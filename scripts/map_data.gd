@@ -15,8 +15,8 @@ static func generate(seed_val: int) -> MapData:
 	var map := MapData.new()
 
 	for f in FLOORS:
-		var floor_nodes := []
-		var count := 1 if f == FLOORS - 1 else NODES_PER_FLOOR
+		var floor_nodes: Array = []
+		var count: int = 1 if f == FLOORS - 1 else NODES_PER_FLOOR
 		for c in count:
 			var node := MapNodeData.new()
 			node.id = f * NODES_PER_FLOOR + c
@@ -38,7 +38,7 @@ static func _pick_type(floor: int, rng: RandomNumberGenerator) -> MapNodeData.Ty
 	if floor == 0:
 		return MapNodeData.Type.COMBAT
 
-	var roll := rng.randf()
+	var roll: float = rng.randf()
 	if roll < 0.45:
 		return MapNodeData.Type.COMBAT
 	elif roll < 0.67:
@@ -53,21 +53,21 @@ static func _generate_connections(map: MapData, rng: RandomNumberGenerator) -> v
 	for f in FLOORS - 1:
 		var cur_floor: Array = map.floors[f]
 		var next_floor: Array = map.floors[f + 1]
-		var next_count := next_floor.size()
+		var next_count: int = next_floor.size()
 
 		if next_count == 1:
-			for node in cur_floor:
+			for node: MapNodeData in cur_floor:
 				node.connections.append(next_floor[0].id)
 			continue
 
-		for node in cur_floor:
+		for node: MapNodeData in cur_floor:
 			var c: int = node.column
-			var primary := clamp(c + rng.randi_range(-1, 1), 0, next_count - 1)
+			var primary: int = clamp(c + rng.randi_range(-1, 1), 0, next_count - 1)
 			node.connections.append(next_floor[primary].id)
 
 			if rng.randf() < 0.30:
-				var dir := 1 if primary == 0 else -1
-				var secondary := primary + dir
+				var dir: int = 1 if primary == 0 else -1
+				var secondary: int = primary + dir
 				if secondary >= 0 and secondary < next_count:
 					var sid: int = next_floor[secondary].id
 					if sid not in node.connections:
@@ -75,11 +75,10 @@ static func _generate_connections(map: MapData, rng: RandomNumberGenerator) -> v
 
 			node.connections.sort()
 
-		# Guarantee every next-floor node is reachable
 		for nc in next_count:
 			var next_node: MapNodeData = next_floor[nc]
-			var reachable := false
-			for node in cur_floor:
+			var reachable: bool = false
+			for node: MapNodeData in cur_floor:
 				if next_node.id in node.connections:
 					reachable = true
 					break
@@ -91,7 +90,7 @@ static func _generate_connections(map: MapData, rng: RandomNumberGenerator) -> v
 
 
 func get_node_by_id(id: int) -> MapNodeData:
-	for floor_nodes in floors:
+	for floor_nodes: Array in floors:
 		for node: MapNodeData in floor_nodes:
 			if node.id == id:
 				return node
@@ -101,12 +100,12 @@ func get_node_by_id(id: int) -> MapNodeData:
 func get_reachable_nodes(current_id: int) -> Array:
 	if current_id == -1:
 		return floors[0].duplicate()
-	var current := get_node_by_id(current_id)
+	var current: MapNodeData = get_node_by_id(current_id)
 	if current == null:
 		return []
-	var result := []
-	for next_id in current.connections:
-		var n := get_node_by_id(next_id)
+	var result: Array = []
+	for next_id: int in current.connections:
+		var n: MapNodeData = get_node_by_id(next_id)
 		if n != null:
 			result.append(n)
 	return result
