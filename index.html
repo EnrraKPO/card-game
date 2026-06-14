@@ -6,123 +6,234 @@
   <title>Card Game</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #1a1a2e; color: #eee; font-family: sans-serif; min-height: 100vh; padding: 2rem; }
-    h1 { text-align: center; margin-bottom: 2rem; font-size: 1.8rem; letter-spacing: 2px; }
-    .stats { display: flex; gap: 1rem; justify-content: center; margin-bottom: 2rem; flex-wrap: wrap; }
-    .stat { background: #16213e; border-radius: 8px; padding: 1rem 1.5rem; text-align: center; min-width: 100px; }
-    .stat-label { font-size: 12px; color: #888; margin-bottom: 4px; }
-    .stat-value { font-size: 28px; font-weight: bold; }
-    .hand { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; min-height: 100px; margin-bottom: 2rem; }
-    .card { background: #fff; color: #111; border-radius: 10px; padding: 12px 16px; font-size: 18px; font-weight: bold; cursor: pointer; transition: transform 0.15s; user-select: none; min-width: 56px; text-align: center; border: 3px solid transparent; }
-    .card:hover { transform: translateY(-8px); }
-    .card.red { color: #c0392b; }
-    .card.selected { border-color: #3498db; transform: translateY(-8px); }
-    .controls { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 2rem; }
-    button { background: #16213e; color: #eee; border: 1px solid #3498db; border-radius: 8px; padding: 10px 20px; font-size: 14px; cursor: pointer; transition: background 0.15s; }
-    button:hover { background: #3498db; color: #fff; }
-    .log { background: #16213e; border-radius: 8px; padding: 1rem; max-width: 600px; margin: 0 auto; max-height: 140px; overflow-y: auto; }
-    .log-entry { font-size: 13px; color: #888; padding: 2px 0; }
+    body { background: #1a1a2e; color: #eee; font-family: sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; }
+    .screen { display: none; flex-direction: column; align-items: center; gap: 1.5rem; width: 100%; max-width: 480px; }
+    .screen.active { display: flex; }
+    h1 { font-size: 2rem; letter-spacing: 3px; text-align: center; }
+    h2 { font-size: 1.3rem; letter-spacing: 2px; text-align: center; color: #aaa; }
+    input { background: #16213e; border: 1px solid #3498db; border-radius: 8px; color: #eee; font-size: 1rem; padding: 12px 16px; width: 100%; outline: none; }
+    input:focus { border-color: #5dade2; }
+    .btn { background: #16213e; color: #eee; border: 1px solid #3498db; border-radius: 8px; padding: 12px 24px; font-size: 1rem; cursor: pointer; width: 100%; transition: background 0.15s; text-align: center; }
+    .btn:hover { background: #3498db; }
+    .btn.danger { border-color: #e74c3c; }
+    .btn.danger:hover { background: #e74c3c; }
+    .btn.secondary { border-color: #555; color: #aaa; }
+    .btn.secondary:hover { background: #333; color: #eee; }
+    .coins { background: #16213e; border-radius: 8px; padding: 10px 20px; font-size: 1rem; border: 1px solid #f39c12; color: #f39c12; text-align: center; }
+    .slot { background: #16213e; border: 1px solid #444; border-radius: 10px; padding: 1rem 1.25rem; width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+    .slot.empty { border-style: dashed; cursor: pointer; justify-content: center; color: #555; transition: border-color 0.15s, color 0.15s; }
+    .slot.empty:hover { border-color: #3498db; color: #3498db; }
+    .slot-info { display: flex; flex-direction: column; gap: 4px; }
+    .slot-name { font-size: 14px; color: #aaa; }
+    .slot-deck { font-size: 16px; font-weight: bold; }
+    .deck-option { background: #16213e; border: 1px solid #444; border-radius: 10px; padding: 1rem 1.25rem; width: 100%; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: border-color 0.15s; }
+    .deck-option:hover { border-color: #3498db; }
+    .deck-option.owned { border-color: #27ae60; }
+    .deck-option.locked { opacity: 0.5; cursor: default; }
+    .deck-price { font-size: 13px; color: #f39c12; }
+    .deck-owned { font-size: 13px; color: #27ae60; }
+    .back { align-self: flex-start; background: none; border: none; color: #888; cursor: pointer; font-size: 14px; padding: 0; }
+    .back:hover { color: #eee; }
+    .divider { width: 100%; border: none; border-top: 1px solid #333; }
+    .error { color: #e74c3c; font-size: 14px; text-align: center; }
   </style>
 </head>
 <body>
-  <h1>Card Game</h1>
 
-  <div class="stats">
-    <div class="stat"><div class="stat-label">Deck</div><div class="stat-value" id="deck-count">52</div></div>
-    <div class="stat"><div class="stat-label">Hand</div><div class="stat-value" id="hand-count">0</div></div>
-    <div class="stat"><div class="stat-label">Discard</div><div class="stat-value" id="discard-count">0</div></div>
-    <div class="stat"><div class="stat-label">Turn</div><div class="stat-value" id="turn-count">1</div></div>
-  </div>
+<!-- USERNAME SCREEN -->
+<div class="screen active" id="screen-username">
+  <h1>CARD GAME</h1>
+  <input type="text" id="username-input" placeholder="Enter your name..." maxlength="20" />
+  <p class="error" id="username-error"></p>
+  <button class="btn" onclick="submitUsername()">Start</button>
+</div>
 
-  <div class="hand" id="hand"></div>
+<!-- MAIN MENU -->
+<div class="screen" id="screen-menu">
+  <h1>CARD GAME</h1>
+  <h2 id="menu-greeting"></h2>
+  <div class="coins" id="menu-coins"></div>
+  <hr class="divider" />
+  <button class="btn" onclick="showScreen('screen-play')">Play</button>
+  <button class="btn" onclick="showShop()">Shop</button>
+</div>
 
-  <div class="controls">
-    <button onclick="dealCards(5)">Deal 5</button>
-    <button onclick="dealCards(1)">Draw 1</button>
-    <button onclick="discardSelected()">Discard selected</button>
-    <button onclick="endTurn()">End turn</button>
-    <button onclick="resetGame()">Reset</button>
-  </div>
+<!-- PLAY SCREEN (SAVE SLOTS) -->
+<div class="screen" id="screen-play">
+  <button class="back" onclick="showScreen('screen-menu')">← Back</button>
+  <h1>PLAY</h1>
+  <h2>Select a save slot</h2>
+  <div id="slots-container" style="width:100%; display:flex; flex-direction:column; gap:12px;"></div>
+</div>
 
-  <div class="log" id="log"></div>
+<!-- DECK SELECTION SCREEN -->
+<div class="screen" id="screen-deck-select">
+  <button class="back" onclick="showScreen('screen-play')">← Back</button>
+  <h1>SELECT DECK</h1>
+  <h2 id="deck-select-subtitle"></h2>
+  <div id="deck-select-list" style="width:100%; display:flex; flex-direction:column; gap:12px;"></div>
+</div>
 
-  <script>
-    const SUITS = ['♠','♣','♥','♦'];
-    const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
-    const RED = ['♥','♦'];
+<!-- SHOP SCREEN -->
+<div class="screen" id="screen-shop">
+  <button class="back" onclick="showScreen('screen-menu')">← Back</button>
+  <h1>SHOP</h1>
+  <div class="coins" id="shop-coins"></div>
+  <div id="shop-list" style="width:100%; display:flex; flex-direction:column; gap:12px;"></div>
+</div>
 
-    let state = { deck: [], hand: [], discard: [], turn: 1, selected: new Set() };
+<script>
+  // ─── SAVE LAYER ───────────────────────────────────────────────────────────
+  // All persistence goes through these two functions.
+  // To move to cloud: swap their internals only.
+  function saveGame(data) {
+    localStorage.setItem('cardgame_save', JSON.stringify(data));
+  }
+  function loadGame() {
+    const raw = localStorage.getItem('cardgame_save');
+    return raw ? JSON.parse(raw) : null;
+  }
 
-    function buildDeck() {
-      const d = [];
-      for (const s of SUITS) for (const r of RANKS) d.push({ suit: s, rank: r });
-      return d;
+  // ─── DECKS CATALOGUE ──────────────────────────────────────────────────────
+  const DECKS = [
+    { id: 'deck_a', name: 'Deck A', price: 0 },
+    { id: 'deck_b', name: 'Deck B', price: 100 },
+  ];
+
+  const STARTING_COINS = 200;
+  const SAVE_SLOT_COUNT = 3;
+
+  // ─── STATE ────────────────────────────────────────────────────────────────
+  let state = null;
+  let pendingSlot = null;
+
+  function initState(username) {
+    return {
+      username,
+      coins: STARTING_COINS,
+      ownedDecks: ['deck_a'],
+      slots: [null, null, null],
+    };
+  }
+
+  // ─── SCREENS ──────────────────────────────────────────────────────────────
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  // ─── USERNAME ─────────────────────────────────────────────────────────────
+  function submitUsername() {
+    const val = document.getElementById('username-input').value.trim();
+    if (!val) { document.getElementById('username-error').textContent = 'Please enter a name.'; return; }
+    const existing = loadGame();
+    if (existing && existing.username === val) {
+      state = existing;
+    } else {
+      state = initState(val);
+      saveGame(state);
     }
+    showMenu();
+  }
 
-    function shuffle(arr) {
-      for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
+  document.getElementById('username-input').addEventListener('keydown', e => { if (e.key === 'Enter') submitUsername(); });
+
+  // ─── MENU ─────────────────────────────────────────────────────────────────
+  function showMenu() {
+    document.getElementById('menu-greeting').textContent = 'Welcome, ' + state.username;
+    document.getElementById('menu-coins').textContent = '🪙 ' + state.coins + ' coins';
+    showScreen('screen-menu');
+  }
+
+  // ─── PLAY / SLOTS ─────────────────────────────────────────────────────────
+  function renderSlots() {
+    const container = document.getElementById('slots-container');
+    container.innerHTML = '';
+    state.slots.forEach((slot, i) => {
+      const el = document.createElement('div');
+      if (!slot) {
+        el.className = 'slot empty';
+        el.textContent = '+ New Game (Slot ' + (i + 1) + ')';
+        el.onclick = () => openDeckSelect(i);
+      } else {
+        el.className = 'slot';
+        el.innerHTML = `
+          <div class="slot-info">
+            <div class="slot-name">Slot ${i + 1}</div>
+            <div class="slot-deck">${slot.deckName}</div>
+          </div>
+          <button class="btn danger" style="width:auto; padding: 8px 14px; font-size:13px;" onclick="deleteSlot(${i})">Delete</button>
+        `;
       }
-      return arr;
-    }
+      container.appendChild(el);
+    });
+    showScreen('screen-play');
+  }
 
-    function log(msg) {
-      const el = document.getElementById('log');
-      const entry = document.createElement('p');
-      entry.className = 'log-entry';
-      entry.textContent = '› ' + msg;
-      el.prepend(entry);
-    }
+  function deleteSlot(i) {
+    state.slots[i] = null;
+    saveGame(state);
+    renderSlots();
+  }
 
-    function render() {
-      document.getElementById('deck-count').textContent = state.deck.length;
-      document.getElementById('hand-count').textContent = state.hand.length;
-      document.getElementById('discard-count').textContent = state.discard.length;
-      document.getElementById('turn-count').textContent = state.turn;
+  // ─── DECK SELECTION ───────────────────────────────────────────────────────
+  function openDeckSelect(slotIndex) {
+    pendingSlot = slotIndex;
+    document.getElementById('deck-select-subtitle').textContent = 'For Slot ' + (slotIndex + 1);
+    const list = document.getElementById('deck-select-list');
+    list.innerHTML = '';
+    DECKS.forEach(deck => {
+      const owned = state.ownedDecks.includes(deck.id);
+      const el = document.createElement('div');
+      el.className = 'deck-option' + (owned ? ' owned' : ' locked');
+      el.innerHTML = `
+        <span>${deck.name}</span>
+        <span class="${owned ? 'deck-owned' : 'deck-price'}">${owned ? 'Owned' : '🪙 ' + deck.price}</span>
+      `;
+      if (owned) el.onclick = () => selectDeck(deck);
+      list.appendChild(el);
+    });
+    showScreen('screen-deck-select');
+  }
 
-      const handEl = document.getElementById('hand');
-      handEl.innerHTML = '';
-      state.hand.forEach((card, i) => {
-        const el = document.createElement('div');
-        el.className = 'card' + (RED.includes(card.suit) ? ' red' : '') + (state.selected.has(i) ? ' selected' : '');
-        el.textContent = card.rank + card.suit;
-        el.onclick = () => { state.selected.has(i) ? state.selected.delete(i) : state.selected.add(i); render(); };
-        handEl.appendChild(el);
-      });
-    }
+  function selectDeck(deck) {
+    state.slots[pendingSlot] = { deckId: deck.id, deckName: deck.name };
+    saveGame(state);
+    pendingSlot = null;
+    renderSlots();
+  }
 
-    function dealCards(n) {
-      if (state.deck.length === 0) { log('Deck is empty — reset to continue'); return; }
-      const drawn = Math.min(n, state.deck.length);
-      state.hand.push(...state.deck.splice(0, drawn));
-      log('Drew ' + drawn + ' card' + (drawn > 1 ? 's' : ''));
-      render();
-    }
+  // ─── SHOP ─────────────────────────────────────────────────────────────────
+  function showShop() {
+    document.getElementById('shop-coins').textContent = '🪙 ' + state.coins + ' coins';
+    const list = document.getElementById('shop-list');
+    list.innerHTML = '';
+    DECKS.forEach(deck => {
+      const owned = state.ownedDecks.includes(deck.id);
+      const el = document.createElement('div');
+      el.className = 'deck-option' + (owned ? ' owned' : '');
+      el.innerHTML = `
+        <span>${deck.name}</span>
+        <span class="${owned ? 'deck-owned' : 'deck-price'}">${owned ? 'Owned' : '🪙 ' + deck.price}</span>
+      `;
+      if (!owned) el.onclick = () => buyDeck(deck);
+      list.appendChild(el);
+    });
+    showScreen('screen-shop');
+  }
 
-    function discardSelected() {
-      if (state.selected.size === 0) { log('No cards selected'); return; }
-      const indices = [...state.selected].sort((a, b) => b - a);
-      const discarded = indices.map(i => { const c = state.hand.splice(i, 1)[0]; state.discard.push(c); return c.rank + c.suit; });
-      log('Discarded: ' + discarded.reverse().join(' '));
-      state.selected.clear();
-      render();
-    }
+  function buyDeck(deck) {
+    if (state.coins < deck.price) { alert('Not enough coins.'); return; }
+    state.coins -= deck.price;
+    state.ownedDecks.push(deck.id);
+    saveGame(state);
+    showShop();
+  }
 
-    function endTurn() {
-      state.turn++;
-      state.selected.clear();
-      log('Turn ' + state.turn + ' begins');
-      render();
-    }
-
-    function resetGame() {
-      state = { deck: shuffle(buildDeck()), hand: [], discard: [], turn: 1, selected: new Set() };
-      log('Game reset — deck shuffled');
-      render();
-    }
-
-    resetGame();
-  </script>
+  // ─── BOOT ─────────────────────────────────────────────────────────────────
+  // Override showScreen for play to always render slots
+  const _showPlay = () => renderSlots();
+  document.querySelector('[onclick="showScreen(\'screen-play\')"]').onclick = _showPlay;
+</script>
 </body>
 </html>
