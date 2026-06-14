@@ -1,0 +1,10 @@
+[gd_scene format=3 uid="uid://bmap01"]
+
+[ext_resource type="Script" path="res://scripts/map.gd" id="1_map"]
+
+[node name="Map" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_map")
