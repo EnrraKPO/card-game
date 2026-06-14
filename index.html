@@ -17,8 +17,6 @@
     .btn:hover { background: #3498db; }
     .btn.danger { border-color: #e74c3c; }
     .btn.danger:hover { background: #e74c3c; }
-    .btn.secondary { border-color: #555; color: #aaa; }
-    .btn.secondary:hover { background: #333; color: #eee; }
     .coins { background: #16213e; border-radius: 8px; padding: 10px 20px; font-size: 1rem; border: 1px solid #f39c12; color: #f39c12; text-align: center; }
     .slot { background: #16213e; border: 1px solid #444; border-radius: 10px; padding: 1rem 1.25rem; width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
     .slot.empty { border-style: dashed; cursor: pointer; justify-content: center; color: #555; transition: border-color 0.15s, color 0.15s; }
@@ -41,7 +39,7 @@
 <body>
 
 <!-- USERNAME SCREEN -->
-<div class="screen active" id="screen-username">
+<div class="screen" id="screen-username">
   <h1>CARD GAME</h1>
   <input type="text" id="username-input" placeholder="Enter your name..." maxlength="20" />
   <p class="error" id="username-error"></p>
@@ -54,13 +52,14 @@
   <h2 id="menu-greeting"></h2>
   <div class="coins" id="menu-coins"></div>
   <hr class="divider" />
-  <button class="btn" onclick="showScreen('screen-play')">Play</button>
+  <button class="btn" onclick="renderSlots()">Play</button>
   <button class="btn" onclick="showShop()">Shop</button>
+  <button class="btn secondary" onclick="clearSave()">Clear save</button>
 </div>
 
 <!-- PLAY SCREEN (SAVE SLOTS) -->
 <div class="screen" id="screen-play">
-  <button class="back" onclick="showScreen('screen-menu')">← Back</button>
+  <button class="back" onclick="showMenu()">← Back</button>
   <h1>PLAY</h1>
   <h2>Select a save slot</h2>
   <div id="slots-container" style="width:100%; display:flex; flex-direction:column; gap:12px;"></div>
@@ -68,7 +67,7 @@
 
 <!-- DECK SELECTION SCREEN -->
 <div class="screen" id="screen-deck-select">
-  <button class="back" onclick="showScreen('screen-play')">← Back</button>
+  <button class="back" onclick="renderSlots()">← Back</button>
   <h1>SELECT DECK</h1>
   <h2 id="deck-select-subtitle"></h2>
   <div id="deck-select-list" style="width:100%; display:flex; flex-direction:column; gap:12px;"></div>
@@ -76,7 +75,7 @@
 
 <!-- SHOP SCREEN -->
 <div class="screen" id="screen-shop">
-  <button class="back" onclick="showScreen('screen-menu')">← Back</button>
+  <button class="back" onclick="showMenu()">← Back</button>
   <h1>SHOP</h1>
   <div class="coins" id="shop-coins"></div>
   <div id="shop-list" style="width:100%; display:flex; flex-direction:column; gap:12px;"></div>
@@ -84,14 +83,19 @@
 
 <script>
   // ─── SAVE LAYER ───────────────────────────────────────────────────────────
-  // All persistence goes through these two functions.
-  // To move to cloud: swap their internals only.
+  // To move to cloud: swap only these two functions.
   function saveGame(data) {
     localStorage.setItem('cardgame_save', JSON.stringify(data));
   }
   function loadGame() {
     const raw = localStorage.getItem('cardgame_save');
     return raw ? JSON.parse(raw) : null;
+  }
+  function clearSave() {
+    if (!confirm('Delete all progress?')) return;
+    localStorage.removeItem('cardgame_save');
+    state = null;
+    showScreen('screen-username');
   }
 
   // ─── DECKS CATALOGUE ──────────────────────────────────────────────────────
@@ -101,9 +105,6 @@
   ];
 
   const STARTING_COINS = 200;
-  const SAVE_SLOT_COUNT = 3;
-
-  // ─── STATE ────────────────────────────────────────────────────────────────
   let state = null;
   let pendingSlot = null;
 
@@ -122,17 +123,23 @@
     document.getElementById(id).classList.add('active');
   }
 
+  // ─── BOOT ─────────────────────────────────────────────────────────────────
+  // On load: if a save exists, go straight to menu. Otherwise show username screen.
+  window.onload = () => {
+    state = loadGame();
+    if (state) {
+      showMenu();
+    } else {
+      showScreen('screen-username');
+    }
+  };
+
   // ─── USERNAME ─────────────────────────────────────────────────────────────
   function submitUsername() {
     const val = document.getElementById('username-input').value.trim();
     if (!val) { document.getElementById('username-error').textContent = 'Please enter a name.'; return; }
-    const existing = loadGame();
-    if (existing && existing.username === val) {
-      state = existing;
-    } else {
-      state = initState(val);
-      saveGame(state);
-    }
+    state = initState(val);
+    saveGame(state);
     showMenu();
   }
 
@@ -229,11 +236,6 @@
     saveGame(state);
     showShop();
   }
-
-  // ─── BOOT ─────────────────────────────────────────────────────────────────
-  // Override showScreen for play to always render slots
-  const _showPlay = () => renderSlots();
-  document.querySelector('[onclick="showScreen(\'screen-play\')"]').onclick = _showPlay;
 </script>
 </body>
 </html>
