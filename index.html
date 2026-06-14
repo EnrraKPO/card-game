@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Card Game</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #1a1a2e; color: #eee; font-family: sans-serif; min-height: 100vh; padding: 2rem; }
+    h1 { text-align: center; margin-bottom: 2rem; font-size: 1.8rem; letter-spacing: 2px; }
+    .stats { display: flex; gap: 1rem; justify-content: center; margin-bottom: 2rem; flex-wrap: wrap; }
+    .stat { background: #16213e; border-radius: 8px; padding: 1rem 1.5rem; text-align: center; min-width: 100px; }
+    .stat-label { font-size: 12px; color: #888; margin-bottom: 4px; }
+    .stat-value { font-size: 28px; font-weight: bold; }
+    .hand { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; min-height: 100px; margin-bottom: 2rem; }
+    .card { background: #fff; color: #111; border-radius: 10px; padding: 12px 16px; font-size: 18px; font-weight: bold; cursor: pointer; transition: transform 0.15s; user-select: none; min-width: 56px; text-align: center; border: 3px solid transparent; }
+    .card:hover { transform: translateY(-8px); }
+    .card.red { color: #c0392b; }
+    .card.selected { border-color: #3498db; transform: translateY(-8px); }
+    .controls { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 2rem; }
+    button { background: #16213e; color: #eee; border: 1px solid #3498db; border-radius: 8px; padding: 10px 20px; font-size: 14px; cursor: pointer; transition: background 0.15s; }
+    button:hover { background: #3498db; color: #fff; }
+    .log { background: #16213e; border-radius: 8px; padding: 1rem; max-width: 600px; margin: 0 auto; max-height: 140px; overflow-y: auto; }
+    .log-entry { font-size: 13px; color: #888; padding: 2px 0; }
+  </style>
+</head>
+<body>
+  <h1>Card Game</h1>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-label">Deck</div><div class="stat-value" id="deck-count">52</div></div>
+    <div class="stat"><div class="stat-label">Hand</div><div class="stat-value" id="hand-count">0</div></div>
+    <div class="stat"><div class="stat-label">Discard</div><div class="stat-value" id="discard-count">0</div></div>
+    <div class="stat"><div class="stat-label">Turn</div><div class="stat-value" id="turn-count">1</div></div>
+  </div>
+
+  <div class="hand" id="hand"></div>
+
+  <div class="controls">
+    <button onclick="dealCards(5)">Deal 5</button>
+    <button onclick="dealCards(1)">Draw 1</button>
+    <button onclick="discardSelected()">Discard selected</button>
+    <button onclick="endTurn()">End turn</button>
+    <button onclick="resetGame()">Reset</button>
+  </div>
+
+  <div class="log" id="log"></div>
+
+  <script>
+    const SUITS = ['♠','♣','♥','♦'];
+    const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+    const RED = ['♥','♦'];
+
+    let state = { deck: [], hand: [], discard: [], turn: 1, selected: new Set() };
+
+    function buildDeck() {
+      const d = [];
+      for (const s of SUITS) for (const r of RANKS) d.push({ suit: s, rank: r });
+      return d;
+    }
+
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function log(msg) {
+      const el = document.getElementById('log');
+      const entry = document.createElement('p');
+      entry.className = 'log-entry';
+      entry.textContent = '› ' + msg;
+      el.prepend(entry);
+    }
+
+    function render() {
+      document.getElementById('deck-count').textContent = state.deck.length;
+      document.getElementById('hand-count').textContent = state.hand.length;
+      document.getElementById('discard-count').textContent = state.discard.length;
+      document.getElementById('turn-count').textContent = state.turn;
+
+      const handEl = document.getElementById('hand');
+      handEl.innerHTML = '';
+      state.hand.forEach((card, i) => {
+        const el = document.createElement('div');
+        el.className = 'card' + (RED.includes(card.suit) ? ' red' : '') + (state.selected.has(i) ? ' selected' : '');
+        el.textContent = card.rank + card.suit;
+        el.onclick = () => { state.selected.has(i) ? state.selected.delete(i) : state.selected.add(i); render(); };
+        handEl.appendChild(el);
+      });
+    }
+
+    function dealCards(n) {
+      if (state.deck.length === 0) { log('Deck is empty — reset to continue'); return; }
+      const drawn = Math.min(n, state.deck.length);
+      state.hand.push(...state.deck.splice(0, drawn));
+      log('Drew ' + drawn + ' card' + (drawn > 1 ? 's' : ''));
+      render();
+    }
+
+    function discardSelected() {
+      if (state.selected.size === 0) { log('No cards selected'); return; }
+      const indices = [...state.selected].sort((a, b) => b - a);
+      const discarded = indices.map(i => { const c = state.hand.splice(i, 1)[0]; state.discard.push(c); return c.rank + c.suit; });
+      log('Discarded: ' + discarded.reverse().join(' '));
+      state.selected.clear();
+      render();
+    }
+
+    function endTurn() {
+      state.turn++;
+      state.selected.clear();
+      log('Turn ' + state.turn + ' begins');
+      render();
+    }
+
+    function resetGame() {
+      state = { deck: shuffle(buildDeck()), hand: [], discard: [], turn: 1, selected: new Set() };
+      log('Game reset — deck shuffled');
+      render();
+    }
+
+    resetGame();
+  </script>
+</body>
+</html>
