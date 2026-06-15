@@ -161,7 +161,9 @@ func _on_node_selected(node: MapNodeData) -> void:
 	_rebuild_node_buttons()
 	queue_redraw()
 
-	# TODO: transition to node.type scene (combat, event, shop, rest, boss)
+	match node.type:
+		MapNodeData.Type.COMBAT, MapNodeData.Type.ELITE, MapNodeData.Type.BOSS:
+			get_tree().change_scene_to_file("res://scenes/combat.tscn")
 
 
 func _on_quit_pressed() -> void:

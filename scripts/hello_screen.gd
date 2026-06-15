@@ -41,7 +41,7 @@ func _ready() -> void:
 
 	confirm_dialog = ConfirmationDialog.new()
 	confirm_dialog.title = "Reset profile"
-	confirm_dialog.dialog_text = "This will erase your saved name and return you to the start. Are you sure?"
+	confirm_dialog.dialog_text = "This will erase your name and all save slots. Are you sure?"
 	confirm_dialog.confirmed.connect(_on_reset_confirmed)
 	add_child(confirm_dialog)
 
@@ -55,5 +55,7 @@ func _on_reset_pressed() -> void:
 
 
 func _on_reset_confirmed() -> void:
+	for i in GameData.SLOT_COUNT:
+		GameData.delete_slot(i)
 	GameData.username = ""
 	get_tree().change_scene_to_file("res://scenes/entry_screen.tscn")

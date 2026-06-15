@@ -14,12 +14,21 @@ var current_node_id: int
 var visited_nodes: Array
 
 
+const STARTER_DECK: Array = [
+	"king",
+	"strike", "strike", "strike", "strike", "strike",
+	"defender", "defender", "defender", "defender",
+	"swift", "swift", "swift", "swift", "swift",
+	"warrior", "warrior", "warrior", "warrior",
+	"archer", "archer", "archer", "archer", "archer",
+]
+
 static func create_new() -> RunData:
 	var run := RunData.new()
 	run.health = STARTING_HEALTH
 	run.max_health = STARTING_HEALTH
 	run.gold = STARTING_GOLD
-	run.deck = []
+	run.deck = STARTER_DECK.duplicate()
 	run.act = 1
 	run.map_seed = randi()
 	run.current_node_id = -1
