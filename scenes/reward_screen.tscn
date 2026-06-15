@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://dq7x3kqanwb2c"]
+
+[ext_resource type="Script" path="res://scripts/reward_screen.gd" id="1"]
+
+[node name="RewardScreen" type="Control"]
+script = ExtResource("1")

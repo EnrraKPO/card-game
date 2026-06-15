@@ -8,15 +8,26 @@ const V_PAD := 48.0
 var map_data: MapData
 var current_node_id: int
 var node_positions: Dictionary = {}
+var _node_resolvers: Dictionary = {}
 
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 
-	map_data = MapData.generate(GameData.current_run.map_seed)
-	current_node_id = GameData.current_run.current_node_id
+	_node_resolvers = {
+		MapNodeData.Type.COMBAT: _enter_combat,
+		MapNodeData.Type.ELITE:  _enter_combat,
+		MapNodeData.Type.BOSS:   _enter_combat,
+		MapNodeData.Type.FORGE:  _enter_forge,
+	}
 
-	for vid in GameData.current_run.visited_nodes:
+	if GameData.current_encounter != null:
+		_process_combat_return()
+
+	map_data = MapData.generate(GameData.current_map_state.map_seed)
+	current_node_id = GameData.current_map_state.current_node_id
+
+	for vid in GameData.current_map_state.visited_nodes:
 		var n: MapNodeData = map_data.get_node_by_id(vid)
 		if n:
 			n.visited = true
@@ -30,32 +41,7 @@ func _build_hud() -> void:
 	hud.set_anchors_and_offsets_preset(PRESET_TOP_WIDE)
 	hud.custom_minimum_size.y = HUD_HEIGHT
 	add_child(hud)
-
-	var hbox := HBoxContainer.new()
-	hbox.add_theme_constant_override("separation", 0)
-	hud.add_child(hbox)
-
-	var run: RunData = GameData.current_run
-
-	var hp := Label.new()
-	hp.text = "  HP  %d / %d" % [run.health, run.max_health]
-	hp.add_theme_font_size_override("font_size", 17)
-	hp.size_flags_horizontal = SIZE_EXPAND_FILL
-	hbox.add_child(hp)
-
-	var act := Label.new()
-	act.text = "Act %d" % run.act
-	act.add_theme_font_size_override("font_size", 17)
-	act.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	act.size_flags_horizontal = SIZE_EXPAND_FILL
-	hbox.add_child(act)
-
-	var gold := Label.new()
-	gold.text = "Gold  %d  " % run.gold
-	gold.add_theme_font_size_override("font_size", 17)
-	gold.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	gold.size_flags_horizontal = SIZE_EXPAND_FILL
-	hbox.add_child(gold)
+	hud.add_child(RunHUD.new())
 
 
 func _build_map() -> void:
@@ -76,6 +62,21 @@ func _build_map() -> void:
 	quit_btn.offset_bottom = -16
 	quit_btn.pressed.connect(_on_quit_pressed)
 	add_child(quit_btn)
+
+	var dbg_forge := Button.new()
+	dbg_forge.text = "[debug] forge"
+	dbg_forge.add_theme_font_size_override("font_size", 13)
+	dbg_forge.modulate = Color(1.0, 0.65, 0.1)
+	dbg_forge.anchor_left = 0.0
+	dbg_forge.anchor_top = 1.0
+	dbg_forge.anchor_right = 0.0
+	dbg_forge.anchor_bottom = 1.0
+	dbg_forge.offset_left = 146
+	dbg_forge.offset_top = -48
+	dbg_forge.offset_right = 280
+	dbg_forge.offset_bottom = -16
+	dbg_forge.pressed.connect(func(): _enter_forge(null))
+	add_child(dbg_forge)
 
 
 func _calculate_positions() -> void:
@@ -151,19 +152,61 @@ func _on_node_selected(node: MapNodeData) -> void:
 		var prev: MapNodeData = map_data.get_node_by_id(current_node_id)
 		if prev:
 			prev.visited = true
-			if current_node_id not in GameData.current_run.visited_nodes:
-				GameData.current_run.visited_nodes.append(current_node_id)
+			if current_node_id not in GameData.current_map_state.visited_nodes:
+				GameData.current_map_state.visited_nodes.append(current_node_id)
 
 	current_node_id = node.id
-	GameData.current_run.current_node_id = current_node_id
+	GameData.current_map_state.current_node_id = current_node_id
 	GameData.save_run()
 
 	_rebuild_node_buttons()
 	queue_redraw()
 
-	match node.type:
-		MapNodeData.Type.COMBAT, MapNodeData.Type.ELITE, MapNodeData.Type.BOSS:
-			get_tree().change_scene_to_file("res://scenes/combat.tscn")
+	_resolve_node(node)
+
+
+func _resolve_node(node: MapNodeData) -> void:
+	if node.type in _node_resolvers:
+		_node_resolvers[node.type].call(node)
+
+
+func _enter_combat(node: MapNodeData) -> void:
+	GameData.current_encounter = _build_encounter(node.type)
+	get_tree().change_scene_to_file("res://scenes/combat.tscn")
+
+
+func _enter_forge(_node: MapNodeData) -> void:
+	get_tree().change_scene_to_file("res://scenes/combination_screen.tscn")
+
+
+func _process_combat_return() -> void:
+	# Reward presentation will be added with the run system
+	GameData.current_encounter = null
+
+
+func _build_encounter(type: MapNodeData.Type) -> EncounterData:
+	var enc := EncounterData.new()
+	match type:
+		MapNodeData.Type.COMBAT:
+			enc.type = EncounterData.Type.COMBAT
+			enc.enemy_deck = ["pawn", "pawn", "pawn", "bishop", "fire", "fire", "water", "earth"]
+		MapNodeData.Type.ELITE:
+			enc.type = EncounterData.Type.ELITE
+			enc.enemy_deck = ["knight", "knight", "rook", "bishop", "bishop", "darkness", "darkness", "fire", "air"]
+		MapNodeData.Type.BOSS:
+			enc.type = EncounterData.Type.BOSS
+			enc.enemy_deck = ["queen", "queen", "rook", "rook", "knight", "knight", "darkness", "darkness", "fire", "air"]
+	enc.reward_pool = _generate_reward_pool()
+	return enc
+
+
+func _generate_reward_pool() -> Array[String]:
+	var non_kings: Array[String] = []
+	for card: CardData in CardData.all():
+		if not card.is_king:
+			non_kings.append(card.id)
+	non_kings.shuffle()
+	return non_kings.slice(0, mini(3, non_kings.size()))
 
 
 func _on_quit_pressed() -> void:

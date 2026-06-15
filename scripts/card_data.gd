@@ -11,8 +11,11 @@ var is_king: bool
 var description: String = ""
 var effects: Array = []  # Array[Effect]
 var image: Texture2D = null
+var elements: Array[String] = []
+var chess_pieces: Array[String] = []
 
 static var _all: Dictionary = {}
+static var _by_composition: Dictionary = {}
 
 
 static func _static_init() -> void:
@@ -70,6 +73,10 @@ static func _load_card_dict(d: Dictionary) -> void:
 		var e := _parse_effect(e_data)
 		if e:
 			card.effects.append(e)
+	card.elements     = Array(d.get("elements",     []), TYPE_STRING, "", null)
+	card.chess_pieces = Array(d.get("chess_pieces", []), TYPE_STRING, "", null)
+	if card.elements.size() > 0 or card.chess_pieces.size() > 0:
+		_by_composition[composition_key(card.elements, card.chess_pieces)] = card
 
 
 static func _parse_effect(d: Dictionary) -> Effect:
@@ -140,8 +147,96 @@ static func _reg(p_id: String, p_name: String, p_cost: int, p_atk: int, p_hp: in
 
 
 static func get_card(p_id: String) -> CardData:
-	return _all.get(p_id, null)
+	if _all.has(p_id):
+		return _all[p_id]
+	return _derive_from_key(p_id)
 
 
 static func all() -> Array:
 	return _all.values()
+
+
+static func composition_key(elems: Array, chess: Array) -> String:
+	var e := elems.duplicate(); e.sort()
+	var c := chess.duplicate(); c.sort()
+	return "_".join(e + c)
+
+
+static func can_combine(a: CardData, b: CardData) -> bool:
+	return (a.elements.size() + b.elements.size()) <= 2 \
+		and (a.chess_pieces.size() + b.chess_pieces.size()) <= 2
+
+
+static func combine(a: CardData, b: CardData) -> CardData:
+	var elems: Array = a.elements + b.elements
+	var chess: Array  = a.chess_pieces + b.chess_pieces
+	var key := composition_key(elems, chess)
+	var authored: CardData = _by_composition.get(key, null)
+	if authored:
+		return authored
+	var derived := _derive(elems, chess, key)
+	_all[key]            = derived
+	_by_composition[key] = derived
+	return derived
+
+
+static func _derive_from_key(key: String) -> CardData:
+	if key.is_empty():
+		return null
+	var elems: Array[String] = []
+	var chess: Array[String]  = []
+	for part: String in key.split("_"):
+		var base: CardData = _all.get(part, null)
+		if base == null or (base.elements.is_empty() and base.chess_pieces.is_empty()):
+			return null
+		elems.append_array(base.elements)
+		chess.append_array(base.chess_pieces)
+	if elems.is_empty() and chess.is_empty():
+		return null
+	var derived := _derive(elems, chess, key)
+	_all[key]            = derived
+	_by_composition[key] = derived
+	return derived
+
+
+static func _derive(elems: Array, chess: Array, key: String) -> CardData:
+	var c := CardData.new()
+	c.id           = key
+	c.elements     = Array(elems, TYPE_STRING, "", null)
+	c.chess_pieces = Array(chess, TYPE_STRING, "", null)
+	c.is_king      = false
+	c.display_name = _derive_name(elems, chess)
+	c.description  = ""
+	var n := elems.size() + chess.size()
+	var cost := 0
+	for e: String in elems:
+		var base: CardData = _all.get(e, null)
+		cost += base.cost if base else 1
+	for cp: String in chess:
+		var base: CardData = _all.get(cp, null)
+		cost += base.cost if base else 1
+	c.cost   = cost
+	c.attack = n * 2
+	c.health = n * 3
+	c.speed  = 2
+	var art := "res://assets/cards/%s.png" % key
+	c.image = load(art) if ResourceLoader.exists(art) \
+		else load("res://assets/cards/placeholder.png")
+	return c
+
+
+static func _derive_name(elems: Array, chess: Array) -> String:
+	const INITIALS := {
+		"fire": "F", "water": "W", "air": "A", "earth": "E",
+		"darkness": "D", "light": "L",
+		"pawn": "P", "bishop": "B", "knight": "K",
+		"rook": "R", "queen": "Q", "king": "C",
+	}
+	var e := elems.duplicate(); e.sort()
+	var c := chess.duplicate(); c.sort()
+	var name := ""
+	for mat: String in e:
+		name += INITIALS.get(mat, mat[0].to_upper())
+	for mat: String in c:
+		name += INITIALS.get(mat, mat[0].to_upper())
+	return name

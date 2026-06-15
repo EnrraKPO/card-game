@@ -66,11 +66,15 @@ func _init_player_hand() -> void:
 
 
 func _init_enemy_hand() -> void:
-	var ids := ["strike", "strike", "strike", "defender", "defender", "swift", "warrior", "archer"]
+	var ids: Array = []
+	if GameData.current_encounter != null:
+		ids = GameData.current_encounter.enemy_deck.duplicate()
+	else:
+		ids = ["strike", "strike", "strike", "defender", "defender", "swift", "warrior", "archer"]
 	ids.shuffle()
 	for id in ids:
 		var data := CardData.get_card(id)
-		if data:
+		if data and not data.is_king:
 			_enemy_hand.append(CardInstance.from_data(data))
 
 
@@ -138,37 +142,30 @@ func _do_cpu_placement() -> void:
 	_set_placement_input(false)
 	_refresh_done_btn()
 
-	var empty_slots: Array = []
-	for r in BoardData.ROWS:
-		for c in BoardData.COLS:
-			if _enemy_grid[r][c] == null:
-				empty_slots.append([r, c])
-	empty_slots.shuffle()
+	var ai: EnemyAI = EnemyAI.new()
+	if GameData.current_encounter != null and GameData.current_encounter.ai != null:
+		ai = GameData.current_encounter.ai
 
-	var shuffled_hand := _enemy_hand.duplicate()
-	shuffled_hand.shuffle()
+	var placements := ai.decide_placements(_enemy_hand, _enemy_grid, _enemy_mana)
 
-	for inst: CardInstance in shuffled_hand:
-		if empty_slots.is_empty():
-			break
-		if inst.data.cost <= _enemy_mana:
-			var pos: Array = empty_slots.pop_front()
-			var r: int = pos[0]
-			var c: int = pos[1]
-			inst.row = r
-			inst.col = c
-			inst.owner = 1
-			_enemy_grid[r][c] = inst
-			_enemy_mana -= inst.data.cost
-			_enemy_hand.erase(inst)
-			var ui := CardUI.create(inst)
-			_enemy_slots[r][c].set_card(ui)
-			var cpu_results := EffectSystem.trigger(Effect.Trigger.ON_PLAY, inst, EffectContext.make(inst, _player_grid, _enemy_grid))
-			_show_effect_results(cpu_results)
-			_cleanup_effect_deaths()
-			_refresh_boards()
-			_animate_card_placed(ui)
-			await get_tree().create_timer(0.35).timeout
+	for placement: Dictionary in placements:
+		var inst: CardInstance = placement["inst"]
+		var r: int             = placement["row"]
+		var c: int             = placement["col"]
+		inst.row = r
+		inst.col = c
+		inst.owner = 1
+		_enemy_grid[r][c] = inst
+		_enemy_mana -= inst.data.cost
+		_enemy_hand.erase(inst)
+		var ui := CardUI.create(inst)
+		_enemy_slots[r][c].set_card(ui)
+		var cpu_results := EffectSystem.trigger(Effect.Trigger.ON_PLAY, inst, EffectContext.make(inst, _player_grid, _enemy_grid))
+		_show_effect_results(cpu_results)
+		_cleanup_effect_deaths()
+		_refresh_boards()
+		_animate_card_placed(ui)
+		await get_tree().create_timer(0.35).timeout
 
 
 func _on_done_pressed() -> void:
@@ -304,10 +301,33 @@ func _any_king_dead() -> bool:
 	return not player_king or not enemy_king
 
 
+func _player_king_alive() -> bool:
+	for r in BoardData.ROWS:
+		for c in BoardData.COLS:
+			if _player_grid[r][c] != null and _player_grid[r][c].data.is_king:
+				return true
+	return false
+
+
 func _handle_combat_end() -> void:
-	# TODO: show win/lose screen before returning to map
-	GameData.save_run()
-	get_tree().change_scene_to_file("res://scenes/map.tscn")
+	var player_won := _player_king_alive()
+	var enc := GameData.current_encounter
+
+	if enc != null:
+		enc.outcome = EncounterData.Outcome.WIN if player_won else EncounterData.Outcome.LOSE
+
+	if player_won:
+		GameData.save_run()
+		get_tree().change_scene_to_file("res://scenes/reward_screen.tscn")
+	else:
+		var penalty := 15
+		if enc != null:
+			match enc.type:
+				EncounterData.Type.ELITE: penalty = 25
+				EncounterData.Type.BOSS:  penalty = GameData.current_run.health
+		GameData.current_run.health = max(0, GameData.current_run.health - penalty)
+		GameData.save_run()
+		get_tree().change_scene_to_file("res://scenes/map.tscn")
 
 
 # ── UI building ────────────────────────────────────────────────────────────────
@@ -339,22 +359,16 @@ func _build_hud(parent: VBoxContainer) -> void:
 	var hbox := HBoxContainer.new()
 	panel.add_child(hbox)
 
-	var run: RunData = GameData.current_run
-
-	var hp := Label.new()
-	hp.text = "  HP  %d / %d" % [run.health, run.max_health]
-	hp.add_theme_font_size_override("font_size", 22)
-	hp.size_flags_horizontal = SIZE_EXPAND_FILL
-	hbox.add_child(hp)
+	hbox.add_child(RunHUD.new())
 
 	_turn_label = Label.new()
-	_turn_label.add_theme_font_size_override("font_size", 22)
+	_turn_label.add_theme_font_size_override("font_size", 17)
 	_turn_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_turn_label.size_flags_horizontal = SIZE_EXPAND_FILL
 	hbox.add_child(_turn_label)
 
 	_mana_label = Label.new()
-	_mana_label.add_theme_font_size_override("font_size", 22)
+	_mana_label.add_theme_font_size_override("font_size", 17)
 	_mana_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_mana_label.size_flags_horizontal = SIZE_EXPAND_FILL
 	hbox.add_child(_mana_label)
@@ -364,6 +378,13 @@ func _build_hud(parent: VBoxContainer) -> void:
 	_done_btn.add_theme_font_size_override("font_size", 18)
 	_done_btn.pressed.connect(_on_done_pressed)
 	hbox.add_child(_done_btn)
+
+	var dbg_win := Button.new()
+	dbg_win.text = "[debug] win"
+	dbg_win.add_theme_font_size_override("font_size", 13)
+	dbg_win.modulate = Color(1.0, 0.65, 0.1)
+	dbg_win.pressed.connect(_handle_combat_end)
+	hbox.add_child(dbg_win)
 
 
 func _build_board_section(parent: BoxContainer, is_player: bool) -> void:
