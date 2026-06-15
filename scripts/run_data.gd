@@ -20,6 +20,8 @@ const STARTER_DECK: Array = [
 	"pawn",   "pawn",   "pawn",
 	"knight", "knight",
 	"bishop", "bishop",
+	"queen", "queen",
+	"rook", "rook"
 ]
 
 static func create_new() -> RunData:

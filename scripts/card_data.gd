@@ -1,6 +1,8 @@
 class_name CardData
 extends RefCounted
 
+enum CardType { UNIT, SPELL }
+
 var id: String
 var display_name: String
 var cost: int
@@ -8,6 +10,7 @@ var attack: int
 var health: int
 var speed: int
 var is_king: bool
+var card_type: CardType = CardType.UNIT
 var description: String = ""
 var effects: Array = []  # Array[Effect]
 var image: Texture2D = null
@@ -75,6 +78,12 @@ static func _load_card_dict(d: Dictionary) -> void:
 			card.effects.append(e)
 	card.elements     = Array(d.get("elements",     []), TYPE_STRING, "", null)
 	card.chess_pieces = Array(d.get("chess_pieces", []), TYPE_STRING, "", null)
+	if d.has("card_type"):
+		card.card_type = CardType.SPELL if d.get("card_type") == "spell" else CardType.UNIT
+	elif not card.elements.is_empty() and card.chess_pieces.is_empty():
+		card.card_type = CardType.SPELL
+	else:
+		card.card_type = CardType.UNIT
 	if card.elements.size() > 0 or card.chess_pieces.size() > 0:
 		_by_composition[composition_key(card.elements, card.chess_pieces)] = card
 
@@ -120,6 +129,7 @@ static func _str_policy(s: String) -> Effect.TargetingPolicy:
 		"all_enemies":    return Effect.TargetingPolicy.ALL_ENEMIES
 		"all_allies":     return Effect.TargetingPolicy.ALL_ALLIES
 		"all":            return Effect.TargetingPolicy.ALL
+		"manual":         return Effect.TargetingPolicy.MANUAL
 	return Effect.TargetingPolicy.SELF
 
 
@@ -215,10 +225,11 @@ static func _derive(elems: Array, chess: Array, key: String) -> CardData:
 	for cp: String in chess:
 		var base: CardData = _all.get(cp, null)
 		cost += base.cost if base else 1
-	c.cost   = cost
-	c.attack = n * 2
-	c.health = n * 3
-	c.speed  = 2
+	c.cost        = cost
+	c.attack      = n * 2
+	c.health      = n * 3
+	c.speed       = 2
+	c.card_type   = CardType.SPELL if (chess.is_empty() and not elems.is_empty()) else CardType.UNIT
 	var art := "res://assets/cards/%s.png" % key
 	c.image = load(art) if ResourceLoader.exists(art) \
 		else load("res://assets/cards/placeholder.png")

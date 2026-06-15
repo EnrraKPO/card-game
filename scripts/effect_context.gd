@@ -4,6 +4,7 @@ extends RefCounted
 var source: CardInstance
 var player_board: Array  # [row][col] -> CardInstance or null
 var enemy_board: Array   # [row][col] -> CardInstance or null
+var manual_target: CardInstance = null
 
 
 static func make(src: CardInstance, p_board: Array, e_board: Array) -> EffectContext:

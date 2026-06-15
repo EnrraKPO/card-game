@@ -16,6 +16,7 @@ enum TargetingPolicy {
 	ALL_ENEMIES,
 	ALL_ALLIES,
 	ALL,
+	MANUAL,
 }
 
 var trigger: Trigger = Trigger.ON_PLAY

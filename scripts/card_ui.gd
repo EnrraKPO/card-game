@@ -2,6 +2,8 @@ class_name CardUI
 extends Control
 
 signal pressed
+signal spell_drag_started(card_ui: CardUI)
+signal spell_drag_ended(card_ui: CardUI)
 
 var card_instance: CardInstance
 var _show_cost: bool
@@ -46,12 +48,16 @@ func refresh() -> void:
 		return
 	_art.texture = card_instance.data.image
 
-	_name_label.text = card_instance.data.display_name
-	_cost_lbl.text   = str(card_instance.get_attribute("cost"))
-	_atk_lbl.text    = str(card_instance.get_attribute("attack"))
-	_hp_lbl.text     = str(card_instance.current_health)
-	_spd_lbl.text    = str(card_instance.get_attribute("speed"))
-	tooltip_text     = card_instance.data.description
+	var is_spell := card_instance.is_spell
+	_name_label.text  = card_instance.data.display_name
+	_cost_lbl.text    = str(card_instance.get_attribute("cost"))
+	_atk_lbl.text     = str(card_instance.get_attribute("attack"))
+	_hp_lbl.text      = str(card_instance.current_health)
+	_spd_lbl.text     = str(card_instance.get_attribute("speed"))
+	_atk_lbl.visible  = not is_spell
+	_hp_lbl.visible   = not is_spell
+	_spd_lbl.visible  = not is_spell
+	tooltip_text      = card_instance.data.description
 
 
 func _make_custom_tooltip(for_text: String) -> Object:
@@ -104,6 +110,8 @@ func _gui_input(event: InputEvent) -> void:
 func _get_drag_data(at_position: Vector2) -> Variant:
 	if card_instance == null:
 		return null
+	if card_instance.is_spell:
+		spell_drag_started.emit(self)
 	modulate.a = 0.0
 	var preview := CardUI.create(card_instance, _show_cost)
 	preview.custom_minimum_size = custom_minimum_size
@@ -118,3 +126,5 @@ func _get_drag_data(at_position: Vector2) -> Variant:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_DRAG_END:
 		modulate.a = 1.0
+		if card_instance != null and card_instance.is_spell:
+			spell_drag_ended.emit(self)

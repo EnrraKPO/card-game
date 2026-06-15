@@ -5,6 +5,19 @@ extends RefCounted
 # Returns an Array of {target, attribute, delta} for each application that
 # used the parameterised path. Custom-apply results are not included since
 # the system cannot know what changed.
+
+# Apply a single effect with a pre-built context (used for spell casting and
+# unit abilities with MANUAL targeting already resolved into context.manual_target).
+static func apply_single(effect: Effect, source: CardInstance, context: EffectContext) -> Array:
+	var results: Array = []
+	var targets := _resolve_targets(effect, source, context)
+	for target: CardInstance in targets:
+		var r := _apply(effect, target)
+		if not r.is_empty():
+			results.append(r)
+	return results
+
+
 static func trigger(event: Effect.Trigger, source: CardInstance, context: EffectContext) -> Array:
 	var results: Array = []
 	if source == null or source.data == null:
@@ -44,6 +57,9 @@ static func _resolve_targets(effect: Effect, source: CardInstance, context: Effe
 			candidates = _flatten(own_board)
 		Effect.TargetingPolicy.ALL:
 			candidates = _flatten(own_board) + _flatten(opp_board)
+		Effect.TargetingPolicy.MANUAL:
+			if context.manual_target != null:
+				candidates = [context.manual_target]
 
 	return candidates.filter(
 		func(c: CardInstance) -> bool: return _passes_conditions(effect.conditions, c)

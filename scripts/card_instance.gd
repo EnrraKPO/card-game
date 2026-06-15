@@ -8,6 +8,9 @@ var col: int = -1
 var owner: int = -1  # 0 = player, 1 = enemy
 var modifiers: Dictionary = {}  # attribute id -> cumulative int delta
 
+var is_spell: bool:
+	get: return data != null and data.card_type == CardData.CardType.SPELL
+
 
 static func from_data(card_data: CardData) -> CardInstance:
 	var inst := CardInstance.new()

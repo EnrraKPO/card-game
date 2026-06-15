@@ -10,6 +10,7 @@ var owner_id: int = -1
 var accept_check: Callable
 
 var _card_ui: CardUI = null
+var _targetable: bool = false
 
 
 func _ready() -> void:
@@ -17,11 +18,20 @@ func _ready() -> void:
 	_apply_style()
 
 
+func set_targetable(enabled: bool) -> void:
+	_targetable = enabled
+	_apply_style()
+
+
 func _apply_style() -> void:
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.08, 0.08, 0.12)
-	style.set_border_width_all(1)
-	style.border_color = Color(0.28, 0.28, 0.38)
+	if _targetable:
+		style.set_border_width_all(3)
+		style.border_color = Color(0.95, 0.75, 0.1)
+	else:
+		style.set_border_width_all(1)
+		style.border_color = Color(0.28, 0.28, 0.38)
 	style.set_corner_radius_all(5)
 	add_theme_stylebox_override("panel", style)
 
@@ -66,10 +76,13 @@ func _gui_input(event: InputEvent) -> void:
 func _can_drop_data(_at: Vector2, data: Variant) -> bool:
 	if not (data is CardUI):
 		return false
+	var card_ui := data as CardUI
+	if card_ui.card_instance.is_spell:
+		return _card_ui != null  # spells target occupied slots
 	if _card_ui != null:
 		return false
 	if accept_check.is_valid():
-		return accept_check.call(data as CardUI, self)
+		return accept_check.call(card_ui, self)
 	return true
 
 

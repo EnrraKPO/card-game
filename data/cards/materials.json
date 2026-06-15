@@ -3,43 +3,61 @@
     "id": "fire",
     "display_name": "Fire",
     "cost": 1, "attack": 2, "health": 1, "speed": 3,
-    "description": "A shard of pure flame.",
-    "elements": ["fire"], "chess_pieces": [], "effects": []
+    "description": "Scorch a unit for 3 damage.",
+    "elements": ["fire"], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_play", "targeting_policy": "manual", "attribute": "health", "amount": -3 }
+    ]
   },
   {
     "id": "water",
     "display_name": "Water",
     "cost": 1, "attack": 0, "health": 4, "speed": 1,
-    "description": "A vessel of still water.",
-    "elements": ["water"], "chess_pieces": [], "effects": []
+    "description": "Restore 4 HP to a unit.",
+    "elements": ["water"], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_play", "targeting_policy": "manual", "attribute": "health", "amount": 4 }
+    ]
   },
   {
     "id": "air",
     "display_name": "Air",
     "cost": 1, "attack": 1, "health": 1, "speed": 5,
-    "description": "A gust of rushing wind.",
-    "elements": ["air"], "chess_pieces": [], "effects": []
+    "description": "Grant a unit +2 Speed.",
+    "elements": ["air"], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_play", "targeting_policy": "manual", "attribute": "speed", "amount": 2 }
+    ]
   },
   {
     "id": "earth",
     "display_name": "Earth",
     "cost": 1, "attack": 1, "health": 4, "speed": 1,
-    "description": "A fragment of solid ground.",
-    "elements": ["earth"], "chess_pieces": [], "effects": []
+    "description": "Fortify a unit with +3 Max HP.",
+    "elements": ["earth"], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_play", "targeting_policy": "manual", "attribute": "max_health", "amount": 3 }
+    ]
   },
   {
     "id": "darkness",
     "display_name": "Darkness",
     "cost": 1, "attack": 3, "health": 1, "speed": 2,
-    "description": "A sliver of the void.",
-    "elements": ["darkness"], "chess_pieces": [], "effects": []
+    "description": "Sap a unit's strength, reducing its Attack by 2.",
+    "elements": ["darkness"], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_play", "targeting_policy": "manual", "attribute": "attack", "amount": -2 }
+    ]
   },
   {
     "id": "light",
     "display_name": "Light",
     "cost": 1, "attack": 0, "health": 3, "speed": 2,
-    "description": "A mote of pure radiance.",
-    "elements": ["light"], "chess_pieces": [], "effects": []
+    "description": "Empower a unit with +3 Attack.",
+    "elements": ["light"], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_play", "targeting_policy": "manual", "attribute": "attack", "amount": 3 }
+    ]
   },
   {
     "id": "pawn",
