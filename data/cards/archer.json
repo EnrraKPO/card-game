@@ -1,0 +1,10 @@
+{
+  "id": "archer",
+  "display_name": "Archer",
+  "cost": 1,
+  "attack": 3,
+  "health": 3,
+  "speed": 6,
+  "description": "Picks off targets from a distance with reliable speed and damage.",
+  "effects": []
+}

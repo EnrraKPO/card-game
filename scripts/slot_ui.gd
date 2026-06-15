@@ -13,7 +13,7 @@ var _card_ui: CardUI = null
 
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(94, 122)
+	custom_minimum_size = Vector2(135, 176)
 	_apply_style()
 
 

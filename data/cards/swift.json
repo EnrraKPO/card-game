@@ -1,0 +1,10 @@
+{
+  "id": "swift",
+  "display_name": "Swift",
+  "cost": 1,
+  "attack": 2,
+  "health": 2,
+  "speed": 8,
+  "description": "Lightning fast. Acts before almost anyone else on the field.",
+  "effects": []
+}

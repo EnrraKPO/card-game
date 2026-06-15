@@ -1,0 +1,11 @@
+{
+  "id": "king",
+  "display_name": "King",
+  "cost": 0,
+  "attack": 1,
+  "health": 20,
+  "speed": 3,
+  "is_king": true,
+  "description": "Your ruler. If the King falls, the battle is lost.",
+  "effects": []
+}

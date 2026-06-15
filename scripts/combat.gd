@@ -1,6 +1,6 @@
 extends Control
 
-const HUD_HEIGHT := 56.0
+const HUD_HEIGHT := 72.0
 
 enum Phase { CPU_PLACE, PLAYER_PLACE, COMBAT }
 
@@ -163,6 +163,10 @@ func _do_cpu_placement() -> void:
 			_enemy_hand.erase(inst)
 			var ui := CardUI.create(inst)
 			_enemy_slots[r][c].set_card(ui)
+			var cpu_results := EffectSystem.trigger(Effect.Trigger.ON_PLAY, inst, EffectContext.make(inst, _player_grid, _enemy_grid))
+			_show_effect_results(cpu_results)
+			_cleanup_effect_deaths()
+			_refresh_boards()
 			_animate_card_placed(ui)
 			await get_tree().create_timer(0.35).timeout
 
@@ -192,7 +196,17 @@ func _run_combat() -> void:
 				all_cards.append(_enemy_grid[r][c])
 
 	all_cards.sort_custom(func(a: CardInstance, b: CardInstance) -> bool:
-		return a.data.speed > b.data.speed
+		var spd_a := a.get_attribute("speed")
+		var spd_b := b.get_attribute("speed")
+		if spd_a != spd_b:
+			return spd_a > spd_b
+		if a.owner != b.owner:
+			return a.owner < b.owner
+		var prox_a := a.col if a.owner == 0 else BoardData.COLS - 1 - a.col
+		var prox_b := b.col if b.owner == 0 else BoardData.COLS - 1 - b.col
+		if prox_a != prox_b:
+			return prox_a > prox_b
+		return a.row > b.row
 	)
 
 	for attacker: CardInstance in all_cards:
@@ -217,8 +231,13 @@ func _run_combat() -> void:
 		await lunge.finished
 
 		await _shake_card(t_card)
-		target.take_damage(attacker.data.attack)
-		_spawn_damage_label(t_card, attacker.data.attack)
+		var dmg := attacker.get_attribute("attack")
+		var atk_results := EffectSystem.trigger(Effect.Trigger.ON_ATTACK, attacker, EffectContext.make(attacker, _player_grid, _enemy_grid))
+		_show_effect_results(atk_results)
+		target.take_damage(dmg)
+		var dtk_results := EffectSystem.trigger(Effect.Trigger.ON_DAMAGE_TAKEN, target, EffectContext.make(target, _player_grid, _enemy_grid))
+		_show_effect_results(dtk_results)
+		_spawn_damage_label(t_card, dmg)
 		_tween_flash(t_card, Color(2.0, 0.3, 0.3), Color.WHITE, 0.35)
 
 		var retreat := create_tween()
@@ -230,6 +249,8 @@ func _run_combat() -> void:
 		a_card.modulate.a = 1.0
 
 		if not target.is_alive():
+			var death_results := EffectSystem.trigger(Effect.Trigger.ON_DEATH, target, EffectContext.make(target, _player_grid, _enemy_grid))
+			_show_effect_results(death_results)
 			await _animate_death(t_card)
 			_remove_card_from_grid(target)
 		else:
@@ -245,7 +266,7 @@ func _find_target(attacker: CardInstance, target_board: Array) -> CardInstance:
 			var candidate: CardInstance = target_board[r][c]
 			if candidate == null:
 				continue
-			var dist: int = abs(attacker.row - r)
+			var dist: int = abs(attacker.row + r - (BoardData.ROWS - 1))
 			if attacker.owner == 0:
 				dist += BoardData.COLS + c - attacker.col
 			else:
@@ -322,25 +343,25 @@ func _build_hud(parent: VBoxContainer) -> void:
 
 	var hp := Label.new()
 	hp.text = "  HP  %d / %d" % [run.health, run.max_health]
-	hp.add_theme_font_size_override("font_size", 17)
+	hp.add_theme_font_size_override("font_size", 22)
 	hp.size_flags_horizontal = SIZE_EXPAND_FILL
 	hbox.add_child(hp)
 
 	_turn_label = Label.new()
-	_turn_label.add_theme_font_size_override("font_size", 17)
+	_turn_label.add_theme_font_size_override("font_size", 22)
 	_turn_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_turn_label.size_flags_horizontal = SIZE_EXPAND_FILL
 	hbox.add_child(_turn_label)
 
 	_mana_label = Label.new()
-	_mana_label.add_theme_font_size_override("font_size", 17)
+	_mana_label.add_theme_font_size_override("font_size", 22)
 	_mana_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_mana_label.size_flags_horizontal = SIZE_EXPAND_FILL
 	hbox.add_child(_mana_label)
 
 	_done_btn = Button.new()
-	_done_btn.custom_minimum_size = Vector2(150, 0)
-	_done_btn.add_theme_font_size_override("font_size", 14)
+	_done_btn.custom_minimum_size = Vector2(200, 0)
+	_done_btn.add_theme_font_size_override("font_size", 18)
 	_done_btn.pressed.connect(_on_done_pressed)
 	hbox.add_child(_done_btn)
 
@@ -354,7 +375,7 @@ func _build_board_section(parent: BoxContainer, is_player: bool) -> void:
 	var label := Label.new()
 	label.text = "Player" if is_player else "Enemy"
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", 13)
+	label.add_theme_font_size_override("font_size", 18)
 	section.add_child(label)
 
 	var center := CenterContainer.new()
@@ -363,8 +384,8 @@ func _build_board_section(parent: BoxContainer, is_player: bool) -> void:
 
 	var grid := GridContainer.new()
 	grid.columns = BoardData.COLS
-	grid.add_theme_constant_override("h_separation", 6)
-	grid.add_theme_constant_override("v_separation", 6)
+	grid.add_theme_constant_override("h_separation", 10)
+	grid.add_theme_constant_override("v_separation", 10)
 	center.add_child(grid)
 
 	var row_order := range(BoardData.ROWS) if is_player \
@@ -391,7 +412,7 @@ func _build_board_section(parent: BoxContainer, is_player: bool) -> void:
 
 func _build_hand_area(parent: VBoxContainer) -> void:
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size.y = 140.0
+	panel.custom_minimum_size.y = 210.0
 	parent.add_child(panel)
 
 	var scroll := ScrollContainer.new()
@@ -402,7 +423,7 @@ func _build_hand_area(parent: VBoxContainer) -> void:
 	panel.add_child(scroll)
 
 	_hand_box = HBoxContainer.new()
-	_hand_box.add_theme_constant_override("separation", 8)
+	_hand_box.add_theme_constant_override("separation", 12)
 	scroll.add_child(_hand_box)
 
 
@@ -499,7 +520,11 @@ func _on_player_slot_card_dropped(slot: SlotUI, card_ui: CardUI) -> void:
 	inst.owner = 0
 	_player_grid[slot.row][slot.col] = inst
 	slot.set_card(card_ui)
-	card_ui.refresh()
+	if from_hand:
+		var play_results := EffectSystem.trigger(Effect.Trigger.ON_PLAY, inst, EffectContext.make(inst, _player_grid, _enemy_grid))
+		_show_effect_results(play_results)
+		_cleanup_effect_deaths()
+	_refresh_boards()
 	_animate_card_placed(card_ui)
 
 
@@ -587,17 +612,69 @@ func _shake_card(card: CardUI) -> void:
 	await tw.finished
 
 
+func _show_effect_results(results: Array) -> void:
+	for r: Dictionary in results:
+		if r.is_empty():
+			continue
+		var target: CardInstance = r.get("target")
+		if target == null or target.row < 0 or target.col < 0:
+			continue
+		var card_ui := _get_card_ui(target)
+		if card_ui == null:
+			continue
+		_spawn_effect_label(card_ui, r.get("attribute", ""), r.get("delta", 0))
+
+
+func _spawn_effect_label(card_ui: CardUI, attribute: String, delta: int) -> void:
+	if delta == 0:
+		return
+	var lbl := Label.new()
+	var sign := "+" if delta > 0 else ""
+	match attribute:
+		"health":
+			lbl.text = "%s%d HP" % [sign, delta]
+			lbl.modulate = Color(0.3, 1.0, 0.3) if delta > 0 else Color(1.0, 0.4, 0.4)
+		"attack":
+			lbl.text = "%s%d ATK" % [sign, delta]
+			lbl.modulate = Color(1.0, 0.85, 0.1)
+		"speed":
+			lbl.text = "%s%d SPD" % [sign, delta]
+			lbl.modulate = Color(0.3, 0.8, 1.0)
+		_:
+			lbl.text = "%s%d %s" % [sign, delta, attribute.to_upper()]
+			lbl.modulate = Color(1.0, 1.0, 1.0)
+	lbl.add_theme_font_size_override("font_size", 22)
+	lbl.z_index = 15
+	lbl.position = card_ui.global_position + Vector2(card_ui.size.x * 0.5 - 20.0, 0.0)
+	add_child(lbl)
+	var tween := create_tween()
+	tween.tween_property(lbl, "position:y", lbl.position.y - 60.0, 0.7)
+	tween.parallel().tween_property(lbl, "modulate:a", 0.0, 0.7)
+	tween.tween_callback(lbl.queue_free)
+
+
+func _cleanup_effect_deaths() -> void:
+	for r in BoardData.ROWS:
+		for c in BoardData.COLS:
+			var p: CardInstance = _player_grid[r][c]
+			if p != null and not p.is_alive():
+				_remove_card_from_grid(p)
+			var e: CardInstance = _enemy_grid[r][c]
+			if e != null and not e.is_alive():
+				_remove_card_from_grid(e)
+
+
 func _spawn_damage_label(card: CardUI, amount: int) -> void:
 	if card == null:
 		return
 	var lbl := Label.new()
 	lbl.text = "-%d" % amount
-	lbl.add_theme_font_size_override("font_size", 22)
+	lbl.add_theme_font_size_override("font_size", 30)
 	lbl.modulate = Color(1.0, 0.25, 0.25)
 	lbl.z_index = 10
-	lbl.position = card.global_position + card.size * 0.5 - Vector2(16, 16)
+	lbl.position = card.global_position + card.size * 0.5 - Vector2(20, 20)
 	add_child(lbl)
 	var tween := create_tween()
-	tween.tween_property(lbl, "position:y", lbl.position.y - 48.0, 0.6)
+	tween.tween_property(lbl, "position:y", lbl.position.y - 64.0, 0.6)
 	tween.parallel().tween_property(lbl, "modulate:a", 0.0, 0.6)
 	tween.tween_callback(lbl.queue_free)

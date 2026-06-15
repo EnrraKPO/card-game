@@ -1,0 +1,10 @@
+{
+  "id": "strike",
+  "display_name": "Strike",
+  "cost": 1,
+  "attack": 4,
+  "health": 3,
+  "speed": 5,
+  "description": "A fast, aggressive unit that hits hard but won't last long.",
+  "effects": []
+}

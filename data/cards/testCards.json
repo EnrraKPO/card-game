@@ -1,0 +1,19 @@
+{
+  "id": "bishop",
+  "display_name": "Bishop",
+  "cost": 4,
+  "attack": 1,
+  "health": 10,
+  "speed": 1,
+  "effects": [
+    {
+      "trigger": "permanent",
+      "targeting_policy": "all_allies",
+      "attribute": "cost",
+      "amount": -1,
+      "conditions": [
+        { "attribute": "cost", "comparator": "gte", "value": 1 }
+      ]
+    }
+  ]
+}

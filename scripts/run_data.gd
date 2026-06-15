@@ -16,11 +16,18 @@ var visited_nodes: Array
 
 const STARTER_DECK: Array = [
 	"king",
-	"strike", "strike", "strike", "strike", "strike",
-	"defender", "defender", "defender", "defender",
-	"swift", "swift", "swift", "swift", "swift",
-	"warrior", "warrior", "warrior", "warrior",
-	"archer", "archer", "archer", "archer", "archer",
+	"strike",    "strike",    "strike",
+	"defender",  "defender",  "defender",
+	"swift",     "swift",     "swift",
+	"warrior",   "warrior",   "warrior",
+	"archer",    "archer",    "archer",
+	"berserker", "berserker",
+	"commander",
+	"plague_doc","plague_doc",
+	"martyr",
+	"vampire",   "vampire",
+	"brute",
+	"assassin",  "assassin",
 ]
 
 static func create_new() -> RunData:

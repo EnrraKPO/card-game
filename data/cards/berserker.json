@@ -1,0 +1,17 @@
+{
+  "id": "berserker",
+  "display_name": "Berserker",
+  "cost": 1,
+  "attack": 3,
+  "health": 4,
+  "speed": 4,
+  "description": "Enters the field with a rush of adrenaline, gaining +2 ATK on play.",
+  "effects": [
+    {
+      "trigger": "on_play",
+      "targeting_policy": "self",
+      "attribute": "attack",
+      "amount": 2
+    }
+  ]
+}
