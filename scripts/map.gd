@@ -148,19 +148,23 @@ func _draw() -> void:
 
 
 func _on_node_selected(node: MapNodeData) -> void:
-	if current_node_id >= 0:
-		var prev: MapNodeData = map_data.get_node_by_id(current_node_id)
-		if prev:
-			prev.visited = true
-			if current_node_id not in GameData.current_map_state.visited_nodes:
-				GameData.current_map_state.visited_nodes.append(current_node_id)
+	var is_combat := node.type in [
+		MapNodeData.Type.COMBAT, MapNodeData.Type.ELITE, MapNodeData.Type.BOSS
+	]
 
-	current_node_id = node.id
-	GameData.current_map_state.current_node_id = current_node_id
-	GameData.save_run()
-
-	_rebuild_node_buttons()
-	queue_redraw()
+	if not is_combat:
+		# Non-combat nodes (forge, etc.): advance map state immediately.
+		if current_node_id >= 0:
+			var prev: MapNodeData = map_data.get_node_by_id(current_node_id)
+			if prev:
+				prev.visited = true
+				if current_node_id not in GameData.current_map_state.visited_nodes:
+					GameData.current_map_state.visited_nodes.append(current_node_id)
+		current_node_id = node.id
+		GameData.current_map_state.current_node_id = current_node_id
+		GameData.save_run()
+		_rebuild_node_buttons()
+		queue_redraw()
 
 	_resolve_node(node)
 
@@ -171,7 +175,10 @@ func _resolve_node(node: MapNodeData) -> void:
 
 
 func _enter_combat(node: MapNodeData) -> void:
-	GameData.current_encounter = _build_encounter(node.type)
+	var enc := _build_encounter(node.type)
+	enc.completing_node_id = current_node_id
+	enc.destination_node_id = node.id
+	GameData.current_encounter = enc
 	get_tree().change_scene_to_file("res://scenes/combat.tscn")
 
 
@@ -180,7 +187,8 @@ func _enter_forge(_node: MapNodeData) -> void:
 
 
 func _process_combat_return() -> void:
-	# Reward presentation will be added with the run system
+	# Reached only if the map loads while an encounter is still in memory
+	# (e.g. mid-combat app crash). Clear it so the node stays clickable.
 	GameData.current_encounter = null
 
 

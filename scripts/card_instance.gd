@@ -3,6 +3,7 @@ extends RefCounted
 
 var data: CardData
 var current_health: int
+var current_shield: int
 var row: int = -1
 var col: int = -1
 var owner: int = -1  # 0 = player, 1 = enemy
@@ -16,6 +17,7 @@ static func from_data(card_data: CardData) -> CardInstance:
 	var inst := CardInstance.new()
 	inst.data = card_data
 	inst.current_health = card_data.health
+	inst.current_shield = card_data.shield
 	return inst
 
 
@@ -27,6 +29,7 @@ func get_attribute(attr: String) -> int:
 		"attack":     return data.attack    + modifiers.get("attack",     0)
 		"speed":      return data.speed     + modifiers.get("speed",      0)
 		"cost":       return data.cost      + modifiers.get("cost",       0)
+		"shield":     return current_shield
 		_:            return modifiers.get(attr, 0)
 
 
@@ -34,8 +37,18 @@ func apply_modifier(attr: String, delta: int) -> void:
 	modifiers[attr] = modifiers.get(attr, 0) + delta
 
 
-func take_damage(amount: int) -> void:
+func take_damage(amount: int) -> Dictionary:
+	var absorbed := 0
+	if current_shield > 0:
+		absorbed = mini(amount, current_shield)
+		current_shield -= absorbed
+		amount -= absorbed
 	current_health -= amount
+	return {"shield_absorbed": absorbed, "health_damage": amount}
+
+
+func restore_shield() -> void:
+	current_shield = data.shield + modifiers.get("shield", 0)
 
 
 func is_alive() -> bool:

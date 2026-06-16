@@ -5,7 +5,8 @@
   "attack": 1,
   "health": 20,
   "speed": 3,
+  "shield": 5,
   "is_king": true,
-  "description": "Your ruler. If the King falls, the battle is lost.",
+  "description": "Your ruler. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
   "effects": []
 }

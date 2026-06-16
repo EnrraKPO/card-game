@@ -23,6 +23,7 @@ var _hand_box: BoxContainer
 var _board: CombatBoard
 var _animator: CombatAnimator
 var _spell_caster: SpellCaster
+var _vfx: VFXPlayer
 
 
 func _ready() -> void:
@@ -31,15 +32,19 @@ func _ready() -> void:
 	_board        = CombatBoard.new()
 	_animator     = CombatAnimator.new()
 	_spell_caster = SpellCaster.new()
+	_vfx          = VFXPlayer.new()
 	add_child(_board)
 	add_child(_animator)
 	add_child(_spell_caster)
+	add_child(_vfx)
 
 	_board.setup_grids()
 	_board.is_hand_card = func(cu: CardUI) -> bool: return _hand_cards.has(cu)
 	_board.get_mana     = func() -> int:            return _mana
 
-	_animator.setup(self, func(inst: CardInstance) -> CardUI: return _board.get_card_ui(inst))
+	var _get_card_ui: Callable = func(inst: CardInstance) -> CardUI: return _board.get_card_ui(inst)
+	_vfx.setup(self, _get_card_ui)
+	_animator.setup(self, _get_card_ui, _vfx)
 
 	_spell_caster.setup(_board, _animator, func() -> int: return _mana)
 
@@ -159,7 +164,7 @@ func _do_cpu_placement() -> void:
 		_enemy_hand.erase(inst)
 		var results := _board.place_enemy_card(inst, r, c)
 		_animator.show_effect_results(results)
-		_animator.animate_card_placed(_board.get_card_ui(inst))
+		_vfx.play(VFXEvent.card_placed(_board.get_card_ui(inst)))
 		await get_tree().create_timer(0.35).timeout
 
 
@@ -174,6 +179,15 @@ func _on_done_pressed() -> void:
 		_handle_combat_end()
 		return
 	await get_tree().create_timer(0.8).timeout
+	for inst: CardInstance in _board.get_all_units():
+		var prev_shield := inst.current_shield
+		inst.restore_shield()
+		var gained := inst.current_shield - prev_shield
+		if gained > 0:
+			var shield_ui := _board.get_card_ui(inst)
+			if shield_ui != null:
+				_vfx.play(VFXEvent.shield_restored(shield_ui, gained))
+	_board.refresh()
 	await _begin_round()
 
 
@@ -188,8 +202,8 @@ func _run_combat() -> void:
 			return sa > sb
 		if a.owner != b.owner:
 			return a.owner < b.owner
-		var pa := a.col if a.owner == 0 else BoardData.COLS - 1 - a.col
-		var pb := b.col if b.owner == 0 else BoardData.COLS - 1 - b.col
+		var pa: int = a.col if a.owner == 0 else BoardData.COLS - 1 - a.col
+		var pb: int = b.col if b.owner == 0 else BoardData.COLS - 1 - b.col
 		if pa != pb:
 			return pa > pb
 		return a.row > b.row
@@ -215,12 +229,14 @@ func _run_combat() -> void:
 		var atk_results := EffectSystem.trigger(Effect.Trigger.ON_ATTACK, attacker,
 			EffectContext.make(attacker, _board.player_grid, _board.enemy_grid))
 		_animator.show_effect_results(atk_results)
-		target.take_damage(dmg)
+		var dmg_split := target.take_damage(dmg)
 		var dtk_results := EffectSystem.trigger(Effect.Trigger.ON_DAMAGE_TAKEN, target,
 			EffectContext.make(target, _board.player_grid, _board.enemy_grid))
 		_animator.show_effect_results(dtk_results)
-		_animator.spawn_damage_label(t_card, dmg)
-		_animator.tween_flash(t_card, Color(2.0, 0.3, 0.3), Color.WHITE, 0.35)
+		if dmg_split.shield_absorbed > 0:
+			_vfx.play(VFXEvent.shield_hit(t_card, dmg_split.shield_absorbed))
+		if dmg_split.health_damage > 0:
+			_vfx.play(VFXEvent.health_damage(t_card, dmg_split.health_damage))
 
 		await _animator.play_retreat(ghost, a_home)
 		ghost.queue_free()
@@ -230,7 +246,7 @@ func _run_combat() -> void:
 			var death_results := EffectSystem.trigger(Effect.Trigger.ON_DEATH, target,
 				EffectContext.make(target, _board.player_grid, _board.enemy_grid))
 			_animator.show_effect_results(death_results)
-			await _animator.animate_death(t_card)
+			await _vfx.play(VFXEvent.death(t_card))
 			_board.remove_card(target)
 		else:
 			t_card.refresh()
@@ -239,21 +255,30 @@ func _run_combat() -> void:
 
 func _handle_combat_end() -> void:
 	var player_won := _board.player_king_alive()
-	var enc        := GameData.current_encounter
-	if enc != null:
-		enc.outcome = EncounterData.Outcome.WIN if player_won else EncounterData.Outcome.LOSE
+	var enc := GameData.current_encounter
 	if player_won:
+		if enc != null:
+			enc.outcome = EncounterData.Outcome.WIN
+			# Advance map state now that the battle is won.
+			var state := GameData.current_map_state
+			if state != null:
+				if enc.completing_node_id >= 0 \
+						and enc.completing_node_id not in state.visited_nodes:
+					state.visited_nodes.append(enc.completing_node_id)
+				if enc.destination_node_id >= 0:
+					state.current_node_id = enc.destination_node_id
 		GameData.save_run()
 		get_tree().change_scene_to_file("res://scenes/reward_screen.tscn")
 	else:
-		var penalty := 15
 		if enc != null:
-			match enc.type:
-				EncounterData.Type.ELITE: penalty = 25
-				EncounterData.Type.BOSS:  penalty = GameData.current_run.health
-		GameData.current_run.health = max(0, GameData.current_run.health - penalty)
-		GameData.save_run()
-		get_tree().change_scene_to_file("res://scenes/map.tscn")
+			enc.outcome = EncounterData.Outcome.LOSE
+		# The run ends on defeat — delete the save and return to the main menu.
+		GameData.delete_slot(GameData.current_slot)
+		GameData.current_run = null
+		GameData.current_map_state = null
+		GameData.current_encounter = null
+		GameData.current_slot = -1
+		get_tree().change_scene_to_file("res://scenes/hello_screen.tscn")
 
 
 # ── Board event handlers ───────────────────────────────────────────────────────
@@ -266,7 +291,7 @@ func _on_board_unit_placed(_inst: CardInstance, card_ui: CardUI, from_hand: bool
 		_hand_cards.erase(card_ui)
 		_refresh_mana()
 	_animator.show_effect_results(results)
-	_animator.animate_card_placed(card_ui)
+	_vfx.play(VFXEvent.card_placed(card_ui))
 
 
 func _on_board_slot_pressed(slot: SlotUI) -> void:

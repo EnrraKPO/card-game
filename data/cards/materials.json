@@ -62,36 +62,36 @@
   {
     "id": "pawn",
     "display_name": "Pawn",
-    "cost": 1, "attack": 2, "health": 3, "speed": 2,
-    "description": "A humble foot soldier.",
+    "cost": 1, "attack": 2, "health": 3, "speed": 2, "shield": 1,
+    "description": "A humble foot soldier. Attacks the nearest enemy. Starts each round with 1 Shield.",
     "elements": [], "chess_pieces": ["pawn"], "effects": []
   },
   {
     "id": "bishop",
     "display_name": "Bishop",
     "cost": 2, "attack": 3, "health": 2, "speed": 3,
-    "description": "A swift diagonal attacker.",
+    "description": "A swift diagonal attacker. Hunts the most wounded enemy, finishing off weakened units.",
     "elements": [], "chess_pieces": ["bishop"], "effects": []
   },
   {
     "id": "knight",
     "display_name": "Knight",
     "cost": 2, "attack": 3, "health": 3, "speed": 4,
-    "description": "A mobile warrior that leaps over obstacles.",
+    "description": "Leaps over the entire frontmost enemy column to strike targets behind it. Falls back to the front column only if no other targets exist.",
     "elements": [], "chess_pieces": ["knight"], "effects": []
   },
   {
     "id": "rook",
     "display_name": "Rook",
-    "cost": 3, "attack": 4, "health": 6, "speed": 1,
-    "description": "A stalwart fortress.",
+    "cost": 3, "attack": 4, "health": 6, "speed": 1, "shield": 3,
+    "description": "A stalwart fortress. Locks onto the highest HP enemy. Starts each round with 3 Shield.",
     "elements": [], "chess_pieces": ["rook"], "effects": []
   },
   {
     "id": "queen",
     "display_name": "Queen",
     "cost": 4, "attack": 5, "health": 5, "speed": 4,
-    "description": "The most powerful piece on the board.",
+    "description": "The most powerful piece on the board. Always targets the highest ATK enemy, neutralising the greatest threat first.",
     "elements": [], "chess_pieces": ["queen"], "effects": []
   }
 ]

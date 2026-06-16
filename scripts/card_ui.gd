@@ -13,6 +13,7 @@ var _show_cost: bool
 @onready var _cost_lbl: Label   = %CostLabel
 @onready var _spd_lbl: Label    = %SpdLabel
 @onready var _atk_lbl: Label    = %AtkLabel
+@onready var _shield_lbl: Label = %ShieldLabel
 @onready var _hp_lbl: Label     = %HpLabel
 @onready var _border: Panel     = %Border
 
@@ -51,12 +52,15 @@ func refresh() -> void:
 	var is_spell := card_instance.is_spell
 	_name_label.text  = card_instance.data.display_name
 	_cost_lbl.text    = str(card_instance.get_attribute("cost"))
-	_atk_lbl.text     = str(card_instance.get_attribute("attack"))
-	_hp_lbl.text      = str(card_instance.current_health)
-	_spd_lbl.text     = str(card_instance.get_attribute("speed"))
-	_atk_lbl.visible  = not is_spell
-	_hp_lbl.visible   = not is_spell
-	_spd_lbl.visible  = not is_spell
+	_atk_lbl.text       = str(card_instance.get_attribute("attack"))
+	_hp_lbl.text        = str(card_instance.current_health)
+	_spd_lbl.text       = str(card_instance.get_attribute("speed"))
+	var shld            := card_instance.current_shield
+	_shield_lbl.text    = str(shld)
+	_atk_lbl.visible    = not is_spell
+	_shield_lbl.visible = not is_spell and shld > 0
+	_hp_lbl.visible     = not is_spell
+	_spd_lbl.visible    = not is_spell
 	tooltip_text      = card_instance.data.description
 
 

@@ -17,6 +17,7 @@ var enemy_slots:  Array = []  # [row][col] -> SlotUI
 var placement_enabled: bool  = false
 var is_hand_card: Callable        # func(CardUI) -> bool
 var get_mana: Callable            # func() -> int
+var _default_strategy := TargetingNearest.new()
 
 
 # ── Initialisation ─────────────────────────────────────────────────────────────
@@ -56,7 +57,7 @@ func build_section(parent: BoxContainer, is_player: bool) -> void:
 	grid.add_theme_constant_override("v_separation", 10)
 	center.add_child(grid)
 
-	var row_order := range(BoardData.ROWS) if is_player \
+	var row_order: Array = range(BoardData.ROWS) if is_player \
 		else range(BoardData.ROWS - 1, -1, -1)
 
 	for r in row_order:
@@ -82,7 +83,7 @@ func build_section(parent: BoxContainer, is_player: bool) -> void:
 
 
 func place_kings() -> void:
-	var back := BoardData.ROWS - 1
+	var back: int = BoardData.ROWS - 1
 
 	var pk := CardInstance.from_data(CardData.get_card("king"))
 	pk.row = back; pk.col = 0; pk.owner = 0
@@ -143,23 +144,10 @@ func get_all_units() -> Array:
 
 
 func find_target(attacker: CardInstance) -> CardInstance:
-	var target_board := enemy_grid if attacker.owner == 0 else player_grid
-	var best: CardInstance = null
-	var best_dist := 999
-	for r in BoardData.ROWS:
-		for c in BoardData.COLS:
-			var candidate: CardInstance = target_board[r][c]
-			if candidate == null:
-				continue
-			var dist: int = abs(attacker.row + r - (BoardData.ROWS - 1))
-			if attacker.owner == 0:
-				dist += BoardData.COLS + c - attacker.col
-			else:
-				dist += BoardData.COLS + attacker.col - c
-			if dist < best_dist:
-				best_dist = dist
-				best = candidate
-	return best
+	var target_board: Array = enemy_grid if attacker.owner == 0 else player_grid
+	var strategy: TargetingStrategy = attacker.data.targeting_strategy \
+		if attacker.data != null else _default_strategy
+	return strategy.find_target(attacker, target_board)
 
 
 func any_king_dead() -> bool:

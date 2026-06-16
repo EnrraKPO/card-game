@@ -1,0 +1,167 @@
+[
+  {
+    "id": "lightning",
+    "display_name": "Lightning",
+    "cost": 2, "attack": 4, "health": 6, "speed": 2,
+    "description": "Call down a violent bolt, dealing 5 damage to a unit.",
+    "elements": ["fire", "air"], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_play", "targeting_policy": "manual", "attribute": "health", "amount": -5 }
+    ]
+  },
+  {
+    "id": "steam",
+    "display_name": "Steam",
+    "cost": 2, "attack": 4, "health": 6, "speed": 2,
+    "description": "Scald a unit with a blinding cloud, dealing 2 damage and reducing its Speed by 2.",
+    "elements": ["fire", "water"], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_play", "targeting_policy": "manual", "attribute": "health", "amount": -2 },
+      { "trigger": "on_play", "targeting_policy": "manual", "attribute": "speed", "amount": -2 }
+    ]
+  },
+  {
+    "id": "magma",
+    "display_name": "Magma",
+    "cost": 2, "attack": 4, "health": 6, "speed": 2,
+    "description": "Engulf a unit in molten rock for 6 damage.",
+    "elements": ["fire", "earth"], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_play", "targeting_policy": "manual", "attribute": "health", "amount": -6 }
+    ]
+  },
+  {
+    "id": "demonic",
+    "display_name": "Demonic",
+    "cost": 2, "attack": 4, "health": 6, "speed": 2,
+    "description": "Corrupt a unit with infernal power, reducing its Attack by 4.",
+    "elements": ["fire", "darkness"], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_play", "targeting_policy": "manual", "attribute": "attack", "amount": -4 }
+    ]
+  },
+  {
+    "id": "spirit",
+    "display_name": "Spirit",
+    "cost": 2, "attack": 4, "health": 6, "speed": 2,
+    "description": "Ignite a unit's inner spirit, granting +4 Attack.",
+    "elements": ["fire", "light"], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_play", "targeting_policy": "manual", "attribute": "attack", "amount": 4 }
+    ]
+  },
+  {
+    "id": "pure_fire",
+    "display_name": "Pure Fire",
+    "cost": 2, "attack": 4, "health": 6, "speed": 2,
+    "description": "An intensified blaze. Deal 6 damage to a unit.",
+    "elements": ["fire", "fire"], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_play", "targeting_policy": "manual", "attribute": "health", "amount": -6 }
+    ]
+  },
+  {
+    "id": "storm",
+    "display_name": "Storm",
+    "cost": 2, "attack": 4, "health": 6, "speed": 2,
+    "description": "Summon a raging storm, dealing 2 damage to all enemies.",
+    "elements": ["air", "water"], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_play", "targeting_policy": "all_enemies", "attribute": "health", "amount": -2 }
+    ]
+  },
+  {
+    "id": "sand",
+    "display_name": "Sand",
+    "cost": 2, "attack": 4, "health": 6, "speed": 2,
+    "description": "Whip up a blinding sandstorm, reducing all enemies' Speed by 2.",
+    "elements": ["air", "earth"], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_play", "targeting_policy": "all_enemies", "attribute": "speed", "amount": -2 }
+    ]
+  },
+  {
+    "id": "miasma",
+    "display_name": "Miasma",
+    "cost": 2, "attack": 4, "health": 6, "speed": 2,
+    "description": "Spread a toxic gas cloud, weakening all enemies' Attack by 2.",
+    "elements": ["air", "darkness"], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_play", "targeting_policy": "all_enemies", "attribute": "attack", "amount": -2 }
+    ]
+  },
+  {
+    "id": "angelic",
+    "display_name": "Angelic",
+    "cost": 2, "attack": 4, "health": 6, "speed": 2,
+    "description": "Bless a unit with heavenly grace, granting +2 Attack and +3 Speed.",
+    "elements": ["air", "light"], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_play", "targeting_policy": "manual", "attribute": "attack", "amount": 2 },
+      { "trigger": "on_play", "targeting_policy": "manual", "attribute": "speed", "amount": 3 }
+    ]
+  },
+  {
+    "id": "mud",
+    "display_name": "Mud",
+    "cost": 2, "attack": 4, "health": 6, "speed": 2,
+    "description": "Bog down a unit in thick mud, reducing its Speed by 3.",
+    "elements": ["water", "earth"], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_play", "targeting_policy": "manual", "attribute": "speed", "amount": -3 }
+    ]
+  },
+  {
+    "id": "poison",
+    "display_name": "Poison",
+    "cost": 2, "attack": 4, "health": 6, "speed": 2,
+    "description": "Poison a unit, dealing 3 damage and reducing its Attack by 2.",
+    "elements": ["water", "darkness"], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_play", "targeting_policy": "manual", "attribute": "health", "amount": -3 },
+      { "trigger": "on_play", "targeting_policy": "manual", "attribute": "attack", "amount": -2 }
+    ]
+  },
+  {
+    "id": "medicine",
+    "display_name": "Medicine",
+    "cost": 2, "attack": 4, "health": 6, "speed": 2,
+    "description": "Restore a unit's vitality, healing 6 HP.",
+    "elements": ["water", "light"], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_play", "targeting_policy": "manual", "attribute": "health", "amount": 6 }
+    ]
+  },
+  {
+    "id": "nature",
+    "display_name": "Nature",
+    "cost": 2, "attack": 4, "health": 6, "speed": 2,
+    "description": "Bolster a unit with natural vitality, granting +6 Max HP.",
+    "elements": ["earth", "light"], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_play", "targeting_policy": "manual", "attribute": "max_health", "amount": 6 }
+    ]
+  },
+  {
+    "id": "stone",
+    "display_name": "Stone",
+    "cost": 2, "attack": 4, "health": 6, "speed": 2,
+    "description": "Petrify a unit, granting +5 Max HP but reducing its Speed by 1.",
+    "elements": ["earth", "darkness"], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_play", "targeting_policy": "manual", "attribute": "max_health", "amount": 5 },
+      { "trigger": "on_play", "targeting_policy": "manual", "attribute": "speed", "amount": -1 }
+    ]
+  },
+  {
+    "id": "undead",
+    "display_name": "Undead",
+    "cost": 2, "attack": 4, "health": 6, "speed": 2,
+    "description": "Curse a unit with undeath, dealing 3 damage and reducing its Max HP by 3.",
+    "elements": ["light", "darkness"], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_play", "targeting_policy": "manual", "attribute": "health", "amount": -3 },
+      { "trigger": "on_play", "targeting_policy": "manual", "attribute": "max_health", "amount": -3 }
+    ]
+  }
+]

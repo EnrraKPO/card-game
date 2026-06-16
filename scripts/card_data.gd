@@ -9,6 +9,7 @@ var cost: int
 var attack: int
 var health: int
 var speed: int
+var shield: int
 var is_king: bool
 var card_type: CardType = CardType.UNIT
 var description: String = ""
@@ -16,6 +17,7 @@ var effects: Array = []  # Array[Effect]
 var image: Texture2D = null
 var elements: Array[String] = []
 var chess_pieces: Array[String] = []
+var targeting_strategy: TargetingStrategy
 
 static var _all: Dictionary = {}
 static var _by_composition: Dictionary = {}
@@ -66,6 +68,7 @@ static func _load_card_dict(d: Dictionary) -> void:
 	var card := get_card(d.get("id", ""))
 	if card == null:
 		return
+	card.shield      = d.get("shield", 0)
 	card.description = d.get("description", "")
 	var art_path := "res://assets/cards/%s.png" % card.id
 	if ResourceLoader.exists(art_path):
@@ -76,8 +79,9 @@ static func _load_card_dict(d: Dictionary) -> void:
 		var e := _parse_effect(e_data)
 		if e:
 			card.effects.append(e)
-	card.elements     = Array(d.get("elements",     []), TYPE_STRING, "", null)
-	card.chess_pieces = Array(d.get("chess_pieces", []), TYPE_STRING, "", null)
+	card.elements          = Array(d.get("elements",     []), TYPE_STRING, "", null)
+	card.chess_pieces      = Array(d.get("chess_pieces", []), TYPE_STRING, "", null)
+	card.targeting_strategy = _make_targeting_strategy(card.chess_pieces)
 	if d.has("card_type"):
 		card.card_type = CardType.SPELL if d.get("card_type") == "spell" else CardType.UNIT
 	elif not card.elements.is_empty() and card.chess_pieces.is_empty():
@@ -229,11 +233,22 @@ static func _derive(elems: Array, chess: Array, key: String) -> CardData:
 	c.attack      = n * 2
 	c.health      = n * 3
 	c.speed       = 2
-	c.card_type   = CardType.SPELL if (chess.is_empty() and not elems.is_empty()) else CardType.UNIT
+	c.card_type          = CardType.SPELL if (chess.is_empty() and not elems.is_empty()) else CardType.UNIT
+	c.targeting_strategy = _make_targeting_strategy(chess)
 	var art := "res://assets/cards/%s.png" % key
 	c.image = load(art) if ResourceLoader.exists(art) \
 		else load("res://assets/cards/placeholder.png")
 	return c
+
+
+static func _make_targeting_strategy(chess_pieces: Array) -> TargetingStrategy:
+	for piece: String in chess_pieces:
+		match piece:
+			"knight": return TargetingKnight.new()
+			"bishop": return TargetingBishop.new()
+			"rook":   return TargetingRook.new()
+			"queen":  return TargetingQueen.new()
+	return TargetingNearest.new()
 
 
 static func _derive_name(elems: Array, chess: Array) -> String:
