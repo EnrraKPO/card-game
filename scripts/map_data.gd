@@ -4,6 +4,12 @@ extends RefCounted
 const FLOORS := 10
 const NODES_PER_FLOOR := 3
 
+# Fallback used only if data/map/node_weights.json is missing or has no row
+# covering a given floor — keeps generation from breaking outright.
+const _FALLBACK_WEIGHTS := {"combat": 0.45, "rest": 0.22, "event": 0.17, "shop": 0.16}
+
+static var _weight_rows: Array = []  # Array[{"min_floor", "max_floor", "weights"}]
+
 
 var floors: Array = []
 
@@ -38,15 +44,64 @@ static func _pick_type(floor: int, rng: RandomNumberGenerator) -> MapNodeData.Ty
 	if floor == 0:
 		return MapNodeData.Type.COMBAT
 
-	var roll: float = rng.randf()
-	if roll < 0.45:
-		return MapNodeData.Type.COMBAT
-	elif roll < 0.67:
-		return MapNodeData.Type.REST
-	elif roll < 0.84:
-		return MapNodeData.Type.EVENT
-	else:
-		return MapNodeData.Type.SHOP
+	var weights: Dictionary = _weights_for_floor(floor)
+	var keys: Array = weights.keys()
+	var picked: String = WeightedRandom.pick(rng, keys, func(k: String) -> float: return weights[k])
+	return _str_type(picked)
+
+
+static func _weights_for_floor(floor: int) -> Dictionary:
+	_ensure_weight_rows_loaded()
+	for row: Dictionary in _weight_rows:
+		if floor >= row.min_floor and floor <= row.max_floor:
+			return row.weights
+	push_error("MapData: no node_weights row covers floor %d, using fallback" % floor)
+	return _FALLBACK_WEIGHTS
+
+
+static func _str_type(s: String) -> MapNodeData.Type:
+	match s:
+		"combat": return MapNodeData.Type.COMBAT
+		"rest":   return MapNodeData.Type.REST
+		"event":  return MapNodeData.Type.EVENT
+		"shop":   return MapNodeData.Type.SHOP
+		"forge":  return MapNodeData.Type.FORGE
+	push_error("MapData: unknown node type key '%s', defaulting to combat" % s)
+	return MapNodeData.Type.COMBAT
+
+
+static func _ensure_weight_rows_loaded() -> void:
+	if not _weight_rows.is_empty():
+		return
+	var dir := DirAccess.open("res://data/map/")
+	if dir == null:
+		push_error("MapData: cannot open res://data/map/")
+		return
+	dir.list_dir_begin()
+	var fname := dir.get_next()
+	while fname != "":
+		if fname.ends_with(".json"):
+			_load_weight_json("res://data/map/" + fname)
+		fname = dir.get_next()
+	dir.list_dir_end()
+
+
+static func _load_weight_json(path: String) -> void:
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		push_error("MapData: cannot open " + path)
+		return
+	var json := JSON.new()
+	if json.parse(file.get_as_text()) != OK:
+		push_error("MapData: parse error in %s — %s" % [path, json.get_error_message()])
+		return
+	var entries: Array = json.data if json.data is Array else [json.data]
+	for d: Dictionary in entries:
+		_weight_rows.append({
+			"min_floor": d.get("min_floor", 0),
+			"max_floor": d.get("max_floor", 999),
+			"weights":   d.get("weights", _FALLBACK_WEIGHTS),
+		})
 
 
 static func _generate_connections(map: MapData, rng: RandomNumberGenerator) -> void:

@@ -1,32 +1,25 @@
 class_name TargetingKnight
 extends TargetingStrategy
 
-# Leaps over the entire frontmost occupied enemy column and strikes behind it.
-# Falls back to the front column only when no targets exist further back.
+# Mimics a chess knight's jump: prefers to leap over the frontmost occupied
+# enemy column, then among what's left prefers landing outside its own row.
+# Each preference is only applied when it leaves at least one candidate —
+# otherwise it falls back, eventually behaving as a plain nearest-target search.
 func find_target(attacker: CardInstance, opponent_board: Array) -> CardInstance:
-	var front_col: int = _frontmost_col(attacker, opponent_board)
-	if front_col < 0:
+	var pool := sorted_by_dist(attacker, opponent_board)
+	if pool.is_empty():
 		return null
 
-	# Gather all units NOT in the front column.
-	var behind: Array = []
-	for r in range(opponent_board.size()):
-		var row: Array = opponent_board[r]
-		for c in range(row.size()):
-			if c == front_col:
-				continue
-			var inst: CardInstance = row[c]
-			if inst != null:
-				behind.append(inst)
-
+	var front_col: int = _frontmost_col(attacker, opponent_board)
+	var behind: Array = pool.filter(func(t: CardInstance) -> bool: return t.col != front_col)
 	if not behind.is_empty():
-		behind.sort_custom(func(a: CardInstance, b: CardInstance) -> bool:
-			return dist(attacker, a.row, a.col) < dist(attacker, b.row, b.col)
-		)
-		return behind[0]
+		pool = behind
 
-	# No targets behind the front column — fall back to nearest available.
-	return sorted_by_dist(attacker, opponent_board)[0]
+	var off_row: Array = pool.filter(func(t: CardInstance) -> bool: return not is_facing(attacker, t))
+	if not off_row.is_empty():
+		pool = off_row
+
+	return pool[0]
 
 
 # Returns the column index of the frontmost occupied column (-1 if board is empty).

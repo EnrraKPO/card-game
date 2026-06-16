@@ -1,0 +1,18 @@
+{
+  "id": "basic_boss",
+  "node_type": "boss",
+  "min_floor": 0,
+  "max_floor": 999,
+  "enemy_pool": [
+    { "id": "queen",    "weight": 2 },
+    { "id": "rook",     "weight": 2 },
+    { "id": "knight",   "weight": 2 },
+    { "id": "darkness", "weight": 2 },
+    { "id": "fire",     "weight": 1 },
+    { "id": "air",      "weight": 1 }
+  ],
+  "pick_count": [9, 11],
+  "gold_reward": [75, 100],
+  "ai": "default",
+  "reward_pool": "default"
+}

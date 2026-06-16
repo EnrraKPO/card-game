@@ -11,25 +11,12 @@ var deck: Array
 var act: int
 
 
-const STARTER_DECK: Array = [
-	"king",
-	"fire",   "fire",   "fire",
-	"water",  "water",  "water",
-	"air",    "air",
-	"earth",  "earth",
-	"pawn",   "pawn",   "pawn",
-	"knight", "knight",
-	"bishop", "bishop",
-	"queen", "queen",
-	"rook", "rook"
-]
-
 static func create_new() -> RunData:
 	var run := RunData.new()
 	run.health     = STARTING_HEALTH
 	run.max_health = STARTING_HEALTH
 	run.gold       = STARTING_GOLD
-	run.deck       = STARTER_DECK.duplicate()
+	run.deck       = DeckData.get_deck(DeckData.FALLBACK_ID)
 	run.act        = 1
 	return run
 

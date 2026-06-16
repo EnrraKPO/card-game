@@ -1,3 +1,4 @@
+class_name MapScreen
 extends Control
 
 const HUD_HEIGHT := 56.0
@@ -8,17 +9,24 @@ const V_PAD := 48.0
 var map_data: MapData
 var current_node_id: int
 var node_positions: Dictionary = {}
-var _node_resolvers: Dictionary = {}
+var encounter_rng: RandomNumberGenerator
+
+# Registry of node-type -> handler. Adding a new node type with real
+# gameplay is: write a NodeKind subclass, register it here, done — no other
+# changes to this file needed. Types absent from this dict (Event, Shop,
+# Rest today) are passed-through with no behaviour, same as before.
+var _node_kinds: Dictionary = {}
 
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 
-	_node_resolvers = {
-		MapNodeData.Type.COMBAT: _enter_combat,
-		MapNodeData.Type.ELITE:  _enter_combat,
-		MapNodeData.Type.BOSS:   _enter_combat,
-		MapNodeData.Type.FORGE:  _enter_forge,
+	_node_kinds = {
+		MapNodeData.Type.COMBAT: NodeKindCombat.new(),
+		MapNodeData.Type.ELITE:  NodeKindCombat.new(),
+		MapNodeData.Type.BOSS:   NodeKindCombat.new(),
+		MapNodeData.Type.FORGE:  NodeKindForge.new(),
+		MapNodeData.Type.SHOP:   NodeKindShop.new(),
 	}
 
 	if GameData.current_encounter != null:
@@ -26,6 +34,9 @@ func _ready() -> void:
 
 	map_data = MapData.generate(GameData.current_map_state.map_seed)
 	current_node_id = GameData.current_map_state.current_node_id
+
+	encounter_rng = RandomNumberGenerator.new()
+	encounter_rng.seed = GameData.current_map_state.map_seed
 
 	for vid in GameData.current_map_state.visited_nodes:
 		var n: MapNodeData = map_data.get_node_by_id(vid)
@@ -63,20 +74,23 @@ func _build_map() -> void:
 	quit_btn.pressed.connect(_on_quit_pressed)
 	add_child(quit_btn)
 
-	var dbg_forge := Button.new()
-	dbg_forge.text = "[debug] forge"
-	dbg_forge.add_theme_font_size_override("font_size", 13)
-	dbg_forge.modulate = Color(1.0, 0.65, 0.1)
-	dbg_forge.anchor_left = 0.0
-	dbg_forge.anchor_top = 1.0
-	dbg_forge.anchor_right = 0.0
-	dbg_forge.anchor_bottom = 1.0
-	dbg_forge.offset_left = 146
-	dbg_forge.offset_top = -48
-	dbg_forge.offset_right = 280
-	dbg_forge.offset_bottom = -16
-	dbg_forge.pressed.connect(func(): _enter_forge(null))
-	add_child(dbg_forge)
+	# Forge is a permanently available action, not a map node — combining
+	# cards already costs two deck slots for one, so it doesn't need the
+	# extra scarcity of being gated behind a rare node.
+	var forge_btn := Button.new()
+	forge_btn.text = "Forge"
+	forge_btn.add_theme_font_size_override("font_size", 13)
+	forge_btn.modulate = MapNodeData.get_color(MapNodeData.Type.FORGE)
+	forge_btn.anchor_left = 1.0
+	forge_btn.anchor_top = 1.0
+	forge_btn.anchor_right = 1.0
+	forge_btn.anchor_bottom = 1.0
+	forge_btn.offset_left = -134
+	forge_btn.offset_top = -48
+	forge_btn.offset_right = -16
+	forge_btn.offset_bottom = -16
+	forge_btn.pressed.connect(func(): _node_kinds[MapNodeData.Type.FORGE].enter(null, self))
+	add_child(forge_btn)
 
 
 func _calculate_positions() -> void:
@@ -170,51 +184,14 @@ func _on_node_selected(node: MapNodeData) -> void:
 
 
 func _resolve_node(node: MapNodeData) -> void:
-	if node.type in _node_resolvers:
-		_node_resolvers[node.type].call(node)
-
-
-func _enter_combat(node: MapNodeData) -> void:
-	var enc := _build_encounter(node.type)
-	enc.completing_node_id = current_node_id
-	enc.destination_node_id = node.id
-	GameData.current_encounter = enc
-	get_tree().change_scene_to_file("res://scenes/combat.tscn")
-
-
-func _enter_forge(_node: MapNodeData) -> void:
-	get_tree().change_scene_to_file("res://scenes/combination_screen.tscn")
+	if node.type in _node_kinds:
+		_node_kinds[node.type].enter(node, self)
 
 
 func _process_combat_return() -> void:
 	# Reached only if the map loads while an encounter is still in memory
 	# (e.g. mid-combat app crash). Clear it so the node stays clickable.
 	GameData.current_encounter = null
-
-
-func _build_encounter(type: MapNodeData.Type) -> EncounterData:
-	var enc := EncounterData.new()
-	match type:
-		MapNodeData.Type.COMBAT:
-			enc.type = EncounterData.Type.COMBAT
-			enc.enemy_deck = ["pawn", "pawn", "pawn", "bishop", "fire", "fire", "water", "earth"]
-		MapNodeData.Type.ELITE:
-			enc.type = EncounterData.Type.ELITE
-			enc.enemy_deck = ["knight", "knight", "rook", "bishop", "bishop", "darkness", "darkness", "fire", "air"]
-		MapNodeData.Type.BOSS:
-			enc.type = EncounterData.Type.BOSS
-			enc.enemy_deck = ["queen", "queen", "rook", "rook", "knight", "knight", "darkness", "darkness", "fire", "air"]
-	enc.reward_pool = _generate_reward_pool()
-	return enc
-
-
-func _generate_reward_pool() -> Array[String]:
-	var non_kings: Array[String] = []
-	for card: CardData in CardData.all():
-		if not card.is_king:
-			non_kings.append(card.id)
-	non_kings.shuffle()
-	return non_kings.slice(0, mini(3, non_kings.size()))
 
 
 func _on_quit_pressed() -> void:

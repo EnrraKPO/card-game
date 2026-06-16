@@ -8,14 +8,31 @@ signal spell_drag_ended(card_ui: CardUI)
 var card_instance: CardInstance
 var _show_cost: bool
 
+@onready var _frame: TextureRect = $Frame
 @onready var _art: TextureRect  = %Art
+@onready var _name_bg: TextureRect = %NameBg
 @onready var _name_label: Label = %NameLabel
+@onready var _cost_bg: TextureRect = %CostBg
 @onready var _cost_lbl: Label   = %CostLabel
+@onready var _spd_bg: TextureRect = %SpdBg
 @onready var _spd_lbl: Label    = %SpdLabel
+@onready var _atk_bg: TextureRect = %AtkBg
 @onready var _atk_lbl: Label    = %AtkLabel
+@onready var _shield_bg: TextureRect = %ShieldBg
 @onready var _shield_lbl: Label = %ShieldLabel
+@onready var _hp_bg: TextureRect = %HpBg
 @onready var _hp_lbl: Label     = %HpLabel
 @onready var _border: Panel     = %Border
+
+const FRAME_UNIT := preload("res://assets/ui/cards/card_frame_unit.png")
+const FRAME_SPELL := preload("res://assets/ui/cards/card_frame_spell.png")
+const FRAME_KING := preload("res://assets/ui/cards/card_frame_king.png")
+const NAMEPLATE := preload("res://assets/ui/cards/nameplate.png")
+const BADGE_COST := preload("res://assets/ui/cards/badge_cost.png")
+const BADGE_SPEED := preload("res://assets/ui/cards/badge_speed.png")
+const BADGE_ATTACK := preload("res://assets/ui/cards/badge_attack.png")
+const BADGE_SHIELD := preload("res://assets/ui/cards/badge_shield.png")
+const BADGE_HEALTH := preload("res://assets/ui/cards/badge_health.png")
 
 static var _scene: PackedScene = null
 
@@ -30,16 +47,37 @@ static func create(inst: CardInstance, show_cost: bool = false) -> CardUI:
 
 
 func _ready() -> void:
+	_apply_asset_textures()
+	_apply_label_style()
 	_apply_border_style()
 	refresh()
+
+
+func _apply_asset_textures() -> void:
+	_name_bg.texture = NAMEPLATE
+	_cost_bg.texture = BADGE_COST
+	_spd_bg.texture = BADGE_SPEED
+	_atk_bg.texture = BADGE_ATTACK
+	_shield_bg.texture = BADGE_SHIELD
+	_hp_bg.texture = BADGE_HEALTH
+
+
+func _apply_label_style() -> void:
+	var labels := [_name_label, _cost_lbl, _spd_lbl, _atk_lbl, _shield_lbl, _hp_lbl]
+	for label: Label in labels:
+		label.add_theme_color_override("font_color", Color(0.96, 0.96, 0.9))
+		label.add_theme_color_override("font_outline_color", Color(0.02, 0.025, 0.04, 0.95))
+		label.add_theme_constant_override("outline_size", 4)
+	_name_label.add_theme_font_size_override("font_size", 12)
+	_shield_lbl.add_theme_color_override("font_color", Color(0.58, 0.86, 1.0))
 
 
 func _apply_border_style() -> void:
 	var is_king := card_instance != null and card_instance.data.is_king
 	var style   := StyleBoxFlat.new()
 	style.bg_color = Color.TRANSPARENT
-	style.set_border_width_all(3 if is_king else 2)
-	style.border_color = Color(1.0, 0.82, 0.2) if is_king else Color(0.45, 0.45, 0.55)
+	style.set_border_width_all(1)
+	style.border_color = Color(1.0, 0.82, 0.2, 0.45) if is_king else Color(0.45, 0.45, 0.55, 0.35)
 	style.set_corner_radius_all(6)
 	_border.add_theme_stylebox_override("panel", style)
 
@@ -50,6 +88,7 @@ func refresh() -> void:
 	_art.texture = card_instance.data.image
 
 	var is_spell := card_instance.is_spell
+	_frame.texture = FRAME_KING if card_instance.data.is_king else (FRAME_SPELL if is_spell else FRAME_UNIT)
 	_name_label.text  = card_instance.data.display_name
 	_cost_lbl.text    = str(card_instance.get_attribute("cost"))
 	_atk_lbl.text       = str(card_instance.get_attribute("attack"))
@@ -57,9 +96,13 @@ func refresh() -> void:
 	_spd_lbl.text       = str(card_instance.get_attribute("speed"))
 	var shld            := card_instance.current_shield
 	_shield_lbl.text    = str(shld)
+	_atk_bg.visible     = not is_spell
 	_atk_lbl.visible    = not is_spell
+	_shield_bg.visible  = not is_spell and shld > 0
 	_shield_lbl.visible = not is_spell and shld > 0
+	_hp_bg.visible      = not is_spell
 	_hp_lbl.visible     = not is_spell
+	_spd_bg.visible     = not is_spell
 	_spd_lbl.visible    = not is_spell
 	tooltip_text      = card_instance.data.description
 

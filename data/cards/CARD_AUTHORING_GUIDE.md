@@ -225,4 +225,4 @@ A list of conditions that must **all** pass for a target to be affected. If omit
 - Multiple conditions on one effect are AND logic — all must pass.
 - OR logic can be expressed as two separate effects with the same trigger and policy but different conditions.
 - The `id` must be unique across all files. Duplicate IDs will silently overwrite each other.
-- Cards must be added to a run's deck to appear in play. The starter deck is defined in `scripts/run_data.gd`.
+- Cards must be added to a run's deck to appear in play. The starter deck is defined in `data/decks/starter.json` (see `data/decks/DECK_AUTHORING_GUIDE.md`).

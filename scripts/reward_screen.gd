@@ -23,6 +23,14 @@ func _ready() -> void:
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(title)
 
+	var gold_gained: int = GameData.current_encounter.gold_reward if GameData.current_encounter != null else 0
+	var gold_lbl := Label.new()
+	gold_lbl.text = "+%d Gold" % gold_gained
+	gold_lbl.add_theme_font_size_override("font_size", 20)
+	gold_lbl.modulate = Color(1.0, 0.85, 0.3)
+	gold_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(gold_lbl)
+
 	var card_row := HBoxContainer.new()
 	card_row.add_theme_constant_override("separation", 32)
 	card_row.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -61,6 +69,8 @@ func _skip() -> void:
 
 
 func _finish() -> void:
+	if GameData.current_encounter != null:
+		GameData.current_run.gold += GameData.current_encounter.gold_reward
 	GameData.save_run()
 	GameData.current_encounter = null
 	get_tree().change_scene_to_file("res://scenes/map.tscn")

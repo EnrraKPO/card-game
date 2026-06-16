@@ -1,0 +1,18 @@
+{
+  "id": "basic_elite",
+  "node_type": "elite",
+  "min_floor": 0,
+  "max_floor": 999,
+  "enemy_pool": [
+    { "id": "knight",    "weight": 2 },
+    { "id": "rook",      "weight": 1 },
+    { "id": "bishop",    "weight": 2 },
+    { "id": "darkness",  "weight": 2 },
+    { "id": "fire",      "weight": 1 },
+    { "id": "air",       "weight": 1 }
+  ],
+  "pick_count": [8, 10],
+  "gold_reward": [40, 60],
+  "ai": "default",
+  "reward_pool": "default"
+}

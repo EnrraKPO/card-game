@@ -80,7 +80,9 @@ func _init_player_hand() -> void:
 	for id in ids:
 		var data := CardData.get_card(id)
 		if data and not data.is_king:
-			_draw_pile.append(CardInstance.from_data(data))
+			var inst := CardInstance.from_data(data)
+			inst.owner = 0
+			_draw_pile.append(inst)
 
 
 func _init_enemy_hand() -> void:
@@ -93,7 +95,9 @@ func _init_enemy_hand() -> void:
 	for id in ids:
 		var data := CardData.get_card(id)
 		if data and not data.is_king and data.card_type == CardData.CardType.UNIT:
-			_enemy_hand.append(CardInstance.from_data(data))
+			var inst := CardInstance.from_data(data)
+			inst.owner = 1
+			_enemy_hand.append(inst)
 
 
 func _create_hand_cards() -> void:

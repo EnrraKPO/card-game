@@ -170,6 +170,18 @@ static func all() -> Array:
 	return _all.values()
 
 
+# Returns up to `count` random non-king card ids — shared by reward and shop
+# offer generation (see EncounterTemplateData.resolve_reward_pool and
+# shop_screen.gd).
+static func random_non_kings(count: int) -> Array[String]:
+	var non_kings: Array[String] = []
+	for card: CardData in all():
+		if not card.is_king:
+			non_kings.append(card.id)
+	non_kings.shuffle()
+	return non_kings.slice(0, mini(count, non_kings.size()))
+
+
 static func composition_key(elems: Array, chess: Array) -> String:
 	var e := elems.duplicate(); e.sort()
 	var c := chess.duplicate(); c.sort()

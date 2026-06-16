@@ -1,6 +1,18 @@
 class_name EnemyAI
 extends RefCounted
 
+# Registry keyed by the "ai" string in encounter template JSON. Add a new
+# match arm here (and a matching EnemyAI subclass) to give an encounter a
+# distinct CPU behaviour — no other file needs to change.
+static func from_key(key: String) -> EnemyAI:
+	match key:
+		"default", "":
+			return EnemyAI.new()
+		_:
+			push_error("EnemyAI: unknown ai key '%s', falling back to default" % key)
+			return EnemyAI.new()
+
+
 # Base implementation: shuffle hand and fill random empty slots.
 # Override decide_placements in a subclass for distinct encounter behaviour.
 func decide_placements(hand: Array, grid: Array, mana: int) -> Array:
