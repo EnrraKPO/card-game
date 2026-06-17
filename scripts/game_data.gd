@@ -12,6 +12,8 @@ var current_slot: int = -1
 var current_run: RunData = null
 var current_map_state: MapState = null
 var current_encounter: EncounterData = null
+# The stat a "?" event site upgrades, handed to the event screen on entry (transient).
+var current_event_attr: String = ""
 
 
 func _ready() -> void:

@@ -60,6 +60,7 @@ func _ready() -> void:
 	_init_enemy_deck()
 	_build_ui()
 	_board.place_kings()
+	_apply_king_persistence()
 	_hand.draw_initial()
 	_refresh()
 	_begin_round()
@@ -152,7 +153,7 @@ func _execute_enemy_action(action: Dictionary) -> void:
 			var inst: CardInstance = action["inst"]
 			_enemy_mana -= inst.data.cost
 			_enemy_hand.erase(inst)
-			_cast_enemy_spell(inst, action["target"])
+			await _show_enemy_spell(inst, action["target"])
 		EnemyAI.Action.GENERATE:
 			var building: CardInstance = action["building"]
 			var token := CardInstance.from_data(building.data.generated_card())
@@ -167,6 +168,54 @@ func _execute_enemy_action(action: Dictionary) -> void:
 		EnemyAI.Action.MOVE:
 			_board.move_enemy_card(action["inst"], action["row"], action["col"])
 	await get_tree().create_timer(0.35).timeout
+
+
+# Makes a CPU spell legible: the enemy has no visible hand, so a cast would otherwise
+# land as unexplained damage during the CPU phase. We pop the spell card up, name it,
+# fly it into its target, THEN resolve the effect (which plays the on-target VFX).
+const _ENEMY_SPELL_HOLD := 0.55
+
+func _show_enemy_spell(inst: CardInstance, target: CardInstance) -> void:
+	var card := CardUI.create(inst)
+	card.custom_minimum_size = Vector2(150, 200)
+	card.z_index      = 40
+	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(card)
+	var origin := Vector2(size.x * 0.5 - 75.0, size.y * 0.28)
+	card.global_position = origin
+
+	var banner := Label.new()
+	banner.text = "Enemy casts %s" % inst.data.display_name
+	banner.add_theme_font_size_override("font_size", 22)
+	banner.modulate         = Color(1.0, 0.55, 0.3)
+	banner.z_index          = 40
+	banner.mouse_filter     = Control.MOUSE_FILTER_IGNORE
+	banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	add_child(banner)
+	banner.global_position = Vector2(size.x * 0.5 - 150.0, origin.y - 44.0)
+	banner.custom_minimum_size.x = 300.0
+
+	# Pop in, then hold so the player can read what was cast.
+	card.scale = Vector2(0.5, 0.5)
+	var pop := create_tween()
+	pop.set_trans(Tween.TRANS_BACK); pop.set_ease(Tween.EASE_OUT)
+	pop.tween_property(card, "scale", Vector2.ONE, 0.18)
+	await pop.finished
+	await get_tree().create_timer(_ENEMY_SPELL_HOLD).timeout
+	banner.queue_free()
+
+	# Single-target spells fly into the victim; area spells just resolve in place.
+	if target != null:
+		var t_ui := _board.get_card_ui(target)
+		if t_ui != null:
+			var fly := create_tween()
+			fly.set_trans(Tween.TRANS_QUAD); fly.set_ease(Tween.EASE_IN)
+			fly.tween_property(card, "global_position", t_ui.global_position, 0.22)
+			await fly.finished
+
+	_cast_enemy_spell(inst, target)
+	await get_tree().create_timer(0.25).timeout
+	card.queue_free()
 
 
 # Applies an enemy spell's ON_PLAY effects against the AI-chosen target (mirrors
@@ -305,10 +354,32 @@ func _trigger(t: Effect.Trigger, inst: CardInstance) -> Array:
 	return EffectSystem.trigger(t, inst, EffectContext.make(inst, _board.player_grid, _board.enemy_grid))
 
 
+# The player's King carries its health across the whole run, so it enters each
+# fight at the run's current HP (max - accumulated damage) instead of full health.
+# Current wounds are the King's own persistence axis; its MAX health (and any future
+# upgrade to it) belongs in the card definition via DeckCard.override, not here.
+# Shield is left alone — it refreshes per turn like every other unit.
+func _apply_king_persistence() -> void:
+	var run := GameData.current_run
+	if run == null:
+		return
+	var pk := _board.get_player_king()
+	if pk == null:
+		return
+	pk.current_health = run.king_health()
+	_board.refresh()
+
+
 func _handle_combat_end() -> void:
 	var player_won := _board.player_king_alive()
 	var enc := GameData.current_encounter
 	if player_won:
+		# Carry the King's wounds back into the run (it survived, so health > 0).
+		var run := GameData.current_run
+		if run != null:
+			var pk := _board.get_player_king()
+			if pk != null:
+				run.king_damage = maxi(0, run.king_max_health() - pk.current_health)
 		if enc != null:
 			enc.outcome = EncounterData.Outcome.WIN
 			# Advance map state now that the battle is won.

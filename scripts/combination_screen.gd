@@ -183,11 +183,11 @@ func _rebuild_deck() -> void:
 
 	var deck: Array = GameData.current_run.deck.duplicate()
 	for i in deck.size():
-		var id: String = deck[i]
-		var data := CardData.get_card(id)
+		var dc: DeckCard = deck[i]
+		var data := CardData.get_card(dc.id)
 		if data == null:
 			continue
-		var inst := CardInstance.from_data(data)
+		var inst := dc.make_instance()
 		var ui   := CardUI.create(inst)
 		ui.custom_minimum_size = CARD_SIZE
 
@@ -196,7 +196,7 @@ func _rebuild_deck() -> void:
 			ui.modulate = Color(1, 1, 1, 0.35)
 
 		var entry_idx := _entries.size()
-		_entries.append({ "id": id, "deck_idx": i, "data": data, "ui": ui })
+		_entries.append({ "card": dc, "deck_idx": i, "data": data, "ui": ui })
 
 		if combinable:
 			ui.pressed.connect(func(): _on_card_pressed(entry_idx))
@@ -241,14 +241,14 @@ func _update_panel() -> void:
 		return
 
 	var data_a: CardData = _entries[_selected[0]].data
-	_fill_slot(_slot_a, CardInstance.from_data(data_a))
+	_fill_slot(_slot_a, _entries[_selected[0]].card.make_instance())
 
 	if _selected.size() < 2:
 		_status_lbl.text = "Pick one more card"
 		return
 
 	var data_b: CardData = _entries[_selected[1]].data
-	_fill_slot(_slot_b, CardInstance.from_data(data_b))
+	_fill_slot(_slot_b, _entries[_selected[1]].card.make_instance())
 
 	if not CardData.can_combine(data_a, data_b):
 		_status_lbl.text    = "These cards exceed the combination limit (2 elements + 2 chess pieces)"
@@ -291,7 +291,8 @@ func _apply_combine() -> void:
 	for i in range(deck_indices.size() - 1, -1, -1):
 		GameData.current_run.deck.remove_at(deck_indices[i])
 
-	GameData.current_run.deck.append(_result_card.id)
+	# Combining is alchemy: the result is a fresh card, source upgrades are consumed.
+	GameData.current_run.deck.append(DeckCard.make(_result_card.id))
 	GameData.save_run()
 
 	_rebuild_deck()

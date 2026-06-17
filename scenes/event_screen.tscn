@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://cxpyftneomby7"]
+
+[ext_resource type="Script" path="res://scripts/event_screen.gd" id="1"]
+
+[node name="EventScreen" type="Control"]
+script = ExtResource("1")

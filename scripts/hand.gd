@@ -66,13 +66,12 @@ func build_into(parent: Control) -> void:
 
 # ── Draw pile + drawing ──────────────────────────────────────────────────────────
 
-func populate_draw_pile(deck_ids: Array) -> void:
-	var ids := deck_ids.duplicate()
-	ids.shuffle()
-	for id in ids:
-		var data := CardData.get_card(id)
-		if data and not data.is_king:
-			var inst := CardInstance.from_data(data)
+func populate_draw_pile(deck_cards: Array) -> void:
+	var cards := deck_cards.duplicate()
+	cards.shuffle()
+	for dc: DeckCard in cards:
+		var inst := dc.make_instance()
+		if inst != null and not inst.data.is_king:
 			inst.owner = 0
 			_draw_pile.append(inst)
 

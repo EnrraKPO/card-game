@@ -12,6 +12,7 @@ screenshots/
 # Root-level art generation previews (scratch)
 /tmp_*.png
 /tmp_*.png.import
+/tmp_*/
 
 # Editor temp files
 *~

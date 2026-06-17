@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b4tt6g2p5wsbs"
-path="res://.godot/imported/water_bishop.png-bcee9709a88296040f831f6391654747.ctex"
+uid="uid://el1432qoxoux"
+path="res://.godot/imported/darkness_pawn.png-e8d30177a5eb33b237b76b43bcfe30b9.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/cards/water_bishop.png"
-dest_files=["res://.godot/imported/water_bishop.png-bcee9709a88296040f831f6391654747.ctex"]
+source_file="res://assets/cards/darkness_pawn.png"
+dest_files=["res://.godot/imported/darkness_pawn.png-e8d30177a5eb33b237b76b43bcfe30b9.ctex"]
 
 [params]
 

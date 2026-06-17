@@ -29,6 +29,8 @@ static func generate(seed_val: int) -> MapData:
 			node.floor = f
 			node.column = c
 			node.type = _pick_type(f, rng)
+			if node.type == MapNodeData.Type.EVENT:
+				node.event_attr = DeckCard.UPGRADABLE[rng.randi() % DeckCard.UPGRADABLE.size()]
 			floor_nodes.append(node)
 		map.floors.append(floor_nodes)
 

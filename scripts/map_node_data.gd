@@ -9,6 +9,10 @@ var column: int
 var type: Type
 var connections: Array = []
 var visited: bool = false
+# For EVENT ("?") nodes: the card stat this site can upgrade. Assigned at map
+# generation from the seeded RNG, so it's stable across reloads (the map is rebuilt
+# from the seed). Empty for non-event nodes. See MapData.generate.
+var event_attr: String = ""
 
 
 static func get_label(t: Type) -> String:

@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://dhvq7caehhnnk"]
+
+[ext_resource type="Script" path="res://scripts/rest_screen.gd" id="1"]
+
+[node name="RestScreen" type="Control"]
+script = ExtResource("1")

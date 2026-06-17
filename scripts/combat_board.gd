@@ -172,6 +172,15 @@ func any_king_dead() -> bool:
 	return not p_alive or not e_alive
 
 
+func get_player_king() -> CardInstance:
+	for r in BoardData.ROWS:
+		for c in BoardData.COLS:
+			var p: CardInstance = player_grid[r][c]
+			if p != null and p.data.is_king:
+				return p
+	return null
+
+
 func player_king_alive() -> bool:
 	for r in BoardData.ROWS:
 		for c in BoardData.COLS:

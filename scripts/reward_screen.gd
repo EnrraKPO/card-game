@@ -60,7 +60,7 @@ func _ready() -> void:
 
 
 func _pick_card(id: String) -> void:
-	GameData.current_run.deck.append(id)
+	GameData.current_run.deck.append(DeckCard.make(id))
 	_finish()
 
 

@@ -79,39 +79,45 @@ static func _load_json(path: String) -> void:
 		_load_card_dict(d)
 
 
-static func _load_card_dict(d: Dictionary) -> void:
-	_reg(
-		d.get("id", ""),
-		d.get("display_name", ""),
-		d.get("cost", 0),
-		d.get("attack", 0),
-		d.get("health", 1),
-		d.get("speed", 1),
-		d.get("is_king", false)
-	)
-	var card := get_card(d.get("id", ""))
-	if card == null:
-		return
-	card.shield      = d.get("shield", 0)
-	card.description = d.get("description", "")
-	var art_path := "res://assets/cards/%s.png" % card.id
-	if ResourceLoader.exists(art_path):
-		card.image = load(art_path)
-	else:
-		card.image = load("res://assets/cards/placeholder.png")
+# Builds a CardData from a definition dict WITHOUT registering it. The single card
+# constructor: used by the JSON loader, and by run-level overridden cards rebuilt from
+# their stored definition (see DeckCard). Derived fields (image, targeting_strategy)
+# are recomputed here from id + chess_pieces, so they never need to be serialised.
+static func build_from_dict(d: Dictionary) -> CardData:
+	var card := CardData.new()
+	card.id           = d.get("id", "")
+	card.display_name = d.get("display_name", "")
+	card.cost         = int(d.get("cost", 0))
+	card.attack       = int(d.get("attack", 0))
+	card.health       = int(d.get("health", 1))
+	card.speed        = int(d.get("speed", 1))
+	card.is_king      = d.get("is_king", false)
+	card.shield       = int(d.get("shield", 0))
+	card.description  = d.get("description", "")
+	card.elements     = Array(d.get("elements",     []), TYPE_STRING, "", null)
+	card.chess_pieces = Array(d.get("chess_pieces", []), TYPE_STRING, "", null)
 	for e_data: Dictionary in d.get("effects", []):
 		var e := _parse_effect(e_data)
 		if e:
 			card.effects.append(e)
-	card.elements          = Array(d.get("elements",     []), TYPE_STRING, "", null)
-	card.chess_pieces      = Array(d.get("chess_pieces", []), TYPE_STRING, "", null)
-	card.targeting_strategy = _make_targeting_strategy(card.chess_pieces)
 	if d.has("card_type"):
 		card.card_type = CardType.SPELL if d.get("card_type") == "spell" else CardType.UNIT
 	elif not card.elements.is_empty() and card.chess_pieces.is_empty():
 		card.card_type = CardType.SPELL
 	else:
 		card.card_type = CardType.UNIT
+	card.targeting_strategy = _make_targeting_strategy(card.chess_pieces)
+	var art_path := "res://assets/cards/%s.png" % card.id
+	card.image = load(art_path) if ResourceLoader.exists(art_path) \
+		else load("res://assets/cards/placeholder.png")
+	return card
+
+
+static func _load_card_dict(d: Dictionary) -> void:
+	var card := build_from_dict(d)
+	if card.id.is_empty():
+		return
+	_all[card.id] = card
 	if card.elements.size() > 0 or card.chess_pieces.size() > 0:
 		_by_composition[composition_key(card.elements, card.chess_pieces)] = card
 
@@ -172,16 +178,27 @@ static func _str_comparator(s: String) -> EffectCondition.Comparator:
 	return EffectCondition.Comparator.GTE
 
 
-static func _reg(p_id: String, p_name: String, p_cost: int, p_atk: int, p_hp: int, p_spd: int, p_king: bool = false) -> void:
-	var c := CardData.new()
-	c.id = p_id
-	c.display_name = p_name
-	c.cost = p_cost
-	c.attack = p_atk
-	c.health = p_hp
-	c.speed = p_spd
-	c.is_king = p_king
-	_all[p_id] = c
+# Inverse of build_from_dict — serialises the authorable definition (omitting derived
+# image/targeting_strategy). Used to snapshot a card into a DeckCard override.
+func to_dict() -> Dictionary:
+	var fx: Array = []
+	for e: Effect in effects:
+		fx.append(e.to_dict())
+	return {
+		"id":           id,
+		"display_name": display_name,
+		"cost":         cost,
+		"attack":       attack,
+		"health":       health,
+		"speed":        speed,
+		"shield":       shield,
+		"is_king":      is_king,
+		"description":  description,
+		"card_type":    "spell" if card_type == CardType.SPELL else "unit",
+		"elements":     Array(elements, TYPE_STRING, "", null),
+		"chess_pieces": Array(chess_pieces, TYPE_STRING, "", null),
+		"effects":      fx,
+	}
 
 
 static func get_card(p_id: String) -> CardData:

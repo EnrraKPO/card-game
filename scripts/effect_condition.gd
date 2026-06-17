@@ -23,6 +23,26 @@ static func make_custom(check: Callable) -> EffectCondition:
 	return c
 
 
+# Inverse of CardData._parse_condition (custom_check is programmatic-only, not stored).
+func to_dict() -> Dictionary:
+	return {
+		"attribute":  attribute,
+		"comparator": comparator_key(comparator),
+		"value":      value,
+	}
+
+
+static func comparator_key(c: Comparator) -> String:
+	match c:
+		Comparator.GT:  return "gt"
+		Comparator.GTE: return "gte"
+		Comparator.LT:  return "lt"
+		Comparator.LTE: return "lte"
+		Comparator.EQ:  return "eq"
+		Comparator.NEQ: return "neq"
+	return "gte"
+
+
 func evaluate(card: CardInstance) -> bool:
 	if custom_check.is_valid():
 		return custom_check.call(card)

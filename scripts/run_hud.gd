@@ -23,7 +23,7 @@ func refresh() -> void:
 	if GameData.current_run == null:
 		return
 	var run := GameData.current_run
-	_hp_label.text   = "  HP  %d / %d" % [run.health, run.max_health]
+	_hp_label.text   = "  HP  %d / %d" % [run.king_health(), run.king_max_health()]
 	_act_label.text  = "Act %d" % run.act
 	_gold_label.text = "Gold  %d  " % run.gold
 

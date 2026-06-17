@@ -55,3 +55,42 @@ static func make_custom(
 	e.conditions = p_conditions.duplicate()
 	e.custom_apply = apply_fn
 	return e
+
+
+# Serialises to the same dict shape CardData._parse_effect reads, so a persisted
+# (overridden) card round-trips through CardData.build_from_dict. NOTE: a programmatic
+# custom_apply effect can't be represented here — nothing uses one today, and such an
+# effect on a player-ownable card would be dropped on save.
+func to_dict() -> Dictionary:
+	var conds: Array = []
+	for c: EffectCondition in conditions:
+		conds.append(c.to_dict())
+	return {
+		"trigger":          trigger_key(trigger),
+		"targeting_policy": policy_key(targeting_policy),
+		"attribute":        attribute,
+		"amount":           amount,
+		"conditions":       conds,
+	}
+
+
+static func trigger_key(t: Trigger) -> String:
+	match t:
+		Trigger.ON_PLAY:         return "on_play"
+		Trigger.ON_DEATH:        return "on_death"
+		Trigger.ON_ATTACK:       return "on_attack"
+		Trigger.ON_DAMAGE_TAKEN: return "on_damage_taken"
+		Trigger.PERMANENT:       return "permanent"
+	return "on_play"
+
+
+static func policy_key(p: TargetingPolicy) -> String:
+	match p:
+		TargetingPolicy.SELF:           return "self"
+		TargetingPolicy.SINGLE_NEAREST: return "single_nearest"
+		TargetingPolicy.SINGLE_RANDOM:  return "single_random"
+		TargetingPolicy.ALL_ENEMIES:    return "all_enemies"
+		TargetingPolicy.ALL_ALLIES:     return "all_allies"
+		TargetingPolicy.ALL:            return "all"
+		TargetingPolicy.MANUAL:         return "manual"
+	return "self"

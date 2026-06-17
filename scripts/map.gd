@@ -27,6 +27,8 @@ func _ready() -> void:
 		MapNodeData.Type.BOSS:   NodeKindCombat.new(),
 		MapNodeData.Type.FORGE:  NodeKindForge.new(),
 		MapNodeData.Type.SHOP:   NodeKindShop.new(),
+		MapNodeData.Type.REST:   NodeKindRest.new(),
+		MapNodeData.Type.EVENT:  NodeKindEvent.new(),
 	}
 
 	if GameData.current_encounter != null:

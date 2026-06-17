@@ -149,7 +149,7 @@ func _on_buy_pressed(entry_idx: int) -> void:
 	if entry.bought or GameData.current_run.gold < entry.price:
 		return
 	GameData.current_run.gold -= entry.price
-	GameData.current_run.deck.append(entry.id)
+	GameData.current_run.deck.append(DeckCard.make(entry.id))
 	GameData.save_run()
 	entry.bought = true
 	entry.buy_btn.text = "Sold"
@@ -210,16 +210,16 @@ func _rebuild_deck() -> void:
 
 	var deck: Array = GameData.current_run.deck.duplicate()
 	for i in deck.size():
-		var id: String = deck[i]
-		var data := CardData.get_card(id)
+		var dc: DeckCard = deck[i]
+		var data := CardData.get_card(dc.id)
 		if data == null:
 			continue
-		var inst := CardInstance.from_data(data)
+		var inst := dc.make_instance()
 		var ui   := CardUI.create(inst)
 		ui.custom_minimum_size = Vector2(110, 145)
 
 		var entry_idx := _deck_entries.size()
-		_deck_entries.append({"id": id, "deck_idx": i, "data": data, "ui": ui})
+		_deck_entries.append({"card": dc, "deck_idx": i, "data": data, "ui": ui})
 		ui.pressed.connect(func(): _on_deck_card_pressed(entry_idx))
 
 		_deck_grid.add_child(ui)
