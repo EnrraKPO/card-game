@@ -1,2 +1,17 @@
 .godot/
 build/
+
+# Local intermediate art backups — not project assets
+assets/cards/_backups/
+assets/ui/cards/_backups/
+
+# Concept-art exploration + bug screenshots (scratch)
+assets/ui/cards/concepts/
+screenshots/
+
+# Root-level art generation previews (scratch)
+/tmp_*.png
+/tmp_*.png.import
+
+# Editor temp files
+*~

@@ -14,7 +14,7 @@ var _targetable: bool = false
 
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(135, 176)
+	custom_minimum_size = Vector2(165, 216)
 	_apply_style()
 
 

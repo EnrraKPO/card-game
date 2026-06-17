@@ -10,6 +10,7 @@
     "knight", "knight",
     "bishop", "bishop",
     "queen", "queen",
-    "rook", "rook"
+    "rook", "rook",
+	"darkness", "darkness"
   ]
 }

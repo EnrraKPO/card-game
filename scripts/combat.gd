@@ -10,16 +10,14 @@ var _max_mana: int = 0
 var _enemy_mana: int = 0
 var _turn: int    = 0
 
-var _draw_pile: Array  = []  # Array[CardInstance]
-var _hand_cards: Array = []  # Array[CardUI]
-var _enemy_hand: Array = []  # Array[CardInstance]
-var _selected_hand_card: CardUI = null
+var _enemy_hand: Array = []       # Array[CardInstance]
+var _enemy_draw_pile: Array = []  # Array[CardInstance]
 
 var _turn_label: Label
 var _mana_label: Label
 var _done_btn: Button
-var _hand_box: BoxContainer
 
+var _hand: Hand
 var _board: CombatBoard
 var _animator: CombatAnimator
 var _spell_caster: SpellCaster
@@ -29,17 +27,19 @@ var _vfx: VFXPlayer
 func _ready() -> void:
 	set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 
+	_hand         = Hand.new()
 	_board        = CombatBoard.new()
 	_animator     = CombatAnimator.new()
 	_spell_caster = SpellCaster.new()
 	_vfx          = VFXPlayer.new()
+	add_child(_hand)
 	add_child(_board)
 	add_child(_animator)
 	add_child(_spell_caster)
 	add_child(_vfx)
 
 	_board.setup_grids()
-	_board.is_hand_card = func(cu: CardUI) -> bool: return _hand_cards.has(cu)
+	_board.is_hand_card = func(cu: CardUI) -> bool: return _hand.contains(cu)
 	_board.get_mana     = func() -> int:            return _mana
 
 	var _get_card_ui: Callable = func(inst: CardInstance) -> CardUI: return _board.get_card_ui(inst)
@@ -47,6 +47,8 @@ func _ready() -> void:
 	_animator.setup(self, _get_card_ui, _vfx)
 
 	_spell_caster.setup(_board, _animator, func() -> int: return _mana)
+	_hand.wire_spell_card = _spell_caster.wire_spell_card
+	_hand.token_hovered.connect(_highlight_building)
 
 	_board.unit_placed.connect(_on_board_unit_placed)
 	_board.slot_pressed.connect(_on_board_slot_pressed)
@@ -54,11 +56,11 @@ func _ready() -> void:
 	_spell_caster.targeting_ended.connect(_on_targeting_ended)
 	_spell_caster.spell_consumed.connect(_on_spell_consumed)
 
-	_init_player_hand()
-	_init_enemy_hand()
+	_hand.populate_draw_pile(GameData.current_run.deck)
+	_init_enemy_deck()
 	_build_ui()
 	_board.place_kings()
-	_create_hand_cards()
+	_hand.draw_initial()
 	_refresh()
 	_begin_round()
 
@@ -72,20 +74,12 @@ func _input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 
 
-# ── Hand initialisation ────────────────────────────────────────────────────────
+# ── Enemy deck / hand ──────────────────────────────────────────────────────────
 
-func _init_player_hand() -> void:
-	var ids: Array = GameData.current_run.deck.duplicate()
-	ids.shuffle()
-	for id in ids:
-		var data := CardData.get_card(id)
-		if data and not data.is_king:
-			var inst := CardInstance.from_data(data)
-			inst.owner = 0
-			_draw_pile.append(inst)
-
-
-func _init_enemy_hand() -> void:
+# Builds the enemy draw pile (spells included now — the AI casts them) and deals an
+# opening hand. The CPU then draws one card per round like the player, so it keeps
+# applying pressure all match instead of emptying its hand early.
+func _init_enemy_deck() -> void:
 	var ids: Array = []
 	if GameData.current_encounter != null:
 		ids = GameData.current_encounter.enemy_deck.duplicate()
@@ -94,43 +88,21 @@ func _init_enemy_hand() -> void:
 	ids.shuffle()
 	for id in ids:
 		var data := CardData.get_card(id)
-		if data and not data.is_king and data.card_type == CardData.CardType.UNIT:
+		if data and not data.is_king:
 			var inst := CardInstance.from_data(data)
 			inst.owner = 1
-			_enemy_hand.append(inst)
+			_enemy_draw_pile.append(inst)
+	var opening := mini(4, _enemy_draw_pile.size())
+	for i in opening:
+		_enemy_hand.append(_enemy_draw_pile[i])
+	_enemy_draw_pile = _enemy_draw_pile.slice(opening)
 
 
-func _create_hand_cards() -> void:
-	var to_draw := mini(4, _draw_pile.size())
-	for i in to_draw:
-		var inst: CardInstance = _draw_pile[i]
-		inst.row = -1
-		inst.col = -1
-		var ui := CardUI.create(inst, true)
-		_hand_cards.append(ui)
-		_hand_box.add_child(ui)
-		_wire_hand_card(ui)
-	_draw_pile = _draw_pile.slice(to_draw)
-
-
-func _draw_card() -> void:
-	if _draw_pile.is_empty():
+func _enemy_draw_one() -> void:
+	if _enemy_draw_pile.is_empty():
 		return
-	var inst: CardInstance = _draw_pile[0]
-	inst.row = -1
-	inst.col = -1
-	_draw_pile = _draw_pile.slice(1)
-	var ui := CardUI.create(inst, true)
-	_hand_cards.append(ui)
-	_hand_box.add_child(ui)
-	_wire_hand_card(ui)
-
-
-func _wire_hand_card(ui: CardUI) -> void:
-	if ui.card_instance.is_spell:
-		_spell_caster.wire_spell_card(ui)
-	else:
-		ui.pressed.connect(func(): _on_hand_card_pressed(ui))
+	_enemy_hand.append(_enemy_draw_pile[0])
+	_enemy_draw_pile = _enemy_draw_pile.slice(1)
 
 
 # ── Round flow ─────────────────────────────────────────────────────────────────
@@ -140,11 +112,14 @@ func _begin_round() -> void:
 	_max_mana   = mini(_turn, 10)
 	_mana       = _max_mana
 	_enemy_mana = _max_mana
-	_draw_card()
+	_hand.draw_one()
+	_enemy_draw_one()
 	await _do_cpu_placement()
 	_phase = Phase.PLAYER_PLACE
 	_board.placement_enabled = true
 	_set_placement_input(true)
+	_reset_exhaustion()
+	_hand.generate_tokens(_player_buildings())
 	_refresh()
 
 
@@ -158,22 +133,86 @@ func _do_cpu_placement() -> void:
 	if GameData.current_encounter != null and GameData.current_encounter.ai != null:
 		ai = GameData.current_encounter.ai
 
-	var placements := ai.decide_placements(_enemy_hand, _board.enemy_grid, _enemy_mana)
+	for action: Dictionary in ai.decide_actions(_enemy_hand, _board, _enemy_mana):
+		await _execute_enemy_action(action)
 
-	for placement: Dictionary in placements:
-		var inst: CardInstance = placement["inst"]
-		var r: int             = placement["row"]
-		var c: int             = placement["col"]
-		_enemy_mana -= inst.data.cost
-		_enemy_hand.erase(inst)
-		var results := _board.place_enemy_card(inst, r, c)
-		_animator.show_effect_results(results)
-		_vfx.play(VFXEvent.card_placed(_board.get_card_ui(inst)))
-		await get_tree().create_timer(0.35).timeout
+
+# Carries out one planned CPU action. The AI guarantees each is legal in sequence
+# (mana + slot occupancy), so this just applies the effect and animates it.
+func _execute_enemy_action(action: Dictionary) -> void:
+	match action["type"]:
+		EnemyAI.Action.PLACE:
+			var inst: CardInstance = action["inst"]
+			_enemy_mana -= inst.data.cost
+			_enemy_hand.erase(inst)
+			var results := _board.place_enemy_card(inst, action["row"], action["col"])
+			_animator.show_effect_results(results)
+			_vfx.play(VFXEvent.card_placed(_board.get_card_ui(inst)))
+		EnemyAI.Action.CAST:
+			var inst: CardInstance = action["inst"]
+			_enemy_mana -= inst.data.cost
+			_enemy_hand.erase(inst)
+			_cast_enemy_spell(inst, action["target"])
+		EnemyAI.Action.GENERATE:
+			var building: CardInstance = action["building"]
+			var token := CardInstance.from_data(building.data.generated_card())
+			_enemy_mana -= token.data.cost
+			building.attack_exhausted = true
+			var b_ui := _board.get_card_ui(building)
+			if b_ui != null:
+				b_ui.set_exhausted(true)
+			var results := _board.place_enemy_card(token, action["row"], action["col"])
+			_animator.show_effect_results(results)
+			_vfx.play(VFXEvent.card_placed(_board.get_card_ui(token)))
+		EnemyAI.Action.MOVE:
+			_board.move_enemy_card(action["inst"], action["row"], action["col"])
+	await get_tree().create_timer(0.35).timeout
+
+
+# Applies an enemy spell's ON_PLAY effects against the AI-chosen target (mirrors
+# SpellCaster._execute_spell, minus the player-facing targeting UI).
+func _cast_enemy_spell(inst: CardInstance, target: CardInstance) -> void:
+	for effect: Effect in inst.data.effects:
+		if effect.trigger != Effect.Trigger.ON_PLAY:
+			continue
+		var ctx := EffectContext.make(inst, _board.player_grid, _board.enemy_grid)
+		ctx.manual_target = target
+		_animator.show_effect_results(EffectSystem.apply_single(effect, inst, ctx))
+		_board.cleanup_effect_deaths()
+	_board.refresh()
+
+
+# ── Rook / building card generation ──────────────────────────────────────────────
+
+# At the start of each round every unit can attack again; un-dim any building
+# that spent its attack generating a card last round.
+func _reset_exhaustion() -> void:
+	for inst: CardInstance in _board.get_all_units():
+		inst.attack_exhausted = false
+		var ui := _board.get_card_ui(inst)
+		if ui != null:
+			ui.set_exhausted(false)
+
+
+func _player_buildings() -> Array:
+	var out: Array = []
+	for inst: CardInstance in _board.get_all_units():
+		if inst.owner == 0 and inst.data.is_building():
+			out.append(inst)
+	return out
+
+
+# Toggles the gold targeting glow on a building's board slot, used to point out
+# which rook a hovered/selected token belongs to.
+func _highlight_building(inst: CardInstance, on: bool) -> void:
+	if inst == null or inst.owner != 0 or inst.row < 0 or inst.col < 0:
+		return
+	(_board.player_slots[inst.row][inst.col] as SlotUI).set_targetable(on)
 
 
 func _on_done_pressed() -> void:
-	_deselect_hand_card()
+	_hand.deselect()
+	_hand.clear_tokens()
 	_phase = Phase.COMBAT
 	_board.placement_enabled = false
 	_set_placement_input(false)
@@ -216,45 +255,54 @@ func _run_combat() -> void:
 	for attacker: CardInstance in all_cards:
 		if not attacker.is_alive():
 			continue
-		var target := _board.find_target(attacker)
-		if target == null:
+		# A building that spent its attack generating a card sits this round out.
+		if attacker.attack_exhausted:
 			continue
+		await _resolve_attack(attacker)
 
-		var a_card := _board.get_card_ui(attacker)
-		var t_card := _board.get_card_ui(target)
-		var a_home := a_card.global_position
 
-		var ghost := _animator.spawn_ghost(a_card)
-		a_card.modulate.a = 0.0
-		await _animator.play_lunge(ghost, t_card.global_position)
+# Plays out a single attacker's strike: target lookup, lunge animation, damage +
+# triggered effects, and the target's death or survival.
+func _resolve_attack(attacker: CardInstance) -> void:
+	var target := _board.find_target(attacker)
+	if target == null:
+		return
 
-		await _animator.shake_card(t_card)
-		var dmg := attacker.get_attribute("attack")
-		var atk_results := EffectSystem.trigger(Effect.Trigger.ON_ATTACK, attacker,
-			EffectContext.make(attacker, _board.player_grid, _board.enemy_grid))
-		_animator.show_effect_results(atk_results)
-		var dmg_split := target.take_damage(dmg)
-		var dtk_results := EffectSystem.trigger(Effect.Trigger.ON_DAMAGE_TAKEN, target,
-			EffectContext.make(target, _board.player_grid, _board.enemy_grid))
-		_animator.show_effect_results(dtk_results)
-		if dmg_split.shield_absorbed > 0:
-			_vfx.play(VFXEvent.shield_hit(t_card, dmg_split.shield_absorbed))
-		if dmg_split.health_damage > 0:
-			_vfx.play(VFXEvent.health_damage(t_card, dmg_split.health_damage))
+	var a_card := _board.get_card_ui(attacker)
+	var t_card := _board.get_card_ui(target)
+	var a_home := a_card.global_position
 
-		await _animator.play_retreat(ghost, a_home)
-		ghost.queue_free()
-		a_card.modulate.a = 1.0
+	var ghost := _animator.spawn_ghost(a_card)
+	a_card.modulate.a = 0.0
+	await _animator.play_lunge(ghost, t_card.global_position)
 
-		if not target.is_alive():
-			var death_results := EffectSystem.trigger(Effect.Trigger.ON_DEATH, target,
-				EffectContext.make(target, _board.player_grid, _board.enemy_grid))
-			_animator.show_effect_results(death_results)
-			await _vfx.play(VFXEvent.death(t_card))
-			_board.remove_card(target)
-		else:
-			t_card.refresh()
-			await get_tree().create_timer(0.2).timeout
+	await _animator.shake_card(t_card)
+	var dmg := attacker.get_attribute("attack")
+	_animator.show_effect_results(_trigger(Effect.Trigger.ON_ATTACK, attacker))
+	var dmg_split := target.take_damage(dmg)
+	_animator.show_effect_results(_trigger(Effect.Trigger.ON_DAMAGE_TAKEN, target))
+	if dmg_split.shield_absorbed > 0:
+		_vfx.play(VFXEvent.shield_hit(t_card, dmg_split.shield_absorbed))
+	if dmg_split.health_damage > 0:
+		_vfx.play(VFXEvent.health_damage(t_card, dmg_split.health_damage))
+
+	await _animator.play_retreat(ghost, a_home)
+	ghost.queue_free()
+	a_card.modulate.a = 1.0
+
+	if not target.is_alive():
+		_animator.show_effect_results(_trigger(Effect.Trigger.ON_DEATH, target))
+		await _vfx.play(VFXEvent.death(t_card))
+		_board.remove_card(target)
+	else:
+		t_card.refresh()
+		await get_tree().create_timer(0.2).timeout
+
+
+# DRYs the repeated "fire an effect trigger for an instance in the current board
+# context" call used throughout combat resolution.
+func _trigger(t: Effect.Trigger, inst: CardInstance) -> Array:
+	return EffectSystem.trigger(t, inst, EffectContext.make(inst, _board.player_grid, _board.enemy_grid))
 
 
 func _handle_combat_end() -> void:
@@ -290,25 +338,40 @@ func _handle_combat_end() -> void:
 func _on_board_unit_placed(_inst: CardInstance, card_ui: CardUI, from_hand: bool, cost: int, results: Array) -> void:
 	if from_hand:
 		_mana -= cost
-		if _selected_hand_card == card_ui:
-			_deselect_hand_card()
-		_hand_cards.erase(card_ui)
+		if card_ui.is_generated:
+			_consume_generated_token(card_ui)
+		else:
+			_hand.remove_card(card_ui)
 		_refresh_mana()
 	_animator.show_effect_results(results)
 	_vfx.play(VFXEvent.card_placed(card_ui))
 
 
+# A generated token was just played: tap its source rook (no attack this round)
+# and turn the token into an ordinary board unit.
+func _consume_generated_token(card_ui: CardUI) -> void:
+	_hand.remove_token(card_ui)
+	var rook: CardInstance = card_ui.card_instance.source_building
+	if rook != null:
+		rook.attack_exhausted = true
+		_highlight_building(rook, false)
+		var rook_ui := _board.get_card_ui(rook)
+		if rook_ui != null:
+			rook_ui.set_exhausted(true)
+	card_ui.clear_generated()
+
+
 func _on_board_slot_pressed(slot: SlotUI) -> void:
 	if _spell_caster.is_targeting():
 		return  # spell_caster handles via its own slot_pressed connection
-	if _phase != Phase.PLAYER_PLACE or _selected_hand_card == null:
+	var card := _hand.selected()
+	if _phase != Phase.PLAYER_PLACE or card == null:
 		return
 	if slot.get_card() != null:
 		return
-	if not _board.can_place_from_hand(_selected_hand_card):
+	if not _board.can_place_from_hand(card):
 		return
-	var card := _selected_hand_card
-	_deselect_hand_card()
+	_hand.deselect()
 	_board.do_place_unit(slot, card)
 
 
@@ -328,7 +391,7 @@ func _on_targeting_ended() -> void:
 
 func _on_spell_consumed(card_ui: CardUI, cost: int) -> void:
 	_mana -= cost
-	_hand_cards.erase(card_ui)
+	_hand.remove_card(card_ui)
 	_refresh_mana()
 
 
@@ -350,7 +413,7 @@ func _build_ui() -> void:
 	boards.add_child(VSeparator.new())
 	_board.build_section(boards, false)
 
-	_build_hand_area(root)
+	_hand.build_into(root)
 
 
 func _build_hud(parent: VBoxContainer) -> void:
@@ -388,23 +451,6 @@ func _build_hud(parent: VBoxContainer) -> void:
 	hbox.add_child(dbg_win)
 
 
-func _build_hand_area(parent: VBoxContainer) -> void:
-	var panel := PanelContainer.new()
-	panel.custom_minimum_size.y = 210.0
-	parent.add_child(panel)
-
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_horizontal = SIZE_EXPAND_FILL
-	scroll.size_flags_vertical   = SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	scroll.vertical_scroll_mode   = ScrollContainer.SCROLL_MODE_DISABLED
-	panel.add_child(scroll)
-
-	_hand_box = HBoxContainer.new()
-	_hand_box.add_theme_constant_override("separation", 12)
-	scroll.add_child(_hand_box)
-
-
 # ── Display refresh ────────────────────────────────────────────────────────────
 
 func _refresh() -> void:
@@ -412,18 +458,13 @@ func _refresh() -> void:
 		_turn_label.text = "Turn %d" % _turn
 	_refresh_mana()
 	_board.refresh()
-	_refresh_hand()
+	_hand.refresh()
 	_refresh_done_btn()
 
 
 func _refresh_mana() -> void:
 	if _mana_label:
 		_mana_label.text = "Mana  %d / %d  " % [_mana, _max_mana]
-
-
-func _refresh_hand() -> void:
-	for ui in _hand_cards:
-		ui.refresh()
 
 
 func _refresh_done_btn() -> void:
@@ -444,32 +485,15 @@ func _refresh_done_btn() -> void:
 			_done_btn.disabled = true
 
 
-# ── Hand input ─────────────────────────────────────────────────────────────────
+# ── Placement input gating ───────────────────────────────────────────────────────
 
+# The hand owns its own cards/tokens; here we only toggle the board-side units that
+# can be repositioned during placement.
 func _set_placement_input(enabled: bool) -> void:
+	_hand.set_input_enabled(enabled)
 	var filter := Control.MOUSE_FILTER_STOP if enabled else Control.MOUSE_FILTER_IGNORE
-	for ui: CardUI in _hand_cards:
-		ui.mouse_filter = filter
 	for r in BoardData.ROWS:
 		for c in BoardData.COLS:
 			var p: CardUI = (_board.player_slots[r][c] as SlotUI).get_card()
 			if p:
 				p.mouse_filter = filter
-
-
-func _on_hand_card_pressed(card_ui: CardUI) -> void:
-	if _phase != Phase.PLAYER_PLACE:
-		return
-	if _selected_hand_card == card_ui:
-		_deselect_hand_card()
-	else:
-		if _selected_hand_card != null:
-			_deselect_hand_card()
-		_selected_hand_card = card_ui
-		card_ui.set_selected(true)
-
-
-func _deselect_hand_card() -> void:
-	if _selected_hand_card != null:
-		_selected_hand_card.set_selected(false)
-		_selected_hand_card = null

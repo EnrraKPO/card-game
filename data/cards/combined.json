@@ -102,8 +102,8 @@
     ]
   },
   {
-    "id": "mud",
-    "display_name": "Mud",
+    "id": "clay",
+    "display_name": "Clay",
     "cost": 2, "attack": 4, "health": 6, "speed": 2,
     "description": "Bog down a unit in thick mud, reducing its Speed by 3.",
     "elements": ["water", "earth"], "chess_pieces": [],

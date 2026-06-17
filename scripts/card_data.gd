@@ -19,6 +19,30 @@ var elements: Array[String] = []
 var chess_pieces: Array[String] = []
 var targeting_strategy: TargetingStrategy
 
+
+# A building is any unit carrying a rook in its composition. Buildings are
+# defensive structures: once placed on the board they are rooted and cannot be
+# repositioned (enforced in CardUI._get_drag_data and CombatBoard.do_place_unit).
+func is_building() -> bool:
+	return chess_pieces.has("rook")
+
+
+# The card this building generates once per turn (see combat.gd): a copy of the
+# card composed of all its NON-rook components. Strip every rook and rebuild from
+# what's left (other pieces + elements). A building with no non-rook components
+# (a plain Rook, or a double Rook) generates nothing. Returns null in that case
+# or when this isn't a building.
+func generated_card() -> CardData:
+	if not is_building():
+		return null
+	var chess := chess_pieces.duplicate()
+	while chess.has("rook"):
+		chess.erase("rook")
+	if chess.is_empty() and elements.is_empty():
+		return null
+	return CardData.get_card(CardData.composition_key(elements, chess))
+
+
 static var _all: Dictionary = {}
 static var _by_composition: Dictionary = {}
 

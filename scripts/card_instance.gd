@@ -9,6 +9,13 @@ var col: int = -1
 var owner: int = -1  # 0 = player, 1 = enemy
 var modifiers: Dictionary = {}  # attribute id -> cumulative int delta
 
+# Set true for the round when this unit spent its attack to generate a card
+# (see rook/building generation in combat.gd). Reset at the start of each round.
+var attack_exhausted: bool = false
+# On a rook-generated token, points back to the building that produced it so
+# playing the token can exhaust that building's attack. Null on normal units.
+var source_building: CardInstance = null
+
 var is_spell: bool:
 	get: return data != null and data.card_type == CardData.CardType.SPELL
 

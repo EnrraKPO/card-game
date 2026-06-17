@@ -117,6 +117,16 @@ func place_enemy_card(inst: CardInstance, r: int, c: int) -> Array:
 	return results
 
 
+# Relocates an already-placed enemy unit to an empty slot (the CPU's reposition
+# action). Carries the existing CardUI across so no ON_PLAY re-triggers.
+func move_enemy_card(inst: CardInstance, r: int, c: int) -> void:
+	var ui: CardUI = (enemy_slots[inst.row][inst.col] as SlotUI).clear_card()
+	enemy_grid[inst.row][inst.col] = null
+	inst.row = r; inst.col = c
+	enemy_grid[r][c] = inst
+	(enemy_slots[r][c] as SlotUI).set_card(ui)
+
+
 func remove_card(inst: CardInstance) -> void:
 	var slots := player_slots if inst.owner == 0 else enemy_slots
 	var board := player_grid  if inst.owner == 0 else enemy_grid
@@ -240,6 +250,11 @@ func do_place_unit(slot: SlotUI, card_ui: CardUI) -> void:
 	var from_hand: bool = is_hand_card.call(card_ui)
 
 	if from_hand and inst.data.cost > get_mana.call():
+		return
+
+	# Buildings are rooted once placed — never relocate an already-placed one.
+	# (CardUI._get_drag_data normally prevents the drag from even starting.)
+	if not from_hand and inst.data.is_building():
 		return
 
 	if not from_hand and inst.row >= 0 and inst.col >= 0:

@@ -6,6 +6,10 @@ var _entries: Array = []
 var _selected: Array = []   # indices into _entries, max 2
 var _result_card: CardData = null
 
+# Must match the CardUI root custom_minimum_size in scenes/card_ui.tscn so the
+# deck grid and combine slots scale with the cards.
+const CARD_SIZE := Vector2(160, 210)
+
 var _deck_grid: GridContainer
 var _slot_a: Control
 var _slot_b: Control
@@ -77,7 +81,7 @@ func _build_ui() -> void:
 
 	# Right: combination panel
 	var right := VBoxContainer.new()
-	right.custom_minimum_size.x = 440.0
+	right.custom_minimum_size.x = 620.0
 	right.size_flags_vertical    = SIZE_EXPAND_FILL
 	right.add_theme_constant_override("separation", 0)
 	body.add_child(right)
@@ -153,7 +157,7 @@ func _build_ui() -> void:
 
 func _make_card_slot() -> Control:
 	var slot := Control.new()
-	slot.custom_minimum_size = Vector2(130, 170)
+	slot.custom_minimum_size = CARD_SIZE
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.12, 0.12, 0.18)
 	style.set_border_width_all(1)
@@ -185,7 +189,7 @@ func _rebuild_deck() -> void:
 			continue
 		var inst := CardInstance.from_data(data)
 		var ui   := CardUI.create(inst)
-		ui.custom_minimum_size = Vector2(130, 170)
+		ui.custom_minimum_size = CARD_SIZE
 
 		var combinable := data.elements.size() > 0 or data.chess_pieces.size() > 0
 		if not combinable:
