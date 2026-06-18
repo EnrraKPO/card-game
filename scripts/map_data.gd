@@ -39,6 +39,11 @@ static func generate(seed_val: int) -> MapData:
 			node.type = _pick_type(f, rng)
 			if node.type == MapNodeData.Type.EVENT:
 				node.event_attr = DeckCard.UPGRADABLE[rng.randi() % DeckCard.UPGRADABLE.size()]
+			elif node.type in [MapNodeData.Type.COMBAT, MapNodeData.Type.ELITE]:
+				# Previewable essence reward: a single random element, modest fixed amount
+				# (balance/authoring is a later pass).
+				var element: String = Materials.ELEMENTS[rng.randi() % Materials.ELEMENTS.size()]
+				node.material_rewards = {element: 2}
 			floor_nodes.append(node)
 		map.floors.append(floor_nodes)
 

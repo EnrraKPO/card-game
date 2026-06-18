@@ -30,36 +30,9 @@ func _ready() -> void:
 
 
 func _build_ui() -> void:
-	var bg := ColorRect.new()
-	bg.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	bg.color = Color(0.07, 0.07, 0.12)
-	add_child(bg)
-
-	var root := VBoxContainer.new()
-	root.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	root.add_theme_constant_override("separation", 0)
-	add_child(root)
-
-	# ── Header ─────────────────────────────────────────────────────────────────
-	var header := PanelContainer.new()
-	header.custom_minimum_size.y = 56.0
-	root.add_child(header)
-
-	var header_hbox := HBoxContainer.new()
-	header.add_child(header_hbox)
-
-	var title := Label.new()
-	title.text = "  Forge — Combine Cards"
-	title.add_theme_font_size_override("font_size", 22)
-	title.size_flags_horizontal = SIZE_EXPAND_FILL
-	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	header_hbox.add_child(title)
-
-	var leave_btn := Button.new()
-	leave_btn.text = "Leave  "
-	leave_btn.add_theme_font_size_override("font_size", 18)
-	leave_btn.pressed.connect(_leave)
-	header_hbox.add_child(leave_btn)
+	var s := ScreenUI.scaffold(self, "Forge — Combine Cards")
+	var root: VBoxContainer = s.root
+	s.header.add_child(ScreenUI.nav_button("Leave  ", _leave))
 
 	# ── Body ───────────────────────────────────────────────────────────────────
 	var body := HBoxContainer.new()

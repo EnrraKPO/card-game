@@ -14,19 +14,29 @@ extends RefCounted
 
 const STARTING_KING := "king"
 
+# TEMP dev seed: kings a fresh profile starts with (one deck each). Until the unlock
+# economy (renown spend) lands, this is how the elemental kings become reachable in-game
+# — trim to just [STARTING_KING] once kings are properly earned.
+const STARTING_KINGS := ["king", "earth_fire_king", "light_light_king"]
+
 var unlocked_kings: Array = []   # Array[String]: king card ids the player may run with
 var decks: Array = []            # Array[OwnedDeck]: the player's owned, editable decks
 var selected_deck_id: String = ""  # which OwnedDeck a fresh run uses
 var next_deck_uid: int = 0       # monotonic counter for collision-free OwnedDeck ids
 var renown: int = 0              # meta-currency earned from runs, spent on permanent unlocks
+# Profile-level crafting resources (the meta economy, distinct from run cards) — see
+# MaterialBag. Essences keyed by element id ("fire".."light"); King Pieces by "king_piece".
+var materials: MaterialBag = MaterialBag.new()
 
 
 static func create_default() -> ProfileData:
 	var p := ProfileData.new()
-	p.unlocked_kings = [STARTING_KING]
 	p.renown = 0
-	var deck := p._seed_deck(STARTING_KING)
-	p.selected_deck_id = deck.id
+	for king_id: String in STARTING_KINGS:
+		p.unlocked_kings.append(king_id)
+		var deck := p._seed_deck(king_id)
+		if p.selected_deck_id.is_empty():
+			p.selected_deck_id = deck.id
 	return p
 
 
@@ -37,6 +47,7 @@ static func from_dict(data: Dictionary) -> ProfileData:
 	p.unlocked_kings = data.get("unlocked_kings", [STARTING_KING])
 	p.renown = int(data.get("renown", 0))
 	p.next_deck_uid = int(data.get("next_deck_uid", 0))
+	p.materials = MaterialBag.from_dict(data.get("materials", {}))
 	if data.has("decks"):
 		for d in data.get("decks", []):
 			p.decks.append(OwnedDeck.from_dict(d))
@@ -69,6 +80,7 @@ func to_dict() -> Dictionary:
 		"selected_deck_id": selected_deck_id,
 		"next_deck_uid":    next_deck_uid,
 		"renown":           renown,
+		"materials":        materials.to_dict(),
 	}
 
 
@@ -95,6 +107,22 @@ func unlock_king(king_id: String) -> OwnedDeck:
 	if king_id not in unlocked_kings:
 		unlocked_kings.append(king_id)
 	return _seed_deck(king_id)
+
+
+# Adds another deck for an ALREADY-unlocked King (the "New Deck" flow). Returns null if
+# the King isn't unlocked — the UI only ever offers unlocked kings, but guard anyway.
+func add_deck_for_king(king_id: String) -> OwnedDeck:
+	if king_id not in unlocked_kings:
+		return null
+	return _seed_deck(king_id)
+
+
+# Marks an owned deck as the active one (used by a fresh run). No-op if the id is unknown.
+func select_deck(deck_id: String) -> void:
+	for od: OwnedDeck in decks:
+		if od.id == deck_id:
+			selected_deck_id = deck_id
+			return
 
 
 # ── internals ─────────────────────────────────────────────────────────────────────

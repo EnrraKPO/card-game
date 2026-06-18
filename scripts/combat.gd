@@ -374,6 +374,9 @@ func _handle_combat_end() -> void:
 	var player_won := _board.player_king_alive()
 	var enc := GameData.current_encounter
 	if player_won:
+		# Apply the encounter's automatic rewards (gold + crafting materials) in one place,
+		# uniformly for boss and normal wins. The card-pick reward is handled by reward_screen.
+		GameData.apply_encounter_rewards(enc)
 		# Carry the King's wounds back into the run (it survived, so health > 0).
 		var run := GameData.current_run
 		if run != null:
@@ -390,12 +393,9 @@ func _handle_combat_end() -> void:
 					state.visited_nodes.append(enc.completing_node_id)
 				if enc.destination_node_id >= 0:
 					state.current_node_id = enc.destination_node_id
-		# A boss skips the normal card reward and funnels back through the map, which
-		# routes to Stage Cleared (special reward) or Run Successful on the final stage.
-		# It still pays its gold here, since the reward screen won't.
+		# A boss skips the normal card reward and funnels straight back through the map (→
+		# Stage Cleared / Run Successful); a normal win goes to the card-reward screen.
 		var is_boss := enc != null and enc.type == EncounterData.Type.BOSS
-		if is_boss and GameData.current_run != null:
-			GameData.current_run.gold += enc.gold_reward
 		GameData.save_run()
 		if is_boss:
 			get_tree().change_scene_to_file("res://scenes/map.tscn")

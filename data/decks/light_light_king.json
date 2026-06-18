@@ -1,0 +1,13 @@
+{
+  "id": "light_light_king",
+  "cards": [
+    "light_pawn", "light_pawn", "light_pawn", "light_pawn",
+    "light_light_pawn", "light_light_pawn",
+    "pawn", "pawn",
+    "light_bishop", "light_bishop",
+    "light_knight", "light_knight",
+    "light_rook", "light_rook",
+    "light_light_queen",
+    "light", "light", "light_light"
+  ]
+}

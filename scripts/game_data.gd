@@ -16,6 +16,8 @@ var current_map_state: MapState = null
 var current_encounter: EncounterData = null
 # The stat a "?" event site upgrades, handed to the event screen on entry (transient).
 var current_event_attr: String = ""
+# The deck the detail screen should display, handed off from the Decks screen (transient).
+var viewing_deck_id: String = ""
 # Meta-progression for the currently-selected slot (see ProfileData).
 var current_profile: ProfileData = null
 
@@ -58,6 +60,26 @@ func save_profile() -> void:
 	if current_profile == null or current_slot < 0:
 		return
 	_write_section("profile_%d" % current_slot, current_profile.to_dict())
+
+
+# Awards profile crafting resources (the one entry point any node/screen uses — combat
+# now, events/shops later). `rewards` is an id→count dict; no-op if empty or no profile.
+func grant_materials(rewards: Dictionary) -> void:
+	if rewards.is_empty() or current_profile == null:
+		return
+	current_profile.materials.add_many(rewards)
+	save_profile()
+
+
+# The one place an encounter's AUTOMATIC win rewards are applied: gold → the run, crafting
+# materials → the profile. (The card-pick reward stays interactive in reward_screen.)
+# Caller persists the run; grant_materials persists the profile.
+func apply_encounter_rewards(enc: EncounterData) -> void:
+	if enc == null:
+		return
+	if current_run != null:
+		current_run.gold += enc.gold_reward
+	grant_materials(enc.material_rewards)
 
 
 # ── Run lifecycle (one run per slot) ──────────────────────────────────────────────

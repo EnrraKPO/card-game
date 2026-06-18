@@ -11,6 +11,7 @@ func enter(node: MapNodeData, map_screen: MapScreen) -> void:
 		return
 
 	var enc := template.instantiate(map_screen.encounter_rng)
+	enc.material_rewards    = node.material_rewards.duplicate()   # the reward previewed on the map
 	enc.completing_node_id  = map_screen.current_node_id
 	enc.destination_node_id = node.id
 	GameData.current_encounter = enc

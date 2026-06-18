@@ -13,6 +13,10 @@ var visited: bool = false
 # generation from the seeded RNG, so it's stable across reloads (the map is rebuilt
 # from the seed). Empty for non-event nodes. See MapData.generate.
 var event_attr: String = ""
+# For COMBAT/ELITE nodes: the profile resources (id→count) won here, assigned at map
+# generation from the seeded RNG (so it's stable across reloads and previewable on the
+# map before you fight). Empty for other node types. See MapData.generate.
+var material_rewards: Dictionary = {}
 
 
 static func get_label(t: Type) -> String:

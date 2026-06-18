@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://k8nxvcdk7sjo"]
+
+[ext_resource type="Script" path="res://scripts/deck_select_screen.gd" id="1"]
+
+[node name="DeckSelectScreen" type="Control"]
+script = ExtResource("1")

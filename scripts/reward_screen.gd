@@ -31,6 +31,19 @@ func _ready() -> void:
 	gold_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(gold_lbl)
 
+	# Crafting resources earned this fight (already banked at combat end — shown for feedback).
+	var mats: Dictionary = GameData.current_encounter.material_rewards if GameData.current_encounter != null else {}
+	for id: String in mats:
+		var amt := int(mats[id])
+		if amt <= 0:
+			continue
+		var mat_lbl := Label.new()
+		mat_lbl.text = "+%d %s" % [amt, Materials.display_name(id)]
+		mat_lbl.add_theme_font_size_override("font_size", 18)
+		mat_lbl.modulate = Materials.color(id)
+		mat_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		vbox.add_child(mat_lbl)
+
 	var card_row := HBoxContainer.new()
 	card_row.add_theme_constant_override("separation", 32)
 	card_row.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -69,8 +82,8 @@ func _skip() -> void:
 
 
 func _finish() -> void:
-	if GameData.current_encounter != null:
-		GameData.current_run.gold += GameData.current_encounter.gold_reward
+	# Gold + materials were already applied at combat end (GameData.apply_encounter_rewards);
+	# here we only persist any card the player picked and leave.
 	GameData.save_run()
 	GameData.current_encounter = null
 	get_tree().change_scene_to_file("res://scenes/map.tscn")

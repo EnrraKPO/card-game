@@ -160,6 +160,30 @@ func _rebuild_node_buttons() -> void:
 
 			add_child(btn)
 
+			# Previewed resource reward, so routes can be planned at a glance.
+			if not node.material_rewards.is_empty():
+				btn.tooltip_text = "%s — reward: %s" % [btn.text, Materials.summary(node.material_rewards)]
+				_add_reward_preview(node, pos)
+
+
+# A small element-coloured "+2 Fire" caption under a node, showing its essence reward.
+func _add_reward_preview(node: MapNodeData, center: Vector2) -> void:
+	var lbl := Label.new()
+	lbl.set_meta("map_node", true)
+	lbl.text = Materials.summary(node.material_rewards)
+	lbl.add_theme_font_size_override("font_size", 11)
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.custom_minimum_size = Vector2(100, 14)
+	lbl.size = Vector2(100, 14)
+	lbl.position = center + Vector2(-50, NODE_SIZE.y / 2.0 + 1.0)
+	lbl.mouse_filter = MOUSE_FILTER_IGNORE
+	# Single-element rewards tint by their element; mixed rewards stay neutral.
+	var color := Color(0.8, 0.82, 0.9)
+	if node.material_rewards.size() == 1:
+		color = Materials.color(node.material_rewards.keys()[0])
+	lbl.modulate = color if not node.visited else color.darkened(0.5)
+	add_child(lbl)
+
 
 func _draw() -> void:
 	if node_positions.is_empty():

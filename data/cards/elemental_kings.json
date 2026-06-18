@@ -1,0 +1,30 @@
+[
+  {
+    "id": "earth_fire_king",
+    "display_name": "Magma King",
+    "cost": 0,
+    "attack": 1,
+    "health": 20,
+    "speed": 3,
+    "shield": 5,
+    "is_king": true,
+    "elements": ["earth", "fire"],
+    "chess_pieces": ["king"],
+    "description": "Ruler of fire and earth. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+    "effects": []
+  },
+  {
+    "id": "light_light_king",
+    "display_name": "Pure Light King",
+    "cost": 0,
+    "attack": 1,
+    "health": 20,
+    "speed": 3,
+    "shield": 5,
+    "is_king": true,
+    "elements": ["light", "light"],
+    "chess_pieces": ["king"],
+    "description": "Ruler of pure light. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+    "effects": []
+  }
+]

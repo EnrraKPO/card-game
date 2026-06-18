@@ -1,0 +1,14 @@
+{
+  "id": "earth_fire_king",
+  "cards": [
+    "fire_pawn", "fire_pawn",
+    "earth_pawn", "earth_pawn",
+    "earth_fire_pawn", "earth_fire_pawn",
+    "pawn", "pawn",
+    "fire_bishop", "earth_bishop",
+    "fire_knight", "earth_knight",
+    "fire_rook", "earth_rook",
+    "earth_fire_queen",
+    "fire", "earth", "magma"
+  ]
+}

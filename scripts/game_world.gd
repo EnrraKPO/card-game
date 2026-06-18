@@ -41,7 +41,7 @@ func _ready() -> void:
 	panels.add_theme_constant_override("separation", 16)
 	vbox.add_child(panels)
 	panels.add_child(_panel_button("Kings"))
-	panels.add_child(_panel_button("Decks"))
+	panels.add_child(_panel_button("Decks", "res://scenes/deck_screen.tscn"))
 	panels.add_child(_panel_button("Unlocks"))
 
 	var has_run := GameData.slot_has_run(GameData.current_slot)
@@ -93,6 +93,11 @@ func _build_loadout_panel() -> Control:
 	_add_stat(box, "King", king_name)
 	_add_stat(box, "Deck", "%d cards" % (deck.cards.size() if deck != null else 0))
 	_add_stat(box, "Renown", str(profile.renown))
+	# Crafting resources earned from runs (essences / King Pieces).
+	for id: String in profile.materials.ids():
+		var n := profile.materials.count(id)
+		if n > 0:
+			_add_stat(box, Materials.display_name(id), str(n))
 	return panel
 
 
@@ -103,22 +108,27 @@ func _add_stat(box: VBoxContainer, key: String, value: String) -> void:
 	box.add_child(lbl)
 
 
-func _panel_button(label: String) -> Button:
+func _panel_button(label: String, scene_path: String = "") -> Button:
 	var btn := Button.new()
 	btn.text = label
 	btn.custom_minimum_size = Vector2(150, 52)
 	btn.add_theme_font_size_override("font_size", 18)
-	btn.disabled = true
-	btn.tooltip_text = "Coming soon"
+	if scene_path.is_empty():
+		btn.disabled = true
+		btn.tooltip_text = "Coming soon"
+	else:
+		btn.pressed.connect(func(): get_tree().change_scene_to_file(scene_path))
 	return btn
 
 
 func _on_embark() -> void:
+	# Continuing an in-progress run keeps its existing deck snapshot — no choice to make.
+	# A fresh run goes through the deck-selection screen, which sets the run deck and launches.
 	if GameData.slot_has_run(GameData.current_slot):
 		GameData.load_run()
+		get_tree().change_scene_to_file("res://scenes/map.tscn")
 	else:
-		GameData.start_new_run()
-	get_tree().change_scene_to_file("res://scenes/map.tscn")
+		get_tree().change_scene_to_file("res://scenes/deck_select_screen.tscn")
 
 
 func _on_abandon_confirmed() -> void:
