@@ -4,7 +4,8 @@ extends NodeKind
 # Shared by Combat, Elite, and Boss nodes — they only differ in which
 # EncounterTemplateData pool gets sampled (see EncounterTemplateData.pick_for).
 func enter(node: MapNodeData, map_screen: MapScreen) -> void:
-	var template := EncounterTemplateData.pick_for(node.type, node.floor, map_screen.encounter_rng)
+	var stage: int = GameData.current_run.act if GameData.current_run != null else 1
+	var template := EncounterTemplateData.pick_for(node.type, node.floor, stage, map_screen.encounter_rng)
 	if template == null:
 		push_error("NodeKindCombat: no encounter template available for node_type %s" % node.type)
 		return

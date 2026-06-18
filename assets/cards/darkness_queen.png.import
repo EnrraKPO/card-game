@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cauaka7l5umrf"
-path="res://.godot/imported/water_queen.png-f83c0b7dd38051e9d7e1498bec9faeb3.ctex"
+uid="uid://g08ai0n6224c"
+path="res://.godot/imported/darkness_queen.png-3820c0535702740df1e6d9ad2e44e5d0.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/cards/water_queen.png"
-dest_files=["res://.godot/imported/water_queen.png-f83c0b7dd38051e9d7e1498bec9faeb3.ctex"]
+source_file="res://assets/cards/darkness_queen.png"
+dest_files=["res://.godot/imported/darkness_queen.png-3820c0535702740df1e6d9ad2e44e5d0.ctex"]
 
 [params]
 

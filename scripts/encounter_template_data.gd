@@ -5,6 +5,10 @@ var id: String = ""
 var node_type: MapNodeData.Type = MapNodeData.Type.COMBAT
 var min_floor: int = 0
 var max_floor: int = 999
+# Stage (act) band this template is eligible for — the difficulty-scaling knob. Author
+# tougher templates (bigger enemy_pool / pick_count / stats) tagged to later stages.
+var min_stage: int = 1
+var max_stage: int = 999
 var weight: float = 1.0
 var enemy_pool: Array = []   # Array[{ "id": String, "weight": float }]
 var pick_count: Array = [1, 1]    # [min, max] inclusive
@@ -55,6 +59,8 @@ static func _from_dict(d: Dictionary) -> EncounterTemplateData:
 	t.node_type   = _str_node_type(d.get("node_type", "combat"))
 	t.min_floor   = d.get("min_floor", 0)
 	t.max_floor   = d.get("max_floor", 999)
+	t.min_stage   = d.get("min_stage", 1)
+	t.max_stage   = d.get("max_stage", 999)
 	t.weight      = d.get("weight", 1.0)
 	t.ai          = d.get("ai", "default")
 	t.reward_pool = d.get("reward_pool", "default")
@@ -78,13 +84,14 @@ static func _str_node_type(s: String) -> MapNodeData.Type:
 
 # ── Selection ───────────────────────────────────────────────────────────────
 
-# Picks a template matching node_type whose floor band contains `floor`.
-# Falls back to ignoring the floor band (any template of that node_type) if
-# nothing matches exactly, so a gap in authored floor coverage degrades
-# gracefully instead of crashing.
-static func pick_for(p_node_type: MapNodeData.Type, floor: int, rng: RandomNumberGenerator) -> EncounterTemplateData:
+# Picks a template matching node_type whose floor AND stage bands contain `floor`/`stage`.
+# Falls back to ignoring the bands (any template of that node_type) if nothing matches
+# exactly, so a gap in authored coverage degrades gracefully instead of crashing.
+static func pick_for(p_node_type: MapNodeData.Type, floor: int, stage: int, rng: RandomNumberGenerator) -> EncounterTemplateData:
 	var in_band: Array = _all.filter(func(t: EncounterTemplateData) -> bool:
-		return t.node_type == p_node_type and floor >= t.min_floor and floor <= t.max_floor
+		return t.node_type == p_node_type \
+			and floor >= t.min_floor and floor <= t.max_floor \
+			and stage >= t.min_stage and stage <= t.max_stage
 	)
 	var candidates: Array = in_band if not in_band.is_empty() else \
 		_all.filter(func(t: EncounterTemplateData) -> bool: return t.node_type == p_node_type)

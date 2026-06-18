@@ -3,6 +3,14 @@ extends RefCounted
 
 const FLOORS := 10
 const NODES_PER_FLOOR := 3
+# How many stages (acts) a full run spans; the last stage's boss is the final boss.
+const STAGES := 3
+
+
+# The boss is always the lone node on the top floor, so its id is deterministic
+# across every generated map. Standing on it means the stage has been cleared.
+static func boss_node_id() -> int:
+	return (FLOORS - 1) * NODES_PER_FLOOR
 
 # Fallback used only if data/map/node_weights.json is missing or has no row
 # covering a given floor — keeps generation from breaking outright.

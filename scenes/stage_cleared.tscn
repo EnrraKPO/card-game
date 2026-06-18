@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://bgv2ji77g15pc"]
+
+[ext_resource type="Script" path="res://scripts/stage_cleared.gd" id="1"]
+
+[node name="StageCleared" type="Control"]
+script = ExtResource("1")

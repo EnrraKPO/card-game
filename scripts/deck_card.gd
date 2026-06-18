@@ -15,6 +15,7 @@ const UPGRADABLE := ["attack", "health", "speed", "shield"]
 
 var id: String
 var override: Dictionary = {}   # empty = use the registered base card; else a full def
+var charms: Array = []           # Array[String]: charm ids enchanting this specific card
 
 
 static func make(card_id: String) -> DeckCard:
@@ -47,26 +48,51 @@ func bump(field: String, amount: int = 1) -> void:
 	override = def
 
 
-# The CardData this deck card resolves to — the overridden definition if present,
-# otherwise the registered base.
-func resolved_data() -> CardData:
-	if override.is_empty():
-		return CardData.get_card(id)
-	return CardData.build_from_dict(override)
+# Attaches a charm (once — no duplicate of the same charm).
+func add_charm(charm_id: String) -> void:
+	if charm_id not in charms:
+		charms.append(charm_id)
+
+
+# Merges a charm's definition-patch (stat bumps + extra effects) into a def dict, so the
+# charm's effects fire through the normal per-card trigger system once built.
+func _apply_charm(def: Dictionary, charm_id: String) -> void:
+	var charm := CharmData.get_charm(charm_id)
+	if charm == null:
+		return
+	for attr in charm.stats:
+		def[attr] = int(def.get(attr, 0)) + int(charm.stats[attr])
+	if not charm.effects.is_empty():
+		var fx: Array = (def.get("effects", []) as Array).duplicate()
+		fx.append_array(charm.effects)
+		def["effects"] = fx
 
 
 func make_instance() -> CardInstance:
-	var data := resolved_data()
-	if data == null:
-		return null
-	return CardInstance.from_data(data)
+	var inst: CardInstance
+	# Fast path: a plain card with no override and no charms uses the registered base.
+	if override.is_empty() and charms.is_empty():
+		var base := CardData.get_card(id)
+		if base == null:
+			return null
+		inst = CardInstance.from_data(base)
+	else:
+		var def := _current_def()
+		for charm_id: String in charms:
+			_apply_charm(def, charm_id)
+		var data := CardData.build_from_dict(def)
+		if data == null:
+			return null
+		inst = CardInstance.from_data(data)
+	inst.charms = charms.duplicate()   # display only; mechanics are baked into the data above
+	return inst
 
 
 func to_dict() -> Dictionary:
-	return {"id": id, "override": override}
+	return {"id": id, "override": override, "charms": charms}
 
 
-# Accepts the new {id, override} form, legacy {id, mods} (attr→delta), and bare strings.
+# Accepts the new {id, override, charms} form, legacy {id, mods} (attr→delta), and bare strings.
 static func from_variant(v: Variant) -> DeckCard:
 	if v is DeckCard:
 		return v
@@ -75,6 +101,7 @@ static func from_variant(v: Variant) -> DeckCard:
 	if v is Dictionary:
 		var dc := make(v.get("id", ""))
 		dc.override = v.get("override", {})
+		dc.charms = v.get("charms", [])
 		if dc.override.is_empty() and v.has("mods"):
 			dc._migrate_legacy_mods(v.get("mods", {}))
 		return dc

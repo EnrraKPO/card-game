@@ -9,17 +9,29 @@ const STARTING_GOLD := 100
 # is how wounded it is — accumulated, unhealed damage. Current health is never
 # stored; it's just (max health - king_damage), computed when a fight starts.
 var king_damage: int = 0
+var king_id: String = "king"   # which King card this run is played with (from the profile)
 var gold: int
 var deck: Array   # Array[DeckCard] — each entry carries its own permanent mods
 var act: int
+var charms: Array = []   # owned, unapplied charm ids (inventory); applied in the forge
 
 
-static func create_new() -> RunData:
+# Seeds a fresh run from the profile's chosen King and starting deck. Falls back to
+# the default King + starter deck when no profile is supplied (e.g. tooling/tests).
+static func create_new(profile: ProfileData = null) -> RunData:
 	var run := RunData.new()
 	run.king_damage = 0
 	run.gold        = STARTING_GOLD
-	run.deck        = _deck_from_variants(DeckData.get_deck(DeckData.FALLBACK_ID))
-	run.act         = 1
+	if profile != null:
+		run.king_id = profile.selected_king
+		run.deck    = _deck_from_variants(profile.starting_deck)
+	else:
+		run.king_id = "king"
+		run.deck    = _deck_from_variants(DeckData.get_deck(DeckData.FALLBACK_ID))
+	run.act = 1
+	# Starting charm inventory — generous for now so the forge/shop charm flow is testable;
+	# trim once charms are properly earned through rewards.
+	run.charms = ["sharpened", "sharpened", "vampiric", "warded", "rallying", "thorned"]
 	return run
 
 
@@ -30,9 +42,11 @@ static func from_dict(data: Dictionary) -> RunData:
 	elif data.has("health") and data.has("max_health"):
 		# Migrate legacy saves that stored absolute current/max health.
 		run.king_damage = maxi(0, int(data["max_health"]) - int(data["health"]))
+	run.king_id = data.get("king_id", "king")
 	run.gold = data.get("gold", STARTING_GOLD)
 	run.deck = _deck_from_variants(data.get("deck", []))
 	run.act  = data.get("act",  1)
+	run.charms = data.get("charms", [])
 	return run
 
 
@@ -42,9 +56,11 @@ func to_dict() -> Dictionary:
 		deck_data.append(dc.to_dict())
 	return {
 		"king_damage": king_damage,
+		"king_id":     king_id,
 		"gold":        gold,
 		"deck":        deck_data,
 		"act":         act,
+		"charms":      charms,
 	}
 
 
@@ -60,7 +76,7 @@ static func _deck_from_variants(raw: Array) -> Array:
 # The King's maximum health — its card stat is the single source of truth. (When
 # per-run max-health upgrades exist, fold a stored bonus in here.)
 func king_max_health() -> int:
-	var king := CardData.get_card("king")
+	var king := CardData.get_card(king_id)
 	return king.health if king != null else 1
 
 

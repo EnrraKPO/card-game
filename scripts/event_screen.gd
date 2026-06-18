@@ -111,10 +111,9 @@ func _rebuild_deck() -> void:
 		var ui := CardUI.create(dc.make_instance())
 		ui.custom_minimum_size = CARD_SIZE
 
-		# Only fieldable deck units are valid targets. Spells aren't placed as units,
-		# and the King isn't drawn from the deck (it's spawned by place_kings), so an
-		# override on a deck King entry would never reach the board — exclude both.
-		var is_target := data.card_type == CardData.CardType.UNIT and not data.is_king
+		# Only fieldable deck units are valid targets — spells aren't placed as units, and
+		# the King isn't drawn from the deck (so a deck-side change never reaches the board).
+		var is_target := data.is_deck_unit()
 		var eligible := is_target and not _done
 		if not eligible:
 			ui.modulate = Color(1, 1, 1, 0.35)

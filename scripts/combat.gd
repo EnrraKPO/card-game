@@ -59,7 +59,7 @@ func _ready() -> void:
 	_hand.populate_draw_pile(GameData.current_run.deck)
 	_init_enemy_deck()
 	_build_ui()
-	_board.place_kings()
+	_board.place_kings(GameData.current_run.king_id if GameData.current_run != null else "king")
 	_apply_king_persistence()
 	_hand.draw_initial()
 	_refresh()
@@ -390,18 +390,23 @@ func _handle_combat_end() -> void:
 					state.visited_nodes.append(enc.completing_node_id)
 				if enc.destination_node_id >= 0:
 					state.current_node_id = enc.destination_node_id
+		# A boss skips the normal card reward and funnels back through the map, which
+		# routes to Stage Cleared (special reward) or Run Successful on the final stage.
+		# It still pays its gold here, since the reward screen won't.
+		var is_boss := enc != null and enc.type == EncounterData.Type.BOSS
+		if is_boss and GameData.current_run != null:
+			GameData.current_run.gold += enc.gold_reward
 		GameData.save_run()
-		get_tree().change_scene_to_file("res://scenes/reward_screen.tscn")
+		if is_boss:
+			get_tree().change_scene_to_file("res://scenes/map.tscn")
+		else:
+			get_tree().change_scene_to_file("res://scenes/reward_screen.tscn")
 	else:
 		if enc != null:
 			enc.outcome = EncounterData.Outcome.LOSE
-		# The run ends on defeat — delete the save and return to the main menu.
-		GameData.delete_slot(GameData.current_slot)
-		GameData.current_run = null
-		GameData.current_map_state = null
-		GameData.current_encounter = null
-		GameData.current_slot = -1
-		get_tree().change_scene_to_file("res://scenes/hello_screen.tscn")
+		# Defeat ends the run (meta-progression kept) and shows the Run Over screen.
+		GameData.end_run()
+		get_tree().change_scene_to_file("res://scenes/run_over.tscn")
 
 
 # ── Board event handlers ───────────────────────────────────────────────────────

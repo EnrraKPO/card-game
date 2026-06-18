@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cauaka7l5umrf"
-path="res://.godot/imported/water_queen.png-f83c0b7dd38051e9d7e1498bec9faeb3.ctex"
+uid="uid://s03wl0j6boyu"
+path="res://.godot/imported/water_bishop_pawn.png-3f519a7592e4f61ac6beabf0448dae3f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/cards/water_queen.png"
-dest_files=["res://.godot/imported/water_queen.png-f83c0b7dd38051e9d7e1498bec9faeb3.ctex"]
+source_file="res://assets/cards/water_bishop_pawn.png"
+dest_files=["res://.godot/imported/water_bishop_pawn.png-3f519a7592e4f61ac6beabf0448dae3f.ctex"]
 
 [params]
 
@@ -23,7 +23,7 @@ compress/rdo_quality_loss=0.0
 compress/hdr_compression=1
 compress/normal_map=0
 compress/channel_pack=0
-mipmaps/generate=true
+mipmaps/generate=false
 mipmaps/limit=-1
 roughness/mode=0
 roughness/src_normal=""

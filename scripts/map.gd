@@ -34,6 +34,15 @@ func _ready() -> void:
 	if GameData.current_encounter != null:
 		_process_combat_return()
 
+	# Multi-stage: standing on the boss node means this stage is cleared. Route to the
+	# Stage Cleared screen (which hands out the special reward and then advances), or to
+	# Run Successful on the final stage. The map itself never advances — those screens do,
+	# so the flow is identical whether we arrived from combat or a reload.
+	if _stage_cleared():
+		var screen := "run_success" if GameData.current_run.act >= MapData.STAGES else "stage_cleared"
+		get_tree().change_scene_to_file.call_deferred("res://scenes/%s.tscn" % screen)
+		return
+
 	map_data = MapData.generate(GameData.current_map_state.map_seed)
 	current_node_id = GameData.current_map_state.current_node_id
 
@@ -125,6 +134,8 @@ func _rebuild_node_buttons() -> void:
 			var btn := Button.new()
 			btn.set_meta("map_node", true)
 			btn.text = MapNodeData.get_label(node.type)
+			if node.type == MapNodeData.Type.BOSS and GameData.current_run.act >= MapData.STAGES:
+				btn.text = "Final Boss"
 			btn.custom_minimum_size = NODE_SIZE
 			btn.size = NODE_SIZE
 			btn.position = pos - NODE_SIZE / 2.0
@@ -190,6 +201,12 @@ func _resolve_node(node: MapNodeData) -> void:
 		_node_kinds[node.type].enter(node, self)
 
 
+# True once the player is standing on the boss node — combat moves you onto a node
+# only after winning it, so this means the stage's boss has been defeated.
+func _stage_cleared() -> bool:
+	return GameData.current_map_state.current_node_id == MapData.boss_node_id()
+
+
 func _process_combat_return() -> void:
 	# Reached only if the map loads while an encounter is still in memory
 	# (e.g. mid-combat app crash). Clear it so the node stays clickable.
@@ -198,4 +215,4 @@ func _process_combat_return() -> void:
 
 func _on_quit_pressed() -> void:
 	GameData.save_run()
-	get_tree().change_scene_to_file("res://scenes/hello_screen.tscn")
+	get_tree().change_scene_to_file("res://scenes/game_world.tscn")

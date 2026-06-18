@@ -82,10 +82,10 @@ func build_section(parent: BoxContainer, is_player: bool) -> void:
 			grid.add_child(slot)
 
 
-func place_kings() -> void:
+func place_kings(player_king_id: String = "king") -> void:
 	var back: int = BoardData.ROWS - 1
 
-	var pk := CardInstance.from_data(CardData.get_card("king"))
+	var pk := CardInstance.from_data(CardData.get_card(player_king_id))
 	pk.row = back; pk.col = 0; pk.owner = 0
 	player_grid[back][0] = pk
 	player_slots[back][0].set_card(CardUI.create(pk))

@@ -8,6 +8,9 @@ var row: int = -1
 var col: int = -1
 var owner: int = -1  # 0 = player, 1 = enemy
 var modifiers: Dictionary = {}  # attribute id -> cumulative int delta
+# Charm ids attached to this card (display only — their mechanics are already baked into
+# `data` by DeckCard.make_instance). Empty for enemies, kings, and tokens.
+var charms: Array = []
 
 # Set true for the round when this unit spent its attack to generate a card
 # (see rook/building generation in combat.gd). Reset at the start of each round.

@@ -6,7 +6,8 @@ var error_label: Label
 
 func _ready() -> void:
 	if not GameData.username.is_empty():
-		get_tree().change_scene_to_file("res://scenes/hello_screen.tscn")
+		# Deferred: changing scene mid-_ready trips the tree's "busy adding children" guard.
+		get_tree().change_scene_to_file.call_deferred("res://scenes/game_slots.tscn")
 		return
 
 	var center := CenterContainer.new()
@@ -52,4 +53,4 @@ func _on_continue_pressed() -> void:
 		error_label.text = "Please enter a name."
 		return
 	GameData.username = username
-	get_tree().change_scene_to_file("res://scenes/hello_screen.tscn")
+	get_tree().change_scene_to_file("res://scenes/game_slots.tscn")

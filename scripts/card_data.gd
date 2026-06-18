@@ -27,6 +27,13 @@ func is_building() -> bool:
 	return chess_pieces.has("rook")
 
 
+# A normal fieldable deck unit — the valid target for per-card modifications (charms,
+# the "?" event upgrade). Excludes spells (never placed as units) and the King (spawned
+# by place_kings, never drawn from the deck, so deck-side changes can't reach the board).
+func is_deck_unit() -> bool:
+	return card_type == CardType.UNIT and not is_king
+
+
 # The card this building generates once per turn (see combat.gd): a copy of the
 # card composed of all its NON-rook components. Strip every rook and rebuild from
 # what's left (other pieces + elements). A building with no non-rook components

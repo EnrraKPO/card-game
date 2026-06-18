@@ -2,10 +2,15 @@ extends Control
 
 const OFFER_COUNT := 4
 const REMOVE_COST := 50
+const CHARM_OFFER_COUNT := 3
+const CHARM_PRICE := 60
 
 # One entry per offered card. { "id": String, "data": CardData, "price": int,
 # "ui": CardUI, "buy_btn": Button, "bought": bool }
 var _offers: Array = []
+# One entry per offered charm. { "id": String, "price": int, "buy_btn": Button, "bought": bool }
+var _charm_offers: Array = []
+var _charm_offer_row: HBoxContainer
 
 # One entry per card slot in the current deck.
 # { "id": String, "deck_idx": int, "data": CardData, "ui": CardUI }
@@ -23,6 +28,7 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	_build_ui()
 	_roll_offers()
+	_roll_charm_offers()
 	_rebuild_deck()
 
 
@@ -98,7 +104,85 @@ func _build_buy_panel() -> Control:
 	for i in OFFER_COUNT:
 		_buy_row.add_child(_make_offer_slot())
 
+	var charm_label := Label.new()
+	charm_label.text = "  Buy Charms"
+	charm_label.add_theme_font_size_override("font_size", 18)
+	panel.add_child(charm_label)
+
+	_charm_offer_row = HBoxContainer.new()
+	_charm_offer_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	_charm_offer_row.add_theme_constant_override("separation", 16)
+	panel.add_child(_charm_offer_row)
+
 	return panel
+
+
+# ── Charm offers ─────────────────────────────────────────────────────────────
+
+func _roll_charm_offers() -> void:
+	var pool: Array = CharmData.all()
+	pool.shuffle()
+	for i in mini(CHARM_OFFER_COUNT, pool.size()):
+		var charm: CharmData = pool[i]
+		var slot := VBoxContainer.new()
+		slot.custom_minimum_size = Vector2(110, 0)
+		slot.add_theme_constant_override("separation", 6)
+		slot.alignment = BoxContainer.ALIGNMENT_CENTER
+
+		var chip := Panel.new()
+		chip.custom_minimum_size = Vector2(64, 64)
+		chip.size_flags_horizontal = SIZE_SHRINK_CENTER
+		chip.tooltip_text = "%s — %s" % [charm.display_name, charm.description]
+		var style := StyleBoxFlat.new()
+		style.bg_color = charm.color
+		style.set_corner_radius_all(14)
+		style.set_border_width_all(3)
+		style.border_color = Color(0.04, 0.04, 0.06, 0.9)
+		chip.add_theme_stylebox_override("panel", style)
+		var glyph := Label.new()
+		glyph.text = charm.letter
+		glyph.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+		glyph.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		glyph.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		glyph.add_theme_font_size_override("font_size", 26)
+		chip.add_child(glyph)
+		slot.add_child(chip)
+
+		var name_lbl := Label.new()
+		name_lbl.text = charm.display_name
+		name_lbl.add_theme_font_size_override("font_size", 13)
+		name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		slot.add_child(name_lbl)
+
+		var price_lbl := Label.new()
+		price_lbl.text = "%d Gold" % CHARM_PRICE
+		price_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		slot.add_child(price_lbl)
+
+		var buy_btn := Button.new()
+		buy_btn.text = "Buy"
+		slot.add_child(buy_btn)
+		_charm_offer_row.add_child(slot)
+
+		var entry := {"id": charm.id, "price": CHARM_PRICE, "buy_btn": buy_btn, "bought": false}
+		_charm_offers.append(entry)
+		var entry_idx := _charm_offers.size() - 1
+		buy_btn.pressed.connect(func(): _on_buy_charm(entry_idx))
+
+	_update_buy_buttons()
+
+
+func _on_buy_charm(entry_idx: int) -> void:
+	var entry: Dictionary = _charm_offers[entry_idx]
+	if entry.bought or GameData.current_run.gold < entry.price:
+		return
+	GameData.current_run.gold -= entry.price
+	GameData.current_run.charms.append(entry.id)
+	GameData.save_run()
+	entry.bought = true
+	entry.buy_btn.text = "Bought"
+	_update_buy_buttons()
+	_refresh_gold_label()
 
 
 func _make_offer_slot() -> Control:
@@ -159,6 +243,8 @@ func _on_buy_pressed(entry_idx: int) -> void:
 
 func _update_buy_buttons() -> void:
 	for entry: Dictionary in _offers:
+		entry.buy_btn.disabled = entry.bought or GameData.current_run.gold < entry.price
+	for entry: Dictionary in _charm_offers:
 		entry.buy_btn.disabled = entry.bought or GameData.current_run.gold < entry.price
 
 

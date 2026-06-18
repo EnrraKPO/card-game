@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://dy2qw2q6w1801"]
+
+[ext_resource type="Script" path="res://scripts/run_success.gd" id="1"]
+
+[node name="RunSuccess" type="Control"]
+script = ExtResource("1")

@@ -7,6 +7,8 @@ signal spell_drag_ended(card_ui: CardUI)
 
 var card_instance: CardInstance
 var _show_cost: bool
+# Left-edge column of charm pips, built lazily (mirrors the composition chips on the right).
+var _charm_col: VBoxContainer = null
 # True for a rook-generated token shown in the hand's "generated" zone; gives
 # the card a distinct glowing frame and a tooltip naming its source building.
 var is_generated: bool = false
@@ -213,6 +215,7 @@ func refresh() -> void:
 	_spd_bg.visible     = not is_spell
 	_spd_lbl.visible    = not is_spell
 	_refresh_composition()
+	_refresh_charms()
 	# Non-empty tooltip_text is required for Godot to invoke _make_custom_tooltip;
 	# fall back to the name so the enlarged preview shows even without a description.
 	var desc := card_instance.data.description
@@ -262,6 +265,65 @@ func _make_comp_chip(comp_id: String, is_element: bool) -> Control:
 	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	chip.add_child(lbl)
 	return chip
+
+
+# Builds the left-edge column of charm pips — one coloured glyph per attached charm,
+# mirroring the composition chips on the right. The full detail lives in the tooltip.
+func _refresh_charms() -> void:
+	var charm_ids: Array = card_instance.charms if card_instance != null else []
+	if _charm_col == null:
+		if charm_ids.is_empty():
+			return   # don't create the column until a charm needs it
+		_charm_col = VBoxContainer.new()
+		_charm_col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_charm_col.add_theme_constant_override("separation", 7)
+		# Left-edge band, mirroring CompRow's right-edge band (anchors in native units).
+		_charm_col.anchor_left = 0.04
+		_charm_col.anchor_top = 0.26
+		_charm_col.anchor_right = 0.19
+		_charm_col.anchor_bottom = 0.75
+		_charm_col.offset_left = 0.0
+		_charm_col.offset_top = 0.0
+		_charm_col.offset_right = 0.0
+		_charm_col.offset_bottom = 0.0
+		_canvas.add_child(_charm_col)
+
+	for child in _charm_col.get_children():
+		child.queue_free()
+	for charm_id: String in charm_ids:
+		_charm_col.add_child(_make_charm_pip(charm_id))
+
+
+func _make_charm_pip(charm_id: String) -> Control:
+	var charm := CharmData.get_charm(charm_id)
+	var color: Color = charm.color if charm != null else Color(0.7, 0.7, 0.75)
+	var glyph: String = charm.letter if charm != null else "✦"
+
+	var pip := Panel.new()
+	pip.custom_minimum_size = Vector2(34, 34)
+	pip.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	pip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	pip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	var style := StyleBoxFlat.new()
+	style.bg_color = color
+	style.set_corner_radius_all(17)   # circular, to read distinctly from the square piece chips
+	style.set_border_width_all(3)
+	style.border_color = Color(0.04, 0.04, 0.06, 0.9)
+	pip.add_theme_stylebox_override("panel", style)
+
+	var lbl := Label.new()
+	lbl.text = glyph
+	lbl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
+	lbl.add_theme_font_size_override("font_size", 20)
+	lbl.add_theme_color_override("font_color", Color(0.98, 0.98, 1.0))
+	lbl.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.7))
+	lbl.add_theme_constant_override("outline_size", 3)
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pip.add_child(lbl)
+	return pip
 
 
 func _make_custom_tooltip(for_text: String) -> Object:
@@ -321,6 +383,25 @@ func _make_custom_tooltip(for_text: String) -> Object:
 		desc_lbl.add_theme_font_size_override("font_size", 18)
 		desc_lbl.modulate = Color(0.82, 0.82, 0.9)
 		vbox.add_child(desc_lbl)
+
+	# Charm detail: one line per attached charm, colour-matched to its on-card pip.
+	if not card_instance.charms.is_empty():
+		vbox.add_child(HSeparator.new())
+		var charms_title := Label.new()
+		charms_title.text = "Charms"
+		charms_title.add_theme_font_size_override("font_size", 16)
+		charms_title.modulate = Color(0.7, 0.7, 0.8)
+		vbox.add_child(charms_title)
+		for charm_id: String in card_instance.charms:
+			var charm := CharmData.get_charm(charm_id)
+			if charm == null:
+				continue
+			var ch_lbl := Label.new()
+			ch_lbl.text = "%s  %s — %s" % [charm.letter, charm.display_name, charm.description]
+			ch_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD
+			ch_lbl.add_theme_font_size_override("font_size", 15)
+			ch_lbl.add_theme_color_override("font_color", charm.color.lightened(0.35))
+			vbox.add_child(ch_lbl)
 
 	return panel
 
