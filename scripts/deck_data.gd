@@ -1,7 +1,8 @@
 class_name DeckData
 extends RefCounted
 
-const FALLBACK_ID := "starter"
+# The basic King's chess deck — also the fallback when a King has no deck file yet.
+const FALLBACK_ID := "king"
 
 static var _all: Dictionary = {}  # id -> Array[String] (card ids)
 

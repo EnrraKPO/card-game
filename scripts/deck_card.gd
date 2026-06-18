@@ -92,6 +92,16 @@ func to_dict() -> Dictionary:
 	return {"id": id, "override": override, "charms": charms}
 
 
+# A fully independent copy — used to snapshot an owned deck into a run so the run's
+# per-card edits (bump / add_charm) never write back to the saved deck. The override and
+# charms containers are deep-duplicated, not shared.
+func clone() -> DeckCard:
+	var dc := DeckCard.make(id)
+	dc.override = override.duplicate(true)
+	dc.charms = charms.duplicate()
+	return dc
+
+
 # Accepts the new {id, override, charms} form, legacy {id, mods} (attr→delta), and bare strings.
 static func from_variant(v: Variant) -> DeckCard:
 	if v is DeckCard:

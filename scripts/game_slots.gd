@@ -76,8 +76,8 @@ func _slot_label(slot: int, started: bool) -> String:
 	if not started:
 		return "Slot %d  —  New Game" % (slot + 1)
 	var profile := GameData.peek_profile(slot)
-	var king := CardData.get_card(profile.selected_king)
-	var king_name: String = king.display_name if king != null else profile.selected_king
+	var king := CardData.get_card(profile.get_selected_king())
+	var king_name: String = king.display_name if king != null else profile.get_selected_king()
 	var run_state := "Run in progress" if GameData.slot_has_run(slot) else "No active run"
 	return "Slot %d  —  %s · %s" % [slot + 1, king_name, run_state]
 

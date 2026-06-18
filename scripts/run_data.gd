@@ -9,24 +9,27 @@ const STARTING_GOLD := 100
 # is how wounded it is — accumulated, unhealed damage. Current health is never
 # stored; it's just (max health - king_damage), computed when a fight starts.
 var king_damage: int = 0
-var king_id: String = "king"   # which King card this run is played with (from the profile)
+var king_id: String = ProfileData.STARTING_KING   # which King card this run is played with (from the profile)
 var gold: int
 var deck: Array   # Array[DeckCard] — each entry carries its own permanent mods
 var act: int
 var charms: Array = []   # owned, unapplied charm ids (inventory); applied in the forge
 
 
-# Seeds a fresh run from the profile's chosen King and starting deck. Falls back to
-# the default King + starter deck when no profile is supplied (e.g. tooling/tests).
+# Seeds a fresh run from the profile's selected owned deck (which carries its King).
+# The run takes a deep-copied SNAPSHOT, so run-time edits never write back to the saved
+# deck. Falls back to the default King + template deck when no profile/deck is supplied
+# (e.g. tooling/tests).
 static func create_new(profile: ProfileData = null) -> RunData:
 	var run := RunData.new()
 	run.king_damage = 0
 	run.gold        = STARTING_GOLD
-	if profile != null:
-		run.king_id = profile.selected_king
-		run.deck    = _deck_from_variants(profile.starting_deck)
+	var deck := profile.get_selected_deck() if profile != null else null
+	if deck != null:
+		run.king_id = deck.king_id
+		run.deck    = deck.snapshot_cards()
 	else:
-		run.king_id = "king"
+		run.king_id = ProfileData.STARTING_KING
 		run.deck    = _deck_from_variants(DeckData.get_deck(DeckData.FALLBACK_ID))
 	run.act = 1
 	# Starting charm inventory — generous for now so the forge/shop charm flow is testable;
@@ -42,7 +45,7 @@ static func from_dict(data: Dictionary) -> RunData:
 	elif data.has("health") and data.has("max_health"):
 		# Migrate legacy saves that stored absolute current/max health.
 		run.king_damage = maxi(0, int(data["max_health"]) - int(data["health"]))
-	run.king_id = data.get("king_id", "king")
+	run.king_id = data.get("king_id", ProfileData.STARTING_KING)
 	run.gold = data.get("gold", STARTING_GOLD)
 	run.deck = _deck_from_variants(data.get("deck", []))
 	run.act  = data.get("act",  1)

@@ -87,10 +87,11 @@ func _build_loadout_panel() -> Control:
 	box.add_theme_constant_override("separation", 6)
 	panel.add_child(box)
 
-	var king := CardData.get_card(profile.selected_king)
-	var king_name: String = king.display_name if king != null else profile.selected_king
+	var deck := profile.get_selected_deck()
+	var king := CardData.get_card(deck.king_id) if deck != null else null
+	var king_name: String = king.display_name if king != null else profile.get_selected_king()
 	_add_stat(box, "King", king_name)
-	_add_stat(box, "Starting deck", "%d cards" % profile.starting_deck.size())
+	_add_stat(box, "Deck", "%d cards" % (deck.cards.size() if deck != null else 0))
 	_add_stat(box, "Renown", str(profile.renown))
 	return panel
 

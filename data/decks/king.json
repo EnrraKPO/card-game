@@ -1,0 +1,10 @@
+{
+  "id": "king",
+  "cards": [
+    "pawn", "pawn", "pawn", "pawn", "pawn", "pawn", "pawn", "pawn",
+    "bishop", "bishop",
+    "knight", "knight",
+    "rook", "rook",
+    "queen"
+  ]
+}
