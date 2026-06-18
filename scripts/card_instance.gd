@@ -48,6 +48,9 @@ func apply_modifier(attr: String, delta: int) -> void:
 
 
 func take_damage(amount: int) -> Dictionary:
+	# Damage never heals: a sub-zero attack (units may have <0 Attack) deals 0, not
+	# negative. Clamping here keeps the invariant for every damage source, not just attacks.
+	amount = maxi(0, amount)
 	var absorbed := 0
 	if current_shield > 0:
 		absorbed = mini(amount, current_shield)
