@@ -34,7 +34,12 @@ func _ready() -> void:
 func _apply() -> void:
 	var win := get_window()
 	var compact := OS.has_feature("mobile") or win.size.x < COMPACT_WIDTH
-	win.content_scale_factor = MOBILE_FACTOR if compact else 1.0
+	var factor := MOBILE_FACTOR if compact else 1.0
+	# Only touch the viewport when something actually changes — the Android soft keyboard
+	# fires size_changed while you type, and re-applying content_scale_factor mid-entry
+	# disrupts the IME (drops focus / dismisses the keyboard).
+	if not is_equal_approx(win.content_scale_factor, factor):
+		win.content_scale_factor = factor
 	if compact != _compact:
 		_compact = compact
 		layout_changed.emit()
