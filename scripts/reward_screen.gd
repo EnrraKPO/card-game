@@ -3,6 +3,8 @@ extends Control
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	var compact := UIScale.is_compact()
+	var card_size := Vector2(230, 302) if compact else Vector2(160, 210)
 
 	var bg := ColorRect.new()
 	bg.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
@@ -19,14 +21,14 @@ func _ready() -> void:
 
 	var title := Label.new()
 	title.text = "Victory!  Choose a Reward"
-	title.add_theme_font_size_override("font_size", 36)
+	title.add_theme_font_size_override("font_size", 48 if compact else 36)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(title)
 
 	var gold_gained: int = GameData.current_encounter.gold_reward if GameData.current_encounter != null else 0
 	var gold_lbl := Label.new()
 	gold_lbl.text = "+%d Gold" % gold_gained
-	gold_lbl.add_theme_font_size_override("font_size", 20)
+	gold_lbl.add_theme_font_size_override("font_size", 30 if compact else 20)
 	gold_lbl.modulate = Color(1.0, 0.85, 0.3)
 	gold_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(gold_lbl)
@@ -39,7 +41,7 @@ func _ready() -> void:
 			continue
 		var mat_lbl := Label.new()
 		mat_lbl.text = "+%d %s" % [amt, Materials.display_name(id)]
-		mat_lbl.add_theme_font_size_override("font_size", 18)
+		mat_lbl.add_theme_font_size_override("font_size", 28 if compact else 18)
 		mat_lbl.modulate = Materials.color(id)
 		mat_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		vbox.add_child(mat_lbl)
@@ -59,14 +61,15 @@ func _ready() -> void:
 			continue
 		var inst := CardInstance.from_data(data)
 		var ui := CardUI.create(inst)
-		ui.custom_minimum_size = Vector2(160, 210)
+		ui.draggable = false
+		ui.custom_minimum_size = card_size
 		ui.pressed.connect(func(): _pick_card(id))
 		card_row.add_child(ui)
 
 	var skip_btn := Button.new()
 	skip_btn.text = "Skip Reward"
-	skip_btn.add_theme_font_size_override("font_size", 18)
-	skip_btn.custom_minimum_size = Vector2(180, 0)
+	skip_btn.add_theme_font_size_override("font_size", 30 if compact else 18)
+	skip_btn.custom_minimum_size = Vector2(260, 84) if compact else Vector2(180, 0)
 	skip_btn.size_flags_horizontal = SIZE_SHRINK_CENTER
 	skip_btn.pressed.connect(_skip)
 	vbox.add_child(skip_btn)

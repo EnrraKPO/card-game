@@ -10,6 +10,9 @@ func _ready() -> void:
 		get_tree().change_scene_to_file.call_deferred("res://scenes/game_slots.tscn")
 		return
 
+	var compact := UIScale.is_compact()
+	var field_size := Vector2(480, 84) if compact else Vector2(320, 48)
+
 	var center := CenterContainer.new()
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(center)
@@ -20,27 +23,27 @@ func _ready() -> void:
 
 	var title := Label.new()
 	title.text = "Enter your name"
-	title.add_theme_font_size_override("font_size", 32)
+	title.add_theme_font_size_override("font_size", 48 if compact else 32)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(title)
 
 	name_input = LineEdit.new()
-	name_input.custom_minimum_size = Vector2(320, 48)
+	name_input.custom_minimum_size = field_size
 	name_input.placeholder_text = "Username"
-	name_input.add_theme_font_size_override("font_size", 20)
+	name_input.add_theme_font_size_override("font_size", 32 if compact else 20)
 	name_input.text_submitted.connect(_on_continue_pressed.unbind(1))
 	vbox.add_child(name_input)
 
 	error_label = Label.new()
 	error_label.modulate = Color(1, 0.3, 0.3, 1)
-	error_label.add_theme_font_size_override("font_size", 16)
+	error_label.add_theme_font_size_override("font_size", 26 if compact else 16)
 	error_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(error_label)
 
 	var button := Button.new()
 	button.text = "Continue"
-	button.custom_minimum_size = Vector2(320, 48)
-	button.add_theme_font_size_override("font_size", 20)
+	button.custom_minimum_size = field_size
+	button.add_theme_font_size_override("font_size", 32 if compact else 20)
 	button.pressed.connect(_on_continue_pressed)
 	vbox.add_child(button)
 

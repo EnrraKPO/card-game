@@ -5,6 +5,7 @@ extends Control
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	var compact := UIScale.is_compact()
 
 	var bg := ColorRect.new()
 	bg.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
@@ -28,14 +29,14 @@ func _ready() -> void:
 
 	var subtitle := Label.new()
 	subtitle.text = "Your King has fallen. The run ends here."
-	subtitle.add_theme_font_size_override("font_size", 20)
+	subtitle.add_theme_font_size_override("font_size", 30 if compact else 20)
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(subtitle)
 
 	var continue_btn := Button.new()
 	continue_btn.text = "Return to your realm"
-	continue_btn.custom_minimum_size = Vector2(300, 56)
-	continue_btn.add_theme_font_size_override("font_size", 22)
+	continue_btn.custom_minimum_size = Vector2(380, 96) if compact else Vector2(300, 56)
+	continue_btn.add_theme_font_size_override("font_size", 32 if compact else 22)
 	continue_btn.size_flags_horizontal = SIZE_SHRINK_CENTER
 	continue_btn.pressed.connect(_on_continue)
 	vbox.add_child(continue_btn)

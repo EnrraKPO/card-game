@@ -45,8 +45,9 @@ func _build_ui() -> void:
 
 
 func _make_deck_card(od: OwnedDeck, ordinal: int) -> Button:
+	var compact := UIScale.is_compact()
 	var btn := Button.new()
-	btn.custom_minimum_size = Vector2(190, 296)
+	btn.custom_minimum_size = Vector2(250, 380) if compact else Vector2(190, 296)
 	if od.id == GameData.current_profile.selected_deck_id:
 		btn.modulate = Color(1.2, 1.25, 1.1)   # pre-highlight the last-used deck
 	var id := od.id
@@ -59,20 +60,20 @@ func _make_deck_card(od: OwnedDeck, ordinal: int) -> Button:
 	box.mouse_filter = MOUSE_FILTER_IGNORE
 	btn.add_child(box)
 
-	var thumb := DeckUI.king_thumbnail(od.king_id, 150)
+	var thumb := DeckUI.king_thumbnail(od.king_id, 200 if compact else 150)
 	thumb.size_flags_horizontal = SIZE_SHRINK_CENTER
 	box.add_child(thumb)
 
 	var name_lbl := Label.new()
 	name_lbl.text = DeckUI.deck_label(od, ordinal)
-	name_lbl.add_theme_font_size_override("font_size", 17)
+	name_lbl.add_theme_font_size_override("font_size", 26 if compact else 17)
 	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_lbl.mouse_filter = MOUSE_FILTER_IGNORE
 	box.add_child(name_lbl)
 
 	var count_lbl := Label.new()
 	count_lbl.text = "%d cards" % od.cards.size()
-	count_lbl.add_theme_font_size_override("font_size", 14)
+	count_lbl.add_theme_font_size_override("font_size", 20 if compact else 14)
 	count_lbl.modulate = Color(0.7, 0.72, 0.8)
 	count_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	count_lbl.mouse_filter = MOUSE_FILTER_IGNORE

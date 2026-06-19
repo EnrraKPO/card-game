@@ -10,6 +10,7 @@ var _picked := false
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	var compact := UIScale.is_compact()
 
 	var bg := ColorRect.new()
 	bg.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
@@ -26,14 +27,14 @@ func _ready() -> void:
 
 	var title := Label.new()
 	title.text = "Stage %d Cleared!" % GameData.current_run.act
-	title.add_theme_font_size_override("font_size", 40)
+	title.add_theme_font_size_override("font_size", 52 if compact else 40)
 	title.modulate = Color(0.5, 1.0, 0.6)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(title)
 
 	var subtitle := Label.new()
 	subtitle.text = "Claim a reward before pressing onward."
-	subtitle.add_theme_font_size_override("font_size", 18)
+	subtitle.add_theme_font_size_override("font_size", 30 if compact else 18)
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(subtitle)
 
@@ -47,14 +48,15 @@ func _ready() -> void:
 		if data == null:
 			continue
 		var ui := CardUI.create(CardInstance.from_data(data))
-		ui.custom_minimum_size = Vector2(160, 210)
+		ui.draggable = false
+		ui.custom_minimum_size = Vector2(230, 302) if compact else Vector2(160, 210)
 		ui.pressed.connect(func(): _pick_card(id))
 		card_row.add_child(ui)
 
 	var onward := Button.new()
 	onward.text = "Onward  →"
-	onward.add_theme_font_size_override("font_size", 20)
-	onward.custom_minimum_size = Vector2(200, 0)
+	onward.add_theme_font_size_override("font_size", 32 if compact else 20)
+	onward.custom_minimum_size = Vector2(280, 88) if compact else Vector2(200, 0)
 	onward.size_flags_horizontal = SIZE_SHRINK_CENTER
 	onward.pressed.connect(_advance)
 	vbox.add_child(onward)

@@ -14,6 +14,7 @@ var _preview_title: Label
 var _preview_body: VBoxContainer
 var _set_active_btn: Button
 var _view_btn: Button
+var _compact := false
 
 
 func _ready() -> void:
@@ -22,6 +23,7 @@ func _ready() -> void:
 	if GameData.current_profile == null or GameData.current_slot < 0:
 		get_tree().change_scene_to_file.call_deferred("res://scenes/game_slots.tscn")
 		return
+	_compact = UIScale.is_compact()
 	_previewed_id = GameData.current_profile.selected_deck_id
 	_build_ui()
 	_rebuild()
@@ -47,13 +49,13 @@ func _build_ui() -> void:
 
 func _build_list_pane() -> Control:
 	var col := VBoxContainer.new()
-	col.custom_minimum_size.x = 440.0
+	col.custom_minimum_size.x = 520.0 if _compact else 440.0
 	col.add_theme_constant_override("separation", 10)
 
 	var new_btn := Button.new()
 	new_btn.text = "+ New Deck"
-	new_btn.custom_minimum_size = Vector2(0, 44)
-	new_btn.add_theme_font_size_override("font_size", 17)
+	new_btn.custom_minimum_size = Vector2(0, 72 if _compact else 44)
+	new_btn.add_theme_font_size_override("font_size", 26 if _compact else 17)
 	new_btn.pressed.connect(func(): _king_picker.visible = true)
 	var new_pad := MarginContainer.new()
 	for side in ["left", "right", "top"]:
@@ -89,7 +91,7 @@ func _build_preview_pane() -> Control:
 	pad.add_child(col)
 
 	_preview_title = Label.new()
-	_preview_title.add_theme_font_size_override("font_size", 22)
+	_preview_title.add_theme_font_size_override("font_size", 30 if _compact else 22)
 	col.add_child(_preview_title)
 
 	var scroll := ScrollContainer.new()
@@ -105,14 +107,14 @@ func _build_preview_pane() -> Control:
 	actions.alignment = BoxContainer.ALIGNMENT_CENTER
 	col.add_child(actions)
 	_set_active_btn = Button.new()
-	_set_active_btn.custom_minimum_size = Vector2(160, 40)
-	_set_active_btn.add_theme_font_size_override("font_size", 16)
+	_set_active_btn.custom_minimum_size = Vector2(240, 76) if _compact else Vector2(160, 40)
+	_set_active_btn.add_theme_font_size_override("font_size", 26 if _compact else 16)
 	_set_active_btn.pressed.connect(_on_set_active)
 	actions.add_child(_set_active_btn)
 	_view_btn = Button.new()
 	_view_btn.text = "View Deck →"
-	_view_btn.custom_minimum_size = Vector2(160, 40)
-	_view_btn.add_theme_font_size_override("font_size", 16)
+	_view_btn.custom_minimum_size = Vector2(240, 76) if _compact else Vector2(160, 40)
+	_view_btn.add_theme_font_size_override("font_size", 26 if _compact else 16)
 	_view_btn.pressed.connect(_on_view_deck)
 	actions.add_child(_view_btn)
 	return panel
@@ -135,7 +137,7 @@ func _build_king_picker() -> void:
 
 	var prompt := Label.new()
 	prompt.text = "New deck for which King?"
-	prompt.add_theme_font_size_override("font_size", 18)
+	prompt.add_theme_font_size_override("font_size", 28 if _compact else 18)
 	prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(prompt)
 
@@ -143,15 +145,16 @@ func _build_king_picker() -> void:
 		var king := CardData.get_card(king_id)
 		var btn := Button.new()
 		btn.text = king.display_name if king != null else king_id
-		btn.custom_minimum_size = Vector2(240, 40)
-		btn.add_theme_font_size_override("font_size", 16)
+		btn.custom_minimum_size = Vector2(360, 72) if _compact else Vector2(240, 40)
+		btn.add_theme_font_size_override("font_size", 26 if _compact else 16)
 		var id := king_id
 		btn.pressed.connect(func(): _create_deck(id))
 		box.add_child(btn)
 
 	var cancel := Button.new()
 	cancel.text = "Cancel"
-	cancel.add_theme_font_size_override("font_size", 14)
+	cancel.add_theme_font_size_override("font_size", 22 if _compact else 14)
+	cancel.custom_minimum_size = Vector2(0, 64) if _compact else Vector2.ZERO
 	cancel.pressed.connect(func(): _king_picker.visible = false)
 	box.add_child(cancel)
 
@@ -196,7 +199,7 @@ func _make_deck_row(od: OwnedDeck, ordinal: int) -> Control:
 	pad.add_child(row)
 
 	# King card — large enough to read, hover for full detail, click to preview the deck.
-	var thumb := DeckUI.king_thumbnail(od.king_id, 124, true)
+	var thumb := DeckUI.king_thumbnail(od.king_id, 180 if _compact else 124, true)
 	thumb.size_flags_vertical = SIZE_SHRINK_CENTER
 	if thumb is CardUI:
 		(thumb as CardUI).pressed.connect(func(): _on_deck_clicked(id))
@@ -222,13 +225,13 @@ func _make_deck_row(od: OwnedDeck, ordinal: int) -> Control:
 	if od.id == GameData.current_profile.selected_deck_id:
 		label += "   ✓ active"
 	name_lbl.text = label
-	name_lbl.add_theme_font_size_override("font_size", 19)
+	name_lbl.add_theme_font_size_override("font_size", 28 if _compact else 19)
 	name_lbl.mouse_filter = MOUSE_FILTER_IGNORE
 	info.add_child(name_lbl)
 
 	var count_lbl := Label.new()
 	count_lbl.text = "%d cards" % od.cards.size()
-	count_lbl.add_theme_font_size_override("font_size", 15)
+	count_lbl.add_theme_font_size_override("font_size", 22 if _compact else 15)
 	count_lbl.modulate = Color(0.7, 0.72, 0.8)
 	count_lbl.mouse_filter = MOUSE_FILTER_IGNORE
 	info.add_child(count_lbl)

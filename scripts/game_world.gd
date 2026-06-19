@@ -14,22 +14,36 @@ func _ready() -> void:
 		get_tree().change_scene_to_file.call_deferred("res://scenes/game_slots.tscn")
 		return
 
+	# Rebuild if the form factor flips (e.g. previewing mobile by resizing in the editor).
+	UIScale.layout_changed.connect(func(): get_tree().reload_current_scene(), CONNECT_ONE_SHOT)
+	var compact := UIScale.is_compact()
+
 	var bg := ColorRect.new()
 	bg.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	bg.color = Color(0.06, 0.07, 0.11)
 	add_child(bg)
 
-	var center := CenterContainer.new()
-	center.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	add_child(center)
-
+	# Desktop centres a compact column; compact fills the screen (minus margins) so the
+	# touch controls are large and the space isn't wasted.
 	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 28)
-	center.add_child(vbox)
+	vbox.add_theme_constant_override("separation", 36 if compact else 28)
+	if compact:
+		var pad := MarginContainer.new()
+		pad.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+		for side in ["left", "right", "top", "bottom"]:
+			pad.add_theme_constant_override("margin_" + side, 56)
+		add_child(pad)
+		vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+		pad.add_child(vbox)
+	else:
+		var center := CenterContainer.new()
+		center.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+		add_child(center)
+		center.add_child(vbox)
 
 	var title := Label.new()
 	title.text = "%s's Realm" % GameData.username
-	title.add_theme_font_size_override("font_size", 44)
+	title.add_theme_font_size_override("font_size", 56 if compact else 44)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(title)
 
@@ -40,35 +54,40 @@ func _ready() -> void:
 	panels.alignment = BoxContainer.ALIGNMENT_CENTER
 	panels.add_theme_constant_override("separation", 16)
 	vbox.add_child(panels)
-	panels.add_child(_panel_button("Kings"))
-	panels.add_child(_panel_button("Decks", "res://scenes/deck_screen.tscn"))
-	panels.add_child(_panel_button("Unlocks"))
+	panels.add_child(_panel_button("Kings", "", compact))
+	panels.add_child(_panel_button("Decks", "res://scenes/deck_screen.tscn", compact))
+	panels.add_child(_panel_button("Unlocks", "", compact))
 
 	var has_run := GameData.slot_has_run(GameData.current_slot)
 
 	var embark := Button.new()
 	embark.text = "Continue Run" if has_run else "Embark"
-	embark.custom_minimum_size = Vector2(260, 60)
-	embark.add_theme_font_size_override("font_size", 26)
-	embark.size_flags_horizontal = SIZE_SHRINK_CENTER
+	embark.add_theme_font_size_override("font_size", 30 if compact else 26)
+	if compact:
+		embark.custom_minimum_size = Vector2(0, 96)
+		embark.size_flags_horizontal = SIZE_FILL
+	else:
+		embark.custom_minimum_size = Vector2(260, 60)
+		embark.size_flags_horizontal = SIZE_SHRINK_CENTER
 	embark.pressed.connect(_on_embark)
 	vbox.add_child(embark)
 
 	if has_run:
 		var abandon := Button.new()
 		abandon.text = "Abandon run"
-		abandon.add_theme_font_size_override("font_size", 14)
-		abandon.size_flags_horizontal = SIZE_SHRINK_CENTER
+		abandon.add_theme_font_size_override("font_size", 18 if compact else 14)
+		abandon.custom_minimum_size = Vector2(0, 56 if compact else 0)
+		abandon.size_flags_horizontal = SIZE_FILL if compact else SIZE_SHRINK_CENTER
 		abandon.pressed.connect(func(): _confirm_abandon.popup_centered())
 		vbox.add_child(abandon)
 
 	var back_btn := Button.new()
 	back_btn.text = "Back to saves"
-	back_btn.add_theme_font_size_override("font_size", 13)
+	back_btn.add_theme_font_size_override("font_size", 18 if compact else 13)
 	back_btn.set_anchors_and_offsets_preset(PRESET_BOTTOM_LEFT)
 	back_btn.offset_left = 16
-	back_btn.offset_top = -48
-	back_btn.offset_right = 150
+	back_btn.offset_top = -(64 if compact else 48)
+	back_btn.offset_right = 220 if compact else 150
 	back_btn.offset_bottom = -16
 	back_btn.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/game_slots.tscn"))
 	add_child(back_btn)
@@ -108,11 +127,16 @@ func _add_stat(box: VBoxContainer, key: String, value: String) -> void:
 	box.add_child(lbl)
 
 
-func _panel_button(label: String, scene_path: String = "") -> Button:
+func _panel_button(label: String, scene_path: String = "", compact: bool = false) -> Button:
 	var btn := Button.new()
 	btn.text = label
-	btn.custom_minimum_size = Vector2(150, 52)
-	btn.add_theme_font_size_override("font_size", 18)
+	if compact:
+		btn.custom_minimum_size = Vector2(0, 80)
+		btn.size_flags_horizontal = SIZE_EXPAND_FILL   # spread across the row
+		btn.add_theme_font_size_override("font_size", 22)
+	else:
+		btn.custom_minimum_size = Vector2(150, 52)
+		btn.add_theme_font_size_override("font_size", 18)
 	if scene_path.is_empty():
 		btn.disabled = true
 		btn.tooltip_text = "Coming soon"

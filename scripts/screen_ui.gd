@@ -15,6 +15,7 @@ const BG_COLOR := Color(0.07, 0.07, 0.12)
 # Add body content to `root` (below the header); add trailing buttons / labels to `header`
 # (the title already fills the left, so they align right).
 static func scaffold(host: Control, title: String) -> Dictionary:
+	var compact := UIScale.is_compact()
 	host.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	var bg := ColorRect.new()
@@ -28,7 +29,7 @@ static func scaffold(host: Control, title: String) -> Dictionary:
 	host.add_child(root)
 
 	var header := PanelContainer.new()
-	header.custom_minimum_size.y = 56.0
+	header.custom_minimum_size.y = 104.0 if compact else 56.0
 	root.add_child(header)
 
 	var header_hbox := HBoxContainer.new()
@@ -36,7 +37,7 @@ static func scaffold(host: Control, title: String) -> Dictionary:
 
 	var title_lbl := Label.new()
 	title_lbl.text = "  " + title
-	title_lbl.add_theme_font_size_override("font_size", 22)
+	title_lbl.add_theme_font_size_override("font_size", 34 if compact else 22)
 	title_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	header_hbox.add_child(title_lbl)
@@ -46,8 +47,11 @@ static func scaffold(host: Control, title: String) -> Dictionary:
 
 # A header nav button (Back / Leave / Cancel) wired to `action`.
 static func nav_button(text: String, action: Callable) -> Button:
+	var compact := UIScale.is_compact()
 	var btn := Button.new()
 	btn.text = text
-	btn.add_theme_font_size_override("font_size", 18)
+	btn.add_theme_font_size_override("font_size", 30 if compact else 18)
+	if compact:
+		btn.custom_minimum_size = Vector2(200, 84)
 	btn.pressed.connect(action)
 	return btn

@@ -20,6 +20,7 @@ static func king_thumbnail(king_id: String, width: float, interactive := false) 
 		placeholder.custom_minimum_size = card_size
 		return placeholder
 	var ui := CardUI.create(CardInstance.from_data(data))
+	ui.draggable = false
 	ui.custom_minimum_size = card_size
 	if not interactive:
 		ui.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -48,6 +49,7 @@ static func deck_grid(od: OwnedDeck, columns: int, card_width: float) -> GridCon
 		if inst == null:
 			continue
 		var ui := CardUI.create(inst)
+		ui.draggable = false
 		ui.custom_minimum_size = card_size
 		grid.add_child(ui)
 	return grid

@@ -20,6 +20,8 @@ var _slot_result: Control
 var _status_lbl: Label
 var _combine_btn: Button
 var _charm_row: HBoxContainer
+var _compact := false
+var _card_size := CARD_SIZE
 
 
 func _ready() -> void:
@@ -30,6 +32,9 @@ func _ready() -> void:
 
 
 func _build_ui() -> void:
+	_compact = UIScale.is_compact()
+	_card_size = Vector2(230, 302) if _compact else CARD_SIZE
+
 	var s := ScreenUI.scaffold(self, "Forge — Combine Cards")
 	var root: VBoxContainer = s.root
 	s.header.add_child(ScreenUI.nav_button("Leave  ", _leave))
@@ -49,7 +54,7 @@ func _build_ui() -> void:
 	body.add_child(scroll)
 
 	_deck_grid = GridContainer.new()
-	_deck_grid.columns = 4
+	_deck_grid.columns = 3 if _compact else 4
 	_deck_grid.add_theme_constant_override("h_separation", 12)
 	_deck_grid.add_theme_constant_override("v_separation", 12)
 	_deck_grid.size_flags_horizontal = SIZE_EXPAND_FILL
@@ -59,7 +64,7 @@ func _build_ui() -> void:
 
 	# Right: combination panel
 	var right := VBoxContainer.new()
-	right.custom_minimum_size.x = 620.0
+	right.custom_minimum_size.x = 760.0 if _compact else 620.0
 	right.size_flags_vertical    = SIZE_EXPAND_FILL
 	right.add_theme_constant_override("separation", 0)
 	body.add_child(right)
@@ -75,7 +80,8 @@ func _build_ui() -> void:
 	var instruction := Label.new()
 	instruction.text = "Combine two cards, or enchant one card with a charm"
 	instruction.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	instruction.add_theme_font_size_override("font_size", 18)
+	instruction.add_theme_font_size_override("font_size", 26 if _compact else 18)
+	instruction.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	panel_vbox.add_child(instruction)
 
 	# Card slots
@@ -89,7 +95,7 @@ func _build_ui() -> void:
 
 	var plus_lbl := Label.new()
 	plus_lbl.text = "+"
-	plus_lbl.add_theme_font_size_override("font_size", 32)
+	plus_lbl.add_theme_font_size_override("font_size", 48 if _compact else 32)
 	plus_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	slots_row.add_child(plus_lbl)
 
@@ -98,7 +104,7 @@ func _build_ui() -> void:
 
 	var arrow_lbl := Label.new()
 	arrow_lbl.text = "→"
-	arrow_lbl.add_theme_font_size_override("font_size", 32)
+	arrow_lbl.add_theme_font_size_override("font_size", 48 if _compact else 32)
 	arrow_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	slots_row.add_child(arrow_lbl)
 
@@ -108,7 +114,7 @@ func _build_ui() -> void:
 	# Status
 	_status_lbl = Label.new()
 	_status_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_status_lbl.add_theme_font_size_override("font_size", 15)
+	_status_lbl.add_theme_font_size_override("font_size", 24 if _compact else 15)
 	panel_vbox.add_child(_status_lbl)
 
 	# Action buttons
@@ -119,16 +125,16 @@ func _build_ui() -> void:
 
 	_combine_btn = Button.new()
 	_combine_btn.text = "Combine"
-	_combine_btn.add_theme_font_size_override("font_size", 18)
-	_combine_btn.custom_minimum_size = Vector2(140, 0)
+	_combine_btn.add_theme_font_size_override("font_size", 28 if _compact else 18)
+	_combine_btn.custom_minimum_size = Vector2(220, 80) if _compact else Vector2(140, 0)
 	_combine_btn.disabled = true
 	_combine_btn.pressed.connect(_apply_combine)
 	btn_row.add_child(_combine_btn)
 
 	var clear_btn := Button.new()
 	clear_btn.text = "Clear"
-	clear_btn.add_theme_font_size_override("font_size", 18)
-	clear_btn.custom_minimum_size = Vector2(100, 0)
+	clear_btn.add_theme_font_size_override("font_size", 28 if _compact else 18)
+	clear_btn.custom_minimum_size = Vector2(160, 80) if _compact else Vector2(100, 0)
 	clear_btn.pressed.connect(_clear_selection)
 	btn_row.add_child(clear_btn)
 
@@ -138,7 +144,8 @@ func _build_ui() -> void:
 	var charm_label := Label.new()
 	charm_label.text = "Charms  (select one card, then a charm to enchant it)"
 	charm_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	charm_label.add_theme_font_size_override("font_size", 15)
+	charm_label.add_theme_font_size_override("font_size", 22 if _compact else 15)
+	charm_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	charm_label.modulate = Color(0.75, 0.75, 0.85)
 	panel_vbox.add_child(charm_label)
 
@@ -150,7 +157,7 @@ func _build_ui() -> void:
 
 func _make_card_slot() -> Control:
 	var slot := Control.new()
-	slot.custom_minimum_size = CARD_SIZE
+	slot.custom_minimum_size = _card_size
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.12, 0.12, 0.18)
 	style.set_border_width_all(1)
@@ -182,7 +189,8 @@ func _rebuild_deck() -> void:
 			continue
 		var inst := dc.make_instance()
 		var ui   := CardUI.create(inst)
-		ui.custom_minimum_size = CARD_SIZE
+		ui.draggable = false   # forge selects by tap; drag would break touch selection
+		ui.custom_minimum_size = _card_size
 
 		var combinable := data.elements.size() > 0 or data.chess_pieces.size() > 0
 		if not combinable:
@@ -315,8 +323,8 @@ func _rebuild_charms() -> void:
 func _make_charm_chip(charm_id: String, count: int) -> Button:
 	var charm := CharmData.get_charm(charm_id)
 	var btn := Button.new()
-	btn.custom_minimum_size = Vector2(56, 56)
-	btn.add_theme_font_size_override("font_size", 20)
+	btn.custom_minimum_size = Vector2(84, 84) if _compact else Vector2(56, 56)
+	btn.add_theme_font_size_override("font_size", 30 if _compact else 20)
 	btn.text = charm.letter if charm != null else "✦"
 	if count > 1:
 		btn.text += " ×%d" % count

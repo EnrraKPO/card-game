@@ -7,6 +7,10 @@ signal spell_drag_ended(card_ui: CardUI)
 
 var card_instance: CardInstance
 var _show_cost: bool
+# Drag-and-drop is a combat affordance (hand → board). Off-combat cards (forge, rewards,
+# deck views) set this false: otherwise a touch tap that drifts a pixel starts a drag
+# instead of firing `pressed`, so selection silently fails on touchscreens.
+var draggable: bool = true
 # Left-edge column of charm pips, built lazily (mirrors the composition chips on the right).
 var _charm_col: VBoxContainer = null
 # True for a rook-generated token shown in the hand's "generated" zone; gives
@@ -419,7 +423,7 @@ func _gui_input(event: InputEvent) -> void:
 
 
 func _get_drag_data(at_position: Vector2) -> Variant:
-	if card_instance == null:
+	if not draggable or card_instance == null:
 		return null
 	# Buildings root in place: a unit with a rook can be dropped from the hand,
 	# but once it's on the board (row >= 0) it can no longer be picked up to move.

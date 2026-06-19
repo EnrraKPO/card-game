@@ -23,6 +23,7 @@ config/main_scene="res://scenes/entry_screen.tscn"
 [autoload]
 
 GameData="*res://scripts/game_data.gd"
+UIScale="*res://scripts/ui_scale.gd"
 
 [display]
 
@@ -31,8 +32,10 @@ window/size/viewport_height=1080
 window/size/mode=2
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
+window/handheld/orientation="sensor_landscape"
 
 [rendering]
 
 textures/canvas_textures/default_texture_filter=2
+renderer/rendering_method="mobile"
 anti_aliasing/quality/msaa_2d=2

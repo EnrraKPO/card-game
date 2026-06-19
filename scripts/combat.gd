@@ -493,8 +493,11 @@ func _build_ui() -> void:
 
 
 func _build_hud(parent: VBoxContainer) -> void:
+	var compact := UIScale.is_compact()
+	var label_font := 30 if compact else 17
+
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size.y = HUD_HEIGHT
+	panel.custom_minimum_size.y = 124.0 if compact else HUD_HEIGHT
 	parent.add_child(panel)
 
 	var hbox := HBoxContainer.new()
@@ -502,26 +505,27 @@ func _build_hud(parent: VBoxContainer) -> void:
 	hbox.add_child(RunHUD.new())
 
 	_turn_label = Label.new()
-	_turn_label.add_theme_font_size_override("font_size", 17)
+	_turn_label.add_theme_font_size_override("font_size", label_font)
 	_turn_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_turn_label.size_flags_horizontal = SIZE_EXPAND_FILL
 	hbox.add_child(_turn_label)
 
 	_mana_label = Label.new()
-	_mana_label.add_theme_font_size_override("font_size", 17)
+	_mana_label.add_theme_font_size_override("font_size", label_font)
 	_mana_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_mana_label.size_flags_horizontal = SIZE_EXPAND_FILL
 	hbox.add_child(_mana_label)
 
+	# The key touch target — "Done placing". Make it big on compact.
 	_done_btn = Button.new()
-	_done_btn.custom_minimum_size = Vector2(200, 0)
-	_done_btn.add_theme_font_size_override("font_size", 18)
+	_done_btn.custom_minimum_size = Vector2(320 if compact else 200, 88 if compact else 0)
+	_done_btn.add_theme_font_size_override("font_size", 34 if compact else 18)
 	_done_btn.pressed.connect(_on_done_pressed)
 	hbox.add_child(_done_btn)
 
 	var dbg_win := Button.new()
 	dbg_win.text = "[debug] win"
-	dbg_win.add_theme_font_size_override("font_size", 13)
+	dbg_win.add_theme_font_size_override("font_size", 20 if compact else 13)
 	dbg_win.modulate = Color(1.0, 0.65, 0.1)
 	dbg_win.pressed.connect(_handle_combat_end)
 	hbox.add_child(dbg_win)
