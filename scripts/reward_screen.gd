@@ -40,7 +40,12 @@ func _ready() -> void:
 		if amt <= 0:
 			continue
 		var mat_lbl := Label.new()
-		mat_lbl.text = "+%d %s" % [amt, Materials.display_name(id)]
+		# Elemental essence rewards also grant one of that element's card (see
+		# GameData.apply_encounter_rewards) — note it so the deck addition isn't a surprise.
+		if id in Materials.ELEMENTS:
+			mat_lbl.text = "+%d %s   ·   +1 %s card" % [amt, Materials.display_name(id), Materials.short_name(id)]
+		else:
+			mat_lbl.text = "+%d %s" % [amt, Materials.display_name(id)]
 		mat_lbl.add_theme_font_size_override("font_size", 28 if compact else 18)
 		mat_lbl.modulate = Materials.color(id)
 		mat_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

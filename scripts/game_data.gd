@@ -79,6 +79,10 @@ func apply_encounter_rewards(enc: EncounterData) -> void:
 		return
 	if current_run != null:
 		current_run.gold += enc.gold_reward
+		# Every elemental-essence reward also hands you one of that element's card.
+		for id: String in enc.material_rewards:
+			if id in Materials.ELEMENTS:
+				current_run.deck.append(DeckCard.make(id))
 	grant_materials(enc.material_rewards)
 
 
