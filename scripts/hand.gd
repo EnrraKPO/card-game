@@ -12,8 +12,6 @@ extends Node
 # cleared, so any lingering highlight is dropped.
 signal token_hovered(building: CardInstance, hovering: bool)
 
-const INITIAL_DRAW := 4
-
 # Wires a spell CardUI for drag-casting; injected by combat (SpellCaster.wire_spell_card).
 var wire_spell_card: Callable
 # Card selection is only honoured while the orchestrator has placement input enabled
@@ -73,11 +71,14 @@ func populate_draw_pile(deck_cards: Array) -> void:
 		var inst := dc.make_instance()
 		if inst != null and not inst.data.is_king:
 			inst.owner = 0
+			# Fill to the run-resolved max (read-time card modifiers add to max_health once
+			# owner is set), so a fresh unit enters at full HP including any unit.health buff.
+			inst.current_health = inst.get_attribute("max_health")
 			_draw_pile.append(inst)
 
 
 func draw_initial() -> void:
-	var n := mini(INITIAL_DRAW, _draw_pile.size())
+	var n := mini(GameData.value("hand.size.initial"), _draw_pile.size())
 	for i in n:
 		_spawn_hand_card(_draw_pile[i])
 	_draw_pile = _draw_pile.slice(n)
@@ -124,6 +125,7 @@ func generate_tokens(buildings: Array) -> void:
 		tok.row = -1
 		tok.col = -1
 		tok.source_building = building
+		tok.current_health = tok.get_attribute("max_health")   # tokens share the player's unit buffs
 		var ui := CardUI.create(tok, true)
 		_gen_cards.append(ui)
 		_gen_box.add_child(ui)   # entering the tree runs _ready, so set_generated is safe after

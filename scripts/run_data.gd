@@ -1,8 +1,6 @@
 class_name RunData
 extends RefCounted
 
-const STARTING_GOLD := 100
-
 # The King is the player's run-long avatar and the only loss condition: when its
 # health hits 0 in a fight, the run is over. The King unit itself is rebuilt fresh
 # each combat (CombatBoard.place_kings), so the only thing we persist between fights
@@ -23,7 +21,9 @@ var charms: Array = []   # owned, unapplied charm ids (inventory); applied in th
 static func create_new(profile: ProfileData = null) -> RunData:
 	var run := RunData.new()
 	run.king_damage = 0
-	run.gold        = STARTING_GOLD
+	# Starting purse resolved through the registry (base + any gold.initial modifier). GameData
+	# rebuilds the modifier set from this profile before create_new (see start_new_run).
+	run.gold        = GameData.value("gold.initial")
 	var deck := profile.get_selected_deck() if profile != null else null
 	if deck != null:
 		run.king_id = deck.king_id
@@ -46,7 +46,7 @@ static func from_dict(data: Dictionary) -> RunData:
 		# Migrate legacy saves that stored absolute current/max health.
 		run.king_damage = maxi(0, int(data["max_health"]) - int(data["health"]))
 	run.king_id = data.get("king_id", ProfileData.STARTING_KING)
-	run.gold = data.get("gold", STARTING_GOLD)
+	run.gold = int(data.get("gold", GameAttributes.default_value("gold.initial")))
 	run.deck = _deck_from_variants(data.get("deck", []))
 	run.act  = data.get("act",  1)
 	run.charms = data.get("charms", [])
@@ -76,11 +76,13 @@ static func _deck_from_variants(raw: Array) -> Array:
 	return out
 
 
-# The King's maximum health — its card stat is the single source of truth. (When
-# per-run max-health upgrades exist, fold a stored bonus in here.)
+# The King's maximum health: its card stat plus the resolved "king.max_health" bonus (default
+# 0; e.g. the Warfare capstone). The bonus resolves through the same registry path as every
+# other number. GameData owns the active modifier set for the live run.
 func king_max_health() -> int:
 	var king := CardData.get_card(king_id)
-	return king.health if king != null else 1
+	var base := king.health if king != null else 1
+	return base + GameData.value("king.max_health")
 
 
 # The King's health entering a fight: full max, minus the damage carried over.

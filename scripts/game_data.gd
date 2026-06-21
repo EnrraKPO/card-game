@@ -18,8 +18,15 @@ var current_encounter: EncounterData = null
 var current_event_attr: String = ""
 # The deck the detail screen should display, handed off from the Decks screen (transient).
 var viewing_deck_id: String = ""
+# The deck the builder should edit, handed off from the Decks screen (transient).
+var editing_deck_id: String = ""
 # Meta-progression for the currently-selected slot (see ProfileData).
 var current_profile: ProfileData = null
+# Aggregate of every active run-wide Effect (from owned upgrades now; relics/heroes
+# later). Rebuilt whenever the profile changes or a run starts; the game systems read every
+# number through value() (globals) / card_bonus() (cards) / EffectSystem.trigger_global
+# (combat events). Empty default = no-op for every query.
+var current_modifiers: ModifierSet = ModifierSet.new()
 
 
 func _ready() -> void:
@@ -36,6 +43,7 @@ func select_slot(slot: int) -> void:
 	current_profile = ProfileData.from_dict(existing)
 	if existing.is_empty():
 		save_profile()   # register the new save so the slot reads as started
+	rebuild_modifiers()
 	current_run = null
 	current_map_state = null
 	current_encounter = null
@@ -62,6 +70,35 @@ func save_profile() -> void:
 	_write_section("profile_%d" % current_slot, current_profile.to_dict())
 
 
+# ── Run-wide modifiers (the upgrade/relic/hero hook) ────────────────────────────────
+
+# Recomputes the active modifier set from the current profile. Call after the profile
+# changes (slot select, an upgrade purchase) or a run starts so every queried number
+# reflects the player's owned upgrades.
+func rebuild_modifiers() -> void:
+	current_modifiers = ModifierSet.from_profile(current_profile)
+
+
+# THE resolver: the current value of any registered game number = its registry default plus
+# every active modifier for that key. This is the single call every system makes to read a
+# run/match number, so they all behave identically and a new number is just a registry row.
+func value(key: String) -> int:
+	return int(round(value_f(key)))
+
+
+func value_f(key: String) -> float:
+	return GameAttributes.default_value(key) + current_modifiers.total_add(key)
+
+
+# Run-wide CARD modifier bonus for an attribute on a specific instance, resolved at read-time
+# by CardInstance.get_attribute. Guarded to PLAYER combat units (owner 0) so upgrade/relic
+# buffs never leak onto enemies or non-combat (deck-builder/preview) instances.
+func card_bonus(inst: CardInstance, attr: String) -> int:
+	if inst == null or inst.owner != 0:
+		return 0
+	return current_modifiers.card_bonus(inst, attr)
+
+
 # Awards profile crafting resources (the one entry point any node/screen uses — combat
 # now, events/shops later). `rewards` is an id→count dict; no-op if empty or no profile.
 func grant_materials(rewards: Dictionary) -> void:
@@ -71,9 +108,19 @@ func grant_materials(rewards: Dictionary) -> void:
 	save_profile()
 
 
+# Awards profile experience (combat wins now, event rewards later — the single entry point).
+# Returns the number of upgrade points newly crossed, for UI feedback. No-op without a profile.
+func grant_experience(amount: int) -> int:
+	if amount <= 0 or current_profile == null:
+		return 0
+	var gained := current_profile.gain_experience(amount)
+	save_profile()
+	return gained
+
+
 # The one place an encounter's AUTOMATIC win rewards are applied: gold → the run, crafting
-# materials → the profile. (The card-pick reward stays interactive in reward_screen.)
-# Caller persists the run; grant_materials persists the profile.
+# materials + experience → the profile. (The card-pick reward stays interactive in reward_screen.)
+# Caller persists the run; grant_materials / grant_experience persist the profile.
 func apply_encounter_rewards(enc: EncounterData) -> void:
 	if enc == null:
 		return
@@ -84,17 +131,37 @@ func apply_encounter_rewards(enc: EncounterData) -> void:
 			if id in Materials.ELEMENTS:
 				current_run.deck.append(DeckCard.make(id))
 	grant_materials(enc.material_rewards)
+	grant_materials(_bonus_reward_materials(enc))
+	grant_experience(enc.exp_reward)
+
+
+# Extra crafting materials granted by run-wide modifiers on top of the encounter's own
+# rewards: a flat essence bonus (random element) and a chance for an Elite to drop a King
+# Piece. Returns an id→count bag (empty when no modifier applies); grant_materials no-ops on it.
+func _bonus_reward_materials(enc: EncounterData) -> Dictionary:
+	var bag := {}
+	var essence := value("reward.essence")
+	if essence > 0:
+		var elem: String = Materials.ELEMENTS[randi() % Materials.ELEMENTS.size()]
+		bag[elem] = essence
+	var kp_chance := value_f("reward.king_piece_chance")
+	if enc.type == EncounterData.Type.ELITE and kp_chance > 0.0 and randf() < kp_chance:
+		var kp := Materials.piece_id("king")
+		bag[kp] = int(bag.get(kp, 0)) + 1
+	return bag
 
 
 # ── Run lifecycle (one run per slot) ──────────────────────────────────────────────
 
 func start_new_run() -> void:
+	rebuild_modifiers()   # bake current upgrades into this run's starting numbers
 	current_run = RunData.create_new(current_profile)
 	current_map_state = MapState.create_new()
 	save_run()
 
 
 func load_run() -> void:
+	rebuild_modifiers()
 	current_run = RunData.from_dict(_read_section("slot_%d" % current_slot))
 	current_map_state = MapState.from_dict(_read_section("map_%d" % current_slot))
 

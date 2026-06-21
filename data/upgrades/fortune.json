@@ -1,0 +1,14 @@
+{
+	"id": "fortune",
+	"display_name": "Fortune",
+	"description": "Wealth, rewards, and playing the long game.",
+	"color": "d9b84a",
+	"nodes": [
+		{ "id": "for_root", "display_name": "Prospector", "description": "Start each run with +25 gold.", "cost": 1, "icon": "✦", "row": 0, "col": 0, "requires": [],
+			"effects": [{ "key": "gold.initial", "amount": 25 }] },
+		{ "id": "for_spoils", "display_name": "Spoils of War", "description": "Combat wins grant +1 essence.", "cost": 2, "icon": "◆", "row": 1, "col": 0, "requires": ["for_root"],
+			"effects": [{ "key": "reward.essence", "amount": 1 }] },
+		{ "id": "for_plunder", "display_name": "Plunder", "description": "Elites have a 50% chance to drop an extra King Piece.", "cost": 3, "icon": "❖", "row": 2, "col": 0, "requires": ["for_spoils"],
+			"effects": [{ "key": "reward.king_piece_chance", "amount": 0.5 }] }
+	]
+}

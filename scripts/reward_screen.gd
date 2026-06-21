@@ -33,6 +33,16 @@ func _ready() -> void:
 	gold_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(gold_lbl)
 
+	# Experience was banked at combat end (GameData.apply_encounter_rewards) — show it for feedback.
+	var exp_gained: int = GameData.current_encounter.exp_reward if GameData.current_encounter != null else 0
+	if exp_gained > 0:
+		var exp_lbl := Label.new()
+		exp_lbl.text = "+%d Experience" % exp_gained
+		exp_lbl.add_theme_font_size_override("font_size", 30 if compact else 20)
+		exp_lbl.modulate = Color(0.55, 0.8, 1.0)
+		exp_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		vbox.add_child(exp_lbl)
+
 	# Crafting resources earned this fight (already banked at combat end — shown for feedback).
 	var mats: Dictionary = GameData.current_encounter.material_rewards if GameData.current_encounter != null else {}
 	for id: String in mats:

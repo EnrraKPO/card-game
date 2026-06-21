@@ -10,10 +10,23 @@ extends RefCounted
 # A run takes a deep-copied SNAPSHOT of the selected deck (snapshot_cards); run-time
 # edits (forge charms, "?" upgrades) mutate that snapshot only, never the owned deck.
 
+# Deck size bounds (the King is NOT counted — it's the deck's anchor, shown separately).
+const MIN_CARDS := 15
+const MAX_CARDS := 23
+
 var id: String                  # unique instance id within the profile (e.g. "deck_3")
 var name: String = ""           # player-facing label
 var king_id: String = "king"    # the King this deck is played with
 var cards: Array = []           # Array[DeckCard]
+
+
+# How many copies of `card_id` this deck currently holds.
+func count_of(card_id: String) -> int:
+	var n := 0
+	for dc: DeckCard in cards:
+		if dc.id == card_id:
+			n += 1
+	return n
 
 
 # Seeds a fresh owned deck from a King's template, falling back to the basic deck when
@@ -29,6 +42,17 @@ static func from_template(p_king_id: String, instance_id: String, display_name: 
 	for card_id in ids:
 		od.cards.append(DeckCard.make(card_id))
 	return od
+
+
+# Re-seeds this deck's cards from its King's template, discarding any customization
+# (the "reset to default" action). King/id/name are kept.
+func reset_to_template() -> void:
+	cards.clear()
+	var ids: Array = DeckData.get_deck(king_id)
+	if ids.is_empty():
+		ids = DeckData.get_deck(DeckData.FALLBACK_ID)
+	for id: String in ids:
+		cards.append(DeckCard.make(id))
 
 
 # A deep copy of the cards, safe to hand to a run (so run mutations don't leak back).

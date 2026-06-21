@@ -1,0 +1,23 @@
+{
+  "id": "air_water_king",
+  "cards": [
+    "air_pawn",
+    "air_pawn",
+    "water_pawn",
+    "water_pawn",
+    "air_water_pawn",
+    "air_water_pawn",
+    "pawn",
+    "pawn",
+    "air_bishop",
+    "water_bishop",
+    "air_knight",
+    "water_knight",
+    "air_rook",
+    "water_rook",
+    "air_water_queen",
+    "air",
+    "water",
+    "air_water"
+  ]
+}

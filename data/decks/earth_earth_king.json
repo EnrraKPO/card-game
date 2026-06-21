@@ -1,0 +1,23 @@
+{
+  "id": "earth_earth_king",
+  "cards": [
+    "earth_pawn",
+    "earth_pawn",
+    "earth_pawn",
+    "earth_pawn",
+    "earth_earth_pawn",
+    "earth_earth_pawn",
+    "pawn",
+    "pawn",
+    "earth_bishop",
+    "earth_bishop",
+    "earth_knight",
+    "earth_knight",
+    "earth_rook",
+    "earth_rook",
+    "earth_earth_queen",
+    "earth",
+    "earth",
+    "earth_earth"
+  ]
+}

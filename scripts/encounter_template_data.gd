@@ -13,6 +13,7 @@ var weight: float = 1.0
 var enemy_pool: Array = []   # Array[{ "id": String, "weight": float }]
 var pick_count: Array = [1, 1]    # [min, max] inclusive
 var gold_reward: Array = [0, 0]   # [min, max] inclusive
+var exp_reward: int = 1           # profile experience for winning this fight (special fights author more)
 var ai: String = "default"
 var reward_pool: String = "default"
 
@@ -64,6 +65,7 @@ static func _from_dict(d: Dictionary) -> EncounterTemplateData:
 	t.weight      = d.get("weight", 1.0)
 	t.ai          = d.get("ai", "default")
 	t.reward_pool = d.get("reward_pool", "default")
+	t.exp_reward  = int(d.get("exp_reward", 1))
 	var pc: Array = d.get("pick_count", [1, 1])
 	t.pick_count  = [pc[0], pc[0] if pc.size() < 2 else pc[1]]
 	var gr: Array = d.get("gold_reward", [0, 0])
@@ -119,6 +121,7 @@ func instantiate(rng: RandomNumberGenerator) -> EncounterData:
 	enc.enemy_deck = deck
 
 	enc.gold_reward = rng.randi_range(gold_reward[0], gold_reward[1])
+	enc.exp_reward  = exp_reward
 	enc.reward_pool = resolve_reward_pool(reward_pool)
 	return enc
 

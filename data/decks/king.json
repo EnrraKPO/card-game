@@ -5,6 +5,6 @@
     "bishop", "bishop",
     "knight", "knight",
     "rook", "rook",
-    "queen"
+    "queen", "queen"
   ]
 }

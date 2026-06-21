@@ -104,9 +104,7 @@ static func build_from_dict(d: Dictionary) -> CardData:
 	card.elements     = Array(d.get("elements",     []), TYPE_STRING, "", null)
 	card.chess_pieces = Array(d.get("chess_pieces", []), TYPE_STRING, "", null)
 	for e_data: Dictionary in d.get("effects", []):
-		var e := _parse_effect(e_data)
-		if e:
-			card.effects.append(e)
+		card.effects.append(Effect.from_dict(e_data))
 	if d.has("card_type"):
 		card.card_type = CardType.SPELL if d.get("card_type") == "spell" else CardType.UNIT
 	elif not card.elements.is_empty() and card.chess_pieces.is_empty():
@@ -127,62 +125,6 @@ static func _load_card_dict(d: Dictionary) -> void:
 	_all[card.id] = card
 	if card.elements.size() > 0 or card.chess_pieces.size() > 0:
 		_by_composition[composition_key(card.elements, card.chess_pieces)] = card
-
-
-static func _parse_effect(d: Dictionary) -> Effect:
-	var conditions: Array = []
-	for c_data: Dictionary in d.get("conditions", []):
-		var c := _parse_condition(c_data)
-		if c:
-			conditions.append(c)
-	return Effect.make(
-		_str_trigger(d.get("trigger", "")),
-		_str_policy(d.get("targeting_policy", "")),
-		d.get("attribute", ""),
-		d.get("amount", 0),
-		conditions
-	)
-
-
-static func _parse_condition(d: Dictionary) -> EffectCondition:
-	return EffectCondition.make(
-		d.get("attribute", ""),
-		_str_comparator(d.get("comparator", "")),
-		d.get("value", 0)
-	)
-
-
-static func _str_trigger(s: String) -> Effect.Trigger:
-	match s:
-		"on_play":         return Effect.Trigger.ON_PLAY
-		"on_death":        return Effect.Trigger.ON_DEATH
-		"on_attack":       return Effect.Trigger.ON_ATTACK
-		"on_damage_taken": return Effect.Trigger.ON_DAMAGE_TAKEN
-		"permanent":       return Effect.Trigger.PERMANENT
-	return Effect.Trigger.ON_PLAY
-
-
-static func _str_policy(s: String) -> Effect.TargetingPolicy:
-	match s:
-		"self":           return Effect.TargetingPolicy.SELF
-		"single_nearest": return Effect.TargetingPolicy.SINGLE_NEAREST
-		"single_random":  return Effect.TargetingPolicy.SINGLE_RANDOM
-		"all_enemies":    return Effect.TargetingPolicy.ALL_ENEMIES
-		"all_allies":     return Effect.TargetingPolicy.ALL_ALLIES
-		"all":            return Effect.TargetingPolicy.ALL
-		"manual":         return Effect.TargetingPolicy.MANUAL
-	return Effect.TargetingPolicy.SELF
-
-
-static func _str_comparator(s: String) -> EffectCondition.Comparator:
-	match s:
-		"gt":  return EffectCondition.Comparator.GT
-		"gte": return EffectCondition.Comparator.GTE
-		"lt":  return EffectCondition.Comparator.LT
-		"lte": return EffectCondition.Comparator.LTE
-		"eq":  return EffectCondition.Comparator.EQ
-		"neq": return EffectCondition.Comparator.NEQ
-	return EffectCondition.Comparator.GTE
 
 
 # Inverse of build_from_dict — serialises the authorable definition (omitting derived
@@ -257,6 +199,11 @@ static func combine(a: CardData, b: CardData) -> CardData:
 static func _derive_from_key(key: String) -> CardData:
 	if key.is_empty():
 		return null
+	# An authored card already owns this composition (e.g. "earth_water" → the Clay spell,
+	# "earth_fire" → Magma). Return it instead of deriving a generic one — deriving here
+	# would OVERWRITE _by_composition[key] and break combine() for that pair.
+	if _by_composition.has(key):
+		return _by_composition[key]
 	var elems: Array[String] = []
 	var chess: Array[String]  = []
 	for part: String in key.split("_"):

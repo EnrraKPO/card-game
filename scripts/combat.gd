@@ -110,10 +110,16 @@ func _enemy_draw_one() -> void:
 
 func _begin_round() -> void:
 	_turn      += 1
-	_max_mana   = mini(_turn, 10)
+	# Every number resolves through GameData.value: the player gets the upgraded values, the
+	# enemy reads the raw registry defaults so player upgrades never buff the CPU.
+	# Ramp climbs to the mana.max ceiling (turn-1 start is mana.initial); mana.per_turn is a
+	# flat bonus stacked on top every turn (so it can exceed the soft cap).
+	var ramp := GameData.value("mana.initial") if _turn == 1 else _turn
+	_max_mana   = mini(ramp, GameData.value("mana.max")) + GameData.value("mana.per_turn")
 	_mana       = _max_mana
-	_enemy_mana = _max_mana
-	_hand.draw_one()
+	_enemy_mana = mini(_turn, int(GameAttributes.default_value("mana.max")))
+	for _i in GameData.value("draw.per_turn"):
+		_hand.draw_one()
 	_enemy_draw_one()
 	await _do_cpu_placement()
 	_phase = Phase.PLAYER_PLACE
@@ -347,11 +353,19 @@ func _resolve_attack(attacker: CardInstance) -> void:
 		t_card.refresh()
 		await get_tree().create_timer(0.2).timeout
 
+	# A triggered/run-level effect resolved during this attack (e.g. an upgrade's on-death
+	# retaliation) may have killed a bystander; sweep any secondary deaths off the board.
+	_board.cleanup_effect_deaths()
 
-# DRYs the repeated "fire an effect trigger for an instance in the current board
-# context" call used throughout combat resolution.
+
+# DRYs the repeated "fire an effect trigger for an instance in the current board context"
+# call used throughout combat resolution. Fires the instance's own (card) triggered effects
+# AND any run-level effects (upgrades/relics) listening for the same event.
 func _trigger(t: Effect.Trigger, inst: CardInstance) -> Array:
-	return EffectSystem.trigger(t, inst, EffectContext.make(inst, _board.player_grid, _board.enemy_grid))
+	var ctx := EffectContext.make(inst, _board.player_grid, _board.enemy_grid)
+	var results := EffectSystem.trigger(t, inst, ctx)
+	results.append_array(EffectSystem.trigger_global(t, ctx))
+	return results
 
 
 # The player's King carries its health across the whole run, so it enters each
@@ -366,6 +380,11 @@ func _apply_king_persistence() -> void:
 	var pk := _board.get_player_king()
 	if pk == null:
 		return
+	# Reflect any run-wide king.max_health bonus on the unit itself so its bar reads correctly
+	# (the King is excluded from the blanket unit.* buffs — its HP has its own modifier axis).
+	var hp_bonus := GameData.value("king.max_health")
+	if hp_bonus != 0:
+		pk.apply_modifier("max_health", hp_bonus)
 	pk.current_health = run.king_health()
 	_board.refresh()
 

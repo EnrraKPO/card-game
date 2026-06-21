@@ -23,6 +23,27 @@ static func make_custom(check: Callable) -> EffectCondition:
 	return c
 
 
+# Parses an authored condition dict (inverse of to_dict). Used by Effect.from_dict so all
+# effect/condition parsing lives in one place.
+static func from_dict(d: Dictionary) -> EffectCondition:
+	return make(
+		d.get("attribute", ""),
+		_str_comparator(d.get("comparator", "")),
+		int(d.get("value", 0))
+	)
+
+
+static func _str_comparator(s: String) -> Comparator:
+	match s:
+		"gt":  return Comparator.GT
+		"gte": return Comparator.GTE
+		"lt":  return Comparator.LT
+		"lte": return Comparator.LTE
+		"eq":  return Comparator.EQ
+		"neq": return Comparator.NEQ
+	return Comparator.GTE
+
+
 # Inverse of CardData._parse_condition (custom_check is programmatic-only, not stored).
 func to_dict() -> Dictionary:
 	return {

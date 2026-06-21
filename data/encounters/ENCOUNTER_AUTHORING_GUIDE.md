@@ -32,6 +32,7 @@ A template describes an enemy *card pool* to sample from, not a fixed list — e
 | `enemy_pool` | array | Yes | Weighted candidate cards (king is implicit, do not include it). Sampled **with replacement**, so the same card can appear more than once in a deck |
 | `pick_count` | `[min, max]` | Yes | Inclusive random range for how many cards are drawn from the pool per instantiation |
 | `gold_reward` | `[min, max]` | No | Inclusive random range of gold granted on win. Defaults to `[0, 0]` |
+| `exp_reward` | int | No | Profile experience granted on win, toward upgrade points. Defaults to `1`; author higher for special fights (e.g. elites/bosses) |
 | `ai` | string | No | Key into `EnemyAI.from_key()`. Defaults to `"default"` |
 | `reward_pool` | string | No | Key into `EncounterTemplateData.resolve_reward_pool()`. Defaults to `"default"` (any non-king card) |
 

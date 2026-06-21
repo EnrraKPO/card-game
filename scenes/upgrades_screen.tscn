@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://b8upgrdscrn04"]
+
+[ext_resource type="Script" path="res://scripts/upgrades_screen.gd" id="1"]
+
+[node name="UpgradesScreen" type="Control"]
+script = ExtResource("1")

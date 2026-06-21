@@ -9,6 +9,6 @@
     "fire_knight", "earth_knight",
     "fire_rook", "earth_rook",
     "earth_fire_queen",
-    "fire", "earth", "magma"
+    "fire", "earth", "earth_fire"
   ]
 }

@@ -1,0 +1,59 @@
+[gd_scene format=3 uid="uid://clabscr7n2x4q"]
+
+[ext_resource type="Script" uid="uid://h16n7w4po236" path="res://scripts/lab_screen.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://cnw276efwq3rw" path="res://assets/ui/lab/refinery.png" id="2"]
+[ext_resource type="Texture2D" uid="uid://ckmfhbgdqtk5m" path="res://assets/ui/lab/card_forge.png" id="3"]
+[ext_resource type="Texture2D" uid="uid://p0y3ccwkcx8u" path="res://assets/ui/lab/king_forge.png" id="4"]
+
+[node name="LabScreen" type="Control" unique_id=588307057]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="Background" type="ColorRect" parent="." unique_id=253630807]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.07, 0.07, 0.12, 1)
+
+[node name="Stage" type="Control" parent="." unique_id=1212400875]
+anchors_preset = 0
+offset_right = 1280.0
+offset_bottom = 720.0
+
+[node name="refinery" type="TextureButton" parent="Stage" unique_id=1359379251]
+layout_mode = 0
+offset_left = 50.0
+offset_top = 83.0
+offset_right = 270.0
+offset_bottom = 303.0
+tooltip_text = "Refinery"
+texture_normal = ExtResource("2")
+ignore_texture_size = true
+stretch_mode = 5
+
+[node name="card_forge" type="TextureButton" parent="Stage" unique_id=872496557]
+layout_mode = 0
+offset_left = 516.0
+offset_top = 383.0
+offset_right = 736.0
+offset_bottom = 603.0
+tooltip_text = "Card Forge"
+texture_normal = ExtResource("3")
+ignore_texture_size = true
+stretch_mode = 5
+
+[node name="king_forge" type="TextureButton" parent="Stage" unique_id=1395068015]
+layout_mode = 0
+offset_left = 946.0
+offset_top = 100.0
+offset_right = 1166.0
+offset_bottom = 320.0
+tooltip_text = "King Forge"
+texture_normal = ExtResource("4")
+ignore_texture_size = true
+stretch_mode = 5

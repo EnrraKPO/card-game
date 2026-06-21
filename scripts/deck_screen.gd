@@ -14,6 +14,11 @@ var _preview_title: Label
 var _preview_body: VBoxContainer
 var _set_active_btn: Button
 var _view_btn: Button
+var _edit_btn: Button
+var _reset_btn: Button
+var _delete_btn: Button
+var _confirm_reset: ConfirmationDialog
+var _confirm_delete: ConfirmationDialog
 var _compact := false
 
 
@@ -45,6 +50,16 @@ func _build_ui() -> void:
 	body.add_child(_build_preview_pane())
 
 	_build_king_picker()
+
+	_confirm_reset = ConfirmationDialog.new()
+	_confirm_reset.title = "Reset deck"
+	_confirm_reset.confirmed.connect(_do_reset)
+	add_child(_confirm_reset)
+
+	_confirm_delete = ConfirmationDialog.new()
+	_confirm_delete.title = "Delete deck"
+	_confirm_delete.confirmed.connect(_do_delete)
+	add_child(_confirm_delete)
 
 
 func _build_list_pane() -> Control:
@@ -102,9 +117,10 @@ func _build_preview_pane() -> Control:
 	_preview_body.size_flags_horizontal = SIZE_EXPAND_FILL
 	scroll.add_child(_preview_body)
 
-	var actions := HBoxContainer.new()
-	actions.add_theme_constant_override("separation", 12)
-	actions.alignment = BoxContainer.ALIGNMENT_CENTER
+	var actions := HFlowContainer.new()
+	actions.add_theme_constant_override("h_separation", 12)
+	actions.add_theme_constant_override("v_separation", 10)
+	actions.alignment = FlowContainer.ALIGNMENT_CENTER
 	col.add_child(actions)
 	_set_active_btn = Button.new()
 	_set_active_btn.custom_minimum_size = Vector2(240, 76) if _compact else Vector2(160, 40)
@@ -117,6 +133,28 @@ func _build_preview_pane() -> Control:
 	_view_btn.add_theme_font_size_override("font_size", 26 if _compact else 16)
 	_view_btn.pressed.connect(_on_view_deck)
 	actions.add_child(_view_btn)
+
+	_edit_btn = Button.new()
+	_edit_btn.text = "Edit Deck →"
+	_edit_btn.custom_minimum_size = Vector2(240, 76) if _compact else Vector2(160, 40)
+	_edit_btn.add_theme_font_size_override("font_size", 26 if _compact else 16)
+	_edit_btn.pressed.connect(_on_edit_deck)
+	actions.add_child(_edit_btn)
+
+	_reset_btn = Button.new()
+	_reset_btn.text = "Reset"
+	_reset_btn.custom_minimum_size = Vector2(240, 76) if _compact else Vector2(140, 40)
+	_reset_btn.add_theme_font_size_override("font_size", 26 if _compact else 16)
+	_reset_btn.pressed.connect(_on_reset)
+	actions.add_child(_reset_btn)
+
+	_delete_btn = Button.new()
+	_delete_btn.text = "Delete"
+	_delete_btn.custom_minimum_size = Vector2(240, 76) if _compact else Vector2(140, 40)
+	_delete_btn.add_theme_font_size_override("font_size", 26 if _compact else 16)
+	_delete_btn.add_theme_color_override("font_color", Color(0.95, 0.6, 0.55))
+	_delete_btn.pressed.connect(_on_delete)
+	actions.add_child(_delete_btn)
 	return panel
 
 
@@ -271,6 +309,9 @@ func _update_preview() -> void:
 		_preview_title.text = ""
 		_set_active_btn.disabled = true
 		_view_btn.disabled = true
+		_edit_btn.disabled = true
+		_reset_btn.disabled = true
+		_delete_btn.disabled = true
 		return
 
 	var is_active := od.id == GameData.current_profile.selected_deck_id
@@ -282,6 +323,9 @@ func _update_preview() -> void:
 	_set_active_btn.text = "Active ✓" if is_active else "Set as Active"
 	_set_active_btn.disabled = is_active
 	_view_btn.disabled = false
+	_edit_btn.disabled = false
+	_reset_btn.disabled = false
+	_delete_btn.disabled = not GameData.current_profile.can_delete_deck(od.id)
 
 
 func _on_set_active() -> void:
@@ -293,3 +337,42 @@ func _on_set_active() -> void:
 func _on_view_deck() -> void:
 	GameData.viewing_deck_id = _previewed_id
 	get_tree().change_scene_to_file("res://scenes/deck_view_screen.tscn")
+
+
+func _on_edit_deck() -> void:
+	GameData.editing_deck_id = _previewed_id
+	get_tree().change_scene_to_file("res://scenes/deck_build_screen.tscn")
+
+
+func _on_reset() -> void:
+	var od := _previewed_deck()
+	if od == null:
+		return
+	_confirm_reset.dialog_text = "Reset \"%s\" to its default King template? Any customisation is lost." \
+		% DeckUI.deck_label(od, _previewed_ordinal(od))
+	_confirm_reset.popup_centered()
+
+
+func _do_reset() -> void:
+	var od := _previewed_deck()
+	if od == null:
+		return
+	od.reset_to_template()
+	GameData.save_profile()
+	_rebuild()
+
+
+func _on_delete() -> void:
+	var od := _previewed_deck()
+	if od == null or not GameData.current_profile.can_delete_deck(od.id):
+		return
+	_confirm_delete.dialog_text = "Delete \"%s\"? This can't be undone." \
+		% DeckUI.deck_label(od, _previewed_ordinal(od))
+	_confirm_delete.popup_centered()
+
+
+func _do_delete() -> void:
+	if GameData.current_profile.delete_deck(_previewed_id):
+		GameData.save_profile()
+		_previewed_id = GameData.current_profile.selected_deck_id
+	_rebuild()

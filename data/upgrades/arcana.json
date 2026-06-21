@@ -1,0 +1,16 @@
+{
+	"id": "arcana",
+	"display_name": "Arcana",
+	"description": "Bend the flow of mana and spells in your favour.",
+	"color": "6f8cd9",
+	"nodes": [
+		{ "id": "arc_root", "display_name": "Attunement", "description": "Start each combat with +1 mana.", "cost": 1, "icon": "✦", "row": 0, "col": 1, "requires": [],
+			"effects": [{ "key": "mana.initial", "amount": 1 }] },
+		{ "id": "arc_cost", "display_name": "Efficiency", "description": "Your element cards cost 1 less mana.", "cost": 2, "icon": "◆", "row": 1, "col": 0, "requires": ["arc_root"],
+			"effects": [{ "key": "card.cost", "amount": -1, "filter": { "has_element": true } }] },
+		{ "id": "arc_draw", "display_name": "Insight", "description": "Draw an extra card in your opening hand.", "cost": 2, "icon": "❖", "row": 1, "col": 2, "requires": ["arc_root"],
+			"effects": [{ "key": "hand.size.initial", "amount": 1 }] },
+		{ "id": "arc_cap", "display_name": "Archmage", "description": "Capstone: gain +1 maximum mana.", "cost": 4, "icon": "▲", "row": 2, "col": 1, "requires": ["arc_cost", "arc_draw"],
+			"effects": [{ "key": "mana.max", "amount": 1 }] }
+	]
+}

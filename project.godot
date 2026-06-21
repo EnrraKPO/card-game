@@ -34,6 +34,12 @@ window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 window/handheld/orientation="sensor_landscape"
 
+[importer_defaults]
+
+texture={
+&"mipmaps/generate": true
+}
+
 [rendering]
 
 textures/canvas_textures/default_texture_filter=2

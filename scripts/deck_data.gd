@@ -51,3 +51,21 @@ static func get_deck(id: String) -> Array:
 		push_error("DeckData: unknown deck id '%s'" % id)
 		return []
 	return _all[id].duplicate()
+
+
+# Whether a deck file exists for this id (no error logged) — used to tell a real,
+# deck-backed elemental King from a generic card derivation (see Lab.is_forgeable_king).
+static func has(id: String) -> bool:
+	return _all.has(id)
+
+
+# How many copies of `card_id` a King's template deck includes — the FREE per-deck allotment
+# of that innate card (see the crafting/collection design). 0 = not innate to this King.
+static func innate_count(king_id: String, card_id: String) -> int:
+	if not _all.has(king_id):
+		return 0
+	var n := 0
+	for id: String in _all[king_id]:
+		if id == card_id:
+			n += 1
+	return n

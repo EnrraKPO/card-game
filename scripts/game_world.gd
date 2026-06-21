@@ -2,7 +2,7 @@ extends Control
 
 # The selected save's hub ("game world"): surfaces that slot's meta-progression and
 # launches its single run — Continue if one's in progress, otherwise start fresh.
-# Kings / Decks / Unlocks are disabled placeholders until those features land.
+# The meta panels (Upgrades / Decks / Lab) each open their own screen.
 
 var _confirm_abandon: ConfirmationDialog
 
@@ -49,14 +49,14 @@ func _ready() -> void:
 
 	vbox.add_child(_build_loadout_panel())
 
-	# Meta panels — disabled placeholders until their features land.
+	# Meta panels — each opens its own meta-progression screen.
 	var panels := HBoxContainer.new()
 	panels.alignment = BoxContainer.ALIGNMENT_CENTER
 	panels.add_theme_constant_override("separation", 16)
 	vbox.add_child(panels)
-	panels.add_child(_panel_button("Kings", "", compact))
+	panels.add_child(_panel_button("Upgrades", "res://scenes/upgrades_screen.tscn", compact))
 	panels.add_child(_panel_button("Decks", "res://scenes/deck_screen.tscn", compact))
-	panels.add_child(_panel_button("Unlocks", "", compact))
+	panels.add_child(_panel_button("Lab", "res://scenes/lab_screen.tscn", compact))
 
 	var has_run := GameData.slot_has_run(GameData.current_slot)
 
@@ -111,7 +111,12 @@ func _build_loadout_panel() -> Control:
 	var king_name: String = king.display_name if king != null else profile.get_selected_king()
 	_add_stat(box, "King", king_name)
 	_add_stat(box, "Deck", "%d cards" % (deck.cards.size() if deck != null else 0))
-	_add_stat(box, "Renown", str(profile.renown))
+	var exp_pad := MarginContainer.new()
+	exp_pad.add_theme_constant_override("margin_left", 8)
+	exp_pad.add_theme_constant_override("margin_top", 4)
+	exp_pad.add_theme_constant_override("margin_bottom", 4)
+	exp_pad.add_child(ScreenUI.experience_bar(profile))
+	box.add_child(exp_pad)
 	# Crafting resources earned from runs (essences / King Pieces).
 	for id: String in profile.materials.ids():
 		var n := profile.materials.count(id)

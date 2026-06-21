@@ -101,7 +101,7 @@ func place_kings(player_king_id: String = "king") -> void:
 func can_place_from_hand(card_ui: CardUI) -> bool:
 	if card_ui.card_instance.is_spell:
 		return false
-	return card_ui.card_instance.data.cost <= get_mana.call()
+	return card_ui.card_instance.get_attribute("cost") <= get_mana.call()
 
 
 func place_enemy_card(inst: CardInstance, r: int, c: int) -> Array:
@@ -257,8 +257,9 @@ func _on_enemy_slot_dropped(slot: SlotUI, card_ui: CardUI) -> void:
 func do_place_unit(slot: SlotUI, card_ui: CardUI) -> void:
 	var inst      := card_ui.card_instance
 	var from_hand: bool = is_hand_card.call(card_ui)
+	var cost      := inst.get_attribute("cost")
 
-	if from_hand and inst.data.cost > get_mana.call():
+	if from_hand and cost > get_mana.call():
 		return
 
 	# Buildings are rooted once placed — never relocate an already-placed one.
@@ -282,4 +283,4 @@ func do_place_unit(slot: SlotUI, card_ui: CardUI) -> void:
 		cleanup_effect_deaths()
 
 	refresh()
-	unit_placed.emit(inst, card_ui, from_hand, inst.data.cost if from_hand else 0, results)
+	unit_placed.emit(inst, card_ui, from_hand, cost if from_hand else 0, results)

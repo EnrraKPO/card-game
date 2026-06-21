@@ -13,6 +13,7 @@
   ],
   "pick_count": [8, 10],
   "gold_reward": [40, 60],
+  "exp_reward": 3,
   "ai": "default",
   "reward_pool": "default"
 }

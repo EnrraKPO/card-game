@@ -7,14 +7,14 @@ extends RefCounted
 const CARD_RATIO := 340.0 / 260.0   # CardUI native height / width (see CardUI.NATIVE_SIZE)
 
 
-# A fixed-size thumbnail of a King's card (the real CardUI, scaled to `width`).
+# A fixed-size thumbnail of any card (the real CardUI, scaled to `width`).
 # `interactive` keeps the CardUI live so hovering shows its detail tooltip and clicking
 # emits its `pressed` signal; otherwise it's decorative (mouse passes through so a parent
 # button stays clickable). CardUI's scene sets a 160x210 minimum, so we MUST override it to
 # the thumbnail size or the card is floored at full size and spills over its neighbours.
-static func king_thumbnail(king_id: String, width: float, interactive := false) -> Control:
+static func card_thumbnail(card_id: String, width: float, interactive := false) -> Control:
 	var card_size := Vector2(width, width * CARD_RATIO)
-	var data := CardData.get_card(king_id)
+	var data := CardData.get_card(card_id)
 	if data == null:
 		var placeholder := Control.new()
 		placeholder.custom_minimum_size = card_size
@@ -25,6 +25,11 @@ static func king_thumbnail(king_id: String, width: float, interactive := false) 
 	if not interactive:
 		ui.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return ui
+
+
+# A King's card thumbnail (alias of card_thumbnail — Kings are just cards).
+static func king_thumbnail(king_id: String, width: float, interactive := false) -> Control:
+	return card_thumbnail(king_id, width, interactive)
 
 
 # The display label for a deck: the King's name, with a " (n)" suffix for a King's 2nd+ deck.

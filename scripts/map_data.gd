@@ -39,7 +39,12 @@ static func generate(seed_val: int) -> MapData:
 			node.type = _pick_type(f, rng)
 			if node.type == MapNodeData.Type.EVENT:
 				node.event_attr = DeckCard.UPGRADABLE[rng.randi() % DeckCard.UPGRADABLE.size()]
-			elif node.type in [MapNodeData.Type.COMBAT, MapNodeData.Type.ELITE]:
+			elif node.type == MapNodeData.Type.ELITE:
+				# Elites drop a chess piece — the king-alchemy currency (the Forge needs a
+				# King Piece). Placeholder: one random piece, uniform odds (balance later).
+				var piece: String = Materials.PIECES[rng.randi() % Materials.PIECES.size()]
+				node.material_rewards = {Materials.piece_id(piece): 1}
+			elif node.type == MapNodeData.Type.COMBAT:
 				# Previewable essence reward: a single random element, modest fixed amount
 				# (balance/authoring is a later pass).
 				var element: String = Materials.ELEMENTS[rng.randi() % Materials.ELEMENTS.size()]

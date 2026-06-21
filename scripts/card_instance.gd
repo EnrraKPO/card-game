@@ -31,14 +31,16 @@ static func from_data(card_data: CardData) -> CardInstance:
 	return inst
 
 
-# Returns the effective value of an attribute, base + any accumulated modifiers.
+# Returns the effective value of an attribute: base + this instance's accumulated modifiers
+# (from triggered effects / charms) + any run-wide CARD modifiers that match this card
+# (upgrades/relics, resolved at read-time — see GameData.card_bonus, guarded to player units).
 func get_attribute(attr: String) -> int:
 	match attr:
 		"health":     return current_health
-		"max_health": return data.health    + modifiers.get("max_health", 0)
-		"attack":     return data.attack    + modifiers.get("attack",     0)
-		"speed":      return data.speed     + modifiers.get("speed",      0)
-		"cost":       return data.cost      + modifiers.get("cost",       0)
+		"max_health": return data.health + modifiers.get("max_health", 0) + GameData.card_bonus(self, "max_health")
+		"attack":     return data.attack + modifiers.get("attack",     0) + GameData.card_bonus(self, "attack")
+		"speed":      return data.speed  + modifiers.get("speed",      0)
+		"cost":       return data.cost   + modifiers.get("cost",       0) + GameData.card_bonus(self, "cost")
 		"shield":     return current_shield
 		_:            return modifiers.get(attr, 0)
 

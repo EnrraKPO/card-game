@@ -45,6 +45,34 @@ static func scaffold(host: Control, title: String) -> Dictionary:
 	return {"root": root, "header": header_hbox}
 
 
+# A profile experience bar: progress toward the next upgrade point + the spendable balance.
+# Reused by the hub and the Upgrades screen. Reads the given profile's experience snapshot.
+static func experience_bar(profile: ProfileData, compact: bool = false) -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 3)
+
+	var pts := profile.upgrade_points
+	var header := Label.new()
+	header.text = "Experience   ·   %d upgrade point%s" % [pts, "" if pts == 1 else "s"]
+	header.add_theme_font_size_override("font_size", 20 if compact else 15)
+	box.add_child(header)
+
+	var bar := ProgressBar.new()
+	bar.min_value = 0
+	bar.max_value = ProfileData.EXP_PER_UPGRADE_POINT
+	bar.value = profile.experience
+	bar.show_percentage = false
+	bar.custom_minimum_size.y = 22.0 if compact else 16.0
+	box.add_child(bar)
+
+	var sub := Label.new()
+	sub.text = "%d / %d to next point" % [profile.experience, ProfileData.EXP_PER_UPGRADE_POINT]
+	sub.add_theme_font_size_override("font_size", 14 if compact else 11)
+	sub.modulate = Color(0.7, 0.7, 0.75)
+	box.add_child(sub)
+	return box
+
+
 # A header nav button (Back / Leave / Cancel) wired to `action`.
 static func nav_button(text: String, action: Callable) -> Button:
 	var compact := UIScale.is_compact()

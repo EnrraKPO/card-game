@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://b7deckbld3yaq"]
+
+[ext_resource type="Script" path="res://scripts/deck_build_screen.gd" id="1"]
+
+[node name="DeckBuildScreen" type="Control"]
+script = ExtResource("1")

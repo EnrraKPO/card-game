@@ -1,5 +1,233 @@
 [
   {
+    "id": "air_air_king",
+    "display_name": "Pure Air King",
+    "cost": 0,
+    "attack": 1,
+    "health": 20,
+    "speed": 3,
+    "shield": 5,
+    "is_king": true,
+    "elements": [
+      "air",
+      "air"
+    ],
+    "chess_pieces": [
+      "king"
+    ],
+    "description": "Ruler of pure air. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+    "effects": []
+  },
+  {
+    "id": "air_darkness_king",
+    "display_name": "Miasma King",
+    "cost": 0,
+    "attack": 1,
+    "health": 20,
+    "speed": 3,
+    "shield": 5,
+    "is_king": true,
+    "elements": [
+      "air",
+      "darkness"
+    ],
+    "chess_pieces": [
+      "king"
+    ],
+    "description": "Ruler of air and darkness. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+    "effects": []
+  },
+  {
+    "id": "air_earth_king",
+    "display_name": "Sand King",
+    "cost": 0,
+    "attack": 1,
+    "health": 20,
+    "speed": 3,
+    "shield": 5,
+    "is_king": true,
+    "elements": [
+      "air",
+      "earth"
+    ],
+    "chess_pieces": [
+      "king"
+    ],
+    "description": "Ruler of air and earth. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+    "effects": []
+  },
+  {
+    "id": "air_fire_king",
+    "display_name": "Lightning King",
+    "cost": 0,
+    "attack": 1,
+    "health": 20,
+    "speed": 3,
+    "shield": 5,
+    "is_king": true,
+    "elements": [
+      "air",
+      "fire"
+    ],
+    "chess_pieces": [
+      "king"
+    ],
+    "description": "Ruler of air and fire. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+    "effects": []
+  },
+  {
+    "id": "air_light_king",
+    "display_name": "Angelic King",
+    "cost": 0,
+    "attack": 1,
+    "health": 20,
+    "speed": 3,
+    "shield": 5,
+    "is_king": true,
+    "elements": [
+      "air",
+      "light"
+    ],
+    "chess_pieces": [
+      "king"
+    ],
+    "description": "Ruler of air and light. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+    "effects": []
+  },
+  {
+    "id": "air_water_king",
+    "display_name": "Storm King",
+    "cost": 0,
+    "attack": 1,
+    "health": 20,
+    "speed": 3,
+    "shield": 5,
+    "is_king": true,
+    "elements": [
+      "air",
+      "water"
+    ],
+    "chess_pieces": [
+      "king"
+    ],
+    "description": "Ruler of air and water. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+    "effects": []
+  },
+  {
+    "id": "darkness_darkness_king",
+    "display_name": "Pure Darkness King",
+    "cost": 0,
+    "attack": 1,
+    "health": 20,
+    "speed": 3,
+    "shield": 5,
+    "is_king": true,
+    "elements": [
+      "darkness",
+      "darkness"
+    ],
+    "chess_pieces": [
+      "king"
+    ],
+    "description": "Ruler of pure darkness. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+    "effects": []
+  },
+  {
+    "id": "darkness_earth_king",
+    "display_name": "Stone King",
+    "cost": 0,
+    "attack": 1,
+    "health": 20,
+    "speed": 3,
+    "shield": 5,
+    "is_king": true,
+    "elements": [
+      "darkness",
+      "earth"
+    ],
+    "chess_pieces": [
+      "king"
+    ],
+    "description": "Ruler of darkness and earth. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+    "effects": []
+  },
+  {
+    "id": "darkness_fire_king",
+    "display_name": "Demonic King",
+    "cost": 0,
+    "attack": 1,
+    "health": 20,
+    "speed": 3,
+    "shield": 5,
+    "is_king": true,
+    "elements": [
+      "darkness",
+      "fire"
+    ],
+    "chess_pieces": [
+      "king"
+    ],
+    "description": "Ruler of darkness and fire. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+    "effects": []
+  },
+  {
+    "id": "darkness_light_king",
+    "display_name": "Undead King",
+    "cost": 0,
+    "attack": 1,
+    "health": 20,
+    "speed": 3,
+    "shield": 5,
+    "is_king": true,
+    "elements": [
+      "darkness",
+      "light"
+    ],
+    "chess_pieces": [
+      "king"
+    ],
+    "description": "Ruler of darkness and light. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+    "effects": []
+  },
+  {
+    "id": "darkness_water_king",
+    "display_name": "Poison King",
+    "cost": 0,
+    "attack": 1,
+    "health": 20,
+    "speed": 3,
+    "shield": 5,
+    "is_king": true,
+    "elements": [
+      "darkness",
+      "water"
+    ],
+    "chess_pieces": [
+      "king"
+    ],
+    "description": "Ruler of darkness and water. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+    "effects": []
+  },
+  {
+    "id": "earth_earth_king",
+    "display_name": "Pure Earth King",
+    "cost": 0,
+    "attack": 1,
+    "health": 20,
+    "speed": 3,
+    "shield": 5,
+    "is_king": true,
+    "elements": [
+      "earth",
+      "earth"
+    ],
+    "chess_pieces": [
+      "king"
+    ],
+    "description": "Ruler of pure earth. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+    "effects": []
+  },
+  {
     "id": "earth_fire_king",
     "display_name": "Magma King",
     "cost": 0,
@@ -8,9 +236,109 @@
     "speed": 3,
     "shield": 5,
     "is_king": true,
-    "elements": ["earth", "fire"],
-    "chess_pieces": ["king"],
+    "elements": [
+      "earth",
+      "fire"
+    ],
+    "chess_pieces": [
+      "king"
+    ],
     "description": "Ruler of fire and earth. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+    "effects": []
+  },
+  {
+    "id": "earth_light_king",
+    "display_name": "Nature King",
+    "cost": 0,
+    "attack": 1,
+    "health": 20,
+    "speed": 3,
+    "shield": 5,
+    "is_king": true,
+    "elements": [
+      "earth",
+      "light"
+    ],
+    "chess_pieces": [
+      "king"
+    ],
+    "description": "Ruler of earth and light. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+    "effects": []
+  },
+  {
+    "id": "earth_water_king",
+    "display_name": "Clay King",
+    "cost": 0,
+    "attack": 1,
+    "health": 20,
+    "speed": 3,
+    "shield": 5,
+    "is_king": true,
+    "elements": [
+      "earth",
+      "water"
+    ],
+    "chess_pieces": [
+      "king"
+    ],
+    "description": "Ruler of earth and water. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+    "effects": []
+  },
+  {
+    "id": "fire_fire_king",
+    "display_name": "Pure Fire King",
+    "cost": 0,
+    "attack": 1,
+    "health": 20,
+    "speed": 3,
+    "shield": 5,
+    "is_king": true,
+    "elements": [
+      "fire",
+      "fire"
+    ],
+    "chess_pieces": [
+      "king"
+    ],
+    "description": "Ruler of pure fire. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+    "effects": []
+  },
+  {
+    "id": "fire_light_king",
+    "display_name": "Spirit King",
+    "cost": 0,
+    "attack": 1,
+    "health": 20,
+    "speed": 3,
+    "shield": 5,
+    "is_king": true,
+    "elements": [
+      "fire",
+      "light"
+    ],
+    "chess_pieces": [
+      "king"
+    ],
+    "description": "Ruler of fire and light. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+    "effects": []
+  },
+  {
+    "id": "fire_water_king",
+    "display_name": "Steam King",
+    "cost": 0,
+    "attack": 1,
+    "health": 20,
+    "speed": 3,
+    "shield": 5,
+    "is_king": true,
+    "elements": [
+      "fire",
+      "water"
+    ],
+    "chess_pieces": [
+      "king"
+    ],
+    "description": "Ruler of fire and water. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
     "effects": []
   },
   {
@@ -22,9 +350,52 @@
     "speed": 3,
     "shield": 5,
     "is_king": true,
-    "elements": ["light", "light"],
-    "chess_pieces": ["king"],
+    "elements": [
+      "light",
+      "light"
+    ],
+    "chess_pieces": [
+      "king"
+    ],
     "description": "Ruler of pure light. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+    "effects": []
+  },
+  {
+    "id": "light_water_king",
+    "display_name": "Rainbow King",
+    "cost": 0,
+    "attack": 1,
+    "health": 20,
+    "speed": 3,
+    "shield": 5,
+    "is_king": true,
+    "elements": [
+      "light",
+      "water"
+    ],
+    "chess_pieces": [
+      "king"
+    ],
+    "description": "Ruler of light and water. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+    "effects": []
+  },
+  {
+    "id": "water_water_king",
+    "display_name": "Pure Water King",
+    "cost": 0,
+    "attack": 1,
+    "health": 20,
+    "speed": 3,
+    "shield": 5,
+    "is_king": true,
+    "elements": [
+      "water",
+      "water"
+    ],
+    "chess_pieces": [
+      "king"
+    ],
+    "description": "Ruler of pure water. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
     "effects": []
   }
 ]

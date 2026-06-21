@@ -1,0 +1,23 @@
+{
+  "id": "darkness_earth_king",
+  "cards": [
+    "darkness_pawn",
+    "darkness_pawn",
+    "earth_pawn",
+    "earth_pawn",
+    "darkness_earth_pawn",
+    "darkness_earth_pawn",
+    "pawn",
+    "pawn",
+    "darkness_bishop",
+    "earth_bishop",
+    "darkness_knight",
+    "earth_knight",
+    "darkness_rook",
+    "earth_rook",
+    "darkness_earth_queen",
+    "darkness",
+    "earth",
+    "darkness_earth"
+  ]
+}

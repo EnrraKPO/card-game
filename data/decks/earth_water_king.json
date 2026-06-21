@@ -1,0 +1,23 @@
+{
+  "id": "earth_water_king",
+  "cards": [
+    "earth_pawn",
+    "earth_pawn",
+    "water_pawn",
+    "water_pawn",
+    "earth_water_pawn",
+    "earth_water_pawn",
+    "pawn",
+    "pawn",
+    "earth_bishop",
+    "water_bishop",
+    "earth_knight",
+    "water_knight",
+    "earth_rook",
+    "water_rook",
+    "earth_water_queen",
+    "earth",
+    "water",
+    "earth_water"
+  ]
+}

@@ -9,27 +9,44 @@ extends RefCounted
 # Apply a single effect with a pre-built context (used for spell casting and
 # unit abilities with MANUAL targeting already resolved into context.manual_target).
 static func apply_single(effect: Effect, source: CardInstance, context: EffectContext) -> Array:
-	var results: Array = []
-	var targets := _resolve_targets(effect, source, context)
-	for target: CardInstance in targets:
-		var r := _apply(effect, target)
-		if not r.is_empty():
-			results.append(r)
-	return results
+	return _run_effect(effect, source, context)
 
 
+# Fires the triggered effects a card on the board carries for an event.
 static func trigger(event: Effect.Trigger, source: CardInstance, context: EffectContext) -> Array:
 	var results: Array = []
 	if source == null or source.data == null:
 		return results
 	for effect: Effect in source.data.effects:
-		if effect.trigger != event:
+		if effect.kind == Effect.Kind.MODIFIER or effect.trigger != event:
 			continue
-		var targets := _resolve_targets(effect, source, context)
-		for target: CardInstance in targets:
-			var r := _apply(effect, target)
-			if not r.is_empty():
-				results.append(r)
+		results.append_array(_run_effect(effect, source, context))
+	return results
+
+
+# Fires RUN-LEVEL triggered effects (upgrades/relics/heroes) for an event — the counterpart to
+# trigger() for sources that aren't a card on the board. Resolved from the triggering card's
+# perspective (context.source); fires only for player-side events so player upgrades react to
+# the player's own units, not the enemy's.
+static func trigger_global(event: Effect.Trigger, context: EffectContext) -> Array:
+	var results: Array = []
+	if context.source == null or context.source.owner != 0:
+		return results
+	for effect: Effect in GameData.current_modifiers.triggered(event):
+		results.append_array(_run_effect(effect, context.source, context))
+	return results
+
+
+# Runs one effect (TRIGGERED → resolve targets + apply; CUSTOM → invoke its code hook).
+static func _run_effect(effect: Effect, source: CardInstance, context: EffectContext) -> Array:
+	if effect.kind == Effect.Kind.CUSTOM:
+		var hook := EffectHooks.get_hook(effect.custom_id)
+		return hook.call(context) if hook.is_valid() else []
+	var results: Array = []
+	for target: CardInstance in _resolve_targets(effect, source, context):
+		var r := _apply(effect, target)
+		if not r.is_empty():
+			results.append(r)
 	return results
 
 
@@ -72,18 +89,19 @@ static func _apply(effect: Effect, target: CardInstance) -> Dictionary:
 	if effect.custom_apply.is_valid():
 		effect.custom_apply.call(target)
 		return {}
+	var amount := effect.amount_int()
 	if effect.attribute == "health":
-		if effect.amount < 0:
-			target.take_damage(-effect.amount)
-			return {"target": target, "attribute": "health", "delta": effect.amount}
+		if amount < 0:
+			target.take_damage(-amount)
+			return {"target": target, "attribute": "health", "delta": amount}
 		else:
 			var max_hp := target.get_attribute("max_health")
-			var healed := mini(effect.amount, max_hp - target.current_health)
+			var healed := mini(amount, max_hp - target.current_health)
 			target.current_health += healed
 			return {"target": target, "attribute": "health", "delta": healed}
 	else:
-		target.apply_modifier(effect.attribute, effect.amount)
-		return {"target": target, "attribute": effect.attribute, "delta": effect.amount}
+		target.apply_modifier(effect.attribute, amount)
+		return {"target": target, "attribute": effect.attribute, "delta": amount}
 
 
 # ── Condition evaluation ───────────────────────────────────────────────────────

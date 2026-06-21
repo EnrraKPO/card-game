@@ -1,0 +1,23 @@
+{
+  "id": "air_air_king",
+  "cards": [
+    "air_pawn",
+    "air_pawn",
+    "air_pawn",
+    "air_pawn",
+    "air_air_pawn",
+    "air_air_pawn",
+    "pawn",
+    "pawn",
+    "air_bishop",
+    "air_bishop",
+    "air_knight",
+    "air_knight",
+    "air_rook",
+    "air_rook",
+    "air_air_queen",
+    "air",
+    "air",
+    "air_air"
+  ]
+}
