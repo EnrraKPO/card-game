@@ -24,6 +24,7 @@ config/main_scene="res://scenes/entry_screen.tscn"
 
 GameData="*res://scripts/game_data.gd"
 UIScale="*res://scripts/ui_scale.gd"
+Nav="*res://scripts/nav.gd"
 
 [display]
 

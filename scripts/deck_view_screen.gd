@@ -30,8 +30,8 @@ func _build_ui() -> void:
 
 	var s := ScreenUI.scaffold(self, title)
 	var root: VBoxContainer = s.root
-	s.header.add_child(ScreenUI.nav_button("Back  ",
-		func(): get_tree().change_scene_to_file("res://scenes/deck_screen.tscn")))
+	ScreenUI.attach_exits(self,
+		func(): get_tree().change_scene_to_file("res://scenes/deck_screen.tscn"), s.header, s.footer)
 
 	# ── Card grid ────────────────────────────────────────────────────────────────
 	var scroll := ScrollContainer.new()

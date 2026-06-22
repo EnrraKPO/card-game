@@ -44,7 +44,7 @@ func _build_ui() -> void:
 	_gold_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	s.header.add_child(_gold_lbl)
 
-	s.header.add_child(ScreenUI.nav_button("Leave  ", _leave))
+	ScreenUI.attach_exits(self, _leave, s.header, s.footer)
 
 	# ── Body ───────────────────────────────────────────────────────────────────
 	var body := HBoxContainer.new()

@@ -98,7 +98,7 @@ func _build_ui() -> void:
 		_missing_art = on
 		_apply_filter()
 	))
-	s.header.add_child(ScreenUI.nav_button("Back  ", _on_back))
+	ScreenUI.attach_exits(self, _on_back, s.header, s.footer)
 
 	var pad := MarginContainer.new()
 	for side in ["left", "right", "top", "bottom"]:

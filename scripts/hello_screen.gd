@@ -4,6 +4,7 @@ var confirm_dialog: ConfirmationDialog
 
 
 func _ready() -> void:
+	Nav.clear_back()   # onboarding screen — the OS back gesture stays inert (never quits)
 	var center := CenterContainer.new()
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(center)

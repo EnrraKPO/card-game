@@ -10,6 +10,7 @@ var _pending_delete_slot: int = -1
 
 
 func _ready() -> void:
+	Nav.clear_back()   # save-select root — the OS back gesture stays inert (never quits)
 	# Rebuild if the form factor flips (e.g. previewing mobile by resizing in the editor).
 	UIScale.layout_changed.connect(func(): get_tree().reload_current_scene(), CONNECT_ONE_SHOT)
 	var compact := UIScale.is_compact()

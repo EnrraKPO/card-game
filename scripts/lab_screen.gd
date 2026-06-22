@@ -97,20 +97,39 @@ func _fit_stage() -> void:
 # ── Overlays (Back bar, inventory, panel host) ──────────────────────────────────────────
 
 func _build_overlays() -> void:
-	# Back bar (top-left).
+	var exit := func() -> void: get_tree().change_scene_to_file("res://scenes/game_world.tscn")
+
+	# Title bar with the standard top-right ✕.
 	var top := HBoxContainer.new()
 	top.set_anchors_and_offsets_preset(PRESET_TOP_WIDE)
 	top.offset_left = 12
 	top.offset_top = 10
 	top.offset_right = -12
 	add_child(top)
-	top.add_child(ScreenUI.nav_button("← Back  ",
-		func(): get_tree().change_scene_to_file("res://scenes/game_world.tscn")))
 	var title := Label.new()
 	title.text = "   Laboratory"
 	title.add_theme_font_size_override("font_size", 30 if _compact else 22)
 	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	title.size_flags_horizontal = SIZE_EXPAND_FILL
 	top.add_child(title)
+	top.add_child(ScreenUI.close_button(exit))
+
+	# Standard bottom-left Back, lifted above the pinned inventory bar so it never overlaps it.
+	var back := ScreenUI.back_button(exit)
+	back.anchor_left = 0.0; back.anchor_right = 0.0
+	back.anchor_top = 1.0; back.anchor_bottom = 1.0
+	back.offset_left = 16
+	back.offset_right = 16 + back.custom_minimum_size.x
+	back.offset_bottom = -(_inv_height + 16)
+	back.offset_top = back.offset_bottom - back.custom_minimum_size.y
+	add_child(back)
+
+	# OS go-back / Esc: collapse an open artifact panel first, otherwise leave the Lab.
+	Nav.set_back(func() -> void:
+		if _open_key != "":
+			_collapse()
+		else:
+			exit.call())
 
 	# Panel host: covers the area above the inventory; hidden until an artifact opens.
 	_panel_host = Control.new()

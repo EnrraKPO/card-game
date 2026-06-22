@@ -37,7 +37,7 @@ func _build_ui() -> void:
 
 	var s := ScreenUI.scaffold(self, "Forge — Combine Cards")
 	var root: VBoxContainer = s.root
-	s.header.add_child(ScreenUI.nav_button("Leave  ", _leave))
+	ScreenUI.attach_exits(self, _leave, s.header, s.footer)
 
 	# ── Body ───────────────────────────────────────────────────────────────────
 	var body := HBoxContainer.new()

@@ -82,16 +82,8 @@ func _ready() -> void:
 		abandon.pressed.connect(func(): _confirm_abandon.popup_centered())
 		vbox.add_child(abandon)
 
-	var back_btn := Button.new()
-	back_btn.text = "Back to saves"
-	back_btn.add_theme_font_size_override("font_size", 18 if compact else 13)
-	back_btn.set_anchors_and_offsets_preset(PRESET_BOTTOM_LEFT)
-	back_btn.offset_left = 16
-	back_btn.offset_top = -(64 if compact else 48)
-	back_btn.offset_right = 220 if compact else 150
-	back_btn.offset_bottom = -16
-	back_btn.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/game_slots.tscn"))
-	add_child(back_btn)
+	ScreenUI.attach_exits(self,
+		func(): get_tree().change_scene_to_file("res://scenes/game_slots.tscn"))
 
 	_confirm_abandon = ConfirmationDialog.new()
 	_confirm_abandon.title = "Abandon run"

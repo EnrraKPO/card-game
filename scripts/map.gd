@@ -77,6 +77,9 @@ func _ready() -> void:
 	_build_bottom_bar()
 	call_deferred("_build_map")
 
+	# Hardware/browser back performs the same safe Save & Quit as the bottom bar (never quits the app).
+	Nav.set_back(_on_quit_pressed)
+
 
 func _build_hud() -> void:
 	var hud := PanelContainer.new()

@@ -37,8 +37,8 @@ func _ready() -> void:
 func _build_ui() -> void:
 	var s := ScreenUI.scaffold(self, "Decks")
 	var root: VBoxContainer = s.root
-	s.header.add_child(ScreenUI.nav_button("Back  ",
-		func(): get_tree().change_scene_to_file("res://scenes/game_world.tscn")))
+	ScreenUI.attach_exits(self,
+		func(): get_tree().change_scene_to_file("res://scenes/game_world.tscn"), s.header, s.footer)
 
 	# ── Body: deck list (left) + preview (right) ──────────────────────────────────
 	var body := HBoxContainer.new()

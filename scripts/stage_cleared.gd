@@ -10,6 +10,7 @@ var _picked := false
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	Nav.clear_back()   # terminal screen — the OS back gesture stays inert (use the on-screen button)
 	var compact := UIScale.is_compact()
 
 	var bg := ColorRect.new()

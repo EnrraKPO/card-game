@@ -102,6 +102,9 @@ func _ready() -> void:
 	skip_btn.pressed.connect(_skip)
 	vbox.add_child(skip_btn)
 
+	# Standard redundant exit routes (top-right ✕ + bottom-left Back); both leave like Skip.
+	ScreenUI.attach_exits(self, _skip)
+
 
 # The element card(s) earned this fight, each offered with an Accept/Reject toggle (Accept by
 # default). Accepted cards are added to the deck on finish; the essence itself is always kept.

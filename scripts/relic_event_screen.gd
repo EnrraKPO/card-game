@@ -55,13 +55,7 @@ func _ready() -> void:
 		for id: String in ids:
 			row.add_child(_make_offer(Grant.make("relic", id), compact))
 
-	var leave := Button.new()
-	leave.text = "Leave"
-	leave.add_theme_font_size_override("font_size", 28 if compact else 18)
-	leave.custom_minimum_size = Vector2(240, 80) if compact else Vector2(180, 0)
-	leave.size_flags_horizontal = SIZE_SHRINK_CENTER
-	leave.pressed.connect(_finish)
-	vbox.add_child(leave)
+	ScreenUI.attach_exits(self, _finish)
 
 
 func _make_offer(grant: Grant, compact: bool) -> Control:

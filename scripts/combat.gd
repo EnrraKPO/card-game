@@ -26,6 +26,7 @@ var _vfx: VFXPlayer
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	Nav.clear_back()   # mid-fight — the OS back gesture stays inert so it can't quit the app
 
 	_hand         = Hand.new()
 	_board        = CombatBoard.new()

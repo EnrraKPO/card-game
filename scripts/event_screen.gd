@@ -88,12 +88,7 @@ func _build_ui() -> void:
 	_upgrade_btn.pressed.connect(_apply_upgrade)
 	btn_row.add_child(_upgrade_btn)
 
-	var leave_btn := Button.new()
-	leave_btn.text = "Continue"
-	leave_btn.add_theme_font_size_override("font_size", 18)
-	leave_btn.custom_minimum_size = Vector2(140, 0)
-	leave_btn.pressed.connect(_leave)
-	btn_row.add_child(leave_btn)
+	ScreenUI.attach_exits(self, _leave)
 
 
 func _rebuild_deck() -> void:

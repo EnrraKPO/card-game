@@ -49,14 +49,7 @@ func _ready() -> void:
 	_rest_btn.pressed.connect(_on_rest)
 	vbox.add_child(_rest_btn)
 
-	var continue_btn := Button.new()
-	continue_btn.text = "Continue"
-	continue_btn.add_theme_font_size_override("font_size", 18)
-	continue_btn.custom_minimum_size = Vector2(180, 0)
-	continue_btn.size_flags_horizontal = SIZE_SHRINK_CENTER
-	continue_btn.pressed.connect(_on_continue)
-	vbox.add_child(continue_btn)
-
+	ScreenUI.attach_exits(self, _on_continue)
 	_refresh()
 
 
