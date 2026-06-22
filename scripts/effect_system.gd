@@ -78,8 +78,15 @@ static func _resolve_targets(effect: Effect, source: CardInstance, context: Effe
 			if context.manual_target != null:
 				candidates = [context.manual_target]
 
+	# Lackeys-only by default: royalty (King/Queen) is filtered out unless the effect opts in, or
+	# it's a SELF effect (a unit affecting itself is inherently explicit). Covers every policy —
+	# including MANUAL, since the player's pick flows through here too.
+	var allow_royalty := effect.targets_royalty or effect.targeting_policy == Effect.TargetingPolicy.SELF
 	return candidates.filter(
-		func(c: CardInstance) -> bool: return _passes_conditions(effect.conditions, c)
+		func(c: CardInstance) -> bool:
+			if not allow_royalty and c.data != null and c.data.is_royalty():
+				return false
+			return _passes_conditions(effect.conditions, c)
 	)
 
 

@@ -34,6 +34,17 @@ func is_deck_unit() -> bool:
 	return card_type == CardType.UNIT and not is_king
 
 
+# Royalty = the King and Queen. They persist on the board, so effects DON'T target them by
+# default — an effect must opt in (Effect.targets_royalty). Everything else fieldable is a
+# "lackey", the default target of buffs/debuffs/heals. See EffectSystem._resolve_targets.
+func is_royalty() -> bool:
+	return is_king or chess_pieces.has("queen")
+
+
+func is_lackey() -> bool:
+	return card_type == CardType.UNIT and not is_royalty()
+
+
 # The card this building generates once per turn (see combat.gd): a copy of the
 # card composed of all its NON-rook components. Strip every rook and rebuild from
 # what's left (other pieces + elements). A building with no non-rook components

@@ -59,22 +59,27 @@ func _plan_spells(hand: Array, board: CombatBoard, used: Dictionary, remaining: 
 	return remaining
 
 
-# Offensive spells hit the player; supportive ones favour our own units.
+# Offensive spells hit the player; supportive ones favour our own units. Effects target lackeys
+# (non-royalty) only unless the spell opts in (targets_royalty) — so we never pick a King/Queen the
+# spell can't actually affect, holding the spell instead (see EffectSystem._resolve_targets).
 func _pick_spell_target(inst: CardInstance, board: CombatBoard) -> CardInstance:
+	var allow_royalty := _allows_royalty(inst)
 	if _is_offensive(inst):
 		var enemies := _units(board.player_grid)
-		var non_kings := enemies.filter(func(u: CardInstance) -> bool: return not u.data.is_king)
+		var pool := enemies if allow_royalty else enemies.filter(func(u: CardInstance) -> bool: return not u.data.is_royalty())
 		var dmg := _health_damage(inst)
 		if dmg > 0:
 			# Prefer a unit this spell can outright kill (the scariest such unit).
-			var killable := non_kings.filter(func(u: CardInstance) -> bool: return u.current_health <= dmg)
+			var killable := pool.filter(func(u: CardInstance) -> bool: return u.current_health <= dmg)
 			if not killable.is_empty():
 				return _highest_attack(killable)
-		if not non_kings.is_empty():
-			return _highest_attack(non_kings)
-		return _king_of(enemies)  # only the king is left to hit
+		if not pool.is_empty():
+			return _highest_attack(pool)
+		return null  # only untargetable royalty left — hold the spell
 	else:
-		var allies := _units(board.enemy_grid).filter(func(u: CardInstance) -> bool: return not u.data.is_king)
+		var allies := _units(board.enemy_grid)
+		if not allow_royalty:
+			allies = allies.filter(func(u: CardInstance) -> bool: return not u.data.is_royalty())
 		if allies.is_empty():
 			return null
 		if _is_heal(inst):
@@ -145,6 +150,12 @@ func _needs_manual(inst: CardInstance) -> bool:
 		return e.trigger == Effect.Trigger.ON_PLAY and e.targeting_policy == Effect.TargetingPolicy.MANUAL)
 
 
+# Whether any of this spell's on-play effects may reach royalty (King/Queen).
+func _allows_royalty(inst: CardInstance) -> bool:
+	return inst.data.effects.any(func(e: Effect) -> bool:
+		return e.trigger == Effect.Trigger.ON_PLAY and e.targets_royalty)
+
+
 func _is_offensive(inst: CardInstance) -> bool:
 	return inst.data.effects.any(func(e: Effect) -> bool:
 		return e.trigger == Effect.Trigger.ON_PLAY and e.amount < 0)
@@ -210,10 +221,3 @@ func _lowest_health(units: Array) -> CardInstance:
 		if best == null or u.current_health < best.current_health:
 			best = u
 	return best
-
-
-func _king_of(units: Array) -> CardInstance:
-	for u: CardInstance in units:
-		if u.data.is_king:
-			return u
-	return null

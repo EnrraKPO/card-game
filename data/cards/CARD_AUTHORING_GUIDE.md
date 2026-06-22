@@ -73,6 +73,38 @@ An effect is an action that fires at a specific moment, targeting one or more ca
 | `all_enemies` | Every enemy card currently on the board |
 | `all_allies` | Every friendly card currently on the board (including self) |
 | `all` | Every card on the board regardless of side |
+| `manual` | A single target the player picks (for spells) |
+
+> **Lackeys only by default.** Every policy above affects **lackeys** — units that are *not* a King
+> or Queen — and skips royalty on **both** sides. So an `all_allies` buff never reaches your King or
+> Queen, an `all_enemies`/`single_nearest`/`manual` effect can't touch the enemy King or Queen, and a
+> `manual` spell won't even let the player select a royal unit. Kings/Queens are still defeated by
+> normal combat attacks (those aren't effects). To let an effect reach royalty, set `targets_royalty`
+> (below). `self` is exempt — a unit's effect on itself always applies, even on a King or Queen.
+
+### `targets_royalty` — opt in to affect Kings & Queens
+
+`bool`, optional, defaults to `false`. When `true`, royalty (King/Queen) become valid targets for
+this effect *in addition* to lackeys. Use sparingly — this is the deliberate tradeoff that keeps the
+persistent King from hoarding every buff.
+
+```json
+{
+  "id": "regicide",
+  "display_name": "Regicide",
+  "cost": 4, "attack": 0, "health": 1, "speed": 1, "card_type": "spell",
+  "elements": ["darkness", "fire"],
+  "effects": [
+    {
+      "trigger": "on_play",
+      "targeting_policy": "manual",
+      "attribute": "health",
+      "amount": -8,
+      "targets_royalty": true
+    }
+  ]
+}
+```
 
 ### `attribute` — what is modified
 

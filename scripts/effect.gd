@@ -50,6 +50,11 @@ var kind: Kind = Kind.TRIGGERED   # default keeps all existing (triggered) card/
 # triggered/attribute path int()s it.
 var amount: float = 0.0
 
+# Opt-in to affect royalty (King/Queen). Effects target lackeys (non-King, non-Queen units)
+# only by default; set this true to let the effect reach a King or Queen too — on either side.
+# Applies to every kind: gates target resolution (TRIGGERED/spells) and matches_card (MODIFIER).
+var targets_royalty: bool = false
+
 # ── TRIGGERED / CUSTOM fields ──
 var trigger: Trigger = Trigger.ON_PLAY
 var targeting_policy: TargetingPolicy = TargetingPolicy.SELF
@@ -70,6 +75,7 @@ var filter: Dictionary = {}   # card selection predicate for scope=CARD
 static func from_dict(d: Dictionary) -> Effect:
 	var e := Effect.new()
 	e.amount = float(d.get("amount", 0))
+	e.targets_royalty = bool(d.get("targets_royalty", false))
 	for c_data: Dictionary in d.get("conditions", []):
 		e.conditions.append(EffectCondition.from_dict(c_data))
 	var kind_str := str(d.get("kind", ""))
@@ -106,6 +112,8 @@ func to_dict() -> Dictionary:
 				d["op"] = "mul"
 			if not filter.is_empty():
 				d["filter"] = filter
+			if targets_royalty:
+				d["targets_royalty"] = true
 			return d
 		Kind.CUSTOM:
 			return {
@@ -118,13 +126,16 @@ func to_dict() -> Dictionary:
 			var conds: Array = []
 			for c: EffectCondition in conditions:
 				conds.append(c.to_dict())
-			return {
+			var d := {
 				"trigger":          trigger_key(trigger),
 				"targeting_policy": policy_key(targeting_policy),
 				"attribute":        attribute,
 				"amount":           amount_int(),
 				"conditions":       conds,
 			}
+			if targets_royalty:
+				d["targets_royalty"] = true
+			return d
 
 
 # ── MODIFIER helpers ─────────────────────────────────────────────────────────────────
@@ -142,16 +153,18 @@ func amount_int() -> int:
 
 
 # Whether a card-scoped modifier applies to a given card. `unit.*` is implicitly fieldable
-# units only (never spells or the King); `filter` narrows further (kind / has_element).
+# LACKEYS only (never spells, and never royalty unless targets_royalty); `filter` narrows
+# further (kind / has_element).
 func matches_card(inst: CardInstance) -> bool:
 	if inst == null or inst.data == null:
 		return false
 	var data := inst.data
-	if key.begins_with("unit.") and (data.is_king or data.card_type == CardData.CardType.SPELL):
+	var blocks_royalty := data.is_royalty() and not targets_royalty
+	if key.begins_with("unit.") and (blocks_royalty or data.card_type == CardData.CardType.SPELL):
 		return false
 	match str(filter.get("kind", "")):
 		"unit":
-			if data.card_type != CardData.CardType.UNIT or data.is_king:
+			if data.card_type != CardData.CardType.UNIT or blocks_royalty:
 				return false
 		"spell":
 			if data.card_type != CardData.CardType.SPELL:

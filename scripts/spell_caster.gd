@@ -11,6 +11,7 @@ var get_mana: Callable  # func() -> int
 
 var _is_targeting: bool  = false
 var _pending_spell: CardUI = null
+var _pending_allow_royalty: bool = true   # whether the in-flight spell may target royalty
 
 signal _target_chosen(target: CardInstance)
 
@@ -51,7 +52,7 @@ func _on_spell_card_pressed(card_ui: CardUI) -> void:
 	var manual_target: CardInstance = null
 	if needs_target:
 		card_ui.set_selected(true)
-		manual_target = await _request_target()
+		manual_target = await _request_target(_spell_allows_royalty(card_ui))
 		card_ui.set_selected(false)
 		if manual_target == null:
 			return
@@ -64,6 +65,9 @@ func _on_spell_dropped(slot: SlotUI, card_ui: CardUI) -> void:
 	var target_ui := slot.get_card()
 	if target_ui == null:
 		return
+	# Royalty can only be hit if the spell opts in (lackeys-only by default).
+	if target_ui.card_instance.data.is_royalty() and not _spell_allows_royalty(card_ui):
+		return
 	if not _can_afford(card_ui):
 		return
 	_execute_spell(card_ui, target_ui.card_instance)
@@ -73,7 +77,8 @@ func _on_spell_drag_started(card_ui: CardUI) -> void:
 	if _is_targeting:
 		return  # click-targeting session already active
 	_pending_spell = card_ui
-	board.set_slots_targetable(true)
+	_pending_allow_royalty = _spell_allows_royalty(card_ui)
+	board.set_slots_targetable(true, _pending_allow_royalty)
 	board.set_board_card_filters(false)
 
 
@@ -88,8 +93,12 @@ func _on_slot_pressed(slot: SlotUI) -> void:
 	if not _is_targeting:
 		return
 	var card := slot.get_card()
-	if card != null:
-		_target_chosen.emit(card.card_instance)
+	if card == null:
+		return
+	# Ignore a royalty pick unless the in-flight spell opts in (the slot isn't highlighted either).
+	if card.card_instance.data.is_royalty() and not _pending_allow_royalty:
+		return
+	_target_chosen.emit(card.card_instance)
 
 
 # ── Core spell execution ───────────────────────────────────────────────────────
@@ -110,17 +119,27 @@ func _execute_spell(card_ui: CardUI, manual_target: CardInstance) -> void:
 	board.refresh()
 
 
-func _request_target() -> CardInstance:
+func _request_target(allow_royalty: bool = true) -> CardInstance:
 	if board.get_all_units().is_empty():
 		return null
 	_is_targeting = true
-	board.set_slots_targetable(true)
+	_pending_allow_royalty = allow_royalty
+	board.set_slots_targetable(true, allow_royalty)
 	targeting_started.emit()
 	var target: CardInstance = await _target_chosen
 	board.set_slots_targetable(false)
 	_is_targeting = false
 	targeting_ended.emit()
 	return target
+
+
+# Whether this spell's manual on-play effects opt into targeting royalty. If ANY manual effect
+# allows it, the player may pick a King/Queen (the central filter still gates per-effect).
+func _spell_allows_royalty(card_ui: CardUI) -> bool:
+	return card_ui.card_instance.data.effects.any(func(e: Effect) -> bool:
+		return e.trigger == Effect.Trigger.ON_PLAY \
+			and e.targeting_policy == Effect.TargetingPolicy.MANUAL \
+			and e.targets_royalty)
 
 
 func _can_afford(card_ui: CardUI) -> bool:
