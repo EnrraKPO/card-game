@@ -1,0 +1,29 @@
+[
+  { "id": "battle_standard", "display_name": "Battle Standard", "description": "Your units have +1 Attack.",
+    "color": "d98032", "letter": "A", "price": 90,
+    "effects": [ { "kind": "modifier", "key": "unit.attack", "amount": 1 } ] },
+
+  { "id": "iron_aegis", "display_name": "Iron Aegis", "description": "Your units have +1 Health.",
+    "color": "5fae4f", "letter": "H", "price": 90,
+    "effects": [ { "kind": "modifier", "key": "unit.health", "amount": 1 } ] },
+
+  { "id": "mana_font", "display_name": "Mana Font", "description": "Gain +1 mana every turn.",
+    "color": "5f8fd9", "letter": "M", "price": 110,
+    "effects": [ { "kind": "modifier", "key": "mana.per_turn", "amount": 1 } ] },
+
+  { "id": "scholars_tome", "display_name": "Scholar's Tome", "description": "Draw +1 card each round.",
+    "color": "5fb3d9", "letter": "D", "price": 110,
+    "effects": [ { "kind": "modifier", "key": "draw.per_turn", "amount": 1 } ] },
+
+  { "id": "crown_of_vigor", "display_name": "Crown of Vigor", "description": "Your King has +10 maximum Health.",
+    "color": "d9b94f", "letter": "K", "price": 100,
+    "effects": [ { "kind": "modifier", "key": "king.max_health", "amount": 10 } ] },
+
+  { "id": "vengeful_totem", "display_name": "Vengeful Totem", "description": "When one of your units dies, deal 2 damage to the nearest enemy.",
+    "color": "9b6fd9", "letter": "V", "price": 80,
+    "effects": [ { "kind": "triggered", "trigger": "on_death", "targeting_policy": "single_nearest", "attribute": "health", "amount": -2 } ] },
+
+  { "id": "war_drums", "display_name": "War Drums", "description": "When one of your units attacks, your other units gain +1 Attack for the rest of combat.",
+    "color": "c2603a", "letter": "W", "price": 120,
+    "effects": [ { "kind": "custom", "custom": "rallying_cry", "trigger": "on_attack" } ] }
+]

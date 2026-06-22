@@ -9,7 +9,10 @@ var column: int
 var type: Type
 var connections: Array = []
 var visited: bool = false
-# For EVENT ("?") nodes: the card stat this site can upgrade. Assigned at map
+# For EVENT ("?") nodes: which event this site runs — "trainer" (the stat-upgrade event) or
+# "relic" (offers a free relic). Rolled at map generation from the seeded RNG. See MapData.generate.
+var event_kind: String = "trainer"
+# For "trainer" EVENT nodes: the card stat this site can upgrade. Assigned at map
 # generation from the seeded RNG, so it's stable across reloads (the map is rebuilt
 # from the seed). Empty for non-event nodes. See MapData.generate.
 var event_attr: String = ""

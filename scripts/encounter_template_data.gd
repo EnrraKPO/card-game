@@ -16,6 +16,8 @@ var gold_reward: Array = [0, 0]   # [min, max] inclusive
 var exp_reward: int = 1           # profile experience for winning this fight (special fights author more)
 var ai: String = "default"
 var reward_pool: String = "default"
+# Chance (0..1) this fight also offers a relic on the reward screen, alongside the card pick.
+var relic_reward_chance: float = 0.0
 
 static var _all: Array = []  # Array[EncounterTemplateData]
 
@@ -65,6 +67,7 @@ static func _from_dict(d: Dictionary) -> EncounterTemplateData:
 	t.weight      = d.get("weight", 1.0)
 	t.ai          = d.get("ai", "default")
 	t.reward_pool = d.get("reward_pool", "default")
+	t.relic_reward_chance = float(d.get("relic_reward", 0.0))
 	t.exp_reward  = int(d.get("exp_reward", 1))
 	var pc: Array = d.get("pick_count", [1, 1])
 	t.pick_count  = [pc[0], pc[0] if pc.size() < 2 else pc[1]]
@@ -123,7 +126,19 @@ func instantiate(rng: RandomNumberGenerator) -> EncounterData:
 	enc.gold_reward = rng.randi_range(gold_reward[0], gold_reward[1])
 	enc.exp_reward  = exp_reward
 	enc.reward_pool = resolve_reward_pool(reward_pool)
+	if relic_reward_chance > 0.0 and rng.randf() < relic_reward_chance:
+		enc.relic_offer = _roll_relic_offer(rng)
 	return enc
+
+
+# Picks an un-owned relic id to offer (empty if the player already owns every relic). Reuses the
+# relic ItemKind's pool so ownership filtering lives in one place.
+func _roll_relic_offer(rng: RandomNumberGenerator) -> String:
+	var kind := ItemKinds.get_kind("relic")
+	if kind == null:
+		return ""
+	var ids := kind.offer_pool(1, rng)
+	return ids[0] if not ids.is_empty() else ""
 
 
 static func _encounter_data_type(t: MapNodeData.Type) -> EncounterData.Type:

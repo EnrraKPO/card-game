@@ -23,6 +23,18 @@ static func from_profile(profile: ProfileData) -> ModifierSet:
 	return s
 
 
+# The full active set for a live run: the profile's owned upgrades PLUS the run's relics. Both
+# sources contribute plain Effects, so they aggregate into the one set with no special-casing.
+static func for_run(profile: ProfileData, run: RunData) -> ModifierSet:
+	var s := from_profile(profile)
+	if run != null:
+		for relic_id: String in run.relics:
+			var relic := RelicData.get_relic(relic_id)
+			if relic != null:
+				s._mods.append_array(relic.effects)
+	return s
+
+
 func add(e: Effect) -> void:
 	_mods.append(e)
 

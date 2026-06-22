@@ -56,6 +56,7 @@ func _ready() -> void:
 	vbox.add_child(panels)
 	panels.add_child(_panel_button("Upgrades", "res://scenes/upgrades_screen.tscn", compact))
 	panels.add_child(_panel_button("Decks", "res://scenes/deck_screen.tscn", compact))
+	panels.add_child(_panel_button("Collection", "res://scenes/collection_screen.tscn", compact))
 	panels.add_child(_panel_button("Lab", "res://scenes/lab_screen.tscn", compact))
 
 	var has_run := GameData.slot_has_run(GameData.current_slot)

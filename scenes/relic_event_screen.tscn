@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://drlcvnt7x2k0a"]
+
+[ext_resource type="Script" path="res://scripts/relic_event_screen.gd" id="1"]
+
+[node name="RelicEventScreen" type="Control"]
+script = ExtResource("1")

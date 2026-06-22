@@ -15,5 +15,6 @@
   "gold_reward": [40, 60],
   "exp_reward": 3,
   "ai": "default",
-  "reward_pool": "default"
+  "reward_pool": "default",
+  "relic_reward": 0.5
 }

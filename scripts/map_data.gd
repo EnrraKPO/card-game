@@ -38,7 +38,12 @@ static func generate(seed_val: int) -> MapData:
 			node.column = c
 			node.type = _pick_type(f, rng)
 			if node.type == MapNodeData.Type.EVENT:
-				node.event_attr = DeckCard.UPGRADABLE[rng.randi() % DeckCard.UPGRADABLE.size()]
+				# Most "?" sites are the stat trainer; some offer a free relic instead.
+				if rng.randf() < 0.4:
+					node.event_kind = "relic"
+				else:
+					node.event_kind = "trainer"
+					node.event_attr = DeckCard.UPGRADABLE[rng.randi() % DeckCard.UPGRADABLE.size()]
 			elif node.type == MapNodeData.Type.ELITE:
 				# Elites drop a chess piece — the king-alchemy currency (the Forge needs a
 				# King Piece). Placeholder: one random piece, uniform odds (balance later).

@@ -76,7 +76,7 @@ func save_profile() -> void:
 # changes (slot select, an upgrade purchase) or a run starts so every queried number
 # reflects the player's owned upgrades.
 func rebuild_modifiers() -> void:
-	current_modifiers = ModifierSet.from_profile(current_profile)
+	current_modifiers = ModifierSet.for_run(current_profile, current_run)
 
 
 # THE resolver: the current value of any registered game number = its registry default plus
@@ -126,10 +126,8 @@ func apply_encounter_rewards(enc: EncounterData) -> void:
 		return
 	if current_run != null:
 		current_run.gold += enc.gold_reward
-		# Every elemental-essence reward also hands you one of that element's card.
-		for id: String in enc.material_rewards:
-			if id in Materials.ELEMENTS:
-				current_run.deck.append(DeckCard.make(id))
+	# The matching element CARD for each essence reward is now OPT-IN on the reward screen
+	# (Accept/Reject), so it's not forced into the deck — only the essence is auto-granted here.
 	grant_materials(enc.material_rewards)
 	grant_materials(_bonus_reward_materials(enc))
 	grant_experience(enc.exp_reward)
@@ -161,9 +159,9 @@ func start_new_run() -> void:
 
 
 func load_run() -> void:
-	rebuild_modifiers()
 	current_run = RunData.from_dict(_read_section("slot_%d" % current_slot))
 	current_map_state = MapState.from_dict(_read_section("map_%d" % current_slot))
+	rebuild_modifiers()   # after the run loads, so its relics are folded in too
 
 
 func save_run() -> void:

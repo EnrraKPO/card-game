@@ -30,7 +30,7 @@ func refresh() -> void:
 
 func _make_label(alignment: HorizontalAlignment) -> Label:
 	var lbl := Label.new()
-	lbl.add_theme_font_size_override("font_size", 30 if UIScale.is_compact() else 17)
+	lbl.add_theme_font_size_override("font_size", 25 if UIScale.is_compact() else 16)
 	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	lbl.horizontal_alignment = alignment
 	lbl.size_flags_horizontal = SIZE_EXPAND_FILL

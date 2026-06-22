@@ -523,6 +523,11 @@ func _build_hud(parent: VBoxContainer) -> void:
 	panel.add_child(hbox)
 	hbox.add_child(RunHUD.new())
 
+	# Read-only relic strip, inline in the top bar so the player can recall their relics mid-fight.
+	var relic_tray := RelicTray.new()
+	relic_tray.interactive = false
+	hbox.add_child(relic_tray)
+
 	_turn_label = Label.new()
 	_turn_label.add_theme_font_size_override("font_size", label_font)
 	_turn_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

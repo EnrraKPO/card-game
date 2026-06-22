@@ -45,6 +45,9 @@ func play_results(results: Array) -> void:
 			_:
 				if delta > 0: play(VFXEvent.buff(card_ui, attr, delta))
 				else:         play(VFXEvent.debuff(card_ui, attr, -delta))
+		# The instance was already mutated by the effect; snap the card's printed stats so the
+		# change is visible immediately, not only at the next board-wide refresh (end of turn).
+		card_ui.refresh()
 
 
 # ── Registry ───────────────────────────────────────────────────────────────────

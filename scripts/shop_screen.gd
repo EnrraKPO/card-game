@@ -1,19 +1,24 @@
 extends Control
 
-const OFFER_COUNT := 4
-const REMOVE_COST := 50
-const CHARM_OFFER_COUNT := 3
-const CHARM_PRICE := 60
+# The shop's buy side is generic: it offers one labelled row per entry in SHOP_KINDS, each row's
+# items sampled and rendered through the unified ItemKind/Grant layer (see ItemKinds). Adding a new
+# purchasable item type is one row here — no bespoke offer/buy code. The remove-a-card panel on the
+# right is unchanged.
 
-# One entry per offered card. { "id": String, "data": CardData, "price": int,
-# "ui": CardUI, "buy_btn": Button, "bought": bool }
+const REMOVE_COST := 50
+
+# Which item kinds the shop sells, in display order, with how many of each to offer.
+const SHOP_KINDS := [
+	{"kind": "card",  "count": 4, "label": "Buy Cards"},
+	{"kind": "charm", "count": 3, "label": "Buy Charms"},
+	{"kind": "relic", "count": 2, "label": "Buy Relics"},
+]
+
+# One entry per offered item: { "grant": Grant, "price": int, "buy_btn": Button, "bought": bool }
 var _offers: Array = []
-# One entry per offered charm. { "id": String, "price": int, "buy_btn": Button, "bought": bool }
-var _charm_offers: Array = []
-var _charm_offer_row: HBoxContainer
 
 # One entry per card slot in the current deck.
-# { "id": String, "deck_idx": int, "data": CardData, "ui": CardUI }
+# { "card": DeckCard, "deck_idx": int, "data": CardData, "ui": CardUI }
 var _deck_entries: Array = []
 var _selected_idx: int = -1   # index into _deck_entries, -1 = none
 
@@ -21,14 +26,11 @@ var _deck_grid: GridContainer
 var _gold_lbl: Label
 var _remove_status_lbl: Label
 var _remove_btn: Button
-var _buy_row: HBoxContainer
 
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	_build_ui()
-	_roll_offers()
-	_roll_charm_offers()
 	_rebuild_deck()
 
 
@@ -57,169 +59,119 @@ func _build_ui() -> void:
 	_refresh_gold_label()
 
 
-# ── Buy panel ────────────────────────────────────────────────────────────────
+# ── Buy panel (generic over ItemKinds) ───────────────────────────────────────
 
 func _build_buy_panel() -> Control:
 	var panel := VBoxContainer.new()
 	panel.size_flags_horizontal = SIZE_EXPAND_FILL
 	panel.add_theme_constant_override("separation", 16)
 
-	var label := Label.new()
-	label.text = "  Buy Cards"
-	label.add_theme_font_size_override("font_size", 18)
-	panel.add_child(label)
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_horizontal = SIZE_EXPAND_FILL
+	scroll.size_flags_vertical   = SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	panel.add_child(scroll)
 
-	_buy_row = HBoxContainer.new()
-	_buy_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	_buy_row.size_flags_vertical = SIZE_EXPAND_FILL
-	_buy_row.add_theme_constant_override("separation", 16)
-	panel.add_child(_buy_row)
+	var col := VBoxContainer.new()
+	col.size_flags_horizontal = SIZE_EXPAND_FILL
+	col.add_theme_constant_override("separation", 16)
+	scroll.add_child(col)
 
-	for i in OFFER_COUNT:
-		_buy_row.add_child(_make_offer_slot())
+	for entry: Dictionary in SHOP_KINDS:
+		col.add_child(_build_kind_row(entry))
 
-	var charm_label := Label.new()
-	charm_label.text = "  Buy Charms"
-	charm_label.add_theme_font_size_override("font_size", 18)
-	panel.add_child(charm_label)
-
-	_charm_offer_row = HBoxContainer.new()
-	_charm_offer_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	_charm_offer_row.add_theme_constant_override("separation", 16)
-	panel.add_child(_charm_offer_row)
-
+	_update_buy_buttons()
 	return panel
 
 
-# ── Charm offers ─────────────────────────────────────────────────────────────
+# A labelled row of offers for one item kind, sampled fresh from the kind's pool.
+func _build_kind_row(entry: Dictionary) -> Control:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 8)
 
-func _roll_charm_offers() -> void:
-	var pool: Array = CharmData.all()
-	pool.shuffle()
-	for i in mini(CHARM_OFFER_COUNT, pool.size()):
-		var charm: CharmData = pool[i]
-		var slot := VBoxContainer.new()
-		slot.custom_minimum_size = Vector2(110, 0)
-		slot.add_theme_constant_override("separation", 6)
-		slot.alignment = BoxContainer.ALIGNMENT_CENTER
+	var label := Label.new()
+	label.text = "  " + str(entry.get("label", ""))
+	label.add_theme_font_size_override("font_size", 18)
+	box.add_child(label)
 
-		var chip := Panel.new()
-		chip.custom_minimum_size = Vector2(64, 64)
-		chip.size_flags_horizontal = SIZE_SHRINK_CENTER
-		chip.tooltip_text = "%s — %s" % [charm.display_name, charm.description]
-		var style := StyleBoxFlat.new()
-		style.bg_color = charm.color
-		style.set_corner_radius_all(14)
-		style.set_border_width_all(3)
-		style.border_color = Color(0.04, 0.04, 0.06, 0.9)
-		chip.add_theme_stylebox_override("panel", style)
-		var glyph := Label.new()
-		glyph.text = charm.letter
-		glyph.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-		glyph.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		glyph.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		glyph.add_theme_font_size_override("font_size", 26)
-		chip.add_child(glyph)
-		slot.add_child(chip)
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 16)
+	box.add_child(row)
 
-		var name_lbl := Label.new()
-		name_lbl.text = charm.display_name
-		name_lbl.add_theme_font_size_override("font_size", 13)
-		name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		slot.add_child(name_lbl)
+	var kind_key := str(entry.get("kind", ""))
+	var kind := ItemKinds.get_kind(kind_key)
+	if kind == null:
+		return box
 
-		var price_lbl := Label.new()
-		price_lbl.text = "%d Gold" % CHARM_PRICE
-		price_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		slot.add_child(price_lbl)
-
-		var buy_btn := Button.new()
-		buy_btn.text = "Buy"
-		slot.add_child(buy_btn)
-		_charm_offer_row.add_child(slot)
-
-		var entry := {"id": charm.id, "price": CHARM_PRICE, "buy_btn": buy_btn, "bought": false}
-		_charm_offers.append(entry)
-		var entry_idx := _charm_offers.size() - 1
-		buy_btn.pressed.connect(func(): _on_buy_charm(entry_idx))
-
-	_update_buy_buttons()
+	var ids := kind.offer_pool(int(entry.get("count", 0)), null)
+	for id: String in ids:
+		row.add_child(_make_offer_slot(Grant.make(kind_key, id)))
+	if ids.is_empty():
+		var none := Label.new()
+		none.text = "  (sold out)"
+		none.modulate = Color(0.6, 0.6, 0.65)
+		row.add_child(none)
+	return box
 
 
-func _on_buy_charm(entry_idx: int) -> void:
-	var entry: Dictionary = _charm_offers[entry_idx]
-	if entry.bought or GameData.current_run.gold < entry.price:
-		return
-	GameData.current_run.gold -= entry.price
-	GameData.current_run.charms.append(entry.id)
-	GameData.save_run()
-	entry.bought = true
-	entry.buy_btn.text = "Bought"
-	_update_buy_buttons()
-	_refresh_gold_label()
-
-
-func _make_offer_slot() -> Control:
+func _make_offer_slot(grant: Grant) -> Control:
 	var slot := VBoxContainer.new()
 	slot.custom_minimum_size = Vector2(150, 0)
 	slot.add_theme_constant_override("separation", 8)
+	slot.alignment = BoxContainer.ALIGNMENT_CENTER
+
+	var ui := grant.make_ui()
+	ui.size_flags_horizontal = SIZE_SHRINK_CENTER
+	slot.add_child(ui)
+
+	var name_lbl := Label.new()
+	name_lbl.text = grant.display_name()
+	name_lbl.add_theme_font_size_override("font_size", 13)
+	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	name_lbl.custom_minimum_size.x = 130
+	slot.add_child(name_lbl)
+
+	var price := grant.price()
+	var price_lbl := Label.new()
+	price_lbl.text = "%d Gold" % price
+	price_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	slot.add_child(price_lbl)
+
+	var buy_btn := Button.new()
+	buy_btn.text = "Buy"
+	slot.add_child(buy_btn)
+
+	var rec := {"grant": grant, "price": price, "buy_btn": buy_btn, "bought": false}
+	_offers.append(rec)
+	buy_btn.pressed.connect(func() -> void: _on_buy(rec))
 	return slot
 
 
-func _roll_offers() -> void:
-	var ids := CardData.random_non_kings(OFFER_COUNT)
-	for i in ids.size():
-		var data := CardData.get_card(ids[i])
-		if data == null:
-			continue
-		var inst := CardInstance.from_data(data)
-		var ui := CardUI.create(inst)
-		ui.custom_minimum_size = Vector2(130, 170)
-		ui.mouse_filter = MOUSE_FILTER_IGNORE
-
-		var price := _price_for(data)
-		var price_lbl := Label.new()
-		price_lbl.text = "%d Gold" % price
-		price_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-
-		var buy_btn := Button.new()
-		buy_btn.text = "Buy"
-
-		var slot: VBoxContainer = _buy_row.get_child(i)
-		slot.add_child(ui)
-		slot.add_child(price_lbl)
-		slot.add_child(buy_btn)
-
-		var entry := {"id": ids[i], "data": data, "price": price, "buy_btn": buy_btn, "bought": false}
-		_offers.append(entry)
-		var entry_idx := _offers.size() - 1
-		buy_btn.pressed.connect(func(): _on_buy_pressed(entry_idx))
-
-	_update_buy_buttons()
-
-
-func _price_for(card: CardData) -> int:
-	return 30 + card.cost * 20
-
-
-func _on_buy_pressed(entry_idx: int) -> void:
-	var entry: Dictionary = _offers[entry_idx]
-	if entry.bought or GameData.current_run.gold < entry.price:
+func _on_buy(rec: Dictionary) -> void:
+	var grant: Grant = rec["grant"]
+	if rec["bought"] or GameData.current_run.gold < rec["price"] or not grant.can_apply():
 		return
-	GameData.current_run.gold -= entry.price
-	GameData.current_run.deck.append(DeckCard.make(entry.id))
-	GameData.save_run()
-	entry.bought = true
-	entry.buy_btn.text = "Sold"
+	GameData.current_run.gold -= rec["price"]
+	grant.apply()
+	rec["bought"] = true
 	_update_buy_buttons()
 	_refresh_gold_label()
 
 
 func _update_buy_buttons() -> void:
-	for entry: Dictionary in _offers:
-		entry.buy_btn.disabled = entry.bought or GameData.current_run.gold < entry.price
-	for entry: Dictionary in _charm_offers:
-		entry.buy_btn.disabled = entry.bought or GameData.current_run.gold < entry.price
+	for rec: Dictionary in _offers:
+		var grant: Grant = rec["grant"]
+		var affordable: bool = GameData.current_run.gold >= int(rec["price"])
+		var grantable: bool = grant.can_apply()
+		rec["buy_btn"].disabled = rec["bought"] or not affordable or not grantable
+		if rec["bought"]:
+			rec["buy_btn"].text = "Bought"
+		elif not grantable:
+			rec["buy_btn"].text = "Full"   # e.g. relic capacity reached
+		else:
+			rec["buy_btn"].text = "Buy"
 
 
 # ── Remove panel ─────────────────────────────────────────────────────────────

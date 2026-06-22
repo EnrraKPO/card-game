@@ -12,6 +12,7 @@ var gold: int
 var deck: Array   # Array[DeckCard] — each entry carries its own permanent mods
 var act: int
 var charms: Array = []   # owned, unapplied charm ids (inventory); applied in the forge
+var relics: Array = []   # owned relic ids (run-unique); each folds its Effects into the run ModifierSet
 
 
 # Seeds a fresh run from the profile's selected owned deck (which carries its King).
@@ -50,6 +51,7 @@ static func from_dict(data: Dictionary) -> RunData:
 	run.deck = _deck_from_variants(data.get("deck", []))
 	run.act  = data.get("act",  1)
 	run.charms = data.get("charms", [])
+	run.relics = data.get("relics", [])
 	return run
 
 
@@ -64,6 +66,7 @@ func to_dict() -> Dictionary:
 		"deck":        deck_data,
 		"act":         act,
 		"charms":      charms,
+		"relics":      relics,
 	}
 
 
@@ -88,3 +91,14 @@ func king_max_health() -> int:
 # The King's health entering a fight: full max, minus the damage carried over.
 func king_health() -> int:
 	return maxi(0, king_max_health() - king_damage)
+
+
+# Discards an owned relic (the player may drop a relic at any time to free a slot — no refund).
+# Rebuilds the run's modifier set so the relic's effects stop applying, then persists.
+func discard_relic(id: String) -> void:
+	var idx := relics.find(id)
+	if idx == -1:
+		return
+	relics.remove_at(idx)
+	GameData.rebuild_modifiers()
+	GameData.save_run()

@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://cqln0t8vx3wma"]
+
+[ext_resource type="Script" path="res://scripts/collection_screen.gd" id="1"]
+
+[node name="CollectionScreen" type="Control"]
+script = ExtResource("1")

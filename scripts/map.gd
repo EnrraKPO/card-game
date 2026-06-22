@@ -36,7 +36,7 @@ func _ready() -> void:
 
 	_compact = UIScale.is_compact()
 	_node_size = NODE_SIZE_COMPACT if _compact else NODE_SIZE
-	_hud_height = 116.0 if _compact else HUD_HEIGHT
+	_hud_height = 92.0 if _compact else HUD_HEIGHT
 	_bottom_bar_height = 124.0 if _compact else 56.0
 
 	_node_kinds = {
@@ -83,7 +83,16 @@ func _build_hud() -> void:
 	hud.set_anchors_and_offsets_preset(PRESET_TOP_WIDE)
 	hud.custom_minimum_size.y = _hud_height
 	add_child(hud)
-	hud.add_child(RunHUD.new())
+
+	# Single row: RunHUD (HP/Act/Gold) stretches; the relic strip sits at the right (tap to discard).
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	hud.add_child(row)
+
+	var run_hud := RunHUD.new()
+	run_hud.size_flags_horizontal = SIZE_EXPAND_FILL
+	row.add_child(run_hud)
+	row.add_child(RelicTray.new())
 
 
 # The scrollable map area, filling the screen below the HUD. The canvas inside it carries

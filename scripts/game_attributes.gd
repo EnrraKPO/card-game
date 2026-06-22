@@ -21,6 +21,7 @@ const DEFAULTS := {
 	# Run economy
 	"gold.initial":             100,  # a run's starting gold
 	"king.max_health":          0,    # bonus added on top of the run King's card health
+	"relic.capacity":           5,    # how many relics a run may hold at once (tunable / moddable)
 	# Encounter rewards
 	"reward.essence":           0,    # bonus essence granted per combat win
 	"reward.king_piece_chance": 0.0,  # chance an Elite also drops a King Piece (0..1)
