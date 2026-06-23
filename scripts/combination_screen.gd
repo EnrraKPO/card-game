@@ -37,6 +37,7 @@ var _wob_t := 0.0
 var _wob := 0.0                         # eased 0→1 wobble strength (ramps with the connection)
 var _aura: ForgeAura = null
 var _target_aura: ForgeAura = null
+var _target_item: Control = null       # the hovered target card's wrapper (wobbles while linked)
 # The swirling vortex that connects the two cards while hovering a valid target.
 var _link: ForgeLink = null
 var _hover_idx: int = -1
@@ -262,9 +263,9 @@ func _begin_drag(payload: Dictionary) -> void:
 	_aura = _make_aura(_source_color(payload), r.x, r.y)
 	_follower.add_child(_aura)
 
-	# Hide the dragged source card so it reads as "lifted".
+	# Lift the dragged source out of the grid (visible = false, so the grid reflows to close the gap).
 	if payload.kind == "card":
-		_entries[payload.idx].item.modulate.a = 0.0
+		_entries[payload.idx].item.visible = false
 
 	_update_drag(get_global_mouse_position())
 
@@ -294,12 +295,19 @@ func _process(delta: float) -> void:
 	if _wob < 0.001:
 		_follower_visual.rotation = 0.0
 		_follower_visual.position = _follower_base_pos
+		if _target_item != null:
+			_target_item.rotation = 0.0
 		return
 	_wob_t += delta
 	var freq := float(cfg["wobble_freq"])
-	_follower_visual.rotation = _wob * float(cfg["wobble_rot"]) * sin(_wob_t * freq)
+	var rot := _wob * float(cfg["wobble_rot"])
+	_follower_visual.rotation = rot * sin(_wob_t * freq)
 	var sway := _wob * float(cfg["wobble_sway"])
 	_follower_visual.position = _follower_base_pos + Vector2(sway * sin(_wob_t * freq * 0.7), sway * sin(_wob_t * freq * 1.3))
+	# The target card wobbles too (rotation only — it lives in the grid, which manages its position),
+	# slightly out of phase so the pair feels independently alive.
+	if _target_item != null:
+		_target_item.rotation = rot * sin(_wob_t * freq + PI * 0.5)
 
 
 func _input(event: InputEvent) -> void:
@@ -312,6 +320,9 @@ func _input(event: InputEvent) -> void:
 		if mb.button_index == MOUSE_BUTTON_LEFT and not mb.pressed:
 			_resolve_drag()
 			get_viewport().set_input_as_handled()
+		elif mb.button_index == MOUSE_BUTTON_RIGHT and mb.pressed:
+			_cancel_drag()   # right-click aborts the drag without merging
+			get_viewport().set_input_as_handled()
 
 
 func _update_drag(global_pos: Vector2) -> void:
@@ -320,10 +331,11 @@ func _update_drag(global_pos: Vector2) -> void:
 	_follower.global_position = global_pos
 	_set_hover(_target_under(global_pos))
 	if _link != null and _hover_idx >= 0:
-		# Vortex runs from the floating card to the hovered target, in overlay-local space.
+		# Connect the two cards' orbit rings, in overlay-local space.
 		var inv := _overlay.get_global_transform().affine_inverse()
 		var tgt: Control = _entries[_hover_idx].item
-		_link.set_endpoints(inv * global_pos, inv * tgt.get_global_rect().get_center())
+		var rr := _card_aura_radii()
+		_link.set_endpoints(inv * global_pos, inv * tgt.get_global_rect().get_center(), rr.x, rr.y)
 
 
 # The index of the deck card under `global_pos`, excluding the dragged source itself; -1 if none.
@@ -364,8 +376,11 @@ func _set_hover(target_idx: int) -> void:
 		_overlay.add_child(_target_aura)
 		_link = ForgeLink.new()
 		_link.setup(col)
-		_link.set_endpoints(inv * _follower.global_position, center)
+		_link.set_endpoints(inv * _follower.global_position, center, rr.x, rr.y)
 		_overlay.add_child(_link)
+		# Mark the target card so _process can wobble it too (rotating around its centre).
+		_target_item = _entries[target_idx].item
+		_target_item.pivot_offset = _target_item.size * 0.5
 
 
 func _clear_hover_visuals() -> void:
@@ -377,6 +392,9 @@ func _clear_hover_visuals() -> void:
 	if _link != null:
 		_link.queue_free()
 		_link = null
+	if _target_item != null:
+		_target_item.rotation = 0.0
+		_target_item = null
 
 
 func _resolve_drag() -> void:
@@ -407,7 +425,7 @@ func _cancel_drag() -> void:
 	if not _drag.is_empty() and _drag.get("kind") == "card":
 		var idx := int(_drag.get("idx", -1))
 		if idx >= 0 and idx < _entries.size() and _entries[idx].item != null:
-			_entries[idx].item.modulate.a = 1.0
+			_entries[idx].item.visible = true   # drop it back into the grid
 	_drag = {}
 	_hover_idx = -1
 	_result_deck_card = null
@@ -480,12 +498,17 @@ func _reset_preview() -> void:
 func _do_combine(src_idx: int, tgt_idx: int, result_dc: DeckCard) -> void:
 	if result_dc == null or src_idx < 0:
 		return
-	# Remove the two source cards highest-deck-index-first to avoid index shifting.
-	var deck_indices := [int(_entries[src_idx].deck_idx), int(_entries[tgt_idx].deck_idx)]
+	var src_deck: int = int(_entries[src_idx].deck_idx)
+	var tgt_deck: int = int(_entries[tgt_idx].deck_idx)
+	# Remove both source cards highest-deck-index-first to avoid index shifting.
+	var deck_indices := [src_deck, tgt_deck]
 	deck_indices.sort()
 	for i in range(deck_indices.size() - 1, -1, -1):
 		GameData.current_run.deck.remove_at(deck_indices[i])
-	GameData.current_run.deck.append(result_dc)
+	# Drop the result into the TARGET card's slot (shift left one if the source sat before it).
+	var insert_at := tgt_deck - (1 if src_deck < tgt_deck else 0)
+	insert_at = clampi(insert_at, 0, GameData.current_run.deck.size())
+	GameData.current_run.deck.insert(insert_at, result_dc)
 	GameData.save_run()
 	_rebuild_deck()
 
