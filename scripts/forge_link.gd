@@ -17,6 +17,7 @@ var _motes: Array = []
 
 # Cached from ForgeFX.LINK at setup.
 var _bow := 0.18
+var _wob_speed := 2.6
 var _end_fade := 0.22
 var _alpha_base := 0.85
 var _alpha_amp := 0.15
@@ -28,6 +29,7 @@ func setup(p_color: Color) -> void:
 	color = p_color
 	var cfg := ForgeFX.LINK
 	_bow = float(cfg["bow"])
+	_wob_speed = float(cfg["wobble_speed"])
 	_end_fade = float(cfg["end_fade"])
 	_alpha_base = float(cfg["alpha_base"])
 	_alpha_amp = float(cfg["alpha_amp"])
@@ -48,6 +50,9 @@ func setup(p_color: Color) -> void:
 			"a0":   randf_range(-spread, spread),   # where on the source ring it leaves (vs facing pt)
 			"a1":   randf_range(-spread, spread),   # where on the sink ring it arrives
 			"bow":  randf_range(-1.0, 1.0),         # which way (and how much) its arc bends
+			"wamp": randf_range(float(cfg["wobble_amp_min"]), float(cfg["wobble_amp_max"])),
+			"wfrq": randf_range(float(cfg["wobble_freq_min"]), float(cfg["wobble_freq_max"])),
+			"wpha": randf() * TAU,                  # this mote's spot in the weave cycle
 			"size": randf_range(float(cfg["size_min"]), float(cfg["size_max"])),
 			"white": randf() < float(cfg["white_chance"]),
 			"flick": randf_range(float(cfg["flick_min"]), float(cfg["flick_max"])),
@@ -90,7 +95,12 @@ func _draw() -> void:
 		var seg := p1 - p0
 		var base := p0.lerp(p1, smoothstep(0.0, 1.0, u))
 		var perp := Vector2(-seg.y, seg.x).normalized()
-		var pos := base + perp * (seg.length() * _bow * float(m["bow"]) * sin(u * PI))
+		# Envelope: 0 at both rings, peaks mid-crossing — keeps sideways motion off the orbits.
+		var env := sin(u * PI)
+		# Static bow (the mote's fixed arc) plus a travelling sine weave that scrolls in time.
+		var bow_off := _bow * float(m["bow"])
+		var weave := float(m["wamp"]) * sin(u * TAU * float(m["wfrq"]) + float(m["wpha"]) + _t * _wob_speed)
+		var pos := base + perp * (seg.length() * (bow_off + weave) * env)
 
 		# Fade in leaving the source ring, out arriving the sink ring → blends into the halos.
 		var fade := clampf(minf(u, 1.0 - u) / _end_fade, 0.0, 1.0)

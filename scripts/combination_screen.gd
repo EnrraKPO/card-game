@@ -19,6 +19,7 @@ const WARN_COLOR := Color(1.0, 0.6, 0.3)
 const IDLE_COLOR := Color(0.7, 0.7, 0.8)
 
 var _deck_grid: GridContainer
+var _scroll: ScrollContainer
 var _charm_row: HBoxContainer
 var _compact := false
 var _card_size := CARD_SIZE
@@ -47,6 +48,9 @@ var _result_deck_card: DeckCard = null
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	# Rebuild the whole screen when the form-factor flips (desktop ↔ compact/touch), so the
+	# layout switches variants instead of the canvas just scaling down. Re-armed each _ready.
+	UIScale.layout_changed.connect(func(): get_tree().reload_current_scene(), CONNECT_ONE_SHOT)
 	_build_ui()
 	_rebuild_deck()
 	_rebuild_charms()
@@ -79,7 +83,9 @@ func _build_ui() -> void:
 	scroll.size_flags_vertical   = SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.vertical_scroll_mode   = ScrollContainer.SCROLL_MODE_AUTO
+	scroll.resized.connect(_relayout_columns)
 	left.add_child(scroll)
+	_scroll = scroll
 
 	_deck_grid = GridContainer.new()
 	_deck_grid.columns = 3 if _compact else 4
@@ -137,6 +143,21 @@ func _build_ui() -> void:
 
 
 # ── Deck display ────────────────────────────────────────────────────────────────
+
+# Pack as many card columns as the scroll viewport can hold, so the grid fills the
+# width instead of sitting at a fixed 4. Re-run whenever the viewport resizes.
+func _relayout_columns() -> void:
+	if _scroll == null or _deck_grid == null:
+		return
+	var bar := _scroll.get_v_scroll_bar()
+	var bar_w := bar.size.x if bar.visible else 0.0
+	var avail := _scroll.size.x - bar_w
+	if avail <= 0.0:
+		return
+	var h_sep := float(_deck_grid.get_theme_constant("h_separation"))
+	var cols := int(floor((avail + h_sep) / (_card_size.x + h_sep)))
+	_deck_grid.columns = maxi(cols, 1)
+
 
 func _rebuild_deck() -> void:
 	_cancel_drag()
@@ -289,6 +310,7 @@ func _make_follower_visual(payload: Dictionary) -> Control:
 func _process(delta: float) -> void:
 	if _follower_visual == null:
 		return
+	_auto_scroll(delta)
 	var cfg := ForgeFX.CARD
 	var connected := 1.0 if _link != null else 0.0
 	_wob = lerpf(_wob, connected, clampf(delta * float(cfg["wobble_ease"]), 0.0, 1.0))
@@ -336,6 +358,28 @@ func _update_drag(global_pos: Vector2) -> void:
 		var tgt: Control = _entries[_hover_idx].item
 		var rr := _card_aura_radii()
 		_link.set_endpoints(inv * global_pos, inv * tgt.get_global_rect().get_center(), rr.x, rr.y)
+
+
+# While dragging, ease the deck scroll up/down when the pointer nears the top/bottom edge,
+# so cards out of view can be reached without letting go. Hover/link are refreshed as it shifts.
+func _auto_scroll(delta: float) -> void:
+	if _scroll == null:
+		return
+	var rect := _scroll.get_global_rect()
+	var zone := 140.0 if _compact else 90.0   # edge band that triggers scrolling
+	var speed := 1100.0                        # px/sec at the very edge
+	var y := get_global_mouse_position().y
+	var dv := 0.0
+	if y < rect.position.y + zone:
+		dv = -(1.0 - clampf((y - rect.position.y) / zone, 0.0, 1.0))
+	elif y > rect.end.y - zone:
+		dv = 1.0 - clampf((rect.end.y - y) / zone, 0.0, 1.0)
+	if dv == 0.0:
+		return
+	var before := _scroll.scroll_vertical
+	_scroll.scroll_vertical = before + int(dv * speed * delta)
+	if _scroll.scroll_vertical != before:
+		_update_drag(get_global_mouse_position())   # cards moved under the cursor — re-evaluate
 
 
 # The index of the deck card under `global_pos`, excluding the dragged source itself; -1 if none.
@@ -526,18 +570,21 @@ func _do_enchant(charm_id: String, tgt_idx: int) -> void:
 
 # ── Particles ──────────────────────────────────────────────────────────────────
 
-# Half-extents of the particle path — the card's half-size plus ForgeFX.AURA.margin, so the ring
-# wraps just outside the outline. Tweak `margin` in ForgeFX to tighten or loosen the radius.
+# Half-extents of the particle path. Start from the card's half-size, scale it by
+# ForgeFX.AURA.radius_scale (the main handle — 1.0 = on the edge, >1 = wider, <1 = tighter), then
+# add ForgeFX.AURA.margin for a flat px nudge on top. Tweak `radius_scale` to resize the ring.
 func _card_aura_radii() -> Vector2:
+	var scale := float(ForgeFX.AURA["radius_scale"])
 	var margin := float(ForgeFX.AURA["margin"])
-	return Vector2(_card_size.x * 0.5 + margin, _card_size.y * 0.5 + margin)
+	return Vector2(_card_size.x * 0.5 * scale + margin, _card_size.y * 0.5 * scale + margin)
 
 
 func _aura_radii(payload: Dictionary) -> Vector2:
 	if payload.kind == "card":
 		return _card_aura_radii()
+	var scale := float(ForgeFX.AURA["radius_scale"])
 	var margin := float(ForgeFX.AURA["margin"])
-	return Vector2(36.0 + margin, 36.0 + margin)
+	return Vector2(36.0 * scale + margin, 36.0 * scale + margin)
 
 
 # A hand-drawn halo that swirls around the card — see ForgeAura (tuning in ForgeFX.AURA).
