@@ -95,6 +95,10 @@ func _build_hud() -> void:
 	var run_hud := RunHUD.new()
 	run_hud.size_flags_horizontal = SIZE_EXPAND_FILL
 	row.add_child(run_hud)
+	if GameData.current_profile != null:
+		var exp := ScreenUI.experience_bar_compact(GameData.current_profile, UIScale.is_compact())
+		exp.size_flags_vertical = SIZE_SHRINK_CENTER
+		row.add_child(exp)
 	row.add_child(RelicTray.new())
 
 

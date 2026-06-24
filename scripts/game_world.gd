@@ -83,7 +83,8 @@ func _ready() -> void:
 		vbox.add_child(abandon)
 
 	ScreenUI.attach_exits(self,
-		func(): get_tree().change_scene_to_file("res://scenes/game_slots.tscn"))
+		func(): get_tree().change_scene_to_file("res://scenes/game_slots.tscn"),
+		null, null, false)   # hub already shows its own larger experience bar
 
 	_confirm_abandon = ConfirmationDialog.new()
 	_confirm_abandon.title = "Abandon run"

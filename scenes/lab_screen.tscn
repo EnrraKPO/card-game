@@ -27,10 +27,10 @@ offset_bottom = 720.0
 
 [node name="refinery" type="TextureButton" parent="Stage" unique_id=1359379251]
 layout_mode = 0
-offset_left = 50.0
-offset_top = 83.0
-offset_right = 270.0
-offset_bottom = 303.0
+offset_left = 712.0
+offset_top = 230.0
+offset_right = 932.0
+offset_bottom = 450.0
 tooltip_text = "Refinery"
 texture_normal = ExtResource("2")
 ignore_texture_size = true
@@ -38,10 +38,10 @@ stretch_mode = 5
 
 [node name="card_forge" type="TextureButton" parent="Stage" unique_id=872496557]
 layout_mode = 0
-offset_left = 516.0
-offset_top = 383.0
-offset_right = 736.0
-offset_bottom = 603.0
+offset_left = 549.0
+offset_top = 230.0
+offset_right = 769.0
+offset_bottom = 450.0
 tooltip_text = "Card Forge"
 texture_normal = ExtResource("3")
 ignore_texture_size = true
@@ -49,10 +49,10 @@ stretch_mode = 5
 
 [node name="king_forge" type="TextureButton" parent="Stage" unique_id=1395068015]
 layout_mode = 0
-offset_left = 946.0
-offset_top = 100.0
-offset_right = 1166.0
-offset_bottom = 320.0
+offset_left = 371.0
+offset_top = 230.0
+offset_right = 591.0
+offset_bottom = 450.0
 tooltip_text = "King Forge"
 texture_normal = ExtResource("4")
 ignore_texture_size = true

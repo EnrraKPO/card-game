@@ -61,6 +61,7 @@ func _ready() -> void:
 	_inv_height = 220.0 if _compact else 150.0
 
 	_stage = $Stage
+	_add_background()
 	_wire_artifacts()
 	_build_overlays()
 	_rebuild_inventory()
@@ -70,6 +71,22 @@ func _ready() -> void:
 
 
 # ── Stage (authored artifacts) ──────────────────────────────────────────────────────────
+
+# Full-screen illustrated backdrop, drawn above the solid Background ColorRect but behind
+# the Stage and overlays. Covers the viewport (cropping overflow) at any aspect ratio.
+func _add_background() -> void:
+	var tex := load("res://assets/ui/lab/lab_background.png") as Texture2D
+	if tex == null:
+		return
+	var bg := TextureRect.new()
+	bg.texture = tex
+	bg.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	bg.mouse_filter = MOUSE_FILTER_IGNORE
+	add_child(bg)
+	move_child(bg, 1)   # index 0 is the Background ColorRect; keep this behind the Stage
+
 
 func _wire_artifacts() -> void:
 	for key: String in ARTIFACTS:
@@ -81,6 +98,28 @@ func _wire_artifacts() -> void:
 		node.mouse_exited.connect(func() -> void: node.modulate = Color.WHITE)
 		if node is BaseButton:
 			(node as BaseButton).pressed.connect(_open.bind(key))
+		var nm: String = NAMES.get(key, key)
+		node.add_child(_make_nameplate(nm))
+
+
+# A visible name banner beneath an artifact. Parented to the artifact so it rides the
+# Stage's uniform scale; outlined for legibility over the dark stage / future art.
+func _make_nameplate(text: String) -> Label:
+	var lbl := Label.new()
+	lbl.text = text
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	# Span the artifact's width (with a little overflow for long names), sitting just below it.
+	lbl.anchor_left = 0.0; lbl.anchor_right = 1.0
+	lbl.anchor_top = 1.0; lbl.anchor_bottom = 1.0
+	lbl.offset_left = -30.0; lbl.offset_right = 30.0
+	lbl.offset_top = 10.0; lbl.offset_bottom = 52.0
+	lbl.add_theme_font_size_override("font_size", 30)
+	lbl.add_theme_color_override("font_color", Color(0.96, 0.97, 1.0))
+	lbl.add_theme_color_override("font_outline_color", Color(0.02, 0.02, 0.05, 0.9))
+	lbl.add_theme_constant_override("outline_size", 6)
+	return lbl
 
 
 # Uniform-scale the Stage to fit the area above the inventory bar, centred.
@@ -112,6 +151,8 @@ func _build_overlays() -> void:
 	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	title.size_flags_horizontal = SIZE_EXPAND_FILL
 	top.add_child(title)
+	if GameData.current_profile != null:
+		top.add_child(ScreenUI.experience_bar_compact(GameData.current_profile, _compact))
 	top.add_child(ScreenUI.close_button(exit))
 
 	# Standard bottom-left Back, lifted above the pinned inventory bar so it never overlaps it.
@@ -161,6 +202,7 @@ func _open(key: String) -> void:
 	_panel_center.add_child(_build_feature_panel(key))
 	_panel_host.visible = true
 	_refresh_open()
+	_rebuild_inventory()   # narrow the inventory to this station's resources
 
 
 func _collapse() -> void:
@@ -169,6 +211,7 @@ func _collapse() -> void:
 		child.queue_free()
 	_panel_host.visible = false
 	_clear_feature_refs()
+	_rebuild_inventory()   # restore the full inventory
 
 
 func _clear_feature_refs() -> void:
@@ -309,9 +352,17 @@ func _rebuild_inventory() -> void:
 		child.queue_free()
 	var bag := GameData.current_profile.materials
 	var ids := _owned_material_ids()
+	# While a facility is open, show only the resources its slots can take.
+	if _open_key != "":
+		var filtered: Array = []
+		for id: String in ids:
+			if _relevant_to_open(id):
+				filtered.append(id)
+		ids = filtered
 	if ids.is_empty():
 		var hint := Label.new()
-		hint.text = "No resources yet — earn essence from encounters, then refine it here."
+		hint.text = ("No resources this station can use yet." if _open_key != ""
+			else "No resources yet — earn essence from encounters, then refine it here.")
 		hint.add_theme_font_size_override("font_size", 20 if _compact else 14)
 		hint.modulate = Color(0.7, 0.72, 0.8)
 		_inventory.add_child(hint)
@@ -336,6 +387,15 @@ func _on_token_clicked(id: String) -> void:
 		if slot.can_accept.call(id):
 			slot.stage(id)
 			return
+
+
+# True if the open facility can use this resource — i.e. any of its slots accepts it.
+# Reuses the slots' own can_accept rules so the inventory filter never drifts from them.
+func _relevant_to_open(id: String) -> bool:
+	for slot: DropSlot in _open_slots():
+		if slot.can_accept.call(id):
+			return true
+	return false
 
 
 func _open_slots() -> Array:

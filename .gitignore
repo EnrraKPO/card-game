@@ -14,6 +14,9 @@ screenshots/
 /tmp_*.png.import
 /tmp_*/
 
+# Icon rasterization / contact-sheet build output (regenerable scratch)
+tools/_icon_preview/
+
 # Editor temp files
 *~
 .aider*

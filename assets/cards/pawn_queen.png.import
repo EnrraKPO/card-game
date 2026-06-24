@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://3xjdtflx2xep"
-path="res://.godot/imported/cavalry.png-9b40cc5d96df7f4e1195884222a4cffa.ctex"
+uid="uid://guxuog3wri8k"
+path="res://.godot/imported/pawn_queen.png-f1ff1d1894cf1ad189292b14ae271e61.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/cards/cavalry.png"
-dest_files=["res://.godot/imported/cavalry.png-9b40cc5d96df7f4e1195884222a4cffa.ctex"]
+source_file="res://assets/cards/pawn_queen.png"
+dest_files=["res://.godot/imported/pawn_queen.png-f1ff1d1894cf1ad189292b14ae271e61.ctex"]
 
 [params]
 

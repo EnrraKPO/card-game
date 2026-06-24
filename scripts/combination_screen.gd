@@ -44,6 +44,12 @@ var _link: ForgeLink = null
 var _hover_idx: int = -1
 # Carried from a valid combine hover so the drop doesn't recompute.
 var _result_deck_card: DeckCard = null
+# Floating result preview (the shared CardTooltip) that trails the cursor while a valid drop is
+# hovered — the same combined card the sidebar shows, but right under the dragged cards.
+var _drag_tip: Control = null
+# The in-scene combine-confirmation overlay (null when closed). In-scene, not a Window, so its cards
+# render in the main viewport with the same MSAA + mipmaps as the deck behind.
+var _combine_modal: Control = null
 
 
 func _ready() -> void:
@@ -184,8 +190,10 @@ func _rebuild_deck() -> void:
 		var item := ForgeDragItem.new()
 		item.custom_minimum_size = _card_size
 		item.setup(ui, {"kind": "card", "idx": entry_idx})
-		# The inner CardUI is input-transparent, so carry a basic tooltip on the wrapper.
+		# tooltip_text must be non-empty for Godot to fire the tooltip at all; tooltip_card then
+		# upgrades it to the same rich preview shown in-game (CardTooltip).
 		item.tooltip_text = data.description if not data.description.is_empty() else data.display_name
+		item.tooltip_card = ui.card_instance
 		if combinable:
 			item.grab.connect(_begin_drag)
 		else:
@@ -333,6 +341,12 @@ func _process(delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
+	# While the confirm overlay is up, Esc cancels it (consumed here so Nav doesn't also fire).
+	if _combine_modal != null:
+		if event.is_action_pressed("ui_cancel"):
+			_close_combine_modal()
+			get_viewport().set_input_as_handled()
+		return
 	if _drag.is_empty():
 		return
 	if event is InputEventMouseMotion:
@@ -352,6 +366,7 @@ func _update_drag(global_pos: Vector2) -> void:
 		return
 	_follower.global_position = global_pos
 	_set_hover(_target_under(global_pos))
+	_position_drag_tip(global_pos)
 	if _link != null and _hover_idx >= 0:
 		# Connect the two cards' orbit rings, in overlay-local space.
 		var inv := _overlay.get_global_transform().affine_inverse()
@@ -405,6 +420,7 @@ func _set_hover(target_idx: int) -> void:
 	var verdict := _evaluate_target(_drag, target_idx)
 	_result_deck_card = verdict.get("result_dc", null)
 	_show_preview(verdict.get("preview", null), str(verdict.get("status", "")), verdict.get("color", IDLE_COLOR))
+	_show_drag_tip(verdict.get("preview", null))
 
 	if bool(verdict.get("ok", false)):
 		var col: Color = verdict.get("color", OK_COLOR)
@@ -439,6 +455,7 @@ func _clear_hover_visuals() -> void:
 	if _target_item != null:
 		_target_item.rotation = 0.0
 		_target_item = null
+	_hide_drag_tip()
 
 
 func _resolve_drag() -> void:
@@ -453,9 +470,152 @@ func _resolve_drag() -> void:
 	if not did:
 		return
 	if payload.get("kind") == "card":
-		_do_combine(src_idx, hover, result_dc)
+		# Combining destroys both originals, so confirm intent before committing.
+		_confirm_combine(src_idx, hover, result_dc)
 	else:
 		_do_enchant(charm_id, hover)
+
+
+# A modal showing the two cards being spent and the card they forge into (all with descriptions),
+# gated behind Cancel/Forge. Built as an in-scene overlay (not a Window) so its cards share the deck's
+# MSAA + mipmaps. Indices stay valid: the dim swallows input so nothing reshuffles the deck, and the
+# deck isn't rebuilt until the user confirms.
+func _confirm_combine(src_idx: int, tgt_idx: int, result_dc: DeckCard) -> void:
+	if result_dc == null or src_idx < 0 or tgt_idx < 0:
+		return
+	var a_inst: CardInstance = (_entries[src_idx].card as DeckCard).make_instance()
+	var b_inst: CardInstance = (_entries[tgt_idx].card as DeckCard).make_instance()
+	var result_inst := result_dc.make_instance()
+
+	# Full-screen dim that blocks the deck behind; a click on it (outside the panel) cancels.
+	var dim := ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.6)
+	dim.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	dim.mouse_filter = MOUSE_FILTER_STOP
+	dim.gui_input.connect(func(e: InputEvent) -> void:
+		if e is InputEventMouseButton and (e as InputEventMouseButton).pressed:
+			_close_combine_modal())
+	add_child(dim)
+	_combine_modal = dim
+
+	# CenterContainer centres the panel; empty space stays input-transparent so it falls to the dim.
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	center.mouse_filter = MOUSE_FILTER_IGNORE
+	dim.add_child(center)
+
+	var panel := PanelContainer.new()
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.09, 0.09, 0.15, 0.98)
+	style.set_border_width_all(2)
+	style.border_color = Color(0.45, 0.45, 0.6)
+	style.set_corner_radius_all(10)
+	style.set_content_margin_all(28 if _compact else 18)
+	panel.add_theme_stylebox_override("panel", style)
+	center.add_child(panel)
+
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 18 if _compact else 12)
+	panel.add_child(col)
+
+	var prompt := Label.new()
+	prompt.text = "Forge these two cards into one? Both originals are consumed."
+	prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	prompt.autowrap_mode = TextServer.AUTOWRAP_WORD
+	prompt.add_theme_font_size_override("font_size", 24 if _compact else 16)
+	col.add_child(prompt)
+
+	var cs := Vector2(190, 249) if _compact else Vector2(150, 196)   # keeps the 260×340 aspect
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 18 if _compact else 14)
+	row.add_child(_make_combine_cell(a_inst, cs))
+	row.add_child(_make_combine_op("+", cs.y))
+	row.add_child(_make_combine_cell(b_inst, cs))
+	row.add_child(_make_combine_op("→", cs.y))
+	row.add_child(_make_combine_cell(result_inst, cs))
+	col.add_child(row)
+
+	var buttons := HBoxContainer.new()
+	buttons.size_flags_horizontal = SIZE_EXPAND_FILL   # span the panel so the two targets are wide
+	buttons.add_theme_constant_override("separation", 24 if _compact else 16)
+	var cancel_btn := _modal_button("Cancel")
+	var forge_btn := _modal_button("Forge")
+	cancel_btn.pressed.connect(_close_combine_modal)
+	forge_btn.pressed.connect(func() -> void:
+		_do_combine(src_idx, tgt_idx, result_dc)
+		_close_combine_modal())
+	buttons.add_child(cancel_btn)
+	buttons.add_child(forge_btn)
+	col.add_child(buttons)
+
+
+func _close_combine_modal() -> void:
+	if _combine_modal != null:
+		_combine_modal.queue_free()
+		_combine_modal = null
+
+
+# A big, easy-to-hit modal button. Each one EXPAND_FILLs half the button row, so on top of the
+# generous min height they stretch wide across the panel — no fiddly aiming for confirm/cancel.
+func _modal_button(text: String) -> Button:
+	var b := Button.new()
+	b.text = text
+	b.size_flags_horizontal = SIZE_EXPAND_FILL
+	b.custom_minimum_size = Vector2(300, 120) if _compact else Vector2(220, 64)
+	b.add_theme_font_size_override("font_size", 40 if _compact else 26)
+	return b
+
+
+# One column of the combine modal: an enlarged card over its name + wrapped description. Cells FILL
+# the row's height (default) so every card sits flush at the top and the three line up, regardless of
+# how tall each description wraps.
+func _make_combine_cell(inst: CardInstance, cs: Vector2) -> Control:
+	var cell := VBoxContainer.new()
+	cell.size_flags_vertical = SIZE_FILL
+	cell.add_theme_constant_override("separation", 6)
+
+	var holder := Control.new()
+	holder.custom_minimum_size = cs
+	holder.size_flags_horizontal = SIZE_SHRINK_CENTER
+	holder.size_flags_vertical = SIZE_SHRINK_BEGIN   # keep the card at its size, pinned to the top
+	var card := CardUI.create(inst)
+	card.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	card.mouse_filter = MOUSE_FILTER_IGNORE
+	holder.add_child(card)
+	cell.add_child(holder)
+
+	var name_lbl := Label.new()
+	name_lbl.text = inst.data.display_name
+	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_lbl.add_theme_font_size_override("font_size", 20 if _compact else 16)
+	cell.add_child(name_lbl)
+
+	var desc := inst.data.description
+	if not desc.is_empty():
+		var desc_lbl := Label.new()
+		desc_lbl.text = desc
+		desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD
+		desc_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		desc_lbl.custom_minimum_size.x = 300.0 if _compact else 220.0   # wider than the card so text wraps to fewer lines
+		desc_lbl.add_theme_font_size_override("font_size", 18 if _compact else 14)
+		desc_lbl.modulate = Color(0.82, 0.82, 0.9)
+		cell.add_child(desc_lbl)
+
+	return cell
+
+
+# The "+" / "→" glyph between cells. Sized to the card's height and pinned to the top so the glyph
+# centres on the cards (not on the taller, description-driven cell).
+func _make_combine_op(glyph: String, card_h: float) -> Control:
+	var lbl := Label.new()
+	lbl.text = glyph
+	lbl.custom_minimum_size.y = card_h
+	lbl.size_flags_vertical = SIZE_SHRINK_BEGIN
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	lbl.add_theme_font_size_override("font_size", 36 if _compact else 28)
+	lbl.modulate = Color(0.7, 0.7, 0.8)
+	return lbl
 
 
 # Tears down the in-flight drag visuals and restores the hidden source. Safe to call anytime.
@@ -535,6 +695,44 @@ func _reset_preview() -> void:
 		child.queue_free()
 	_preview_status.text = "Drag a card onto another to combine them,\nor drag a charm onto a card to enchant it."
 	_preview_status.modulate = IDLE_COLOR
+
+
+# Floats the shared CardTooltip of the would-be result next to the cursor while dragging, so the
+# combined card reads right where the action is (mirrors the sidebar preview). `inst` null = hide.
+func _show_drag_tip(inst: CardInstance) -> void:
+	_hide_drag_tip()
+	if inst == null:
+		return
+	var tip := CardTooltip.build(inst)
+	if tip == null:
+		return
+	tip.mouse_filter = MOUSE_FILTER_IGNORE   # decorative — never intercept the drag
+	_overlay.add_child(tip)
+	_drag_tip = tip
+	_position_drag_tip(get_global_mouse_position())
+
+
+func _hide_drag_tip() -> void:
+	if _drag_tip != null:
+		_drag_tip.queue_free()
+		_drag_tip = null
+
+
+# Trails the tip beside the pointer, clearing the dragged card, and clamps it on-screen (flips to
+# the cursor's left if it would overflow the right edge).
+func _position_drag_tip(global_pos: Vector2) -> void:
+	if _drag_tip == null:
+		return
+	var vp := get_viewport_rect().size
+	var ts := _drag_tip.get_combined_minimum_size()
+	var gap := _card_size.x * 0.6 + 24.0   # clear the half-card-wide follower under the cursor
+	var margin := 16.0
+	var x := global_pos.x + gap
+	if x + ts.x + margin > vp.x:
+		x = global_pos.x - gap - ts.x
+	x = clampf(x, margin, maxf(margin, vp.x - ts.x - margin))
+	var y := clampf(global_pos.y - ts.y * 0.5, margin, maxf(margin, vp.y - ts.y - margin))
+	_drag_tip.global_position = Vector2(x, y)
 
 
 # ── Apply ──────────────────────────────────────────────────────────────────────
