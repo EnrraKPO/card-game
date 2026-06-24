@@ -17,6 +17,16 @@ var _charm_col: VBoxContainer = null
 # the card a distinct glowing frame and a tooltip naming its source building.
 var is_generated: bool = false
 
+# Touch card inspection: hover tooltips don't fire on a touchscreen, so a long-press
+# (hold still ~0.4s) opens the full-screen CardInspector instead. Desktop keeps the
+# hover tooltip and is left untouched (the timer only arms when a touchscreen exists).
+const LONG_PRESS_SEC := 0.4
+const LONG_PRESS_MOVE := 14.0   # px of drift that reclassifies the hold as a drag/scroll
+var _hold_timer: Timer = null
+var _press_origin := Vector2.ZERO
+var _did_inspect := false
+var _touch_inspect := false
+
 @onready var _frame: TextureRect = $Canvas/Frame
 @onready var _art: TextureRect  = %Art
 @onready var _name_bg: TextureRect = %NameBg
@@ -146,6 +156,14 @@ func _ready() -> void:
 	refresh()
 	resized.connect(_apply_scale)
 	_apply_scale()
+	# Arm long-press inspection only on touch devices; desktop relies on the hover tooltip.
+	_touch_inspect = DisplayServer.is_touchscreen_available()
+	if _touch_inspect:
+		_hold_timer = Timer.new()
+		_hold_timer.one_shot = true
+		_hold_timer.wait_time = LONG_PRESS_SEC
+		_hold_timer.timeout.connect(_on_long_press)
+		add_child(_hold_timer)
 
 
 # Uniformly scales the fixed-size Canvas to fill the CardUI's current size.
@@ -392,14 +410,39 @@ func set_selected(selected: bool) -> void:
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
-		if mb.button_index == MOUSE_BUTTON_LEFT and not mb.pressed:
-			pressed.emit()
-			accept_event()
+		if mb.button_index == MOUSE_BUTTON_LEFT:
+			if mb.pressed:
+				# Begin a potential long-press; a quick release fires `pressed` as before.
+				_press_origin = mb.position
+				_did_inspect = false
+				if _hold_timer != null:
+					_hold_timer.start()
+			else:
+				if _hold_timer != null:
+					_hold_timer.stop()
+				if not _did_inspect:   # a long-press already opened the inspector — don't also select
+					pressed.emit()
+				accept_event()
+	elif event is InputEventMouseMotion:
+		# Drift past the threshold means a drag/scroll, not an inspect — abandon the hold.
+		if _hold_timer != null and not _hold_timer.is_stopped() \
+				and (event as InputEventMouseMotion).position.distance_to(_press_origin) > LONG_PRESS_MOVE:
+			_hold_timer.stop()
+
+
+# Long-press fired with the finger held still: open the full-screen detail inspector. The
+# pending release is then swallowed (see _gui_input) so the hold doesn't also select/play.
+func _on_long_press() -> void:
+	_did_inspect = true
+	CardInspector.open(self, card_instance, _show_cost)
 
 
 func _get_drag_data(at_position: Vector2) -> Variant:
 	if not draggable or card_instance == null:
 		return null
+	# A real drag won the gesture — cancel any pending long-press inspect.
+	if _hold_timer != null:
+		_hold_timer.stop()
 	# Buildings root in place: a unit with a rook can be dropped from the hand,
 	# but once it's on the board (row >= 0) it can no longer be picked up to move.
 	if card_instance.row >= 0 and card_instance.data.is_building():

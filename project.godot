@@ -35,6 +35,10 @@ window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 window/handheld/orientation="sensor_landscape"
 
+[gui]
+
+theme/custom="res://assets/ui/theme.tres"
+
 [importer_defaults]
 
 texture={
