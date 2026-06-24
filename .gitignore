@@ -20,3 +20,7 @@ tools/_icon_preview/
 # Editor temp files
 *~
 .aider*
+
+# Krita autosave / scratch files (keep real .kra sources if ever added)
+*-autosave.kra
+.~lock.*

@@ -61,6 +61,34 @@ const PIECE_ICONS := {
 	"king": preload("res://assets/ui/icons/piece_king.png"),
 }
 
+const ELEMENT_ICONS := {
+	"fire": preload("res://assets/ui/icons/fire_icon.png"),
+	"water": preload("res://assets/ui/icons/water_icon.png"),
+	"air": preload("res://assets/ui/icons/air_icon.png"),
+	"earth": preload("res://assets/ui/icons/earth_icon.png"),
+	"darkness": preload("res://assets/ui/icons/darkness_icon.png"),
+	"light": preload("res://assets/ui/icons/light_icon.png"),
+}
+
+# A rim around the (black) silhouette icons so they read on saturated chip colours. The rim is
+# a pale, desaturated tint of the chip's own hue — pops against the icon without going stark
+# white. One material per composition id (the rim is fixed per id). See icon_outline.gdshader.
+const ICON_OUTLINE_SHADER := preload("res://assets/ui/icons/icon_outline.gdshader")
+static var _icon_outline_mats: Dictionary = {}
+
+# A washed-out, lightened version of `base` in the same hue — the icon rim colour.
+static func _rim_color(base: Color) -> Color:
+	return Color.from_hsv(base.h, base.s * 0.4, maxf(base.v, 0.88))
+
+static func _icon_outline_material(comp_id: String, base: Color) -> ShaderMaterial:
+	if not _icon_outline_mats.has(comp_id):
+		var mat := ShaderMaterial.new()
+		mat.shader = ICON_OUTLINE_SHADER
+		mat.set_shader_parameter("outline_color", _rim_color(base))
+		mat.set_shader_parameter("width", 0.055)
+		_icon_outline_mats[comp_id] = mat
+	return _icon_outline_mats[comp_id]
+
 # All card text uses EB Garamond (an open-licensed OFL serif, so it's safe to
 # embed in the web export — unlike a SystemFont, which the browser build can't
 # resolve). It's a variable font; we render it heavier than its book default via
@@ -261,9 +289,10 @@ func _make_comp_chip(comp_id: String, is_element: bool) -> Control:
 	style.border_color = Color(0.04, 0.04, 0.06, 0.85)
 	chip.add_theme_stylebox_override("panel", style)
 
-	if not is_element and PIECE_ICONS.has(comp_id):
+	var icons: Dictionary = ELEMENT_ICONS if is_element else PIECE_ICONS
+	if icons.has(comp_id):
 		var icon := TextureRect.new()
-		icon.texture = PIECE_ICONS[comp_id]
+		icon.texture = icons[comp_id]
 		icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		icon.offset_left = 3
 		icon.offset_top = 3
@@ -272,6 +301,9 @@ func _make_comp_chip(comp_id: String, is_element: bool) -> Control:
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		# Clamp edge samples (no wrap) so the outline shader's halo doesn't bleed across edges.
+		icon.texture_repeat = CanvasItem.TEXTURE_REPEAT_DISABLED
+		icon.material = _icon_outline_material(comp_id, info.color)
 		chip.add_child(icon)
 		return chip
 
