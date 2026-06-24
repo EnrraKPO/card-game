@@ -19,11 +19,23 @@ const MOBILE_FACTOR := 1.35
 # previewing the mobile layout in the editor by shrinking the run window.
 const COMPACT_WIDTH := 1100.0
 
+# Safe-area inset: how far interactables must stay clear of the screen edges. The edges are
+# where mobile browsers steal touches (back/forward swipe gestures, rounded corners, notches),
+# so corner buttons and edge-pinned content read as "hard to press" there. Generous on touch,
+# small on desktop (just breathing room). The single source of truth — see ScreenUI and combat.
+const SAFE_INSET_COMPACT := 40.0
+const SAFE_INSET_DESKTOP := 28.0
+
 var _compact := false
 
 
 func is_compact() -> bool:
 	return _compact
+
+
+# Edge clearance for interactables, in viewport units. Larger on touch (see SAFE_INSET_*).
+func safe_inset() -> float:
+	return SAFE_INSET_COMPACT if _compact else SAFE_INSET_DESKTOP
 
 
 func _ready() -> void:

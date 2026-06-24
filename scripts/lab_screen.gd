@@ -138,12 +138,13 @@ func _fit_stage() -> void:
 func _build_overlays() -> void:
 	var exit := func() -> void: get_tree().change_scene_to_file("res://scenes/game_world.tscn")
 
-	# Title bar with the standard top-right ✕.
+	# Title bar with the standard top-right ✕, inset off the edges like every other screen.
+	var inset := UIScale.safe_inset()
 	var top := HBoxContainer.new()
 	top.set_anchors_and_offsets_preset(PRESET_TOP_WIDE)
-	top.offset_left = 12
-	top.offset_top = 10
-	top.offset_right = -12
+	top.offset_left = inset
+	top.offset_top = inset
+	top.offset_right = -inset
 	add_child(top)
 	var title := Label.new()
 	title.text = "   Laboratory"
@@ -159,9 +160,9 @@ func _build_overlays() -> void:
 	var back := ScreenUI.back_button(exit)
 	back.anchor_left = 0.0; back.anchor_right = 0.0
 	back.anchor_top = 1.0; back.anchor_bottom = 1.0
-	back.offset_left = 16
-	back.offset_right = 16 + back.custom_minimum_size.x
-	back.offset_bottom = -(_inv_height + 16)
+	back.offset_left = inset
+	back.offset_right = inset + back.custom_minimum_size.x
+	back.offset_bottom = -(_inv_height + inset)
 	back.offset_top = back.offset_bottom - back.custom_minimum_size.y
 	add_child(back)
 

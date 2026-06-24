@@ -494,8 +494,16 @@ func _on_spell_consumed(card_ui: CardUI, cost: int) -> void:
 # ── UI building ────────────────────────────────────────────────────────────────
 
 func _build_ui() -> void:
+	# Inset the whole stack off the screen edges so the top-bar buttons (notably "Done
+	# placing", far right) and the hand stay clear of the touch-hostile borders. See
+	# UIScale.safe_inset.
+	var inset := UIScale.safe_inset()
 	var root := VBoxContainer.new()
 	root.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	root.offset_left = inset
+	root.offset_top = inset
+	root.offset_right = -inset
+	root.offset_bottom = -inset
 	add_child(root)
 
 	_build_hud(root)

@@ -26,8 +26,16 @@ static func scaffold(host: Control, title: String) -> Dictionary:
 	bg.color = BG_COLOR
 	host.add_child(bg)
 
+	# The background (above) stays full-bleed; the chrome + body inset off the edges so no
+	# button (the ✕ in the header, Back in the footer, any content) sits in the touch-hostile
+	# border zone. One inset, bigger on touch — see UIScale.safe_inset.
+	var inset := UIScale.safe_inset()
 	var outer := VBoxContainer.new()
 	outer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	outer.offset_left = inset
+	outer.offset_top = inset
+	outer.offset_right = -inset
+	outer.offset_bottom = -inset
 	outer.add_theme_constant_override("separation", 0)
 	host.add_child(outer)
 
@@ -193,8 +201,9 @@ static func attach_exits(host: Control, exit: Callable, header: HBoxContainer = 
 		var sz := exp.size
 		exp.anchor_left = 0.0; exp.anchor_top = 0.0
 		exp.anchor_right = 0.0; exp.anchor_bottom = 0.0
-		exp.offset_left = 16.0; exp.offset_top = 14.0
-		exp.offset_right = 16.0 + sz.x; exp.offset_bottom = 14.0 + sz.y
+		var inset := UIScale.safe_inset()
+		exp.offset_left = inset; exp.offset_top = inset
+		exp.offset_right = inset + sz.x; exp.offset_bottom = inset + sz.y
 
 	Nav.set_back(exit)
 
@@ -202,18 +211,18 @@ static func attach_exits(host: Control, exit: Callable, header: HBoxContainer = 
 # Anchors `btn` to a corner of `host` with a fixed inset, sized to its own minimum. Kept outside any
 # container so the anchors/offsets fully determine the rect.
 static func _pin(host: Control, btn: Button, preset: int) -> void:
-	const INSET := 16.0
+	var inset := UIScale.safe_inset()
 	var w: float = btn.custom_minimum_size.x
 	var h: float = btn.custom_minimum_size.y
 	match preset:
 		Control.PRESET_TOP_RIGHT:
 			btn.anchor_left = 1.0; btn.anchor_right = 1.0
 			btn.anchor_top = 0.0; btn.anchor_bottom = 0.0
-			btn.offset_right = -INSET; btn.offset_left = -INSET - w
-			btn.offset_top = INSET; btn.offset_bottom = INSET + h
+			btn.offset_right = -inset; btn.offset_left = -inset - w
+			btn.offset_top = inset; btn.offset_bottom = inset + h
 		Control.PRESET_BOTTOM_LEFT:
 			btn.anchor_left = 0.0; btn.anchor_right = 0.0
 			btn.anchor_top = 1.0; btn.anchor_bottom = 1.0
-			btn.offset_left = INSET; btn.offset_right = INSET + w
-			btn.offset_bottom = -INSET; btn.offset_top = -INSET - h
+			btn.offset_left = inset; btn.offset_right = inset + w
+			btn.offset_bottom = -inset; btn.offset_top = -inset - h
 	host.add_child(btn)
