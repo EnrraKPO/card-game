@@ -7,18 +7,9 @@ var _element_toggles: Array = []
 
 
 func _ready() -> void:
-	set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	var compact := UIScale.is_compact()
 	var card_size := Vector2(230, 302) if compact else Vector2(160, 210)
-
-	var bg := ColorRect.new()
-	bg.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	bg.color = Color(0.06, 0.06, 0.1)
-	add_child(bg)
-
-	var center := CenterContainer.new()
-	center.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	add_child(center)
+	var center := ScreenUI.frame_centered(self, "Reward", _skip)
 
 	var vbox := VBoxContainer.new()
 	vbox.add_theme_constant_override("separation", 24)
@@ -101,9 +92,6 @@ func _ready() -> void:
 	skip_btn.size_flags_horizontal = SIZE_SHRINK_CENTER
 	skip_btn.pressed.connect(_skip)
 	vbox.add_child(skip_btn)
-
-	# Standard redundant exit routes (top-right ✕ + bottom-left Back); both leave like Skip.
-	ScreenUI.attach_exits(self, _skip)
 
 
 # The element card(s) earned this fight, each offered with an Accept/Reject toggle (Accept by

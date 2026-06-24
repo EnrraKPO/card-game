@@ -702,12 +702,14 @@ func _show_king_celebration(king_id: String) -> void:
 	box.add_child(sub)
 
 	if deck != null:
+		var cols := 4 if _compact else 6
+		var card_w := 92.0 if _compact else 74.0
 		var scroll := ScrollContainer.new()
 		scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-		scroll.custom_minimum_size = Vector2(0, minf(vp.y * 0.42, 360.0))
-		var grid := DeckUI.deck_grid(deck, 4 if _compact else 6, 92.0 if _compact else 74.0)
-		grid.size_flags_horizontal = SIZE_SHRINK_CENTER
-		scroll.add_child(grid)
+		# Fixed width sized for `cols` cards, so the auto-wrapping grid lays out in that many columns.
+		scroll.custom_minimum_size = Vector2(cols * card_w + (cols - 1) * 10 + 4, minf(vp.y * 0.42, 360.0))
+		scroll.size_flags_horizontal = SIZE_SHRINK_CENTER
+		scroll.add_child(DeckUI.deck_grid(deck, card_w))
 		box.add_child(scroll)
 
 	var btn := Button.new()

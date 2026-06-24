@@ -18,34 +18,23 @@ func _ready() -> void:
 	UIScale.layout_changed.connect(func(): get_tree().reload_current_scene(), CONNECT_ONE_SHOT)
 	var compact := UIScale.is_compact()
 
-	var bg := ColorRect.new()
-	bg.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	bg.color = Color(0.06, 0.07, 0.11)
-	add_child(bg)
+	# Standard chrome (the realm name sits in the header bar); the hub fills the body below it.
+	var body := ScreenUI.frame(self, "%s's Realm" % GameData.username,
+		func(): get_tree().change_scene_to_file("res://scenes/game_slots.tscn"))
 
-	# Desktop centres a compact column; compact fills the screen (minus margins) so the
-	# touch controls are large and the space isn't wasted.
+	# Desktop centres a compact column; compact fills the body so the touch controls stay large.
 	var vbox := VBoxContainer.new()
 	vbox.add_theme_constant_override("separation", 36 if compact else 28)
 	if compact:
-		var pad := MarginContainer.new()
-		pad.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-		for side in ["left", "right", "top", "bottom"]:
-			pad.add_theme_constant_override("margin_" + side, 56)
-		add_child(pad)
 		vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-		pad.add_child(vbox)
+		vbox.size_flags_vertical = SIZE_EXPAND_FILL
+		body.add_child(vbox)
 	else:
 		var center := CenterContainer.new()
-		center.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-		add_child(center)
+		center.size_flags_horizontal = SIZE_EXPAND_FILL
+		center.size_flags_vertical = SIZE_EXPAND_FILL
+		body.add_child(center)
 		center.add_child(vbox)
-
-	var title := Label.new()
-	title.text = "%s's Realm" % GameData.username
-	title.add_theme_font_size_override("font_size", 56 if compact else 44)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	vbox.add_child(title)
 
 	vbox.add_child(_build_loadout_panel())
 
@@ -81,10 +70,6 @@ func _ready() -> void:
 		abandon.size_flags_horizontal = SIZE_FILL if compact else SIZE_SHRINK_CENTER
 		abandon.pressed.connect(func(): _confirm_abandon.popup_centered())
 		vbox.add_child(abandon)
-
-	ScreenUI.attach_exits(self,
-		func(): get_tree().change_scene_to_file("res://scenes/game_slots.tscn"),
-		null, null, false)   # hub already shows its own larger experience bar
 
 	_confirm_abandon = ConfirmationDialog.new()
 	_confirm_abandon.title = "Abandon run"

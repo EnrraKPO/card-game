@@ -37,7 +37,7 @@ func _ready() -> void:
 func _build_ui() -> void:
 	var s := ScreenUI.scaffold(self, "Decks")
 	var root: VBoxContainer = s.root
-	ScreenUI.attach_exits(self,
+	ScreenUI.attach_exits(
 		func(): get_tree().change_scene_to_file("res://scenes/game_world.tscn"), s.header, s.footer)
 
 	# ── Body: deck list (left) + preview (right) ──────────────────────────────────
@@ -318,7 +318,7 @@ func _update_preview() -> void:
 	_preview_title.text = "%s  ·  %d cards%s" % [
 		DeckUI.deck_label(od, _previewed_ordinal(od)), od.cards.size(),
 		"   (active)" if is_active else ""]
-	_preview_body.add_child(DeckUI.deck_grid(od, 4, 92))
+	_preview_body.add_child(DeckUI.deck_grid(od, 150 if _compact else 132))
 
 	_set_active_btn.text = "Active ✓" if is_active else "Set as Active"
 	_set_active_btn.disabled = is_active

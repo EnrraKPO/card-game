@@ -27,16 +27,8 @@ func _ready() -> void:
 
 
 func _build_ui() -> void:
-	var bg := ColorRect.new()
-	bg.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	bg.color = Color(0.08, 0.07, 0.05)
-	add_child(bg)
-
-	var root := VBoxContainer.new()
-	root.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	var root := ScreenUI.frame(self, "Event", _leave)
 	root.add_theme_constant_override("separation", 16)
-	root.add_theme_constant_override("margin_left", 24)
-	add_child(root)
 
 	var title := Label.new()
 	title.text = "A Wandering Trainer"
@@ -87,8 +79,6 @@ func _build_ui() -> void:
 	_upgrade_btn.custom_minimum_size = Vector2(220, 0)
 	_upgrade_btn.pressed.connect(_apply_upgrade)
 	btn_row.add_child(_upgrade_btn)
-
-	ScreenUI.attach_exits(self, _leave)
 
 
 func _rebuild_deck() -> void:

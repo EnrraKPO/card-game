@@ -69,7 +69,7 @@ func _build_ui() -> void:
 
 	var s := ScreenUI.scaffold(self, "Forge")
 	var root: VBoxContainer = s.root
-	ScreenUI.attach_exits(self, _leave, s.header, s.footer)
+	ScreenUI.attach_exits(_leave, s.header, s.footer)
 
 	# ── Body ───────────────────────────────────────────────────────────────────
 	var body := HBoxContainer.new()

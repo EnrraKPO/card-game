@@ -44,7 +44,7 @@ func _build_ui() -> void:
 	_gold_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	s.header.add_child(_gold_lbl)
 
-	ScreenUI.attach_exits(self, _leave, s.header, s.footer)
+	ScreenUI.attach_exits(_leave, s.header, s.footer)
 
 	# ── Body ───────────────────────────────────────────────────────────────────
 	var body := HBoxContainer.new()

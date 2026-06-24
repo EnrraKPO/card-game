@@ -29,7 +29,7 @@ func _ready() -> void:
 
 	var s := ScreenUI.scaffold(self, "Upgrades")
 	var root: VBoxContainer = s.root
-	ScreenUI.attach_exits(self,
+	ScreenUI.attach_exits(
 		func(): get_tree().change_scene_to_file("res://scenes/game_world.tscn"), s.header, s.footer)
 	_build_body(root)
 

@@ -8,17 +8,8 @@ const OFFER_COUNT := 2
 
 
 func _ready() -> void:
-	set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	var compact := UIScale.is_compact()
-
-	var bg := ColorRect.new()
-	bg.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	bg.color = Color(0.06, 0.06, 0.10)
-	add_child(bg)
-
-	var center := CenterContainer.new()
-	center.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	add_child(center)
+	var center := ScreenUI.frame_centered(self, "Shrine", _finish)
 
 	var vbox := VBoxContainer.new()
 	vbox.add_theme_constant_override("separation", 28)
@@ -54,8 +45,6 @@ func _ready() -> void:
 		vbox.add_child(row)
 		for id: String in ids:
 			row.add_child(_make_offer(Grant.make("relic", id), compact))
-
-	ScreenUI.attach_exits(self, _finish)
 
 
 func _make_offer(grant: Grant, compact: bool) -> Control:

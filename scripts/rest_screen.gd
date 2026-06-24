@@ -8,26 +8,11 @@ var _rest_btn: Button
 
 
 func _ready() -> void:
-	set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-
-	var bg := ColorRect.new()
-	bg.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	bg.color = Color(0.06, 0.06, 0.1)
-	add_child(bg)
-
-	var center := CenterContainer.new()
-	center.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	add_child(center)
+	var center := ScreenUI.frame_centered(self, "Rest Site", _on_continue)
 
 	var vbox := VBoxContainer.new()
 	vbox.add_theme_constant_override("separation", 32)
 	center.add_child(vbox)
-
-	var title := Label.new()
-	title.text = "Rest Site"
-	title.add_theme_font_size_override("font_size", 36)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	vbox.add_child(title)
 
 	var subtitle := Label.new()
 	subtitle.text = "Your King recovers %d%% of maximum health." % int(HEAL_PERCENT * 100)
@@ -49,7 +34,6 @@ func _ready() -> void:
 	_rest_btn.pressed.connect(_on_rest)
 	vbox.add_child(_rest_btn)
 
-	ScreenUI.attach_exits(self, _on_continue)
 	_refresh()
 
 

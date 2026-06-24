@@ -15,7 +15,7 @@ func _ready() -> void:
 func _build_ui() -> void:
 	var s := ScreenUI.scaffold(self, "Choose a Deck for This Run")
 	var root: VBoxContainer = s.root
-	ScreenUI.attach_exits(self,
+	ScreenUI.attach_exits(
 		func(): get_tree().change_scene_to_file("res://scenes/game_world.tscn"), s.header, s.footer)
 
 	# ── Deck grid ────────────────────────────────────────────────────────────────

@@ -59,7 +59,7 @@ func _build_ui() -> void:
 		_save_btn.custom_minimum_size = Vector2(180, 84)
 	_save_btn.pressed.connect(_on_save)
 	s.header.add_child(_save_btn)
-	ScreenUI.attach_exits(self, _on_back, s.header, s.footer)
+	ScreenUI.attach_exits(_on_back, s.header, s.footer)
 
 	var body: BoxContainer = VBoxContainer.new() if _compact else HBoxContainer.new()
 	body.size_flags_vertical = SIZE_EXPAND_FILL

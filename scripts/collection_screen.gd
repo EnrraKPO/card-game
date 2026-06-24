@@ -14,7 +14,7 @@ extends Control
 var _compact := false
 var _tile_w := 70.0
 var _with_art := true
-var _missing_art := true
+var _missing_art := false
 
 var _grid: HFlowContainer
 var _summary: Label
@@ -98,7 +98,7 @@ func _build_ui() -> void:
 		_missing_art = on
 		_apply_filter()
 	))
-	ScreenUI.attach_exits(self, _on_back, s.header, s.footer)
+	ScreenUI.attach_exits(_on_back, s.header, s.footer)
 
 	var pad := MarginContainer.new()
 	for side in ["left", "right", "top", "bottom"]:

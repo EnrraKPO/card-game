@@ -1,13 +1,18 @@
 class_name ScreenUI
 extends RefCounted
 
-# Shared chrome for the code-built full-screen menus (Decks, Shop, Forge, …). Removes the
-# repeated "background + header bar + body + footer" boilerplate, plus the standard exit
-# affordances (top-right ✕ / bottom-left Back) wired to the OS go-back gesture (see Nav).
-# Usage:
+# THE shared chrome for every code-built full-screen menu/overlay (Decks, Shop, Forge, Reward,
+# Rest, the hub, …). One frame for all of them — standard "background + header bar (title + EXP +
+# ✕) + body + footer (Back)" with the exits wired to the OS go-back gesture (see Nav) — so the
+# chrome, and the ✕/Back placement, is identical everywhere by construction.
+# Usage (preferred):
+#   var body := ScreenUI.frame(self, "Decks", _go_back)   # returns the body container to fill
+#   body.add_child(my_content)
+# Centered overlays use frame_centered() instead. Screens that must add their own header buttons
+# drop to scaffold + attach_exits:
 #   var s := ScreenUI.scaffold(self, "Decks")
-#   s.root.add_child(my_body)                          # screen content (between header & footer)
-#   ScreenUI.attach_exits(self, _go_back, s.header, s.footer)
+#   s.header.add_child(my_button)
+#   ScreenUI.attach_exits(_go_back, s.header, s.footer)
 
 const BG_COLOR := Color(0.07, 0.07, 0.12)
 const CLOSE_GLYPH := "✕"
@@ -173,56 +178,34 @@ static func back_button(action: Callable) -> Button:
 	return btn
 
 
-# Adds the two standard exit affordances — a top-right "✕" and a bottom-left "Back", both wired to
-# the same `exit` — and registers `exit` as the OS go-back / Esc handler (see Nav). On a scaffold
-# screen pass its `header` and `footer` so the buttons dock into the chrome (no overlap); on a
-# hand-built / centered screen omit them and the buttons float in the corners of `host`.
-static func attach_exits(host: Control, exit: Callable, header: HBoxContainer = null, footer: HBoxContainer = null, float_exp: bool = true) -> void:
-	var close := close_button(exit)
-	if header != null:
-		header.add_child(close)
-	else:
-		_pin(host, close, Control.PRESET_TOP_RIGHT)
+# THE canonical full-screen frame. Builds the standard chrome (header: title + EXP + ✕; footer:
+# Back), wires `exit` to both buttons and the OS go-back / Esc gesture (see Nav), and returns the
+# body container for the caller to fill. Every menu/overlay screen comes through here, so the
+# chrome — and crucially the ✕/Back placement — is identical everywhere by construction. Callers
+# that need the header/footer refs (e.g. to drop an extra title-bar button) can use scaffold +
+# attach_exits directly; everyone else should prefer frame().
+static func frame(host: Control, title: String, exit: Callable) -> VBoxContainer:
+	var s := scaffold(host, title)
+	attach_exits(exit, s.header, s.footer)
+	return s.root
 
-	var back := back_button(exit)
-	if footer != null:
-		footer.add_child(back)
-	else:
-		_pin(host, back, Control.PRESET_BOTTOM_LEFT)
 
-	# Header-less screens (the in-run encounter popups) get the persistent exp readout pinned
-	# top-left, clear of the ✕ (top-right) and Back (bottom-left). Scaffold screens already
-	# carry it in their header; pass float_exp=false to opt out (e.g. the hub, which shows its
-	# own larger bar). Combat builds its own HUD and never routes through here.
-	if header == null and float_exp and GameData.current_profile != null:
-		var exp := experience_bar_compact(GameData.current_profile, UIScale.is_compact())
-		host.add_child(exp)
-		exp.reset_size()
-		var sz := exp.size
-		exp.anchor_left = 0.0; exp.anchor_top = 0.0
-		exp.anchor_right = 0.0; exp.anchor_bottom = 0.0
-		var inset := UIScale.safe_inset()
-		exp.offset_left = inset; exp.offset_top = inset
-		exp.offset_right = inset + sz.x; exp.offset_bottom = inset + sz.y
+# Centered-content variant of frame: same chrome, but the body is a CenterContainer so the caller's
+# content sits centered in the middle band (the look the old "?"/reward/rest popups had). Returns
+# the CenterContainer to add a single content node to.
+static func frame_centered(host: Control, title: String, exit: Callable) -> CenterContainer:
+	var body := frame(host, title, exit)
+	var center := CenterContainer.new()
+	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	center.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_child(center)
+	return center
 
+
+# Docks the two standard exits — top-right ✕ into `header`, bottom-left Back into `footer` — and
+# registers `exit` as the OS go-back / Esc handler. There is no floating fallback: every screen has
+# the standard chrome, so the exits always land in the same place.
+static func attach_exits(exit: Callable, header: HBoxContainer, footer: HBoxContainer) -> void:
+	header.add_child(close_button(exit))
+	footer.add_child(back_button(exit))
 	Nav.set_back(exit)
-
-
-# Anchors `btn` to a corner of `host` with a fixed inset, sized to its own minimum. Kept outside any
-# container so the anchors/offsets fully determine the rect.
-static func _pin(host: Control, btn: Button, preset: int) -> void:
-	var inset := UIScale.safe_inset()
-	var w: float = btn.custom_minimum_size.x
-	var h: float = btn.custom_minimum_size.y
-	match preset:
-		Control.PRESET_TOP_RIGHT:
-			btn.anchor_left = 1.0; btn.anchor_right = 1.0
-			btn.anchor_top = 0.0; btn.anchor_bottom = 0.0
-			btn.offset_right = -inset; btn.offset_left = -inset - w
-			btn.offset_top = inset; btn.offset_bottom = inset + h
-		Control.PRESET_BOTTOM_LEFT:
-			btn.anchor_left = 0.0; btn.anchor_right = 0.0
-			btn.anchor_top = 1.0; btn.anchor_bottom = 1.0
-			btn.offset_left = inset; btn.offset_right = inset + w
-			btn.offset_bottom = -inset; btn.offset_top = -inset - h
-	host.add_child(btn)

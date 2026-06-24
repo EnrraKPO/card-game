@@ -41,11 +41,15 @@ static func deck_label(od: OwnedDeck, ordinal: int) -> String:
 	return label
 
 
-# A read-only grid of a deck's cards (each the real CardUI, baked with its overrides/charms
-# via DeckCard.make_instance). Shared by the Decks preview pane and the View Deck screen.
-static func deck_grid(od: OwnedDeck, columns: int, card_width: float) -> GridContainer:
-	var grid := GridContainer.new()
-	grid.columns = columns
+# A read-only, auto-wrapping grid of a deck's cards (each the real CardUI, baked with its
+# overrides/charms via DeckCard.make_instance). An HFlowContainer so it fills the available width
+# — packing as many `card_width` cards per row as fit and wrapping the rest — instead of a fixed
+# column count that wastes a wide pane and forces extra scrolling. Shared by the Decks preview
+# pane and the View Deck screen; place it in a width-constraining parent (a horizontal-scroll-
+# disabled ScrollContainer / EXPAND_FILL container) so it knows where to wrap.
+static func deck_grid(od: OwnedDeck, card_width: float) -> HFlowContainer:
+	var grid := HFlowContainer.new()
+	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	grid.add_theme_constant_override("h_separation", 10)
 	grid.add_theme_constant_override("v_separation", 10)
 	var card_size := Vector2(card_width, card_width * CARD_RATIO)
