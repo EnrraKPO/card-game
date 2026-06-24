@@ -46,11 +46,10 @@ jobs:
           mkdir -p build/web
           godot --headless --export-release "Web" build/web/index.html
 
-      - name: Patch SharedArrayBuffer for GitHub Pages
-        run: |
-          wget -q https://raw.githubusercontent.com/gzuidhof/coi-serviceworker/master/coi-serviceworker.min.js \
-            -O build/web/coi-serviceworker.js
-          sed -i 's|<head>|<head><script src="coi-serviceworker.js"></script>|' build/web/index.html
+      # No coi-serviceworker: the Web preset exports the `nothreads` variant,
+      # which uses no SharedArrayBuffer and needs no COOP/COEP headers. The
+      # service worker only intercepted every fetch (including index.pck) and
+      # broke pack loading ("Couldn't load project data at path /").
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
