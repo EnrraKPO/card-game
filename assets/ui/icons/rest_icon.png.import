@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://d2xm6vp4dq4lv"
-path="res://.godot/imported/clay.png-a3c1ef9f6da6326eeb4a67641be5a1b2.ctex"
+uid="uid://dv3i0yhn8p14s"
+path="res://.godot/imported/rest_icon.png-f83b49f9d6ba05f4200efc3acbcaa7c3.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/cards/clay.png"
-dest_files=["res://.godot/imported/clay.png-a3c1ef9f6da6326eeb4a67641be5a1b2.ctex"]
+source_file="res://assets/ui/icons/rest_icon.png"
+dest_files=["res://.godot/imported/rest_icon.png-f83b49f9d6ba05f4200efc3acbcaa7c3.ctex"]
 
 [params]
 

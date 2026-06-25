@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://jqhmig3eqxou"
-path="res://.godot/imported/magma.png-07069322634743a770fd7b6036b4ec9b.ctex"
+uid="uid://d1cbt2sbqb1h7"
+path="res://.godot/imported/air_fire.png-bf2e6c12017de53abfc7ce8411c61d66.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/cards/magma.png"
-dest_files=["res://.godot/imported/magma.png-07069322634743a770fd7b6036b4ec9b.ctex"]
+source_file="res://assets/cards/air_fire.png"
+dest_files=["res://.godot/imported/air_fire.png-bf2e6c12017de53abfc7ce8411c61d66.ctex"]
 
 [params]
 

@@ -16,7 +16,7 @@ func _ready() -> void:
 	var compact := UIScale.is_compact()
 
 	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 20 if compact else 16)
+	vbox.add_theme_constant_override("separation", 20 if compact else 22)
 	if compact:
 		# Fill the screen so the slot rows are wide, tall and easy to tap.
 		var pad := MarginContainer.new()
@@ -27,6 +27,8 @@ func _ready() -> void:
 		vbox.alignment = BoxContainer.ALIGNMENT_CENTER
 		pad.add_child(vbox)
 	else:
+		# A wide, centered menu column (balanced margins, big readable rows) — not a thin strip.
+		vbox.custom_minimum_size.x = 860.0
 		var center := CenterContainer.new()
 		center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		add_child(center)
@@ -34,7 +36,7 @@ func _ready() -> void:
 
 	var title := Label.new()
 	title.text = "Select Save"
-	title.add_theme_font_size_override("font_size", 48 if compact else 32)
+	title.add_theme_font_size_override("font_size", 48 if compact else 44)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(title)
 
@@ -46,8 +48,8 @@ func _ready() -> void:
 		vbox.add_child(row)
 
 		var slot_btn := Button.new()
-		slot_btn.custom_minimum_size = Vector2(380, 96 if compact else 64)
-		slot_btn.add_theme_font_size_override("font_size", 24 if compact else 18)
+		slot_btn.custom_minimum_size = Vector2(380, 96 if compact else 80)
+		slot_btn.add_theme_font_size_override("font_size", 24 if compact else 26)
 		slot_btn.text = _slot_label(i, started)
 		slot_btn.size_flags_horizontal = SIZE_EXPAND_FILL
 		var idx := i
@@ -56,8 +58,8 @@ func _ready() -> void:
 
 		var del_btn := Button.new()
 		del_btn.text = "Delete"
-		del_btn.custom_minimum_size = Vector2(120 if compact else 80, 96 if compact else 64)
-		del_btn.add_theme_font_size_override("font_size", 18 if compact else 14)
+		del_btn.custom_minimum_size = Vector2(120, 96 if compact else 80)
+		del_btn.add_theme_font_size_override("font_size", 18)
 		del_btn.disabled = not started
 		del_btn.pressed.connect(func(): _on_delete_pressed(idx))
 		row.add_child(del_btn)

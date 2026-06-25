@@ -30,14 +30,14 @@ func _ready() -> void:
 
 	var subtitle := Label.new()
 	subtitle.text = "Your King has fallen. The run ends here."
-	subtitle.add_theme_font_size_override("font_size", 30 if compact else 20)
+	subtitle.add_theme_font_size_override("font_size", 30 if compact else 26)
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(subtitle)
 
 	var continue_btn := Button.new()
 	continue_btn.text = "Return to your realm"
-	continue_btn.custom_minimum_size = Vector2(380, 96) if compact else Vector2(300, 56)
-	continue_btn.add_theme_font_size_override("font_size", 32 if compact else 22)
+	continue_btn.custom_minimum_size = Vector2(380, 96) if compact else Vector2(360, 78)
+	continue_btn.add_theme_font_size_override("font_size", 32 if compact else 26)
 	continue_btn.size_flags_horizontal = SIZE_SHRINK_CENTER
 	continue_btn.pressed.connect(_on_continue)
 	vbox.add_child(continue_btn)

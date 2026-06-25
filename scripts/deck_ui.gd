@@ -41,6 +41,20 @@ static func deck_label(od: OwnedDeck, ordinal: int) -> String:
 	return label
 
 
+# The deck's cards as bare CardUI controls (read-only, baked with overrides/charms via
+# DeckCard.make_instance), unsized — for a FitGrid, which drives their size to fit the space.
+static func deck_cards(od: OwnedDeck) -> Array[Control]:
+	var out: Array[Control] = []
+	for dc: DeckCard in od.cards:
+		var inst := dc.make_instance()
+		if inst == null:
+			continue
+		var ui := CardUI.create(inst)
+		ui.draggable = false
+		out.append(ui)
+	return out
+
+
 # A read-only, auto-wrapping grid of a deck's cards (each the real CardUI, baked with its
 # overrides/charms via DeckCard.make_instance). An HFlowContainer so it fills the available width
 # — packing as many `card_width` cards per row as fit and wrapping the rest — instead of a fixed

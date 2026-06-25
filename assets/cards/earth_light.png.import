@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cn3n2ncvjh4uq"
-path="res://.godot/imported/knight_knight_v3.png-bad22253fa97afe2f2ea6e3f743fbf4b.ctex"
+uid="uid://2nni7ey86l48"
+path="res://.godot/imported/earth_light.png-dac45c2285761b275e6e3816bfc33c33.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/cards/knight_knight_v3.png"
-dest_files=["res://.godot/imported/knight_knight_v3.png-bad22253fa97afe2f2ea6e3f743fbf4b.ctex"]
+source_file="res://assets/cards/earth_light.png"
+dest_files=["res://.godot/imported/earth_light.png-dac45c2285761b275e6e3816bfc33c33.ctex"]
 
 [params]
 

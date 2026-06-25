@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bdv7sqeaaxvns"
-path="res://.godot/imported/rook.png-4c9991589a5a379beff8265f269d3f0f.ctex"
+uid="uid://bf20ciss6op77"
+path="res://.godot/imported/darkness_earth.png-5e918a0a5c86132273f4271b5edcd95d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/cards/rook.png"
-dest_files=["res://.godot/imported/rook.png-4c9991589a5a379beff8265f269d3f0f.ctex"]
+source_file="res://assets/cards/darkness_earth.png"
+dest_files=["res://.godot/imported/darkness_earth.png-5e918a0a5c86132273f4271b5edcd95d.ctex"]
 
 [params]
 

@@ -2,15 +2,51 @@ class_name MapScreen
 extends Control
 
 const HUD_HEIGHT := 56.0
-const NODE_SIZE := Vector2(72, 38)
-# Big in canvas units on purpose: canvas_items scales the 1920 design down onto the phone,
-# so these need to be large to read/tap. The map scrolls, so size isn't space-constrained.
-const NODE_SIZE_COMPACT := Vector2(230, 104)
-const H_PAD := 80.0
+# Medallion diameter. Big in canvas units on purpose: canvas_items scales the 1920 design
+# down onto the phone, so nodes need to be large to read/tap. The map scrolls, so size
+# isn't space-constrained. The type caption and reward badge hang below the circle.
+const NODE_DIAM := 62.0
+const NODE_DIAM_COMPACT := 150.0
 const V_PAD := 48.0
-# Vertical spacing between floors on compact: large enough that the map overflows the
-# screen and scrolls, with big tappable nodes that don't collide with reward captions.
-const COMPACT_FLOOR_STEP := 270.0
+
+# --- Tunable in the Inspector (select the Map root node in map.tscn, drag the sliders,
+# --- then run to see the result). Spacing is a multiple of node diameter, so it scales with
+# --- node size. Lane spacing is still capped to the viewport width so nodes never clip.
+@export_group("Node Spacing")
+## Horizontal gap between lanes, ×node diameter (desktop).
+@export_range(1.0, 6.0, 0.05) var lane_spacing_mult := 2.8
+## Horizontal gap between lanes, ×node diameter (compact / phone).
+@export_range(1.0, 6.0, 0.05) var lane_spacing_mult_compact := 1.9
+## Vertical gap between floors, ×node diameter (desktop).
+@export_range(1.0, 6.0, 0.05) var floor_spacing_mult := 2.6
+## Vertical gap between floors, ×node diameter (compact / phone).
+@export_range(1.0, 6.0, 0.05) var floor_spacing_mult_compact := 2.1
+## Layout relaxation passes: nodes are repeatedly pulled toward the average position of the
+## nodes they connect to (keeping each floor ordered + spaced), so connected nodes sit close
+## and trails stay short. More passes = tighter to the branch structure. 0 = raw lane grid.
+@export_range(0, 24, 1) var relax_passes := 10
+## Optional organic sparsity ON TOP of the relaxed layout: each node nudged by up to this
+## ×lane spacing (seeded per map, stable across reloads). 0 = clean relaxed layout.
+@export_range(0.0, 0.4, 0.01) var organic_jitter := 0.0
+
+@export_group("Trails")
+## Trail bow, as a fraction of the edge's HORIZONTAL travel — so straight-up edges stay
+## straight and only angled edges curve, more the more they lean. 0 = always straight.
+@export_range(0.0, 0.8, 0.01) var trail_bow := 0.28
+## Which way the trails bow: outward (away from the centre of the fork) vs inward.
+@export var trail_curve_outward := true
+
+@export_group("Node Variety")
+## Anti-clustering: when a node type (Rest/Shop/Event — not Combat) is rolled, its weight
+## immediately drops to this fraction, then climbs back to full over "Type Recovery" nodes.
+## Lower = harsher penalty on back-to-back repeats. 1 = no penalty.
+@export_range(0.0, 1.0, 0.05) var type_repeat_drop := 0.15
+## How many generated nodes a just-rolled type takes to recover full weight. 0 = feature off.
+@export_range(0, 12, 1) var type_recovery := 3
+## Dot radius, ×node radius.
+@export_range(0.02, 0.3, 0.005) var trail_dot_radius_mult := 0.085
+## Gap between dots, ×node radius (smaller = denser trail).
+@export_range(0.2, 1.5, 0.05) var trail_dot_spacing_mult := 0.5
 
 var map_data: MapData
 var current_node_id: int
@@ -26,7 +62,7 @@ var _node_kinds: Dictionary = {}
 var _scroll: ScrollContainer
 var _canvas: MapCanvas
 var _compact := false
-var _node_size := NODE_SIZE
+var _node_diam := NODE_DIAM
 var _hud_height := HUD_HEIGHT
 var _bottom_bar_height := 56.0
 
@@ -35,7 +71,7 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 
 	_compact = UIScale.is_compact()
-	_node_size = NODE_SIZE_COMPACT if _compact else NODE_SIZE
+	_node_diam = NODE_DIAM_COMPACT if _compact else NODE_DIAM
 	_hud_height = 92.0 if _compact else HUD_HEIGHT
 	_bottom_bar_height = 124.0 if _compact else 56.0
 
@@ -61,7 +97,7 @@ func _ready() -> void:
 		get_tree().change_scene_to_file.call_deferred("res://scenes/%s.tscn" % screen)
 		return
 
-	map_data = MapData.generate(GameData.current_map_state.map_seed)
+	map_data = MapData.generate(GameData.current_map_state.map_seed, type_repeat_drop, type_recovery)
 	current_node_id = GameData.current_map_state.current_node_id
 
 	encounter_rng = RandomNumberGenerator.new()
@@ -160,20 +196,24 @@ func _build_bottom_bar() -> void:
 
 
 func _build_map() -> void:
-	# Canvas width fits the scroll viewport (no horizontal scroll); height fills it on
-	# desktop, or grows tall enough to scroll through every floor on compact.
+	# Canvas width fits the scroll viewport (no horizontal scroll); its height is whatever the
+	# fixed floor spacing needs (always taller than the viewport, so it scrolls).
 	var view: Vector2 = _scroll.size
 	if view.x <= 0.0:
 		view = Vector2(size.x, size.y - _hud_height - _bottom_bar_height)
-	var canvas_h: float = view.y
-	if _compact:
-		canvas_h = maxf(view.y, V_PAD * 2.0 + COMPACT_FLOOR_STEP * float(MapData.FLOORS - 1))
+
+	var floor_spacing: float = _node_diam * (floor_spacing_mult_compact if _compact else floor_spacing_mult)
+	var canvas_h: float = maxf(view.y, V_PAD * 2.0 + floor_spacing * float(MapData.FLOORS - 1))
 	_canvas.custom_minimum_size = Vector2(0, canvas_h)
 
-	_calculate_positions(Vector2(view.x, canvas_h))
+	_calculate_positions(Vector2(view.x, canvas_h), floor_spacing)
 	_canvas.positions = node_positions
 	_canvas.map_data = map_data
-	_canvas.line_width = 4.0 if _compact else 2.0
+	_canvas.node_radius = _node_diam * 0.5
+	_canvas.curve_bow = trail_bow
+	_canvas.curve_dir = -1.0 if trail_curve_outward else 1.0
+	_canvas.dot_radius_mult = trail_dot_radius_mult
+	_canvas.dot_spacing_mult = trail_dot_spacing_mult
 	_rebuild_node_buttons()
 	_canvas.queue_redraw()
 
@@ -193,18 +233,86 @@ func _scroll_to_current() -> void:
 	_scroll.scroll_vertical = int(maxf(0.0, target_y))
 
 
-func _calculate_positions(canvas_size: Vector2) -> void:
-	var usable_w: float = canvas_size.x - H_PAD * 2.0
+# Node x-positions follow the BRANCHING, not the abstract lane index: starting from the lane
+# grid, each node is relaxed toward the average x of the nodes it connects to, so connected
+# nodes sit close and trails stay short instead of stretching across the map. Each floor's
+# nodes are kept in lane order with a minimum gap (so paths never cross or overlap). y comes
+# straight from the floor. The result is then fit-to-width and centred.
+func _calculate_positions(canvas_size: Vector2, floor_spacing: float) -> void:
+	var lane_mult: float = lane_spacing_mult_compact if _compact else lane_spacing_mult
+	var lane_spacing: float = _node_diam * lane_mult
+	var min_gap: float = lane_spacing
+
+	# Neighbours in both directions (parents + children), so relaxation pulls a node toward
+	# everything it's wired to.
+	var nbrs: Dictionary = {}
+	var x_of: Dictionary = {}
+	for floor_nodes: Array in map_data.floors:
+		for node: MapNodeData in floor_nodes:
+			nbrs[node.id] = []
+			x_of[node.id] = float(node.column) * lane_spacing
+	for floor_nodes: Array in map_data.floors:
+		for node: MapNodeData in floor_nodes:
+			for c: int in node.connections:
+				nbrs[node.id].append(c)
+				nbrs[c].append(node.id)
+
+	for pass_i in relax_passes:
+		# Pull each node toward the mean of itself + its neighbours.
+		var next_x: Dictionary = {}
+		for id: int in x_of:
+			var sum: float = x_of[id]
+			var count: float = 1.0
+			for nb: int in nbrs[id]:
+				sum += x_of[nb]
+				count += 1.0
+			next_x[id] = sum / count
+		x_of = next_x
+		# Re-impose lane order + min gap per floor. Alternate sweep direction so the floors
+		# don't all drift one way.
+		for floor_nodes: Array in map_data.floors:
+			var ordered: Array = floor_nodes.duplicate()
+			ordered.sort_custom(func(a: MapNodeData, b: MapNodeData) -> bool: return a.column < b.column)
+			if pass_i % 2 == 0:
+				for i in range(1, ordered.size()):
+					var lo: float = x_of[ordered[i - 1].id] + min_gap
+					if x_of[ordered[i].id] < lo:
+						x_of[ordered[i].id] = lo
+			else:
+				for i in range(ordered.size() - 2, -1, -1):
+					var hi: float = x_of[ordered[i + 1].id] - min_gap
+					if x_of[ordered[i].id] > hi:
+						x_of[ordered[i].id] = hi
+
+	_finalize_positions(canvas_size, floor_spacing, x_of, lane_spacing)
+
+
+# Fit the relaxed x-coordinates into the viewport width (shrink only if too wide), centre
+# them, add optional organic jitter, and pair with the floor y.
+func _finalize_positions(canvas_size: Vector2, floor_spacing: float, x_of: Dictionary, lane_spacing: float) -> void:
+	var min_x: float = INF
+	var max_x: float = -INF
+	for id: int in x_of:
+		min_x = minf(min_x, x_of[id])
+		max_x = maxf(max_x, x_of[id])
+	var span: float = maxf(max_x - min_x, 1.0)
+	var avail: float = canvas_size.x - _node_diam - 16.0
+	var scale: float = minf(1.0, avail / span)
+	var graph_center: float = (min_x + max_x) * 0.5
+	var canvas_center: float = canvas_size.x * 0.5
 	var usable_h: float = canvas_size.y - V_PAD * 2.0
-	var floor_step: float = usable_h / float(MapData.FLOORS - 1)
+	var half: float = _node_diam * 0.5
+	var jitter := RandomNumberGenerator.new()
 
 	for floor_nodes: Array in map_data.floors:
-		var count: int = floor_nodes.size()
-		for i in count:
-			var node: MapNodeData = floor_nodes[i]
-			var x: float = canvas_size.x / 2.0 if count == 1 \
-				else H_PAD + usable_w * float(i) / float(count - 1)
-			var y: float = V_PAD + usable_h - float(node.floor) * floor_step
+		for node: MapNodeData in floor_nodes:
+			var x: float = canvas_center + (x_of[node.id] - graph_center) * scale
+			var y: float = V_PAD + usable_h - float(node.floor) * floor_spacing
+			if organic_jitter > 0.0:
+				jitter.seed = GameData.current_map_state.map_seed ^ (node.id * 2654435761)
+				x += jitter.randf_range(-1.0, 1.0) * lane_spacing * organic_jitter
+				y += jitter.randf_range(-1.0, 1.0) * floor_spacing * organic_jitter * 0.5
+			x = clampf(x, half + 4.0, canvas_size.x - half - 4.0)
 			node_positions[node.id] = Vector2(x, y)
 
 
@@ -216,65 +324,49 @@ func _rebuild_node_buttons() -> void:
 	var reachable: Array = map_data.get_reachable_nodes(current_node_id)
 	var reachable_ids: Array = reachable.map(func(n: MapNodeData) -> int: return n.id)
 
+	# Let the canvas highlight the edges leaving the current node (the branch choices).
+	_canvas.current_id = current_node_id
+	_canvas.reachable_ids = reachable_ids
+
 	for floor_nodes: Array in map_data.floors:
 		for node: MapNodeData in floor_nodes:
 			var pos: Vector2 = node_positions[node.id]
-			var btn := Button.new()
-			btn.set_meta("map_node", true)
-			btn.text = MapNodeData.get_label(node.type)
-			if node.type == MapNodeData.Type.BOSS and GameData.current_run.act >= MapData.STAGES:
-				btn.text = "Final Boss"
-			if _compact:
-				btn.add_theme_font_size_override("font_size", 38)
-			btn.custom_minimum_size = _node_size
-			btn.size = _node_size
-			btn.position = pos - _node_size / 2.0
-
 			var is_current: bool = node.id == current_node_id
 			var is_reachable: bool = node.id in reachable_ids
 
+			var state: int
 			if is_current:
-				btn.modulate = Color(1.0, 0.95, 0.2)
+				state = MapNodeMedallion.State.CURRENT
 			elif node.visited:
-				btn.modulate = Color(0.3, 0.3, 0.3)
-				btn.disabled = true
+				state = MapNodeMedallion.State.VISITED
 			elif is_reachable:
-				btn.modulate = MapNodeData.get_color(node.type)
+				state = MapNodeMedallion.State.REACHABLE
 			else:
-				btn.modulate = Color(0.22, 0.22, 0.22, 0.8)
-				btn.disabled = true
+				state = MapNodeMedallion.State.LOCKED
 
+			var caption := ""
+			if node.type == MapNodeData.Type.BOSS and GameData.current_run.act >= MapData.STAGES:
+				caption = "Final Boss"
+
+			var reward_summary := ""
+			var reward_color := Color(0.8, 0.82, 0.9)
+			if not node.material_rewards.is_empty():
+				reward_summary = Materials.summary(node.material_rewards)
+				# Single-element rewards tint by their element; mixed rewards stay neutral.
+				if node.material_rewards.size() == 1:
+					reward_color = Materials.color(node.material_rewards.keys()[0])
+
+			var med := MapNodeMedallion.new()
+			med.set_meta("map_node", true)
+			med.configure(node.type, state, _node_diam, _compact, caption, reward_summary, reward_color)
+			med.position = pos - Vector2(_node_diam, _node_diam) / 2.0
+			if not reward_summary.is_empty():
+				var label := caption if not caption.is_empty() else MapNodeData.get_label(node.type)
+				med.tooltip_text = "%s — reward: %s" % [label, reward_summary]
 			if is_reachable:
 				var captured: MapNodeData = node
-				btn.pressed.connect(func(): _on_node_selected(captured))
-
-			_canvas.add_child(btn)
-
-			# Previewed resource reward, so routes can be planned at a glance.
-			if not node.material_rewards.is_empty():
-				btn.tooltip_text = "%s — reward: %s" % [btn.text, Materials.summary(node.material_rewards)]
-				_add_reward_preview(node, pos)
-
-
-# A small element-coloured "+2 Fire" caption under a node, showing its essence reward.
-func _add_reward_preview(node: MapNodeData, center: Vector2) -> void:
-	var lbl := Label.new()
-	lbl.set_meta("map_node", true)
-	lbl.text = Materials.summary(node.material_rewards)
-	lbl.add_theme_font_size_override("font_size", 32 if _compact else 11)
-	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	var w := 280.0 if _compact else 100.0
-	var lh := 38.0 if _compact else 14.0
-	lbl.custom_minimum_size = Vector2(w, lh)
-	lbl.size = Vector2(w, lh)
-	lbl.position = center + Vector2(-w / 2.0, _node_size.y / 2.0 + 4.0)
-	lbl.mouse_filter = MOUSE_FILTER_IGNORE
-	# Single-element rewards tint by their element; mixed rewards stay neutral.
-	var color := Color(0.8, 0.82, 0.9)
-	if node.material_rewards.size() == 1:
-		color = Materials.color(node.material_rewards.keys()[0])
-	lbl.modulate = color if not node.visited else color.darkened(0.5)
-	_canvas.add_child(lbl)
+				med.pressed.connect(func(): _on_node_selected(captured))
+			_canvas.add_child(med)
 
 
 func _on_node_selected(node: MapNodeData) -> void:

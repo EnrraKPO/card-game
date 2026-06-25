@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dsfgvl5neg0p3"
-path="res://.godot/imported/nature.png-7e893eaeca97378ea15ee0ec6aa300b3.ctex"
+uid="uid://fdqysunon72k"
+path="res://.godot/imported/earth_water.png-a174695bcc01d90e352d62c9e0d389f7.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/cards/nature.png"
-dest_files=["res://.godot/imported/nature.png-7e893eaeca97378ea15ee0ec6aa300b3.ctex"]
+source_file="res://assets/cards/earth_water.png"
+dest_files=["res://.godot/imported/earth_water.png-a174695bcc01d90e352d62c9e0d389f7.ctex"]
 
 [params]
 

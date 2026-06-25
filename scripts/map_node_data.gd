@@ -44,3 +44,21 @@ static func get_color(t: Type) -> Color:
 		Type.BOSS:   return Color(0.85, 0.35, 0.10)
 		Type.FORGE:  return Color(0.80, 0.55, 0.10)
 	return Color.WHITE
+
+
+# Black-silhouette icon for each node type, drawn inside the medallion with the
+# icon-outline shader (see MapNodeMedallion). ELITE reuses the "epic combat" art;
+# rest/boss/forge are placeholder copies of the generic event icon for now.
+const _ICONS := {
+	Type.COMBAT: preload("res://assets/ui/icons/combat_icon.png"),
+	Type.ELITE:  preload("res://assets/ui/icons/combat_epic_icon.png"),
+	Type.EVENT:  preload("res://assets/ui/icons/event_generic_icon.png"),
+	Type.SHOP:   preload("res://assets/ui/icons/shop_icon.png"),
+	Type.REST:   preload("res://assets/ui/icons/rest_icon.png"),
+	Type.BOSS:   preload("res://assets/ui/icons/boss_icon.png"),
+	Type.FORGE:  preload("res://assets/ui/icons/forge_icon.png"),
+}
+
+
+static func get_icon(t: Type) -> Texture2D:
+	return _ICONS.get(t, null)

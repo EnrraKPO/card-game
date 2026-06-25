@@ -9,11 +9,8 @@ const OFFER_COUNT := 2
 
 func _ready() -> void:
 	var compact := UIScale.is_compact()
-	var center := ScreenUI.frame_centered(self, "Shrine", _finish)
-
-	var vbox := VBoxContainer.new()
+	var vbox := ScreenUI.frame_centered(self, "Shrine", _finish)
 	vbox.add_theme_constant_override("separation", 28)
-	center.add_child(vbox)
 
 	var title := Label.new()
 	title.text = "An Ancient Shrine"

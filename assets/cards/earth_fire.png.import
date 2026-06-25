@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bdv7sqeaaxvns"
-path="res://.godot/imported/rook.png-4c9991589a5a379beff8265f269d3f0f.ctex"
+uid="uid://i5ap63x8fyhd"
+path="res://.godot/imported/earth_fire.png-719d4fbb824e2fe18564b5fc85de7945.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/cards/rook.png"
-dest_files=["res://.godot/imported/rook.png-4c9991589a5a379beff8265f269d3f0f.ctex"]
+source_file="res://assets/cards/earth_fire.png"
+dest_files=["res://.godot/imported/earth_fire.png-719d4fbb824e2fe18564b5fc85de7945.ctex"]
 
 [params]
 

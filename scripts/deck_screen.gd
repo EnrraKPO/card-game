@@ -6,12 +6,12 @@ extends Control
 # detail "View Deck" screen. Creating a deck picks an unlocked King and seeds its
 # composition. Card-content editing (add/remove from a collection) is a later layer.
 
-var _list: VBoxContainer
+var _deck_grid: FitGrid
 var _king_picker: PanelContainer
 var _previewed_id: String = ""
 
 var _preview_title: Label
-var _preview_body: VBoxContainer
+var _preview_grid: FitGrid
 var _set_active_btn: Button
 var _view_btn: Button
 var _edit_btn: Button
@@ -40,13 +40,13 @@ func _build_ui() -> void:
 	ScreenUI.attach_exits(
 		func(): get_tree().change_scene_to_file("res://scenes/game_world.tscn"), s.header, s.footer)
 
-	# ── Body: deck list (left) + preview (right) ──────────────────────────────────
+	# ── Body: deck grid (fills, no scroll) + fixed preview panel (right) ───────────
 	var body := HBoxContainer.new()
 	body.size_flags_vertical = SIZE_EXPAND_FILL
-	body.add_theme_constant_override("separation", 0)
+	body.add_theme_constant_override("separation", 12)
 	root.add_child(body)
 
-	body.add_child(_build_list_pane())
+	body.add_child(_build_deck_grid_pane())
 	body.add_child(_build_preview_pane())
 
 	_build_king_picker()
@@ -62,41 +62,18 @@ func _build_ui() -> void:
 	add_child(_confirm_delete)
 
 
-func _build_list_pane() -> Control:
-	var col := VBoxContainer.new()
-	col.custom_minimum_size.x = 520.0 if _compact else 440.0
-	col.add_theme_constant_override("separation", 10)
-
-	var new_btn := Button.new()
-	new_btn.text = "+ New Deck"
-	new_btn.custom_minimum_size = Vector2(0, 72 if _compact else 44)
-	new_btn.add_theme_font_size_override("font_size", 26 if _compact else 17)
-	new_btn.pressed.connect(func(): _king_picker.visible = true)
-	var new_pad := MarginContainer.new()
-	for side in ["left", "right", "top"]:
-		new_pad.add_theme_constant_override("margin_" + side, 16)
-	new_pad.add_child(new_btn)
-	col.add_child(new_pad)
-
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	col.add_child(scroll)
-	var pad := MarginContainer.new()
-	for side in ["left", "right", "bottom"]:
-		pad.add_theme_constant_override("margin_" + side, 16)
-	pad.size_flags_horizontal = SIZE_EXPAND_FILL
-	scroll.add_child(pad)
-	_list = VBoxContainer.new()
-	_list.add_theme_constant_override("separation", 14)
-	_list.size_flags_horizontal = SIZE_EXPAND_FILL
-	pad.add_child(_list)
-	return col
+func _build_deck_grid_pane() -> Control:
+	# Every deck shown at once as a grid that sizes itself to fit — you never scroll through decks.
+	# Each deck is its King's card (already card-shaped, so FitGrid handles it); + New is a tile too.
+	_deck_grid = FitGrid.new()
+	_deck_grid.size_flags_horizontal = SIZE_EXPAND_FILL
+	_deck_grid.size_flags_vertical = SIZE_EXPAND_FILL
+	return _deck_grid
 
 
 func _build_preview_pane() -> Control:
 	var panel := PanelContainer.new()
-	panel.size_flags_horizontal = SIZE_EXPAND_FILL
+	panel.custom_minimum_size.x = 440.0 if _compact else 360.0
 	var pad := MarginContainer.new()
 	for side in ["left", "right", "top", "bottom"]:
 		pad.add_theme_constant_override("margin_" + side, 16)
@@ -109,13 +86,11 @@ func _build_preview_pane() -> Control:
 	_preview_title.add_theme_font_size_override("font_size", 30 if _compact else 22)
 	col.add_child(_preview_title)
 
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	col.add_child(scroll)
-	_preview_body = VBoxContainer.new()
-	_preview_body.size_flags_horizontal = SIZE_EXPAND_FILL
-	scroll.add_child(_preview_body)
+	# The whole deck always fits this pane — FitGrid sizes the cards to fill it, no scrolling.
+	_preview_grid = FitGrid.new()
+	_preview_grid.size_flags_horizontal = SIZE_EXPAND_FILL
+	_preview_grid.size_flags_vertical = SIZE_EXPAND_FILL
+	col.add_child(_preview_grid)
 
 	var actions := HFlowContainer.new()
 	actions.add_theme_constant_override("h_separation", 12)
@@ -207,74 +182,67 @@ func _create_deck(king_id: String) -> void:
 
 
 func _rebuild() -> void:
-	for child in _list.get_children():
-		child.queue_free()
-
 	var profile := GameData.current_profile
-	# Per-king running index, so a King's 2nd+ deck reads "Magma King (2)".
+	# Per-king running index, so a King's 2nd+ deck reads "(2)".
 	var king_seen: Dictionary = {}
+	var tiles: Array[Control] = []
 	for od: OwnedDeck in profile.decks:
 		var n := int(king_seen.get(od.king_id, 0)) + 1
 		king_seen[od.king_id] = n
-		_list.add_child(_make_deck_row(od, n))
+		tiles.append(_make_deck_tile(od, n))
+	tiles.append(_make_new_deck_tile())
+	_deck_grid.set_cards(tiles)
 	_update_preview()
 
 
-func _make_deck_row(od: OwnedDeck, ordinal: int) -> Control:
-	var panel := PanelContainer.new()
-	panel.size_flags_horizontal = SIZE_EXPAND_FILL
-	if od.id == _previewed_id:
-		panel.modulate = Color(1.25, 1.3, 1.15)   # the deck currently shown in the preview
+# One deck = its King's card (FitGrid sizes it). Click selects it into the side preview; the active
+# deck and a duplicate-ordinal suffix show as an overlaid badge. The previewed deck reads brighter.
+func _make_deck_tile(od: OwnedDeck, ordinal: int) -> Control:
+	var tile := Control.new()
+	tile.mouse_filter = MOUSE_FILTER_IGNORE
 	var id := od.id
 
-	var pad := MarginContainer.new()
-	for side in ["left", "right", "top", "bottom"]:
-		pad.add_theme_constant_override("margin_" + side, 12)
-	panel.add_child(pad)
+	var king := CardData.get_card(od.king_id)
+	if king != null:
+		var card := CardUI.create(CardInstance.from_data(king))
+		card.draggable = false
+		card.custom_minimum_size = Vector2.ZERO
+		card.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+		card.pressed.connect(func(): _on_deck_clicked(id))
+		if od.id == _previewed_id:
+			card.set_selected(true)
+		tile.add_child(card)
 
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 16)
-	pad.add_child(row)
-
-	# King card — large enough to read, hover for full detail, click to preview the deck.
-	var thumb := DeckUI.king_thumbnail(od.king_id, 180 if _compact else 124, true)
-	thumb.size_flags_vertical = SIZE_SHRINK_CENTER
-	if thumb is CardUI:
-		(thumb as CardUI).pressed.connect(func(): _on_deck_clicked(id))
-	row.add_child(thumb)
-
-	# The rest of the row is a flat click target so the whole row selects, not just the card.
-	var info_btn := Button.new()
-	info_btn.flat = true
-	info_btn.size_flags_horizontal = SIZE_EXPAND_FILL
-	info_btn.size_flags_vertical = SIZE_EXPAND_FILL
-	info_btn.pressed.connect(func(): _on_deck_clicked(id))
-	row.add_child(info_btn)
-
-	var info := VBoxContainer.new()
-	info.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	info.alignment = BoxContainer.ALIGNMENT_CENTER
-	info.add_theme_constant_override("separation", 4)
-	info.mouse_filter = MOUSE_FILTER_IGNORE
-	info_btn.add_child(info)
-
-	var name_lbl := Label.new()
-	var label := DeckUI.deck_label(od, ordinal)
+	var badge_text := ""
 	if od.id == GameData.current_profile.selected_deck_id:
-		label += "   ✓ active"
-	name_lbl.text = label
-	name_lbl.add_theme_font_size_override("font_size", 28 if _compact else 19)
-	name_lbl.mouse_filter = MOUSE_FILTER_IGNORE
-	info.add_child(name_lbl)
+		badge_text = "✓ ACTIVE"
+	if ordinal > 1:
+		badge_text += ("   " if not badge_text.is_empty() else "") + "(%d)" % ordinal
+	if not badge_text.is_empty():
+		var badge := Label.new()
+		badge.text = badge_text
+		badge.add_theme_font_size_override("font_size", 18 if _compact else 13)
+		badge.add_theme_color_override("font_color", Color(0.35, 1.0, 0.5))
+		badge.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.85))
+		badge.add_theme_constant_override("outline_size", 5)
+		badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		badge.mouse_filter = MOUSE_FILTER_IGNORE
+		badge.set_anchors_and_offsets_preset(PRESET_TOP_WIDE)
+		badge.offset_top = 4.0
+		badge.offset_bottom = 32.0
+		tile.add_child(badge)
+	return tile
 
-	var count_lbl := Label.new()
-	count_lbl.text = "%d cards" % od.cards.size()
-	count_lbl.add_theme_font_size_override("font_size", 22 if _compact else 15)
-	count_lbl.modulate = Color(0.7, 0.72, 0.8)
-	count_lbl.mouse_filter = MOUSE_FILTER_IGNORE
-	info.add_child(count_lbl)
 
-	return panel
+# A card-shaped "+ New Deck" tile sitting in the grid alongside the decks.
+func _make_new_deck_tile() -> Control:
+	var btn := Button.new()
+	btn.text = "+\nNew Deck"
+	btn.custom_minimum_size = Vector2.ZERO
+	btn.size_flags_horizontal = SIZE_FILL
+	btn.size_flags_vertical = SIZE_FILL
+	btn.pressed.connect(func(): _king_picker.visible = true)
+	return btn
 
 
 func _on_deck_clicked(deck_id: String) -> void:
@@ -301,11 +269,9 @@ func _previewed_ordinal(target: OwnedDeck) -> int:
 
 
 func _update_preview() -> void:
-	for child in _preview_body.get_children():
-		child.queue_free()
-
 	var od := _previewed_deck()
 	if od == null:
+		_preview_grid.set_cards([])
 		_preview_title.text = ""
 		_set_active_btn.disabled = true
 		_view_btn.disabled = true
@@ -318,7 +284,7 @@ func _update_preview() -> void:
 	_preview_title.text = "%s  ·  %d cards%s" % [
 		DeckUI.deck_label(od, _previewed_ordinal(od)), od.cards.size(),
 		"   (active)" if is_active else ""]
-	_preview_body.add_child(DeckUI.deck_grid(od, 150 if _compact else 132))
+	_preview_grid.set_cards(DeckUI.deck_cards(od))
 
 	_set_active_btn.text = "Active ✓" if is_active else "Set as Active"
 	_set_active_btn.disabled = is_active

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://clijmq4pmpj4i"
-path="res://.godot/imported/storm.png-a5d9fb1076a2acd6b1d4d9d064f2ff3f.ctex"
+uid="uid://b5t4fhtu6m7rt"
+path="res://.godot/imported/light_water.png-30da1708a6be1f658db0a6e67de9752d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/cards/storm.png"
-dest_files=["res://.godot/imported/storm.png-a5d9fb1076a2acd6b1d4d9d064f2ff3f.ctex"]
+source_file="res://assets/cards/light_water.png"
+dest_files=["res://.godot/imported/light_water.png-30da1708a6be1f658db0a6e67de9752d.ctex"]
 
 [params]
 

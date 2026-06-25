@@ -190,16 +190,14 @@ static func frame(host: Control, title: String, exit: Callable) -> VBoxContainer
 	return s.root
 
 
-# Centered-content variant of frame: same chrome, but the body is a CenterContainer so the caller's
-# content sits centered in the middle band (the look the old "?"/reward/rest popups had). Returns
-# the CenterContainer to add a single content node to.
-static func frame_centered(host: Control, title: String, exit: Callable) -> CenterContainer:
+# Centered-content variant of frame for sparse "hero" screens (Reward, Rest, Shrine…). Returns the
+# body column directly: it FILLS the width (children stretch full-width, so centered labels/rows
+# span the screen instead of huddling in a thin strip) and centers its content vertically. This is
+# the anti-"tiny island in empty space" layout — add content straight to the returned VBox.
+static func frame_centered(host: Control, title: String, exit: Callable) -> VBoxContainer:
 	var body := frame(host, title, exit)
-	var center := CenterContainer.new()
-	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	center.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	body.add_child(center)
-	return center
+	body.alignment = BoxContainer.ALIGNMENT_CENTER
+	return body
 
 
 # Docks the two standard exits — top-right ✕ into `header`, bottom-left Back into `footer` — and

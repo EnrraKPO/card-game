@@ -2,6 +2,6 @@
   {
     "min_floor": 1,
     "max_floor": 999,
-    "weights": { "combat": 0.45, "rest": 0.20, "event": 0.15, "shop": 0.20 }
+    "weights": { "combat": 0.55, "rest": 0.12, "event": 0.20, "shop": 0.13 }
   }
 ]

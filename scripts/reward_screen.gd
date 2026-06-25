@@ -8,16 +8,13 @@ var _element_toggles: Array = []
 
 func _ready() -> void:
 	var compact := UIScale.is_compact()
-	var card_size := Vector2(230, 302) if compact else Vector2(160, 210)
-	var center := ScreenUI.frame_centered(self, "Reward", _skip)
-
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 24)
-	center.add_child(vbox)
+	var card_size := Vector2(300, 394) if compact else Vector2(248, 326)
+	var vbox := ScreenUI.frame_centered(self, "Reward", _skip)
+	vbox.add_theme_constant_override("separation", 28)
 
 	var title := Label.new()
 	title.text = "Victory!  Choose a Reward"
-	title.add_theme_font_size_override("font_size", 48 if compact else 36)
+	title.add_theme_font_size_override("font_size", 56 if compact else 44)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(title)
 
@@ -122,6 +119,9 @@ func _build_element_offers(vbox: VBoxContainer, ids: Array[String], compact: boo
 		ui.draggable = false
 		ui.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		ui.custom_minimum_size = recv_size
+		# Keep the card at its own width — a CardUI scales (and so grows taller) to fill extra
+		# width, which would otherwise spill over the wider "Accept" toggle stacked beneath it.
+		ui.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		slot.add_child(ui)
 
 		var toggle := CheckButton.new()

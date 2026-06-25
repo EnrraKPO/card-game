@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://crfindegdecud"
-path="res://.godot/imported/miasma.png-11768a88337ce6b56b958a90a6446f18.ctex"
+uid="uid://dqtofcspa4eaa"
+path="res://.godot/imported/steam_refs.png-ae48f0c01330d5683ee51c3c5446e231.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/cards/miasma.png"
-dest_files=["res://.godot/imported/miasma.png-11768a88337ce6b56b958a90a6446f18.ctex"]
+source_file="res://tmp/steam_refs.png"
+dest_files=["res://.godot/imported/steam_refs.png-ae48f0c01330d5683ee51c3c5446e231.ctex"]
 
 [params]
 

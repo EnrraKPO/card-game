@@ -35,7 +35,7 @@ func _ready() -> void:
 
 	var subtitle := Label.new()
 	subtitle.text = "Claim a reward before pressing onward."
-	subtitle.add_theme_font_size_override("font_size", 30 if compact else 18)
+	subtitle.add_theme_font_size_override("font_size", 30 if compact else 26)
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(subtitle)
 
@@ -50,14 +50,14 @@ func _ready() -> void:
 			continue
 		var ui := CardUI.create(CardInstance.from_data(data))
 		ui.draggable = false
-		ui.custom_minimum_size = Vector2(230, 302) if compact else Vector2(160, 210)
+		ui.custom_minimum_size = Vector2(230, 302) if compact else Vector2(220, 289)
 		ui.pressed.connect(func(): _pick_card(id))
 		card_row.add_child(ui)
 
 	var onward := Button.new()
 	onward.text = "Onward  →"
-	onward.add_theme_font_size_override("font_size", 32 if compact else 20)
-	onward.custom_minimum_size = Vector2(280, 88) if compact else Vector2(200, 0)
+	onward.add_theme_font_size_override("font_size", 32 if compact else 26)
+	onward.custom_minimum_size = Vector2(280, 88) if compact else Vector2(240, 76)
 	onward.size_flags_horizontal = SIZE_SHRINK_CENTER
 	onward.pressed.connect(_advance)
 	vbox.add_child(onward)

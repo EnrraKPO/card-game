@@ -33,16 +33,15 @@ func _build_ui() -> void:
 	ScreenUI.attach_exits(
 		func(): get_tree().change_scene_to_file("res://scenes/deck_screen.tscn"), s.header, s.footer)
 
-	# ── Card grid ────────────────────────────────────────────────────────────────
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	root.add_child(scroll)
-	var center := MarginContainer.new()
-	center.size_flags_horizontal = SIZE_EXPAND_FILL
+	# ── Card grid: the whole deck sized to fill the screen, never scrolled ─────────
+	var pad := MarginContainer.new()
+	pad.size_flags_horizontal = SIZE_EXPAND_FILL
+	pad.size_flags_vertical = SIZE_EXPAND_FILL
 	for side in ["left", "right", "top", "bottom"]:
-		center.add_theme_constant_override("margin_" + side, 24)
-	scroll.add_child(center)
+		pad.add_theme_constant_override("margin_" + side, 24)
+	root.add_child(pad)
 
+	var grid := FitGrid.new()
+	pad.add_child(grid)
 	if od != null:
-		center.add_child(DeckUI.deck_grid(od, 168))
+		grid.set_cards(DeckUI.deck_cards(od))

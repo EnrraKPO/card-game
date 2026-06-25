@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dmua8k6ntuup5"
-path="res://.godot/imported/sand.png-1e50be8fbf46dc9daf655385d540f65e.ctex"
+uid="uid://cbvstn7hui4p2"
+path="res://.godot/imported/combat_epic_icon.png-1cc92a54e7efa3878bb5955c0f8f5778.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/cards/sand.png"
-dest_files=["res://.godot/imported/sand.png-1e50be8fbf46dc9daf655385d540f65e.ctex"]
+source_file="res://assets/ui/icons/combat_epic_icon.png"
+dest_files=["res://.godot/imported/combat_epic_icon.png-1cc92a54e7efa3878bb5955c0f8f5778.ctex"]
 
 [params]
 

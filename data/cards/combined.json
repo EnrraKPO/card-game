@@ -194,7 +194,7 @@
   },
   {
     "id": "darkness_earth",
-    "display_name": "Stone",
+    "display_name": "Rock",
     "cost": 2, "attack": 4, "health": 6, "speed": 2,
     "description": "Petrify a unit, granting +5 Max HP but reducing its Speed by 1.",
     "elements": ["earth", "darkness"], "chess_pieces": [],

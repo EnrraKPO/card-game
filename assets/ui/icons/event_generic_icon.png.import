@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c4gphnmwishmk"
-path="res://.godot/imported/knight_pawn_v2.png-94dc506b7a8a8d37c2bf7e375d6d1f89.ctex"
+uid="uid://dgii8o3cp6bc1"
+path="res://.godot/imported/event_generic_icon.png-76bda95d58929ab46af4d69b88278aef.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/cards/knight_pawn_v2.png"
-dest_files=["res://.godot/imported/knight_pawn_v2.png-94dc506b7a8a8d37c2bf7e375d6d1f89.ctex"]
+source_file="res://assets/ui/icons/event_generic_icon.png"
+dest_files=["res://.godot/imported/event_generic_icon.png-76bda95d58929ab46af4d69b88278aef.ctex"]
 
 [params]
 

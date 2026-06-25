@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://clfl1htihojr"
-path="res://.godot/imported/poison.png-47aa78a7fbb1bddfca62699022319c65.ctex"
+uid="uid://dll7ni6xpwloy"
+path="res://.godot/imported/darkness_light.png-5e7a25b88877d2501bfe06d2b25e2895.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/cards/poison.png"
-dest_files=["res://.godot/imported/poison.png-47aa78a7fbb1bddfca62699022319c65.ctex"]
+source_file="res://assets/cards/darkness_light.png"
+dest_files=["res://.godot/imported/darkness_light.png-5e7a25b88877d2501bfe06d2b25e2895.ctex"]
 
 [params]
 
