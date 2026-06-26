@@ -1,0 +1,39 @@
+[
+  {
+    "id": "skeleton_grunt",
+    "display_name": "Skeleton Grunt",
+    "cost": 2, "attack": 3, "health": 4, "speed": 2,
+    "description": "A reanimated soldier that simply refuses to stay down.",
+    "enemy_only": true, "elements": [], "chess_pieces": [], "effects": []
+  },
+  {
+    "id": "bone_archer",
+    "display_name": "Bone Archer",
+    "cost": 3, "attack": 4, "health": 3, "speed": 4, "ranged": true,
+    "description": "Looses a cursed arrow that saps 1 Attack from every enemy.",
+    "enemy_only": true, "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_play", "targeting_policy": "all_enemies", "attribute": "attack", "amount": -1 }
+    ]
+  },
+  {
+    "id": "ghoul",
+    "display_name": "Ravenous Ghoul",
+    "cost": 3, "attack": 4, "health": 5, "speed": 3,
+    "description": "Feasts as it fights, healing 1 HP with every strike.",
+    "enemy_only": true, "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_attack", "targeting_policy": "self", "attribute": "health", "amount": 1 }
+    ]
+  },
+  {
+    "id": "vampire_lord",
+    "display_name": "Vampire Lord",
+    "cost": 5, "attack": 6, "health": 7, "speed": 4,
+    "description": "A noble of the night that drains 2 HP from its prey with every attack.",
+    "enemy_only": true, "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_attack", "targeting_policy": "self", "attribute": "health", "amount": 2 }
+    ]
+  }
+]

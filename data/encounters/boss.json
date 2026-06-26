@@ -1,20 +1,59 @@
-{
-  "id": "basic_boss",
-  "node_type": "boss",
-  "min_floor": 0,
-  "max_floor": 999,
-  "enemy_pool": [
-    { "id": "queen",    "weight": 2 },
-    { "id": "rook",     "weight": 2 },
-    { "id": "knight",   "weight": 2 },
-    { "id": "darkness", "weight": 2 },
-    { "id": "fire",     "weight": 1 },
-    { "id": "air",      "weight": 1 }
-  ],
-  "pick_count": [9, 11],
-  "gold_reward": [75, 100],
-  "exp_reward": 5,
-  "ai": "default",
-  "reward_pool": "default",
-  "relic_reward": 1.0
-}
+[
+  {
+    "id": "boss_goblins",
+    "node_type": "boss",
+    "min_floor": 0, "max_floor": 999,
+    "weight": 1.0,
+    "enemy_king": "gorthok",
+    "enemy_pool": [
+      { "id": "goblin_cutter",  "weight": 2 },
+      { "id": "goblin_fanatic", "weight": 3 },
+      { "id": "goblin_bomber",  "weight": 2 },
+      { "id": "goblin_warboss", "weight": 3 }
+    ],
+    "pick_count": [18, 22],
+    "gold_reward": [75, 100],
+    "exp_reward": 5,
+    "ai": "default",
+    "reward_pool": "default",
+    "relic_reward": 1.0
+  },
+  {
+    "id": "boss_undead",
+    "node_type": "boss",
+    "min_floor": 0, "max_floor": 999,
+    "weight": 1.0,
+    "enemy_king": "mortis",
+    "enemy_pool": [
+      { "id": "skeleton_grunt", "weight": 2 },
+      { "id": "bone_archer",    "weight": 3 },
+      { "id": "ghoul",          "weight": 3 },
+      { "id": "vampire_lord",   "weight": 2 }
+    ],
+    "pick_count": [16, 20],
+    "gold_reward": [75, 100],
+    "exp_reward": 5,
+    "ai": "default",
+    "reward_pool": "default",
+    "relic_reward": 1.0
+  },
+  {
+    "id": "boss_golems",
+    "node_type": "boss",
+    "min_floor": 0, "max_floor": 999,
+    "weight": 1.0,
+    "enemy_king": "titanus",
+    "enemy_pool": [
+      { "id": "stone_sentinel",  "weight": 2 },
+      { "id": "iron_bulwark",    "weight": 3 },
+      { "id": "granite_smasher", "weight": 3 },
+      { "id": "colossus",        "weight": 3 }
+    ],
+    "pick_count": [14, 18],
+    "gold_reward": [75, 100],
+    "exp_reward": 5,
+    "ai": "default",
+    "reward_pool": "default",
+    "relic_reward": 1.0
+  }
+]

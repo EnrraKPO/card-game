@@ -1,0 +1,29 @@
+[
+  {
+    "id": "goblin_warlord",
+    "display_name": "Goblin Warlord",
+    "cost": 0, "attack": 6, "health": 26, "speed": 4, "shield": 2,
+    "is_king": true, "enemy_only": true,
+    "description": "The warband's biggest, meanest goblin. Cut him down to win. Attacks the nearest enemy and starts each round with 2 Shield.",
+    "elements": [], "chess_pieces": [], "effects": []
+  },
+  {
+    "id": "bone_lich",
+    "display_name": "Bone Lich",
+    "cost": 0, "attack": 4, "health": 30, "speed": 3, "shield": 3,
+    "is_king": true, "enemy_only": true,
+    "description": "The horde's dark master. He knits himself back together with every strike — destroy him to win. Starts each round with 3 Shield.",
+    "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_attack", "targeting_policy": "self", "attribute": "health", "amount": 2 }
+    ]
+  },
+  {
+    "id": "stoneborn_warlord",
+    "display_name": "Stoneborn Warlord",
+    "cost": 0, "attack": 4, "health": 34, "speed": 1, "shield": 6,
+    "is_king": true, "enemy_only": true,
+    "description": "An immense living monolith that anchors the legion. Bring it down to win. Slow, but starts each round with 6 Shield.",
+    "elements": [], "chess_pieces": [], "effects": []
+  }
+]

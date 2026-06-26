@@ -4,6 +4,9 @@ extends Control
 # launches its single run — Continue if one's in progress, otherwise start fresh.
 # The meta panels (Upgrades / Decks / Lab) each open their own screen.
 
+# Feature flag: the Collection screen is hidden for now. Flip to true to re-surface its hub button.
+const SHOW_COLLECTION := false
+
 var _confirm_abandon: ConfirmationDialog
 
 
@@ -45,7 +48,8 @@ func _ready() -> void:
 	vbox.add_child(panels)
 	panels.add_child(_panel_button("Upgrades", "res://scenes/upgrades_screen.tscn", compact))
 	panels.add_child(_panel_button("Decks", "res://scenes/deck_screen.tscn", compact))
-	panels.add_child(_panel_button("Collection", "res://scenes/collection_screen.tscn", compact))
+	if SHOW_COLLECTION:
+		panels.add_child(_panel_button("Collection", "res://scenes/collection_screen.tscn", compact))
 	panels.add_child(_panel_button("Lab", "res://scenes/lab_screen.tscn", compact))
 
 	var has_run := GameData.slot_has_run(GameData.current_slot)

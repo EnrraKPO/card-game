@@ -65,20 +65,32 @@ def get(path):
     return json.load(urllib.request.urlopen(SERVER + path, timeout=30))
 
 
+def fetch_image(img):
+    qs = urllib.parse.urlencode({"filename": img["filename"],
+                                 "subfolder": img.get("subfolder", ""),
+                                 "type": img.get("type", "output")})
+    return urllib.request.urlopen(f"{SERVER}/view?{qs}", timeout=60).read()
+
+
 def main():
+    global SERVER
     ap = argparse.ArgumentParser()
     ap.add_argument("prompt")
     ap.add_argument("--out", default="cardgame")
+    ap.add_argument("--dest", help="path to write the final PNG (e.g. assets/cards/foo.png)")
     ap.add_argument("--w", type=int, default=1024)
     ap.add_argument("--h", type=int, default=1024)
     ap.add_argument("--steps", type=int, default=20)
     ap.add_argument("--guidance", type=float, default=4.0)
     ap.add_argument("--seed", type=int, default=-1)
+    ap.add_argument("--port", type=int, default=8188,
+                    help="ComfyUI port (8187 is often a stale/poisoned instance)")
     ap.add_argument("--rembg", action="store_true",
                     help="remove background -> transparent PNG (for sprites/artifacts)")
     ap.add_argument("--rembg-model", default="Inspyrenet",
                     help="RMBG-2.0 | RMBG-1.4 | Inspyrenet | BEN2")
     a = ap.parse_args()
+    SERVER = f"http://127.0.0.1:{a.port}"
 
     seed = a.seed if a.seed >= 0 else random.randint(0, 2**32 - 1)
     wf = build_workflow(a.prompt, a.w, a.h, a.steps, a.guidance, seed, a.out,
@@ -102,6 +114,13 @@ def main():
     for node in h.get("outputs", {}).values():
         for img in node.get("images", []):
             print(f"[image] {img['subfolder']}/{img['filename']} ({img['type']})")
+            if a.dest:
+                import os
+                os.makedirs(os.path.dirname(os.path.abspath(a.dest)), exist_ok=True)
+                with open(a.dest, "wb") as f:
+                    f.write(fetch_image(img))
+                print(f"[saved] {a.dest}")
+                return
 
 
 if __name__ == "__main__":

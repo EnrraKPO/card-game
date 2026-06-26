@@ -82,7 +82,7 @@ func build_section(parent: BoxContainer, is_player: bool) -> void:
 			grid.add_child(slot)
 
 
-func place_kings(player_king_id: String = "king") -> void:
+func place_kings(player_king_id: String = "king", enemy_king_id: String = "king") -> void:
 	var back: int = BoardData.ROWS - 1
 
 	var pk := CardInstance.from_data(CardData.get_card(player_king_id))
@@ -90,7 +90,7 @@ func place_kings(player_king_id: String = "king") -> void:
 	player_grid[back][0] = pk
 	player_slots[back][0].set_card(CardUI.create(pk))
 
-	var ek := CardInstance.from_data(CardData.get_card("king"))
+	var ek := CardInstance.from_data(CardData.get_card(enemy_king_id))
 	ek.row = back; ek.col = BoardData.COLS - 1; ek.owner = 1
 	enemy_grid[back][BoardData.COLS - 1] = ek
 	enemy_slots[back][BoardData.COLS - 1].set_card(CardUI.create(ek))

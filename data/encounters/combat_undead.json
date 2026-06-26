@@ -1,0 +1,18 @@
+{
+  "id": "undead_horde",
+  "node_type": "combat",
+  "min_floor": 0, "max_floor": 999,
+  "min_stage": 1, "max_stage": 999,
+  "weight": 1.0,
+  "enemy_king": "bone_lich",
+  "enemy_pool": [
+    { "id": "skeleton_grunt", "weight": 3 },
+    { "id": "bone_archer",    "weight": 2 },
+    { "id": "ghoul",          "weight": 2 },
+    { "id": "vampire_lord",   "weight": 1 }
+  ],
+  "pick_count": [16, 22],
+  "gold_reward": [20, 30],
+  "ai": "default",
+  "reward_pool": "default"
+}

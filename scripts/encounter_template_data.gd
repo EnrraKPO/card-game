@@ -11,6 +11,9 @@ var min_stage: int = 1
 var max_stage: int = 999
 var weight: float = 1.0
 var enemy_pool: Array = []   # Array[{ "id": String, "weight": float }]
+# The card id placed in the enemy's king slot — its win-condition unit. Defaults to the
+# generic "king"; tribe encounters name a themed Captain (an is_king enemy_only card).
+var enemy_king: String = "king"
 var pick_count: Array = [1, 1]    # [min, max] inclusive
 var gold_reward: Array = [0, 0]   # [min, max] inclusive
 var exp_reward: int = 1           # profile experience for winning this fight (special fights author more)
@@ -66,6 +69,7 @@ static func _from_dict(d: Dictionary) -> EncounterTemplateData:
 	t.max_stage   = d.get("max_stage", 999)
 	t.weight      = d.get("weight", 1.0)
 	t.ai          = d.get("ai", "default")
+	t.enemy_king  = d.get("enemy_king", "king")
 	t.reward_pool = d.get("reward_pool", "default")
 	t.relic_reward_chance = float(d.get("relic_reward", 0.0))
 	t.exp_reward  = int(d.get("exp_reward", 1))
@@ -114,6 +118,7 @@ func instantiate(rng: RandomNumberGenerator) -> EncounterData:
 	var enc := EncounterData.new()
 	enc.type = _encounter_data_type(node_type)
 	enc.ai   = EnemyAI.from_key(ai)
+	enc.enemy_king = enemy_king
 
 	var count: int = rng.randi_range(pick_count[0], pick_count[1])
 	var deck: Array[String] = []

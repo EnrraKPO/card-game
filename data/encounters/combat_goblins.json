@@ -1,0 +1,18 @@
+{
+  "id": "goblin_warband",
+  "node_type": "combat",
+  "min_floor": 0, "max_floor": 999,
+  "min_stage": 1, "max_stage": 999,
+  "weight": 1.0,
+  "enemy_king": "goblin_warlord",
+  "enemy_pool": [
+    { "id": "goblin_cutter",  "weight": 3 },
+    { "id": "goblin_fanatic", "weight": 2 },
+    { "id": "goblin_bomber",  "weight": 1 },
+    { "id": "goblin_warboss", "weight": 1 }
+  ],
+  "pick_count": [18, 24],
+  "gold_reward": [20, 30],
+  "ai": "default",
+  "reward_pool": "default"
+}

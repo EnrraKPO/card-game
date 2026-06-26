@@ -1,10 +1,12 @@
 [gd_scene format=3 uid="uid://bentry1"]
 
-[ext_resource type="Script" path="res://scripts/entry_screen.gd" id="1_entry"]
+[ext_resource type="Script" uid="uid://hhwed8xji8hh" path="res://scripts/entry_screen.gd" id="1_entry"]
 
-[node name="EntryScreen" type="Control"]
+[node name="EntryScreen" type="Control" unique_id=1038706904]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("1_entry")

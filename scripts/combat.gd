@@ -60,7 +60,12 @@ func _ready() -> void:
 	_hand.populate_draw_pile(GameData.current_run.deck)
 	_init_enemy_deck()
 	_build_ui()
-	_board.place_kings(GameData.current_run.king_id if GameData.current_run != null else "king")
+	var enemy_king_id := "king"
+	if GameData.current_encounter != null and not GameData.current_encounter.enemy_king.is_empty():
+		enemy_king_id = GameData.current_encounter.enemy_king
+	_board.place_kings(
+		GameData.current_run.king_id if GameData.current_run != null else "king",
+		enemy_king_id)
 	_apply_king_persistence()
 	_hand.draw_initial()
 	_refresh()
@@ -154,7 +159,7 @@ func _execute_enemy_action(action: Dictionary) -> void:
 			_enemy_mana -= inst.data.cost
 			_enemy_hand.erase(inst)
 			var results := _board.place_enemy_card(inst, action["row"], action["col"])
-			_animator.show_effect_results(results)
+			_animator.show_effect_results(results, inst)
 			_vfx.play(VFXEvent.card_placed(_board.get_card_ui(inst)))
 		EnemyAI.Action.CAST:
 			var inst: CardInstance = action["inst"]
@@ -170,7 +175,7 @@ func _execute_enemy_action(action: Dictionary) -> void:
 			if b_ui != null:
 				b_ui.set_exhausted(true)
 			var results := _board.place_enemy_card(token, action["row"], action["col"])
-			_animator.show_effect_results(results)
+			_animator.show_effect_results(results, token)
 			_vfx.play(VFXEvent.card_placed(_board.get_card_ui(token)))
 		EnemyAI.Action.MOVE:
 			_board.move_enemy_card(action["inst"], action["row"], action["col"])
@@ -233,7 +238,7 @@ func _cast_enemy_spell(inst: CardInstance, target: CardInstance) -> void:
 			continue
 		var ctx := EffectContext.make(inst, _board.player_grid, _board.enemy_grid)
 		ctx.manual_target = target
-		_animator.show_effect_results(EffectSystem.apply_single(effect, inst, ctx))
+		_animator.show_effect_results(EffectSystem.apply_single(effect, inst, ctx), inst)
 		_board.cleanup_effect_deaths()
 	_board.refresh()
 
@@ -317,8 +322,8 @@ func _run_combat() -> void:
 		await _resolve_attack(attacker)
 
 
-# Plays out a single attacker's strike: target lookup, lunge animation, damage +
-# triggered effects, and the target's death or survival.
+# Plays out a single attacker's strike: target lookup, delivery (melee lunge or ranged
+# bolt), damage + triggered effects, and the target's death or survival.
 func _resolve_attack(attacker: CardInstance) -> void:
 	var target := _board.find_target(attacker)
 	if target == null:
@@ -326,28 +331,27 @@ func _resolve_attack(attacker: CardInstance) -> void:
 
 	var a_card := _board.get_card_ui(attacker)
 	var t_card := _board.get_card_ui(target)
-	var a_home := a_card.global_position
 
-	var ghost := _animator.spawn_ghost(a_card)
-	a_card.modulate.a = 0.0
-	await _animator.play_lunge(ghost, t_card.global_position)
-
-	await _animator.shake_card(t_card)
-	var dmg := attacker.get_attribute("attack")
-	_animator.show_effect_results(_trigger(Effect.Trigger.ON_ATTACK, attacker))
-	var dmg_split := target.take_damage(dmg)
-	_animator.show_effect_results(_trigger(Effect.Trigger.ON_DAMAGE_TAKEN, target))
-	if dmg_split.shield_absorbed > 0:
-		_vfx.play(VFXEvent.shield_hit(t_card, dmg_split.shield_absorbed))
-	if dmg_split.health_damage > 0:
-		_vfx.play(VFXEvent.health_damage(t_card, dmg_split.health_damage))
-
-	await _animator.play_retreat(ghost, a_home)
-	ghost.queue_free()
-	a_card.modulate.a = 1.0
+	if attacker.data.ranged:
+		# Ranged: hold position and fire a bolt; the hit lands when it arrives.
+		await _vfx.play(VFXEvent.projectile(
+			a_card, t_card, attacker.get_attribute("attack"),
+			Color(0.65, 0.9, 1.0), VFXEvent.Projectile.BOLT, false))
+		_apply_attack_damage(attacker, target, t_card)
+	else:
+		# Melee: lunge in, strike, retreat.
+		var a_home := a_card.global_position
+		var ghost := _animator.spawn_ghost(a_card)
+		a_card.modulate.a = 0.0
+		await _animator.play_lunge(ghost, t_card.global_position)
+		await _animator.shake_card(t_card)
+		_apply_attack_damage(attacker, target, t_card)
+		await _animator.play_retreat(ghost, a_home)
+		ghost.queue_free()
+		a_card.modulate.a = 1.0
 
 	if not target.is_alive():
-		_animator.show_effect_results(_trigger(Effect.Trigger.ON_DEATH, target))
+		_animator.show_effect_results(_trigger(Effect.Trigger.ON_DEATH, target), target)
 		await _vfx.play(VFXEvent.death(t_card))
 		_board.remove_card(target)
 	else:
@@ -357,6 +361,20 @@ func _resolve_attack(attacker: CardInstance) -> void:
 	# A triggered/run-level effect resolved during this attack (e.g. an upgrade's on-death
 	# retaliation) may have killed a bystander; sweep any secondary deaths off the board.
 	_board.cleanup_effect_deaths()
+
+
+# Applies a strike's damage at the moment of impact: ON_ATTACK trigger, the (shield-split)
+# damage, ON_DAMAGE_TAKEN trigger, and the shield/health hit numbers. Attack value is read
+# before ON_ATTACK fires so a self-buff on attack doesn't retroactively change this hit.
+func _apply_attack_damage(attacker: CardInstance, target: CardInstance, t_card: CardUI) -> void:
+	var dmg := attacker.get_attribute("attack")
+	_animator.show_effect_results(_trigger(Effect.Trigger.ON_ATTACK, attacker), attacker)
+	var dmg_split := target.take_damage(dmg)
+	_animator.show_effect_results(_trigger(Effect.Trigger.ON_DAMAGE_TAKEN, target), target)
+	if dmg_split.shield_absorbed > 0:
+		_vfx.play(VFXEvent.shield_hit(t_card, dmg_split.shield_absorbed))
+	if dmg_split.health_damage > 0:
+		_vfx.play(VFXEvent.health_damage(t_card, dmg_split.health_damage))
 
 
 # DRYs the repeated "fire an effect trigger for an instance in the current board context"
@@ -431,7 +449,7 @@ func _handle_combat_end() -> void:
 
 # ── Board event handlers ───────────────────────────────────────────────────────
 
-func _on_board_unit_placed(_inst: CardInstance, card_ui: CardUI, from_hand: bool, cost: int, results: Array) -> void:
+func _on_board_unit_placed(inst: CardInstance, card_ui: CardUI, from_hand: bool, cost: int, results: Array) -> void:
 	if from_hand:
 		_mana -= cost
 		if card_ui.is_generated:
@@ -439,7 +457,7 @@ func _on_board_unit_placed(_inst: CardInstance, card_ui: CardUI, from_hand: bool
 		else:
 			_hand.remove_card(card_ui)
 		_refresh_mana()
-	_animator.show_effect_results(results)
+	_animator.show_effect_results(results, inst)
 	_vfx.play(VFXEvent.card_placed(card_ui))
 
 

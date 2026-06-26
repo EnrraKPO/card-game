@@ -18,6 +18,15 @@ var image: Texture2D = null
 var elements: Array[String] = []
 var chess_pieces: Array[String] = []
 var targeting_strategy: TargetingStrategy
+# Enemy-only fodder cards (tribes the CPU fights with). Kept out of every player-facing
+# pool — reward offers and shop stock (random_non_kings). They carry no element/chess
+# composition, so composition_key is empty and they're already absent from the collection
+# screen and the combine system; this flag covers the remaining reward/shop path.
+var enemy_only: bool = false
+# Ranged units fire a projectile at their target on auto-attack instead of the melee lunge
+# (see combat.gd::_resolve_attack). Authored per-card — NOT derived from composition, so e.g.
+# the base Bishop is ranged but most bishop-composed units aren't unless they opt in.
+var ranged: bool = false
 
 
 # A building is any unit carrying a rook in its composition. Buildings are
@@ -114,6 +123,8 @@ static func build_from_dict(d: Dictionary) -> CardData:
 	card.description  = d.get("description", "")
 	card.elements     = Array(d.get("elements",     []), TYPE_STRING, "", null)
 	card.chess_pieces = Array(d.get("chess_pieces", []), TYPE_STRING, "", null)
+	card.enemy_only   = bool(d.get("enemy_only", false))
+	card.ranged       = bool(d.get("ranged", false))
 	for e_data: Dictionary in d.get("effects", []):
 		card.effects.append(Effect.from_dict(e_data))
 	if d.has("card_type"):
@@ -123,7 +134,10 @@ static func build_from_dict(d: Dictionary) -> CardData:
 	else:
 		card.card_type = CardType.UNIT
 	card.targeting_strategy = _make_targeting_strategy(card.chess_pieces)
-	var art_path := "res://assets/cards/%s.png" % card.id
+	# Enemy fodder/captain art is organised under cards/enemies/ to keep it out of the
+	# main (player-facing) card art folder.
+	var art_dir := "res://assets/cards/enemies/" if card.enemy_only else "res://assets/cards/"
+	var art_path := "%s%s.png" % [art_dir, card.id]
 	card.image = load(art_path) if ResourceLoader.exists(art_path) \
 		else load("res://assets/cards/placeholder.png")
 	return card
@@ -153,6 +167,7 @@ func to_dict() -> Dictionary:
 		"speed":        speed,
 		"shield":       shield,
 		"is_king":      is_king,
+		"ranged":       ranged,
 		"description":  description,
 		"card_type":    "spell" if card_type == CardType.SPELL else "unit",
 		"elements":     Array(elements, TYPE_STRING, "", null),
@@ -177,7 +192,7 @@ static func all() -> Array:
 static func random_non_kings(count: int) -> Array[String]:
 	var non_kings: Array[String] = []
 	for card: CardData in all():
-		if not card.is_king:
+		if not card.is_king and not card.enemy_only:
 			non_kings.append(card.id)
 	non_kings.shuffle()
 	return non_kings.slice(0, mini(count, non_kings.size()))
@@ -262,6 +277,7 @@ static func _derive(elems: Array, chess: Array, key: String) -> CardData:
 static func _make_targeting_strategy(chess_pieces: Array) -> TargetingStrategy:
 	for piece: String in chess_pieces:
 		match piece:
+			"pawn": continue
 			"knight": return TargetingKnight.new()
 			"bishop": return TargetingBishop.new()
 			"rook":   return TargetingRook.new()

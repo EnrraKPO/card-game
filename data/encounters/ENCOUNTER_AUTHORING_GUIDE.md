@@ -8,16 +8,17 @@ A template describes an enemy *card pool* to sample from, not a fixed list — e
 
 ```json
 {
-  "id": "basic_combat",
+  "id": "goblin_warband",
   "node_type": "combat",
   "min_floor": 0,
   "max_floor": 999,
   "weight": 1,
+  "enemy_king": "goblin_warlord",
   "enemy_pool": [
-    { "id": "pawn", "weight": 3 },
-    { "id": "bishop", "weight": 1 }
+    { "id": "goblin_cutter", "weight": 3 },
+    { "id": "goblin_warboss", "weight": 1 }
   ],
-  "pick_count": [6, 9],
+  "pick_count": [18, 24],
   "ai": "default",
   "reward_pool": "default"
 }
@@ -29,8 +30,9 @@ A template describes an enemy *card pool* to sample from, not a fixed list — e
 | `node_type` | string | Yes | `combat`, `elite`, or `boss` — which map node type this template can serve |
 | `min_floor` / `max_floor` | int | No | Inclusive floor-eligibility band. Defaults to `0`/`999` (always eligible) |
 | `weight` | float | No | Relative chance of being picked when multiple templates are eligible for the same node_type + floor. Defaults to `1` |
-| `enemy_pool` | array | Yes | Weighted candidate cards (king is implicit, do not include it). Sampled **with replacement**, so the same card can appear more than once in a deck |
-| `pick_count` | `[min, max]` | Yes | Inclusive random range for how many cards are drawn from the pool per instantiation |
+| `enemy_king` | string | No | Card id placed in the enemy's king slot — the win-condition unit. Defaults to `"king"` (the generic crown King). Tribe fights name a themed **Captain** (an `is_king` + `enemy_only` card, e.g. `goblin_warlord`, or a tougher `hobgoblin_tyrant`/`gorthok` for elites/bosses). Do **not** also list it in `enemy_pool` |
+| `enemy_pool` | array | Yes | Weighted candidate cards for the enemy *deck* (the king/captain is separate — see `enemy_king`). Sampled **with replacement**, so the same card can appear more than once. Size the deck generously via `pick_count` so the CPU doesn't run dry mid-fight |
+| `pick_count` | `[min, max]` | Yes | Inclusive random range for how many cards are drawn from the pool per instantiation. Tribe fights use ~14–24 so the opponent keeps applying pressure rather than emptying its hand |
 | `gold_reward` | `[min, max]` | No | Inclusive random range of gold granted on win. Defaults to `[0, 0]` |
 | `exp_reward` | int | No | Profile experience granted on win, toward upgrade points. Defaults to `1`; author higher for special fights (e.g. elites/bosses) |
 | `ai` | string | No | Key into `EnemyAI.from_key()`. Defaults to `"default"` |

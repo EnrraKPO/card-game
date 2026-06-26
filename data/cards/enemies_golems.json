@@ -1,0 +1,42 @@
+[
+  {
+    "id": "stone_sentinel",
+    "display_name": "Stone Sentinel",
+    "cost": 3, "attack": 3, "health": 8, "speed": 1, "shield": 3,
+    "description": "An ancient guardian — slow, but nearly immovable. Starts each round with 3 Shield.",
+    "enemy_only": true, "elements": [], "chess_pieces": [], "effects": []
+  },
+  {
+    "id": "iron_bulwark",
+    "display_name": "Iron Bulwark",
+    "cost": 4, "attack": 3, "health": 9, "speed": 1, "shield": 4,
+    "description": "Raises the line, fortifying all allies with +2 Max HP. Starts each round with 4 Shield.",
+    "enemy_only": true, "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_play", "targeting_policy": "all_allies", "attribute": "max_health", "amount": 2 }
+    ]
+  },
+  {
+    "id": "granite_smasher",
+    "display_name": "Granite Smasher",
+    "cost": 5, "attack": 6, "health": 9, "speed": 2, "shield": 2,
+    "description": "When battered to 4 HP or less, it rampages for +2 Attack. Starts each round with 2 Shield.",
+    "enemy_only": true, "elements": [], "chess_pieces": [],
+    "effects": [
+      {
+        "trigger": "on_damage_taken", "targeting_policy": "self", "attribute": "attack", "amount": 2,
+        "conditions": [ { "attribute": "health", "comparator": "lte", "value": 4 } ]
+      }
+    ]
+  },
+  {
+    "id": "colossus",
+    "display_name": "Stoneborn Colossus",
+    "cost": 7, "attack": 7, "health": 12, "speed": 1, "shield": 4,
+    "description": "A mountain given form. Fortifies all allies with +3 Max HP and holds the line with 4 Shield each round.",
+    "enemy_only": true, "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_play", "targeting_policy": "all_allies", "attribute": "max_health", "amount": 3 }
+    ]
+  }
+]

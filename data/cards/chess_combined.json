@@ -1,152 +1,152 @@
 [
   {
-    "id": "pawn_pawn",
-    "display_name": "Warrior",
-    "cost": 2, "attack": 4, "health": 6, "speed": 2, "shield": 2,
-    "description": "Two footmen fighting back to back. Strikes the nearest enemy and starts each round with 2 Shield. When it falls, all allies gain +1 Attack.",
-    "elements": [], "chess_pieces": ["pawn", "pawn"],
-    "effects": [
-      { "trigger": "on_death", "targeting_policy": "all_allies", "attribute": "attack", "amount": 1 }
-    ]
+	"id": "pawn_pawn",
+	"display_name": "Warrior",
+	"cost": 2, "attack": 4, "health": 6, "speed": 2, "shield": 2,
+	"description": "Two footmen fighting back to back. Strikes the nearest enemy and starts each round with 2 Shield. When it falls, all allies gain +1 Attack.",
+	"elements": [], "chess_pieces": ["pawn", "pawn"],
+	"effects": [
+	  { "trigger": "on_death", "targeting_policy": "all_allies", "attribute": "attack", "amount": 1 }
+	]
   },
   {
-    "id": "bishop_pawn",
-    "display_name": "Paladin",
-    "cost": 3, "attack": 4, "health": 6, "speed": 3, "shield": 1,
-    "description": "A holy knight that hunts the most wounded enemy and mends itself, healing 1 HP with every strike.",
-    "elements": [], "chess_pieces": ["bishop", "pawn"],
-    "effects": [
-      { "trigger": "on_attack", "targeting_policy": "self", "attribute": "health", "amount": 1 }
-    ]
+	"id": "bishop_pawn",
+	"display_name": "Paladin",
+	"cost": 3, "attack": 4, "health": 6, "speed": 3, "shield": 1,
+	"description": "A holy knight that hunts the most wounded enemy and mends itself, healing 1 HP with every strike.",
+	"elements": [], "chess_pieces": ["bishop", "pawn"],
+	"effects": [
+	  { "trigger": "on_attack", "targeting_policy": "self", "attribute": "health", "amount": 1 }
+	]
   },
   {
-    "id": "knight_pawn",
-    "display_name": "Cavalry",
-    "cost": 3, "attack": 5, "health": 5, "speed": 5, "shield": 1,
-    "description": "Mounted lancers that leap the front column to crush the backline. Charges in with +1 Attack.",
-    "elements": [], "chess_pieces": ["knight", "pawn"],
-    "effects": [
-      { "trigger": "on_play", "targeting_policy": "self", "attribute": "attack", "amount": 1 }
-    ]
+	"id": "knight_pawn",
+	"display_name": "Cavalry",
+	"cost": 3, "attack": 5, "health": 5, "speed": 5, "shield": 1,
+	"description": "Mounted lancers that leap the front column to crush the backline. Charges in with +1 Attack.",
+	"elements": [], "chess_pieces": ["knight", "pawn"],
+	"effects": [
+	  { "trigger": "on_play", "targeting_policy": "self", "attribute": "attack", "amount": 1 }
+	]
   },
   {
-    "id": "pawn_rook",
-    "display_name": "Armory",
-    "cost": 4, "attack": 4, "health": 8, "speed": 1, "shield": 4,
-    "description": "A walking arsenal. Locks onto the sturdiest enemy and fortifies all allies with +2 Max HP. Starts each round with 4 Shield.",
-    "elements": [], "chess_pieces": ["pawn", "rook"],
-    "effects": [
-      { "trigger": "on_play", "targeting_policy": "all_allies", "attribute": "max_health", "amount": 2 }
-    ]
+	"id": "pawn_rook",
+	"display_name": "Barracks",
+	"cost": 4, "attack": 4, "health": 8, "speed": 1, "shield": 4,
+	"description": "A walking arsenal. Locks onto the sturdiest enemy and fortifies all allies with +2 Max HP. Starts each round with 4 Shield.",
+	"elements": [], "chess_pieces": ["pawn", "rook"],
+	"effects": [
+	  { "trigger": "on_play", "targeting_policy": "all_allies", "attribute": "max_health", "amount": 2 }
+	]
   },
   {
-    "id": "pawn_queen",
-    "display_name": "Commander",
-    "cost": 5, "attack": 5, "health": 7, "speed": 3, "shield": 1,
-    "description": "Rallies the ranks — all allies gain +1 Attack on play. Cuts down the deadliest enemy first.",
-    "elements": [], "chess_pieces": ["pawn", "queen"],
-    "effects": [
-      { "trigger": "on_play", "targeting_policy": "all_allies", "attribute": "attack", "amount": 1 }
-    ]
+	"id": "pawn_queen",
+	"display_name": "Commander",
+	"cost": 5, "attack": 5, "health": 7, "speed": 3, "shield": 1,
+	"description": "Rallies the ranks — all allies gain +1 Attack on play. Cuts down the deadliest enemy first.",
+	"elements": [], "chess_pieces": ["pawn", "queen"],
+	"effects": [
+	  { "trigger": "on_play", "targeting_policy": "all_allies", "attribute": "attack", "amount": 1 }
+	]
   },
   {
-    "id": "knight_knight",
-    "display_name": "Beast",
-    "cost": 4, "attack": 6, "health": 6, "speed": 5,
-    "description": "A savage creature that leaps the front column to maul the backline, growing +1 Attack with every strike.",
-    "elements": [], "chess_pieces": ["knight", "knight"],
-    "effects": [
-      { "trigger": "on_attack", "targeting_policy": "self", "attribute": "attack", "amount": 1 }
-    ]
+	"id": "knight_knight",
+	"display_name": "Beast",
+	"cost": 4, "attack": 6, "health": 6, "speed": 5,
+	"description": "A savage creature that leaps the front column to maul the backline, growing +1 Attack with every strike.",
+	"elements": [], "chess_pieces": ["knight", "knight"],
+	"effects": [
+	  { "trigger": "on_attack", "targeting_policy": "self", "attribute": "attack", "amount": 1 }
+	]
   },
   {
-    "id": "bishop_knight",
-    "display_name": "Fable",
-    "cost": 4, "attack": 5, "health": 6, "speed": 5,
-    "description": "A legendary mount that vaults deep into enemy lines. Its death inspires all allies with +2 Attack.",
-    "elements": [], "chess_pieces": ["knight", "bishop"],
-    "effects": [
-      { "trigger": "on_death", "targeting_policy": "all_allies", "attribute": "attack", "amount": 2 }
-    ]
+	"id": "bishop_knight",
+	"display_name": "Fable",
+	"cost": 4, "attack": 5, "health": 6, "speed": 5,
+	"description": "A legendary mount that vaults deep into enemy lines. Its death inspires all allies with +2 Attack.",
+	"elements": [], "chess_pieces": ["knight", "bishop"],
+	"effects": [
+	  { "trigger": "on_death", "targeting_policy": "all_allies", "attribute": "attack", "amount": 2 }
+	]
   },
   {
-    "id": "knight_queen",
-    "display_name": "Monster",
-    "cost": 6, "attack": 7, "health": 7, "speed": 5,
-    "description": "A towering horror that leaps the front column and drains 2 HP with each attack.",
-    "elements": [], "chess_pieces": ["knight", "queen"],
-    "effects": [
-      { "trigger": "on_attack", "targeting_policy": "self", "attribute": "health", "amount": 2 }
-    ]
+	"id": "knight_queen",
+	"display_name": "Monster",
+	"cost": 6, "attack": 7, "health": 7, "speed": 5,
+	"description": "A towering horror that leaps the front column and drains 2 HP with each attack.",
+	"elements": [], "chess_pieces": ["knight", "queen"],
+	"effects": [
+	  { "trigger": "on_attack", "targeting_policy": "self", "attribute": "health", "amount": 2 }
+	]
   },
   {
-    "id": "knight_rook",
-    "display_name": "Bestiary",
-    "cost": 5, "attack": 5, "health": 9, "speed": 3, "shield": 3,
-    "description": "A caged menace. Leaps the front column and, once wounded to 4 HP or less, rages for +2 Attack. Starts each round with 3 Shield.",
-    "elements": [], "chess_pieces": ["knight", "rook"],
-    "effects": [
-      {
-        "trigger": "on_damage_taken", "targeting_policy": "self", "attribute": "attack", "amount": 2,
-        "conditions": [ { "attribute": "health", "comparator": "lte", "value": 4 } ]
-      }
-    ]
+	"id": "knight_rook",
+	"display_name": "Bestiary",
+	"cost": 5, "attack": 5, "health": 9, "speed": 3, "shield": 3,
+	"description": "A caged menace. Leaps the front column and, once wounded to 4 HP or less, rages for +2 Attack. Starts each round with 3 Shield.",
+	"elements": [], "chess_pieces": ["knight", "rook"],
+	"effects": [
+	  {
+		"trigger": "on_damage_taken", "targeting_policy": "self", "attribute": "attack", "amount": 2,
+		"conditions": [ { "attribute": "health", "comparator": "lte", "value": 4 } ]
+	  }
+	]
   },
   {
-    "id": "bishop_bishop",
-    "display_name": "Sorcerer",
-    "cost": 4, "attack": 6, "health": 4, "speed": 4,
-    "description": "Twin diviners. Blasts every enemy for 1 on arrival, then hunts the most wounded.",
-    "elements": [], "chess_pieces": ["bishop", "bishop"],
-    "effects": [
-      { "trigger": "on_play", "targeting_policy": "all_enemies", "attribute": "health", "amount": -1 }
-    ]
+	"id": "bishop_bishop",
+	"display_name": "Sorcerer",
+	"cost": 4, "attack": 6, "health": 4, "speed": 4,
+	"description": "Twin diviners. Blasts every enemy for 1 on arrival, then hunts the most wounded.",
+	"elements": [], "chess_pieces": ["bishop", "bishop"],
+	"effects": [
+	  { "trigger": "on_play", "targeting_policy": "all_enemies", "attribute": "health", "amount": -1 }
+	]
   },
   {
-    "id": "bishop_rook",
-    "display_name": "Temple",
-    "cost": 5, "attack": 4, "health": 9, "speed": 2, "shield": 3,
-    "description": "A sacred bastion. Heals all allies for 3 on arrival and locks onto the sturdiest enemy. Starts each round with 3 Shield.",
-    "elements": [], "chess_pieces": ["rook", "bishop"],
-    "effects": [
-      { "trigger": "on_play", "targeting_policy": "all_allies", "attribute": "health", "amount": 3 }
-    ]
+	"id": "bishop_rook",
+	"display_name": "Temple",
+	"cost": 5, "attack": 4, "health": 9, "speed": 2, "shield": 3,
+	"description": "A sacred bastion. Heals all allies for 3 on arrival and locks onto the sturdiest enemy. Starts each round with 3 Shield.",
+	"elements": [], "chess_pieces": ["rook", "bishop"],
+	"effects": [
+	  { "trigger": "on_play", "targeting_policy": "all_allies", "attribute": "health", "amount": 3 }
+	]
   },
   {
-    "id": "bishop_queen",
-    "display_name": "Deity",
-    "cost": 6, "attack": 6, "health": 7, "speed": 4,
-    "description": "A divine being. Blesses all allies with +2 Attack and smites the deadliest enemy.",
-    "elements": [], "chess_pieces": ["queen", "bishop"],
-    "effects": [
-      { "trigger": "on_play", "targeting_policy": "all_allies", "attribute": "attack", "amount": 2 }
-    ]
+	"id": "bishop_queen",
+	"display_name": "Deity",
+	"cost": 6, "attack": 6, "health": 7, "speed": 4,
+	"description": "A divine being. Blesses all allies with +2 Attack and smites the deadliest enemy.",
+	"elements": [], "chess_pieces": ["queen", "bishop"],
+	"effects": [
+	  { "trigger": "on_play", "targeting_policy": "all_allies", "attribute": "attack", "amount": 2 }
+	]
   },
   {
-    "id": "rook_rook",
-    "display_name": "Turret",
-    "cost": 6, "attack": 6, "health": 11, "speed": 1, "shield": 6,
-    "description": "An immovable gun emplacement. Locks onto the sturdiest enemy and starts each round with 6 Shield.",
-    "elements": [], "chess_pieces": ["rook", "rook"], "effects": []
+	"id": "rook_rook",
+	"display_name": "Turret",
+	"cost": 6, "attack": 6, "health": 11, "speed": 1, "shield": 6,
+	"description": "An immovable gun emplacement. Locks onto the sturdiest enemy and starts each round with 6 Shield.",
+	"elements": [], "chess_pieces": ["rook", "rook"], "effects": []
   },
   {
-    "id": "queen_rook",
-    "display_name": "Castle",
-    "cost": 7, "attack": 7, "health": 10, "speed": 2, "shield": 4,
-    "description": "A royal stronghold. Fortifies all allies with +3 Max HP and holds the line against the sturdiest enemy. Starts each round with 4 Shield.",
-    "elements": [], "chess_pieces": ["rook", "queen"],
-    "effects": [
-      { "trigger": "on_play", "targeting_policy": "all_allies", "attribute": "max_health", "amount": 3 }
-    ]
+	"id": "queen_rook",
+	"display_name": "Castle",
+	"cost": 7, "attack": 7, "health": 10, "speed": 2, "shield": 4,
+	"description": "A royal stronghold. Fortifies all allies with +3 Max HP and holds the line against the sturdiest enemy. Starts each round with 4 Shield.",
+	"elements": [], "chess_pieces": ["rook", "queen"],
+	"effects": [
+	  { "trigger": "on_play", "targeting_policy": "all_allies", "attribute": "max_health", "amount": 3 }
+	]
   },
   {
-    "id": "queen_queen",
-    "display_name": "Hero",
-    "cost": 8, "attack": 9, "health": 9, "speed": 5,
-    "description": "The ultimate champion. Inspires all allies with +2 Attack and cuts down the deadliest enemy.",
-    "elements": [], "chess_pieces": ["queen", "queen"],
-    "effects": [
-      { "trigger": "on_play", "targeting_policy": "all_allies", "attribute": "attack", "amount": 2 }
-    ]
+	"id": "queen_queen",
+	"display_name": "Hero",
+	"cost": 8, "attack": 9, "health": 9, "speed": 5,
+	"description": "The ultimate champion. Inspires all allies with +2 Attack and cuts down the deadliest enemy.",
+	"elements": [], "chess_pieces": ["queen", "queen"],
+	"effects": [
+	  { "trigger": "on_play", "targeting_policy": "all_allies", "attribute": "attack", "amount": 2 }
+	]
   }
 ]

@@ -48,10 +48,19 @@ const V_PAD := 48.0
 ## Gap between dots, ×node radius (smaller = denser trail).
 @export_range(0.2, 1.5, 0.05) var trail_dot_spacing_mult := 0.5
 
+@export_group("Forge Button")
+## Forge button CENTRE as a fraction of the screen (0 = left/top, 1 = right/bottom). The map
+## nodes sit in a centred band with empty side margins, so pull X in from 1.0 to bring the
+## button nearer the content. Drag these in the Inspector, then run, to place it exactly.
+@export_range(0.0, 1.0, 0.01) var forge_pos_x := 0.84
+@export_range(0.0, 1.0, 0.01) var forge_pos_y := 0.5
+## Forge button diameter, px (desktop / compact-phone).
+@export_range(64.0, 240.0, 2.0) var forge_diam := 112.0
+@export_range(80.0, 280.0, 2.0) var forge_diam_compact := 150.0
+
 var map_data: MapData
 var current_node_id: int
 var node_positions: Dictionary = {}
-var encounter_rng: RandomNumberGenerator
 
 # Registry of node-type -> handler. Adding a new node type with real
 # gameplay is: write a NodeKind subclass, register it here, done — no other
@@ -100,9 +109,6 @@ func _ready() -> void:
 	map_data = MapData.generate(GameData.current_map_state.map_seed, type_repeat_drop, type_recovery)
 	current_node_id = GameData.current_map_state.current_node_id
 
-	encounter_rng = RandomNumberGenerator.new()
-	encounter_rng.seed = GameData.current_map_state.map_seed
-
 	for vid in GameData.current_map_state.visited_nodes:
 		var n: MapNodeData = map_data.get_node_by_id(vid)
 		if n:
@@ -111,6 +117,7 @@ func _ready() -> void:
 	_build_hud()
 	_build_scroll()
 	_build_bottom_bar()
+	_build_forge_fab()
 	call_deferred("_build_map")
 
 	# Hardware/browser back performs the same safe Save & Quit as the bottom bar (never quits the app).
@@ -183,16 +190,61 @@ func _build_bottom_bar() -> void:
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = SIZE_EXPAND_FILL
 	hbox.add_child(spacer)
+	# Forge moved out of this bar into a prominent floating button — see _build_forge_fab().
 
-	# Forge is a permanently available action, not a map node — combining cards already
-	# costs two deck slots for one, so it doesn't need the scarcity of a rare node.
-	var forge_btn := Button.new()
-	forge_btn.text = "Forge"
-	forge_btn.add_theme_font_size_override("font_size", font)
-	forge_btn.modulate = MapNodeData.get_color(MapNodeData.Type.FORGE)
-	forge_btn.custom_minimum_size = btn_size
-	forge_btn.pressed.connect(func(): _node_kinds[MapNodeData.Type.FORGE].enter(null, self))
-	hbox.add_child(forge_btn)
+
+# A big chunky round Forge button (the one always-available action) floating over the
+# lower-right of the MAP area — deliberately pulled in off the corner and up into the main
+# content so it reads as a primary feature on its own, without glow/animation gimmicks.
+func _build_forge_fab() -> void:
+	var diam: float = forge_diam_compact if _compact else forge_diam
+	var amber := MapNodeData.get_color(MapNodeData.Type.FORGE)
+
+	var fab := Control.new()
+	# Centre the button at (forge_pos_x, forge_pos_y) of the screen — tune in the Inspector.
+	fab.anchor_left = forge_pos_x; fab.anchor_right = forge_pos_x
+	fab.anchor_top  = forge_pos_y; fab.anchor_bottom = forge_pos_y
+	fab.offset_left = -diam * 0.5; fab.offset_right  = diam * 0.5
+	fab.offset_top  = -diam * 0.5; fab.offset_bottom = diam * 0.5
+	fab.z_index = 50
+	add_child(fab)
+
+	var btn := Button.new()
+	btn.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	btn.focus_mode = Control.FOCUS_NONE
+	btn.tooltip_text = "Forge — combine two cards into one"
+	_style_forge_button(btn, amber, diam)
+	btn.pressed.connect(func(): _node_kinds[MapNodeData.Type.FORGE].enter(null, self))
+	fab.add_child(btn)
+
+	# Anvil icon centred inside the circle (clicks pass through to the button).
+	var icon := TextureRect.new()
+	icon.texture = MapNodeData.get_icon(MapNodeData.Type.FORGE)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE     # let it shrink to the circle
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	var pad := diam * 0.24
+	icon.offset_left = pad; icon.offset_top = pad
+	icon.offset_right = -pad; icon.offset_bottom = -pad
+	fab.add_child(icon)
+
+
+func _style_forge_button(btn: Button, amber: Color, diam: float) -> void:
+	for state in ["normal", "hover", "pressed"]:
+		var sb := StyleBoxFlat.new()
+		var bg := amber
+		if state == "hover":   bg = amber.lightened(0.18)
+		if state == "pressed": bg = amber.darkened(0.15)
+		sb.bg_color = bg
+		sb.set_corner_radius_all(int(diam))          # > radius/2 → clamps to a full circle
+		sb.border_color = Color(1.0, 0.93, 0.72)     # bright rim
+		sb.set_border_width_all(5)
+		sb.shadow_color = Color(0.0, 0.0, 0.0, 0.35)  # soft drop shadow for depth (no glow halo)
+		sb.shadow_size = 6
+		sb.shadow_offset = Vector2(0, 3)
+		sb.anti_aliasing = true
+		btn.add_theme_stylebox_override(state, sb)
 
 
 func _build_map() -> void:

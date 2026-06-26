@@ -1,0 +1,18 @@
+{
+  "id": "stone_legion",
+  "node_type": "combat",
+  "min_floor": 0, "max_floor": 999,
+  "min_stage": 1, "max_stage": 999,
+  "weight": 1.0,
+  "enemy_king": "stoneborn_warlord",
+  "enemy_pool": [
+    { "id": "stone_sentinel",  "weight": 3 },
+    { "id": "iron_bulwark",    "weight": 2 },
+    { "id": "granite_smasher", "weight": 1 },
+    { "id": "colossus",        "weight": 1 }
+  ],
+  "pick_count": [14, 18],
+  "gold_reward": [25, 35],
+  "ai": "default",
+  "reward_pool": "default"
+}

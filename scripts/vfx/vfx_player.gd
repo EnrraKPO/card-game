@@ -20,8 +20,13 @@ func play(event: VFXEvent) -> void:
 	await effect.play()
 
 
-# Converts EffectSystem result arrays into VFX events and plays them.
-func play_results(results: Array) -> void:
+# Converts EffectSystem result arrays into VFX events and plays them. When the effect's
+# `source` unit is on the board, health damage flies in as a projectile from it (the impact
+# snaps HP + shows the number on arrival); otherwise damage resolves on the target in place.
+func play_results(results: Array, source_inst: CardInstance = null) -> void:
+	var source_ui: CardUI = null
+	if source_inst != null and source_inst.row >= 0:
+		source_ui = _get_card_ui.call(source_inst) as CardUI
 	for r: Dictionary in results:
 		if r.is_empty():
 			continue
@@ -35,10 +40,18 @@ func play_results(results: Array) -> void:
 		var delta: int    = r.get("delta", 0)
 		if delta == 0:
 			continue
+		# A projectile defers the HP snap to its own impact, so don't double-refresh here.
+		var deferred := false
 		match attr:
 			"health":
-				if delta < 0: play(VFXEvent.health_damage(card_ui, -delta))
-				else:         play(VFXEvent.heal(card_ui, delta))
+				if delta < 0:
+					if source_ui != null and is_instance_valid(source_ui) and source_ui != card_ui:
+						play(VFXEvent.projectile(source_ui, card_ui, -delta))
+						deferred = true
+					else:
+						play(VFXEvent.health_damage(card_ui, -delta))
+				else:
+					play(VFXEvent.heal(card_ui, delta))
 			"shield":
 				if delta < 0: play(VFXEvent.shield_hit(card_ui, -delta))
 				else:         play(VFXEvent.shield_restored(card_ui, delta))
@@ -47,7 +60,8 @@ func play_results(results: Array) -> void:
 				else:         play(VFXEvent.debuff(card_ui, attr, -delta))
 		# The instance was already mutated by the effect; snap the card's printed stats so the
 		# change is visible immediately, not only at the next board-wide refresh (end of turn).
-		card_ui.refresh()
+		if not deferred:
+			card_ui.refresh()
 
 
 # ── Registry ───────────────────────────────────────────────────────────────────
@@ -63,6 +77,7 @@ func _make_effect(type: VFXEvent.Type) -> VFXEffect:
 		VFXEvent.Type.DEATH:           return VFXEffectDeath.new()
 		VFXEvent.Type.CARD_PLACED:     return VFXEffectCardPlaced.new()
 		VFXEvent.Type.SHIELD_RESTORED: return VFXEffectShieldRestored.new()
+		VFXEvent.Type.PROJECTILE:      return VFXEffectProjectile.new()
 		_:
 			push_warning("VFXPlayer: no effect registered for type %d" % type)
 			return null

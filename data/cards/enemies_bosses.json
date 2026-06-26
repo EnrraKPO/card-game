@@ -1,0 +1,56 @@
+[
+  {
+    "id": "hobgoblin_tyrant",
+    "display_name": "Hobgoblin Tyrant",
+    "cost": 0, "attack": 7, "health": 40, "speed": 4, "shield": 3,
+    "is_king": true, "enemy_only": true,
+    "description": "An elite hobgoblin who rules the warband through sheer brutality. Cut him down to win. Starts each round with 3 Shield.",
+    "elements": [], "chess_pieces": [], "effects": []
+  },
+  {
+    "id": "death_knight",
+    "display_name": "Death Knight",
+    "cost": 0, "attack": 5, "health": 44, "speed": 3, "shield": 4,
+    "is_king": true, "enemy_only": true,
+    "description": "An armored champion of the dead that mends itself with every blow. Destroy it to win. Starts each round with 4 Shield.",
+    "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_attack", "targeting_policy": "self", "attribute": "health", "amount": 2 }
+    ]
+  },
+  {
+    "id": "obsidian_behemoth",
+    "display_name": "Obsidian Behemoth",
+    "cost": 0, "attack": 5, "health": 50, "speed": 1, "shield": 8,
+    "is_king": true, "enemy_only": true,
+    "description": "A vast slab of living obsidian that anchors the legion. Bring it down to win. Slow, but starts each round with 8 Shield.",
+    "elements": [], "chess_pieces": [], "effects": []
+  },
+  {
+    "id": "gorthok",
+    "display_name": "Gorthok, the Warchief",
+    "cost": 0, "attack": 8, "health": 62, "speed": 4, "shield": 4,
+    "is_king": true, "enemy_only": true,
+    "description": "Warchief of the entire goblin horde — monstrous and merciless. Slay him to win the battle. Starts each round with 4 Shield.",
+    "elements": [], "chess_pieces": [], "effects": []
+  },
+  {
+    "id": "mortis",
+    "display_name": "Mortis, the Undying",
+    "cost": 0, "attack": 6, "health": 72, "speed": 3, "shield": 5,
+    "is_king": true, "enemy_only": true,
+    "description": "The deathless sovereign of the undead, knitting his bones whole with every strike. Destroy him to win. Starts each round with 5 Shield.",
+    "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_attack", "targeting_policy": "self", "attribute": "health", "amount": 3 }
+    ]
+  },
+  {
+    "id": "titanus",
+    "display_name": "Titanus, the World-Render",
+    "cost": 0, "attack": 6, "health": 85, "speed": 1, "shield": 10,
+    "is_king": true, "enemy_only": true,
+    "description": "A mountain that walks — the eldest of the stoneborn. Bring it down to win. Immensely slow, but starts each round with 10 Shield.",
+    "elements": [], "chess_pieces": [], "effects": []
+  }
+]
