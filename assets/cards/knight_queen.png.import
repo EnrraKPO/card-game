@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ybitnf8xtkjo"
-path="res://.godot/imported/bishop_pawn_old.png-e21e727428752df4a0d22578f52c6a28.ctex"
+uid="uid://dmnix7la8hkom"
+path="res://.godot/imported/knight_queen.png-2b0082e3bc6aee1fbf42f541ce207ac2.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/cards/bishop_pawn_old.png"
-dest_files=["res://.godot/imported/bishop_pawn_old.png-e21e727428752df4a0d22578f52c6a28.ctex"]
+source_file="res://assets/cards/knight_queen.png"
+dest_files=["res://.godot/imported/knight_queen.png-2b0082e3bc6aee1fbf42f541ce207ac2.ctex"]
 
 [params]
 

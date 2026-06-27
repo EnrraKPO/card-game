@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c6kbymexyoni0"
-path="res://.godot/imported/bishop_bishop_old.png-b3b56f698ac6f15fde692684ebf452b7.ctex"
+uid="uid://6njw11coixmv"
+path="res://.godot/imported/rook_rook.png-b750c450da15f5b99f8c983cb0a08d4b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/cards/bishop_bishop_old.png"
-dest_files=["res://.godot/imported/bishop_bishop_old.png-b3b56f698ac6f15fde692684ebf452b7.ctex"]
+source_file="res://assets/cards/rook_rook.png"
+dest_files=["res://.godot/imported/rook_rook.png-b750c450da15f5b99f8c983cb0a08d4b.ctex"]
 
 [params]
 

@@ -28,6 +28,10 @@ var enemy_only: bool = false
 # the base Bishop is ranged but most bishop-composed units aren't unless they opt in.
 var ranged: bool = false
 
+# Procedural enemy power scaling: each point of encounter `power` grows a scaled card's
+# offensive/defensive stats by this fraction (see CardData.scaled / EncounterTemplateData).
+const POWER_STAT_GROWTH := 0.05
+
 
 # A building is any unit carrying a rook in its composition. Buildings are
 # defensive structures: once placed on the board they are rooted and cannot be
@@ -180,6 +184,35 @@ static func get_card(p_id: String) -> CardData:
 	if _all.has(p_id):
 		return _all[p_id]
 	return _derive_from_key(p_id)
+
+
+# Returns a COPY of `base` with attack/health/shield grown by `power` (the procedural enemy
+# difficulty lever — same card, stronger deeper in a run). Cost/speed/effects are unchanged:
+# cost stays the card's identity on the curve (the pool weighting handles "heavier mix"). power
+# <= 0 returns the base untouched. Never registered, so it can't pollute the card pools.
+static func scaled(base: CardData, power: float) -> CardData:
+	if base == null or power <= 0.0:
+		return base
+	var c := CardData.new()
+	c.id            = base.id
+	c.display_name  = base.display_name
+	c.cost          = base.cost
+	c.speed         = base.speed
+	c.is_king       = base.is_king
+	c.card_type     = base.card_type
+	c.description   = base.description
+	c.elements      = base.elements.duplicate()
+	c.chess_pieces  = base.chess_pieces.duplicate()
+	c.enemy_only    = base.enemy_only
+	c.ranged        = base.ranged
+	c.effects       = base.effects
+	c.targeting_strategy = base.targeting_strategy
+	c.image         = base.image
+	var mult := 1.0 + power * POWER_STAT_GROWTH
+	c.attack = int(round(base.attack * mult))
+	c.health = int(round(base.health * mult))
+	c.shield = int(round(base.shield * mult))
+	return c
 
 
 static func all() -> Array:

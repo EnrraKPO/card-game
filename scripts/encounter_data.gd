@@ -7,6 +7,7 @@ enum Outcome { PENDING, WIN, LOSE }
 var type: Type = Type.COMBAT
 var enemy_deck: Array[String] = []   # card IDs; king is implicit, non-king cards only
 var enemy_king: String = "king"      # the enemy's win-condition unit (a themed Captain for tribe fights)
+var power: float = 0.0               # procedural difficulty: scales enemy card stats, deck size, captain
 var reward_pool: Array[String] = []  # card IDs offered as rewards after a win
 var relic_offer: String = ""         # optional relic id offered alongside the card pick (elites/bosses)
 var gold_reward: int = 0             # gold granted on win, set by EncounterTemplateData

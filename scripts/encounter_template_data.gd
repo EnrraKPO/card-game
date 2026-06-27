@@ -22,6 +22,18 @@ var reward_pool: String = "default"
 # Chance (0..1) this fight also offers a relic on the reward screen, alongside the card pick.
 var relic_reward_chance: float = 0.0
 
+# Extra power on top of the depth-derived value (authored per template) — lets elites/bosses
+# be tougher than a plain combat at the same floor without separate scaling code.
+var power_bonus: float = 0.0
+
+# ── Procedural difficulty (power) tuning ──────────────────────────────────────
+# `power` = how deep the player is (global floor; ~0 at the first fight). One number drives
+# three procedural levers below — raise a knob to steepen that part of the curve.
+const POWER_PER_FLOOR  := 1.0    # power gained per floor of run depth
+const POWER_CURVE_BIAS := 0.05   # how hard the pool skews toward costlier cards as power climbs
+const POWER_SIZE_GROWTH := 0.5   # extra enemy-deck cards per point of power
+# (per-card stat growth lives on CardData.POWER_STAT_GROWTH, used by CardData.scaled)
+
 static var _all: Array = []  # Array[EncounterTemplateData]
 
 
@@ -70,6 +82,7 @@ static func _from_dict(d: Dictionary) -> EncounterTemplateData:
 	t.weight      = d.get("weight", 1.0)
 	t.ai          = d.get("ai", "default")
 	t.enemy_king  = d.get("enemy_king", "king")
+	t.power_bonus = float(d.get("power_bonus", 0.0))
 	t.reward_pool = d.get("reward_pool", "default")
 	t.relic_reward_chance = float(d.get("relic_reward", 0.0))
 	t.exp_reward  = int(d.get("exp_reward", 1))
@@ -114,17 +127,24 @@ static func pick_for(p_node_type: MapNodeData.Type, floor: int, stage: int, rng:
 
 # ── Instantiation ───────────────────────────────────────────────────────────
 
-func instantiate(rng: RandomNumberGenerator) -> EncounterData:
+func instantiate(rng: RandomNumberGenerator, power: float = 0.0) -> EncounterData:
 	var enc := EncounterData.new()
 	enc.type = _encounter_data_type(node_type)
 	enc.ai   = EnemyAI.from_key(ai)
 	enc.enemy_king = enemy_king
+	enc.power = maxf(0.0, power + power_bonus)
 
-	var count: int = rng.randi_range(pick_count[0], pick_count[1])
+	# Deck size and pool composition both ramp with power: a bigger deck (more sustain) drawn
+	# from a mix that smoothly skews toward costlier cards. The per-card STAT scaling is applied
+	# later, at deck build (combat._init_enemy_deck), from enc.power.
+	var count: int = rng.randi_range(pick_count[0], pick_count[1]) \
+		+ int(round(enc.power * POWER_SIZE_GROWTH))
 	var deck: Array[String] = []
 	if not enemy_pool.is_empty():
+		var mid := _pool_mid_cost()
 		for i in count:
-			var entry: Dictionary = WeightedRandom.pick(rng, enemy_pool, func(e: Dictionary) -> float: return e.weight)
+			var entry: Dictionary = WeightedRandom.pick(rng, enemy_pool,
+				func(e: Dictionary) -> float: return float(e.weight) * _cost_bias(e.id, mid, enc.power))
 			deck.append(entry.id)
 	enc.enemy_deck = deck
 
@@ -134,6 +154,26 @@ func instantiate(rng: RandomNumberGenerator) -> EncounterData:
 	if relic_reward_chance > 0.0 and rng.randf() < relic_reward_chance:
 		enc.relic_offer = _roll_relic_offer(rng)
 	return enc
+
+
+# Average mana cost across the pool — the midpoint the cost bias pivots around.
+func _pool_mid_cost() -> float:
+	if enemy_pool.is_empty():
+		return 0.0
+	var total := 0.0
+	for e: Dictionary in enemy_pool:
+		var c := CardData.get_card(e.id)
+		total += float(c.cost) if c != null else 0.0
+	return total / float(enemy_pool.size())
+
+
+# Smoothly skews selection toward cards costlier than the pool midpoint as power climbs (gentle
+# early, strong deep). Returns 1.0 at power 0 (so the authored weights stand) — a continuous
+# exponential, so the "heavier mix" slides in gradually instead of in tier jumps.
+static func _cost_bias(id: String, mid_cost: float, power: float) -> float:
+	var c := CardData.get_card(id)
+	var cost := float(c.cost) if c != null else mid_cost
+	return exp(POWER_CURVE_BIAS * power * (cost - mid_cost))
 
 
 # Picks an un-owned relic id to offer (empty if the player already owns every relic). Reuses the

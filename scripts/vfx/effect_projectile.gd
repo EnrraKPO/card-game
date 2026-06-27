@@ -106,7 +106,7 @@ func _on_arrival() -> void:
 		_burst(_center(dst), _event.color)
 	if _event.show_impact:
 		_flash(Color(2.0, 0.3, 0.3))
-		_float_label("-%d HP" % _event.amount, Color(1.0, 0.3, 0.3))
+		_float_label("-%d" % _event.amount, Color(1.0, 0.3, 0.3), "health")
 		if dst != null and is_instance_valid(dst):
 			dst.refresh()
 

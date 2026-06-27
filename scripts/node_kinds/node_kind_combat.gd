@@ -18,7 +18,11 @@ func enter(node: MapNodeData, map_screen: MapScreen) -> void:
 		push_error("NodeKindCombat: no encounter template available for node_type %s" % node.type)
 		return
 
-	var enc := template.instantiate(rng)
+	# Difficulty scales with how deep the player is — power ≈ the number of encounters cleared so
+	# far (global floor across stages). The first fight is ~0 (gentle); it climbs every floor.
+	var global_floor := (stage - 1) * MapData.FLOORS + node.floor
+	var power := float(global_floor) * EncounterTemplateData.POWER_PER_FLOOR
+	var enc := template.instantiate(rng, power)
 	enc.material_rewards    = node.material_rewards.duplicate()   # the reward previewed on the map
 	enc.completing_node_id  = map_screen.current_node_id
 	enc.destination_node_id = node.id

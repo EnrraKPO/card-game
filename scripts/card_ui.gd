@@ -276,6 +276,59 @@ func refresh() -> void:
 	tooltip_text = desc if not desc.is_empty() else card_instance.data.display_name
 
 
+# Global-space centre of the badge that displays a given stat, so combat VFX can pop a number
+# right where its stat lives (position carries the meaning). Uses the badge's global transform so
+# the Canvas's uniform scale is accounted for. Falls back to the card centre for unknown/hidden
+# stats (e.g. a spell, or a shield badge that's currently empty).
+func stat_anchor(attr: String) -> Vector2:
+	var node: Control = null
+	match attr:
+		"attack":               node = _atk_bg
+		"health", "max_health": node = _hp_bg
+		"shield":               node = _shield_bg
+		"speed":                node = _spd_bg
+		"cost":                 node = _cost_bg
+	# Don't require `visible`: a badge that's momentarily hidden (e.g. a shield badge at 0 about to
+	# be restored) still has a valid anchored position, and we want the glint to land on it.
+	if node != null and is_instance_valid(node):
+		return node.get_global_transform() * (node.size * 0.5)
+	return global_position + size * 0.5
+
+
+# A focal "this stat just changed" pop: scales the named stat's badge — icon AND number together,
+# about their shared centre — up and back, pulling the eye straight to the badge that moved. `grow`
+# true springs a gain outward; false gives a loss a quick recoil dip. Purely transient — the badge
+# returns to its authored scale, so the card's fixed Canvas layout is never disturbed.
+func pulse_stat(attr: String, grow: bool = true) -> void:
+	var bg: Control = null
+	var lbl: Control = null
+	match attr:
+		"attack":               bg = _atk_bg;    lbl = _atk_lbl
+		"health", "max_health": bg = _hp_bg;     lbl = _hp_lbl
+		"shield":               bg = _shield_bg; lbl = _shield_lbl
+		"speed":                bg = _spd_bg;    lbl = _spd_lbl
+		"cost":                 bg = _cost_bg;   lbl = _cost_lbl
+	if bg == null or not is_instance_valid(bg):
+		return
+	var peak: float = 1.32 if grow else 0.8
+	# Both nodes pivot about the badge centre (the bg's centre) so they scale as one rigid unit
+	# instead of drifting apart.
+	var centre := bg.position + bg.size * 0.5
+	_pop_node(bg, bg.size * 0.5, peak)
+	if lbl != null and is_instance_valid(lbl):
+		_pop_node(lbl, centre - lbl.position, peak)
+
+
+func _pop_node(node: Control, pivot: Vector2, peak: float) -> void:
+	node.pivot_offset = pivot
+	# Pop out, HOLD at the peak a beat so the change registers, then settle — without the hold the
+	# badge just blinks and the eye can't catch what moved.
+	var tw := create_tween()
+	tw.tween_property(node, "scale", Vector2(peak, peak), 0.14).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	tw.tween_interval(0.14)
+	tw.tween_property(node, "scale", Vector2.ONE, 0.20).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+
+
 # Rebuilds the composition chip strip from the card's elements + chess pieces.
 func _refresh_composition() -> void:
 	for child in _comp_row.get_children():

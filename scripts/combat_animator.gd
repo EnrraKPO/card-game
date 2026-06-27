@@ -13,9 +13,10 @@ func setup(root: Node, p_get_card_ui: Callable, vfx: VFXPlayer) -> void:
 
 
 # Converts EffectSystem result arrays to VFX events via VFXPlayer. Pass `source` (the unit
-# whose effect produced these results) so direct damage flies in as a projectile from it.
+# whose effect produced these results) so direct damage flies in as a projectile from it. AWAIT
+# this so the results play as an ordered sequence and finish before the caller cleans up deaths.
 func show_effect_results(results: Array, source: CardInstance = null) -> void:
-	_vfx.play_results(results, source)
+	await _vfx.play_results(results, source)
 
 
 # ── Positional animations (lunge / retreat / shake) ───────────────────────────
@@ -45,14 +46,29 @@ func shake_card(card: CardUI) -> void:
 	await tw.finished
 
 
+# Accelerate INTO the target (EASE_IN peaks at contact) so the strike is fastest at the moment
+# of impact — the rebound picks the motion up from there without a pause.
 func play_lunge(ghost: CardUI, target_pos: Vector2) -> void:
 	var tw := create_tween()
 	tw.set_ease(Tween.EASE_IN)
 	tw.set_trans(Tween.TRANS_QUAD)
-	tw.tween_property(ghost, "global_position", target_pos, 0.3)
+	tw.tween_property(ghost, "global_position", target_pos, 0.18)
 	await tw.finished
 
 
+# Snappy recoil from the impact overshoot back to the attack position beside the target. EASE_OUT
+# leaves the overshoot fast (the bounce) and TRANS_BACK springs a hair past the rest spot before
+# settling. Chained straight off the lunge with no pause, so the overshoot reads as one motion.
+func play_rebound(ghost: CardUI, rest_pos: Vector2) -> void:
+	var tw := create_tween()
+	tw.set_ease(Tween.EASE_OUT)
+	tw.set_trans(Tween.TRANS_BACK)
+	tw.tween_property(ghost, "global_position", rest_pos, 0.14)
+	await tw.finished
+
+
+# Glide back home from the attack position, once the strike's VFX and triggered effects have
+# all resolved.
 func play_retreat(ghost: CardUI, home_pos: Vector2) -> void:
 	var tw := create_tween()
 	tw.set_ease(Tween.EASE_OUT)

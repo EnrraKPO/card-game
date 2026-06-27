@@ -11,7 +11,7 @@
     { "id": "ghoul",          "weight": 2 },
     { "id": "vampire_lord",   "weight": 1 }
   ],
-  "pick_count": [16, 22],
+  "pick_count": [5, 7],
   "gold_reward": [20, 30],
   "ai": "default",
   "reward_pool": "default"

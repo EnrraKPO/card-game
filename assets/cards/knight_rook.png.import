@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bj437rajn8jq5"
-path="res://.godot/imported/bishop_knigh_old.png-f73dee3f566f3c0ab936cb4a7c919a04.ctex"
+uid="uid://3i07e1bdcpdj"
+path="res://.godot/imported/knight_rook.png-208c3711b666e9f363b70d879756022b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/cards/bishop_knigh_old.png"
-dest_files=["res://.godot/imported/bishop_knigh_old.png-f73dee3f566f3c0ab936cb4a7c919a04.ctex"]
+source_file="res://assets/cards/knight_rook.png"
+dest_files=["res://.godot/imported/knight_rook.png-208c3711b666e9f363b70d879756022b.ctex"]
 
 [params]
 

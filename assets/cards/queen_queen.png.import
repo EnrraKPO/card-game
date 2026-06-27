@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dmb824wu8c4lg"
-path="res://.godot/imported/knight_rook_bestiary_v1.png-e317cc31f2d1b8995ad4a6eafdc39eaf.ctex"
+uid="uid://c7mdv8y4x7bqi"
+path="res://.godot/imported/queen_queen.png-32ca874bef1c659504b80c8af737f82c.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/cards/knight_rook_bestiary_v1.png"
-dest_files=["res://.godot/imported/knight_rook_bestiary_v1.png-e317cc31f2d1b8995ad4a6eafdc39eaf.ctex"]
+source_file="res://assets/cards/queen_queen.png"
+dest_files=["res://.godot/imported/queen_queen.png-32ca874bef1c659504b80c8af737f82c.ctex"]
 
 [params]
 

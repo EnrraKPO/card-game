@@ -12,7 +12,13 @@ enum Type {
 	SHIELD_RESTORED,
 	COMBINE,
 	PROJECTILE,
+	SOURCE_TRIGGER,   # the card whose ability fired flares (causality cue)
+	TARGET_MARK,      # a card singled out by an effect gets a tinted reticle
 }
+
+# SOURCE_TRIGGER look. Generic for now; the field is here so source glints can later branch by
+# the firing trigger (a battlecry shouldn't look like a deathrattle). Add values, don't replumb.
+enum TriggerVariant { GENERIC }
 
 # Projectile look: a round magic ORB (triggered/spell damage) vs a sharp BOLT streak that
 # orients along its flight path (ranged unit auto-attacks). Same system, distinct visuals.
@@ -25,6 +31,7 @@ var attribute: String = ""
 var amount:    int    = 0
 var color:     Color  = Color.WHITE
 var proj_style:  Projectile = Projectile.ORB
+var variant:     TriggerVariant = TriggerVariant.GENERIC   # SOURCE_TRIGGER look selector
 # PROJECTILE: when true the bolt resolves its own impact (flash + "-N HP" + HP snap) on arrival;
 # when false it only travels + bursts and the caller applies/labels the damage (auto-attacks,
 # which split shield vs health themselves).
@@ -76,6 +83,23 @@ static func card_placed(card: CardUI) -> VFXEvent:
 static func shield_restored(card: CardUI, amount: int) -> VFXEvent:
 	var e := VFXEvent.new()
 	e.type = Type.SHIELD_RESTORED; e.target = card; e.amount = amount
+	return e
+
+
+# The triggering card flares to show ITS ability is what fired (played once per resolution, before
+# the effect lands on its targets). `variant` is reserved for per-trigger looks (battlecry vs
+# deathrattle); only GENERIC exists today.
+static func source_trigger(card: CardUI, variant: TriggerVariant = TriggerVariant.GENERIC) -> VFXEvent:
+	var e := VFXEvent.new()
+	e.type = Type.SOURCE_TRIGGER; e.target = card; e.variant = variant
+	return e
+
+
+# A reticle that snaps onto a card singled out by an effect — the "this one is being affected"
+# cue, tinted (`color`) by what's happening to it so it reads at a glance alongside the source glint.
+static func target_mark(card: CardUI, color: Color) -> VFXEvent:
+	var e := VFXEvent.new()
+	e.type = Type.TARGET_MARK; e.target = card; e.color = color
 	return e
 
 

@@ -2,6 +2,14 @@ extends Control
 
 const HUD_HEIGHT := 72.0
 
+# Selectable battle speeds the HUD toggle cycles through (applied as Engine.time_scale). Shown as
+# percentages; every fight starts at 100% (1.0) — the dial is per-combat, not remembered.
+const BATTLE_SPEEDS: Array[float] = [0.5, 1.0, 1.5, 2.0]
+
+# Beat between a shield absorbing part of a hit and the bleed-through HP damage landing, so the
+# shield reads as taking the blow first (scaled by battle speed like every other combat beat).
+const SHIELD_LEAD := 0.14
+
 enum Phase { CPU_PLACE, PLAYER_PLACE, COMBAT, TARGETING }
 
 var _phase: Phase = Phase.CPU_PLACE
@@ -16,6 +24,8 @@ var _enemy_draw_pile: Array = []  # Array[CardInstance]
 var _turn_label: Label
 var _mana_label: Label
 var _done_btn: Button
+var _speed_btn: Button
+var _battle_speed: float = 1.0   # 100%; reset each combat, cycled by the HUD dial
 
 var _hand: Hand
 var _board: CombatBoard
@@ -23,10 +33,17 @@ var _animator: CombatAnimator
 var _spell_caster: SpellCaster
 var _vfx: VFXPlayer
 
+# While a melee attacker is lunging, its real card is hidden and a ghost duplicate does the
+# travelling. This maps such an attacker → its ghost so the attacker's own VFX (the on-attack
+# glint / self-buff) plays on the card the player is actually watching, not the hidden origin one.
+var _ghost_ui: Dictionary = {}   # CardInstance -> CardUI
+
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	Nav.clear_back()   # mid-fight — the OS back gesture stays inert so it can't quit the app
+	_battle_speed = 1.0                  # every fight starts at 100%
+	Engine.time_scale = _battle_speed
 
 	_hand         = Hand.new()
 	_board        = CombatBoard.new()
@@ -43,7 +60,11 @@ func _ready() -> void:
 	_board.is_hand_card = func(cu: CardUI) -> bool: return _hand.contains(cu)
 	_board.get_mana     = func() -> int:            return _mana
 
-	var _get_card_ui: Callable = func(inst: CardInstance) -> CardUI: return _board.get_card_ui(inst)
+	var _get_card_ui: Callable = func(inst: CardInstance) -> CardUI:
+		var ghost: CardUI = _ghost_ui.get(inst)
+		if ghost != null and is_instance_valid(ghost):
+			return ghost
+		return _board.get_card_ui(inst)
 	_vfx.setup(self, _get_card_ui)
 	_animator.setup(self, _get_card_ui, _vfx)
 
@@ -61,15 +82,23 @@ func _ready() -> void:
 	_init_enemy_deck()
 	_build_ui()
 	var enemy_king_id := "king"
+	var enemy_power := 0.0
 	if GameData.current_encounter != null and not GameData.current_encounter.enemy_king.is_empty():
 		enemy_king_id = GameData.current_encounter.enemy_king
+		enemy_power   = GameData.current_encounter.power
 	_board.place_kings(
 		GameData.current_run.king_id if GameData.current_run != null else "king",
-		enemy_king_id)
+		enemy_king_id, enemy_power)
 	_apply_king_persistence()
 	_hand.draw_initial()
 	_refresh()
 	_begin_round()
+
+
+# Combat owns the global time_scale only while it's on screen — always restore real-time on the
+# way out (win, loss, or back) so menus/map/other scenes are never left running fast.
+func _exit_tree() -> void:
+	Engine.time_scale = 1.0
 
 
 func _input(event: InputEvent) -> void:
@@ -92,9 +121,10 @@ func _init_enemy_deck() -> void:
 		ids = GameData.current_encounter.enemy_deck.duplicate()
 	else:
 		ids = ["strike", "strike", "strike", "defender", "defender", "swift", "warrior", "archer"]
+	var power: float = GameData.current_encounter.power if GameData.current_encounter != null else 0.0
 	ids.shuffle()
 	for id in ids:
-		var data := CardData.get_card(id)
+		var data := CardData.scaled(CardData.get_card(id), power)
 		if data and not data.is_king:
 			var inst := CardInstance.from_data(data)
 			inst.owner = 1
@@ -159,8 +189,8 @@ func _execute_enemy_action(action: Dictionary) -> void:
 			_enemy_mana -= inst.data.cost
 			_enemy_hand.erase(inst)
 			var results := _board.place_enemy_card(inst, action["row"], action["col"])
-			_animator.show_effect_results(results, inst)
 			_vfx.play(VFXEvent.card_placed(_board.get_card_ui(inst)))
+			await _animator.show_effect_results(results, inst)
 		EnemyAI.Action.CAST:
 			var inst: CardInstance = action["inst"]
 			_enemy_mana -= inst.data.cost
@@ -175,8 +205,8 @@ func _execute_enemy_action(action: Dictionary) -> void:
 			if b_ui != null:
 				b_ui.set_exhausted(true)
 			var results := _board.place_enemy_card(token, action["row"], action["col"])
-			_animator.show_effect_results(results, token)
 			_vfx.play(VFXEvent.card_placed(_board.get_card_ui(token)))
+			await _animator.show_effect_results(results, token)
 		EnemyAI.Action.MOVE:
 			_board.move_enemy_card(action["inst"], action["row"], action["col"])
 	await get_tree().create_timer(0.35).timeout
@@ -225,7 +255,7 @@ func _show_enemy_spell(inst: CardInstance, target: CardInstance) -> void:
 			fly.tween_property(card, "global_position", t_ui.global_position, 0.22)
 			await fly.finished
 
-	_cast_enemy_spell(inst, target)
+	await _cast_enemy_spell(inst, target)
 	await get_tree().create_timer(0.25).timeout
 	card.queue_free()
 
@@ -238,7 +268,7 @@ func _cast_enemy_spell(inst: CardInstance, target: CardInstance) -> void:
 			continue
 		var ctx := EffectContext.make(inst, _board.player_grid, _board.enemy_grid)
 		ctx.manual_target = target
-		_animator.show_effect_results(EffectSystem.apply_single(effect, inst, ctx), inst)
+		await _animator.show_effect_results(EffectSystem.apply_single(effect, inst, ctx), inst)
 		_board.cleanup_effect_deaths()
 	_board.refresh()
 
@@ -290,6 +320,7 @@ func _on_done_pressed() -> void:
 		if gained > 0:
 			var shield_ui := _board.get_card_ui(inst)
 			if shield_ui != null:
+				shield_ui.refresh()   # show the restored shield badge as the glint points at it
 				_vfx.play(VFXEvent.shield_restored(shield_ui, gained))
 	_board.refresh()
 	await _begin_round()
@@ -337,21 +368,37 @@ func _resolve_attack(attacker: CardInstance) -> void:
 		await _vfx.play(VFXEvent.projectile(
 			a_card, t_card, attacker.get_attribute("attack"),
 			Color(0.65, 0.9, 1.0), VFXEvent.Projectile.BOLT, false))
-		_apply_attack_damage(attacker, target, t_card)
+		await _apply_attack_damage(attacker, target, t_card)
 	else:
-		# Melee: lunge in, strike, retreat.
+		# Melee: lunge across and plunge INTO the target (overlapping from the side it approaches —
+		# player units from the target's left, enemy units from its right), bounce back out to the
+		# attack position beside it, and HOLD there while the strike's damage + triggered effects (e.g.
+		# bishop_pawn's heal-on-attack) resolve next to the target — only then retreat home. The lunge
+		# and rebound chain with no pause at the overshoot, so the hit keeps its momentum on impact.
 		var a_home := a_card.global_position
+		var gap := 12.0
+		var beside_x: float = (t_card.global_position.x - a_card.size.x - gap) if attacker.owner == 0 \
+			else (t_card.global_position.x + t_card.size.x + gap)
+		var beside := Vector2(beside_x, t_card.global_position.y)
+		# Overshoot PAST the attack position along the approach line (beside, pushed further from
+		# home), so the rebound retraces the exact vector the lunge came in on — a real recoil off the
+		# hit, not a step to the side.
+		var overshoot := beside + (beside - a_home).normalized() * (a_card.size.x * 0.3)
 		var ghost := _animator.spawn_ghost(a_card)
 		a_card.modulate.a = 0.0
-		await _animator.play_lunge(ghost, t_card.global_position)
-		await _animator.shake_card(t_card)
-		_apply_attack_damage(attacker, target, t_card)
+		# Route the attacker's own VFX onto the ghost while it travels (see _ghost_ui).
+		_ghost_ui[attacker] = ghost
+		await _animator.play_lunge(ghost, overshoot)
+		_animator.shake_card(t_card)               # impact shake at the apex, over the rebound
+		await _animator.play_rebound(ghost, beside)
+		await _apply_attack_damage(attacker, target, t_card)
 		await _animator.play_retreat(ghost, a_home)
+		_ghost_ui.erase(attacker)
 		ghost.queue_free()
 		a_card.modulate.a = 1.0
 
 	if not target.is_alive():
-		_animator.show_effect_results(_trigger(Effect.Trigger.ON_DEATH, target), target)
+		await _animator.show_effect_results(_trigger(Effect.Trigger.ON_DEATH, target), target)
 		await _vfx.play(VFXEvent.death(t_card))
 		_board.remove_card(target)
 	else:
@@ -368,12 +415,17 @@ func _resolve_attack(attacker: CardInstance) -> void:
 # before ON_ATTACK fires so a self-buff on attack doesn't retroactively change this hit.
 func _apply_attack_damage(attacker: CardInstance, target: CardInstance, t_card: CardUI) -> void:
 	var dmg := attacker.get_attribute("attack")
-	_animator.show_effect_results(_trigger(Effect.Trigger.ON_ATTACK, attacker), attacker)
+	await _animator.show_effect_results(_trigger(Effect.Trigger.ON_ATTACK, attacker), attacker)
 	var dmg_split := target.take_damage(dmg)
-	_animator.show_effect_results(_trigger(Effect.Trigger.ON_DAMAGE_TAKEN, target), target)
+	await _animator.show_effect_results(_trigger(Effect.Trigger.ON_DAMAGE_TAKEN, target), target)
+	# Shield reads FIRST: it takes the blow on its own badge (and only the badge — a held shield
+	# leaves the card unwounded). When the hit also bleeds through to HP, a brief halt lets the
+	# absorb land before the wound, so the shield is legible as the first thing that happened.
 	if dmg_split.shield_absorbed > 0:
 		_vfx.play(VFXEvent.shield_hit(t_card, dmg_split.shield_absorbed))
 	if dmg_split.health_damage > 0:
+		if dmg_split.shield_absorbed > 0:
+			await get_tree().create_timer(SHIELD_LEAD).timeout
 		_vfx.play(VFXEvent.health_damage(t_card, dmg_split.health_damage))
 
 
@@ -457,8 +509,8 @@ func _on_board_unit_placed(inst: CardInstance, card_ui: CardUI, from_hand: bool,
 		else:
 			_hand.remove_card(card_ui)
 		_refresh_mana()
-	_animator.show_effect_results(results, inst)
 	_vfx.play(VFXEvent.card_placed(card_ui))
+	await _animator.show_effect_results(results, inst)
 
 
 # A generated token was just played: tap its source rook (no attack this round)
@@ -567,6 +619,14 @@ func _build_hud(parent: VBoxContainer) -> void:
 	_mana_label.size_flags_horizontal = SIZE_EXPAND_FILL
 	hbox.add_child(_mana_label)
 
+	# Battle-speed toggle — cycles 1x → 2x → 4x, persisted and applied live as Engine.time_scale.
+	_speed_btn = Button.new()
+	_speed_btn.custom_minimum_size = Vector2(120 if compact else 76, 88 if compact else 0)
+	_speed_btn.add_theme_font_size_override("font_size", 30 if compact else 16)
+	_speed_btn.pressed.connect(_on_speed_pressed)
+	hbox.add_child(_speed_btn)
+	_refresh_speed_btn()
+
 	# The key touch target — "Done placing". Make it big on compact.
 	_done_btn = Button.new()
 	_done_btn.custom_minimum_size = Vector2(320 if compact else 200, 88 if compact else 0)
@@ -596,6 +656,20 @@ func _refresh() -> void:
 func _refresh_mana() -> void:
 	if _mana_label:
 		_mana_label.text = "Mana  %d / %d  " % [_mana, _max_mana]
+
+
+# Advance to the next battle speed, applying it immediately (live time_scale). Per-combat only —
+# not persisted, so the next fight starts back at 100%.
+func _on_speed_pressed() -> void:
+	var i := BATTLE_SPEEDS.find(_battle_speed)
+	_battle_speed = BATTLE_SPEEDS[(i + 1) % BATTLE_SPEEDS.size()]
+	Engine.time_scale = _battle_speed
+	_refresh_speed_btn()
+
+
+func _refresh_speed_btn() -> void:
+	if _speed_btn:
+		_speed_btn.text = "%d%%" % roundi(_battle_speed * 100.0)
 
 
 func _refresh_done_btn() -> void:

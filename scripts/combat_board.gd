@@ -82,7 +82,8 @@ func build_section(parent: BoxContainer, is_player: bool) -> void:
 			grid.add_child(slot)
 
 
-func place_kings(player_king_id: String = "king", enemy_king_id: String = "king") -> void:
+func place_kings(player_king_id: String = "king", enemy_king_id: String = "king",
+		enemy_power: float = 0.0) -> void:
 	var back: int = BoardData.ROWS - 1
 
 	var pk := CardInstance.from_data(CardData.get_card(player_king_id))
@@ -90,7 +91,8 @@ func place_kings(player_king_id: String = "king", enemy_king_id: String = "king"
 	player_grid[back][0] = pk
 	player_slots[back][0].set_card(CardUI.create(pk))
 
-	var ek := CardInstance.from_data(CardData.get_card(enemy_king_id))
+	# The enemy Captain scales with encounter power, like the rest of the deck.
+	var ek := CardInstance.from_data(CardData.scaled(CardData.get_card(enemy_king_id), enemy_power))
 	ek.row = back; ek.col = BoardData.COLS - 1; ek.owner = 1
 	enemy_grid[back][BoardData.COLS - 1] = ek
 	enemy_slots[back][BoardData.COLS - 1].set_card(CardUI.create(ek))
@@ -245,7 +247,7 @@ func _can_drop_on_player_slot(card_ui: CardUI, _slot: SlotUI) -> bool:
 	if card_ui.card_instance.is_spell:
 		return false
 	if is_hand_card.call(card_ui):
-		return card_ui.card_instance.data.cost <= get_mana.call()
+		return card_ui.card_instance.get_attribute("cost") <= get_mana.call()
 	return true
 
 

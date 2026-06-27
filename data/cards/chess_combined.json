@@ -130,7 +130,7 @@
 	"elements": [], "chess_pieces": ["rook", "rook"], "effects": []
   },
   {
-	"id": "queen_rook",
+	"id": "rook_queen",
 	"display_name": "Castle",
 	"cost": 7, "attack": 7, "health": 10, "speed": 2, "shield": 4,
 	"description": "A royal stronghold. Fortifies all allies with +3 Max HP and holds the line against the sturdiest enemy. Starts each round with 4 Shield.",

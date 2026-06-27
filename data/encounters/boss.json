@@ -5,13 +5,14 @@
     "min_floor": 0, "max_floor": 999,
     "weight": 1.0,
     "enemy_king": "gorthok",
+    "power_bonus": 4.0,
     "enemy_pool": [
       { "id": "goblin_cutter",  "weight": 2 },
       { "id": "goblin_fanatic", "weight": 3 },
       { "id": "goblin_bomber",  "weight": 2 },
       { "id": "goblin_warboss", "weight": 3 }
     ],
-    "pick_count": [18, 22],
+    "pick_count": [7, 9],
     "gold_reward": [75, 100],
     "exp_reward": 5,
     "ai": "default",
@@ -24,13 +25,14 @@
     "min_floor": 0, "max_floor": 999,
     "weight": 1.0,
     "enemy_king": "mortis",
+    "power_bonus": 4.0,
     "enemy_pool": [
       { "id": "skeleton_grunt", "weight": 2 },
       { "id": "bone_archer",    "weight": 3 },
       { "id": "ghoul",          "weight": 3 },
       { "id": "vampire_lord",   "weight": 2 }
     ],
-    "pick_count": [16, 20],
+    "pick_count": [7, 9],
     "gold_reward": [75, 100],
     "exp_reward": 5,
     "ai": "default",
@@ -43,13 +45,14 @@
     "min_floor": 0, "max_floor": 999,
     "weight": 1.0,
     "enemy_king": "titanus",
+    "power_bonus": 4.0,
     "enemy_pool": [
       { "id": "stone_sentinel",  "weight": 2 },
       { "id": "iron_bulwark",    "weight": 3 },
       { "id": "granite_smasher", "weight": 3 },
       { "id": "colossus",        "weight": 3 }
     ],
-    "pick_count": [14, 18],
+    "pick_count": [6, 8],
     "gold_reward": [75, 100],
     "exp_reward": 5,
     "ai": "default",

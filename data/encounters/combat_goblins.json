@@ -11,7 +11,7 @@
     { "id": "goblin_bomber",  "weight": 1 },
     { "id": "goblin_warboss", "weight": 1 }
   ],
-  "pick_count": [18, 24],
+  "pick_count": [5, 7],
   "gold_reward": [20, 30],
   "ai": "default",
   "reward_pool": "default"

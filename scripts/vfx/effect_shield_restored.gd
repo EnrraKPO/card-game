@@ -4,7 +4,8 @@ extends VFXEffect
 func play() -> void:
 	if _event.target == null:
 		queue_free(); return
-	_flash(Color(0.4, 0.8, 2.0), 0.5)
+	# Glint ONLY — no floating number. Per-turn shield regen fires on every unit at once, so a label
+	# here is pure spam; the gain glint on the shield badge is enough to point the eye.
 	if _event.amount > 0:
-		_float_label("+%d SHD" % _event.amount, Color(0.35, 0.75, 1.0))
+		_stat_glint("shield", Color(0.4, 0.8, 1.0), true)
 	queue_free()

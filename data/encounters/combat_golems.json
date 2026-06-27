@@ -11,7 +11,7 @@
     { "id": "granite_smasher", "weight": 1 },
     { "id": "colossus",        "weight": 1 }
   ],
-  "pick_count": [14, 18],
+  "pick_count": [4, 6],
   "gold_reward": [25, 35],
   "ai": "default",
   "reward_pool": "default"

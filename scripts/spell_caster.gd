@@ -56,7 +56,7 @@ func _on_spell_card_pressed(card_ui: CardUI) -> void:
 		card_ui.set_selected(false)
 		if manual_target == null:
 			return
-	_execute_spell(card_ui, manual_target)
+	await _execute_spell(card_ui, manual_target)
 
 
 func _on_spell_dropped(slot: SlotUI, card_ui: CardUI) -> void:
@@ -70,7 +70,7 @@ func _on_spell_dropped(slot: SlotUI, card_ui: CardUI) -> void:
 		return
 	if not _can_afford(card_ui):
 		return
-	_execute_spell(card_ui, target_ui.card_instance)
+	await _execute_spell(card_ui, target_ui.card_instance)
 
 
 func _on_spell_drag_started(card_ui: CardUI) -> void:
@@ -114,7 +114,7 @@ func _execute_spell(card_ui: CardUI, manual_target: CardInstance) -> void:
 		var ctx := EffectContext.make(inst, board.player_grid, board.enemy_grid)
 		ctx.manual_target = manual_target
 		var results := EffectSystem.apply_single(effect, inst, ctx)
-		animator.show_effect_results(results)
+		await animator.show_effect_results(results)
 		board.cleanup_effect_deaths()
 	board.refresh()
 
