@@ -28,6 +28,7 @@ var _inv_height := 160.0
 var _inv_lift := 0.0       # gap kept below the inventory bar so it clears the screen edge
 var _open_key := ""
 
+
 var _stage: Control
 var _panel_host: Control
 var _panel_center: MarginContainer
@@ -59,7 +60,10 @@ func _ready() -> void:
 		return
 	UIScale.layout_changed.connect(func(): get_tree().reload_current_scene(), CONNECT_ONE_SHOT)
 	_compact = UIScale.is_compact()
-	_inv_height = 220.0 if _compact else 150.0
+	# Snug to one row of tokens: token height + heading + paddings + a small buffer, so the full
+	# token shows without a scrollbar but the bar doesn't tower over the tokens either.
+	# (token 128/92  +  heading ~30/22  +  VBox sep 8  +  panel pad 28  +  ~16/14 buffer)
+	_inv_height = 210.0 if _compact else 164.0
 	# Float the inventory above the very bottom edge — the lowest band is where mobile gesture
 	# bars / browser chrome steal touches, which made the resource tokens hard to tap.
 	_inv_lift = (UIScale.safe_inset() + 24.0) if _compact else UIScale.safe_inset()
@@ -204,6 +208,18 @@ func _open(key: String) -> void:
 	_open_key = key
 	for child in _panel_center.get_children():
 		child.queue_free()
+	# Near full-width on compact; a centred, capped-width modal on desktop so the bigger
+	# components fill the panel instead of clustering in a corner of a sprawling box.
+	var vp := get_viewport_rect().size
+	# Desktop: a generous two-column modal that claims most of the width (capped so it never gets
+	# absurd on ultrawides). Compact: near full-bleed with a thin safe margin.
+	var panel_w := minf(vp.x * 0.82, 1120.0)
+	var v_m := 16 if _compact else 28
+	var h_m := 16 if _compact else int(maxf((vp.x - panel_w) * 0.5, 28.0))
+	for side in ["top", "bottom"]:
+		_panel_center.add_theme_constant_override("margin_" + side, v_m)
+	for side in ["left", "right"]:
+		_panel_center.add_theme_constant_override("margin_" + side, h_m)
 	_panel_center.add_child(_build_feature_panel(key))
 	_panel_host.visible = true
 	_refresh_open()
@@ -255,8 +271,8 @@ func _build_feature_panel(key: String) -> Control:
 	header.add_child(title)
 	var close := Button.new()
 	close.text = "✕"
-	close.add_theme_font_size_override("font_size", 30 if _compact else 20)
-	close.custom_minimum_size = Vector2(72, 72) if _compact else Vector2(40, 36)
+	close.add_theme_font_size_override("font_size", 34 if _compact else 26)
+	close.custom_minimum_size = Vector2(84, 84) if _compact else Vector2(56, 52)
 	close.pressed.connect(_collapse)
 	header.add_child(close)
 
@@ -265,16 +281,21 @@ func _build_feature_panel(key: String) -> Control:
 	sub.add_theme_font_size_override("font_size", 20 if _compact else 14)
 	sub.modulate = Color(0.7, 0.72, 0.8)
 	sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	# An autowrap Label otherwise reports a ~1px min width and a huge min height (text wrapped one
+	# word per line), which balloons the panel's minimum and bloats it on reopen. A real min width
+	# makes its min height sane; it still wraps to the full width when actually laid out.
+	sub.custom_minimum_size.x = 300.0
 	box.add_child(sub)
 
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	box.add_child(scroll)
+	# Body fills the panel directly (no ScrollContainer — it would size the body to its content
+	# height and starve the preview's EXPAND_FILL of slack). The preview claims the leftover
+	# space, distributing as slots-on-top / big-preview-middle / button-bottom.
 	var body := VBoxContainer.new()
 	body.size_flags_horizontal = SIZE_EXPAND_FILL
-	body.add_theme_constant_override("separation", 12)
-	scroll.add_child(body)
+	body.size_flags_vertical = SIZE_EXPAND_FILL
+	body.alignment = BoxContainer.ALIGNMENT_CENTER   # centre when no child expands (e.g. Refinery)
+	body.add_theme_constant_override("separation", 20 if _compact else 16)
+	box.add_child(body)
 
 	match key:
 		"refinery":   _refinery_body(body)
@@ -379,20 +400,29 @@ func _rebuild_inventory() -> void:
 		_inventory.add_child(token)
 
 
-# Tap-to-assign: route a clicked resource into the open artifact's first compatible slot
-# (empty slots first, otherwise replace the first that accepts it). No-op when nothing's open.
+# Tap-to-assign: route a clicked resource into the open artifact's first empty compatible slot.
+# If every compatible slot is already filled, do nothing (don't silently replace one) and say so —
+# the player can tap a filled slot to clear it first. No-op when nothing's open.
 func _on_token_clicked(id: String) -> void:
 	if _open_key.is_empty():
 		return
-	var slots := _open_slots()
-	for slot: DropSlot in slots:
+	for slot: DropSlot in _open_slots():
 		if slot.staged_id.is_empty() and slot.can_accept.call(id):
 			slot.stage(id)
 			return
-	for slot: DropSlot in slots:
-		if slot.can_accept.call(id):
-			slot.stage(id)
-			return
+	_set_open_status("No empty slots available.")
+
+
+# Set the open artifact's status line (each facility has its own). Lasts until the next slot
+# change refreshes it via the facility's _update_*.
+func _set_open_status(text: String) -> void:
+	var label: Label = null
+	match _open_key:
+		"refinery":   label = _refine_status
+		"card_forge": label = _mint_status
+		"king_forge": label = _forge_status
+	if is_instance_valid(label):
+		label.text = text
 
 
 # True if the open facility can use this resource — i.e. any of its slots accepts it.
@@ -423,28 +453,32 @@ func _open_slots() -> Array:
 # ── Refinery ────────────────────────────────────────────────────────────────────────────
 
 func _refinery_body(box: VBoxContainer) -> void:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 14)
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	box.add_child(row)
+	var cols := _columns(box)
+	var left: VBoxContainer = cols[0]
+	var right: VBoxContainer = cols[1]
+
+	var slots := _slot_grid(1)
+	left.add_child(slots)
 
 	_refinery_slot = DropSlot.new().setup("Essence", _compact)
 	_refinery_slot.can_accept = func(id: String) -> bool: return id in Materials.ELEMENTS
 	_refinery_slot.on_changed = _update_refinery
-	row.add_child(_refinery_slot)
+	slots.add_child(_refinery_slot)
+
+	_refine_status = Label.new()
+	_refine_status.add_theme_font_size_override("font_size", 22 if _compact else 15)
+	_refine_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_refine_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_refine_status.custom_minimum_size.x = 240.0   # keep autowrap from inflating min height (see sub)
+	right.add_child(_refine_status)
 
 	_refine_btn = Button.new()
 	_refine_btn.text = "Refine"
-	_refine_btn.add_theme_font_size_override("font_size", 24 if _compact else 16)
-	_refine_btn.custom_minimum_size = Vector2(0, 84) if _compact else Vector2(140, 0)
+	_refine_btn.add_theme_font_size_override("font_size", 32 if _compact else 26)
+	_refine_btn.custom_minimum_size = Vector2(0, 116) if _compact else Vector2(0, 80)
+	_refine_btn.size_flags_horizontal = SIZE_FILL
 	_refine_btn.pressed.connect(_on_refine)
-	row.add_child(_refine_btn)
-
-	_refine_status = Label.new()
-	_refine_status.add_theme_font_size_override("font_size", 19 if _compact else 13)
-	_refine_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_refine_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	box.add_child(_refine_status)
+	right.add_child(_refine_btn)
 
 
 func _update_refinery() -> void:
@@ -472,13 +506,98 @@ func _on_refine() -> void:
 	_refresh_open()
 
 
+# ── Panel layout scaffolding (two-column on desktop, stacked on compact) ─────────────────
+
+# Splits a feature-panel body into [left, right] columns: side-by-side (slots | preview+action)
+# on a wide desktop panel so it fills the width, or — on compact — a single stacked column
+# (both entries are the body itself, so callers just append slots → preview → button in order).
+func _columns(body: VBoxContainer) -> Array:
+	if _compact:
+		return [body, body]
+	var row := HBoxContainer.new()
+	row.size_flags_vertical = SIZE_EXPAND_FILL
+	row.add_theme_constant_override("separation", 32)
+	body.add_child(row)
+	var cols: Array = []
+	for i in 2:
+		var col := VBoxContainer.new()
+		col.size_flags_horizontal = SIZE_EXPAND_FILL
+		col.size_flags_vertical = SIZE_EXPAND_FILL
+		col.alignment = BoxContainer.ALIGNMENT_CENTER   # centre content when nothing expands
+		col.add_theme_constant_override("separation", 16)
+		row.add_child(col)
+		cols.append(col)
+	return cols
+
+
+# A centred holder for an artifact's drop slots, in a fixed `columns`-wide grid. A GridContainer
+# (not an HFlowContainer) on purpose: FlowContainer's minimum size is width-dependent and
+# order-sensitive, so a panel rebuilt while hidden then shown could carry a stale single-row
+# minimum and blow the column width on the next open. The grid's minimum is deterministic.
+func _slot_grid(columns: int) -> GridContainer:
+	var grid := GridContainer.new()
+	grid.columns = columns
+	grid.size_flags_horizontal = SIZE_SHRINK_CENTER
+	grid.size_flags_vertical = SIZE_SHRINK_CENTER
+	grid.add_theme_constant_override("h_separation", 16)
+	grid.add_theme_constant_override("v_separation", 16)
+	return grid
+
+
+# An expanding preview holder. Deliberately a PLAIN Control (not AspectRatioContainer/Center-
+# Container): those report a minimum size derived from their child/own prior layout, which is what
+# made the panel grow and bleed off-screen on reopen. A plain Control contributes ZERO minimum, so
+# the preview can never push the panel bigger; the card inside is sized/centred manually by
+# _fit_preview against the holder's real rect — bounded by construction, no size math.
+func _make_preview_holder() -> Control:
+	var holder := Control.new()
+	holder.size_flags_horizontal = SIZE_EXPAND_FILL
+	holder.size_flags_vertical = SIZE_EXPAND_FILL
+	holder.clip_contents = true
+	holder.resized.connect(_fit_preview.bind(holder))
+	return holder
+
+
+# Empty the preview holder now (detach immediately, not deferred).
+func _clear_preview(holder: Control) -> void:
+	for child in holder.get_children():
+		holder.remove_child(child)
+		child.queue_free()
+
+
+# Size the holder's card to the largest that keeps the card aspect and fits the holder, centred.
+func _fit_preview(holder: Control) -> void:
+	if holder.get_child_count() == 0:
+		return
+	var card := holder.get_child(0) as Control
+	var avail := holder.size
+	var w := minf(avail.x, avail.y / DeckUI.CARD_RATIO)
+	var sz := Vector2(w, w * DeckUI.CARD_RATIO)
+	card.size = sz
+	card.position = (avail - sz) * 0.5
+
+
+# Show `card_id`'s card filling `holder`. custom_minimum_size is zeroed (so it never grows the
+# panel) and the card is positioned/sized by _fit_preview.
+func _set_preview(holder: Control, card_id: String, interactive: bool) -> void:
+	for child in holder.get_children():
+		holder.remove_child(child)   # detach now so _fit_preview never sizes a stale, dying card
+		child.queue_free()
+	var card := DeckUI.card_thumbnail(card_id, 10.0, interactive)
+	card.custom_minimum_size = Vector2.ZERO
+	holder.add_child(card)
+	_fit_preview(holder)
+
+
 # ── Card Forge ──────────────────────────────────────────────────────────────────────────
 
 func _card_forge_body(box: VBoxContainer) -> void:
-	var slots := HBoxContainer.new()
-	slots.add_theme_constant_override("separation", 10)
-	slots.alignment = BoxContainer.ALIGNMENT_CENTER
-	box.add_child(slots)
+	var cols := _columns(box)
+	var left: VBoxContainer = cols[0]
+	var right: VBoxContainer = cols[1]
+
+	var slots := _slot_grid(2)
+	left.add_child(slots)
 
 	_mint_stone_slots.clear()
 	for i in 2:
@@ -495,23 +614,23 @@ func _card_forge_body(box: VBoxContainer) -> void:
 		slots.add_child(slot)
 		_mint_piece_slots.append(slot)
 
-	_mint_preview = CenterContainer.new()
-	_mint_preview.custom_minimum_size.y = (150.0 if _compact else 104.0) * DeckUI.CARD_RATIO
-	box.add_child(_mint_preview)
+	_mint_preview = _make_preview_holder()
+	right.add_child(_mint_preview)
 
 	_mint_status = Label.new()
-	_mint_status.add_theme_font_size_override("font_size", 19 if _compact else 13)
+	_mint_status.add_theme_font_size_override("font_size", 22 if _compact else 15)
 	_mint_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_mint_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	box.add_child(_mint_status)
+	_mint_status.custom_minimum_size.x = 240.0   # keep autowrap from inflating min height (see sub)
+	right.add_child(_mint_status)
 
 	_mint_btn = Button.new()
 	_mint_btn.text = "Craft Card"
-	_mint_btn.add_theme_font_size_override("font_size", 24 if _compact else 16)
-	_mint_btn.custom_minimum_size = Vector2(0, 84) if _compact else Vector2(160, 0)
-	_mint_btn.size_flags_horizontal = SIZE_SHRINK_CENTER
+	_mint_btn.add_theme_font_size_override("font_size", 32 if _compact else 26)
+	_mint_btn.custom_minimum_size = Vector2(0, 116) if _compact else Vector2(0, 80)
+	_mint_btn.size_flags_horizontal = SIZE_FILL
 	_mint_btn.pressed.connect(_on_mint)
-	box.add_child(_mint_btn)
+	right.add_child(_mint_btn)
 
 
 func _staged_card_id() -> String:
@@ -533,18 +652,16 @@ func _staged_card_id() -> String:
 
 
 func _update_card_forge() -> void:
-	for child in _mint_preview.get_children():
-		child.queue_free()
-
 	var card_id := _staged_card_id()
 	if card_id.is_empty():
+		_clear_preview(_mint_preview)
 		_mint_status.text = "Drop ingredients to design a card."
 		_mint_btn.disabled = true
 		return
 
 	var card := CardData.get_card(card_id)
 	var card_name: String = card.display_name if card != null else card_id
-	_mint_preview.add_child(DeckUI.card_thumbnail(card_id, 150.0 if _compact else 104.0, true))
+	_set_preview(_mint_preview, card_id, true)
 
 	if not Lab.is_mintable(card_id):
 		_mint_status.text = "Can't craft %s here." % card_name
@@ -571,10 +688,12 @@ func _on_mint() -> void:
 # ── King Forge ──────────────────────────────────────────────────────────────────────────
 
 func _king_forge_body(box: VBoxContainer) -> void:
-	var slots := HBoxContainer.new()
-	slots.add_theme_constant_override("separation", 12)
-	slots.alignment = BoxContainer.ALIGNMENT_CENTER
-	box.add_child(slots)
+	var cols := _columns(box)
+	var left: VBoxContainer = cols[0]
+	var right: VBoxContainer = cols[1]
+
+	var slots := _slot_grid(3)
+	left.add_child(slots)
 
 	_king_slot = DropSlot.new().setup("King Piece", _compact)
 	_king_slot.can_accept = func(id: String) -> bool: return id == Lab.KING_PIECE
@@ -589,23 +708,23 @@ func _king_forge_body(box: VBoxContainer) -> void:
 		slots.add_child(slot)
 		_stone_slots.append(slot)
 
-	_forge_preview = CenterContainer.new()
-	_forge_preview.custom_minimum_size.y = (160.0 if _compact else 110.0) * DeckUI.CARD_RATIO
-	box.add_child(_forge_preview)
+	_forge_preview = _make_preview_holder()
+	right.add_child(_forge_preview)
 
 	_forge_status = Label.new()
-	_forge_status.add_theme_font_size_override("font_size", 19 if _compact else 13)
+	_forge_status.add_theme_font_size_override("font_size", 22 if _compact else 15)
 	_forge_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_forge_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	box.add_child(_forge_status)
+	_forge_status.custom_minimum_size.x = 240.0   # keep autowrap from inflating min height (see sub)
+	right.add_child(_forge_status)
 
 	_forge_btn = Button.new()
 	_forge_btn.text = "Forge King"
-	_forge_btn.add_theme_font_size_override("font_size", 24 if _compact else 16)
-	_forge_btn.custom_minimum_size = Vector2(0, 84) if _compact else Vector2(160, 0)
-	_forge_btn.size_flags_horizontal = SIZE_SHRINK_CENTER
+	_forge_btn.add_theme_font_size_override("font_size", 32 if _compact else 26)
+	_forge_btn.custom_minimum_size = Vector2(0, 116) if _compact else Vector2(0, 80)
+	_forge_btn.size_flags_horizontal = SIZE_FILL
 	_forge_btn.pressed.connect(_on_forge)
-	box.add_child(_forge_btn)
+	right.add_child(_forge_btn)
 
 
 func _staged_element(slot: DropSlot) -> String:
@@ -613,12 +732,10 @@ func _staged_element(slot: DropSlot) -> String:
 
 
 func _update_forge() -> void:
-	for child in _forge_preview.get_children():
-		child.queue_free()
-
 	var a := _staged_element(_stone_slots[0])
 	var b := _staged_element(_stone_slots[1])
 	if a.is_empty() or b.is_empty():
+		_clear_preview(_forge_preview)
 		_forge_status.text = "Drop two stones to choose a King."
 		_forge_btn.disabled = true
 		return
@@ -626,7 +743,7 @@ func _update_forge() -> void:
 	var king_id := Lab.king_id_for(a, b)
 	var king := CardData.get_card(king_id)
 	var king_name: String = king.display_name if king != null else king_id
-	_forge_preview.add_child(DeckUI.king_thumbnail(king_id, 160.0 if _compact else 110.0))
+	_set_preview(_forge_preview, king_id, false)
 
 	var profile := GameData.current_profile
 	if king_id in profile.unlocked_kings:

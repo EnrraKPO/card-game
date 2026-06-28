@@ -110,6 +110,15 @@ static func color(id: String) -> Color:
 	return ELEMENT_COLOR.get(element_of(id), Color.WHITE)
 
 
+# The discreet backing tint for a material's token/slot: elemental colour for essences and
+# stones, gold for the King (the prize), and a neutral grey for the other chess pieces so
+# their illustrated art reads on its own rather than under a coloured wash.
+static func frame_tint(id: String) -> Color:
+	if is_piece(id) and piece_of(id) != "king":
+		return Color(0.78, 0.80, 0.85)
+	return color(id)
+
+
 # Illustrated art for a material id, or null if it has none yet. Pieces, stones and elemental
 # essences are all illustrated now.
 static func texture(id: String) -> Texture2D:

@@ -39,12 +39,9 @@ func _build() -> void:
 		custom_minimum_size = Vector2(150, 80) if _compact else Vector2(108, 58)
 
 	# Discreet framing: a faint translucent backing, no outline — the art (or label) carries the
-	# identity, the panel just gives it a subtle resting place. Elemental resources (essences /
-	# stones) tint the backing by their colour; chess pieces stay neutral so their art reads on
-	# its own — except the King, which keeps its gold tint to mark it as the special one.
-	var tint := c
-	if Materials.is_piece(material_id) and Materials.piece_of(material_id) != "king":
-		tint = Color(0.78, 0.80, 0.85)
+	# identity, the panel just gives it a subtle resting place. See Materials.frame_tint for the
+	# colour rule (elemental tint for essences/stones + the King, neutral for the other pieces).
+	var tint := Materials.frame_tint(material_id)
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = Color(tint.r, tint.g, tint.b, 0.10)
 	sb.set_corner_radius_all(8)

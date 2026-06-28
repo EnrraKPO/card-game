@@ -94,7 +94,7 @@
   },
   {
 	"id": "bishop_bishop",
-	"display_name": "Cardinal",
+	"display_name": "Hierophant",
 	"cost": 4, "attack": 6, "health": 4, "speed": 4,
 	"description": "Twin diviners. Blasts every enemy for 1 on arrival, then hunts the most wounded.",
 	"elements": [], "chess_pieces": ["bishop", "bishop"],

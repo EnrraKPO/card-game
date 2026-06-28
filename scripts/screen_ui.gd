@@ -161,8 +161,8 @@ static func close_button(action: Callable) -> Button:
 	var btn := Button.new()
 	btn.text = CLOSE_GLYPH
 	btn.tooltip_text = "Close"
-	btn.add_theme_font_size_override("font_size", 32 if compact else 20)
-	btn.custom_minimum_size = Vector2(84, 84) if compact else Vector2(44, 40)
+	btn.add_theme_font_size_override("font_size", 34 if compact else 24)
+	btn.custom_minimum_size = Vector2(88, 88) if compact else Vector2(56, 52)
 	btn.pressed.connect(action)
 	return btn
 
@@ -172,8 +172,8 @@ static func back_button(action: Callable) -> Button:
 	var compact := UIScale.is_compact()
 	var btn := Button.new()
 	btn.text = "‹ Back"
-	btn.add_theme_font_size_override("font_size", 30 if compact else 18)
-	btn.custom_minimum_size = Vector2(200, 84) if compact else Vector2(120, 40)
+	btn.add_theme_font_size_override("font_size", 30 if compact else 22)
+	btn.custom_minimum_size = Vector2(210, 88) if compact else Vector2(150, 54)
 	btn.pressed.connect(action)
 	return btn
 

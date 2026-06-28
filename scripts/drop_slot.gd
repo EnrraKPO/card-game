@@ -26,12 +26,14 @@ func setup(label: String, compact: bool) -> DropSlot:
 
 
 func _build() -> void:
-	custom_minimum_size = Vector2(150, 112) if _compact else Vector2(118, 84)
-	# Illustrated art for a staged piece, behind the name label (hidden until one is staged).
+	# Portrait to match the resource art (pieces/stones are tall), so the illustration fills the
+	# slot instead of floating in a wide box with big side gaps.
+	custom_minimum_size = Vector2(116, 184) if _compact else Vector2(96, 152)
+	# Staged art fills the slot (inset by the panel's content margin — see _refresh). It replaces
+	# the label entirely when present — no text stacked over the illustration. The label is the
+	# empty-slot placeholder. NB: PanelContainer stretches children to its content rect and
+	# ignores manual offsets, so the margin must live on the stylebox, not here.
 	_art = TextureRect.new()
-	_art.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	_art.offset_bottom = -(28 if _compact else 20)   # leave room for the name strip below
-	_art.offset_top = 6
 	_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_art.mouse_filter = MOUSE_FILTER_IGNORE
@@ -65,33 +67,38 @@ func stage(id: String) -> bool:
 
 func _refresh() -> void:
 	var sb := StyleBoxFlat.new()
-	sb.set_corner_radius_all(8)
+	sb.set_corner_radius_all(10)
 	sb.set_border_width_all(2)
+	# Content margin = the breathing room around the art (PanelContainer insets children by it).
+	var pad := 18.0 if _compact else 15.0
+	for side in ["left", "right", "top", "bottom"]:
+		sb.set("content_margin_" + side, pad)
 	if staged_id.is_empty():
-		sb.bg_color = Color(0.12, 0.13, 0.18)
+		# Empty: a quiet dashed-feeling well that reads as "drop here".
+		sb.bg_color = Color(0.12, 0.13, 0.18, 0.85)
 		sb.border_color = Color(0.40, 0.42, 0.50)
 		_label.text = slot_label
 		_label.add_theme_color_override("font_color", Color(0.60, 0.62, 0.70))
 		_set_art(null)
 	else:
-		var c := Materials.color(staged_id)
-		sb.bg_color = Color(c.r, c.g, c.b, 0.25)
-		sb.border_color = c
-		_label.text = Materials.short_name(staged_id)
-		_label.add_theme_color_override("font_color", c)
-		_set_art(Materials.texture(staged_id))
+		# Filled: the same discreet tint the inventory tokens use, with the art front and centre.
+		var tint := Materials.frame_tint(staged_id)
+		sb.bg_color = Color(tint.r, tint.g, tint.b, 0.14)
+		sb.border_color = Color(tint.r, tint.g, tint.b, 0.55)
+		var tex := Materials.texture(staged_id)
+		_set_art(tex)
+		if tex == null:   # fallback for any resource without art: show its name
+			_label.text = Materials.short_name(staged_id)
+			_label.add_theme_color_override("font_color", Materials.color(staged_id))
 	add_theme_stylebox_override("panel", sb)
 
 
-# Show the staged piece's art (if any) filling the slot, with the name pinned to a bottom
-# strip; with no art the label centres in the whole slot as before.
+# Show the staged resource's art filling the slot; the art replaces the label entirely (no
+# text stacked over the illustration). With no art the label carries the slot's content.
 func _set_art(tex: Texture2D) -> void:
 	_art.texture = tex
 	_art.visible = tex != null
-	if tex != null:
-		_label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
-	else:
-		_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_label.visible = tex == null
 
 
 func _can_drop_data(_at: Vector2, data: Variant) -> bool:
