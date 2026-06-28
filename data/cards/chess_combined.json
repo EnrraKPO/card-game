@@ -71,7 +71,7 @@
   },
   {
 	"id": "knight_queen",
-	"display_name": "Monster",
+	"display_name": "Myth",
 	"cost": 6, "attack": 7, "health": 7, "speed": 5,
 	"description": "A towering horror that leaps the front column and drains 2 HP with each attack.",
 	"elements": [], "chess_pieces": ["knight", "queen"],
@@ -81,7 +81,7 @@
   },
   {
 	"id": "knight_rook",
-	"display_name": "Bestiary",
+	"display_name": "Stable",
 	"cost": 5, "attack": 5, "health": 9, "speed": 3, "shield": 3,
 	"description": "A caged menace. Leaps the front column and, once wounded to 4 HP or less, rages for +2 Attack. Starts each round with 3 Shield.",
 	"elements": [], "chess_pieces": ["knight", "rook"],
@@ -94,7 +94,7 @@
   },
   {
 	"id": "bishop_bishop",
-	"display_name": "Sorcerer",
+	"display_name": "Cardinal",
 	"cost": 4, "attack": 6, "health": 4, "speed": 4,
 	"description": "Twin diviners. Blasts every enemy for 1 on arrival, then hunts the most wounded.",
 	"elements": [], "chess_pieces": ["bishop", "bishop"],
@@ -104,7 +104,7 @@
   },
   {
 	"id": "bishop_rook",
-	"display_name": "Temple",
+	"display_name": "Arcane Tower",
 	"cost": 5, "attack": 4, "health": 9, "speed": 2, "shield": 3,
 	"description": "A sacred bastion. Heals all allies for 3 on arrival and locks onto the sturdiest enemy. Starts each round with 3 Shield.",
 	"elements": [], "chess_pieces": ["rook", "bishop"],
@@ -114,7 +114,7 @@
   },
   {
 	"id": "bishop_queen",
-	"display_name": "Deity",
+	"display_name": "Creed",
 	"cost": 6, "attack": 6, "health": 7, "speed": 4,
 	"description": "A divine being. Blesses all allies with +2 Attack and smites the deadliest enemy.",
 	"elements": [], "chess_pieces": ["queen", "bishop"],

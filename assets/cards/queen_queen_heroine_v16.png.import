@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ct20kdic456mq"
-path="res://.godot/imported/queen_queen_heroine_v12.png-2edca555d84345f9b8f95d13b9ee5f4c.ctex"
+uid="uid://c100hosqvbqyp"
+path="res://.godot/imported/queen_queen_heroine_v16.png-08c8aa4255b1c43c0d4d37cc08852e15.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/cards/queen_queen_heroine_v12.png"
-dest_files=["res://.godot/imported/queen_queen_heroine_v12.png-2edca555d84345f9b8f95d13b9ee5f4c.ctex"]
+source_file="res://assets/cards/queen_queen_heroine_v16.png"
+dest_files=["res://.godot/imported/queen_queen_heroine_v16.png-08c8aa4255b1c43c0d4d37cc08852e15.ctex"]
 
 [params]
 
