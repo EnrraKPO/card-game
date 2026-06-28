@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://yxrf1yoxmqdy"
-path="res://.godot/imported/queen_queen_heroine_v15.png-fd0099c7b7551712152771d3518d938e.ctex"
+uid="uid://dct0i746nyph"
+path="res://.godot/imported/darkness_stone.png-3d9ecfdf72bc23e934038f71f49d211c.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/cards/queen_queen_heroine_v15.png"
-dest_files=["res://.godot/imported/queen_queen_heroine_v15.png-fd0099c7b7551712152771d3518d938e.ctex"]
+source_file="res://assets/ui/stones/darkness_stone.png"
+dest_files=["res://.godot/imported/darkness_stone.png-3d9ecfdf72bc23e934038f71f49d211c.ctex"]
 
 [params]
 

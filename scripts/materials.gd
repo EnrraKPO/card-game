@@ -15,6 +15,12 @@ const PIECES := ["pawn", "knight", "bishop", "rook", "queen", "king"]
 const STONE_SUFFIX := "_stone"
 const PIECE_SUFFIX := "_piece"
 
+# Illustrated art for tokens. Piece/stone filenames match the id ("king_piece.png",
+# "fire_stone.png"); essence ids are the bare element, so their art is "<element>_essence.png".
+const PIECE_ART_DIR := "res://assets/ui/pieces/"
+const STONE_ART_DIR := "res://assets/ui/stones/"
+const ESSENCE_ART_DIR := "res://assets/ui/essences/"
+
 const ELEMENT_COLOR := {
 	"fire":     Color(0.90, 0.35, 0.20),
 	"water":    Color(0.30, 0.55, 0.95),
@@ -102,6 +108,23 @@ static func color(id: String) -> Color:
 	if is_piece(id):
 		return PIECE_COLOR.get(piece_of(id), Color(0.85, 0.78, 0.50))
 	return ELEMENT_COLOR.get(element_of(id), Color.WHITE)
+
+
+# Illustrated art for a material id, or null if it has none yet. Pieces, stones and elemental
+# essences are all illustrated now.
+static func texture(id: String) -> Texture2D:
+	var path := ""
+	if is_piece(id):
+		path = PIECE_ART_DIR + id + ".png"
+	elif is_stone(id):
+		path = STONE_ART_DIR + id + ".png"
+	elif id in ELEMENTS:
+		path = ESSENCE_ART_DIR + id + "_essence.png"
+	else:
+		return null
+	if not ResourceLoader.exists(path):
+		return null
+	return load(path) as Texture2D
 
 
 # Compact "+2 Fire" summary of a rewards dict (id→count) for map previews.

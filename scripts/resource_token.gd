@@ -29,14 +29,30 @@ func setup(id: String, count: int, compact: bool) -> ResourceToken:
 
 
 func _build() -> void:
-	custom_minimum_size = Vector2(150, 80) if _compact else Vector2(108, 58)
 	var c := Materials.color(material_id)
+	var art := Materials.texture(material_id)
+	# Illustrated piece tokens are taller and squarer so the art reads big; text resources
+	# (essences/stones) keep the compact wide chip.
+	if art != null:
+		custom_minimum_size = Vector2(104, 128) if _compact else Vector2(76, 92)
+	else:
+		custom_minimum_size = Vector2(150, 80) if _compact else Vector2(108, 58)
 
+	# Discreet framing: a faint translucent backing, no outline — the art (or label) carries the
+	# identity, the panel just gives it a subtle resting place. Elemental resources (essences /
+	# stones) tint the backing by their colour; chess pieces stay neutral so their art reads on
+	# its own — except the King, which keeps its gold tint to mark it as the special one.
+	var tint := c
+	if Materials.is_piece(material_id) and Materials.piece_of(material_id) != "king":
+		tint = Color(0.78, 0.80, 0.85)
 	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(c.r, c.g, c.b, 0.20)
-	sb.border_color = c
-	sb.set_border_width_all(2)
+	sb.bg_color = Color(tint.r, tint.g, tint.b, 0.10)
 	sb.set_corner_radius_all(8)
+	# Inset the content so the art/label doesn't kiss the frame edges (more headroom on top).
+	sb.content_margin_top = 10
+	sb.content_margin_bottom = 6
+	sb.content_margin_left = 6
+	sb.content_margin_right = 6
 	add_theme_stylebox_override("panel", sb)
 
 	var draggable := available > 0
@@ -45,16 +61,32 @@ func _build() -> void:
 
 	var box := VBoxContainer.new()
 	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_theme_constant_override("separation", 2)
 	box.mouse_filter = MOUSE_FILTER_IGNORE
 	add_child(box)
 
-	var name_lbl := Label.new()
-	name_lbl.text = Materials.short_name(material_id)
-	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_lbl.add_theme_font_size_override("font_size", 19 if _compact else 13)
-	name_lbl.add_theme_color_override("font_color", c)
-	name_lbl.mouse_filter = MOUSE_FILTER_IGNORE
-	box.add_child(name_lbl)
+	# Illustrated tokens (chess pieces) show their art with the name in the tooltip; resources
+	# without art (essences/stones) fall back to a coloured name label.
+	if art != null:
+		tooltip_text = Materials.display_name(material_id)
+		var icon := TextureRect.new()
+		icon.texture = art
+		# Fill the token (minus the count strip) and keep aspect; IGNORE_SIZE so the full-res
+		# art doesn't dictate the token's min size (it was blowing the container out).
+		icon.size_flags_vertical = SIZE_EXPAND_FILL
+		icon.custom_minimum_size = Vector2(0, 78 if _compact else 56)
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.mouse_filter = MOUSE_FILTER_IGNORE
+		box.add_child(icon)
+	else:
+		var name_lbl := Label.new()
+		name_lbl.text = Materials.short_name(material_id)
+		name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		name_lbl.add_theme_font_size_override("font_size", 19 if _compact else 13)
+		name_lbl.add_theme_color_override("font_color", c)
+		name_lbl.mouse_filter = MOUSE_FILTER_IGNORE
+		box.add_child(name_lbl)
 
 	var count_lbl := Label.new()
 	count_lbl.text = "x%d" % available

@@ -25,6 +25,7 @@ const SUBTITLES := {
 
 var _compact := false
 var _inv_height := 160.0
+var _inv_lift := 0.0       # gap kept below the inventory bar so it clears the screen edge
 var _open_key := ""
 
 var _stage: Control
@@ -59,6 +60,9 @@ func _ready() -> void:
 	UIScale.layout_changed.connect(func(): get_tree().reload_current_scene(), CONNECT_ONE_SHOT)
 	_compact = UIScale.is_compact()
 	_inv_height = 220.0 if _compact else 150.0
+	# Float the inventory above the very bottom edge — the lowest band is where mobile gesture
+	# bars / browser chrome steal touches, which made the resource tokens hard to tap.
+	_inv_lift = (UIScale.safe_inset() + 24.0) if _compact else UIScale.safe_inset()
 
 	_stage = $Stage
 	_add_background()
@@ -127,7 +131,7 @@ func _fit_stage() -> void:
 	if _stage == null:
 		return
 	var vp := get_viewport_rect().size
-	var avail := Vector2(vp.x, maxf(vp.y - _inv_height, 1.0))
+	var avail := Vector2(vp.x, maxf(vp.y - _inv_height - _inv_lift, 1.0))
 	var sc := minf(avail.x / DESIGN.x, avail.y / DESIGN.y)
 	_stage.scale = Vector2(sc, sc)
 	_stage.position = Vector2((vp.x - DESIGN.x * sc) * 0.5, (avail.y - DESIGN.y * sc) * 0.5)
@@ -162,7 +166,7 @@ func _build_overlays() -> void:
 	back.anchor_top = 1.0; back.anchor_bottom = 1.0
 	back.offset_left = inset
 	back.offset_right = inset + back.custom_minimum_size.x
-	back.offset_bottom = -(_inv_height + inset)
+	back.offset_bottom = -(_inv_height + _inv_lift + inset)
 	back.offset_top = back.offset_bottom - back.custom_minimum_size.y
 	add_child(back)
 
@@ -176,7 +180,7 @@ func _build_overlays() -> void:
 	# Panel host: covers the area above the inventory; hidden until an artifact opens.
 	_panel_host = Control.new()
 	_panel_host.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	_panel_host.offset_bottom = -_inv_height
+	_panel_host.offset_bottom = -(_inv_height + _inv_lift)
 	_panel_host.visible = false
 	add_child(_panel_host)
 	var dim := ColorRect.new()
@@ -305,7 +309,8 @@ func _refresh_open() -> void:
 func _build_inventory_bar() -> Control:
 	var panel := PanelContainer.new()
 	panel.set_anchors_and_offsets_preset(PRESET_BOTTOM_WIDE)
-	panel.offset_top = -_inv_height
+	panel.offset_top = -(_inv_height + _inv_lift)
+	panel.offset_bottom = -_inv_lift
 	var pad := MarginContainer.new()
 	for side in ["left", "right", "top", "bottom"]:
 		pad.add_theme_constant_override("margin_" + side, 14)

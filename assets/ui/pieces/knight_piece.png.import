@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c100hosqvbqyp"
-path="res://.godot/imported/queen_queen_heroine_v16.png-08c8aa4255b1c43c0d4d37cc08852e15.ctex"
+uid="uid://7avlsypq6j2y"
+path="res://.godot/imported/knight_piece.png-47cf623ea5578d223d4fc7f54ebd582d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/cards/queen_queen_heroine_v16.png"
-dest_files=["res://.godot/imported/queen_queen_heroine_v16.png-08c8aa4255b1c43c0d4d37cc08852e15.ctex"]
+source_file="res://assets/ui/pieces/knight_piece.png"
+dest_files=["res://.godot/imported/knight_piece.png-47cf623ea5578d223d4fc7f54ebd582d.ctex"]
 
 [params]
 
