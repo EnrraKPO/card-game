@@ -6,7 +6,7 @@
 	"description": "Call down a violent bolt, dealing 5 damage to a unit.",
 	"elements": ["fire", "air"], "chess_pieces": [],
 	"effects": [
-	  { "trigger": "on_play", "targeting_policy": "manual", "attribute": "health", "amount": -5 }
+	  { "trigger": "on_play", "targeting_policy": "manual", "attribute": "damage_taken", "amount": 5 }
 	]
   },
   {
@@ -16,7 +16,7 @@
 	"description": "Scald a unit with a blinding cloud, dealing 2 damage and reducing its Speed by 2.",
 	"elements": ["fire", "water"], "chess_pieces": [],
 	"effects": [
-	  { "trigger": "on_play", "targeting_policy": "manual", "attribute": "health", "amount": -2 },
+	  { "trigger": "on_play", "targeting_policy": "manual", "attribute": "damage_taken", "amount": 2 },
 	  { "trigger": "on_play", "targeting_policy": "manual", "attribute": "speed", "amount": -2 }
 	]
   },
@@ -27,7 +27,7 @@
 	"description": "Engulf a unit in molten rock for 6 damage.",
 	"elements": ["fire", "earth"], "chess_pieces": [],
 	"effects": [
-	  { "trigger": "on_play", "targeting_policy": "manual", "attribute": "health", "amount": -6 }
+	  { "trigger": "on_play", "targeting_policy": "manual", "attribute": "damage_taken", "amount": 6 }
 	]
   },
   {
@@ -57,7 +57,7 @@
 	"description": "An intensified blaze. Deal 6 damage to a unit.",
 	"elements": ["fire", "fire"], "chess_pieces": [],
 	"effects": [
-	  { "trigger": "on_play", "targeting_policy": "manual", "attribute": "health", "amount": -6 }
+	  { "trigger": "on_play", "targeting_policy": "manual", "attribute": "damage_taken", "amount": 6 }
 	]
   },
   {
@@ -117,7 +117,7 @@
 	"description": "Summon a raging storm, dealing 2 damage to all enemies.",
 	"elements": ["air", "water"], "chess_pieces": [],
 	"effects": [
-	  { "trigger": "on_play", "targeting_policy": "all_enemies", "attribute": "health", "amount": -2 }
+	  { "trigger": "on_play", "targeting_policy": "all_enemies", "attribute": "damage_taken", "amount": 2 }
 	]
   },
   {
@@ -168,7 +168,7 @@
 	"description": "Poison a unit: deal 3 damage, reduce its Attack by 2, and apply Poison 1.",
 	"elements": ["water", "darkness"], "chess_pieces": [],
 	"effects": [
-	  { "trigger": "on_play", "targeting_policy": "manual", "attribute": "health", "amount": -3 },
+	  { "trigger": "on_play", "targeting_policy": "manual", "attribute": "damage_taken", "amount": 3 },
 	  { "trigger": "on_play", "targeting_policy": "manual", "attribute": "attack", "amount": -2 },
 	  { "trigger": "on_play", "targeting_policy": "manual", "status": { "id": "poison", "stacks": 1 } }
 	]
@@ -211,7 +211,7 @@
 	"description": "Curse a unit with undeath, dealing 3 damage and reducing its Max HP by 3.",
 	"elements": ["light", "darkness"], "chess_pieces": [],
 	"effects": [
-	  { "trigger": "on_play", "targeting_policy": "manual", "attribute": "health", "amount": -3 },
+	  { "trigger": "on_play", "targeting_policy": "manual", "attribute": "damage_taken", "amount": 3 },
 	  { "trigger": "on_play", "targeting_policy": "manual", "attribute": "max_health", "amount": -3 }
 	]
   }

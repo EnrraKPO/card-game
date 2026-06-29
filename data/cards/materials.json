@@ -6,7 +6,7 @@
     "description": "Scorch a unit for 3 damage.",
     "elements": ["fire"], "chess_pieces": [],
     "effects": [
-      { "trigger": "on_play", "targeting_policy": "manual", "attribute": "health", "amount": -3 }
+      { "trigger": "on_play", "targeting_policy": "manual", "attribute": "damage_taken", "amount": 3 }
     ]
   },
   {

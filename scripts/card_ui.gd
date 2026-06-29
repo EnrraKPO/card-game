@@ -13,8 +13,6 @@ var _show_cost: bool
 var draggable: bool = true
 # Left-edge column of charm pips, built lazily (mirrors the composition chips on the right).
 var _charm_col: VBoxContainer = null
-# Top-edge row of status pips (runtime buffs/debuffs), built lazily.
-var _status_row: HBoxContainer = null
 # True for a rook-generated token shown in the hand's "generated" zone; gives
 # the card a distinct glowing frame and a tooltip naming its source building.
 var is_generated: bool = false
@@ -44,6 +42,7 @@ var _touch_inspect := false
 @onready var _hp_bg: TextureRect = %HpBg
 @onready var _hp_lbl: Label     = %HpLabel
 @onready var _comp_row: BoxContainer = %CompRow
+@onready var _status_row: BoxContainer = %StatusRow   # authored under Canvas; position it in the editor
 @onready var _border: Panel     = %Border
 @onready var _canvas: Control   = $Canvas
 
@@ -454,42 +453,29 @@ func _make_charm_pip(charm_id: String) -> Control:
 	return pip
 
 
-# Builds the top-edge row of status pips — one coloured glyph (or icon) per active Status, with
-# its remaining duration and (when >1) stack count. The detail lives in the pip tooltip. Mirrors
-# the charm column; built lazily so a status-free card costs nothing.
+# Fills the StatusRow node (authored in card_ui.tscn — move/anchor it in the editor) with one pip
+# per active Status: its icon (or coloured glyph), count, and a hover tooltip with the detail.
 func _refresh_statuses() -> void:
-	var stats: Array = card_instance.statuses if card_instance != null else []
 	if _status_row == null:
-		if stats.is_empty():
-			return
-		_status_row = HBoxContainer.new()
-		_status_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		_status_row.alignment = BoxContainer.ALIGNMENT_CENTER
-		_status_row.add_theme_constant_override("separation", 5)
-		# Horizontal band across the top, below the nameplate (anchors in native Canvas units).
-		_status_row.anchor_left = 0.16
-		_status_row.anchor_right = 0.84
-		_status_row.anchor_top = 0.135
-		_status_row.anchor_bottom = 0.215
-		_status_row.offset_left = 0.0
-		_status_row.offset_top = 0.0
-		_status_row.offset_right = 0.0
-		_status_row.offset_bottom = 0.0
-		_canvas.add_child(_status_row)
-
+		return
 	for child in _status_row.get_children():
+		_status_row.remove_child(child)
 		child.queue_free()
+	var stats: Array = card_instance.statuses if card_instance != null else []
 	for si: StatusInstance in stats:
 		_status_row.add_child(_make_status_pip(si))
 
 
 func _make_status_pip(si: StatusInstance) -> Control:
 	var sd: StatusData = si.data
-	var pip := Panel.new()
+	# A StatusPip (Panel subclass) so hovering the badge shows the status's own rich tooltip
+	# (name, count, description) instead of the card's.
+	var pip := StatusPip.new().setup(si)
 	pip.custom_minimum_size = Vector2(32, 32)
 	pip.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	pip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	pip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pip.mouse_filter = Control.MOUSE_FILTER_STOP
+	var cnt := si.count()
 
 	var style := StyleBoxFlat.new()
 	style.bg_color = sd.color
@@ -524,9 +510,8 @@ func _make_status_pip(si: StatusInstance) -> Control:
 
 	# The headline count, bottom-right: the stack count for a count-decay status (e.g. poison's
 	# value), otherwise the remaining turns. A whole-combat status shows none.
-	var primary: int = si.stacks if sd.decay == StatusData.DECAY_STACKS else si.remaining
-	if primary > 0:
-		pip.add_child(_pip_corner(str(primary), HORIZONTAL_ALIGNMENT_RIGHT, VERTICAL_ALIGNMENT_BOTTOM))
+	if cnt > 0:
+		pip.add_child(_pip_corner(str(cnt), HORIZONTAL_ALIGNMENT_RIGHT, VERTICAL_ALIGNMENT_BOTTOM))
 	# Stack count, top-left, for a timed status that also stacks intensity (count-decay already
 	# shows its stacks as the headline above).
 	if sd.decay != StatusData.DECAY_STACKS and si.stacks > 1:

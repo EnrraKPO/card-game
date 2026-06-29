@@ -27,6 +27,7 @@ enum Trigger {
 	PERMANENT,
 	ON_TURN_START,   # fired for every unit at the start of a combat round (status lifecycle)
 	ON_TURN_END,     # fired for every unit at the end of a combat round; statuses then count down
+	ON_ACTIVATE,     # fired for a unit when ITS turn comes up in the speed-ordered combat loop
 }
 
 # Sentinel for "apply this status for its own default duration" (the applier didn't override it).
@@ -41,7 +42,13 @@ enum TargetingPolicy {
 	ALL,
 	MANUAL,
 	ATTACK_TARGET,   # the unit this card is currently striking (valid in an ON_ATTACK context)
+	SUBJECT,         # the unit the event is about (the activator/actor — see EffectContext.subject)
 }
+
+# For an event-driven (TRIGGERED/CUSTOM) effect, which unit — relative to the effect's HOLDER — must
+# be the event's subject for the effect to react. Default SELF means "I react only to my own action,"
+# which reproduces pre-broadcast behaviour with no data migration. See EffectSystem._subject_matches.
+enum SubjectFilter { SELF, ALLY, ENEMY, ANY }
 
 # Card-scoped MODIFIER keys → the CardInstance attribute each one adjusts.
 const CARD_ATTR := {
@@ -59,6 +66,7 @@ var amount: float = 0.0
 
 # ── TRIGGERED / CUSTOM fields ──
 var trigger: Trigger = Trigger.ON_PLAY
+var subject_filter: SubjectFilter = SubjectFilter.SELF
 var targeting_policy: TargetingPolicy = TargetingPolicy.SELF
 var conditions: Array = []   # Array[EffectCondition]
 var attribute: String = ""
@@ -100,10 +108,12 @@ static func from_dict(d: Dictionary) -> Effect:
 		e.kind             = Kind.CUSTOM
 		e.custom_id        = d.get("custom", "")
 		e.trigger          = _str_trigger(d.get("trigger", ""))
+		e.subject_filter   = _str_subject(d.get("subject", ""))
 		e.targeting_policy = _str_policy(d.get("targeting_policy", ""))
 	else:
 		e.kind             = Kind.TRIGGERED
 		e.trigger          = _str_trigger(d.get("trigger", ""))
+		e.subject_filter   = _str_subject(d.get("subject", ""))
 		e.targeting_policy = _str_policy(d.get("targeting_policy", ""))
 		e.attribute        = d.get("attribute", "")
 	# Optional "apply a status" payload, valid on any event-driven (TRIGGERED) effect.
@@ -127,12 +137,15 @@ func to_dict() -> Dictionary:
 				d["filter"] = filter
 			return d
 		Kind.CUSTOM:
-			return {
+			var cd := {
 				"kind":             "custom",
 				"custom":           custom_id,
 				"trigger":          trigger_key(trigger),
 				"targeting_policy": policy_key(targeting_policy),
 			}
+			if subject_filter != SubjectFilter.SELF:
+				cd["subject"] = subject_key(subject_filter)
+			return cd
 		_:
 			var conds: Array = []
 			for c: EffectCondition in conditions:
@@ -144,6 +157,8 @@ func to_dict() -> Dictionary:
 				"amount":           amount_int(),
 				"conditions":       conds,
 			}
+			if subject_filter != SubjectFilter.SELF:
+				d["subject"] = subject_key(subject_filter)
 			if not status_id.is_empty():
 				d["status"] = {"id": status_id, "duration": status_duration, "stacks": status_stacks}
 			return d
@@ -194,6 +209,7 @@ static func _str_trigger(s: String) -> Trigger:
 		"permanent":       return Trigger.PERMANENT
 		"on_turn_start":   return Trigger.ON_TURN_START
 		"on_turn_end":     return Trigger.ON_TURN_END
+		"on_activate":     return Trigger.ON_ACTIVATE
 	return Trigger.ON_PLAY
 
 
@@ -207,7 +223,26 @@ static func _str_policy(s: String) -> TargetingPolicy:
 		"all":            return TargetingPolicy.ALL
 		"manual":         return TargetingPolicy.MANUAL
 		"attack_target":  return TargetingPolicy.ATTACK_TARGET
+		"subject":        return TargetingPolicy.SUBJECT
 	return TargetingPolicy.SELF
+
+
+static func _str_subject(s: String) -> SubjectFilter:
+	match s:
+		"self":  return SubjectFilter.SELF
+		"ally":  return SubjectFilter.ALLY
+		"enemy": return SubjectFilter.ENEMY
+		"any":   return SubjectFilter.ANY
+	return SubjectFilter.SELF
+
+
+static func subject_key(f: SubjectFilter) -> String:
+	match f:
+		SubjectFilter.SELF:  return "self"
+		SubjectFilter.ALLY:  return "ally"
+		SubjectFilter.ENEMY: return "enemy"
+		SubjectFilter.ANY:   return "any"
+	return "self"
 
 
 static func trigger_key(t: Trigger) -> String:
@@ -219,6 +254,7 @@ static func trigger_key(t: Trigger) -> String:
 		Trigger.PERMANENT:       return "permanent"
 		Trigger.ON_TURN_START:   return "on_turn_start"
 		Trigger.ON_TURN_END:     return "on_turn_end"
+		Trigger.ON_ACTIVATE:     return "on_activate"
 	return "on_play"
 
 
@@ -232,4 +268,5 @@ static func policy_key(p: TargetingPolicy) -> String:
 		TargetingPolicy.ALL:            return "all"
 		TargetingPolicy.MANUAL:         return "manual"
 		TargetingPolicy.ATTACK_TARGET:  return "attack_target"
+		TargetingPolicy.SUBJECT:        return "subject"
 	return "self"

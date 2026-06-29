@@ -5,7 +5,7 @@
 	"color": "9b6fd9",
 	"nodes": [
 		{ "id": "mys_vengeance", "display_name": "Vengeance", "description": "When one of your units dies, deal 2 damage to the nearest enemy.", "cost": 1, "icon": "✦", "row": 0, "col": 0, "requires": [],
-			"effects": [{ "kind": "triggered", "trigger": "on_death", "targeting_policy": "single_nearest", "attribute": "health", "amount": -2 }] },
+			"effects": [{ "kind": "triggered", "trigger": "on_death", "targeting_policy": "single_nearest", "attribute": "damage_taken", "amount": 2 }] },
 		{ "id": "mys_rally", "display_name": "Rallying Cry", "description": "When one of your units attacks, your other units gain +1 attack for the rest of combat.", "cost": 2, "icon": "◆", "row": 1, "col": 0, "requires": ["mys_vengeance"],
 			"effects": [{ "kind": "custom", "custom": "rallying_cry", "trigger": "on_attack" }] }
 	]

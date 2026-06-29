@@ -23,7 +23,7 @@
     "description": "A walking powder keg. Explodes on death, dealing 2 to all enemies.",
     "enemy_only": true, "elements": [], "chess_pieces": [],
     "effects": [
-      { "trigger": "on_death", "targeting_policy": "all_enemies", "attribute": "health", "amount": -2 }
+      { "trigger": "on_death", "targeting_policy": "all_enemies", "attribute": "damage_taken", "amount": 2 }
     ]
   },
   {

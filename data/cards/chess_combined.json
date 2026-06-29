@@ -99,7 +99,7 @@
 	"description": "Twin diviners. Blasts every enemy for 1 on arrival, then hunts the most wounded.",
 	"elements": [], "chess_pieces": ["bishop", "bishop"],
 	"effects": [
-	  { "trigger": "on_play", "targeting_policy": "all_enemies", "attribute": "health", "amount": -1 }
+	  { "trigger": "on_play", "targeting_policy": "all_enemies", "attribute": "damage_taken", "amount": 1 }
 	]
   },
   {

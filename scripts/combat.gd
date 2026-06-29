@@ -308,7 +308,7 @@ func _on_done_pressed() -> void:
 	_board.placement_enabled = false
 	_set_placement_input(false)
 	_refresh()
-	await _tick_statuses(Effect.Trigger.ON_TURN_START)
+	await _resolve_event(Effect.Trigger.ON_TURN_START)
 	if _board.any_king_dead():
 		_handle_combat_end()
 		return
@@ -316,7 +316,7 @@ func _on_done_pressed() -> void:
 	if _board.any_king_dead():
 		_handle_combat_end()
 		return
-	await _tick_statuses(Effect.Trigger.ON_TURN_END)
+	await _resolve_event(Effect.Trigger.ON_TURN_END)
 	if _board.any_king_dead():
 		_handle_combat_end()
 		return
@@ -353,6 +353,12 @@ func _run_combat() -> void:
 	)
 
 	for attacker: CardInstance in all_cards:
+		if not attacker.is_alive():
+			continue
+		# The unit's turn has come up: broadcast its ON_ACTIVATE moment (subject = this unit). Its own
+		# effects proc (e.g. poison) then its statuses decay. This can kill it before it acts, so
+		# re-check life before its attack.
+		await _resolve_event(Effect.Trigger.ON_ACTIVATE, attacker)
 		if not attacker.is_alive():
 			continue
 		# A building that spent its attack generating a card sits this round out.
@@ -406,7 +412,7 @@ func _resolve_attack(attacker: CardInstance) -> void:
 		a_card.modulate.a = 1.0
 
 	if not target.is_alive():
-		await _animator.show_effect_results(_trigger(Effect.Trigger.ON_DEATH, target), target)
+		await _fire(Effect.Trigger.ON_DEATH, target)
 		await _vfx.play(VFXEvent.death(t_card))
 		_board.remove_card(target)
 	else:
@@ -423,9 +429,9 @@ func _resolve_attack(attacker: CardInstance) -> void:
 # before ON_ATTACK fires so a self-buff on attack doesn't retroactively change this hit.
 func _apply_attack_damage(attacker: CardInstance, target: CardInstance, t_card: CardUI) -> void:
 	var dmg := attacker.get_attribute("attack")
-	await _animator.show_effect_results(_trigger(Effect.Trigger.ON_ATTACK, attacker, target), attacker)
+	await _fire(Effect.Trigger.ON_ATTACK, attacker, null, target)
 	var dmg_split := target.take_damage(dmg)
-	await _animator.show_effect_results(_trigger(Effect.Trigger.ON_DAMAGE_TAKEN, target), target)
+	await _fire(Effect.Trigger.ON_DAMAGE_TAKEN, target)
 	# Shield reads FIRST: it takes the blow on its own badge (and only the badge — a held shield
 	# leaves the card unwounded). When the hit also bleeds through to HP, a brief halt lets the
 	# absorb land before the wound, so the shield is legible as the first thing that happened.
@@ -437,38 +443,53 @@ func _apply_attack_damage(attacker: CardInstance, target: CardInstance, t_card: 
 		_vfx.play(VFXEvent.health_damage(t_card, dmg_split.health_damage))
 
 
-# DRYs the repeated "fire an effect trigger for an instance in the current board context"
-# call used throughout combat resolution. Fires the instance's own (card) triggered effects
-# AND any run-level effects (upgrades/relics) listening for the same event.
-func _trigger(t: Effect.Trigger, inst: CardInstance, atk_target: CardInstance = null) -> Array:
-	var ctx := EffectContext.make(inst, _board.player_grid, _board.enemy_grid)
+# The SINGLE dispatch-and-present point for a combat trigger: it resolves `event` for `holder` in
+# board context AND forwards the results to the animator, inseparably. Routing every trigger through
+# here is what makes resolution and its VFX impossible to drift apart — a dispatch path shows its
+# results BY CONSTRUCTION, not by each call site remembering to forward them (the omission that made
+# the status path silent). `subject` is the unit the event is about; it defaults to the holder (an
+# actor reacting to its own action). `run_level` also fires run-level (upgrade/relic) effects once —
+# true for per-actor events (attack/death), false for the per-holder status fan-out, where firing
+# the run-level effects once per holder would multiply them.
+func _fire(event: Effect.Trigger, holder: CardInstance, subject: CardInstance = null,
+		atk_target: CardInstance = null, run_level: bool = true) -> void:
+	var ctx := EffectContext.make(holder, _board.player_grid, _board.enemy_grid)
+	ctx.subject = subject if subject != null else holder
 	ctx.attack_target = atk_target   # lets an ON_ATTACK effect target the unit being struck
-	var results := EffectSystem.trigger(t, inst, ctx)
-	results.append_array(EffectSystem.trigger_global(t, ctx))
-	return results
+	var results := EffectSystem.trigger(event, holder, ctx)
+	if run_level:
+		results.append_array(EffectSystem.trigger_global(event, ctx))
+	if not results.is_empty():
+		await _animator.show_effect_results(results, holder)
 
 
-# The per-round status lifecycle for `event` (ON_TURN_START / ON_TURN_END), across every living
-# unit: each unit's status (and any native) effects for that event resolve in board context, any
-# deaths they cause are swept through the normal death path, and on ON_TURN_END every unit's
-# ROUNDS statuses then count down and expire. Run-level (upgrade/relic) turn effects are NOT fired
-# here — they would fire once per unit; add a single trigger_global call if that's ever wanted.
-func _tick_statuses(event: Effect.Trigger) -> void:
-	for inst: CardInstance in _board.get_all_units():
-		if not inst.is_alive():
+# The single entry point for a combat MOMENT: combat BROADCASTS the event (with the `subject` — the
+# unit it is about, or null for a subject-less phase moment like a turn boundary) and every holder on
+# the board decides for itself whether it reacts. Two ordered tiers:
+#   1. Effects PROC — the event fans to every holder; each of its effects (native + status) self-
+#      selects via trigger + subject_filter (default SELF → only the subject's own effects fire, so
+#      current content is unchanged). A holder a proc kills is swept through the normal death path.
+#   2. Statuses DECAY — statuses progress, self-scoped: a subject event decays only the subject's
+#      statuses; a phase event decays everyone's. Run as a second tier so all effects land first.
+# Decay is just another reactor (same self gate), kept in its own tier purely for ordering. New
+# per-moment lookups slot in here. Each holder's proc goes through _fire, so the status path shows
+# its results through the same animator as every other trigger — no special path, no silent effects.
+func _resolve_event(event: Effect.Trigger, subject: CardInstance = null) -> void:
+	var units := _board.get_all_units()
+	for holder: CardInstance in units:
+		if not holder.is_alive():
 			continue
-		var ctx := EffectContext.make(inst, _board.player_grid, _board.enemy_grid)
-		var results := EffectSystem.trigger(event, inst, ctx)
-		if not results.is_empty():
-			await _animator.show_effect_results(results, inst)
-		if not inst.is_alive():
-			await _animator.show_effect_results(_trigger(Effect.Trigger.ON_DEATH, inst), inst)
-			await _vfx.play(VFXEvent.death(_board.get_card_ui(inst)))
-			_board.remove_card(inst)
-	# Count statuses down AFTER this phase's effects fired (advance only touches statuses whose
-	# decay_phase matches this event), so a count-based status uses its pre-decay value first.
-	for inst: CardInstance in _board.get_all_units():
-		StatusEngine.advance(inst, event)
+		# Per-holder fan-out: don't fire the run-level effects here (they'd fire once per holder).
+		await _fire(event, holder, subject, null, false)
+		if not holder.is_alive():
+			await _fire(Effect.Trigger.ON_DEATH, holder)
+			var ui := _board.get_card_ui(holder)
+			if ui != null:
+				await _vfx.play(VFXEvent.death(ui))
+			_board.remove_card(holder)
+	for holder: CardInstance in units:
+		if subject == null or subject == holder:
+			StatusEngine.advance(holder, event)
 	_board.cleanup_effect_deaths()
 	_board.refresh()
 

@@ -87,4 +87,32 @@ static func build(inst: CardInstance, show_cost := true) -> Control:
 			ch_lbl.add_theme_color_override("font_color", charm.color.lightened(0.35))
 			vbox.add_child(ch_lbl)
 
+	# Active statuses: one line each (glyph, name, count, description), colour-matched to its pip.
+	if not inst.statuses.is_empty():
+		vbox.add_child(HSeparator.new())
+		var status_title := Label.new()
+		status_title.text = "Statuses"
+		status_title.add_theme_font_size_override("font_size", 16)
+		status_title.modulate = Color(0.7, 0.7, 0.8)
+		vbox.add_child(status_title)
+		for si: StatusInstance in inst.statuses:
+			var sd: StatusData = si.data
+			var cnt := si.count()
+			var row := HBoxContainer.new()
+			row.add_theme_constant_override("separation", 6)
+			var icon := sd.icon_rect(22.0)
+			if icon != null:
+				row.add_child(icon)
+			var line := "%s%s" % [sd.display_name, (" %d" % cnt) if cnt > 0 else ""]
+			if not sd.description.is_empty():
+				line += " — %s" % sd.description
+			var st_lbl := Label.new()
+			st_lbl.text = line
+			st_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD
+			st_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			st_lbl.add_theme_font_size_override("font_size", 15)
+			st_lbl.add_theme_color_override("font_color", sd.color.lightened(0.35))
+			row.add_child(st_lbl)
+			vbox.add_child(row)
+
 	return panel

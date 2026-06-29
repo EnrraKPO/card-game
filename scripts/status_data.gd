@@ -21,9 +21,11 @@ const DECAY_DURATION := "duration"   # `remaining` counts down (default); expire
 const DECAY_STACKS := "stacks"       # the stack COUNT counts down; expires at 0 stacks (e.g. poison)
 const DECAY_NONE := "none"           # never wears off (lasts the whole fight)
 
-# When the per-round decay (and any on_turn_* effects) resolves.
+# When the decay (and any matching periodic effects) resolves. TURN_START/END sweep every unit at
+# the round boundary; ACTIVATE ticks the one unit when its turn comes up in the combat order.
 const PHASE_TURN_START := "turn_start"
 const PHASE_TURN_END := "turn_end"   # default
+const PHASE_ACTIVATE := "activate"
 
 var id: String
 var display_name: String
@@ -101,3 +103,20 @@ func icon() -> Texture2D:
 	if not ResourceLoader.exists(path):
 		return null
 	return load(path) as Texture2D
+
+
+# A `px`-square TextureRect of the status art for inline use (tooltips / description rows), or null
+# if the status has no art — callers then show text alone rather than falling back to the glyph,
+# which doesn't scale or render reliably on mobile.
+func icon_rect(px: float) -> TextureRect:
+	var tex := icon()
+	if tex == null:
+		return null
+	var r := TextureRect.new()
+	r.texture = tex
+	r.custom_minimum_size = Vector2(px, px)
+	r.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	r.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	r.size_flags_vertical = Control.SIZE_SHRINK_BEGIN   # top-align with the first line of the label
+	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return r

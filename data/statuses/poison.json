@@ -1,15 +1,15 @@
 {
 	"id": "poison",
 	"display_name": "Poison",
-	"description": "At the start of each turn, suffer damage equal to the poison count; then the count drops by 1.",
+	"description": "When this unit activates, it suffers damage equal to the poison count; then the count drops by 1.",
 	"beneficial": false,
 	"color": "5a8f3a",
 	"glyph": "☠",
 	"decay": "stacks",
-	"decay_phase": "turn_start",
+	"decay_phase": "activate",
 	"stacking": "stack",
 	"max_stacks": 99,
 	"effects": [
-		{ "trigger": "on_turn_start", "targeting_policy": "self", "attribute": "health", "amount": -1 }
+		{ "trigger": "on_activate", "targeting_policy": "self", "attribute": "health", "amount": -1 }
 	]
 }

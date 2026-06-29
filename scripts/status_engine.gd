@@ -6,8 +6,8 @@ extends RefCounted
 # no per-status code:
 #   • modifier_bonus    — folds a card's status MODIFIER effects into CardInstance.get_attribute
 #                         at read-time (mirroring GameData.card_bonus), scaled by stack count.
-#   • triggered_effects — a card's active status TRIGGERED/CUSTOM effects for an event, so
-#                         EffectSystem.trigger can fire them alongside the card's own.
+#   • triggered_groups  — a card's active statuses (grouped) that have TRIGGERED/CUSTOM effects
+#                         for an event, so EffectSystem.trigger fires them alongside the card's own.
 #   • advance           — the per-round countdown: decrement ROUNDS statuses, drop expired.
 # See StatusData, StatusInstance, EffectSystem.
 
@@ -23,16 +23,20 @@ static func modifier_bonus(inst: CardInstance, attr: String) -> int:
 	return total
 
 
-# A card's active status TRIGGERED/CUSTOM effects matching an event, each paired with the stack
-# count so EffectSystem can scale the magnitude. Returns Array of { "effect", "stacks" }.
-static func triggered_effects(inst: CardInstance, event: Effect.Trigger) -> Array:
+# A card's active statuses that have TRIGGERED/CUSTOM effects matching an event, grouped per status
+# so a stacked status's effects can scale together by its stack count.
+# Returns Array of { "effects": Array[Effect], "stacks": int }.
+static func triggered_groups(inst: CardInstance, event: Effect.Trigger) -> Array:
 	var out: Array = []
 	if inst == null:
 		return out
 	for si: StatusInstance in inst.statuses:
+		var matched: Array = []
 		for e: Effect in si.data.effects:
 			if (e.kind == Effect.Kind.TRIGGERED or e.kind == Effect.Kind.CUSTOM) and e.trigger == event:
-				out.append({"effect": e, "stacks": si.stacks})
+				matched.append(e)
+		if not matched.is_empty():
+			out.append({"effects": matched, "stacks": si.stacks})
 	return out
 
 
@@ -56,8 +60,10 @@ static func advance(inst: CardInstance, event: Effect.Trigger) -> void:
 static func _decays_on(si: StatusInstance, event: Effect.Trigger) -> bool:
 	if si.data.decay == StatusData.DECAY_NONE:
 		return false
-	var at_start := si.data.decay_phase == StatusData.PHASE_TURN_START
-	return event == Effect.Trigger.ON_TURN_START if at_start else event == Effect.Trigger.ON_TURN_END
+	match si.data.decay_phase:
+		StatusData.PHASE_TURN_START: return event == Effect.Trigger.ON_TURN_START
+		StatusData.PHASE_ACTIVATE:   return event == Effect.Trigger.ON_ACTIVATE
+		_:                           return event == Effect.Trigger.ON_TURN_END
 
 
 static func _is_expired(si: StatusInstance) -> bool:

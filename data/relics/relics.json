@@ -21,7 +21,7 @@
 
   { "id": "vengeful_totem", "display_name": "Vengeful Totem", "description": "When one of your units dies, deal 2 damage to the nearest enemy.",
     "color": "9b6fd9", "letter": "V", "price": 80,
-    "effects": [ { "kind": "triggered", "trigger": "on_death", "targeting_policy": "single_nearest", "attribute": "health", "amount": -2 } ] },
+    "effects": [ { "kind": "triggered", "trigger": "on_death", "targeting_policy": "single_nearest", "attribute": "damage_taken", "amount": 2 } ] },
 
   { "id": "war_drums", "display_name": "War Drums", "description": "When one of your units attacks, your other units gain +1 Attack for the rest of combat.",
     "color": "c2603a", "letter": "W", "price": 120,

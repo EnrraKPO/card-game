@@ -17,7 +17,7 @@
 
   { "id": "thorned", "display_name": "Thorned", "description": "When struck, deals 2 damage to the nearest enemy.",
     "color": "8a6f4f", "letter": "T",
-    "effects": [ { "trigger": "on_damage_taken", "targeting_policy": "single_nearest", "attribute": "health", "amount": -2 } ] },
+    "effects": [ { "trigger": "on_damage_taken", "targeting_policy": "single_nearest", "attribute": "damage_taken", "amount": 2 } ] },
 
   { "id": "rallying", "display_name": "Rallying", "description": "When played, all allies gain +1 Attack.",
     "color": "d9b94f", "letter": "R", "targets": "any",

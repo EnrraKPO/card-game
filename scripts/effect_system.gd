@@ -22,10 +22,29 @@ static func trigger(event: Effect.Trigger, source: CardInstance, context: Effect
 	for effect: Effect in source.data.effects:
 		if effect.kind == Effect.Kind.MODIFIER or effect.trigger != event:
 			continue
+		if not _subject_matches(effect, context.subject, source):
+			continue
 		results.append_array(_run_effect(effect, source, context))
-	for entry: Dictionary in StatusEngine.triggered_effects(source, event):
-		results.append_array(_run_effect(entry["effect"], source, context, int(entry["stacks"])))
+	# A card's active statuses contribute their TRIGGERED/CUSTOM effects for this event too, with
+	# each status's magnitude scaled by its stack count.
+	for grp: Dictionary in StatusEngine.triggered_groups(source, event):
+		for effect: Effect in grp["effects"]:
+			if not _subject_matches(effect, context.subject, source):
+				continue
+			results.append_array(_run_effect(effect, source, context, int(grp["stacks"])))
 	return results
+
+
+# Whether an event-driven effect reacts to THIS event, given the event's subject and the effect's
+# HOLDER. The relationship is read from the holder's side. SELF (the default) also passes when there
+# is no subject (a phase event like turn-end), meaning "the holder reacts for itself".
+static func _subject_matches(effect: Effect, subject: CardInstance, holder: CardInstance) -> bool:
+	match effect.subject_filter:
+		Effect.SubjectFilter.SELF:  return subject == null or subject == holder
+		Effect.SubjectFilter.ALLY:  return subject != null and subject.owner == holder.owner
+		Effect.SubjectFilter.ENEMY: return subject != null and subject.owner != holder.owner
+		Effect.SubjectFilter.ANY:   return true
+	return false
 
 
 # Fires RUN-LEVEL triggered effects (upgrades/relics/heroes) for an event — the counterpart to
@@ -85,6 +104,9 @@ static func _resolve_targets(effect: Effect, source: CardInstance, context: Effe
 		Effect.TargetingPolicy.ATTACK_TARGET:
 			if context.attack_target != null:
 				candidates = [context.attack_target]
+		Effect.TargetingPolicy.SUBJECT:
+			if context.subject != null:
+				candidates = [context.subject]
 
 	# Effects apply to royalty (King/Queen) and lackeys alike; only the per-effect conditions filter.
 	return candidates.filter(func(c: CardInstance) -> bool: return _passes_conditions(effect.conditions, c))
@@ -102,14 +124,21 @@ static func _apply(effect: Effect, target: CardInstance, source: CardInstance, a
 		return {"target": target, "status_applied": effect.status_id}
 	var amount := effect.amount_int() * amount_scale
 	if effect.attribute == "health":
+		# Direct health change — straight to HP. Damage (negative) ignores shield (e.g. poison);
+		# a heal (positive) is clamped to max. The shield pipeline lives on "damage_taken".
 		if amount < 0:
-			target.take_damage(-amount)
+			target.current_health += amount
 			return {"target": target, "attribute": "health", "delta": amount}
 		else:
 			var max_hp := target.get_attribute("max_health")
 			var healed := mini(amount, max_hp - target.current_health)
 			target.current_health += healed
 			return {"target": target, "attribute": "health", "delta": healed}
+	elif effect.attribute == "damage_taken":
+		# The incoming-hit channel: a positive amount is damage the shield absorbs first, the
+		# remainder wounding health — the same resolution an attack goes through.
+		target.take_damage(amount)
+		return {"target": target, "attribute": "health", "delta": -amount}
 	else:
 		target.apply_modifier(effect.attribute, amount)
 		return {"target": target, "attribute": effect.attribute, "delta": amount}
