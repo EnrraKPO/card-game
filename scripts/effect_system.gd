@@ -12,27 +12,43 @@ static func apply_single(effect: Effect, source: CardInstance, context: EffectCo
 	return _run_effect(effect, source, context)
 
 
-# Fires the triggered effects a card on the board carries for an event — both the card's NATIVE
-# effects and any its active Statuses carry (status magnitudes scale by stack count). One dispatch
-# point, so a status reaches every event a native card effect does.
-static func trigger(event: Effect.Trigger, source: CardInstance, context: EffectContext) -> Array:
-	var results: Array = []
+# Fires the triggered effects a unit carries for an event, grouped BY CONTAINER so the dispatcher can
+# cue each container before its effects: the card's own (native) effects form one group (status_id
+# ""), and each active status forms its own group (its magnitudes scaled by stack count). Resolution
+# itself is container-blind — the container id is carried only so presentation can glint the right
+# badge; it never touches target resolution. Returns Array of { "status_id": String, "results": [] }
+# (only groups that produced results).
+static func trigger_grouped(event: Effect.Trigger, source: CardInstance, context: EffectContext) -> Array:
+	var groups: Array = []
 	if source == null or source.data == null:
-		return results
+		return groups
+	var native: Array = []
 	for effect: Effect in source.data.effects:
 		if effect.kind == Effect.Kind.MODIFIER or effect.trigger != event:
 			continue
 		if not _subject_matches(effect, context.subject, source):
 			continue
-		results.append_array(_run_effect(effect, source, context))
-	# A card's active statuses contribute their TRIGGERED/CUSTOM effects for this event too, with
-	# each status's magnitude scaled by its stack count.
+		native.append_array(_run_effect(effect, source, context))
+	if not native.is_empty():
+		groups.append({"status_id": "", "results": native})
 	for grp: Dictionary in StatusEngine.triggered_groups(source, event):
+		var sres: Array = []
 		for effect: Effect in grp["effects"]:
 			if not _subject_matches(effect, context.subject, source):
 				continue
-			results.append_array(_run_effect(effect, source, context, int(grp["stacks"])))
-	return results
+			sres.append_array(_run_effect(effect, source, context, int(grp["stacks"])))
+		if not sres.is_empty():
+			groups.append({"status_id": grp["status_id"], "results": sres})
+	return groups
+
+
+# Flat results across all of a unit's containers — for callers that don't sequence per-container
+# cues (card play, spells). Same resolution as trigger_grouped, one combined array.
+static func trigger(event: Effect.Trigger, source: CardInstance, context: EffectContext) -> Array:
+	var out: Array = []
+	for grp: Dictionary in trigger_grouped(event, source, context):
+		out.append_array(grp["results"])
+	return out
 
 
 # Whether an event-driven effect reacts to THIS event, given the event's subject and the effect's

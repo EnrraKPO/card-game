@@ -32,15 +32,23 @@ const SOURCE_HOLD := 0.22   # beat after the caster glints, before its effects s
 const MARK_LEAD   := 0.24   # the reticle reads as "look at THIS card" before its badge cue fires
 const STEP_HOLD   := 0.30   # beat after the burst resolves, before returning
 
-func play_results(results: Array, source_inst: CardInstance = null) -> void:
+func play_results(results: Array, source_inst: CardInstance = null,
+		cue_status_id: String = "", show_cue: bool = true) -> void:
 	var source_ui: CardUI = null
 	if source_inst != null and source_inst.row >= 0:
 		source_ui = _get_card_ui.call(source_inst) as CardUI
 
-	# Layer 1 — source glint: once, and only when the effect actually moved a stat (an empty/no-op
-	# resolution shouldn't flare). Spells pass no on-board source, so they're naturally skipped.
-	if source_ui != null and is_instance_valid(source_ui) and _has_effect(results):
-		await play(VFXEvent.source_trigger(source_ui))
+	# Layer 1 — the CONTAINER cue: glint the container whose effects are about to land, once, and only
+	# when the effects actually move a stat (a no-op resolution shouldn't flare). An empty cue id glints
+	# the source card itself (the card container); a status id glints that status's pip. `show_cue` off
+	# skips it entirely (e.g. run-level effects with no on-board container).
+	if show_cue and source_ui != null and is_instance_valid(source_ui) and _has_effect(results):
+		if cue_status_id.is_empty():
+			await play(VFXEvent.source_trigger(source_ui))
+		else:
+			var pip := source_ui.find_status_pip(cue_status_id)
+			if pip != null:
+				pip.glint()
 		await _hold(SOURCE_HOLD)
 
 	# Launch each affected card's reticle + hit as its own sub-sequence and let them run together.

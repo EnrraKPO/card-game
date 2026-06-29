@@ -24,8 +24,9 @@ static func modifier_bonus(inst: CardInstance, attr: String) -> int:
 
 
 # A card's active statuses that have TRIGGERED/CUSTOM effects matching an event, grouped per status
-# so a stacked status's effects can scale together by its stack count.
-# Returns Array of { "effects": Array[Effect], "stacks": int }.
+# (so a stacked status's effects scale together, and the dispatcher can cue each status's pip as the
+# container before its effects). Returns Array of { "status_id": String, "effects": Array[Effect],
+# "stacks": int }.
 static func triggered_groups(inst: CardInstance, event: Effect.Trigger) -> Array:
 	var out: Array = []
 	if inst == null:
@@ -36,7 +37,7 @@ static func triggered_groups(inst: CardInstance, event: Effect.Trigger) -> Array
 			if (e.kind == Effect.Kind.TRIGGERED or e.kind == Effect.Kind.CUSTOM) and e.trigger == event:
 				matched.append(e)
 		if not matched.is_empty():
-			out.append({"effects": matched, "stacks": si.stacks})
+			out.append({"status_id": si.data.id, "effects": matched, "stacks": si.stacks})
 	return out
 
 

@@ -456,11 +456,17 @@ func _fire(event: Effect.Trigger, holder: CardInstance, subject: CardInstance = 
 	var ctx := EffectContext.make(holder, _board.player_grid, _board.enemy_grid)
 	ctx.subject = subject if subject != null else holder
 	ctx.attack_target = atk_target   # lets an ON_ATTACK effect target the unit being struck
-	var results := EffectSystem.trigger(event, holder, ctx)
+	# Walk the holder's containers one at a time — its card, then each status — cueing each before its
+	# (container-blind) effects land: card glint / pip glint → that container's effect VFX.
+	for group: Dictionary in EffectSystem.trigger_grouped(event, holder, ctx):
+		var gres: Array = group["results"]
+		var sid: String = group["status_id"]
+		await _animator.show_effect_results(gres, holder, sid)
+	# Run-level (relic/upgrade) effects have no on-board container to cue yet — play them un-cued.
 	if run_level:
-		results.append_array(EffectSystem.trigger_global(event, ctx))
-	if not results.is_empty():
-		await _animator.show_effect_results(results, holder)
+		var rl := EffectSystem.trigger_global(event, ctx)
+		if not rl.is_empty():
+			await _animator.show_effect_results(rl, holder, "", false)
 
 
 # The single entry point for a combat MOMENT: combat BROADCASTS the event (with the `subject` — the

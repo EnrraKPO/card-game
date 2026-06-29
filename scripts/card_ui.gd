@@ -5,6 +5,9 @@ signal pressed
 signal spell_drag_started(card_ui: CardUI)
 signal spell_drag_ended(card_ui: CardUI)
 
+# Status badge scene — its size/fonts/style are authored in the editor (status_pip.tscn).
+const STATUS_PIP_SCENE := preload("res://scenes/status_pip.tscn")
+
 var card_instance: CardInstance
 var _show_cost: bool
 # Drag-and-drop is a combat affordance (hand → board). Off-combat cards (forge, rewards,
@@ -466,72 +469,22 @@ func _refresh_statuses() -> void:
 		_status_row.add_child(_make_status_pip(si))
 
 
+# The badge node for a given active status (or null) — lets the VFX layer glint the right pip as
+# that status's container cue before its effects land.
+func find_status_pip(status_id: String) -> StatusPip:
+	if _status_row == null:
+		return null
+	for child in _status_row.get_children():
+		var pip := child as StatusPip
+		if pip != null and pip.status != null and pip.status.data.id == status_id:
+			return pip
+	return null
+
+
 func _make_status_pip(si: StatusInstance) -> Control:
-	var sd: StatusData = si.data
-	# A StatusPip (Panel subclass) so hovering the badge shows the status's own rich tooltip
-	# (name, count, description) instead of the card's.
-	var pip := StatusPip.new().setup(si)
-	pip.custom_minimum_size = Vector2(32, 32)
-	pip.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	pip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	pip.mouse_filter = Control.MOUSE_FILTER_STOP
-	var cnt := si.count()
-
-	var style := StyleBoxFlat.new()
-	style.bg_color = sd.color
-	style.set_corner_radius_all(8)   # rounded square, to read distinctly from round charm pips
-	style.set_border_width_all(3)
-	style.border_color = Color(0.04, 0.04, 0.06, 0.9)
-	pip.add_theme_stylebox_override("panel", style)
-
-	# Prefer the status's art; fall back to its coloured glyph.
-	var art := sd.icon()
-	if art != null:
-		var tex := TextureRect.new()
-		tex.texture = art
-		tex.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		tex.offset_left = 2; tex.offset_top = 2; tex.offset_right = -2; tex.offset_bottom = -2
-		tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		pip.add_child(tex)
-	else:
-		var glyph := Label.new()
-		glyph.text = sd.glyph
-		glyph.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		glyph.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		glyph.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		glyph.add_theme_font_size_override("font_size", 19)
-		glyph.add_theme_color_override("font_color", Color(0.99, 0.99, 1.0))
-		glyph.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.75))
-		glyph.add_theme_constant_override("outline_size", 3)
-		glyph.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		pip.add_child(glyph)
-
-	# The headline count, bottom-right: the stack count for a count-decay status (e.g. poison's
-	# value), otherwise the remaining turns. A whole-combat status shows none.
-	if cnt > 0:
-		pip.add_child(_pip_corner(str(cnt), HORIZONTAL_ALIGNMENT_RIGHT, VERTICAL_ALIGNMENT_BOTTOM))
-	# Stack count, top-left, for a timed status that also stacks intensity (count-decay already
-	# shows its stacks as the headline above).
-	if sd.decay != StatusData.DECAY_STACKS and si.stacks > 1:
-		pip.add_child(_pip_corner("x%d" % si.stacks, HORIZONTAL_ALIGNMENT_LEFT, VERTICAL_ALIGNMENT_TOP))
+	var pip := STATUS_PIP_SCENE.instantiate() as StatusPip
+	pip.setup(si)
 	return pip
-
-
-# A small corner number on a status pip (remaining duration / stack count).
-func _pip_corner(text: String, h_align: int, v_align: int) -> Label:
-	var lbl := Label.new()
-	lbl.text = text
-	lbl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	lbl.horizontal_alignment = h_align
-	lbl.vertical_alignment = v_align
-	lbl.add_theme_font_size_override("font_size", 12)
-	lbl.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
-	lbl.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.95))
-	lbl.add_theme_constant_override("outline_size", 4)
-	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	return lbl
 
 
 # The rich hover panel is the shared CardTooltip, so it matches everywhere a card is shown.

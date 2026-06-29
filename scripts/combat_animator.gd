@@ -12,11 +12,14 @@ func setup(root: Node, p_get_card_ui: Callable, vfx: VFXPlayer) -> void:
 	_vfx         = vfx
 
 
-# Converts EffectSystem result arrays to VFX events via VFXPlayer. Pass `source` (the unit
-# whose effect produced these results) so direct damage flies in as a projectile from it. AWAIT
-# this so the results play as an ordered sequence and finish before the caller cleans up deaths.
-func show_effect_results(results: Array, source: CardInstance = null) -> void:
-	await _vfx.play_results(results, source)
+# Converts EffectSystem result arrays to VFX events via VFXPlayer. Pass `source` (the unit whose
+# effect produced these results) so direct damage flies in as a projectile from it. `cue_status_id`
+# selects the container cue played before the effects: "" glints the source card, a status id glints
+# that status's pip; `show_cue=false` suppresses the cue (e.g. un-attributed run-level effects).
+# AWAIT this so the results play as an ordered sequence and finish before the caller cleans up deaths.
+func show_effect_results(results: Array, source: CardInstance = null,
+		cue_status_id: String = "", show_cue: bool = true) -> void:
+	await _vfx.play_results(results, source, cue_status_id, show_cue)
 
 
 # ── Positional animations (lunge / retreat / shake) ───────────────────────────
