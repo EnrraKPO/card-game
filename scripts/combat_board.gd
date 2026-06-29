@@ -213,20 +213,11 @@ func refresh() -> void:
 				e.refresh()
 
 
-func set_slots_targetable(enabled: bool, allow_royalty: bool = true) -> void:
+func set_slots_targetable(enabled: bool) -> void:
 	for r in BoardData.ROWS:
 		for c in BoardData.COLS:
-			(player_slots[r][c] as SlotUI).set_targetable(enabled and _slot_targetable(player_slots[r][c], allow_royalty))
-			(enemy_slots[r][c] as SlotUI).set_targetable(enabled and _slot_targetable(enemy_slots[r][c], allow_royalty))
-
-
-# A slot is a valid manual-spell target unless it holds royalty the spell can't reach. Empty
-# slots stay targetable as before (pressing one is a no-op — see SpellCaster._on_slot_pressed).
-func _slot_targetable(slot: SlotUI, allow_royalty: bool) -> bool:
-	if allow_royalty:
-		return true
-	var ui := slot.get_card()
-	return ui == null or ui.card_instance == null or not ui.card_instance.data.is_royalty()
+			(player_slots[r][c] as SlotUI).set_targetable(enabled)
+			(enemy_slots[r][c] as SlotUI).set_targetable(enabled)
 
 
 func set_board_card_filters(enabled: bool) -> void:

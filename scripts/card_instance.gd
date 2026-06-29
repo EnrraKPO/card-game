@@ -11,6 +11,10 @@ var modifiers: Dictionary = {}  # attribute id -> cumulative int delta
 # Charm ids attached to this card (display only — their mechanics are already baked into
 # `data` by DeckCard.make_instance). Empty for enemies, kings, and tokens.
 var charms: Array = []
+# Live Statuses on this card (Array[StatusInstance]) — runtime buffs/debuffs/periodic effects
+# applied during combat and removed on a timer. Never serialized (rebuilt each fight). Their
+# effects fold into get_attribute (MODIFIER) and fire via EffectSystem.trigger (TRIGGERED).
+var statuses: Array = []
 
 # Set true for the round when this unit spent its attack to generate a card
 # (see rook/building generation in combat.gd). Reset at the start of each round.
@@ -37,10 +41,10 @@ static func from_data(card_data: CardData) -> CardInstance:
 func get_attribute(attr: String) -> int:
 	match attr:
 		"health":     return current_health
-		"max_health": return data.health + modifiers.get("max_health", 0) + GameData.card_bonus(self, "max_health")
-		"attack":     return data.attack + modifiers.get("attack",     0) + GameData.card_bonus(self, "attack")
-		"speed":      return data.speed  + modifiers.get("speed",      0)
-		"cost":       return data.cost   + modifiers.get("cost",       0) + GameData.card_bonus(self, "cost")
+		"max_health": return data.health + modifiers.get("max_health", 0) + GameData.card_bonus(self, "max_health") + StatusEngine.modifier_bonus(self, "max_health")
+		"attack":     return data.attack + modifiers.get("attack",     0) + GameData.card_bonus(self, "attack")     + StatusEngine.modifier_bonus(self, "attack")
+		"speed":      return data.speed  + modifiers.get("speed",      0) + GameData.card_bonus(self, "speed")      + StatusEngine.modifier_bonus(self, "speed")
+		"cost":       return data.cost   + modifiers.get("cost",       0) + GameData.card_bonus(self, "cost")       + StatusEngine.modifier_bonus(self, "cost")
 		"shield":     return current_shield
 		_:            return modifiers.get(attr, 0)
 
@@ -68,3 +72,70 @@ func restore_shield() -> void:
 
 func is_alive() -> bool:
 	return current_health > 0
+
+
+# ── Statuses ───────────────────────────────────────────────────────────────────────────
+
+# Applies a status (by id) to this card, combining with an existing one of the same id per the
+# status's stacking rule. `duration` defaults to the status's own (pass to override); a status
+# whose kind is "combat" always lasts the whole fight regardless. See StatusData / StatusEngine.
+func apply_status(status_id: String, duration: int = Effect.STATUS_DURATION_DEFAULT, stacks: int = 1, src: CardInstance = null) -> void:
+	var sdata := StatusData.get_status(status_id)
+	if sdata == null:
+		return
+	var existing := find_status(status_id)
+	if existing == null or sdata.stacking == StatusData.STACK_INDEPENDENT:
+		statuses.append(StatusInstance.make(sdata, _initial_remaining(sdata, duration), clampi(stacks, 1, sdata.max_stacks), src))
+		return
+	match sdata.stacking:
+		StatusData.STACK_EXTEND:
+			if sdata.decay == StatusData.DECAY_DURATION and existing.remaining != -1:
+				existing.remaining += _resolved_duration(sdata, duration)
+		StatusData.STACK_INTENSITY:
+			existing.stacks = mini(existing.stacks + stacks, sdata.max_stacks)
+			existing.remaining = _refreshed_remaining(existing, sdata, duration)
+		_:   # STACK_REFRESH (default)
+			existing.remaining = _refreshed_remaining(existing, sdata, duration)
+
+
+func find_status(status_id: String) -> StatusInstance:
+	for si: StatusInstance in statuses:
+		if si.data.id == status_id:
+			return si
+	return null
+
+
+func remove_status(status_id: String) -> void:
+	statuses = statuses.filter(func(si: StatusInstance) -> bool: return si.data.id != status_id)
+
+
+func clear_statuses() -> void:
+	statuses.clear()
+
+
+# The effective duration to apply: the caller's override, else the status's own default.
+static func _resolved_duration(sdata: StatusData, duration: int) -> int:
+	return duration if duration != Effect.STATUS_DURATION_DEFAULT else sdata.default_duration
+
+
+# Initial `remaining` for a new instance: a countdown only for DECAY_DURATION; -1 (unused) for
+# stack-decay / never-decay statuses, which don't use the timer.
+static func _initial_remaining(sdata: StatusData, duration: int) -> int:
+	if sdata.decay != StatusData.DECAY_DURATION:
+		return -1
+	return _resolved_duration(sdata, duration)
+
+
+# Refreshed `remaining` on re-application: the longer of current and incoming for DECAY_DURATION;
+# left as-is otherwise.
+static func _refreshed_remaining(existing: StatusInstance, sdata: StatusData, duration: int) -> int:
+	if sdata.decay != StatusData.DECAY_DURATION:
+		return existing.remaining
+	return _longer_duration(existing.remaining, _resolved_duration(sdata, duration))
+
+
+# The longer of two durations, where -1 (whole-combat) outranks any finite count.
+static func _longer_duration(a: int, b: int) -> int:
+	if a == -1 or b == -1:
+		return -1
+	return maxi(a, b)

@@ -62,6 +62,8 @@ An effect is an action that fires at a specific moment, targeting one or more ca
 | `on_attack` | Each time the card attacks |
 | `on_damage_taken` | Each time the card takes damage |
 | `permanent` | Applied once when the card enters the board |
+| `on_turn_start` | Fired for the card at the start of each combat round (before attacks) |
+| `on_turn_end` | Fired for the card at the end of each combat round (after attacks); statuses then count down |
 
 ### `targeting_policy` — who is affected
 
@@ -74,37 +76,13 @@ An effect is an action that fires at a specific moment, targeting one or more ca
 | `all_allies` | Every friendly card currently on the board (including self) |
 | `all` | Every card on the board regardless of side |
 | `manual` | A single target the player picks (for spells) |
+| `attack_target` | The unit this card is striking — only meaningful on an `on_attack` effect (e.g. "apply Poison to whoever I hit") |
 
-> **Lackeys only by default.** Every policy above affects **lackeys** — units that are *not* a King
-> or Queen — and skips royalty on **both** sides. So an `all_allies` buff never reaches your King or
-> Queen, an `all_enemies`/`single_nearest`/`manual` effect can't touch the enemy King or Queen, and a
-> `manual` spell won't even let the player select a royal unit. Kings/Queens are still defeated by
-> normal combat attacks (those aren't effects). To let an effect reach royalty, set `targets_royalty`
-> (below). `self` is exempt — a unit's effect on itself always applies, even on a King or Queen.
-
-### `targets_royalty` — opt in to affect Kings & Queens
-
-`bool`, optional, defaults to `false`. When `true`, royalty (King/Queen) become valid targets for
-this effect *in addition* to lackeys. Use sparingly — this is the deliberate tradeoff that keeps the
-persistent King from hoarding every buff.
-
-```json
-{
-  "id": "regicide",
-  "display_name": "Regicide",
-  "cost": 4, "attack": 0, "health": 1, "speed": 1, "card_type": "spell",
-  "elements": ["darkness", "fire"],
-  "effects": [
-    {
-      "trigger": "on_play",
-      "targeting_policy": "manual",
-      "attribute": "health",
-      "amount": -8,
-      "targets_royalty": true
-    }
-  ]
-}
-```
+> **Effects apply to everyone.** Every policy above affects Kings, Queens, and ordinary units
+> equally — there is no royalty exemption. So an `all_allies` buff reaches your King, an
+> `all_enemies`/`single_nearest`/`manual` effect can hit the enemy King, and a `manual` spell lets
+> the player pick any unit. (Kings are still the win/lose condition and persist across fights — that
+> hasn't changed.)
 
 ### `attribute` — what is modified
 
@@ -118,6 +96,27 @@ persistent King from hoarding every buff.
 ### `amount` — how much to change
 
 An integer. Positive values buff, negative values debuff or deal damage.
+
+### `status` — apply a Status to the targets (optional)
+
+Instead of (or in addition to) a one-shot `attribute` change, an effect can apply a **Status** — a
+named, time-boxed bundle of effects that rides the card for a duration (see
+`data/statuses/STATUS_AUTHORING_GUIDE.md`). Any triggered effect can apply one; it lands on every
+target the `targeting_policy` resolves.
+
+```json
+{
+  "trigger": "on_play",
+  "targeting_policy": "single_nearest",
+  "status": { "id": "withered", "duration": 3, "stacks": 1 }
+}
+```
+
+| Field | Type | Description |
+|---|---|---|
+| `id` | string | The status to apply (must exist in `data/statuses/`) |
+| `duration` | int | Optional — overrides the status's own default duration |
+| `stacks` | int | Optional — stacks to add (default 1; combines per the status's stacking rule) |
 
 ### `conditions` — filter valid targets (optional)
 
@@ -250,6 +249,26 @@ A list of conditions that must **all** pass for a target to be affected. If omit
 ```
 
 ---
+
+## Composition cards (element / chess-piece combos)
+
+A card with `elements` and/or `chess_pieces` is a **composition** card. If you author one but
+**omit its stats** (`cost`/`attack`/`health`/`speed`/`display_name`), it inherits the derived
+values for that composition — so you can attach effects to a combo without restating its numbers:
+
+```json
+{
+  "id": "darkness_water_pawn",
+  "elements": ["darkness", "water"], "chess_pieces": ["pawn"],
+  "effects": [
+    { "trigger": "on_attack", "targeting_policy": "attack_target", "status": { "id": "poison", "stacks": 1 } }
+  ]
+}
+```
+
+Any stat you *do* specify is respected; the rest are derived. (Fully-statted combo cards — see
+`chess_combined.json` — keep working exactly as before.) Use the canonical id: elements and pieces
+sorted alphabetically, e.g. `darkness_water_bishop_pawn`, not `..._pawn_bishop`.
 
 ## Notes
 

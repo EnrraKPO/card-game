@@ -1,0 +1,13 @@
+{
+	"id": "empowered",
+	"display_name": "Empowered",
+	"description": "Gains +2 Attack while active.",
+	"beneficial": true,
+	"color": "e0a93b",
+	"glyph": "↑",
+	"default_duration": 2,
+	"stacking": "refresh",
+	"effects": [
+		{ "kind": "modifier", "key": "unit.attack", "amount": 2 }
+	]
+}

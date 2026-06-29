@@ -12,7 +12,9 @@ static func apply_single(effect: Effect, source: CardInstance, context: EffectCo
 	return _run_effect(effect, source, context)
 
 
-# Fires the triggered effects a card on the board carries for an event.
+# Fires the triggered effects a card on the board carries for an event — both the card's NATIVE
+# effects and any its active Statuses carry (status magnitudes scale by stack count). One dispatch
+# point, so a status reaches every event a native card effect does.
 static func trigger(event: Effect.Trigger, source: CardInstance, context: EffectContext) -> Array:
 	var results: Array = []
 	if source == null or source.data == null:
@@ -21,6 +23,8 @@ static func trigger(event: Effect.Trigger, source: CardInstance, context: Effect
 		if effect.kind == Effect.Kind.MODIFIER or effect.trigger != event:
 			continue
 		results.append_array(_run_effect(effect, source, context))
+	for entry: Dictionary in StatusEngine.triggered_effects(source, event):
+		results.append_array(_run_effect(entry["effect"], source, context, int(entry["stacks"])))
 	return results
 
 
@@ -38,13 +42,14 @@ static func trigger_global(event: Effect.Trigger, context: EffectContext) -> Arr
 
 
 # Runs one effect (TRIGGERED → resolve targets + apply; CUSTOM → invoke its code hook).
-static func _run_effect(effect: Effect, source: CardInstance, context: EffectContext) -> Array:
+# `amount_scale` multiplies stat/heal magnitudes (used to scale a stacked status's effects).
+static func _run_effect(effect: Effect, source: CardInstance, context: EffectContext, amount_scale: int = 1) -> Array:
 	if effect.kind == Effect.Kind.CUSTOM:
 		var hook := EffectHooks.get_hook(effect.custom_id)
 		return hook.call(context) if hook.is_valid() else []
 	var results: Array = []
 	for target: CardInstance in _resolve_targets(effect, source, context):
-		var r := _apply(effect, target)
+		var r := _apply(effect, target, source, amount_scale)
 		if not r.is_empty():
 			results.append(r)
 	return results
@@ -77,26 +82,25 @@ static func _resolve_targets(effect: Effect, source: CardInstance, context: Effe
 		Effect.TargetingPolicy.MANUAL:
 			if context.manual_target != null:
 				candidates = [context.manual_target]
+		Effect.TargetingPolicy.ATTACK_TARGET:
+			if context.attack_target != null:
+				candidates = [context.attack_target]
 
-	# Lackeys-only by default: royalty (King/Queen) is filtered out unless the effect opts in, or
-	# it's a SELF effect (a unit affecting itself is inherently explicit). Covers every policy —
-	# including MANUAL, since the player's pick flows through here too.
-	var allow_royalty := effect.targets_royalty or effect.targeting_policy == Effect.TargetingPolicy.SELF
-	return candidates.filter(
-		func(c: CardInstance) -> bool:
-			if not allow_royalty and c.data != null and c.data.is_royalty():
-				return false
-			return _passes_conditions(effect.conditions, c)
-	)
+	# Effects apply to royalty (King/Queen) and lackeys alike; only the per-effect conditions filter.
+	return candidates.filter(func(c: CardInstance) -> bool: return _passes_conditions(effect.conditions, c))
 
 
 # ── Effect application ─────────────────────────────────────────────────────────
 
-static func _apply(effect: Effect, target: CardInstance) -> Dictionary:
+static func _apply(effect: Effect, target: CardInstance, source: CardInstance, amount_scale: int = 1) -> Dictionary:
 	if effect.custom_apply.is_valid():
 		effect.custom_apply.call(target)
 		return {}
-	var amount := effect.amount_int()
+	# Generic "apply a status" operation: any effect can grant a status to each resolved target.
+	if not effect.status_id.is_empty():
+		target.apply_status(effect.status_id, effect.status_duration, effect.status_stacks, source)
+		return {"target": target, "status_applied": effect.status_id}
+	var amount := effect.amount_int() * amount_scale
 	if effect.attribute == "health":
 		if amount < 0:
 			target.take_damage(-amount)

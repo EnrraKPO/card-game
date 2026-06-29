@@ -47,9 +47,8 @@ func is_deck_unit() -> bool:
 	return card_type == CardType.UNIT and not is_king
 
 
-# Royalty = the King and Queen. They persist on the board, so effects DON'T target them by
-# default — an effect must opt in (Effect.targets_royalty). Everything else fieldable is a
-# "lackey", the default target of buffs/debuffs/heals. See EffectSystem._resolve_targets.
+# Royalty = the King and Queen (the King is also the win/lose condition and persists across
+# fights). Effects now apply to royalty and lackeys equally; this is kept as a domain concept.
 func is_royalty() -> bool:
 	return is_king or chess_pieces.has("queen")
 
@@ -76,6 +75,9 @@ func generated_card() -> CardData:
 
 static var _all: Dictionary = {}
 static var _by_composition: Dictionary = {}
+# Authored composition cards that omitted their stats — they inherit the derived stats once every
+# base card is loaded (so designers can attach effects to a composition without re-stating it).
+static var _derive_fill: Array = []   # [{ "card": CardData, "def": Dictionary }]
 
 
 static func _static_init() -> void:
@@ -90,6 +92,7 @@ static func _static_init() -> void:
 			_load_json("res://data/cards/" + fname)
 		fname = dir.get_next()
 	dir.list_dir_end()
+	_fill_derived_stats()   # composition cards authored without stats inherit them now
 
 
 static func _load_json(path: String) -> void:
@@ -154,6 +157,25 @@ static func _load_card_dict(d: Dictionary) -> void:
 	_all[card.id] = card
 	if card.elements.size() > 0 or card.chess_pieces.size() > 0:
 		_by_composition[composition_key(card.elements, card.chess_pieces)] = card
+		# A composition card authored without stats (e.g. just to attach effects) inherits the
+		# derived stats in a post-load pass, once every base card is available.
+		if not d.has("attack"):
+			_derive_fill.append({"card": card, "def": d})
+
+
+# Fills the derived stats for stat-less composition cards (deferred to here so base cards are
+# all loaded). Any core field the author DID specify is respected; the rest come from the formula.
+static func _fill_derived_stats() -> void:
+	for entry: Dictionary in _derive_fill:
+		var card: CardData = entry["card"]
+		var def: Dictionary = entry["def"]
+		var s := _derived_stats(card.elements, card.chess_pieces)
+		if not def.has("cost"):         card.cost = int(s["cost"])
+		if not def.has("health"):       card.health = int(s["health"])
+		if not def.has("speed"):        card.speed = int(s["speed"])
+		if not def.has("attack"):       card.attack = int(s["attack"])
+		if not def.has("display_name"): card.display_name = str(s["display_name"])
+	_derive_fill.clear()
 
 
 # Inverse of build_from_dict — serialises the authorable definition (omitting derived
@@ -279,14 +301,9 @@ static func _derive_from_key(key: String) -> CardData:
 	return derived
 
 
-static func _derive(elems: Array, chess: Array, key: String) -> CardData:
-	var c := CardData.new()
-	c.id           = key
-	c.elements     = Array(elems, TYPE_STRING, "", null)
-	c.chess_pieces = Array(chess, TYPE_STRING, "", null)
-	c.is_king      = false
-	c.display_name = _derive_name(elems, chess)
-	c.description  = ""
+# The formula stats for a composition (the values a fully-derived card gets, and the values a
+# stat-less authored composition card inherits — see _fill_derived_stats).
+static func _derived_stats(elems: Array, chess: Array) -> Dictionary:
 	var n := elems.size() + chess.size()
 	var cost := 0
 	for e: String in elems:
@@ -295,10 +312,28 @@ static func _derive(elems: Array, chess: Array, key: String) -> CardData:
 	for cp: String in chess:
 		var base: CardData = _all.get(cp, null)
 		cost += base.cost if base else 1
-	c.cost        = cost
-	c.attack      = n * 2
-	c.health      = n * 3
-	c.speed       = 2
+	return {
+		"cost":         cost,
+		"attack":       n * 2,
+		"health":       n * 3,
+		"speed":        2,
+		"display_name": _derive_name(elems, chess),
+	}
+
+
+static func _derive(elems: Array, chess: Array, key: String) -> CardData:
+	var c := CardData.new()
+	c.id           = key
+	c.elements     = Array(elems, TYPE_STRING, "", null)
+	c.chess_pieces = Array(chess, TYPE_STRING, "", null)
+	c.is_king      = false
+	c.description  = ""
+	var s := _derived_stats(elems, chess)
+	c.display_name = str(s["display_name"])
+	c.cost         = int(s["cost"])
+	c.attack       = int(s["attack"])
+	c.health       = int(s["health"])
+	c.speed        = int(s["speed"])
 	c.card_type          = CardType.SPELL if (chess.is_empty() and not elems.is_empty()) else CardType.UNIT
 	c.targeting_strategy = _make_targeting_strategy(chess)
 	var art := "res://assets/cards/%s.png" % key

@@ -13,6 +13,8 @@ var _show_cost: bool
 var draggable: bool = true
 # Left-edge column of charm pips, built lazily (mirrors the composition chips on the right).
 var _charm_col: VBoxContainer = null
+# Top-edge row of status pips (runtime buffs/debuffs), built lazily.
+var _status_row: HBoxContainer = null
 # True for a rook-generated token shown in the hand's "generated" zone; gives
 # the card a distinct glowing frame and a tooltip naming its source building.
 var is_generated: bool = false
@@ -270,6 +272,7 @@ func refresh() -> void:
 	_spd_lbl.visible    = not is_spell
 	_refresh_composition()
 	_refresh_charms()
+	_refresh_statuses()
 	# Non-empty tooltip_text is required for Godot to invoke _make_custom_tooltip;
 	# fall back to the name so the enlarged preview shows even without a description.
 	var desc := card_instance.data.description
@@ -449,6 +452,101 @@ func _make_charm_pip(charm_id: String) -> Control:
 	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	pip.add_child(lbl)
 	return pip
+
+
+# Builds the top-edge row of status pips — one coloured glyph (or icon) per active Status, with
+# its remaining duration and (when >1) stack count. The detail lives in the pip tooltip. Mirrors
+# the charm column; built lazily so a status-free card costs nothing.
+func _refresh_statuses() -> void:
+	var stats: Array = card_instance.statuses if card_instance != null else []
+	if _status_row == null:
+		if stats.is_empty():
+			return
+		_status_row = HBoxContainer.new()
+		_status_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_status_row.alignment = BoxContainer.ALIGNMENT_CENTER
+		_status_row.add_theme_constant_override("separation", 5)
+		# Horizontal band across the top, below the nameplate (anchors in native Canvas units).
+		_status_row.anchor_left = 0.16
+		_status_row.anchor_right = 0.84
+		_status_row.anchor_top = 0.135
+		_status_row.anchor_bottom = 0.215
+		_status_row.offset_left = 0.0
+		_status_row.offset_top = 0.0
+		_status_row.offset_right = 0.0
+		_status_row.offset_bottom = 0.0
+		_canvas.add_child(_status_row)
+
+	for child in _status_row.get_children():
+		child.queue_free()
+	for si: StatusInstance in stats:
+		_status_row.add_child(_make_status_pip(si))
+
+
+func _make_status_pip(si: StatusInstance) -> Control:
+	var sd: StatusData = si.data
+	var pip := Panel.new()
+	pip.custom_minimum_size = Vector2(32, 32)
+	pip.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	pip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	pip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	var style := StyleBoxFlat.new()
+	style.bg_color = sd.color
+	style.set_corner_radius_all(8)   # rounded square, to read distinctly from round charm pips
+	style.set_border_width_all(3)
+	style.border_color = Color(0.04, 0.04, 0.06, 0.9)
+	pip.add_theme_stylebox_override("panel", style)
+
+	# Prefer the status's art; fall back to its coloured glyph.
+	var art := sd.icon()
+	if art != null:
+		var tex := TextureRect.new()
+		tex.texture = art
+		tex.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		tex.offset_left = 2; tex.offset_top = 2; tex.offset_right = -2; tex.offset_bottom = -2
+		tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		pip.add_child(tex)
+	else:
+		var glyph := Label.new()
+		glyph.text = sd.glyph
+		glyph.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		glyph.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		glyph.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		glyph.add_theme_font_size_override("font_size", 19)
+		glyph.add_theme_color_override("font_color", Color(0.99, 0.99, 1.0))
+		glyph.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.75))
+		glyph.add_theme_constant_override("outline_size", 3)
+		glyph.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		pip.add_child(glyph)
+
+	# The headline count, bottom-right: the stack count for a count-decay status (e.g. poison's
+	# value), otherwise the remaining turns. A whole-combat status shows none.
+	var primary: int = si.stacks if sd.decay == StatusData.DECAY_STACKS else si.remaining
+	if primary > 0:
+		pip.add_child(_pip_corner(str(primary), HORIZONTAL_ALIGNMENT_RIGHT, VERTICAL_ALIGNMENT_BOTTOM))
+	# Stack count, top-left, for a timed status that also stacks intensity (count-decay already
+	# shows its stacks as the headline above).
+	if sd.decay != StatusData.DECAY_STACKS and si.stacks > 1:
+		pip.add_child(_pip_corner("x%d" % si.stacks, HORIZONTAL_ALIGNMENT_LEFT, VERTICAL_ALIGNMENT_TOP))
+	return pip
+
+
+# A small corner number on a status pip (remaining duration / stack count).
+func _pip_corner(text: String, h_align: int, v_align: int) -> Label:
+	var lbl := Label.new()
+	lbl.text = text
+	lbl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	lbl.horizontal_alignment = h_align
+	lbl.vertical_alignment = v_align
+	lbl.add_theme_font_size_override("font_size", 12)
+	lbl.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
+	lbl.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.95))
+	lbl.add_theme_constant_override("outline_size", 4)
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return lbl
 
 
 # The rich hover panel is the shared CardTooltip, so it matches everywhere a card is shown.

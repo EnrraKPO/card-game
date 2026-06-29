@@ -25,7 +25,12 @@ enum Trigger {
 	ON_ATTACK,
 	ON_DAMAGE_TAKEN,
 	PERMANENT,
+	ON_TURN_START,   # fired for every unit at the start of a combat round (status lifecycle)
+	ON_TURN_END,     # fired for every unit at the end of a combat round; statuses then count down
 }
+
+# Sentinel for "apply this status for its own default duration" (the applier didn't override it).
+const STATUS_DURATION_DEFAULT := -9999
 
 enum TargetingPolicy {
 	SELF,
@@ -35,12 +40,14 @@ enum TargetingPolicy {
 	ALL_ALLIES,
 	ALL,
 	MANUAL,
+	ATTACK_TARGET,   # the unit this card is currently striking (valid in an ON_ATTACK context)
 }
 
 # Card-scoped MODIFIER keys → the CardInstance attribute each one adjusts.
 const CARD_ATTR := {
 	"unit.attack": "attack",
 	"unit.health": "max_health",
+	"unit.speed":  "speed",
 	"card.cost":   "cost",
 }
 
@@ -50,11 +57,6 @@ var kind: Kind = Kind.TRIGGERED   # default keeps all existing (triggered) card/
 # triggered/attribute path int()s it.
 var amount: float = 0.0
 
-# Opt-in to affect royalty (King/Queen). Effects target lackeys (non-King, non-Queen units)
-# only by default; set this true to let the effect reach a King or Queen too — on either side.
-# Applies to every kind: gates target resolution (TRIGGERED/spells) and matches_card (MODIFIER).
-var targets_royalty: bool = false
-
 # ── TRIGGERED / CUSTOM fields ──
 var trigger: Trigger = Trigger.ON_PLAY
 var targeting_policy: TargetingPolicy = TargetingPolicy.SELF
@@ -62,6 +64,12 @@ var conditions: Array = []   # Array[EffectCondition]
 var attribute: String = ""
 var custom_id: String = ""           # CUSTOM: id into EffectHooks
 var custom_apply: Callable           # programmatic inline hook (not data-authored)
+
+# Generic "apply a status" payload: any TRIGGERED effect may grant a status to each resolved
+# target (in place of / as well as a stat delta). Empty status_id = this effect applies no status.
+var status_id: String = ""
+var status_duration: int = STATUS_DURATION_DEFAULT   # sentinel = use the status's own default
+var status_stacks: int = 1
 
 # ── MODIFIER fields ──
 var scope: Scope = Scope.GLOBAL
@@ -75,7 +83,6 @@ var filter: Dictionary = {}   # card selection predicate for scope=CARD
 static func from_dict(d: Dictionary) -> Effect:
 	var e := Effect.new()
 	e.amount = float(d.get("amount", 0))
-	e.targets_royalty = bool(d.get("targets_royalty", false))
 	for c_data: Dictionary in d.get("conditions", []):
 		e.conditions.append(EffectCondition.from_dict(c_data))
 	var kind_str := str(d.get("kind", ""))
@@ -99,6 +106,12 @@ static func from_dict(d: Dictionary) -> Effect:
 		e.trigger          = _str_trigger(d.get("trigger", ""))
 		e.targeting_policy = _str_policy(d.get("targeting_policy", ""))
 		e.attribute        = d.get("attribute", "")
+	# Optional "apply a status" payload, valid on any event-driven (TRIGGERED) effect.
+	var st: Dictionary = d.get("status", {})
+	if not st.is_empty():
+		e.status_id       = str(st.get("id", ""))
+		e.status_duration = int(st.get("duration", STATUS_DURATION_DEFAULT))
+		e.status_stacks   = int(st.get("stacks", 1))
 	return e
 
 
@@ -112,8 +125,6 @@ func to_dict() -> Dictionary:
 				d["op"] = "mul"
 			if not filter.is_empty():
 				d["filter"] = filter
-			if targets_royalty:
-				d["targets_royalty"] = true
 			return d
 		Kind.CUSTOM:
 			return {
@@ -133,8 +144,8 @@ func to_dict() -> Dictionary:
 				"amount":           amount_int(),
 				"conditions":       conds,
 			}
-			if targets_royalty:
-				d["targets_royalty"] = true
+			if not status_id.is_empty():
+				d["status"] = {"id": status_id, "duration": status_duration, "stacks": status_stacks}
 			return d
 
 
@@ -152,19 +163,17 @@ func amount_int() -> int:
 	return int(round(amount))
 
 
-# Whether a card-scoped modifier applies to a given card. `unit.*` is implicitly fieldable
-# LACKEYS only (never spells, and never royalty unless targets_royalty); `filter` narrows
-# further (kind / has_element).
+# Whether a card-scoped modifier applies to a given card. `unit.*` keys apply to any unit
+# (King/Queen included) but never to spell cards; `filter` narrows further (kind / has_element).
 func matches_card(inst: CardInstance) -> bool:
 	if inst == null or inst.data == null:
 		return false
 	var data := inst.data
-	var blocks_royalty := data.is_royalty() and not targets_royalty
-	if key.begins_with("unit.") and (blocks_royalty or data.card_type == CardData.CardType.SPELL):
+	if key.begins_with("unit.") and data.card_type == CardData.CardType.SPELL:
 		return false
 	match str(filter.get("kind", "")):
 		"unit":
-			if data.card_type != CardData.CardType.UNIT or blocks_royalty:
+			if data.card_type != CardData.CardType.UNIT:
 				return false
 		"spell":
 			if data.card_type != CardData.CardType.SPELL:
@@ -183,6 +192,8 @@ static func _str_trigger(s: String) -> Trigger:
 		"on_attack":       return Trigger.ON_ATTACK
 		"on_damage_taken": return Trigger.ON_DAMAGE_TAKEN
 		"permanent":       return Trigger.PERMANENT
+		"on_turn_start":   return Trigger.ON_TURN_START
+		"on_turn_end":     return Trigger.ON_TURN_END
 	return Trigger.ON_PLAY
 
 
@@ -195,6 +206,7 @@ static func _str_policy(s: String) -> TargetingPolicy:
 		"all_allies":     return TargetingPolicy.ALL_ALLIES
 		"all":            return TargetingPolicy.ALL
 		"manual":         return TargetingPolicy.MANUAL
+		"attack_target":  return TargetingPolicy.ATTACK_TARGET
 	return TargetingPolicy.SELF
 
 
@@ -205,6 +217,8 @@ static func trigger_key(t: Trigger) -> String:
 		Trigger.ON_ATTACK:       return "on_attack"
 		Trigger.ON_DAMAGE_TAKEN: return "on_damage_taken"
 		Trigger.PERMANENT:       return "permanent"
+		Trigger.ON_TURN_START:   return "on_turn_start"
+		Trigger.ON_TURN_END:     return "on_turn_end"
 	return "on_play"
 
 
@@ -217,4 +231,5 @@ static func policy_key(p: TargetingPolicy) -> String:
 		TargetingPolicy.ALL_ALLIES:     return "all_allies"
 		TargetingPolicy.ALL:            return "all"
 		TargetingPolicy.MANUAL:         return "manual"
+		TargetingPolicy.ATTACK_TARGET:  return "attack_target"
 	return "self"

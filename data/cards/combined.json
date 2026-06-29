@@ -165,11 +165,12 @@
 	"id": "darkness_water",
 	"display_name": "Poison",
 	"cost": 2, "attack": 4, "health": 6, "speed": 2,
-	"description": "Poison a unit, dealing 3 damage and reducing its Attack by 2.",
+	"description": "Poison a unit: deal 3 damage, reduce its Attack by 2, and apply Poison 1.",
 	"elements": ["water", "darkness"], "chess_pieces": [],
 	"effects": [
 	  { "trigger": "on_play", "targeting_policy": "manual", "attribute": "health", "amount": -3 },
-	  { "trigger": "on_play", "targeting_policy": "manual", "attribute": "attack", "amount": -2 }
+	  { "trigger": "on_play", "targeting_policy": "manual", "attribute": "attack", "amount": -2 },
+	  { "trigger": "on_play", "targeting_policy": "manual", "status": { "id": "poison", "stacks": 1 } }
 	]
   },
   {

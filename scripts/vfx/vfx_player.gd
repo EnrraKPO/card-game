@@ -51,6 +51,11 @@ func play_results(results: Array, source_inst: CardInstance = null) -> void:
 	for r: Dictionary in results:
 		if r.is_empty():
 			continue
+		# A status application has no stat delta; mark the target (tinted by benefit) and snap its
+		# pip in. Handled up front, sequentially, so it never tangles with the concurrent stat hits.
+		if r.has("status_applied"):
+			await _play_status_applied(r.get("target"), str(r.get("status_applied", "")))
+			continue
 		var inst: CardInstance = r.get("target")
 		if inst == null or inst.row < 0:
 			continue
@@ -69,6 +74,20 @@ func play_results(results: Array, source_inst: CardInstance = null) -> void:
 	while remaining[0] > 0:
 		await get_tree().process_frame
 	await _hold(STEP_HOLD)
+
+
+# A status landing on a card: a benefit-tinted reticle, then refresh so the new pip shows. No
+# stat number (a status isn't a single-stat change — its pip carries the detail).
+func _play_status_applied(inst: CardInstance, status_id: String) -> void:
+	if inst == null or inst.row < 0:
+		return
+	var card_ui: CardUI = _get_card_ui.call(inst) as CardUI
+	if card_ui == null or not is_instance_valid(card_ui):
+		return
+	var sd := StatusData.get_status(status_id)
+	var tint := Color(0.55, 0.95, 0.6) if (sd == null or sd.beneficial) else Color(0.95, 0.55, 0.55)
+	await play(VFXEvent.target_mark(card_ui, tint))
+	card_ui.refresh()
 
 
 # One affected card's slice of a (possibly multi-target) resolution, run concurrently with its

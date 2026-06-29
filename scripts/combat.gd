@@ -308,7 +308,15 @@ func _on_done_pressed() -> void:
 	_board.placement_enabled = false
 	_set_placement_input(false)
 	_refresh()
+	await _tick_statuses(Effect.Trigger.ON_TURN_START)
+	if _board.any_king_dead():
+		_handle_combat_end()
+		return
 	await _run_combat()
+	if _board.any_king_dead():
+		_handle_combat_end()
+		return
+	await _tick_statuses(Effect.Trigger.ON_TURN_END)
 	if _board.any_king_dead():
 		_handle_combat_end()
 		return
@@ -415,7 +423,7 @@ func _resolve_attack(attacker: CardInstance) -> void:
 # before ON_ATTACK fires so a self-buff on attack doesn't retroactively change this hit.
 func _apply_attack_damage(attacker: CardInstance, target: CardInstance, t_card: CardUI) -> void:
 	var dmg := attacker.get_attribute("attack")
-	await _animator.show_effect_results(_trigger(Effect.Trigger.ON_ATTACK, attacker), attacker)
+	await _animator.show_effect_results(_trigger(Effect.Trigger.ON_ATTACK, attacker, target), attacker)
 	var dmg_split := target.take_damage(dmg)
 	await _animator.show_effect_results(_trigger(Effect.Trigger.ON_DAMAGE_TAKEN, target), target)
 	# Shield reads FIRST: it takes the blow on its own badge (and only the badge — a held shield
@@ -432,11 +440,37 @@ func _apply_attack_damage(attacker: CardInstance, target: CardInstance, t_card: 
 # DRYs the repeated "fire an effect trigger for an instance in the current board context"
 # call used throughout combat resolution. Fires the instance's own (card) triggered effects
 # AND any run-level effects (upgrades/relics) listening for the same event.
-func _trigger(t: Effect.Trigger, inst: CardInstance) -> Array:
+func _trigger(t: Effect.Trigger, inst: CardInstance, atk_target: CardInstance = null) -> Array:
 	var ctx := EffectContext.make(inst, _board.player_grid, _board.enemy_grid)
+	ctx.attack_target = atk_target   # lets an ON_ATTACK effect target the unit being struck
 	var results := EffectSystem.trigger(t, inst, ctx)
 	results.append_array(EffectSystem.trigger_global(t, ctx))
 	return results
+
+
+# The per-round status lifecycle for `event` (ON_TURN_START / ON_TURN_END), across every living
+# unit: each unit's status (and any native) effects for that event resolve in board context, any
+# deaths they cause are swept through the normal death path, and on ON_TURN_END every unit's
+# ROUNDS statuses then count down and expire. Run-level (upgrade/relic) turn effects are NOT fired
+# here — they would fire once per unit; add a single trigger_global call if that's ever wanted.
+func _tick_statuses(event: Effect.Trigger) -> void:
+	for inst: CardInstance in _board.get_all_units():
+		if not inst.is_alive():
+			continue
+		var ctx := EffectContext.make(inst, _board.player_grid, _board.enemy_grid)
+		var results := EffectSystem.trigger(event, inst, ctx)
+		if not results.is_empty():
+			await _animator.show_effect_results(results, inst)
+		if not inst.is_alive():
+			await _animator.show_effect_results(_trigger(Effect.Trigger.ON_DEATH, inst), inst)
+			await _vfx.play(VFXEvent.death(_board.get_card_ui(inst)))
+			_board.remove_card(inst)
+	# Count statuses down AFTER this phase's effects fired (advance only touches statuses whose
+	# decay_phase matches this event), so a count-based status uses its pre-decay value first.
+	for inst: CardInstance in _board.get_all_units():
+		StatusEngine.advance(inst, event)
+	_board.cleanup_effect_deaths()
+	_board.refresh()
 
 
 # The player's King carries its health across the whole run, so it enters each

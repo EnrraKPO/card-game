@@ -205,8 +205,10 @@
     "chess_pieces": [
       "king"
     ],
-    "description": "Ruler of darkness and water. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
-    "effects": []
+    "description": "Ruler of darkness and water. If the King falls, the battle is lost. Attacks the nearest enemy, applying Poison 1. Starts each round with 5 Shield.",
+    "effects": [
+      { "trigger": "on_attack", "targeting_policy": "attack_target", "status": { "id": "poison", "stacks": 1 } }
+    ]
   },
   {
     "id": "earth_earth_king",

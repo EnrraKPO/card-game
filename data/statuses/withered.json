@@ -1,0 +1,14 @@
+{
+	"id": "withered",
+	"display_name": "Withered",
+	"description": "Loses 1 Health at the end of each turn. Stacks.",
+	"beneficial": false,
+	"color": "7a9b58",
+	"glyph": "☠",
+	"default_duration": 3,
+	"stacking": "stack",
+	"max_stacks": 9,
+	"effects": [
+		{ "trigger": "on_turn_end", "targeting_policy": "self", "attribute": "health", "amount": -1 }
+	]
+}
