@@ -22,14 +22,16 @@ var _offers: Array = []
 var _deck_entries: Array = []
 var _selected_idx: int = -1   # index into _deck_entries, -1 = none
 
-var _deck_grid: GridContainer
+var _deck_grid: FitGrid
 var _gold_lbl: Label
 var _remove_status_lbl: Label
 var _remove_btn: Button
+var _compact := false
 
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	_compact = UIScale.is_compact()
 	_build_ui()
 	_rebuild_deck()
 
@@ -39,7 +41,7 @@ func _build_ui() -> void:
 	var root: VBoxContainer = s.root
 
 	_gold_lbl = Label.new()
-	_gold_lbl.add_theme_font_size_override("font_size", 18)
+	_gold_lbl.add_theme_font_size_override("font_size", 28 if _compact else 24)
 	_gold_lbl.modulate = Color(1.0, 0.85, 0.3)
 	_gold_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	s.header.add_child(_gold_lbl)
@@ -49,12 +51,16 @@ func _build_ui() -> void:
 	# ── Body ───────────────────────────────────────────────────────────────────
 	var body := HBoxContainer.new()
 	body.size_flags_vertical = SIZE_EXPAND_FILL
-	body.add_theme_constant_override("separation", 0)
+	body.add_theme_constant_override("separation", 24)
 	root.add_child(body)
 
-	body.add_child(_build_buy_panel())
+	var buy := _build_buy_panel()
+	buy.size_flags_stretch_ratio = 2.0
+	body.add_child(buy)
 	body.add_child(VSeparator.new())
-	body.add_child(_build_remove_panel())
+	var remove := _build_remove_panel()
+	remove.size_flags_stretch_ratio = 1.0
+	body.add_child(remove)
 
 	_refresh_gold_label()
 
@@ -91,12 +97,12 @@ func _build_kind_row(entry: Dictionary) -> Control:
 
 	var label := Label.new()
 	label.text = "  " + str(entry.get("label", ""))
-	label.add_theme_font_size_override("font_size", 18)
+	label.add_theme_font_size_override("font_size", 28 if _compact else 24)
 	box.add_child(label)
 
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 16)
+	row.add_theme_constant_override("separation", 28 if _compact else 24)
 	box.add_child(row)
 
 	var kind_key := str(entry.get("kind", ""))
@@ -117,8 +123,8 @@ func _build_kind_row(entry: Dictionary) -> Control:
 
 func _make_offer_slot(grant: Grant) -> Control:
 	var slot := VBoxContainer.new()
-	slot.custom_minimum_size = Vector2(150, 0)
-	slot.add_theme_constant_override("separation", 8)
+	slot.custom_minimum_size = Vector2(220 if _compact else 190, 0)
+	slot.add_theme_constant_override("separation", 10)
 	slot.alignment = BoxContainer.ALIGNMENT_CENTER
 
 	var ui := grant.make_ui()
@@ -127,20 +133,25 @@ func _make_offer_slot(grant: Grant) -> Control:
 
 	var name_lbl := Label.new()
 	name_lbl.text = grant.display_name()
-	name_lbl.add_theme_font_size_override("font_size", 13)
+	name_lbl.add_theme_font_size_override("font_size", 20 if _compact else 18)
 	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	name_lbl.custom_minimum_size.x = 130
+	name_lbl.custom_minimum_size.x = 180
 	slot.add_child(name_lbl)
 
 	var price := grant.price()
 	var price_lbl := Label.new()
 	price_lbl.text = "%d Gold" % price
+	price_lbl.add_theme_font_size_override("font_size", 22 if _compact else 19)
+	price_lbl.modulate = Color(1.0, 0.85, 0.3)
 	price_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	slot.add_child(price_lbl)
 
 	var buy_btn := Button.new()
 	buy_btn.text = "Buy"
+	buy_btn.size_flags_horizontal = SIZE_EXPAND_FILL
+	buy_btn.custom_minimum_size = Vector2(0, 96) if _compact else Vector2(0, 64)
+	buy_btn.add_theme_font_size_override("font_size", 28 if _compact else 22)
 	slot.add_child(buy_btn)
 
 	var rec := {"grant": grant, "price": price, "buy_btn": buy_btn, "bought": false}
@@ -178,36 +189,32 @@ func _update_buy_buttons() -> void:
 
 func _build_remove_panel() -> Control:
 	var panel := VBoxContainer.new()
-	panel.custom_minimum_size.x = 420.0
+	panel.size_flags_horizontal = SIZE_EXPAND_FILL
 	panel.size_flags_vertical = SIZE_EXPAND_FILL
-	panel.add_theme_constant_override("separation", 12)
+	panel.add_theme_constant_override("separation", 16)
 
 	var label := Label.new()
 	label.text = "  Remove a Card"
-	label.add_theme_font_size_override("font_size", 18)
+	label.add_theme_font_size_override("font_size", 28 if _compact else 24)
 	panel.add_child(label)
 
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_horizontal = SIZE_EXPAND_FILL
-	scroll.size_flags_vertical   = SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.vertical_scroll_mode   = ScrollContainer.SCROLL_MODE_AUTO
-	panel.add_child(scroll)
-
-	_deck_grid = GridContainer.new()
-	_deck_grid.columns = 3
-	_deck_grid.add_theme_constant_override("h_separation", 10)
-	_deck_grid.add_theme_constant_override("v_separation", 10)
+	# The whole deck fits — FitGrid sizes the cards to fill, no scrolling.
+	_deck_grid = FitGrid.new()
 	_deck_grid.size_flags_horizontal = SIZE_EXPAND_FILL
-	scroll.add_child(_deck_grid)
+	_deck_grid.size_flags_vertical   = SIZE_EXPAND_FILL
+	panel.add_child(_deck_grid)
 
 	_remove_status_lbl = Label.new()
 	_remove_status_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_remove_status_lbl.add_theme_font_size_override("font_size", 26 if _compact else 22)
 	panel.add_child(_remove_status_lbl)
 
 	_remove_btn = Button.new()
 	_remove_btn.text = "Remove (%d Gold)" % REMOVE_COST
 	_remove_btn.disabled = true
+	_remove_btn.size_flags_horizontal = SIZE_EXPAND_FILL
+	_remove_btn.custom_minimum_size = Vector2(0, 120) if _compact else Vector2(0, 84)
+	_remove_btn.add_theme_font_size_override("font_size", 30 if _compact else 26)
 	_remove_btn.pressed.connect(_apply_remove)
 	panel.add_child(_remove_btn)
 
@@ -215,11 +222,10 @@ func _build_remove_panel() -> Control:
 
 
 func _rebuild_deck() -> void:
-	for child in _deck_grid.get_children():
-		child.queue_free()
 	_deck_entries.clear()
 	_selected_idx = -1
 
+	var cards: Array = []
 	var deck: Array = GameData.current_run.deck.duplicate()
 	for i in deck.size():
 		var dc: DeckCard = deck[i]
@@ -228,14 +234,14 @@ func _rebuild_deck() -> void:
 			continue
 		var inst := dc.make_instance()
 		var ui   := CardUI.create(inst)
-		ui.custom_minimum_size = Vector2(110, 145)
 
 		var entry_idx := _deck_entries.size()
 		_deck_entries.append({"card": dc, "deck_idx": i, "data": data, "ui": ui})
 		ui.pressed.connect(func(): _on_deck_card_pressed(entry_idx))
 
-		_deck_grid.add_child(ui)
+		cards.append(ui)
 
+	_deck_grid.set_cards(cards)
 	_update_remove_panel()
 
 

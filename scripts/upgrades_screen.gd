@@ -74,7 +74,7 @@ func _build_body(root: VBoxContainer) -> void:
 
 	# Detail strip — previews the focused tree, then whichever node is clicked.
 	var detail := PanelContainer.new()
-	detail.custom_minimum_size.y = 150.0 if _compact else 104.0
+	detail.custom_minimum_size.y = 168.0 if _compact else 132.0
 	root.add_child(detail)
 	var dbox := VBoxContainer.new()
 	dbox.add_theme_constant_override("separation", 4)
@@ -96,9 +96,8 @@ func _build_body(root: VBoxContainer) -> void:
 	head.add_child(_detail_title)
 
 	_buy_btn = Button.new()
-	_buy_btn.add_theme_font_size_override("font_size", 22 if _compact else 15)
-	if _compact:
-		_buy_btn.custom_minimum_size = Vector2(220, 64)
+	_buy_btn.add_theme_font_size_override("font_size", 26 if _compact else 20)
+	_buy_btn.custom_minimum_size = Vector2(260, 96) if _compact else Vector2(200, 64)
 	_buy_btn.visible = false
 	_buy_btn.pressed.connect(_on_buy_pressed)
 	head.add_child(_buy_btn)

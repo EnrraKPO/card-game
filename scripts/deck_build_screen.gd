@@ -34,7 +34,7 @@ func _ready() -> void:
 		return
 	UIScale.layout_changed.connect(func(): get_tree().reload_current_scene(), CONNECT_ONE_SHOT)
 	_compact = UIScale.is_compact()
-	_tile_w = 110.0 if _compact else 82.0
+	_tile_w = 130.0 if _compact else 112.0
 	for dc: DeckCard in _deck.cards:
 		_cards.append(dc.clone())
 	_build_ui()
@@ -54,9 +54,8 @@ func _build_ui() -> void:
 	var s := ScreenUI.scaffold(self, "Edit Deck")
 	_save_btn = Button.new()
 	_save_btn.text = "Save"
-	_save_btn.add_theme_font_size_override("font_size", 30 if _compact else 18)
-	if _compact:
-		_save_btn.custom_minimum_size = Vector2(180, 84)
+	_save_btn.add_theme_font_size_override("font_size", 30 if _compact else 22)
+	_save_btn.custom_minimum_size = Vector2(220, 96) if _compact else Vector2(160, 56)
 	_save_btn.pressed.connect(_on_save)
 	s.header.add_child(_save_btn)
 	ScreenUI.attach_exits(_on_back, s.header, s.footer)
@@ -69,7 +68,7 @@ func _build_ui() -> void:
 	body.add_child(_build_pool_pane())
 
 	_status = Label.new()
-	_status.add_theme_font_size_override("font_size", 22 if _compact else 15)
+	_status.add_theme_font_size_override("font_size", 24 if _compact else 19)
 	_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var status_pad := MarginContainer.new()
 	for side in ["top", "bottom"]:

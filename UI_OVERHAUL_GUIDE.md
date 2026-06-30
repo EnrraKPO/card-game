@@ -32,19 +32,24 @@ Parse-check edited scripts (warnings are errors for this user):
 - `screen_ui.gd` (global chrome): outer margin = `safe_inset()+36`; 24px vertical gaps between header/body/footer (fixes ✕ cramped against body); chunky Back (260×96 / 340×130). Header has h-padding + 16 separation.
 - `game_world.gd` (Hub): sidebar | actions split by ratio; meta-button row / Continue Run / Abandon divide the height. Matches `frontend_concept`. ✓ rendered-verified.
 - `game_slots.gd` (Save Select): dark bg + margin; big title; full-width tall slot rows; big Delete; real Reset button. Matches `profiles_concept`. ✓ rendered-verified (`screenshots/saveselect_new.png`).
+- `deck_screen.gd` (Decks): preview pane fixed-width → stretch-ratio split (deck grid 1.7 : preview 1.0); actions now a 2-col grid of chunky full-width buttons via `_make_action_button`. ✓ `decks_new.png`.
+- `combination_screen.gd` (Forge): right preview fixed-width + `CenterContainer` island → filled `PanelContainer` split by ratio (left 2.2 : right 1.0), "Preview" header + bigger preview card. ✓ `forge_new.png`.
+- `upgrade_tree_view.gd` (Upgrades tree): now scales-to-fit AND centers — small trees blow up (cap `MAX_SCALE`), big trees shrink (floor `MIN_SCALE`), never scroll; node/font/link sizes all scale. `upgrades_screen.gd`: chunky desktop Buy button + taller detail strip. Matches `upgrades_concept`. ✓ `upgrades_new.png`.
+- `hello_screen.gd` / `entry_screen.gd`: added dark `ScreenUI.BG_COLOR` bg (was raw engine gray); big title + chunky Play/Continue + properly-placed/sized Reset. ✓ `hello_new.png`.
+- `event_screen.gd` (Event): hardcoded 6-col scroll grid → `FitGrid` that fills + sizes cards; bigger title/blurb/gold/status + chunky upgrade button. ✓ `event_new.png`.
+- `shop_screen.gd` (Shop): buy/remove split by ratio (was fixed-420 remove panel); chunky full-width Buy buttons + gold-colored prices + bigger fonts; remove deck via `FitGrid`. ✓ `shop_new.png`.
+- `deck_select_screen.gd` (Deck Select): stranded top-left 4-col grid → `FitGrid` of card-shaped tiles (King card + bottom name/count banner), matches Decks screen, fills canvas. ✓ `deckselect_new.png`.
+- `deck_build_screen.gd` (Edit Deck): bigger tiles (`_tile_w` 112 desktop), chunky desktop Save button, bigger status. ✓ `deckbuild_new.png`.
 
-## Remaining screens — worst offenders first
-(From a full catalogue. Fix each, render, save `<screen>_new.png`.)
-1. **Decks** `deck_screen.gd:~76` — right preview panel hardcoded `custom_minimum_size.x = 360/440`. Replace with a stretch-ratio split.
-2. **Forge** `combination_screen.gd:~119,124` — right preview fixed 360/420 + `CenterContainer`. Same fix.
-3. **Upgrades** `upgrades_screen.gd` + `upgrade_tree_view.gd` — detail strip fixed height; tree cluster small (see `upgrades_concept.jpg`: tree should fill the canvas, bigger tabs/nodes).
-4. **Entry / Hello** `entry_screen.gd`, `hello_screen.gd` — `CenterContainer` islands with fixed button/field sizes.
-5. **Event** `event_screen.gd:~61` — hardcoded `columns = 6` (overflows compact). Make columns responsive to width.
-6. **Deck Select** `deck_select_screen.gd`, **Edit Deck** `deck_build_screen.gd` — fixed card sizes / no fill in places.
-7. **Shop** `shop_screen.gd`, **Debug Shop** `debug_shop.gd` — offer slots 150px wide; lots of bottom empty space — let content fill.
-8. **Lab** `lab_screen.gd` — "fake full" (busy bg, small actual UI + float gaps); make the interactive content/buttons bigger.
-9. **Map** `map.gd`, **Combat HUD** `combat.gd:_build_hud` — HUD button sizing inconsistent; reasonable but review.
-10. Mostly-OK (light touch): `reward_screen.gd`, `rest_screen.gd`, `relic_event_screen.gd`, `collection_screen.gd`.
+### Harness note
+`_render.gd` now starts a run (with sample charms) for run-dependent scenes and sets `editing_deck_id`/`viewing_deck_id`, so Forge/Shop/Event/Deck-Build render with real content.
+
+- `lab_screen.gd` (Lab): reworked over several rounds of feedback. Final = a **"room" with two full-area states** over the **darkened** room art. Working area shows either the three artifacts as BIG clickable objects (`_make_artifact_object`), or — once clicked — that artifact's crafting workspace filling the area with a "‹ Lab" back button (`_build_craft_panel`/`_close_artifact`); no dim modal. Forge bodies split the card preview into its OWN column (`_assemble_forge`) so it doesn't fight the action button. **Working area + resources sit SIDE BY SIDE on desktop** (HBox: work 2.6 | resources column 1.0) so they can't overlap on short windows; **stacked** on compact. (Earlier stacked-everywhere version overflowed the crafting panel down over the resources at 1366×768 — that's why it's side-by-side now.) ✓ `lab_room_new.png`, `lab_craft_new.png`.
+
+## Remaining screens
+1. **Debug Shop** `debug_shop.gd` — dev tool; low priority.
+2. **Map** `map.gd`, **Combat HUD** `combat.gd:_build_hud` — HUD button sizing inconsistent; reasonable but review.
+3. Mostly-OK (light touch): `reward_screen.gd`, `rest_screen.gd`, `relic_event_screen.gd`, `collection_screen.gd`.
 
 Shared helpers: `ScreenUI` (`screen_ui.gd`) — `frame/scaffold/frame_centered`, `back_button`, `close_button`, `experience_bar`, `BG_COLOR`. `UIScale` (`ui_scale.gd`) — `is_compact()` (true if mobile or window <1100px), `safe_inset()` (40 compact / 28 desktop).
 

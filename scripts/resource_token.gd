@@ -34,9 +34,9 @@ func _build() -> void:
 	# Illustrated piece tokens are taller and squarer so the art reads big; text resources
 	# (essences/stones) keep the compact wide chip.
 	if art != null:
-		custom_minimum_size = Vector2(104, 128) if _compact else Vector2(76, 92)
+		custom_minimum_size = Vector2(124, 152) if _compact else Vector2(104, 128)
 	else:
-		custom_minimum_size = Vector2(150, 80) if _compact else Vector2(108, 58)
+		custom_minimum_size = Vector2(168, 96) if _compact else Vector2(140, 80)
 
 	# Discreet framing: a faint translucent backing, no outline — the art (or label) carries the
 	# identity, the panel just gives it a subtle resting place. See Materials.frame_tint for the
@@ -71,7 +71,7 @@ func _build() -> void:
 		# Fill the token (minus the count strip) and keep aspect; IGNORE_SIZE so the full-res
 		# art doesn't dictate the token's min size (it was blowing the container out).
 		icon.size_flags_vertical = SIZE_EXPAND_FILL
-		icon.custom_minimum_size = Vector2(0, 78 if _compact else 56)
+		icon.custom_minimum_size = Vector2(0, 96 if _compact else 78)
 		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		icon.mouse_filter = MOUSE_FILTER_IGNORE
@@ -80,7 +80,7 @@ func _build() -> void:
 		var name_lbl := Label.new()
 		name_lbl.text = Materials.short_name(material_id)
 		name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		name_lbl.add_theme_font_size_override("font_size", 19 if _compact else 13)
+		name_lbl.add_theme_font_size_override("font_size", 22 if _compact else 17)
 		name_lbl.add_theme_color_override("font_color", c)
 		name_lbl.mouse_filter = MOUSE_FILTER_IGNORE
 		box.add_child(name_lbl)
@@ -88,7 +88,7 @@ func _build() -> void:
 	var count_lbl := Label.new()
 	count_lbl.text = "x%d" % available
 	count_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	count_lbl.add_theme_font_size_override("font_size", 22 if _compact else 15)
+	count_lbl.add_theme_font_size_override("font_size", 24 if _compact else 18)
 	count_lbl.mouse_filter = MOUSE_FILTER_IGNORE
 	box.add_child(count_lbl)
 

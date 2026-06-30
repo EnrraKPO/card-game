@@ -4,14 +4,14 @@ extends Control
 # this node rolled (GameData.current_event_attr, set by NodeKindEvent). One upgrade
 # per visit. Spells can't be placed as units, so only units are eligible.
 const EVENT_COST := 40
-const CARD_SIZE := Vector2(110, 145)
 
 var _attr: String = "attack"
 var _entries: Array = []      # { "card": DeckCard, "deck_idx": int, "ui": CardUI }
 var _selected_idx: int = -1
 var _done: bool = false
+var _compact := false
 
-var _deck_grid: GridContainer
+var _deck_grid: FitGrid
 var _gold_lbl: Label
 var _status_lbl: Label
 var _upgrade_btn: Button
@@ -27,46 +27,39 @@ func _ready() -> void:
 
 
 func _build_ui() -> void:
+	_compact = UIScale.is_compact()
 	var root := ScreenUI.frame(self, "Event", _leave)
 	root.add_theme_constant_override("separation", 16)
 
 	var title := Label.new()
 	title.text = "A Wandering Trainer"
-	title.add_theme_font_size_override("font_size", 32)
+	title.add_theme_font_size_override("font_size", 52 if _compact else 44)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	root.add_child(title)
 
 	var blurb := Label.new()
 	blurb.text = "Offers to permanently raise one unit's %s by +1, for %d gold." \
 		% [DeckCard.attr_label(_attr), EVENT_COST]
-	blurb.add_theme_font_size_override("font_size", 18)
+	blurb.add_theme_font_size_override("font_size", 26 if _compact else 22)
 	blurb.modulate = Color(0.85, 0.8, 0.6)
 	blurb.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	root.add_child(blurb)
 
 	_gold_lbl = Label.new()
-	_gold_lbl.add_theme_font_size_override("font_size", 18)
+	_gold_lbl.add_theme_font_size_override("font_size", 28 if _compact else 24)
 	_gold_lbl.modulate = Color(1.0, 0.85, 0.3)
 	_gold_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	root.add_child(_gold_lbl)
 
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_horizontal = SIZE_EXPAND_FILL
-	scroll.size_flags_vertical   = SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.vertical_scroll_mode   = ScrollContainer.SCROLL_MODE_AUTO
-	root.add_child(scroll)
-
-	_deck_grid = GridContainer.new()
-	_deck_grid.columns = 6
-	_deck_grid.add_theme_constant_override("h_separation", 10)
-	_deck_grid.add_theme_constant_override("v_separation", 10)
+	# The whole deck always fits — FitGrid sizes the cards to fill the body, no scrolling.
+	_deck_grid = FitGrid.new()
 	_deck_grid.size_flags_horizontal = SIZE_EXPAND_FILL
-	scroll.add_child(_deck_grid)
+	_deck_grid.size_flags_vertical   = SIZE_EXPAND_FILL
+	root.add_child(_deck_grid)
 
 	_status_lbl = Label.new()
 	_status_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_status_lbl.add_theme_font_size_override("font_size", 15)
+	_status_lbl.add_theme_font_size_override("font_size", 26 if _compact else 22)
 	root.add_child(_status_lbl)
 
 	var btn_row := HBoxContainer.new()
@@ -75,18 +68,17 @@ func _build_ui() -> void:
 	root.add_child(btn_row)
 
 	_upgrade_btn = Button.new()
-	_upgrade_btn.add_theme_font_size_override("font_size", 18)
-	_upgrade_btn.custom_minimum_size = Vector2(220, 0)
+	_upgrade_btn.add_theme_font_size_override("font_size", 30 if _compact else 26)
+	_upgrade_btn.custom_minimum_size = Vector2(440, 120) if _compact else Vector2(380, 84)
 	_upgrade_btn.pressed.connect(_apply_upgrade)
 	btn_row.add_child(_upgrade_btn)
 
 
 func _rebuild_deck() -> void:
-	for child in _deck_grid.get_children():
-		child.queue_free()
 	_entries.clear()
 	_selected_idx = -1
 
+	var cards: Array = []
 	var deck: Array = GameData.current_run.deck.duplicate()
 	for i in deck.size():
 		var dc: DeckCard = deck[i]
@@ -94,7 +86,6 @@ func _rebuild_deck() -> void:
 		if data == null:
 			continue
 		var ui := CardUI.create(dc.make_instance())
-		ui.custom_minimum_size = CARD_SIZE
 
 		# Only fieldable deck units are valid targets — spells aren't placed as units, and
 		# the King isn't drawn from the deck (so a deck-side change never reaches the board).
@@ -109,8 +100,9 @@ func _rebuild_deck() -> void:
 		if is_target:
 			_entries.append({ "card": dc, "deck_idx": i, "ui": ui })
 
-		_deck_grid.add_child(ui)
+		cards.append(ui)
 
+	_deck_grid.set_cards(cards)
 	_refresh()
 
 

@@ -40,10 +40,10 @@ func _build_ui() -> void:
 	ScreenUI.attach_exits(
 		func(): get_tree().change_scene_to_file("res://scenes/game_world.tscn"), s.header, s.footer)
 
-	# ── Body: deck grid (fills, no scroll) + fixed preview panel (right) ───────────
+	# ── Body: deck grid (fills, no scroll) + preview panel (right), split by ratio ──
 	var body := HBoxContainer.new()
 	body.size_flags_vertical = SIZE_EXPAND_FILL
-	body.add_theme_constant_override("separation", 12)
+	body.add_theme_constant_override("separation", 24)
 	root.add_child(body)
 
 	body.add_child(_build_deck_grid_pane())
@@ -68,22 +68,25 @@ func _build_deck_grid_pane() -> Control:
 	_deck_grid = FitGrid.new()
 	_deck_grid.size_flags_horizontal = SIZE_EXPAND_FILL
 	_deck_grid.size_flags_vertical = SIZE_EXPAND_FILL
+	_deck_grid.size_flags_stretch_ratio = 1.7
 	return _deck_grid
 
 
 func _build_preview_pane() -> Control:
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size.x = 440.0 if _compact else 360.0
+	panel.size_flags_horizontal = SIZE_EXPAND_FILL
+	panel.size_flags_vertical = SIZE_EXPAND_FILL
+	panel.size_flags_stretch_ratio = 1.0
 	var pad := MarginContainer.new()
 	for side in ["left", "right", "top", "bottom"]:
-		pad.add_theme_constant_override("margin_" + side, 16)
+		pad.add_theme_constant_override("margin_" + side, 24)
 	panel.add_child(pad)
 	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 10)
+	col.add_theme_constant_override("separation", 18)
 	pad.add_child(col)
 
 	_preview_title = Label.new()
-	_preview_title.add_theme_font_size_override("font_size", 30 if _compact else 22)
+	_preview_title.add_theme_font_size_override("font_size", 34 if _compact else 28)
 	col.add_child(_preview_title)
 
 	# The whole deck always fits this pane — FitGrid sizes the cards to fill it, no scrolling.
@@ -92,45 +95,35 @@ func _build_preview_pane() -> Control:
 	_preview_grid.size_flags_vertical = SIZE_EXPAND_FILL
 	col.add_child(_preview_grid)
 
-	var actions := HFlowContainer.new()
-	actions.add_theme_constant_override("h_separation", 12)
-	actions.add_theme_constant_override("v_separation", 10)
-	actions.alignment = FlowContainer.ALIGNMENT_CENTER
+	# Two-column grid of chunky, full-width action buttons (no tiny floating chips).
+	var actions := GridContainer.new()
+	actions.columns = 2
+	actions.add_theme_constant_override("h_separation", 16)
+	actions.add_theme_constant_override("v_separation", 16)
 	col.add_child(actions)
-	_set_active_btn = Button.new()
-	_set_active_btn.custom_minimum_size = Vector2(240, 76) if _compact else Vector2(160, 40)
-	_set_active_btn.add_theme_font_size_override("font_size", 26 if _compact else 16)
-	_set_active_btn.pressed.connect(_on_set_active)
+
+	_set_active_btn = _make_action_button("", _on_set_active)
 	actions.add_child(_set_active_btn)
-	_view_btn = Button.new()
-	_view_btn.text = "View Deck →"
-	_view_btn.custom_minimum_size = Vector2(240, 76) if _compact else Vector2(160, 40)
-	_view_btn.add_theme_font_size_override("font_size", 26 if _compact else 16)
-	_view_btn.pressed.connect(_on_view_deck)
+	_view_btn = _make_action_button("View Deck →", _on_view_deck)
 	actions.add_child(_view_btn)
-
-	_edit_btn = Button.new()
-	_edit_btn.text = "Edit Deck →"
-	_edit_btn.custom_minimum_size = Vector2(240, 76) if _compact else Vector2(160, 40)
-	_edit_btn.add_theme_font_size_override("font_size", 26 if _compact else 16)
-	_edit_btn.pressed.connect(_on_edit_deck)
+	_edit_btn = _make_action_button("Edit Deck →", _on_edit_deck)
 	actions.add_child(_edit_btn)
-
-	_reset_btn = Button.new()
-	_reset_btn.text = "Reset"
-	_reset_btn.custom_minimum_size = Vector2(240, 76) if _compact else Vector2(140, 40)
-	_reset_btn.add_theme_font_size_override("font_size", 26 if _compact else 16)
-	_reset_btn.pressed.connect(_on_reset)
+	_reset_btn = _make_action_button("Reset", _on_reset)
 	actions.add_child(_reset_btn)
-
-	_delete_btn = Button.new()
-	_delete_btn.text = "Delete"
-	_delete_btn.custom_minimum_size = Vector2(240, 76) if _compact else Vector2(140, 40)
-	_delete_btn.add_theme_font_size_override("font_size", 26 if _compact else 16)
+	_delete_btn = _make_action_button("Delete", _on_delete)
 	_delete_btn.add_theme_color_override("font_color", Color(0.95, 0.6, 0.55))
-	_delete_btn.pressed.connect(_on_delete)
 	actions.add_child(_delete_btn)
 	return panel
+
+
+func _make_action_button(text: String, handler: Callable) -> Button:
+	var btn := Button.new()
+	btn.text = text
+	btn.size_flags_horizontal = SIZE_EXPAND_FILL
+	btn.custom_minimum_size = Vector2(0, 120) if _compact else Vector2(0, 72)
+	btn.add_theme_font_size_override("font_size", 32 if _compact else 24)
+	btn.pressed.connect(handler)
+	return btn
 
 
 # An inline overlay listing the unlocked Kings; choosing one seeds a new deck for it.

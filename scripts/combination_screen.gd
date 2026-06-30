@@ -81,6 +81,7 @@ func _build_ui() -> void:
 	var left := VBoxContainer.new()
 	left.size_flags_horizontal = SIZE_EXPAND_FILL
 	left.size_flags_vertical   = SIZE_EXPAND_FILL
+	left.size_flags_stretch_ratio = 2.2
 	left.add_theme_constant_override("separation", 8)
 	body.add_child(left)
 
@@ -112,34 +113,45 @@ func _build_ui() -> void:
 	_charm_row.add_theme_constant_override("separation", 10)
 	left.add_child(_charm_row)
 
-	body.add_child(VSeparator.new())
+	# Right: live preview panel — a filled panel split by ratio (no fixed width / floating island).
+	var right_panel := PanelContainer.new()
+	right_panel.size_flags_horizontal = SIZE_EXPAND_FILL
+	right_panel.size_flags_vertical   = SIZE_EXPAND_FILL
+	right_panel.size_flags_stretch_ratio = 1.0
+	body.add_child(right_panel)
 
-	# Right: live preview panel.
+	var right_pad := MarginContainer.new()
+	for side in ["left", "right", "top", "bottom"]:
+		right_pad.add_theme_constant_override("margin_" + side, 24)
+	right_panel.add_child(right_pad)
+
 	var right := VBoxContainer.new()
-	right.custom_minimum_size.x = 420.0 if _compact else 360.0
-	right.size_flags_vertical    = SIZE_EXPAND_FILL
 	right.add_theme_constant_override("separation", 18)
-	body.add_child(right)
+	right_pad.add_child(right)
 
-	var right_center := CenterContainer.new()
-	right_center.size_flags_vertical = SIZE_EXPAND_FILL
-	right.add_child(right_center)
+	var preview_label := Label.new()
+	preview_label.text = "Preview"
+	preview_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	preview_label.add_theme_font_size_override("font_size", 30 if _compact else 24)
+	preview_label.modulate = IDLE_COLOR
+	right.add_child(preview_label)
 
-	var panel_vbox := VBoxContainer.new()
-	panel_vbox.add_theme_constant_override("separation", 18)
-	right_center.add_child(panel_vbox)
-
+	# The preview card fills the upper half of the panel (centred, aspect kept by the card itself).
+	var preview_size := _card_size * (1.4 if _compact else 1.7)
 	_preview_holder = Control.new()
-	_preview_holder.custom_minimum_size = _card_size
+	_preview_holder.custom_minimum_size = preview_size
 	_preview_holder.size_flags_horizontal = SIZE_SHRINK_CENTER
-	panel_vbox.add_child(_preview_holder)
+	_preview_holder.size_flags_vertical = SIZE_SHRINK_CENTER
+	right.add_child(_preview_holder)
 
 	_preview_status = Label.new()
 	_preview_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_preview_status.add_theme_font_size_override("font_size", 24 if _compact else 16)
+	_preview_status.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_preview_status.add_theme_font_size_override("font_size", 26 if _compact else 20)
 	_preview_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_preview_status.custom_minimum_size.x = 400.0 if _compact else 340.0
-	panel_vbox.add_child(_preview_status)
+	_preview_status.size_flags_horizontal = SIZE_EXPAND_FILL
+	_preview_status.size_flags_vertical = SIZE_EXPAND_FILL
+	right.add_child(_preview_status)
 
 	# Drag overlay: floats above everything, never eats input.
 	_overlay = Control.new()
