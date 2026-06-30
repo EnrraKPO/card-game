@@ -17,6 +17,12 @@ screenshots/
 # Art-generation scratch / preview dir
 /tmp/
 
+# UI render-harness output images (regenerable scratch)
+/_render_out.png
+/_render_out.png.import
+/_shot_out.png
+/_shot_out.png.import
+
 # Icon rasterization / contact-sheet build output (regenerable scratch)
 tools/_icon_preview/
 

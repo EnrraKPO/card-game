@@ -13,30 +13,31 @@ func _ready() -> void:
 	Nav.clear_back()   # save-select root — the OS back gesture stays inert (never quits)
 	# Rebuild if the form factor flips (e.g. previewing mobile by resizing in the editor).
 	UIScale.layout_changed.connect(func(): get_tree().reload_current_scene(), CONNECT_ONE_SHOT)
-	var compact := UIScale.is_compact()
+
+	# This screen is the root picker (no ScreenUI chrome), so it lays its own dark background and
+	# fills the whole screen: big title, near-full-width tall slot rows dividing the height, and a
+	# real Reset button — proportional coverage, no centered island.
+	var bg := ColorRect.new()
+	bg.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	bg.color = ScreenUI.BG_COLOR
+	add_child(bg)
+
+	var pad := MarginContainer.new()
+	pad.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	var m := int(UIScale.safe_inset() + 36.0)
+	for side in ["left", "right", "top", "bottom"]:
+		pad.add_theme_constant_override("margin_" + side, m)
+	add_child(pad)
 
 	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 20 if compact else 22)
-	if compact:
-		# Fill the screen so the slot rows are wide, tall and easy to tap.
-		var pad := MarginContainer.new()
-		pad.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-		for side in ["left", "right", "top", "bottom"]:
-			pad.add_theme_constant_override("margin_" + side, 64)
-		add_child(pad)
-		vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-		pad.add_child(vbox)
-	else:
-		# A wide, centered menu column (balanced margins, big readable rows) — not a thin strip.
-		vbox.custom_minimum_size.x = 860.0
-		var center := CenterContainer.new()
-		center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		add_child(center)
-		center.add_child(vbox)
+	vbox.size_flags_horizontal = SIZE_EXPAND_FILL
+	vbox.size_flags_vertical = SIZE_EXPAND_FILL
+	vbox.add_theme_constant_override("separation", 24)
+	pad.add_child(vbox)
 
 	var title := Label.new()
 	title.text = "Select Save"
-	title.add_theme_font_size_override("font_size", 48 if compact else 44)
+	title.add_theme_font_size_override("font_size", 64)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(title)
 
@@ -44,37 +45,42 @@ func _ready() -> void:
 		var started := GameData.slot_started(i)
 
 		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 8)
+		row.size_flags_horizontal = SIZE_EXPAND_FILL
+		row.size_flags_vertical = SIZE_EXPAND_FILL   # the slot rows divide the height — big and tall
+		row.add_theme_constant_override("separation", 20)
 		vbox.add_child(row)
 
 		var slot_btn := Button.new()
-		slot_btn.custom_minimum_size = Vector2(380, 96 if compact else 80)
-		slot_btn.add_theme_font_size_override("font_size", 24 if compact else 26)
 		slot_btn.text = _slot_label(i, started)
+		slot_btn.add_theme_font_size_override("font_size", 34)
 		slot_btn.size_flags_horizontal = SIZE_EXPAND_FILL
+		slot_btn.size_flags_vertical = SIZE_EXPAND_FILL
 		var idx := i
 		slot_btn.pressed.connect(func(): _on_slot_selected(idx))
 		row.add_child(slot_btn)
 
 		var del_btn := Button.new()
 		del_btn.text = "Delete"
-		del_btn.custom_minimum_size = Vector2(120, 96 if compact else 80)
-		del_btn.add_theme_font_size_override("font_size", 18)
+		del_btn.add_theme_font_size_override("font_size", 28)
+		del_btn.custom_minimum_size.x = 240.0
+		del_btn.size_flags_vertical = SIZE_EXPAND_FILL
 		del_btn.disabled = not started
 		del_btn.pressed.connect(func(): _on_delete_pressed(idx))
 		row.add_child(del_btn)
 
-	# Global reset (name + every save), bottom-right.
+	# Global reset (name + every save) — a real button at the bottom-right.
+	var footer := HBoxContainer.new()
+	footer.size_flags_horizontal = SIZE_EXPAND_FILL
+	vbox.add_child(footer)
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = SIZE_EXPAND_FILL
+	footer.add_child(spacer)
 	var reset_btn := Button.new()
 	reset_btn.text = "Reset profile"
-	reset_btn.add_theme_font_size_override("font_size", 18 if compact else 13)
-	reset_btn.set_anchors_and_offsets_preset(PRESET_BOTTOM_RIGHT)
-	reset_btn.offset_left = -(220 if compact else 150)
-	reset_btn.offset_top = -(64 if compact else 48)
-	reset_btn.offset_right = -16
-	reset_btn.offset_bottom = -16
+	reset_btn.add_theme_font_size_override("font_size", 24)
+	reset_btn.custom_minimum_size = Vector2(300, 90)
 	reset_btn.pressed.connect(func(): _confirm_reset.popup_centered())
-	add_child(reset_btn)
+	footer.add_child(reset_btn)
 
 	_confirm_delete = ConfirmationDialog.new()
 	_confirm_delete.title = "Delete save"

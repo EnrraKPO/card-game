@@ -34,25 +34,37 @@ static func scaffold(host: Control, title: String) -> Dictionary:
 	# The background (above) stays full-bleed; the chrome + body inset off the edges so no
 	# button (the ✕ in the header, Back in the footer, any content) sits in the touch-hostile
 	# border zone. One inset, bigger on touch — see UIScale.safe_inset.
-	var inset := UIScale.safe_inset()
+	# Touch-safe inset PLUS a base outer margin, so the whole frame breathes off the screen edges
+	# (and the corner ✕ / Back aren't jammed against them). The header gets its own padding below.
+	var margin := UIScale.safe_inset() + 36.0
 	var outer := VBoxContainer.new()
 	outer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	outer.offset_left = inset
-	outer.offset_top = inset
-	outer.offset_right = -inset
-	outer.offset_bottom = -inset
-	outer.add_theme_constant_override("separation", 0)
+	outer.offset_left = margin
+	outer.offset_top = margin
+	outer.offset_right = -margin
+	outer.offset_bottom = -margin
+	# Vertical gaps between header / body / footer so the corner ✕ and Back aren't jammed against
+	# the body's top/bottom rows (e.g. the ✕ vs the first meta button).
+	outer.add_theme_constant_override("separation", 24)
 	host.add_child(outer)
 
 	var header := PanelContainer.new()
 	header.custom_minimum_size.y = 104.0 if compact else 56.0
 	outer.add_child(header)
 
+	# Horizontal padding inside the header + spacing between its items, so the title and the docked
+	# ✕ (added by attach_exits) have breathing room instead of being jammed against the edges.
+	var header_pad := MarginContainer.new()
+	header_pad.add_theme_constant_override("margin_left", 16)
+	header_pad.add_theme_constant_override("margin_right", 16)
+	header.add_child(header_pad)
+
 	var header_hbox := HBoxContainer.new()
-	header.add_child(header_hbox)
+	header_hbox.add_theme_constant_override("separation", 16)
+	header_pad.add_child(header_hbox)
 
 	var title_lbl := Label.new()
-	title_lbl.text = "  " + title
+	title_lbl.text = title
 	title_lbl.add_theme_font_size_override("font_size", 34 if compact else 22)
 	title_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -167,13 +179,13 @@ static func close_button(action: Callable) -> Button:
 	return btn
 
 
-# The standard bottom-left "Back" button.
+# The standard bottom-left "Back" button — chunky, not a tiny outlier next to the page's content.
 static func back_button(action: Callable) -> Button:
 	var compact := UIScale.is_compact()
 	var btn := Button.new()
 	btn.text = "‹ Back"
-	btn.add_theme_font_size_override("font_size", 30 if compact else 22)
-	btn.custom_minimum_size = Vector2(210, 88) if compact else Vector2(150, 54)
+	btn.add_theme_font_size_override("font_size", 40 if compact else 30)
+	btn.custom_minimum_size = Vector2(340, 130) if compact else Vector2(260, 96)
 	btn.pressed.connect(action)
 	return btn
 
