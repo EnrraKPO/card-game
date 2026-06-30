@@ -10,25 +10,17 @@ signal grab(payload: Dictionary)
 
 var payload: Dictionary = {}
 
-# When set (card items), hover shows the shared rich CardTooltip instead of the plain text one.
-# The inner CardUI is input-transparent, so the wrapper hosts the tooltip on its behalf.
-var tooltip_card: CardInstance = null
-
 
 # Wraps `content` (a CardUI or a charm chip) and tags it with `p` (e.g. {"kind":"card","idx":i}).
+# A CardUI is left on MOUSE_FILTER_PASS so it shows its OWN standard hover tooltip (the same path
+# the whole game uses) while still letting the press fall through to us to start the drag. Charm
+# chips have no tooltip of their own, so they stay IGNORE and we host their plain text tooltip.
 func setup(content: Control, p: Dictionary) -> void:
 	payload = p
 	mouse_filter = Control.MOUSE_FILTER_STOP
-	content.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	content.mouse_filter = Control.MOUSE_FILTER_PASS if content is CardUI else Control.MOUSE_FILTER_IGNORE
 	content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(content)
-
-
-# Card items get the full preview panel; charms (tooltip_card == null) fall back to tooltip_text.
-func _make_custom_tooltip(_for_text: String) -> Object:
-	if tooltip_card != null:
-		return CardTooltip.build(tooltip_card)
-	return null
 
 
 func _gui_input(event: InputEvent) -> void:

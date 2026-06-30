@@ -1,9 +1,14 @@
 extends Control
 
-# The Forge. Drag one deck card onto another to COMBINE them; drag a charm chip onto a card to
-# ENCHANT it. While dragging, the floating card carries a particle aura; hovering a valid target
-# wraps it in a matching aura and a swirling vortex (ForgeLink) pulls motes between the two cards,
-# while the side preview shows the result. Dropping on a valid target performs the merge; else cancels.
+# The Forge. Two ways to COMBINE two deck cards into one:
+#  • Tap/click flow: tap a card to drop it into ingredient slot A on the right, tap a second for
+#    slot B; the forged result + a Combine button appear. Tapping a slotted card removes it.
+#  • Drag flow: drag a card; it shows in slot A, whatever you hover shows in slot B, with the result
+#    previewed. Dropping one card on another is the same as pressing Combine.
+# Either way the commit goes through a Cancel/Forge confirm modal (_confirm_combine) — the merge is
+# destructive (both originals are consumed). Charms still ENCHANT a card by dragging the chip onto
+# it. While dragging, the floating card carries a particle aura and a vortex links it to a valid
+# target (VFX tuning lives in ForgeFX).
 
 # One entry per deck card: { "card": DeckCard, "deck_idx": int, "data": CardData, "ui": CardUI,
 # "item": ForgeDragItem (null for non-combinable cards, which can't be dragged but can be enchanted) }
@@ -18,15 +23,28 @@ const BAD_COLOR  := Color(1.0, 0.4, 0.4)
 const WARN_COLOR := Color(1.0, 0.6, 0.3)
 const IDLE_COLOR := Color(0.7, 0.7, 0.8)
 
+const DRAG_THRESHOLD := 12.0   # px the pointer must travel before a press becomes a drag (vs a tap)
+
 var _deck_grid: GridContainer
 var _scroll: ScrollContainer
 var _charm_row: HBoxContainer
 var _compact := false
 var _card_size := CARD_SIZE
 
-# Right-hand preview panel.
-var _preview_holder: Control
+# Right-hand forge panel: two ingredient slots, the forged result, a status line, the Combine button.
+var _slot_a: Control
+var _slot_b: Control
+var _result_slot: Control
 var _preview_status: Label
+var _combine_btn: Button
+
+# Click-to-select flow (the no-drag path): entry indices of the chosen pair (-1 = empty).
+var _sel_a: int = -1
+var _sel_b: int = -1
+# A press not yet resolved: it becomes a TAP (select) on release, or a DRAG once it moves past
+# DRAG_THRESHOLD — so a click selects while dragging still works.
+var _pending: Dictionary = {}
+var _press_pos := Vector2.ZERO
 
 # Drag session (empty `_drag` == nothing in flight).
 var _overlay: Control
@@ -44,11 +62,8 @@ var _link: ForgeLink = null
 var _hover_idx: int = -1
 # Carried from a valid combine hover so the drop doesn't recompute.
 var _result_deck_card: DeckCard = null
-# Floating result preview (the shared CardTooltip) that trails the cursor while a valid drop is
-# hovered — the same combined card the sidebar shows, but right under the dragged cards.
-var _drag_tip: Control = null
-# The in-scene combine-confirmation overlay (null when closed). In-scene, not a Window, so its cards
-# render in the main viewport with the same MSAA + mipmaps as the deck behind.
+# The in-scene combine-confirmation overlay (null when closed). Combining is destructive (both
+# originals are consumed), so BOTH the Combine button and a drop go through this gate.
 var _combine_modal: Control = null
 
 
@@ -60,7 +75,7 @@ func _ready() -> void:
 	_build_ui()
 	_rebuild_deck()
 	_rebuild_charms()
-	_reset_preview()
+	_refresh_forge()
 
 
 func _build_ui() -> void:
@@ -113,7 +128,8 @@ func _build_ui() -> void:
 	_charm_row.add_theme_constant_override("separation", 10)
 	left.add_child(_charm_row)
 
-	# Right: live preview panel — a filled panel split by ratio (no fixed width / floating island).
+	# Right: the forge panel — two ingredient slots (A + B), the forged result, a status line and the
+	# Combine button. Tapping deck cards fills the slots; dragging shows the dragged/hovered pair.
 	var right_panel := PanelContainer.new()
 	right_panel.size_flags_horizontal = SIZE_EXPAND_FILL
 	right_panel.size_flags_vertical   = SIZE_EXPAND_FILL
@@ -126,32 +142,75 @@ func _build_ui() -> void:
 	right_panel.add_child(right_pad)
 
 	var right := VBoxContainer.new()
-	right.add_theme_constant_override("separation", 18)
+	right.add_theme_constant_override("separation", 14)
 	right_pad.add_child(right)
 
-	var preview_label := Label.new()
-	preview_label.text = "Preview"
-	preview_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	preview_label.add_theme_font_size_override("font_size", 30 if _compact else 24)
-	preview_label.modulate = IDLE_COLOR
-	right.add_child(preview_label)
+	var header_lbl := Label.new()
+	header_lbl.text = "Combine"
+	header_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	header_lbl.add_theme_font_size_override("font_size", 30 if _compact else 24)
+	header_lbl.modulate = IDLE_COLOR
+	right.add_child(header_lbl)
 
-	# The preview card fills the upper half of the panel (centred, aspect kept by the card itself).
-	var preview_size := _card_size * (1.4 if _compact else 1.7)
-	_preview_holder = Control.new()
-	_preview_holder.custom_minimum_size = preview_size
-	_preview_holder.size_flags_horizontal = SIZE_SHRINK_CENTER
-	_preview_holder.size_flags_vertical = SIZE_SHRINK_CENTER
-	right.add_child(_preview_holder)
+	# Slots + result scroll within the pane so a short window never overflows; the Combine button
+	# below stays pinned and always reachable.
+	var rscroll := ScrollContainer.new()
+	rscroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	rscroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	rscroll.size_flags_vertical = SIZE_EXPAND_FILL
+	right.add_child(rscroll)
+	var rcol := VBoxContainer.new()
+	rcol.size_flags_horizontal = SIZE_EXPAND_FILL
+	rcol.size_flags_vertical = SIZE_EXPAND_FILL
+	rcol.alignment = BoxContainer.ALIGNMENT_CENTER
+	rcol.add_theme_constant_override("separation", 12)
+	rscroll.add_child(rcol)
+
+	var slot_size := Vector2(150, 196) if _compact else Vector2(122, 160)
+	var result_size := Vector2(212, 277) if _compact else Vector2(178, 233)
+
+	var ing := HBoxContainer.new()
+	ing.alignment = BoxContainer.ALIGNMENT_CENTER
+	ing.add_theme_constant_override("separation", 14)
+	rcol.add_child(ing)
+	var sa := _make_card_slot(slot_size, "Tap a\ncard")
+	_slot_a = sa["holder"]
+	ing.add_child(sa["slot"])
+	var plus := Label.new()
+	plus.text = "+"
+	plus.add_theme_font_size_override("font_size", 40 if _compact else 32)
+	plus.modulate = IDLE_COLOR
+	plus.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	ing.add_child(plus)
+	var sb := _make_card_slot(slot_size, "Tap a\ncard")
+	_slot_b = sb["holder"]
+	ing.add_child(sb["slot"])
+
+	var arrow := Label.new()
+	arrow.text = "↓"
+	arrow.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	arrow.add_theme_font_size_override("font_size", 40 if _compact else 32)
+	arrow.modulate = IDLE_COLOR
+	rcol.add_child(arrow)
+
+	var sr := _make_card_slot(result_size, "Result")
+	_result_slot = sr["holder"]
+	rcol.add_child(sr["slot"])
 
 	_preview_status = Label.new()
 	_preview_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_preview_status.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_preview_status.add_theme_font_size_override("font_size", 26 if _compact else 20)
 	_preview_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_preview_status.size_flags_horizontal = SIZE_EXPAND_FILL
-	_preview_status.size_flags_vertical = SIZE_EXPAND_FILL
-	right.add_child(_preview_status)
+	_preview_status.add_theme_font_size_override("font_size", 22 if _compact else 17)
+	_preview_status.custom_minimum_size.x = 200.0
+	rcol.add_child(_preview_status)
+
+	_combine_btn = Button.new()
+	_combine_btn.text = "Combine"
+	_combine_btn.size_flags_horizontal = SIZE_EXPAND_FILL
+	_combine_btn.custom_minimum_size = Vector2(0, 110) if _compact else Vector2(0, 72)
+	_combine_btn.add_theme_font_size_override("font_size", 32 if _compact else 26)
+	_combine_btn.pressed.connect(_on_combine_pressed)
+	right.add_child(_combine_btn)
 
 	# Drag overlay: floats above everything, never eats input.
 	_overlay = Control.new()
@@ -182,7 +241,8 @@ func _rebuild_deck() -> void:
 	for child in _deck_grid.get_children():
 		child.queue_free()
 	_entries.clear()
-	_reset_preview()
+	_sel_a = -1
+	_sel_b = -1
 
 	var deck: Array = GameData.current_run.deck.duplicate()
 	for i in deck.size():
@@ -202,17 +262,17 @@ func _rebuild_deck() -> void:
 		var item := ForgeDragItem.new()
 		item.custom_minimum_size = _card_size
 		item.setup(ui, {"kind": "card", "idx": entry_idx})
-		# tooltip_text must be non-empty for Godot to fire the tooltip at all; tooltip_card then
-		# upgrades it to the same rich preview shown in-game (CardTooltip).
-		item.tooltip_text = data.description if not data.description.is_empty() else data.display_name
-		item.tooltip_card = ui.card_instance
+		# Hover detail comes from the CardUI's OWN standard tooltip (ForgeDragItem leaves the card on
+		# MOUSE_FILTER_PASS) — the same path the rest of the game uses; nothing bespoke here.
 		if combinable:
-			item.grab.connect(_begin_drag)
+			item.grab.connect(_on_press)
 		else:
 			ui.modulate = Color(1, 1, 1, 0.35)
 
 		_entries.append({ "card": dc, "deck_idx": i, "data": data, "ui": ui, "item": item })
 		_deck_grid.add_child(item)
+
+	_refresh_forge()
 
 
 # ── Charm inventory ──────────────────────────────────────────────────────────────
@@ -246,7 +306,7 @@ func _make_charm_item(charm_id: String, count: int) -> ForgeDragItem:
 	var charm := CharmData.get_charm(charm_id)
 	if charm != null:
 		item.tooltip_text = "%s — %s" % [charm.display_name, charm.description]
-	item.grab.connect(_begin_drag)
+	item.grab.connect(_on_press)
 	return item
 
 
@@ -304,10 +364,13 @@ func _begin_drag(payload: Dictionary) -> void:
 	_aura = _make_aura(_source_color(payload), r.x, r.y)
 	_follower.add_child(_aura)
 
-	# Lift the dragged source out of the grid (visible = false, so the grid reflows to close the gap).
+	# Leave the dragged source IN PLACE as a dimmed "ghost": its grid slot stays occupied, so the
+	# grid never reflows mid-drag. Cards staying put avoids accidental drops on one that slid under
+	# the pointer. The follower in the overlay is what the player actually moves.
 	if payload.kind == "card":
-		_entries[payload.idx].item.visible = false
+		_entries[payload.idx].item.modulate.a = 0.28
 
+	_refresh_forge()   # show the dragged card in slot A right away
 	_update_drag(get_global_mouse_position())
 
 
@@ -353,24 +416,41 @@ func _process(delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
-	# While the confirm overlay is up, Esc cancels it (consumed here so Nav doesn't also fire).
+	# While the confirm overlay is up, swallow input here (Esc cancels it) so a stray tap/drag
+	# can't reshuffle the deck behind it and Nav doesn't also fire.
 	if _combine_modal != null:
 		if event.is_action_pressed("ui_cancel"):
 			_close_combine_modal()
 			get_viewport().set_input_as_handled()
 		return
-	if _drag.is_empty():
-		return
 	if event is InputEventMouseMotion:
-		_update_drag(get_global_mouse_position())
+		if not _drag.is_empty():
+			_update_drag(get_global_mouse_position())
+		elif not _pending.is_empty() and get_global_mouse_position().distance_to(_press_pos) > DRAG_THRESHOLD:
+			# Moved past the threshold — promote the pending press into a real drag.
+			var p := _pending
+			_pending = {}
+			_begin_drag(p)
 	elif event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
 		if mb.button_index == MOUSE_BUTTON_LEFT and not mb.pressed:
-			_resolve_drag()
-			get_viewport().set_input_as_handled()
+			# NOTE: do NOT set_input_as_handled() here. _input runs before Godot's GUI layer; eating
+			# the button-up means the GUI never sees it, so Godot keeps thinking the button is held
+			# on the last-pressed card and FREEZES gui.mouse_over — which froze hover tooltips on the
+			# last-clicked card. Letting the release reach the GUI keeps hover tracking correct.
+			if not _drag.is_empty():
+				_resolve_drag()
+			elif not _pending.is_empty():
+				# Released without dragging — it's a tap (select).
+				var p := _pending
+				_pending = {}
+				_on_tap(p)
 		elif mb.button_index == MOUSE_BUTTON_RIGHT and mb.pressed:
-			_cancel_drag()   # right-click aborts the drag without merging
-			get_viewport().set_input_as_handled()
+			if not _drag.is_empty():
+				_cancel_drag()   # right-click aborts the drag without merging
+				get_viewport().set_input_as_handled()
+			elif not _pending.is_empty():
+				_pending = {}
 
 
 func _update_drag(global_pos: Vector2) -> void:
@@ -378,7 +458,6 @@ func _update_drag(global_pos: Vector2) -> void:
 		return
 	_follower.global_position = global_pos
 	_set_hover(_target_under(global_pos))
-	_position_drag_tip(global_pos)
 	if _link != null and _hover_idx >= 0:
 		# Connect the two cards' orbit rings, in overlay-local space.
 		var inv := _overlay.get_global_transform().affine_inverse()
@@ -426,13 +505,12 @@ func _set_hover(target_idx: int) -> void:
 	_clear_hover_visuals()
 	_hover_idx = target_idx
 	if target_idx < 0:
-		_reset_preview()
+		_refresh_forge()
 		return
 
 	var verdict := _evaluate_target(_drag, target_idx)
 	_result_deck_card = verdict.get("result_dc", null)
-	_show_preview(verdict.get("preview", null), str(verdict.get("status", "")), verdict.get("color", IDLE_COLOR))
-	_show_drag_tip(verdict.get("preview", null))
+	_refresh_forge()   # slot A = dragged, slot B = hovered, result previewed
 
 	if bool(verdict.get("ok", false)):
 		var col: Color = verdict.get("color", OK_COLOR)
@@ -467,7 +545,6 @@ func _clear_hover_visuals() -> void:
 	if _target_item != null:
 		_target_item.rotation = 0.0
 		_target_item = null
-	_hide_drag_tip()
 
 
 func _resolve_drag() -> void:
@@ -481,17 +558,19 @@ func _resolve_drag() -> void:
 	_cancel_drag()
 	if not did:
 		return
+	# Dropping a card on another opens the SAME confirm gate as the Combine button — combining is
+	# destructive (both originals are consumed). Charms enchant the card they're dropped on.
 	if payload.get("kind") == "card":
-		# Combining destroys both originals, so confirm intent before committing.
 		_confirm_combine(src_idx, hover, result_dc)
 	else:
 		_do_enchant(charm_id, hover)
 
 
 # A modal showing the two cards being spent and the card they forge into (all with descriptions),
-# gated behind Cancel/Forge. Built as an in-scene overlay (not a Window) so its cards share the deck's
-# MSAA + mipmaps. Indices stay valid: the dim swallows input so nothing reshuffles the deck, and the
-# deck isn't rebuilt until the user confirms.
+# gated behind Cancel/Forge — combining is destructive, so it's the confirm step for BOTH the
+# Combine button and a drop. Built as an in-scene overlay (not a Window) so its cards share the
+# deck's MSAA + mipmaps. Indices stay valid: the dim swallows input so nothing reshuffles the deck,
+# and the deck isn't rebuilt until the user confirms.
 func _confirm_combine(src_idx: int, tgt_idx: int, result_dc: DeckCard) -> void:
 	if result_dc == null or src_idx < 0 or tgt_idx < 0:
 		return
@@ -641,10 +720,11 @@ func _cancel_drag() -> void:
 	if not _drag.is_empty() and _drag.get("kind") == "card":
 		var idx := int(_drag.get("idx", -1))
 		if idx >= 0 and idx < _entries.size() and _entries[idx].item != null:
-			_entries[idx].item.visible = true   # drop it back into the grid
+			_entries[idx].item.modulate.a = 1.0   # un-ghost the source back to normal
 	_drag = {}
 	_hover_idx = -1
 	_result_deck_card = null
+	_refresh_forge()   # revert the slots to the click-selected pair (if any)
 
 
 # ── Validity + preview ──────────────────────────────────────────────────────────
@@ -690,61 +770,173 @@ func _merged_parent_charms(parents: Array, result_card: CardData) -> Array:
 	return out
 
 
-func _show_preview(inst: CardInstance, status: String, color: Color) -> void:
-	for child in _preview_holder.get_children():
-		child.queue_free()
+# A card-shaped slot (framed PanelContainer) with an inner holder + a placeholder label shown while
+# empty. Returns {"slot": the framed control to add, "holder": the Control to fill via _set_holder_card}.
+func _make_card_slot(card_size: Vector2, placeholder: String) -> Dictionary:
+	var slot := PanelContainer.new()
+	slot.custom_minimum_size = card_size
+	slot.size_flags_horizontal = SIZE_SHRINK_CENTER
+	slot.size_flags_vertical = SIZE_SHRINK_CENTER
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(1, 1, 1, 0.05)
+	sb.set_corner_radius_all(10)
+	sb.set_border_width_all(2)
+	sb.border_color = Color(1, 1, 1, 0.16)
+	slot.add_theme_stylebox_override("panel", sb)
+
+	var holder := Control.new()
+	holder.clip_contents = true
+	holder.mouse_filter = MOUSE_FILTER_IGNORE
+	slot.add_child(holder)
+
+	var ph := Label.new()
+	ph.name = "Placeholder"
+	ph.text = placeholder
+	ph.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	ph.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	ph.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	ph.add_theme_font_size_override("font_size", 22 if _compact else 16)
+	ph.modulate = Color(0.6, 0.62, 0.72)
+	ph.mouse_filter = MOUSE_FILTER_IGNORE
+	holder.add_child(ph)
+	return {"slot": slot, "holder": holder}
+
+
+# Puts `inst`'s card into a slot holder (or clears it back to the placeholder when null).
+# `on_click` (when valid) fires when the slotted card is clicked/tapped — used to clear the slot.
+func _set_holder_card(holder: Control, inst: CardInstance, on_click := Callable()) -> void:
+	for c in holder.get_children():
+		if c.name == "Placeholder":
+			c.visible = inst == null
+		else:
+			c.queue_free()
 	if inst != null:
 		var ui := CardUI.create(inst)
+		ui.draggable = false
+		# Zero the scene's min size so the card scales DOWN to the slot instead of overflowing and
+		# getting clipped (CardUI scales its canvas by width; the slot is sized to the card aspect).
+		ui.custom_minimum_size = Vector2.ZERO
 		ui.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-		ui.mouse_filter = MOUSE_FILTER_IGNORE
-		_preview_holder.add_child(ui)
+		ui.mouse_filter = MOUSE_FILTER_STOP   # receives hover (its standard tooltip) and clicks (clear)
+		if on_click.is_valid():
+			ui.pressed.connect(on_click)
+		holder.add_child(ui)
+
+
+# THE single place that paints the right panel. While dragging it shows the dragged card (slot A)
+# and the hovered target (slot B); otherwise it shows the click-selected pair. The result + Combine
+# button reflect whichever pair is current.
+func _refresh_forge() -> void:
+	var a_inst: CardInstance = null
+	var b_inst: CardInstance = null
+	var result_inst: CardInstance = null
+	var status := ""
+	var color := IDLE_COLOR
+	var can_combine := false
+	# Click-to-clear is only wired in the selection flow (set below); during a drag the slots show
+	# transient drag/hover cards and must not be clearable.
+	var a_click := Callable()
+	var b_click := Callable()
+
+	if not _drag.is_empty() and _drag.get("kind") == "card":
+		var di := int(_drag.get("idx", -1))
+		if di >= 0 and di < _entries.size():
+			a_inst = _entries[di].card.make_instance()
+		if _hover_idx >= 0 and _hover_idx < _entries.size():
+			b_inst = _entries[_hover_idx].card.make_instance()
+			var verdict := _evaluate_target(_drag, _hover_idx)
+			status = str(verdict.get("status", ""))
+			color = verdict.get("color", IDLE_COLOR)
+			if bool(verdict.get("ok", false)):
+				result_inst = verdict.get("preview", null)
+		else:
+			status = "Drop onto another card to combine."
+	elif not _drag.is_empty():
+		status = "Drop the charm onto a card to enchant it."
+	else:
+		a_click = _clear_slot_a
+		b_click = _clear_slot_b
+		if _sel_a >= 0 and _sel_a < _entries.size():
+			a_inst = _entries[_sel_a].card.make_instance()
+		if _sel_b >= 0 and _sel_b < _entries.size():
+			b_inst = _entries[_sel_b].card.make_instance()
+		if a_inst != null and b_inst != null:
+			var verdict := _evaluate_target({"kind": "card", "idx": _sel_a}, _sel_b)
+			status = str(verdict.get("status", ""))
+			color = verdict.get("color", IDLE_COLOR)
+			if bool(verdict.get("ok", false)):
+				result_inst = verdict.get("preview", null)
+				_result_deck_card = verdict.get("result_dc", null)
+				can_combine = true
+		elif a_inst != null or b_inst != null:
+			status = "Select another card to combine."
+		else:
+			status = "Tap two cards to combine — or drag one onto another.\nDrag a charm onto a card to enchant it."
+
+	_set_holder_card(_slot_a, a_inst, a_click)
+	_set_holder_card(_slot_b, b_inst, b_click)
+	_set_holder_card(_result_slot, result_inst)
 	_preview_status.text = status
 	_preview_status.modulate = color
+	_combine_btn.disabled = not can_combine
 
 
-func _reset_preview() -> void:
-	for child in _preview_holder.get_children():
-		child.queue_free()
-	_preview_status.text = "Drag a card onto another to combine them,\nor drag a charm onto a card to enchant it."
-	_preview_status.modulate = IDLE_COLOR
-
-
-# Floats the shared CardTooltip of the would-be result next to the cursor while dragging, so the
-# combined card reads right where the action is (mirrors the sidebar preview). `inst` null = hide.
-func _show_drag_tip(inst: CardInstance) -> void:
-	_hide_drag_tip()
-	if inst == null:
+# A press on a deck card / charm: held as pending until release (tap) or movement (drag).
+func _on_press(payload: Dictionary) -> void:
+	if not _drag.is_empty() or not _pending.is_empty():
 		return
-	var tip := CardTooltip.build(inst)
-	if tip == null:
+	_pending = payload
+	_press_pos = get_global_mouse_position()
+
+
+# A tap (press+release without dragging): toggle the card into/out of the ingredient slots.
+func _on_tap(payload: Dictionary) -> void:
+	if payload.get("kind") != "card":
+		_preview_status.text = "Drag a charm onto a card to enchant it."
+		_preview_status.modulate = IDLE_COLOR
 		return
-	tip.mouse_filter = MOUSE_FILTER_IGNORE   # decorative — never intercept the drag
-	_overlay.add_child(tip)
-	_drag_tip = tip
-	_position_drag_tip(get_global_mouse_position())
+	var idx := int(payload.idx)
+	if idx == _sel_a:
+		_sel_a = -1
+	elif idx == _sel_b:
+		_sel_b = -1
+	elif _sel_a < 0:
+		_sel_a = idx
+	elif _sel_b < 0:
+		_sel_b = idx
+	else:
+		_sel_b = idx   # both slots full — replace the second ingredient
+	_update_selection_highlights()
+	_refresh_forge()
 
 
-func _hide_drag_tip() -> void:
-	if _drag_tip != null:
-		_drag_tip.queue_free()
-		_drag_tip = null
+func _update_selection_highlights() -> void:
+	for i in _entries.size():
+		var ui: CardUI = _entries[i].ui
+		if ui != null:
+			ui.set_selected(i == _sel_a or i == _sel_b)
 
 
-# Trails the tip beside the pointer, clearing the dragged card, and clamps it on-screen (flips to
-# the cursor's left if it would overflow the right edge).
-func _position_drag_tip(global_pos: Vector2) -> void:
-	if _drag_tip == null:
+# Clicking a filled ingredient slot empties it (the deck card un-highlights and frees up the slot).
+func _clear_slot_a() -> void:
+	_sel_a = -1
+	_update_selection_highlights()
+	_refresh_forge()
+
+
+func _clear_slot_b() -> void:
+	_sel_b = -1
+	_update_selection_highlights()
+	_refresh_forge()
+
+
+func _on_combine_pressed() -> void:
+	if _sel_a < 0 or _sel_b < 0:
 		return
-	var vp := get_viewport_rect().size
-	var ts := _drag_tip.get_combined_minimum_size()
-	var gap := _card_size.x * 0.6 + 24.0   # clear the half-card-wide follower under the cursor
-	var margin := 16.0
-	var x := global_pos.x + gap
-	if x + ts.x + margin > vp.x:
-		x = global_pos.x - gap - ts.x
-	x = clampf(x, margin, maxf(margin, vp.x - ts.x - margin))
-	var y := clampf(global_pos.y - ts.y * 0.5, margin, maxf(margin, vp.y - ts.y - margin))
-	_drag_tip.global_position = Vector2(x, y)
+	var verdict := _evaluate_target({"kind": "card", "idx": _sel_a}, _sel_b)
+	if not bool(verdict.get("ok", false)):
+		return
+	_confirm_combine(_sel_a, _sel_b, verdict.get("result_dc", null))
 
 
 # ── Apply ──────────────────────────────────────────────────────────────────────
@@ -775,7 +967,9 @@ func _do_enchant(charm_id: String, tgt_idx: int) -> void:
 	GameData.save_run()
 	_rebuild_deck()
 	_rebuild_charms()
-	_show_preview(dc.make_instance(), "Enchanted %s with %s!" % [data.display_name, CharmData.get_charm(charm_id).display_name], OK_COLOR)
+	# _rebuild_deck refreshed the panel to the idle prompt; overwrite with the success message.
+	_preview_status.text = "Enchanted %s with %s!" % [data.display_name, CharmData.get_charm(charm_id).display_name]
+	_preview_status.modulate = OK_COLOR
 
 
 # ── Particles ──────────────────────────────────────────────────────────────────
