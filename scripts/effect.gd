@@ -43,6 +43,7 @@ enum TargetingPolicy {
 	MANUAL,
 	ATTACK_TARGET,   # the unit this card is currently striking (valid in an ON_ATTACK context)
 	SUBJECT,         # the unit the event is about (the activator/actor — see EffectContext.subject)
+	ATTACKER,        # the unit that dealt the blow (valid in an ON_DAMAGE_TAKEN context)
 }
 
 # For an event-driven (TRIGGERED/CUSTOM) effect, which unit — relative to the effect's HOLDER — must
@@ -67,6 +68,7 @@ var amount: float = 0.0
 # ── TRIGGERED / CUSTOM fields ──
 var trigger: Trigger = Trigger.ON_PLAY
 var subject_filter: SubjectFilter = SubjectFilter.SELF
+var subject_elements: Array = []   # event subject must carry one of these elements (empty = any)
 var targeting_policy: TargetingPolicy = TargetingPolicy.SELF
 var conditions: Array = []   # Array[EffectCondition]
 var attribute: String = ""
@@ -82,6 +84,15 @@ var status_stacks: int = 1
 # ── MODIFIER fields ──
 var scope: Scope = Scope.GLOBAL
 var key: String = ""
+
+# Which container owns this effect (kind + id), set by RelicData/StatusData at load — used by the
+# combat cue (glint the relic chip / status pip) and by negate_attack (to record which status caused
+# a miss). Empty for plain card effects. Never affects target resolution.
+var owner_kind: String = ""
+var owner_id: String = ""
+# Probabilistic gate, rolled once before the effect resolves: the effect fires with this chance
+# (1.0 = always). A declarative condition, separate from what the effect does. See EffectSystem.
+var chance: float = 1.0
 var op: Op = Op.ADD
 var filter: Dictionary = {}   # card selection predicate for scope=CARD
 
@@ -91,6 +102,7 @@ var filter: Dictionary = {}   # card selection predicate for scope=CARD
 static func from_dict(d: Dictionary) -> Effect:
 	var e := Effect.new()
 	e.amount = float(d.get("amount", 0))
+	e.chance = float(d.get("chance", 1.0))
 	for c_data: Dictionary in d.get("conditions", []):
 		e.conditions.append(EffectCondition.from_dict(c_data))
 	var kind_str := str(d.get("kind", ""))
@@ -109,11 +121,13 @@ static func from_dict(d: Dictionary) -> Effect:
 		e.custom_id        = d.get("custom", "")
 		e.trigger          = _str_trigger(d.get("trigger", ""))
 		e.subject_filter   = _str_subject(d.get("subject", ""))
+		e.subject_elements = (d.get("subject_elements", []) as Array).duplicate()
 		e.targeting_policy = _str_policy(d.get("targeting_policy", ""))
 	else:
 		e.kind             = Kind.TRIGGERED
 		e.trigger          = _str_trigger(d.get("trigger", ""))
 		e.subject_filter   = _str_subject(d.get("subject", ""))
+		e.subject_elements = (d.get("subject_elements", []) as Array).duplicate()
 		e.targeting_policy = _str_policy(d.get("targeting_policy", ""))
 		e.attribute        = d.get("attribute", "")
 	# Optional "apply a status" payload, valid on any event-driven (TRIGGERED) effect.
@@ -159,6 +173,10 @@ func to_dict() -> Dictionary:
 			}
 			if subject_filter != SubjectFilter.SELF:
 				d["subject"] = subject_key(subject_filter)
+			if not subject_elements.is_empty():
+				d["subject_elements"] = subject_elements
+			if chance != 1.0:
+				d["chance"] = chance
 			if not status_id.is_empty():
 				d["status"] = {"id": status_id, "duration": status_duration, "stacks": status_stacks}
 			return d
@@ -224,6 +242,7 @@ static func _str_policy(s: String) -> TargetingPolicy:
 		"manual":         return TargetingPolicy.MANUAL
 		"attack_target":  return TargetingPolicy.ATTACK_TARGET
 		"subject":        return TargetingPolicy.SUBJECT
+		"attacker":       return TargetingPolicy.ATTACKER
 	return TargetingPolicy.SELF
 
 
@@ -269,4 +288,5 @@ static func policy_key(p: TargetingPolicy) -> String:
 		TargetingPolicy.MANUAL:         return "manual"
 		TargetingPolicy.ATTACK_TARGET:  return "attack_target"
 		TargetingPolicy.SUBJECT:        return "subject"
+		TargetingPolicy.ATTACKER:       return "attacker"
 	return "self"

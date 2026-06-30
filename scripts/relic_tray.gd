@@ -13,6 +13,8 @@ const CHIP_COMPACT := 44
 # enters the tree (refresh runs in _ready).
 var interactive: bool = true
 
+var _chips: Dictionary = {}   # relic_id -> Button, so a firing relic can glint its chip
+
 
 func _ready() -> void:
 	add_theme_constant_override("separation", 5)
@@ -24,6 +26,7 @@ func _ready() -> void:
 func refresh() -> void:
 	for c in get_children():
 		c.queue_free()
+	_chips.clear()
 	if GameData.current_run == null:
 		return
 
@@ -34,7 +37,24 @@ func refresh() -> void:
 	for relic_id: String in relics:
 		var relic := RelicData.get_relic(relic_id)
 		if relic != null:
-			add_child(_make_chip(relic))
+			var chip := _make_chip(relic)
+			_chips[relic_id] = chip
+			add_child(chip)
+
+
+# A quick scale pop + brightness flash on a relic's chip — the "this relic fired" cue, played by
+# combat just before the relic's effects' VFX land. No-op if the relic isn't shown or isn't laid out.
+func glint(relic_id: String) -> void:
+	var chip: Button = _chips.get(relic_id)
+	if chip == null or chip.size == Vector2.ZERO:
+		return
+	chip.pivot_offset = chip.size * 0.5
+	var tw := create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(chip, "scale", Vector2(1.45, 1.45), 0.14).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	tw.tween_property(chip, "modulate", Color(1.7, 1.7, 1.7), 0.12)
+	tw.chain().tween_property(chip, "scale", Vector2.ONE, 0.22).set_ease(Tween.EASE_OUT)
+	tw.parallel().tween_property(chip, "modulate", Color.WHITE, 0.22)
 
 
 # "Relics 2/5" — the at-a-glance read of how many slots are used and how many remain.

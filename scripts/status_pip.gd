@@ -47,21 +47,39 @@ func setup(si: StatusInstance) -> void:
 	stacks_lbl.visible = sd.decay != StatusData.DECAY_STACKS and si.stacks > 1
 
 
-# The container cue for this status: a quick scale pop plus a white flash overlay, played by the VFX
-# layer just before the status's effects land. The flash is a transient child tweened on alpha and
-# drawn above the row's clip (high z_index) so the pop isn't swallowed by the small pip bounds.
-func glint() -> void:
-	if size == Vector2.ZERO:    # not laid out yet — bail rather than pivot from a corner
+# Status pips carry TWO distinct, reusable cues — the same vocabulary for every status, so "fired"
+# and "gained" always read the same way no matter which status it is:
+#   • flash_proc    — the status's triggered effect just FIRED (poison ticked, blind forced a miss…):
+#                     a sharp WHITE discharge + scale punch.
+#   • flash_applied — the status was just APPLIED/stacked onto the card: a softer bloom in the
+#                     status's OWN colour + a gentle pop.
+# Both bail if the pip isn't laid out yet (can't pivot from a zero rect).
+
+func flash_proc() -> void:
+	if size == Vector2.ZERO:
 		return
 	pivot_offset = size * 0.5
-	_flash_pop()
+	_white_flash()
 	var tw := create_tween()
 	tw.set_parallel(true)
 	tw.tween_property(self, "scale", Vector2(1.55, 1.55), 0.14).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
 	tw.chain().tween_property(self, "scale", Vector2.ONE, 0.22).set_ease(Tween.EASE_OUT)
 
 
-func _flash_pop() -> void:
+func flash_applied() -> void:
+	if size == Vector2.ZERO:
+		return
+	pivot_offset = size * 0.5
+	_color_ring(status.data.color if status != null else Color.WHITE)
+	var tw := create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(self, "scale", Vector2(1.28, 1.28), 0.12).set_ease(Tween.EASE_OUT)
+	tw.chain().tween_property(self, "scale", Vector2.ONE, 0.20).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_SINE)
+
+
+# A bright white sheen blooming over the pip and fading — the unmistakable "this fired" discharge,
+# above the row's clip so it can't be hidden.
+func _white_flash() -> void:
 	var flash := Panel.new()
 	flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	flash.z_index = 50
@@ -77,6 +95,29 @@ func _flash_pop() -> void:
 	ft.tween_property(flash, "scale", Vector2(1.7, 1.7), 0.34).set_ease(Tween.EASE_OUT)
 	ft.tween_property(flash, "modulate:a", 0.0, 0.34).set_ease(Tween.EASE_OUT)
 	ft.chain().tween_callback(flash.queue_free)
+
+
+# A hollow ring in `col` ringing outward from the pip and fading — the "gained" bloom, tinted by the
+# status so an application reads as arrival, not discharge.
+func _color_ring(col: Color) -> void:
+	var ring := Panel.new()
+	ring.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ring.z_index = 50
+	ring.size = size
+	ring.pivot_offset = size * 0.5
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(col, 0.0)
+	sb.border_color = Color(col, 0.85)
+	sb.set_border_width_all(3)
+	sb.set_corner_radius_all(10)
+	sb.anti_aliasing = true
+	ring.add_theme_stylebox_override("panel", sb)
+	add_child(ring)
+	var t := create_tween()
+	t.set_parallel(true)
+	t.tween_property(ring, "scale", Vector2(1.95, 1.95), 0.38).set_ease(Tween.EASE_OUT)
+	t.tween_property(ring, "modulate:a", 0.0, 0.38)
+	t.chain().tween_callback(ring.queue_free)
 
 
 func _make_custom_tooltip(_for_text: String) -> Object:

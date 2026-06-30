@@ -42,13 +42,13 @@ func play_results(results: Array, source_inst: CardInstance = null,
 	# when the effects actually move a stat (a no-op resolution shouldn't flare). An empty cue id glints
 	# the source card itself (the card container); a status id glints that status's pip. `show_cue` off
 	# skips it entirely (e.g. run-level effects with no on-board container).
-	if show_cue and source_ui != null and is_instance_valid(source_ui) and _has_effect(results):
+	if show_cue and source_ui != null and is_instance_valid(source_ui) and not results.is_empty():
 		if cue_status_id.is_empty():
 			await play(VFXEvent.source_trigger(source_ui))
 		else:
 			var pip := source_ui.find_status_pip(cue_status_id)
 			if pip != null:
-				pip.glint()
+				pip.flash_proc()
 		await _hold(SOURCE_HOLD)
 
 	# Launch each affected card's reticle + hit as its own sub-sequence and let them run together.
@@ -58,6 +58,11 @@ func play_results(results: Array, source_inst: CardInstance = null,
 	var remaining := [0]
 	for r: Dictionary in results:
 		if r.is_empty():
+			continue
+		# A status application has no stat delta — it's its own cue: mark the target, then pop the
+		# pip that was added/stacked. Handled up front, sequentially, so it reads before stat hits.
+		if r.has("status_applied"):
+			await _play_status_applied(r.get("target"), str(r.get("status_applied", "")))
 			continue
 		var inst: CardInstance = r.get("target")
 		if inst == null or inst.row < 0:
@@ -77,6 +82,25 @@ func play_results(results: Array, source_inst: CardInstance = null,
 	while remaining[0] > 0:
 		await get_tree().process_frame
 	await _hold(STEP_HOLD)
+
+
+# A status landing on a card: a benefit-tinted reticle on the card, then refresh so the new/updated
+# pip exists, then pop that pip so the gained stack reads. No stat number — the pip carries the count.
+func _play_status_applied(inst: CardInstance, status_id: String) -> void:
+	if inst == null or inst.row < 0:
+		return
+	var card_ui: CardUI = _get_card_ui.call(inst) as CardUI
+	if card_ui == null or not is_instance_valid(card_ui):
+		return
+	var sd := StatusData.get_status(status_id)
+	var tint := Color(0.55, 0.95, 0.6) if (sd == null or sd.beneficial) else Color(0.95, 0.55, 0.55)
+	await play(VFXEvent.target_mark(card_ui, tint))
+	card_ui.refresh()
+	await get_tree().process_frame   # let the freshly built pip lay out before it can pivot/pop
+	var pip := card_ui.find_status_pip(status_id)
+	if pip != null:
+		pip.flash_applied()
+	await _hold(MARK_LEAD)
 
 
 # One affected card's slice of a (possibly multi-target) resolution, run concurrently with its
@@ -116,15 +140,6 @@ func _hold(seconds: float) -> void:
 	await get_tree().create_timer(seconds).timeout
 
 
-# Whether any result actually changed a stat (drives the source glint — a no-op resolution
-# shouldn't flare its caster).
-func _has_effect(results: Array) -> bool:
-	for r: Dictionary in results:
-		if not r.is_empty() and int(r.get("delta", 0)) != 0:
-			return true
-	return false
-
-
 # The reticle/category tint for a result, by the same (attribute, sign) logic that routes the
 # effect VFX below — one classification, reused. Extend both together when adding a category.
 func _result_color(attr: String, delta: int) -> Color:
@@ -150,6 +165,7 @@ func _make_effect(type: VFXEvent.Type) -> VFXEffect:
 		VFXEvent.Type.PROJECTILE:      return VFXEffectProjectile.new()
 		VFXEvent.Type.SOURCE_TRIGGER:  return VFXEffectSourceGlint.new()
 		VFXEvent.Type.TARGET_MARK:     return VFXEffectTargetMark.new()
+		VFXEvent.Type.MISS:            return VFXEffectMiss.new()
 		_:
 			push_warning("VFXPlayer: no effect registered for type %d" % type)
 			return null

@@ -1,0 +1,15 @@
+{
+	"id": "blind",
+	"display_name": "Blind",
+	"description": "When this unit attacks, 50% chance to miss (deal no damage). One charge is spent per attack.",
+	"beneficial": false,
+	"color": "5a6a9f",
+	"glyph": "◐",
+	"decay": "stacks",
+	"decay_phase": "attack",
+	"stacking": "stack",
+	"max_stacks": 99,
+	"effects": [
+		{ "trigger": "on_attack", "targeting_policy": "self", "attribute": "negate_attack", "chance": 0.5 }
+	]
+}

@@ -64,6 +64,7 @@ static func _decays_on(si: StatusInstance, event: Effect.Trigger) -> bool:
 	match si.data.decay_phase:
 		StatusData.PHASE_TURN_START: return event == Effect.Trigger.ON_TURN_START
 		StatusData.PHASE_ACTIVATE:   return event == Effect.Trigger.ON_ACTIVATE
+		StatusData.PHASE_ATTACK:     return event == Effect.Trigger.ON_ATTACK
 		_:                           return event == Effect.Trigger.ON_TURN_END
 
 

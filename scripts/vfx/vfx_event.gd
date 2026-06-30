@@ -14,6 +14,7 @@ enum Type {
 	PROJECTILE,
 	SOURCE_TRIGGER,   # the card whose ability fired flares (causality cue)
 	TARGET_MARK,      # a card singled out by an effect gets a tinted reticle
+	MISS,             # an attack negated (e.g. by Blind): a "Miss" label instead of a damage number
 }
 
 # SOURCE_TRIGGER look. Generic for now; the field is here so source glints can later branch by
@@ -71,6 +72,13 @@ static func debuff(card: CardUI, attr: String, amount: int) -> VFXEvent:
 static func death(card: CardUI) -> VFXEvent:
 	var e := VFXEvent.new()
 	e.type = Type.DEATH; e.target = card
+	return e
+
+
+# A negated attack: a "Miss" label floats off the would-be victim, in place of a damage number.
+static func miss(card: CardUI) -> VFXEvent:
+	var e := VFXEvent.new()
+	e.type = Type.MISS; e.target = card
 	return e
 
 

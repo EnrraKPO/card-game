@@ -50,7 +50,10 @@ static func _load_json(path: String) -> void:
 		r.letter       = d.get("letter", "✦")
 		r.price        = int(d.get("price", 80))
 		for e: Dictionary in d.get("effects", []):
-			r.effects.append(Effect.from_dict(e))
+			var eff := Effect.from_dict(e)
+			eff.owner_kind = "relic"   # so combat can glint this relic's chip when it fires
+			eff.owner_id = r.id
+			r.effects.append(eff)
 		if not r.id.is_empty():
 			_all[r.id] = r
 

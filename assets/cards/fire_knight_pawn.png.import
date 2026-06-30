@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c8d7ffybax3hq"
-path="res://.godot/imported/fire_pawn_pawn.png-9bd5cf504df6a489bb2ff6b3cdbbcea3.ctex"
+uid="uid://b4oveanw80xcj"
+path="res://.godot/imported/fire_knight_pawn.png-197d13db5d1dc2b51bd7b20157d6621a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/cards/fire_pawn_pawn.png"
-dest_files=["res://.godot/imported/fire_pawn_pawn.png-9bd5cf504df6a489bb2ff6b3cdbbcea3.ctex"]
+source_file="res://assets/cards/fire_knight_pawn.png"
+dest_files=["res://.godot/imported/fire_knight_pawn.png-197d13db5d1dc2b51bd7b20157d6621a.ctex"]
 
 [params]
 

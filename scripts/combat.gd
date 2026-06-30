@@ -9,6 +9,7 @@ const BATTLE_SPEEDS: Array[float] = [0.5, 1.0, 1.5, 2.0]
 # Beat between a shield absorbing part of a hit and the bleed-through HP damage landing, so the
 # shield reads as taking the blow first (scaled by battle speed like every other combat beat).
 const SHIELD_LEAD := 0.14
+const RELIC_CUE_LEAD := 0.34   # let a firing relic's chip glint read before its effects' VFX
 
 enum Phase { CPU_PLACE, PLAYER_PLACE, COMBAT, TARGETING }
 
@@ -23,6 +24,7 @@ var _enemy_draw_pile: Array = []  # Array[CardInstance]
 
 var _turn_label: Label
 var _mana_label: Label
+var _relic_tray: RelicTray   # read-only relic strip in the HUD; a firing relic glints its chip
 var _done_btn: Button
 var _speed_btn: Button
 var _battle_speed: float = 1.0   # 100%; reset each combat, cycled by the HUD dial
@@ -430,17 +432,36 @@ func _resolve_attack(attacker: CardInstance) -> void:
 func _apply_attack_damage(attacker: CardInstance, target: CardInstance, t_card: CardUI) -> void:
 	var dmg := attacker.get_attribute("attack")
 	await _fire(Effect.Trigger.ON_ATTACK, attacker, null, target)
+	# If any negated attacks are queued on this unit, consume one — this strike deals 0. We don't care
+	# what queued it; the cause's own cue already fired. Each queued negation is honoured separately.
+	if attacker.negate_next_attacks > 0:
+		attacker.negate_next_attacks -= 1
+		dmg = 0
+	# Resolve the attack-driven decay NOW — right after the ON_ATTACK roll, BEFORE the strike's own
+	# effects. A charge is spent per attack (hit or miss); doing it here means a Blind that an effect
+	# applies in *reaction* to this attack (a relic blinding the attacker on hit, via ON_DAMAGE_TAKEN
+	# below) lands afterwards and survives, instead of being eaten by this same attack.
+	StatusEngine.advance(attacker, Effect.Trigger.ON_ATTACK)
+
+	# The strike is PERFORMED either way — even a whiff still attacks, it just deals 0. So damage is
+	# applied (0 on a miss) and ON_DAMAGE_TAKEN fires regardless, so on-attacked reactions (e.g. a
+	# relic blinding the attacker) run whether or not it connected. Only the readout differs.
 	var dmg_split := target.take_damage(dmg)
-	await _fire(Effect.Trigger.ON_DAMAGE_TAKEN, target)
-	# Shield reads FIRST: it takes the blow on its own badge (and only the badge — a held shield
-	# leaves the card unwounded). When the hit also bleeds through to HP, a brief halt lets the
-	# absorb land before the wound, so the shield is legible as the first thing that happened.
-	if dmg_split.shield_absorbed > 0:
-		_vfx.play(VFXEvent.shield_hit(t_card, dmg_split.shield_absorbed))
-	if dmg_split.health_damage > 0:
+	await _fire(Effect.Trigger.ON_DAMAGE_TAKEN, target, null, null, attacker)
+	if dmg <= 0:
+		# A 0-damage strike (negated, or <=0 Attack) reads as "Miss" rather than a number.
+		_vfx.play(VFXEvent.miss(t_card))
+	else:
+		# Shield reads FIRST: it takes the blow on its own badge (and only the badge — a held shield
+		# leaves the card unwounded). When the hit also bleeds through to HP, a brief halt lets the
+		# absorb land before the wound, so the shield is legible as the first thing that happened.
 		if dmg_split.shield_absorbed > 0:
-			await get_tree().create_timer(SHIELD_LEAD).timeout
-		_vfx.play(VFXEvent.health_damage(t_card, dmg_split.health_damage))
+			_vfx.play(VFXEvent.shield_hit(t_card, dmg_split.shield_absorbed))
+		if dmg_split.health_damage > 0:
+			if dmg_split.shield_absorbed > 0:
+				await get_tree().create_timer(SHIELD_LEAD).timeout
+			_vfx.play(VFXEvent.health_damage(t_card, dmg_split.health_damage))
+	_board.refresh()
 
 
 # The SINGLE dispatch-and-present point for a combat trigger: it resolves `event` for `holder` in
@@ -452,21 +473,28 @@ func _apply_attack_damage(attacker: CardInstance, target: CardInstance, t_card: 
 # true for per-actor events (attack/death), false for the per-holder status fan-out, where firing
 # the run-level effects once per holder would multiply them.
 func _fire(event: Effect.Trigger, holder: CardInstance, subject: CardInstance = null,
-		atk_target: CardInstance = null, run_level: bool = true) -> void:
+		atk_target: CardInstance = null, attacker: CardInstance = null, run_level: bool = true) -> void:
 	var ctx := EffectContext.make(holder, _board.player_grid, _board.enemy_grid)
 	ctx.subject = subject if subject != null else holder
 	ctx.attack_target = atk_target   # lets an ON_ATTACK effect target the unit being struck
+	ctx.attacker = attacker          # lets an ON_DAMAGE_TAKEN effect target the unit that struck
 	# Walk the holder's containers one at a time — its card, then each status — cueing each before its
 	# (container-blind) effects land: card glint / pip glint → that container's effect VFX.
 	for group: Dictionary in EffectSystem.trigger_grouped(event, holder, ctx):
 		var gres: Array = group["results"]
 		var sid: String = group["status_id"]
 		await _animator.show_effect_results(gres, holder, sid)
-	# Run-level (relic/upgrade) effects have no on-board container to cue yet — play them un-cued.
+	# Run-level (relic/upgrade) effects, grouped by their owning item: glint the owner's chip (relics
+	# only for now) before its effects' VFX, so a relic proc reads as cause -> effect.
 	if run_level:
-		var rl := EffectSystem.trigger_global(event, ctx)
-		if not rl.is_empty():
-			await _animator.show_effect_results(rl, holder, "", false)
+		for grp: Dictionary in EffectSystem.trigger_global_grouped(event, ctx):
+			var rres: Array = grp["results"]
+			if rres.is_empty():
+				continue
+			if str(grp["owner_kind"]) == "relic" and _relic_tray != null:
+				_relic_tray.glint(str(grp["owner_id"]))
+				await get_tree().create_timer(RELIC_CUE_LEAD).timeout
+			await _animator.show_effect_results(rres, holder, "", false)
 
 
 # The single entry point for a combat MOMENT: combat BROADCASTS the event (with the `subject` — the
@@ -486,7 +514,7 @@ func _resolve_event(event: Effect.Trigger, subject: CardInstance = null) -> void
 		if not holder.is_alive():
 			continue
 		# Per-holder fan-out: don't fire the run-level effects here (they'd fire once per holder).
-		await _fire(event, holder, subject, null, false)
+		await _fire(event, holder, subject, null, null, false)
 		if not holder.is_alive():
 			await _fire(Effect.Trigger.ON_DEATH, holder)
 			var ui := _board.get_card_ui(holder)
@@ -664,9 +692,10 @@ func _build_hud(parent: VBoxContainer) -> void:
 	hbox.add_child(RunHUD.new())
 
 	# Read-only relic strip, inline in the top bar so the player can recall their relics mid-fight.
-	var relic_tray := RelicTray.new()
-	relic_tray.interactive = false
-	hbox.add_child(relic_tray)
+	# Kept as a field so a firing relic can glint its chip (see _fire).
+	_relic_tray = RelicTray.new()
+	_relic_tray.interactive = false
+	hbox.add_child(_relic_tray)
 
 	_turn_label = Label.new()
 	_turn_label.add_theme_font_size_override("font_size", label_font)

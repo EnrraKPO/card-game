@@ -26,6 +26,7 @@ const DECAY_NONE := "none"           # never wears off (lasts the whole fight)
 const PHASE_TURN_START := "turn_start"
 const PHASE_TURN_END := "turn_end"   # default
 const PHASE_ACTIVATE := "activate"
+const PHASE_ATTACK := "attack"       # counts down each time the unit attacks (e.g. Blind charges)
 
 var id: String
 var display_name: String
@@ -85,7 +86,10 @@ static func from_dict(d: Dictionary) -> StatusData:
 	s.stacking         = str(d.get("stacking", STACK_REFRESH))
 	s.max_stacks       = int(d.get("max_stacks", 99))
 	for e_data: Dictionary in d.get("effects", []):
-		s.effects.append(Effect.from_dict(e_data))
+		var eff := Effect.from_dict(e_data)
+		eff.owner_kind = "status"   # so combat can cue this status's pip / negate_attack can name it
+		eff.owner_id = s.id
+		s.effects.append(eff)
 	return s
 
 

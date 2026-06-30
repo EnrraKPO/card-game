@@ -190,6 +190,15 @@ func _build_bottom_bar() -> void:
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = SIZE_EXPAND_FILL
 	hbox.add_child(spacer)
+
+	# Debug-only: jump to the free relic/charm acquisition screen to stress-test content.
+	var debug_btn := Button.new()
+	debug_btn.text = "Debug Items"
+	debug_btn.add_theme_font_size_override("font_size", font)
+	debug_btn.custom_minimum_size = btn_size
+	debug_btn.pressed.connect(func() -> void:
+		get_tree().change_scene_to_file("res://scenes/debug_shop.tscn"))
+	hbox.add_child(debug_btn)
 	# Forge moved out of this bar into a prominent floating button — see _build_forge_fab().
 
 

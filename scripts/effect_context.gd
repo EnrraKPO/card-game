@@ -6,6 +6,7 @@ var player_board: Array  # [row][col] -> CardInstance or null
 var enemy_board: Array   # [row][col] -> CardInstance or null
 var manual_target: CardInstance = null
 var attack_target: CardInstance = null   # the unit `source` is striking, during an ON_ATTACK
+var attacker: CardInstance = null        # the unit that dealt the blow, during an ON_DAMAGE_TAKEN
 # The SUBJECT: the unit the broadcast event is about (who activated / attacked / died). An effect's
 # subject_filter is evaluated against this relative to the holder; null for subject-less phase events.
 var subject: CardInstance = null

@@ -19,6 +19,10 @@ var statuses: Array = []
 # Set true for the round when this unit spent its attack to generate a card
 # (see rook/building generation in combat.gd). Reset at the start of each round.
 var attack_exhausted: bool = false
+# Transient: how many of this unit's upcoming attacks deal 0 damage. Each negation source adds one;
+# combat consumes one per strike. A bare count — it carries no notion of what queued the negations
+# or why; each cause's own cue is separate.
+var negate_next_attacks: int = 0
 # On a rook-generated token, points back to the building that produced it so
 # playing the token can exhaust that building's attack. Null on normal units.
 var source_building: CardInstance = null
