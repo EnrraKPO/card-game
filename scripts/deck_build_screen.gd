@@ -24,13 +24,12 @@ var _save_btn: Button
 
 
 func _ready() -> void:
-	set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	if GameData.current_profile == null or GameData.current_slot < 0:
-		get_tree().change_scene_to_file.call_deferred("res://scenes/game_slots.tscn")
+		Nav.goto.call_deferred("res://scenes/game_slots.tscn")
 		return
 	_deck = _find_deck(GameData.editing_deck_id)
 	if _deck == null:
-		get_tree().change_scene_to_file.call_deferred("res://scenes/deck_screen.tscn")
+		Nav.goto.call_deferred("res://scenes/deck_screen.tscn")
 		return
 	UIScale.layout_changed.connect(func(): get_tree().reload_current_scene(), CONNECT_ONE_SHOT)
 	_compact = UIScale.is_compact()
@@ -50,20 +49,32 @@ func _find_deck(deck_id: String) -> OwnedDeck:
 
 # ── layout ──────────────────────────────────────────────────────────────────────────────
 
+func get_chrome() -> Dictionary:
+	return {"title": "Edit Deck", "exit": _on_back, "show_footer": true}
+
+
 func _build_ui() -> void:
-	var s := ScreenUI.scaffold(self, "Edit Deck")
+	var root := VBoxContainer.new()
+	root.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	add_child(root)
+
+	# Screen-specific toolbar (the header stays pure catalog fields + title + ✕) — just the Save
+	# action, right-aligned above the deck/pool panes.
+	var toolbar := HBoxContainer.new()
+	toolbar.add_child(Control.new())
+	toolbar.get_child(0).size_flags_horizontal = SIZE_EXPAND_FILL
 	_save_btn = Button.new()
 	_save_btn.text = "Save"
 	_save_btn.add_theme_font_size_override("font_size", 30 if _compact else 22)
 	_save_btn.custom_minimum_size = Vector2(220, 96) if _compact else Vector2(160, 56)
 	_save_btn.pressed.connect(_on_save)
-	s.header.add_child(_save_btn)
-	ScreenUI.attach_exits(_on_back, s.header, s.footer)
+	toolbar.add_child(_save_btn)
+	root.add_child(toolbar)
 
 	var body: BoxContainer = VBoxContainer.new() if _compact else HBoxContainer.new()
 	body.size_flags_vertical = SIZE_EXPAND_FILL
 	body.add_theme_constant_override("separation", 12)
-	s.root.add_child(body)
+	root.add_child(body)
 	body.add_child(_build_deck_pane())
 	body.add_child(_build_pool_pane())
 
@@ -74,7 +85,7 @@ func _build_ui() -> void:
 	for side in ["top", "bottom"]:
 		status_pad.add_theme_constant_override("margin_" + side, 8)
 	status_pad.add_child(_status)
-	s.root.add_child(status_pad)
+	root.add_child(status_pad)
 
 
 func _build_deck_pane() -> Control:
@@ -219,11 +230,11 @@ func _on_save() -> void:
 		return
 	_deck.cards = _cards
 	GameData.save_profile()
-	get_tree().change_scene_to_file("res://scenes/deck_screen.tscn")
+	Nav.goto("res://scenes/deck_screen.tscn")
 
 
 func _on_back() -> void:
-	get_tree().change_scene_to_file("res://scenes/deck_screen.tscn")
+	Nav.goto("res://scenes/deck_screen.tscn")
 
 
 # ── render ──────────────────────────────────────────────────────────────────────────────

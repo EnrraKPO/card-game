@@ -23,9 +23,8 @@ var _placeholder: Texture2D
 
 
 func _ready() -> void:
-	set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	if GameData.current_profile == null or GameData.current_slot < 0:
-		get_tree().change_scene_to_file.call_deferred("res://scenes/game_slots.tscn")
+		Nav.goto.call_deferred("res://scenes/game_slots.tscn")
 		return
 	UIScale.layout_changed.connect(func(): get_tree().reload_current_scene(), CONNECT_ONE_SHOT)
 	_compact = UIScale.is_compact()
@@ -81,30 +80,44 @@ func _authored_by_composition() -> Dictionary:
 
 # ── Build ────────────────────────────────────────────────────────────────────────────────
 
+func get_chrome() -> Dictionary:
+	return {"title": "Collection", "exit": _on_back, "show_footer": true}
+
+
 func _build_ui() -> void:
-	var s := ScreenUI.scaffold(self, "Collection")
+	var root := VBoxContainer.new()
+	root.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	add_child(root)
+
+	# Screen-specific toolbar (the header stays pure catalog fields + title + ✕) — art-coverage
+	# summary + filters, none of which are run-status data.
+	var toolbar := HBoxContainer.new()
+	toolbar.add_theme_constant_override("separation", 16)
 
 	_summary = Label.new()
 	_summary.add_theme_font_size_override("font_size", 26 if _compact else 16)
 	_summary.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_summary.modulate = Color(0.8, 0.82, 0.9)
-	s.header.add_child(_summary)
+	toolbar.add_child(_summary)
 
-	s.header.add_child(_filter_toggle("With art", true, func(on: bool) -> void:
+	toolbar.add_child(Control.new())
+	toolbar.get_child(1).size_flags_horizontal = SIZE_EXPAND_FILL
+
+	toolbar.add_child(_filter_toggle("With art", true, func(on: bool) -> void:
 		_with_art = on
 		_apply_filter()
 	))
-	s.header.add_child(_filter_toggle("Missing art", true, func(on: bool) -> void:
+	toolbar.add_child(_filter_toggle("Missing art", true, func(on: bool) -> void:
 		_missing_art = on
 		_apply_filter()
 	))
-	ScreenUI.attach_exits(_on_back, s.header, s.footer)
+	root.add_child(toolbar)
 
 	var pad := MarginContainer.new()
 	for side in ["left", "right", "top", "bottom"]:
 		pad.add_theme_constant_override("margin_" + side, 14)
 	pad.size_flags_vertical = SIZE_EXPAND_FILL
-	s.root.add_child(pad)
+	root.add_child(pad)
 
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_horizontal = SIZE_EXPAND_FILL
@@ -187,4 +200,4 @@ func _apply_filter() -> void:
 
 
 func _on_back() -> void:
-	get_tree().change_scene_to_file("res://scenes/game_world.tscn")
+	Nav.goto("res://scenes/game_world.tscn")

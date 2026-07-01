@@ -5,13 +5,7 @@ var confirm_dialog: ConfirmationDialog
 
 func _ready() -> void:
 	Nav.clear_back()   # onboarding screen — the OS back gesture stays inert (never quits)
-	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var compact := UIScale.is_compact()
-
-	var bg := ColorRect.new()
-	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	bg.color = ScreenUI.BG_COLOR
-	add_child(bg)
 
 	var center := CenterContainer.new()
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -60,7 +54,7 @@ func _ready() -> void:
 
 
 func _on_play_pressed() -> void:
-	get_tree().change_scene_to_file("res://scenes/game_slots.tscn")
+	Nav.goto("res://scenes/game_slots.tscn")
 
 
 func _on_reset_pressed() -> void:
@@ -71,4 +65,4 @@ func _on_reset_confirmed() -> void:
 	for i in GameData.SLOT_COUNT:
 		GameData.delete_slot(i)
 	GameData.username = ""
-	get_tree().change_scene_to_file("res://scenes/entry_screen.tscn")
+	Nav.goto("res://scenes/entry_screen.tscn")

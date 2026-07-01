@@ -6,12 +6,17 @@ extends Control
 # relic capacity cap (a relic can still only be owned once). Charms are free and repeatable.
 
 func _ready() -> void:
-	set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	_build()
 
 
+func get_chrome() -> Dictionary:
+	return {"title": "Debug — Acquire Items", "exit": _leave, "show_footer": true}
+
+
 func _build() -> void:
-	var body := ScreenUI.frame(self, "Debug — Acquire Items", _leave)
+	var body := VBoxContainer.new()
+	body.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	add_child(body)
 
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_horizontal = SIZE_EXPAND_FILL
@@ -112,4 +117,4 @@ func _refresh_button(btn: Button, kind: String, id: String) -> void:
 
 
 func _leave() -> void:
-	get_tree().change_scene_to_file("res://scenes/map.tscn")
+	Nav.goto("res://scenes/map.tscn")

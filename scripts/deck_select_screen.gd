@@ -5,27 +5,25 @@ extends Control
 # as the run deck and launches. Cancel returns to the hub.
 
 func _ready() -> void:
-	set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	if GameData.current_profile == null or GameData.current_slot < 0:
-		get_tree().change_scene_to_file.call_deferred("res://scenes/game_slots.tscn")
+		Nav.goto.call_deferred("res://scenes/game_slots.tscn")
 		return
 	_build_ui()
 
 
-func _build_ui() -> void:
-	var s := ScreenUI.scaffold(self, "Choose a Deck for This Run")
-	var root: VBoxContainer = s.root
-	ScreenUI.attach_exits(
-		func(): get_tree().change_scene_to_file("res://scenes/game_world.tscn"), s.header, s.footer)
+func get_chrome() -> Dictionary:
+	return {"title": "Choose a Deck for This Run",
+		"exit": func(): Nav.goto("res://scenes/game_world.tscn"), "show_footer": true}
 
+
+func _build_ui() -> void:
 	# ── Deck grid ────────────────────────────────────────────────────────────────
 	# Every owned deck shown at once as card-shaped tiles that fit the screen (no scroll),
 	# mirroring the Decks screen so the chooser fills the canvas instead of stranding a small
 	# cluster top-left.
 	var grid := FitGrid.new()
-	grid.size_flags_horizontal = SIZE_EXPAND_FILL
-	grid.size_flags_vertical = SIZE_EXPAND_FILL
-	root.add_child(grid)
+	grid.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	add_child(grid)
 
 	var profile := GameData.current_profile
 	var king_seen: Dictionary = {}
@@ -91,4 +89,4 @@ func _play(deck_id: String) -> void:
 	GameData.current_profile.select_deck(deck_id)
 	GameData.save_profile()
 	GameData.start_new_run()
-	get_tree().change_scene_to_file("res://scenes/map.tscn")
+	Nav.goto("res://scenes/map.tscn")

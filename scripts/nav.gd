@@ -7,6 +7,19 @@ extends Node
 # "quit the app". With no handler registered the gesture is simply inert.
 
 var _back: Callable = Callable()
+var shell: Node = null
+
+
+# Registers the persistent Shell (see scripts/shell.gd) so goto() has somewhere to mount content.
+func register_shell(s: Node) -> void:
+	shell = s
+
+
+# THE navigation entry point — mounts `scene_path` into the Shell's body instead of replacing the
+# whole scene tree, so the Shell's header/footer chrome persists across navigation. Replaces the
+# old get_tree().change_scene_to_file(...) calls everywhere.
+func goto(scene_path: String) -> void:
+	shell.mount(scene_path)
 
 
 # The active screen's exit. Returning to a parent should re-set this; forward/terminal screens

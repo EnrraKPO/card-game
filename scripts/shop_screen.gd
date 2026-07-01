@@ -23,36 +23,33 @@ var _deck_entries: Array = []
 var _selected_idx: int = -1   # index into _deck_entries, -1 = none
 
 var _deck_grid: FitGrid
-var _gold_lbl: Label
+var _header_fields: Dictionary
 var _remove_status_lbl: Label
 var _remove_btn: Button
 var _compact := false
 
 
 func _ready() -> void:
-	set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	_compact = UIScale.is_compact()
 	_build_ui()
 	_rebuild_deck()
 
 
+func get_chrome() -> Dictionary:
+	return {"title": "Shop", "exit": _leave, "fields": [ScreenUI.Field.EXP, ScreenUI.Field.GOLD],
+		"show_footer": true}
+
+
+func on_chrome_applied(handles: Dictionary) -> void:
+	_header_fields = handles.get("fields", {})
+
+
 func _build_ui() -> void:
-	var s := ScreenUI.scaffold(self, "Shop")
-	var root: VBoxContainer = s.root
-
-	_gold_lbl = Label.new()
-	_gold_lbl.add_theme_font_size_override("font_size", 28 if _compact else 24)
-	_gold_lbl.modulate = Color(1.0, 0.85, 0.3)
-	_gold_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	s.header.add_child(_gold_lbl)
-
-	ScreenUI.attach_exits(_leave, s.header, s.footer)
-
 	# ── Body ───────────────────────────────────────────────────────────────────
 	var body := HBoxContainer.new()
-	body.size_flags_vertical = SIZE_EXPAND_FILL
+	body.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	body.add_theme_constant_override("separation", 24)
-	root.add_child(body)
+	add_child(body)
 
 	var buy := _build_buy_panel()
 	buy.size_flags_stretch_ratio = 2.0
@@ -61,8 +58,6 @@ func _build_ui() -> void:
 	var remove := _build_remove_panel()
 	remove.size_flags_stretch_ratio = 1.0
 	body.add_child(remove)
-
-	_refresh_gold_label()
 
 
 # ── Buy panel (generic over ItemKinds) ───────────────────────────────────────
@@ -286,8 +281,8 @@ func _apply_remove() -> void:
 # ── Shared ───────────────────────────────────────────────────────────────────
 
 func _refresh_gold_label() -> void:
-	_gold_lbl.text = "  Gold: %d  " % GameData.current_run.gold
+	ScreenUI.refresh_field(ScreenUI.Field.GOLD, _header_fields)
 
 
 func _leave() -> void:
-	get_tree().change_scene_to_file("res://scenes/map.tscn")
+	Nav.goto("res://scenes/map.tscn")

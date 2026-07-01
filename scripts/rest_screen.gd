@@ -7,9 +7,16 @@ var _hp_label: Label
 var _rest_btn: Button
 
 
+func get_chrome() -> Dictionary:
+	return {"title": "Rest Site", "exit": _on_continue, "show_footer": true}
+
+
 func _ready() -> void:
-	var vbox := ScreenUI.frame_centered(self, "Rest Site", _on_continue)
+	var vbox := VBoxContainer.new()
+	vbox.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
 	vbox.add_theme_constant_override("separation", 40)
+	add_child(vbox)
 
 	var subtitle := Label.new()
 	subtitle.text = "Your King recovers %d%% of maximum health." % int(HEAL_PERCENT * 100)
@@ -64,4 +71,4 @@ func _on_rest() -> void:
 
 
 func _on_continue() -> void:
-	get_tree().change_scene_to_file("res://scenes/map.tscn")
+	Nav.goto("res://scenes/map.tscn")

@@ -31,7 +31,12 @@ func _ready() -> void:
 	sv.size = RES
 	sv.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	add_child(sv)
-	sv.add_child(load(scene_path).instantiate())
+	# Boot the real persistent Shell (not the bare screen) so the render shows the actual chrome
+	# under test — screens no longer carry their own header/background since the Shell refactor.
+	var shell: Node = load("res://scenes/main.tscn").instantiate()
+	shell.auto_start = false
+	sv.add_child(shell)
+	shell.mount(scene_path)
 	for i in 8:
 		await get_tree().process_frame
 	sv.get_texture().get_image().save_png(OUT)

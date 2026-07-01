@@ -14,14 +14,9 @@ func _ready() -> void:
 	# Rebuild if the form factor flips (e.g. previewing mobile by resizing in the editor).
 	UIScale.layout_changed.connect(func(): get_tree().reload_current_scene(), CONNECT_ONE_SHOT)
 
-	# This screen is the root picker (no ScreenUI chrome), so it lays its own dark background and
-	# fills the whole screen: big title, near-full-width tall slot rows dividing the height, and a
-	# real Reset button — proportional coverage, no centered island.
-	var bg := ColorRect.new()
-	bg.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	bg.color = ScreenUI.BG_COLOR
-	add_child(bg)
-
+	# This screen is the root picker (no header chrome; Shell's own background already paints
+	# behind it), so it fills the whole screen: big title, near-full-width tall slot rows dividing
+	# the height, and a real Reset button — proportional coverage, no centered island.
 	var pad := MarginContainer.new()
 	pad.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	var m := int(UIScale.safe_inset() + 36.0)
@@ -106,7 +101,7 @@ func _slot_label(slot: int, started: bool) -> String:
 
 func _on_slot_selected(slot: int) -> void:
 	GameData.select_slot(slot)
-	get_tree().change_scene_to_file("res://scenes/game_world.tscn")
+	Nav.goto("res://scenes/game_world.tscn")
 
 
 func _on_delete_pressed(slot: int) -> void:
@@ -120,9 +115,9 @@ func _on_delete_confirmed() -> void:
 		return
 	GameData.delete_slot(_pending_delete_slot)
 	_pending_delete_slot = -1
-	get_tree().change_scene_to_file("res://scenes/game_slots.tscn")
+	Nav.goto("res://scenes/game_slots.tscn")
 
 
 func _on_reset_confirmed() -> void:
 	GameData.wipe_all()
-	get_tree().change_scene_to_file("res://scenes/entry_screen.tscn")
+	Nav.goto("res://scenes/entry_screen.tscn")

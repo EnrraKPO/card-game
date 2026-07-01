@@ -23,10 +23,9 @@ var _compact := false
 
 
 func _ready() -> void:
-	set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	# Reached without a selected save (e.g. stale direct load) — bounce to save select.
 	if GameData.current_profile == null or GameData.current_slot < 0:
-		get_tree().change_scene_to_file.call_deferred("res://scenes/game_slots.tscn")
+		Nav.goto.call_deferred("res://scenes/game_slots.tscn")
 		return
 	_compact = UIScale.is_compact()
 	_previewed_id = GameData.current_profile.selected_deck_id
@@ -34,17 +33,17 @@ func _ready() -> void:
 	_rebuild()
 
 
-func _build_ui() -> void:
-	var s := ScreenUI.scaffold(self, "Decks")
-	var root: VBoxContainer = s.root
-	ScreenUI.attach_exits(
-		func(): get_tree().change_scene_to_file("res://scenes/game_world.tscn"), s.header, s.footer)
+func get_chrome() -> Dictionary:
+	return {"title": "Decks", "exit": func(): Nav.goto("res://scenes/game_world.tscn"),
+		"show_footer": true}
 
+
+func _build_ui() -> void:
 	# ── Body: deck grid (fills, no scroll) + preview panel (right), split by ratio ──
 	var body := HBoxContainer.new()
-	body.size_flags_vertical = SIZE_EXPAND_FILL
+	body.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	body.add_theme_constant_override("separation", 24)
-	root.add_child(body)
+	add_child(body)
 
 	body.add_child(_build_deck_grid_pane())
 	body.add_child(_build_preview_pane())
@@ -295,12 +294,12 @@ func _on_set_active() -> void:
 
 func _on_view_deck() -> void:
 	GameData.viewing_deck_id = _previewed_id
-	get_tree().change_scene_to_file("res://scenes/deck_view_screen.tscn")
+	Nav.goto("res://scenes/deck_view_screen.tscn")
 
 
 func _on_edit_deck() -> void:
 	GameData.editing_deck_id = _previewed_id
-	get_tree().change_scene_to_file("res://scenes/deck_build_screen.tscn")
+	Nav.goto("res://scenes/deck_build_screen.tscn")
 
 
 func _on_reset() -> void:

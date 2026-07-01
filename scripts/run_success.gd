@@ -4,7 +4,6 @@ extends Control
 # keeping the save's meta-progression) and returns to the save's hub.
 
 func _ready() -> void:
-	set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	Nav.clear_back()   # terminal screen — the OS back gesture stays inert (use the on-screen button)
 	var compact := UIScale.is_compact()
 
@@ -45,4 +44,4 @@ func _ready() -> void:
 
 func _on_continue() -> void:
 	GameData.end_run()
-	get_tree().change_scene_to_file("res://scenes/game_world.tscn")
+	Nav.goto("res://scenes/game_world.tscn")

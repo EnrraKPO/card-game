@@ -77,7 +77,6 @@ var _combine_modal: Control = null
 
 
 func _ready() -> void:
-	set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	# Rebuild the whole screen when the form-factor flips (desktop ↔ compact/touch), so the
 	# layout switches variants instead of the canvas just scaling down. Re-armed each _ready.
 	UIScale.layout_changed.connect(func(): get_tree().reload_current_scene(), CONNECT_ONE_SHOT)
@@ -87,19 +86,22 @@ func _ready() -> void:
 	_refresh_forge()
 
 
+func get_chrome() -> Dictionary:
+	return {"title": "Forge", "exit": _leave,
+		"fields": [ScreenUI.Field.ACT, ScreenUI.Field.HP, ScreenUI.Field.GOLD,
+			ScreenUI.Field.RELICS, ScreenUI.Field.EXP],
+		"show_footer": true}
+
+
 func _build_ui() -> void:
 	_compact = UIScale.is_compact()
 	_card_size = Vector2(230, 302) if _compact else CARD_SIZE
 
-	var s := ScreenUI.scaffold(self, "Forge")
-	var root: VBoxContainer = s.root
-	ScreenUI.attach_exits(_leave, s.header, s.footer)
-
 	# ── Body ───────────────────────────────────────────────────────────────────
 	var body := HBoxContainer.new()
-	body.size_flags_vertical = SIZE_EXPAND_FILL
+	body.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	body.add_theme_constant_override("separation", 0)
-	root.add_child(body)
+	add_child(body)
 
 	# Left: scrollable deck grid + charm row beneath it.
 	var left := VBoxContainer.new()
@@ -1131,4 +1133,4 @@ func _source_color(payload: Dictionary) -> Color:
 
 
 func _leave() -> void:
-	get_tree().change_scene_to_file("res://scenes/map.tscn")
+	Nav.goto("res://scenes/map.tscn")

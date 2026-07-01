@@ -7,10 +7,17 @@ extends Control
 const OFFER_COUNT := 2
 
 
+func get_chrome() -> Dictionary:
+	return {"title": "Shrine", "exit": _finish, "show_footer": true}
+
+
 func _ready() -> void:
 	var compact := UIScale.is_compact()
-	var vbox := ScreenUI.frame_centered(self, "Shrine", _finish)
+	var vbox := VBoxContainer.new()
+	vbox.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
 	vbox.add_theme_constant_override("separation", 28)
+	add_child(vbox)
 
 	var title := Label.new()
 	title.text = "An Ancient Shrine"
@@ -91,4 +98,4 @@ func _pick(grant: Grant) -> void:
 
 
 func _finish() -> void:
-	get_tree().change_scene_to_file("res://scenes/map.tscn")
+	Nav.goto("res://scenes/map.tscn")

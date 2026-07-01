@@ -42,9 +42,22 @@ var _vfx: VFXPlayer
 var _ghost_ui: Dictionary = {}   # CardInstance -> CardUI
 
 
+func get_chrome() -> Dictionary:
+	return {"fields": [ScreenUI.Field.ACT, ScreenUI.Field.HP, ScreenUI.Field.GOLD,
+		ScreenUI.Field.RELICS, ScreenUI.Field.EXP], "exit": _handle_combat_end,
+		"back": Callable(), "debug_close": true}
+
+
+# The relic strip is a live catalog field in the header; grab it here (once Shell has applied the
+# chrome) to glint a firing relic's chip (see _fire) and make it read-only so it never eats combat
+# input.
+func on_chrome_applied(handles: Dictionary) -> void:
+	_relic_tray = handles.get("fields", {}).get(ScreenUI.Field.RELICS)
+	if _relic_tray != null:
+		_relic_tray.interactive = false
+
+
 func _ready() -> void:
-	set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	Nav.clear_back()   # mid-fight — the OS back gesture stays inert so it can't quit the app
 	_battle_speed = 1.0                  # every fight starts at 100%
 	Engine.time_scale = _battle_speed
 
@@ -578,15 +591,15 @@ func _handle_combat_end() -> void:
 		var is_boss := enc != null and enc.type == EncounterData.Type.BOSS
 		GameData.save_run()
 		if is_boss:
-			get_tree().change_scene_to_file("res://scenes/map.tscn")
+			Nav.goto("res://scenes/map.tscn")
 		else:
-			get_tree().change_scene_to_file("res://scenes/reward_screen.tscn")
+			Nav.goto("res://scenes/reward_screen.tscn")
 	else:
 		if enc != null:
 			enc.outcome = EncounterData.Outcome.LOSE
 		# Defeat ends the run (meta-progression kept) and shows the Run Over screen.
 		GameData.end_run()
-		get_tree().change_scene_to_file("res://scenes/run_over.tscn")
+		Nav.goto("res://scenes/run_over.tscn")
 
 
 # ── Board event handlers ───────────────────────────────────────────────────────
@@ -654,24 +667,16 @@ func _on_spell_consumed(card_ui: CardUI, cost: int) -> void:
 # ── UI building ────────────────────────────────────────────────────────────────
 
 func _build_ui() -> void:
-	# One top-to-bottom stack, laid out by the container (no absolute offsets, so nothing can slide
-	# under anything). Row 1: the full-bleed run-status header. Row 2: the body (inset off the screen
-	# edges) holding the arena + hand.
-	var root := VBoxContainer.new()
-	root.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	root.add_theme_constant_override("separation", 0)
-	add_child(root)
-
-	root.add_child(_build_header())   # full-bleed top row; its own padding keeps content off edges
-
+	# The shared header (Act/HP/Gold/Relics/EXP) is Shell chrome now, not this screen's concern —
+	# see get_chrome(). This just builds the body: inset off the screen edges, holding the arena + hand.
 	var inset := int(UIScale.safe_inset())
 	var body := MarginContainer.new()
-	body.size_flags_vertical = SIZE_EXPAND_FILL
+	body.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	body.add_theme_constant_override("margin_left", inset)
 	body.add_theme_constant_override("margin_right", inset)
 	body.add_theme_constant_override("margin_bottom", inset)
-	body.add_theme_constant_override("margin_top", 14)   # a small breath under the header
-	root.add_child(body)
+	body.add_theme_constant_override("margin_top", 14)
+	add_child(body)
 
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 16)
@@ -704,33 +709,6 @@ func _build_ui() -> void:
 	# a fixed grid marooned in empty space.
 	_board_row.resized.connect(_resize_board)
 	call_deferred("_resize_board")
-
-
-# The shared run-status header (Act/HP/Gold/Relics/EXP): same catalog, same placement as every
-# other screen, each field self-pulling from GameData. These values are all constant during a fight
-# (king damage lives on the board unit until combat end), so the static header is accurate
-# throughout. Returned as the full-bleed first row of _build_ui's stack (fills width naturally).
-#
-# The docked ✕ is the DEBUG "win fight" affordance (given a distinct orange treatment so it never
-# reads as a normal close): combat has no real mid-fight exit, and we re-clear the OS-back gesture
-# after building so the back button can't trigger it — the ✕ is tap-only.
-func _build_header() -> Control:
-	var hb := ScreenUI.header_bar(_handle_combat_end, {
-		"fields": [ScreenUI.Field.ACT, ScreenUI.Field.HP, ScreenUI.Field.GOLD, ScreenUI.Field.RELICS, ScreenUI.Field.EXP],
-	})
-
-	var close: Button = hb.close
-	if close != null:
-		close.tooltip_text = "Debug: win this fight"
-		close.modulate = Color(1.0, 0.65, 0.1)   # orange = debug affordance, not a real close
-	Nav.clear_back()   # the ✕ is debug-only; keep the OS back gesture inert (no accidental win)
-
-	# The relic strip is a live catalog field here; grab it to glint a firing relic's chip (see
-	# _fire) and make it read-only so it never eats combat input.
-	_relic_tray = hb.fields.get(ScreenUI.Field.RELICS)
-	if _relic_tray != null:
-		_relic_tray.interactive = false
-	return hb.bar
 
 
 # The vertical mana gauge, hugging the LEFT of the board: one framed component with a "MANA" label

@@ -6,11 +6,18 @@ extends Control
 var _element_toggles: Array = []
 
 
+func get_chrome() -> Dictionary:
+	return {"title": "Reward", "exit": _skip, "show_footer": true}
+
+
 func _ready() -> void:
 	var compact := UIScale.is_compact()
 	var card_size := Vector2(300, 394) if compact else Vector2(248, 326)
-	var vbox := ScreenUI.frame_centered(self, "Reward", _skip)
+	var vbox := VBoxContainer.new()
+	vbox.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
 	vbox.add_theme_constant_override("separation", 28)
+	add_child(vbox)
 
 	var title := Label.new()
 	title.text = "Victory!  Choose a Reward"
@@ -228,4 +235,4 @@ func _finish() -> void:
 				GameData.current_run.deck.append(DeckCard.make(str(entry["id"])))
 	GameData.save_run()
 	GameData.current_encounter = null
-	get_tree().change_scene_to_file("res://scenes/map.tscn")
+	Nav.goto("res://scenes/map.tscn")

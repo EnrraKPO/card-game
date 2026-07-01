@@ -8,17 +8,11 @@ func _ready() -> void:
 	Nav.clear_back()   # onboarding root — the OS back gesture stays inert (never quits)
 	if not GameData.username.is_empty():
 		# Deferred: changing scene mid-_ready trips the tree's "busy adding children" guard.
-		get_tree().change_scene_to_file.call_deferred("res://scenes/game_slots.tscn")
+		Nav.goto.call_deferred("res://scenes/game_slots.tscn")
 		return
 
-	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var compact := UIScale.is_compact()
 	var field_size := Vector2(560, 130) if compact else Vector2(480, 100)
-
-	var bg := ColorRect.new()
-	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	bg.color = ScreenUI.BG_COLOR
-	add_child(bg)
 
 	var center := CenterContainer.new()
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -64,4 +58,4 @@ func _on_continue_pressed() -> void:
 		error_label.text = "Please enter a name."
 		return
 	GameData.username = username
-	get_tree().change_scene_to_file("res://scenes/game_slots.tscn")
+	Nav.goto("res://scenes/game_slots.tscn")

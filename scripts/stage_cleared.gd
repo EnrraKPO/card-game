@@ -9,7 +9,6 @@ var _picked := false
 
 
 func _ready() -> void:
-	set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	Nav.clear_back()   # terminal screen — the OS back gesture stays inert (use the on-screen button)
 	var compact := UIScale.is_compact()
 
@@ -73,4 +72,4 @@ func _pick_card(id: String) -> void:
 
 func _advance() -> void:
 	GameData.advance_stage()
-	get_tree().change_scene_to_file("res://scenes/map.tscn")
+	Nav.goto("res://scenes/map.tscn")

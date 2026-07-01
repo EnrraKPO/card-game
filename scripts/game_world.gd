@@ -15,19 +15,24 @@ const SHOW_COLLECTION := false
 var _confirm_abandon: ConfirmationDialog
 
 
+func get_chrome() -> Dictionary:
+	return {"title": "%s's Realm" % GameData.username,
+		"exit": func(): Nav.goto("res://scenes/game_slots.tscn"), "show_footer": true}
+
+
 func _ready() -> void:
-	set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	# Reached without a selected save (e.g. a stale direct load) — bounce to save select.
 	if GameData.current_profile == null or GameData.current_slot < 0:
-		get_tree().change_scene_to_file.call_deferred("res://scenes/game_slots.tscn")
+		Nav.goto.call_deferred("res://scenes/game_slots.tscn")
 		return
 
 	# Rebuild if the form factor flips (e.g. previewing mobile by resizing in the editor).
 	UIScale.layout_changed.connect(func(): get_tree().reload_current_scene(), CONNECT_ONE_SHOT)
 
-	# Standard chrome (the realm name sits in the header bar); the hub fills the body below it.
-	var body := ScreenUI.frame(self, "%s's Realm" % GameData.username,
-		func(): get_tree().change_scene_to_file("res://scenes/game_slots.tscn"))
+	# The hub fills the body below the shared header (the realm name sits in it).
+	var body := VBoxContainer.new()
+	body.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	add_child(body)
 
 	# Width split: resources sidebar (~28%) | actions column (the rest), both full height.
 	var main := HBoxContainer.new()
@@ -133,7 +138,7 @@ func _meta_button(label: String, scene_path: String) -> Button:
 		btn.disabled = true
 		btn.tooltip_text = "Coming soon"
 	else:
-		btn.pressed.connect(func(): get_tree().change_scene_to_file(scene_path))
+		btn.pressed.connect(func(): Nav.goto(scene_path))
 	return btn
 
 
@@ -142,11 +147,11 @@ func _on_embark() -> void:
 	# A fresh run goes through the deck-selection screen, which sets the run deck and launches.
 	if GameData.slot_has_run(GameData.current_slot):
 		GameData.load_run()
-		get_tree().change_scene_to_file("res://scenes/map.tscn")
+		Nav.goto("res://scenes/map.tscn")
 	else:
-		get_tree().change_scene_to_file("res://scenes/deck_select_screen.tscn")
+		Nav.goto("res://scenes/deck_select_screen.tscn")
 
 
 func _on_abandon_confirmed() -> void:
 	GameData.end_run()
-	get_tree().change_scene_to_file("res://scenes/game_world.tscn")
+	Nav.goto("res://scenes/game_world.tscn")

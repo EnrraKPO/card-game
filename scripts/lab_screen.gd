@@ -65,7 +65,7 @@ var _mint_status: Label
 
 func _ready() -> void:
 	if GameData.current_profile == null or GameData.current_slot < 0:
-		get_tree().change_scene_to_file.call_deferred("res://scenes/game_slots.tscn")
+		Nav.goto.call_deferred("res://scenes/game_slots.tscn")
 		return
 	UIScale.layout_changed.connect(func(): get_tree().reload_current_scene(), CONNECT_ONE_SHOT)
 	_compact = UIScale.is_compact()
@@ -90,7 +90,7 @@ func _add_background() -> void:
 		bg.modulate = Color(0.42, 0.42, 0.48)   # dim the room so the UI sits clearly on top
 		bg.mouse_filter = MOUSE_FILTER_IGNORE
 		add_child(bg)
-		move_child(bg, 1)   # index 0 is the Background ColorRect; keep this behind the room
+		move_child(bg, 0)   # behind $Stage (freed once its art is read) and the room UI
 
 	# A readability scrim over the dimmed room so panel text/edges stay crisp.
 	var scrim := ColorRect.new()
@@ -102,8 +102,25 @@ func _add_background() -> void:
 
 # ── Layout: header · working area (room ⇄ crafting) · inventory · back ───────────────────
 
+func get_chrome() -> Dictionary:
+	# The header ✕ always leaves the Lab outright; the OS-back gesture is smarter — from an open
+	# crafting panel it closes the panel back to the room first (see _back_or_close below).
+	return {"title": "Laboratory", "fields": [ScreenUI.Field.EXP], "exit": _leave,
+		"back": _back_or_close}
+
+
+func _leave() -> void:
+	Nav.goto("res://scenes/game_world.tscn")
+
+
+func _back_or_close() -> void:
+	if _open_key != "":
+		_close_artifact()
+	else:
+		_leave()
+
+
 func _build_layout() -> void:
-	var exit := func() -> void: get_tree().change_scene_to_file("res://scenes/game_world.tscn")
 	var inset := UIScale.safe_inset()
 
 	var outer := MarginContainer.new()
@@ -116,20 +133,6 @@ func _build_layout() -> void:
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 20)
 	outer.add_child(col)
-
-	# Header: title · EXP · ✕
-	var header := HBoxContainer.new()
-	header.add_theme_constant_override("separation", 16)
-	col.add_child(header)
-	var title := Label.new()
-	title.text = "Laboratory"
-	title.add_theme_font_size_override("font_size", 38 if _compact else 30)
-	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	title.size_flags_horizontal = SIZE_EXPAND_FILL
-	header.add_child(title)
-	if GameData.current_profile != null:
-		header.add_child(ScreenUI.experience_bar_compact(GameData.current_profile, _compact))
-	header.add_child(ScreenUI.close_button(exit))
 
 	# Working area: the big artifact objects (the "room"), or an open artifact's crafting panel —
 	# whichever is active fills it (clip as a safety so nothing ever bleeds outside).
@@ -163,17 +166,11 @@ func _build_layout() -> void:
 		area.add_child(inv)
 		col.add_child(area)
 
-	# Footer: standard bottom-left Back.
+	# Footer: standard bottom-left Back (body content, not header chrome — this screen keeps its
+	# own full-bleed background/room art, so it opts out of Shell's inset menu-mode footer).
 	var footer := HBoxContainer.new()
 	col.add_child(footer)
-	footer.add_child(ScreenUI.back_button(exit))
-
-	# OS go-back / Esc: from a crafting panel, return to the room first; otherwise leave the Lab.
-	Nav.set_back(func() -> void:
-		if _open_key != "":
-			_close_artifact()
-		else:
-			exit.call())
+	footer.add_child(ScreenUI.back_button(_leave))
 
 
 # The "room": the kept artifact art shown as BIG clickable objects spread across the working area.

@@ -76,12 +76,15 @@ var _hud_height := HUD_HEIGHT
 var _bottom_bar_height := 56.0
 
 
-func _ready() -> void:
-	set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+func get_chrome() -> Dictionary:
+	return {"fields": [ScreenUI.Field.ACT, ScreenUI.Field.HP, ScreenUI.Field.GOLD,
+		ScreenUI.Field.RELICS, ScreenUI.Field.EXP], "exit": _on_quit_pressed}
 
+
+func _ready() -> void:
 	_compact = UIScale.is_compact()
 	_node_diam = NODE_DIAM_COMPACT if _compact else NODE_DIAM
-	_hud_height = 104.0 if _compact else 68.0
+	_hud_height = 104.0 if _compact else 56.0
 	_bottom_bar_height = 140.0 if _compact else 96.0
 
 	_node_kinds = {
@@ -103,7 +106,7 @@ func _ready() -> void:
 	# so the flow is identical whether we arrived from combat or a reload.
 	if _stage_cleared():
 		var screen := "run_success" if GameData.current_run.act >= MapData.STAGES else "stage_cleared"
-		get_tree().change_scene_to_file.call_deferred("res://scenes/%s.tscn" % screen)
+		Nav.goto.call_deferred("res://scenes/%s.tscn" % screen)
 		return
 
 	map_data = MapData.generate(GameData.current_map_state.map_seed, type_repeat_drop, type_recovery)
@@ -114,44 +117,18 @@ func _ready() -> void:
 		if n:
 			n.visited = true
 
-	# Dark themed backdrop (was raw engine gray) so the trails + medallions read on it and the
-	# screen matches the rest of the game's chrome. Added first → sits behind everything.
-	var bg := ColorRect.new()
-	bg.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	bg.color = ScreenUI.BG_COLOR
-	bg.mouse_filter = MOUSE_FILTER_IGNORE
-	add_child(bg)
-
-	_build_hud()
 	_build_scroll()
 	_build_bottom_bar()
 	_build_forge_fab()
 	call_deferred("_build_map")
 
-	# Hardware/browser back performs the same safe Save & Quit as the bottom bar (never quits the app).
-	Nav.set_back(_on_quit_pressed)
 
-
-func _build_hud() -> void:
-	# The whole header comes from the shared system, declaratively: the bar chrome, the field
-	# layout/placement, the docked ✕ (a redundant exit alongside the bottom Save & Quit — both save
-	# & return to the hub), and the OS-back wiring are all handled there. This screen only names the
-	# set of fields it wants shown; the catalog decides where each sits and self-pulls its data, so
-	# it looks identical to every other view.
-	var hb := ScreenUI.header_bar(_on_quit_pressed, {
-		"fields": [ScreenUI.Field.ACT, ScreenUI.Field.HP, ScreenUI.Field.GOLD, ScreenUI.Field.RELICS, ScreenUI.Field.EXP],
-	})
-	hb.bar.set_anchors_and_offsets_preset(PRESET_TOP_WIDE)
-	add_child(hb.bar)
-	_hud_height = hb.bar.custom_minimum_size.y   # the scroll sits below the real header height
-
-
-# The scrollable map area, filling the screen below the HUD. The canvas inside it carries
-# the nodes + connection lines; on compact it's taller than the viewport so it scrolls.
+# The scrollable map area, filling the screen below the shared header (Shell already reserved
+# that space — the header itself is no longer this screen's concern). The canvas inside it
+# carries the nodes + connection lines; on compact it's taller than the viewport so it scrolls.
 func _build_scroll() -> void:
 	_scroll = ScrollContainer.new()
 	_scroll.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	_scroll.offset_top = _hud_height
 	_scroll.offset_bottom = -_bottom_bar_height   # leave room for the bottom action bar
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	add_child(_scroll)
@@ -199,7 +176,7 @@ func _build_bottom_bar() -> void:
 	debug_btn.add_theme_font_size_override("font_size", font)
 	debug_btn.custom_minimum_size = btn_size
 	debug_btn.pressed.connect(func() -> void:
-		get_tree().change_scene_to_file("res://scenes/debug_shop.tscn"))
+		Nav.goto("res://scenes/debug_shop.tscn"))
 	hbox.add_child(debug_btn)
 	# Forge moved out of this bar into a prominent floating button — see _build_forge_fab().
 
@@ -473,4 +450,4 @@ func _process_combat_return() -> void:
 
 func _on_quit_pressed() -> void:
 	GameData.save_run()
-	get_tree().change_scene_to_file("res://scenes/game_world.tscn")
+	Nav.goto("res://scenes/game_world.tscn")

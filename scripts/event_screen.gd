@@ -18,7 +18,6 @@ var _upgrade_btn: Button
 
 
 func _ready() -> void:
-	set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	_attr = GameData.current_event_attr
 	if _attr.is_empty():
 		_attr = DeckCard.UPGRADABLE[0]
@@ -26,10 +25,16 @@ func _ready() -> void:
 	_rebuild_deck()
 
 
+func get_chrome() -> Dictionary:
+	return {"title": "Event", "exit": _leave, "show_footer": true}
+
+
 func _build_ui() -> void:
 	_compact = UIScale.is_compact()
-	var root := ScreenUI.frame(self, "Event", _leave)
+	var root := VBoxContainer.new()
+	root.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	root.add_theme_constant_override("separation", 16)
+	add_child(root)
 
 	var title := Label.new()
 	title.text = "A Wandering Trainer"
@@ -161,4 +166,4 @@ func _apply_upgrade() -> void:
 
 func _leave() -> void:
 	GameData.current_event_attr = ""
-	get_tree().change_scene_to_file("res://scenes/map.tscn")
+	Nav.goto("res://scenes/map.tscn")

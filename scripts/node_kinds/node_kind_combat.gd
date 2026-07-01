@@ -27,4 +27,4 @@ func enter(node: MapNodeData, map_screen: MapScreen) -> void:
 	enc.completing_node_id  = map_screen.current_node_id
 	enc.destination_node_id = node.id
 	GameData.current_encounter = enc
-	map_screen.get_tree().change_scene_to_file("res://scenes/combat.tscn")
+	Nav.goto("res://scenes/combat.tscn")

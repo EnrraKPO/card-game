@@ -21,16 +21,16 @@ var _selected_node: UpgradeNode = null
 func _ready() -> void:
 	# Reached without a selected save (e.g. a stale direct load) — bounce to save select.
 	if GameData.current_profile == null or GameData.current_slot < 0:
-		get_tree().change_scene_to_file.call_deferred("res://scenes/game_slots.tscn")
+		Nav.goto.call_deferred("res://scenes/game_slots.tscn")
 		return
 	# Rebuild if the form factor flips (e.g. previewing mobile by resizing in the editor).
 	UIScale.layout_changed.connect(func(): get_tree().reload_current_scene(), CONNECT_ONE_SHOT)
 	_compact = UIScale.is_compact()
 
-	var s := ScreenUI.scaffold(self, "Upgrades")
-	var root: VBoxContainer = s.root
-	ScreenUI.attach_exits(
-		func(): get_tree().change_scene_to_file("res://scenes/game_world.tscn"), s.header, s.footer)
+	var root := VBoxContainer.new()
+	root.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	root.add_theme_constant_override("separation", 0)
+	add_child(root)
 	_build_body(root)
 
 	var trees := UpgradeTree.all()
@@ -43,7 +43,12 @@ func _ready() -> void:
 	_select_tree(trees[0].id)
 
 
-func _build_body(root: VBoxContainer) -> void:
+func get_chrome() -> Dictionary:
+	return {"title": "Upgrades", "exit": func(): Nav.goto("res://scenes/game_world.tscn"),
+		"show_footer": true}
+
+
+func _build_body(root: Control) -> void:
 	# Experience / upgrade-point banner — this is where points are spent, so show the balance.
 	_exp_pad = MarginContainer.new()
 	for side in ["left", "right", "top"]:
