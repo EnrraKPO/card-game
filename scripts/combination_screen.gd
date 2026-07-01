@@ -1,14 +1,16 @@
 extends Control
 
-# The Forge. Two ways to COMBINE two deck cards into one:
-#  • Tap/click flow: tap a card to drop it into ingredient slot A on the right, tap a second for
-#    slot B; the forged result + a Combine button appear. Tapping a slotted card removes it.
-#  • Drag flow: drag a card; it shows in slot A, whatever you hover shows in slot B, with the result
-#    previewed. Dropping one card on another is the same as pressing Combine.
-# Either way the commit goes through a Cancel/Forge confirm modal (_confirm_combine) — the merge is
-# destructive (both originals are consumed). Charms still ENCHANT a card by dragging the chip onto
-# it. While dragging, the floating card carries a particle aura and a vortex links it to a valid
-# target (VFX tuning lives in ForgeFX).
+# The Forge. COMBINE two deck cards into one, or ENCHANT a card with a charm. Both actions share the
+# right-hand panel (slot A + slot B → result + action button) and support two input styles:
+#  • Tap/click: tap a card into slot A, a second into slot B → Combine. Or tap a charm (it goes to
+#    slot A), then tap a card (slot B) → Enchant. Tapping a filled slot clears it.
+#  • Drag: drag a card onto another (combine), or a charm onto a card (enchant); the dragged item
+#    and the hovered target fill the slots live, and dropping is the same as pressing the button.
+# COMBINE goes through a Cancel/Forge confirm modal (_confirm_combine) — it's destructive (both
+# originals consumed). ENCHANT applies directly (it just spends the charm). While dragging, the
+# floating item carries a particle aura and a vortex links it to a valid target (VFX in ForgeFX).
+# On a touch device a dragged charm lifts above the finger (which would otherwise hide it), with the
+# hit-test following the chip; on desktop it stays centred on the cursor at its normal size.
 
 # One entry per deck card: { "card": DeckCard, "deck_idx": int, "data": CardData, "ui": CardUI,
 # "item": ForgeDragItem (null for non-combinable cards, which can't be dragged but can be enchanted) }
@@ -37,10 +39,16 @@ var _slot_b: Control
 var _result_slot: Control
 var _preview_status: Label
 var _combine_btn: Button
+var _panel_header: Label
 
 # Click-to-select flow (the no-drag path): entry indices of the chosen pair (-1 = empty).
 var _sel_a: int = -1
 var _sel_b: int = -1
+# Click-selected charm to enchant with ("" = none). When set, the screen is in ENCHANT mode:
+# slot A shows the charm, the next tapped card (kept in _sel_a) is the target.
+var _sel_charm: String = ""
+# The card-shaped slot size (used to size the charm chip shown in a slot). Set in _build_ui.
+var _slot_size := Vector2.ZERO
 # A press not yet resolved: it becomes a TAP (select) on release, or a DRAG once it moves past
 # DRAG_THRESHOLD — so a click selects while dragging still works.
 var _pending: Dictionary = {}
@@ -52,6 +60,7 @@ var _drag: Dictionary = {}
 var _follower: Control = null
 var _follower_visual: Control = null   # the card/charm visual inside the follower (wobbles when linked)
 var _follower_base_pos := Vector2.ZERO # its resting position (centred on the pointer)
+var _follower_center := Vector2.ZERO   # visual centre offset from the pointer (0 for cards; lifted for charms)
 var _wob_t := 0.0
 var _wob := 0.0                         # eased 0→1 wobble strength (ramps with the connection)
 var _aura: ForgeAura = null
@@ -145,12 +154,12 @@ func _build_ui() -> void:
 	right.add_theme_constant_override("separation", 14)
 	right_pad.add_child(right)
 
-	var header_lbl := Label.new()
-	header_lbl.text = "Combine"
-	header_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	header_lbl.add_theme_font_size_override("font_size", 30 if _compact else 24)
-	header_lbl.modulate = IDLE_COLOR
-	right.add_child(header_lbl)
+	_panel_header = Label.new()
+	_panel_header.text = "Combine"
+	_panel_header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_panel_header.add_theme_font_size_override("font_size", 30 if _compact else 24)
+	_panel_header.modulate = IDLE_COLOR
+	right.add_child(_panel_header)
 
 	# Slots + result scroll within the pane so a short window never overflows; the Combine button
 	# below stays pinned and always reachable.
@@ -166,14 +175,14 @@ func _build_ui() -> void:
 	rcol.add_theme_constant_override("separation", 12)
 	rscroll.add_child(rcol)
 
-	var slot_size := Vector2(150, 196) if _compact else Vector2(122, 160)
+	_slot_size = Vector2(150, 196) if _compact else Vector2(122, 160)
 	var result_size := Vector2(212, 277) if _compact else Vector2(178, 233)
 
 	var ing := HBoxContainer.new()
 	ing.alignment = BoxContainer.ALIGNMENT_CENTER
 	ing.add_theme_constant_override("separation", 14)
 	rcol.add_child(ing)
-	var sa := _make_card_slot(slot_size, "Tap a\ncard")
+	var sa := _make_card_slot(_slot_size, "Tap a\ncard")
 	_slot_a = sa["holder"]
 	ing.add_child(sa["slot"])
 	var plus := Label.new()
@@ -182,7 +191,7 @@ func _build_ui() -> void:
 	plus.modulate = IDLE_COLOR
 	plus.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	ing.add_child(plus)
-	var sb := _make_card_slot(slot_size, "Tap a\ncard")
+	var sb := _make_card_slot(_slot_size, "Tap a\ncard")
 	_slot_b = sb["holder"]
 	ing.add_child(sb["slot"])
 
@@ -243,6 +252,7 @@ func _rebuild_deck() -> void:
 	_entries.clear()
 	_sel_a = -1
 	_sel_b = -1
+	_sel_charm = ""
 
 	var deck: Array = GameData.current_run.deck.duplicate()
 	for i in deck.size():
@@ -349,19 +359,30 @@ func _begin_drag(payload: Dictionary) -> void:
 	_result_deck_card = null
 
 	var visual: Control = _make_follower_visual(payload)
+	var half := visual.custom_minimum_size * 0.5
 	_follower = Control.new()
 	_follower.mouse_filter = MOUSE_FILTER_IGNORE
-	visual.position = -visual.custom_minimum_size * 0.5   # centre the visual on the pointer
-	visual.pivot_offset = visual.custom_minimum_size * 0.5   # so wobble rotates around its centre
+	# The dragged item is enlarged either way. Cards always centre on the pointer. A charm centres on
+	# the pointer on desktop (a mouse cursor occludes nothing), but on a TOUCH device it lifts above
+	# the finger — a chip under a fingertip is invisible while dragging. When lifted, the hit-test and
+	# the vortex follow the chip's centre via _follower_center (see _update_drag).
+	if payload.kind == "charm" and DisplayServer.is_touchscreen_available():
+		var lift := 48.0
+		visual.position = Vector2(-half.x, -visual.custom_minimum_size.y - lift)
+	else:
+		visual.position = -half   # centre the visual on the pointer
+	visual.pivot_offset = half   # so wobble rotates around its centre
 	_follower.add_child(visual)
 	_overlay.add_child(_follower)
 	_follower_visual = visual
 	_follower_base_pos = visual.position
+	_follower_center = visual.position + half   # visual centre vs pointer (0 for cards; lifted for charms)
 	_wob_t = 0.0
 	_wob = 0.0
 
 	var r := _aura_radii(payload)
 	_aura = _make_aura(_source_color(payload), r.x, r.y)
+	_aura.position = _follower_center   # keep the halo on the (possibly lifted) visual, not the pointer
 	_follower.add_child(_aura)
 
 	# Leave the dragged source IN PLACE as a dimmed "ghost": its grid slot stays occupied, so the
@@ -382,11 +403,17 @@ func _make_follower_visual(payload: Dictionary) -> Control:
 		ui.size = _card_size
 		ui.modulate.a = 0.85
 		return ui
-	var size := Vector2(96, 96) if _compact else Vector2(64, 64)
+	var size := _charm_follower_size()
 	var chip := _make_charm_chip(payload.id, 1, size)
 	chip.custom_minimum_size = size
 	chip.size = size
 	return chip
+
+
+# The dragged charm chip's size — normal (same as before). Touch visibility is handled by LIFTING
+# the chip above the finger (see _begin_drag), not by enlarging it; desktop needs neither.
+func _charm_follower_size() -> Vector2:
+	return Vector2(96, 96) if _compact else Vector2(64, 64)
 
 
 # Drives the dragged card's wobble: it eases in while a link is active, out when it breaks.
@@ -457,13 +484,16 @@ func _update_drag(global_pos: Vector2) -> void:
 	if _follower == null:
 		return
 	_follower.global_position = global_pos
-	_set_hover(_target_under(global_pos))
+	# Hit-test from the follower VISUAL centre (lifted for charms), not the raw pointer — otherwise a
+	# lifted charm chip visibly overlapping a card wouldn't register, since the pointer sits below it.
+	var hit := global_pos + _follower_center
+	_set_hover(_target_under(hit))
 	if _link != null and _hover_idx >= 0:
-		# Connect the two cards' orbit rings, in overlay-local space.
+		# Connect the two cards' orbit rings, in overlay-local space (source = the visual centre).
 		var inv := _overlay.get_global_transform().affine_inverse()
 		var tgt: Control = _entries[_hover_idx].item
 		var rr := _card_aura_radii()
-		_link.set_endpoints(inv * global_pos, inv * tgt.get_global_rect().get_center(), rr.x, rr.y)
+		_link.set_endpoints(inv * hit, inv * tgt.get_global_rect().get_center(), rr.x, rr.y)
 
 
 # While dragging, ease the deck scroll up/down when the pointer nears the top/bottom edge,
@@ -526,7 +556,7 @@ func _set_hover(target_idx: int) -> void:
 		_overlay.add_child(_target_aura)
 		_link = ForgeLink.new()
 		_link.setup(col)
-		_link.set_endpoints(inv * _follower.global_position, center, rr.x, rr.y)
+		_link.set_endpoints(inv * (_follower.global_position + _follower_center), center, rr.x, rr.y)
 		_overlay.add_child(_link)
 		# Mark the target card so _process can wobble it too (rotating around its centre).
 		_target_item = _entries[target_idx].item
@@ -823,18 +853,41 @@ func _set_holder_card(holder: Control, inst: CardInstance, on_click := Callable(
 		holder.add_child(ui)
 
 
-# THE single place that paints the right panel. While dragging it shows the dragged card (slot A)
-# and the hovered target (slot B); otherwise it shows the click-selected pair. The result + Combine
-# button reflect whichever pair is current.
+# Shows the selected charm as a large chip centred in a (card-shaped) slot; clicking it deselects
+# the charm — matching the tap-a-slot-to-clear behaviour of the card slots.
+func _set_holder_charm(holder: Control, charm_id: String) -> void:
+	for c in holder.get_children():
+		if c.name == "Placeholder":
+			c.visible = false
+		else:
+			c.queue_free()
+	var cc := CenterContainer.new()
+	cc.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	cc.mouse_filter = MOUSE_FILTER_IGNORE
+	var d := _slot_size.x * 0.66
+	var chip := _make_charm_chip(charm_id, 1, Vector2(d, d))
+	chip.mouse_filter = MOUSE_FILTER_STOP   # clickable to deselect (+ its own charm tooltip on hover)
+	chip.gui_input.connect(func(e: InputEvent) -> void:
+		if e is InputEventMouseButton and (e as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT \
+				and not (e as InputEventMouseButton).pressed:
+			_clear_charm())
+	cc.add_child(chip)
+	holder.add_child(cc)
+
+
+# THE single place that paints the right panel. It shows whichever pairing is current — a card+card
+# COMBINE or a charm+card ENCHANT — sourced from either an in-flight drag or the click selection.
 func _refresh_forge() -> void:
-	var a_inst: CardInstance = null
-	var b_inst: CardInstance = null
+	var a_inst: CardInstance = null       # slot A card (null when slot A shows a charm instead)
+	var a_charm := ""                     # slot A charm id ("" = slot A shows a card / placeholder)
+	var b_inst: CardInstance = null       # slot B card
 	var result_inst: CardInstance = null
 	var status := ""
 	var color := IDLE_COLOR
-	var can_combine := false
+	var can_act := false                  # is the action button enabled
+	var enchanting := false               # true = Enchant action, false = Combine
 	# Click-to-clear is only wired in the selection flow (set below); during a drag the slots show
-	# transient drag/hover cards and must not be clearable.
+	# transient drag/hover content and must not be clearable.
 	var a_click := Callable()
 	var b_click := Callable()
 
@@ -851,9 +904,37 @@ func _refresh_forge() -> void:
 				result_inst = verdict.get("preview", null)
 		else:
 			status = "Drop onto another card to combine."
-	elif not _drag.is_empty():
-		status = "Drop the charm onto a card to enchant it."
+	elif not _drag.is_empty() and _drag.get("kind") == "charm":
+		enchanting = true
+		a_charm = str(_drag.get("id", ""))
+		if _hover_idx >= 0 and _hover_idx < _entries.size():
+			b_inst = _entries[_hover_idx].card.make_instance()
+			var verdict := _evaluate_target(_drag, _hover_idx)
+			status = str(verdict.get("status", ""))
+			color = verdict.get("color", IDLE_COLOR)
+			if bool(verdict.get("ok", false)):
+				result_inst = verdict.get("preview", null)
+		else:
+			status = "Drop the charm onto a card to enchant it."
+	elif _sel_charm != "":
+		# Enchant mode (click flow): charm in slot A, the tapped target card (kept in _sel_a) in slot B.
+		enchanting = true
+		a_charm = _sel_charm
+		b_click = _clear_slot_a
+		var charm := CharmData.get_charm(_sel_charm)
+		var charm_name: String = charm.display_name if charm != null else _sel_charm
+		if _sel_a >= 0 and _sel_a < _entries.size():
+			b_inst = _entries[_sel_a].card.make_instance()
+			var verdict := _evaluate_target({"kind": "charm", "id": _sel_charm}, _sel_a)
+			status = str(verdict.get("status", ""))
+			color = verdict.get("color", IDLE_COLOR)
+			if bool(verdict.get("ok", false)):
+				result_inst = verdict.get("preview", null)
+				can_act = true
+		else:
+			status = "Tap a card to enchant it with %s." % charm_name
 	else:
+		# Combine mode (click flow): two selected cards.
 		a_click = _clear_slot_a
 		b_click = _clear_slot_b
 		if _sel_a >= 0 and _sel_a < _entries.size():
@@ -867,18 +948,23 @@ func _refresh_forge() -> void:
 			if bool(verdict.get("ok", false)):
 				result_inst = verdict.get("preview", null)
 				_result_deck_card = verdict.get("result_dc", null)
-				can_combine = true
+				can_act = true
 		elif a_inst != null or b_inst != null:
 			status = "Select another card to combine."
 		else:
-			status = "Tap two cards to combine — or drag one onto another.\nDrag a charm onto a card to enchant it."
+			status = "Tap two cards to combine, or a charm then a card to enchant.\n(Dragging works too.)"
 
-	_set_holder_card(_slot_a, a_inst, a_click)
+	if a_charm != "":
+		_set_holder_charm(_slot_a, a_charm)
+	else:
+		_set_holder_card(_slot_a, a_inst, a_click)
 	_set_holder_card(_slot_b, b_inst, b_click)
 	_set_holder_card(_result_slot, result_inst)
 	_preview_status.text = status
 	_preview_status.modulate = color
-	_combine_btn.disabled = not can_combine
+	_panel_header.text = "Enchant" if enchanting else "Combine"
+	_combine_btn.text = "Enchant" if enchanting else "Combine"
+	_combine_btn.disabled = not can_act
 
 
 # A press on a deck card / charm: held as pending until release (tap) or movement (drag).
@@ -889,14 +975,25 @@ func _on_press(payload: Dictionary) -> void:
 	_press_pos = get_global_mouse_position()
 
 
-# A tap (press+release without dragging): toggle the card into/out of the ingredient slots.
+# A tap (press+release without dragging). A charm tap toggles ENCHANT mode; a card tap either picks
+# the enchant target (in enchant mode) or fills the combine slots.
 func _on_tap(payload: Dictionary) -> void:
-	if payload.get("kind") != "card":
-		_preview_status.text = "Drag a charm onto a card to enchant it."
-		_preview_status.modulate = IDLE_COLOR
+	if payload.get("kind") == "charm":
+		var cid := str(payload.get("id", ""))
+		if _sel_charm == cid:
+			_sel_charm = ""          # tapping the selected charm again cancels enchant mode
+		else:
+			_sel_charm = cid         # enter enchant mode; keep _sel_a as the target, drop the 2nd card
+			_sel_b = -1
+		_update_selection_highlights()
+		_refresh_forge()
 		return
+
 	var idx := int(payload.idx)
-	if idx == _sel_a:
+	if _sel_charm != "":
+		# Enchant mode: the tapped card is the single target (kept in _sel_a).
+		_sel_a = -1 if _sel_a == idx else idx
+	elif idx == _sel_a:
 		_sel_a = -1
 	elif idx == _sel_b:
 		_sel_b = -1
@@ -915,6 +1012,11 @@ func _update_selection_highlights() -> void:
 		var ui: CardUI = _entries[i].ui
 		if ui != null:
 			ui.set_selected(i == _sel_a or i == _sel_b)
+	# Brighten the selected charm chip in the tray, dim the rest, so the active charm reads.
+	for child in _charm_row.get_children():
+		if child is ForgeDragItem:
+			var cid: String = str((child as ForgeDragItem).payload.get("id", ""))
+			child.modulate = Color(1.25, 1.25, 1.25) if cid == _sel_charm else Color.WHITE
 
 
 # Clicking a filled ingredient slot empties it (the deck card un-highlights and frees up the slot).
@@ -930,7 +1032,22 @@ func _clear_slot_b() -> void:
 	_refresh_forge()
 
 
+func _clear_charm() -> void:
+	_sel_charm = ""
+	_update_selection_highlights()
+	_refresh_forge()
+
+
+# The action button: enchant the selected card with the selected charm, or open the combine confirm.
 func _on_combine_pressed() -> void:
+	if _sel_charm != "":
+		if _sel_a < 0:
+			return
+		var ev := _evaluate_target({"kind": "charm", "id": _sel_charm}, _sel_a)
+		if not bool(ev.get("ok", false)):
+			return
+		_do_enchant(_sel_charm, _sel_a)
+		return
 	if _sel_a < 0 or _sel_b < 0:
 		return
 	var verdict := _evaluate_target({"kind": "card", "idx": _sel_a}, _sel_b)
@@ -988,7 +1105,8 @@ func _aura_radii(payload: Dictionary) -> Vector2:
 		return _card_aura_radii()
 	var scale := float(ForgeFX.AURA["radius_scale"])
 	var margin := float(ForgeFX.AURA["margin"])
-	return Vector2(36.0 * scale + margin, 36.0 * scale + margin)
+	var r := _charm_follower_size().x * 0.5   # match the (enlarged) charm follower
+	return Vector2(r * scale + margin, r * scale + margin)
 
 
 # A hand-drawn halo that swirls around the card — see ForgeAura (tuning in ForgeFX.AURA).
