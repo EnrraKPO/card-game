@@ -1,18 +1,14 @@
 class_name ResourceToken
 extends PanelContainer
 
-# A draggable representation of a fungible crafting resource (an id in a MaterialBag — see
-# Materials). Renders the material's colour + short name + available count, and drags a
-# { "type": ResourceToken.PAYLOAD_TYPE, "id": <material id> } payload that DropSlot accepts.
-# Purely visual: a token stands for "one of this resource". Staging and spending are the
-# MaterialBag's job, driven by the owning artifact (see lab_screen.gd). Reusable beyond the
-# Lab — the lab-world foundation, built on Godot's native Control drag-and-drop.
+# A representation of a fungible crafting resource (an id in a MaterialBag — see Materials).
+# Renders the material's colour + short name + available count. It does NOT use Godot's native
+# drag-and-drop: that grabs the gesture on the tiniest finger drift, which made taps unreliable on
+# touch. Instead it just reports the PRESS via `grab`; lab_screen.gd owns the gesture and decides
+# tap (assign to the first open slot) vs drag (manual follower → drop on a slot). See DropSlot.
 
-const PAYLOAD_TYPE := "resource"
-
-# Emitted on a tap (a click that wasn't a drag) — the Lab uses it to auto-assign the
-# resource into the open artifact's first compatible slot, so dragging is optional.
-signal clicked(material_id: String)
+# Emitted when the token is pressed (available only). lab_screen turns this into a tap or a drag.
+signal grab(material_id: String)
 
 var material_id := ""
 var available := 0
@@ -34,9 +30,9 @@ func _build() -> void:
 	# Illustrated piece tokens are taller and squarer so the art reads big; text resources
 	# (essences/stones) keep the compact wide chip.
 	if art != null:
-		custom_minimum_size = Vector2(124, 152) if _compact else Vector2(104, 128)
+		custom_minimum_size = Vector2(150, 186) if _compact else Vector2(104, 128)
 	else:
-		custom_minimum_size = Vector2(168, 96) if _compact else Vector2(140, 80)
+		custom_minimum_size = Vector2(196, 116) if _compact else Vector2(140, 80)
 
 	# Discreet framing: a faint translucent backing, no outline — the art (or label) carries the
 	# identity, the panel just gives it a subtle resting place. See Materials.frame_tint for the
@@ -71,7 +67,7 @@ func _build() -> void:
 		# Fill the token (minus the count strip) and keep aspect; IGNORE_SIZE so the full-res
 		# art doesn't dictate the token's min size (it was blowing the container out).
 		icon.size_flags_vertical = SIZE_EXPAND_FILL
-		icon.custom_minimum_size = Vector2(0, 96 if _compact else 78)
+		icon.custom_minimum_size = Vector2(0, 118 if _compact else 78)
 		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		icon.mouse_filter = MOUSE_FILTER_IGNORE
@@ -93,21 +89,14 @@ func _build() -> void:
 	box.add_child(count_lbl)
 
 
-func _get_drag_data(_at: Vector2) -> Variant:
-	if available <= 0:
-		return null
-	var preview := ResourceToken.new().setup(material_id, available, _compact)
-	preview.modulate = Color(1, 1, 1, 0.85)
-	set_drag_preview(preview)
-	return {"type": PAYLOAD_TYPE, "id": material_id}
-
-
-# A plain tap (no drag) emits `clicked`. During a drag the release is consumed by the drop
-# target, so this only fires for genuine clicks — drag and tap-to-assign coexist.
+# Report the press (only when we actually have some of this resource). We accept the event so the
+# surrounding ScrollContainer can't treat a press-and-drag on a token as a scroll. lab_screen then
+# distinguishes tap vs drag by how far the pointer moves before release.
 func _gui_input(event: InputEvent) -> void:
 	if available <= 0:
 		return
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
-		if mb.button_index == MOUSE_BUTTON_LEFT and not mb.pressed:
-			clicked.emit(material_id)
+		if mb.button_index == MOUSE_BUTTON_LEFT and mb.pressed:
+			grab.emit(material_id)
+			accept_event()

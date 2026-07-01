@@ -33,6 +33,16 @@ var _artifact_view: Control      # the big clickable artifact objects (the room)
 var _craft_panel: Control = null # the open artifact's crafting workspace (null in the room)
 var _inventory: HFlowContainer
 
+# Manual resource gesture (tap-to-assign OR drag-onto-a-slot), owned here rather than via Godot's
+# native drag-and-drop (which stole taps on touch — see ResourceToken). A press becomes a TAP on
+# release, or a DRAG once the pointer moves past DRAG_THRESHOLD.
+const DRAG_THRESHOLD := 12.0
+var _pending_id := ""            # a pressed token not yet resolved to tap/drag
+var _press_pos := Vector2.ZERO
+var _drag_id := ""               # the resource id being dragged ("" = not dragging)
+var _drag_follower: Control = null
+var _drag_center := Vector2.ZERO # follower visual centre vs pointer (0 desktop; lifted on touch)
+
 # Refinery widgets (valid only while it's the open artifact)
 var _refinery_slot: DropSlot
 var _refine_btn: Button
@@ -401,7 +411,7 @@ func _rebuild_inventory() -> void:
 		return
 	for id: String in ids:
 		var token := ResourceToken.new().setup(id, bag.count(id), _compact)
-		token.clicked.connect(_on_token_clicked)
+		token.grab.connect(_on_token_grab)
 		# Inside an artifact, dim what it can't use; in the room, show everything at full strength.
 		if _open_key != "" and not _relevant_to_open(id):
 			token.modulate = Color(1, 1, 1, 0.4)
@@ -421,6 +431,88 @@ func _on_token_clicked(id: String) -> void:
 			slot.stage(id)
 			return
 	_set_open_status("No empty slots available — tap a filled slot to clear it.")
+
+
+# ── Manual resource gesture (tap vs drag) ────────────────────────────────────────────────
+
+# A token was pressed — hold it as pending until release (tap) or enough movement (drag).
+func _on_token_grab(id: String) -> void:
+	if _drag_id != "" or _pending_id != "":
+		return
+	_pending_id = id
+	_press_pos = get_global_mouse_position()
+
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventMouseMotion:
+		if _drag_id != "":
+			_update_token_drag(get_global_mouse_position())
+		elif _pending_id != "" and get_global_mouse_position().distance_to(_press_pos) > DRAG_THRESHOLD:
+			var id := _pending_id
+			_pending_id = ""
+			_begin_token_drag(id)
+	elif event is InputEventMouseButton:
+		var mb := event as InputEventMouseButton
+		if mb.button_index == MOUSE_BUTTON_LEFT and not mb.pressed:
+			# NOTE: never set_input_as_handled() on the release — eating it desyncs Godot's GUI
+			# button state and freezes hover (learned in the Forge).
+			if _drag_id != "":
+				_resolve_token_drop()
+				_end_token_drag()
+			elif _pending_id != "":
+				var id := _pending_id
+				_pending_id = ""
+				_on_token_clicked(id)   # tap
+		elif mb.button_index == MOUSE_BUTTON_RIGHT and mb.pressed:
+			if _drag_id != "":
+				_end_token_drag()       # right-click cancels a drag
+			elif _pending_id != "":
+				_pending_id = ""
+
+
+# Start a manual drag: a resource-token follower trails the pointer. On a touch device it lifts
+# above the finger (a token under a fingertip is invisible); on desktop it centres on the cursor.
+func _begin_token_drag(id: String) -> void:
+	_drag_id = id
+	var vis := ResourceToken.new().setup(id, GameData.current_profile.materials.count(id), _compact)
+	vis.modulate = Color(1, 1, 1, 0.9)
+	vis.mouse_filter = MOUSE_FILTER_IGNORE
+	var sz := vis.custom_minimum_size
+	var half := sz * 0.5
+	if DisplayServer.is_touchscreen_available():
+		vis.position = Vector2(-half.x, -sz.y - 48.0)
+	else:
+		vis.position = -half
+	_drag_center = vis.position + half
+	_drag_follower = Control.new()
+	_drag_follower.mouse_filter = MOUSE_FILTER_IGNORE
+	_drag_follower.add_child(vis)
+	add_child(_drag_follower)   # last child of the screen → on top of the UI
+	_update_token_drag(get_global_mouse_position())
+
+
+func _update_token_drag(pos: Vector2) -> void:
+	if is_instance_valid(_drag_follower):
+		_drag_follower.global_position = pos
+
+
+func _end_token_drag() -> void:
+	if is_instance_valid(_drag_follower):
+		_drag_follower.queue_free()
+	_drag_follower = null
+	_drag_id = ""
+
+
+# Drop resolution: if the follower's visual centre is over a compatible slot, stage it there;
+# otherwise fall back to tap behaviour (assign to the first open compatible slot), so a drop that
+# lands near — but not exactly on — a slot still does the obvious thing.
+func _resolve_token_drop() -> void:
+	var hit := get_global_mouse_position() + _drag_center
+	for slot: DropSlot in _open_slots():
+		if slot.get_global_rect().has_point(hit) and slot.can_accept.call(_drag_id):
+			slot.stage(_drag_id)
+			return
+	_on_token_clicked(_drag_id)
 
 
 # Set the open artifact's status line (each facility has its own). Lasts until the next slot

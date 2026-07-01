@@ -2,10 +2,11 @@ class_name DropSlot
 extends PanelContainer
 
 # A drop target on a lab artifact (the Refinery's essence slot, the Forge's piece/stone
-# slots). Accepts ResourceToken drags filtered by `can_accept`, stages a single resource id
-# (fungible — only the id matters; the count lives in the MaterialBag), and notifies the
-# owning artifact via `on_changed` so it can refresh its preview/affordability. Clicking a
-# filled slot clears it. Part of the reusable lab-world foundation.
+# slots). It stages a single resource id (fungible — only the id matters; the count lives in the
+# MaterialBag), filtered by `can_accept`, and notifies the owning artifact via `on_changed` so it
+# can refresh its preview/affordability. Tapping a filled slot clears it. lab_screen drives both
+# tap-to-assign and its own manual drag (calling `stage` on a hit) — no native drag-and-drop here
+# (it stole taps on touch). Part of the reusable lab-world foundation.
 
 var slot_label := "Empty"
 var staged_id := ""
@@ -28,7 +29,7 @@ func setup(label: String, compact: bool) -> DropSlot:
 func _build() -> void:
 	# Portrait to match the resource art (pieces/stones are tall), so the illustration fills the
 	# slot instead of floating in a wide box with big side gaps.
-	custom_minimum_size = Vector2(116, 184) if _compact else Vector2(96, 152)
+	custom_minimum_size = Vector2(138, 214) if _compact else Vector2(96, 152)
 	# Staged art fills the slot (inset by the panel's content margin — see _refresh). It replaces
 	# the label entirely when present — no text stacked over the illustration. The label is the
 	# empty-slot placeholder. NB: PanelContainer stretches children to its content rect and
@@ -99,17 +100,6 @@ func _set_art(tex: Texture2D) -> void:
 	_art.texture = tex
 	_art.visible = tex != null
 	_label.visible = tex == null
-
-
-func _can_drop_data(_at: Vector2, data: Variant) -> bool:
-	return data is Dictionary and data.get("type", "") == ResourceToken.PAYLOAD_TYPE \
-		and can_accept.call(data.get("id", ""))
-
-
-func _drop_data(_at: Vector2, data: Variant) -> void:
-	staged_id = data.get("id", "")
-	_refresh()
-	on_changed.call()
 
 
 func _gui_input(event: InputEvent) -> void:
