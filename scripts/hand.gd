@@ -35,21 +35,33 @@ func build_into(parent: Control) -> void:
 	panel.custom_minimum_size.y = 235.0
 	parent.add_child(panel)
 
+	# Padding inside the hand bar so the first/last card isn't jammed against the screen edge and
+	# the row breathes off the top/bottom of the bar. The scroll (and its cards) live inside this.
+	var pad := MarginContainer.new()
+	pad.add_theme_constant_override("margin_left", 28)
+	pad.add_theme_constant_override("margin_right", 28)
+	pad.add_theme_constant_override("margin_top", 12)
+	pad.add_theme_constant_override("margin_bottom", 12)
+	panel.add_child(pad)
+
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical   = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	scroll.vertical_scroll_mode   = ScrollContainer.SCROLL_MODE_DISABLED
-	panel.add_child(scroll)
+	pad.add_child(scroll)
 
-	# The hand row holds normal cards on the left, then a separator and the
-	# rook-generated "build" tokens on the right so they read as distinct.
+	# The hand row holds normal cards on the left, then a separator and the rook-generated "build"
+	# tokens on the right so they read as distinct. All three parts SHRINK_CENTER vertically so every
+	# card — hand card or token — sits on the same centreline (no group-to-group vertical drift).
 	var content := HBoxContainer.new()
 	content.add_theme_constant_override("separation", 12)
+	content.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	scroll.add_child(content)
 
 	_hand_box = HBoxContainer.new()
 	_hand_box.add_theme_constant_override("separation", 12)
+	_hand_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	content.add_child(_hand_box)
 
 	_gen_separator = VSeparator.new()
@@ -58,6 +70,7 @@ func build_into(parent: Control) -> void:
 
 	_gen_box = HBoxContainer.new()
 	_gen_box.add_theme_constant_override("separation", 12)
+	_gen_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_gen_box.visible = false
 	content.add_child(_gen_box)
 

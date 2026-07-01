@@ -17,6 +17,19 @@ extends RefCounted
 const BG_COLOR := Color(0.07, 0.07, 0.12)
 const CLOSE_GLYPH := "✕"
 
+# The fixed catalog of run-status fields any header can show. A screen names the keys it wants
+# (in a header_bar definition); each field pulls its OWN data from the single canonical source
+# (GameData.current_run / current_profile), so a screen never passes a value in and the same fact
+# always renders identically everywhere. Turn/Mana are deliberately NOT here — they're combat
+# gameplay state, not run status, and live in combat's own HUD.
+enum Field { ACT, HP, GOLD, RELICS, EXP }
+
+# WHERE each field sits is a property of the catalog, NOT of any screen — so the same field always
+# lands in the same place, in the same order, in every header. A screen only chooses WHICH fields to
+# show; these two ordered lists decide the rest (left cluster · flexible gap · right cluster · ✕).
+const _LEFT_FIELDS := [Field.ACT, Field.HP, Field.GOLD, Field.RELICS]
+const _RIGHT_FIELDS := [Field.EXP]
+
 
 # THE header surface — a clearly distinct bar (lighter than the screen, with a thin accent underline)
 # so a header always reads as a bar and its ✕ sits inside it rather than floating. Shared by every
@@ -195,12 +208,23 @@ static func experience_bar_compact(profile: ProfileData, compact: bool = false, 
 
 
 # THE shared header bar for full-bleed HUD screens (map, later combat) that manage their own body
-# instead of the framed scaffold(). Same chrome as the menu header — a PanelContainer bar with the
-# standard docked ✕ (right) and a left content slot the screen fills with shared widgets (stat(),
-# experience_bar_compact(), RelicTray…) — and it wires `exit` to the OS go-back gesture (Nav), so
-# every screen's header is built here rather than hand-rolled. Caller anchors `bar` (e.g. TOP_WIDE)
-# and adds it to the screen; `content` is where the screen's header items go.
-static func header_bar(exit: Callable) -> Dictionary:
+# instead of the framed scaffold(). Fully declarative: the screen says only WHAT it wants shown, and
+# the bar decides WHERE everything sits — identically to every other screen. It wires `exit` to the
+# docked ✕ and the OS go-back gesture (Nav). Caller only anchors `bar` (e.g. TOP_WIDE) and adds it.
+#   definition = {
+#     name   : String          # optional title (the ONE view-supplied string), "" for none
+#     fields : Array[Field]     # WHICH fields to show — an unordered set. Order/side are NOT the
+#                               #   screen's call: the catalog (_LEFT_FIELDS/_RIGHT_FIELDS) fixes
+#                               #   them, so the same field is always in the same spot everywhere.
+#   }
+# Every field also pulls its own data from the canonical source (see header_field / Field), so a
+# screen never feeds values OR placement in. Layout: [title · left fields] — gap — [right fields · ✕].
+# `exit` is optional: pass a valid Callable for the standard docked ✕ + OS-back wiring (menus, map);
+# pass an empty Callable() for screens with no exit (combat mid-fight) — then no ✕ is shown and Nav
+# is left untouched. Returns { bar, fields, close } where `fields` maps each shown Field to its live
+# widget (e.g. the RelicTray) so a view can poke a component it needs a handle on (glint, read-only…),
+# and `close` is the docked ✕ Button (or null when no exit) so a view can restyle it (combat's debug ✕).
+static func header_bar(exit: Callable, definition: Dictionary = {}) -> Dictionary:
 	var compact := UIScale.is_compact()
 	var bar := PanelContainer.new()
 	bar.custom_minimum_size.y = 104.0 if compact else 56.0
@@ -213,18 +237,93 @@ static func header_bar(exit: Callable) -> Dictionary:
 	bar.add_child(pad)
 
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 16)
+	row.add_theme_constant_override("separation", 16 if compact else 12)
 	pad.add_child(row)
 
-	# The content slot fills the left; the ✕ docks at the far right (same placement as every menu).
-	var content := HBoxContainer.new()
-	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	content.add_theme_constant_override("separation", 16)
-	row.add_child(content)
-	row.add_child(close_button(exit))
+	# Optional title — the single string a view supplies (an accepted exception to "no view data").
+	var title: String = definition.get("name", "")
+	if title != "":
+		var title_lbl := Label.new()
+		title_lbl.text = title
+		title_lbl.add_theme_font_size_override("font_size", 34 if compact else 22)
+		title_lbl.add_theme_color_override("font_color", Color(0.92, 0.94, 1.0))
+		title_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		row.add_child(title_lbl)
 
-	Nav.set_back(exit)
-	return {"bar": bar, "content": content}
+	# The screen supplies an unordered SET of fields; the catalog decides order + side. We walk the
+	# canonical lists (not the screen's) and place whatever it asked for, so placement is identical
+	# across screens by construction. `fields` collects each built field's live widget for the caller.
+	var wanted: Array = definition.get("fields", [])
+	var fields := {}
+	for key in _LEFT_FIELDS:
+		if key in wanted:
+			var f := header_field(key, fields)
+			if f != null:
+				row.add_child(f)
+
+	# The open middle: the last left field grows into it, so newly-earned content (e.g. relics)
+	# expands rightward rather than the header staying half-empty.
+	var gap := Control.new()
+	gap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(gap)
+
+	# Right cluster.
+	for key in _RIGHT_FIELDS:
+		if key in wanted:
+			var rf := header_field(key, fields)
+			if rf != null:
+				row.add_child(rf)
+
+	# The docked ✕ (same placement as every menu header) — only for screens that HAVE an exit.
+	# Combat passes none, so it shows no ✕ and we don't touch the OS-back gesture it cleared.
+	var close: Button = null
+	if exit.is_valid():
+		close = close_button(exit)
+		row.add_child(close)
+		Nav.set_back(exit)
+
+	return {"bar": bar, "fields": fields, "close": close}
+
+
+# The catalog builder: turns a Field key into its self-pulling widget, reading only the canonical
+# run/profile source so the same fact renders identically in every header. Returns null when the
+# backing data isn't present (e.g. no active run / profile yet), so callers can list a field
+# unconditionally and the bar just omits it. If `refs` is given, a field that a view may need a
+# live handle on registers itself there under its Field key (e.g. RELICS → the RelicTray).
+static func header_field(key: int, refs: Dictionary = {}) -> Control:
+	var compact := UIScale.is_compact()
+	var run := GameData.current_run
+	match key:
+		Field.ACT:
+			if run == null:
+				return null
+			# The prominent run label (not a chip) — reads as the header's headline, per the map look.
+			var act := Label.new()
+			act.text = "Act %d" % run.act
+			act.add_theme_font_size_override("font_size", 34 if compact else 22)
+			act.add_theme_color_override("font_color", Color(0.92, 0.94, 1.0))
+			act.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			return act
+		Field.HP:
+			if run == null:
+				return null
+			return stat("HP", "%d / %d" % [run.king_health(), run.king_max_health()], Color(0.62, 0.9, 0.66))
+		Field.GOLD:
+			if run == null:
+				return null
+			return stat("Gold", str(run.gold), Color(0.98, 0.85, 0.35))
+		Field.RELICS:
+			if run == null:
+				return null
+			var tray := RelicTray.new()
+			refs[key] = tray   # so a view can glint a firing relic / set the strip read-only
+			return header_chip(tray)
+		Field.EXP:
+			var profile := GameData.current_profile
+			if profile == null:
+				return null
+			return header_chip(experience_bar_compact(profile, compact, false))
+	return null
 
 
 # A subtle rounded container ("chip") for a header element, so each stat reads as its own tidy

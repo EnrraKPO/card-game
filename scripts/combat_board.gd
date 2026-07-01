@@ -36,25 +36,19 @@ func setup_grids() -> void:
 
 
 func build_section(parent: BoxContainer, is_player: bool) -> void:
-	var section := VBoxContainer.new()
-	section.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	section.size_flags_vertical   = Control.SIZE_EXPAND_FILL
-	parent.add_child(section)
-
-	var label := Label.new()
-	label.text = "Player" if is_player else "Enemy"
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", 18)
-	section.add_child(label)
-
+	# A board half: the slot grid, centred in whatever area it's given so leftover space (after
+	# combat sizes the slots to fill) sits as balanced margins rather than a lopsided gap. No
+	# "Player"/"Enemy" label — the near/far halves read for themselves and the label only stole
+	# vertical room.
 	var center := CenterContainer.new()
-	center.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	section.add_child(center)
+	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	center.size_flags_vertical   = Control.SIZE_EXPAND_FILL
+	parent.add_child(center)
 
 	var grid := GridContainer.new()
 	grid.columns = BoardData.COLS
-	grid.add_theme_constant_override("h_separation", 10)
-	grid.add_theme_constant_override("v_separation", 10)
+	grid.add_theme_constant_override("h_separation", BoardData.SLOT_GAP)
+	grid.add_theme_constant_override("v_separation", BoardData.SLOT_GAP)
 	center.add_child(grid)
 
 	var row_order: Array = range(BoardData.ROWS) if is_player \

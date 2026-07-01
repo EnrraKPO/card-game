@@ -1,7 +1,5 @@
 extends Control
 
-const HUD_HEIGHT := 72.0
-
 # Selectable battle speeds the HUD toggle cycles through (applied as Engine.time_scale). Shown as
 # percentages; every fight starts at 100% (1.0) — the dial is per-combat, not remembered.
 const BATTLE_SPEEDS: Array[float] = [0.5, 1.0, 1.5, 2.0]
@@ -10,6 +8,7 @@ const BATTLE_SPEEDS: Array[float] = [0.5, 1.0, 1.5, 2.0]
 # shield reads as taking the blow first (scaled by battle speed like every other combat beat).
 const SHIELD_LEAD := 0.14
 const RELIC_CUE_LEAD := 0.34   # let a firing relic's chip glint read before its effects' VFX
+const BOARD_HALVES_GAP := 40.0   # the visual gulf between the player half and the enemy half
 
 enum Phase { CPU_PLACE, PLAYER_PLACE, COMBAT, TARGETING }
 
@@ -22,12 +21,14 @@ var _turn: int    = 0
 var _enemy_hand: Array = []       # Array[CardInstance]
 var _enemy_draw_pile: Array = []  # Array[CardInstance]
 
-var _turn_label: Label
-var _mana_label: Label
-var _relic_tray: RelicTray   # read-only relic strip in the HUD; a firing relic glints its chip
-var _done_btn: Button
+var _mana_label: Label       # numeric readout on the vertical mana gauge
+var _mana_fill: ColorRect    # the gauge's liquid level; its top anchor tracks mana/max
+var _relic_tray: RelicTray   # read-only relic strip in the header; a firing relic glints its chip
+var _done_btn: Button        # the chunky vertical "Ready" button (right of the board)
 var _speed_btn: Button
 var _battle_speed: float = 1.0   # 100%; reset each combat, cycled by the HUD dial
+
+var _board_row: HBoxContainer   # the two board halves; drives responsive slot sizing on resize
 
 var _hand: Hand
 var _board: CombatBoard
@@ -653,90 +654,197 @@ func _on_spell_consumed(card_ui: CardUI, cost: int) -> void:
 # ── UI building ────────────────────────────────────────────────────────────────
 
 func _build_ui() -> void:
-	# Inset the whole stack off the screen edges so the top-bar buttons (notably "Done
-	# placing", far right) and the hand stay clear of the touch-hostile borders. See
-	# UIScale.safe_inset.
-	var inset := UIScale.safe_inset()
+	# One top-to-bottom stack, laid out by the container (no absolute offsets, so nothing can slide
+	# under anything). Row 1: the full-bleed run-status header. Row 2: the body (inset off the screen
+	# edges) holding the arena + hand.
 	var root := VBoxContainer.new()
 	root.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	root.offset_left = inset
-	root.offset_top = inset
-	root.offset_right = -inset
-	root.offset_bottom = -inset
+	root.add_theme_constant_override("separation", 0)
 	add_child(root)
 
-	_build_hud(root)
+	root.add_child(_build_header())   # full-bleed top row; its own padding keeps content off edges
 
-	var boards := HBoxContainer.new()
-	boards.size_flags_vertical = SIZE_EXPAND_FILL
-	boards.add_theme_constant_override("separation", 0)
-	root.add_child(boards)
+	var inset := int(UIScale.safe_inset())
+	var body := MarginContainer.new()
+	body.size_flags_vertical = SIZE_EXPAND_FILL
+	body.add_theme_constant_override("margin_left", inset)
+	body.add_theme_constant_override("margin_right", inset)
+	body.add_theme_constant_override("margin_bottom", inset)
+	body.add_theme_constant_override("margin_top", 14)   # a small breath under the header
+	root.add_child(body)
 
-	_board.build_section(boards, true)
-	boards.add_child(VSeparator.new())
-	_board.build_section(boards, false)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 16)
+	body.add_child(col)
 
-	_hand.build_into(root)
+	# The arena row: mana gauge hugs the LEFT of the board, the two board halves fill the middle, and
+	# the action column (speed + Ready) hugs the RIGHT. Gameplay controls live around the board they
+	# act on. All three stretch to the same height, so the row reads as one balanced band.
+	var arena := HBoxContainer.new()
+	arena.size_flags_vertical = SIZE_EXPAND_FILL
+	arena.add_theme_constant_override("separation", 18)
+	col.add_child(arena)
+
+	arena.add_child(_build_mana_gauge())
+
+	_board_row = HBoxContainer.new()
+	_board_row.size_flags_horizontal = SIZE_EXPAND_FILL
+	_board_row.size_flags_vertical = SIZE_EXPAND_FILL
+	_board_row.add_theme_constant_override("separation", int(BOARD_HALVES_GAP))
+	arena.add_child(_board_row)
+
+	_board.build_section(_board_row, true)
+	_board.build_section(_board_row, false)
+
+	arena.add_child(_build_action_column())
+
+	_hand.build_into(col)
+
+	# The board fills its area with the biggest cards that fit (recomputed on any resize), instead of
+	# a fixed grid marooned in empty space.
+	_board_row.resized.connect(_resize_board)
+	call_deferred("_resize_board")
 
 
-func _build_hud(parent: VBoxContainer) -> void:
+# The shared run-status header (Act/HP/Gold/Relics/EXP): same catalog, same placement as every
+# other screen, each field self-pulling from GameData. These values are all constant during a fight
+# (king damage lives on the board unit until combat end), so the static header is accurate
+# throughout. Returned as the full-bleed first row of _build_ui's stack (fills width naturally).
+#
+# The docked ✕ is the DEBUG "win fight" affordance (given a distinct orange treatment so it never
+# reads as a normal close): combat has no real mid-fight exit, and we re-clear the OS-back gesture
+# after building so the back button can't trigger it — the ✕ is tap-only.
+func _build_header() -> Control:
+	var hb := ScreenUI.header_bar(_handle_combat_end, {
+		"fields": [ScreenUI.Field.ACT, ScreenUI.Field.HP, ScreenUI.Field.GOLD, ScreenUI.Field.RELICS, ScreenUI.Field.EXP],
+	})
+
+	var close: Button = hb.close
+	if close != null:
+		close.tooltip_text = "Debug: win this fight"
+		close.modulate = Color(1.0, 0.65, 0.1)   # orange = debug affordance, not a real close
+	Nav.clear_back()   # the ✕ is debug-only; keep the OS back gesture inert (no accidental win)
+
+	# The relic strip is a live catalog field here; grab it to glint a firing relic's chip (see
+	# _fire) and make it read-only so it never eats combat input.
+	_relic_tray = hb.fields.get(ScreenUI.Field.RELICS)
+	if _relic_tray != null:
+		_relic_tray.interactive = false
+	return hb.bar
+
+
+# The vertical mana gauge, hugging the LEFT of the board: a dark track with a blue liquid level that
+# tracks mana/max (see _refresh_mana), plus a numeric readout. Mana is gameplay state, so it sits by
+# the board, not in the shared run-status header.
+func _build_mana_gauge() -> Control:
 	var compact := UIScale.is_compact()
-	var label_font := 30 if compact else 17
+	var gauge := Panel.new()
+	gauge.custom_minimum_size.x = 118.0 if compact else 80.0
+	gauge.size_flags_vertical = SIZE_EXPAND_FILL
+	gauge.tooltip_text = "Mana"
+	var track := StyleBoxFlat.new()
+	track.bg_color = Color(0.05, 0.05, 0.09)
+	track.set_corner_radius_all(12)
+	track.set_border_width_all(2)
+	track.border_color = Color(0.30, 0.32, 0.42)
+	gauge.add_theme_stylebox_override("panel", track)
 
-	var panel := PanelContainer.new()
-	panel.custom_minimum_size.y = 124.0 if compact else HUD_HEIGHT
-	parent.add_child(panel)
+	# Liquid level: anchored to fill from the bottom; _refresh_mana sets its top anchor to 1-ratio.
+	_mana_fill = ColorRect.new()
+	_mana_fill.color = Color(0.30, 0.55, 0.95)
+	_mana_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_mana_fill.set_anchors_and_offsets_preset(PRESET_BOTTOM_WIDE)
+	_mana_fill.offset_left = 4
+	_mana_fill.offset_right = -4
+	_mana_fill.offset_bottom = -4
+	_mana_fill.anchor_top = 0.0
+	_mana_fill.offset_top = 0
+	gauge.add_child(_mana_fill)
 
-	var hbox := HBoxContainer.new()
-	panel.add_child(hbox)
-	hbox.add_child(RunHUD.new())
-
-	# Read-only relic strip, inline in the top bar so the player can recall their relics mid-fight.
-	# Kept as a field so a firing relic can glint its chip (see _fire).
-	_relic_tray = RelicTray.new()
-	_relic_tray.interactive = false
-	hbox.add_child(_relic_tray)
-
-	_turn_label = Label.new()
-	_turn_label.add_theme_font_size_override("font_size", label_font)
-	_turn_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_turn_label.size_flags_horizontal = SIZE_EXPAND_FILL
-	hbox.add_child(_turn_label)
+	var tag := Label.new()
+	tag.text = "MANA"
+	tag.add_theme_font_size_override("font_size", 18 if compact else 13)
+	tag.add_theme_color_override("font_color", Color(0.82, 0.88, 1.0))
+	tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	tag.set_anchors_and_offsets_preset(PRESET_TOP_WIDE)
+	tag.offset_top = 8
+	tag.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	gauge.add_child(tag)
 
 	_mana_label = Label.new()
-	_mana_label.add_theme_font_size_override("font_size", label_font)
-	_mana_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_mana_label.size_flags_horizontal = SIZE_EXPAND_FILL
-	hbox.add_child(_mana_label)
+	_mana_label.add_theme_font_size_override("font_size", 40 if compact else 30)
+	_mana_label.add_theme_color_override("font_color", Color(1, 1, 1))
+	_mana_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_mana_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_mana_label.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	_mana_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	gauge.add_child(_mana_label)
+	return gauge
 
-	# Battle-speed toggle — cycles 1x → 2x → 4x, persisted and applied live as Engine.time_scale.
+
+# The action column, hugging the RIGHT of the board: the battle-speed toggle stacked above the big
+# "Ready" button. Both gameplay controls, kept by the board they drive.
+func _build_action_column() -> Control:
+	var compact := UIScale.is_compact()
+	var col := VBoxContainer.new()
+	col.custom_minimum_size.x = 240.0 if compact else 180.0
+	col.add_theme_constant_override("separation", 14)
+
+	# Battle-speed toggle — cycles 1x → 2x → 4x, applied live as Engine.time_scale.
 	_speed_btn = Button.new()
-	_speed_btn.custom_minimum_size = Vector2(120 if compact else 76, 88 if compact else 0)
-	_speed_btn.add_theme_font_size_override("font_size", 30 if compact else 16)
+	_speed_btn.custom_minimum_size.y = 96.0 if compact else 56.0
+	_speed_btn.size_flags_horizontal = SIZE_EXPAND_FILL
+	_speed_btn.add_theme_font_size_override("font_size", 32 if compact else 20)
 	_speed_btn.pressed.connect(_on_speed_pressed)
-	hbox.add_child(_speed_btn)
+	col.add_child(_speed_btn)
 	_refresh_speed_btn()
 
-	# The key touch target — "Done placing". Make it big on compact.
+	# The key touch target — "Ready" — a chunky vertical button filling the rest of the column.
 	_done_btn = Button.new()
-	_done_btn.custom_minimum_size = Vector2(320 if compact else 200, 88 if compact else 0)
-	_done_btn.add_theme_font_size_override("font_size", 34 if compact else 18)
+	_done_btn.size_flags_horizontal = SIZE_EXPAND_FILL
+	_done_btn.size_flags_vertical = SIZE_EXPAND_FILL
+	_done_btn.add_theme_font_size_override("font_size", 44 if compact else 30)
+	_done_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_done_btn.pressed.connect(_on_done_pressed)
-	hbox.add_child(_done_btn)
+	col.add_child(_done_btn)
+	_refresh_done_btn()
+	return col
 
-	var dbg_win := Button.new()
-	dbg_win.text = "[debug] win"
-	dbg_win.add_theme_font_size_override("font_size", 20 if compact else 13)
-	dbg_win.modulate = Color(1.0, 0.65, 0.1)
-	dbg_win.pressed.connect(_handle_combat_end)
-	hbox.add_child(dbg_win)
+
+# Sizes every board slot to the largest card that fits the current board area (keeping the card
+# aspect), so the two 4×3 halves fill the space with big, tappable cards and even gaps — instead of
+# a fixed grid stranded in emptiness. Runs on any resize (window / form factor). Idempotent: bails
+# when the target size is unchanged, so setting the slots can't feed back into the resized signal.
+func _resize_board() -> void:
+	if _board_row == null:
+		return
+	var area := _board_row.size
+	if area.x < 1.0 or area.y < 1.0:
+		return
+
+	var cols := BoardData.COLS
+	var rows := BoardData.ROWS
+	var gap := float(BoardData.SLOT_GAP)
+	# Width splits across the two halves (minus the gulf between them); each half holds `cols`.
+	var half_w := (area.x - BOARD_HALVES_GAP) / 2.0
+	var slot_w_by_width := (half_w - (cols - 1) * gap) / float(cols)
+	var slot_w_by_height := ((area.y - (rows - 1) * gap) / float(rows)) / BoardData.SLOT_ASPECT
+	var slot_w := floorf(minf(slot_w_by_width, slot_w_by_height))
+	if slot_w < 1.0:
+		return
+	var slot_size := Vector2(slot_w, floorf(slot_w * BoardData.SLOT_ASPECT))
+
+	if (_board.player_slots[0][0] as SlotUI).custom_minimum_size == slot_size:
+		return   # already correct → stop before we trigger another resize
+	for r in rows:
+		for c in cols:
+			(_board.player_slots[r][c] as SlotUI).custom_minimum_size = slot_size
+			(_board.enemy_slots[r][c] as SlotUI).custom_minimum_size = slot_size
 
 
 # ── Display refresh ────────────────────────────────────────────────────────────
 
 func _refresh() -> void:
-	if _turn_label:
-		_turn_label.text = "Turn %d" % _turn
 	_refresh_mana()
 	_board.refresh()
 	_hand.refresh()
@@ -745,7 +853,12 @@ func _refresh() -> void:
 
 func _refresh_mana() -> void:
 	if _mana_label:
-		_mana_label.text = "Mana  %d / %d  " % [_mana, _max_mana]
+		_mana_label.text = "%d / %d" % [_mana, _max_mana]
+	if _mana_fill:
+		# The liquid level fills the bottom `ratio` of the gauge via its top anchor.
+		var ratio := (float(_mana) / float(_max_mana)) if _max_mana > 0 else 0.0
+		_mana_fill.anchor_top = 1.0 - clampf(ratio, 0.0, 1.0)
+		_mana_fill.offset_top = 0
 
 
 # Advance to the next battle speed, applying it immediately (live time_scale). Per-combat only —
@@ -767,16 +880,16 @@ func _refresh_done_btn() -> void:
 		return
 	match _phase:
 		Phase.PLAYER_PLACE:
-			_done_btn.text     = "Done Placing"
+			_done_btn.text     = "Ready"
 			_done_btn.disabled = false
 		Phase.CPU_PLACE:
-			_done_btn.text     = "CPU is placing..."
+			_done_btn.text     = "CPU\nplacing…"
 			_done_btn.disabled = true
 		Phase.COMBAT:
-			_done_btn.text     = "Combat..."
+			_done_btn.text     = "Battle…"
 			_done_btn.disabled = true
 		Phase.TARGETING:
-			_done_btn.text     = "Select a target..."
+			_done_btn.text     = "Select\na target…"
 			_done_btn.disabled = true
 
 
