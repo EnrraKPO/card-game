@@ -6,7 +6,7 @@ extends HBoxContainer
 # owned relic. Hovering a chip describes its effect. Used interactive in the map HUD (tap a chip to
 # discard — see RunData.discard_relic) and read-only in combat. Rebuilt on entry and after a discard.
 
-const CHIP := 26
+const CHIP := 34
 const CHIP_COMPACT := 44
 
 # Map HUD = true (chips tappable to discard); combat = false (display only). Set before the node
@@ -61,7 +61,7 @@ func glint(relic_id: String) -> void:
 func _make_count_label(used: int, capacity: int) -> Label:
 	var lbl := Label.new()
 	lbl.text = "Relics %d/%d " % [used, capacity]
-	lbl.add_theme_font_size_override("font_size", 22 if UIScale.is_compact() else 14)
+	lbl.add_theme_font_size_override("font_size", 22 if UIScale.is_compact() else 18)
 	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	lbl.size_flags_vertical = SIZE_SHRINK_CENTER
 	lbl.modulate = Color(0.8, 0.8, 0.88)
@@ -74,7 +74,7 @@ func _make_chip(relic: RelicData) -> Button:
 	btn.custom_minimum_size = Vector2(s, s)
 	btn.size_flags_vertical = SIZE_SHRINK_CENTER
 	btn.text = relic.letter
-	btn.add_theme_font_size_override("font_size", 24 if UIScale.is_compact() else 14)
+	btn.add_theme_font_size_override("font_size", 24 if UIScale.is_compact() else 18)
 	btn.add_theme_color_override("font_color", Color(0.06, 0.06, 0.08))
 	btn.add_theme_color_override("font_hover_color", Color(0.06, 0.06, 0.08))
 	var tip := "%s — %s" % [relic.display_name, relic.description]

@@ -133,34 +133,40 @@ func _ready() -> void:
 
 
 func _build_hud() -> void:
-	var hud := PanelContainer.new()
-	hud.set_anchors_and_offsets_preset(PRESET_TOP_WIDE)
-	hud.custom_minimum_size.y = _hud_height
-	add_child(hud)
+	# The header comes from the shared system (ScreenUI.header_bar): the bar chrome, the docked ✕
+	# (a redundant exit alongside the bottom Save & Quit — both save & return to the hub), and the
+	# OS-back wiring are all handled there. This screen only fills the content slot with shared
+	# widgets, and never renders any info a different way than other views do.
+	var hb := ScreenUI.header_bar(_on_quit_pressed)
+	hb.bar.set_anchors_and_offsets_preset(PRESET_TOP_WIDE)
+	add_child(hb.bar)
+	_hud_height = hb.bar.custom_minimum_size.y   # the scroll sits below the real header height
 
-	# Inset the content off the screen edges (safe area on touch) + a little breathing room, so the
-	# HP / Gold / relics aren't jammed against the corners.
-	var pad := MarginContainer.new()
-	var inset := int(UIScale.safe_inset())
-	pad.add_theme_constant_override("margin_left", inset + 8)
-	pad.add_theme_constant_override("margin_right", inset + 8)
-	pad.add_theme_constant_override("margin_top", 6)
-	pad.add_theme_constant_override("margin_bottom", 6)
-	hud.add_child(pad)
+	# Each piece is a shared widget in its own chip. Content stacks LEFT (Act title · HP · Gold ·
+	# Relics) then a flexible gap, then stacks RIGHT (EXP · ✕). Relics is the rightmost left-aligned
+	# element, so the open middle space is its room to grow as relics are collected.
+	var content: HBoxContainer = hb.content
+	content.add_theme_constant_override("separation", 16 if _compact else 12)
+	var run := GameData.current_run
 
-	# Single row: RunHUD (HP/Act/Gold) stretches; the relic strip sits at the right (tap to discard).
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 16)
-	pad.add_child(row)
+	var act := Label.new()
+	act.text = "Act %d" % run.act
+	act.add_theme_font_size_override("font_size", 34 if _compact else 22)
+	act.add_theme_color_override("font_color", Color(0.92, 0.94, 1.0))
+	act.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	content.add_child(act)
 
-	var run_hud := RunHUD.new()
-	run_hud.size_flags_horizontal = SIZE_EXPAND_FILL
-	row.add_child(run_hud)
+	content.add_child(ScreenUI.stat("HP", "%d / %d" % [run.king_health(), run.king_max_health()], Color(0.62, 0.9, 0.66)))
+	content.add_child(ScreenUI.stat("Gold", str(run.gold), Color(0.98, 0.85, 0.35)))
+	content.add_child(ScreenUI.header_chip(RelicTray.new()))
+
+	# Open space between the left stack and the right-aligned EXP — Relics grows into it.
+	var gap := Control.new()
+	gap.size_flags_horizontal = SIZE_EXPAND_FILL
+	content.add_child(gap)
+
 	if GameData.current_profile != null:
-		var exp := ScreenUI.experience_bar_compact(GameData.current_profile, UIScale.is_compact())
-		exp.size_flags_vertical = SIZE_SHRINK_CENTER
-		row.add_child(exp)
-	row.add_child(RelicTray.new())
+		content.add_child(ScreenUI.header_chip(ScreenUI.experience_bar_compact(GameData.current_profile, _compact, false)))
 
 
 # The scrollable map area, filling the screen below the HUD. The canvas inside it carries

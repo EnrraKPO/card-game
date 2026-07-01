@@ -18,6 +18,17 @@ const BG_COLOR := Color(0.07, 0.07, 0.12)
 const CLOSE_GLYPH := "✕"
 
 
+# THE header surface — a clearly distinct bar (lighter than the screen, with a thin accent underline)
+# so a header always reads as a bar and its ✕ sits inside it rather than floating. Shared by every
+# header (scaffold's menu header + header_bar's HUD header) so they're identical.
+static func _header_stylebox() -> StyleBoxFlat:
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.13, 0.13, 0.19)
+	sb.border_width_bottom = 2
+	sb.border_color = Color(0.30, 0.33, 0.44)
+	return sb
+
+
 # Builds the standard chrome on `host` and returns { root, header, footer }. Add body content to
 # `root` (the expand-fill middle, between header and footer); add trailing buttons / labels to
 # `header` (the title fills the left, so they align right); the `footer` is the bottom bar that
@@ -50,6 +61,7 @@ static func scaffold(host: Control, title: String) -> Dictionary:
 
 	var header := PanelContainer.new()
 	header.custom_minimum_size.y = 104.0 if compact else 56.0
+	header.add_theme_stylebox_override("panel", _header_stylebox())
 	outer.add_child(header)
 
 	# Horizontal padding inside the header + spacing between its items, so the title and the docked
@@ -123,21 +135,28 @@ static func experience_bar(profile: ProfileData, compact: bool = false) -> Contr
 	return box
 
 
-# A single-row experience widget sized to live in a header bar: tag + thin bar + count, with a
-# gold spendable-points nudge when any are banked. A static snapshot (experience only changes
-# in-run), mirroring how the hub and Upgrades screen read the profile. See experience_bar.
-static func experience_bar_compact(profile: ProfileData, compact: bool = false) -> Control:
+# A single-row experience widget for a header bar: an "EXP" tag + a clearly-styled progress bar
+# (reads as a bar — coloured fill on a dark track) + a subtle gold pip when upgrade points are
+# banked (the hint that there's something to spend at the hub; the exact count lives on the
+# Upgrades screen, not here). `expand` makes the whole widget (and its bar) fill available width —
+# used as the header's flexible element that soaks up space freed when other content is hidden.
+# A static snapshot (experience only changes between screens). See experience_bar.
+static func experience_bar_compact(profile: ProfileData, compact: bool = false, expand: bool = false) -> Control:
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 6)
+	row.add_theme_constant_override("separation", 8)
 	row.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	if expand:
+		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var pts := profile.upgrade_points
-	row.tooltip_text = "Experience — %d / %d to next upgrade point · %d available" % [
-		profile.experience, ProfileData.EXP_PER_UPGRADE_POINT, pts]
+	var tip := "Experience — %d / %d to the next upgrade point" % [profile.experience, ProfileData.EXP_PER_UPGRADE_POINT]
+	if pts > 0:
+		tip += "\n%d upgrade point%s available — spend them at the hub." % [pts, "" if pts == 1 else "s"]
+	row.tooltip_text = tip
 
 	var tag := Label.new()
 	tag.text = "EXP"
-	tag.add_theme_font_size_override("font_size", 18 if compact else 12)
-	tag.modulate = Color(0.7, 0.72, 0.8)
+	tag.add_theme_font_size_override("font_size", 18 if compact else 15)
+	tag.modulate = Color(0.72, 0.74, 0.82)
 	tag.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	row.add_child(tag)
 
@@ -146,25 +165,106 @@ static func experience_bar_compact(profile: ProfileData, compact: bool = false) 
 	bar.max_value = ProfileData.EXP_PER_UPGRADE_POINT
 	bar.value = profile.experience
 	bar.show_percentage = false
-	bar.custom_minimum_size = Vector2(150.0 if compact else 120.0, 18.0 if compact else 14.0)
+	bar.custom_minimum_size = Vector2(0.0 if expand else (240.0 if compact else 180.0), 20.0 if compact else 16.0)
 	bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	if expand:
+		bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# Style it so it unmistakably reads as a progress bar: coloured fill on a dark rounded track.
+	var track := StyleBoxFlat.new()
+	track.bg_color = Color(0.05, 0.05, 0.09)
+	track.set_corner_radius_all(6)
+	track.set_border_width_all(1)
+	track.border_color = Color(0.30, 0.32, 0.42)
+	var fill := StyleBoxFlat.new()
+	fill.bg_color = Color(0.42, 0.72, 0.98)
+	fill.set_corner_radius_all(6)
+	bar.add_theme_stylebox_override("background", track)
+	bar.add_theme_stylebox_override("fill", fill)
 	row.add_child(bar)
 
-	var val := Label.new()
-	val.text = "%d/%d" % [profile.experience, ProfileData.EXP_PER_UPGRADE_POINT]
-	val.add_theme_font_size_override("font_size", 16 if compact else 11)
-	val.modulate = Color(0.7, 0.72, 0.8)
-	val.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	row.add_child(val)
-
+	# Minor "you have upgrade points" nudge — a gold pip, details in the tooltip.
 	if pts > 0:
-		var pt := Label.new()
-		pt.text = "  %d pt%s" % [pts, "" if pts == 1 else "s"]
-		pt.add_theme_font_size_override("font_size", 18 if compact else 13)
-		pt.add_theme_color_override("font_color", Color(0.95, 0.84, 0.34))
-		pt.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		row.add_child(pt)
+		var pip := Label.new()
+		pip.text = "●"
+		pip.add_theme_font_size_override("font_size", 18 if compact else 14)
+		pip.add_theme_color_override("font_color", Color(0.95, 0.84, 0.34))
+		pip.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		pip.tooltip_text = tip
+		row.add_child(pip)
 	return row
+
+
+# THE shared header bar for full-bleed HUD screens (map, later combat) that manage their own body
+# instead of the framed scaffold(). Same chrome as the menu header — a PanelContainer bar with the
+# standard docked ✕ (right) and a left content slot the screen fills with shared widgets (stat(),
+# experience_bar_compact(), RelicTray…) — and it wires `exit` to the OS go-back gesture (Nav), so
+# every screen's header is built here rather than hand-rolled. Caller anchors `bar` (e.g. TOP_WIDE)
+# and adds it to the screen; `content` is where the screen's header items go.
+static func header_bar(exit: Callable) -> Dictionary:
+	var compact := UIScale.is_compact()
+	var bar := PanelContainer.new()
+	bar.custom_minimum_size.y = 104.0 if compact else 56.0
+	bar.add_theme_stylebox_override("panel", _header_stylebox())
+
+	var pad := MarginContainer.new()
+	var inset := int(UIScale.safe_inset() + 8.0)   # keep content out of the touch-hostile edge
+	pad.add_theme_constant_override("margin_left", inset)
+	pad.add_theme_constant_override("margin_right", inset)
+	bar.add_child(pad)
+
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 16)
+	pad.add_child(row)
+
+	# The content slot fills the left; the ✕ docks at the far right (same placement as every menu).
+	var content := HBoxContainer.new()
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content.add_theme_constant_override("separation", 16)
+	row.add_child(content)
+	row.add_child(close_button(exit))
+
+	Nav.set_back(exit)
+	return {"bar": bar, "content": content}
+
+
+# A subtle rounded container ("chip") for a header element, so each stat reads as its own tidy
+# capsule instead of muddy free-floating text. Wrap any header widget (stat, RelicTray, EXP…) in one
+# for a consistent, structured look.
+static func header_chip(inner: Control) -> PanelContainer:
+	var chip := PanelContainer.new()
+	chip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.18, 0.19, 0.27)
+	sb.set_corner_radius_all(8)
+	sb.content_margin_left = 12
+	sb.content_margin_right = 12
+	sb.content_margin_top = 5
+	sb.content_margin_bottom = 5
+	chip.add_theme_stylebox_override("panel", sb)
+	chip.add_child(inner)
+	return chip
+
+
+# ONE consistent header stat readout — a dim tag + a coloured value in a chip — so a given piece of
+# run info (HP, Gold, …) looks identical in every view that shows it. Used in the header content slot.
+static func stat(tag: String, value: String, value_color: Color) -> Control:
+	var compact := UIScale.is_compact()
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 7)
+	h.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var t := Label.new()
+	t.text = tag
+	t.add_theme_font_size_override("font_size", 20 if compact else 15)
+	t.add_theme_color_override("font_color", Color(0.6, 0.62, 0.72))
+	t.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	h.add_child(t)
+	var v := Label.new()
+	v.text = value
+	v.add_theme_font_size_override("font_size", 28 if compact else 22)
+	v.add_theme_color_override("font_color", value_color)
+	v.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	h.add_child(v)
+	return header_chip(h)
 
 
 # The standard top-right "✕" close button.
