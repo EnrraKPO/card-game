@@ -21,8 +21,8 @@ var _turn: int    = 0
 var _enemy_hand: Array = []       # Array[CardInstance]
 var _enemy_draw_pile: Array = []  # Array[CardInstance]
 
-var _mana_label: Label       # numeric readout on the vertical mana gauge
-var _mana_fill: ColorRect    # the gauge's liquid level; its top anchor tracks mana/max
+var _mana_label: Label              # current-mana number on the vertical gauge
+var _mana_chunks_box: VBoxContainer  # one chunk per max-mana point; lit=available, dim=spent
 var _relic_tray: RelicTray   # read-only relic strip in the header; a firing relic glints its chip
 var _done_btn: Button        # the chunky vertical "Ready" button (right of the board)
 var _speed_btn: Button
@@ -733,13 +733,16 @@ func _build_header() -> Control:
 	return hb.bar
 
 
-# The vertical mana gauge, hugging the LEFT of the board: a dark track with a blue liquid level that
-# tracks mana/max (see _refresh_mana), plus a numeric readout. Mana is gameplay state, so it sits by
-# the board, not in the shared run-status header.
+# The vertical mana gauge, hugging the LEFT of the board: one framed component with a "MANA" label
+# in a header cell at the TOP, the chunk stack in the middle (one chunk per point of max mana —
+# spent chunks dim, available ones lit, filling from the bottom), and the current/max count in a
+# matching footer cell at the BOTTOM. Labels and chunks never overlap. _refresh_mana rebuilds the
+# chunk count when max mana ramps and recolours them as mana is spent. Mana is gameplay state, so
+# it sits by the board, not the header.
 func _build_mana_gauge() -> Control:
 	var compact := UIScale.is_compact()
 	var gauge := Panel.new()
-	gauge.custom_minimum_size.x = 118.0 if compact else 80.0
+	gauge.custom_minimum_size.x = 122.0 if compact else 86.0
 	gauge.size_flags_vertical = SIZE_EXPAND_FILL
 	gauge.tooltip_text = "Mana"
 	var track := StyleBoxFlat.new()
@@ -749,57 +752,84 @@ func _build_mana_gauge() -> Control:
 	track.border_color = Color(0.30, 0.32, 0.42)
 	gauge.add_theme_stylebox_override("panel", track)
 
-	# Liquid level: anchored to fill from the bottom; _refresh_mana sets its top anchor to 1-ratio.
-	_mana_fill = ColorRect.new()
-	_mana_fill.color = Color(0.30, 0.55, 0.95)
-	_mana_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_mana_fill.set_anchors_and_offsets_preset(PRESET_BOTTOM_WIDE)
-	_mana_fill.offset_left = 4
-	_mana_fill.offset_right = -4
-	_mana_fill.offset_bottom = -4
-	_mana_fill.anchor_top = 0.0
-	_mana_fill.offset_top = 0
-	gauge.add_child(_mana_fill)
+	var pad := MarginContainer.new()
+	pad.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	pad.add_theme_constant_override("margin_left", 6)
+	pad.add_theme_constant_override("margin_right", 6)
+	pad.add_theme_constant_override("margin_top", 6)
+	pad.add_theme_constant_override("margin_bottom", 6)
+	pad.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	gauge.add_child(pad)
 
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 6)
+	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pad.add_child(col)
+
+	# Header cell: the "MANA" label.
 	var tag := Label.new()
 	tag.text = "MANA"
-	tag.add_theme_font_size_override("font_size", 18 if compact else 13)
-	tag.add_theme_color_override("font_color", Color(0.82, 0.88, 1.0))
+	tag.add_theme_font_size_override("font_size", 22 if compact else 16)
+	tag.add_theme_color_override("font_color", Color(0.72, 0.78, 0.92))
 	tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	tag.set_anchors_and_offsets_preset(PRESET_TOP_WIDE)
-	tag.offset_top = 8
+	tag.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	tag.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	gauge.add_child(tag)
+	col.add_child(tag)
 
+	col.add_child(_gauge_divider())
+
+	# The chunk stack fills the middle of the gauge (one Panel per max-mana point).
+	_mana_chunks_box = VBoxContainer.new()
+	_mana_chunks_box.size_flags_vertical = SIZE_EXPAND_FILL
+	_mana_chunks_box.add_theme_constant_override("separation", 5)
+	_mana_chunks_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.add_child(_mana_chunks_box)
+
+	col.add_child(_gauge_divider())
+
+	# Footer cell: the current/max count, in a matching zone at the bottom (never over the chunks).
 	_mana_label = Label.new()
-	_mana_label.add_theme_font_size_override("font_size", 40 if compact else 30)
-	_mana_label.add_theme_color_override("font_color", Color(1, 1, 1))
+	_mana_label.add_theme_font_size_override("font_size", 34 if compact else 26)
+	_mana_label.add_theme_color_override("font_color", Color(0.92, 0.96, 1.0))
 	_mana_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_mana_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_mana_label.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	_mana_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	gauge.add_child(_mana_label)
+	col.add_child(_mana_label)
 	return gauge
 
 
-# The action column, hugging the RIGHT of the board: the battle-speed toggle stacked above the big
-# "Ready" button. Both gameplay controls, kept by the board they drive.
+# A thin horizontal rule that frames the mana gauge's header/footer cells against the chunk stack.
+func _gauge_divider() -> Panel:
+	var divider := Panel.new()
+	divider.custom_minimum_size.y = 2.0
+	divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.30, 0.32, 0.42)
+	divider.add_theme_stylebox_override("panel", sb)
+	return divider
+
+
+# Colours for the mana chunks: lit = available, dim = spent (or not yet ramped into).
+const MANA_LIT := Color(0.34, 0.60, 0.98)
+const MANA_DIM := Color(0.15, 0.16, 0.23)
+
+
+func _make_mana_chunk() -> Panel:
+	var chunk := Panel.new()
+	chunk.size_flags_vertical = SIZE_EXPAND_FILL
+	chunk.custom_minimum_size.y = 8.0   # a floor so many chunks never collapse to nothing
+	chunk.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return chunk
+
+
+# The action column, hugging the RIGHT of the board: the big "Ready" button on top, with the
+# battle-speed toggle tucked at the bottom. Both gameplay controls, kept by the board they drive.
 func _build_action_column() -> Control:
 	var compact := UIScale.is_compact()
 	var col := VBoxContainer.new()
 	col.custom_minimum_size.x = 240.0 if compact else 180.0
 	col.add_theme_constant_override("separation", 14)
 
-	# Battle-speed toggle — cycles 1x → 2x → 4x, applied live as Engine.time_scale.
-	_speed_btn = Button.new()
-	_speed_btn.custom_minimum_size.y = 96.0 if compact else 56.0
-	_speed_btn.size_flags_horizontal = SIZE_EXPAND_FILL
-	_speed_btn.add_theme_font_size_override("font_size", 32 if compact else 20)
-	_speed_btn.pressed.connect(_on_speed_pressed)
-	col.add_child(_speed_btn)
-	_refresh_speed_btn()
-
-	# The key touch target — "Ready" — a chunky vertical button filling the rest of the column.
+	# The key touch target — "Ready" — a chunky vertical button filling the top of the column.
 	_done_btn = Button.new()
 	_done_btn.size_flags_horizontal = SIZE_EXPAND_FILL
 	_done_btn.size_flags_vertical = SIZE_EXPAND_FILL
@@ -808,6 +838,15 @@ func _build_action_column() -> Control:
 	_done_btn.pressed.connect(_on_done_pressed)
 	col.add_child(_done_btn)
 	_refresh_done_btn()
+
+	# Battle-speed toggle — cycles 1x → 2x → 4x, applied live as Engine.time_scale — at the bottom.
+	_speed_btn = Button.new()
+	_speed_btn.custom_minimum_size.y = 96.0 if compact else 56.0
+	_speed_btn.size_flags_horizontal = SIZE_EXPAND_FILL
+	_speed_btn.add_theme_font_size_override("font_size", 32 if compact else 20)
+	_speed_btn.pressed.connect(_on_speed_pressed)
+	col.add_child(_speed_btn)
+	_refresh_speed_btn()
 	return col
 
 
@@ -853,12 +892,27 @@ func _refresh() -> void:
 
 func _refresh_mana() -> void:
 	if _mana_label:
-		_mana_label.text = "%d / %d" % [_mana, _max_mana]
-	if _mana_fill:
-		# The liquid level fills the bottom `ratio` of the gauge via its top anchor.
-		var ratio := (float(_mana) / float(_max_mana)) if _max_mana > 0 else 0.0
-		_mana_fill.anchor_top = 1.0 - clampf(ratio, 0.0, 1.0)
-		_mana_fill.offset_top = 0
+		_mana_label.text = "%d/%d" % [_mana, _max_mana]
+	if _mana_chunks_box == null:
+		return
+
+	# Rebuild the segment stack when max mana changes (it ramps up over the fight).
+	var want := maxi(_max_mana, 0)
+	if _mana_chunks_box.get_child_count() != want:
+		for ch in _mana_chunks_box.get_children():
+			_mana_chunks_box.remove_child(ch)
+			ch.queue_free()
+		for _i in want:
+			_mana_chunks_box.add_child(_make_mana_chunk())
+
+	# Light the bottom `_mana` chunks (available), dim the rest (spent / not yet ramped).
+	var chunks := _mana_chunks_box.get_children()
+	for idx in chunks.size():
+		var from_bottom := chunks.size() - 1 - idx
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = MANA_LIT if from_bottom < _mana else MANA_DIM
+		sb.set_corner_radius_all(4)
+		(chunks[idx] as Panel).add_theme_stylebox_override("panel", sb)
 
 
 # Advance to the next battle speed, applying it immediately (live time_scale). Per-combat only —
