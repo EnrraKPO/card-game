@@ -45,10 +45,11 @@ Parse-check edited scripts (warnings are errors for this user):
 `_render.gd` now starts a run (with sample charms) for run-dependent scenes and sets `editing_deck_id`/`viewing_deck_id`, so Forge/Shop/Event/Deck-Build render with real content.
 
 - `lab_screen.gd` (Lab): reworked over several rounds of feedback. Final = a **"room" with two full-area states** over the **darkened** room art. Working area shows either the three artifacts as BIG clickable objects (`_make_artifact_object`), or — once clicked — that artifact's crafting workspace filling the area with a "‹ Lab" back button (`_build_craft_panel`/`_close_artifact`); no dim modal. Forge bodies split the card preview into its OWN column (`_assemble_forge`) so it doesn't fight the action button. **Working area + resources sit SIDE BY SIDE on desktop** (HBox: work 2.6 | resources column 1.0) so they can't overlap on short windows; **stacked** on compact. (Earlier stacked-everywhere version overflowed the crafting panel down over the resources at 1366×768 — that's why it's side-by-side now.) ✓ `lab_room_new.png`, `lab_craft_new.png`.
+- `map.gd` (Map): chrome-only pass — the medallion/trail drawing (`MapCanvas`) is untouched. Added the dark `ScreenUI.BG_COLOR` backdrop (was raw engine gray → trails/medallions now read); HUD + bottom bar get safe-inset padding and bigger/chunkier text+buttons; `run_hud.gd` fonts bumped (22 desktop/28 compact); HUD/bottom-bar heights raised. Forge FAB kept (already chunky). ✓ `map_new.png`.
 
 ## Remaining screens
 1. **Debug Shop** `debug_shop.gd` — dev tool; low priority.
-2. **Map** `map.gd`, **Combat HUD** `combat.gd:_build_hud` — HUD button sizing inconsistent; reasonable but review.
+2. **Combat HUD** `combat.gd:_build_hud` — HUD button sizing; reasonable but review.
 3. Mostly-OK (light touch): `reward_screen.gd`, `rest_screen.gd`, `relic_event_screen.gd`, `collection_screen.gd`.
 
 Shared helpers: `ScreenUI` (`screen_ui.gd`) — `frame/scaffold/frame_centered`, `back_button`, `close_button`, `experience_bar`, `BG_COLOR`. `UIScale` (`ui_scale.gd`) — `is_compact()` (true if mobile or window <1100px), `safe_inset()` (40 compact / 28 desktop).

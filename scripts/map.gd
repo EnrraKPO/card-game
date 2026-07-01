@@ -81,8 +81,8 @@ func _ready() -> void:
 
 	_compact = UIScale.is_compact()
 	_node_diam = NODE_DIAM_COMPACT if _compact else NODE_DIAM
-	_hud_height = 92.0 if _compact else HUD_HEIGHT
-	_bottom_bar_height = 124.0 if _compact else 56.0
+	_hud_height = 104.0 if _compact else 68.0
+	_bottom_bar_height = 140.0 if _compact else 96.0
 
 	_node_kinds = {
 		MapNodeData.Type.COMBAT: NodeKindCombat.new(),
@@ -114,6 +114,14 @@ func _ready() -> void:
 		if n:
 			n.visited = true
 
+	# Dark themed backdrop (was raw engine gray) so the trails + medallions read on it and the
+	# screen matches the rest of the game's chrome. Added first → sits behind everything.
+	var bg := ColorRect.new()
+	bg.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	bg.color = ScreenUI.BG_COLOR
+	bg.mouse_filter = MOUSE_FILTER_IGNORE
+	add_child(bg)
+
 	_build_hud()
 	_build_scroll()
 	_build_bottom_bar()
@@ -130,10 +138,20 @@ func _build_hud() -> void:
 	hud.custom_minimum_size.y = _hud_height
 	add_child(hud)
 
+	# Inset the content off the screen edges (safe area on touch) + a little breathing room, so the
+	# HP / Gold / relics aren't jammed against the corners.
+	var pad := MarginContainer.new()
+	var inset := int(UIScale.safe_inset())
+	pad.add_theme_constant_override("margin_left", inset + 8)
+	pad.add_theme_constant_override("margin_right", inset + 8)
+	pad.add_theme_constant_override("margin_top", 6)
+	pad.add_theme_constant_override("margin_bottom", 6)
+	hud.add_child(pad)
+
 	# Single row: RunHUD (HP/Act/Gold) stretches; the relic strip sits at the right (tap to discard).
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 10)
-	hud.add_child(row)
+	row.add_theme_constant_override("separation", 16)
+	pad.add_child(row)
 
 	var run_hud := RunHUD.new()
 	run_hud.size_flags_horizontal = SIZE_EXPAND_FILL
@@ -168,17 +186,18 @@ func _build_bottom_bar() -> void:
 	add_child(bar)
 
 	var pad := MarginContainer.new()
-	pad.add_theme_constant_override("margin_left", 16)
-	pad.add_theme_constant_override("margin_right", 16)
-	pad.add_theme_constant_override("margin_top", 8)
-	pad.add_theme_constant_override("margin_bottom", 8)
+	var inset := int(UIScale.safe_inset())
+	pad.add_theme_constant_override("margin_left", inset + 8)
+	pad.add_theme_constant_override("margin_right", inset + 8)
+	pad.add_theme_constant_override("margin_top", 10)
+	pad.add_theme_constant_override("margin_bottom", 10)
 	bar.add_child(pad)
 
 	var hbox := HBoxContainer.new()
 	pad.add_child(hbox)
 
-	var font := 32 if _compact else 14
-	var btn_size := Vector2(300, 84) if _compact else Vector2(130, 0)
+	var font := 30 if _compact else 20
+	var btn_size := Vector2(300, 96) if _compact else Vector2(210, 60)
 
 	var quit_btn := Button.new()
 	quit_btn.text = "Save & Quit"
