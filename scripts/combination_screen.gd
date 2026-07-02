@@ -145,6 +145,12 @@ func _build_ui() -> void:
 	right_panel.size_flags_horizontal = SIZE_EXPAND_FILL
 	right_panel.size_flags_vertical   = SIZE_EXPAND_FILL
 	right_panel.size_flags_stretch_ratio = 1.0
+	var right_style := StyleBoxFlat.new()
+	right_style.bg_color = ScreenUI.SURFACE_COLOR
+	right_style.border_color = ScreenUI.SURFACE_BORDER
+	right_style.set_border_width_all(2)
+	right_style.set_corner_radius_all(12)
+	right_panel.add_theme_stylebox_override("panel", right_style)
 	body.add_child(right_panel)
 
 	var right_pad := MarginContainer.new()
@@ -215,12 +221,10 @@ func _build_ui() -> void:
 	_preview_status.custom_minimum_size.x = 200.0
 	rcol.add_child(_preview_status)
 
-	_combine_btn = Button.new()
-	_combine_btn.text = "Combine"
+	_combine_btn = ScreenUI.action_button("Combine", _on_combine_pressed,
+		Vector2(0, 110) if _compact else Vector2(0, 72), 32 if _compact else 26,
+		ScreenUI.CHROME_CONFIRM)
 	_combine_btn.size_flags_horizontal = SIZE_EXPAND_FILL
-	_combine_btn.custom_minimum_size = Vector2(0, 110) if _compact else Vector2(0, 72)
-	_combine_btn.add_theme_font_size_override("font_size", 32 if _compact else 26)
-	_combine_btn.pressed.connect(_on_combine_pressed)
 	right.add_child(_combine_btn)
 
 	# Drag overlay: floats above everything, never eats input.
@@ -301,7 +305,7 @@ func _rebuild_charms() -> void:
 		var empty := Label.new()
 		empty.text = "(no charms)"
 		empty.add_theme_font_size_override("font_size", 20 if _compact else 14)
-		empty.modulate = Color(0.6, 0.6, 0.65)
+		empty.add_theme_color_override("font_color", Color("5a4a38"))
 		_charm_row.add_child(empty)
 		return
 
@@ -629,9 +633,9 @@ func _confirm_combine(src_idx: int, tgt_idx: int, result_dc: DeckCard) -> void:
 
 	var panel := PanelContainer.new()
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.09, 0.09, 0.15, 0.98)
+	style.bg_color = Color(ScreenUI.SURFACE_DEEP, 0.98)
 	style.set_border_width_all(2)
-	style.border_color = Color(0.45, 0.45, 0.6)
+	style.border_color = ScreenUI.SURFACE_DEEP_BORDER
 	style.set_corner_radius_all(10)
 	style.set_content_margin_all(28 if _compact else 18)
 	panel.add_theme_stylebox_override("panel", style)
@@ -662,8 +666,8 @@ func _confirm_combine(src_idx: int, tgt_idx: int, result_dc: DeckCard) -> void:
 	var buttons := HBoxContainer.new()
 	buttons.size_flags_horizontal = SIZE_EXPAND_FILL   # span the panel so the two targets are wide
 	buttons.add_theme_constant_override("separation", 24 if _compact else 16)
-	var cancel_btn := _modal_button("Cancel")
-	var forge_btn := _modal_button("Forge")
+	var cancel_btn := _modal_button("Cancel", ScreenUI.CHROME_NEUTRAL)
+	var forge_btn := _modal_button("Forge", ScreenUI.CHROME_CONFIRM)
 	cancel_btn.pressed.connect(_close_combine_modal)
 	forge_btn.pressed.connect(func() -> void:
 		_do_combine(src_idx, tgt_idx, result_dc)
@@ -681,12 +685,10 @@ func _close_combine_modal() -> void:
 
 # A big, easy-to-hit modal button. Each one EXPAND_FILLs half the button row, so on top of the
 # generous min height they stretch wide across the panel — no fiddly aiming for confirm/cancel.
-func _modal_button(text: String) -> Button:
-	var b := Button.new()
-	b.text = text
+func _modal_button(text: String, color: Color) -> Button:
+	var b := ScreenUI.action_button(text, Callable(),
+		Vector2(300, 120) if _compact else Vector2(220, 64), 40 if _compact else 26, color)
 	b.size_flags_horizontal = SIZE_EXPAND_FILL
-	b.custom_minimum_size = Vector2(300, 120) if _compact else Vector2(220, 64)
-	b.add_theme_font_size_override("font_size", 40 if _compact else 26)
 	return b
 
 
@@ -722,7 +724,7 @@ func _make_combine_cell(inst: CardInstance, cs: Vector2) -> Control:
 		desc_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		desc_lbl.custom_minimum_size.x = 300.0 if _compact else 220.0   # wider than the card so text wraps to fewer lines
 		desc_lbl.add_theme_font_size_override("font_size", 18 if _compact else 14)
-		desc_lbl.modulate = Color(0.82, 0.82, 0.9)
+		desc_lbl.add_theme_color_override("font_color", Color("3a2f22"))   # dark text — modal panel is light SURFACE_DEEP
 		cell.add_child(desc_lbl)
 
 	return cell
@@ -737,7 +739,7 @@ func _make_combine_op(glyph: String, card_h: float) -> Control:
 	lbl.size_flags_vertical = SIZE_SHRINK_BEGIN
 	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	lbl.add_theme_font_size_override("font_size", 36 if _compact else 28)
-	lbl.modulate = Color(0.7, 0.7, 0.8)
+	lbl.add_theme_color_override("font_color", Color("5a4a38"))
 	return lbl
 
 
@@ -828,7 +830,7 @@ func _make_card_slot(card_size: Vector2, placeholder: String) -> Dictionary:
 	ph.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	ph.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	ph.add_theme_font_size_override("font_size", 22 if _compact else 16)
-	ph.modulate = Color(0.6, 0.62, 0.72)
+	ph.add_theme_color_override("font_color", Color("5a4a38"))
 	ph.mouse_filter = MOUSE_FILTER_IGNORE
 	holder.add_child(ph)
 	return {"slot": slot, "holder": holder}

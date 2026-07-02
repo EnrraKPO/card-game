@@ -76,8 +76,8 @@ func _refresh() -> void:
 		sb.set("content_margin_" + side, pad)
 	if staged_id.is_empty():
 		# Empty: a quiet dashed-feeling well that reads as "drop here".
-		sb.bg_color = Color(0.12, 0.13, 0.18, 0.85)
-		sb.border_color = Color(0.40, 0.42, 0.50)
+		sb.bg_color = Color(ScreenUI.SURFACE_DEEP, 0.85)
+		sb.border_color = ScreenUI.SURFACE_BORDER
 		_label.text = slot_label
 		_label.add_theme_color_override("font_color", Color(0.60, 0.62, 0.70))
 		_set_art(null)

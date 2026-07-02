@@ -54,7 +54,7 @@ func _ready() -> void:
 	var hint := Label.new()
 	hint.text = "Tap anywhere to close"
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hint.modulate = Color(0.78, 0.78, 0.85)
+	hint.add_theme_color_override("font_color", Color(0.78, 0.78, 0.85))
 	col.add_child(hint)
 
 

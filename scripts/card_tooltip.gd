@@ -16,9 +16,9 @@ static func build(inst: CardInstance, show_cost := true) -> Control:
 
 	var panel := PanelContainer.new()
 	var style  := StyleBoxFlat.new()
-	style.bg_color = Color(0.08, 0.08, 0.14, 0.97)
+	style.bg_color = Color(ScreenUI.SURFACE_DEEP, 0.97)
 	style.set_border_width_all(1)
-	style.border_color = Color(0.45, 0.45, 0.6)
+	style.border_color = ScreenUI.SURFACE_DEEP_BORDER
 	style.set_corner_radius_all(6)
 	style.set_content_margin_all(12)
 	panel.add_theme_stylebox_override("panel", style)
@@ -56,7 +56,8 @@ static func build(inst: CardInstance, show_cost := true) -> Control:
 			% inst.source_building.data.display_name
 		note.autowrap_mode = TextServer.AUTOWRAP_WORD
 		note.add_theme_font_size_override("font_size", 15)
-		note.add_theme_color_override("font_color", Color(0.45, 0.95, 1.0))
+		note.add_theme_color_override("font_color", Color(0.05, 0.35, 0.45))   # sits on the light
+																 # SURFACE_DEEP tooltip panel now
 		vbox.add_child(note)
 
 	var desc := inst.data.description
@@ -65,7 +66,7 @@ static func build(inst: CardInstance, show_cost := true) -> Control:
 		desc_lbl.text          = desc
 		desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD
 		desc_lbl.add_theme_font_size_override("font_size", 18)
-		desc_lbl.modulate = Color(0.82, 0.82, 0.9)
+		desc_lbl.add_theme_color_override("font_color", Color("3a2f22"))   # dark text — panel is light SURFACE_DEEP
 		vbox.add_child(desc_lbl)
 
 	# Charm detail: one line per attached charm, colour-matched to its on-card pip.
@@ -74,7 +75,7 @@ static func build(inst: CardInstance, show_cost := true) -> Control:
 		var charms_title := Label.new()
 		charms_title.text = "Charms"
 		charms_title.add_theme_font_size_override("font_size", 16)
-		charms_title.modulate = Color(0.7, 0.7, 0.8)
+		charms_title.add_theme_color_override("font_color", Color("5a4a38"))
 		vbox.add_child(charms_title)
 		for charm_id: String in inst.charms:
 			var charm := CharmData.get_charm(charm_id)
@@ -84,7 +85,7 @@ static func build(inst: CardInstance, show_cost := true) -> Control:
 			ch_lbl.text = "%s  %s — %s" % [charm.letter, charm.display_name, charm.description]
 			ch_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD
 			ch_lbl.add_theme_font_size_override("font_size", 15)
-			ch_lbl.add_theme_color_override("font_color", charm.color.lightened(0.35))
+			ch_lbl.add_theme_color_override("font_color", charm.color.darkened(0.35))   # light panel now
 			vbox.add_child(ch_lbl)
 
 	# Active statuses: one line each (glyph, name, count, description), colour-matched to its pip.
@@ -93,7 +94,7 @@ static func build(inst: CardInstance, show_cost := true) -> Control:
 		var status_title := Label.new()
 		status_title.text = "Statuses"
 		status_title.add_theme_font_size_override("font_size", 16)
-		status_title.modulate = Color(0.7, 0.7, 0.8)
+		status_title.add_theme_color_override("font_color", Color("5a4a38"))
 		vbox.add_child(status_title)
 		for si: StatusInstance in inst.statuses:
 			var sd: StatusData = si.data
@@ -111,7 +112,7 @@ static func build(inst: CardInstance, show_cost := true) -> Control:
 			st_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD
 			st_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			st_lbl.add_theme_font_size_override("font_size", 15)
-			st_lbl.add_theme_color_override("font_color", sd.color.lightened(0.35))
+			st_lbl.add_theme_color_override("font_color", sd.color.darkened(0.35))   # light panel now
 			row.add_child(st_lbl)
 			vbox.add_child(row)
 

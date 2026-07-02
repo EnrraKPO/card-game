@@ -106,7 +106,7 @@ func _build_kind_row(entry: Dictionary) -> Control:
 	if ids.is_empty():
 		var none := Label.new()
 		none.text = "  (sold out)"
-		none.modulate = Color(0.6, 0.6, 0.65)
+		none.add_theme_color_override("font_color", Color("5a4a38"))
 		row.add_child(none)
 	return box
 
@@ -133,15 +133,14 @@ func _make_offer_slot(grant: Grant) -> Control:
 	var price_lbl := Label.new()
 	price_lbl.text = "%d Gold" % price
 	price_lbl.add_theme_font_size_override("font_size", 22 if _compact else 19)
-	price_lbl.modulate = Color(1.0, 0.85, 0.3)
+	price_lbl.add_theme_color_override("font_color", Color("9c7a10"))
 	price_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	slot.add_child(price_lbl)
 
-	var buy_btn := Button.new()
-	buy_btn.text = "Buy"
+	var buy_btn := ScreenUI.action_button("Buy", Callable(),
+		Vector2(0, 96) if _compact else Vector2(0, 64), 28 if _compact else 22,
+		ScreenUI.CHROME_CONFIRM)
 	buy_btn.size_flags_horizontal = SIZE_EXPAND_FILL
-	buy_btn.custom_minimum_size = Vector2(0, 96) if _compact else Vector2(0, 64)
-	buy_btn.add_theme_font_size_override("font_size", 28 if _compact else 22)
 	slot.add_child(buy_btn)
 
 	var rec := {"grant": grant, "price": price, "buy_btn": buy_btn, "bought": false}
@@ -198,13 +197,11 @@ func _build_remove_panel() -> Control:
 	_remove_status_lbl.add_theme_font_size_override("font_size", 26 if _compact else 22)
 	panel.add_child(_remove_status_lbl)
 
-	_remove_btn = Button.new()
-	_remove_btn.text = "Remove (%d Gold)" % REMOVE_COST
+	_remove_btn = ScreenUI.action_button("Remove (%d Gold)" % REMOVE_COST, _apply_remove,
+		Vector2(0, 120) if _compact else Vector2(0, 84), 30 if _compact else 26,
+		ScreenUI.CHROME_DANGER)
 	_remove_btn.disabled = true
 	_remove_btn.size_flags_horizontal = SIZE_EXPAND_FILL
-	_remove_btn.custom_minimum_size = Vector2(0, 120) if _compact else Vector2(0, 84)
-	_remove_btn.add_theme_font_size_override("font_size", 30 if _compact else 26)
-	_remove_btn.pressed.connect(_apply_remove)
 	panel.add_child(_remove_btn)
 
 	return panel

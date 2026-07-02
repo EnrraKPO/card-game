@@ -46,13 +46,13 @@ func _build_ui() -> void:
 	blurb.text = "Offers to permanently raise one unit's %s by +1, for %d gold." \
 		% [DeckCard.attr_label(_attr), EVENT_COST]
 	blurb.add_theme_font_size_override("font_size", 26 if _compact else 22)
-	blurb.modulate = Color(0.85, 0.8, 0.6)
+	blurb.add_theme_color_override("font_color", Color("6b5636"))
 	blurb.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	root.add_child(blurb)
 
 	_gold_lbl = Label.new()
 	_gold_lbl.add_theme_font_size_override("font_size", 28 if _compact else 24)
-	_gold_lbl.modulate = Color(1.0, 0.85, 0.3)
+	_gold_lbl.add_theme_color_override("font_color", Color("9c7a10"))
 	_gold_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	root.add_child(_gold_lbl)
 
@@ -72,10 +72,9 @@ func _build_ui() -> void:
 	btn_row.add_theme_constant_override("separation", 16)
 	root.add_child(btn_row)
 
-	_upgrade_btn = Button.new()
-	_upgrade_btn.add_theme_font_size_override("font_size", 30 if _compact else 26)
-	_upgrade_btn.custom_minimum_size = Vector2(440, 120) if _compact else Vector2(380, 84)
-	_upgrade_btn.pressed.connect(_apply_upgrade)
+	_upgrade_btn = ScreenUI.action_button("", _apply_upgrade,
+		Vector2(440, 120) if _compact else Vector2(380, 84), 30 if _compact else 26,
+		ScreenUI.CHROME_CONFIRM)
 	btn_row.add_child(_upgrade_btn)
 
 
@@ -135,7 +134,7 @@ func _refresh() -> void:
 		return
 	if _selected_idx < 0:
 		_status_lbl.text = "Select a unit to train"
-		_status_lbl.modulate = Color(0.65, 0.65, 0.65)
+		_status_lbl.add_theme_color_override("font_color", Color("5a5248"))
 		_upgrade_btn.disabled = true
 		return
 
@@ -143,10 +142,10 @@ func _refresh() -> void:
 	var card_name: String = CardData.get_card(_entries[_selected_idx].card.id).display_name
 	if can_afford:
 		_status_lbl.text = "Train %s  (+1 %s)" % [card_name, DeckCard.attr_label(_attr)]
-		_status_lbl.modulate = Color(0.4, 1.0, 0.55)
+		_status_lbl.add_theme_color_override("font_color", Color("1f7a35"))
 	else:
 		_status_lbl.text = "Not enough gold to train %s" % card_name
-		_status_lbl.modulate = Color(1.0, 0.4, 0.4)
+		_status_lbl.add_theme_color_override("font_color", Color("8a2020"))
 	_upgrade_btn.disabled = not can_afford
 
 

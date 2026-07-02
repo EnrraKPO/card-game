@@ -57,22 +57,17 @@ func _ready() -> void:
 		row.add_theme_constant_override("separation", 20)
 		vbox.add_child(row)
 
-		var slot_btn := Button.new()
-		slot_btn.text = _slot_label(i, started)
-		slot_btn.add_theme_font_size_override("font_size", 34)
+		var idx := i
+		var slot_btn := ScreenUI.action_button(_slot_label(i, started),
+			func(): _on_slot_selected(idx), Vector2.ZERO, 34, ScreenUI.CHROME_NEUTRAL)
 		slot_btn.size_flags_horizontal = SIZE_EXPAND_FILL
 		slot_btn.size_flags_vertical = SIZE_EXPAND_FILL
-		var idx := i
-		slot_btn.pressed.connect(func(): _on_slot_selected(idx))
 		row.add_child(slot_btn)
 
-		var del_btn := Button.new()
-		del_btn.text = "Delete"
-		del_btn.add_theme_font_size_override("font_size", 28)
-		del_btn.custom_minimum_size.x = 240.0
+		var del_btn := ScreenUI.action_button("Delete", func(): _on_delete_pressed(idx),
+			Vector2(240, 0), 28, ScreenUI.CHROME_DANGER)
 		del_btn.size_flags_vertical = SIZE_EXPAND_FILL
 		del_btn.disabled = not started
-		del_btn.pressed.connect(func(): _on_delete_pressed(idx))
 		row.add_child(del_btn)
 	# Reset profile is Shell's footer now (get_chrome's footer_actions) — nothing left to build here.
 

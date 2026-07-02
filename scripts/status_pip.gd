@@ -126,7 +126,7 @@ func _make_custom_tooltip(_for_text: String) -> Object:
 	var sd: StatusData = status.data
 	var panel := PanelContainer.new()
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.08, 0.08, 0.14, 0.97)
+	style.bg_color = Color(ScreenUI.SURFACE_DEEP, 0.97)
 	style.set_border_width_all(1)
 	style.border_color = sd.color
 	style.set_corner_radius_all(6)
@@ -146,7 +146,7 @@ func _make_custom_tooltip(_for_text: String) -> Object:
 	var title := Label.new()
 	title.text = "%s%s" % [sd.display_name, (" %d" % cnt) if cnt > 0 else ""]
 	title.add_theme_font_size_override("font_size", 16)
-	title.add_theme_color_override("font_color", sd.color.lightened(0.4))
+	title.add_theme_color_override("font_color", sd.color.darkened(0.35))   # light panel now
 	title_row.add_child(title)
 	vbox.add_child(title_row)
 
@@ -156,7 +156,7 @@ func _make_custom_tooltip(_for_text: String) -> Object:
 		desc.autowrap_mode = TextServer.AUTOWRAP_WORD
 		desc.custom_minimum_size.x = 240.0
 		desc.add_theme_font_size_override("font_size", 14)
-		desc.modulate = Color(0.82, 0.82, 0.9)
+		desc.add_theme_color_override("font_color", Color("3a2f22"))   # dark text — panel is light SURFACE_DEEP
 		vbox.add_child(desc)
 
 	return panel

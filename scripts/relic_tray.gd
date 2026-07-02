@@ -64,7 +64,8 @@ func _make_count_label(used: int, capacity: int) -> Label:
 	lbl.add_theme_font_size_override("font_size", 22 if UIScale.is_compact() else 18)
 	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	lbl.size_flags_vertical = SIZE_SHRINK_CENTER
-	lbl.modulate = Color(0.8, 0.8, 0.88)
+	lbl.add_theme_color_override("font_color", Color("6b5636"))   # sits on the header_chip's cream
+																	# capsule (ScreenUI.SURFACE_DEEP)
 	return lbl
 
 

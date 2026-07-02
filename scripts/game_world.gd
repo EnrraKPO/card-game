@@ -69,23 +69,19 @@ func _ready() -> void:
 		row.add_child(_meta_button("Collection", "res://scenes/collection_screen.tscn"))
 	row.add_child(_meta_button("Lab", "res://scenes/lab_screen.tscn"))
 
-	var embark := Button.new()
-	embark.text = "Continue Run" if has_run else "Embark"
-	embark.add_theme_font_size_override("font_size", 44)
+	var embark := ScreenUI.action_button("Continue Run" if has_run else "Embark", _on_embark,
+		Vector2.ZERO, 44, ScreenUI.CHROME_CONFIRM)
 	embark.size_flags_horizontal = SIZE_EXPAND_FILL
 	embark.size_flags_vertical = SIZE_EXPAND_FILL
 	embark.size_flags_stretch_ratio = 2.3
-	embark.pressed.connect(_on_embark)
 	actions.add_child(embark)
 
 	if has_run:
-		var abandon := Button.new()
-		abandon.text = "Abandon run"
-		abandon.add_theme_font_size_override("font_size", 28)
+		var abandon := ScreenUI.action_button("Abandon run", func(): _confirm_abandon.popup_centered(),
+			Vector2.ZERO, 28, ScreenUI.CHROME_DANGER)
 		abandon.size_flags_horizontal = SIZE_EXPAND_FILL
 		abandon.size_flags_vertical = SIZE_EXPAND_FILL
 		abandon.size_flags_stretch_ratio = 1.2
-		abandon.pressed.connect(func(): _confirm_abandon.popup_centered())
 		actions.add_child(abandon)
 
 	_confirm_abandon = ConfirmationDialog.new()
@@ -98,6 +94,13 @@ func _ready() -> void:
 func _build_loadout_panel() -> Control:
 	var profile := GameData.current_profile
 	var panel := PanelContainer.new()
+	var style := StyleBoxFlat.new()
+	style.bg_color = ScreenUI.SURFACE_COLOR
+	style.border_color = ScreenUI.SURFACE_BORDER
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(12)
+	style.set_content_margin_all(0)
+	panel.add_theme_stylebox_override("panel", style)
 	var pad := MarginContainer.new()
 	for side in ["left", "top", "right", "bottom"]:
 		pad.add_theme_constant_override("margin_" + side, 20)
@@ -129,11 +132,9 @@ func _add_stat(box: VBoxContainer, key: String, value: String) -> void:
 
 # A meta-progression button that expands to fill its share of the top row.
 func _meta_button(label: String, scene_path: String) -> Button:
-	var btn := Button.new()
-	btn.text = label
+	var btn := ScreenUI.action_button(label, Callable(), Vector2.ZERO, 34, ScreenUI.CHROME_NEUTRAL)
 	btn.size_flags_horizontal = SIZE_EXPAND_FILL
 	btn.size_flags_vertical = SIZE_EXPAND_FILL
-	btn.add_theme_font_size_override("font_size", 34)
 	if scene_path.is_empty():
 		btn.disabled = true
 		btn.tooltip_text = "Coming soon"

@@ -823,21 +823,19 @@ func _build_action_column() -> Control:
 	col.add_theme_constant_override("separation", 14)
 
 	# The key touch target — "Ready" — a chunky vertical button filling the top of the column.
-	_done_btn = Button.new()
+	# Green, from the glossy handoff's own "Ready" palette entry.
+	_done_btn = ScreenUI.action_button("", _on_done_pressed, Vector2.ZERO,
+		44 if compact else 30, ScreenUI.CHROME_READY)
 	_done_btn.size_flags_horizontal = SIZE_EXPAND_FILL
 	_done_btn.size_flags_vertical = SIZE_EXPAND_FILL
-	_done_btn.add_theme_font_size_override("font_size", 44 if compact else 30)
 	_done_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_done_btn.pressed.connect(_on_done_pressed)
 	col.add_child(_done_btn)
 	_refresh_done_btn()
 
 	# Battle-speed toggle — cycles 1x → 2x → 4x, applied live as Engine.time_scale — at the bottom.
-	_speed_btn = Button.new()
+	_speed_btn = ScreenUI.action_button("", _on_speed_pressed, Vector2.ZERO, 32 if compact else 20)
 	_speed_btn.custom_minimum_size.y = 96.0 if compact else 56.0
 	_speed_btn.size_flags_horizontal = SIZE_EXPAND_FILL
-	_speed_btn.add_theme_font_size_override("font_size", 32 if compact else 20)
-	_speed_btn.pressed.connect(_on_speed_pressed)
 	col.add_child(_speed_btn)
 	_refresh_speed_btn()
 	return col

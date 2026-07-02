@@ -63,11 +63,9 @@ func _build_ui() -> void:
 	var toolbar := HBoxContainer.new()
 	toolbar.add_child(Control.new())
 	toolbar.get_child(0).size_flags_horizontal = SIZE_EXPAND_FILL
-	_save_btn = Button.new()
-	_save_btn.text = "Save"
-	_save_btn.add_theme_font_size_override("font_size", 30 if _compact else 22)
-	_save_btn.custom_minimum_size = Vector2(220, 96) if _compact else Vector2(160, 56)
-	_save_btn.pressed.connect(_on_save)
+	_save_btn = ScreenUI.action_button("Save", _on_save,
+		Vector2(220, 96) if _compact else Vector2(160, 56), 30 if _compact else 22,
+		ScreenUI.CHROME_CONFIRM)
 	toolbar.add_child(_save_btn)
 	root.add_child(toolbar)
 
@@ -293,10 +291,8 @@ func _rebuild_king() -> void:
 	lbl.add_theme_font_size_override("font_size", 22 if _compact else 14)
 	side.add_child(lbl)
 
-	var btn := Button.new()
-	btn.text = "Restore King" if not _king_present else "Remove King"
-	btn.add_theme_font_size_override("font_size", 18 if _compact else 12)
-	btn.pressed.connect(_toggle_king)
+	var btn := ScreenUI.action_button("Restore King" if not _king_present else "Remove King",
+		_toggle_king, Vector2(160, 44), 18 if _compact else 12, ScreenUI.CHROME_NEUTRAL)
 	side.add_child(btn)
 
 

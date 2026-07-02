@@ -21,21 +21,18 @@ func _ready() -> void:
 	var subtitle := Label.new()
 	subtitle.text = "Your King recovers %d%% of maximum health." % int(HEAL_PERCENT * 100)
 	subtitle.add_theme_font_size_override("font_size", 30)
-	subtitle.modulate = Color(0.8, 0.8, 0.85)
+	subtitle.add_theme_color_override("font_color", Color("5a4a38"))
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(subtitle)
 
 	_hp_label = Label.new()
 	_hp_label.add_theme_font_size_override("font_size", 64)
-	_hp_label.modulate = Color(0.4, 0.9, 0.45)
+	_hp_label.add_theme_color_override("font_color", Color("1f7a35"))
 	_hp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(_hp_label)
 
-	_rest_btn = Button.new()
-	_rest_btn.add_theme_font_size_override("font_size", 34)
-	_rest_btn.custom_minimum_size = Vector2(460, 110)
+	_rest_btn = ScreenUI.action_button("", _on_rest, Vector2(460, 110), 34, ScreenUI.CHROME_CONFIRM)
 	_rest_btn.size_flags_horizontal = SIZE_SHRINK_CENTER
-	_rest_btn.pressed.connect(_on_rest)
 	vbox.add_child(_rest_btn)
 
 	_refresh()

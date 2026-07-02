@@ -76,6 +76,12 @@ func _build_preview_pane() -> Control:
 	panel.size_flags_horizontal = SIZE_EXPAND_FILL
 	panel.size_flags_vertical = SIZE_EXPAND_FILL
 	panel.size_flags_stretch_ratio = 1.0
+	var style := StyleBoxFlat.new()
+	style.bg_color = ScreenUI.SURFACE_COLOR
+	style.border_color = ScreenUI.SURFACE_BORDER
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(12)
+	panel.add_theme_stylebox_override("panel", style)
 	var pad := MarginContainer.new()
 	for side in ["left", "right", "top", "bottom"]:
 		pad.add_theme_constant_override("margin_" + side, 24)
@@ -101,27 +107,23 @@ func _build_preview_pane() -> Control:
 	actions.add_theme_constant_override("v_separation", 16)
 	col.add_child(actions)
 
-	_set_active_btn = _make_action_button("", _on_set_active)
+	_set_active_btn = _make_action_button("", _on_set_active, ScreenUI.CHROME_NEUTRAL)
 	actions.add_child(_set_active_btn)
-	_view_btn = _make_action_button("View Deck →", _on_view_deck)
+	_view_btn = _make_action_button("View Deck →", _on_view_deck, ScreenUI.CHROME_NEUTRAL)
 	actions.add_child(_view_btn)
-	_edit_btn = _make_action_button("Edit Deck →", _on_edit_deck)
+	_edit_btn = _make_action_button("Edit Deck →", _on_edit_deck, ScreenUI.CHROME_NEUTRAL)
 	actions.add_child(_edit_btn)
-	_reset_btn = _make_action_button("Reset", _on_reset)
+	_reset_btn = _make_action_button("Reset", _on_reset, ScreenUI.CHROME_DANGER)
 	actions.add_child(_reset_btn)
-	_delete_btn = _make_action_button("Delete", _on_delete)
-	_delete_btn.add_theme_color_override("font_color", Color(0.95, 0.6, 0.55))
+	_delete_btn = _make_action_button("Delete", _on_delete, ScreenUI.CHROME_DANGER)
 	actions.add_child(_delete_btn)
 	return panel
 
 
-func _make_action_button(text: String, handler: Callable) -> Button:
-	var btn := Button.new()
-	btn.text = text
+func _make_action_button(text: String, handler: Callable, color: Color) -> Button:
+	var btn := ScreenUI.action_button(text, handler,
+		Vector2(0, 120) if _compact else Vector2(0, 72), 32 if _compact else 24, color)
 	btn.size_flags_horizontal = SIZE_EXPAND_FILL
-	btn.custom_minimum_size = Vector2(0, 120) if _compact else Vector2(0, 72)
-	btn.add_theme_font_size_override("font_size", 32 if _compact else 24)
-	btn.pressed.connect(handler)
 	return btn
 
 
@@ -148,19 +150,14 @@ func _build_king_picker() -> void:
 
 	for king_id: String in GameData.current_profile.unlocked_kings:
 		var king := CardData.get_card(king_id)
-		var btn := Button.new()
-		btn.text = king.display_name if king != null else king_id
-		btn.custom_minimum_size = Vector2(360, 72) if _compact else Vector2(240, 40)
-		btn.add_theme_font_size_override("font_size", 26 if _compact else 16)
 		var id := king_id
-		btn.pressed.connect(func(): _create_deck(id))
+		var btn := ScreenUI.action_button(king.display_name if king != null else king_id,
+			func(): _create_deck(id), Vector2(360, 72) if _compact else Vector2(240, 40),
+			26 if _compact else 16, ScreenUI.CHROME_NEUTRAL)
 		box.add_child(btn)
 
-	var cancel := Button.new()
-	cancel.text = "Cancel"
-	cancel.add_theme_font_size_override("font_size", 22 if _compact else 14)
-	cancel.custom_minimum_size = Vector2(0, 64) if _compact else Vector2.ZERO
-	cancel.pressed.connect(func(): _king_picker.visible = false)
+	var cancel := ScreenUI.action_button("Cancel", func(): _king_picker.visible = false,
+		Vector2(0, 64) if _compact else Vector2.ZERO, 22 if _compact else 14, ScreenUI.CHROME_NEUTRAL)
 	box.add_child(cancel)
 
 
@@ -228,12 +225,10 @@ func _make_deck_tile(od: OwnedDeck, ordinal: int) -> Control:
 
 # A card-shaped "+ New Deck" tile sitting in the grid alongside the decks.
 func _make_new_deck_tile() -> Control:
-	var btn := Button.new()
-	btn.text = "+\nNew Deck"
-	btn.custom_minimum_size = Vector2.ZERO
+	var btn := ScreenUI.action_button("+\nNew Deck", func(): _king_picker.visible = true,
+		Vector2.ZERO, 22 if _compact else 16, ScreenUI.CHROME_NEUTRAL)
 	btn.size_flags_horizontal = SIZE_FILL
 	btn.size_flags_vertical = SIZE_FILL
-	btn.pressed.connect(func(): _king_picker.visible = true)
 	return btn
 
 

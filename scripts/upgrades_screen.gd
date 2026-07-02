@@ -80,6 +80,13 @@ func _build_body(root: Control) -> void:
 	# Detail strip — previews the focused tree, then whichever node is clicked.
 	var detail := PanelContainer.new()
 	detail.custom_minimum_size.y = 168.0 if _compact else 132.0
+	var detail_style := StyleBoxFlat.new()
+	detail_style.bg_color = ScreenUI.SURFACE_COLOR
+	detail_style.border_color = ScreenUI.SURFACE_BORDER
+	detail_style.set_border_width_all(2)
+	detail_style.set_corner_radius_all(10)
+	detail_style.set_content_margin_all(0)
+	detail.add_theme_stylebox_override("panel", detail_style)
 	root.add_child(detail)
 	var dbox := VBoxContainer.new()
 	dbox.add_theme_constant_override("separation", 4)
@@ -100,11 +107,10 @@ func _build_body(root: Control) -> void:
 	_detail_title.size_flags_vertical = SIZE_SHRINK_CENTER
 	head.add_child(_detail_title)
 
-	_buy_btn = Button.new()
-	_buy_btn.add_theme_font_size_override("font_size", 26 if _compact else 20)
-	_buy_btn.custom_minimum_size = Vector2(260, 96) if _compact else Vector2(200, 64)
+	_buy_btn = ScreenUI.action_button("", _on_buy_pressed,
+		Vector2(260, 96) if _compact else Vector2(200, 64), 26 if _compact else 20,
+		ScreenUI.CHROME_CONFIRM)
 	_buy_btn.visible = false
-	_buy_btn.pressed.connect(_on_buy_pressed)
 	head.add_child(_buy_btn)
 
 	_detail_body = Label.new()
@@ -115,13 +121,10 @@ func _build_body(root: Control) -> void:
 
 
 func _make_tab(tree: UpgradeTree) -> Button:
-	var btn := Button.new()
-	btn.text = tree.display_name
+	var btn := ScreenUI.action_button(tree.display_name, func() -> void: _select_tree(tree.id),
+		Vector2(0, 72) if _compact else Vector2.ZERO, 24 if _compact else 16,
+		ScreenUI.CHROME_NEUTRAL)
 	btn.toggle_mode = true
-	btn.add_theme_font_size_override("font_size", 24 if _compact else 16)
-	if _compact:
-		btn.custom_minimum_size = Vector2(0, 72)
-	btn.pressed.connect(func() -> void: _select_tree(tree.id))
 	_tab_buttons[tree.id] = btn
 	return btn
 

@@ -21,17 +21,13 @@ func _ready() -> void:
 	hello_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(hello_label)
 
-	var play_btn := Button.new()
-	play_btn.text = "Play"
-	play_btn.custom_minimum_size = Vector2(560, 140) if compact else Vector2(440, 112)
-	play_btn.add_theme_font_size_override("font_size", 44 if compact else 36)
-	play_btn.pressed.connect(_on_play_pressed)
+	var play_btn := ScreenUI.action_button("Play", _on_play_pressed,
+		Vector2(560, 140) if compact else Vector2(440, 112), 44 if compact else 36,
+		ScreenUI.CHROME_CONFIRM)
 	vbox.add_child(play_btn)
 
-	var reset_btn := Button.new()
-	reset_btn.text = "Reset profile"
-	reset_btn.add_theme_font_size_override("font_size", 24 if compact else 18)
-	reset_btn.add_theme_color_override("font_color", Color(0.95, 0.6, 0.55))
+	var reset_btn := ScreenUI.action_button("Reset profile", _on_reset_pressed, Vector2.ZERO,
+		24 if compact else 18, ScreenUI.CHROME_DANGER)
 	reset_btn.anchor_left = 1.0
 	reset_btn.anchor_top = 1.0
 	reset_btn.anchor_right = 1.0
@@ -43,7 +39,6 @@ func _ready() -> void:
 	reset_btn.offset_top = -(rh + rm)
 	reset_btn.offset_right = -rm
 	reset_btn.offset_bottom = -rm
-	reset_btn.pressed.connect(_on_reset_pressed)
 	add_child(reset_btn)
 
 	confirm_dialog = ConfirmationDialog.new()

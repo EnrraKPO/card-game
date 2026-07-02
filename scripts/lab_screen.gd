@@ -279,11 +279,9 @@ func _build_craft_panel(key: String) -> Control:
 	var header := HBoxContainer.new()
 	header.add_theme_constant_override("separation", 16)
 	box.add_child(header)
-	var back := Button.new()
-	back.text = "‹ Lab"
-	back.add_theme_font_size_override("font_size", 28 if _compact else 22)
-	back.custom_minimum_size = Vector2(200, 96) if _compact else Vector2(150, 60)
-	back.pressed.connect(_close_artifact)
+	var back := ScreenUI.action_button("‹ Lab", _close_artifact,
+		Vector2(200, 96) if _compact else Vector2(150, 60), 28 if _compact else 22,
+		ScreenUI.CHROME_NEUTRAL)
 	header.add_child(back)
 	var title := Label.new()
 	title.text = NAMES.get(key, key)
@@ -295,7 +293,7 @@ func _build_craft_panel(key: String) -> Control:
 	var sub := Label.new()
 	sub.text = SUBTITLES.get(key, "")
 	sub.add_theme_font_size_override("font_size", 24 if _compact else 19)
-	sub.modulate = Color(0.72, 0.74, 0.82)
+	sub.add_theme_color_override("font_color", Color(0.72, 0.74, 0.82))
 	sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	sub.custom_minimum_size.x = 300.0   # keep autowrap from inflating min height
 	box.add_child(sub)
@@ -357,7 +355,7 @@ func _build_inventory_panel() -> Control:
 	var title := Label.new()
 	title.text = "Resources" if not _compact else "Resources  ·  drag or tap onto the artifact's slots"
 	title.add_theme_font_size_override("font_size", 26 if _compact else 22)
-	title.modulate = Color(0.78, 0.8, 0.9)
+	title.add_theme_color_override("font_color", Color(0.78, 0.8, 0.9))
 	box.add_child(title)
 
 	var scroll := ScrollContainer.new()
@@ -399,7 +397,7 @@ func _rebuild_inventory() -> void:
 		var hint := Label.new()
 		hint.text = "No resources yet — earn essence from encounters, then refine it here."
 		hint.add_theme_font_size_override("font_size", 24 if _compact else 18)
-		hint.modulate = Color(0.7, 0.72, 0.8)
+		hint.add_theme_color_override("font_color", Color(0.7, 0.72, 0.8))
 		_inventory.add_child(hint)
 		return
 	for id: String in ids:
@@ -567,12 +565,10 @@ func _refinery_body(box: VBoxContainer) -> void:
 	_refine_status.custom_minimum_size.x = 240.0   # keep autowrap from inflating min height (see sub)
 	right.add_child(_refine_status)
 
-	_refine_btn = Button.new()
-	_refine_btn.text = "Refine"
-	_refine_btn.add_theme_font_size_override("font_size", 32 if _compact else 26)
-	_refine_btn.custom_minimum_size = Vector2(0, 116) if _compact else Vector2(0, 80)
+	_refine_btn = ScreenUI.action_button("Refine", _on_refine,
+		Vector2(0, 116) if _compact else Vector2(0, 80), 32 if _compact else 26,
+		ScreenUI.CHROME_CONFIRM)
 	_refine_btn.size_flags_horizontal = SIZE_FILL
-	_refine_btn.pressed.connect(_on_refine)
 	right.add_child(_refine_btn)
 
 
@@ -738,12 +734,9 @@ func _make_forge_status() -> Label:
 
 
 func _make_forge_button(text: String, cb: Callable) -> Button:
-	var b := Button.new()
-	b.text = text
-	b.add_theme_font_size_override("font_size", 32 if _compact else 28)
-	b.custom_minimum_size = Vector2(0, 116) if _compact else Vector2(0, 88)
+	var b := ScreenUI.action_button(text, cb, Vector2(0, 116) if _compact else Vector2(0, 88),
+		32 if _compact else 28, ScreenUI.CHROME_CONFIRM)
 	b.size_flags_horizontal = SIZE_FILL
-	b.pressed.connect(cb)
 	return b
 
 
@@ -955,12 +948,10 @@ func _show_king_celebration(king_id: String) -> void:
 		scroll.add_child(DeckUI.deck_grid(deck, card_w))
 		box.add_child(scroll)
 
-	var btn := Button.new()
-	btn.text = "Continue"
-	btn.add_theme_font_size_override("font_size", 26 if _compact else 18)
-	btn.custom_minimum_size = Vector2(0, 84) if _compact else Vector2(200, 44)
+	var btn := ScreenUI.action_button("Continue", func(): overlay.queue_free(),
+		Vector2(0, 84) if _compact else Vector2(200, 44), 26 if _compact else 18,
+		ScreenUI.CHROME_CONFIRM)
 	btn.size_flags_horizontal = SIZE_SHRINK_CENTER
-	btn.pressed.connect(func(): overlay.queue_free())
 	box.add_child(btn)
 
 

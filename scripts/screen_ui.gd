@@ -8,8 +8,29 @@ extends RefCounted
 # screen-specific content (buttons, filters, counts) — those belong in a toolbar row inside the
 # screen's own body content, same as any other body content.
 
-const BG_COLOR := Color(0.07, 0.07, 0.12)
 const CLOSE_GLYPH := "✕"
+
+# THE app-wide neutral palette — every screen's background/panel/dialog surface picks one of
+# these, never invents its own. LIGHT AND WARM — matching the actual art-direction reference
+# (D:\Godot\ArtDirection\styleguide.jpg, section 3 "Board UI & Buttons": a warm cream page with a
+# tan/wood board panel, NOT a dark backdrop). A dark app background under these saturated glossy
+# buttons reads as neon signage; the same buttons on a warm, light, low-saturation surface read as
+# molded plastic toys on a table — the actual "Bold & Punchy" look this is meant to be. A screen
+# with its own bespoke background hue — even a thematically-motivated one, like a victory/defeat
+# tint — breaks the game's identity; carry that mood in text/accent color instead, the way
+# run_success/run_over already do with their title.
+const BG_COLOR := Color("e8b854")                   # the app background — Shell, and nothing else
+													 # (a full screen never overrides this) — ochre
+const SURFACE_COLOR := Color("f5ecd6")              # header/footer/panel surfaces sitting on BG_COLOR
+													 # — cream, lighter than BG_COLOR
+const SURFACE_BORDER := Color("b08a3a")             # accent border on a SURFACE_COLOR panel
+const SURFACE_DEEP := Color("e8dcb8")               # inset panels sitting ON a surface (tooltips,
+													 # dialogs, drop wells) — one step deeper/richer
+const SURFACE_DEEP_BORDER := Color("9c7622")
+const TEXT_COLOR := Color("2b2118")                 # the default warm dark text color for a light
+													 # background — see also theme.tres's Label
+													 # default, which covers everything NOT built
+													 # through ScreenUI's own shared helpers
 
 # THE bar height — header and footer are the same fixed row height, everywhere, always. Both
 # build_header() and footer_bar() size themselves off this one pair of numbers. Includes BAR_V_PAD
@@ -40,9 +61,9 @@ const _RIGHT_FIELDS := [Field.EXP]
 # header (scaffold's menu header + header_bar's HUD header) so they're identical.
 static func _header_stylebox() -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.13, 0.13, 0.19)
+	sb.bg_color = SURFACE_COLOR
 	sb.border_width_bottom = 2
-	sb.border_color = Color(0.30, 0.33, 0.44)
+	sb.border_color = SURFACE_BORDER
 	return sb
 
 
@@ -52,9 +73,9 @@ static func _header_stylebox() -> StyleBoxFlat:
 # behind it under the default flat Panel style.
 static func _footer_stylebox() -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.13, 0.13, 0.19)
+	sb.bg_color = SURFACE_COLOR
 	sb.border_width_top = 2
-	sb.border_color = Color(0.30, 0.33, 0.44)
+	sb.border_color = SURFACE_BORDER
 	return sb
 
 
@@ -81,7 +102,9 @@ static func experience_bar(profile: ProfileData, compact: bool = false) -> Contr
 	var sub := Label.new()
 	sub.text = "%d / %d to next point" % [profile.experience, ProfileData.EXP_PER_UPGRADE_POINT]
 	sub.add_theme_font_size_override("font_size", 14 if compact else 11)
-	sub.modulate = Color(0.7, 0.7, 0.75)
+	sub.add_theme_color_override("font_color", Color("5a4a38"))   # muted warm brown — this widget
+															 # sits directly on the light app
+															 # background, not a dark chip
 	box.add_child(sub)
 	return box
 
@@ -107,7 +130,8 @@ static func experience_bar_compact(profile: ProfileData, compact: bool = false, 
 	var tag := Label.new()
 	tag.text = "EXP"
 	tag.add_theme_font_size_override("font_size", 18 if compact else 15)
-	tag.modulate = Color(0.72, 0.74, 0.82)
+	tag.add_theme_color_override("font_color", Color("6b5636"))   # sits on the header_chip's cream
+																	# capsule (ScreenUI.SURFACE_DEEP)
 	tag.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	row.add_child(tag)
 
@@ -175,7 +199,8 @@ static func build_header() -> Dictionary:
 
 	var title_lbl := Label.new()
 	title_lbl.add_theme_font_size_override("font_size", 34 if compact else 22)
-	title_lbl.add_theme_color_override("font_color", Color(0.92, 0.94, 1.0))
+	title_lbl.add_theme_color_override("font_color", TEXT_COLOR)   # sits directly on the light
+																	 # header bar, not a dark chip
 	title_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	title_lbl.visible = false
 	row.add_child(title_lbl)
@@ -185,7 +210,7 @@ static func build_header() -> Dictionary:
 	for key in _LEFT_FIELDS:
 		var built := _build_field(key)
 		built.widget.visible = false   # starts hidden — Shell's first _apply_header call is what
-		                                 # detects "just became visible" and pulls real data in
+										 # detects "just became visible" and pulls real data in
 		fields[key] = built.widget
 		refs[key] = built.ref
 		row.add_child(built.widget)
@@ -207,8 +232,7 @@ static func build_header() -> Dictionary:
 	close.visible = false
 	row.add_child(close)
 
-	var debug_close := close_button(Callable())
-	debug_close.modulate = Color(1.0, 0.55, 0.2)
+	var debug_close := close_button(Callable(), true)
 	debug_close.tooltip_text = "Debug: end combat"
 	debug_close.visible = false
 	row.add_child(debug_close)
@@ -230,16 +254,16 @@ static func _build_field(key: int) -> Dictionary:
 			# The prominent run label (not a chip) — reads as the header's headline, per the map look.
 			var act := Label.new()
 			act.add_theme_font_size_override("font_size", 34 if compact else 22)
-			act.add_theme_color_override("font_color", Color(0.92, 0.94, 1.0))
+			act.add_theme_color_override("font_color", TEXT_COLOR)   # not in a dark chip
 			act.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 			GameSignals.act_changed.connect(func(a: int) -> void: act.text = "Act %d" % a)
 			return {"widget": act, "ref": act}
 		Field.HP:
-			var hp := stat("HP", "", Color(0.62, 0.9, 0.66))
+			var hp := stat("HP", "", Color("1f7a35"))
 			GameSignals.hp_changed.connect(func(cur: int, mx: int) -> void: _refresh_stat(hp, "%d / %d" % [cur, mx]))
 			return {"widget": hp, "ref": hp}
 		Field.GOLD:
-			var gold := stat("Gold", "", Color(0.98, 0.85, 0.35))
+			var gold := stat("Gold", "", Color("9c7a10"))
 			GameSignals.gold_changed.connect(func(v: int) -> void: _refresh_stat(gold, str(v)))
 			return {"widget": gold, "ref": gold}
 		Field.RELICS:
@@ -300,7 +324,9 @@ static func header_chip(inner: Control) -> PanelContainer:
 	var chip := PanelContainer.new()
 	chip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.18, 0.19, 0.27)
+	sb.bg_color = SURFACE_DEEP        # on-palette — was a leftover dark-navy chip from the old
+	sb.border_color = SURFACE_DEEP_BORDER    # dark-theme header, never updated with the rest
+	sb.set_border_width_all(1)
 	sb.set_corner_radius_all(8)
 	sb.content_margin_left = 12
 	sb.content_margin_right = 12
@@ -321,7 +347,7 @@ static func stat(tag: String, value: String, value_color: Color) -> Control:
 	var t := Label.new()
 	t.text = tag
 	t.add_theme_font_size_override("font_size", 20 if compact else 15)
-	t.add_theme_color_override("font_color", Color(0.6, 0.62, 0.72))
+	t.add_theme_color_override("font_color", Color("6b5636"))
 	t.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	h.add_child(t)
 	var v := Label.new()
@@ -333,41 +359,56 @@ static func stat(tag: String, value: String, value_color: Color) -> Control:
 	return header_chip(h)
 
 
-# THE chrome-button look shared by every header/footer button — a raised, shadowed capsule so it
-# reads as a pressable object sitting ON the bar, not text flush inside it (same "give it volume"
-# treatment as map.gd's big Forge button, just toned down for a bar-sized control). One shared
-# builder so every close/footer button gets identical depth; states differ only by shade.
-static func _apply_chrome_button_style(btn: Button, base: Color, radius: int) -> void:
-	for state in ["normal", "hover", "pressed"]:
-		var sb := StyleBoxFlat.new()
-		var bg := base
-		if state == "hover":   bg = base.lightened(0.15)
-		if state == "pressed": bg = base.darkened(0.15)
-		sb.bg_color = bg
-		sb.set_corner_radius_all(radius)
-		sb.border_color = base.lightened(0.4)
-		sb.set_border_width_all(2)
-		sb.shadow_color = Color(0.0, 0.0, 0.0, 0.35)
-		sb.shadow_size = 6
-		sb.shadow_offset = Vector2(0, 3)
-		sb.anti_aliasing = true
-		btn.add_theme_stylebox_override(state, sb)
+# THE chrome-button look shared by every header/footer button — a procedural glossy "candy" cap
+# (see D:\Godot\ArtDirection\Card game UI system\design_handoff_glossy_buttons) so it reads as a
+# raised, punchy, pressable object sitting ON the bar, not text flush inside it. One shared builder
+# so every close/footer button gets identical volume; only `base_color` ever varies.
+#
+# A deliberately SMALL button palette — three colors, not six. Most buttons (navigation, Back,
+# secondary actions, "View"/"Edit"/"Active") are CHROME_NEUTRAL; the one primary action on a
+# screen is CHROME_CONFIRM; a destructive/rare action is CHROME_DANGER. Every button everywhere
+# picks one of these three — no screen introduces a new color, and no screen shows more than
+# these three colors' worth of buttons at once. CHROME_DEBUG and CHROME_READY are the two
+# exceptions, and both are contextually isolated (debug-only screens; combat's own HUD) so they
+# never appear alongside the other three and don't add to the count a user sees at once.
+const CHROME_NEUTRAL := Color("5a8fae")   # Matte blue — everyday/secondary actions (Back, navigate, …)
+const CHROME_CONFIRM := Color("f6b91e")   # Gold — THE primary/confirm action on a screen
+const CHROME_DANGER := Color("c73838")    # Red — destructive/reset actions (Delete, Reset, Abandon)
+const CHROME_READY := Color("3aa740")     # Green — combat's Ready button only
+const CHROME_DEBUG := Color("f6871d")     # Orange — the debug affordance (combat's debug ✕)
+const CHROME_INK := Color("1c2136")       # Handoff's shared outline ink
+
+# THE button — every button anywhere in the app (not just header/footer chrome) goes through this
+# one builder, so the whole UI reads as one consistent glossy "Bold & Punchy" system instead of a
+# patchwork of ad hoc Button.new() styling per screen. `base_color` defaults to the neutral teal;
+# pass CHROME_DEBUG for a debug-only action, or another handoff color for a screen that genuinely
+# needs to distinguish an action (e.g. destructive vs constructive) — but default to CHROME_NEUTRAL
+# unless there's a real reason not to.
+static func action_button(text: String, action: Callable, min_size: Vector2 = Vector2(220, 64),
+		font_size: int = 22, base_color: Color = CHROME_NEUTRAL) -> GlossyButton:
+	var btn := GlossyButton.new()
+	btn.text = text
+	btn.custom_minimum_size = min_size
+	btn.add_theme_font_size_override("font_size", font_size)
+	btn.base_color = base_color
+	btn.ink = CHROME_INK
+	if action.is_valid():
+		btn.pressed.connect(action)
+	return btn
 
 
 # The standard top-right "✕" close button. `action` may be an empty Callable() — Shell builds
 # both header close buttons once with no action bound yet, then rebinds them per screen (see
-# Shell._rebind_button); an empty Callable here just means "not wired up yet."
-static func close_button(action: Callable) -> Button:
+# Shell._rebind_button); an empty Callable here just means "not wired up yet." `debug`: the
+# orange debug-✕ variant (combat) — a separate fixed piece with its own color, never a mutation
+# of the normal ✕ (see [[header-system]] — no chrome piece changes appearance per screen).
+static func close_button(action: Callable, debug: bool = false) -> Button:
 	var compact := UIScale.is_compact()
-	var btn := Button.new()
-	btn.text = CLOSE_GLYPH
-	btn.tooltip_text = "Close"
-	btn.add_theme_font_size_override("font_size", 34 if compact else 24)
-	btn.custom_minimum_size = Vector2(BUTTON_HEIGHT_COMPACT, BUTTON_HEIGHT_COMPACT) if compact \
+	var min_size := Vector2(BUTTON_HEIGHT_COMPACT, BUTTON_HEIGHT_COMPACT) if compact \
 		else Vector2(56, BUTTON_HEIGHT)
-	_apply_chrome_button_style(btn, Color(0.24, 0.25, 0.33), 12)
-	if action.is_valid():
-		btn.pressed.connect(action)
+	var btn := action_button(CLOSE_GLYPH, action, min_size, 34 if compact else 24,
+		CHROME_DEBUG if debug else CHROME_NEUTRAL)
+	btn.tooltip_text = "Close"
 	return btn
 
 
@@ -380,14 +421,8 @@ static func close_button(action: Callable) -> Button:
 # persistent Back button, rebound per screen via Shell._rebind_button.
 static func footer_button(text: String, action: Callable) -> Button:
 	var compact := UIScale.is_compact()
-	var btn := Button.new()
-	btn.text = text
-	btn.add_theme_font_size_override("font_size", 30 if compact else 20)
-	btn.custom_minimum_size = Vector2(340, BUTTON_HEIGHT_COMPACT) if compact else Vector2(260, BUTTON_HEIGHT)
-	_apply_chrome_button_style(btn, Color(0.24, 0.25, 0.33), 12)
-	if action.is_valid():
-		btn.pressed.connect(action)
-	return btn
+	var min_size := Vector2(340, BUTTON_HEIGHT_COMPACT) if compact else Vector2(260, BUTTON_HEIGHT)
+	return action_button(text, action, min_size, 30 if compact else 20, CHROME_NEUTRAL)
 
 
 # The standard bottom-left "Back" button — just the common case of footer_button().
@@ -421,5 +456,3 @@ static func footer_bar() -> Dictionary:
 	var hbox := HBoxContainer.new()
 	pad.add_child(hbox)
 	return {"bar": bar, "hbox": hbox}
-
-

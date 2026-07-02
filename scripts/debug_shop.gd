@@ -80,7 +80,7 @@ func _make_slot(kind: String, id: String) -> Control:
 	name_lbl.custom_minimum_size.x = 140
 	slot.add_child(name_lbl)
 
-	var btn := Button.new()
+	var btn := ScreenUI.action_button("", Callable(), Vector2(130, 48), 18, ScreenUI.CHROME_DEBUG)
 	btn.pressed.connect(func() -> void:
 		_grant(kind, id)
 		_refresh_button(btn, kind, id))

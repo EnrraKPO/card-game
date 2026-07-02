@@ -28,7 +28,7 @@ func _ready() -> void:
 	var blurb := Label.new()
 	blurb.text = "Claim one relic to carry for the rest of your run."
 	blurb.add_theme_font_size_override("font_size", 24 if compact else 18)
-	blurb.modulate = Color(0.82, 0.8, 0.62)
+	blurb.add_theme_color_override("font_color", Color("6b5636"))
 	blurb.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(blurb)
 
@@ -39,7 +39,7 @@ func _ready() -> void:
 		var none := Label.new()
 		none.text = "The shrine lies dormant. (No new relics to offer.)"
 		none.add_theme_font_size_override("font_size", 22 if compact else 16)
-		none.modulate = Color(0.7, 0.7, 0.75)
+		none.add_theme_color_override("font_color", Color("5a4a38"))
 		none.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		vbox.add_child(none)
 	else:
@@ -72,15 +72,15 @@ func _make_offer(grant: Grant, compact: bool) -> Control:
 	var desc := Label.new()
 	desc.text = relic.description if relic != null else ""
 	desc.add_theme_font_size_override("font_size", 18 if compact else 13)
-	desc.modulate = Color(0.78, 0.78, 0.84)
+	desc.add_theme_color_override("font_color", Color("4a3d2e"))
 	desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	desc.custom_minimum_size = Vector2(220.0 if compact else 180.0, 0)
 	slot.add_child(desc)
 
-	var take := Button.new()
-	take.add_theme_font_size_override("font_size", 26 if compact else 16)
-	take.custom_minimum_size = Vector2(200, 70) if compact else Vector2(150, 0)
+	var take := ScreenUI.action_button("", Callable(),
+		Vector2(200, 70) if compact else Vector2(150, 0), 26 if compact else 16,
+		ScreenUI.CHROME_CONFIRM)
 	take.size_flags_horizontal = SIZE_SHRINK_CENTER
 	if grant.can_apply():
 		take.text = "Take"

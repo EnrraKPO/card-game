@@ -97,7 +97,7 @@ func _build_ui() -> void:
 	_summary = Label.new()
 	_summary.add_theme_font_size_override("font_size", 26 if _compact else 16)
 	_summary.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_summary.modulate = Color(0.8, 0.82, 0.9)
+	_summary.add_theme_color_override("font_color", ScreenUI.TEXT_COLOR)
 	toolbar.add_child(_summary)
 
 	toolbar.add_child(Control.new())

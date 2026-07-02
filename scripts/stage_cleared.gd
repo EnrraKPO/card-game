@@ -12,11 +12,7 @@ func _ready() -> void:
 	Nav.clear_back()   # terminal screen — the OS back gesture stays inert (use the on-screen button)
 	var compact := UIScale.is_compact()
 
-	var bg := ColorRect.new()
-	bg.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	bg.color = Color(0.05, 0.09, 0.07)
-	add_child(bg)
-
+	# No screen-wide background here — Shell already paints the app's one BG_COLOR behind every screen.
 	var center := CenterContainer.new()
 	center.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	add_child(center)
@@ -28,7 +24,7 @@ func _ready() -> void:
 	var title := Label.new()
 	title.text = "Stage %d Cleared!" % GameData.current_run.act
 	title.add_theme_font_size_override("font_size", 52 if compact else 40)
-	title.modulate = Color(0.5, 1.0, 0.6)
+	title.add_theme_color_override("font_color", Color("1f7a35"))
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(title)
 
@@ -53,12 +49,10 @@ func _ready() -> void:
 		ui.pressed.connect(func(): _pick_card(id))
 		card_row.add_child(ui)
 
-	var onward := Button.new()
-	onward.text = "Onward  →"
-	onward.add_theme_font_size_override("font_size", 32 if compact else 26)
-	onward.custom_minimum_size = Vector2(280, 88) if compact else Vector2(240, 76)
+	var onward := ScreenUI.action_button("Onward  →", _advance,
+		Vector2(280, 88) if compact else Vector2(240, 76), 32 if compact else 26,
+		ScreenUI.CHROME_CONFIRM)
 	onward.size_flags_horizontal = SIZE_SHRINK_CENTER
-	onward.pressed.connect(_advance)
 	vbox.add_child(onward)
 
 

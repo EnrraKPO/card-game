@@ -132,10 +132,14 @@ func _add_card(n: UpgradeNode, pos: Vector2, scale: float) -> void:
 	box.add_theme_constant_override("separation", int(4 * scale))
 	btn.add_child(box)
 
+	# These sit on the node's own dark tile background (see OWNED_TINT/LOCKED_TINT below), not the
+	# app's light background — need an explicit light color rather than the project's default dark
+	# text (theme.tres' Label default, meant for text directly on the light app surface).
 	var icon := Label.new()
 	icon.text = n.icon
 	icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	icon.add_theme_font_size_override("font_size", int((30 if _compact else 26) * scale))
+	icon.add_theme_color_override("font_color", Color(0.92, 0.94, 0.9))
 	box.add_child(icon)
 
 	var name_lbl := Label.new()
@@ -144,6 +148,7 @@ func _add_card(n: UpgradeNode, pos: Vector2, scale: float) -> void:
 	name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	name_lbl.custom_minimum_size.x = _card_size.x
 	name_lbl.add_theme_font_size_override("font_size", int((18 if _compact else 15) * scale))
+	name_lbl.add_theme_color_override("font_color", Color(0.92, 0.94, 0.9))
 	box.add_child(name_lbl)
 
 	_cards[n.id] = { "button": btn, "name": name_lbl, "node": n }

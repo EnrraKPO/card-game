@@ -152,12 +152,26 @@ func _build_forge_fab() -> void:
 	fab.z_index = 50
 	add_child(fab)
 
+	# A plain Button, not GlossyButton — the nine-patch skin (see glossy_button.gd) can't produce
+	# an exact circle from a rectangular corner-cut texture. Styled directly with a StyleBoxFlat
+	# circle (corner radius == half the square's side) until the design gets its own circular art.
 	var btn := Button.new()
 	btn.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	btn.focus_mode = Control.FOCUS_NONE
 	btn.tooltip_text = "Forge — combine two cards into one"
-	_style_forge_button(btn, amber, diam)
 	btn.pressed.connect(func(): _node_kinds[MapNodeData.Type.FORGE].enter(null, self))
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = amber
+	sb.set_corner_radius_all(int(diam * 0.5))
+	sb.border_color = ScreenUI.CHROME_INK
+	sb.set_border_width_all(3)
+	btn.add_theme_stylebox_override("normal", sb)
+	var sb_hover := sb.duplicate() as StyleBoxFlat
+	sb_hover.bg_color = amber.lightened(0.1)
+	btn.add_theme_stylebox_override("hover", sb_hover)
+	var sb_pressed := sb.duplicate() as StyleBoxFlat
+	sb_pressed.bg_color = amber.darkened(0.15)
+	btn.add_theme_stylebox_override("pressed", sb_pressed)
 	fab.add_child(btn)
 
 	# Anvil icon centred inside the circle (clicks pass through to the button).
@@ -171,23 +185,6 @@ func _build_forge_fab() -> void:
 	icon.offset_left = pad; icon.offset_top = pad
 	icon.offset_right = -pad; icon.offset_bottom = -pad
 	fab.add_child(icon)
-
-
-func _style_forge_button(btn: Button, amber: Color, diam: float) -> void:
-	for state in ["normal", "hover", "pressed"]:
-		var sb := StyleBoxFlat.new()
-		var bg := amber
-		if state == "hover":   bg = amber.lightened(0.18)
-		if state == "pressed": bg = amber.darkened(0.15)
-		sb.bg_color = bg
-		sb.set_corner_radius_all(int(diam))          # > radius/2 → clamps to a full circle
-		sb.border_color = Color(1.0, 0.93, 0.72)     # bright rim
-		sb.set_border_width_all(5)
-		sb.shadow_color = Color(0.0, 0.0, 0.0, 0.35)  # soft drop shadow for depth (no glow halo)
-		sb.shadow_size = 6
-		sb.shadow_offset = Vector2(0, 3)
-		sb.anti_aliasing = true
-		btn.add_theme_stylebox_override(state, sb)
 
 
 func _build_map() -> void:

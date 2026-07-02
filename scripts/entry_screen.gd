@@ -37,16 +37,13 @@ func _ready() -> void:
 	vbox.add_child(name_input)
 
 	error_label = Label.new()
-	error_label.modulate = Color(1, 0.3, 0.3, 1)
+	error_label.add_theme_color_override("font_color", Color(0.75, 0.1, 0.1, 1))
 	error_label.add_theme_font_size_override("font_size", 28 if compact else 22)
 	error_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(error_label)
 
-	var button := Button.new()
-	button.text = "Continue"
-	button.custom_minimum_size = field_size
-	button.add_theme_font_size_override("font_size", 40 if compact else 32)
-	button.pressed.connect(_on_continue_pressed)
+	var button := ScreenUI.action_button("Continue", _on_continue_pressed, field_size,
+		40 if compact else 32, ScreenUI.CHROME_CONFIRM)
 	vbox.add_child(button)
 
 	name_input.grab_focus()

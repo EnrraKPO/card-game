@@ -29,7 +29,7 @@ func _ready() -> void:
 	var gold_lbl := Label.new()
 	gold_lbl.text = "+%d Gold" % gold_gained
 	gold_lbl.add_theme_font_size_override("font_size", 30 if compact else 20)
-	gold_lbl.modulate = Color(1.0, 0.85, 0.3)
+	gold_lbl.add_theme_color_override("font_color", Color("9c7a10"))
 	gold_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(gold_lbl)
 
@@ -39,7 +39,7 @@ func _ready() -> void:
 		var exp_lbl := Label.new()
 		exp_lbl.text = "+%d Experience" % exp_gained
 		exp_lbl.add_theme_font_size_override("font_size", 30 if compact else 20)
-		exp_lbl.modulate = Color(0.55, 0.8, 1.0)
+		exp_lbl.add_theme_color_override("font_color", Color("1f5c8a"))
 		exp_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		vbox.add_child(exp_lbl)
 
@@ -67,7 +67,7 @@ func _ready() -> void:
 	var choose_lbl := Label.new()
 	choose_lbl.text = "Pick one:"
 	choose_lbl.add_theme_font_size_override("font_size", 26 if compact else 18)
-	choose_lbl.modulate = Color(0.85, 0.85, 0.9)
+	choose_lbl.add_theme_color_override("font_color", Color("5a4a38"))
 	choose_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(choose_lbl)
 
@@ -89,12 +89,10 @@ func _ready() -> void:
 	for grant: Grant in offers:
 		card_row.add_child(_make_offer(grant, card_size, compact))
 
-	var skip_btn := Button.new()
-	skip_btn.text = "Skip Reward"
-	skip_btn.add_theme_font_size_override("font_size", 30 if compact else 18)
-	skip_btn.custom_minimum_size = Vector2(260, 84) if compact else Vector2(180, 0)
+	var skip_btn := ScreenUI.action_button("Skip Reward", _skip,
+		Vector2(260, 84) if compact else Vector2(180, 0), 30 if compact else 18,
+		ScreenUI.CHROME_NEUTRAL)
 	skip_btn.size_flags_horizontal = SIZE_SHRINK_CENTER
-	skip_btn.pressed.connect(_skip)
 	vbox.add_child(skip_btn)
 
 
@@ -104,7 +102,7 @@ func _build_element_offers(vbox: VBoxContainer, ids: Array[String], compact: boo
 	var recv_lbl := Label.new()
 	recv_lbl.text = "Bonus elemental card"
 	recv_lbl.add_theme_font_size_override("font_size", 24 if compact else 15)
-	recv_lbl.modulate = Color(0.78, 0.84, 0.9)
+	recv_lbl.add_theme_color_override("font_color", Color("5a4a38"))
 	recv_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(recv_lbl)
 
@@ -170,14 +168,14 @@ func _make_relic_offer(grant: Grant, card_size: Vector2, compact: bool) -> Contr
 	btn.tooltip_text = grant.tooltip()
 	btn.disabled = not pickable
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.12, 0.12, 0.16)
+	style.bg_color = ScreenUI.SURFACE_DEEP
 	style.set_corner_radius_all(10)
 	style.set_border_width_all(3)
 	style.border_color = accent
 	btn.add_theme_stylebox_override("normal", style)
 	btn.add_theme_stylebox_override("disabled", style)
 	var hover := style.duplicate() as StyleBoxFlat
-	hover.bg_color = Color(0.16, 0.16, 0.21)
+	hover.bg_color = ScreenUI.SURFACE_DEEP.lightened(0.08)
 	btn.add_theme_stylebox_override("hover", hover)
 	btn.add_theme_stylebox_override("pressed", hover)
 
@@ -188,18 +186,18 @@ func _make_relic_offer(grant: Grant, card_size: Vector2, compact: bool) -> Contr
 	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	btn.add_child(v)
 
-	v.add_child(_offer_label(relic.letter if relic != null else "✦", 64 if compact else 44, accent))
-	v.add_child(_offer_label("RELIC", 18 if compact else 12, Color(0.7, 0.7, 0.78)))
-	var name_lbl := _offer_label(grant.display_name(), 24 if compact else 17, Color(0.95, 0.95, 1.0))
+	v.add_child(_offer_label(relic.letter if relic != null else "✦", 64 if compact else 44, accent.darkened(0.3)))
+	v.add_child(_offer_label("RELIC", 18 if compact else 12, Color("5a4a38")))
+	var name_lbl := _offer_label(grant.display_name(), 24 if compact else 17, ScreenUI.TEXT_COLOR)
 	name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	name_lbl.custom_minimum_size.x = card_size.x - 18
 	v.add_child(name_lbl)
-	var desc := _offer_label(relic.description if relic != null else "", 18 if compact else 12, Color(0.82, 0.82, 0.88))
+	var desc := _offer_label(relic.description if relic != null else "", 18 if compact else 12, Color("4a3d2e"))
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	desc.custom_minimum_size.x = card_size.x - 18
 	v.add_child(desc)
 	if not pickable:
-		v.add_child(_offer_label("Inventory Full", 18 if compact else 12, Color(0.9, 0.5, 0.5)))
+		v.add_child(_offer_label("Inventory Full", 18 if compact else 12, Color("8a2020")))
 
 	if pickable:
 		btn.pressed.connect(func() -> void: _pick(grant))

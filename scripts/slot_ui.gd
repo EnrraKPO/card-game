@@ -24,14 +24,17 @@ func set_targetable(enabled: bool) -> void:
 
 
 func _apply_style() -> void:
+	# Deliberately NOT ScreenUI.SURFACE_DEEP — that's an app-chrome tone (now light, to match the
+	# app's plastic-toy palette), but an empty battlefield slot is the game board, not UI chrome; it
+	# needs to stay a dark, receding "empty" surface so cards read clearly against it either way.
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.08, 0.08, 0.12)
+	style.bg_color = Color("241d16")
 	if _targetable:
 		style.set_border_width_all(3)
 		style.border_color = Color(0.95, 0.75, 0.1)
 	else:
 		style.set_border_width_all(1)
-		style.border_color = Color(0.28, 0.28, 0.38)
+		style.border_color = Color(0.40, 0.36, 0.30)
 	style.set_corner_radius_all(5)
 	add_theme_stylebox_override("panel", style)
 
