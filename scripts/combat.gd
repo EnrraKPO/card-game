@@ -739,10 +739,10 @@ func _build_mana_gauge() -> Control:
 	gauge.size_flags_vertical = SIZE_EXPAND_FILL
 	gauge.tooltip_text = "Mana"
 	var track := StyleBoxFlat.new()
-	track.bg_color = Color(0.05, 0.05, 0.09)
+	track.bg_color = ScreenUI.MANA_TRACK_BG
 	track.set_corner_radius_all(12)
 	track.set_border_width_all(2)
-	track.border_color = Color(0.30, 0.32, 0.42)
+	track.border_color = ScreenUI.MANA_TRACK_BORDER
 	gauge.add_theme_stylebox_override("panel", track)
 
 	var pad := MarginContainer.new()
@@ -796,14 +796,9 @@ func _gauge_divider() -> Panel:
 	divider.custom_minimum_size.y = 2.0
 	divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.30, 0.32, 0.42)
+	sb.bg_color = ScreenUI.MANA_TRACK_BORDER
 	divider.add_theme_stylebox_override("panel", sb)
 	return divider
-
-
-# Colours for the mana chunks: lit = available, dim = spent (or not yet ramped into).
-const MANA_LIT := Color(0.34, 0.60, 0.98)
-const MANA_DIM := Color(0.15, 0.16, 0.23)
 
 
 func _make_mana_chunk() -> Panel:
@@ -901,7 +896,7 @@ func _refresh_mana() -> void:
 	for idx in chunks.size():
 		var from_bottom := chunks.size() - 1 - idx
 		var sb := StyleBoxFlat.new()
-		sb.bg_color = MANA_LIT if from_bottom < _mana else MANA_DIM
+		sb.bg_color = ScreenUI.MANA_LIT if from_bottom < _mana else ScreenUI.MANA_DIM
 		sb.set_corner_radius_all(4)
 		(chunks[idx] as Panel).add_theme_stylebox_override("panel", sb)
 

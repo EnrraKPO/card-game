@@ -27,14 +27,15 @@ func _apply_style() -> void:
 	# Deliberately NOT ScreenUI.SURFACE_DEEP — that's an app-chrome tone (now light, to match the
 	# app's plastic-toy palette), but an empty battlefield slot is the game board, not UI chrome; it
 	# needs to stay a dark, receding "empty" surface so cards read clearly against it either way.
+	# Still themeable via ScreenUI.SLOT_* (backed by UIPalette's own "Combat board" group).
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color("241d16")
+	style.bg_color = ScreenUI.SLOT_EMPTY
 	if _targetable:
 		style.set_border_width_all(3)
-		style.border_color = Color(0.95, 0.75, 0.1)
+		style.border_color = ScreenUI.SLOT_BORDER_HIGHLIGHT
 	else:
 		style.set_border_width_all(1)
-		style.border_color = Color(0.40, 0.36, 0.30)
+		style.border_color = ScreenUI.SLOT_BORDER_IDLE
 	style.set_corner_radius_all(5)
 	add_theme_stylebox_override("panel", style)
 

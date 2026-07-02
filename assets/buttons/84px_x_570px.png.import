@@ -2,16 +2,12 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dqt11piat3l6x"
-path="res://.godot/imported/button_shademap_large.png-d0cfae7bd951cfaf869df806f083dcbf.ctex"
-metadata={
-"vram_texture": false
-}
+uid="uid://wmxx45rhxfob"
+valid=false
 
 [deps]
 
-source_file="res://assets/ui/button_shademap_large.png"
-dest_files=["res://.godot/imported/button_shademap_large.png-d0cfae7bd951cfaf869df806f083dcbf.ctex"]
+source_file="res://assets/buttons/84px_x_570px.png"
 
 [params]
 

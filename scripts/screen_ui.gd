@@ -19,18 +19,25 @@ const CLOSE_GLYPH := "✕"
 # with its own bespoke background hue — even a thematically-motivated one, like a victory/defeat
 # tint — breaks the game's identity; carry that mood in text/accent color instead, the way
 # run_success/run_over already do with their title.
-const BG_COLOR := Color("e8b854")                   # the app background — Shell, and nothing else
-													 # (a full screen never overrides this) — ochre
-const SURFACE_COLOR := Color("f5ecd6")              # header/footer/panel surfaces sitting on BG_COLOR
-													 # — cream, lighter than BG_COLOR
-const SURFACE_BORDER := Color("b08a3a")             # accent border on a SURFACE_COLOR panel
-const SURFACE_DEEP := Color("e8dcb8")               # inset panels sitting ON a surface (tooltips,
-													 # dialogs, drop wells) — one step deeper/richer
-const SURFACE_DEEP_BORDER := Color("9c7622")
-const TEXT_COLOR := Color("2b2118")                 # the default warm dark text color for a light
-													 # background — see also theme.tres's Label
-													 # default, which covers everything NOT built
-													 # through ScreenUI's own shared helpers
+#
+# Backed by UIPalette (scripts/ui_palette.gd) — edit the Color() values in that script directly to
+# retheme the whole app; these static vars just mirror it once at class-load time so every existing
+# `ScreenUI.BG_COLOR`-style call site keeps working unchanged.
+static var _palette: UIPalette = UIPalette.new()
+static var BG_COLOR: Color = _palette.bg_color              # the app background — Shell, and nothing
+															 # else (a full screen never overrides
+															 # this) — ochre
+static var SURFACE_COLOR: Color = _palette.surface_color   # header/footer/panel surfaces sitting on
+															 # BG_COLOR — cream, lighter than BG_COLOR
+static var SURFACE_BORDER: Color = _palette.surface_border # accent border on a SURFACE_COLOR panel
+static var SURFACE_DEEP: Color = _palette.surface_deep     # inset panels sitting ON a surface
+															 # (tooltips, dialogs, drop wells) — one
+															 # step deeper/richer
+static var SURFACE_DEEP_BORDER: Color = _palette.surface_deep_border
+static var TEXT_COLOR: Color = _palette.text_color         # the default warm dark text color for a
+															 # light background — see also theme.tres's
+															 # Label default, which covers everything
+															 # NOT built through ScreenUI's own helpers
 
 # THE bar height — header and footer are the same fixed row height, everywhere, always. Both
 # build_header() and footer_bar() size themselves off this one pair of numbers. Includes BAR_V_PAD
@@ -371,12 +378,25 @@ static func stat(tag: String, value: String, value_color: Color) -> Control:
 # these three colors' worth of buttons at once. CHROME_DEBUG and CHROME_READY are the two
 # exceptions, and both are contextually isolated (debug-only screens; combat's own HUD) so they
 # never appear alongside the other three and don't add to the count a user sees at once.
-const CHROME_NEUTRAL := Color("5a8fae")   # Matte blue — everyday/secondary actions (Back, navigate, …)
-const CHROME_CONFIRM := Color("f6b91e")   # Gold — THE primary/confirm action on a screen
-const CHROME_DANGER := Color("c73838")    # Red — destructive/reset actions (Delete, Reset, Abandon)
-const CHROME_READY := Color("3aa740")     # Green — combat's Ready button only
-const CHROME_DEBUG := Color("f6871d")     # Orange — the debug affordance (combat's debug ✕)
-const CHROME_INK := Color("1c2136")       # Handoff's shared outline ink
+static var CHROME_NEUTRAL: Color = _palette.chrome_neutral   # Matte blue — everyday/secondary
+															   # actions (Back, navigate, …)
+static var CHROME_CONFIRM: Color = _palette.chrome_confirm   # Gold — THE primary/confirm action
+static var CHROME_DANGER: Color = _palette.chrome_danger     # Red — destructive/reset actions
+															   # (Delete, Reset, Abandon)
+static var CHROME_READY: Color = _palette.chrome_ready       # Green — combat's Ready button only
+static var CHROME_DEBUG: Color = _palette.chrome_debug       # Orange — the debug affordance
+															   # (combat's debug ✕)
+static var CHROME_INK: Color = _palette.chrome_ink           # Handoff's shared outline ink
+
+# The combat board's own colors — separate from the chrome palette above (see UIPalette's "Combat
+# board" group for why); combat.gd and slot_ui.gd read these instead of hardcoding their own.
+static var SLOT_EMPTY: Color = _palette.slot_empty
+static var SLOT_BORDER_IDLE: Color = _palette.slot_border_idle
+static var SLOT_BORDER_HIGHLIGHT: Color = _palette.slot_border_highlight
+static var MANA_TRACK_BG: Color = _palette.mana_track_bg
+static var MANA_TRACK_BORDER: Color = _palette.mana_track_border
+static var MANA_LIT: Color = _palette.mana_lit
+static var MANA_DIM: Color = _palette.mana_dim
 
 # THE button — every button anywhere in the app (not just header/footer chrome) goes through this
 # one builder, so the whole UI reads as one consistent glossy "Bold & Punchy" system instead of a
