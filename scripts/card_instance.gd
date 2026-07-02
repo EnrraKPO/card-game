@@ -1,9 +1,20 @@
 class_name CardInstance
 extends RefCounted
 
+# Fires on every current_health write (damage, healing, shield bleed-through, initial draw/reset).
+# Combat connects this for the player King specifically to drive the header's live HP display (see
+# [[header-system]]) — RunData.king_damage is only the POST-fight snapshot, so it can't be the
+# source of a mid-fight signal; the board unit's live health is.
+signal health_changed(current: int)
+
 var data: CardData
-var current_health: int
+var current_health: int : set = _set_current_health
 var current_shield: int
+
+
+func _set_current_health(v: int) -> void:
+	current_health = v
+	health_changed.emit(v)
 var row: int = -1
 var col: int = -1
 var owner: int = -1  # 0 = player, 1 = enemy

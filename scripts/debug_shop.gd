@@ -97,9 +97,7 @@ func _grant(kind: String, id: String) -> void:
 		return
 	if kind == "relic":
 		if id not in run.relics:
-			run.relics.append(id)
-			GameData.rebuild_modifiers()   # fold the relic's effects into the live run
-			GameData.save_run()
+			run.add_relic(id)
 	else:
 		Grant.make("charm", id).apply()    # appends to run.charms + saves
 

@@ -6,13 +6,32 @@ extends RefCounted
 # each combat (CombatBoard.place_kings), so the only thing we persist between fights
 # is how wounded it is — accumulated, unhealed damage. Current health is never
 # stored; it's just (max health - king_damage), computed when a fight starts.
-var king_damage: int = 0
+var king_damage: int = 0 : set = _set_king_damage
 var king_id: String = ProfileData.STARTING_KING   # which King card this run is played with (from the profile)
-var gold: int
+var gold: int : set = _set_gold
 var deck: Array   # Array[DeckCard] — each entry carries its own permanent mods
-var act: int
+var act: int : set = _set_act
 var charms: Array = []   # owned, unapplied charm ids (inventory); applied in the forge
 var relics: Array = []   # owned relic ids (run-unique); each folds its Effects into the run ModifierSet
+
+
+# Property setters emit on GameSignals (see [[header-system]]) so any live UI — the header's HP/
+# Gold/Act fields — updates itself without the mutating code needing to know it exists. Plain
+# assignment/compound-assignment (run.gold -= cost) already routes through these; no call-site
+# changes needed for these three scalar fields.
+func _set_king_damage(v: int) -> void:
+	king_damage = v
+	GameSignals.hp_changed.emit(king_health(), king_max_health())
+
+
+func _set_gold(v: int) -> void:
+	gold = v
+	GameSignals.gold_changed.emit(v)
+
+
+func _set_act(v: int) -> void:
+	act = v
+	GameSignals.act_changed.emit(v)
 
 
 # Seeds a fresh run from the profile's selected owned deck (which carries its King).
@@ -93,6 +112,16 @@ func king_health() -> int:
 	return maxi(0, king_max_health() - king_damage)
 
 
+# Grants an owned relic (bought, rewarded, or debug-granted). Rebuilds the run's modifier set so
+# the relic's effects take hold immediately, persists, and signals — callers no longer bundle
+# rebuild_modifiers()/save_run() themselves (see item_kind_relic.gd, debug_shop.gd).
+func add_relic(id: String) -> void:
+	relics.append(id)
+	GameData.rebuild_modifiers()
+	GameData.save_run()
+	GameSignals.relics_changed.emit()
+
+
 # Discards an owned relic (the player may drop a relic at any time to free a slot — no refund).
 # Rebuilds the run's modifier set so the relic's effects stop applying, then persists.
 func discard_relic(id: String) -> void:
@@ -102,3 +131,4 @@ func discard_relic(id: String) -> void:
 	relics.remove_at(idx)
 	GameData.rebuild_modifiers()
 	GameData.save_run()
+	GameSignals.relics_changed.emit()

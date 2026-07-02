@@ -1,7 +1,6 @@
 class_name MapScreen
 extends Control
 
-const HUD_HEIGHT := 56.0
 # Medallion diameter. Big in canvas units on purpose: canvas_items scales the 1920 design
 # down onto the phone, so nodes need to be large to read/tap. The map scrolls, so size
 # isn't space-constrained. The type caption and reward badge hang below the circle.
@@ -72,20 +71,21 @@ var _scroll: ScrollContainer
 var _canvas: MapCanvas
 var _compact := false
 var _node_diam := NODE_DIAM
-var _hud_height := HUD_HEIGHT
-var _bottom_bar_height := 56.0
 
 
 func get_chrome() -> Dictionary:
 	return {"fields": [ScreenUI.Field.ACT, ScreenUI.Field.HP, ScreenUI.Field.GOLD,
-		ScreenUI.Field.RELICS, ScreenUI.Field.EXP], "exit": _on_quit_pressed}
+			ScreenUI.Field.RELICS, ScreenUI.Field.EXP], "exit": _on_quit_pressed,
+		"show_footer": true, "inset": false, "footer_actions": [
+			{"label": "Save & Quit", "action": _on_quit_pressed},
+			{"label": "Debug Items", "action": func(): Nav.goto("res://scenes/debug_shop.tscn"),
+				"align": "right"},
+		]}
 
 
 func _ready() -> void:
 	_compact = UIScale.is_compact()
 	_node_diam = NODE_DIAM_COMPACT if _compact else NODE_DIAM
-	_hud_height = 104.0 if _compact else 56.0
-	_bottom_bar_height = 140.0 if _compact else 96.0
 
 	_node_kinds = {
 		MapNodeData.Type.COMBAT: NodeKindCombat.new(),
@@ -118,67 +118,22 @@ func _ready() -> void:
 			n.visited = true
 
 	_build_scroll()
-	_build_bottom_bar()
 	_build_forge_fab()
 	call_deferred("_build_map")
 
 
-# The scrollable map area, filling the screen below the shared header (Shell already reserved
-# that space — the header itself is no longer this screen's concern). The canvas inside it
-# carries the nodes + connection lines; on compact it's taller than the viewport so it scrolls.
+# The scrollable map area, filling the screen below the shared header and above the shared footer
+# (Shell already reserved both, laying this content out in its own VBoxContainer row — nothing
+# here needs to account for their heights). The canvas inside it carries the nodes + connection
+# lines; on compact it's taller than the viewport so it scrolls.
 func _build_scroll() -> void:
 	_scroll = ScrollContainer.new()
 	_scroll.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	_scroll.offset_bottom = -_bottom_bar_height   # leave room for the bottom action bar
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	add_child(_scroll)
 
 	_canvas = MapCanvas.new()
 	_scroll.add_child(_canvas)
-
-
-# Forge + Save & Quit live in their own bottom bar, separate from the scrollable map so
-# they never overlap nodes.
-func _build_bottom_bar() -> void:
-	var bar := PanelContainer.new()
-	bar.set_anchors_and_offsets_preset(PRESET_BOTTOM_WIDE)
-	bar.offset_top = -_bottom_bar_height
-	add_child(bar)
-
-	var pad := MarginContainer.new()
-	var inset := int(UIScale.safe_inset())
-	pad.add_theme_constant_override("margin_left", inset + 8)
-	pad.add_theme_constant_override("margin_right", inset + 8)
-	pad.add_theme_constant_override("margin_top", 10)
-	pad.add_theme_constant_override("margin_bottom", 10)
-	bar.add_child(pad)
-
-	var hbox := HBoxContainer.new()
-	pad.add_child(hbox)
-
-	var font := 30 if _compact else 20
-	var btn_size := Vector2(300, 96) if _compact else Vector2(210, 60)
-
-	var quit_btn := Button.new()
-	quit_btn.text = "Save & Quit"
-	quit_btn.add_theme_font_size_override("font_size", font)
-	quit_btn.custom_minimum_size = btn_size
-	quit_btn.pressed.connect(_on_quit_pressed)
-	hbox.add_child(quit_btn)
-
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = SIZE_EXPAND_FILL
-	hbox.add_child(spacer)
-
-	# Debug-only: jump to the free relic/charm acquisition screen to stress-test content.
-	var debug_btn := Button.new()
-	debug_btn.text = "Debug Items"
-	debug_btn.add_theme_font_size_override("font_size", font)
-	debug_btn.custom_minimum_size = btn_size
-	debug_btn.pressed.connect(func() -> void:
-		Nav.goto("res://scenes/debug_shop.tscn"))
-	hbox.add_child(debug_btn)
-	# Forge moved out of this bar into a prominent floating button — see _build_forge_fab().
 
 
 # A big chunky round Forge button (the one always-available action) floating over the
@@ -240,7 +195,9 @@ func _build_map() -> void:
 	# fixed floor spacing needs (always taller than the viewport, so it scrolls).
 	var view: Vector2 = _scroll.size
 	if view.x <= 0.0:
-		view = Vector2(size.x, size.y - _hud_height - _bottom_bar_height)
+		# self is already sized by Shell's own layout to exclude the header and footer rows —
+		# nothing here needs to account for their heights.
+		view = size
 
 	var floor_spacing: float = _node_diam * (floor_spacing_mult_compact if _compact else floor_spacing_mult)
 	var canvas_h: float = maxf(view.y, V_PAD * 2.0 + floor_spacing * float(MapData.FLOORS - 1))

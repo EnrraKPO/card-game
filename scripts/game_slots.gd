@@ -9,26 +9,38 @@ var _confirm_reset: ConfirmationDialog
 var _pending_delete_slot: int = -1
 
 
+func get_chrome() -> Dictionary:
+	# Root picker — no header (Shell's own background already paints behind it). show_footer:
+	# true still gets it the standard Shell-built footer + inset margin, just with a
+	# "Reset profile" action instead of the usual Back (there's nowhere to go back to here).
+	return {"show_header": false, "show_footer": true, "footer_actions": [
+		{"label": "Reset profile", "action": func(): _confirm_reset.popup_centered(),
+			"align": "right"},
+	]}
+
+
 func _ready() -> void:
 	Nav.clear_back()   # save-select root — the OS back gesture stays inert (never quits)
 	# Rebuild if the form factor flips (e.g. previewing mobile by resizing in the editor).
 	UIScale.layout_changed.connect(func(): get_tree().reload_current_scene(), CONNECT_ONE_SHOT)
 
-	# This screen is the root picker (no header chrome; Shell's own background already paints
-	# behind it), so it fills the whole screen: big title, near-full-width tall slot rows dividing
-	# the height, and a real Reset button — proportional coverage, no centered island.
-	var pad := MarginContainer.new()
-	pad.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	var m := int(UIScale.safe_inset() + 36.0)
-	for side in ["left", "right", "top", "bottom"]:
-		pad.add_theme_constant_override("margin_" + side, m)
-	add_child(pad)
+	_confirm_delete = ConfirmationDialog.new()
+	_confirm_delete.title = "Delete save"
+	_confirm_delete.confirmed.connect(_on_delete_confirmed)
+	add_child(_confirm_delete)
 
+	_confirm_reset = ConfirmationDialog.new()
+	_confirm_reset.title = "Reset profile"
+	_confirm_reset.dialog_text = "This erases your name and all saves. Are you sure?"
+	_confirm_reset.confirmed.connect(_on_reset_confirmed)
+	add_child(_confirm_reset)
+
+	# Big title, near-full-width tall slot rows dividing the height — proportional coverage, no
+	# centered island. Shell already wraps this in the standard inset margin + footer row.
 	var vbox := VBoxContainer.new()
-	vbox.size_flags_horizontal = SIZE_EXPAND_FILL
-	vbox.size_flags_vertical = SIZE_EXPAND_FILL
+	vbox.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	vbox.add_theme_constant_override("separation", 24)
-	pad.add_child(vbox)
+	add_child(vbox)
 
 	var title := Label.new()
 	title.text = "Select Save"
@@ -62,31 +74,7 @@ func _ready() -> void:
 		del_btn.disabled = not started
 		del_btn.pressed.connect(func(): _on_delete_pressed(idx))
 		row.add_child(del_btn)
-
-	# Global reset (name + every save) — a real button at the bottom-right.
-	var footer := HBoxContainer.new()
-	footer.size_flags_horizontal = SIZE_EXPAND_FILL
-	vbox.add_child(footer)
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = SIZE_EXPAND_FILL
-	footer.add_child(spacer)
-	var reset_btn := Button.new()
-	reset_btn.text = "Reset profile"
-	reset_btn.add_theme_font_size_override("font_size", 24)
-	reset_btn.custom_minimum_size = Vector2(300, 90)
-	reset_btn.pressed.connect(func(): _confirm_reset.popup_centered())
-	footer.add_child(reset_btn)
-
-	_confirm_delete = ConfirmationDialog.new()
-	_confirm_delete.title = "Delete save"
-	_confirm_delete.confirmed.connect(_on_delete_confirmed)
-	add_child(_confirm_delete)
-
-	_confirm_reset = ConfirmationDialog.new()
-	_confirm_reset.title = "Reset profile"
-	_confirm_reset.dialog_text = "This erases your name and all saves. Are you sure?"
-	_confirm_reset.confirmed.connect(_on_reset_confirmed)
-	add_child(_confirm_reset)
+	# Reset profile is Shell's footer now (get_chrome's footer_actions) — nothing left to build here.
 
 
 func _slot_label(slot: int, started: bool) -> String:

@@ -106,7 +106,7 @@ func get_chrome() -> Dictionary:
 	# The header ✕ always leaves the Lab outright; the OS-back gesture is smarter — from an open
 	# crafting panel it closes the panel back to the room first (see _back_or_close below).
 	return {"title": "Laboratory", "fields": [ScreenUI.Field.EXP], "exit": _leave,
-		"back": _back_or_close}
+		"back": _back_or_close, "show_footer": true, "inset": false}
 
 
 func _leave() -> void:
@@ -165,12 +165,8 @@ func _build_layout() -> void:
 		inv.size_flags_stretch_ratio = 1.0
 		area.add_child(inv)
 		col.add_child(area)
-
-	# Footer: standard bottom-left Back (body content, not header chrome — this screen keeps its
-	# own full-bleed background/room art, so it opts out of Shell's inset menu-mode footer).
-	var footer := HBoxContainer.new()
-	col.add_child(footer)
-	footer.add_child(ScreenUI.back_button(_leave))
+	# Footer is Shell's now (show_footer + inset:false in get_chrome) — this screen only builds
+	# its own working-area content, same as every other screen.
 
 
 # The "room": the kept artifact art shown as BIG clickable objects spread across the working area.

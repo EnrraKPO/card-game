@@ -23,7 +23,6 @@ var _deck_entries: Array = []
 var _selected_idx: int = -1   # index into _deck_entries, -1 = none
 
 var _deck_grid: FitGrid
-var _header_fields: Dictionary
 var _remove_status_lbl: Label
 var _remove_btn: Button
 var _compact := false
@@ -38,10 +37,6 @@ func _ready() -> void:
 func get_chrome() -> Dictionary:
 	return {"title": "Shop", "exit": _leave, "fields": [ScreenUI.Field.EXP, ScreenUI.Field.GOLD],
 		"show_footer": true}
-
-
-func on_chrome_applied(handles: Dictionary) -> void:
-	_header_fields = handles.get("fields", {})
 
 
 func _build_ui() -> void:
@@ -163,7 +158,6 @@ func _on_buy(rec: Dictionary) -> void:
 	grant.apply()
 	rec["bought"] = true
 	_update_buy_buttons()
-	_refresh_gold_label()
 
 
 func _update_buy_buttons() -> void:
@@ -273,16 +267,11 @@ func _apply_remove() -> void:
 	GameData.current_run.deck.remove_at(deck_idx)
 	GameData.save_run()
 
-	_refresh_gold_label()
 	_update_buy_buttons()
 	_rebuild_deck()
 
 
 # ── Shared ───────────────────────────────────────────────────────────────────
-
-func _refresh_gold_label() -> void:
-	ScreenUI.refresh_field(ScreenUI.Field.GOLD, _header_fields)
-
 
 func _leave() -> void:
 	Nav.goto("res://scenes/map.tscn")

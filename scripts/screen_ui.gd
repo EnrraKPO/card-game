@@ -11,6 +11,16 @@ extends RefCounted
 const BG_COLOR := Color(0.07, 0.07, 0.12)
 const CLOSE_GLYPH := "✕"
 
+# THE bar height — header and footer are the same fixed row height, everywhere, always. Both
+# build_header() and footer_bar() size themselves off this one pair of numbers. Includes BAR_V_PAD
+# of breathing room above/below the buttons on top of their own fixed BUTTON_HEIGHT, so a button
+# never looks compressed flush against the bar's edge.
+const BAR_V_PAD := 6.0
+const BUTTON_HEIGHT := 52.0
+const BUTTON_HEIGHT_COMPACT := 88.0
+const BAR_HEIGHT := BUTTON_HEIGHT + BAR_V_PAD * 2.0
+const BAR_HEIGHT_COMPACT := BUTTON_HEIGHT_COMPACT + BAR_V_PAD * 2.0
+
 # The fixed catalog of run-status fields any header can show. A screen names the keys it wants
 # (in a header_bar definition); each field pulls its OWN data from the single canonical source
 # (GameData.current_run / current_profile), so a screen never passes a value in and the same fact
@@ -32,6 +42,18 @@ static func _header_stylebox() -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = Color(0.13, 0.13, 0.19)
 	sb.border_width_bottom = 2
+	sb.border_color = Color(0.30, 0.33, 0.44)
+	return sb
+
+
+# THE footer surface — same bg/accent treatment as the header (see _header_stylebox), just with
+# the accent line on the TOP edge instead of the bottom (the edge facing the content either bar
+# borders), so the footer reads as a matching bar of its own instead of fading into the page
+# behind it under the default flat Panel style.
+static func _footer_stylebox() -> StyleBoxFlat:
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.13, 0.13, 0.19)
+	sb.border_width_top = 2
 	sb.border_color = Color(0.30, 0.33, 0.44)
 	return sb
 
@@ -123,59 +145,50 @@ static func experience_bar_compact(profile: ProfileData, compact: bool = false, 
 	return row
 
 
-# THE shared header bar for full-bleed HUD screens (map, later combat) that manage their own body
-# instead of the framed scaffold(). Fully declarative: the screen says only WHAT it wants shown, and
-# the bar decides WHERE everything sits — identically to every other screen. It wires `exit` to the
-# docked ✕ and the OS go-back gesture (Nav). Caller only anchors `bar` (e.g. TOP_WIDE) and adds it.
-#   definition = {
-#     name   : String          # optional title (the ONE view-supplied string), "" for none
-#     fields : Array[Field]     # WHICH fields to show — an unordered set. Order/side are NOT the
-#                               #   screen's call: the catalog (_LEFT_FIELDS/_RIGHT_FIELDS) fixes
-#                               #   them, so the same field is always in the same spot everywhere.
-#   }
-# Every field also pulls its own data from the canonical source (see header_field / Field), so a
-# screen never feeds values OR placement in. Layout: [title · left fields] — gap — [right fields · ✕].
-# `exit` is optional: pass a valid Callable for the standard docked ✕ + OS-back wiring (menus, map);
-# pass an empty Callable() for screens with no exit (combat mid-fight) — then no ✕ is shown and Nav
-# is left untouched. Returns { bar, fields, close } where `fields` maps each shown Field to its live
-# widget (e.g. the RelicTray) so a view can poke a component it needs a handle on (glint, read-only…),
-# and `close` is the docked ✕ Button (or null when no exit) so a view can restyle it (combat's debug ✕).
-static func header_bar(exit: Callable, definition: Dictionary = {}) -> Dictionary:
+# THE header — built ONCE by Shell (shell.gd's _ready(), never again). Every piece it can ever
+# show (title, the 5 catalog fields, the normal ✕, the debug ✕) is constructed here, up front, and
+# lives for the whole app session. Nothing about the header is ever destroyed or rebuilt when you
+# navigate between screens — a screen only toggles which of these fixed pieces are visible right
+# now (Shell._apply_header does the toggling, reading a screen's get_chrome()). Two separate close
+# buttons exist so neither one's styling/behavior ever has to branch per screen — a screen picks
+# which of the two to show, the normal ✕ never changes.
+# Returns { bar, title, fields: {Field -> Control}, refs: {Field -> Control}, close, debug_close }.
+# `fields[key]` is the widget Shell shows/hides; `refs[key]` is the live handle a screen may want
+# (e.g. RELICS's raw RelicTray, for combat's .glint()) — see on_chrome_applied users.
+static func build_header() -> Dictionary:
 	var compact := UIScale.is_compact()
 	var bar := PanelContainer.new()
-	bar.custom_minimum_size.y = 104.0 if compact else 56.0
+	bar.custom_minimum_size.y = BAR_HEIGHT_COMPACT if compact else BAR_HEIGHT
 	bar.add_theme_stylebox_override("panel", _header_stylebox())
 
 	var pad := MarginContainer.new()
 	var inset := int(UIScale.safe_inset() + 8.0)   # keep content out of the touch-hostile edge
 	pad.add_theme_constant_override("margin_left", inset)
 	pad.add_theme_constant_override("margin_right", inset)
+	pad.add_theme_constant_override("margin_top", int(BAR_V_PAD))
+	pad.add_theme_constant_override("margin_bottom", int(BAR_V_PAD))
 	bar.add_child(pad)
 
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 16 if compact else 12)
 	pad.add_child(row)
 
-	# Optional title — the single string a view supplies (an accepted exception to "no view data").
-	var title: String = definition.get("name", "")
-	if title != "":
-		var title_lbl := Label.new()
-		title_lbl.text = title
-		title_lbl.add_theme_font_size_override("font_size", 34 if compact else 22)
-		title_lbl.add_theme_color_override("font_color", Color(0.92, 0.94, 1.0))
-		title_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		row.add_child(title_lbl)
+	var title_lbl := Label.new()
+	title_lbl.add_theme_font_size_override("font_size", 34 if compact else 22)
+	title_lbl.add_theme_color_override("font_color", Color(0.92, 0.94, 1.0))
+	title_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	title_lbl.visible = false
+	row.add_child(title_lbl)
 
-	# The screen supplies an unordered SET of fields; the catalog decides order + side. We walk the
-	# canonical lists (not the screen's) and place whatever it asked for, so placement is identical
-	# across screens by construction. `fields` collects each built field's live widget for the caller.
-	var wanted: Array = definition.get("fields", [])
 	var fields := {}
+	var refs := {}
 	for key in _LEFT_FIELDS:
-		if key in wanted:
-			var f := header_field(key, fields)
-			if f != null:
-				row.add_child(f)
+		var built := _build_field(key)
+		built.widget.visible = false   # starts hidden — Shell's first _apply_header call is what
+		                                 # detects "just became visible" and pulls real data in
+		fields[key] = built.widget
+		refs[key] = built.ref
+		row.add_child(built.widget)
 
 	# The open middle: the last left field grows into it, so newly-earned content (e.g. relics)
 	# expands rightward rather than the header staying half-empty.
@@ -183,83 +196,84 @@ static func header_bar(exit: Callable, definition: Dictionary = {}) -> Dictionar
 	gap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(gap)
 
-	# Right cluster.
 	for key in _RIGHT_FIELDS:
-		if key in wanted:
-			var rf := header_field(key, fields)
-			if rf != null:
-				row.add_child(rf)
+		var built := _build_field(key)
+		built.widget.visible = false
+		fields[key] = built.widget
+		refs[key] = built.ref
+		row.add_child(built.widget)
 
-	# The docked ✕ (same placement as every menu header) — only for screens that HAVE an exit.
-	# Combat passes none, so it shows no ✕ and we don't touch the OS-back gesture it cleared.
-	var close: Button = null
-	if exit.is_valid():
-		close = close_button(exit)
-		row.add_child(close)
-		Nav.set_back(exit)
+	var close := close_button(Callable())
+	close.visible = false
+	row.add_child(close)
 
-	return {"bar": bar, "fields": fields, "close": close}
+	var debug_close := close_button(Callable())
+	debug_close.modulate = Color(1.0, 0.55, 0.2)
+	debug_close.tooltip_text = "Debug: end combat"
+	debug_close.visible = false
+	row.add_child(debug_close)
+
+	return {"bar": bar, "title": title_lbl, "fields": fields, "refs": refs,
+		"close": close, "debug_close": debug_close}
 
 
-# The catalog builder: turns a Field key into its self-pulling widget, reading only the canonical
-# run/profile source so the same fact renders identically in every header. Returns null when the
-# backing data isn't present (e.g. no active run / profile yet), so callers can list a field
-# unconditionally and the bar just omits it. If `refs` is given, a field that a view may need a
-# live handle on registers itself there under its Field key (e.g. RELICS → the RelicTray).
-static func header_field(key: int, refs: Dictionary = {}) -> Control:
+# The catalog builder: constructs ONE Field's widget, once, unconditionally (never returns null —
+# unlike the old per-mount version, there's no "skip if no run yet" case, because this widget will
+# sit hidden until a screen actually wants it shown; see sync_field for what fills it with real
+# data at that point). Connects GameSignals immediately so it stays live thereafter regardless of
+# visibility. Returns {widget, ref}: `widget` is what Shell shows/hides; `ref` is the live handle a
+# screen may want (RELICS' raw RelicTray) — for every other field ref == widget.
+static func _build_field(key: int) -> Dictionary:
 	var compact := UIScale.is_compact()
-	var run := GameData.current_run
 	match key:
 		Field.ACT:
-			if run == null:
-				return null
 			# The prominent run label (not a chip) — reads as the header's headline, per the map look.
 			var act := Label.new()
-			act.text = "Act %d" % run.act
 			act.add_theme_font_size_override("font_size", 34 if compact else 22)
 			act.add_theme_color_override("font_color", Color(0.92, 0.94, 1.0))
 			act.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-			return act
+			GameSignals.act_changed.connect(func(a: int) -> void: act.text = "Act %d" % a)
+			return {"widget": act, "ref": act}
 		Field.HP:
-			if run == null:
-				return null
-			var hp := stat("HP", "%d / %d" % [run.king_health(), run.king_max_health()], Color(0.62, 0.9, 0.66))
-			refs[key] = hp   # so a view can refresh_field() it if HP can change while the screen stays open
-			return hp
+			var hp := stat("HP", "", Color(0.62, 0.9, 0.66))
+			GameSignals.hp_changed.connect(func(cur: int, mx: int) -> void: _refresh_stat(hp, "%d / %d" % [cur, mx]))
+			return {"widget": hp, "ref": hp}
 		Field.GOLD:
-			if run == null:
-				return null
-			var gold := stat("Gold", str(run.gold), Color(0.98, 0.85, 0.35))
-			refs[key] = gold   # so a view can refresh_field() it (e.g. Shop, which spends gold in place)
-			return gold
+			var gold := stat("Gold", "", Color(0.98, 0.85, 0.35))
+			GameSignals.gold_changed.connect(func(v: int) -> void: _refresh_stat(gold, str(v)))
+			return {"widget": gold, "ref": gold}
 		Field.RELICS:
-			if run == null:
-				return null
 			var tray := RelicTray.new()
-			refs[key] = tray   # so a view can glint a firing relic / set the strip read-only
-			return header_chip(tray)
+			GameSignals.relics_changed.connect(tray.refresh)   # full rebuild — tray already does this
+			return {"widget": header_chip(tray), "ref": tray}
 		Field.EXP:
-			var profile := GameData.current_profile
-			if profile == null:
-				return null
-			return header_chip(experience_bar_compact(profile, compact, false))
-	return null
+			var chip := header_chip(Control.new())
+			GameSignals.exp_changed.connect(func() -> void: _refresh_exp_chip(chip))
+			return {"widget": chip, "ref": chip}
+	return {"widget": null, "ref": null}
 
 
-# Re-pulls a header field's value from the canonical source and updates it in place — for the rare
-# screen where that value changes while the screen itself stays open (e.g. Shop spending gold),
-# unlike map/combat's static per-visit snapshot. No-op if the field wasn't shown (not in `fields`).
-static func refresh_field(key: int, fields: Dictionary) -> void:
-	if not fields.has(key):
-		return
+# Pulls this field's CURRENT value from the canonical source into its already-built widget — called
+# by Shell exactly once, the moment a field transitions from hidden to shown (a screen might mount
+# while GameSignals hasn't fired since app start, e.g. right after loading a save), and harmlessly
+# thereafter (the live signal connections from _build_field keep it correct while shown). No-op for
+# fields with no backing data yet (no active run / profile) — they just stay at their built default.
+static func sync_field(key: int, widget: Control) -> void:
 	var run := GameData.current_run
-	if run == null:
-		return
 	match key:
+		Field.ACT:
+			if run != null:
+				(widget as Label).text = "Act %d" % run.act
 		Field.HP:
-			_refresh_stat(fields[key], "%d / %d" % [run.king_health(), run.king_max_health()])
+			if run != null:
+				_refresh_stat(widget, "%d / %d" % [run.king_health(), run.king_max_health()])
 		Field.GOLD:
-			_refresh_stat(fields[key], str(run.gold))
+			if run != null:
+				_refresh_stat(widget, str(run.gold))
+		Field.RELICS:
+			widget.get_child(0).refresh()   # the chip's one child is the RelicTray
+		Field.EXP:
+			_refresh_exp_chip(widget)
 
 
 # Swaps the value text inside a stat() chip in place (chip -> [tag, value] row -> value label).
@@ -267,6 +281,16 @@ static func _refresh_stat(chip: Control, value: String) -> void:
 	var row: HBoxContainer = chip.get_child(0)
 	var value_lbl: Label = row.get_child(1)
 	value_lbl.text = value
+
+
+# Rebuilds the EXP chip's inner content (a fresh experience_bar_compact each time — it's cheap and
+# has no state worth preserving) from the current profile. No-op if there's no profile yet.
+static func _refresh_exp_chip(chip: Control) -> void:
+	for c in chip.get_children():
+		c.queue_free()
+	var p := GameData.current_profile
+	if p != null:
+		chip.add_child(experience_bar_compact(p, UIScale.is_compact(), false))
 
 
 # A subtle rounded container ("chip") for a header element, so each stat reads as its own tidy
@@ -309,26 +333,93 @@ static func stat(tag: String, value: String, value_color: Color) -> Control:
 	return header_chip(h)
 
 
-# The standard top-right "✕" close button.
+# THE chrome-button look shared by every header/footer button — a raised, shadowed capsule so it
+# reads as a pressable object sitting ON the bar, not text flush inside it (same "give it volume"
+# treatment as map.gd's big Forge button, just toned down for a bar-sized control). One shared
+# builder so every close/footer button gets identical depth; states differ only by shade.
+static func _apply_chrome_button_style(btn: Button, base: Color, radius: int) -> void:
+	for state in ["normal", "hover", "pressed"]:
+		var sb := StyleBoxFlat.new()
+		var bg := base
+		if state == "hover":   bg = base.lightened(0.15)
+		if state == "pressed": bg = base.darkened(0.15)
+		sb.bg_color = bg
+		sb.set_corner_radius_all(radius)
+		sb.border_color = base.lightened(0.4)
+		sb.set_border_width_all(2)
+		sb.shadow_color = Color(0.0, 0.0, 0.0, 0.35)
+		sb.shadow_size = 6
+		sb.shadow_offset = Vector2(0, 3)
+		sb.anti_aliasing = true
+		btn.add_theme_stylebox_override(state, sb)
+
+
+# The standard top-right "✕" close button. `action` may be an empty Callable() — Shell builds
+# both header close buttons once with no action bound yet, then rebinds them per screen (see
+# Shell._rebind_button); an empty Callable here just means "not wired up yet."
 static func close_button(action: Callable) -> Button:
 	var compact := UIScale.is_compact()
 	var btn := Button.new()
 	btn.text = CLOSE_GLYPH
 	btn.tooltip_text = "Close"
 	btn.add_theme_font_size_override("font_size", 34 if compact else 24)
-	btn.custom_minimum_size = Vector2(88, 88) if compact else Vector2(56, 52)
-	btn.pressed.connect(action)
+	btn.custom_minimum_size = Vector2(BUTTON_HEIGHT_COMPACT, BUTTON_HEIGHT_COMPACT) if compact \
+		else Vector2(56, BUTTON_HEIGHT)
+	_apply_chrome_button_style(btn, Color(0.24, 0.25, 0.33), 12)
+	if action.is_valid():
+		btn.pressed.connect(action)
 	return btn
 
 
-# The standard bottom-left "Back" button — chunky, not a tiny outlier next to the page's content.
-static func back_button(action: Callable) -> Button:
+# THE footer button — identical everywhere a footer appears, and sized to fit inside the footer
+# bar's fixed height (see footer_bar) — the same row height the header uses, so the two bars read
+# as one consistent chrome band, just top and bottom. No caller may size/font a footer button
+# itself; every footer action (Back, Save & Quit, Debug Items, …) goes through this one builder,
+# so footers read as one component across the whole app instead of drifting per screen. `action`
+# may be an empty Callable() — see close_button's note; the same applies here for Shell's
+# persistent Back button, rebound per screen via Shell._rebind_button.
+static func footer_button(text: String, action: Callable) -> Button:
 	var compact := UIScale.is_compact()
 	var btn := Button.new()
-	btn.text = "‹ Back"
-	btn.add_theme_font_size_override("font_size", 40 if compact else 30)
-	btn.custom_minimum_size = Vector2(340, 130) if compact else Vector2(260, 96)
-	btn.pressed.connect(action)
+	btn.text = text
+	btn.add_theme_font_size_override("font_size", 30 if compact else 20)
+	btn.custom_minimum_size = Vector2(340, BUTTON_HEIGHT_COMPACT) if compact else Vector2(260, BUTTON_HEIGHT)
+	_apply_chrome_button_style(btn, Color(0.24, 0.25, 0.33), 12)
+	if action.is_valid():
+		btn.pressed.connect(action)
 	return btn
+
+
+# The standard bottom-left "Back" button — just the common case of footer_button().
+static func back_button(action: Callable) -> Button:
+	return footer_button("‹ Back", action)
+
+
+# THE footer bar shell — a PanelContainer wrapping a padded HBoxContainer, the same fixed height
+# as the header (BAR_HEIGHT/BAR_HEIGHT_COMPACT) so the two read as one consistent chrome band, just
+# top and bottom. Built ONLY by Shell (shell.gd's _apply_footer), as its own row alongside the
+# header and content, never nested inside a screen's content, and never varying with whatever that
+# content does. Same fixed safe_inset + 8 padding header_bar() uses, on every screen, every time —
+# a screen's own inset choice has zero effect on where its footer buttons sit. Returns
+# {bar: PanelContainer, hbox: HBoxContainer} — the caller adds footer_button()s to the hbox.
+static func footer_bar() -> Dictionary:
+	var compact := UIScale.is_compact()
+	var left := int(UIScale.safe_inset() + 8.0)
+	var bar := PanelContainer.new()
+	bar.custom_minimum_size.y = BAR_HEIGHT_COMPACT if compact else BAR_HEIGHT
+	bar.add_theme_stylebox_override("panel", _footer_stylebox())
+	# Vertical margin is just BAR_V_PAD — same as the header's — centering footer_button()
+	# (BUTTON_HEIGHT_COMPACT/BUTTON_HEIGHT tall) inside the bar so both bars read as one
+	# consistent chrome band, top and bottom.
+	var v_margin := int(BAR_V_PAD)
+	var pad := MarginContainer.new()
+	pad.add_theme_constant_override("margin_left", left)
+	pad.add_theme_constant_override("margin_right", left)
+	pad.add_theme_constant_override("margin_top", v_margin)
+	pad.add_theme_constant_override("margin_bottom", v_margin)
+	bar.add_child(pad)
+	var hbox := HBoxContainer.new()
+	pad.add_child(hbox)
+	return {"bar": bar, "hbox": hbox}
 
 

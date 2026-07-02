@@ -50,9 +50,7 @@ func can_grant(id: String) -> bool:
 func grant(id: String, _count: int) -> void:
 	if not can_grant(id):
 		return
-	GameData.current_run.relics.append(id)
-	GameData.rebuild_modifiers()   # fold the new relic's effects into the live run numbers
-	GameData.save_run()
+	GameData.current_run.add_relic(id)
 
 
 func _owned(id: String) -> bool:

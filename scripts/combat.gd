@@ -50,11 +50,14 @@ func get_chrome() -> Dictionary:
 
 # The relic strip is a live catalog field in the header; grab it here (once Shell has applied the
 # chrome) to glint a firing relic's chip (see _fire) and make it read-only so it never eats combat
-# input.
+# input. The tray is now Shell's one persistent instance (see [[header-system]]) — Shell already
+# reset interactive to true before this runs, so flipping it back to false here must also rebuild
+# the chips (interactive is baked into each chip's tooltip/click-binding at refresh() time).
 func on_chrome_applied(handles: Dictionary) -> void:
 	_relic_tray = handles.get("fields", {}).get(ScreenUI.Field.RELICS)
 	if _relic_tray != null:
 		_relic_tray.interactive = false
+		_relic_tray.refresh()
 
 
 func _ready() -> void:
@@ -561,6 +564,18 @@ func _apply_king_persistence() -> void:
 		pk.apply_modifier("max_health", hp_bonus)
 	pk.current_health = run.king_health()
 	_board.refresh()
+
+	# The header's HP field mirrors RunData, which only finalizes king_damage at combat end (see
+	# _handle_combat_end) — wire it to the King's LIVE board health instead, so it ticks during the
+	# fight. This bypasses RunData entirely mid-fight; the persisted value still only ever gets
+	# written once, at combat end, unchanged from before.
+	pk.health_changed.connect(_on_king_health_changed)
+
+
+func _on_king_health_changed(current: int) -> void:
+	var run := GameData.current_run
+	if run != null:
+		GameSignals.hp_changed.emit(current, run.king_max_health())
 
 
 func _handle_combat_end() -> void:

@@ -30,8 +30,8 @@ var next_deck_uid: int = 0       # monotonic counter for collision-free OwnedDec
 # Experience accrues from combat (and event rewards); each EXP_PER_UPGRADE_POINT of it
 # becomes one upgrade point. `experience` is only the progress toward the NEXT point (the
 # bar); `upgrade_points` is the spendable balance for the Upgrades skill trees.
-var experience: int = 0
-var upgrade_points: int = 0
+var experience: int = 0 : set = _set_experience
+var upgrade_points: int = 0 : set = _set_upgrade_points
 # Purchased Upgrades-tree nodes (UpgradeNode ids). Each owned node contributes its run-wide
 # Effects to the run's ModifierSet — the profile-level source feeding the upgrade system.
 var owned_upgrades: Array = []   # Array[String]
@@ -117,6 +117,19 @@ func to_dict() -> Dictionary:
 
 
 # ── Experience / upgrade points ─────────────────────────────────────────────────────
+
+# Property setters emit GameSignals.exp_changed (see [[header-system]]) so the header's EXP field
+# updates itself — no payload (the widget reads both experience and upgrade_points together), so
+# the subscriber just re-reads current state, same coarse-refresh treatment as relics.
+func _set_experience(v: int) -> void:
+	experience = v
+	GameSignals.exp_changed.emit()
+
+
+func _set_upgrade_points(v: int) -> void:
+	upgrade_points = v
+	GameSignals.exp_changed.emit()
+
 
 # Banks experience and converts each full EXP_PER_UPGRADE_POINT into one upgrade point,
 # carrying the remainder toward the next. Returns the number of points newly gained (for
