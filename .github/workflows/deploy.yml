@@ -41,6 +41,13 @@ jobs:
           unzip -q "Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
           mv templates/* ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable/
 
+      # A fresh CI checkout has no .godot/imported/ cache (it's gitignored), so no resources are
+      # imported yet. --export-release does NOT import on its own: it aborts on the first resource
+      # whose imported data is missing (e.g. the theme's bundled font -> missing .fontdata). So do
+      # a dedicated import pass first, which generates .godot/imported/ for every asset.
+      - name: Import resources
+        run: godot --headless --import
+
       - name: Export for Web
         run: |
           mkdir -p build/web
