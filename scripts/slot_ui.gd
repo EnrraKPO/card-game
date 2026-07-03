@@ -87,7 +87,10 @@ func _can_drop_data(_at: Vector2, data: Variant) -> bool:
 		return false
 	var card_ui := data as CardUI
 	if card_ui.card_instance.is_spell:
-		return _card_ui != null  # spells target occupied slots
+		# Spells target occupied slots — and only ELIGIBLE ones: during a spell drag the board
+		# marks targetable just the slots whose occupant passes the spell's conditions (see
+		# SpellCaster._on_spell_drag_started), so an invalid drop is rejected at hover time.
+		return _card_ui != null and _targetable
 	if _card_ui != null:
 		return false
 	if accept_check.is_valid():

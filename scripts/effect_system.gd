@@ -222,6 +222,13 @@ static func _apply(effect: Effect, target: CardInstance, source: CardInstance, c
 
 # ── Condition evaluation ───────────────────────────────────────────────────────
 
+# The same gate _resolve_targets applies, exposed for PRE-resolution eligibility checks —
+# the spell-targeting UI (only eligible units light up / accept the drop) and the enemy AI's
+# target picking, so an ineligible pick is impossible instead of a silent fizzle.
+static func passes_conditions(conditions: Array, card: CardInstance) -> bool:
+	return _passes_conditions(conditions, card)
+
+
 static func _passes_conditions(conditions: Array, card: CardInstance) -> bool:
 	for cond: EffectCondition in conditions:
 		if not cond.evaluate(card):

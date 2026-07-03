@@ -11,6 +11,7 @@ var get_mana: Callable  # func() -> int
 
 var _is_targeting: bool  = false
 var _pending_spell: CardUI = null
+var _targeting_spell: CardUI = null   # the spell whose click-targeting session is active
 
 signal _target_chosen(target: CardInstance)
 
@@ -51,7 +52,7 @@ func _on_spell_card_pressed(card_ui: CardUI) -> void:
 	var manual_target: CardInstance = null
 	if needs_target:
 		card_ui.set_selected(true)
-		manual_target = await _request_target()
+		manual_target = await _request_target(card_ui)
 		card_ui.set_selected(false)
 		if manual_target == null:
 			return
@@ -66,6 +67,8 @@ func _on_spell_dropped(slot: SlotUI, card_ui: CardUI) -> void:
 		return
 	if not _can_afford(card_ui):
 		return
+	if not _eligible(card_ui.card_instance, target_ui.card_instance):
+		return   # ineligible pick (e.g. Castling onto an already-Barriered unit) — spell kept
 	await _execute_spell(card_ui, target_ui.card_instance)
 
 
@@ -73,7 +76,7 @@ func _on_spell_drag_started(card_ui: CardUI) -> void:
 	if _is_targeting:
 		return  # click-targeting session already active
 	_pending_spell = card_ui
-	board.set_slots_targetable(true)
+	board.set_slots_targetable(true, _eligibility_of(card_ui))
 	board.set_board_card_filters(false)
 
 
@@ -90,6 +93,8 @@ func _on_slot_pressed(slot: SlotUI) -> void:
 	var card := slot.get_card()
 	if card == null:
 		return
+	if _targeting_spell != null and not _eligible(_targeting_spell.card_instance, card.card_instance):
+		return   # ineligible pick — stay in targeting, let the player choose again
 	_target_chosen.emit(card.card_instance)
 
 
@@ -111,18 +116,45 @@ func _execute_spell(card_ui: CardUI, manual_target: CardInstance) -> void:
 	board.refresh()
 
 
-func _request_target() -> CardInstance:
+func _request_target(spell_ui: CardUI) -> CardInstance:
 	if board.get_all_units().is_empty():
 		return null
 	_is_targeting = true
-	board.set_slots_targetable(true)
+	_targeting_spell = spell_ui
+	board.set_slots_targetable(true, _eligibility_of(spell_ui))
 	targeting_started.emit()
 	var target: CardInstance = await _target_chosen
 	board.set_slots_targetable(false)
 	_is_targeting = false
+	_targeting_spell = null
 	targeting_ended.emit()
 	return target
 
 
 func _can_afford(card_ui: CardUI) -> bool:
 	return card_ui.card_instance.get_attribute("cost") <= get_mana.call()
+
+
+# ── Target eligibility ─────────────────────────────────────────────────────────
+
+# Whether `target` is a valid manual pick for this spell: it must pass the conditions of at
+# least one of the spell's manual ON_PLAY effects (a spell with no manual effects has no
+# eligibility gate). Keeps the targeting UI honest — only units the resolution would actually
+# affect light up and accept the pick, so a spell can't be wasted on an invalid target
+# (e.g. Castling onto a unit that already has a Barrier).
+func _eligible(spell: CardInstance, target: CardInstance) -> bool:
+	var has_manual := false
+	for e: Effect in spell.data.effects:
+		if e.trigger != Effect.Trigger.ON_PLAY \
+				or e.targeting_policy != Effect.TargetingPolicy.MANUAL:
+			continue
+		has_manual = true
+		if EffectSystem.passes_conditions(e.conditions, target):
+			return true
+	return not has_manual
+
+
+# The per-occupant predicate handed to CombatBoard.set_slots_targetable.
+func _eligibility_of(spell_ui: CardUI) -> Callable:
+	return func(occupant: CardInstance) -> bool:
+		return _eligible(spell_ui.card_instance, occupant)

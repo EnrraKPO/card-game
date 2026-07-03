@@ -7,6 +7,11 @@ var attribute: String = ""
 var comparator: Comparator = Comparator.GTE
 var value: int = 0
 var custom_check: Callable
+# STATUS-form condition: passes when the card's carrying of the named status matches `present`
+# (e.g. { "status": "barrier", "present": false } = "only units without a Barrier"). When
+# `status_id` is set, the attribute/comparator fields are ignored.
+var status_id: String = ""
+var present: bool = true
 
 
 static func make(attr: String, comp: Comparator, val: int) -> EffectCondition:
@@ -24,8 +29,13 @@ static func make_custom(check: Callable) -> EffectCondition:
 
 
 # Parses an authored condition dict (inverse of to_dict). Used by Effect.from_dict so all
-# effect/condition parsing lives in one place.
+# effect/condition parsing lives in one place. A "status" key selects the status form.
 static func from_dict(d: Dictionary) -> EffectCondition:
+	if d.has("status"):
+		var c := EffectCondition.new()
+		c.status_id = str(d.get("status", ""))
+		c.present = bool(d.get("present", true))
+		return c
 	return make(
 		d.get("attribute", ""),
 		_str_comparator(d.get("comparator", "")),
@@ -46,6 +56,8 @@ static func _str_comparator(s: String) -> Comparator:
 
 # Inverse of CardData._parse_condition (custom_check is programmatic-only, not stored).
 func to_dict() -> Dictionary:
+	if not status_id.is_empty():
+		return {"status": status_id, "present": present}
 	return {
 		"attribute":  attribute,
 		"comparator": comparator_key(comparator),
@@ -67,6 +79,8 @@ static func comparator_key(c: Comparator) -> String:
 func evaluate(card: CardInstance) -> bool:
 	if custom_check.is_valid():
 		return custom_check.call(card)
+	if not status_id.is_empty():
+		return (card.find_status(status_id) != null) == present
 	var card_val := card.get_attribute(attribute)
 	match comparator:
 		Comparator.GT:  return card_val > value

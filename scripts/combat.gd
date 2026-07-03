@@ -226,8 +226,10 @@ func _execute_enemy_action(action: Dictionary) -> void:
 			if token.is_spell:
 				# A generated SPELL token (e.g. Castling) casts instead of taking a board slot —
 				# mirrors a normal enemy CAST, just sourced from a building instead of the hand.
+				# The AI picked any needed manual target at planning time (see _plan_generation).
 				token.owner = 1
-				await _show_enemy_spell(token, null)
+				var spell_target: CardInstance = action.get("target", null)
+				await _show_enemy_spell(token, spell_target)
 			else:
 				var results := _board.place_enemy_card(token, action["row"], action["col"])
 				_vfx.play(VFXEvent.card_placed(_board.get_card_ui(token)))

@@ -133,6 +133,12 @@ A list of conditions that must **all** pass for a target to be affected. If omit
 ]
 ```
 
+**Status form** — instead of an attribute comparison, a condition can gate on whether the
+target carries a named status: `{ "status": "barrier", "present": false }` passes only for
+units *without* a Barrier (so e.g. Castling can't re-Barrier a unit); `"present": true` (the
+default) requires the status. For `manual` spells, ineligible units don't light up during
+targeting and reject the pick/drop outright — the spell can't be wasted.
+
 **`attribute`** — any card attribute listed above (`health`, `attack`, `speed`, `cost`)
 
 **`comparator`** — how to compare the attribute value against `value`

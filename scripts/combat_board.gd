@@ -207,11 +207,21 @@ func refresh() -> void:
 				e.refresh()
 
 
-func set_slots_targetable(enabled: bool) -> void:
+# `eligible` (optional, func(CardInstance) -> bool) narrows targeting to slots whose occupant
+# passes — used by spell targeting so only valid picks light up and accept drops (e.g. Castling
+# can't target a unit that already has a Barrier). Without it, every slot toggles as before.
+func set_slots_targetable(enabled: bool, eligible: Callable = Callable()) -> void:
 	for r in BoardData.ROWS:
 		for c in BoardData.COLS:
-			(player_slots[r][c] as SlotUI).set_targetable(enabled)
-			(enemy_slots[r][c] as SlotUI).set_targetable(enabled)
+			_set_slot_targetable(player_slots[r][c] as SlotUI, player_grid[r][c] as CardInstance, enabled, eligible)
+			_set_slot_targetable(enemy_slots[r][c] as SlotUI, enemy_grid[r][c] as CardInstance, enabled, eligible)
+
+
+func _set_slot_targetable(slot: SlotUI, occupant: CardInstance, enabled: bool, eligible: Callable) -> void:
+	if not enabled or not eligible.is_valid():
+		slot.set_targetable(enabled)
+		return
+	slot.set_targetable(occupant != null and bool(eligible.call(occupant)))
 
 
 func set_board_card_filters(enabled: bool) -> void:
