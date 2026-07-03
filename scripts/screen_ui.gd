@@ -52,7 +52,7 @@ const BUTTON_HEIGHT := 52.0
 # Mobile/compact chrome is deliberately much taller than desktop: the header/footer bars and their
 # ✕ / Back buttons size off this, and touch targets need to be big and easy to hit. ~1.5x the old
 # value so the bars and corner buttons are ~50% larger on mobile.
-const BUTTON_HEIGHT_COMPACT := 136.0
+const BUTTON_HEIGHT_COMPACT := 200.0
 const BAR_HEIGHT := BUTTON_HEIGHT + BAR_V_PAD * 2.0
 const BAR_HEIGHT_COMPACT := BUTTON_HEIGHT_COMPACT + BAR_V_PAD * 2.0
 
@@ -439,7 +439,7 @@ static func close_button(action: Callable, debug: bool = false) -> Button:
 	# never paints past this box, however small.
 	var side := BUTTON_HEIGHT_COMPACT - 16.0 if compact else BUTTON_HEIGHT - 8.0
 	var min_size := Vector2(side, side)
-	var btn := action_button(CLOSE_GLYPH, action, min_size, 46 if compact else 20,
+	var btn := action_button(CLOSE_GLYPH, action, min_size, 72 if compact else 20,
 		CHROME_DEBUG if debug else CHROME_NEUTRAL)
 	btn.tooltip_text = "Close"
 	btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -455,8 +455,8 @@ static func close_button(action: Callable, debug: bool = false) -> Button:
 # persistent Back button, rebound per screen via Shell._rebind_button.
 static func footer_button(text: String, action: Callable) -> Button:
 	var compact := UIScale.is_compact()
-	var min_size := Vector2(380, BUTTON_HEIGHT_COMPACT) if compact else Vector2(260, BUTTON_HEIGHT)
-	return action_button(text, action, min_size, 42 if compact else 20, CHROME_NEUTRAL)
+	var min_size := Vector2(440, BUTTON_HEIGHT_COMPACT) if compact else Vector2(260, BUTTON_HEIGHT)
+	return action_button(text, action, min_size, 60 if compact else 20, CHROME_NEUTRAL)
 
 
 # The standard bottom-left "Back" button — just the common case of footer_button().
