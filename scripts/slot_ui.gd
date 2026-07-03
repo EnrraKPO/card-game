@@ -59,6 +59,11 @@ func set_card(card: CardUI) -> void:
 		old_parent.remove_child(card)
 	add_child(card)
 	card.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	# Face the opponent: the card is authored in the PLAYER's orientation, so player cards (and the
+	# hand, which never flips) read identically with no change. Enemy cards (right half, facing
+	# left) mirror that layout so the two armies read as mirror images across the board. See
+	# CardUI.set_flipped.
+	card.set_flipped(owner_id == 1)
 
 
 func clear_card() -> CardUI:

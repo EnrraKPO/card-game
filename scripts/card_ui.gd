@@ -160,6 +160,7 @@ func _ready() -> void:
 	refresh()
 	resized.connect(_apply_scale)
 	_apply_scale()
+	_apply_flip()   # honour a facing set before the nodes existed (see set_flipped)
 	# Arm long-press inspection only on touch devices; desktop relies on the hover tooltip.
 	_touch_inspect = DisplayServer.is_touchscreen_available()
 	if _touch_inspect:
@@ -175,6 +176,76 @@ func _apply_scale() -> void:
 	if _canvas == null or size.x <= 0.0:
 		return
 	_canvas.scale = Vector2.ONE * (size.x / NATIVE_SIZE.x)
+
+
+# ── Combat facing ────────────────────────────────────────────────────────────────
+# During combat the two armies face across the board (player half on the left facing right, enemy
+# half on the right facing left). By default a card's stat badges sit fixed (Attack on the left
+# edge, Shield/Health on the right), so both armies read as parallel rather than facing off. Setting
+# a card "flipped" mirrors its stat cluster horizontally, so its Attack faces the opponent and the
+# two sides become mirror images across the centre line. Only the badge POSITIONS mirror — the
+# numbers and icons inside each badge are moved, never flipped, so everything still reads normally.
+
+var _want_flipped := false
+var _flip_applied := false
+
+# EVERY positioned overlay node mirrors as one rigid reflection — not just the stat badges. The
+# original layout is collision-free, so its full mirror is too; mirroring only some badges would
+# drop them onto the ones left in place (e.g. Shield onto the charm column, Cost onto the comp
+# chips). Art/Frame/Border are full-rect and symmetric, so they're deliberately excluded (and the
+# art must never mirror). `_charm_col` is built lazily and may be null here — callers skip nulls,
+# and _refresh_charms mirrors it on creation if the flip is already applied.
+func _flip_nodes() -> Array:
+	return [_cost_bg, _cost_lbl, _name_bg, _name_label, _comp_row,
+		_atk_bg, _atk_lbl, _spd_bg, _spd_lbl, _shield_bg, _shield_lbl,
+		_hp_bg, _hp_lbl, _status_row, _charm_col]
+
+
+# The stat-badge background textures — mirrored in place (flip_h) so their asymmetric art faces the
+# same way as the reflected layout. Just the badge assets, not the labels or the illustration.
+func _badge_bgs() -> Array:
+	return [_cost_bg, _name_bg, _spd_bg, _atk_bg, _shield_bg, _hp_bg]
+
+
+# Sets the card's combat facing. `flipped` mirrors the stat cluster to the opposite edge. Idempotent
+# and order-independent: safe to call before _ready (the flip is applied in _ready) and to call
+# repeatedly (e.g. when a unit is moved between slots) — it tracks the applied state, never toggling.
+func set_flipped(flipped: bool) -> void:
+	_want_flipped = flipped
+	_apply_flip()
+
+
+func _apply_flip() -> void:
+	if _atk_bg == null:            # nodes not ready yet — _ready() will call this again
+		return
+	if _flip_applied == _want_flipped:
+		return
+	_flip_applied = _want_flipped
+	for node: Control in _flip_nodes():
+		if node != null:   # _charm_col is built lazily; skip until it exists
+			_mirror_x(node)
+	# Also reflect the badge ART itself (not just its position): the badge textures are asymmetric
+	# (e.g. the speed wing, the attack blade), so after the cluster mirrors they'd point the wrong
+	# way. flip_h reflects each badge texture in place; the number Labels are left alone so they
+	# still read normally. The card illustration is deliberately NOT flipped.
+	for bg: TextureRect in _badge_bgs():
+		bg.flip_h = _want_flipped
+
+
+# Reflects a control's horizontal placement across the Canvas's vertical centre, leaving its
+# vertical placement and its contents untouched. Its own inverse, so re-calling toggles cleanly.
+# Works in Canvas pixels pinned to a zero anchor rather than mirroring the anchors themselves: the
+# Canvas is a fixed native size (never resized, only scaled — see _apply_scale), so pixel offsets
+# are stable, and this sidesteps the anchor-crossing clamp that stretches a badge when its left
+# anchor is pushed past its still-old right anchor mid-update.
+func _mirror_x(node: Control) -> void:
+	var w := NATIVE_SIZE.x
+	var cur_left := node.anchor_left * w + node.offset_left
+	var cur_right := node.anchor_right * w + node.offset_right
+	node.anchor_left = 0.0
+	node.anchor_right = 0.0
+	node.offset_left = w - cur_right
+	node.offset_right = w - cur_left
 
 
 func _apply_asset_textures() -> void:
@@ -416,6 +487,11 @@ func _refresh_charms() -> void:
 		_charm_col.offset_right = 0.0
 		_charm_col.offset_bottom = 0.0
 		_canvas.add_child(_charm_col)
+		# If this card was already flipped before it grew a charm column, mirror the new column to
+		# match the rest of the reflected layout. (When the column already exists at flip time, the
+		# _flip_nodes() loop handles it instead.)
+		if _flip_applied:
+			_mirror_x(_charm_col)
 
 	for child in _charm_col.get_children():
 		child.queue_free()
