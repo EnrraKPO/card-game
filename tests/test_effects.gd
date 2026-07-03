@@ -14,6 +14,30 @@ func run() -> void:
 	_interception()
 	_channel_policy()
 	_interceptor_round_trip()
+	_composition_conditions()
+
+
+func _composition_conditions() -> void:
+	# The "lackeys only" gate: composition must contain neither king nor queen.
+	var lackeys_only := EffectCondition.from_dict({"composition": ["king", "queen"], "present": false})
+	check(lackeys_only.evaluate(unit("pawn")), "a pawn passes the lackeys-only gate")
+	check(lackeys_only.evaluate(unit("rook")), "a rook passes the lackeys-only gate")
+	check(not lackeys_only.evaluate(unit("king")), "the King (composition contains king) fails it")
+	check(not lackeys_only.evaluate(unit("queen")), "the Queen fails it")
+	check(not lackeys_only.evaluate(unit("rook_queen")), "the Castle (rook+queen combo) fails it")
+
+	# present: true = "contains any of these" — the element-gate form (Blinding Ward's twin).
+	var light_only := EffectCondition.from_dict({"composition": "light"})
+	var light_unit := CardInstance.from_data(CardData.get_card("light_pawn"))
+	if light_unit == null or light_unit.data == null:
+		light_unit = CardInstance.from_data(CardData.get_card("light"))
+	check(light_only.evaluate(light_unit), "a light-composed card passes the light gate")
+	check(not light_only.evaluate(unit("pawn")), "a plain pawn fails the light gate")
+
+	# Round-trips through the authored schema, list normalized.
+	var rt := EffectCondition.from_dict(lackeys_only.to_dict())
+	check(rt.composition == ["king", "queen"] and rt.present == false,
+			"composition condition round-trips (list + present)")
 
 
 # A throwaway unit whose CARD carries the given interceptor effects (native interceptors are

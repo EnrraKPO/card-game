@@ -12,6 +12,12 @@ var custom_check: Callable
 # `status_id` is set, the attribute/comparator fields are ignored.
 var status_id: String = ""
 var present: bool = true
+# COMPOSITION-form condition: passes when the card's composition (elements + chess pieces)
+# contains ANY of the listed ids (`present: true`, the default) or NONE of them
+# (`present: false`). The targeting-side twin of `subject_elements` (how Blinding Ward gates
+# on light). E.g. { "composition": ["king", "queen"], "present": false } = "lackeys only" —
+# gate a buff away from royal compositions so the persistent King doesn't hoard every buff.
+var composition: Array = []
 
 
 static func make(attr: String, comp: Comparator, val: int) -> EffectCondition:
@@ -29,11 +35,18 @@ static func make_custom(check: Callable) -> EffectCondition:
 
 
 # Parses an authored condition dict (inverse of to_dict). Used by Effect.from_dict so all
-# effect/condition parsing lives in one place. A "status" key selects the status form.
+# effect/condition parsing lives in one place. A "status" key selects the status form, a
+# "composition" key (single id or list) the composition form.
 static func from_dict(d: Dictionary) -> EffectCondition:
 	if d.has("status"):
 		var c := EffectCondition.new()
 		c.status_id = str(d.get("status", ""))
+		c.present = bool(d.get("present", true))
+		return c
+	if d.has("composition"):
+		var c := EffectCondition.new()
+		var comp: Variant = d.get("composition")
+		c.composition = [str(comp)] if comp is String else (comp as Array).duplicate()
 		c.present = bool(d.get("present", true))
 		return c
 	return make(
@@ -58,6 +71,8 @@ static func _str_comparator(s: String) -> Comparator:
 func to_dict() -> Dictionary:
 	if not status_id.is_empty():
 		return {"status": status_id, "present": present}
+	if not composition.is_empty():
+		return {"composition": composition.duplicate(), "present": present}
 	return {
 		"attribute":  attribute,
 		"comparator": comparator_key(comparator),
@@ -81,6 +96,13 @@ func evaluate(card: CardInstance) -> bool:
 		return custom_check.call(card)
 	if not status_id.is_empty():
 		return (card.find_status(status_id) != null) == present
+	if not composition.is_empty():
+		var has := false
+		for id: String in composition:
+			if card.data.elements.has(id) or card.data.chess_pieces.has(id):
+				has = true
+				break
+		return has == present
 	var card_val := card.get_attribute(attribute)
 	match comparator:
 		Comparator.GT:  return card_val > value

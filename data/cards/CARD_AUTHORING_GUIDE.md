@@ -139,6 +139,13 @@ units *without* a Barrier (so e.g. Castling can't re-Barrier a unit); `"present"
 default) requires the status. For `manual` spells, ineligible units don't light up during
 targeting and reject the pick/drop outright — the spell can't be wasted.
 
+**Composition form** — gate on what the target is made of (its `elements` + `chess_pieces`),
+the targeting-side twin of `subject_elements`: `{ "composition": ["king", "queen"],
+"present": false }` passes only for units with no royal piece in their composition ("lackeys
+only" — keep a buff off the persistent King); `{ "composition": ["light"] }` passes only for
+light-composed units. A single id or a list is accepted; `present: true` (default) means
+"contains any of these", `false` means "contains none".
+
 **`attribute`** — any card attribute listed above (`health`, `attack`, `speed`, `cost`)
 
 **`comparator`** — how to compare the attribute value against `value`
