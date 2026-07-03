@@ -195,17 +195,18 @@ static func _apply(effect: Effect, target: CardInstance, source: CardInstance, c
 		# Direct health change — a signed HEALTH mutation. The Resolver owns the form (negative
 		# bypasses shield, e.g. poison; positive heals, clamped to max) and reports the delta
 		# that actually landed. The shield-routed pipeline lives on "damage_taken".
-		var out := Resolver.submit(StatMutation.make(target, StatMutation.HEALTH, amount, source))
-		var delta := int(out.get("delta", 0))
-		if delta == 0:
+		var out := Resolver.submit(StatMutation.make(target,
+				StatMutation.stat_for_attribute(effect.attribute), amount, source))
+		if out.delta == 0:
 			return {}   # already full / 0 heal — nothing happened
-		return {"target": target, "attribute": "health", "delta": delta}
+		return {"target": target, "attribute": "health", "delta": out.delta}
 	elif effect.attribute == "damage_taken":
 		# The incoming-hit channel: attack-form damage — shield absorbs first, the remainder
 		# wounds health. HOW it splits is the Resolver's knowledge, not ours.
 		if amount <= 0:
 			return {}
-		Resolver.submit(StatMutation.make(target, StatMutation.DAMAGE, amount, source))
+		Resolver.submit(StatMutation.make(target,
+				StatMutation.stat_for_attribute(effect.attribute), amount, source))
 		return {"target": target, "attribute": "health", "delta": -amount}
 	elif effect.attribute == "outgoing_damage" or effect.attribute == "incoming_damage":
 		# Arbitration: rewrite the PENDING damage mutation riding the context (built by combat,
@@ -228,7 +229,8 @@ static func _apply(effect: Effect, target: CardInstance, source: CardInstance, c
 	else:
 		if amount == 0:
 			return {}
-		Resolver.submit(StatMutation.make(target, StringName(effect.attribute), amount, source))
+		Resolver.submit(StatMutation.make(target,
+				StatMutation.stat_for_attribute(effect.attribute), amount, source))
 		return {"target": target, "attribute": effect.attribute, "delta": amount}
 
 

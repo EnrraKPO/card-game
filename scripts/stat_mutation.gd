@@ -22,15 +22,17 @@ const HEALTH := &"health"
 # Attack-form harm: a positive magnitude, resolved shield-first. HOW it lands (shield absorbs,
 # the rest wounds health) is the Resolver's knowledge — no caller knows shields exist.
 const DAMAGE := &"damage"
-# Current shield pool delta. (As a modifier/override field this same name is the per-round
-# base shield instead — same word, resolved by target kind.)
-const SHIELD := &"shield"
+# The CURRENT shield pool (floors at 0). Distinct from SHIELD below: "shield" has always meant
+# the per-round base (what restore_shield refills to), so the live pool gets its own name —
+# one word must never mean two stats.
+const SHIELD_POOL := &"shield_pool"
 
 # ── Stats: additive modifiers on a CardInstance (fold into get_attribute at read time) ──
 const ATTACK := &"attack"
 const SPEED := &"speed"
 const COST := &"cost"
 const MAX_HEALTH := &"max_health"
+const SHIELD := &"shield"   # per-round base shield (raises what each round's refill restores)
 
 # A DeckCard target instead treats `stat` as the card-definition FIELD to bump permanently
 # ("attack"/"health"/"speed"/"shield" — see DeckCard.UPGRADABLE and the "?" event).
@@ -45,6 +47,17 @@ var stat: StringName = HEALTH
 var amount: int = 0
 var source: CardInstance = null    # who caused it (null for system mutations)
 var channel: StringName = CH_EFFECT
+
+
+# Effect-attribute name → the stat it lands as. The two authored names with a distinct
+# resolution form map to their stat ("health" signed/shield-bypassing, "damage_taken" the
+# shield-first attack form); any other attribute is an additive modifier under its own name.
+# Owned here so the vocabulary and its translation live in one file (used by EffectSystem).
+static func stat_for_attribute(attr: String) -> StringName:
+	match attr:
+		"health":       return HEALTH
+		"damage_taken": return DAMAGE
+	return StringName(attr)
 
 
 static func make(p_target: Object, p_stat: StringName, p_amount: int,
