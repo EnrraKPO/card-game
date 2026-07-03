@@ -18,10 +18,10 @@ func enter(node: MapNodeData, map_screen: MapScreen) -> void:
 		push_error("NodeKindCombat: no encounter template available for node_type %s" % node.type)
 		return
 
-	# Difficulty scales with how deep the player is — power ≈ the number of encounters cleared so
-	# far (global floor across stages). The first fight is ~0 (gentle); it climbs every floor.
+	# Difficulty scales with how deep the player is (global floor across stages, 0 at the first
+	# fight). The ramp is convex — gentle early, steep late — see EncounterTemplateData.power_for_depth.
 	var global_floor := (stage - 1) * MapData.FLOORS + node.floor
-	var power := float(global_floor) * EncounterTemplateData.POWER_PER_FLOOR
+	var power := EncounterTemplateData.power_for_depth(global_floor)
 	var enc := template.instantiate(rng, power)
 	enc.material_rewards    = node.material_rewards.duplicate()   # the reward previewed on the map
 	enc.completing_node_id  = map_screen.current_node_id

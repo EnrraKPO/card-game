@@ -8,6 +8,10 @@ const NODE_DIAM := 62.0
 const NODE_DIAM_COMPACT := 150.0
 const V_PAD := 48.0
 
+# The always-available Forge action's button art (a complete circular glossy button — see
+# _build_forge_fab, which shows this directly instead of drawing its own circle + anvil).
+const FORGE_FAB_TEX := preload("res://assets/buttons/forge.png")
+
 # --- Tunable in the Inspector (select the Map root node in map.tscn, drag the sliders,
 # --- then run to see the result). Spacing is a multiple of node diameter, so it scales with
 # --- node size. Lane spacing is still capped to the viewport width so nodes never clip.
@@ -141,7 +145,6 @@ func _build_scroll() -> void:
 # content so it reads as a primary feature on its own, without glow/animation gimmicks.
 func _build_forge_fab() -> void:
 	var diam: float = forge_diam_compact if _compact else forge_diam
-	var amber := MapNodeData.get_color(MapNodeData.Type.FORGE)
 
 	var fab := Control.new()
 	# Centre the button at (forge_pos_x, forge_pos_y) of the screen — tune in the Inspector.
@@ -152,39 +155,30 @@ func _build_forge_fab() -> void:
 	fab.z_index = 50
 	add_child(fab)
 
-	# A plain Button, not GlossyButton — the nine-patch skin (see glossy_button.gd) can't produce
-	# an exact circle from a rectangular corner-cut texture. Styled directly with a StyleBoxFlat
-	# circle (corner radius == half the square's side) until the design gets its own circular art.
+	# The provided circular button art IS the button face (glossy circle + anvil baked in), so we
+	# just show it and lay a transparent Button over it for the click + tooltip.
+	var tex := TextureRect.new()
+	tex.texture = FORGE_FAB_TEX
+	tex.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	fab.add_child(tex)
+
 	var btn := Button.new()
 	btn.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	btn.focus_mode = Control.FOCUS_NONE
 	btn.tooltip_text = "Forge — combine two cards into one"
+	for s in ["normal", "hover", "pressed", "focus", "disabled"]:
+		btn.add_theme_stylebox_override(s, StyleBoxEmpty.new())
 	btn.pressed.connect(func(): _node_kinds[MapNodeData.Type.FORGE].enter(null, self))
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = amber
-	sb.set_corner_radius_all(int(diam * 0.5))
-	sb.border_color = ScreenUI.CHROME_INK
-	sb.set_border_width_all(3)
-	btn.add_theme_stylebox_override("normal", sb)
-	var sb_hover := sb.duplicate() as StyleBoxFlat
-	sb_hover.bg_color = amber.lightened(0.1)
-	btn.add_theme_stylebox_override("hover", sb_hover)
-	var sb_pressed := sb.duplicate() as StyleBoxFlat
-	sb_pressed.bg_color = amber.darkened(0.15)
-	btn.add_theme_stylebox_override("pressed", sb_pressed)
+	# Tactile feedback on the art itself (the button has no visual of its own): brighten on hover,
+	# sink darker on press.
+	btn.mouse_entered.connect(func() -> void: if not btn.button_pressed: tex.modulate = Color(1.12, 1.12, 1.12))
+	btn.mouse_exited.connect(func() -> void: tex.modulate = Color.WHITE)
+	btn.button_down.connect(func() -> void: tex.modulate = Color(0.85, 0.85, 0.85))
+	btn.button_up.connect(func() -> void: tex.modulate = Color.WHITE)
 	fab.add_child(btn)
-
-	# Anvil icon centred inside the circle (clicks pass through to the button).
-	var icon := TextureRect.new()
-	icon.texture = MapNodeData.get_icon(MapNodeData.Type.FORGE)
-	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE     # let it shrink to the circle
-	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	icon.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	var pad := diam * 0.24
-	icon.offset_left = pad; icon.offset_top = pad
-	icon.offset_right = -pad; icon.offset_bottom = -pad
-	fab.add_child(icon)
 
 
 func _build_map() -> void:

@@ -263,11 +263,13 @@ func _apply_label_style() -> void:
 		label.add_theme_color_override("font_color", Color(0.97, 0.95, 0.86))
 		label.add_theme_color_override("font_outline_color", Color(0.02, 0.02, 0.04, 1.0))
 		label.add_theme_constant_override("outline_size", 6)
-	# Only the stat numbers use the Garamond serif; the name keeps the default
-	# sans face, which the user found more readable for words.
 	var numbers := [_cost_lbl, _spd_lbl, _atk_lbl, _shield_lbl, _hp_lbl]
 	for num: Label in numbers:
-		num.add_theme_font_size_override("font_size", 30)
+		if UIScale.is_compact():
+			num.add_theme_font_size_override("font_size", 36)
+		else:
+			num.add_theme_font_size_override("font_size", 30)
+
 	_name_label.add_theme_font_size_override("font_size", 22)
 	_shield_lbl.add_theme_color_override("font_color", Color(0.58, 0.86, 1.0))
 

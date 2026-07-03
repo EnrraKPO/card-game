@@ -27,12 +27,29 @@ var relic_reward_chance: float = 0.0
 var power_bonus: float = 0.0
 
 # ── Procedural difficulty (power) tuning ──────────────────────────────────────
-# `power` = how deep the player is (global floor; ~0 at the first fight). One number drives
-# three procedural levers below — raise a knob to steepen that part of the curve.
-const POWER_PER_FLOOR  := 1.0    # power gained per floor of run depth
+# `power` = how deep the player is. It drives three procedural levers below (deck size, cost skew,
+# and — via CardData.scaled — per-card stats), so ONE curve shapes the whole difficulty ramp. See
+# power_for_depth() for how run depth maps to power.
+const POWER_PER_FLOOR  := 1.0    # peak power at the final boss ≈ POWER_PER_FLOOR * deepest floor
+# Shape of the depth→power ramp. 1.0 = linear (constant slope, the old behaviour). >1 = gentle at
+# the start and steep later: the first fights sit near power 0 (very easy) while deep fights ramp
+# up hard. This is the knob to turn if the early/late balance still feels off.
+const POWER_CURVE_EXP  := 1.7
 const POWER_CURVE_BIAS := 0.05   # how hard the pool skews toward costlier cards as power climbs
 const POWER_SIZE_GROWTH := 0.5   # extra enemy-deck cards per point of power
 # (per-card stat growth lives on CardData.POWER_STAT_GROWTH, used by CardData.scaled)
+
+
+# Maps how deep the player is (global floor, 0 at the first fight) to encounter power. A convex
+# ramp (POWER_CURVE_EXP > 1) keeps early fights near power 0 (gentle) and then climbs steeply toward
+# the deepest floor. Normalised so the deepest floor still peaks at the same power the old linear
+# ramp did (POWER_PER_FLOOR * deepest floor) — only the SHAPE of the curve changes, not the ceiling.
+static func power_for_depth(global_floor: int) -> float:
+	var max_depth := float(MapData.STAGES * MapData.FLOORS - 1)
+	if global_floor <= 0 or max_depth <= 0.0:
+		return 0.0
+	var t := clampf(float(global_floor) / max_depth, 0.0, 1.0)
+	return POWER_PER_FLOOR * max_depth * pow(t, POWER_CURVE_EXP)
 
 static var _all: Array = []  # Array[EncounterTemplateData]
 
