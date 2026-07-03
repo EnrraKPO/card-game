@@ -115,11 +115,23 @@ func _build_loadout_panel() -> Control:
 	_add_stat(box, "King", king_name)
 	_add_stat(box, "Deck", "%d cards" % (deck.cards.size() if deck != null else 0))
 	box.add_child(ScreenUI.experience_bar(profile))
-	# Crafting resources earned from runs (essences / King Pieces).
+
+	# Crafting resources earned from runs (essences / King Pieces) — scrolls within its own share
+	# of the sidebar instead of growing unbounded and forcing the whole row (sidebar + actions
+	# column) taller than the screen, which pushed the actions column's own bottom button
+	# (Abandon run) down under the footer.
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	box.add_child(scroll)
+	var mat_box := VBoxContainer.new()
+	mat_box.add_theme_constant_override("separation", 10)
+	mat_box.size_flags_horizontal = SIZE_EXPAND_FILL
+	scroll.add_child(mat_box)
 	for id: String in profile.materials.ids():
 		var n := profile.materials.count(id)
 		if n > 0:
-			_add_stat(box, Materials.display_name(id), str(n))
+			_add_stat(mat_box, Materials.display_name(id), str(n))
 	return panel
 
 

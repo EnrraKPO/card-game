@@ -473,10 +473,12 @@ func _apply_attack_damage(attacker: CardInstance, target: CardInstance, t_card: 
 		# leaves the card unwounded). When the hit also bleeds through to HP, a brief halt lets the
 		# absorb land before the wound, so the shield is legible as the first thing that happened.
 		if dmg_split.shield_absorbed > 0:
+			Sfx.shield_block()
 			_vfx.play(VFXEvent.shield_hit(t_card, dmg_split.shield_absorbed))
 		if dmg_split.health_damage > 0:
 			if dmg_split.shield_absorbed > 0:
 				await get_tree().create_timer(SHIELD_LEAD).timeout
+			Sfx.attack_damage()
 			_vfx.play(VFXEvent.health_damage(t_card, dmg_split.health_damage))
 	_board.refresh()
 

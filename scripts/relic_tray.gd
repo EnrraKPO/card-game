@@ -74,14 +74,44 @@ func _make_chip(relic: RelicData) -> Button:
 	var btn := Button.new()
 	btn.custom_minimum_size = Vector2(s, s)
 	btn.size_flags_vertical = SIZE_SHRINK_CENTER
-	btn.text = relic.letter
-	btn.add_theme_font_size_override("font_size", 24 if UIScale.is_compact() else 18)
-	btn.add_theme_color_override("font_color", Color(0.06, 0.06, 0.08))
-	btn.add_theme_color_override("font_hover_color", Color(0.06, 0.06, 0.08))
 	var tip := "%s — %s" % [relic.display_name, relic.description]
 	if interactive:
 		tip += "\n(tap to discard)"
 	btn.tooltip_text = tip
+	if relic.icon != null:
+		_style_icon_chip(btn, relic.icon)
+	else:
+		_style_letter_chip(btn, relic)
+	if interactive:
+		btn.pressed.connect(func() -> void: _confirm_discard(relic))
+	else:
+		btn.mouse_default_cursor_shape = Control.CURSOR_ARROW
+	return btn
+
+
+# The illustrated variant: the art fills the chip, frameless (it carries its own frame), with just
+# a faint rounded hover wash so the map HUD's tap-to-discard still has feedback.
+func _style_icon_chip(btn: Button, icon: Texture2D) -> void:
+	btn.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
+	var hover := StyleBoxFlat.new()
+	hover.bg_color = Color(1, 1, 1, 0.14)
+	hover.set_corner_radius_all(7)
+	btn.add_theme_stylebox_override("hover", hover)
+	var tex := TextureRect.new()
+	tex.texture = icon
+	tex.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	btn.add_child(tex)
+
+
+# The default coloured-letter chip, for relics with no art.
+func _style_letter_chip(btn: Button, relic: RelicData) -> void:
+	btn.text = relic.letter
+	btn.add_theme_font_size_override("font_size", 24 if UIScale.is_compact() else 18)
+	btn.add_theme_color_override("font_color", Color(0.06, 0.06, 0.08))
+	btn.add_theme_color_override("font_hover_color", Color(0.06, 0.06, 0.08))
 	var style := StyleBoxFlat.new()
 	style.bg_color = relic.color
 	style.set_corner_radius_all(7)
@@ -91,11 +121,6 @@ func _make_chip(relic: RelicData) -> Button:
 	var hover := style.duplicate() as StyleBoxFlat
 	hover.bg_color = relic.color.lightened(0.12)
 	btn.add_theme_stylebox_override("hover", hover)
-	if interactive:
-		btn.pressed.connect(func() -> void: _confirm_discard(relic))
-	else:
-		btn.mouse_default_cursor_shape = Control.CURSOR_ARROW
-	return btn
 
 
 func _confirm_discard(relic: RelicData) -> void:

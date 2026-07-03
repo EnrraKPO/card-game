@@ -8,7 +8,11 @@ extends RefCounted
 # screen-specific content (buttons, filters, counts) — those belong in a toolbar row inside the
 # screen's own body content, same as any other body content.
 
-const CLOSE_GLYPH := "✕"
+# U+00D7 (multiplication sign), not U+2715 ("✕") — the bundled CHUNKY_FONT (Baloo2-ExtraBold)
+# has no glyph for U+2715 at all. Desktop silently falls back to a system font so it looked fine
+# there, but web/mobile builds have no such fallback and render a broken glyph. × is actually in
+# the font (verified via Font.has_char), so it's guaranteed to render the same everywhere.
+const CLOSE_GLYPH := "×"
 
 # THE app-wide neutral palette — every screen's background/panel/dialog surface picks one of
 # these, never invents its own. LIGHT AND WARM — matching the actual art-direction reference
@@ -167,7 +171,9 @@ static func experience_bar_compact(profile: ProfileData, compact: bool = false, 
 	# Minor "you have upgrade points" nudge — a gold pip, details in the tooltip.
 	if pts > 0:
 		var pip := Label.new()
-		pip.text = "●"
+		# "•" not "●" — the app's default font (Baloo2-ExtraBold) has no glyph for U+25CF; see
+		# CLOSE_GLYPH for the same issue and why it matters specifically on web/mobile.
+		pip.text = "•"
 		pip.add_theme_font_size_override("font_size", 18 if compact else 14)
 		pip.add_theme_color_override("font_color", Color(0.95, 0.84, 0.34))
 		pip.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -424,11 +430,16 @@ static func action_button(text: String, action: Callable, min_size: Vector2 = Ve
 # of the normal ✕ (see [[header-system]] — no chrome piece changes appearance per screen).
 static func close_button(action: Callable, debug: bool = false) -> Button:
 	var compact := UIScale.is_compact()
-	var min_size := Vector2(BUTTON_HEIGHT_COMPACT, BUTTON_HEIGHT_COMPACT) if compact \
-		else Vector2(56, BUTTON_HEIGHT)
-	var btn := action_button(CLOSE_GLYPH, action, min_size, 34 if compact else 24,
+	# Smaller than the bar's full inner content height (BUTTON_HEIGHT/_COMPACT) so it doesn't sit
+	# flush against the bar's top/bottom edge. SIZE_SHRINK_CENTER below keeps the row from
+	# re-stretching it back out. GlossyButton.clip_contents guarantees the nine-patch art itself
+	# never paints past this box, however small.
+	var side := BUTTON_HEIGHT_COMPACT - 12.0 if compact else BUTTON_HEIGHT - 8.0
+	var min_size := Vector2(side, side)
+	var btn := action_button(CLOSE_GLYPH, action, min_size, 30 if compact else 20,
 		CHROME_DEBUG if debug else CHROME_NEUTRAL)
 	btn.tooltip_text = "Close"
+	btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	return btn
 
 

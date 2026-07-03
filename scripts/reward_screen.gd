@@ -186,7 +186,10 @@ func _make_relic_offer(grant: Grant, card_size: Vector2, compact: bool) -> Contr
 	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	btn.add_child(v)
 
-	v.add_child(_offer_label(relic.letter if relic != null else "✦", 64 if compact else 44, accent.darkened(0.3)))
+	if relic != null and relic.icon != null:
+		v.add_child(_offer_icon(relic.icon, 140 if compact else 104))
+	else:
+		v.add_child(_offer_label(relic.letter if relic != null else "✦", 64 if compact else 44, accent.darkened(0.3)))
 	v.add_child(_offer_label("RELIC", 18 if compact else 12, Color("5a4a38")))
 	var name_lbl := _offer_label(grant.display_name(), 24 if compact else 17, ScreenUI.TEXT_COLOR)
 	name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -202,6 +205,19 @@ func _make_relic_offer(grant: Grant, card_size: Vector2, compact: bool) -> Contr
 	if pickable:
 		btn.pressed.connect(func() -> void: _pick(grant))
 	return btn
+
+
+# The relic illustration, sized to a fixed square, taking the place of the big glyph label at the
+# top of a relic offer. Fit-centred (art carries its own frame + transparency).
+func _offer_icon(icon: Texture2D, box: int) -> TextureRect:
+	var tex := TextureRect.new()
+	tex.texture = icon
+	tex.custom_minimum_size = Vector2(box, box)
+	tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	tex.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return tex
 
 
 func _offer_label(text: String, font_size: int, col: Color) -> Label:

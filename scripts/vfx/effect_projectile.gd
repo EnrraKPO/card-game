@@ -165,13 +165,17 @@ func _spawn_trail(pos: Vector2, color: Color) -> void:
 	dot.z_index = 38
 	dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	dot.pivot_offset = dot.size * 0.5
-	dot.global_position = pos - dot.size * 0.5
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = Color(color, 0.65)
 	sb.set_corner_radius_all(int(d))
 	sb.anti_aliasing = true
 	dot.add_theme_stylebox_override("panel", sb)
 	_root.add_child(dot)
+	# AFTER add_child — set before parenting, global_position writes plain `position` and the puff
+	# lands offset by _root's global offset (the header bar above combat); see source_glint. The
+	# bolt itself never had this bug (positioned per-tick, already in the tree), which is why the
+	# trail visibly detached below its own projectile.
+	dot.global_position = pos - dot.size * 0.5
 	var tw := _root.create_tween()
 	tw.set_parallel(true)
 	tw.tween_property(dot, "modulate:a", 0.0, 0.30)
@@ -190,7 +194,6 @@ func _burst(center: Vector2, color: Color) -> void:
 	ring.z_index = 39
 	ring.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ring.pivot_offset = ring.size * 0.5
-	ring.global_position = center - ring.size * 0.5
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = Color(color, 0.0)
 	sb.set_corner_radius_all(int(d * 0.5))
@@ -199,6 +202,7 @@ func _burst(center: Vector2, color: Color) -> void:
 	sb.anti_aliasing = true
 	ring.add_theme_stylebox_override("panel", sb)
 	_root.add_child(ring)
+	ring.global_position = center - ring.size * 0.5   # AFTER add_child — see _spawn_trail
 	var tw := _root.create_tween()
 	tw.set_parallel(true)
 	tw.tween_property(ring, "scale", Vector2(2.4, 2.4), 0.28).set_ease(Tween.EASE_OUT)

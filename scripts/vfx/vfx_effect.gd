@@ -20,6 +20,7 @@ func play() -> void:
 const LABEL_LIFE    := 0.95   # total time a number is on screen
 const LABEL_RISE    := 42.0   # px it drifts upward over its life
 const STACK_SPACING := 24.0   # vertical gap between numbers stacked on the same stat
+const NUMBER_FONT := preload("res://assets/fontd/Baloo_2/static/Baloo2-ExtraBold.ttf")
 
 # Pops a combat number anchored to the stat it changes (`anchor_attr`: "health", "shield", "attack",
 # "speed", "cost"; "" = card centre). Position is the primary cue — a red number over the HP badge
@@ -34,26 +35,34 @@ func _float_label(text: String, color: Color, anchor_attr: String = "") -> void:
 	var slot := _reserve_label_slot(root, "%d:%s" % [card.get_instance_id(), anchor_attr])
 
 	var lbl := Label.new()
-	lbl.text     = text
-	lbl.modulate = color
-	# Big, with a fat dark outline so the number reads over any card art, and a high z so it sits
-	# above every other VFX layer.
+	lbl.text = text
+	# `color` sets the actual font color directly — NOT via modulate, which multiplies against the
+	# theme's default Label color. That default is now a dark warm brown (the light re-theme), so
+	# modulate-tinting used to crush every number toward near-black regardless of `color`. modulate
+	# itself stays white and is only ever used below for the alpha fade-out, never for tint.
+	# Big, chunky (matches the button font), with a fat dark outline so the number reads over any
+	# card art, and a high z so it sits above every other VFX layer.
+	lbl.add_theme_font_override("font", NUMBER_FONT)
 	lbl.add_theme_font_size_override("font_size", 30)
+	lbl.add_theme_color_override("font_color", color)
 	lbl.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.95))
 	lbl.add_theme_constant_override("outline_size", 7)
 	lbl.z_index = 60
 	var anchor: Vector2 = card.stat_anchor(anchor_attr) if card.has_method("stat_anchor") \
 		else card.global_position + card.size * 0.5
 	# Start just above the badge (offset left to roughly centre a 1-2 digit number), stacked rows
-	# climbing higher; then rise further from there.
+	# climbing higher; then rise further from there. `anchor` is GLOBAL, so position via
+	# global_position and only after add_child (before parenting the setter writes plain
+	# `position`, which offsets the number by root's global offset — the header above combat).
 	var base_pos := anchor + Vector2(-14.0, -26.0 - slot * STACK_SPACING)
-	lbl.position = base_pos
 	root.add_child(lbl)
+	lbl.global_position = base_pos
 
 	# ONE continuous, decelerating rise — no mid-animation freeze. Opacity (not motion) is staged:
-	# solid for the first half so it reads, then fades over the second half.
+	# solid for the first half so it reads, then fades over the second half. The rise target is in
+	# the label's LOCAL space (position:y), relative to where it just landed.
 	var rise := root.create_tween()
-	rise.tween_property(lbl, "position:y", base_pos.y - LABEL_RISE, LABEL_LIFE).set_ease(Tween.EASE_OUT)
+	rise.tween_property(lbl, "position:y", lbl.position.y - LABEL_RISE, LABEL_LIFE).set_ease(Tween.EASE_OUT)
 
 	var fade := root.create_tween()
 	fade.tween_interval(LABEL_LIFE * 0.5)
@@ -110,7 +119,6 @@ func _stat_glint(anchor_attr: String, color: Color, positive: bool, react_card: 
 	glint.z_index = 17
 	glint.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	glint.pivot_offset = glint.size * 0.5
-	glint.global_position = anchor - glint.size * 0.5
 	var sb := StyleBoxFlat.new()
 	sb.set_corner_radius_all(int(d * 0.5))   # circular
 	sb.anti_aliasing = true
@@ -125,6 +133,7 @@ func _stat_glint(anchor_attr: String, color: Color, positive: bool, react_card: 
 		sb.set_border_width_all(2)
 	glint.add_theme_stylebox_override("panel", sb)
 	_root.add_child(glint)
+	glint.global_position = anchor - glint.size * 0.5   # AFTER add_child — see _float_label
 	var tw := _root.create_tween()
 	tw.set_parallel(true)
 	if positive:
@@ -156,10 +165,10 @@ func _drain_card(card: Control) -> void:
 	var wash := ColorRect.new()
 	wash.color = Color(0.55, 0.55, 0.6, 0.0)
 	wash.size = card.size
-	wash.global_position = card.global_position
 	wash.z_index = 16
 	wash.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.add_child(wash)
+	wash.global_position = card.global_position   # AFTER add_child — see _float_label
 	var wt := _root.create_tween()
 	wt.tween_property(wash, "color:a", 0.5, 0.10).set_ease(Tween.EASE_OUT)
 	wt.tween_property(wash, "color:a", 0.0, 0.28)

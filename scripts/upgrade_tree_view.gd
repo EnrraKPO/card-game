@@ -106,7 +106,9 @@ func refresh_states() -> void:
 			btn.modulate = Color.WHITE
 		elif profile.owns_upgrade(node.id):
 			btn.modulate = OWNED_TINT
-			name_lbl.text = "%s ✓" % node.display_name
+			# "√" not "✓" — the default font (Baloo2-ExtraBold) has no U+2713 glyph; see
+			# ScreenUI.CLOSE_GLYPH for the same issue.
+			name_lbl.text = "%s √" % node.display_name
 		elif profile.upgrade_unlocked(node):
 			btn.modulate = Color.WHITE
 		else:

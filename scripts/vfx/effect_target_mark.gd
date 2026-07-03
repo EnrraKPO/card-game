@@ -20,7 +20,6 @@ func play() -> void:
 	frame.z_index = 15
 	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	frame.pivot_offset = frame.size * 0.5
-	frame.global_position = card.global_position
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = Color(_event.color, 0.0)
 	sb.set_corner_radius_all(14)
@@ -34,6 +33,9 @@ func play() -> void:
 	sb.anti_aliasing = true
 	frame.add_theme_stylebox_override("panel", sb)
 	_root.add_child(frame)
+	# AFTER add_child — set before parenting, global_position writes plain `position` and the
+	# reticle lands offset by _root's global offset (the header bar above combat); see source_glint.
+	frame.global_position = card.global_position
 
 	# Snap in from slightly oversized, hold a beat bright, then fade out.
 	frame.scale = Vector2(1.12, 1.12)

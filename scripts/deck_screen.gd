@@ -204,7 +204,7 @@ func _make_deck_tile(od: OwnedDeck, ordinal: int) -> Control:
 
 	var badge_text := ""
 	if od.id == GameData.current_profile.selected_deck_id:
-		badge_text = "✓ ACTIVE"
+		badge_text = "√ ACTIVE"
 	if ordinal > 1:
 		badge_text += ("   " if not badge_text.is_empty() else "") + "(%d)" % ordinal
 	if not badge_text.is_empty():
@@ -273,7 +273,10 @@ func _update_preview() -> void:
 		"   (active)" if is_active else ""]
 	_preview_grid.set_cards(DeckUI.deck_cards(od))
 
-	_set_active_btn.text = "Active ✓" if is_active else "Set as Active"
+	# "√" not "✓" — the bundled button font (Baloo2-ExtraBold) has no glyph for U+2713 at all,
+	# which renders broken on web/mobile builds (no reliable system-font fallback there); see
+	# ScreenUI.CLOSE_GLYPH for the same issue on the header's close button.
+	_set_active_btn.text = "Active √" if is_active else "Set as Active"
 	_set_active_btn.disabled = is_active
 	_view_btn.disabled = false
 	_edit_btn.disabled = false

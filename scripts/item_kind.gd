@@ -47,13 +47,19 @@ func grant(_id: String, _count: int) -> void:
 
 # ── Shared UI ──────────────────────────────────────────────────────────────────────────
 
-# A 64×64 coloured chip with a glyph and tooltip — the shared look for charm/relic offers and the
-# relic tray (lifted from shop_screen's charm-chip styling).
-static func make_chip(letter: String, col: Color, tip: String) -> Control:
+# A 64×64 chip with a tooltip — the shared look for charm/relic offers and the relic tray (lifted
+# from shop_screen's charm-chip styling). With `icon` it shows that illustration fit-centred and
+# frameless (relic art carries its own frame + transparency); without one it falls back to the
+# coloured `letter` glyph.
+static func make_chip(letter: String, col: Color, tip: String, icon: Texture2D = null) -> Control:
 	var chip := Panel.new()
 	chip.custom_minimum_size = Vector2(64, 64)
 	chip.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	chip.tooltip_text = tip
+	if icon != null:
+		chip.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+		chip.add_child(_fill_icon(icon))
+		return chip
 	var style := StyleBoxFlat.new()
 	style.bg_color = col
 	style.set_corner_radius_all(14)
@@ -68,3 +74,16 @@ static func make_chip(letter: String, col: Color, tip: String) -> Control:
 	glyph.add_theme_font_size_override("font_size", 26)
 	chip.add_child(glyph)
 	return chip
+
+
+# A full-rect TextureRect that fits its art inside the parent, aspect preserved (art has its own
+# frame + transparent margins, so KEEP_ASPECT_CENTERED, never cover/crop). Non-interactive so it
+# never steals a tap from the chip/button it sits on.
+static func _fill_icon(icon: Texture2D) -> TextureRect:
+	var tex := TextureRect.new()
+	tex.texture = icon
+	tex.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return tex

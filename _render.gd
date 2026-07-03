@@ -18,6 +18,8 @@ func _ready() -> void:
 		var did: String = GameData.current_profile.selected_deck_id
 		GameData.editing_deck_id = did
 		GameData.viewing_deck_id = did
+	if OS.get_cmdline_user_args().size() > 1 and OS.get_cmdline_user_args()[1] == "compact":
+		UIScale._compact = true
 	if scene_path.contains("reward"):
 		var enc := EncounterData.new()
 		enc.type = EncounterData.Type.ELITE

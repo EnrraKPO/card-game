@@ -1,5 +1,7 @@
 [gd_resource type="Theme" format=3 uid="uid://bui1theme01"]
 
+[ext_resource type="FontFile" uid="uid://cnkajhk3x82ny" path="res://assets/fontd/Baloo_2/static/Baloo2-ExtraBold.ttf" id="1"]
+
 [sub_resource type="StyleBoxFlat" id="btn_disabled"]
 content_margin_left = 24.0
 content_margin_top = 14.0
@@ -81,6 +83,7 @@ corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
 
 [resource]
+default_font = ExtResource("1")
 default_font_size = 20
 Button/colors/font_color = Color(0.92, 0.93, 0.97, 1)
 Button/colors/font_disabled_color = Color(0.5, 0.5, 0.55, 1)
@@ -92,9 +95,9 @@ Button/styles/focus = SubResource("btn_focus")
 Button/styles/hover = SubResource("btn_hover")
 Button/styles/normal = SubResource("btn_normal")
 Button/styles/pressed = SubResource("btn_pressed")
+CheckButton/colors/font_color = Color(0.169, 0.129, 0.094, 1)
 Label/colors/font_color = Color(0.169, 0.129, 0.094, 1)
-RichTextLabel/colors/default_color = Color(0.169, 0.129, 0.094, 1)
 LineEdit/colors/font_color = Color(0.169, 0.129, 0.094, 1)
 LineEdit/colors/font_placeholder_color = Color(0.169, 0.129, 0.094, 0.5)
-CheckButton/colors/font_color = Color(0.169, 0.129, 0.094, 1)
 OptionButton/colors/font_color = Color(0.169, 0.129, 0.094, 1)
+RichTextLabel/colors/default_color = Color(0.169, 0.129, 0.094, 1)

@@ -26,6 +26,7 @@ GameData="*res://scripts/game_data.gd"
 UIScale="*res://scripts/ui_scale.gd"
 Nav="*res://scripts/nav.gd"
 GameSignals="*res://scripts/game_signals.gd"
+Sfx="*res://scripts/sfx.gd"
 
 [display]
 

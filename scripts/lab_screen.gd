@@ -811,6 +811,7 @@ func _on_mint() -> void:
 	var card := CardData.get_card(card_id)
 	var card_name: String = card.display_name if card != null else card_id
 	if Lab.mint(GameData.current_profile, card_id):
+		Sfx.combined()
 		GameData.save_profile()
 		_rebuild_inventory()
 		_refresh_open()
@@ -879,6 +880,7 @@ func _on_forge() -> void:
 	var b := _staged_element(_stone_slots[1])
 	var king_id := Lab.forge(GameData.current_profile, a, b)
 	if not king_id.is_empty():
+		Sfx.combined()
 		GameData.save_profile()
 		_rebuild_inventory()
 		_refresh_open()

@@ -61,7 +61,7 @@
   },
   {
 	"id": "bishop_knight",
-	"display_name": "Fable",
+	"display_name": "Cryptid",
 	"cost": 4, "attack": 5, "health": 6, "speed": 5,
 	"description": "A legendary mount that vaults deep into enemy lines. Its death inspires all allies with +2 Attack.",
 	"elements": [], "chess_pieces": ["knight", "bishop"],
@@ -71,7 +71,7 @@
   },
   {
 	"id": "knight_queen",
-	"display_name": "Myth",
+	"display_name": "Monster",
 	"cost": 6, "attack": 7, "health": 7, "speed": 5,
 	"description": "A towering horror that leaps the front column and drains 2 HP with each attack.",
 	"elements": [], "chess_pieces": ["knight", "queen"],
@@ -114,7 +114,7 @@
   },
   {
 	"id": "bishop_queen",
-	"display_name": "Creed",
+	"display_name": "Deity",
 	"cost": 6, "attack": 6, "health": 7, "speed": 4,
 	"description": "A divine being. Blesses all allies with +2 Attack and smites the deadliest enemy.",
 	"elements": [], "chess_pieces": ["queen", "bishop"],

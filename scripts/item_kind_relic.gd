@@ -18,7 +18,7 @@ func make_offer_ui(id: String) -> Control:
 	var r := RelicData.get_relic(id)
 	if r == null:
 		return Control.new()
-	return ItemKind.make_chip(r.letter, r.color, tooltip(id))
+	return ItemKind.make_chip(r.letter, r.color, tooltip(id), r.icon)
 
 
 func display_name(id: String) -> String:

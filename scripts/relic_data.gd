@@ -12,7 +12,9 @@ var id: String
 var display_name: String
 var description: String
 var color: Color = Color(0.80, 0.74, 0.45)   # chip colour in the relic tray / offers
-var letter: String = "✦"                      # short glyph shown on the chip
+var letter: String = "✦"                      # short glyph shown on the chip when there's no icon
+var icon: Texture2D = null                     # optional illustration; when present it replaces the
+											   # coloured letter chip everywhere the relic is shown
 var price: int = 80                            # gold cost when offered in a shop
 var effects: Array = []                        # Array[Effect] — the run-wide effects this relic grants
 
@@ -48,6 +50,11 @@ static func _load_json(path: String) -> void:
 		r.description  = d.get("description", "")
 		r.color        = Color.html(str(d.get("color", "ccbc72")))
 		r.letter       = d.get("letter", "✦")
+		# Art is by-convention (assets/relics/<id>.png), same pattern card_data uses for card art —
+		# no path in the JSON. Absent art is fine: the letter+colour chip is the fallback everywhere.
+		var art_path := "res://assets/relics/%s.png" % r.id
+		if ResourceLoader.exists(art_path):
+			r.icon = load(art_path)
 		r.price        = int(d.get("price", 80))
 		for e: Dictionary in d.get("effects", []):
 			var eff := Effect.from_dict(e)

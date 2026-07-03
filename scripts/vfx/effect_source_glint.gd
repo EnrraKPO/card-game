@@ -24,7 +24,6 @@ func play() -> void:
 	halo.z_index = 14
 	halo.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	halo.pivot_offset = halo.size * 0.5
-	halo.global_position = card.global_position
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = Color(GLINT_COLOR, 0.0)
 	sb.set_corner_radius_all(14)
@@ -37,6 +36,11 @@ func play() -> void:
 	sb.anti_aliasing = true
 	halo.add_theme_stylebox_override("panel", sb)
 	_root.add_child(halo)
+	# Positioned AFTER add_child: on a parentless Control, the global_position setter just writes
+	# plain `position`, so setting it before parenting bakes in _root's own global offset once the
+	# node enters the tree — since the Shell refactor put combat below the header bar, that
+	# rendered the halo visibly shifted down by the header's height.
+	halo.global_position = card.global_position
 	var ht := _root.create_tween()
 	ht.set_parallel(true)
 	ht.tween_property(halo, "scale", Vector2(HALO_GROW, HALO_GROW), HALO_DUR).set_ease(Tween.EASE_OUT)

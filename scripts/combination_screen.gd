@@ -93,6 +93,13 @@ func get_chrome() -> Dictionary:
 		"show_footer": true}
 
 
+func _exit_tree() -> void:
+	# The mixing loop lives on the Sfx AUTOLOAD, so it survives this screen being freed — leaving
+	# mid-drag (Shell frees content on navigation, no _cancel_drag runs) would otherwise let the
+	# drone play forever over the next screen.
+	Sfx.mixing_stop()
+
+
 func _build_ui() -> void:
 	_compact = UIScale.is_compact()
 	_card_size = Vector2(230, 302) if _compact else CARD_SIZE
@@ -390,6 +397,7 @@ func _begin_drag(payload: Dictionary) -> void:
 	_aura = _make_aura(_source_color(payload), r.x, r.y)
 	_aura.position = _follower_center   # keep the halo on the (possibly lifted) visual, not the pointer
 	_follower.add_child(_aura)
+	Sfx.mixing_start()   # the aura's audio half — loops for exactly as long as the particles swirl
 
 	# Leave the dragged source IN PLACE as a dimmed "ghost": its grid slot stays occupied, so the
 	# grid never reflows mid-drag. Cards staying put avoids accidental drops on one that slid under
@@ -553,6 +561,7 @@ func _set_hover(target_idx: int) -> void:
 		# Both halos whirl faster/brighter and a swirling vortex pulls motes between the two cards.
 		var connect_intensity := float(ForgeFX.AURA["connect_intensity"])
 		_aura.set_intensity(connect_intensity)
+		Sfx.mixing_react(true)   # the rev-up is the intensified halos' audio half
 		var inv := _overlay.get_global_transform().affine_inverse()
 		var center := inv * (_entries[target_idx].item as Control).get_global_rect().get_center()
 		var rr := _card_aura_radii()
@@ -570,6 +579,7 @@ func _set_hover(target_idx: int) -> void:
 
 
 func _clear_hover_visuals() -> void:
+	Sfx.mixing_react(false)
 	if _aura != null:
 		_aura.set_intensity(1.0)
 	if _target_aura != null:
@@ -744,7 +754,10 @@ func _make_combine_op(glyph: String, card_h: float) -> Control:
 
 
 # Tears down the in-flight drag visuals and restores the hidden source. Safe to call anytime.
+# Every drag ends through here (drop resolves, right-click abort, screen exit), so this is the
+# single stop point for the mixing loop started in _begin_drag.
 func _cancel_drag() -> void:
+	Sfx.mixing_stop()
 	_clear_hover_visuals()
 	if _follower != null:
 		_follower.queue_free()
@@ -1077,6 +1090,7 @@ func _do_combine(src_idx: int, tgt_idx: int, result_dc: DeckCard) -> void:
 	insert_at = clampi(insert_at, 0, GameData.current_run.deck.size())
 	GameData.current_run.deck.insert(insert_at, result_dc)
 	GameData.save_run()
+	Sfx.combined()
 	_rebuild_deck()
 
 
@@ -1086,6 +1100,7 @@ func _do_enchant(charm_id: String, tgt_idx: int) -> void:
 	dc.add_charm(charm_id)
 	GameData.current_run.charms.erase(charm_id)
 	GameData.save_run()
+	Sfx.combined()
 	_rebuild_deck()
 	_rebuild_charms()
 	# _rebuild_deck refreshed the panel to the idle prompt; overwrite with the success message.
