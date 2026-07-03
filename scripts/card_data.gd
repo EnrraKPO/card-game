@@ -66,10 +66,9 @@ func is_lackey() -> bool:
 # The card this building generates once per turn (see combat.gd): a copy of the
 # card composed of all its NON-rook components. Strip every rook and rebuild from
 # what's left (other pieces + elements). A building with no non-rook components
-# (a plain Rook, or a double Rook) generates nothing for now. Returns null in that
-# case or when this isn't a building. PLANNED: that empty case will generate
-# "Castling", the base rook_generated card, once the Castled barrier lands on the
-# arbitration layer (see the rook_generated flag above; deferred, not dropped).
+# (a plain Rook, or a double Rook) generates "Castling" — the base rook_generated
+# spell (grants every ally a Barrier; see CardData.rook_generated). Returns null
+# only when this isn't a building at all.
 func generated_card() -> CardData:
 	if not is_building():
 		return null
@@ -77,7 +76,7 @@ func generated_card() -> CardData:
 	while chess.has("rook"):
 		chess.erase("rook")
 	if chess.is_empty() and elements.is_empty():
-		return null
+		return CardData.get_card("castling")
 	return CardData.get_card(CardData.composition_key(elements, chess))
 
 

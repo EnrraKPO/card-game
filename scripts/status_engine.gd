@@ -59,7 +59,8 @@ static func advance(inst: CardInstance, event: Effect.Trigger) -> void:
 
 
 static func _decays_on(si: StatusInstance, event: Effect.Trigger) -> bool:
-	if si.data.decay == StatusData.DECAY_NONE:
+	# NONE never decays; INTERCEPT decays only via consume_interception (not phase-driven).
+	if si.data.decay == StatusData.DECAY_NONE or si.data.decay == StatusData.DECAY_INTERCEPT:
 		return false
 	match si.data.decay_phase:
 		StatusData.PHASE_TURN_START: return event == Effect.Trigger.ON_TURN_START
@@ -69,8 +70,21 @@ static func _decays_on(si: StatusInstance, event: Effect.Trigger) -> bool:
 
 
 static func _is_expired(si: StatusInstance) -> bool:
-	if si.data.decay == StatusData.DECAY_STACKS:
+	if si.data.decay == StatusData.DECAY_STACKS or si.data.decay == StatusData.DECAY_INTERCEPT:
 		return si.stacks <= 0
 	if si.data.decay == StatusData.DECAY_DURATION:
 		return si.remaining == 0
 	return false
+
+
+# Spends one charge of an intercept-decay status, called by Resolver._try_intercept after one
+# of the status's INTERCEPTOR effects actually rewrote a mutation (a rewrite that changed
+# nothing never reaches here — a Barrier ignores a whiff). Phase-decay statuses (Blind) are
+# untouched: they spend on their own phase via advance() instead.
+static func consume_interception(holder: CardInstance, status_id: String) -> void:
+	var si := holder.find_status(status_id)
+	if si == null or si.data.decay != StatusData.DECAY_INTERCEPT:
+		return
+	si.stacks -= 1
+	if si.stacks <= 0:
+		holder.remove_status(status_id)

@@ -48,6 +48,9 @@ var _touch_inspect := false
 @onready var _status_row: BoxContainer = %StatusRow   # authored under Canvas; position it in the editor
 @onready var _border: Panel     = %Border
 @onready var _canvas: Control   = $Canvas
+# The status-aura overlay (see _refresh_aura) — created lazily, only for cards that carry an
+# aura-declaring status (e.g. Barrier's "protected" ring).
+var _aura: Panel = null
 
 # The card is authored once at this fixed native resolution. Every visual lives
 # under the Canvas node, which is uniformly scaled to fill whatever size the
@@ -544,6 +547,38 @@ func _refresh_statuses() -> void:
 	var stats: Array = card_instance.statuses if card_instance != null else []
 	for si: StatusInstance in stats:
 		_status_row.add_child(_make_status_pip(si))
+	_refresh_aura(stats)
+
+
+# A persistent "protected"-style frame over the whole card while an aura-declaring status
+# (StatusData.aura — e.g. Barrier) is active, in that status's color: a thick soft ring plus a
+# faint tint wash, so the protection reads at a glance without hunting for the pip. Lazily
+# created; appears/disappears with the status on the next refresh (combat refreshes the board
+# after every strike, so a spent Barrier's aura drops immediately).
+func _refresh_aura(stats: Array) -> void:
+	var aura_status: StatusData = null
+	for si: StatusInstance in stats:
+		if si.data.aura:
+			aura_status = si.data
+			break
+	if aura_status == null:
+		if _aura != null:
+			_aura.visible = false
+		return
+	if _aura == null:
+		_aura = Panel.new()
+		_aura.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_canvas.add_child(_aura)
+		_aura.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var c := aura_status.color
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(c.r, c.g, c.b, 0.10)
+	style.border_color = Color(c.r, c.g, c.b, 0.85)
+	style.set_border_width_all(7)
+	style.set_corner_radius_all(10)
+	style.set_expand_margin_all(4.0)
+	_aura.add_theme_stylebox_override("panel", style)
+	_aura.visible = true
 
 
 # The badge node for a given active status (or null) — lets the VFX layer glint the right pip as

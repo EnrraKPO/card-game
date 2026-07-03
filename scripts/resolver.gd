@@ -175,5 +175,12 @@ static func _try_intercept(e: Effect, stacks: int, holder: CardInstance, side: E
 		m.amount += e.amount_int() * stacks   # additive rewrites scale by stacks, like stat deltas
 	if m.stat == StatMutation.DAMAGE:
 		m.amount = maxi(0, m.amount)
+	if m.amount == before:
+		# Changed nothing = didn't fire: no cue, no charge spent. This is what makes a Barrier
+		# ignore a whiff — blocking a 0-damage strike (a Blinded attacker's miss) is a no-op.
+		return
 	records.append({"owner_kind": e.owner_kind, "owner_id": e.owner_id,
 			"holder": holder, "delta": m.amount - before})
+	# An intercept-decay status (Barrier) spends a charge the moment it actually rewrites.
+	if e.owner_kind == "status":
+		StatusEngine.consume_interception(holder, e.owner_id)

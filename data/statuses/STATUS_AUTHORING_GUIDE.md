@@ -20,6 +20,7 @@ card/spell/charm/upgrade effect's `status` payload (see the card guide).
 | `display_name` | string | No | Name shown in the pip tooltip (defaults from `id`) |
 | `description` | string | No | Tooltip text |
 | `beneficial` | bool | No | `true` (default) tints the apply VFX/pip as a buff; `false` as a debuff |
+| `aura` | bool | No | `true` draws a persistent "protected"-style frame over the card (in the status's `color`) while the status is active — for statuses whose presence should read at a glance (e.g. Barrier) |
 | `color` | hex string | No | Pip background colour (e.g. `"e0a93b"`) |
 | `glyph` | string | No | Short glyph shown on the pip (e.g. `"↑"`, `"☠"`) |
 | `default_duration` | int | No | Initial `remaining` for a `duration`-decay status, when the applier doesn't override it |
@@ -45,6 +46,7 @@ card/spell/charm/upgrade effect's `status` payload (see the card guide).
 | `duration` (default) | The `remaining` timer (starts at `default_duration`) counts down 1 each round; expires at 0. Intensity (`stacks`) is independent. |
 | `stacks` | The stack **count** counts down 1 each round; expires at 0 stacks. The count is the magnitude (effects scale by it) — Slay-the-Spire poison. |
 | `none` | Never wears off; lasts the whole fight. |
+| `intercept` | A stack is spent each time one of the status's **interceptor** effects actually rewrites a mutation (see the Interceptors section); expires at 0 stacks. A rewrite that changes nothing spends nothing — so a Barrier ignores a whiff (a Blinded attacker's 0-damage miss). Not phase-driven; `decay_phase` is ignored. |
 
 `decay_phase` chooses when the countdown (and any `on_turn_start`/`on_turn_end` effects) resolve:
 `turn_end` (default, after attacks) or `turn_start` (before attacks). Effects fire **before** the
@@ -143,6 +145,19 @@ to nothing; one charge spent per attack (`decay: "stacks"`, `decay_phase: "attac
 	"decay": "stacks", "decay_phase": "attack", "stacking": "stack", "max_stacks": 99,
 	"effects": [
 		{ "intercept": "damage", "channel": "attack", "role": "source", "op": "mul", "amount": 0, "chance": 0.5 }
+	]
+}
+```
+
+**Barrier** is the defender-side counterpart — a target-role block that spends itself only
+when it actually stops something (`decay: "intercept"`), stacks as extra charges, and shows a
+persistent protected frame (`aura`):
+```json
+{
+	"id": "barrier", "beneficial": true, "glyph": "◈", "color": "8fd0ff", "aura": true,
+	"decay": "intercept", "stacking": "stack", "max_stacks": 9,
+	"effects": [
+		{ "intercept": "damage", "channel": "attack", "role": "target", "op": "mul", "amount": 0 }
 	]
 }
 ```

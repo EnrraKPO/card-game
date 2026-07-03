@@ -20,6 +20,9 @@ const STACK_INDEPENDENT := "independent"  # keep a separate instance
 const DECAY_DURATION := "duration"   # `remaining` counts down (default); expires at 0
 const DECAY_STACKS := "stacks"       # the stack COUNT counts down; expires at 0 stacks (e.g. poison)
 const DECAY_NONE := "none"           # never wears off (lasts the whole fight)
+const DECAY_INTERCEPT := "intercept" # a stack is spent each time one of this status's INTERCEPTOR
+                                     # effects actually rewrites a mutation (Barrier blocking a hit);
+                                     # a rewrite that changes nothing spends nothing. Not phase-driven.
 
 # When the decay (and any matching periodic effects) resolves. TURN_START/END sweep every unit at
 # the round boundary; ACTIVATE ticks the one unit when its turn comes up in the combat order.
@@ -34,6 +37,10 @@ var description: String
 var color: Color = Color(0.75, 0.75, 0.82)
 var glyph: String = "✦"
 var beneficial: bool = true     # picks the apply VFX + default pip read
+# A persistent "protected"-style frame drawn over the card while the status is active (in the
+# status's color) — for statuses whose presence should read at a glance, like Barrier. See
+# CardUI._refresh_aura.
+var aura: bool = false
 var default_duration: int = 1   # initial `remaining` for DECAY_DURATION statuses
 var decay: String = DECAY_DURATION
 var decay_phase: String = PHASE_TURN_END
@@ -80,6 +87,7 @@ static func from_dict(d: Dictionary) -> StatusData:
 	s.color            = Color.html(str(d.get("color", "bfbfd2")))
 	s.glyph            = str(d.get("glyph", d.get("letter", "✦")))
 	s.beneficial       = bool(d.get("beneficial", true))
+	s.aura             = bool(d.get("aura", false))
 	s.default_duration = int(d.get("default_duration", d.get("duration", 1)))
 	s.decay            = str(d.get("decay", DECAY_DURATION))
 	s.decay_phase      = str(d.get("decay_phase", PHASE_TURN_END))

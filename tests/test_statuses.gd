@@ -10,8 +10,54 @@ func suite_name() -> String:
 
 func run() -> void:
 	_blind_end_to_end()
+	_barrier()
 	_poison_tick_and_decay()
 	_modifier_status_and_expiry()
+
+
+func _barrier() -> void:
+	# Barrier: target-role block, spent only when it actually stops something.
+	var tgt := unit("rook")   # 6 HP, 3 shield
+	tgt.apply_status("barrier", Effect.STATUS_DURATION_DEFAULT, 1, null)
+	var atk := unit("pawn")
+	var out := Resolver.submit(StatMutation.damage(tgt, 5, atk))
+	check_eq(out.delta, 0, "barrier blocks a damaging strike outright")
+	check_eq(tgt.current_shield, 3, "blocked strike never reaches the shield")
+	check(tgt.find_status("barrier") == null, "barrier is consumed by the block")
+	check(not out.interceptions.is_empty()
+			and str(out.interceptions[0].get("owner_id", "")) == "barrier",
+			"the block records barrier for the pip cue")
+
+	# A 0-damage whiff spends nothing and cues nothing.
+	tgt.apply_status("barrier", Effect.STATUS_DURATION_DEFAULT, 1, null)
+	var whiff := Resolver.submit(StatMutation.damage(tgt, 0, atk))
+	check_eq(whiff.delta, 0, "a whiff lands 0 either way")
+	check(whiff.interceptions.is_empty(), "a whiff records no interception (no phantom cue)")
+	check(tgt.find_status("barrier") != null, "a whiff doesn't spend the barrier")
+
+	# A Blinded attacker's miss (source-side block zeroes the strike first): barrier untouched.
+	var blinded := CardInstance.from_data(CardData.build_from_dict({
+		"id": "_test_sure_blind", "display_name": "T",
+		"cost": 1, "attack": 4, "health": 3, "speed": 1,
+		"effects": [
+			{"intercept": "damage", "channel": "attack", "role": "source", "op": "mul", "amount": 0},
+		]}))
+	blinded.owner = 0
+	var missed := Resolver.submit(StatMutation.damage(tgt, 4, blinded))
+	check_eq(missed.delta, 0, "the blinded strike still lands 0")
+	check_eq(missed.interceptions.size(), 1, "only the source-side block fires (barrier stays silent)")
+	check(tgt.find_status("barrier") != null, "a blinded miss doesn't spend the barrier")
+
+	# Stacked barrier = that many blocks: one charge per stopped strike.
+	var tgt2 := unit("rook")
+	tgt2.apply_status("barrier", Effect.STATUS_DURATION_DEFAULT, 2, null)
+	Resolver.submit(StatMutation.damage(tgt2, 4, atk))
+	var si := tgt2.find_status("barrier")
+	check(si != null and si.stacks == 1, "a 2-charge barrier survives the first block with 1 left")
+	Resolver.submit(StatMutation.damage(tgt2, 4, atk))
+	check(tgt2.find_status("barrier") == null, "the second block spends the last charge")
+	var third := Resolver.submit(StatMutation.damage(tgt2, 4, atk))
+	check_eq(third.delta, -4, "the third strike lands in full")
 
 
 func _blind_end_to_end() -> void:

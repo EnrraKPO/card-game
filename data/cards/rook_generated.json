@@ -1,0 +1,14 @@
+[
+  {
+	"id": "castling",
+	"display_name": "Castling",
+	"cost": 1, "attack": 0, "health": 1, "speed": 1,
+	"card_type": "spell",
+	"rook_generated": true,
+	"description": "A defensive maneuver. Grants every ally a Barrier that blocks the next damaging attack.",
+	"elements": [], "chess_pieces": [],
+	"effects": [
+	  { "trigger": "on_play", "targeting_policy": "all_allies", "status": { "id": "barrier", "stacks": 1 } }
+	]
+  }
+]

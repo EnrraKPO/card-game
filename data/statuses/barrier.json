@@ -1,0 +1,15 @@
+{
+	"id": "barrier",
+	"display_name": "Barrier",
+	"description": "Blocks the next attack that would deal damage to this unit. A blocked strike reads as a Miss; a harmless whiff doesn't spend the Barrier.",
+	"beneficial": true,
+	"color": "8fd0ff",
+	"glyph": "◈",
+	"aura": true,
+	"decay": "intercept",
+	"stacking": "stack",
+	"max_stacks": 9,
+	"effects": [
+		{ "intercept": "damage", "channel": "attack", "role": "target", "op": "mul", "amount": 0 }
+	]
+}

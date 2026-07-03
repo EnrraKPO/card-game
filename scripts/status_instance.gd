@@ -20,7 +20,10 @@ static func make(p_data: StatusData, p_remaining: int, p_stacks: int, p_source: 
 	return si
 
 
-# The headline number shown for this status: the stack COUNT for a count-decay status (e.g.
-# poison's value), otherwise the remaining turns. A whole-combat status returns -1 (no number).
+# The headline number shown for this status: the stack COUNT for a count-decay status (poison's
+# value, a Barrier's remaining charges), otherwise the remaining turns. A whole-combat status
+# returns -1 (no number).
 func count() -> int:
-	return stacks if data.decay == StatusData.DECAY_STACKS else remaining
+	if data.decay == StatusData.DECAY_STACKS or data.decay == StatusData.DECAY_INTERCEPT:
+		return stacks
+	return remaining
