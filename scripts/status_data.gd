@@ -87,7 +87,7 @@ static func from_dict(d: Dictionary) -> StatusData:
 	s.max_stacks       = int(d.get("max_stacks", 99))
 	for e_data: Dictionary in d.get("effects", []):
 		var eff := Effect.from_dict(e_data)
-		eff.owner_kind = "status"   # so combat can cue this status's pip / negate_attack can name it
+		eff.owner_kind = "status"   # so combat can cue this status's pip when its effects fire
 		eff.owner_id = s.id
 		s.effects.append(eff)
 	return s

@@ -223,9 +223,15 @@ func _execute_enemy_action(action: Dictionary) -> void:
 			var b_ui := _board.get_card_ui(building)
 			if b_ui != null:
 				b_ui.set_exhausted(true)
-			var results := _board.place_enemy_card(token, action["row"], action["col"])
-			_vfx.play(VFXEvent.card_placed(_board.get_card_ui(token)))
-			await _animator.show_effect_results(results, token)
+			if token.is_spell:
+				# A generated SPELL token (e.g. Castling) casts instead of taking a board slot —
+				# mirrors a normal enemy CAST, just sourced from a building instead of the hand.
+				token.owner = 1
+				await _show_enemy_spell(token, null)
+			else:
+				var results := _board.place_enemy_card(token, action["row"], action["col"])
+				_vfx.play(VFXEvent.card_placed(_board.get_card_ui(token)))
+				await _animator.show_effect_results(results, token)
 		EnemyAI.Action.MOVE:
 			_board.move_enemy_card(action["inst"], action["row"], action["col"])
 	await get_tree().create_timer(0.35).timeout
@@ -342,7 +348,7 @@ func _on_done_pressed() -> void:
 	await get_tree().create_timer(0.8).timeout
 	for inst: CardInstance in _board.get_all_units():
 		var prev_shield := inst.current_shield
-		inst.restore_shield()
+		Resolver.restore_shield(inst)
 		var gained := inst.current_shield - prev_shield
 		if gained > 0:
 			var shield_ui := _board.get_card_ui(inst)
@@ -447,23 +453,26 @@ func _resolve_attack(attacker: CardInstance) -> void:
 # damage, ON_DAMAGE_TAKEN trigger, and the shield/health hit numbers. Attack value is read
 # before ON_ATTACK fires so a self-buff on attack doesn't retroactively change this hit.
 func _apply_attack_damage(attacker: CardInstance, target: CardInstance, t_card: CardUI) -> void:
-	var dmg := attacker.get_attribute("attack")
-	await _fire(Effect.Trigger.ON_ATTACK, attacker, null, target)
-	# If any negated attacks are queued on this unit, consume one — this strike deals 0. We don't care
-	# what queued it; the cause's own cue already fired. Each queued negation is honoured separately.
-	if attacker.negate_next_attacks > 0:
-		attacker.negate_next_attacks -= 1
-		dmg = 0
-	# Resolve the attack-driven decay NOW — right after the ON_ATTACK roll, BEFORE the strike's own
-	# effects. A charge is spent per attack (hit or miss); doing it here means a Blind that an effect
-	# applies in *reaction* to this attack (a relic blinding the attacker on hit, via ON_DAMAGE_TAKEN
-	# below) lands afterwards and survives, instead of being eaten by this same attack.
+	# The strike is not dealt as fact — it's a PENDING mutation. Built here, it rides the
+	# ON_ATTACK dispatch (context.pending) where any reacting effect may rewrite it through the
+	# ordinary effect vocabulary (e.g. Blind multiplies it to 0 — see "outgoing_damage" in
+	# EffectSystem._apply), and is then SUBMITTED to the Resolver — the only thing that writes
+	# stats — which owns the shield-first resolution form. Combat never learns WHY the number
+	# changed and never touches the target itself; it presents the outcome the Resolver reports.
+	var pending := StatMutation.damage(target, attacker.get_attribute("attack"), attacker)
+	await _fire(Effect.Trigger.ON_ATTACK, attacker, null, target, null, true, pending)
+	var dmg := pending.amount
+	# Resolve the attack-driven decay NOW — right after the ON_ATTACK moment, BEFORE the strike's
+	# own on-hit effects. A charge is spent per attack (hit or miss); doing it here means a Blind
+	# that an effect applies in *reaction* to this attack (a relic blinding the attacker on hit,
+	# via ON_DAMAGE_TAKEN below) lands afterwards and survives, instead of being eaten by this
+	# same attack.
 	StatusEngine.advance(attacker, Effect.Trigger.ON_ATTACK)
 
 	# The strike is PERFORMED either way — even a whiff still attacks, it just deals 0. So damage is
 	# applied (0 on a miss) and ON_DAMAGE_TAKEN fires regardless, so on-attacked reactions (e.g. a
 	# relic blinding the attacker) run whether or not it connected. Only the readout differs.
-	var dmg_split := target.take_damage(dmg)
+	var dmg_split := Resolver.submit(pending)
 	await _fire(Effect.Trigger.ON_DAMAGE_TAKEN, target, null, null, attacker)
 	if dmg <= 0:
 		# A 0-damage strike (negated, or <=0 Attack) reads as "Miss" rather than a number.
@@ -492,11 +501,13 @@ func _apply_attack_damage(attacker: CardInstance, target: CardInstance, t_card: 
 # true for per-actor events (attack/death), false for the per-holder status fan-out, where firing
 # the run-level effects once per holder would multiply them.
 func _fire(event: Effect.Trigger, holder: CardInstance, subject: CardInstance = null,
-		atk_target: CardInstance = null, attacker: CardInstance = null, run_level: bool = true) -> void:
+		atk_target: CardInstance = null, attacker: CardInstance = null, run_level: bool = true,
+		pending: StatMutation = null) -> void:
 	var ctx := EffectContext.make(holder, _board.player_grid, _board.enemy_grid)
 	ctx.subject = subject if subject != null else holder
 	ctx.attack_target = atk_target   # lets an ON_ATTACK effect target the unit being struck
 	ctx.attacker = attacker          # lets an ON_DAMAGE_TAKEN effect target the unit that struck
+	ctx.pending = pending            # the arbitrated pending mutation, when this moment carries one
 	# Walk the holder's containers one at a time — its card, then each status — cueing each before its
 	# (container-blind) effects land: card glint / pip glint → that container's effect VFX.
 	for group: Dictionary in EffectSystem.trigger_grouped(event, holder, ctx):
@@ -563,8 +574,9 @@ func _apply_king_persistence() -> void:
 	# (the King is excluded from the blanket unit.* buffs — its HP has its own modifier axis).
 	var hp_bonus := GameData.value("king.max_health")
 	if hp_bonus != 0:
-		pk.apply_modifier("max_health", hp_bonus)
-	pk.current_health = run.king_health()
+		Resolver.submit(StatMutation.make(pk, StatMutation.MAX_HEALTH, hp_bonus,
+				null, StatMutation.CH_SYSTEM))
+	Resolver.set_health(pk, run.king_health())
 	_board.refresh()
 
 	# The header's HP field mirrors RunData, which only finalizes king_damage at combat end (see
@@ -677,7 +689,13 @@ func _on_targeting_ended() -> void:
 
 func _on_spell_consumed(card_ui: CardUI, cost: int) -> void:
 	_mana -= cost
-	_hand.remove_card(card_ui)
+	# A rook-generated SPELL token (e.g. Castling) casts through this same path as a normal hand
+	# spell — but it must exhaust its source rook like a generated UNIT token does, not just drop
+	# out of the normal hand list (see _consume_generated_token).
+	if card_ui.is_generated:
+		_consume_generated_token(card_ui)
+	else:
+		_hand.remove_card(card_ui)
 	_refresh_mana()
 
 

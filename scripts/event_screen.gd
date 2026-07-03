@@ -155,7 +155,10 @@ func _apply_upgrade() -> void:
 	var entry: Dictionary = _entries[_selected_idx]
 	var card_name: String = CardData.get_card(entry.card.id).display_name
 	GameData.current_run.gold -= EVENT_COST
-	entry.card.bump(_attr, 1)
+	# Permanent deck-card upgrade: an override mutation, routed through the Resolver like every
+	# other stat change (the DeckCard target form — see Resolver.submit).
+	Resolver.submit(StatMutation.make(entry.card, StringName(_attr), 1,
+			null, StatMutation.CH_SYSTEM))
 	GameData.save_run()
 	_done = true
 	_rebuild_deck()

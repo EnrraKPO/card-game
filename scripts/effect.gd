@@ -17,7 +17,7 @@ extends RefCounted
 
 enum Kind  { MODIFIER, TRIGGERED, CUSTOM }
 enum Scope { GLOBAL, CARD }
-enum Op    { ADD, MUL }   # ADD today; MUL reserved
+enum Op    { ADD, MUL }   # MUL consumed by pending-mutation arbitration (see EffectSystem._apply); MODIFIERs are ADD-only today
 
 enum Trigger {
 	ON_PLAY,
@@ -86,8 +86,8 @@ var scope: Scope = Scope.GLOBAL
 var key: String = ""
 
 # Which container owns this effect (kind + id), set by RelicData/StatusData at load — used by the
-# combat cue (glint the relic chip / status pip) and by negate_attack (to record which status caused
-# a miss). Empty for plain card effects. Never affects target resolution.
+# combat cue (glint the relic chip / status pip). Empty for plain card effects. Never affects
+# target resolution.
 var owner_kind: String = ""
 var owner_id: String = ""
 # Probabilistic gate, rolled once before the effect resolves: the effect fires with this chance
@@ -130,6 +130,9 @@ static func from_dict(d: Dictionary) -> Effect:
 		e.subject_elements = (d.get("subject_elements", []) as Array).duplicate()
 		e.targeting_policy = _str_policy(d.get("targeting_policy", ""))
 		e.attribute        = d.get("attribute", "")
+		# MUL is only meaningful for the arbitration attributes today (e.g. Blind's
+		# "outgoing_damage" ×0); plain stat deltas stay additive.
+		e.op               = Op.MUL if str(d.get("op", "add")) == "mul" else Op.ADD
 	# Optional "apply a status" payload, valid on any event-driven (TRIGGERED) effect.
 	var st: Dictionary = d.get("status", {})
 	if not st.is_empty():
@@ -177,6 +180,8 @@ func to_dict() -> Dictionary:
 				d["subject_elements"] = subject_elements
 			if chance != 1.0:
 				d["chance"] = chance
+			if op == Op.MUL:
+				d["op"] = "mul"
 			if not status_id.is_empty():
 				d["status"] = {"id": status_id, "duration": status_duration, "stacks": status_stacks}
 			return d

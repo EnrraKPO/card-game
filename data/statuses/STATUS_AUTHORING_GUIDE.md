@@ -112,3 +112,35 @@ or a spell that withers the nearest enemy on play:
   statuses scale `modifier` and triggered magnitudes by their stack count.
 - Statuses are combat-runtime only — they are never saved and never carry across fights.
 - `id` must be unique across all status files; duplicates silently overwrite.
+
+## Arbitration: rewriting a pending attack (`outgoing_damage` / `incoming_damage`)
+
+Combat does not deal attack damage as fact — it builds the **pending mutation** (a
+`StatMutation`: stat `damage`, a positive magnitude), sends it through the trigger dispatch
+where effects may rewrite it, and then submits whatever is left to the **Resolver** (the single
+writer of all game stats — it owns the shield-first resolution; no effect or combat code knows
+shields exist). An effect rewrites the pending amount with the `outgoing_damage` /
+`incoming_damage` attributes (aliases — "my own strike" vs "a hit landing on me"; both edit the
+same pending mutation):
+
+- `"op": "mul"` scales the pending amount — `amount: 0` is a full block (reads as **Miss**).
+- default (`add`) shifts it — **positive adds damage, negative is armor** (e.g. `amount: -3`
+  shaves 3 off the hit). Scaled by stacks like any stat delta.
+- The pending amount can shrink to 0 but never goes below (a blocked strike is 0, not a heal).
+- Outside an arbitrated moment (no pending mutation on the context) the effect is a no-op.
+
+**Blind** is the canonical example — when the holder attacks, 50% chance its own strike is
+multiplied to nothing; one charge spent per attack (`decay: "stacks"`, `decay_phase: "attack"`):
+```json
+{
+	"id": "blind", "beneficial": false, "glyph": "◐",
+	"decay": "stacks", "decay_phase": "attack", "stacking": "stack", "max_stacks": 99,
+	"effects": [
+		{ "trigger": "on_attack", "targeting_policy": "self", "attribute": "outgoing_damage", "op": "mul", "amount": 0, "chance": 0.5 }
+	]
+}
+```
+
+Nothing persists between attacks: the pending mutation is built fresh per strike, rewritten during that
+one dispatch, consumed, and discarded — so combat carries no status-specific logic and there is
+no stored counter that a later, unrelated attack could accidentally spend.

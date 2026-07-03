@@ -5,7 +5,8 @@ extends RefCounted
 # for the orchestrator to execute; combat._execute_enemy_action dispatches on type.
 #   { "type": Action.PLACE,    "inst": CardInstance, "row": int, "col": int }
 #   { "type": Action.CAST,     "inst": CardInstance, "target": CardInstance|null }
-#   { "type": Action.GENERATE, "building": CardInstance, "row": int, "col": int }
+#   { "type": Action.GENERATE, "building": CardInstance, "row": int, "col": int }  — unit token
+#   { "type": Action.GENERATE, "building": CardInstance }                          — spell token (no slot)
 #   { "type": Action.MOVE,     "inst": CardInstance, "row": int, "col": int }
 enum Action { PLACE, MOVE, CAST, GENERATE }
 
@@ -126,6 +127,11 @@ func _plan_generation(board: CombatBoard, occ: Array, remaining: int, actions: A
 			continue
 		var token := inst.data.generated_card()
 		if token == null or token.cost > remaining:
+			continue
+		# A SPELL token (e.g. Castling) casts rather than taking a board slot — no placement to plan.
+		if token.card_type == CardData.CardType.SPELL:
+			actions.append({ "type": Action.GENERATE, "building": inst })
+			remaining -= token.cost
 			continue
 		var slot := _take_front_slot(occ)
 		if slot.is_empty():

@@ -31,6 +31,6 @@ static func _rallying_cry(ctx: EffectContext) -> Array:
 	for row: Array in ctx.player_board:
 		for unit: CardInstance in row:
 			if unit != null and unit != ctx.source and not unit.data.is_king:
-				unit.apply_modifier("attack", 1)
+				Resolver.submit(StatMutation.make(unit, StatMutation.ATTACK, 1, ctx.source))
 				results.append({"target": unit, "attribute": "attack", "delta": 1})
 	return results

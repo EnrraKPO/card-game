@@ -92,6 +92,7 @@ An effect is an action that fires at a specific moment, targeting one or more ca
 | `attack` | Attack power |
 | `speed` | Attack order priority |
 | `cost` | Mana cost |
+| `outgoing_damage` / `incoming_damage` | Rewrites a **pending attack** during arbitration instead of a card stat — see the Arbitration section of `data/statuses/STATUS_AUTHORING_GUIDE.md`. With `"op": "mul", "amount": 0` the strike is fully blocked (reads as Miss); with the default add op, positive `amount` adds damage and negative is armor. Only meaningful on an `on_attack` effect today. |
 
 ### `amount` — how much to change
 

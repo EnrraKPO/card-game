@@ -23,6 +23,12 @@ var targeting_strategy: TargetingStrategy
 # composition, so composition_key is empty and they're already absent from the collection
 # screen and the combine system; this flag covers the remaining reward/shop path.
 var enemy_only: bool = false
+# Rook-generated cards (e.g. "Castling") exist ONLY as a building's generated token — see
+# CardData.generated_card(). Same exclusion story as enemy_only (kept out of random_non_kings;
+# empty elements/chess_pieces already keeps them off the collection screen, the combine system,
+# and Lab minting), but this is a distinct concept: these are player-usable, just not independently
+# obtainable outside of owning the Rook that makes them.
+var rook_generated: bool = false
 # Ranged units fire a projectile at their target on auto-attack instead of the melee lunge
 # (see combat.gd::_resolve_attack). Authored per-card — NOT derived from composition, so e.g.
 # the base Bishop is ranged but most bishop-composed units aren't unless they opt in.
@@ -60,8 +66,10 @@ func is_lackey() -> bool:
 # The card this building generates once per turn (see combat.gd): a copy of the
 # card composed of all its NON-rook components. Strip every rook and rebuild from
 # what's left (other pieces + elements). A building with no non-rook components
-# (a plain Rook, or a double Rook) generates nothing. Returns null in that case
-# or when this isn't a building.
+# (a plain Rook, or a double Rook) generates nothing for now. Returns null in that
+# case or when this isn't a building. PLANNED: that empty case will generate
+# "Castling", the base rook_generated card, once the Castled barrier lands on the
+# arbitration layer (see the rook_generated flag above; deferred, not dropped).
 func generated_card() -> CardData:
 	if not is_building():
 		return null
@@ -131,6 +139,7 @@ static func build_from_dict(d: Dictionary) -> CardData:
 	card.elements     = Array(d.get("elements",     []), TYPE_STRING, "", null)
 	card.chess_pieces = Array(d.get("chess_pieces", []), TYPE_STRING, "", null)
 	card.enemy_only   = bool(d.get("enemy_only", false))
+	card.rook_generated = bool(d.get("rook_generated", false))
 	card.ranged       = bool(d.get("ranged", false))
 	for e_data: Dictionary in d.get("effects", []):
 		card.effects.append(Effect.from_dict(e_data))
@@ -226,6 +235,7 @@ static func scaled(base: CardData, power: float) -> CardData:
 	c.elements      = base.elements.duplicate()
 	c.chess_pieces  = base.chess_pieces.duplicate()
 	c.enemy_only    = base.enemy_only
+	c.rook_generated = base.rook_generated
 	c.ranged        = base.ranged
 	c.effects       = base.effects
 	c.targeting_strategy = base.targeting_strategy
@@ -247,7 +257,7 @@ static func all() -> Array:
 static func random_non_kings(count: int) -> Array[String]:
 	var non_kings: Array[String] = []
 	for card: CardData in all():
-		if not card.is_king and not card.enemy_only:
+		if not card.is_king and not card.enemy_only and not card.rook_generated:
 			non_kings.append(card.id)
 	non_kings.shuffle()
 	return non_kings.slice(0, mini(count, non_kings.size()))

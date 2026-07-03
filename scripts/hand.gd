@@ -86,7 +86,7 @@ func populate_draw_pile(deck_cards: Array) -> void:
 			inst.owner = 0
 			# Fill to the run-resolved max (read-time card modifiers add to max_health once
 			# owner is set), so a fresh unit enters at full HP including any unit.health buff.
-			inst.current_health = inst.get_attribute("max_health")
+			Resolver.fill_health(inst)
 			_draw_pile.append(inst)
 
 
@@ -138,12 +138,18 @@ func generate_tokens(buildings: Array) -> void:
 		tok.row = -1
 		tok.col = -1
 		tok.source_building = building
-		tok.current_health = tok.get_attribute("max_health")   # tokens share the player's unit buffs
+		Resolver.fill_health(tok)   # tokens share the player's unit buffs
 		var ui := CardUI.create(tok, true)
 		_gen_cards.append(ui)
 		_gen_box.add_child(ui)   # entering the tree runs _ready, so set_generated is safe after
 		ui.set_generated()
-		ui.pressed.connect(func(): _toggle_select(ui))
+		# A rook can generate a SPELL token (e.g. Castling) as well as a unit — route it through
+		# SpellCaster like any hand spell, same fork as _spawn_hand_card.
+		if ui.card_instance.is_spell:
+			if wire_spell_card.is_valid():
+				wire_spell_card.call(ui)
+		else:
+			ui.pressed.connect(func(): _toggle_select(ui))
 		ui.mouse_entered.connect(func(): token_hovered.emit(building, true))
 		ui.mouse_exited.connect(func():  token_hovered.emit(building, false))
 	var has_tokens := not _gen_cards.is_empty()

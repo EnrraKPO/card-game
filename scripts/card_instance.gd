@@ -30,10 +30,6 @@ var statuses: Array = []
 # Set true for the round when this unit spent its attack to generate a card
 # (see rook/building generation in combat.gd). Reset at the start of each round.
 var attack_exhausted: bool = false
-# Transient: how many of this unit's upcoming attacks deal 0 damage. Each negation source adds one;
-# combat consumes one per strike. A bare count — it carries no notion of what queued the negations
-# or why; each cause's own cue is separate.
-var negate_next_attacks: int = 0
 # On a rook-generated token, points back to the building that produced it so
 # playing the token can exhaust that building's attack. Null on normal units.
 var source_building: CardInstance = null
@@ -64,27 +60,11 @@ func get_attribute(attr: String) -> int:
 		_:            return modifiers.get(attr, 0)
 
 
+# Storage-level write for the additive-modifier bag. Called by Resolver ONLY — every stat
+# change in the game routes through Resolver.submit (see Resolver); nothing else mutates
+# these values directly. Damage/heal/shield forms live in the Resolver too.
 func apply_modifier(attr: String, delta: int) -> void:
 	modifiers[attr] = modifiers.get(attr, 0) + delta
-
-
-func take_damage(amount: int) -> Dictionary:
-	# An incoming hit: the shield absorbs first, the rest wounds health. Damage never heals: a
-	# sub-zero attack (units may have <0 Attack) deals 0, not negative. Clamping here keeps the
-	# invariant for every damage source, not just attacks. Direct health changes (the "health"
-	# attribute — poison, heals) bypass this entirely; see EffectSystem._apply.
-	amount = maxi(0, amount)
-	var absorbed := 0
-	if current_shield > 0:
-		absorbed = mini(amount, current_shield)
-		current_shield -= absorbed
-		amount -= absorbed
-	current_health -= amount
-	return {"shield_absorbed": absorbed, "health_damage": amount}
-
-
-func restore_shield() -> void:
-	current_shield = data.shield + modifiers.get("shield", 0)
 
 
 func is_alive() -> bool:

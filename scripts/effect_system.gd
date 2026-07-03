@@ -131,7 +131,7 @@ static func _run_effect(effect: Effect, source: CardInstance, context: EffectCon
 		return hook.call(context) if hook.is_valid() else []
 	var results: Array = []
 	for target: CardInstance in _resolve_targets(effect, source, context):
-		var r := _apply(effect, target, source, amount_scale)
+		var r := _apply(effect, target, source, context, amount_scale)
 		if not r.is_empty():
 			results.append(r)
 	return results
@@ -180,7 +180,7 @@ static func _resolve_targets(effect: Effect, source: CardInstance, context: Effe
 
 # ── Effect application ─────────────────────────────────────────────────────────
 
-static func _apply(effect: Effect, target: CardInstance, source: CardInstance, amount_scale: int = 1) -> Dictionary:
+static func _apply(effect: Effect, target: CardInstance, source: CardInstance, context: EffectContext, amount_scale: int = 1) -> Dictionary:
 	if effect.custom_apply.is_valid():
 		effect.custom_apply.call(target)
 		return {}
@@ -192,33 +192,43 @@ static func _apply(effect: Effect, target: CardInstance, source: CardInstance, a
 	# happened — so "produced a result" == "the container did something", which drives the cue.
 	var amount := effect.amount_int() * amount_scale
 	if effect.attribute == "health":
-		# Direct health change — straight to HP. Damage (negative) ignores shield (e.g. poison);
-		# a heal (positive) is clamped to max. The shield pipeline lives on "damage_taken".
-		if amount < 0:
-			target.current_health += amount
-			return {"target": target, "attribute": "health", "delta": amount}
-		var max_hp := target.get_attribute("max_health")
-		var healed := mini(amount, max_hp - target.current_health)
-		if healed == 0:
+		# Direct health change — a signed HEALTH mutation. The Resolver owns the form (negative
+		# bypasses shield, e.g. poison; positive heals, clamped to max) and reports the delta
+		# that actually landed. The shield-routed pipeline lives on "damage_taken".
+		var out := Resolver.submit(StatMutation.make(target, StatMutation.HEALTH, amount, source))
+		var delta := int(out.get("delta", 0))
+		if delta == 0:
 			return {}   # already full / 0 heal — nothing happened
-		target.current_health += healed
-		return {"target": target, "attribute": "health", "delta": healed}
+		return {"target": target, "attribute": "health", "delta": delta}
 	elif effect.attribute == "damage_taken":
-		# The incoming-hit channel: a positive amount is damage the shield absorbs first, the
-		# remainder wounding health — the same resolution an attack goes through.
+		# The incoming-hit channel: attack-form damage — shield absorbs first, the remainder
+		# wounds health. HOW it splits is the Resolver's knowledge, not ours.
 		if amount <= 0:
 			return {}
-		target.take_damage(amount)
+		Resolver.submit(StatMutation.make(target, StatMutation.DAMAGE, amount, source))
 		return {"target": target, "attribute": "health", "delta": -amount}
-	elif effect.attribute == "negate_attack":
-		# Queue one more negated attack on the target (its next strike deals 0). That's the whole job;
-		# the pip cue and the "Miss" follow on their own. Returns a non-empty result so the cue fires.
-		target.negate_next_attacks += 1
+	elif effect.attribute == "outgoing_damage" or effect.attribute == "incoming_damage":
+		# Arbitration: rewrite the PENDING damage mutation riding the context (built by combat,
+		# see combat._apply_attack_damage) — combat posted the strike it is ABOUT to submit and
+		# submits whatever this leaves behind. The two names are aliases for readability at the
+		# authoring site (the attacker's own strike vs a hit landing on the holder); both edit
+		# the same pending mutation. MUL scales the pending amount (×0 = a full block, reading
+		# as "Miss" downstream); ADD shifts it — positive is more damage, negative is armor —
+		# scaled by stacks like any stat delta. The amount never drops below 0 (a blocked strike
+		# is 0, not a heal). Outside an arbitrated moment there is no pending mutation and this
+		# is a no-op (returns {}, so no cue fires for something that did nothing).
+		if context == null or context.pending == null:
+			return {}
+		if effect.op == Effect.Op.MUL:
+			context.pending.amount = int(round(context.pending.amount * effect.amount))
+		else:
+			context.pending.amount += amount
+		context.pending.amount = maxi(context.pending.amount, 0)
 		return {"target": target}
 	else:
 		if amount == 0:
 			return {}
-		target.apply_modifier(effect.attribute, amount)
+		Resolver.submit(StatMutation.make(target, StringName(effect.attribute), amount, source))
 		return {"target": target, "attribute": effect.attribute, "delta": amount}
 
 

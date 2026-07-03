@@ -10,6 +10,6 @@
 	"stacking": "stack",
 	"max_stacks": 99,
 	"effects": [
-		{ "trigger": "on_attack", "targeting_policy": "self", "attribute": "negate_attack", "chance": 0.5 }
+		{ "trigger": "on_attack", "targeting_policy": "self", "attribute": "outgoing_damage", "op": "mul", "amount": 0, "chance": 0.5 }
 	]
 }
