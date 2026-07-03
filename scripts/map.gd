@@ -4,9 +4,16 @@ extends Control
 # Medallion diameter. Big in canvas units on purpose: canvas_items scales the 1920 design
 # down onto the phone, so nodes need to be large to read/tap. The map scrolls, so size
 # isn't space-constrained. The type caption and reward badge hang below the circle.
-const NODE_DIAM := 62.0
+const NODE_DIAM := 84.0
 const NODE_DIAM_COMPACT := 150.0
-const V_PAD := 48.0
+const V_PAD_TOP := 56.0
+# Extra air under the bottom floor: the caption + reward badge hang BELOW the node circle,
+# so the last row needs clearance or its text sits right on the screen edge. _build_map adds
+# a node diameter on top of this so it scales with zoom.
+const V_PAD_BOTTOM := 72.0
+
+# Zoom level is remembered across map visits within the session (combat → map → combat).
+static var _zoom_level := 1.0
 
 # The always-available Forge action's button art (a complete circular glossy button — see
 # _build_forge_fab, which shows this directly instead of drawing its own circle + anvil).
@@ -47,9 +54,14 @@ const FORGE_FAB_TEX := preload("res://assets/buttons/forge.png")
 ## How many generated nodes a just-rolled type takes to recover full weight. 0 = feature off.
 @export_range(0, 12, 1) var type_recovery := 3
 ## Dot radius, ×node radius.
-@export_range(0.02, 0.3, 0.005) var trail_dot_radius_mult := 0.085
+@export_range(0.02, 0.3, 0.005) var trail_dot_radius_mult := 0.11
 ## Gap between dots, ×node radius (smaller = denser trail).
-@export_range(0.2, 1.5, 0.05) var trail_dot_spacing_mult := 0.5
+@export_range(0.2, 1.5, 0.05) var trail_dot_spacing_mult := 0.42
+
+@export_group("Zoom")
+## Zoom slider range. 1.0 = the design-size layout; above it the canvas grows and pans.
+@export_range(0.5, 1.0, 0.05) var zoom_min := 0.8
+@export_range(1.0, 2.5, 0.05) var zoom_max := 1.8
 
 @export_group("Forge Button")
 ## Forge button CENTRE as a fraction of the screen (0 = left/top, 1 = right/bottom). The map
@@ -89,7 +101,7 @@ func get_chrome() -> Dictionary:
 
 func _ready() -> void:
 	_compact = UIScale.is_compact()
-	_node_diam = NODE_DIAM_COMPACT if _compact else NODE_DIAM
+	_node_diam = _base_diam() * _zoom_level
 
 	_node_kinds = {
 		MapNodeData.Type.COMBAT: NodeKindCombat.new(),
@@ -123,7 +135,12 @@ func _ready() -> void:
 
 	_build_scroll()
 	_build_forge_fab()
+	_build_zoom_slider()
 	call_deferred("_build_map")
+
+
+func _base_diam() -> float:
+	return NODE_DIAM_COMPACT if _compact else NODE_DIAM
 
 
 # The scrollable map area, filling the screen below the shared header and above the shared footer
@@ -133,7 +150,8 @@ func _ready() -> void:
 func _build_scroll() -> void:
 	_scroll = ScrollContainer.new()
 	_scroll.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	# Horizontal scroll appears only when zoomed in (the canvas grows wider than the view).
+	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	add_child(_scroll)
 
 	_canvas = MapCanvas.new()
@@ -181,9 +199,103 @@ func _build_forge_fab() -> void:
 	fab.add_child(btn)
 
 
+# A chunky vertical zoom slider (+ on top, − below, map-app style) floating over the left
+# edge of the map area, vertically centred — the one region that stays clear of map content
+# on both desktop (empty side margins) and compact (node rows hug the top/bottom corners).
+# Dragging it rebuilds the map live at the new node scale (spacing is a multiple of node
+# diameter, so the whole layout grows with it and the canvas pans/scrolls).
+func _build_zoom_slider() -> void:
+	# A translucent rounded panel behind the controls, so the slider reads as a UI control
+	# sitting over the map rather than loose parts mixed into the nodes.
+	var panel := PanelContainer.new()
+	panel.z_index = 60
+	panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER_LEFT,
+			Control.PRESET_MODE_MINSIZE, 32 if _compact else 22)
+	panel.grow_horizontal = Control.GROW_DIRECTION_END
+	panel.grow_vertical = Control.GROW_DIRECTION_BOTH
+	var bg := StyleBoxFlat.new()
+	bg.bg_color = Color(0.10, 0.10, 0.20, 0.55)
+	bg.set_corner_radius_all(18)
+	bg.set_content_margin_all(16.0 if _compact else 12.0)
+	panel.add_theme_stylebox_override("panel", bg)
+	add_child(panel)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 14 if _compact else 10)
+	panel.add_child(box)
+
+	var slider := VSlider.new()
+	slider.min_value = zoom_min
+	slider.max_value = zoom_max
+	# Coarse-ish step: every change rebuilds the node buttons, so don't fire per-pixel.
+	slider.step = 0.05
+	slider.value = _zoom_level
+	slider.focus_mode = Control.FOCUS_NONE
+	slider.tooltip_text = "Zoom"
+	slider.custom_minimum_size = Vector2(96.0, 380.0) if _compact else Vector2(64.0, 300.0)
+	slider.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	# Chunky track + gold fill + big round grabber (the theme defaults are tiny desktop-ware).
+	var track := StyleBoxFlat.new()
+	track.bg_color = Color(0.10, 0.10, 0.18, 0.75)
+	track.set_corner_radius_all(10)
+	var half_thick: float = 12.0 if _compact else 8.0
+	track.content_margin_left = half_thick
+	track.content_margin_right = half_thick
+	slider.add_theme_stylebox_override("slider", track)
+	var fill: StyleBoxFlat = track.duplicate()
+	fill.bg_color = Color("f6b91e")
+	slider.add_theme_stylebox_override("grabber_area", fill)
+	slider.add_theme_stylebox_override("grabber_area_highlight", fill)
+	var grab := _make_grabber_tex(56 if _compact else 40)
+	slider.add_theme_icon_override("grabber", grab)
+	slider.add_theme_icon_override("grabber_highlight", grab)
+	slider.add_theme_icon_override("grabber_disabled", grab)
+	slider.value_changed.connect(func(v: float) -> void:
+		_zoom_level = v
+		_apply_zoom())
+
+	box.add_child(_zoom_step_btn("+", 1.0, slider))
+	box.add_child(slider)
+	box.add_child(_zoom_step_btn("−", -1.0, slider))
+
+
+func _zoom_step_btn(txt: String, dir: float, slider: Slider) -> Button:
+	var b := Button.new()
+	b.text = txt
+	b.focus_mode = Control.FOCUS_NONE
+	var s: float = 96.0 if _compact else 64.0
+	b.custom_minimum_size = Vector2(s, s)
+	b.add_theme_font_size_override("font_size", 48 if _compact else 32)
+	b.pressed.connect(func() -> void: slider.value += dir * (zoom_max - zoom_min) / 6.0)
+	return b
+
+
+# A round gold grabber knob with a dark rim, built as a radial gradient (no art asset needed).
+func _make_grabber_tex(diam: int) -> Texture2D:
+	var tex := GradientTexture2D.new()
+	tex.width = diam
+	tex.height = diam
+	tex.fill = GradientTexture2D.FILL_RADIAL
+	tex.fill_from = Vector2(0.5, 0.5)
+	tex.fill_to = Vector2(1.0, 0.5)
+	var grad := Gradient.new()
+	var gold := Color("f6b91e")
+	var rim := Color(0.16, 0.12, 0.03)
+	grad.offsets = PackedFloat32Array([0.0, 0.68, 0.76, 0.9, 1.0])
+	grad.colors = PackedColorArray([gold, gold, rim, rim, Color(rim.r, rim.g, rim.b, 0.0)])
+	tex.gradient = grad
+	return tex
+
+
+func _apply_zoom() -> void:
+	_node_diam = _base_diam() * _zoom_level
+	_build_map()
+
+
 func _build_map() -> void:
-	# Canvas width fits the scroll viewport (no horizontal scroll); its height is whatever the
-	# fixed floor spacing needs (always taller than the viewport, so it scrolls).
+	# Canvas width fits the scroll viewport at zoom 1 and grows with zoom (panning via scroll);
+	# its height is whatever the floor spacing needs (always taller than the viewport, so it
+	# scrolls vertically).
 	var view: Vector2 = _scroll.size
 	if view.x <= 0.0:
 		# self is already sized by Shell's own layout to exclude the header and footer rows —
@@ -191,10 +303,14 @@ func _build_map() -> void:
 		view = size
 
 	var floor_spacing: float = _node_diam * (floor_spacing_mult_compact if _compact else floor_spacing_mult)
-	var canvas_h: float = maxf(view.y, V_PAD * 2.0 + floor_spacing * float(MapData.FLOORS - 1))
-	_canvas.custom_minimum_size = Vector2(0, canvas_h)
+	var canvas_w: float = view.x * maxf(1.0, _zoom_level)
+	# The bottom pad includes a node diameter so the caption + reward text hanging below the
+	# last row always clears the screen edge, at any zoom.
+	var pad_bottom: float = V_PAD_BOTTOM + _node_diam
+	var canvas_h: float = maxf(view.y, V_PAD_TOP + pad_bottom + floor_spacing * float(MapData.FLOORS - 1))
+	_canvas.custom_minimum_size = Vector2(canvas_w, canvas_h)
 
-	_calculate_positions(Vector2(view.x, canvas_h), floor_spacing)
+	_calculate_positions(Vector2(canvas_w, canvas_h), floor_spacing, pad_bottom)
 	_canvas.positions = node_positions
 	_canvas.map_data = map_data
 	_canvas.node_radius = _node_diam * 0.5
@@ -213,12 +329,16 @@ func _build_map() -> void:
 func _scroll_to_current() -> void:
 	if _scroll == null:
 		return
+	var canvas_w: float = _canvas.custom_minimum_size.x
 	var target_y: float
+	var target_x: float = (canvas_w - _scroll.size.x) / 2.0
 	if current_node_id >= 0 and node_positions.has(current_node_id):
 		target_y = node_positions[current_node_id].y - _scroll.size.y / 2.0
+		target_x = node_positions[current_node_id].x - _scroll.size.x / 2.0
 	else:
-		target_y = _canvas.size.y   # start floor sits at the bottom of the canvas
+		target_y = _canvas.custom_minimum_size.y   # start floor sits at the bottom of the canvas
 	_scroll.scroll_vertical = int(maxf(0.0, target_y))
+	_scroll.scroll_horizontal = int(maxf(0.0, target_x))
 
 
 # Node x-positions follow the BRANCHING, not the abstract lane index: starting from the lane
@@ -226,7 +346,7 @@ func _scroll_to_current() -> void:
 # nodes sit close and trails stay short instead of stretching across the map. Each floor's
 # nodes are kept in lane order with a minimum gap (so paths never cross or overlap). y comes
 # straight from the floor. The result is then fit-to-width and centred.
-func _calculate_positions(canvas_size: Vector2, floor_spacing: float) -> void:
+func _calculate_positions(canvas_size: Vector2, floor_spacing: float, pad_bottom: float) -> void:
 	var lane_mult: float = lane_spacing_mult_compact if _compact else lane_spacing_mult
 	var lane_spacing: float = _node_diam * lane_mult
 	var min_gap: float = lane_spacing
@@ -272,12 +392,13 @@ func _calculate_positions(canvas_size: Vector2, floor_spacing: float) -> void:
 					if x_of[ordered[i].id] > hi:
 						x_of[ordered[i].id] = hi
 
-	_finalize_positions(canvas_size, floor_spacing, x_of, lane_spacing)
+	_finalize_positions(canvas_size, floor_spacing, x_of, lane_spacing, pad_bottom)
 
 
 # Fit the relaxed x-coordinates into the viewport width (shrink only if too wide), centre
 # them, add optional organic jitter, and pair with the floor y.
-func _finalize_positions(canvas_size: Vector2, floor_spacing: float, x_of: Dictionary, lane_spacing: float) -> void:
+func _finalize_positions(canvas_size: Vector2, floor_spacing: float, x_of: Dictionary,
+		lane_spacing: float, pad_bottom: float) -> void:
 	var min_x: float = INF
 	var max_x: float = -INF
 	for id: int in x_of:
@@ -288,14 +409,14 @@ func _finalize_positions(canvas_size: Vector2, floor_spacing: float, x_of: Dicti
 	var scale: float = minf(1.0, avail / span)
 	var graph_center: float = (min_x + max_x) * 0.5
 	var canvas_center: float = canvas_size.x * 0.5
-	var usable_h: float = canvas_size.y - V_PAD * 2.0
+	var usable_h: float = canvas_size.y - V_PAD_TOP - pad_bottom
 	var half: float = _node_diam * 0.5
 	var jitter := RandomNumberGenerator.new()
 
 	for floor_nodes: Array in map_data.floors:
 		for node: MapNodeData in floor_nodes:
 			var x: float = canvas_center + (x_of[node.id] - graph_center) * scale
-			var y: float = V_PAD + usable_h - float(node.floor) * floor_spacing
+			var y: float = V_PAD_TOP + usable_h - float(node.floor) * floor_spacing
 			if organic_jitter > 0.0:
 				jitter.seed = GameData.current_map_state.map_seed ^ (node.id * 2654435761)
 				x += jitter.randf_range(-1.0, 1.0) * lane_spacing * organic_jitter
@@ -346,7 +467,7 @@ func _rebuild_node_buttons() -> void:
 
 			var med := MapNodeMedallion.new()
 			med.set_meta("map_node", true)
-			med.configure(node.type, state, _node_diam, _compact, caption, reward_summary, reward_color)
+			med.configure(node.type, state, _node_diam, caption, reward_summary, reward_color)
 			med.position = pos - Vector2(_node_diam, _node_diam) / 2.0
 			if not reward_summary.is_empty():
 				var label := caption if not caption.is_empty() else MapNodeData.get_label(node.type)

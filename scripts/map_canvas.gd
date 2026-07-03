@@ -20,15 +20,39 @@ var curve_dir: float = -1.0       # +1 / -1: which side the trail bows (set by M
 var dot_radius_mult: float = 0.085  # dot radius ×node_radius
 var dot_spacing_mult: float = 0.5   # gap between dots ×node_radius
 
+var _dragging := false
+
+
+func _ready() -> void:
+	# Hand cursor over the open map area hints it's draggable, without needing an instruction label.
+	mouse_default_cursor_shape = Control.CURSOR_DRAG
+
+
+# Click-and-hold-drag panning: a node Button on top of us (mouse_filter STOP) still eats its own
+# clicks first, so this only fires over open canvas — exactly where there's nothing to click
+# anyway. Godot implicitly keeps routing motion/release to us once we've captured the press, even
+# if the pointer drifts over a button mid-drag, so panning stays smooth across the whole canvas.
+func _gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		_dragging = event.pressed
+		if event.pressed:
+			accept_event()
+	elif event is InputEventMouseMotion and _dragging:
+		var scroll := get_parent() as ScrollContainer
+		if scroll:
+			scroll.scroll_horizontal -= int(event.relative.x)
+			scroll.scroll_vertical -= int(event.relative.y)
+		accept_event()
+
 
 func _draw() -> void:
 	if positions.is_empty() or map_data == null:
 		return
-	# Faint for routes not taken, warm gold along the travelled path, bright gold for the
-	# edges leaving the current node — the immediate branch choices.
-	var dim := Color(0.62, 0.62, 0.66, 0.45)
-	var taken := Color(0.82, 0.70, 0.36, 0.9)
-	var choice := Color(1.0, 0.87, 0.40, 1.0)
+	# Muted-but-solid slate for routes not taken, warm gold along the travelled path, bright
+	# gold for the edges leaving the current node — the immediate branch choices.
+	var dim := Color(0.33, 0.34, 0.45, 0.8)
+	var taken := Color(0.88, 0.72, 0.32, 0.95)
+	var choice := Color(1.0, 0.85, 0.30, 1.0)
 	for floor_nodes: Array in map_data.floors:
 		for node: MapNodeData in floor_nodes:
 			var from: Vector2 = positions.get(node.id, Vector2.ZERO)
@@ -38,7 +62,7 @@ func _draw() -> void:
 				var emphasis := 1.0
 				if node.id == current_id and next_id in reachable_ids:
 					col = choice
-					emphasis = 1.5
+					emphasis = 1.6
 				elif node.visited:
 					col = taken
 					emphasis = 1.2
@@ -63,9 +87,13 @@ func _draw_trail(from: Vector2, to: Vector2, color: Color, emphasis: float) -> v
 	# Trim both ends past the node radius (plus a little) so dots don't tuck under the icons.
 	var margin := clampf((node_radius + dot_r * 2.0) / length, 0.06, 0.42)
 	var step := spacing / length
+	var shadow := Color(0.06, 0.06, 0.12, 0.35)
 	var t := margin
 	while t <= 1.0 - margin + 0.0001:
-		draw_circle(_bezier(from, ctrl, to, t), dot_r, color, true, -1.0, true)
+		var p := _bezier(from, ctrl, to, t)
+		# Soft dark under-dot: keeps the breadcrumbs legible against light background art.
+		draw_circle(p, dot_r * 1.5, shadow, true, -1.0, true)
+		draw_circle(p, dot_r, color, true, -1.0, true)
 		t += step
 
 

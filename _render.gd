@@ -20,6 +20,15 @@ func _ready() -> void:
 		GameData.viewing_deck_id = did
 	if OS.get_cmdline_user_args().size() > 1 and OS.get_cmdline_user_args()[1] == "compact":
 		UIScale._compact = true
+	# Map: simulate being mid-run (one visited node, standing on the next) so all medallion
+	# states render — visited check, current glow, reachable highlight, locked.
+	if scene_path.contains("map") and args.size() > 1 and "midrun" in args:
+		var md := MapData.generate(GameData.current_map_state.map_seed, 0.15, 3)
+		var start: MapNodeData = md.floors[0][0]
+		GameData.current_map_state.visited_nodes = [start.id]
+		GameData.current_map_state.current_node_id = start.connections[0]
+	if scene_path.contains("map") and args.size() > 1 and "zoomed" in args:
+		MapScreen._zoom_level = 1.6
 	if scene_path.contains("reward"):
 		var enc := EncounterData.new()
 		enc.type = EncounterData.Type.ELITE
