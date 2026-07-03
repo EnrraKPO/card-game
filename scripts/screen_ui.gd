@@ -52,7 +52,7 @@ const BUTTON_HEIGHT := 52.0
 # Mobile/compact chrome is deliberately much taller than desktop: the header/footer bars and their
 # ✕ / Back buttons size off this, and touch targets need to be big and easy to hit. ~1.5x the old
 # value so the bars and corner buttons are ~50% larger on mobile.
-const BUTTON_HEIGHT_COMPACT := 200.0
+const BUTTON_HEIGHT_COMPACT := 80.0
 const BAR_HEIGHT := BUTTON_HEIGHT + BAR_V_PAD * 2.0
 const BAR_HEIGHT_COMPACT := BUTTON_HEIGHT_COMPACT + BAR_V_PAD * 2.0
 
@@ -432,14 +432,12 @@ static func action_button(text: String, action: Callable, min_size: Vector2 = Ve
 # orange debug-✕ variant (combat) — a separate fixed piece with its own color, never a mutation
 # of the normal ✕ (see [[header-system]] — no chrome piece changes appearance per screen).
 static func close_button(action: Callable, debug: bool = false) -> Button:
-	var compact := UIScale.is_compact()
-	# Smaller than the bar's full inner content height (BUTTON_HEIGHT/_COMPACT) so it doesn't sit
-	# flush against the bar's top/bottom edge. SIZE_SHRINK_CENTER below keeps the row from
-	# re-stretching it back out. GlossyButton.clip_contents guarantees the nine-patch art itself
-	# never paints past this box, however small.
-	var side := BUTTON_HEIGHT_COMPACT - 16.0 if compact else BUTTON_HEIGHT - 8.0
+	# One large size in every case (desktop AND mobile) for now — a single size is easy to test.
+	# SIZE_SHRINK_CENTER keeps the row from re-stretching it; GlossyButton.clip_contents keeps the
+	# nine-patch art inside the box.
+	var side := BUTTON_HEIGHT_COMPACT - 16.0
 	var min_size := Vector2(side, side)
-	var btn := action_button(CLOSE_GLYPH, action, min_size, 72 if compact else 20,
+	var btn := action_button(CLOSE_GLYPH, action, min_size, 32,
 		CHROME_DEBUG if debug else CHROME_NEUTRAL)
 	btn.tooltip_text = "Close"
 	btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -455,7 +453,7 @@ static func close_button(action: Callable, debug: bool = false) -> Button:
 # persistent Back button, rebound per screen via Shell._rebind_button.
 static func footer_button(text: String, action: Callable) -> Button:
 	var compact := UIScale.is_compact()
-	var min_size := Vector2(440, BUTTON_HEIGHT_COMPACT) if compact else Vector2(260, BUTTON_HEIGHT)
+	var min_size := Vector2(200, BUTTON_HEIGHT_COMPACT)
 	return action_button(text, action, min_size, 60 if compact else 20, CHROME_NEUTRAL)
 
 

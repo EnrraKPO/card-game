@@ -1,6 +1,8 @@
-[gd_scene load_steps=2 format=3 uid="uid://main"]
+[gd_scene format=3 uid="uid://main"]
 
-[ext_resource type="Script" path="res://scripts/shell.gd" id="1"]
+[ext_resource type="Script" uid="uid://dr5wy8xutoijr" path="res://scripts/shell.gd" id="1"]
 
-[node name="Shell" type="Control"]
+[node name="Shell" type="Control" unique_id=1899856928]
+layout_mode = 3
+anchors_preset = 0
 script = ExtResource("1")
