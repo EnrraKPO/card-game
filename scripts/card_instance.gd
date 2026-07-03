@@ -71,6 +71,20 @@ func is_alive() -> bool:
 	return current_health > 0
 
 
+# Swaps this unit's card identity in place (a material merged into its composition — see
+# EffectHooks.deliver_material). Wounds carry over as a damage DELTA: merging upgrades a unit,
+# it never heals it — and never kills it (floor 1 HP). Runtime modifiers, statuses, the charm
+# list, the current shield pool, position and owner all stay. Per-card overrides and charm
+# stat bakes on the OLD data do NOT transfer — the combined composition resolves to its
+# authored/derived card (v1 rule). Health lands through the Resolver like every stat write.
+func transform(new_data: CardData) -> void:
+	if new_data == null:
+		return
+	var damage := get_attribute("max_health") - current_health
+	data = new_data
+	Resolver.set_health(self, maxi(1, get_attribute("max_health") - damage))
+
+
 # ── Statuses ───────────────────────────────────────────────────────────────────────────
 
 # Applies a status (by id) to this card, combining with an existing one of the same id per the

@@ -53,6 +53,9 @@ enum TargetingPolicy {
 	ATTACK_TARGET,   # the unit this card is currently striking (valid in an ON_ATTACK context)
 	SUBJECT,         # the unit the event is about (the activator/actor — see EffectContext.subject)
 	ATTACKER,        # the unit that dealt the blow (valid in an ON_DAMAGE_TAKEN context)
+	MANUAL_SLOT,     # a SLOT the player picks on their own side — may be EMPTY (the effect decides
+	                 # what an empty pick means, e.g. material delivery spawns there); an occupied
+	                 # pick is gated by the effect's conditions. See SpellCaster's slot-mode flow.
 }
 
 # For an event-driven (TRIGGERED/CUSTOM) effect, which unit — relative to the effect's HOLDER — must
@@ -281,6 +284,7 @@ static func _str_policy(s: String) -> TargetingPolicy:
 		"attack_target":  return TargetingPolicy.ATTACK_TARGET
 		"subject":        return TargetingPolicy.SUBJECT
 		"attacker":       return TargetingPolicy.ATTACKER
+		"manual_slot":    return TargetingPolicy.MANUAL_SLOT
 	return TargetingPolicy.SELF
 
 
@@ -335,4 +339,5 @@ static func policy_key(p: TargetingPolicy) -> String:
 		TargetingPolicy.ATTACK_TARGET:  return "attack_target"
 		TargetingPolicy.SUBJECT:        return "subject"
 		TargetingPolicy.ATTACKER:       return "attacker"
+		TargetingPolicy.MANUAL_SLOT:    return "manual_slot"
 	return "self"

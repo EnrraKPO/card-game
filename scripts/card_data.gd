@@ -63,12 +63,12 @@ func is_lackey() -> bool:
 	return card_type == CardType.UNIT and not is_royalty()
 
 
-# The card this building generates once per turn (see combat.gd): a copy of the
-# card composed of all its NON-rook components. Strip every rook and rebuild from
-# what's left (other pieces + elements). A building with no non-rook components
-# (a plain Rook, or a double Rook) generates "Castling" — the base rook_generated
-# spell (grants every ally a Barrier; see CardData.rook_generated). Returns null
-# only when this isn't a building at all.
+# The card this building generates once per turn (see combat.gd): a building with no non-rook
+# components (a plain Rook, or a double Rook) generates "Castling" (the Barrier spell); any
+# other building generates the MATERIAL-DELIVERY spell for its non-rook remainder — a spell
+# that adds that remainder to a picked own slot: merging compositions with the occupant, or
+# spawning the remainder's unit on an empty slot (see _material_spell / EffectHooks).
+# Returns null only when this isn't a building at all.
 func generated_card() -> CardData:
 	if not is_building():
 		return null
@@ -77,7 +77,58 @@ func generated_card() -> CardData:
 		chess.erase("rook")
 	if chess.is_empty() and elements.is_empty():
 		return CardData.get_card("castling")
-	return CardData.get_card(CardData.composition_key(elements, chess))
+	return _material_spell(elements, chess)
+
+
+# Cache of synthesized material-delivery spells (composition key → CardData): one stable
+# identity per material. Never registered in _all/_by_composition — invisible to every
+# player-facing pool (shop/reward/Lab/collection), like all rook-generated cards.
+static var _material_spells: Dictionary = {}
+
+
+# Synthesizes the "Reinforce: X" spell for a material. The spell CARRIES the material as its
+# own composition (self-describing: the hook reads it back, the card chips render it) but is
+# explicitly a SPELL. Its single CUSTOM effect (EffectHooks."deliver_material") targets a
+# MANUAL_SLOT: an occupied own slot merges (gated by the conditions below), an empty own slot
+# spawns the material's unit.
+static func _material_spell(elems: Array, chess: Array) -> CardData:
+	var key := composition_key(elems, chess)
+	if _material_spells.has(key):
+		return _material_spells[key]
+	var remainder := get_card(key)
+	if remainder == null:
+		return null
+	var spell := CardData.new()
+	spell.id             = "deliver_" + key
+	spell.display_name   = "Reinforce: " + remainder.display_name
+	spell.cost           = remainder.cost
+	spell.card_type      = CardType.SPELL
+	spell.rook_generated = true
+	spell.elements       = Array(elems, TYPE_STRING, "", null)
+	spell.chess_pieces   = Array(chess, TYPE_STRING, "", null)
+	spell.description    = "Adds %s to one of your units, merging their compositions — or spawns a new %s on one of your empty slots." \
+			% [remainder.display_name, remainder.display_name]
+	spell.image          = remainder.image
+	spell.targeting_strategy = _make_targeting_strategy([])
+	var e := Effect.new()
+	e.kind = Effect.Kind.CUSTOM
+	e.custom_id = "deliver_material"
+	e.trigger = Effect.Trigger.ON_PLAY
+	e.targeting_policy = Effect.TargetingPolicy.MANUAL_SLOT
+	# Merge eligibility, evaluated per-occupant at pick time (the empty-slot spawn case is the
+	# MANUAL_SLOT flow's own rule): the combined composition must stay within the combine caps
+	# (2 elements / 2 chess pieces — CardData.can_combine's rule), and never touch a king
+	# composition: the combined card would be a plain derived combo, silently dropping is_king
+	# and breaking the win condition.
+	e.conditions.append(EffectCondition.make_custom(
+		func(target: CardInstance) -> bool:
+			if target.data.chess_pieces.has("king"):
+				return false
+			return target.data.elements.size() + elems.size() <= 2 \
+				and target.data.chess_pieces.size() + chess.size() <= 2))
+	spell.effects.append(e)
+	_material_spells[key] = spell
+	return spell
 
 
 static var _all: Dictionary = {}

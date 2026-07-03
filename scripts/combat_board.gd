@@ -113,6 +113,24 @@ func place_enemy_card(inst: CardInstance, r: int, c: int) -> Array:
 	return results
 
 
+# Spawns a unit into an empty PLAYER slot outside the hand-placement flow (material
+# delivery's empty-slot case — see EffectHooks.deliver_material). Mirrors place_enemy_card:
+# occupies the grid, creates the CardUI, fires the unit's ON_PLAY effects.
+func spawn_player_card(inst: CardInstance, r: int, c: int) -> Array:
+	if player_grid[r][c] != null:
+		return []
+	inst.row = r; inst.col = c; inst.owner = 0
+	player_grid[r][c] = inst
+	var ui := CardUI.create(inst)
+	(player_slots[r][c] as SlotUI).set_card(ui)
+	var results := EffectSystem.trigger(
+		Effect.Trigger.ON_PLAY, inst,
+		EffectContext.make(inst, player_grid, enemy_grid))
+	cleanup_effect_deaths()
+	refresh()
+	return results
+
+
 # Relocates an already-placed enemy unit to an empty slot (the CPU's reposition
 # action). Carries the existing CardUI across so no ON_PLAY re-triggers.
 func move_enemy_card(inst: CardInstance, r: int, c: int) -> void:
@@ -222,6 +240,18 @@ func _set_slot_targetable(slot: SlotUI, occupant: CardInstance, enabled: bool, e
 		slot.set_targetable(enabled)
 		return
 	slot.set_targetable(occupant != null and bool(eligible.call(occupant)))
+
+
+# Slot-level variant for MANUAL_SLOT effects (material delivery): `eligible` judges the SLOT
+# itself — side, emptiness, occupant — so EMPTY slots can be valid picks (the spawn case),
+# which the occupant-based filter above can never express.
+func set_slots_targetable_by_slot(enabled: bool, eligible: Callable) -> void:
+	for r in BoardData.ROWS:
+		for c in BoardData.COLS:
+			var ps := player_slots[r][c] as SlotUI
+			var es := enemy_slots[r][c] as SlotUI
+			ps.set_targetable(enabled and bool(eligible.call(ps)))
+			es.set_targetable(enabled and bool(eligible.call(es)))
 
 
 func set_board_card_filters(enabled: bool) -> void:

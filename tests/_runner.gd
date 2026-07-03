@@ -16,6 +16,7 @@ const SUITES: Array = [
 	preload("res://tests/test_effects.gd"),
 	preload("res://tests/test_statuses.gd"),
 	preload("res://tests/test_castling.gd"),
+	preload("res://tests/test_materials.gd"),
 ]
 
 

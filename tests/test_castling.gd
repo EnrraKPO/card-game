@@ -20,8 +20,8 @@ func run() -> void:
 			"a plain Rook generates Castling")
 	check_eq(CardData.get_card("rook_rook").generated_card().id, "castling",
 			"the Turret (double rook) generates Castling")
-	check_eq(CardData.get_card("pawn_rook").generated_card().id, "pawn",
-			"composite rook buildings still generate their non-rook piece")
+	check_eq(CardData.get_card("pawn_rook").generated_card().id, "deliver_pawn",
+			"composite rook buildings generate their material-delivery spell (see test_materials)")
 
 	check(not ("castling" in CardData.random_non_kings(99999)),
 			"castling never surfaces in shop/reward pools")
