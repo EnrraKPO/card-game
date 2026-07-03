@@ -71,9 +71,9 @@ static func make(p_target: Object, p_stat: StringName, p_amount: int,
 	return m
 
 
-# The pending strike of an attack. Combat builds this BEFORE the ON_ATTACK dispatch and hangs
-# it on the context (EffectContext.pending) so effects can rewrite the amount mid-flight
-# (arbitration — see "outgoing_damage" in EffectSystem._apply), then submits whatever is left.
-# Never negative: a fully blocked strike is 0, not a heal.
+# The strike of an attack: attack-channel damage from `p_source`. Interception happens inside
+# Resolver.submit (INTERCEPTOR effects on the source/target rewriting the amount — e.g. Blind);
+# the caller just submits and presents the outcome. Never negative: a fully blocked strike is
+# 0, not a heal.
 static func damage(p_target: Object, p_amount: int, p_source: CardInstance) -> StatMutation:
 	return make(p_target, DAMAGE, maxi(0, p_amount), p_source, CH_ATTACK)

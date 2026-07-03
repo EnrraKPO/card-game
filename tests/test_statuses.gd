@@ -15,23 +15,29 @@ func run() -> void:
 
 
 func _blind_end_to_end() -> void:
-	# Statistical: Blind's 50% roll happens per attack; a charge is spent per attack (hit or
-	# miss) via the fire-then-advance order combat uses. Loose bounds — it's an RNG test.
+	# Statistical: Blind is a status-carried INTERCEPTOR — its 50% roll happens inside
+	# Resolver.submit, per strike; a charge is spent per attack (hit or miss) via the
+	# submit-then-advance order combat uses. Loose bounds — it's an RNG test.
 	var trials := 400
 	var blocked := 0
 	var charge_leak := false
+	var cue_missing := false
 	for i in trials:
 		var atk := unit("pawn")
 		atk.apply_status("blind", Effect.STATUS_DURATION_DEFAULT, 1, null)
-		var ctx := ctx_for(atk)
-		ctx.pending = StatMutation.damage(atk, 4, atk)
-		EffectSystem.trigger(Effect.Trigger.ON_ATTACK, atk, ctx)
-		if ctx.pending.amount == 0:
+		var tgt := unit("pawn")
+		var out := Resolver.submit(StatMutation.damage(tgt, 4, atk))
+		if out.delta == 0:
 			blocked += 1
+			# A status-owned interception must name its status so combat can glint the pip.
+			if out.interceptions.is_empty() \
+					or str(out.interceptions[0].get("owner_id", "")) != "blind":
+				cue_missing = true
 		StatusEngine.advance(atk, Effect.Trigger.ON_ATTACK)
 		if atk.find_status("blind") != null:
 			charge_leak = true
 	check(not charge_leak, "blind charge is spent after one attack, hit or miss")
+	check(not cue_missing, "blocked strikes record blind as the intercepting status (pip cue)")
 	var rate := float(blocked) / float(trials)
 	check(rate > 0.35 and rate < 0.65,
 			"blind blocks ~50%% of strikes (got %d/%d)" % [blocked, trials])

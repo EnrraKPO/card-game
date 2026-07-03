@@ -453,43 +453,56 @@ func _resolve_attack(attacker: CardInstance) -> void:
 # damage, ON_DAMAGE_TAKEN trigger, and the shield/health hit numbers. Attack value is read
 # before ON_ATTACK fires so a self-buff on attack doesn't retroactively change this hit.
 func _apply_attack_damage(attacker: CardInstance, target: CardInstance, t_card: CardUI) -> void:
-	# The strike is not dealt as fact — it's a PENDING mutation. Built here, it rides the
-	# ON_ATTACK dispatch (context.pending) where any reacting effect may rewrite it through the
-	# ordinary effect vocabulary (e.g. Blind multiplies it to 0 — see "outgoing_damage" in
-	# EffectSystem._apply), and is then SUBMITTED to the Resolver — the only thing that writes
-	# stats — which owns the shield-first resolution form. Combat never learns WHY the number
-	# changed and never touches the target itself; it presents the outcome the Resolver reports.
-	var pending := StatMutation.damage(target, attacker.get_attribute("attack"), attacker)
-	await _fire(Effect.Trigger.ON_ATTACK, attacker, null, target, null, true, pending)
-	var dmg := pending.amount
-	# Resolve the attack-driven decay NOW — right after the ON_ATTACK moment, BEFORE the strike's
-	# own on-hit effects. A charge is spent per attack (hit or miss); doing it here means a Blind
-	# that an effect applies in *reaction* to this attack (a relic blinding the attacker on hit,
-	# via ON_DAMAGE_TAKEN below) lands afterwards and survives, instead of being eaten by this
-	# same attack.
+	# The ON_ATTACK moment is an EVENT — it fires whether or not any damage follows (reactions
+	# like on-hit poison ride it). The strike itself is just a mutation submitted to the
+	# Resolver, which owns both the shield-first resolution form AND interception (Blind and
+	# friends rewriting the amount inside the gate — see Effect.Kind.INTERCEPTOR). Combat never
+	# learns WHY the number changed; it presents the outcome the Resolver reports.
+	await _fire(Effect.Trigger.ON_ATTACK, attacker, null, target)
+	var outcome := Resolver.submit(
+			StatMutation.damage(target, attacker.get_attribute("attack"), attacker))
+	# Cue whatever intercepted (the Blind pip glint) BEFORE the damage readout — resolution is
+	# already complete; this is pure playback in resolution order.
+	await _present_interceptions(outcome)
+	var dmg := -outcome.delta
+	# Resolve the attack-driven decay AFTER submit (the Resolver needs the status alive to query
+	# its interceptors) and BEFORE the strike's on-hit reactions below. A charge is spent per
+	# attack (hit or miss); a Blind that an effect applies in *reaction* to this attack (a relic
+	# blinding the attacker on hit, via ON_DAMAGE_TAKEN) lands afterwards and survives, instead
+	# of being eaten by this same attack.
 	StatusEngine.advance(attacker, Effect.Trigger.ON_ATTACK)
 
-	# The strike is PERFORMED either way — even a whiff still attacks, it just deals 0. So damage is
-	# applied (0 on a miss) and ON_DAMAGE_TAKEN fires regardless, so on-attacked reactions (e.g. a
-	# relic blinding the attacker) run whether or not it connected. Only the readout differs.
-	var dmg_split := Resolver.submit(pending)
+	# The strike is PERFORMED either way — even a whiff still attacks, it just deals 0. So damage
+	# was applied (0 on a miss) and ON_DAMAGE_TAKEN fires regardless, so on-attacked reactions
+	# (e.g. a relic blinding the attacker) run whether or not it connected. Only the readout
+	# differs.
 	await _fire(Effect.Trigger.ON_DAMAGE_TAKEN, target, null, null, attacker)
 	if dmg <= 0:
-		# A 0-damage strike (negated, or <=0 Attack) reads as "Miss" rather than a number.
+		# A 0-damage strike (blocked, or <=0 Attack) reads as "Miss" rather than a number.
 		_vfx.play(VFXEvent.miss(t_card))
 	else:
 		# Shield reads FIRST: it takes the blow on its own badge (and only the badge — a held shield
 		# leaves the card unwounded). When the hit also bleeds through to HP, a brief halt lets the
 		# absorb land before the wound, so the shield is legible as the first thing that happened.
-		if dmg_split.shield_absorbed > 0:
+		if outcome.shield_absorbed > 0:
 			Sfx.shield_block()
-			_vfx.play(VFXEvent.shield_hit(t_card, dmg_split.shield_absorbed))
-		if dmg_split.health_damage > 0:
-			if dmg_split.shield_absorbed > 0:
+			_vfx.play(VFXEvent.shield_hit(t_card, outcome.shield_absorbed))
+		if outcome.health_damage > 0:
+			if outcome.shield_absorbed > 0:
 				await get_tree().create_timer(SHIELD_LEAD).timeout
 			Sfx.attack_damage()
-			_vfx.play(VFXEvent.health_damage(t_card, dmg_split.health_damage))
+			_vfx.play(VFXEvent.health_damage(t_card, outcome.health_damage))
 	_board.refresh()
+
+
+# Plays the pip/card glints for whatever intercepted a mutation inside the Resolver, in firing
+# order — pure playback off the Outcome record; resolution already happened. A status-owned
+# interception glints that status's pip on its holder; anything else glints the holder's card.
+func _present_interceptions(outcome: Resolver.Outcome) -> void:
+	for rec: Dictionary in outcome.interceptions:
+		var holder: CardInstance = rec.get("holder")
+		var sid: String = str(rec.get("owner_id", "")) if str(rec.get("owner_kind", "")) == "status" else ""
+		await _animator.show_effect_results([{"target": holder}], holder, sid)
 
 
 # The SINGLE dispatch-and-present point for a combat trigger: it resolves `event` for `holder` in
@@ -501,13 +514,11 @@ func _apply_attack_damage(attacker: CardInstance, target: CardInstance, t_card: 
 # true for per-actor events (attack/death), false for the per-holder status fan-out, where firing
 # the run-level effects once per holder would multiply them.
 func _fire(event: Effect.Trigger, holder: CardInstance, subject: CardInstance = null,
-		atk_target: CardInstance = null, attacker: CardInstance = null, run_level: bool = true,
-		pending: StatMutation = null) -> void:
+		atk_target: CardInstance = null, attacker: CardInstance = null, run_level: bool = true) -> void:
 	var ctx := EffectContext.make(holder, _board.player_grid, _board.enemy_grid)
 	ctx.subject = subject if subject != null else holder
 	ctx.attack_target = atk_target   # lets an ON_ATTACK effect target the unit being struck
 	ctx.attacker = attacker          # lets an ON_DAMAGE_TAKEN effect target the unit that struck
-	ctx.pending = pending            # the arbitrated pending mutation, when this moment carries one
 	# Walk the holder's containers one at a time — its card, then each status — cueing each before its
 	# (container-blind) effects land: card glint / pip glint → that container's effect VFX.
 	for group: Dictionary in EffectSystem.trigger_grouped(event, holder, ctx):

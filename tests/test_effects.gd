@@ -2,17 +2,30 @@ extends TestCase
 
 # The effect pipeline riding the Resolver: the three stat-write paths behave exactly as they
 # did pre-Resolver (heal clamp + landed-delta results, shield-first damage_taken, modifiers),
-# plus pending-mutation arbitration (Blind's block form, armor, clamping, no-op safety).
+# plus interception inside the gate (block/armor forms, channel policy, clamping, cue records).
 
 
 func suite_name() -> String:
-	return "Effects & Arbitration"
+	return "Effects & Interception"
 
 
 func run() -> void:
 	_effect_write_paths()
-	_arbitration()
-	_op_round_trip()
+	_interception()
+	_channel_policy()
+	_interceptor_round_trip()
+
+
+# A throwaway unit whose CARD carries the given interceptor effects (native interceptors are
+# unscaled; status-carried ones are exercised in the statuses suite via Blind).
+func _interceptor_unit(fx: Array) -> CardInstance:
+	var inst := CardInstance.from_data(CardData.build_from_dict({
+		"id": "_test_interceptor", "display_name": "T",
+		"cost": 1, "attack": 2, "health": 9, "speed": 1, "shield": 3,
+		"effects": fx,
+	}))
+	inst.owner = 0
+	return inst
 
 
 func _effect_write_paths() -> void:
@@ -48,42 +61,79 @@ func _effect_write_paths() -> void:
 	check_eq(u.get_attribute("attack"), atk0 + 2, "modifier effect folds via Resolver")
 
 
-func _arbitration() -> void:
-	var u := unit("pawn")
-	var ctx := ctx_for(u)
+func _interception() -> void:
+	# SOURCE role: a blocker's own strike is multiplied to nothing inside the gate.
+	var blocker := _interceptor_unit([
+		{"intercept": "damage", "channel": "attack", "role": "source", "op": "mul", "amount": 0},
+	])
+	var victim := unit("rook")
+	var hp0 := victim.current_health
+	var out := Resolver.submit(StatMutation.damage(victim, 5, blocker))
+	check_eq(out.delta, 0, "source-role mul-0 blocks the strike inside the gate (5 -> 0)")
+	check_eq(victim.current_health, hp0, "blocked strike leaves the target unwounded")
+	check_eq(victim.current_shield, 3, "blocked strike leaves the shield untouched")
+	check_eq(out.interceptions.size(), 1, "outcome records the interception (for the cue)")
+	check_eq(int(out.interceptions[0].get("delta", 1)), -5, "interception record carries its delta")
 
-	var block := Effect.from_dict({"trigger": "on_attack", "targeting_policy": "self",
-			"attribute": "outgoing_damage", "op": "mul", "amount": 0})
-	ctx.pending = StatMutation.damage(u, 5, u)
-	var bres := EffectSystem.apply_single(block, u, ctx)
-	check_eq(ctx.pending.amount, 0, "mul-0 blocks the pending strike (5 -> 0)")
-	check(not bres.is_empty(), "a pending rewrite returns a result (for the pip cue)")
+	# A LATER strike from a clean source is untouched — nothing persists anywhere.
+	var clean := unit("pawn")
+	var later := Resolver.submit(StatMutation.damage(victim, 3, clean))
+	check_eq(later.delta, -3, "a later strike carries no residue from the blocked one")
 
-	# Two block sources in the same moment: still just 0, and a LATER strike is untouched
-	# (nothing persists — the stale-counter bug class is impossible by construction).
-	ctx.pending = StatMutation.damage(u, 6, u)
-	EffectSystem.apply_single(block, u, ctx)
-	EffectSystem.apply_single(block, u, ctx)
-	check_eq(ctx.pending.amount, 0, "double block is still just 0")
-	check_eq(StatMutation.damage(u, 6, u).amount, 6, "a fresh strike carries no residue")
+	# TARGET role: armor on the defender shaves the hit before the shield sees it.
+	var armored := _interceptor_unit([
+		{"intercept": "damage", "channel": "attack", "role": "target", "amount": -3},
+	])
+	var hit := Resolver.submit(StatMutation.damage(armored, 5, clean))
+	check_eq(hit.shield_absorbed, 2, "armor -3 shaves 5 -> 2 before shield resolution")
+	check_eq(armored.current_health, 9, "armored unit's health untouched (shield held)")
+	var over := Resolver.submit(StatMutation.damage(armored, 2, clean))
+	check_eq(over.delta, 0, "over-armor clamps at 0 — never flips into a heal")
 
-	var armor := Effect.from_dict({"trigger": "on_attack", "targeting_policy": "self",
-			"attribute": "incoming_damage", "amount": -3})
-	ctx.pending = StatMutation.damage(u, 5, null)
-	EffectSystem.apply_single(armor, u, ctx)
-	check_eq(ctx.pending.amount, 2, "armor (add -3) shaves the pending strike (5 -> 2)")
-	ctx.pending = StatMutation.damage(u, 2, null)
-	EffectSystem.apply_single(armor, u, ctx)
-	check_eq(ctx.pending.amount, 0, "over-armor clamps at 0 — never flips into a heal")
+	# Roles don't cross: a source-role interceptor never fires when its holder is the TARGET.
+	var on_holder := Resolver.submit(StatMutation.damage(blocker, 4, clean))
+	check_eq(on_holder.delta, -4, "source-role interceptor ignores hits ON its holder (full 4 lands)")
+	check(on_holder.interceptions.is_empty(), "no interception recorded for the wrong role")
 
-	ctx.pending = null
-	check(EffectSystem.apply_single(armor, u, ctx).is_empty(),
-			"arbitration without a pending mutation is a silent no-op")
+	# chance: 0.0 never fires.
+	var lucky := _interceptor_unit([
+		{"intercept": "damage", "channel": "attack", "role": "target", "op": "mul", "amount": 0, "chance": 0.0},
+	])
+	var through := Resolver.submit(StatMutation.damage(lucky, 4, clean))
+	check_eq(through.delta, -4, "chance-0 interceptor never fires")
+	check(through.interceptions.is_empty(), "a non-firing interceptor records nothing")
 
 
-func _op_round_trip() -> void:
-	var block := Effect.from_dict({"trigger": "on_attack", "targeting_policy": "self",
-			"attribute": "outgoing_damage", "op": "mul", "amount": 0})
-	var rt := Effect.from_dict(block.to_dict())
-	check(rt.op == Effect.Op.MUL and rt.attribute == "outgoing_damage",
-			"triggered effect round-trips with op=mul intact")
+func _channel_policy() -> void:
+	# An attack-only barrier ignores everything that isn't attack-channel damage.
+	var barrier := _interceptor_unit([
+		{"intercept": "damage", "channel": "attack", "role": "target", "op": "mul", "amount": 0},
+	])
+	var hp0 := barrier.current_health
+
+	# A poison-style direct HEALTH change: different stat entirely — sails through.
+	Resolver.submit(StatMutation.make(barrier, StatMutation.HEALTH, -2, null))
+	check_eq(barrier.current_health, hp0 - 2, "direct health change ignores a damage barrier")
+
+	# Spell/effect damage (damage_taken path submits on the EFFECT channel): same stat,
+	# different channel — sails through too. This pins the channel policy.
+	var dmg_eff := Effect.from_dict({"trigger": "on_play", "targeting_policy": "self",
+			"attribute": "damage_taken", "amount": 4})
+	EffectSystem.apply_single(dmg_eff, barrier, ctx_for(barrier))
+	check_eq(barrier.current_shield, 0, "effect-channel damage passes an attack-only barrier (shield eats 3)")
+	check_eq(barrier.current_health, hp0 - 2 - 1, "effect-channel damage bleeds through normally")
+
+	# Attack-channel damage IS blocked.
+	var blocked := Resolver.submit(StatMutation.damage(barrier, 5, unit("pawn")))
+	check_eq(blocked.delta, 0, "attack-channel damage is blocked by the barrier")
+
+
+func _interceptor_round_trip() -> void:
+	var e := Effect.from_dict({"intercept": "damage", "channel": "attack", "role": "source",
+			"op": "mul", "amount": 0, "chance": 0.5})
+	check(e.kind == Effect.Kind.INTERCEPTOR, "'intercept' key infers the INTERCEPTOR kind")
+	var rt := Effect.from_dict(e.to_dict())
+	check(rt.kind == Effect.Kind.INTERCEPTOR and rt.intercept == StatMutation.DAMAGE
+			and rt.channel == StatMutation.CH_ATTACK and rt.role == Effect.Role.SOURCE
+			and rt.op == Effect.Op.MUL and rt.chance == 0.5,
+			"interceptor round-trips intact (stat/channel/role/op/chance)")

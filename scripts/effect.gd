@@ -2,22 +2,31 @@ class_name Effect
 extends RefCounted
 
 # The single effect payload any game component can hold (cards, charms, upgrades, relics,
-# heroes). One authored schema, three KINDS routed to the right evaluator:
-#   • MODIFIER  — a passive delta on a value. scope=GLOBAL keys a registry number (see
-#                 GameAttributes), resolved by GameData.value; scope=CARD keys a card
-#                 attribute, folded into CardInstance.get_attribute at read-time for matching
-#                 player cards (predicate selection via `filter`).
-#   • TRIGGERED — an event-driven, targeted, conditional effect (the classic card effect).
-#                 Dispatched from a card on the board (EffectSystem.trigger) AND at run level
-#                 from any active source (EffectSystem.trigger_global).
-#   • CUSTOM    — a code hook (EffectHooks) keyed by `custom_id`, for logic the schema can't
-#                 express. Fired like a TRIGGERED effect; runs arbitrary code with the context.
+# heroes). One authored schema, four KINDS routed to the right evaluator:
+#   • MODIFIER    — a passive delta on a value. scope=GLOBAL keys a registry number (see
+#                   GameAttributes), resolved by GameData.value; scope=CARD keys a card
+#                   attribute, folded into CardInstance.get_attribute at read-time for matching
+#                   player cards (predicate selection via `filter`).
+#   • TRIGGERED   — an event-driven, targeted, conditional effect (the classic card effect).
+#                   Dispatched from a card on the board (EffectSystem.trigger) AND at run level
+#                   from any active source (EffectSystem.trigger_global).
+#   • CUSTOM      — a code hook (EffectHooks) keyed by `custom_id`, for logic the schema can't
+#                   express. Fired like a TRIGGERED effect; runs arbitrary code with the context.
+#   • INTERCEPTOR — a standing rewrite of a pending StatMutation passing through the Resolver.
+#                   NOT an event in time: it matches mutations by stat/channel/role and adjusts
+#                   the amount BEFORE it commits (e.g. Blind: my outgoing attack damage ×0, half
+#                   the time). Evaluated only inside Resolver.submit — never by the trigger
+#                   dispatch. See Resolver._intercept.
 # `from_dict` is the one parser; it infers the kind from the fields present, so existing card /
 # charm / upgrade data loads unchanged.
 
-enum Kind  { MODIFIER, TRIGGERED, CUSTOM }
+enum Kind  { MODIFIER, TRIGGERED, CUSTOM, INTERCEPTOR }
 enum Scope { GLOBAL, CARD }
-enum Op    { ADD, MUL }   # MUL consumed by pending-mutation arbitration (see EffectSystem._apply); MODIFIERs are ADD-only today
+enum Op    { ADD, MUL }   # MUL consumed by INTERCEPTOR rewrites (see Resolver._intercept); MODIFIERs are ADD-only today
+
+# INTERCEPTOR: which side of the mutation the HOLDER must be for this to fire — the unit that
+# caused it (SOURCE, e.g. Blind on the attacker) or the unit receiving it (TARGET, e.g. armor).
+enum Role { SOURCE, TARGET }
 
 enum Trigger {
 	ON_PLAY,
@@ -85,6 +94,11 @@ var status_stacks: int = 1
 var scope: Scope = Scope.GLOBAL
 var key: String = ""
 
+# ── INTERCEPTOR fields ──
+var intercept: StringName = &""   # the StatMutation stat this rewrites (e.g. "damage")
+var channel: StringName = &""     # provenance filter (e.g. "attack"); empty = any channel
+var role: Role = Role.SOURCE      # which side of the mutation the holder must be
+
 # Which container owns this effect (kind + id), set by RelicData/StatusData at load — used by the
 # combat cue (glint the relic chip / status pip). Empty for plain card effects. Never affects
 # target resolution.
@@ -116,6 +130,12 @@ static func from_dict(d: Dictionary) -> Effect:
 		e.scope = Scope.CARD if CARD_ATTR.has(e.key) else Scope.GLOBAL
 		if d.has("scope"):
 			e.scope = Scope.CARD if str(d.get("scope")) == "card" else Scope.GLOBAL
+	elif kind_str == "interceptor" or (kind_str.is_empty() and d.has("intercept")):
+		e.kind      = Kind.INTERCEPTOR
+		e.intercept = StringName(str(d.get("intercept", "")))
+		e.channel   = StringName(str(d.get("channel", "")))
+		e.role      = _str_role(str(d.get("role", "source")))
+		e.op        = Op.MUL if str(d.get("op", "add")) == "mul" else Op.ADD
 	elif kind_str == "custom" or (kind_str.is_empty() and d.has("custom")):
 		e.kind             = Kind.CUSTOM
 		e.custom_id        = d.get("custom", "")
@@ -130,8 +150,8 @@ static func from_dict(d: Dictionary) -> Effect:
 		e.subject_elements = (d.get("subject_elements", []) as Array).duplicate()
 		e.targeting_policy = _str_policy(d.get("targeting_policy", ""))
 		e.attribute        = d.get("attribute", "")
-		# MUL is only meaningful for the arbitration attributes today (e.g. Blind's
-		# "outgoing_damage" ×0); plain stat deltas stay additive.
+		# Parsed for round-trip fidelity; no TRIGGERED evaluator consumes MUL today (the
+		# INTERCEPTOR kind is where mul does its work — see Resolver._intercept).
 		e.op               = Op.MUL if str(d.get("op", "add")) == "mul" else Op.ADD
 	# Optional "apply a status" payload, valid on any event-driven (TRIGGERED) effect.
 	var st: Dictionary = d.get("status", {})
@@ -163,6 +183,19 @@ func to_dict() -> Dictionary:
 			if subject_filter != SubjectFilter.SELF:
 				cd["subject"] = subject_key(subject_filter)
 			return cd
+		Kind.INTERCEPTOR:
+			var idd := {
+				"intercept": String(intercept),
+				"role":      role_key(role),
+				"amount":    amount,
+			}
+			if channel != &"":
+				idd["channel"] = String(channel)
+			if op == Op.MUL:
+				idd["op"] = "mul"
+			if chance != 1.0:
+				idd["chance"] = chance
+			return idd
 		_:
 			var conds: Array = []
 			for c: EffectCondition in conditions:
@@ -249,6 +282,14 @@ static func _str_policy(s: String) -> TargetingPolicy:
 		"subject":        return TargetingPolicy.SUBJECT
 		"attacker":       return TargetingPolicy.ATTACKER
 	return TargetingPolicy.SELF
+
+
+static func _str_role(s: String) -> Role:
+	return Role.TARGET if s == "target" else Role.SOURCE
+
+
+static func role_key(r: Role) -> String:
+	return "target" if r == Role.TARGET else "source"
 
 
 static func _str_subject(s: String) -> SubjectFilter:

@@ -24,7 +24,11 @@ static func trigger_grouped(event: Effect.Trigger, source: CardInstance, context
 		return groups
 	var native: Array = []
 	for effect: Effect in source.data.effects:
-		if effect.kind == Effect.Kind.MODIFIER or effect.trigger != event:
+		# Only event-driven kinds ride the trigger dispatch — MODIFIERs fold at read time,
+		# INTERCEPTORs fire inside Resolver.submit; neither is an event reaction.
+		if effect.kind != Effect.Kind.TRIGGERED and effect.kind != Effect.Kind.CUSTOM:
+			continue
+		if effect.trigger != event:
 			continue
 		if not _subject_matches(effect, context.subject, source):
 			continue
@@ -208,24 +212,6 @@ static func _apply(effect: Effect, target: CardInstance, source: CardInstance, c
 		Resolver.submit(StatMutation.make(target,
 				StatMutation.stat_for_attribute(effect.attribute), amount, source))
 		return {"target": target, "attribute": "health", "delta": -amount}
-	elif effect.attribute == "outgoing_damage" or effect.attribute == "incoming_damage":
-		# Arbitration: rewrite the PENDING damage mutation riding the context (built by combat,
-		# see combat._apply_attack_damage) — combat posted the strike it is ABOUT to submit and
-		# submits whatever this leaves behind. The two names are aliases for readability at the
-		# authoring site (the attacker's own strike vs a hit landing on the holder); both edit
-		# the same pending mutation. MUL scales the pending amount (×0 = a full block, reading
-		# as "Miss" downstream); ADD shifts it — positive is more damage, negative is armor —
-		# scaled by stacks like any stat delta. The amount never drops below 0 (a blocked strike
-		# is 0, not a heal). Outside an arbitrated moment there is no pending mutation and this
-		# is a no-op (returns {}, so no cue fires for something that did nothing).
-		if context == null or context.pending == null:
-			return {}
-		if effect.op == Effect.Op.MUL:
-			context.pending.amount = int(round(context.pending.amount * effect.amount))
-		else:
-			context.pending.amount += amount
-		context.pending.amount = maxi(context.pending.amount, 0)
-		return {"target": target}
 	else:
 		if amount == 0:
 			return {}

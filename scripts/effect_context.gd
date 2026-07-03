@@ -10,10 +10,6 @@ var attacker: CardInstance = null        # the unit that dealt the blow, during 
 # The SUBJECT: the unit the broadcast event is about (who activated / attacked / died). An effect's
 # subject_filter is evaluated against this relative to the holder; null for subject-less phase events.
 var subject: CardInstance = null
-# The arbitration payload: the PENDING mutation combat is about to submit for this moment
-# (see StatMutation + Resolver). Effects rewrite it in place; combat submits what's left.
-# Null outside an arbitrated dispatch — pending-modifying effects are then a no-op.
-var pending: StatMutation = null
 
 
 static func make(src: CardInstance, p_board: Array, e_board: Array) -> EffectContext:

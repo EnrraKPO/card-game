@@ -92,7 +92,11 @@ An effect is an action that fires at a specific moment, targeting one or more ca
 | `attack` | Attack power |
 | `speed` | Attack order priority |
 | `cost` | Mana cost |
-| `outgoing_damage` / `incoming_damage` | Rewrites a **pending attack** during arbitration instead of a card stat — see the Arbitration section of `data/statuses/STATUS_AUTHORING_GUIDE.md`. With `"op": "mul", "amount": 0` the strike is fully blocked (reads as Miss); with the default add op, positive `amount` adds damage and negative is armor. Only meaningful on an `on_attack` effect today. |
+
+> **Interceptor effects** — an effect with an `"intercept"` key instead of a `trigger` is not an
+> event reaction at all: it rewrites matching stat mutations inside the Resolver before they
+> commit (e.g. Blind blocking its holder's own attack damage). See the Interceptors section of
+> `data/statuses/STATUS_AUTHORING_GUIDE.md` for the schema; cards can carry them too.
 
 ### `amount` — how much to change
 
