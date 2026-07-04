@@ -22,7 +22,7 @@
 	"card_type": "spell",
 	"rook_generated": true,
 	"material": "pawn",
-	"description": "Adds Pawn to one of your units, merging their compositions — or spawns a new Pawn on one of your empty slots.",
+	"description": "Adds Pawn to one of your units, merging their compositions - or spawns a new Pawn on one of your empty slots.",
 	"elements": [], "chess_pieces": [],
 	"effects": [
 	  {
@@ -30,7 +30,7 @@
 		"trigger": "on_play", "targeting_policy": "manual_slot",
 		"conditions": [
 		  { "composition": ["king", "rook"], "present": false },
-		  { "mergeable_with": "pawn" }
+		  { "attribute": "piece_count", "comparator": "lte", "value": 1 }
 		]
 	  }
 	]
@@ -42,7 +42,7 @@
 	"card_type": "spell",
 	"rook_generated": true,
 	"material": "knight",
-	"description": "Adds Knight to one of your units, merging their compositions — or spawns a new Knight on one of your empty slots.",
+	"description": "Adds Knight to one of your units, merging their compositions - or spawns a new Knight on one of your empty slots.",
 	"elements": [], "chess_pieces": [],
 	"effects": [
 	  {
@@ -50,7 +50,7 @@
 		"trigger": "on_play", "targeting_policy": "manual_slot",
 		"conditions": [
 		  { "composition": ["king", "rook"], "present": false },
-		  { "mergeable_with": "knight" }
+		  { "attribute": "piece_count", "comparator": "lte", "value": 1 }
 		]
 	  }
 	]
@@ -62,7 +62,7 @@
 	"card_type": "spell",
 	"rook_generated": true,
 	"material": "bishop",
-	"description": "Adds Bishop to one of your units, merging their compositions — or spawns a new Bishop on one of your empty slots.",
+	"description": "Adds Bishop to one of your units, merging their compositions - or spawns a new Bishop on one of your empty slots.",
 	"elements": [], "chess_pieces": [],
 	"effects": [
 	  {
@@ -70,7 +70,7 @@
 		"trigger": "on_play", "targeting_policy": "manual_slot",
 		"conditions": [
 		  { "composition": ["king", "rook"], "present": false },
-		  { "mergeable_with": "bishop" }
+		  { "attribute": "piece_count", "comparator": "lte", "value": 1 }
 		]
 	  }
 	]
@@ -82,7 +82,7 @@
 	"card_type": "spell",
 	"rook_generated": true,
 	"material": "queen",
-	"description": "Adds Queen to one of your units, merging their compositions — or spawns a new Queen on one of your empty slots.",
+	"description": "Adds Queen to one of your units, merging their compositions - or spawns a new Queen on one of your empty slots.",
 	"elements": [], "chess_pieces": [],
 	"effects": [
 	  {
@@ -90,7 +90,7 @@
 		"trigger": "on_play", "targeting_policy": "manual_slot",
 		"conditions": [
 		  { "composition": ["king", "rook"], "present": false },
-		  { "mergeable_with": "queen" }
+		  { "attribute": "piece_count", "comparator": "lte", "value": 1 }
 		]
 	  }
 	]
@@ -102,7 +102,7 @@
 	"card_type": "spell",
 	"rook_generated": true,
 	"material": "darkness_water",
-	"description": "Adds Blight (darkness + water) to one of your units, merging their compositions — or spawns a new Blight on one of your empty slots.",
+	"description": "Adds Blight (darkness + water) to one of your units, merging their compositions - or spawns a new Blight on one of your empty slots.",
 	"elements": [], "chess_pieces": [],
 	"effects": [
 	  {
@@ -110,7 +110,7 @@
 		"trigger": "on_play", "targeting_policy": "manual_slot",
 		"conditions": [
 		  { "composition": ["king", "rook"], "present": false },
-		  { "mergeable_with": "darkness_water" }
+		  { "attribute": "element_count", "comparator": "eq", "value": 0 }
 		]
 	  }
 	]

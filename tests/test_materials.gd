@@ -95,13 +95,15 @@ func _eligibility() -> void:
 			CardInstance.from_data(CardData.get_card("fire_pawn"))),
 			"1 existing element + 2 more would exceed the element cap")
 
-	# The mergeable_with condition form stands alone and round-trips.
-	var merge_cond := EffectCondition.from_dict({"mergeable_with": "pawn"})
-	check(merge_cond.evaluate(unit("pawn")), "mergeable_with passes a unit with room")
-	check(not merge_cond.evaluate(CardInstance.from_data(CardData.get_card("pawn_pawn"))),
-			"mergeable_with fails a full unit")
-	var rt := EffectCondition.from_dict(merge_cond.to_dict())
-	check(rt.mergeable_with == "pawn", "mergeable_with round-trips through the schema")
+	# Merge room is a plain COUNT query: composition sizes are ordinary condition attributes.
+	check_eq(unit("pawn").get_attribute("piece_count"), 1, "piece_count queries the composition")
+	check_eq(CardInstance.from_data(CardData.get_card("darkness_water")).get_attribute("element_count"), 2,
+			"element_count queries the composition")
+	var room := EffectCondition.from_dict(
+			{"attribute": "piece_count", "comparator": "lte", "value": 1})
+	check(room.evaluate(unit("pawn")), "a 1-piece unit has room for one more piece")
+	check(not room.evaluate(CardInstance.from_data(CardData.get_card("pawn_pawn"))),
+			"a 2-piece unit fails the count gate")
 
 
 func _merge() -> void:

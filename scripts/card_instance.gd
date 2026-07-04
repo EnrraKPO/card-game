@@ -57,6 +57,10 @@ func get_attribute(attr: String) -> int:
 		"speed":      return data.speed  + modifiers.get("speed",      0) + GameData.card_bonus(self, "speed")      + StatusEngine.modifier_bonus(self, "speed")
 		"cost":       return data.cost   + modifiers.get("cost",       0) + GameData.card_bonus(self, "cost")       + StatusEngine.modifier_bonus(self, "cost")
 		"shield":     return current_shield
+		# Read-only composition counts, so conditions can query merge room with the ordinary
+		# attribute/comparator form (e.g. a pawn material: piece_count <= 1). Never modified.
+		"piece_count":   return data.chess_pieces.size()
+		"element_count": return data.elements.size()
 		_:            return modifiers.get(attr, 0)
 
 

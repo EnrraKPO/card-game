@@ -122,9 +122,12 @@ static func _material_spell(elems: Array, chess: Array) -> CardData:
 		"effects": [{
 			"kind": "custom", "custom": "deliver_material",
 			"trigger": "on_play", "targeting_policy": "manual_slot",
+			# Merge room as plain count conditions (the target must be able to absorb this
+			# material within the combine caps of 2 elements / 2 chess pieces).
 			"conditions": [
 				{"composition": ["king", "rook"], "present": false},
-				{"mergeable_with": key},
+				{"attribute": "piece_count", "comparator": "lte", "value": 2 - chess.size()},
+				{"attribute": "element_count", "comparator": "lte", "value": 2 - elems.size()},
 			],
 		}],
 	})

@@ -150,11 +150,11 @@ only" — keep a buff off the persistent King); `{ "composition": ["light"] }` p
 light-composed units. A single id or a list is accepted; `present: true` (default) means
 "contains any of these", `false` means "contains none".
 
-**Mergeable form** — `{ "mergeable_with": "pawn" }` passes when the target's composition can
-still absorb the named material's composition within the combine caps (≤2 elements, ≤2 chess
-pieces). The authorable merge gate for material-delivery cards — see `rook_generated.json`.
-
-**`attribute`** — any card attribute listed above (`health`, `attack`, `speed`, `cost`)
+**`attribute`** — any card attribute listed above (`health`, `attack`, `speed`, `cost`), plus
+the read-only composition counts `piece_count` / `element_count` (how many chess pieces /
+elements the target's composition holds). The counts are the merge-room gate for material
+cards — a 1-piece material authors `{ "attribute": "piece_count", "comparator": "lte",
+"value": 1 }` (the combine cap is 2 of each) — see `rook_generated.json`.
 
 **`comparator`** — how to compare the attribute value against `value`
 

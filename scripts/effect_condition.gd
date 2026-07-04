@@ -18,11 +18,6 @@ var present: bool = true
 # on light). E.g. { "composition": ["king", "queen"], "present": false } = "lackeys only" —
 # gate a buff away from royal compositions so the persistent King doesn't hoard every buff.
 var composition: Array = []
-# MERGEABLE-form condition: passes when the card's composition can still absorb the named
-# material's composition within the combine caps (≤2 elements, ≤2 chess pieces — see
-# CardData.can_combine). The authorable merge gate for material-delivery cards:
-# { "mergeable_with": "pawn" }.
-var mergeable_with: String = ""
 
 
 static func make(attr: String, comp: Comparator, val: int) -> EffectCondition:
@@ -54,10 +49,6 @@ static func from_dict(d: Dictionary) -> EffectCondition:
 		c.composition = [str(comp)] if comp is String else (comp as Array).duplicate()
 		c.present = bool(d.get("present", true))
 		return c
-	if d.has("mergeable_with"):
-		var c := EffectCondition.new()
-		c.mergeable_with = str(d.get("mergeable_with", ""))
-		return c
 	return make(
 		d.get("attribute", ""),
 		_str_comparator(d.get("comparator", "")),
@@ -82,8 +73,6 @@ func to_dict() -> Dictionary:
 		return {"status": status_id, "present": present}
 	if not composition.is_empty():
 		return {"composition": composition.duplicate(), "present": present}
-	if not mergeable_with.is_empty():
-		return {"mergeable_with": mergeable_with}
 	return {
 		"attribute":  attribute,
 		"comparator": comparator_key(comparator),
@@ -114,9 +103,6 @@ func evaluate(card: CardInstance) -> bool:
 				has = true
 				break
 		return has == present
-	if not mergeable_with.is_empty():
-		var mat := CardData.get_card(mergeable_with)
-		return mat != null and CardData.can_combine(card.data, mat)
 	var card_val := card.get_attribute(attribute)
 	match comparator:
 		Comparator.GT:  return card_val > value
