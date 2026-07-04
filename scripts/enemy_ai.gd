@@ -5,8 +5,8 @@ extends RefCounted
 # for the orchestrator to execute; combat._execute_enemy_action dispatches on type.
 #   { "type": Action.PLACE,    "inst": CardInstance, "row": int, "col": int }
 #   { "type": Action.CAST,     "inst": CardInstance, "target": CardInstance|null }
-#   { "type": Action.GENERATE, "building": CardInstance, "row": int, "col": int }        — unit token
-#   { "type": Action.GENERATE, "building": CardInstance, "target": CardInstance|null }   — spell token (no slot)
+#   { "type": Action.GENERATE, "unit": CardInstance, "ability": AbilityData, "row": int, "col": int }      — material spawn
+#   { "type": Action.GENERATE, "unit": CardInstance, "ability": AbilityData, "target": CardInstance|null } — targeted ability
 #   { "type": Action.MOVE,     "inst": CardInstance, "row": int, "col": int }
 enum Action { PLACE, MOVE, CAST, GENERATE }
 
@@ -119,47 +119,46 @@ func _plan_advance(board: CombatBoard, occ: Array, actions: Array) -> void:
 		actions.append({ "type": Action.MOVE, "inst": best, "row": slot[0], "col": dest_col })
 
 
-# ── Building generation (uses leftover mana) ──────────────────────────────────────
+# ── Ability activation (uses leftover mana) ───────────────────────────────────────
 
+# Activates units' abilities with the leftover mana. V1 policy per ability: a MATERIAL ability
+# always resolves as its SPAWN half on a planned slot (functionally the old unit generation;
+# merge smarts later); any other manually-targeted ability needs an eligible own-side target
+# picked here — none eligible = hold it (don't waste the tap on a guaranteed fizzle). A
+# tap-costed activation ends that unit's planning for the turn.
 func _plan_generation(board: CombatBoard, occ: Array, remaining: int, actions: Array) -> void:
 	for inst: CardInstance in _units(board.enemy_grid):
 		if inst.attack_exhausted:
 			continue
-		# Any unit with a resolvable generated token (a GENERATOR effect, or a rook building's
-		# derived fallback) may generate — rootedness is a separate concept.
-		var token := inst.data.generated_card()
-		if token == null or token.cost > remaining:
-			continue
-		# A non-delivery SPELL token (Castling) casts rather than taking a board slot — no
-		# placement to plan, but a manually-targeted spell needs an eligible target picked here
-		# (an ally passing the effect's conditions, e.g. one without a Barrier yet). No eligible
-		# target = hold the generation (don't waste the rook's attack on a guaranteed fizzle).
-		if token.card_type == CardData.CardType.SPELL and token.material.is_empty():
-			var target := _pick_generated_spell_target(token, board)
-			if target == null and _data_needs_manual(token):
+		for ab: AbilityData in inst.ability_list():
+			if ab.mana > remaining:
 				continue
-			actions.append({ "type": Action.GENERATE, "building": inst, "target": target })
-			remaining -= token.cost
-			continue
-		# Units — and MATERIAL spell tokens ("Reinforce: X", `material` field set), which the AI
-		# always resolves as their SPAWN half in v1 (identical to the old unit generation; merge
-		# smarts later) — take a board slot.
-		var slot := _take_front_slot(occ)
-		if slot.is_empty():
-			break
-		actions.append({ "type": Action.GENERATE, "building": inst, "row": slot[0], "col": slot[1] })
-		remaining -= token.cost
+			if not ab.material.is_empty():
+				var slot := _take_front_slot(occ)
+				if slot.is_empty():
+					return   # board full — no further spawn-type activations possible
+				actions.append({ "type": Action.GENERATE, "unit": inst, "ability": ab,
+						"row": slot[0], "col": slot[1] })
+			else:
+				var target := _pick_ability_target(ab, board)
+				if target == null and _ability_needs_manual(ab):
+					continue
+				actions.append({ "type": Action.GENERATE, "unit": inst, "ability": ab,
+						"target": target })
+			remaining -= ab.mana
+			if ab.tap:
+				break   # the holder is tapped when this executes — one tap ability per turn
 
 
-# The ally a generated manual-targeted spell token should hit: the highest-attack own unit
-# passing the conditions of any of the token's manual ON_PLAY effects (protect the biggest
-# threat first). Null when the token needs no manual target, or nothing is eligible.
-func _pick_generated_spell_target(token: CardData, board: CombatBoard) -> CardInstance:
-	if not _data_needs_manual(token):
+# The ally a manually-targeted ability should hit: the highest-attack own unit passing the
+# conditions of any of the ability's manual ON_PLAY effects (protect the biggest threat
+# first). Null when the ability needs no manual target, or nothing is eligible.
+func _pick_ability_target(ab: AbilityData, board: CombatBoard) -> CardInstance:
+	if not _ability_needs_manual(ab):
 		return null
 	var eligible: Array = []
 	for u: CardInstance in _units(board.enemy_grid):
-		for e: Effect in token.effects:
+		for e: Effect in ab.effects:
 			if e.trigger == Effect.Trigger.ON_PLAY \
 					and e.targeting_policy == Effect.TargetingPolicy.MANUAL \
 					and EffectSystem.passes_conditions(e.conditions, u):
@@ -170,9 +169,8 @@ func _pick_generated_spell_target(token: CardData, board: CombatBoard) -> CardIn
 	return _highest_attack(eligible)
 
 
-# CardData-level twin of _needs_manual (generated tokens are planned before any instance exists).
-func _data_needs_manual(token: CardData) -> bool:
-	return token.effects.any(func(e: Effect) -> bool:
+func _ability_needs_manual(ab: AbilityData) -> bool:
+	return ab.effects.any(func(e: Effect) -> bool:
 		return e.trigger == Effect.Trigger.ON_PLAY and e.targeting_policy == Effect.TargetingPolicy.MANUAL)
 
 

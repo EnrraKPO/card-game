@@ -47,6 +47,9 @@ var decay_phase: String = PHASE_TURN_END
 var stacking: String = STACK_REFRESH
 var max_stacks: int = 99
 var effects: Array = []   # Array[Effect]
+# Activated abilities this status HOLDS (by id, see AbilityData) — ported to the carrier while
+# the status is active, gone with it. Any effect container may hold abilities.
+var abilities: Array[String] = []
 
 static var _all: Dictionary = {}
 
@@ -93,6 +96,7 @@ static func from_dict(d: Dictionary) -> StatusData:
 	s.decay_phase      = str(d.get("decay_phase", PHASE_TURN_END))
 	s.stacking         = str(d.get("stacking", STACK_REFRESH))
 	s.max_stacks       = int(d.get("max_stacks", 99))
+	s.abilities        = Array(d.get("abilities", []), TYPE_STRING, "", null)
 	for e_data: Dictionary in d.get("effects", []):
 		var eff := Effect.from_dict(e_data)
 		eff.owner_kind = "status"   # so combat can cue this status's pip when its effects fire

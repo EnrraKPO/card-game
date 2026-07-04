@@ -30,9 +30,12 @@ var statuses: Array = []
 # Set true for the round when this unit spent its attack to generate a card
 # (see rook/building generation in combat.gd). Reset at the start of each round.
 var attack_exhausted: bool = false
-# On a rook-generated token, points back to the building that produced it so
-# playing the token can exhaust that building's attack. Null on normal units.
+# On an ability's tray token (the card-shaped view of an activated ability), the unit that
+# HOLDS the ability — activation acts as this unit (effect source) and pays its tap cost.
+# Null on normal units.
 var source_building: CardInstance = null
+# On an ability's tray token, the ability being activated. Null on normal units.
+var ability: AbilityData = null
 
 var is_spell: bool:
 	get: return data != null and data.card_type == CardData.CardType.SPELL
@@ -73,6 +76,24 @@ func apply_modifier(attr: String, delta: int) -> void:
 
 func is_alive() -> bool:
 	return current_health > 0
+
+
+# The unit's current activated abilities — resolved at READ TIME like any stat: the card's
+# base list (ability_ids, incl. the rook fallback) plus any held by active statuses (a status
+# holding an ability makes it temporary by nature). No runtime write channel exists yet; when
+# mutation becomes relevant it slots in here, beside the other components.
+func ability_list() -> Array:
+	var out: Array = []
+	for ab_id: String in data.ability_ids():
+		var ab := AbilityData.get_ability(ab_id)
+		if ab != null:
+			out.append(ab)
+	for si: StatusInstance in statuses:
+		for ab_id: String in si.data.abilities:
+			var ab := AbilityData.get_ability(ab_id)
+			if ab != null:
+				out.append(ab)
+	return out
 
 
 # Swaps this unit's card identity in place (a material merged into its composition — see

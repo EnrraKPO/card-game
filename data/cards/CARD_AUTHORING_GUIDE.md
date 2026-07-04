@@ -36,8 +36,7 @@ A file can contain a single card or an array of cards.
 | `is_king` | bool | No | Marks the card as the King unit. Defaults to false. |
 | `description` | string | No | Flavour or ability text shown in the tooltip on hover. |
 | `effects` | array | No | List of effects triggered at various moments. Defaults to empty. |
-| `rook_generated` | bool | No | The card exists ONLY as a rook building's generated token — excluded from shop/reward pools. See `rook_generated.json`. |
-| `material` | string | No | Delivery spells only: the composition key this card delivers (e.g. `"pawn"`, `"darkness_water"`) — read by the `deliver_material` hook, combat and the enemy AI. |
+| `abilities` | array | No | ACTIVATED ABILITIES this card holds, by id — definitions live in `data/abilities/` (see `ABILITY_AUTHORING_GUIDE.md` there). How rook buildings offer Castling and the materials; any card may hold abilities. A rook building with none authored falls back to the derived rule (Castling for pure rooks, a synthesized material delivery for its remainder). |
 
 ---
 
@@ -78,7 +77,7 @@ An effect is an action that fires at a specific moment, targeting one or more ca
 | `all_allies` | Every friendly card currently on the board (including self) |
 | `all` | Every card on the board regardless of side |
 | `manual` | A single target the player picks (for spells) |
-| `manual_slot` | A SLOT on the player's own side, picked manually — may be **empty** (the effect decides what an empty pick means, e.g. material delivery spawns there); an occupied pick is gated by the effect's `conditions`. Used by the synthesized "Reinforce: X" material spells rook buildings generate — those are their OWN cards (empty composition; a `material` field declares what they deliver; art convention `assets/cards/deliver_<key>.png`, placeholder until authored). Merges never target kings or rooks. |
+| `manual_slot` | A SLOT on the player's own side, picked manually — may be **empty** (the effect decides what an empty pick means, e.g. material delivery spawns there); an occupied pick is gated by the effect's `conditions`. Used by the "X Material" activated abilities (see `data/abilities/`). Merges never target kings or rooks. |
 | `attack_target` | The unit this card is striking — only meaningful on an `on_attack` effect (e.g. "apply Poison to whoever I hit") |
 
 > **Effects apply to everyone.** Every policy above affects Kings, Queens, and ordinary units
@@ -101,12 +100,6 @@ An effect is an action that fires at a specific moment, targeting one or more ca
 > commit (e.g. Blind blocking its holder's own attack damage). See the Interceptors section of
 > `data/statuses/STATUS_AUTHORING_GUIDE.md` for the schema; cards can carry them too.
 
-> **Generator effects** — `{ "generate": "<card id>" }` makes the card offer that card as a
-> once-per-round generated token while on the board (playing the token costs mana AND the
-> generator's attack for the round; tokens are use-it-or-lose-it). This is how rook buildings
-> grant Castling and the material spells (see `rook_generated.json`), but ANY card may author
-> one. A rook building with no generator effect falls back to the derived rule: no non-rook
-> remainder → Castling; otherwise a synthesized delivery spell for the remainder.
 
 ### `amount` — how much to change
 

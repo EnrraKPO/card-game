@@ -181,7 +181,7 @@ func _begin_round() -> void:
 	_board.placement_enabled = true
 	_set_placement_input(true)
 	_reset_exhaustion()
-	_hand.generate_tokens(_player_generators())
+	_hand.generate_tokens(_player_units())
 	_refresh()
 
 
@@ -216,33 +216,30 @@ func _execute_enemy_action(action: Dictionary) -> void:
 			_enemy_hand.erase(inst)
 			await _show_enemy_spell(inst, action["target"])
 		EnemyAI.Action.GENERATE:
-			var building: CardInstance = action["building"]
-			var token := CardInstance.from_data(building.data.generated_card())
-			_enemy_mana -= token.data.cost
-			building.attack_exhausted = true
-			var b_ui := _board.get_card_ui(building)
-			if b_ui != null:
-				b_ui.set_exhausted(true)
-			if token.is_spell and token.data.material.is_empty():
-				# A non-delivery spell token (Castling) casts instead of taking a board slot —
-				# mirrors a normal enemy CAST, just sourced from a building instead of the hand.
-				# The AI picked any needed manual target at planning time (see _plan_generation).
-				token.owner = 1
-				var spell_target: CardInstance = action.get("target", null)
-				await _show_enemy_spell(token, spell_target)
-			elif token.is_spell:
-				# A MATERIAL spell token ("Reinforce: X" — its `material` field names what it
-				# delivers). AI v1 policy: always its SPAWN half — place the material's unit on
-				# the planned slot, functionally the old unit generation. Merge smarts later.
-				var mat := CardData.get_card(token.data.material)
+			# An enemy unit activates an ability. Pay the cost (mana + tap if the ability
+			# carries it), then resolve per v1 policy: a material ability always takes its
+			# SPAWN half onto the planned slot (functionally the old unit generation; merge
+			# smarts later); any other ability casts at the AI-picked target.
+			var holder: CardInstance = action["unit"]
+			var ab: AbilityData = action["ability"]
+			_enemy_mana -= ab.mana
+			if ab.tap:
+				holder.attack_exhausted = true
+				var b_ui := _board.get_card_ui(holder)
+				if b_ui != null:
+					b_ui.set_exhausted(true)
+			if not ab.material.is_empty():
+				var mat := CardData.get_card(ab.material)
 				var m_inst := CardInstance.from_data(mat)
 				var m_results := _board.place_enemy_card(m_inst, action["row"], action["col"])
 				_vfx.play(VFXEvent.card_placed(_board.get_card_ui(m_inst)))
 				await _animator.show_effect_results(m_results, m_inst)
 			else:
-				var results := _board.place_enemy_card(token, action["row"], action["col"])
-				_vfx.play(VFXEvent.card_placed(_board.get_card_ui(token)))
-				await _animator.show_effect_results(results, token)
+				# Present via the card-shaped ability view, like an enemy spell cast.
+				var display := CardInstance.from_data(ab.display_card())
+				display.owner = 1
+				var spell_target: CardInstance = action.get("target", null)
+				await _show_enemy_spell(display, spell_target)
 		EnemyAI.Action.MOVE:
 			_board.move_enemy_card(action["inst"], action["row"], action["col"])
 	await get_tree().create_timer(0.35).timeout
@@ -321,13 +318,12 @@ func _reset_exhaustion() -> void:
 			ui.set_exhausted(false)
 
 
-# Player units that offer a generated token this round — anything whose card resolves a
-# generated_card() (a GENERATOR effect, or a rook building's derived fallback). Rootedness
-# (is_building) is a separate concept and NOT the gate here.
-func _player_generators() -> Array:
+# Player units offered to the ability tray this round — the Hand filters each unit's
+# ability_list() itself. Rootedness (is_building) is a separate concept and NOT a gate here.
+func _player_units() -> Array:
 	var out: Array = []
 	for inst: CardInstance in _board.get_all_units():
-		if inst.owner == 0 and inst.data.generated_card() != null:
+		if inst.owner == 0:
 			out.append(inst)
 	return out
 
@@ -670,17 +666,19 @@ func _on_board_unit_placed(inst: CardInstance, card_ui: CardUI, from_hand: bool,
 	await _animator.show_effect_results(results, inst)
 
 
-# A generated token was just played: tap its source rook (no attack this round)
-# and turn the token into an ordinary board unit.
+# An ability token was just activated: pay its tap cost if it has one (the holder's action
+# for the round — its other tap-costed offers leave the tray immediately).
 func _consume_generated_token(card_ui: CardUI) -> void:
 	_hand.remove_token(card_ui)
-	var rook: CardInstance = card_ui.card_instance.source_building
-	if rook != null:
-		rook.attack_exhausted = true
-		_highlight_building(rook, false)
-		var rook_ui := _board.get_card_ui(rook)
-		if rook_ui != null:
-			rook_ui.set_exhausted(true)
+	var holder: CardInstance = card_ui.card_instance.source_building
+	var ab: AbilityData = card_ui.card_instance.ability
+	if holder != null and (ab == null or ab.tap):
+		holder.attack_exhausted = true
+		_highlight_building(holder, false)
+		var holder_ui := _board.get_card_ui(holder)
+		if holder_ui != null:
+			holder_ui.set_exhausted(true)
+		_hand.prune_tapped(holder)
 	card_ui.clear_generated()
 
 

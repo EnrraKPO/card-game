@@ -138,14 +138,20 @@ func _execute_spell(card_ui: CardUI, manual_target: CardInstance, manual_slot: S
 	var cost := inst.get_attribute("cost")
 	spell_consumed.emit(card_ui, cost)  # orchestrator deducts mana + removes from hand
 	card_ui.queue_free()
+	# An ability token acts AS its holder: the effects' source is the unit holding the ability
+	# (the rook grants the Barrier), not the ephemeral card-shaped view being consumed.
+	var src := inst
+	if inst.ability != null and inst.source_building != null:
+		src = inst.source_building
 	for effect: Effect in inst.data.effects:
 		if effect.trigger != Effect.Trigger.ON_PLAY:
 			continue
-		var ctx := EffectContext.make(inst, board.player_grid, board.enemy_grid)
+		var ctx := EffectContext.make(src, board.player_grid, board.enemy_grid)
 		ctx.manual_target = manual_target
 		ctx.manual_slot = manual_slot   # slot-mode extras: the picked slot (may be empty)
 		ctx.board_node = board          # + board access for hooks that spawn (see EffectContext)
-		var results := EffectSystem.apply_single(effect, inst, ctx)
+		ctx.ability = inst.ability      # lets hooks read the ability's parameters
+		var results := EffectSystem.apply_single(effect, src, ctx)
 		await animator.show_effect_results(results)
 		board.cleanup_effect_deaths()
 	board.refresh()

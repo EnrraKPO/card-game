@@ -18,6 +18,9 @@ var subject: CardInstance = null
 # Resolver; both stay null in headless/AI flows, and hooks must null-check them.
 var manual_slot: SlotUI = null
 var board_node: CombatBoard = null
+# The activated ability being resolved, when this dispatch is an ability activation — how
+# hooks read the ability's parameters (e.g. deliver_material's material key). Null otherwise.
+var ability: AbilityData = null
 
 
 static func make(src: CardInstance, p_board: Array, e_board: Array) -> EffectContext:

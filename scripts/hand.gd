@@ -122,39 +122,48 @@ func refresh() -> void:
 		ui.refresh()
 
 
-# ── Rook / building tokens ───────────────────────────────────────────────────────
+# ── Activated abilities (card-shaped tray offers) ─────────────────────────────────
 
-# Offers one token per player building, each linked to its source rook. Tokens are
-# use-it-or-lose-it: rebuilt fresh every round. Buildings whose composition yields no
-# token (plain/double rook) are skipped — see CardData.generated_card().
-func generate_tokens(buildings: Array) -> void:
+# Offers each fielded unit's activated abilities as card-shaped tray entries (the interim
+# ability UX: abilities live alongside cards). One entry per ability; a tap-costed ability of
+# an already-tapped holder isn't offered at all. Rebuilt fresh every round.
+func generate_tokens(units: Array) -> void:
 	clear_tokens()
-	for building: CardInstance in buildings:
-		var base := building.data.generated_card()
-		if base == null:
-			continue
-		var tok := CardInstance.from_data(base)
-		tok.owner = 0
-		tok.row = -1
-		tok.col = -1
-		tok.source_building = building
-		Resolver.fill_health(tok)   # tokens share the player's unit buffs
-		var ui := CardUI.create(tok, true)
-		_gen_cards.append(ui)
-		_gen_box.add_child(ui)   # entering the tree runs _ready, so set_generated is safe after
-		ui.set_generated()
-		# A rook can generate a SPELL token (e.g. Castling) as well as a unit — route it through
-		# SpellCaster like any hand spell, same fork as _spawn_hand_card.
-		if ui.card_instance.is_spell:
+	for holder: CardInstance in units:
+		for ab: AbilityData in holder.ability_list():
+			if ab.tap and holder.attack_exhausted:
+				continue
+			var tok := CardInstance.from_data(ab.display_card())
+			tok.owner = holder.owner
+			tok.row = -1
+			tok.col = -1
+			tok.source_building = holder
+			tok.ability = ab
+			var ui := CardUI.create(tok, true)
+			_gen_cards.append(ui)
+			_gen_box.add_child(ui)   # entering the tree runs _ready, so set_generated is safe after
+			ui.set_generated()
+			# Ability tokens are spell-shaped activations — route through SpellCaster like any
+			# hand spell (targeting, eligibility, drag).
 			if wire_spell_card.is_valid():
 				wire_spell_card.call(ui)
-		else:
-			ui.pressed.connect(func(): _toggle_select(ui))
-		ui.mouse_entered.connect(func(): token_hovered.emit(building, true))
-		ui.mouse_exited.connect(func():  token_hovered.emit(building, false))
+			ui.mouse_entered.connect(func(): token_hovered.emit(holder, true))
+			ui.mouse_exited.connect(func():  token_hovered.emit(holder, false))
 	var has_tokens := not _gen_cards.is_empty()
 	_gen_box.visible = has_tokens
 	_gen_separator.visible = has_tokens
+
+
+# Removes remaining tray offers a holder can no longer pay for because it just tapped —
+# a tapped shopkeeper's tap-costed wares leave the shelf immediately.
+func prune_tapped(holder: CardInstance) -> void:
+	for ui: CardUI in _gen_cards.duplicate():
+		var inst := ui.card_instance
+		if inst != null and inst.source_building == holder \
+				and inst.ability != null and inst.ability.tap:
+			remove_token(ui)
+			token_hovered.emit(holder, false)
+			ui.queue_free()
 
 
 func clear_tokens() -> void:

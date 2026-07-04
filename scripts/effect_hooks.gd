@@ -24,15 +24,17 @@ static func get_hook(id: String) -> Callable:
 
 # ── Hooks ────────────────────────────────────────────────────────────────────────────
 
-# Material delivery (the rook-generated "Reinforce: X" spells — see CardData._material_spell):
-# the spell's `material` field names what it delivers. An occupied pick MERGES: the target's
-# composition combines with the material (CardData.combine) and the unit transforms in place,
-# wounds carried. An EMPTY pick SPAWNS the material's unit card there. Eligibility (own side,
-# merge caps, no kings, no rooks/buildings) was already enforced at pick time by the
-# MANUAL_SLOT targeting flow; the guards here are backstops. The enemy AI never routes here —
-# its v1 policy always spawns, handled directly in combat's GENERATE branch.
+# Material delivery (the "X Material" activated abilities — see AbilityData): the ability's
+# `material` field names what it delivers, read off the activation context. An occupied pick
+# MERGES: the target's composition combines with the material (CardData.combine) and the unit
+# transforms in place, wounds carried. An EMPTY pick SPAWNS the material's unit card there.
+# Eligibility (own side, merge caps, no kings, no rooks/buildings) was already enforced at
+# pick time by the MANUAL_SLOT targeting flow; the guards here are backstops. The enemy AI
+# never routes here — its v1 policy always spawns, handled in combat's GENERATE branch.
 static func _deliver_material(ctx: EffectContext) -> Array:
-	var material := CardData.get_card(ctx.source.data.material)
+	if ctx.ability == null or ctx.ability.material.is_empty():
+		return []
+	var material := CardData.get_card(ctx.ability.material)
 	if material == null:
 		return []
 	if ctx.manual_target != null:

@@ -23,18 +23,10 @@ var targeting_strategy: TargetingStrategy
 # composition, so composition_key is empty and they're already absent from the collection
 # screen and the combine system; this flag covers the remaining reward/shop path.
 var enemy_only: bool = false
-# Rook-generated cards (e.g. "Castling") exist ONLY as a building's generated token — see
-# CardData.generated_card(). Same exclusion story as enemy_only (kept out of random_non_kings;
-# empty elements/chess_pieces already keeps them off the collection screen, the combine system,
-# and Lab minting), but this is a distinct concept: these are player-usable, just not independently
-# obtainable outside of owning the Rook that makes them.
-var rook_generated: bool = false
-# Marks a MATERIAL-DELIVERY spell: the composition key this spell delivers (e.g. "pawn",
-# "darkness_water"). The delivery card is its own card — own id/name/art — and does NOT carry
-# the material as its composition; this field is how the delivery hook, the enemy AI and
-# combat learn what it delivers. Empty = not a delivery card. Delivery cards are authored in
-# data/cards/rook_generated.json; _material_spell is only the fallback for un-authored combos.
-var material: String = ""
+# The ACTIVATED ABILITIES this card holds, by ability id (see AbilityData — definitions in
+# data/abilities/). Rook buildings author these ("abilities": ["castling"]); any card may.
+# Read through ability_ids(), which adds the derived fallback for un-authored rook combos.
+var abilities: Array[String] = []
 # Ranged units fire a projectile at their target on auto-attack instead of the melee lunge
 # (see combat.gd::_resolve_attack). Authored per-card — NOT derived from composition, so e.g.
 # the base Bishop is ranged but most bishop-composed units aren't unless they opt in.
@@ -69,69 +61,25 @@ func is_lackey() -> bool:
 	return card_type == CardType.UNIT and not is_royalty()
 
 
-# The card this unit offers as a once-per-round generated token (see combat/hand). Declared
-# by a GENERATOR effect — `{ "generate": "<card id>" }` in the card's effects array — so ANY
-# card can author generation; the rook buildings do. A rook building WITHOUT one falls back
-# to the derived rule (no non-rook remainder → "Castling"; otherwise a synthesized
-# material-delivery spell for the remainder), so forge-derived rook combos keep generating —
-# author a GENERATOR effect + a real card in rook_generated.json to take control of one.
-# Null = generates nothing. NOTE: rootedness (is_building) and generation are separate
-# concepts — buildings are rooted by composition whether or not they generate.
-func generated_card() -> CardData:
-	for e: Effect in effects:
-		if e.kind == Effect.Kind.GENERATOR and not e.generate.is_empty():
-			return CardData.get_card(e.generate)
+# The card's base activated abilities, by id (see AbilityData). Authored via "abilities";
+# a rook BUILDING with none authored falls back to the derived rule — Castling for pure
+# rooks, the synthesized material delivery for its non-rook remainder — so forge-derived
+# rook combos keep their offer. NOTE: rootedness (is_building) and abilities are separate
+# concepts — buildings are rooted by composition whether or not they hold abilities.
+func ability_ids() -> Array:
+	if not abilities.is_empty():
+		return abilities
 	if not is_building():
-		return null
+		return []
 	var chess := chess_pieces.duplicate()
 	while chess.has("rook"):
 		chess.erase("rook")
 	if chess.is_empty() and elements.is_empty():
-		return CardData.get_card("castling")
-	return _material_spell(elements, chess)
-
-
-# Cache of synthesized material-delivery spells (composition key → CardData): one stable
-# identity per material. Never registered in _all/_by_composition — invisible to every
-# player-facing pool (shop/reward/Lab/collection), like all rook-generated cards.
-static var _material_spells: Dictionary = {}
-
-
-# FALLBACK synthesis of a material-delivery spell for a remainder no one has authored (e.g. a
-# forge-derived elemental rook). Delivery cards proper are AUTHORED in rook_generated.json —
-# this builds the same shape from the same authored schema (build_from_dict on a def dict, no
-# code-only effects/conditions), so a synthesized card behaves exactly like an authored one;
-# authoring the id in JSON simply replaces it.
-static func _material_spell(elems: Array, chess: Array) -> CardData:
-	var key := composition_key(elems, chess)
-	if _material_spells.has(key):
-		return _material_spells[key]
-	var remainder := get_card(key)
-	if remainder == null:
-		return null
-	var spell := build_from_dict({
-		"id": "deliver_" + key,
-		"display_name": remainder.display_name + " Material",
-		"cost": remainder.cost,
-		"card_type": "spell",
-		"rook_generated": true,
-		"material": key,
-		"description": "Adds %s to one of your units, merging their compositions — or spawns a new %s on one of your empty slots." \
-				% [remainder.display_name, remainder.display_name],
-		"effects": [{
-			"kind": "custom", "custom": "deliver_material",
-			"trigger": "on_play", "targeting_policy": "manual_slot",
-			# Merge room as plain count conditions (the target must be able to absorb this
-			# material within the combine caps of 2 elements / 2 chess pieces).
-			"conditions": [
-				{"composition": ["king", "rook"], "present": false},
-				{"attribute": "piece_count", "comparator": "lte", "value": 2 - chess.size()},
-				{"attribute": "element_count", "comparator": "lte", "value": 2 - elems.size()},
-			],
-		}],
-	})
-	_material_spells[key] = spell
-	return spell
+		return ["castling"]
+	var ab := AbilityData.material_ability(elements, chess)
+	if ab == null:
+		return []
+	return [ab.id]
 
 
 static var _all: Dictionary = {}
@@ -192,8 +140,7 @@ static func build_from_dict(d: Dictionary) -> CardData:
 	card.elements     = Array(d.get("elements",     []), TYPE_STRING, "", null)
 	card.chess_pieces = Array(d.get("chess_pieces", []), TYPE_STRING, "", null)
 	card.enemy_only   = bool(d.get("enemy_only", false))
-	card.rook_generated = bool(d.get("rook_generated", false))
-	card.material     = str(d.get("material", ""))
+	card.abilities    = Array(d.get("abilities", []), TYPE_STRING, "", null)
 	card.ranged       = bool(d.get("ranged", false))
 	for e_data: Dictionary in d.get("effects", []):
 		card.effects.append(Effect.from_dict(e_data))
@@ -263,10 +210,10 @@ func to_dict() -> Dictionary:
 		"chess_pieces": Array(chess_pieces, TYPE_STRING, "", null),
 		"effects":      fx,
 	}
-	# A delivery card's payload survives override snapshots. (A building's grant needs nothing
-	# here — it's a GENERATOR effect, and effects round-trip natively.)
-	if not material.is_empty():
-		d["material"] = material
+	# A card's held abilities are identity, like its effects — they survive override snapshots
+	# (a "?"-event bump must not reset what a rook offers).
+	if not abilities.is_empty():
+		d["abilities"] = Array(abilities, TYPE_STRING, "", null)
 	return d
 
 
@@ -294,8 +241,7 @@ static func scaled(base: CardData, power: float) -> CardData:
 	c.elements      = base.elements.duplicate()
 	c.chess_pieces  = base.chess_pieces.duplicate()
 	c.enemy_only    = base.enemy_only
-	c.rook_generated = base.rook_generated
-	c.material      = base.material
+	c.abilities     = base.abilities.duplicate()
 	c.ranged        = base.ranged
 	c.effects       = base.effects
 	c.targeting_strategy = base.targeting_strategy
@@ -317,7 +263,7 @@ static func all() -> Array:
 static func random_non_kings(count: int) -> Array[String]:
 	var non_kings: Array[String] = []
 	for card: CardData in all():
-		if not card.is_king and not card.enemy_only and not card.rook_generated:
+		if not card.is_king and not card.enemy_only:
 			non_kings.append(card.id)
 	non_kings.shuffle()
 	return non_kings.slice(0, mini(count, non_kings.size()))
