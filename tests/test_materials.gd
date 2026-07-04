@@ -18,11 +18,16 @@ func run() -> void:
 
 
 func _generation() -> void:
+	# Authored grants: each rook building declares `generates`; the delivery cards are REAL
+	# JSON cards (rook_generated.json) — no synthesized effects for authored materials.
 	var barracks := CardData.get_card("pawn_rook")
 	var spell := barracks.generated_card()
-	check(spell != null and spell.id == "deliver_pawn", "Barracks generates the pawn material spell")
+	check(spell != null and spell.id == "pawn_material",
+			"Barracks generates its AUTHORED delivery card (generates field)")
 	if spell == null:
 		return
+	check(spell == CardData.get_card("pawn_material"),
+			"the delivery card is the registered authored card, not a synthesized one")
 	check(spell.card_type == CardData.CardType.SPELL, "material delivery is a spell")
 	check(spell.rook_generated, "material spells are rook-generated (pool-excluded)")
 	check(spell.elements.is_empty() and spell.chess_pieces.is_empty(),
@@ -30,22 +35,40 @@ func _generation() -> void:
 	check_eq(spell.material, "pawn", "what it delivers is declared by the material field")
 	check(spell.image != CardData.get_card("pawn").image,
 			"the delivery card does not reuse the material's illustration")
-	check_eq(spell.cost, CardData.get_card("pawn").cost, "spell cost = the material card's cost")
 	var fx: Array = spell.effects.filter(func(e: Effect) -> bool:
 		return e.kind == Effect.Kind.CUSTOM and e.custom_id == "deliver_material" \
 			and e.targeting_policy == Effect.TargetingPolicy.MANUAL_SLOT)
-	check_eq(fx.size(), 1, "one MANUAL_SLOT deliver_material effect")
-	check(barracks.generated_card() == spell, "material spells are cached (stable identity)")
+	check_eq(fx.size(), 1, "one MANUAL_SLOT deliver_material effect, authored in JSON")
 
-	var espell := CardData.get_card("darkness_water_rook").generated_card()
-	check(espell != null and espell.id == "deliver_darkness_water",
-			"element-remainder rooks generate element material spells")
+	check_eq(CardData.get_card("knight_rook").generated_card().id, "knight_material",
+			"Stable grants knight_material")
+	check_eq(CardData.get_card("bishop_rook").generated_card().id, "bishop_material",
+			"Arcane Tower grants bishop_material")
+	check_eq(CardData.get_card("rook_queen").generated_card().id, "queen_material",
+			"Castle grants queen_material")
+	check_eq(CardData.get_card("darkness_water_rook").generated_card().id, "blight_material",
+			"Blight Rook grants blight_material (element material, authored)")
 	check_eq(CardData.get_card("rook").generated_card().id, "castling",
-			"plain Rook still generates Castling")
+			"plain Rook grants Castling (authored via generates)")
 	check_eq(CardData.get_card("rook_rook").generated_card().id, "castling",
-			"Turret still generates Castling")
-	check(not ("deliver_pawn" in CardData.random_non_kings(99999)),
-			"material spells never surface in shop/reward pools")
+			"Turret grants Castling")
+	check(not ("pawn_material" in CardData.random_non_kings(99999)),
+			"authored delivery cards never surface in shop/reward pools")
+
+	# Un-authored combos (forge-derived rooks) fall back to a synthesized delivery card built
+	# from the SAME authored schema (build_from_dict — no code-only effects).
+	var derived := CardData.get_card("fire_rook")
+	var fallback := derived.generated_card()
+	check(fallback != null and fallback.id == "deliver_fire" and fallback.material == "fire",
+			"un-authored rook combos fall back to a synthesized delivery card")
+	check(fallback != null and derived.generated_card() == fallback,
+			"fallback delivery cards are cached (stable identity)")
+
+	# A "?"-event bump must not reset an authored grant: generates survives the override snapshot.
+	var dc := DeckCard.make("pawn_rook")
+	Resolver.submit(StatMutation.make(dc, StatMutation.ATTACK, 1, null, StatMutation.CH_SYSTEM))
+	check_eq(dc.make_instance().data.generated_card().id, "pawn_material",
+			"an upgraded (overridden) Barracks still grants pawn_material")
 
 
 func _eligibility() -> void:
@@ -71,6 +94,14 @@ func _eligibility() -> void:
 	check(not EffectSystem.passes_conditions(econds,
 			CardInstance.from_data(CardData.get_card("fire_pawn"))),
 			"1 existing element + 2 more would exceed the element cap")
+
+	# The mergeable_with condition form stands alone and round-trips.
+	var merge_cond := EffectCondition.from_dict({"mergeable_with": "pawn"})
+	check(merge_cond.evaluate(unit("pawn")), "mergeable_with passes a unit with room")
+	check(not merge_cond.evaluate(CardInstance.from_data(CardData.get_card("pawn_pawn"))),
+			"mergeable_with fails a full unit")
+	var rt := EffectCondition.from_dict(merge_cond.to_dict())
+	check(rt.mergeable_with == "pawn", "mergeable_with round-trips through the schema")
 
 
 func _merge() -> void:

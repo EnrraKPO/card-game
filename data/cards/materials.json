@@ -84,6 +84,7 @@
     "id": "rook",
     "display_name": "Rook",
     "cost": 3, "attack": 4, "health": 6, "speed": 1, "shield": 3,
+    "generates": "castling",
     "description": "A stalwart fortress. Locks onto the highest HP enemy. Starts each round with 3 Shield.",
     "elements": [], "chess_pieces": ["rook"], "effects": []
   },

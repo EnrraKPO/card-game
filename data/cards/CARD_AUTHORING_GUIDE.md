@@ -36,6 +36,9 @@ A file can contain a single card or an array of cards.
 | `is_king` | bool | No | Marks the card as the King unit. Defaults to false. |
 | `description` | string | No | Flavour or ability text shown in the tooltip on hover. |
 | `effects` | array | No | List of effects triggered at various moments. Defaults to empty. |
+| `rook_generated` | bool | No | The card exists ONLY as a rook building's generated token — excluded from shop/reward pools. See `rook_generated.json`. |
+| `generates` | string | No | Buildings only: the card id this rook generates each round (e.g. `"pawn_material"`, `"castling"`) — the per-rook grant mapping. Empty = the derived fallback (no remainder → Castling; otherwise a synthesized material spell). |
+| `material` | string | No | Delivery spells only: the composition key this card delivers (e.g. `"pawn"`, `"darkness_water"`) — read by the `deliver_material` hook, combat and the enemy AI. |
 
 ---
 
@@ -146,6 +149,10 @@ the targeting-side twin of `subject_elements`: `{ "composition": ["king", "queen
 only" — keep a buff off the persistent King); `{ "composition": ["light"] }` passes only for
 light-composed units. A single id or a list is accepted; `present: true` (default) means
 "contains any of these", `false` means "contains none".
+
+**Mergeable form** — `{ "mergeable_with": "pawn" }` passes when the target's composition can
+still absorb the named material's composition within the combine caps (≤2 elements, ≤2 chess
+pieces). The authorable merge gate for material-delivery cards — see `rook_generated.json`.
 
 **`attribute`** — any card attribute listed above (`health`, `attack`, `speed`, `cost`)
 
