@@ -25,8 +25,11 @@ func _generation() -> void:
 		return
 	check(spell.card_type == CardData.CardType.SPELL, "material delivery is a spell")
 	check(spell.rook_generated, "material spells are rook-generated (pool-excluded)")
-	check(spell.chess_pieces.has("pawn") and spell.chess_pieces.size() == 1,
-			"the spell carries the material as its own composition")
+	check(spell.elements.is_empty() and spell.chess_pieces.is_empty(),
+			"the delivery card is its OWN card — no material composition on it")
+	check_eq(spell.material, "pawn", "what it delivers is declared by the material field")
+	check(spell.image != CardData.get_card("pawn").image,
+			"the delivery card does not reuse the material's illustration")
 	check_eq(spell.cost, CardData.get_card("pawn").cost, "spell cost = the material card's cost")
 	var fx: Array = spell.effects.filter(func(e: Effect) -> bool:
 		return e.kind == Effect.Kind.CUSTOM and e.custom_id == "deliver_material" \
@@ -55,6 +58,11 @@ func _eligibility() -> void:
 			"a 2-piece unit has no room for another piece")
 	check(not EffectSystem.passes_conditions(conds, unit("king")),
 			"kings are never merge targets (would lose is_king)")
+	check(not EffectSystem.passes_conditions(conds, unit("rook")),
+			"rooks/buildings are never merge targets")
+	check(not EffectSystem.passes_conditions(conds,
+			CardInstance.from_data(CardData.get_card("pawn_rook"))),
+			"composite buildings are never merge targets either")
 
 	var espell := CardData.get_card("darkness_water_rook").generated_card()
 	var econds: Array = (espell.effects[0] as Effect).conditions
@@ -98,3 +106,8 @@ func _merge() -> void:
 	var kres := EffectSystem.apply_single(spell_inst.data.effects[0], spell_inst, ctx)
 	check(king.data.is_king and kres.is_empty(),
 			"the hook backstop refuses a king merge outright")
+	var rook := unit("rook")
+	ctx.manual_target = rook
+	var rres := EffectSystem.apply_single(spell_inst.data.effects[0], spell_inst, ctx)
+	check(rook.data.id == "rook" and rres.is_empty(),
+			"the hook backstop refuses a rook merge outright")

@@ -223,19 +223,18 @@ func _execute_enemy_action(action: Dictionary) -> void:
 			var b_ui := _board.get_card_ui(building)
 			if b_ui != null:
 				b_ui.set_exhausted(true)
-			if token.is_spell and token.data.elements.is_empty() and token.data.chess_pieces.is_empty():
-				# A compositionless spell token (Castling) casts instead of taking a board slot —
+			if token.is_spell and token.data.material.is_empty():
+				# A non-delivery spell token (Castling) casts instead of taking a board slot —
 				# mirrors a normal enemy CAST, just sourced from a building instead of the hand.
 				# The AI picked any needed manual target at planning time (see _plan_generation).
 				token.owner = 1
 				var spell_target: CardInstance = action.get("target", null)
 				await _show_enemy_spell(token, spell_target)
 			elif token.is_spell:
-				# A MATERIAL spell token ("Reinforce: X" — the spell's composition IS the
-				# material). AI v1 policy: always its SPAWN half — place the material's unit on
+				# A MATERIAL spell token ("Reinforce: X" — its `material` field names what it
+				# delivers). AI v1 policy: always its SPAWN half — place the material's unit on
 				# the planned slot, functionally the old unit generation. Merge smarts later.
-				var mat := CardData.get_card(CardData.composition_key(
-						token.data.elements, token.data.chess_pieces))
+				var mat := CardData.get_card(token.data.material)
 				var m_inst := CardInstance.from_data(mat)
 				var m_results := _board.place_enemy_card(m_inst, action["row"], action["col"])
 				_vfx.play(VFXEvent.card_placed(_board.get_card_ui(m_inst)))

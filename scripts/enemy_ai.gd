@@ -128,19 +128,18 @@ func _plan_generation(board: CombatBoard, occ: Array, remaining: int, actions: A
 		var token := inst.data.generated_card()
 		if token == null or token.cost > remaining:
 			continue
-		# A compositionless SPELL token (Castling) casts rather than taking a board slot — no
+		# A non-delivery SPELL token (Castling) casts rather than taking a board slot — no
 		# placement to plan, but a manually-targeted spell needs an eligible target picked here
 		# (an ally passing the effect's conditions, e.g. one without a Barrier yet). No eligible
 		# target = hold the generation (don't waste the rook's attack on a guaranteed fizzle).
-		if token.card_type == CardData.CardType.SPELL \
-				and token.elements.is_empty() and token.chess_pieces.is_empty():
+		if token.card_type == CardData.CardType.SPELL and token.material.is_empty():
 			var target := _pick_generated_spell_target(token, board)
 			if target == null and _data_needs_manual(token):
 				continue
 			actions.append({ "type": Action.GENERATE, "building": inst, "target": target })
 			remaining -= token.cost
 			continue
-		# Units — and MATERIAL spell tokens ("Reinforce: X", spell + composition), which the AI
+		# Units — and MATERIAL spell tokens ("Reinforce: X", `material` field set), which the AI
 		# always resolves as their SPAWN half in v1 (identical to the old unit generation; merge
 		# smarts later) — take a board slot.
 		var slot := _take_front_slot(occ)

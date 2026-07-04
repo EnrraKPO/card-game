@@ -29,6 +29,11 @@ var enemy_only: bool = false
 # and Lab minting), but this is a distinct concept: these are player-usable, just not independently
 # obtainable outside of owning the Rook that makes them.
 var rook_generated: bool = false
+# Marks a MATERIAL-DELIVERY spell: the composition key this spell delivers (e.g. "pawn",
+# "darkness_water"). The delivery card is its own card — own id/name/art — and does NOT carry
+# the material as its composition; this field is how the delivery hook, the enemy AI and
+# combat learn what it delivers. Empty = not a delivery card. See _material_spell.
+var material: String = ""
 # Ranged units fire a projectile at their target on auto-attack instead of the melee lunge
 # (see combat.gd::_resolve_attack). Authored per-card — NOT derived from composition, so e.g.
 # the base Bishop is ranged but most bishop-composed units aren't unless they opt in.
@@ -86,9 +91,10 @@ func generated_card() -> CardData:
 static var _material_spells: Dictionary = {}
 
 
-# Synthesizes the "Reinforce: X" spell for a material. The spell CARRIES the material as its
-# own composition (self-describing: the hook reads it back, the card chips render it) but is
-# explicitly a SPELL. Its single CUSTOM effect (EffectHooks."deliver_material") targets a
+# Synthesizes the "Reinforce: X" spell for a material. The delivery spell is its OWN card —
+# own id, own name, own art (assets/cards/deliver_<key>.png, placeholder until authored) and
+# an EMPTY composition; what it delivers is declared by the `material` field, not by what the
+# card is made of. Its single CUSTOM effect (EffectHooks."deliver_material") targets a
 # MANUAL_SLOT: an occupied own slot merges (gated by the conditions below), an empty own slot
 # spawns the material's unit.
 static func _material_spell(elems: Array, chess: Array) -> CardData:
@@ -104,11 +110,12 @@ static func _material_spell(elems: Array, chess: Array) -> CardData:
 	spell.cost           = remainder.cost
 	spell.card_type      = CardType.SPELL
 	spell.rook_generated = true
-	spell.elements       = Array(elems, TYPE_STRING, "", null)
-	spell.chess_pieces   = Array(chess, TYPE_STRING, "", null)
+	spell.material       = key
 	spell.description    = "Adds %s to one of your units, merging their compositions — or spawns a new %s on one of your empty slots." \
 			% [remainder.display_name, remainder.display_name]
-	spell.image          = remainder.image
+	var art := "res://assets/cards/deliver_%s.png" % key
+	spell.image          = load(art) if ResourceLoader.exists(art) \
+			else load("res://assets/cards/placeholder.png")
 	spell.targeting_strategy = _make_targeting_strategy([])
 	var e := Effect.new()
 	e.kind = Effect.Kind.CUSTOM
@@ -117,12 +124,12 @@ static func _material_spell(elems: Array, chess: Array) -> CardData:
 	e.targeting_policy = Effect.TargetingPolicy.MANUAL_SLOT
 	# Merge eligibility, evaluated per-occupant at pick time (the empty-slot spawn case is the
 	# MANUAL_SLOT flow's own rule): the combined composition must stay within the combine caps
-	# (2 elements / 2 chess pieces — CardData.can_combine's rule), and never touch a king
-	# composition: the combined card would be a plain derived combo, silently dropping is_king
-	# and breaking the win condition.
+	# (2 elements / 2 chess pieces — CardData.can_combine's rule), and never touch a king or a
+	# rook composition — a king combo would silently drop is_king and break the win condition;
+	# buildings (rooks) are not merge targets by design.
 	e.conditions.append(EffectCondition.make_custom(
 		func(target: CardInstance) -> bool:
-			if target.data.chess_pieces.has("king"):
+			if target.data.chess_pieces.has("king") or target.data.chess_pieces.has("rook"):
 				return false
 			return target.data.elements.size() + elems.size() <= 2 \
 				and target.data.chess_pieces.size() + chess.size() <= 2))
@@ -190,6 +197,7 @@ static func build_from_dict(d: Dictionary) -> CardData:
 	card.chess_pieces = Array(d.get("chess_pieces", []), TYPE_STRING, "", null)
 	card.enemy_only   = bool(d.get("enemy_only", false))
 	card.rook_generated = bool(d.get("rook_generated", false))
+	card.material     = str(d.get("material", ""))
 	card.ranged       = bool(d.get("ranged", false))
 	for e_data: Dictionary in d.get("effects", []):
 		card.effects.append(Effect.from_dict(e_data))
@@ -286,6 +294,7 @@ static func scaled(base: CardData, power: float) -> CardData:
 	c.chess_pieces  = base.chess_pieces.duplicate()
 	c.enemy_only    = base.enemy_only
 	c.rook_generated = base.rook_generated
+	c.material      = base.material
 	c.ranged        = base.ranged
 	c.effects       = base.effects
 	c.targeting_strategy = base.targeting_strategy

@@ -76,7 +76,7 @@ An effect is an action that fires at a specific moment, targeting one or more ca
 | `all_allies` | Every friendly card currently on the board (including self) |
 | `all` | Every card on the board regardless of side |
 | `manual` | A single target the player picks (for spells) |
-| `manual_slot` | A SLOT on the player's own side, picked manually — may be **empty** (the effect decides what an empty pick means, e.g. material delivery spawns there); an occupied pick is gated by the effect's `conditions`. Used by the synthesized "Reinforce: X" material spells rook buildings generate. |
+| `manual_slot` | A SLOT on the player's own side, picked manually — may be **empty** (the effect decides what an empty pick means, e.g. material delivery spawns there); an occupied pick is gated by the effect's `conditions`. Used by the synthesized "Reinforce: X" material spells rook buildings generate — those are their OWN cards (empty composition; a `material` field declares what they deliver; art convention `assets/cards/deliver_<key>.png`, placeholder until authored). Merges never target kings or rooks. |
 | `attack_target` | The unit this card is striking — only meaningful on an `on_attack` effect (e.g. "apply Poison to whoever I hit") |
 
 > **Effects apply to everyone.** Every policy above affects Kings, Queens, and ordinary units

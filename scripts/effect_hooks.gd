@@ -25,20 +25,20 @@ static func get_hook(id: String) -> Callable:
 # ── Hooks ────────────────────────────────────────────────────────────────────────────
 
 # Material delivery (the rook-generated "Reinforce: X" spells — see CardData._material_spell):
-# the spell's OWN composition is the material. An occupied pick MERGES: the target's
+# the spell's `material` field names what it delivers. An occupied pick MERGES: the target's
 # composition combines with the material (CardData.combine) and the unit transforms in place,
 # wounds carried. An EMPTY pick SPAWNS the material's unit card there. Eligibility (own side,
-# merge caps, no kings) was already enforced at pick time by the MANUAL_SLOT targeting flow;
-# the guards here are backstops. The enemy AI never routes here — its v1 policy always spawns,
-# handled directly in combat's GENERATE branch.
+# merge caps, no kings, no rooks/buildings) was already enforced at pick time by the
+# MANUAL_SLOT targeting flow; the guards here are backstops. The enemy AI never routes here —
+# its v1 policy always spawns, handled directly in combat's GENERATE branch.
 static func _deliver_material(ctx: EffectContext) -> Array:
-	var material := CardData.get_card(
-			CardData.composition_key(ctx.source.data.elements, ctx.source.data.chess_pieces))
+	var material := CardData.get_card(ctx.source.data.material)
 	if material == null:
 		return []
 	if ctx.manual_target != null:
 		if not CardData.can_combine(ctx.manual_target.data, material) \
-				or ctx.manual_target.data.chess_pieces.has("king"):
+				or ctx.manual_target.data.chess_pieces.has("king") \
+				or ctx.manual_target.data.chess_pieces.has("rook"):
 			return []
 		ctx.manual_target.transform(CardData.combine(ctx.manual_target.data, material))
 		if ctx.board_node != null:
