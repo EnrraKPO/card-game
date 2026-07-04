@@ -55,3 +55,35 @@ func run() -> void:
 
 	# The protected read: Barrier declares the persistent aura (see CardUI._refresh_aura).
 	check(StatusData.get_status("barrier").aura, "barrier declares the protected aura")
+
+	_heal()
+
+
+# The Bishop's Heal: 2 HP to a manually-picked unit, 1 mana + tap — pure authored content
+# riding the ability system, zero engine code.
+func _heal() -> void:
+	var ab := AbilityData.get_ability("heal")
+	check(ab != null, "heal ability definition loads")
+	if ab == null:
+		return
+	check_eq(ab.mana, 1, "heal costs 1 mana")
+	check(ab.tap, "heal taps its holder")
+	check("heal" in CardData.get_card("bishop").ability_ids(), "the Bishop holds Heal")
+
+	var holder := unit("bishop")
+	var t := unit("rook")
+	Resolver.submit(StatMutation.make(t, StatMutation.HEALTH, -3, null))
+	var ctx := EffectContext.make(holder, [[holder, t]], [[]])
+	ctx.manual_target = t
+	ctx.ability = ab
+	var hp0 := t.current_health
+	var res := EffectSystem.apply_single(ab.effects[0], holder, ctx)
+	check_eq(t.current_health, hp0 + 2, "activation restores 2 HP to the picked unit")
+	check(not res.is_empty(), "the heal produced a result (cue)")
+
+	# At full HP the heal resolves to nothing (clamped by the Resolver, no phantom cue). The
+	# pick-time gate can't yet EXCLUDE full units — "wounded" needs attribute-vs-attribute
+	# condition vocabulary that doesn't exist; flagged as a known papercut.
+	Resolver.fill_health(t)
+	res = EffectSystem.apply_single(ab.effects[0], holder, ctx)
+	check(res.is_empty(), "healing a full unit resolves to nothing")

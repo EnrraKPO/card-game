@@ -150,9 +150,10 @@ func _plan_generation(board: CombatBoard, occ: Array, remaining: int, actions: A
 				break   # the holder is tapped when this executes — one tap ability per turn
 
 
-# The ally a manually-targeted ability should hit: the highest-attack own unit passing the
-# conditions of any of the ability's manual ON_PLAY effects (protect the biggest threat
-# first). Null when the ability needs no manual target, or nothing is eligible.
+# The ally a manually-targeted ability should hit: a HEALING ability aims at the most wounded
+# own unit and is held when nobody is hurt (mirrors _pick_spell_target's heal logic — don't
+# burn mana + the tap on a full-HP heal); anything else protects the biggest threat. Null when
+# the ability needs no manual target, or nothing is worth targeting.
 func _pick_ability_target(ab: AbilityData, board: CombatBoard) -> CardInstance:
 	if not _ability_needs_manual(ab):
 		return null
@@ -166,12 +167,23 @@ func _pick_ability_target(ab: AbilityData, board: CombatBoard) -> CardInstance:
 				break
 	if eligible.is_empty():
 		return null
+	if _ability_is_heal(ab):
+		var wounded: Array = eligible.filter(func(u: CardInstance) -> bool:
+			return u.current_health < u.get_attribute("max_health"))
+		if wounded.is_empty():
+			return null
+		return _lowest_health(wounded)
 	return _highest_attack(eligible)
 
 
 func _ability_needs_manual(ab: AbilityData) -> bool:
 	return ab.effects.any(func(e: Effect) -> bool:
 		return e.trigger == Effect.Trigger.ON_PLAY and e.targeting_policy == Effect.TargetingPolicy.MANUAL)
+
+
+func _ability_is_heal(ab: AbilityData) -> bool:
+	return ab.effects.any(func(e: Effect) -> bool:
+		return e.trigger == Effect.Trigger.ON_PLAY and e.attribute == "health" and e.amount > 0)
 
 
 # ── Effect inspection ──────────────────────────────────────────────────────────────

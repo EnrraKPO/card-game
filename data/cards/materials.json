@@ -71,7 +71,8 @@
     "display_name": "Bishop",
     "cost": 2, "attack": 3, "health": 2, "speed": 3, "ranged": true,
     "description": "A swift diagonal attacker. Strikes the most wounded enemy from afar, finishing off weakened units.",
-    "elements": [], "chess_pieces": ["bishop"], "effects": []
+    "elements": [], "chess_pieces": ["bishop"],
+    "abilities": ["heal"], "effects": []
   },
   {
     "id": "knight",

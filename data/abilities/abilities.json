@@ -13,6 +13,15 @@
 	]
   },
   {
+	"id": "heal",
+	"display_name": "Heal",
+	"description": "Restores 2 HP to a unit of your choice.",
+	"cost": { "mana": 1, "tap": true },
+	"effects": [
+	  { "trigger": "on_play", "targeting_policy": "manual", "attribute": "health", "amount": 2 }
+	]
+  },
+  {
 	"id": "pawn_material",
 	"display_name": "Pawn Material",
 	"description": "Adds Pawn to one of your units, merging their compositions - or spawns a new Pawn on one of your empty slots.",
