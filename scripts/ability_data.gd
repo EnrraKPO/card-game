@@ -133,7 +133,11 @@ func display_card() -> CardData:
 	c.description = description
 	c.effects = effects
 	c.targeting_strategy = TargetingNearest.new()
+	# Art: assets/abilities/<id>.png preferred; assets/cards/<id>.png accepted too (the material
+	# art predates the ability migration and lives there); placeholder otherwise.
 	var art := ABILITY_ART_DIR + id + ".png"
+	if not ResourceLoader.exists(art):
+		art = "res://assets/cards/%s.png" % id
 	c.image = load(art) if ResourceLoader.exists(art) \
 			else load("res://assets/cards/placeholder.png")
 	_display = c
