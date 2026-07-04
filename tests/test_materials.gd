@@ -21,9 +21,12 @@ func _generation() -> void:
 	# Authored grants: each rook building declares `generates`; the delivery cards are REAL
 	# JSON cards (rook_generated.json) — no synthesized effects for authored materials.
 	var barracks := CardData.get_card("pawn_rook")
+	check(barracks.effects.any(func(e: Effect) -> bool:
+			return e.kind == Effect.Kind.GENERATOR and e.generate == "pawn_material"),
+			"the grant is a GENERATOR effect in the building's effects array")
 	var spell := barracks.generated_card()
 	check(spell != null and spell.id == "pawn_material",
-			"Barracks generates its AUTHORED delivery card (generates field)")
+			"Barracks generates its AUTHORED delivery card")
 	if spell == null:
 		return
 	check(spell == CardData.get_card("pawn_material"),
@@ -64,11 +67,21 @@ func _generation() -> void:
 	check(fallback != null and derived.generated_card() == fallback,
 			"fallback delivery cards are cached (stable identity)")
 
-	# A "?"-event bump must not reset an authored grant: generates survives the override snapshot.
+	# A "?"-event bump must not reset an authored grant: the GENERATOR effect rides the
+	# override snapshot like any other effect (native round-trip, no special casing).
 	var dc := DeckCard.make("pawn_rook")
 	Resolver.submit(StatMutation.make(dc, StatMutation.ATTACK, 1, null, StatMutation.CH_SYSTEM))
 	check_eq(dc.make_instance().data.generated_card().id, "pawn_material",
 			"an upgraded (overridden) Barracks still grants pawn_material")
+
+	# Generation is not legally rook-exclusive: any card may author a generator effect.
+	var oddball := CardData.build_from_dict({
+		"id": "_test_generator", "display_name": "T",
+		"cost": 1, "attack": 1, "health": 2, "speed": 1,
+		"effects": [ { "generate": "castling" } ],
+	})
+	check_eq(oddball.generated_card().id, "castling",
+			"a non-building with a generator effect generates too")
 
 
 func _eligibility() -> void:

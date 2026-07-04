@@ -37,7 +37,6 @@ A file can contain a single card or an array of cards.
 | `description` | string | No | Flavour or ability text shown in the tooltip on hover. |
 | `effects` | array | No | List of effects triggered at various moments. Defaults to empty. |
 | `rook_generated` | bool | No | The card exists ONLY as a rook building's generated token — excluded from shop/reward pools. See `rook_generated.json`. |
-| `generates` | string | No | Buildings only: the card id this rook generates each round (e.g. `"pawn_material"`, `"castling"`) — the per-rook grant mapping. Empty = the derived fallback (no remainder → Castling; otherwise a synthesized material spell). |
 | `material` | string | No | Delivery spells only: the composition key this card delivers (e.g. `"pawn"`, `"darkness_water"`) — read by the `deliver_material` hook, combat and the enemy AI. |
 
 ---
@@ -101,6 +100,13 @@ An effect is an action that fires at a specific moment, targeting one or more ca
 > event reaction at all: it rewrites matching stat mutations inside the Resolver before they
 > commit (e.g. Blind blocking its holder's own attack damage). See the Interceptors section of
 > `data/statuses/STATUS_AUTHORING_GUIDE.md` for the schema; cards can carry them too.
+
+> **Generator effects** — `{ "generate": "<card id>" }` makes the card offer that card as a
+> once-per-round generated token while on the board (playing the token costs mana AND the
+> generator's attack for the round; tokens are use-it-or-lose-it). This is how rook buildings
+> grant Castling and the material spells (see `rook_generated.json`), but ANY card may author
+> one. A rook building with no generator effect falls back to the derived rule: no non-rook
+> remainder → Castling; otherwise a synthesized delivery spell for the remainder.
 
 ### `amount` — how much to change
 

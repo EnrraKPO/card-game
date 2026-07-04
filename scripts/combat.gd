@@ -181,7 +181,7 @@ func _begin_round() -> void:
 	_board.placement_enabled = true
 	_set_placement_input(true)
 	_reset_exhaustion()
-	_hand.generate_tokens(_player_buildings())
+	_hand.generate_tokens(_player_generators())
 	_refresh()
 
 
@@ -321,10 +321,13 @@ func _reset_exhaustion() -> void:
 			ui.set_exhausted(false)
 
 
-func _player_buildings() -> Array:
+# Player units that offer a generated token this round — anything whose card resolves a
+# generated_card() (a GENERATOR effect, or a rook building's derived fallback). Rootedness
+# (is_building) is a separate concept and NOT the gate here.
+func _player_generators() -> Array:
 	var out: Array = []
 	for inst: CardInstance in _board.get_all_units():
-		if inst.owner == 0 and inst.data.is_building():
+		if inst.owner == 0 and inst.data.generated_card() != null:
 			out.append(inst)
 	return out
 

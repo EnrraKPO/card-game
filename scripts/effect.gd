@@ -17,10 +17,15 @@ extends RefCounted
 #                   the amount BEFORE it commits (e.g. Blind: my outgoing attack damage ×0, half
 #                   the time). Evaluated only inside Resolver.submit — never by the trigger
 #                   dispatch. See Resolver._intercept.
+#   • GENERATOR   — a standing declaration read by the token system (combat/hand): "each round
+#                   this unit offers <card id> as a generated token" (costs mana + the
+#                   generator's attack for the round). How rook buildings grant Castling and
+#                   the material spells — but any card may author one. See
+#                   CardData.generated_card.
 # `from_dict` is the one parser; it infers the kind from the fields present, so existing card /
 # charm / upgrade data loads unchanged.
 
-enum Kind  { MODIFIER, TRIGGERED, CUSTOM, INTERCEPTOR }
+enum Kind  { MODIFIER, TRIGGERED, CUSTOM, INTERCEPTOR, GENERATOR }
 enum Scope { GLOBAL, CARD }
 enum Op    { ADD, MUL }   # MUL consumed by INTERCEPTOR rewrites (see Resolver._intercept); MODIFIERs are ADD-only today
 
@@ -102,6 +107,9 @@ var intercept: StringName = &""   # the StatMutation stat this rewrites (e.g. "d
 var channel: StringName = &""     # provenance filter (e.g. "attack"); empty = any channel
 var role: Role = Role.SOURCE      # which side of the mutation the holder must be
 
+# ── GENERATOR fields ──
+var generate: String = ""         # card id offered as this unit's once-per-round token
+
 # Which container owns this effect (kind + id), set by RelicData/StatusData at load — used by the
 # combat cue (glint the relic chip / status pip). Empty for plain card effects. Never affects
 # target resolution.
@@ -139,6 +147,9 @@ static func from_dict(d: Dictionary) -> Effect:
 		e.channel   = StringName(str(d.get("channel", "")))
 		e.role      = _str_role(str(d.get("role", "source")))
 		e.op        = Op.MUL if str(d.get("op", "add")) == "mul" else Op.ADD
+	elif kind_str == "generator" or (kind_str.is_empty() and d.has("generate")):
+		e.kind     = Kind.GENERATOR
+		e.generate = str(d.get("generate", ""))
 	elif kind_str == "custom" or (kind_str.is_empty() and d.has("custom")):
 		e.kind             = Kind.CUSTOM
 		e.custom_id        = d.get("custom", "")
@@ -186,6 +197,8 @@ func to_dict() -> Dictionary:
 			if subject_filter != SubjectFilter.SELF:
 				cd["subject"] = subject_key(subject_filter)
 			return cd
+		Kind.GENERATOR:
+			return {"generate": generate}
 		Kind.INTERCEPTOR:
 			var idd := {
 				"intercept": String(intercept),

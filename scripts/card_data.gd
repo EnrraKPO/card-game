@@ -35,10 +35,6 @@ var rook_generated: bool = false
 # combat learn what it delivers. Empty = not a delivery card. Delivery cards are authored in
 # data/cards/rook_generated.json; _material_spell is only the fallback for un-authored combos.
 var material: String = ""
-# What this BUILDING generates each round, by card id (e.g. "pawn_material", "castling") —
-# the authored rook→grant mapping, controlled per-card in JSON. Empty = fall back to the
-# derived rules in generated_card(). Only consulted for buildings.
-var generates: String = ""
 # Ranged units fire a projectile at their target on auto-attack instead of the melee lunge
 # (see combat.gd::_resolve_attack). Authored per-card — NOT derived from composition, so e.g.
 # the base Bishop is ranged but most bishop-composed units aren't unless they opt in.
@@ -73,17 +69,20 @@ func is_lackey() -> bool:
 	return card_type == CardType.UNIT and not is_royalty()
 
 
-# The card this building generates once per turn (see combat.gd). AUTHORED mapping first: a
-# building that declares `generates` grants exactly that card — the per-rook control knob.
-# Without it, the derived fallback: no non-rook remainder → "Castling"; otherwise the
-# synthesized material-delivery spell for the remainder (covers forge-derived rook combos no
-# one has authored yet — author `generates` + a real card in rook_generated.json to take
-# control of one). Returns null only when this isn't a building at all.
+# The card this unit offers as a once-per-round generated token (see combat/hand). Declared
+# by a GENERATOR effect — `{ "generate": "<card id>" }` in the card's effects array — so ANY
+# card can author generation; the rook buildings do. A rook building WITHOUT one falls back
+# to the derived rule (no non-rook remainder → "Castling"; otherwise a synthesized
+# material-delivery spell for the remainder), so forge-derived rook combos keep generating —
+# author a GENERATOR effect + a real card in rook_generated.json to take control of one.
+# Null = generates nothing. NOTE: rootedness (is_building) and generation are separate
+# concepts — buildings are rooted by composition whether or not they generate.
 func generated_card() -> CardData:
+	for e: Effect in effects:
+		if e.kind == Effect.Kind.GENERATOR and not e.generate.is_empty():
+			return CardData.get_card(e.generate)
 	if not is_building():
 		return null
-	if not generates.is_empty():
-		return CardData.get_card(generates)
 	var chess := chess_pieces.duplicate()
 	while chess.has("rook"):
 		chess.erase("rook")
@@ -195,7 +194,6 @@ static func build_from_dict(d: Dictionary) -> CardData:
 	card.enemy_only   = bool(d.get("enemy_only", false))
 	card.rook_generated = bool(d.get("rook_generated", false))
 	card.material     = str(d.get("material", ""))
-	card.generates    = str(d.get("generates", ""))
 	card.ranged       = bool(d.get("ranged", false))
 	for e_data: Dictionary in d.get("effects", []):
 		card.effects.append(Effect.from_dict(e_data))
@@ -265,10 +263,8 @@ func to_dict() -> Dictionary:
 		"chess_pieces": Array(chess_pieces, TYPE_STRING, "", null),
 		"effects":      fx,
 	}
-	# A deck-carried building keeps its authored grant through override snapshots (a "?"-event
-	# bump must not silently reset what the rook generates); same for a delivery card's payload.
-	if not generates.is_empty():
-		d["generates"] = generates
+	# A delivery card's payload survives override snapshots. (A building's grant needs nothing
+	# here — it's a GENERATOR effect, and effects round-trip natively.)
 	if not material.is_empty():
 		d["material"] = material
 	return d
@@ -300,7 +296,6 @@ static func scaled(base: CardData, power: float) -> CardData:
 	c.enemy_only    = base.enemy_only
 	c.rook_generated = base.rook_generated
 	c.material      = base.material
-	c.generates     = base.generates
 	c.ranged        = base.ranged
 	c.effects       = base.effects
 	c.targeting_strategy = base.targeting_strategy

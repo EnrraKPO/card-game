@@ -123,8 +123,10 @@ func _plan_advance(board: CombatBoard, occ: Array, actions: Array) -> void:
 
 func _plan_generation(board: CombatBoard, occ: Array, remaining: int, actions: Array) -> void:
 	for inst: CardInstance in _units(board.enemy_grid):
-		if not inst.data.is_building() or inst.attack_exhausted:
+		if inst.attack_exhausted:
 			continue
+		# Any unit with a resolvable generated token (a GENERATOR effect, or a rook building's
+		# derived fallback) may generate — rootedness is a separate concept.
 		var token := inst.data.generated_card()
 		if token == null or token.cost > remaining:
 			continue
