@@ -2,22 +2,22 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cg1tria36tj8y"
-path="res://.godot/imported/fire_bishop_queen_proportions_alt.png-fa81adb418adff68155cf3a88283b07d.ctex"
+uid="uid://vakr6yskagmf"
+path="res://.godot/imported/war_drums.png-d513340b8f5b527c3a8a19bbee838882.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/cards/fire_bishop_queen_proportions_alt.png"
-dest_files=["res://.godot/imported/fire_bishop_queen_proportions_alt.png-fa81adb418adff68155cf3a88283b07d.ctex"]
+source_file="res://assets/relics/war_drums.png"
+dest_files=["res://.godot/imported/war_drums.png-d513340b8f5b527c3a8a19bbee838882.ctex"]
 
 [params]
 
-compress/mode=1
+compress/mode=0
 compress/high_quality=false
-compress/lossy_quality=0.85
+compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1
@@ -36,5 +36,5 @@ process/premult_alpha=false
 process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
-process/size_limit=1024
+process/size_limit=0
 detect_3d/compress_to=1
