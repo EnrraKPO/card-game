@@ -39,7 +39,7 @@ func setup(si: StatusInstance) -> void:
 	var cnt := si.count()
 	var count_lbl := $Count as Label
 	count_lbl.text = str(cnt)
-	count_lbl.visible = cnt > 0
+	count_lbl.visible = cnt > 1
 
 	# Stack tag (top-left) for a timed status that also stacks intensity (count-decay shows it above).
 	var stacks_lbl := $Stacks as Label
@@ -144,7 +144,7 @@ func _make_custom_tooltip(_for_text: String) -> Object:
 	if icon != null:
 		title_row.add_child(icon)
 	var title := Label.new()
-	title.text = "%s%s" % [sd.display_name, (" %d" % cnt) if cnt > 0 else ""]
+	title.text = "%s%s" % [sd.display_name, (" %d" % cnt) if cnt > 1 else ""]
 	title.add_theme_font_size_override("font_size", 16)
 	title.add_theme_color_override("font_color", sd.color.darkened(0.35))   # light panel now
 	title_row.add_child(title)

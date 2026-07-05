@@ -36,6 +36,10 @@ var _animator: CombatAnimator
 var _spell_caster: SpellCaster
 var _vfx: VFXPlayer
 
+# The board CardUI currently highlighted as "inspected" (see _on_inspect_changed), tracked so
+# it can be cleared when the inspection moves to a different unit or closes.
+var _inspected_ui: CardUI = null
+
 # While a melee attacker is lunging, its real card is hidden and a ghost duplicate does the
 # travelling. This maps such an attacker → its ghost so the attacker's own VFX (the on-attack
 # glint / self-buff) plays on the card the player is actually watching, not the hidden origin one.
@@ -90,6 +94,7 @@ func _ready() -> void:
 	_spell_caster.setup(_board, _animator, func() -> int: return _mana)
 	_hand.wire_spell_card = _spell_caster.wire_spell_card
 	_hand.token_hovered.connect(_highlight_building)
+	_hand.inspect_changed.connect(_on_inspect_changed)
 
 	_board.unit_placed.connect(_on_board_unit_placed)
 	_board.slot_pressed.connect(_on_board_slot_pressed)
@@ -181,7 +186,6 @@ func _begin_round() -> void:
 	_board.placement_enabled = true
 	_set_placement_input(true)
 	_reset_exhaustion()
-	_hand.generate_tokens(_player_units())
 	_refresh()
 
 
@@ -235,9 +239,13 @@ func _execute_enemy_action(action: Dictionary) -> void:
 				_vfx.play(VFXEvent.card_placed(_board.get_card_ui(m_inst)))
 				await _animator.show_effect_results(m_results, m_inst)
 			else:
-				# Present via the card-shaped ability view, like an enemy spell cast.
+				# Present via the card-shaped ability view, like an enemy spell cast. source_building
+				# + ability mirror the player's ability tokens (see Hand._rebuild_inspect_view) so
+				# _cast_enemy_spell resolves the holder as the effect source (glint included).
 				var display := CardInstance.from_data(ab.display_card())
 				display.owner = 1
+				display.source_building = holder
+				display.ability = ab
 				var spell_target: CardInstance = action.get("target", null)
 				await _show_enemy_spell(display, spell_target)
 		EnemyAI.Action.MOVE:
@@ -296,12 +304,16 @@ func _show_enemy_spell(inst: CardInstance, target: CardInstance) -> void:
 # Applies an enemy spell's ON_PLAY effects against the AI-chosen target (mirrors
 # SpellCaster._execute_spell, minus the player-facing targeting UI).
 func _cast_enemy_spell(inst: CardInstance, target: CardInstance) -> void:
+	# An ability's display card acts AS its holder — same resolution as SpellCaster._execute_spell.
+	var src := inst
+	if inst.ability != null and inst.source_building != null:
+		src = inst.source_building
 	for effect: Effect in inst.data.effects:
 		if effect.trigger != Effect.Trigger.ON_PLAY:
 			continue
-		var ctx := EffectContext.make(inst, _board.player_grid, _board.enemy_grid)
+		var ctx := EffectContext.make(src, _board.player_grid, _board.enemy_grid)
 		ctx.manual_target = target
-		await _animator.show_effect_results(EffectSystem.apply_single(effect, inst, ctx), inst)
+		await _animator.show_effect_results(EffectSystem.apply_single(effect, src, ctx), src)
 		_board.cleanup_effect_deaths()
 	_board.refresh()
 
@@ -318,16 +330,6 @@ func _reset_exhaustion() -> void:
 			ui.set_exhausted(false)
 
 
-# Player units offered to the ability tray this round — the Hand filters each unit's
-# ability_list() itself. Rootedness (is_building) is a separate concept and NOT a gate here.
-func _player_units() -> Array:
-	var out: Array = []
-	for inst: CardInstance in _board.get_all_units():
-		if inst.owner == 0:
-			out.append(inst)
-	return out
-
-
 # Toggles the gold targeting glow on a building's board slot, used to point out
 # which rook a hovered/selected token belongs to.
 func _highlight_building(inst: CardInstance, on: bool) -> void:
@@ -336,9 +338,22 @@ func _highlight_building(inst: CardInstance, on: bool) -> void:
 	(_board.player_slots[inst.row][inst.col] as SlotUI).set_targetable(on)
 
 
+# Mirrors Hand's inspected card as a board highlight (see CardUI.set_inspected).
+func _on_inspect_changed(inst: CardInstance) -> void:
+	if _inspected_ui != null and is_instance_valid(_inspected_ui):
+		_inspected_ui.set_inspected(false)
+	_inspected_ui = null
+	if inst == null:
+		return
+	var ui := _board.get_card_ui(inst)
+	if ui != null:
+		ui.set_inspected(true)
+		_inspected_ui = ui
+
+
 func _on_done_pressed() -> void:
 	_hand.deselect()
-	_hand.clear_tokens()
+	_hand.clear_inspected()
 	_phase = Phase.COMBAT
 	_board.placement_enabled = false
 	_set_placement_input(false)
@@ -680,15 +695,24 @@ func _consume_generated_token(card_ui: CardUI) -> void:
 			holder_ui.set_exhausted(true)
 		_hand.prune_tapped(holder)
 	card_ui.clear_generated()
+	_hand.clear_inspected()
 
 
 func _on_board_slot_pressed(slot: SlotUI) -> void:
 	if _spell_caster.is_targeting():
 		return  # spell_caster handles via its own slot_pressed connection
-	var card := _hand.selected()
-	if _phase != Phase.PLAYER_PLACE or card == null:
+	if _phase != Phase.PLAYER_PLACE:
 		return
-	if slot.get_card() != null:
+	var occupant := slot.get_card()
+	if occupant != null:
+		# Clicking any fielded unit — either side — makes it the inspected card: the hand row
+		# shows its description and abilities (see Hand.set_inspected) instead of anything
+		# placement-related.
+		_hand.deselect()
+		_hand.set_inspected(occupant.card_instance)
+		return
+	var card := _hand.selected()
+	if card == null:
 		return
 	if not _board.can_place_from_hand(card):
 		return

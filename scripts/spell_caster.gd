@@ -136,13 +136,17 @@ func _on_slot_pressed(slot: SlotUI) -> void:
 func _execute_spell(card_ui: CardUI, manual_target: CardInstance, manual_slot: SlotUI = null) -> void:
 	var inst := card_ui.card_instance
 	var cost := inst.get_attribute("cost")
-	spell_consumed.emit(card_ui, cost)  # orchestrator deducts mana + removes from hand
-	card_ui.queue_free()
 	# An ability token acts AS its holder: the effects' source is the unit holding the ability
-	# (the rook grants the Barrier), not the ephemeral card-shaped view being consumed.
+	# (the rook grants the Barrier), not the ephemeral card-shaped view being consumed. Resolved
+	# BEFORE emitting spell_consumed below: that signal's handler (Combat._on_spell_consumed →
+	# _consume_generated_token → CardUI.clear_generated) nulls inst.source_building synchronously,
+	# so reading it after the emit silently loses the holder (breaking both effect source
+	# attribution and the activation glint, which depends on src being a real placed unit).
 	var src := inst
 	if inst.ability != null and inst.source_building != null:
 		src = inst.source_building
+	spell_consumed.emit(card_ui, cost)  # orchestrator deducts mana + removes from hand
+	card_ui.queue_free()
 	for effect: Effect in inst.data.effects:
 		if effect.trigger != Effect.Trigger.ON_PLAY:
 			continue
@@ -152,7 +156,10 @@ func _execute_spell(card_ui: CardUI, manual_target: CardInstance, manual_slot: S
 		ctx.board_node = board          # + board access for hooks that spawn (see EffectContext)
 		ctx.ability = inst.ability      # lets hooks read the ability's parameters
 		var results := EffectSystem.apply_single(effect, src, ctx)
-		await animator.show_effect_results(results)
+		# Passing `src` glints the ability's holder (see VFXPlayer.play_results) — safe for a
+		# regular non-ability spell too, since its `src` is the ephemeral spell card itself
+		# (row == -1, never on the board), which play_results's own row-guard already skips.
+		await animator.show_effect_results(results, src)
 		board.cleanup_effect_deaths()
 	board.refresh()
 

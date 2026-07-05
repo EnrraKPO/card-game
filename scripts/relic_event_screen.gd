@@ -21,7 +21,7 @@ func _ready() -> void:
 
 	var title := Label.new()
 	title.text = "An Ancient Shrine"
-	title.add_theme_font_size_override("font_size", 44 if compact else 34)
+	title.add_theme_font_size_override("font_size", 44 if compact else 44)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(title)
 

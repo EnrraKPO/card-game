@@ -96,6 +96,15 @@ func ability_list() -> Array:
 	return out
 
 
+# Whether at least one of this unit's abilities is currently offerable — a tap-costed ability of
+# an already-tapped unit doesn't count (mana affordability is checked later, at cast time).
+func has_available_abilities() -> bool:
+	for ab: AbilityData in ability_list():
+		if not (ab.tap and attack_exhausted):
+			return true
+	return false
+
+
 # Swaps this unit's card identity in place (a material merged into its composition — see
 # EffectHooks.deliver_material). Wounds carry over as a damage DELTA: merging upgrades a unit,
 # it never heals it — and never kills it (floor 1 HP). Runtime modifiers, statuses, the charm

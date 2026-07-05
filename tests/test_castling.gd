@@ -23,7 +23,7 @@ func run() -> void:
 	# Activation grants Barrier to ONE picked unit; the effects' source is the HOLDER.
 	var holder := unit("rook")
 	var a1 := unit("pawn")
-	var a2 := unit("rook")
+	var a2 := unit("knight")
 	var ctx := EffectContext.make(holder, [[a1, a2]], [[]])
 	ctx.manual_target = a1
 	ctx.ability = ab
@@ -45,6 +45,13 @@ func run() -> void:
 		res = EffectSystem.apply_single(e, holder, ctx)
 	check(res.is_empty(), "re-casting at a Barriered unit resolves to nothing")
 	check(si != null and si.stacks == 1, "no double-stack from the refused re-cast")
+
+	# Rook exclusion: a unit carrying Rook in its composition can never be Castling's target,
+	# Barrier or not — buildings don't get to hide behind Castling.
+	var a3 := unit("rook")
+	for e: Effect in ab.effects:
+		check(not EffectSystem.passes_conditions(e.conditions, a3),
+				"a unit with Rook in its composition fails eligibility, even without a Barrier")
 
 	# The card-shaped tray view is presentational only.
 	var display := ab.display_card()

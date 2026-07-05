@@ -53,12 +53,22 @@ func set_card(card: CardUI) -> void:
 	# Clear old parent slot's reference before re-parenting
 	var old_parent := card.get_parent()
 	if old_parent is SlotUI:
-		(old_parent as SlotUI)._card_ui = null
-		old_parent.remove_child(card)
+		var old_slot := old_parent as SlotUI
+		old_slot._card_ui = null
+		if card.pressed.is_connected(old_slot._on_card_pressed):
+			card.pressed.disconnect(old_slot._on_card_pressed)
+		old_slot.remove_child(card)
 	elif old_parent != null:
 		old_parent.remove_child(card)
 	add_child(card)
 	card.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	# CardUI._gui_input calls accept_event() on every click release (long-press/tooltip handling),
+	# which marks the event handled and stops it from ever bubbling to this slot's own _gui_input —
+	# MOUSE_FILTER_PASS doesn't help, since Godot only forwards an event to the parent if the child
+	# left it unhandled. So we listen to the card's `pressed` signal directly instead of relying on
+	# GUI event propagation (see Combat._on_board_slot_pressed, the click-to-open-ability-tray path).
+	if not card.pressed.is_connected(_on_card_pressed):
+		card.pressed.connect(_on_card_pressed)
 	# Face the opponent: the card is authored in the PLAYER's orientation, so player cards (and the
 	# hand, which never flips) read identically with no change. Enemy cards (right half, facing
 	# left) mirror that layout so the two armies read as mirror images across the board. See
@@ -66,10 +76,16 @@ func set_card(card: CardUI) -> void:
 	card.set_flipped(owner_id == 1)
 
 
+func _on_card_pressed() -> void:
+	pressed.emit()
+
+
 func clear_card() -> CardUI:
 	var card := _card_ui
 	if _card_ui != null and _card_ui.get_parent() == self:
 		remove_child(_card_ui)
+	if card != null and card.pressed.is_connected(_on_card_pressed):
+		card.pressed.disconnect(_on_card_pressed)
 	_card_ui = null
 	return card
 

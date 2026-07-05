@@ -51,6 +51,13 @@ var _touch_inspect := false
 # The status-aura overlay (see _refresh_aura) — created lazily, only for cards that carry an
 # aura-declaring status (e.g. Barrier's "protected" ring).
 var _aura: Panel = null
+# The idle "click me, I have an ability" cue (see _refresh_ability_cue) — a dim pulsing outline,
+# created lazily, only for a fielded player unit with a currently offerable ability.
+var _ability_cue: Panel = null
+var _ability_cue_tween: Tween = null
+# The static "you are looking at this one" highlight (see set_inspected) — created lazily,
+# externally driven, distinct from both _ability_cue (a fact about the card) and set_selected.
+var _inspect_cue: Panel = null
 
 # The card is authored once at this fixed native resolution. Every visual lives
 # under the Canvas node, which is uniformly scaled to fill whatever size the
@@ -325,6 +332,15 @@ func set_exhausted(exhausted: bool) -> void:
 	modulate = Color(0.6, 0.6, 0.68) if exhausted else Color.WHITE
 
 
+# An inspected ENEMY unit's ability tokens are shown for information only — not castable.
+# IGNORE blocks click/hover/long-press-inspect entirely; the dimmed alpha (distinct from
+# set_exhausted's opaque grey) reads as "look, don't touch".
+func set_noninteractive() -> void:
+	draggable = false
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	modulate = Color(1.0, 1.0, 1.0, 0.62)
+
+
 func refresh() -> void:
 	if card_instance == null:
 		return
@@ -350,6 +366,7 @@ func refresh() -> void:
 	_refresh_composition()
 	_refresh_charms()
 	_refresh_statuses()
+	_refresh_ability_cue()
 	# Non-empty tooltip_text is required for Godot to invoke _make_custom_tooltip;
 	# fall back to the name so the enlarged preview shows even without a description.
 	var desc := card_instance.data.description
@@ -579,6 +596,69 @@ func _refresh_aura(stats: Array) -> void:
 	style.set_expand_margin_all(4.0)
 	_aura.add_theme_stylebox_override("panel", style)
 	_aura.visible = true
+
+
+# A dim, slowly-pulsing outline on a fielded player unit that currently has an ability worth
+# clicking — the "dormant device, may turn on" affordance for the click-to-inspect view
+# (see Hand.set_inspected). Placeholder styling until real art exists. Board units only
+# (row/col set, owner 0); lazily created like _aura, torn down (tween killed) when inactive so
+# refresh() — called often, e.g. every board.refresh() pass — never stacks tweens.
+func _refresh_ability_cue() -> void:
+	var active := card_instance != null and card_instance.row >= 0 and card_instance.col >= 0 \
+			and card_instance.owner == 0 and card_instance.has_available_abilities()
+	if not active:
+		if _ability_cue != null:
+			_ability_cue.visible = false
+		if _ability_cue_tween != null:
+			_ability_cue_tween.kill()
+			_ability_cue_tween = null
+		return
+	if _ability_cue == null:
+		_ability_cue = Panel.new()
+		_ability_cue.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_canvas.add_child(_ability_cue)
+		_ability_cue.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		# Matched to _refresh_aura's visual weight (7px/0.85/0.10) — the previous 4px/0.55 border,
+		# further diluted by a 0.35-1.0 modulate pulse (real alpha dipping to ~0.19), was too weak
+		# to register against the card's own gold/parchment frame art at board-slot scale.
+		var style := StyleBoxFlat.new()
+		style.bg_color = Color(1.0, 0.78, 0.35, 0.10)
+		style.border_color = Color(1.0, 0.78, 0.35, 0.85)
+		style.set_border_width_all(6)
+		style.set_corner_radius_all(10)
+		style.set_expand_margin_all(4.0)
+		_ability_cue.add_theme_stylebox_override("panel", style)
+	_ability_cue.visible = true
+	if _ability_cue_tween != null:
+		_ability_cue_tween.kill()
+	_ability_cue_tween = create_tween()
+	_ability_cue_tween.set_loops()
+	_ability_cue_tween.tween_property(_ability_cue, "modulate:a", 0.6, 0.9).set_ease(Tween.EASE_IN_OUT)
+	_ability_cue_tween.tween_property(_ability_cue, "modulate:a", 1.0, 0.9).set_ease(Tween.EASE_IN_OUT)
+
+
+# A solid, non-pulsing highlight marking "this is the board unit the hand panel is currently
+# showing" (see Hand.set_inspected / Combat._on_inspect_changed). Unlike _refresh_ability_cue,
+# this is externally-driven UI selection state, not a fact derivable from card_instance — so it's
+# NOT called from refresh(), only from the orchestrator. Deliberately a distinct cool cyan from
+# both the amber ability-cue and the blue-white set_selected tint, and a separate Panel sibling
+# (not a modulate change) so all three compose without visual collision.
+func set_inspected(active: bool) -> void:
+	if _inspect_cue == null:
+		if not active:
+			return
+		_inspect_cue = Panel.new()
+		_inspect_cue.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_canvas.add_child(_inspect_cue)
+		_inspect_cue.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		var style := StyleBoxFlat.new()
+		style.bg_color = Color(0.35, 0.85, 1.0, 0.10)
+		style.border_color = Color(0.35, 0.9, 1.0, 0.95)
+		style.set_border_width_all(5)
+		style.set_corner_radius_all(10)
+		style.set_expand_margin_all(4.0)
+		_inspect_cue.add_theme_stylebox_override("panel", style)
+	_inspect_cue.visible = active
 
 
 # The badge node for a given active status (or null) — lets the VFX layer glint the right pip as

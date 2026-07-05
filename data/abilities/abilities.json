@@ -7,7 +7,10 @@
 	"effects": [
 	  {
 		"trigger": "on_play", "targeting_policy": "manual",
-		"conditions": [ { "status": "barrier", "present": false } ],
+		"conditions": [
+		  { "status": "barrier", "present": false },
+		  { "composition": ["rook"], "present": false }
+		],
 		"status": { "id": "barrier", "stacks": 1 }
 	  }
 	]
