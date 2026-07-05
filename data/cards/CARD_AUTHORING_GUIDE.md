@@ -130,6 +130,11 @@ target the `targeting_policy` resolves.
 
 A list of conditions that must **all** pass for a target to be affected. If omitted or empty, all candidates from the targeting policy are affected.
 
+Conditions gate targeting on **every effect kind, in the same form**: on a triggered effect they
+filter the targeting policy's candidates; on a card-scoped `modifier` (see the status guide) they
+select which cards the passive delta folds into (e.g. "+1 Health to pawn units" = a `unit.health`
+modifier with `{ "composition": ["pawn"] }`). Interceptors do not evaluate conditions yet.
+
 ```json
 "conditions": [
   { "attribute": "speed", "comparator": "gte", "value": 5 }

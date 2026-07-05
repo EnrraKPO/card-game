@@ -1,0 +1,19 @@
+{
+  "id": "frost_nova",
+  "display_name": "Frost Nova",
+  "description": "Chills every enemy on the board.",
+  "cost": {
+    "mana": 2,
+    "tap": true
+  },
+  "effects": [
+    {
+      "trigger": "on_play",
+      "targeting_policy": "all_enemies",
+      "status": {
+        "id": "chilled",
+        "stacks": 1
+      }
+    }
+  ]
+}

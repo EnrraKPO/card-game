@@ -1,0 +1,35 @@
+{
+  "id": "frozen_patrol",
+  "display_name": "",
+  "node_type": "combat",
+  "min_floor": 2,
+  "max_floor": 999,
+  "weight": 1,
+  "enemy_king": "death_knight",
+  "power_bonus": 0.5,
+  "enemy_pool": [
+    {
+      "id": "skeleton_grunt",
+      "weight": 3
+    },
+    {
+      "id": "bone_archer",
+      "weight": 2
+    },
+    {
+      "id": "ghoul",
+      "weight": 2
+    }
+  ],
+  "pick_count": [
+    14,
+    20
+  ],
+  "gold_reward": [
+    25,
+    45
+  ],
+  "exp_reward": 2,
+  "ai": "default",
+  "reward_pool": "default"
+}

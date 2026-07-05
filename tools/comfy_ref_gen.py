@@ -23,10 +23,21 @@ CLIP = "mistral_3_small_flux2_bf16.safetensors"
 VAE  = "flux2-vae.safetensors"
 
 
+# The user's Flux 2 turbo LoRA — pass --turbo to fold it in and drop to ~8 steps.
+TURBO_LORA = "Flux_2-Turbo-LoRA_comfyui.safetensors"
+
+
 def build_workflow(prompt, refs, w, h, steps, guidance, seed, prefix,
-                   scale=True, rembg=False, rembg_model="Inspyrenet"):
+                   scale=True, rembg=False, rembg_model="Inspyrenet",
+                   lora=None, lora_strength=1.0):
     """refs: list of filenames already present in ComfyUI's input dir."""
-    wf = {
+    wf = {}
+    if lora:
+        wf["15"] = {"class_type": "LoraLoaderModelOnly",
+                    "inputs": {"lora_name": lora, "strength_model": lora_strength,
+                               "model": ["10", 0]}}
+    model_src = ["15", 0] if lora else ["10", 0]
+    wf.update({
         "10": {"class_type": "UNETLoader",
                "inputs": {"unet_name": UNET, "weight_dtype": "default"}},
         "11": {"class_type": "CLIPLoader",
@@ -34,7 +45,7 @@ def build_workflow(prompt, refs, w, h, steps, guidance, seed, prefix,
         "12": {"class_type": "VAELoader", "inputs": {"vae_name": VAE}},
         "20": {"class_type": "CLIPTextEncode",
                "inputs": {"text": prompt, "clip": ["11", 0]}},
-    }
+    })
 
     # Build the reference chain: each ref image is VAE-encoded and appended to
     # the conditioning via ReferenceLatent. cond_src tracks the latest node.
@@ -60,7 +71,7 @@ def build_workflow(prompt, refs, w, h, steps, guidance, seed, prefix,
         "21": {"class_type": "FluxGuidance",
                "inputs": {"conditioning": cond_src, "guidance": guidance}},
         "30": {"class_type": "BasicGuider",
-               "inputs": {"model": ["10", 0], "conditioning": ["21", 0]}},
+               "inputs": {"model": model_src, "conditioning": ["21", 0]}},
         "31": {"class_type": "KSamplerSelect",
                "inputs": {"sampler_name": "euler"}},
         "32": {"class_type": "Flux2Scheduler",
@@ -148,7 +159,16 @@ def main():
                     help="remove background -> transparent PNG (for sprites/artifacts)")
     ap.add_argument("--rembg-model", default="Inspyrenet",
                     help="RMBG-2.0 | RMBG-1.4 | Inspyrenet | BEN2")
+    ap.add_argument("--turbo", action="store_true",
+                    help=f"fold in {TURBO_LORA} and default --steps to 8 (~3x faster)")
+    ap.add_argument("--lora", default=None,
+                    help="use a specific LoRA by filename instead of --turbo's default")
+    ap.add_argument("--lora-strength", type=float, default=1.0)
     a = ap.parse_args()
+
+    lora = a.lora or (TURBO_LORA if a.turbo else None)
+    if lora and a.steps == 20:   # only override the default, never an explicit --steps
+        a.steps = 8
 
     if not a.ref:
         print("[warn] no --ref given; this is a plain text2img run "
@@ -163,7 +183,7 @@ def main():
     seed = a.seed if a.seed >= 0 else random.randint(0, 2**32 - 1)
     wf = build_workflow(a.prompt, refs, a.w, a.h, a.steps, a.guidance, seed,
                         a.out, scale=not a.no_scale, rembg=a.rembg,
-                        rembg_model=a.rembg_model)
+                        rembg_model=a.rembg_model, lora=lora, lora_strength=a.lora_strength)
 
     pid = post("/prompt", {"prompt": wf})["prompt_id"]
     print(f"[queued] prompt_id={pid} seed={seed} refs={len(refs)}", flush=True)

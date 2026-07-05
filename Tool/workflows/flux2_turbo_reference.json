@@ -1,0 +1,185 @@
+{
+  "prompt": {
+    "10": {
+      "class_type": "UNETLoader",
+      "inputs": {
+        "unet_name": "flux2_dev_fp8mixed.safetensors",
+        "weight_dtype": "default"
+      }
+    },
+    "11": {
+      "class_type": "CLIPLoader",
+      "inputs": {
+        "clip_name": "mistral_3_small_flux2_bf16.safetensors",
+        "type": "flux2"
+      }
+    },
+    "12": {
+      "class_type": "VAELoader",
+      "inputs": {
+        "vae_name": "flux2-vae.safetensors"
+      }
+    },
+    "15": {
+      "class_type": "LoraLoaderModelOnly",
+      "inputs": {
+        "lora_name": "Flux_2-Turbo-LoRA_comfyui.safetensors",
+        "strength_model": 1,
+        "model": [
+          "10",
+          0
+        ]
+      }
+    },
+    "20": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "text": "<your restyle prompt here>",
+        "clip": [
+          "11",
+          0
+        ]
+      }
+    },
+    "21": {
+      "class_type": "FluxGuidance",
+      "inputs": {
+        "conditioning": [
+          "73",
+          0
+        ],
+        "guidance": 4
+      }
+    },
+    "30": {
+      "class_type": "BasicGuider",
+      "inputs": {
+        "model": [
+          "15",
+          0
+        ],
+        "conditioning": [
+          "21",
+          0
+        ]
+      }
+    },
+    "31": {
+      "class_type": "KSamplerSelect",
+      "inputs": {
+        "sampler_name": "euler"
+      }
+    },
+    "32": {
+      "class_type": "Flux2Scheduler",
+      "inputs": {
+        "steps": 8,
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    "33": {
+      "class_type": "RandomNoise",
+      "inputs": {
+        "noise_seed": -1
+      }
+    },
+    "34": {
+      "class_type": "EmptyFlux2LatentImage",
+      "inputs": {
+        "width": 1024,
+        "height": 1536,
+        "batch_size": 1
+      }
+    },
+    "40": {
+      "class_type": "SamplerCustomAdvanced",
+      "inputs": {
+        "noise": [
+          "33",
+          0
+        ],
+        "guider": [
+          "30",
+          0
+        ],
+        "sampler": [
+          "31",
+          0
+        ],
+        "sigmas": [
+          "32",
+          0
+        ],
+        "latent_image": [
+          "34",
+          0
+        ]
+      }
+    },
+    "50": {
+      "class_type": "VAEDecode",
+      "inputs": {
+        "samples": [
+          "40",
+          0
+        ],
+        "vae": [
+          "12",
+          0
+        ]
+      }
+    },
+    "60": {
+      "class_type": "SaveImage",
+      "inputs": {
+        "images": [
+          "50",
+          0
+        ],
+        "filename_prefix": "cardgame"
+      }
+    },
+    "70": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "REF_IMAGE.png"
+      }
+    },
+    "71": {
+      "class_type": "FluxKontextImageScale",
+      "inputs": {
+        "image": [
+          "70",
+          0
+        ]
+      }
+    },
+    "72": {
+      "class_type": "VAEEncode",
+      "inputs": {
+        "pixels": [
+          "71",
+          0
+        ],
+        "vae": [
+          "12",
+          0
+        ]
+      }
+    },
+    "73": {
+      "class_type": "ReferenceLatent",
+      "inputs": {
+        "conditioning": [
+          "20",
+          0
+        ],
+        "latent": [
+          "72",
+          0
+        ]
+      }
+    }
+  }
+}

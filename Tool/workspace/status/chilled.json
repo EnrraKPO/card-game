@@ -1,0 +1,19 @@
+{
+  "id": "chilled",
+  "display_name": "Chilled",
+  "description": "Slowed by biting frost. Loses 1 Speed per stack.",
+  "beneficial": false,
+  "color": "7fc4e8",
+  "glyph": "?",
+  "stacking": "stack",
+  "max_stacks": 5,
+  "decay": "duration",
+  "default_duration": 2,
+  "effects": [
+    {
+      "kind": "modifier",
+      "key": "unit.speed",
+      "amount": -1
+    }
+  ]
+}

@@ -70,6 +70,12 @@ status is active (it disappears automatically when the status falls off):
 }
 ```
 > `modifier` keys: `unit.attack`, `unit.health` (max HP), `unit.speed`, `card.cost`.
+> A card-scoped `modifier` may also carry `conditions` — the same list triggered effects use
+> (stat / status / composition forms, see the card guide). Every card the modifier would fold
+> into is a *target*, and targeting is always gated by the conditions: e.g.
+> `{ "kind": "modifier", "key": "unit.health", "amount": 1, "conditions": [{ "composition": ["pawn"] }] }`
+> is "+1 Health to pawn units". A condition on the very attribute the modifier feeds sees the
+> unit valued without condition-bearing modifiers (no self-reference loops).
 
 **Withered** — a periodic debuff that stacks. The `on_turn_end` effect drains 1 HP each round,
 and because `stacking` is `stack`, re-applying makes it drain harder:

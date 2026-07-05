@@ -1,0 +1,22 @@
+{
+  "id": "pawn_vanguard",
+  "description": "Your pawn-composed units have +1 Health.",
+  "color": "8fbf6f",
+  "price": 80,
+  "effects": [
+    {
+      "amount": 1,
+      "key": "unit.health",
+      "conditions": [
+        {
+          "composition": [
+            "pawn"
+          ]
+        }
+      ],
+      "kind": "modifier"
+    }
+  ],
+  "letter": "P",
+  "display_name": "Pawn Vanguard"
+}

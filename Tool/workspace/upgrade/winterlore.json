@@ -1,0 +1,47 @@
+{
+  "id": "winterlore",
+  "display_name": "Winterlore",
+  "description": "Command the cold between fights.",
+  "color": "7fc4e8",
+  "nodes": [
+    {
+      "id": "wl_root",
+      "display_name": "Cold Snap",
+      "description": "Start each combat with +1 mana.",
+      "cost": 1,
+      "icon": "?",
+      "row": 0,
+      "col": 0,
+      "requires": [],
+      "effects": [
+        {
+          "key": "mana.initial",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "wl_deep",
+      "display_name": "Deep Freeze",
+      "description": "Whenever an enemy attacks your units, it is Chilled.",
+      "cost": 2,
+      "icon": "?",
+      "row": 1,
+      "col": 0,
+      "requires": [
+        "wl_root"
+      ],
+      "effects": [
+        {
+          "kind": "triggered",
+          "trigger": "on_damage_taken",
+          "targeting_policy": "attacker",
+          "status": {
+            "id": "chilled",
+            "stacks": 1
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -177,6 +177,11 @@ func to_dict() -> Dictionary:
 				d["op"] = "mul"
 			if not filter.is_empty():
 				d["filter"] = filter
+			if not conditions.is_empty():
+				var mconds: Array = []
+				for c: EffectCondition in conditions:
+					mconds.append(c.to_dict())
+				d["conditions"] = mconds
 			return d
 		Kind.CUSTOM:
 			var cd := {
@@ -239,8 +244,18 @@ func amount_int() -> int:
 	return int(round(amount))
 
 
-# Whether a card-scoped modifier applies to a given card. `unit.*` keys apply to any unit
-# (King/Queen included) but never to spell cards; `filter` narrows further (kind / has_element).
+# Re-entrancy guard for condition-gated modifiers: evaluating a stat condition reads
+# get_attribute, which folds modifiers back in — without the guard a modifier conditioned on
+# its own attribute ("+1 attack while attack >= 5") recurses forever. While a modifier
+# condition is being evaluated, nested condition-BEARING modifiers count as non-matching, so
+# conditions see the unit as valued by its base + unconditional modifiers.
+static var _in_modifier_condition := false
+
+# Whether a card-scoped modifier applies to a given card — the card is the modifier's TARGET,
+# and like every effect, targeting is gated by `conditions` (the full EffectCondition
+# vocabulary: stat compares, status presence, composition). `unit.*` keys apply to any unit
+# (King/Queen included) but never to spell cards; the legacy `filter` (kind / has_element)
+# still narrows further.
 func matches_card(inst: CardInstance) -> bool:
 	if inst == null or inst.data == null:
 		return false
@@ -256,6 +271,15 @@ func matches_card(inst: CardInstance) -> bool:
 				return false
 	if bool(filter.get("has_element", false)) and data.elements.is_empty():
 		return false
+	if not conditions.is_empty():
+		if _in_modifier_condition:
+			return false
+		_in_modifier_condition = true
+		for c: EffectCondition in conditions:
+			if not c.evaluate(inst):
+				_in_modifier_condition = false
+				return false
+		_in_modifier_condition = false
 	return true
 
 

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CardGame Authoring Tool</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ctext y='13' font-size='13'%3E⚒%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div id="app">
+  <header id="topbar">
+    <div class="brand">⚒ CardGame Authoring</div>
+    <div id="comfy-badge" class="badge" title="ComfyUI connection">ComfyUI: …</div>
+    <button id="settings-btn" class="ghost">Settings</button>
+  </header>
+  <div id="main">
+    <nav id="sidebar">
+      <div id="type-tabs"></div>
+      <div id="item-list-wrap">
+        <div id="item-list-head">
+          <span id="item-list-title"></span>
+          <button id="new-item-btn">+ New</button>
+        </div>
+        <div id="item-list"></div>
+      </div>
+    </nav>
+    <section id="editor">
+      <div id="editor-empty" class="empty-hint">
+        <h2>Pick a content type, then an item — or create a new one.</h2>
+        <p>Everything you author lives in the Tool's own workspace. Nothing touches the
+        game until you press <b>Install</b>, and <b>Uninstall</b> removes exactly what
+        was installed.</p>
+      </div>
+      <div id="editor-body" hidden>
+        <div id="editor-toolbar">
+          <div id="item-title"></div>
+          <div class="spacer"></div>
+          <span id="dirty-flag" hidden>unsaved changes</span>
+          <button id="save-btn">Save</button>
+          <button id="update-btn" hidden>Push update</button>
+          <button id="install-btn"></button>
+          <button id="delete-btn" class="danger">Delete</button>
+        </div>
+        <div id="install-info" class="install-info"></div>
+        <div id="validation-msg" hidden></div>
+        <div id="editor-columns">
+          <div id="form-col"></div>
+          <div id="side-col">
+            <div class="panel" id="summary-panel">
+              <h3>In plain words</h3>
+              <div id="summary-body"></div>
+            </div>
+            <div class="panel" id="art-panel"></div>
+            <div class="panel" id="json-panel">
+              <h3>Deployed JSON <button id="copy-json" class="ghost tiny">copy</button></h3>
+              <pre id="json-preview"></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+<div id="modal-root"></div>
+<div id="toast-root"></div>
+<script src="/helpers.js"></script>
+<script src="/effects.js"></script>
+<script src="/editors.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>

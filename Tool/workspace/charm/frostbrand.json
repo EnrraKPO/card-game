@@ -1,0 +1,20 @@
+{
+  "id": "frostbrand",
+  "display_name": "Frostbrand",
+  "description": "+1 Attack, and strikes Chill the target.",
+  "color": "7fc4e8",
+  "letter": "F",
+  "stats": {
+    "attack": 1
+  },
+  "effects": [
+    {
+      "trigger": "on_attack",
+      "targeting_policy": "attack_target",
+      "status": {
+        "id": "chilled",
+        "stacks": 1
+      }
+    }
+  ]
+}

@@ -15,6 +15,64 @@ func run() -> void:
 	_channel_policy()
 	_interceptor_round_trip()
 	_composition_conditions()
+	_conditioned_modifiers()
+
+
+# Modifier targeting is gated by `conditions` exactly like triggered targeting: every card the
+# modifier would fold into is a TARGET, tested with the full EffectCondition vocabulary
+# (composition / stat / status forms). The legacy `filter` keeps working alongside.
+func _conditioned_modifiers() -> void:
+	var pawn := unit("pawn")
+	var knight := unit("knight")
+	var base_pawn_hp := pawn.get_attribute("max_health")
+	var base_knight_hp := knight.get_attribute("max_health")
+
+	# Run-wide "+1 health to pawn units" — composition-form condition on a card modifier.
+	var pawn_buff := Effect.from_dict({"kind": "modifier", "key": "unit.health", "amount": 1,
+			"conditions": [{"composition": ["pawn"]}]})
+	GameData.current_modifiers.add(pawn_buff)
+	check_eq(pawn.get_attribute("max_health"), base_pawn_hp + 1,
+			"conditioned modifier reaches a pawn (+1 health)")
+	check_eq(knight.get_attribute("max_health"), base_knight_hp,
+			"conditioned modifier skips a knight")
+
+	# Stat-form condition on a DIFFERENT attribute than the one modified.
+	var frail_buff := Effect.from_dict({"kind": "modifier", "key": "unit.attack", "amount": 2,
+			"conditions": [{"attribute": "health", "comparator": "lte",
+				"value": pawn.get_attribute("max_health")}]})
+	GameData.current_modifiers.add(frail_buff)
+	var base_pawn_atk := unit("pawn").data.attack
+	check_eq(unit("pawn").get_attribute("attack"), base_pawn_atk + 2,
+			"stat-form condition gates a modifier (pawn is frail enough)")
+
+	# Self-referential guard: a modifier conditioned on the attribute it feeds must terminate,
+	# and the condition sees the unit valued WITHOUT condition-bearing modifiers.
+	var self_ref := Effect.from_dict({"kind": "modifier", "key": "unit.attack", "amount": 1,
+			"conditions": [{"attribute": "attack", "comparator": "gte", "value": 0}]})
+	GameData.current_modifiers.add(self_ref)
+	check_eq(unit("pawn").get_attribute("attack"), base_pawn_atk + 2 + 1,
+			"self-referential modifier condition terminates and applies")
+
+	GameData.current_modifiers = ModifierSet.new()   # restore the clean env
+
+	# Status-held card modifiers gate on the carrier the same way.
+	var picky := StatusData.from_dict({"id": "_test_picky", "effects": [
+			{"kind": "modifier", "key": "unit.attack", "amount": 3,
+				"conditions": [{"composition": ["pawn"]}]}]})
+	var carrier_pawn := unit("pawn")
+	carrier_pawn.statuses.append(StatusInstance.make(picky, 2, 1, null))
+	var carrier_knight := unit("knight")
+	carrier_knight.statuses.append(StatusInstance.make(picky, 2, 1, null))
+	check_eq(carrier_pawn.get_attribute("attack"), carrier_pawn.data.attack + 3,
+			"status-held conditioned modifier buffs a matching carrier")
+	check_eq(carrier_knight.get_attribute("attack"), carrier_knight.data.attack,
+			"status-held conditioned modifier skips a non-matching carrier")
+
+	# Authored round-trip: conditions survive modifier serialization.
+	var rt := Effect.from_dict(pawn_buff.to_dict())
+	check(rt.kind == Effect.Kind.MODIFIER and rt.conditions.size() == 1
+			and (rt.conditions[0] as EffectCondition).composition == ["pawn"],
+			"modifier conditions round-trip through to_dict/from_dict")
 
 
 func _composition_conditions() -> void:

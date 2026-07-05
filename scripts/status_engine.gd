@@ -18,7 +18,9 @@ static func modifier_bonus(inst: CardInstance, attr: String) -> int:
 	var total := 0
 	for si: StatusInstance in inst.statuses:
 		for e: Effect in si.data.effects:
-			if e.is_card_modifier() and e.card_attribute() == attr:
+			# The carrier is the status modifier's target — gated by the same
+			# filter + conditions as run-wide card modifiers (see Effect.matches_card).
+			if e.is_card_modifier() and e.card_attribute() == attr and e.matches_card(inst):
 				total += e.amount_int() * si.stacks
 	return total
 

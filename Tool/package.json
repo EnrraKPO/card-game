@@ -1,0 +1,13 @@
+{
+  "name": "cardgame-authoring-tool",
+  "version": "1.0.0",
+  "main": "server.js",
+  "description": "Local content-authoring tool for CardGame",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test/api_test.js && node test/ui_test.js"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^25.3.0"
+  }
+}

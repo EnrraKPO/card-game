@@ -16,8 +16,12 @@ CLIP = "mistral_3_small_flux2_bf16.safetensors"
 VAE  = "flux2-vae.safetensors"
 
 
+# The user's Flux 2 turbo LoRA — pass --turbo to fold it in and drop to ~8 steps.
+TURBO_LORA = "Flux_2-Turbo-LoRA_comfyui.safetensors"
+
+
 def build_workflow(prompt, w, h, steps, guidance, seed, prefix, rembg=False,
-                   rembg_model="Inspyrenet"):
+                   rembg_model="Inspyrenet", lora=None, lora_strength=1.0):
     save = ({"60": {"class_type": "easy imageRemBg",
                     "inputs": {"images": ["50", 0], "rem_mode": rembg_model,
                                "image_output": "Save", "save_prefix": prefix,
@@ -26,7 +30,12 @@ def build_workflow(prompt, w, h, steps, guidance, seed, prefix, rembg=False,
             if rembg else
             {"60": {"class_type": "SaveImage",
                     "inputs": {"images": ["50", 0], "filename_prefix": prefix}}})
-    return dict(save, **{
+    # Optional speed LoRA folded into the UNET before guiding (LoraLoaderModelOnly).
+    lora_nodes = {"15": {"class_type": "LoraLoaderModelOnly",
+                         "inputs": {"lora_name": lora, "strength_model": lora_strength,
+                                    "model": ["10", 0]}}} if lora else {}
+    model_src = ["15", 0] if lora else ["10", 0]
+    return dict(save, **lora_nodes, **{
         "10": {"class_type": "UNETLoader",
                "inputs": {"unet_name": UNET, "weight_dtype": "default"}},
         "11": {"class_type": "CLIPLoader",
@@ -37,7 +46,7 @@ def build_workflow(prompt, w, h, steps, guidance, seed, prefix, rembg=False,
         "21": {"class_type": "FluxGuidance",
                "inputs": {"conditioning": ["20", 0], "guidance": guidance}},
         "30": {"class_type": "BasicGuider",
-               "inputs": {"model": ["10", 0], "conditioning": ["21", 0]}},
+               "inputs": {"model": model_src, "conditioning": ["21", 0]}},
         "31": {"class_type": "KSamplerSelect",
                "inputs": {"sampler_name": "euler"}},
         "32": {"class_type": "Flux2Scheduler",
@@ -89,12 +98,21 @@ def main():
                     help="remove background -> transparent PNG (for sprites/artifacts)")
     ap.add_argument("--rembg-model", default="Inspyrenet",
                     help="RMBG-2.0 | RMBG-1.4 | Inspyrenet | BEN2")
+    ap.add_argument("--turbo", action="store_true",
+                    help=f"fold in {TURBO_LORA} and default --steps to 8 (~3x faster)")
+    ap.add_argument("--lora", default=None,
+                    help="use a specific LoRA by filename instead of --turbo's default")
+    ap.add_argument("--lora-strength", type=float, default=1.0)
     a = ap.parse_args()
     SERVER = f"http://127.0.0.1:{a.port}"
 
+    lora = a.lora or (TURBO_LORA if a.turbo else None)
+    if lora and a.steps == 20:   # only override the default, never an explicit --steps
+        a.steps = 8
+
     seed = a.seed if a.seed >= 0 else random.randint(0, 2**32 - 1)
     wf = build_workflow(a.prompt, a.w, a.h, a.steps, a.guidance, seed, a.out,
-                        a.rembg, a.rembg_model)
+                        a.rembg, a.rembg_model, lora, a.lora_strength)
 
     pid = post("/prompt", {"prompt": wf})["prompt_id"]
     print(f"[queued] prompt_id={pid} seed={seed}", flush=True)
