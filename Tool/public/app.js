@@ -12,6 +12,8 @@ const state = {
   gameFilter: '',
   gameTree: {},         // per-type { file: expanded } state of the Game-content tree
   artJob: null,
+  advancedOpen: false,  // the fullscreen art generator (same _art draft as the panel)
+  artRefs: null,        // ranked reference cards for the advanced browser (null = loading)
 };
 
 const $ = id => document.getElementById(id);
@@ -132,6 +134,7 @@ async function openGameItem(id) {
   try { g = await api(`/api/game/item?type=${state.currentType}&id=${encodeURIComponent(id)}`); }
   catch (e) { toast(e.message, 'err'); return; }
   const ed = EDITORS[state.currentType];
+  if (state.advancedOpen) { state.advancedOpen = false; $('modal-root').replaceChildren(); }
   state.mode = 'game';
   state.currentId = id;
   state.isNew = false;
@@ -147,6 +150,7 @@ async function openGameItem(id) {
 
 function newItem() {
   if (!confirmDiscard()) return;
+  if (state.advancedOpen) { state.advancedOpen = false; $('modal-root').replaceChildren(); }
   state.mode = 'game';
   state.currentId = null;
   state.isNew = true;
@@ -331,12 +335,8 @@ function artDefaults() {
   return { width: t.artW, height: t.artH, rembg: t.rembg, steps: 20, guidance: 4.0, seed: -1 };
 }
 
-function renderArtPanel() {
-  const panel = $('art-panel');
-  const ed = EDITORS[state.currentType];
-  const t = state.types[state.currentType];
-  panel.replaceChildren(el('h3', { text: 'Art (ComfyUI)' }));
-
+// The item's art-generation draft, defaults applied (shared by both views).
+function artDraft() {
   if (!state.draft._art) state.draft._art = Object.assign(artDefaults(), { prompt: '' });
   const a = state.draft._art;
   if (!a.model || !state.artModels[a.model]) {
@@ -345,6 +345,28 @@ function renderArtPanel() {
     const m0 = state.artModels[a.model];
     if (m0) { a.steps = m0.steps; a.guidance = m0.guidance; }
   }
+  return a;
+}
+
+// The compact ("normal") art panel in the editor's side column. All generation controls
+// come from buildArtControls / buildArtPreviews, shared with the fullscreen advanced mode.
+function renderArtPanel() {
+  const panel = $('art-panel');
+  panel.replaceChildren(el('h3', {}, 'Art (ComfyUI) ',
+    el('button', { class: 'ghost tiny', text: '⛶ Advanced',
+      title: 'Fullscreen generator with a reference browser (pull existing card art as input for the image model and the LLM)',
+      onclick: openAdvanced })));
+  panel.append(...buildArtControls(renderArtPanel));
+  panel.append(...buildArtPreviews(renderArtPanel));
+  if (state.advancedOpen) renderAdvanced();
+}
+
+// Every generation control (model, prompt, style, references, dims, generate button),
+// as an array of nodes. `rerender` = the calling view's own re-render function;
+// `advanced` adds the LLM guidance inputs that only the fullscreen view has room for.
+function buildArtControls(rerender, advanced) {
+  const ed = EDITORS[state.currentType];
+  const a = artDraft();
   const mdl = state.artModels[a.model];
 
   const noChange = () => { state.dirty = true; $('dirty-flag').hidden = false; };
@@ -398,20 +420,23 @@ function renderArtPanel() {
       styleArea),
   );
 
-  // ── reference image: the item's current art, or an external image the user uploads ──
+  // ── reference image: the item's current art, an uploaded external image, or another
+  // card's game art picked in the advanced mode's reference browser ──
   const artAvail = !!state.gameArt || state.gameHasArt;
   const refSrcLabel = state.gameArt ? 'the in-game art' : 'the latest generated image';
   if (a.useRef && !a.refSource) a.refSource = 'current';   // drafts from the checkbox era
   if (!a.refSource || !mdl.supportsRef) a.refSource = mdl.supportsRef ? a.refSource || 'none' : 'none';
   if (a.refSource === 'current' && !artAvail) a.refSource = 'none';   // offering it would only error
+  if (a.refSource === 'game' && !a.refGameArt) a.refSource = 'none';
   const refActive = a.refSource !== 'none';
   const refRow = el('div', { class: 'frow' },
     fld('Reference image', mdl.supportsRef
       ? selectInput(a, 'refSource', [
           { value: 'none', label: 'None' },
           artAvail ? { value: 'current', label: `Current art (${refSrcLabel})` } : null,
+          a.refGameArt ? { value: 'game', label: `Game art: ${a.refGameName || a.refGameArt}` } : null,
           { value: 'upload', label: 'Uploaded image…' },
-        ].filter(Boolean), () => { noChange(); renderArtPanel(); })
+        ].filter(Boolean), () => { noChange(); rerender(); })
       : el('span', { class: 'hint', text: `${mdl.label} has no reference path` })),
     a.refSource === 'upload' ? el('div', { class: 'fld' },
       el('span', { class: 'lab', text: a.refUploadLabel ? `Using: ${a.refUploadLabel}` : 'Pick an image file' }),
@@ -426,7 +451,7 @@ function renderArtPanel() {
           });
           const out = await api('/api/art/upload-ref', { name: f.name, dataBase64: dataUrl.split(',')[1] });
           a.refUpload = out.name; a.refUploadLabel = f.name;
-          noChange(); renderArtPanel();
+          noChange(); rerender();
         } catch (err) { toast('Reference upload failed: ' + err.message, 'err'); }
       } })) : null,
   );
@@ -434,11 +459,21 @@ function renderArtPanel() {
   if (mdl.refModes && refActive && !mdl.refModes.some(rm => rm.value === a.refMode)) a.refMode = mdl.refModes[0].value;
   if (mdl.refModes && a.denoise == null) a.denoise = 0.6;
   const refModeRow = (mdl.refModes && refActive) ? el('div', { class: 'frow' },
-    fld('Reference mode', selectInput(a, 'refMode', mdl.refModes, () => { noChange(); renderArtPanel(); })),
+    fld('Reference mode', selectInput(a, 'refMode', mdl.refModes, () => { noChange(); rerender(); })),
     a.refMode === 'img2img'
       ? fld('Denoise', numInput(a, 'denoise', noChange, { float: true, step: 0.05, min: 0.05, max: 1 }),
             'Lower = closer to the reference; higher = more freedom to restyle')
       : null,
+  ) : null;
+
+  // ── LLM visual references attached from the browser: a removable chip strip ──
+  const llmStrip = (a.llmRefs && a.llmRefs.length) ? el('div', { class: 'attached-strip' },
+    el('span', { class: 'lab', text: 'LLM sees:' }),
+    ...a.llmRefs.map(r => el('span', { class: 'chip-ref' }, r.name,
+      el('button', { class: 'ghost tiny', text: '✕', title: 'Detach', onclick: () => {
+        a.llmRefs = a.llmRefs.filter(x => x.art !== r.art);
+        noChange(); rerender();
+      } }))),
   ) : null;
 
   // ── model picker: each entry is a full architecture with its own defaults ──
@@ -451,18 +486,29 @@ function renderArtPanel() {
       a.guidance = nm.guidance;
       if (!nm.supportsRef) { a.useRef = false; a.refSource = 'none'; }
       if (!nm.supportsTurbo) a.turbo = false;
-      noChange(); renderArtPanel();
+      noChange(); rerender();
     })),
   );
 
-  panel.append(
+  const status = el('div', { class: 'art-status' });
+  const genBtn = el('button', { class: 'primary', text: '🎨 Generate', style: 'margin-top:10px', onclick: () => startArt(status, genBtn) });
+  if (state.isNew || !state.currentId) { genBtn.disabled = true; status.textContent = 'Save the item first (art is filed under its id).'; }
+  if (state.artJob && state.artJob.itemId === state.currentId) {
+    genBtn.disabled = true;
+    status.textContent = `Generating… ${state.artJob.elapsed || 0}s`;
+  }
+
+  return [
     modelRow,
     el('div', { class: 'frow' },
       el('div', { class: 'fld wide' },
         el('span', { class: 'lab' }, 'Prompt ',
           el('button', { class: 'ghost tiny', text: '↻ auto', title: 'Re-derive the template prompt from the item’s name/composition',
             onclick: () => { a.prompt = ed.promptFor(state.draft); promptArea.value = a.prompt; noChange(); } }),
-          el('button', { class: 'ghost tiny', text: '✨ llm', title: 'Ask the local LLM (Ollama, see Settings) to write a rich prompt from the item’s full data — press again to re-roll',
+          el('button', { class: 'ghost tiny', text: '✨ llm',
+            title: 'Ask the local LLM (Ollama, see Settings) to write a rich prompt from the item’s full data'
+              + (a.llmRefs && a.llmRefs.length ? ` and the ${a.llmRefs.length} attached reference illustration(s)` : '')
+              + ' — press again to re-roll',
             onclick: async e => {
               const btn = e.target;
               btn.disabled = true; btn.textContent = '✨ thinking…';
@@ -470,25 +516,73 @@ function renderArtPanel() {
                 const out = await api('/api/art/prompt', {
                   type: state.currentType,
                   name: state.draft.display_name || state.draft.id || 'unnamed',
-                  summary: ed.summarize(state.draft),
+                  summary: ed.summarize(state.draft).filter(l => !(a.llmHidden || []).includes(l)),
                   example: ed.promptFor(state.draft),
+                  refArts: (a.llmRefs || []).map(r => r.art),
+                  concept: a.llmConcept || '',
+                  refHint: a.llmRefHint || '',
                 });
                 a.prompt = out.prompt; promptArea.value = out.prompt; noChange();
               } catch (err) { toast('LLM prompt failed: ' + err.message, 'err'); }
               btn.disabled = false; btn.textContent = '✨ llm';
+            } }),
+          el('button', { class: 'ghost tiny', text: '🔎 match art',
+            disabled: !(state.gameArt || state.gameHasArt),
+            title: (state.gameArt || state.gameHasArt)
+              ? 'Vision-analyze the item’s current art and write a prompt that recreates it — for faithful variations'
+              : 'Vision-analyze the current art — no current art yet',
+            onclick: async e => {
+              const btn = e.target;
+              btn.disabled = true; btn.textContent = '🔎 looking…';
+              try {
+                const out = await api('/api/art/prompt-from-art', { type: state.currentType, id: state.currentId });
+                a.prompt = out.prompt; promptArea.value = out.prompt; noChange();
+              } catch (err) { toast('Art analysis failed: ' + err.message, 'err'); }
+              btn.disabled = false; btn.textContent = '🔎 match art';
             } })),
+        llmStrip,
         promptArea),
     ),
+    // optional creative direction for the ✨ prompt writer (fullscreen view only — the
+    // values still apply from the compact panel's ✨ button, they persist on the draft)
+    advanced ? el('div', { class: 'frow' },
+      el('div', { class: 'fld wide' },
+        el('span', { class: 'lab', text: 'LLM: concept direction (optional)' }),
+        textInput(a, 'llmConcept', noChange, 'e.g. an elderly sea-witch hunched over a cauldron, more menace than majesty')),
+    ) : null,
+    advanced ? el('div', { class: 'frow' },
+      el('div', { class: 'fld wide' },
+        el('span', { class: 'lab', text: 'LLM: how to use the references (optional)' }),
+        textInput(a, 'llmRefHint', noChange, 'e.g. copy the armor design and palette, but pose the subject in motion')),
+    ) : null,
+    // per-line visibility of the item data the ✨ prompt writer receives — mechanics like
+    // material costs pollute the visual concept, so any line can be hidden from the LLM.
+    // Hidden lines are remembered by their text: if the line changes it reappears visible.
+    advanced ? (() => {
+      if (!a.llmHidden) a.llmHidden = [];
+      return el('div', { class: 'frow' },
+        el('div', { class: 'fld wide' },
+          el('span', { class: 'lab', text: 'Item data the LLM sees (untick lines that pollute the concept)' }),
+          el('div', { class: 'llm-lines' },
+            ...ed.summarize(state.draft).map(line => el('label', { class: 'check llm-line' },
+              el('input', { type: 'checkbox', checked: !a.llmHidden.includes(line),
+                onchange: e => {
+                  if (e.target.checked) a.llmHidden = a.llmHidden.filter(x => x !== line);
+                  else a.llmHidden.push(line);
+                  noChange();
+                } }),
+              line)))));
+    })() : null,
     mdl.supportsNegative ? el('div', { class: 'frow' },
       el('div', { class: 'fld wide' },
         el('span', { class: 'lab', text: 'Negative prompt (empty = the usual booru quality negatives)' }),
         el('textarea', { value: a.negative || '', rows: 2,
           placeholder: 'worst quality, low quality, watermark, …',
           oninput: e => { a.negative = e.target.value; noChange(); } })),
-    ) : document.createTextNode(''),   // native append() stringifies null
+    ) : null,
     styleRow,
     refRow,
-    refModeRow || document.createTextNode(''),
+    refModeRow,
     el('div', { class: 'frow' },
       fld('Width', numInput(a, 'width', noChange, { min: 256, step: 64 }), null, 'narrow'),
       fld('Height', numInput(a, 'height', noChange, { min: 256, step: 64 }), null, 'narrow'),
@@ -508,29 +602,29 @@ function renderArtPanel() {
               const turboSteps = state.settings.turboSteps || 8;
               if (a.turbo && a.steps === 20) a.steps = turboSteps;
               else if (!a.turbo && a.steps === turboSteps) a.steps = 20;
-              noChange(); renderArtPanel();
+              noChange(); rerender();
             },
           }),
           mdl.supportsTurbo ? `⚡ Turbo LoRA (~${state.settings.turboSteps || 8} steps, much faster)`
             : `⚡ Turbo LoRA — Flux 2 only`)),
     ),
     el('div', { class: 'hint', text: ed.artNote }),
-  );
+    genBtn,
+    status,
+    (state.artJob && state.artJob.itemId === state.currentId)
+      ? el('div', { class: 'progressbar' }, el('div')) : null,
+  ].filter(Boolean);
+}
 
-  const status = el('div', { class: 'art-status' });
-  const genBtn = el('button', { class: 'primary', text: '🎨 Generate', style: 'margin-top:10px', onclick: () => startArt(status, genBtn) });
-  if (state.isNew || !state.currentId) { genBtn.disabled = true; status.textContent = 'Save the item first (art is filed under its id).'; }
-  if (state.artJob && state.artJob.itemId === state.currentId) genBtn.disabled = true;
-  panel.append(genBtn, status);
-  if (state.artJob && state.artJob.itemId === state.currentId) {
-    status.textContent = `Generating… ${state.artJob.elapsed || 0}s`;
-    panel.append(el('div', { class: 'progressbar' }, el('div')));
-  }
+// The item's current imagery + actions (deploy / flip / discard), as an array of nodes.
+function buildArtPreviews(rerender) {
+  const t = state.types[state.currentType];
+  const out = [];
 
   // Art the game currently shows for this item (installed art) — always presented.
   const installedArt = state.gameArt;
   if (installedArt) {
-    panel.append(
+    out.push(
       el('div', { class: 'lab subtle', style: 'margin-top:10px', text: 'In-game art — ' + installedArt }),
       el('img', { class: 'art-preview', loading: 'lazy', src: '/gameart/' + installedArt + '?ts=' + Date.now() }),
     );
@@ -538,7 +632,7 @@ function renderArtPanel() {
 
   const hasArt = state.gameHasArt;
   if (hasArt && installedArt) {
-    panel.append(el('div', { class: 'lab subtle', style: 'margin-top:10px', text: 'Generated (workspace)' }));
+    out.push(el('div', { class: 'lab subtle', style: 'margin-top:10px', text: 'Generated (workspace)' }));
   }
   // Flip works off whichever image is current (workspace art preferred, else in-game art)
   // and always lands in the WORKSPACE — deploying the flip stays an explicit act.
@@ -546,17 +640,17 @@ function renderArtPanel() {
     title: 'Mirror the image left-right (result goes to the workspace; press "Use in game" to deploy it)',
     onclick: () => flipArtHorizontal(hasArt ? null : installedArt) }) : null;
   if (hasArt) {
-    panel.append(el('img', { class: 'art-preview', src: `/art/${state.currentType}/${state.currentId}.png?ts=${Date.now()}` }));
+    out.push(el('img', { class: 'art-preview', src: `/art/${state.currentType}/${state.currentId}.png?ts=${Date.now()}` }));
     // Generation never touches the game's assets — this button is the explicit deploy act.
     const canDeploy = state.mode === 'game' && !state.isNew && !!t.artDir;
     if (canDeploy)
-      panel.append(el('div', { class: 'hint', style: 'margin-top:6px', text: 'Kept in the tool workspace until you press "Use in game" (any replaced art is backed up).' }));
-    panel.append(el('div', { style: 'margin-top:6px' },
+      out.push(el('div', { class: 'hint', style: 'margin-top:6px', text: 'Kept in the tool workspace until you press "Use in game" (any replaced art is backed up).' }));
+    out.push(el('div', { style: 'margin-top:6px' },
       canDeploy ? el('button', { class: 'primary small', text: '⬆ Use in game', style: 'margin-right:6px', onclick: async () => {
         try {
-          const out = await api('/api/art/deploy', { type: state.currentType, id: state.currentId });
-          toast(`Deployed to ${out.art} (give the Godot editor focus once to import it).`, 'ok');
-          state.gameArt = out.art;
+          const out2 = await api('/api/art/deploy', { type: state.currentType, id: state.currentId });
+          toast(`Deployed to ${out2.art} (give the Godot editor focus once to import it).`, 'ok');
+          state.gameArt = out2.art;
           renderSidePanels();
         } catch (e) { toast(e.message, 'err'); }
       } }) : null,
@@ -567,8 +661,90 @@ function renderArtPanel() {
         await refreshState(true); renderSidePanels(); renderItemList();
       } })));
   } else if (installedArt) {
-    panel.append(el('div', { style: 'margin-top:6px' }, flipBtn));
+    out.push(el('div', { style: 'margin-top:6px' }, flipBtn));
   }
+  return out;
+}
+
+// ── advanced (fullscreen) mode: same _art draft, plus the reference browser ──
+function openAdvanced() {
+  state.advancedOpen = true;
+  state.artRefs = null;
+  renderAdvanced();
+  loadArtRefs();
+}
+
+function closeAdvanced() {
+  state.advancedOpen = false;
+  $('modal-root').replaceChildren();
+  renderSidePanels();
+}
+
+async function loadArtRefs() {
+  const d = state.draft || {};
+  try {
+    const out = await api('/api/art/references', {
+      elements: d.elements || [], chess_pieces: d.chess_pieces || [], excludeId: state.currentId });
+    state.artRefs = out.refs;
+  } catch (e) {
+    state.artRefs = [];
+    toast('Loading references failed: ' + e.message, 'err');
+  }
+  if (state.advancedOpen) renderAdvanced();
+}
+
+function renderAdvanced() {
+  const a = artDraft();
+  const mdl = state.artModels[a.model];
+  const noChange = () => { state.dirty = true; $('dirty-flag').hidden = false; };
+
+  const refRows = (state.artRefs || []).map(r => {
+    const isImg = a.refSource === 'game' && a.refGameArt === r.art;
+    const isLlm = (a.llmRefs || []).some(x => x.art === r.art);
+    return el('div', { class: 'ref-row' + (isImg ? ' attached-img' : '') + (isLlm ? ' attached-llm' : '') },
+      el('img', { class: 'thumb', loading: 'lazy', src: '/gameart/' + r.art }),
+      el('span', { class: 'ref-name' }, r.name,
+        el('span', { class: 'ref-comp', text: [...(r.elements || []), ...(r.chess_pieces || [])].join(' · ') || '—' })),
+      el('button', {
+        class: 'ghost tiny', text: isImg ? '✕ img' : '→ img', disabled: !mdl.supportsRef,
+        title: mdl.supportsRef ? 'Use as the image-model reference (img2img / reference latent)'
+          : `${mdl.label} has no reference path`,
+        onclick: () => {
+          if (isImg) { a.refSource = 'none'; a.refGameArt = null; a.refGameName = null; }
+          else { a.refSource = 'game'; a.refGameArt = r.art; a.refGameName = r.name; }
+          noChange(); renderAdvanced();
+        } }),
+      el('button', {
+        class: 'ghost tiny', text: isLlm ? '− llm' : '+ llm',
+        title: 'Show this illustration to the LLM prompt writer (style reference, up to 4)',
+        onclick: () => {
+          if (!a.llmRefs) a.llmRefs = [];
+          if (isLlm) a.llmRefs = a.llmRefs.filter(x => x.art !== r.art);
+          else if (a.llmRefs.length >= 4) { toast('At most 4 LLM references.', 'err'); return; }
+          else a.llmRefs.push({ id: r.id, name: r.name, art: r.art });
+          noChange(); renderAdvanced();
+        } }),
+    );
+  });
+
+  const modal = el('div', { class: 'modal advanced' },
+    el('div', { class: 'advanced-head' },
+      el('h2', { text: `Advanced art — ${state.draft.display_name || state.currentId || 'new item'}` }),
+      el('button', { class: 'ghost', text: '⇱ Collapse', title: 'Back to the compact art panel (nothing is lost)', onclick: closeAdvanced })),
+    el('div', { class: 'advanced-cols' },
+      el('div', { class: 'advanced-col refs' },
+        el('h3', { text: 'References (ranked by composition)' }),
+        el('div', { class: 'hint', text: 'The bare piece version of this card ranks first, then the closest compositions. → img feeds the image model; + llm shows it to the prompt writer.' }),
+        state.artRefs === null ? el('div', { class: 'hint', text: 'Loading…' })
+          : refRows.length ? el('div', {}, ...refRows)
+          : el('div', { class: 'hint', text: 'No other card art in the game yet.' })),
+      el('div', { class: 'advanced-col' },
+        el('h3', { text: 'Generation' }),
+        ...buildArtControls(renderAdvanced, true)),
+      el('div', { class: 'advanced-col previews' },
+        el('h3', { text: 'Current imagery' }),
+        ...buildArtPreviews(renderAdvanced))));
+  $('modal-root').replaceChildren(modal);
 }
 
 // Mirror the item's art left-right on a canvas and store the result as WORKSPACE art
@@ -624,6 +800,7 @@ async function startArt(statusEl, btn) {
       steps: a.steps, guidance: a.guidance, seed: a.seed, rembg: a.rembg,
       useRef: !!a.refSource && a.refSource !== 'none',
       refUpload: a.refSource === 'upload' ? a.refUpload : undefined,
+      refGameArt: a.refSource === 'game' ? a.refGameArt : undefined,
       refMode: a.refMode, denoise: a.denoise, turbo: !!a.turbo,
       model: a.model || 'flux2',
     });
@@ -644,8 +821,9 @@ async function pollArt() {
     state.artJob.elapsed = j.elapsed;
     if (j.status === 'running') {
       if (state.currentId === state.artJob.itemId) {
-        const s = document.querySelector('#art-panel .art-status');
-        if (s) s.textContent = `Generating… ${j.elapsed}s`;
+        // both views (compact panel and the advanced modal) show a live status line
+        for (const s of document.querySelectorAll('.art-status'))
+          s.textContent = `Generating… ${j.elapsed}s`;
       }
       setTimeout(pollArt, 2000);
       return;
@@ -824,6 +1002,9 @@ $('enabled-check').addEventListener('change', e => {
 });
 $('delete-btn').addEventListener('click', deleteItem);
 $('settings-btn').addEventListener('click', openSettings);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && state.advancedOpen) closeAdvanced();
+});
 $('copy-json').addEventListener('click', () => {
   navigator.clipboard.writeText($('json-preview').textContent);
   toast('JSON copied.');

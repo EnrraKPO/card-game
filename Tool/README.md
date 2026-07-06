@@ -74,6 +74,33 @@ Card auto-prompts deliberately never say "card"/"tcg" (the model would render a 
 framed card with stats) and never include description/effect text (it gets rendered AS
 text in the image) — they build the subject from the card's name and composition instead.
 
+**⛶ Advanced mode** — a fullscreen generator (same draft as the compact panel; Collapse
+loses nothing) with a **reference browser**: every game card that has art, ranked by
+composition affinity against the current card (`POST /api/art/references` — the bare
+piece version first, e.g. `bishop_queen` for `darkness_water_bishop_queen`, then pure
+subsets by shared components with pieces weighted over elements, then cards with foreign
+components). Each entry attaches as **→ img** (single image-model reference, feeding the
+img2img / reference-latent paths via `refGameArt`) and/or **+ llm** (up to 4 illustrations
+shown to the prompt-writing LLM as style references). Multi-image note: some model
+runners (gemma4:31b on current Ollama) crash on multi-image requests — the server then
+falls back automatically to per-image style-note calls plus a text-only synthesis call.
+
+Two optional guidance inputs (advanced view; they persist on the item's art draft and
+apply from either view's ✨ button): **concept direction** — free-text creative steer,
+always passed to the LLM — and **how to use the references** — passed only when
+reference illustrations are attached, and carried into the fallback synthesis call too.
+
+**Item data the LLM sees** (advanced view) lists every summary line the prompt writer
+would receive, each with a checkbox — untick lines that pollute the visual concept
+(material costs, verbose trigger mechanics). Hidden lines are remembered by their text,
+so a line whose content changes reappears visible.
+
+**🔎 match art** (beside ✨) vision-analyzes the item's *current* art (in-game preferred,
+else workspace — `POST /api/art/prompt-from-art`) and writes a prompt that would recreate
+it: subject, pose, palette, lighting, rendering style. For generating faithful variations
+of art you already like — pair it with img2img on the same image. Single-image call, so
+it works on runners with the multi-image crash.
+
 **✨ LLM prompts** — the "✨ llm" button beside "↻ auto" asks a local Ollama model
 (`POST /api/art/prompt`; URL + model in Settings, default `gemma4:31b` on `:11434`) to
 write a rich prompt from the item's FULL data: it reads the same plain-English summary

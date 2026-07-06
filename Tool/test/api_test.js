@@ -141,6 +141,42 @@ async function main() {
     check('art put stores workspace art', r.data.ok
       && fs.readFileSync(path.join(WS_DIR, 'art', 'card', 'apitest_flip.png')).equals(PNG1x1));
 
+    // ── reference catalog: composition-affinity ranking for the advanced browser ──
+    // Query composition: darkness_water_bishop_queen. Expected tiers:
+    //   0: bishop_queen (bare piece version)  1: subsets by score  2: foreign components
+    const rankCards = [
+      { id: 'bishop_queen', chess_pieces: ['bishop', 'queen'] },
+      { id: 'darkness_bishop_queen', elements: ['darkness'], chess_pieces: ['bishop', 'queen'] },
+      { id: 'darkness_water_queen', elements: ['darkness', 'water'], chess_pieces: ['queen'] },
+      { id: 'lone_queen', chess_pieces: ['queen'] },
+      { id: 'darkness_water_pawn', elements: ['darkness', 'water'], chess_pieces: ['pawn'] },
+      { id: 'artless_bishop_queen', chess_pieces: ['bishop', 'queen'] },   // no art → excluded
+    ];
+    fs.writeFileSync(path.join(SANDBOX, 'data/cards/rank_units.json'), JSON.stringify(
+      rankCards.map(c => Object.assign({ display_name: c.id, cost: 1, attack: 1, health: 1, speed: 1 }, c))));
+    for (const c of rankCards) if (c.id !== 'artless_bishop_queen')
+      fs.writeFileSync(path.join(SANDBOX, 'assets/cards', c.id + '.png'), PNG1x1);
+    r = await api('/api/art/references', {
+      elements: ['darkness', 'water'], chess_pieces: ['bishop', 'queen'], excludeId: 'zzz' });
+    const order = r.data.refs.map(x => x.id);
+    check('references ranked: bare piece version first', order[0] === 'bishop_queen', order.join(','));
+    check('references ranked: subsets by shared score', order[1] === 'darkness_bishop_queen'
+      && order[2] === 'darkness_water_queen' && order[3] === 'lone_queen', order.join(','));
+    check('references ranked: foreign components trail, artless excluded',
+      order.indexOf('darkness_water_pawn') > order.indexOf('lone_queen')
+      && !order.includes('artless_bishop_queen'), order.join(','));
+    check('reference entries carry art + composition', r.data.refs[0].art === 'assets/cards/bishop_queen.png'
+      && JSON.stringify(r.data.refs[0].chess_pieces) === '["bishop","queen"]');
+
+    // ── game art as the image-model reference ──
+    r = await api('/api/art/generate', { type: 'card', id: 'apitest_noart2', prompt: 'x',
+      useRef: true, refGameArt: 'assets/cards/bishop_queen.png', model: 'krea2', refMode: 'img2img' });
+    check('game-art ref bypasses the current-art requirement',
+      (r.data.error || '') !== 'this item has no current art to use as input', r.data.error);
+    r = await api('/api/art/generate', { type: 'card', id: 'apitest_noart2', prompt: 'x',
+      useRef: true, refGameArt: '../secrets.png', model: 'krea2', refMode: 'img2img' });
+    check('game-art ref path is validated', /reference game art not found/.test(r.data.error || ''), r.data.error);
+
     // ── LLM art prompts: a fake Ollama proves the request shape + response cleanup ──
     let llmReq = null;
     const fakeOllama = require('http').createServer((rq, rs) => {
@@ -161,7 +197,67 @@ async function main() {
       llmReq && llmReq.path === '/api/generate' && llmReq.body.model === 'testmodel'
       && llmReq.body.stream === false && /never use the words/i.test(llmReq.body.system)
       && llmReq.body.prompt.includes('Cost 1') && llmReq.body.prompt.includes('example staging'));
+    check('text-only llm request has no images', llmReq.body.images === undefined);
+    // visual references ride along as base64 images + the style-matching addendum
+    r = await api('/api/art/prompt', { type: 'card', name: 'Pawn', summary: [],
+      refArts: ['assets/cards/bishop_queen.png', 'assets/cards/lone_queen.png'] });
+    check('llm vision request carries the reference images',
+      r.data.ok && llmReq.body.images && llmReq.body.images.length === 2
+      && llmReq.body.images[0] === PNG1x1.toString('base64')
+      && /reference illustrations/i.test(llmReq.body.system));
+    // optional creative direction: concept always rides along, refHint only with refs
+    r = await api('/api/art/prompt', { type: 'card', name: 'Pawn', summary: [],
+      concept: 'menacing sea witch', refHint: 'copy the armor' });
+    check('concept rides along, refHint dropped without refs',
+      llmReq.body.prompt.includes('Concept direction (follow this): menacing sea witch')
+      && !llmReq.body.prompt.includes('copy the armor'));
+    r = await api('/api/art/prompt', { type: 'card', name: 'Pawn', summary: [],
+      refArts: ['assets/cards/bishop_queen.png'], concept: 'menacing sea witch', refHint: 'copy the armor' });
+    check('refHint included when references are attached',
+      llmReq.body.prompt.includes('How to use the reference illustrations: copy the armor')
+      && llmReq.body.prompt.includes('menacing sea witch'));
+    r = await api('/api/art/prompt', { type: 'card', name: 'Pawn', summary: [],
+      refArts: ['../oops.png'] });
+    check('llm ref art path is validated', r.status === 400 && /reference art not found/.test(r.data.error || ''));
+    // vision analysis of the item's CURRENT art → a recreating prompt (apitest_flip has
+    // workspace art from the /api/art/put test above)
+    r = await api('/api/art/prompt-from-art', { type: 'card', id: 'apitest_flip' });
+    check('prompt-from-art analyzes the current art',
+      r.data.ok && r.data.prompt === 'a spectral pawn knight wreathed in venom mist, painterly'
+      && llmReq.body.images.length === 1 && llmReq.body.images[0] === PNG1x1.toString('base64')
+      && /recreate/i.test(llmReq.body.system));
+    r = await api('/api/art/prompt-from-art', { type: 'card', id: 'apitest_no_art_at_all' });
+    check('prompt-from-art without art rejected', r.status === 400 && /no current art/.test(r.data.error || ''));
     fakeOllama.close();
+
+    // ── multi-image fallback: runners like gemma4 crash on >1 images per request; the
+    // server must fall back to per-image style notes + a text-only synthesis call ──
+    const seenCalls = [];
+    let lastCrashyBody = null;
+    const crashyOllama = require('http').createServer((rq, rs) => {
+      let b = ''; rq.on('data', c => b += c);
+      rq.on('end', () => {
+        const body = JSON.parse(b);
+        seenCalls.push((body.images || []).length);
+        if ((body.images || []).length === 0) lastCrashyBody = body;
+        rs.setHeader('Content-Type', 'application/json');
+        if ((body.images || []).length > 1) { rs.statusCode = 500; rs.end(JSON.stringify({ error: 'runner crashed' })); return; }
+        rs.end(JSON.stringify({ response: (body.images || []).length === 1
+          ? 'painterly, glowing rim light' : 'a knight in the described painterly style' }));
+      });
+    });
+    await new Promise(ok => crashyOllama.listen(8479, ok));
+    r = await api('/api/art/prompt', { type: 'card', name: 'Knight', summary: [],
+      refArts: ['assets/cards/bishop_queen.png', 'assets/cards/lone_queen.png'],
+      concept: 'menacing sea witch', refHint: 'copy the armor' });
+    check('multi-image crash falls back to style notes',
+      r.data.ok && r.data.prompt === 'a knight in the described painterly style'
+      && JSON.stringify(seenCalls) === '[2,1,1,0]', JSON.stringify({ calls: seenCalls, out: r.data }));
+    check('guidance survives into the fallback synthesis call',
+      lastCrashyBody && lastCrashyBody.prompt.includes('menacing sea witch')
+      && lastCrashyBody.prompt.includes('copy the armor')
+      && lastCrashyBody.prompt.includes('Reference style notes:'), lastCrashyBody && lastCrashyBody.prompt);
+    crashyOllama.close();
     r = await api('/api/art/prompt', { type: 'card', name: 'Pawn', summary: [] });
     check('llm unreachable reports cleanly', r.status === 502 && /unreachable/i.test(r.data.error));
 

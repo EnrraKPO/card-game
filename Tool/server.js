@@ -888,6 +888,60 @@ async function uploadRefImage(absPath, name) {
   return out.name || name;
 }
 
+// ── reference catalog: existing card art ranked by composition affinity ──────
+// The current card's composition (elements + chess_pieces, both multisets — pieces
+// repeat, e.g. bishop_bishop) ranks every OTHER card that has art:
+//   tier 0 — the "bare piece version": identical piece multiset, no elements.
+//   tier 1 — pure subsets of the composition (no foreign components),
+//            best shared-component count first, pieces weighted over elements.
+//   tier 2 — everything else (has components this card lacks), same score,
+//            fewer foreign components first. Offered, never excluded.
+function multisetCounts(arr) {
+  const m = new Map();
+  for (const x of arr || []) m.set(x, (m.get(x) || 0) + 1);
+  return m;
+}
+function multisetShared(a, b) {
+  let n = 0;
+  for (const [k, c] of a) n += Math.min(c, b.get(k) || 0);
+  return n;
+}
+function multisetSize(m) { let n = 0; for (const c of m.values()) n += c; return n; }
+
+// Resolve a repo-relative game-art path (as handed out by rankCardReferences / the
+// /gameart route) to an absolute path — same validation as serving it.
+function gameArtAbs(rel) {
+  rel = String(rel || '');
+  if (rel.includes('..') || !rel.startsWith('assets/') || !rel.endsWith('.png')) return null;
+  const abs = path.join(GAME_ROOT, rel);
+  return fs.existsSync(abs) ? abs : null;
+}
+
+function rankCardReferences(elements, pieces, excludeId) {
+  const curE = multisetCounts(elements), curP = multisetCounts(pieces);
+  const curPieceCount = multisetSize(curP);
+  const refs = [];
+  for (const e of listGameEntries('card', true)) {
+    if (e.id === excludeId) continue;
+    const art = gameArtRel('card', e.id, e.data);
+    if (!art) continue;
+    const candE = multisetCounts(e.data.elements), candP = multisetCounts(e.data.chess_pieces);
+    const sharedP = multisetShared(curP, candP), sharedE = multisetShared(curE, candE);
+    const foreign = (multisetSize(candP) - sharedP) + (multisetSize(candE) - sharedE);
+    const barePieceVersion = foreign === 0 && sharedE === 0 && multisetSize(candE) === 0
+      && sharedP === curPieceCount && multisetSize(candP) === curPieceCount && curPieceCount > 0;
+    const tier = barePieceVersion ? 0 : (foreign === 0 ? 1 : 2);
+    refs.push({
+      id: e.id, name: e.data.display_name || e.id, art,
+      elements: e.data.elements || [], chess_pieces: e.data.chess_pieces || [],
+      _tier: tier, _score: 2 * sharedP + sharedE, _foreign: foreign,
+    });
+  }
+  refs.sort((a, b) => a._tier - b._tier || b._score - a._score
+    || a._foreign - b._foreign || (a.id < b.id ? -1 : 1));
+  return refs.map(({ _tier, _score, _foreign, ...r }) => r);
+}
+
 // ── LLM art prompts (local Ollama) ───────────────────────────────────────────
 // The LLM reads the item's FULL data (the same plain-English summary the editor shows)
 // and translates mechanics into imagery. The hard rules the plain auto-prompt encodes
@@ -906,28 +960,86 @@ const LLM_SYSTEM_PROMPT = [
   '- Output only the prompt itself — no preamble, no options, no quotation marks.',
 ].join('\n');
 
-async function llmArtPrompt(typeLabel, name, summary, example) {
+// When reference illustrations ride along (advanced mode), the model sees the actual
+// pixels — gemma4:31b is vision-capable — plus an instruction to match style, not subject.
+const LLM_VISION_ADDENDUM =
+  'You are shown reference illustrations from the same game. Match their rendering style, ' +
+  'palette, and level of detail — do NOT copy their subjects.';
+
+// One /api/generate round-trip. Returns the parsed body; throws on transport failure.
+async function ollamaGenerate(body) {
   const s = getSettings();
   const base = (s.ollamaUrl || 'http://127.0.0.1:11434').replace(/\/$/, '');
+  let res;
+  try {
+    res = await fetch(base + '/api/generate', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Object.assign({ model: s.llmModel || 'gemma4:31b', stream: false, think: false }, body)),
+    });
+  } catch (e) { throw new Error(`Ollama unreachable at ${base} — is it running?`); }
+  if (!res.ok) {
+    const detail = await res.text();
+    const err = new Error(`Ollama request failed: HTTP ${res.status} ${detail.slice(0, 500)}`);
+    err.httpStatus = res.status;
+    throw err;
+  }
+  return res.json();
+}
+
+async function llmArtPrompt(typeLabel, name, summary, example, refImages, concept, refHint) {
   const user = [
     `Item type: ${typeLabel}`,
     `Name: ${name}`,
     'Item data:',
     ...(summary || []).map(l => '- ' + l),
     example ? `Example prompt for this item type (staging reference): ${example}` : '',
+    // optional creative direction from the user, verbatim
+    concept ? `Concept direction (follow this): ${concept}` : '',
+    (refHint && refImages && refImages.length) ? `How to use the reference illustrations: ${refHint}` : '',
   ].filter(Boolean).join('\n');
-  let res;
-  try {
-    res = await fetch(base + '/api/generate', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: s.llmModel || 'gemma4:31b', system: LLM_SYSTEM_PROMPT,
-                             prompt: user, stream: false, think: false,
-                             options: { temperature: 0.9, num_predict: 200 } }),
-    });
-  } catch (e) { throw new Error(`Ollama unreachable at ${base} — is it running?`); }
-  if (!res.ok) throw new Error(`Ollama request failed: HTTP ${res.status} ${await res.text()}`);
-  const out = await res.json();
-  let text = String(out.response || '')
+  const opts = { temperature: 0.9, num_predict: 200 };
+  let out;
+  if (!refImages || !refImages.length) {
+    out = await ollamaGenerate({ system: LLM_SYSTEM_PROMPT, prompt: user, options: opts });
+  } else {
+    // Preferred path: all reference illustrations in ONE vision request.
+    try {
+      out = await ollamaGenerate({ system: LLM_SYSTEM_PROMPT + '\n' + LLM_VISION_ADDENDUM,
+                                   prompt: user, images: refImages, options: opts });
+    } catch (e) {
+      if (refImages.length === 1) {
+        if (/image|vision|multimodal/i.test(e.message))
+          throw new Error(`the configured LLM can't read images — pick a vision-capable model in Settings (${e.message.slice(0, 200)})`);
+        throw e;
+      }
+      // Some model runners (gemma4:31b on current Ollama) crash on MULTI-image requests
+      // while handling single images fine. Fall back: describe each reference's style in
+      // its own single-image call, then write the prompt from those notes text-only.
+      const notes = [];
+      for (const img of refImages) {
+        const d = await ollamaGenerate({
+          system: 'Describe the visual STYLE of this illustration in one sentence: medium, ' +
+                  'palette, lighting, rendering technique. Do NOT describe the subject.',
+          prompt: 'Style:', images: [img],
+          options: { temperature: 0.3, num_predict: 80 },
+        });
+        const line = String(d.response || '').replace(/\s*\n+\s*/g, ' ').trim();
+        if (line) notes.push(line);
+      }
+      out = await ollamaGenerate({
+        system: LLM_SYSTEM_PROMPT + '\nWrite the prompt so the result matches the reference ' +
+                'style notes you are given — they describe illustrations from the same game.',
+        prompt: user + '\nReference style notes:\n' + notes.map(n => '- ' + n).join('\n'),
+        options: opts,
+      });
+    }
+  }
+  return cleanLlmPrompt(out);
+}
+
+// LLM responses arrive with thinking remnants / labels / quotes — reduce to the bare prompt.
+function cleanLlmPrompt(out) {
+  const text = String(out.response || '')
     .replace(/<think>[\s\S]*?<\/think>/g, '')      // thinking remnants, if the flag is ignored
     .replace(/^\s*(?:prompt\s*:)?\s*/i, '')        // "Prompt:" label prefixes
     .replace(/\s*\n+\s*/g, ' ')
@@ -935,6 +1047,32 @@ async function llmArtPrompt(typeLabel, name, summary, example) {
     .trim();
   if (!text) throw new Error('the LLM returned an empty prompt');
   return text;
+}
+
+// Vision-analyze the item's CURRENT art and write a prompt that would recreate it —
+// for regenerating faithful variations of art the user already likes. Single-image
+// call, so it works on runners with the multi-image crash (gemma4:31b).
+const LLM_MATCH_SYSTEM_PROMPT = [
+  'You write prompts for an image-generation model. You are shown an existing illustration',
+  'from a fantasy game. Respond with exactly ONE image prompt that would faithfully recreate',
+  'it: subject, pose, composition, palette, lighting, rendering style — comma-separated',
+  'visual phrases, under 60 words.',
+  'Hard rules:',
+  '- Never use the words: card, TCG, trading card, frame, border, stats, icon, UI, text.',
+  '- The prompt must not ask for readable text, letters, or numbers in the scene.',
+  '- Output only the prompt itself — no preamble, no commentary, no quotation marks.',
+].join('\n');
+
+async function llmPromptFromArt(type, id) {
+  const abs = currentArtAbs(type, id);
+  if (!abs) throw new Error('this item has no current art to analyze');
+  const out = await ollamaGenerate({
+    system: LLM_MATCH_SYSTEM_PROMPT,
+    prompt: 'Write the prompt that recreates this illustration.',
+    images: [fs.readFileSync(abs).toString('base64')],
+    options: { temperature: 0.4, num_predict: 200 },
+  });
+  return cleanLlmPrompt(out);
 }
 
 // Copies the workspace-generated image to the game's asset path for this entry, backing up
@@ -957,7 +1095,7 @@ function deployArtIfPossible(type, id) {
   return rel;
 }
 
-async function startArtJob({ type, id, prompt, negative, width, height, steps, guidance, seed, rembg, useRef, refUpload, refMode, denoise, turbo, model }) {
+async function startArtJob({ type, id, prompt, negative, width, height, steps, guidance, seed, rembg, useRef, refUpload, refGameArt, refMode, denoise, turbo, model }) {
   const t = TYPES[type];
   if (!t) throw new Error('unknown type');
   if (!validId(id)) throw new Error('bad item id');
@@ -974,7 +1112,11 @@ async function startArtJob({ type, id, prompt, negative, width, height, steps, g
   let refName = null;
   if (useRef) {
     let refAbs;
-    if (refUpload) {
+    if (refGameArt) {
+      // another item's in-game art, picked from the advanced mode's reference browser
+      refAbs = gameArtAbs(refGameArt);
+      if (!refAbs) throw new Error('reference game art not found: ' + refGameArt);
+    } else if (refUpload) {
       // an external image the user pushed through /api/art/upload-ref
       refAbs = path.join(WORKSPACE, 'refs', safeRefName(refUpload));
       if (!fs.existsSync(refAbs)) throw new Error('uploaded reference image not found — upload it again');
@@ -1286,15 +1428,41 @@ async function handle(req, res) {
       fs.writeFileSync(artPath(type, id), Buffer.from(dataBase64, 'base64'));
       return send(res, 200, { ok: true });
     }
-    // Ask the local LLM (Ollama) to write an art prompt from the item's summarized data.
+    // Existing card art ranked by composition affinity, for the advanced mode's browser.
+    if (p === '/api/art/references' && req.method === 'POST') {
+      const { elements, chess_pieces, excludeId } = await readBody(req);
+      return send(res, 200, { refs: rankCardReferences(
+        Array.isArray(elements) ? elements.map(String) : [],
+        Array.isArray(chess_pieces) ? chess_pieces.map(String) : [],
+        excludeId ? String(excludeId) : null) });
+    }
+    // Ask the local LLM (Ollama) to write an art prompt from the item's summarized data,
+    // optionally showing it reference illustrations (refArts: repo-relative assets/ paths).
     if (p === '/api/art/prompt' && req.method === 'POST') {
-      const { type, name, summary, example } = await readBody(req);
+      const { type, name, summary, example, refArts, concept, refHint } = await readBody(req);
       if (!TYPES[type] || !name) return send(res, 400, { error: 'bad request' });
+      const refImages = [];
+      for (const rel of Array.isArray(refArts) ? refArts.slice(0, 4) : []) {
+        const abs = gameArtAbs(rel);
+        if (!abs) return send(res, 400, { error: 'reference art not found: ' + rel });
+        refImages.push(fs.readFileSync(abs).toString('base64'));
+      }
       try {
         const prompt = await llmArtPrompt(TYPES[type].label, String(name),
-          Array.isArray(summary) ? summary.map(String) : [], example ? String(example) : '');
+          Array.isArray(summary) ? summary.map(String) : [], example ? String(example) : '', refImages,
+          concept ? String(concept) : '', refHint ? String(refHint) : '');
         return send(res, 200, { ok: true, prompt });
       } catch (e) { return send(res, 502, { error: e.message }); }
+    }
+    // Vision-analyze the item's current art → a prompt that recreates it.
+    if (p === '/api/art/prompt-from-art' && req.method === 'POST') {
+      const { type, id } = await readBody(req);
+      if (!TYPES[type] || !validId(id)) return send(res, 400, { error: 'bad request' });
+      try {
+        return send(res, 200, { ok: true, prompt: await llmPromptFromArt(type, id) });
+      } catch (e) {
+        return send(res, /no current art/.test(e.message) ? 400 : 502, { error: e.message });
+      }
     }
     // Stash a user-provided external image in the workspace as generation reference input.
     if (p === '/api/art/upload-ref' && req.method === 'POST') {

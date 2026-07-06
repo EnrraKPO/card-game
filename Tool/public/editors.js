@@ -159,8 +159,11 @@ const CardEditor = {
   summarize(d) {
     const lines = [];
     const kind = d.elements.length && !d.chess_pieces.length ? 'Spell' : (d.chess_pieces.includes('rook') ? 'Building' : 'Unit');
-    const comp = [...d.elements, ...d.chess_pieces].join(' + ') || 'no composition';
-    lines.push(`${d.display_name || d.id || 'Unnamed'} — ${kind} (${comp}).`);
+    const comp = [...d.elements, ...d.chess_pieces].join(' + ');
+    // name/kind and composition are SEPARATE lines: the LLM-visibility checklist toggles
+    // per line, and a name is often unrelated to the materials that compose the card
+    lines.push(`${d.display_name || d.id || 'Unnamed'} — ${kind}.`);
+    if (comp) lines.push(`Composition: ${comp}.`);
     if (d._derive_stats) lines.push('Stats derived from the composition by the game.');
     else lines.push(`Cost ${d.cost} · ATK ${d.attack} · HP ${d.health} · SPD ${d.speed}${d.shield ? ' · Shield ' + d.shield : ''}.`);
     if (d.ranged) lines.push('Attacks at range (projectile).');

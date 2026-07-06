@@ -22,10 +22,14 @@ for (const d of ['data/cards', 'data/statuses', 'data/abilities', 'data/charms',
   fs.mkdirSync(path.join(SANDBOX, d), { recursive: true });
 fs.writeFileSync(path.join(SANDBOX, 'data/cards/base.json'), JSON.stringify([
   { id: 'pawn', display_name: 'Pawn', cost: 1, attack: 1, health: 2, speed: 3, chess_pieces: ['pawn'] },
+  { id: 'lone_pawn', display_name: 'Lone Pawn', cost: 1, attack: 1, health: 1, speed: 1, chess_pieces: ['pawn'] },
+  { id: 'fire_queen', display_name: 'Fire Queen', cost: 5, attack: 5, health: 5, speed: 5, elements: ['fire'], chess_pieces: ['queen'] },
 ]));
 fs.writeFileSync(path.join(SANDBOX, 'data/statuses/poison.json'), JSON.stringify({ id: 'poison', display_name: 'Poison' }));
-fs.writeFileSync(path.join(SANDBOX, 'assets/cards/pawn.png'),
-  Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64'));
+const PNG1x1_UI = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+fs.writeFileSync(path.join(SANDBOX, 'assets/cards/pawn.png'), PNG1x1_UI);
+fs.writeFileSync(path.join(SANDBOX, 'assets/cards/lone_pawn.png'), PNG1x1_UI);
+fs.writeFileSync(path.join(SANDBOX, 'assets/cards/fire_queen.png'), PNG1x1_UI);
 fs.mkdirSync(SHOTS, { recursive: true });
 
 let failures = 0;
@@ -277,10 +281,19 @@ async function main() {
       [...document.querySelectorAll('#art-panel button')].some(b => b.textContent.includes('Use in game'))));
 
     // ═══ ✨ LLM prompt fills the field (against a fake Ollama) ═══
+    // The fake answers differently when reference images ride along, so the advanced-mode
+    // test below also proves the attached refs actually reach the LLM request.
+    let lastOllamaBody = null;
     const fakeOllama = require('http').createServer((rq, rs) => {
       let b = ''; rq.on('data', c => b += c);
-      rq.on('end', () => { rs.setHeader('Content-Type', 'application/json');
-        rs.end(JSON.stringify({ response: 'a lone pawn soldier at dawn, painterly' })); });
+      rq.on('end', () => {
+        lastOllamaBody = JSON.parse(b);
+        const withImages = (lastOllamaBody.images || []).length > 0;
+        rs.setHeader('Content-Type', 'application/json');
+        rs.end(JSON.stringify({ response: withImages
+          ? 'a pawn styled after the references, painterly'
+          : 'a lone pawn soldier at dawn, painterly' }));
+      });
     });
     await new Promise(ok => fakeOllama.listen(8480, ok));
     await page.evaluate(async () => {
@@ -291,6 +304,89 @@ async function main() {
     await sleep(800);
     check('llm button fills the prompt field', await page.evaluate(() =>
       document.querySelector('#art-panel textarea').value === 'a lone pawn soldier at dawn, painterly'));
+
+    // ═══ advanced fullscreen mode: reference browser + attach flows ═══
+    await page.evaluate(() => {
+      [...document.querySelectorAll('#art-panel button')].find(b => b.textContent.includes('Advanced')).click();
+    });
+    await sleep(500);   // modal + async reference load
+    check('advanced mode opens fullscreen', await page.evaluate(() => !!document.querySelector('.modal.advanced')));
+    check('llm guidance inputs live in advanced mode only', await page.evaluate(() => {
+      const labs = root => [...root.querySelectorAll('.fld .lab')].map(l => l.textContent);
+      return labs(document.querySelector('.modal.advanced')).some(t => t.includes('concept direction'))
+        && labs(document.querySelector('.modal.advanced')).some(t => t.includes('how to use the references'))
+        && !labs(document.getElementById('art-panel')).some(t => t.includes('concept direction'));
+    }));
+    check('reference browser ranks the bare piece version first', await page.evaluate(() => {
+      const rows = [...document.querySelectorAll('.modal.advanced .ref-row')];
+      return rows.length === 2 && rows[0].textContent.includes('Lone Pawn')
+        && rows[1].textContent.includes('Fire Queen') && !!rows[0].querySelector('img.thumb');
+    }));
+    await page.evaluate(() => {
+      const row = [...document.querySelectorAll('.modal.advanced .ref-row')].find(r => r.textContent.includes('Lone Pawn'));
+      [...row.querySelectorAll('button')].find(b => b.textContent.includes('llm')).click();
+    });
+    await sleep(150);
+    check('llm ref attaches with badge + chip', await page.evaluate(() => {
+      const row = [...document.querySelectorAll('.modal.advanced .ref-row')].find(r => r.textContent.includes('Lone Pawn'));
+      const strip = document.querySelector('.modal.advanced .attached-strip');
+      return row.classList.contains('attached-llm') && strip && strip.textContent.includes('Lone Pawn');
+    }));
+    await page.evaluate(() => {
+      [...document.querySelectorAll('.modal.advanced button')].find(b => b.textContent.includes('✨')).click();
+    });
+    await sleep(800);
+    check('advanced ✨ sends the attached refs to the llm', await page.evaluate(() =>
+      document.querySelector('.modal.advanced textarea').value === 'a pawn styled after the references, painterly'));
+    check('llm saw the full item data by default', lastOllamaBody && lastOllamaBody.prompt.includes('Cost 1'));
+    check('name and composition are separately toggleable lines', await page.evaluate(() => {
+      const lines = [...document.querySelectorAll('.modal.advanced .llm-line')].map(l => l.textContent);
+      return lines.some(t => t.trim() === 'Pawn — Unit.') && lines.some(t => t.trim() === 'Composition: pawn.');
+    }));
+    // untick the stats line → it must vanish from the next LLM request
+    await page.evaluate(() => {
+      const line = [...document.querySelectorAll('.modal.advanced .llm-line')].find(l => l.textContent.includes('Cost 1'));
+      line.querySelector('input').click();
+    });
+    await sleep(100);
+    await page.evaluate(() => {
+      [...document.querySelectorAll('.modal.advanced button')].find(b => b.textContent.includes('✨')).click();
+    });
+    await sleep(800);
+    check('unticked line is hidden from the llm', lastOllamaBody && !lastOllamaBody.prompt.includes('Cost 1')
+      && lastOllamaBody.prompt.includes('Pawn'), lastOllamaBody && lastOllamaBody.prompt);
+    // 🔎 match art: vision-analyzes the item's current art into a recreating prompt
+    await page.evaluate(() => {
+      [...document.querySelectorAll('.modal.advanced button')].find(b => b.textContent.includes('match art')).click();
+    });
+    await sleep(800);
+    check('match-art fills the prompt from the current art', await page.evaluate(() =>
+      document.querySelector('.modal.advanced textarea').value === 'a pawn styled after the references, painterly')
+      && lastOllamaBody && lastOllamaBody.images.length === 1 && /recreate/i.test(lastOllamaBody.system));
+    await page.evaluate(() => {
+      const row = [...document.querySelectorAll('.modal.advanced .ref-row')].find(r => r.textContent.includes('Fire Queen'));
+      [...row.querySelectorAll('button')].find(b => b.textContent.includes('img')).click();
+    });
+    await sleep(150);
+    check('game-art image ref attaches and selects the game source', await page.evaluate(() => {
+      const row = [...document.querySelectorAll('.modal.advanced .ref-row')].find(r => r.textContent.includes('Fire Queen'));
+      const sel = [...document.querySelectorAll('.modal.advanced .fld')]
+        .find(f => f.querySelector('.lab') && f.querySelector('.lab').textContent === 'Reference image');
+      return row.classList.contains('attached-img') && sel && sel.querySelector('select').value === 'game';
+    }));
+    await shot('04_advanced_mode');
+    await page.evaluate(() => {
+      [...document.querySelectorAll('.modal.advanced button')].find(b => b.textContent.includes('Collapse')).click();
+    });
+    await sleep(200);
+    check('collapse returns to the compact panel with refs intact', await page.evaluate(() => {
+      if (document.querySelector('.modal.advanced')) return false;
+      const sel = [...document.querySelectorAll('#art-panel .fld')]
+        .find(f => f.querySelector('.lab') && f.querySelector('.lab').textContent === 'Reference image');
+      return sel && sel.querySelector('select').value === 'game'
+        && document.querySelector('#art-panel textarea').value === 'a pawn styled after the references, painterly';
+    }));
+    await shot('05_after_collapse');
     fakeOllama.close();
 
     check('no page errors during the whole run', errors.length === 0, errors.slice(0, 5).join(' | '));
