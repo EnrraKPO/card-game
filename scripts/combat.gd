@@ -146,23 +146,28 @@ func _input(event: InputEvent) -> void:
 				and _spell_caster.is_targeting():
 			_spell_caster.cancel_targeting()
 			get_viewport().set_input_as_handled()
+		elif mb.button_index == MOUSE_BUTTON_LEFT and not mb.pressed:
+			_maybe_dismiss_hand_view(mb.position)
 
 
 # Clicking anywhere OUTSIDE the hand panel while it's past its base level dismisses back to
-# the plain hand view (clearing any inspected card). Consumed GUI events never reach here, so
-# everything interactive — slots (which switch the inspection instead), cards, buttons, the
-# hand panel itself — stays in charge of its own click. Fires on RELEASE because that's where
-# slots/cards act; skipped during spell targeting, which owns stray clicks.
-func _unhandled_input(event: InputEvent) -> void:
-	if not (event is InputEventMouseButton):
-		return
-	var mb := event as InputEventMouseButton
-	if mb.button_index != MOUSE_BUTTON_LEFT or mb.pressed:
+# the plain hand view (clearing any inspected card). A geometric test in _input, NOT
+# _unhandled_input: background panels/gauges consume clicks they do nothing with (STOP mouse
+# filters), so unhandled-input never fires over most of the screen. _input runs BEFORE GUI
+# delivery, so a click on a board unit dismisses and then the slot's own handler re-inspects
+# that unit in the same frame — the "switch inspection" behavior falls out for free. Fires on
+# RELEASE (where slots/cards act); skipped during spell targeting (which owns stray clicks)
+# and mid-drag (a failed drop must not also close the view).
+func _maybe_dismiss_hand_view(point: Vector2) -> void:
+	if _hand.nav_level() == Hand.NavLevel.HAND:
 		return
 	if _spell_caster.is_targeting():
 		return
-	if _hand.nav_level() != Hand.NavLevel.HAND:
-		_hand.dismiss_to_hand()
+	if get_viewport().gui_is_dragging():
+		return
+	if _hand.panel_contains(point):
+		return
+	_hand.dismiss_to_hand()
 
 
 # ── Enemy deck / hand ──────────────────────────────────────────────────────────
@@ -812,11 +817,6 @@ func _on_board_slot_pressed(slot: SlotUI) -> void:
 		# placement-related.
 		_hand.deselect()
 		_hand.set_inspected(occupant.card_instance)
-		return
-	# An EMPTY slot is "outside the hand panel" too, but its click is consumed here rather
-	# than reaching _unhandled_input — dismiss a raised hand view the same way.
-	if _hand.nav_level() != Hand.NavLevel.HAND:
-		_hand.dismiss_to_hand()
 		return
 	var card := _hand.selected()
 	if card == null:

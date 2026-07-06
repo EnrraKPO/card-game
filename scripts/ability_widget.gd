@@ -8,8 +8,9 @@ extends CardUI
 # procedural panels later without touching behavior.
 #
 # Autocast (the Warcraft idiom): an autocast-capable ability (AbilityData.autocast) shows
-# corner brackets — dim while merely capable, bright and pulsing while ARMED. Right-click
-# (desktop) or long-press (touch) toggles armed state, stored on the HOLDER unit
+# corner brackets — plain while merely capable; ARMED adds the effects (pulsing bracket glow
+# + sparkles orbiting the card edge — see AutocastFX). Right-click (desktop) or long-press
+# (touch) toggles armed state, stored on the HOLDER unit
 # (CardInstance.autocast_ability — a single field, so max 1 armed per unit is structural).
 # While armed, dragging the holder onto a valid target fires the ability (see the autocast
 # path in CombatBoard/SpellCaster).
@@ -17,18 +18,16 @@ extends CardUI
 signal autocast_toggled(holder: CardInstance)
 
 # Native Canvas units (260x340). Bracket size keeps the corner art's aspect (581:508);
-# the art itself lives in CardUI.AUTOCAST_CORNERS (shared with the board echo).
+# the visuals themselves live in AutocastFX (shared with the board echo).
 const BRACKET_SIZE := Vector2(64.0, 56.0)
 const BRACKET_INSET := 3.0
-const BRACKET_DIM_ALPHA := 0.35
 
 # Procedural frame palette — deliberately not the card frames' gold/parchment: a cool dark
 # slab with an arcane violet edge, so an ability is instantly tellable from a card.
 const FRAME_BG := Color(0.115, 0.10, 0.16)
 const FRAME_EDGE := Color(0.66, 0.52, 0.92)
 
-var _bracket_layer: Control = null
-var _bracket_tween: Tween = null
+var _bracket_fx: AutocastFX = null
 
 static var _widget_scene: PackedScene = null
 
@@ -93,36 +92,25 @@ func _build_ability_chrome() -> void:
 	_canvas.add_child(edge)
 	edge.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
-	# Corner brackets live on one shared layer (built by CardUI.build_bracket_layer, same art
-	# as the board echo) so the armed pulse is a single tween on the layer, not four.
+	# Corner brackets + the armed effects live in one shared bundle (CardUI.build_autocast_fx
+	# → AutocastFX, the same visuals as the board echo).
 	var ab := _ability()
 	if ab == null or not ab.autocast:
 		return
-	_bracket_layer = build_bracket_layer(BRACKET_SIZE, BRACKET_INSET)
+	_bracket_fx = build_autocast_fx(BRACKET_SIZE, BRACKET_INSET)
 
 
-# Bracket state: dim while capable-but-off, full-bright with a slow pulse while armed. Tween
-# hygiene mirrors _refresh_ability_cue: kill before recreate, so repeated refreshes never
-# stack tweens.
+# Bracket state: plain brackets while capable-but-off; armed adds the glow pulse and the
+# orbiting sparkles (AutocastFX owns both, idempotently — safe to call every refresh).
 func _refresh_brackets() -> void:
-	if _bracket_layer == null:
+	if _bracket_fx == null:
 		return
-	if _bracket_tween != null:
-		_bracket_tween.kill()
-		_bracket_tween = null
-	if _is_armed():
-		_bracket_layer.modulate.a = 1.0
-		_bracket_tween = create_tween()
-		_bracket_tween.set_loops()
-		_bracket_tween.tween_property(_bracket_layer, "modulate:a", 0.65, 0.7).set_ease(Tween.EASE_IN_OUT)
-		_bracket_tween.tween_property(_bracket_layer, "modulate:a", 1.0, 0.7).set_ease(Tween.EASE_IN_OUT)
-	else:
-		_bracket_layer.modulate.a = BRACKET_DIM_ALPHA
+	_bracket_fx.set_armed(_is_armed())
 
 
 func refresh() -> void:
 	super()
-	_refresh_brackets()   # no-op until _build_ability_chrome has run (layer still null)
+	_refresh_brackets()   # no-op until _build_ability_chrome has run (fx still null)
 
 
 # ── Autocast toggle input ──────────────────────────────────────────────────────────

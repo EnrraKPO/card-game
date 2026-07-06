@@ -42,6 +42,7 @@ var _selected: CardUI  = null
 var _inspected: CardInstance = null
 var _nav_level: NavLevel = NavLevel.HAND
 
+var _panel: PanelContainer
 var _hand_box: BoxContainer
 var _gen_box: BoxContainer
 var _abilities_box: BoxContainer
@@ -64,9 +65,10 @@ const DESC_PREVIEW_SIZE := Vector2(180, 235)
 # ── UI construction ──────────────────────────────────────────────────────────────
 
 func build_into(parent: Control) -> void:
-	var panel := PanelContainer.new()
-	panel.custom_minimum_size.y = 235.0
-	parent.add_child(panel)
+	_panel = PanelContainer.new()
+	_panel.custom_minimum_size.y = 235.0
+	parent.add_child(_panel)
+	var panel := _panel
 
 	# Top-level row: the card area (padded, see below) and the inspect sidebar are SIBLINGS
 	# here, not nested — the sidebar must NOT inherit the card area's padding. That padding
@@ -318,6 +320,12 @@ func inspected() -> CardInstance:
 
 func nav_level() -> NavLevel:
 	return _nav_level
+
+
+# Whether a screen-space point lands on the hand panel — the outside-click dismissal's
+# boundary (see Combat._input).
+func panel_contains(point: Vector2) -> bool:
+	return _panel != null and _panel.get_global_rect().has_point(point)
 
 
 # Level 2: the Abilities list — every fielded player unit with a currently OFFERABLE ability

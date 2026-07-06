@@ -63,8 +63,9 @@ var _ability_cue_tween: Tween = null
 # externally driven, distinct from both _ability_cue (a fact about the card) and set_selected.
 var _inspect_cue: Panel = null
 # The armed-autocast echo on a fielded holder (see _refresh_autocast_brackets) — small corner
-# brackets so "who is armed" reads on the board without inspecting. Lazily created like _aura.
-var _autocast_layer: Control = null
+# brackets + the armed effects (glow pulse, orbiting sparkles), so "who is armed" reads on
+# the board without inspecting. Lazily created like _aura.
+var _autocast_fx: AutocastFX = null
 
 # The card is authored once at this fixed native resolution. Every visual lives
 # under the Canvas node, which is uniformly scaled to fill whatever size the
@@ -90,15 +91,6 @@ const PIECE_ICONS := {
 	"rook": preload("res://assets/ui/icons/piece_rook.png"),
 	"queen": preload("res://assets/ui/icons/piece_queen.png"),
 	"king": preload("res://assets/ui/icons/piece_king.png"),
-}
-
-# The autocast corner-bracket art, shared by the AbilityWidget (capability/armed display)
-# and the board echo on an armed holder (see _refresh_autocast_brackets).
-const AUTOCAST_CORNERS := {
-	"left_top":     preload("res://assets/ui/cards/autocast_corner_left_top.png"),
-	"right_top":    preload("res://assets/ui/cards/autocast_corner_right_top.png"),
-	"left_bottom":  preload("res://assets/ui/cards/autocast_corner_left_bottom.png"),
-	"right_bottom": preload("res://assets/ui/cards/autocast_corner_right_bottom.png"),
 }
 
 const ELEMENT_ICONS := {
@@ -654,47 +646,35 @@ func _refresh_ability_cue() -> void:
 	_ability_cue_tween.tween_property(_ability_cue, "modulate:a", 1.0, 0.9).set_ease(Tween.EASE_IN_OUT)
 
 
-# Builds a full-rect layer holding the four autocast corner brackets, sized/inset in native
-# Canvas units. Shared by the board echo below and the AbilityWidget's capability display —
-# same art at two scales, so the tray widget and its board holder visually rhyme.
-func build_bracket_layer(bracket_size: Vector2, inset: float) -> Control:
-	var layer := Control.new()
-	layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_canvas.add_child(layer)
-	layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	var positions := {
-		"left_top":     Vector2(inset, inset),
-		"right_top":    Vector2(NATIVE_SIZE.x - inset - bracket_size.x, inset),
-		"left_bottom":  Vector2(inset, NATIVE_SIZE.y - inset - bracket_size.y),
-		"right_bottom": Vector2(NATIVE_SIZE.x - inset - bracket_size.x,
-				NATIVE_SIZE.y - inset - bracket_size.y),
-	}
-	for corner: String in AUTOCAST_CORNERS:
-		var tr := TextureRect.new()
-		tr.texture = AUTOCAST_CORNERS[corner] as Texture2D
-		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		tr.stretch_mode = TextureRect.STRETCH_SCALE
-		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		layer.add_child(tr)
-		tr.position = positions[corner] as Vector2
-		tr.size = bracket_size
-	return layer
+# Builds the autocast FX bundle (corner brackets + armed glow/sparkles — see AutocastFX)
+# full-rect under the Canvas, sized/inset in native units. Shared by the board echo below
+# and the AbilityWidget's capability display — same visuals at two scales, so the tray
+# widget and its board holder visually rhyme.
+func build_autocast_fx(bracket_size: Vector2, inset: float) -> AutocastFX:
+	var fx := AutocastFX.new()
+	_canvas.add_child(fx)
+	fx.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	fx.setup(bracket_size, inset, NATIVE_SIZE)
+	return fx
 
 
-# The board-side echo of an ARMED autocast ability: small corner brackets on the fielded
-# holder, so the player can see who is armed without opening the inspect tray. Derivable
-# from card_instance (like _refresh_ability_cue), so it lives in refresh(). armed_autocast()
-# already validates the id against the current ability list — a stale arm just disappears.
+# The board-side echo of an ARMED autocast ability: small corner brackets + the armed
+# effects on the fielded holder, so the player can see who is armed without opening the
+# inspect tray. Derivable from card_instance (like _refresh_ability_cue), so it lives in
+# refresh(). armed_autocast() already validates the id against the current ability list —
+# a stale arm just disappears.
 func _refresh_autocast_brackets() -> void:
 	var active := card_instance != null and card_instance.row >= 0 and card_instance.col >= 0 \
 			and card_instance.owner == 0 and card_instance.armed_autocast() != null
 	if not active:
-		if _autocast_layer != null:
-			_autocast_layer.visible = false
+		if _autocast_fx != null:
+			_autocast_fx.visible = false
+			_autocast_fx.set_armed(false)
 		return
-	if _autocast_layer == null:
-		_autocast_layer = build_bracket_layer(Vector2(48.0, 42.0), 6.0)
-	_autocast_layer.visible = true
+	if _autocast_fx == null:
+		_autocast_fx = build_autocast_fx(Vector2(48.0, 42.0), 6.0)
+	_autocast_fx.visible = true
+	_autocast_fx.set_armed(true)
 
 
 # A solid, non-pulsing highlight marking "this is the board unit the hand panel is currently
