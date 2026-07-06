@@ -4,6 +4,9 @@ extends Node
 signal targeting_started
 signal targeting_ended
 signal spell_consumed(card_ui: CardUI, mana_cost: int)
+# An armed autocast ability is about to resolve (holder dropped onto a valid target); the
+# orchestrator pays its costs (mana + tap) — the tray-token flow's spell_consumed equivalent.
+signal ability_autocast(holder: CardInstance, ab: AbilityData)
 
 var board: CombatBoard
 var animator: CombatAnimator
@@ -147,21 +150,29 @@ func _execute_spell(card_ui: CardUI, manual_target: CardInstance, manual_slot: S
 		src = inst.source_building
 	spell_consumed.emit(card_ui, cost)  # orchestrator deducts mana + removes from hand
 	card_ui.queue_free()
-	for effect: Effect in inst.data.effects:
+	await _resolve_on_play(inst.data.effects, src, inst.ability, manual_target, manual_slot)
+	board.refresh()
+
+
+# The ON_PLAY resolution loop shared by spell/token casts and autocast activations: build a
+# context per effect, apply, animate, sweep deaths. `ab` (nullable) lets hooks read the
+# ability's parameters (ctx.ability).
+func _resolve_on_play(effects: Array, src: CardInstance, ab: AbilityData,
+		manual_target: CardInstance, manual_slot: SlotUI) -> void:
+	for effect: Effect in effects:
 		if effect.trigger != Effect.Trigger.ON_PLAY:
 			continue
 		var ctx := EffectContext.make(src, board.player_grid, board.enemy_grid)
 		ctx.manual_target = manual_target
 		ctx.manual_slot = manual_slot   # slot-mode extras: the picked slot (may be empty)
 		ctx.board_node = board          # + board access for hooks that spawn (see EffectContext)
-		ctx.ability = inst.ability      # lets hooks read the ability's parameters
+		ctx.ability = ab
 		var results := EffectSystem.apply_single(effect, src, ctx)
 		# Passing `src` glints the ability's holder (see VFXPlayer.play_results) — safe for a
 		# regular non-ability spell too, since its `src` is the ephemeral spell card itself
 		# (row == -1, never on the board), which play_results's own row-guard already skips.
 		await animator.show_effect_results(results, src)
 		board.cleanup_effect_deaths()
-	board.refresh()
 
 
 func _request_target(spell_ui: CardUI) -> CardInstance:
@@ -208,8 +219,14 @@ func _can_afford(card_ui: CardUI) -> bool:
 # affect light up and accept the pick, so a spell can't be wasted on an invalid target
 # (e.g. Castling onto a unit that already has a Barrier).
 func _eligible(spell: CardInstance, target: CardInstance) -> bool:
+	return _manual_effects_eligible(spell.data.effects, target)
+
+
+# The effects-level form of _eligible, shared with the autocast gate (which judges an
+# AbilityData's effects directly — no spell-shaped token exists on that path).
+func _manual_effects_eligible(effects: Array, target: CardInstance) -> bool:
 	var has_manual := false
-	for e: Effect in spell.data.effects:
+	for e: Effect in effects:
 		if e.trigger != Effect.Trigger.ON_PLAY \
 				or e.targeting_policy != Effect.TargetingPolicy.MANUAL:
 			continue
@@ -253,3 +270,38 @@ func _slot_eligible(spell: CardInstance, slot: SlotUI) -> bool:
 func _slot_eligibility_of(spell_ui: CardUI) -> Callable:
 	return func(slot: SlotUI) -> bool:
 		return _slot_eligible(spell_ui.card_instance, slot)
+
+
+# ── Autocast (an armed ability fired by dragging its holder onto a target) ──────
+
+# Whether dropping dragged unit `holder` onto `slot` fires its armed autocast ability:
+# armed + fielded player unit + payable (untapped if tap-costed, mana affordable) + the
+# occupant passes the ability's manual-effect conditions. Consulted both at drop-accept
+# time (SlotUI.autocast_check via CombatBoard.can_autocast) and again at execution.
+func autocast_drop_ok(holder: CardInstance, slot: SlotUI) -> bool:
+	if holder == null or holder.row < 0 or holder.owner != 0:
+		return false
+	var ab := holder.armed_autocast()
+	if ab == null:
+		return false
+	if ab.tap and holder.attack_exhausted:
+		return false
+	if ab.mana > get_mana.call():
+		return false
+	var occupant := slot.get_card()
+	if occupant == null:
+		return false
+	return _manual_effects_eligible(ab.effects, occupant.card_instance)
+
+
+# Resolves the armed ability on the slot's occupant, with the HOLDER as effect source (same
+# rule as the tray-token path). Emits ability_autocast first so the orchestrator pays the
+# costs — mirroring _execute_spell's consume-then-resolve order.
+func activate_autocast(holder: CardInstance, slot: SlotUI) -> void:
+	if not autocast_drop_ok(holder, slot):
+		return
+	var ab := holder.armed_autocast()
+	var target: CardInstance = slot.get_card().card_instance
+	ability_autocast.emit(holder, ab)
+	await _resolve_on_play(ab.effects, holder, ab, target, null)
+	board.refresh()

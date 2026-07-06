@@ -4,6 +4,10 @@ extends Control
 signal pressed
 signal spell_drag_started(card_ui: CardUI)
 signal spell_drag_ended(card_ui: CardUI)
+# Fielded-unit drag lifecycle (row >= 0, non-spell) — the board listens to run the autocast
+# drag affordance (drop card filters + light valid targets). See CombatBoard.
+signal unit_drag_started(card_ui: CardUI)
+signal unit_drag_ended(card_ui: CardUI)
 
 # Status badge scene — its size/fonts/style are authored in the editor (status_pip.tscn).
 const STATUS_PIP_SCENE := preload("res://scenes/status_pip.tscn")
@@ -58,6 +62,9 @@ var _ability_cue_tween: Tween = null
 # The static "you are looking at this one" highlight (see set_inspected) — created lazily,
 # externally driven, distinct from both _ability_cue (a fact about the card) and set_selected.
 var _inspect_cue: Panel = null
+# The armed-autocast echo on a fielded holder (see _refresh_autocast_brackets) — small corner
+# brackets so "who is armed" reads on the board without inspecting. Lazily created like _aura.
+var _autocast_layer: Control = null
 
 # The card is authored once at this fixed native resolution. Every visual lives
 # under the Canvas node, which is uniformly scaled to fill whatever size the
@@ -83,6 +90,15 @@ const PIECE_ICONS := {
 	"rook": preload("res://assets/ui/icons/piece_rook.png"),
 	"queen": preload("res://assets/ui/icons/piece_queen.png"),
 	"king": preload("res://assets/ui/icons/piece_king.png"),
+}
+
+# The autocast corner-bracket art, shared by the AbilityWidget (capability/armed display)
+# and the board echo on an armed holder (see _refresh_autocast_brackets).
+const AUTOCAST_CORNERS := {
+	"left_top":     preload("res://assets/ui/cards/autocast_corner_left_top.png"),
+	"right_top":    preload("res://assets/ui/cards/autocast_corner_right_top.png"),
+	"left_bottom":  preload("res://assets/ui/cards/autocast_corner_left_bottom.png"),
+	"right_bottom": preload("res://assets/ui/cards/autocast_corner_right_bottom.png"),
 }
 
 const ELEMENT_ICONS := {
@@ -367,6 +383,7 @@ func refresh() -> void:
 	_refresh_charms()
 	_refresh_statuses()
 	_refresh_ability_cue()
+	_refresh_autocast_brackets()
 	# Non-empty tooltip_text is required for Godot to invoke _make_custom_tooltip;
 	# fall back to the name so the enlarged preview shows even without a description.
 	var desc := card_instance.data.description
@@ -637,6 +654,49 @@ func _refresh_ability_cue() -> void:
 	_ability_cue_tween.tween_property(_ability_cue, "modulate:a", 1.0, 0.9).set_ease(Tween.EASE_IN_OUT)
 
 
+# Builds a full-rect layer holding the four autocast corner brackets, sized/inset in native
+# Canvas units. Shared by the board echo below and the AbilityWidget's capability display —
+# same art at two scales, so the tray widget and its board holder visually rhyme.
+func build_bracket_layer(bracket_size: Vector2, inset: float) -> Control:
+	var layer := Control.new()
+	layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_canvas.add_child(layer)
+	layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var positions := {
+		"left_top":     Vector2(inset, inset),
+		"right_top":    Vector2(NATIVE_SIZE.x - inset - bracket_size.x, inset),
+		"left_bottom":  Vector2(inset, NATIVE_SIZE.y - inset - bracket_size.y),
+		"right_bottom": Vector2(NATIVE_SIZE.x - inset - bracket_size.x,
+				NATIVE_SIZE.y - inset - bracket_size.y),
+	}
+	for corner: String in AUTOCAST_CORNERS:
+		var tr := TextureRect.new()
+		tr.texture = AUTOCAST_CORNERS[corner] as Texture2D
+		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		tr.stretch_mode = TextureRect.STRETCH_SCALE
+		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		layer.add_child(tr)
+		tr.position = positions[corner] as Vector2
+		tr.size = bracket_size
+	return layer
+
+
+# The board-side echo of an ARMED autocast ability: small corner brackets on the fielded
+# holder, so the player can see who is armed without opening the inspect tray. Derivable
+# from card_instance (like _refresh_ability_cue), so it lives in refresh(). armed_autocast()
+# already validates the id against the current ability list — a stale arm just disappears.
+func _refresh_autocast_brackets() -> void:
+	var active := card_instance != null and card_instance.row >= 0 and card_instance.col >= 0 \
+			and card_instance.owner == 0 and card_instance.armed_autocast() != null
+	if not active:
+		if _autocast_layer != null:
+			_autocast_layer.visible = false
+		return
+	if _autocast_layer == null:
+		_autocast_layer = build_bracket_layer(Vector2(48.0, 42.0), 6.0)
+	_autocast_layer.visible = true
+
+
 # A solid, non-pulsing highlight marking "this is the board unit the hand panel is currently
 # showing" (see Hand.set_inspected / Combat._on_inspect_changed). Unlike _refresh_ability_cue,
 # this is externally-driven UI selection state, not a fact derivable from card_instance — so it's
@@ -718,31 +778,42 @@ func _on_long_press() -> void:
 	CardInspector.open(self, card_instance, _show_cost)
 
 
+# The ghost copy of this card a DragGhost preview shows — overridden by AbilityWidget so a
+# tray token ghosts with its own widget frame, not a card frame.
+func make_ghost_view() -> CardUI:
+	return CardUI.create(card_instance, _show_cost)
+
+
 func _get_drag_data(at_position: Vector2) -> Variant:
 	if not draggable or card_instance == null:
 		return null
 	# A real drag won the gesture — cancel any pending long-press inspect.
 	if _hold_timer != null:
 		_hold_timer.stop()
-	# Buildings root in place: a unit with a rook can be dropped from the hand,
-	# but once it's on the board (row >= 0) it can no longer be picked up to move.
-	if card_instance.row >= 0 and card_instance.data.is_building():
+	# The opponent's fielded units are not the player's to pick up.
+	if card_instance.row >= 0 and card_instance.owner == 1:
+		return null
+	# Buildings root in place: a unit with a rook can be dropped from the hand, but once on the
+	# board it can't be picked up to MOVE. With an autocast ability ARMED it drags anyway — the
+	# drag can only cast (no move spot ever accepts it; see CombatBoard/_can_drop_on_player_slot),
+	# and the DragGhost accordingly always presents the ability.
+	if card_instance.row >= 0 and card_instance.data.is_building() \
+			and card_instance.armed_autocast() == null:
 		return null
 	if card_instance.is_spell:
 		spell_drag_started.emit(self)
-	modulate.a = 0.0
-	var preview := CardUI.create(card_instance, _show_cost)
-	preview.custom_minimum_size = custom_minimum_size
-	preview.modulate.a = 0.7
-	var wrapper := Control.new()
-	wrapper.add_child(preview)
-	preview.position = -at_position
-	set_drag_preview(wrapper)
+	elif card_instance.row >= 0:
+		unit_drag_started.emit(self)
+	# The real card stays fully visible in place; the cursor carries a clearly-distinct ghost
+	# copy (context-sensitive when an autocast ability is armed — see DragGhost).
+	set_drag_preview(DragGhost.make(self, at_position))
 	return self
 
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_DRAG_END:
-		modulate.a = 1.0
+		modulate.a = 1.0   # the source is no longer hidden during drags; kept as a safety reset
 		if card_instance != null and card_instance.is_spell:
 			spell_drag_ended.emit(self)
+		elif card_instance != null and card_instance.row >= 0:
+			unit_drag_ended.emit(self)

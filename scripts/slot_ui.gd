@@ -8,6 +8,9 @@ var row: int = -1
 var col: int = -1
 var owner_id: int = -1
 var accept_check: Callable
+# Gate for the AUTOCAST drop gesture — a fielded unit with an armed autocast ability dropped
+# onto this slot's occupant (see CombatBoard). Occupied slots reject unit drops otherwise.
+var autocast_check: Callable   # func(CardUI, SlotUI) -> bool
 
 var _card_ui: CardUI = null
 var _targetable: bool = false
@@ -109,10 +112,20 @@ func _can_drop_data(_at: Vector2, data: Variant) -> bool:
 		# hover time. See SpellCaster._on_spell_drag_started.
 		return _targetable
 	if _card_ui != null:
-		return false
+		# The one unit-onto-occupied-slot gesture: an armed autocast ability fired by dragging
+		# its holder onto a valid target. Everything else stays rejected as before. Either way
+		# the verdict feeds the drag ghost, which presents cast-vs-not-appliable accordingly.
+		var can_cast := autocast_check.is_valid() and bool(autocast_check.call(card_ui, self))
+		DragGhost.report(DragGhost.State.CAST_OK if can_cast else DragGhost.State.CAST_INVALID, self)
+		return can_cast
+	var can_move := true
 	if accept_check.is_valid():
-		return accept_check.call(card_ui, self)
-	return true
+		can_move = bool(accept_check.call(card_ui, self))
+	if can_move:
+		# A valid move spot shows the unit itself on the ghost; an invalid empty slot reports
+		# nothing and lets the ghost fall back to its default presentation.
+		DragGhost.report(DragGhost.State.UNIT, self)
+	return can_move
 
 
 func _drop_data(_at: Vector2, data: Variant) -> void:

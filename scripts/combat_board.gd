@@ -7,6 +7,10 @@ signal unit_placed(inst: CardInstance, card_ui: CardUI, from_hand: bool, cost: i
 signal slot_pressed(slot: SlotUI)
 # Emitted when a spell is drag-dropped onto a slot; spell_caster handles.
 signal spell_dropped(slot: SlotUI, card_ui: CardUI)
+# Emitted when a fielded unit with an armed autocast ability is dropped onto a valid occupied
+# slot (the drop already passed `can_autocast` via SlotUI.autocast_check); combat routes it
+# to SpellCaster.activate_autocast. The dragged unit never moves.
+signal autocast_dropped(slot: SlotUI, card_ui: CardUI)
 
 var player_grid: Array = []   # [row][col] -> CardInstance or null
 var enemy_grid:  Array = []   # [row][col] -> CardInstance or null
@@ -17,6 +21,9 @@ var enemy_slots:  Array = []  # [row][col] -> SlotUI
 var placement_enabled: bool  = false
 var is_hand_card: Callable        # func(CardUI) -> bool
 var get_mana: Callable            # func() -> int
+# Whether dropping this dragged unit onto this slot fires its armed autocast ability —
+# SpellCaster.autocast_drop_ok (armed + payable + eligible occupant), injected like get_mana.
+var can_autocast: Callable        # func(CardInstance, SlotUI) -> bool
 var _default_strategy := TargetingNearest.new()
 
 
@@ -64,6 +71,7 @@ func build_section(parent: BoxContainer, is_player: bool) -> void:
 			if is_player:
 				player_slots[r][c]   = slot
 				slot.accept_check    = _can_drop_on_player_slot
+				slot.autocast_check  = _can_autocast_on_slot
 				var s := slot
 				s.card_dropped.connect(func(cu: CardUI): _on_player_slot_dropped(s, cu))
 				s.pressed.connect(func(): slot_pressed.emit(s))
@@ -83,7 +91,9 @@ func place_kings(player_king_id: String = "king", enemy_king_id: String = "king"
 	var pk := CardInstance.from_data(CardData.get_card(player_king_id))
 	pk.row = back; pk.col = 0; pk.owner = 0
 	player_grid[back][0] = pk
-	player_slots[back][0].set_card(CardUI.create(pk))
+	var pk_ui := CardUI.create(pk)
+	player_slots[back][0].set_card(pk_ui)
+	_wire_unit_drag(pk_ui)
 
 	# The enemy Captain scales with encounter power, like the rest of the deck.
 	var ek := CardInstance.from_data(CardData.scaled(CardData.get_card(enemy_king_id), enemy_power))
@@ -123,6 +133,7 @@ func spawn_player_card(inst: CardInstance, r: int, c: int) -> Array:
 	player_grid[r][c] = inst
 	var ui := CardUI.create(inst)
 	(player_slots[r][c] as SlotUI).set_card(ui)
+	_wire_unit_drag(ui)
 	var results := EffectSystem.trigger(
 		GameEvent.make(&"play", inst), inst,
 		EffectContext.make(inst, player_grid, enemy_grid))
@@ -269,11 +280,26 @@ func set_board_card_filters(enabled: bool) -> void:
 # ── Internal drop handlers ─────────────────────────────────────────────────────
 
 func _can_drop_on_player_slot(card_ui: CardUI, _slot: SlotUI) -> bool:
-	if card_ui.card_instance.is_spell:
+	var inst := card_ui.card_instance
+	if inst.is_spell:
 		return false
 	if is_hand_card.call(card_ui):
-		return card_ui.card_instance.get_attribute("cost") <= get_mana.call()
+		return inst.get_attribute("cost") <= get_mana.call()
+	# Board-to-board MOVE legality (the accept-side twin of CardUI._get_drag_data's gates):
+	# only the player's own fielded, non-building units relocate — a fielded building's drag
+	# exists solely to cast its armed ability, and no move spot ever accepts it.
+	if inst.owner != 0:
+		return false
+	if inst.row >= 0 and inst.data.is_building():
+		return false
 	return true
+
+
+# The occupied-slot gate consulted by SlotUI._can_drop_data — occupied slots reject unit
+# drops except the autocast gesture (see `can_autocast`).
+func _can_autocast_on_slot(card_ui: CardUI, slot: SlotUI) -> bool:
+	return placement_enabled and can_autocast.is_valid() \
+			and bool(can_autocast.call(card_ui.card_instance, slot))
 
 
 func _on_player_slot_dropped(slot: SlotUI, card_ui: CardUI) -> void:
@@ -282,12 +308,42 @@ func _on_player_slot_dropped(slot: SlotUI, card_ui: CardUI) -> void:
 		return
 	if not placement_enabled:
 		return
+	if slot.get_card() != null:
+		# A drop onto an occupied slot only got here through the autocast gate
+		# (SlotUI._can_drop_data → _can_autocast_on_slot): fire the ability, don't place.
+		autocast_dropped.emit(slot, card_ui)
+		return
 	do_place_unit(slot, card_ui)
 
 
 func _on_enemy_slot_dropped(slot: SlotUI, card_ui: CardUI) -> void:
 	if card_ui.card_instance.is_spell:
 		spell_dropped.emit(slot, card_ui)
+
+
+# Every PLAYER board unit joins the autocast drag affordance, whatever path fielded it (hand
+# placement, move, material spawn, the king). Re-entry (a relocating unit) is guarded.
+func _wire_unit_drag(card_ui: CardUI) -> void:
+	if not card_ui.unit_drag_started.is_connected(_on_unit_drag_started):
+		card_ui.unit_drag_started.connect(_on_unit_drag_started)
+		card_ui.unit_drag_ended.connect(_on_unit_drag_ended)
+
+
+# A fielded unit's drag doubles as the autocast gesture. Card mouse filters must drop for the
+# drag's duration regardless of armed state (an occupied slot's occupant CardUI would swallow
+# the drop otherwise — same reason SpellCaster does this for spell drags); the target
+# highlight only lights when something is actually armed.
+func _on_unit_drag_started(card_ui: CardUI) -> void:
+	set_board_card_filters(false)
+	if card_ui.card_instance.armed_autocast() == null:
+		return
+	set_slots_targetable_by_slot(true, func(slot: SlotUI) -> bool:
+		return slot.get_card() != null and _can_autocast_on_slot(card_ui, slot))
+
+
+func _on_unit_drag_ended(_card_ui: CardUI) -> void:
+	set_board_card_filters(true)
+	set_slots_targetable(false)
 
 
 func do_place_unit(slot: SlotUI, card_ui: CardUI) -> void:
@@ -309,6 +365,8 @@ func do_place_unit(slot: SlotUI, card_ui: CardUI) -> void:
 	inst.row = slot.row; inst.col = slot.col; inst.owner = 0
 	player_grid[slot.row][slot.col] = inst
 	slot.set_card(card_ui)
+
+	_wire_unit_drag(card_ui)
 
 	var results: Array = []
 	if from_hand:

@@ -36,6 +36,10 @@ var attack_exhausted: bool = false
 var source_building: CardInstance = null
 # On an ability's tray token, the ability being activated. Null on normal units.
 var ability: AbilityData = null
+# The ARMED autocast ability's id ("" = none) — set by the AbilityWidget toggle. A single field,
+# so "max 1 armed per unit" is structural. Runtime-only (never serialized); survives tapping
+# (the offer just isn't fireable until the round refresh). Read through armed_autocast().
+var autocast_ability: String = ""
 
 var is_spell: bool:
 	get: return data != null and data.card_type == CardData.CardType.SPELL
@@ -94,6 +98,17 @@ func ability_list() -> Array:
 			if ab != null:
 				out.append(ab)
 	return out
+
+
+# The armed autocast ability, resolved against the CURRENT ability list — a stale id (the
+# granting status expired) reads as "nothing armed" without needing an eviction hook.
+func armed_autocast() -> AbilityData:
+	if autocast_ability.is_empty():
+		return null
+	for ab: AbilityData in ability_list():
+		if ab.id == autocast_ability:
+			return ab
+	return null
 
 
 # Whether at least one of this unit's abilities is currently offerable — a tap-costed ability of

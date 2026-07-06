@@ -4,6 +4,7 @@
 	"display_name": "Castling",
 	"description": "A defensive maneuver. Grants one unit without a Barrier a Barrier that blocks the next damaging attack.",
 	"cost": { "mana": 1, "tap": true },
+	"autocast": true,
 	"effects": [
 	  {
 		"trigger": "on_play", "targeting_policy": "manual",
@@ -20,6 +21,7 @@
 	"display_name": "Heal",
 	"description": "Restores 2 HP to a unit of your choice.",
 	"cost": { "mana": 1, "tap": true },
+	"autocast": true,
 	"effects": [
 	  { "trigger": "on_play", "targeting_policy": "manual", "attribute": "health", "amount": 2 }
 	]

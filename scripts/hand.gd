@@ -16,6 +16,10 @@ signal token_hovered(building: CardInstance, hovering: bool)
 # orchestrator can mirror it as a board highlight — see Combat._on_inspect_changed.
 signal inspect_changed(inst: CardInstance)
 
+# Emitted when an ability widget's autocast toggle changes a holder's armed state, so the
+# orchestrator can refresh that unit's board card (the armed-brackets echo).
+signal autocast_changed(holder: CardInstance)
+
 # Wires a spell CardUI for drag-casting; injected by combat (SpellCaster.wire_spell_card).
 var wire_spell_card: Callable
 # Card selection is only honoured while the orchestrator has placement input enabled
@@ -274,13 +278,14 @@ func _rebuild_inspect_view() -> void:
 		tok.col = -1
 		tok.source_building = inst
 		tok.ability = ab
-		var ui := CardUI.create(tok, true)
+		var ui := AbilityWidget.create_for(tok)
 		_gen_cards.append(ui)
 		_gen_box.add_child(ui)   # entering the tree runs _ready, so set_generated is safe after
 		ui.set_generated()
 		if interactive:
 			if wire_spell_card.is_valid():
 				wire_spell_card.call(ui)
+			ui.autocast_toggled.connect(_on_autocast_toggled)
 			ui.mouse_entered.connect(func(): token_hovered.emit(inst, true))
 			ui.mouse_exited.connect(func():  token_hovered.emit(inst, false))
 		else:
@@ -288,6 +293,15 @@ func _rebuild_inspect_view() -> void:
 	_hand_box.visible = false
 	_gen_box.visible = true
 	_desc_panel.visible = true
+
+
+# Arming one ability implicitly disarms the holder's other one (single autocast_ability
+# field) — refresh EVERY tray widget so the disarmed sibling's brackets dim too, then let
+# the orchestrator update the holder's board card.
+func _on_autocast_toggled(holder: CardInstance) -> void:
+	for ui: CardUI in _gen_cards:
+		ui.refresh()
+	autocast_changed.emit(holder)
 
 
 # Removes remaining tray offers a holder can no longer pay for because it just tapped —

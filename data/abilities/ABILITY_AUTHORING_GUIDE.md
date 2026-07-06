@@ -19,6 +19,7 @@ not cards — they live in no pool, deck, or collection.
 | `description` | string | No | Tooltip text |
 | `cost` | object | No | `{ "mana": int, "tap": bool }`. `tap` (default **true**) spends the holder's action for the round (it neither attacks nor taps again until the round refresh); a tapped holder's tap-costed abilities are not offered at all |
 | `material` | string | No | For material-delivery abilities: the composition key delivered (read by the `deliver_material` hook) |
+| `autocast` | bool | No | Autocast-capable (default false). The widget shows corner brackets; right-click / long-press ARMS it (max 1 armed per unit). While armed, dragging the holder unit onto a valid target fires the ability on it, paying the normal cost — the unit does not move. Only meaningful on movable holders with manually-targeted effects |
 | `effects` | array | No | The ordinary effect schema — triggers are ignored (`on_play` by convention); targeting policies, conditions and payloads work exactly as on cards |
 
 ## Presentation

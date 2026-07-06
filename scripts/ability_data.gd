@@ -24,6 +24,10 @@ var display_name: String
 var description: String = ""
 var mana: int = 0
 var tap: bool = true
+# Autocast-capable: the widget shows corner brackets and the player can ARM it (right-click /
+# long-press). While armed, dragging the holder onto a valid target fires the ability on it.
+# Armed state lives on the holder (CardInstance.autocast_ability), not here.
+var autocast: bool = false
 # For material-delivery abilities: the composition key delivered (see EffectHooks.deliver_material).
 var material: String = ""
 var effects: Array = []   # Array[Effect] — the ordinary schema (targeting, conditions, payloads)
@@ -71,6 +75,7 @@ static func from_dict(d: Dictionary) -> AbilityData:
 	var cost: Dictionary = d.get("cost", {})
 	ab.mana         = int(cost.get("mana", 0))
 	ab.tap          = bool(cost.get("tap", true))
+	ab.autocast     = bool(d.get("autocast", false))
 	ab.material     = str(d.get("material", ""))
 	for e_data: Dictionary in d.get("effects", []):
 		var eff := Effect.from_dict(e_data)

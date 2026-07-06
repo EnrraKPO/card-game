@@ -5,7 +5,17 @@ signal card_returned(card_ui: CardUI)
 
 
 func _can_drop_data(_at: Vector2, data: Variant) -> bool:
-	return data is CardUI and not (data as CardUI).card_instance.data.is_king
+	if not (data is CardUI):
+		return false
+	var inst := (data as CardUI).card_instance
+	if inst.data.is_king:
+		return false
+	# Buildings are rooted once fielded — an armed building's drag exists only to cast its
+	# ability, never to come back to hand.
+	if inst.row >= 0 and inst.data.is_building():
+		return false
+	DragGhost.report(DragGhost.State.UNIT, self)   # returning to hand is a move — ghost shows the unit
+	return true
 
 
 func _drop_data(_at: Vector2, data: Variant) -> void:

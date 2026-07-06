@@ -95,12 +95,16 @@ func _ready() -> void:
 	_hand.wire_spell_card = _spell_caster.wire_spell_card
 	_hand.token_hovered.connect(_highlight_building)
 	_hand.inspect_changed.connect(_on_inspect_changed)
+	_hand.autocast_changed.connect(_on_autocast_changed)
 
+	_board.can_autocast = _spell_caster.autocast_drop_ok
 	_board.unit_placed.connect(_on_board_unit_placed)
 	_board.slot_pressed.connect(_on_board_slot_pressed)
+	_board.autocast_dropped.connect(_on_autocast_dropped)
 	_spell_caster.targeting_started.connect(_on_targeting_started)
 	_spell_caster.targeting_ended.connect(_on_targeting_ended)
 	_spell_caster.spell_consumed.connect(_on_spell_consumed)
+	_spell_caster.ability_autocast.connect(_on_ability_autocast)
 
 	_hand.populate_draw_pile(GameData.current_run.deck)
 	_init_enemy_deck()
@@ -729,14 +733,44 @@ func _consume_generated_token(card_ui: CardUI) -> void:
 	var holder: CardInstance = card_ui.card_instance.source_building
 	var ab: AbilityData = card_ui.card_instance.ability
 	if holder != null and (ab == null or ab.tap):
-		holder.attack_exhausted = true
-		_highlight_building(holder, false)
-		var holder_ui := _board.get_card_ui(holder)
-		if holder_ui != null:
-			holder_ui.set_exhausted(true)
-		_hand.prune_tapped(holder)
+		_pay_tap(holder)
 	card_ui.clear_generated()
 	_hand.clear_inspected()
+
+
+# Spends the holder's action for the round — the tap half of an ability's cost, shared by
+# the tray-token path above and the autocast path (_on_ability_autocast).
+func _pay_tap(holder: CardInstance) -> void:
+	holder.attack_exhausted = true
+	_highlight_building(holder, false)
+	var holder_ui := _board.get_card_ui(holder)
+	if holder_ui != null:
+		holder_ui.set_exhausted(true)
+	_hand.prune_tapped(holder)
+
+
+# ── Autocast (armed ability fired by dragging the holder onto a target) ─────────
+
+# The drop passed the eligibility gate (SlotUI.autocast_check → SpellCaster.autocast_drop_ok);
+# hand it to the caster, which re-validates and emits ability_autocast for payment below.
+func _on_autocast_dropped(slot: SlotUI, card_ui: CardUI) -> void:
+	await _spell_caster.activate_autocast(card_ui.card_instance, slot)
+
+
+# The autocast twin of _on_spell_consumed + _consume_generated_token: mana, then the tap.
+func _on_ability_autocast(holder: CardInstance, ab: AbilityData) -> void:
+	_mana -= ab.mana
+	_refresh_mana()
+	if ab.tap:
+		_pay_tap(holder)
+
+
+# An ability widget toggled a holder's armed state: refresh that unit's board card so the
+# armed-brackets echo (CardUI._refresh_autocast_brackets) tracks it.
+func _on_autocast_changed(holder: CardInstance) -> void:
+	var ui := _board.get_card_ui(holder)
+	if ui != null:
+		ui.refresh()
 
 
 func _on_board_slot_pressed(slot: SlotUI) -> void:
