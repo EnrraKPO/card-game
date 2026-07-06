@@ -1,0 +1,98 @@
+{
+  "prompt": {
+    "10": {
+      "class_type": "CheckpointLoaderSimple",
+      "inputs": {
+        "ckpt_name": "ssdd_illustrious\\novaCartoonXL_v60.safetensors"
+      }
+    },
+    "11": {
+      "class_type": "CLIPSetLastLayer",
+      "inputs": {
+        "clip": [
+          "10",
+          1
+        ],
+        "stop_at_clip_layer": -2
+      }
+    },
+    "20": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "text": "masterpiece, best quality, high quality, <booru tags here>",
+        "clip": [
+          "11",
+          0
+        ]
+      }
+    },
+    "21": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "text": "worst quality, low quality, lowres, bad anatomy, bad hands, missing fingers, extra digits, fewer digits, jpeg artifacts, signature, watermark, username, text, blurry, deformed",
+        "clip": [
+          "11",
+          0
+        ]
+      }
+    },
+    "34": {
+      "class_type": "EmptyLatentImage",
+      "inputs": {
+        "width": 832,
+        "height": 1216,
+        "batch_size": 1
+      }
+    },
+    "40": {
+      "class_type": "KSampler",
+      "inputs": {
+        "model": [
+          "10",
+          0
+        ],
+        "positive": [
+          "20",
+          0
+        ],
+        "negative": [
+          "21",
+          0
+        ],
+        "latent_image": [
+          "34",
+          0
+        ],
+        "seed": -1,
+        "steps": 30,
+        "cfg": 5,
+        "sampler_name": "euler_ancestral",
+        "scheduler": "normal",
+        "denoise": 1
+      }
+    },
+    "50": {
+      "class_type": "VAEDecode",
+      "inputs": {
+        "samples": [
+          "40",
+          0
+        ],
+        "vae": [
+          "10",
+          2
+        ]
+      }
+    },
+    "60": {
+      "class_type": "SaveImage",
+      "inputs": {
+        "images": [
+          "50",
+          0
+        ],
+        "filename_prefix": "cardgame"
+      }
+    }
+  }
+}

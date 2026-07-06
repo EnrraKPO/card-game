@@ -61,6 +61,10 @@ function validId(id) { return typeof id === 'string' && /^[a-z0-9_]+$/.test(id);
 ensureDir(WORKSPACE);
 for (const t of Object.keys(TYPES)) ensureDir(path.join(WORKSPACE, t));
 ensureDir(path.join(WORKSPACE, 'art'));
+ensureDir(path.join(WORKSPACE, 'refs'));   // user-uploaded external reference images
+
+// Uploaded reference filenames pass through URLs and the ComfyUI input folder — keep them tame.
+function safeRefName(name) { return String(name || 'reference.png').replace(/[^a-zA-Z0-9._-]/g, '_'); }
 
 // ── settings ─────────────────────────────────────────────────────────────────
 const SETTINGS_PATH = path.join(WORKSPACE, 'settings.json');
@@ -69,6 +73,7 @@ function getSettings() {
     comfyUrl: 'http://127.0.0.1:8187', artStyle: '', stylePresets: {},
     turboLora: 'Flux_2-Turbo-LoRA_comfyui.safetensors',  // the user's Flux 2 turbo LoRA
     turboSteps: 8, turboStrength: 1.0,
+    ollamaUrl: 'http://127.0.0.1:11434', llmModel: 'gemma4:31b',   // local LLM for art prompts
   }, readJson(SETTINGS_PATH, {}));
 }
 
@@ -99,20 +104,27 @@ function writeGameJson(abs, data) {
 // All entries of a type in the game's own files (tool-installed files excluded — those are
 // workspace-managed). nodeweights files have no per-entry ids: each file is one pseudo-entry
 // { id: <filename>, bands: [...] }.
-function listGameEntries(type) {
+// `includeTool` also lists entries from tool-deployed files (data/…/tool_<type>_<id>.json),
+// tagged with their owning workspace item — so installed content is BROWSABLE among the
+// game's cards while remaining workspace-managed (in-place editing still refuses them:
+// findGameEntry keeps the default excludeTool view).
+function listGameEntries(type, includeTool = false) {
   const dir = path.join(GAME_ROOT, TYPES[type].dataDir);
   const out = [];
   if (!fs.existsSync(dir)) return out;
   for (const f of fs.readdirSync(dir)) {
-    if (!f.endsWith('.json') || f.startsWith('tool_')) continue;
+    if (!f.endsWith('.json')) continue;
+    const toolMatch = f.match(/^tool_([a-z]+)_([a-z0-9_]+)\.json$/);
+    if (toolMatch && !includeTool) continue;
+    const owner = toolMatch ? { type: toolMatch[1], id: toolMatch[2] } : null;
     const raw = readJson(path.join(dir, f), null);
     if (raw == null) continue;
     if (type === 'nodeweights') {
-      if (Array.isArray(raw)) out.push({ id: f.slice(0, -5), file: f, data: { id: f.slice(0, -5), bands: raw } });
+      if (Array.isArray(raw)) out.push({ id: f.slice(0, -5), file: f, data: { id: f.slice(0, -5), bands: raw }, tool: owner });
       continue;
     }
     const entries = Array.isArray(raw) ? raw : [raw];
-    for (const e of entries) if (e && e.id) out.push({ id: e.id, file: f, data: e });
+    for (const e of entries) if (e && e.id) out.push({ id: e.id, file: f, data: e, tool: owner });
   }
   return out;
 }
@@ -153,6 +165,72 @@ function syncSiblingHashes(type, file, edits, abs) {
   const written = fileHash(abs);
   for (const k of Object.keys(edits))
     if (k.startsWith(type + '/') && edits[k].file === file) edits[k].fileHash = written;
+}
+
+// ── entry-centric authoring on REAL game files (the final model) ─────────────────────
+// Save an entry INTO a game data file: replace it where it already lives, append it to the
+// chosen file otherwise (creating the file if needed). Every change is snapshotted in the
+// edits manifest so Revert works: replaced entries restore their original, added entries
+// get REMOVED again. "Uninstalling" content is not a verb — it's the `enabled: false`
+// property, which the game's loaders now respect.
+function saveGameEntry(type, file, data) {
+  if (!/^[a-z0-9_]+\.json$/.test(file)) throw new Error('file must be a plain lowercase name ending in .json');
+  const err = validateItem(type, data);
+  if (err) throw new Error('Validation failed: ' + err);
+  const existing = findGameEntry(type, data.id);
+  const edits = getEdits();
+  const key = type + '/' + data.id;
+  if (existing) {
+    // replace in the file it already lives in (the chosen file is ignored for existing ids —
+    // an entry has ONE home; moving between files is a delete + re-add)
+    const abs = path.join(GAME_ROOT, TYPES[type].dataDir, existing.file);
+    const rawBackup = editBackupFile(type, existing.file);
+    if (!fs.existsSync(rawBackup)) { ensureDir(path.dirname(rawBackup)); fs.copyFileSync(abs, rawBackup); }
+    if (!edits[key]) edits[key] = { file: existing.file, original: existing.data, at: new Date().toISOString() };
+    replaceGameEntry(type, data.id, existing.file, data);
+    syncSiblingHashes(type, existing.file, edits, abs);
+    setEdits(edits);
+    return { file: TYPES[type].dataDir + '/' + existing.file, action: 'updated' };
+  }
+  const abs = path.join(GAME_ROOT, TYPES[type].dataDir, file);
+  let raw = [];
+  if (fs.existsSync(abs)) {
+    const rawBackup = editBackupFile(type, file);
+    if (!fs.existsSync(rawBackup)) { ensureDir(path.dirname(rawBackup)); fs.copyFileSync(abs, rawBackup); }
+    raw = readJson(abs, null);
+    if (raw == null) throw new Error(`cannot parse ${file}`);
+    if (!Array.isArray(raw)) raw = [raw];   // single-object files grow into arrays
+  } else {
+    ensureDir(path.dirname(abs));
+  }
+  raw.push(stripMeta(data));
+  writeGameJson(abs, raw);
+  if (!edits[key]) edits[key] = { file, original: null, added: true, at: new Date().toISOString() };
+  syncSiblingHashes(type, file, edits, abs);
+  setEdits(edits);
+  // pending workspace art (generated before the entry was saved) deploys now
+  const art = deployArtIfPossible(type, data.id);
+  return { file: TYPES[type].dataDir + '/' + file, action: 'added', art };
+}
+
+// Remove an entry from its file (snapshot kept: Revert re-adds it). An emptied file is
+// deleted outright.
+function deleteGameEntry(type, id) {
+  const existing = findGameEntry(type, id);
+  if (!existing) throw new Error(`no game ${type} with id "${id}"`);
+  const abs = path.join(GAME_ROOT, TYPES[type].dataDir, existing.file);
+  const rawBackup = editBackupFile(type, existing.file);
+  if (!fs.existsSync(rawBackup)) { ensureDir(path.dirname(rawBackup)); fs.copyFileSync(abs, rawBackup); }
+  const edits = getEdits();
+  const key = type + '/' + id;
+  let raw = readJson(abs, null);
+  if (!Array.isArray(raw)) raw = [raw];
+  const remaining = raw.filter(e => !(e && e.id === id));
+  if (remaining.length) { writeGameJson(abs, remaining); syncSiblingHashes(type, existing.file, edits, abs); }
+  else fs.unlinkSync(abs);
+  edits[key] = { file: existing.file, original: existing.data, deleted: true, at: new Date().toISOString() };
+  setEdits(edits);
+  return { file: TYPES[type].dataDir + '/' + existing.file, removedFile: !remaining.length };
 }
 
 function applyGameEdit(type, id, data, applyArt) {
@@ -213,6 +291,23 @@ function restoreGameEdit(type, id) {
   if (untouched && !others && fs.existsSync(rawBackup)) {
     fs.copyFileSync(rawBackup, abs);
     usedBackup = true;
+  } else if (entry.added) {
+    // reverting an ADDED entry = remove it again
+    let raw = readJson(abs, null);
+    if (raw != null) {
+      if (!Array.isArray(raw)) raw = [raw];
+      const remaining = raw.filter(e => !(e && e.id === id));
+      if (remaining.length) { writeGameJson(abs, remaining); if (others) syncSiblingHashes(type, entry.file, edits, abs); }
+      else fs.unlinkSync(abs);
+    }
+  } else if (entry.deleted) {
+    // reverting a DELETED entry = put it back
+    let raw = fs.existsSync(abs) ? readJson(abs, null) : [];
+    if (raw == null) raw = [];
+    if (!Array.isArray(raw)) raw = [raw];
+    raw.push(entry.original);
+    writeGameJson(abs, raw);
+    if (others) syncSiblingHashes(type, entry.file, edits, abs);
   } else {
     replaceGameEntry(type, id, entry.file, entry.original);
     // Keep every remaining sibling's hash in sync, exactly like applyGameEdit does — otherwise
@@ -321,6 +416,14 @@ function stripMeta(data) {
 
 // ── validation (server-side gate before install) ─────────────────────────────
 const TRIGGERS = ['on_play','on_death','on_attack','on_damage_taken','permanent','on_turn_start','on_turn_end','on_activate'];
+// The native trigger-resolver schema (see scripts/triggers/trigger_resolver.gd).
+const SIMPLE_EVENTS = ['play','death','activate','turn_start','turn_end'];
+const DUAL_EVENTS = ['attack','struck'];
+const RELATIONS = ['self','ally','enemy'];
+// The native targeting schema (see scripts/triggers/target_resolver.gd).
+const TARGET_KINDS = ['all','auto','manual','manual_slot','participant'];
+const CRITERIA = ['nearest','random'];
+const PARTICIPANTS = ['holder','origin','destination'];
 const POLICIES = ['self','single_nearest','single_random','all_enemies','all_allies','all','manual','attack_target','subject','attacker','manual_slot'];
 const SUBJECTS = ['self','ally','enemy','any'];
 const COMPARATORS = ['gt','gte','lt','lte','eq','neq'];
@@ -333,6 +436,63 @@ const COND_ATTRS = ['health','attack','speed','cost','piece_count','element_coun
 const ELEMENTS = ['fire','water','air','earth','darkness','light'];
 const PIECES = ['pawn','knight','bishop','rook','queen','king'];
 
+function validateConditionList(list, where) {
+  for (let i = 0; i < (list || []).length; i++) {
+    const c = list[i];
+    if (c.status) continue;
+    if (c.relation) {
+      if (!RELATIONS.includes(c.relation)) return `${where} condition ${i + 1}: bad relation "${c.relation}"`;
+      continue;
+    }
+    if (c.composition) {
+      const compList = Array.isArray(c.composition) ? c.composition : [c.composition];
+      for (const cid of compList)
+        if (!ELEMENTS.includes(cid) && !PIECES.includes(cid)) return `${where} condition ${i + 1}: "${cid}" is not an element or chess piece`;
+      continue;
+    }
+    if (!COND_ATTRS.includes(c.attribute)) return `${where} condition ${i + 1}: bad attribute "${c.attribute}"`;
+    if (!COMPARATORS.includes(c.comparator)) return `${where} condition ${i + 1}: bad comparator`;
+  }
+  return null;
+}
+
+// The trigger may be a legacy string or a native resolver object.
+function validateTrigger(t, where) {
+  if (t == null) return null;                       // omitted = legacy default on_play
+  if (typeof t === 'string') {
+    if (!TRIGGERS.includes(t)) return `${where}: bad trigger "${t}"`;
+    return null;
+  }
+  if (typeof t !== 'object') return `${where}: trigger must be a string or an object`;
+  const kind = String(t.kind || 'event');
+  if (kind === 'transient') return null;
+  if (kind === 'event') {
+    if (!SIMPLE_EVENTS.includes(String(t.event))) return `${where}: "${t.event}" is not a simple event (${SIMPLE_EVENTS.join('/')})`;
+    return validateConditionList(t.conditions, `${where} trigger`);
+  }
+  if (kind === 'dual_event') {
+    if (!DUAL_EVENTS.includes(String(t.event))) return `${where}: "${t.event}" is not a dual event (${DUAL_EVENTS.join('/')})`;
+    return validateConditionList(t.origin_conditions, `${where} trigger origin`)
+        || validateConditionList(t.destination_conditions, `${where} trigger destination`);
+  }
+  return `${where}: unknown trigger kind "${kind}"`;
+}
+
+// The targets may be a legacy policy string ("targeting_policy") or a native resolver object.
+function validateTargets(t, where) {
+  if (t == null) return null;
+  if (typeof t !== 'object') return `${where}: targets must be an object`;
+  const kind = String(t.kind || 'all');
+  if (!TARGET_KINDS.includes(kind)) return `${where}: unknown targets kind "${kind}"`;
+  if (kind === 'auto') {
+    if (!CRITERIA.includes(String(t.criterion || 'nearest'))) return `${where}: bad criterion "${t.criterion}"`;
+    if (t.count != null && (!Number.isInteger(t.count) || t.count < 1)) return `${where}: count must be a positive integer`;
+  }
+  if (kind === 'participant' && !PARTICIPANTS.includes(String(t.participant || 'holder')))
+    return `${where}: bad participant "${t.participant}"`;
+  return validateConditionList(t.conditions, `${where} targets`);
+}
+
 function validateEffect(e, where) {
   if (!e || typeof e !== 'object') return `${where}: effect must be an object`;
   const kind = e.kind || (e.key ? 'modifier' : e.intercept ? 'interceptor' : e.custom ? 'custom' : 'triggered');
@@ -344,29 +504,19 @@ function validateEffect(e, where) {
     if (e.role && !['source','target'].includes(e.role)) return `${where}: bad role`;
   } else if (kind === 'custom') {
     if (!CUSTOM_HOOKS.includes(e.custom)) return `${where}: unknown custom hook "${e.custom}"`;
-    if (e.trigger && !TRIGGERS.includes(e.trigger)) return `${where}: bad trigger "${e.trigger}"`;
+    const terr = validateTrigger(e.trigger, where) || validateTargets(e.targets, where);
+    if (terr) return terr;
     if (e.targeting_policy && !POLICIES.includes(e.targeting_policy)) return `${where}: bad targeting_policy`;
   } else {
-    if (e.trigger && !TRIGGERS.includes(e.trigger)) return `${where}: bad trigger "${e.trigger}"`;
+    const terr = validateTrigger(e.trigger, where) || validateTargets(e.targets, where);
+    if (terr) return terr;
     if (e.targeting_policy && !POLICIES.includes(e.targeting_policy)) return `${where}: bad targeting_policy "${e.targeting_policy}"`;
     if (e.subject && !SUBJECTS.includes(e.subject)) return `${where}: bad subject filter`;
     if (e.attribute && !EFFECT_ATTRS.includes(e.attribute)) return `${where}: bad attribute "${e.attribute}"`;
     const hasPayload = e.attribute || (e.status && e.status.id);
     if (!hasPayload) return `${where}: effect does nothing — set an attribute change or a status to apply`;
   }
-  for (let i = 0; i < (e.conditions || []).length; i++) {
-    const c = e.conditions[i];
-    if (c.status) continue;
-    if (c.composition) {
-      const list = Array.isArray(c.composition) ? c.composition : [c.composition];
-      for (const cid of list)
-        if (!ELEMENTS.includes(cid) && !PIECES.includes(cid)) return `${where} condition ${i + 1}: "${cid}" is not an element or chess piece`;
-      continue;
-    }
-    if (!COND_ATTRS.includes(c.attribute)) return `${where} condition ${i + 1}: bad attribute "${c.attribute}"`;
-    if (!COMPARATORS.includes(c.comparator)) return `${where} condition ${i + 1}: bad comparator`;
-  }
-  return null;
+  return validateConditionList(e.conditions, where);
 }
 
 function validateEffects(list, where) {
@@ -456,7 +606,8 @@ function validateItem(type, d) {
   return 'unknown type';
 }
 
-// nodeweights deploys as the raw band array (the game format), not the {bands} wrapper.
+// nodeweights deploys as the raw band array, cardsets as the raw multi-card array (the
+// game formats), not their editor wrappers.
 function deployPayload(type, data) {
   if (type === 'nodeweights') return stripMeta(data.bands);
   return stripMeta(data);
@@ -503,6 +654,12 @@ function gameVocab() {
     elements: ELEMENTS,
     pieces: PIECES,
     triggers: TRIGGERS,
+    simpleEvents: SIMPLE_EVENTS,
+    dualEvents: DUAL_EVENTS,
+    relations: RELATIONS,
+    targetKinds: TARGET_KINDS,
+    criteria: CRITERIA,
+    participants: PARTICIPANTS,
     policies: POLICIES,
     subjects: SUBJECTS,
     comparators: COMPARATORS,
@@ -520,6 +677,152 @@ let jobSeq = 1;
 function comfyFetch(urlPath, opts) {
   const base = getSettings().comfyUrl.replace(/\/$/, '');
   return fetch(base + urlPath, opts);
+}
+
+// ── model registry ───────────────────────────────────────────────────────────
+// Each entry = one generation architecture on the user's ComfyUI server, with its own
+// graph builder and defaults. Graph shapes are taken from ComfyUI 0.27's bundled local
+// workflow templates (image_krea2_turbo_t2i / image_ideogram4_t2i) and the repo's proven
+// Illustrious pipeline (tools/comfy_sdxl_gen.py) — not guessed.
+const MODELS = {
+  flux2: {
+    label: 'Flux 2 dev', steps: 20, guidance: 4.0,
+    supportsRef: true, supportsTurbo: true, supportsNegative: false,
+  },
+  krea2: {
+    label: 'Krea 2 Turbo', steps: 8, guidance: 1.0,
+    supportsRef: true, supportsTurbo: false, supportsNegative: false,
+    // Two distinct ways to steer Krea2 off a reference image — img2img is guaranteed to work
+    // (plain latent noising, any architecture); reference is experimental (relies on Krea2
+    // sharing Qwen-Image's CLIP/VAE with the Kontext-style ReferenceLatent conditioning trick).
+    refModes: [
+      { value: 'img2img', label: 'Img2img (denoise controls how much of the reference survives)' },
+      { value: 'reference', label: 'Reference latent (experimental — may not transfer to this checkpoint)' },
+    ],
+  },
+  ideogram4: {
+    label: 'Ideogram 4', steps: 20, guidance: 7.0,
+    supportsRef: false, supportsTurbo: false, supportsNegative: false,
+  },
+  novacartoon: {
+    label: 'NovaCartoonXL (Illustrious)', steps: 30, guidance: 5.0,
+    supportsRef: false, supportsTurbo: false, supportsNegative: true,
+  },
+};
+
+// The shared save tail: plain SaveImage, or background removal (same node both ways).
+function saveNodes(imageRef, prefix, rembg) {
+  return rembg
+    ? { 60: { class_type: 'easy imageRemBg',
+              inputs: { images: imageRef, rem_mode: 'Inspyrenet', image_output: 'Save',
+                        save_prefix: prefix, torchscript_jit: false, add_background: 'none',
+                        refine_foreground: true } } }
+    : { 60: { class_type: 'SaveImage', inputs: { images: imageRef, filename_prefix: prefix } } };
+}
+
+// Krea 2 Turbo: simple KSampler graph — qwen3vl text encoder (type krea2), qwen_image VAE,
+// zeroed-out negative, cfg ~1 at 8 steps (euler/simple).
+//
+// Two optional reference paths, picked by refMode when refName is set:
+//   'img2img'    — LoadImage → ImageScale → VAEEncode feeds the *starting latent* instead of
+//                  EmptyLatentImage, with denoise < 1 controlling how much of it survives.
+//                  Architecture-agnostic, guaranteed to work on any checkpoint.
+//   'reference'  — the Flux 2 Kontext trick (LoadImage → ImageScale → VAEEncode →
+//                  ReferenceLatent onto the positive conditioning). Experimental: it rides
+//                  Krea2 sharing Qwen-Image's CLIP/VAE, not a confirmed-supported path.
+function buildKrea2Workflow(prompt, w, h, steps, cfg, seed, prefix, rembg, refName, refMode, denoise) {
+  const useImg2Img = !!refName && refMode === 'img2img';
+  const useReference = !!refName && refMode === 'reference';
+
+  const latentNodes = useImg2Img ? {
+    70: { class_type: 'LoadImage', inputs: { image: refName } },
+    71: { class_type: 'ImageScale', inputs: { image: ['70', 0], width: w, height: h, upscale_method: 'lanczos', crop: 'disabled' } },
+    34: { class_type: 'VAEEncode', inputs: { pixels: ['71', 0], vae: ['12', 0] } },
+  } : {
+    34: { class_type: 'EmptyLatentImage', inputs: { width: w, height: h, batch_size: 1 } },
+  };
+
+  const referenceNodes = useReference ? {
+    80: { class_type: 'LoadImage', inputs: { image: refName } },
+    81: { class_type: 'ImageScale', inputs: { image: ['80', 0], width: w, height: h, upscale_method: 'lanczos', crop: 'disabled' } },
+    82: { class_type: 'VAEEncode', inputs: { pixels: ['81', 0], vae: ['12', 0] } },
+    83: { class_type: 'ReferenceLatent', inputs: { conditioning: ['20', 0], latent: ['82', 0] } },
+  } : {};
+  const positive = useReference ? ['83', 0] : ['20', 0];
+
+  return Object.assign(saveNodes(['50', 0], prefix, rembg), latentNodes, referenceNodes, {
+    10: { class_type: 'UNETLoader', inputs: { unet_name: 'krea2_turbo_bf16.safetensors', weight_dtype: 'default' } },
+    11: { class_type: 'CLIPLoader', inputs: { clip_name: 'qwen3vl_4b_bf16.safetensors', type: 'krea2' } },
+    12: { class_type: 'VAELoader', inputs: { vae_name: 'qwen_image_vae.safetensors' } },
+    20: { class_type: 'CLIPTextEncode', inputs: { text: prompt, clip: ['11', 0] } },
+    21: { class_type: 'ConditioningZeroOut', inputs: { conditioning: ['20', 0] } },
+    40: { class_type: 'KSampler',
+          inputs: { model: ['10', 0], positive, negative: ['21', 0], latent_image: ['34', 0],
+                    seed, steps, cfg, sampler_name: 'euler', scheduler: 'simple',
+                    denoise: useImg2Img ? (denoise == null ? 0.6 : denoise) : 1.0 } },
+    50: { class_type: 'VAEDecode', inputs: { samples: ['40', 0], vae: ['12', 0] } },
+  });
+}
+
+// Ideogram 4: asymmetric CFG — a conditional and a dedicated unconditional diffusion model
+// feed a DualModelGuider (cfg on `guidance`), the conditional side wrapped in a CFGOverride
+// that drops cfg to 3 for the last 30% of the schedule; Ideogram4Scheduler Default preset
+// (mu 0.0, std 1.75); flux2 VAE.
+function buildIdeogram4Workflow(prompt, w, h, steps, cfg, seed, prefix, rembg) {
+  return Object.assign(saveNodes(['50', 0], prefix, rembg), {
+    10: { class_type: 'UNETLoader', inputs: { unet_name: 'ideogram4_fp8_scaled.safetensors', weight_dtype: 'default' } },
+    13: { class_type: 'UNETLoader', inputs: { unet_name: 'ideogram4_unconditional_fp8_scaled.safetensors', weight_dtype: 'default' } },
+    11: { class_type: 'CLIPLoader', inputs: { clip_name: 'qwen3vl_8b_fp8_scaled.safetensors', type: 'ideogram4' } },
+    12: { class_type: 'VAELoader', inputs: { vae_name: 'flux2-vae.safetensors' } },
+    20: { class_type: 'CLIPTextEncode', inputs: { text: prompt, clip: ['11', 0] } },
+    21: { class_type: 'ConditioningZeroOut', inputs: { conditioning: ['20', 0] } },
+    22: { class_type: 'CFGOverride', inputs: { model: ['10', 0], cfg: 3.0, start_percent: 0.7, end_percent: 1.0 } },
+    30: { class_type: 'DualModelGuider',
+          inputs: { model: ['22', 0], positive: ['20', 0], cfg,
+                    model_negative: ['13', 0], negative: ['21', 0] } },
+    31: { class_type: 'KSamplerSelect', inputs: { sampler_name: 'euler' } },
+    32: { class_type: 'Ideogram4Scheduler', inputs: { steps, width: w, height: h, mu: 0.0, std: 1.75 } },
+    33: { class_type: 'RandomNoise', inputs: { noise_seed: seed } },
+    34: { class_type: 'EmptyFlux2LatentImage', inputs: { width: w, height: h, batch_size: 1 } },
+    40: { class_type: 'SamplerCustomAdvanced',
+          inputs: { noise: ['33', 0], guider: ['30', 0], sampler: ['31', 0], sigmas: ['32', 0],
+                    latent_image: ['34', 0] } },
+    50: { class_type: 'VAEDecode', inputs: { samples: ['40', 0], vae: ['12', 0] } },
+  });
+}
+
+// Booru-style SDXL quality enhancers (the repo's proven Illustrious convention —
+// see tools/comfy_sdxl_gen.py).
+const SDXL_POS_PREFIX = 'masterpiece, best quality, high quality, ';
+const SDXL_NEG_DEFAULT = 'worst quality, low quality, lowres, bad anatomy, bad hands, ' +
+  'missing fingers, extra digits, fewer digits, jpeg artifacts, ' +
+  'signature, watermark, username, text, blurry, deformed';
+const NOVACARTOON_CKPT = 'ssdd_illustrious\\novaCartoonXL_v60.safetensors';
+
+// SDXL trains on ~1MP buckets — map the per-type canvases onto the nearest native size
+// by aspect so an Illustrious render never runs at Flux resolutions.
+function sdxlSize(w, h) {
+  const aspect = w / h;
+  if (aspect > 1.15) return [1216, 832];
+  if (aspect < 0.87) return [832, 1216];
+  return [1024, 1024];
+}
+
+// NovaCartoonXL (Illustrious): classic SDXL checkpoint graph — clip-skip 2, quality
+// prefix, real negative prompt, euler_ancestral/normal, baked VAE.
+function buildNovaCartoonWorkflow(prompt, negative, w, h, steps, cfg, seed, prefix, rembg) {
+  const [sw, sh] = sdxlSize(w, h);
+  return Object.assign(saveNodes(['50', 0], prefix, rembg), {
+    10: { class_type: 'CheckpointLoaderSimple', inputs: { ckpt_name: NOVACARTOON_CKPT } },
+    11: { class_type: 'CLIPSetLastLayer', inputs: { clip: ['10', 1], stop_at_clip_layer: -2 } },
+    20: { class_type: 'CLIPTextEncode', inputs: { text: SDXL_POS_PREFIX + prompt, clip: ['11', 0] } },
+    21: { class_type: 'CLIPTextEncode', inputs: { text: negative || SDXL_NEG_DEFAULT, clip: ['11', 0] } },
+    34: { class_type: 'EmptyLatentImage', inputs: { width: sw, height: sh, batch_size: 1 } },
+    40: { class_type: 'KSampler',
+          inputs: { model: ['10', 0], positive: ['20', 0], negative: ['21', 0], latent_image: ['34', 0],
+                    seed, steps, cfg, sampler_name: 'euler_ancestral', scheduler: 'normal', denoise: 1.0 } },
+    50: { class_type: 'VAEDecode', inputs: { samples: ['40', 0], vae: ['10', 2] } },
+  });
 }
 
 function buildFluxWorkflow(prompt, w, h, steps, guidance, seed, prefix, rembg, refName, lora, loraStrength) {
@@ -585,18 +888,100 @@ async function uploadRefImage(absPath, name) {
   return out.name || name;
 }
 
-async function startArtJob({ type, id, prompt, width, height, steps, guidance, seed, rembg, useRef, turbo }) {
+// ── LLM art prompts (local Ollama) ───────────────────────────────────────────
+// The LLM reads the item's FULL data (the same plain-English summary the editor shows)
+// and translates mechanics into imagery. The hard rules the plain auto-prompt encodes
+// (never "card"/"tcg", never rules text in the scene) are enforced by instruction here.
+const LLM_SYSTEM_PROMPT = [
+  'You write prompts for an image-generation model that illustrates fantasy game pieces.',
+  'Given a game item\'s data, respond with exactly ONE image prompt: a single vivid subject',
+  'or scene as comma-separated visual phrases, under 60 words.',
+  'Hard rules:',
+  '- Translate game mechanics into visual motifs (poison → dripping green venom, healing →',
+  '  soft radiant glow, speed → wind-blurred motion). Never quote or restate rules text.',
+  '- Never use the words: card, TCG, trading card, frame, border, stats, icon, UI, text.',
+  '- The scene must contain no readable text, letters, numbers, or lettering of any kind.',
+  '- Match the staging of the example prompt you are given (subject framing, background),',
+  '  but with far richer, item-specific imagery.',
+  '- Output only the prompt itself — no preamble, no options, no quotation marks.',
+].join('\n');
+
+async function llmArtPrompt(typeLabel, name, summary, example) {
+  const s = getSettings();
+  const base = (s.ollamaUrl || 'http://127.0.0.1:11434').replace(/\/$/, '');
+  const user = [
+    `Item type: ${typeLabel}`,
+    `Name: ${name}`,
+    'Item data:',
+    ...(summary || []).map(l => '- ' + l),
+    example ? `Example prompt for this item type (staging reference): ${example}` : '',
+  ].filter(Boolean).join('\n');
+  let res;
+  try {
+    res = await fetch(base + '/api/generate', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: s.llmModel || 'gemma4:31b', system: LLM_SYSTEM_PROMPT,
+                             prompt: user, stream: false, think: false,
+                             options: { temperature: 0.9, num_predict: 200 } }),
+    });
+  } catch (e) { throw new Error(`Ollama unreachable at ${base} — is it running?`); }
+  if (!res.ok) throw new Error(`Ollama request failed: HTTP ${res.status} ${await res.text()}`);
+  const out = await res.json();
+  let text = String(out.response || '')
+    .replace(/<think>[\s\S]*?<\/think>/g, '')      // thinking remnants, if the flag is ignored
+    .replace(/^\s*(?:prompt\s*:)?\s*/i, '')        // "Prompt:" label prefixes
+    .replace(/\s*\n+\s*/g, ' ')
+    .replace(/^["'`]+|["'`]+$/g, '')
+    .trim();
+  if (!text) throw new Error('the LLM returned an empty prompt');
+  return text;
+}
+
+// Copies the workspace-generated image to the game's asset path for this entry, backing up
+// whatever was there (once). Returns the deployed repo-relative path, or null when the
+// entry isn't in the game yet / the type has no art slot (the Save flow retries it).
+function deployArtIfPossible(type, id) {
+  if (!fs.existsSync(artPath(type, id))) return null;
+  const entry = findGameEntry(type, id);
+  if (!entry) return null;
+  const dir = artDirFor(type, entry.data);
+  if (!dir) return null;
+  const rel = dir + '/' + id + '.png';
+  const abs = path.join(GAME_ROOT, rel);
+  if (fs.existsSync(abs) && !fs.existsSync(editBackupArt(type, id))) {
+    ensureDir(path.dirname(editBackupArt(type, id)));
+    fs.copyFileSync(abs, editBackupArt(type, id));
+  }
+  ensureDir(path.dirname(abs));
+  fs.copyFileSync(artPath(type, id), abs);
+  return rel;
+}
+
+async function startArtJob({ type, id, prompt, negative, width, height, steps, guidance, seed, rembg, useRef, refUpload, refMode, denoise, turbo, model }) {
   const t = TYPES[type];
   if (!t) throw new Error('unknown type');
   if (!validId(id)) throw new Error('bad item id');
+  const m = MODELS[model || 'flux2'];
+  if (!m) throw new Error(`unknown model "${model}"`);
   const w = width || t.artW, h = height || t.artH;
   const s = (seed == null || seed < 0) ? Math.floor(Math.random() * 2 ** 32) : seed;
   const doRembg = rembg == null ? t.rembg : !!rembg;
   const prefix = `tool_${type}_${id}`;
+  if (useRef && !m.supportsRef) throw new Error(`${m.label} has no image-reference path — reference input is Flux 2 only`);
+  if (turbo && !m.supportsTurbo) throw new Error(`the turbo LoRA is Flux 2 only — ${m.label} has its own speed profile`);
+  if (useRef && m.refModes && !m.refModes.some(rm => rm.value === refMode))
+    throw new Error(`${m.label} needs a refMode of ${m.refModes.map(rm => rm.value).join(' or ')}`);
   let refName = null;
   if (useRef) {
-    const refAbs = currentArtAbs(type, id);
-    if (!refAbs) throw new Error('this item has no current art to use as input');
+    let refAbs;
+    if (refUpload) {
+      // an external image the user pushed through /api/art/upload-ref
+      refAbs = path.join(WORKSPACE, 'refs', safeRefName(refUpload));
+      if (!fs.existsSync(refAbs)) throw new Error('uploaded reference image not found — upload it again');
+    } else {
+      refAbs = currentArtAbs(type, id);
+      if (!refAbs) throw new Error('this item has no current art to use as input');
+    }
     refName = await uploadRefImage(refAbs, `tool_ref_${type}_${id}.png`);
   }
   const settings = getSettings();
@@ -606,8 +991,14 @@ async function startArtJob({ type, id, prompt, width, height, steps, guidance, s
     lora = settings.turboLora;
     loraStrength = settings.turboStrength == null ? 1.0 : settings.turboStrength;
   }
-  const wf = buildFluxWorkflow(prompt, w, h, steps || (turbo ? settings.turboSteps || 8 : 20),
-    guidance || 4.0, s, prefix, doRembg, refName, lora, loraStrength);
+  const useSteps = steps || (turbo ? settings.turboSteps || 8 : m.steps);
+  const useCfg = guidance || m.guidance;
+  let wf;
+  const key = model || 'flux2';
+  if (key === 'krea2') wf = buildKrea2Workflow(prompt, w, h, useSteps, useCfg, s, prefix, doRembg, refName, refMode, denoise);
+  else if (key === 'ideogram4') wf = buildIdeogram4Workflow(prompt, w, h, useSteps, useCfg, s, prefix, doRembg);
+  else if (key === 'novacartoon') wf = buildNovaCartoonWorkflow(prompt, negative, w, h, useSteps, useCfg, s, prefix, doRembg);
+  else wf = buildFluxWorkflow(prompt, w, h, useSteps, useCfg, s, prefix, doRembg, refName, lora, loraStrength);
   const res = await comfyFetch('/prompt', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ prompt: wf }),
@@ -650,6 +1041,9 @@ async function pollJob(jobId) {
           const dest = artPath(job.type, job.id);
           ensureDir(path.dirname(dest));
           fs.writeFileSync(dest, buf);
+          // The image stays in the tool workspace — deploying into the game's assets is an
+          // EXPLICIT act (POST /api/art/deploy, or a new entry's first Save), so the current
+          // in-game art survives as reference material until the user commits.
           job.status = 'done';
           return;
         } catch (e) {
@@ -690,12 +1084,13 @@ async function handle(req, res) {
       const edits = getEdits();
       for (const t of Object.keys(TYPES)) {
         items[t] = listItems(t);
-        game[t] = listGameEntries(t).map(e => ({
+        game[t] = listGameEntries(t, true).map(e => ({
           id: e.id,
           name: (e.data && e.data.display_name) || e.id,
           file: e.file,
           edited: !!edits[t + '/' + e.id],
           art: gameArtRel(t, e.id, e.data),
+          tool: e.tool || undefined,   // deployed-by-the-tool: browsable, edited via its workspace item
         }));
       }
       return send(res, 200, {
@@ -707,6 +1102,11 @@ async function handle(req, res) {
         game,
         vocab: gameVocab(),
         settings: getSettings(),
+        artModels: Object.fromEntries(Object.entries(MODELS).map(([k, v]) => [k, {
+          label: v.label, steps: v.steps, guidance: v.guidance,
+          supportsRef: v.supportsRef, supportsTurbo: v.supportsTurbo, supportsNegative: v.supportsNegative,
+          refModes: v.refModes || undefined,
+        }])),
       });
     }
     if (p === '/api/game/item') {
@@ -718,6 +1118,20 @@ async function handle(req, res) {
       return send(res, 200, { id: found.id, file: found.file, data: found.data,
         edited: !!edits[type + '/' + id], hasArt: fs.existsSync(artPath(type, id)),
         gameArt: gameArtRel(type, id, found.data) });
+    }
+    if (p === '/api/game/save' && req.method === 'POST') {
+      const { type, file, data } = await readBody(req);
+      if (!TYPES[type] || !data || !validId(data.id)) return send(res, 400, { error: 'bad request' });
+      try {
+        return send(res, 200, Object.assign({ ok: true }, saveGameEntry(type, String(file || 'authored.json'), data)));
+      } catch (e) { return send(res, 400, { error: e.message }); }
+    }
+    if (p === '/api/game/delete-entry' && req.method === 'POST') {
+      const { type, id } = await readBody(req);
+      if (!TYPES[type] || !validId(id)) return send(res, 400, { error: 'bad request' });
+      try {
+        return send(res, 200, Object.assign({ ok: true }, deleteGameEntry(type, id)));
+      } catch (e) { return send(res, 400, { error: e.message }); }
     }
     if (p === '/api/game/apply' && req.method === 'POST') {
       const { type, id, data, applyArt } = await readBody(req);
@@ -810,6 +1224,8 @@ async function handle(req, res) {
       if ('turboLora' in body) s.turboLora = String(body.turboLora || '');
       if ('turboSteps' in body) s.turboSteps = Math.max(1, parseInt(body.turboSteps, 10) || 8);
       if ('turboStrength' in body) s.turboStrength = parseFloat(body.turboStrength) || 1.0;
+      if (body.ollamaUrl) s.ollamaUrl = String(body.ollamaUrl);
+      if ('llmModel' in body) s.llmModel = String(body.llmModel || '');
       writeJson(SETTINGS_PATH, s);
       return send(res, 200, { ok: true, settings: s });
     }
@@ -852,6 +1268,42 @@ async function handle(req, res) {
       if (fs.existsSync(artPath(type, id))) fs.unlinkSync(artPath(type, id));
       return send(res, 200, { ok: true });
     }
+    // The explicit "use this in the game" act — generation itself never deploys.
+    if (p === '/api/art/deploy' && req.method === 'POST') {
+      const { type, id } = await readBody(req);
+      if (!TYPES[type] || !validId(id)) return send(res, 400, { error: 'bad request' });
+      if (!fs.existsSync(artPath(type, id))) return send(res, 400, { error: 'no workspace art for this item' });
+      const rel = deployArtIfPossible(type, id);
+      if (!rel) return send(res, 400, { error: 'not deployable — the entry is not in the game, or this type has no art slot' });
+      return send(res, 200, { ok: true, art: rel });
+    }
+    // Overwrite the workspace art with client-supplied PNG bytes (the browser does pixel
+    // work like horizontal flips on a canvas — the server stays dependency-free).
+    if (p === '/api/art/put' && req.method === 'POST') {
+      const { type, id, dataBase64 } = await readBody(req);
+      if (!TYPES[type] || !validId(id) || !dataBase64) return send(res, 400, { error: 'bad request' });
+      ensureDir(path.dirname(artPath(type, id)));
+      fs.writeFileSync(artPath(type, id), Buffer.from(dataBase64, 'base64'));
+      return send(res, 200, { ok: true });
+    }
+    // Ask the local LLM (Ollama) to write an art prompt from the item's summarized data.
+    if (p === '/api/art/prompt' && req.method === 'POST') {
+      const { type, name, summary, example } = await readBody(req);
+      if (!TYPES[type] || !name) return send(res, 400, { error: 'bad request' });
+      try {
+        const prompt = await llmArtPrompt(TYPES[type].label, String(name),
+          Array.isArray(summary) ? summary.map(String) : [], example ? String(example) : '');
+        return send(res, 200, { ok: true, prompt });
+      } catch (e) { return send(res, 502, { error: e.message }); }
+    }
+    // Stash a user-provided external image in the workspace as generation reference input.
+    if (p === '/api/art/upload-ref' && req.method === 'POST') {
+      const { name, dataBase64 } = await readBody(req);
+      if (!dataBase64) return send(res, 400, { error: 'dataBase64 is required' });
+      const safe = safeRefName(name);
+      fs.writeFileSync(path.join(WORKSPACE, 'refs', safe), Buffer.from(dataBase64, 'base64'));
+      return send(res, 200, { ok: true, name: safe });
+    }
     // workspace art preview
     if (p.startsWith('/art/')) {
       const m = p.match(/^\/art\/([a-z]+)\/([a-z0-9_]+)\.png$/);
@@ -888,4 +1340,5 @@ if (require.main === module) {
   });
 }
 
-module.exports = { validateItem, buildFluxWorkflow, TYPES, gameVocab };
+module.exports = { validateItem, buildFluxWorkflow, buildKrea2Workflow, buildIdeogram4Workflow,
+  buildNovaCartoonWorkflow, MODELS, TYPES, gameVocab };

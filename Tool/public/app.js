@@ -35,6 +35,7 @@ async function refreshState(keepEditor) {
   const s = await api('/api/state');
   state.types = s.types; state.items = s.items; state.game = s.game || {};
   state.vocab = s.vocab; state.settings = s.settings;
+  state.artModels = s.artModels || { flux2: { label: 'Flux 2 dev', steps: 20, guidance: 4.0, supportsRef: true, supportsTurbo: true } };
   renderTabs(); renderItemList();
   if (!keepEditor) renderEditor();
   else refreshInstallBar();
@@ -59,33 +60,13 @@ function renderTabs() {
 
 function renderItemList() {
   $('item-list-title').textContent = state.types[state.currentType] ? state.types[state.currentType].label + 's' : '';
+  $('gen-set-btn').hidden = state.currentType !== 'card';
   const list = $('item-list');
   list.replaceChildren();
-  const items = (state.items[state.currentType] || []).slice()
-    .sort((a, b) => a.id.localeCompare(b.id));
-  if (!items.length) list.append(el('div', { class: 'subtle', style: 'padding:10px', text: 'Nothing authored yet.' }));
-  for (const it of items) {
-    const name = (it.data && it.data.display_name) || it.id;
-    const thumbSrc = it.hasArt ? `/art/${state.currentType}/${it.id}.png`
-      : it.gameArt ? '/gameart/' + it.gameArt : null;
-    list.append(el('div', {
-      class: 'item-row' + (state.mode === 'ws' && state.currentId === it.id ? ' active' : ''),
-      onclick: () => { if (!confirmDiscard()) return; openItem(it.id); },
-    },
-      thumbSrc ? el('img', { class: 'thumb', loading: 'lazy', src: thumbSrc }) : null,
-      el('div', { class: 'item-name' }, el('div', { text: name }), el('div', { class: 'item-id', text: it.id })),
-      it.hasArt ? el('span', { class: 'pill art', text: 'art' }) : null,
-      it.installed ? el('span', { class: 'pill installed', text: 'installed' }) : el('span', { class: 'pill', text: 'draft' }),
-    ));
-  }
-
-  // ── existing game content (edit in place): a tree, grouped by source json file ──
+  // ── THE list: the game's data files (files → entries) — nothing else exists ──
   const gameItems = (state.game[state.currentType] || []).slice()
     .sort((a, b) => a.id.localeCompare(b.id));
-  if (!gameItems.length) return;
-  list.append(el('div', { style: 'display:flex;align-items:center;gap:8px;padding:14px 4px 6px' },
-    el('span', { style: 'font-weight:600', text: 'Game content' }),
-    el('span', { class: 'subtle', text: gameItems.length + '' })));
+  if (!gameItems.length) { list.append(el('div', { class: 'subtle', style: 'padding:10px', text: 'No ' + state.types[state.currentType].label.toLowerCase() + 's yet — press + New.' })); return; }
   const search = el('input', {
     type: 'text', placeholder: 'filter…', value: state.gameFilter,
     style: 'margin:0 4px 8px; width:calc(100% - 8px)',
@@ -123,7 +104,10 @@ function renderItemList() {
     for (const g of entries) {
       list.append(el('div', {
         class: 'item-row tree-leaf' + (state.mode === 'game' && state.currentId === g.id ? ' active' : ''),
-        onclick: () => { if (!confirmDiscard()) return; openGameItem(g.id); },
+        onclick: () => {
+          if (!confirmDiscard()) return;
+          openGameItem(g.id);
+        },
       },
         g.art ? el('img', { class: 'thumb', loading: 'lazy', src: '/gameart/' + g.art }) : null,
         el('div', { class: 'item-name' }, el('div', { text: g.name }), el('div', { class: 'item-id', text: g.id })),
@@ -140,17 +124,9 @@ function confirmDiscard() {
 }
 
 // ── editor lifecycle ─────────────────────────────────────────────────────────
-function openItem(id) {
-  const it = (state.items[state.currentType] || []).find(x => x.id === id);
-  if (!it) return;
-  state.mode = 'ws';
-  state.currentId = id;
-  state.isNew = false;
-  state.draft = JSON.parse(JSON.stringify(it.data));
-  state.dirty = false;
-  renderItemList(); renderEditor();
-}
-
+// ONE lifecycle: every entry lives in a real game data file. Opening reads it there;
+// Save writes it back (or appends a new entry to a chosen file); Revert restores the
+// snapshot; the Enabled checkbox is the on/off switch the game loaders respect.
 async function openGameItem(id) {
   let g;
   try { g = await api(`/api/game/item?type=${state.currentType}&id=${encodeURIComponent(id)}`); }
@@ -164,16 +140,22 @@ async function openGameItem(id) {
   state.gameHasArt = !!g.hasArt;
   state.gameArt = g.gameArt || null;
   state.draft = ed.toDraft ? ed.toDraft(g.data) : JSON.parse(JSON.stringify(g.data));
+  state.draft.enabled = g.data.enabled !== false;
   state.dirty = false;
   renderItemList(); renderEditor();
 }
 
 function newItem() {
   if (!confirmDiscard()) return;
-  state.mode = 'ws';
+  state.mode = 'game';
   state.currentId = null;
   state.isNew = true;
+  state.gameFile = null;
+  state.gameEdited = false;
+  state.gameHasArt = false;
+  state.gameArt = null;
   state.draft = EDITORS[state.currentType].newItem();
+  state.draft.enabled = true;
   state.dirty = false;
   renderItemList(); renderEditor();
 }
@@ -204,8 +186,7 @@ function renderEditor() {
   empty.hidden = true; body.hidden = false;
   const ed = EDITORS[state.currentType];
 
-  const prefix = state.mode === 'game' ? 'Game ' : (state.isNew ? 'New ' : '');
-  $('item-title').textContent = prefix + ed.label +
+  $('item-title').textContent = (state.isNew ? 'New ' : '') + ed.label +
     (state.draft.display_name ? ' — ' + state.draft.display_name : state.draft.id ? ' — ' + state.draft.id : '');
   $('dirty-flag').hidden = !state.dirty;
   $('validation-msg').hidden = true;
@@ -240,78 +221,20 @@ function renderSidePanels() {
   renderArtPanel();
 }
 
-// ── install bar ──────────────────────────────────────────────────────────────
-function currentItemMeta() {
-  return (state.items[state.currentType] || []).find(x => x.id === state.currentId);
-}
-
+// ── toolbar ──
 function refreshInstallBar() {
   const t = state.types[state.currentType];
   const info = $('install-info');
-  const save = $('save-btn'), upd = $('update-btn'), inst = $('install-btn'), del = $('delete-btn');
-
-  if (state.mode === 'game') {
-    save.hidden = true;
-    inst.hidden = true;
-    upd.hidden = false;
-    upd.textContent = 'Apply to game';
-    upd.className = 'primary';
-    del.hidden = !state.gameEdited;
-    del.textContent = 'Restore original';
-    info.innerHTML = 'Editing GAME content in place: <b>' + t.dataDir + '/' + state.gameFile + '</b>' +
-      (state.gameEdited ? ' — original snapshot kept, restorable' : '') +
-      (state.dirty ? ' — <span style="color:var(--accent)">changes not applied yet</span>' : '');
-    return;
-  }
-
-  save.hidden = false;
-  inst.hidden = false;
-  del.hidden = false;
-  del.textContent = 'Delete';
-  const it = currentItemMeta();
-  const installed = it && it.installed;
-  inst.textContent = installed ? 'Uninstall from game' : 'Install into game';
-  inst.className = installed ? 'danger' : 'primary';
-  inst.disabled = state.isNew;
-  upd.hidden = !installed;
-  upd.textContent = 'Push update';
-  upd.className = 'primary';
-  if (state.isNew) info.textContent = 'Save first — installing deploys the JSON into ' + (t ? t.dataDir : '') + '.';
-  else if (installed) info.innerHTML = 'Deployed as <b>' + t.dataDir + '/tool_' + state.currentType + '_' + state.currentId + '.json</b>' +
-    (state.dirty ? ' — <span style="color:var(--accent)">save + reinstall to push your changes</span>' : '');
-  else info.textContent = 'Draft only — press Install to deploy into ' + t.dataDir + '.';
-}
-
-async function saveDraft() {
-  if (state.mode === 'game') return applyGame();
-  const ed = EDITORS[state.currentType];
-  let data;
-  try { data = ed.serialize(state.draft); } catch (e) { toast('Cannot serialize: ' + e.message, 'err'); return false; }
-  if (state.draft._art) data._art = state.draft._art;   // persist art settings (stripped on deploy)
-  if (!/^[a-z0-9_]+$/.test(data.id || '')) {
-    showValidation('id must be lowercase letters, digits and underscores'); return false;
-  }
-  // duplicate-id guard on create
-  if (state.isNew && (state.items[state.currentType] || []).some(x => x.id === data.id)) {
-    showValidation(`A ${state.currentType} with id "${data.id}" already exists in the workspace.`); return false;
-  }
-  try {
-    await api('/api/item/save', { type: state.currentType, data });
-  } catch (e) { toast('Save failed: ' + e.message, 'err'); return false; }
-  state.currentId = data.id;
-  state.isNew = false;
-  state.dirty = false;
-  await refreshState(true);
-  renderItemList();
-  renderSidePanels();   // art panel unlocks once the item exists under its id
-  $('dirty-flag').hidden = true;
-  $('item-title').textContent = EDITORS[state.currentType].label +
-    (state.draft.display_name ? ' — ' + state.draft.display_name : ' — ' + state.draft.id);
-  // validate quietly so problems surface early
-  const v = await api('/api/validate', { type: state.currentType, data });
-  if (!v.ok) showValidation('Saved, but not installable yet: ' + v.error);
-  else { showValidation('Saved. Valid and ready to install.', true); }
-  return true;
+  $('revert-btn').hidden = !state.gameEdited;
+  $('delete-btn').hidden = state.isNew;
+  $('enabled-check').checked = state.draft ? state.draft.enabled !== false : true;
+  const bits = [];
+  if (state.isNew) bits.push('New entry — Save adds it to a ' + (t ? t.dataDir : '') + ' file of your choice');
+  else bits.push('In <b>' + t.dataDir + '/' + state.gameFile + '</b>');
+  if (state.draft && state.draft.enabled === false) bits.push('<span style="color:var(--bad)">disabled — the game skips it</span>');
+  if (state.dirty) bits.push('<span style="color:var(--accent)">unsaved changes</span>');
+  bits.push('<span class="subtle">the game reads data at startup · new images import when the Godot editor regains focus</span>');
+  info.innerHTML = bits.join(' · ');
 }
 
 function showValidation(msg, ok) {
@@ -321,73 +244,82 @@ function showValidation(msg, ok) {
   box.textContent = msg;
 }
 
-async function installOrUninstall() {
-  const it = currentItemMeta();
-  if (!it) return;
-  try {
-    if (it.installed) {
-      const out = await api('/api/item/uninstall', { type: state.currentType, id: state.currentId });
-      toast('Uninstalled — removed ' + (out.removed.length ? out.removed.join(', ') : 'manifest entry'), 'ok');
-    } else {
-      if (state.dirty && !await saveDraft()) return;
-      const out = await api('/api/item/install', { type: state.currentType, id: state.currentId });
-      toast('Installed → ' + out.files.join(', '), 'ok');
-    }
-  } catch (e) {
-    toast(e.message, 'err');
-  }
-  await refreshState(true);
-  renderItemList();
-}
-
-// Re-deploy the (saved) draft over the already-installed files.
-async function pushUpdate() {
-  if (state.mode === 'game') return applyGame();
-  if (state.dirty && !await saveDraft()) return;
-  try {
-    const out = await api('/api/item/install', { type: state.currentType, id: state.currentId });
-    toast('Updated → ' + out.files.join(', '), 'ok');
-  } catch (e) { toast(e.message, 'err'); }
-  await refreshState(true);
-  renderItemList();
-}
-
-// Write the edited game entry back into its own file (snapshotting the original first).
-async function applyGame() {
+// The one save: serialize the editor, carry the enabled flag, write the entry into its
+// game file (append for new entries, into a file the user picks).
+async function gameSave() {
   const ed = EDITORS[state.currentType];
   let data;
-  try { data = ed.serialize(state.draft); } catch (e) { toast('Cannot serialize: ' + e.message, 'err'); return; }
-  let applyArt = false;
-  if (state.gameHasArt && state.types[state.currentType].artDir) {
-    applyArt = confirm('Also replace this item’s game art with the generated image?\n(The current art is backed up and restored with "Restore original".)');
+  try { data = ed.serialize(state.draft); } catch (e) { toast('Cannot serialize: ' + e.message, 'err'); return false; }
+  if (state.draft.enabled === false) data.enabled = false;
+  if (!/^[a-z0-9_]+$/.test(data.id || '')) {
+    showValidation('id must be lowercase letters, digits and underscores'); return false;
+  }
+  let file = state.gameFile;
+  if (state.isNew) {
+    if ((state.game[state.currentType] || []).some(g => g.id === data.id)) {
+      showValidation(`"${data.id}" already exists — open it from the list instead.`); return false;
+    }
+    file = await pickTargetFile(data.id);
+    if (!file) return false;
   }
   try {
-    const out = await api('/api/game/apply', { type: state.currentType, id: state.currentId, data, applyArt });
-    toast('Applied to ' + out.file + (out.art && out.art.length ? ' (+ art)' : ''), 'ok');
-    state.dirty = false;
+    const out = await api('/api/game/save', { type: state.currentType, file, data });
+    state.currentId = data.id;
+    state.isNew = false;
+    state.gameFile = out.file.split('/').pop();
     state.gameEdited = true;
-  } catch (e) { toast(e.message, 'err'); return; }
+    state.dirty = false;
+    toast(`Saved into ${out.file}` + (out.art ? ' (+ art)' : ''), 'ok');
+  } catch (e) { showValidation(e.message); return false; }
   await refreshState(true);
   renderItemList();
+  renderSidePanels();
+  $('dirty-flag').hidden = true;
+  return true;
 }
 
-async function restoreGame() {
-  if (!confirm(`Restore "${state.currentId}" to its original state (undo all tool edits)?`)) return;
+// Where should a NEW entry live? An existing file of this type, or a fresh normally-named one.
+function pickTargetFile(id) {
+  return new Promise(resolve => {
+    const files = [...new Set((state.game[state.currentType] || []).map(g => g.file))].sort();
+    const cfg = { file: files[0] || '', fresh: files.length ? '' : (id + '.json') };
+    const modal = el('div', { class: 'modal' },
+      el('h2', { text: 'Which file should this live in?' }),
+      files.length ? fld('Existing file', selectInput(cfg, 'file', files, () => { cfg.fresh = ''; renderFresh(); })) : null,
+      fld('…or a new file', el('input', { type: 'text', value: cfg.fresh, placeholder: 'e.g. ' + id + '.json',
+        oninput: e => { cfg.fresh = e.target.value; } })),
+      el('div', { class: 'modal-actions' },
+        el('button', { class: 'ghost', text: 'Cancel', onclick: () => { $('modal-root').replaceChildren(); resolve(null); } }),
+        el('button', { class: 'primary', text: 'Save here', onclick: () => {
+          let f = (cfg.fresh || '').trim() || cfg.file;
+          if (f && !f.endsWith('.json')) f += '.json';
+          $('modal-root').replaceChildren();
+          resolve(f || null);
+        } }),
+      ));
+    function renderFresh() {}
+    $('modal-root').replaceChildren(modal);
+  });
+}
+
+async function gameRevert() {
+  if (!confirm(`Revert "${state.currentId}" to how it was before the tool touched it?`)) return;
   try {
     const out = await api('/api/game/restore', { type: state.currentType, id: state.currentId });
-    toast('Restored original in ' + out.file, 'ok');
+    toast('Reverted in ' + out.file, 'ok');
   } catch (e) { toast(e.message, 'err'); return; }
   await refreshState(true);
-  await openGameItem(state.currentId);
+  const still = (state.game[state.currentType] || []).some(g => g.id === state.currentId);
+  if (still) await openGameItem(state.currentId);
+  else { state.draft = null; state.currentId = null; renderEditor(); renderItemList(); }
 }
 
 async function deleteItem() {
-  if (state.mode === 'game') return restoreGame();
   if (state.isNew) { state.draft = null; renderEditor(); return; }
-  if (!confirm(`Delete ${state.currentType} "${state.currentId}" from the workspace?\n(It will be uninstalled from the game first if installed.)`)) return;
+  if (!confirm(`Remove "${state.currentId}" from ${state.gameFile}?\n(Revert can bring it back until the next change.)`)) return;
   try {
-    await api('/api/item/delete', { type: state.currentType, id: state.currentId });
-    toast('Deleted.', 'ok');
+    const out = await api('/api/game/delete-entry', { type: state.currentType, id: state.currentId });
+    toast('Removed from ' + out.file + (out.removedFile ? ' (file emptied and deleted)' : ''), 'ok');
   } catch (e) { toast(e.message, 'err'); return; }
   state.currentId = null; state.draft = null; state.dirty = false;
   await refreshState();
@@ -403,10 +335,17 @@ function renderArtPanel() {
   const panel = $('art-panel');
   const ed = EDITORS[state.currentType];
   const t = state.types[state.currentType];
-  panel.replaceChildren(el('h3', { text: 'Art (ComfyUI · Flux 2 dev)' }));
+  panel.replaceChildren(el('h3', { text: 'Art (ComfyUI)' }));
 
   if (!state.draft._art) state.draft._art = Object.assign(artDefaults(), { prompt: '' });
   const a = state.draft._art;
+  if (!a.model || !state.artModels[a.model]) {
+    // Krea 2 is the house default — adopt its step/guidance profile along with the pick
+    a.model = state.artModels.krea2 ? 'krea2' : 'flux2';
+    const m0 = state.artModels[a.model];
+    if (m0) { a.steps = m0.steps; a.guidance = m0.guidance; }
+  }
+  const mdl = state.artModels[a.model];
 
   const noChange = () => { state.dirty = true; $('dirty-flag').hidden = false; };
   // empty prompt = auto-derive from the item's current name/description at generate time
@@ -459,28 +398,97 @@ function renderArtPanel() {
       styleArea),
   );
 
-  // ── use the current art as an image reference ──
-  const refAvail = state.mode === 'game' ? (!!state.gameArt || state.gameHasArt)
-    : !!(currentItemMeta() && (currentItemMeta().gameArt || currentItemMeta().hasArt));
-  const refSrcLabel = (state.mode === 'game' ? state.gameArt : (currentItemMeta() && currentItemMeta().gameArt))
-    ? 'the in-game art' : 'the generated workspace image';
-  const refCheck = el('label', { class: 'check' },
-    el('input', {
-      type: 'checkbox', checked: !!a.useRef, disabled: !refAvail,
-      onchange: e => { a.useRef = e.target.checked; noChange(); },
-    }),
-    refAvail ? `Use current art as input (${refSrcLabel})` : 'Use current art as input — no current art');
+  // ── reference image: the item's current art, or an external image the user uploads ──
+  const artAvail = !!state.gameArt || state.gameHasArt;
+  const refSrcLabel = state.gameArt ? 'the in-game art' : 'the latest generated image';
+  if (a.useRef && !a.refSource) a.refSource = 'current';   // drafts from the checkbox era
+  if (!a.refSource || !mdl.supportsRef) a.refSource = mdl.supportsRef ? a.refSource || 'none' : 'none';
+  if (a.refSource === 'current' && !artAvail) a.refSource = 'none';   // offering it would only error
+  const refActive = a.refSource !== 'none';
+  const refRow = el('div', { class: 'frow' },
+    fld('Reference image', mdl.supportsRef
+      ? selectInput(a, 'refSource', [
+          { value: 'none', label: 'None' },
+          artAvail ? { value: 'current', label: `Current art (${refSrcLabel})` } : null,
+          { value: 'upload', label: 'Uploaded image…' },
+        ].filter(Boolean), () => { noChange(); renderArtPanel(); })
+      : el('span', { class: 'hint', text: `${mdl.label} has no reference path` })),
+    a.refSource === 'upload' ? el('div', { class: 'fld' },
+      el('span', { class: 'lab', text: a.refUploadLabel ? `Using: ${a.refUploadLabel}` : 'Pick an image file' }),
+      el('input', { type: 'file', accept: 'image/*', onchange: async e => {
+        const f = e.target.files && e.target.files[0];
+        if (!f) return;
+        try {
+          const dataUrl = await new Promise((ok, bad) => {
+            const r = new FileReader();
+            r.onload = () => ok(r.result); r.onerror = () => bad(new Error('reading the file failed'));
+            r.readAsDataURL(f);
+          });
+          const out = await api('/api/art/upload-ref', { name: f.name, dataBase64: dataUrl.split(',')[1] });
+          a.refUpload = out.name; a.refUploadLabel = f.name;
+          noChange(); renderArtPanel();
+        } catch (err) { toast('Reference upload failed: ' + err.message, 'err'); }
+      } })) : null,
+  );
+
+  if (mdl.refModes && refActive && !mdl.refModes.some(rm => rm.value === a.refMode)) a.refMode = mdl.refModes[0].value;
+  if (mdl.refModes && a.denoise == null) a.denoise = 0.6;
+  const refModeRow = (mdl.refModes && refActive) ? el('div', { class: 'frow' },
+    fld('Reference mode', selectInput(a, 'refMode', mdl.refModes, () => { noChange(); renderArtPanel(); })),
+    a.refMode === 'img2img'
+      ? fld('Denoise', numInput(a, 'denoise', noChange, { float: true, step: 0.05, min: 0.05, max: 1 }),
+            'Lower = closer to the reference; higher = more freedom to restyle')
+      : null,
+  ) : null;
+
+  // ── model picker: each entry is a full architecture with its own defaults ──
+  const modelRow = el('div', { class: 'frow' },
+    fld('Model', selectInput(a, 'model', Object.entries(state.artModels)
+      .map(([k, v]) => ({ value: k, label: v.label })), () => {
+      // switching models adopts that model's step/guidance profile
+      const nm = state.artModels[a.model];
+      a.steps = nm.steps;
+      a.guidance = nm.guidance;
+      if (!nm.supportsRef) { a.useRef = false; a.refSource = 'none'; }
+      if (!nm.supportsTurbo) a.turbo = false;
+      noChange(); renderArtPanel();
+    })),
+  );
 
   panel.append(
+    modelRow,
     el('div', { class: 'frow' },
       el('div', { class: 'fld wide' },
         el('span', { class: 'lab' }, 'Prompt ',
-          el('button', { class: 'ghost tiny', text: '↻ auto', title: 'Re-derive the prompt from the item’s name/description',
-            onclick: () => { a.prompt = ed.promptFor(state.draft); promptArea.value = a.prompt; noChange(); } })),
+          el('button', { class: 'ghost tiny', text: '↻ auto', title: 'Re-derive the template prompt from the item’s name/composition',
+            onclick: () => { a.prompt = ed.promptFor(state.draft); promptArea.value = a.prompt; noChange(); } }),
+          el('button', { class: 'ghost tiny', text: '✨ llm', title: 'Ask the local LLM (Ollama, see Settings) to write a rich prompt from the item’s full data — press again to re-roll',
+            onclick: async e => {
+              const btn = e.target;
+              btn.disabled = true; btn.textContent = '✨ thinking…';
+              try {
+                const out = await api('/api/art/prompt', {
+                  type: state.currentType,
+                  name: state.draft.display_name || state.draft.id || 'unnamed',
+                  summary: ed.summarize(state.draft),
+                  example: ed.promptFor(state.draft),
+                });
+                a.prompt = out.prompt; promptArea.value = out.prompt; noChange();
+              } catch (err) { toast('LLM prompt failed: ' + err.message, 'err'); }
+              btn.disabled = false; btn.textContent = '✨ llm';
+            } })),
         promptArea),
     ),
+    mdl.supportsNegative ? el('div', { class: 'frow' },
+      el('div', { class: 'fld wide' },
+        el('span', { class: 'lab', text: 'Negative prompt (empty = the usual booru quality negatives)' }),
+        el('textarea', { value: a.negative || '', rows: 2,
+          placeholder: 'worst quality, low quality, watermark, …',
+          oninput: e => { a.negative = e.target.value; noChange(); } })),
+    ) : document.createTextNode(''),   // native append() stringifies null
     styleRow,
-    el('div', { class: 'frow' }, el('div', { class: 'fld' }, refCheck)),
+    refRow,
+    refModeRow || document.createTextNode(''),
     el('div', { class: 'frow' },
       fld('Width', numInput(a, 'width', noChange, { min: 256, step: 64 }), null, 'narrow'),
       fld('Height', numInput(a, 'height', noChange, { min: 256, step: 64 }), null, 'narrow'),
@@ -493,7 +501,7 @@ function renderArtPanel() {
       el('div', { class: 'fld' },
         el('label', { class: 'check' },
           el('input', {
-            type: 'checkbox', checked: !!a.turbo,
+            type: 'checkbox', checked: !!a.turbo, disabled: !mdl.supportsTurbo,
             onchange: e => {
               a.turbo = e.target.checked;
               // swap the steps default along with the mode (only if the user hasn't customized)
@@ -503,7 +511,8 @@ function renderArtPanel() {
               noChange(); renderArtPanel();
             },
           }),
-          `⚡ Turbo LoRA (~${state.settings.turboSteps || 8} steps, much faster)`)),
+          mdl.supportsTurbo ? `⚡ Turbo LoRA (~${state.settings.turboSteps || 8} steps, much faster)`
+            : `⚡ Turbo LoRA — Flux 2 only`)),
     ),
     el('div', { class: 'hint', text: ed.artNote }),
   );
@@ -519,8 +528,7 @@ function renderArtPanel() {
   }
 
   // Art the game currently shows for this item (installed art) — always presented.
-  const installedArt = state.mode === 'game' ? state.gameArt
-    : (currentItemMeta() && currentItemMeta().gameArt);
+  const installedArt = state.gameArt;
   if (installedArt) {
     panel.append(
       el('div', { class: 'lab subtle', style: 'margin-top:10px', text: 'In-game art — ' + installedArt }),
@@ -528,22 +536,62 @@ function renderArtPanel() {
     );
   }
 
-  const it = currentItemMeta();
-  const hasArt = state.mode === 'game' ? state.gameHasArt : (it && it.hasArt);
+  const hasArt = state.gameHasArt;
   if (hasArt && installedArt) {
     panel.append(el('div', { class: 'lab subtle', style: 'margin-top:10px', text: 'Generated (workspace)' }));
   }
+  // Flip works off whichever image is current (workspace art preferred, else in-game art)
+  // and always lands in the WORKSPACE — deploying the flip stays an explicit act.
+  const flipBtn = (hasArt || installedArt) ? el('button', { class: 'ghost small', text: '⇋ Flip horizontally', style: 'margin-right:6px',
+    title: 'Mirror the image left-right (result goes to the workspace; press "Use in game" to deploy it)',
+    onclick: () => flipArtHorizontal(hasArt ? null : installedArt) }) : null;
   if (hasArt) {
     panel.append(el('img', { class: 'art-preview', src: `/art/${state.currentType}/${state.currentId}.png?ts=${Date.now()}` }));
-    if (state.mode === 'game')
-      panel.append(el('div', { class: 'hint', style: 'margin-top:6px', text: 'This generated image replaces the game art when you Apply (you will be asked; the original is backed up).' }));
+    // Generation never touches the game's assets — this button is the explicit deploy act.
+    const canDeploy = state.mode === 'game' && !state.isNew && !!t.artDir;
+    if (canDeploy)
+      panel.append(el('div', { class: 'hint', style: 'margin-top:6px', text: 'Kept in the tool workspace until you press "Use in game" (any replaced art is backed up).' }));
     panel.append(el('div', { style: 'margin-top:6px' },
+      canDeploy ? el('button', { class: 'primary small', text: '⬆ Use in game', style: 'margin-right:6px', onclick: async () => {
+        try {
+          const out = await api('/api/art/deploy', { type: state.currentType, id: state.currentId });
+          toast(`Deployed to ${out.art} (give the Godot editor focus once to import it).`, 'ok');
+          state.gameArt = out.art;
+          renderSidePanels();
+        } catch (e) { toast(e.message, 'err'); }
+      } }) : null,
+      flipBtn,
       el('button', { class: 'ghost small', text: 'Discard art', onclick: async () => {
         await api('/api/art/delete', { type: state.currentType, id: state.currentId });
         state.gameHasArt = false;
         await refreshState(true); renderSidePanels(); renderItemList();
       } })));
+  } else if (installedArt) {
+    panel.append(el('div', { style: 'margin-top:6px' }, flipBtn));
   }
+}
+
+// Mirror the item's art left-right on a canvas and store the result as WORKSPACE art
+// (the server stays image-library-free). fromGameArt = flip the installed art instead
+// of workspace art — the flipped copy still only reaches the game via "Use in game".
+async function flipArtHorizontal(fromGameArt) {
+  const src = fromGameArt
+    ? '/gameart/' + fromGameArt + '?ts=' + Date.now()
+    : `/art/${state.currentType}/${state.currentId}.png?ts=${Date.now()}`;
+  try {
+    const img = new Image();
+    img.src = src;
+    await img.decode();
+    const c = document.createElement('canvas');
+    c.width = img.naturalWidth; c.height = img.naturalHeight;
+    const ctx = c.getContext('2d');
+    ctx.translate(c.width, 0); ctx.scale(-1, 1);
+    ctx.drawImage(img, 0, 0);
+    await api('/api/art/put', { type: state.currentType, id: state.currentId,
+      dataBase64: c.toDataURL('image/png').split(',')[1] });
+    state.gameHasArt = true;
+    renderSidePanels();
+  } catch (e) { toast('Flip failed: ' + (e.message || e), 'err'); }
 }
 
 // The style fragment is global — persist it (debounced while typing).
@@ -571,9 +619,13 @@ async function startArt(statusEl, btn) {
     const { jobId } = await api('/api/art/generate', {
       type: state.currentType, id: state.currentId,
       prompt: style ? base + ', ' + style : base,
+      negative: a.negative || '',
       width: a.width, height: a.height,
       steps: a.steps, guidance: a.guidance, seed: a.seed, rembg: a.rembg,
-      useRef: !!a.useRef, turbo: !!a.turbo,
+      useRef: !!a.refSource && a.refSource !== 'none',
+      refUpload: a.refSource === 'upload' ? a.refUpload : undefined,
+      refMode: a.refMode, denoise: a.denoise, turbo: !!a.turbo,
+      model: a.model || 'flux2',
     });
     state.artJob = { jobId, itemId: state.currentId, type: state.currentType, elapsed: 0 };
     renderArtPanel();
@@ -593,7 +645,7 @@ async function pollArt() {
     if (j.status === 'running') {
       if (state.currentId === state.artJob.itemId) {
         const s = document.querySelector('#art-panel .art-status');
-        if (s) s.textContent = `Generating… ${j.elapsed}s (Flux 2 typically needs 60–100s)`;
+        if (s) s.textContent = `Generating… ${j.elapsed}s`;
       }
       setTimeout(pollArt, 2000);
       return;
@@ -601,8 +653,11 @@ async function pollArt() {
     const finished = state.artJob;
     state.artJob = null;
     if (j.status === 'done') {
-      toast(`Art ready for ${finished.itemId}.`, 'ok');
-      if (state.mode === 'game' && state.currentId === finished.itemId) state.gameHasArt = true;
+      const hasSlot = !!(state.types[finished.type] && state.types[finished.type].artDir);
+      toast(`Art ready for ${finished.itemId}.` + (hasSlot
+        ? ' It stays in the workspace — press "⬆ Use in game" when you want it deployed.'
+        : ' (Reference only — the game has no art slot for this type.)'), 'ok');
+      if (state.currentId === finished.itemId) state.gameHasArt = true;
       await refreshState(true);
       renderItemList();
       if (state.currentId === finished.itemId) renderSidePanels();
@@ -613,6 +668,88 @@ async function pollArt() {
   } catch (e) {
     setTimeout(pollArt, 4000);
   }
+}
+
+// ── set generator: a composition family as INDIVIDUAL card items ─────────────
+// Not a content type — a batch-create. Each generated entry is a real card you can open,
+// differentiate and edit like any other; stats stay derived (the game computes them).
+const SET_PIECES = ['pawn', 'knight', 'bishop', 'rook', 'queen'];
+
+function generateSetCards(cfg) {
+  const els = [cfg.a, cfg.b].filter(Boolean).sort();
+  if (!els.length) return [];
+  const combos = [];
+  if (cfg.spell) combos.push([]);
+  if (cfg.singles) for (const p of SET_PIECES) combos.push([p]);
+  if (cfg.pairs)
+    for (let i = 0; i < SET_PIECES.length; i++)
+      for (let j = i; j < SET_PIECES.length; j++) combos.push([SET_PIECES[i], SET_PIECES[j]]);
+  return combos.map(chess => {
+    const sorted = [...chess].sort();
+    const card = { id: [...els, ...sorted].join('_'), _derive_stats: true, elements: els.slice() };
+    if (sorted.length) card.chess_pieces = sorted;
+    if (cfg.description) card.description = cfg.description;
+    if (cfg.effects.length) card.effects = cfg.effects.map(cleanEffectForDeploy);
+    return card;
+  });
+}
+
+function openSetGenerator() {
+  const cfg = { a: 'water', b: '', singles: true, pairs: true, spell: false,
+    description: '', effects: [], install: true };
+  const preview = el('div', { class: 'subtle mono', style: 'margin-top:8px; line-height:1.6' });
+  const refresh = () => {
+    const cards = generateSetCards(cfg);
+    const existing = new Set([...state.vocab.cards.map(c => c.id), ...(state.items.card || []).map(i => i.id)]);
+    const fresh = cards.filter(c => !existing.has(c.id));
+    preview.textContent = cards.length
+      ? `${fresh.length} new cards` + (cards.length - fresh.length ? ` (${cards.length - fresh.length} skipped — ids already exist)` : '')
+        + ': ' + fresh.map(c => c.id).join(', ')
+      : 'pick at least one element';
+  };
+  const fxWrap = el('div');
+  renderEffectList(fxWrap, cfg.effects, fxCtx(editorCtx(), 'each generated card'), refresh);
+  const modal = el('div', { class: 'modal', style: 'width:640px' },
+    el('h2', { text: 'Generate a composition set' }),
+    el('div', { class: 'frow' },
+      fld('Element A', selectInput(cfg, 'a', state.vocab.elements.map(e => ({ value: e, label: labelOf('element', e) })), refresh)),
+      fld('Element B', selectInput(cfg, 'b', state.vocab.elements.map(e => ({ value: e, label: labelOf('element', e) })), refresh,
+        { optional: true, emptyLabel: '(none — single element)' }), 'same element twice is valid'),
+    ),
+    el('div', { class: 'frow' },
+      el('div', { class: 'fld' }, checkInput(cfg, 'singles', refresh, 'Single-piece units (5)')),
+      el('div', { class: 'fld' }, checkInput(cfg, 'pairs', refresh, 'Two-piece units (15)')),
+      el('div', { class: 'fld' }, checkInput(cfg, 'spell', refresh, 'Pure-element spell entry')),
+    ),
+    el('div', { class: 'frow' },
+      el('div', { class: 'fld wide' }, el('span', { class: 'lab', text: 'Description (stamped on each card — edit per card afterwards)' }),
+        el('textarea', { value: '', oninput: e => { cfg.description = e.target.value; } })),
+    ),
+    el('span', { class: 'lab subtle', text: 'Starting effects (stamped on each card — edit per card afterwards):' }),
+    fxWrap,
+    preview,
+    el('div', { class: 'modal-actions' },
+      el('button', { class: 'ghost', text: 'Cancel', onclick: () => $('modal-root').replaceChildren() }),
+      el('button', { class: 'primary', text: 'Generate cards', onclick: async () => {
+        const existing = new Set(state.vocab.cards.map(c => c.id));
+        const cards = generateSetCards(cfg).filter(c => !existing.has(c.id));
+        if (!cards.length) { toast('Nothing to generate — every id already exists.', 'err'); return; }
+        // the whole family lives in ONE normally-named game file, each entry an ordinary card
+        const setFile = [cfg.a, cfg.b].filter(Boolean).sort().join('_') + '_units.json';
+        let made = 0;
+        for (const card of cards) {
+          try {
+            await api('/api/game/save', { type: 'card', file: setFile, data: card });
+            made++;
+          } catch (e) { toast(`${card.id}: ${e.message}`, 'err'); }
+        }
+        $('modal-root').replaceChildren();
+        toast(`${made} cards saved into data/cards/${setFile} — in the game (restart it to see them).`, 'ok');
+        await refreshState();
+      } }),
+    ));
+  $('modal-root').replaceChildren(modal);
+  refresh();
 }
 
 // ── settings & health ────────────────────────────────────────────────────────
@@ -633,6 +770,8 @@ async function openSettings() {
     turboLora: state.settings.turboLora || '',
     turboSteps: state.settings.turboSteps || 8,
     turboStrength: state.settings.turboStrength == null ? 1.0 : state.settings.turboStrength,
+    ollamaUrl: state.settings.ollamaUrl || 'http://127.0.0.1:11434',
+    llmModel: state.settings.llmModel || 'gemma4:31b',
   };
   const loraInput = textInput(s, 'turboLora', () => {}, 'a .safetensors under models/loras');
   loraInput.setAttribute('list', 'lora-list');
@@ -646,6 +785,10 @@ async function openSettings() {
     el('div', { class: 'frow', style: 'margin-top:10px' },
       fld('Turbo steps', numInput(s, 'turboSteps', () => {}, { min: 1 }), 'default steps in turbo mode', 'narrow'),
       fld('Turbo strength', numInput(s, 'turboStrength', () => {}, { float: true, step: 0.05, min: 0, max: 2 }), null, 'narrow'),
+    ),
+    el('div', { class: 'frow', style: 'margin-top:10px' },
+      fld('Ollama URL', textInput(s, 'ollamaUrl', () => {}, 'http://127.0.0.1:11434'), 'local LLM server for ✨ art prompts'),
+      fld('LLM model', textInput(s, 'llmModel', () => {}, 'gemma4:31b'), 'an Ollama model name'),
     ),
     el('div', { class: 'modal-actions' },
       el('button', { class: 'ghost', text: 'Cancel', onclick: () => $('modal-root').replaceChildren() }),
@@ -670,9 +813,15 @@ async function openSettings() {
 
 // ── boot ─────────────────────────────────────────────────────────────────────
 $('new-item-btn').addEventListener('click', newItem);
-$('save-btn').addEventListener('click', saveDraft);
-$('install-btn').addEventListener('click', installOrUninstall);
-$('update-btn').addEventListener('click', pushUpdate);
+$('gen-set-btn').addEventListener('click', openSetGenerator);
+$('save-btn').addEventListener('click', gameSave);
+$('revert-btn').addEventListener('click', gameRevert);
+$('enabled-check').addEventListener('change', e => {
+  if (!state.draft) return;
+  state.draft.enabled = e.target.checked;
+  onDraftChange();
+  refreshInstallBar();
+});
 $('delete-btn').addEventListener('click', deleteItem);
 $('settings-btn').addEventListener('click', openSettings);
 $('copy-json').addEventListener('click', () => {

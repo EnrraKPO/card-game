@@ -1,0 +1,146 @@
+{
+  "prompt": {
+    "10": {
+      "class_type": "UNETLoader",
+      "inputs": {
+        "unet_name": "krea2_turbo_bf16.safetensors",
+        "weight_dtype": "default"
+      }
+    },
+    "11": {
+      "class_type": "CLIPLoader",
+      "inputs": {
+        "clip_name": "qwen3vl_4b_bf16.safetensors",
+        "type": "krea2"
+      }
+    },
+    "12": {
+      "class_type": "VAELoader",
+      "inputs": {
+        "vae_name": "qwen_image_vae.safetensors"
+      }
+    },
+    "20": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "text": "<your restyle prompt here>",
+        "clip": [
+          "11",
+          0
+        ]
+      }
+    },
+    "21": {
+      "class_type": "ConditioningZeroOut",
+      "inputs": {
+        "conditioning": [
+          "20",
+          0
+        ]
+      }
+    },
+    "34": {
+      "class_type": "EmptyLatentImage",
+      "inputs": {
+        "width": 1024,
+        "height": 1024,
+        "batch_size": 1
+      }
+    },
+    "40": {
+      "class_type": "KSampler",
+      "inputs": {
+        "model": [
+          "10",
+          0
+        ],
+        "positive": [
+          "83",
+          0
+        ],
+        "negative": [
+          "21",
+          0
+        ],
+        "latent_image": [
+          "34",
+          0
+        ],
+        "seed": -1,
+        "steps": 8,
+        "cfg": 1,
+        "sampler_name": "euler",
+        "scheduler": "simple",
+        "denoise": 1
+      }
+    },
+    "50": {
+      "class_type": "VAEDecode",
+      "inputs": {
+        "samples": [
+          "40",
+          0
+        ],
+        "vae": [
+          "12",
+          0
+        ]
+      }
+    },
+    "60": {
+      "class_type": "SaveImage",
+      "inputs": {
+        "images": [
+          "50",
+          0
+        ],
+        "filename_prefix": "cardgame"
+      }
+    },
+    "80": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "REF_IMAGE.png"
+      }
+    },
+    "81": {
+      "class_type": "ImageScale",
+      "inputs": {
+        "image": [
+          "80",
+          0
+        ],
+        "width": 1024,
+        "height": 1024,
+        "upscale_method": "lanczos",
+        "crop": "disabled"
+      }
+    },
+    "82": {
+      "class_type": "VAEEncode",
+      "inputs": {
+        "pixels": [
+          "81",
+          0
+        ],
+        "vae": [
+          "12",
+          0
+        ]
+      }
+    },
+    "83": {
+      "class_type": "ReferenceLatent",
+      "inputs": {
+        "conditioning": [
+          "20",
+          0
+        ],
+        "latent": [
+          "82",
+          0
+        ]
+      }
+    }
+  }
+}

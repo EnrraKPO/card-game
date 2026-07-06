@@ -122,6 +122,44 @@ const L = {
     on_turn_end: 'At the end of each round',
     on_activate: 'When its turn comes up',
   },
+  // Native trigger events (the resolver schema): every event has an ORIGIN and dual
+  // events also a DESTINATION; conditions gate the participants.
+  event: {
+    transient: 'On use (spell cast / ability activation)',
+    play: 'When a unit is played',
+    death: 'When a unit dies',
+    attack: 'When a unit attacks (before the hit)',
+    struck: 'When a unit is struck (after the hit)',
+    activate: 'When a unit takes its turn',
+    turn_start: 'At round start (per unit)',
+    turn_end: 'At round end (per unit)',
+  },
+  // Designer nouns for each event's participants (origin, destination).
+  eventOrigin: {
+    play: 'The played unit', death: 'The dying unit', attack: 'The attacker',
+    struck: 'The attacker', activate: 'The acting unit',
+    turn_start: 'The unit whose round it is', turn_end: 'The unit whose round it is',
+  },
+  eventDestination: { attack: 'The unit being struck', struck: 'The struck unit' },
+  relation: {
+    self: 'this card itself',
+    ally: 'an ally of this card (itself included)',
+    enemy: 'an enemy of this card',
+  },
+  // Native targeting kinds (the TargetResolver schema).
+  targetKind: {
+    all: 'Every unit matching the conditions',
+    auto: 'Auto-pick from matching units',
+    manual: 'A unit the player picks',
+    manual_slot: 'A slot the player picks (may be empty)',
+    participant: 'An event participant / itself',
+  },
+  criterion: { nearest: 'nearest to this card', random: 'at random' },
+  participant: {
+    holder: 'this card itself',
+    origin: 'the event ORIGIN (whoever caused it)',
+    destination: 'the event DESTINATION (whoever received it)',
+  },
   policy: {
     self: 'Itself',
     single_nearest: 'The nearest enemy',
@@ -196,6 +234,7 @@ function labelOf(dict, key) { return (L[dict] && L[dict][key]) || key; }
 // ── plain-English descriptions ───────────────────────────────────────────────
 function describeCondition(c) {
   if (!c) return '';
+  if (c.relation) return 'is ' + labelOf('relation', c.relation);
   if (c.status) return (c.present === false ? 'not carrying ' : 'carrying ') + c.status;
   if (c.composition) {
     const list = Array.isArray(c.composition) ? c.composition : [c.composition];
@@ -229,11 +268,41 @@ function describeEffect(e, ownerNoun) {
     return s + '.';
   }
   // triggered / custom
-  const when = labelOf('trigger', e.trigger || 'on_play');
-  let subj = '';
-  if (e.subject && e.subject !== 'self') subj = ` — reacting to ${labelOf('subject', e.subject)}`;
-  if (e.subject_elements && e.subject_elements.length) subj += ` (subject must be ${e.subject_elements.join('/')})`;
-  const who = labelOf('policy', e.targeting_policy || 'self');
+  let when, subj = '';
+  if (e.trigger && typeof e.trigger === 'object') {
+    // native resolver form: event + participant condition lists
+    const t = e.trigger;
+    if (t.kind === 'transient') {
+      when = labelOf('event', 'transient');
+    } else {
+      when = labelOf('event', t.event);
+      const gates = [];
+      const oc = t.kind === 'dual_event' ? t.origin_conditions : t.conditions;
+      if (oc && oc.length)
+        gates.push(`origin ${oc.map(describeCondition).join(' and ')}`);
+      if (t.kind === 'dual_event' && t.destination_conditions && t.destination_conditions.length)
+        gates.push(`destination ${t.destination_conditions.map(describeCondition).join(' and ')}`);
+      if (gates.length) subj = ' — where ' + gates.join('; ');
+    }
+  } else {
+    when = labelOf('trigger', e.trigger || 'on_play');
+    if (e.subject && e.subject !== 'self') subj = ` — reacting to ${labelOf('subject', e.subject)}`;
+    if (e.subject_elements && e.subject_elements.length) subj += ` (subject must be ${e.subject_elements.join('/')})`;
+  }
+  let who;
+  if (e.targets && typeof e.targets === 'object') {
+    const tg = e.targets;
+    const conds = (tg.conditions || []).map(describeCondition).join(' and ');
+    if (tg.kind === 'participant') who = labelOf('participant', tg.participant || 'holder');
+    else if (tg.kind === 'auto') who = `${tg.count > 1 ? tg.count + ' units' : 'one unit'} ${labelOf('criterion', tg.criterion || 'nearest')}`;
+    else if (tg.kind === 'manual') who = 'a unit the player picks';
+    else if (tg.kind === 'manual_slot') who = 'a slot the player picks';
+    else who = 'every unit';
+    if (conds && tg.kind !== 'participant') who += ` (${conds})`;
+    else if (conds) who += ` (if ${conds})`;
+  } else {
+    who = labelOf('policy', e.targeting_policy || 'self');
+  }
   const parts = [];
   if (kind === 'custom') {
     parts.push(labelOf('hook', e.custom));
@@ -252,7 +321,7 @@ function describeEffect(e, ownerNoun) {
   }
   if (!parts.length) parts.push('(no payload yet)');
   let s = `${when}${subj} → ${who}: ${parts.join(' and ')}`;
-  if (e.conditions && e.conditions.length)
+  if (e.conditions && e.conditions.length && !(e.targets && typeof e.targets === 'object'))
     s += ` — only if ${e.conditions.map(describeCondition).join(' and ')}`;
   if (e.chance != null && e.chance !== 1) s += ` (${Math.round(e.chance * 100)}% chance)`;
   return s + '.';

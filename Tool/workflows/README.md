@@ -12,6 +12,11 @@ server (`flux2_base.json` and `flux2_turbo.json` both completed with `status: su
 | `flux2_turbo.json` | + the turbo LoRA (`Flux_2-Turbo-LoRA_comfyui.safetensors`), ~8 steps — roughly 3x faster, quality holds. |
 | `flux2_reference.json` | + an image reference (Kontext reference-latent chain): keeps the subject/character from a source image while the prompt restyles it. |
 | `flux2_turbo_reference.json` | Both combined — fast restyles of existing art. |
+| `krea2_turbo.json` | Krea 2 Turbo (qwen3vl encoder, qwen_image VAE, zeroed negative, 8 steps cfg 1) — expressive/painterly, ~26s. |
+| `krea2_img2img.json` | + img2img reference: `LoadImage → ImageScale → VAEEncode` feeds the starting latent (denoise 0.6) instead of `EmptyLatentImage`. Architecture-agnostic, always works. |
+| `krea2_reference.json` | + the Flux 2 Kontext `ReferenceLatent` trick, reused on the bet that Krea2 shares Qwen-Image's CLIP/VAE. **Experimental** — untested against the live server, may not transfer. |
+| `ideogram4.json` | Ideogram 4 — dual-model asymmetric CFG (`DualModelGuider` cfg 7, conditional side `CFGOverride` 3.0 @70–100%, `Ideogram4Scheduler` Default preset, flux2 VAE), ~31s. |
+| `novacartoon_xl.json` | NovaCartoonXL (Illustrious/SDXL) — clip-skip 2, booru quality prefix + negatives, euler_ancestral 30 steps cfg 5, SDXL buckets, ~16s. Booru-tag prompts. Served via a directory junction: `C:\ComfyUI\models\checkpoints\ssdd_illustrious` → `D:\SSDD\Checkpoints\Illustrious`. |
 
 **Note on the ComfyUI app's drag-and-drop "Load":** that expects the richer *workflow* export
 (node positions, links, UI metadata), which these are not. These are the *API* format — use

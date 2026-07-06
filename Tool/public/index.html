@@ -20,6 +20,7 @@
       <div id="item-list-wrap">
         <div id="item-list-head">
           <span id="item-list-title"></span>
+          <button id="gen-set-btn" class="ghost" hidden title="Generate a whole composition family as individual cards">⚙ Set…</button>
           <button id="new-item-btn">+ New</button>
         </div>
         <div id="item-list"></div>
@@ -37,9 +38,11 @@
           <div id="item-title"></div>
           <div class="spacer"></div>
           <span id="dirty-flag" hidden>unsaved changes</span>
-          <button id="save-btn">Save</button>
-          <button id="update-btn" hidden>Push update</button>
-          <button id="install-btn"></button>
+          <label class="check" id="enabled-wrap" title="Disabled entries stay in the file but the game skips them">
+            <input type="checkbox" id="enabled-check" checked> Enabled
+          </label>
+          <button id="save-btn" class="primary">Save to game</button>
+          <button id="revert-btn" class="ghost" hidden>Revert</button>
           <button id="delete-btn" class="danger">Delete</button>
         </div>
         <div id="install-info" class="install-info"></div>

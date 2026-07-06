@@ -170,8 +170,17 @@ const CardEditor = {
     for (const e of d.effects || []) lines.push(describeEffect(e, 'this card'));
     return lines;
   },
+  // Deliberately never says "card"/"tcg" (the model renders a whole framed card with
+  // stats) and never includes description/effect text (it gets rendered AS text).
   promptFor(d) {
-    return `Rich glowing painterly fantasy trading-card illustration of ${d.display_name || slugToName(d.id)}, ${d.description || 'a mysterious combatant'}, dramatic volumetric lighting, ornate dark background, high detail`;
+    const pieces = d.chess_pieces || [], els = d.elements || [];
+    const kind = els.length && !pieces.length ? 'spell' : pieces.includes('rook') ? 'building' : 'creature';
+    const elem = els.join(' and ');
+    const subject =
+      kind === 'spell' ? `a dramatic burst of ${elem || 'arcane'} magic` :
+      kind === 'building' ? `an imposing fantasy ${elem ? elem + '-themed ' : ''}fortification` :
+      `a fantasy ${elem ? elem + '-themed ' : ''}${d.is_king ? 'king in regal armor' : 'combatant'}`;
+    return `Rich glowing painterly fantasy illustration of ${d.display_name || slugToName(d.id)}, ${subject}, dramatic volumetric lighting, ornate dark background, high detail`;
   },
   artNote: 'Installed to assets/cards/<id>.png — shown on the card in game.',
 };
