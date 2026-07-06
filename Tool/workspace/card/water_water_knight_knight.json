@@ -1,0 +1,13 @@
+{
+  "_derive_stats": true,
+  "id": "water_water_knight_knight",
+  "elements": [
+    "water",
+    "water"
+  ],
+  "chess_pieces": [
+    "knight",
+    "knight"
+  ],
+  "description": "Twin-water unit."
+}

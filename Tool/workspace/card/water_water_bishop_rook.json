@@ -1,0 +1,13 @@
+{
+  "_derive_stats": true,
+  "id": "water_water_bishop_rook",
+  "elements": [
+    "water",
+    "water"
+  ],
+  "chess_pieces": [
+    "bishop",
+    "rook"
+  ],
+  "description": "Twin-water unit."
+}

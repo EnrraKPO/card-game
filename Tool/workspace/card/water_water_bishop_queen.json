@@ -1,0 +1,13 @@
+{
+  "_derive_stats": true,
+  "id": "water_water_bishop_queen",
+  "elements": [
+    "water",
+    "water"
+  ],
+  "chess_pieces": [
+    "bishop",
+    "queen"
+  ],
+  "description": "Twin-water unit."
+}

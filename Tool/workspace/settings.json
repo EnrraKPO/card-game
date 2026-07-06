@@ -1,11 +1,14 @@
 {
-  "comfyUrl": "http://127.0.0.1:8187",
-  "artStyle": "cartoon art style, 2d illustration, clean bold outlines, flat cell shading",
+  "comfyUrl": "http://127.0.0.1:8000",
+  "artStyle": "cartoon art style, 2d illustration, clean bold outlines, flat cell shading, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear, clean",
   "stylePresets": {
     "painterly": "rich glowing painterly illustration, volumetric god rays",
-    "cartoon": "cartoon art style, 2d illustration, clean bold outlines, flat cell shading"
+    "cartoon": "cartoon art style, 2d illustration, clean bold outlines, flat cell shading",
+    "chibi": "cartoon art style, 2d illustration, clean bold outlines, flat cell shading, fantasy game illustration, chibi cartoon style"
   },
   "turboLora": "Flux_2-Turbo-LoRA_comfyui.safetensors",
   "turboSteps": 8,
-  "turboStrength": 1
+  "turboStrength": 1,
+  "ollamaUrl": "http://127.0.0.1:11434",
+  "llmModel": "gemma4:31b"
 }

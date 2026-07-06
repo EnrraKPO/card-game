@@ -1,7 +1,10 @@
 {
   "id": "frost_adept",
-  "_derive_stats": true,
   "display_name": "Frost Adept",
+  "cost": 2,
+  "attack": 2,
+  "health": 3,
+  "speed": 4,
   "description": "A ranged initiate of the winter arts. Chills whoever it strikes.",
   "elements": [
     "water"
@@ -30,17 +33,5 @@
         "participant": "destination"
       }
     }
-  ],
-  "_art": {
-    "width": 1024,
-    "height": 1536,
-    "rembg": false,
-    "steps": 8,
-    "guidance": 1,
-    "seed": -1,
-    "prompt": "Rich glowing painterly fantasy illustration of Frost Adept, A ranged initiate of the winter arts.",
-    "model": "krea2",
-    "useRef": false,
-    "turbo": false
-  }
+  ]
 }

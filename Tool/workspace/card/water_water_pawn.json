@@ -1,0 +1,12 @@
+{
+  "_derive_stats": true,
+  "id": "water_water_pawn",
+  "elements": [
+    "water",
+    "water"
+  ],
+  "chess_pieces": [
+    "pawn"
+  ],
+  "description": "Twin-water unit."
+}

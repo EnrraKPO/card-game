@@ -1,1 +1,176 @@
-{}
+{
+  "card/darkness_water_bishop_bishop": {
+    "file": "darkness_water_poison_units.json",
+    "original": {
+      "id": "darkness_water_bishop_bishop",
+      "elements": [
+        "darkness",
+        "water"
+      ],
+      "chess_pieces": [
+        "bishop",
+        "bishop"
+      ],
+      "description": "Applies Poison 1 to the unit it strikes.",
+      "effects": [
+        {
+          "trigger": "on_attack",
+          "targeting_policy": "attack_target",
+          "status": {
+            "id": "poison",
+            "stacks": 1
+          }
+        }
+      ]
+    },
+    "at": "2026-07-06T03:29:10.127Z",
+    "fileHash": "965bdab4a5f00b951fa244cf172e51d299ae64ea"
+  },
+  "card/darkness_water_bishop": {
+    "file": "darkness_water_poison_units.json",
+    "original": {
+      "id": "darkness_water_bishop",
+      "display_name": "Blight Bishop",
+      "elements": [
+        "darkness",
+        "water"
+      ],
+      "chess_pieces": [
+        "bishop"
+      ],
+      "description": "Applies Poison 1 to the unit it strikes.",
+      "effects": [
+        {
+          "trigger": "on_attack",
+          "targeting_policy": "attack_target",
+          "status": {
+            "id": "poison",
+            "stacks": 1
+          }
+        }
+      ]
+    },
+    "at": "2026-07-06T03:30:31.771Z",
+    "fileHash": "965bdab4a5f00b951fa244cf172e51d299ae64ea"
+  },
+  "card/darkness_water_bishop_knight": {
+    "file": "darkness_water_poison_units.json",
+    "original": {
+      "id": "darkness_water_bishop_knight",
+      "elements": [
+        "darkness",
+        "water"
+      ],
+      "chess_pieces": [
+        "bishop",
+        "knight"
+      ],
+      "description": "Applies Poison 1 to the unit it strikes.",
+      "effects": [
+        {
+          "trigger": "on_attack",
+          "targeting_policy": "attack_target",
+          "status": {
+            "id": "poison",
+            "stacks": 1
+          }
+        }
+      ]
+    },
+    "at": "2026-07-06T03:30:40.272Z",
+    "fileHash": "965bdab4a5f00b951fa244cf172e51d299ae64ea"
+  },
+  "status/barrier": {
+    "file": "barrier.json",
+    "original": {
+      "id": "barrier",
+      "display_name": "Barrier",
+      "description": "Blocks the next attack that would deal damage to this unit. A blocked strike reads as a Miss; a harmless whiff doesn't spend the Barrier.",
+      "beneficial": true,
+      "color": "8fd0ff",
+      "glyph": "◈",
+      "aura": true,
+      "decay": "intercept",
+      "stacking": "stack",
+      "max_stacks": 9,
+      "effects": [
+        {
+          "intercept": "damage",
+          "channel": "attack",
+          "role": "target",
+          "op": "mul",
+          "amount": 0
+        }
+      ]
+    },
+    "at": "2026-07-06T03:58:40.416Z",
+    "fileHash": "2119be447ce0d2232cf58859b25a24b1f6652c0e"
+  },
+  "card/bone_lich": {
+    "file": "enemies_captains.json",
+    "original": {
+      "id": "bone_lich",
+      "display_name": "Bone Lich",
+      "cost": 0,
+      "attack": 4,
+      "health": 30,
+      "speed": 3,
+      "shield": 3,
+      "is_king": true,
+      "enemy_only": true,
+      "description": "The horde's dark master. He knits himself back together with every strike — destroy him to win. Starts each round with 3 Shield.",
+      "elements": [],
+      "chess_pieces": [],
+      "effects": [
+        {
+          "trigger": "on_attack",
+          "targeting_policy": "self",
+          "attribute": "health",
+          "amount": 2
+        }
+      ]
+    },
+    "at": "2026-07-06T14:16:12.923Z",
+    "fileHash": "55da9a15de943c88116afa61dde3985f43af688a"
+  },
+  "card/goblin_warlord": {
+    "file": "enemies_captains.json",
+    "original": {
+      "id": "goblin_warlord",
+      "display_name": "Goblin Warlord",
+      "cost": 0,
+      "attack": 6,
+      "health": 26,
+      "speed": 4,
+      "shield": 2,
+      "is_king": true,
+      "enemy_only": true,
+      "description": "The warband's biggest, meanest goblin. Cut him down to win. Attacks the nearest enemy and starts each round with 2 Shield.",
+      "elements": [],
+      "chess_pieces": [],
+      "effects": []
+    },
+    "at": "2026-07-06T14:18:38.096Z",
+    "fileHash": "55da9a15de943c88116afa61dde3985f43af688a"
+  },
+  "card/stoneborn_warlord": {
+    "file": "enemies_captains.json",
+    "original": {
+      "id": "stoneborn_warlord",
+      "display_name": "Stoneborn Warlord",
+      "cost": 0,
+      "attack": 4,
+      "health": 34,
+      "speed": 1,
+      "shield": 6,
+      "is_king": true,
+      "enemy_only": true,
+      "description": "An immense living monolith that anchors the legion. Bring it down to win. Slow, but starts each round with 6 Shield.",
+      "elements": [],
+      "chess_pieces": [],
+      "effects": []
+    },
+    "at": "2026-07-06T14:28:03.077Z",
+    "fileHash": "55da9a15de943c88116afa61dde3985f43af688a"
+  }
+}
