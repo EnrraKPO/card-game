@@ -106,7 +106,7 @@ func place_enemy_card(inst: CardInstance, r: int, c: int) -> Array:
 	var ui := CardUI.create(inst)
 	enemy_slots[r][c].set_card(ui)
 	var results := EffectSystem.trigger(
-		Effect.Trigger.ON_PLAY, inst,
+		GameEvent.make(&"play", inst), inst,
 		EffectContext.make(inst, player_grid, enemy_grid))
 	cleanup_effect_deaths()
 	refresh()
@@ -124,7 +124,7 @@ func spawn_player_card(inst: CardInstance, r: int, c: int) -> Array:
 	var ui := CardUI.create(inst)
 	(player_slots[r][c] as SlotUI).set_card(ui)
 	var results := EffectSystem.trigger(
-		Effect.Trigger.ON_PLAY, inst,
+		GameEvent.make(&"play", inst), inst,
 		EffectContext.make(inst, player_grid, enemy_grid))
 	cleanup_effect_deaths()
 	refresh()
@@ -314,7 +314,7 @@ func do_place_unit(slot: SlotUI, card_ui: CardUI) -> void:
 	if from_hand:
 		card_ui._show_cost = false
 		results = EffectSystem.trigger(
-			Effect.Trigger.ON_PLAY, inst,
+			GameEvent.make(&"play", inst), inst,
 			EffectContext.make(inst, player_grid, enemy_grid))
 		cleanup_effect_deaths()
 

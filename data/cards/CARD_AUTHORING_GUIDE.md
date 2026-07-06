@@ -56,17 +56,78 @@ An effect is an action that fires at a specific moment, targeting one or more ca
 
 ### `trigger` — when the effect fires
 
-| Value | Description |
-|---|---|
-| `on_play` | When the card is placed on the board |
-| `on_death` | When the card is killed |
-| `on_attack` | Each time the card attacks |
-| `on_damage_taken` | Each time the card takes damage |
-| `permanent` | Applied once when the card enters the board |
-| `on_turn_start` | Fired for the card at the start of each combat round (before attacks) |
-| `on_turn_end` | Fired for the card at the end of each combat round (after attacks); statuses then count down |
+Activation is decided by an injected **trigger resolver** (see `scripts/triggers/`). Every
+combat EVENT has the same abstract shape — an **origin** (the unit it emanates from) and,
+for dual events, a **destination** (the unit on the receiving end) — and activation is gated
+by plain condition lists on those participants. Events **broadcast**: any unit on the board
+may watch any event; conditions decide who reacts.
 
-### `targeting_policy` — who is affected
+**Native form** — `trigger` as an object:
+
+```json
+{ "trigger": { "kind": "event", "event": "death",
+    "conditions": [ { "composition": ["darkness", "pawn"] }, { "attribute": "attack", "comparator": "gt", "value": 2 } ] },
+  "targeting_policy": "self", "attribute": "attack", "amount": 2 }
+```
+…fires whenever any darkness+pawn unit with more than 2 Attack dies, whoever holds the effect.
+
+| Kind | Fields | Events |
+|---|---|---|
+| `transient` | — (applies when its container is USED: spell cast / ability activation) | — |
+| `event` | `event`, `conditions` (gate the origin) | `play`, `death`, `activate` (the unit's turn comes up), `turn_start`, `turn_end` |
+| `dual_event` | `event`, `origin_conditions`, `destination_conditions` (AND-ed) | `attack` (the swing, before the hit resolves), `struck` (after the hit resolves — fires whether or not damage landed) |
+
+Conditions are the ordinary schema below, plus the **relation form**
+`{ "relation": "self" | "ally" | "enemy" }` — the tested unit's relationship to the effect's
+HOLDER. `{ "relation": "self" }` on the watched participant is how "reacts only to its own
+action" is written. A non-empty condition list on a participant the event doesn't have fails
+(the effect doesn't fire).
+
+**Legacy form** — `trigger` as a string, still fully supported (it maps losslessly onto a
+resolver at load; `subject`/`subject_elements` become conditions on the participant that was
+the subject):
+
+| Value | Maps to |
+|---|---|
+| `on_play` | event `play`, self-gated |
+| `on_death` | event `death`, self-gated |
+| `on_attack` | dual `attack`, origin self-gated |
+| `on_damage_taken` | dual `struck`, destination self-gated |
+| `on_turn_start` / `on_turn_end` | the round-boundary events, self-gated |
+| `on_activate` | event `activate`, self-gated |
+| `permanent` | inert (never dispatched — kept only for old data) |
+
+### `targets` — who is affected
+
+Like activation, targeting is an injected **target resolver** (see
+`scripts/triggers/target_resolver.gd`), resolved from the same shared context the trigger
+saw: `resolve(event, holder, board)`. Conditions are the same grammar as everywhere else.
+
+**Native form** — `targets` as an object (owns its conditions; no top-level `conditions`):
+
+```json
+{ "targets": { "kind": "auto", "criterion": "nearest", "count": 2,
+    "conditions": [ { "relation": "enemy" } ] } }
+```
+
+| Kind | Fields | Meaning |
+|---|---|---|
+| `all` | `conditions` | Every unit on the board passing the conditions |
+| `auto` | `criterion` (`nearest`/`random`), `count` (default 1), `conditions` | Automatic pick among passing units |
+| `manual` | `conditions` | The unit the player picks; conditions are the eligibility gate |
+| `manual_slot` | `conditions` | The player picks a SLOT on their side (may be empty) — the deliberate outlier, used by material delivery |
+| `participant` | `participant` (`holder`/`origin`/`destination`), `conditions` | A direct reference to the activating event's participant (or the holder itself); no event or missing participant → no targets |
+
+The old implicit scopes are just conditions now: "all enemies" = `all` +
+`{"relation": "enemy"}` — which also makes previously inexpressible things authorable
+("nearest ally", "the 2 nearest enemies", "every pawn on either side").
+
+### `targeting_policy` — the legacy string form (still supported)
+
+Maps losslessly onto a resolver at load; the top-level `conditions` list travels with it.
+`self` → participant holder; `attack_target`/`attacker`/`subject` → event participants;
+`single_nearest`/`single_random`/`all_enemies`/`all_allies` gain their implicit relation
+condition.
 
 | Value | Description |
 |---|---|

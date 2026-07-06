@@ -77,6 +77,8 @@ static func _load_json(path: String) -> void:
 		return
 	var entries: Array = json.data if json.data is Array else [json.data]
 	for d: Dictionary in entries:
+		if not bool(d.get("enabled", true)):
+			continue
 		var s := StatusData.from_dict(d)
 		if not s.id.is_empty():
 			_all[s.id] = s

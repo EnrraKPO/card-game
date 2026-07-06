@@ -85,6 +85,8 @@ static func _load_json(path: String) -> void:
 	else:
 		entries = [json.data]
 	for d: Dictionary in entries:
+		if not bool(d.get("enabled", true)):
+			continue
 		_all.append(_from_dict(d))
 
 

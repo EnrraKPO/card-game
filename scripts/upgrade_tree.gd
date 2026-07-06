@@ -37,6 +37,8 @@ static func _load_json(path: String) -> void:
 		return
 	var entries: Array = json.data if json.data is Array else [json.data]
 	for d: Dictionary in entries:
+		if not bool(d.get("enabled", true)):
+			continue
 		var t := UpgradeTree.new()
 		t.id           = d.get("id", "")
 		t.display_name = d.get("display_name", "")

@@ -59,11 +59,12 @@ func card_bonus(inst: CardInstance, attr: String) -> int:
 	return int(round(sum))
 
 
-# Active TRIGGERED/CUSTOM effects whose trigger matches an event — the run-level dispatch
-# list (see EffectSystem.trigger_global).
-func triggered(event: Effect.Trigger) -> Array:
+# Active TRIGGERED/CUSTOM effects listening to an event — the run-level dispatch list
+# (see EffectSystem.trigger_global; the full activation gate runs there via the resolver).
+func triggered(event_id: StringName) -> Array:
 	var out: Array = []
 	for e: Effect in _mods:
-		if (e.kind == Effect.Kind.TRIGGERED or e.kind == Effect.Kind.CUSTOM) and e.trigger == event:
+		if (e.kind == Effect.Kind.TRIGGERED or e.kind == Effect.Kind.CUSTOM) \
+				and e.trigger_resolver().listens(event_id):
 			out.append(e)
 	return out

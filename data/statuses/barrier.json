@@ -10,6 +10,12 @@
 	"stacking": "stack",
 	"max_stacks": 9,
 	"effects": [
-		{ "intercept": "damage", "channel": "attack", "role": "target", "op": "mul", "amount": 0 }
+		{
+			"intercept": "damage",
+			"channel": "attack",
+			"role": "target",
+			"op": "mul",
+			"amount": 0
+		}
 	]
 }

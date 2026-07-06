@@ -18,7 +18,7 @@ static func apply_single(effect: Effect, source: CardInstance, context: EffectCo
 # itself is container-blind — the container id is carried only so presentation can glint the right
 # badge; it never touches target resolution. Returns Array of { "status_id": String, "results": [] }
 # (only groups that produced results).
-static func trigger_grouped(event: Effect.Trigger, source: CardInstance, context: EffectContext) -> Array:
+static func trigger_grouped(event: GameEvent, source: CardInstance, context: EffectContext) -> Array:
 	var groups: Array = []
 	if source == null or source.data == null:
 		return groups
@@ -28,19 +28,19 @@ static func trigger_grouped(event: Effect.Trigger, source: CardInstance, context
 		# INTERCEPTORs fire inside Resolver.submit; neither is an event reaction.
 		if effect.kind != Effect.Kind.TRIGGERED and effect.kind != Effect.Kind.CUSTOM:
 			continue
-		if effect.trigger != event:
+		# THE activation gate: the effect's injected resolver decides, from the event's
+		# origin/destination and this holder, whether it fires (see TriggerResolver).
+		if not effect.trigger_resolver().fires(event, source):
 			continue
-		if not _subject_matches(effect, context.subject, source):
-			continue
-		native.append_array(_run_effect(effect, source, context))
+		native.append_array(_run_effect(effect, source, context, event))
 	if not native.is_empty():
 		groups.append({"status_id": "", "results": native})
-	for grp: Dictionary in StatusEngine.triggered_groups(source, event):
+	for grp: Dictionary in StatusEngine.triggered_groups(source, event.id):
 		var sres: Array = []
 		for effect: Effect in grp["effects"]:
-			if not _subject_matches(effect, context.subject, source):
+			if not effect.trigger_resolver().fires(event, source):
 				continue
-			sres.append_array(_run_effect(effect, source, context, int(grp["stacks"])))
+			sres.append_array(_run_effect(effect, source, context, event, int(grp["stacks"])))
 		if not sres.is_empty():
 			groups.append({"status_id": grp["status_id"], "results": sres})
 	return groups
@@ -48,70 +48,43 @@ static func trigger_grouped(event: Effect.Trigger, source: CardInstance, context
 
 # Flat results across all of a unit's containers — for callers that don't sequence per-container
 # cues (card play, spells). Same resolution as trigger_grouped, one combined array.
-static func trigger(event: Effect.Trigger, source: CardInstance, context: EffectContext) -> Array:
+static func trigger(event: GameEvent, source: CardInstance, context: EffectContext) -> Array:
 	var out: Array = []
 	for grp: Dictionary in trigger_grouped(event, source, context):
 		out.append_array(grp["results"])
 	return out
 
 
-# Whether an event-driven effect reacts to THIS event, given the event's subject and the effect's
-# HOLDER. Two gates: the relationship of the subject to the holder, then (if the effect names any)
-# the subject's elements. Both must pass.
-static func _subject_matches(effect: Effect, subject: CardInstance, holder: CardInstance) -> bool:
-	if not _subject_relationship_ok(effect.subject_filter, subject, holder):
-		return false
-	if not effect.subject_elements.is_empty():
-		if subject == null or subject.data == null:
-			return false
-		var has := false
-		for el: String in effect.subject_elements:
-			if subject.data.elements.has(el):
-				has = true
-				break
-		if not has:
-			return false
-	return true
-
-
-# The relationship gate: how the subject must relate to the holder. SELF (the default) also passes
-# when there is no subject (a phase event like turn-end), meaning "the holder reacts for itself".
-static func _subject_relationship_ok(filter: Effect.SubjectFilter, subject: CardInstance, holder: CardInstance) -> bool:
-	match filter:
-		Effect.SubjectFilter.SELF:  return subject == null or subject == holder
-		Effect.SubjectFilter.ALLY:  return subject != null and subject.owner == holder.owner
-		Effect.SubjectFilter.ENEMY: return subject != null and subject.owner != holder.owner
-		Effect.SubjectFilter.ANY:   return true
-	return false
-
-
 # Fires RUN-LEVEL triggered effects (upgrades/relics/heroes) for an event — the counterpart to
 # trigger() for sources that aren't a card on the board. Resolved from the triggering card's
-# perspective (context.source); fires only for player-side events so player upgrades react to
-# the player's own units, not the enemy's.
-static func trigger_global(event: Effect.Trigger, context: EffectContext) -> Array:
+# perspective (context.source = the event's subject); fires only for player-side events so
+# player upgrades react to the player's own units, not the enemy's. The perspective card also
+# serves as the resolver's HOLDER, so relation conditions read relative to it (a legacy
+# {"relation": "self"} gate passes trivially, preserving the old "global effects don't
+# subject-filter" behavior).
+static func trigger_global(event: GameEvent, context: EffectContext) -> Array:
 	var results: Array = []
 	if context.source == null or context.source.owner != 0:
 		return results
-	for effect: Effect in GameData.current_modifiers.triggered(event):
-		if not _subject_matches(effect, context.subject, context.source):
+	for effect: Effect in GameData.current_modifiers.triggered(event.id):
+		if not effect.trigger_resolver().fires(event, context.source):
 			continue
-		results.append_array(_run_effect(effect, context.source, context))
+		results.append_array(_run_effect(effect, context.source, context, event))
 	return results
 
 
 # Run-level results GROUPED by their owning container (relic/upgrade), so the dispatcher can cue
 # each owner — e.g. glint the relic's chip — before its effects' VFX. Returns Array of
 # { "owner_kind": String, "owner_id": String, "results": [] } in firing order, only non-empty groups.
-static func trigger_global_grouped(event: Effect.Trigger, context: EffectContext) -> Array:
+static func trigger_global_grouped(event: GameEvent, context: EffectContext) -> Array:
 	var order: Array = []          # owner_ids in first-seen order
 	var by_owner: Dictionary = {}  # owner_id -> group dict
 	if context.source == null or context.source.owner != 0:
 		return order
-	for effect: Effect in GameData.current_modifiers.triggered(event):
-		if not _subject_matches(effect, context.subject, context.source):
+	for effect: Effect in GameData.current_modifiers.triggered(event.id):
+		if not effect.trigger_resolver().fires(event, context.source):
 			continue
-		var res := _run_effect(effect, context.source, context)
+		var res := _run_effect(effect, context.source, context, event)
 		if res.is_empty():
 			continue
 		if not by_owner.has(effect.owner_id):
@@ -125,61 +98,27 @@ static func trigger_global_grouped(event: Effect.Trigger, context: EffectContext
 
 
 # Runs one effect (TRIGGERED → resolve targets + apply; CUSTOM → invoke its code hook).
-# `amount_scale` multiplies stat/heal magnitudes (used to scale a stacked status's effects).
-static func _run_effect(effect: Effect, source: CardInstance, context: EffectContext, amount_scale: int = 1) -> Array:
+# `event` is the GameEvent that activated the effect (null for a transient use — a spell
+# cast / ability activation), handed to the target resolver so participant targeting can
+# reference the event's origin/destination. `amount_scale` multiplies stat/heal magnitudes
+# (used to scale a stacked status's effects).
+static func _run_effect(effect: Effect, source: CardInstance, context: EffectContext,
+		event: GameEvent = null, amount_scale: int = 1) -> Array:
 	# Probabilistic gate (the effect's `chance`): roll once; on a miss the effect doesn't fire at all.
 	if effect.chance < 1.0 and randf() >= effect.chance:
 		return []
 	if effect.kind == Effect.Kind.CUSTOM:
 		var hook := EffectHooks.get_hook(effect.custom_id)
 		return hook.call(context) if hook.is_valid() else []
+	# THE targeting socket: the effect's injected resolver returns the affected unit(s)
+	# from the same shared context the trigger saw (see TargetResolver). Effects apply to
+	# royalty (King/Queen) and lackeys alike; only the resolver's conditions filter.
 	var results: Array = []
-	for target: CardInstance in _resolve_targets(effect, source, context):
+	for target: CardInstance in effect.targets_resolver().resolve(event, source, context):
 		var r := _apply(effect, target, source, context, amount_scale)
 		if not r.is_empty():
 			results.append(r)
 	return results
-
-
-# ── Target resolution ──────────────────────────────────────────────────────────
-
-static func _resolve_targets(effect: Effect, source: CardInstance, context: EffectContext) -> Array:
-	var own_board := context.player_board if source.owner == 0 else context.enemy_board
-	var opp_board := context.enemy_board  if source.owner == 0 else context.player_board
-
-	var candidates: Array = []
-	match effect.targeting_policy:
-		Effect.TargetingPolicy.SELF:
-			candidates = [source]
-		Effect.TargetingPolicy.SINGLE_NEAREST:
-			var nearest := _find_nearest(source, opp_board)
-			if nearest:
-				candidates = [nearest]
-		Effect.TargetingPolicy.SINGLE_RANDOM:
-			var pool := _flatten(opp_board)
-			if not pool.is_empty():
-				candidates = [pool[randi() % pool.size()]]
-		Effect.TargetingPolicy.ALL_ENEMIES:
-			candidates = _flatten(opp_board)
-		Effect.TargetingPolicy.ALL_ALLIES:
-			candidates = _flatten(own_board)
-		Effect.TargetingPolicy.ALL:
-			candidates = _flatten(own_board) + _flatten(opp_board)
-		Effect.TargetingPolicy.MANUAL:
-			if context.manual_target != null:
-				candidates = [context.manual_target]
-		Effect.TargetingPolicy.ATTACK_TARGET:
-			if context.attack_target != null:
-				candidates = [context.attack_target]
-		Effect.TargetingPolicy.SUBJECT:
-			if context.subject != null:
-				candidates = [context.subject]
-		Effect.TargetingPolicy.ATTACKER:
-			if context.attacker != null:
-				candidates = [context.attacker]
-
-	# Effects apply to royalty (King/Queen) and lackeys alike; only the per-effect conditions filter.
-	return candidates.filter(func(c: CardInstance) -> bool: return _passes_conditions(effect.conditions, c))
 
 
 # ── Effect application ─────────────────────────────────────────────────────────
@@ -225,42 +164,16 @@ static func _apply(effect: Effect, target: CardInstance, source: CardInstance, c
 # The same gate _resolve_targets applies, exposed for PRE-resolution eligibility checks —
 # the spell-targeting UI (only eligible units light up / accept the drop) and the enemy AI's
 # target picking, so an ineligible pick is impossible instead of a silent fizzle.
-static func passes_conditions(conditions: Array, card: CardInstance) -> bool:
-	return _passes_conditions(conditions, card)
+static func passes_conditions(conditions: Array, card: CardInstance, holder: CardInstance = null) -> bool:
+	return _passes_conditions(conditions, card, holder)
 
 
-static func _passes_conditions(conditions: Array, card: CardInstance) -> bool:
+static func _passes_conditions(conditions: Array, card: CardInstance, holder: CardInstance = null) -> bool:
 	for cond: EffectCondition in conditions:
-		if not cond.evaluate(card):
+		if not cond.evaluate(card, holder):
 			return false
 	return true
 
 
-# ── Board utilities ────────────────────────────────────────────────────────────
-
-static func _flatten(board: Array) -> Array:
-	var result: Array = []
-	for row in board:
-		for cell in row:
-			if cell != null:
-				result.append(cell)
-	return result
-
-
-static func _find_nearest(source: CardInstance, target_board: Array) -> CardInstance:
-	var best: CardInstance = null
-	var best_dist := 999
-	for r in target_board.size():
-		for c in target_board[r].size():
-			var candidate: CardInstance = target_board[r][c]
-			if candidate == null:
-				continue
-			var dist: int = abs(source.row + r - (BoardData.ROWS - 1))
-			if source.owner == 0:
-				dist += BoardData.COLS + c - source.col
-			else:
-				dist += BoardData.COLS + source.col - c
-			if dist < best_dist:
-				best_dist = dist
-				best = candidate
-	return best
+# (Board flattening and the nearest-distance metric moved into TargetResolver — the
+# targeting socket owns its own search primitives now.)

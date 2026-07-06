@@ -161,6 +161,10 @@ static func build_from_dict(d: Dictionary) -> CardData:
 
 
 static func _load_card_dict(d: Dictionary) -> void:
+	# Authoring kill-switch: an entry with "enabled": false exists in the data but is not
+	# loaded — content deactivates without leaving the file (see the authoring tool).
+	if not bool(d.get("enabled", true)):
+		return
 	var card := build_from_dict(d)
 	if card.id.is_empty():
 		return

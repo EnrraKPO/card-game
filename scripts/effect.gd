@@ -80,9 +80,28 @@ var kind: Kind = Kind.TRIGGERED   # default keeps all existing (triggered) card/
 var amount: float = 0.0
 
 # ── TRIGGERED / CUSTOM fields ──
+# THE activation gate: an injected TriggerResolver decides whether this effect fires for a
+# given GameEvent (see scripts/triggers/). Authoritative for all dispatch. Built by
+# from_dict from either the native form ("trigger" as a dictionary) or the legacy schema
+# (trigger string + subject + subject_elements), which maps losslessly — zero migration.
+var resolver: TriggerResolver = null
+# Whether the trigger was authored in the native (dictionary) form — steers to_dict so both
+# schemas round-trip byte-faithfully (legacy in → legacy out).
+var authored_native_trigger := false
+# THE targeting socket: an injected TargetResolver returns the unit(s) this effect
+# affects, from the same shared context the trigger saw (event, holder, board). Built by
+# from_dict from either the native form ("targets" as a dictionary) or the legacy
+# "targeting_policy" string — zero migration.
+var target_resolver: TargetResolver = null
+var authored_native_targets := false
+var _native_targets: Dictionary = {}   # raw native "targets" form; resolver built lazily
+# Legacy/compat mirrors, kept for the consumers that classify effects WITHOUT resolving:
+# the spell/ability "== ON_PLAY" include filter, SpellCaster's manual/slot mode checks and
+# eligibility reads (conditions), enemy-AI heuristics. Derived for native-form effects;
+# never consulted by dispatch.
 var trigger: Trigger = Trigger.ON_PLAY
 var subject_filter: SubjectFilter = SubjectFilter.SELF
-var subject_elements: Array = []   # event subject must carry one of these elements (empty = any)
+var subject_elements: Array = []   # legacy companion of `trigger`; folded into the resolver
 var targeting_policy: TargetingPolicy = TargetingPolicy.SELF
 var conditions: Array = []   # Array[EffectCondition]
 var attribute: String = ""
@@ -144,16 +163,12 @@ static func from_dict(d: Dictionary) -> Effect:
 	elif kind_str == "custom" or (kind_str.is_empty() and d.has("custom")):
 		e.kind             = Kind.CUSTOM
 		e.custom_id        = d.get("custom", "")
-		e.trigger          = _str_trigger(d.get("trigger", ""))
-		e.subject_filter   = _str_subject(d.get("subject", ""))
-		e.subject_elements = (d.get("subject_elements", []) as Array).duplicate()
-		e.targeting_policy = _str_policy(d.get("targeting_policy", ""))
+		e._parse_trigger(d)
+		e._parse_targets(d)
 	else:
 		e.kind             = Kind.TRIGGERED
-		e.trigger          = _str_trigger(d.get("trigger", ""))
-		e.subject_filter   = _str_subject(d.get("subject", ""))
-		e.subject_elements = (d.get("subject_elements", []) as Array).duplicate()
-		e.targeting_policy = _str_policy(d.get("targeting_policy", ""))
+		e._parse_trigger(d)
+		e._parse_targets(d)
 		e.attribute        = d.get("attribute", "")
 		# Parsed for round-trip fidelity; no TRIGGERED evaluator consumes MUL today (the
 		# INTERCEPTOR kind is where mul does its work — see Resolver._intercept).
@@ -165,6 +180,92 @@ static func from_dict(d: Dictionary) -> Effect:
 		e.status_duration = int(st.get("duration", STATUS_DURATION_DEFAULT))
 		e.status_stacks   = int(st.get("stacks", 1))
 	return e
+
+
+# Parses the activation gate from either schema. Native form: "trigger" is a Dictionary
+# (see TriggerResolver); the legacy compat fields are derived from it. Legacy form: the
+# trigger string + subject + subject_elements keys, folded into an equivalent resolver.
+func _parse_trigger(d: Dictionary) -> void:
+	var trig_v: Variant = d.get("trigger", "on_play")
+	if trig_v is Dictionary:
+		authored_native_trigger = true
+		resolver = TriggerResolver.parse(trig_v, "", [])
+		trigger = _derived_legacy_trigger()
+		return
+	trigger          = _str_trigger(str(trig_v) if not str(trig_v).is_empty() else "on_play")
+	subject_filter   = _str_subject(d.get("subject", ""))
+	subject_elements = (d.get("subject_elements", []) as Array).duplicate()
+	resolver = TriggerResolver.from_legacy(trigger_key(trigger), subject_key(subject_filter), subject_elements)
+
+
+func _derived_legacy_trigger() -> Trigger:
+	if resolver is TriggerResolver.Simple:
+		return TriggerResolver.legacy_trigger_for((resolver as TriggerResolver.Simple).event)
+	if resolver is TriggerResolver.Dual:
+		return TriggerResolver.legacy_trigger_for((resolver as TriggerResolver.Dual).event)
+	return Trigger.ON_PLAY   # transient behaves like on_play for the use-path filters
+
+
+# The serialized "trigger" value: the native dictionary form when authored that way, the
+# legacy string otherwise (kept out of the dict literals — the branches have no shared type).
+func _trigger_out() -> Variant:
+	if authored_native_trigger:
+		return trigger_resolver().to_dict()
+	return trigger_key(trigger)
+
+
+# The activation resolver, lazily derived for programmatically-built effects (Effect.new()
+# + field assignment, e.g. in tests) that never went through from_dict.
+func trigger_resolver() -> TriggerResolver:
+	if resolver == null:
+		resolver = TriggerResolver.from_legacy(trigger_key(trigger), subject_key(subject_filter), subject_elements)
+	return resolver
+
+
+# Parses the targeting socket from either schema — WITHOUT constructing the resolver.
+# Construction is deferred to targets_resolver(): data files parse during other classes'
+# @static_initializer runs, when TargetResolver's script (whose signatures reach into the
+# UI layer via EffectContext) may not be compiled yet. Only the raw form and the compat
+# mirrors (targeting_policy enum + conditions list) are captured here.
+func _parse_targets(d: Dictionary) -> void:
+	var tv: Variant = d.get("targets", null)
+	if tv is Dictionary:
+		authored_native_targets = true
+		_native_targets = (tv as Dictionary).duplicate(true)
+		conditions = TriggerResolver._parse_conditions(_native_targets.get("conditions", []))
+		targeting_policy = _policy_from_native(_native_targets)
+		return
+	targeting_policy = _str_policy(d.get("targeting_policy", ""))
+
+
+# The targeting resolver, built on first use (runtime — never during static init).
+func targets_resolver() -> TargetResolver:
+	if target_resolver == null:
+		if authored_native_targets:
+			target_resolver = TargetResolver.parse(_native_targets)
+			# the mirror and the resolver must share ONE condition list (see TargetResolver)
+			target_resolver.conditions = conditions
+		else:
+			target_resolver = TargetResolver.from_legacy(policy_key(targeting_policy), conditions,
+					trigger == Trigger.ON_DAMAGE_TAKEN)
+	return target_resolver
+
+
+# The compat TargetingPolicy for a native "targets" dict — derived from the raw strings so
+# no TargetResolver construction is needed at parse time.
+static func _policy_from_native(d: Dictionary) -> TargetingPolicy:
+	match str(d.get("kind", "all")):
+		"manual":      return TargetingPolicy.MANUAL
+		"manual_slot": return TargetingPolicy.MANUAL_SLOT
+		"auto":
+			return TargetingPolicy.SINGLE_RANDOM if str(d.get("criterion", "nearest")) == "random" \
+					else TargetingPolicy.SINGLE_NEAREST
+		"participant":
+			match str(d.get("participant", "holder")):
+				"origin":      return TargetingPolicy.ATTACKER
+				"destination": return TargetingPolicy.ATTACK_TARGET
+				_:             return TargetingPolicy.SELF
+	return TargetingPolicy.ALL
 
 
 # Serialises back to the authored shape. Exercised for persisted (overridden) CARD effects,
@@ -185,12 +286,15 @@ func to_dict() -> Dictionary:
 			return d
 		Kind.CUSTOM:
 			var cd := {
-				"kind":             "custom",
-				"custom":           custom_id,
-				"trigger":          trigger_key(trigger),
-				"targeting_policy": policy_key(targeting_policy),
+				"kind":    "custom",
+				"custom":  custom_id,
+				"trigger": _trigger_out(),
 			}
-			if subject_filter != SubjectFilter.SELF:
+			if authored_native_targets:
+				cd["targets"] = targets_resolver().to_dict()
+			else:
+				cd["targeting_policy"] = policy_key(targeting_policy)
+			if not authored_native_trigger and subject_filter != SubjectFilter.SELF:
 				cd["subject"] = subject_key(subject_filter)
 			return cd
 		Kind.INTERCEPTOR:
@@ -207,19 +311,23 @@ func to_dict() -> Dictionary:
 				idd["chance"] = chance
 			return idd
 		_:
-			var conds: Array = []
-			for c: EffectCondition in conditions:
-				conds.append(c.to_dict())
 			var d := {
-				"trigger":          trigger_key(trigger),
-				"targeting_policy": policy_key(targeting_policy),
-				"attribute":        attribute,
-				"amount":           amount_int(),
-				"conditions":       conds,
+				"trigger":   _trigger_out(),
+				"attribute": attribute,
+				"amount":    amount_int(),
 			}
-			if subject_filter != SubjectFilter.SELF:
+			if authored_native_targets:
+				# the resolver owns the conditions in the native form — no top-level copy
+				d["targets"] = targets_resolver().to_dict()
+			else:
+				d["targeting_policy"] = policy_key(targeting_policy)
+				var conds: Array = []
+				for c: EffectCondition in conditions:
+					conds.append(c.to_dict())
+				d["conditions"] = conds
+			if not authored_native_trigger and subject_filter != SubjectFilter.SELF:
 				d["subject"] = subject_key(subject_filter)
-			if not subject_elements.is_empty():
+			if not authored_native_trigger and not subject_elements.is_empty():
 				d["subject_elements"] = subject_elements
 			if chance != 1.0:
 				d["chance"] = chance

@@ -56,6 +56,8 @@ static func _load_json(path: String) -> void:
 		return
 	var entries: Array = json.data if json.data is Array else [json.data]
 	for d: Dictionary in entries:
+		if not bool(d.get("enabled", true)):
+			continue
 		var ab := AbilityData.from_dict(d)
 		if not ab.id.is_empty():
 			_all[ab.id] = ab

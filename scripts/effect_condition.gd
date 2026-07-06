@@ -18,6 +18,12 @@ var present: bool = true
 # on light). E.g. { "composition": ["king", "queen"], "present": false } = "lackeys only" —
 # gate a buff away from royal compositions so the persistent King doesn't hoard every buff.
 var composition: Array = []
+# RELATION-form condition: passes on the tested unit's relationship to the effect's HOLDER —
+# "self" (it IS the holder), "ally" (same side, holder included), "enemy" (opposite side).
+# This is how trigger resolvers express "reacts to its own action" ({"relation": "self"} on
+# the watched participant — see TriggerResolver.from_legacy). Requires a holder in context;
+# evaluated without one it fails closed.
+var relation: String = ""
 
 
 static func make(attr: String, comp: Comparator, val: int) -> EffectCondition:
@@ -49,6 +55,10 @@ static func from_dict(d: Dictionary) -> EffectCondition:
 		c.composition = [str(comp)] if comp is String else (comp as Array).duplicate()
 		c.present = bool(d.get("present", true))
 		return c
+	if d.has("relation"):
+		var c := EffectCondition.new()
+		c.relation = str(d.get("relation", "self"))
+		return c
 	return make(
 		d.get("attribute", ""),
 		_str_comparator(d.get("comparator", "")),
@@ -73,6 +83,8 @@ func to_dict() -> Dictionary:
 		return {"status": status_id, "present": present}
 	if not composition.is_empty():
 		return {"composition": composition.duplicate(), "present": present}
+	if not relation.is_empty():
+		return {"relation": relation}
 	return {
 		"attribute":  attribute,
 		"comparator": comparator_key(comparator),
@@ -91,9 +103,19 @@ static func comparator_key(c: Comparator) -> String:
 	return "gte"
 
 
-func evaluate(card: CardInstance) -> bool:
+# `holder` is the unit carrying the effect this condition belongs to — required by the
+# relation form, ignored by every other form (callers without a holder concept omit it).
+func evaluate(card: CardInstance, holder: CardInstance = null) -> bool:
 	if custom_check.is_valid():
 		return custom_check.call(card)
+	if not relation.is_empty():
+		if holder == null:
+			return false
+		match relation:
+			"self":  return card == holder
+			"ally":  return card.owner == holder.owner
+			"enemy": return card.owner != holder.owner
+		return false
 	if not status_id.is_empty():
 		return (card.find_status(status_id) != null) == present
 	if not composition.is_empty():

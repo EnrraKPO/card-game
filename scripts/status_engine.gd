@@ -29,14 +29,17 @@ static func modifier_bonus(inst: CardInstance, attr: String) -> int:
 # (so a stacked status's effects scale together, and the dispatcher can cue each status's pip as the
 # container before its effects). Returns Array of { "status_id": String, "effects": Array[Effect],
 # "stacks": int }.
-static func triggered_groups(inst: CardInstance, event: Effect.Trigger) -> Array:
+static func triggered_groups(inst: CardInstance, event_id: StringName) -> Array:
 	var out: Array = []
 	if inst == null:
 		return out
 	for si: StatusInstance in inst.statuses:
 		var matched: Array = []
 		for e: Effect in si.data.effects:
-			if (e.kind == Effect.Kind.TRIGGERED or e.kind == Effect.Kind.CUSTOM) and e.trigger == event:
+			# Cheap event-id prefilter; the full activation gate (participant conditions)
+			# runs in EffectSystem.trigger_grouped via the same resolver.
+			if (e.kind == Effect.Kind.TRIGGERED or e.kind == Effect.Kind.CUSTOM) \
+					and e.trigger_resolver().listens(event_id):
 				matched.append(e)
 		if not matched.is_empty():
 			out.append({"status_id": si.data.id, "effects": matched, "stacks": si.stacks})
@@ -47,10 +50,10 @@ static func triggered_groups(inst: CardInstance, event: Effect.Trigger) -> Array
 # decay_phase matches `event` counts down (its stack count for DECAY_STACKS, else its `remaining`
 # timer) and is dropped if it hits zero. Run once per unit per phase, AFTER that phase's effects
 # fire — so e.g. poison deals its damage from the current count, then the count drops.
-static func advance(inst: CardInstance, event: Effect.Trigger) -> void:
+static func advance(inst: CardInstance, event_id: StringName) -> void:
 	var kept: Array = []
 	for si: StatusInstance in inst.statuses:
-		if _decays_on(si, event):
+		if _decays_on(si, event_id):
 			if si.data.decay == StatusData.DECAY_STACKS:
 				si.stacks -= 1
 			elif si.data.decay == StatusData.DECAY_DURATION and si.remaining > 0:
@@ -60,15 +63,15 @@ static func advance(inst: CardInstance, event: Effect.Trigger) -> void:
 	inst.statuses = kept
 
 
-static func _decays_on(si: StatusInstance, event: Effect.Trigger) -> bool:
+static func _decays_on(si: StatusInstance, event_id: StringName) -> bool:
 	# NONE never decays; INTERCEPT decays only via consume_interception (not phase-driven).
 	if si.data.decay == StatusData.DECAY_NONE or si.data.decay == StatusData.DECAY_INTERCEPT:
 		return false
 	match si.data.decay_phase:
-		StatusData.PHASE_TURN_START: return event == Effect.Trigger.ON_TURN_START
-		StatusData.PHASE_ACTIVATE:   return event == Effect.Trigger.ON_ACTIVATE
-		StatusData.PHASE_ATTACK:     return event == Effect.Trigger.ON_ATTACK
-		_:                           return event == Effect.Trigger.ON_TURN_END
+		StatusData.PHASE_TURN_START: return event_id == &"turn_start"
+		StatusData.PHASE_ACTIVATE:   return event_id == &"activate"
+		StatusData.PHASE_ATTACK:     return event_id == &"attack"
+		_:                           return event_id == &"turn_end"
 
 
 static func _is_expired(si: StatusInstance) -> bool:
