@@ -96,6 +96,16 @@ func _ready() -> void:
 	_hand.token_hovered.connect(_highlight_building)
 	_hand.inspect_changed.connect(_on_inspect_changed)
 	_hand.autocast_changed.connect(_on_autocast_changed)
+	# Feeds the hand's level-2 Abilities view: the fielded player units whose abilities are
+	# currently offerable (same rule as CardUI's amber ability cue).
+	_hand.get_ability_units = func() -> Array:
+		var out: Array = []
+		for r in BoardData.ROWS:
+			for c in BoardData.COLS:
+				var inst: CardInstance = _board.player_grid[r][c]
+				if inst != null and inst.has_available_abilities():
+					out.append(inst)
+		return out
 
 	_board.can_autocast = _spell_caster.autocast_drop_ok
 	_board.unit_placed.connect(_on_board_unit_placed)
@@ -136,6 +146,23 @@ func _input(event: InputEvent) -> void:
 				and _spell_caster.is_targeting():
 			_spell_caster.cancel_targeting()
 			get_viewport().set_input_as_handled()
+
+
+# Clicking anywhere OUTSIDE the hand panel while it's past its base level dismisses back to
+# the plain hand view (clearing any inspected card). Consumed GUI events never reach here, so
+# everything interactive — slots (which switch the inspection instead), cards, buttons, the
+# hand panel itself — stays in charge of its own click. Fires on RELEASE because that's where
+# slots/cards act; skipped during spell targeting, which owns stray clicks.
+func _unhandled_input(event: InputEvent) -> void:
+	if not (event is InputEventMouseButton):
+		return
+	var mb := event as InputEventMouseButton
+	if mb.button_index != MOUSE_BUTTON_LEFT or mb.pressed:
+		return
+	if _spell_caster.is_targeting():
+		return
+	if _hand.nav_level() != Hand.NavLevel.HAND:
+		_hand.dismiss_to_hand()
 
 
 # ── Enemy deck / hand ──────────────────────────────────────────────────────────
@@ -785,6 +812,11 @@ func _on_board_slot_pressed(slot: SlotUI) -> void:
 		# placement-related.
 		_hand.deselect()
 		_hand.set_inspected(occupant.card_instance)
+		return
+	# An EMPTY slot is "outside the hand panel" too, but its click is consumed here rather
+	# than reaching _unhandled_input — dismiss a raised hand view the same way.
+	if _hand.nav_level() != Hand.NavLevel.HAND:
+		_hand.dismiss_to_hand()
 		return
 	var card := _hand.selected()
 	if card == null:

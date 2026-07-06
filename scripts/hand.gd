@@ -22,20 +22,33 @@ signal autocast_changed(holder: CardInstance)
 
 # Wires a spell CardUI for drag-casting; injected by combat (SpellCaster.wire_spell_card).
 var wire_spell_card: Callable
+# The fielded player units with a currently offerable ability (func() -> Array[CardInstance]);
+# injected by combat — feeds the level-2 Abilities view.
+var get_ability_units: Callable
 # Card selection is only honoured while the orchestrator has placement input enabled
 # (i.e. during the player's placement phase). Toggled via set_input_enabled().
 var selection_enabled: bool = false
 
+# The hand panel's navigation levels: the plain hand row, the Abilities list (fielded units
+# with an offerable ability, an activation menu), and the single-unit inspection view. One
+# always-visible button column drives them (see _set_level); the panel's height never changes.
+enum NavLevel { HAND, ABILITIES, INSPECT }
+
 var _draw_pile: Array  = []  # Array[CardInstance]
 var _hand_cards: Array = []  # Array[CardUI]
 var _gen_cards: Array  = []  # Array[CardUI] — rook-generated tokens, this turn only
+var _ability_entries: Array = []  # Array[CardUI] — the level-2 Abilities view's entries
 var _selected: CardUI  = null
 var _inspected: CardInstance = null
+var _nav_level: NavLevel = NavLevel.HAND
 
 var _hand_box: BoxContainer
 var _gen_box: BoxContainer
+var _abilities_box: BoxContainer
 var _desc_panel: PanelContainer
 var _back_btn: Button
+var _inspect_abilities_btn: Button
+var _back_abilities_btn: Button
 var _desc_hbox: HBoxContainer
 var _desc_name_lbl: Label
 var _desc_text_lbl: Label
@@ -107,6 +120,18 @@ func build_into(parent: Control) -> void:
 	# The preview CardUI (art + frame) is inserted as _desc_hbox's first child fresh on every
 	# _rebuild_inspect_view call — see there for why it's rebuilt rather than reused in place.
 
+	# A modest inset around the text column: at INSPECT the preview card used to be the only
+	# thing keeping the name off the panel edge, and at ABILITIES (no preview — the sidebar
+	# shows the level hint) the text sat flush against the panel's left edge.
+	var desc_text_wrap := MarginContainer.new()
+	desc_text_wrap.add_theme_constant_override("margin_left", 14)
+	desc_text_wrap.add_theme_constant_override("margin_top", 10)
+	desc_text_wrap.add_theme_constant_override("margin_right", 10)
+	desc_text_wrap.add_theme_constant_override("margin_bottom", 10)
+	desc_text_wrap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	desc_text_wrap.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_desc_hbox.add_child(desc_text_wrap)
+
 	var desc_vbox := VBoxContainer.new()
 	desc_vbox.custom_minimum_size.x = 260.0   # wide enough that the description rarely wraps
 	# past 2-3 lines — a too-narrow column was forcing enough wrap to blow past the fixed
@@ -116,7 +141,7 @@ func build_into(parent: Control) -> void:
 	# preview's own top alignment below — SHRINK_CENTER here (short text, tall box) floated the
 	# whole column in the middle with dead space above/below it, reading as "shrunk".
 	desc_vbox.add_theme_constant_override("separation", 12)
-	_desc_hbox.add_child(desc_vbox)
+	desc_text_wrap.add_child(desc_vbox)
 
 	_desc_name_lbl = Label.new()
 	_desc_name_lbl.add_theme_font_size_override("font_size", 24)
@@ -129,24 +154,50 @@ func build_into(parent: Control) -> void:
 	_desc_text_lbl.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	desc_vbox.add_child(_desc_text_lbl)
 
-	# "Back to hand" is its own block at the far right of the sidebar — not a small button sharing
-	# a row with the name label. THE shared chrome button (ScreenUI.action_button) — CHROME_NEUTRAL
-	# is the app's standing color for Back/secondary actions. A genuine inset margin on all four
-	# sides (explicitly asked for), NOT a shrink-to-minimum-and-center — the button still fills
-	# whatever's left inside that margin, so it stays big.
-	var back_wrap := MarginContainer.new()
-	back_wrap.add_theme_constant_override("margin_left", 16)
-	back_wrap.add_theme_constant_override("margin_right", 16)
-	back_wrap.add_theme_constant_override("margin_top", 16)
-	back_wrap.add_theme_constant_override("margin_bottom", 16)
-	back_wrap.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_desc_hbox.add_child(back_wrap)
+	# The navigation button column at the far right of the bar — ALWAYS visible (unlike the
+	# sidebar), one column for every level so the actions live in the same place throughout.
+	# THE shared chrome buttons (ScreenUI.action_button / GlossyButton) — CHROME_NEUTRAL is the
+	# app's standing color for Back/secondary actions. A genuine inset margin on all four sides
+	# (explicitly asked for), NOT a shrink-to-minimum-and-center — the visible buttons still
+	# fill whatever's left inside that margin, SHARING the column height evenly when more than
+	# one shows (all EXPAND_FILL children of one VBox), so they stay big.
+	var nav_wrap := MarginContainer.new()
+	nav_wrap.add_theme_constant_override("margin_left", 16)
+	nav_wrap.add_theme_constant_override("margin_right", 16)
+	nav_wrap.add_theme_constant_override("margin_top", 16)
+	nav_wrap.add_theme_constant_override("margin_bottom", 16)
+	nav_wrap.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	outer_row.add_child(nav_wrap)
 
-	_back_btn = ScreenUI.action_button("← Back to hand", clear_inspected, Vector2(220, 64), 24,
+	var nav_box := VBoxContainer.new()
+	nav_box.add_theme_constant_override("separation", 10)
+	nav_wrap.add_child(nav_box)
+
+	# Level 1's action: open the Abilities list. Same footprint as the Back buttons below so
+	# the column's width never shifts between levels.
+	_inspect_abilities_btn = ScreenUI.action_button("Inspect Abilities", show_abilities,
+			Vector2(220, 64), 24, ScreenUI.CHROME_NEUTRAL)
+	_inspect_abilities_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_inspect_abilities_btn.size_flags_vertical   = Control.SIZE_EXPAND_FILL
+	nav_box.add_child(_inspect_abilities_btn)
+
+	# Levels 2+3: straight back to the plain hand (the original inspection-exit behavior,
+	# routed through _on_back_to_hand only to also cover level 2, where nothing is inspected).
+	_back_btn = ScreenUI.action_button("← Back to hand", _on_back_to_hand, Vector2(220, 64), 24,
 			ScreenUI.CHROME_NEUTRAL)
 	_back_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_back_btn.size_flags_vertical   = Control.SIZE_EXPAND_FILL
-	back_wrap.add_child(_back_btn)
+	_back_btn.visible = false
+	nav_box.add_child(_back_btn)
+
+	# Level 3 only: up one level, back to the Abilities list — shares the column with Back to
+	# hand at half height each.
+	_back_abilities_btn = ScreenUI.action_button("← Back to Abilities", _on_back_to_abilities,
+			Vector2(220, 64), 22, ScreenUI.CHROME_NEUTRAL)
+	_back_abilities_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_back_abilities_btn.size_flags_vertical   = Control.SIZE_EXPAND_FILL
+	_back_abilities_btn.visible = false
+	nav_box.add_child(_back_abilities_btn)
 
 	# The hand row and the ability-token row occupy the same space and are shown one at a time
 	# (see set_inspected/clear_inspected) — never both visible together. Both SHRINK_CENTER
@@ -166,6 +217,14 @@ func build_into(parent: Control) -> void:
 	_gen_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_gen_box.visible = false
 	content.add_child(_gen_box)
+
+	# The level-2 Abilities row — same slot in the content strip as the other two, shown one
+	# at a time (see _set_level).
+	_abilities_box = HBoxContainer.new()
+	_abilities_box.add_theme_constant_override("separation", 12)
+	_abilities_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_abilities_box.visible = false
+	content.add_child(_abilities_box)
 
 
 # ── Draw pile + drawing ──────────────────────────────────────────────────────────
@@ -224,11 +283,22 @@ func refresh() -> void:
 func set_inspected(inst: CardInstance) -> void:
 	_inspected = inst
 	_rebuild_inspect_view()
+	_set_level(NavLevel.INSPECT)
 	inspect_changed.emit(inst)
 
 
-# Leaves the inspect view and restores the normal hand row.
+# Leaves the inspect view and restores the normal hand row (level 1) — the "Back to hand"
+# action, unchanged; "Back to Abilities" tears down the same state but lands on level 2.
 func clear_inspected() -> void:
+	if _inspected == null:
+		return
+	_leave_inspect()
+	_set_level(NavLevel.HAND)
+
+
+# Tears down the inspection state (tokens, preview, sidebar) without deciding where the
+# navigation lands — the two Back actions differ only in the level they return to.
+func _leave_inspect() -> void:
 	if _inspected == null:
 		return
 	_inspected = null
@@ -237,12 +307,88 @@ func clear_inspected() -> void:
 		_desc_preview.queue_free()
 		_desc_preview = null
 	_desc_panel.visible = false
-	_hand_box.visible = true
 	inspect_changed.emit(null)
 
 
 func inspected() -> CardInstance:
 	return _inspected
+
+
+# ── Hand-panel navigation (see NavLevel) ───────────────────────────────────────────
+
+func nav_level() -> NavLevel:
+	return _nav_level
+
+
+# Level 2: the Abilities list — every fielded player unit with a currently OFFERABLE ability
+# (same availability rule as the amber board cue: a tapped unit's tap-costed abilities don't
+# count), as clickable entries that drill into the unit's inspection.
+func show_abilities() -> void:
+	deselect()
+	_leave_inspect()   # reachable from level 3 ("Back to Abilities") — drop that state first
+	_rebuild_abilities_view()
+	# The sidebar doubles as the level's hint (no preview here — that's inspect-only).
+	_desc_name_lbl.text = ""
+	_desc_text_lbl.text = "Click a unit to inspect its abilities."
+	_set_level(NavLevel.ABILITIES)
+
+
+# The outside-click dismissal (see Combat._unhandled_input): any level, straight back to the
+# plain hand row, clearing the inspected card on the way.
+func dismiss_to_hand() -> void:
+	if _inspected != null:
+		clear_inspected()
+	else:
+		_set_level(NavLevel.HAND)
+
+
+func _on_back_to_hand() -> void:
+	dismiss_to_hand()
+
+
+func _on_back_to_abilities() -> void:
+	show_abilities()
+
+
+# One switch for what each level shows: the three content rows swap in the same strip, the
+# nav column's visible buttons re-split its height (Inspect Abilities alone on level 1; Back
+# to hand alone on level 2; both Backs at half height on level 3). The sidebar (_desc_panel)
+# and token row are managed by the inspect enter/leave flows, not here.
+func _set_level(level: NavLevel) -> void:
+	_nav_level = level
+	_hand_box.visible      = level == NavLevel.HAND
+	_abilities_box.visible = level == NavLevel.ABILITIES
+	# The sidebar serves both raised levels: the unit detail at INSPECT (filled by
+	# _rebuild_inspect_view), the "click a unit" hint at ABILITIES (set by show_abilities).
+	_desc_panel.visible    = level != NavLevel.HAND
+	if level != NavLevel.ABILITIES:
+		_clear_ability_entries()
+	_inspect_abilities_btn.visible = level == NavLevel.HAND
+	_back_btn.visible              = level != NavLevel.HAND
+	_back_abilities_btn.visible    = level == NavLevel.INSPECT
+
+
+func _rebuild_abilities_view() -> void:
+	_clear_ability_entries()
+	if not get_ability_units.is_valid():
+		return
+	for inst: CardInstance in get_ability_units.call():
+		var ui := CardUI.create(inst, false)
+		ui.draggable = false   # a menu entry, not the board unit — click inspects, never drags
+		ui.pressed.connect(func(): set_inspected(inst))
+		# Hovering an entry glows its board slot, same affordance as hovering an ability token.
+		ui.mouse_entered.connect(func(): token_hovered.emit(inst, true))
+		ui.mouse_exited.connect(func():  token_hovered.emit(inst, false))
+		_ability_entries.append(ui)
+		_abilities_box.add_child(ui)
+
+
+func _clear_ability_entries() -> void:
+	for ui: CardUI in _ability_entries:
+		if ui.card_instance != null:
+			token_hovered.emit(ui.card_instance, false)
+		ui.queue_free()
+	_ability_entries.clear()
 
 
 # One entry per ability; a tap-costed ability of an already-tapped holder isn't offered at
