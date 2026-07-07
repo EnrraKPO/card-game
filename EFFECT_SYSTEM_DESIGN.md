@@ -5,9 +5,10 @@ Status: STAGES 1 + 2 IMPLEMENTED (stage 1 merged to main; stage 2 on branch
 relation dissolution (self target kind / allegiance conditions / trigger `of` gates),
 fired() channel replacing owner stamping, Tool wording + run-scope affordance (stage 2).
 247/247 green on tests/_runner.tscn; Tool suites ALL PASS.
-Deferred: Tool NATIVE-form emission (allegiance/self/of + status while/tracker editor)
-needs server.js vocab+validation and editors.js, which carry unrelated uncommitted work.
-Stage 3 (composition-as-derived) pending.
+Tool NATIVE-form authoring DONE (stage 2d): standing effect kind + tracker select,
+"Whose event" of-gates, allegiance condition form, server vocab+validation for the new
+schema; the blocking Tool WIP was shelved at the user's request (git stash
+"Tool WIP shelved at user request"). Stage 3 (composition-as-derived) pending.
 Note: the tracker kind classes landed as `ContainerTracker`/`StacksTracker` (a bare
 `Container` inner class hides Godot's native Control class).
 Origin: the `charged.json` bug (a correct `relation: self` condition silently killed a

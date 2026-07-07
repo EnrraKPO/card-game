@@ -152,11 +152,21 @@ const L = {
   },
   // Native targeting kinds (the TargetResolver schema).
   targetKind: {
+    self: 'The holder itself',
     all: 'Every unit matching the conditions',
     auto: 'Auto-pick from matching units',
     manual: 'A unit the player picks',
     manual_slot: 'A slot the player picks (may be empty)',
-    participant: 'An event participant / itself',
+    participant: 'An event participant (origin / destination)',
+  },
+  // Standing-effect vocabulary: what the payload folds into, and the tracker kinds
+  // (the effect's authored lifetime authority — see EffectTracker in the game).
+  standingAttr: {
+    attack: 'Attack', health: 'Max Health', speed: 'Speed', cost: 'Mana cost',
+  },
+  trackerKind: {
+    container: 'its container exists (status active / card fielded)',
+    stacks: 'stacks remain — and the amount SCALES per stack',
   },
   criterion: { nearest: 'nearest to this card', random: 'at random' },
   participant: {
@@ -253,6 +263,16 @@ function signed(n) { return (n > 0 ? '+' : '') + n; }
 function describeEffect(e, ownerNoun) {
   const owner = ownerNoun || 'this';
   if (!e) return '';
+  if (e.trigger && typeof e.trigger === 'object' && e.trigger.kind === 'while') {
+    // STANDING: live while its tracker is, folded into stats at read time.
+    const tgt = e.targets && e.targets.kind === 'all'
+      ? 'every unit' + ((e.targets.conditions || []).length
+          ? ` (${e.targets.conditions.map(describeCondition).join(' and ')})` : '')
+      : `${owner} itself`;
+    const per = e.tracker && e.tracker.kind === 'stacks' ? ' per stack' : '';
+    const attr = e.attribute === 'health' ? 'max Health' : labelOf('attr', e.attribute).split(' (')[0];
+    return `While active: ${signed(e.amount || 0)} ${attr}${per} to ${tgt}.`;
+  }
   const kind = e.kind || (e.key ? 'modifier' : e.intercept ? 'interceptor' : e.custom ? 'custom' : 'triggered');
   if (kind === 'modifier') {
     let s = `Passive: ${labelOf('modKey', e.key)} ${signed(e.amount || 0)}`;
@@ -282,6 +302,8 @@ function describeEffect(e, ownerNoun) {
     } else {
       when = labelOf('event', t.event);
       const gates = [];
+      if (t.of === 'self' || t.origin_of === 'self') gates.push('its own');
+      if (t.destination_of === 'self') gates.push('it is the destination');
       const oc = t.kind === 'dual_event' ? t.origin_conditions : t.conditions;
       if (oc && oc.length)
         gates.push(`origin ${oc.map(describeCondition).join(' and ')}`);
@@ -298,7 +320,8 @@ function describeEffect(e, ownerNoun) {
   if (e.targets && typeof e.targets === 'object') {
     const tg = e.targets;
     const conds = (tg.conditions || []).map(describeCondition).join(' and ');
-    if (tg.kind === 'participant') who = labelOf('participant', tg.participant || 'holder');
+    if (tg.kind === 'self') who = 'itself';
+    else if (tg.kind === 'participant') who = labelOf('participant', tg.participant || 'holder');
     else if (tg.kind === 'auto') who = `${tg.count > 1 ? tg.count + ' units' : 'one unit'} ${labelOf('criterion', tg.criterion || 'nearest')}`;
     else if (tg.kind === 'manual') who = 'a unit the player picks';
     else if (tg.kind === 'manual_slot') who = 'a slot the player picks';

@@ -419,9 +419,12 @@ const TRIGGERS = ['on_play','on_death','on_attack','on_damage_taken','permanent'
 // The native trigger-resolver schema (see scripts/triggers/trigger_resolver.gd).
 const SIMPLE_EVENTS = ['play','death','activate','turn_start','turn_end'];
 const DUAL_EVENTS = ['attack','struck'];
-const RELATIONS = ['self','ally','enemy'];
+const RELATIONS = ['self','ally','enemy'];   // legacy spelling; ally/enemy map to allegiance in-game
+const ALLEGIANCES = ['ally','enemy'];        // side vs the effect's OWNER — the native predicate form
+const PARTICIPANT_GATES = ['self','any'];    // trigger "of" gates (identity is structural, not a condition)
+const TRACKER_KINDS = ['container','stacks'];
 // The native targeting schema (see scripts/triggers/target_resolver.gd).
-const TARGET_KINDS = ['all','auto','manual','manual_slot','participant'];
+const TARGET_KINDS = ['self','all','auto','manual','manual_slot','participant'];
 const CRITERIA = ['nearest','random'];
 const PARTICIPANTS = ['holder','origin','destination'];
 const POLICIES = ['self','single_nearest','single_random','all_enemies','all_allies','all','manual','attack_target','subject','attacker','manual_slot'];
@@ -440,8 +443,20 @@ function validateConditionList(list, where) {
   for (let i = 0; i < (list || []).length; i++) {
     const c = list[i];
     if (c.status) continue;
+    if (c.allegiance) {
+      if (!ALLEGIANCES.includes(c.allegiance)) return `${where} condition ${i + 1}: bad allegiance "${c.allegiance}"`;
+      continue;
+    }
     if (c.relation) {
       if (!RELATIONS.includes(c.relation)) return `${where} condition ${i + 1}: bad relation "${c.relation}"`;
+      continue;
+    }
+    if (c.card_type) {
+      if (!['unit','spell'].includes(c.card_type)) return `${where} condition ${i + 1}: bad card_type "${c.card_type}"`;
+      continue;
+    }
+    if (c.has_element !== undefined) {
+      if (typeof c.has_element !== 'boolean') return `${where} condition ${i + 1}: has_element must be a boolean`;
       continue;
     }
     if (c.composition) {
@@ -466,16 +481,28 @@ function validateTrigger(t, where) {
   if (typeof t !== 'object') return `${where}: trigger must be a string or an object`;
   const kind = String(t.kind || 'event');
   if (kind === 'transient') return null;
+  if (kind === 'while') return null;   // standing: no event, no participants — lifetime is the tracker's
   if (kind === 'event') {
     if (!SIMPLE_EVENTS.includes(String(t.event))) return `${where}: "${t.event}" is not a simple event (${SIMPLE_EVENTS.join('/')})`;
+    if (t.of != null && !PARTICIPANT_GATES.includes(String(t.of))) return `${where}: bad participant gate "of": "${t.of}"`;
     return validateConditionList(t.conditions, `${where} trigger`);
   }
   if (kind === 'dual_event') {
     if (!DUAL_EVENTS.includes(String(t.event))) return `${where}: "${t.event}" is not a dual event (${DUAL_EVENTS.join('/')})`;
+    for (const k of ['origin_of', 'destination_of'])
+      if (t[k] != null && !PARTICIPANT_GATES.includes(String(t[k]))) return `${where}: bad participant gate "${k}": "${t[k]}"`;
     return validateConditionList(t.origin_conditions, `${where} trigger origin`)
         || validateConditionList(t.destination_conditions, `${where} trigger destination`);
   }
   return `${where}: unknown trigger kind "${kind}"`;
+}
+
+// The tracker (standing effects only): the effect's authored lifetime authority.
+function validateTracker(t, where) {
+  if (t == null) return null;   // absent = the container-existence default
+  if (typeof t !== 'object') return `${where}: tracker must be an object`;
+  if (!TRACKER_KINDS.includes(String(t.kind || 'container'))) return `${where}: unknown tracker kind "${t.kind}"`;
+  return null;
 }
 
 // The targets may be a legacy policy string ("targeting_policy") or a native resolver object.
@@ -508,11 +535,21 @@ function validateEffect(e, where) {
     if (terr) return terr;
     if (e.targeting_policy && !POLICIES.includes(e.targeting_policy)) return `${where}: bad targeting_policy`;
   } else {
-    const terr = validateTrigger(e.trigger, where) || validateTargets(e.targets, where);
+    const terr = validateTrigger(e.trigger, where) || validateTargets(e.targets, where)
+        || validateTracker(e.tracker, where);
     if (terr) return terr;
     if (e.targeting_policy && !POLICIES.includes(e.targeting_policy)) return `${where}: bad targeting_policy "${e.targeting_policy}"`;
     if (e.subject && !SUBJECTS.includes(e.subject)) return `${where}: bad subject filter`;
     if (e.attribute && !EFFECT_ATTRS.includes(e.attribute)) return `${where}: bad attribute "${e.attribute}"`;
+    const standing = e.trigger && typeof e.trigger === 'object' && e.trigger.kind === 'while';
+    if (standing) {
+      // Mirrors the game's fail-loud rules (Effect._validate_standing): a standing effect
+      // is a continuous stat fold — nothing else is meaningful on it.
+      if (!e.attribute) return `${where}: a standing (while) effect needs an attribute to fold`;
+      if (e.status && e.status.id) return `${where}: a standing (while) effect cannot apply a status`;
+      const tk = e.targets && typeof e.targets === 'object' ? String(e.targets.kind || 'all') : 'all';
+      if (!['self','all'].includes(tk)) return `${where}: standing targets must be "self" or "all"`;
+    }
     const hasPayload = e.attribute || (e.status && e.status.id);
     if (!hasPayload) return `${where}: effect does nothing — set an attribute change or a status to apply`;
   }
@@ -657,6 +694,9 @@ function gameVocab() {
     simpleEvents: SIMPLE_EVENTS,
     dualEvents: DUAL_EVENTS,
     relations: RELATIONS,
+    allegiances: ALLEGIANCES,
+    participantGates: PARTICIPANT_GATES,
+    trackerKinds: TRACKER_KINDS,
     targetKinds: TARGET_KINDS,
     criteria: CRITERIA,
     participants: PARTICIPANTS,

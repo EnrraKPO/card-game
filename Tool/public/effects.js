@@ -5,13 +5,19 @@
 'use strict';
 
 const EFFECT_KINDS = [
-  { value: 'triggered', label: 'Triggered — reacts to an event' },
-  { value: 'modifier', label: 'Modifier — passive number change' },
+  { value: 'triggered', label: 'Triggered — reacts to an event (when)' },
+  { value: 'standing', label: 'Standing — stat change while active (while)' },
+  { value: 'modifier', label: 'Modifier — run-wide number change' },
   { value: 'interceptor', label: 'Interceptor — rewrites damage before it lands' },
   { value: 'custom', label: 'Custom — a named code hook' },
 ];
 
+function isStanding(e) {
+  return e.trigger && typeof e.trigger === 'object' && e.trigger.kind === 'while';
+}
+
 function effectKindOf(e) {
+  if (isStanding(e)) return 'standing';
   return e.kind || (e.key != null ? 'modifier' : e.intercept != null ? 'interceptor' : e.custom != null ? 'custom' : 'triggered');
 }
 
@@ -19,18 +25,25 @@ function effectKindOf(e) {
 function coerceEffectKind(e, kind) {
   for (const k of Object.keys(e)) delete e[k];
   if (kind === 'modifier') Object.assign(e, { kind: 'modifier', key: 'unit.attack', amount: 1 });
+  else if (kind === 'standing') Object.assign(e, { trigger: { kind: 'while' },
+    targets: { kind: 'self' }, tracker: { kind: 'container' }, attribute: 'attack', amount: 1 });
   else if (kind === 'interceptor') Object.assign(e, { kind: 'interceptor', intercept: 'damage', channel: 'attack', role: 'target', op: 'mul', amount: 0 });
   else if (kind === 'custom') Object.assign(e, { kind: 'custom', custom: 'rallying_cry',
-    trigger: { kind: 'dual_event', event: 'attack', origin_conditions: [{ relation: 'self' }], destination_conditions: [] },
-    targets: { kind: 'participant', participant: 'holder', conditions: [] } });
-  else Object.assign(e, { trigger: { kind: 'event', event: 'play', conditions: [{ relation: 'self' }] },
-    targets: { kind: 'participant', participant: 'holder', conditions: [] },
+    trigger: { kind: 'dual_event', event: 'attack', origin_of: 'self', origin_conditions: [], destination_conditions: [] },
+    targets: { kind: 'self', conditions: [] } });
+  else Object.assign(e, { trigger: { kind: 'event', event: 'play', of: 'self', conditions: [] },
+    targets: { kind: 'self', conditions: [] },
     attribute: 'health', amount: -1 });
 }
 
-function defaultEffect() {
-  return { trigger: { kind: 'event', event: 'play', conditions: [{ relation: 'self' }] },
-    targets: { kind: 'participant', participant: 'holder', conditions: [] },
+// Context-aware blank effect: a status most often wants a standing per-stack buff on its
+// carrier; everything else starts as the classic on-play triggered effect.
+function defaultEffect(ctx) {
+  if (ctx && ctx.ownerNoun === 'the carrier')
+    return { trigger: { kind: 'while' }, targets: { kind: 'self' },
+      tracker: { kind: 'stacks' }, attribute: 'attack', amount: 1 };
+  return { trigger: { kind: 'event', event: 'play', of: 'self', conditions: [] },
+    targets: { kind: 'self', conditions: [] },
     attribute: 'attack', amount: 1 };
 }
 
@@ -39,24 +52,60 @@ function defaultEffect() {
 // exactly the way the game parses it (see TriggerResolver.from_legacy).
 const LEGACY_TRIGGER_EVENTS = {
   on_play: ['play', false], on_death: ['death', false], on_attack: ['attack', true],
-  on_damage_taken: ['struck', true], permanent: ['play', false],
+  on_damage_taken: ['struck', true],
   on_turn_start: ['turn_start', false], on_turn_end: ['turn_end', false], on_activate: ['activate', false],
 };
 
+// Native lists authored before the owner model spelled identity as a {relation: "self"}
+// CONDITION; the game now extracts it into structure. Do the same on edit: consume any
+// identity entry, report whether one was there, and convert ally/enemy onto allegiance.
+function extractIdentity(list) {
+  let found = false;
+  const out = [];
+  for (const c of list || []) {
+    if (c && c.relation === 'self') { found = true; continue; }
+    if (c && (c.relation === 'ally' || c.relation === 'enemy')) { out.push({ allegiance: c.relation }); continue; }
+    out.push(c);
+  }
+  return { found, out };
+}
+
 function normalizeTrigger(e) {
-  if (e.trigger && typeof e.trigger === 'object') return;
+  if (e.trigger && typeof e.trigger === 'object') {
+    const t = e.trigger;
+    if (t.kind === 'event') {
+      const r = extractIdentity(t.conditions);
+      if (r.found) t.of = 'self';
+      t.conditions = r.out;
+    } else if (t.kind === 'dual_event') {
+      const ro = extractIdentity(t.origin_conditions);
+      const rd = extractIdentity(t.destination_conditions);
+      if (ro.found) t.origin_of = 'self';
+      if (rd.found) t.destination_of = 'self';
+      t.origin_conditions = ro.out;
+      t.destination_conditions = rd.out;
+    }
+    return;
+  }
+  if (e.trigger === 'permanent') {   // the legacy "permanent" trigger IS the standing kind
+    e.trigger = { kind: 'while' };
+    delete e.subject;
+    delete e.subject_elements;
+    return;
+  }
   const [event, isDual] = LEGACY_TRIGGER_EVENTS[e.trigger || 'on_play'] || ['play', false];
+  // Legacy subject: "self" is the structural participant gate; ally/enemy are allegiance.
+  const gateSelf = e.subject !== 'any' && e.subject !== 'ally' && e.subject !== 'enemy';
   const conds = [];
-  if (e.subject === 'ally' || e.subject === 'enemy') conds.push({ relation: e.subject });
-  else if (e.subject !== 'any') conds.push({ relation: 'self' });
+  if (e.subject === 'ally' || e.subject === 'enemy') conds.push({ allegiance: e.subject });
   if (e.subject_elements && e.subject_elements.length) conds.push({ composition: e.subject_elements.slice() });
   if (isDual) {
     // the legacy subject was the attacker for on_attack, the struck unit for on_damage_taken
     e.trigger = e.trigger === 'on_damage_taken'
-      ? { kind: 'dual_event', event, origin_conditions: [], destination_conditions: conds }
-      : { kind: 'dual_event', event, origin_conditions: conds, destination_conditions: [] };
+      ? { kind: 'dual_event', event, ...(gateSelf ? { destination_of: 'self' } : {}), origin_conditions: [], destination_conditions: conds }
+      : { kind: 'dual_event', event, ...(gateSelf ? { origin_of: 'self' } : {}), origin_conditions: conds, destination_conditions: [] };
   } else {
-    e.trigger = { kind: 'event', event, conditions: conds };
+    e.trigger = { kind: 'event', event, ...(gateSelf ? { of: 'self' } : {}), conditions: conds };
   }
   delete e.subject;
   delete e.subject_elements;
@@ -66,16 +115,26 @@ function normalizeTrigger(e) {
 // the way the game maps it (TargetResolver.from_legacy — implicit scopes become relation
 // conditions; `subject` follows the normalized trigger's event).
 function normalizeTargets(e) {
-  if (e.targets && typeof e.targets === 'object') { delete e.conditions; delete e.targeting_policy; return; }
+  if (e.targets && typeof e.targets === 'object') {
+    // pre-owner-model native data: identity conditions collapse into the self kind
+    const r = extractIdentity(e.targets.conditions);
+    e.targets.conditions = r.out;
+    if (r.found && (e.targets.kind === 'all' || e.targets.kind == null)) e.targets.kind = 'self';
+    if (e.targets.kind === 'participant' && (e.targets.participant || 'holder') === 'holder') {
+      e.targets.kind = 'self';   // canonical spelling
+      delete e.targets.participant;
+    }
+    delete e.conditions; delete e.targeting_policy; return;
+  }
   const conds = (e.conditions || []).slice();
   const p = e.targeting_policy || 'self';
   const subjectIsDestination = e.trigger && typeof e.trigger === 'object' && e.trigger.event === 'struck';
   const map = {
-    self: { kind: 'participant', participant: 'holder', conditions: conds },
-    single_nearest: { kind: 'auto', criterion: 'nearest', conditions: [{ relation: 'enemy' }, ...conds] },
-    single_random: { kind: 'auto', criterion: 'random', conditions: [{ relation: 'enemy' }, ...conds] },
-    all_enemies: { kind: 'all', conditions: [{ relation: 'enemy' }, ...conds] },
-    all_allies: { kind: 'all', conditions: [{ relation: 'ally' }, ...conds] },
+    self: { kind: 'self', conditions: conds },
+    single_nearest: { kind: 'auto', criterion: 'nearest', conditions: [{ allegiance: 'enemy' }, ...conds] },
+    single_random: { kind: 'auto', criterion: 'random', conditions: [{ allegiance: 'enemy' }, ...conds] },
+    all_enemies: { kind: 'all', conditions: [{ allegiance: 'enemy' }, ...conds] },
+    all_allies: { kind: 'all', conditions: [{ allegiance: 'ally' }, ...conds] },
     all: { kind: 'all', conditions: conds },
     manual: { kind: 'manual', conditions: conds },
     manual_slot: { kind: 'manual_slot', conditions: conds },
@@ -92,7 +151,7 @@ function normalizeTargets(e) {
 function retargetTargets(e, kindKey) {
   const conds = (e.targets && e.targets.conditions) || [];
   if (kindKey === 'auto') e.targets = { kind: 'auto', criterion: 'nearest', count: 1, conditions: conds };
-  else if (kindKey === 'participant') e.targets = { kind: 'participant', participant: 'holder', conditions: conds };
+  else if (kindKey === 'participant') e.targets = { kind: 'participant', participant: 'origin', conditions: conds };
   else e.targets = { kind: kindKey, conditions: conds };
 }
 
@@ -111,36 +170,30 @@ const COND_KINDS = [
   { value: 'attribute', label: 'Stat check' },
   { value: 'status', label: 'Has / lacks a status' },
   { value: 'composition', label: 'Made of / not made of' },
-  { value: 'relation', label: 'Relation — identity or side' },
+  { value: 'allegiance', label: 'Side — ally or enemy of this effect' },
 ];
 
 function condKindOf(c) {
-  return (c.relation != null || c.allegiance != null) ? 'relation'
+  return (c.allegiance != null || c.relation != null) ? 'allegiance'
     : c.status != null ? 'status'
     : c.composition != null ? 'composition' : 'attribute';
 }
 
-// Run-scope containers (relic / upgrade) have an OWNER (the player) but no HOLDER unit —
-// identity ("itself") is inexpressible there and must not be offered. Side relations
-// (ally/enemy) compare against the effect's owner and work everywhere.
-function isRunScope(ctx) {
-  return ctx.ownerNoun === 'this relic' || ctx.ownerNoun === 'this upgrade';
+// Conditions are PREDICATES only. Identity ("the holder itself") is never one — it is
+// picked structurally (the "self" target kind / the trigger's "Whose action" gate).
+// Allegiance compares the tested unit's SIDE against the effect's OWNER, which every
+// container has (a relic's owner is the player) — so it works even with no holder unit.
+function allegianceOptions() {
+  return [
+    { value: 'ally', label: 'on this effect’s own side (ally — holder included)' },
+    { value: 'enemy', label: 'on the opposite side (enemy)' },
+  ];
 }
 
-function relationOptions(ctx) {
-  const noun = ctx.ownerNoun || 'the holder';
-  const opts = [];
-  if (!isRunScope(ctx)) opts.push({ value: 'self', label: `${noun} itself` });
-  opts.push({ value: 'ally', label: 'on this effect’s own side (ally — holder included)' });
-  opts.push({ value: 'enemy', label: 'on the opposite side (enemy)' });
-  return opts;
-}
-
-// The relation select edits whichever key the condition carries. Legacy data says
-// "relation"; the game maps ally/enemy onto owner-based allegiance and extracts "self"
-// into structure (self targeting / the trigger participant gate) — see EffectCondition.
+// Edits whichever key the condition carries: native data says "allegiance", legacy data
+// "relation" (the game maps it losslessly; the editor converges on allegiance on rebuild).
 function relationValueKey(c) {
-  return c.allegiance != null ? 'allegiance' : 'relation';
+  return c.relation != null ? 'relation' : 'allegiance';
 }
 
 function renderCondition(c, ctx, onChange, onRemove) {
@@ -155,7 +208,7 @@ function renderCondition(c, ctx, onChange, onRemove) {
         for (const k of Object.keys(c)) delete c[k];
         if (e.target.value === 'status') Object.assign(c, { status: (ctx.statusIds()[0] || 'poison'), present: true });
         else if (e.target.value === 'composition') Object.assign(c, { composition: ['king'], present: false });
-        else if (e.target.value === 'relation') Object.assign(c, { relation: isRunScope(ctx) ? 'ally' : 'self' });
+        else if (e.target.value === 'allegiance') Object.assign(c, { allegiance: 'ally' });
         else Object.assign(c, { attribute: 'health', comparator: 'lte', value: 3 });
         onChange(); renderInto();
       },
@@ -165,9 +218,9 @@ function renderCondition(c, ctx, onChange, onRemove) {
     const row = el('div', { class: 'frow' });
     row.append(fld('Condition type', kindSel));
     const k = condKindOf(c);
-    if (k === 'relation') {
+    if (k === 'allegiance') {
       row.append(
-        fld('Must be', selectInput(c, relationValueKey(c), relationOptions(ctx), onChange)),
+        fld('Must be', selectInput(c, relationValueKey(c), allegianceOptions(), onChange)),
       );
     } else if (k === 'status') {
       row.append(
@@ -237,6 +290,23 @@ function conditionSection(e, ctx, localChange, labelWhenSome) {
   return condWrap;
 }
 
+// The participant-gate select ("of" / "origin_of" / "destination_of"): identity with the
+// holder is a structural yes/no, never a condition. Absent key = anyone.
+function ofSelect(t, key, ctx, onChange) {
+  const holder = { v: t[key] === 'self' ? 'self' : 'any' };
+  const sel = el('select', {
+    onchange: e => {
+      if (e.target.value === 'self') t[key] = 'self';
+      else delete t[key];
+      onChange();
+    },
+  });
+  const noun = ctx.ownerNoun || 'the holder';
+  sel.append(el('option', { value: 'any', text: 'anyone', selected: holder.v === 'any' }));
+  sel.append(el('option', { value: 'self', text: `${noun} itself only`, selected: holder.v === 'self' }));
+  return sel;
+}
+
 function originHint(event) {
   const noun = labelOf('eventOrigin', event);
   return noun && noun !== event ? ` (${noun.toLowerCase()})` : '';
@@ -261,8 +331,7 @@ function participantConditionSection(obj, key, ctx, localChange, labelText) {
       }));
     });
     wrap.append(el('button', { class: 'ghost small list-add', text: '+ add condition', onclick: () => {
-      // run-scope content has no holder unit, so identity ("self") is inexpressible there
-      obj[key].push({ relation: isRunScope(ctx) ? 'ally' : 'self' });
+      obj[key].push({ allegiance: 'ally' });
       localChange(); render();
     } }));
   };
@@ -290,7 +359,26 @@ function renderEffect(e, ctx, onChange, onRemove) {
     const body = el('div', { class: 'fx-body' });
     card.append(body);
 
-    if (kind === 'modifier') {
+    if (kind === 'standing') {
+      // A STANDING effect: live while its tracker is, folded into stats at read time.
+      normalizeTargets(e);
+      if (!e.tracker) e.tracker = { kind: 'container' };
+      const tgHolder = { kind: e.targets.kind };
+      body.append(el('div', { class: 'frow' },
+        fld('Stat', selectInput(e, 'attribute', ['attack', 'health', 'speed', 'cost']
+          .map(a => ({ value: a, label: labelOf('standingAttr', a) })), localChange),
+          'health here means MAX health — standing effects never write current health'),
+        fld('By', numInput(e, 'amount', localChange, { float: true, step: 'any' }), 'per tracker intensity (× stacks)', 'narrow'),
+        fld('Applies to', selectInput(tgHolder, 'kind', [
+          { value: 'self', label: `${ctx.ownerNoun || 'the holder'} itself` },
+          { value: 'all', label: 'every unit matching the conditions' },
+        ], () => { retargetTargets(e, tgHolder.kind); onChange(); renderInto(); })),
+        fld('Lives as long as', selectInput(e.tracker, 'kind', (ctx.vocab.trackerKinds || ['container', 'stacks'])
+          .map(k => ({ value: k, label: labelOf('trackerKind', k) })), localChange)),
+      ));
+      if (e.targets.kind !== 'self')
+        body.append(participantConditionSection(e.targets, 'conditions', ctx, localChange, 'TARGETS must satisfy:'));
+    } else if (kind === 'modifier') {
       const row = el('div', { class: 'frow' },
         fld('What number', selectInput(e, 'key', ctx.vocab.modifierKeys.map(k => ({ value: k, label: labelOf('modKey', k) })), localChange),
           'unit.* / card.cost fold into matching cards; the rest are run-wide numbers'),
@@ -371,19 +459,31 @@ function renderEffect(e, ctx, onChange, onRemove) {
         ));
       } else if (tg.kind === 'participant') {
         rows.push(el('div', { class: 'frow' },
-          fld('Which participant', selectInput(tg, 'participant', (ctx.vocab.participants || ['holder', 'origin', 'destination'])
+          // "holder" is spelled as the self target kind now — not offered here.
+          fld('Which participant', selectInput(tg, 'participant', (ctx.vocab.participants || ['origin', 'destination'])
+            .filter(p => p !== 'holder')
             .map(p => ({ value: p, label: labelOf('participant', p) })), localChange),
             'origin/destination need an event — nothing is targeted on plain use'),
         ));
       }
       // The two slots are the ABSTRACT participants — same for every event. The event-specific
       // noun is only a parenthetical hint, so the UI teaches the model instead of hiding it.
+      // Each watched slot carries the structural IDENTITY gate ("Whose action" — the
+      // participant must BE the holder) separately from its predicate conditions.
       if (t.kind === 'event') {
+        rows.push(el('div', { class: 'frow' },
+          fld('Whose event', ofSelect(t, 'of', ctx, localChange),
+            'identity is structural — conditions below are predicates on the origin'),
+        ));
         rows.push(participantConditionSection(t, 'conditions', ctx, localChange,
           'ORIGIN' + originHint(t.event) + ' must satisfy:'));
       } else if (t.kind === 'dual_event') {
         if (!t.origin_conditions) t.origin_conditions = [];
         if (!t.destination_conditions) t.destination_conditions = [];
+        rows.push(el('div', { class: 'frow' },
+          fld('Origin is', ofSelect(t, 'origin_of', ctx, localChange)),
+          fld('Destination is', ofSelect(t, 'destination_of', ctx, localChange)),
+        ));
         rows.push(participantConditionSection(t, 'origin_conditions', ctx, localChange,
           'ORIGIN' + originHint(t.event) + ' must satisfy:'));
         rows.push(participantConditionSection(t, 'destination_conditions', ctx, localChange,
@@ -445,7 +545,7 @@ function renderEffectList(container, effects, ctx, onChange) {
       }));
     });
     container.append(el('button', { class: 'ghost small list-add', text: '+ add effect', onclick: () => {
-      effects.push(defaultEffect()); onChange(); renderInto();
+      effects.push(defaultEffect(ctx)); onChange(); renderInto();
     } }));
   }
   renderInto();
@@ -455,13 +555,17 @@ function renderEffectList(container, effects, ctx, onChange) {
 function cleanEffectForDeploy(e) {
   const out = JSON.parse(JSON.stringify(e));
   if (out.trigger && typeof out.trigger === 'object') {
-    // native resolver form: prune empty participant lists; the legacy subject keys never
-    // coexist with it (normalizeTrigger folded them in)
+    // native resolver form: prune empty participant lists and "anyone" gates; the legacy
+    // subject keys never coexist with it (normalizeTrigger folded them in)
     for (const k of ['conditions', 'origin_conditions', 'destination_conditions'])
       if (out.trigger[k] && !out.trigger[k].length) delete out.trigger[k];
+    for (const k of ['of', 'origin_of', 'destination_of'])
+      if (out.trigger[k] != null && out.trigger[k] !== 'self') delete out.trigger[k];
     delete out.subject;
     delete out.subject_elements;
   }
+  if (out.tracker && String(out.tracker.kind || 'container') === 'container')
+    delete out.tracker;   // the container-existence default — absent means exactly that
   if (out.targets && typeof out.targets === 'object') {
     if (out.targets.conditions && !out.targets.conditions.length) delete out.targets.conditions;
     if (out.targets.count === 1) delete out.targets.count;
