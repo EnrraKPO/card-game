@@ -63,6 +63,23 @@ EffectContainer:
                                      # (glint pip/chip, nothing) — see §2.2 note
 ```
 
+**Owner (SETTLED, stage 2).** Every container also carries an `owner()` — a SIDE, the
+allegiance anchor — distinct from `holder()`, the identity anchor. A status FORWARDS its
+carrier's owner (ruling: carrier-forwarded, not applier-owned; an applier-owned variant
+would be an explicit authored opt-out if ever designed). Relics/upgrades: owner = the
+player, holder = null. Consequences — the relation condition form is DISSOLVED:
+  • `self` was targeting in a condition costume → becomes the `self` TARGET KIND
+    ({"targets": {"kind": "self"}} = the holder), and the trigger resolver's participant
+    gate (whose event I react to) becomes a structural field, not a condition.
+  • `ally`/`enemy` were allegiance predicates → become owner-based ALLEGIANCE conditions,
+    valid in EVERY container (a relic's "your units" = ally — replaces the hardcoded
+    owner-0 run-scope guard with authorable data; legacy shim synthesizes it).
+  • `ally` includes the holder itself (same-side check; do not "fix" this later).
+  • Only `self` is inexpressible without a holder — the Tool hides it for run-scope
+    content; the loader rejects it loudly.
+  • Conditions then contain only true predicates (stat / status / composition /
+    allegiance) and evaluate with (tested unit, owner) — no holder parameter.
+
 **Container ≠ Tracker.** The container does NOT provide the tracker — the tracker is
 authored on the effect (§2.3). A container's obligations end at the three members above.
 Its *existence* is passively observable, and a tracker MAY bind to it when the effect
