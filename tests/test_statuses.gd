@@ -13,6 +13,8 @@ func run() -> void:
 	_barrier()
 	_poison_tick_and_decay()
 	_modifier_status_and_expiry()
+	_charged_standing_scaling()
+	_standing_transparency()
 
 
 func _barrier() -> void:
@@ -115,3 +117,70 @@ func _modifier_status_and_expiry() -> void:
 	StatusEngine.advance(u, &"turn_end")
 	check(u.find_status("empowered") == null, "empowered expires after its duration")
 	check_eq(u.get_attribute("attack"), atk0, "expired status stops folding — no teardown needed")
+
+
+func _charged_standing_scaling() -> void:
+	# Charged is the first NATIVE standing effect: {"trigger": {"kind": "while"}} + a
+	# relation:self targeting condition + the `stacks` tracker. This pins the whole unified
+	# path — including the original bug (a holder-aware relation condition on a status's
+	# standing effect must WORK, not silently fail closed).
+	var u := unit("pawn")
+	var atk0 := u.get_attribute("attack")
+	var spd0 := u.get_attribute("speed")
+	u.apply_status("charged", Effect.STATUS_DURATION_DEFAULT, 3, null)
+	check_eq(u.get_attribute("attack"), atk0 + 3, "charged folds +1 attack per stack (3)")
+	check_eq(u.get_attribute("speed"), spd0 + 3, "charged folds +1 speed per stack (3)")
+
+	# Stack decay (turn_end): the contribution shrinks live — nothing was written anywhere.
+	StatusEngine.advance(u, &"turn_end")
+	check_eq(u.get_attribute("attack"), atk0 + 2, "one decayed stack shrinks the fold to +2")
+
+	# Re-application accumulates (stacking: "stack"), clamped by max_stacks.
+	u.apply_status("charged", Effect.STATUS_DURATION_DEFAULT, 2, null)
+	check_eq(u.get_attribute("attack"), atk0 + 4, "re-applying charged stacks the intensity (2+2)")
+
+	# PULL validity: zero the stacks WITHOUT running any cleanup — the tracker must already
+	# read invalid at the next get_attribute (removal is hygiene, never correctness).
+	var si := u.find_status("charged")
+	si.stacks = 0
+	check_eq(u.get_attribute("attack"), atk0, "a dead tracker is inert before cleanup runs")
+	check_eq(u.get_attribute("speed"), spd0, "…for every attribute it fed")
+
+	# And full expiry through the normal path leaves no residue.
+	var u2 := unit("pawn")
+	u2.apply_status("charged", Effect.STATUS_DURATION_DEFAULT, 1, null)
+	StatusEngine.advance(u2, &"turn_end")
+	check(u2.find_status("charged") == null, "charged expires when its last stack decays")
+	check_eq(u2.get_attribute("attack"), atk0, "expiry leaves base attack untouched")
+
+
+func _standing_transparency() -> void:
+	# Container transparency: the SAME standing effect payload contributes identically from
+	# a status and from the run set (relic/upgrade path) — containers are invisible at
+	# effect level. Native form on the status; legacy modifier form on the run set.
+	var via_status := StatusData.from_dict({"id": "_test_transparent", "effects": [
+			{"trigger": {"kind": "while"},
+				"targets": {"kind": "all", "conditions": [{"relation": "self"}]},
+				"attribute": "attack", "amount": 2}]})
+	var a := unit("pawn")
+	a.statuses.append(StatusInstance.make(via_status, -1, 1, null))
+	var via_status_val := a.get_attribute("attack")   # measured BEFORE the run buff exists
+	var b := unit("pawn")
+	GameData.current_modifiers.add(Effect.from_dict(
+			{"kind": "modifier", "key": "unit.attack", "amount": 2}))
+	var via_run_val := b.get_attribute("attack")
+	GameData.current_modifiers = ModifierSet.new()   # restore the clean env
+	check_eq(via_status_val, via_run_val, "one payload, two containers, identical result")
+	check_eq(via_status_val, a.data.attack + 2, "status-held native standing effect lands (+2)")
+
+	# A standing "health" payload feeds MAX health (when-effects on health write CURRENT).
+	var hp_status := StatusData.from_dict({"id": "_test_vital", "effects": [
+			{"trigger": {"kind": "while"},
+				"targets": {"kind": "all", "conditions": [{"relation": "self"}]},
+				"attribute": "health", "amount": 3}]})
+	var c := unit("pawn")
+	var max0 := c.get_attribute("max_health")
+	var cur0 := c.current_health
+	c.statuses.append(StatusInstance.make(hp_status, -1, 1, null))
+	check_eq(c.get_attribute("max_health"), max0 + 3, "standing health payload raises max health")
+	check_eq(c.current_health, cur0, "…and never writes current health")

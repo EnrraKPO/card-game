@@ -10,6 +10,10 @@ var remaining: int = -1           # rounds left; -1 = lasts the whole combat (ne
 var stacks: int = 1
 var source: CardInstance = null   # who applied it (nullable; for future source-linked durations)
 
+# Trackers bound to this instance, one per standing effect, created lazily on first read
+# (the go-live moment) and never rebuilt — a tracker's death is one-way. See EffectTracker.
+var _trackers: Dictionary = {}
+
 
 static func make(p_data: StatusData, p_remaining: int, p_stacks: int, p_source: CardInstance) -> StatusInstance:
 	var si := StatusInstance.new()
@@ -18,6 +22,22 @@ static func make(p_data: StatusData, p_remaining: int, p_stacks: int, p_source: 
 	si.stacks = p_stacks
 	si.source = p_source
 	return si
+
+
+# The EffectTracker existence probe (duck-typed — see EffectTracker.Container): this
+# status still exists while its decay state says so. Pull-checked on every read, so a
+# not-yet-removed expired instance is already inert.
+func exists() -> bool:
+	return not StatusEngine.is_expired(self)
+
+
+# The lifetime authority for one of this status's standing effects, bound to this
+# instance. The binding is resolved privately by the tracker (design hard rule: neither
+# the effect nor the container knows the other's type).
+func tracker_for(e: Effect) -> EffectTracker:
+	if not _trackers.has(e):
+		_trackers[e] = EffectTracker.bind(e.tracker_spec, self)
+	return _trackers[e]
 
 
 # The headline number shown for this status: the stack COUNT for a count-decay status (poison's

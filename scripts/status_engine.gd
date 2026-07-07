@@ -4,25 +4,12 @@ extends RefCounted
 # The operator for Statuses — the cross-cutting logic that keeps StatusData/StatusInstance (the
 # state on a CardInstance) participating in the SAME effect pipeline as native card effects, with
 # no per-status code:
-#   • modifier_bonus    — folds a card's status MODIFIER effects into CardInstance.get_attribute
-#                         at read-time (mirroring GameData.card_bonus), scaled by stack count.
 #   • triggered_groups  — a card's active statuses (grouped) that have TRIGGERED/CUSTOM effects
 #                         for an event, so EffectSystem.trigger fires them alongside the card's own.
 #   • advance           — the per-round countdown: decrement ROUNDS statuses, drop expired.
-# See StatusData, StatusInstance, EffectSystem.
-
-
-# Summed delta of a card's status MODIFIER effects (card-scoped) for one attribute, each scaled
-# by its status's stack count. Read-time, so expiry/removal needs no teardown.
-static func modifier_bonus(inst: CardInstance, attr: String) -> int:
-	var total := 0
-	for si: StatusInstance in inst.statuses:
-		for e: Effect in si.data.effects:
-			# The carrier is the status modifier's target — gated by the same
-			# filter + conditions as run-wide card modifiers (see Effect.matches_card).
-			if e.is_card_modifier() and e.card_attribute() == attr and e.matches_card(inst):
-				total += e.amount_int() * si.stacks
-	return total
+# (Status-held STANDING effects fold into get_attribute through LiveEffects — the one
+# evaluator shared with every other container; nothing status-specific remains on that path.)
+# See StatusData, StatusInstance, EffectSystem, LiveEffects.
 
 
 # A card's active statuses that have TRIGGERED/CUSTOM effects matching an event, grouped per status
@@ -58,7 +45,7 @@ static func advance(inst: CardInstance, event_id: StringName) -> void:
 				si.stacks -= 1
 			elif si.data.decay == StatusData.DECAY_DURATION and si.remaining > 0:
 				si.remaining -= 1
-		if not _is_expired(si):
+		if not is_expired(si):
 			kept.append(si)
 	inst.statuses = kept
 
@@ -74,7 +61,9 @@ static func _decays_on(si: StatusInstance, event_id: StringName) -> bool:
 		_:                           return event_id == &"turn_end"
 
 
-static func _is_expired(si: StatusInstance) -> bool:
+# Whether a status instance's decay state says it is over. Public: StatusInstance.exists()
+# (the tracker existence probe) pull-checks this on every read — removal is hygiene only.
+static func is_expired(si: StatusInstance) -> bool:
 	if si.data.decay == StatusData.DECAY_STACKS or si.data.decay == StatusData.DECAY_INTERCEPT:
 		return si.stacks <= 0
 	if si.data.decay == StatusData.DECAY_DURATION:

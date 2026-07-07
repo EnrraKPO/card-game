@@ -24,7 +24,8 @@ var modifiers: Dictionary = {}  # attribute id -> cumulative int delta
 var charms: Array = []
 # Live Statuses on this card (Array[StatusInstance]) — runtime buffs/debuffs/periodic effects
 # applied during combat and removed on a timer. Never serialized (rebuilt each fight). Their
-# effects fold into get_attribute (MODIFIER) and fire via EffectSystem.trigger (TRIGGERED).
+# STANDING effects fold into get_attribute via LiveEffects; TRIGGERED ones fire via
+# EffectSystem.trigger.
 var statuses: Array = []
 
 # Set true for the round when this unit spent its attack to generate a card
@@ -53,16 +54,17 @@ static func from_data(card_data: CardData) -> CardInstance:
 	return inst
 
 
-# Returns the effective value of an attribute: base + this instance's accumulated modifiers
-# (from triggered effects / charms) + any run-wide CARD modifiers that match this card
-# (upgrades/relics, resolved at read-time — see GameData.card_bonus, guarded to player units).
+# Returns the effective value of an attribute: base + this instance's accumulated WRITTEN
+# modifiers (baked history from triggered effects / charms) + every live STANDING effect
+# currently reaching this card — statuses, its own innate effects, and the run set, all
+# through the ONE evaluator (LiveEffects), recomputed against current state on every read.
 func get_attribute(attr: String) -> int:
 	match attr:
 		"health":     return current_health
-		"max_health": return data.health + modifiers.get("max_health", 0) + GameData.card_bonus(self, "max_health") + StatusEngine.modifier_bonus(self, "max_health")
-		"attack":     return data.attack + modifiers.get("attack",     0) + GameData.card_bonus(self, "attack")     + StatusEngine.modifier_bonus(self, "attack")
-		"speed":      return data.speed  + modifiers.get("speed",      0) + GameData.card_bonus(self, "speed")      + StatusEngine.modifier_bonus(self, "speed")
-		"cost":       return data.cost   + modifiers.get("cost",       0) + GameData.card_bonus(self, "cost")       + StatusEngine.modifier_bonus(self, "cost")
+		"max_health": return data.health + modifiers.get("max_health", 0) + LiveEffects.bonus(self, "max_health")
+		"attack":     return data.attack + modifiers.get("attack",     0) + LiveEffects.bonus(self, "attack")
+		"speed":      return data.speed  + modifiers.get("speed",      0) + LiveEffects.bonus(self, "speed")
+		"cost":       return data.cost   + modifiers.get("cost",       0) + LiveEffects.bonus(self, "cost")
 		"shield":     return current_shield
 		# Read-only composition counts, so conditions can query merge room with the ordinary
 		# attribute/comparator form (e.g. a pawn material: piece_count <= 1). Never modified.

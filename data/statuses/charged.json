@@ -1,0 +1,27 @@
+{
+	"id": "charged",
+	"display_name": "Charged",
+	"description": "This unit is charged with energy: +1 Attack and +1 Speed per stack.",
+	"beneficial": true,
+	"color": "8fd0ff",
+	"glyph": "✦",
+	"decay": "stacks",
+	"stacking": "stack",
+	"max_stacks": 9,
+	"effects": [
+		{
+			"trigger": { "kind": "while" },
+			"targets": { "kind": "all", "conditions": [ { "relation": "self" } ] },
+			"tracker": { "kind": "stacks" },
+			"attribute": "attack",
+			"amount": 1
+		},
+		{
+			"trigger": { "kind": "while" },
+			"targets": { "kind": "all", "conditions": [ { "relation": "self" } ] },
+			"tracker": { "kind": "stacks" },
+			"attribute": "speed",
+			"amount": 1
+		}
+	]
+}

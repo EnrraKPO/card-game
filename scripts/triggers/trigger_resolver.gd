@@ -11,6 +11,9 @@ extends RefCounted
 # order, leaving half-parsed scripts):
 #   • Transient — no event: the effect applies as part of its own use (a spell cast, an
 #                 ability activation). Never fires from dispatch.
+#   • While     — no event: a STANDING effect, live for as long as its tracker is valid
+#                 (see EffectTracker / LiveEffects). Never dispatched, never applied on
+#                 use — the read path evaluates it continuously against the current board.
 #   • Simple    — an origin-only event (play/death/activate/turn_start/turn_end) gated by
 #                 one plain-condition list evaluated against the origin.
 #   • Dual      — a two-participant event (attack/struck) gated by TWO condition lists:
@@ -26,6 +29,7 @@ extends RefCounted
 # ("on_attack" + "subject" + "subject_elements") and maps losslessly onto a resolver here
 # (zero data migration); a DICTIONARY is the native form:
 #   { "kind": "transient" }
+#   { "kind": "while" }
 #   { "kind": "event", "event": "death", "conditions": [ ... ] }
 #   { "kind": "dual_event", "event": "struck",
 #     "origin_conditions": [ ... ], "destination_conditions": [ ... ] }
@@ -34,8 +38,8 @@ const SIMPLE_EVENTS: Array[StringName] = [&"play", &"death", &"activate", &"turn
 const DUAL_EVENTS: Array[StringName] = [&"attack", &"struck"]
 
 # Legacy trigger key → (event id, whether the legacy single subject was the DESTINATION).
-# `permanent` maps to an event no emission point ever fires — it was already inert before
-# this system existed (never dispatched anywhere) and stays inert, just visibly so.
+# `permanent` is intercepted in from_legacy before this map is consulted: it becomes the
+# While kind (a standing effect) — the meaning that dangling slot always wanted.
 const LEGACY_EVENTS := {
 	"on_play":         [&"play", false],
 	"on_death":        [&"death", false],
@@ -80,6 +84,13 @@ class Transient extends TriggerResolver:
 
 	func to_dict() -> Dictionary:
 		return {"kind": "transient"}
+
+
+class While extends TriggerResolver:
+	# A STANDING effect: live for as long as its tracker is valid, contributing at read time
+	# (see LiveEffects). All base gates stay false — dispatch and the use path never touch it.
+	func to_dict() -> Dictionary:
+		return {"kind": "while"}
 
 
 class Simple extends TriggerResolver:
@@ -145,6 +156,8 @@ static func parse(trigger_value: Variant, subject_key: String, subject_elements:
 # resolver. The legacy subject becomes conditions on the participant that WAS the subject:
 # the origin for every event except on_damage_taken, whose subject was the struck unit.
 static func from_legacy(trigger_key: String, subject_key: String, subject_elements: Array) -> TriggerResolver:
+	if trigger_key == "permanent":
+		return While.new()   # the legacy "permanent" trigger IS the standing kind
 	var mapping: Array = LEGACY_EVENTS.get(trigger_key, LEGACY_EVENTS["on_play"])
 	var event_id: StringName = mapping[0]
 	var subject_is_destination: bool = mapping[1]
@@ -176,6 +189,8 @@ static func _from_native(d: Dictionary) -> TriggerResolver:
 	match str(d.get("kind", "")):
 		"transient":
 			return Transient.new()
+		"while":
+			return While.new()
 		"dual_event":
 			var dual := Dual.new()
 			dual.event = StringName(str(d.get("event", "attack")))

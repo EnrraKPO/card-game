@@ -49,14 +49,14 @@ func total_add(key: String) -> float:
 	return sum
 
 
-# Summed delta of all CARD MODIFIER effects targeting `attr` that match this instance — the
-# read-time card resolution path (see CardInstance.get_attribute / GameData.card_bonus).
-func card_bonus(inst: CardInstance, attr: String) -> int:
-	var sum := 0.0
+# The run set's STANDING effects — enumerated by LiveEffects (the one read-time evaluator)
+# alongside every other container's. This class only aggregates; it no longer evaluates.
+func standing() -> Array:
+	var out: Array = []
 	for e: Effect in _mods:
-		if e.is_card_modifier() and e.card_attribute() == attr and e.matches_card(inst):
-			sum += e.amount
-	return int(round(sum))
+		if e.is_standing():
+			out.append(e)
+	return out
 
 
 # Active TRIGGERED/CUSTOM effects listening to an event — the run-level dispatch list

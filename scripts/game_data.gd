@@ -24,7 +24,7 @@ var editing_deck_id: String = ""
 var current_profile: ProfileData = null
 # Aggregate of every active run-wide Effect (from owned upgrades now; relics/heroes
 # later). Rebuilt whenever the profile changes or a run starts; the game systems read every
-# number through value() (globals) / card_bonus() (cards) / EffectSystem.trigger_global
+# number through value() (globals) / LiveEffects.bonus (cards) / EffectSystem.trigger_global
 # (combat events). Empty default = no-op for every query.
 var current_modifiers: ModifierSet = ModifierSet.new()
 
@@ -88,15 +88,6 @@ func value(key: String) -> int:
 
 func value_f(key: String) -> float:
 	return GameAttributes.default_value(key) + current_modifiers.total_add(key)
-
-
-# Run-wide CARD modifier bonus for an attribute on a specific instance, resolved at read-time
-# by CardInstance.get_attribute. Guarded to PLAYER combat units (owner 0) so upgrade/relic
-# buffs never leak onto enemies or non-combat (deck-builder/preview) instances.
-func card_bonus(inst: CardInstance, attr: String) -> int:
-	if inst == null or inst.owner != 0:
-		return 0
-	return current_modifiers.card_bonus(inst, attr)
 
 
 # Awards profile crafting resources (the one entry point any node/screen uses — combat

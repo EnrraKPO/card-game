@@ -103,6 +103,12 @@ static func from_dict(d: Dictionary) -> StatusData:
 		var eff := Effect.from_dict(e_data)
 		eff.owner_kind = "status"   # so combat can cue this status's pip when its effects fire
 		eff.owner_id = s.id
+		# Legacy shim (load-time data migration only — the runtime has no per-container
+		# behavior): an old modifier-kind effect in a STATUS file always scaled by stack
+		# count, so it defaults to the `stacks` tracker. Native (while) effects author
+		# their tracker explicitly; absent = the container-existence default.
+		if eff.kind == Effect.Kind.MODIFIER and eff.is_standing() and eff.tracker_spec.is_empty():
+			eff.tracker_spec = {"kind": "stacks"}
 		s.effects.append(eff)
 	return s
 

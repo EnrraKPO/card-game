@@ -114,9 +114,14 @@ var status_id: String = ""
 var status_duration: int = STATUS_DURATION_DEFAULT   # sentinel = use the status's own default
 var status_stacks: int = 1
 
-# ── MODIFIER fields ──
+# ── MODIFIER fields (legacy authored form; card-scoped ones parse into STANDING effects) ──
 var scope: Scope = Scope.GLOBAL
 var key: String = ""
+
+# ── STANDING ("while"-trigger) fields ──
+# The authored tracker spec — the effect's lifetime authority, bound to a host object at
+# go-live by EffectTracker.bind (see EffectTracker). Empty = the container-existence default.
+var tracker_spec: Dictionary = {}
 
 # ── INTERCEPTOR fields ──
 var intercept: StringName = &""   # the StatMutation stat this rewrites (e.g. "damage")
@@ -154,6 +159,15 @@ static func from_dict(d: Dictionary) -> Effect:
 		e.scope = Scope.CARD if CARD_ATTR.has(e.key) else Scope.GLOBAL
 		if d.has("scope"):
 			e.scope = Scope.CARD if str(d.get("scope")) == "card" else Scope.GLOBAL
+		# Legacy shim: a card-scoped modifier IS a standing effect — wire it onto the
+		# unified path (While resolver + triggered-vocabulary attribute). GLOBAL-scope
+		# modifiers stay on the registry path (GameData.value) untouched. The MODIFIER
+		# kind + key/filter fields survive purely so to_dict round-trips byte-faithfully.
+		if e.scope == Scope.CARD:
+			e.resolver = TriggerResolver.While.new()
+			e.trigger = Trigger.PERMANENT
+			e.attribute = CARD_ATTR.get(e.key, "")
+			e.tracker_spec = (d.get("tracker", {}) as Dictionary).duplicate()
 	elif kind_str == "interceptor" or (kind_str.is_empty() and d.has("intercept")):
 		e.kind      = Kind.INTERCEPTOR
 		e.intercept = StringName(str(d.get("intercept", "")))
@@ -170,6 +184,7 @@ static func from_dict(d: Dictionary) -> Effect:
 		e._parse_trigger(d)
 		e._parse_targets(d)
 		e.attribute        = d.get("attribute", "")
+		e.tracker_spec     = (d.get("tracker", {}) as Dictionary).duplicate()
 		# Parsed for round-trip fidelity; no TRIGGERED evaluator consumes MUL today (the
 		# INTERCEPTOR kind is where mul does its work — see Resolver._intercept).
 		e.op               = Op.MUL if str(d.get("op", "add")) == "mul" else Op.ADD
@@ -179,7 +194,25 @@ static func from_dict(d: Dictionary) -> Effect:
 		e.status_id       = str(st.get("id", ""))
 		e.status_duration = int(st.get("duration", STATUS_DURATION_DEFAULT))
 		e.status_stacks   = int(st.get("stacks", 1))
+	e._validate_standing(d)
 	return e
+
+
+# Load-time authoring validation for standing effects — FAIL LOUD, never silently closed
+# (a silently-rejected correct condition is the failure mode this redesign exists to kill).
+func _validate_standing(d: Dictionary) -> void:
+	if not is_standing():
+		return
+	if standing_attribute().is_empty():
+		push_error("Effect: standing (while) effect with no foldable attribute — %s" % [d])
+	if not status_id.is_empty():
+		push_error("Effect: a standing (while) effect cannot apply a status — %s" % [d])
+	if kind == Kind.CUSTOM:
+		push_error("Effect: a custom hook cannot be standing (while) — %s" % [d])
+	# Standing membership is condition-based; selection policies (nearest/random/manual)
+	# have no meaning for a continuous fold.
+	if authored_native_targets and str(_native_targets.get("kind", "all")) != "all":
+		push_error("Effect: standing (while) targets must be the 'all' (condition) form — %s" % [d])
 
 
 # Parses the activation gate from either schema. Native form: "trigger" is a Dictionary
@@ -203,6 +236,8 @@ func _derived_legacy_trigger() -> Trigger:
 		return TriggerResolver.legacy_trigger_for((resolver as TriggerResolver.Simple).event)
 	if resolver is TriggerResolver.Dual:
 		return TriggerResolver.legacy_trigger_for((resolver as TriggerResolver.Dual).event)
+	if resolver is TriggerResolver.While:
+		return Trigger.PERMANENT   # standing: excluded from every use-path/apply filter
 	return Trigger.ON_PLAY   # transient behaves like on_play for the use-path filters
 
 
@@ -333,15 +368,31 @@ func to_dict() -> Dictionary:
 				d["chance"] = chance
 			if op == Op.MUL:
 				d["op"] = "mul"
+			if not tracker_spec.is_empty():
+				d["tracker"] = tracker_spec.duplicate()
 			if not status_id.is_empty():
 				d["status"] = {"id": status_id, "duration": status_duration, "stacks": status_stacks}
 			return d
 
 
-# ── MODIFIER helpers ─────────────────────────────────────────────────────────────────
+# ── STANDING helpers ─────────────────────────────────────────────────────────────────
+# (Membership — "does this standing effect apply to unit u right now?" — lives in
+# LiveEffects, the one evaluator; the old per-kind matches_card gate is gone with it.)
 
-func is_card_modifier() -> bool:
-	return kind == Kind.MODIFIER and scope == Scope.CARD
+# A standing effect is one whose trigger's temporal mode is "while" — live until its
+# tracker dies, folded at read time, never dispatched. Both authoring forms land here:
+# native {"trigger": {"kind": "while"}} and the legacy card-scoped modifier shim.
+func is_standing() -> bool:
+	return trigger_resolver() is TriggerResolver.While
+
+
+# The CardInstance attribute a standing effect folds into. Legacy modifiers carry it via
+# their key; native effects use the triggered vocabulary, where a standing "health"
+# payload means MAX health (a when-effect on "health" writes current health instead).
+func standing_attribute() -> String:
+	if kind == Kind.MODIFIER:
+		return CARD_ATTR.get(key, "")
+	return "max_health" if attribute == "health" else attribute
 
 
 func card_attribute() -> String:
@@ -350,45 +401,6 @@ func card_attribute() -> String:
 
 func amount_int() -> int:
 	return int(round(amount))
-
-
-# Re-entrancy guard for condition-gated modifiers: evaluating a stat condition reads
-# get_attribute, which folds modifiers back in — without the guard a modifier conditioned on
-# its own attribute ("+1 attack while attack >= 5") recurses forever. While a modifier
-# condition is being evaluated, nested condition-BEARING modifiers count as non-matching, so
-# conditions see the unit as valued by its base + unconditional modifiers.
-static var _in_modifier_condition := false
-
-# Whether a card-scoped modifier applies to a given card — the card is the modifier's TARGET,
-# and like every effect, targeting is gated by `conditions` (the full EffectCondition
-# vocabulary: stat compares, status presence, composition). `unit.*` keys apply to any unit
-# (King/Queen included) but never to spell cards; the legacy `filter` (kind / has_element)
-# still narrows further.
-func matches_card(inst: CardInstance) -> bool:
-	if inst == null or inst.data == null:
-		return false
-	var data := inst.data
-	if key.begins_with("unit.") and data.card_type == CardData.CardType.SPELL:
-		return false
-	match str(filter.get("kind", "")):
-		"unit":
-			if data.card_type != CardData.CardType.UNIT:
-				return false
-		"spell":
-			if data.card_type != CardData.CardType.SPELL:
-				return false
-	if bool(filter.get("has_element", false)) and data.elements.is_empty():
-		return false
-	if not conditions.is_empty():
-		if _in_modifier_condition:
-			return false
-		_in_modifier_condition = true
-		for c: EffectCondition in conditions:
-			if not c.evaluate(inst):
-				_in_modifier_condition = false
-				return false
-		_in_modifier_condition = false
-	return true
 
 
 # ── enum <-> string ──────────────────────────────────────────────────────────────────
