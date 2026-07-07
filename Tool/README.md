@@ -124,8 +124,10 @@ card/frame/stats words, no readable text in the scene, staging matched to the pe
 template it receives as an example. Press again to re-roll; the result lands in the
 Prompt field for editing before generation.
 
-Types with no art slot in the game (statuses, charms, upgrades, encounters, map nodes)
-still allow generation as workspace reference imagery — clearly labeled as such.
+Types with no art slot in the game (charms, upgrades, encounters, map nodes) still allow
+generation as workspace reference imagery — clearly labeled as such. Statuses DO have a
+slot: icons deploy to `assets/ui/status/<id>_status.png` (StatusData's pip-art convention;
+pips fall back to glyph + colour without one).
 
 **Art recipe (`tool.art`)** — the art panel's state persists ON the entry when you Save:
 prompt, negative, model, dims, steps/guidance, fixed seed, rembg/turbo, the reference

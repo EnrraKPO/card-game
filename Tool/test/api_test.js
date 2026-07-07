@@ -129,6 +129,13 @@ async function main() {
     check('explicit art deploy works', r.data.ok && r.data.art === 'assets/cards/apitest_arty.png');
     r = await api('/api/art/deploy', { type: 'card', id: 'apitest_nonexistent' });
     check('deploy without workspace art rejected', r.status === 400);
+    // status art has a REAL game slot: StatusData.icon() reads assets/ui/status/<id>_status.png
+    fs.mkdirSync(path.join(WS_DIR, 'art', 'status'), { recursive: true });
+    fs.writeFileSync(path.join(WS_DIR, 'art', 'status', 'poison.png'), PNG1x1);
+    r = await api('/api/art/deploy', { type: 'status', id: 'poison' });
+    check('status art deploys to the pip icon convention',
+      r.status === 200 && r.data.art === 'assets/ui/status/poison_status.png'
+      && fs.existsSync(path.join(SANDBOX, 'assets/ui/status/poison_status.png')), JSON.stringify(r.data));
     await api('/api/game/delete-entry', { type: 'card', id: 'apitest_arty' });
     await api('/api/game/delete-entry', { type: 'card', id: 'apitest_rat' });
 

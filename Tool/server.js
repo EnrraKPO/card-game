@@ -39,7 +39,9 @@ const PORT = parseInt(process.argv[2] || '8460', 10);
 const TYPES = {
   card:       { label: 'Card',            dataDir: 'data/cards',      artDir: 'assets/cards',     artW: 1024, artH: 1536, rembg: false },
   relic:      { label: 'Relic',           dataDir: 'data/relics',     artDir: 'assets/relics',    artW: 1024, artH: 1024, rembg: true  },
-  status:     { label: 'Status',          dataDir: 'data/statuses',   artDir: null,               artW: 512,  artH: 512,  rembg: true  },
+  // status pips DO have an art slot: StatusData.icon() loads assets/ui/status/<id>_status.png
+  // (optional — pips fall back to glyph+colour), hence the artSuffix on the deployed filename
+  status:     { label: 'Status',          dataDir: 'data/statuses',   artDir: 'assets/ui/status', artSuffix: '_status', artW: 512, artH: 512, rembg: true },
   ability:    { label: 'Ability',         dataDir: 'data/abilities',  artDir: 'assets/abilities', artW: 1024, artH: 1024, rembg: true  },
   charm:      { label: 'Charm',           dataDir: 'data/charms',     artDir: null,               artW: 512,  artH: 512,  rembg: true  },
   upgrade:    { label: 'Upgrade Tree',    dataDir: 'data/upgrades',   artDir: null,               artW: 512,  artH: 512,  rembg: true  },
@@ -308,14 +310,14 @@ function applyGameEdit(type, id, data, applyArt) {
   if (applyArt && fs.existsSync(artPath(type, id))) {
     const artDir = artDirFor(type, data);
     if (artDir) {
-      const artAbs = path.join(GAME_ROOT, artDir, id + '.png');
+      const artAbs = path.join(GAME_ROOT, artDir, artFileFor(type, id));
       if (!edits[key].art) {
         if (fs.existsSync(artAbs)) {
           ensureDir(path.dirname(editBackupArt(type, id)));
           fs.copyFileSync(artAbs, editBackupArt(type, id));
-          edits[key].art = { rel: artDir + '/' + id + '.png', existed: true };
+          edits[key].art = { rel: artDir + '/' + artFileFor(type, id), existed: true };
         } else {
-          edits[key].art = { rel: artDir + '/' + id + '.png', existed: false };
+          edits[key].art = { rel: artDir + '/' + artFileFor(type, id), existed: false };
         }
       }
       ensureDir(path.dirname(artAbs));
@@ -442,13 +444,17 @@ function artDirFor(type, data) {
   return t.artDir;
 }
 
+// The game-side art FILENAME for this item — statuses deploy as <id>_status.png
+// (StatusData's lookup convention); every other type is plain <id>.png.
+function artFileFor(type, id) { return id + (TYPES[type].artSuffix || '') + '.png'; }
+
 // The art the game currently shows for this item, if any — the repo-relative png path, or
 // null. Mirrors the game's lookup conventions: enemy cards live under assets/cards/enemies/,
 // and abilities fall back to assets/cards/<id>.png (material art predates the migration).
 function gameArtRel(type, id, data) {
   const candidates = [];
   const dir = artDirFor(type, data);
-  if (dir) candidates.push(dir + '/' + id + '.png');
+  if (dir) candidates.push(dir + '/' + artFileFor(type, id));
   if (type === 'ability') candidates.push('assets/cards/' + id + '.png');
   for (const rel of candidates)
     if (fs.existsSync(path.join(GAME_ROOT, rel))) return rel;
@@ -1508,7 +1514,7 @@ function deployArtIfPossible(type, id) {
   if (!entry) return null;
   const dir = artDirFor(type, entry.data);
   if (!dir) return null;
-  const rel = dir + '/' + id + '.png';
+  const rel = dir + '/' + artFileFor(type, id);
   const abs = path.join(GAME_ROOT, rel);
   if (fs.existsSync(abs) && !fs.existsSync(editBackupArt(type, id))) {
     ensureDir(path.dirname(editBackupArt(type, id)));
@@ -1757,7 +1763,7 @@ async function handle(req, res) {
       files.push(rel);
       const artDir = artDirFor(type, data);
       if (artDir && fs.existsSync(artPath(type, id))) {
-        const artRel = artDir + '/' + id + '.png';
+        const artRel = artDir + '/' + artFileFor(type, id);
         const artAbs = path.join(GAME_ROOT, artRel);
         const manifest0 = getManifest();
         const ours = Object.values(manifest0).some(e => e.files.includes(artRel));

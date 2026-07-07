@@ -324,7 +324,7 @@ const StatusEditor = {
   promptFor(d) {
     return `Small fantasy status emblem icon representing "${d.display_name || slugToName(d.id)}", single centered glowing symbol, painterly style, on a plain solid white background`;
   },
-  artNote: 'Reference only — the game renders status pips from glyph + colour; generated art is kept in the tool workspace and NOT installed.',
+  artNote: 'Installed to assets/ui/status/<id>_status.png — shown on the status pip and in tooltips (pips fall back to glyph + colour without it). Background removal recommended.',
 };
 
 // ═════════════════════════════════ ABILITY ══════════════════════════════════
