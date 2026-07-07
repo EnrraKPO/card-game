@@ -141,10 +141,14 @@ const L = {
     turn_start: 'The unit whose round it is', turn_end: 'The unit whose round it is',
   },
   eventDestination: { attack: 'The unit being struck', struck: 'The struck unit' },
+  // Identity ("self") is relative to the effect's HOLDER (the unit carrying it — the
+  // status's carrier, the card itself); ally/enemy are SIDES relative to the effect's
+  // OWNER, which every container has (a relic's owner is the player). See the game's
+  // EffectCondition (allegiance) — legacy data spells both as "relation".
   relation: {
-    self: 'this card itself',
-    ally: 'an ally of this card (itself included)',
-    enemy: 'an enemy of this card',
+    self: 'the holder itself',
+    ally: 'an ally of this effect’s owner (holder included)',
+    enemy: 'an enemy of this effect’s owner',
   },
   // Native targeting kinds (the TargetResolver schema).
   targetKind: {
@@ -235,6 +239,7 @@ function labelOf(dict, key) { return (L[dict] && L[dict][key]) || key; }
 function describeCondition(c) {
   if (!c) return '';
   if (c.relation) return 'is ' + labelOf('relation', c.relation);
+  if (c.allegiance) return 'is ' + labelOf('relation', c.allegiance);
   if (c.status) return (c.present === false ? 'not carrying ' : 'carrying ') + c.status;
   if (c.composition) {
     const list = Array.isArray(c.composition) ? c.composition : [c.composition];

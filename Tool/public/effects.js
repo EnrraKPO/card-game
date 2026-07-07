@@ -111,13 +111,36 @@ const COND_KINDS = [
   { value: 'attribute', label: 'Stat check' },
   { value: 'status', label: 'Has / lacks a status' },
   { value: 'composition', label: 'Made of / not made of' },
-  { value: 'relation', label: 'Relationship to this card' },
+  { value: 'relation', label: 'Relation — identity or side' },
 ];
 
 function condKindOf(c) {
-  return c.relation != null ? 'relation'
+  return (c.relation != null || c.allegiance != null) ? 'relation'
     : c.status != null ? 'status'
     : c.composition != null ? 'composition' : 'attribute';
+}
+
+// Run-scope containers (relic / upgrade) have an OWNER (the player) but no HOLDER unit —
+// identity ("itself") is inexpressible there and must not be offered. Side relations
+// (ally/enemy) compare against the effect's owner and work everywhere.
+function isRunScope(ctx) {
+  return ctx.ownerNoun === 'this relic' || ctx.ownerNoun === 'this upgrade';
+}
+
+function relationOptions(ctx) {
+  const noun = ctx.ownerNoun || 'the holder';
+  const opts = [];
+  if (!isRunScope(ctx)) opts.push({ value: 'self', label: `${noun} itself` });
+  opts.push({ value: 'ally', label: 'on this effect’s own side (ally — holder included)' });
+  opts.push({ value: 'enemy', label: 'on the opposite side (enemy)' });
+  return opts;
+}
+
+// The relation select edits whichever key the condition carries. Legacy data says
+// "relation"; the game maps ally/enemy onto owner-based allegiance and extracts "self"
+// into structure (self targeting / the trigger participant gate) — see EffectCondition.
+function relationValueKey(c) {
+  return c.allegiance != null ? 'allegiance' : 'relation';
 }
 
 function renderCondition(c, ctx, onChange, onRemove) {
@@ -132,7 +155,7 @@ function renderCondition(c, ctx, onChange, onRemove) {
         for (const k of Object.keys(c)) delete c[k];
         if (e.target.value === 'status') Object.assign(c, { status: (ctx.statusIds()[0] || 'poison'), present: true });
         else if (e.target.value === 'composition') Object.assign(c, { composition: ['king'], present: false });
-        else if (e.target.value === 'relation') Object.assign(c, { relation: 'self' });
+        else if (e.target.value === 'relation') Object.assign(c, { relation: isRunScope(ctx) ? 'ally' : 'self' });
         else Object.assign(c, { attribute: 'health', comparator: 'lte', value: 3 });
         onChange(); renderInto();
       },
@@ -144,8 +167,7 @@ function renderCondition(c, ctx, onChange, onRemove) {
     const k = condKindOf(c);
     if (k === 'relation') {
       row.append(
-        fld('Must be', selectInput(c, 'relation', (ctx.vocab.relations || ['self', 'ally', 'enemy'])
-          .map(r => ({ value: r, label: labelOf('relation', r) })), onChange)),
+        fld('Must be', selectInput(c, relationValueKey(c), relationOptions(ctx), onChange)),
       );
     } else if (k === 'status') {
       row.append(
@@ -239,7 +261,8 @@ function participantConditionSection(obj, key, ctx, localChange, labelText) {
       }));
     });
     wrap.append(el('button', { class: 'ghost small list-add', text: '+ add condition', onclick: () => {
-      obj[key].push({ relation: 'self' });
+      // run-scope content has no holder unit, so identity ("self") is inexpressible there
+      obj[key].push({ relation: isRunScope(ctx) ? 'ally' : 'self' });
       localChange(); render();
     } }));
   };
