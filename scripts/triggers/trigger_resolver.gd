@@ -20,19 +20,22 @@ extends RefCounted
 #                 ORIGIN_CONDITIONS and DESTINATION_CONDITIONS, AND-ed. A non-empty list
 #                 on a missing participant fails (never fires).
 #
-# Conditions are plain EffectConditions (stat / status / composition / relation). The
-# `relation` form ("self"/"ally"/"enemy") is evaluated against the effect's HOLDER, which
-# is how "reacts only to its own action" is expressed: {"relation": "self"} on the
-# participant being watched.
+# Conditions are plain EffectConditions (stat / status / composition / allegiance) —
+# true PREDICATES only. "Reacts only to its own action" is NOT a condition: it is the
+# structural PARTICIPANT GATE ("of": "self" — the watched participant must BE the holder),
+# a field on the event kinds. Allegiance ("an ally died") stays a condition, compared
+# against the holder's side. Legacy {"relation": "self"} condition dicts (both the old
+# subject mapping and Tool-authored native lists) are extracted into the gate at parse.
 #
 # Authoring: the effect's "trigger" key. A STRING is the legacy schema
 # ("on_attack" + "subject" + "subject_elements") and maps losslessly onto a resolver here
 # (zero data migration); a DICTIONARY is the native form:
 #   { "kind": "transient" }
 #   { "kind": "while" }
-#   { "kind": "event", "event": "death", "conditions": [ ... ] }
-#   { "kind": "dual_event", "event": "struck",
+#   { "kind": "event", "event": "death", "of": "self", "conditions": [ ... ] }
+#   { "kind": "dual_event", "event": "struck", "origin_of": "any", "destination_of": "self",
 #     "origin_conditions": [ ... ], "destination_conditions": [ ... ] }
+#   ("of" values: "self" = the holder only; "any" (default) = anyone's event)
 
 const SIMPLE_EVENTS: Array[StringName] = [&"play", &"death", &"activate", &"turn_start", &"turn_end", &"permanent"]
 const DUAL_EVENTS: Array[StringName] = [&"attack", &"struck"]
@@ -95,13 +98,16 @@ class While extends TriggerResolver:
 
 class Simple extends TriggerResolver:
 	var event: StringName = &"play"
-	var conditions: Array = []   # Array[EffectCondition], all must pass against the origin
+	var of_holder := false       # the participant gate: the origin must BE the holder
+	var conditions: Array = []   # Array[EffectCondition] (predicates), tested on the origin
 
 	func listens(event_id: StringName) -> bool:
 		return event_id == event
 
 	func fires(p_event: GameEvent, holder: CardInstance) -> bool:
 		if p_event.id != event:
+			return false
+		if of_holder and p_event.origin != holder:
 			return false
 		return TriggerResolver.conditions_pass(conditions, p_event.origin, holder)
 
@@ -112,6 +118,8 @@ class Simple extends TriggerResolver:
 
 	func to_dict() -> Dictionary:
 		var d := {"kind": "event", "event": String(event)}
+		if of_holder:
+			d["of"] = "self"
 		if not conditions.is_empty():
 			d["conditions"] = TriggerResolver.conditions_to_dicts(conditions)
 		return d
@@ -119,8 +127,10 @@ class Simple extends TriggerResolver:
 
 class Dual extends TriggerResolver:
 	var event: StringName = &"attack"
-	var origin_conditions: Array = []        # Array[EffectCondition]
-	var destination_conditions: Array = []   # Array[EffectCondition]
+	var origin_of_holder := false            # participant gates, one per slot
+	var destination_of_holder := false
+	var origin_conditions: Array = []        # Array[EffectCondition] (predicates)
+	var destination_conditions: Array = []   # Array[EffectCondition] (predicates)
 
 	func listens(event_id: StringName) -> bool:
 		return event_id == event
@@ -128,12 +138,20 @@ class Dual extends TriggerResolver:
 	func fires(p_event: GameEvent, holder: CardInstance) -> bool:
 		if p_event.id != event:
 			return false
+		if origin_of_holder and p_event.origin != holder:
+			return false
+		if destination_of_holder and p_event.destination != holder:
+			return false
 		if not TriggerResolver.conditions_pass(origin_conditions, p_event.origin, holder):
 			return false
 		return TriggerResolver.conditions_pass(destination_conditions, p_event.destination, holder)
 
 	func to_dict() -> Dictionary:
 		var d := {"kind": "dual_event", "event": String(event)}
+		if origin_of_holder:
+			d["origin_of"] = "self"
+		if destination_of_holder:
+			d["destination_of"] = "self"
 		if not origin_conditions.is_empty():
 			d["origin_conditions"] = TriggerResolver.conditions_to_dicts(origin_conditions)
 		if not destination_conditions.is_empty():
@@ -153,8 +171,9 @@ static func parse(trigger_value: Variant, subject_key: String, subject_elements:
 
 
 # Maps the legacy schema (trigger string + subject filter + subject elements) onto a
-# resolver. The legacy subject becomes conditions on the participant that WAS the subject:
-# the origin for every event except on_damage_taken, whose subject was the struck unit.
+# resolver, applied to the participant that WAS the subject (the origin for every event
+# except on_damage_taken, whose subject was the struck unit). Legacy subject "self"
+# becomes the structural participant gate; ally/enemy become allegiance conditions.
 static func from_legacy(trigger_key: String, subject_key: String, subject_elements: Array) -> TriggerResolver:
 	if trigger_key == "permanent":
 		return While.new()   # the legacy "permanent" trigger IS the standing kind
@@ -162,12 +181,13 @@ static func from_legacy(trigger_key: String, subject_key: String, subject_elemen
 	var event_id: StringName = mapping[0]
 	var subject_is_destination: bool = mapping[1]
 
+	var gate_self := false
 	var conds: Array = []
 	match subject_key:
-		"ally":  conds.append(EffectCondition.from_dict({"relation": "ally"}))
-		"enemy": conds.append(EffectCondition.from_dict({"relation": "enemy"}))
-		"any":   pass   # no relationship gate
-		_:       conds.append(EffectCondition.from_dict({"relation": "self"}))
+		"ally":  conds.append(EffectCondition.from_dict({"allegiance": "ally"}))
+		"enemy": conds.append(EffectCondition.from_dict({"allegiance": "enemy"}))
+		"any":   pass   # no gate at all
+		_:       gate_self = true   # legacy default: reacts only to its own action
 	if not subject_elements.is_empty():
 		conds.append(EffectCondition.from_dict({"composition": subject_elements.duplicate()}))
 
@@ -175,12 +195,15 @@ static func from_legacy(trigger_key: String, subject_key: String, subject_elemen
 		var dual := Dual.new()
 		dual.event = event_id
 		if subject_is_destination:
+			dual.destination_of_holder = gate_self
 			dual.destination_conditions = conds
 		else:
+			dual.origin_of_holder = gate_self
 			dual.origin_conditions = conds
 		return dual
 	var simple := Simple.new()
 	simple.event = event_id
+	simple.of_holder = gate_self
 	simple.conditions = conds
 	return simple
 
@@ -194,19 +217,36 @@ static func _from_native(d: Dictionary) -> TriggerResolver:
 		"dual_event":
 			var dual := Dual.new()
 			dual.event = StringName(str(d.get("event", "attack")))
+			dual.origin_of_holder = str(d.get("origin_of", "any")) == "self" \
+					or _has_identity(d.get("origin_conditions", []))
+			dual.destination_of_holder = str(d.get("destination_of", "any")) == "self" \
+					or _has_identity(d.get("destination_conditions", []))
 			dual.origin_conditions = _parse_conditions(d.get("origin_conditions", []))
 			dual.destination_conditions = _parse_conditions(d.get("destination_conditions", []))
 			return dual
 		_:   # "event" (and anything unrecognised degrades to a simple event)
 			var simple := Simple.new()
 			simple.event = StringName(str(d.get("event", "play")))
+			simple.of_holder = str(d.get("of", "any")) == "self" \
+					or _has_identity(d.get("conditions", []))
 			simple.conditions = _parse_conditions(d.get("conditions", []))
 			return simple
+
+
+# Identity dicts ({"relation": "self"} — the pre-gate native schema) are STRUCTURE, not
+# predicates: they are read into the participant gate and never become conditions.
+static func _has_identity(raw: Variant) -> bool:
+	for c_data: Dictionary in (raw as Array):
+		if EffectCondition.is_identity_dict(c_data):
+			return true
+	return false
 
 
 static func _parse_conditions(raw: Variant) -> Array:
 	var out: Array = []
 	for c_data: Dictionary in (raw as Array):
+		if EffectCondition.is_identity_dict(c_data):
+			continue   # structural — consumed by the participant gate / self target kind
 		out.append(EffectCondition.from_dict(c_data))
 	return out
 
@@ -220,13 +260,16 @@ static func conditions_to_dicts(conds: Array) -> Array:
 
 # All conditions must pass against the given participant; a non-empty list on a MISSING
 # participant fails (the agreed ruling: you can't gate on someone who isn't there).
+# Conditions are predicates over (unit, owner-side): the holder here only contributes its
+# SIDE (allegiance anchor) — identity gating is structural, never conditional.
 static func conditions_pass(conds: Array, unit: CardInstance, holder: CardInstance) -> bool:
 	if conds.is_empty():
 		return true
 	if unit == null:
 		return false
+	var owner := -1 if holder == null else holder.owner
 	for c: EffectCondition in conds:
-		if not c.evaluate(unit, holder):
+		if not c.evaluate(unit, owner):
 			return false
 	return true
 

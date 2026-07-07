@@ -120,10 +120,10 @@ func _modifier_status_and_expiry() -> void:
 
 
 func _charged_standing_scaling() -> void:
-	# Charged is the first NATIVE standing effect: {"trigger": {"kind": "while"}} + a
-	# relation:self targeting condition + the `stacks` tracker. This pins the whole unified
-	# path — including the original bug (a holder-aware relation condition on a status's
-	# standing effect must WORK, not silently fail closed).
+	# Charged is the first NATIVE standing effect: {"trigger": {"kind": "while"}} + the
+	# `self` target kind + the `stacks` tracker. This pins the whole unified path — the
+	# descendant of the original bug (a status's self-scoped standing effect must WORK,
+	# not silently fail closed).
 	var u := unit("pawn")
 	var atk0 := u.get_attribute("attack")
 	var spd0 := u.get_attribute("speed")

@@ -187,13 +187,18 @@ eliminates. Revisit only with a measured problem.
 
 ## 4. Authoring schema
 
-New native form — a live effect is an ordinary effect whose trigger is `while`:
+New native form — a live effect is an ordinary effect whose trigger is `while`. Identity
+is structural (the `self` target kind / the trigger's `of` participant gate); conditions
+are predicates only (stat / status / composition / allegiance / card_type / has_element):
 
 ```json
 { "trigger": { "kind": "while" },
-  "targets": { "kind": "all", "conditions": [ { "relation": "self" } ] },
+  "targets": { "kind": "self" },
   "tracker": { "kind": "container" },
   "attribute": "attack", "amount": 2 }
+
+{ "trigger": { "kind": "event", "event": "death", "of": "self" }, ... }   // reacts to own death
+{ "targets": { "kind": "all", "conditions": [ { "allegiance": "ally" } ] } }  // "your units" — works holderless
 ```
 
 (`"tracker": {"kind": "container"}` is the default for `while` effects and may be

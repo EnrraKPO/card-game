@@ -169,8 +169,9 @@ static func passes_conditions(conditions: Array, card: CardInstance, holder: Car
 
 
 static func _passes_conditions(conditions: Array, card: CardInstance, holder: CardInstance = null) -> bool:
+	var owner := -1 if holder == null else holder.owner   # conditions are (unit, owner-side) predicates
 	for cond: EffectCondition in conditions:
-		if not cond.evaluate(card, holder):
+		if not cond.evaluate(card, owner):
 			return false
 	return true
 

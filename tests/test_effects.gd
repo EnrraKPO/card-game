@@ -16,6 +16,7 @@ func run() -> void:
 	_interceptor_round_trip()
 	_composition_conditions()
 	_conditioned_modifiers()
+	_run_scope_allegiance()
 
 
 # Modifier targeting is gated by `conditions` exactly like triggered targeting: every card the
@@ -73,6 +74,28 @@ func _conditioned_modifiers() -> void:
 	check(rt.kind == Effect.Kind.MODIFIER and rt.conditions.size() == 1
 			and (rt.conditions[0] as EffectCondition).composition == ["pawn"],
 			"modifier conditions round-trip through to_dict/from_dict")
+
+
+# ALLEGIANCE in a HOLDERLESS container — the capability the owner model unlocks: a native
+# run-scope standing effect says "your units" as data ({"allegiance": "ally"}), no unit
+# holder anywhere. The run container is owned by the player, so ally = player units only.
+func _run_scope_allegiance() -> void:
+	var mine := unit("pawn")            # owner 0 (player)
+	var foe := unit("pawn")
+	foe.owner = 1
+	var neutral := unit("pawn")
+	neutral.owner = -1                  # non-combat (preview) instance
+	GameData.current_modifiers.add(Effect.from_dict({
+			"trigger": {"kind": "while"},
+			"targets": {"kind": "all", "conditions": [{"allegiance": "ally"}]},
+			"attribute": "attack", "amount": 2}))
+	check_eq(mine.get_attribute("attack"), mine.data.attack + 2,
+			"run-scope ally standing effect reaches a player unit")
+	check_eq(foe.get_attribute("attack"), foe.data.attack,
+			"…and never an enemy unit")
+	check_eq(neutral.get_attribute("attack"), neutral.data.attack,
+			"…and never a sideless (preview) instance")
+	GameData.current_modifiers = ModifierSet.new()   # restore the clean env
 
 
 func _composition_conditions() -> void:

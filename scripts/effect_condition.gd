@@ -18,12 +18,21 @@ var present: bool = true
 # on light). E.g. { "composition": ["king", "queen"], "present": false } = "lackeys only" —
 # gate a buff away from royal compositions so the persistent King doesn't hoard every buff.
 var composition: Array = []
-# RELATION-form condition: passes on the tested unit's relationship to the effect's HOLDER —
-# "self" (it IS the holder), "ally" (same side, holder included), "enemy" (opposite side).
-# This is how trigger resolvers express "reacts to its own action" ({"relation": "self"} on
-# the watched participant — see TriggerResolver.from_legacy). Requires a holder in context;
-# evaluated without one it fails closed.
-var relation: String = ""
+# ALLEGIANCE-form condition: passes on the tested unit's SIDE relative to the effect's
+# OWNER (the container's side — every container has one, even holderless run-scope ones):
+# "ally" = same side (the holder itself included — do not "fix" that), "enemy" = opposite.
+# Replaces the old relation form's ally/enemy: allegiance is an owner question, never a
+# holder question. Identity-with-holder ("self") is NOT a condition — it is structural
+# (the `self` target kind / the trigger's participant gate); legacy {"relation": "self"}
+# dicts are extracted by the resolver parsers before conditions are built.
+var allegiance: String = ""
+# CARD_TYPE-form condition: passes when the card is the named type ("unit" / "spell").
+# The native replacement for the legacy `filter` {"kind": ...} narrowing.
+var card_type: String = ""
+# HAS_ELEMENT-form condition: passes when the card's composition contains at least one
+# element (`true`) or none (`false`). Native replacement for filter {"has_element": true}.
+var has_element_set := false
+var has_element := false
 
 
 static func make(attr: String, comp: Comparator, val: int) -> EffectCondition:
@@ -42,7 +51,10 @@ static func make_custom(check: Callable) -> EffectCondition:
 
 # Parses an authored condition dict (inverse of to_dict). Used by Effect.from_dict so all
 # effect/condition parsing lives in one place. A "status" key selects the status form, a
-# "composition" key (single id or list) the composition form.
+# "composition" key (single id or list) the composition form, an "allegiance" key the
+# allegiance form. Legacy {"relation": "ally"/"enemy"} maps onto allegiance losslessly;
+# legacy {"relation": "self"} is STRUCTURAL and must be extracted by the caller first
+# (is_identity_dict) — one slipping through parses as vacuous-true, loudly.
 static func from_dict(d: Dictionary) -> EffectCondition:
 	if d.has("status"):
 		var c := EffectCondition.new()
@@ -55,15 +67,37 @@ static func from_dict(d: Dictionary) -> EffectCondition:
 		c.composition = [str(comp)] if comp is String else (comp as Array).duplicate()
 		c.present = bool(d.get("present", true))
 		return c
-	if d.has("relation"):
+	if d.has("allegiance") or d.has("relation"):
 		var c := EffectCondition.new()
-		c.relation = str(d.get("relation", "self"))
+		c.allegiance = str(d.get("allegiance", d.get("relation", "")))
+		if c.allegiance == "self":
+			# Identity is not a predicate; the parsers extract it into structure. Reaching
+			# here means a context we didn't cover — fail LOUD, degrade vacuous-true (the
+			# self gate was vacuously true in every carrier-scoped legacy context).
+			push_error("EffectCondition: unextracted {relation: self} — structural, not a condition: %s" % [d])
+			c.allegiance = ""
+		return c
+	if d.has("card_type"):
+		var c := EffectCondition.new()
+		c.card_type = str(d.get("card_type", ""))
+		return c
+	if d.has("has_element"):
+		var c := EffectCondition.new()
+		c.has_element_set = true
+		c.has_element = bool(d.get("has_element", true))
 		return c
 	return make(
 		d.get("attribute", ""),
 		_str_comparator(d.get("comparator", "")),
 		int(d.get("value", 0))
 	)
+
+
+# Whether a RAW condition dict is the legacy identity form ({"relation": "self"}) — the
+# resolver parsers consume these into structure (self target kind / trigger participant
+# gate) before building the condition list.
+static func is_identity_dict(d: Dictionary) -> bool:
+	return str(d.get("relation", "")) == "self"
 
 
 static func _str_comparator(s: String) -> Comparator:
@@ -78,13 +112,19 @@ static func _str_comparator(s: String) -> Comparator:
 
 
 # Inverse of CardData._parse_condition (custom_check is programmatic-only, not stored).
+# Legacy {"relation": "ally"/"enemy"} input serializes as its canonical allegiance form —
+# a deliberate native-schema migration (parse accepts both; emit converges on one).
 func to_dict() -> Dictionary:
 	if not status_id.is_empty():
 		return {"status": status_id, "present": present}
 	if not composition.is_empty():
 		return {"composition": composition.duplicate(), "present": present}
-	if not relation.is_empty():
-		return {"relation": relation}
+	if not allegiance.is_empty():
+		return {"allegiance": allegiance}
+	if not card_type.is_empty():
+		return {"card_type": card_type}
+	if has_element_set:
+		return {"has_element": has_element}
 	return {
 		"attribute":  attribute,
 		"comparator": comparator_key(comparator),
@@ -103,18 +143,18 @@ static func comparator_key(c: Comparator) -> String:
 	return "gte"
 
 
-# `holder` is the unit carrying the effect this condition belongs to — required by the
-# relation form, ignored by every other form (callers without a holder concept omit it).
-func evaluate(card: CardInstance, holder: CardInstance = null) -> bool:
+# `owner` is the SIDE of the effect this condition belongs to (the container's owner) —
+# required by the allegiance form, ignored by every other form. -1 = no side known
+# (allegiance then fails closed: you can't compare against a side that isn't there).
+func evaluate(card: CardInstance, owner: int = -1) -> bool:
 	if custom_check.is_valid():
 		return custom_check.call(card)
-	if not relation.is_empty():
-		if holder == null:
+	if not allegiance.is_empty():
+		if owner < 0:
 			return false
-		match relation:
-			"self":  return card == holder
-			"ally":  return card.owner == holder.owner
-			"enemy": return card.owner != holder.owner
+		match allegiance:
+			"ally":  return card.owner == owner
+			"enemy": return card.owner >= 0 and card.owner != owner
 		return false
 	if not status_id.is_empty():
 		return (card.find_status(status_id) != null) == present
@@ -125,6 +165,11 @@ func evaluate(card: CardInstance, holder: CardInstance = null) -> bool:
 				has = true
 				break
 		return has == present
+	if not card_type.is_empty():
+		var want_unit := card_type == "unit"
+		return (card.data.card_type == CardData.CardType.UNIT) == want_unit
+	if has_element_set:
+		return card.data.elements.is_empty() != has_element
 	var card_val := card.get_attribute(attribute)
 	match comparator:
 		Comparator.GT:  return card_val > value

@@ -147,6 +147,8 @@ static func from_dict(d: Dictionary) -> Effect:
 	e.amount = float(d.get("amount", 0))
 	e.chance = float(d.get("chance", 1.0))
 	for c_data: Dictionary in d.get("conditions", []):
+		if EffectCondition.is_identity_dict(c_data):
+			continue   # {"relation": "self"} is structural (self targeting), not a predicate
 		e.conditions.append(EffectCondition.from_dict(c_data))
 	var kind_str := str(d.get("kind", ""))
 	if kind_str == "modifier" or (kind_str.is_empty() and d.has("key")):
@@ -163,9 +165,13 @@ static func from_dict(d: Dictionary) -> Effect:
 		# unified path (While resolver + triggered-vocabulary attribute). GLOBAL-scope
 		# modifiers stay on the registry path (GameData.value) untouched. The MODIFIER
 		# kind + key/filter fields survive purely so to_dict round-trips byte-faithfully.
+		# Scope: legacy modifiers always meant "everyone my conditions admit", never the
+		# holder alone — an ALL target (identity self, if authored, is stripped as vacuous:
+		# on the status path the carrier is the whole candidate set anyway).
 		if e.scope == Scope.CARD:
 			e.resolver = TriggerResolver.While.new()
 			e.trigger = Trigger.PERMANENT
+			e.targeting_policy = TargetingPolicy.ALL
 			e.attribute = CARD_ATTR.get(e.key, "")
 			e.tracker_spec = (d.get("tracker", {}) as Dictionary).duplicate()
 	elif kind_str == "interceptor" or (kind_str.is_empty() and d.has("intercept")):
@@ -209,10 +215,10 @@ func _validate_standing(d: Dictionary) -> void:
 		push_error("Effect: a standing (while) effect cannot apply a status — %s" % [d])
 	if kind == Kind.CUSTOM:
 		push_error("Effect: a custom hook cannot be standing (while) — %s" % [d])
-	# Standing membership is condition-based; selection policies (nearest/random/manual)
-	# have no meaning for a continuous fold.
-	if authored_native_targets and str(_native_targets.get("kind", "all")) != "all":
-		push_error("Effect: standing (while) targets must be the 'all' (condition) form — %s" % [d])
+	# Standing membership is self or condition-based; selection policies (nearest/random/
+	# manual) have no meaning for a continuous fold.
+	if authored_native_targets and not str(_native_targets.get("kind", "all")) in ["all", "self"]:
+		push_error("Effect: standing (while) targets must be the 'self' or 'all' form — %s" % [d])
 
 
 # Parses the activation gate from either schema. Native form: "trigger" is a Dictionary
@@ -290,6 +296,7 @@ func targets_resolver() -> TargetResolver:
 # no TargetResolver construction is needed at parse time.
 static func _policy_from_native(d: Dictionary) -> TargetingPolicy:
 	match str(d.get("kind", "all")):
+		"self":        return TargetingPolicy.SELF
 		"manual":      return TargetingPolicy.MANUAL
 		"manual_slot": return TargetingPolicy.MANUAL_SLOT
 		"auto":
@@ -300,6 +307,10 @@ static func _policy_from_native(d: Dictionary) -> TargetingPolicy:
 				"origin":      return TargetingPolicy.ATTACKER
 				"destination": return TargetingPolicy.ATTACK_TARGET
 				_:             return TargetingPolicy.SELF
+	# Pre-gate native data spelled self-targeting as all + {"relation": "self"} — that
+	# identity entry is structural (the self kind), not a condition.
+	if TriggerResolver._has_identity(d.get("conditions", [])):
+		return TargetingPolicy.SELF
 	return TargetingPolicy.ALL
 
 

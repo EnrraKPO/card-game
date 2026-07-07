@@ -22,12 +22,19 @@ extends RefCounted
 #   • Participant  — a direct reference to the event's origin/destination (or the holder
 #                    itself), returned iff it passes the conditions. No event, or an event
 #                    without that participant → no targets, by construction.
+#                    participant "holder" is canonically spelled {"kind": "self"} — the
+#                    SELF target kind ("applies to the holder"), which is how identity
+#                    targeting is expressed now that the relation condition form is gone.
 #
-# Conditions are the same plain EffectCondition grammar as everywhere else (stat / status /
-# composition / relation-to-holder). One grammar, three sockets: trigger → targets → payload.
+# Conditions are the same plain EffectCondition PREDICATE grammar as everywhere else
+# (stat / status / composition / allegiance-to-owner). One grammar, three sockets:
+# trigger → targets → payload. Identity ("the holder itself") is never a condition — it
+# is the self kind; legacy {"relation": "self"} entries in a native condition list are
+# extracted into it at parse.
 #
 # Authoring: the effect's "targets" key (native form). The legacy "targeting_policy" string
 # maps losslessly at load (see from_legacy) — zero data migration:
+#   { "targets": { "kind": "self" } }
 #   { "targets": { "kind": "all", "conditions": [ ... ] } }
 #   { "targets": { "kind": "auto", "criterion": "nearest", "count": 1, "conditions": [ ... ] } }
 #   { "targets": { "kind": "manual", "conditions": [ ... ] } }
@@ -139,6 +146,9 @@ class Participant extends TargetResolver:
 		return _passing([unit], holder)
 
 	func to_dict() -> Dictionary:
+		# participant "holder" serializes as its canonical spelling: the self kind.
+		if participant == "holder":
+			return _base_dict("self")
 		var d := _base_dict("participant")
 		d["participant"] = participant
 		return d
@@ -150,6 +160,8 @@ class Participant extends TargetResolver:
 static func parse(d: Dictionary) -> TargetResolver:
 	var conds := TriggerResolver._parse_conditions(d.get("conditions", []))
 	match str(d.get("kind", "")):
+		"self":
+			return _participant("holder", conds)
 		"auto":
 			var auto := Auto.new()
 			auto.criterion = str(d.get("criterion", "nearest"))
@@ -170,6 +182,10 @@ static func parse(d: Dictionary) -> TargetResolver:
 			part.conditions = conds
 			return part
 		_:   # "all" (and anything unrecognised degrades to it — fail visible, not crashy)
+			# Pre-gate native data spelled self-targeting as all + {"relation": "self"};
+			# the identity entry is structural, so such a dict IS the self kind.
+			if TriggerResolver._has_identity(d.get("conditions", [])):
+				return _participant("holder", conds)
 			var all := All.new()
 			all.conditions = conds
 			return all
@@ -218,18 +234,18 @@ static func _participant(which: String, conditions: Array) -> Participant:
 
 
 # Legacy nearest/random searched only the OPPOSING board; the implicit scope becomes an
-# explicit relation condition prepended to the authored ones (the shared array itself is
+# explicit allegiance condition prepended to the authored ones (the shared array itself is
 # left untouched — the effect's legacy mirror must serialize back byte-identical).
 static func _auto(criterion: String, conditions: Array, enemies_only: bool) -> Auto:
 	var auto := Auto.new()
 	auto.criterion = criterion
-	auto.conditions = ([EffectCondition.from_dict({"relation": "enemy"})] + conditions) if enemies_only else conditions
+	auto.conditions = ([EffectCondition.from_dict({"allegiance": "enemy"})] + conditions) if enemies_only else conditions
 	return auto
 
 
-static func _all(conditions: Array, relation: String) -> All:
+static func _all(conditions: Array, allegiance: String) -> All:
 	var all := All.new()
-	all.conditions = [EffectCondition.from_dict({"relation": relation})] + conditions
+	all.conditions = [EffectCondition.from_dict({"allegiance": allegiance})] + conditions
 	return all
 
 

@@ -139,19 +139,39 @@ func _dual_gating() -> void:
 
 
 func _relation_conditions() -> void:
-	var holder := _unit(2, 0)
+	# The relation form is DISSOLVED: ally/enemy are ALLEGIANCE predicates against the
+	# effect's OWNER side (no holder needed — they work in holderless run-scope
+	# containers); identity ("self") is STRUCTURAL (the self target kind / the trigger
+	# participant gate) and never becomes a condition.
 	var ally := _unit(2, 0)
 	var enemy := _unit(2, 1)
-	var self_c := EffectCondition.from_dict({"relation": "self"})
-	var ally_c := EffectCondition.from_dict({"relation": "ally"})
-	var enemy_c := EffectCondition.from_dict({"relation": "enemy"})
-	check(self_c.evaluate(holder, holder) and not self_c.evaluate(ally, holder),
-			"relation self = the holder itself")
-	check(ally_c.evaluate(ally, holder) and ally_c.evaluate(holder, holder) and not ally_c.evaluate(enemy, holder),
-			"relation ally = same side (holder included)")
-	check(enemy_c.evaluate(enemy, holder) and not enemy_c.evaluate(ally, holder),
-			"relation enemy = opposite side")
-	check(not self_c.evaluate(holder), "relation without a holder fails closed")
+	var ally_c := EffectCondition.from_dict({"allegiance": "ally"})
+	var enemy_c := EffectCondition.from_dict({"allegiance": "enemy"})
+	check(ally_c.evaluate(ally, 0) and not ally_c.evaluate(enemy, 0),
+			"allegiance ally = same side as the effect's owner")
+	check(enemy_c.evaluate(enemy, 0) and not enemy_c.evaluate(ally, 0),
+			"allegiance enemy = opposite side")
+	check(not ally_c.evaluate(ally) and not enemy_c.evaluate(enemy),
+			"allegiance with no owner side fails closed")
+
+	# Legacy {"relation": ...} parses onto allegiance; serialization converges canonical.
+	var legacy_c := EffectCondition.from_dict({"relation": "ally"})
+	check(legacy_c.evaluate(ally, 0) and legacy_c.to_dict() == {"allegiance": "ally"},
+			"legacy relation ally maps to allegiance (canonical out)")
+
+	# Identity in a native targets list is consumed into the SELF kind, zero conditions.
+	var normalized := Effect.from_dict({"trigger": {"kind": "while"},
+			"targets": {"kind": "all", "conditions": [{"relation": "self"}]},
+			"attribute": "attack", "amount": 1})
+	check(normalized.targeting_policy == Effect.TargetingPolicy.SELF
+			and normalized.conditions.is_empty(),
+			"targets all + relation self normalizes to the self kind, no conditions")
+	var native_self := Effect.from_dict({"trigger": {"kind": "while"},
+			"targets": {"kind": "self"}, "attribute": "speed", "amount": 1})
+	check(native_self.targeting_policy == Effect.TargetingPolicy.SELF,
+			"the native self target kind parses")
+	check(str(native_self.targets_resolver().to_dict().get("kind")) == "self",
+			"the self kind serializes canonically")
 
 
 func _round_trip() -> void:

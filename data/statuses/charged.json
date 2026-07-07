@@ -11,14 +11,14 @@
 	"effects": [
 		{
 			"trigger": { "kind": "while" },
-			"targets": { "kind": "all", "conditions": [ { "relation": "self" } ] },
+			"targets": { "kind": "self" },
 			"tracker": { "kind": "stacks" },
 			"attribute": "attack",
 			"amount": 1
 		},
 		{
 			"trigger": { "kind": "while" },
-			"targets": { "kind": "all", "conditions": [ { "relation": "self" } ] },
+			"targets": { "kind": "self" },
 			"tracker": { "kind": "stacks" },
 			"attribute": "speed",
 			"amount": 1
