@@ -10,6 +10,7 @@ var id: String
 var display_name: String
 var description: String
 var color: Color = Color(0.55, 0.6, 0.85)   # tree accent (tabs, link lines)
+var icon: Texture2D = null   # optional tree emblem — assets/ui/upgrades/<id>.png (see below)
 var nodes: Array[UpgradeNode] = []
 
 static var _all: Dictionary = {}
@@ -46,6 +47,11 @@ static func _load_json(path: String) -> void:
 		t.color        = Color.html(str(d.get("color", "8c99d9")))
 		for nd: Dictionary in d.get("nodes", []):
 			t.nodes.append(UpgradeNode.from_dict(nd))
+		# Emblem art is by-convention (assets/ui/upgrades/<id>.png) — the same pattern
+		# relic chips and status pips use; absent art just means no emblem is shown.
+		var art_path := "res://assets/ui/upgrades/%s.png" % t.id
+		if ResourceLoader.exists(art_path):
+			t.icon = load(art_path)
 		if t.id.is_empty():
 			push_error("UpgradeTree: a tree in %s is missing an 'id'" % path)
 			continue

@@ -136,6 +136,15 @@ async function main() {
     check('status art deploys to the pip icon convention',
       r.status === 200 && r.data.art === 'assets/ui/status/poison_status.png'
       && fs.existsSync(path.join(SANDBOX, 'assets/ui/status/poison_status.png')), JSON.stringify(r.data));
+    // upgrade trees carry an emblem slot too (assets/ui/upgrades/<id>.png, plain name)
+    fs.writeFileSync(path.join(SANDBOX, 'data/upgrades/apitest_tree.json'),
+      JSON.stringify({ id: 'apitest_tree', display_name: 'T', nodes: [{ id: 'n1', display_name: 'N', effects: [] }] }));
+    fs.mkdirSync(path.join(WS_DIR, 'art', 'upgrade'), { recursive: true });
+    fs.writeFileSync(path.join(WS_DIR, 'art', 'upgrade', 'apitest_tree.png'), PNG1x1);
+    r = await api('/api/art/deploy', { type: 'upgrade', id: 'apitest_tree' });
+    check('upgrade emblem deploys to assets/ui/upgrades',
+      r.status === 200 && r.data.art === 'assets/ui/upgrades/apitest_tree.png'
+      && fs.existsSync(path.join(SANDBOX, 'assets/ui/upgrades/apitest_tree.png')), JSON.stringify(r.data));
     await api('/api/game/delete-entry', { type: 'card', id: 'apitest_arty' });
     await api('/api/game/delete-entry', { type: 'card', id: 'apitest_rat' });
 

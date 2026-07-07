@@ -9,6 +9,7 @@ extends Control
 var _compact := false
 var _tree_view: UpgradeTreeView
 var _tabs: HFlowContainer
+var _detail_icon: TextureRect
 var _detail_title: Label
 var _detail_body: Label
 var _buy_btn: Button
@@ -88,12 +89,25 @@ func _build_body(root: Control) -> void:
 	detail_style.set_content_margin_all(0)
 	detail.add_theme_stylebox_override("panel", detail_style)
 	root.add_child(detail)
+	# Emblem (the tree's generated art, when it has any) beside the text column — the
+	# detail strip is the tree's identity spot, so the emblem lives here for every tree.
+	var drow := HBoxContainer.new()
+	drow.add_theme_constant_override("separation", 16 if _compact else 12)
+	_detail_icon = TextureRect.new()
+	_detail_icon.custom_minimum_size = Vector2.ONE * (120.0 if _compact else 96.0)
+	_detail_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_detail_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_detail_icon.size_flags_vertical = SIZE_SHRINK_CENTER
+	_detail_icon.visible = false
+	drow.add_child(_detail_icon)
 	var dbox := VBoxContainer.new()
 	dbox.add_theme_constant_override("separation", 4)
+	dbox.size_flags_horizontal = SIZE_EXPAND_FILL
+	drow.add_child(dbox)
 	var dpad := MarginContainer.new()
 	for side in ["left", "right", "top", "bottom"]:
 		dpad.add_theme_constant_override("margin_" + side, 18 if _compact else 14)
-	dpad.add_child(dbox)
+	dpad.add_child(drow)
 	detail.add_child(dpad)
 
 	# Header row: the focused node's title on the left, its purchase button on the right.
@@ -142,6 +156,8 @@ func _select_tree(tree_id: String) -> void:
 	if tree != null:
 		_detail_title.text = tree.display_name
 		_detail_body.text = tree.description
+		_detail_icon.texture = tree.icon
+		_detail_icon.visible = tree.icon != null
 
 
 func _on_node_selected(node: UpgradeNode) -> void:

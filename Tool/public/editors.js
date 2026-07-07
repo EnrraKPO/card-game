@@ -387,7 +387,7 @@ const AbilityEditor = {
   promptFor(d) {
     return `Fantasy spell ability icon, ${d.display_name || slugToName(d.id)}, ${d.description || ''}, single centered glowing emblem, painterly style, on a plain solid white background`;
   },
-  artNote: 'Installed to assets/abilities/<id>.png — shown on the ability tray entry. Background removal recommended.',
+  artNote: 'Installed to assets/abilities/<id>.png — shown on the ability tray entry. Card-format art (portrait, full background).',
 };
 
 // ═════════════════════════════════ CHARM ════════════════════════════════════
@@ -555,7 +555,7 @@ const UpgradeEditor = {
   promptFor(d) {
     return `Fantasy skill tree emblem, ${d.display_name || slugToName(d.id)}, single centered glowing sigil, painterly style, on a plain solid white background`;
   },
-  artNote: 'Reference only — upgrade nodes render glyph icons; generated art stays in the tool workspace.',
+  artNote: 'Installed to assets/ui/upgrades/<id>.png — the tree\'s emblem on the Upgrades screen (nodes themselves stay glyphs). Background removal recommended.',
 };
 
 // ═══════════════════════════════ ENCOUNTER ══════════════════════════════════

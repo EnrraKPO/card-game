@@ -48,6 +48,13 @@ func _ready() -> void:
 	shell.auto_start = false
 	sv.add_child(shell)
 	shell.mount(scene_path)
+	await get_tree().process_frame
+	# Upgrades: select a specific tree tab (pass its id after the scene path).
+	if scene_path.contains("upgrades") and args.size() > 1:
+		for n: Node in sv.find_children("*", "Control", true, false):
+			if n.has_method("_select_tree"):
+				n.call("_select_tree", args[1])
+				break
 	for i in 8:
 		await get_tree().process_frame
 	sv.get_texture().get_image().save_png(OUT)
