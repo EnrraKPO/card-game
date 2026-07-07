@@ -16,11 +16,7 @@
 				"trigger": {
 					"kind": "dual_event",
 					"event": "attack",
-					"origin_conditions": [
-						{
-							"relation": "self"
-						}
-					]
+					"origin_of": "self"
 				},
 				"status": {
 					"id": "poison"
@@ -35,6 +31,7 @@
 	{
 		"id": "darkness_water_knight",
 		"display_name": "Blight Knight",
+		"description": "Applies Poison 1 to the unit it strikes.",
 		"elements": [
 			"darkness",
 			"water"
@@ -42,17 +39,44 @@
 		"chess_pieces": [
 			"knight"
 		],
-		"description": "Applies Poison 1 to the unit it strikes.",
 		"effects": [
 			{
-				"trigger": "on_attack",
-				"targeting_policy": "attack_target",
+				"trigger": {
+					"kind": "dual_event",
+					"event": "attack",
+					"origin_of": "self"
+				},
 				"status": {
-					"id": "poison",
-					"stacks": 1
+					"id": "poison"
+				},
+				"targets": {
+					"kind": "participant",
+					"participant": "destination"
 				}
 			}
-		]
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Rearing horse made of translucent toxic green slime, glowing acid-yellow body dripping goo, flowing liquid mane, dark purple armored barding and bridle adorned with skull-and-crossbones emblems, puddles and rising vapor wisps, cracked barren wasteland, deep crimson-red sky, dramatic backlit glow, bold outlines, painterly fantasy illustration, vibrant chartreuse and violet palette",
+				"ref": {
+					"source": "current",
+					"mode": "img2img",
+					"denoise": 0.6
+				},
+				"last": {
+					"seed": 261525328,
+					"prompt": "Rearing horse made of translucent toxic green slime, glowing acid-yellow body dripping goo, flowing liquid mane, dark purple armored barding and bridle adorned with skull-and-crossbones emblems, puddles and rising vapor wisps, cracked barren wasteland, deep crimson-red sky, dramatic backlit glow, bold outlines, painterly fantasy illustration, vibrant chartreuse and violet palette",
+					"style": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric light, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear,",
+					"at": "2026-07-07"
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_water_pawn",
@@ -141,11 +165,7 @@
 				"trigger": {
 					"kind": "dual_event",
 					"event": "attack",
-					"origin_conditions": [
-						{
-							"relation": "self"
-						}
-					]
+					"origin_of": "self"
 				},
 				"status": {
 					"id": "poison"
@@ -159,6 +179,12 @@
 	},
 	{
 		"id": "darkness_water_bishop_knight",
+		"display_name": "Blight Basilisk",
+		"cost": 6,
+		"attack": 2,
+		"health": 14,
+		"speed": 2,
+		"shield": 1,
 		"description": "Applies Poison 1 to the unit it strikes.",
 		"elements": [
 			"darkness",
@@ -180,11 +206,31 @@
 					]
 				},
 				"status": {
-					"id": "poison"
+					"id": "poison",
+					"stacks": 2
 				},
 				"targets": {
 					"kind": "participant",
 					"participant": "destination"
+				}
+			},
+			{
+				"trigger": {
+					"kind": "dual_event",
+					"event": "struck",
+					"destination_conditions": [
+						{
+							"relation": "self"
+						}
+					]
+				},
+				"targets": {
+					"kind": "participant",
+					"participant": "origin"
+				},
+				"status": {
+					"id": "poison",
+					"stacks": 2
 				}
 			}
 		]

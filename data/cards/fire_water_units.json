@@ -1,0 +1,241 @@
+[
+	{
+		"id": "fire_water_pawn",
+		"elements": [
+			"fire",
+			"water"
+		],
+		"chess_pieces": [
+			"pawn"
+		],
+		"description": "Steam unit. "
+	},
+	{
+		"id": "fire_water_knight",
+		"elements": [
+			"fire",
+			"water"
+		],
+		"chess_pieces": [
+			"knight"
+		],
+		"description": "Steam unit. "
+	},
+	{
+		"id": "fire_water_bishop",
+		"display_name": "Steam Bishop",
+		"description": "Steam unit. ",
+		"elements": [
+			"fire",
+			"water"
+		],
+		"chess_pieces": [
+			"bishop"
+		]
+	},
+	{
+		"id": "fire_water_rook",
+		"elements": [
+			"fire",
+			"water"
+		],
+		"chess_pieces": [
+			"rook"
+		],
+		"description": "Steam unit. "
+	},
+	{
+		"id": "fire_water_queen",
+		"elements": [
+			"fire",
+			"water"
+		],
+		"chess_pieces": [
+			"queen"
+		],
+		"description": "Steam unit. "
+	},
+	{
+		"id": "fire_water_pawn_pawn",
+		"elements": [
+			"fire",
+			"water"
+		],
+		"chess_pieces": [
+			"pawn",
+			"pawn"
+		],
+		"description": "Steam unit. "
+	},
+	{
+		"id": "fire_water_knight_pawn",
+		"elements": [
+			"fire",
+			"water"
+		],
+		"chess_pieces": [
+			"knight",
+			"pawn"
+		],
+		"description": "Steam unit. "
+	},
+	{
+		"id": "fire_water_bishop_pawn",
+		"elements": [
+			"fire",
+			"water"
+		],
+		"chess_pieces": [
+			"bishop",
+			"pawn"
+		],
+		"description": "Steam unit. "
+	},
+	{
+		"id": "fire_water_pawn_rook",
+		"elements": [
+			"fire",
+			"water"
+		],
+		"chess_pieces": [
+			"pawn",
+			"rook"
+		],
+		"description": "Steam unit. "
+	},
+	{
+		"id": "fire_water_pawn_queen",
+		"elements": [
+			"fire",
+			"water"
+		],
+		"chess_pieces": [
+			"pawn",
+			"queen"
+		],
+		"description": "Steam unit. "
+	},
+	{
+		"id": "fire_water_knight_knight",
+		"elements": [
+			"fire",
+			"water"
+		],
+		"chess_pieces": [
+			"knight",
+			"knight"
+		],
+		"description": "Steam unit. "
+	},
+	{
+		"id": "fire_water_bishop_knight",
+		"display_name": "Catoblepas",
+		"description": "Steam unit. ",
+		"elements": [
+			"fire",
+			"water"
+		],
+		"chess_pieces": [
+			"bishop",
+			"knight"
+		]
+	},
+	{
+		"id": "fire_water_knight_rook",
+		"elements": [
+			"fire",
+			"water"
+		],
+		"chess_pieces": [
+			"knight",
+			"rook"
+		],
+		"description": "Steam unit. "
+	},
+	{
+		"id": "fire_water_knight_queen",
+		"elements": [
+			"fire",
+			"water"
+		],
+		"chess_pieces": [
+			"knight",
+			"queen"
+		],
+		"description": "Steam unit. "
+	},
+	{
+		"id": "fire_water_bishop_bishop",
+		"display_name": "Steam Hierophant",
+		"description": "Steam unit. ",
+		"elements": [
+			"fire",
+			"water"
+		],
+		"chess_pieces": [
+			"bishop",
+			"bishop"
+		],
+		"ranged": true
+	},
+	{
+		"id": "fire_water_bishop_rook",
+		"elements": [
+			"fire",
+			"water"
+		],
+		"chess_pieces": [
+			"bishop",
+			"rook"
+		],
+		"description": "Steam unit. "
+	},
+	{
+		"id": "fire_water_bishop_queen",
+		"elements": [
+			"fire",
+			"water"
+		],
+		"chess_pieces": [
+			"bishop",
+			"queen"
+		],
+		"description": "Steam unit. "
+	},
+	{
+		"id": "fire_water_rook_rook",
+		"elements": [
+			"fire",
+			"water"
+		],
+		"chess_pieces": [
+			"rook",
+			"rook"
+		],
+		"description": "Steam unit. "
+	},
+	{
+		"id": "fire_water_queen_rook",
+		"elements": [
+			"fire",
+			"water"
+		],
+		"chess_pieces": [
+			"queen",
+			"rook"
+		],
+		"description": "Steam unit. "
+	},
+	{
+		"id": "fire_water_queen_queen",
+		"elements": [
+			"fire",
+			"water"
+		],
+		"chess_pieces": [
+			"queen",
+			"queen"
+		],
+		"description": "Steam unit. "
+	}
+]

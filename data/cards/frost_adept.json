@@ -1,37 +1,31 @@
 {
-  "id": "frost_adept",
-  "display_name": "Frost Adept",
-  "cost": 2,
-  "attack": 2,
-  "health": 3,
-  "speed": 4,
-  "description": "A ranged initiate of the winter arts. Chills whoever it strikes.",
-  "elements": [
-    "water"
-  ],
-  "chess_pieces": [
-    "pawn"
-  ],
-  "enemy_only": true,
-  "ranged": true,
-  "effects": [
-    {
-      "trigger": {
-        "kind": "dual_event",
-        "event": "attack",
-        "origin_conditions": [
-          {
-            "relation": "self"
-          }
-        ]
-      },
-      "status": {
-        "id": "chilled"
-      },
-      "targets": {
-        "kind": "participant",
-        "participant": "destination"
-      }
-    }
-  ]
+	"id": "frost_adept",
+	"display_name": "Frost Adept",
+	"cost": 2,
+	"attack": 2,
+	"health": 3,
+	"speed": 4,
+	"description": "A ranged initiate of the winter arts. Chills whoever it strikes.",
+	"enemy_only": true,
+	"ranged": true,
+	"effects": [
+		{
+			"trigger": {
+				"kind": "dual_event",
+				"event": "attack",
+				"origin_conditions": [
+					{
+						"relation": "self"
+					}
+				]
+			},
+			"status": {
+				"id": "chilled"
+			},
+			"targets": {
+				"kind": "participant",
+				"participant": "destination"
+			}
+		}
+	]
 }

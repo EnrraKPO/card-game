@@ -1,0 +1,13 @@
+[
+	{
+		"id": "fire_water_pawn",
+		"elements": [
+			"fire",
+			"water"
+		],
+		"chess_pieces": [
+			"pawn"
+		],
+		"description": "Steam unit. "
+	}
+]
