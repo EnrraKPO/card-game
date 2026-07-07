@@ -40,6 +40,15 @@ The tool is part of the game ecosystem — seamless and organic:
   combos, derived stats) into one normally-named file — every entry an ordinary card.
 - Server-side validation gates every save (unknown events, dangling references,
   payload-less effects…).
+- **✨ from words** (below every effect list): type an effect in plain English
+  ("+1 strength to all pawn units") and a local coder LLM (`effectsModel` in Settings,
+  default qwen3-coder) writes the JSON. The server teaches it the effect grammar plus
+  english⇒json example pairs mined live from the game's own content (via the same
+  `describeEffect` that renders "In plain words" — the two directions can't drift),
+  validates every attempt and feeds errors back for up to 3 tries. Results land in the
+  builder as ordinary editable rows — check the plain-words restatement; if validation
+  still objects, the best attempt lands anyway with the error as a toast (the save gate
+  keeps final say).
 
 ## Art (ComfyUI)
 
@@ -88,9 +97,10 @@ runners (gemma4:31b on current Ollama) crash on multi-image requests — the ser
 falls back automatically to per-image style-note calls plus a text-only synthesis call.
 
 Two optional guidance inputs (advanced view; they persist on the item's art draft and
-apply from either view's ✨ button): **concept direction** — free-text creative steer,
-always passed to the LLM — and **how to use the references** — passed only when
-reference illustrations are attached, and carried into the fallback synthesis call too.
+apply from either view's ✨ and 🔎 buttons): **concept direction** — free-text creative
+steer, always passed to the LLM — and **how to use the references** — passed only when
+reference illustrations are attached (🔎 always passes it: the analyzed image IS the
+reference), and carried into the fallback synthesis call too.
 Both carry the same named-preset cluster as the shared Style fragment (＋ save preset /
 − delete / select; stored globally in settings as `conceptPresets` / `refHintPresets`).
 
@@ -116,6 +126,36 @@ Prompt field for editing before generation.
 
 Types with no art slot in the game (statuses, charms, upgrades, encounters, map nodes)
 still allow generation as workspace reference imagery — clearly labeled as such.
+
+**Art recipe (`tool.art`)** — the art panel's state persists ON the entry when you Save:
+prompt, negative, model, dims, steps/guidance, fixed seed, rembg/turbo, the reference
+image (source + path/ID), and the ✨ LLM guidance (concept, ref hint, attached LLM refs,
+hidden lines). Each generation also stamps `tool.art.last` — the seed, resolved prompt
+and style fragment that actually produced the image — so every image is reproducible
+from its entry's JSON alone (external scripts can read it straight off the data file).
+Opening an entry auto-loads its recipe into the panel; the **↻ Recipe** button re-runs
+the last generation exactly (same seed/prompt/style — current model/dims apply, so
+change one field for a controlled variation). Game loaders ignore the `tool` key; a
+panel you never touch writes no metadata.
+
+**Set generator conflict handling** — before generating, the "⚙ Set…" preview plans every
+slot against the live game data **by composition** (elements + pieces, sorted — matching the
+game's `composition_key`): genuinely new slots are generated; a composition that already
+exists in ANOTHER file (even under a custom id like `frost_adept`) has its definition
+**pulled in** — moved verbatim into the family file via `/api/game/move-entry` (Revert on
+such an entry puts it back where it came from); compositions already in the family file are
+left alone; an id taken by an unrelated composition is skipped with a warning. No more
+duplicate-composition twins shadowing each other in the game's registry.
+
+**✨ AI provider** — Settings routes every ✨ feature (art prompts, 🔎 match art, effects
+from words) through one provider: **Local (Ollama)** (the default; per-feature models as
+above), **Claude Code** (shells out to the installed `claude` CLI in headless print mode —
+uses the login/subscription you already have, no API key, no extra billing; model blank =
+your Claude Code default), **Claude API** (official SDK; pay-per-token developer platform —
+`ant auth login` or `ANTHROPIC_API_KEY`; default `claude-opus-4-8`), or **ChatGPT**
+(OpenAI Responses API; pay-per-token; needs `OPENAI_API_KEY`; default `gpt-5.5`).
+Non-Ollama providers use their one configured model for all features (the Ollama
+art/effects model split doesn't apply) and handle multi-image references natively.
 
 ## Tests
 

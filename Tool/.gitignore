@@ -1,2 +1,5 @@
 node_modules/
 test/shots/
+
+# Claude Code provider runtime temp (system-prompt files, ref images)
+workspace/tmp/

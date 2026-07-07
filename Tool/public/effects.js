@@ -537,6 +537,7 @@ function cleanupFilter(e) {
 
 // The whole list, with an "add" button.
 function renderEffectList(container, effects, ctx, onChange) {
+  const nl = { text: '' };   // survives re-renders — typed text isn't lost on list edits
   function renderInto() {
     container.replaceChildren();
     effects.forEach((e, i) => {
@@ -547,6 +548,37 @@ function renderEffectList(container, effects, ctx, onChange) {
     container.append(el('button', { class: 'ghost small list-add', text: '+ add effect', onclick: () => {
       effects.push(defaultEffect(ctx)); onChange(); renderInto();
     } }));
+    // ✨ from words — the LLM translates a plain-English description into effect rows.
+    // Generated effects land HERE as ordinary editable rows, never straight in the file;
+    // the server validates (retrying on errors) and the save gate still has final say.
+    const inp = textInput(nl, 'text', () => {},
+      '…or describe it in words — e.g. “+1 strength to all pawn units”');
+    inp.addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); btn.click(); } });
+    const btn = el('button', { class: 'ghost small', text: '✨ from words',
+      title: 'Ask the local LLM (Ollama, effects model in Settings) to write these effects — check the plain-words restatement after',
+      onclick: async () => {
+        const text = (nl.text || '').trim();
+        if (!text) { inp.focus(); return; }
+        btn.disabled = true; btn.textContent = '✨ thinking…';
+        try {
+          const out = await api('/api/effects/from-text', { type: ctx.type, text });
+          if (!(out.effects || []).length) {
+            toast('The LLM produced no effects — try rephrasing.', 'err');
+          } else {
+            for (const e of out.effects) effects.push(e);
+            if (out.warning) toast('Check the new effect — the validator still objects: ' + out.warning, 'err');
+            else toast(`${out.effects.length} effect(s) added — verify the plain-words line says what you meant.`, 'ok');
+            nl.text = '';
+            onChange();
+          }
+        } catch (err) {
+          toast('Effect generation failed: ' + err.message, 'err');
+        }
+        renderInto();
+      } });
+    inp.style.flex = '1';
+    btn.style.flexShrink = '0';
+    container.append(el('div', { style: 'display:flex; align-items:center; gap:6px; margin-top:6px' }, inp, btn));
   }
   renderInto();
 }

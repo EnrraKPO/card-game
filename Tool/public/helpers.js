@@ -195,6 +195,7 @@ const L = {
   },
   attr: {
     health: 'Health (heal + / damage −, ignores shield)',
+    max_health: 'Max Health (raises the cap, does not heal)',
     damage_taken: 'Damage (hits shield first)',
     attack: 'Attack',
     speed: 'Speed',
@@ -367,3 +368,9 @@ function describeCost(cost) {
 function slugToName(id) {
   return (id || '').split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 }
+
+// The plain-English describers are pure functions — the server requires them too
+// (few-shot example pairs for the ✨ effects-from-words prompt), so English↔JSON
+// stays a single source in both directions.
+if (typeof module !== 'undefined' && module.exports)
+  module.exports = { describeEffect, describeCondition, labelOf, slugToName };

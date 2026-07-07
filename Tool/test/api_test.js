@@ -40,7 +40,14 @@ const readSbox = rel => JSON.parse(fs.readFileSync(path.join(SANDBOX, rel), 'utf
 
 async function main() {
   const server = spawn(process.execPath, [path.join(TOOL, 'server.js'), String(PORT)], {
-    env: Object.assign({}, process.env, { CARDGAME_ROOT: SANDBOX, CARDGAME_WORKSPACE: WS_DIR }),
+    env: Object.assign({}, process.env, { CARDGAME_ROOT: SANDBOX, CARDGAME_WORKSPACE: WS_DIR,
+      // cloud-provider tests: both SDKs honor their BASE_URL env vars, so the fakes below
+      // stand in for api.anthropic.com / api.openai.com without touching adapter code
+      ANTHROPIC_API_KEY: 'test-key', ANTHROPIC_BASE_URL: 'http://127.0.0.1:8483',
+      OPENAI_API_KEY: 'test-key', OPENAI_BASE_URL: 'http://127.0.0.1:8484/v1',
+      // claude-code provider tests: the stub CLI logs its invocation + replies from a file
+      FAKE_CLAUDE_LOG: path.join(WS_DIR, 'fake_claude_log.json'),
+      FAKE_CLAUDE_REPLY_FILE: path.join(WS_DIR, 'fake_claude_reply.txt') }),
     stdio: 'inherit',
   });
   await new Promise(r => setTimeout(r, 700));
@@ -232,9 +239,77 @@ async function main() {
       r.data.ok && r.data.prompt === 'a spectral pawn knight wreathed in venom mist, painterly'
       && llmReq.body.images.length === 1 && llmReq.body.images[0] === PNG1x1.toString('base64')
       && /recreate/i.test(llmReq.body.system));
+    // the ✨ guidance inputs apply here too — and refHint needs no attached refs
+    // (the analyzed image IS the reference)
+    r = await api('/api/art/prompt-from-art', { type: 'card', id: 'apitest_flip',
+      concept: 'menacing sea witch', refHint: 'copy the armor' });
+    check('prompt-from-art honors concept + refHint guidance',
+      r.data.ok && llmReq.body.prompt.includes('menacing sea witch')
+      && llmReq.body.prompt.includes('copy the armor'));
+    r = await api('/api/art/prompt-from-art', { type: 'card', id: 'apitest_flip' });
+    check('prompt-from-art without guidance stays bare',
+      r.data.ok && !/Concept direction|as a reference/.test(llmReq.body.prompt));
     r = await api('/api/art/prompt-from-art', { type: 'card', id: 'apitest_no_art_at_all' });
     check('prompt-from-art without art rejected', r.status === 400 && /no current art/.test(r.data.error || ''));
     fakeOllama.close();
+
+    // ── ✨ effects from words: generate → validate → retry, on a scripted fake ──
+    const fxReqs = []; let fxQueue = [];
+    const fakeFx = require('http').createServer((rq, rs) => {
+      let b = ''; rq.on('data', c => b += c);
+      rq.on('end', () => {
+        fxReqs.push(JSON.parse(b));
+        rs.setHeader('Content-Type', 'application/json');
+        rs.end(JSON.stringify({ response: fxQueue.shift() || '[]' }));
+      });
+    });
+    await new Promise(ok => fakeFx.listen(8481, ok));
+    await api('/api/settings', { ollamaUrl: 'http://127.0.0.1:8481', effectsModel: 'fxmodel' });
+    // an entry with a valid effect → the example miner has something to pair
+    await api('/api/game/save', { type: 'card', file: 'apitest_units.json', data: {
+      id: 'apitest_fx_example', display_name: 'FxEx', cost: 1, attack: 1, health: 1, speed: 1,
+      effects: [{ trigger: { kind: 'event', event: 'play', of: 'self' },
+        targets: { kind: 'self' }, attribute: 'attack', amount: 2 }] } });
+    const GOOD_FX = JSON.stringify([{ trigger: { kind: 'while' },
+      targets: { kind: 'all', conditions: [{ composition: ['pawn'] }] }, attribute: 'attack', amount: 1 }]);
+    const BAD_FX = JSON.stringify([{ trigger: { kind: 'event', event: 'bogus' },
+      targets: { kind: 'all' }, attribute: 'attack', amount: 1 }]);
+
+    fxQueue = ['<think>hm</think>```json\n' + GOOD_FX + '\n```'];
+    r = await api('/api/effects/from-text', { type: 'card', text: '+1 strength to all pawn units' });
+    check('effects-from-text returns validated effects (noise stripped)',
+      r.data.ok && r.data.attempts === 1 && !r.data.warning
+      && r.data.effects.length === 1 && r.data.effects[0].attribute === 'attack', JSON.stringify(r.data));
+    let fxReq = fxReqs[fxReqs.length - 1];
+    check('effects request uses the effects model + schema + the text',
+      fxReq.model === 'fxmodel' && /JSON array of effect objects/.test(fxReq.system)
+      && fxReq.prompt.includes('+1 strength to all pawn units'));
+    check('prompt carries mined english⇒json example pairs',
+      /Examples \(plain words ⇒ JSON\)/.test(fxReq.prompt) && fxReq.prompt.includes('⇒ [{'));
+    check('schema prompt lists the live status vocab', /poison/.test(fxReq.system));
+
+    fxQueue = [BAD_FX, GOOD_FX];
+    r = await api('/api/effects/from-text', { type: 'card', text: 'x' });
+    check('invalid attempt retries with the validator error fed back',
+      r.data.attempts === 2 && !r.data.warning
+      && fxReqs[fxReqs.length - 1].prompt.includes('not a simple event'), JSON.stringify(r.data));
+
+    fxQueue = ['no json here at all', GOOD_FX];
+    r = await api('/api/effects/from-text', { type: 'card', text: 'x' });
+    check('unparseable reply retries', r.data.attempts === 2 && !r.data.warning, JSON.stringify(r.data));
+
+    fxQueue = [BAD_FX, BAD_FX, BAD_FX];
+    r = await api('/api/effects/from-text', { type: 'card', text: 'x' });
+    check('persistent invalid returns the best attempt WITH its warning',
+      r.data.ok && r.data.attempts === 3 && /not a simple event/.test(r.data.warning || '')
+      && r.data.effects.length === 1, JSON.stringify(r.data));
+
+    r = await api('/api/effects/from-text', { type: 'card', text: '   ' });
+    check('empty text rejected', r.status === 400);
+    await api('/api/game/delete-entry', { type: 'card', id: 'apitest_fx_example' });
+    fakeFx.close();
+    // point Ollama back at 8479 — the multi-image fallback tests below reuse that port
+    await api('/api/settings', { ollamaUrl: 'http://127.0.0.1:8479' });
 
     // ── named presets for the LLM guidance inputs persist like style presets ──
     r = await api('/api/settings', { conceptPresets: { witchy: 'menacing sea witch' },
@@ -275,6 +350,139 @@ async function main() {
     crashyOllama.close();
     r = await api('/api/art/prompt', { type: 'card', name: 'Pawn', summary: [] });
     check('llm unreachable reports cleanly', r.status === 502 && /unreachable/i.test(r.data.error));
+
+    // ── cloud providers: the ✨ features route to Claude / ChatGPT via the same seam ──
+    let claudeReq = null, claudeText = 'Prompt: "a tidal bishop, painterly"';
+    const fakeClaude = require('http').createServer((rq, rs) => {
+      let b = ''; rq.on('data', c => b += c);
+      rq.on('end', () => {
+        claudeReq = { path: rq.url, auth: String(rq.headers['x-api-key'] || rq.headers.authorization || ''), body: JSON.parse(b) };
+        rs.setHeader('Content-Type', 'application/json');
+        rs.end(JSON.stringify({ id: 'msg_1', type: 'message', role: 'assistant', model: 'claude-test',
+          content: [{ type: 'text', text: claudeText }],
+          stop_reason: 'end_turn', usage: { input_tokens: 1, output_tokens: 1 } }));
+      });
+    });
+    await new Promise(ok => fakeClaude.listen(8483, ok));
+    r = await api('/api/settings', { llmProvider: 'claude', claudeModel: 'claude-test' });
+    check('provider + cloud models persist in settings',
+      r.data.settings.llmProvider === 'claude' && r.data.settings.claudeModel === 'claude-test');
+    r = await api('/api/art/prompt', { type: 'card', name: 'Bishop', summary: ['Cost 2'],
+      refArts: ['assets/cards/bishop_queen.png'] });
+    check('claude provider serves ✨ art prompts (cleaned)',
+      r.data.ok && r.data.prompt === 'a tidal bishop, painterly', JSON.stringify(r.data));
+    check('claude request carries model, system, vision block and adaptive thinking',
+      claudeReq && claudeReq.path === '/v1/messages' && claudeReq.body.model === 'claude-test'
+      && /never use the words/i.test(claudeReq.body.system)
+      && claudeReq.body.thinking && claudeReq.body.thinking.type === 'adaptive'
+      && claudeReq.body.messages[0].content.some(c => c.type === 'image' && c.source.data === PNG1x1.toString('base64'))
+      && claudeReq.body.messages[0].content.some(c => c.type === 'text' && c.text.includes('Cost 2')),
+      JSON.stringify(claudeReq && claudeReq.body));
+    check('claude request is authenticated', /test-key/.test(claudeReq.auth), claudeReq.auth);
+    // ✨ effects ride the same switch — ONE provider model, s.effectsModel ignored
+    claudeText = '```json\n' + GOOD_FX + '\n```';
+    r = await api('/api/effects/from-text', { type: 'card', text: '+1 strength to all pawn units' });
+    check('claude serves ✨ effects with the provider model',
+      r.data.ok && !r.data.warning && r.data.effects.length === 1
+      && claudeReq.body.model === 'claude-test'
+      && /JSON array of effect objects/.test(claudeReq.body.system), JSON.stringify(r.data));
+
+    let openaiReq = null;
+    const fakeOpenAI = require('http').createServer((rq, rs) => {
+      let b = ''; rq.on('data', c => b += c);
+      rq.on('end', () => {
+        openaiReq = { path: rq.url, auth: String(rq.headers.authorization || ''), body: JSON.parse(b) };
+        rs.setHeader('Content-Type', 'application/json');
+        rs.end(JSON.stringify({ id: 'resp_1', object: 'response', status: 'completed',
+          output: [{ type: 'message', role: 'assistant',
+            content: [{ type: 'output_text', text: 'a stormy rook, painterly', annotations: [] }] }],
+          usage: { input_tokens: 1, output_tokens: 1 } }));
+      });
+    });
+    await new Promise(ok => fakeOpenAI.listen(8484, ok));
+    await api('/api/settings', { llmProvider: 'openai', openaiModel: 'gpt-test' });
+    r = await api('/api/art/prompt', { type: 'card', name: 'Rook', summary: [],
+      refArts: ['assets/cards/bishop_queen.png'] });
+    check('openai provider serves ✨ art prompts',
+      r.data.ok && r.data.prompt === 'a stormy rook, painterly', JSON.stringify(r.data));
+    check('openai request uses the Responses API with instructions + image',
+      openaiReq && openaiReq.path === '/v1/responses' && openaiReq.body.model === 'gpt-test'
+      && /never use the words/i.test(openaiReq.body.instructions)
+      && openaiReq.body.input[0].content.some(c => c.type === 'input_image')
+      && openaiReq.auth === 'Bearer test-key', JSON.stringify(openaiReq && openaiReq.body));
+
+    // ── claude-code provider: rides the user's subscription via `claude -p` ──
+    const ccLog = path.join(WS_DIR, 'fake_claude_log.json');
+    const ccReply = path.join(WS_DIR, 'fake_claude_reply.txt');
+    fs.writeFileSync(ccReply, 'Prompt: "a moonlit knight, painterly"');
+    await api('/api/settings', { llmProvider: 'claude-code', claudeCodeModel: 'opus',
+      claudeCliCmd: `node ${path.join(TOOL, 'test', 'fake_claude.js')}` });
+    r = await api('/api/art/prompt', { type: 'card', name: 'Knight', summary: ['Cost 3'],
+      refArts: ['assets/cards/bishop_queen.png'] });
+    check('claude-code provider serves ✨ art prompts (cleaned)',
+      r.data.ok && r.data.prompt === 'a moonlit knight, painterly', JSON.stringify(r.data));
+    const cc = JSON.parse(fs.readFileSync(ccLog, 'utf8'));
+    check('claude-code runs headless print mode with only the Read tool',
+      cc.argv.includes('-p') && cc.argv.join(' ').includes('--output-format text')
+      && cc.argv.join(' ').includes('--allowedTools Read')
+      && cc.argv.join(' ').includes('--model opus'), JSON.stringify(cc.argv));
+    const sysIdx = cc.argv.indexOf('--system-prompt-file');
+    check('claude-code system prompt travels via file, not shell args',
+      sysIdx >= 0 && /never use the words/i.test(fs.readFileSync(cc.argv[sysIdx + 1], 'utf8')));
+    check('claude-code prompt arrives on stdin with the item data',
+      cc.stdin.includes('Cost 3') && /Reference image 1 .* Read tool: (.+\.png)/.test(cc.stdin));
+    const refPath = cc.stdin.match(/Read tool: (.+\.png)/)[1];
+    check('claude-code reference image written for the Read tool',
+      fs.existsSync(refPath) && fs.readFileSync(refPath).equals(PNG1x1));
+    // ✨ effects ride the same switch
+    fs.writeFileSync(ccReply, '```json\n' + GOOD_FX + '\n```');
+    r = await api('/api/effects/from-text', { type: 'card', text: '+1 strength to all pawn units' });
+    check('claude-code serves ✨ effects', r.data.ok && !r.data.warning
+      && r.data.effects.length === 1, JSON.stringify(r.data));
+
+    r = await api('/api/settings', { llmProvider: 'bogus' });
+    check('bad llmProvider rejected', r.status === 400);
+    await api('/api/settings', { llmProvider: 'ollama' });
+    fakeClaude.close(); fakeOpenAI.close();
+
+    // ── per-entry art recipe (tool.art) rides save/update untouched ──
+    r = await api('/api/game/save', { type: 'card', file: 'apitest_units.json', data: {
+      id: 'apitest_recipe', display_name: 'Rec', cost: 1, attack: 1, health: 1, speed: 1,
+      tool: { art: { prompt: 'moody bishop', model: 'krea2', width: 1024, height: 1536,
+        steps: 20, guidance: 4, rembg: false, ref: { source: 'game', path: 'assets/cards/bishop_queen.png' },
+        concept: 'menacing sea witch',
+        last: { seed: 12345, prompt: 'moody bishop', style: 'cartoon', at: '2026-07-07' } } } } });
+    let recEntry = readSbox('data/cards/apitest_units.json').find(e => e.id === 'apitest_recipe');
+    check('art recipe (tool.art) persists on the entry', r.status === 200
+      && recEntry.tool.art.last.seed === 12345
+      && recEntry.tool.art.ref.path === 'assets/cards/bishop_queen.png', JSON.stringify(recEntry));
+    r = await api('/api/game/save', { type: 'card', file: 'apitest_units.json', data:
+      Object.assign({}, recEntry, { attack: 2 }) });
+    recEntry = readSbox('data/cards/apitest_units.json').find(e => e.id === 'apitest_recipe');
+    check('recipe survives an entry update', recEntry.attack === 2 && recEntry.tool.art.last.seed === 12345);
+    await api('/api/game/delete-entry', { type: 'card', id: 'apitest_recipe' });
+
+    // ── move-entry: relocate between files with revertible bookkeeping ──
+    // (the set generator uses this to pull an existing composition into the family file)
+    fs.writeFileSync(path.join(SANDBOX, 'data/cards/apitest_move_src.json'),
+      JSON.stringify([{ id: 'apitest_mover', display_name: 'Mover', cost: 1, attack: 2, health: 3, speed: 4, elements: ['air', 'earth'], chess_pieces: ['knight'] }]));
+    fs.writeFileSync(path.join(SANDBOX, 'data/cards/apitest_move_dst.json'),
+      JSON.stringify([{ id: 'apitest_anchor', display_name: 'Anchor', cost: 1, attack: 1, health: 1, speed: 1 }]));
+    r = await api('/api/state');
+    check('game entries expose composition for set planning',
+      r.data.game.card.some(c => c.id === 'apitest_mover' && c.elements.join() === 'air,earth' && c.chess_pieces.join() === 'knight'));
+    r = await api('/api/game/move-entry', { type: 'card', id: 'apitest_mover', file: 'apitest_move_dst.json' });
+    check('move-entry relocates the definition verbatim (emptied source removed)',
+      r.status === 200 && r.data.action === 'moved'
+      && !fs.existsSync(path.join(SANDBOX, 'data/cards/apitest_move_src.json'))
+      && readSbox('data/cards/apitest_move_dst.json').some(e => e.id === 'apitest_mover' && e.attack === 2));
+    r = await api('/api/game/move-entry', { type: 'card', id: 'apitest_anchor', file: 'apitest_move_dst.json' });
+    check('move to its own file is a no-op', r.data.action === 'in_place');
+    r = await api('/api/game/restore', { type: 'card', id: 'apitest_mover' });
+    check('reverting a move puts the entry back in its source file',
+      r.status === 200
+      && readSbox('data/cards/apitest_move_src.json').some(e => e.id === 'apitest_mover' && e.attack === 2)
+      && !readSbox('data/cards/apitest_move_dst.json').some(e => e.id === 'apitest_mover'));
 
     // ── single-object files keep working (statuses) ──
     r = await api('/api/game/item?type=status&id=poison');

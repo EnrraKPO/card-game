@@ -169,7 +169,7 @@ function newItem() {
 function editorCtx() {
   const ws = {};
   for (const t of Object.keys(state.items)) ws[t] = state.items[t];
-  return { vocab: state.vocab, workspace: ws, isNew: state.isNew };
+  return { vocab: state.vocab, workspace: ws, isNew: state.isNew, type: state.currentType };
 }
 
 function clientDeployPreview(type, serialized) {
@@ -257,6 +257,12 @@ async function gameSave() {
   let data;
   try { data = ed.serialize(state.draft); } catch (e) { toast('Cannot serialize: ' + e.message, 'err'); return false; }
   if (state.draft.enabled === false) data.enabled = false;
+  // the art panel's recipe persists on the entry (tool.art); other tool.* keys pass through
+  const artMeta = state.draft._art ? artMetaFromDraft(state.draft._art)
+    : (state.draft.tool && state.draft.tool.art) || null;
+  const toolMeta = Object.assign({}, state.draft.tool);
+  if (artMeta) toolMeta.art = artMeta; else delete toolMeta.art;
+  if (Object.keys(toolMeta).length) data.tool = toolMeta;
   if (!/^[a-z0-9_]+$/.test(data.id || '')) {
     showValidation('id must be lowercase letters, digits and underscores'); return false;
   }
@@ -337,9 +343,67 @@ function artDefaults() {
   return { width: t.artW, height: t.artH, rembg: t.rembg, steps: 20, guidance: 4.0, seed: -1 };
 }
 
+// ── per-entry art recipe (entry.tool.art) ────────────────────────────────────
+// The art panel's live state persists WITH the entry on Save, so the whole
+// generation recipe — prompt, model, dims, reference (path/ID), ✨ guidance,
+// and the seed/style/prompt that produced the last image (`last`, stamped at
+// generation) — travels with the content in its data file. Anything can read
+// it back off the JSON (this panel on open, scripts, batch regeneration).
+// `touched` gates the write: a panel the user never interacted with stamps
+// nothing, so untouched entries stay metadata-free.
+function artMetaFromDraft(a) {
+  if (!a || !a.touched) return null;
+  const m = { model: a.model || 'flux2', width: a.width, height: a.height,
+    steps: a.steps, guidance: a.guidance, rembg: !!a.rembg };
+  if (a.prompt) m.prompt = a.prompt;
+  if (a.negative) m.negative = a.negative;
+  if (a.seed != null && a.seed >= 0) m.seed = a.seed;
+  if (a.turbo) m.turbo = true;
+  if (a.refSource && a.refSource !== 'none') {
+    m.ref = { source: a.refSource };
+    const p = a.refSource === 'upload' ? a.refUpload : a.refSource === 'game' ? a.refGameArt : null;
+    if (p) m.ref.path = p;
+    if (a.refSource === 'upload' && a.refUploadLabel) m.ref.name = a.refUploadLabel;
+    if (a.refSource === 'game' && a.refGameName) m.ref.name = a.refGameName;
+    if (a.refMode) m.ref.mode = a.refMode;
+    if (a.denoise != null) m.ref.denoise = a.denoise;
+  }
+  if (a.llmConcept) m.concept = a.llmConcept;
+  if (a.llmRefHint) m.refHint = a.llmRefHint;
+  if ((a.llmRefs || []).length) m.llmRefs = a.llmRefs.map(r => ({ name: r.name, art: r.art }));
+  if ((a.llmHidden || []).length) m.llmHidden = a.llmHidden.slice();
+  if (a.lastGen) m.last = Object.assign({}, a.lastGen);
+  return m;
+}
+
+function artDraftFromMeta(m) {
+  const a = Object.assign(artDefaults(), { prompt: m.prompt || '', touched: true });
+  for (const k of ['model', 'width', 'height', 'steps', 'guidance', 'negative']) if (m[k] != null) a[k] = m[k];
+  a.seed = m.seed != null ? m.seed : -1;
+  a.rembg = !!m.rembg;
+  a.turbo = !!m.turbo;
+  if (m.ref && m.ref.source) {
+    a.refSource = m.ref.source;
+    if (m.ref.source === 'upload') { a.refUpload = m.ref.path; a.refUploadLabel = m.ref.name || m.ref.path; }
+    if (m.ref.source === 'game') { a.refGameArt = m.ref.path; a.refGameName = m.ref.name || ''; }
+    if (m.ref.mode) a.refMode = m.ref.mode;
+    if (m.ref.denoise != null) a.denoise = m.ref.denoise;
+  }
+  if (m.concept) a.llmConcept = m.concept;
+  if (m.refHint) a.llmRefHint = m.refHint;
+  if (m.llmRefs) a.llmRefs = m.llmRefs.map(r => ({ name: r.name, art: r.art }));
+  if (m.llmHidden) a.llmHidden = m.llmHidden.slice();
+  if (m.last) a.lastGen = Object.assign({}, m.last);
+  return a;
+}
+
 // The item's art-generation draft, defaults applied (shared by both views).
+// Seeded from the entry's stored recipe (tool.art) when it has one.
 function artDraft() {
-  if (!state.draft._art) state.draft._art = Object.assign(artDefaults(), { prompt: '' });
+  if (!state.draft._art)
+    state.draft._art = state.draft.tool && state.draft.tool.art
+      ? artDraftFromMeta(state.draft.tool.art)
+      : Object.assign(artDefaults(), { prompt: '' });
   const a = state.draft._art;
   if (!a.model || !state.artModels[a.model]) {
     // Krea 2 is the house default — adopt its step/guidance profile along with the pick
@@ -371,7 +435,7 @@ function buildArtControls(rerender, advanced) {
   const a = artDraft();
   const mdl = state.artModels[a.model];
 
-  const noChange = () => { state.dirty = true; $('dirty-flag').hidden = false; };
+  const noChange = () => { a.touched = true; state.dirty = true; $('dirty-flag').hidden = false; };
   // empty prompt = auto-derive from the item's current name/description at generate time
   const promptArea = el('textarea', {
     value: a.prompt || '', rows: 3, placeholder: 'auto: ' + ed.promptFor(state.draft),
@@ -464,11 +528,16 @@ function buildArtControls(rerender, advanced) {
 
   const status = el('div', { class: 'art-status' });
   const genBtn = el('button', { class: 'primary', text: '🎨 Generate', style: 'margin-top:10px', onclick: () => startArt(status, genBtn) });
+  const recipeBtn = a.lastGen ? el('button', { class: 'ghost', text: '↻ Recipe', style: 'margin:10px 0 0 6px',
+    title: `Regenerate what produced the last image — its prompt, style and seed ${a.lastGen.seed}`
+      + (a.lastGen.at ? ` (recorded ${a.lastGen.at})` : '') + '; the current model/dims/reference apply',
+    onclick: () => startArt(status, recipeBtn, true) }) : null;
   if (state.isNew || !state.currentId) { genBtn.disabled = true; status.textContent = 'Save the item first (art is filed under its id).'; }
   if (state.artJob && state.artJob.itemId === state.currentId) {
     genBtn.disabled = true;
     status.textContent = `Generating… ${state.artJob.elapsed || 0}s`;
   }
+  if (recipeBtn) recipeBtn.disabled = genBtn.disabled;
 
   return [
     modelRow,
@@ -501,13 +570,17 @@ function buildArtControls(rerender, advanced) {
           el('button', { class: 'ghost tiny', text: '🔎 match art',
             disabled: !(state.gameArt || state.gameHasArt),
             title: (state.gameArt || state.gameHasArt)
-              ? 'Vision-analyze the item’s current art and write a prompt that recreates it — for faithful variations'
+              ? 'Vision-analyze the item’s current art and write a prompt that recreates it — for faithful variations (the LLM guidance inputs apply here too)'
               : 'Vision-analyze the current art — no current art yet',
             onclick: async e => {
               const btn = e.target;
               btn.disabled = true; btn.textContent = '🔎 looking…';
               try {
-                const out = await api('/api/art/prompt-from-art', { type: state.currentType, id: state.currentId });
+                const out = await api('/api/art/prompt-from-art', {
+                  type: state.currentType, id: state.currentId,
+                  concept: a.llmConcept || '',
+                  refHint: a.llmRefHint || '',
+                });
                 a.prompt = out.prompt; promptArea.value = out.prompt; noChange();
               } catch (err) { toast('Art analysis failed: ' + err.message, 'err'); }
               btn.disabled = false; btn.textContent = '🔎 match art';
@@ -590,7 +663,7 @@ function buildArtControls(rerender, advanced) {
             : `⚡ Turbo LoRA — Flux 2 only`)),
     ),
     el('div', { class: 'hint', text: ed.artNote }),
-    genBtn,
+    recipeBtn ? el('div', {}, genBtn, recipeBtn) : genBtn,
     status,
     (state.artJob && state.artJob.itemId === state.currentId)
       ? el('div', { class: 'progressbar' }, el('div')) : null,
@@ -677,7 +750,7 @@ async function loadArtRefs() {
 function renderAdvanced() {
   const a = artDraft();
   const mdl = state.artModels[a.model];
-  const noChange = () => { state.dirty = true; $('dirty-flag').hidden = false; };
+  const noChange = () => { a.touched = true; state.dirty = true; $('dirty-flag').hidden = false; };
   // a full re-render replaces the DOM — carry the reference column's scroll across so
   // attaching a ref deep in the list doesn't bounce the user back to the top
   const prevRefsCol = document.querySelector('.modal.advanced .advanced-col.refs');
@@ -835,28 +908,37 @@ async function saveStyleNow() {
   } catch (e) { toast('Saving style failed: ' + e.message, 'err'); }
 }
 
-async function startArt(statusEl, btn) {
+// `recipe` = the ↻ Recipe button: reproduce the LAST generation exactly — its
+// recorded prompt, style fragment and seed (the current model/dims/reference
+// still apply; edit one field first for a controlled variation).
+async function startArt(statusEl, btn, recipe) {
   const a = state.draft._art;
   btn.disabled = true;
   statusEl.className = 'art-status';
   statusEl.textContent = 'Queueing…';
   await saveStyleNow();
-  const base = a.prompt || EDITORS[state.currentType].promptFor(state.draft);
-  const style = (state.settings.artStyle || '').trim();
+  const last = recipe && a.lastGen ? a.lastGen : null;
+  const base = last ? last.prompt : (a.prompt || EDITORS[state.currentType].promptFor(state.draft));
+  const style = last ? (last.style || '') : (state.settings.artStyle || '').trim();
+  // a random seed resolves HERE, not server-side, so the recipe records what actually ran
+  const seed = last ? last.seed
+    : (a.seed != null && a.seed >= 0 ? a.seed : Math.floor(Math.random() * 2 ** 32));
   try {
     const { jobId } = await api('/api/art/generate', {
       type: state.currentType, id: state.currentId,
       prompt: style ? base + ', ' + style : base,
       negative: a.negative || '',
       width: a.width, height: a.height,
-      steps: a.steps, guidance: a.guidance, seed: a.seed, rembg: a.rembg,
+      steps: a.steps, guidance: a.guidance, seed, rembg: a.rembg,
       useRef: !!a.refSource && a.refSource !== 'none',
       refUpload: a.refSource === 'upload' ? a.refUpload : undefined,
       refGameArt: a.refSource === 'game' ? a.refGameArt : undefined,
       refMode: a.refMode, denoise: a.denoise, turbo: !!a.turbo,
       model: a.model || 'flux2',
     });
-    state.artJob = { jobId, itemId: state.currentId, type: state.currentType, elapsed: 0 };
+    state.artJob = { jobId, itemId: state.currentId, type: state.currentType, elapsed: 0,
+      // stamped into the entry's recipe (tool.art.last) when the job completes
+      stamp: { seed, prompt: base, style, at: new Date().toISOString().slice(0, 10) } };
     renderArtPanel();
     pollArt();
   } catch (e) {
@@ -887,6 +969,15 @@ async function pollArt() {
       toast(`Art ready for ${finished.itemId}.` + (hasSlot
         ? ' It stays in the workspace — press "⬆ Use in game" when you want it deployed.'
         : ' (Reference only — the game has no art slot for this type.)'), 'ok');
+      // record what produced this image on the entry's recipe (only stamped on
+      // SUCCESS — a failed job leaves the previous image and its recipe intact)
+      if (state.currentId === finished.itemId && state.currentType === finished.type
+          && state.draft && state.draft._art && finished.stamp) {
+        state.draft._art.lastGen = finished.stamp;
+        state.draft._art.touched = true;
+        state.dirty = true;
+        $('dirty-flag').hidden = false;
+      }
       if (state.currentId === finished.itemId) state.gameHasArt = true;
       await refreshState(true);
       renderItemList();
@@ -924,18 +1015,54 @@ function generateSetCards(cfg) {
   });
 }
 
+// Composition identity — elements and pieces each sorted. Matches the game's
+// CardData.composition_key semantics, so the set generator can spot an existing
+// card that OWNS a slot's composition even under a custom id (e.g. frost_adept).
+function setCompKey(d) {
+  return [...(d.elements || [])].sort().join('_') + '|' + [...(d.chess_pieces || [])].sort().join('_');
+}
+
+// Plans a set generation against the live game data: which slots are genuinely new,
+// which compositions already exist ELSEWHERE (their definitions get PULLED — moved
+// verbatim into the family file), which are already in place, and which ids are
+// taken by an unrelated composition (hands off).
+function planSetCards(cfg) {
+  const cards = generateSetCards(cfg);
+  const setFile = [cfg.a, cfg.b].filter(Boolean).sort().join('_') + '_units.json';
+  const byComp = new Map();
+  for (const g of state.game.card || []) {
+    if (!(g.elements || []).length && !(g.chess_pieces || []).length) continue;
+    const k = setCompKey(g);
+    if (!byComp.has(k)) byComp.set(k, g);
+  }
+  const ids = new Set([...state.vocab.cards.map(c => c.id), ...(state.items.card || []).map(i => i.id)]);
+  const plan = { fresh: [], moves: [], inPlace: [], taken: [], setFile };
+  for (const c of cards) {
+    const owner = byComp.get(setCompKey(c));
+    if (owner) {
+      if (owner.file === setFile) plan.inPlace.push(owner.id);
+      else plan.moves.push(owner);
+    } else if (ids.has(c.id)) plan.taken.push(c.id);
+    else plan.fresh.push(c);
+  }
+  return plan;
+}
+
 function openSetGenerator() {
   const cfg = { a: 'water', b: '', singles: true, pairs: true, spell: false,
     description: '', effects: [], install: true };
   const preview = el('div', { class: 'subtle mono', style: 'margin-top:8px; line-height:1.6' });
   const refresh = () => {
-    const cards = generateSetCards(cfg);
-    const existing = new Set([...state.vocab.cards.map(c => c.id), ...(state.items.card || []).map(i => i.id)]);
-    const fresh = cards.filter(c => !existing.has(c.id));
-    preview.textContent = cards.length
-      ? `${fresh.length} new cards` + (cards.length - fresh.length ? ` (${cards.length - fresh.length} skipped — ids already exist)` : '')
-        + ': ' + fresh.map(c => c.id).join(', ')
-      : 'pick at least one element';
+    const plan = planSetCards(cfg);
+    if (!plan.fresh.length && !plan.moves.length && !plan.inPlace.length && !plan.taken.length) {
+      preview.textContent = 'pick at least one element';
+      return;
+    }
+    preview.textContent = `${plan.fresh.length} new cards`
+      + (plan.moves.length ? ` · ${plan.moves.length} pulled in from other files (${plan.moves.map(m => `${m.id} — ${m.file}`).join(', ')})` : '')
+      + (plan.inPlace.length ? ` · ${plan.inPlace.length} already in place` : '')
+      + (plan.taken.length ? ` · ${plan.taken.length} skipped (id taken by a different composition: ${plan.taken.join(', ')})` : '')
+      + (plan.fresh.length ? ': ' + plan.fresh.map(c => c.id).join(', ') : '');
   };
   const fxWrap = el('div');
   renderEffectList(fxWrap, cfg.effects, fxCtx(editorCtx(), 'each generated card'), refresh);
@@ -961,20 +1088,27 @@ function openSetGenerator() {
     el('div', { class: 'modal-actions' },
       el('button', { class: 'ghost', text: 'Cancel', onclick: () => $('modal-root').replaceChildren() }),
       el('button', { class: 'primary', text: 'Generate cards', onclick: async () => {
-        const existing = new Set(state.vocab.cards.map(c => c.id));
-        const cards = generateSetCards(cfg).filter(c => !existing.has(c.id));
-        if (!cards.length) { toast('Nothing to generate — every id already exists.', 'err'); return; }
-        // the whole family lives in ONE normally-named game file, each entry an ordinary card
-        const setFile = [cfg.a, cfg.b].filter(Boolean).sort().join('_') + '_units.json';
-        let made = 0;
-        for (const card of cards) {
+        const plan = planSetCards(cfg);
+        if (!plan.fresh.length && !plan.moves.length) { toast('Nothing to do — every composition already lives in ' + plan.setFile + '.', 'err'); return; }
+        // existing compositions are PULLED in first — their definitions move verbatim
+        // into the family file (Revert on such an entry puts it back where it came from)
+        let moved = 0, made = 0;
+        for (const m of plan.moves) {
           try {
-            await api('/api/game/save', { type: 'card', file: setFile, data: card });
+            await api('/api/game/move-entry', { type: 'card', id: m.id, file: plan.setFile });
+            moved++;
+          } catch (e) { toast(`${m.id}: ${e.message}`, 'err'); }
+        }
+        // the whole family lives in ONE normally-named game file, each entry an ordinary card
+        for (const card of plan.fresh) {
+          try {
+            await api('/api/game/save', { type: 'card', file: plan.setFile, data: card });
             made++;
           } catch (e) { toast(`${card.id}: ${e.message}`, 'err'); }
         }
         $('modal-root').replaceChildren();
-        toast(`${made} cards saved into data/cards/${setFile} — in the game (restart it to see them).`, 'ok');
+        toast(`${made} cards saved` + (moved ? `, ${moved} existing pulled in,` : '')
+          + ` into data/cards/${plan.setFile} — in the game (restart it to see them).`, 'ok');
         await refreshState();
       } }),
     ));
@@ -1000,8 +1134,13 @@ async function openSettings() {
     turboLora: state.settings.turboLora || '',
     turboSteps: state.settings.turboSteps || 8,
     turboStrength: state.settings.turboStrength == null ? 1.0 : state.settings.turboStrength,
+    llmProvider: state.settings.llmProvider || 'ollama',
     ollamaUrl: state.settings.ollamaUrl || 'http://127.0.0.1:11434',
     llmModel: state.settings.llmModel || 'gemma4:31b',
+    effectsModel: state.settings.effectsModel || 'qwen3-coder-next:q4_K_M',
+    claudeModel: state.settings.claudeModel || 'claude-opus-4-8',
+    openaiModel: state.settings.openaiModel || 'gpt-5.5',
+    claudeCodeModel: state.settings.claudeCodeModel || '',
   };
   const loraInput = textInput(s, 'turboLora', () => {}, 'a .safetensors under models/loras');
   loraInput.setAttribute('list', 'lora-list');
@@ -1016,9 +1155,21 @@ async function openSettings() {
       fld('Turbo steps', numInput(s, 'turboSteps', () => {}, { min: 1 }), 'default steps in turbo mode', 'narrow'),
       fld('Turbo strength', numInput(s, 'turboStrength', () => {}, { float: true, step: 0.05, min: 0, max: 2 }), null, 'narrow'),
     ),
+    fld('✨ AI provider', selectInput(s, 'llmProvider', [
+      { value: 'ollama', label: 'Local (Ollama)' },
+      { value: 'claude-code', label: 'Claude Code (your subscription)' },
+      { value: 'claude', label: 'Claude API (pay per token)' },
+      { value: 'openai', label: 'ChatGPT (OpenAI API, pay per token)' },
+    ], () => {}), 'routes ALL ✨ features — art prompts, prompt-from-art, effects from words'),
     el('div', { class: 'frow', style: 'margin-top:10px' },
-      fld('Ollama URL', textInput(s, 'ollamaUrl', () => {}, 'http://127.0.0.1:11434'), 'local LLM server for ✨ art prompts'),
-      fld('LLM model', textInput(s, 'llmModel', () => {}, 'gemma4:31b'), 'an Ollama model name'),
+      fld('Ollama URL', textInput(s, 'ollamaUrl', () => {}, 'http://127.0.0.1:11434'), 'local LLM server for the ✨ features'),
+      fld('LLM model', textInput(s, 'llmModel', () => {}, 'gemma4:31b'), 'vision model for ✨ art prompts'),
+      fld('Effects model', textInput(s, 'effectsModel', () => {}, 'qwen3-coder-next:q4_K_M'), 'coder model for ✨ effects from words'),
+    ),
+    el('div', { class: 'frow', style: 'margin-top:10px' },
+      fld('Claude Code model', textInput(s, 'claudeCodeModel', () => {}, '(your Claude Code default)'), 'uses the `claude` CLI login — no key; blank = its default, or opus/sonnet/haiku'),
+      fld('Claude API model', textInput(s, 'claudeModel', () => {}, 'claude-opus-4-8'), 'auth: `ant auth login` or ANTHROPIC_API_KEY'),
+      fld('ChatGPT model', textInput(s, 'openaiModel', () => {}, 'gpt-5.5'), 'auth: OPENAI_API_KEY env var'),
     ),
     el('div', { class: 'modal-actions' },
       el('button', { class: 'ghost', text: 'Cancel', onclick: () => $('modal-root').replaceChildren() }),

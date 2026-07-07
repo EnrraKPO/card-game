@@ -23,8 +23,15 @@ for (const d of ['data/cards', 'data/statuses', 'data/abilities', 'data/charms',
 fs.writeFileSync(path.join(SANDBOX, 'data/cards/base.json'), JSON.stringify([
   { id: 'pawn', display_name: 'Pawn', cost: 1, attack: 1, health: 2, speed: 3, chess_pieces: ['pawn'] },
   { id: 'lone_pawn', display_name: 'Lone Pawn', cost: 1, attack: 1, health: 1, speed: 1, chess_pieces: ['pawn'] },
-  { id: 'fire_queen', display_name: 'Fire Queen', cost: 5, attack: 5, health: 5, speed: 5, elements: ['fire'], chess_pieces: ['queen'] },
+  { id: 'fire_queen', display_name: 'Fire Queen', cost: 5, attack: 5, health: 5, speed: 5, elements: ['fire'], chess_pieces: ['queen'],
+    // a stored art recipe (tool.art) — the panel must auto-load it and offer ↻ Recipe
+    tool: { art: { prompt: 'a regal fire queen', model: 'krea2', width: 1024, height: 1536,
+      steps: 20, guidance: 4, rembg: false,
+      last: { seed: 424242, prompt: 'a regal fire queen', style: '', at: '2026-07-07' } } } },
   { id: 'goblin', display_name: 'Goblin Grunt', cost: 1, attack: 2, health: 1, speed: 4, enemy_only: true },
+  // owns the air+earth knight composition under a custom id — the set generator must PULL
+  // this definition into the family file instead of generating a conflicting air_earth_knight
+  { id: 'dust_devil', display_name: 'Dust Devil', cost: 3, attack: 4, health: 2, speed: 6, elements: ['air', 'earth'], chess_pieces: ['knight'] },
 ]));
 fs.writeFileSync(path.join(SANDBOX, 'data/statuses/poison.json'), JSON.stringify({ id: 'poison', display_name: 'Poison' }));
 const PNG1x1_UI = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
@@ -199,13 +206,20 @@ async function main() {
     });
     await sleep(150);
     check('generator previews the family', await page.evaluate(() =>
-      document.querySelector('.modal').textContent.includes('20 new cards')));
+      document.querySelector('.modal').textContent.includes('19 new cards')));
+    check('generator plans to pull the existing composition in', await page.evaluate(() =>
+      /1 pulled in from other files \(dust_devil — base\.json\)/.test(document.querySelector('.modal').textContent)));
     await page.evaluate(() => {
       [...document.querySelectorAll('.modal button')].find(b => b.textContent === 'Generate cards').click();
     });
     await sleep(1500);
     const setFile = path.join(SANDBOX, 'data/cards/air_earth_units.json');
     check('family written into ONE normally-named file', fs.existsSync(setFile) && readSbox('data/cards/air_earth_units.json').length === 20);
+    const aeSet = readSbox('data/cards/air_earth_units.json');
+    check('existing composition moved in verbatim, no conflicting twin generated',
+      aeSet.some(e => e.id === 'dust_devil' && e.attack === 4)
+      && !aeSet.some(e => e.id === 'air_earth_knight')
+      && !readSbox('data/cards/base.json').some(e => e.id === 'dust_devil'));
     await openEntry('air_earth_units.json', 'air_earth_pawn');
     check('set entry opens as an ordinary card', await page.evaluate(() =>
       document.getElementById('item-title').textContent.includes('Card —')));
@@ -447,6 +461,31 @@ async function main() {
     }));
     await shot('05_after_collapse');
     fakeOllama.close();
+
+    // ═══ per-entry art recipe (tool.art): auto-load, ↻ Recipe, save round-trip ═══
+    await openEntry('base.json', 'fire_queen');
+    check('stored art recipe auto-feeds the panel', await page.evaluate(() =>
+      document.querySelector('#art-panel textarea').value === 'a regal fire queen'));
+    check('↻ Recipe button appears with the recorded seed', await page.evaluate(() => {
+      const b = [...document.querySelectorAll('#art-panel button')].find(x => x.textContent.includes('↻ Recipe'));
+      return !!b && b.title.includes('424242');
+    }));
+    await page.evaluate(() => {
+      const ta = document.querySelector('#art-panel textarea');
+      ta.value = 'an ashen fire queen'; ta.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await sleep(100);
+    await saveToGame();
+    const fq = readSbox('data/cards/base.json').find(e => e.id === 'fire_queen');
+    check('edited recipe saved onto the entry, generation stamp preserved',
+      fq.tool && fq.tool.art && fq.tool.art.prompt === 'an ashen fire queen'
+      && fq.tool.art.last && fq.tool.art.last.seed === 424242, JSON.stringify(fq.tool));
+    // an entry with NO recipe and an untouched panel must stay metadata-free
+    await openEntry('base.json', 'lone_pawn');
+    await setFld('Name', 'Lone Pawn!');
+    await saveToGame();
+    check('untouched art panel stamps no metadata', !('tool' in
+      readSbox('data/cards/base.json').find(e => e.id === 'lone_pawn')));
 
     check('no page errors during the whole run', errors.length === 0, errors.slice(0, 5).join(' | '));
   } catch (e) {

@@ -74,7 +74,13 @@ function getSettings() {
     conceptPresets: {}, refHintPresets: {},   // named presets for the ✨ LLM guidance inputs
     turboLora: 'Flux_2-Turbo-LoRA_comfyui.safetensors',  // the user's Flux 2 turbo LoRA
     turboSteps: 8, turboStrength: 1.0,
+    llmProvider: 'ollama',   // 'ollama' (local) | 'claude-code' (subscription) | 'claude' (API) | 'openai' — routes ALL ✨ LLM features
+    claudeCodeModel: '',     // blank = the user's Claude Code default; or opus/sonnet/haiku/full id
+    claudeCliCmd: 'claude',  // launcher override (tests point it at a stub)
     ollamaUrl: 'http://127.0.0.1:11434', llmModel: 'gemma4:31b',   // local LLM for art prompts
+    effectsModel: 'qwen3-coder-next:q4_K_M',   // local LLM for ✨ effects-from-words (JSON work — a coder model)
+    claudeModel: 'claude-opus-4-8',   // cloud providers use ONE model for every ✨ feature
+    openaiModel: 'gpt-5.5',
   }, readJson(SETTINGS_PATH, {}));
 }
 
@@ -234,6 +240,51 @@ function deleteGameEntry(type, id) {
   return { file: TYPES[type].dataDir + '/' + existing.file, removedFile: !remaining.length };
 }
 
+// Relocate an entry to another file of its type — the set generator's "pull an existing
+// composition into the family file". ONE bookkeeping record covers both files (`movedFrom`),
+// so Revert removes it from the target and puts the original back in its source. Composing
+// this from delete + save would break revert: both share the edits key `type/id`, and the
+// second write would shadow the first record.
+function moveGameEntry(type, id, file) {
+  if (!/^[a-z0-9_]+\.json$/.test(file)) throw new Error('file must be a plain lowercase name ending in .json');
+  if (type === 'nodeweights') throw new Error('node-weight bands cannot move between files');
+  const existing = findGameEntry(type, id);
+  if (!existing) throw new Error(`no game ${type} with id "${id}"`);
+  if (existing.file === file) return { file: TYPES[type].dataDir + '/' + file, action: 'in_place' };
+  const srcAbs = path.join(GAME_ROOT, TYPES[type].dataDir, existing.file);
+  const dstAbs = path.join(GAME_ROOT, TYPES[type].dataDir, file);
+  // raw-byte backups for BOTH files on their first tool touch, same as save/delete
+  for (const [f, abs] of [[existing.file, srcAbs], [file, dstAbs]]) {
+    if (!fs.existsSync(abs)) continue;
+    const b = editBackupFile(type, f);
+    if (!fs.existsSync(b)) { ensureDir(path.dirname(b)); fs.copyFileSync(abs, b); }
+  }
+  const edits = getEdits();
+  const key = type + '/' + id;
+  // out of the source (an emptied file disappears, like delete-entry)
+  let src = readJson(srcAbs, null);
+  if (src == null) throw new Error(`cannot parse ${existing.file}`);
+  if (!Array.isArray(src)) src = [src];
+  const remaining = src.filter(e => !(e && e.id === id));
+  if (remaining.length) { writeGameJson(srcAbs, remaining); syncSiblingHashes(type, existing.file, edits, srcAbs); }
+  else fs.unlinkSync(srcAbs);
+  // into the target, definition verbatim (created if needed; single-object files grow)
+  let dst = fs.existsSync(dstAbs) ? readJson(dstAbs, null) : [];
+  if (dst == null) throw new Error(`cannot parse ${file}`);
+  if (!Array.isArray(dst)) dst = [dst];
+  dst.push(stripMeta(existing.data));
+  ensureDir(path.dirname(dstAbs));
+  writeGameJson(dstAbs, dst);
+  // bookkeeping: a fresh record remembers the source; a prior record keeps ITS original
+  // (revert then undoes the earlier edit AND the move in one step). A prior `added`
+  // record stays `added` — reverting a tool-created entry still just removes it.
+  if (!edits[key]) edits[key] = { file, original: existing.data, movedFrom: existing.file, at: new Date().toISOString() };
+  else { edits[key].movedFrom = edits[key].movedFrom || edits[key].file; edits[key].file = file; }
+  syncSiblingHashes(type, file, edits, dstAbs);
+  setEdits(edits);
+  return { file: TYPES[type].dataDir + '/' + file, action: 'moved', from: existing.file };
+}
+
 function applyGameEdit(type, id, data, applyArt) {
   const found = findGameEntry(type, id);
   if (!found) throw new Error(`no game ${type} with id "${id}" (new content goes through the workspace Install flow)`);
@@ -284,12 +335,15 @@ function restoreGameEdit(type, id) {
   const abs = path.join(GAME_ROOT, TYPES[type].dataDir, entry.file);
   // Untouched since the tool's last write, and this is the file's last remaining edit?
   // Then restore the ORIGINAL BYTES (exact formatting), not just the entry's values.
+  // A cross-file move can't take this shortcut: the target's backup predates the move,
+  // so restoring it fixes ONE file while the source also needs its entry back.
   const untouched = entry.fileHash && fs.existsSync(abs) && fileHash(abs) === entry.fileHash;
   const others = Object.keys(edits).some(k =>
     k !== key && k.startsWith(type + '/') && edits[k].file === entry.file);
+  const crossFileMove = !!entry.movedFrom && !entry.added;
   const rawBackup = editBackupFile(type, entry.file);
   let usedBackup = false;
-  if (untouched && !others && fs.existsSync(rawBackup)) {
+  if (untouched && !others && !crossFileMove && fs.existsSync(rawBackup)) {
     fs.copyFileSync(rawBackup, abs);
     usedBackup = true;
   } else if (entry.added) {
@@ -301,6 +355,23 @@ function restoreGameEdit(type, id) {
       if (remaining.length) { writeGameJson(abs, remaining); if (others) syncSiblingHashes(type, entry.file, edits, abs); }
       else fs.unlinkSync(abs);
     }
+  } else if (entry.movedFrom) {
+    // reverting a MOVE = out of the target, original back into the source
+    let dst = fs.existsSync(abs) ? readJson(abs, null) : null;
+    if (dst != null) {
+      if (!Array.isArray(dst)) dst = [dst];
+      const remaining = dst.filter(e => !(e && e.id === id));
+      if (remaining.length) { writeGameJson(abs, remaining); if (others) syncSiblingHashes(type, entry.file, edits, abs); }
+      else fs.unlinkSync(abs);
+    }
+    const srcAbs = path.join(GAME_ROOT, TYPES[type].dataDir, entry.movedFrom);
+    let src = fs.existsSync(srcAbs) ? readJson(srcAbs, null) : [];
+    if (src == null) src = [];
+    if (!Array.isArray(src)) src = [src];
+    src.push(entry.original);
+    ensureDir(path.dirname(srcAbs));
+    writeGameJson(srcAbs, src);
+    syncSiblingHashes(type, entry.movedFrom, edits, srcAbs);
   } else if (entry.deleted) {
     // reverting a DELETED entry = put it back
     let raw = fs.existsSync(abs) ? readJson(abs, null) : [];
@@ -435,7 +506,7 @@ const MODIFIER_KEYS = ['unit.attack','unit.health','unit.speed','card.cost',
   'mana.initial','mana.max','mana.per_turn','hand.size.initial','draw.per_turn',
   'gold.initial','king.max_health','relic.capacity','reward.essence','reward.king_piece_chance'];
 const CUSTOM_HOOKS = ['rallying_cry','deliver_material'];
-const EFFECT_ATTRS = ['health','damage_taken','attack','speed','shield','cost'];
+const EFFECT_ATTRS = ['health','max_health','damage_taken','attack','speed','shield','cost'];
 const COND_ATTRS = ['health','attack','speed','cost','piece_count','element_count'];
 const ELEMENTS = ['fire','water','air','earth','darkness','light'];
 const PIECES = ['pawn','knight','bishop','rook','queen','king'];
@@ -1029,6 +1100,152 @@ async function ollamaGenerate(body) {
   return res.json();
 }
 
+// ── cloud providers ──────────────────────────────────────────────────────────
+// Same request shape as ollamaGenerate ({system, prompt, images?, options}), same
+// {response} result, so every ✨ feature routes through llmGenerate unchanged. The
+// cloud adapters ignore body.model and Ollama's sampling options: one configured
+// model per provider serves all features, and the current cloud flagships reject
+// temperature-style knobs anyway. Clients are lazy so the SDKs only load (and read
+// their credentials) when the provider is actually selected.
+
+let _claude = null;
+async function claudeGenerate(body) {
+  const s = getSettings();
+  if (!_claude) {
+    const Anthropic = require('@anthropic-ai/sdk');
+    try {
+      _claude = new Anthropic();   // credentials: ANTHROPIC_API_KEY or an `ant auth login` profile
+    } catch (e) {
+      throw new Error(`Claude auth not configured — run \`ant auth login\` or set ANTHROPIC_API_KEY, then restart the Tool (${e.message})`);
+    }
+  }
+  const content = (body.images || []).map(img =>
+    ({ type: 'image', source: { type: 'base64', media_type: 'image/png', data: img } }));
+  content.push({ type: 'text', text: body.prompt });
+  let msg;
+  try {
+    msg = await _claude.messages.create({
+      model: s.claudeModel || 'claude-opus-4-8',
+      max_tokens: 8192,   // headroom for adaptive thinking; billed only as generated
+      thinking: { type: 'adaptive' },
+      system: body.system,
+      messages: [{ role: 'user', content }],
+    });
+  } catch (e) {
+    if (e.status === 401)
+      throw new Error('Claude auth failed — run `ant auth login` or set ANTHROPIC_API_KEY, then restart the Tool');
+    throw new Error(`Claude request failed: ${e.message}`);
+  }
+  const text = (msg.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+  return { response: text };
+}
+
+let _openai = null;
+async function openaiGenerate(body) {
+  const s = getSettings();
+  if (!_openai) {
+    const OpenAI = require('openai');
+    try {
+      _openai = new OpenAI();   // credentials: OPENAI_API_KEY (OpenAI has no login flow for API use)
+    } catch (e) {
+      throw new Error(`ChatGPT auth not configured — set OPENAI_API_KEY, then restart the Tool (${e.message})`);
+    }
+  }
+  const content = [{ type: 'input_text', text: body.prompt }];
+  for (const img of body.images || [])
+    content.push({ type: 'input_image', image_url: 'data:image/png;base64,' + img });
+  let rsp;
+  try {
+    rsp = await _openai.responses.create({
+      model: s.openaiModel || 'gpt-5.5',
+      instructions: body.system,
+      input: [{ role: 'user', content }],
+      max_output_tokens: 8192,
+    });
+  } catch (e) {
+    if (e.status === 401)
+      throw new Error('ChatGPT auth failed — check OPENAI_API_KEY, then restart the Tool');
+    throw new Error(`ChatGPT request failed: ${e.message}`);
+  }
+  // output_text is the SDK convenience getter; scan the output array as a fallback.
+  let text = rsp.output_text || '';
+  if (!text) {
+    for (const item of rsp.output || [])
+      for (const c of item.content || [])
+        if (c.type === 'output_text') text += c.text;
+  }
+  return { response: text };
+}
+
+// ── Claude Code provider: rides the user's EXISTING Claude subscription ──────
+// Shells out to the locally installed Claude Code CLI in headless print mode
+// (`claude -p`), so ✨ calls use the same login and limits as the user's normal
+// Claude Code sessions — no API key, no per-token developer-platform billing.
+// The prompt travels via stdin and the system prompt via a temp file, so model
+// text never touches shell quoting. Reference images are written to workspace
+// tmp files the CLI views with its Read tool (the only tool allowed; print
+// mode auto-denies the rest).
+const { spawn: spawnProc } = require('child_process');
+
+async function claudeCodeGenerate(body) {
+  const s = getSettings();
+  const model = String(s.claudeCodeModel || '').trim();
+  if (model && !/^[\w.:-]+$/.test(model)) throw new Error(`bad Claude Code model "${model}"`);
+  const tmpDir = path.join(WORKSPACE, 'tmp');
+  ensureDir(tmpDir);
+  const sysFile = path.join(tmpDir, 'claude_system.txt');
+  fs.writeFileSync(sysFile, String(body.system || ''));
+  const promptParts = [body.prompt];
+  (body.images || []).forEach((img, i) => {
+    const p = path.join(tmpDir, `claude_ref_${i}.png`);
+    fs.writeFileSync(p, Buffer.from(img, 'base64'));
+    promptParts.push(`Reference image ${i + 1} — view it with the Read tool: ${p}`);
+  });
+  const cmd = [String(s.claudeCliCmd || 'claude'), '-p', '--output-format', 'text',
+    '--system-prompt-file', `"${sysFile}"`, '--allowedTools', 'Read', '--add-dir', `"${tmpDir}"`]
+    .concat(model ? ['--model', model] : []).join(' ');
+  return new Promise((resolve, reject) => {
+    // a stray API key/token in the env would silently reroute the CLI onto
+    // per-token API billing — the whole point of this provider is the subscription
+    const env = Object.assign({}, process.env);
+    delete env.ANTHROPIC_API_KEY;
+    delete env.ANTHROPIC_AUTH_TOKEN;
+    const child = spawnProc(cmd, { shell: true, env, windowsHide: true });
+    let out = '', errOut = '';
+    const timer = setTimeout(() => {
+      child.kill();
+      reject(new Error('Claude Code timed out after 240s'));
+    }, 240000);
+    child.stdout.on('data', c => out += c);
+    child.stderr.on('data', c => errOut += c);
+    child.on('error', e => {
+      clearTimeout(timer);
+      reject(new Error(`Claude Code CLI not runnable (${e.message}) — is \`claude\` installed?`));
+    });
+    child.on('close', code => {
+      clearTimeout(timer);
+      if (code !== 0) {
+        const detail = (errOut || out).slice(0, 400);
+        if (/log ?in|auth|credential/i.test(detail))
+          return reject(new Error(`Claude Code is not logged in — run \`claude\` in a terminal and /login once (${detail})`));
+        return reject(new Error(`Claude Code failed (exit ${code}): ${detail}`));
+      }
+      resolve({ response: out });
+    });
+    child.stdin.end(promptParts.join('\n'));
+  });
+}
+
+// THE provider switch: every ✨ feature calls this, the settings decide who answers.
+async function llmGenerate(body) {
+  switch (getSettings().llmProvider || 'ollama') {
+    case 'claude-code': return claudeCodeGenerate(body);
+    case 'claude':      return claudeGenerate(body);
+    case 'openai':      return openaiGenerate(body);
+    default:            return ollamaGenerate(body);
+  }
+}
+
 async function llmArtPrompt(typeLabel, name, summary, example, refImages, concept, refHint) {
   const user = [
     `Item type: ${typeLabel}`,
@@ -1043,11 +1260,11 @@ async function llmArtPrompt(typeLabel, name, summary, example, refImages, concep
   const opts = { temperature: 0.9, num_predict: 200 };
   let out;
   if (!refImages || !refImages.length) {
-    out = await ollamaGenerate({ system: LLM_SYSTEM_PROMPT, prompt: user, options: opts });
+    out = await llmGenerate({ system: LLM_SYSTEM_PROMPT, prompt: user, options: opts });
   } else {
     // Preferred path: all reference illustrations in ONE vision request.
     try {
-      out = await ollamaGenerate({ system: LLM_SYSTEM_PROMPT + '\n' + LLM_VISION_ADDENDUM,
+      out = await llmGenerate({ system: LLM_SYSTEM_PROMPT + '\n' + LLM_VISION_ADDENDUM,
                                    prompt: user, images: refImages, options: opts });
     } catch (e) {
       if (refImages.length === 1) {
@@ -1060,7 +1277,7 @@ async function llmArtPrompt(typeLabel, name, summary, example, refImages, concep
       // its own single-image call, then write the prompt from those notes text-only.
       const notes = [];
       for (const img of refImages) {
-        const d = await ollamaGenerate({
+        const d = await llmGenerate({
           system: 'Describe the visual STYLE of this illustration in one sentence: medium, ' +
                   'palette, lighting, rendering technique. Do NOT describe the subject.',
           prompt: 'Style:', images: [img],
@@ -1069,7 +1286,7 @@ async function llmArtPrompt(typeLabel, name, summary, example, refImages, concep
         const line = String(d.response || '').replace(/\s*\n+\s*/g, ' ').trim();
         if (line) notes.push(line);
       }
-      out = await ollamaGenerate({
+      out = await llmGenerate({
         system: LLM_SYSTEM_PROMPT + '\nWrite the prompt so the result matches the reference ' +
                 'style notes you are given — they describe illustrations from the same game.',
         prompt: user + '\nReference style notes:\n' + notes.map(n => '- ' + n).join('\n'),
@@ -1086,7 +1303,7 @@ function cleanLlmPrompt(out) {
     .replace(/<think>[\s\S]*?<\/think>/g, '')      // thinking remnants, if the flag is ignored
     .replace(/^\s*(?:prompt\s*:)?\s*/i, '')        // "Prompt:" label prefixes
     .replace(/\s*\n+\s*/g, ' ')
-    .replace(/^["'`]+|["'`]+$/g, '')
+    .replace(/^["'`*]+|["'`*]+$/g, '')   // incl. markdown *emphasis* wrapping (Claude Code)
     .trim();
   if (!text) throw new Error('the LLM returned an empty prompt');
   return text;
@@ -1100,22 +1317,186 @@ const LLM_MATCH_SYSTEM_PROMPT = [
   'from a fantasy game. Respond with exactly ONE image prompt that would faithfully recreate',
   'it: subject, pose, composition, palette, lighting, rendering style — comma-separated',
   'visual phrases, under 60 words.',
+  'If the request includes concept direction or guidance on how to use the illustration,',
+  'follow it — deviate from faithful recreation exactly where it tells you to.',
   'Hard rules:',
   '- Never use the words: card, TCG, trading card, frame, border, stats, icon, UI, text.',
   '- The prompt must not ask for readable text, letters, or numbers in the scene.',
   '- Output only the prompt itself — no preamble, no commentary, no quotation marks.',
 ].join('\n');
 
-async function llmPromptFromArt(type, id) {
+async function llmPromptFromArt(type, id, concept, refHint) {
   const abs = currentArtAbs(type, id);
   if (!abs) throw new Error('this item has no current art to analyze');
-  const out = await ollamaGenerate({
+  const user = [
+    'Write the prompt that recreates this illustration.',
+    // the same optional guidance inputs the ✨ writer honors — here the analyzed
+    // image IS the reference, so the ref hint applies unconditionally
+    concept ? `Concept direction (follow this, adjusting the recreation toward it): ${concept}` : '',
+    refHint ? `How to use the illustration as a reference: ${refHint}` : '',
+  ].filter(Boolean).join('\n');
+  const out = await llmGenerate({
     system: LLM_MATCH_SYSTEM_PROMPT,
-    prompt: 'Write the prompt that recreates this illustration.',
+    prompt: user,
     images: [fs.readFileSync(abs).toString('base64')],
     options: { temperature: 0.4, num_predict: 200 },
   });
   return cleanLlmPrompt(out);
+}
+
+// ── ✨ effects from words: plain-English description → validated effect JSON ──
+// The LLM writes the same dicts Effect.from_dict parses; validateEffects gates every
+// attempt and feeds its error message back for a retry. describeEffect (required from
+// public/helpers.js — the single English↔JSON source) pairs real game effects with
+// their plain-words line as always-current few-shot examples.
+const { describeEffect } = require(path.join(PUBLIC, 'helpers.js'));
+
+const EFFECTS_MODEL_DEFAULT = 'qwen3-coder-next:q4_K_M';
+
+// Types whose entries carry a top-level effects array — the example mine.
+const FX_OWNER_NOUN = { card: 'this card', relic: 'this relic', status: 'the carrier',
+  ability: 'the holder', charm: 'the charmed card', upgrade: 'this upgrade' };
+
+function effectShapeKey(e) {
+  const t = e.trigger;
+  const trig = t && typeof t === 'object' ? `${t.kind || 'event'}:${t.event || ''}` : String(t || '');
+  const tgt = e.targets && typeof e.targets === 'object' ? String(e.targets.kind || 'all') : String(e.targeting_policy || '');
+  const kind = e.kind || (e.key ? 'modifier' : e.intercept ? 'interceptor' : e.custom ? 'custom' : 'triggered');
+  return [kind, trig, tgt, e.attribute || '', e.status && e.status.id ? 'st' : '', e.key || '', e.custom || ''].join('|');
+}
+
+// One valid example per effect SHAPE, same-type entries first — diversity over volume.
+function mineEffectExamples(type, cap) {
+  const order = [type, ...Object.keys(FX_OWNER_NOUN).filter(t => t !== type && t !== 'upgrade')];
+  const seen = new Set(), out = [];
+  for (const t of order) {
+    if (!FX_OWNER_NOUN[t] || t === 'upgrade') continue;   // upgrade effects live on nested nodes
+    for (const entry of listGameEntries(t)) {
+      for (const fx of Array.isArray(entry.data.effects) ? entry.data.effects : []) {
+        if (out.length >= cap) return out;
+        if (validateEffect(fx, 'x')) continue;            // only teach grammar that validates
+        const shape = effectShapeKey(fx);
+        if (seen.has(shape)) continue;
+        seen.add(shape);
+        out.push({ english: describeEffect(fx, FX_OWNER_NOUN[t]), json: fx });
+      }
+    }
+  }
+  return out;
+}
+
+// The effect grammar, spelled for a code model. Status ids are live vocab.
+function effectsSystemPrompt() {
+  const statusIds = listGameEntries('status').map(e => e.id);
+  return [
+    "You translate a game designer's plain-English effect description into the game's effect JSON.",
+    'Respond with ONLY a JSON array of effect objects — no prose, no markdown fences.',
+    '',
+    'An effect object takes ONE of these forms:',
+    '1. TRIGGERED — reacts to an event:',
+    '   {"trigger": <trigger>, "targets": <targets>, plus a payload: "attribute" one of',
+    `   ${EFFECT_ATTRS.join('/')} with numeric "amount", and/or "status": {"id": <status id>,`,
+    '   "stacks": n?, "duration": rounds?}. Optional "chance": 0..1.}',
+    '   attribute "health": negative amount = direct damage, positive = heal.',
+    '   attribute "max_health" raises/lowers the unit\'s maximum health (does not heal).',
+    '   attribute "damage_taken" deals damage that consumes shield first.',
+    `   <trigger> = {"kind":"event","event": one of ${SIMPLE_EVENTS.join('/')}, "of":"self"?, "conditions":[...]?}`,
+    `     or {"kind":"dual_event","event": one of ${DUAL_EVENTS.join('/')}, "origin_of":"self"?,`,
+    '     "destination_of":"self"?, "origin_conditions":[...]?, "destination_conditions":[...]?}.',
+    '   "of"/"origin_of"/"destination_of":"self" = the event must involve the holder itself;',
+    '   omit them to react to anyone\'s event. For dual events, origin = the acting unit',
+    '   (e.g. attacker), destination = the receiving unit.',
+    '2. STANDING — continuous stat change while the effect is active:',
+    '   {"trigger": {"kind":"while"}, "targets": {"kind":"self"} or {"kind":"all","conditions":[...]?},',
+    '   "attribute": ..., "amount": n, "tracker": {"kind":"stacks"}?}',
+    '   tracker "stacks" = the amount applies PER STACK; omit the tracker otherwise.',
+    '   Use STANDING for any ongoing/aura wording ("while", "as long as", buffs from a status).',
+    `3. MODIFIER — run-wide passive number change: {"kind":"modifier","key": one of ${MODIFIER_KEYS.join('/')},`,
+    '   "amount": n, "conditions":[...]?}. Only for run-wide numbers, never for board effects.',
+    '4. INTERCEPTOR — rewrites damage before it lands: {"kind":"interceptor","intercept":"damage",',
+    '   "channel":"attack"?, "role":"source"|"target", "op":"add"|"mul", "amount": n, "chance":?}',
+    `5. CUSTOM code hook: {"kind":"custom","custom": one of ${CUSTOM_HOOKS.join('/')}, "trigger":..., "targets":...}`,
+    '',
+    '<targets> = {"kind":"self"} | {"kind":"all","conditions":[...]?}',
+    '  | {"kind":"auto","criterion":"nearest"|"random","count":n?,"conditions":[...]?}',
+    '  | {"kind":"manual"} (the player picks a unit) | {"kind":"manual_slot"} (the player picks a slot)',
+    `  | {"kind":"participant","participant":"holder"|"origin"|"destination"} (a trigger participant)`,
+    '',
+    'A condition object is ONE of:',
+    '  {"allegiance":"ally"|"enemy"} — side relative to the effect\'s owner (ally includes the holder)',
+    '  {"status": <status id>, "present": false?} — carrying (or not carrying) a status',
+    '  {"composition": [<elements/pieces>...], "present": false?} — made of any of these / none of these',
+    '  {"card_type":"unit"|"spell"} | {"has_element": true|false}',
+    `  {"attribute": one of ${COND_ATTRS.join('/')}, "comparator": one of ${COMPARATORS.join('/')}, "value": n}`,
+    '',
+    `Vocabulary: elements = ${ELEMENTS.join(', ')}; chess pieces = ${PIECES.join(', ')}.`,
+    `Status ids that exist: ${statusIds.join(', ') || '(none yet)'}. Never invent a status id.`,
+    'Rules:',
+    '- "strength" means the attack attribute.',
+    '- Write the SIMPLEST form that says exactly what the text says — no extra conditions,',
+    '  chances, triggers or effects the text does not ask for.',
+    '- Several distinct effects in the text = several objects in the array. In particular:',
+    '  ONE effect object has ONE targets — payloads aimed at different recipients (e.g.',
+    '  "poison the target and gain shield" = destination + self) MUST be separate objects,',
+    '  each repeating the trigger.',
+  ].join('\n');
+}
+
+// Strip think blocks / fences, then parse the first JSON array (or lone object) found.
+function extractJsonEffects(response) {
+  let s = String(response || '')
+    .replace(/<think>[\s\S]*?<\/think>/g, '')
+    .replace(/```(?:json)?/g, '');
+  const start = s.search(/[\[{]/);
+  if (start < 0) throw new Error('no JSON in the reply');
+  for (let end = s.length; end > start; end--) {
+    const cand = s.slice(start, end).trim();
+    if (!cand.endsWith(']') && !cand.endsWith('}')) continue;
+    try {
+      const v = JSON.parse(cand);
+      return Array.isArray(v) ? v : [v];
+    } catch (e) { /* keep shrinking */ }
+  }
+  throw new Error('unparseable JSON in the reply');
+}
+
+// Generate → validate → feed the error back, up to 3 attempts. Never throws on a
+// mere bad answer: the last parseable attempt returns WITH its validation warning,
+// so the user fixes a dropdown instead of losing the whole result (the save gate
+// still refuses invalid effects).
+async function llmEffectsFromText(type, text) {
+  const s = getSettings();
+  const noun = FX_OWNER_NOUN[type] || 'the holder';
+  const examples = mineEffectExamples(type, 10);
+  const system = effectsSystemPrompt();
+  let user = [
+    `Effect holder: a ${TYPES[type].label} ("${noun}").`,
+    examples.length ? "Examples (plain words ⇒ JSON) from the game's existing content:" : '',
+    ...examples.map(x => `${x.english} ⇒ ${JSON.stringify([x.json])}`),
+    `Write the JSON array for: ${text}`,
+  ].filter(Boolean).join('\n');
+  let best = null, lastErr = null;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    const out = await llmGenerate({
+      model: s.effectsModel || EFFECTS_MODEL_DEFAULT,
+      system, prompt: user,
+      options: { temperature: attempt === 1 ? 0.2 : 0.5, num_predict: 800 },
+    });
+    let effects;
+    try {
+      effects = extractJsonEffects(out.response);
+    } catch (e) {
+      lastErr = e.message;
+      user += `\nYour previous reply was not parseable JSON (${e.message}). Reply with ONLY the JSON array.`;
+      continue;
+    }
+    best = effects;
+    const err = validateEffects(effects, 'generated');
+    if (!err) return { effects, attempts: attempt };
+    lastErr = err;
+    user += `\nYou replied: ${JSON.stringify(effects)}\nThe validator rejected it: ${err}\nFix that and reply with ONLY the corrected JSON array.`;
+  }
+  return { effects: best || [], warning: lastErr, attempts: 3 };
 }
 
 // Copies the workspace-generated image to the game's asset path for this entry, backing up
@@ -1276,6 +1657,9 @@ async function handle(req, res) {
           edited: !!edits[t + '/' + e.id],
           art: gameArtRel(t, e.id, e.data),
           tool: e.tool || undefined,   // deployed-by-the-tool: browsable, edited via its workspace item
+          // composition identity, for the set generator's conflict planning (cards only)
+          elements: (e.data && e.data.elements) || undefined,
+          chess_pieces: (e.data && e.data.chess_pieces) || undefined,
         }));
       }
       return send(res, 200, {
@@ -1316,6 +1700,13 @@ async function handle(req, res) {
       if (!TYPES[type] || !validId(id)) return send(res, 400, { error: 'bad request' });
       try {
         return send(res, 200, Object.assign({ ok: true }, deleteGameEntry(type, id)));
+      } catch (e) { return send(res, 400, { error: e.message }); }
+    }
+    if (p === '/api/game/move-entry' && req.method === 'POST') {
+      const { type, id, file } = await readBody(req);
+      if (!TYPES[type] || !validId(id) || !file) return send(res, 400, { error: 'bad request' });
+      try {
+        return send(res, 200, Object.assign({ ok: true }, moveGameEntry(type, id, String(file))));
       } catch (e) { return send(res, 400, { error: e.message }); }
     }
     if (p === '/api/game/apply' && req.method === 'POST') {
@@ -1414,6 +1805,16 @@ async function handle(req, res) {
       if ('turboStrength' in body) s.turboStrength = parseFloat(body.turboStrength) || 1.0;
       if (body.ollamaUrl) s.ollamaUrl = String(body.ollamaUrl);
       if ('llmModel' in body) s.llmModel = String(body.llmModel || '');
+      if ('effectsModel' in body) s.effectsModel = String(body.effectsModel || '');
+      if ('llmProvider' in body) {
+        if (!['ollama', 'claude-code', 'claude', 'openai'].includes(body.llmProvider))
+          return send(res, 400, { error: `bad llmProvider "${body.llmProvider}"` });
+        s.llmProvider = body.llmProvider;
+      }
+      if ('claudeModel' in body) s.claudeModel = String(body.claudeModel || '');
+      if ('openaiModel' in body) s.openaiModel = String(body.openaiModel || '');
+      if ('claudeCodeModel' in body) s.claudeCodeModel = String(body.claudeCodeModel || '');
+      if ('claudeCliCmd' in body) s.claudeCliCmd = String(body.claudeCliCmd || 'claude');
       writeJson(SETTINGS_PATH, s);
       return send(res, 200, { ok: true, settings: s });
     }
@@ -1502,12 +1903,24 @@ async function handle(req, res) {
     }
     // Vision-analyze the item's current art → a prompt that recreates it.
     if (p === '/api/art/prompt-from-art' && req.method === 'POST') {
-      const { type, id } = await readBody(req);
+      const { type, id, concept, refHint } = await readBody(req);
       if (!TYPES[type] || !validId(id)) return send(res, 400, { error: 'bad request' });
       try {
-        return send(res, 200, { ok: true, prompt: await llmPromptFromArt(type, id) });
+        return send(res, 200, { ok: true, prompt: await llmPromptFromArt(type, id,
+          concept ? String(concept) : '', refHint ? String(refHint) : '') });
       } catch (e) {
         return send(res, /no current art/.test(e.message) ? 400 : 502, { error: e.message });
+      }
+    }
+    // Plain-English effect description → validated effect JSON (✨ from words).
+    if (p === '/api/effects/from-text' && req.method === 'POST') {
+      const { type, text } = await readBody(req);
+      if (!TYPES[type] || typeof text !== 'string' || !text.trim() || text.length > 2000)
+        return send(res, 400, { error: 'bad request' });
+      try {
+        return send(res, 200, Object.assign({ ok: true }, await llmEffectsFromText(type, text.trim())));
+      } catch (e) {
+        return send(res, 502, { error: e.message });
       }
     }
     // Stash a user-provided external image in the workspace as generation reference input.

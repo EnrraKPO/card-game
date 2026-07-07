@@ -13,6 +13,7 @@ function fxCtx(ctx, ownerNoun) {
   return {
     vocab: ctx.vocab,
     ownerNoun,
+    type: ctx.type,   // the item type — /api/effects/from-text biases its examples by it
     statusIds: () => {
       const game = ctx.vocab.statuses.map(s => s.id);
       const ws = (ctx.workspace.status || []).map(s => s.id);
