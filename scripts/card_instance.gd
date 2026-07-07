@@ -147,7 +147,9 @@ func apply_status(status_id: String, duration: int = Effect.STATUS_DURATION_DEFA
 		return
 	var existing := find_status(status_id)
 	if existing == null or sdata.stacking == StatusData.STACK_INDEPENDENT:
-		statuses.append(StatusInstance.make(sdata, _initial_remaining(sdata, duration), clampi(stacks, 1, sdata.max_stacks), src))
+		var si := StatusInstance.make(sdata, _initial_remaining(sdata, duration), clampi(stacks, 1, sdata.max_stacks), src)
+		si.bind_carrier(self)
+		statuses.append(si)
 		return
 	match sdata.stacking:
 		StatusData.STACK_EXTEND:

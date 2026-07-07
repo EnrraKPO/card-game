@@ -59,10 +59,9 @@ static func _load_json(path: String) -> void:
 			r.icon = load(art_path)
 		r.price        = int(d.get("price", 80))
 		for e: Dictionary in d.get("effects", []):
-			var eff := Effect.from_dict(e)
-			eff.owner_kind = "relic"   # so combat can glint this relic's chip when it fires
-			eff.owner_id = r.id
-			r.effects.append(eff)
+			# No owner stamping: the effect stays container-blind. The relic-chip glint is
+			# driven by dispatch context (ModifierSet.owner_of → trigger_global_grouped).
+			r.effects.append(Effect.from_dict(e))
 		if not r.id.is_empty():
 			_all[r.id] = r
 

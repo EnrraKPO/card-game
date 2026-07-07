@@ -151,15 +151,18 @@ static func _intercept(m: StatMutation) -> Array:
 static func _intercept_side(holder: CardInstance, side: Effect.Role, m: StatMutation, records: Array) -> void:
 	if holder == null or holder.data == null:
 		return
+	# The enumeration knows which container it is iterating — that knowledge stays HERE
+	# (dispatch context for the cue record) and in the blind fired() channel; the effects
+	# themselves are container-blind.
 	for e: Effect in holder.data.effects:
-		_try_intercept(e, 1, holder, side, m, records)
+		_try_intercept(e, 1, holder, side, m, records, null)
 	for si: StatusInstance in holder.statuses:
 		for e: Effect in si.data.effects:
-			_try_intercept(e, si.stacks, holder, side, m, records)
+			_try_intercept(e, si.stacks, holder, side, m, records, si)
 
 
 static func _try_intercept(e: Effect, stacks: int, holder: CardInstance, side: Effect.Role,
-		m: StatMutation, records: Array) -> void:
+		m: StatMutation, records: Array, si: StatusInstance) -> void:
 	if e.kind != Effect.Kind.INTERCEPTOR or e.role != side:
 		return
 	if e.intercept != m.stat:
@@ -179,8 +182,12 @@ static func _try_intercept(e: Effect, stacks: int, holder: CardInstance, side: E
 		# Changed nothing = didn't fire: no cue, no charge spent. This is what makes a Barrier
 		# ignore a whiff — blocking a 0-damage strike (a Blinded attacker's miss) is a no-op.
 		return
-	records.append({"owner_kind": e.owner_kind, "owner_id": e.owner_id,
-			"holder": holder, "delta": m.amount - before})
-	# An intercept-decay status (Barrier) spends a charge the moment it actually rewrites.
-	if e.owner_kind == "status":
-		StatusEngine.consume_interception(holder, e.owner_id)
+	records.append({
+		"owner_kind": "status" if si != null else "card",
+		"owner_id": si.data.id if si != null else str(holder.data.id),
+		"holder": holder, "delta": m.amount - before,
+	})
+	# The blind upward channel: the container learns one of its effects actually fired and
+	# reacts on its own terms — an intercept-decay status (Barrier) spends a charge.
+	if si != null:
+		si.fired(e)

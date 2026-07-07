@@ -1,8 +1,13 @@
 # Effect System Redesign — One Effect, Transparent Containers
 
-Status: STAGE 1 IMPLEMENTED (branch `effect-unification`) — contract + Tracker + the one
-evaluator (LiveEffects), legacy mapping, three folds + matches_card deleted, charged.json
-re-authored natively; 241/241 green on tests/_runner.tscn. Stages 2–3 pending.
+Status: STAGES 1 + 2 IMPLEMENTED (stage 1 merged to main; stage 2 on branch
+`effect-stage2`) — contract + Tracker + the one evaluator (stage 1); owner model,
+relation dissolution (self target kind / allegiance conditions / trigger `of` gates),
+fired() channel replacing owner stamping, Tool wording + run-scope affordance (stage 2).
+247/247 green on tests/_runner.tscn; Tool suites ALL PASS.
+Deferred: Tool NATIVE-form emission (allegiance/self/of + status while/tracker editor)
+needs server.js vocab+validation and editors.js, which carry unrelated uncommitted work.
+Stage 3 (composition-as-derived) pending.
 Note: the tracker kind classes landed as `ContainerTracker`/`StacksTracker` (a bare
 `Container` inner class hides Godot's native Control class).
 Origin: the `charged.json` bug (a correct `relation: self` condition silently killed a

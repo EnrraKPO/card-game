@@ -128,11 +128,10 @@ var intercept: StringName = &""   # the StatMutation stat this rewrites (e.g. "d
 var channel: StringName = &""     # provenance filter (e.g. "attack"); empty = any channel
 var role: Role = Role.SOURCE      # which side of the mutation the holder must be
 
-# Which container owns this effect (kind + id), set by RelicData/StatusData at load — used by the
-# combat cue (glint the relic chip / status pip). Empty for plain card effects. Never affects
-# target resolution.
-var owner_kind: String = ""
-var owner_id: String = ""
+# (No owner_kind/owner_id here: an effect NEVER knows what container holds it. Container
+# identity travels as dispatch context — the enumeration knows which container it is
+# iterating — and reactions to an effect firing go through the container's blind upward
+# channel, fired(e). See StatusInstance.fired and EFFECT_SYSTEM_DESIGN.md §2.2.)
 # Probabilistic gate, rolled once before the effect resolves: the effect fires with this chance
 # (1.0 = always). A declarative condition, separate from what the effect does. See EffectSystem.
 var chance: float = 1.0

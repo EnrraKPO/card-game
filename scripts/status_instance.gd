@@ -13,6 +13,10 @@ var source: CardInstance = null   # who applied it (nullable; for future source-
 # Trackers bound to this instance, one per standing effect, created lazily on first read
 # (the go-live moment) and never rebuilt — a tracker's death is one-way. See EffectTracker.
 var _trackers: Dictionary = {}
+# The unit this status sits on — WEAK (the carrier owns its statuses; a strong back-ref
+# would cycle). Bound by CardInstance.apply_status; unbound instances (tests building
+# state by hand) just skip prompt removal — pull validity keeps them correct regardless.
+var _carrier_ref: WeakRef = null
 
 
 static func make(p_data: StatusData, p_remaining: int, p_stacks: int, p_source: CardInstance) -> StatusInstance:
@@ -38,6 +42,26 @@ func tracker_for(e: Effect) -> EffectTracker:
 	if not _trackers.has(e):
 		_trackers[e] = EffectTracker.bind(e.tracker_spec, self)
 	return _trackers[e]
+
+
+func bind_carrier(carrier: CardInstance) -> void:
+	_carrier_ref = weakref(carrier)
+
+
+# The BLIND UPWARD CHANNEL (EFFECT_SYSTEM_DESIGN.md §2.2): dispatch tells this container
+# one of its effects just genuinely fired; how to react is entirely this container's
+# business — an intercept-decay status (Barrier) spends a charge per real rewrite (a
+# rewrite that changed nothing never reaches here, so a whiff spends nothing). The effect
+# never knows WHAT it signalled.
+func fired(_e: Effect) -> void:
+	if data.decay != StatusData.DECAY_INTERCEPT:
+		return
+	stacks -= 1
+	if stacks > 0 or _carrier_ref == null:
+		return   # spent-out but unbound instances stay inert via pull validity (exists())
+	var carrier: CardInstance = _carrier_ref.get_ref()
+	if carrier != null:
+		carrier.remove_status(data.id)   # prompt removal = hygiene (the pip disappearing)
 
 
 # The headline number shown for this status: the stack COUNT for a count-decay status (poison's

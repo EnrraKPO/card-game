@@ -87,10 +87,14 @@ static func trigger_global_grouped(event: GameEvent, context: EffectContext) -> 
 		var res := _run_effect(effect, context.source, context, event)
 		if res.is_empty():
 			continue
-		if not by_owner.has(effect.owner_id):
-			by_owner[effect.owner_id] = {"owner_kind": effect.owner_kind, "owner_id": effect.owner_id, "results": []}
-			order.append(effect.owner_id)
-		(by_owner[effect.owner_id]["results"] as Array).append_array(res)
+		# Container identity is DISPATCH CONTEXT (the set knows who contributed what);
+		# the effect itself is container-blind.
+		var owner: Dictionary = GameData.current_modifiers.owner_of(effect)
+		var oid := str(owner["id"])
+		if not by_owner.has(oid):
+			by_owner[oid] = {"owner_kind": str(owner["kind"]), "owner_id": oid, "results": []}
+			order.append(oid)
+		(by_owner[oid]["results"] as Array).append_array(res)
 	var out: Array = []
 	for key: String in order:
 		out.append(by_owner[key])

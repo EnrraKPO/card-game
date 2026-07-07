@@ -78,10 +78,9 @@ static func from_dict(d: Dictionary) -> AbilityData:
 	ab.autocast     = bool(d.get("autocast", false))
 	ab.material     = str(d.get("material", ""))
 	for e_data: Dictionary in d.get("effects", []):
-		var eff := Effect.from_dict(e_data)
-		eff.owner_kind = "ability"
-		eff.owner_id = ab.id
-		ab.effects.append(eff)
+		# No owner stamping — effects are container-blind (see EFFECT_SYSTEM_DESIGN.md §2.2);
+		# ability activation presents its own cue (the tray token), no per-effect id needed.
+		ab.effects.append(Effect.from_dict(e_data))
 	return ab
 
 

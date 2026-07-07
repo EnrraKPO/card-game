@@ -71,14 +71,6 @@ static func is_expired(si: StatusInstance) -> bool:
 	return false
 
 
-# Spends one charge of an intercept-decay status, called by Resolver._try_intercept after one
-# of the status's INTERCEPTOR effects actually rewrote a mutation (a rewrite that changed
-# nothing never reaches here — a Barrier ignores a whiff). Phase-decay statuses (Blind) are
-# untouched: they spend on their own phase via advance() instead.
-static func consume_interception(holder: CardInstance, status_id: String) -> void:
-	var si := holder.find_status(status_id)
-	if si == null or si.data.decay != StatusData.DECAY_INTERCEPT:
-		return
-	si.stacks -= 1
-	if si.stacks <= 0:
-		holder.remove_status(status_id)
+# (Intercept-charge spending moved into the container itself: Resolver._try_intercept
+# signals the owning StatusInstance through the blind fired() channel, and the status
+# spends its own DECAY_INTERCEPT charge — see StatusInstance.fired.)

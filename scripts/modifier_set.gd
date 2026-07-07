@@ -9,6 +9,10 @@ extends RefCounted
 # set is a valid no-op.
 
 var _mods: Array = []   # Array[Effect]
+# Which container contributed each effect ({"kind": String, "id": String} by Effect) —
+# DISPATCH CONTEXT for presentation (glint the right relic chip), recorded here because
+# effects are container-blind by design and never carry their origin themselves.
+var _owners: Dictionary = {}
 
 
 # Gathers the effects contributed by a profile's OWNED upgrade nodes across all trees.
@@ -19,7 +23,8 @@ static func from_profile(profile: ProfileData) -> ModifierSet:
 	for tree: UpgradeTree in UpgradeTree.all():
 		for node: UpgradeNode in tree.nodes:
 			if profile.owns_upgrade(node.id):
-				s._mods.append_array(node.effects)
+				for e: Effect in node.effects:
+					s._add_owned(e, "upgrade", node.id)
 	return s
 
 
@@ -31,12 +36,24 @@ static func for_run(profile: ProfileData, run: RunData) -> ModifierSet:
 		for relic_id: String in run.relics:
 			var relic := RelicData.get_relic(relic_id)
 			if relic != null:
-				s._mods.append_array(relic.effects)
+				for e: Effect in relic.effects:
+					s._add_owned(e, "relic", relic_id)
 	return s
 
 
 func add(e: Effect) -> void:
+	_add_owned(e, "run", "")
+
+
+func _add_owned(e: Effect, owner_kind: String, owner_id: String) -> void:
 	_mods.append(e)
+	_owners[e] = {"kind": owner_kind, "id": owner_id}
+
+
+# The contributing container of an effect in this set — consumed by the grouped run-level
+# dispatch so combat can cue the owner (relic chip) before its effects' VFX.
+func owner_of(e: Effect) -> Dictionary:
+	return _owners.get(e, {"kind": "run", "id": ""})
 
 
 # Summed delta of all GLOBAL MODIFIER effects for a key. The resolver (GameData.value_f) adds
