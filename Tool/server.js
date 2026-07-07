@@ -71,6 +71,7 @@ const SETTINGS_PATH = path.join(WORKSPACE, 'settings.json');
 function getSettings() {
   return Object.assign({
     comfyUrl: 'http://127.0.0.1:8187', artStyle: '', stylePresets: {},
+    conceptPresets: {}, refHintPresets: {},   // named presets for the ✨ LLM guidance inputs
     turboLora: 'Flux_2-Turbo-LoRA_comfyui.safetensors',  // the user's Flux 2 turbo LoRA
     turboSteps: 8, turboStrength: 1.0,
     ollamaUrl: 'http://127.0.0.1:11434', llmModel: 'gemma4:31b',   // local LLM for art prompts
@@ -974,6 +975,7 @@ function rankCardReferences(elements, pieces, excludeId) {
     refs.push({
       id: e.id, name: e.data.display_name || e.id, art,
       elements: e.data.elements || [], chess_pieces: e.data.chess_pieces || [],
+      enemy: !!e.data.enemy_only,
       _tier: tier, _score: 2 * sharedP + sharedE, _foreign: foreign,
     });
   }
@@ -995,8 +997,9 @@ const LLM_SYSTEM_PROMPT = [
   '  soft radiant glow, speed → wind-blurred motion). Never quote or restate rules text.',
   '- Never use the words: card, TCG, trading card, frame, border, stats, icon, UI, text.',
   '- The scene must contain no readable text, letters, numbers, or lettering of any kind.',
-  '- Match the staging of the example prompt you are given (subject framing, background),',
-  '  but with far richer, item-specific imagery.',
+  '- If you are given an example prompt, it defines STAGING ONLY: subject framing,',
+  '  centered-object vs full-scene, plain background for cutouts. Never reuse its wording,',
+  '  style adjectives, lighting or background phrases — invent imagery specific to this item.',
   '- Output only the prompt itself — no preamble, no options, no quotation marks.',
 ].join('\n');
 
@@ -1032,7 +1035,7 @@ async function llmArtPrompt(typeLabel, name, summary, example, refImages, concep
     `Name: ${name}`,
     'Item data:',
     ...(summary || []).map(l => '- ' + l),
-    example ? `Example prompt for this item type (staging reference): ${example}` : '',
+    example ? `Example prompt for this item type (staging only — do not copy its wording): ${example}` : '',
     // optional creative direction from the user, verbatim
     concept ? `Concept direction (follow this): ${concept}` : '',
     (refHint && refImages && refImages.length) ? `How to use the reference illustrations: ${refHint}` : '',
@@ -1397,11 +1400,14 @@ async function handle(req, res) {
       const body = await readBody(req);
       const s = getSettings();
       if (body.comfyUrl) s.comfyUrl = String(body.comfyUrl);
-      // shared art style: one live prompt fragment + named presets, global across items
+      // shared art style: one live prompt fragment + named presets, global across items;
+      // the ✨ LLM guidance inputs (concept / how-to-use-references) get preset maps too
       if ('artStyle' in body) s.artStyle = String(body.artStyle || '');
-      if (body.stylePresets && typeof body.stylePresets === 'object') {
-        s.stylePresets = {};
-        for (const [k, v] of Object.entries(body.stylePresets)) s.stylePresets[k] = String(v);
+      for (const key of ['stylePresets', 'conceptPresets', 'refHintPresets']) {
+        if (body[key] && typeof body[key] === 'object') {
+          s[key] = {};
+          for (const [k, v] of Object.entries(body[key])) s[key][k] = String(v);
+        }
       }
       if ('turboLora' in body) s.turboLora = String(body.turboLora || '');
       if ('turboSteps' in body) s.turboSteps = Math.max(1, parseInt(body.turboSteps, 10) || 8);

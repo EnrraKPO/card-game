@@ -183,7 +183,9 @@ const CardEditor = {
       kind === 'spell' ? `a dramatic burst of ${elem || 'arcane'} magic` :
       kind === 'building' ? `an imposing fantasy ${elem ? elem + '-themed ' : ''}fortification` :
       `a fantasy ${elem ? elem + '-themed ' : ''}${d.is_king ? 'king in regal armor' : 'combatant'}`;
-    return `Rich glowing painterly fantasy illustration of ${d.display_name || slugToName(d.id)}, ${subject}, dramatic volumetric lighting, ornate dark background, high detail`;
+    // no background guidance on purpose — a fixed phrase here ("ornate dark background")
+    // homogenized every generation, and the ✨ LLM parroted it from the example
+    return `Rich glowing painterly fantasy illustration of ${d.display_name || slugToName(d.id)}, ${subject}, dramatic volumetric lighting, high detail`;
   },
   artNote: 'Installed to assets/cards/<id>.png — shown on the card in game.',
 };

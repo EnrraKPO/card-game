@@ -14,6 +14,8 @@ const state = {
   artJob: null,
   advancedOpen: false,  // the fullscreen art generator (same _art draft as the panel)
   artRefs: null,        // ranked reference cards for the advanced browser (null = loading)
+  refFilter: '',        // reference browser: free-text filter (session-level)
+  refEnemyFilter: 'all', // reference browser: 'all' | 'player' | 'enemy'
 };
 
 const $ = id => document.getElementById(id);
@@ -377,46 +379,16 @@ function buildArtControls(rerender, advanced) {
   });
 
   // ── shared STYLE prompt: one global fragment appended to every generation, with presets ──
-  if (!state.settings.stylePresets) state.settings.stylePresets = {};
   const styleArea = el('textarea', {
     value: state.settings.artStyle || '', rows: 2,
     placeholder: 'e.g. cartoon art style, 2d illustration — appended to every prompt',
     oninput: e => { state.settings.artStyle = e.target.value; saveStyleSoon(); },
   });
-  const presetSel = el('select', {
-    onchange: e => {
-      if (!e.target.value) return;
-      state.settings.artStyle = state.settings.stylePresets[e.target.value] || '';
-      styleArea.value = state.settings.artStyle;
-      saveStyleSoon();
-    },
-  });
-  const rebuildPresets = () => {
-    presetSel.replaceChildren(el('option', { value: '', text: 'presets…' }));
-    for (const name of Object.keys(state.settings.stylePresets).sort())
-      presetSel.append(el('option', { value: name, text: name }));
-  };
-  rebuildPresets();
   const styleRow = el('div', { class: 'frow' },
     el('div', { class: 'fld wide' },
       el('span', { class: 'lab' }, 'Style (shared across ALL generations) ',
-        el('button', { class: 'ghost tiny', text: '＋ save preset', title: 'Save the current style text as a named preset',
-          onclick: async () => {
-            const name = (window.prompt('Preset name:', '') || '').trim();
-            if (!name) return;
-            state.settings.stylePresets[name] = styleArea.value;
-            rebuildPresets(); presetSel.value = name;
-            await saveStyleNow();
-            toast(`Style preset "${name}" saved.`, 'ok');
-          } }),
-        el('button', { class: 'ghost tiny', text: '− delete', title: 'Delete the selected preset',
-          onclick: async () => {
-            if (!presetSel.value) return;
-            delete state.settings.stylePresets[presetSel.value];
-            rebuildPresets();
-            await saveStyleNow();
-          } }),
-        presetSel),
+        ...presetControls('stylePresets', () => styleArea.value,
+          v => { state.settings.artStyle = v; styleArea.value = v; saveStyleSoon(); })),
       styleArea),
   );
 
@@ -544,17 +516,26 @@ function buildArtControls(rerender, advanced) {
         promptArea),
     ),
     // optional creative direction for the ✨ prompt writer (fullscreen view only — the
-    // values still apply from the compact panel's ✨ button, they persist on the draft)
-    advanced ? el('div', { class: 'frow' },
-      el('div', { class: 'fld wide' },
-        el('span', { class: 'lab', text: 'LLM: concept direction (optional)' }),
-        textInput(a, 'llmConcept', noChange, 'e.g. an elderly sea-witch hunched over a cauldron, more menace than majesty')),
-    ) : null,
-    advanced ? el('div', { class: 'frow' },
-      el('div', { class: 'fld wide' },
-        el('span', { class: 'lab', text: 'LLM: how to use the references (optional)' }),
-        textInput(a, 'llmRefHint', noChange, 'e.g. copy the armor design and palette, but pose the subject in motion')),
-    ) : null,
+    // values still apply from the compact panel's ✨ button, they persist on the draft).
+    // Both carry named-preset clusters like the shared Style fragment.
+    advanced ? (() => {
+      const inp = textInput(a, 'llmConcept', noChange, 'e.g. an elderly sea-witch hunched over a cauldron, more menace than majesty');
+      return el('div', { class: 'frow' },
+        el('div', { class: 'fld wide' },
+          el('span', { class: 'lab' }, 'LLM: concept direction (optional) ',
+            ...presetControls('conceptPresets', () => a.llmConcept || '',
+              v => { a.llmConcept = v; inp.value = v; noChange(); })),
+          inp));
+    })() : null,
+    advanced ? (() => {
+      const inp = textInput(a, 'llmRefHint', noChange, 'e.g. copy the armor design and palette, but pose the subject in motion');
+      return el('div', { class: 'frow' },
+        el('div', { class: 'fld wide' },
+          el('span', { class: 'lab' }, 'LLM: how to use the references (optional) ',
+            ...presetControls('refHintPresets', () => a.llmRefHint || '',
+              v => { a.llmRefHint = v; inp.value = v; noChange(); })),
+          inp));
+    })() : null,
     // per-line visibility of the item data the ✨ prompt writer receives — mechanics like
     // material costs pollute the visual concept, so any line can be hidden from the LLM.
     // Hidden lines are remembered by their text: if the line changes it reappears visible.
@@ -697,14 +678,19 @@ function renderAdvanced() {
   const a = artDraft();
   const mdl = state.artModels[a.model];
   const noChange = () => { state.dirty = true; $('dirty-flag').hidden = false; };
+  // a full re-render replaces the DOM — carry the reference column's scroll across so
+  // attaching a ref deep in the list doesn't bounce the user back to the top
+  const prevRefsCol = document.querySelector('.modal.advanced .advanced-col.refs');
+  const keepScroll = prevRefsCol ? prevRefsCol.scrollTop : 0;
 
-  const refRows = (state.artRefs || []).map(r => {
+  const refRow = r => {
     const isImg = a.refSource === 'game' && a.refGameArt === r.art;
     const isLlm = (a.llmRefs || []).some(x => x.art === r.art);
+    const comp = [...(r.elements || []), ...(r.chess_pieces || [])].join(' · ');
     return el('div', { class: 'ref-row' + (isImg ? ' attached-img' : '') + (isLlm ? ' attached-llm' : '') },
       el('img', { class: 'thumb', loading: 'lazy', src: '/gameart/' + r.art }),
       el('span', { class: 'ref-name' }, r.name,
-        el('span', { class: 'ref-comp', text: [...(r.elements || []), ...(r.chess_pieces || [])].join(' · ') || '—' })),
+        el('span', { class: 'ref-comp', text: (comp || '—') + (r.enemy ? ' · enemy' : '') })),
       el('button', {
         class: 'ghost tiny', text: isImg ? '✕ img' : '→ img', disabled: !mdl.supportsRef,
         title: mdl.supportsRef ? 'Use as the image-model reference (img2img / reference latent)'
@@ -725,7 +711,34 @@ function renderAdvanced() {
           noChange(); renderAdvanced();
         } }),
     );
-  });
+  };
+
+  // the list rebuilds IN PLACE on filter changes — typing never re-renders the modal,
+  // so the filter input keeps focus and the column keeps its scroll position
+  const listEl = el('div', { class: 'adv-ref-list' });
+  const rebuildList = () => {
+    const f = (state.refFilter || '').toLowerCase();
+    const ef = state.refEnemyFilter || 'all';
+    const rows = (state.artRefs || [])
+      .filter(r => ef === 'all' || (ef === 'enemy') === !!r.enemy)
+      .filter(r => !f || `${r.name} ${r.id} ${[...(r.elements || []), ...(r.chess_pieces || [])].join(' ')}`.toLowerCase().includes(f))
+      .map(refRow);
+    listEl.replaceChildren(...(rows.length ? rows
+      : [el('div', { class: 'hint', text: state.artRefs === null ? 'Loading…'
+          : state.artRefs.length ? 'No references match the filter.' : 'No other card art in the game yet.' })]));
+  };
+  rebuildList();
+
+  const filterRow = el('div', { class: 'frow ref-filter' },
+    el('input', {
+      type: 'text', value: state.refFilter || '', placeholder: 'filter by name / composition…',
+      oninput: e => { state.refFilter = e.target.value; rebuildList(); },
+    }),
+    selectInput(state, 'refEnemyFilter', [
+      { value: 'all', label: 'All cards' },
+      { value: 'player', label: 'Player cards' },
+      { value: 'enemy', label: 'Enemy cards' },
+    ], rebuildList));
 
   const modal = el('div', { class: 'modal advanced' },
     el('div', { class: 'advanced-head' },
@@ -735,9 +748,8 @@ function renderAdvanced() {
       el('div', { class: 'advanced-col refs' },
         el('h3', { text: 'References (ranked by composition)' }),
         el('div', { class: 'hint', text: 'The bare piece version of this card ranks first, then the closest compositions. → img feeds the image model; + llm shows it to the prompt writer.' }),
-        state.artRefs === null ? el('div', { class: 'hint', text: 'Loading…' })
-          : refRows.length ? el('div', {}, ...refRows)
-          : el('div', { class: 'hint', text: 'No other card art in the game yet.' })),
+        filterRow,
+        listEl),
       el('div', { class: 'advanced-col' },
         el('h3', { text: 'Generation' }),
         ...buildArtControls(renderAdvanced, true)),
@@ -745,6 +757,7 @@ function renderAdvanced() {
         el('h3', { text: 'Current imagery' }),
         ...buildArtPreviews(renderAdvanced))));
   $('modal-root').replaceChildren(modal);
+  modal.querySelector('.advanced-col.refs').scrollTop = keepScroll;
 }
 
 // Mirror the item's art left-right on a canvas and store the result as WORKSPACE art
@@ -768,6 +781,45 @@ async function flipArtHorizontal(fromGameArt) {
     state.gameHasArt = true;
     renderSidePanels();
   } catch (e) { toast('Flip failed: ' + (e.message || e), 'err'); }
+}
+
+// A named-preset cluster (＋ save / − delete / select) for one text value. Presets live
+// globally in settings[key] as {name: text}; getValue/setValue bridge to wherever the
+// live text is (the shared style fragment, or a per-item _art draft field).
+function presetControls(key, getValue, setValue) {
+  if (!state.settings[key]) state.settings[key] = {};
+  const sel = el('select', {
+    onchange: e => { if (e.target.value) setValue(state.settings[key][e.target.value] || ''); },
+  });
+  const rebuild = () => {
+    sel.replaceChildren(el('option', { value: '', text: 'presets…' }));
+    for (const name of Object.keys(state.settings[key]).sort())
+      sel.append(el('option', { value: name, text: name }));
+  };
+  rebuild();
+  const persist = async () => {
+    try { await api('/api/settings', { [key]: state.settings[key] }); }
+    catch (e) { toast('Saving presets failed: ' + e.message, 'err'); }
+  };
+  return [
+    el('button', { class: 'ghost tiny', text: '＋ save preset', title: 'Save the current text as a named preset',
+      onclick: async () => {
+        const name = (window.prompt('Preset name:', '') || '').trim();
+        if (!name) return;
+        state.settings[key][name] = getValue();
+        rebuild(); sel.value = name;
+        await persist();
+        toast(`Preset "${name}" saved.`, 'ok');
+      } }),
+    el('button', { class: 'ghost tiny', text: '− delete', title: 'Delete the selected preset',
+      onclick: async () => {
+        if (!sel.value) return;
+        delete state.settings[key][sel.value];
+        rebuild();
+        await persist();
+      } }),
+    sel,
+  ];
 }
 
 // The style fragment is global — persist it (debounced while typing).

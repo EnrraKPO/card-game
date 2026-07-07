@@ -18,18 +18,20 @@ const BASE = `http://127.0.0.1:${PORT}`;
 const CHROME = ['C:/Program Files/Google/Chrome/Application/chrome.exe',
   'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'].find(fs.existsSync);
 
-for (const d of ['data/cards', 'data/statuses', 'data/abilities', 'data/charms', 'data/relics', 'data/upgrades', 'data/encounters', 'data/map', 'assets/cards'])
+for (const d of ['data/cards', 'data/statuses', 'data/abilities', 'data/charms', 'data/relics', 'data/upgrades', 'data/encounters', 'data/map', 'assets/cards/enemies'])
   fs.mkdirSync(path.join(SANDBOX, d), { recursive: true });
 fs.writeFileSync(path.join(SANDBOX, 'data/cards/base.json'), JSON.stringify([
   { id: 'pawn', display_name: 'Pawn', cost: 1, attack: 1, health: 2, speed: 3, chess_pieces: ['pawn'] },
   { id: 'lone_pawn', display_name: 'Lone Pawn', cost: 1, attack: 1, health: 1, speed: 1, chess_pieces: ['pawn'] },
   { id: 'fire_queen', display_name: 'Fire Queen', cost: 5, attack: 5, health: 5, speed: 5, elements: ['fire'], chess_pieces: ['queen'] },
+  { id: 'goblin', display_name: 'Goblin Grunt', cost: 1, attack: 2, health: 1, speed: 4, enemy_only: true },
 ]));
 fs.writeFileSync(path.join(SANDBOX, 'data/statuses/poison.json'), JSON.stringify({ id: 'poison', display_name: 'Poison' }));
 const PNG1x1_UI = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
 fs.writeFileSync(path.join(SANDBOX, 'assets/cards/pawn.png'), PNG1x1_UI);
 fs.writeFileSync(path.join(SANDBOX, 'assets/cards/lone_pawn.png'), PNG1x1_UI);
 fs.writeFileSync(path.join(SANDBOX, 'assets/cards/fire_queen.png'), PNG1x1_UI);
+fs.writeFileSync(path.join(SANDBOX, 'assets/cards/enemies/goblin.png'), PNG1x1_UI);
 fs.mkdirSync(SHOTS, { recursive: true });
 
 let failures = 0;
@@ -51,7 +53,7 @@ async function main() {
   const errors = [];
   page.on('pageerror', e => errors.push(String(e)));
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
-  page.on('dialog', d => d.accept());
+  page.on('dialog', d => d.accept(d.type() === 'prompt' ? 'uitest_preset' : undefined));
   const shot = n => page.screenshot({ path: path.join(SHOTS, n + '.png') });
 
   async function clickTab(label) {
@@ -230,9 +232,9 @@ async function main() {
         .find(f => f.querySelector('.lab') && f.querySelector('.lab').textContent === 'Steps').querySelector('input');
       return sel.value === 'krea2' && steps.value === '8';
     }));
-    check('card auto-prompt avoids card/tcg and effect text', await page.evaluate(() => {
+    check('card auto-prompt avoids card/tcg, effect text and canned backgrounds', await page.evaluate(() => {
       const ph = document.querySelector('#art-panel textarea').placeholder;
-      return ph.startsWith('auto: ') && !/card|tcg/i.test(ph);
+      return ph.startsWith('auto: ') && !/card|tcg|ornate dark background/i.test(ph);
     }));
     await page.evaluate(() => {
       const f = [...document.querySelectorAll('#art-panel .fld')]
@@ -319,9 +321,34 @@ async function main() {
     }));
     check('reference browser ranks the bare piece version first', await page.evaluate(() => {
       const rows = [...document.querySelectorAll('.modal.advanced .ref-row')];
-      return rows.length === 2 && rows[0].textContent.includes('Lone Pawn')
-        && rows[1].textContent.includes('Fire Queen') && !!rows[0].querySelector('img.thumb');
+      return rows.length === 3 && rows[0].textContent.includes('Lone Pawn')
+        && rows.some(r => r.textContent.includes('Fire Queen'))
+        && rows.some(r => r.textContent.includes('Goblin Grunt')) && !!rows[0].querySelector('img.thumb');
     }));
+
+    // ═══ browser filters: free text + enemy/player, list rebuilds in place ═══
+    const setRefFilter = async (text, enemy) => page.evaluate((t, e) => {
+      const inp = document.querySelector('.modal.advanced .ref-filter input');
+      inp.value = t; inp.dispatchEvent(new Event('input', { bubbles: true }));
+      const sel = document.querySelector('.modal.advanced .ref-filter select');
+      sel.value = e; sel.dispatchEvent(new Event('change', { bubbles: true }));
+    }, text, enemy);
+    await setRefFilter('fire', 'all');
+    check('text filter narrows the list', await page.evaluate(() => {
+      const rows = [...document.querySelectorAll('.modal.advanced .ref-row')];
+      return rows.length === 1 && rows[0].textContent.includes('Fire Queen');
+    }));
+    await setRefFilter('', 'enemy');
+    check('enemy filter shows only enemy cards', await page.evaluate(() => {
+      const rows = [...document.querySelectorAll('.modal.advanced .ref-row')];
+      return rows.length === 1 && rows[0].textContent.includes('Goblin Grunt');
+    }));
+    await setRefFilter('', 'player');
+    check('player filter hides enemy cards', await page.evaluate(() => {
+      const rows = [...document.querySelectorAll('.modal.advanced .ref-row')];
+      return rows.length === 2 && !rows.some(r => r.textContent.includes('Goblin Grunt'));
+    }));
+    await setRefFilter('lone', 'all');
     await page.evaluate(() => {
       const row = [...document.querySelectorAll('.modal.advanced .ref-row')].find(r => r.textContent.includes('Lone Pawn'));
       [...row.querySelectorAll('button')].find(b => b.textContent.includes('llm')).click();
@@ -330,8 +357,12 @@ async function main() {
     check('llm ref attaches with badge + chip', await page.evaluate(() => {
       const row = [...document.querySelectorAll('.modal.advanced .ref-row')].find(r => r.textContent.includes('Lone Pawn'));
       const strip = document.querySelector('.modal.advanced .attached-strip');
-      return row.classList.contains('attached-llm') && strip && strip.textContent.includes('Lone Pawn');
+      return row && row.classList.contains('attached-llm') && strip && strip.textContent.includes('Lone Pawn');
     }));
+    check('filter survives an attach re-render', await page.evaluate(() =>
+      document.querySelector('.modal.advanced .ref-filter input').value === 'lone'
+      && document.querySelectorAll('.modal.advanced .ref-row').length === 1));
+    await setRefFilter('', 'all');
     await page.evaluate(() => {
       [...document.querySelectorAll('.modal.advanced button')].find(b => b.textContent.includes('✨')).click();
     });
@@ -355,6 +386,34 @@ async function main() {
     await sleep(800);
     check('unticked line is hidden from the llm', lastOllamaBody && !lastOllamaBody.prompt.includes('Cost 1')
       && lastOllamaBody.prompt.includes('Pawn'), lastOllamaBody && lastOllamaBody.prompt);
+    // ═══ guidance presets: save the concept text as a preset, recall it after clearing ═══
+    const conceptFld = () => [...document.querySelectorAll('.modal.advanced .fld')]
+      .find(f => f.querySelector('.lab') && f.querySelector('.lab').textContent.includes('concept direction'));
+    await page.evaluate(fldFinder => {
+      const fld = eval(`(${fldFinder})`)();
+      const inp = fld.querySelector('input[type=text]');
+      inp.value = 'grim sea witch energy';
+      inp.dispatchEvent(new Event('input', { bubbles: true }));
+      [...fld.querySelectorAll('button')].find(b => b.textContent.includes('save preset')).click();
+    }, conceptFld.toString());
+    await sleep(400);
+    check('concept preset saved into the select', await page.evaluate(fldFinder => {
+      const fld = eval(`(${fldFinder})`)();
+      return [...fld.querySelector('select').options].some(o => o.value === 'uitest_preset');
+    }, conceptFld.toString()));
+    await page.evaluate(fldFinder => {
+      const fld = eval(`(${fldFinder})`)();
+      const inp = fld.querySelector('input[type=text]');
+      inp.value = ''; inp.dispatchEvent(new Event('input', { bubbles: true }));
+      const sel = fld.querySelector('select');
+      sel.value = 'uitest_preset'; sel.dispatchEvent(new Event('change', { bubbles: true }));
+    }, conceptFld.toString());
+    await sleep(150);
+    check('concept preset recalls into the field', await page.evaluate(fldFinder => {
+      const fld = eval(`(${fldFinder})`)();
+      return fld.querySelector('input[type=text]').value === 'grim sea witch energy';
+    }, conceptFld.toString()));
+
     // 🔎 match art: vision-analyzes the item's current art into a recreating prompt
     await page.evaluate(() => {
       [...document.querySelectorAll('.modal.advanced button')].find(b => b.textContent.includes('match art')).click();

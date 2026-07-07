@@ -81,7 +81,9 @@ piece version first, e.g. `bishop_queen` for `darkness_water_bishop_queen`, then
 subsets by shared components with pieces weighted over elements, then cards with foreign
 components). Each entry attaches as **→ img** (single image-model reference, feeding the
 img2img / reference-latent paths via `refGameArt`) and/or **+ llm** (up to 4 illustrations
-shown to the prompt-writing LLM as style references). Multi-image note: some model
+shown to the prompt-writing LLM as style references). The list has a free-text filter
+(name / id / composition) and an All / Player / Enemy cards selector; filtering rebuilds
+the list in place, and attaching preserves the column's scroll position and filters. Multi-image note: some model
 runners (gemma4:31b on current Ollama) crash on multi-image requests — the server then
 falls back automatically to per-image style-note calls plus a text-only synthesis call.
 
@@ -89,6 +91,8 @@ Two optional guidance inputs (advanced view; they persist on the item's art draf
 apply from either view's ✨ button): **concept direction** — free-text creative steer,
 always passed to the LLM — and **how to use the references** — passed only when
 reference illustrations are attached, and carried into the fallback synthesis call too.
+Both carry the same named-preset cluster as the shared Style fragment (＋ save preset /
+− delete / select; stored globally in settings as `conceptPresets` / `refHintPresets`).
 
 **Item data the LLM sees** (advanced view) lists every summary line the prompt writer
 would receive, each with a checkbox — untick lines that pollute the visual concept

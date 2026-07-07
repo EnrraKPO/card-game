@@ -167,6 +167,12 @@ async function main() {
       && !order.includes('artless_bishop_queen'), order.join(','));
     check('reference entries carry art + composition', r.data.refs[0].art === 'assets/cards/bishop_queen.png'
       && JSON.stringify(r.data.refs[0].chess_pieces) === '["bishop","queen"]');
+    // enemy cards are flagged so the browser can filter them
+    fs.writeFileSync(path.join(SANDBOX, 'assets/cards/enemies/goblin_cutter.png'), PNG1x1);
+    r = await api('/api/art/references', { elements: [], chess_pieces: [], excludeId: 'zzz' });
+    const goblin = r.data.refs.find(x => x.id === 'goblin_cutter');
+    check('reference entries carry the enemy flag', goblin && goblin.enemy === true
+      && r.data.refs.find(x => x.id === 'bishop_queen').enemy === false);
 
     // ── game art as the image-model reference ──
     r = await api('/api/art/generate', { type: 'card', id: 'apitest_noart2', prompt: 'x',
@@ -229,6 +235,15 @@ async function main() {
     r = await api('/api/art/prompt-from-art', { type: 'card', id: 'apitest_no_art_at_all' });
     check('prompt-from-art without art rejected', r.status === 400 && /no current art/.test(r.data.error || ''));
     fakeOllama.close();
+
+    // ── named presets for the LLM guidance inputs persist like style presets ──
+    r = await api('/api/settings', { conceptPresets: { witchy: 'menacing sea witch' },
+      refHintPresets: { armor: 'copy the armor design' } });
+    check('llm guidance presets persist', r.data.settings.conceptPresets.witchy === 'menacing sea witch'
+      && r.data.settings.refHintPresets.armor === 'copy the armor design');
+    r = await api('/api/state');
+    check('llm guidance presets exposed in state', r.data.settings.conceptPresets.witchy === 'menacing sea witch'
+      && r.data.settings.refHintPresets.armor === 'copy the armor design');
 
     // ── multi-image fallback: runners like gemma4 crash on >1 images per request; the
     // server must fall back to per-image style notes + a text-only synthesis call ──
