@@ -46,6 +46,7 @@ var _panel: PanelContainer
 var _hand_box: BoxContainer
 var _gen_box: BoxContainer
 var _abilities_box: BoxContainer
+var _no_abilities_lbl: Label
 var _desc_panel: PanelContainer
 var _back_btn: Button
 var _inspect_abilities_btn: Button
@@ -220,6 +221,20 @@ func build_into(parent: Control) -> void:
 	_gen_box.visible = false
 	content.add_child(_gen_box)
 
+	# Shown in the token row's place when the inspected unit offers no activated abilities,
+	# so the inspect view says why that space is empty instead of just being empty.
+	_no_abilities_lbl = Label.new()
+	_no_abilities_lbl.text = "This unit doesn't have activated abilities"
+	_no_abilities_lbl.add_theme_font_size_override("font_size", 20)
+	_no_abilities_lbl.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 0.55))
+	# Card-height box with centred text: a bare label's own height won't centre inside the
+	# ScrollContainer (cards only look centred because they fill the row), so the label
+	# claims the same height a card row does and centres its text within it.
+	_no_abilities_lbl.custom_minimum_size.y = 210.0
+	_no_abilities_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_no_abilities_lbl.visible = false
+	content.add_child(_no_abilities_lbl)
+
 	# The level-2 Abilities row — same slot in the content strip as the other two, shown one
 	# at a time (see _set_level).
 	_abilities_box = HBoxContainer.new()
@@ -366,6 +381,8 @@ func _set_level(level: NavLevel) -> void:
 	_nav_level = level
 	_hand_box.visible      = level == NavLevel.HAND
 	_abilities_box.visible = level == NavLevel.ABILITIES
+	if level != NavLevel.INSPECT:
+		_no_abilities_lbl.visible = false
 	# The sidebar serves both raised levels: the unit detail at INSPECT (filled by
 	# _rebuild_inspect_view), the "click a unit" hint at ABILITIES (set by show_abilities).
 	_desc_panel.visible    = level != NavLevel.HAND
@@ -445,7 +462,8 @@ func _rebuild_inspect_view() -> void:
 		else:
 			ui.set_noninteractive()
 	_hand_box.visible = false
-	_gen_box.visible = true
+	_gen_box.visible = not _gen_cards.is_empty()
+	_no_abilities_lbl.visible = _gen_cards.is_empty()
 	_desc_panel.visible = true
 
 

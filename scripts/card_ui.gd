@@ -744,6 +744,11 @@ func _gui_input(event: InputEvent) -> void:
 				if not _did_inspect:   # a long-press already opened the inspector — don't also select
 					pressed.emit()
 				accept_event()
+		elif mb.button_index == MOUSE_BUTTON_RIGHT and mb.pressed:
+			# The desktop path to the in-depth view (touch reaches it via long-press). Note the
+			# AbilityWidget override consumes right-click first for autocast-capable abilities.
+			CardInspector.open(self, card_instance, _show_cost)
+			accept_event()
 	elif event is InputEventMouseMotion:
 		# Drift past the threshold means a drag/scroll, not an inspect — abandon the hold.
 		if _hold_timer != null and not _hold_timer.is_stopped() \

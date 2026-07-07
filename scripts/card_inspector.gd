@@ -1,10 +1,11 @@
 class_name CardInspector
 extends Control
 
-# Full-screen, tap-to-dismiss card detail overlay for touch. Hover tooltips don't exist on a
-# touchscreen (a finger can't hover-and-wait), so a long-press on any CardUI opens this instead:
-# the same shared CardTooltip panel, enlarged and centred over a dimmed scrim. Any press anywhere
-# closes it. Built in code (no scene), mirroring the rest of the UI. See CardUI._gui_input.
+# Full-screen, tap-to-dismiss card detail overlay: the in-depth view of a card. Opened by
+# long-press on touch (hover tooltips don't exist there) and by RIGHT-CLICK on desktop — the
+# same shared CardTooltip panel (incl. the abilities section), enlarged and centred over a
+# dimmed scrim. Any press anywhere closes it. Built in code (no scene), mirroring the rest of
+# the UI. See CardUI._gui_input.
 
 var _inst: CardInstance
 var _show_cost: bool
@@ -52,20 +53,29 @@ func _ready() -> void:
 		col.add_child(panel)
 
 	var hint := Label.new()
-	hint.text = "Tap anywhere to close"
+	hint.text = "Tap anywhere to close" if DisplayServer.is_touchscreen_available() \
+			else "Click anywhere to close"
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.add_theme_color_override("font_color", Color(0.78, 0.78, 0.85))
 	col.add_child(hint)
 
 
 # Any press anywhere dismisses. _input runs ahead of GUI routing, so this fires even when the tap
-# lands on the card panel's own labels. Release events are ignored so the long-press that opened
-# the inspector (the finger is still down at open time) doesn't immediately close it again.
+# lands on the card panel's own labels. Opening-gesture releases are ignored so the long-press that
+# opened the inspector (the finger is still down at open time) doesn't immediately close it again.
+# The CLOSING click is consumed whole — hidden on the press, freed on the matching release, both
+# marked handled — so the release can't leak into whatever sits underneath (e.g. Combat's
+# outside-click dismissal would also collapse the hand's inspect view behind the overlay).
 func _input(event: InputEvent) -> void:
 	var is_press := (event is InputEventMouseButton and (event as InputEventMouseButton).pressed) \
 		or (event is InputEventScreenTouch and (event as InputEventScreenTouch).pressed)
+	var is_release := (event is InputEventMouseButton and not (event as InputEventMouseButton).pressed) \
+		or (event is InputEventScreenTouch and not (event as InputEventScreenTouch).pressed)
 	if is_press and not _dismissing:
 		_dismissing = true
+		visible = false
+		get_viewport().set_input_as_handled()
+	elif is_release and _dismissing:
 		get_viewport().set_input_as_handled()
 		if _layer != null:
 			_layer.queue_free()

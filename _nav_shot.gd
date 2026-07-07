@@ -47,5 +47,11 @@ func _ready() -> void:
 		await get_tree().process_frame
 	sv.get_texture().get_image().save_png("res://_nav_l3.png")
 
+	# A unit WITHOUT activated abilities — the token row's place shows the explanatory text.
+	combat._hand.set_inspected(combat._board.get_player_king())
+	for _i in 4:
+		await get_tree().process_frame
+	sv.get_texture().get_image().save_png("res://_nav_l3_no_abilities.png")
+
 	print("RENDERED nav levels 2+3")
 	get_tree().quit()
