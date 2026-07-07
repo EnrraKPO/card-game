@@ -1,0 +1,273 @@
+[
+	{
+		"id": "fire_fire_pawn",
+		"display_name": "Pure Fire Pawn",
+		"elements": [
+			"fire",
+			"fire"
+		],
+		"chess_pieces": [
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi fire elemental soldier, full body standing pose, round red-orange helmet crowned with flame, glowing yellow eyes on faceless molten face, red scarf, flaming armor, holding tall spear with blazing translucent spearhead, round shield with flame emblem, fire licking the cracked ground, dark blue twilight sky with jagged peaks, vibrant orange-red against deep blue palette, glossy stylized game illustration, strong rim glow",
+				"ref": {
+					"source": "current",
+					"mode": "img2img",
+					"denoise": 0.7
+				},
+				"llmHidden": [
+					"Stats derived from the composition by the game.",
+					"Composition: fire + fire + pawn."
+				],
+				"last": {
+					"seed": 2440133686,
+					"prompt": "Chibi fire elemental soldier, full body standing pose, round red-orange helmet crowned with flame, glowing yellow eyes on faceless molten face, red scarf, flaming armor, holding tall spear with blazing translucent spearhead, round shield with flame emblem, fire licking the cracked ground, dark blue twilight sky with jagged peaks, vibrant orange-red against deep blue palette, glossy stylized game illustration, strong rim glow",
+					"style": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric light, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear,",
+					"at": "2026-07-07"
+				}
+			}
+		}
+	},
+	{
+		"id": "fire_fire_knight",
+		"display_name": "Pure Fire Knight",
+		"elements": [
+			"fire",
+			"fire"
+		],
+		"chess_pieces": [
+			"knight"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Rearing fiery war horse made of living flame, blazing mane and tail, dark obsidian armored barding with ember gem accents, red leather harness and bridle, front hooves raised, glowing orange-yellow body against dusky purple volcanic badlands at twilight, radiant fire lighting, stylized fantasy game illustration, vibrant painterly rendering, centered dynamic composition, chibi cartoon visuals",
+				"ref": {
+					"source": "current",
+					"mode": "img2img",
+					"denoise": 0.7
+				},
+				"concept": "This is a chess knight, meaning a horse. ",
+				"llmHidden": [
+					"Composition: fire + fire + knight.",
+					"Stats derived from the composition by the game.",
+					"fire_fire_knight — Unit."
+				],
+				"last": {
+					"seed": 4019047826,
+					"prompt": "Rearing fiery war horse made of living flame, blazing mane and tail, dark obsidian armored barding with ember gem accents, red leather harness and bridle, front hooves raised, glowing orange-yellow body against dusky purple volcanic badlands at twilight, radiant fire lighting, stylized fantasy game illustration, vibrant painterly rendering, centered dynamic composition, chibi cartoon visuals",
+					"style": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric light, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear,",
+					"at": "2026-07-07"
+				}
+			}
+		}
+	},
+	{
+		"id": "fire_fire_bishop",
+		"elements": [
+			"fire",
+			"fire"
+		],
+		"chess_pieces": [
+			"bishop"
+		]
+	},
+	{
+		"id": "fire_fire_rook",
+		"elements": [
+			"fire",
+			"fire"
+		],
+		"chess_pieces": [
+			"rook"
+		]
+	},
+	{
+		"id": "fire_fire_queen",
+		"elements": [
+			"fire",
+			"fire"
+		],
+		"chess_pieces": [
+			"queen"
+		]
+	},
+	{
+		"id": "fire_fire_pawn_pawn",
+		"elements": [
+			"fire",
+			"fire"
+		],
+		"chess_pieces": [
+			"pawn",
+			"pawn"
+		]
+	},
+	{
+		"id": "fire_fire_knight_pawn",
+		"elements": [
+			"fire",
+			"fire"
+		],
+		"chess_pieces": [
+			"knight",
+			"pawn"
+		]
+	},
+	{
+		"id": "fire_fire_bishop_pawn",
+		"elements": [
+			"fire",
+			"fire"
+		],
+		"chess_pieces": [
+			"bishop",
+			"pawn"
+		]
+	},
+	{
+		"id": "fire_fire_pawn_rook",
+		"elements": [
+			"fire",
+			"fire"
+		],
+		"chess_pieces": [
+			"pawn",
+			"rook"
+		]
+	},
+	{
+		"id": "fire_fire_pawn_queen",
+		"elements": [
+			"fire",
+			"fire"
+		],
+		"chess_pieces": [
+			"pawn",
+			"queen"
+		]
+	},
+	{
+		"id": "fire_fire_knight_knight",
+		"elements": [
+			"fire",
+			"fire"
+		],
+		"chess_pieces": [
+			"knight",
+			"knight"
+		]
+	},
+	{
+		"id": "fire_fire_bishop_knight",
+		"elements": [
+			"fire",
+			"fire"
+		],
+		"chess_pieces": [
+			"bishop",
+			"knight"
+		]
+	},
+	{
+		"id": "fire_fire_knight_rook",
+		"elements": [
+			"fire",
+			"fire"
+		],
+		"chess_pieces": [
+			"knight",
+			"rook"
+		]
+	},
+	{
+		"id": "fire_fire_knight_queen",
+		"elements": [
+			"fire",
+			"fire"
+		],
+		"chess_pieces": [
+			"knight",
+			"queen"
+		]
+	},
+	{
+		"id": "fire_fire_bishop_bishop",
+		"elements": [
+			"fire",
+			"fire"
+		],
+		"chess_pieces": [
+			"bishop",
+			"bishop"
+		]
+	},
+	{
+		"id": "fire_fire_bishop_rook",
+		"elements": [
+			"fire",
+			"fire"
+		],
+		"chess_pieces": [
+			"bishop",
+			"rook"
+		]
+	},
+	{
+		"id": "fire_fire_bishop_queen",
+		"elements": [
+			"fire",
+			"fire"
+		],
+		"chess_pieces": [
+			"bishop",
+			"queen"
+		]
+	},
+	{
+		"id": "fire_fire_rook_rook",
+		"elements": [
+			"fire",
+			"fire"
+		],
+		"chess_pieces": [
+			"rook",
+			"rook"
+		]
+	},
+	{
+		"id": "fire_fire_queen_rook",
+		"elements": [
+			"fire",
+			"fire"
+		],
+		"chess_pieces": [
+			"queen",
+			"rook"
+		]
+	},
+	{
+		"id": "fire_fire_queen_queen",
+		"elements": [
+			"fire",
+			"fire"
+		],
+		"chess_pieces": [
+			"queen",
+			"queen"
+		]
+	}
+]

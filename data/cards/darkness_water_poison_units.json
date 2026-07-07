@@ -81,6 +81,7 @@
 	{
 		"id": "darkness_water_pawn",
 		"display_name": "Blight Pawn",
+		"description": "Applies Poison 1 to the unit it strikes.",
 		"elements": [
 			"darkness",
 			"water"
@@ -88,17 +89,44 @@
 		"chess_pieces": [
 			"pawn"
 		],
-		"description": "Applies Poison 1 to the unit it strikes.",
 		"effects": [
 			{
-				"trigger": "on_attack",
-				"targeting_policy": "attack_target",
+				"trigger": {
+					"kind": "dual_event",
+					"event": "attack",
+					"origin_of": "self"
+				},
 				"status": {
-					"id": "poison",
-					"stacks": 1
+					"id": "poison"
+				},
+				"targets": {
+					"kind": "participant",
+					"participant": "destination"
 				}
 			}
-		]
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi toxic slime soldier made of translucent glowing green ooze, glowing eyes, wearing dark purple knight helmet, pauldron, belt and boots, holding dripping green crystal-tipped spear and round purple shield with skull-and-crossbones emblem, standing in bubbling slime puddle, cracked wasteland with rising toxic fumes, dark red ominous sky, bold outlines, vibrant cel-shaded fantasy game illustration",
+				"ref": {
+					"source": "current",
+					"mode": "img2img",
+					"denoise": 0.7
+				},
+				"last": {
+					"seed": 1873673946,
+					"prompt": "Chibi toxic slime soldier made of translucent glowing green ooze, glowing eyes, wearing dark purple knight helmet, pauldron, belt and boots, holding dripping green crystal-tipped spear and round purple shield with skull-and-crossbones emblem, standing in bubbling slime puddle, cracked wasteland with rising toxic fumes, dark red ominous sky, bold outlines, vibrant cel-shaded fantasy game illustration",
+					"style": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric light, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear,",
+					"at": "2026-07-07"
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_water_queen",

@@ -24,7 +24,7 @@
       ]
     },
     "at": "2026-07-06T03:29:10.127Z",
-    "fileHash": "61d2edc0edaf49f6d19e4599c0bdac58fba0d907"
+    "fileHash": "9ad073edf4ca6e78621b56eb1b9d28ed18cb4a34"
   },
   "card/darkness_water_bishop": {
     "file": "darkness_water_poison_units.json",
@@ -51,7 +51,7 @@
       ]
     },
     "at": "2026-07-06T03:30:31.771Z",
-    "fileHash": "61d2edc0edaf49f6d19e4599c0bdac58fba0d907"
+    "fileHash": "9ad073edf4ca6e78621b56eb1b9d28ed18cb4a34"
   },
   "card/darkness_water_bishop_knight": {
     "file": "darkness_water_poison_units.json",
@@ -78,7 +78,7 @@
       ]
     },
     "at": "2026-07-06T03:30:40.272Z",
-    "fileHash": "61d2edc0edaf49f6d19e4599c0bdac58fba0d907"
+    "fileHash": "9ad073edf4ca6e78621b56eb1b9d28ed18cb4a34"
   },
   "status/barrier": {
     "file": "barrier.json",
@@ -198,7 +198,7 @@
       ]
     },
     "at": "2026-07-06T16:55:44.254Z",
-    "fileHash": "61d2edc0edaf49f6d19e4599c0bdac58fba0d907"
+    "fileHash": "9ad073edf4ca6e78621b56eb1b9d28ed18cb4a34"
   },
   "card/frost_adept": {
     "file": "frost_adept.json",
@@ -450,6 +450,173 @@
       ]
     },
     "at": "2026-07-07T21:49:59.225Z",
-    "fileHash": "61d2edc0edaf49f6d19e4599c0bdac58fba0d907"
+    "fileHash": "9ad073edf4ca6e78621b56eb1b9d28ed18cb4a34"
+  },
+  "card/darkness_water_pawn": {
+    "file": "darkness_water_poison_units.json",
+    "original": {
+      "id": "darkness_water_pawn",
+      "display_name": "Blight Pawn",
+      "elements": [
+        "darkness",
+        "water"
+      ],
+      "chess_pieces": [
+        "pawn"
+      ],
+      "description": "Applies Poison 1 to the unit it strikes.",
+      "effects": [
+        {
+          "trigger": "on_attack",
+          "targeting_policy": "attack_target",
+          "status": {
+            "id": "poison",
+            "stacks": 1
+          }
+        }
+      ]
+    },
+    "at": "2026-07-07T23:15:58.333Z",
+    "fileHash": "9ad073edf4ca6e78621b56eb1b9d28ed18cb4a34"
+  },
+  "card/fire_fire_pawn": {
+    "file": "fire_fire_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-07T23:17:24.311Z",
+    "fileHash": "d2f16295dc8f94526f4fdd54d1c1af33c4e28676"
+  },
+  "card/fire_fire_knight": {
+    "file": "fire_fire_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-07T23:17:24.322Z",
+    "fileHash": "d2f16295dc8f94526f4fdd54d1c1af33c4e28676"
+  },
+  "card/fire_fire_bishop": {
+    "file": "fire_fire_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-07T23:17:24.330Z",
+    "fileHash": "d2f16295dc8f94526f4fdd54d1c1af33c4e28676"
+  },
+  "card/fire_fire_rook": {
+    "file": "fire_fire_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-07T23:17:24.345Z",
+    "fileHash": "d2f16295dc8f94526f4fdd54d1c1af33c4e28676"
+  },
+  "card/fire_fire_queen": {
+    "file": "fire_fire_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-07T23:17:24.356Z",
+    "fileHash": "d2f16295dc8f94526f4fdd54d1c1af33c4e28676"
+  },
+  "card/fire_fire_pawn_pawn": {
+    "file": "fire_fire_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-07T23:17:24.363Z",
+    "fileHash": "d2f16295dc8f94526f4fdd54d1c1af33c4e28676"
+  },
+  "card/fire_fire_knight_pawn": {
+    "file": "fire_fire_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-07T23:17:24.369Z",
+    "fileHash": "d2f16295dc8f94526f4fdd54d1c1af33c4e28676"
+  },
+  "card/fire_fire_bishop_pawn": {
+    "file": "fire_fire_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-07T23:17:24.377Z",
+    "fileHash": "d2f16295dc8f94526f4fdd54d1c1af33c4e28676"
+  },
+  "card/fire_fire_pawn_rook": {
+    "file": "fire_fire_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-07T23:17:24.386Z",
+    "fileHash": "d2f16295dc8f94526f4fdd54d1c1af33c4e28676"
+  },
+  "card/fire_fire_pawn_queen": {
+    "file": "fire_fire_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-07T23:17:24.391Z",
+    "fileHash": "d2f16295dc8f94526f4fdd54d1c1af33c4e28676"
+  },
+  "card/fire_fire_knight_knight": {
+    "file": "fire_fire_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-07T23:17:24.397Z",
+    "fileHash": "d2f16295dc8f94526f4fdd54d1c1af33c4e28676"
+  },
+  "card/fire_fire_bishop_knight": {
+    "file": "fire_fire_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-07T23:17:24.419Z",
+    "fileHash": "d2f16295dc8f94526f4fdd54d1c1af33c4e28676"
+  },
+  "card/fire_fire_knight_rook": {
+    "file": "fire_fire_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-07T23:17:24.433Z",
+    "fileHash": "d2f16295dc8f94526f4fdd54d1c1af33c4e28676"
+  },
+  "card/fire_fire_knight_queen": {
+    "file": "fire_fire_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-07T23:17:24.453Z",
+    "fileHash": "d2f16295dc8f94526f4fdd54d1c1af33c4e28676"
+  },
+  "card/fire_fire_bishop_bishop": {
+    "file": "fire_fire_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-07T23:17:24.460Z",
+    "fileHash": "d2f16295dc8f94526f4fdd54d1c1af33c4e28676"
+  },
+  "card/fire_fire_bishop_rook": {
+    "file": "fire_fire_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-07T23:17:24.465Z",
+    "fileHash": "d2f16295dc8f94526f4fdd54d1c1af33c4e28676"
+  },
+  "card/fire_fire_bishop_queen": {
+    "file": "fire_fire_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-07T23:17:24.472Z",
+    "fileHash": "d2f16295dc8f94526f4fdd54d1c1af33c4e28676"
+  },
+  "card/fire_fire_rook_rook": {
+    "file": "fire_fire_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-07T23:17:24.478Z",
+    "fileHash": "d2f16295dc8f94526f4fdd54d1c1af33c4e28676"
+  },
+  "card/fire_fire_queen_rook": {
+    "file": "fire_fire_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-07T23:17:24.483Z",
+    "fileHash": "d2f16295dc8f94526f4fdd54d1c1af33c4e28676"
+  },
+  "card/fire_fire_queen_queen": {
+    "file": "fire_fire_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-07T23:17:24.488Z",
+    "fileHash": "d2f16295dc8f94526f4fdd54d1c1af33c4e28676"
   }
 }
