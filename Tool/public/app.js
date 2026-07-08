@@ -319,7 +319,7 @@ function openFlowBatchMonitor(file) {
         body.append(el('div', { class: 'lab subtle', style: 'margin-top:8px', text: `Landing for ${j.currentId}:` }));
         const rowEl = el('div', { style: 'display:flex; flex-wrap:wrap; gap:8px' });
         for (const nd of cf.nodes) {
-          const src = `/flowart/card/${j.currentId}/${nd.file}`;
+          const src = `/flowart/card/${j.currentId}/${nd.file}?v=${nd.seed}`;   // repeated filenames → cache-bust
           rowEl.append(el('img', { src, loading: 'lazy',
             style: 'width:132px; height:auto; border-radius:6px; cursor:zoom-in',
             title: `step ${nd.step} · seed ${nd.seed}`,
@@ -338,7 +338,7 @@ function openFlowBatchMonitor(file) {
         text: 'Completed — the randomly picked art (swap any via the card\'s 🗂 pool / ⛓ gallery):' }));
       const rowEl = el('div', { style: 'display:flex; flex-wrap:wrap; gap:8px' });
       for (const r of done) {
-        const src = `/flowart/card/${r.id}/${r.picked}`;
+        const src = `/flowart/card/${r.id}/${r.picked}?v=${r.seed}`;   // repeated filenames → cache-bust
         rowEl.append(el('div', { style: 'width:132px' },
           el('img', { src, loading: 'lazy', style: 'width:132px; height:auto; border-radius:6px; cursor:zoom-in',
             onclick: () => openLightbox(src, `${r.id} · seed ${r.seed}`) }),
@@ -1877,7 +1877,9 @@ function openFlowModal() {
         text: `Step ${stepN} — ${mdl ? mdl.label : list[0].model} (click a candidate to use it)` }));
       const rowEl = el('div', { style: 'display:flex; flex-wrap:wrap; gap:10px; margin-top:4px' });
       for (const nd of list) {
-        const src = `/flowart/${type}/${id}/${nd.file}`;
+        // ?v=seed cache-busts: flow filenames (1_01.png…) repeat every run, and the browser
+        // serves the stale cached image for a repeated URL even under Cache-Control: no-store.
+        const src = `/flowart/${type}/${id}/${nd.file}?v=${nd.seed}`;
         const caption = `#${nd.n} · seed ${nd.seed}` + (nd.parent ? ` · from #${nd.parent}` : '');
         const pick = async () => {
           const out = await api('/api/art/flow-pick', { type, id, file: nd.file });
