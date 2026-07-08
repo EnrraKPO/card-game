@@ -111,6 +111,11 @@ function renderKinBar() {
         el('input', { type: 'checkbox', checked: artGuidesEnabled(),
           onchange: e => setKinField('useArtGuides', e.target.checked) }), 'use art guides'),
       el('button', { class: 'ghost tiny', text: 'Edit guides…', onclick: openArtGuidesModal })),
+    // always-on free-text steering — empty = inert; persists on blur without a re-render
+    el('input', { type: 'text', class: 'kin-steer', placeholder: '✨ steer (optional): a free-text nudge for every generation',
+      value: state.settings.kinSteer || '',
+      onchange: e => { state.settings.kinSteer = e.target.value;
+        api('/api/settings', { kinSteer: e.target.value }).catch(() => {}); } }),
     el('span', { class: 'hint', text: 'what every ✨ recipe inference carries over from a card\'s anchor image' }),
   ].filter(Boolean);
   bar.replaceChildren(...parts);

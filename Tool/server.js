@@ -82,6 +82,7 @@ function getSettings() {
     kinThemeMode: 'family',    // 'family' = auto element-relatives | 'select' = the hand-picked kinThemeRefs
     kinThemeRefs: [],          // card ids picked as theme references (used when kinThemeMode='select')
     useArtGuides: false,       // opt-in: inject the composition-keyed art_guides into every ✨ writer
+    kinSteer: '',              // always-on free-text creative direction; empty = contributes nothing
     turboLora: 'Flux_2-Turbo-LoRA_comfyui.safetensors',  // the user's Flux 2 turbo LoRA
     turboSteps: 8, turboStrength: 1.0,
     llmProvider: 'ollama',   // 'ollama' (local) | 'claude-code' (subscription) | 'claude' (API) | 'openai' — routes ALL ✨ LLM features
@@ -121,6 +122,12 @@ function artGuideLines(elements, pieces) {
   if (t && t.negative) neg.push(t.negative);
   if (neg.length) lines.push(`Avoid — do NOT depict: ${neg.join('; ')}`);
   return lines;
+}
+
+// The always-on free-text steering nudge (global, all flows). Empty → no line.
+function steerLines() {
+  const s = (getSettings().kinSteer || '').trim();
+  return s ? [`Creative direction (follow this): ${s}`] : [];
 }
 
 // ── installed manifest ───────────────────────────────────────────────────────
@@ -1526,6 +1533,7 @@ async function llmInferAnchored(entry, anchor, adherence) {
     // the composition-encoding id (see llmInferBlend).
     d.display_name ? `Card name (the authored concept + theme identity — honor it): ${d.display_name}` : '',
     ...artGuideLines(d.elements, d.chess_pieces),   // opt-in authored composition direction
+    ...steerLines(),                                 // always-on free-text steering
     'Reference image 1 is THE CONCEPT — the exact subject this card\'s art must depict.',
     themeLines.length ? 'THEME examples (how this theme looks in this game — palette, materials, magic; match it, do not name it):' : '',
     ...themeLines,
@@ -1599,6 +1607,7 @@ async function llmInferBlend(entry) {
     // out the composition and is the leak); omit the line when there is no display name.
     d.display_name ? `Card name (the authored concept + theme identity — honor it): ${d.display_name}` : '',
     ...artGuideLines(d.elements, d.chess_pieces),   // opt-in authored composition direction
+    ...steerLines(),                                 // always-on free-text steering
     d.description ? `Card text (flavor context only — never render text): ${d.description}` : '',
     conceptLines.length ? 'CONCEPT relatives — they show what the SUBJECT is:' : '',
     ...conceptLines,
@@ -2444,6 +2453,7 @@ async function handle(req, res) {
       if ('kinThemeRefs' in body)
         s.kinThemeRefs = Array.isArray(body.kinThemeRefs) ? body.kinThemeRefs.map(String) : [];
       if ('useArtGuides' in body) s.useArtGuides = !!body.useArtGuides;
+      if ('kinSteer' in body) s.kinSteer = String(body.kinSteer || '');
       if ('quickFlow' in body) {   // null clears the appointment
         if (body.quickFlow != null) {
           const qfErr = validateFlowSpec(body.quickFlow.steps);
@@ -2694,7 +2704,7 @@ async function handle(req, res) {
         if (!abs) return send(res, 400, { error: 'reference art not found: ' + rel });
         refImages.push(fs.readFileSync(abs).toString('base64'));
       }
-      const guides = type === 'card' ? artGuideLines(elements, pieces) : [];
+      const guides = [...(type === 'card' ? artGuideLines(elements, pieces) : []), ...steerLines()];
       try {
         const prompt = await llmArtPrompt(TYPES[type].label, String(name),
           Array.isArray(summary) ? summary.map(String) : [], example ? String(example) : '', refImages,
@@ -2707,7 +2717,7 @@ async function handle(req, res) {
       const { type, id, concept, refHint } = await readBody(req);
       if (!TYPES[type] || !validId(id)) return send(res, 400, { error: 'bad request' });
       const ge = type === 'card' ? findGameEntry('card', id) : null;
-      const guides = ge ? artGuideLines(ge.data.elements, ge.data.chess_pieces) : [];
+      const guides = [...(ge ? artGuideLines(ge.data.elements, ge.data.chess_pieces) : []), ...steerLines()];
       try {
         return send(res, 200, { ok: true, prompt: await llmPromptFromArt(type, id,
           concept ? String(concept) : '', refHint ? String(refHint) : '', guides) });

@@ -61,6 +61,7 @@ body {
 #kin-bar select { width: 100%; }
 #kin-bar .hint { font-size: 11px; color: #6d7690; }
 #kin-bar .kin-refs-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+#kin-bar .kin-steer { width: 100%; }
 .item-row .ref-check { font-size: 10px; color: var(--fg-dim); gap: 3px; white-space: nowrap; }
 .guide-section { margin: 10px 0; }
 .guide-section > h3 { margin: 6px 0; font-size: 13px; }

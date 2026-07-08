@@ -655,6 +655,16 @@ async function main() {
       && /Avoid — do NOT depict:.*no exposed flesh.*not bright/.test(kinReq.prompt), kinReq && kinReq.prompt);
     await api('/api/settings', { useArtGuides: false });
     await api('/api/art-guides', { concept: {}, theme: {} });
+
+    // ── feature 4: always-on free-text steering (empty = inert) ──
+    await api('/api/art/infer-recipe', { type: 'card', id: 'darkness_earth_bishop_rook', adherence: 'free' });
+    check('steer withheld when empty', !/Creative direction/.test(kinReq.prompt), kinReq && kinReq.prompt);
+    r = await api('/api/settings', { kinSteer: 'lit by a single amber lantern' });
+    check('kinSteer persists', r.data.settings.kinSteer === 'lit by a single amber lantern');
+    await api('/api/art/infer-recipe', { type: 'card', id: 'darkness_earth_bishop_rook', adherence: 'free' });
+    check('steer injects a creative-direction line into the prompt',
+      /Creative direction \(follow this\): lit by a single amber lantern/.test(kinReq.prompt), kinReq && kinReq.prompt);
+    await api('/api/settings', { kinSteer: '' });
     fakeKin.close();
 
     // ── ⛓ multi-step flows: a fake ComfyUI proves the chain, the fan-out and the pick ──
