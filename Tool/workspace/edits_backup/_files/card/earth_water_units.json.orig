@@ -1,0 +1,13 @@
+[
+	{
+		"id": "earth_water_pawn",
+		"elements": [
+			"earth",
+			"water"
+		],
+		"display_name": "Clay Pawn",
+		"chess_pieces": [
+			"pawn"
+		]
+	}
+]

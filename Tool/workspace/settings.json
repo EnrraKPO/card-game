@@ -1,6 +1,6 @@
 {
   "comfyUrl": "http://127.0.0.1:8000",
-  "artStyle": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear, clean background",
+  "artStyle": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear",
   "stylePresets": {
     "painterly": "rich glowing painterly illustration, volumetric god rays",
     "cartoon": "cartoon art style, 2d illustration, clean bold outlines, flat cell shading",
@@ -16,8 +16,21 @@
     "Infer Element": "Use the provided image references to infer the interpretation of the elemental theme",
     "Infer element and concept": "Use the poison themed cards to infer theme presentation, and the base card to infer concept"
   },
-  "flowPresets": {},
+  "flowPresets": {
+    "Krea2 stepped": "[{\"model\":\"krea2\",\"samples\":1,\"turbo\":false,\"denoise\":0.4},{\"model\":\"krea2\",\"samples\":3,\"denoise\":0.6},{\"model\":\"krea2\",\"samples\":1,\"denoise\":0.7}]",
+    "Krea 2 stepped": "[{\"model\":\"krea2\",\"samples\":1,\"turbo\":false,\"denoise\":0.45},{\"model\":\"krea2\",\"samples\":2,\"denoise\":0.6},{\"model\":\"krea2\",\"samples\":2,\"denoise\":0.75}]"
+  },
   "kinAdherence": "concept",
+  "kinAnchorMode": "current",
+  "kinThemeMode": "select",
+  "kinThemeRefs": [
+    "fire_water_knight",
+    "fire_water_pawn",
+    "fire_water_queen",
+    "fire_water_rook"
+  ],
+  "useArtGuides": true,
+  "kinSteer": "",
   "turboLora": "Flux_2-Turbo-LoRA_comfyui.safetensors",
   "turboSteps": 8,
   "turboStrength": 1,
@@ -33,18 +46,19 @@
     "steps": [
       {
         "model": "krea2",
-        "samples": 3,
-        "denoise": 0.5
+        "samples": 1,
+        "turbo": false,
+        "denoise": 0.45
       },
       {
         "model": "krea2",
-        "samples": 1,
+        "samples": 2,
         "denoise": 0.6
       },
       {
         "model": "krea2",
-        "samples": 1,
-        "denoise": 0.7
+        "samples": 2,
+        "denoise": 0.75
       }
     ],
     "anchor": "recipe"

@@ -1,14 +1,55 @@
 [
 	{
 		"id": "air_fire_pawn",
+		"display_name": "Lightning Pawn",
 		"elements": [
 			"air",
 			"fire"
 		],
-		"display_name": "Lightning Pawn",
 		"chess_pieces": [
 			"pawn"
-		]
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Small chibi-proportioned lightning footsoldier, glowing golden crackling energy coursing through crimson-and-gold plated armor, molten yellow eyes, clutching a short crackling electric spear, angular lightning-bolt crest on the helm, radiant sparks trailing from his boots, standing on a glowing runic disc, warm amber sky, painterly high-detail fantasy rendering",
+				"ref": {
+					"source": "current",
+					"mode": "img2img",
+					"denoise": 0.6
+				},
+				"concept": "Avoid storm themes, electricity is the theme. Favor a warm palette.",
+				"llmRefs": [
+					{
+						"name": "Lightning Bishop",
+						"art": "assets/cards/air_fire_bishop.png"
+					},
+					{
+						"name": "Lightning King",
+						"art": "assets/cards/air_fire_king.png"
+					},
+					{
+						"name": "Lightning Knight",
+						"art": "assets/cards/air_fire_knight.png"
+					},
+					{
+						"name": "Lightning Queen",
+						"art": "assets/cards/air_fire_queen.png"
+					}
+				],
+				"last": {
+					"seed": 1015598947,
+					"prompt": "Small chibi-proportioned lightning footsoldier, glowing golden crackling energy coursing through crimson-and-gold plated armor, molten yellow eyes, clutching a short crackling electric spear, angular lightning-bolt crest on the helm, radiant sparks trailing from his boots, standing on a glowing runic disc, warm amber sky, painterly high-detail fantasy rendering",
+					"style": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear",
+					"at": "2026-07-08"
+				}
+			}
+		}
 	},
 	{
 		"id": "air_fire_knight",
@@ -19,7 +60,29 @@
 		"display_name": "Lightning Knight",
 		"chess_pieces": [
 			"knight"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Chibi cartoon warhorse rearing mid-charge on a round windswept dais, storm-blue crystalline barding veined with molten gold, jagged lightning arcing off its mane and hooves, wind-torn amber scarf streaming behind, glowing golden eyes, sparks trailing from galloping legs, churning tempest clouds and crackling sky-glow behind, thick outlines, bold saturated colors",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight.png",
+					"name": "Knight"
+				},
+				"inferredFrom": {
+					"concept": [
+						"knight",
+						"bishop_knight",
+						"darkness_light_bishop_knight"
+					],
+					"theme": [
+						"air_fire",
+						"air_fire_bishop",
+						"air_fire_king"
+					]
+				}
+			}
+		}
 	},
 	{
 		"id": "air_fire_bishop",
@@ -30,7 +93,29 @@
 		"display_name": "Lightning Bishop",
 		"chess_pieces": [
 			"bishop"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Chibi cartoon bishop standing on a round windswept dais, tall cleft mitre of storm-blue crystal edged in molten gold, flowing white robes veined with crackling lightning threads, gripping a spiraled crozier that arcs golden electricity, an amber-glowing tome under one arm, wind-torn scarf streaming, glowing eyes, sparks swirling around him, churning tempest clouds behind, thick outlines, bold saturated colors",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop.png",
+					"name": "Bishop"
+				},
+				"inferredFrom": {
+					"concept": [
+						"bishop",
+						"bishop_bishop",
+						"bishop_knight"
+					],
+					"theme": [
+						"air_fire",
+						"air_fire_king",
+						"air_fire_knight"
+					]
+				}
+			}
+		}
 	},
 	{
 		"id": "air_fire_rook",
@@ -64,7 +149,29 @@
 		"display_name": "Lightning Queen",
 		"chess_pieces": [
 			"queen"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Chibi cartoon queen standing on a round windswept dais, long dark hair flowing in gusts, tall pointed crown of storm-blue crystal tipped with molten gold, white gown veined with crackling golden lightning threads, red wind-torn cape billowing, cradling a floating orb of caged blue-white electricity, glowing amber eyes, sparks and swirling air currents around her, tempest clouds behind, thick outlines, bold saturated colors",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/queen.png",
+					"name": "Queen"
+				},
+				"inferredFrom": {
+					"concept": [
+						"queen",
+						"bishop_queen",
+						"darkness_light_bishop_queen"
+					],
+					"theme": [
+						"air_fire",
+						"air_fire_bishop",
+						"air_fire_king"
+					]
+				}
+			}
+		}
 	},
 	{
 		"id": "air_fire_pawn_pawn",
@@ -76,7 +183,29 @@
 		"chess_pieces": [
 			"pawn",
 			"pawn"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Chibi lightning warrior footsoldier in a bold battle stance, storm-blue crystalline breastplate veined with molten gold, jagged bolt-forged sword crackling white voltage, round shield rimmed in glowing amber sparks, wind-torn scarf streaming, vapor-wreathed helm, fierce glowing eyes, electric arcs snapping across a churning tempest sky, bold saturated game illustration",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_pawn.png",
+					"name": "Warrior"
+				},
+				"inferredFrom": {
+					"concept": [
+						"pawn_pawn",
+						"darkness_light_pawn_pawn",
+						"water_water_pawn_pawn"
+					],
+					"theme": [
+						"air_fire_pawn",
+						"air_fire",
+						"air_fire_bishop"
+					]
+				}
+			}
+		}
 	},
 	{
 		"id": "air_fire_knight_pawn",
@@ -88,7 +217,29 @@
 		"chess_pieces": [
 			"knight",
 			"pawn"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Storm-blue crystalline barded warhorse charging low, jagged lightning arcing off mane and hooves, an armored rider leveling a bolt-forged lance streaming white voltage, molten-gold veins glowing across the plate, wind-torn amber scarf whipping behind, sparks trailing galloping legs, churning tempest clouds and crackling sky-glow, bold saturated fantasy illustration.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_pawn.png",
+					"name": "Cavalry"
+				},
+				"inferredFrom": {
+					"concept": [
+						"knight_pawn",
+						"water_water_knight_pawn",
+						"air_darkness_knight_pawn"
+					],
+					"theme": [
+						"air_fire_knight",
+						"air_fire_pawn",
+						"air_fire_pawn_pawn"
+					]
+				}
+			}
+		}
 	},
 	{
 		"id": "air_fire_bishop_pawn",
@@ -100,7 +251,29 @@
 		"chess_pieces": [
 			"bishop",
 			"pawn"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Storm-blue crystalline paladin in bolt-forged plate, closed visored helm crowned with a jagged lightning crest, molten-gold veins glowing across pauldrons and cross-marked tabard, hoisting a flanged mace crackling white voltage and a tall kite shield rimmed in amber sparks, arcs snapping off his gauntlets, wind-torn cape streaming, fierce glowing eyes, churning tempest sky, bold saturated fantasy illustration",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_pawn.png",
+					"name": "Paladin"
+				},
+				"inferredFrom": {
+					"concept": [
+						"bishop_pawn",
+						"water_water_bishop_pawn",
+						"air_darkness_bishop_pawn"
+					],
+					"theme": [
+						"air_fire_bishop",
+						"air_fire_knight_pawn",
+						"air_fire_pawn"
+					]
+				}
+			}
+		}
 	},
 	{
 		"id": "air_fire_pawn_rook",
@@ -112,7 +285,29 @@
 		"chess_pieces": [
 			"pawn",
 			"rook"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Storm-blue crystalline coastal watchtower crackling with white lightning, its bolt-forged battlements veined in molten gold, twin arcing voltage jets erupting from crenelated turrets, a chibi sentry in electrified plate hoisting a spark-wreathed spear at the barbican, amber sparks snapping across churning tempest clouds, wind-torn banners streaming, bold saturated fantasy illustration",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_rook.png",
+					"name": "Barracks"
+				},
+				"inferredFrom": {
+					"concept": [
+						"pawn_rook",
+						"darkness_light_pawn_rook",
+						"water_water_pawn_rook"
+					],
+					"theme": [
+						"air_fire_bishop_pawn",
+						"air_fire_knight_pawn",
+						"air_fire_pawn"
+					]
+				}
+			}
+		}
 	},
 	{
 		"id": "air_fire_pawn_queen",
@@ -124,7 +319,29 @@
 		"chess_pieces": [
 			"pawn",
 			"queen"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Storm-blue crystalline warrior-queen commanding atop a thunderhead rampart, jagged lightning crown crackling white voltage, molten-gold veins glowing across her plate, hoisting a bolt-forged scepter trailing twin spiraling arcs, a rank of small chibi soldiers of living electricity marching below, paired thunder-surges sparking at their boots, churning tempest sky, bold saturated fantasy illustration",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_queen.png",
+					"name": "Commander"
+				},
+				"inferredFrom": {
+					"concept": [
+						"pawn_queen",
+						"darkness_light_pawn_queen",
+						"water_water_pawn_queen"
+					],
+					"theme": [
+						"air_fire_bishop_pawn",
+						"air_fire_knight_pawn",
+						"air_fire_pawn"
+					]
+				}
+			}
+		}
 	},
 	{
 		"id": "air_fire_knight_knight",
@@ -136,19 +353,59 @@
 		"chess_pieces": [
 			"knight",
 			"knight"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "A pair of twin storm-beasts galloping in mirrored unison, crackling with electricity, storm-blue crystalline hides veined with molten gold, jagged lightning arcing between their entwined manes, glowing golden eyes, wind-torn amber banners streaming from their flanks, hooves scattering white sparks across a churning tempest of thunderheads and crackling sky-glow, bold saturated fantasy illustration.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_knight.png",
+					"name": "Beast"
+				},
+				"inferredFrom": {
+					"concept": [
+						"knight_knight",
+						"water_water_knight_knight",
+						"air_darkness_knight_knight"
+					],
+					"theme": [
+						"air_fire_knight",
+						"air_fire_knight_pawn",
+						"air_fire"
+					]
+				}
+			}
+		}
 	},
 	{
 		"id": "air_fire_bishop_knight",
+		"display_name": "Lightning Cryptid",
 		"elements": [
 			"air",
 			"fire"
 		],
-		"display_name": "Lightning Cryptid",
 		"chess_pieces": [
 			"bishop",
 			"knight"
-		]
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi cartoon horned storm-stag cryptid prancing across a windswept ridge, storm-blue crystalline hide veined with molten-gold filigree, spiraled twin horns of amber lightning-glass fanned like a mitre, jagged voltage arcing off its antlers and hooves, wind-torn glowing mane streaming, fierce luminous eyes, sparks trailing its legs, churning tempest clouds and crackling sky behind, thick outlines, bold saturated colors",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_knight.png",
+					"name": "Cryptid",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
 	},
 	{
 		"id": "air_fire_knight_rook",
@@ -160,7 +417,29 @@
 		"chess_pieces": [
 			"knight",
 			"rook"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Storm-forged coral-stone stable tower rearing from a lightning-scorched crag, battlements crowned with amber lightning-glass spires, a crackling voltage war horse leaning from its arched gate, mane streaming as jagged bolts, twin cascades of white sparks pouring off the ramparts, storm-blue crystalline walls veined with molten gold, churning thunderhead sky behind, thick outlines, bold saturated colors",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_rook.png",
+					"name": "Stable"
+				},
+				"inferredFrom": {
+					"concept": [
+						"knight_rook",
+						"darkness_light_knight_rook",
+						"water_water_knight_rook"
+					],
+					"theme": [
+						"air_fire_bishop_knight",
+						"air_fire_knight",
+						"air_fire_knight_knight"
+					]
+				}
+			}
+		}
 	},
 	{
 		"id": "air_fire_knight_queen",
@@ -172,19 +451,65 @@
 		"chess_pieces": [
 			"knight",
 			"queen"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Chibi cartoon dragon rearing on hind legs like a charging warhorse, storm-blue crystalline hide veined with molten gold, spiraled coral-lightning horns of amber voltage-glass, jagged electricity arcing off its wings and claws, wind-torn glowing mane streaming, fierce golden eyes, sparks scattering from its talons, churning thunderhead sky crackling behind, thick outlines, bold saturated colors",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_queen.png",
+					"name": "Monster"
+				},
+				"inferredFrom": {
+					"concept": [
+						"knight_queen",
+						"darkness_light_knight_queen",
+						"water_water_knight_queen"
+					],
+					"theme": [
+						"air_fire_bishop_knight",
+						"air_fire_knight",
+						"air_fire_knight_knight"
+					]
+				}
+			}
+		}
 	},
 	{
 		"id": "air_fire_bishop_bishop",
+		"display_name": "Lightning Hierophant",
 		"elements": [
 			"air",
 			"fire"
 		],
-		"display_name": "Lightning Hierophant",
 		"chess_pieces": [
 			"bishop",
 			"bishop"
-		]
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi-proportioned bearded high priest with a long flowing white beard, crimson-and-gold ceremonial robes crackling with golden electricity, tall pointed mitre crowned by a glowing amber gem, molten-yellow eyes, raising a tall staff topped with a spinning ring of forked lightning, sparks arcing from his fingertips, standing on a radiant runic disc, warm amber sky, thick outlines, bold saturated painterly rendering",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_bishop.png",
+					"name": "Hierophant",
+					"mode": "img2img",
+					"denoise": 0.75
+				},
+				"last": {
+					"seed": 3883577729,
+					"prompt": "Chibi-proportioned bearded high priest with a long flowing white beard, crimson-and-gold ceremonial robes crackling with golden electricity, tall pointed mitre crowned by a glowing amber gem, molten-yellow eyes, raising a tall staff topped with a spinning ring of forked lightning, sparks arcing from his fingertips, standing on a radiant runic disc, warm amber sky, thick outlines, bold saturated painterly rendering, cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear",
+					"style": "",
+					"at": "2026-07-08"
+				}
+			}
+		}
 	},
 	{
 		"id": "air_fire_bishop_rook",
@@ -196,7 +521,29 @@
 		"chess_pieces": [
 			"bishop",
 			"rook"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Cartoon chibi storm-spire tower crackling with power, walls of storm-blue crystal ridged with molten-gold trim, forked lightning arcing from its battlements, a swirling ring of white voltage crowning its cleft mitre-topped spire, tiny robed storm-priest guardian raising a sparking hand at its gate, whirling sparks, roiling tempest clouds behind, thick bold outlines, saturated colors",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_rook.png",
+					"name": "Arcane Tower"
+				},
+				"inferredFrom": {
+					"concept": [
+						"bishop_rook",
+						"darkness_light_bishop_rook",
+						"water_water_bishop_rook"
+					],
+					"theme": [
+						"air_fire_bishop",
+						"air_fire_bishop_bishop",
+						"air_fire_bishop_knight"
+					]
+				}
+			}
+		}
 	},
 	{
 		"id": "air_fire_bishop_queen",
@@ -208,7 +555,29 @@
 		"chess_pieces": [
 			"bishop",
 			"queen"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Majestic front-facing storm-goddess sovereign standing on a wind-scoured dais, towering fanned mitre-crown of storm-blue crystal ringed in molten-gold spikes, flowing pale robes veined with crackling voltage and gilded scrollwork, one hand raising a lightning-wreathed spiraled scepter, the other cradling a floating orb of white thunder, blazing radiant eyes, sparks swirling, roiling tempest clouds behind, thick outlines, bold saturated colors",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_queen.png",
+					"name": "Deity"
+				},
+				"inferredFrom": {
+					"concept": [
+						"bishop_queen",
+						"darkness_light_bishop_queen",
+						"darkness_water_bishop_queen"
+					],
+					"theme": [
+						"air_fire_bishop",
+						"air_fire_bishop_bishop",
+						"air_fire_bishop_knight"
+					]
+				}
+			}
+		}
 	},
 	{
 		"id": "air_fire_rook_rook",
@@ -220,7 +589,29 @@
 		"chess_pieces": [
 			"rook",
 			"rook"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Twin storm-forged crystalline fortress towers linked by a bolt-veined rampart bridge, walls of storm-blue crystal ridged with molten-gold trim, each turret crowned with a churning ring of white voltage discharging forked lightning skyward, cascading amber sparks pouring down barbican slits, arcing tendrils leaping between spires, roiling thunderhead sky behind, thick bold outlines, saturated cheerful colors",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook_rook.png",
+					"name": "Turret"
+				},
+				"inferredFrom": {
+					"concept": [
+						"rook_rook",
+						"darkness_light_rook_rook",
+						"water_water_rook_rook"
+					],
+					"theme": [
+						"air_fire_bishop_rook",
+						"air_fire_knight_rook",
+						"air_fire_pawn_rook"
+					]
+				}
+			}
+		}
 	},
 	{
 		"id": "air_fire_queen_rook",
@@ -232,7 +623,29 @@
 		"chess_pieces": [
 			"queen",
 			"rook"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Lightning Castle, a colossal fortress keep sculpted from storm-blue crystal ridged with molten-gold trim, forked white lightning arcing between its twin towers, a crowning ring of swirling voltage above the cleft central spire, sparks cascading down the ramparts into a churning electric moat, roiling thunderhead sky crackling behind, thick bold outlines, saturated colors",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook_queen.png",
+					"name": "Castle"
+				},
+				"inferredFrom": {
+					"concept": [
+						"rook_queen",
+						"water_water_queen_rook",
+						"air_darkness_queen_rook"
+					],
+					"theme": [
+						"air_fire_bishop_queen",
+						"air_fire_bishop_rook",
+						"air_fire_knight_queen"
+					]
+				}
+			}
+		}
 	},
 	{
 		"id": "air_fire_queen_queen",
@@ -244,6 +657,28 @@
 		"chess_pieces": [
 			"queen",
 			"queen"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Chibi warrior queen forged from crackling storm energy, wild curly hair streaming as arcing white lightning, jagged voltage crown of blue crystal spiked with molten gold, sapphire plate veined with glowing amber current, swinging an oversized greatsword sheathed in spiraling thunderbolts, leaping off a thunderhead cliff as twin lightning arcs spiral beneath, churning tempest sky, bold outlines, vibrant electric blue-and-gold palette",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/queen_queen.png",
+					"name": "Hero"
+				},
+				"inferredFrom": {
+					"concept": [
+						"queen_queen",
+						"water_water_queen_queen",
+						"air_darkness_queen_queen"
+					],
+					"theme": [
+						"air_fire_bishop_queen",
+						"air_fire_knight_queen",
+						"air_fire_pawn_queen"
+					]
+				}
+			}
+		}
 	}
 ]

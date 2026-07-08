@@ -339,7 +339,6 @@
 	{
 		"id": "water_water_knight_queen",
 		"display_name": "Pure Water Monster",
-		"description": "Twin-water unit.",
 		"elements": [
 			"water",
 			"water"
@@ -356,16 +355,21 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Cartoon giant dragon sculpted from translucent living seawater, long swept-back spiral horns and spiky crest of curling foam, broad rippling wave-membrane wings spread wide, pale seafoam belly plates, pearl claws, fin-tipped tail coiling through surf, rearing atop a cresting turquoise breaker over a tiny coastal fishing village, bursting spray and aquamarine droplets, bold outlines, bright cheerful colors, fierce face",
+				"prompt": "Chibi dragon sculpted from living seawater, translucent rippling aquamarine body over deep-blue depths, rearing on hind legs like a charging warhorse, curling foam crest crown, horns of spiraling coral and pearl, twin whirlpool helixes spinning along its tail, wings of arcing spray and mist, claws bursting paired turquoise fountains, sunlit open-ocean horizon, bold outlines, bright sapphire-and-seafoam palette",
 				"ref": {
-					"source": "current",
+					"source": "game",
+					"path": "assets/cards/knight_queen.png",
+					"name": "Monster",
 					"mode": "img2img",
 					"denoise": 0.8
 				},
+				"llmShown": [
+					"Stats derived from the composition by the game."
+				],
 				"last": {
-					"seed": 3363768950,
-					"prompt": "Cartoon giant dragon sculpted from translucent living seawater, long swept-back spiral horns and spiky crest of curling foam, broad rippling wave-membrane wings spread wide, pale seafoam belly plates, pearl claws, fin-tipped tail coiling through surf, rearing atop a cresting turquoise breaker over a tiny coastal fishing village, bursting spray and aquamarine droplets, bold outlines, bright cheerful colors, fierce face",
-					"style": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear, clean background",
+					"seed": 1596503169,
+					"prompt": "Chibi dragon sculpted from living seawater, translucent rippling aquamarine body over deep-blue depths, rearing on hind legs like a charging warhorse, curling foam crest crown, horns of spiraling coral and pearl, twin whirlpool helixes spinning along its tail, wings of arcing spray and mist, claws bursting paired turquoise fountains, sunlit open-ocean horizon, bold outlines, bright sapphire-and-seafoam palette, cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear",
+					"style": "",
 					"at": "2026-07-08"
 				}
 			}

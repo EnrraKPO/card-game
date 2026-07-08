@@ -1,0 +1,729 @@
+[
+	{
+		"id": "earth_water_pawn",
+		"elements": [
+			"earth",
+			"water"
+		],
+		"display_name": "Clay Pawn",
+		"chess_pieces": [
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Chibi foot soldier sculpted from damp reddish-brown earth, hand-pressed faceted body glistening with wet sheen, sagging molded shoulder guards and drooping helmet oozing sludge, tiny cracked round shield and stubby blunt cudgel, hollow blank sockets, thick globs sliding from its joints, wading through soft mud amid warm mystical glow and drifting motes, dark shadowed backdrop, richly textured fantasy digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn.png",
+					"name": "Pawn"
+				},
+				"inferredFrom": {
+					"concept": [
+						"pawn",
+						"air_darkness_bishop_pawn",
+						"air_darkness_knight_pawn"
+					],
+					"theme": [
+						"air_fire_knight",
+						"air_fire_pawn",
+						"air_fire_rook",
+						"earth_water_knight"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "earth_water_knight",
+		"elements": [
+			"earth",
+			"water"
+		],
+		"display_name": "Clay Knight",
+		"chess_pieces": [
+			"knight"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Small chibi-proportioned foot knight sculpted from soft wet clay, rounded helm and stubby raised shield of packed damp earth, glossy slick smears and thumb-pressed dents across a cracking drying surface, muddy brown haunches dribbling wet runnels, glowing amber eyes, dark background with warm ochre conjuring haze and faint teal mist curling upward, soft glowing ground circle, centered figure, dark fantasy digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight.png",
+					"name": "Knight"
+				},
+				"inferredFrom": {
+					"concept": [
+						"knight",
+						"air_darkness_bishop_knight",
+						"air_darkness_knight"
+					],
+					"theme": [
+						"air_fire_knight",
+						"air_fire_pawn",
+						"air_fire_rook",
+						"earth_water_pawn"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "earth_water_bishop",
+		"elements": [
+			"earth",
+			"water"
+		],
+		"display_name": "Clay Bishop",
+		"chess_pieces": [
+			"bishop"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Damp hand-sculpted mitred prelate figure formed from wet reddish-brown earth, faceted molded surface glistening with a slick sheen, sagging draped robe and tall peaked headpiece drooping at the tip, hollow blank sockets, gripping a curling shepherd's staff oozing sludge from its coiled crook, mud dripping from sleeves and hem, soft warm mystical glow, drifting motes, dark shadowed backdrop, richly textured fantasy digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop.png",
+					"name": "Bishop"
+				},
+				"inferredFrom": {
+					"concept": [
+						"bishop",
+						"air_darkness_bishop",
+						"air_darkness_bishop_bishop"
+					],
+					"theme": [
+						"air_fire_knight",
+						"air_fire_pawn",
+						"air_fire_rook",
+						"earth_water_knight"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "earth_water_rook",
+		"elements": [
+			"earth",
+			"water"
+		],
+		"display_name": "Clay Rook",
+		"chess_pieces": [
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Muddy fortress turret of packed wet earth, crenellated crown slumping under its own weight, glossy slick smears and thumb-pressed dents scoring a cracking drying surface, muddy runnels dribbling down its flanks, a tiny stubby earthen sentry peeking from a sagging arched window, glowing amber eyes, faint teal mist curling up from a soft glowing ground circle, warm ochre haze, dark background, centered figure, dark fantasy digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook.png",
+					"name": "Rook"
+				},
+				"inferredFrom": {
+					"concept": [
+						"rook",
+						"air_darkness_bishop_rook",
+						"air_darkness_knight_rook"
+					],
+					"theme": [
+						"air_fire_knight",
+						"air_fire_pawn",
+						"air_fire_rook",
+						"earth_water_knight"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "earth_water_queen",
+		"elements": [
+			"earth",
+			"water"
+		],
+		"display_name": "Clay Queen",
+		"chess_pieces": [
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Chibi clay-sculpted sovereign queen seated cross-legged, tall many-pointed diadem-helm of packed wet earth atop a slick rounded head, high-collared robe modeled in dripping muddy brown with thumb-pressed grooves and glossy smears, cupping a small crown-shape in one palm, cracking drying skin oozing wet runnels, glowing amber eyes, warm ochre haze and faint teal mist, soft glowing ground circle, centered figure, dark fantasy digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/queen.png",
+					"name": "Queen"
+				},
+				"inferredFrom": {
+					"concept": [
+						"queen",
+						"air_darkness_bishop_queen",
+						"air_darkness_knight_queen"
+					],
+					"theme": [
+						"air_fire_knight",
+						"air_fire_pawn",
+						"air_fire_rook",
+						"earth_water_knight"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "earth_water_pawn_pawn",
+		"elements": [
+			"earth",
+			"water"
+		],
+		"display_name": "Clay Warrior",
+		"chess_pieces": [
+			"pawn",
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Chibi armored footsoldier sculpted from soft wet clay, rounded open-faced helm and stubby broad blade of packed damp earth, glossy slick smears and thumb-pressed dents cracking across a drying surface, muddy runnels dribbling off shoulders and raised shield, glowing amber eyes, lunging mid-swing, warm ochre haze and faint teal mist over a soft glowing ground circle, centered figure, dark fantasy digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_pawn.png",
+					"name": "Warrior"
+				},
+				"inferredFrom": {
+					"concept": [
+						"pawn_pawn",
+						"air_darkness_pawn_pawn",
+						"air_fire_pawn_pawn"
+					],
+					"theme": [
+						"air_fire_knight",
+						"air_fire_pawn",
+						"air_fire_rook",
+						"earth_water_knight"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "earth_water_knight_pawn",
+		"elements": [
+			"earth",
+			"water"
+		],
+		"display_name": "Clay Cavalry",
+		"chess_pieces": [
+			"knight",
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Mud-sculpted mounted lancer astride a barded warhorse, both packed from slick wet earth, glossy thumb-pressed dents and dribbling brown runnels down flank and cape, drying cracks webbing a rounded visored helm, stubby lowered lance trailing sludgy droplets, glowing amber eyes, charging low through faint teal haze over a soft glowing ground circle, dark ochre background, centered figure, dark fantasy digital painting.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_pawn.png",
+					"name": "Cavalry"
+				},
+				"inferredFrom": {
+					"concept": [
+						"knight_pawn",
+						"air_darkness_knight_pawn",
+						"air_fire_knight_pawn"
+					],
+					"theme": [
+						"air_fire_knight",
+						"air_fire_pawn",
+						"air_fire_rook",
+						"earth_water_knight"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "earth_water_bishop_pawn",
+		"elements": [
+			"earth",
+			"water"
+		],
+		"display_name": "Clay Paladin",
+		"chess_pieces": [
+			"bishop",
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Chibi foot paladin sculpted from soft wet clay, rounded visored helm ridged like a tiny crown, stubby raised kite shield and a thick flanged mace all of packed damp earth, glossy slick smears and thumb-pressed dents over a cracking drying surface, muddy runnels dribbling off pauldrons, glowing amber eyes, warm ochre conjuring haze and curling teal mist, soft luminous ground ring, centered figure, dark fantasy digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_pawn.png",
+					"name": "Paladin"
+				},
+				"inferredFrom": {
+					"concept": [
+						"bishop_pawn",
+						"air_darkness_bishop_pawn",
+						"air_fire_bishop_pawn"
+					],
+					"theme": [
+						"air_fire_knight",
+						"air_fire_pawn",
+						"air_fire_rook",
+						"earth_water_knight"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "earth_water_pawn_rook",
+		"elements": [
+			"earth",
+			"water"
+		],
+		"display_name": "Clay Barracks",
+		"chess_pieces": [
+			"pawn",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Muddy watchtower barracks slumped from soft wet packed earth, rounded crenellated top and arched gateway oozing glossy slick clay, thumb-pressed dents and cracking drying smears, a slick spear-rack and stubby earthen guard with domed helm and round shield beside the door, glowing amber eyes, warm ochre haze and curling teal mist, soft luminous ground circle, dark background, centered figure, dark fantasy digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_rook.png",
+					"name": "Barracks"
+				},
+				"inferredFrom": {
+					"concept": [
+						"pawn_rook",
+						"air_darkness_pawn_rook",
+						"air_fire_pawn_rook"
+					],
+					"theme": [
+						"air_fire_knight",
+						"air_fire_pawn",
+						"air_fire_rook",
+						"earth_water_knight"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "earth_water_pawn_queen",
+		"elements": [
+			"earth",
+			"water"
+		],
+		"display_name": "Clay Commander",
+		"chess_pieces": [
+			"pawn",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"prompt": "A muddy war-leader shaped from soft wet earth, sculpted from slick packed clay, raised on a mounded platform of dripping mud, thrusting a stubby baton upward to rally a column of small clay soldiers slogging below, glossy thumb-pressed dents and cracking drying skin, wet runnels streaming down, glowing amber eyes, warm ochre haze and curling teal mist, soft glowing ground circle, dark fantasy digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_queen.png",
+					"name": "Commander"
+				},
+				"inferredFrom": {
+					"concept": [
+						"pawn_queen",
+						"air_darkness_pawn_queen",
+						"air_fire_pawn_queen"
+					],
+					"theme": [
+						"air_fire_knight",
+						"air_fire_pawn",
+						"air_fire_rook",
+						"earth_water_knight"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "earth_water_knight_knight",
+		"display_name": "Clay Beast",
+		"elements": [
+			"earth",
+			"water"
+		],
+		"chess_pieces": [
+			"knight",
+			"knight"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Muddy clay-sculpted war-bull rearing mid-charge, hulking shoulders and lowered head packed from wet earth, thick curved horns of smooth drying clay, thumb-pressed dents and glossy slick smears cracking across its haunches, dribbling brown runnels, glowing amber eyes, dark background with warm ochre haze and faint teal mist, soft glowing ground circle, centered figure, dark fantasy digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_knight.png",
+					"name": "Beast"
+				},
+				"inferredFrom": {
+					"concept": [
+						"knight_knight",
+						"air_darkness_knight_knight",
+						"air_fire_knight_knight"
+					],
+					"theme": [
+						"air_fire_knight",
+						"air_fire_pawn",
+						"air_fire_rook",
+						"earth_water_knight"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "earth_water_bishop_knight",
+		"display_name": "Clay Cryptid",
+		"elements": [
+			"earth",
+			"water"
+		],
+		"chess_pieces": [
+			"bishop",
+			"knight"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "A colossal chibi cryptid beast sculpted from soft wet clay, plump rounded body of packed dripping earth, stubby clawed limbs sinking into muddy runnels, glossy thumb-pressed dents cracking across its drying hide, snuffling snout and tiny curled hornlets, glowing amber eyes, warm ochre conjuring haze and faint teal mist curling from a soft glowing ground circle, centered figure, dark fantasy digital painting.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_knight.png",
+					"name": "Cryptid",
+					"mode": "img2img",
+					"denoise": 0.75
+				},
+				"concept": "avoid the unicorn theme, use a different mystical beast to represent clay and mud",
+				"last": {
+					"seed": 546710975,
+					"prompt": "A colossal chibi cryptid beast sculpted from soft wet clay, plump rounded body of packed dripping earth, stubby clawed limbs sinking into muddy runnels, glossy thumb-pressed dents cracking across its drying hide, snuffling snout and tiny curled hornlets, glowing amber eyes, warm ochre conjuring haze and faint teal mist curling from a soft glowing ground circle, centered figure, dark fantasy digital painting.",
+					"style": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear",
+					"at": "2026-07-08"
+				}
+			}
+		}
+	},
+	{
+		"id": "earth_water_knight_rook",
+		"elements": [
+			"earth",
+			"water"
+		],
+		"display_name": "Clay Stable",
+		"chess_pieces": [
+			"knight",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Wet clay stable hut with sagging mud-daubed walls, thumb-pressed arched doorway and drooping earthen roof, a slick clay horse head with glowing amber eyes leaning out, glossy wet runnels dribbling down cracking drying flanks, warm ochre haze and faint teal mist, soft glowing ground circle, centered figure, dark fantasy digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_rook.png",
+					"name": "Stable"
+				},
+				"inferredFrom": {
+					"concept": [
+						"knight_rook",
+						"air_darkness_knight_rook",
+						"air_fire_knight_rook"
+					],
+					"theme": [
+						"air_fire_knight",
+						"air_fire_pawn",
+						"air_fire_rook",
+						"earth_water_knight"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "earth_water_knight_queen",
+		"elements": [
+			"earth",
+			"water"
+		],
+		"display_name": "Clay Monster",
+		"chess_pieces": [
+			"knight",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"prompt": "A hulking clay dragon rearing on thick stubby limbs, body sculpted from soft wet earth with glossy slick smears and thumb-pressed dents across a cracking drying hide, swept-back muddy horns dribbling wet brown runnels, sagging membranous wings of packed damp mud, glowing amber eyes, centered figure, dark background with warm ochre haze and faint teal mist, soft glowing ground circle, dark fantasy digital painting.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_queen.png",
+					"name": "Monster"
+				},
+				"inferredFrom": {
+					"concept": [
+						"knight_queen",
+						"air_darkness_knight_queen",
+						"air_fire_knight_queen"
+					],
+					"theme": [
+						"air_fire_knight",
+						"air_fire_pawn",
+						"air_fire_rook",
+						"earth_water_knight"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "earth_water_bishop_bishop",
+		"display_name": "Clay Hierophant",
+		"elements": [
+			"earth",
+			"water"
+		],
+		"chess_pieces": [
+			"bishop",
+			"bishop"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi bearded patriarch sculpted from soft wet earth, tall rounded mitre and flowing beard formed of packed damp mud, robe of glossy slick smears cracking as it dries, glowing amber eyes, raising a dribbling staff as thick ochre conjuring haze spirals from his upraised palm, thumb-pressed dents across his surface, faint teal mist curling upward, soft glowing ground circle, centered figure, dark background, dark fantasy digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_bishop.png",
+					"name": "Hierophant"
+				},
+				"inferredFrom": {
+					"concept": [
+						"bishop_bishop",
+						"air_darkness_bishop_bishop",
+						"air_fire_bishop_bishop"
+					],
+					"theme": [
+						"air_fire_knight",
+						"air_fire_pawn",
+						"air_fire_rook",
+						"earth_water_knight"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "earth_water_bishop_rook",
+		"display_name": "Clay Arcane Tower",
+		"elements": [
+			"earth",
+			"water"
+		],
+		"chess_pieces": [
+			"bishop",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Wet clay wizard spire on a round earthen dais, rounded crenellated crown and stubby conical cap sculpted from packed damp mud, thumb-pressed dents and glossy slick smears cracking as it dries, arched glowing doorway, tall slit openings oozing muddy runnels, a chibi robed mud-caster with staff at its base, glowing amber eyes, warm ochre haze and teal mist, soft glowing ground circle, centered, dark fantasy digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_rook.png",
+					"name": "Arcane Tower"
+				},
+				"inferredFrom": {
+					"concept": [
+						"bishop_rook",
+						"air_darkness_bishop_rook",
+						"air_fire_bishop_rook"
+					],
+					"theme": [
+						"air_fire_knight",
+						"air_fire_pawn",
+						"air_fire_rook",
+						"earth_water_knight"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "earth_water_bishop_queen",
+		"display_name": "Clay Deity",
+		"elements": [
+			"earth",
+			"water"
+		],
+		"chess_pieces": [
+			"bishop",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi goddess sculpted from soft wet clay, rounded high-collared robe of packed damp earth with thumb-pressed filigree, glossy slick smears and hairline drying cracks, one palm cradling a dribbling mud orb, the other raising an earthen scepter oozing wet runnels, glowing amber eyes, floating cross-legged above a soft glowing ground circle, dark background with warm ochre haze and faint teal mist, centered figure, dark fantasy digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_queen.png",
+					"name": "Deity"
+				},
+				"inferredFrom": {
+					"concept": [
+						"bishop_queen",
+						"air_darkness_bishop_queen",
+						"air_fire_bishop_queen"
+					],
+					"theme": [
+						"air_fire_knight",
+						"air_fire_pawn",
+						"air_fire_rook",
+						"earth_water_knight"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "earth_water_rook_rook",
+		"elements": [
+			"earth",
+			"water"
+		],
+		"display_name": "Clay Turret",
+		"chess_pieces": [
+			"rook",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Squat weaponized turret with a wide battered base, arrow-slit windows, and a swiveling top-mounted ballista aimed skyward — everything sculpted from soft wet packed earth, glossy slick thumb-pressed smears, muddy runnels dribbling down cracking drying surfaces, glowing amber eyes in the slits, warm ochre haze and curling teal mist, soft glowing ground circle, centered figure, dark fantasy digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook_rook.png",
+					"name": "Turret"
+				},
+				"inferredFrom": {
+					"concept": [
+						"rook_rook",
+						"air_darkness_rook_rook",
+						"air_fire_rook_rook"
+					],
+					"theme": [
+						"air_fire_knight",
+						"air_fire_pawn",
+						"air_fire_rook",
+						"earth_water_knight"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "earth_water_queen_rook",
+		"elements": [
+			"earth",
+			"water"
+		],
+		"display_name": "Clay Castle",
+		"chess_pieces": [
+			"queen",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Muddy fortress keep sculpted from soft wet clay, a tall central turret flanked by two rounded towers, glossy thumb-pressed dents and slick smears across a cracking drying surface, muddy runnels dribbling down the ramparts, drooping earthen pennants, tiny glowing amber-eyed guard peeking from an arched slot, warm ochre haze, faint teal mist, soft glowing ground circle, centered, dark fantasy digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook_queen.png",
+					"name": "Castle"
+				},
+				"inferredFrom": {
+					"concept": [
+						"rook_queen",
+						"air_darkness_queen_rook",
+						"air_fire_queen_rook"
+					],
+					"theme": [
+						"air_fire_knight",
+						"air_fire_pawn",
+						"air_fire_rook",
+						"earth_water_knight"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "earth_water_queen_queen",
+		"display_name": "Clay Hero",
+		"elements": [
+			"earth",
+			"water"
+		],
+		"chess_pieces": [
+			"queen",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi warrior queen sculpted from soft wet clay, long curly hair molded in slick earthen coils, rounded crown pressed with thumb-dents and set with glossy dark pebbles, packed-mud plate armor cracking as it dries, wielding an oversized dripping clay greatsword mid-swing, leaping from a crumbling muddy ledge, glowing amber eyes, warm ochre haze, faint teal mist, centered figure, dark fantasy digital painting.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/queen_queen.png",
+					"name": "Hero"
+				},
+				"inferredFrom": {
+					"concept": [
+						"queen_queen",
+						"air_darkness_queen_queen",
+						"air_fire_queen_queen"
+					],
+					"theme": [
+						"air_fire_knight",
+						"air_fire_pawn",
+						"air_fire_rook",
+						"earth_water_knight"
+					]
+				}
+			}
+		}
+	}
+]

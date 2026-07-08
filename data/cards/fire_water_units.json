@@ -1,6 +1,8 @@
 [
 	{
 		"id": "fire_water_pawn",
+		"display_name": "Steam Pawn",
+		"description": "Steam unit. ",
 		"elements": [
 			"fire",
 			"water"
@@ -8,8 +10,24 @@
 		"chess_pieces": [
 			"pawn"
 		],
-		"description": "Steam unit. ",
-		"display_name": "Steam Pawn"
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi clockwork foot soldier of riveted brass plating and polished mahogany limbs, brass-ringed conical boots and hinged piston joints, a domed helm with a glowing amber pressure-glass window, gripping a stubby valve-tipped cudgel and a bolted round buckler, jets of white steam hissing from shoulder vents, standing on glossy blue tiled plaza past hazy azure spires, warm pink sky, richly detailed digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn.png",
+					"name": "Pawn",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
 	},
 	{
 		"id": "fire_water_knight",
@@ -21,7 +39,29 @@
 			"knight"
 		],
 		"description": "Steam unit. ",
-		"display_name": "Steam Knight"
+		"display_name": "Steam Knight",
+		"tool": {
+			"art": {
+				"prompt": "Steam-fueled armored warhorse forged of riveted brass and dark polished timber, hinged piston legs and pressure-glass amber eyes, valved copper chamfron and bolted plated chest, jets of white steam hissing from shoulder and flank vents, galloping through hazy azure spires beneath a warm pink sky, dramatic side angle, richly detailed digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight.png",
+					"name": "Knight"
+				},
+				"inferredFrom": {
+					"concept": [
+						"knight",
+						"air_darkness_bishop_knight",
+						"air_darkness_knight"
+					],
+					"theme": [
+						"fire_water_pawn",
+						"fire_water_queen",
+						"fire_water_rook"
+					]
+				}
+			}
+		}
 	},
 	{
 		"id": "fire_water_bishop",
@@ -33,7 +73,30 @@
 		],
 		"chess_pieces": [
 			"bishop"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Chibi steam-powered prelate automaton of riveted brass and polished mahogany, tall hinged conical mitre crowned with a glowing amber pressure-glass gem, valved copper cowl and piston-jointed arms, gripping a spiral-crooked valve staff topped with a hissing gauge, white steam jetting from shoulder and flank vents, standing on glossy blue tiles past hazy azure spires, warm pink sky, low three-quarter angle, richly detailed digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop.png",
+					"name": "Bishop"
+				},
+				"inferredFrom": {
+					"concept": [
+						"bishop",
+						"air_darkness_bishop",
+						"air_darkness_bishop_bishop"
+					],
+					"theme": [
+						"fire_water_knight",
+						"fire_water_pawn",
+						"fire_water_queen",
+						"fire_water_rook"
+					]
+				}
+			}
+		}
 	},
 	{
 		"id": "fire_water_rook",
@@ -45,10 +108,34 @@
 			"rook"
 		],
 		"description": "Steam unit. ",
-		"display_name": "Steam Rook"
+		"display_name": "Steam Rook",
+		"tool": {
+			"art": {
+				"prompt": "Riveted brass-and-dark-timber siege fortress with pressure-glass amber windows and bolted copper battlements, a valved spire crowned by a glowing amber lens, hinged piston drawbridge, jets of white steam hissing from flank vents and rooftop pipes, a chibi steam-powered warden of plated brass standing guard, hazy azure spires under a warm pink sky, low three-quarter angle, richly detailed digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook.png",
+					"name": "Rook"
+				},
+				"inferredFrom": {
+					"concept": [
+						"rook",
+						"air_darkness_bishop_rook",
+						"air_darkness_knight_rook"
+					],
+					"theme": [
+						"fire_water_knight",
+						"fire_water_pawn",
+						"fire_water_queen"
+					]
+				}
+			}
+		}
 	},
 	{
 		"id": "fire_water_queen",
+		"display_name": "Steam Queen",
+		"description": "Steam unit. ",
 		"elements": [
 			"fire",
 			"water"
@@ -56,11 +143,33 @@
 		"chess_pieces": [
 			"queen"
 		],
-		"description": "Steam unit. ",
-		"display_name": "Steam Queen"
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Steampunk mechanical automaton queen, pale mask-like face, brass gear headdress crowned with three smokestacks venting billowing white steam, copper-and-wood bell-shaped riveted skirt with glowing furnace windows, gauntleted arm conjuring swirling blue steam, standing frontal pose, ornate boiler-hall interior, warm brass and amber palette, cool blue accents, detailed anime illustration, dramatic golden lighting",
+				"ref": {
+					"source": "current",
+					"mode": "img2img",
+					"denoise": 0.5
+				},
+				"last": {
+					"seed": 1206083821,
+					"prompt": "Steampunk mechanical automaton queen, pale mask-like face, brass gear headdress crowned with three smokestacks venting billowing white steam, copper-and-wood bell-shaped riveted skirt with glowing furnace windows, gauntleted arm conjuring swirling blue steam, standing frontal pose, ornate boiler-hall interior, warm brass and amber palette, cool blue accents, detailed anime illustration, dramatic golden lighting, cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear",
+					"style": "",
+					"at": "2026-07-08"
+				}
+			}
+		}
 	},
 	{
 		"id": "fire_water_pawn_pawn",
+		"display_name": "Steam Warrior",
+		"description": "Steam unit. ",
 		"elements": [
 			"fire",
 			"water"
@@ -69,11 +178,29 @@
 			"pawn",
 			"pawn"
 		],
-		"description": "Steam unit. ",
-		"display_name": "Steam Warrior"
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi armored warrior forged of riveted brass and polished dark timber, domed helm with an open face showing fierce eyes behind a glowing amber pressure-glass visor, bolted plated chest over dark padding, hinged piston limbs, gripping a valve-tipped broadsword and a bolted round buckler, lunging mid-swing as white steam bursts from hissing shoulder and flank vents, hazy azure spires under a warm pink sky, richly detailed digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_pawn.png",
+					"name": "Warrior",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
 	},
 	{
 		"id": "fire_water_knight_pawn",
+		"display_name": "Steam Cavalry",
+		"description": "Steam unit. ",
 		"elements": [
 			"fire",
 			"water"
@@ -82,8 +209,24 @@
 			"knight",
 			"pawn"
 		],
-		"description": "Steam unit. ",
-		"display_name": "Steam Cavalry"
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Mounted armored rider forged of riveted brass and dark polished timber, valved copper visored helm crowned with a plumed pressure-glass amber crest, gripping a long piston-jointed lance, astride a mechanical warhorse with hinged legs and bolted chest plating, jets of white steam bursting from shoulder and flank vents, charging low through hazy azure spires beneath a warm pink sky, dramatic front-charging angle, richly detailed digital painting.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_pawn.png",
+					"name": "Cavalry",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
 	},
 	{
 		"id": "fire_water_bishop_pawn",
@@ -96,10 +239,35 @@
 			"pawn"
 		],
 		"description": "Steam unit. ",
-		"display_name": "Steam Paladin"
+		"display_name": "Steam Paladin",
+		"tool": {
+			"art": {
+				"prompt": "Steam-fueled paladin knight forged of riveted brass and dark polished timber, hinged piston limbs, a closed visored helm with a valved copper crest and amber pressure-glass eyes, bolted cross-marked chest plating and engraved pauldrons, gripping a piston-jointed flanged mace and a tall bolted kite shield, jets of white steam hissing from shoulder and flank vents, standing among hazy azure spires beneath a warm pink sky, low heroic angle, richly detailed digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_pawn.png",
+					"name": "Paladin"
+				},
+				"inferredFrom": {
+					"concept": [
+						"bishop_pawn",
+						"air_darkness_bishop_pawn",
+						"air_fire_bishop_pawn"
+					],
+					"theme": [
+						"fire_water_knight",
+						"fire_water_pawn",
+						"fire_water_queen",
+						"fire_water_rook"
+					]
+				}
+			}
+		}
 	},
 	{
 		"id": "fire_water_pawn_rook",
+		"display_name": "Steam Barracks",
+		"description": "Steam unit. ",
 		"elements": [
 			"fire",
 			"water"
@@ -108,11 +276,29 @@
 			"pawn",
 			"rook"
 		],
-		"description": "Steam unit. ",
-		"display_name": "Steam Barracks"
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Steam-powered garrison tower of riveted brass and dark polished timber, crenellated copper battlements and an arched gateway sealed by a hinged piston portcullis, pressure-glass amber windows aglow, a stubby valve-crowned turret, jets of white steam hissing from flank vents and rooftop pipes, a chibi plated warden gripping a bolted round shield beside a rack of valve-tipped pikes, hazy azure spires under a warm pink sky, low three-quarter angle, richly detailed digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_rook.png",
+					"name": "Barracks",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
 	},
 	{
 		"id": "fire_water_pawn_queen",
+		"display_name": "Steam Commander",
+		"description": "Steam unit. ",
 		"elements": [
 			"fire",
 			"water"
@@ -121,11 +307,29 @@
 			"pawn",
 			"queen"
 		],
-		"description": "Steam unit. ",
-		"display_name": "Steam Commander"
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "A commander atop a riveted platform of dark timber and polished metal, plated in engraved copper armor, domed helm with a glowing amber pressure-glass crest, thrusting a valve-tipped baton skyward, white steam jetting from shoulder vents, rallying a column of piston-jointed mechanical soldiers, hazy blue spires, warm pink sky, richly detailed digital painting.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_queen.png",
+					"name": "Commander",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
 	},
 	{
 		"id": "fire_water_knight_knight",
+		"display_name": "Steam Beast",
+		"description": "Steam unit. ",
 		"elements": [
 			"fire",
 			"water"
@@ -134,8 +338,29 @@
 			"knight",
 			"knight"
 		],
-		"description": "Steam unit. ",
-		"display_name": "Steam Beast"
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Massive armored horned bull, puffy steam exhausts, forged of riveted brass and dark polished timber, curved sweeping horns and a bolted plated chamfron over its broad snout, glowing amber pressure-glass eyes, layered valved copper barding across its humped back and stout piston legs, jets of white steam bursting from its nostrils and flank vents, lowering its head mid-charge across a glossy blue plaza amid hazy azure spires, warm pink sky, dynamic low three-quarter angle, richly detailed digital painting, mechanical creature, steampunk mech animal",
+				"ref": {
+					"source": "current",
+					"mode": "img2img",
+					"denoise": 0.75
+				},
+				"concept": "increase the steampunk mech signals, add more steam, steam is the core theme",
+				"last": {
+					"seed": 872774988,
+					"prompt": "Massive armored horned bull, puffy steam exhausts, forged of riveted brass and dark polished timber, curved sweeping horns and a bolted plated chamfron over its broad snout, glowing amber pressure-glass eyes, layered valved copper barding across its humped back and stout piston legs, jets of white steam bursting from its nostrils and flank vents, lowering its head mid-charge across a glossy blue plaza amid hazy azure spires, warm pink sky, dynamic low three-quarter angle, richly detailed digital painting, mechanical creature, steampunk mech animal",
+					"style": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear",
+					"at": "2026-07-08"
+				}
+			}
+		}
 	},
 	{
 		"id": "fire_water_bishop_knight",
@@ -169,6 +394,8 @@
 	},
 	{
 		"id": "fire_water_knight_rook",
+		"display_name": "Steam Stable",
+		"description": "Steam unit. ",
 		"elements": [
 			"fire",
 			"water"
@@ -177,11 +404,29 @@
 			"knight",
 			"rook"
 		],
-		"description": "Steam unit. ",
-		"display_name": "Steam Stable"
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Riveted brass-and-dark-timber stable with iron-strapped double doors, pressure-glass amber windows and a bolted copper roof, spike-topped corner posts crowned by a small glowing amber lens, a hanging valved lantern and coiled hose, jets of white steam hissing from flank vents and rooftop pipes, a piston-legged mechanical horse head peering out with pressure-glass amber eyes, hazy azure spires under a warm pink sky, low three-quarter angle, richly detailed digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_rook.png",
+					"name": "Stable",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
 	},
 	{
 		"id": "fire_water_knight_queen",
+		"display_name": "Steam Monster",
+		"description": "Steam unit. ",
 		"elements": [
 			"fire",
 			"water"
@@ -190,8 +435,24 @@
 			"knight",
 			"queen"
 		],
-		"description": "Steam unit. ",
-		"display_name": "Steam Monster"
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Colossal horned reptilian titan reforged of riveted bronze plating and dark oiled timber, swept-back polished metal horns and a jagged bolted spine ridge, pressure-glass amber eyes aglow, hinged piston limbs and clawed valve-tipped talons, tattered vented wings flared as jets of white steam scream from shoulder and flank ports, lunging above hazy blue spires, warm pink sky, low three-quarter angle, richly detailed digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_queen.png",
+					"name": "Monster",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
 	},
 	{
 		"id": "fire_water_bishop_bishop",
@@ -205,7 +466,30 @@
 			"bishop",
 			"bishop"
 		],
-		"ranged": true
+		"ranged": true,
+		"tool": {
+			"art": {
+				"prompt": "Chibi bearded high priest of riveted brass and dark timber, tall valved copper mitre crowned with a glowing amber pressure-glass gem, long white beard, engraved plated robe with bolted studs and a flared cape, gripping a piston-jointed staff, hurling a spiraling blast of scalding white steam from an upraised palm, jets hissing from shoulder vents, atop a bolted mechanical dais amid hazy azure spires, warm pink sky, low three-quarter angle, richly detailed digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_bishop.png",
+					"name": "Hierophant"
+				},
+				"inferredFrom": {
+					"concept": [
+						"bishop_bishop",
+						"air_darkness_bishop_bishop",
+						"darkness_light_bishop_bishop"
+					],
+					"theme": [
+						"fire_water_knight",
+						"fire_water_pawn",
+						"fire_water_queen",
+						"fire_water_rook"
+					]
+				}
+			}
+		}
 	},
 	{
 		"id": "fire_water_bishop_rook",
@@ -218,10 +502,35 @@
 			"rook"
 		],
 		"description": "Steam unit. ",
-		"display_name": "Steam Arcane Tower"
+		"display_name": "Steam Arcane Tower",
+		"tool": {
+			"art": {
+				"prompt": "Towering cylindrical arcane spire built of riveted brass plates and dark polished timber, crenellated copper battlements and a valved conical cap crowned by a glowing amber pressure-glass finial, tall pointed lens-glass windows, an arched doorway lit by warm amber light, jets of white steam hissing from flank vents and rooftop pipes, low three-quarter angle amid hazy azure spires under a warm pink sky, richly detailed digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_rook.png",
+					"name": "Arcane Tower"
+				},
+				"inferredFrom": {
+					"concept": [
+						"bishop_rook",
+						"air_darkness_bishop_rook",
+						"darkness_light_bishop_rook"
+					],
+					"theme": [
+						"fire_water_knight",
+						"fire_water_pawn",
+						"fire_water_queen",
+						"fire_water_rook"
+					]
+				}
+			}
+		}
 	},
 	{
 		"id": "fire_water_bishop_queen",
+		"display_name": "Steam Deity",
+		"description": "Steam unit. ",
 		"elements": [
 			"fire",
 			"water"
@@ -230,11 +539,36 @@
 			"bishop",
 			"queen"
 		],
-		"description": "Steam unit. ",
-		"display_name": "Steam Deity"
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Divine steam goddess forged of riveted brass and dark polished timber, serene androgynous face with glowing amber pressure-glass eyes, tall fanned headdress of hinged bladed plates with steam vents, radiating around a valved halo of spinning gears, high-collared robe of engraved filigree and bolted waist boss, wide flowing sleeves, one hand raised trailing white steam, other gripping a gear valve scepter riddled by a high pressure vent, jets of white steam hissing from shoulder and flank vents, floating above a bolted dais amid hazy azure spires, warm pink sky, richly detailed digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_queen.png",
+					"name": "Deity",
+					"mode": "img2img",
+					"denoise": 0.5
+				},
+				"concept": "avoid fire and flace concepts, prioritize steampunk and steam",
+				"last": {
+					"seed": 479301148,
+					"prompt": "Divine steam goddess forged of riveted brass and dark polished timber, serene androgynous face with glowing amber pressure-glass eyes, tall fanned headdress of hinged bladed plates with steam vents, radiating around a valved halo of spinning gears, high-collared robe of engraved filigree and bolted waist boss, wide flowing sleeves, one hand raised trailing white steam, other gripping a gear valve scepter riddled by a high pressure vent, jets of white steam hissing from shoulder and flank vents, floating above a bolted dais amid hazy azure spires, warm pink sky, richly detailed digital painting, cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear",
+					"style": "",
+					"at": "2026-07-08"
+				}
+			}
+		}
 	},
 	{
 		"id": "fire_water_rook_rook",
+		"display_name": "Steam Turret",
+		"description": "Steam unit. ",
 		"elements": [
 			"fire",
 			"water"
@@ -243,11 +577,29 @@
 			"rook",
 			"rook"
 		],
-		"description": "Steam unit. ",
-		"display_name": "Steam Turret"
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Squat riveted brass-and-dark-timber gun turret, wide bolted base with pressure-glass amber viewports, swiveling atop a valved multi-barrel steam cannon venting scalding white jets from its muzzle, hinged piston mounts and copper battlements, roaring vapor blasting from flank pipes and rooftop vents, perched amid hazy azure spires under a warm pink sky, low three-quarter angle, richly detailed digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook_rook.png",
+					"name": "Turret",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
 	},
 	{
 		"id": "fire_water_queen_rook",
+		"display_name": "Steam Castle",
+		"description": "Steam unit. ",
 		"elements": [
 			"fire",
 			"water"
@@ -256,11 +608,29 @@
 			"queen",
 			"rook"
 		],
-		"description": "Steam unit. ",
-		"display_name": "Steam Castle"
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Massive fortress of riveted brass and dark polished timber, a tall central keep flanked by two rounded towers capped with valved copper cupolas and glowing amber pressure-glass lenses, bolted battlements, hinged piston gate, white steam jetting from flank vents and rooftop pipes, hazy azure spires, warm pink sky, richly detailed digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook_queen.png",
+					"name": "Castle",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
 	},
 	{
 		"id": "fire_water_queen_queen",
+		"display_name": "Steam Hero",
+		"description": "Steam unit. ",
 		"elements": [
 			"fire",
 			"water"
@@ -269,7 +639,23 @@
 			"queen",
 			"queen"
 		],
-		"description": "Steam unit. ",
-		"display_name": "Steam Hero"
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi steam-fueled warrior queen forged of riveted brass and dark polished timber, long curly hair sculpted from burnished copper coils, a valved crown-helm crowned by a glowing amber pressure-glass gem, hinged piston-jointed plate armor with engraved filigree, swinging an oversized valve-tipped greatsword mid-leap, jets of white steam hissing from shoulder and flank vents, vaulting above bolted machinery amid hazy azure spires, warm pink sky, richly detailed digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/queen_queen.png",
+					"name": "Hero",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
 	}
 ]

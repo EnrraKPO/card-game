@@ -1,0 +1,76 @@
+{
+  "concept": {
+    "bishop_bishop": {
+      "label": "Hierophant",
+      "positive": "bearded, casting powerful magic",
+      "negative": ""
+    },
+    "bishop": {
+      "label": "Bishop",
+      "positive": "Inspired by a chess bishop",
+      "negative": "Never bearded"
+    },
+    "bishop_knight": {
+      "label": "Cryptid",
+      "positive": "A magical or mythical creature linked to the elemental theme",
+      "negative": ""
+    },
+    "bishop_queen": {
+      "label": "Deity",
+      "positive": "goddess, divine figure",
+      "negative": "crown"
+    },
+    "pawn_queen": {
+      "label": "Commander",
+      "positive": "a female military leader rallying troops, standing above ground level in a platform, pointing with a baton",
+      "negative": "crown, giant"
+    },
+    "rook_rook": {
+      "label": "Turret",
+      "positive": "a weaponized turret, the concept of the weapon on top matches the element theme",
+      "negative": ""
+    }
+  },
+  "theme": {
+    "air_fire": {
+      "label": "Lightning",
+      "positive": "warm palette",
+      "negative": "cool palette, storm theme"
+    },
+    "air_darkness": {
+      "label": "Miasma",
+      "positive": "plague themed",
+      "negative": "poison"
+    },
+    "earth_water": {
+      "label": "Clay",
+      "positive": "muddy textures, mud, soft wet clay materials",
+      "negative": "rock, stone, fire, furance"
+    },
+    "air_light": {
+      "label": "Angelic",
+      "positive": "wings, feathers, halo, golden fences, clouds",
+      "negative": ""
+    },
+    "darkness_water": {
+      "label": "Blight",
+      "positive": "poison, sludgy and viscous, use the classic \"skull and bones\" poison symbol imagery",
+      "negative": ""
+    },
+    "bishop_rook": {
+      "label": "Arcane Tower",
+      "positive": "A magic tower with a priest magician standing at the front, the tower itself is imposing and endowed with magical energy",
+      "negative": ""
+    },
+    "darnkess_light": {
+      "label": "Undead",
+      "positive": "focus on the undead theme (zombies, skeletons, ghosts, etc), add eerie ominous glow",
+      "negative": "spirit"
+    },
+    "fire_water": {
+      "label": "Steam",
+      "positive": "steampunk, steam fueled mechanic units, present high-pressure steam vents",
+      "negative": ""
+    }
+  }
+}

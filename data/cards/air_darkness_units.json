@@ -108,7 +108,24 @@
 		"display_name": "Miasma Rook",
 		"chess_pieces": [
 			"rook"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Squat cylindrical stone watchtower with crenellated battlements and a peaked-arch window sheltering a tiny helmeted purple-eyed guardian, tapered dark-granite blocks veined in glowing chartreuse cracks, violet gem diamonds set into its walls, tattered purple flame-scrolled banner ripped by wind, canted upward angle atop a crumbling rampart, swirling green miasma and purple smoke tearing past under a moonless bruised-violet sky",
+				"ref": {
+					"source": "current"
+				},
+				"inferredFrom": {
+					"anchor": "air_darkness_rook",
+					"theme": [
+						"air_darkness",
+						"air_darkness_bishop",
+						"air_darkness_king"
+					],
+					"mode": "concept"
+				}
+			}
+		}
 	},
 	{
 		"id": "air_darkness_queen",
@@ -119,7 +136,24 @@
 		"display_name": "Miasma Queen",
 		"chess_pieces": [
 			"queen"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Chibi dark-skinned sorceress queen with fierce glowing yellow eyes and hooded cape, three brass smokestack-chimneys rising from her crown belching sickly chartreuse fumes, pale corseted gown ribbed in riveted bronze plating with glowing amber capsule panels, tattered draping cloak, whirling aloft on a swirling cyclone of poison-green miasma clutching a churning hornet-swarm orb, buffeted by howling wind above a moonless plague-fogged rampart, dramatic upward angle",
+				"ref": {
+					"source": "current"
+				},
+				"inferredFrom": {
+					"anchor": "air_darkness_queen",
+					"theme": [
+						"air_darkness",
+						"air_darkness_bishop",
+						"air_darkness_king"
+					],
+					"mode": "concept"
+				}
+			}
+		}
 	},
 	{
 		"id": "air_darkness_pawn_pawn",
@@ -131,7 +165,26 @@
 		"chess_pieces": [
 			"pawn",
 			"pawn"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Chibi armored warrior knight, rounded steel visor helmet with open face and fierce dark eyes, plate-armored shoulders and chest over quilted black gambeson, brown leather belt, sturdy boots, gripping a broad longsword now wreathed in dripping green venom and a large wooden kite shield, lunging mid-swing as toxic chartreuse miasma and swarming flies coil around him, ruined violet-lit gothic ramparts, moonless purple storm sky, dark fantasy digital painting, purple-and-sickly-yellow palette",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_pawn.png",
+					"name": "Warrior"
+				},
+				"inferredFrom": {
+					"anchor": "pawn_pawn",
+					"theme": [
+						"air_darkness_pawn",
+						"air_darkness",
+						"air_darkness_bishop"
+					],
+					"mode": "concept"
+				}
+			}
+		}
 	},
 	{
 		"id": "air_darkness_knight_pawn",
@@ -143,7 +196,26 @@
 		"chess_pieces": [
 			"knight",
 			"pawn"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Mounted knight cavalier in polished plate armor with closed visored helm and tall red plume, red scarf and cape, gauntlets gripping a long lance bearing a tattered banner, astride a barded warhorse in steel chamfron and chest plate — now recast in sickly chartreuse miasma and deep purple, glowing yellow-green eyes, venom dripping from the lance tip, charging low through swirling toxic fog and swarming flies past crumbling gothic tombstones under a moonless violet storm sky, dramatic front-charging angle, dark fantasy digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_pawn.png",
+					"name": "Cavalry"
+				},
+				"inferredFrom": {
+					"anchor": "knight_pawn",
+					"theme": [
+						"air_darkness_knight",
+						"air_darkness_pawn",
+						"air_darkness_pawn_pawn"
+					],
+					"mode": "concept"
+				}
+			}
+		}
 	},
 	{
 		"id": "air_darkness_bishop_pawn",
@@ -155,7 +227,26 @@
 		"chess_pieces": [
 			"bishop",
 			"pawn"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Chibi paladin knight in heavy plate armor, closed visored helm with golden crest and small crown ridge, red scarf and tattered cape, cross-emblazoned tabard and cross-marked pauldrons, spiked flanged mace and tall kite shield bearing a radiant cross — recast in sickly chartreuse and deep purple, glowing yellow-green eyes, venom weeping from mace spikes, wading through knee-deep toxic fog and swarming flies past crumbling gothic crypts, low heroic angle, moonless violet storm sky, dark fantasy digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_pawn.png",
+					"name": "Paladin"
+				},
+				"inferredFrom": {
+					"anchor": "bishop_pawn",
+					"theme": [
+						"air_darkness_bishop",
+						"air_darkness_knight_pawn",
+						"air_darkness_pawn"
+					],
+					"mode": "concept"
+				}
+			}
+		}
 	},
 	{
 		"id": "air_darkness_pawn_rook",
@@ -167,7 +258,26 @@
 		"chess_pieces": [
 			"pawn",
 			"rook"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Chibi stone barracks tower with crenellated battlements and arched gateway, hanging red banner bearing a golden pawn emblem, a wooden rack of spears beside the door, a small guard in domed steel helmet with red scarf gripping a tall spear and round red shield — recast in sickly chartreuse and deep purple, glowing yellow-green windows, toxic miasma pouring from the gateway, swarming flies and venom-slick moss on cracked stones, oblique dusk angle, moonless violet storm sky, dark fantasy digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_rook.png",
+					"name": "Barracks"
+				},
+				"inferredFrom": {
+					"anchor": "pawn_rook",
+					"theme": [
+						"air_darkness_bishop_pawn",
+						"air_darkness_knight_pawn",
+						"air_darkness_pawn"
+					],
+					"mode": "concept"
+				}
+			}
+		}
 	},
 	{
 		"id": "air_darkness_pawn_queen",
@@ -179,7 +289,26 @@
 		"chess_pieces": [
 			"pawn",
 			"queen"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Chibi female commander in ornate silver-and-gold plate armor, tall crested helm with fleur-de-lis crown ridge and red gemstone, flowing brown hair, red scarf and billowing cape, diamond-emblazoned tabard, thrusting a jeweled command baton skyward — recast in sickly chartreuse and deep purple, glowing yellow-green eyes, venomous fumes coiling from the baton, leading a spear column of shadowed pikemen through knee-deep toxic fog and swarming flies past crumbling gothic ramparts, moonless violet storm sky, high dramatic angle, dark fantasy digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_queen.png",
+					"name": "Commander"
+				},
+				"inferredFrom": {
+					"anchor": "pawn_queen",
+					"theme": [
+						"air_darkness_bishop_pawn",
+						"air_darkness_knight_pawn",
+						"air_darkness_pawn"
+					],
+					"mode": "concept"
+				}
+			}
+		}
 	},
 	{
 		"id": "air_darkness_knight_knight",
@@ -191,7 +320,26 @@
 		"chess_pieces": [
 			"knight",
 			"knight"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Massive armored bull recast in sickly chartreuse miasma mottled with deep purple, hulking muscular shoulders and lowered head, curved gleaming horns now venom-slick bone, silver-and-gold spiked forehead plate with faceted gem, gold nose ring, tattered violet-smoke cape, glowing yellow eyes, snorting toxic vapor as it rears and stamps mid-charge through swirling green fog and swarming flies above crumbling gothic ruins, low three-quarter angle, dark fantasy digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_knight.png",
+					"name": "Beast"
+				},
+				"inferredFrom": {
+					"anchor": "knight_knight",
+					"theme": [
+						"air_darkness_knight",
+						"air_darkness_knight_pawn",
+						"air_darkness"
+					],
+					"mode": "concept"
+				}
+			}
+		}
 	},
 	{
 		"id": "air_darkness_bishop_knight",
@@ -203,7 +351,26 @@
 		"chess_pieces": [
 			"bishop",
 			"knight"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Chibi unicorn with a spiraled golden horn, flowing curly cream mane and tail, golden filigree swirls on its haunches, golden cloven hooves and amber eyes — recast in pale chartreuse miasma mottled with deep violet, glowing yellow-green eyes, venom dripping from its horn tip, rearing atop a crumbling gothic tombstone amid coiling toxic fog and swirling flies, low dramatic angle, moonless purple storm sky, dark fantasy digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_knight.png",
+					"name": "Cryptid"
+				},
+				"inferredFrom": {
+					"anchor": "bishop_knight",
+					"theme": [
+						"air_darkness_bishop",
+						"air_darkness_bishop_pawn",
+						"air_darkness_knight"
+					],
+					"mode": "concept"
+				}
+			}
+		}
 	},
 	{
 		"id": "air_darkness_knight_rook",
@@ -215,7 +382,26 @@
 		"chess_pieces": [
 			"knight",
 			"rook"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Timber-and-stone stable with iron-strapped Dutch doors, red tiled roof and spike-topped corner posts, hanging lantern, horseshoe, a golden knight-horse pennant, pitchfork in a hay pile, paw-crest round shield and feed barrel — recast in sickly chartreuse and deep-violet miasma, venom-slick metal, a pale ghostly horse head peering out with glowing yellow eyes, coiling toxic fog and swarming flies, crumbling gothic ruins under a moonless purple storm sky, low three-quarter angle, dark fantasy digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_rook.png",
+					"name": "Stable"
+				},
+				"inferredFrom": {
+					"anchor": "knight_rook",
+					"theme": [
+						"air_darkness_bishop_knight",
+						"air_darkness_knight",
+						"air_darkness_knight_knight"
+					],
+					"mode": "concept"
+				}
+			}
+		}
 	},
 	{
 		"id": "air_darkness_knight_queen",
@@ -227,7 +413,26 @@
 		"chess_pieces": [
 			"knight",
 			"queen"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Colossal horned dragon recast in sickly chartreuse miasma mottled with deep violet, swept-back pearlescent bone horns, jagged spine ridges and pale ashen underbelly, tattered membranous wings trailing green vapor, venom-slick talons and a barbed tail spade, glowing yellow eyes, wings flared as it lunges through swirling toxic fog and swarming flies above crumbling gothic ruins, low three-quarter angle, moonless purple storm sky, dark fantasy digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_queen.png",
+					"name": "Monster"
+				},
+				"inferredFrom": {
+					"anchor": "knight_queen",
+					"theme": [
+						"air_darkness_bishop_knight",
+						"air_darkness_knight",
+						"air_darkness_knight_knight"
+					],
+					"mode": "concept"
+				}
+			}
+		}
 	},
 	{
 		"id": "air_darkness_bishop_bishop",
@@ -239,7 +444,26 @@
 		"chess_pieces": [
 			"bishop",
 			"bishop"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Chibi bearded bishop patriarch with fierce eyes, tall pointed gold-trimmed mitre set with a diamond gem, flowing white beard, cream-and-crimson robe with golden diamond studs and belt, red cape, gripping a long staff topped with a glowing orb — recast in sickly chartreuse and deep violet, glowing yellow-green eyes, venom seeping from the orb, hurling a spiraling cloud of toxic miasma from an upraised palm atop a shattered cathedral altar amid swirling flies, low three-quarter angle, moonless purple storm sky, dark fantasy digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_bishop.png",
+					"name": "Hierophant"
+				},
+				"inferredFrom": {
+					"anchor": "bishop_bishop",
+					"theme": [
+						"air_darkness_bishop",
+						"air_darkness_bishop_knight",
+						"air_darkness_bishop_pawn"
+					],
+					"mode": "concept"
+				}
+			}
+		}
 	},
 	{
 		"id": "air_darkness_bishop_rook",
@@ -251,31 +475,86 @@
 		"chess_pieces": [
 			"bishop",
 			"rook"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Tall round gray-stone arcane tower with crenellated top, red conical roof and glowing blue crystal finial, tall pointed stained-glass windows, crimson banner bearing a golden bishop-piece emblem, arched glowing doorway, a hooded chibi bishop with mitre, book and gem-topped staff beside it — all recast in sickly chartreuse and deep violet, venom seeping from the crystal finial, toxic miasma and swirling flies pouring from cracked windows atop a ruined graveyard hill, low three-quarter angle, moonless purple storm sky, dark fantasy digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_rook.png",
+					"name": "Arcane Tower"
+				},
+				"inferredFrom": {
+					"anchor": "bishop_rook",
+					"theme": [
+						"air_darkness_bishop",
+						"air_darkness_bishop_bishop",
+						"air_darkness_bishop_knight"
+					],
+					"mode": "concept"
+				}
+			}
+		}
 	},
 	{
 		"id": "air_darkness_bishop_queen",
+		"display_name": "Miasma Deity",
 		"elements": [
 			"air",
 			"darkness"
 		],
-		"display_name": "Miasma Deity",
 		"chess_pieces": [
 			"bishop",
 			"queen"
-		]
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi golden deity with blank glowing eyes and a spiked leafed crown-helm topped by a small crown, ornate cream-and-gold high-collared robe with scrolling filigree, red waist sash with a round boss, bearing a flame-tipped scepter and a golden crown in one palm — recast in sickly chartreuse and deep violet, venom seeping from the scepter flame, floating cross-legged amid a churning vortex of toxic miasma and swirling flies above a cracked obsidian shrine, low worm's-eye angle, moonless purple storm sky, dark fantasy digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_queen.png",
+					"name": "Deity",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
 	},
 	{
 		"id": "air_darkness_rook_rook",
+		"display_name": "Miasma Turret",
 		"elements": [
 			"air",
 			"darkness"
 		],
-		"display_name": "Miasma Turret",
 		"chess_pieces": [
 			"rook",
 			"rook"
-		]
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Squat crenellated gray-stone rook turret, wide battered base, arrow-slit windows, mounted timber-and-iron ballista swiveling atop with a bolt loaded, red banner bearing a golden rook emblem — recast in sickly chartreuse and deep violet, venom dripping from the corroded ballista tip, toxic miasma and swarming flies belching from arrow slits, cracked moss-slick stones on a ruined graveyard mound, high three-quarter angle, moonless purple storm sky, dark fantasy digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook_rook.png",
+					"name": "Turret",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
 	},
 	{
 		"id": "air_darkness_queen_rook",
@@ -287,7 +566,26 @@
 		"chess_pieces": [
 			"queen",
 			"rook"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Symmetrical gray-stone castle with a tall central crenellated keep flanked by two round towers capped in red conical roofs and gold finials, red pennant flags, red-and-gold banners bearing a golden crown emblem, studded iron gate under a gold-trimmed arch, two chibi helmeted spear guards with crown shields — recast in sickly chartreuse and deep violet, venom oozing from cracked battlements, toxic miasma and swarming flies billowing from arrow-slits, sinking into a poisoned bog, high canted angle, moonless purple storm sky, dark fantasy digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook_queen.png",
+					"name": "Castle"
+				},
+				"inferredFrom": {
+					"anchor": "rook_queen",
+					"theme": [
+						"air_darkness_bishop_queen",
+						"air_darkness_bishop_rook",
+						"air_darkness_knight_queen"
+					],
+					"mode": "concept"
+				}
+			}
+		}
 	},
 	{
 		"id": "air_darkness_queen_queen",
@@ -299,6 +597,25 @@
 		"chess_pieces": [
 			"queen",
 			"queen"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Chibi dark-skinned young king with voluminous curly black hair, spiked gold crown set with red gems, scowling brown eyes, white-and-gold spike-shouldered plate armor studded with ruby diamonds, flowing red cape, gripping a translucent crystalline greatsword — recast in sickly chartreuse and deep violet, venom dripping from the glowing blade, vaulting through a churning toxic miasma cloud thick with swirling flies over crumbling gothic tombstones, dynamic upward diagonal angle, moonless purple storm sky, dark fantasy digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/queen_queen.png",
+					"name": "Hero"
+				},
+				"inferredFrom": {
+					"anchor": "queen_queen",
+					"theme": [
+						"air_darkness_bishop_queen",
+						"air_darkness_knight_queen",
+						"air_darkness_pawn_queen"
+					],
+					"mode": "concept"
+				}
+			}
+		}
 	}
 ]
