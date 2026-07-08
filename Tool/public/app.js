@@ -374,12 +374,14 @@ function openQuickFlowBatchModal(file, entries) {
   const cfg = { fill: missing > 0, adherence: kinDefault() };
   const fillRow = el('div');
   const renderFill = () => {
-    fillRow.replaceChildren(
+    // filter nulls: native replaceChildren coerces a null arg to the string "null"
+    fillRow.replaceChildren(...[
       missing > 0 ? el('div', { class: 'fld' },
         checkInput(cfg, 'fill', renderFill, `Fill recipes first for the ${missing} card${missing === 1 ? '' : 's'} without one (✨ kin)`)) : null,
       (missing > 0 && cfg.fill) ? el('div', { class: 'frow' },
         fld('What carries over from each card\'s anchor image',
-          selectInput(cfg, 'adherence', KIN_MODES, () => {}))) : null);
+          selectInput(cfg, 'adherence', KIN_MODES, () => {}))) : null,
+    ].filter(Boolean));
   };
   renderFill();
   $('modal-root').replaceChildren(el('div', { class: 'modal', style: 'width:640px' },
