@@ -127,7 +127,7 @@ function artGuidesEnabled() { return !!state.settings.useArtGuides; }
 // saved back wholesale — the server normalizes keys to canonical sorted order.
 function openArtGuidesModal() {
   api('/api/art-guides').then(res => {
-    const guides = (res && res.data && res.data.guides) || { concept: {}, theme: {} };
+    const guides = (res && res.guides) || { concept: {}, theme: {} };
     const rows = { concept: [], theme: [] };
     for (const axis of ['concept', 'theme'])
       for (const [k, v] of Object.entries(guides[axis] || {}))

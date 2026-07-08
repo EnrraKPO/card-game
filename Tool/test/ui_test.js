@@ -605,6 +605,34 @@ async function main() {
     });
     await sleep(150);
 
+    // ── ✨ art guides editor: add + save, then REOPEN must show the saved guide ──
+    // (regression: the reopen read the wrong response shape and always showed empty)
+    await page.evaluate(() => openArtGuidesModal());
+    await sleep(200);
+    await page.evaluate(() => [...document.querySelectorAll('.modal button')]
+      .find(b => /Add concept guide/.test(b.textContent)).click());
+    await sleep(120);
+    await page.evaluate(() => {
+      const row = document.querySelector('.guide-section .guide-row');
+      const set = (elm, v) => { elm.value = v; elm.dispatchEvent(new Event('input', { bubbles: true })); };
+      set(row.querySelectorAll('input')[0], 'bishop_bishop');
+      set(row.querySelectorAll('input')[1], 'Hierophant');
+      set(row.querySelector('textarea'), 'a bearded elder');
+    });
+    await page.evaluate(() => [...document.querySelectorAll('.modal-actions button')]
+      .find(b => b.textContent === 'Save').click());
+    await sleep(250);
+    await page.evaluate(() => openArtGuidesModal());
+    await sleep(250);
+    check('art guides editor shows existing guides on reopen', await page.evaluate(() => {
+      const row = document.querySelector('.guide-section .guide-row');
+      return !!row && row.querySelectorAll('input')[0].value === 'bishop_bishop'
+        && row.querySelector('textarea').value === 'a bearded elder';
+    }));
+    await page.evaluate(() => [...document.querySelectorAll('.modal button')]
+      .find(b => b.textContent === 'Cancel').click());
+    await sleep(120);
+
     check('no page errors during the whole run', errors.length === 0, errors.slice(0, 5).join(' | '));
   } catch (e) {
     failures++;
