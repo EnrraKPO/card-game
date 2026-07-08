@@ -95,7 +95,9 @@ function renderKinBar() {
   if (state.currentType !== 'card') { bar.hidden = true; bar.replaceChildren(); return; }
   bar.hidden = false;
   const selecting = kinThemeMode() === 'select';
-  bar.replaceChildren(
+  // NOTE: native replaceChildren coerces a null arg to the string "null" — unlike el(),
+  // it does not skip nulls. Build the list and filter before spreading.
+  const parts = [
     el('span', { class: 'lab', text: '✨ kin default' }),
     selectInput({ get v() { return kinDefault(); }, set v(x) { setKinDefault(x); } }, 'v', KIN_MODES, () => {}),
     selectInput({ get v() { return kinAnchorMode(); }, set v(x) { setKinField('kinAnchorMode', x); } }, 'v', KIN_ANCHOR_MODES, () => {}),
@@ -104,8 +106,75 @@ function renderKinBar() {
       el('span', { class: 'hint', text: `${kinThemeRefs().length} theme reference(s) selected — tick "use as reference" on cards below` }),
       el('button', { class: 'ghost tiny', text: 'Clear all', disabled: !kinThemeRefs().length,
         onclick: () => setKinField('kinThemeRefs', []) })) : null,
+    el('div', { class: 'kin-refs-row' },
+      el('label', { class: 'check' },
+        el('input', { type: 'checkbox', checked: artGuidesEnabled(),
+          onchange: e => setKinField('useArtGuides', e.target.checked) }), 'use art guides'),
+      el('button', { class: 'ghost tiny', text: 'Edit guides…', onclick: openArtGuidesModal })),
     el('span', { class: 'hint', text: 'what every ✨ recipe inference carries over from a card\'s anchor image' }),
-  );
+  ].filter(Boolean);
+  bar.replaceChildren(...parts);
+}
+function artGuidesEnabled() { return !!state.settings.useArtGuides; }
+
+// ── ✨ art guides editor ──────────────────────────────────────────────────────
+// Composition-keyed authored direction (tool-bound). Loaded fresh, edited as row arrays,
+// saved back wholesale — the server normalizes keys to canonical sorted order.
+function openArtGuidesModal() {
+  api('/api/art-guides').then(res => {
+    const guides = (res && res.data && res.data.guides) || { concept: {}, theme: {} };
+    const rows = { concept: [], theme: [] };
+    for (const axis of ['concept', 'theme'])
+      for (const [k, v] of Object.entries(guides[axis] || {}))
+        rows[axis].push({ key: k, label: v.label || '', positive: v.positive || '', negative: v.negative || '' });
+    renderArtGuidesModal(rows);
+  }).catch(err => toast('Could not load art guides: ' + err.message, 'err'));
+}
+
+function renderArtGuidesModal(rows) {
+  const meta = {
+    concept: { title: 'Concept guides — keyed by PIECE composition', hint: 'e.g. bishop_bishop (Hierophant)' },
+    theme: { title: 'Theme guides — keyed by ELEMENT composition', hint: 'e.g. air_fire (Lightning)' },
+  };
+  const section = axis => {
+    const wrap = el('div', { class: 'guide-section' }, el('h3', { text: meta[axis].title }));
+    for (const row of rows[axis]) {
+      wrap.append(el('div', { class: 'guide-row' },
+        el('div', { class: 'frow' },
+          fld('Composition key', textInput(row, 'key', () => {}, meta[axis].hint), 'order is normalized on save'),
+          fld('Label', textInput(row, 'label', () => {}, axis === 'concept' ? 'Hierophant' : 'Lightning')),
+          el('button', { class: 'ghost tiny', text: '✕', title: 'delete this guide',
+            onclick: () => { rows[axis] = rows[axis].filter(r => r !== row); renderArtGuidesModal(rows); } })),
+        el('label', { class: 'fld wide' }, el('span', { class: 'lab', text: 'Positive — authoritative direction' }),
+          el('textarea', { value: row.positive, oninput: e => { row.positive = e.target.value; } })),
+        el('label', { class: 'fld wide' }, el('span', { class: 'lab', text: 'Negative — anti-drift (do NOT depict)' }),
+          el('textarea', { value: row.negative, oninput: e => { row.negative = e.target.value; } }))));
+    }
+    wrap.append(el('button', { class: 'ghost', text: '+ Add ' + axis + ' guide',
+      onclick: () => { rows[axis].push({ key: '', label: '', positive: '', negative: '' }); renderArtGuidesModal(rows); } }));
+    return wrap;
+  };
+  $('modal-root').replaceChildren(el('div', { class: 'modal', style: 'width:720px; max-height:86vh; overflow:auto' },
+    el('h2', {}, '✨ Art guides'),
+    el('div', { class: 'hint', text: 'Authored art direction injected into every ✨ writer when "use art guides" is on. '
+      + 'Exact-composition match; positives are authoritative, negatives push drift away.' }),
+    section('concept'), section('theme'),
+    el('div', { class: 'modal-actions' },
+      el('button', { class: 'ghost', text: 'Cancel', onclick: () => $('modal-root').replaceChildren() }),
+      el('button', { class: 'primary', text: 'Save', onclick: async () => {
+        const payload = { concept: {}, theme: {} };
+        for (const axis of ['concept', 'theme'])
+          for (const row of rows[axis]) {
+            const key = (row.key || '').trim();
+            if (!key) continue;
+            payload[axis][key] = { label: row.label || '', positive: row.positive || '', negative: row.negative || '' };
+          }
+        try {
+          await api('/api/art-guides', payload);
+          $('modal-root').replaceChildren();
+          toast('Art guides saved', 'ok');
+        } catch (err) { toast('Save failed: ' + err.message, 'err'); }
+      } }))));
 }
 
 // The bulk entry point: confirm + pick adherence, then start the server-side job.
@@ -999,6 +1068,8 @@ function buildArtControls(rerender, advanced) {
                   refArts: (a.llmRefs || []).map(r => r.art),
                   concept: a.llmConcept || '',
                   refHint: a.llmRefHint || '',
+                  // composition drives the opt-in art-guide lookup server-side (cards only)
+                  elements: state.draft.elements || [], pieces: state.draft.chess_pieces || [],
                 });
                 a.prompt = out.prompt; promptArea.value = out.prompt; noChange();
               } catch (err) { toast('LLM prompt failed: ' + err.message, 'err'); }

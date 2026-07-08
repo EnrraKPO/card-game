@@ -81,6 +81,7 @@ function getSettings() {
     kinAnchorMode: 'current',  // 'current' = own art first, else base unit | 'base' = always the base unit
     kinThemeMode: 'family',    // 'family' = auto element-relatives | 'select' = the hand-picked kinThemeRefs
     kinThemeRefs: [],          // card ids picked as theme references (used when kinThemeMode='select')
+    useArtGuides: false,       // opt-in: inject the composition-keyed art_guides into every ✨ writer
     turboLora: 'Flux_2-Turbo-LoRA_comfyui.safetensors',  // the user's Flux 2 turbo LoRA
     turboSteps: 8, turboStrength: 1.0,
     llmProvider: 'ollama',   // 'ollama' (local) | 'claude-code' (subscription) | 'claude' (API) | 'openai' — routes ALL ✨ LLM features
@@ -91,6 +92,35 @@ function getSettings() {
     claudeModel: 'claude-opus-4-8',   // cloud providers use ONE model for every ✨ feature
     openaiModel: 'gpt-5.5',
   }, readJson(SETTINGS_PATH, {}));
+}
+
+// ── art guides ───────────────────────────────────────────────────────────────
+// Tool-bound authored art direction, keyed by COMPOSITION (not by card): `concept` by
+// sorted piece-multiset ("bishop_bishop" → Hierophant), `theme` by sorted element-multiset
+// ("air_fire" → Lightning). Each entry = {label, positive, negative}. The positive is
+// authoritative direction the family art can't convey; the negative is the anti-drift
+// guard. Exact-multiset match, self-contained — no guide → the writer infers as before.
+// Injected into every ✨ writer only when settings.useArtGuides is on.
+const GUIDES_PATH = path.join(WORKSPACE, 'art_guides.json');
+function getArtGuides() {
+  const g = readJson(GUIDES_PATH, {});
+  return { concept: (g && g.concept) || {}, theme: (g && g.theme) || {} };
+}
+function compKey(arr) { return (Array.isArray(arr) ? arr.slice() : []).sort().join('_'); }
+
+// The authored guide lines for a card's composition, or [] when guides are off / none match.
+function artGuideLines(elements, pieces) {
+  if (!getSettings().useArtGuides) return [];
+  const g = getArtGuides();
+  const c = g.concept[compKey(pieces)];
+  const t = g.theme[compKey(elements)];
+  const lines = [], neg = [];
+  if (c && c.positive) lines.push(`Concept direction (AUTHORITATIVE — the subject is this): ${c.positive}`);
+  if (t && t.positive) lines.push(`Theme direction (AUTHORITATIVE — the look/palette is this): ${t.positive}`);
+  if (c && c.negative) neg.push(c.negative);
+  if (t && t.negative) neg.push(t.negative);
+  if (neg.length) lines.push(`Avoid — do NOT depict: ${neg.join('; ')}`);
+  return lines;
 }
 
 // ── installed manifest ───────────────────────────────────────────────────────
@@ -1297,10 +1327,11 @@ async function llmVisionGenerate({ system, prompt, images, options }) {
   }
 }
 
-async function llmArtPrompt(typeLabel, name, summary, example, refImages, concept, refHint) {
+async function llmArtPrompt(typeLabel, name, summary, example, refImages, concept, refHint, guides) {
   const user = [
     `Item type: ${typeLabel}`,
     `Name: ${name}`,
+    ...(guides || []),   // opt-in authored composition direction (authoritative)
     'Item data:',
     ...(summary || []).map(l => '- ' + l),
     example ? `Example prompt for this item type (staging only — do not copy its wording): ${example}` : '',
@@ -1341,11 +1372,12 @@ const LLM_MATCH_SYSTEM_PROMPT = [
   '- Output only the prompt itself — no preamble, no commentary, no quotation marks.',
 ].join('\n');
 
-async function llmPromptFromArt(type, id, concept, refHint) {
+async function llmPromptFromArt(type, id, concept, refHint, guides) {
   const abs = currentArtAbs(type, id);
   if (!abs) throw new Error('this item has no current art to analyze');
   const user = [
     'Write the prompt that recreates this illustration.',
+    ...(guides || []),   // opt-in authored composition direction (authoritative)
     // the same optional guidance inputs the ✨ writer honors — here the analyzed
     // image IS the reference, so the ref hint applies unconditionally
     concept ? `Concept direction (follow this, adjusting the recreation toward it): ${concept}` : '',
@@ -1493,6 +1525,7 @@ async function llmInferAnchored(entry, anchor, adherence) {
     // Authored name = concept + theme identity ("Lightning Hierophant"); name only, never
     // the composition-encoding id (see llmInferBlend).
     d.display_name ? `Card name (the authored concept + theme identity — honor it): ${d.display_name}` : '',
+    ...artGuideLines(d.elements, d.chess_pieces),   // opt-in authored composition direction
     'Reference image 1 is THE CONCEPT — the exact subject this card\'s art must depict.',
     themeLines.length ? 'THEME examples (how this theme looks in this game — palette, materials, magic; match it, do not name it):' : '',
     ...themeLines,
@@ -1565,6 +1598,7 @@ async function llmInferBlend(entry) {
     // the one signal the family art can't convey. Name only, NEVER the id (the id spells
     // out the composition and is the leak); omit the line when there is no display name.
     d.display_name ? `Card name (the authored concept + theme identity — honor it): ${d.display_name}` : '',
+    ...artGuideLines(d.elements, d.chess_pieces),   // opt-in authored composition direction
     d.description ? `Card text (flavor context only — never render text): ${d.description}` : '',
     conceptLines.length ? 'CONCEPT relatives — they show what the SUBJECT is:' : '',
     ...conceptLines,
@@ -2409,6 +2443,7 @@ async function handle(req, res) {
       }
       if ('kinThemeRefs' in body)
         s.kinThemeRefs = Array.isArray(body.kinThemeRefs) ? body.kinThemeRefs.map(String) : [];
+      if ('useArtGuides' in body) s.useArtGuides = !!body.useArtGuides;
       if ('quickFlow' in body) {   // null clears the appointment
         if (body.quickFlow != null) {
           const qfErr = validateFlowSpec(body.quickFlow.steps);
@@ -2420,6 +2455,25 @@ async function handle(req, res) {
       }
       writeJson(SETTINGS_PATH, s);
       return send(res, 200, { ok: true, settings: s });
+    }
+    // Art guides: composition-keyed authored direction (tool-bound). GET returns the table;
+    // POST replaces it wholesale (keys normalized to canonical sorted order).
+    if (p === '/api/art-guides' && req.method === 'GET')
+      return send(res, 200, { ok: true, guides: getArtGuides() });
+    if (p === '/api/art-guides' && req.method === 'POST') {
+      const body = await readBody(req);
+      const out = { concept: {}, theme: {} };
+      for (const axis of ['concept', 'theme']) {
+        const src = body[axis] && typeof body[axis] === 'object' ? body[axis] : {};
+        for (const [k, v] of Object.entries(src)) {
+          const key = compKey(String(k).split('_').filter(Boolean));
+          if (!key || !v || typeof v !== 'object') continue;
+          out[axis][key] = { label: String(v.label || ''),
+            positive: String(v.positive || ''), negative: String(v.negative || '') };
+        }
+      }
+      writeJson(GUIDES_PATH, out);
+      return send(res, 200, { ok: true, guides: out });
     }
     if (p === '/api/comfy/loras') {
       try {
@@ -2632,7 +2686,7 @@ async function handle(req, res) {
     // Ask the local LLM (Ollama) to write an art prompt from the item's summarized data,
     // optionally showing it reference illustrations (refArts: repo-relative assets/ paths).
     if (p === '/api/art/prompt' && req.method === 'POST') {
-      const { type, name, summary, example, refArts, concept, refHint } = await readBody(req);
+      const { type, name, summary, example, refArts, concept, refHint, elements, pieces } = await readBody(req);
       if (!TYPES[type] || !name) return send(res, 400, { error: 'bad request' });
       const refImages = [];
       for (const rel of Array.isArray(refArts) ? refArts.slice(0, 4) : []) {
@@ -2640,10 +2694,11 @@ async function handle(req, res) {
         if (!abs) return send(res, 400, { error: 'reference art not found: ' + rel });
         refImages.push(fs.readFileSync(abs).toString('base64'));
       }
+      const guides = type === 'card' ? artGuideLines(elements, pieces) : [];
       try {
         const prompt = await llmArtPrompt(TYPES[type].label, String(name),
           Array.isArray(summary) ? summary.map(String) : [], example ? String(example) : '', refImages,
-          concept ? String(concept) : '', refHint ? String(refHint) : '');
+          concept ? String(concept) : '', refHint ? String(refHint) : '', guides);
         return send(res, 200, { ok: true, prompt });
       } catch (e) { return send(res, 502, { error: e.message }); }
     }
@@ -2651,9 +2706,11 @@ async function handle(req, res) {
     if (p === '/api/art/prompt-from-art' && req.method === 'POST') {
       const { type, id, concept, refHint } = await readBody(req);
       if (!TYPES[type] || !validId(id)) return send(res, 400, { error: 'bad request' });
+      const ge = type === 'card' ? findGameEntry('card', id) : null;
+      const guides = ge ? artGuideLines(ge.data.elements, ge.data.chess_pieces) : [];
       try {
         return send(res, 200, { ok: true, prompt: await llmPromptFromArt(type, id,
-          concept ? String(concept) : '', refHint ? String(refHint) : '') });
+          concept ? String(concept) : '', refHint ? String(refHint) : '', guides) });
       } catch (e) {
         return send(res, /no current art/.test(e.message) ? 400 : 502, { error: e.message });
       }

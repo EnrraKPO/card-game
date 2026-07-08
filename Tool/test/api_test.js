@@ -632,6 +632,29 @@ async function main() {
       && !/already authored/.test(kinReq.prompt), kinReq && kinReq.prompt);
     check('bad kinThemeMode rejected', (await api('/api/settings', { kinThemeMode: 'bogus' })).status === 400);
     await api('/api/settings', { kinThemeMode: 'family', kinThemeRefs: [] });
+
+    // ── feature 3: composition-keyed art guides (opt-in) ──
+    // darkness_earth_bishop_rook → concept key "bishop_rook", theme key "darkness_earth".
+    r = await api('/api/art-guides', {   // POST replaces the table; keys normalize to sorted order
+      concept: { rook_bishop: { label: 'Warden', positive: 'a stone golem warden', negative: 'no exposed flesh' } },
+      theme: { earth_darkness: { label: 'Gravebound', positive: 'deep violet basalt palette', negative: 'not bright, not stormy' } },
+    });
+    check('art-guides POST normalizes composition keys to sorted order',
+      r.data.ok && !!r.data.guides.concept.bishop_rook && !!r.data.guides.theme.darkness_earth, JSON.stringify(r.data.guides));
+    check('art-guides GET round-trips',
+      (await api('/api/art-guides')).data.guides.concept.bishop_rook.positive === 'a stone golem warden');
+    await api('/api/art/infer-recipe', { type: 'card', id: 'darkness_earth_bishop_rook', adherence: 'free' });
+    check('art guides withheld when useArtGuides is off',
+      !/stone golem warden/.test(kinReq.prompt), kinReq && kinReq.prompt);
+    r = await api('/api/settings', { useArtGuides: true });
+    check('useArtGuides persists', r.data.settings.useArtGuides === true);
+    await api('/api/art/infer-recipe', { type: 'card', id: 'darkness_earth_bishop_rook', adherence: 'free' });
+    check('art guides inject the authored concept + theme positives and the negatives',
+      /AUTHORITATIVE.*a stone golem warden/.test(kinReq.prompt)
+      && /deep violet basalt palette/.test(kinReq.prompt)
+      && /Avoid — do NOT depict:.*no exposed flesh.*not bright/.test(kinReq.prompt), kinReq && kinReq.prompt);
+    await api('/api/settings', { useArtGuides: false });
+    await api('/api/art-guides', { concept: {}, theme: {} });
     fakeKin.close();
 
     // ── ⛓ multi-step flows: a fake ComfyUI proves the chain, the fan-out and the pick ──
