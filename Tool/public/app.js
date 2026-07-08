@@ -50,15 +50,36 @@ async function refreshState(keepEditor) {
   else refreshInstallBar();
 }
 
-// ✨ inference adherence — what carries over from a card's anchor image. ONE list,
-// shared by the batch modal, the per-item tree action and the art panel's dial;
-// the chosen value persists as the default (settings.kinAdherence).
+// ✨ inference adherence — what carries over from a card's anchor image. ONE list AND
+// ONE value: settings.kinAdherence is the single source of truth, shown in the card
+// list's kin bar (renderKinBar) and read by every ✨ action — the per-card quick button,
+// the per-file batch, and the art panel dial. Changing it anywhere changes it everywhere.
 const KIN_MODES = [
   { value: 'concept', label: 'Same concept — the design: same recognizable character, fresh pose & scene' },
   { value: 'replicate', label: 'Replicate — the picture: same pose & framing, re-themed only' },
   { value: 'free', label: 'Free — just the idea: loose family blend' },
 ];
 function kinDefault() { return state.settings.kinAdherence || 'concept'; }
+// Persist the global adherence and refresh the list so every ✨ tooltip reflects it.
+function setKinDefault(v) {
+  state.settings.kinAdherence = v;
+  api('/api/settings', { kinAdherence: v }).catch(() => {});
+  renderItemList();
+}
+
+// The one visible kin control: a global adherence picker sitting above the card list.
+// Cards only — the other item types have no art recipes to infer.
+function renderKinBar() {
+  const bar = $('kin-bar');
+  if (!bar) return;
+  if (state.currentType !== 'card') { bar.hidden = true; bar.replaceChildren(); return; }
+  bar.hidden = false;
+  bar.replaceChildren(
+    el('span', { class: 'lab', text: '✨ kin default' }),
+    selectInput({ get v() { return kinDefault(); }, set v(x) { setKinDefault(x); } }, 'v', KIN_MODES, () => {}),
+    el('span', { class: 'hint', text: 'what every ✨ recipe inference carries over from a card\'s anchor image' }),
+  );
+}
 
 // The bulk entry point: confirm + pick adherence, then start the server-side job.
 function openInferBatchModal(file) {
@@ -345,6 +366,7 @@ function renderTabs() {
 function renderItemList() {
   $('item-list-title').textContent = state.types[state.currentType] ? state.types[state.currentType].label + 's' : '';
   $('gen-set-btn').hidden = state.currentType !== 'card';
+  renderKinBar();
   const list = $('item-list');
   list.replaceChildren();
   // ── THE list: the game's data files (files → entries) — nothing else exists ──
@@ -427,7 +449,7 @@ function renderItemList() {
         hasRecipe ? el('span', { class: 'subtle', text: '✨', title: 'has an art recipe (prompt stored on the entry)' }) : null,
         (state.currentType === 'card' && !hasRecipe && !run) ? el('button', { class: 'ghost tiny', text: '✨',
           title: 'Infer THIS card\'s art recipe from its family and store it on the entry '
-            + `(adherence: ${kinDefault()} — change it via any file's ✨ or the art panel dial)`,
+            + `(adherence: ${kinDefault()} — set the ✨ kin default above the list)`,
           onclick: async e => {
             e.stopPropagation();
             const btn = e.target;
@@ -758,9 +780,12 @@ function llmMechLine(l) {
     || /^Stats derived from the composition/.test(l);
 }
 function llmLineVisible(a, l) {
-  if ((a.llmShown || []).includes(l)) return true;
+  // HARD RULE: composition/stat lines NEVER reach the ✨ prompt writer — the leak is kept
+  // out of the INPUT entirely, so there is nothing to filter out of the output. No per-item
+  // opt-in either (the old llmShown escape hatch is gone).
+  if (llmMechLine(l)) return false;
   if ((a.llmHidden || []).includes(l)) return false;
-  return !llmMechLine(l);
+  return true;
 }
 
 // The item's art-generation draft, defaults applied (shared by both views).
@@ -949,13 +974,13 @@ function buildArtControls(rerender, advanced) {
             disabled: state.isNew || !state.currentId,
             title: 'Infer the prompt from this card\'s FAMILY: the anchor image (own art, else the '
               + 'bare piece version) is the concept, element-relatives give the theme; the anchor '
-              + 'becomes the generation reference. The select on the left picks the adherence.',
+              + `becomes the generation reference. Adherence = the global kin default (${kinDefault()}).`,
             onclick: async e => {
               const btn = e.target;
               btn.disabled = true; btn.textContent = '✨ inferring…';
               try {
                 const out = await api('/api/art/infer-recipe',
-                  { type: 'card', id: state.currentId, adherence: a.kinMode || 'concept' });
+                  { type: 'card', id: state.currentId, adherence: kinDefault() });
                 a.prompt = out.prompt; promptArea.value = out.prompt;
                 if (out.ref) {
                   a.refSource = 'game';
@@ -995,14 +1020,14 @@ function buildArtControls(rerender, advanced) {
         promptArea),
     ),
     // the ✨ kin adherence dial: WHAT carries over from the anchor image (see server.js).
-    // A labeled field of its own — as an unlabeled inline dropdown nobody could tell what
-    // it was (user feedback).
-    state.currentType === 'card' ? (() => {
-      if (!a.kinMode) a.kinMode = kinDefault();
-      return el('div', { class: 'frow' },
-        fld('✨ kin — what carries over from the anchor image', selectInput(a, 'kinMode', KIN_MODES, noChange),
-          'the anchor = own art, else the bare piece version\'s art'));
-    })() : null,
+    // Bound to the GLOBAL kin default — the same value the card list's kin bar shows and
+    // every ✨ action reads — so there is one source of truth, not a per-card fork.
+    state.currentType === 'card'
+      ? el('div', { class: 'frow' },
+          fld('✨ kin — what carries over from the anchor image (global default)',
+            selectInput({ get v() { return kinDefault(); }, set v(x) { setKinDefault(x); } }, 'v', KIN_MODES, () => {}),
+            'the anchor = own art, else the bare piece version\'s art'))
+      : null,
     // optional creative direction for the ✨ prompt writer (fullscreen view only — the
     // values still apply from the compact panel's ✨ button, they persist on the draft).
     // Both carry named-preset clusters like the shared Style fragment.
@@ -1032,19 +1057,21 @@ function buildArtControls(rerender, advanced) {
       if (!a.llmShown) a.llmShown = [];
       return el('div', { class: 'frow' },
         el('div', { class: 'fld wide' },
-          el('span', { class: 'lab', text: 'Item data the LLM sees (mechanical lines — composition, stats — start unticked)' }),
+          el('span', { class: 'lab', text: 'Item data the LLM sees (composition & stats are always withheld — cannot be enabled)' }),
           el('div', { class: 'llm-lines' },
-            ...ed.summarize(state.draft).map(line => el('label', { class: 'check llm-line' },
-              el('input', { type: 'checkbox', checked: llmLineVisible(a, line),
-                onchange: e => {
-                  a.llmHidden = a.llmHidden.filter(x => x !== line);
-                  a.llmShown = a.llmShown.filter(x => x !== line);
-                  // only record deviations from the default, so a changed line resets
-                  if (e.target.checked) { if (llmMechLine(line)) a.llmShown.push(line); }
-                  else if (!llmMechLine(line)) a.llmHidden.push(line);
-                  noChange();
-                } }),
-              line)))));
+            ...ed.summarize(state.draft).map(line => {
+              const mech = llmMechLine(line);
+              return el('label', { class: 'check llm-line' + (mech ? ' locked' : '') },
+                el('input', { type: 'checkbox', checked: llmLineVisible(a, line), disabled: mech,
+                  title: mech ? 'Composition/stats never go to the prompt writer' : '',
+                  onchange: e => {
+                    a.llmHidden = a.llmHidden.filter(x => x !== line);
+                    // only record deviations from the default (visible), so a re-tick resets
+                    if (!e.target.checked) a.llmHidden.push(line);
+                    noChange();
+                  } }),
+                line);
+            }))));
     })() : null,
     mdl.supportsNegative ? el('div', { class: 'frow' },
       el('div', { class: 'fld wide' },

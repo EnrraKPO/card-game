@@ -455,17 +455,23 @@ async function main() {
       const name = lines.find(l => l.textContent.trim() === 'Pawn — Unit.');
       return name && name.querySelector('input').checked && comp && !comp.querySelector('input').checked;
     }));
-    // ticking a mechanical line opts it back in for THIS item
+    // a mechanical line CANNOT be opted back in — its checkbox is locked (disabled), so
+    // composition/stats can never reach the prompt writer (the hard guarantee, enforced by
+    // keeping the leak out of the INPUT rather than scrubbing the output)
+    check('mechanical-line checkbox is locked (no opt-in)', await page.evaluate(() => {
+      const line = [...document.querySelectorAll('.modal.advanced .llm-line')].find(l => l.textContent.includes('Cost 1'));
+      return !!line && line.querySelector('input').disabled;
+    }));
     await page.evaluate(() => {
       const line = [...document.querySelectorAll('.modal.advanced .llm-line')].find(l => l.textContent.includes('Cost 1'));
-      line.querySelector('input').click();
+      line.querySelector('input').click();   // no-op: the input is disabled
     });
     await sleep(100);
     await page.evaluate(() => {
       [...document.querySelectorAll('.modal.advanced button')].find(b => b.textContent.includes('✨')).click();
     });
     await sleep(800);
-    check('a ticked mechanical line reaches the llm', lastOllamaBody && lastOllamaBody.prompt.includes('Cost 1'),
+    check('a mechanical line still never reaches the llm', lastOllamaBody && !lastOllamaBody.prompt.includes('Cost 1'),
       lastOllamaBody && lastOllamaBody.prompt);
     // untick a NORMAL line → it must vanish from the next request
     await page.evaluate(() => {

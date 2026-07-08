@@ -536,21 +536,26 @@ async function main() {
       kinReq && kinReq.prompt.includes('Reference image 1 is THE CONCEPT')
       && /Inventory what makes the subject/.test(kinReq.prompt)
       && /Same recognizable character, new presentation/.test(kinReq.prompt)
-      && kinReq.prompt.includes('darkness_earth_knight: "already authored"')
-      && /darkness_earth_pawn: see reference image 2/.test(kinReq.prompt)
+      // relatives ride in by ANONYMOUS label — the authored prompt rides along verbatim,
+      // but the composition-encoding id never appears (that was the leak)
+      && /theme example \d+: "already authored"/.test(kinReq.prompt)
+      && /theme example \d+: see reference image 2/.test(kinReq.prompt)
       && !/Composition:/.test(kinReq.prompt)
+      && !/bishop_rook|darkness_earth/.test(kinReq.prompt)
       && (kinReq.images || []).length >= 2, kinReq && kinReq.prompt);
     r = await api('/api/art/infer-recipe', { type: 'card', id: 'darkness_earth_bishop_rook', adherence: 'replicate' });
     check('replicate mode carries the PICTURE (re-dress only)',
       r.data.ok && r.data.stats.mode === 'replicate'
-      && /re-dress it in the darkness and earth/.test(kinReq.prompt)
-      && /SAME illustration, re-themed/.test(kinReq.prompt), kinReq && kinReq.prompt);
+      && /re-dress it in the theme shown by the examples/.test(kinReq.prompt)
+      && /SAME illustration, re-themed/.test(kinReq.prompt)
+      && !/darkness and earth/.test(kinReq.prompt), kinReq && kinReq.prompt);   // no element naming
     r = await api('/api/art/infer-recipe', { type: 'card', id: 'darkness_earth_bishop_rook', adherence: 'free' });
     check('free adherence keeps the blend behavior (minus the composition line)',
       r.data.ok && r.data.stats.mode === 'free'
       && /CONCEPT relatives/.test(kinReq.prompt)
-      && kinReq.prompt.includes('bishop_rook: "a mitred tower-warden construct"')
-      && !/Composition:/.test(kinReq.prompt), kinReq && kinReq.prompt);
+      && /concept relative \d+: "a mitred tower-warden construct"/.test(kinReq.prompt)
+      && !/Composition:/.test(kinReq.prompt)
+      && !/bishop_rook|darkness_earth/.test(kinReq.prompt), kinReq && kinReq.prompt);   // no id leaks
     check('single-card inference writes nothing',
       !readSbox('data/cards/apitest_kin.json').find(e => e.id === 'darkness_earth_bishop_rook').tool);
     // persist: true = the tree's per-item action — same inference, written onto the entry

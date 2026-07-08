@@ -179,14 +179,17 @@ const CardEditor = {
   promptFor(d) {
     const pieces = d.chess_pieces || [], els = d.elements || [];
     const kind = els.length && !pieces.length ? 'spell' : pieces.includes('rook') ? 'building' : 'creature';
-    const elem = els.join(' and ');
+    // NEVER name the elements or pieces: the theme is carried by reference art, not by
+    // prompt words, and the id encodes the composition. Subject stays generic; identity
+    // rides the display name only (which the author controls).
     const subject =
-      kind === 'spell' ? `a dramatic burst of ${elem || 'arcane'} magic` :
-      kind === 'building' ? `an imposing fantasy ${elem ? elem + '-themed ' : ''}fortification` :
-      `a fantasy ${elem ? elem + '-themed ' : ''}${d.is_king ? 'king in regal armor' : 'combatant'}`;
+      kind === 'spell' ? 'a dramatic burst of arcane magic' :
+      kind === 'building' ? 'an imposing fantasy fortification' :
+      d.is_king ? 'a regal fantasy ruler in ornate armor' : 'a fantasy combatant';
+    const name = d.display_name || '';
     // no background guidance on purpose — a fixed phrase here ("ornate dark background")
     // homogenized every generation, and the ✨ LLM parroted it from the example
-    return `Rich glowing painterly fantasy illustration of ${d.display_name || slugToName(d.id)}, ${subject}, dramatic volumetric lighting, high detail`;
+    return `Rich glowing painterly fantasy illustration of ${name ? name + ', ' : ''}${subject}, dramatic volumetric lighting, high detail`;
   },
   artNote: 'Installed to assets/cards/<id>.png — shown on the card in game.',
 };

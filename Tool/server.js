@@ -1444,32 +1444,38 @@ async function llmInferRecipe(entry, adherence) {
 async function llmInferAnchored(entry, anchor, adherence) {
   const started = Date.now();
   const d = entry.data;
-  const els = (d.elements || []).join(' and ');
   const { theme } = inferRelatives(entry);
   const images = [fs.readFileSync(anchor.abs).toString('base64')];
   const themeLines = [];
+  // Anonymous role labels only — never a relative id (it spells out the composition). A
+  // relative's stored prompt is a good example for the family, so it rides along verbatim.
+  let tn = 0;
   for (const r of theme) {
     if (r.id === anchor.id) continue;
-    if (r.prompt) themeLines.push(`- ${r.id}: "${r.prompt}"`);
+    tn++;
+    if (r.prompt) themeLines.push(`- theme example ${tn}: "${r.prompt}"`);
     else if (r.art && images.length < 3) {
       images.push(fs.readFileSync(path.join(GAME_ROOT, r.art)).toString('base64'));
-      themeLines.push(`- ${r.id}: see reference image ${images.length}`);
+      themeLines.push(`- theme example ${tn}: see reference image ${images.length}`);
     }
   }
+  // "the theme" — never the element names. The look is shown by the theme examples and
+  // their reference art; naming the elements is the leak we are closing.
   const task = adherence === 'replicate'
-    ? `Describe reference image 1 faithfully — the subject, its pose, the framing and composition — and re-dress it in the ${els || 'card'}'s theme: replace ONLY materials, palette, lighting and magical effects. The result must read as the SAME illustration, re-themed.`
-    : `Inventory what makes the subject of reference image 1 recognizable — creature type, build, anatomy, signature features, attire and equipment — and carry ALL of those identifying details into the prompt. Then stage it FRESH: invent a new pose, action, camera angle and setting that express the ${els || 'card'}'s theme, with materials and palette rendered in that theme. Same recognizable character, new presentation — do not copy the reference's pose or composition.`;
+    ? "Describe reference image 1 faithfully — the subject, its pose, the framing and composition — and re-dress it in the theme shown by the examples below: replace ONLY materials, palette, lighting and magical effects. The result must read as the SAME illustration, re-themed."
+    : "Inventory what makes the subject of reference image 1 recognizable — creature type, build, anatomy, signature features, attire and equipment — and carry ALL of those identifying details into the prompt. Then stage it FRESH: invent a new pose, action, camera angle and setting that express the theme shown by the examples below, with materials and palette rendered in that theme. Same recognizable character, new presentation — do not copy the reference's pose or composition.";
   const user = [
-    `Card: ${d.display_name || d.id}`,
     'Reference image 1 is THE CONCEPT — the exact subject this card\'s art must depict.',
-    themeLines.length ? `THEME examples (how ${els || 'this theme'} looks in this game — palette, materials, magic):` : '',
+    themeLines.length ? 'THEME examples (how this theme looks in this game — palette, materials, magic; match it, do not name it):' : '',
     ...themeLines,
     task,
+    'Do not name any element, material family, or chess piece — describe only what is seen.',
   ].filter(Boolean).join('\n');
   const out = await llmVisionGenerate({
     system: LLM_SYSTEM_PROMPT +
       '\nYou are re-theming an existing illustration: reference image 1 is the concept anchor.' +
-      ' Carry its specifics into the prompt as instructed — do not reinterpret the subject.',
+      ' Carry its specifics into the prompt as instructed — do not reinterpret the subject,' +
+      ' and never name an element or chess piece.',
     prompt: user, images, options: { temperature: 0.6, num_predict: 220 },
   });
   const recipe = { prompt: cleanLlmPrompt(out), ref: Object.assign({}, anchor.ref) };
@@ -1508,32 +1514,37 @@ async function llmInferBlend(entry) {
     }
   const images = [];
   const conceptLines = [], themeLines = [];
-  for (const [list, out] of [[concept, conceptLines], [theme, themeLines]]) {
+  // Relatives are referenced by ANONYMOUS role labels, never by id — an id like
+  // "air_fire_bishop_queen" spells out the composition and taught the LLM to draw a chess
+  // bishop/queen. A relative's stored prompt IS an example of good art for the family, so
+  // it rides along verbatim; only the composition-encoding id is withheld.
+  for (const [list, out, role] of [[concept, conceptLines, 'concept'], [theme, themeLines, 'theme']]) {
+    let n = 0;
     for (const r of list) {
-      if (r.prompt) out.push(`- ${r.id}: "${r.prompt}"`);
+      n++;
+      if (r.prompt) out.push(`- ${role} relative ${n}: "${r.prompt}"`);
       else if (chosen.has(r.id)) {
         images.push(fs.readFileSync(path.join(GAME_ROOT, r.art)).toString('base64'));
-        out.push(`- ${r.id}: see reference image ${images.length}`);
+        out.push(`- ${role} relative ${n}: see reference image ${images.length}`);
       }
     }
   }
-  // NAME ONLY — the mechanical composition line taught the LLM to compose the card
-  // from its materials instead of depicting a subject (user-diagnosed); elements enter
-  // purely as the visual theme carried by the theme relatives.
+  // The card is described by its family alone — NEVER by naming its own elements or pieces
+  // (that is the leak). CONCEPT relatives show what the subject is; THEME relatives (and
+  // their reference art) carry the look. No composition word appears anywhere in the input.
   const user = [
-    `Card: ${d.display_name || d.id}`,
     d.description ? `Card text (flavor context only — never render text): ${d.description}` : '',
-    conceptLines.length ? "CONCEPT relatives (share this card's chess pieces — they show what the subject IS):" : '',
+    conceptLines.length ? 'CONCEPT relatives — they show what the SUBJECT is:' : '',
     ...conceptLines,
-    themeLines.length ? "THEME relatives (share this card's elements — they show the elemental look: palette, materials, magic):" : '',
+    themeLines.length ? 'THEME relatives — they show the LOOK (palette, materials, magic); match it from their art/description, do not name it:' : '',
     ...themeLines,
-    'Write ONE image prompt for the card: the concept subject expressed through the elemental theme.',
+    'Write ONE image prompt: the concept subject rendered in the theme look. Do not name any element, material family, or chess piece — describe only what is seen.',
   ].filter(Boolean).join('\n');
   const out = await llmVisionGenerate({
     system: LLM_SYSTEM_PROMPT +
       "\nYou are inferring the prompt from the card's FAMILY: relatives are grouped as CONCEPT" +
-      ' (shared chess pieces) and THEME (shared elements). Blend them — never copy a relative' +
-      "'s prompt verbatim.",
+      ' (the subject) and THEME (the look). Blend them — never copy a relative' +
+      "'s prompt verbatim, and never name an element or chess piece.",
     prompt: user, images, options: { temperature: 0.8, num_predict: 200 },
   });
   const recipe = { prompt: cleanLlmPrompt(out) };
