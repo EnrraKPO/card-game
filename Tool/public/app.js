@@ -60,23 +60,50 @@ const KIN_MODES = [
   { value: 'free', label: 'Free — just the idea: loose family blend' },
 ];
 function kinDefault() { return state.settings.kinAdherence || 'concept'; }
-// Persist the global adherence and refresh the list so every ✨ tooltip reflects it.
-function setKinDefault(v) {
-  state.settings.kinAdherence = v;
-  api('/api/settings', { kinAdherence: v }).catch(() => {});
+function kinAnchorMode() { return state.settings.kinAnchorMode || 'current'; }
+function kinThemeMode() { return state.settings.kinThemeMode || 'family'; }
+function kinThemeRefs() { return state.settings.kinThemeRefs || (state.settings.kinThemeRefs = []); }
+// The ✨ kin controls are ONE global source of truth: every setter persists and refreshes
+// the list so all three entry points (per-card quick, per-file batch, editor) read the same.
+function setKinField(key, v) {
+  state.settings[key] = v;
+  const patch = {}; patch[key] = v;
+  api('/api/settings', patch).catch(() => {});
   renderItemList();
 }
+function setKinDefault(v) { setKinField('kinAdherence', v); }
+function toggleThemeRef(id) {
+  const refs = kinThemeRefs().slice();
+  const i = refs.indexOf(id);
+  if (i >= 0) refs.splice(i, 1); else refs.push(id);
+  setKinField('kinThemeRefs', refs);
+}
 
-// The one visible kin control: a global adherence picker sitting above the card list.
-// Cards only — the other item types have no art recipes to infer.
+const KIN_ANCHOR_MODES = [
+  { value: 'current', label: 'Prioritize current art concept — regenerate off the card\'s own art if it has any' },
+  { value: 'base', label: 'Prioritize base unit art concept — always anchor on the base unit, ignore own art' },
+];
+const KIN_THEME_MODES = [
+  { value: 'family', label: 'Infer theme from unit family — auto element-relatives' },
+  { value: 'select', label: 'Select theme references — hand-pick the cards below' },
+];
+
+// The visible kin controls above the card list — all global, cards only.
 function renderKinBar() {
   const bar = $('kin-bar');
   if (!bar) return;
   if (state.currentType !== 'card') { bar.hidden = true; bar.replaceChildren(); return; }
   bar.hidden = false;
+  const selecting = kinThemeMode() === 'select';
   bar.replaceChildren(
     el('span', { class: 'lab', text: '✨ kin default' }),
     selectInput({ get v() { return kinDefault(); }, set v(x) { setKinDefault(x); } }, 'v', KIN_MODES, () => {}),
+    selectInput({ get v() { return kinAnchorMode(); }, set v(x) { setKinField('kinAnchorMode', x); } }, 'v', KIN_ANCHOR_MODES, () => {}),
+    selectInput({ get v() { return kinThemeMode(); }, set v(x) { setKinField('kinThemeMode', x); } }, 'v', KIN_THEME_MODES, () => {}),
+    selecting ? el('div', { class: 'kin-refs-row' },
+      el('span', { class: 'hint', text: `${kinThemeRefs().length} theme reference(s) selected — tick "use as reference" on cards below` }),
+      el('button', { class: 'ghost tiny', text: 'Clear all', disabled: !kinThemeRefs().length,
+        onclick: () => setKinField('kinThemeRefs', []) })) : null,
     el('span', { class: 'hint', text: 'what every ✨ recipe inference carries over from a card\'s anchor image' }),
   );
 }
@@ -445,6 +472,13 @@ function renderItemList() {
       },
         g.art ? el('img', { class: 'thumb', loading: 'lazy', src: '/gameart/' + g.art }) : null,
         el('div', { class: 'item-name' }, el('div', { text: g.name }), el('div', { class: 'item-id', text: g.id })),
+        // theme-reference picker — only in "Select theme references" mode
+        (state.currentType === 'card' && kinThemeMode() === 'select')
+          ? el('label', { class: 'check ref-check', title: 'Use as a theme reference for ✨ kin inference',
+              onclick: e => e.stopPropagation() },
+              el('input', { type: 'checkbox', checked: kinThemeRefs().includes(g.id),
+                onchange: () => toggleThemeRef(g.id) }), 'ref')
+          : null,
         g.edited ? el('span', { class: 'pill installed', text: 'edited' }) : null,
         hasRecipe ? el('span', { class: 'subtle', text: '✨', title: 'has an art recipe (prompt stored on the entry)' }) : null,
         (state.currentType === 'card' && !hasRecipe && !run) ? el('button', { class: 'ghost tiny', text: '✨',

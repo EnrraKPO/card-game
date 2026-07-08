@@ -78,6 +78,9 @@ function getSettings() {
     conceptPresets: {}, refHintPresets: {},   // named presets for the ✨ LLM guidance inputs
     flowPresets: {},   // named multi-step generation flows (JSON-encoded step arrays)
     kinAdherence: 'concept',   // ✨ inference default: what carries over from the anchor
+    kinAnchorMode: 'current',  // 'current' = own art first, else base unit | 'base' = always the base unit
+    kinThemeMode: 'family',    // 'family' = auto element-relatives | 'select' = the hand-picked kinThemeRefs
+    kinThemeRefs: [],          // card ids picked as theme references (used when kinThemeMode='select')
     turboLora: 'Flux_2-Turbo-LoRA_comfyui.safetensors',  // the user's Flux 2 turbo LoRA
     turboSteps: 8, turboStrength: 1.0,
     llmProvider: 'ollama',   // 'ollama' (local) | 'claude-code' (subscription) | 'claude' (API) | 'openai' — routes ALL ✨ LLM features
@@ -1377,6 +1380,19 @@ function sharedIdCount(a, b) {
   return n;
 }
 
+// A hand-picked theme reference → a theme-pool entry (stored prompt and/or art). Null
+// when the card is missing, is the target itself, or teaches nothing.
+function themeRefEntry(id, excludeId) {
+  if (id === excludeId) return null;
+  const e = findGameEntry('card', id);
+  if (!e) return null;
+  const ta = e.data.tool && e.data.tool.art;
+  const prompt = (ta && (ta.prompt || (ta.last && ta.last.prompt))) || null;
+  const art = gameArtRel('card', e.id, e.data);
+  if (!prompt && !art) return null;
+  return { id: e.id, data: e.data, prompt, art, sp: 0, se: 1, bare: false, exactEls: false };
+}
+
 // The two relative pools, best-first. Only cards that can TEACH something (a stored
 // recipe prompt or deployed art) count; enemy fodder is excluded (own art style).
 function inferRelatives(entry) {
@@ -1405,6 +1421,13 @@ function inferRelatives(entry) {
   const theme = scored.filter(r => r.se > 0 && !inConcept.has(r.id))
     .sort((a, b) => (b.exactEls - a.exactEls) || (b.se - a.se) || (b.sp - a.sp) || a.id.localeCompare(b.id))
     .slice(0, 3);
+  // kinThemeMode 'select': the hand-picked references REPLACE the auto element-family
+  // theme. Concept (piece side) is untouched. Empty / unusable picks fall back to family.
+  const s = getSettings();
+  if (s.kinThemeMode === 'select' && Array.isArray(s.kinThemeRefs) && s.kinThemeRefs.length) {
+    const picked = s.kinThemeRefs.map(id => themeRefEntry(id, entry.id)).filter(Boolean).slice(0, 4);
+    if (picked.length) return { concept, theme: picked };
+  }
   return { concept, theme };
 }
 
@@ -1412,7 +1435,9 @@ function inferRelatives(entry) {
 // keeps identity), else the bare piece version's art (bishop_rook for
 // darkness_earth_bishop_rook), else the closest piece-relative with art.
 function resolveAnchor(entry) {
-  const own = currentArtAbs('card', entry.id);
+  // kinAnchorMode 'base' skips the card's own art and anchors straight on the base unit
+  // (the bare piece version), even when the card already has art.
+  const own = (getSettings().kinAnchorMode === 'base') ? null : currentArtAbs('card', entry.id);
   if (own) return { id: entry.id, abs: own, ref: { source: 'current' } };
   const { concept } = inferRelatives(entry);
   const cand = concept.find(r => r.bare && r.art) || concept.find(r => r.art);
@@ -2372,6 +2397,18 @@ async function handle(req, res) {
           return send(res, 400, { error: `bad kinAdherence "${body.kinAdherence}"` });
         s.kinAdherence = body.kinAdherence;
       }
+      if ('kinAnchorMode' in body) {
+        if (!['current', 'base'].includes(body.kinAnchorMode))
+          return send(res, 400, { error: `bad kinAnchorMode "${body.kinAnchorMode}"` });
+        s.kinAnchorMode = body.kinAnchorMode;
+      }
+      if ('kinThemeMode' in body) {
+        if (!['family', 'select'].includes(body.kinThemeMode))
+          return send(res, 400, { error: `bad kinThemeMode "${body.kinThemeMode}"` });
+        s.kinThemeMode = body.kinThemeMode;
+      }
+      if ('kinThemeRefs' in body)
+        s.kinThemeRefs = Array.isArray(body.kinThemeRefs) ? body.kinThemeRefs.map(String) : [];
       if ('quickFlow' in body) {   // null clears the appointment
         if (body.quickFlow != null) {
           const qfErr = validateFlowSpec(body.quickFlow.steps);

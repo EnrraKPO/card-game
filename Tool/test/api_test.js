@@ -604,6 +604,34 @@ async function main() {
     r = await api('/api/settings', { kinAdherence: 'bogus' });
     check('bad kinAdherence rejected', r.status === 400);
     await api('/api/settings', { kinAdherence: 'concept' });
+
+    // ── feature 2: anchor-mode + theme-select toggles (global settings) ──
+    // anchor mode 'base' skips the card's OWN art. darkness_earth_pawn HAS own art, so
+    // current mode anchors on it (ref.source 'current') and base mode must not.
+    r = await api('/api/art/infer-recipe', { type: 'card', id: 'darkness_earth_pawn' });
+    check('anchor mode current: own-art card anchors on itself',
+      r.data.ref && r.data.ref.source === 'current', JSON.stringify(r.data.ref));
+    r = await api('/api/settings', { kinAnchorMode: 'base' });
+    check('kinAnchorMode persists', r.data.settings.kinAnchorMode === 'base');
+    r = await api('/api/art/infer-recipe', { type: 'card', id: 'darkness_earth_pawn' });
+    check('anchor mode base: own art skipped (anchor is no longer the card itself)',
+      !r.data.ref || r.data.ref.source !== 'current', JSON.stringify(r.data.ref));
+    check('bad kinAnchorMode rejected', (await api('/api/settings', { kinAnchorMode: 'bogus' })).status === 400);
+    await api('/api/settings', { kinAnchorMode: 'current' });
+
+    // theme mode 'select' REPLACES the auto element-family theme with the hand-picked refs
+    await api('/api/art/infer-recipe', { type: 'card', id: 'darkness_earth_bishop_rook', adherence: 'free' });
+    check('theme mode family: the auto element-relative theme is used',
+      /already authored/.test(kinReq.prompt), kinReq && kinReq.prompt);
+    r = await api('/api/settings', { kinThemeMode: 'select', kinThemeRefs: ['bishop_rook'] });
+    check('kinThemeMode + kinThemeRefs persist',
+      r.data.settings.kinThemeMode === 'select' && r.data.settings.kinThemeRefs.includes('bishop_rook'));
+    await api('/api/art/infer-recipe', { type: 'card', id: 'darkness_earth_bishop_rook', adherence: 'free' });
+    check('theme mode select: picked refs REPLACE the family theme',
+      /theme relative \d+: "a mitred tower-warden construct"/.test(kinReq.prompt)
+      && !/already authored/.test(kinReq.prompt), kinReq && kinReq.prompt);
+    check('bad kinThemeMode rejected', (await api('/api/settings', { kinThemeMode: 'bogus' })).status === 400);
+    await api('/api/settings', { kinThemeMode: 'family', kinThemeRefs: [] });
     fakeKin.close();
 
     // ── ⛓ multi-step flows: a fake ComfyUI proves the chain, the fan-out and the pick ──
