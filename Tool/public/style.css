@@ -201,12 +201,15 @@ table.mini input, table.mini select { padding: 4px 6px; }
   padding: 22px 26px; width: 480px; max-width: 92vw; max-height: 86vh; overflow-y: auto; }
 .modal h2 { margin: 0 0 14px; font-size: 17px; }
 .modal .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
-/* pinned close bar: sticks to the top of a scrolling modal; negative margins span it to
-   the modal edges (over the 22/26 padding) so its background masks content scrolling under. */
-.modal-topbar { position: sticky; top: 0; z-index: 10; display: flex; justify-content: flex-end;
-  margin: -22px -26px 8px; padding: 8px 14px; background: var(--bg2); border-radius: 10px 10px 0 0; }
-.modal-x { border: none; background: transparent; color: var(--fg-dim); font-size: 18px; line-height: 1;
-  cursor: pointer; padding: 2px 9px; border-radius: 6px; }
+/* pinned header: title + ✕ stick to the top of a scrolling modal. Negative margins span it
+   to the modal edges (over the 22/26 padding) so its background masks content scrolling under;
+   the title lives INSIDE it, so the bar can never cover the title. */
+.modal-header { position: sticky; top: -22px; z-index: 10; display: flex; align-items: center;
+  justify-content: space-between; gap: 12px; margin: -22px -26px 14px; padding: 16px 22px 12px;
+  background: var(--bg2); border-radius: 10px 10px 0 0; border-bottom: 1px solid var(--line); }
+.modal-header h2 { margin: 0; }
+.modal-x { border: none; background: transparent; color: var(--fg-dim); font-size: 20px; line-height: 1;
+  cursor: pointer; padding: 2px 9px; border-radius: 6px; flex: none; }
 .modal-x:hover { color: var(--fg); background: rgba(127, 127, 127, 0.18); }
 
 /* ── advanced (fullscreen) art generator ── */
