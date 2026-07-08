@@ -184,15 +184,17 @@ function renderArtGuidesModal(rows) {
 
 // The bulk entry point: confirm + pick adherence, then start the server-side job.
 function openInferBatchModal(file) {
-  const cfg = { adherence: kinDefault() };
+  const cfg = { adherence: kinDefault(), overwrite: false };
   $('modal-root').replaceChildren(el('div', { class: 'modal', style: 'width:620px' },
     el('h2', {}, '✨ Infer art recipes — ', el('span', { class: 'subtle', text: file })),
-    el('div', { class: 'hint', text: 'One LLM pass per card that lacks a recipe prompt; each result persists onto '
-      + 'its entry as it lands (revertible per entry). Authored recipes are never overwritten.' }),
+    el('div', { class: 'hint', text: 'One LLM pass per card; each result persists onto its entry as it lands '
+      + '(revertible per entry). By default cards that already have a recipe are skipped.' }),
     el('div', { class: 'frow', style: 'margin:10px 0' },
       fld('What carries over from each card\'s anchor image',
         selectInput(cfg, 'adherence', KIN_MODES, () => {}),
         'anchor = the card\'s own art, else its bare piece version\'s art — remembered as the default')),
+    el('div', { class: 'fld', style: 'margin:6px 0' },
+      checkInput(cfg, 'overwrite', () => {}, 'Overwrite existing recipes (re-infer cards that already have one)')),
     el('div', { class: 'modal-actions' },
       el('button', { class: 'ghost', text: 'Cancel', onclick: () => $('modal-root').replaceChildren() }),
       el('button', { class: 'primary', text: '✨ Run', onclick: async () => {
@@ -200,7 +202,7 @@ function openInferBatchModal(file) {
         try {
           state.settings.kinAdherence = cfg.adherence;
           api('/api/settings', { kinAdherence: cfg.adherence }).catch(() => {});
-          const out = await api('/api/art/infer-recipes', { type: 'card', file, adherence: cfg.adherence });
+          const out = await api('/api/art/infer-recipes', { type: 'card', file, adherence: cfg.adherence, overwrite: cfg.overwrite });
           attachInferPoll(file, out.jobId);
           renderItemList();
         } catch (err) { toast('Inference failed: ' + err.message, 'err'); }
@@ -557,11 +559,13 @@ function renderItemList() {
           : null,
         g.edited ? el('span', { class: 'pill installed', text: 'edited' }) : null,
         hasRecipe ? el('span', { class: 'subtle', text: '✨', title: 'has an art recipe (prompt stored on the entry)' }) : null,
-        (state.currentType === 'card' && !hasRecipe && !run) ? el('button', { class: 'ghost tiny', text: '✨',
-          title: 'Infer THIS card\'s art recipe from its family and store it on the entry '
+        (state.currentType === 'card' && !run) ? el('button', { class: 'ghost tiny', text: '✨',
+          title: (hasRecipe ? 'Re-infer THIS card\'s recipe from its family and OVERWRITE the existing one '
+                            : 'Infer THIS card\'s art recipe from its family and store it on the entry ')
             + `(adherence: ${kinDefault()} — set the ✨ kin default above the list)`,
           onclick: async e => {
             e.stopPropagation();
+            if (hasRecipe && !confirm(`Overwrite the existing art recipe for "${g.id}"?`)) return;
             const btn = e.target;
             btn.disabled = true; btn.textContent = '…';
             try {

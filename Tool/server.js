@@ -1657,7 +1657,8 @@ async function runInferJob(job, entries) {
   try {
     const todo = [];
     for (const entry of entries) {
-      if (entry.data.tool && entry.data.tool.art && entry.data.tool.art.prompt)
+      // authored recipes are kept unless the run explicitly opts into overwriting
+      if (!job.overwrite && entry.data.tool && entry.data.tool.art && entry.data.tool.art.prompt)
         job.results.push({ id: entry.id, skipped: true });
       else todo.push(entry);
     }
@@ -2745,17 +2746,17 @@ async function handle(req, res) {
       } catch (e) { return send(res, 502, { error: e.message }); }
     }
     // ✨ recipe inference for a whole FILE — starts a polled server-side JOB (one per
-    // file); each inferred recipe is persisted onto its entry as it completes, entries
-    // that already carry a recipe prompt are skipped.
+    // file); each inferred recipe is persisted onto its entry as it completes. Entries that
+    // already carry a recipe prompt are skipped unless overwrite is set.
     if (p === '/api/art/infer-recipes' && req.method === 'POST') {
-      const { type, file, adherence } = await readBody(req);
+      const { type, file, adherence, overwrite } = await readBody(req);
       if (type !== 'card' || !file) return send(res, 400, { error: 'recipe inference is cards-only for now' });
       const entries = listGameEntries('card').filter(e => e.file === file);
       if (!entries.length) return send(res, 404, { error: 'no card entries in ' + file });
       const running = inferJobForFile(file);
       if (running) return send(res, 200, { ok: true, jobId: running.id, already: true });
-      const job = { id: 'infer' + inferSeq++, file, adherence, status: 'running', total: entries.length,
-        done: 0, results: [], startedAt: Date.now() };
+      const job = { id: 'infer' + inferSeq++, file, adherence, overwrite: !!overwrite,
+        status: 'running', total: entries.length, done: 0, results: [], startedAt: Date.now() };
       inferJobs[job.id] = job;
       runInferJob(job, entries);   // deliberately not awaited — the browser polls
       return send(res, 200, { ok: true, jobId: job.id });

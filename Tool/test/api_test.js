@@ -665,6 +665,30 @@ async function main() {
     check('steer injects a creative-direction line into the prompt',
       /Creative direction \(follow this\): lit by a single amber lantern/.test(kinReq.prompt), kinReq && kinReq.prompt);
     await api('/api/settings', { kinSteer: '' });
+
+    // ── overwrite: re-infer cards that already carry a recipe (default skips them) ──
+    // Runs LAST — it overwrites darkness_earth_knight's authored prompt, which earlier
+    // tests depend on. Both entries in apitest_kin.json now have recipes → both process.
+    r = await api('/api/art/infer-recipes', { type: 'card', file: 'apitest_kin.json', overwrite: true });
+    let owJob = null;
+    for (let i = 0; i < 100; i++) {
+      await new Promise(ok => setTimeout(ok, 100));
+      owJob = (await api('/api/art/infer-job?id=' + r.data.jobId)).data;
+      if (owJob.status !== 'running') break;
+    }
+    check('overwrite batch re-infers recipe-carrying cards (nothing skipped)',
+      owJob.status === 'done' && owJob.total === 2 && !owJob.results.some(x => x.skipped), JSON.stringify(owJob));
+    check('overwrite replaced the previously-authored recipe',
+      readSbox('data/cards/apitest_kin.json').find(e => e.id === 'darkness_earth_knight').tool.art.prompt === KIN_PROMPT);
+    // default (no overwrite) still skips authored entries
+    r = await api('/api/art/infer-recipes', { type: 'card', file: 'apitest_kin.json' });
+    for (let i = 0; i < 100; i++) {
+      await new Promise(ok => setTimeout(ok, 100));
+      owJob = (await api('/api/art/infer-job?id=' + r.data.jobId)).data;
+      if (owJob.status !== 'running') break;
+    }
+    check('default batch still skips recipe-carrying cards',
+      owJob.results.every(x => x.skipped) && owJob.total === 0, JSON.stringify(owJob));
     fakeKin.close();
 
     // ── ⛓ multi-step flows: a fake ComfyUI proves the chain, the fan-out and the pick ──
