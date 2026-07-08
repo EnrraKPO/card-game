@@ -1973,6 +1973,9 @@ function openFlowModal() {
   } });
 
   const modal = el('div', { class: 'modal', style: 'width:820px; max-height:86vh; overflow-y:auto' },
+    // pinned close bar — stays at the top of the (scrolling) modal so ✕ is always reachable
+    el('div', { class: 'modal-topbar' },
+      el('button', { class: 'modal-x', title: 'Close', onclick: () => $('modal-root').replaceChildren() }, '✕')),
     el('h2', {}, '⛓ Multi-step generation — ', el('span', { class: 'subtle', text: id })),
     el('div', { class: 'hint', text: 'Each step feeds every one of its outputs into the next; sample counts multiply. '
       + 'The item\'s prompt (+ shared style) drives all steps; background removal happens on the picked image only.' }),

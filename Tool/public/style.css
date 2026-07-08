@@ -201,6 +201,13 @@ table.mini input, table.mini select { padding: 4px 6px; }
   padding: 22px 26px; width: 480px; max-width: 92vw; max-height: 86vh; overflow-y: auto; }
 .modal h2 { margin: 0 0 14px; font-size: 17px; }
 .modal .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+/* pinned close bar: sticks to the top of a scrolling modal; negative margins span it to
+   the modal edges (over the 22/26 padding) so its background masks content scrolling under. */
+.modal-topbar { position: sticky; top: 0; z-index: 10; display: flex; justify-content: flex-end;
+  margin: -22px -26px 8px; padding: 8px 14px; background: var(--bg2); border-radius: 10px 10px 0 0; }
+.modal-x { border: none; background: transparent; color: var(--fg-dim); font-size: 18px; line-height: 1;
+  cursor: pointer; padding: 2px 9px; border-radius: 6px; }
+.modal-x:hover { color: var(--fg); background: rgba(127, 127, 127, 0.18); }
 
 /* ── advanced (fullscreen) art generator ── */
 .modal.advanced { width: 96vw; max-width: none; height: 92vh; max-height: 92vh;
