@@ -32,6 +32,9 @@ fs.writeFileSync(path.join(SANDBOX, 'data/cards/base.json'), JSON.stringify([
   // owns the air+earth knight composition under a custom id — the set generator must PULL
   // this definition into the family file instead of generating a conflicting air_earth_knight
   { id: 'dust_devil', display_name: 'Dust Devil', cost: 3, attack: 4, health: 2, speed: 6, elements: ['air', 'earth'], chess_pieces: ['knight'] },
+  // base combo cards = the naming vocabulary for generated set cards (Sand Paladin etc.)
+  { id: 'air_earth', display_name: 'Sand', cost: 2, attack: 2, health: 2, speed: 2, elements: ['air', 'earth'], card_type: 'spell' },
+  { id: 'bishop_pawn', display_name: 'Paladin', cost: 2, attack: 2, health: 3, speed: 3, chess_pieces: ['bishop', 'pawn'] },
 ]));
 fs.writeFileSync(path.join(SANDBOX, 'data/statuses/poison.json'), JSON.stringify({ id: 'poison', display_name: 'Poison' }));
 const PNG1x1_UI = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
@@ -220,6 +223,11 @@ async function main() {
       aeSet.some(e => e.id === 'dust_devil' && e.attack === 4)
       && !aeSet.some(e => e.id === 'air_earth_knight')
       && !readSbox('data/cards/base.json').some(e => e.id === 'dust_devil'));
+    check('generated cards named from the base combo vocabulary',
+      aeSet.find(e => e.id === 'air_earth_bishop_pawn').display_name === 'Sand Paladin'
+      && aeSet.find(e => e.id === 'air_earth_pawn').display_name === 'Sand Pawn'
+      && aeSet.find(e => e.id === 'air_earth_queen_rook').display_name === 'Sand Queen Rook',
+      JSON.stringify(aeSet.map(e => e.display_name)));
     await openEntry('air_earth_units.json', 'air_earth_pawn');
     check('set entry opens as an ordinary card', await page.evaluate(() =>
       document.getElementById('item-title').textContent.includes('Card —')));
@@ -232,6 +240,60 @@ async function main() {
 
     // ═══ art panel model picker basics ═══
     await openEntry('base.json', 'pawn');
+    check('kin adherence dial is a labeled field', await page.evaluate(() =>
+      [...document.querySelectorAll('#art-panel .fld .lab')]
+        .some(l => l.textContent.includes('what carries over from the anchor'))));
+
+    // ═══ bulk ✨: the file button opens the adherence modal (does not fire blind) ═══
+    await page.evaluate(() => {
+      [...document.querySelectorAll('.tree-file button')].find(b => b.textContent.trim() === '✨').click();
+    });
+    await sleep(250);
+    check('file ✨ opens the batch modal with the adherence choice', await page.evaluate(() => {
+      const m = document.querySelector('.modal');
+      if (!m || !m.textContent.includes('Infer art recipes')) return false;
+      const opts = [...m.querySelectorAll('select option')].map(o => o.textContent);
+      const sel = m.querySelector('select');
+      return opts.some(t => t.includes('Same concept')) && opts.some(t => t.includes('Replicate'))
+        && sel.selectedOptions[0].textContent.includes('Same concept');   // intermediate = default
+    }));
+    await page.evaluate(() => {
+      [...document.querySelectorAll('.modal button')].find(b => b.textContent === 'Cancel').click();
+    });
+    await sleep(100);
+
+    // ═══ ⛓ Quick Flow: appointment via settings, file batch modal, per-item button ═══
+    await page.evaluate(async () => {
+      await fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quickFlow: { steps: [{ model: 'flux2', samples: 1, turbo: true },
+          { model: 'krea2', samples: 3, denoise: 0.55 }], anchor: 'recipe' } }) });
+      await refreshState(true);
+    });
+    await sleep(300);
+    await page.evaluate(() => {
+      const row = [...document.querySelectorAll('.tree-file')].find(x => x.textContent.includes('base.json'));
+      [...row.querySelectorAll('button')].find(b => b.textContent.trim() === '⛓').click();
+    });
+    await sleep(250);
+    check('file ⛓ opens the Quick Flow modal with eligibility and the fill offer', await page.evaluate(() => {
+      const m = document.querySelector('.modal');
+      return m && m.textContent.includes('Quick Flow — base.json')
+        && /1 card has a recipe prompt and will flow/.test(m.textContent)
+        && !!m.querySelector('input[type=checkbox]')
+        && ![...m.querySelectorAll('button')].find(b => b.textContent === '⛓ Run').disabled;
+    }));
+    await page.evaluate(() => {
+      [...document.querySelectorAll('.modal button')].find(b => b.textContent === 'Cancel').click();
+    });
+    await sleep(100);
+    check('recipe-carrying card rows get the one-click ⛓', await page.evaluate(() => {
+      const rows = [...document.querySelectorAll('.item-row.tree-leaf')];
+      const fq = rows.find(r => r.querySelector('.item-id') && r.querySelector('.item-id').textContent === 'fire_queen');
+      const lp = rows.find(r => r.querySelector('.item-id') && r.querySelector('.item-id').textContent === 'lone_pawn');
+      return fq && [...fq.querySelectorAll('button')].some(b => b.textContent.trim() === '⛓')
+        && lp && ![...lp.querySelectorAll('button')].some(b => b.textContent.trim() === '⛓');
+    }));
+
     check('model picker lists all architectures', await page.evaluate(() => {
       const sel = [...document.querySelectorAll('#art-panel .fld')]
         .find(f => f.querySelector('.lab') && f.querySelector('.lab').textContent === 'Model');
@@ -383,12 +445,17 @@ async function main() {
     await sleep(800);
     check('advanced ✨ sends the attached refs to the llm', await page.evaluate(() =>
       document.querySelector('.modal.advanced textarea').value === 'a pawn styled after the references, painterly'));
-    check('llm saw the full item data by default', lastOllamaBody && lastOllamaBody.prompt.includes('Cost 1'));
-    check('name and composition are separately toggleable lines', await page.evaluate(() => {
-      const lines = [...document.querySelectorAll('.modal.advanced .llm-line')].map(l => l.textContent);
-      return lines.some(t => t.trim() === 'Pawn — Unit.') && lines.some(t => t.trim() === 'Composition: pawn.');
+    check('mechanical lines (composition, stats) are hidden from the llm BY DEFAULT',
+      lastOllamaBody && !lastOllamaBody.prompt.includes('Cost 1')
+      && !lastOllamaBody.prompt.includes('Composition: pawn')
+      && lastOllamaBody.prompt.includes('Pawn — Unit'), lastOllamaBody && lastOllamaBody.prompt);
+    check('name and composition are separately toggleable lines (mech ones unticked)', await page.evaluate(() => {
+      const lines = [...document.querySelectorAll('.modal.advanced .llm-line')];
+      const comp = lines.find(l => l.textContent.trim() === 'Composition: pawn.');
+      const name = lines.find(l => l.textContent.trim() === 'Pawn — Unit.');
+      return name && name.querySelector('input').checked && comp && !comp.querySelector('input').checked;
     }));
-    // untick the stats line → it must vanish from the next LLM request
+    // ticking a mechanical line opts it back in for THIS item
     await page.evaluate(() => {
       const line = [...document.querySelectorAll('.modal.advanced .llm-line')].find(l => l.textContent.includes('Cost 1'));
       line.querySelector('input').click();
@@ -398,8 +465,25 @@ async function main() {
       [...document.querySelectorAll('.modal.advanced button')].find(b => b.textContent.includes('✨')).click();
     });
     await sleep(800);
-    check('unticked line is hidden from the llm', lastOllamaBody && !lastOllamaBody.prompt.includes('Cost 1')
-      && lastOllamaBody.prompt.includes('Pawn'), lastOllamaBody && lastOllamaBody.prompt);
+    check('a ticked mechanical line reaches the llm', lastOllamaBody && lastOllamaBody.prompt.includes('Cost 1'),
+      lastOllamaBody && lastOllamaBody.prompt);
+    // untick a NORMAL line → it must vanish from the next request
+    await page.evaluate(() => {
+      const line = [...document.querySelectorAll('.modal.advanced .llm-line')].find(l => l.textContent.trim() === 'Pawn — Unit.');
+      line.querySelector('input').click();
+    });
+    await sleep(100);
+    await page.evaluate(() => {
+      [...document.querySelectorAll('.modal.advanced button')].find(b => b.textContent.includes('✨')).click();
+    });
+    await sleep(800);
+    check('unticked line is hidden from the llm', lastOllamaBody && !lastOllamaBody.prompt.includes('Pawn — Unit'),
+      lastOllamaBody && lastOllamaBody.prompt);
+    await page.evaluate(() => {   // restore for later assertions
+      const line = [...document.querySelectorAll('.modal.advanced .llm-line')].find(l => l.textContent.trim() === 'Pawn — Unit.');
+      line.querySelector('input').click();
+    });
+    await sleep(100);
     // ═══ guidance presets: save the concept text as a preset, recall it after clearing ═══
     const conceptFld = () => [...document.querySelectorAll('.modal.advanced .fld')]
       .find(f => f.querySelector('.lab') && f.querySelector('.lab').textContent.includes('concept direction'));
@@ -486,6 +570,34 @@ async function main() {
     await saveToGame();
     check('untouched art panel stamps no metadata', !('tool' in
       readSbox('data/cards/base.json').find(e => e.id === 'lone_pawn')));
+
+    // ═══ ⛓ flow modal: steps editor, presets, fan-out math ═══
+    await page.evaluate(() => {
+      [...document.querySelectorAll('#art-panel button')].find(b => b.textContent.includes('⛓ Flow')).click();
+    });
+    await sleep(400);
+    check('flow modal opens with steps editor, presets and fan-out total', await page.evaluate(() => {
+      const m = document.querySelector('.modal');
+      if (!m || !m.textContent.includes('Multi-step generation')) return false;
+      const labs = [...m.querySelectorAll('.lab')].map(l => l.textContent);
+      return m.textContent.includes('Step 1') && m.textContent.includes('Step 2')
+        && labs.some(t => t.includes('Flow presets'))
+        && /4 images will be generated/.test(m.textContent);   // default flux×1 → krea×3
+    }));
+    check('flow anchor offers current art, the base piece art and an upload', await page.evaluate(() => {
+      const m = document.querySelector('.modal');
+      const fldEl = [...m.querySelectorAll('.fld')]
+        .find(f => f.querySelector('.lab') && f.querySelector('.lab').textContent.includes('Anchor'));
+      if (!fldEl) return false;
+      const opts = [...fldEl.querySelectorAll('select option')].map(o => o.textContent);
+      return opts.some(t => t.includes('Current art'))
+        && opts.some(t => t.includes('Base piece art: Pawn'))
+        && !!m.querySelector('input[type=file]');
+    }));
+    await page.evaluate(() => {
+      [...document.querySelectorAll('.modal button')].find(b => b.textContent === 'Close').click();
+    });
+    await sleep(150);
 
     check('no page errors during the whole run', errors.length === 0, errors.slice(0, 5).join(' | '));
   } catch (e) {

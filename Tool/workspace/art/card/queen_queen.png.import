@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bvtkykjq0pcoa"
-path="res://.godot/imported/darkness_light_knight_knight.png-fc97f48a6bac4bc509f943640a194789.ctex"
+uid="uid://by10y17ta0pmg"
+path="res://.godot/imported/queen_queen.png-b675ca7a6105626ab039893b8604bf3f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/cards/darkness_light_knight_knight.png"
-dest_files=["res://.godot/imported/darkness_light_knight_knight.png-fc97f48a6bac4bc509f943640a194789.ctex"]
+source_file="res://Tool/workspace/art/card/queen_queen.png"
+dest_files=["res://.godot/imported/queen_queen.png-b675ca7a6105626ab039893b8604bf3f.ctex"]
 
 [params]
 

@@ -76,6 +76,8 @@ function getSettings() {
   return Object.assign({
     comfyUrl: 'http://127.0.0.1:8187', artStyle: '', stylePresets: {},
     conceptPresets: {}, refHintPresets: {},   // named presets for the ✨ LLM guidance inputs
+    flowPresets: {},   // named multi-step generation flows (JSON-encoded step arrays)
+    kinAdherence: 'concept',   // ✨ inference default: what carries over from the anchor
     turboLora: 'Flux_2-Turbo-LoRA_comfyui.safetensors',  // the user's Flux 2 turbo LoRA
     turboSteps: 8, turboStrength: 1.0,
     llmProvider: 'ollama',   // 'ollama' (local) | 'claude-code' (subscription) | 'claude' (API) | 'openai' — routes ALL ✨ LLM features
@@ -1199,7 +1201,9 @@ async function claudeCodeGenerate(body) {
   const s = getSettings();
   const model = String(s.claudeCodeModel || '').trim();
   if (model && !/^[\w.:-]+$/.test(model)) throw new Error(`bad Claude Code model "${model}"`);
-  const tmpDir = path.join(WORKSPACE, 'tmp');
+  // per-call temp dir: parallel calls (batch recipe inference) must not clobber
+  // each other's system/reference files
+  const tmpDir = path.join(WORKSPACE, 'tmp', `${Date.now()}_${Math.floor(Math.random() * 1e6)}`);
   ensureDir(tmpDir);
   const sysFile = path.join(tmpDir, 'claude_system.txt');
   fs.writeFileSync(sysFile, String(body.system || ''));
@@ -1232,6 +1236,7 @@ async function claudeCodeGenerate(body) {
     });
     child.on('close', code => {
       clearTimeout(timer);
+      try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch (e) { /* best-effort */ }
       if (code !== 0) {
         const detail = (errOut || out).slice(0, 400);
         if (/log ?in|auth|credential/i.test(detail))
@@ -1254,6 +1259,41 @@ async function llmGenerate(body) {
   }
 }
 
+// One vision generation with the multi-image crash fallback. Some model runners
+// (gemma4:31b on current Ollama) crash on MULTI-image requests while handling single
+// images fine — on failure, describe each image's style in its own single-image call,
+// then synthesize text-only from the notes. Shared by the ✨ art-prompt writer and
+// the ✨ recipe inference.
+async function llmVisionGenerate({ system, prompt, images, options }) {
+  if (!images || !images.length) return llmGenerate({ system, prompt, options });
+  try {
+    return await llmGenerate({ system: system + '\n' + LLM_VISION_ADDENDUM, prompt, images, options });
+  } catch (e) {
+    if (images.length === 1) {
+      if (/image|vision|multimodal/i.test(e.message))
+        throw new Error(`the configured LLM can't read images — pick a vision-capable model in Settings (${e.message.slice(0, 200)})`);
+      throw e;
+    }
+    const notes = [];
+    for (const img of images) {
+      const d = await llmGenerate({
+        system: 'Describe the visual STYLE of this illustration in one sentence: medium, ' +
+                'palette, lighting, rendering technique. Do NOT describe the subject.',
+        prompt: 'Style:', images: [img],
+        options: { temperature: 0.3, num_predict: 80 },
+      });
+      const line = String(d.response || '').replace(/\s*\n+\s*/g, ' ').trim();
+      if (line) notes.push(line);
+    }
+    return llmGenerate({
+      system: system + '\nWrite the prompt so the result matches the reference ' +
+              'style notes you are given — they describe illustrations from the same game.',
+      prompt: prompt + '\nReference style notes:\n' + notes.map(n => '- ' + n).join('\n'),
+      options,
+    });
+  }
+}
+
 async function llmArtPrompt(typeLabel, name, summary, example, refImages, concept, refHint) {
   const user = [
     `Item type: ${typeLabel}`,
@@ -1265,43 +1305,8 @@ async function llmArtPrompt(typeLabel, name, summary, example, refImages, concep
     concept ? `Concept direction (follow this): ${concept}` : '',
     (refHint && refImages && refImages.length) ? `How to use the reference illustrations: ${refHint}` : '',
   ].filter(Boolean).join('\n');
-  const opts = { temperature: 0.9, num_predict: 200 };
-  let out;
-  if (!refImages || !refImages.length) {
-    out = await llmGenerate({ system: LLM_SYSTEM_PROMPT, prompt: user, options: opts });
-  } else {
-    // Preferred path: all reference illustrations in ONE vision request.
-    try {
-      out = await llmGenerate({ system: LLM_SYSTEM_PROMPT + '\n' + LLM_VISION_ADDENDUM,
-                                   prompt: user, images: refImages, options: opts });
-    } catch (e) {
-      if (refImages.length === 1) {
-        if (/image|vision|multimodal/i.test(e.message))
-          throw new Error(`the configured LLM can't read images — pick a vision-capable model in Settings (${e.message.slice(0, 200)})`);
-        throw e;
-      }
-      // Some model runners (gemma4:31b on current Ollama) crash on MULTI-image requests
-      // while handling single images fine. Fall back: describe each reference's style in
-      // its own single-image call, then write the prompt from those notes text-only.
-      const notes = [];
-      for (const img of refImages) {
-        const d = await llmGenerate({
-          system: 'Describe the visual STYLE of this illustration in one sentence: medium, ' +
-                  'palette, lighting, rendering technique. Do NOT describe the subject.',
-          prompt: 'Style:', images: [img],
-          options: { temperature: 0.3, num_predict: 80 },
-        });
-        const line = String(d.response || '').replace(/\s*\n+\s*/g, ' ').trim();
-        if (line) notes.push(line);
-      }
-      out = await llmGenerate({
-        system: LLM_SYSTEM_PROMPT + '\nWrite the prompt so the result matches the reference ' +
-                'style notes you are given — they describe illustrations from the same game.',
-        prompt: user + '\nReference style notes:\n' + notes.map(n => '- ' + n).join('\n'),
-        options: opts,
-      });
-    }
-  }
+  const out = await llmVisionGenerate({ system: LLM_SYSTEM_PROMPT, prompt: user,
+    images: refImages, options: { temperature: 0.9, num_predict: 200 } });
   return cleanLlmPrompt(out);
 }
 
@@ -1350,6 +1355,249 @@ async function llmPromptFromArt(type, id, concept, refHint) {
     options: { temperature: 0.4, num_predict: 200 },
   });
   return cleanLlmPrompt(out);
+}
+
+// ── ✨ recipe inference: fill a card's art recipe from its FAMILY ─────────────
+// The user authors nothing: piece-relatives supply the CONCEPT (what the subject IS —
+// bishop_rook is consulted before anything else for darkness_earth_bishop_rook), and
+// element-relatives supply the THEME (how it is dressed — darkness_earth_pawn et al).
+// Each relative contributes its stored recipe prompt when it has one (free, exact) and
+// its actual art as a vision reference otherwise. The synthesized result is an ordinary
+// tool.art recipe: prompt + the closest relative's art as the generation reference.
+
+// Array flavor of the multiset-overlap count (rankCardReferences' multisetShared
+// works on Maps of counts — do NOT reuse that name, it shadows globally).
+function sharedIdCount(a, b) {
+  const pool = [...b];
+  let n = 0;
+  for (const x of a) {
+    const i = pool.indexOf(x);
+    if (i >= 0) { pool.splice(i, 1); n++; }
+  }
+  return n;
+}
+
+// The two relative pools, best-first. Only cards that can TEACH something (a stored
+// recipe prompt or deployed art) count; enemy fodder is excluded (own art style).
+function inferRelatives(entry) {
+  const els = entry.data.elements || [];
+  const pieces = entry.data.chess_pieces || [];
+  const scored = [];
+  for (const e of listGameEntries('card')) {
+    if (e.id === entry.id || e.data.enemy_only) continue;
+    const cEls = e.data.elements || [];
+    const cPieces = e.data.chess_pieces || [];
+    const ta = e.data.tool && e.data.tool.art;
+    const prompt = (ta && (ta.prompt || (ta.last && ta.last.prompt))) || null;
+    const art = gameArtRel('card', e.id, e.data);
+    if (!prompt && !art) continue;
+    const sp = sharedIdCount(pieces, cPieces), se = sharedIdCount(els, cEls);
+    if (!sp && !se) continue;
+    scored.push({ id: e.id, data: e.data, prompt, art, sp, se,
+      // the bare piece version (same pieces, no elements) is the concept anchor
+      bare: pieces.length > 0 && sp === pieces.length && cPieces.length === pieces.length && !cEls.length,
+      exactEls: els.length > 0 && se === els.length && cEls.length === els.length });
+  }
+  const concept = scored.filter(r => r.sp > 0)
+    .sort((a, b) => (b.bare - a.bare) || (b.sp - a.sp) || (a.se - b.se) || a.id.localeCompare(b.id))
+    .slice(0, 3);
+  const inConcept = new Set(concept.map(r => r.id));
+  const theme = scored.filter(r => r.se > 0 && !inConcept.has(r.id))
+    .sort((a, b) => (b.exactEls - a.exactEls) || (b.se - a.se) || (b.sp - a.sp) || a.id.localeCompare(b.id))
+    .slice(0, 3);
+  return { concept, theme };
+}
+
+// THE concept anchor for a card: its own current art when it has any (regeneration
+// keeps identity), else the bare piece version's art (bishop_rook for
+// darkness_earth_bishop_rook), else the closest piece-relative with art.
+function resolveAnchor(entry) {
+  const own = currentArtAbs('card', entry.id);
+  if (own) return { id: entry.id, abs: own, ref: { source: 'current' } };
+  const { concept } = inferRelatives(entry);
+  const cand = concept.find(r => r.bare && r.art) || concept.find(r => r.art);
+  if (cand) return { id: cand.id, abs: path.join(GAME_ROOT, cand.art),
+    ref: { source: 'game', path: cand.art, name: cand.data.display_name || cand.id } };
+  return null;
+}
+
+// Adherence = WHICH INSTRUCTIONS the prompt-writing LLM gets (the user's mental model,
+// settled over a long discussion). The question each mode answers is: WHAT carries
+// over from the anchor image?
+//   replicate — the PICTURE carries: subject, pose, framing; only materials/palette/
+//               lighting re-themed. For re-rendering art you already like.
+//   concept   — the DESIGN carries (THE DEFAULT): the same recognizable character —
+//               anatomy, signature features, attire — but a freshly invented
+//               presentation (pose, action, camera, scene) staged for the theme.
+//   free      — the IDEA carries: loose family blend, no anchor lock.
+// No anchor art anywhere → falls back to free (reported via stats.mode).
+async function llmInferRecipe(entry, adherence) {
+  const alias = { faithful: 'replicate', subject: 'concept' };   // pre-rename names
+  adherence = alias[adherence] || adherence;
+  adherence = ['replicate', 'concept', 'free'].includes(adherence) ? adherence : 'concept';
+  const anchor = adherence === 'free' ? null : resolveAnchor(entry);
+  if (adherence !== 'free' && !anchor) adherence = 'free';
+  if (adherence !== 'free') return llmInferAnchored(entry, anchor, adherence);
+  return llmInferBlend(entry);
+}
+
+async function llmInferAnchored(entry, anchor, adherence) {
+  const started = Date.now();
+  const d = entry.data;
+  const els = (d.elements || []).join(' and ');
+  const { theme } = inferRelatives(entry);
+  const images = [fs.readFileSync(anchor.abs).toString('base64')];
+  const themeLines = [];
+  for (const r of theme) {
+    if (r.id === anchor.id) continue;
+    if (r.prompt) themeLines.push(`- ${r.id}: "${r.prompt}"`);
+    else if (r.art && images.length < 3) {
+      images.push(fs.readFileSync(path.join(GAME_ROOT, r.art)).toString('base64'));
+      themeLines.push(`- ${r.id}: see reference image ${images.length}`);
+    }
+  }
+  const task = adherence === 'replicate'
+    ? `Describe reference image 1 faithfully — the subject, its pose, the framing and composition — and re-dress it in the ${els || 'card'}'s theme: replace ONLY materials, palette, lighting and magical effects. The result must read as the SAME illustration, re-themed.`
+    : `Inventory what makes the subject of reference image 1 recognizable — creature type, build, anatomy, signature features, attire and equipment — and carry ALL of those identifying details into the prompt. Then stage it FRESH: invent a new pose, action, camera angle and setting that express the ${els || 'card'}'s theme, with materials and palette rendered in that theme. Same recognizable character, new presentation — do not copy the reference's pose or composition.`;
+  const user = [
+    `Card: ${d.display_name || d.id}`,
+    'Reference image 1 is THE CONCEPT — the exact subject this card\'s art must depict.',
+    themeLines.length ? `THEME examples (how ${els || 'this theme'} looks in this game — palette, materials, magic):` : '',
+    ...themeLines,
+    task,
+  ].filter(Boolean).join('\n');
+  const out = await llmVisionGenerate({
+    system: LLM_SYSTEM_PROMPT +
+      '\nYou are re-theming an existing illustration: reference image 1 is the concept anchor.' +
+      ' Carry its specifics into the prompt as instructed — do not reinterpret the subject.',
+    prompt: user, images, options: { temperature: 0.6, num_predict: 220 },
+  });
+  const recipe = { prompt: cleanLlmPrompt(out), ref: Object.assign({}, anchor.ref) };
+  recipe.inferredFrom = { anchor: anchor.id, theme: theme.map(r => r.id), mode: adherence };
+  recipe.stats = { mode: adherence, relatives: theme.length + 1,
+    prompts: theme.filter(r => r.prompt).length, images: images.length, ms: Date.now() - started };
+  return recipe;
+}
+
+async function llmInferBlend(entry) {
+  const started = Date.now();
+  const d = entry.data;
+  const { concept, theme } = inferRelatives(entry);
+  if (!concept.length && !theme.length)
+    throw new Error('no related cards with art or stored prompts to infer from');
+  // Vision references are the expensive part (full-size card art per image) — stored
+  // prompts are free and exact, so the more prompts the family already carries, the
+  // fewer images ride along: 0 prompts → up to 3 images … 3+ prompts → text-only.
+  // Budgeting: theme images outrank concept images (palette/materials are the visual
+  // signal; concepts describe well in text), and a pool with entries but no stored
+  // prompts always gets at least one image so it isn't silently dropped.
+  const promptCount = [...concept, ...theme].filter(r => r.prompt).length;
+  const imgCap = Math.max(0, 3 - promptCount);
+  const imgWorthy = r => !r.prompt && r.art;
+  const order = [];
+  for (let k = 0; k < 3; k++) {   // theme-first interleave
+    if (theme[k] && imgWorthy(theme[k])) order.push(theme[k]);
+    if (concept[k] && imgWorthy(concept[k])) order.push(concept[k]);
+  }
+  const chosen = new Set();
+  for (const r of order) if (chosen.size < imgCap) chosen.add(r.id);
+  for (const list of [concept, theme])
+    if (list.length && !list.some(r => r.prompt || chosen.has(r.id))) {
+      const best = list.find(imgWorthy);
+      if (best) chosen.add(best.id);
+    }
+  const images = [];
+  const conceptLines = [], themeLines = [];
+  for (const [list, out] of [[concept, conceptLines], [theme, themeLines]]) {
+    for (const r of list) {
+      if (r.prompt) out.push(`- ${r.id}: "${r.prompt}"`);
+      else if (chosen.has(r.id)) {
+        images.push(fs.readFileSync(path.join(GAME_ROOT, r.art)).toString('base64'));
+        out.push(`- ${r.id}: see reference image ${images.length}`);
+      }
+    }
+  }
+  // NAME ONLY — the mechanical composition line taught the LLM to compose the card
+  // from its materials instead of depicting a subject (user-diagnosed); elements enter
+  // purely as the visual theme carried by the theme relatives.
+  const user = [
+    `Card: ${d.display_name || d.id}`,
+    d.description ? `Card text (flavor context only — never render text): ${d.description}` : '',
+    conceptLines.length ? "CONCEPT relatives (share this card's chess pieces — they show what the subject IS):" : '',
+    ...conceptLines,
+    themeLines.length ? "THEME relatives (share this card's elements — they show the elemental look: palette, materials, magic):" : '',
+    ...themeLines,
+    'Write ONE image prompt for the card: the concept subject expressed through the elemental theme.',
+  ].filter(Boolean).join('\n');
+  const out = await llmVisionGenerate({
+    system: LLM_SYSTEM_PROMPT +
+      "\nYou are inferring the prompt from the card's FAMILY: relatives are grouped as CONCEPT" +
+      ' (shared chess pieces) and THEME (shared elements). Blend them — never copy a relative' +
+      "'s prompt verbatim.",
+    prompt: user, images, options: { temperature: 0.8, num_predict: 200 },
+  });
+  const recipe = { prompt: cleanLlmPrompt(out) };
+  // generation reference: the closest relative that has art — keeps the family look
+  const refCand = [...concept, ...theme].find(r => r.art);
+  if (refCand) recipe.ref = { source: 'game', path: refCand.art, name: refCand.data.display_name || refCand.id };
+  recipe.inferredFrom = { concept: concept.map(r => r.id), theme: theme.map(r => r.id) };
+  // what this inference actually cost — surfaced in the UI so slowness is explainable
+  recipe.stats = { mode: 'free', relatives: concept.length + theme.length, prompts: promptCount,
+    images: images.length, ms: Date.now() - started };
+  return recipe;
+}
+
+// ── ✨ recipe inference JOBS ──────────────────────────────────────────────────
+// Batch inference runs server-side as a polled job (like art generation): the browser
+// starting it can re-render, navigate, even reload — progress lives here, one job per
+// file at a time, and /api/state lists running jobs so a fresh page reattaches.
+const inferJobs = {};   // jobId -> { id, file, status, total, done, results, error, startedAt }
+let inferSeq = 1;
+function inferJobForFile(file) {
+  return Object.values(inferJobs).find(j => j.file === file && j.status === 'running') || null;
+}
+
+// Persists one inferred recipe onto its entry (stats stay response-only telemetry).
+function persistRecipe(entry, recipe) {
+  const stats = recipe.stats;
+  delete recipe.stats;
+  const data = JSON.parse(JSON.stringify(entry.data));
+  data.tool = Object.assign({}, data.tool, { art: Object.assign({}, data.tool && data.tool.art, recipe) });
+  saveGameEntry('card', entry.file, data);
+  return stats;
+}
+
+async function runInferJob(job, entries) {
+  try {
+    const todo = [];
+    for (const entry of entries) {
+      if (entry.data.tool && entry.data.tool.art && entry.data.tool.art.prompt)
+        job.results.push({ id: entry.id, skipped: true });
+      else todo.push(entry);
+    }
+    job.total = todo.length;
+    // LLM passes run in PARALLEL chunks on cloud providers (a local Ollama shares one
+    // GPU — parallel requests just thrash it). File WRITES stay strictly serial:
+    // concurrent saveGameEntry calls on one file would read-modify-write over each other.
+    const width = (getSettings().llmProvider || 'ollama') === 'ollama' ? 1 : 3;
+    for (let i = 0; i < todo.length; i += width) {
+      const chunk = todo.slice(i, i + width);
+      const inferred = await Promise.all(chunk.map(entry =>
+        llmInferRecipe(entry, job.adherence).then(recipe => ({ entry, recipe }), e => ({ entry, error: e.message }))));
+      for (const { entry, recipe, error } of inferred) {
+        if (error) job.results.push({ id: entry.id, error });
+        else {
+          const stats = persistRecipe(entry, recipe);
+          job.results.push({ id: entry.id, prompt: recipe.prompt, ref: recipe.ref && recipe.ref.path, stats });
+        }
+        job.done++;
+      }
+    }
+    job.status = 'done';
+  } catch (e) {
+    job.status = 'error';
+    job.error = e.message;
+  }
 }
 
 // ── ✨ effects from words: plain-English description → validated effect JSON ──
@@ -1558,6 +1806,33 @@ async function startArtJob({ type, id, prompt, negative, width, height, steps, g
     }
     refName = await uploadRefImage(refAbs, `tool_ref_${type}_${id}.png`);
   }
+  const jobId = String(jobSeq++);
+  const job = jobs[jobId] = { status: 'running', type, id, seed: s, startedAt: Date.now(), error: null };
+  (async () => {
+    try {
+      const buf = await comfyGenerate({ model: model || 'flux2', prompt, negative, w, h,
+        steps, guidance, seed: s, rembg: doRembg, refName, refMode, denoise, turbo, prefix });
+      const dest = artPath(type, id);
+      ensureDir(path.dirname(dest));
+      fs.writeFileSync(dest, buf);
+      addToPool(type, id, buf, { source: 'generate', model: model || 'flux2', seed: s, needsRembg: false });
+      // The image stays in the tool workspace — deploying into the game's assets is an
+      // EXPLICIT act (POST /api/art/deploy, or a new entry's first Save), so the current
+      // in-game art survives as reference material until the user commits.
+      job.status = 'done';
+    } catch (e) {
+      job.status = 'error';
+      job.error = e.message;
+    }
+  })();
+  return { jobId, seed: s };
+}
+
+// Queue ONE ComfyUI generation and await its output image bytes — the primitive the
+// single-image art job and the multi-step flow runner both ride. steps/guidance of 0
+// (or absent) fall back to the model's defaults.
+async function comfyGenerate({ model, prompt, negative, w, h, steps, guidance, seed, rembg, refName, refMode, denoise, turbo, prefix }) {
+  const m = MODELS[model];
   const settings = getSettings();
   let lora = null, loraStrength = 1.0;
   if (turbo) {
@@ -1568,66 +1843,306 @@ async function startArtJob({ type, id, prompt, negative, width, height, steps, g
   const useSteps = steps || (turbo ? settings.turboSteps || 8 : m.steps);
   const useCfg = guidance || m.guidance;
   let wf;
-  const key = model || 'flux2';
-  if (key === 'krea2') wf = buildKrea2Workflow(prompt, w, h, useSteps, useCfg, s, prefix, doRembg, refName, refMode, denoise);
-  else if (key === 'ideogram4') wf = buildIdeogram4Workflow(prompt, w, h, useSteps, useCfg, s, prefix, doRembg);
-  else if (key === 'novacartoon') wf = buildNovaCartoonWorkflow(prompt, negative, w, h, useSteps, useCfg, s, prefix, doRembg);
-  else wf = buildFluxWorkflow(prompt, w, h, useSteps, useCfg, s, prefix, doRembg, refName, lora, loraStrength);
+  if (model === 'krea2') wf = buildKrea2Workflow(prompt, w, h, useSteps, useCfg, seed, prefix, rembg, refName, refMode, denoise);
+  else if (model === 'ideogram4') wf = buildIdeogram4Workflow(prompt, w, h, useSteps, useCfg, seed, prefix, rembg);
+  else if (model === 'novacartoon') wf = buildNovaCartoonWorkflow(prompt, negative, w, h, useSteps, useCfg, seed, prefix, rembg);
+  else wf = buildFluxWorkflow(prompt, w, h, useSteps, useCfg, seed, prefix, rembg, refName, lora, loraStrength);
   const res = await comfyFetch('/prompt', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ prompt: wf }),
   });
   if (!res.ok) throw new Error(`ComfyUI queue failed: HTTP ${res.status} ${await res.text()}`);
   const { prompt_id } = await res.json();
-  const jobId = String(jobSeq++);
-  jobs[jobId] = { status: 'running', type, id, promptId: prompt_id, seed: s, startedAt: Date.now(), error: null };
-  pollJob(jobId);
-  return { jobId, seed: s };
+  return waitForComfyImage(prompt_id);
 }
 
-async function pollJob(jobId) {
-  const job = jobs[jobId];
+async function waitForComfyImage(promptId) {
+  const startedAt = Date.now();
   for (;;) {
-    if (Date.now() - job.startedAt > 15 * 60 * 1000) {
-      job.status = 'error'; job.error = 'timed out after 15 minutes'; return;
-    }
+    if (Date.now() - startedAt > 15 * 60 * 1000) throw new Error('timed out after 15 minutes');
     await new Promise(r => setTimeout(r, 2000));
     let hist;
     try {
-      const res = await comfyFetch('/history/' + job.promptId);
+      const res = await comfyFetch('/history/' + promptId);
       hist = await res.json();
     } catch (e) { continue; }
-    const h = hist[job.promptId];
+    const h = hist[promptId];
     if (!h) continue;
     const statusStr = (h.status && h.status.status_str) || '?';
-    if (statusStr === 'error') {
-      const msgs = JSON.stringify((h.status && h.status.messages) || []).slice(0, 2000);
-      job.status = 'error'; job.error = 'ComfyUI error: ' + msgs; return;
-    }
-    // grab the first output image
+    if (statusStr === 'error')
+      throw new Error('ComfyUI error: ' + JSON.stringify((h.status && h.status.messages) || []).slice(0, 2000));
     for (const node of Object.values(h.outputs || {})) {
       for (const img of node.images || []) {
-        try {
-          const qs = new URLSearchParams({ filename: img.filename, subfolder: img.subfolder || '', type: img.type || 'output' });
-          const res = await comfyFetch('/view?' + qs.toString());
-          if (!res.ok) throw new Error('view HTTP ' + res.status);
-          const buf = Buffer.from(await res.arrayBuffer());
-          const dest = artPath(job.type, job.id);
-          ensureDir(path.dirname(dest));
-          fs.writeFileSync(dest, buf);
-          // The image stays in the tool workspace — deploying into the game's assets is an
-          // EXPLICIT act (POST /api/art/deploy, or a new entry's first Save), so the current
-          // in-game art survives as reference material until the user commits.
-          job.status = 'done';
-          return;
-        } catch (e) {
-          job.status = 'error'; job.error = 'fetching image failed: ' + e.message; return;
-        }
+        const qs = new URLSearchParams({ filename: img.filename, subfolder: img.subfolder || '', type: img.type || 'output' });
+        const res = await comfyFetch('/view?' + qs.toString());
+        if (!res.ok) throw new Error('fetching image failed: view HTTP ' + res.status);
+        return Buffer.from(await res.arrayBuffer());
       }
     }
-    job.status = 'error'; job.error = 'ComfyUI finished but produced no image (status ' + statusStr + ')';
-    return;
+    throw new Error('ComfyUI finished but produced no image (status ' + statusStr + ')');
   }
+}
+
+// ── the per-item generation POOL ─────────────────────────────────────────────
+// EVERY generated image (single 🎨 runs and every flow candidate) is captured here
+// with its metadata, append-only, so nothing is ever lost to an overwrite — the user
+// inspects the pool and swaps any entry in as the item's workspace art at will.
+// Flow images are stored pre-rembg (chaining needs backgrounds); `needsRembg` marks
+// them so pool-use applies removal exactly like a flow pick does.
+const POOL_CAP = 60;   // per item; oldest entries pruned past this
+
+function poolDir(type, id) { return path.join(WORKSPACE, 'art', '_pool', type, id); }
+function poolManifest(type, id) { return readJson(path.join(poolDir(type, id), 'pool.json'), []); }
+
+function addToPool(type, id, buf, meta) {
+  const dir = poolDir(type, id);
+  ensureDir(dir);
+  let list = poolManifest(type, id);
+  const n = (list.length ? Math.max(...list.map(e => e.n)) : 0) + 1;
+  const file = `p${String(n).padStart(3, '0')}.png`;
+  fs.writeFileSync(path.join(dir, file), buf);
+  list.push(Object.assign({ n, file, at: new Date().toISOString() }, meta));
+  while (list.length > POOL_CAP) {
+    const old = list.shift();
+    try { fs.unlinkSync(path.join(dir, old.file)); } catch (e) { /* already gone */ }
+  }
+  writeJson(path.join(dir, 'pool.json'), list);
+}
+
+// ── multi-step generation FLOWS ──────────────────────────────────────────────
+// The user's best-results process, automated: e.g. Flux 2 first (prompt adherence),
+// then a Krea 2 img2img pass at ~half denoise (visual style). A flow is 1-4 steps,
+// each with a model + SAMPLE COUNT — every output of step N feeds step N+1, so
+// counts multiply through the tree (1 → 3 → 1 = three finals). All outputs land as
+// candidates under workspace/art/_flow/<type>/<id>/ with a manifest; the user picks
+// the winner (rembg runs THERE, once — img2img passes need backgrounds intact).
+const flowJobs = {};   // jobId -> { id, type, itemId, status, total, done, stepNow, nodes, ... }
+let flowSeq = 1;
+const FLOW_TOTAL_CAP = 24;
+
+function flowDir(type, id) { return path.join(WORKSPACE, 'art', '_flow', type, id); }
+function flowJobForItem(type, id) {
+  return Object.values(flowJobs).find(j => j.type === type && j.itemId === id && j.status === 'running') || null;
+}
+
+function validateFlowSpec(spec) {
+  if (!Array.isArray(spec) || !spec.length || spec.length > 4) return 'a flow needs 1-4 steps';
+  let branch = 1, total = 0;
+  for (let i = 0; i < spec.length; i++) {
+    const st = spec[i] || {};
+    const m = MODELS[st.model];
+    if (!m) return `step ${i + 1}: unknown model "${st.model}"`;
+    const n = parseInt(st.samples, 10);
+    if (!(n >= 1 && n <= 8)) return `step ${i + 1}: samples must be 1-8`;
+    if (i > 0) {
+      if (!m.supportsRef) return `step ${i + 1}: ${m.label} cannot take the previous image as input`;
+      // denoise only drives models with an img2img path (Krea 2); Flux 2 chains via ReferenceLatent
+      if (m.refModes && !(parseFloat(st.denoise) > 0 && parseFloat(st.denoise) <= 1))
+        return `step ${i + 1}: denoise must be between 0 and 1`;
+    }
+    if (st.turbo && !m.supportsTurbo) return `step ${i + 1}: turbo is Flux 2 only`;
+    branch *= n;
+    total += branch;
+  }
+  if (total > FLOW_TOTAL_CAP) return `this flow would generate ${total} images — the cap is ${FLOW_TOTAL_CAP}`;
+  return null;
+}
+
+async function runFlowJob(job) {
+  try {
+    const t = TYPES[job.type];
+    const dir = flowDir(job.type, job.itemId);
+    fs.rmSync(dir, { recursive: true, force: true });   // a new flow replaces the item's last one
+    ensureDir(dir);
+    // step 1 grows from the ANCHOR image when one is set, from scratch otherwise
+    const anchorRef = job.anchorAbs
+      ? await uploadRefImage(job.anchorAbs, `tool_flow_anchor_${job.type}_${job.itemId}.png`)
+      : null;
+    let parents = [null];
+    let counter = 0;
+    outer:
+    for (let si = 0; si < job.spec.length; si++) {
+      const st = job.spec[si];
+      job.stepNow = si + 1;
+      const next = [];
+      for (const parent of parents) {
+        for (let k = 0; k < parseInt(st.samples, 10); k++) {
+          if (job.cancel) break outer;   // stop lands between images (plus a comfy interrupt)
+          const seed = Math.floor(Math.random() * 2 ** 32);
+          const refName = parent
+            ? await uploadRefImage(path.join(dir, parent.file), `tool_flow_${job.type}_${job.itemId}_${parent.n}.png`)
+            : anchorRef;
+          const buf = await comfyGenerate({
+            model: st.model, prompt: job.prompt, negative: job.negative,
+            w: t.artW, h: t.artH, steps: parseInt(st.steps, 10) || 0, guidance: parseFloat(st.guidance) || 0,
+            seed, rembg: false,   // background removal runs once, on the PICKED image
+            refName, refMode: (refName && MODELS[st.model].refModes) ? 'img2img' : undefined,
+            denoise: parseFloat(st.denoise) || 0.55, turbo: !!st.turbo,
+            prefix: `tool_flow_${job.type}_${job.itemId}`,
+          });
+          counter++;
+          const node = { n: counter, step: si + 1, parent: parent ? parent.n : 0,
+            file: `${si + 1}_${String(counter).padStart(2, '0')}.png`,
+            seed, model: st.model,
+            denoise: (refName && MODELS[st.model].refModes) ? parseFloat(st.denoise) || 0.55 : undefined };
+          fs.writeFileSync(path.join(dir, node.file), buf);
+          addToPool(job.type, job.itemId, buf, { source: 'flow', model: st.model, seed,
+            step: si + 1, needsRembg: !!t.rembg });
+          job.nodes.push(node);
+          job.done++;
+          next.push(node);
+        }
+      }
+      parents = next;
+    }
+    writeJson(path.join(dir, 'flow.json'),
+      { at: new Date().toISOString(), prompt: job.prompt, spec: job.spec,
+        anchor: job.anchor || null, nodes: job.nodes });
+    job.status = job.cancel ? 'stopped' : 'done';
+  } catch (e) {
+    // an interrupt aborts the in-flight ComfyUI prompt, which surfaces as an error —
+    // when WE cancelled, that's a clean stop, not a failure
+    job.status = job.cancel ? 'stopped' : 'error';
+    job.error = job.cancel ? null : e.message;
+  }
+}
+
+// Best-effort: abort whatever ComfyUI is currently generating (its /interrupt endpoint).
+function comfyInterrupt() {
+  try { comfyFetch('/interrupt', { method: 'POST' }).catch(() => {}); } catch (e) { /* unreachable comfy */ }
+}
+
+// Promote one flow candidate to the item's workspace art (rembg once, when the type
+// wants it). Shared by the flow-pick endpoint and the Quick Flow batch's auto-pick.
+async function applyFlowPick(type, id, file) {
+  const abs = path.join(flowDir(type, id), file);
+  if (!fs.existsSync(abs)) throw new Error('no such flow image');
+  let buf = fs.readFileSync(abs);
+  if (TYPES[type].rembg) buf = await rembgImage(abs, `tool_${type}_${id}`);
+  ensureDir(path.dirname(artPath(type, id)));
+  fs.writeFileSync(artPath(type, id), buf);
+  const running = flowJobForItem(type, id);
+  const manifest = readJson(path.join(flowDir(type, id), 'flow.json'), null);
+  const nodes = running ? running.nodes : ((manifest && manifest.nodes) || []);
+  return nodes.find(nd => nd.file === file) || null;
+}
+
+// ── Quick Flow BATCH: the appointed flow, run across many cards ──────────────
+// The user marks one flow as "Quick Flow" (settings.quickFlow = { steps, anchor });
+// a single click then runs it on one card or a whole file. Only cards CARRYING a
+// recipe prompt flow (that prompt is the generation prompt); engaging the batch can
+// first fill missing recipes (kin inference, chosen adherence). When a card's tree
+// completes, ONE image from the LAST step is picked at random and applied as its
+// workspace art — pools and per-card flow galleries fill as usual, so a bad random
+// pick is one 🗂/⛓ swap away from fixed.
+const flowBatchJobs = {};
+let flowBatchSeq = 1;
+function flowBatchJobForFile(file) {
+  return Object.values(flowBatchJobs).find(j => j.file === file && j.status === 'running') || null;
+}
+
+// The step-1 anchor for one card under the Quick Flow's anchor POLICY.
+function resolveBatchAnchor(entry, policy) {
+  if (policy === 'current') return currentArtAbs('card', entry.id);
+  if (policy === 'base') {
+    const { concept } = inferRelatives(entry);
+    const c = concept.find(r => r.bare && r.art) || concept.find(r => r.art);
+    return c ? path.join(GAME_ROOT, c.art) : null;
+  }
+  if (policy === 'recipe') {
+    const ref = entry.data.tool && entry.data.tool.art && entry.data.tool.art.ref;
+    if (!ref) return null;
+    if (ref.source === 'current') return currentArtAbs('card', entry.id);
+    if (ref.source === 'game') return gameArtAbs(String(ref.path || ''));
+    if (ref.source === 'upload') {
+      const abs = path.join(WORKSPACE, 'refs', safeRefName(ref.path));
+      return fs.existsSync(abs) ? abs : null;
+    }
+  }
+  return null;
+}
+
+async function runFlowBatchJob(job) {
+  const hasRecipe = e => !!(e.data.tool && e.data.tool.art && e.data.tool.art.prompt);
+  try {
+    // phase 1 (opt-in on engage): fill missing recipes first
+    if (job.fill) {
+      job.phase = 'recipes';
+      const missing = job.entries.filter(e => !hasRecipe(e));
+      job.total = missing.length;
+      for (const entry of missing) {
+        if (job.cancel) break;
+        job.currentId = entry.id;
+        try {
+          const recipe = await llmInferRecipe(entry, job.adherence);
+          persistRecipe(entry, recipe);
+        } catch (e) {
+          job.results.push({ id: entry.id, error: 'recipe: ' + e.message });
+        }
+        job.done++;
+      }
+    }
+    // phase 2: the flows — re-list so freshly filled recipes count
+    job.phase = 'flows';
+    const entries = listGameEntries('card').filter(e => job.ids.includes(e.id));
+    const eligible = entries.filter(hasRecipe);
+    for (const e0 of entries.filter(e => !hasRecipe(e)))
+      if (!job.results.some(r => r.id === e0.id))
+        job.results.push({ id: e0.id, skipped: 'no recipe prompt' });
+    job.total = eligible.length;
+    job.done = 0;
+    const style = (getSettings().artStyle || '').trim();
+    let fbranch = 1, ftotal = 0;
+    for (const st of job.spec) { fbranch *= parseInt(st.samples, 10); ftotal += fbranch; }
+    for (const entry of eligible) {
+      if (job.cancel) break;
+      job.currentId = entry.id;
+      const base = entry.data.tool.art.prompt;
+      let anchorAbs = resolveBatchAnchor(entry, job.anchorPolicy);
+      if (anchorAbs && !MODELS[job.spec[0].model].supportsRef) anchorAbs = null;
+      // a real per-item flow job — galleries, pool capture and reattachment all apply
+      const fjob = { id: 'flow' + flowSeq++, type: 'card', itemId: entry.id, status: 'running',
+        total: ftotal, done: 0, stepNow: 0, nodes: [], prompt: style ? base + ', ' + style : base,
+        negative: '', spec: job.spec, anchorAbs,
+        anchor: anchorAbs ? { source: job.anchorPolicy } : null, startedAt: Date.now() };
+      flowJobs[fjob.id] = fjob;
+      job.currentFjobId = fjob.id;   // the monitor reads live image progress off this
+      await runFlowJob(fjob);
+      if (fjob.status === 'stopped') {
+        job.results.push({ id: entry.id, stopped: true });
+        job.done++;
+        break;
+      }
+      if (fjob.status !== 'done') {
+        job.results.push({ id: entry.id, error: fjob.error || fjob.status });
+      } else {
+        const finals = fjob.nodes.filter(n => n.step === job.spec.length);
+        const pick = finals[Math.floor(Math.random() * finals.length)];
+        await applyFlowPick('card', entry.id, pick.file);
+        job.results.push({ id: entry.id, picked: pick.file, seed: pick.seed });
+      }
+      job.done++;
+    }
+    job.status = job.cancel ? 'stopped' : 'done';
+  } catch (e) {
+    job.status = 'error';
+    job.error = e.message;
+  }
+}
+
+// Background-removal-only pass: LoadImage → the same Inspyrenet node the generation
+// workflows end with. Runs when a flow pick lands on a type whose art wants rembg.
+async function rembgImage(absPng, prefix) {
+  const name = await uploadRefImage(absPng, `tool_rembg_${Date.now()}.png`);
+  const wf = Object.assign({ 1: { class_type: 'LoadImage', inputs: { image: name } } },
+    saveNodes(['1', 0], prefix, true));
+  const res = await comfyFetch('/prompt', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt: wf }),
+  });
+  if (!res.ok) throw new Error(`ComfyUI queue failed: HTTP ${res.status} ${await res.text()}`);
+  const { prompt_id } = await res.json();
+  return waitForComfyImage(prompt_id);
 }
 
 // ── HTTP plumbing ────────────────────────────────────────────────────────────
@@ -1668,10 +2183,21 @@ async function handle(req, res) {
           // composition identity, for the set generator's conflict planning (cards only)
           elements: (e.data && e.data.elements) || undefined,
           chess_pieces: (e.data && e.data.chess_pieces) || undefined,
+          // has an authored/inferred art recipe (tool.art prompt) — the ✨ marker
+          recipe: (e.data && e.data.tool && e.data.tool.art && e.data.tool.art.prompt) ? true : undefined,
         }));
       }
       return send(res, 200, {
         gameRoot: GAME_ROOT,
+        // running batch-inference jobs, so a fresh/reloaded page reattaches its progress UI
+        inferJobs: Object.values(inferJobs).filter(j => j.status === 'running')
+          .map(j => ({ id: j.id, file: j.file, total: j.total, done: j.done })),
+        // running multi-step flows, same reattachment purpose
+        flowJobs: Object.values(flowJobs).filter(j => j.status === 'running')
+          .map(j => ({ id: j.id, type: j.type, itemId: j.itemId, total: j.total, done: j.done })),
+        // running Quick Flow batches
+        flowBatchJobs: Object.values(flowBatchJobs).filter(j => j.status === 'running')
+          .map(j => ({ id: j.id, file: j.file, phase: j.phase, total: j.total, done: j.done })),
         types: Object.fromEntries(Object.entries(TYPES).map(([k, v]) => [k, {
           label: v.label, dataDir: v.dataDir, artDir: v.artDir, artW: v.artW, artH: v.artH, rembg: v.rembg,
         }])),
@@ -1802,7 +2328,7 @@ async function handle(req, res) {
       // shared art style: one live prompt fragment + named presets, global across items;
       // the ✨ LLM guidance inputs (concept / how-to-use-references) get preset maps too
       if ('artStyle' in body) s.artStyle = String(body.artStyle || '');
-      for (const key of ['stylePresets', 'conceptPresets', 'refHintPresets']) {
+      for (const key of ['stylePresets', 'conceptPresets', 'refHintPresets', 'flowPresets']) {
         if (body[key] && typeof body[key] === 'object') {
           s[key] = {};
           for (const [k, v] of Object.entries(body[key])) s[key][k] = String(v);
@@ -1823,6 +2349,20 @@ async function handle(req, res) {
       if ('openaiModel' in body) s.openaiModel = String(body.openaiModel || '');
       if ('claudeCodeModel' in body) s.claudeCodeModel = String(body.claudeCodeModel || '');
       if ('claudeCliCmd' in body) s.claudeCliCmd = String(body.claudeCliCmd || 'claude');
+      if ('kinAdherence' in body) {
+        if (!['concept', 'replicate', 'free'].includes(body.kinAdherence))
+          return send(res, 400, { error: `bad kinAdherence "${body.kinAdherence}"` });
+        s.kinAdherence = body.kinAdherence;
+      }
+      if ('quickFlow' in body) {   // null clears the appointment
+        if (body.quickFlow != null) {
+          const qfErr = validateFlowSpec(body.quickFlow.steps);
+          if (qfErr) return send(res, 400, { error: 'Quick Flow: ' + qfErr });
+          if (!['none', 'current', 'base', 'recipe'].includes(body.quickFlow.anchor || 'recipe'))
+            return send(res, 400, { error: 'Quick Flow: bad anchor policy' });
+        }
+        s.quickFlow = body.quickFlow;
+      }
       writeJson(SETTINGS_PATH, s);
       return send(res, 200, { ok: true, settings: s });
     }
@@ -1852,6 +2392,149 @@ async function handle(req, res) {
       } catch (e) {
         return send(res, 502, { error: e.message });
       }
+    }
+    // ── multi-step flows ──
+    if (p === '/api/art/flow' && req.method === 'POST') {
+      const { type, id, prompt, negative, steps, anchor } = await readBody(req);
+      if (!TYPES[type] || !validId(id)) return send(res, 400, { error: 'bad request' });
+      if (!prompt || !String(prompt).trim()) return send(res, 400, { error: 'prompt is required' });
+      const err = validateFlowSpec(steps);
+      if (err) return send(res, 400, { error: err });
+      // the step-1 ANCHOR: the concept image the whole tree grows from
+      let anchorAbs = null;
+      if (anchor && anchor.source && anchor.source !== 'none') {
+        if (anchor.source === 'current') anchorAbs = currentArtAbs(type, id);
+        else if (anchor.source === 'game') anchorAbs = gameArtAbs(String(anchor.path || ''));
+        else if (anchor.source === 'upload') {
+          anchorAbs = path.join(WORKSPACE, 'refs', safeRefName(anchor.path));
+          if (!fs.existsSync(anchorAbs)) anchorAbs = null;
+        }
+        if (!anchorAbs) return send(res, 400, { error: 'anchor image not found' });
+        if (!MODELS[steps[0].model].supportsRef)
+          return send(res, 400, { error: `step 1: ${MODELS[steps[0].model].label} cannot take the anchor image as input` });
+      }
+      const running = flowJobForItem(type, String(id));
+      if (running) return send(res, 200, { ok: true, jobId: running.id, already: true });
+      let branch = 1, total = 0;
+      for (const st of steps) { branch *= parseInt(st.samples, 10); total += branch; }
+      const job = { id: 'flow' + flowSeq++, type, itemId: String(id), status: 'running',
+        total, done: 0, stepNow: 0, nodes: [], prompt: String(prompt),
+        negative: negative ? String(negative) : '', spec: steps, anchorAbs,
+        anchor: anchorAbs ? { source: anchor.source, path: anchor.path } : null, startedAt: Date.now() };
+      flowJobs[job.id] = job;
+      runFlowJob(job);   // deliberately not awaited — the browser polls
+      return send(res, 200, { ok: true, jobId: job.id, total });
+    }
+    // ── Quick Flow batch ──
+    if (p === '/api/art/flow-batch' && req.method === 'POST') {
+      const { type, file, ids, fill, adherence } = await readBody(req);
+      if (type !== 'card') return send(res, 400, { error: 'quick flows are cards-only for now' });
+      const qf = getSettings().quickFlow;
+      if (!qf || !Array.isArray(qf.steps) || !qf.steps.length)
+        return send(res, 400, { error: 'no Quick Flow appointed yet — open ⛓ Flow… on any card and press ★ Quick Flow' });
+      const specErr = validateFlowSpec(qf.steps);
+      if (specErr) return send(res, 400, { error: 'the appointed Quick Flow is invalid: ' + specErr });
+      let entries;
+      if (Array.isArray(ids) && ids.length)
+        entries = listGameEntries('card').filter(e => ids.map(String).includes(e.id));
+      else if (file) entries = listGameEntries('card').filter(e => e.file === file);
+      else return send(res, 400, { error: 'bad request' });
+      if (!entries.length) return send(res, 404, { error: 'no matching cards' });
+      const jfile = file || entries[0].file;
+      const running = flowBatchJobForFile(jfile);
+      if (running) return send(res, 200, { ok: true, jobId: running.id, already: true });
+      const job = { id: 'fbatch' + flowBatchSeq++, file: jfile, ids: entries.map(e => e.id), entries,
+        spec: qf.steps, anchorPolicy: qf.anchor || 'recipe', fill: !!fill, adherence,
+        status: 'running', phase: 'starting', total: entries.length, done: 0,
+        results: [], cancel: false, currentId: null, startedAt: Date.now() };
+      flowBatchJobs[job.id] = job;
+      runFlowBatchJob(job);   // deliberately not awaited — the browser polls
+      return send(res, 200, { ok: true, jobId: job.id });
+    }
+    if (p === '/api/art/flow-batch-job') {
+      const job = flowBatchJobs[url.searchParams.get('id')];
+      if (!job) return send(res, 404, { error: 'no such job' });
+      // live image-level progress + landed candidates of the card in flight
+      const cur = job.currentFjobId ? flowJobs[job.currentFjobId] : null;
+      const currentFlow = (cur && cur.status === 'running' && cur.itemId === job.currentId)
+        ? { done: cur.done, total: cur.total, stepNow: cur.stepNow, stepCount: cur.spec.length, nodes: cur.nodes }
+        : null;
+      return send(res, 200, { status: job.status, phase: job.phase, error: job.error,
+        file: job.file, total: job.total, done: job.done, currentId: job.currentId,
+        currentFlow, results: job.results, elapsed: Math.round((Date.now() - job.startedAt) / 1000) });
+    }
+    if (p === '/api/art/flow-batch-stop' && req.method === 'POST') {
+      const { id } = await readBody(req);
+      const job = flowBatchJobs[id];
+      if (!job) return send(res, 404, { error: 'no such job' });
+      job.cancel = true;
+      const cur = job.currentFjobId ? flowJobs[job.currentFjobId] : null;
+      if (cur && cur.status === 'running') cur.cancel = true;
+      comfyInterrupt();   // abort the in-flight generation too — cancel means NOW
+      return send(res, 200, { ok: true });
+    }
+    // stop a single (non-batch) flow — the flow modal's Stop button
+    if (p === '/api/art/flow-stop' && req.method === 'POST') {
+      const { id } = await readBody(req);
+      const job = flowJobs[id];
+      if (!job) return send(res, 404, { error: 'no such job' });
+      job.cancel = true;
+      comfyInterrupt();
+      return send(res, 200, { ok: true });
+    }
+    if (p === '/api/art/flow-job') {
+      const job = flowJobs[url.searchParams.get('id')];
+      if (!job) return send(res, 404, { error: 'no such job' });
+      return send(res, 200, { status: job.status, error: job.error, type: job.type, id: job.itemId,
+        total: job.total, done: job.done, stepNow: job.stepNow, stepCount: job.spec.length,
+        nodes: job.nodes, elapsed: Math.round((Date.now() - job.startedAt) / 1000) });
+    }
+    // the item's last FINISHED flow (from its on-disk manifest — survives server restarts)
+    if (p === '/api/art/flow-result') {
+      const type = url.searchParams.get('type'), id = url.searchParams.get('id');
+      if (!TYPES[type] || !validId(id)) return send(res, 400, { error: 'bad request' });
+      return send(res, 200, { ok: true, result: readJson(path.join(flowDir(type, id), 'flow.json'), null) });
+    }
+    // promote one flow candidate to the item's workspace art (rembg here, when the type wants it)
+    if (p === '/api/art/flow-pick' && req.method === 'POST') {
+      const { type, id, file } = await readBody(req);
+      if (!TYPES[type] || !validId(id) || !/^[0-9]+_[0-9]+\.png$/.test(String(file || '')))
+        return send(res, 400, { error: 'bad request' });
+      try {
+        return send(res, 200, { ok: true, node: await applyFlowPick(type, id, String(file)) });
+      } catch (e) {
+        return send(res, /no such flow image/.test(e.message) ? 404 : 502, { error: e.message });
+      }
+    }
+    // ── the generation pool ──
+    if (p === '/api/art/pool') {
+      const type = url.searchParams.get('type'), id = url.searchParams.get('id');
+      if (!TYPES[type] || !validId(id)) return send(res, 400, { error: 'bad request' });
+      return send(res, 200, { ok: true, pool: poolManifest(type, id) });
+    }
+    if (p === '/api/art/pool-use' && req.method === 'POST') {
+      const { type, id, file } = await readBody(req);
+      if (!TYPES[type] || !validId(id) || !/^p[0-9]+\.png$/.test(String(file || '')))
+        return send(res, 400, { error: 'bad request' });
+      const entry = poolManifest(type, id).find(e => e.file === String(file));
+      const abs = path.join(poolDir(type, id), String(file));
+      if (!entry || !fs.existsSync(abs)) return send(res, 404, { error: 'no such pool image' });
+      try {
+        let buf = fs.readFileSync(abs);
+        if (entry.needsRembg && TYPES[type].rembg) buf = await rembgImage(abs, `tool_${type}_${id}`);
+        ensureDir(path.dirname(artPath(type, id)));
+        fs.writeFileSync(artPath(type, id), buf);
+        return send(res, 200, { ok: true, entry });
+      } catch (e) { return send(res, 502, { error: e.message }); }
+    }
+    if (p === '/api/art/pool-delete' && req.method === 'POST') {
+      const { type, id, file } = await readBody(req);
+      if (!TYPES[type] || !validId(id) || !/^p[0-9]+\.png$/.test(String(file || '')))
+        return send(res, 400, { error: 'bad request' });
+      const list = poolManifest(type, id).filter(e => e.file !== String(file));
+      try { fs.unlinkSync(path.join(poolDir(type, id), String(file))); } catch (e) { /* gone */ }
+      writeJson(path.join(poolDir(type, id), 'pool.json'), list);
+      return send(res, 200, { ok: true, count: list.length });
     }
     if (p === '/api/art/job') {
       const job = jobs[url.searchParams.get('id')];
@@ -1920,6 +2603,48 @@ async function handle(req, res) {
         return send(res, /no current art/.test(e.message) ? 400 : 502, { error: e.message });
       }
     }
+    // ✨ recipe inference for ONE card. Default: returns the recipe, writes nothing
+    // (the open editor fills its art draft; the user Saves like any other edit).
+    // `persist: true` (the tree's per-item action) writes it onto the entry instead.
+    if (p === '/api/art/infer-recipe' && req.method === 'POST') {
+      const { type, id, persist, adherence } = await readBody(req);
+      if (type !== 'card' || !validId(id)) return send(res, 400, { error: 'recipe inference is cards-only for now' });
+      const entry = findGameEntry('card', id);
+      if (!entry) return send(res, 404, { error: `no game card with id "${id}"` });
+      if (persist && inferJobForFile(entry.file))
+        return send(res, 409, { error: `a batch inference is already running over ${entry.file}` });
+      try {
+        const recipe = await llmInferRecipe(entry, adherence);
+        if (persist) {
+          const stats = persistRecipe(entry, recipe);
+          return send(res, 200, Object.assign({ ok: true, persisted: true, stats }, recipe));
+        }
+        return send(res, 200, Object.assign({ ok: true }, recipe));
+      } catch (e) { return send(res, 502, { error: e.message }); }
+    }
+    // ✨ recipe inference for a whole FILE — starts a polled server-side JOB (one per
+    // file); each inferred recipe is persisted onto its entry as it completes, entries
+    // that already carry a recipe prompt are skipped.
+    if (p === '/api/art/infer-recipes' && req.method === 'POST') {
+      const { type, file, adherence } = await readBody(req);
+      if (type !== 'card' || !file) return send(res, 400, { error: 'recipe inference is cards-only for now' });
+      const entries = listGameEntries('card').filter(e => e.file === file);
+      if (!entries.length) return send(res, 404, { error: 'no card entries in ' + file });
+      const running = inferJobForFile(file);
+      if (running) return send(res, 200, { ok: true, jobId: running.id, already: true });
+      const job = { id: 'infer' + inferSeq++, file, adherence, status: 'running', total: entries.length,
+        done: 0, results: [], startedAt: Date.now() };
+      inferJobs[job.id] = job;
+      runInferJob(job, entries);   // deliberately not awaited — the browser polls
+      return send(res, 200, { ok: true, jobId: job.id });
+    }
+    if (p === '/api/art/infer-job') {
+      const job = inferJobs[url.searchParams.get('id')];
+      if (!job) return send(res, 404, { error: 'no such job' });
+      return send(res, 200, { status: job.status, error: job.error, file: job.file,
+        total: job.total, done: job.done, results: job.results,
+        elapsed: Math.round((Date.now() - job.startedAt) / 1000) });
+    }
     // Plain-English effect description → validated effect JSON (✨ from words).
     if (p === '/api/effects/from-text' && req.method === 'POST') {
       const { type, text } = await readBody(req);
@@ -1940,6 +2665,20 @@ async function handle(req, res) {
       return send(res, 200, { ok: true, name: safe });
     }
     // workspace art preview
+    // pool image previews
+    if (p.startsWith('/poolart/')) {
+      const m = p.match(/^\/poolart\/([a-z]+)\/([a-z0-9_]+)\/(p[0-9]+\.png)$/);
+      if (m && TYPES[m[1]] && fs.existsSync(path.join(poolDir(m[1], m[2]), m[3])))
+        return send(res, 200, fs.readFileSync(path.join(poolDir(m[1], m[2]), m[3])), 'image/png');
+      return send(res, 404, { error: 'no art' });
+    }
+    // flow candidate previews
+    if (p.startsWith('/flowart/')) {
+      const m = p.match(/^\/flowart\/([a-z]+)\/([a-z0-9_]+)\/([0-9]+_[0-9]+\.png)$/);
+      if (m && TYPES[m[1]] && fs.existsSync(path.join(flowDir(m[1], m[2]), m[3])))
+        return send(res, 200, fs.readFileSync(path.join(flowDir(m[1], m[2]), m[3])), 'image/png');
+      return send(res, 404, { error: 'no art' });
+    }
     if (p.startsWith('/art/')) {
       const m = p.match(/^\/art\/([a-z]+)\/([a-z0-9_]+)\.png$/);
       if (m && TYPES[m[1]] && fs.existsSync(artPath(m[1], m[2]))) {

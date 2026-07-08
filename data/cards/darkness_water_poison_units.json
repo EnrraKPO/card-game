@@ -283,11 +283,12 @@
 					"stacks": 1
 				}
 			}
-		]
+		],
+		"display_name": "Blight Paladin"
 	},
 	{
 		"id": "darkness_water_bishop_queen",
-		"display_name": "Poison Goddess",
+		"display_name": "Blight Goddess",
 		"description": "Applies Poison 1 to the unit it strikes.",
 		"elements": [
 			"darkness",
@@ -302,11 +303,7 @@
 				"trigger": {
 					"kind": "dual_event",
 					"event": "attack",
-					"origin_conditions": [
-						{
-							"relation": "self"
-						}
-					]
+					"origin_of": "self"
 				},
 				"status": {
 					"id": "poison"
@@ -338,7 +335,8 @@
 					"stacks": 1
 				}
 			}
-		]
+		],
+		"display_name": "Blight Arcane Tower"
 	},
 	{
 		"id": "darkness_water_knight_knight",
@@ -360,7 +358,8 @@
 					"stacks": 1
 				}
 			}
-		]
+		],
+		"display_name": "Blight Beast"
 	},
 	{
 		"id": "darkness_water_knight_pawn",
@@ -382,7 +381,8 @@
 					"stacks": 1
 				}
 			}
-		]
+		],
+		"display_name": "Blight Cavalry"
 	},
 	{
 		"id": "darkness_water_knight_queen",
@@ -404,7 +404,8 @@
 					"stacks": 1
 				}
 			}
-		]
+		],
+		"display_name": "Blight Monster"
 	},
 	{
 		"id": "darkness_water_knight_rook",
@@ -426,7 +427,8 @@
 					"stacks": 1
 				}
 			}
-		]
+		],
+		"display_name": "Blight Stable"
 	},
 	{
 		"id": "darkness_water_pawn_pawn",
@@ -448,7 +450,8 @@
 					"stacks": 1
 				}
 			}
-		]
+		],
+		"display_name": "Blight Warrior"
 	},
 	{
 		"id": "darkness_water_pawn_queen",
@@ -470,7 +473,8 @@
 					"stacks": 1
 				}
 			}
-		]
+		],
+		"display_name": "Blight Commander"
 	},
 	{
 		"id": "darkness_water_pawn_rook",
@@ -492,7 +496,8 @@
 					"stacks": 1
 				}
 			}
-		]
+		],
+		"display_name": "Blight Barracks"
 	},
 	{
 		"id": "darkness_water_queen_queen",
@@ -514,7 +519,8 @@
 					"stacks": 1
 				}
 			}
-		]
+		],
+		"display_name": "Blight Hero"
 	},
 	{
 		"id": "darkness_water_queen_rook",
@@ -536,7 +542,8 @@
 					"stacks": 1
 				}
 			}
-		]
+		],
+		"display_name": "Blight Castle"
 	},
 	{
 		"id": "darkness_water_rook_rook",
@@ -558,6 +565,7 @@
 					"stacks": 1
 				}
 			}
-		]
+		],
+		"display_name": "Blight Turret"
 	}
 ]

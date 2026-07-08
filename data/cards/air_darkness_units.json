@@ -1,0 +1,304 @@
+[
+	{
+		"id": "air_darkness_pawn",
+		"display_name": "Miasma Pawn",
+		"elements": [
+			"air",
+			"darkness"
+		],
+		"chess_pieces": [
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi plague-doctor pawn soldier, white beaked mask with glowing yellow-green eyes, round black helmet with purple gem, holding tall crystal spear with tattered purple banner and round shield with purple swirl, wreathed in toxic green miasma and swarming flies, ruined gothic spires under stormy violet sky, cobblestone ground, dark fantasy digital painting, purple-and-sickly-yellow palette",
+				"turbo": true,
+				"ref": {
+					"source": "current",
+					"mode": "img2img",
+					"denoise": 0.45
+				},
+				"last": {
+					"seed": 1607425523,
+					"prompt": "Chibi plague-doctor pawn soldier, white beaked mask with glowing yellow-green eyes, round black helmet with purple gem, holding tall crystal spear with tattered purple banner and round shield with purple swirl, wreathed in toxic green miasma and swarming flies, ruined gothic spires under stormy violet sky, cobblestone ground, dark fantasy digital painting, purple-and-sickly-yellow palette",
+					"style": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear, clean background",
+					"at": "2026-07-08"
+				}
+			}
+		}
+	},
+	{
+		"id": "air_darkness_knight",
+		"display_name": "Miasma Knight",
+		"elements": [
+			"air",
+			"darkness"
+		],
+		"chess_pieces": [
+			"knight"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Armored warhorse formed of pale chartreuse miasma mottled with deep purple, billowing curly violet-smoke mane and tail, glowing yellow eyes, mauve plate armor pierced with triple round holes — chamfron, hexagonal chestplate, buckled straps, hoof guards — galloping mid-air through a howling night gale above shattered gothic ruins, smoky legs trailing coiling sickly-green vapor, dramatic side angle",
+				"ref": {
+					"source": "current",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_darkness_bishop",
+		"display_name": "Miasma Bishop",
+		"elements": [
+			"air",
+			"darkness"
+		],
+		"chess_pieces": [
+			"bishop"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi bishop with fierce purple eyes beneath a towering silver-edged mitre set with a violet gem, hooded cowl and purple scarf, dark filigreed robe with amethyst pendants, spiral-crook crozier with dangling gem charm slamming down as an open grimoire spirals overhead, chartreuse miasma and purple smoke funneling skyward from a cracked cathedral floor, dramatic low three-quarter angle, moonless gale-torn night",
+				"turbo": true,
+				"llmRefs": [
+					{
+						"name": "Bishop",
+						"art": "assets/cards/bishop.png"
+					}
+				],
+				"llmHidden": [
+					"Composition: air + darkness + bishop.",
+					"Stats derived from the composition by the game."
+				],
+				"last": {
+					"seed": 2526321822,
+					"prompt": "Chibi bishop with fierce purple eyes beneath a towering silver-edged mitre set with a violet gem, hooded cowl and purple scarf, dark filigreed robe with amethyst pendants, spiral-crook crozier with dangling gem charm slamming down as an open grimoire spirals overhead, chartreuse miasma and purple smoke funneling skyward from a cracked cathedral floor, dramatic low three-quarter angle, moonless gale-torn night, cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear, clean background",
+					"style": "",
+					"at": "2026-07-08"
+				}
+			}
+		}
+	},
+	{
+		"id": "air_darkness_rook",
+		"elements": [
+			"air",
+			"darkness"
+		],
+		"display_name": "Miasma Rook",
+		"chess_pieces": [
+			"rook"
+		]
+	},
+	{
+		"id": "air_darkness_queen",
+		"elements": [
+			"air",
+			"darkness"
+		],
+		"display_name": "Miasma Queen",
+		"chess_pieces": [
+			"queen"
+		]
+	},
+	{
+		"id": "air_darkness_pawn_pawn",
+		"elements": [
+			"air",
+			"darkness"
+		],
+		"display_name": "Miasma Warrior",
+		"chess_pieces": [
+			"pawn",
+			"pawn"
+		]
+	},
+	{
+		"id": "air_darkness_knight_pawn",
+		"elements": [
+			"air",
+			"darkness"
+		],
+		"display_name": "Miasma Cavalry",
+		"chess_pieces": [
+			"knight",
+			"pawn"
+		]
+	},
+	{
+		"id": "air_darkness_bishop_pawn",
+		"elements": [
+			"air",
+			"darkness"
+		],
+		"display_name": "Miasma Paladin",
+		"chess_pieces": [
+			"bishop",
+			"pawn"
+		]
+	},
+	{
+		"id": "air_darkness_pawn_rook",
+		"elements": [
+			"air",
+			"darkness"
+		],
+		"display_name": "Miasma Barracks",
+		"chess_pieces": [
+			"pawn",
+			"rook"
+		]
+	},
+	{
+		"id": "air_darkness_pawn_queen",
+		"elements": [
+			"air",
+			"darkness"
+		],
+		"display_name": "Miasma Commander",
+		"chess_pieces": [
+			"pawn",
+			"queen"
+		]
+	},
+	{
+		"id": "air_darkness_knight_knight",
+		"elements": [
+			"air",
+			"darkness"
+		],
+		"display_name": "Miasma Beast",
+		"chess_pieces": [
+			"knight",
+			"knight"
+		]
+	},
+	{
+		"id": "air_darkness_bishop_knight",
+		"elements": [
+			"air",
+			"darkness"
+		],
+		"display_name": "Miasma Cryptid",
+		"chess_pieces": [
+			"bishop",
+			"knight"
+		]
+	},
+	{
+		"id": "air_darkness_knight_rook",
+		"elements": [
+			"air",
+			"darkness"
+		],
+		"display_name": "Miasma Stable",
+		"chess_pieces": [
+			"knight",
+			"rook"
+		]
+	},
+	{
+		"id": "air_darkness_knight_queen",
+		"elements": [
+			"air",
+			"darkness"
+		],
+		"display_name": "Miasma Monster",
+		"chess_pieces": [
+			"knight",
+			"queen"
+		]
+	},
+	{
+		"id": "air_darkness_bishop_bishop",
+		"elements": [
+			"air",
+			"darkness"
+		],
+		"display_name": "Miasma Hierophant",
+		"chess_pieces": [
+			"bishop",
+			"bishop"
+		]
+	},
+	{
+		"id": "air_darkness_bishop_rook",
+		"elements": [
+			"air",
+			"darkness"
+		],
+		"display_name": "Miasma Arcane Tower",
+		"chess_pieces": [
+			"bishop",
+			"rook"
+		]
+	},
+	{
+		"id": "air_darkness_bishop_queen",
+		"elements": [
+			"air",
+			"darkness"
+		],
+		"display_name": "Miasma Deity",
+		"chess_pieces": [
+			"bishop",
+			"queen"
+		]
+	},
+	{
+		"id": "air_darkness_rook_rook",
+		"elements": [
+			"air",
+			"darkness"
+		],
+		"display_name": "Miasma Turret",
+		"chess_pieces": [
+			"rook",
+			"rook"
+		]
+	},
+	{
+		"id": "air_darkness_queen_rook",
+		"elements": [
+			"air",
+			"darkness"
+		],
+		"display_name": "Miasma Castle",
+		"chess_pieces": [
+			"queen",
+			"rook"
+		]
+	},
+	{
+		"id": "air_darkness_queen_queen",
+		"elements": [
+			"air",
+			"darkness"
+		],
+		"display_name": "Miasma Hero",
+		"chess_pieces": [
+			"queen",
+			"queen"
+		]
+	}
+]

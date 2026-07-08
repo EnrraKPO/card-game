@@ -8,7 +8,8 @@
 		"chess_pieces": [
 			"pawn"
 		],
-		"description": "Steam unit. "
+		"description": "Steam unit. ",
+		"display_name": "Steam Pawn"
 	},
 	{
 		"id": "fire_water_knight",
@@ -19,7 +20,8 @@
 		"chess_pieces": [
 			"knight"
 		],
-		"description": "Steam unit. "
+		"description": "Steam unit. ",
+		"display_name": "Steam Knight"
 	},
 	{
 		"id": "fire_water_bishop",
@@ -42,7 +44,8 @@
 		"chess_pieces": [
 			"rook"
 		],
-		"description": "Steam unit. "
+		"description": "Steam unit. ",
+		"display_name": "Steam Rook"
 	},
 	{
 		"id": "fire_water_queen",
@@ -53,7 +56,8 @@
 		"chess_pieces": [
 			"queen"
 		],
-		"description": "Steam unit. "
+		"description": "Steam unit. ",
+		"display_name": "Steam Queen"
 	},
 	{
 		"id": "fire_water_pawn_pawn",
@@ -65,7 +69,8 @@
 			"pawn",
 			"pawn"
 		],
-		"description": "Steam unit. "
+		"description": "Steam unit. ",
+		"display_name": "Steam Warrior"
 	},
 	{
 		"id": "fire_water_knight_pawn",
@@ -77,7 +82,8 @@
 			"knight",
 			"pawn"
 		],
-		"description": "Steam unit. "
+		"description": "Steam unit. ",
+		"display_name": "Steam Cavalry"
 	},
 	{
 		"id": "fire_water_bishop_pawn",
@@ -89,7 +95,8 @@
 			"bishop",
 			"pawn"
 		],
-		"description": "Steam unit. "
+		"description": "Steam unit. ",
+		"display_name": "Steam Paladin"
 	},
 	{
 		"id": "fire_water_pawn_rook",
@@ -101,7 +108,8 @@
 			"pawn",
 			"rook"
 		],
-		"description": "Steam unit. "
+		"description": "Steam unit. ",
+		"display_name": "Steam Barracks"
 	},
 	{
 		"id": "fire_water_pawn_queen",
@@ -113,7 +121,8 @@
 			"pawn",
 			"queen"
 		],
-		"description": "Steam unit. "
+		"description": "Steam unit. ",
+		"display_name": "Steam Commander"
 	},
 	{
 		"id": "fire_water_knight_knight",
@@ -125,7 +134,8 @@
 			"knight",
 			"knight"
 		],
-		"description": "Steam unit. "
+		"description": "Steam unit. ",
+		"display_name": "Steam Beast"
 	},
 	{
 		"id": "fire_water_bishop_knight",
@@ -138,7 +148,24 @@
 		"chess_pieces": [
 			"bishop",
 			"knight"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Chunky catoblepas beast, downturned bulldog-cat face, heavy drooping head, glowing yellow eyes, small tusks, cracked charcoal-stone hide veined with molten orange, overlapping cobalt-blue scales on flanks tail and spiny back ridge, smoldering vent craters puffing steam, black claws, wading chest-deep through a boiling turquoise hot spring, water hissing into steam clouds around it, low side angle, misty geyser basin",
+				"ref": {
+					"source": "current"
+				},
+				"inferredFrom": {
+					"anchor": "fire_water_bishop_knight",
+					"theme": [
+						"fire_water_bishop",
+						"fire_water_bishop_bishop",
+						"fire_water_knight"
+					],
+					"mode": "concept"
+				}
+			}
+		}
 	},
 	{
 		"id": "fire_water_knight_rook",
@@ -150,7 +177,8 @@
 			"knight",
 			"rook"
 		],
-		"description": "Steam unit. "
+		"description": "Steam unit. ",
+		"display_name": "Steam Stable"
 	},
 	{
 		"id": "fire_water_knight_queen",
@@ -162,7 +190,8 @@
 			"knight",
 			"queen"
 		],
-		"description": "Steam unit. "
+		"description": "Steam unit. ",
+		"display_name": "Steam Monster"
 	},
 	{
 		"id": "fire_water_bishop_bishop",
@@ -188,7 +217,8 @@
 			"bishop",
 			"rook"
 		],
-		"description": "Steam unit. "
+		"description": "Steam unit. ",
+		"display_name": "Steam Arcane Tower"
 	},
 	{
 		"id": "fire_water_bishop_queen",
@@ -200,7 +230,8 @@
 			"bishop",
 			"queen"
 		],
-		"description": "Steam unit. "
+		"description": "Steam unit. ",
+		"display_name": "Steam Deity"
 	},
 	{
 		"id": "fire_water_rook_rook",
@@ -212,7 +243,8 @@
 			"rook",
 			"rook"
 		],
-		"description": "Steam unit. "
+		"description": "Steam unit. ",
+		"display_name": "Steam Turret"
 	},
 	{
 		"id": "fire_water_queen_rook",
@@ -224,7 +256,8 @@
 			"queen",
 			"rook"
 		],
-		"description": "Steam unit. "
+		"description": "Steam unit. ",
+		"display_name": "Steam Castle"
 	},
 	{
 		"id": "fire_water_queen_queen",
@@ -236,6 +269,7 @@
 			"queen",
 			"queen"
 		],
-		"description": "Steam unit. "
+		"description": "Steam unit. ",
+		"display_name": "Steam Hero"
 	}
 ]

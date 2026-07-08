@@ -1,0 +1,249 @@
+[
+	{
+		"id": "air_fire_pawn",
+		"elements": [
+			"air",
+			"fire"
+		],
+		"display_name": "Lightning Pawn",
+		"chess_pieces": [
+			"pawn"
+		]
+	},
+	{
+		"id": "air_fire_knight",
+		"elements": [
+			"air",
+			"fire"
+		],
+		"display_name": "Lightning Knight",
+		"chess_pieces": [
+			"knight"
+		]
+	},
+	{
+		"id": "air_fire_bishop",
+		"elements": [
+			"air",
+			"fire"
+		],
+		"display_name": "Lightning Bishop",
+		"chess_pieces": [
+			"bishop"
+		]
+	},
+	{
+		"id": "air_fire_rook",
+		"display_name": "Lightning Rook",
+		"elements": [
+			"air",
+			"fire"
+		],
+		"chess_pieces": [
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi black stone rook tower crackling with golden lightning, glowing yellow energy veins between dark bricks, red banner with lightning bolt emblem, tiny helmeted guard peeking from arched window, crenellated top with ruby diamond gem, glowing magic circle on ground, storm-lit gothic cathedral spires behind, dark dramatic sky, vibrant gold-orange-black palette, polished stylized game illustration",
+				"turbo": true
+			}
+		}
+	},
+	{
+		"id": "air_fire_queen",
+		"elements": [
+			"air",
+			"fire"
+		],
+		"display_name": "Lightning Queen",
+		"chess_pieces": [
+			"queen"
+		]
+	},
+	{
+		"id": "air_fire_pawn_pawn",
+		"elements": [
+			"air",
+			"fire"
+		],
+		"display_name": "Lightning Warrior",
+		"chess_pieces": [
+			"pawn",
+			"pawn"
+		]
+	},
+	{
+		"id": "air_fire_knight_pawn",
+		"elements": [
+			"air",
+			"fire"
+		],
+		"display_name": "Lightning Cavalry",
+		"chess_pieces": [
+			"knight",
+			"pawn"
+		]
+	},
+	{
+		"id": "air_fire_bishop_pawn",
+		"elements": [
+			"air",
+			"fire"
+		],
+		"display_name": "Lightning Paladin",
+		"chess_pieces": [
+			"bishop",
+			"pawn"
+		]
+	},
+	{
+		"id": "air_fire_pawn_rook",
+		"elements": [
+			"air",
+			"fire"
+		],
+		"display_name": "Lightning Barracks",
+		"chess_pieces": [
+			"pawn",
+			"rook"
+		]
+	},
+	{
+		"id": "air_fire_pawn_queen",
+		"elements": [
+			"air",
+			"fire"
+		],
+		"display_name": "Lightning Commander",
+		"chess_pieces": [
+			"pawn",
+			"queen"
+		]
+	},
+	{
+		"id": "air_fire_knight_knight",
+		"elements": [
+			"air",
+			"fire"
+		],
+		"display_name": "Lightning Beast",
+		"chess_pieces": [
+			"knight",
+			"knight"
+		]
+	},
+	{
+		"id": "air_fire_bishop_knight",
+		"elements": [
+			"air",
+			"fire"
+		],
+		"display_name": "Lightning Cryptid",
+		"chess_pieces": [
+			"bishop",
+			"knight"
+		]
+	},
+	{
+		"id": "air_fire_knight_rook",
+		"elements": [
+			"air",
+			"fire"
+		],
+		"display_name": "Lightning Stable",
+		"chess_pieces": [
+			"knight",
+			"rook"
+		]
+	},
+	{
+		"id": "air_fire_knight_queen",
+		"elements": [
+			"air",
+			"fire"
+		],
+		"display_name": "Lightning Monster",
+		"chess_pieces": [
+			"knight",
+			"queen"
+		]
+	},
+	{
+		"id": "air_fire_bishop_bishop",
+		"elements": [
+			"air",
+			"fire"
+		],
+		"display_name": "Lightning Hierophant",
+		"chess_pieces": [
+			"bishop",
+			"bishop"
+		]
+	},
+	{
+		"id": "air_fire_bishop_rook",
+		"elements": [
+			"air",
+			"fire"
+		],
+		"display_name": "Lightning Arcane Tower",
+		"chess_pieces": [
+			"bishop",
+			"rook"
+		]
+	},
+	{
+		"id": "air_fire_bishop_queen",
+		"elements": [
+			"air",
+			"fire"
+		],
+		"display_name": "Lightning Deity",
+		"chess_pieces": [
+			"bishop",
+			"queen"
+		]
+	},
+	{
+		"id": "air_fire_rook_rook",
+		"elements": [
+			"air",
+			"fire"
+		],
+		"display_name": "Lightning Turret",
+		"chess_pieces": [
+			"rook",
+			"rook"
+		]
+	},
+	{
+		"id": "air_fire_queen_rook",
+		"elements": [
+			"air",
+			"fire"
+		],
+		"display_name": "Lightning Castle",
+		"chess_pieces": [
+			"queen",
+			"rook"
+		]
+	},
+	{
+		"id": "air_fire_queen_queen",
+		"elements": [
+			"air",
+			"fire"
+		],
+		"display_name": "Lightning Hero",
+		"chess_pieces": [
+			"queen",
+			"queen"
+		]
+	}
+]

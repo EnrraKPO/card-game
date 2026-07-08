@@ -14,6 +14,7 @@ func run() -> void:
 	_legacy_mapping()
 	_all_and_conditions()
 	_auto_nearest_and_random()
+	_column_priority()
 	_participant()
 	_manual()
 	_native_round_trip()
@@ -125,6 +126,49 @@ func _auto_nearest_and_random() -> void:
 			"attribute": "damage_taken", "amount": 1})
 	check_eq(ec.targets_resolver().resolve(null, holder, ctx).size(), 2,
 			"native Auto count=2 returns the two nearest enemies")
+
+
+# Column depth DOMINATES lane offset (the user-observed bug: equal weighting let a
+# same-lane unit two columns deep tie an adjacent-lane front unit, and the unstable
+# sort then read as "units prefer their own row"). Within one column the facing lane
+# wins; exact ties break deterministically by row index. Attack targeting
+# (TargetingStrategy.dist) and effect targeting (TargetResolver.board_distance) must
+# agree on this geometry.
+func _column_priority() -> void:
+	var attacker := _unit(2, 0, 1, 3)          # player: front column, middle lane
+	var same_lane_deep := _unit(2, 1, 1, 1)    # faces the attacker, two columns deep
+	var adjacent_front := _unit(2, 1, 0, 0)    # one lane over, front column
+	var grid: Array = [
+		[adjacent_front, null, null, null],
+		[null, same_lane_deep, null, null],
+		[null, null, null, null],
+	]
+	var strat := TargetingNearest.new()
+	check(strat.find_target(attacker, grid) == adjacent_front,
+			"attack targeting: closest COLUMN beats a same-lane deeper target")
+
+	var facing := _unit(2, 1, 1, 0)            # front column, facing lane
+	grid[1][0] = facing
+	check(strat.find_target(attacker, grid) == facing,
+			"attack targeting: within the closest column the facing lane wins")
+	grid[1][0] = null
+
+	var lane_two := _unit(2, 1, 2, 0)          # front column, one lane over (the other way)
+	grid[2][0] = lane_two
+	check(strat.find_target(attacker, grid) == adjacent_front,
+			"attack targeting: equal lane offsets break deterministically by row")
+	grid[2][0] = null
+
+	# effect targeting shares the geometry
+	var ctx := EffectContext.make(attacker, [[attacker]], [
+		[adjacent_front, null, null, null],
+		[null, same_lane_deep, null, null],
+	])
+	var e := Effect.from_dict({"trigger": "on_play", "targeting_policy": "single_nearest",
+			"attribute": "damage_taken", "amount": 1})
+	var targets := e.targets_resolver().resolve(null, attacker, ctx)
+	check(targets.size() == 1 and targets[0] == adjacent_front,
+			"effect targeting: single_nearest agrees — closest column first")
 
 
 func _participant() -> void:

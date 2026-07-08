@@ -3,3 +3,7 @@ test/shots/
 
 # Claude Code provider runtime temp (system-prompt files, ref images)
 workspace/tmp/
+
+# Art-generation intermediates: per-card variation flow + selection pool (scratch)
+workspace/art/_flow/
+workspace/art/_pool/

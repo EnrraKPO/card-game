@@ -1,0 +1,237 @@
+[
+	{
+		"id": "darkness_light_pawn",
+		"elements": [
+			"darkness",
+			"light"
+		],
+		"display_name": "Undead Pawn",
+		"chess_pieces": [
+			"pawn"
+		]
+	},
+	{
+		"id": "darkness_light_knight",
+		"elements": [
+			"darkness",
+			"light"
+		],
+		"display_name": "Undead Knight",
+		"chess_pieces": [
+			"knight"
+		]
+	},
+	{
+		"id": "darkness_light_bishop",
+		"display_name": "Undead Bishop",
+		"elements": [
+			"darkness",
+			"light"
+		],
+		"chess_pieces": [
+			"bishop"
+		]
+	},
+	{
+		"id": "darkness_light_rook",
+		"elements": [
+			"darkness",
+			"light"
+		],
+		"display_name": "Undead Rook",
+		"chess_pieces": [
+			"rook"
+		]
+	},
+	{
+		"id": "darkness_light_queen",
+		"elements": [
+			"darkness",
+			"light"
+		],
+		"display_name": "Undead Queen",
+		"chess_pieces": [
+			"queen"
+		]
+	},
+	{
+		"id": "darkness_light_pawn_pawn",
+		"elements": [
+			"darkness",
+			"light"
+		],
+		"display_name": "Undead Warrior",
+		"chess_pieces": [
+			"pawn",
+			"pawn"
+		]
+	},
+	{
+		"id": "darkness_light_knight_pawn",
+		"elements": [
+			"darkness",
+			"light"
+		],
+		"display_name": "Undead Cavalry",
+		"chess_pieces": [
+			"knight",
+			"pawn"
+		]
+	},
+	{
+		"id": "darkness_light_bishop_pawn",
+		"elements": [
+			"darkness",
+			"light"
+		],
+		"display_name": "Undead Paladin",
+		"chess_pieces": [
+			"bishop",
+			"pawn"
+		]
+	},
+	{
+		"id": "darkness_light_pawn_rook",
+		"elements": [
+			"darkness",
+			"light"
+		],
+		"display_name": "Undead Barracks",
+		"chess_pieces": [
+			"pawn",
+			"rook"
+		]
+	},
+	{
+		"id": "darkness_light_pawn_queen",
+		"elements": [
+			"darkness",
+			"light"
+		],
+		"display_name": "Undead Commander",
+		"chess_pieces": [
+			"pawn",
+			"queen"
+		]
+	},
+	{
+		"id": "darkness_light_knight_knight",
+		"elements": [
+			"darkness",
+			"light"
+		],
+		"display_name": "Undead Beast",
+		"chess_pieces": [
+			"knight",
+			"knight"
+		]
+	},
+	{
+		"id": "darkness_light_bishop_knight",
+		"elements": [
+			"darkness",
+			"light"
+		],
+		"display_name": "Undead Cryptid",
+		"chess_pieces": [
+			"bishop",
+			"knight"
+		]
+	},
+	{
+		"id": "darkness_light_knight_rook",
+		"elements": [
+			"darkness",
+			"light"
+		],
+		"display_name": "Undead Stable",
+		"chess_pieces": [
+			"knight",
+			"rook"
+		]
+	},
+	{
+		"id": "darkness_light_knight_queen",
+		"elements": [
+			"darkness",
+			"light"
+		],
+		"display_name": "Undead Monster",
+		"chess_pieces": [
+			"knight",
+			"queen"
+		]
+	},
+	{
+		"id": "darkness_light_bishop_bishop",
+		"elements": [
+			"darkness",
+			"light"
+		],
+		"display_name": "Undead Hierophant",
+		"chess_pieces": [
+			"bishop",
+			"bishop"
+		]
+	},
+	{
+		"id": "darkness_light_bishop_rook",
+		"elements": [
+			"darkness",
+			"light"
+		],
+		"display_name": "Undead Arcane Tower",
+		"chess_pieces": [
+			"bishop",
+			"rook"
+		]
+	},
+	{
+		"id": "darkness_light_bishop_queen",
+		"elements": [
+			"darkness",
+			"light"
+		],
+		"display_name": "Undead Deity",
+		"chess_pieces": [
+			"bishop",
+			"queen"
+		]
+	},
+	{
+		"id": "darkness_light_rook_rook",
+		"elements": [
+			"darkness",
+			"light"
+		],
+		"display_name": "Undead Turret",
+		"chess_pieces": [
+			"rook",
+			"rook"
+		]
+	},
+	{
+		"id": "darkness_light_queen_rook",
+		"elements": [
+			"darkness",
+			"light"
+		],
+		"display_name": "Undead Castle",
+		"chess_pieces": [
+			"queen",
+			"rook"
+		]
+	},
+	{
+		"id": "darkness_light_queen_queen",
+		"elements": [
+			"darkness",
+			"light"
+		],
+		"display_name": "Undead Hero",
+		"chess_pieces": [
+			"queen",
+			"queen"
+		]
+	}
+]

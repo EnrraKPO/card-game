@@ -1,0 +1,13 @@
+[
+	{
+		"id": "air_darkness_pawn",
+		"elements": [
+			"air",
+			"darkness"
+		],
+		"display_name": "Miasma Pawn",
+		"chess_pieces": [
+			"pawn"
+		]
+	}
+]

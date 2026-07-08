@@ -36,10 +36,35 @@
 		],
 		"abilities": [
 			"heal"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Cartoon chibi bishop priest cloaked in flowing sea-blue vestments, coral-and-pearl mitre, holding a twin-pronged crozier of living water, gentle turquoise waves lapping at his feet, soft aquamarine mist rising from his open palm as tiny droplets drift upward, tranquil ocean-shore meadow behind him, bold outlines, bright cheerful colors",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop.png",
+					"name": "Bishop"
+				},
+				"inferredFrom": {
+					"concept": [
+						"bishop",
+						"bishop_bishop",
+						"bishop_knight"
+					],
+					"theme": [
+						"water_water",
+						"water_water_king",
+						"water_water_knight"
+					]
+				}
+			}
+		},
+		"display_name": "Pure Water Bishop"
 	},
 	{
 		"id": "water_water_bishop_bishop",
+		"display_name": "Pure Water Hierophant",
+		"description": "Twin-water unit.",
 		"elements": [
 			"water",
 			"water"
@@ -48,7 +73,24 @@
 			"bishop",
 			"bishop"
 		],
-		"description": "Twin-water unit."
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Cartoon chibi bishop archpriest formed of translucent living water, rippling liquid vestments in deep sapphire and seafoam, pearl-crested mitre streaming twin waterfalls, raising a crozier crowned by two orbiting spheres of swirling tide, mirrored watery double rising behind him, curling waves and drifting bubbles all around, bold outlines, luminous blue palette",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_bishop.png",
+					"name": "Hierophant",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
 	},
 	{
 		"id": "water_water_bishop_knight",
@@ -60,7 +102,30 @@
 			"bishop",
 			"knight"
 		],
-		"description": "Twin-water unit."
+		"description": "Twin-water unit.",
+		"tool": {
+			"art": {
+				"prompt": "Cartoon chibi unicorn steed sculpted from living seawater, translucent rippling body over deep-blue depths, spiraling pearl-and-coral horn, mane and tail flowing as twin curling waves, tiny tidewater mitre on its brow, hooves splashing paired fountains that arc symmetrically behind it, drifting aquamarine droplets and gentle surf beneath, sunny coastal meadow shore, bold outlines, bright cheerful colors",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_knight.png",
+					"name": "Cryptid"
+				},
+				"inferredFrom": {
+					"concept": [
+						"bishop_knight",
+						"darkness_water_bishop_knight",
+						"bishop"
+					],
+					"theme": [
+						"water_water_bishop",
+						"water_water_bishop_bishop",
+						"water_water_knight"
+					]
+				}
+			}
+		},
+		"display_name": "Pure Water Cryptid"
 	},
 	{
 		"id": "water_water_bishop_pawn",
@@ -72,7 +137,30 @@
 			"bishop",
 			"pawn"
 		],
-		"description": "Twin-water unit."
+		"description": "Twin-water unit.",
+		"tool": {
+			"art": {
+				"prompt": "Cartoon chibi acolyte bishop in stout tide-forged armor, seashell pauldrons over flowing seafoam tabard, small pearl-tipped mitre atop a barnacle-crusted helm, gripping a short coral mace trailing twin ribbons of swirling water, paired splashes bursting at his boots, glistening droplets and rolling surf across a sunny shoreline, bold outlines, bright cheerful colors",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_pawn.png",
+					"name": "Paladin"
+				},
+				"inferredFrom": {
+					"concept": [
+						"bishop_pawn",
+						"bishop",
+						"bishop_bishop"
+					],
+					"theme": [
+						"water_water_bishop",
+						"water_water_bishop_bishop",
+						"water_water_bishop_knight"
+					]
+				}
+			}
+		},
+		"display_name": "Pure Water Paladin"
 	},
 	{
 		"id": "water_water_bishop_queen",
@@ -84,10 +172,35 @@
 			"bishop",
 			"queen"
 		],
-		"description": "Twin-water unit."
+		"description": "Twin-water unit.",
+		"tool": {
+			"art": {
+				"prompt": "Cartoon chibi high priestess-queen sculpted from translucent living seawater, regal crown of coral and pearls atop a mitre streaming twin tide-veils, four graceful arms raising a crozier and a bubble-crowned diadem, twin whirlpool spirals swirling at her sides, curling foam waves at her feet, sunny seaside plaza behind, bold outlines, bright sapphire-and-seafoam palette",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_queen.png",
+					"name": "Deity"
+				},
+				"inferredFrom": {
+					"concept": [
+						"bishop_queen",
+						"darkness_water_bishop_queen",
+						"bishop"
+					],
+					"theme": [
+						"water_water_bishop",
+						"water_water_bishop_bishop",
+						"water_water_bishop_knight"
+					]
+				}
+			}
+		},
+		"display_name": "Pure Water Deity"
 	},
 	{
 		"id": "water_water_bishop_rook",
+		"display_name": "Pure Water Arcane Tower",
+		"description": "Twin-water unit.",
 		"elements": [
 			"water",
 			"water"
@@ -96,7 +209,28 @@
 			"bishop",
 			"rook"
 		],
-		"description": "Twin-water unit."
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Cartoon chibi coral-stone chapel tower rising from a tidal pool, walls of pale sea-rock veined with pearl, twin waterfalls cascading from its battlements into curling waves, tiny water-priest guardian in seafoam vestments with a mitre-topped spire above, drifting bubbles and aquamarine spray, sunny coastal hills behind, bold outlines, bright cheerful colors",
+				"ref": {
+					"source": "current",
+					"mode": "img2img",
+					"denoise": 0.7
+				},
+				"last": {
+					"seed": 3787694734,
+					"prompt": "Cartoon chibi coral-stone chapel tower rising from a tidal pool, walls of pale sea-rock veined with pearl, twin waterfalls cascading from its battlements into curling waves, tiny water-priest guardian in seafoam vestments with a mitre-topped spire above, drifting bubbles and aquamarine spray, sunny coastal hills behind, bold outlines, bright cheerful colors",
+					"style": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric light, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear, clean background",
+					"at": "2026-07-08"
+				}
+			}
+		}
 	},
 	{
 		"id": "water_water_knight",
@@ -107,7 +241,30 @@
 		"chess_pieces": [
 			"knight"
 		],
-		"description": "Twin-water unit."
+		"description": "Twin-water unit.",
+		"tool": {
+			"art": {
+				"prompt": "Cartoon chibi war horse formed of surging living water, translucent deep-blue body with curling twin wave crests along mane and tail, silver shell-plated barding trimmed in pearl, kelp-strap bridle, rearing mid-gallop atop a cresting double breaker, spray and turquoise droplets bursting around its hooves, misty lagoon cliffs behind, bold outlines, bright cheerful colors",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight.png",
+					"name": "Knight"
+				},
+				"inferredFrom": {
+					"concept": [
+						"knight",
+						"bishop_knight",
+						"fire_fire_knight"
+					],
+					"theme": [
+						"water_water_bishop_knight",
+						"water_water_knight_pawn",
+						"water_water"
+					]
+				}
+			}
+		},
+		"display_name": "Pure Water Knight"
 	},
 	{
 		"id": "water_water_knight_knight",
@@ -119,7 +276,30 @@
 			"knight",
 			"knight"
 		],
-		"description": "Twin-water unit."
+		"description": "Twin-water unit.",
+		"tool": {
+			"art": {
+				"prompt": "Cartoon chibi pair of twin war horses conjured from living seawater, mirrored translucent aqua bodies galloping side by side, manes and tails curling into matched spiral waves, pearl-studded coral barding, kelp reins entwining them together, hooves kicking up symmetrical fans of foam atop a rolling tide, drifting bubbles and sea-mist coastline behind, bold outlines, bright cheerful colors",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_knight.png",
+					"name": "Beast"
+				},
+				"inferredFrom": {
+					"concept": [
+						"knight_knight",
+						"bishop_knight",
+						"fire_fire_knight"
+					],
+					"theme": [
+						"water_water_bishop_knight",
+						"water_water_knight",
+						"water_water_knight_pawn"
+					]
+				}
+			}
+		},
+		"display_name": "Pure Water Beast"
 	},
 	{
 		"id": "water_water_knight_pawn",
@@ -131,10 +311,35 @@
 			"knight",
 			"pawn"
 		],
-		"description": "Twin-water unit."
+		"description": "Twin-water unit.",
+		"tool": {
+			"art": {
+				"prompt": "Cartoon chibi squire in wave-etched shell armor riding a small pony of living translucent water, twin curling crests forming its mane, rider hefting a trident-tipped lance streaming double ribbons of brine, paired geysers erupting where hooves strike wet sand, scattered sapphire droplets over a bright tide-pool beach, bold outlines, bright cheerful colors",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_pawn.png",
+					"name": "Cavalry"
+				},
+				"inferredFrom": {
+					"concept": [
+						"knight_pawn",
+						"bishop_knight",
+						"bishop_pawn"
+					],
+					"theme": [
+						"water_water_bishop_knight",
+						"water_water_bishop_pawn",
+						"water_water_knight"
+					]
+				}
+			}
+		},
+		"display_name": "Pure Water Cavalry"
 	},
 	{
 		"id": "water_water_knight_queen",
+		"display_name": "Pure Water Monster",
+		"description": "Twin-water unit.",
 		"elements": [
 			"water",
 			"water"
@@ -143,7 +348,28 @@
 			"knight",
 			"queen"
 		],
-		"description": "Twin-water unit."
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Cartoon giant dragon sculpted from translucent living seawater, long swept-back spiral horns and spiky crest of curling foam, broad rippling wave-membrane wings spread wide, pale seafoam belly plates, pearl claws, fin-tipped tail coiling through surf, rearing atop a cresting turquoise breaker over a tiny coastal fishing village, bursting spray and aquamarine droplets, bold outlines, bright cheerful colors, fierce face",
+				"ref": {
+					"source": "current",
+					"mode": "img2img",
+					"denoise": 0.8
+				},
+				"last": {
+					"seed": 3363768950,
+					"prompt": "Cartoon giant dragon sculpted from translucent living seawater, long swept-back spiral horns and spiky crest of curling foam, broad rippling wave-membrane wings spread wide, pale seafoam belly plates, pearl claws, fin-tipped tail coiling through surf, rearing atop a cresting turquoise breaker over a tiny coastal fishing village, bursting spray and aquamarine droplets, bold outlines, bright cheerful colors, fierce face",
+					"style": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear, clean background",
+					"at": "2026-07-08"
+				}
+			}
+		}
 	},
 	{
 		"id": "water_water_knight_rook",
@@ -155,10 +381,35 @@
 			"knight",
 			"rook"
 		],
-		"description": "Twin-water unit."
+		"description": "Twin-water unit.",
+		"tool": {
+			"art": {
+				"prompt": "Cartoon chibi fortified stable tower of pale coral-stone rising from a tidal pool, battlements crowned with conch spires, a translucent living-water war horse leaning from its arched gate, mane curling as twin wave crests, paired waterfalls pouring from the ramparts into rolling surf, aquamarine spray and drifting bubbles, sunny lagoon shore behind, bold outlines, bright cheerful colors",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_rook.png",
+					"name": "Stable"
+				},
+				"inferredFrom": {
+					"concept": [
+						"knight_rook",
+						"bishop_knight",
+						"bishop_rook"
+					],
+					"theme": [
+						"water_water_bishop_knight",
+						"water_water_bishop_rook",
+						"water_water_knight"
+					]
+				}
+			}
+		},
+		"display_name": "Pure Water Stable"
 	},
 	{
 		"id": "water_water_pawn",
+		"display_name": "Pure Water Pawn",
+		"description": "Twin-water unit.",
 		"elements": [
 			"water",
 			"water"
@@ -166,7 +417,24 @@
 		"chess_pieces": [
 			"pawn"
 		],
-		"description": "Twin-water unit."
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi water elemental soldier, full body standing pose, domed helm of rippling liquid crested with two curling wave plumes, calm glowing white eyes on a translucent aqua face, shell-plated armor beaded with droplets, tall spear tipped with a swirling twin-vortex of water, round shield bearing a double-wave crest, paired tide pools splashing at his boots, misty seafoam meadow, luminous blues, glossy stylized game illustration",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn.png",
+					"name": "Pawn",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
 	},
 	{
 		"id": "water_water_pawn_pawn",
@@ -178,7 +446,30 @@
 			"pawn",
 			"pawn"
 		],
-		"description": "Twin-water unit."
+		"description": "Twin-water unit.",
+		"tool": {
+			"art": {
+				"prompt": "Chibi twin water elemental footsoldiers standing shoulder to shoulder, full body pose, matching rippling liquid helms with single wave plumes, translucent aqua faces with calm glowing eyes, kelp-strapped shell breastplates, one hefting a coral-hafted spear, the other raising a clamshell buckler, mirrored tide surges coiling between them, wet sandbar with foaming shallows, luminous blues, glossy stylized game illustration",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_pawn.png",
+					"name": "Warrior"
+				},
+				"inferredFrom": {
+					"concept": [
+						"pawn_pawn",
+						"bishop_pawn",
+						"fire_fire_pawn"
+					],
+					"theme": [
+						"water_water_bishop_pawn",
+						"water_water_knight_pawn",
+						"water_water_pawn"
+					]
+				}
+			}
+		},
+		"display_name": "Pure Water Warrior"
 	},
 	{
 		"id": "water_water_pawn_queen",
@@ -190,7 +481,30 @@
 			"pawn",
 			"queen"
 		],
-		"description": "Twin-water unit."
+		"description": "Twin-water unit.",
+		"tool": {
+			"art": {
+				"prompt": "Cartoon chibi soldier-queen commanding from a coral rampart, tiara of pearls over a wave-crested helm, brandishing a trident-scepter trailing twin spiraling water ribbons, rank of small chibi pikemen of living translucent seawater marching below, paired tide-surges foaming at their boots, sunlit lagoon horizon, bold outlines, bright sapphire-and-seafoam palette",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_queen.png",
+					"name": "Commander"
+				},
+				"inferredFrom": {
+					"concept": [
+						"pawn_queen",
+						"bishop_pawn",
+						"bishop_queen"
+					],
+					"theme": [
+						"water_water_bishop_pawn",
+						"water_water_bishop_queen",
+						"water_water_knight_pawn"
+					]
+				}
+			}
+		},
+		"display_name": "Pure Water Commander"
 	},
 	{
 		"id": "water_water_pawn_rook",
@@ -202,10 +516,35 @@
 			"pawn",
 			"rook"
 		],
-		"description": "Twin-water unit."
+		"description": "Twin-water unit.",
+		"tool": {
+			"art": {
+				"prompt": "Cartoon chibi sentry in tide-worn shell armor guarding a squat coral-rock watchtower rising from shallow surf, pearl-veined battlements crowned by twin arcing water jets, the little guard hoisting a spear wreathed in double spiraling brine ribbons, foaming waves lapping the tower's barnacled base, sapphire spray and drifting bubbles under a sunny seaside sky, bold outlines, bright cheerful colors",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_rook.png",
+					"name": "Barracks"
+				},
+				"inferredFrom": {
+					"concept": [
+						"pawn_rook",
+						"bishop_pawn",
+						"bishop_rook"
+					],
+					"theme": [
+						"water_water_bishop_pawn",
+						"water_water_bishop_rook",
+						"water_water_knight_pawn"
+					]
+				}
+			}
+		},
+		"display_name": "Pure Water Barracks"
 	},
 	{
 		"id": "water_water_queen",
+		"display_name": "Pure Water Queen",
+		"description": "Twin-water unit.",
 		"elements": [
 			"water",
 			"water"
@@ -213,10 +552,37 @@
 		"chess_pieces": [
 			"queen"
 		],
-		"description": "Twin-water unit."
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Cartoon chibi queen formed of translucent living seawater, flowing gown of layered rolling waves, pearl-studded coral crown, long hair streaming into twin cascading waterfalls, one raised palm conjuring a glassy sphere of swirling tides, paired whirlpools spiraling around her hem, glistening turquoise droplets, calm ocean shallows and clear sky behind, bold outlines, bright sapphire-and-seafoam palette",
+				"seed": 1,
+				"ref": {
+					"source": "current",
+					"mode": "img2img",
+					"denoise": 0.5
+				},
+				"llmHidden": [
+					"Composition: water + water + queen.",
+					"Stats derived from the composition by the game."
+				],
+				"last": {
+					"seed": 1,
+					"prompt": "Cartoon chibi queen formed of translucent living seawater, flowing gown of layered rolling waves, pearl-studded coral crown, long hair streaming into twin cascading waterfalls, one raised palm conjuring a glassy sphere of swirling tides, paired whirlpools spiraling around her hem, glistening turquoise droplets, calm ocean shallows and clear sky behind, bold outlines, bright sapphire-and-seafoam palette",
+					"style": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear, clean background",
+					"at": "2026-07-08"
+				}
+			}
+		}
 	},
 	{
 		"id": "water_water_queen_queen",
+		"display_name": "Pure Water Hero",
 		"elements": [
 			"water",
 			"water"
@@ -225,10 +591,39 @@
 			"queen",
 			"queen"
 		],
-		"description": "Twin-water unit."
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Cartoon chibi warrior queen sculpted from translucent living seawater, curling foam hair streaming like breaking surf, coral crown studded with pearls, sapphire armor of hardened ice-glass, swinging an oversized greatsword of coiled whirlpool water, leaping from a wave-crest as twin tide spirals arc beneath her, sunlit ocean cliffs behind, bold outlines, bright sapphire-and-seafoam palette",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/queen_queen.png",
+					"name": "Hero",
+					"mode": "img2img",
+					"denoise": 0.6
+				},
+				"llmHidden": [
+					"Composition: water + water + queen + queen.",
+					"Stats derived from the composition by the game."
+				],
+				"last": {
+					"seed": 4001987195,
+					"prompt": "Cartoon chibi warrior queen sculpted from translucent living seawater, curling foam hair streaming like breaking surf, coral crown studded with pearls, sapphire armor of hardened ice-glass, swinging an oversized greatsword of coiled whirlpool water, leaping from a wave-crest as twin tide spirals arc beneath her, sunlit ocean cliffs behind, bold outlines, bright sapphire-and-seafoam palette, cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear, clean background",
+					"style": "",
+					"at": "2026-07-08"
+				}
+			}
+		}
 	},
 	{
 		"id": "water_water_queen_rook",
+		"display_name": "Pure Water Castle",
+		"description": "Twin-water unit.",
 		"elements": [
 			"water",
 			"water"
@@ -237,7 +632,34 @@
 			"queen",
 			"rook"
 		],
-		"description": "Twin-water unit."
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Cartoon chibi grand castle keep sculpted from flowing living seawater, translucent aquamarine walls veined with pearl, crystal-foam dome atop its central spire, twin tide cascades pouring from the ramparts into a swirling whirlpool moat, coral buttresses and drifting bubbles, misty turquoise spray, sunlit lagoon shore behind, bold outlines, bright sapphire-and-seafoam palette",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook_queen.png",
+					"name": "Castle",
+					"mode": "img2img",
+					"denoise": 0.6
+				},
+				"llmHidden": [
+					"Composition: water + water + queen + rook.",
+					"Stats derived from the composition by the game."
+				],
+				"last": {
+					"seed": 1561280640,
+					"prompt": "Cartoon chibi grand castle keep sculpted from flowing living seawater, translucent aquamarine walls veined with pearl, crystal-foam dome atop its central spire, twin tide cascades pouring from the ramparts into a swirling whirlpool moat, coral buttresses and drifting bubbles, misty turquoise spray, sunlit lagoon shore behind, bold outlines, bright sapphire-and-seafoam palette",
+					"style": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, fantasy game illustration, optimized to read at small size, chibi cartoon style. detailed background scene, neat, clear, clean background",
+					"at": "2026-07-08"
+				}
+			}
+		}
 	},
 	{
 		"id": "water_water_rook",
@@ -248,7 +670,30 @@
 		"chess_pieces": [
 			"rook"
 		],
-		"description": "Twin-water unit."
+		"description": "Twin-water unit.",
+		"tool": {
+			"art": {
+				"prompt": "Cartoon chibi squat coral-stone fortress tower rising from rolling surf, sturdy pearl-veined battlements crowned by two great spiraling water columns, tiny grinning droplet spirit peeking from an arched shell window, twin waterfalls sheeting down the barnacled walls into foaming turquoise waves, sapphire spray and drifting bubbles, sunny lagoon horizon behind, bold outlines, bright cheerful colors",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook.png",
+					"name": "Rook"
+				},
+				"inferredFrom": {
+					"concept": [
+						"rook",
+						"bishop_rook",
+						"fire_fire_rook"
+					],
+					"theme": [
+						"water_water_bishop_rook",
+						"water_water_knight_rook",
+						"water_water_pawn_rook"
+					]
+				}
+			}
+		},
+		"display_name": "Pure Water Rook"
 	},
 	{
 		"id": "water_water_rook_rook",
@@ -260,6 +705,29 @@
 			"rook",
 			"rook"
 		],
-		"description": "Twin-water unit."
+		"description": "Twin-water unit.",
+		"tool": {
+			"art": {
+				"prompt": "Cartoon chibi twin coral-stone fortress towers joined by a stout pearl-veined rampart bridge, rising from a shimmering tidal pool, each turret crowned with a great spiraling water column, waterfalls spilling between the battlements into churning surf, barnacled buttresses and conch-shell arrow slits, aquamarine spray and drifting bubbles, sunny lagoon horizon behind, bold outlines, bright cheerful colors",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook_rook.png",
+					"name": "Turret"
+				},
+				"inferredFrom": {
+					"concept": [
+						"rook_rook",
+						"bishop_rook",
+						"fire_fire_rook"
+					],
+					"theme": [
+						"water_water_bishop_rook",
+						"water_water_knight_rook",
+						"water_water_pawn_rook"
+					]
+				}
+			}
+		},
+		"display_name": "Pure Water Turret"
 	}
 ]

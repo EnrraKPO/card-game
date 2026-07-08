@@ -1,0 +1,13 @@
+[
+	{
+		"id": "darkness_light_pawn",
+		"elements": [
+			"darkness",
+			"light"
+		],
+		"display_name": "Undead Pawn",
+		"chess_pieces": [
+			"pawn"
+		]
+	}
+]

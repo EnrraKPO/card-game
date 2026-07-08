@@ -105,9 +105,11 @@ Both carry the same named-preset cluster as the shared Style fragment (＋ save 
 − delete / select; stored globally in settings as `conceptPresets` / `refHintPresets`).
 
 **Item data the LLM sees** (advanced view) lists every summary line the prompt writer
-would receive, each with a checkbox — untick lines that pollute the visual concept
-(material costs, verbose trigger mechanics). Hidden lines are remembered by their text,
-so a line whose content changes reappears visible.
+would receive, each with a checkbox. **Mechanical lines — the composition and stat
+blocks — start UNTICKED** (they pushed prompts toward material-mashup thinking; tick one
+back on when a specific item genuinely wants it). Untick any other line that pollutes
+the visual concept. Deviations are remembered by line text, so a line whose content
+changes resets to its default.
 
 **🔎 match art** (beside ✨) vision-analyzes the item's *current* art (in-game preferred,
 else workspace — `POST /api/art/prompt-from-art`) and writes a prompt that would recreate
@@ -140,6 +142,12 @@ the last generation exactly (same seed/prompt/style — current model/dims apply
 change one field for a controlled variation). Game loaders ignore the `tool` key; a
 panel you never touch writes no metadata.
 
+**Set generator naming** — generated cards are named from birth: `<element combo name>
+<piece combo name>` looked up from the base combo cards (fire_water = "Steam",
+bishop_pawn = "Paladin" → `fire_water_bishop_pawn` = **"Steam Paladin"**), falling back to
+capitalized ids when a base combo is missing. Names matter beyond flavor: ✨ recipe
+inference feeds the card name to the LLM.
+
 **Set generator conflict handling** — before generating, the "⚙ Set…" preview plans every
 slot against the live game data **by composition** (elements + pieces, sorted — matching the
 game's `composition_key`): genuinely new slots are generated; a composition that already
@@ -148,6 +156,68 @@ exists in ANOTHER file (even under a custom id like `frost_adept`) has its defin
 such an entry puts it back where it came from); compositions already in the family file are
 left alone; an id taken by an unrelated composition is skipped with a warning. No more
 duplicate-composition twins shadowing each other in the game's registry.
+
+**✨ Recipe inference (kin)** — fills a card's art recipe automatically from its FAMILY,
+anchored on an image: the card's own art when it has any, else the bare piece version's
+art (`bishop_rook` for `darkness_earth_bishop_rook`), else the closest piece-relative with
+art. The **adherence select** beside the button decides WHAT carries over from the anchor —
+`same concept` (default: the DESIGN carries — the same recognizable character, its
+anatomy/signature features/attire inventoried into the prompt — but pose, camera and
+scene are invented fresh for the theme), `replicate` (the PICTURE carries: same pose and
+framing, only materials/palette/lighting re-themed — for re-rendering art you like),
+`free` (just the idea; loose family blend). Theme
+comes from element-relatives (their stored prompts, else their art as vision refs); the
+card's mechanical composition is never shown to the LLM (it caused material-mashup
+prompts). The anchor becomes the recipe's generation reference. Three entry points: the "✨ kin" button in a card's art panel (fills the draft;
+you Save), a ✨ button on each card row in the tree (infers + stores that one entry's
+recipe), and a ✨ button on each card FILE (batch over every entry lacking a recipe —
+the primary, bulk use). The file button opens a small modal to pick the ADHERENCE for
+the run (what carries over from each card's anchor image; "same concept" is the
+default); the choice persists as `settings.kinAdherence` and also drives the per-item
+tree ✨ and the art-panel dial's starting value.
+The batch runs as a server-side job: the file row shows live `✨ n/m…` progress, each
+entry gains its ✨ marker as its recipe lands, and browsing (or reloading) the UI never
+interrupts it — a fresh page reattaches to running jobs. Entries carrying a recipe show
+a ✨ marker permanently; authored recipes are never overwritten by the batch.
+
+**🗂 Generation pool** — every image generated for an item (🎨 single runs and every ⛓
+flow candidate) is captured automatically under `workspace/art/_pool/<type>/<id>/` with
+its metadata (source, model, seed, date), newest first, capped at 60 per item. The
+"🗂 Pool…" button opens the gallery: click any image to inspect it full-size (lightbox),
+✔ swaps it in as the item's workspace art (rembg applied there for flow images on types
+that want it), ✕ removes it. Nothing is ever lost to an overwrite again.
+
+**⛓ Quick Flow (batch)** — appoint any flow as THE Quick Flow ("★ Quick Flow" in the
+flow modal: saves its steps + anchor policy, where the policy resolves per card — its
+recipe reference, current art, base piece art, or none). Then one click runs it: a ⛓ on
+each recipe-carrying card row, and a ⛓ on each card file for the whole set. Only cards
+with a recipe prompt flow (the prompt drives generation); engaging the file batch offers
+to fill missing recipes first (✨ kin, adherence of your choice). When each card's tree
+completes, ONE image from the LAST step is picked at random and applied as its art
+(rembg as usual) — everything still lands in the 🗂 pool and the card's ⛓ gallery, so
+any pick can be swapped afterwards. Runs as a reattachable server-side job with a full
+monitoring UX: starting one auto-opens the **live monitor** (current card, step/image
+progress, candidates appearing as they land, finished cards with their picked art), a
+**persistent status strip** (bottom-left) stays visible while anything runs — with
+👁 monitor and ✕ stop right on it — and the file row shows the `⛓ n/m…` pill. **Stop
+acts immediately**: it aborts ComfyUI's in-flight generation (`/interrupt`), keeps
+everything already finished, and single (non-batch) flows have the same Stop in the
+flow modal.
+
+**⛓ Multi-step flows** — the "⛓ Flow…" button on the art panel automates chained
+generation: 1–4 steps, each with a model and a SAMPLE count; every output of step N feeds
+step N+1 as img2img input (Krea 2, denoise per step) or reference latent (Flux 2), so
+counts multiply through the tree (default flow: Flux 2 ×1 for prompt adherence → Krea 2
+img2img ×3 at 0.55 denoise for style). An **anchor** select feeds step 1 an input image — always offering the real choices:
+none, current art, the card's **base piece art** (resolved live, e.g. bishop_rook's art),
+the recipe's own reference, or an image uploaded right in the modal — defaulting to the
+recipe's pick when one exists. Step-1 denoise is the image-adherence dial. Capped at 24 images per run. The item's prompt
+(+ shared style) drives all steps; flows run as polled server-side jobs (close the modal
+or reload — reopening reattaches, and the last finished flow's gallery persists on disk).
+All candidates appear in the gallery grouped by step — clicking one makes it the item's
+workspace art (background removal happens there, once, for types that want it) and stamps
+its seed into the entry's recipe. Flows save as named presets (Settings-backed, like
+style presets).
 
 **✨ AI provider** — Settings routes every ✨ feature (art prompts, 🔎 match art, effects
 from words) through one provider: **Local (Ollama)** (the default; per-feature models as

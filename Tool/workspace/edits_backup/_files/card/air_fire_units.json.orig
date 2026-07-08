@@ -1,0 +1,13 @@
+[
+	{
+		"id": "air_fire_pawn",
+		"elements": [
+			"air",
+			"fire"
+		],
+		"display_name": "Lightning Pawn",
+		"chess_pieces": [
+			"pawn"
+		]
+	}
+]

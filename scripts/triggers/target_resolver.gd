@@ -280,15 +280,18 @@ static func board_units(context: EffectContext) -> Array:
 	return out
 
 
-# Board distance from the holder to a candidate: the legacy cross-board metric (row
-# offset mirrored across the front line + column depth) when they stand on opposite
-# sides, plain Manhattan distance on the same side.
+# Board distance from the holder to a candidate. Cross-board: COLUMN DEPTH DOMINATES
+# and the mirrored lane offset only breaks ties within a column — the same lexicographic
+# geometry as TargetingStrategy.dist, so attack targeting and effect targeting agree on
+# what "nearest" means. Same side: plain Manhattan, scaled by the same factor so mixed
+# ally/enemy pools stay commensurate.
 static func board_distance(holder: CardInstance, cand: CardInstance) -> int:
 	if cand.owner == holder.owner:
-		return absi(holder.row - cand.row) + absi(holder.col - cand.col)
-	var dist: int = absi(holder.row + cand.row - (BoardData.ROWS - 1))
+		return (absi(holder.row - cand.row) + absi(holder.col - cand.col)) * BoardData.ROWS
+	var lane_offset: int = absi(holder.row + cand.row - (BoardData.ROWS - 1))
+	var depth: int
 	if holder.owner == 0:
-		dist += BoardData.COLS + cand.col - holder.col
+		depth = BoardData.COLS + cand.col - holder.col
 	else:
-		dist += BoardData.COLS + holder.col - cand.col
-	return dist
+		depth = BoardData.COLS + holder.col - cand.col
+	return depth * BoardData.ROWS + lane_offset

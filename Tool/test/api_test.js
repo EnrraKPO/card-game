@@ -442,14 +442,12 @@ async function main() {
       cc.argv.includes('-p') && cc.argv.join(' ').includes('--output-format text')
       && cc.argv.join(' ').includes('--allowedTools Read')
       && cc.argv.join(' ').includes('--model opus'), JSON.stringify(cc.argv));
-    const sysIdx = cc.argv.indexOf('--system-prompt-file');
     check('claude-code system prompt travels via file, not shell args',
-      sysIdx >= 0 && /never use the words/i.test(fs.readFileSync(cc.argv[sysIdx + 1], 'utf8')));
+      cc.argv.includes('--system-prompt-file') && /never use the words/i.test(cc.systemPrompt));
     check('claude-code prompt arrives on stdin with the item data',
       cc.stdin.includes('Cost 3') && /Reference image 1 .* Read tool: (.+\.png)/.test(cc.stdin));
-    const refPath = cc.stdin.match(/Read tool: (.+\.png)/)[1];
     check('claude-code reference image written for the Read tool',
-      fs.existsSync(refPath) && fs.readFileSync(refPath).equals(PNG1x1));
+      cc.refs.length === 1 && !cc.refs[0].missing && cc.refs[0].data === PNG1x1.toString('base64'));
     // ✨ effects ride the same switch
     fs.writeFileSync(ccReply, '```json\n' + GOOD_FX + '\n```');
     r = await api('/api/effects/from-text', { type: 'card', text: '+1 strength to all pawn units' });
@@ -499,6 +497,264 @@ async function main() {
       r.status === 200
       && readSbox('data/cards/apitest_move_src.json').some(e => e.id === 'apitest_mover' && e.attack === 2)
       && !readSbox('data/cards/apitest_move_dst.json').some(e => e.id === 'apitest_mover'));
+
+    // ── ✨ recipe inference: concept from piece-relatives, theme from element-relatives ──
+    fs.writeFileSync(path.join(SANDBOX, 'data/cards/apitest_kin_lib.json'), JSON.stringify([
+      { id: 'bishop_rook', display_name: 'Bishop Rook', cost: 2, attack: 2, health: 4, speed: 2,
+        chess_pieces: ['bishop', 'rook'], tool: { art: { prompt: 'a mitred tower-warden construct' } } },
+      { id: 'darkness_earth_pawn', display_name: 'Dark Earth Pawn', cost: 1, attack: 1, health: 2, speed: 3,
+        elements: ['darkness', 'earth'], chess_pieces: ['pawn'] },
+    ]));
+    fs.writeFileSync(path.join(SANDBOX, 'assets/cards/bishop_rook.png'), PNG1x1);
+    fs.writeFileSync(path.join(SANDBOX, 'assets/cards/darkness_earth_pawn.png'), PNG1x1);
+    fs.writeFileSync(path.join(SANDBOX, 'data/cards/apitest_kin.json'), JSON.stringify([
+      { id: 'darkness_earth_bishop_rook', display_name: 'Grave Bastion', cost: 4, attack: 4, health: 8, speed: 1,
+        elements: ['darkness', 'earth'], chess_pieces: ['bishop', 'rook'] },
+      { id: 'darkness_earth_knight', display_name: 'Dark Knight', cost: 2, attack: 3, health: 3, speed: 4,
+        elements: ['darkness', 'earth'], chess_pieces: ['knight'], tool: { art: { prompt: 'already authored' } } },
+    ]));
+    const KIN_PROMPT = 'a looming basalt bishop-tower wreathed in shadow, painterly';
+    let kinReq = null;
+    const fakeKin = require('http').createServer((rq, rs) => {
+      let b = ''; rq.on('data', c => b += c);
+      rq.on('end', () => {
+        kinReq = JSON.parse(b);
+        rs.setHeader('Content-Type', 'application/json');
+        rs.end(JSON.stringify({ response: KIN_PROMPT }));
+      });
+    });
+    await new Promise(ok => fakeKin.listen(8482, ok));
+    await api('/api/settings', { llmProvider: 'ollama', ollamaUrl: 'http://127.0.0.1:8482' });
+    r = await api('/api/art/infer-recipe', { type: 'card', id: 'darkness_earth_bishop_rook' });
+    check('kin inference anchors on the bare piece version\'s IMAGE (same-concept default)',
+      r.data.ok && r.data.prompt === KIN_PROMPT
+      && r.data.ref && r.data.ref.path === 'assets/cards/bishop_rook.png'
+      && r.data.inferredFrom.anchor === 'bishop_rook'
+      && r.data.inferredFrom.theme.includes('darkness_earth_pawn')
+      && r.data.stats.mode === 'concept', JSON.stringify(r.data));
+    check('same-concept mode carries the DESIGN and frees the presentation',
+      kinReq && kinReq.prompt.includes('Reference image 1 is THE CONCEPT')
+      && /Inventory what makes the subject/.test(kinReq.prompt)
+      && /Same recognizable character, new presentation/.test(kinReq.prompt)
+      && kinReq.prompt.includes('darkness_earth_knight: "already authored"')
+      && /darkness_earth_pawn: see reference image 2/.test(kinReq.prompt)
+      && !/Composition:/.test(kinReq.prompt)
+      && (kinReq.images || []).length >= 2, kinReq && kinReq.prompt);
+    r = await api('/api/art/infer-recipe', { type: 'card', id: 'darkness_earth_bishop_rook', adherence: 'replicate' });
+    check('replicate mode carries the PICTURE (re-dress only)',
+      r.data.ok && r.data.stats.mode === 'replicate'
+      && /re-dress it in the darkness and earth/.test(kinReq.prompt)
+      && /SAME illustration, re-themed/.test(kinReq.prompt), kinReq && kinReq.prompt);
+    r = await api('/api/art/infer-recipe', { type: 'card', id: 'darkness_earth_bishop_rook', adherence: 'free' });
+    check('free adherence keeps the blend behavior (minus the composition line)',
+      r.data.ok && r.data.stats.mode === 'free'
+      && /CONCEPT relatives/.test(kinReq.prompt)
+      && kinReq.prompt.includes('bishop_rook: "a mitred tower-warden construct"')
+      && !/Composition:/.test(kinReq.prompt), kinReq && kinReq.prompt);
+    check('single-card inference writes nothing',
+      !readSbox('data/cards/apitest_kin.json').find(e => e.id === 'darkness_earth_bishop_rook').tool);
+    // persist: true = the tree's per-item action — same inference, written onto the entry
+    r = await api('/api/art/infer-recipe', { type: 'card', id: 'darkness_earth_pawn', persist: true });
+    check('per-item inference persists onto the entry', r.data.persisted && r.data.stats
+      && readSbox('data/cards/apitest_kin_lib.json').find(e => e.id === 'darkness_earth_pawn').tool.art.prompt === KIN_PROMPT,
+      JSON.stringify(r.data));
+    r = await api('/api/state');
+    check('state flags entries carrying a recipe',
+      r.data.game.card.find(c => c.id === 'darkness_earth_pawn').recipe === true
+      && !r.data.game.card.find(c => c.id === 'darkness_earth_bishop_rook').recipe);
+    // batch = a polled server-side job (the UI must survive re-renders/reloads)
+    r = await api('/api/art/infer-recipes', { type: 'card', file: 'apitest_kin.json' });
+    check('batch inference starts a job', r.status === 200 && !!r.data.jobId, JSON.stringify(r.data));
+    let kinJob = null;
+    for (let i = 0; i < 100; i++) {
+      await new Promise(ok => setTimeout(ok, 100));
+      kinJob = (await api('/api/art/infer-job?id=' + r.data.jobId)).data;
+      if (kinJob.status !== 'running') break;
+    }
+    check('inference job completes with per-entry results and progress counts',
+      kinJob.status === 'done' && kinJob.total === 1 && kinJob.done === 1
+      && kinJob.results.find(x => x.id === 'darkness_earth_bishop_rook').prompt === KIN_PROMPT
+      && kinJob.results.find(x => x.id === 'darkness_earth_knight').skipped, JSON.stringify(kinJob));
+    check('batch job persisted recipes, skipping authored ones',
+      readSbox('data/cards/apitest_kin.json').find(e => e.id === 'darkness_earth_bishop_rook').tool.art.prompt === KIN_PROMPT
+      && readSbox('data/cards/apitest_kin.json').find(e => e.id === 'darkness_earth_bishop_rook').tool.art.ref.path === 'assets/cards/bishop_rook.png'
+      && readSbox('data/cards/apitest_kin.json').find(e => e.id === 'darkness_earth_knight').tool.art.prompt === 'already authored');
+    check('running jobs surface in state for UI reattachment',
+      Array.isArray((await api('/api/state')).data.inferJobs));
+    // adherence threads through the BATCH too (the bulk path is the primary use)
+    fs.writeFileSync(path.join(SANDBOX, 'data/cards/apitest_kin2.json'), JSON.stringify([
+      { id: 'darkness_earth_rook', display_name: 'Grave Turret', cost: 3, attack: 2, health: 9, speed: 1,
+        elements: ['darkness', 'earth'], chess_pieces: ['rook'] }]));
+    r = await api('/api/art/infer-recipes', { type: 'card', file: 'apitest_kin2.json', adherence: 'replicate' });
+    for (let i = 0; i < 100; i++) {
+      await new Promise(ok => setTimeout(ok, 100));
+      if ((await api('/api/art/infer-job?id=' + r.data.jobId)).data.status !== 'running') break;
+    }
+    check('batch inference honors the chosen adherence',
+      /SAME illustration, re-themed/.test(kinReq.prompt), kinReq && kinReq.prompt);
+    r = await api('/api/settings', { kinAdherence: 'replicate' });
+    check('kin adherence default persists in settings', r.data.settings.kinAdherence === 'replicate');
+    r = await api('/api/settings', { kinAdherence: 'bogus' });
+    check('bad kinAdherence rejected', r.status === 400);
+    await api('/api/settings', { kinAdherence: 'concept' });
+    fakeKin.close();
+
+    // ── ⛓ multi-step flows: a fake ComfyUI proves the chain, the fan-out and the pick ──
+    const comfyReqs = [];
+    const fakeComfy = require('http').createServer((rq, rs) => {
+      let b = ''; rq.on('data', c => b += c);
+      rq.on('end', () => {
+        const u = rq.url;
+        rs.setHeader('Content-Type', 'application/json');
+        if (u.startsWith('/upload/image')) {
+          comfyReqs.push({ upload: true });
+          rs.end(JSON.stringify({ name: 'up_' + comfyReqs.length + '.png' }));
+        } else if (u === '/prompt') {
+          comfyReqs.push({ wf: JSON.parse(b).prompt });
+          rs.end(JSON.stringify({ prompt_id: 'p' + comfyReqs.length }));
+        } else if (u.startsWith('/history/')) {
+          const pid = u.slice('/history/'.length);
+          rs.end(JSON.stringify({ [pid]: { status: { status_str: 'success' },
+            outputs: { 60: { images: [{ filename: 'o.png', subfolder: '', type: 'output' }] } } } }));
+        } else if (u.startsWith('/view')) {
+          rs.setHeader('Content-Type', 'image/png');
+          rs.end(PNG1x1);
+        } else { rs.statusCode = 404; rs.end('{}'); }
+      });
+    });
+    await new Promise(ok => fakeComfy.listen(8485, ok));
+    await api('/api/settings', { comfyUrl: 'http://127.0.0.1:8485' });
+    r = await api('/api/art/flow', { type: 'card', id: 'apitest_flip', prompt: 'x',
+      steps: [{ model: 'flux2', samples: 8 }, { model: 'krea2', samples: 8, denoise: 0.5 }] });
+    check('flow cap rejects oversized fan-outs', r.status === 400 && /cap/.test(r.data.error || ''), r.data.error);
+    r = await api('/api/art/flow', { type: 'card', id: 'apitest_flip', prompt: 'x',
+      steps: [{ model: 'flux2', samples: 1 }, { model: 'ideogram4', samples: 1 }] });
+    check('flow rejects input-less models on later steps', r.status === 400, r.data.error);
+    r = await api('/api/art/flow', { type: 'card', id: 'apitest_flip', prompt: 'a mystic pawn',
+      steps: [{ model: 'flux2', samples: 1 }, { model: 'krea2', samples: 2, denoise: 0.5 }] });
+    check('flow starts a job with the multiplied total', r.status === 200 && !!r.data.jobId && r.data.total === 3,
+      JSON.stringify(r.data));
+    let fj = null;
+    for (let i = 0; i < 200; i++) {
+      await new Promise(ok => setTimeout(ok, 150));
+      fj = (await api('/api/art/flow-job?id=' + r.data.jobId)).data;
+      if (fj.status !== 'running') break;
+    }
+    check('flow completes the fan-out tree', fj.status === 'done' && fj.done === 3
+      && fj.nodes.length === 3 && fj.nodes[0].step === 1 && fj.nodes[0].parent === 0
+      && fj.nodes.filter(n => n.step === 2 && n.parent === 1).length === 2, JSON.stringify(fj));
+    check('step-2 generations chain off the parent image',
+      comfyReqs.filter(q => q.wf && JSON.stringify(q.wf).includes('LoadImage')).length === 2);
+    const flowDirAbs = path.join(WS_DIR, 'art', '_flow', 'card', 'apitest_flip');
+    check('flow candidates are on disk with a manifest',
+      fs.existsSync(path.join(flowDirAbs, fj.nodes[2].file))
+      && JSON.parse(fs.readFileSync(path.join(flowDirAbs, 'flow.json'), 'utf8')).nodes.length === 3);
+    const imgRes = await fetch(BASE + '/flowart/card/apitest_flip/' + fj.nodes[1].file);
+    check('flow candidates are served', imgRes.status === 200
+      && Buffer.from(await imgRes.arrayBuffer()).equals(PNG1x1));
+    r = await api('/api/art/flow-pick', { type: 'card', id: 'apitest_flip', file: fj.nodes[1].file });
+    check('picking a candidate promotes it to workspace art', r.data.ok
+      && r.data.node && r.data.node.seed != null
+      && fs.readFileSync(path.join(WS_DIR, 'art', 'card', 'apitest_flip.png')).equals(PNG1x1),
+      JSON.stringify(r.data));
+    check('flow-result returns the manifest after the fact',
+      (await api('/api/art/flow-result?type=card&id=apitest_flip')).data.result.nodes.length === 3);
+    check('state lists running flows for UI reattachment',
+      Array.isArray((await api('/api/state')).data.flowJobs));
+    r = await api('/api/settings', { flowPresets: { housestyle: JSON.stringify([{ model: 'flux2', samples: 1 }]) } });
+    check('flow presets persist', (r.data.settings.flowPresets.housestyle || '').includes('flux2'));
+    // anchored flow: step 1 grows from a concept image instead of from scratch
+    r = await api('/api/art/flow', { type: 'card', id: 'apitest_flip', prompt: 'x',
+      anchor: { source: 'game', path: 'assets/cards/bishop_queen.png' },
+      steps: [{ model: 'ideogram4', samples: 1 }] });
+    check('anchored flow rejects input-less step-1 models', r.status === 400, r.data.error);
+    const wfCountBefore = comfyReqs.filter(q => q.wf).length;
+    r = await api('/api/art/flow', { type: 'card', id: 'apitest_flip', prompt: 'an anchored pawn',
+      anchor: { source: 'game', path: 'assets/cards/bishop_queen.png' },
+      steps: [{ model: 'krea2', samples: 1, denoise: 0.4 }] });
+    check('anchored flow starts', r.status === 200 && !!r.data.jobId, JSON.stringify(r.data));
+    for (let i = 0; i < 200; i++) {
+      await new Promise(ok => setTimeout(ok, 150));
+      fj = (await api('/api/art/flow-job?id=' + r.data.jobId)).data;
+      if (fj.status !== 'running') break;
+    }
+    const anchoredWfs = comfyReqs.filter(q => q.wf).slice(wfCountBefore);
+    check('anchored step 1 runs img2img off the anchor with its denoise',
+      fj.status === 'done' && fj.nodes.length === 1 && fj.nodes[0].denoise === 0.4
+      && anchoredWfs.length === 1 && JSON.stringify(anchoredWfs[0].wf).includes('LoadImage'),
+      JSON.stringify({ fj, wf: anchoredWfs.length }));
+    check('anchored flow manifest records the anchor',
+      JSON.parse(fs.readFileSync(path.join(flowDirAbs, 'flow.json'), 'utf8')).anchor.path === 'assets/cards/bishop_queen.png');
+
+    // ── the generation pool: every flow candidate landed there, swappable at will ──
+    r = await api('/api/art/pool?type=card&id=apitest_flip');
+    check('every generation pooled with metadata', r.data.pool.length === 4
+      && r.data.pool.every(e => e.source === 'flow' && e.seed != null && /^p[0-9]+\.png$/.test(e.file)),
+      JSON.stringify(r.data.pool));
+    const poolEntry = r.data.pool[0];
+    const poolImg = await fetch(BASE + `/poolart/card/apitest_flip/${poolEntry.file}`);
+    check('pool images are served', poolImg.status === 200
+      && Buffer.from(await poolImg.arrayBuffer()).equals(PNG1x1));
+    r = await api('/api/art/pool-use', { type: 'card', id: 'apitest_flip', file: poolEntry.file });
+    check('pool-use swaps the workspace art', r.data.ok
+      && fs.readFileSync(path.join(WS_DIR, 'art', 'card', 'apitest_flip.png')).equals(PNG1x1));
+    r = await api('/api/art/pool-delete', { type: 'card', id: 'apitest_flip', file: poolEntry.file });
+    check('pool-delete removes an entry', r.data.ok && r.data.count === 3);
+
+    // ── ⛓ Quick Flow batch: appointed flow across a file, auto-pick from the last step ──
+    const fakeKin2 = require('http').createServer((rq, rs) => {
+      let b = ''; rq.on('data', c => b += c);
+      rq.on('end', () => {
+        rs.setHeader('Content-Type', 'application/json');
+        rs.end(JSON.stringify({ response: 'a quick-flow prompt' }));
+      });
+    });
+    await new Promise(ok => fakeKin2.listen(8482, ok));
+    r = await api('/api/settings', { quickFlow: { steps: [{ model: 'ideogram4', samples: 1 }, { model: 'ideogram4', samples: 1 }], anchor: 'none' } });
+    check('invalid quick flow rejected at appointment', r.status === 400, r.data.error);
+    r = await api('/api/settings', { quickFlow: { steps: [{ model: 'krea2', samples: 2, denoise: 0.5 }], anchor: 'none' } });
+    check('quick flow appointment persists', r.data.settings.quickFlow.steps[0].model === 'krea2');
+    r = await api('/api/art/flow-batch', { type: 'card', file: 'nope.json' });
+    check('quick flow batch on an empty file 404s', r.status === 404);
+    fs.writeFileSync(path.join(SANDBOX, 'data/cards/apitest_qf.json'), JSON.stringify([
+      { id: 'apitest_qf_a', display_name: 'QA', cost: 1, attack: 1, health: 1, speed: 1,
+        elements: ['fire'], chess_pieces: ['pawn'], tool: { art: { prompt: 'an authored fire pawn' } } },
+      { id: 'apitest_qf_b', display_name: 'QB', cost: 1, attack: 1, health: 1, speed: 1,
+        elements: ['fire'], chess_pieces: ['queen'] },
+    ]));
+    r = await api('/api/art/flow-batch', { type: 'card', file: 'apitest_qf.json', fill: true, adherence: 'free' });
+    check('quick flow batch starts', r.status === 200 && !!r.data.jobId, JSON.stringify(r.data));
+    let qj = null, sawCurrent = false;
+    for (let i = 0; i < 300; i++) {
+      await new Promise(ok => setTimeout(ok, 150));
+      qj = (await api('/api/art/flow-batch-job?id=' + r.data.jobId)).data;
+      if (qj.status === 'running' && qj.currentFlow && qj.currentId) sawCurrent = true;
+      if (qj.status !== 'running') break;
+    }
+    check('monitor snapshot exposes the current card and live image progress', sawCurrent);
+    check('quick flow fills missing recipes, flows every card and picks finals',
+      qj.status === 'done'
+      && qj.results.filter(x => x.picked).length === 2
+      && readSbox('data/cards/apitest_qf.json').find(e => e.id === 'apitest_qf_b').tool.art.prompt === 'a quick-flow prompt'
+      && fs.existsSync(path.join(WS_DIR, 'art', 'card', 'apitest_qf_a.png'))
+      && fs.existsSync(path.join(WS_DIR, 'art', 'card', 'apitest_qf_b.png')), JSON.stringify(qj));
+    check('picks come from the LAST step', qj.results.filter(x => x.picked).every(x => /^1_/.test(x.picked)));
+    check('running quick-flow batches surface in state',
+      Array.isArray((await api('/api/state')).data.flowBatchJobs));
+    // stop: halts promptly (in-flight image aborted best-effort), nothing gets picked
+    r = await api('/api/art/flow-batch', { type: 'card', file: 'apitest_qf.json', fill: false });
+    check('quick flow batch restarts on the same file', r.status === 200 && !!r.data.jobId);
+    await api('/api/art/flow-batch-stop', { id: r.data.jobId });
+    let sj = null;
+    for (let i = 0; i < 100; i++) {
+      await new Promise(ok => setTimeout(ok, 150));
+      sj = (await api('/api/art/flow-batch-job?id=' + r.data.jobId)).data;
+      if (sj.status !== 'running') break;
+    }
+    check('stop halts the batch cleanly with no picks',
+      sj.status === 'stopped' && sj.results.filter(x => x.picked).length === 0, JSON.stringify(sj));
+    fakeKin2.close();
+    fakeComfy.close();
 
     // ── single-object files keep working (statuses) ──
     r = await api('/api/game/item?type=status&id=poison');

@@ -1,6 +1,6 @@
 {
   "comfyUrl": "http://127.0.0.1:8000",
-  "artStyle": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric light, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear, ",
+  "artStyle": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear, clean background",
   "stylePresets": {
     "painterly": "rich glowing painterly illustration, volumetric god rays",
     "cartoon": "cartoon art style, 2d illustration, clean bold outlines, flat cell shading",
@@ -16,6 +16,8 @@
     "Infer Element": "Use the provided image references to infer the interpretation of the elemental theme",
     "Infer element and concept": "Use the poison themed cards to infer theme presentation, and the base card to infer concept"
   },
+  "flowPresets": {},
+  "kinAdherence": "concept",
   "turboLora": "Flux_2-Turbo-LoRA_comfyui.safetensors",
   "turboSteps": 8,
   "turboStrength": 1,
@@ -26,5 +28,25 @@
   "llmModel": "gemma4:31b",
   "effectsModel": "qwen3-coder-next:q4_K_M",
   "claudeModel": "claude-opus-4-8",
-  "openaiModel": "gpt-5.5"
+  "openaiModel": "gpt-5.5",
+  "quickFlow": {
+    "steps": [
+      {
+        "model": "krea2",
+        "samples": 3,
+        "denoise": 0.5
+      },
+      {
+        "model": "krea2",
+        "samples": 1,
+        "denoise": 0.6
+      },
+      {
+        "model": "krea2",
+        "samples": 1,
+        "denoise": 0.7
+      }
+    ],
+    "anchor": "recipe"
+  }
 }
