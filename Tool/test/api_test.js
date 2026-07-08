@@ -536,8 +536,9 @@ async function main() {
       kinReq && kinReq.prompt.includes('Reference image 1 is THE CONCEPT')
       && /Inventory what makes the subject/.test(kinReq.prompt)
       && /Same recognizable character, new presentation/.test(kinReq.prompt)
-      // relatives ride in by ANONYMOUS label — the authored prompt rides along verbatim,
-      // but the composition-encoding id never appears (that was the leak)
+      // the AUTHORED name rides in (concept + theme identity), but the composition-encoding
+      // id never appears — relatives enter by ANONYMOUS label, their prompts verbatim
+      && /Card name .*: Grave Bastion/.test(kinReq.prompt)
       && /theme example \d+: "already authored"/.test(kinReq.prompt)
       && /theme example \d+: see reference image 2/.test(kinReq.prompt)
       && !/Composition:/.test(kinReq.prompt)
@@ -554,6 +555,7 @@ async function main() {
       r.data.ok && r.data.stats.mode === 'free'
       && /CONCEPT relatives/.test(kinReq.prompt)
       && /concept relative \d+: "a mitred tower-warden construct"/.test(kinReq.prompt)
+      && /Card name .*: Grave Bastion/.test(kinReq.prompt)   // authored name present
       && !/Composition:/.test(kinReq.prompt)
       && !/bishop_rook|darkness_earth/.test(kinReq.prompt), kinReq && kinReq.prompt);   // no id leaks
     check('single-card inference writes nothing',

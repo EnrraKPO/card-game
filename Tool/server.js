@@ -1465,6 +1465,9 @@ async function llmInferAnchored(entry, anchor, adherence) {
     ? "Describe reference image 1 faithfully — the subject, its pose, the framing and composition — and re-dress it in the theme shown by the examples below: replace ONLY materials, palette, lighting and magical effects. The result must read as the SAME illustration, re-themed."
     : "Inventory what makes the subject of reference image 1 recognizable — creature type, build, anatomy, signature features, attire and equipment — and carry ALL of those identifying details into the prompt. Then stage it FRESH: invent a new pose, action, camera angle and setting that express the theme shown by the examples below, with materials and palette rendered in that theme. Same recognizable character, new presentation — do not copy the reference's pose or composition.";
   const user = [
+    // Authored name = concept + theme identity ("Lightning Hierophant"); name only, never
+    // the composition-encoding id (see llmInferBlend).
+    d.display_name ? `Card name (the authored concept + theme identity — honor it): ${d.display_name}` : '',
     'Reference image 1 is THE CONCEPT — the exact subject this card\'s art must depict.',
     themeLines.length ? 'THEME examples (how this theme looks in this game — palette, materials, magic; match it, do not name it):' : '',
     ...themeLines,
@@ -1533,6 +1536,10 @@ async function llmInferBlend(entry) {
   // (that is the leak). CONCEPT relatives show what the subject is; THEME relatives (and
   // their reference art) carry the look. No composition word appears anywhere in the input.
   const user = [
+    // The AUTHORED name carries the concept + theme identity ("Lightning Hierophant") —
+    // the one signal the family art can't convey. Name only, NEVER the id (the id spells
+    // out the composition and is the leak); omit the line when there is no display name.
+    d.display_name ? `Card name (the authored concept + theme identity — honor it): ${d.display_name}` : '',
     d.description ? `Card text (flavor context only — never render text): ${d.description}` : '',
     conceptLines.length ? 'CONCEPT relatives — they show what the SUBJECT is:' : '',
     ...conceptLines,
