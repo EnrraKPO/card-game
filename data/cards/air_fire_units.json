@@ -243,34 +243,30 @@
 	},
 	{
 		"id": "air_fire_bishop_pawn",
+		"display_name": "Lightning Paladin",
 		"elements": [
 			"air",
 			"fire"
 		],
-		"display_name": "Lightning Paladin",
 		"chess_pieces": [
 			"bishop",
 			"pawn"
 		],
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "Storm-blue crystalline paladin in bolt-forged plate, closed visored helm crowned with a jagged lightning crest, molten-gold veins glowing across pauldrons and cross-marked tabard, hoisting a flanged mace crackling white voltage and a tall kite shield rimmed in amber sparks, arcs snapping off his gauntlets, wind-torn cape streaming, fierce glowing eyes, churning tempest sky, bold saturated fantasy illustration",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/bishop_pawn.png",
-					"name": "Paladin"
-				},
-				"inferredFrom": {
-					"concept": [
-						"bishop_pawn",
-						"water_water_bishop_pawn",
-						"air_darkness_bishop_pawn"
-					],
-					"theme": [
-						"air_fire_bishop",
-						"air_fire_knight_pawn",
-						"air_fire_pawn"
-					]
+					"name": "Paladin",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
@@ -581,34 +577,30 @@
 	},
 	{
 		"id": "air_fire_rook_rook",
+		"display_name": "Lightning Turret",
 		"elements": [
 			"air",
 			"fire"
 		],
-		"display_name": "Lightning Turret",
 		"chess_pieces": [
 			"rook",
 			"rook"
 		],
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "Twin storm-forged crystalline fortress towers linked by a bolt-veined rampart bridge, walls of storm-blue crystal ridged with molten-gold trim, each turret crowned with a churning ring of white voltage discharging forked lightning skyward, cascading amber sparks pouring down barbican slits, arcing tendrils leaping between spires, roiling thunderhead sky behind, thick bold outlines, saturated cheerful colors",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/rook_rook.png",
-					"name": "Turret"
-				},
-				"inferredFrom": {
-					"concept": [
-						"rook_rook",
-						"darkness_light_rook_rook",
-						"water_water_rook_rook"
-					],
-					"theme": [
-						"air_fire_bishop_rook",
-						"air_fire_knight_rook",
-						"air_fire_pawn_rook"
-					]
+					"name": "Turret",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}

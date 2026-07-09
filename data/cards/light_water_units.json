@@ -1,0 +1,625 @@
+[
+	{
+		"id": "light_water_pawn",
+		"elements": [
+			"light",
+			"water"
+		],
+		"display_name": "Rainbow Pawn",
+		"chess_pieces": [
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Prismatic-crystalline chibi foot soldier of shimmering translucent dew, small rounded helm and simple plated armor rippling through every spectral hue, wide luminous eyes, clutching a short spear tipped with radiant light and a round faceted shield alive with refracting gemlike sparkle, droplets of iridescent color beading off its surface, casting soft rainbow reflections on a dark polished floor, centered heroic pose, deep black misty void.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn.png",
+					"name": "Pawn"
+				},
+				"inferredFrom": {
+					"concept": [
+						"pawn",
+						"air_darkness_bishop_pawn",
+						"air_darkness_knight_pawn"
+					],
+					"theme": [
+						"light_water_knight",
+						"light_water_queen",
+						"light_water_rook"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "light_water_knight",
+		"display_name": "Rainbow Knight",
+		"elements": [
+			"light",
+			"water"
+		],
+		"chess_pieces": [
+			"knight"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Rainbow-flame armored knight astride a rearing warhorse, both bodies woven of luminous prismatic mist shifting through every spectral hue, plate edges beaded with soft glowing dew, faceted refracting gems set in pauldrons and chamfron scattering colored sparks, spectral multicolored mane streaming upward, prismatic reflections spilling across a dark polished floor, deep misty void backdrop, radiant fantasy digital painting.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight.png",
+					"name": "Knight",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "light_water_bishop",
+		"elements": [
+			"light",
+			"water"
+		],
+		"display_name": "Rainbow Bishop",
+		"chess_pieces": [
+			"bishop"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Prismatic crystalline priest, small and round, luminous mitre of shifting spectral hues crowned with a many-faceted glittering gem scattering refracted light, translucent dew-soft robe rippling through every rainbow color, a slender spiral staff tipped with a glowing multifaceted jewel, wide glowing prismatic eyes, iridescent vapor streaming upward, casting scattered colored reflections across a dark polished floor, centered heroic pose, deep black misty void.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop.png",
+					"name": "Bishop"
+				},
+				"inferredFrom": {
+					"concept": [
+						"bishop",
+						"air_darkness_bishop",
+						"air_darkness_bishop_bishop"
+					],
+					"theme": [
+						"light_water_knight",
+						"light_water_pawn",
+						"light_water_queen",
+						"light_water_rook"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "light_water_rook",
+		"display_name": "Rainbow Rook",
+		"elements": [
+			"light",
+			"water"
+		],
+		"chess_pieces": [
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Prismatic-crystalline chibi tower woven of shimmering translucent dew, crenellated top and steep conical cap rippling through every spectral hue, tall arched windows glowing with soft rainbow light, faceted refracting gems studding its walls scattering colored sparks, a slender pennant of luminous multicolored mist streaming upward, iridescent droplets beading down, casting rainbow reflections across a dark polished floor, centered heroic pose, deep misty black void.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook.png",
+					"name": "Rook",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "light_water_queen",
+		"display_name": "Rainbow Queen",
+		"elements": [
+			"light",
+			"water"
+		],
+		"chess_pieces": [
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Prismatic queenly deity woven of luminous multicolored dew, tall filigreed high collar and flowing translucent robe rippling through every spectral hue, radiant crown-helm of faceted glittering gems scattering colored sparks, blank glowing eyes, one upraised palm cradling a small refracting crown, a slender scepter tipped with soft rainbow light, iridescent droplets beading off her form, colored reflections across a dark polished floor, centered regal pose, deep misty void.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/queen.png",
+					"name": "Queen",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "light_water_pawn_pawn",
+		"display_name": "Rainbow Warrior",
+		"elements": [
+			"light",
+			"water"
+		],
+		"chess_pieces": [
+			"pawn",
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Prismatic-crystalline chibi warrior of shimmering translucent dew, rounded open-face helm and plated armor rippling through every spectral hue, fierce luminous eyes, hoisting a long light-tipped blade and faceted gem-studded shield scattering colored sparks, iridescent droplets beading off its surface, centered heroic lunging pose, soft rainbow reflections on a dark polished floor, deep misty black void, radiant fantasy digital painting.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_pawn.png",
+					"name": "Warrior",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "light_water_knight_pawn",
+		"display_name": "Rainbow Cavalry",
+		"elements": [
+			"light",
+			"water"
+		],
+		"chess_pieces": [
+			"knight",
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Prismatic mounted lancer woven of luminous multicolored dew, plate rippling through every spectral hue, closed helm crested with a streaming ribbon of iridescent mist, gauntlets gripping a slender lance tipped with soft rainbow light, astride a translucent shimmering warhorse charging low, faceted refracting gems studding chamfron and pauldrons scattering colored sparks, iridescent droplets beading off both forms, rainbow reflections across a dark polished floor, deep misty void, front-charging angle.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_pawn.png",
+					"name": "Cavalry",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "light_water_bishop_pawn",
+		"display_name": "Rainbow Paladin",
+		"elements": [
+			"light",
+			"water"
+		],
+		"chess_pieces": [
+			"bishop",
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi paladin knight in rounded visored helm crowned with a small ridged coronet, plated armor and flowing cape all woven of luminous translucent dew rippling through every spectral hue, hoisting a flanged mace and tall pointed shield alive with faceted refracting gems scattering colored sparks, iridescent droplets beading off his form, glowing eyes, soft rainbow reflections across a dark polished floor, centered heroic pose, deep misty void.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_pawn.png",
+					"name": "Paladin",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "light_water_pawn_rook",
+		"display_name": "Rainbow Barracks",
+		"elements": [
+			"light",
+			"water"
+		],
+		"chess_pieces": [
+			"pawn",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Prismatic-crystalline chibi barracks tower woven of shimmering translucent dew, crenellated battlements and arched gateway rippling through every spectral hue, a hanging pennant of luminous multicolored mist, a rack of light-tipped spears beside the door, a tiny rounded-helm sentry of glittering dew clutching a radiant spear and a round faceted shield scattering colored sparks, iridescent droplets beading down the walls, rainbow reflections across a dark polished floor, centered heroic pose, deep misty black void.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_rook.png",
+					"name": "Barracks",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "light_water_pawn_queen",
+		"display_name": "Rainbow Commander",
+		"elements": [
+			"light",
+			"water"
+		],
+		"chess_pieces": [
+			"pawn",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Female military leader woven of luminous translucent dew, her lightweight plated garb rippling through every spectral hue, standing atop a raised prismatic platform and thrusting a slender baton skyward to rally a column of small shimmering soldiers below, faceted refracting gems studding her pauldrons scattering colored sparks, iridescent droplets beading off her form, colored reflections across a dark polished floor, deep misty void, high dramatic angle, radiant fantasy digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_queen.png",
+					"name": "Commander",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "light_water_knight_knight",
+		"display_name": "Rainbow Beast",
+		"elements": [
+			"light",
+			"water"
+		],
+		"chess_pieces": [
+			"knight",
+			"knight"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Prismatic rainbow-hued bull woven of luminous translucent dew, hulking muscled shoulders and lowered head shifting through every spectral color, faceted refracting gems studding curved horns and a glittering forehead plate scattering colored sparks, spectral multicolored mane streaming upward, iridescent droplets beading off its hide, mid-charge stamping across a dark polished floor casting rainbow reflections, deep misty void, radiant fantasy digital painting.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_knight.png",
+					"name": "Beast",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "light_water_bishop_knight",
+		"elements": [
+			"light",
+			"water"
+		],
+		"display_name": "Rainbow Cryptid",
+		"chess_pieces": [
+			"bishop",
+			"knight"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Prismatic chibi horned cryptid fawn woven of luminous translucent dew, plump body rippling through every spectral hue, twin spiraled horns of faceted glittering gems scattering colored sparks, wide radiant eyes, iridescent droplets beading off its downy coat, delicate crystalline hooves, colored reflections spilling across a dark polished floor, centered playful pose, deep misty black void.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_knight.png",
+					"name": "Cryptid"
+				},
+				"inferredFrom": {
+					"concept": [
+						"bishop_knight",
+						"air_darkness_bishop_knight",
+						"air_fire_bishop_knight"
+					],
+					"theme": [
+						"light_water_knight",
+						"light_water_pawn",
+						"light_water_queen",
+						"light_water_rook"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "light_water_knight_rook",
+		"display_name": "Rainbow Stable",
+		"elements": [
+			"light",
+			"water"
+		],
+		"chess_pieces": [
+			"knight",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Prismatic-crystalline stable pavilion woven of shimmering translucent dew, timber beams and roof tiles rippling through every spectral hue, arched doors ajar with a luminous multicolored horse peering out, mane streaming as soft rainbow mist, faceted refracting gems studding walls and corner posts scattering colored sparks, iridescent droplets beading down, casting rainbow reflections across a dark polished floor, centered, deep misty black void.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_rook.png",
+					"name": "Stable",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "light_water_knight_queen",
+		"elements": [
+			"light",
+			"water"
+		],
+		"display_name": "Rainbow Monster",
+		"chess_pieces": [
+			"knight",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Prismatic monster dragon woven of luminous translucent dew, colossal swept-back horns and jagged spine ridges rippling through every spectral hue, membranous wings glazed like iridescent film scattering colored sparks, faceted refracting gems studding its chest and talons, wide glowing eyes, droplets of rainbow color beading off its scales, casting soft colored reflections across a dark polished floor, wings flared in a rearing lunge, deep misty black void, radiant fantasy digital painting.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_queen.png",
+					"name": "Monster"
+				},
+				"inferredFrom": {
+					"concept": [
+						"knight_queen",
+						"air_darkness_knight_queen",
+						"air_fire_knight_queen"
+					],
+					"theme": [
+						"light_water_knight",
+						"light_water_pawn",
+						"light_water_rook",
+						"light_water_queen"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "light_water_bishop_bishop",
+		"elements": [
+			"light",
+			"water"
+		],
+		"display_name": "Rainbow Hierophant",
+		"chess_pieces": [
+			"bishop",
+			"bishop"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Chibi-proportioned bearded high priest woven of luminous translucent dew rippling through every spectral hue, tall pointed mitre and layered robes shimmering in shifting rainbow color, crowned and studded with faceted refracting gems scattering colored sparks, glowing prismatic eyes, both palms raised unleashing a spiraling burst of radiant multicolored magic, iridescent droplets beading off his form, colored reflections across a dark polished floor, centered heroic pose, deep misty void.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_bishop.png",
+					"name": "Hierophant"
+				},
+				"inferredFrom": {
+					"concept": [
+						"bishop_bishop",
+						"air_darkness_bishop_bishop",
+						"air_fire_bishop_bishop"
+					],
+					"theme": [
+						"light_water_knight",
+						"light_water_pawn",
+						"light_water_rook",
+						"light_water_queen"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "light_water_bishop_rook",
+		"display_name": "Rainbow Arcane Tower",
+		"elements": [
+			"light",
+			"water"
+		],
+		"chess_pieces": [
+			"bishop",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Prismatic-crystalline round tower woven of shimmering translucent dew, crenellated summit and steep tapering cap rippling through every spectral hue, tall arched windows aglow with soft rainbow light, faceted refracting gems studding its walls scattering colored sparks, a slender pennant of luminous multicolored mist streaming upward, iridescent droplets beading down, a tiny robed guardian raising a radiant staff at its glowing gateway, rainbow reflections across a dark polished floor, centered heroic pose, deep misty black void.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_rook.png",
+					"name": "Arcane Tower",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "light_water_bishop_queen",
+		"elements": [
+			"light",
+			"water"
+		],
+		"display_name": "Rainbow Deity",
+		"chess_pieces": [
+			"bishop",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Radiant goddess figure floating serenely, her body and streaming gown woven of luminous prismatic mist rippling through every spectral hue, skin beaded with iridescent glowing dew, faceted refracting gems studding her shoulders and cupped in open palms scattering colored sparks, spectral rainbow hair drifting upward, soft rainbow reflections across a dark polished floor, deep misty black void.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_queen.png",
+					"name": "Deity"
+				},
+				"inferredFrom": {
+					"concept": [
+						"bishop_queen",
+						"air_darkness_bishop_queen",
+						"air_fire_bishop_queen"
+					],
+					"theme": [
+						"light_water_knight",
+						"light_water_pawn",
+						"light_water_rook"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "light_water_rook_rook",
+		"display_name": "Rainbow Turret",
+		"elements": [
+			"light",
+			"water"
+		],
+		"chess_pieces": [
+			"rook",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Prismatic-crystalline fortress tower woven of shimmering translucent dew, rippling through every spectral hue, faceted refracting gems studding curved walls scattering colored sparks, crowned with a swiveling luminous crystal cannon loaded with a radiant prism bolt, iridescent droplets beading down glowing arched slits, centered heroic pose, rainbow reflections on dark polished floor, deep misty black void.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook_rook.png",
+					"name": "Turret",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "light_water_queen_rook",
+		"display_name": "Rainbow Castle",
+		"elements": [
+			"light",
+			"water"
+		],
+		"chess_pieces": [
+			"queen",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Prismatic-crystalline fortress woven of shimmering translucent dew, a tall central crenellated keep flanked by two round towers with steep conical caps, all rippling through every spectral hue, slender pennants of luminous multicolored mist streaming upward, faceted refracting gems studding the walls scattering colored sparks, an arched gate glowing with soft rainbow light, iridescent droplets beading down its ramparts, rainbow reflections across a dark polished floor, centered heroic pose, deep misty black void.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook_queen.png",
+					"name": "Castle",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "light_water_queen_queen",
+		"display_name": "Rainbow Hero",
+		"elements": [
+			"light",
+			"water"
+		],
+		"chess_pieces": [
+			"queen",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Prismatic-crystalline chibi warrior hero woven of shimmering translucent dew, long curly hair cascading in rippling spectral hues, spiked helm-crown of faceted glittering gems scattering colored sparks, rounded plate armor shifting through every rainbow tint, streaming iridescent cape of luminous mist, hoisting an oversized greatsword of refracting light mid-leap, glowing droplets beading off its form, rainbow reflections across a dark polished floor, low heroic angle, deep misty void.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/queen_queen.png",
+					"name": "Hero",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	}
+]

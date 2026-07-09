@@ -1,0 +1,13 @@
+[
+	{
+		"id": "light_light_pawn",
+		"elements": [
+			"light",
+			"light"
+		],
+		"display_name": "Pure Light Pawn",
+		"chess_pieces": [
+			"pawn"
+		]
+	}
+]

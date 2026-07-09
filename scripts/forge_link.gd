@@ -25,9 +25,14 @@ var _alpha_min := 0.55
 var _alpha_max := 1.0
 
 
-func setup(p_color: Color) -> void:
+# `overrides` replaces individual ForgeFX.LINK values for THIS link only (the merge FX uses it to
+# fatten/brighten the stream, since its cards sit far enough apart that the drag's tiny 2-mote flow
+# would be invisible). Empty = the stock drag tuning.
+func setup(p_color: Color, overrides: Dictionary = {}) -> void:
 	color = p_color
-	var cfg := ForgeFX.LINK
+	var cfg := ForgeFX.LINK.duplicate()
+	for k in overrides:
+		cfg[k] = overrides[k]
 	_bow = float(cfg["bow"])
 	_wob_speed = float(cfg["wobble_speed"])
 	_end_fade = float(cfg["end_fade"])

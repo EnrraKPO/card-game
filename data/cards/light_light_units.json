@@ -1,0 +1,610 @@
+[
+	{
+		"id": "light_light_pawn",
+		"display_name": "Pure Light Pawn",
+		"elements": [
+			"light",
+			"light"
+		],
+		"chess_pieces": [
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi foot-soldier forged of living luminous gold, translucent glowing body, small radiant sunburst helm and simple spear tipped with a blazing point, white-and-gold plate greaves and a small round shield etched with a starburst, flowing luminous crest, radiant beams streaming outward, standing on pale stone under a deep violet-blue dawn sky, glowing eyes, digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn.png",
+					"name": "Pawn",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "light_light_knight",
+		"elements": [
+			"light",
+			"light"
+		],
+		"display_name": "Pure Light Knight",
+		"chess_pieces": [
+			"knight"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Chibi armored warhorse composed entirely of glowing radiant white-gold luminescence, flowing luminous cream mane and tail streaming like liquid light, translucent pale-gold plate barding on chamfron and chestplate etched with bright filigree, blazing golden eyes, hooves trailing sparkling sunlit motes, rearing mid-gallop, radiant beams bursting behind, deep violet twilight sky, dark cobblestone ground, chibi digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight.png",
+					"name": "Knight"
+				},
+				"inferredFrom": {
+					"concept": [
+						"knight",
+						"air_darkness_bishop_knight",
+						"air_darkness_knight"
+					],
+					"theme": [
+						"light_light_pawn",
+						"light_light_queen",
+						"light_light_rook"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "light_light_bishop",
+		"elements": [
+			"light",
+			"light"
+		],
+		"display_name": "Pure Light Bishop",
+		"chess_pieces": [
+			"bishop"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Chibi luminous priest-sage sculpted entirely from radiant golden light, translucent glowing body, tall tapering pointed headdress crowned with a brilliant sunburst gem, clean-shaven serene face with softly glowing eyes, layered ivory-and-gold robes woven of shimmering light with a diamond-studded sash, gripping a tall slender staff topped by a blazing radiant orb spilling soft beams, palm raised releasing gentle luminous motes, standing on cracked stone tiles, low three-quarter angle, deep blue twilight sky pierced by golden light-rays",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop.png",
+					"name": "Bishop"
+				},
+				"inferredFrom": {
+					"concept": [
+						"bishop",
+						"air_darkness_bishop",
+						"air_darkness_bishop_bishop"
+					],
+					"theme": [
+						"light_light_knight",
+						"light_light_pawn",
+						"light_light_queen",
+						"light_light_rook"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "light_light_rook",
+		"elements": [
+			"light",
+			"light"
+		],
+		"display_name": "Pure Light Rook",
+		"chess_pieces": [
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Radiant sentinel tower built entirely of glowing luminescence, translucent pale-gold stonework with crenellated top and a shining beacon crest, tall arched openings streaming brilliant beams, a small chibi guardian of living light standing at its gate with a luminous staff, hooves of light-motes drifting upward, deep violet twilight sky, pale stone ground, chibi digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook.png",
+					"name": "Rook"
+				},
+				"inferredFrom": {
+					"concept": [
+						"rook",
+						"air_darkness_bishop_rook",
+						"air_darkness_knight_rook"
+					],
+					"theme": [
+						"light_light_knight",
+						"light_light_pawn",
+						"light_light_queen"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "light_light_queen",
+		"display_name": "Pure Light Queen",
+		"elements": [
+			"light",
+			"light"
+		],
+		"chess_pieces": [
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Radiant queenly deity woven wholly of glowing white-gold luminescence, blank blazing eyes, translucent luminous high-collared robe of liquid light traced with bright scrolling filigree, tall leafed spire-crown of radiant beams, cradling a small glowing coronet in one open palm, floating cross-legged, sunlit motes streaming outward, deep violet twilight void, digital painting.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/queen.png",
+					"name": "Queen",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "light_light_pawn_pawn",
+		"display_name": "Pure Light Warrior",
+		"elements": [
+			"light",
+			"light"
+		],
+		"chess_pieces": [
+			"pawn",
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Radiant chibi warrior knight woven of living luminous light, translucent glowing plate armor over a body of pale brilliant radiance, open-faced helm with blazing bright eyes, gripping a broad shining blade streaming brilliant rays and a round shield etched with a bursting star pattern, lunging mid-swing, sparkling motes trailing, deep violet twilight sky, pale stone ground, chibi digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_pawn.png",
+					"name": "Warrior",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "light_light_knight_pawn",
+		"display_name": "Pure Light Cavalry",
+		"elements": [
+			"light",
+			"light"
+		],
+		"chess_pieces": [
+			"knight",
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Mounted lance-charging cavalier forged wholly of glowing white-gold luminescence, translucent radiant plate and closed visored helm crowned with a tall streaming crest of liquid light, gripping a long luminous lance trailing a tattered banner of pure brilliance, astride a barded warhorse woven of light with glowing chamfron and chestplate, charging low through drifting sunlit motes, deep violet twilight void, dramatic front-charging angle, digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_pawn.png",
+					"name": "Cavalry",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "light_light_bishop_pawn",
+		"display_name": "Pure Light Paladin",
+		"elements": [
+			"light",
+			"light"
+		],
+		"chess_pieces": [
+			"bishop",
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Radiant paladin knight forged wholly of glowing white-gold luminescence, translucent luminous plate and closed visored helm crowned with a small ridged crest, streaming cape of liquid light, hoisting a shining flanged mace and tall kite shield etched with bright filigree, blazing golden eyes, sunlit motes drifting from his gauntlets, standing on pale stone under a deep violet twilight sky, chibi digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_pawn.png",
+					"name": "Paladin",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "light_light_pawn_rook",
+		"display_name": "Pure Light Barracks",
+		"elements": [
+			"light",
+			"light"
+		],
+		"chess_pieces": [
+			"pawn",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Radiant chibi garrison keep built wholly of glowing luminescence, translucent pale-gold crenellated battlements and arched gateway streaming brilliant beams, a shining banner of liquid light hung above the door, a rack of luminous spears alongside, a small guardian of living light in a domed shining helm gripping a tall gleaming spear and round beaming shield, sunlit motes drifting upward, deep violet twilight sky, pale stone ground, chibi digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_rook.png",
+					"name": "Barracks",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "light_light_pawn_queen",
+		"display_name": "Pure Light Commander",
+		"elements": [
+			"light",
+			"light"
+		],
+		"chess_pieces": [
+			"pawn",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Radiant female military commander woven entirely of glowing white-gold light, standing on a raised luminous platform, thrusting a shining command baton toward the sky, translucent gleaming plate armor traced with bright filigree, streaming luminous crest and flowing cape of liquid light, rallying a column of small glowing soldiers below, sunlit motes drifting upward, deep violet twilight sky, pale stone ground, digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_queen.png",
+					"name": "Commander",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "light_light_knight_knight",
+		"display_name": "Pure Light Beast",
+		"elements": [
+			"light",
+			"light"
+		],
+		"chess_pieces": [
+			"knight",
+			"knight"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Radiant beast woven wholly of glowing white-gold luminescence, hulking muscular bull-like form with lowered head and translucent luminous hide traced with bright filigree, curved horns of solidified light, blazing golden eyes, flowing luminous crest streaming down its spine, hooves scattering sparkling sunlit motes as it charges, radiant beams bursting outward, deep violet twilight void, pale stone ground, digital painting.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_knight.png",
+					"name": "Beast",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "light_light_bishop_knight",
+		"display_name": "Pure Light Cryptid",
+		"elements": [
+			"light",
+			"light"
+		],
+		"chess_pieces": [
+			"bishop",
+			"knight"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Radiant chibi unicorn woven entirely of glowing white-gold luminescence, translucent luminous body, spiraled shining horn streaming brilliant beams, flowing mane and tail of liquid light rippling outward, blazing pale eyes, glowing hooves scattering drifting motes, rearing atop pale luminous stone, deep violet twilight void behind, sunlit sparks trailing, chibi digital painting.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_knight.png",
+					"name": "Cryptid",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "light_light_knight_rook",
+		"display_name": "Pure Light Stable",
+		"elements": [
+			"light",
+			"light"
+		],
+		"chess_pieces": [
+			"knight",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Radiant war stable-tower woven wholly of glowing white-gold luminescence, translucent luminous walls streaming brilliant beams from tall arched gates, a shimmering horse of living light leaning from the doorway with a mane of drifting sunlit motes, small luminous banner and drifting light-flecks, blazing eyes, deep violet twilight sky, pale stone ground, chibi digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_rook.png",
+					"name": "Stable",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "light_light_knight_queen",
+		"display_name": "Pure Light Monster",
+		"elements": [
+			"light",
+			"light"
+		],
+		"chess_pieces": [
+			"knight",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Radiant chibi dragon composed entirely of glowing pale luminescence, translucent body of liquid light, swept-back horns and jagged spine ridges shining as beams, membranous wings streaming brilliant rays, talons dripping sparkling motes, blazing white eyes, rearing mid-lunge as light-flecks scatter upward, deep violet twilight void, pale stone ground, chibi digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_queen.png",
+					"name": "Monster",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "light_light_bishop_bishop",
+		"display_name": "Pure Light Hierophant",
+		"elements": [
+			"light",
+			"light"
+		],
+		"chess_pieces": [
+			"bishop",
+			"bishop"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi bearded high priest formed of glowing pale-gold luminescence, translucent body of living light, tall pointed spire-mitre crowned with a radiant many-faceted gem, streaming beard of liquid light, blazing white eyes, high-collared robe of shining filigree, upraised palm hurling a spiraling burst of brilliant light, staff topped with a blinding orb, sunlit motes swirling, deep violet twilight void, pale stone dais, chibi digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_bishop.png",
+					"name": "Hierophant",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "light_light_bishop_rook",
+		"display_name": "Pure Light Arcane Tower",
+		"elements": [
+			"light",
+			"light"
+		],
+		"chess_pieces": [
+			"bishop",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Radiant sentinel spire built wholly of glowing translucent light-stone, crenellated crown and a shining crystalline finial pouring brilliant beams, tall arched openings streaming brightness, luminous scrolling filigree along its walls, a small hooded chibi guardian of living light at its arched gate holding a beam-tipped staff and glowing tome, motes drifting upward, deep violet twilight sky, pale stone ground, chibi digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_rook.png",
+					"name": "Arcane Tower",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "light_light_bishop_queen",
+		"display_name": "Pure Light Deity",
+		"elements": [
+			"light",
+			"light"
+		],
+		"chess_pieces": [
+			"bishop",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Radiant goddess sovereign woven wholly of glowing luminescence, translucent body of liquid light, blank blazing eyes, flowing high-collared robe of pure radiance traced with bright scrolling filigree, tall spire of streaming beams above her brow, one open palm cradling a small glowing orb, floating serene, sunlit motes drifting outward, deep violet twilight void, digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_queen.png",
+					"name": "Deity",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "light_light_rook_rook",
+		"display_name": "Pure Light Turret",
+		"elements": [
+			"light",
+			"light"
+		],
+		"chess_pieces": [
+			"rook",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Radiant weaponized turret built wholly of glowing luminescence, translucent pale-gold stonework with battered wide base and arrow-slit openings streaming brilliant beams, crowned by a swiveling bolt-thrower forged of living light with a loaded shining bolt aimed skyward, drifting sunlit motes, deep violet twilight sky, pale stone ground, digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook_rook.png",
+					"name": "Turret",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "light_light_queen_rook",
+		"display_name": "Pure Light Castle",
+		"elements": [
+			"light",
+			"light"
+		],
+		"chess_pieces": [
+			"queen",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Radiant fortress keep sculpted wholly of glowing luminescence, a tall central crenellated tower flanked by twin round towers streaming brilliant beams, translucent pale-gold ramparts etched with bright filigree, luminous pennants and banners of living light, an arched gate spilling radiance, tiny chibi guardians of light standing watch, sunlit motes drifting upward, deep violet twilight sky, pale stone ground, chibi digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook_queen.png",
+					"name": "Castle",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "light_light_queen_queen",
+		"display_name": "Pure Light Hero",
+		"elements": [
+			"light",
+			"light"
+		],
+		"chess_pieces": [
+			"queen",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Radiant chibi warrior queen woven wholly of glowing luminescence, translucent voluminous curly hair streaming as ribbons of liquid brightness, spiked crown of radiant beams, blazing pale eyes, luminous plate armor traced with bright filigree and spiked pauldrons, streaming crest cape of light, swinging an oversized translucent greatsword blazing white-gold, leaping mid-swing, sunlit motes bursting outward, deep violet twilight void, chibi digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/queen_queen.png",
+					"name": "Hero",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	}
+]

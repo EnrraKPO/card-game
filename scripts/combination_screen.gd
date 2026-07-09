@@ -74,6 +74,17 @@ var _result_deck_card: DeckCard = null
 # The in-scene combine-confirmation overlay (null when closed). Combining is destructive (both
 # originals are consumed), so BOTH the Combine button and a drop go through this gate.
 var _combine_modal: Control = null
+# The merge VFX painted over slots A+B while a valid combine is previewed (visual only — no drone).
+# _panel_fx_key identifies the shown pair so a rebuilt panel only respawns the FX when it changes.
+var _panel_fx: ForgeMergeFX = null
+var _panel_fx_key := ""
+# Fusion-animation state, live only between hitting "Forge" and dismissing the result toast. While
+# _fusing is true the confirm dim ignores clicks/Esc so the sequence can't be cut off mid-flight.
+var _fusing := false
+var _confirm_fx: ForgeMergeFX = null   # the confirm modal's swirl (freed when the fusion takes over)
+var _fuse_panel: Control = null        # the static A+B→result preview panel (hidden during the fusion)
+var _fuse_holders: Array = []          # [holder_a, holder_b] — source card rects the fusion flies from
+var _fuse_anim: ForgeFuseAnim = null
 
 
 func _ready() -> void:
@@ -448,12 +459,18 @@ func _process(delta: float) -> void:
 	var freq := float(cfg["wobble_freq"])
 	var rot := _wob * float(cfg["wobble_rot"])
 	_follower_visual.rotation = rot * sin(_wob_t * freq)
-	var sway := _wob * float(cfg["wobble_sway"])
-	_follower_visual.position = _follower_base_pos + Vector2(sway * sin(_wob_t * freq * 0.7), sway * sin(_wob_t * freq * 1.3))
-	# The target card wobbles too (rotation only — it lives in the grid, which manages its position),
-	# slightly out of phase so the pair feels independently alive.
+	# The dragged card lunges toward its target so the pair reads as PULLING together — the same
+	# motion the merge FX gives the static pair (ForgeFX.CARD.pull_*). Rotation only for the target
+	# (it lives in the scrolling grid, which manages its position), a half-cycle out of phase.
+	var pull_off := Vector2.ZERO
 	if _target_item != null:
+		var to_target := _target_item.get_global_rect().get_center() - (_follower.global_position + _follower_center)
+		if to_target.length() > 0.01:
+			var pull := _wob * (_follower_visual.size.x * float(cfg["pull_frac"])) \
+				* (0.5 - 0.5 * cos(_wob_t * freq * float(cfg["pull_freq_mult"])))
+			pull_off = to_target.normalized() * pull
 		_target_item.rotation = rot * sin(_wob_t * freq + PI * 0.5)
+	_follower_visual.position = _follower_base_pos + pull_off
 
 
 func _input(event: InputEvent) -> void:
@@ -461,7 +478,8 @@ func _input(event: InputEvent) -> void:
 	# can't reshuffle the deck behind it and Nav doesn't also fire.
 	if _combine_modal != null:
 		if event.is_action_pressed("ui_cancel"):
-			_close_combine_modal()
+			if not _fusing:            # mid-fusion Esc is swallowed but must NOT abort the sequence
+				_close_combine_modal()
 			get_viewport().set_input_as_handled()
 		return
 	if event is InputEventMouseMotion:
@@ -629,11 +647,16 @@ func _confirm_combine(src_idx: int, tgt_idx: int, result_dc: DeckCard) -> void:
 	dim.color = Color(0, 0, 0, 0.6)
 	dim.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	dim.mouse_filter = MOUSE_FILTER_STOP
+	# A click on the dim (outside the panel) closes — but NOT mid-fusion, where it would abort the
+	# sequence. After the fusion, this same handler is what dismisses the result toast on "click out".
 	dim.gui_input.connect(func(e: InputEvent) -> void:
+		if _fusing:
+			return
 		if e is InputEventMouseButton and (e as InputEventMouseButton).pressed:
 			_close_combine_modal())
 	add_child(dim)
 	_combine_modal = dim
+	_fusing = false
 
 	# CenterContainer centres the panel; empty space stays input-transparent so it falls to the dim.
 	var center := CenterContainer.new()
@@ -666,12 +689,30 @@ func _confirm_combine(src_idx: int, tgt_idx: int, result_dc: DeckCard) -> void:
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 18 if _compact else 14)
-	row.add_child(_make_combine_cell(a_inst, cs))
+	var cell_a := _make_combine_cell(a_inst, cs)
+	var cell_b := _make_combine_cell(b_inst, cs)
+	row.add_child(cell_a)
 	row.add_child(_make_combine_op("+", cs.y))
-	row.add_child(_make_combine_cell(b_inst, cs))
+	row.add_child(cell_b)
 	row.add_child(_make_combine_op("→", cs.y))
 	row.add_child(_make_combine_cell(result_inst, cs))
 	col.add_child(row)
+
+	# Swirl + link the two consumed cards (result stays clean) with the mixing drone, so the fusion
+	# reads and sounds exactly like a drag. The FX lives in `dim` (full-rect, above the panel) so it
+	# draws over the cards; it tracks each card holder's rect (the holder is the cell's first child).
+	# The drone stops in _close_combine_modal — every dismissal path (Cancel, Forge, Esc, dim-click)
+	# routes through it.
+	var fx := ForgeMergeFX.new()
+	dim.add_child(fx)
+	fx.bind(cell_a.get_child(0), cell_b.get_child(0),
+		_color_for_card(a_inst.data), _color_for_card(b_inst.data), OK_COLOR)
+	Sfx.mixing_start()
+	Sfx.mixing_react(true)
+	# Kept so the fusion can hide the static preview and reuse the card rects it flies from.
+	_confirm_fx = fx
+	_fuse_panel = panel
+	_fuse_holders = [cell_a.get_child(0), cell_b.get_child(0)]
 
 	var buttons := HBoxContainer.new()
 	buttons.size_flags_horizontal = SIZE_EXPAND_FILL   # span the panel so the two targets are wide
@@ -679,9 +720,7 @@ func _confirm_combine(src_idx: int, tgt_idx: int, result_dc: DeckCard) -> void:
 	var cancel_btn := _modal_button("Cancel", ScreenUI.CHROME_NEUTRAL)
 	var forge_btn := _modal_button("Forge", ScreenUI.CHROME_CONFIRM)
 	cancel_btn.pressed.connect(_close_combine_modal)
-	forge_btn.pressed.connect(func() -> void:
-		_do_combine(src_idx, tgt_idx, result_dc)
-		_close_combine_modal())
+	forge_btn.pressed.connect(_start_fuse.bind(src_idx, tgt_idx, result_dc))
 	buttons.add_child(cancel_btn)
 	buttons.add_child(forge_btn)
 	col.add_child(buttons)
@@ -689,8 +728,185 @@ func _confirm_combine(src_idx: int, tgt_idx: int, result_dc: DeckCard) -> void:
 
 func _close_combine_modal() -> void:
 	if _combine_modal != null:
+		Sfx.mixing_react(false)
+		Sfx.mixing_stop()   # the modal's swirl drone (FX itself is freed with the dim)
 		_combine_modal.queue_free()
 		_combine_modal = null
+	# Children (confirm FX, fusion, toast) are freed with the dim — just drop our references.
+	_fusing = false
+	_confirm_fx = null
+	_fuse_panel = null
+	_fuse_anim = null
+	_fuse_holders = []
+	# The panel path hides its static slot cards during the fusion — restore them (no-op otherwise).
+	if _slot_a != null:
+		_slot_a.visible = true
+	if _slot_b != null:
+		_slot_b.visible = true
+	if _result_slot != null:
+		_result_slot.visible = true
+
+
+# "Forge" pressed in the confirm modal (the drag-drop path) → play the fusion over the confirm dim.
+# The reaction drone keeps going as the cards fly together and stops at the flash (see _on_fuse_flash).
+func _start_fuse(src_idx: int, tgt_idx: int, result_dc: DeckCard) -> void:
+	if _fusing or _combine_modal == null or _fuse_holders.size() < 2:
+		return
+	_fusing = true
+	if _confirm_fx != null:
+		_confirm_fx.queue_free()   # drop the confirm swirl on the now-hidden cards; the fusion has its own
+		_confirm_fx = null
+	if _fuse_panel != null:
+		_fuse_panel.visible = false   # drop the static A+B→result preview; the fusion takes the stage
+	_begin_fusion(src_idx, tgt_idx, result_dc, _fuse_holders[0], _fuse_holders[1])
+
+
+# Panel "Combine" pressed → no confirm modal (the panel already shows A+B→result). Build the same
+# input-blocking backdrop the modal uses (reusing _combine_modal so close/Esc/toast all work), hide
+# the static slot cards, and play the fusion right on where they sit. Silent until the flash (the
+# side panel has no reaction drone — only the combined SFX at impact).
+func _start_panel_fusion(src_idx: int, tgt_idx: int, result_dc: DeckCard) -> void:
+	if _fusing or _combine_modal != null or result_dc == null:
+		return
+
+	var dim := ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.6)
+	dim.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	dim.mouse_filter = MOUSE_FILTER_STOP
+	dim.gui_input.connect(func(e: InputEvent) -> void:
+		if _fusing:
+			return
+		if e is InputEventMouseButton and (e as InputEventMouseButton).pressed:
+			_close_combine_modal())
+	add_child(dim)
+	_combine_modal = dim
+	_fusing = true
+
+	# The fusion carries its own swirl; drop the preview swirl and hide the static slot cards so the
+	# flying clones (which start right on them) don't double up.
+	if _panel_fx != null:
+		_panel_fx.queue_free()
+		_panel_fx = null
+	_panel_fx_key = ""
+	_slot_a.visible = false
+	_slot_b.visible = false
+	_result_slot.visible = false
+
+	_begin_fusion(src_idx, tgt_idx, result_dc, _slot_a, _slot_b)
+
+
+# Shared fusion launcher: flies clones of the two source cards (read from `holder_a`/`holder_b`) into
+# their midpoint over the active _combine_modal, commits the merge at the flash, and reveals the
+# result toast. Both the modal (drag-drop) path and the panel path funnel through here.
+func _begin_fusion(src_idx: int, tgt_idx: int, result_dc: DeckCard, holder_a: Control, holder_b: Control) -> void:
+	var a_center := holder_a.get_global_rect().get_center()
+	var b_center := holder_b.get_global_rect().get_center()
+	var card_size := holder_a.size
+	# The pair collides at the midpoint between them — each flies straight at the other. (The result
+	# toast that follows is screen-centred, so its fade-in absorbs the small hop from here.)
+	var center := (a_center + b_center) * 0.5
+
+	var a_inst := (_entries[src_idx].card as DeckCard).make_instance()
+	var b_inst := (_entries[tgt_idx].card as DeckCard).make_instance()
+	var result_inst := result_dc.make_instance()
+	var color_a := _color_for_card(_entries[src_idx].data)
+	var color_b := _color_for_card(_entries[tgt_idx].data)
+
+	var anim := ForgeFuseAnim.new()
+	anim.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	# At the flash: stop any reaction drone, then commit the merge (mutate deck + rebuild + combined
+	# SFX) — all hidden behind the white.
+	anim.flashed.connect(_on_fuse_flash.bind(src_idx, tgt_idx, result_dc))
+	anim.finished.connect(_on_fuse_finished.bind(result_inst))
+	_combine_modal.add_child(anim)
+	_fuse_anim = anim
+	anim.play(a_inst, b_inst, result_inst, a_center, b_center, center, card_size, color_a, color_b, OK_COLOR)
+
+
+func _on_fuse_flash(src_idx: int, tgt_idx: int, result_dc: DeckCard) -> void:
+	Sfx.mixing_react(false)
+	Sfx.mixing_stop()   # the reaction drone ends as the pair flashes into one
+	_do_combine(src_idx, tgt_idx, result_dc)
+
+
+func _on_fuse_finished(result_inst: CardInstance) -> void:
+	_show_result_toast(result_inst)
+
+
+# The dismissible "Forged!" toast: the new card centred over the dim with its name + description.
+# Clicking the dim (outside the card) closes the whole modal; the card panel swallows its own clicks,
+# so it's a true "click out to dismiss". Merge is already committed by this point.
+func _show_result_toast(result_inst: CardInstance) -> void:
+	if _combine_modal == null:
+		return
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	center.mouse_filter = MOUSE_FILTER_IGNORE
+	_combine_modal.add_child(center)
+
+	var panel := PanelContainer.new()
+	panel.mouse_filter = MOUSE_FILTER_STOP   # swallow clicks — only a click OUTSIDE (on the dim) closes
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(ScreenUI.SURFACE_DEEP, 0.98)
+	style.set_border_width_all(2)
+	style.border_color = ScreenUI.SURFACE_DEEP_BORDER
+	style.set_corner_radius_all(10)
+	style.set_content_margin_all(28 if _compact else 20)
+	panel.add_theme_stylebox_override("panel", style)
+	center.add_child(panel)
+
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 14 if _compact else 10)
+	panel.add_child(col)
+
+	var title := Label.new()
+	title.text = "Forged!"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 32 if _compact else 24)
+	title.add_theme_color_override("font_color", OK_COLOR)
+	col.add_child(title)
+
+	var cs := Vector2(300, 393) if _compact else Vector2(230, 301)
+	var holder := Control.new()
+	holder.custom_minimum_size = cs
+	holder.size_flags_horizontal = SIZE_SHRINK_CENTER
+	var card := CardUI.create(result_inst)
+	card.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	card.mouse_filter = MOUSE_FILTER_IGNORE
+	holder.add_child(card)
+	col.add_child(holder)
+
+	var name_lbl := Label.new()
+	name_lbl.text = result_inst.data.display_name
+	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_lbl.add_theme_font_size_override("font_size", 26 if _compact else 18)
+	col.add_child(name_lbl)
+
+	var desc := result_inst.data.description
+	if not desc.is_empty():
+		var desc_lbl := Label.new()
+		desc_lbl.text = desc
+		desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD
+		desc_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		desc_lbl.custom_minimum_size.x = 360.0 if _compact else 280.0
+		desc_lbl.add_theme_font_size_override("font_size", 20 if _compact else 14)
+		desc_lbl.add_theme_color_override("font_color", Color("3a2f22"))
+		col.add_child(desc_lbl)
+
+	var hint := Label.new()
+	hint.text = "Tap anywhere to continue"
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint.add_theme_font_size_override("font_size", 18 if _compact else 13)
+	hint.add_theme_color_override("font_color", Color("5a4a38"))
+	col.add_child(hint)
+
+	# The toast now covers the reveal — drop the animation and re-arm click-to-dismiss.
+	if _fuse_anim != null:
+		_fuse_anim.queue_free()
+		_fuse_anim = null
+	_fusing = false
+	center.modulate.a = 0.0
+	create_tween().tween_property(center, "modulate:a", 1.0, 0.18)
 
 
 # A big, easy-to-hit modal button. Each one EXPAND_FILLs half the button row, so on top of the
@@ -983,6 +1199,10 @@ func _refresh_forge() -> void:
 	_combine_btn.text = "Enchant" if enchanting else "Combine"
 	_combine_btn.disabled = not can_act
 
+	# Swirl the two ingredient slots whenever a valid COMBINE is previewed (never for enchant, which
+	# has no "two cards fusing" read). Slots A/B are stable holders, so the FX just tracks their rects.
+	_update_panel_fx(result_inst if not enchanting else null, a_inst, b_inst)
+
 
 # A press on a deck card / charm: held as pending until release (tap) or movement (drag).
 func _on_press(payload: Dictionary) -> void:
@@ -1055,7 +1275,9 @@ func _clear_charm() -> void:
 	_refresh_forge()
 
 
-# The action button: enchant the selected card with the selected charm, or open the combine confirm.
+# The action button: enchant the selected card with the selected charm, or fuse the selected pair.
+# Combining from the panel skips the confirm modal (the panel already previews A+B→result) and plays
+# the fusion right on the slot cards; the destructive-action gate is the drag-drop path's job.
 func _on_combine_pressed() -> void:
 	if _sel_charm != "":
 		if _sel_a < 0:
@@ -1070,7 +1292,7 @@ func _on_combine_pressed() -> void:
 	var verdict := _evaluate_target({"kind": "card", "idx": _sel_a}, _sel_b)
 	if not bool(verdict.get("ok", false)):
 		return
-	_confirm_combine(_sel_a, _sel_b, verdict.get("result_dc", null))
+	_start_panel_fusion(_sel_a, _sel_b, verdict.get("result_dc", null))
 
 
 # ── Apply ──────────────────────────────────────────────────────────────────────
@@ -1128,6 +1350,26 @@ func _aura_radii(payload: Dictionary) -> Vector2:
 	return Vector2(r * scale + margin, r * scale + margin)
 
 
+# Shows/updates/hides the merge swirl over slots A+B. Painted only when a valid combine is queued
+# (result != null and both ingredients present); keyed on the pair so a mere panel repaint doesn't
+# respawn identical FX (which would restart the swirl every hover flicker / status change).
+func _update_panel_fx(result_inst: CardInstance, a_inst: CardInstance, b_inst: CardInstance) -> void:
+	var key := ""
+	if result_inst != null and a_inst != null and b_inst != null:
+		key = a_inst.data.id + "|" + b_inst.data.id
+	if key == _panel_fx_key:
+		return
+	_panel_fx_key = key
+	if _panel_fx != null:
+		_panel_fx.queue_free()
+		_panel_fx = null
+	if key == "":
+		return
+	_panel_fx = ForgeMergeFX.new()
+	_overlay.add_child(_panel_fx)
+	_panel_fx.bind(_slot_a, _slot_b, _color_for_card(a_inst.data), _color_for_card(b_inst.data), OK_COLOR)
+
+
 # A hand-drawn halo that swirls around the card — see ForgeAura (tuning in ForgeFX.AURA).
 func _make_aura(color: Color, rx: float, ry: float) -> ForgeAura:
 	var a := ForgeAura.new()
@@ -1137,16 +1379,21 @@ func _make_aura(color: Color, rx: float, ry: float) -> ForgeAura:
 
 func _source_color(payload: Dictionary) -> Color:
 	if payload.kind == "card":
-		var data: CardData = _entries[int(payload.idx)].data
-		if not data.elements.is_empty():
-			var info: Dictionary = CardUI.COMP_VISUALS.get(data.elements[0], {})
-			return info.get("color", Color(0.7, 0.8, 1.0))
-		if not data.chess_pieces.is_empty():
-			var cinfo: Dictionary = CardUI.COMP_VISUALS.get(data.chess_pieces[0], {})
-			return cinfo.get("color", Color(0.7, 0.8, 1.0))
-		return Color(0.7, 0.8, 1.0)
+		return _color_for_card(_entries[int(payload.idx)].data)
 	var charm := CharmData.get_charm(str(payload.id))
 	return charm.color if charm != null else Color(0.8, 0.7, 1.0)
+
+
+# The aura tint for a card — its first element's colour, falling back to its first chess piece, then
+# a neutral blue. Shared by the drag source aura and the static merge FX (modal + side panel).
+func _color_for_card(data: CardData) -> Color:
+	if not data.elements.is_empty():
+		var info: Dictionary = CardUI.COMP_VISUALS.get(data.elements[0], {})
+		return info.get("color", Color(0.7, 0.8, 1.0))
+	if not data.chess_pieces.is_empty():
+		var cinfo: Dictionary = CardUI.COMP_VISUALS.get(data.chess_pieces[0], {})
+		return cinfo.get("color", Color(0.7, 0.8, 1.0))
+	return Color(0.7, 0.8, 1.0)
 
 
 func _leave() -> void:

@@ -59,17 +59,22 @@ const AURA := {
 }
 
 const CARD := {
-	# The dragged card gently wobbles while it's connected to a target.
-	"wobble_rot":  0.07,   # peak rotation in radians (~4°)
-	"wobble_sway": 4.0,    # peak positional sway in px
-	"wobble_freq": 9.0,    # wobble speed (rad/s)
-	"wobble_ease": 10.0,   # how fast it eases in/out as the connection forms/breaks
+	# Two reacting cards wobble while connected — the SAME motion everywhere it happens: a dragged
+	# card over its target, and the queued pair in the combine modal / forge side panel.
+	"wobble_rot":     0.045,  # peak tilt in radians (~2.5°) — a small quiver, not a big swing
+	"wobble_freq":    9.0,    # wobble speed (rad/s)
+	"wobble_ease":    10.0,   # how fast it eases in/out as the connection forms/breaks
+	# On top of the tilt, each card lunges toward its partner so the two read as PULLING together.
+	"pull_frac":      0.045,  # inward lunge distance, as a fraction of card width
+	"pull_freq_mult": 0.7,    # tug tempo relative to wobble_freq (one coherent motion, just under the tilt)
 }
 
 const LINK := {
 	# Motes leave a point on one card's orbit ring, arc across the gap, and merge onto the other
 	# card's ring (fading in/out at the rings) — a seamless orbit-to-orbit transfer, never the centre.
-	"count":        2,     # number of motes flowing between the two cards
+	# Dense/large enough to read across the WIDE gap of the modal/panel (where a card-width sits
+	# between the pair), not just the tight overlap of a drag — one config for every context.
+	"count":        14,    # number of motes flowing between the two cards
 
 	# Where on each ring motes enter/leave, and how curved the crossing is
 	"spread":        1.3,    # radians of ring (each side of the facing point) motes fan across
@@ -90,12 +95,12 @@ const LINK := {
 	"speed_max":     1.1,
 
 	# Per-mote dot
-	"size_min":      0.1,
-	"size_max":      0.4,
-	"alpha_base":    0.45,
-	"alpha_amp":     0.15,
-	"alpha_min":     0.15,
-	"alpha_max":     0.60,
+	"size_min":      0.9,
+	"size_max":      2.2,
+	"alpha_base":    0.75,
+	"alpha_amp":     0.2,
+	"alpha_min":     0.45,
+	"alpha_max":     1.0,
 	"white_chance":  0.4,
 	"flick_min":     0.5,
 	"flick_max":     1.2,

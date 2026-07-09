@@ -88,6 +88,12 @@
 					"name": "Hierophant",
 					"mode": "img2img",
 					"denoise": 0.6
+				},
+				"last": {
+					"seed": 3736622604,
+					"prompt": "Cartoon chibi bishop archpriest formed of translucent living water, rippling liquid vestments in deep sapphire and seafoam, pearl-crested mitre streaming twin waterfalls, raising a crozier crowned by two orbiting spheres of swirling tide, mirrored watery double rising behind him, curling waves and drifting bubbles all around, bold outlines, luminous blue palette, cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear",
+					"style": "",
+					"at": "2026-07-09"
 				}
 			}
 		}

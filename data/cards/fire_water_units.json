@@ -76,24 +76,19 @@
 		],
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "Chibi steam-powered prelate automaton of riveted brass and polished mahogany, tall hinged conical mitre crowned with a glowing amber pressure-glass gem, valved copper cowl and piston-jointed arms, gripping a spiral-crooked valve staff topped with a hissing gauge, white steam jetting from shoulder and flank vents, standing on glossy blue tiles past hazy azure spires, warm pink sky, low three-quarter angle, richly detailed digital painting",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/bishop.png",
-					"name": "Bishop"
-				},
-				"inferredFrom": {
-					"concept": [
-						"bishop",
-						"air_darkness_bishop",
-						"air_darkness_bishop_bishop"
-					],
-					"theme": [
-						"fire_water_knight",
-						"fire_water_pawn",
-						"fire_water_queen",
-						"fire_water_rook"
-					]
+					"name": "Bishop",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
@@ -469,24 +464,23 @@
 		"ranged": true,
 		"tool": {
 			"art": {
-				"prompt": "Chibi bearded high priest of riveted brass and dark timber, tall valved copper mitre crowned with a glowing amber pressure-glass gem, long white beard, engraved plated robe with bolted studs and a flared cape, gripping a piston-jointed staff, hurling a spiraling blast of scalding white steam from an upraised palm, jets hissing from shoulder vents, atop a bolted mechanical dais amid hazy azure spires, warm pink sky, low three-quarter angle, richly detailed digital painting",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Stout bearded steampunk bishop-mage casting powerful magic, glowing brass goggles, ornate gold-and-crimson robes with pocket-watch pendant, raised gauntleted fist, spiked mechanical staff crowned with radiant orb, billowing high-pressure steam vents behind, towering pipe-and-boiler machinery, blue sky, grassy foreground, bold cartoon vector style, warm gold palette, crisp cel shading",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/bishop_bishop.png",
-					"name": "Hierophant"
+					"source": "current",
+					"mode": "img2img",
+					"denoise": 0.5
 				},
-				"inferredFrom": {
-					"concept": [
-						"bishop_bishop",
-						"air_darkness_bishop_bishop",
-						"darkness_light_bishop_bishop"
-					],
-					"theme": [
-						"fire_water_knight",
-						"fire_water_pawn",
-						"fire_water_queen",
-						"fire_water_rook"
-					]
+				"last": {
+					"seed": 861839728,
+					"prompt": "Stout bearded steampunk bishop-mage casting powerful magic, glowing brass goggles, ornate gold-and-crimson robes with pocket-watch pendant, raised gauntleted fist, spiked mechanical staff crowned with radiant orb, billowing high-pressure steam vents behind, towering pipe-and-boiler machinery, blue sky, grassy foreground, bold cartoon vector style, warm gold palette, crisp cel shading",
+					"style": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear",
+					"at": "2026-07-08"
 				}
 			}
 		}
@@ -577,6 +571,7 @@
 			"rook",
 			"rook"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",

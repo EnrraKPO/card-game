@@ -71,6 +71,16 @@
       "label": "Steam",
       "positive": "steampunk, steam fueled mechanic units, present high-pressure steam vents",
       "negative": ""
+    },
+    "light_water": {
+      "label": "Rainbow",
+      "positive": "focus on color and texture, multicolored rainbow palette, lightweight materials, like a soft ethereal dew, also colorful gems with lots of refractory effects",
+      "negative": "fire, smoke, heavy materials"
+    },
+    "light_light": {
+      "label": "Pure Light",
+      "positive": "light element, materials read as made of light, creatures may be represented as light elemental beings, from a light elemental world",
+      "negative": "fire, multicolored, rainbow, heavenly, angel"
     }
   }
 }
