@@ -1,11 +1,9 @@
 extends Control
 
-# Shown after a (non-final) stage boss falls. Offers a special reward — a pick from a
-# stronger card selection — then advances the run into the next stage. The reward pool
-# is intentionally simple for now (any non-King card); specialise it here later.
-const REWARD_CHOICES := 3
-
-var _picked := false
+# Shown after a (non-final) stage boss falls: a brief "you cleared the stage" beat, then Onward
+# hands out the stage reward — a choice of charms — through the shared reward screen (which then
+# advances the run into the next stage). See GameData.pending_reward_* / reward_screen.
+const CHARM_CHOICES := 4
 
 
 func _ready() -> void:
@@ -29,25 +27,10 @@ func _ready() -> void:
 	vbox.add_child(title)
 
 	var subtitle := Label.new()
-	subtitle.text = "Claim a reward before pressing onward."
+	subtitle.text = "A charm awaits — press onward to choose your reward."
 	subtitle.add_theme_font_size_override("font_size", 30 if compact else 26)
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(subtitle)
-
-	var card_row := HBoxContainer.new()
-	card_row.add_theme_constant_override("separation", 32)
-	card_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	vbox.add_child(card_row)
-
-	for id: String in CardData.random_non_kings(REWARD_CHOICES):
-		var data := CardData.get_card(id)
-		if data == null:
-			continue
-		var ui := CardUI.create(CardInstance.from_data(data))
-		ui.draggable = false
-		ui.custom_minimum_size = Vector2(230, 302) if compact else Vector2(220, 289)
-		ui.pressed.connect(func(): _pick_card(id))
-		card_row.add_child(ui)
 
 	var onward := ScreenUI.action_button("Onward  →", _advance,
 		Vector2(280, 88) if compact else Vector2(240, 76), 32 if compact else 26,
@@ -56,14 +39,21 @@ func _ready() -> void:
 	vbox.add_child(onward)
 
 
-func _pick_card(id: String) -> void:
-	if _picked:
-		return
-	_picked = true
-	GameData.current_run.deck.append(DeckCard.make(id))
-	_advance()
-
-
+# Onward: queue a charm choice for the reward screen, which advances the stage once it's picked
+# (or skipped). If no charms are available to offer, just advance straight through.
 func _advance() -> void:
-	GameData.advance_stage()
-	Nav.goto("res://scenes/map.tscn")
+	var offers: Array = []
+	var kind := ItemKinds.get_kind("charm")
+	if kind != null:
+		for id: String in kind.offer_pool(CHARM_CHOICES, null):
+			offers.append(Grant.make("charm", id))
+
+	if offers.is_empty():
+		GameData.advance_stage()
+		Nav.goto("res://scenes/map.tscn")
+		return
+
+	GameData.pending_reward_offers = offers
+	GameData.pending_reward_title = "Stage Cleared — Choose a Charm"
+	GameData.pending_reward_advance_stage = true
+	Nav.goto("res://scenes/reward_screen.tscn")

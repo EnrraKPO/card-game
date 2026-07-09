@@ -169,10 +169,38 @@ func instantiate(rng: RandomNumberGenerator, power: float = 0.0) -> EncounterDat
 
 	enc.gold_reward = rng.randi_range(gold_reward[0], gold_reward[1])
 	enc.exp_reward  = exp_reward
-	enc.reward_pool = resolve_reward_pool(reward_pool)
-	if relic_reward_chance > 0.0 and rng.randf() < relic_reward_chance:
-		enc.relic_offer = _roll_relic_offer(rng)
+	if enc.type == EncounterData.Type.ELITE:
+		# Elites ("epic" fights) grant a special reward instead of cards: a choice of relics and charms.
+		enc.reward_offers = _roll_elite_offers(rng)
+	else:
+		enc.reward_pool = resolve_reward_pool(reward_pool)
+		if relic_reward_chance > 0.0 and rng.randf() < relic_reward_chance:
+			enc.relic_offer = _roll_relic_offer(rng)
 	return enc
+
+
+# Elite reward: up to 4 offers mixing relics and charms, balanced by alternating the two pools and
+# filling from whichever still has entries when one runs short. Reuses each kind's offer pool (the
+# relic pool already filters out relics the player owns), so it degrades gracefully if a pool is thin.
+func _roll_elite_offers(rng: RandomNumberGenerator) -> Array:
+	const TOTAL := 4
+	var relic_kind := ItemKinds.get_kind("relic")
+	var charm_kind := ItemKinds.get_kind("charm")
+	var relics: Array = relic_kind.offer_pool(TOTAL, rng) if relic_kind != null else []
+	var charms: Array = charm_kind.offer_pool(TOTAL, rng) if charm_kind != null else []
+	var offers: Array = []
+	var ri := 0
+	var ci := 0
+	while offers.size() < TOTAL and (ri < relics.size() or ci < charms.size()):
+		if ri < relics.size():
+			offers.append(Grant.make("relic", relics[ri]))
+			ri += 1
+		if offers.size() >= TOTAL:
+			break
+		if ci < charms.size():
+			offers.append(Grant.make("charm", charms[ci]))
+			ci += 1
+	return offers
 
 
 # Average mana cost across the pool — the midpoint the cost bias pivots around.

@@ -16,6 +16,13 @@ var current_map_state: MapState = null
 var current_encounter: EncounterData = null
 # The stat a "?" event site upgrades, handed to the event screen on entry (transient).
 var current_event_attr: String = ""
+# A standalone reward request for the reward screen when it's NOT tied to a combat encounter
+# (e.g. the charm choice after clearing a stage). When pending_reward_offers is non-empty the
+# reward screen shows those offers instead of building from current_encounter. Transient — set
+# just before navigating to the reward screen, consumed and cleared there (see reward_screen).
+var pending_reward_offers: Array = []          # Array[Grant]
+var pending_reward_title: String = ""
+var pending_reward_advance_stage: bool = false
 # The deck the detail screen should display, handed off from the Decks screen (transient).
 var viewing_deck_id: String = ""
 # The deck the builder should edit, handed off from the Decks screen (transient).

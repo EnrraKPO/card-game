@@ -8,7 +8,7 @@ func _ready() -> void:
 	var scene_path: String = args[0] if args.size() > 0 else "res://scenes/game_world.tscn"
 	GameData.select_slot(0)
 	# Screens that read GameData.current_run need an active run with a populated deck.
-	for needs_run in ["combination", "shop", "deck_build", "rest", "relic_event", "event", "combat", "map"]:
+	for needs_run in ["combination", "shop", "deck_build", "rest", "relic_event", "event", "combat", "map", "stage_cleared"]:
 		if scene_path.contains(needs_run):
 			GameData.start_new_run()
 			GameData.current_run.charms.append_array(["sharpened", "sturdy", "swift", "warded"])
@@ -29,14 +29,34 @@ func _ready() -> void:
 		GameData.current_map_state.current_node_id = start.connections[0]
 	if scene_path.contains("map") and args.size() > 1 and "zoomed" in args:
 		MapScreen._zoom_level = 1.6
-	if scene_path.contains("reward"):
+	if scene_path.contains("reward") and args.size() > 1 and "charm" in args:
+		# Standalone charm reward (the post-stage pick) — pending offers, no encounter.
+		GameData.start_new_run()
+		var coffers: Array = []
+		var ckind := ItemKinds.get_kind("charm")
+		if ckind != null:
+			for cid: String in ckind.offer_pool(4, null):
+				coffers.append(Grant.make("charm", cid))
+		GameData.pending_reward_offers = coffers
+		GameData.pending_reward_title = "Stage Cleared — Choose a Charm"
+		GameData.pending_reward_advance_stage = true
+	elif scene_path.contains("reward"):
 		var enc := EncounterData.new()
 		enc.type = EncounterData.Type.ELITE
 		enc.gold_reward = 45
 		enc.exp_reward = 3
 		enc.material_rewards = {"fire": 2, "water": 1, "knight_piece": 1}
-		enc.reward_pool = ["fire_fire", "air_water", "earth_fire"]
-		enc.relic_offer = "battle_standard"
+		# Elite reward: a relic/charm choice (mirrors EncounterTemplateData._roll_elite_offers).
+		var eoffers: Array = []
+		var rk := ItemKinds.get_kind("relic")
+		var chk := ItemKinds.get_kind("charm")
+		var rids: Array = rk.offer_pool(2, null) if rk != null else []
+		var cids: Array = chk.offer_pool(2, null) if chk != null else []
+		for rid: String in rids:
+			eoffers.append(Grant.make("relic", rid))
+		for cid: String in cids:
+			eoffers.append(Grant.make("charm", cid))
+		enc.reward_offers = eoffers
 		GameData.current_encounter = enc
 	var sv := SubViewport.new()
 	sv.size = RES

@@ -26,6 +26,11 @@ func _ready() -> void:
 
 	var compact := UIScale.is_compact()
 
+	# Standalone mode: a reward not tied to a combat win (e.g. the charm choice after clearing a
+	# stage). The offers come from GameData.pending_reward_offers, there's no gold/exp/material
+	# summary and no bonus-card side column — just the pick. See GameData.pending_reward_*.
+	var standalone := not GameData.pending_reward_offers.is_empty()
+
 	# The authoritative "how tall can our content actually be" figure. Deliberately NOT derived
 	# from body/content_row's own reported size: those are real Containers, and CardUI defaults to
 	# reporting its native 260x340 as its own minimum size before anything explicitly resizes it —
@@ -54,7 +59,10 @@ func _ready() -> void:
 	body.add_child(header_row)
 
 	var title := Label.new()
-	title.text = "Victory!  Choose a Reward"
+	if standalone:
+		title.text = GameData.pending_reward_title if not GameData.pending_reward_title.is_empty() else "Choose a Reward"
+	else:
+		title.text = "Victory!  Choose a Reward"
 	title.add_theme_font_size_override("font_size", 40 if compact else 32)
 	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	header_row.add_child(title)
@@ -70,26 +78,29 @@ func _ready() -> void:
 	summary_strip.size_flags_horizontal = SIZE_EXPAND_FILL
 	header_row.add_child(summary_strip)
 
-	var gold_gained: int = GameData.current_encounter.gold_reward if GameData.current_encounter != null else 0
-	summary_strip.add_child(_reward_stat("Gold", "+%d" % gold_gained, Color("9c7a10"), compact))
-
-	# Experience was banked at combat end (GameData.apply_encounter_rewards) — show it for feedback.
-	var exp_gained: int = GameData.current_encounter.exp_reward if GameData.current_encounter != null else 0
-	if exp_gained > 0:
-		summary_strip.add_child(_reward_stat("Exp", "+%d" % exp_gained, Color("1f5c8a"), compact))
-
-	# Crafting resources earned this fight (already banked). Each elemental essence reward also
-	# grants the matching element CARD to the deck — collected here and shown as actual cards below
-	# (rather than as "+1 X card" text), so the player sees exactly what entered their deck.
+	# The gold/exp/material summary and the bonus-card side column only make sense for a combat win;
+	# a standalone reward (e.g. the post-stage charm) has none of these — just the pick.
 	var granted_cards: Array[String] = []
-	var mats: Dictionary = GameData.current_encounter.material_rewards if GameData.current_encounter != null else {}
-	for id: String in mats:
-		var amt := int(mats[id])
-		if amt <= 0:
-			continue
-		summary_strip.add_child(_reward_stat(Materials.display_name(id), "+%d" % amt, Materials.color(id), compact))
-		if id in Materials.ELEMENTS:
-			granted_cards.append(id)
+	if not standalone and GameData.current_encounter != null:
+		var gold_gained: int = GameData.current_encounter.gold_reward
+		summary_strip.add_child(_reward_stat("Gold", "+%d" % gold_gained, Color("9c7a10"), compact))
+
+		# Experience was banked at combat end (GameData.apply_encounter_rewards) — show it for feedback.
+		var exp_gained: int = GameData.current_encounter.exp_reward
+		if exp_gained > 0:
+			summary_strip.add_child(_reward_stat("Exp", "+%d" % exp_gained, Color("1f5c8a"), compact))
+
+		# Crafting resources earned this fight (already banked). Each elemental essence reward also
+		# grants the matching element CARD to the deck — collected here and shown as actual cards below
+		# (rather than as "+1 X card" text), so the player sees exactly what entered their deck.
+		var mats: Dictionary = GameData.current_encounter.material_rewards
+		for id: String in mats:
+			var amt := int(mats[id])
+			if amt <= 0:
+				continue
+			summary_strip.add_child(_reward_stat(Materials.display_name(id), "+%d" % amt, Materials.color(id), compact))
+			if id in Materials.ELEMENTS:
+				granted_cards.append(id)
 
 	# Built here but added below as part of reward_col (paired with reward_grid, not body directly)
 	# so it's centered over the reward grid's own column, not the full screen width — it was
@@ -149,11 +160,17 @@ func _ready() -> void:
 	# clickable (no separate button) to keep picking friction-free. Built here (before reward_panel)
 	# so its count is known up front for the width computation below.
 	var offers: Array = []
-	if GameData.current_encounter != null:
-		for id: String in GameData.current_encounter.reward_pool:
-			offers.append(Grant.make("card", id))
-		if not GameData.current_encounter.relic_offer.is_empty():
-			offers.append(Grant.make("relic", GameData.current_encounter.relic_offer))
+	if standalone:
+		offers = GameData.pending_reward_offers.duplicate()
+	elif GameData.current_encounter != null:
+		if not GameData.current_encounter.reward_offers.is_empty():
+			# An encounter with an explicit offer list (elites: relic/charm choice) uses it verbatim.
+			offers = GameData.current_encounter.reward_offers.duplicate()
+		else:
+			for id: String in GameData.current_encounter.reward_pool:
+				offers.append(Grant.make("card", id))
+			if not GameData.current_encounter.relic_offer.is_empty():
+				offers.append(Grant.make("relic", GameData.current_encounter.relic_offer))
 
 	# The reward picks are the main event: a FitGrid (the shared "N card-shaped controls, sized to
 	# fill available space, no scrolling" component also used by the shop/deck/event screens).
@@ -399,9 +416,10 @@ func _build_element_offers(content_row: HBoxContainer, ids: Array[String], compa
 # pick); relics render as a card-sized info panel, also click-to-pick. A relic at the capacity cap
 # is shown disabled. Sizing is left to the caller's FitGrid, which drives size/position directly.
 func _make_offer(grant: Grant, compact: bool) -> Control:
-	if grant.kind == "card":
-		return _make_card_offer(grant)
-	return _make_relic_offer(grant)
+	match grant.kind:
+		"card":  return _make_card_offer(grant)
+		"charm": return _make_charm_offer(grant)
+		_:       return _make_relic_offer(grant)
 
 
 # Wraps the card art with its description below, within whatever cell FitGrid assigns. Deliberately
@@ -452,8 +470,33 @@ func _make_card_offer(grant: Grant) -> Control:
 func _make_relic_offer(grant: Grant) -> Control:
 	var relic := RelicData.get_relic(grant.id)
 	var accent := relic.color if relic != null else Color(0.80, 0.74, 0.45)
-	var pickable := grant.can_apply()
+	return _make_info_offer(grant, "RELIC", accent,
+		relic.icon if relic != null else null,
+		relic.letter if relic != null else "✦",
+		grant.display_name(),
+		relic.description if relic != null else "",
+		grant.can_apply(),
+		"Inventory Full")
 
+
+# Charm offers are rendered like relics — a card-sized info panel, click to pick — but from
+# CharmData (glyph + colour, no icon art) and always pickable (charms have no capacity cap).
+func _make_charm_offer(grant: Grant) -> Control:
+	var charm := CharmData.get_charm(grant.id)
+	var accent := charm.color if charm != null else Color(0.72, 0.72, 0.80)
+	return _make_info_offer(grant, "CHARM", accent, null,
+		charm.letter if charm != null else "✦",
+		charm.display_name if charm != null else grant.display_name(),
+		charm.description if charm != null else "",
+		true, "")
+
+
+# The shared "info panel" offer used by relics and charms: an accent-bordered, card-sized button
+# with a glyph/icon, a kind tag, name, description, and (optionally) an unavailable note. Scales its
+# own content live from the box FitGrid assigns it. `full_text` shows (and disables the pick) when
+# not pickable — an empty string means "always available".
+func _make_info_offer(grant: Grant, tag: String, accent: Color, icon: Texture2D, glyph: String,
+		name_text: String, desc_text: String, pickable: bool, full_text: String) -> Control:
 	var btn := Button.new()
 	btn.tooltip_text = grant.tooltip()
 	btn.disabled = not pickable
@@ -478,23 +521,23 @@ func _make_relic_offer(grant: Grant) -> Control:
 
 	var icon_box: TextureRect = null
 	var glyph_lbl: Label = null
-	if relic != null and relic.icon != null:
-		icon_box = _offer_icon(relic.icon, 104)
+	if icon != null:
+		icon_box = _offer_icon(icon, 104)
 		v.add_child(icon_box)
 	else:
-		glyph_lbl = _offer_label(relic.letter if relic != null else "✦", 44, accent.darkened(0.3))
+		glyph_lbl = _offer_label(glyph, 44, accent.darkened(0.3))
 		v.add_child(glyph_lbl)
-	var tag_lbl := _offer_label("RELIC", 16, Color("5a4a38"))
+	var tag_lbl := _offer_label(tag, 16, Color("5a4a38"))
 	v.add_child(tag_lbl)
-	var name_lbl := _offer_label(grant.display_name(), 20, ScreenUI.TEXT_COLOR)
+	var name_lbl := _offer_label(name_text, 20, ScreenUI.TEXT_COLOR)
 	name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	v.add_child(name_lbl)
-	var desc := _offer_label(relic.description if relic != null else "", 16, Color("4a3d2e"))
+	var desc := _offer_label(desc_text, 16, Color("4a3d2e"))
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	v.add_child(desc)
 	var full_lbl: Label = null
-	if not pickable:
-		full_lbl = _offer_label("Inventory Full", 16, Color("8a2020"))
+	if not pickable and not full_text.is_empty():
+		full_lbl = _offer_label(full_text, 16, Color("8a2020"))
 		v.add_child(full_lbl)
 
 	# A relic offer is hand-built (not a CardUI, which scales its whole canvas as one unit), so it
@@ -557,6 +600,20 @@ func _skip() -> void:
 
 
 func _finish() -> void:
+	# A standalone reward (e.g. the post-stage charm) isn't a combat win — no bonus cards, no
+	# encounter to clear. Consume the pending request; advance the stage first if it asked to.
+	if not GameData.pending_reward_offers.is_empty():
+		var advance := GameData.pending_reward_advance_stage
+		GameData.pending_reward_offers = []
+		GameData.pending_reward_title = ""
+		GameData.pending_reward_advance_stage = false
+		if advance:
+			GameData.advance_stage()   # generates the next stage's map + saves
+		else:
+			GameData.save_run()
+		Nav.goto("res://scenes/map.tscn")
+		return
+
 	# Gold + materials were applied at combat end (GameData.apply_encounter_rewards); here we add
 	# any ACCEPTED bonus elemental cards plus whatever pick reward was already applied, then leave.
 	if GameData.current_run != null:

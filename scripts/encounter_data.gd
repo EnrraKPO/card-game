@@ -10,6 +10,9 @@ var enemy_king: String = "king"      # the enemy's win-condition unit (a themed 
 var power: float = 0.0               # procedural difficulty: scales enemy card stats, deck size, captain
 var reward_pool: Array[String] = []  # card IDs offered as rewards after a win
 var relic_offer: String = ""         # optional relic id offered alongside the card pick (elites/bosses)
+# An explicit reward offer list (Array[Grant]); when non-empty the reward screen shows these
+# INSTEAD of the card pool + single relic. Elites use it for their relic/charm choice.
+var reward_offers: Array = []
 var gold_reward: int = 0             # gold granted on win, set by EncounterTemplateData
 var exp_reward: int = 1              # profile experience granted on win (1 by default; special fights more)
 var material_rewards: Dictionary = {}  # profile crafting resources (id→count) granted on win
