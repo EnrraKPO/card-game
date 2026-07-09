@@ -41,9 +41,9 @@
     "steps": [
       {
         "model": "krea2",
-        "samples": 2,
+        "samples": 1,
         "turbo": false,
-        "denoise": 0.5
+        "denoise": 0.45
       },
       {
         "model": "krea2",
@@ -52,8 +52,8 @@
       },
       {
         "model": "krea2",
-        "samples": 3,
-        "denoise": 0.7
+        "samples": 2,
+        "denoise": 0.75
       }
     ],
     "anchor": "recipe"

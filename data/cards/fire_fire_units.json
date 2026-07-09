@@ -17,11 +17,11 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Chibi fire elemental soldier, full body standing pose, round red-orange helmet crowned with flame, glowing yellow eyes on faceless molten face, red scarf, flaming armor, holding tall spear with blazing translucent spearhead, round shield with flame emblem, fire licking the cracked ground, dark blue twilight sky with jagged peaks, vibrant orange-red against deep blue palette, glossy stylized game illustration, strong rim glow",
+				"prompt": "Solitary young footsoldier of living flame, blank molten face with blazing golden eyes, ember-riveted charcoal breastplate and a small crowned helm with a single fire plume, gripping a short glowing-headed spear trailing a curling ribbon of fire, sparks scattering from cracked scorched ground, drifting cinders in smoky crimson dusk, bold outlines, glossy stylized game illustration",
 				"ref": {
-					"source": "current",
-					"mode": "img2img",
-					"denoise": 0.7
+					"source": "game",
+					"path": "assets/cards/pawn.png",
+					"name": "Pawn"
 				},
 				"llmHidden": [
 					"Stats derived from the composition by the game.",
@@ -32,6 +32,18 @@
 					"prompt": "Chibi fire elemental soldier, full body standing pose, round red-orange helmet crowned with flame, glowing yellow eyes on faceless molten face, red scarf, flaming armor, holding tall spear with blazing translucent spearhead, round shield with flame emblem, fire licking the cracked ground, dark blue twilight sky with jagged peaks, vibrant orange-red against deep blue palette, glossy stylized game illustration, strong rim glow",
 					"style": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric light, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear,",
 					"at": "2026-07-07"
+				},
+				"inferredFrom": {
+					"concept": [
+						"pawn",
+						"air_darkness_bishop_pawn",
+						"air_darkness_knight_pawn"
+					],
+					"theme": [
+						"fire_fire_bishop_pawn",
+						"fire_fire_knight_pawn",
+						"fire_fire_pawn_pawn"
+					]
 				}
 			}
 		}
@@ -54,11 +66,11 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Rearing fiery war horse made of living flame, blazing mane and tail, dark obsidian armored barding with ember gem accents, red leather harness and bridle, front hooves raised, glowing orange-yellow body against dusky purple volcanic badlands at twilight, radiant fire lighting, stylized fantasy game illustration, vibrant painterly rendering, centered dynamic composition, chibi cartoon visuals",
+				"prompt": "Cartoon chibi armored knight forged of living flame astride a small blazing steed, mirrored fire-plate barding studded with glowing ember gems, curling ember mane streaming, brandishing a fiery lance trailing twin ribbons of light, sparks scattering where hooves strike scorched dark rock, drifting cinders against a smoky amber dusk, bold outlines, vivid saturated oranges and deep charcoal",
 				"ref": {
-					"source": "current",
-					"mode": "img2img",
-					"denoise": 0.7
+					"source": "game",
+					"path": "assets/cards/knight.png",
+					"name": "Knight"
 				},
 				"concept": "This is a chess knight, meaning a horse. ",
 				"llmHidden": [
@@ -71,12 +83,25 @@
 					"prompt": "Rearing fiery war horse made of living flame, blazing mane and tail, dark obsidian armored barding with ember gem accents, red leather harness and bridle, front hooves raised, glowing orange-yellow body against dusky purple volcanic badlands at twilight, radiant fire lighting, stylized fantasy game illustration, vibrant painterly rendering, centered dynamic composition, chibi cartoon visuals",
 					"style": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric light, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear,",
 					"at": "2026-07-07"
+				},
+				"inferredFrom": {
+					"concept": [
+						"knight",
+						"air_darkness_bishop_knight",
+						"air_darkness_knight"
+					],
+					"theme": [
+						"fire_fire_bishop_knight",
+						"fire_fire_knight_knight",
+						"fire_fire_knight_pawn"
+					]
 				}
 			}
 		}
 	},
 	{
 		"id": "fire_fire_bishop",
+		"display_name": "Pure Fire Bishop",
 		"elements": [
 			"fire",
 			"fire"
@@ -86,27 +111,22 @@
 		],
 		"tool": {
 			"art": {
-				"prompt": "Chibi bishop priest wreathed in living flame, tall miter of molten ruby crystal, charred crimson robes trimmed with glowing ember runescale, crooked staff of red gemstone crackling with fire, tiny fierce eyes beneath a smoldering hood, standing on cracked lava-veined ground under smoky orange dusk, radiant firelight, stylized fantasy game illustration, vibrant painterly rendering, centered composition, chibi cartoon visuals",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "A towering flame-sculpted priest wreathed in living fire, glowing gemstone-set headpiece flaring atop his brow, molten dark vestments veined with searing light, clutching a curled hooked staff crowned with orbiting fireball suns, open blazing tome spiraling overhead, cinders and eruption plumes swirling from cracked scorched ground, dramatic low three-quarter angle, smoky orange gloom",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/bishop.png",
-					"name": "Bishop"
-				},
-				"inferredFrom": {
-					"concept": [
-						"bishop",
-						"bishop_bishop",
-						"bishop_knight"
-					],
-					"theme": [
-						"fire_fire",
-						"fire_fire_king",
-						"fire_fire_knight"
-					]
+					"name": "Bishop",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"display_name": "Pure Fire Bishop"
+		}
 	},
 	{
 		"id": "fire_fire_rook",
@@ -119,7 +139,7 @@
 		],
 		"tool": {
 			"art": {
-				"prompt": "Cartoon fantasy tower of blackened volcanic rock and molten seams, crenellations spouting twin roaring flame plumes, cracked masonry glowing ember-orange from within, lava trickling down the tapered stone base, tiny fiery sentinel peering from an arched window, drifting sparks and heat shimmer against a smoldering dark red sky, bold outlines, saturated fiery palette",
+				"prompt": "Molten fortress tower of living flame rising from a glowing ember lake, walls of blazing crystal veined with roaring firelight, twin waterfalls of fire pouring from crenellated battlements, a spire crowned with a burning gem, a small hooded chibi mage of pure flame with a fiery gem-tipped staff and glowing spellbook beside its arched blazing doorway, drifting cinders, smoky crimson dusk, bold outlines.",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/rook.png",
@@ -128,13 +148,13 @@
 				"inferredFrom": {
 					"concept": [
 						"rook",
-						"bishop_rook",
-						"darkness_water_rook"
+						"air_darkness_bishop_rook",
+						"air_darkness_knight_rook"
 					],
 					"theme": [
-						"fire_fire",
-						"fire_fire_bishop",
-						"fire_fire_king"
+						"fire_fire_bishop_rook",
+						"fire_fire_knight_rook",
+						"fire_fire_pawn_rook"
 					]
 				}
 			}
@@ -143,6 +163,7 @@
 	},
 	{
 		"id": "fire_fire_queen",
+		"display_name": "Pure Fire Queen",
 		"elements": [
 			"fire",
 			"fire"
@@ -152,30 +173,30 @@
 		],
 		"tool": {
 			"art": {
-				"prompt": "Chibi fantasy game illustration, bold black outlines, fierce cute fire queen standing full-body, molten lava gown with flame-patterned hem trailing embers, tall crown of living fire crowning wild blazing hair, one hand conjuring a swirling inferno orb of white-hot flame, red-orange glowing palette, ember sparks drifting, dark smoldering throne hall backdrop, scorched floor ring beneath her",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "chibi fire elemental queen, flowing flame-hair and blazing crown, stern gaze, glowing gown of living fire, holding swirling fireball orb in outstretched hand, standing on ornate circular floor, dark gothic hall of ember-lit arches, orange-red-gold palette, dramatic inner glow, painterly fantasy illustration",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/queen.png",
-					"name": "Queen"
+					"source": "current",
+					"mode": "img2img",
+					"denoise": 0.7
 				},
-				"inferredFrom": {
-					"concept": [
-						"queen",
-						"bishop_queen",
-						"darkness_water_bishop_queen"
-					],
-					"theme": [
-						"fire_fire",
-						"fire_fire_bishop",
-						"fire_fire_king"
-					]
+				"last": {
+					"seed": 319464761,
+					"prompt": "chibi fire elemental queen, flowing flame-hair and blazing crown, stern gaze, glowing gown of living fire, holding swirling fireball orb in outstretched hand, standing on ornate circular floor, dark gothic hall of ember-lit arches, orange-red-gold palette, dramatic inner glow, painterly fantasy illustration",
+					"style": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear",
+					"at": "2026-07-09"
 				}
 			}
-		},
-		"display_name": "Pure Fire Queen"
+		}
 	},
 	{
 		"id": "fire_fire_pawn_pawn",
+		"display_name": "Pure Fire Warrior",
 		"elements": [
 			"fire",
 			"fire"
@@ -186,30 +207,26 @@
 		],
 		"tool": {
 			"art": {
-				"prompt": "Chibi twin fire elemental footsoldiers standing shoulder to shoulder, full body pose, matching molten helms each crowned with a flame plume, faceless lava faces with blazing yellow eyes, ember-riveted charcoal breastplates, one hefting an obsidian-hafted spear with blazing head, the other raising a smoldering round shield, twin fire whorls entwining between them, cracked lava-veined ground, sparks rising into smoky dusk, glossy stylized game illustration",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "A lone flame-born warrior, molten armored plates glowing with inner heat, an open-faced ember helm revealing blazing golden eyes, gripping a broad longsword sheathed in curling ribbons of living fire, lunging mid-swing as bright sparks and drifting cinders spiral around him, cracked scorched ground, smoky crimson dusk, bold outlines, vivid glowing oranges and deep charcoal.",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/pawn_pawn.png",
-					"name": "Warrior"
-				},
-				"inferredFrom": {
-					"concept": [
-						"pawn_pawn",
-						"water_water_pawn_pawn",
-						"bishop_pawn"
-					],
-					"theme": [
-						"fire_fire_pawn",
-						"fire_fire",
-						"fire_fire_bishop"
-					]
+					"name": "Warrior",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"display_name": "Pure Fire Warrior"
+		}
 	},
 	{
 		"id": "fire_fire_knight_pawn",
+		"display_name": "Pure Fire Cavalry",
 		"elements": [
 			"fire",
 			"fire"
@@ -220,30 +237,26 @@
 		],
 		"tool": {
 			"art": {
-				"prompt": "Cartoon chibi squire in cracked obsidian armor veined with molten seams, riding a small pony of living flame with a mane of curling embers, hefting a spear trailing twin ribbons of fire, sparks bursting where hooves strike scorched black rock, drifting cinders against a smoky crimson dusk, bold outlines, vivid molten oranges and deep charcoal",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Mounted lancer and barded warhorse both bodied entirely of living flame, mirror-bright fire-plate barding set with glowing ember gems, a tall curling plume of pure blaze streaming from the visored helm, ember mane and cape whipping back, lowered lance trailing twin ribbons of light, charging low as sparks scatter from scorched dark rock, drifting cinders against smoky amber dusk, bold outlines, saturated oranges and deep charcoal.",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/knight_pawn.png",
-					"name": "Cavalry"
-				},
-				"inferredFrom": {
-					"concept": [
-						"knight_pawn",
-						"water_water_knight_pawn",
-						"bishop_knight"
-					],
-					"theme": [
-						"fire_fire_knight",
-						"fire_fire_pawn",
-						"fire_fire"
-					]
+					"name": "Cavalry",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"display_name": "Pure Fire Cavalry"
+		}
 	},
 	{
 		"id": "fire_fire_bishop_pawn",
+		"display_name": "Pure Fire Paladin",
 		"elements": [
 			"fire",
 			"fire"
@@ -254,30 +267,26 @@
 		],
 		"tool": {
 			"art": {
-				"prompt": "Cartoon chibi acolyte bishop of living flame, stout ember-forged armor with molten obsidian pauldrons over a charred crimson tabard, small ruby-crystal mitre atop a soot-blackened helm, gripping a short brimstone mace trailing twin ribbons of swirling fire, paired flame bursts erupting at his boots, drifting cinders across cracked lava ground under smoky orange dusk, bold outlines, vibrant fiery colors",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Towering chibi paladin knight forged entirely of roaring living flame, visored helm ridged into a tiny blazing crown, incandescent tabard bearing a searing cross of light, molten dark pauldrons veined with glowing heat, hoisting a radiant kite shield and a spiked mace trailing ember sparks, glowing white-hot eyes, cinders and eruption plumes swirling around a scorched cracked floor, centered figure, smoky orange gloom, bold outlines.",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/bishop_pawn.png",
-					"name": "Paladin"
-				},
-				"inferredFrom": {
-					"concept": [
-						"bishop_pawn",
-						"water_water_bishop_pawn",
-						"bishop"
-					],
-					"theme": [
-						"fire_fire_bishop",
-						"fire_fire_pawn",
-						"fire_fire"
-					]
+					"name": "Paladin",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"display_name": "Pure Fire Paladin"
+		}
 	},
 	{
 		"id": "fire_fire_pawn_rook",
+		"display_name": "Pure Fire Barracks",
 		"elements": [
 			"fire",
 			"fire"
@@ -288,30 +297,26 @@
 		],
 		"tool": {
 			"art": {
-				"prompt": "Cartoon chibi flame sentinel guarding a stout volcanic-rock watchtower rising from a lake of glowing lava, obsidian battlements veined with molten cracks, twin pillars of fire roaring from the tower's crown, the little guard in ember-forged armor hoisting a blazing spear, cinders swirling against a smoky crimson dusk, bold outlines, vivid molten oranges and deep charcoal",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Towering chibi stronghold keep with battlements and an arched gateway, its walls formed from woven living flame veined with white-hot seams, a hanging banner of pure blazing radiance, a rack of ember-tipped spears by the door, a stout sentry in glowing molten armor and a curling ember scarf gripping a flame-wreathed spear and round burning shield, drifting cinders, smoky crimson dusk, bold outlines, vibrant fiery colors",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/pawn_rook.png",
-					"name": "Barracks"
-				},
-				"inferredFrom": {
-					"concept": [
-						"pawn_rook",
-						"water_water_pawn_rook",
-						"bishop_pawn"
-					],
-					"theme": [
-						"fire_fire_bishop_pawn",
-						"fire_fire_knight_pawn",
-						"fire_fire_pawn"
-					]
+					"name": "Barracks",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"display_name": "Pure Fire Barracks"
+		}
 	},
 	{
 		"id": "fire_fire_pawn_queen",
+		"display_name": "Pure Fire Commander",
 		"elements": [
 			"fire",
 			"fire"
@@ -322,30 +327,26 @@
 		],
 		"tool": {
 			"art": {
-				"prompt": "Cartoon chibi soldier-queen of living flame commanding from a jagged basalt rampart, molten-gold crown fused into an ember-forged helm, raising a blazing scepter trailing twin spiraling fire ribbons, rank of small chibi pikemen of crackling ember-bodied flame marching below, paired lava bursts flaring at their boots, cinders drifting over a glowing volcanic horizon, bold outlines, vivid crimson-and-molten-orange palette",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "A commanding woman wrought entirely of living flame, tall crested helm streaming a plume of pure blaze, radiant ember-plate and a whipping cinder cape, raised a slender glowing baton skyward atop a raised blazing dais, marshaling ranks of fiery humanoid soldiers below, drifting sparks against smoky amber gloom, bold outlines, saturated oranges and deep charcoal.",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/pawn_queen.png",
-					"name": "Commander"
-				},
-				"inferredFrom": {
-					"concept": [
-						"pawn_queen",
-						"water_water_pawn_queen",
-						"bishop_pawn"
-					],
-					"theme": [
-						"fire_fire_bishop_pawn",
-						"fire_fire_knight_pawn",
-						"fire_fire_pawn"
-					]
+					"name": "Commander",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"display_name": "Pure Fire Commander"
+		}
 	},
 	{
 		"id": "fire_fire_knight_knight",
+		"display_name": "Pure Fire Beast",
 		"elements": [
 			"fire",
 			"fire"
@@ -356,30 +357,26 @@
 		],
 		"tool": {
 			"art": {
-				"prompt": "Cartoon chibi pair of twin stallions forged from roaring flame, mirrored blazing bodies charging in unison, manes and tails braiding into matched helixes of fire, jagged basalt barding laced with glowing lava cracks, chain reins of red-hot links binding them together, hooves striking twin bursts of sparks across cooling magma flats, ashen storm sky behind, bold outlines, fierce saturated colors",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Colossal war-bull rearing mid-charge, its entire hulking body woven from living flame, thick curved horns of pure blaze, ember mane crackling along its lowered neck, glowing molten eyes, streaming ribbons of fire from flaring nostrils, sparks scattering from cracked scorched ground, drifting cinders against smoky amber dusk, bold outlines, saturated oranges and deep charcoal.",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/knight_knight.png",
-					"name": "Beast"
-				},
-				"inferredFrom": {
-					"concept": [
-						"knight_knight",
-						"water_water_knight_knight",
-						"bishop_knight"
-					],
-					"theme": [
-						"fire_fire_knight",
-						"fire_fire_knight_pawn",
-						"fire_fire"
-					]
+					"name": "Beast",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"display_name": "Pure Fire Beast"
+		}
 	},
 	{
 		"id": "fire_fire_bishop_knight",
+		"display_name": "Pure Fire Cryptid",
 		"elements": [
 			"fire",
 			"fire"
@@ -390,30 +387,32 @@
 		],
 		"tool": {
 			"art": {
-				"prompt": "Cartoon chibi steed of living flame rearing mid-charge, obsidian barding studded with ember gems, blazing mane and tail streaming, tall ruby-crystal mitre atop its brow, crooked brimstone crozier strapped to its saddle trailing twin fire ribbons, hooves striking sparks from cracked lava-veined ground, drifting cinders under smoky orange dusk, bold outlines, vibrant fiery colors",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Roaring flame-born feline cryptid with a serpentine tail, its body woven entirely of living blaze, incandescent white-hot eyes, curved horns flaring like tiny crowns of fire, molten claws trailing ember sparks, wisps of cinder curling from its mane, prowling low across scorched cracked ground, smoky orange gloom, bold outlines, centered figure",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/bishop_knight.png",
-					"name": "Cryptid"
+					"name": "Cryptid",
+					"mode": "img2img",
+					"denoise": 0.6
 				},
-				"inferredFrom": {
-					"concept": [
-						"bishop_knight",
-						"darkness_water_bishop_knight",
-						"water_water_bishop_knight"
-					],
-					"theme": [
-						"fire_fire_bishop",
-						"fire_fire_bishop_pawn",
-						"fire_fire_knight"
-					]
+				"last": {
+					"seed": 2381666331,
+					"prompt": "Roaring flame-born feline cryptid with a serpentine tail, its body woven entirely of living blaze, incandescent white-hot eyes, curved horns flaring like tiny crowns of fire, molten claws trailing ember sparks, wisps of cinder curling from its mane, prowling low across scorched cracked ground, smoky orange gloom, bold outlines, centered figure, cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear",
+					"style": "",
+					"at": "2026-07-09"
 				}
 			}
-		},
-		"display_name": "Pure Fire Cryptid"
+		}
 	},
 	{
 		"id": "fire_fire_knight_rook",
+		"display_name": "Pure Fire Stable",
 		"elements": [
 			"fire",
 			"fire"
@@ -424,30 +423,30 @@
 		],
 		"tool": {
 			"art": {
-				"prompt": "Cartoon chibi fortified obsidian watchtower rising from a lava lake, battlements crowned with jagged basalt spikes and ember gems, a rearing war horse of living flame leaning from its arched gate, mane whipping into twin fire helixes, paired molten falls pouring from the ramparts into bubbling magma, drifting cinders under a smoky crimson dusk, bold outlines, fierce saturated colors",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Blazing timber-and-strap stable woven from living flame, glowing-ember Dutch doors and spike-topped corner posts, hanging cinder-lantern, curling incandescent horse head peering out with white-hot eyes, pitchfork sunk in smoldering bright hay, molten pennant streaming sparks, drifting embers over scorched dark ground, smoky amber gloom, low three-quarter angle, bold outlines.",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/knight_rook.png",
-					"name": "Stable"
-				},
-				"inferredFrom": {
-					"concept": [
-						"knight_rook",
-						"water_water_knight_rook",
-						"bishop_knight"
-					],
-					"theme": [
-						"fire_fire_knight",
-						"fire_fire_knight_knight",
-						"fire_fire_knight_pawn"
-					]
+					"name": "Stable",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"display_name": "Pure Fire Stable"
+		}
 	},
 	{
 		"id": "fire_fire_knight_queen",
+		"display_name": "Pure Fire Monster",
+		"cost": 0,
+		"attack": 0,
+		"health": 1,
+		"speed": 0,
 		"elements": [
 			"fire",
 			"fire"
@@ -458,30 +457,26 @@
 		],
 		"tool": {
 			"art": {
-				"prompt": "Cartoon chibi dragon forged from roaring living flame, rearing on hind legs like a charging warhorse, molten orange body veined with white-hot cracks, jagged obsidian crown set with ruby embers atop its horned head, twin firestorm helixes spiraling along its tail, wings of curling ember ribbons, claws striking spark bursts off cracked magma rock, smoky crimson dusk behind, bold outlines, fierce saturated colors",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "A colossal winged serpent-drake rearing mid-lunge, its horned body and swept-back curved horns forged from roaring living flame, jagged spine ridges spitting sparks, tattered wings of translucent blazing plumes trailing cinders, molten talons and a barbed tail, glowing white-hot eyes, coiling through swirling smoke and drifting embers, low three-quarter angle, smoky crimson-orange gloom, bold outlines.",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/knight_queen.png",
-					"name": "Monster"
-				},
-				"inferredFrom": {
-					"concept": [
-						"knight_queen",
-						"water_water_knight_queen",
-						"bishop_knight"
-					],
-					"theme": [
-						"fire_fire_knight",
-						"fire_fire_knight_knight",
-						"fire_fire_knight_pawn"
-					]
+					"name": "Monster",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"display_name": "Pure Fire Monster"
+		}
 	},
 	{
 		"id": "fire_fire_bishop_bishop",
+		"display_name": "Pure Fire Hierophant",
 		"elements": [
 			"fire",
 			"fire"
@@ -498,11 +493,13 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Cartoon chibi bishop, fire beard, archpriest sculpted from roaring living flame, fire iconography, molten obsidian vestments veined with glowing magma, twin ruby-crystal mitres blazing atop his head, lifting a brimstone crozier crowned by two orbiting fireball suns, a second flame-double flaring behind him, spiraling cinders and eruption plumes all around, bold outlines, searing orange-and-crimson palette, beard is on fire",
+				"prompt": "A bearded high priest with fierce glowing white-hot eyes, entire body and flowing beard woven from roaring living flame, tall gem-crowned headpiece flaring above his brow, molten vestments veined with searing light, hurling a spiraling blaze from an upraised palm, curled hooked staff crowned with orbiting ember suns, cinders swirling over scorched cracked ground, low three-quarter angle, smoky orange gloom, bold outlines",
 				"ref": {
-					"source": "current",
+					"source": "game",
+					"path": "assets/cards/bishop_bishop.png",
+					"name": "Hierophant",
 					"mode": "img2img",
-					"denoise": 0.7
+					"denoise": 0.6
 				},
 				"last": {
 					"seed": 3274064888,
@@ -511,11 +508,11 @@
 					"at": "2026-07-08"
 				}
 			}
-		},
-		"display_name": "Pure Fire Hierophant"
+		}
 	},
 	{
 		"id": "fire_fire_bishop_rook",
+		"display_name": "Pure Fire Arcane Tower",
 		"elements": [
 			"fire",
 			"fire"
@@ -526,30 +523,26 @@
 		],
 		"tool": {
 			"art": {
-				"prompt": "Cartoon chibi obsidian chapel tower rising from a lava lake, walls of black volcanic stone veined with glowing magma, twin rivers of molten fire pouring from its battlements into bubbling flame, ruby-crystal mitre-topped spire crowning it, drifting cinders and orange spark spray, smoky dusk sky behind cracked basalt cliffs, bold outlines, vibrant fiery colors",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "A colossal round tower woven entirely from roaring living flame, crenellated crown flaring with searing light, tapered blazing roof spire tipped by a white-hot glowing gem, tall arched windows spilling radiant fire, hanging pennant sculpted of curling embers, glowing arched threshold, a small hooded flame-bodied acolyte with gem-crowned headpiece and hooked ember staff beside it, cinders swirling over scorched cracked ground, low three-quarter angle, smoky orange gloom, bold outlines",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/bishop_rook.png",
-					"name": "Arcane Tower"
-				},
-				"inferredFrom": {
-					"concept": [
-						"bishop_rook",
-						"water_water_bishop_rook",
-						"bishop"
-					],
-					"theme": [
-						"fire_fire_bishop",
-						"fire_fire_bishop_knight",
-						"fire_fire_bishop_pawn"
-					]
+					"name": "Arcane Tower",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"display_name": "Pure Fire Arcane Tower"
+		}
 	},
 	{
 		"id": "fire_fire_bishop_queen",
+		"display_name": "Pure Fire Deity",
 		"elements": [
 			"fire",
 			"fire"
@@ -560,30 +553,26 @@
 		],
 		"tool": {
 			"art": {
-				"prompt": "Cartoon chibi high priestess-queen of living flame, molten ruby crown atop a tall ember-crystal mitre streaming twin fire-ribbon veils, four graceful arms raising a brimstone crozier and a blazing diadem, twin spiraling fire whirls at her sides, charred crimson robes trailing embers over cracked lava ground, smoky orange dusk, bold outlines, vibrant fiery palette",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "A radiant goddess seated serene, her whole form and streaming hair woven from roaring living flame, white-hot eyes blazing, flowing vestments of molten light veined with searing gold, cupping a swirling blaze in one upturned palm, incandescent halo of orbiting ember suns, cinders spiraling over scorched cracked ground, low three-quarter angle, smoky orange-crimson gloom, bold outlines",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/bishop_queen.png",
-					"name": "Deity"
-				},
-				"inferredFrom": {
-					"concept": [
-						"bishop_queen",
-						"darkness_water_bishop_queen",
-						"water_water_bishop_queen"
-					],
-					"theme": [
-						"fire_fire_bishop",
-						"fire_fire_bishop_knight",
-						"fire_fire_bishop_pawn"
-					]
+					"name": "Deity",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"display_name": "Pure Fire Deity"
+		}
 	},
 	{
 		"id": "fire_fire_rook_rook",
+		"display_name": "Pure Fire Turret",
 		"elements": [
 			"fire",
 			"fire"
@@ -594,30 +583,26 @@
 		],
 		"tool": {
 			"art": {
-				"prompt": "Cartoon chibi twin obsidian fortress towers linked by a massive basalt battlement bridge, rising from a roiling lava sea, each turret erupting a spiraling column of flame from its crown, molten cascades pouring between crenellations into glowing magma, ember-gem studded buttresses and cracked stone glowing from within, cinder sparks swirling under a smoldering crimson sky, bold outlines, blazing saturated colors",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Towering squat siege turret of woven living flame, wide battered base of glowing-ember blocks, white-hot seams pulsing along its walls, narrow blazing arrow-slits venting curls of smoke, crowned by a swiveling incandescent cannon of molten metal aimed skyward with a searing bright charge, drifting cinders and spark spray, smoky amber gloom, high three-quarter angle, bold outlines, vibrant fiery colors",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/rook_rook.png",
-					"name": "Turret"
-				},
-				"inferredFrom": {
-					"concept": [
-						"rook_rook",
-						"water_water_rook_rook",
-						"bishop_rook"
-					],
-					"theme": [
-						"fire_fire_bishop_rook",
-						"fire_fire_knight_rook",
-						"fire_fire_pawn_rook"
-					]
+					"name": "Turret",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"display_name": "Pure Fire Turret"
+		}
 	},
 	{
 		"id": "fire_fire_queen_rook",
+		"display_name": "Pure Fire Castle",
 		"elements": [
 			"fire",
 			"fire"
@@ -628,30 +613,26 @@
 		],
 		"tool": {
 			"art": {
-				"prompt": "Cartoon chibi majestic queen's fortress tower forged of glowing magma-brick, molten gold diadem dome atop its spire, regal flame-sculpted queen figure rising from the crest wielding an ember scepter, twin lava cascades pouring from the ramparts into a ring of roiling fire moat, spark plumes and crimson haze, cracked basalt ridge behind, bold outlines, vibrant fiery palette",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Massive fortress keep with a tall central crenellated turret flanked by two round towers under tapering spires, studded gate beneath an arched threshold, hanging pennants and a small helmeted spear guard — every surface woven from roaring living flame, molten stone glowing white-hot, cinders spiraling over scorched cracked ground, low three-quarter angle, smoky orange-crimson gloom, bold outlines",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/rook_queen.png",
-					"name": "Castle"
-				},
-				"inferredFrom": {
-					"concept": [
-						"rook_queen",
-						"water_water_queen_rook",
-						"bishop_queen"
-					],
-					"theme": [
-						"fire_fire_bishop_queen",
-						"fire_fire_bishop_rook",
-						"fire_fire_knight_queen"
-					]
+					"name": "Castle",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"display_name": "Pure Fire Castle"
+		}
 	},
 	{
 		"id": "fire_fire_queen_queen",
+		"display_name": "Pure Fire Hero",
 		"elements": [
 			"fire",
 			"fire"
@@ -662,26 +643,21 @@
 		],
 		"tool": {
 			"art": {
-				"prompt": "Cartoon chibi twin empresses forged from living flame, mirrored back-to-back in molten-lava gowns veined with white-hot cracks, matching obsidian-and-ruby crowns, each raising an ember scepter topped by a spinning fireball, twin fire tornadoes coiling around their trailing skirts, sparks arcing between them, cracked magma courtyard glowing beneath a smoky crimson sky, bold outlines, blazing orange-and-scarlet palette",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "A fiery hero forged wholly of living flame, wild curly mane streaming as blazing tendrils, jagged crowning ridge of white-hot spires, blazing molten plate armor veined with searing gold, a whipping cinder cape, hoisting an oversized incandescent greatsword mid-swing while leaping from a scorched ledge, glowing white eyes, drifting sparks, smoky crimson-orange gloom, bold outlines.",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/queen_queen.png",
-					"name": "Hero"
-				},
-				"inferredFrom": {
-					"concept": [
-						"queen_queen",
-						"water_water_queen_queen",
-						"bishop_queen"
-					],
-					"theme": [
-						"fire_fire_bishop_queen",
-						"fire_fire_knight_queen",
-						"fire_fire_pawn_queen"
-					]
+					"name": "Hero",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"display_name": "Pure Fire Hero"
+		}
 	}
 ]

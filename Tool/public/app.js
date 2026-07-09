@@ -182,6 +182,108 @@ function renderArtGuidesModal(rows) {
       } }))));
 }
 
+// ── ⚖ offer rarity editor ─────────────────────────────────────────────────────
+// Global tuning for how likely each card is to be offered (reward/shop/stage-clear). Reads
+// data/offer_rarity.json + the real offerable pool from the server, previews the distribution
+// live client-side (mirrors CardData.offer_weight), saves the config back to the game file.
+function offerRarityDefaults() {
+  return { piece: { pawn: 4, knight: 5, bishop: 5, rook: 5, queen: 20, king: 5 },
+    element: 10, count: { '1': 1, '2': 2, '3': 3, '4': 4 } };
+}
+function openOfferRarityModal() {
+  api('/api/offer-rarity').then(res => {
+    const c = (res && res.config) || {};
+    const cfg = offerRarityDefaults();
+    Object.assign(cfg.piece, c.piece_rarity || {});
+    if (Number.isFinite(c.element_rarity)) cfg.element = c.element_rarity;
+    Object.assign(cfg.count, c.count_multiplier || {});
+    renderOfferRarityModal(cfg, (res && res.pool) || []);
+  }).catch(err => toast('Could not load offer rarity: ' + err.message, 'err'));
+}
+
+function renderOfferRarityModal(cfg, pool) {
+  const TIER = ['', '#5c8a54', '#c0912f', '#cc7433', '#8a5fb0'];
+  const PIECES = ['pawn', 'knight', 'bishop', 'rook', 'queen'];
+  const COUNTS = [1, 2, 3, 4];
+
+  const weight = card => {
+    let r = 1;
+    for (let i = 0; i < card.e; i++) r *= cfg.element;
+    for (const pc of card.p) r *= (cfg.piece[pc] ?? 5);
+    const n = card.e + card.p.length;
+    r *= (cfg.count[String(n)] ?? n);
+    return r > 0 ? 1 / r : 0;
+  };
+
+  const distBox = el('div');
+  const update = () => {
+    const rows = pool.map(c => ({ n: c.e + c.p.length, w: weight(c) }));
+    const total = rows.reduce((s, r) => s + r.w, 0) || 1;
+    const bucket = { 1: 0, 2: 0, 3: 0, 4: 0 }, cnt = { 1: 0, 2: 0, 3: 0, 4: 0 };
+    rows.forEach(r => { bucket[r.n] = (bucket[r.n] || 0) + r.w / total; cnt[r.n] = (cnt[r.n] || 0) + 1; });
+    const max = Math.max(...COUNTS.map(n => bucket[n]), 1e-9);
+    const bars = COUNTS.map(n => {
+      const pct = bucket[n] * 100, w = bucket[n] / max * 100;
+      const lbl = ['', 'Single', 'Two', 'Three', 'Four'][n];
+      return el('div', { style: 'display:grid;grid-template-columns:118px 1fr;gap:12px;align-items:center;margin:8px 0' },
+        el('div', { style: 'font-size:13px' },
+          el('span', { style: `display:inline-block;width:10px;height:10px;border-radius:2px;background:${TIER[n]};margin-right:8px;vertical-align:middle` }),
+          lbl + ' ', el('span', { class: 'subtle', text: `${cnt[n] || 0} cards` })),
+        el('div', { style: 'position:relative;background:rgba(128,128,128,.2);border-radius:5px;height:26px;overflow:hidden' },
+          el('div', { style: `height:100%;width:${w}%;background:${TIER[n]};border-radius:5px;transition:width .25s` }),
+          el('div', { style: 'position:absolute;top:0;height:26px;display:flex;align-items:center;padding:0 8px;font-size:12px;font-weight:600', text: pct.toFixed(1) + '%' })));
+    });
+    const single = bucket[1] * 100, dual = bucket[2] * 100, complex = (bucket[3] + bucket[4]) * 100;
+    distBox.replaceChildren(
+      el('div', {}, ...bars),
+      el('div', { class: 'hint', style: 'margin-top:10px',
+        text: `Single ${single.toFixed(1)}%  ·  Dual ${dual.toFixed(1)}%  ·  3–4 piece ${complex.toFixed(1)}%   (pool: ${pool.length} cards)` }));
+  };
+
+  const numRow = (label, sub, get, set, min, max, step) => {
+    let num;
+    const rng = el('input', { type: 'range', min, max, step, value: get(), style: 'flex:1',
+      oninput: e => { set(parseFloat(e.target.value)); num.value = e.target.value; update(); } });
+    num = el('input', { type: 'number', min, step, value: get(), style: 'width:66px',
+      oninput: e => { const v = parseFloat(e.target.value); if (!isNaN(v)) { set(v); rng.value = v; update(); } } });
+    return el('div', { style: 'margin:7px 0' },
+      el('div', { style: 'display:flex;justify-content:space-between;font-size:13px;margin-bottom:2px' },
+        el('span', { text: label }), sub ? el('span', { class: 'subtle', text: sub }) : null),
+      el('div', { style: 'display:flex;align-items:center;gap:10px' }, rng, num));
+  };
+
+  const controls = el('div', { style: 'flex:1;min-width:270px' },
+    el('h3', { text: 'Chess piece rarity' }),
+    ...PIECES.map(k => numRow(k[0].toUpperCase() + k.slice(1),
+      k === 'pawn' ? 'most common' : (k === 'queen' ? 'rarest' : ''),
+      () => cfg.piece[k], v => cfg.piece[k] = v, 1, 60, 0.5)),
+    el('h3', { text: 'Element rarity', style: 'margin-top:14px' }),
+    numRow('Element', 'all elements equal', () => cfg.element, v => cfg.element = v, 1, 60, 0.5),
+    el('h3', { text: 'Count multiplier', style: 'margin-top:14px' }),
+    ...COUNTS.map(n => numRow(n + (n === 1 ? ' component' : ' components'), '× rarity',
+      () => cfg.count[String(n)], v => cfg.count[String(n)] = v, 0.25, 30, 0.25)));
+
+  $('modal-root').replaceChildren(el('div', { class: 'modal', style: 'width:820px; max-height:88vh; overflow:auto' },
+    el('h2', {}, '⚖ Offer rarity'),
+    el('div', { class: 'hint', text: 'How likely each card is to be offered as a reward, in shops, and on stage clear. '
+      + 'Higher rarity = shown less often; every extra component multiplies a card\'s rarity up. '
+      + 'Saves to data/offer_rarity.json — restart the game to apply.' }),
+    el('div', { style: 'display:flex;gap:26px;flex-wrap:wrap;margin-top:12px' },
+      controls,
+      el('div', { style: 'flex:1;min-width:290px' }, el('h3', { text: 'Live offer distribution' }), distBox)),
+    el('div', { class: 'modal-actions' },
+      el('button', { class: 'ghost', text: 'Reset to defaults', onclick: () => renderOfferRarityModal(offerRarityDefaults(), pool) }),
+      el('button', { class: 'ghost', text: 'Cancel', onclick: () => $('modal-root').replaceChildren() }),
+      el('button', { class: 'primary', text: 'Save to game', onclick: async () => {
+        try {
+          await api('/api/offer-rarity', { piece_rarity: cfg.piece, element_rarity: cfg.element, count_multiplier: cfg.count });
+          $('modal-root').replaceChildren();
+          toast('Offer rarity saved — restart the game to apply', 'ok');
+        } catch (err) { toast('Save failed: ' + err.message, 'err'); }
+      } }))));
+  update();
+}
+
 // The bulk entry point: confirm + pick adherence, then start the server-side job.
 function openInferBatchModal(file) {
   const cfg = { adherence: kinDefault(), overwrite: false };
@@ -2144,6 +2246,7 @@ $('enabled-check').addEventListener('change', e => {
 });
 $('delete-btn').addEventListener('click', deleteItem);
 $('settings-btn').addEventListener('click', openSettings);
+$('offer-rarity-btn').addEventListener('click', openOfferRarityModal);
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && state.advancedOpen) closeAdvanced();
 });

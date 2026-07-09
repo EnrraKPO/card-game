@@ -109,6 +109,49 @@ function getArtGuides() {
 }
 function compKey(arr) { return (Array.isArray(arr) ? arr.slice() : []).sort().join('_'); }
 
+// ── offer rarity ─────────────────────────────────────────────────────────────
+// Global tuning for how likely each card is to be OFFERED (reward/shop/stage-clear).
+// Lives in the game's own data/offer_rarity.json (read by CardData.offer_weight). Mirror
+// of the game's OFFER_RARITY_DEFAULT so the tool round-trips the same shape / fallbacks.
+const OFFER_RARITY_PATH = path.join(GAME_ROOT, 'data/offer_rarity.json');
+const OFFER_RARITY_DEFAULT = {
+  piece_rarity: { pawn: 4, knight: 5, bishop: 5, rook: 5, queen: 20, king: 5 },
+  element_rarity: 10,
+  count_multiplier: { '1': 1, '2': 2, '3': 3, '4': 4 },
+};
+function getOfferRarity() {
+  const d = readJson(OFFER_RARITY_PATH, {}) || {};
+  return {
+    piece_rarity: Object.assign({}, OFFER_RARITY_DEFAULT.piece_rarity,
+      (d.piece_rarity && typeof d.piece_rarity === 'object') ? d.piece_rarity : {}),
+    element_rarity: Number.isFinite(d.element_rarity) ? d.element_rarity : OFFER_RARITY_DEFAULT.element_rarity,
+    count_multiplier: Object.assign({}, OFFER_RARITY_DEFAULT.count_multiplier,
+      (d.count_multiplier && typeof d.count_multiplier === 'object') ? d.count_multiplier : {}),
+  };
+}
+// The actual offerable pool, derived from the game's card files exactly as the game filters it
+// (random_non_kings: not is_king, not enemy_only, and skipping tool-disabled entries). Each entry
+// carries its element count + piece list so the tool can compute the live distribution client-side.
+function offerRarityPool() {
+  const dir = path.join(GAME_ROOT, 'data/cards');
+  const out = [];
+  let files = [];
+  try { files = fs.readdirSync(dir).filter(f => f.endsWith('.json')); } catch (e) { return out; }
+  for (const f of files) {
+    const data = readJson(path.join(dir, f), null);
+    const entries = Array.isArray(data) ? data : (data ? [data] : []);
+    for (const c of entries) {
+      if (!c || typeof c !== 'object' || !c.id) continue;
+      if (c.enabled === false || c.is_king || c.enemy_only) continue;
+      const p = Array.isArray(c.chess_pieces) ? c.chess_pieces.slice() : [];
+      const e = Array.isArray(c.elements) ? c.elements.length : 0;
+      if (e === 0 && p.length === 0) continue;   // no composition to weight
+      out.push({ id: c.id, e, p });
+    }
+  }
+  return out;
+}
+
 // The authored guide lines for a card's composition, or [] when guides are off / none match.
 function artGuideLines(elements, pieces) {
   if (!getSettings().useArtGuides) return [];
@@ -2485,6 +2528,21 @@ async function handle(req, res) {
       }
       writeJson(GUIDES_PATH, out);
       return send(res, 200, { ok: true, guides: out });
+    }
+    if (p === '/api/offer-rarity' && req.method === 'GET')
+      return send(res, 200, { ok: true, config: getOfferRarity(), pool: offerRarityPool() });
+    if (p === '/api/offer-rarity' && req.method === 'POST') {
+      const body = await readBody(req);
+      const cur = getOfferRarity();
+      const num = (v, fb) => (Number.isFinite(v) && v > 0) ? v : fb;
+      const out = { piece_rarity: {}, element_rarity: num(body.element_rarity, cur.element_rarity), count_multiplier: {} };
+      for (const k of ['pawn', 'knight', 'bishop', 'rook', 'queen', 'king'])
+        out.piece_rarity[k] = num(body.piece_rarity && body.piece_rarity[k], cur.piece_rarity[k]);
+      const cm = (body.count_multiplier && typeof body.count_multiplier === 'object') ? body.count_multiplier : {};
+      for (const k of ['1', '2', '3', '4'])
+        out.count_multiplier[k] = num(cm[k], cur.count_multiplier[k]);
+      writeJson(OFFER_RARITY_PATH, out);
+      return send(res, 200, { ok: true, config: out });
     }
     if (p === '/api/comfy/loras') {
       try {

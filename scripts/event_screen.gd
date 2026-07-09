@@ -1,14 +1,15 @@
 extends Control
 
 # A "?" site: pay gold to permanently raise one chosen deck card by +1 in the stat
-# this node rolled (GameData.current_event_attr, set by NodeKindEvent). One upgrade
-# per visit. Spells can't be placed as units, so only units are eligible.
+# this node rolled (GameData.current_event_attr, set by NodeKindEvent). The trainer can be
+# used repeatedly in a single visit, but each upgrade DOUBLES the price of the next one.
+# Spells can't be placed as units, so only units are eligible.
 const EVENT_COST := 40
 
 var _attr: String = "attack"
 var _entries: Array = []      # { "card": DeckCard, "deck_idx": int, "ui": CardUI }
 var _selected_idx: int = -1
-var _done: bool = false
+var _cost: int = EVENT_COST   # price of the NEXT upgrade; doubles after each purchase
 var _compact := false
 
 var _deck_grid: FitGrid
@@ -43,8 +44,8 @@ func _build_ui() -> void:
 	root.add_child(title)
 
 	var blurb := Label.new()
-	blurb.text = "Offers to permanently raise one unit's %s by +1, for %d gold." \
-		% [DeckCard.attr_label(_attr), EVENT_COST]
+	blurb.text = "Permanently raise a unit's %s by +1. Each training costs double the last." \
+		% DeckCard.attr_label(_attr)
 	blurb.add_theme_font_size_override("font_size", 26 if _compact else 22)
 	blurb.add_theme_color_override("font_color", Color("6b5636"))
 	blurb.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -94,7 +95,7 @@ func _rebuild_deck() -> void:
 		# Only fieldable deck units are valid targets — spells aren't placed as units, and
 		# the King isn't drawn from the deck (so a deck-side change never reaches the board).
 		var is_target := data.is_deck_unit()
-		var eligible := is_target and not _done
+		var eligible := is_target
 		if not eligible:
 			ui.modulate = Color(1, 1, 1, 0.35)
 		else:
@@ -111,8 +112,6 @@ func _rebuild_deck() -> void:
 
 
 func _on_card_pressed(entry_idx: int) -> void:
-	if _done:
-		return
 	if _selected_idx == entry_idx:
 		_entries[entry_idx].ui.set_selected(false)
 		_selected_idx = -1
@@ -127,18 +126,15 @@ func _on_card_pressed(entry_idx: int) -> void:
 func _refresh() -> void:
 	var gold: int = GameData.current_run.gold
 	_gold_lbl.text = "Gold  %d" % gold
-	_upgrade_btn.text = "Upgrade %s  (%d Gold)" % [DeckCard.attr_label(_attr), EVENT_COST]
+	_upgrade_btn.text = "Upgrade %s  (%d Gold)" % [DeckCard.attr_label(_attr), _cost]
 
-	if _done:
-		_upgrade_btn.disabled = true
-		return
 	if _selected_idx < 0:
 		_status_lbl.text = "Select a unit to train"
 		_status_lbl.add_theme_color_override("font_color", Color("5a5248"))
 		_upgrade_btn.disabled = true
 		return
 
-	var can_afford := gold >= EVENT_COST
+	var can_afford := gold >= _cost
 	var card_name: String = CardData.get_card(_entries[_selected_idx].card.id).display_name
 	if can_afford:
 		_status_lbl.text = "Train %s  (+1 %s)" % [card_name, DeckCard.attr_label(_attr)]
@@ -150,20 +146,21 @@ func _refresh() -> void:
 
 
 func _apply_upgrade() -> void:
-	if _done or _selected_idx < 0 or GameData.current_run.gold < EVENT_COST:
+	if _selected_idx < 0 or GameData.current_run.gold < _cost:
 		return
 	var entry: Dictionary = _entries[_selected_idx]
 	var card_name: String = CardData.get_card(entry.card.id).display_name
-	GameData.current_run.gold -= EVENT_COST
+	GameData.current_run.gold -= _cost
 	# Permanent deck-card upgrade: an override mutation, routed through the Resolver like every
 	# other stat change (the DeckCard target form — see Resolver.submit).
 	Resolver.submit(StatMutation.make(entry.card, StringName(_attr), 1,
 			null, StatMutation.CH_SYSTEM))
+	# Each training doubles the price of the next one within this visit.
+	_cost *= 2
 	GameData.save_run()
-	_done = true
 	_rebuild_deck()
 	_status_lbl.text = "%s gained +1 %s." % [card_name, DeckCard.attr_label(_attr)]
-	_status_lbl.modulate = Color(0.4, 1.0, 0.55)
+	_status_lbl.add_theme_color_override("font_color", Color("1f7a35"))
 
 
 func _leave() -> void:

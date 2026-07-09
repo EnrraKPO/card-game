@@ -81,6 +81,11 @@
       "label": "Pure Light",
       "positive": "light element, materials read as made of light, creatures may be represented as light elemental beings, from a light elemental world",
       "negative": "fire, multicolored, rainbow, heavenly, angel"
+    },
+    "fire_fire": {
+      "label": "Pure Fire",
+      "positive": "fire element, materials read as made of fire, creatures may be represented as fire elemental beings, from a fire elemental world",
+      "negative": "lava, magma, volcanic"
     }
   }
 }

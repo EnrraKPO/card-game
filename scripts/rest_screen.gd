@@ -5,6 +5,9 @@ const HEAL_PERCENT := 0.30
 
 var _hp_label: Label
 var _rest_btn: Button
+# A rest site grants a single rest per visit — once used, the button locks even if the
+# King isn't back to full health.
+var _rested: bool = false
 
 
 func get_chrome() -> Dictionary:
@@ -46,8 +49,10 @@ func _refresh() -> void:
 		return
 	_hp_label.text = "HP  %d / %d" % [run.king_health(), run.king_max_health()]
 	var full: bool = run.king_damage <= 0
-	_rest_btn.disabled = full
-	if full:
+	_rest_btn.disabled = full or _rested
+	if _rested:
+		_rest_btn.text = "Rested"
+	elif full:
 		_rest_btn.text = "Already at full health"
 	else:
 		_rest_btn.text = "Rest  (+%d HP)" % _heal_amount(run)
@@ -63,6 +68,7 @@ func _on_rest() -> void:
 	if run == null:
 		return
 	run.king_damage = maxi(0, run.king_damage - _heal_amount(run))
+	_rested = true
 	GameData.save_run()
 	_refresh()
 

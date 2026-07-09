@@ -358,6 +358,10 @@ func refresh() -> void:
 	_frame.texture = FRAME_KING if card_instance.data.is_king else (FRAME_SPELL if is_spell else FRAME_UNIT)
 	_name_label.text  = card_instance.data.display_name
 	_cost_lbl.text    = str(card_instance.get_attribute("cost"))
+	# The King isn't cast from hand for mana, so its cost badge is meaningless — hide it.
+	var show_cost := not card_instance.data.is_king
+	_cost_bg.visible  = show_cost
+	_cost_lbl.visible = show_cost
 	_atk_lbl.text       = str(card_instance.get_attribute("attack"))
 	_hp_lbl.text        = str(card_instance.current_health)
 	_spd_lbl.text       = str(card_instance.get_attribute("speed"))

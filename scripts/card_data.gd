@@ -261,16 +261,87 @@ static func all() -> Array:
 	return _all.values()
 
 
-# Returns up to `count` random non-king card ids — shared by reward and shop
-# offer generation (see EncounterTemplateData.resolve_reward_pool and
-# shop_screen.gd).
+# Offer rarity is data-driven — all tunable numbers live in res://data/offer_rarity.json (see
+# OFFER_RARITY_DEFAULT for the shape / fallback). HIGHER rarity = LESS likely to be offered. A
+# card's rarity = product of its components' rarities × the count multiplier for how many
+# components it has; its offer likelihood is 1 / rarity. Edit the JSON and restart to retune.
+const OFFER_RARITY_PATH := "res://data/offer_rarity.json"
+const OFFER_RARITY_DEFAULT := {
+	"piece_rarity": {"pawn": 4.0, "knight": 5.0, "bishop": 5.0, "rook": 5.0, "queen": 20.0, "king": 5.0},
+	"element_rarity": 10.0,
+	"count_multiplier": {"1": 1.0, "2": 2.0, "3": 3.0, "4": 4.0},
+}
+static var _offer_cfg: Dictionary = {}
+
+
+# Lazily loads (and caches) the offer-rarity config, falling back to OFFER_RARITY_DEFAULT for the
+# whole file or any missing key so a partial / absent JSON still works.
+static func _offer_config() -> Dictionary:
+	if not _offer_cfg.is_empty():
+		return _offer_cfg
+	_offer_cfg = OFFER_RARITY_DEFAULT.duplicate(true)
+	if FileAccess.file_exists(OFFER_RARITY_PATH):
+		var file := FileAccess.open(OFFER_RARITY_PATH, FileAccess.READ)
+		var json := JSON.new()
+		if file != null and json.parse(file.get_as_text()) == OK and json.data is Dictionary:
+			var d: Dictionary = json.data
+			if d.get("piece_rarity") is Dictionary:
+				_offer_cfg["piece_rarity"] = d["piece_rarity"]
+			if d.get("element_rarity") != null:
+				_offer_cfg["element_rarity"] = float(d["element_rarity"])
+			if d.get("count_multiplier") is Dictionary:
+				_offer_cfg["count_multiplier"] = d["count_multiplier"]
+		else:
+			push_error("CardData: bad offer_rarity.json — using defaults")
+	return _offer_cfg
+
+
+static func offer_weight(card: CardData) -> float:
+	var cfg := _offer_config()
+	var piece_rarity: Dictionary = cfg["piece_rarity"]
+	var element_rarity: float = float(cfg["element_rarity"])
+	var count_mult: Dictionary = cfg["count_multiplier"]
+
+	var rarity := 1.0
+	for _e in card.elements:
+		rarity *= element_rarity
+	for piece: String in card.chess_pieces:
+		rarity *= float(piece_rarity.get(piece, 5.0))
+	# Extra penalty scaling with the number of components: multi-piece cards fall off faster
+	# than the per-component product alone. Counts beyond the table fall back to the count itself.
+	var components := card.elements.size() + card.chess_pieces.size()
+	rarity *= float(count_mult.get(str(components), float(components)))
+
+	return 1.0 / rarity if rarity > 0.0 else 0.0
+
+
+# Returns up to `count` random non-king card ids, drawn WITHOUT replacement weighted by
+# offer_weight (rarer compositions surface less often). Shared by reward and shop offer
+# generation (see EncounterTemplateData.resolve_reward_pool and shop_screen.gd).
 static func random_non_kings(count: int) -> Array[String]:
-	var non_kings: Array[String] = []
+	var pool: Array = []   # [{ "id": String, "w": float }]
 	for card: CardData in all():
 		if not card.is_king and not card.enemy_only:
-			non_kings.append(card.id)
-	non_kings.shuffle()
-	return non_kings.slice(0, mini(count, non_kings.size()))
+			pool.append({"id": card.id, "w": offer_weight(card)})
+
+	var out: Array[String] = []
+	var draws := mini(count, pool.size())
+	for _i in draws:
+		var total := 0.0
+		for entry: Dictionary in pool:
+			total += float(entry["w"])
+		if total <= 0.0:
+			break
+		var roll := randf() * total
+		var pick := pool.size() - 1
+		for j in pool.size():
+			roll -= float(pool[j]["w"])
+			if roll <= 0.0:
+				pick = j
+				break
+		out.append(String(pool[pick]["id"]))
+		pool.remove_at(pick)
+	return out
 
 
 static func composition_key(elems: Array, chess: Array) -> String:
