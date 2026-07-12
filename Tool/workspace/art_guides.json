@@ -210,17 +210,17 @@
     },
     "air_darkness": {
       "label": "Miasma",
-      "positive": "plague themed",
-      "negative": "poison",
+      "positive": "plague themed, smoke, gas, fetid emanations, air pollution, mosquitoes, toxic vapors",
+      "negative": "poison, fire, undead",
       "refs": [
-        {
-          "card": "air_darkness_pawn"
-        },
         {
           "card": "air_darkness_knight"
         },
         {
           "card": "air_darkness_queen"
+        },
+        {
+          "upload": "air_darkness.png"
         }
       ],
       "seeded": true
