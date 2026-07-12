@@ -1577,6 +1577,7 @@ async function llmInferAnchored(entry, anchor, adherence) {
     d.display_name ? `Card name (the authored concept + theme identity — honor it): ${d.display_name}` : '',
     ...artGuideLines(d.elements, d.chess_pieces),   // opt-in authored composition direction
     ...steerLines(),                                 // always-on free-text steering
+    d.art_instructions ? `Author's art direction for this card (follow it): ${d.art_instructions}` : '',
     'Reference image 1 is THE CONCEPT — the exact subject this card\'s art must depict.',
     themeLines.length ? 'THEME examples (how this theme looks in this game — palette, materials, magic; match it, do not name it):' : '',
     ...themeLines,
@@ -1651,7 +1652,10 @@ async function llmInferBlend(entry) {
     d.display_name ? `Card name (the authored concept + theme identity — honor it): ${d.display_name}` : '',
     ...artGuideLines(d.elements, d.chess_pieces),   // opt-in authored composition direction
     ...steerLines(),                                 // always-on free-text steering
-    d.description ? `Card text (flavor context only — never render text): ${d.description}` : '',
+    // The card's tooltip/flavour text is deliberately NOT fed in (it is lore, not art
+    // direction). The author's per-card Prompt instructions ARE — that field replaced it,
+    // and it is honored only when non-empty.
+    d.art_instructions ? `Author's art direction for this card (follow it): ${d.art_instructions}` : '',
     conceptLines.length ? 'CONCEPT relatives — they show what the SUBJECT is:' : '',
     ...conceptLines,
     themeLines.length ? 'THEME relatives — they show the LOOK (palette, materials, magic); match it from their art/description, do not name it:' : '',
@@ -1683,7 +1687,8 @@ async function llmInferBlend(entry) {
 const inferJobs = {};   // jobId -> { id, file, status, total, done, results, error, startedAt }
 let inferSeq = 1;
 function inferJobForFile(file) {
-  return Object.values(inferJobs).find(j => j.file === file && j.status === 'running') || null;
+  return Object.values(inferJobs).find(j => j.file === file
+    && (j.status === 'running' || j.status === 'queued')) || null;
 }
 
 // Persists one inferred recipe onto its entry (stats stay response-only telemetry).
@@ -1905,7 +1910,12 @@ function deployArtIfPossible(type, id) {
   return rel;
 }
 
-async function startArtJob({ type, id, prompt, negative, width, height, steps, guidance, seed, rembg, useRef, refUpload, refGameArt, refMode, denoise, turbo, model }) {
+// Validate a single-image request, upload its reference, and create the jobs[] shell
+// (born 'queued'). Returns { jobId, seed, run } — run() is the awaitable that actually
+// drives ComfyUI and lands the image; the generation queue's worker calls it when this
+// job reaches the front. (Was startArtJob, which fired run() immediately; the queue owns
+// firing now — see enqueue/pump.)
+async function prepareArtJob({ type, id, prompt, negative, width, height, steps, guidance, seed, rembg, useRef, refUpload, refGameArt, refMode, denoise, turbo, model }) {
   const t = TYPES[type];
   if (!t) throw new Error('unknown type');
   if (!validId(id)) throw new Error('bad item id');
@@ -1937,8 +1947,8 @@ async function startArtJob({ type, id, prompt, negative, width, height, steps, g
     refName = await uploadRefImage(refAbs, `tool_ref_${type}_${id}.png`);
   }
   const jobId = String(jobSeq++);
-  const job = jobs[jobId] = { status: 'running', type, id, seed: s, startedAt: Date.now(), error: null };
-  (async () => {
+  const job = jobs[jobId] = { status: 'queued', type, id, seed: s, startedAt: Date.now(), error: null };
+  const run = async () => {
     try {
       const buf = await comfyGenerate({ model: model || 'flux2', prompt, negative, w, h,
         steps, guidance, seed: s, rembg: doRembg, refName, refMode, denoise, turbo, prefix });
@@ -1954,8 +1964,8 @@ async function startArtJob({ type, id, prompt, negative, width, height, steps, g
       job.status = 'error';
       job.error = e.message;
     }
-  })();
-  return { jobId, seed: s };
+  };
+  return { jobId, seed: s, run };
 }
 
 // Queue ONE ComfyUI generation and await its output image bytes — the primitive the
@@ -2052,7 +2062,8 @@ const FLOW_TOTAL_CAP = 24;
 
 function flowDir(type, id) { return path.join(WORKSPACE, 'art', '_flow', type, id); }
 function flowJobForItem(type, id) {
-  return Object.values(flowJobs).find(j => j.type === type && j.itemId === id && j.status === 'running') || null;
+  return Object.values(flowJobs).find(j => j.type === type && j.itemId === id
+    && (j.status === 'running' || j.status === 'queued')) || null;
 }
 
 function validateFlowSpec(spec) {
@@ -2167,8 +2178,14 @@ async function applyFlowPick(type, id, file) {
 // pick is one 🗂/⛓ swap away from fixed.
 const flowBatchJobs = {};
 let flowBatchSeq = 1;
-function flowBatchJobForFile(file) {
-  return Object.values(flowBatchJobs).find(j => j.file === file && j.status === 'running') || null;
+// Dedup by the EXACT card selection, not the file: a whole-file batch and any number of
+// single-card quick flows in the same file are distinct requests that all belong in the
+// queue. This only short-circuits a true double-submit of the identical selection.
+function flowBatchJobForIds(ids) {
+  const key = ids.map(String).slice().sort().join(',');
+  return Object.values(flowBatchJobs).find(j =>
+    (j.status === 'running' || j.status === 'queued')
+    && (j.ids || []).map(String).slice().sort().join(',') === key) || null;
 }
 
 // The step-1 anchor for one card under the Quick Flow's anchor POLICY.
@@ -2198,7 +2215,11 @@ async function runFlowBatchJob(job) {
     // phase 1 (opt-in on engage): fill missing recipes first
     if (job.fill) {
       job.phase = 'recipes';
-      const missing = job.entries.filter(e => !hasRecipe(e));
+      // Re-read fresh at EXECUTION time — never job.entries (snapshotted at enqueue). A recipe
+      // batch queued AHEAD of this one may have just filled these on disk; honor that and skip
+      // them, rather than re-inferring every recipe from a stale pre-queue snapshot.
+      const fresh = listGameEntries('card').filter(e => job.ids.includes(e.id));
+      const missing = fresh.filter(e => !hasRecipe(e));
       job.total = missing.length;
       for (const entry of missing) {
         if (job.cancel) break;
@@ -2258,6 +2279,176 @@ async function runFlowBatchJob(job) {
     job.status = 'error';
     job.error = e.message;
   }
+}
+
+// ── Generation queue ─────────────────────────────────────────────────────────
+// ONE global FIFO of generation REQUESTS, serviced by ONE worker (pump). Every
+// generation — single, flow, or Quick Flow batch — routes through here, so ComfyUI
+// is only ever driven by one job at a time and a request kicked off while something
+// is running lands behind it and starts automatically when the queue reaches it.
+//
+// An entry's unit of work is the WHOLE runner — the GPU work PLUS its tool-side tail
+// (a batch's random pick + applyFlowPick, rembg, pool capture, the front-loaded LLM
+// recipe fill). pump() awaits the runner to full completion, so an entry is only
+// 'done' once that tail has run and nothing is left dangling when the queue advances.
+//
+// The underlying job shells (jobs[]/flowJobs[]/flowBatchJobs[]) are created up front
+// carrying the SAME id the endpoint returns and born 'queued'; every existing per-job
+// poll endpoint therefore keeps working unchanged (it just reports 'queued' until the
+// worker starts the job). This queue is a NEW overlay, not a rewrite of those flows.
+const genQueue = [];   // entries, oldest first; terminal ones linger as history (pruned)
+let queueSeq = 1;
+let pumping = false;
+const QUEUE_HISTORY = 15;
+
+function isTerminal(s) { return s === 'done' || s === 'error' || s === 'stopped'; }
+
+function enqueue(entry) {
+  entry.id = 'q' + queueSeq++;
+  entry.status = 'queued';
+  entry.error = null;
+  entry.enqueuedAt = Date.now();
+  entry.startedAt = null;
+  entry.finishedAt = null;
+  // resolves when the worker finishes this entry — lets an HTTP handler await its turn
+  // and then send the result inline (the interactive ✨ endpoints keep their shape).
+  entry.done = new Promise(resolve => { entry._resolve = resolve; });
+  genQueue.push(entry);
+  pump();   // deliberately not awaited
+  return entry;
+}
+
+// Run one entry to full completion, propagating the underlying job's terminal state.
+// The runners record their own errors on the job (they never throw), so we read status.
+async function runQueueEntry(entry) {
+  const j = entry.jobRef;
+  j.status = 'running';
+  j.startedAt = Date.now();
+  if (entry.kind === 'flow') await runFlowJob(j);
+  else if (entry.kind === 'flow-batch') await runFlowBatchJob(j);
+  else await entry.run();   // 'generate' | 'prompt' | 'recipe-batch' — run() records on j
+  if (j.status === 'error') { entry.error = j.error; return 'error'; }
+  return j.status === 'stopped' ? 'stopped' : 'done';
+}
+
+function pump() {
+  if (pumping) return;
+  const entry = genQueue.find(e => e.status === 'queued');
+  if (!entry) return;
+  pumping = true;
+  entry.status = 'running';
+  entry.startedAt = Date.now();
+  (async () => {
+    try {
+      entry.status = await runQueueEntry(entry);
+    } catch (e) {
+      entry.status = 'error';
+      entry.error = e.message;
+    }
+    entry.finishedAt = Date.now();
+    if (entry._resolve) entry._resolve(entry);   // wake any HTTP handler awaiting this entry
+    pruneQueueHistory();
+    pumping = false;
+    pump();   // advance to the next queued entry
+  })();
+}
+
+// Keep at most QUEUE_HISTORY finished entries so the widget shows recent results
+// without the list growing without bound.
+function pruneQueueHistory() {
+  const done = genQueue.filter(e => isTerminal(e.status));
+  for (let i = 0; i < done.length - QUEUE_HISTORY; i++) {
+    const idx = genQueue.indexOf(done[i]);
+    if (idx >= 0) genQueue.splice(idx, 1);
+  }
+}
+
+// Drop a queued entry's pre-created job shell so it doesn't linger in the registries.
+function dropJobShell(e) {
+  if (e.kind === 'flow') delete flowJobs[e.jobId];
+  else if (e.kind === 'flow-batch') delete flowBatchJobs[e.jobId];
+  else if (e.kind === 'recipe-batch') delete inferJobs[e.jobId];
+  else if (e.kind === 'prompt') delete promptJobs[e.jobId];
+  else if (e.kind === 'generate') delete jobs[e.jobId];
+}
+
+// Cancel a still-QUEUED entry: mark its shell stopped, release any HTTP handler awaiting
+// it (a queued ✨ prompt has one), and drop the shell. Never called on a running entry.
+function cancelQueued(e) {
+  if (e.jobRef) e.jobRef.status = 'stopped';
+  e.status = 'stopped';
+  if (e._resolve) e._resolve(e);
+  dropJobShell(e);
+}
+
+// Stop the currently-running entry: the same cancel + ComfyUI interrupt the per-flow
+// stop buttons use. (generate has no cancel flag of its own — the interrupt aborts its
+// in-flight ComfyUI prompt, which surfaces as an error, i.e. a stop.)
+function stopRunningEntry(e) {
+  const j = e.jobRef;
+  if (j) {
+    j.cancel = true;
+    const cur = j.currentFjobId ? flowJobs[j.currentFjobId] : null;
+    if (cur) cur.cancel = true;
+  }
+  comfyInterrupt();
+}
+
+function removeQueueEntry(id) {
+  const e = genQueue.find(x => x.id === id);
+  if (!e) return { error: 'no such queue entry' };
+  if (e.status === 'running') { stopRunningEntry(e); return { ok: true, stopping: true }; }
+  if (e.status === 'queued') cancelQueued(e);
+  genQueue.splice(genQueue.indexOf(e), 1);
+  return { ok: true, removed: true };
+}
+
+// which: 'pending' = drop only not-yet-started; 'history' = drop only finished;
+// default = both (leaves the running one alone).
+function clearQueue(which) {
+  const drop = e => which === 'pending' ? e.status === 'queued'
+    : which === 'history' ? isTerminal(e.status)
+    : (e.status === 'queued' || isTerminal(e.status));
+  for (const e of genQueue.filter(drop)) if (e.status === 'queued') cancelQueued(e);
+  const keep = genQueue.filter(e => !drop(e));
+  genQueue.length = 0;
+  genQueue.push(...keep);
+}
+
+// The widget's view: entries with live progress pulled from the underlying job.
+function queueView() {
+  return genQueue.map(e => {
+    const j = e.jobRef || {};
+    let progress = null;
+    if (e.kind === 'flow-batch') progress = { phase: j.phase, done: j.done, total: j.total, currentId: j.currentId };
+    else if (e.kind === 'flow') progress = { done: j.done, total: j.total, stepNow: j.stepNow, stepCount: (j.spec || []).length };
+    else if (e.kind === 'recipe-batch') progress = { done: j.done, total: j.total };
+    else progress = { elapsed: j.startedAt ? Math.round((Date.now() - j.startedAt) / 1000) : 0 };   // 'generate' | 'prompt'
+    return { id: e.id, kind: e.kind, label: e.label, status: e.status, jobId: e.jobId,
+      error: e.error, refType: e.refType || null, refId: e.refId || null, file: e.file || null,
+      progress, enqueuedAt: e.enqueuedAt, startedAt: e.startedAt, finishedAt: e.finishedAt };
+  });
+}
+
+// Run one LLM/prompt unit of work (work: async () => resultValue) THROUGH the queue,
+// then resolve with its result. The interactive ✨ endpoints call this and send the
+// result inline, so their response shape is unchanged — the request just waits its turn
+// in the single sequence (an image generation for the same item, enqueued after, cannot
+// start until this completes). Validation stays in the endpoint (fail fast, right code).
+const promptJobs = {};   // pjId -> { status, result, error, startedAt }
+let promptSeq = 1;
+async function runPromptInQueue(label, ref, work) {
+  const jobId = 'pj' + promptSeq++;
+  const job = promptJobs[jobId] = { status: 'queued', result: null, error: null, startedAt: Date.now() };
+  const entry = enqueue({ kind: 'prompt', label, jobId, jobRef: job,
+    refType: ref && ref.type, refId: ref && ref.id,
+    run: async () => {
+      try { job.result = await work(); job.status = 'done'; }
+      catch (e) { job.status = 'error'; job.error = e.message; }
+    } });
+  await entry.done;
+  if (job.status !== 'done') throw new Error(job.error || 'cancelled — removed from the queue');
+  return job.result;
 }
 
 // Background-removal-only pass: LoadImage → the same Inspyrenet node the generation
@@ -2320,14 +2511,16 @@ async function handle(req, res) {
       return send(res, 200, {
         gameRoot: GAME_ROOT,
         // running batch-inference jobs, so a fresh/reloaded page reattaches its progress UI
-        inferJobs: Object.values(inferJobs).filter(j => j.status === 'running')
+        inferJobs: Object.values(inferJobs).filter(j => j.status === 'running' || j.status === 'queued')
           .map(j => ({ id: j.id, file: j.file, total: j.total, done: j.done })),
-        // running multi-step flows, same reattachment purpose
-        flowJobs: Object.values(flowJobs).filter(j => j.status === 'running')
+        // running (or queued) multi-step flows, same reattachment purpose
+        flowJobs: Object.values(flowJobs).filter(j => j.status === 'running' || j.status === 'queued')
           .map(j => ({ id: j.id, type: j.type, itemId: j.itemId, total: j.total, done: j.done })),
-        // running Quick Flow batches
-        flowBatchJobs: Object.values(flowBatchJobs).filter(j => j.status === 'running')
+        // running (or queued) Quick Flow batches
+        flowBatchJobs: Object.values(flowBatchJobs).filter(j => j.status === 'running' || j.status === 'queued')
           .map(j => ({ id: j.id, file: j.file, phase: j.phase, total: j.total, done: j.done })),
+        // the generation queue, so a fresh/reloaded page hydrates the monitor widget
+        queue: queueView(),
         types: Object.fromEntries(Object.entries(TYPES).map(([k, v]) => [k, {
           label: v.label, dataDir: v.dataDir, artDir: v.artDir, artW: v.artW, artH: v.artH, rembg: v.rembg,
         }])),
@@ -2565,11 +2758,27 @@ async function handle(req, res) {
       const body = await readBody(req);
       if (!body.prompt || !String(body.prompt).trim()) return send(res, 400, { error: 'prompt is required' });
       try {
-        const out = await startArtJob(body);
-        return send(res, 200, out);
+        // validate + upload the reference now (fail fast), then hand the run to the queue
+        const prep = await prepareArtJob(body);
+        const entry = enqueue({ kind: 'generate', label: `Generate: ${body.id}`,
+          jobId: prep.jobId, jobRef: jobs[prep.jobId], run: prep.run,
+          refType: body.type, refId: String(body.id) });
+        return send(res, 200, { jobId: prep.jobId, seed: prep.seed, queueId: entry.id });
       } catch (e) {
         return send(res, 502, { error: e.message });
       }
+    }
+    // ── the generation queue (monitor widget) ──
+    if (p === '/api/art/queue') return send(res, 200, { queue: queueView() });
+    if (p === '/api/art/queue-remove' && req.method === 'POST') {
+      const { id } = await readBody(req);
+      const out = removeQueueEntry(id);
+      return send(res, out.error ? 404 : 200, out);
+    }
+    if (p === '/api/art/queue-clear' && req.method === 'POST') {
+      const { which } = await readBody(req);
+      clearQueue(which);
+      return send(res, 200, { ok: true, queue: queueView() });
     }
     // ── multi-step flows ──
     if (p === '/api/art/flow' && req.method === 'POST') {
@@ -2595,12 +2804,13 @@ async function handle(req, res) {
       if (running) return send(res, 200, { ok: true, jobId: running.id, already: true });
       let branch = 1, total = 0;
       for (const st of steps) { branch *= parseInt(st.samples, 10); total += branch; }
-      const job = { id: 'flow' + flowSeq++, type, itemId: String(id), status: 'running',
+      const job = { id: 'flow' + flowSeq++, type, itemId: String(id), status: 'queued',
         total, done: 0, stepNow: 0, nodes: [], prompt: String(prompt),
         negative: negative ? String(negative) : '', spec: steps, anchorAbs,
         anchor: anchorAbs ? { source: anchor.source, path: anchor.path } : null, startedAt: Date.now() };
       flowJobs[job.id] = job;
-      runFlowJob(job);   // deliberately not awaited — the browser polls
+      enqueue({ kind: 'flow', label: `Flow: ${id}`, jobId: job.id, jobRef: job,
+        refType: type, refId: String(id) });   // the queue's worker calls runFlowJob
       return send(res, 200, { ok: true, jobId: job.id, total });
     }
     // ── Quick Flow batch ──
@@ -2619,14 +2829,17 @@ async function handle(req, res) {
       else return send(res, 400, { error: 'bad request' });
       if (!entries.length) return send(res, 404, { error: 'no matching cards' });
       const jfile = file || entries[0].file;
-      const running = flowBatchJobForFile(jfile);
+      const running = flowBatchJobForIds(entries.map(e => e.id));
       if (running) return send(res, 200, { ok: true, jobId: running.id, already: true });
       const job = { id: 'fbatch' + flowBatchSeq++, file: jfile, ids: entries.map(e => e.id), entries,
         spec: qf.steps, anchorPolicy: qf.anchor || 'recipe', fill: !!fill, adherence,
-        status: 'running', phase: 'starting', total: entries.length, done: 0,
+        status: 'queued', phase: 'queued', total: entries.length, done: 0,
         results: [], cancel: false, currentId: null, startedAt: Date.now() };
       flowBatchJobs[job.id] = job;
-      runFlowBatchJob(job);   // deliberately not awaited — the browser polls
+      // single-card quick flows read better as the card id; whole-file as the file
+      const label = entries.length === 1 ? `⛓ Quick Flow: ${entries[0].id}`
+        : `Batch: ${jfile} (${entries.length} cards)`;
+      enqueue({ kind: 'flow-batch', label, jobId: job.id, jobRef: job, file: jfile });
       return send(res, 200, { ok: true, jobId: job.id });
     }
     if (p === '/api/art/flow-batch-job') {
@@ -2755,7 +2968,7 @@ async function handle(req, res) {
     // Ask the local LLM (Ollama) to write an art prompt from the item's summarized data,
     // optionally showing it reference illustrations (refArts: repo-relative assets/ paths).
     if (p === '/api/art/prompt' && req.method === 'POST') {
-      const { type, name, summary, example, refArts, concept, refHint, elements, pieces } = await readBody(req);
+      const { type, name, summary, example, refArts, concept, refHint, elements, pieces, instructions } = await readBody(req);
       if (!TYPES[type] || !name) return send(res, 400, { error: 'bad request' });
       const refImages = [];
       for (const rel of Array.isArray(refArts) ? refArts.slice(0, 4) : []) {
@@ -2764,10 +2977,14 @@ async function handle(req, res) {
         refImages.push(fs.readFileSync(abs).toString('base64'));
       }
       const guides = [...(type === 'card' ? artGuideLines(elements, pieces) : []), ...steerLines()];
+      // the card's per-card Prompt instructions field (authoritative author art direction)
+      if (instructions && String(instructions).trim())
+        guides.push(`Author's art direction for this card (follow it): ${String(instructions).trim()}`);
       try {
-        const prompt = await llmArtPrompt(TYPES[type].label, String(name),
-          Array.isArray(summary) ? summary.map(String) : [], example ? String(example) : '', refImages,
-          concept ? String(concept) : '', refHint ? String(refHint) : '', guides);
+        const prompt = await runPromptInQueue(`✨ Prompt: ${name}`, { type, id: null }, () =>
+          llmArtPrompt(TYPES[type].label, String(name),
+            Array.isArray(summary) ? summary.map(String) : [], example ? String(example) : '', refImages,
+            concept ? String(concept) : '', refHint ? String(refHint) : '', guides));
         return send(res, 200, { ok: true, prompt });
       } catch (e) { return send(res, 502, { error: e.message }); }
     }
@@ -2778,8 +2995,9 @@ async function handle(req, res) {
       const ge = type === 'card' ? findGameEntry('card', id) : null;
       const guides = [...(ge ? artGuideLines(ge.data.elements, ge.data.chess_pieces) : []), ...steerLines()];
       try {
-        return send(res, 200, { ok: true, prompt: await llmPromptFromArt(type, id,
-          concept ? String(concept) : '', refHint ? String(refHint) : '', guides) });
+        const prompt = await runPromptInQueue(`✨ From art: ${id}`, { type, id }, () =>
+          llmPromptFromArt(type, id, concept ? String(concept) : '', refHint ? String(refHint) : '', guides));
+        return send(res, 200, { ok: true, prompt });
       } catch (e) {
         return send(res, /no current art/.test(e.message) ? 400 : 502, { error: e.message });
       }
@@ -2795,12 +3013,15 @@ async function handle(req, res) {
       if (persist && inferJobForFile(entry.file))
         return send(res, 409, { error: `a batch inference is already running over ${entry.file}` });
       try {
-        const recipe = await llmInferRecipe(entry, adherence);
-        if (persist) {
-          const stats = persistRecipe(entry, recipe);
-          return send(res, 200, Object.assign({ ok: true, persisted: true, stats }, recipe));
-        }
-        return send(res, 200, Object.assign({ ok: true }, recipe));
+        const result = await runPromptInQueue(`✨ Recipe: ${id}`, { type: 'card', id }, async () => {
+          const recipe = await llmInferRecipe(entry, adherence);
+          if (persist) {
+            const stats = persistRecipe(entry, recipe);
+            return Object.assign({ persisted: true, stats }, recipe);
+          }
+          return recipe;
+        });
+        return send(res, 200, Object.assign({ ok: true }, result));
       } catch (e) { return send(res, 502, { error: e.message }); }
     }
     // ✨ recipe inference for a whole FILE — starts a polled server-side JOB (one per
@@ -2814,9 +3035,10 @@ async function handle(req, res) {
       const running = inferJobForFile(file);
       if (running) return send(res, 200, { ok: true, jobId: running.id, already: true });
       const job = { id: 'infer' + inferSeq++, file, adherence, overwrite: !!overwrite,
-        status: 'running', total: entries.length, done: 0, results: [], startedAt: Date.now() };
+        status: 'queued', total: entries.length, done: 0, results: [], startedAt: Date.now() };
       inferJobs[job.id] = job;
-      runInferJob(job, entries);   // deliberately not awaited — the browser polls
+      enqueue({ kind: 'recipe-batch', label: `✨ Recipes: ${file} (${entries.length})`,
+        jobId: job.id, jobRef: job, file, run: () => runInferJob(job, entries) });
       return send(res, 200, { ok: true, jobId: job.id });
     }
     if (p === '/api/art/infer-job') {
@@ -2832,7 +3054,9 @@ async function handle(req, res) {
       if (!TYPES[type] || typeof text !== 'string' || !text.trim() || text.length > 2000)
         return send(res, 400, { error: 'bad request' });
       try {
-        return send(res, 200, Object.assign({ ok: true }, await llmEffectsFromText(type, text.trim())));
+        const result = await runPromptInQueue(`✨ Effects (${type})`, { type, id: null }, () =>
+          llmEffectsFromText(type, text.trim()));
+        return send(res, 200, Object.assign({ ok: true }, result));
       } catch (e) {
         return send(res, 502, { error: e.message });
       }

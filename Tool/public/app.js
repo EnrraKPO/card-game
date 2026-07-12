@@ -331,7 +331,7 @@ function attachFlowBatchPoll(file, jobId) {
       run.done = j.done; run.total = j.total; run.phase = j.phase; run.currentId = j.currentId;
       run.snapshot = j;
       if (run.onUpdate) run.onUpdate(j);   // the live monitor, if open
-      if (j.status === 'running') {
+      if (j.status === 'running' || j.status === 'queued') {   // 'queued' = waiting behind the queue
         renderItemList();
         renderBatchStrip();
         setTimeout(poll, 2000);
@@ -370,7 +370,9 @@ function renderBatchStrip() {
   strip.replaceChildren(...runs.map(([file, run]) => {
     const j = run.snapshot || {};
     const cf = j.currentFlow;
-    const text = `⛓ ${file} — ` + (j.phase === 'recipes'
+    const text = `⛓ ${file} — ` + (j.status === 'queued'
+      ? 'queued…'
+      : j.phase === 'recipes'
       ? `filling recipes ${j.done || 0}/${j.total || '?'}${j.currentId ? ': ' + j.currentId : ''}`
       : `card ${Math.min((j.done || 0) + 1, j.total || 1)}/${j.total || '?'}${j.currentId ? ': ' + j.currentId : ''}`
         + (cf ? ` · image ${Math.min(cf.done + 1, cf.total)}/${cf.total}` : ''));
@@ -406,9 +408,11 @@ function openFlowBatchMonitor(file) {
   const redraw = j => {
     if (!document.body.contains(body)) return;
     body.replaceChildren();
-    const running = j.status === 'running';
+    const running = j.status === 'running' || j.status === 'queued';
     stopBtn.disabled = !running;
-    if (running && j.phase === 'recipes') {
+    if (j.status === 'queued') {
+      body.append(el('div', { class: 'art-status', text: 'Queued — waiting for the current job to finish…' }));
+    } else if (running && j.phase === 'recipes') {
       body.append(el('div', { class: 'art-status',
         text: `Filling recipes — ${j.done}/${j.total}${j.currentId ? ' (' + j.currentId + ')' : ''}… (${j.elapsed}s)` }));
     } else if (running) {
@@ -509,6 +513,7 @@ function openQuickFlowBatchModal(file, entries) {
           }
           const out = await api('/api/art/flow-batch', { type: 'card', file, fill: cfg.fill, adherence: cfg.adherence });
           attachFlowBatchPoll(file, out.jobId);
+          kickQueue();
           renderItemList();
           openFlowBatchMonitor(file);
         } catch (err) { toast('Quick flow failed: ' + err.message, 'err'); }
@@ -528,7 +533,7 @@ function attachInferPoll(file, jobId) {
       run.done = j.done;
       run.total = j.total;
       for (const r of j.results || []) if (r.prompt || r.skipped) run.doneIds.add(r.id);
-      if (j.status === 'running') {
+      if (j.status === 'running' || j.status === 'queued') {   // 'queued' = waiting behind the queue
         renderItemList();
         setTimeout(poll, 2500);
         return;
@@ -639,7 +644,6 @@ function renderItemList() {
     ));
     if (!expanded) continue;
     const run = state.inferRuns && state.inferRuns[file];
-    const batchRun = state.flowBatchRuns && state.flowBatchRuns[file];
     for (const g of entries) {
       // recipe marker: stored on the entry, or landed just now by the running batch
       const hasRecipe = g.recipe || (run && run.doneIds.has(g.id));
@@ -683,9 +687,11 @@ function renderItemList() {
               btn.disabled = false; btn.textContent = '✨';
             }
           } }) : null,
-        // one-click Quick Flow: recipe-carrying cards only (the recipe prompt IS the flow prompt)
-        (state.currentType === 'card' && hasRecipe && !run && !batchRun) ? el('button', { class: 'ghost tiny', text: '⛓',
-          title: `Run the Quick Flow on THIS card — one image from the last step is picked at random as its art`
+        // one-click Quick Flow: recipe-carrying cards only (the recipe prompt IS the flow
+        // prompt). Stays available while other flows run — each click queues another; the
+        // queue widget monitors them all (so we don't pop a modal per click here).
+        (state.currentType === 'card' && hasRecipe && !run) ? el('button', { class: 'ghost tiny', text: '⛓',
+          title: `Queue the Quick Flow on THIS card — one image from the last step is picked at random as its art`
             + (state.settings.quickFlow ? ` (${quickFlowSummary(state.settings.quickFlow)})` : ' — none appointed yet'),
           onclick: async e => {
             e.stopPropagation();
@@ -693,9 +699,10 @@ function renderItemList() {
             btn.disabled = true; btn.textContent = '…';
             try {
               const out = await api('/api/art/flow-batch', { type: 'card', ids: [g.id], fill: false });
-              attachFlowBatchPoll(g.file, out.jobId);
+              attachFlowBatchPoll(g.file, out.jobId);   // completion refreshes the art in place
+              kickQueue();
+              toast(out.already ? `${g.id}: already queued` : `${g.id}: quick flow queued`, 'ok');
               renderItemList();
-              openFlowBatchMonitor(g.file);
             } catch (err) {
               toast(`${g.id}: ${err.message}`, 'err');
               btn.disabled = false; btn.textContent = '⛓';
@@ -1183,6 +1190,7 @@ function buildArtControls(rerender, advanced) {
                   refHint: a.llmRefHint || '',
                   // composition drives the opt-in art-guide lookup server-side (cards only)
                   elements: state.draft.elements || [], pieces: state.draft.chess_pieces || [],
+                  instructions: state.draft.art_instructions || '',   // per-card authored art direction
                 });
                 a.prompt = out.prompt; promptArea.value = out.prompt; noChange();
               } catch (err) { toast('LLM prompt failed: ' + err.message, 'err'); }
@@ -1606,6 +1614,7 @@ async function startArt(statusEl, btn, recipe) {
       stamp: { seed, prompt: base, style, at: new Date().toISOString().slice(0, 10) } };
     renderArtPanel();
     pollArt();
+    kickQueue();
   } catch (e) {
     btn.disabled = false;
     statusEl.className = 'art-status err';
@@ -1618,11 +1627,11 @@ async function pollArt() {
   try {
     const j = await api('/api/art/job?id=' + state.artJob.jobId);
     state.artJob.elapsed = j.elapsed;
-    if (j.status === 'running') {
+    if (j.status === 'running' || j.status === 'queued') {
       if (state.currentId === state.artJob.itemId) {
         // both views (compact panel and the advanced modal) show a live status line
-        for (const s of document.querySelectorAll('.art-status'))
-          s.textContent = `Generating… ${j.elapsed}s`;
+        const txt = j.status === 'queued' ? 'Queued…' : `Generating… ${j.elapsed}s`;
+        for (const s of document.querySelectorAll('.art-status')) s.textContent = txt;
       }
       setTimeout(pollArt, 2000);
       return;
@@ -2035,9 +2044,11 @@ function openFlowModal() {
       try { j = await api('/api/art/flow-job?id=' + jobId); }
       catch (e) { setTimeout(tick, 4000); return; }
       renderGallery(j.nodes);
-      if (j.status === 'running') {
+      if (j.status === 'running' || j.status === 'queued') {
         status.className = 'art-status';
-        status.textContent = `Running — step ${j.stepNow}/${j.stepCount}, image ${j.done + 1} of ${j.total} (${j.elapsed}s)…`;
+        status.textContent = j.status === 'queued'
+          ? 'Queued — waiting for the current job to finish…'
+          : `Running — step ${j.stepNow}/${j.stepCount}, image ${j.done + 1} of ${j.total} (${j.elapsed}s)…`;
         setTimeout(tick, 2500);
         return;
       }
@@ -2071,6 +2082,7 @@ function openFlowModal() {
         negative: a.negative || '', steps: cfg.map(st => Object.assign({}, st)), anchor });
       gallery.replaceChildren();
       attach(out.jobId);
+      kickQueue();
     } catch (e) { toast(e.message, 'err'); }
   } });
 
@@ -2233,6 +2245,86 @@ async function openSettings() {
   } catch (e) { /* offline — free text still works */ }
 }
 
+// ── generation queue monitor (bottom-right widget) ───────────────────────────
+// A single always-on poller drives a fixed panel listing every generation request —
+// running, queued behind it, and recently finished. It reads the server's /api/art/queue
+// (the authoritative FIFO); the per-flow strips/modals stay as the drill-in detail views.
+let queuePollTimer = null;
+let queueCollapsed = false;
+const QUEUE_ICON = { queued: '⧗', running: '▶', done: '✓', error: '✕', stopped: '■' };
+
+// Poll now — called on boot and after anything is enqueued, so the widget appears at once.
+function kickQueue() {
+  if (queuePollTimer) { clearTimeout(queuePollTimer); queuePollTimer = null; }
+  pollQueue();
+}
+
+async function pollQueue() {
+  let list = [];
+  try { list = (await api('/api/art/queue')).queue || []; }
+  catch (e) { /* server hiccup — keep the last render, retry on the timer */ }
+  renderQueueWidget(list);
+  const active = list.some(e => e.status === 'queued' || e.status === 'running');
+  queuePollTimer = setTimeout(pollQueue, active ? 1500 : 5000);
+}
+
+function queueProgressText(e) {
+  const pr = e.progress || {};
+  if (e.status === 'queued') return 'waiting…';
+  if (e.status === 'error') return e.error || 'failed';
+  if (e.status === 'stopped') return 'stopped';
+  if (e.status === 'done') return 'done';
+  if (e.kind === 'flow-batch') {
+    if (pr.phase === 'recipes') return `filling recipes ${pr.done || 0}/${pr.total || '?'}`;
+    return `card ${Math.min((pr.done || 0) + 1, pr.total || 1)}/${pr.total || '?'}`
+      + (pr.currentId ? ' · ' + pr.currentId : '');
+  }
+  if (e.kind === 'flow') return `step ${pr.stepNow || 0}/${pr.stepCount || '?'} · ${pr.done || 0}/${pr.total || '?'} imgs`;
+  if (e.kind === 'recipe-batch') return `recipe ${Math.min((pr.done || 0) + 1, pr.total || 1)}/${pr.total || '?'}`;
+  if (e.kind === 'prompt') return `writing… ${pr.elapsed || 0}s`;
+  return `${pr.elapsed || 0}s`;
+}
+
+function renderQueueWidget(list) {
+  let w = document.getElementById('queue-widget');
+  if (!list.length) { if (w) w.remove(); return; }
+  if (!w) { w = el('div', { id: 'queue-widget' }); document.body.append(w); }
+  const active = list.filter(e => e.status === 'queued' || e.status === 'running');
+  const done = list.filter(e => e.status !== 'queued' && e.status !== 'running');
+  const pending = active.filter(e => e.status === 'queued').length;
+  const header = el('div', { class: 'q-head' },
+    el('span', { class: 'q-title', text: `⧗ Queue${pending ? ' · ' + pending + ' waiting' : (active.length ? ' · running' : '')}` }),
+    el('div', { class: 'q-head-btns' },
+      pending > 1 ? el('button', { class: 'ghost tiny', text: 'clear queued',
+        onclick: () => queueClear('pending') }) : null,
+      done.length ? el('button', { class: 'ghost tiny', text: 'clear done',
+        onclick: () => queueClear('history') }) : null,
+      el('button', { class: 'ghost tiny', text: queueCollapsed ? '▸' : '▾', title: 'collapse',
+        onclick: () => { queueCollapsed = !queueCollapsed; renderQueueWidget(list); } })));
+  const rowFor = e => el('div', { class: 'q-row q-' + e.status },
+    el('span', { class: 'q-ico', text: QUEUE_ICON[e.status] || '•' }),
+    el('div', { class: 'q-body' },
+      el('div', { class: 'q-label', text: e.label, title: e.label }),
+      el('div', { class: 'q-sub' + (e.status === 'error' ? ' err' : ''), text: queueProgressText(e) })),
+    el('button', { class: 'ghost tiny q-x', text: '✕',
+      title: e.status === 'running' ? 'Stop now (aborts the in-flight image)' : 'Remove from queue',
+      onclick: async () => {
+        try { await api('/api/art/queue-remove', { id: e.id }); kickQueue(); }
+        catch (err) { toast(err.message, 'err'); }
+      } }));
+  const listWrap = el('div', { class: 'q-list' });
+  if (!queueCollapsed) {
+    for (const e of active) listWrap.append(rowFor(e));
+    for (const e of done.slice().reverse()) listWrap.append(rowFor(e));
+  }
+  w.replaceChildren(header, listWrap);
+}
+
+async function queueClear(which) {
+  try { await api('/api/art/queue-clear', { which }); kickQueue(); }
+  catch (e) { toast(e.message, 'err'); }
+}
+
 // ── boot ─────────────────────────────────────────────────────────────────────
 $('new-item-btn').addEventListener('click', newItem);
 $('gen-set-btn').addEventListener('click', openSetGenerator);
@@ -2258,3 +2350,4 @@ window.addEventListener('beforeunload', e => { if (state.dirty) e.preventDefault
 
 refreshState().then(checkComfy).catch(e => toast('Failed to load: ' + e.message, 'err'));
 setInterval(checkComfy, 30000);
+pollQueue();   // the generation-queue monitor widget

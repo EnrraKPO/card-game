@@ -55,7 +55,7 @@ function cleanEffects(list) { return (list || []).map(cleanEffectForDeploy); }
 const CardEditor = {
   label: 'Card',
   newItem: () => ({
-    id: '', display_name: '', description: '',
+    id: '', display_name: '', description: '', art_instructions: '',
     cost: 1, attack: 2, health: 3, speed: 3, shield: 0,
     elements: [], chess_pieces: [], effects: [], abilities: [],
     ranged: false, is_king: false, enemy_only: false,
@@ -85,6 +85,12 @@ const CardEditor = {
         el('div', { class: 'frow' },
           el('div', { class: 'fld wide' }, el('span', { class: 'lab', text: 'Tooltip / flavour text' }),
             el('textarea', { value: draft.description || '', oninput: e => { draft.description = e.target.value; onChange(); } })),
+        ),
+        el('div', { class: 'frow' },
+          el('div', { class: 'fld wide' }, el('span', { class: 'lab', text: 'Prompt instructions' }),
+            el('textarea', { value: draft.art_instructions || '',
+              placeholder: 'optional — steers ✨ art-prompt generation for this card (never shown in game; the flavour text no longer influences art)',
+              oninput: e => { draft.art_instructions = e.target.value; onChange(); } })),
         ),
         el('div', { class: 'frow' },
           el('div', { class: 'fld' }, checkInput(draft, 'ranged', onChange, 'Ranged — fires a projectile instead of lunging')),
@@ -138,6 +144,7 @@ const CardEditor = {
       if (d.display_name) out.display_name = d.display_name;
     }
     if (d.description) out.description = d.description;
+    if (d.art_instructions) out.art_instructions = d.art_instructions;   // authoring-only; steers art-prompt generation
     if (d.elements.length) out.elements = d.elements.slice().sort();
     if (d.chess_pieces.length) out.chess_pieces = d.chess_pieces.slice().sort();
     if (d.is_king) out.is_king = true;
