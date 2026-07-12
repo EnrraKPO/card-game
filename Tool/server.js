@@ -73,14 +73,16 @@ function safeRefName(name) { return String(name || 'reference.png').replace(/[^a
 // ── settings ─────────────────────────────────────────────────────────────────
 const SETTINGS_PATH = path.join(WORKSPACE, 'settings.json');
 function getSettings() {
-  return Object.assign({
+  const s = Object.assign({
     comfyUrl: 'http://127.0.0.1:8187', artStyle: '', stylePresets: {},
     conceptPresets: {}, refHintPresets: {},   // named presets for the ✨ LLM guidance inputs
     flowPresets: {},   // named multi-step generation flows (JSON-encoded step arrays)
     kinAdherence: 'concept',   // ✨ inference default: what carries over from the anchor
-    kinAnchorMode: 'current',  // 'current' = own art first, else base unit | 'base' = always the base unit
-    kinThemeMode: 'family',    // 'family' = auto element-relatives | 'select' = the hand-picked kinThemeRefs
-    kinThemeRefs: [],          // card ids picked as theme references (used when kinThemeMode='select')
+    // Anchor source for ✨ inference: 'current' = the card's own art (else its canonical
+    // concept) | 'canonical' = always the canonical concept ref | 'custom' = the card's
+    // stored recipe reference. (kinThemeMode/kinThemeRefs — the old flat global theme
+    // list — is gone: theme now flows ONLY through canonical appointments in art guides.)
+    kinAnchorMode: 'current',
     useArtGuides: false,       // opt-in: inject the composition-keyed art_guides into every ✨ writer
     kinSteer: '',              // always-on free-text creative direction; empty = contributes nothing
     turboLora: 'Flux_2-Turbo-LoRA_comfyui.safetensors',  // the user's Flux 2 turbo LoRA
@@ -93,21 +95,132 @@ function getSettings() {
     claudeModel: 'claude-opus-4-8',   // cloud providers use ONE model for every ✨ feature
     openaiModel: 'gpt-5.5',
   }, readJson(SETTINGS_PATH, {}));
+  // legacy value migration: 'base' (bare-piece hunting) became 'canonical' (appointed ref)
+  if (s.kinAnchorMode === 'base') s.kinAnchorMode = 'canonical';
+  return s;
 }
 
-// ── art guides ───────────────────────────────────────────────────────────────
-// Tool-bound authored art direction, keyed by COMPOSITION (not by card): `concept` by
-// sorted piece-multiset ("bishop_bishop" → Hierophant), `theme` by sorted element-multiset
-// ("air_fire" → Lightning). Each entry = {label, positive, negative}. The positive is
-// authoritative direction the family art can't convey; the negative is the anti-drift
-// guard. Exact-multiset match, self-contained — no guide → the writer infers as before.
-// Injected into every ✨ writer only when settings.useArtGuides is on.
+// ── art guides + canonical references ────────────────────────────────────────
+// Tool-bound authored art direction AND canonical reference appointments, keyed by
+// COMPOSITION (not by card): `concept` by sorted piece-multiset ("bishop_bishop" →
+// Hierophant), `theme` by sorted element-multiset ("air_fire" → Lightning).
+//   concept entry = { label, positive, negative, ref,  seeded }
+//   theme entry   = { label, positive, negative, refs, seeded }
+// A ref is {card: id} or {upload: filename} (workspace/refs). THE RULE (settled with
+// the user): composition identity is atomic — resolution is EXACT-multiset match only,
+// never component overlap ("air" may never pollute "air_fire"; "bishop" may never
+// pollute "bishop_rook"). Canonical refs are MANDATORY for canonical-anchored
+// generation: an unappointed slot refuses, it never silently degrades to a relative.
+// `seeded` marks that the default appointment pass ran for the key (concept ← the bare
+// piece card's art; theme ← the composition's pawn/knight/queen) so a deliberately
+// cleared slot is never re-seeded. Guide text stays opt-in via settings.useArtGuides;
+// canonical refs are independent of that switch.
 const GUIDES_PATH = path.join(WORKSPACE, 'art_guides.json');
 function getArtGuides() {
   const g = readJson(GUIDES_PATH, {});
   return { concept: (g && g.concept) || {}, theme: (g && g.theme) || {} };
 }
 function compKey(arr) { return (Array.isArray(arr) ? arr.slice() : []).sort().join('_'); }
+
+// A stored canonical ref, normalized — or null when it isn't one.
+function normalizeCanonicalRef(r) {
+  if (!r || typeof r !== 'object') return null;
+  if (r.card && validId(r.card)) return { card: String(r.card) };
+  if (r.upload) return { upload: safeRefName(r.upload) };
+  return null;
+}
+
+// Every composition the game's cards actually use (enemy-only cards are OUTSIDE the
+// canonical system for now — they neither key compositions nor serve as references).
+function allCompositions() {
+  const concept = new Set(), theme = new Set();
+  for (const e of listGameEntries('card')) {
+    if (e.data.enemy_only) continue;
+    const pk = compKey(e.data.chess_pieces), ek = compKey(e.data.elements);
+    if (pk) concept.add(pk);
+    if (ek) theme.add(ek);
+  }
+  return { concept: [...concept].sort(), theme: [...theme].sort() };
+}
+
+// The spec'd default appointments for one composition key, from cards that HAVE art:
+// concept ← the bare piece card (exact piece multiset, no elements); theme ← the exact
+// element composition's pawn, knight and queen. Missing/artless cards contribute nothing.
+function seedDefaultsFor(axis, key) {
+  const entries = listGameEntries('card').filter(e => !e.data.enemy_only);
+  if (axis === 'concept') {
+    const bare = entries.find(e => compKey(e.data.chess_pieces) === key
+      && !(e.data.elements || []).length && gameArtRel('card', e.id, e.data));
+    return bare ? { ref: { card: bare.id } } : { ref: null };
+  }
+  const refs = [];
+  for (const piece of ['pawn', 'knight', 'queen']) {
+    const hit = entries.find(e => compKey(e.data.elements) === key
+      && compKey(e.data.chess_pieces) === piece && gameArtRel('card', e.id, e.data));
+    if (hit) refs.push({ card: hit.id });
+  }
+  return { refs };
+}
+
+// Idempotent seeding pass: give every composition key that has never been seeded its
+// default appointments. Runs before every canonical read and on the guides GET — cheap,
+// and only ever touches keys without the `seeded` marker (a cleared slot stays cleared).
+function seedArtGuideRefs() {
+  const g = getArtGuides();
+  const comps = allCompositions();
+  let changed = false;
+  for (const [axis, keys] of [['concept', comps.concept], ['theme', comps.theme]]) {
+    for (const key of keys) {
+      const entry = g[axis][key] || (g[axis][key] = { label: '', positive: '', negative: '' });
+      if (entry.seeded) continue;
+      Object.assign(entry, seedDefaultsFor(axis, key));
+      entry.seeded = true;
+      changed = true;
+    }
+  }
+  if (changed) writeJson(GUIDES_PATH, g);
+  return g;
+}
+
+// Resolve one stored ref to a usable image (+ optional stored prompt, for card refs).
+// Returns { kind, id?, name, abs, art?, prompt? } or null when the ref no longer resolves
+// (card deleted / art removed / upload gone).
+function resolveCanonicalRef(ref) {
+  const r = normalizeCanonicalRef(ref);
+  if (!r) return null;
+  if (r.upload) {
+    const abs = path.join(WORKSPACE, 'refs', r.upload);
+    return fs.existsSync(abs) ? { kind: 'upload', name: r.upload, abs } : null;
+  }
+  const e = findGameEntry('card', r.card);
+  if (!e || e.data.enemy_only) return null;
+  const art = gameArtRel('card', e.id, e.data);
+  if (!art) return null;
+  const ta = e.data.tool && e.data.tool.art;
+  return { kind: 'card', id: e.id, name: e.data.display_name || e.id,
+    abs: path.join(GAME_ROOT, art), art,
+    prompt: (ta && (ta.prompt || (ta.last && ta.last.prompt))) || null };
+}
+
+// The MANDATORY canonical pools for a card. Exact-composition lookup only; a missing or
+// unresolvable appointment throws (the caller surfaces the message) — never a fallback.
+function canonicalConceptFor(pieces) {
+  const key = compKey(pieces);
+  if (!key) return null;   // no pieces (a pure spell) — concept simply doesn't apply
+  const entry = seedArtGuideRefs().concept[key];
+  const resolved = entry && entry.ref ? resolveCanonicalRef(entry.ref) : null;
+  if (!resolved) throw new Error(`no canonical concept appointed for "${key}" — appoint it in ✨ Art guides`);
+  return resolved;
+}
+function canonicalThemeFor(elements) {
+  const key = compKey(elements);
+  if (!key) return [];   // no elements (a bare piece card) — theme doesn't apply
+  const entry = seedArtGuideRefs().theme[key];
+  const resolved = (entry && Array.isArray(entry.refs) ? entry.refs : [])
+    .map(resolveCanonicalRef).filter(Boolean);
+  if (!resolved.length) throw new Error(`no canonical theme appointed for "${key}" — appoint it in ✨ Art guides`);
+  return resolved;
+}
 
 // ── offer rarity ─────────────────────────────────────────────────────────────
 // Global tuning for how likely each card is to be OFFERED (reward/shop/stage-clear).
@@ -1447,90 +1560,52 @@ async function llmPromptFromArt(type, id, concept, refHint, guides) {
   return cleanLlmPrompt(out);
 }
 
-// ── ✨ recipe inference: fill a card's art recipe from its FAMILY ─────────────
-// The user authors nothing: piece-relatives supply the CONCEPT (what the subject IS —
-// bishop_rook is consulted before anything else for darkness_earth_bishop_rook), and
-// element-relatives supply the THEME (how it is dressed — darkness_earth_pawn et al).
-// Each relative contributes its stored recipe prompt when it has one (free, exact) and
-// its actual art as a vision reference otherwise. The synthesized result is an ordinary
-// tool.art recipe: prompt + the closest relative's art as the generation reference.
+// ── ✨ recipe inference: fill a card's art recipe from its CANONICAL REFS ─────
+// The canonical appointments (art guides, exact-composition keys) supply everything:
+// the concept ref says what the subject IS, the theme refs say how it is dressed.
+// Card refs contribute their stored recipe prompt when they have one (free, exact) and
+// their art as a vision reference otherwise; upload refs are always vision references.
+// NOTHING is discovered dynamically — the old relative-scoring machinery is gone, and
+// a missing appointment REFUSES rather than borrowing from a component overlap.
 
-// Array flavor of the multiset-overlap count (rankCardReferences' multisetShared
-// works on Maps of counts — do NOT reuse that name, it shadows globally).
-function sharedIdCount(a, b) {
-  const pool = [...b];
-  let n = 0;
-  for (const x of a) {
-    const i = pool.indexOf(x);
-    if (i >= 0) { pool.splice(i, 1); n++; }
-  }
-  return n;
+// Enemy-only cards are outside the canonical system for now (their own pipeline later).
+function assertCanonicalEligible(entry) {
+  if (entry.data.enemy_only)
+    throw new Error('enemy cards are outside the canonical reference system for now');
 }
 
-// A hand-picked theme reference → a theme-pool entry (stored prompt and/or art). Null
-// when the card is missing, is the target itself, or teaches nothing.
-function themeRefEntry(id, excludeId) {
-  if (id === excludeId) return null;
-  const e = findGameEntry('card', id);
-  if (!e) return null;
-  const ta = e.data.tool && e.data.tool.art;
-  const prompt = (ta && (ta.prompt || (ta.last && ta.last.prompt))) || null;
-  const art = gameArtRel('card', e.id, e.data);
-  if (!prompt && !art) return null;
-  return { id: e.id, data: e.data, prompt, art, sp: 0, se: 1, bare: false, exactEls: false };
+// The two canonical pools for a card. Throws on any missing appointment (mandatory).
+function canonicalPools(entry) {
+  assertCanonicalEligible(entry);
+  const concept = canonicalConceptFor(entry.data.chess_pieces);
+  const theme = canonicalThemeFor(entry.data.elements);
+  if (!concept && !theme.length)
+    throw new Error('this card has no composition (pieces or elements) to resolve canonical references from');
+  return { concept: concept ? [concept] : [], theme };
 }
 
-// The two relative pools, best-first. Only cards that can TEACH something (a stored
-// recipe prompt or deployed art) count; enemy fodder is excluded (own art style).
-function inferRelatives(entry) {
-  const els = entry.data.elements || [];
-  const pieces = entry.data.chess_pieces || [];
-  const scored = [];
-  for (const e of listGameEntries('card')) {
-    if (e.id === entry.id || e.data.enemy_only) continue;
-    const cEls = e.data.elements || [];
-    const cPieces = e.data.chess_pieces || [];
-    const ta = e.data.tool && e.data.tool.art;
-    const prompt = (ta && (ta.prompt || (ta.last && ta.last.prompt))) || null;
-    const art = gameArtRel('card', e.id, e.data);
-    if (!prompt && !art) continue;
-    const sp = sharedIdCount(pieces, cPieces), se = sharedIdCount(els, cEls);
-    if (!sp && !se) continue;
-    scored.push({ id: e.id, data: e.data, prompt, art, sp, se,
-      // the bare piece version (same pieces, no elements) is the concept anchor
-      bare: pieces.length > 0 && sp === pieces.length && cPieces.length === pieces.length && !cEls.length,
-      exactEls: els.length > 0 && se === els.length && cEls.length === els.length });
-  }
-  const concept = scored.filter(r => r.sp > 0)
-    .sort((a, b) => (b.bare - a.bare) || (b.sp - a.sp) || (a.se - b.se) || a.id.localeCompare(b.id))
-    .slice(0, 3);
-  const inConcept = new Set(concept.map(r => r.id));
-  const theme = scored.filter(r => r.se > 0 && !inConcept.has(r.id))
-    .sort((a, b) => (b.exactEls - a.exactEls) || (b.se - a.se) || (b.sp - a.sp) || a.id.localeCompare(b.id))
-    .slice(0, 3);
-  // kinThemeMode 'select': the hand-picked references REPLACE the auto element-family
-  // theme. Concept (piece side) is untouched. Empty / unusable picks fall back to family.
-  const s = getSettings();
-  if (s.kinThemeMode === 'select' && Array.isArray(s.kinThemeRefs) && s.kinThemeRefs.length) {
-    const picked = s.kinThemeRefs.map(id => themeRefEntry(id, entry.id)).filter(Boolean).slice(0, 4);
-    if (picked.length) return { concept, theme: picked };
-  }
-  return { concept, theme };
-}
-
-// THE concept anchor for a card: its own current art when it has any (regeneration
-// keeps identity), else the bare piece version's art (bishop_rook for
-// darkness_earth_bishop_rook), else the closest piece-relative with art.
+// The anchor image for anchored adherence modes, per the user-selected anchor source:
+//   current   — the card's own working art; a card with none uses its canonical concept
+//   canonical — always the canonical concept ref, ignoring own art
+//   custom    — the card's stored recipe reference (tool.art.ref)
+// Missing/unresolvable → throws (mandatory; the old silent fall-to-free is gone).
 function resolveAnchor(entry) {
-  // kinAnchorMode 'base' skips the card's own art and anchors straight on the base unit
-  // (the bare piece version), even when the card already has art.
-  const own = (getSettings().kinAnchorMode === 'base') ? null : currentArtAbs('card', entry.id);
-  if (own) return { id: entry.id, abs: own, ref: { source: 'current' } };
-  const { concept } = inferRelatives(entry);
-  const cand = concept.find(r => r.bare && r.art) || concept.find(r => r.art);
-  if (cand) return { id: cand.id, abs: path.join(GAME_ROOT, cand.art),
-    ref: { source: 'game', path: cand.art, name: cand.data.display_name || cand.id } };
-  return null;
+  assertCanonicalEligible(entry);
+  const mode = getSettings().kinAnchorMode;
+  if (mode === 'custom') {
+    const ref = entry.data.tool && entry.data.tool.art && entry.data.tool.art.ref;
+    const abs = ref ? resolveBatchAnchorRef(entry, ref) : null;
+    if (!abs) throw new Error(`no custom reference stored on "${entry.id}" — set one in the art panel, or switch the anchor source`);
+    return { id: entry.id, abs, ref: Object.assign({}, ref) };
+  }
+  if (mode !== 'canonical') {   // 'current'
+    const own = currentArtAbs('card', entry.id);
+    if (own) return { id: entry.id, abs: own, ref: { source: 'current' } };
+  }
+  const c = canonicalConceptFor(entry.data.chess_pieces);   // throws when unappointed
+  if (!c) throw new Error(`"${entry.id}" has no pieces — no canonical concept applies; use the current-art or custom anchor`);
+  return { id: c.id || c.name, abs: c.abs,
+    ref: c.kind === 'card' ? { source: 'game', path: c.art, name: c.name } : { source: 'upload', path: c.name } };
 }
 
 // Adherence = WHICH INSTRUCTIONS the prompt-writing LLM gets (the user's mental model,
@@ -1542,32 +1617,30 @@ function resolveAnchor(entry) {
 //               anatomy, signature features, attire — but a freshly invented
 //               presentation (pose, action, camera, scene) staged for the theme.
 //   free      — the IDEA carries: loose family blend, no anchor lock.
-// No anchor art anywhere → falls back to free (reported via stats.mode).
 async function llmInferRecipe(entry, adherence) {
   const alias = { faithful: 'replicate', subject: 'concept' };   // pre-rename names
   adherence = alias[adherence] || adherence;
   adherence = ['replicate', 'concept', 'free'].includes(adherence) ? adherence : 'concept';
-  const anchor = adherence === 'free' ? null : resolveAnchor(entry);
-  if (adherence !== 'free' && !anchor) adherence = 'free';
-  if (adherence !== 'free') return llmInferAnchored(entry, anchor, adherence);
+  if (adherence !== 'free') return llmInferAnchored(entry, resolveAnchor(entry), adherence);
   return llmInferBlend(entry);
 }
 
 async function llmInferAnchored(entry, anchor, adherence) {
   const started = Date.now();
   const d = entry.data;
-  const { theme } = inferRelatives(entry);
+  assertCanonicalEligible(entry);
+  const theme = canonicalThemeFor(d.elements);   // mandatory when the card has elements
   const images = [fs.readFileSync(anchor.abs).toString('base64')];
   const themeLines = [];
-  // Anonymous role labels only — never a relative id (it spells out the composition). A
-  // relative's stored prompt is a good example for the family, so it rides along verbatim.
+  // Anonymous role labels only — never a reference id (it spells out the composition). A
+  // card ref's stored prompt is a good example for the theme, so it rides along verbatim.
   let tn = 0;
   for (const r of theme) {
-    if (r.id === anchor.id) continue;
+    if (r.id && r.id === anchor.id) continue;   // the anchor already IS image 1
     tn++;
     if (r.prompt) themeLines.push(`- theme example ${tn}: "${r.prompt}"`);
-    else if (r.art && images.length < 3) {
-      images.push(fs.readFileSync(path.join(GAME_ROOT, r.art)).toString('base64'));
+    else if (images.length < 3) {
+      images.push(fs.readFileSync(r.abs).toString('base64'));
       themeLines.push(`- theme example ${tn}: see reference image ${images.length}`);
     }
   }
@@ -1597,7 +1670,7 @@ async function llmInferAnchored(entry, anchor, adherence) {
     prompt: user, images, options: { temperature: 0.6, num_predict: 220 },
   });
   const recipe = { prompt: cleanLlmPrompt(out), ref: Object.assign({}, anchor.ref) };
-  recipe.inferredFrom = { anchor: anchor.id, theme: theme.map(r => r.id), mode: adherence };
+  recipe.inferredFrom = { anchor: anchor.id, theme: theme.map(r => r.id || r.name), mode: adherence };
   recipe.stats = { mode: adherence, relatives: theme.length + 1,
     prompts: theme.filter(r => r.prompt).length, images: images.length, ms: Date.now() - started };
   return recipe;
@@ -1606,44 +1679,42 @@ async function llmInferAnchored(entry, anchor, adherence) {
 async function llmInferBlend(entry) {
   const started = Date.now();
   const d = entry.data;
-  const { concept, theme } = inferRelatives(entry);
-  if (!concept.length && !theme.length)
-    throw new Error('no related cards with art or stored prompts to infer from');
-  // Vision references are the expensive part (full-size card art per image) — stored
-  // prompts are free and exact, so the more prompts the family already carries, the
-  // fewer images ride along: 0 prompts → up to 3 images … 3+ prompts → text-only.
+  const { concept, theme } = canonicalPools(entry);   // mandatory — throws when unappointed
+  // Vision references are the expensive part (full-size art per image) — stored prompts
+  // are free and exact, so the more prompts the canonical refs already carry, the fewer
+  // images ride along: 0 prompts → up to 3 images … 3+ prompts → text-only.
   // Budgeting: theme images outrank concept images (palette/materials are the visual
   // signal; concepts describe well in text), and a pool with entries but no stored
   // prompts always gets at least one image so it isn't silently dropped.
   const promptCount = [...concept, ...theme].filter(r => r.prompt).length;
   const imgCap = Math.max(0, 3 - promptCount);
-  const imgWorthy = r => !r.prompt && r.art;
+  const imgWorthy = r => !r.prompt;   // canonical refs always resolve to an image
   const order = [];
   for (let k = 0; k < 3; k++) {   // theme-first interleave
     if (theme[k] && imgWorthy(theme[k])) order.push(theme[k]);
     if (concept[k] && imgWorthy(concept[k])) order.push(concept[k]);
   }
   const chosen = new Set();
-  for (const r of order) if (chosen.size < imgCap) chosen.add(r.id);
+  for (const r of order) if (chosen.size < imgCap) chosen.add(r);
   for (const list of [concept, theme])
-    if (list.length && !list.some(r => r.prompt || chosen.has(r.id))) {
+    if (list.length && !list.some(r => r.prompt || chosen.has(r))) {
       const best = list.find(imgWorthy);
-      if (best) chosen.add(best.id);
+      if (best) chosen.add(best);
     }
   const images = [];
   const conceptLines = [], themeLines = [];
-  // Relatives are referenced by ANONYMOUS role labels, never by id — an id like
+  // References go in under ANONYMOUS role labels, never by id — an id like
   // "air_fire_bishop_queen" spells out the composition and taught the LLM to draw a chess
-  // bishop/queen. A relative's stored prompt IS an example of good art for the family, so
+  // bishop/queen. A card ref's stored prompt IS an example of good art for the family, so
   // it rides along verbatim; only the composition-encoding id is withheld.
   for (const [list, out, role] of [[concept, conceptLines, 'concept'], [theme, themeLines, 'theme']]) {
     let n = 0;
     for (const r of list) {
       n++;
-      if (r.prompt) out.push(`- ${role} relative ${n}: "${r.prompt}"`);
-      else if (chosen.has(r.id)) {
-        images.push(fs.readFileSync(path.join(GAME_ROOT, r.art)).toString('base64'));
-        out.push(`- ${role} relative ${n}: see reference image ${images.length}`);
+      if (r.prompt) out.push(`- ${role} reference ${n}: "${r.prompt}"`);
+      else if (chosen.has(r)) {
+        images.push(fs.readFileSync(r.abs).toString('base64'));
+        out.push(`- ${role} reference ${n}: see reference image ${images.length}`);
       }
     }
   }
@@ -1661,24 +1732,28 @@ async function llmInferBlend(entry) {
     // direction). The author's per-card Prompt instructions ARE — that field replaced it,
     // and it is honored only when non-empty.
     d.art_instructions ? `Author's art direction for this card (follow it): ${d.art_instructions}` : '',
-    conceptLines.length ? 'CONCEPT relatives — they show what the SUBJECT is:' : '',
+    conceptLines.length ? 'CONCEPT references — they show what the SUBJECT is:' : '',
     ...conceptLines,
-    themeLines.length ? 'THEME relatives — they show the LOOK (palette, materials, magic); match it from their art/description, do not name it:' : '',
+    themeLines.length ? 'THEME references — they show the LOOK (palette, materials, magic); match it from their art/description, do not name it:' : '',
     ...themeLines,
     'Write ONE image prompt: the concept subject rendered in the theme look. Do not name any element, material family, or chess piece — describe only what is seen.',
   ].filter(Boolean).join('\n');
   const out = await llmVisionGenerate({
     system: LLM_SYSTEM_PROMPT +
-      "\nYou are inferring the prompt from the card's FAMILY: relatives are grouped as CONCEPT" +
-      ' (the subject) and THEME (the look). Blend them — never copy a relative' +
+      "\nYou are inferring the prompt from the card's canonical references: they are grouped as CONCEPT" +
+      ' (the subject) and THEME (the look). Blend them — never copy a reference' +
       "'s prompt verbatim, and never name an element or chess piece.",
     prompt: user, images, options: { temperature: 0.8, num_predict: 200 },
   });
   const recipe = { prompt: cleanLlmPrompt(out) };
-  // generation reference: the closest relative that has art — keeps the family look
-  const refCand = [...concept, ...theme].find(r => r.art);
-  if (refCand) recipe.ref = { source: 'game', path: refCand.art, name: refCand.data.display_name || refCand.id };
-  recipe.inferredFrom = { concept: concept.map(r => r.id), theme: theme.map(r => r.id) };
+  // generation reference: the concept ref when it's a card (keeps the subject), else the
+  // first card theme ref — uploads deliver as upload-source refs
+  const refCand = [...concept, ...theme].find(r => r.kind === 'card')
+    || [...concept, ...theme][0] || null;
+  if (refCand) recipe.ref = refCand.kind === 'card'
+    ? { source: 'game', path: refCand.art, name: refCand.name }
+    : { source: 'upload', path: refCand.name };
+  recipe.inferredFrom = { concept: concept.map(r => r.id || r.name), theme: theme.map(r => r.id || r.name) };
   // what this inference actually cost — surfaced in the UI so slowness is explainable
   recipe.stats = { mode: 'free', relatives: concept.length + theme.length, prompts: promptCount,
     images: images.length, ms: Date.now() - started };
@@ -2194,23 +2269,32 @@ function flowBatchJobForIds(ids) {
 }
 
 // The step-1 anchor for one card under the Quick Flow's anchor POLICY.
+// A recipe-style stored reference ({source: current|game|upload, path}) → abs path or null.
+function resolveBatchAnchorRef(entry, ref) {
+  if (!ref) return null;
+  if (ref.source === 'current') return currentArtAbs('card', entry.id);
+  if (ref.source === 'game') return gameArtAbs(String(ref.path || ''));
+  if (ref.source === 'upload') {
+    const abs = path.join(WORKSPACE, 'refs', safeRefName(ref.path));
+    return fs.existsSync(abs) ? abs : null;
+  }
+  return null;
+}
+
+// Policies: 'current' (own art; none → from scratch), 'canonical' (the appointed concept
+// ref — MANDATORY, throws when unappointed), 'custom' (the card's stored recipe ref).
+// Legacy stored names: 'base' → canonical, 'recipe' → custom.
 function resolveBatchAnchor(entry, policy) {
+  if (policy === 'base') policy = 'canonical';
+  if (policy === 'recipe') policy = 'custom';
   if (policy === 'current') return currentArtAbs('card', entry.id);
-  if (policy === 'base') {
-    const { concept } = inferRelatives(entry);
-    const c = concept.find(r => r.bare && r.art) || concept.find(r => r.art);
-    return c ? path.join(GAME_ROOT, c.art) : null;
+  if (policy === 'canonical') {
+    assertCanonicalEligible(entry);
+    const c = canonicalConceptFor(entry.data.chess_pieces);   // throws when unappointed
+    return c ? c.abs : null;   // null = a pure spell (no pieces): no concept applies
   }
-  if (policy === 'recipe') {
-    const ref = entry.data.tool && entry.data.tool.art && entry.data.tool.art.ref;
-    if (!ref) return null;
-    if (ref.source === 'current') return currentArtAbs('card', entry.id);
-    if (ref.source === 'game') return gameArtAbs(String(ref.path || ''));
-    if (ref.source === 'upload') {
-      const abs = path.join(WORKSPACE, 'refs', safeRefName(ref.path));
-      return fs.existsSync(abs) ? abs : null;
-    }
-  }
+  if (policy === 'custom')
+    return resolveBatchAnchorRef(entry, entry.data.tool && entry.data.tool.art && entry.data.tool.art.ref);
   return null;
 }
 
@@ -2254,7 +2338,15 @@ async function runFlowBatchJob(job) {
       if (job.cancel) break;
       job.currentId = entry.id;
       const base = entry.data.tool.art.prompt;
-      let anchorAbs = resolveBatchAnchor(entry, job.anchorPolicy);
+      let anchorAbs;
+      try {
+        anchorAbs = resolveBatchAnchor(entry, job.anchorPolicy);
+      } catch (e) {
+        // a canonical refusal (unappointed slot) skips THIS card, not the whole batch
+        job.results.push({ id: entry.id, error: e.message });
+        job.done++;
+        continue;
+      }
       if (anchorAbs && !MODELS[job.spec[0].model].supportsRef) anchorAbs = null;
       // a real per-item flow job — galleries, pool capture and reattachment all apply
       const fjob = { id: 'flow' + flowSeq++, type: 'card', itemId: entry.id, status: 'running',
@@ -2683,24 +2775,18 @@ async function handle(req, res) {
         s.kinAdherence = body.kinAdherence;
       }
       if ('kinAnchorMode' in body) {
-        if (!['current', 'base'].includes(body.kinAnchorMode))
+        if (!['current', 'canonical', 'custom'].includes(body.kinAnchorMode))
           return send(res, 400, { error: `bad kinAnchorMode "${body.kinAnchorMode}"` });
         s.kinAnchorMode = body.kinAnchorMode;
       }
-      if ('kinThemeMode' in body) {
-        if (!['family', 'select'].includes(body.kinThemeMode))
-          return send(res, 400, { error: `bad kinThemeMode "${body.kinThemeMode}"` });
-        s.kinThemeMode = body.kinThemeMode;
-      }
-      if ('kinThemeRefs' in body)
-        s.kinThemeRefs = Array.isArray(body.kinThemeRefs) ? body.kinThemeRefs.map(String) : [];
+      // kinThemeMode/kinThemeRefs are gone: theme references live in art guides now
       if ('useArtGuides' in body) s.useArtGuides = !!body.useArtGuides;
       if ('kinSteer' in body) s.kinSteer = String(body.kinSteer || '');
       if ('quickFlow' in body) {   // null clears the appointment
         if (body.quickFlow != null) {
           const qfErr = validateFlowSpec(body.quickFlow.steps);
           if (qfErr) return send(res, 400, { error: 'Quick Flow: ' + qfErr });
-          if (!['none', 'current', 'base', 'recipe'].includes(body.quickFlow.anchor || 'recipe'))
+          if (!['none', 'current', 'canonical', 'custom', 'base', 'recipe'].includes(body.quickFlow.anchor || 'custom'))
             return send(res, 400, { error: 'Quick Flow: bad anchor policy' });
         }
         s.quickFlow = body.quickFlow;
@@ -2708,10 +2794,12 @@ async function handle(req, res) {
       writeJson(SETTINGS_PATH, s);
       return send(res, 200, { ok: true, settings: s });
     }
-    // Art guides: composition-keyed authored direction (tool-bound). GET returns the table;
-    // POST replaces it wholesale (keys normalized to canonical sorted order).
+    // Art guides + canonical references: composition-keyed, tool-bound. GET seeds any
+    // never-seeded composition first, then returns the table plus the composition keys the
+    // game actually uses (so the UI lists unappointed ones too). POST replaces the table
+    // wholesale (keys normalized to canonical sorted order), refs and seeded markers kept.
     if (p === '/api/art-guides' && req.method === 'GET')
-      return send(res, 200, { ok: true, guides: getArtGuides() });
+      return send(res, 200, { ok: true, guides: seedArtGuideRefs(), compositions: allCompositions() });
     if (p === '/api/art-guides' && req.method === 'POST') {
       const body = await readBody(req);
       const out = { concept: {}, theme: {} };
@@ -2720,12 +2808,29 @@ async function handle(req, res) {
         for (const [k, v] of Object.entries(src)) {
           const key = compKey(String(k).split('_').filter(Boolean));
           if (!key || !v || typeof v !== 'object') continue;
-          out[axis][key] = { label: String(v.label || ''),
+          const entry = { label: String(v.label || ''),
             positive: String(v.positive || ''), negative: String(v.negative || '') };
+          // canonical reference slots — concept holds one, theme holds a list
+          if (axis === 'concept') entry.ref = normalizeCanonicalRef(v.ref);
+          else entry.refs = (Array.isArray(v.refs) ? v.refs : []).map(normalizeCanonicalRef).filter(Boolean);
+          if (v.seeded) entry.seeded = true;   // keep the marker: cleared slots stay cleared
+          out[axis][key] = entry;
         }
       }
       writeJson(GUIDES_PATH, out);
       return send(res, 200, { ok: true, guides: out });
+    }
+    // Re-apply the spec'd default appointments to ONE composition key (overwrites its refs).
+    if (p === '/api/art-guides/seed' && req.method === 'POST') {
+      const { axis, key } = await readBody(req);
+      if (!['concept', 'theme'].includes(axis) || !key) return send(res, 400, { error: 'bad request' });
+      const g = seedArtGuideRefs();
+      const k = compKey(String(key).split('_').filter(Boolean));
+      const entry = g[axis][k] || (g[axis][k] = { label: '', positive: '', negative: '' });
+      Object.assign(entry, seedDefaultsFor(axis, k));
+      entry.seeded = true;
+      writeJson(GUIDES_PATH, g);
+      return send(res, 200, { ok: true, guides: g });
     }
     if (p === '/api/offer-rarity' && req.method === 'GET')
       return send(res, 200, { ok: true, config: getOfferRarity(), pool: offerRarityPool() });
@@ -2796,6 +2901,17 @@ async function handle(req, res) {
       let anchorAbs = null;
       if (anchor && anchor.source && anchor.source !== 'none') {
         if (anchor.source === 'current') anchorAbs = currentArtAbs(type, id);
+        else if (anchor.source === 'canonical') {
+          // the appointed canonical concept ref (cards only; mandatory — refuse when missing)
+          if (type !== 'card') return send(res, 400, { error: 'canonical references are cards-only' });
+          const entry = findGameEntry('card', id);
+          if (!entry) return send(res, 400, { error: 'canonical anchor needs a saved game card' });
+          try {
+            assertCanonicalEligible(entry);
+            const c = canonicalConceptFor(entry.data.chess_pieces);
+            anchorAbs = c ? c.abs : null;
+          } catch (e) { return send(res, 400, { error: e.message }); }
+        }
         else if (anchor.source === 'game') anchorAbs = gameArtAbs(String(anchor.path || ''));
         else if (anchor.source === 'upload') {
           anchorAbs = path.join(WORKSPACE, 'refs', safeRefName(anchor.path));
@@ -3073,6 +3189,13 @@ async function handle(req, res) {
       const safe = safeRefName(name);
       fs.writeFileSync(path.join(WORKSPACE, 'refs', safe), Buffer.from(dataBase64, 'base64'));
       return send(res, 200, { ok: true, name: safe });
+    }
+    // uploaded reference previews (workspace/refs — canonical ref slots, flow anchors)
+    if (p.startsWith('/refimg/')) {
+      const name = safeRefName(decodeURIComponent(p.slice('/refimg/'.length)));
+      const abs = path.join(WORKSPACE, 'refs', name);
+      if (fs.existsSync(abs)) return send(res, 200, fs.readFileSync(abs), 'image/png');
+      return send(res, 404, { error: 'no such reference image' });
     }
     // workspace art preview
     // pool image previews

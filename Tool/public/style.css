@@ -302,3 +302,20 @@ table.mini input, table.mini select { padding: 4px 6px; }
 #queue-widget .q-sub.err { color: var(--bad); }
 #queue-widget .q-row.q-done, #queue-widget .q-row.q-stopped { opacity: 0.7; }
 #queue-widget .q-x { flex: none; }
+
+/* ── art guides: nested index + canonical reference tiles ────────────────── */
+.guide-index-row {
+  display: flex; align-items: center; gap: 8px; padding: 7px 10px; cursor: pointer;
+  border: 1px solid transparent; border-radius: 6px;
+}
+.guide-index-row:hover { background: var(--bg3); border-color: var(--line); }
+.guide-index-row .guide-key { font-weight: 600; }
+.guide-index-row .spacer { flex: 1; }
+.pill.missing { background: #3a2020; border: 1px solid #7a3838; color: #f0a0a0;
+  border-radius: 10px; padding: 1px 8px; font-size: 11px; }
+.guide-ref-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
+.guide-ref-tile { width: 132px; display: flex; flex-direction: column; gap: 3px; }
+.guide-ref-tile img { width: 132px; height: auto; border-radius: 6px; }
+.guide-ref-broken { width: 132px; height: 90px; display: flex; align-items: center;
+  justify-content: center; background: var(--bg3); border: 1px dashed var(--bad);
+  border-radius: 6px; color: var(--bad); font-size: 12px; }

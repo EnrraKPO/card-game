@@ -3,89 +3,675 @@
     "bishop_bishop": {
       "label": "Hierophant",
       "positive": "bearded, casting powerful magic",
-      "negative": ""
+      "negative": "",
+      "ref": {
+        "card": "bishop_bishop"
+      },
+      "seeded": true
     },
     "bishop": {
       "label": "Bishop",
       "positive": "Inspired by a chess bishop",
-      "negative": "Never bearded"
+      "negative": "Never bearded",
+      "ref": {
+        "card": "bishop"
+      },
+      "seeded": true
     },
     "bishop_knight": {
       "label": "Cryptid",
       "positive": "A magical or mythical creature linked to the elemental theme",
-      "negative": ""
+      "negative": "",
+      "ref": {
+        "card": "bishop_knight"
+      },
+      "seeded": true
     },
     "bishop_queen": {
       "label": "Deity",
       "positive": "goddess, divine figure",
-      "negative": "crown"
+      "negative": "crown",
+      "ref": {
+        "card": "bishop_queen"
+      },
+      "seeded": true
     },
     "pawn_queen": {
       "label": "Commander",
       "positive": "a female military leader rallying troops, standing above ground level in a platform, pointing with a baton",
-      "negative": "crown, giant"
+      "negative": "crown, giant",
+      "ref": {
+        "card": "pawn_queen"
+      },
+      "seeded": true
     },
     "rook_rook": {
       "label": "Turret",
       "positive": "a weaponized turret, the concept of the weapon on top matches the element theme",
-      "negative": ""
+      "negative": "",
+      "ref": {
+        "card": "rook_rook"
+      },
+      "seeded": true
+    },
+    "bishop_pawn": {
+      "label": "Paladin",
+      "positive": "heavy armor, closed helmet, blunt weapon, sigil",
+      "negative": "cross themed imagery",
+      "ref": {
+        "card": "bishop_pawn"
+      },
+      "seeded": true
+    },
+    "bishop_rook": {
+      "label": "Arcane Tower",
+      "positive": "A magic tower with a priest magician standing at the front, the tower itself is imposing and endowed with magical energy",
+      "negative": "",
+      "ref": {
+        "card": "bishop_rook"
+      },
+      "seeded": true
+    },
+    "king": {
+      "label": "King",
+      "positive": "The king of a realm, a star character, identity strongly derived from elemental theme of his kingdom. Wears a crown and wields a scepter.",
+      "negative": "",
+      "ref": {
+        "card": "king"
+      },
+      "seeded": true
+    },
+    "knight": {
+      "label": "Knight",
+      "positive": "Any animal that can be connected to the elemental theme",
+      "negative": "",
+      "ref": {
+        "card": "knight"
+      },
+      "seeded": true
+    },
+    "knight_knight": {
+      "label": "Beast",
+      "positive": "A strong powerful beast associated with the elemental theme",
+      "negative": "",
+      "ref": {
+        "card": "knight_knight"
+      },
+      "seeded": true
+    },
+    "knight_pawn": {
+      "label": "Cavalry",
+      "positive": "A knight mounted on a beast",
+      "negative": "",
+      "ref": {
+        "card": "knight_pawn"
+      },
+      "seeded": true
+    },
+    "knight_queen": {
+      "label": "Monster",
+      "positive": "any legendary monster beast that can be associated to the element theme",
+      "negative": "",
+      "ref": {
+        "card": "knight_queen"
+      },
+      "seeded": true
+    },
+    "knight_rook": {
+      "label": "Stable",
+      "positive": "small barn-like building with an animal inside",
+      "negative": "",
+      "ref": {
+        "card": "knight_rook"
+      },
+      "seeded": true
+    },
+    "pawn": {
+      "label": "Pawn",
+      "positive": "Just a pawn, small round helmet with a spherical peg on top. Wields a spear.",
+      "negative": "",
+      "ref": {
+        "card": "pawn"
+      },
+      "seeded": true
+    },
+    "pawn_pawn": {
+      "label": "Soldier",
+      "positive": "Armored soldier with a long sword and a shield, wearing light armor and a full helmet.",
+      "negative": "",
+      "ref": {
+        "card": "pawn_pawn"
+      },
+      "seeded": true
+    },
+    "pawn_rook": {
+      "label": "Barracks",
+      "positive": "Building that looks like a training facility, weapons rack and a solder standing at the front.",
+      "negative": "",
+      "ref": {
+        "card": "pawn_rook"
+      },
+      "seeded": true
+    },
+    "queen": {
+      "label": "Queen",
+      "positive": "magnificent queen from an elemental realm, all her identity must communicate the identity thematic of her realm",
+      "negative": "",
+      "ref": {
+        "card": "queen"
+      },
+      "seeded": true
+    },
+    "queen_queen": {
+      "label": "Hero",
+      "positive": "Start character, a powerful female hero, her identity is strongly driven by her elemental theme",
+      "negative": "",
+      "ref": {
+        "card": "queen_queen"
+      },
+      "seeded": true
+    },
+    "queen_rook": {
+      "label": "Castle",
+      "positive": "",
+      "negative": "",
+      "ref": {
+        "card": "rook_queen"
+      },
+      "seeded": true
+    },
+    "rook": {
+      "label": "Rook",
+      "positive": "",
+      "negative": "",
+      "ref": {
+        "card": "rook"
+      },
+      "seeded": true
     }
   },
   "theme": {
     "air_fire": {
       "label": "Lightning",
       "positive": "warm palette",
-      "negative": "cool palette, storm theme"
+      "negative": "cool palette, storm theme",
+      "refs": [
+        {
+          "card": "air_fire_pawn"
+        },
+        {
+          "card": "air_fire_knight"
+        },
+        {
+          "card": "air_fire_queen"
+        }
+      ],
+      "seeded": true
     },
     "air_darkness": {
       "label": "Miasma",
       "positive": "plague themed",
-      "negative": "poison"
+      "negative": "poison",
+      "refs": [
+        {
+          "card": "air_darkness_pawn"
+        },
+        {
+          "card": "air_darkness_knight"
+        },
+        {
+          "card": "air_darkness_queen"
+        }
+      ],
+      "seeded": true
     },
     "earth_water": {
       "label": "Clay",
       "positive": "muddy textures, mud, soft wet clay materials",
-      "negative": "rock, stone, fire, furance"
+      "negative": "rock, stone, fire, furance",
+      "refs": [
+        {
+          "card": "earth_water_pawn"
+        },
+        {
+          "card": "earth_water_knight"
+        },
+        {
+          "card": "earth_water_queen"
+        }
+      ],
+      "seeded": true
     },
     "air_light": {
       "label": "Angelic",
       "positive": "wings, feathers, halo, golden fences, clouds",
-      "negative": ""
+      "negative": "",
+      "refs": [
+        {
+          "card": "air_light_pawn"
+        },
+        {
+          "card": "air_light_knight"
+        },
+        {
+          "card": "air_light_queen"
+        }
+      ],
+      "seeded": true
     },
     "darkness_water": {
       "label": "Blight",
       "positive": "poison, sludgy and viscous, use the classic \"skull and bones\" poison symbol imagery",
-      "negative": ""
+      "negative": "",
+      "refs": [
+        {
+          "card": "darkness_water_pawn"
+        },
+        {
+          "card": "darkness_water_knight"
+        },
+        {
+          "card": "darkness_water_queen"
+        }
+      ],
+      "seeded": true
     },
     "bishop_rook": {
       "label": "Arcane Tower",
       "positive": "A magic tower with a priest magician standing at the front, the tower itself is imposing and endowed with magical energy",
-      "negative": ""
+      "negative": "",
+      "refs": [
+        {
+          "upload": "bishop_rook.png"
+        }
+      ]
     },
     "darnkess_light": {
       "label": "Undead",
       "positive": "focus on the undead theme (zombies, skeletons, ghosts, etc), add eerie ominous glow",
-      "negative": "spirit"
+      "negative": "spirit",
+      "refs": [
+        {
+          "upload": "darkness_light_pawn.png"
+        },
+        {
+          "upload": "darkness_light_queen.png"
+        },
+        {
+          "upload": "darkness_light_knight.png"
+        }
+      ]
     },
     "fire_water": {
       "label": "Steam",
       "positive": "steampunk, steam fueled mechanic units, present high-pressure steam vents",
-      "negative": ""
+      "negative": "",
+      "refs": [
+        {
+          "card": "fire_water_pawn"
+        },
+        {
+          "card": "fire_water_knight"
+        },
+        {
+          "card": "fire_water_queen"
+        }
+      ],
+      "seeded": true
     },
     "light_water": {
       "label": "Rainbow",
       "positive": "focus on color and texture, multicolored rainbow palette, lightweight materials, like a soft ethereal dew, also colorful gems with lots of refractory effects",
-      "negative": "fire, smoke, heavy materials"
+      "negative": "fire, smoke, heavy materials",
+      "refs": [
+        {
+          "card": "light_water_pawn"
+        },
+        {
+          "card": "light_water_knight"
+        },
+        {
+          "card": "light_water_queen"
+        }
+      ],
+      "seeded": true
     },
     "light_light": {
       "label": "Pure Light",
       "positive": "light element, materials read as made of light, creatures may be represented as light elemental beings, from a light elemental world",
-      "negative": "fire, multicolored, rainbow, heavenly, angel"
+      "negative": "fire, multicolored, rainbow, heavenly, angel",
+      "refs": [
+        {
+          "card": "light_light_pawn"
+        },
+        {
+          "card": "light_light_knight"
+        },
+        {
+          "card": "light_light_queen"
+        }
+      ],
+      "seeded": true
     },
     "fire_fire": {
       "label": "Pure Fire",
       "positive": "fire element, materials read as made of fire, creatures may be represented as fire elemental beings, from a fire elemental world",
-      "negative": "lava, magma, volcanic"
+      "negative": "lava, magma, volcanic",
+      "refs": [
+        {
+          "card": "fire_fire_pawn"
+        },
+        {
+          "card": "fire_fire_knight"
+        },
+        {
+          "card": "fire_fire_queen"
+        }
+      ],
+      "seeded": true
+    },
+    "air_water": {
+      "label": "Storm",
+      "positive": "dark clouds, rain, raging winds, cumulonimbus",
+      "negative": "lightning, electricity",
+      "refs": [
+        {
+          "card": "air_water_pawn"
+        },
+        {
+          "card": "air_water_knight"
+        },
+        {
+          "card": "air_water_queen"
+        }
+      ],
+      "seeded": true
+    },
+    "air": {
+      "label": "Air",
+      "positive": "unit endowed with air, air related palette, air nation",
+      "negative": "heaven, holy, angel",
+      "refs": [
+        {
+          "upload": "air_pawn.png"
+        },
+        {
+          "upload": "air_queen.png"
+        },
+        {
+          "upload": "air_knight.png"
+        }
+      ],
+      "seeded": true
+    },
+    "air_air": {
+      "label": "Pure Air",
+      "positive": "unit from an air elemental realm, strong air elemental theme, powerful air magic",
+      "negative": "heaven, angel, holy",
+      "refs": [
+        {
+          "card": "air_air_pawn"
+        },
+        {
+          "card": "air_air_knight"
+        },
+        {
+          "card": "air_air_queen"
+        }
+      ],
+      "seeded": true
+    },
+    "air_earth": {
+      "label": "Sand",
+      "positive": "unit from an sand elemental realm, strong sand elemental theme, desert, white cloth",
+      "negative": "beach",
+      "refs": [
+        {
+          "card": "air_earth_pawn"
+        },
+        {
+          "card": "air_earth_knight"
+        },
+        {
+          "card": "air_earth_queen"
+        }
+      ],
+      "seeded": true
+    },
+    "darkness": {
+      "label": "Darkness",
+      "positive": "unit endowed with darkness, darkness related palette, darkness nation",
+      "negative": "demon, undead",
+      "refs": [
+        {
+          "card": "darkness_pawn"
+        },
+        {
+          "card": "darkness_knight"
+        },
+        {
+          "card": "darkness_queen"
+        }
+      ],
+      "seeded": true
+    },
+    "darkness_darkness": {
+      "label": "Pure darkness",
+      "positive": "Units made of pure darkness",
+      "negative": "",
+      "refs": [
+        {
+          "card": "darkness_darkness_pawn"
+        },
+        {
+          "card": "darkness_darkness_knight"
+        },
+        {
+          "card": "darkness_darkness_queen"
+        }
+      ],
+      "seeded": true
+    },
+    "darkness_earth": {
+      "label": "Rock",
+      "positive": "obsidian, underground, solid, rock, stone, crystal",
+      "negative": "earth, ground",
+      "refs": [
+        {
+          "card": "darkness_earth_knight"
+        },
+        {
+          "card": "darkness_earth_queen"
+        }
+      ],
+      "seeded": true
+    },
+    "darkness_fire": {
+      "label": "Demon",
+      "positive": "unit belonging to a demon realm, green and red palette, demonic features",
+      "negative": "",
+      "refs": [
+        {
+          "card": "darkness_fire_pawn"
+        },
+        {
+          "card": "darkness_fire_knight"
+        },
+        {
+          "card": "darkness_fire_queen"
+        }
+      ],
+      "seeded": true
+    },
+    "darkness_light": {
+      "label": "Undead",
+      "positive": "focus on the undead theme (zombies, skeletons, ghosts, etc), add eerie ominous glow",
+      "negative": "spirit",
+      "refs": [
+        {
+          "card": "darkness_light_pawn"
+        },
+        {
+          "card": "darkness_light_knight"
+        },
+        {
+          "card": "darkness_light_queen"
+        }
+      ],
+      "seeded": true
+    },
+    "earth": {
+      "label": "Earth",
+      "positive": "units endowed with earth, units belong to an earth nation",
+      "negative": "rock, nature, crystal, diamond",
+      "refs": [
+        {
+          "upload": "earth_pawn.png"
+        },
+        {
+          "upload": "earth_queen.png"
+        },
+        {
+          "upload": "earth_knight.png"
+        }
+      ],
+      "seeded": true
+    },
+    "earth_earth": {
+      "label": "Pure Earth",
+      "positive": "unit from an earth elemental realm, strong earth elemental theme, powerful earth magic",
+      "negative": "rock, crystal, nature",
+      "refs": [
+        {
+          "card": "earth_earth_pawn"
+        },
+        {
+          "card": "earth_earth_knight"
+        },
+        {
+          "card": "earth_earth_queen"
+        }
+      ],
+      "seeded": true
+    },
+    "earth_fire": {
+      "label": "Magma",
+      "positive": "molten rock, volcanic, lava, magma, units from a magma element realm, strong magma magic",
+      "negative": "",
+      "refs": [
+        {
+          "card": "earth_fire_pawn"
+        },
+        {
+          "card": "earth_fire_knight"
+        },
+        {
+          "card": "earth_fire_queen"
+        }
+      ],
+      "seeded": true
+    },
+    "earth_light": {
+      "label": "Nature",
+      "positive": "leaves, flowers, wood, trees, roots, grass",
+      "negative": "",
+      "refs": [
+        {
+          "card": "earth_light_knight"
+        },
+        {
+          "card": "earth_light_queen"
+        },
+        {
+          "upload": "earth_light_pawn.png"
+        }
+      ],
+      "seeded": true
+    },
+    "fire": {
+      "label": "Fire",
+      "positive": "unit endowed with fire, fire palette, fire nation unit",
+      "negative": "magma, lava, volcano",
+      "refs": [
+        {
+          "upload": "fire_pawn.png"
+        },
+        {
+          "upload": "fire_queen.png"
+        },
+        {
+          "upload": "fire_knight.png"
+        }
+      ],
+      "seeded": true
+    },
+    "fire_light": {
+      "label": "Spirit",
+      "positive": "blue fire, shiny, luminous unit, dark environment, ominous",
+      "negative": "zombie, demon",
+      "refs": [
+        {
+          "card": "fire_light_pawn"
+        },
+        {
+          "card": "fire_light_knight"
+        },
+        {
+          "card": "fire_light_queen"
+        }
+      ],
+      "seeded": true
+    },
+    "light": {
+      "label": "Light",
+      "positive": "unit endowed with light, light related palette, light nation",
+      "negative": "holy, angel, heaven, wings",
+      "refs": [
+        {
+          "card": "light_pawn"
+        },
+        {
+          "card": "light_knight"
+        },
+        {
+          "card": "light_queen"
+        }
+      ],
+      "seeded": true
+    },
+    "water": {
+      "label": "Water",
+      "positive": "unit endowed with water, water related palette, water nation",
+      "negative": "",
+      "refs": [
+        {
+          "card": "water_pawn"
+        },
+        {
+          "card": "water_knight"
+        },
+        {
+          "card": "water_queen"
+        }
+      ],
+      "seeded": true
+    },
+    "water_water": {
+      "label": "Pure Water",
+      "positive": "unit from an water elemental realm, strong water elemental theme, strong water magic, coral, pearls, algae",
+      "negative": "",
+      "refs": [
+        {
+          "card": "water_water_pawn"
+        },
+        {
+          "card": "water_water_knight"
+        },
+        {
+          "card": "water_water_queen"
+        }
+      ],
+      "seeded": true
     }
   }
 }

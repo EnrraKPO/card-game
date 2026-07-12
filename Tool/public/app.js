@@ -61,8 +61,6 @@ const KIN_MODES = [
 ];
 function kinDefault() { return state.settings.kinAdherence || 'concept'; }
 function kinAnchorMode() { return state.settings.kinAnchorMode || 'current'; }
-function kinThemeMode() { return state.settings.kinThemeMode || 'family'; }
-function kinThemeRefs() { return state.settings.kinThemeRefs || (state.settings.kinThemeRefs = []); }
 // The ✨ kin controls are ONE global source of truth: every setter persists and refreshes
 // the list so all three entry points (per-card quick, per-file batch, editor) read the same.
 function setKinField(key, v) {
@@ -72,20 +70,13 @@ function setKinField(key, v) {
   renderItemList();
 }
 function setKinDefault(v) { setKinField('kinAdherence', v); }
-function toggleThemeRef(id) {
-  const refs = kinThemeRefs().slice();
-  const i = refs.indexOf(id);
-  if (i >= 0) refs.splice(i, 1); else refs.push(id);
-  setKinField('kinThemeRefs', refs);
-}
 
+// Anchor source for ✨ inference. Theme references are NOT selected here anymore — they
+// are canonical appointments per element composition, managed in ✨ Art guides.
 const KIN_ANCHOR_MODES = [
-  { value: 'current', label: 'Prioritize current art concept — regenerate off the card\'s own art if it has any' },
-  { value: 'base', label: 'Prioritize base unit art concept — always anchor on the base unit, ignore own art' },
-];
-const KIN_THEME_MODES = [
-  { value: 'family', label: 'Infer theme from unit family — auto element-relatives' },
-  { value: 'select', label: 'Select theme references — hand-pick the cards below' },
+  { value: 'current', label: 'Anchor: current art — the card\'s own art (canonical concept when it has none)' },
+  { value: 'canonical', label: 'Anchor: canonical — always the appointed canonical concept ref' },
+  { value: 'custom', label: 'Anchor: custom — the card\'s stored recipe reference' },
 ];
 
 // The visible kin controls above the card list — all global, cards only.
@@ -94,18 +85,12 @@ function renderKinBar() {
   if (!bar) return;
   if (state.currentType !== 'card') { bar.hidden = true; bar.replaceChildren(); return; }
   bar.hidden = false;
-  const selecting = kinThemeMode() === 'select';
   // NOTE: native replaceChildren coerces a null arg to the string "null" — unlike el(),
   // it does not skip nulls. Build the list and filter before spreading.
   const parts = [
     el('span', { class: 'lab', text: '✨ kin default' }),
     selectInput({ get v() { return kinDefault(); }, set v(x) { setKinDefault(x); } }, 'v', KIN_MODES, () => {}),
     selectInput({ get v() { return kinAnchorMode(); }, set v(x) { setKinField('kinAnchorMode', x); } }, 'v', KIN_ANCHOR_MODES, () => {}),
-    selectInput({ get v() { return kinThemeMode(); }, set v(x) { setKinField('kinThemeMode', x); } }, 'v', KIN_THEME_MODES, () => {}),
-    selecting ? el('div', { class: 'kin-refs-row' },
-      el('span', { class: 'hint', text: `${kinThemeRefs().length} theme reference(s) selected — tick "use as reference" on cards below` }),
-      el('button', { class: 'ghost tiny', text: 'Clear all', disabled: !kinThemeRefs().length,
-        onclick: () => setKinField('kinThemeRefs', []) })) : null,
     el('div', { class: 'kin-refs-row' },
       el('label', { class: 'check' },
         el('input', { type: 'checkbox', checked: artGuidesEnabled(),
@@ -122,64 +107,175 @@ function renderKinBar() {
 }
 function artGuidesEnabled() { return !!state.settings.useArtGuides; }
 
-// ── ✨ art guides editor ──────────────────────────────────────────────────────
-// Composition-keyed authored direction (tool-bound). Loaded fresh, edited as row arrays,
-// saved back wholesale — the server normalizes keys to canonical sorted order.
+// ── ✨ art guides + canonical references editor ───────────────────────────────
+// Composition-keyed, two nested levels: an INDEX of the two axes (unit concepts by piece
+// composition, element themes by element composition) → a PAGE per composition holding
+// its guide text AND its canonical reference slot(s). Concept = exactly one ref; theme =
+// one or more. A ref is a card (its deployed art) or an uploaded image. Canonical refs
+// are MANDATORY for canonical-anchored generation — an empty slot means refusals.
 function openArtGuidesModal() {
   api('/api/art-guides').then(res => {
     const guides = (res && res.guides) || { concept: {}, theme: {} };
-    const rows = { concept: [], theme: [] };
-    for (const axis of ['concept', 'theme'])
-      for (const [k, v] of Object.entries(guides[axis] || {}))
-        rows[axis].push({ key: k, label: v.label || '', positive: v.positive || '', negative: v.negative || '' });
-    renderArtGuidesModal(rows);
+    const comps = (res && res.compositions) || { concept: [], theme: [] };
+    renderArtGuidesIndex(guides, comps);
   }).catch(err => toast('Could not load art guides: ' + err.message, 'err'));
 }
 
-function renderArtGuidesModal(rows) {
-  const meta = {
-    concept: { title: 'Concept guides — keyed by PIECE composition', hint: 'e.g. bishop_bishop (Hierophant)' },
-    theme: { title: 'Theme guides — keyed by ELEMENT composition', hint: 'e.g. air_fire (Lightning)' },
-  };
+const GUIDE_AXIS_META = {
+  concept: { title: 'Unit concepts — by PIECE composition', one: 'concept', hint: 'e.g. bishop_bishop (Hierophant)' },
+  theme: { title: 'Element themes — by ELEMENT composition', one: 'theme', hint: 'e.g. air_fire (Lightning)' },
+};
+function guideRefsOf(axis, entry) {
+  if (!entry) return [];
+  return axis === 'concept' ? (entry.ref ? [entry.ref] : []) : (entry.refs || []);
+}
+// A canonical ref → its preview URL (card art via the game list, uploads via /refimg).
+function guideRefThumb(ref) {
+  if (ref.upload) return '/refimg/' + encodeURIComponent(ref.upload);
+  const g = (state.game.card || []).find(x => x.id === ref.card);
+  return g && g.art ? '/gameart/' + g.art : null;
+}
+
+async function saveArtGuides(guides) {
+  await api('/api/art-guides', guides);
+}
+
+function renderArtGuidesIndex(guides, comps) {
   const section = axis => {
-    const wrap = el('div', { class: 'guide-section' }, el('h3', { text: meta[axis].title }));
-    for (const row of rows[axis]) {
-      wrap.append(el('div', { class: 'guide-row' },
-        el('div', { class: 'frow' },
-          fld('Composition key', textInput(row, 'key', () => {}, meta[axis].hint), 'order is normalized on save'),
-          fld('Label', textInput(row, 'label', () => {}, axis === 'concept' ? 'Hierophant' : 'Lightning')),
-          el('button', { class: 'ghost tiny', text: '✕', title: 'delete this guide',
-            onclick: () => { rows[axis] = rows[axis].filter(r => r !== row); renderArtGuidesModal(rows); } })),
-        el('label', { class: 'fld wide' }, el('span', { class: 'lab', text: 'Positive — authoritative direction' }),
-          el('textarea', { value: row.positive, oninput: e => { row.positive = e.target.value; } })),
-        el('label', { class: 'fld wide' }, el('span', { class: 'lab', text: 'Negative — anti-drift (do NOT depict)' }),
-          el('textarea', { value: row.negative, oninput: e => { row.negative = e.target.value; } }))));
+    // every composition the game uses + any extra authored keys
+    const keys = [...new Set([...(comps[axis] || []), ...Object.keys(guides[axis] || {})])].sort();
+    const wrap = el('div', { class: 'guide-section' }, el('h3', { text: GUIDE_AXIS_META[axis].title }));
+    if (!keys.length) wrap.append(el('div', { class: 'subtle', text: 'No compositions found.' }));
+    for (const key of keys) {
+      const entry = guides[axis][key];
+      const refs = guideRefsOf(axis, entry);
+      const hasText = !!(entry && (entry.positive || entry.negative));
+      const real = (comps[axis] || []).includes(key);   // backed by an actual game composition?
+      wrap.append(el('div', { class: 'guide-index-row', onclick: () => renderArtGuidesPage(guides, comps, axis, key) },
+        el('span', { class: 'guide-key', text: key }),
+        entry && entry.label ? el('span', { class: 'subtle', text: entry.label }) : null,
+        !real ? el('span', { class: 'pill missing', text: 'stray key', title: 'no game card uses this composition — likely a mistake; delete it' }) : null,
+        el('span', { class: 'spacer' }),
+        hasText ? el('span', { class: 'pill installed', text: '📝 guide' }) : null,
+        refs.length ? el('span', { class: 'pill installed', text: `🖼 ${refs.length} ref${refs.length > 1 ? 's' : ''}` })
+          : el('span', { class: 'pill missing', text: '⚠ no refs', title: 'canonical-anchored generation will refuse this composition' }),
+        entry ? el('button', { class: 'ghost tiny', text: '✕',
+          title: real ? 'Delete this entry — the composition stays listed and re-seeds its default refs on next load'
+                      : 'Delete this stray entry for good (no game composition uses it)',
+          onclick: async e => {
+            e.stopPropagation();
+            if (!confirm(`Delete the ${axis} entry for "${key}"?` + (real
+              ? '\n(A real composition: it re-seeds default refs on next load.)'
+              : '\n(A stray key: it will be gone for good.)'))) return;
+            delete guides[axis][key];
+            try {
+              await saveArtGuides(guides);
+              toast(`Deleted ${axis} entry "${key}".`, 'ok');
+            } catch (err) { toast('Delete failed: ' + err.message, 'err'); }
+            renderArtGuidesIndex(guides, comps);
+          } }) : null));
     }
-    wrap.append(el('button', { class: 'ghost', text: '+ Add ' + axis + ' guide',
-      onclick: () => { rows[axis].push({ key: '', label: '', positive: '', negative: '' }); renderArtGuidesModal(rows); } }));
     return wrap;
   };
-  $('modal-root').replaceChildren(el('div', { class: 'modal', style: 'width:720px; max-height:86vh; overflow:auto' },
-    el('h2', {}, '✨ Art guides'),
-    el('div', { class: 'hint', text: 'Authored art direction injected into every ✨ writer when "use art guides" is on. '
-      + 'Exact-composition match; positives are authoritative, negatives push drift away.' }),
+  $('modal-root').replaceChildren(el('div', { class: 'modal', style: 'width:760px; max-height:86vh; overflow:auto' },
+    el('h2', {}, '✨ Art guides & canonical references'),
+    el('div', { class: 'hint', text: 'Per exact composition: authored guide text (injected when "use art guides" is on) '
+      + 'and the CANONICAL references every ✨ inference draws from. No component mixing, ever — a composition without '
+      + 'refs refuses canonical-anchored generation.' }),
     section('concept'), section('theme'),
     el('div', { class: 'modal-actions' },
-      el('button', { class: 'ghost', text: 'Cancel', onclick: () => $('modal-root').replaceChildren() }),
-      el('button', { class: 'primary', text: 'Save', onclick: async () => {
-        const payload = { concept: {}, theme: {} };
-        for (const axis of ['concept', 'theme'])
-          for (const row of rows[axis]) {
-            const key = (row.key || '').trim();
-            if (!key) continue;
-            payload[axis][key] = { label: row.label || '', positive: row.positive || '', negative: row.negative || '' };
-          }
-        try {
-          await api('/api/art-guides', payload);
-          $('modal-root').replaceChildren();
-          toast('Art guides saved', 'ok');
-        } catch (err) { toast('Save failed: ' + err.message, 'err'); }
-      } }))));
+      el('button', { class: 'ghost', text: 'Close', onclick: () => $('modal-root').replaceChildren() }))));
+}
+
+function renderArtGuidesPage(guides, comps, axis, key) {
+  const entry = guides[axis][key] || (guides[axis][key] = { label: '', positive: '', negative: '' });
+  const single = axis === 'concept';
+  const rerender = () => renderArtGuidesPage(guides, comps, axis, key);
+  const persist = async ok => {
+    try { await saveArtGuides(guides); if (ok) toast(ok, 'ok'); }
+    catch (err) { toast('Save failed: ' + err.message, 'err'); }
+  };
+
+  const setRefs = list => {
+    if (single) entry.ref = list[0] || null;
+    else entry.refs = list;
+  };
+  const refs = guideRefsOf(axis, entry);
+
+  const refTile = (ref, i) => {
+    const thumb = guideRefThumb(ref);
+    return el('div', { class: 'guide-ref-tile' },
+      thumb ? el('img', { src: thumb, loading: 'lazy' })
+        : el('div', { class: 'guide-ref-broken', text: '⚠ image missing' }),
+      el('div', { class: 'subtle', style: 'font-size:11px', text: ref.card || ref.upload }),
+      el('button', { class: 'ghost tiny', text: '✕', title: 'Remove this reference', onclick: async () => {
+        const list = refs.slice(); list.splice(i, 1); setRefs(list);
+        await persist('Reference removed.'); rerender();
+      } }));
+  };
+
+  // add-a-card picker: any art-bearing card id (free choice — appointing is deliberate)
+  const cardIds = (state.game.card || []).filter(g => g.art).map(g => g.id).sort();
+  const pick = { id: '' };
+  const dl = el('datalist', { id: 'guide-ref-cards' }, ...cardIds.map(id => el('option', { value: id })));
+  const addCard = async () => {
+    if (!cardIds.includes(pick.id)) { toast('Pick an existing card id (with art).', 'err'); return; }
+    const list = single ? [] : refs.slice();
+    list.push({ card: pick.id });
+    setRefs(list);
+    await persist(`Appointed ${pick.id}.`); rerender();
+  };
+  const uploadInput = el('input', { type: 'file', accept: 'image/*', style: 'display:none',
+    onchange: async e => {
+      const f = e.target.files && e.target.files[0];
+      if (!f) return;
+      const dataUrl = await new Promise((res2, rej) => {
+        const r = new FileReader(); r.onload = () => res2(r.result); r.onerror = rej; r.readAsDataURL(f);
+      });
+      try {
+        const out = await api('/api/art/upload-ref', { name: f.name, dataBase64: dataUrl.split(',')[1] });
+        const list = single ? [] : refs.slice();
+        list.push({ upload: out.name });
+        setRefs(list);
+        await persist(`Uploaded ${out.name}.`); rerender();
+      } catch (err) { toast(err.message, 'err'); }
+    } });
+
+  $('modal-root').replaceChildren(el('div', { class: 'modal', style: 'width:760px; max-height:86vh; overflow:auto' },
+    el('h2', {}, '✨ ', el('span', { class: 'subtle', text: GUIDE_AXIS_META[axis].one + ' · ' }), key),
+    el('div', { class: 'frow' },
+      fld('Label', textInput(entry, 'label', () => {}, axis === 'concept' ? 'Hierophant' : 'Lightning'))),
+    el('label', { class: 'fld wide' }, el('span', { class: 'lab', text: 'Positive — authoritative direction' }),
+      el('textarea', { value: entry.positive || '', oninput: e => { entry.positive = e.target.value; } })),
+    el('label', { class: 'fld wide' }, el('span', { class: 'lab', text: 'Negative — anti-drift (do NOT depict)' }),
+      el('textarea', { value: entry.negative || '', oninput: e => { entry.negative = e.target.value; } })),
+    el('h3', { text: single ? 'Canonical concept reference (exactly one)' : 'Canonical theme references (one or more)' }),
+    el('div', { class: 'hint', text: single
+      ? 'The subject anchor for this piece composition. Default: the bare piece card\'s art.'
+      : 'The look/palette references for this exact element composition. Default: its pawn, knight and queen. '
+        + 'Any card of this composition (any pieces) or an uploaded image is a valid appointment.' }),
+    refs.length ? el('div', { class: 'guide-ref-grid' }, ...refs.map(refTile))
+      : el('div', { class: 'pill missing', text: '⚠ no references — canonical-anchored generation refuses this composition' }),
+    el('div', { class: 'frow', style: 'margin-top:8px; align-items:flex-end' },
+      fld(single ? 'Appoint a card (replaces the slot)' : 'Appoint a card',
+        el('input', { type: 'text', list: 'guide-ref-cards', value: '', placeholder: 'card id…',
+          oninput: e => { pick.id = e.target.value; } })), dl,
+      el('button', { class: 'ghost', text: single ? '✔ appoint' : '+ add card', onclick: addCard }),
+      el('button', { class: 'ghost', text: '⬆ upload image…', onclick: () => uploadInput.click() }), uploadInput,
+      el('button', { class: 'ghost', text: '⟳ re-seed defaults', title: 'Overwrite the slot(s) with the spec defaults '
+        + '(concept: bare piece art; theme: this composition\'s pawn/knight/queen)', onclick: async () => {
+          try {
+            const out = await api('/api/art-guides/seed', { axis, key });
+            Object.assign(guides, out.guides);
+            toast('Defaults re-seeded.', 'ok'); renderArtGuidesPage(guides, comps, axis, key);
+          } catch (err) { toast(err.message, 'err'); }
+        } })),
+    el('div', { class: 'modal-actions' },
+      el('button', { class: 'ghost', text: '← Back', onclick: async () => {
+        await persist(null);   // guide-text edits ride along
+        renderArtGuidesIndex(guides, comps);
+      } }),
+      el('button', { class: 'primary', text: 'Save', onclick: () => persist('Saved.') }))));
 }
 
 // ── ⚖ offer rarity editor ─────────────────────────────────────────────────────
@@ -294,7 +390,7 @@ function openInferBatchModal(file) {
     el('div', { class: 'frow', style: 'margin:10px 0' },
       fld('What carries over from each card\'s anchor image',
         selectInput(cfg, 'adherence', KIN_MODES, () => {}),
-        'anchor = the card\'s own art, else its bare piece version\'s art — remembered as the default')),
+        'anchor source = the kin bar setting (current art / canonical / custom) — remembered as the default')),
     el('div', { class: 'fld', style: 'margin:6px 0' },
       checkInput(cfg, 'overwrite', () => {}, 'Overwrite existing recipes (re-infer cards that already have one)')),
     el('div', { class: 'modal-actions' },
@@ -620,13 +716,6 @@ function renderItemList() {
       },
         g.art ? el('img', { class: 'thumb', loading: 'lazy', src: '/gameart/' + g.art }) : null,
         el('div', { class: 'item-name' }, el('div', { text: g.name }), el('div', { class: 'item-id', text: g.id })),
-        // theme-reference picker — only in "Select theme references" mode
-        (state.currentType === 'card' && kinThemeMode() === 'select')
-          ? el('label', { class: 'check ref-check', title: 'Use as a theme reference for ✨ kin inference',
-              onclick: e => e.stopPropagation() },
-              el('input', { type: 'checkbox', checked: kinThemeRefs().includes(g.id),
-                onchange: () => toggleThemeRef(g.id) }), 'ref')
-          : null,
         g.edited ? el('span', { class: 'pill installed', text: 'edited' }) : null,
         hasRecipe ? el('span', { class: 'subtle', text: '✨', title: 'has an art recipe (prompt stored on the entry)' }) : null,
         (state.currentType === 'card' && !run) ? el('button', { class: 'ghost tiny', text: '✨',
@@ -1162,9 +1251,9 @@ function buildArtControls(rerender, advanced) {
             } }),
           state.currentType === 'card' ? el('button', { class: 'ghost tiny', text: '✨ kin',
             disabled: state.isNew || !state.currentId,
-            title: 'Infer the prompt from this card\'s FAMILY: the anchor image (own art, else the '
-              + 'bare piece version) is the concept, element-relatives give the theme; the anchor '
-              + `becomes the generation reference. Adherence = the global kin default (${kinDefault()}).`,
+            title: 'Infer the prompt from this card\'s CANONICAL references (appointed per exact '
+              + 'composition in ✨ Art guides): the anchor is the concept, the theme refs give the look; '
+              + `the anchor becomes the generation reference. Adherence = the global kin default (${kinDefault()}).`,
             onclick: async e => {
               const btn = e.target;
               btn.disabled = true; btn.textContent = '✨ inferring…';
@@ -1216,7 +1305,7 @@ function buildArtControls(rerender, advanced) {
       ? el('div', { class: 'frow' },
           fld('✨ kin — what carries over from the anchor image (global default)',
             selectInput({ get v() { return kinDefault(); }, set v(x) { setKinDefault(x); } }, 'v', KIN_MODES, () => {}),
-            'the anchor = own art, else the bare piece version\'s art'))
+            'anchor source = the kin bar setting (current art / canonical / custom)'))
       : null,
     // optional creative direction for the ✨ prompt writer (fullscreen view only — the
     // values still apply from the compact panel's ✨ button, they persist on the draft).
@@ -1884,25 +1973,17 @@ function openFlowModal() {
   ];
   const cfg = state.flowSteps;
   const a0 = artDraft();
-  // step-1 ANCHOR: the concept image the whole tree grows from. ALWAYS offer the real
-  // choices — current art, the card's base piece art (resolved here, whether or not a
-  // recipe set it), the recipe's own reference, an upload — defaulting to the recipe's
-  // pick when there is one, "none" otherwise.
-  const basePiece = (() => {
-    if (type !== 'card' || !state.draft) return null;
-    const pieces = [...(state.draft.chess_pieces || [])].sort();
-    if (!pieces.length) return null;
-    const key = '|' + pieces.join('_');
-    const hit = (state.game.card || []).find(g => g.id !== id && setCompKey(g) === key && g.art);
-    return hit ? { path: hit.art, name: hit.name || hit.id } : null;
-  })();
+  // step-1 ANCHOR: the concept image the whole tree grows from. Choices: current art,
+  // the composition's CANONICAL concept ref (appointed in ✨ Art guides — mandatory,
+  // refuses when unappointed), the recipe's own reference, an upload — defaulting to
+  // the recipe's pick when there is one, "none" otherwise.
   const anchorCfg = { source: (a0.refSource && a0.refSource !== 'none') ? a0.refSource : 'none' };
   const buildAnchorOpts = () => [
     { value: 'none', label: 'None — from scratch' },
     (state.gameArt || state.gameHasArt) ? { value: 'current', label: 'Current art' } : null,
-    (basePiece && (!a0.refGameArt || a0.refGameArt !== basePiece.path))
-      ? { value: 'base', label: `Base piece art: ${basePiece.name}` } : null,
-    a0.refGameArt ? { value: 'game', label: `${a0.refGameArt === (basePiece && basePiece.path) ? 'Base piece art' : 'Recipe reference'}: ${a0.refGameName || a0.refGameArt}` } : null,
+    (type === 'card' && (state.draft && (state.draft.chess_pieces || []).length))
+      ? { value: 'canonical', label: 'Canonical concept (appointed in ✨ Art guides)' } : null,
+    a0.refGameArt ? { value: 'game', label: `Custom reference: ${a0.refGameName || a0.refGameArt}` } : null,
     a0.refUpload ? { value: 'upload', label: `Uploaded: ${a0.refUploadLabel || a0.refUpload}` } : null,
   ].filter(Boolean);
   let anchorOpts = buildAnchorOpts();
@@ -2066,9 +2147,8 @@ function openFlowModal() {
     currentPrompt = style ? base + ', ' + style : base;
     try {
       const anchor = anchorCfg.source === 'none' ? undefined
-        : anchorCfg.source === 'base' ? { source: 'game', path: basePiece.path }
         : {
-          source: anchorCfg.source,
+          source: anchorCfg.source,   // 'canonical' resolves server-side (mandatory)
           path: anchorCfg.source === 'game' ? a.refGameArt
             : anchorCfg.source === 'upload' ? a.refUpload : undefined,
         };
@@ -2135,8 +2215,8 @@ function openFlowModal() {
         title: 'Appoint THIS flow (steps + anchor policy) as the Quick Flow — then one click runs it '
           + 'per card or per file from the list, auto-picking a random last-step image as the art',
         onclick: async () => {
-          const policyMap = { none: 'none', current: 'current', base: 'base', game: 'recipe', upload: 'none' };
-          const policy = policyMap[anchorCfg.source] || 'recipe';
+          const policyMap = { none: 'none', current: 'current', canonical: 'canonical', game: 'custom', upload: 'none' };
+          const policy = policyMap[anchorCfg.source] || 'custom';
           const qf = { steps: cfg.map(st => Object.assign({}, st)), anchor: policy };
           try {
             await api('/api/settings', { quickFlow: qf });
