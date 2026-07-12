@@ -808,7 +808,7 @@ function showValidation(msg, ok) {
 
 // The one save: serialize the editor, carry the enabled flag, write the entry into its
 // game file (append for new entries, into a file the user picks).
-async function gameSave() {
+async function gameSave(quiet) {
   const ed = EDITORS[state.currentType];
   let data;
   try { data = ed.serialize(state.draft); } catch (e) { toast('Cannot serialize: ' + e.message, 'err'); return false; }
@@ -837,7 +837,7 @@ async function gameSave() {
     state.gameFile = out.file.split('/').pop();
     state.gameEdited = true;
     state.dirty = false;
-    toast(`Saved into ${out.file}` + (out.art ? ' (+ art)' : ''), 'ok');
+    if (!quiet) toast(`Saved into ${out.file}` + (out.art ? ' (+ art)' : ''), 'ok');
   } catch (e) { showValidation(e.message); return false; }
   await refreshState(true);
   renderItemList();
@@ -1339,9 +1339,9 @@ function buildArtPreviews(rerender) {
       canDeploy ? el('button', { class: 'primary small', text: '⬆ Use in game', style: 'margin-right:6px', onclick: async () => {
         try {
           const out2 = await api('/api/art/deploy', { type: state.currentType, id: state.currentId });
-          toast(`Deployed to ${out2.art} (give the Godot editor focus once to import it).`, 'ok');
           state.gameArt = out2.art;
-          renderSidePanels();
+          const saved = await gameSave(true);   // persist the card data too — one action, no separate Save
+          if (saved) toast(`Deployed to ${out2.art} and saved (give the Godot editor focus once to import it).`, 'ok');
         } catch (e) { toast(e.message, 'err'); }
       } }) : null,
       flipBtn,
@@ -1820,15 +1820,15 @@ async function openPoolModal() {
           + (out.entry.needsRembg && state.types[type].rembg ? ' (background removed)' : '') + '.', 'ok');
         renderSidePanels();
       };
-      // set it as the art AND push it straight into the game's assets (one step)
+      // set it as the art, deploy it, AND save the card data — one step, no separate Save
       const useAndDeploy = async () => {
         const out = await api('/api/art/pool-use', { type, id, file: entry.file });
         state.gameHasArt = true;
         const out2 = await api('/api/art/deploy', { type, id });
         state.gameArt = out2.art;
-        toast(`Pool #${entry.n} is now the card art and deployed to the game`
+        const saved = await gameSave(true);
+        if (saved) toast(`Pool #${entry.n} is now the card art, deployed and saved to the game`
           + (out.entry.needsRembg && state.types[type].rembg ? ' (background removed)' : '') + '.', 'ok');
-        renderSidePanels();
       };
       grid.append(el('div', { style: 'width:224px' },
         el('img', { src, loading: 'lazy', style: 'width:224px; height:auto; border-radius:6px; cursor:zoom-in',
@@ -1985,10 +1985,12 @@ function openFlowModal() {
           }
           let msg = `Candidate #${nd.n} is now this item's workspace art`
             + (state.types[type].rembg ? ' (background removed)' : '');
-          if (deploy) {   // …and push it straight into the game's assets in one step
+          if (deploy) {   // …deploy it into the game AND save the card data — one step
             const out2 = await api('/api/art/deploy', { type, id });
             state.gameArt = out2.art;
-            msg += ' and deployed to the game.';
+            const saved = await gameSave(true);
+            msg += saved ? ', deployed and saved to the game.'
+              : ', deployed — but the card data could not be saved (see the validation error).';
           } else {
             msg += ' — deploy when ready.';
           }
