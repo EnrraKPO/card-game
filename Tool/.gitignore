@@ -7,3 +7,6 @@ workspace/tmp/
 # Art-generation intermediates: per-card variation flow + selection pool (scratch)
 workspace/art/_flow/
 workspace/art/_pool/
+
+# Replaced-art backups (auto-made on overwrite; a local safety net, not for versioning)
+workspace/edits_backup/
