@@ -1070,15 +1070,20 @@ function buildFluxWorkflow(prompt, w, h, steps, guidance, seed, prefix, rembg, r
   });
 }
 
-// The image "current art" refers to for an item: the game's installed art when it exists
-// (the stable original — what "restyle this card" means), else the workspace-generated art.
+// The image "current art" refers to for an item: the workspace-generated art when it
+// exists (what the art panel shows as your working image), else the game's installed art.
 function currentArtAbs(type, id) {
+  // "Current art" = the image the art panel shows as your working art: the workspace-
+  // generated image when present, else the deployed in-game art. This mirrors
+  // buildArtPreviews / the Flip button ("workspace art preferred, else in-game art"),
+  // so every "current" consumer (Flow & batch anchors, recipe inference, single-image
+  // reference, recreate-from-art) uses the image you're actually looking at.
+  if (fs.existsSync(artPath(type, id))) return artPath(type, id);
   const wsItem = readJson(itemPath(type, id), null);
   const gameEntry = wsItem ? null : findGameEntry(type, id);
   const data = wsItem || (gameEntry && gameEntry.data) || {};
   const rel = gameArtRel(type, id, data);
   if (rel) return path.join(GAME_ROOT, rel);
-  if (fs.existsSync(artPath(type, id))) return artPath(type, id);
   return null;
 }
 
