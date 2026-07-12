@@ -91,6 +91,21 @@ function renderKinBar() {
     el('span', { class: 'lab', text: '✨ kin default' }),
     selectInput({ get v() { return kinDefault(); }, set v(x) { setKinDefault(x); } }, 'v', KIN_MODES, () => {}),
     selectInput({ get v() { return kinAnchorMode(); }, set v(x) { setKinField('kinAnchorMode', x); } }, 'v', KIN_ANCHOR_MODES, () => {}),
+    // Quick Flow step-1 anchor — the img2img input each ⛓ run grows from. Lives on the
+    // appointment (settings.quickFlow.anchor); shown here so per-CARD ⛓ one-clicks are
+    // controllable without opening the per-file batch modal (which edits the same value).
+    state.settings.quickFlow ? el('div', { class: 'kin-refs-row' },
+      el('span', { class: 'lab', text: '⛓ flow anchor' }),
+      selectInput({
+        get v() { const a = state.settings.quickFlow.anchor;
+          return { base: 'canonical', recipe: 'custom' }[a] || a || 'custom'; },
+        set v(x) {
+          const qf2 = Object.assign({}, state.settings.quickFlow, { anchor: x });
+          state.settings.quickFlow = qf2;
+          api('/api/settings', { quickFlow: qf2 }).catch(() => {});
+          renderItemList();
+        },
+      }, 'v', QF_ANCHOR_MODES, () => {})) : null,
     el('div', { class: 'kin-refs-row' },
       el('label', { class: 'check' },
         el('input', { type: 'checkbox', checked: artGuidesEnabled(),
@@ -410,9 +425,10 @@ function openInferBatchModal(file) {
 // ── ⛓ Quick Flow: the appointed flow, one click per card or per file ─────────
 function quickFlowSummary(qf) {
   if (!qf || !Array.isArray(qf.steps)) return null;
+  const anchor = { base: 'canonical', recipe: 'custom' }[qf.anchor] || qf.anchor || 'custom';
   return qf.steps.map(st => `${(state.artModels[st.model] || { label: st.model }).label}×${st.samples}`
     + (st.denoise ? `@${st.denoise}` : '') + (st.turbo ? '⚡' : '')).join(' → ')
-    + ` · anchor: ${qf.anchor || 'recipe'}`;
+    + ` · anchor: ${anchor}${anchor === 'none' ? ' (step 1 from scratch!)' : ''}`;
 }
 
 function attachFlowBatchPoll(file, jobId) {
@@ -534,12 +550,22 @@ function openFlowBatchMonitor(file) {
   }
 }
 
+// Step-1 anchor policies for Quick Flow runs — what each card's tree grows from.
+const QF_ANCHOR_MODES = [
+  { value: 'current', label: 'Current art — each card\'s own working art (none → from scratch)' },
+  { value: 'canonical', label: 'Canonical — each card\'s appointed canonical concept ref (refuses if unappointed)' },
+  { value: 'custom', label: 'Custom — each card\'s stored recipe reference (none → from scratch)' },
+  { value: 'none', label: 'None — every card starts from scratch (step 1 is pure text-to-image)' },
+];
+
 // The bulk engagement: eligibility counts, the fill-missing-recipes offer, then run.
 function openQuickFlowBatchModal(file, entries) {
   const qf = state.settings.quickFlow;
   const withRecipe = entries.filter(g => g.recipe).length;
   const missing = entries.length - withRecipe;
-  const cfg = { fill: missing > 0, adherence: kinDefault() };
+  // legacy stored policy names from before the canonical system
+  const qfAnchor = { base: 'canonical', recipe: 'custom' }[qf && qf.anchor] || (qf && qf.anchor) || 'custom';
+  const cfg = { fill: missing > 0, adherence: kinDefault(), anchor: qfAnchor };
   const fillRow = el('div');
   const renderFill = () => {
     // filter nulls: native replaceChildren coerces a null arg to the string "null"
@@ -559,6 +585,10 @@ function openQuickFlowBatchModal(file, entries) {
     el('div', { class: 'subtle', style: 'margin:8px 0', text:
       `${withRecipe} card${withRecipe === 1 ? ' has' : 's have'} a recipe prompt and will flow`
       + (missing ? `; ${missing} lack${missing === 1 ? 's' : ''} one` + (cfg.fill ? '' : ' and will be skipped') : '') + '.' }),
+    qf ? el('div', { class: 'frow', style: 'margin:8px 0' },
+      fld('Step-1 anchor — the image each card\'s tree grows from (img2img input)',
+        selectInput(cfg, 'anchor', QF_ANCHOR_MODES, () => {}),
+        'saved onto the Quick Flow appointment — the per-card ⛓ buttons use it too')) : null,
     fillRow,
     el('div', { class: 'hint', text: 'Each card runs the appointed flow; ONE image from the last step is picked at '
       + 'random as its art. Everything lands in the card\'s 🗂 pool and ⛓ gallery, so any pick can be swapped after.' }),
@@ -570,6 +600,13 @@ function openQuickFlowBatchModal(file, entries) {
           if (cfg.fill) {
             state.settings.kinAdherence = cfg.adherence;
             api('/api/settings', { kinAdherence: cfg.adherence }).catch(() => {});
+          }
+          // the anchor choice persists onto the appointment BEFORE engaging, so this run
+          // (the server reads settings.quickFlow) and every per-card ⛓ click follow it
+          if (qf && cfg.anchor !== qf.anchor) {
+            const qf2 = Object.assign({}, qf, { anchor: cfg.anchor });
+            await api('/api/settings', { quickFlow: qf2 });
+            state.settings.quickFlow = qf2;
           }
           const out = await api('/api/art/flow-batch', { type: 'card', file, fill: cfg.fill, adherence: cfg.adherence });
           attachFlowBatchPoll(file, out.jobId);
@@ -1934,7 +1971,7 @@ async function openPoolModal() {
             try { await useAndDeploy(); } catch (err) { toast(err.message, 'err'); }
             e.target.disabled = false;
           } }),
-          el('button', { class: 'ghost tiny', text: '✕', title: 'Remove from the pool', onclick: async () => {
+          el('button', { class: 'ghost tiny', text: '✕', title: 'Permanently delete this image from disk', onclick: async () => {
             try {
               await api('/api/art/pool-delete', { type, id, file: entry.file });
               pool = pool.filter(x => x.file !== entry.file);
@@ -1947,9 +1984,25 @@ async function openPoolModal() {
   $('modal-root').replaceChildren(el('div', { class: 'modal', style: 'width:900px; max-height:86vh; overflow-y:auto' },
     el('h2', {}, '🗂 Generation pool — ', title),
     el('div', { class: 'hint', text: 'Every image generated for this item (🎨 runs and ⛓ flow candidates), newest first. '
-      + 'Click to inspect full-size; ✔ use swaps it in as the workspace art; ⬆ to game does that AND deploys it into the game in one step.' }),
+      + 'Click to inspect full-size; ✔ use swaps it in as the workspace art; ⬆ to game does that AND deploys it into the game '
+      + 'in one step; ✕ permanently deletes the image from disk.' }),
     grid,
     el('div', { class: 'modal-actions' },
+      el('button', { class: 'danger', text: '🗑 Delete all from disk',
+        title: 'Permanently delete every pooled image AND the last flow\'s candidates for this item. '
+          + 'The current workspace art and deployed game art are untouched.',
+        onclick: async e => {
+          if (!pool.length) { toast('The pool is already empty.', 'ok'); return; }
+          if (!confirm(`Permanently delete all ${pool.length} pooled images AND the last flow's candidate images for "${id}" from disk?\n\nThe card's current art and deployed game art are NOT touched.`)) return;
+          e.target.disabled = true;
+          try {
+            await api('/api/art/pool-clear', { type, id });
+            pool = [];
+            render();
+            toast('All generation intermediates for this item deleted from disk.', 'ok');
+          } catch (err) { toast(err.message, 'err'); }
+          e.target.disabled = false;
+        } }),
       el('button', { class: 'ghost', text: 'Close', onclick: () => $('modal-root').replaceChildren() }))));
 }
 

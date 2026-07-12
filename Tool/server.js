@@ -3051,10 +3051,41 @@ async function handle(req, res) {
       const { type, id, file } = await readBody(req);
       if (!TYPES[type] || !validId(id) || !/^p[0-9]+\.png$/.test(String(file || '')))
         return send(res, 400, { error: 'bad request' });
-      const list = poolManifest(type, id).filter(e => e.file !== String(file));
+      const all = poolManifest(type, id);
+      const entry = all.find(e => e.file === String(file));
+      const list = all.filter(e => e.file !== String(file));
       try { fs.unlinkSync(path.join(poolDir(type, id), String(file))); } catch (e) { /* gone */ }
       writeJson(path.join(poolDir(type, id), 'pool.json'), list);
+      // A flow-born image exists TWICE on disk: the pool copy just removed and the
+      // original in the item's _flow dir. Delete the twin too (matched by seed+step),
+      // and drop it from the flow manifest so the ⛓ gallery stays truthful. Skipped
+      // while a flow is RUNNING for this item (its tree is still being read as refs);
+      // that leftover is wiped anyway when the next flow starts.
+      if (entry && entry.source === 'flow' && !flowJobForItem(type, String(id))) {
+        const fdir = flowDir(type, id);
+        const man = readJson(path.join(fdir, 'flow.json'), null);
+        if (man && Array.isArray(man.nodes)) {
+          const idx = man.nodes.findIndex(nd => nd.seed === entry.seed && nd.step === entry.step);
+          if (idx >= 0) {
+            try { fs.unlinkSync(path.join(fdir, man.nodes[idx].file)); } catch (e) { /* gone */ }
+            man.nodes.splice(idx, 1);
+            writeJson(path.join(fdir, 'flow.json'), man);
+          }
+        }
+      }
       return send(res, 200, { ok: true, count: list.length });
+    }
+    // Permanently delete ALL of an item's generation intermediates from disk: the whole
+    // pool, and (unless flows:false) the last flow's candidate images too. The item's
+    // workspace art and deployed game art are never touched by this.
+    if (p === '/api/art/pool-clear' && req.method === 'POST') {
+      const { type, id, flows } = await readBody(req);
+      if (!TYPES[type] || !validId(id)) return send(res, 400, { error: 'bad request' });
+      if (flowJobForItem(type, String(id)))
+        return send(res, 409, { error: 'a flow is running for this item — stop it first' });
+      fs.rmSync(poolDir(type, id), { recursive: true, force: true });
+      if (flows !== false) fs.rmSync(flowDir(type, id), { recursive: true, force: true });
+      return send(res, 200, { ok: true });
     }
     if (p === '/api/art/job') {
       const job = jobs[url.searchParams.get('id')];
