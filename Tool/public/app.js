@@ -333,12 +333,10 @@ function attachFlowBatchPoll(file, jobId) {
       if (run.onUpdate) run.onUpdate(j);   // the live monitor, if open
       if (j.status === 'running' || j.status === 'queued') {   // 'queued' = waiting behind the queue
         renderItemList();
-        renderBatchStrip();
         setTimeout(poll, 2000);
         return;
       }
       delete state.flowBatchRuns[file];
-      renderBatchStrip();
       const picked = (j.results || []).filter(r => r.picked).length;
       const skipped = (j.results || []).filter(r => r.skipped).length;
       const failed = (j.results || []).filter(r => r.error);
@@ -354,40 +352,6 @@ function attachFlowBatchPoll(file, jobId) {
     } catch (e) { setTimeout(poll, 4000); }
   };
   poll();
-}
-
-// A fixed strip (bottom-left) that exists whenever a quick-flow batch runs — the
-// always-visible answer to "is anything happening, and on which card?"
-function renderBatchStrip() {
-  let strip = document.getElementById('batch-strip');
-  const runs = Object.entries(state.flowBatchRuns || {});
-  if (!runs.length) { if (strip) strip.remove(); return; }
-  if (!strip) {
-    strip = el('div', { id: 'batch-strip',
-      style: 'position:fixed; left:12px; bottom:12px; z-index:1500; display:flex; flex-direction:column; gap:6px' });
-    document.body.append(strip);
-  }
-  strip.replaceChildren(...runs.map(([file, run]) => {
-    const j = run.snapshot || {};
-    const cf = j.currentFlow;
-    const text = `⛓ ${file} — ` + (j.status === 'queued'
-      ? 'queued…'
-      : j.phase === 'recipes'
-      ? `filling recipes ${j.done || 0}/${j.total || '?'}${j.currentId ? ': ' + j.currentId : ''}`
-      : `card ${Math.min((j.done || 0) + 1, j.total || 1)}/${j.total || '?'}${j.currentId ? ': ' + j.currentId : ''}`
-        + (cf ? ` · image ${Math.min(cf.done + 1, cf.total)}/${cf.total}` : ''));
-    return el('div', { style: 'background:#1d2030; border:1px solid #3a3f58; border-radius:8px; '
-        + 'padding:8px 10px; display:flex; align-items:center; gap:10px; font-size:13px; color:#dde4f5' },
-      el('span', { text }),
-      el('button', { class: 'ghost tiny', text: '👁 monitor', onclick: () => openFlowBatchMonitor(file) }),
-      el('button', { class: 'ghost tiny', text: '✕', title: 'Stop now (aborts the in-flight image too)',
-        onclick: async () => {
-          try {
-            await api('/api/art/flow-batch-stop', { id: run.jobId });
-            toast('Stopping…', 'ok');
-          } catch (e) { toast(e.message, 'err'); }
-        } }));
-  }));
 }
 
 // The live monitor: current card, per-image progress, candidates as they land,
@@ -1856,14 +1820,29 @@ async function openPoolModal() {
           + (out.entry.needsRembg && state.types[type].rembg ? ' (background removed)' : '') + '.', 'ok');
         renderSidePanels();
       };
+      // set it as the art AND push it straight into the game's assets (one step)
+      const useAndDeploy = async () => {
+        const out = await api('/api/art/pool-use', { type, id, file: entry.file });
+        state.gameHasArt = true;
+        const out2 = await api('/api/art/deploy', { type, id });
+        state.gameArt = out2.art;
+        toast(`Pool #${entry.n} is now the card art and deployed to the game`
+          + (out.entry.needsRembg && state.types[type].rembg ? ' (background removed)' : '') + '.', 'ok');
+        renderSidePanels();
+      };
       grid.append(el('div', { style: 'width:224px' },
         el('img', { src, loading: 'lazy', style: 'width:224px; height:auto; border-radius:6px; cursor:zoom-in',
           onclick: () => openLightbox(src, `#${entry.n} · ${meta}`, use) }),
         el('div', { class: 'subtle', style: 'font-size:11px; margin-top:2px', text: meta }),
         el('div', {},
-          el('button', { class: 'ghost tiny', text: '✔ use', onclick: async e => {
+          el('button', { class: 'ghost tiny', text: '✔ use', title: 'Set as the workspace art (deploying stays a separate step)', onclick: async e => {
             e.target.disabled = true;
             try { await use(); } catch (err) { toast(err.message, 'err'); }
+            e.target.disabled = false;
+          } }),
+          el('button', { class: 'ghost tiny', text: '⬆ to game', title: 'Set as the card art AND deploy it into the game assets in one step', onclick: async e => {
+            e.target.disabled = true;
+            try { await useAndDeploy(); } catch (err) { toast(err.message, 'err'); }
             e.target.disabled = false;
           } }),
           el('button', { class: 'ghost tiny', text: '✕', title: 'Remove from the pool', onclick: async () => {
@@ -1879,7 +1858,7 @@ async function openPoolModal() {
   $('modal-root').replaceChildren(el('div', { class: 'modal', style: 'width:900px; max-height:86vh; overflow-y:auto' },
     el('h2', {}, '🗂 Generation pool — ', title),
     el('div', { class: 'hint', text: 'Every image generated for this item (🎨 runs and ⛓ flow candidates), newest first. '
-      + 'Click to inspect full-size; ✔ swaps it in as the workspace art — deploying stays explicit.' }),
+      + 'Click to inspect full-size; ✔ use swaps it in as the workspace art; ⬆ to game does that AND deploys it into the game in one step.' }),
     grid,
     el('div', { class: 'modal-actions' },
       el('button', { class: 'ghost', text: 'Close', onclick: () => $('modal-root').replaceChildren() }))));
@@ -1992,7 +1971,7 @@ function openFlowModal() {
         // serves the stale cached image for a repeated URL even under Cache-Control: no-store.
         const src = `/flowart/${type}/${id}/${nd.file}?v=${nd.seed}`;
         const caption = `#${nd.n} · seed ${nd.seed}` + (nd.parent ? ` · from #${nd.parent}` : '');
-        const pick = async () => {
+        const pick = async (deploy) => {
           const out = await api('/api/art/flow-pick', { type, id, file: nd.file });
           state.gameHasArt = true;
           // stamp the pick into the entry's recipe, like a normal generation would
@@ -2004,8 +1983,16 @@ function openFlowModal() {
             state.dirty = true;
             $('dirty-flag').hidden = false;
           }
-          toast(`Candidate #${nd.n} is now this item's workspace art`
-            + (state.types[type].rembg ? ' (background removed)' : '') + ' — deploy when ready.', 'ok');
+          let msg = `Candidate #${nd.n} is now this item's workspace art`
+            + (state.types[type].rembg ? ' (background removed)' : '');
+          if (deploy) {   // …and push it straight into the game's assets in one step
+            const out2 = await api('/api/art/deploy', { type, id });
+            state.gameArt = out2.art;
+            msg += ' and deployed to the game.';
+          } else {
+            msg += ' — deploy when ready.';
+          }
+          toast(msg, 'ok');
           renderSidePanels();
         };
         rowEl.append(el('div', { style: 'width:224px' },
@@ -2015,9 +2002,14 @@ function openFlowModal() {
             onclick: () => openLightbox(src, caption, pick) }),
           el('div', {},
             el('span', { class: 'subtle', style: 'font-size:11px; margin-right:6px', text: caption }),
-            el('button', { class: 'ghost tiny', text: '✔ use', onclick: async e => {
+            el('button', { class: 'ghost tiny', text: '✔ use', title: 'Set as the workspace art (deploy separately)', onclick: async e => {
               e.target.disabled = true;
               try { await pick(); } catch (err) { toast(err.message, 'err'); }
+              e.target.disabled = false;
+            } }),
+            el('button', { class: 'ghost tiny', text: '⬆ to game', title: 'Set as the card art AND deploy it into the game assets in one step', onclick: async e => {
+              e.target.disabled = true;
+              try { await pick(true); } catch (err) { toast(err.message, 'err'); }
               e.target.disabled = false;
             } }))));
       }
@@ -2306,6 +2298,10 @@ function renderQueueWidget(list) {
     el('div', { class: 'q-body' },
       el('div', { class: 'q-label', text: e.label, title: e.label }),
       el('div', { class: 'q-sub' + (e.status === 'error' ? ' err' : ''), text: queueProgressText(e) })),
+    // Quick Flow batches get a live monitor (candidates as they land) while active
+    (e.kind === 'flow-batch' && e.file && (e.status === 'running' || e.status === 'queued'))
+      ? el('button', { class: 'ghost tiny q-x', text: '👁', title: 'Monitor this batch',
+          onclick: () => openFlowBatchMonitor(e.file) }) : null,
     el('button', { class: 'ghost tiny q-x', text: '✕',
       title: e.status === 'running' ? 'Stop now (aborts the in-flight image)' : 'Remove from queue',
       onclick: async () => {
