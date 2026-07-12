@@ -55,7 +55,7 @@ async function refreshState(keepEditor) {
 // list's kin bar (renderKinBar) and read by every ✨ action — the per-card quick button,
 // the per-file batch, and the art panel dial. Changing it anywhere changes it everywhere.
 const KIN_MODES = [
-  { value: 'concept', label: 'Same concept — the design: same recognizable character, fresh pose & scene' },
+  { value: 'concept', label: 'Same concept — the anchor\'s concept re-imagined natively in the elemental theme' },
   { value: 'replicate', label: 'Replicate — the picture: same pose & framing, re-themed only' },
   { value: 'free', label: 'Free — just the idea: loose family blend' },
 ];

@@ -1613,9 +1613,11 @@ function resolveAnchor(entry) {
 // over from the anchor image?
 //   replicate — the PICTURE carries: subject, pose, framing; only materials/palette/
 //               lighting re-themed. For re-rendering art you already like.
-//   concept   — the DESIGN carries (THE DEFAULT): the same recognizable character —
-//               anatomy, signature features, attire — but a freshly invented
-//               presentation (pose, action, camera, scene) staged for the theme.
+//   concept   — the CONCEPT carries (THE DEFAULT): the anchor's archetype — what kind
+//               of unit it is — re-imagined as a NATIVE of the elemental theme. The
+//               theme has authority over the embodiment (materials, attire, even the
+//               being's nature); the concept keeps it readable as the same KIND of
+//               unit, not the same individual. Pose/scene invented fresh.
 //   free      — the IDEA carries: loose family blend, no anchor lock.
 async function llmInferRecipe(entry, adherence) {
   const alias = { faithful: 'replicate', subject: 'concept' };   // pre-rename names
@@ -1648,7 +1650,7 @@ async function llmInferAnchored(entry, anchor, adherence) {
   // their reference art; naming the elements is the leak we are closing.
   const task = adherence === 'replicate'
     ? "Describe reference image 1 faithfully — the subject, its pose, the framing and composition — and re-dress it in the theme shown by the examples below: replace ONLY materials, palette, lighting and magical effects. The result must read as the SAME illustration, re-themed."
-    : "Inventory what makes the subject of reference image 1 recognizable — creature type, build, anatomy, signature features, attire and equipment — and carry ALL of those identifying details into the prompt. Then stage it FRESH: invent a new pose, action, camera angle and setting that express the theme shown by the examples below, with materials and palette rendered in that theme. Same recognizable character, new presentation — do not copy the reference's pose or composition.";
+    : "Identify the CONCEPT of reference image 1 — what kind of unit it is: its role, archetype, build and silhouette. Then write a prompt for a NEW VERSION of that concept, re-imagined as a native of the theme shown by the examples below. The theme decides the embodiment: materials, palette, attire, weaponry and magical nature may all transform to belong to the theme. Keep the result readable as the same KIND of unit — not the same individual. Invent the pose, action, camera angle and setting freely; do not copy the reference's pose or composition.";
   const user = [
     // Authored name = concept + theme identity ("Lightning Hierophant"); name only, never
     // the composition-encoding id (see llmInferBlend).
@@ -1656,17 +1658,23 @@ async function llmInferAnchored(entry, anchor, adherence) {
     ...artGuideLines(d.elements, d.chess_pieces),   // opt-in authored composition direction
     ...steerLines(),                                 // always-on free-text steering
     d.art_instructions ? `Author's art direction for this card (follow it): ${d.art_instructions}` : '',
-    'Reference image 1 is THE CONCEPT — the exact subject this card\'s art must depict.',
+    adherence === 'replicate'
+      ? 'Reference image 1 is THE CONCEPT — the exact subject this card\'s art must depict.'
+      : 'Reference image 1 is THE CONCEPT — the kind of unit this card depicts; the theme below re-embodies it.',
     themeLines.length ? 'THEME examples (how this theme looks in this game — palette, materials, magic; match it, do not name it):' : '',
     ...themeLines,
     task,
     'Do not name any element, material family, or chess piece — describe only what is seen.',
   ].filter(Boolean).join('\n');
   const out = await llmVisionGenerate({
-    system: LLM_SYSTEM_PROMPT +
-      '\nYou are re-theming an existing illustration: reference image 1 is the concept anchor.' +
-      ' Carry its specifics into the prompt as instructed — do not reinterpret the subject,' +
-      ' and never name an element or chess piece.',
+    system: LLM_SYSTEM_PROMPT + (adherence === 'replicate'
+      ? '\nYou are re-theming an existing illustration: reference image 1 is the concept anchor.'
+        + ' Carry its specifics into the prompt as instructed — do not reinterpret the subject,'
+        + ' and never name an element or chess piece.'
+      : '\nYou are fusing a concept with a theme: reference image 1 shows the CONCEPT (what kind'
+        + ' of unit this is), the theme examples show the LOOK it must natively belong to. Write'
+        + ' their fusion — a theme-native version of the concept, not the same character with'
+        + ' theme accents — and never name an element or chess piece.'),
     prompt: user, images, options: { temperature: 0.6, num_predict: 220 },
   });
   const recipe = { prompt: cleanLlmPrompt(out), ref: Object.assign({}, anchor.ref) };
