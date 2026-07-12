@@ -12,7 +12,7 @@
     "bishop": {
       "label": "Bishop",
       "positive": "Inspired by a chess bishop",
-      "negative": "Never bearded",
+      "negative": "bearded",
       "ref": {
         "card": "bishop"
       },
@@ -372,8 +372,8 @@
     },
     "air_water": {
       "label": "Storm",
-      "positive": "dark clouds, rain, raging winds, cumulonimbus",
-      "negative": "lightning, electricity",
+      "positive": "dark clouds, rain, raging winds",
+      "negative": "lightning, electricity, thunder, electric",
       "refs": [
         {
           "card": "air_water_pawn"
