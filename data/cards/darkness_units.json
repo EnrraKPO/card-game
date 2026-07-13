@@ -27,7 +27,8 @@
 		"display_name": "Darkness Bishop",
 		"chess_pieces": [
 			"bishop"
-		]
+		],
+		"ranged": true
 	},
 	{
 		"id": "darkness_rook",

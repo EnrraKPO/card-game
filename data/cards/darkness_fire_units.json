@@ -96,7 +96,8 @@
 					]
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "darkness_fire_rook",

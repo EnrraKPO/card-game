@@ -129,11 +129,10 @@
 		"id": "pawn",
 		"display_name": "Pawn",
 		"cost": 1,
-		"attack": 2,
+		"attack": 1,
 		"health": 3,
-		"speed": 2,
-		"shield": 1,
-		"description": "A humble foot soldier. Attacks the nearest enemy. Starts each round with 1 Shield.",
+		"speed": 1,
+		"description": "A humble foot soldier. Attacks the nearest enemy.",
 		"chess_pieces": [
 			"pawn"
 		],
@@ -142,15 +141,10 @@
 				"trigger": {
 					"kind": "event",
 					"event": "play",
-					"conditions": [
-						{
-							"relation": "self"
-						}
-					]
+					"of": "self"
 				},
 				"targets": {
-					"kind": "participant",
-					"participant": "holder"
+					"kind": "self"
 				},
 				"status": {
 					"id": "charged",

@@ -92,7 +92,8 @@
 					]
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "darkness_earth_rook",

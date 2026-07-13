@@ -96,7 +96,8 @@
 					]
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "earth_earth_rook",

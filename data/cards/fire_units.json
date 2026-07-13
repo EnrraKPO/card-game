@@ -1,215 +1,219 @@
 [
 	{
-		"id": "light_pawn",
+		"id": "fire_pawn",
+		"display_name": "Fire Pawn",
+		"cost": 2,
+		"attack": 3,
+		"health": 3,
+		"speed": 1,
 		"elements": [
-			"light"
+			"fire"
 		],
-		"display_name": "Light Pawn",
 		"chess_pieces": [
 			"pawn"
 		]
 	},
 	{
-		"id": "light_knight",
+		"id": "fire_knight",
 		"elements": [
-			"light"
+			"fire"
 		],
-		"display_name": "Light Knight",
+		"display_name": "Fire Knight",
 		"chess_pieces": [
 			"knight"
 		]
 	},
 	{
-		"id": "light_bishop",
+		"id": "fire_bishop",
 		"elements": [
-			"light"
+			"fire"
 		],
-		"display_name": "Light Bishop",
+		"display_name": "Fire Bishop",
 		"chess_pieces": [
 			"bishop"
 		],
 		"ranged": true
 	},
 	{
-		"id": "light_rook",
+		"id": "fire_rook",
 		"elements": [
-			"light"
+			"fire"
 		],
-		"display_name": "Light Rook",
+		"display_name": "Fire Rook",
 		"chess_pieces": [
 			"rook"
 		]
 	},
 	{
-		"id": "light_queen",
+		"id": "fire_queen",
 		"elements": [
-			"light"
+			"fire"
 		],
-		"display_name": "Light Queen",
+		"display_name": "Fire Queen",
 		"chess_pieces": [
 			"queen"
 		]
 	},
 	{
-		"id": "light_pawn_pawn",
+		"id": "fire_pawn_pawn",
 		"elements": [
-			"light"
+			"fire"
 		],
-		"display_name": "Light Warrior",
+		"display_name": "Fire Warrior",
 		"chess_pieces": [
 			"pawn",
 			"pawn"
 		]
 	},
 	{
-		"id": "light_knight_pawn",
+		"id": "fire_knight_pawn",
 		"elements": [
-			"light"
+			"fire"
 		],
-		"display_name": "Light Cavalry",
+		"display_name": "Fire Cavalry",
 		"chess_pieces": [
 			"knight",
 			"pawn"
 		]
 	},
 	{
-		"id": "light_bishop_pawn",
+		"id": "fire_bishop_pawn",
 		"elements": [
-			"light"
+			"fire"
 		],
-		"display_name": "Light Paladin",
+		"display_name": "Fire Paladin",
 		"chess_pieces": [
 			"bishop",
 			"pawn"
 		]
 	},
 	{
-		"id": "light_pawn_rook",
+		"id": "fire_pawn_rook",
 		"elements": [
-			"light"
+			"fire"
 		],
-		"display_name": "Light Barracks",
+		"display_name": "Fire Barracks",
 		"chess_pieces": [
 			"pawn",
 			"rook"
 		]
 	},
 	{
-		"id": "light_pawn_queen",
+		"id": "fire_pawn_queen",
 		"elements": [
-			"light"
+			"fire"
 		],
-		"display_name": "Light Commander",
+		"display_name": "Fire Commander",
 		"chess_pieces": [
 			"pawn",
 			"queen"
 		]
 	},
 	{
-		"id": "light_knight_knight",
+		"id": "fire_knight_knight",
 		"elements": [
-			"light"
+			"fire"
 		],
-		"display_name": "Light Beast",
+		"display_name": "Fire Beast",
 		"chess_pieces": [
 			"knight",
 			"knight"
 		]
 	},
 	{
-		"id": "light_bishop_knight",
+		"id": "fire_bishop_knight",
 		"elements": [
-			"light"
+			"fire"
 		],
-		"display_name": "Light Cryptid",
+		"display_name": "Fire Cryptid",
 		"chess_pieces": [
 			"bishop",
 			"knight"
 		]
 	},
 	{
-		"id": "light_knight_rook",
+		"id": "fire_knight_rook",
 		"elements": [
-			"light"
+			"fire"
 		],
-		"display_name": "Light Stable",
+		"display_name": "Fire Stable",
 		"chess_pieces": [
 			"knight",
 			"rook"
 		]
 	},
 	{
-		"id": "light_knight_queen",
+		"id": "fire_knight_queen",
 		"elements": [
-			"light"
+			"fire"
 		],
-		"display_name": "Light Monster",
+		"display_name": "Fire Monster",
 		"chess_pieces": [
 			"knight",
 			"queen"
 		]
 	},
 	{
-		"id": "light_bishop_bishop",
+		"id": "fire_bishop_bishop",
 		"elements": [
-			"light"
+			"fire"
 		],
-		"display_name": "Light Hierophant",
+		"display_name": "Fire Hierophant",
 		"chess_pieces": [
 			"bishop",
 			"bishop"
 		]
 	},
 	{
-		"id": "light_bishop_rook",
+		"id": "fire_bishop_rook",
 		"elements": [
-			"light"
+			"fire"
 		],
-		"display_name": "Light Arcane Tower",
+		"display_name": "Fire Arcane Tower",
 		"chess_pieces": [
 			"bishop",
 			"rook"
 		]
 	},
 	{
-		"id": "light_bishop_queen",
+		"id": "fire_bishop_queen",
 		"elements": [
-			"light"
+			"fire"
 		],
-		"display_name": "Light Deity",
+		"display_name": "Fire Deity",
 		"chess_pieces": [
 			"bishop",
 			"queen"
 		]
 	},
 	{
-		"id": "light_rook_rook",
+		"id": "fire_rook_rook",
 		"elements": [
-			"light"
+			"fire"
 		],
-		"display_name": "Light Turret",
+		"display_name": "Fire Turret",
 		"chess_pieces": [
 			"rook",
 			"rook"
 		]
 	},
 	{
-		"id": "light_queen_rook",
+		"id": "fire_queen_rook",
 		"elements": [
-			"light"
+			"fire"
 		],
-		"display_name": "Light Castle",
+		"display_name": "Fire Castle",
 		"chess_pieces": [
 			"queen",
 			"rook"
 		]
 	},
 	{
-		"id": "light_queen_queen",
+		"id": "fire_queen_queen",
 		"elements": [
-			"light"
+			"fire"
 		],
-		"display_name": "Light Hero",
+		"display_name": "Fire Hero",
 		"chess_pieces": [
 			"queen",
 			"queen"
