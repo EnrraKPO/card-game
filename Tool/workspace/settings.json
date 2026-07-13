@@ -1,6 +1,6 @@
 {
   "comfyUrl": "http://127.0.0.1:8000",
-  "artStyle": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear",
+  "artStyle": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration. detailed background scene, neat, clear",
   "stylePresets": {
     "painterly": "rich glowing painterly illustration, volumetric god rays",
     "cartoon": "cartoon art style, 2d illustration, clean bold outlines, flat cell shading",

@@ -52,7 +52,7 @@ async function refreshState(keepEditor) {
 
 // ✨ inference adherence — what carries over from a card's anchor image. ONE list AND
 // ONE value: settings.kinAdherence is the single source of truth, shown in the card
-// list's kin bar (renderKinBar) and read by every ✨ action — the per-card quick button,
+// list's kin section (buildKinSection, in the art panel) and read by every ✨ action — the per-card quick button,
 // the per-file batch, and the art panel dial. Changing it anywhere changes it everywhere.
 const KIN_MODES = [
   { value: 'concept', label: 'Same concept — the anchor\'s concept re-imagined natively in the elemental theme' },
@@ -68,6 +68,8 @@ function setKinField(key, v) {
   const patch = {}; patch[key] = v;
   api('/api/settings', patch).catch(() => {});
   renderItemList();
+  if (state.draft) renderArtPanel();
+  else renderEmptyKinPanel();
 }
 function setKinDefault(v) { setKinField('kinAdherence', v); }
 
@@ -79,14 +81,10 @@ const KIN_ANCHOR_MODES = [
   { value: 'custom', label: 'Anchor: custom — the card\'s stored recipe reference' },
 ];
 
-// The visible kin controls above the card list — all global, cards only.
-function renderKinBar() {
-  const bar = $('kin-bar');
-  if (!bar) return;
-  if (state.currentType !== 'card') { bar.hidden = true; bar.replaceChildren(); return; }
-  bar.hidden = false;
-  // NOTE: native replaceChildren coerces a null arg to the string "null" — unlike el(),
-  // it does not skip nulls. Build the list and filter before spreading.
+// The kin controls — all global, cards only. A collapsible section of the art panel
+// (moved out of the sidebar to keep the card list navigable).
+function buildKinSection() {
+  if (state.currentType !== 'card') return null;
   const parts = [
     el('span', { class: 'lab', text: '✨ kin default' }),
     selectInput({ get v() { return kinDefault(); }, set v(x) { setKinDefault(x); } }, 'v', KIN_MODES, () => {}),
@@ -118,7 +116,22 @@ function renderKinBar() {
         api('/api/settings', { kinSteer: e.target.value }).catch(() => {}); } }),
     el('span', { class: 'hint', text: 'what every ✨ recipe inference carries over from a card\'s anchor image' }),
   ].filter(Boolean);
-  bar.replaceChildren(...parts);
+  const details = el('details', Object.assign({ class: 'kin-bar',
+    ontoggle: e => { state.kinOpen = e.target.open; } }, state.kinOpen ? { open: 'open' } : {}),
+    el('summary', { text: '✨ Recipe defaults (global — every ✨/⛓ action reads these)' }),
+    ...parts);
+  return details;
+}
+
+// With no item open, the editor's empty view still hosts the global kin controls —
+// they steer the card list's ✨/⛓ buttons, which work without any selection.
+function renderEmptyKinPanel() {
+  const p = $('empty-kin-panel');
+  if (!p) return;
+  if (state.kinOpen == null) state.kinOpen = true;   // default OPEN here: it's the only content
+  const kin = buildKinSection();
+  p.hidden = !kin;
+  p.replaceChildren(...(kin ? [kin] : []));
 }
 function artGuidesEnabled() { return !!state.settings.useArtGuides; }
 
@@ -672,10 +685,88 @@ function renderTabs() {
   }
 }
 
+// ── composition filters (cards only): the Pieces and Elements realms ─────────
+// Each realm filters INDEPENDENTLY: a matching mode plus a chip selection.
+//   any   — neutral, the realm doesn't filter at all
+//   has   — inclusive: the card must CONTAIN every selected component (others allowed)
+//   only  — exclusive: the card may contain ONLY selected components; cards with
+//           nothing in this realm (e.g. pure spells for Pieces) are hidden
+//   exact — has all selected components and nothing else ("the pure pawn cards")
+const COMP_REALMS = {
+  piece: { label: 'Pieces', field: 'chess_pieces',
+    icons: { pawn: '♟', knight: '♞', bishop: '♝', rook: '♜', queen: '♛', king: '♚' },
+    vocab: () => (state.vocab && state.vocab.pieces) || [] },
+  element: { label: 'Elements', field: 'elements',
+    icons: { fire: '🔥', water: '💧', air: '🌪', earth: '⛰', darkness: '🌑', light: '☀' },
+    vocab: () => (state.vocab && state.vocab.elements) || [] },
+};
+const COMP_MODES = [
+  { value: 'any', label: 'any', title: 'Neutral — this realm does not filter' },
+  { value: 'has', label: 'has', title: 'Inclusive — show cards that CONTAIN every selected component (other components allowed)' },
+  { value: 'only', label: 'only', title: 'Exclusive — show cards built ONLY from selected components (cards with nothing in this realm are hidden)' },
+  { value: 'exact', label: 'exact', title: 'Exactly — show cards with all selected components and nothing else' },
+];
+const COMP_COUNTS = [0, 1, 2];   // per-realm component count (duplicates counted; realm max is 2)
+function compFilter(realm) {
+  if (!state.compFilter) state.compFilter = {};
+  if (!state.compFilter[realm]) state.compFilter[realm] = { mode: 'any', sel: {}, counts: {} };
+  if (!state.compFilter[realm].counts) state.compFilter[realm].counts = {};
+  return state.compFilter[realm];
+}
+function realmCountsOn(f) { return COMP_COUNTS.filter(n => f.counts[n]); }
+function compFilterActive() {
+  return Object.keys(COMP_REALMS).some(r => {
+    const f = compFilter(r);
+    return f.mode !== 'any' || realmCountsOn(f).length;
+  });
+}
+function realmPasses(realm, g) {
+  const f = compFilter(realm);
+  const comps = g[COMP_REALMS[realm].field] || [];
+  // count gate: the realm's REAL component count, duplicates counted (air_air_pawn_pawn
+  // has 2 elements) — this is what separates air_pawn from its doubled variations
+  const counts = realmCountsOn(f);
+  if (counts.length && !counts.includes(comps.length)) return false;
+  if (f.mode === 'any') return true;
+  const sel = COMP_REALMS[realm].vocab().filter(v => f.sel[v]);
+  const have = [...new Set(comps)];   // mode matching stays set-wise; the count gate handles multiplicity
+  if (f.mode === 'has') return sel.every(s => have.includes(s));
+  if (f.mode === 'only') return have.length > 0 && have.every(c => sel.includes(c));
+  return sel.length === have.length && sel.every(s => have.includes(s));   // exact
+}
+function cardPassesCompFilter(g) { return realmPasses('piece', g) && realmPasses('element', g); }
+
+function renderCompFilterBar() {
+  const realmRow = realm => {
+    const meta = COMP_REALMS[realm];
+    const f = compFilter(realm);
+    const setSel = (vals, on) => { for (const v of vals) f.sel[v] = on; renderItemList(); };
+    return el('div', { class: 'comp-realm' + (f.mode === 'any' && !realmCountsOn(f).length ? ' idle' : '') },
+      el('span', { class: 'lab', text: meta.label }),
+      el('span', { class: 'comp-mode' }, ...COMP_MODES.map(m => el('button', {
+        class: m.value === f.mode ? 'active' : '', text: m.label, title: m.title,
+        onclick: () => { f.mode = m.value; renderItemList(); },
+      }))),
+      el('span', { class: 'comp-mode comp-counts', title: 'Component COUNT in this realm (duplicates counted: air_air = 2). '
+        + 'Select one or more counts to require; none selected = any count.' },
+        ...COMP_COUNTS.map(n => el('button', {
+          class: f.counts[n] ? 'active' : '', text: n + '',
+          onclick: () => { f.counts[n] = !f.counts[n]; renderItemList(); },
+        }))),
+      ...meta.vocab().map(v => el('button', {
+        class: 'comp-chip' + (f.sel[v] ? ' on' : ''),
+        title: (f.sel[v] ? 'Deselect ' : 'Select ') + v,
+        onclick: () => setSel([v], !f.sel[v]),
+      }, el('span', { text: (meta.icons[v] || '') + ' ' + v }))),
+      el('button', { class: 'ghost tiny', text: 'all', title: 'Select every ' + meta.label.toLowerCase() + ' chip', onclick: () => setSel(meta.vocab(), true) }),
+      el('button', { class: 'ghost tiny', text: 'none', title: 'Clear the ' + meta.label.toLowerCase() + ' selection', onclick: () => setSel(meta.vocab(), false) }));
+  };
+  return el('div', { class: 'comp-filter-bar' }, realmRow('piece'), realmRow('element'));
+}
+
 function renderItemList() {
   $('item-list-title').textContent = state.types[state.currentType] ? state.types[state.currentType].label + 's' : '';
   $('gen-set-btn').hidden = state.currentType !== 'card';
-  renderKinBar();
   const list = $('item-list');
   list.replaceChildren();
   // ── THE list: the game's data files (files → entries) — nothing else exists ──
@@ -688,8 +779,12 @@ function renderItemList() {
     oninput: e => { state.gameFilter = e.target.value; renderItemList(); },
   });
   list.append(search);
+  if (state.currentType === 'card') list.append(renderCompFilterBar());
   const q = state.gameFilter.trim().toLowerCase();
-  const filtered = q ? gameItems.filter(g => g.id.includes(q) || (g.name || '').toLowerCase().includes(q)) : gameItems;
+  let filtered = q ? gameItems.filter(g => g.id.includes(q) || (g.name || '').toLowerCase().includes(q)) : gameItems;
+  const compActive = state.currentType === 'card' && compFilterActive();
+  if (compActive) filtered = filtered.filter(cardPassesCompFilter);
+  if (!filtered.length) list.append(el('div', { class: 'subtle', style: 'padding:10px', text: 'Nothing matches the filters.' }));
 
   // group by file
   const byFile = new Map();
@@ -704,7 +799,7 @@ function renderItemList() {
     const entries = byFile.get(file);
     // a filter match, or the open item's file, force the branch open
     const holdsCurrent = state.mode === 'game' && entries.some(g => g.id === state.currentId);
-    const expanded = q ? true : (expandState[file] != null ? expandState[file] : holdsCurrent);
+    const expanded = (q || compActive) ? true : (expandState[file] != null ? expandState[file] : holdsCurrent);
     const editedCount = entries.filter(g => g.edited).length;
     list.append(el('div', {
       class: 'tree-file' + (expanded ? ' open' : ''),
@@ -870,7 +965,7 @@ function clientDeployPreview(type, serialized) {
 
 function renderEditor() {
   const empty = $('editor-empty'), body = $('editor-body');
-  if (!state.draft) { empty.hidden = false; body.hidden = true; return; }
+  if (!state.draft) { empty.hidden = false; body.hidden = true; renderEmptyKinPanel(); return; }
   empty.hidden = true; body.hidden = false;
   const ed = EDITORS[state.currentType];
 
@@ -1126,6 +1221,8 @@ function renderArtPanel() {
     el('button', { class: 'ghost tiny', text: '⛶ Advanced',
       title: 'Fullscreen generator with a reference browser (pull existing card art as input for the image model and the LLM)',
       onclick: openAdvanced })));
+  const kin = buildKinSection();
+  if (kin) panel.append(kin);
   panel.append(...buildArtControls(renderArtPanel));
   panel.append(...buildArtPreviews(renderArtPanel));
   if (state.advancedOpen) renderAdvanced();
@@ -2484,6 +2581,7 @@ function renderChatMsg(m) {
     const list = el('div', { class: 'chat-changes' },
       m.changes.map(c => el('div', { class: 'chat-change' },
         el('b', { text: `${c.type}/${c.id}` }),
+        c.created ? el('span', { class: 'chat-new', text: 'NEW' }) : null,
         el('span', { class: 'subtle', text: ' · ' + c.file }),
         (c.notes || []).map(n => el('div', { class: 'chat-note', text: n })))));
     parts.push(list);

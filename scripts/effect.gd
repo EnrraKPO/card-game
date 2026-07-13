@@ -255,8 +255,12 @@ func _parse_intercept_gate(d: Dictionary) -> void:
 func _validate_standing(d: Dictionary) -> void:
 	if not is_standing():
 		return
-	if standing_attribute().is_empty():
-		push_error("Effect: standing (while) effect with no foldable attribute — %s" % [d])
+	# Membership, not mere presence: an attribute outside the folded set would be computed
+	# by LiveEffects and read by nobody — the silent-evaporation bug this guard exists for
+	# (found the hard way: a standing "shield" bonus before max_shield joined the fold).
+	if not standing_attribute() in FOLDABLE_ATTRS:
+		push_error("Effect: standing (while) attribute '%s' is not foldable (%s) — %s"
+				% [standing_attribute(), ", ".join(FOLDABLE_ATTRS), d])
 	if not status_id.is_empty():
 		push_error("Effect: a standing (while) effect cannot apply a status — %s" % [d])
 	if kind == Kind.CUSTOM:
@@ -477,13 +481,23 @@ func is_standing() -> bool:
 	return trigger_resolver() is TriggerResolver.While
 
 
+# The attributes the read-time fold actually serves (get_attribute consults LiveEffects
+# for exactly these). Pools (current health/shield, side resources) are stored state and
+# can never be standing targets — their BASE is what folds (see FOLDABLE_MAP).
+const FOLDABLE_ATTRS: Array[String] = ["max_health", "attack", "speed", "cost", "max_shield"]
+# Pool-named authored attributes → the base each one folds into when authored standing:
+# a "while +1 health" means max health, a "while +1 shield" means the shield base the
+# pool refreshes to (and reads against) — never the pool itself.
+const FOLDABLE_MAP := {"health": "max_health", "shield": "max_shield"}
+
+
 # The CardInstance attribute a standing effect folds into. Legacy modifiers carry it via
-# their key; native effects use the triggered vocabulary, where a standing "health"
-# payload means MAX health (a when-effect on "health" writes current health instead).
+# their key; native effects use the triggered vocabulary, mapped through FOLDABLE_MAP
+# (a when-effect on "health"/"shield" writes the pool instead).
 func standing_attribute() -> String:
 	if kind == Kind.MODIFIER:
 		return CARD_ATTR.get(key, "")
-	return "max_health" if attribute == "health" else attribute
+	return FOLDABLE_MAP.get(attribute, attribute)
 
 
 func card_attribute() -> String:

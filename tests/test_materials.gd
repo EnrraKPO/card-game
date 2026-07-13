@@ -58,9 +58,11 @@ func _holders() -> void:
 	names = inst.ability_list().map(func(a: AbilityData) -> String: return a.id)
 	check(not ("pawn_material" in names), "and leaves with the status (transient by nature)")
 
-	# Un-authored rook combos (forge-derived) synthesize a fallback ability from the same
-	# authored schema; authoring the id in data/abilities/ would replace it.
-	var derived := CardData.get_card("fire_rook")
+	# Rook combos with no authored abilities synthesize a fallback ability from the same
+	# authored schema; authoring the id in data/abilities/ would replace it. (fire_rook
+	# itself gained an authored ability in the unit data pass, so the fixture is the
+	# still-unauthored Fire Turret — same "fire" remainder.)
+	var derived := CardData.get_card("fire_rook_rook")
 	var ids := derived.ability_ids()
 	check(ids.size() == 1 and str(ids[0]) == "deliver_fire",
 			"derived rook combos fall back to a synthesized material ability")

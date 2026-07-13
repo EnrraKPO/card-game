@@ -1,0 +1,60 @@
+[
+	{
+		"id": "earth_pawn",
+		"display_name": "Earth Pawn",
+		"cost": 1,
+		"attack": 1,
+		"health": 3,
+		"speed": 1,
+		"shield": 1,
+		"elements": [
+			"earth"
+		],
+		"chess_pieces": [
+			"pawn"
+		]
+	},
+	{
+		"id": "earth_knight",
+		"elements": [
+			"earth"
+		],
+		"display_name": "Earth Knight",
+		"chess_pieces": [
+			"knight"
+		]
+	},
+	{
+		"id": "earth_bishop",
+		"elements": [
+			"earth"
+		],
+		"display_name": "Earth Bishop",
+		"chess_pieces": [
+			"bishop"
+		]
+	},
+	{
+		"id": "earth_rook",
+		"elements": [
+			"earth"
+		],
+		"display_name": "Earth Rook",
+		"chess_pieces": [
+			"rook"
+		],
+		"abilities": [
+			"stone_charge"
+		]
+	},
+	{
+		"id": "earth_queen",
+		"elements": [
+			"earth"
+		],
+		"display_name": "Earth Queen",
+		"chess_pieces": [
+			"queen"
+		]
+	}
+]

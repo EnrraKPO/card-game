@@ -89,6 +89,20 @@ async function main() {
       id: 'apitest_bad', display_name: 'B', cost: 1, attack: 1, health: 1, speed: 1,
       effects: [{ trigger: { kind: 'event', event: 'bogus_event' }, targets: { kind: 'all' }, attribute: 'attack', amount: 1 }] } });
     check('invalid entry rejected', r.status === 400 && /not a simple event/.test(r.data.error), r.data.error);
+    // interceptors must name a stat a mutation can actually carry (the stalwart_barrier
+    // lesson: "intercept: max_health" is a plausible invention that matches nothing)…
+    r = await api('/api/game/save', { type: 'status', file: 'apitest_statuses.json', data: {
+      id: 'apitest_badint', effects: [{ kind: 'interceptor', intercept: 'healing', role: 'target', op: 'mul', amount: 0 }] } });
+    check('unknown intercept stat rejected', r.status === 400 && /unknown intercept stat "healing"/.test(r.data.error), r.data.error);
+    // …and standing (while) attributes must be in the read-time fold's served set.
+    r = await api('/api/game/save', { type: 'status', file: 'apitest_statuses.json', data: {
+      id: 'apitest_badwhile', effects: [{ trigger: { kind: 'while' }, targets: { kind: 'self' }, attribute: 'damage_taken', amount: 1 }] } });
+    check('non-foldable standing attribute rejected', r.status === 400 && /cannot be standing/.test(r.data.error), r.data.error);
+    // the shield base IS foldable (maps to max_shield — the stalwart_barrier fix)
+    r = await api('/api/game/save', { type: 'status', file: 'apitest_statuses.json', data: {
+      id: 'apitest_shieldwhile', effects: [{ trigger: { kind: 'while' }, targets: { kind: 'self' }, attribute: 'shield', amount: 1 }] } });
+    check('standing shield accepted', r.status === 200, JSON.stringify(r.data).slice(0, 200));
+    await api('/api/game/delete-entry', { type: 'status', id: 'apitest_shieldwhile' });
 
     // ── revert semantics: replaced → original; added → removed ──
     r = await api('/api/game/item?type=card&id=pawn');
@@ -422,6 +436,45 @@ async function main() {
     r = await api('/api/game/restore', { type: 'card', id: 'pawn' });
     check('chat edit reverts like any edit', r.status === 200
       && readSbox('data/cards/base.json').find(e => e.id === 'pawn').cost === 1);
+
+    // ── create: a brand-new entry, referenced by a later op in the SAME plan ──
+    const RAGE = { id: 'chat_rage', display_name: 'Chat Rage', cost: { mana: 1, tap: true },
+      effects: [{ trigger: 'on_play', targeting_policy: 'manual', attribute: 'health', amount: 2 }] };
+    chatQueue = [JSON.stringify({ reply: 'Created.', ops: [
+      { type: 'ability', op: 'create', id: 'chat_rage', file: 'chattest_abilities.json', value: RAGE },
+      { type: 'card', ids: ['chat_pawn_b'], op: 'append', field: 'abilities', value: 'chat_rage' },
+    ] })];
+    r = await api('/api/chat/edit', { messages: [{ role: 'user', content: 'give pawn b a new heal ability' }] });
+    const createProposal = r.data;
+    const created = (createProposal.changes || []).find(c => c.id === 'chat_rage');
+    check('create previews a new entry', createProposal.ok && created && created.created === true
+      && created.before === null && created.file === 'chattest_abilities.json'
+      && created.notes.some(n => n.startsWith('display_name:')), JSON.stringify(createProposal).slice(0, 300));
+    check('preview writes NO new file', !fs.existsSync(path.join(SANDBOX, 'data/abilities/chattest_abilities.json')));
+    check('system prompt teaches the create op', /"op": "create"/.test(chatReqs[chatReqs.length - 1].system)
+      && /files: /.test(chatReqs[chatReqs.length - 1].prompt));
+
+    r = await api('/api/chat/apply', { changes: createProposal.changes });
+    check('apply writes the created entry and its reference', r.data.ok && r.data.applied.length === 2, JSON.stringify(r.data));
+    check('created ability landed in its chosen file', readSbox('data/abilities/chattest_abilities.json')[0].id === 'chat_rage');
+    check('card gained the new ability id',
+      readSbox('data/cards/chattest_units.json').find(e => e.id === 'chat_pawn_b').abilities[0] === 'chat_rage');
+
+    // re-applying the same create is refused — the id exists now
+    r = await api('/api/chat/apply', { changes: [created] });
+    check('stale create refused once the id exists', !r.data.ok && /appeared since/.test(r.data.skipped[0].error), JSON.stringify(r.data));
+
+    // a create with a taken id is retried with the error fed back
+    chatQueue = [JSON.stringify({ reply: 'x', ops: [{ type: 'ability', op: 'create', id: 'chat_rage', file: 'x.json', value: RAGE }] }),
+      JSON.stringify({ reply: 'ok', ops: [] })];
+    r = await api('/api/chat/edit', { messages: [{ role: 'user', content: 'x' }] });
+    check('duplicate-id create retried with the failure fed back', r.data.attempts === 2
+      && chatReqs[chatReqs.length - 1].prompt.includes('already exists'), JSON.stringify(r.data).slice(0, 300));
+
+    // revert rides the normal `added` record: the created entry is removed again
+    r = await api('/api/game/restore', { type: 'ability', id: 'chat_rage' });
+    check('reverting a chat-created entry removes it (file emptied → gone)',
+      r.status === 200 && !fs.existsSync(path.join(SANDBOX, 'data/abilities/chattest_abilities.json')));
 
     await api('/api/game/delete-entry', { type: 'card', id: 'chat_pawn_b' });
     fakeChat.close();

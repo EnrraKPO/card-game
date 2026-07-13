@@ -325,6 +325,32 @@ is "any effect could be an interception; sources are never manually enumerated."
 This is the groundwork for the CombatSide/player-targeted-effects design (draw/mana as
 interceptable mutations targeting a side) — see §10.
 
+### 8.1 Split-hit portion gates + foldable shield base (BUILT, 2026-07-13)
+
+Agreed in discussion (the stalwart_barrier finding): **interception always names a real
+stat; the channel names the source.** `damage` is precisely a hit's PRE-SPLIT total — once
+it settles, `Resolver._apply_damage` apportions it shield-first and each share is its own
+pending mutation on the hit's channel (`shield_pool` / `health`), run through the same gate
+before committing. Rules: shares are reductions by construction (`StatMutation.portion`,
+re-clamped ≤ 0 per rewrite — the mirror of DAMAGE's ≥ 0 re-floor); no re-flow between
+shares; portion records append to the same `Outcome.interceptions`. "Block attack damage
+that would reach Health" = `intercept: "health", channel: "attack"` — no sign condition
+(attacks never heal). Direct health changes (poison/heals) never pass the split; finer
+provenance than the channel (poison-the-status vs any effect) is the deferred Phase-2
+instigator gate.
+
+Substrate fix shipped with it: **shield joined the fold** — `max_shield`
+(card base + baked `shield` modifiers + live standing effects) mirrors `max_health`, the
+pool is `max_shield − shield_spent` floored at 0 (absorbed damage is preserved when the
+base moves, the health coupling rule), and `restore_shield` refills to the same read.
+Standing `"shield"` maps to `max_shield` via `Effect.FOLDABLE_MAP`. Both fail-loud
+validators (game `_validate_standing`, tool) now enforce MEMBERSHIP in the folded set /
+`INTERCEPT_STATS` — mere presence let the original dead-letter stalwart_barrier through.
+Proof content: `stalwart_barrier` (blocks the health share, absorption passes and spends
+no charge, flat +1 shield while held). Suites: `tests/test_interception.gd`
+(`_split_portion_gates`, `_portion_no_reflow`), `tests/test_statuses.gd`
+(`_foldable_shield_pool`).
+
 ## 9. Test plan
 
 - Existing regression suite tests/_runner.tscn — mandatory after every step (resolution

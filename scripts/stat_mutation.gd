@@ -9,11 +9,11 @@ extends RefCounted
 # names effect attributes use, CardInstance.modifiers keys on, and DeckCard override fields
 # carry — one language, no translation layer anywhere.
 #
-# `channel` is provenance metadata: what KIND of procedure spawned this mutation. Nothing
-# consumes it yet — it exists so interception can subscribe selectively later ("block attack
-# damage, ignore poison ticks") without reshaping this contract. NOTE: events are never
-# inferred from mutations — "an attack happened" is a Trigger broadcast that fires whether or
-# not any mutation follows (a whiff still counts as being attacked).
+# `channel` is provenance metadata: what KIND of procedure spawned this mutation. Interception
+# subscribes to it selectively — "block attack damage, ignore poison ticks" is an interceptor
+# on stat `health` gated to channel `attack`. NOTE: events are never inferred from mutations —
+# "an attack happened" is a Trigger broadcast that fires whether or not any mutation follows
+# (a whiff still counts as being attacked).
 
 # ── Stats: live pools on a CardInstance ──
 # Signed direct health change: positive heals (clamped to max), negative wounds DIRECTLY,
@@ -80,6 +80,11 @@ var channel: StringName = CH_EFFECT
 # (`amount` carries the stack count — the interceptable magnitude, like every other form).
 var status_id: String = ""
 var status_duration: int = Effect.STATUS_DURATION_DEFAULT
+# Marks the shield/health SHARE of a split hit (built inside Resolver._apply_damage). A
+# portion is a reduction by construction: rewrites clamp it at <= 0 after every interceptor
+# (mirroring the >= 0 re-floor on DAMAGE), so "take less" can zero a wound but never flip
+# it into a heal or a shield gain.
+var portion := false
 
 
 # Effect-attribute name → the stat it lands as. The two authored names with a distinct

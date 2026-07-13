@@ -717,6 +717,16 @@ const EFFECT_ATTRS = ['health','max_health','damage_taken','attack','speed','shi
 // Side stats: only valid with targets {"kind":"side"} and vice versa (mirrors
 // Effect._validate_side_targets — see EFFECT_SYSTEM_DESIGN.md §10).
 const SIDE_ATTRS = ['draw','discard','mana','max_mana'];
+// The stats a pending mutation can carry — the interceptor match vocabulary (mirrors
+// StatMutation + the Resolver's split: "damage" is a hit's pre-split total; its shares
+// then pass as "shield_pool" / "health" on the hit's channel).
+const INTERCEPT_STATS = ['damage','health','shield_pool','status',
+  'attack','speed','cost','max_health','shield', ...SIDE_ATTRS];
+// The attributes the game's read-time fold serves — the ONLY legal standing (while)
+// targets (mirrors Effect.FOLDABLE_ATTRS/FOLDABLE_MAP: pool-named attributes fold as
+// their base — "health" means max_health, "shield" the shield base the pool follows).
+const FOLDABLE_MAP = { health: 'max_health', shield: 'max_shield' };
+const FOLDABLE_ATTRS = ['max_health', 'attack', 'speed', 'cost', 'max_shield'];
 const COND_ATTRS = ['health','attack','speed','cost','piece_count','element_count'];
 const ELEMENTS = ['fire','water','air','earth','darkness','light'];
 const PIECES = ['pawn','knight','bishop','rook','queen','king'];
@@ -821,7 +831,9 @@ function validateEffect(e, where) {
     if (!MODIFIER_KEYS.includes(e.key)) return `${where}: unknown modifier key "${e.key}"`;
     if (typeof e.amount !== 'number') return `${where}: modifier needs a numeric amount`;
   } else if (kind === 'interceptor') {
-    if (!e.intercept) return `${where}: interceptor needs an "intercept" stat (e.g. damage, health, status)`;
+    if (!e.intercept) return `${where}: interceptor needs an "intercept" stat (${INTERCEPT_STATS.join('/')})`;
+    if (!INTERCEPT_STATS.includes(e.intercept))
+      return `${where}: unknown intercept stat "${e.intercept}" — a mutation only ever carries one of ${INTERCEPT_STATS.join('/')}`;
     if (e.role && !['source','target'].includes(e.role)) return `${where}: bad role`;
     // Native relational gate: which mutation participant is scrutinised + its relation.
     if (e.of != null) {
@@ -853,8 +865,13 @@ function validateEffect(e, where) {
     const standing = e.trigger && typeof e.trigger === 'object' && e.trigger.kind === 'while';
     if (standing) {
       // Mirrors the game's fail-loud rules (Effect._validate_standing): a standing effect
-      // is a continuous stat fold — nothing else is meaningful on it.
+      // is a continuous stat fold — nothing else is meaningful on it, and only attributes
+      // the read-time fold actually serves are legal (membership, not mere presence —
+      // anything else would be computed and read by nobody).
       if (!e.attribute) return `${where}: a standing (while) effect needs an attribute to fold`;
+      if (!FOLDABLE_ATTRS.includes(FOLDABLE_MAP[e.attribute] || e.attribute))
+        return `${where}: attribute "${e.attribute}" cannot be standing — only `
+          + `health/shield/${FOLDABLE_ATTRS.join('/')} fold at read time`;
       if (e.status && e.status.id) return `${where}: a standing (while) effect cannot apply a status`;
       const tk = e.targets && typeof e.targets === 'object' ? String(e.targets.kind || 'all') : 'all';
       if (!['self','all'].includes(tk)) return `${where}: standing targets must be "self" or "all"`;
@@ -1911,6 +1928,8 @@ function effectsGrammarLines() {
     '   attribute "health": negative amount = direct damage, positive = heal.',
     '   attribute "max_health" raises/lowers the unit\'s maximum health (does not heal).',
     '   attribute "damage_taken" deals damage that consumes shield first.',
+    '   attribute "shield" raises/lowers the unit\'s shield BASE — the pool follows it',
+    '   (triggered = permanent bump; standing = while the effect holds).',
     `   PLAYER-side payloads ("draw 2 cards", "gain 1 mana"): attribute one of ${SIDE_ATTRS.join('/')}`,
     '   paired with targets {"kind":"side","of":"own"|"opponent"} (and ONLY that pairing:',
     '   side stats never target units, unit stats/statuses never target a side; no conditions).',
@@ -1928,12 +1947,22 @@ function effectsGrammarLines() {
     '   "attribute": ..., "amount": n, "tracker": {"kind":"stacks"}?}',
     '   tracker "stacks" = the amount applies PER STACK; omit the tracker otherwise.',
     '   Use STANDING for any ongoing/aura wording ("while", "as long as", buffs from a status).',
+    `   Standing attributes fold at read time — legal: health/shield/${FOLDABLE_ATTRS.join('/')}`,
+    '   ("health" folds as max_health, "shield" as the shield base). Pools cannot be standing.',
     `3. MODIFIER — run-wide passive number change: {"kind":"modifier","key": one of ${MODIFIER_KEYS.join('/')},`,
     '   "amount": n, "conditions":[...]?}. Only for run-wide numbers, never for board effects.',
     '4. INTERCEPTOR — rewrites a pending stat change before it lands: {"kind":"interceptor",',
-    `   "intercept":"damage"|"health"|"status"|${SIDE_ATTRS.map(a => `"${a}"`).join('|')}, "channel":"attack"?,`,
+    `   "intercept": one of ${INTERCEPT_STATS.map(a => `"${a}"`).join('|')},`,
+    '   "channel":"attack"|"effect"|"system"|"cost"?,',
     '   "of": {"participant":"source"|"target", "relation":"self"|"ally"|"enemy"|"any"},',
     '   "op":"add"|"mul", "amount": n, "chance":?, "conditions":[...]?}',
+    '   The channel is the change\'s PROVENANCE — gate on it to say where it must come from.',
+    '   A hit resolves in three interceptable passes: "damage" = the whole hit before the',
+    '   shield/health split, then each share on the hit\'s channel — "shield_pool" = what the',
+    '   shield is about to absorb, "health" = what is about to wound health. So "block attack',
+    '   damage that would reach Health" = intercept "health" + channel "attack", op "mul",',
+    '   amount 0 (shares are always reductions; no sign condition needed). Rewritten shares',
+    '   never redistribute to each other.',
     '   participant = which side of the change is scrutinised (source caused it, target receives',
     '   it); relation = that unit\'s side vs the effect\'s owner ("self" = must be the holder —',
     '   only meaningful on a card/status, never a relic/upgrade). Conditions gate the participant;',
@@ -2047,13 +2076,14 @@ async function llmEffectsFromText(type, text) {
 
 // ── 💬 edit chat: conversational blanket edits over the game's content ────────
 // The designer chats ("all pawns cost 2 mana; water pawns +2 health"); the LLM
-// answers with an OPERATIONS PLAN — four JSON-shape verbs (set / delete / append /
-// remove) against entry ids — never with rewritten entries, so fields it doesn't
-// name physically cannot change. Ops are simulated on copies, validateItem gates
-// every touched entry (errors feed a retry, like ✨ effects), and NOTHING is written
-// until the user applies the previewed result; each applied entry goes through
-// applyGameEdit, so the normal per-entry snapshot/Revert machinery covers chat edits.
-const CHAT_OPS = ['set', 'delete', 'append', 'remove'];
+// answers with an OPERATIONS PLAN — field verbs (set / delete / append / remove)
+// against entry ids plus a whole-entry `create` — never with rewritten entries, so
+// fields it doesn't name physically cannot change. Ops are simulated on copies,
+// validateItem gates every touched entry (errors feed a retry, like ✨ effects), and
+// NOTHING is written until the user applies the previewed result; each applied entry
+// goes through applyGameEdit (or saveGameEntry for created ones), so the normal
+// per-entry snapshot/Revert machinery covers chat edits.
+const CHAT_OPS = ['set', 'delete', 'append', 'remove', 'create'];
 
 // One catalog line per entry: every top-level field as k=v (JSON, truncated), effects
 // as indexed plain-words summaries (the index is the LLM's handle for remove/dot-paths).
@@ -2068,7 +2098,8 @@ function chatCatalog() {
   for (const type of Object.keys(TYPES)) {
     const entries = listGameEntries(type);
     if (!entries.length) continue;
-    lines.push(`## ${type} (${entries.length} entries)`);
+    const files = [...new Set(entries.map(e => e.file))].sort();
+    lines.push(`## ${type} (${entries.length} entries; files: ${files.join(', ')})`);
     for (const e of entries) {
       const d = e.data;
       const parts = [];
@@ -2109,7 +2140,18 @@ function chatSystemPrompt() {
     '- append: push "value" onto the LIST at "field" (creates the list if absent).',
     '- remove: delete the item at "index" from the LIST at "field".',
     `Content types: ${Object.keys(TYPES).join(', ')}. ids must come from the catalog.`,
-    'You cannot create or delete entries, and ops must never change an "id".',
+    '',
+    'A fifth op creates a brand-new entry (any type except nodeweights):',
+    '  {"type": "<content type>", "op": "create", "id": "<new lowercase_id>",',
+    '   "file": "<file.json>", "value": {"id": "<same id>", ...the complete entry...}}',
+    '- "id" must not already exist; "value" is the whole entry and must carry the same "id".',
+    '- "file" is where the entry will live: pick the catalog-listed file of that type whose',
+    '  entries it belongs with, or name a new lowercase file for a genuinely new group.',
+    '- Later ops in the same plan may reference the created id (e.g. create an ability,',
+    '  then append its id to a card\'s "abilities" list).',
+    '- Model new entries on similar catalog entries; ask to see one in full ("need") when unsure.',
+    '',
+    'You cannot delete entries, and ops must never change an existing "id".',
     'To take an entry out of the game, set enabled=false (the game skips disabled entries).',
     'Only propose what the designer asked for — no extra "improvements".',
     '',
@@ -2168,14 +2210,27 @@ function applyChatOp(data, op) {
 }
 
 // Simulate an ops plan against copies of the current entries. Returns the touched
-// entries as { type, id, file, before, after }; throws a message the retry feeds back.
+// entries as { type, id, file, before, after } — created entries carry before: null
+// and created: true; throws a message the retry feeds back.
 function simulateChatOps(ops) {
   const touched = new Map();
   for (let i = 0; i < ops.length; i++) {
     const op = ops[i] || {};
     const where = `op ${i + 1}`;
     if (!TYPES[op.type]) throw new Error(`${where}: unknown type "${op.type}"`);
-    if (!CHAT_OPS.includes(op.op)) throw new Error(`${where}: unknown op "${op.op}" (set/delete/append/remove)`);
+    if (!CHAT_OPS.includes(op.op)) throw new Error(`${where}: unknown op "${op.op}" (set/delete/append/remove/create)`);
+    if (op.op === 'create') {
+      if (op.type === 'nodeweights') throw new Error(`${where}: nodeweights entries cannot be created in chat`);
+      if (!validId(op.id)) throw new Error(`${where}: "id" must be lowercase letters, digits and underscores`);
+      if (!/^[a-z0-9_]+\.json$/.test(op.file || '')) throw new Error(`${where}: "file" must be a plain lowercase name ending in .json`);
+      if (!op.value || typeof op.value !== 'object' || Array.isArray(op.value)) throw new Error(`${where}: "value" must be the complete entry object`);
+      if (op.value.id !== op.id) throw new Error(`${where}: "value.id" must equal "${op.id}"`);
+      const key = op.type + '/' + op.id;
+      if (touched.has(key) || findGameEntry(op.type, op.id)) throw new Error(`${where}: ${key} already exists — create needs a new id`);
+      touched.set(key, { type: op.type, id: op.id, file: op.file, created: true,
+        before: null, after: JSON.parse(JSON.stringify(op.value)) });
+      continue;
+    }
     if (typeof op.field !== 'string' || !op.field) throw new Error(`${where}: missing "field"`);
     const ids = Array.isArray(op.ids) ? op.ids : [];
     if (!ids.length) throw new Error(`${where}: "ids" must name at least one entry`);
@@ -2271,7 +2326,7 @@ async function llmChatEdit(messages) {
       .map(c => { const err = validateItem(c.type, c.after); return err ? `${c.type}/${c.id}: ${err}` : null; })
       .filter(Boolean);
     if (!errs.length) {
-      for (const c of changes) c.notes = chatChangeNotes(c.type, c.before, c.after);
+      for (const c of changes) c.notes = chatChangeNotes(c.type, c.before || {}, c.after);
       return { reply, ops, changes, attempts: attempt };
     }
     lastErr = errs.join('; ');
@@ -3539,8 +3594,9 @@ async function handle(req, res) {
         return send(res, 502, { error: e.message });
       }
     }
-    // Apply a previewed chat proposal. Each entry rides applyGameEdit (snapshot + revert);
-    // an entry that changed since its preview is refused, the rest still apply.
+    // Apply a previewed chat proposal. Edited entries ride applyGameEdit, created ones
+    // saveGameEntry (both snapshot + revert); an entry that changed (or appeared) since
+    // its preview is refused, the rest still apply.
     if (p === '/api/chat/apply' && req.method === 'POST') {
       const { changes } = await readBody(req);
       if (!Array.isArray(changes) || !changes.length) return send(res, 400, { error: 'no changes' });
@@ -3551,10 +3607,15 @@ async function handle(req, res) {
           if (!c || !TYPES[c.type] || !validId(c.id) || !c.after || c.after.id !== c.id)
             throw new Error('malformed change');
           const cur = findGameEntry(c.type, c.id);
-          if (!cur) throw new Error('entry no longer exists');
-          if (JSON.stringify(cur.data) !== JSON.stringify(c.before))
-            throw new Error('entry changed since this preview — ask the chat again');
-          applyGameEdit(c.type, c.id, c.after, false);
+          if (c.created) {
+            if (cur) throw new Error('an entry with this id appeared since the preview — ask the chat again');
+            saveGameEntry(c.type, c.file, c.after);
+          } else {
+            if (!cur) throw new Error('entry no longer exists');
+            if (JSON.stringify(cur.data) !== JSON.stringify(c.before))
+              throw new Error('entry changed since this preview — ask the chat again');
+            applyGameEdit(c.type, c.id, c.after, false);
+          }
           applied.push(label);
         } catch (e) { skipped.push({ entry: label, error: e.message }); }
       }

@@ -1,17 +1,25 @@
 [
 	{
 		"id": "darkness_pawn",
+		"display_name": "Darkness Pawn",
+		"cost": 1,
+		"attack": 1,
+		"health": 2,
+		"speed": 1,
+		"description": "When this unit is destroyed, draw a card.",
 		"elements": [
 			"darkness"
 		],
-		"display_name": "Darkness Pawn",
 		"chess_pieces": [
 			"pawn"
 		],
-		"description": "When this unit is destroyed, draw a card.",
 		"effects": [
 			{
-				"trigger": "on_death",
+				"trigger": {
+					"kind": "event",
+					"event": "death",
+					"of": "self"
+				},
 				"attribute": "draw",
 				"amount": 1,
 				"targets": {
@@ -50,6 +58,9 @@
 		"display_name": "Darkness Rook",
 		"chess_pieces": [
 			"rook"
+		],
+		"abilities": [
+			"umbral_charge"
 		]
 	},
 	{

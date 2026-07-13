@@ -63,14 +63,16 @@ static func submit(m: StatMutation) -> Outcome:
 		return Outcome.new()
 	var interceptions := _intercept(m)
 	var out := _apply_to_instance(inst, m)
-	out.interceptions = interceptions
+	# The application form may have run nested gates of its own (a DAMAGE split intercepts
+	# its shield/health portions — see _apply_damage): keep those records, in firing order.
+	out.interceptions = interceptions + out.interceptions
 	return out
 
 
 static func _apply_to_instance(inst: CardInstance, m: StatMutation) -> Outcome:
 	match m.stat:
 		StatMutation.DAMAGE:
-			return _apply_damage(inst, m.amount)
+			return _apply_damage(inst, m)
 		StatMutation.HEALTH:
 			return _apply_health(inst, m.amount)
 		StatMutation.STATUS:
@@ -125,10 +127,11 @@ static func _apply_to_side(side: CombatSide, m: StatMutation) -> Outcome:
 
 # ── Set-form conveniences (expressed as additive mutations, so there is still one contract) ──
 
-# Round-start shield refresh: back to the card's base + accumulated shield modifiers.
+# Round-start shield refresh: back to the effective base — card stat + baked modifiers +
+# live standing effects, i.e. the same max_shield read the pool measures itself against.
 static func restore_shield(inst: CardInstance) -> void:
-	var full: int = inst.data.shield + int(inst.modifiers.get("shield", 0))
-	submit(StatMutation.make(inst, StatMutation.SHIELD_POOL, full - inst.current_shield,
+	submit(StatMutation.make(inst, StatMutation.SHIELD_POOL,
+			inst.get_attribute("max_shield") - inst.current_shield,
 			null, StatMutation.CH_SYSTEM))
 
 
@@ -160,20 +163,37 @@ static func set_side_mana(side: CombatSide, value: int) -> void:
 
 # ── Application forms (private knowledge of HOW each stat resolves) ──
 
-static func _apply_damage(inst: CardInstance, amount: int) -> Outcome:
+static func _apply_damage(inst: CardInstance, m: StatMutation) -> Outcome:
 	# An incoming hit: the shield absorbs first, the rest wounds health. Damage never heals —
 	# a sub-zero amount deals 0. (Direct health changes — poison, heals — are HEALTH mutations
 	# and bypass this entirely.)
-	amount = maxi(0, amount)
-	var absorbed := 0
-	if inst.current_shield > 0:
-		absorbed = mini(amount, inst.current_shield)
-		inst.current_shield -= absorbed
-		amount -= absorbed
-	inst.current_health -= amount
-	var o := Outcome.make(inst, StatMutation.DAMAGE, -(absorbed + amount))
+	#
+	# The split happens INSIDE the interception boundary: once the total (`damage`, already
+	# gated by submit) is apportioned, each share becomes its own pending mutation on the
+	# hit's channel — the shield share as SHIELD_POOL, the health share as HEALTH — and runs
+	# the same gate before committing. That is what lets an interceptor speak to "damage
+	# that would reach Health" (Stalwart Barrier) or "damage the shield eats", with the
+	# channel carrying provenance as everywhere else. No re-flow: a rewritten portion never
+	# redistributes to the other. Portions are reductions by construction (see
+	# StatMutation.portion); a hit's untouched share commits exactly as split.
+	var amount := maxi(0, m.amount)
+	var absorbed := mini(amount, inst.current_shield)
+	var records: Array = []
+	var sm := StatMutation.make(inst, StatMutation.SHIELD_POOL, -absorbed, m.source, m.channel)
+	sm.portion = true
+	records.append_array(_intercept(sm))
+	absorbed = clampi(-sm.amount, 0, inst.current_shield)
+	var pierce := amount - mini(amount, inst.current_shield)
+	var hm := StatMutation.make(inst, StatMutation.HEALTH, -pierce, m.source, m.channel)
+	hm.portion = true
+	records.append_array(_intercept(hm))
+	pierce = maxi(0, -hm.amount)
+	inst.current_shield -= absorbed
+	inst.current_health -= pierce
+	var o := Outcome.make(inst, StatMutation.DAMAGE, -(absorbed + pierce))
 	o.shield_absorbed = absorbed
-	o.health_damage = amount
+	o.health_damage = pierce
+	o.interceptions = records
 	return o
 
 
@@ -198,7 +218,10 @@ static func _apply_health(inst: CardInstance, amount: int) -> Outcome:
 # target unit → run set; within a unit: native effects, then each status's (scaled by stack
 # count). Each match rolls its own chance. DAMAGE and STATUS amounts are re-floored at 0
 # after every rewrite — a blocked strike is 0, never a heal; an intercepted-away status
-# application applies nothing. Returns the presentation records for Outcome.interceptions.
+# application applies nothing (split-hit portions clamp the mirror way, at <= 0). Runs
+# once per pending mutation — a DAMAGE hit passes through up to three times: the total,
+# then its shield and health portions (see _apply_damage). Returns the presentation
+# records for Outcome.interceptions.
 
 static func _intercept(m: StatMutation) -> Array:
 	var records: Array = []
@@ -280,6 +303,10 @@ static func _try_intercept(e: Effect, stacks: int, holder: CardInstance, owner_s
 		# Magnitude-form stats re-floor after every rewrite — an intercepted-away draw
 		# draws nothing; it never becomes a discard.
 		m.amount = maxi(0, m.amount)
+	elif m.portion:
+		# A split hit's shield/health share is a reduction by construction: re-clamp at 0
+		# after every rewrite, so "take less" zeroes a wound but never flips it into a heal.
+		m.amount = mini(0, m.amount)
 	if m.amount == before:
 		# Changed nothing = didn't fire: no cue, no charge spent. This is what makes a Barrier
 		# ignore a whiff — blocking a 0-damage strike (a Blinded attacker's miss) is a no-op.

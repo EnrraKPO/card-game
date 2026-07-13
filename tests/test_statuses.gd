@@ -15,6 +15,26 @@ func run() -> void:
 	_modifier_status_and_expiry()
 	_charged_standing_scaling()
 	_standing_transparency()
+	_foldable_shield_pool()
+
+
+func _foldable_shield_pool() -> void:
+	# Shield's base is FOLDABLE (max_shield mirrors max_health) while the pool stays state;
+	# the coupling rule preserves what's been absorbed when the base moves — the health
+	# precedent applied to shield. Authored carrier: Stalwart Barrier's standing +1.
+	var u := unit("rook")   # 6 HP, 3 base shield
+	check_eq(u.get_attribute("max_shield"), 3, "max_shield reads the card base")
+	check_eq(u.current_shield, 3, "a fresh unit's pool is the effective base")
+	u.apply_status("stalwart_barrier", Effect.STATUS_DURATION_DEFAULT, 1, null)
+	check_eq(u.current_shield, 4, "a standing shield bonus raises the pool immediately")
+	var atk := unit("pawn")
+	atk.owner = 1
+	Resolver.submit(StatMutation.damage(u, 2, atk))
+	check_eq(u.current_shield, 2, "absorption spends the pool (4 -> 2)")
+	u.remove_status("stalwart_barrier")
+	check_eq(u.current_shield, 1, "the bonus leaves with the status; absorbed stays absorbed")
+	Resolver.restore_shield(u)
+	check_eq(u.current_shield, 3, "round refresh restores to the effective base")
 
 
 func _barrier() -> void:

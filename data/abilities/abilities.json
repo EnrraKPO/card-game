@@ -1,114 +1,426 @@
 [
-  {
-	"id": "castling",
-	"display_name": "Castling",
-	"description": "A defensive maneuver. Grants one unit without a Barrier a Barrier that blocks the next damaging attack.",
-	"cost": { "mana": 1, "tap": true },
-	"autocast": true,
-	"effects": [
-	  {
-		"trigger": "on_play", "targeting_policy": "manual",
-		"conditions": [
-		  { "status": "barrier", "present": false },
-		  { "composition": ["rook"], "present": false }
+	{
+		"id": "castling",
+		"display_name": "Castling",
+		"description": "A defensive maneuver. Grants one unit without a Barrier a Barrier that blocks the next damaging attack.",
+		"cost": {
+			"mana": 1,
+			"tap": true
+		},
+		"autocast": true,
+		"effects": [
+			{
+				"trigger": "on_play",
+				"targeting_policy": "manual",
+				"conditions": [
+					{
+						"status": "barrier",
+						"present": false
+					},
+					{
+						"composition": [
+							"rook"
+						],
+						"present": false
+					}
+				],
+				"status": {
+					"id": "barrier",
+					"stacks": 1
+				}
+			}
+		]
+	},
+	{
+		"id": "heal",
+		"display_name": "Heal",
+		"description": "Restores 2 HP to a unit of your choice.",
+		"cost": {
+			"mana": 1,
+			"tap": true
+		},
+		"effects": [
+			{
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"attribute": "health",
+				"amount": 2,
+				"targets": {
+					"kind": "manual"
+				}
+			}
 		],
-		"status": { "id": "barrier", "stacks": 1 }
-	  }
-	]
-  },
-  {
-	"id": "heal",
-	"display_name": "Heal",
-	"description": "Restores 2 HP to a unit of your choice.",
-	"cost": { "mana": 1, "tap": true },
-	"autocast": true,
-	"effects": [
-	  { "trigger": "on_play", "targeting_policy": "manual", "attribute": "health", "amount": 2 }
-	]
-  },
-  {
-	"id": "pawn_material",
-	"display_name": "Pawn Material",
-	"description": "Adds Pawn to one of your units, merging their compositions - or spawns a new Pawn on one of your empty slots.",
-	"cost": { "mana": 1, "tap": true },
-	"material": "pawn",
-	"effects": [
-	  {
-		"kind": "custom", "custom": "deliver_material",
-		"trigger": "on_play", "targeting_policy": "manual_slot",
-		"conditions": [
-		  { "composition": ["king", "rook"], "present": false },
-		  { "attribute": "piece_count", "comparator": "lte", "value": 1 }
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "A knight in ornate steel plate armor kneeling on one knee in a forest glade, head bowed, arm resting on raised knee, bathed in a radiant golden shaft of light from above, drifting glowing motes, dark twisted trees framing the scene, colorful wildflowers in lush grass, warm amber palette, painterly fantasy illustration, dramatic vertical composition",
+				"turbo": true,
+				"last": {
+					"seed": 1161717498,
+					"prompt": "A knight in ornate steel plate armor kneeling on one knee in a forest glade, head bowed, arm resting on raised knee, bathed in a radiant golden shaft of light from above, drifting glowing motes, dark twisted trees framing the scene, colorful wildflowers in lush grass, warm amber palette, painterly fantasy illustration, dramatic vertical composition, cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear",
+					"style": "",
+					"at": "2026-07-13"
+				}
+			}
+		}
+	},
+	{
+		"id": "pawn_material",
+		"display_name": "Pawn Material",
+		"description": "Adds Pawn to one of your units, merging their compositions - or spawns a new Pawn on one of your empty slots.",
+		"cost": {
+			"mana": 1,
+			"tap": true
+		},
+		"material": "pawn",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "piece_count",
+							"comparator": "lte",
+							"value": 1
+						}
+					]
+				}
+			}
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Single black chess pawn on a table, centered upright on a chess board, bold dark outlines, flat cel-shaded cartoon vector style, charcoal-grey body with soft slate-blue highlights on sphere head and base, glossy sheen accents, clean minimal composition, gentle even lighting",
+				"turbo": true,
+				"ref": {
+					"source": "current",
+					"mode": "img2img",
+					"denoise": 0.6
+				},
+				"last": {
+					"seed": 2204573041,
+					"prompt": "Single black chess pawn on a table, centered upright on a chess board, bold dark outlines, flat cel-shaded cartoon vector style, charcoal-grey body with soft slate-blue highlights on sphere head and base, glossy sheen accents, clean minimal composition, gentle even lighting",
+					"style": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear",
+					"at": "2026-07-13"
+				}
+			}
+		}
+	},
+	{
+		"id": "knight_material",
+		"display_name": "Knight Material",
+		"description": "Adds Knight to one of your units, merging their compositions - or spawns a new Knight on one of your empty slots.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"material": "knight",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "piece_count",
+							"comparator": "lte",
+							"value": 1
+						}
+					]
+				}
+			}
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Single black chess knight on a table, centered upright on a chess board, bold dark outlines, flat cel-shaded cartoon vector style, charcoal-grey body with soft slate-blue highlights on head and base, glossy sheen accents, clean minimal composition, gentle even lighting",
+				"turbo": true,
+				"last": {
+					"seed": 2039584248,
+					"prompt": "Single black chess knight on a table, centered upright on a chess board, bold dark outlines, flat cel-shaded cartoon vector style, charcoal-grey body with soft slate-blue highlights on head and base, glossy sheen accents, clean minimal composition, gentle even lighting",
+					"style": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration. detailed background scene, neat, clear",
+					"at": "2026-07-13"
+				}
+			}
+		}
+	},
+	{
+		"id": "bishop_material",
+		"display_name": "Bishop Material",
+		"description": "Adds Bishop to one of your units, merging their compositions - or spawns a new Bishop on one of your empty slots.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"material": "bishop",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": "on_play",
+				"targeting_policy": "manual_slot",
+				"conditions": [
+					{
+						"composition": [
+							"king",
+							"rook"
+						],
+						"present": false
+					},
+					{
+						"attribute": "piece_count",
+						"comparator": "lte",
+						"value": 1
+					}
+				]
+			}
 		]
-	  }
-	]
-  },
-  {
-	"id": "knight_material",
-	"display_name": "Knight Material",
-	"description": "Adds Knight to one of your units, merging their compositions - or spawns a new Knight on one of your empty slots.",
-	"cost": { "mana": 2, "tap": true },
-	"material": "knight",
-	"effects": [
-	  {
-		"kind": "custom", "custom": "deliver_material",
-		"trigger": "on_play", "targeting_policy": "manual_slot",
-		"conditions": [
-		  { "composition": ["king", "rook"], "present": false },
-		  { "attribute": "piece_count", "comparator": "lte", "value": 1 }
+	},
+	{
+		"id": "queen_material",
+		"display_name": "Queen Material",
+		"description": "Adds Queen to one of your units, merging their compositions - or spawns a new Queen on one of your empty slots.",
+		"cost": {
+			"mana": 4,
+			"tap": true
+		},
+		"material": "queen",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": "on_play",
+				"targeting_policy": "manual_slot",
+				"conditions": [
+					{
+						"composition": [
+							"king",
+							"rook"
+						],
+						"present": false
+					},
+					{
+						"attribute": "piece_count",
+						"comparator": "lte",
+						"value": 1
+					}
+				]
+			}
 		]
-	  }
-	]
-  },
-  {
-	"id": "bishop_material",
-	"display_name": "Bishop Material",
-	"description": "Adds Bishop to one of your units, merging their compositions - or spawns a new Bishop on one of your empty slots.",
-	"cost": { "mana": 2, "tap": true },
-	"material": "bishop",
-	"effects": [
-	  {
-		"kind": "custom", "custom": "deliver_material",
-		"trigger": "on_play", "targeting_policy": "manual_slot",
-		"conditions": [
-		  { "composition": ["king", "rook"], "present": false },
-		  { "attribute": "piece_count", "comparator": "lte", "value": 1 }
+	},
+	{
+		"id": "blight_material",
+		"display_name": "Blight Material",
+		"description": "Adds Blight (darkness + water) to one of your units, merging their compositions - or spawns a new Blight on one of your empty slots.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"material": "darkness_water",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": "on_play",
+				"targeting_policy": "manual_slot",
+				"conditions": [
+					{
+						"composition": [
+							"king",
+							"rook"
+						],
+						"present": false
+					},
+					{
+						"attribute": "element_count",
+						"comparator": "eq",
+						"value": 0
+					}
+				]
+			}
 		]
-	  }
-	]
-  },
-  {
-	"id": "queen_material",
-	"display_name": "Queen Material",
-	"description": "Adds Queen to one of your units, merging their compositions - or spawns a new Queen on one of your empty slots.",
-	"cost": { "mana": 4, "tap": true },
-	"material": "queen",
-	"effects": [
-	  {
-		"kind": "custom", "custom": "deliver_material",
-		"trigger": "on_play", "targeting_policy": "manual_slot",
-		"conditions": [
-		  { "composition": ["king", "rook"], "present": false },
-		  { "attribute": "piece_count", "comparator": "lte", "value": 1 }
+	},
+	{
+		"id": "warding_charge",
+		"display_name": "Warding Castling",
+		"description": "Grants one unit without a Barrier an Empowered Barrier that blocks the next damaging attack and gives that unit +1 Attack while it holds.",
+		"cost": {
+			"mana": 1,
+			"tap": true
+		},
+		"effects": [
+			{
+				"trigger": {
+					"kind": "event",
+					"event": "play"
+				},
+				"targets": {
+					"kind": "manual"
+				},
+				"status": {
+					"id": "empowered_barrier"
+				}
+			}
 		]
-	  }
-	]
-  },
-  {
-	"id": "blight_material",
-	"display_name": "Blight Material",
-	"description": "Adds Blight (darkness + water) to one of your units, merging their compositions - or spawns a new Blight on one of your empty slots.",
-	"cost": { "mana": 2, "tap": true },
-	"material": "darkness_water",
-	"effects": [
-	  {
-		"kind": "custom", "custom": "deliver_material",
-		"trigger": "on_play", "targeting_policy": "manual_slot",
-		"conditions": [
-		  { "composition": ["king", "rook"], "present": false },
-		  { "attribute": "element_count", "comparator": "eq", "value": 0 }
+	},
+	{
+		"id": "gale_charge",
+		"display_name": "Gale Castling",
+		"description": "Grants one unit without a Barrier a Swift Barrier that blocks the next damaging attack and gives that unit +2 Speed while it holds.",
+		"cost": {
+			"mana": 1,
+			"tap": true
+		},
+		"effects": [
+			{
+				"trigger": {
+					"kind": "event",
+					"event": "play"
+				},
+				"targets": {
+					"kind": "manual"
+				},
+				"status": {
+					"id": "swift_barrier"
+				}
+			}
 		]
-	  }
-	]
-  }
+	},
+	{
+		"id": "tide_charge",
+		"display_name": "Tide Castling",
+		"description": "Grants one unit without a Barrier a Mending Barrier that blocks the next damaging attack and heals that unit 1 Health at the start of each round while it holds.",
+		"cost": {
+			"mana": 1,
+			"tap": true
+		},
+		"effects": [
+			{
+				"trigger": {
+					"kind": "event",
+					"event": "play"
+				},
+				"targets": {
+					"kind": "manual"
+				},
+				"status": {
+					"id": "mending_barrier"
+				}
+			}
+		]
+	},
+	{
+		"id": "radiant_charge",
+		"display_name": "Radiant Castling",
+		"description": "Grants one unit without a Barrier a Luminous Barrier that blocks the next damaging attack and grants you 1 mana when it is struck away.",
+		"cost": {
+			"mana": 1,
+			"tap": true
+		},
+		"effects": [
+			{
+				"trigger": {
+					"kind": "event",
+					"event": "play"
+				},
+				"targets": {
+					"kind": "manual"
+				},
+				"status": {
+					"id": "luminous_barrier"
+				}
+			}
+		]
+	},
+	{
+		"id": "stone_charge",
+		"display_name": "Stone Castling",
+		"description": "Grants one unit without a Barrier a Stalwart Barrier that blocks the next attack that would damage its Health (Shield damage passes through) and gives that unit +1 Shield while it holds.",
+		"cost": {
+			"mana": 1,
+			"tap": true
+		},
+		"effects": [
+			{
+				"trigger": {
+					"kind": "event",
+					"event": "play"
+				},
+				"targets": {
+					"kind": "manual"
+				},
+				"status": {
+					"id": "stalwart_barrier"
+				}
+			}
+		]
+	},
+	{
+		"id": "umbral_charge",
+		"display_name": "Umbral Castling",
+		"description": "Grants one unit without a Barrier an Umbral Barrier that blocks the next damaging attack; while it holds, units striking the carrier lose 1 Attack.",
+		"cost": {
+			"mana": 1,
+			"tap": true
+		},
+		"effects": [
+			{
+				"trigger": {
+					"kind": "event",
+					"event": "play"
+				},
+				"targets": {
+					"kind": "manual"
+				},
+				"status": {
+					"id": "umbral_barrier"
+				}
+			}
+		]
+	}
 ]

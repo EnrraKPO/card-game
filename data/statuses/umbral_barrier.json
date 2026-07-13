@@ -1,0 +1,36 @@
+[
+	{
+		"id": "umbral_barrier",
+		"display_name": "Umbral Barrier",
+		"description": "Blocks the next attack that would deal damage to this unit. While it holds, units striking the carrier lose 1 Attack. A blocked strike reads as a Miss; a harmless whiff doesn't spend the Barrier.",
+		"beneficial": true,
+		"color": "8fd0ff",
+		"glyph": "◈",
+		"aura": true,
+		"decay": "intercept",
+		"stacking": "stack",
+		"max_stacks": 9,
+		"effects": [
+			{
+				"intercept": "damage",
+				"channel": "attack",
+				"role": "target",
+				"op": "mul",
+				"amount": 0
+			},
+			{
+				"trigger": {
+					"kind": "dual_event",
+					"event": "struck",
+					"destination_of": "self"
+				},
+				"targets": {
+					"kind": "participant",
+					"participant": "origin"
+				},
+				"attribute": "attack",
+				"amount": -1
+			}
+		]
+	}
+]

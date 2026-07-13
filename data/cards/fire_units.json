@@ -2,7 +2,7 @@
 	{
 		"id": "fire_pawn",
 		"display_name": "Fire Pawn",
-		"cost": 2,
+		"cost": 1,
 		"attack": 3,
 		"health": 3,
 		"speed": 1,
@@ -42,6 +42,9 @@
 		"display_name": "Fire Rook",
 		"chess_pieces": [
 			"rook"
+		],
+		"abilities": [
+			"warding_charge"
 		]
 	},
 	{

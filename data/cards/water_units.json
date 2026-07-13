@@ -2,7 +2,7 @@
 	{
 		"id": "water_pawn",
 		"display_name": "Water Pawn",
-		"cost": 2,
+		"cost": 1,
 		"attack": 1,
 		"health": 5,
 		"speed": 1,
@@ -42,6 +42,9 @@
 		"display_name": "Water Rook",
 		"chess_pieces": [
 			"rook"
+		],
+		"abilities": [
+			"tide_charge"
 		]
 	},
 	{

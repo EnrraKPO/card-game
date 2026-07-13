@@ -1,10 +1,14 @@
 [
 	{
 		"id": "light_pawn",
+		"display_name": "Light Pawn",
+		"cost": 0,
+		"attack": 1,
+		"health": 3,
+		"speed": 1,
 		"elements": [
 			"light"
 		],
-		"display_name": "Light Pawn",
 		"chess_pieces": [
 			"pawn"
 		]
@@ -38,6 +42,9 @@
 		"display_name": "Light Rook",
 		"chess_pieces": [
 			"rook"
+		],
+		"abilities": [
+			"radiant_charge"
 		]
 	},
 	{

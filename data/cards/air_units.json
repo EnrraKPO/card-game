@@ -1,0 +1,59 @@
+[
+	{
+		"id": "air_pawn",
+		"display_name": "Air Pawn",
+		"cost": 1,
+		"attack": 1,
+		"health": 3,
+		"speed": 4,
+		"elements": [
+			"air"
+		],
+		"chess_pieces": [
+			"pawn"
+		]
+	},
+	{
+		"id": "air_knight",
+		"elements": [
+			"air"
+		],
+		"display_name": "Air Knight",
+		"chess_pieces": [
+			"knight"
+		]
+	},
+	{
+		"id": "air_bishop",
+		"elements": [
+			"air"
+		],
+		"display_name": "Air Bishop",
+		"chess_pieces": [
+			"bishop"
+		]
+	},
+	{
+		"id": "air_rook",
+		"elements": [
+			"air"
+		],
+		"display_name": "Air Rook",
+		"chess_pieces": [
+			"rook"
+		],
+		"abilities": [
+			"gale_charge"
+		]
+	},
+	{
+		"id": "air_queen",
+		"elements": [
+			"air"
+		],
+		"display_name": "Air Queen",
+		"chess_pieces": [
+			"queen"
+		]
+	}
+]

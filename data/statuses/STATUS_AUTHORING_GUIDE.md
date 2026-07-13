@@ -135,13 +135,32 @@ amount before it commits.
 
 | Field | Meaning |
 |---|---|
-| `intercept` | The mutation stat to rewrite (e.g. `damage`) |
+| `intercept` | The mutation stat to rewrite (`damage`, `health`, `shield_pool`, `status`, a side stat, or an additive attribute) |
 | `channel` | Provenance filter: `attack` = a unit's strike; omit to match any channel (so e.g. an attack-only barrier ignores poison ticks and spell damage) |
 | `role` | Which side the holder must be: `source` (the causing unit — Blind) or `target` (the receiving unit — armor, barriers) |
 | `op` / `amount` | `mul` scales the amount (`0` = full block, reads as **Miss**); default add shifts it — negative is armor (`-3` shaves 3 off the hit), scaled by stacks |
 | `chance` | Optional roll per matching mutation |
 
 A `damage` amount is re-floored at 0 after every rewrite — a blocked strike is 0, never a heal.
+
+### A hit resolves in three interceptable passes
+
+`damage` is the hit's **pre-split total**. Once it settles, the Resolver apportions it
+shield-first, and each share becomes its own pending mutation **on the hit's channel** — the
+shield share as `shield_pool`, the health share as `health` — gated again before committing.
+Shares are always reductions (re-clamped at ≤ 0 after every rewrite, so "take less" can zero
+a wound but never flip it into a heal), and a rewritten share never redistributes to the
+other. So "block attack damage **that would reach Health**, letting shield absorption pass"
+is one interceptor, no sign conditions:
+
+```json
+{ "intercept": "health", "channel": "attack", "role": "target", "op": "mul", "amount": 0 }
+```
+
+That is **Stalwart Barrier** — and because a rewrite that changes nothing spends nothing, a
+hit fully eaten by the shield doesn't consume the charge (`decay: "intercept"`). Direct
+health changes (poison, heals) are `health` mutations on their own channels and never pass
+through the split.
 
 **Blind** is the canonical example — 50% chance the holder's own attack strike is multiplied
 to nothing; one charge spent per attack (`decay: "stacks"`, `decay_phase: "attack"`):

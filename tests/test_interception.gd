@@ -21,6 +21,54 @@ func run() -> void:
 	_legacy_roundtrip()
 	_native_roundtrip()
 	_authored_content_end_to_end()
+	_split_portion_gates()
+	_portion_no_reflow()
+
+
+func _split_portion_gates() -> void:
+	# A hit's shield/health shares run their OWN interception pass after the total settles
+	# (stat shield_pool / health, on the hit's channel) — the "damage that would reach
+	# Health" vocabulary. Authored end-to-end: Stalwart Barrier blocks the health share,
+	# lets absorption pass, and spends a charge only when it actually blocked.
+	var atk := unit("pawn")
+	atk.owner = 1
+	var tgt := unit("rook")   # 6 HP, 3 base shield
+	tgt.apply_status("stalwart_barrier", Effect.STATUS_DURATION_DEFAULT, 2, null)
+	# stacks are block CHARGES; the standing +1 is flat while held (container tracker)
+	check_eq(tgt.current_shield, 4, "stalwart folds a flat +1 onto the pool")
+	# Fully absorbed: the health share is 0 — nothing rewritten, no charge spent.
+	var absorbed := Resolver.submit(StatMutation.damage(tgt, 3, atk))
+	check_eq(absorbed.shield_absorbed, 3, "shield eats the whole hit")
+	check_eq(absorbed.health_damage, 0, "nothing reaches health")
+	var si := tgt.find_status("stalwart_barrier")
+	check(si != null and si.stacks == 2, "an absorbed hit spends NO stalwart charge")
+	# Piercing: pool 1 vs 4 damage → shares 1 shield / 3 health; the health share is
+	# rewritten to 0, absorption passes through untouched.
+	var pierced := Resolver.submit(StatMutation.damage(tgt, 4, atk))
+	check_eq(pierced.shield_absorbed, 1, "the shield share commits as split")
+	check_eq(pierced.health_damage, 0, "the health share is blocked by the portion gate")
+	check_eq(tgt.current_health, 6, "no wound landed")
+	si = tgt.find_status("stalwart_barrier")
+	check(si != null and si.stacks == 1, "the block spends one charge")
+	check(pierced.interceptions.size() == 1
+			and str(pierced.interceptions[0].get("owner_id", "")) == "stalwart_barrier",
+			"the portion rewrite is recorded for presentation")
+
+
+func _portion_no_reflow() -> void:
+	# Portions never redistribute: sparing the shield does not enlarge the wound. A
+	# run-scope interceptor zeroes the shield share; the health share stays as split.
+	_seed_run_set({"kind": "interceptor", "intercept": "shield_pool", "channel": "attack",
+			"of": {"participant": "target", "relation": "ally"}, "op": "mul", "amount": 0},
+			"relic", "aegis_lacquer")
+	var atk := unit("pawn")
+	atk.owner = 1
+	var mine := unit("rook")   # 3 shield
+	var hit := Resolver.submit(StatMutation.damage(mine, 4, atk))
+	check_eq(hit.shield_absorbed, 0, "the shield share is intercepted away")
+	check_eq(mine.current_shield, 3, "the pool is untouched")
+	check_eq(hit.health_damage, 1, "the health share stays as split (no re-flow)")
+	_clear_run_set()
 
 
 # Seeds the run set with one owned interceptor effect; caller MUST _clear_run_set() after.

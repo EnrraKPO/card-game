@@ -9,7 +9,19 @@ signal health_changed(current: int)
 
 var data: CardData
 var current_health: int : set = _set_current_health
-var current_shield: int
+
+# Shield mirrors the health pair: "max_shield" is the DERIVED base (card stat + baked
+# modifiers + live standing effects, recomputed on every read — see get_attribute), and
+# what's been absorbed this round is the stored state. The pool is their difference,
+# floored at 0 — so a standing bonus appearing mid-round raises the pool immediately, its
+# expiry lowers it, and absorbed damage stays absorbed through both (the same coupling
+# rule max_health changes use: preserve the damage, move the current with the max).
+var shield_spent: int = 0
+var current_shield: int:
+	get:
+		return maxi(0, get_attribute("max_shield") - shield_spent)
+	set(v):
+		shield_spent = get_attribute("max_shield") - v
 
 
 func _set_current_health(v: int) -> void:
@@ -50,7 +62,7 @@ static func from_data(card_data: CardData) -> CardInstance:
 	var inst := CardInstance.new()
 	inst.data = card_data
 	inst.current_health = card_data.health
-	inst.current_shield = card_data.shield
+	# shield_spent starts at 0 — the pool reads as the full effective base (max_shield)
 	return inst
 
 
@@ -66,6 +78,7 @@ func get_attribute(attr: String) -> int:
 		"speed":      return data.speed  + modifiers.get("speed",      0) + LiveEffects.bonus(self, "speed")
 		"cost":       return data.cost   + modifiers.get("cost",       0) + LiveEffects.bonus(self, "cost")
 		"shield":     return current_shield
+		"max_shield": return data.shield + modifiers.get("shield", 0) + LiveEffects.bonus(self, "max_shield")
 		# Read-only composition counts, so conditions can query merge room with the ordinary
 		# attribute/comparator form (e.g. a pawn material: piece_count <= 1). Never modified.
 		"piece_count":   return data.chess_pieces.size()

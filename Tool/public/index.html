@@ -11,6 +11,7 @@
 <div id="app">
   <header id="topbar">
     <div class="brand">⚒ CardGame Authoring</div>
+    <div id="type-tabs"></div>
     <div id="comfy-badge" class="badge" title="ComfyUI connection">ComfyUI: …</div>
     <button id="offer-rarity-btn" class="ghost" title="Tune how likely each card is to be offered as a reward">⚖ Offer Rarity</button>
     <button id="chat-btn" class="ghost" title="Chat with an AI to make blanket content edits">💬 AI edit</button>
@@ -18,14 +19,12 @@
   </header>
   <div id="main">
     <nav id="sidebar">
-      <div id="type-tabs"></div>
       <div id="item-list-wrap">
         <div id="item-list-head">
           <span id="item-list-title"></span>
           <button id="gen-set-btn" class="ghost" hidden title="Generate a whole composition family as individual cards">⚙ Set…</button>
           <button id="new-item-btn">+ New</button>
         </div>
-        <div id="kin-bar" hidden></div>
         <div id="item-list"></div>
       </div>
     </nav>
@@ -35,6 +34,7 @@
         <p>Everything you author lives in the Tool's own workspace. Nothing touches the
         game until you press <b>Install</b>, and <b>Uninstall</b> removes exactly what
         was installed.</p>
+        <div class="panel" id="empty-kin-panel" hidden></div>
       </div>
       <div id="editor-body" hidden>
         <div id="editor-toolbar">
