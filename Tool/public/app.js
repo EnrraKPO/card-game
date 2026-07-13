@@ -2456,6 +2456,110 @@ async function queueClear(which) {
   catch (e) { toast(e.message, 'err'); }
 }
 
+// ── 💬 edit chat: conversational blanket edits ────────────────────────────────
+// Talk to an LLM about the game's content; it answers with an ops plan the server
+// simulates + validates into a per-entry before/after PREVIEW. Nothing is written
+// until Apply — each applied entry then has the normal per-entry Revert. The
+// conversation lives in state.chat, so closing/reopening the modal keeps it.
+function openChatModal() {
+  if (!state.chat) state.chat = { log: [], busy: false };
+  renderChatModal();
+}
+
+// History as the server wants it: assistant turns replay the exact JSON they proposed,
+// so follow-ups ("also make them cost 2") have the prior plan in context.
+function chatHistoryPayload() {
+  return state.chat.log
+    .filter(m => !m.failed)
+    .map(m => ({ role: m.role,
+      content: m.role === 'assistant' ? JSON.stringify({ reply: m.reply || '', ops: m.ops || [] }) : m.text }));
+}
+
+function renderChatMsg(m) {
+  if (m.role === 'user') return el('div', { class: 'chat-msg user', text: m.text });
+  const parts = [];
+  if (m.reply) parts.push(el('div', { class: 'chat-reply', text: m.reply }));
+  if (m.warning) parts.push(el('div', { class: 'chat-warning', text: '⚠ ' + m.warning }));
+  if (m.changes && m.changes.length) {
+    const list = el('div', { class: 'chat-changes' },
+      m.changes.map(c => el('div', { class: 'chat-change' },
+        el('b', { text: `${c.type}/${c.id}` }),
+        el('span', { class: 'subtle', text: ' · ' + c.file }),
+        (c.notes || []).map(n => el('div', { class: 'chat-note', text: n })))));
+    parts.push(list);
+    if (m.applyResult) {
+      const a = m.applyResult;
+      parts.push(el('div', { class: 'chat-applied', text: `✔ applied ${a.applied.length}`
+        + (a.skipped.length ? ` — skipped ${a.skipped.map(x => `${x.entry} (${x.error})`).join(', ')}` : '') }));
+    } else {
+      parts.push(el('button', { class: 'primary', text: `Apply ${m.changes.length} ${m.changes.length === 1 ? 'entry' : 'entries'}`,
+        disabled: state.chat.busy, onclick: () => applyChatChanges(m) }));
+    }
+  }
+  return el('div', { class: 'chat-msg assistant' }, parts.length ? parts : el('div', { class: 'subtle', text: '(empty reply)' }));
+}
+
+function renderChatModal() {
+  const c = state.chat;
+  const logEl = el('div', { class: 'chat-log' }, c.log.map(renderChatMsg));
+  if (c.busy) logEl.append(el('div', { class: 'chat-msg assistant chat-busy', text: '… thinking' }));
+  if (!c.log.length) logEl.append(el('div', { class: 'empty-hint', style: 'margin:auto; text-align:center' },
+    el('p', { text: 'Ask for blanket edits in plain words — "all pawns cost 2 mana, water pawns get +2 health" — or just ask questions about the content.' })));
+  const input = el('textarea', { class: 'chat-input', rows: 2, placeholder: 'Describe the change… (Enter sends, Shift+Enter = newline)',
+    value: c.pending || '',
+    oninput: e => { c.pending = e.target.value; },
+    onkeydown: e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); } } });
+  const modal = el('div', { class: 'modal chat-modal' },
+    el('div', { class: 'modal-header' },
+      el('h2', {}, '💬 AI blanket edits'),
+      el('button', { class: 'ghost tiny', text: 'Clear chat', disabled: c.busy,
+        onclick: () => { state.chat = { log: [], busy: false }; renderChatModal(); } }),
+      el('button', { class: 'modal-x', title: 'Close (keeps the conversation)', onclick: () => $('modal-root').replaceChildren() }, '✕')),
+    el('div', { class: 'hint', text: 'Proposed edits preview here and touch nothing until you press Apply. '
+      + 'Applied entries get the normal per-entry Revert in their editors.' }),
+    logEl,
+    el('div', { class: 'chat-send-row' }, input,
+      el('button', { class: 'primary', text: 'Send', disabled: c.busy, onclick: sendChat })));
+  $('modal-root').replaceChildren(modal);
+  logEl.scrollTop = logEl.scrollHeight;
+  input.focus();
+}
+
+async function sendChat() {
+  const c = state.chat;
+  const text = (c.pending || '').trim();
+  if (!text || c.busy) return;
+  c.log.push({ role: 'user', text });
+  c.pending = '';
+  c.busy = true;
+  renderChatModal();
+  try {
+    const r = await api('/api/chat/edit', { messages: chatHistoryPayload() });
+    c.log.push({ role: 'assistant', reply: r.reply, ops: r.ops || [], changes: r.changes || [], warning: r.warning });
+  } catch (e) {
+    // failed turns stay visible but are excluded from the replayed history
+    c.log.push({ role: 'assistant', reply: '', failed: true, warning: e.message });
+  }
+  c.busy = false;
+  renderChatModal();
+}
+
+async function applyChatChanges(m) {
+  const c = state.chat;
+  if (c.busy) return;
+  c.busy = true;
+  renderChatModal();
+  try {
+    const r = await api('/api/chat/apply', { changes: m.changes });
+    m.applyResult = r;
+    toast(r.skipped.length ? `Applied ${r.applied.length}, skipped ${r.skipped.length}.` : `Applied ${r.applied.length} entries.`,
+      r.skipped.length ? 'err' : undefined);
+    await refreshState(true);
+  } catch (e) { toast(e.message, 'err'); }
+  c.busy = false;
+  renderChatModal();
+}
+
 // ── boot ─────────────────────────────────────────────────────────────────────
 $('new-item-btn').addEventListener('click', newItem);
 $('gen-set-btn').addEventListener('click', openSetGenerator);
@@ -2470,6 +2574,7 @@ $('enabled-check').addEventListener('change', e => {
 $('delete-btn').addEventListener('click', deleteItem);
 $('settings-btn').addEventListener('click', openSettings);
 $('offer-rarity-btn').addEventListener('click', openOfferRarityModal);
+$('chat-btn').addEventListener('click', openChatModal);
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && state.advancedOpen) closeAdvanced();
 });

@@ -1865,12 +1865,11 @@ function mineEffectExamples(type, cap) {
 }
 
 // The effect grammar, spelled for a code model. Status ids are live vocab.
-function effectsSystemPrompt() {
+// Shared verbatim between ✨ effects-from-words and the 💬 edit chat (which writes
+// effect objects as op VALUES) — one grammar, two wrappers.
+function effectsGrammarLines() {
   const statusIds = listGameEntries('status').map(e => e.id);
   return [
-    "You translate a game designer's plain-English effect description into the game's effect JSON.",
-    'Respond with ONLY a JSON array of effect objects — no prose, no markdown fences.',
-    '',
     'An effect object takes ONE of these forms:',
     '1. TRIGGERED — reacts to an event:',
     '   {"trigger": <trigger>, "targets": <targets>, plus a payload: "attribute" one of',
@@ -1918,11 +1917,21 @@ function effectsSystemPrompt() {
     '  ONE effect object has ONE targets — payloads aimed at different recipients (e.g.',
     '  "poison the target and gain shield" = destination + self) MUST be separate objects,',
     '  each repeating the trigger.',
+  ];
+}
+
+function effectsSystemPrompt() {
+  return [
+    "You translate a game designer's plain-English effect description into the game's effect JSON.",
+    'Respond with ONLY a JSON array of effect objects — no prose, no markdown fences.',
+    '',
+    ...effectsGrammarLines(),
   ].join('\n');
 }
 
-// Strip think blocks / fences, then parse the first JSON array (or lone object) found.
-function extractJsonEffects(response) {
+// Strip think blocks / fences, then parse the first JSON value found (shrinking from
+// the right until something parses — tolerates trailing prose).
+function extractJson(response) {
   let s = String(response || '')
     .replace(/<think>[\s\S]*?<\/think>/g, '')
     .replace(/```(?:json)?/g, '');
@@ -1932,11 +1941,15 @@ function extractJsonEffects(response) {
     const cand = s.slice(start, end).trim();
     if (!cand.endsWith(']') && !cand.endsWith('}')) continue;
     try {
-      const v = JSON.parse(cand);
-      return Array.isArray(v) ? v : [v];
+      return JSON.parse(cand);
     } catch (e) { /* keep shrinking */ }
   }
   throw new Error('unparseable JSON in the reply');
+}
+
+function extractJsonEffects(response) {
+  const v = extractJson(response);
+  return Array.isArray(v) ? v : [v];
 }
 
 // Generate → validate → feed the error back, up to 3 attempts. Never throws on a
@@ -1976,6 +1989,241 @@ async function llmEffectsFromText(type, text) {
     user += `\nYou replied: ${JSON.stringify(effects)}\nThe validator rejected it: ${err}\nFix that and reply with ONLY the corrected JSON array.`;
   }
   return { effects: best || [], warning: lastErr, attempts: 3 };
+}
+
+// ── 💬 edit chat: conversational blanket edits over the game's content ────────
+// The designer chats ("all pawns cost 2 mana; water pawns +2 health"); the LLM
+// answers with an OPERATIONS PLAN — four JSON-shape verbs (set / delete / append /
+// remove) against entry ids — never with rewritten entries, so fields it doesn't
+// name physically cannot change. Ops are simulated on copies, validateItem gates
+// every touched entry (errors feed a retry, like ✨ effects), and NOTHING is written
+// until the user applies the previewed result; each applied entry goes through
+// applyGameEdit, so the normal per-entry snapshot/Revert machinery covers chat edits.
+const CHAT_OPS = ['set', 'delete', 'append', 'remove'];
+
+// One catalog line per entry: every top-level field as k=v (JSON, truncated), effects
+// as indexed plain-words summaries (the index is the LLM's handle for remove/dot-paths).
+// `tool` metadata (art recipes) is noise for content edits and huge — always dropped.
+const CHAT_SKIP_FIELDS = new Set(['id', 'display_name', 'effects', 'tool']);
+function chatFieldValue(v) {
+  const s = JSON.stringify(v);
+  return s.length > 200 ? s.slice(0, 200) + '…' : s;
+}
+function chatCatalog() {
+  const lines = [];
+  for (const type of Object.keys(TYPES)) {
+    const entries = listGameEntries(type);
+    if (!entries.length) continue;
+    lines.push(`## ${type} (${entries.length} entries)`);
+    for (const e of entries) {
+      const d = e.data;
+      const parts = [];
+      if (d.display_name && d.display_name !== e.id) parts.push(JSON.stringify(d.display_name));
+      for (const [k, v] of Object.entries(d)) {
+        if (CHAT_SKIP_FIELDS.has(k) || v === null || v === undefined) continue;
+        parts.push(`${k}=${chatFieldValue(v)}`);
+      }
+      const fx = Array.isArray(d.effects) ? d.effects : [];
+      if (fx.length) {
+        const noun = FX_OWNER_NOUN[type] || 'the holder';
+        parts.push('effects=[' + fx.map((x, i) => `${i}: ${describeEffect(x, noun)}`).join(' | ') + ']');
+      }
+      lines.push(`- ${e.id}: ${parts.join(' ')}`);
+    }
+  }
+  return lines.join('\n');
+}
+
+function chatSystemPrompt() {
+  return [
+    "You are the content-editing assistant inside a card game's authoring tool.",
+    'The designer chats with you to make blanket edits across the game content database.',
+    'Every turn you receive the full content catalog and the conversation so far.',
+    'Respond with ONLY a JSON object — no prose, no markdown fences — in ONE of these forms:',
+    '1. {"reply": "<your answer to the designer>", "ops": [<op>, ...]}',
+    '   Propose edits. "reply" says what you did in plain words; empty ops = a pure chat',
+    '   answer (questions, advice, asking the designer to clarify).',
+    '2. {"reply": "...", "need": [{"type": "<content type>", "ids": ["..."]}]}',
+    '   Ask to see the FULL JSON of specific entries first, when a catalog line is too',
+    '   terse for the edit (e.g. a truncated field). They arrive on your next turn.',
+    '',
+    'An op edits ONE field across MANY entries:',
+    '  {"type": "<content type>", "ids": ["<entry id>", ...], "op": "set"|"delete"|"append"|"remove",',
+    '   "field": "<name or dot.path like effects.0.amount>", "value": <any JSON>?, "index": <n>?}',
+    '- set: write "value" at "field" (creates the field if new).',
+    '- delete: remove the field entirely.',
+    '- append: push "value" onto the LIST at "field" (creates the list if absent).',
+    '- remove: delete the item at "index" from the LIST at "field".',
+    `Content types: ${Object.keys(TYPES).join(', ')}. ids must come from the catalog.`,
+    'You cannot create or delete entries, and ops must never change an "id".',
+    'To take an entry out of the game, set enabled=false (the game skips disabled entries).',
+    'Only propose what the designer asked for — no extra "improvements".',
+    '',
+    'When a value you write is an effect object (an item of an "effects" list), use the',
+    'effect grammar below. The catalog shows current effects as "<index>: <plain words>".',
+    '',
+    ...effectsGrammarLines(),
+  ].join('\n');
+}
+
+// Walk a dot path to its parent container; numeric segments index arrays.
+function chatResolveParent(root, field) {
+  const segs = String(field).split('.');
+  let cur = root;
+  for (let i = 0; i < segs.length - 1; i++) {
+    const k = Array.isArray(cur) ? Number(segs[i]) : segs[i];
+    const ok = Array.isArray(cur) ? Number.isInteger(k) && k >= 0 && k < cur.length
+      : cur != null && typeof cur === 'object' && k in cur;
+    if (!ok) throw new Error(`path "${field}" has nothing at "${segs[i]}"`);
+    cur = cur[k];
+  }
+  if (cur == null || typeof cur !== 'object') throw new Error(`path "${field}" does not lead into an object or list`);
+  return { parent: cur, key: Array.isArray(cur) ? Number(segs[segs.length - 1]) : segs[segs.length - 1] };
+}
+
+// Apply one op to one entry's data IN PLACE. Throws a designer-readable message.
+function applyChatOp(data, op) {
+  const { parent, key } = chatResolveParent(data, op.field);
+  const isList = Array.isArray(parent);
+  if (isList && !(Number.isInteger(key) && key >= 0 && key < parent.length))
+    throw new Error(`"${op.field}" is not an existing list index`);
+  switch (op.op) {
+    case 'set':
+      parent[key] = op.value;
+      return;
+    case 'delete':
+      if (isList) parent.splice(key, 1);
+      else if (key in parent) delete parent[key];
+      else throw new Error(`no field "${op.field}" to delete`);
+      return;
+    case 'append': {
+      if (parent[key] === undefined && !isList) parent[key] = [];
+      if (!Array.isArray(parent[key])) throw new Error(`"${op.field}" is not a list`);
+      parent[key].push(op.value);
+      return;
+    }
+    case 'remove': {
+      if (!Array.isArray(parent[key])) throw new Error(`"${op.field}" is not a list`);
+      const i = op.index;
+      if (!(Number.isInteger(i) && i >= 0 && i < parent[key].length))
+        throw new Error(`"index" ${i} is out of range for "${op.field}" (${parent[key].length} items)`);
+      parent[key].splice(i, 1);
+      return;
+    }
+  }
+}
+
+// Simulate an ops plan against copies of the current entries. Returns the touched
+// entries as { type, id, file, before, after }; throws a message the retry feeds back.
+function simulateChatOps(ops) {
+  const touched = new Map();
+  for (let i = 0; i < ops.length; i++) {
+    const op = ops[i] || {};
+    const where = `op ${i + 1}`;
+    if (!TYPES[op.type]) throw new Error(`${where}: unknown type "${op.type}"`);
+    if (!CHAT_OPS.includes(op.op)) throw new Error(`${where}: unknown op "${op.op}" (set/delete/append/remove)`);
+    if (typeof op.field !== 'string' || !op.field) throw new Error(`${where}: missing "field"`);
+    const ids = Array.isArray(op.ids) ? op.ids : [];
+    if (!ids.length) throw new Error(`${where}: "ids" must name at least one entry`);
+    for (const id of ids) {
+      const key = op.type + '/' + id;
+      let t = touched.get(key);
+      if (!t) {
+        const found = findGameEntry(op.type, id);
+        if (!found) throw new Error(`${where}: no ${op.type} "${id}" in the game`);
+        t = { type: op.type, id, file: found.file, before: found.data, after: JSON.parse(JSON.stringify(found.data)) };
+        touched.set(key, t);
+      }
+      try { applyChatOp(t.after, op); } catch (e) { throw new Error(`${where} on ${key}: ${e.message}`); }
+      if (t.after.id !== id) throw new Error(`${where} on ${key}: ops must never change "id"`);
+    }
+  }
+  return [...touched.values()];
+}
+
+// Human-readable per-entry diff lines for the preview ("cost: 1 → 2", "effects + …").
+function chatChangeNotes(type, before, after) {
+  const notes = [];
+  const noun = FX_OWNER_NOUN[type] || 'the holder';
+  for (const k of new Set([...Object.keys(before), ...Object.keys(after)])) {
+    const a = before[k], b = after[k];
+    if (JSON.stringify(a) === JSON.stringify(b)) continue;
+    if (k === 'effects') {
+      const av = (Array.isArray(a) ? a : []).map(x => describeEffect(x, noun));
+      const bv = (Array.isArray(b) ? b : []).map(x => describeEffect(x, noun));
+      for (const s of bv.filter(x => !av.includes(x))) notes.push(`effects + ${s}`);
+      for (const s of av.filter(x => !bv.includes(x))) notes.push(`effects − ${s}`);
+      continue;
+    }
+    const fmt = v => v === undefined ? '(none)' : chatFieldValue(v);
+    notes.push(`${k}: ${fmt(a)} → ${fmt(b)}`);
+  }
+  return notes;
+}
+
+// One chat turn: catalog + conversation → parsed ops → simulate → validate, feeding
+// parse/op/validation errors back for up to 6 total generations. A `need` request
+// (full entry JSON) also consumes a generation. Persistent failure returns NO changes
+// — invalid edits are unappliable, so the designer just rephrases.
+async function llmChatEdit(messages) {
+  const s = getSettings();
+  const system = chatSystemPrompt();
+  const convo = messages.map(m => (m.role === 'assistant' ? 'Assistant: ' : 'Designer: ') + m.content).join('\n');
+  let user = ['The content catalog (one line per entry):', chatCatalog(), '',
+    'Conversation:', convo, '', 'Reply with ONLY the JSON object.'].join('\n');
+  let reply = '', lastErr = null;
+  for (let attempt = 1; attempt <= 6; attempt++) {
+    const out = await llmGenerate({
+      model: s.effectsModel || EFFECTS_MODEL_DEFAULT,
+      system, prompt: user,
+      options: { temperature: 0.2, num_predict: 4000 },
+    });
+    let msg;
+    try {
+      msg = extractJson(out.response);
+      if (Array.isArray(msg) || typeof msg !== 'object' || msg === null) throw new Error('the reply must be one JSON object');
+    } catch (e) {
+      lastErr = e.message;
+      user += `\nYour previous reply was not usable (${e.message}). Reply with ONLY the JSON object.`;
+      continue;
+    }
+    reply = typeof msg.reply === 'string' ? msg.reply : '';
+    if (Array.isArray(msg.need) && msg.need.length) {
+      const chunks = [];
+      for (const n of msg.need) {
+        if (!TYPES[n && n.type]) continue;
+        for (const id of (Array.isArray(n.ids) ? n.ids : []).slice(0, 40)) {
+          const found = findGameEntry(n.type, id);
+          if (!found) { chunks.push(`${n.type}/${id}: (not found)`); continue; }
+          const full = Object.assign({}, found.data);
+          delete full.tool;
+          chunks.push(`${n.type}/${id}: ${JSON.stringify(full)}`);
+        }
+      }
+      user += `\nFull JSON of the entries you asked for:\n${chunks.join('\n') || '(none matched)'}\nNow reply with ONLY the JSON object.`;
+      continue;
+    }
+    const ops = Array.isArray(msg.ops) ? msg.ops : [];
+    if (!ops.length) return { reply, ops: [], changes: [], attempts: attempt };
+    let changes;
+    try {
+      changes = simulateChatOps(ops);
+    } catch (e) {
+      lastErr = e.message;
+      user += `\nYou replied: ${JSON.stringify(msg)}\nApplying those ops failed: ${e.message}\nFix the ops and reply with ONLY the JSON object.`;
+      continue;
+    }
+    const errs = changes
+      .map(c => { const err = validateItem(c.type, c.after); return err ? `${c.type}/${c.id}: ${err}` : null; })
+      .filter(Boolean);
+    if (!errs.length) {
+      for (const c of changes) c.notes = chatChangeNotes(c.type, c.before, c.after);
+      return { reply, ops, changes, attempts: attempt };
+    }
+    lastErr = errs.join('; ');
+    user += `\nYou replied: ${JSON.stringify(msg)}\nThe validator rejected the result: ${lastErr}\nFix the ops and reply with ONLY the JSON object.`;
+  }
+  return { reply, ops: [], changes: [], warning: lastErr || 'no usable reply', attempts: 6 };
 }
 
 // Copies the workspace-generated image to the game's asset path for this entry, backing up
@@ -3220,6 +3468,43 @@ async function handle(req, res) {
       } catch (e) {
         return send(res, 502, { error: e.message });
       }
+    }
+    // 💬 edit chat: one conversational turn → ops plan simulated + validated into a
+    // PREVIEW ({changes}); nothing touches the game until /api/chat/apply.
+    if (p === '/api/chat/edit' && req.method === 'POST') {
+      const { messages } = await readBody(req);
+      const list = (Array.isArray(messages) ? messages : [])
+        .filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content.trim())
+        .slice(-24);
+      if (!list.length || list[list.length - 1].role !== 'user')
+        return send(res, 400, { error: 'messages must end with a non-empty user message' });
+      try {
+        const result = await runPromptInQueue('💬 Edit chat', { type: null, id: null }, () => llmChatEdit(list));
+        return send(res, 200, Object.assign({ ok: true }, result));
+      } catch (e) {
+        return send(res, 502, { error: e.message });
+      }
+    }
+    // Apply a previewed chat proposal. Each entry rides applyGameEdit (snapshot + revert);
+    // an entry that changed since its preview is refused, the rest still apply.
+    if (p === '/api/chat/apply' && req.method === 'POST') {
+      const { changes } = await readBody(req);
+      if (!Array.isArray(changes) || !changes.length) return send(res, 400, { error: 'no changes' });
+      const applied = [], skipped = [];
+      for (const c of changes) {
+        const label = `${c && c.type}/${c && c.id}`;
+        try {
+          if (!c || !TYPES[c.type] || !validId(c.id) || !c.after || c.after.id !== c.id)
+            throw new Error('malformed change');
+          const cur = findGameEntry(c.type, c.id);
+          if (!cur) throw new Error('entry no longer exists');
+          if (JSON.stringify(cur.data) !== JSON.stringify(c.before))
+            throw new Error('entry changed since this preview — ask the chat again');
+          applyGameEdit(c.type, c.id, c.after, false);
+          applied.push(label);
+        } catch (e) { skipped.push({ entry: label, error: e.message }); }
+      }
+      return send(res, 200, { ok: !skipped.length, applied, skipped });
     }
     // Stash a user-provided external image in the workspace as generation reference input.
     if (p === '/api/art/upload-ref' && req.method === 'POST') {

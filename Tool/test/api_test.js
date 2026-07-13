@@ -324,6 +324,107 @@ async function main() {
     check('empty text rejected', r.status === 400);
     await api('/api/game/delete-entry', { type: 'card', id: 'apitest_fx_example' });
     fakeFx.close();
+
+    // ── 💬 edit chat: ops plan → simulate + validate → preview → apply ──
+    const chatReqs = []; let chatQueue = [];
+    const fakeChat = require('http').createServer((rq, rs) => {
+      let b = ''; rq.on('data', c => b += c);
+      rq.on('end', () => {
+        chatReqs.push(JSON.parse(b));
+        rs.setHeader('Content-Type', 'application/json');
+        rs.end(JSON.stringify({ response: chatQueue.shift() || '{}' }));
+      });
+    });
+    await new Promise(ok => fakeChat.listen(8485, ok));
+    await api('/api/settings', { ollamaUrl: 'http://127.0.0.1:8485', effectsModel: 'chatmodel' });
+    await api('/api/game/save', { type: 'card', file: 'chattest_units.json', data: {
+      id: 'chat_pawn_a', display_name: 'Chat Pawn A', cost: 1, attack: 1, health: 2, speed: 3, chess_pieces: ['pawn'] } });
+    await api('/api/game/save', { type: 'card', file: 'chattest_units.json', data: {
+      id: 'chat_pawn_b', display_name: 'Chat Pawn B', cost: 1, attack: 1, health: 2, speed: 3, chess_pieces: ['pawn'] } });
+    const DRAW_FX = { trigger: { kind: 'event', event: 'death', of: 'self' }, targets: { kind: 'self' }, attribute: 'attack', amount: 1 };
+
+    // a full blanket edit: one op across both pawns + one append on a single pawn
+    chatQueue = ['<think>ok</think>```json\n' + JSON.stringify({ reply: 'Done.', ops: [
+      { type: 'card', ids: ['chat_pawn_a', 'chat_pawn_b'], op: 'set', field: 'cost', value: 2 },
+      { type: 'card', ids: ['chat_pawn_b'], op: 'append', field: 'effects', value: DRAW_FX },
+    ] }) + '\n```'];
+    r = await api('/api/chat/edit', { messages: [{ role: 'user', content: 'all chat pawns cost 2' }] });
+    const proposal = r.data;
+    check('chat returns a validated preview', r.status === 200 && proposal.ok && proposal.attempts === 1
+      && proposal.reply === 'Done.' && proposal.changes.length === 2, JSON.stringify(r.data).slice(0, 400));
+    const chA = proposal.changes.find(c => c.id === 'chat_pawn_a'), chB = proposal.changes.find(c => c.id === 'chat_pawn_b');
+    check('preview carries before/after + notes', chA.before.cost === 1 && chA.after.cost === 2
+      && chB.after.effects.length === 1 && chA.notes.some(n => /cost: 1 → 2/.test(n))
+      && chB.notes.some(n => /effects \+/.test(n)), JSON.stringify({ a: chA.notes, b: chB.notes }));
+    check('preview writes NOTHING to game files', readSbox('data/cards/chattest_units.json')[0].cost === 1);
+    let chatReq = chatReqs[chatReqs.length - 1];
+    check('chat request: model + ops grammar + effect grammar + catalog + conversation',
+      chatReq.model === 'chatmodel' && /"set"\|"delete"\|"append"\|"remove"/.test(chatReq.system)
+      && /An effect object takes ONE of these forms/.test(chatReq.system)
+      && /- chat_pawn_a: .*cost=1/.test(chatReq.prompt) && /Designer: all chat pawns cost 2/.test(chatReq.prompt));
+
+    // a pure chat answer proposes nothing
+    chatQueue = [JSON.stringify({ reply: 'You have two chat pawns.', ops: [] })];
+    r = await api('/api/chat/edit', { messages: [{ role: 'user', content: 'how many chat pawns?' }] });
+    check('pure chat answer has no changes', r.data.ok && r.data.reply === 'You have two chat pawns.' && r.data.changes.length === 0);
+
+    // "need" fetches full entry JSON, then ops arrive on the next generation
+    chatQueue = [JSON.stringify({ reply: '', need: [{ type: 'card', ids: ['chat_pawn_a'] }] }),
+      JSON.stringify({ reply: 'ok', ops: [{ type: 'card', ids: ['chat_pawn_a'], op: 'set', field: 'speed', value: 4 }] })];
+    r = await api('/api/chat/edit', { messages: [{ role: 'user', content: 'x' }] });
+    check('need loop feeds full JSON then accepts ops', r.data.attempts === 2 && r.data.changes[0].after.speed === 4
+      && chatReqs[chatReqs.length - 1].prompt.includes('"display_name":"Chat Pawn A"'), JSON.stringify(r.data).slice(0, 300));
+
+    // a broken op is retried with the error fed back
+    chatQueue = [JSON.stringify({ reply: 'x', ops: [{ type: 'card', ids: ['nope'], op: 'set', field: 'cost', value: 2 }] }),
+      JSON.stringify({ reply: 'fixed', ops: [{ type: 'card', ids: ['chat_pawn_a'], op: 'set', field: 'cost', value: 2 }] })];
+    r = await api('/api/chat/edit', { messages: [{ role: 'user', content: 'x' }] });
+    check('bad op retries with the failure fed back', r.data.attempts === 2 && r.data.reply === 'fixed'
+      && chatReqs[chatReqs.length - 1].prompt.includes('no card "nope"'), JSON.stringify(r.data).slice(0, 300));
+
+    // a result that fails validateItem is retried; persistent failure returns NO changes
+    const BAD_OP = JSON.stringify({ reply: 'x', ops: [{ type: 'card', ids: ['chat_pawn_a'], op: 'delete', field: 'cost' }] });
+    chatQueue = [BAD_OP, BAD_OP, BAD_OP, BAD_OP, BAD_OP, BAD_OP];
+    r = await api('/api/chat/edit', { messages: [{ role: 'user', content: 'x' }] });
+    check('persistently invalid plan yields warning and no changes',
+      r.data.ok && r.data.changes.length === 0 && /missing stat "cost"/.test(r.data.warning || ''), JSON.stringify(r.data).slice(0, 300));
+    check('validator error was fed back to the model',
+      chatReqs[chatReqs.length - 1].prompt.includes('missing stat "cost"'));
+
+    r = await api('/api/chat/edit', { messages: [] });
+    check('empty chat rejected', r.status === 400);
+
+    // apply the first proposal: entries write through the normal edit machinery
+    r = await api('/api/chat/apply', { changes: proposal.changes });
+    check('apply writes both entries', r.data.ok && r.data.applied.length === 2 && r.data.skipped.length === 0, JSON.stringify(r.data));
+    let chatFile = readSbox('data/cards/chattest_units.json');
+    check('applied values landed', chatFile[0].cost === 2 && chatFile[1].cost === 2 && chatFile[1].effects.length === 1);
+    r = await api('/api/game/item?type=card&id=chat_pawn_a');
+    check('applied entry is a recorded (revertible) edit', r.data.edited === true);
+
+    // re-applying the SAME preview is refused: the entries changed since it was taken
+    r = await api('/api/chat/apply', { changes: proposal.changes });
+    check('stale preview refused per entry', !r.data.ok && r.data.applied.length === 0
+      && r.data.skipped.length === 2 && /changed since this preview/.test(r.data.skipped[0].error), JSON.stringify(r.data));
+
+    // revert rides the normal edit records: an entry the tool ADDED reverts by removal…
+    r = await api('/api/game/restore', { type: 'card', id: 'chat_pawn_a' });
+    check('reverting a chat edit on a tool-added entry removes it',
+      r.status === 200 && !readSbox('data/cards/chattest_units.json').some(e => e.id === 'chat_pawn_a'));
+    // …and a PRE-EXISTING entry reverts to its original values
+    r = await api('/api/game/item?type=card&id=pawn');
+    const pawnBefore = r.data.data;
+    const pawnAfter = JSON.parse(JSON.stringify(pawnBefore));
+    pawnAfter.cost = 2;
+    r = await api('/api/chat/apply', { changes: [{ type: 'card', id: 'pawn', file: 'base.json', before: pawnBefore, after: pawnAfter }] });
+    check('chat apply works on pre-existing entries', r.data.ok && r.data.applied.length === 1, JSON.stringify(r.data));
+    check('pre-existing entry updated', readSbox('data/cards/base.json').find(e => e.id === 'pawn').cost === 2);
+    r = await api('/api/game/restore', { type: 'card', id: 'pawn' });
+    check('chat edit reverts like any edit', r.status === 200
+      && readSbox('data/cards/base.json').find(e => e.id === 'pawn').cost === 1);
+
+    await api('/api/game/delete-entry', { type: 'card', id: 'chat_pawn_b' });
+    fakeChat.close();
     // point Ollama back at 8479 — the multi-image fallback tests below reuse that port
     await api('/api/settings', { ollamaUrl: 'http://127.0.0.1:8479' });
 

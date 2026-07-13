@@ -633,6 +633,43 @@ async function main() {
       .find(b => b.textContent === 'Cancel').click());
     await sleep(120);
 
+    // ═══ 💬 edit chat: send → preview (writes nothing) → apply ═══
+    const chatUiReplies = [JSON.stringify({ reply: 'Pawns now cost 2.', ops: [
+      { type: 'card', ids: ['pawn', 'lone_pawn'], op: 'set', field: 'cost', value: 2 }] })];
+    const fakeChatUi = require('http').createServer((rq, rs) => {
+      let b = ''; rq.on('data', c => b += c);
+      rq.on('end', () => { rs.setHeader('Content-Type', 'application/json');
+        rs.end(JSON.stringify({ response: chatUiReplies.shift() || '{}' })); });
+    });
+    await new Promise(ok => fakeChatUi.listen(8489, ok));
+    await fetch(BASE + '/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ollamaUrl: 'http://127.0.0.1:8489' }) });
+    const pawnCostBefore = readSbox('data/cards/base.json').find(e => e.id === 'pawn').cost;
+    await page.click('#chat-btn'); await sleep(200);
+    check('chat modal opens', await page.evaluate(() => !!document.querySelector('.chat-modal')));
+    await page.type('.chat-input', 'all pawns cost 2');
+    await page.keyboard.press('Enter');
+    await sleep(1500);
+    await shot('20_chat_preview');
+    check('chat preview lists the touched entries with diffs', await page.evaluate(() => {
+      const m = document.querySelector('.chat-modal');
+      return !!m && m.textContent.includes('Pawns now cost 2.')
+        && m.querySelectorAll('.chat-change').length === 2
+        && /cost: .+ → 2/.test(m.textContent);
+    }));
+    check('preview applied nothing', readSbox('data/cards/base.json').find(e => e.id === 'pawn').cost === pawnCostBefore);
+    await page.evaluate(() => [...document.querySelectorAll('.chat-modal button')]
+      .find(b => /^Apply 2/.test(b.textContent)).click());
+    await sleep(700);
+    check('chat apply writes the entries', readSbox('data/cards/base.json').find(e => e.id === 'pawn').cost === 2
+      && readSbox('data/cards/base.json').find(e => e.id === 'lone_pawn').cost === 2);
+    check('apply confirms in the log', await page.evaluate(() =>
+      /✔ applied 2/.test(document.querySelector('.chat-modal').textContent)));
+    await shot('21_chat_applied');
+    await page.evaluate(() => document.querySelector('.chat-modal .modal-x').click());
+    await sleep(120);
+    fakeChatUi.close();
+
     check('no page errors during the whole run', errors.length === 0, errors.slice(0, 5).join(' | '));
   } catch (e) {
     failures++;

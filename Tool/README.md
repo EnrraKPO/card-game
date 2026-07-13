@@ -49,6 +49,16 @@ The tool is part of the game ecosystem — seamless and organic:
   builder as ordinary editable rows — check the plain-words restatement; if validation
   still objects, the best attempt lands anyway with the error as a toast (the save gate
   keeps final say).
+- **💬 AI edit** (topbar): a chat for blanket edits across ALL content types — "all
+  pawns cost 2 mana, water pawns get +2 health". The LLM sees a compact catalog (every
+  entry as one line: fields + plain-words effect summaries) and answers with an
+  OPERATIONS PLAN — four JSON verbs (`set`/`delete`/`append`/`remove` on a field or
+  dot-path) against entry ids — never rewritten entries, so fields it doesn't name
+  can't change. It can request full entry JSON when a catalog line is too terse, and
+  it writes effect values in the same validated effect grammar as ✨ from words. Ops
+  are simulated + validated server-side (errors feed retries); the reply is a per-entry
+  before/after preview that touches nothing until **Apply**, and applied entries carry
+  the normal per-entry Revert. Pure questions work too (empty ops = just an answer).
 
 ## Art (ComfyUI)
 
