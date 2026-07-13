@@ -16,13 +16,13 @@ const TOP_MARGIN := 12.0   # the body's top inset; another _resize_board height-
 enum Phase { CPU_PLACE, PLAYER_PLACE, COMBAT, TARGETING }
 
 var _phase: Phase = Phase.CPU_PLACE
-var _mana: int    = 0
-var _max_mana: int = 0
-var _enemy_mana: int = 0
 var _turn: int    = 0
 
-var _enemy_hand: Array = []       # Array[CardInstance]
-var _enemy_draw_pile: Array = []  # Array[CardInstance]
+# The two sides' resource state (mana / hand / draw pile) — one object each, mutated ONLY
+# through Resolver.submit (side stats: draw/discard/mana/max_mana). The player's Hand bar
+# and the mana gauge subscribe to the player side's signals; the enemy side has no watchers.
+var _player_side: CombatSide
+var _enemy_side: CombatSide
 
 var _mana_label: Label              # current-mana number on the vertical gauge
 var _mana_chunks_box: VBoxContainer  # one chunk per max-mana point; lit=available, dim=spent
@@ -68,6 +68,8 @@ func _ready() -> void:
 	_battle_speed = 1.0                  # every fight starts at 100%
 	Engine.time_scale = _battle_speed
 
+	_player_side  = CombatSide.make(0)
+	_enemy_side   = CombatSide.make(1)
 	_hand         = Hand.new()
 	_board        = CombatBoard.new()
 	_animator     = CombatAnimator.new()
@@ -80,8 +82,10 @@ func _ready() -> void:
 	add_child(_vfx)
 
 	_board.setup_grids()
+	_board.player_side  = _player_side
+	_board.enemy_side   = _enemy_side
 	_board.is_hand_card = func(cu: CardUI) -> bool: return _hand.contains(cu)
-	_board.get_mana     = func() -> int:            return _mana
+	_board.get_mana     = func() -> int:            return _player_side.mana
 
 	var _get_card_ui: Callable = func(inst: CardInstance) -> CardUI:
 		var ghost: CardUI = _ghost_ui.get(inst)
@@ -96,7 +100,9 @@ func _ready() -> void:
 			_relic_tray.glint(relic_id)
 	_animator.setup(self, _get_card_ui, _vfx)
 
-	_spell_caster.setup(_board, _animator, func() -> int: return _mana)
+	_spell_caster.setup(_board, _animator, func() -> int: return _player_side.mana)
+	_hand.bind_side(_player_side)
+	_player_side.mana_changed.connect(_refresh_mana)
 	_hand.wire_spell_card = _spell_caster.wire_spell_card
 	_hand.token_hovered.connect(_highlight_building)
 	_hand.inspect_changed.connect(_on_inspect_changed)
@@ -121,7 +127,7 @@ func _ready() -> void:
 	_spell_caster.spell_consumed.connect(_on_spell_consumed)
 	_spell_caster.ability_autocast.connect(_on_ability_autocast)
 
-	_hand.populate_draw_pile(GameData.current_run.deck)
+	_init_player_deck(GameData.current_run.deck)
 	_init_enemy_deck()
 	_build_ui()
 	var enemy_king_id := "king"
@@ -133,7 +139,10 @@ func _ready() -> void:
 		GameData.current_run.king_id if GameData.current_run != null else "king",
 		enemy_king_id, enemy_power)
 	_apply_king_persistence()
-	_hand.draw_initial()
+	# The opening hand: a system-channel draw on the side (single-writer rule — every side
+	# write rides submit, so even opening draws are interceptable by channel-aware effects).
+	Resolver.submit(StatMutation.make(_player_side, StatMutation.DRAW,
+			GameData.value("hand.size.initial"), null, StatMutation.CH_SYSTEM))
 	_refresh()
 	_begin_round()
 
@@ -175,7 +184,22 @@ func _maybe_dismiss_hand_view(point: Vector2) -> void:
 	_hand.dismiss_to_hand()
 
 
-# ── Enemy deck / hand ──────────────────────────────────────────────────────────
+# ── Deck construction (each side's draw pile; draws themselves ride the Resolver) ──
+
+# Builds the player's draw pile from the run deck (shuffled DeckCard instances). Kings
+# never ride the pile; fresh units fill to their run-resolved max health.
+func _init_player_deck(deck_cards: Array) -> void:
+	var cards := deck_cards.duplicate()
+	cards.shuffle()
+	for dc: DeckCard in cards:
+		var inst := dc.make_instance()
+		if inst != null and not inst.data.is_king:
+			inst.owner = 0
+			# Fill to the run-resolved max (read-time card modifiers add to max_health once
+			# owner is set), so a fresh unit enters at full HP including any unit.health buff.
+			Resolver.fill_health(inst)
+			_player_side.draw_pile.append(inst)
+
 
 # Builds the enemy draw pile (spells included now — the AI casts them) and deals an
 # opening hand. The CPU then draws one card per round like the player, so it keeps
@@ -193,18 +217,17 @@ func _init_enemy_deck() -> void:
 		if data and not data.is_king:
 			var inst := CardInstance.from_data(data)
 			inst.owner = 1
-			_enemy_draw_pile.append(inst)
-	var opening := mini(4, _enemy_draw_pile.size())
-	for i in opening:
-		_enemy_hand.append(_enemy_draw_pile[i])
-	_enemy_draw_pile = _enemy_draw_pile.slice(opening)
+			_enemy_side.draw_pile.append(inst)
+	Resolver.submit(StatMutation.make(_enemy_side, StatMutation.DRAW, 4,
+			null, StatMutation.CH_SYSTEM))
 
 
-func _enemy_draw_one() -> void:
-	if _enemy_draw_pile.is_empty():
-		return
-	_enemy_hand.append(_enemy_draw_pile[0])
-	_enemy_draw_pile = _enemy_draw_pile.slice(1)
+# Paying a card/ability cost: a COST-channel mana mutation — its own provenance so a
+# "mana gains doubled" interceptor can never touch spending. Legality (can afford) is
+# checked at the call sites / by the AI planner, as before.
+func _pay_mana(side: CombatSide, cost: int) -> void:
+	Resolver.submit(StatMutation.make(side, StatMutation.MANA, -cost,
+			null, StatMutation.CH_COST))
 
 
 # ── Round flow ─────────────────────────────────────────────────────────────────
@@ -216,12 +239,16 @@ func _begin_round() -> void:
 	# The ramp is UNCAPPED by design — mana keeps growing every turn, the whole fight, for both
 	# sides (turn-1 start is mana.initial); mana.per_turn is a flat bonus stacked on top.
 	var ramp := GameData.value("mana.initial") if _turn == 1 else _turn
-	_max_mana   = ramp + GameData.value("mana.per_turn")
-	_mana       = _max_mana
-	_enemy_mana = _turn
-	for _i in GameData.value("draw.per_turn"):
-		_hand.draw_one()
-	_enemy_draw_one()
+	Resolver.set_side_max_mana(_player_side, ramp + GameData.value("mana.per_turn"))
+	Resolver.set_side_mana(_player_side, _player_side.max_mana)
+	Resolver.set_side_max_mana(_enemy_side, _turn)
+	Resolver.set_side_mana(_enemy_side, _turn)
+	# Turn draws are DRAW mutations on each side (system channel), so "your draws are
+	# doubled" interceptors catch them like any effect-driven draw.
+	Resolver.submit(StatMutation.make(_player_side, StatMutation.DRAW,
+			GameData.value("draw.per_turn"), null, StatMutation.CH_SYSTEM))
+	Resolver.submit(StatMutation.make(_enemy_side, StatMutation.DRAW, 1,
+			null, StatMutation.CH_SYSTEM))
 	await _do_cpu_placement()
 	_phase = Phase.PLAYER_PLACE
 	_board.placement_enabled = true
@@ -240,7 +267,7 @@ func _do_cpu_placement() -> void:
 	if GameData.current_encounter != null and GameData.current_encounter.ai != null:
 		ai = GameData.current_encounter.ai
 
-	for action: Dictionary in ai.decide_actions(_enemy_hand, _board, _enemy_mana):
+	for action: Dictionary in ai.decide_actions(_enemy_side.hand, _board, _enemy_side.mana):
 		await _execute_enemy_action(action)
 
 
@@ -250,15 +277,15 @@ func _execute_enemy_action(action: Dictionary) -> void:
 	match action["type"]:
 		EnemyAI.Action.PLACE:
 			var inst: CardInstance = action["inst"]
-			_enemy_mana -= inst.data.cost
-			_enemy_hand.erase(inst)
+			_pay_mana(_enemy_side, inst.data.cost)
+			_enemy_side.remove_from_hand(inst)
 			var results := _board.place_enemy_card(inst, action["row"], action["col"])
 			_vfx.play(VFXEvent.card_placed(_board.get_card_ui(inst)))
 			await _animator.show_effect_results(results, inst)
 		EnemyAI.Action.CAST:
 			var inst: CardInstance = action["inst"]
-			_enemy_mana -= inst.data.cost
-			_enemy_hand.erase(inst)
+			_pay_mana(_enemy_side, inst.data.cost)
+			_enemy_side.remove_from_hand(inst)
 			await _show_enemy_spell(inst, action["target"])
 		EnemyAI.Action.GENERATE:
 			# An enemy unit activates an ability. Pay the cost (mana + tap if the ability
@@ -267,7 +294,7 @@ func _execute_enemy_action(action: Dictionary) -> void:
 			# smarts later); any other ability casts at the AI-picked target.
 			var holder: CardInstance = action["unit"]
 			var ab: AbilityData = action["ability"]
-			_enemy_mana -= ab.mana
+			_pay_mana(_enemy_side, ab.mana)
 			if ab.tap:
 				holder.attack_exhausted = true
 				var b_ui := _board.get_card_ui(holder)
@@ -352,7 +379,7 @@ func _cast_enemy_spell(inst: CardInstance, target: CardInstance) -> void:
 	for effect: Effect in inst.data.effects:
 		if effect.trigger != Effect.Trigger.ON_PLAY:
 			continue
-		var ctx := EffectContext.make(src, _board.player_grid, _board.enemy_grid)
+		var ctx := _board.make_context(src)
 		ctx.manual_target = target
 		await _animator.show_effect_results(EffectSystem.apply_single(effect, src, ctx), src)
 		_board.cleanup_effect_deaths()
@@ -570,7 +597,7 @@ func _apply_attack_damage(attacker: CardInstance, target: CardInstance, t_card: 
 # legacy single-subject view (SUBJECT/ATTACKER/ATTACK_TARGET targeting still read it); the
 # activation decision itself lives entirely in each effect's TriggerResolver.
 func _event_ctx(event: GameEvent, holder: CardInstance) -> EffectContext:
-	var ctx := EffectContext.make(holder, _board.player_grid, _board.enemy_grid)
+	var ctx := _board.make_context(holder)
 	ctx.subject = event.subject()
 	if event.id == &"attack":
 		ctx.attack_target = event.destination   # lets an attack effect target the unit being struck
@@ -748,12 +775,12 @@ func _handle_combat_end() -> void:
 
 func _on_board_unit_placed(inst: CardInstance, card_ui: CardUI, from_hand: bool, cost: int, results: Array) -> void:
 	if from_hand:
-		_mana -= cost
+		_pay_mana(_player_side, cost)
 		if card_ui.is_generated:
 			_consume_generated_token(card_ui)
 		else:
+			_player_side.remove_from_hand(inst)
 			_hand.remove_card(card_ui)
-		_refresh_mana()
 	_vfx.play(VFXEvent.card_placed(card_ui))
 	await _animator.show_effect_results(results, inst)
 
@@ -791,8 +818,7 @@ func _on_autocast_dropped(slot: SlotUI, card_ui: CardUI) -> void:
 
 # The autocast twin of _on_spell_consumed + _consume_generated_token: mana, then the tap.
 func _on_ability_autocast(holder: CardInstance, ab: AbilityData) -> void:
-	_mana -= ab.mana
-	_refresh_mana()
+	_pay_mana(_player_side, ab.mana)
 	if ab.tap:
 		_pay_tap(holder)
 
@@ -842,15 +868,15 @@ func _on_targeting_ended() -> void:
 
 
 func _on_spell_consumed(card_ui: CardUI, cost: int) -> void:
-	_mana -= cost
+	_pay_mana(_player_side, cost)
 	# A rook-generated SPELL token (e.g. Castling) casts through this same path as a normal hand
 	# spell — but it must exhaust its source rook like a generated UNIT token does, not just drop
 	# out of the normal hand list (see _consume_generated_token).
 	if card_ui.is_generated:
 		_consume_generated_token(card_ui)
 	else:
+		_player_side.remove_from_hand(card_ui.card_instance)
 		_hand.remove_card(card_ui)
-	_refresh_mana()
 
 
 # ── UI building ────────────────────────────────────────────────────────────────
@@ -1187,12 +1213,12 @@ func _refresh() -> void:
 
 func _refresh_mana() -> void:
 	if _mana_label:
-		_mana_label.text = "%d/%d" % [_mana, _max_mana]
+		_mana_label.text = "%d/%d" % [_player_side.mana, _player_side.max_mana]
 	if _mana_chunks_box == null:
 		return
 
 	# Rebuild the segment stack when max mana changes (it ramps up over the fight).
-	var want := maxi(_max_mana, 0)
+	var want := maxi(_player_side.max_mana, 0)
 	if _mana_chunks_box.get_child_count() != want:
 		for ch in _mana_chunks_box.get_children():
 			_mana_chunks_box.remove_child(ch)
@@ -1200,12 +1226,12 @@ func _refresh_mana() -> void:
 		for _i in want:
 			_mana_chunks_box.add_child(_make_mana_chunk())
 
-	# Light the bottom `_mana` chunks (available), dim the rest (spent / not yet ramped).
+	# Light the bottom `mana` chunks (available), dim the rest (spent / not yet ramped).
 	var chunks := _mana_chunks_box.get_children()
 	for idx in chunks.size():
 		var from_bottom := chunks.size() - 1 - idx
 		var sb := StyleBoxFlat.new()
-		sb.bg_color = ScreenUI.MANA_LIT if from_bottom < _mana else ScreenUI.MANA_DIM
+		sb.bg_color = ScreenUI.MANA_LIT if from_bottom < _player_side.mana else ScreenUI.MANA_DIM
 		sb.set_corner_radius_all(4)
 		(chunks[idx] as Panel).add_theme_stylebox_override("panel", sb)
 

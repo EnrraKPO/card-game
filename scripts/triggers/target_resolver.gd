@@ -5,7 +5,8 @@ extends RefCounted
 # the counterpart of TriggerResolver's "when". Every targeted Effect holds exactly one;
 # resolution is one uniform call for every kind:
 #
-#     resolve(event, holder, context) -> Array[CardInstance]
+#     resolve(event, holder, context) -> Array   # CardInstance or CombatSide (the Side kind);
+#                                                # EffectSystem dispatches on target type
 #
 # The activating GameEvent is part of the shared context (null for a transient use — a
 # spell cast / ability activation has no event). Kinds differ only in which part of that
@@ -40,6 +41,7 @@ extends RefCounted
 #   { "targets": { "kind": "manual", "conditions": [ ... ] } }
 #   { "targets": { "kind": "manual_slot", "conditions": [ ... ] } }
 #   { "targets": { "kind": "participant", "participant": "origin", "conditions": [ ... ] } }
+#   { "targets": { "kind": "side", "of": "own"|"opponent" } }   — a PLAYER, not a unit (see Side)
 
 const CRITERIA: Array[String] = ["nearest", "random"]
 const PARTICIPANTS: Array[String] = ["holder", "origin", "destination"]
@@ -132,6 +134,27 @@ class ManualSlot extends TargetResolver:
 		return _base_dict("manual_slot")
 
 
+class Side extends TargetResolver:
+	# A PLAYER side as the target — the resolve() seam widens to a heterogeneous Array here
+	# (CardInstance or CombatSide; EffectSystem dispatches on type, mirroring Resolver.submit).
+	# `of` is relative to the HOLDER's owner ("own"/"opponent"); run-scope effects anchor via
+	# their perspective card, same as trigger_global. No conditions: players have no stats or
+	# composition to predicate on (load validation rejects authored ones — see Effect).
+	var of: String = "own"
+
+	func resolve(_event: GameEvent, holder: CardInstance, context: EffectContext) -> Array:
+		if context == null or holder == null or holder.owner < 0:
+			return []
+		var want := holder.owner if of == "own" else 1 - holder.owner
+		var side := context.side_for(want)
+		return [] if side == null else [side]
+
+	func to_dict() -> Dictionary:
+		var d := _base_dict("side")
+		d["of"] = of
+		return d
+
+
 class Participant extends TargetResolver:
 	var participant: String = "holder"
 
@@ -176,6 +199,13 @@ static func parse(d: Dictionary) -> TargetResolver:
 			var slot := ManualSlot.new()
 			slot.conditions = conds
 			return slot
+		"side":
+			var side := Side.new()
+			side.of = str(d.get("of", "own"))
+			if not side.of in ["own", "opponent"]:
+				push_error("TargetResolver: unknown side selector '%s' — %s" % [side.of, d])
+				side.of = "own"
+			return side
 		"participant":
 			var part := Participant.new()
 			part.participant = str(d.get("participant", "holder"))

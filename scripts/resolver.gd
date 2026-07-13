@@ -51,6 +51,13 @@ static func submit(m: StatMutation) -> Outcome:
 		# Definition edits are out-of-combat bookkeeping — never intercepted.
 		(m.target as DeckCard).bump(String(m.stat), m.amount)
 		return Outcome.make(m.target, m.stat, m.amount)
+	if m.target is CombatSide:
+		# Player-resource mutation (draw / discard / mana / max_mana) — intercepted like any
+		# live stat: "your draws are doubled" is just an interceptor with intercept "draw".
+		var side_interceptions := _intercept(m)
+		var sout := _apply_to_side(m.target as CombatSide, m)
+		sout.interceptions = side_interceptions
+		return sout
 	var inst := m.target as CardInstance
 	if inst == null:
 		return Outcome.new()
@@ -87,6 +94,35 @@ static func _apply_to_instance(inst: CardInstance, m: StatMutation) -> Outcome:
 			return Outcome.make(inst, m.stat, m.amount)
 
 
+# ── Application forms: CombatSide (player resources) ──
+# The side stats' resolution knowledge: draw/discard floor at 0 and stop at their zone's
+# supply (delta reports what actually moved); mana floors at 0 and is UNCAPPED above
+# max_mana (settled — no clamp); max_mana floors at 0. The side's primitives commit and
+# emit; the forms decide how much.
+
+static func _apply_to_side(side: CombatSide, m: StatMutation) -> Outcome:
+	match m.stat:
+		StatMutation.DRAW:
+			var drawn := side.pull_to_hand(maxi(0, m.amount))
+			return Outcome.make(side, StatMutation.DRAW, drawn.size())
+		StatMutation.DISCARD:
+			var gone := side.discard_random(maxi(0, m.amount))
+			return Outcome.make(side, StatMutation.DISCARD, gone.size())
+		StatMutation.MANA:
+			var prev := side.mana
+			side.set_mana(maxi(0, prev + m.amount))
+			return Outcome.make(side, StatMutation.MANA, side.mana - prev)
+		StatMutation.MAX_MANA:
+			var prev_max := side.max_mana
+			side.set_max_mana(maxi(0, prev_max + m.amount))
+			return Outcome.make(side, StatMutation.MAX_MANA, side.max_mana - prev_max)
+		_:
+			# Load validation keeps authored data out of here; a programmatic mismatch
+			# fails loud and commits nothing.
+			push_error("Resolver: stat '%s' is not a side stat" % String(m.stat))
+			return Outcome.make(side, m.stat, 0)
+
+
 # ── Set-form conveniences (expressed as additive mutations, so there is still one contract) ──
 
 # Round-start shield refresh: back to the card's base + accumulated shield modifiers.
@@ -107,6 +143,18 @@ static func fill_health(inst: CardInstance) -> void:
 # Set current health to an absolute value (king persistence), routed as a signed HEALTH delta.
 static func set_health(inst: CardInstance, value: int) -> void:
 	submit(StatMutation.make(inst, StatMutation.HEALTH, value - inst.current_health,
+			null, StatMutation.CH_SYSTEM))
+
+
+# Turn bookkeeping set-forms for a side's mana gauge (the ramp + refill at round start),
+# routed as signed system-channel deltas — same pattern as set_health.
+static func set_side_max_mana(side: CombatSide, value: int) -> void:
+	submit(StatMutation.make(side, StatMutation.MAX_MANA, value - side.max_mana,
+			null, StatMutation.CH_SYSTEM))
+
+
+static func set_side_mana(side: CombatSide, value: int) -> void:
+	submit(StatMutation.make(side, StatMutation.MANA, value - side.mana,
 			null, StatMutation.CH_SYSTEM))
 
 
@@ -188,24 +236,35 @@ static func _try_intercept(e: Effect, stacks: int, holder: CardInstance, owner_s
 	if e.channel != &"" and e.channel != m.channel:
 		return
 	# The participant gate: which side of the pending mutation this interceptor scrutinises.
-	# A missing participant (system mutation with no source) never matches.
+	# A missing participant (system mutation with no source) never matches. When the target
+	# is a CombatSide, THE SIDE is the target participant: allegiance conditions compare its
+	# owner against the anchor; identity and the unit-form predicates can never match a side
+	# (a player has no stats/composition and is nobody's holder).
 	var participant: CardInstance = null
+	var side: CombatSide = null
 	if e.intercept_participant == "source":
 		participant = m.source
+	elif m.target is CombatSide:
+		side = m.target as CombatSide
 	else:
 		participant = m.target as CardInstance
-	if participant == null:
+	if participant == null and side == null:
 		return
 	# Structural identity (legacy role / of.relation "self"): the participant must BE the
-	# holder — by construction never matched by a holderless (run-scope) container.
-	if e.intercept_identity and participant != holder:
+	# holder — by construction never matched by a holderless (run-scope) container, and
+	# never by a side participant.
+	if e.intercept_identity and (side != null or participant != holder):
 		return
 	# Conditions — the shared grammar's fourth socket (trigger → targets → payload →
 	# intercept): mutation-form predicates read the pending mutation; unit forms read the
-	# selected participant against the owner anchor (allegiance/composition/stat/status).
+	# selected participant against the owner anchor (allegiance/composition/stat/status);
+	# a side participant answers only the allegiance form (fail-closed otherwise).
 	for c: EffectCondition in e.conditions:
 		if c.is_mutation_form():
 			if not c.evaluate_mutation(m):
+				return
+		elif side != null:
+			if not c.evaluate_side(side.owner, owner_side):
 				return
 		elif not c.evaluate(participant, owner_side):
 			return
@@ -216,7 +275,10 @@ static func _try_intercept(e: Effect, stacks: int, holder: CardInstance, owner_s
 		m.amount = int(round(m.amount * e.amount))
 	else:
 		m.amount += e.amount_int() * stacks   # additive rewrites scale by stacks, like stat deltas
-	if m.stat == StatMutation.DAMAGE or m.stat == StatMutation.STATUS:
+	if m.stat == StatMutation.DAMAGE or m.stat == StatMutation.STATUS \
+			or m.stat == StatMutation.DRAW or m.stat == StatMutation.DISCARD:
+		# Magnitude-form stats re-floor after every rewrite — an intercepted-away draw
+		# draws nothing; it never becomes a discard.
 		m.amount = maxi(0, m.amount)
 	if m.amount == before:
 		# Changed nothing = didn't fire: no cue, no charge spent. This is what makes a Barrier

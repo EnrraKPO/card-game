@@ -166,6 +166,21 @@ func is_mutation_form() -> bool:
 	return not mutation_attr.is_empty()
 
 
+# Evaluates this condition against a SIDE participant (a CombatSide-targeted mutation
+# passing through the interceptor match). Only the allegiance form can speak about a
+# player; every other form is a unit predicate and fails CLOSED — a side has no stats,
+# statuses, or composition to test.
+func evaluate_side(side_owner: int, owner: int) -> bool:
+	if allegiance.is_empty():
+		return false
+	if owner < 0:
+		return false
+	match allegiance:
+		"ally":  return side_owner == owner
+		"enemy": return side_owner >= 0 and side_owner != owner
+	return false
+
+
 # Evaluates a MUTATION-form condition against a pending StatMutation (the Resolver's
 # interceptor match routes mutation-form conditions here, unit forms to evaluate()).
 func evaluate_mutation(m: StatMutation) -> bool:

@@ -45,5 +45,10 @@
 
   { "id": "contagion_stone", "display_name": "Contagion Stone", "description": "Statuses you apply gain +1 stack.",
 	"color": "8f5aa0", "letter": "S", "price": 110,
-	"effects": [ { "kind": "interceptor", "intercept": "status", "of": { "participant": "source", "relation": "ally" }, "amount": 1 } ] }
+	"effects": [ { "kind": "interceptor", "intercept": "status", "of": { "participant": "source", "relation": "ally" }, "amount": 1 } ] },
+
+  { "id": "reapers_ledger", "display_name": "Reaper's Ledger", "description": "Whenever one of your darkness units is destroyed, draw a card.",
+	"color": "6a4a8f", "letter": "R", "price": 100,
+	"effects": [ { "kind": "triggered", "trigger": "on_death", "subject_elements": ["darkness"],
+	  "attribute": "draw", "amount": 1, "targets": { "kind": "side", "of": "own" } } ] }
 ]

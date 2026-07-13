@@ -22,6 +22,20 @@ var board_node: CombatBoard = null
 # hooks read the ability's parameters (e.g. deliver_material's material key). Null otherwise.
 var ability: AbilityData = null
 
+# The two CombatSides, for side-targeted effects ("draw 2" — see TargetResolver.Side).
+# Injected wherever a combat is live (CombatBoard.make_context); null in contexts built
+# outside one, where a side target simply resolves to nothing.
+var player_side: CombatSide = null
+var enemy_side: CombatSide = null
+
+
+func side_for(side_owner: int) -> CombatSide:
+	if side_owner == 0:
+		return player_side
+	if side_owner == 1:
+		return enemy_side
+	return null
+
 
 static func make(src: CardInstance, p_board: Array, e_board: Array) -> EffectContext:
 	var ctx := EffectContext.new()

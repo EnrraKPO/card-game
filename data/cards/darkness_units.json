@@ -7,6 +7,18 @@
 		"display_name": "Darkness Pawn",
 		"chess_pieces": [
 			"pawn"
+		],
+		"description": "When this unit is destroyed, draw a card.",
+		"effects": [
+			{
+				"trigger": "on_death",
+				"attribute": "draw",
+				"amount": 1,
+				"targets": {
+					"kind": "side",
+					"of": "own"
+				}
+			}
 		]
 	},
 	{

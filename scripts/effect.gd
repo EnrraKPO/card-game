@@ -209,6 +209,7 @@ static func from_dict(d: Dictionary) -> Effect:
 		e.status_duration = int(st.get("duration", STATUS_DURATION_DEFAULT))
 		e.status_stacks   = int(st.get("stacks", 1))
 	e._validate_standing(d)
+	e._validate_side_targets(d)
 	# Mutation-form conditions predicate over a pending StatMutation — only the interceptor
 	# match ever evaluates them. Anywhere else they'd be a silently-vacuous gate: fail loud.
 	if e.kind != Kind.INTERCEPTOR:
@@ -264,6 +265,26 @@ func _validate_standing(d: Dictionary) -> void:
 	# manual) have no meaning for a continuous fold.
 	if authored_native_targets and not str(_native_targets.get("kind", "all")) in ["all", "self"]:
 		push_error("Effect: standing (while) targets must be the 'self' or 'all' form — %s" % [d])
+
+
+# Load-time cross-validation of the side-targeted vocabulary — FAIL LOUD both ways:
+# a side stat (draw/discard/mana/max_mana) is meaningless on a unit, and a side target
+# can commit nothing else (players have no unit stats, no statuses, no conditions to pass).
+func _validate_side_targets(d: Dictionary) -> void:
+	var side_targeted := authored_native_targets and str(_native_targets.get("kind", "")) == "side"
+	if StatMutation.is_side_stat(attribute) and not side_targeted:
+		push_error("Effect: side stat '%s' requires targets {\"kind\": \"side\"} — %s" % [attribute, d])
+	if not side_targeted:
+		return
+	if kind != Kind.TRIGGERED:
+		push_error("Effect: side targeting is only valid on a triggered effect — %s" % [d])
+	if not StatMutation.is_side_stat(attribute):
+		push_error("Effect: side-targeted attribute '%s' is not a side stat %s — %s"
+				% [attribute, StatMutation.SIDE_STATS, d])
+	if not status_id.is_empty():
+		push_error("Effect: a side-targeted effect cannot apply a status — %s" % [d])
+	if not (_native_targets.get("conditions", []) as Array).is_empty():
+		push_error("Effect: side targets take no conditions (players have nothing to predicate on) — %s" % [d])
 
 
 # Parses the activation gate from either schema. Native form: "trigger" is a Dictionary
@@ -344,6 +365,9 @@ static func _policy_from_native(d: Dictionary) -> TargetingPolicy:
 		"self":        return TargetingPolicy.SELF
 		"manual":      return TargetingPolicy.MANUAL
 		"manual_slot": return TargetingPolicy.MANUAL_SLOT
+		# A side target needs no pick and no unit scan — ALL is the honest compat mirror
+		# (the classifiers only ask "is this manual / slot-mode?", to which the answer is no).
+		"side":        return TargetingPolicy.ALL
 		"auto":
 			return TargetingPolicy.SINGLE_RANDOM if str(d.get("criterion", "nearest")) == "random" \
 					else TargetingPolicy.SINGLE_NEAREST

@@ -702,9 +702,10 @@ const ALLEGIANCES = ['ally','enemy'];        // side vs the effect's OWNER — t
 const PARTICIPANT_GATES = ['self','any'];    // trigger "of" gates (identity is structural, not a condition)
 const TRACKER_KINDS = ['container','stacks'];
 // The native targeting schema (see scripts/triggers/target_resolver.gd).
-const TARGET_KINDS = ['self','all','auto','manual','manual_slot','participant'];
+const TARGET_KINDS = ['self','all','auto','manual','manual_slot','participant','side'];
 const CRITERIA = ['nearest','random'];
 const PARTICIPANTS = ['holder','origin','destination'];
+const SIDE_SELECTORS = ['own','opponent'];   // the side kind's "of" (relative to the holder)
 const POLICIES = ['self','single_nearest','single_random','all_enemies','all_allies','all','manual','attack_target','subject','attacker','manual_slot'];
 const SUBJECTS = ['self','ally','enemy','any'];
 const COMPARATORS = ['gt','gte','lt','lte','eq','neq'];
@@ -713,6 +714,9 @@ const MODIFIER_KEYS = ['unit.attack','unit.health','unit.speed','card.cost',
   'gold.initial','king.max_health','relic.capacity','reward.essence','reward.king_piece_chance'];
 const CUSTOM_HOOKS = ['rallying_cry','deliver_material'];
 const EFFECT_ATTRS = ['health','max_health','damage_taken','attack','speed','shield','cost'];
+// Side stats: only valid with targets {"kind":"side"} and vice versa (mirrors
+// Effect._validate_side_targets — see EFFECT_SYSTEM_DESIGN.md §10).
+const SIDE_ATTRS = ['draw','discard','mana','max_mana'];
 const COND_ATTRS = ['health','attack','speed','cost','piece_count','element_count'];
 const ELEMENTS = ['fire','water','air','earth','darkness','light'];
 const PIECES = ['pawn','knight','bishop','rook','queen','king'];
@@ -803,6 +807,10 @@ function validateTargets(t, where) {
   }
   if (kind === 'participant' && !PARTICIPANTS.includes(String(t.participant || 'holder')))
     return `${where}: bad participant "${t.participant}"`;
+  if (kind === 'side') {
+    if (!SIDE_SELECTORS.includes(String(t.of || 'own'))) return `${where}: bad side selector "${t.of}" (own/opponent)`;
+    if ((t.conditions || []).length) return `${where}: side targets take no conditions (players have nothing to predicate on)`;
+  }
   return validateConditionList(t.conditions, `${where} targets`);
 }
 
@@ -833,7 +841,15 @@ function validateEffect(e, where) {
     if (terr) return terr;
     if (e.targeting_policy && !POLICIES.includes(e.targeting_policy)) return `${where}: bad targeting_policy "${e.targeting_policy}"`;
     if (e.subject && !SUBJECTS.includes(e.subject)) return `${where}: bad subject filter`;
-    if (e.attribute && !EFFECT_ATTRS.includes(e.attribute)) return `${where}: bad attribute "${e.attribute}"`;
+    if (e.attribute && !EFFECT_ATTRS.includes(e.attribute) && !SIDE_ATTRS.includes(e.attribute)) return `${where}: bad attribute "${e.attribute}"`;
+    // Side-stat/side-target pairing, fail-loud both ways (Effect._validate_side_targets).
+    const sideTargeted = e.targets && typeof e.targets === 'object' && String(e.targets.kind || '') === 'side';
+    if (SIDE_ATTRS.includes(e.attribute) && !sideTargeted)
+      return `${where}: side stat "${e.attribute}" requires targets {"kind": "side"}`;
+    if (sideTargeted && !SIDE_ATTRS.includes(e.attribute))
+      return `${where}: side-targeted attribute must be one of ${SIDE_ATTRS.join('/')}`;
+    if (sideTargeted && e.status && e.status.id)
+      return `${where}: a side-targeted effect cannot apply a status`;
     const standing = e.trigger && typeof e.trigger === 'object' && e.trigger.kind === 'while';
     if (standing) {
       // Mirrors the game's fail-loud rules (Effect._validate_standing): a standing effect
@@ -999,6 +1015,8 @@ function gameVocab() {
     modifierKeys: MODIFIER_KEYS,
     customHooks: CUSTOM_HOOKS,
     effectAttrs: EFFECT_ATTRS,
+    sideAttrs: SIDE_ATTRS,
+    sideSelectors: SIDE_SELECTORS,
     condAttrs: COND_ATTRS,
   };
 }
@@ -1893,6 +1911,12 @@ function effectsGrammarLines() {
     '   attribute "health": negative amount = direct damage, positive = heal.',
     '   attribute "max_health" raises/lowers the unit\'s maximum health (does not heal).',
     '   attribute "damage_taken" deals damage that consumes shield first.',
+    `   PLAYER-side payloads ("draw 2 cards", "gain 1 mana"): attribute one of ${SIDE_ATTRS.join('/')}`,
+    '   paired with targets {"kind":"side","of":"own"|"opponent"} (and ONLY that pairing:',
+    '   side stats never target units, unit stats/statuses never target a side; no conditions).',
+    '   "draw" pulls cards deck→hand, "discard" removes random hand cards, "mana"/"max_mana"',
+    '   change the current/maximum mana pool. For PASSIVE per-turn quantities ("draw an extra',
+    '   card each turn") use a MODIFIER key instead (draw.per_turn etc.), not a side payload.',
     `   <trigger> = {"kind":"event","event": one of ${SIMPLE_EVENTS.join('/')}, "of":"self"?, "conditions":[...]?}`,
     `     or {"kind":"dual_event","event": one of ${DUAL_EVENTS.join('/')}, "origin_of":"self"?,`,
     '     "destination_of":"self"?, "origin_conditions":[...]?, "destination_conditions":[...]?}.',
@@ -1907,7 +1931,7 @@ function effectsGrammarLines() {
     `3. MODIFIER — run-wide passive number change: {"kind":"modifier","key": one of ${MODIFIER_KEYS.join('/')},`,
     '   "amount": n, "conditions":[...]?}. Only for run-wide numbers, never for board effects.',
     '4. INTERCEPTOR — rewrites a pending stat change before it lands: {"kind":"interceptor",',
-    '   "intercept":"damage"|"health"|"status", "channel":"attack"?,',
+    `   "intercept":"damage"|"health"|"status"|${SIDE_ATTRS.map(a => `"${a}"`).join('|')}, "channel":"attack"?,`,
     '   "of": {"participant":"source"|"target", "relation":"self"|"ally"|"enemy"|"any"},',
     '   "op":"add"|"mul", "amount": n, "chance":?, "conditions":[...]?}',
     '   participant = which side of the change is scrutinised (source caused it, target receives',
@@ -1915,7 +1939,10 @@ function effectsGrammarLines() {
     '   only meaningful on a card/status, never a relic/upgrade). Conditions gate the participant;',
     '   an interceptor may also use the mutation-form condition (below) to gate on the amount,',
     '   e.g. amount > 0 on "health" = heals only. intercept "status" rewrites the STACK COUNT of',
-    '   a status being applied. Any container can intercept — relics and upgrades included.',
+    '   a status being applied. Intercepting a side stat (e.g. "your draws are doubled" =',
+    '   intercept "draw", op "mul"): the target participant is the PLAYER side — relation',
+    '   ally/enemy compares that side against the owner; "self" never matches a side.',
+    '   Any container can intercept — relics and upgrades included.',
     '   (Legacy spelling "role":"source"|"target" = participant + relation "self".)',
     `5. CUSTOM code hook: {"kind":"custom","custom": one of ${CUSTOM_HOOKS.join('/')}, "trigger":..., "targets":...}`,
     '',
@@ -1923,6 +1950,7 @@ function effectsGrammarLines() {
     '  | {"kind":"auto","criterion":"nearest"|"random","count":n?,"conditions":[...]?}',
     '  | {"kind":"manual"} (the player picks a unit) | {"kind":"manual_slot"} (the player picks a slot)',
     `  | {"kind":"participant","participant":"holder"|"origin"|"destination"} (a trigger participant)`,
+    '  | {"kind":"side","of":"own"|"opponent"} (a PLAYER — only for side-stat payloads, see above)',
     '',
     'A condition object is ONE of:',
     '  {"allegiance":"ally"|"enemy"} — side relative to the effect\'s owner (ally includes the holder)',

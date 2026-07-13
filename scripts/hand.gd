@@ -1,11 +1,12 @@
 class_name Hand
 extends Node
 
-# Owns the player's hand: the draw pile, the normal hand cards, the rook-generated
-# tokens, the containers that present them, and the current selection. Cross-cutting
-# concerns (mana, board placement, which board slot a token highlights) stay in the
-# combat orchestrator — this node only manages hand state + presentation and reports
-# intent back through signals and a small query interface.
+# PRESENTS the player's hand: the hand-card UI, the rook-generated tokens, the containers
+# that present them, and the current selection. Hand STATE (the card instances + draw pile)
+# lives on the player's CombatSide — this node subscribes to its signals (see bind_side)
+# and mirrors them as CardUI. Cross-cutting concerns (mana, board placement, which board
+# slot a token highlights) stay in the combat orchestrator; intent reports back through
+# signals and a small query interface.
 
 # Emitted when a generated token is hovered/unhovered so the orchestrator can glow
 # the source building's board slot. Also emitted (with `false`) when a token is
@@ -34,7 +35,6 @@ var selection_enabled: bool = false
 # always-visible button column drives them (see _set_level); the panel's height never changes.
 enum NavLevel { HAND, ABILITIES, INSPECT }
 
-var _draw_pile: Array  = []  # Array[CardInstance]
 var _hand_cards: Array = []  # Array[CardUI]
 var _gen_cards: Array  = []  # Array[CardUI] — rook-generated tokens, this turn only
 var _ability_entries: Array = []  # Array[CardUI] — the level-2 Abilities view's entries
@@ -281,33 +281,26 @@ func build_into(parent: Control, left_widget: Control = null) -> void:
 	content.add_child(_abilities_box)
 
 
-# ── Draw pile + drawing ──────────────────────────────────────────────────────────
+# ── State mirroring (the player's CombatSide drives; this bar presents) ──────────
 
-func populate_draw_pile(deck_cards: Array) -> void:
-	var cards := deck_cards.duplicate()
-	cards.shuffle()
-	for dc: DeckCard in cards:
-		var inst := dc.make_instance()
-		if inst != null and not inst.data.is_king:
-			inst.owner = 0
-			# Fill to the run-resolved max (read-time card modifiers add to max_health once
-			# owner is set), so a fresh unit enters at full HP including any unit.health buff.
-			Resolver.fill_health(inst)
-			_draw_pile.append(inst)
+# Subscribes this bar to the player side's zone signals: drawn cards spawn CardUI,
+# discarded cards drop theirs. All draw/discard STATE changes happen on the side (via
+# the Resolver); this is the one place the hand UI learns about them.
+func bind_side(side: CombatSide) -> void:
+	side.cards_drawn.connect(_on_cards_drawn)
+	side.cards_discarded.connect(_on_cards_discarded)
 
 
-func draw_initial() -> void:
-	var n := mini(GameData.value("hand.size.initial"), _draw_pile.size())
-	for i in n:
-		_spawn_hand_card(_draw_pile[i])
-	_draw_pile = _draw_pile.slice(n)
+func _on_cards_drawn(insts: Array) -> void:
+	for inst: CardInstance in insts:
+		_spawn_hand_card(inst)
 
 
-func draw_one() -> void:
-	if _draw_pile.is_empty():
-		return
-	_spawn_hand_card(_draw_pile[0])
-	_draw_pile = _draw_pile.slice(1)
+func _on_cards_discarded(insts: Array) -> void:
+	for ui: CardUI in _hand_cards.duplicate():
+		if insts.has(ui.card_instance):
+			remove_card(ui)
+			ui.queue_free()
 
 
 func _spawn_hand_card(inst: CardInstance) -> void:

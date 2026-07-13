@@ -114,18 +114,38 @@ static func _run_effect(effect: Effect, source: CardInstance, context: EffectCon
 	if effect.kind == Effect.Kind.CUSTOM:
 		var hook := EffectHooks.get_hook(effect.custom_id)
 		return hook.call(context) if hook.is_valid() else []
-	# THE targeting socket: the effect's injected resolver returns the affected unit(s)
-	# from the same shared context the trigger saw (see TargetResolver). Effects apply to
-	# royalty (King/Queen) and lackeys alike; only the resolver's conditions filter.
+	# THE targeting socket: the effect's injected resolver returns the affected target(s)
+	# from the same shared context the trigger saw (see TargetResolver). The array is
+	# heterogeneous — units (CardInstance) or a player (CombatSide, the "side" kind) —
+	# dispatched by type here, mirroring Resolver.submit. Effects apply to royalty
+	# (King/Queen) and lackeys alike; only the resolver's conditions filter.
 	var results: Array = []
-	for target: CardInstance in effect.targets_resolver().resolve(event, source, context):
-		var r := _apply(effect, target, source, context, amount_scale)
+	for target: Object in effect.targets_resolver().resolve(event, source, context):
+		var r: Dictionary
+		if target is CombatSide:
+			r = _apply_side(effect, target as CombatSide, source, amount_scale)
+		else:
+			r = _apply(effect, target as CardInstance, source, context, amount_scale)
 		if not r.is_empty():
 			results.append(r)
 	return results
 
 
 # ── Effect application ─────────────────────────────────────────────────────────
+
+# A side-targeted payload (draw/discard/mana/max_mana — load-validated pairing): one
+# mutation on the side, same result-dict shape as the unit path so dispatchers/cues
+# treat it uniformly. Delta 0 (empty pile, intercepted away) is a no-op — no result.
+static func _apply_side(effect: Effect, side: CombatSide, source: CardInstance, amount_scale: int = 1) -> Dictionary:
+	var amount := effect.amount_int() * amount_scale
+	if amount == 0:
+		return {}
+	var out := Resolver.submit(StatMutation.make(side,
+			StatMutation.stat_for_attribute(effect.attribute), amount, source))
+	if out.delta == 0:
+		return {}
+	return _with_interceptions({"target": side, "attribute": effect.attribute, "delta": out.delta}, out)
+
 
 static func _apply(effect: Effect, target: CardInstance, source: CardInstance, context: EffectContext, amount_scale: int = 1) -> Dictionary:
 	if effect.custom_apply.is_valid():

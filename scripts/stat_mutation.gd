@@ -42,12 +42,36 @@ const SHIELD := &"shield"   # per-round base shield (raises what each round's re
 # A DeckCard target instead treats `stat` as the card-definition FIELD to bump permanently
 # ("attack"/"health"/"speed"/"shield" — see DeckCard.UPGRADABLE and the "?" event).
 
+# ── Stats: player-side resources (target is a CombatSide, not a card) ──
+# "draw N": pull N cards deck→hand; floors at 0, stops at the pile — delta reports what
+# actually moved. Interceptable ("your draws are doubled"), including turn-start draws
+# (single-writer rule: every side write rides submit, channels keep provenance distinct).
+const DRAW := &"draw"
+# Random discard of N cards from the hand (floors at 0, stops at the hand; chosen-discard
+# UI deliberately later). Discarded cards cease — no discard-pile zone exists.
+const DISCARD := &"discard"
+# Signed current-mana change. Floors at 0; NO cap at max_mana (settled: the pool may
+# exceed max freely — a "gain 3 mana" at full mana is a real gain, not a clamp-away).
+const MANA := &"mana"
+# Additive max-mana change (the gauge's size). Floors at 0.
+const MAX_MANA := &"max_mana"
+
+# The side-stat vocabulary, as authored attribute strings — the load-time validation set
+# (side stats require side targeting and vice versa; see Effect._validate_side_targets).
+const SIDE_STATS: Array[String] = ["draw", "discard", "mana", "max_mana"]
+
+static func is_side_stat(attr: String) -> bool:
+	return SIDE_STATS.has(attr)
+
 # ── Channels (provenance) ──
 const CH_ATTACK := &"attack"   # a unit's strike
 const CH_EFFECT := &"effect"   # a card/status/relic/upgrade effect
 const CH_SYSTEM := &"system"   # engine bookkeeping (round shield refresh, king persistence, setup)
+const CH_COST   := &"cost"     # paying a card/ability cost — distinct so a "mana gains doubled"
+							   # interceptor can never double SPENDING
 
-var target: Object = null          # CardInstance (live stats) or DeckCard (persistent override)
+var target: Object = null          # CardInstance (live stats), CombatSide (player resources)
+								   # or DeckCard (persistent override)
 var stat: StringName = HEALTH
 var amount: int = 0
 var source: CardInstance = null    # who caused it (null for system mutations)

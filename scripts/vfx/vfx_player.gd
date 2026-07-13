@@ -72,7 +72,9 @@ func play_results(results: Array, source_inst: CardInstance = null,
 		if r.has("status_applied"):
 			await _play_status_applied(r.get("target"), str(r.get("status_applied", "")))
 			continue
-		var inst: CardInstance = r.get("target")
+		# A side-targeted result (draw/mana — target is a CombatSide, not a card) has no board
+		# surface here: its presentation IS the hand/gauge reacting to the side's signals.
+		var inst := r.get("target") as CardInstance
 		if inst == null or inst.row < 0:
 			continue
 		var card_ui: CardUI = _get_card_ui.call(inst) as CardUI

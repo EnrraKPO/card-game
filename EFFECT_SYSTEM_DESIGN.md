@@ -323,7 +323,7 @@ is "any effect could be an interception; sources are never manually enumerated."
   JSON end-to-end through `ModifierSet.for_run`).
 
 This is the groundwork for the CombatSide/player-targeted-effects design (draw/mana as
-interceptable mutations targeting a side) — discussed, not yet built.
+interceptable mutations targeting a side) — see §10.
 
 ## 9. Test plan
 
@@ -335,3 +335,53 @@ interceptable mutations targeting a side) — discussed, not yet built.
   stratification determinism (condition-bearing effects can't see each other, order of
   load irrelevant); legacy round-trip (old modifier JSON in → same JSON out, same
   numbers as before the redesign).
+
+## 10. CombatSide — player-targeted effects (BUILT 2026-07-14)
+
+Effects like "draw 2", "gain 1 mana", "+1 max mana", "discard a card" target a PLAYER, not a
+unit. Passive quantities (draw-per-turn, opening-hand size) already work as global modifier
+reads (`GameData.value`) and are NOT this; this is the ACTIVE-action channel: discrete
+payloads delivered to a side.
+
+- **CombatSide** (`scripts/combat_side.gd`, RefCounted): one per side, owns `owner` (0/1),
+  `mana`, `max_mana`, `hand: Array[CardInstance]`, `draw_pile: Array[CardInstance]` —
+  collapsing combat.gd's player/enemy field asymmetry. It exposes commit PRIMITIVES only
+  (`pull_to_hand`, `discard_random`, raw setters); resolution FORM lives in the Resolver.
+  It emits signals (`cards_drawn`, `cards_discarded`, `mana_changed`); **Hand becomes pure
+  presentation** subscribing to the player side's signals. EnemyAI reads `side.hand`/
+  `side.mana`. Rejected en route (don't re-propose): CombatSide as a resolver; polymorphic
+  `target.apply(payload)` — Resolver's target-type dispatch is the right place.
+- **Vocabulary**: four new stats — `draw` / `discard` / `mana` / `max_mana` (side-only
+  names). Forms in `Resolver._apply_to_side`: draw pulls `min(n, pile)` deck→hand (delta =
+  actually drawn, floored at 0); discard removes random `min(n, hand)` (cards cease — no
+  discard-pile concept, deliberately); mana signed, floors at 0, **NO cap at max_mana**
+  (settled: the pool may exceed max freely); max_mana additive, floors at 0.
+- **Single writer swallows ALL side writes**: turn-start draw, turn mana refill, and cost
+  payment reroute through `Resolver.submit` — so "your draws are doubled" catches turn-start
+  draws automatically. Channels keep provenance distinct: turn bookkeeping = `system`,
+  effect payloads = `effect`, and a NEW `cost` channel for paying card/ability costs (a
+  "mana gains doubled" interceptor must never double spending).
+- **Side target kind**: `{"targets": {"kind": "side", "of": "own"|"opponent"}}`, resolved
+  relative to `holder.owner` (run-scope effects anchor via the perspective card, as in
+  `trigger_global`). `EffectContext` grows `player_side`/`enemy_side`. Payloads reuse the
+  existing attribute/amount grammar. Load-time cross-validation, fail-loud both ways: side
+  stats require side targeting; side targeting requires side stats.
+- **The resolve() seam** (settled): `TargetResolver.resolve` returns a heterogeneous Array
+  (CardInstance or CombatSide); `EffectSystem._apply` dispatches on target type, mirroring
+  `Resolver.submit`. No wrapper EffectTarget class. ManualSlot can fold in later as a real
+  target kind returning a slot object.
+- **Interception over side mutations**: side mutations ARE intercepted (unlike DeckCard).
+  `participant: "source"` works unchanged (a unit whose effect drew); `participant:
+  "target"` means THE SIDE — allegiance conditions compare `side.owner` against the
+  anchor; composition/stat/status conditions never match a side (unit predicates).
+  Mutation-form conditions work unchanged.
+- **Out of scope**: damage-the-player (the King IS the life total); chosen-discard UI
+  (random first); passive quantities (already work).
+- **Status (all landed 2026-07-14)**: CombatSide + Resolver forms + side targeting +
+  load validation + Tool schema (`server.js` grammar/validation, `public/effects.js`
+  editor, `helpers.js` describers) + `tests/test_combat_side.gd` (48 cases: forms, no-cap
+  mana, draw interception incl. re-floor and cost channel, own/opponent resolution,
+  round-trip) — suite at 330/330; live combat boot verified via the render harness.
+  Remaining: shipping content using the payloads (a content decision — author via the
+  Tool); a dedicated VFX cue for side results (today the hand/gauge reaction IS the
+  presentation); chosen-discard UI (random-only, by design).

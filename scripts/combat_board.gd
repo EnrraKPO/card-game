@@ -24,7 +24,20 @@ var get_mana: Callable            # func() -> int
 # Whether dropping this dragged unit onto this slot fires its armed autocast ability —
 # SpellCaster.autocast_drop_ok (armed + payable + eligible occupant), injected like get_mana.
 var can_autocast: Callable        # func(CardInstance, SlotUI) -> bool
+# The two CombatSides (player resources), injected by combat so every effect context built
+# during a fight can resolve side targets ("draw 2" — see TargetResolver.Side).
+var player_side: CombatSide = null
+var enemy_side: CombatSide = null
 var _default_strategy := TargetingNearest.new()
+
+
+# The one context builder for live-combat effect dispatch: grids + the sides. Every
+# in-combat EffectContext comes through here so a side target is never silently missing.
+func make_context(src: CardInstance) -> EffectContext:
+	var ctx := EffectContext.make(src, player_grid, enemy_grid)
+	ctx.player_side = player_side
+	ctx.enemy_side = enemy_side
+	return ctx
 
 # Zone dressing: each half sits on its own faintly tinted field so "my side / their side" reads
 # at a glance — cool blue for the player, warm red for the enemy. Low alpha keeps the shared
@@ -139,8 +152,7 @@ func place_enemy_card(inst: CardInstance, r: int, c: int) -> Array:
 	var ui := CardUI.create(inst)
 	enemy_slots[r][c].set_card(ui)
 	var results := EffectSystem.trigger(
-		GameEvent.make(&"play", inst), inst,
-		EffectContext.make(inst, player_grid, enemy_grid))
+		GameEvent.make(&"play", inst), inst, make_context(inst))
 	cleanup_effect_deaths()
 	refresh()
 	return results
@@ -158,8 +170,7 @@ func spawn_player_card(inst: CardInstance, r: int, c: int) -> Array:
 	(player_slots[r][c] as SlotUI).set_card(ui)
 	_wire_unit_drag(ui)
 	var results := EffectSystem.trigger(
-		GameEvent.make(&"play", inst), inst,
-		EffectContext.make(inst, player_grid, enemy_grid))
+		GameEvent.make(&"play", inst), inst, make_context(inst))
 	cleanup_effect_deaths()
 	refresh()
 	return results
@@ -395,8 +406,7 @@ func do_place_unit(slot: SlotUI, card_ui: CardUI) -> void:
 	if from_hand:
 		card_ui._show_cost = false
 		results = EffectSystem.trigger(
-			GameEvent.make(&"play", inst), inst,
-			EffectContext.make(inst, player_grid, enemy_grid))
+			GameEvent.make(&"play", inst), inst, make_context(inst))
 		cleanup_effect_deaths()
 
 	refresh()

@@ -162,7 +162,7 @@ func _resolve_on_play(effects: Array, src: CardInstance, ab: AbilityData,
 	for effect: Effect in effects:
 		if effect.trigger != Effect.Trigger.ON_PLAY:
 			continue
-		var ctx := EffectContext.make(src, board.player_grid, board.enemy_grid)
+		var ctx := board.make_context(src)
 		ctx.manual_target = manual_target
 		ctx.manual_slot = manual_slot   # slot-mode extras: the picked slot (may be empty)
 		ctx.board_node = board          # + board access for hooks that spawn (see EffectContext)

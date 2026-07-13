@@ -158,6 +158,7 @@ const L = {
     manual: 'A unit the player picks',
     manual_slot: 'A slot the player picks (may be empty)',
     participant: 'An event participant (origin / destination)',
+    side: 'A player side (own / opponent) — side-stat payloads only',
   },
   // Standing-effect vocabulary: what the payload folds into, and the tracker kinds
   // (the effect's authored lifetime authority — see EffectTracker in the game).
@@ -201,6 +202,11 @@ const L = {
     speed: 'Speed',
     shield: 'Shield',
     cost: 'Mana cost',
+    // Side stats (targets kind "side" only — a PLAYER, not a unit).
+    draw: 'Draw cards (deck → hand)',
+    discard: 'Discard random cards',
+    mana: 'Mana (current pool, uncapped above max)',
+    max_mana: 'Max mana',
   },
   condAttr: {
     health: 'Health', attack: 'Attack', speed: 'Speed', cost: 'Mana cost',
@@ -340,6 +346,7 @@ function describeEffect(e, ownerNoun) {
     else if (tg.kind === 'auto') who = `${tg.count > 1 ? tg.count + ' units' : 'one unit'} ${labelOf('criterion', tg.criterion || 'nearest')}`;
     else if (tg.kind === 'manual') who = 'a unit the player picks';
     else if (tg.kind === 'manual_slot') who = 'a slot the player picks';
+    else if (tg.kind === 'side') who = tg.of === 'opponent' ? 'the OPPONENT player' : 'YOUR side';
     else who = 'every unit';
     if (conds && tg.kind !== 'participant') who += ` (${conds})`;
     else if (conds) who += ` (if ${conds})`;
@@ -354,6 +361,10 @@ function describeEffect(e, ownerNoun) {
       const amt = e.amount || 0;
       if (e.attribute === 'health') parts.push(amt >= 0 ? `heal ${amt} Health` : `deal ${-amt} direct damage`);
       else if (e.attribute === 'damage_taken') parts.push(`deal ${amt} damage (shield first)`);
+      else if (e.attribute === 'draw') parts.push(`draw ${amt} card${amt === 1 ? '' : 's'}`);
+      else if (e.attribute === 'discard') parts.push(`discard ${amt} random card${amt === 1 ? '' : 's'}`);
+      else if (e.attribute === 'mana') parts.push(amt >= 0 ? `gain ${amt} mana` : `lose ${-amt} mana`);
+      else if (e.attribute === 'max_mana') parts.push(`${signed(amt)} max mana`);
       else parts.push(`${signed(amt)} ${labelOf('attr', e.attribute).split(' (')[0]}`);
     }
     if (e.status && e.status.id) {

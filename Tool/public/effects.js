@@ -123,6 +123,7 @@ function normalizeTrigger(e) {
 // conditions; `subject` follows the normalized trigger's event).
 function normalizeTargets(e) {
   if (e.targets && typeof e.targets === 'object') {
+    if (e.targets.kind === 'side') { delete e.targets.conditions; delete e.conditions; delete e.targeting_policy; return; }
     // pre-owner-model native data: identity conditions collapse into the self kind
     const r = extractIdentity(e.targets.conditions);
     e.targets.conditions = r.out;
@@ -159,6 +160,7 @@ function retargetTargets(e, kindKey) {
   const conds = (e.targets && e.targets.conditions) || [];
   if (kindKey === 'auto') e.targets = { kind: 'auto', criterion: 'nearest', count: 1, conditions: conds };
   else if (kindKey === 'participant') e.targets = { kind: 'participant', participant: 'origin', conditions: conds };
+  else if (kindKey === 'side') e.targets = { kind: 'side', of: 'own' };   // no conditions: players have no predicates
   else e.targets = { kind: kindKey, conditions: conds };
 }
 
@@ -505,6 +507,12 @@ function renderEffect(e, ctx, onChange, onRemove) {
             .map(p => ({ value: p, label: labelOf('participant', p) })), localChange),
             'origin/destination need an event — nothing is targeted on plain use'),
         ));
+      } else if (tg.kind === 'side') {
+        rows.push(el('div', { class: 'frow' },
+          fld('Which player', selectInput(tg, 'of', (ctx.vocab.sideSelectors || ['own', 'opponent'])
+            .map(s => ({ value: s, label: s === 'own' ? 'Own side (the holder’s player)' : 'The opponent' })), localChange),
+            'a PLAYER, not a unit — pair with a side stat (draw/discard/mana/max mana)'),
+        ));
       }
       // The two slots are the ABSTRACT participants — same for every event. The event-specific
       // noun is only a parenthetical hint, so the UI teaches the model instead of hiding it.
@@ -531,13 +539,19 @@ function renderEffect(e, ctx, onChange, onRemove) {
       }
 
       if (kind !== 'custom') {
+        // A side target commits side stats and nothing else (no unit stats, no status —
+        // mirrors the game's load validation), so the payload vocabulary follows the kind.
+        const sideTargeted = tg.kind === 'side';
+        const attrPool = sideTargeted ? (ctx.vocab.sideAttrs || ['draw', 'discard', 'mana', 'max_mana'])
+          : ctx.vocab.effectAttrs;
+        if (sideTargeted && !attrPool.includes(e.attribute)) { e.attribute = attrPool[0]; delete e.status; }
         rows.push(el('div', { class: 'frow' },
-          fld('Change stat', selectInput(e, 'attribute', ctx.vocab.effectAttrs.map(a => ({ value: a, label: labelOf('attr', a) })), localChange, { optional: true, emptyLabel: '(no stat change)' })),
+          fld('Change stat', selectInput(e, 'attribute', attrPool.map(a => ({ value: a, label: labelOf('attr', a) })), localChange, sideTargeted ? {} : { optional: true, emptyLabel: '(no stat change)' })),
           fld('By', numInput(e, 'amount', localChange, { optional: e.attribute == null, placeholder: '0' }),
-            'health: + heals, − damages. damage_taken: positive number of damage.', 'narrow'),
+            sideTargeted ? 'mana: + gains (uncapped above max), − drains.' : 'health: + heals, − damages. damage_taken: positive number of damage.', 'narrow'),
         ));
         // status payload
-        const hasStatus = !!(e.status && e.status.id != null);
+        const hasStatus = !sideTargeted && !!(e.status && e.status.id != null);
         const stWrap = el('div');
         const renderStatus = () => {
           stWrap.replaceChildren();
@@ -557,11 +571,14 @@ function renderEffect(e, ctx, onChange, onRemove) {
               el('button', { class: 'ghost tiny', text: '✕ no status', onclick: () => { delete e.status; localChange(); renderStatus(); } })),
           ));
         };
-        renderStatus();
-        rows.push(stWrap);
+        if (!sideTargeted) {
+          renderStatus();
+          rows.push(stWrap);
+        }
       }
 
-      rows.push(participantConditionSection(tg, 'conditions', ctx, localChange, 'TARGETS must satisfy:'));
+      if (tg.kind !== 'side')
+        rows.push(participantConditionSection(tg, 'conditions', ctx, localChange, 'TARGETS must satisfy:'));
       body.append(...rows);
     }
   }
