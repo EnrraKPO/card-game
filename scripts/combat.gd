@@ -89,6 +89,11 @@ func _ready() -> void:
 			return ghost
 		return _board.get_card_ui(inst)
 	_vfx.setup(self, _get_card_ui)
+	# Relic-owned interception cues glint the tray chip; the tray lives in combat's chrome,
+	# so combat lends the presenter this one reach into it.
+	_vfx.relic_glint = func(relic_id: String) -> void:
+		if _relic_tray != null:
+			_relic_tray.glint(relic_id)
 	_animator.setup(self, _get_card_ui, _vfx)
 
 	_spell_caster.setup(_board, _animator, func() -> int: return _mana)
@@ -522,9 +527,9 @@ func _apply_attack_damage(attacker: CardInstance, target: CardInstance, t_card: 
 	await _broadcast(GameEvent.make(&"attack", attacker, target))
 	var outcome := Resolver.submit(
 			StatMutation.damage(target, attacker.get_attribute("attack"), attacker))
-	# Cue whatever intercepted (the Blind pip glint) BEFORE the damage readout — resolution is
-	# already complete; this is pure playback in resolution order.
-	await _present_interceptions(outcome)
+	# Cue whatever intercepted (the Blind pip glint, a relic chip) BEFORE the damage readout —
+	# resolution is already complete; this is pure playback in resolution order.
+	await _vfx.play_interceptions(outcome.interceptions)
 	var dmg := -outcome.delta
 	# Resolve the attack-driven decay AFTER submit (the Resolver needs the status alive to query
 	# its interceptors) and BEFORE the strike's on-hit reactions below. A charge is spent per
@@ -556,14 +561,9 @@ func _apply_attack_damage(attacker: CardInstance, target: CardInstance, t_card: 
 	_board.refresh()
 
 
-# Plays the pip/card glints for whatever intercepted a mutation inside the Resolver, in firing
-# order — pure playback off the Outcome record; resolution already happened. A status-owned
-# interception glints that status's pip on its holder; anything else glints the holder's card.
-func _present_interceptions(outcome: Resolver.Outcome) -> void:
-	for rec: Dictionary in outcome.interceptions:
-		var holder: CardInstance = rec.get("holder")
-		var sid: String = str(rec.get("owner_id", "")) if str(rec.get("owner_kind", "")) == "status" else ""
-		await _animator.show_effect_results([{"target": holder}], holder, sid)
+# (Interception playback lives in VFXPlayer.play_interceptions — the one presenter every
+# path shares: the attack path plays its Outcome's records directly, and effect-path records
+# ride the result dicts into play_results.)
 
 
 # Builds a dispatch context for one holder reacting to an event. The context carries the

@@ -717,10 +717,18 @@ const COND_ATTRS = ['health','attack','speed','cost','piece_count','element_coun
 const ELEMENTS = ['fire','water','air','earth','darkness','light'];
 const PIECES = ['pawn','knight','bishop','rook','queen','king'];
 
-function validateConditionList(list, where) {
+function validateConditionList(list, where, allowMutation) {
   for (let i = 0; i < (list || []).length; i++) {
     const c = list[i];
     if (c.status) continue;
+    if (c.mutation) {
+      // Mutation-form conditions predicate over a PENDING StatMutation — only the
+      // interceptor match evaluates them (mirrors Effect.from_dict's fail-loud rule).
+      if (!allowMutation) return `${where} condition ${i + 1}: mutation-form conditions are only valid on interceptors`;
+      if (c.mutation !== 'amount') return `${where} condition ${i + 1}: bad mutation attribute "${c.mutation}"`;
+      if (!COMPARATORS.includes(c.comparator)) return `${where} condition ${i + 1}: bad comparator`;
+      continue;
+    }
     if (c.allegiance) {
       if (!ALLEGIANCES.includes(c.allegiance)) return `${where} condition ${i + 1}: bad allegiance "${c.allegiance}"`;
       continue;
@@ -805,8 +813,15 @@ function validateEffect(e, where) {
     if (!MODIFIER_KEYS.includes(e.key)) return `${where}: unknown modifier key "${e.key}"`;
     if (typeof e.amount !== 'number') return `${where}: modifier needs a numeric amount`;
   } else if (kind === 'interceptor') {
-    if (!e.intercept) return `${where}: interceptor needs an "intercept" stat (e.g. damage)`;
+    if (!e.intercept) return `${where}: interceptor needs an "intercept" stat (e.g. damage, health, status)`;
     if (e.role && !['source','target'].includes(e.role)) return `${where}: bad role`;
+    // Native relational gate: which mutation participant is scrutinised + its relation.
+    if (e.of != null) {
+      if (typeof e.of !== 'object') return `${where}: interceptor "of" must be an object`;
+      if (e.of.participant && !['source','target'].includes(e.of.participant)) return `${where}: bad intercept participant "${e.of.participant}"`;
+      if (e.of.relation && !['self','ally','enemy','any'].includes(e.of.relation)) return `${where}: bad intercept relation "${e.of.relation}"`;
+    }
+    return validateConditionList(e.conditions, where, true);
   } else if (kind === 'custom') {
     if (!CUSTOM_HOOKS.includes(e.custom)) return `${where}: unknown custom hook "${e.custom}"`;
     const terr = validateTrigger(e.trigger, where) || validateTargets(e.targets, where);
@@ -1891,8 +1906,17 @@ function effectsGrammarLines() {
     '   Use STANDING for any ongoing/aura wording ("while", "as long as", buffs from a status).',
     `3. MODIFIER — run-wide passive number change: {"kind":"modifier","key": one of ${MODIFIER_KEYS.join('/')},`,
     '   "amount": n, "conditions":[...]?}. Only for run-wide numbers, never for board effects.',
-    '4. INTERCEPTOR — rewrites damage before it lands: {"kind":"interceptor","intercept":"damage",',
-    '   "channel":"attack"?, "role":"source"|"target", "op":"add"|"mul", "amount": n, "chance":?}',
+    '4. INTERCEPTOR — rewrites a pending stat change before it lands: {"kind":"interceptor",',
+    '   "intercept":"damage"|"health"|"status", "channel":"attack"?,',
+    '   "of": {"participant":"source"|"target", "relation":"self"|"ally"|"enemy"|"any"},',
+    '   "op":"add"|"mul", "amount": n, "chance":?, "conditions":[...]?}',
+    '   participant = which side of the change is scrutinised (source caused it, target receives',
+    '   it); relation = that unit\'s side vs the effect\'s owner ("self" = must be the holder —',
+    '   only meaningful on a card/status, never a relic/upgrade). Conditions gate the participant;',
+    '   an interceptor may also use the mutation-form condition (below) to gate on the amount,',
+    '   e.g. amount > 0 on "health" = heals only. intercept "status" rewrites the STACK COUNT of',
+    '   a status being applied. Any container can intercept — relics and upgrades included.',
+    '   (Legacy spelling "role":"source"|"target" = participant + relation "self".)',
     `5. CUSTOM code hook: {"kind":"custom","custom": one of ${CUSTOM_HOOKS.join('/')}, "trigger":..., "targets":...}`,
     '',
     '<targets> = {"kind":"self"} | {"kind":"all","conditions":[...]?}',
@@ -1906,6 +1930,8 @@ function effectsGrammarLines() {
     '  {"composition": [<elements/pieces>...], "present": false?} — made of any of these / none of these',
     '  {"card_type":"unit"|"spell"} | {"has_element": true|false}',
     `  {"attribute": one of ${COND_ATTRS.join('/')}, "comparator": one of ${COMPARATORS.join('/')}, "value": n}`,
+    `  {"mutation":"amount", "comparator": one of ${COMPARATORS.join('/')}, "value": n} — INTERCEPTOR ONLY:`,
+    '    a predicate over the pending change\'s amount (e.g. gt 0 = only positive changes/heals)',
     '',
     `Vocabulary: elements = ${ELEMENTS.join(', ')}; chess pieces = ${PIECES.join(', ')}.`,
     `Status ids that exist: ${statusIds.join(', ') || '(none yet)'}. Never invent a status id.`,

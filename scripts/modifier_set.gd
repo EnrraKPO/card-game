@@ -76,6 +76,17 @@ func standing() -> Array:
 	return out
 
 
+# The run set's INTERCEPTOR effects — enumerated by Resolver._intercept alongside the
+# mutation participants' own containers, so relics/upgrades rewrite pending mutations
+# through the same gate as unit-held interceptors (universal interception).
+func interceptors() -> Array:
+	var out: Array = []
+	for e: Effect in _mods:
+		if e.kind == Effect.Kind.INTERCEPTOR:
+			out.append(e)
+	return out
+
+
 # Active TRIGGERED/CUSTOM effects listening to an event — the run-level dispatch list
 # (see EffectSystem.trigger_global; the full activation gate runs there via the resolver).
 func triggered(event_id: StringName) -> Array:

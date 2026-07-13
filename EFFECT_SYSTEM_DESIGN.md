@@ -290,7 +290,42 @@ combat's VFX cue read of owner_kind (dispatch context instead).
 3. **(Deferred) composition-as-derived.** Route composition reads through the same lens;
    unlocks "pawn units lose their pawn component". Nothing in steps 1–2 blocks it.
 
-## 8. Test plan
+## 8. Universal interception (BUILT, 2026-07-13)
+
+The INTERCEPTOR kind got the container-transparency treatment (agreed in discussion,
+2026-07-13): **any active container's interceptors rewrite pending mutations** — the ruling
+is "any effect could be an interception; sources are never manually enumerated."
+
+- **Enumeration** (`Resolver._intercept`): the same source set every other evaluator uses —
+  the mutation's participant units (own card + statuses) and the run set
+  (`ModifierSet.interceptors()` via `GameData.current_modifiers`). Fixed structural order:
+  source unit → target unit → run set (no authored ordering yet — deliberately deferred).
+  Third-party-unit interceptors are the interception twin of auras: built when auras are,
+  as ONE shared board-wide enumeration.
+- **Relational match** replaces the holder-role gate: an interceptor names a mutation
+  PARTICIPANT (`of.participant`: source/target) and gates it structurally (identity —
+  `of.relation: "self"`, the participant must BE the holder) or predicatively (the shared
+  condition grammar, evaluated against the participant with the owner side as allegiance
+  anchor). Legacy `role: source|target` maps losslessly to participant + identity;
+  `of.relation: ally/enemy` converges onto an allegiance condition at parse — one grammar,
+  one canonical spelling. Conditions are thereby the grammar's FOURTH socket:
+  trigger → targets → payload → intercept.
+- **MUTATION-form condition** (`{"mutation": "amount", "comparator": ..., "value": ...}`):
+  a predicate over the pending mutation itself, interceptor-only (fail-loud elsewhere).
+  How "heals only" is spelled on a health intercept — no bespoke direction property.
+- **Status application rides the Resolver** (`StatMutation.STATUS`, `status_apply` factory):
+  `EffectSystem._apply` submits instead of calling `apply_status` directly, making stack
+  counts interceptable. STATUS floors at 0 after every rewrite like DAMAGE; an
+  intercepted-away application applies nothing and cues nothing.
+- Proof content: `war_bulwark` upgrade (ally units take −1 attack damage), `menders_charm`
+  relic (+1 to ally-sourced heals), `contagion_stone` relic (+1 stack per ally-applied
+  status — additive, NOT doubling). Suite: `tests/test_interception.gd` (incl. the authored
+  JSON end-to-end through `ModifierSet.for_run`).
+
+This is the groundwork for the CombatSide/player-targeted-effects design (draw/mana as
+interceptable mutations targeting a side) — discussed, not yet built.
+
+## 9. Test plan
 
 - Existing regression suite tests/_runner.tscn — mandatory after every step (resolution
   layer touched).

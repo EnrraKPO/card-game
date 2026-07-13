@@ -126,7 +126,16 @@ var tracker_spec: Dictionary = {}
 # ── INTERCEPTOR fields ──
 var intercept: StringName = &""   # the StatMutation stat this rewrites (e.g. "damage")
 var channel: StringName = &""     # provenance filter (e.g. "attack"); empty = any channel
-var role: Role = Role.SOURCE      # which side of the mutation the holder must be
+# The relational match gate (native "of" form): which mutation PARTICIPANT this interceptor
+# scrutinises ("source"/"target") and whether that participant must BE the holder (identity —
+# structural, never a condition, per the stage-2 ruling). Ally/enemy gating is spelled as an
+# allegiance CONDITION (the shared grammar; of.relation ally/enemy parses into one). Legacy
+# `role` maps losslessly: role source ≡ participant "source" + identity. `role` survives as
+# the legacy mirror for byte-faithful round-trips.
+var intercept_participant: String = "source"
+var intercept_identity := false
+var authored_native_intercept := false
+var role: Role = Role.SOURCE      # legacy mirror: which side of the mutation the holder must be
 
 # (No owner_kind/owner_id here: an effect NEVER knows what container holds it. Container
 # identity travels as dispatch context — the enumeration knows which container it is
@@ -177,8 +186,8 @@ static func from_dict(d: Dictionary) -> Effect:
 		e.kind      = Kind.INTERCEPTOR
 		e.intercept = StringName(str(d.get("intercept", "")))
 		e.channel   = StringName(str(d.get("channel", "")))
-		e.role      = _str_role(str(d.get("role", "source")))
 		e.op        = Op.MUL if str(d.get("op", "add")) == "mul" else Op.ADD
+		e._parse_intercept_gate(d)
 	elif kind_str == "custom" or (kind_str.is_empty() and d.has("custom")):
 		e.kind             = Kind.CUSTOM
 		e.custom_id        = d.get("custom", "")
@@ -200,7 +209,44 @@ static func from_dict(d: Dictionary) -> Effect:
 		e.status_duration = int(st.get("duration", STATUS_DURATION_DEFAULT))
 		e.status_stacks   = int(st.get("stacks", 1))
 	e._validate_standing(d)
+	# Mutation-form conditions predicate over a pending StatMutation — only the interceptor
+	# match ever evaluates them. Anywhere else they'd be a silently-vacuous gate: fail loud.
+	if e.kind != Kind.INTERCEPTOR:
+		for c: EffectCondition in e.conditions:
+			if c.is_mutation_form():
+				push_error("Effect: mutation-form condition on a non-interceptor effect — %s" % [d])
 	return e
+
+
+# Parses the interceptor match gate from either schema. Native form: "of" is a dictionary
+# {"participant": "source"/"target", "relation": "self"/"ally"/"enemy"/"any"} — identity
+# (self) is structural; ally/enemy converge onto an allegiance CONDITION prepended to the
+# list (one grammar, one canonical spelling). Legacy form: the "role" string, meaning "the
+# holder must be that participant" — maps losslessly to participant + identity.
+func _parse_intercept_gate(d: Dictionary) -> void:
+	var of_v: Variant = d.get("of", null)
+	if of_v is Dictionary:
+		authored_native_intercept = true
+		var of := of_v as Dictionary
+		intercept_participant = str(of.get("participant", "target"))
+		if not intercept_participant in ["source", "target"]:
+			push_error("Effect: unknown intercept participant '%s' — %s" % [intercept_participant, d])
+			intercept_participant = "target"
+		match str(of.get("relation", "any")):
+			"self":
+				intercept_identity = true
+			"ally", "enemy":
+				conditions.push_front(EffectCondition.from_dict({"allegiance": str(of.get("relation"))}))
+			"any":
+				pass
+			_:
+				push_error("Effect: unknown intercept relation '%s' — %s" % [str(of.get("relation")), d])
+		# Legacy mirror, derived for consumers that classify without matching.
+		role = Role.SOURCE if intercept_participant == "source" else Role.TARGET
+		return
+	role = _str_role(str(d.get("role", "source")))
+	intercept_participant = "source" if role == Role.SOURCE else "target"
+	intercept_identity = true
 
 
 # Load-time authoring validation for standing effects — FAIL LOUD, never silently closed
@@ -343,11 +389,22 @@ func to_dict() -> Dictionary:
 				cd["subject"] = subject_key(subject_filter)
 			return cd
 		Kind.INTERCEPTOR:
-			var idd := {
-				"intercept": String(intercept),
-				"role":      role_key(role),
-				"amount":    amount,
-			}
+			var idd := {"intercept": String(intercept)}
+			if not authored_native_intercept:
+				idd["role"] = role_key(role)   # legacy key order preserved: intercept, role, amount
+			idd["amount"] = amount
+			if authored_native_intercept:
+				# Native out: identity keeps its structural spelling; ally/enemy live in the
+				# conditions list (the canonical convergence — of.relation in, condition out).
+				var of := {"participant": intercept_participant}
+				if intercept_identity:
+					of["relation"] = "self"
+				idd["of"] = of
+				if not conditions.is_empty():
+					var iconds: Array = []
+					for c: EffectCondition in conditions:
+						iconds.append(c.to_dict())
+					idd["conditions"] = iconds
 			if channel != &"":
 				idd["channel"] = String(channel)
 			if op == Op.MUL:

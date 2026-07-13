@@ -132,9 +132,14 @@ static func _apply(effect: Effect, target: CardInstance, source: CardInstance, c
 		effect.custom_apply.call(target)
 		return {}
 	# Generic "apply a status" operation: any effect can grant a status to each resolved target.
+	# Routed through the Resolver (single-writer rule) so interceptors can rewrite the stack
+	# count — an application intercepted away (delta 0) applies nothing and cues nothing.
 	if not effect.status_id.is_empty():
-		target.apply_status(effect.status_id, effect.status_duration, effect.status_stacks, source)
-		return {"target": target, "status_applied": effect.status_id}
+		var sout := Resolver.submit(StatMutation.status_apply(target, effect.status_id,
+				effect.status_duration, effect.status_stacks, source))
+		if sout.delta <= 0:
+			return {}
+		return _with_interceptions({"target": target, "status_applied": effect.status_id}, sout)
 	# Every branch returns {} for a no-op (nothing changed) and a non-empty result when something
 	# happened — so "produced a result" == "the container did something", which drives the cue.
 	var amount := effect.amount_int() * amount_scale
@@ -146,21 +151,30 @@ static func _apply(effect: Effect, target: CardInstance, source: CardInstance, c
 				StatMutation.stat_for_attribute(effect.attribute), amount, source))
 		if out.delta == 0:
 			return {}   # already full / 0 heal — nothing happened
-		return {"target": target, "attribute": "health", "delta": out.delta}
+		return _with_interceptions({"target": target, "attribute": "health", "delta": out.delta}, out)
 	elif effect.attribute == "damage_taken":
 		# The incoming-hit channel: attack-form damage — shield absorbs first, the remainder
 		# wounds health. HOW it splits is the Resolver's knowledge, not ours.
 		if amount <= 0:
 			return {}
-		Resolver.submit(StatMutation.make(target,
+		var dout := Resolver.submit(StatMutation.make(target,
 				StatMutation.stat_for_attribute(effect.attribute), amount, source))
-		return {"target": target, "attribute": "health", "delta": -amount}
+		return _with_interceptions({"target": target, "attribute": "health", "delta": -amount}, dout)
 	else:
 		if amount == 0:
 			return {}
-		Resolver.submit(StatMutation.make(target,
+		var mout := Resolver.submit(StatMutation.make(target,
 				StatMutation.stat_for_attribute(effect.attribute), amount, source))
-		return {"target": target, "attribute": effect.attribute, "delta": amount}
+		return _with_interceptions({"target": target, "attribute": effect.attribute, "delta": amount}, mout)
+
+
+# Rides the Resolver's interception records on the result dict, so presentation can cue the
+# rewriters (relic chip / status pip / card glint) before the effect's own VFX — the effect
+# path's counterpart of the attack path's Outcome.interceptions playback.
+static func _with_interceptions(r: Dictionary, out: Resolver.Outcome) -> Dictionary:
+	if not out.interceptions.is_empty():
+		r["interceptions"] = out.interceptions
+	return r
 
 
 # ── Condition evaluation ───────────────────────────────────────────────────────

@@ -33,6 +33,12 @@ var card_type: String = ""
 # element (`true`) or none (`false`). Native replacement for filter {"has_element": true}.
 var has_element_set := false
 var has_element := false
+# MUTATION-form condition: a predicate over a PENDING StatMutation rather than a unit —
+# valid only on INTERCEPTOR effects (load-validated), evaluated by the Resolver's match
+# via evaluate_mutation. "amount" is the one attribute today (e.g. {"mutation": "amount",
+# "comparator": "gt", "value": 0} = "only heals" on a health intercept); the comparator
+# machinery is shared with the attribute form.
+var mutation_attr: String = ""
 
 
 static func make(attr: String, comp: Comparator, val: int) -> EffectCondition:
@@ -86,6 +92,14 @@ static func from_dict(d: Dictionary) -> EffectCondition:
 		c.has_element_set = true
 		c.has_element = bool(d.get("has_element", true))
 		return c
+	if d.has("mutation"):
+		var c := EffectCondition.new()
+		c.mutation_attr = str(d.get("mutation", ""))
+		if c.mutation_attr != "amount":
+			push_error("EffectCondition: unknown mutation attribute '%s' — %s" % [c.mutation_attr, d])
+		c.comparator = _str_comparator(d.get("comparator", ""))
+		c.value = int(d.get("value", 0))
+		return c
 	return make(
 		d.get("attribute", ""),
 		_str_comparator(d.get("comparator", "")),
@@ -125,6 +139,8 @@ func to_dict() -> Dictionary:
 		return {"card_type": card_type}
 	if has_element_set:
 		return {"has_element": has_element}
+	if not mutation_attr.is_empty():
+		return {"mutation": mutation_attr, "comparator": comparator_key(comparator), "value": value}
 	return {
 		"attribute":  attribute,
 		"comparator": comparator_key(comparator),
@@ -146,7 +162,21 @@ static func comparator_key(c: Comparator) -> String:
 # `owner` is the SIDE of the effect this condition belongs to (the container's owner) —
 # required by the allegiance form, ignored by every other form. -1 = no side known
 # (allegiance then fails closed: you can't compare against a side that isn't there).
+func is_mutation_form() -> bool:
+	return not mutation_attr.is_empty()
+
+
+# Evaluates a MUTATION-form condition against a pending StatMutation (the Resolver's
+# interceptor match routes mutation-form conditions here, unit forms to evaluate()).
+func evaluate_mutation(m: StatMutation) -> bool:
+	if mutation_attr != "amount" or m == null:
+		return false
+	return _compare(m.amount)
+
+
 func evaluate(card: CardInstance, owner: int = -1) -> bool:
+	if is_mutation_form():
+		return true   # not a unit predicate — routed to evaluate_mutation; vacuous here
 	if custom_check.is_valid():
 		return custom_check.call(card)
 	if not allegiance.is_empty():
@@ -170,12 +200,16 @@ func evaluate(card: CardInstance, owner: int = -1) -> bool:
 		return (card.data.card_type == CardData.CardType.UNIT) == want_unit
 	if has_element_set:
 		return card.data.elements.is_empty() != has_element
-	var card_val := card.get_attribute(attribute)
+	return _compare(card.get_attribute(attribute))
+
+
+# The one comparator application, shared by the attribute (unit) and mutation forms.
+func _compare(actual: int) -> bool:
 	match comparator:
-		Comparator.GT:  return card_val > value
-		Comparator.GTE: return card_val >= value
-		Comparator.LT:  return card_val < value
-		Comparator.LTE: return card_val <= value
-		Comparator.EQ:  return card_val == value
-		Comparator.NEQ: return card_val != value
+		Comparator.GT:  return actual > value
+		Comparator.GTE: return actual >= value
+		Comparator.LT:  return actual < value
+		Comparator.LTE: return actual <= value
+		Comparator.EQ:  return actual == value
+		Comparator.NEQ: return actual != value
 	return false

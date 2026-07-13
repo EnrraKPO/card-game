@@ -7,11 +7,12 @@ extends RefCounted
 #   • Resolution FORM lives here and nowhere else: attack damage routes through shield before
 #     health, heals clamp to max, direct wounds bypass shield. Callers say WHAT ("damage 5");
 #     the Resolver knows HOW.
-#   • INTERCEPTION happens inside the gate: before a mutation on a CardInstance commits, the
-#     source's and target's INTERCEPTOR effects (native + statuses, see Effect.Kind) get to
-#     rewrite its amount, matched declaratively by stat/channel/role — e.g. Blind multiplies
-#     the holder's outgoing attack damage to 0. No call site knows interception exists; the
-#     Outcome records what fired so presentation can cue the right pips afterwards.
+#   • INTERCEPTION happens inside the gate: before a mutation on a CardInstance commits, every
+#     active container's INTERCEPTOR effects (the participants' cards + statuses AND the run
+#     set — relics/upgrades) get to rewrite its amount, matched declaratively by stat/channel/
+#     participant/conditions — e.g. Blind multiplies the holder's outgoing attack damage to 0;
+#     a relic adds +1 to every allied heal. No call site knows interception exists; the
+#     Outcome records what fired so presentation can cue the right pips/chips afterwards.
 #
 # Every submit returns an Outcome — the standardized report of what actually happened, and
 # the embryo of the future outcome stream presentation will consume. Events stay separate
@@ -65,6 +66,15 @@ static func _apply_to_instance(inst: CardInstance, m: StatMutation) -> Outcome:
 			return _apply_damage(inst, m.amount)
 		StatMutation.HEALTH:
 			return _apply_health(inst, m.amount)
+		StatMutation.STATUS:
+			# Status application — the Resolver is the single writer of statuses too, which is
+			# what lets interceptors rewrite the stack count. An application intercepted away
+			# (amount <= 0) applies nothing and reports delta 0. Stacking/clamping knowledge
+			# stays in apply_status; delta reports the REQUESTED stacks (the pre-clamp ask).
+			if m.amount <= 0 or m.status_id.is_empty():
+				return Outcome.make(inst, StatMutation.STATUS, 0)
+			inst.apply_status(m.status_id, m.status_duration, m.amount, m.source)
+			return Outcome.make(inst, StatMutation.STATUS, m.amount)
 		StatMutation.SHIELD_POOL:
 			# Pool floors at 0; the outcome reports the change that ACTUALLY landed. (Plain
 			# "shield" is the per-round BASE — an additive modifier, handled below.)
@@ -132,43 +142,73 @@ static func _apply_health(inst: CardInstance, amount: int) -> Outcome:
 
 
 # ── Interception (see Effect.Kind.INTERCEPTOR) ──
-# Before a mutation commits, the units on both of its sides get to rewrite the amount: first
-# the SOURCE's interceptors (the causing unit modifying its own outgoing change — Blind), then
-# the TARGET's (the receiving unit defending — armor, a future Castled). Within a side: the
-# card's native effects, then each status's (scaled by stack count). Each match rolls its own
-# chance. A DAMAGE amount is re-floored at 0 after every rewrite — a blocked strike is 0,
-# never a heal. Returns the presentation records for Outcome.interceptions.
+# Before a mutation commits, every active container's interceptors get to rewrite the amount —
+# universal interception: the same source set every other evaluator enumerates (a participant
+# unit's own card + statuses, and the run set: relics/upgrades via GameData.current_modifiers).
+# WHO an interceptor scrutinises is the effect's own data (participant + identity/conditions),
+# not the enumeration. Fixed structural order (no authored ordering yet): source unit →
+# target unit → run set; within a unit: native effects, then each status's (scaled by stack
+# count). Each match rolls its own chance. DAMAGE and STATUS amounts are re-floored at 0
+# after every rewrite — a blocked strike is 0, never a heal; an intercepted-away status
+# application applies nothing. Returns the presentation records for Outcome.interceptions.
 
 static func _intercept(m: StatMutation) -> Array:
 	var records: Array = []
-	_intercept_side(m.source, Effect.Role.SOURCE, m, records)
 	var t := m.target as CardInstance
-	if t != null:
-		_intercept_side(t, Effect.Role.TARGET, m, records)
+	_intercept_unit(m.source, m, records)
+	if t != null and t != m.source:
+		_intercept_unit(t, m, records)
+	if GameData.current_modifiers != null:
+		for e: Effect in GameData.current_modifiers.interceptors():
+			# Run scope: no holder; owned by the PLAYER side (the allegiance anchor).
+			_try_intercept(e, 1, null, 0, m, records, null,
+					GameData.current_modifiers.owner_of(e))
 	return records
 
 
-static func _intercept_side(holder: CardInstance, side: Effect.Role, m: StatMutation, records: Array) -> void:
+static func _intercept_unit(holder: CardInstance, m: StatMutation, records: Array) -> void:
 	if holder == null or holder.data == null:
 		return
 	# The enumeration knows which container it is iterating — that knowledge stays HERE
 	# (dispatch context for the cue record) and in the blind fired() channel; the effects
 	# themselves are container-blind.
 	for e: Effect in holder.data.effects:
-		_try_intercept(e, 1, holder, side, m, records, null)
+		_try_intercept(e, 1, holder, holder.owner, m, records, null, {})
 	for si: StatusInstance in holder.statuses:
 		for e: Effect in si.data.effects:
-			_try_intercept(e, si.stacks, holder, side, m, records, si)
+			_try_intercept(e, si.stacks, holder, holder.owner, m, records, si, {})
 
 
-static func _try_intercept(e: Effect, stacks: int, holder: CardInstance, side: Effect.Role,
-		m: StatMutation, records: Array, si: StatusInstance) -> void:
-	if e.kind != Effect.Kind.INTERCEPTOR or e.role != side:
+static func _try_intercept(e: Effect, stacks: int, holder: CardInstance, owner_side: int,
+		m: StatMutation, records: Array, si: StatusInstance, run_owner: Dictionary) -> void:
+	if e.kind != Effect.Kind.INTERCEPTOR:
 		return
 	if e.intercept != m.stat:
 		return
 	if e.channel != &"" and e.channel != m.channel:
 		return
+	# The participant gate: which side of the pending mutation this interceptor scrutinises.
+	# A missing participant (system mutation with no source) never matches.
+	var participant: CardInstance = null
+	if e.intercept_participant == "source":
+		participant = m.source
+	else:
+		participant = m.target as CardInstance
+	if participant == null:
+		return
+	# Structural identity (legacy role / of.relation "self"): the participant must BE the
+	# holder — by construction never matched by a holderless (run-scope) container.
+	if e.intercept_identity and participant != holder:
+		return
+	# Conditions — the shared grammar's fourth socket (trigger → targets → payload →
+	# intercept): mutation-form predicates read the pending mutation; unit forms read the
+	# selected participant against the owner anchor (allegiance/composition/stat/status).
+	for c: EffectCondition in e.conditions:
+		if c.is_mutation_form():
+			if not c.evaluate_mutation(m):
+				return
+		elif not c.evaluate(participant, owner_side):
+			return
 	if e.chance < 1.0 and randf() >= e.chance:
 		return
 	var before := m.amount
@@ -176,17 +216,24 @@ static func _try_intercept(e: Effect, stacks: int, holder: CardInstance, side: E
 		m.amount = int(round(m.amount * e.amount))
 	else:
 		m.amount += e.amount_int() * stacks   # additive rewrites scale by stacks, like stat deltas
-	if m.stat == StatMutation.DAMAGE:
+	if m.stat == StatMutation.DAMAGE or m.stat == StatMutation.STATUS:
 		m.amount = maxi(0, m.amount)
 	if m.amount == before:
 		# Changed nothing = didn't fire: no cue, no charge spent. This is what makes a Barrier
 		# ignore a whiff — blocking a 0-damage strike (a Blinded attacker's miss) is a no-op.
 		return
-	records.append({
-		"owner_kind": "status" if si != null else "card",
-		"owner_id": si.data.id if si != null else str(holder.data.id),
-		"holder": holder, "delta": m.amount - before,
-	})
+	if run_owner.is_empty():
+		records.append({
+			"owner_kind": "status" if si != null else "card",
+			"owner_id": si.data.id if si != null else str(holder.data.id),
+			"holder": holder, "delta": m.amount - before,
+		})
+	else:
+		records.append({
+			"owner_kind": str(run_owner.get("kind", "run")),
+			"owner_id": str(run_owner.get("id", "")),
+			"holder": null, "delta": m.amount - before,
+		})
 	# The blind upward channel: the container learns one of its effects actually fired and
 	# reacts on its own terms — an intercept-decay status (Barrier) spends a charge.
 	if si != null:

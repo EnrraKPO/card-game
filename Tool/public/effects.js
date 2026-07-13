@@ -8,7 +8,7 @@ const EFFECT_KINDS = [
   { value: 'triggered', label: 'Triggered — reacts to an event (when)' },
   { value: 'standing', label: 'Standing — stat change while active (while)' },
   { value: 'modifier', label: 'Modifier — run-wide number change' },
-  { value: 'interceptor', label: 'Interceptor — rewrites damage before it lands' },
+  { value: 'interceptor', label: 'Interceptor — rewrites a pending change before it lands' },
   { value: 'custom', label: 'Custom — a named code hook' },
 ];
 
@@ -21,13 +21,20 @@ function effectKindOf(e) {
   return e.kind || (e.key != null ? 'modifier' : e.intercept != null ? 'interceptor' : e.custom != null ? 'custom' : 'triggered');
 }
 
+// Run-scope containers (relic/upgrade) have no holder unit — the identity relation
+// ("self") is inexpressible there; the editor hides it (stage-2 affordance).
+function isRunScopeCtx(ctx) {
+  return ctx && (ctx.ownerNoun === 'this relic' || ctx.ownerNoun === 'this upgrade');
+}
+
 // Rebuild an effect object as a given kind, keeping what carries over.
-function coerceEffectKind(e, kind) {
+function coerceEffectKind(e, kind, ctx) {
   for (const k of Object.keys(e)) delete e[k];
   if (kind === 'modifier') Object.assign(e, { kind: 'modifier', key: 'unit.attack', amount: 1 });
   else if (kind === 'standing') Object.assign(e, { trigger: { kind: 'while' },
     targets: { kind: 'self' }, tracker: { kind: 'container' }, attribute: 'attack', amount: 1 });
-  else if (kind === 'interceptor') Object.assign(e, { kind: 'interceptor', intercept: 'damage', channel: 'attack', role: 'target', op: 'mul', amount: 0 });
+  else if (kind === 'interceptor') Object.assign(e, { kind: 'interceptor', intercept: 'damage', channel: 'attack',
+    of: { participant: 'target', relation: isRunScopeCtx(ctx) ? 'ally' : 'self' }, op: 'mul', amount: 0 });
   else if (kind === 'custom') Object.assign(e, { kind: 'custom', custom: 'rallying_cry',
     trigger: { kind: 'dual_event', event: 'attack', origin_of: 'self', origin_conditions: [], destination_conditions: [] },
     targets: { kind: 'self', conditions: [] } });
@@ -172,11 +179,15 @@ const COND_KINDS = [
   { value: 'composition', label: 'Made of / not made of' },
   { value: 'allegiance', label: 'Side — ally or enemy of this effect' },
 ];
+// Interceptors only: a predicate over the PENDING change itself (its amount) rather than
+// a unit — how "heals only" is spelled on a health intercept (amount > 0).
+const MUTATION_COND_KIND = { value: 'mutation', label: 'Pending amount check (interceptor)' };
 
 function condKindOf(c) {
   return (c.allegiance != null || c.relation != null) ? 'allegiance'
     : c.status != null ? 'status'
-    : c.composition != null ? 'composition' : 'attribute';
+    : c.composition != null ? 'composition'
+    : c.mutation != null ? 'mutation' : 'attribute';
 }
 
 // Conditions are PREDICATES only. Identity ("the holder itself") is never one — it is
@@ -196,7 +207,7 @@ function relationValueKey(c) {
   return c.relation != null ? 'relation' : 'allegiance';
 }
 
-function renderCondition(c, ctx, onChange, onRemove) {
+function renderCondition(c, ctx, onChange, onRemove, allowMutation) {
   const card = el('div', { class: 'cond-card' });
   const kind = condKindOf(c);
   const rebuild = () => { onChange(); renderInto(); };
@@ -209,11 +220,13 @@ function renderCondition(c, ctx, onChange, onRemove) {
         if (e.target.value === 'status') Object.assign(c, { status: (ctx.statusIds()[0] || 'poison'), present: true });
         else if (e.target.value === 'composition') Object.assign(c, { composition: ['king'], present: false });
         else if (e.target.value === 'allegiance') Object.assign(c, { allegiance: 'ally' });
+        else if (e.target.value === 'mutation') Object.assign(c, { mutation: 'amount', comparator: 'gt', value: 0 });
         else Object.assign(c, { attribute: 'health', comparator: 'lte', value: 3 });
         onChange(); renderInto();
       },
     });
-    for (const o of COND_KINDS) kindSel.append(el('option', { value: o.value, text: o.label, selected: condKindOf(c) === o.value }));
+    const kindOpts = allowMutation ? COND_KINDS.concat([MUTATION_COND_KIND]) : COND_KINDS;
+    for (const o of kindOpts) kindSel.append(el('option', { value: o.value, text: o.label, selected: condKindOf(c) === o.value }));
 
     const row = el('div', { class: 'frow' });
     row.append(fld('Condition type', kindSel));
@@ -235,6 +248,12 @@ function renderCondition(c, ctx, onChange, onRemove) {
           el('span', { class: 'lab', text: 'Elements / pieces' }),
           chipSet(c.composition, ctx.vocab.elements.concat(ctx.vocab.pieces), onChange,
             id => labelOf('element', id) !== id ? labelOf('element', id) : labelOf('piece', id))),
+      );
+    } else if (k === 'mutation') {
+      row.append(
+        fld('The pending amount is', selectInput(c, 'comparator', ctx.vocab.comparators.map(x => ({ value: x, label: labelOf('cmp', x) })), onChange),
+          'e.g. gt 0 on a health intercept = heals only'),
+        fld('Value', numInput(c, 'value', onChange), null, 'narrow'),
       );
     } else {
       row.append(
@@ -270,7 +289,7 @@ function statusPicker(obj, key, ctx, onChange) {
 // ── effect editor ────────────────────────────────────────────────────────────
 // ctx: { vocab, statusIds(), ownerNoun }
 // Shared "conditions" section — targeting on EVERY effect kind is gated by the same list.
-function conditionSection(e, ctx, localChange, labelWhenSome) {
+function conditionSection(e, ctx, localChange, labelWhenSome, allowMutation) {
   if (!e.conditions) e.conditions = [];
   const condWrap = el('div');
   const renderConds = () => {
@@ -279,7 +298,7 @@ function conditionSection(e, ctx, localChange, labelWhenSome) {
     e.conditions.forEach((c, i) => {
       condWrap.append(renderCondition(c, ctx, localChange, () => {
         e.conditions.splice(i, 1); localChange(); renderConds();
-      }));
+      }, allowMutation));
     });
     condWrap.append(el('button', { class: 'ghost small list-add', text: '+ add target condition', onclick: () => {
       e.conditions.push({ attribute: 'health', comparator: 'lte', value: 3 });
@@ -349,7 +368,7 @@ function renderEffect(e, ctx, onChange, onRemove) {
     const localChange = () => { onChange(); sumEl.textContent = describeEffect(e, ctx.ownerNoun); };
 
     const kindSel = el('select', {
-      onchange: ev => { coerceEffectKind(e, ev.target.value); onChange(); renderInto(); },
+      onchange: ev => { coerceEffectKind(e, ev.target.value, ctx); onChange(); renderInto(); },
     });
     for (const o of EFFECT_KINDS) kindSel.append(el('option', { value: o.value, text: o.label, selected: kind === o.value }));
 
@@ -401,16 +420,35 @@ function renderEffect(e, ctx, onChange, onRemove) {
       }
       cleanupFilter(e);
     } else if (kind === 'interceptor') {
+      // Legacy role → the native relational gate on first render, exactly the way the
+      // game parses it (role = participant + identity — see Effect._parse_intercept_gate).
+      if (!e.of || typeof e.of !== 'object') {
+        e.of = { participant: e.role === 'source' ? 'source' : 'target', relation: 'self' };
+        delete e.role;
+      }
+      const relationOpts = [
+        ...(isRunScopeCtx(ctx) ? [] : [{ value: 'self', label: `${ctx.ownerNoun || 'the holder'} itself` }]),
+        { value: 'ally', label: 'on this effect’s own side (ally)' },
+        { value: 'enemy', label: 'on the opposite side (enemy)' },
+        { value: 'any', label: 'anyone' },
+      ];
       body.append(el('div', { class: 'frow' },
-        fld('Rewrites', selectInput(e, 'intercept', [{ value: 'damage', label: 'damage' }], localChange),
-          'the stat mutation being rewritten'),
+        fld('Rewrites', selectInput(e, 'intercept', [
+          { value: 'damage', label: 'damage (shield-first hits)' },
+          { value: 'health', label: 'health (direct heals / wounds)' },
+          { value: 'status', label: 'status stacks being applied' },
+        ], localChange), 'the pending change being rewritten'),
         fld('Only from', selectInput(e, 'channel', [
           { value: 'attack', label: 'unit strikes (auto-attacks)' },
         ], localChange, { optional: true, emptyLabel: 'any source (spells, poison, strikes…)' })),
-        fld('Holder must be', selectInput(e, 'role', [
-          { value: 'target', label: 'the one being hit (armor / barrier)' },
+      ));
+      body.append(el('div', { class: 'frow' },
+        fld('Scrutinises', selectInput(e.of, 'participant', [
+          { value: 'target', label: 'the one receiving it (armor / barrier)' },
           { value: 'source', label: 'the one causing it (blind)' },
-        ], localChange)),
+        ], localChange), 'which side of the pending change is matched'),
+        fld('Who must be', selectInput(e.of, 'relation', relationOpts, localChange),
+          'relative to this effect’s owner'),
       ));
       body.append(el('div', { class: 'frow' },
         fld('Operation', selectInput(e, 'op', [
@@ -420,6 +458,8 @@ function renderEffect(e, ctx, onChange, onRemove) {
         fld('Chance', numInput(e, 'chance', localChange, { float: true, step: 0.05, min: 0, max: 1, optional: true, placeholder: '1.0' }),
           'roll per hit, 0–1; empty = always', 'narrow'),
       ));
+      body.append(conditionSection(e, ctx, localChange,
+        'Only when ALL of these hold (unit checks read the scrutinised participant):', true));
     } else {
       // triggered / custom share the event plumbing
       const rows = [];

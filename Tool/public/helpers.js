@@ -256,6 +256,7 @@ function describeCondition(c) {
     const list = Array.isArray(c.composition) ? c.composition : [c.composition];
     return (c.present === false ? 'made of none of: ' : 'made of any of: ') + list.join(', ');
   }
+  if (c.mutation) return `the pending amount ${labelOf('cmp', c.comparator)} ${c.value}`;
   return `${labelOf('condAttr', c.attribute)} ${labelOf('cmp', c.comparator)} ${c.value}`;
 }
 
@@ -284,12 +285,25 @@ function describeEffect(e, ownerNoun) {
     return s + '.';
   }
   if (kind === 'interceptor') {
-    const side = e.role === 'target' ? 'incoming' : 'outgoing';
     const chan = e.channel ? `${e.channel} ` : '';
+    const stat = e.intercept === 'status' ? 'status stacks' : (e.intercept || 'damage');
     let verb;
     if (e.op === 'mul') verb = e.amount === 0 ? 'is fully blocked' : `is multiplied ×${e.amount}`;
     else verb = `is shifted by ${signed(e.amount || 0)}`;
-    let s = `The holder’s ${side} ${chan}${e.intercept || 'damage'} ${verb}`;
+    let s;
+    if (e.of && typeof e.of === 'object') {
+      // Native relational gate: which mutation participant is scrutinised + its relation.
+      const part = e.of.participant === 'source' ? 'caused by' : 'received by';
+      const rel = e.of.relation === 'self' ? owner
+        : e.of.relation === 'ally' ? 'an ally'
+        : e.of.relation === 'enemy' ? 'an enemy' : 'anyone';
+      s = `Pending ${chan}${stat} ${part} ${rel} ${verb}`;
+    } else {
+      const side = e.role === 'target' ? 'incoming' : 'outgoing';
+      s = `The holder’s ${side} ${chan}${stat} ${verb}`;
+    }
+    if (e.conditions && e.conditions.length)
+      s += ` — where ${e.conditions.map(describeCondition).join(' and ')}`;
     if (e.chance != null && e.chance !== 1) s += ` (${Math.round(e.chance * 100)}% of the time)`;
     return s + '.';
   }

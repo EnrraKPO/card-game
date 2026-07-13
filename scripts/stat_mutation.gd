@@ -26,6 +26,11 @@ const DAMAGE := &"damage"
 # the per-round base (what restore_shield refills to), so the live pool gets its own name —
 # one word must never mean two stats.
 const SHIELD_POOL := &"shield_pool"
+# Status application: "apply `amount` stacks of `status_id` to the target". Routed through the
+# Resolver like every other state write (single-writer rule), which is what makes stack counts
+# interceptable ("statuses you apply gain +1 stack"). Floors at 0 like DAMAGE — an intercepted-
+# away application applies nothing, never removes stacks.
+const STATUS := &"status"
 
 # ── Stats: additive modifiers on a CardInstance (fold into get_attribute at read time) ──
 const ATTACK := &"attack"
@@ -47,6 +52,10 @@ var stat: StringName = HEALTH
 var amount: int = 0
 var source: CardInstance = null    # who caused it (null for system mutations)
 var channel: StringName = CH_EFFECT
+# STATUS-form metadata: which status is being applied and with what duration override
+# (`amount` carries the stack count — the interceptable magnitude, like every other form).
+var status_id: String = ""
+var status_duration: int = Effect.STATUS_DURATION_DEFAULT
 
 
 # Effect-attribute name → the stat it lands as. The two authored names with a distinct
@@ -77,3 +86,13 @@ static func make(p_target: Object, p_stat: StringName, p_amount: int,
 # 0, not a heal.
 static func damage(p_target: Object, p_amount: int, p_source: CardInstance) -> StatMutation:
 	return make(p_target, DAMAGE, maxi(0, p_amount), p_source, CH_ATTACK)
+
+
+# A status application: `p_stacks` stacks of `p_status_id` onto the target. Submitted through
+# the Resolver so interceptors can rewrite the stack count before it commits.
+static func status_apply(p_target: Object, p_status_id: String, p_duration: int,
+		p_stacks: int, p_source: CardInstance = null) -> StatMutation:
+	var m := make(p_target, STATUS, maxi(0, p_stacks), p_source, CH_EFFECT)
+	m.status_id = p_status_id
+	m.status_duration = p_duration
+	return m

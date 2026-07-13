@@ -3,6 +3,9 @@ extends Node
 
 var _root:           Node
 var _get_card_ui:    Callable  # func(CardInstance) -> CardUI
+# The relic-chip cue for relic-owned interceptions — func(relic_id: String). Injected by
+# combat (the tray lives in its chrome); invalid = no chip on screen, cue skipped.
+var relic_glint:     Callable
 
 
 func setup(root: Node, get_card_ui: Callable) -> void:
@@ -31,6 +34,7 @@ func play(event: VFXEvent) -> void:
 const SOURCE_HOLD := 0.22   # beat after the caster glints, before its effects start landing
 const MARK_LEAD   := 0.24   # the reticle reads as "look at THIS card" before its badge cue fires
 const STEP_HOLD   := 0.30   # beat after the burst resolves, before returning
+const CHIP_LEAD   := 0.34   # beat after a relic chip glints, before the rewritten effect lands
 
 func play_results(results: Array, source_inst: CardInstance = null,
 		cue_status_id: String = "", show_cue: bool = true) -> void:
@@ -59,6 +63,10 @@ func play_results(results: Array, source_inst: CardInstance = null,
 	for r: Dictionary in results:
 		if r.is_empty():
 			continue
+		# Whatever intercepted this result's mutation inside the Resolver cues FIRST — the
+		# rewriter (relic chip / status pip) reads as the cause of the adjusted number.
+		if r.has("interceptions"):
+			await play_interceptions(r.get("interceptions"))
 		# A status application has no stat delta — it's its own cue: mark the target, then pop the
 		# pip that was added/stacked. Handled up front, sequentially, so it reads before stat hits.
 		if r.has("status_applied"):
@@ -82,6 +90,36 @@ func play_results(results: Array, source_inst: CardInstance = null,
 	while remaining[0] > 0:
 		await get_tree().process_frame
 	await _hold(STEP_HOLD)
+
+
+# Plays the cue for each interception record (Outcome.interceptions, or a result dict's
+# "interceptions" key), in firing order — pure playback; resolution already happened. A
+# status-owned record flashes that status's pip on its holder; a card-owned one glints the
+# holder's card; a relic-owned one glints its tray chip via the injected relic_glint.
+# Upgrades (and un-owned run records) have no combat chip — no cue surface.
+func play_interceptions(records: Array) -> void:
+	for rec: Dictionary in records:
+		var kind := str(rec.get("owner_kind", ""))
+		if kind == "relic":
+			if relic_glint.is_valid():
+				relic_glint.call(str(rec.get("owner_id", "")))
+				await _hold(CHIP_LEAD)
+			continue
+		if kind != "status" and kind != "card":
+			continue
+		var holder: CardInstance = rec.get("holder")
+		if holder == null or holder.row < 0:
+			continue
+		var ui := _get_card_ui.call(holder) as CardUI
+		if ui == null or not is_instance_valid(ui):
+			continue
+		if kind == "status":
+			var pip := ui.find_status_pip(str(rec.get("owner_id", "")))
+			if pip != null:
+				pip.flash_proc()
+		else:
+			await play(VFXEvent.source_trigger(ui))
+		await _hold(SOURCE_HOLD)
 
 
 # A status landing on a card: a benefit-tinted reticle on the card, then refresh so the new/updated

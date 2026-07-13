@@ -36,5 +36,14 @@
 	"effects": [
 	  { "kind": "triggered", "trigger": "on_damage_taken", "targeting_policy": "attacker", "status": { "id": "blind", "stacks": 1 } },
 	  { "kind": "triggered", "trigger": "on_attack", "subject_elements": ["light"], "targeting_policy": "attack_target", "status": { "id": "blind", "stacks": 1 } }
-	] }
+	] },
+
+  { "id": "menders_charm", "display_name": "Mender's Charm", "description": "Your healing effects restore +1 Health.",
+	"color": "6fce8f", "letter": "+", "price": 100,
+	"effects": [ { "kind": "interceptor", "intercept": "health", "of": { "participant": "source", "relation": "ally" },
+	  "conditions": [ { "mutation": "amount", "comparator": "gt", "value": 0 } ], "amount": 1 } ] },
+
+  { "id": "contagion_stone", "display_name": "Contagion Stone", "description": "Statuses you apply gain +1 stack.",
+	"color": "8f5aa0", "letter": "S", "price": 110,
+	"effects": [ { "kind": "interceptor", "intercept": "status", "of": { "participant": "source", "relation": "ally" }, "amount": 1 } ] }
 ]
