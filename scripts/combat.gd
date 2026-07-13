@@ -29,6 +29,9 @@ var _mana_chunks_box: VBoxContainer  # one chunk per max-mana point; lit=availab
 var _relic_tray: RelicTray   # read-only vertical relic strip on the screen's left edge (see
 							  # _build_relic_strip); a firing relic glints its chip
 var _done_btn: Button        # the chunky vertical "Ready" button (right of the board)
+var _done_label: Label       # the Ready button's caption — bottom-anchored inside the button so
+							  # the word sits on the hand band, aligned with Inspect Abilities
+							  # (Button has no vertical text alignment; see _build_action_column)
 var _speed_btn: Button
 var _battle_speed: float = 1.0   # 100%; reset each combat, cycled by the HUD dial
 
@@ -870,10 +873,18 @@ func _build_ui() -> void:
 	body.add_theme_constant_override("margin_top", int(TOP_MARGIN))
 	add_child(body)
 
+	# The body splits into the MAIN column (arena over hand bar) and the full-height ACTION
+	# column on the right — so the Ready button spans BOTH bands, from under the speed/✕ row all
+	# the way down through the hand bar's height.
+	var root := HBoxContainer.new()
+	root.add_theme_constant_override("separation", 12)
+	body.add_child(root)
+
 	var col := VBoxContainer.new()
+	col.size_flags_horizontal = SIZE_EXPAND_FILL
 	col.add_theme_constant_override("separation", int(COL_SEP))   # a small visible breath between
 	# the board and the hand bar — flush-to-flush read as one compressed block
-	body.add_child(col)
+	root.add_child(col)
 
 	# The arena row: the relic strip hugs the LEFT of the board (full arena height — room for the
 	# 10-relic capacity at big chip sizes), the two board halves fill the middle, and the action
@@ -902,8 +913,14 @@ func _build_ui() -> void:
 	_board_row.add_child(_make_halves_divider())
 	_board.build_section(_board_row, false)
 
+	# The action column: the main column's full-height SIBLING (not part of the arena). Its own
+	# bottom margin swallows the body's below-screen bleed — the Ready button is interactive, so
+	# unlike the hand bar's dead card frame it must end at the real screen edge.
+	var action_wrap := MarginContainer.new()
+	action_wrap.add_theme_constant_override("margin_bottom", int(Hand.BOTTOM_BLEED))
 	var actions := _build_action_column()
-	arena.add_child(actions)
+	action_wrap.add_child(actions)
+	root.add_child(action_wrap)
 
 	# The fixed width flanking the board — _resize_board's width basis (see there for why it must
 	# come from here and not from live container sizes).
@@ -958,7 +975,8 @@ func _build_relic_strip() -> Control:
 
 	_relic_tray = RelicTray.new()
 	_relic_tray.vertical = true
-	_relic_tray.interactive = false   # display only — chips must never eat combat input
+	_relic_tray.interactive = false   # info-only: tapping a chip opens its detail overlay
+									   # (the touch reading path), but never offers Discard
 	pad.add_child(_relic_tray)
 	return strip
 
@@ -1057,7 +1075,10 @@ func _make_mana_chunk() -> Panel:
 func _build_action_column() -> Control:
 	var compact := UIScale.is_compact()
 	var col := VBoxContainer.new()
-	col.custom_minimum_size.x = 200.0 if compact else 148.0
+	# Width floor: the speed button (column − separation − the 48px ✕) must stay at or above its
+	# GlossyButton bake's 136px width — a nine-patch can only STRETCH cleanly; compressing the
+	# centre band squashes the baked rim/sheen into doubled-line artifacts.
+	col.custom_minimum_size.x = 200.0 if compact else 192.0
 	col.add_theme_constant_override("separation", 10)
 
 	# Battle-speed toggle — cycles the BATTLE_SPEEDS percentages, applied live as
@@ -1076,14 +1097,31 @@ func _build_action_column() -> Control:
 	debug_close.tooltip_text = "Debug: end combat"
 	top_row.add_child(debug_close)
 
-	# The key touch target — "Ready" — a chunky vertical button filling the rest of the column.
-	# Green, from the glossy handoff's own "Ready" palette entry.
+	# The key touch target — "Ready" — a chunky vertical button filling the rest of the column,
+	# all the way down through the hand bar's band. Green, from the glossy handoff's own "Ready"
+	# palette entry. The caption is NOT the button's own text (which Godot can only centre
+	# vertically — mid-screen on a button this tall): it's a bottom-anchored child Label whose
+	# band _resize_board keeps equal to the hand bar's, so the word sits level with the Inspect
+	# Abilities text beside it. Styled to match GlossyButton's own text treatment.
 	_done_btn = ScreenUI.action_button("", _on_done_pressed, Vector2.ZERO,
 		44 if compact else 30, ScreenUI.CHROME_READY)
 	_done_btn.size_flags_horizontal = SIZE_EXPAND_FILL
 	_done_btn.size_flags_vertical = SIZE_EXPAND_FILL
-	_done_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	col.add_child(_done_btn)
+
+	_done_label = Label.new()
+	_done_label.set_anchors_and_offsets_preset(PRESET_BOTTOM_WIDE)
+	_done_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_done_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_done_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_done_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_done_label.add_theme_font_override("font", GlossyButton.CHUNKY_FONT)
+	_done_label.add_theme_font_size_override("font_size", 44 if compact else 30)
+	_done_label.add_theme_color_override("font_color", Color.WHITE)
+	_done_label.add_theme_color_override("font_outline_color", ScreenUI.CHROME_READY.darkened(0.55))
+	_done_label.add_theme_constant_override("outline_size", 8)
+	_done_btn.add_child(_done_label)
+
 	_refresh_done_btn()
 	return col
 
@@ -1126,6 +1164,10 @@ func _resize_board() -> void:
 	# Before the slot bail — the hand can be stale even when the slots are already correct
 	# (it no-ops when unchanged).
 	_hand.set_card_size(slot_size)
+	# Keep the Ready caption's band equal to the hand bar's visible height (the button's bottom
+	# already sits at the true screen edge), so the word stays level with Inspect Abilities.
+	if _done_label != null:
+		_done_label.offset_top = -(slot_size.y + Hand.PAD_TOP - Hand.BOTTOM_BLEED)
 	if (_board.player_slots[0][0] as SlotUI).custom_minimum_size == slot_size:
 		return   # already correct → stop before we trigger another resize
 	for r in rows:
@@ -1183,21 +1225,23 @@ func _refresh_speed_btn() -> void:
 
 
 func _refresh_done_btn() -> void:
-	if _done_btn == null:
+	if _done_btn == null or _done_label == null:
 		return
 	match _phase:
 		Phase.PLAYER_PLACE:
-			_done_btn.text     = "Ready"
+			_done_label.text   = "Ready"
 			_done_btn.disabled = false
 		Phase.CPU_PLACE:
-			_done_btn.text     = "CPU\nplacing…"
+			_done_label.text   = "CPU\nplacing…"
 			_done_btn.disabled = true
 		Phase.COMBAT:
-			_done_btn.text     = "Battle…"
+			_done_label.text   = "Battle…"
 			_done_btn.disabled = true
 		Phase.TARGETING:
-			_done_btn.text     = "Select\na target…"
+			_done_label.text   = "Select\na target…"
 			_done_btn.disabled = true
+	# The caption is a child Label, outside the button's own disabled styling — dim it manually.
+	_done_label.modulate.a = 0.55 if _done_btn.disabled else 1.0
 
 
 # ── Placement input gating ───────────────────────────────────────────────────────

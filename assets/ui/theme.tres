@@ -2,6 +2,22 @@
 
 [ext_resource type="FontFile" uid="uid://cnkajhk3x82ny" path="res://assets/fontd/Baloo_2/static/Baloo2-ExtraBold.ttf" id="1"]
 
+[sub_resource type="StyleBoxFlat" id="tooltip_panel"]
+content_margin_left = 16.0
+content_margin_top = 12.0
+content_margin_right = 16.0
+content_margin_bottom = 12.0
+bg_color = Color(0.09, 0.095, 0.13, 0.97)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.45, 0.47, 0.6, 0.9)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
 [sub_resource type="StyleBoxFlat" id="btn_disabled"]
 content_margin_left = 24.0
 content_margin_top = 14.0
@@ -101,3 +117,8 @@ LineEdit/colors/font_color = Color(0.169, 0.129, 0.094, 1)
 LineEdit/colors/font_placeholder_color = Color(0.169, 0.129, 0.094, 0.5)
 OptionButton/colors/font_color = Color(0.169, 0.129, 0.094, 1)
 RichTextLabel/colors/default_color = Color(0.169, 0.129, 0.094, 1)
+TooltipLabel/colors/font_color = Color(1, 1, 1, 1)
+TooltipLabel/colors/font_outline_color = Color(0.02, 0.02, 0.04, 1)
+TooltipLabel/constants/outline_size = 8
+TooltipLabel/font_sizes/font_size = 30
+TooltipPanel/styles/panel = SubResource("tooltip_panel")

@@ -24,6 +24,11 @@ const _TEX_ICON := preload("res://assets/ui/button_shademap_icon.png")
 const _TEX_ICON_PRESSED := preload("res://assets/ui/button_shademap_icon_pressed.png")
 const _TEX_READY := preload("res://assets/ui/button_shademap_ready.png")
 const _TEX_READY_PRESSED := preload("res://assets/ui/button_shademap_ready_pressed.png")
+# The short-portrait bake: the ready bake with its caps kept 1:1 and only the uniform middle
+# body shortened (cut offline, not squashed — see tools/README note in the commit). For tall
+# buttons well under the full Ready strip's height, e.g. combat's Inspect Abilities.
+const _TEX_READY_S := preload("res://assets/ui/button_shademap_ready_s.png")
+const _TEX_READY_S_PRESSED := preload("res://assets/ui/button_shademap_ready_s_pressed.png")
 const _TEX_48 := preload("res://assets/ui/button_shademap_48.png")
 const _TEX_48_PRESSED := preload("res://assets/ui/button_shademap_48_pressed.png")
 const _TEX_64 := preload("res://assets/ui/button_shademap_64.png")
@@ -44,8 +49,10 @@ const _TEX_140_PRESSED := preload("res://assets/ui/button_shademap_140_pressed.p
 # texture — a completely different, oversized corner curve next to normally-nine-patched buttons.
 const _ICON_RATIO_MIN := 0.85
 const _ICON_RATIO_MAX := 1.15
-# A button narrower than this w:h ratio is treated as the portrait "Ready" shape.
-const _PORTRAIT_RATIO_MAX := 0.5
+# A button narrower than this w:h ratio is treated as a portrait shape (the full-height "Ready"
+# strip, or the short variant for hand-bar-height buttons — picked by nearest bake height, like
+# the landscape buckets).
+const _PORTRAIT_RATIO_MAX := 0.68
 
 # Landscape (wide pill) buckets, picked by nearest match to the button's own height. Margins were
 # measured directly off each cropped texture by finding where the border's own geometric position
@@ -165,6 +172,12 @@ func _pick_bucket(w: float, h: float) -> Dictionary:
 		return {"key": "icon", "texture": _TEX_ICON, "texture_pressed": _TEX_ICON_PRESSED,
 			"margin_left": 32, "margin_right": 32, "margin_top": 33, "margin_bottom": 33}
 	if ratio <= _PORTRAIT_RATIO_MAX:
+		# Two portrait bakes (280 / 647 tall) — nearest by height, same authored margins (the
+		# short bake keeps the tall one's caps 1:1, so the corner crops are identical).
+		if absf(h - 280.0) < absf(h - 647.0):
+			return {"key": "ready_s", "texture": _TEX_READY_S,
+				"texture_pressed": _TEX_READY_S_PRESSED,
+				"margin_left": 30, "margin_right": 29, "margin_top": 44, "margin_bottom": 44}
 		return {"key": "ready", "texture": _TEX_READY, "texture_pressed": _TEX_READY_PRESSED,
 			"margin_left": 30, "margin_right": 29, "margin_top": 44, "margin_bottom": 44}
 	var best: Dictionary = _LANDSCAPE_BUCKETS[0]

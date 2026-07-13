@@ -80,6 +80,9 @@ func _ready() -> void:
 		var ci := CardInstance.from_data(CardData.get_card("rook"))
 		ci.owner = 0
 		CardInspector.open(shell, ci)
+	# "relic": pop the RelicInspector (map variant, with the Discard button).
+	if "relic" in args:
+		RelicInspector.open(shell, RelicData.get_relic("battle_standard"), true)
 	# Upgrades: select a specific tree tab (pass its id after the scene path).
 	if scene_path.contains("upgrades") and args.size() > 1:
 		for n: Node in sv.find_children("*", "Control", true, false):

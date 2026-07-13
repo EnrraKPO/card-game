@@ -17,8 +17,10 @@ const CHIP_COMPACT := 44
 const CHIP_VERTICAL := 64
 const CHIP_VERTICAL_COMPACT := 76
 
-# Map HUD = true (chips tappable to discard); combat = false (display only). Set before the node
-# enters the tree (refresh runs in _ready).
+# Whether the detail overlay a chip opens offers DISCARD (see RelicInspector): map HUD = true,
+# combat = false (mid-fight relics are info-only). Tapping a chip opens the overlay in both
+# modes — it's the only relic-reading path on touch, where hover tooltips don't exist. Set
+# before the node enters the tree (refresh runs in _ready).
 var interactive: bool = true
 
 var _chips: Dictionary = {}   # relic_id -> Button, so a firing relic can glint its chip
@@ -98,18 +100,15 @@ func _make_chip(relic: RelicData) -> Button:
 		btn.size_flags_horizontal = SIZE_SHRINK_CENTER
 	else:
 		btn.size_flags_vertical = SIZE_SHRINK_CENTER
-	var tip := "%s — %s" % [relic.display_name, relic.description]
-	if interactive:
-		tip += "\n(tap to discard)"
-	btn.tooltip_text = tip
+	btn.tooltip_text = "%s — %s" % [relic.display_name, relic.description]
 	if relic.icon != null:
 		_style_icon_chip(btn, relic.icon)
 	else:
 		_style_letter_chip(btn, relic)
-	if interactive:
-		btn.pressed.connect(func() -> void: _confirm_discard(relic))
-	else:
-		btn.mouse_default_cursor_shape = Control.CURSOR_ARROW
+	# Tap → the full detail overlay, everywhere. Discarding (map only) lives INSIDE the
+	# overlay as an explicit button, so a stray tap can never start a discard.
+	btn.pressed.connect(func() -> void:
+		RelicInspector.open(self, relic, interactive, func() -> void: _discard(relic)))
 	return btn
 
 
@@ -147,17 +146,9 @@ func _style_letter_chip(btn: Button, relic: RelicData) -> void:
 	btn.add_theme_stylebox_override("hover", hover)
 
 
-func _confirm_discard(relic: RelicData) -> void:
-	var dlg := ConfirmationDialog.new()
-	dlg.title = "Discard Relic"
-	dlg.dialog_text = "Discard %s?\n\n%s\n\nThis cannot be undone." % [relic.display_name, relic.description]
-	dlg.ok_button_text = "Discard"
-	add_child(dlg)
-	dlg.confirmed.connect(func() -> void:
-		if GameData.current_run != null:
-			GameData.current_run.discard_relic(relic.id)
-		refresh()
-	)
-	dlg.canceled.connect(dlg.queue_free)
-	dlg.close_requested.connect(dlg.queue_free)
-	dlg.popup_centered()
+# The overlay's Discard action (see _make_chip) — the overlay itself was the deliberate step,
+# so this applies immediately; no second confirmation dialog.
+func _discard(relic: RelicData) -> void:
+	if GameData.current_run != null:
+		GameData.current_run.discard_relic(relic.id)
+	refresh()

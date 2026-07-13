@@ -74,6 +74,9 @@ const BOTTOM_BLEED := 8.0
 # a term in combat's shared-card-size solve (_resize_board): bar height = card height + this.
 const PAD_TOP := 6.0
 
+# The Inspect Abilities button's base colour — fuchsia, deliberately loud (see its build site).
+const INSPECT_ACCENT := Color("d92bc4")
+
 # Card preview shown in the sidebar's description panel, sized to fill the full hand-bar
 # height at the card's native 260:340 aspect ratio — AT LEAST the game's regular card
 # size (160×210, see card_ui.tscn), not a shrunk-down "card inside a card". This is the
@@ -107,12 +110,14 @@ func build_into(parent: Control, left_widget: Control = null) -> void:
 	if left_widget != null:
 		outer_row.add_child(left_widget)
 
-	# Padding inside the hand bar so the first/last card isn't jammed against the screen edge and
-	# the row breathes off the top of the bar. NO bottom padding: the cards sit flush at the bar's
-	# bottom edge so the off-screen bleed (BOTTOM_BLEED) crops only their dead sub-gem frame, not
-	# empty panel. The scroll (and its cards) live inside this.
+	# Padding inside the hand bar: the row breathes off the top of the bar, and the last card
+	# keeps clear of the sidebar. NO left padding — the mana gauge column (plus the row's own
+	# separation) already stands between the first card and the screen edge, so more inset there
+	# is dead space. NO bottom padding: the cards sit flush at the bar's bottom edge so the
+	# off-screen bleed (BOTTOM_BLEED) crops only their dead sub-gem frame, not empty panel. The
+	# scroll (and its cards) live inside this.
 	var pad := MarginContainer.new()
-	pad.add_theme_constant_override("margin_left", 20)
+	pad.add_theme_constant_override("margin_left", 0)
 	pad.add_theme_constant_override("margin_right", 20)
 	pad.add_theme_constant_override("margin_top", int(PAD_TOP))
 	pad.add_theme_constant_override("margin_bottom", 0)
@@ -201,33 +206,36 @@ func build_into(parent: Control, left_widget: Control = null) -> void:
 	nav_wrap.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	outer_row.add_child(nav_wrap)
 
+	# Every size in this column is chosen so its GlossyButton bake never COMPRESSES (a nine-patch
+	# only stretches cleanly; squeezing the centre band doubles the baked rim into seams):
+	# the full-band Inspect button rides the short-portrait bake (170×280, ratio ≤ 0.68), and
+	# the Back pills ride the 48 bucket (136 wide) — every width stays at/above its bake's.
 	var nav_box := VBoxContainer.new()
+	nav_box.alignment = BoxContainer.ALIGNMENT_CENTER
 	nav_box.add_theme_constant_override("separation", 10)
 	nav_wrap.add_child(nav_box)
 
-	# Level 1's action: open the Abilities list. Same footprint as the Back buttons below so
-	# the column's width never shifts between levels.
+	# Level 1's action: open the Abilities list — a TALL, narrow button spanning the whole hand
+	# band (it's the hand bar's landmark), its label wrapping to two lines so it doesn't hoard
+	# width. Fuchsia: a deliberately loud accent — this is the gateway to abilities and must
+	# not read as chrome.
 	_inspect_abilities_btn = ScreenUI.action_button("Inspect Abilities", show_abilities,
-			Vector2(220, 64), 24, ScreenUI.CHROME_NEUTRAL)
-	_inspect_abilities_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_inspect_abilities_btn.size_flags_vertical   = Control.SIZE_EXPAND_FILL
+			Vector2(140, 64), 22, INSPECT_ACCENT)
+	_inspect_abilities_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_inspect_abilities_btn.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	nav_box.add_child(_inspect_abilities_btn)
 
 	# Levels 2+3: straight back to the plain hand (the original inspection-exit behavior,
 	# routed through _on_back_to_hand only to also cover level 2, where nothing is inspected).
-	_back_btn = ScreenUI.action_button("← Back to hand", _on_back_to_hand, Vector2(220, 64), 24,
+	# Fixed-height pills (see the column comment), vertically centred by the nav box.
+	_back_btn = ScreenUI.action_button("← Back to hand", _on_back_to_hand, Vector2(140, 56), 18,
 			ScreenUI.CHROME_NEUTRAL)
-	_back_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_back_btn.size_flags_vertical   = Control.SIZE_EXPAND_FILL
 	_back_btn.visible = false
 	nav_box.add_child(_back_btn)
 
-	# Level 3 only: up one level, back to the Abilities list — shares the column with Back to
-	# hand at half height each.
+	# Level 3 only: up one level, back to the Abilities list — stacked under Back to hand.
 	_back_abilities_btn = ScreenUI.action_button("← Back to Abilities", _on_back_to_abilities,
-			Vector2(220, 64), 22, ScreenUI.CHROME_NEUTRAL)
-	_back_abilities_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_back_abilities_btn.size_flags_vertical   = Control.SIZE_EXPAND_FILL
+			Vector2(140, 56), 16, ScreenUI.CHROME_NEUTRAL)
 	_back_abilities_btn.visible = false
 	nav_box.add_child(_back_abilities_btn)
 
