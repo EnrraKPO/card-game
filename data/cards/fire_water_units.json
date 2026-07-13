@@ -487,6 +487,7 @@
 	},
 	{
 		"id": "fire_water_bishop_rook",
+		"display_name": "Steam Arcane Tower",
 		"elements": [
 			"fire",
 			"water"
@@ -495,28 +496,22 @@
 			"bishop",
 			"rook"
 		],
-		"description": "Steam unit. ",
-		"display_name": "Steam Arcane Tower",
+		"ranged": true,
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "Towering cylindrical arcane spire built of riveted brass plates and dark polished timber, crenellated copper battlements and a valved conical cap crowned by a glowing amber pressure-glass finial, tall pointed lens-glass windows, an arched doorway lit by warm amber light, jets of white steam hissing from flank vents and rooftop pipes, low three-quarter angle amid hazy azure spires under a warm pink sky, richly detailed digital painting",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/bishop_rook.png",
-					"name": "Arcane Tower"
-				},
-				"inferredFrom": {
-					"concept": [
-						"bishop_rook",
-						"air_darkness_bishop_rook",
-						"darkness_light_bishop_rook"
-					],
-					"theme": [
-						"fire_water_knight",
-						"fire_water_pawn",
-						"fire_water_queen",
-						"fire_water_rook"
-					]
+					"name": "Arcane Tower",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}

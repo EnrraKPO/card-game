@@ -311,35 +311,30 @@
 	},
 	{
 		"id": "earth_water_pawn_queen",
+		"display_name": "Clay Commander",
 		"elements": [
 			"earth",
 			"water"
 		],
-		"display_name": "Clay Commander",
 		"chess_pieces": [
 			"pawn",
 			"queen"
 		],
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "A muddy war-leader shaped from soft wet earth, sculpted from slick packed clay, raised on a mounded platform of dripping mud, thrusting a stubby baton upward to rally a column of small clay soldiers slogging below, glossy thumb-pressed dents and cracking drying skin, wet runnels streaming down, glowing amber eyes, warm ochre haze and curling teal mist, soft glowing ground circle, dark fantasy digital painting",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/pawn_queen.png",
-					"name": "Commander"
-				},
-				"inferredFrom": {
-					"concept": [
-						"pawn_queen",
-						"air_darkness_pawn_queen",
-						"air_fire_pawn_queen"
-					],
-					"theme": [
-						"air_fire_knight",
-						"air_fire_pawn",
-						"air_fire_rook",
-						"earth_water_knight"
-					]
+					"name": "Commander",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
@@ -459,35 +454,30 @@
 	},
 	{
 		"id": "earth_water_knight_queen",
+		"display_name": "Clay Monster",
 		"elements": [
 			"earth",
 			"water"
 		],
-		"display_name": "Clay Monster",
 		"chess_pieces": [
 			"knight",
 			"queen"
 		],
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "A hulking clay dragon rearing on thick stubby limbs, body sculpted from soft wet earth with glossy slick smears and thumb-pressed dents across a cracking drying hide, swept-back muddy horns dribbling wet brown runnels, sagging membranous wings of packed damp mud, glowing amber eyes, centered figure, dark background with warm ochre haze and faint teal mist, soft glowing ground circle, dark fantasy digital painting.",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/knight_queen.png",
-					"name": "Monster"
-				},
-				"inferredFrom": {
-					"concept": [
-						"knight_queen",
-						"air_darkness_knight_queen",
-						"air_fire_knight_queen"
-					],
-					"theme": [
-						"air_fire_knight",
-						"air_fire_pawn",
-						"air_fire_rook",
-						"earth_water_knight"
-					]
+					"name": "Monster",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
@@ -515,20 +505,9 @@
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/bishop_bishop.png",
-					"name": "Hierophant"
-				},
-				"inferredFrom": {
-					"concept": [
-						"bishop_bishop",
-						"air_darkness_bishop_bishop",
-						"air_fire_bishop_bishop"
-					],
-					"theme": [
-						"air_fire_knight",
-						"air_fire_pawn",
-						"air_fire_rook",
-						"earth_water_knight"
-					]
+					"name": "Hierophant",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
@@ -544,6 +523,7 @@
 			"bishop",
 			"rook"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -556,20 +536,9 @@
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/bishop_rook.png",
-					"name": "Arcane Tower"
-				},
-				"inferredFrom": {
-					"concept": [
-						"bishop_rook",
-						"air_darkness_bishop_rook",
-						"air_fire_bishop_rook"
-					],
-					"theme": [
-						"air_fire_knight",
-						"air_fire_pawn",
-						"air_fire_rook",
-						"earth_water_knight"
-					]
+					"name": "Arcane Tower",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
@@ -593,59 +562,50 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Chibi goddess sculpted from soft wet clay, rounded high-collared robe of packed damp earth with thumb-pressed filigree, glossy slick smears and hairline drying cracks, one palm cradling a dribbling mud orb, the other raising an earthen scepter oozing wet runnels, glowing amber eyes, floating cross-legged above a soft glowing ground circle, dark background with warm ochre haze and faint teal mist, centered figure, dark fantasy digital painting",
+				"prompt": "Towering front-facing serene goddess sculpted from soft wet reddish earth, faceted molded surface glistening with slick sheen, sagging draped mantle formed of packed damp mud, arms outspread as thick ochre haze curls from open palms, hollow glowing amber sockets, thumb-pressed dents cracking across her drying form, mud dripping from sleeves, faint teal mist rising, soft glowing ground halo, centered figure, dark background, richly textured dark fantasy digital painting",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/bishop_queen.png",
-					"name": "Deity"
+					"name": "Deity",
+					"mode": "img2img",
+					"denoise": 0.6
 				},
-				"inferredFrom": {
-					"concept": [
-						"bishop_queen",
-						"air_darkness_bishop_queen",
-						"air_fire_bishop_queen"
-					],
-					"theme": [
-						"air_fire_knight",
-						"air_fire_pawn",
-						"air_fire_rook",
-						"earth_water_knight"
-					]
+				"last": {
+					"seed": 1034682192,
+					"prompt": "Towering front-facing serene goddess sculpted from soft wet reddish earth, faceted molded surface glistening with slick sheen, sagging draped mantle formed of packed damp mud, arms outspread as thick ochre haze curls from open palms, hollow glowing amber sockets, thumb-pressed dents cracking across her drying form, mud dripping from sleeves, faint teal mist rising, soft glowing ground halo, centered figure, dark background, richly textured dark fantasy digital painting, cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear",
+					"style": "",
+					"at": "2026-07-12"
 				}
 			}
 		}
 	},
 	{
 		"id": "earth_water_rook_rook",
+		"display_name": "Clay Turret",
 		"elements": [
 			"earth",
 			"water"
 		],
-		"display_name": "Clay Turret",
 		"chess_pieces": [
 			"rook",
 			"rook"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "Squat weaponized turret with a wide battered base, arrow-slit windows, and a swiveling top-mounted ballista aimed skyward — everything sculpted from soft wet packed earth, glossy slick thumb-pressed smears, muddy runnels dribbling down cracking drying surfaces, glowing amber eyes in the slits, warm ochre haze and curling teal mist, soft glowing ground circle, centered figure, dark fantasy digital painting",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/rook_rook.png",
-					"name": "Turret"
-				},
-				"inferredFrom": {
-					"concept": [
-						"rook_rook",
-						"air_darkness_rook_rook",
-						"air_fire_rook_rook"
-					],
-					"theme": [
-						"air_fire_knight",
-						"air_fire_pawn",
-						"air_fire_rook",
-						"earth_water_knight"
-					]
+					"name": "Turret",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}

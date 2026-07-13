@@ -119,7 +119,7 @@
     },
     "knight_rook": {
       "label": "Stable",
-      "positive": "small barn-like building with an animal inside",
+      "positive": "small barn-like building with an animal inside, the building must look like it belongs in the world of the element theme. The architecture and the materials of the building must fit the elemental theme.",
       "negative": "",
       "ref": {
         "card": "knight_rook"

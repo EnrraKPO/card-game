@@ -1,0 +1,217 @@
+[
+	{
+		"id": "water_pawn",
+		"elements": [
+			"water"
+		],
+		"display_name": "Water Pawn",
+		"chess_pieces": [
+			"pawn"
+		]
+	},
+	{
+		"id": "water_knight",
+		"elements": [
+			"water"
+		],
+		"display_name": "Water Knight",
+		"chess_pieces": [
+			"knight"
+		]
+	},
+	{
+		"id": "water_bishop",
+		"elements": [
+			"water"
+		],
+		"display_name": "Water Bishop",
+		"chess_pieces": [
+			"bishop"
+		]
+	},
+	{
+		"id": "water_rook",
+		"elements": [
+			"water"
+		],
+		"display_name": "Water Rook",
+		"chess_pieces": [
+			"rook"
+		]
+	},
+	{
+		"id": "water_queen",
+		"elements": [
+			"water"
+		],
+		"display_name": "Water Queen",
+		"chess_pieces": [
+			"queen"
+		]
+	},
+	{
+		"id": "water_pawn_pawn",
+		"elements": [
+			"water"
+		],
+		"display_name": "Water Warrior",
+		"chess_pieces": [
+			"pawn",
+			"pawn"
+		]
+	},
+	{
+		"id": "water_knight_pawn",
+		"elements": [
+			"water"
+		],
+		"display_name": "Water Cavalry",
+		"chess_pieces": [
+			"knight",
+			"pawn"
+		]
+	},
+	{
+		"id": "water_bishop_pawn",
+		"elements": [
+			"water"
+		],
+		"display_name": "Water Paladin",
+		"chess_pieces": [
+			"bishop",
+			"pawn"
+		]
+	},
+	{
+		"id": "water_pawn_rook",
+		"elements": [
+			"water"
+		],
+		"display_name": "Water Barracks",
+		"chess_pieces": [
+			"pawn",
+			"rook"
+		]
+	},
+	{
+		"id": "water_pawn_queen",
+		"elements": [
+			"water"
+		],
+		"display_name": "Water Commander",
+		"chess_pieces": [
+			"pawn",
+			"queen"
+		]
+	},
+	{
+		"id": "water_knight_knight",
+		"elements": [
+			"water"
+		],
+		"display_name": "Water Beast",
+		"chess_pieces": [
+			"knight",
+			"knight"
+		]
+	},
+	{
+		"id": "water_bishop_knight",
+		"elements": [
+			"water"
+		],
+		"display_name": "Water Cryptid",
+		"chess_pieces": [
+			"bishop",
+			"knight"
+		]
+	},
+	{
+		"id": "water_knight_rook",
+		"elements": [
+			"water"
+		],
+		"display_name": "Water Stable",
+		"chess_pieces": [
+			"knight",
+			"rook"
+		]
+	},
+	{
+		"id": "water_knight_queen",
+		"elements": [
+			"water"
+		],
+		"display_name": "Water Monster",
+		"chess_pieces": [
+			"knight",
+			"queen"
+		]
+	},
+	{
+		"id": "water_bishop_bishop",
+		"elements": [
+			"water"
+		],
+		"display_name": "Water Hierophant",
+		"chess_pieces": [
+			"bishop",
+			"bishop"
+		]
+	},
+	{
+		"id": "water_bishop_rook",
+		"elements": [
+			"water"
+		],
+		"display_name": "Water Arcane Tower",
+		"chess_pieces": [
+			"bishop",
+			"rook"
+		]
+	},
+	{
+		"id": "water_bishop_queen",
+		"elements": [
+			"water"
+		],
+		"display_name": "Water Deity",
+		"chess_pieces": [
+			"bishop",
+			"queen"
+		]
+	},
+	{
+		"id": "water_rook_rook",
+		"elements": [
+			"water"
+		],
+		"display_name": "Water Turret",
+		"chess_pieces": [
+			"rook",
+			"rook"
+		]
+	},
+	{
+		"id": "water_queen_rook",
+		"elements": [
+			"water"
+		],
+		"display_name": "Water Castle",
+		"chess_pieces": [
+			"queen",
+			"rook"
+		]
+	},
+	{
+		"id": "water_queen_queen",
+		"elements": [
+			"water"
+		],
+		"display_name": "Water Hero",
+		"chess_pieces": [
+			"queen",
+			"queen"
+		]
+	}
+]

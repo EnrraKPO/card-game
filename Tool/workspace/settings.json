@@ -20,10 +20,8 @@
     "Krea2 stepped": "[{\"model\":\"krea2\",\"samples\":1,\"turbo\":false,\"denoise\":0.4},{\"model\":\"krea2\",\"samples\":3,\"denoise\":0.6},{\"model\":\"krea2\",\"samples\":1,\"denoise\":0.7}]",
     "Krea 2 stepped": "[{\"model\":\"krea2\",\"samples\":1,\"turbo\":false,\"denoise\":0.45},{\"model\":\"krea2\",\"samples\":2,\"denoise\":0.6},{\"model\":\"krea2\",\"samples\":2,\"denoise\":0.75}]"
   },
-  "kinAdherence": "free",
-  "kinAnchorMode": "current",
-  "kinThemeMode": "select",
-  "kinThemeRefs": [],
+  "kinAdherence": "concept",
+  "kinAnchorMode": "canonical",
   "useArtGuides": true,
   "kinSteer": "",
   "turboLora": "Flux_2-Turbo-LoRA_comfyui.safetensors",
@@ -37,25 +35,27 @@
   "effectsModel": "qwen3-coder-next:q4_K_M",
   "claudeModel": "claude-opus-4-8",
   "openaiModel": "gpt-5.5",
+  "kinThemeMode": "family",
+  "kinThemeRefs": [],
   "quickFlow": {
     "steps": [
       {
         "model": "krea2",
         "samples": 1,
         "turbo": false,
-        "denoise": 0.45
-      },
-      {
-        "model": "krea2",
-        "samples": 2,
-        "denoise": 0.6
-      },
-      {
-        "model": "krea2",
-        "samples": 2,
         "denoise": 0.75
+      },
+      {
+        "model": "krea2",
+        "samples": 1,
+        "denoise": 0.8
+      },
+      {
+        "model": "krea2",
+        "samples": 1,
+        "denoise": 0.85
       }
     ],
-    "anchor": "recipe"
+    "anchor": "custom"
   }
 }

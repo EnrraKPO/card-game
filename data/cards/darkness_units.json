@@ -1,0 +1,217 @@
+[
+	{
+		"id": "darkness_pawn",
+		"elements": [
+			"darkness"
+		],
+		"display_name": "Darkness Pawn",
+		"chess_pieces": [
+			"pawn"
+		]
+	},
+	{
+		"id": "darkness_knight",
+		"elements": [
+			"darkness"
+		],
+		"display_name": "Darkness Knight",
+		"chess_pieces": [
+			"knight"
+		]
+	},
+	{
+		"id": "darkness_bishop",
+		"elements": [
+			"darkness"
+		],
+		"display_name": "Darkness Bishop",
+		"chess_pieces": [
+			"bishop"
+		]
+	},
+	{
+		"id": "darkness_rook",
+		"elements": [
+			"darkness"
+		],
+		"display_name": "Darkness Rook",
+		"chess_pieces": [
+			"rook"
+		]
+	},
+	{
+		"id": "darkness_queen",
+		"elements": [
+			"darkness"
+		],
+		"display_name": "Darkness Queen",
+		"chess_pieces": [
+			"queen"
+		]
+	},
+	{
+		"id": "darkness_pawn_pawn",
+		"elements": [
+			"darkness"
+		],
+		"display_name": "Darkness Warrior",
+		"chess_pieces": [
+			"pawn",
+			"pawn"
+		]
+	},
+	{
+		"id": "darkness_knight_pawn",
+		"elements": [
+			"darkness"
+		],
+		"display_name": "Darkness Cavalry",
+		"chess_pieces": [
+			"knight",
+			"pawn"
+		]
+	},
+	{
+		"id": "darkness_bishop_pawn",
+		"elements": [
+			"darkness"
+		],
+		"display_name": "Darkness Paladin",
+		"chess_pieces": [
+			"bishop",
+			"pawn"
+		]
+	},
+	{
+		"id": "darkness_pawn_rook",
+		"elements": [
+			"darkness"
+		],
+		"display_name": "Darkness Barracks",
+		"chess_pieces": [
+			"pawn",
+			"rook"
+		]
+	},
+	{
+		"id": "darkness_pawn_queen",
+		"elements": [
+			"darkness"
+		],
+		"display_name": "Darkness Commander",
+		"chess_pieces": [
+			"pawn",
+			"queen"
+		]
+	},
+	{
+		"id": "darkness_knight_knight",
+		"elements": [
+			"darkness"
+		],
+		"display_name": "Darkness Beast",
+		"chess_pieces": [
+			"knight",
+			"knight"
+		]
+	},
+	{
+		"id": "darkness_bishop_knight",
+		"elements": [
+			"darkness"
+		],
+		"display_name": "Darkness Cryptid",
+		"chess_pieces": [
+			"bishop",
+			"knight"
+		]
+	},
+	{
+		"id": "darkness_knight_rook",
+		"elements": [
+			"darkness"
+		],
+		"display_name": "Darkness Stable",
+		"chess_pieces": [
+			"knight",
+			"rook"
+		]
+	},
+	{
+		"id": "darkness_knight_queen",
+		"elements": [
+			"darkness"
+		],
+		"display_name": "Darkness Monster",
+		"chess_pieces": [
+			"knight",
+			"queen"
+		]
+	},
+	{
+		"id": "darkness_bishop_bishop",
+		"elements": [
+			"darkness"
+		],
+		"display_name": "Darkness Hierophant",
+		"chess_pieces": [
+			"bishop",
+			"bishop"
+		]
+	},
+	{
+		"id": "darkness_bishop_rook",
+		"elements": [
+			"darkness"
+		],
+		"display_name": "Darkness Arcane Tower",
+		"chess_pieces": [
+			"bishop",
+			"rook"
+		]
+	},
+	{
+		"id": "darkness_bishop_queen",
+		"elements": [
+			"darkness"
+		],
+		"display_name": "Darkness Deity",
+		"chess_pieces": [
+			"bishop",
+			"queen"
+		]
+	},
+	{
+		"id": "darkness_rook_rook",
+		"elements": [
+			"darkness"
+		],
+		"display_name": "Darkness Turret",
+		"chess_pieces": [
+			"rook",
+			"rook"
+		]
+	},
+	{
+		"id": "darkness_queen_rook",
+		"elements": [
+			"darkness"
+		],
+		"display_name": "Darkness Castle",
+		"chess_pieces": [
+			"queen",
+			"rook"
+		]
+	},
+	{
+		"id": "darkness_queen_queen",
+		"elements": [
+			"darkness"
+		],
+		"display_name": "Darkness Hero",
+		"chess_pieces": [
+			"queen",
+			"queen"
+		]
+	}
+]

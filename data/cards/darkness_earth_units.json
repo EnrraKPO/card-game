@@ -1,0 +1,617 @@
+[
+	{
+		"id": "darkness_earth_pawn",
+		"display_name": "Rock Pawn",
+		"elements": [
+			"darkness",
+			"earth"
+		],
+		"chess_pieces": [
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Sturdy foot soldier hewn from dark faceted mineral, blocky armored plates of jagged obsidian-black stone veined with glowing violet seams, heavy squared helm and broad rocky pauldrons, clenched gauntlet gripping a chunky slab-headed maul, cracked amethyst light pulsing through fissures, scattered floating shards and dim gold glints, deep shadowed void, thick bold outlines, saturated stylized colors.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn.png",
+					"name": "Pawn",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_earth_knight",
+		"elements": [
+			"darkness",
+			"earth"
+		],
+		"display_name": "Rock Knight",
+		"chess_pieces": [
+			"knight"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Rearing armored warhorse hewn from faceted dark obsidian stone, jagged crystalline plates and shard-edged barding, cracked seams pulsing with violet inner light, mane and tail streaming as splintered mineral spikes, hooves striking sparks of amethyst glow, gilded fracture lines along its flanks, wisps of pale luminous haze curling around it, deep shadowed void background",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight.png",
+					"name": "Knight"
+				},
+				"inferredFrom": {
+					"concept": [
+						"knight",
+						"air_air_bishop_knight",
+						"air_air_knight"
+					],
+					"theme": [
+						"darkness_earth",
+						"darkness_earth_bishop",
+						"darkness_earth_queen"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_earth_bishop",
+		"elements": [
+			"darkness",
+			"earth"
+		],
+		"display_name": "Rock Bishop",
+		"chess_pieces": [
+			"bishop"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Smooth-faced clean-shaven stone hierophant carved from jagged dark faceted mineral, a tall cleft crystalline mitre rising to a sharp peak, robes of layered slate shards, glowing violet veins pulsing through polished rock plates, raising a chiseled crook staff crowned with a lone luminous gem, faint golden ore glints, hovering above a softly radiant purple sigil ring, deep shadowed void, dramatic amethyst glow",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop.png",
+					"name": "Bishop"
+				},
+				"inferredFrom": {
+					"concept": [
+						"bishop",
+						"air_air_bishop",
+						"air_air_bishop_bishop"
+					],
+					"theme": [
+						"darkness_earth",
+						"darkness_earth_knight",
+						"darkness_earth_queen"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_earth_rook",
+		"elements": [
+			"darkness",
+			"earth"
+		],
+		"display_name": "Rock Rook",
+		"chess_pieces": [
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"prompt": "A towering broad-shouldered keep hewn from faceted dark mineral, jagged crystalline battlements and shard-edged crenellations, cracked seams pulsing with violet inner light, splintered spikes bristling from its ramparts, broad shard-plumed wings sweeping upward from its upper walls, a soft luminous ring hovering above its peak, gilded fracture lines tracing its flanks, hooves of pale haze curling at its base, deep shadowed void.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook.png",
+					"name": "Rook"
+				},
+				"inferredFrom": {
+					"concept": [
+						"rook",
+						"air_air_bishop_rook",
+						"air_air_knight_rook"
+					],
+					"theme": [
+						"darkness_earth",
+						"darkness_earth_bishop",
+						"darkness_earth_knight"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_earth_queen",
+		"elements": [
+			"darkness",
+			"earth"
+		],
+		"display_name": "Rock Queen",
+		"chess_pieces": [
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Rearing regal queen sculpted from jagged dark faceted rockstone, crown of splintered mineral shards rising to sharp peaks, gowned in layered stony plates streaming sideways in rushing gusts, cracked seams pulsing violet inner light, gilded fracture lines glinting gold, a soft radiant purple ring hovering above her fractured brow, wisps of pale luminous haze curling past, deep shadowed void, dramatic amethyst glow, bold clean cel-shading, thick outlines, centered heroic subject",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/queen.png",
+					"name": "Queen"
+				},
+				"inferredFrom": {
+					"concept": [
+						"queen",
+						"air_air_bishop_queen",
+						"air_air_knight_queen"
+					],
+					"theme": [
+						"darkness_earth",
+						"darkness_earth_bishop",
+						"darkness_earth_knight"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_earth_pawn_pawn",
+		"display_name": "Rock Warrior",
+		"elements": [
+			"darkness",
+			"earth"
+		],
+		"chess_pieces": [
+			"pawn",
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Stocky chibi footsoldier planted in a braced guard, blocky armored plates hewn from jagged dark faceted mineral, glowing violet seams pulsing through cracked polished rock, broad squared pauldrons and heavy squared helm, clenched gauntlets gripping a chunky slab-headed sword and rough round shield, faint golden ore glints, hovering shards, deep shadowed void, thick bold outlines, saturated stylized colors.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_pawn.png",
+					"name": "Warrior",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_earth_knight_pawn",
+		"display_name": "Rock Cavalry",
+		"elements": [
+			"darkness",
+			"earth"
+		],
+		"chess_pieces": [
+			"knight",
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Stocky armored warhorse mid-charge hewn from jagged dark faceted stone, blocky crystalline barding veined with glowing violet seams, cracked polished plates pulsing amethyst light, mane and tail streaming as splintered mineral spikes, a stone-plated rider leveling a slab-headed lance, hooves striking sparks of purple glow, scattered floating shards, faint golden ore glints, deep shadowed void, thick bold outlines, saturated stylized colors.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_pawn.png",
+					"name": "Cavalry",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_earth_bishop_pawn",
+		"display_name": "Rock Paladin",
+		"elements": [
+			"darkness",
+			"earth"
+		],
+		"chess_pieces": [
+			"bishop",
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Towering knight sculpted from jagged dark faceted rock, blocky layered plates veined with pulsing violet seams, a heavy squared visored helm crested with a cleft mineral peak, one gauntlet hoisting a chunky slab-headed warhammer glinting with golden ore, tall broad shield radiating cracked amethyst light, hovering shattered shards, deep shadowed void, thick bold outlines, saturated stylized colors.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_pawn.png",
+					"name": "Paladin",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_earth_pawn_rook",
+		"display_name": "Rock Barracks",
+		"elements": [
+			"darkness",
+			"earth"
+		],
+		"chess_pieces": [
+			"pawn",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Craggy fortress-barracks carved from jagged dark faceted stone, blocky shard-edged battlements and squared crenellated crown, deep fissures pulsing with glowing violet light, an arched gateway breathing amethyst haze, floating rock splinters drifting nearby, a stocky helmeted sentry braced with a slab-headed spear at the door, deep shadowed void, thick bold outlines, saturated stylized colors, centered.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_rook.png",
+					"name": "Barracks",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_earth_pawn_queen",
+		"display_name": "Rock Commander",
+		"elements": [
+			"darkness",
+			"earth"
+		],
+		"chess_pieces": [
+			"pawn",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Resolute female battle-commander raised on a jutting faceted-stone platform, blocky armored plates of jagged dark mineral veined with pulsing violet seams, thrusting a slender slab-tipped baton skyward to rally a column of small chibi rock-hewn spear-bearers marching below, cracked amethyst light glinting with gold ore, hovering broken shards, deep shadowed void, thick bold outlines, saturated stylized colors",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_queen.png",
+					"name": "Commander",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_earth_knight_knight",
+		"display_name": "Rock Beast",
+		"elements": [
+			"darkness",
+			"earth"
+		],
+		"chess_pieces": [
+			"knight",
+			"knight"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Colossal war-beast rearing mid-charge, its hulking muscled body hewn from jagged faceted dark stone, blocky mineral plating cracked along its flanks, molten violet light seething through every fissure, sweeping horns of splintered crystal, blank amethyst-glowing eyes, mane and tail streaming as broken shard spikes, hooves striking bursts of purple sparks, faint golden ore glints, floating stone fragments, deep shadowed void, thick bold outlines, saturated stylized colors.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_knight.png",
+					"name": "Beast",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_earth_bishop_knight",
+		"display_name": "Rock Cryptid",
+		"elements": [
+			"darkness",
+			"earth"
+		],
+		"chess_pieces": [
+			"bishop",
+			"knight"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Rock-hewn stag cryptid carved from jagged dark faceted mineral, blocky layered plates along its flanks veined with pulsing violet seams, cleft crystalline antlers rising in splintered peaks, cracked fissures glowing amethyst, gilded ore glinting on its haunches, hooves striking sparks of purple light, drifting shattered shards, deep shadowed void, thick bold outlines, saturated stylized colors.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_knight.png",
+					"name": "Cryptid",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_earth_knight_rook",
+		"elements": [
+			"darkness",
+			"earth"
+		],
+		"display_name": "Rock Stable",
+		"chess_pieces": [
+			"knight",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Skeletal warhorse rearing from an arched gateway of stacked faceted dark stalls, hollow eye sockets seething with molten violet, cracked plated barding of splintered mineral, broad wings spread as jagged crystalline shards, streaming shard-spike mane, hooves striking bursts of amethyst sparks, gilded fracture veins, floating stone fragments, deep shadowed void, thick bold outlines, saturated stylized colors, centered heroic subject",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_rook.png",
+					"name": "Stable"
+				},
+				"inferredFrom": {
+					"concept": [
+						"knight_rook",
+						"air_air_knight_rook",
+						"air_fire_knight_rook"
+					],
+					"theme": [
+						"darkness_earth_bishop_knight",
+						"darkness_earth_knight",
+						"darkness_earth_knight_knight"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_earth_knight_queen",
+		"display_name": "Rock Monster",
+		"elements": [
+			"darkness",
+			"earth"
+		],
+		"chess_pieces": [
+			"knight",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Hulking stone brute rearing on massive cracked legs mid-roar, boulder-heavy body carved from jagged faceted dark rock, blocky mineral plates grinding along its back, deep fissures seething with molten violet light, fists of splintered crystal knuckles striking sparks of purple, glinting gilded ore across its shoulders, drifting broken stone chunks orbiting, blank amethyst-glowing eyes, deep shadowed void, thick bold outlines, saturated stylized colors, centered heroic subject",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_queen.png",
+					"name": "Monster",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_earth_bishop_bishop",
+		"display_name": "Rock Hierophant",
+		"elements": [
+			"darkness",
+			"earth"
+		],
+		"chess_pieces": [
+			"bishop",
+			"bishop"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Bearded high priest hewn from jagged dark faceted stone, a long beard of layered rocky shards, tall cleft peaked headdress veined with pulsing violet seams, robes of stacked slate plates glinting with golden ore, molten amethyst eyes, thrusting a chiseled staff as crackling purple energy erupts spiraling from his open palm, hovering above a glowing violet sigil ring, drifting shattered shards, deep shadowed void, thick bold outlines, saturated stylized colors, centered heroic figure",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_bishop.png",
+					"name": "Hierophant",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_earth_bishop_rook",
+		"display_name": "Rock Arcane Tower",
+		"elements": [
+			"darkness",
+			"earth"
+		],
+		"chess_pieces": [
+			"bishop",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "A colossal broad-shouldered fortress-spire hewn from jagged dark faceted stone, blocky stacked plates veined with pulsing violet seams, a tall cleft crystalline summit splitting into splintered peaks, glowing amethyst fissures cracking its flanks, gilded ore glinting along battlements, drifting shattered shards, hovering above a radiant violet sigil ring, deep shadowed void, thick bold outlines, saturated stylized colors, centered heroic structure",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_rook.png",
+					"name": "Arcane Tower",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_earth_bishop_queen",
+		"display_name": "Rock Deity",
+		"elements": [
+			"darkness",
+			"earth"
+		],
+		"chess_pieces": [
+			"bishop",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Rock deity goddess carved from jagged dark faceted mineral, serene angular female face of polished stone, long streaming hair of layered rocky shards, tall cleft crystalline peaks rising behind her brow, robes of stacked slate plates veined with pulsing violet seams, gilded ore glinting, molten amethyst eyes, palms parting spiraling purple energy, hovering above a glowing violet sigil ring, drifting shattered fragments, deep shadowed void, thick bold outlines, saturated stylized colors, centered heroic figure",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_queen.png",
+					"name": "Deity",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_earth_rook_rook",
+		"display_name": "Rock Turret",
+		"elements": [
+			"darkness",
+			"earth"
+		],
+		"chess_pieces": [
+			"rook",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Craggy weaponized watchtower hewn from jagged faceted dark rock, shard-edged battlements and squared crenellations, deep fissures pulsing with glowing violet inner light, crowned by a swiveling top-mounted cannon of gleaming stone hurling a spinning boulder shell, tumbling rubble and dust trailing its blast, floating splintered fragments drifting nearby, gilded fracture veins, deep shadowed void, thick bold outlines, saturated stylized colors, centered heroic structure",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook_rook.png",
+					"name": "Turret",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_earth_queen_rook",
+		"display_name": "Rock Castle",
+		"elements": [
+			"darkness",
+			"earth"
+		],
+		"chess_pieces": [
+			"queen",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "A colossal fortress keep hewn from jagged dark faceted rock, blocky stacked plates veined with pulsing violet seams, a tall cleft summit splitting into twin splintered towers, deep amethyst fissures glowing across its ramparts, gilded ore glinting along battlements, drifting broken stone shards orbiting slowly, hovering above a radiant violet sigil ring, deep shadowed void, thick bold outlines, saturated stylized colors, centered heroic structure",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook_queen.png",
+					"name": "Castle",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_earth_queen_queen",
+		"display_name": "Rock Hero",
+		"elements": [
+			"darkness",
+			"earth"
+		],
+		"chess_pieces": [
+			"queen",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi warrior queen hewn from jagged dark faceted mineral, wild curly hair of layered stony shards, angular polished-stone face with molten violet eyes, cleft crystalline peaks crowning her brow, stacked slate plate armor veined with pulsing purple seams and glinting gold ore, swinging an oversized cracked-crystal greatsword mid-leap, drifting broken fragments, deep shadowed void, thick bold outlines, saturated stylized colors, centered heroic figure",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/queen_queen.png",
+					"name": "Hero",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	}
+]

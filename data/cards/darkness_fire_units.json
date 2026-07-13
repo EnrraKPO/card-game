@@ -1,0 +1,621 @@
+[
+	{
+		"id": "darkness_fire_pawn",
+		"elements": [
+			"darkness",
+			"fire"
+		],
+		"display_name": "Demonic Pawn",
+		"chess_pieces": [
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Hunched infernal footsoldier carved from smoky faceted violet crystal, faceted plates split by molten crimson glowing seams, sweeping curved horns crowning a fanged crystalline helm, one clawed fist gripping a jagged shard-blade trailing ember sparks, searing orange eyes blazing, wisps of drifting red fire and floating cinders, dark void backdrop with faint glowing circular rune-light, thick bold outlines, saturated stylized colors.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn.png",
+					"name": "Pawn"
+				},
+				"inferredFrom": {
+					"concept": [
+						"pawn",
+						"air_air_bishop_pawn",
+						"air_air_knight_pawn"
+					],
+					"theme": [
+						"darkness_fire",
+						"darkness_fire_bishop",
+						"darkness_fire_king"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_fire_knight",
+		"elements": [
+			"darkness",
+			"fire"
+		],
+		"display_name": "Demonic Knight",
+		"chess_pieces": [
+			"knight"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Rearing armored warhorse forged of faceted crimson-and-violet crystal shards, glowing molten-orange veins pulsing across its plated barding, blazing golden-fire eyes, spiraling infernal horns of jagged translucent gemstone, mane streaming as dark ember smoke, hooves striking sparks of burning red light, drifting cinders and faint glowing sigils, thick bold outlines, deep shadowed void background.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight.png",
+					"name": "Knight"
+				},
+				"inferredFrom": {
+					"concept": [
+						"knight",
+						"air_air_bishop_knight",
+						"air_air_knight"
+					],
+					"theme": [
+						"darkness_fire",
+						"darkness_fire_bishop",
+						"darkness_fire_king"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_fire_bishop",
+		"elements": [
+			"darkness",
+			"fire"
+		],
+		"display_name": "Demonic Bishop",
+		"chess_pieces": [
+			"bishop"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Smooth-faced hierophant with cruel horned crystalline mitre, pale beardless face lit by molten inner fire, faceted low-poly armor of shadow-violet gems threaded with glowing infernal-orange cracks, blazing ember eyes, spreading tattered wings of jagged red crystal shards, raising a spiraled dark crook loosing embers, hovering over a burning ritual circle, deep black background, dramatic crimson glow, centered menacing figure",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop.png",
+					"name": "Bishop"
+				},
+				"inferredFrom": {
+					"concept": [
+						"bishop",
+						"air_air_bishop",
+						"air_air_bishop_bishop"
+					],
+					"theme": [
+						"darkness_fire",
+						"darkness_fire_king",
+						"darkness_fire_knight"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_fire_rook",
+		"elements": [
+			"darkness",
+			"fire"
+		],
+		"display_name": "Demonic Rook",
+		"chess_pieces": [
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"prompt": "A cloven-hoofed bone steed rearing within a jagged archway of blackened gothic stalls, hollow sockets pouring molten orange fire, faceted shadow-violet plating veined with glowing infernal cracks, tattered wings of splintered red crystal shards flaring upward, a smoldering ring of embers hovering above its skull, deep black background, dramatic crimson glow, centered menacing subject",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook.png",
+					"name": "Rook"
+				},
+				"inferredFrom": {
+					"concept": [
+						"rook",
+						"air_air_bishop_rook",
+						"air_air_knight_rook"
+					],
+					"theme": [
+						"darkness_fire",
+						"darkness_fire_bishop",
+						"darkness_fire_king"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_fire_queen",
+		"elements": [
+			"darkness",
+			"fire"
+		],
+		"display_name": "Demonic Queen",
+		"chess_pieces": [
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Winged front-facing demoness suspended on rising cinders, cruel pale beautiful face lit by molten inner fire, blazing ember eyes, flowing dark hair whipped sideways, tattered translucent robes of jagged crimson crystal shards, faceted shadow-violet gem armor threaded with glowing infernal-orange cracks, broad sweeping wings of red crystal, a searing dark halo above her brow, hands parting spirals of embers, deep black background, dramatic crimson glow, centered menacing figure, bold clean cel-shading, thick outlines",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/queen.png",
+					"name": "Queen"
+				},
+				"inferredFrom": {
+					"concept": [
+						"queen",
+						"air_air_bishop_queen",
+						"air_air_knight_queen"
+					],
+					"theme": [
+						"darkness_fire",
+						"darkness_fire_bishop",
+						"darkness_fire_king"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_fire_pawn_pawn",
+		"display_name": "Demonic Warrior",
+		"elements": [
+			"darkness",
+			"fire"
+		],
+		"chess_pieces": [
+			"pawn",
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Stocky footsoldier braced in a low battle stance, body hewn from smoky faceted purple crystal split by molten glowing-orange fissures, jagged spiked pauldrons and a fanged crystalline helm sprouting curved horns, blazing ember eyes, one gauntleted fist swinging a cracked shard-blade shedding sparks, drifting red cinders and coiling smoke, faint circular ritual glow beneath scorched feet, dark void backdrop, thick bold outlines, saturated stylized colors, centered menacing figure.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_pawn.png",
+					"name": "Warrior",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_fire_knight_pawn",
+		"display_name": "Demonic Cavalry",
+		"elements": [
+			"darkness",
+			"fire"
+		],
+		"chess_pieces": [
+			"knight",
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Demonic warhorse charging low, its galloping body hewn from smoky faceted purple crystal split by molten crimson fissures, plated barding sprouting curved horns, blazing ember eyes, hooves striking sparks and coiling smoke, a horned crystalline rider crouched forward leveling a jagged shard-lance shedding cinders, drifting red embers, faint circular ritual glow, dark void backdrop, thick bold outlines, saturated stylized colors.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_pawn.png",
+					"name": "Cavalry",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_fire_bishop_pawn",
+		"display_name": "Demonic Paladin",
+		"elements": [
+			"darkness",
+			"fire"
+		],
+		"chess_pieces": [
+			"bishop",
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Towering demonic paladin hewn from smoky faceted violet crystal, layered plate armor split by molten orange fissures, a fanged visored helm crowned with sweeping curved horns and a crest of jagged shards, blazing ember eyes behind the visor, one gauntlet raising a spiked warhammer trailing sparks, tall shield glowing with infernal seams, tattered cloak streaming into coiling smoke, drifting red cinders, faint ritual glow beneath scorched feet, deep black void, thick bold outlines, saturated stylized colors, centered menacing figure",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_pawn.png",
+					"name": "Paladin",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_fire_pawn_rook",
+		"display_name": "Demonic Barracks",
+		"elements": [
+			"darkness",
+			"fire"
+		],
+		"chess_pieces": [
+			"pawn",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Hulking demonic garrison-keep hewn from smoky faceted violet crystal, rounded battlemented crown and yawning fanged gateway split by molten crimson fissures, hollow windows pouring searing orange fire, curved horns jutting from its ramparts, tattered banners smoldering into coiling smoke and drifting cinders, a horned crystalline sentry clutching a jagged shard-lance at the threshold, faint circular ritual glow beneath scorched foundations, thick bold outlines, saturated stylized colors, centered menacing figure, dark void backdrop.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_rook.png",
+					"name": "Barracks",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_fire_pawn_queen",
+		"display_name": "Demonic Commander",
+		"elements": [
+			"darkness",
+			"fire"
+		],
+		"chess_pieces": [
+			"pawn",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "A commanding woman perched on a jutting ledge of smoky faceted violet crystal, one arm thrusting a slender jagged shard-baton skyward, layered plate armor split by molten crimson fissures, sweeping curved horns framing her stern face, blazing ember eyes, tattered cloak streaming into coiling smoke, tiny horned crystalline soldiers marching below in drifting red cinders, faint circular ritual glow, dark void, thick bold outlines, saturated stylized colors.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_queen.png",
+					"name": "Commander",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_fire_knight_knight",
+		"display_name": "Demonic Beast",
+		"elements": [
+			"darkness",
+			"fire"
+		],
+		"chess_pieces": [
+			"knight",
+			"knight"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Colossal horned war-beast rearing mid-charge, its hulking muscled body hewn from faceted crimson-and-violet crystal split by molten-orange fissures, blazing golden-fire eyes, spiraling infernal horns of jagged translucent gemstone, streaming ember-smoke mane, hooves striking sparks and coiling smoke, drifting glowing cinders, faint circular ritual glow, dark shadowed void backdrop, thick bold outlines, saturated stylized colors.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_knight.png",
+					"name": "Beast",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_fire_bishop_knight",
+		"display_name": "Demonic Cryptid",
+		"elements": [
+			"darkness",
+			"fire"
+		],
+		"chess_pieces": [
+			"bishop",
+			"knight"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Dark cryptid stag beast conjured from coiling black smoke and faceted crimson-violet gemstone, gaunt body threaded with molten-orange fissures, sweeping jagged translucent horns of glowing infernal shards, blazing ember eyes, mane and tail streaming into curling dark cinders, hooves striking sparks of burning red light, drifting glowing sigils, thick bold outlines, deep shadowed void.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_knight.png",
+					"name": "Cryptid",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_fire_knight_rook",
+		"elements": [
+			"darkness",
+			"fire"
+		],
+		"display_name": "Demonic Stable",
+		"chess_pieces": [
+			"knight",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Skeletal warhorse rearing in the arched mouth of a ruined stable, its bony frame and hollow skull hewn from faceted deep-crimson and violet crystal split by molten-orange fissures, blazing golden-fire sockets, tattered barding streaming as dark ember smoke, hooves striking sparks of burning red light, drifting glowing cinders and faint ritual glow, thick bold outlines, shadowed void backdrop.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_rook.png",
+					"name": "Stable"
+				},
+				"inferredFrom": {
+					"concept": [
+						"knight_rook",
+						"air_air_knight_rook",
+						"air_earth_knight_rook"
+					],
+					"theme": [
+						"darkness_fire_bishop_knight",
+						"darkness_fire_knight",
+						"darkness_fire_knight_knight"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_fire_knight_queen",
+		"display_name": "Demonic Monster",
+		"elements": [
+			"darkness",
+			"fire"
+		],
+		"chess_pieces": [
+			"knight",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Towering demonic winged beast reared high on clawed hind legs, hulking body hewn from faceted crimson-and-violet crystal split by molten-orange fissures, blazing golden-fire eyes deep in a snarling horned skull, spiraling jagged translucent horns, vast membranous wings streaming curling ember-smoke, hooked talons striking showers of burning red sparks, drifting glowing cinders, faint circular ritual glow, deep shadowed void backdrop, thick bold outlines, saturated stylized shading, centered heroic subject.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_queen.png",
+					"name": "Monster",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_fire_bishop_bishop",
+		"display_name": "Demonic Hierophant",
+		"elements": [
+			"darkness",
+			"fire"
+		],
+		"chess_pieces": [
+			"bishop",
+			"bishop"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Bearded infernal high-priest carved from smoky faceted violet crystal, long streaming beard of coiling black cinders, tall horned mitre of jagged glowing shards, tattered robes split by molten-orange fissures, blazing ember eyes, arms upraised loosing spiraling whorls of burning red arcane light and drifting sigils from open palms, deep black void, thick bold outlines, saturated stylized rendering, centered menacing figure",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_bishop.png",
+					"name": "Hierophant",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_fire_bishop_rook",
+		"display_name": "Demonic Arcane Tower",
+		"elements": [
+			"darkness",
+			"fire"
+		],
+		"chess_pieces": [
+			"bishop",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "A soaring slender spire of smoky faceted violet crystal, tall tapering cap threaded with molten-orange fissures, arched doorway and slit windows blazing with spiraling infernal-red arcane light, jagged glowing shards jutting from its upper battlements, drifting burning sigils orbiting the peak, ember-lit ritual circle at its base, deep black void, thick bold outlines, centered menacing structure.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_rook.png",
+					"name": "Arcane Tower",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_fire_bishop_queen",
+		"display_name": "Demonic Deity",
+		"elements": [
+			"darkness",
+			"fire"
+		],
+		"chess_pieces": [
+			"bishop",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Towering front-facing dark goddess conjured from coiling black smoke and faceted crimson-violet crystal, serene feminine visage lit by molten inner fire, blazing ember eyes, long streaming hair dissolving into curling cinders, tattered flowing robes split by glowing orange fissures, sweeping jagged translucent wings of glowing infernal shards, arms upraised loosing spiraling whorls of burning red light and drifting sigils, deep shadowed void, thick bold outlines, saturated stylized rendering, centered menacing figure",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_queen.png",
+					"name": "Deity",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_fire_rook_rook",
+		"display_name": "Demonic Turret",
+		"elements": [
+			"darkness",
+			"fire"
+		],
+		"chess_pieces": [
+			"rook",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Hulking fortress turret carved from smoky faceted violet crystal veined with molten crimson fissures, narrow slit windows pouring searing orange fire, crowned by a swiveling top-mounted horned cannon of jagged shard-plating, its fanged barrel belching a churning gout of hellfire and coiling ember smoke, tattered smoldering banners, drifting cinders, faint ritual glow beneath scorched foundations, thick bold outlines, saturated stylized colors, centered menacing structure, dark void backdrop",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook_rook.png",
+					"name": "Turret",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_fire_queen_rook",
+		"display_name": "Demonic Castle",
+		"elements": [
+			"darkness",
+			"fire"
+		],
+		"chess_pieces": [
+			"queen",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "A cleft-turreted dark fortress keep sculpted from faceted crimson-and-violet crystal, a tall spired central tower between two rounded battlement towers, molten-orange fissures snaking down the walls, arched gateway and slit windows blazing with spiraling infernal-red light, jagged shards jutting from the ramparts, drifting burning cinders and curling ember-smoke, a faint glowing ritual circle at its base, deep shadowed void, thick bold outlines, saturated stylized shading, centered menacing structure.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook_queen.png",
+					"name": "Castle",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_fire_queen_queen",
+		"display_name": "Demonic Hero",
+		"elements": [
+			"darkness",
+			"fire"
+		],
+		"chess_pieces": [
+			"queen",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "A demonic warrior queen leaping mid-swing from a jagged ledge, body hewn from faceted crimson-and-violet crystal split by molten-orange fissures, blazing ember eyes, long streaming hair dissolving into curling cinders, spiked crown of glowing embers, cracked plate armor seamed with burning light, crimson cloak trailing smoke, hoisting an oversized translucent shard-greatsword scattering red sparks, drifting cinders, deep shadowed void, thick bold outlines, saturated stylized shading, centered heroic figure.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/queen_queen.png",
+					"name": "Hero",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	}
+]

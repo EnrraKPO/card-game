@@ -30,33 +30,27 @@
 	},
 	{
 		"id": "light_light_knight",
+		"display_name": "Pure Light Knight",
 		"elements": [
 			"light",
 			"light"
 		],
-		"display_name": "Pure Light Knight",
 		"chess_pieces": [
 			"knight"
 		],
 		"tool": {
 			"art": {
-				"prompt": "Chibi armored warhorse composed entirely of glowing radiant white-gold luminescence, flowing luminous cream mane and tail streaming like liquid light, translucent pale-gold plate barding on chamfron and chestplate etched with bright filigree, blazing golden eyes, hooves trailing sparkling sunlit motes, rearing mid-gallop, radiant beams bursting behind, deep violet twilight sky, dark cobblestone ground, chibi digital painting",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Radiant knight steed rearing on shining hooves, translucent charger woven wholly of glowing white-gold luminance, plated barding and chamfron of hardened brilliance traced with fine shining filigree, streaming mane and tail rippling as ribbons of liquid light, blazing pale eyes, hooves scattering drifting luminous motes, poised leaping stance, deep violet twilight void behind, sunlit sparks trailing, digital painting.",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/knight.png",
-					"name": "Knight"
-				},
-				"inferredFrom": {
-					"concept": [
-						"knight",
-						"air_darkness_bishop_knight",
-						"air_darkness_knight"
-					],
-					"theme": [
-						"light_light_pawn",
-						"light_light_queen",
-						"light_light_rook"
-					]
+					"source": "current",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
@@ -468,6 +462,7 @@
 			"bishop",
 			"rook"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -528,6 +523,7 @@
 			"rook",
 			"rook"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",

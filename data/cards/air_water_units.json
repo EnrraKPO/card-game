@@ -1,0 +1,693 @@
+[
+	{
+		"id": "air_water_pawn",
+		"elements": [
+			"air",
+			"water"
+		],
+		"display_name": "Storm Pawn",
+		"chess_pieces": [
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Chibi footsoldier standing firm against a howling downpour, small round helm crowned with a spherical knob beaded with raindrops, mist-grey quilted tunic soaked and flapping, both hands clutching a spear angled into shrieking wind, rain streaking sideways in silver sheets, boots splashing puddled mud, towering charcoal thunderheads swallowing the horizon, thick bold outlines, saturated stylized colors, centered figure.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn.png",
+					"name": "Pawn"
+				},
+				"inferredFrom": {
+					"anchor": "pawn",
+					"theme": [
+						"air_water_pawn",
+						"air_water_knight",
+						"air_water_queen"
+					],
+					"mode": "concept"
+				}
+			}
+		}
+	},
+	{
+		"id": "air_water_knight",
+		"elements": [
+			"air",
+			"water"
+		],
+		"display_name": "Storm Knight",
+		"chess_pieces": [
+			"knight"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Saddled steed mid-leap through boiling storm, chunky stylized proportions, body of rain-slicked charcoal cloudstuff banded with pale silver tack, glowing sapphire set in its chestplate, mane and tail streaming into torn mist and downpour, hooves scattering rain-spray off a drenched crag, gale-bent grass below, towering blue-black thunderheads swallowing the sky, thick bold outlines, saturated stormy colors, centered figure.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight.png",
+					"name": "Knight"
+				},
+				"inferredFrom": {
+					"anchor": "knight",
+					"theme": [
+						"air_water_pawn",
+						"air_water_knight",
+						"air_water_queen"
+					],
+					"mode": "concept"
+				}
+			}
+		}
+	},
+	{
+		"id": "air_water_bishop",
+		"display_name": "Storm Bishop",
+		"elements": [
+			"air",
+			"water"
+		],
+		"chess_pieces": [
+			"bishop"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi cleric striding into a shrieking gale, tall split-peaked headpiece of layered slate cloud trimmed in pale silver and beaded with raindrops, drenched mist-grey vestments whipping sideways, gloved hand gripping a spiral-crooked staff of coiled vapor weeping rain, other arm hugging a rain-slicked tome, sideways silver downpour, sodden hillside, towering blue-black thunderheads behind, thick bold outlines, saturated stormy colors, centered figure.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop.png",
+					"name": "Bishop",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_water_rook",
+		"elements": [
+			"air",
+			"water"
+		],
+		"display_name": "Storm Rook",
+		"chess_pieces": [
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Squat crenellated watchtower sculpted from boiling charcoal cloudstuff, chunky vapor blocks veined with pale silver mist, a soaked slate pennant thrashing sideways in shrieking gale, tiny helmed sentry peering from a rain-curtained window, silver downpour cascading off its battlements, drenched wind-flattened grass below, towering blue-black thunderheads behind, thick bold outlines, saturated stormy colors, centered structure.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook.png",
+					"name": "Rook"
+				},
+				"inferredFrom": {
+					"anchor": "rook",
+					"theme": [
+						"air_water_pawn",
+						"air_water_knight",
+						"air_water_queen"
+					],
+					"mode": "concept"
+				}
+			}
+		}
+	},
+	{
+		"id": "air_water_queen",
+		"elements": [
+			"air",
+			"water"
+		],
+		"display_name": "Storm Queen",
+		"chess_pieces": [
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Chibi regal sorceress woman formed of churning storm-vapor, stern rain-washed face beneath a crown of coiled dark cloud beaded with silver droplets, long hair dissolving into streaming downpour, slate-grey gown rippling like windblown mist with pale silver trim, one hand raised cradling a swirling sphere of compressed rain and spiraling gale, drenched hilltop below, towering blue-black thunderheads behind, thick bold outlines, saturated stormy colors, centered figure.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/queen.png",
+					"name": "Queen"
+				},
+				"inferredFrom": {
+					"anchor": "queen",
+					"theme": [
+						"air_water_pawn",
+						"air_water_knight",
+						"air_water_queen"
+					],
+					"mode": "concept"
+				}
+			}
+		}
+	},
+	{
+		"id": "air_water_pawn_pawn",
+		"display_name": "Storm Warrior",
+		"elements": [
+			"air",
+			"water"
+		],
+		"chess_pieces": [
+			"pawn",
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi armored soldier braced low against a screaming gale, full slate-grey helm sheeting rain off its visor, cloud-pale armor plates edged in wind-torn wisps of mist, long sword raised into sideways-driving silver rain, round shield of dense grey vapor catching flying spray, cloak snapping violently, mud splashing underfoot, colossal blue-black thunderheads boiling overhead, thick bold outlines, saturated stormy colors, centered figure.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_pawn.png",
+					"name": "Warrior"
+				},
+				"inferredFrom": {
+					"anchor": "pawn_pawn",
+					"theme": [
+						"air_water_pawn",
+						"air_water_knight",
+						"air_water_queen"
+					],
+					"mode": "concept"
+				}
+			}
+		}
+	},
+	{
+		"id": "air_water_knight_pawn",
+		"display_name": "Storm Cavalry",
+		"elements": [
+			"air",
+			"water"
+		],
+		"chess_pieces": [
+			"knight",
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi armored rider charging through a slanting downpour astride a beast of coiled dark cloudstuff, its mane and tail unraveling into torn mist, rider's slate-grey plate beaded with rain, drenched banner-lance shredding in the gale, hooves bursting rain-spray from a flooded moor, towering blue-black thunderheads engulfing the sky, thick bold outlines, saturated stormy colors, centered figure.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_pawn.png",
+					"name": "Cavalry"
+				},
+				"inferredFrom": {
+					"anchor": "knight_pawn",
+					"theme": [
+						"air_water_pawn",
+						"air_water_knight",
+						"air_water_queen"
+					],
+					"mode": "concept"
+				}
+			}
+		}
+	},
+	{
+		"id": "air_water_bishop_pawn",
+		"display_name": "Storm Paladin",
+		"elements": [
+			"air",
+			"water"
+		],
+		"chess_pieces": [
+			"bishop",
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi armored champion in bulky slate-dark plate slicked with rain, visor lowered on a rounded helm crested with torn grey cloud-wisp, drenched storm-blue tabard bearing a silver spiral-gale emblem, hefting a heavy flanged maul wreathed in swirling mist, tattered cape whipping in shrieking wind, boots planted on a flooded crag, towering blue-black thunderheads behind, sideways silver rain, thick bold outlines, saturated stormy colors, centered figure.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_pawn.png",
+					"name": "Paladin",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_water_pawn_rook",
+		"display_name": "Storm Barracks",
+		"elements": [
+			"air",
+			"water"
+		],
+		"chess_pieces": [
+			"pawn",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Squat crenellated stronghold built of rain-slicked slate and packed thundercloud vapor, drenched banner whipping in shrieking gale, wooden rack of spears streaming water beside the arched doorway, chibi soldier in soaked quilted tunic and round helm bracing a spear at the entrance, puddled muddy ground, sideways silver rain, towering blue-black cumulonimbus behind, thick bold outlines, saturated stormy colors.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_rook.png",
+					"name": "Barracks"
+				},
+				"inferredFrom": {
+					"anchor": "pawn_rook",
+					"theme": [
+						"air_water_pawn",
+						"air_water_knight",
+						"air_water_queen"
+					],
+					"mode": "concept"
+				}
+			}
+		}
+	},
+	{
+		"id": "air_water_pawn_queen",
+		"display_name": "Storm Commander",
+		"elements": [
+			"air",
+			"water"
+		],
+		"chess_pieces": [
+			"pawn",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi female commander of storm-born legion, standing atop a rain-lashed crag of dark cloudstuff, drenched slate-grey battle coat with pale silver clasps whipping in shrieking gale, pointing a mist-wrapped baton toward the horizon, wet hair streaming into torn vapor, chibi spear-bearers marching below through sideways silver rain, towering blue-black thunderheads boiling behind, thick bold outlines, saturated stormy colors, centered figure.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_queen.png",
+					"name": "Commander"
+				},
+				"inferredFrom": {
+					"anchor": "pawn_queen",
+					"theme": [
+						"air_water_pawn",
+						"air_water_knight",
+						"air_water_queen"
+					],
+					"mode": "concept"
+				}
+			}
+		}
+	},
+	{
+		"id": "air_water_knight_knight",
+		"display_name": "Storm Beast",
+		"elements": [
+			"air",
+			"water"
+		],
+		"chess_pieces": [
+			"knight",
+			"knight"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Massive armored bull lowering its head to charge, hulking body of dense roiling black cloudstuff streaked with rain, sweeping horns of pale windswept vapor tipped in silver, drenched slate barding rippling like torn mist, hooves whipping up spiraling gusts and rain-spray, sideways silver downpour, towering blue-black thunderheads engulfing the sky, thick bold outlines, saturated stormy colors, centered figure.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_knight.png",
+					"name": "Beast"
+				},
+				"inferredFrom": {
+					"anchor": "knight_knight",
+					"theme": [
+						"air_water_pawn",
+						"air_water_knight",
+						"air_water_queen"
+					],
+					"mode": "concept"
+				}
+			}
+		}
+	},
+	{
+		"id": "air_water_bishop_knight",
+		"display_name": "Storm Cryptid",
+		"elements": [
+			"air",
+			"water"
+		],
+		"chess_pieces": [
+			"bishop",
+			"knight"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Mythic single-horned steed rearing atop a rain-lashed bluff, chunky stylized proportions, body of churning slate cloudstuff streaked with driving rain, spiraled horn of compressed pale mist beaded with droplets, mane and tail unraveling into torn downpour, hooves of dense grey vapor splashing spray, gale-flattened grass, towering blue-black thunderheads engulfing the sky, thick bold outlines, saturated stormy colors, centered figure.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_knight.png",
+					"name": "Cryptid"
+				},
+				"inferredFrom": {
+					"anchor": "bishop_knight",
+					"theme": [
+						"air_water_pawn",
+						"air_water_knight",
+						"air_water_queen"
+					],
+					"mode": "concept"
+				}
+			}
+		}
+	},
+	{
+		"id": "air_water_knight_rook",
+		"display_name": "Storm Stable",
+		"elements": [
+			"air",
+			"water"
+		],
+		"chess_pieces": [
+			"knight",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Small stable of layered slate-grey cloudstuff and rain-slicked driftwood banded with pale silver, roof shingled in curling wisps of dark vapor streaming sideways in shrieking gale, a chibi steed of churning mist with a silver-beaded downpour mane peering over the half-door, drenched hay bales scattering in the wind, puddled mud below, towering blue-black thunderheads behind, thick bold outlines, saturated stormy colors, centered building.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_rook.png",
+					"name": "Stable",
+					"mode": "img2img",
+					"denoise": 0.6
+				},
+				"last": {
+					"seed": 1675381496,
+					"prompt": "Small stable of layered slate-grey cloudstuff and rain-slicked driftwood banded with pale silver, roof shingled in curling wisps of dark vapor streaming sideways in shrieking gale, a chibi steed of churning mist with a silver-beaded downpour mane peering over the half-door, drenched hay bales scattering in the wind, puddled mud below, towering blue-black thunderheads behind, thick bold outlines, saturated stormy colors, centered building., cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear",
+					"style": "",
+					"at": "2026-07-13"
+				}
+			}
+		}
+	},
+	{
+		"id": "air_water_knight_queen",
+		"display_name": "Storm Monster",
+		"elements": [
+			"air",
+			"water"
+		],
+		"chess_pieces": [
+			"knight",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Colossal winged dragon sculpted from churning blue-black cloudstuff, wings of ragged storm-vapor trailing sheets of driving rain, spines and horns of pale silver mist beaded with droplets, glowing rain-grey eyes, rearing over a drowned windswept village of gale-bent trees, downpour streaking sideways, towering cumulonimbus swallowing the sky, thick bold outlines, saturated stormy colors, centered figure.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_queen.png",
+					"name": "Monster"
+				},
+				"inferredFrom": {
+					"anchor": "knight_queen",
+					"theme": [
+						"air_water_pawn",
+						"air_water_knight",
+						"air_water_queen"
+					],
+					"mode": "concept"
+				}
+			}
+		}
+	},
+	{
+		"id": "air_water_bishop_bishop",
+		"display_name": "Storm Hierophant",
+		"elements": [
+			"air",
+			"water"
+		],
+		"chess_pieces": [
+			"bishop",
+			"bishop"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi elder storm-priest with a long rain-soaked white beard, tall peaked ceremonial hat of layered slate cloud banded in silver, drenched grey vestments whipping in shrieking gale, raising a crooked staff topped with a churning orb of compressed rain and spiraling wind, sideways silver downpour, flooded stone rise below, towering blue-black thunderheads behind, thick bold outlines, saturated stormy colors, centered figure.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_bishop.png",
+					"name": "Hierophant",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_water_bishop_rook",
+		"display_name": "Storm Arcane Tower",
+		"elements": [
+			"air",
+			"water"
+		],
+		"chess_pieces": [
+			"bishop",
+			"rook"
+		],
+		"ranged": true,
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Imposing round-battlemented spire of rain-darkened slate hewn from a drenched crag, arched windows glowing pale silver through streaming downpour, banners of torn grey mist whipping in shrieking gale, coiled cloud-wisps spiraling its crown, chibi hooded priest before the drenched doorway raising a staff crowned with a swirling orb of compressed rain, towering blue-black thunderheads behind, thick bold outlines, saturated stormy colors, centered composition.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_rook.png",
+					"name": "Arcane Tower"
+				},
+				"inferredFrom": {
+					"anchor": "bishop_rook",
+					"theme": [
+						"air_water_pawn",
+						"air_water_knight",
+						"air_water_queen"
+					],
+					"mode": "concept"
+				}
+			}
+		}
+	},
+	{
+		"id": "air_water_bishop_queen",
+		"display_name": "Storm Deity",
+		"elements": [
+			"air",
+			"water"
+		],
+		"chess_pieces": [
+			"bishop",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Four-armed goddess of living tempest, serene rain-washed face with pale silver glowing eyes, tall headdress of layered dark cloud plumes shedding droplets, flowing slate-grey robes dissolving into torn mist at the hem, upper hands parting sheets of sideways rain, lower hands cupping a spiraling gale-orb and a rain-beaded staff of condensed vapor, halo of swirling blue-black thunderhead behind her, drenched stone plateau, thick bold outlines, saturated stormy colors, centered figure.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_queen.png",
+					"name": "Deity"
+				},
+				"inferredFrom": {
+					"anchor": "bishop_queen",
+					"theme": [
+						"air_water_pawn",
+						"air_water_knight",
+						"air_water_queen"
+					],
+					"mode": "concept"
+				}
+			}
+		}
+	},
+	{
+		"id": "air_water_rook_rook",
+		"display_name": "Storm Turret",
+		"elements": [
+			"air",
+			"water"
+		],
+		"chess_pieces": [
+			"rook",
+			"rook"
+		],
+		"ranged": true,
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Squat crenellated watchtower built of rain-slicked charcoal cloudstuff banded with riveted silver, coiling mist seeping between its blocks, a swiveling launcher mounted on top spun from compressed gale and dark vapor hurling a spiraling bolt of driven rain, sideways silver downpour, drenched windswept hilltop, towering blue-black thunderheads behind, thick bold outlines, saturated stormy colors, centered structure.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook_rook.png",
+					"name": "Turret"
+				},
+				"inferredFrom": {
+					"anchor": "rook_rook",
+					"theme": [
+						"air_water_pawn",
+						"air_water_knight",
+						"air_water_queen"
+					],
+					"mode": "concept"
+				}
+			}
+		}
+	},
+	{
+		"id": "air_water_queen_rook",
+		"display_name": "Storm Castle",
+		"elements": [
+			"air",
+			"water"
+		],
+		"chess_pieces": [
+			"queen",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Towering fortress hewn from rain-slicked storm-dark stone, battlements wreathed in coiling grey cloud, turrets crowned with churning vapor cones, silver banners whipping in shrieking gale, sideways rain lashing dripping walls, gate of woven mist and compressed downpour, drenched crag beneath swirling puddles, towering blue-black thunderheads engulfing the sky, thick bold outlines, saturated stormy colors, centered structure.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook_queen.png",
+					"name": "Castle"
+				},
+				"inferredFrom": {
+					"anchor": "rook_queen",
+					"theme": [
+						"air_water_pawn",
+						"air_water_knight",
+						"air_water_queen"
+					],
+					"mode": "concept"
+				}
+			}
+		}
+	},
+	{
+		"id": "air_water_queen_queen",
+		"display_name": "Storm Hero",
+		"elements": [
+			"air",
+			"water"
+		],
+		"chess_pieces": [
+			"queen",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi armored heroine braced mid-stride on a rain-lashed clifftop, wielding a massive greatsword of condensed churning cloudstuff trailing torn wisps of mist, slate-and-silver plate armor studded with deep sapphire gems, drenched dark hair whipping into streaming vapor, tattered rain-soaked cape snapping in shrieking gusts, towering blue-black thunderheads and sideways silver rain behind, thick bold outlines, saturated stormy colors, centered figure.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/queen_queen.png",
+					"name": "Hero"
+				},
+				"inferredFrom": {
+					"anchor": "queen_queen",
+					"theme": [
+						"air_water_pawn",
+						"air_water_knight",
+						"air_water_queen"
+					],
+					"mode": "concept"
+				}
+			}
+		}
+	}
+]

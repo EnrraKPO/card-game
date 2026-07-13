@@ -1,0 +1,621 @@
+[
+	{
+		"id": "earth_fire_pawn",
+		"elements": [
+			"earth",
+			"fire"
+		],
+		"display_name": "Magma Pawn",
+		"chess_pieces": [
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Sturdy foot soldier forged from faceted translucent obsidian shot through with veins of molten orange light, blocky plated armor dripping rivulets of glowing liquid fire, a cracked visored helm venting rising embers, gripping a stubby glassy blade weeping incandescent droplets, small angular shield pulsing with inner heat, scattered floating sparks, thick bold outlines, saturated fiery colors, brooding dark ember-lit backdrop.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn.png",
+					"name": "Pawn"
+				},
+				"inferredFrom": {
+					"concept": [
+						"pawn",
+						"air_air_bishop_pawn",
+						"air_air_knight_pawn"
+					],
+					"theme": [
+						"earth_fire",
+						"earth_fire_bishop",
+						"earth_fire_king"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "earth_fire_knight",
+		"elements": [
+			"earth",
+			"fire"
+		],
+		"display_name": "Magma Knight",
+		"chess_pieces": [
+			"knight"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Rearing armored warhorse forged from faceted glowing crystal veined with molten orange rivers, plated barding of cracked obsidian shell weeping trickling incandescent droplets, mane erupting into flickering ember sparks and rising heat shimmer, hooves striking cascades of white-hot glow, radiant fiery seams pulsing across its flank, brooding dark cavern haze, faint glinting embers drifting around it",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight.png",
+					"name": "Knight"
+				},
+				"inferredFrom": {
+					"concept": [
+						"knight",
+						"air_air_bishop_knight",
+						"air_air_knight"
+					],
+					"theme": [
+						"earth_fire",
+						"earth_fire_bishop",
+						"earth_fire_king"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "earth_fire_bishop",
+		"elements": [
+			"earth",
+			"fire"
+		],
+		"display_name": "Magma Bishop",
+		"chess_pieces": [
+			"bishop"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Youthful smooth-faced high priest, no beard, in molten robes of flowing incandescent lava rippling with cracked obsidian seams, tall cleft crested headdress crowned in glowing embers, veins of white-hot fire coursing through blackened crystalline armor, gripping a spiraled staff trailing sparks and dripping magma, raising an open palm bursting with searing whorls of flame, standing on scorched glassy stone, bold cel-shaded outlines, deep ember-orange and charcoal palette, radiant volcanic glow",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop.png",
+					"name": "Bishop"
+				},
+				"inferredFrom": {
+					"concept": [
+						"bishop",
+						"air_air_bishop",
+						"air_air_bishop_bishop"
+					],
+					"theme": [
+						"earth_fire",
+						"earth_fire_king",
+						"earth_fire_knight"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "earth_fire_rook",
+		"elements": [
+			"earth",
+			"fire"
+		],
+		"display_name": "Magma Rook",
+		"chess_pieces": [
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"prompt": "A colossal fortress-tower of blackened molten rock rearing above scorched glassy ground, cracked obsidian battlements bleeding rivers of white-hot fire down its flanks, glowing ember veins pulsing through crystalline stone walls, arched openings gushing sparks and dripping incandescent lava, crown of smoldering embers ringing its jagged peak, bold clean cel-shading, deep ember-orange and charcoal palette, radiant volcanic glow, centered heroic structure",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook.png",
+					"name": "Rook"
+				},
+				"inferredFrom": {
+					"concept": [
+						"rook",
+						"air_air_bishop_rook",
+						"air_air_knight_rook"
+					],
+					"theme": [
+						"earth_fire",
+						"earth_fire_bishop",
+						"earth_fire_king"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "earth_fire_queen",
+		"elements": [
+			"earth",
+			"fire"
+		],
+		"display_name": "Magma Queen",
+		"chess_pieces": [
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Regal front-facing molten sovereign woman hovering serenely on rising heat-haze currents, smooth incandescent face and streaming ribbons of white-hot fire for hair, flowing robes of rippling liquid fire seamed with cracked blackened crystal, broad sweeping wings of ember-glowing plumes, a ring of drifting sparks above her brow, hands parting spiraling whorls of flame, scorched glassy stone below, bold clean cel-shading, thick outlines, deep ember-orange and charcoal palette, radiant volcanic glow, centered heroic subject",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/queen.png",
+					"name": "Queen"
+				},
+				"inferredFrom": {
+					"concept": [
+						"queen",
+						"air_air_bishop_queen",
+						"air_air_knight_queen"
+					],
+					"theme": [
+						"earth_fire",
+						"earth_fire_bishop",
+						"earth_fire_king"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "earth_fire_pawn_pawn",
+		"display_name": "Magma Warrior",
+		"elements": [
+			"earth",
+			"fire"
+		],
+		"chess_pieces": [
+			"pawn",
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Molten warrior forged from faceted black glass shot through with veins of white-hot orange fire, blocky plated armor weeping rivulets of glowing liquid flame, cracked visored helm venting rising embers, gripping a stubby incandescent blade dripping searing droplets, angular shield pulsing with inner heat, lunging mid-swing amid floating sparks, scorched glassy ground, brooding ember-lit gloom, thick bold outlines, saturated fiery palette.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_pawn.png",
+					"name": "Warrior",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "earth_fire_knight_pawn",
+		"display_name": "Magma Cavalry",
+		"elements": [
+			"earth",
+			"fire"
+		],
+		"chess_pieces": [
+			"knight",
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Charging armored rider low over a galloping mount, both forged from faceted black glass laced with rivers of white-hot orange fire, plated barding weeping incandescent droplets, cracked visored helm venting embers, leveled lance dripping searing molten glow, hooves striking cascades of sparks and rising heat shimmer, scorched glassy ground, brooding ember-lit gloom, thick bold outlines, saturated fiery palette.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_pawn.png",
+					"name": "Cavalry",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "earth_fire_bishop_pawn",
+		"display_name": "Magma Paladin",
+		"elements": [
+			"earth",
+			"fire"
+		],
+		"chess_pieces": [
+			"bishop",
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Towering armored paladin forged from faceted black glass veined with white-hot orange fire, blocky plates weeping rivulets of glowing liquid flame, serene visored helm crested with a plume of rising embers, one gauntlet lifting a heavy warhammer dripping searing droplets, tall shield pulsing with inner heat, drifting sparks, scorched glassy ground, thick bold outlines, saturated ember palette, brooding volcanic glow",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_pawn.png",
+					"name": "Paladin",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "earth_fire_pawn_rook",
+		"display_name": "Magma Barracks",
+		"elements": [
+			"earth",
+			"fire"
+		],
+		"chess_pieces": [
+			"pawn",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Colossal barracks tower forged from faceted black volcanic glass shot through with veins of white-hot orange fire, crenellated crown weeping rivers of molten flame down cracked flanks, arched gateway gushing sparks and dripping incandescent lava, hollow openings pulsing with ember light, tattered banners of curling smoke, a blocky glass-armored sentry venting rising embers gripping a stubby glowing blade beside the door, scorched glassy ground, floating cinders, thick bold outlines, saturated fiery palette, centered structure, brooding ember-lit gloom",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_rook.png",
+					"name": "Barracks",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "earth_fire_pawn_queen",
+		"display_name": "Magma Commander",
+		"elements": [
+			"earth",
+			"fire"
+		],
+		"chess_pieces": [
+			"pawn",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "A commander forged from faceted translucent obsidian veined with rivers of white-hot molten light, ornate blocky plate weeping glowing droplets, crested visored helm venting rising embers, one arm thrusting a slender glowing baton skyward atop a scorched glassy platform, a chibi column of small ember-lit spear-bearers marching below, drifting sparks, thick bold outlines, saturated fiery palette, brooding volcanic glow",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_queen.png",
+					"name": "Commander",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "earth_fire_knight_knight",
+		"display_name": "Magma Beast",
+		"elements": [
+			"earth",
+			"fire"
+		],
+		"chess_pieces": [
+			"knight",
+			"knight"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Colossal molten-forged beast rearing mid-charge, its towering muscled bulk cast from faceted dark volcanic glass split by glowing rivers of white-hot orange, cracked plated armor weeping searing droplets, curved horns of blackened glass venting embers, blazing yellow eyes, mane bursting into flickering sparks and rippling heat haze, hooves striking cascades of glowing fragments, brooding ember-lit gloom, thick bold outlines, saturated fiery palette.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_knight.png",
+					"name": "Beast",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "earth_fire_bishop_knight",
+		"display_name": "Magma Cryptid",
+		"elements": [
+			"earth",
+			"fire"
+		],
+		"chess_pieces": [
+			"bishop",
+			"knight"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Volcanic-forged mythic stag rearing on scorched glassy ground, faceted molten body threaded with rivers of white-hot fire, antlers branching into cracked obsidian shards weeping incandescent droplets, mane erupting into rising ember sparks and shimmering heat, glowing amber eyes, hooves striking cascades of searing glow, bold outlines, brooding cavern haze, drifting embers.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_knight.png",
+					"name": "Cryptid",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "earth_fire_knight_rook",
+		"elements": [
+			"earth",
+			"fire"
+		],
+		"display_name": "Magma Stable",
+		"chess_pieces": [
+			"knight",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Skeletal warhorse rearing in an arched gateway of dark stalls, its faceted body glowing molten orange threaded with rivers of white-hot fire, cracked obsidian barding weeping incandescent droplets, hollow amber eyes blazing, mane erupting into ember sparks and rising heat shimmer, wings of drifting flame, hooves striking cascades of searing glow, scorched glassy ground, brooding volcanic haze, bold cel-shaded outlines, centered heroic subject",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_rook.png",
+					"name": "Stable"
+				},
+				"inferredFrom": {
+					"concept": [
+						"knight_rook",
+						"air_air_knight_rook",
+						"air_darkness_knight_rook"
+					],
+					"theme": [
+						"earth_fire_bishop_knight",
+						"earth_fire_bishop_rook",
+						"earth_fire_knight"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "earth_fire_knight_queen",
+		"display_name": "Magma Monster",
+		"elements": [
+			"earth",
+			"fire"
+		],
+		"chess_pieces": [
+			"knight",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Colossal molten titan looming upright mid-eruption, hulking body cast from faceted charred glass riven by seething rivers of white-hot orange, jagged spine ridges venting ember bursts, cracked plated hide weeping searing droplets, curved blackened horns trailing sparks, blazing amber eyes, taloned fists dripping incandescent slag, rippling heat haze, brooding ember-lit cavern gloom, thick bold outlines, saturated fiery palette, centered heroic subject.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_queen.png",
+					"name": "Monster",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "earth_fire_bishop_bishop",
+		"display_name": "Magma Hierophant",
+		"elements": [
+			"earth",
+			"fire"
+		],
+		"chess_pieces": [
+			"bishop",
+			"bishop"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Molten-robed hierophant with a long flowing beard of drifting ember-lit smoke, tall cleft crested headdress crowned in white-hot glowing coals, incandescent robes rippling with cracked blackened seams, veins of searing fire coursing through crystalline armor, gripping a spiraled staff trailing sparks and dripping molten droplets, upraised open palm bursting with searing whorls of flame, scorched glassy stone underfoot, bold outlines, saturated ember-orange and charcoal palette, radiant volcanic glow, centered heroic figure",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_bishop.png",
+					"name": "Hierophant",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "earth_fire_bishop_rook",
+		"display_name": "Magma Arcane Tower",
+		"elements": [
+			"earth",
+			"fire"
+		],
+		"chess_pieces": [
+			"bishop",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "A colossal spire of living molten rock, cleft crenellations crowned in white-hot embers, arched openings weeping incandescent light, veins of searing fire threading its blackened crystalline flanks, a glowing amber finial spitting sparks at its peak, rooted on scorched glassy stone amid drifting embers and volcanic haze, bold cel-shaded outlines, ember-orange and charcoal palette, centered heroic structure",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_rook.png",
+					"name": "Arcane Tower",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "earth_fire_bishop_queen",
+		"display_name": "Magma Deity",
+		"elements": [
+			"earth",
+			"fire"
+		],
+		"chess_pieces": [
+			"bishop",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Molten volcanic goddess floating serene above a scorched glassy expanse, incandescent flowing hair streaming into rising ember sparks, radiant skin veined with rivers of white-hot fire beneath cracked blackened seams, translucent robes rippling like liquid lava, open palms cupping bursting whorls of searing flame, drifting embers and heat-haze, bold cel-shaded outlines, saturated ember-orange and charcoal glow.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_queen.png",
+					"name": "Deity",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "earth_fire_rook_rook",
+		"display_name": "Magma Turret",
+		"elements": [
+			"earth",
+			"fire"
+		],
+		"chess_pieces": [
+			"rook",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Molten-rock watchtower turret with a wide battered base, arrow-slit openings pulsing with searing amber light, crowned by a swiveling top-mounted cannon of blackened glassy metal shot through with white-hot veins, its barrel gushing sparks and dribbling incandescent molten fire, cracked flanks bleeding glowing rivulets, scorched glassy ground, drifting cinders, bold clean cel-shading, deep ember-orange and charcoal palette, centered heroic structure",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook_rook.png",
+					"name": "Turret",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "earth_fire_queen_rook",
+		"display_name": "Magma Castle",
+		"elements": [
+			"earth",
+			"fire"
+		],
+		"chess_pieces": [
+			"queen",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "A colossal fortress keep of blackened faceted glass split by rivers of white-hot orange, a tall cleft central turret between two rounded battlement towers, arched openings and slit windows weeping incandescent light, molten seams cracking the ramparts, a glowing amber finial spitting sparks at its peak, rooted on scorched glassy ground amid drifting embers and rippling heat haze, bold cel-shaded outlines, saturated ember and charcoal palette, centered heroic structure",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook_queen.png",
+					"name": "Castle",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "earth_fire_queen_queen",
+		"display_name": "Magma Hero",
+		"elements": [
+			"earth",
+			"fire"
+		],
+		"chess_pieces": [
+			"queen",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Molten volcanic hero mid-leap, voluminous curly incandescent hair streaming into rising ember sparks, dark skin veined with rivers of white-hot fire beneath cracked blackened seams, spiked crown of glowing coals, faceted charred-glass plate weeping searing droplets, crimson cape rippling like liquid flame, hoisting an oversized blazing greatsword skyward, drifting sparks, heat-haze, thick bold outlines, saturated ember-orange and charcoal glow, low heroic angle",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/queen_queen.png",
+					"name": "Hero",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	}
+]

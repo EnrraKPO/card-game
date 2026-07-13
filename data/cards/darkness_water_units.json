@@ -1,16 +1,15 @@
 [
 	{
-		"id": "darkness_water_bishop",
-		"display_name": "Blight Bishop",
+		"id": "darkness_water_pawn",
+		"display_name": "Blight Pawn",
 		"description": "Applies Poison 1 to the unit it strikes.",
 		"elements": [
 			"darkness",
 			"water"
 		],
 		"chess_pieces": [
-			"bishop"
+			"pawn"
 		],
-		"ranged": true,
 		"effects": [
 			{
 				"trigger": {
@@ -26,7 +25,29 @@
 					"participant": "destination"
 				}
 			}
-		]
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi toxic slime soldier made of translucent glowing green ooze, glowing eyes, wearing dark purple knight helmet, pauldron, belt and boots, holding dripping green crystal-tipped spear and round purple shield with skull-and-crossbones emblem, standing in bubbling slime puddle, cracked wasteland with rising toxic fumes, dark red ominous sky, bold outlines, vibrant cel-shaded fantasy game illustration",
+				"ref": {
+					"source": "current",
+					"mode": "img2img",
+					"denoise": 0.7
+				},
+				"last": {
+					"seed": 1873673946,
+					"prompt": "Chibi toxic slime soldier made of translucent glowing green ooze, glowing eyes, wearing dark purple knight helmet, pauldron, belt and boots, holding dripping green crystal-tipped spear and round purple shield with skull-and-crossbones emblem, standing in bubbling slime puddle, cracked wasteland with rising toxic fumes, dark red ominous sky, bold outlines, vibrant cel-shaded fantasy game illustration",
+					"style": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric light, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear,",
+					"at": "2026-07-07"
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_water_knight",
@@ -79,16 +100,17 @@
 		}
 	},
 	{
-		"id": "darkness_water_pawn",
-		"display_name": "Blight Pawn",
+		"id": "darkness_water_bishop",
+		"display_name": "Blight Bishop",
 		"description": "Applies Poison 1 to the unit it strikes.",
 		"elements": [
 			"darkness",
 			"water"
 		],
 		"chess_pieces": [
-			"pawn"
+			"bishop"
 		],
+		"ranged": true,
 		"effects": [
 			{
 				"trigger": {
@@ -102,50 +124,6 @@
 				"targets": {
 					"kind": "participant",
 					"participant": "destination"
-				}
-			}
-		],
-		"tool": {
-			"art": {
-				"model": "krea2",
-				"width": 1024,
-				"height": 1536,
-				"steps": 8,
-				"guidance": 1,
-				"rembg": false,
-				"prompt": "Chibi toxic slime soldier made of translucent glowing green ooze, glowing eyes, wearing dark purple knight helmet, pauldron, belt and boots, holding dripping green crystal-tipped spear and round purple shield with skull-and-crossbones emblem, standing in bubbling slime puddle, cracked wasteland with rising toxic fumes, dark red ominous sky, bold outlines, vibrant cel-shaded fantasy game illustration",
-				"ref": {
-					"source": "current",
-					"mode": "img2img",
-					"denoise": 0.7
-				},
-				"last": {
-					"seed": 1873673946,
-					"prompt": "Chibi toxic slime soldier made of translucent glowing green ooze, glowing eyes, wearing dark purple knight helmet, pauldron, belt and boots, holding dripping green crystal-tipped spear and round purple shield with skull-and-crossbones emblem, standing in bubbling slime puddle, cracked wasteland with rising toxic fumes, dark red ominous sky, bold outlines, vibrant cel-shaded fantasy game illustration",
-					"style": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric light, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear,",
-					"at": "2026-07-07"
-				}
-			}
-		}
-	},
-	{
-		"id": "darkness_water_queen",
-		"display_name": "Blight Queen",
-		"elements": [
-			"darkness",
-			"water"
-		],
-		"chess_pieces": [
-			"queen"
-		],
-		"description": "Applies Poison 1 to the unit it strikes.",
-		"effects": [
-			{
-				"trigger": "on_attack",
-				"targeting_policy": "attack_target",
-				"status": {
-					"id": "poison",
-					"stacks": 1
 				}
 			}
 		]
@@ -176,34 +154,164 @@
 		]
 	},
 	{
-		"id": "darkness_water_bishop_bishop",
-		"display_name": "Blight Hierophant",
+		"id": "darkness_water_queen",
+		"display_name": "Blight Queen",
+		"elements": [
+			"darkness",
+			"water"
+		],
+		"chess_pieces": [
+			"queen"
+		],
 		"description": "Applies Poison 1 to the unit it strikes.",
+		"effects": [
+			{
+				"trigger": "on_attack",
+				"targeting_policy": "attack_target",
+				"status": {
+					"id": "poison",
+					"stacks": 1
+				}
+			}
+		]
+	},
+	{
+		"id": "darkness_water_pawn_pawn",
+		"elements": [
+			"darkness",
+			"water"
+		],
+		"chess_pieces": [
+			"pawn",
+			"pawn"
+		],
+		"description": "Applies Poison 1 to the unit it strikes.",
+		"effects": [
+			{
+				"trigger": "on_attack",
+				"targeting_policy": "attack_target",
+				"status": {
+					"id": "poison",
+					"stacks": 1
+				}
+			}
+		],
+		"display_name": "Blight Warrior"
+	},
+	{
+		"id": "darkness_water_knight_pawn",
+		"elements": [
+			"darkness",
+			"water"
+		],
+		"chess_pieces": [
+			"knight",
+			"pawn"
+		],
+		"description": "Applies Poison 1 to the unit it strikes.",
+		"effects": [
+			{
+				"trigger": "on_attack",
+				"targeting_policy": "attack_target",
+				"status": {
+					"id": "poison",
+					"stacks": 1
+				}
+			}
+		],
+		"display_name": "Blight Cavalry"
+	},
+	{
+		"id": "darkness_water_bishop_pawn",
 		"elements": [
 			"darkness",
 			"water"
 		],
 		"chess_pieces": [
 			"bishop",
-			"bishop"
+			"pawn"
 		],
-		"ranged": true,
+		"description": "Applies Poison 1 to the unit it strikes.",
 		"effects": [
 			{
-				"trigger": {
-					"kind": "dual_event",
-					"event": "attack",
-					"origin_of": "self"
-				},
+				"trigger": "on_attack",
+				"targeting_policy": "attack_target",
 				"status": {
-					"id": "poison"
-				},
-				"targets": {
-					"kind": "participant",
-					"participant": "destination"
+					"id": "poison",
+					"stacks": 1
 				}
 			}
-		]
+		],
+		"display_name": "Blight Paladin"
+	},
+	{
+		"id": "darkness_water_pawn_rook",
+		"elements": [
+			"darkness",
+			"water"
+		],
+		"chess_pieces": [
+			"pawn",
+			"rook"
+		],
+		"description": "Applies Poison 1 to the unit it strikes.",
+		"effects": [
+			{
+				"trigger": "on_attack",
+				"targeting_policy": "attack_target",
+				"status": {
+					"id": "poison",
+					"stacks": 1
+				}
+			}
+		],
+		"display_name": "Blight Barracks"
+	},
+	{
+		"id": "darkness_water_pawn_queen",
+		"elements": [
+			"darkness",
+			"water"
+		],
+		"chess_pieces": [
+			"pawn",
+			"queen"
+		],
+		"description": "Applies Poison 1 to the unit it strikes.",
+		"effects": [
+			{
+				"trigger": "on_attack",
+				"targeting_policy": "attack_target",
+				"status": {
+					"id": "poison",
+					"stacks": 1
+				}
+			}
+		],
+		"display_name": "Blight Commander"
+	},
+	{
+		"id": "darkness_water_knight_knight",
+		"elements": [
+			"darkness",
+			"water"
+		],
+		"chess_pieces": [
+			"knight",
+			"knight"
+		],
+		"description": "Applies Poison 1 to the unit it strikes.",
+		"effects": [
+			{
+				"trigger": "on_attack",
+				"targeting_policy": "attack_target",
+				"status": {
+					"id": "poison",
+					"stacks": 1
+				}
+			}
+		],
+		"display_name": "Blight Beast"
 	},
 	{
 		"id": "darkness_water_bishop_knight",
@@ -264,14 +372,14 @@
 		]
 	},
 	{
-		"id": "darkness_water_bishop_pawn",
+		"id": "darkness_water_knight_rook",
 		"elements": [
 			"darkness",
 			"water"
 		],
 		"chess_pieces": [
-			"bishop",
-			"pawn"
+			"knight",
+			"rook"
 		],
 		"description": "Applies Poison 1 to the unit it strikes.",
 		"effects": [
@@ -284,7 +392,90 @@
 				}
 			}
 		],
-		"display_name": "Blight Paladin"
+		"display_name": "Blight Stable"
+	},
+	{
+		"id": "darkness_water_knight_queen",
+		"elements": [
+			"darkness",
+			"water"
+		],
+		"chess_pieces": [
+			"knight",
+			"queen"
+		],
+		"description": "Applies Poison 1 to the unit it strikes.",
+		"effects": [
+			{
+				"trigger": "on_attack",
+				"targeting_policy": "attack_target",
+				"status": {
+					"id": "poison",
+					"stacks": 1
+				}
+			}
+		],
+		"display_name": "Blight Monster"
+	},
+	{
+		"id": "darkness_water_bishop_bishop",
+		"display_name": "Blight Hierophant",
+		"description": "Applies Poison 1 to the unit it strikes.",
+		"elements": [
+			"darkness",
+			"water"
+		],
+		"chess_pieces": [
+			"bishop",
+			"bishop"
+		],
+		"ranged": true,
+		"effects": [
+			{
+				"trigger": {
+					"kind": "dual_event",
+					"event": "attack",
+					"origin_of": "self"
+				},
+				"status": {
+					"id": "poison"
+				},
+				"targets": {
+					"kind": "participant",
+					"participant": "destination"
+				}
+			}
+		]
+	},
+	{
+		"id": "darkness_water_bishop_rook",
+		"display_name": "Blight Arcane Tower",
+		"description": "Applies Poison 1 to the unit it strikes.",
+		"elements": [
+			"darkness",
+			"water"
+		],
+		"chess_pieces": [
+			"bishop",
+			"rook"
+		],
+		"ranged": true,
+		"effects": [
+			{
+				"trigger": {
+					"kind": "dual_event",
+					"event": "attack",
+					"origin_of": "self"
+				},
+				"status": {
+					"id": "poison"
+				},
+				"targets": {
+					"kind": "participant",
+					"participant": "destination"
+				}
+			}
+		]
 	},
 	{
 		"id": "darkness_water_bishop_queen",
@@ -316,13 +507,13 @@
 		]
 	},
 	{
-		"id": "darkness_water_bishop_rook",
+		"id": "darkness_water_rook_rook",
 		"elements": [
 			"darkness",
 			"water"
 		],
 		"chess_pieces": [
-			"bishop",
+			"rook",
 			"rook"
 		],
 		"description": "Applies Poison 1 to the unit it strikes.",
@@ -336,191 +527,7 @@
 				}
 			}
 		],
-		"display_name": "Blight Arcane Tower"
-	},
-	{
-		"id": "darkness_water_knight_knight",
-		"elements": [
-			"darkness",
-			"water"
-		],
-		"chess_pieces": [
-			"knight",
-			"knight"
-		],
-		"description": "Applies Poison 1 to the unit it strikes.",
-		"effects": [
-			{
-				"trigger": "on_attack",
-				"targeting_policy": "attack_target",
-				"status": {
-					"id": "poison",
-					"stacks": 1
-				}
-			}
-		],
-		"display_name": "Blight Beast"
-	},
-	{
-		"id": "darkness_water_knight_pawn",
-		"elements": [
-			"darkness",
-			"water"
-		],
-		"chess_pieces": [
-			"knight",
-			"pawn"
-		],
-		"description": "Applies Poison 1 to the unit it strikes.",
-		"effects": [
-			{
-				"trigger": "on_attack",
-				"targeting_policy": "attack_target",
-				"status": {
-					"id": "poison",
-					"stacks": 1
-				}
-			}
-		],
-		"display_name": "Blight Cavalry"
-	},
-	{
-		"id": "darkness_water_knight_queen",
-		"elements": [
-			"darkness",
-			"water"
-		],
-		"chess_pieces": [
-			"knight",
-			"queen"
-		],
-		"description": "Applies Poison 1 to the unit it strikes.",
-		"effects": [
-			{
-				"trigger": "on_attack",
-				"targeting_policy": "attack_target",
-				"status": {
-					"id": "poison",
-					"stacks": 1
-				}
-			}
-		],
-		"display_name": "Blight Monster"
-	},
-	{
-		"id": "darkness_water_knight_rook",
-		"elements": [
-			"darkness",
-			"water"
-		],
-		"chess_pieces": [
-			"knight",
-			"rook"
-		],
-		"description": "Applies Poison 1 to the unit it strikes.",
-		"effects": [
-			{
-				"trigger": "on_attack",
-				"targeting_policy": "attack_target",
-				"status": {
-					"id": "poison",
-					"stacks": 1
-				}
-			}
-		],
-		"display_name": "Blight Stable"
-	},
-	{
-		"id": "darkness_water_pawn_pawn",
-		"elements": [
-			"darkness",
-			"water"
-		],
-		"chess_pieces": [
-			"pawn",
-			"pawn"
-		],
-		"description": "Applies Poison 1 to the unit it strikes.",
-		"effects": [
-			{
-				"trigger": "on_attack",
-				"targeting_policy": "attack_target",
-				"status": {
-					"id": "poison",
-					"stacks": 1
-				}
-			}
-		],
-		"display_name": "Blight Warrior"
-	},
-	{
-		"id": "darkness_water_pawn_queen",
-		"elements": [
-			"darkness",
-			"water"
-		],
-		"chess_pieces": [
-			"pawn",
-			"queen"
-		],
-		"description": "Applies Poison 1 to the unit it strikes.",
-		"effects": [
-			{
-				"trigger": "on_attack",
-				"targeting_policy": "attack_target",
-				"status": {
-					"id": "poison",
-					"stacks": 1
-				}
-			}
-		],
-		"display_name": "Blight Commander"
-	},
-	{
-		"id": "darkness_water_pawn_rook",
-		"elements": [
-			"darkness",
-			"water"
-		],
-		"chess_pieces": [
-			"pawn",
-			"rook"
-		],
-		"description": "Applies Poison 1 to the unit it strikes.",
-		"effects": [
-			{
-				"trigger": "on_attack",
-				"targeting_policy": "attack_target",
-				"status": {
-					"id": "poison",
-					"stacks": 1
-				}
-			}
-		],
-		"display_name": "Blight Barracks"
-	},
-	{
-		"id": "darkness_water_queen_queen",
-		"elements": [
-			"darkness",
-			"water"
-		],
-		"chess_pieces": [
-			"queen",
-			"queen"
-		],
-		"description": "Applies Poison 1 to the unit it strikes.",
-		"effects": [
-			{
-				"trigger": "on_attack",
-				"targeting_policy": "attack_target",
-				"status": {
-					"id": "poison",
-					"stacks": 1
-				}
-			}
-		],
-		"display_name": "Blight Hero"
+		"display_name": "Blight Turret"
 	},
 	{
 		"id": "darkness_water_queen_rook",
@@ -546,14 +553,14 @@
 		"display_name": "Blight Castle"
 	},
 	{
-		"id": "darkness_water_rook_rook",
+		"id": "darkness_water_queen_queen",
 		"elements": [
 			"darkness",
 			"water"
 		],
 		"chess_pieces": [
-			"rook",
-			"rook"
+			"queen",
+			"queen"
 		],
 		"description": "Applies Poison 1 to the unit it strikes.",
 		"effects": [
@@ -566,6 +573,6 @@
 				}
 			}
 		],
-		"display_name": "Blight Turret"
+		"display_name": "Blight Hero"
 	}
 ]

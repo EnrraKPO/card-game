@@ -1,0 +1,628 @@
+[
+	{
+		"id": "air_light_pawn",
+		"elements": [
+			"air",
+			"light"
+		],
+		"display_name": "Angelic Pawn",
+		"chess_pieces": [
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Chibi armored foot soldier with soft feathered wings and a glowing golden halo above a rounded helm, gripping a slender silver spear and a round shield rimmed with light, cream tunic and pale gold-trimmed plate, standing among low golden picket rails on sunlit rolling clouds, radiant sky, bold outlines, vibrant cel-shaded fantasy game illustration",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn.png",
+					"name": "Pawn"
+				},
+				"inferredFrom": {
+					"concept": [
+						"pawn",
+						"bishop_pawn",
+						"darkness_water_pawn"
+					],
+					"theme": [
+						"air_water_knight",
+						"air_water_pawn",
+						"air_water_queen",
+						"air_water_rook"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "air_light_knight",
+		"elements": [
+			"air",
+			"light"
+		],
+		"display_name": "Angelic Knight",
+		"chess_pieces": [
+			"knight"
+		],
+		"tool": {
+			"art": {
+				"prompt": "A noble armored warhorse rearing mid-charge, plated in gleaming silver and gold barding, vast white-feathered wings sweeping upward, a soft golden halo above its brow, glowing eyes, mane streaming, hooves striking through billowing luminous clouds, low golden picket railings glinting below, radiant heavenly light, centered heroic subject on softly glowing sky",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight.png",
+					"name": "Knight"
+				},
+				"inferredFrom": {
+					"concept": [
+						"knight",
+						"bishop_knight",
+						"darkness_water_bishop_knight"
+					],
+					"theme": [
+						"air_water_knight",
+						"air_water_pawn",
+						"air_water_queen",
+						"air_water_rook"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "air_light_bishop",
+		"elements": [
+			"air",
+			"light"
+		],
+		"display_name": "Angelic Bishop",
+		"chess_pieces": [
+			"bishop"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Stout cheerful cleric-warrior in flowing ivory-and-gold robes, smooth beardless young face, tall peaked plumed helm crowned with a glowing golden halo, broad feathered white wings spread wide, gripping a slender curled-crook staff, cradling a gilt-clasped tome, standing atop billowing sunlit clouds behind low shimmering golden lattice railings, bold clean cartoon cel-shading, warm radiant sky, centered heroic figure",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop.png",
+					"name": "Bishop"
+				},
+				"inferredFrom": {
+					"concept": [
+						"bishop",
+						"bishop_bishop",
+						"bishop_knight"
+					],
+					"theme": [
+						"air_water_knight",
+						"air_water_pawn",
+						"air_water_queen",
+						"air_water_rook"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "air_light_rook",
+		"elements": [
+			"air",
+			"light"
+		],
+		"display_name": "Angelic Rook",
+		"chess_pieces": [
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"prompt": "A crenellated stone watchtower haloed in golden light, broad white feathered wings sweeping from its battlements, a glowing ring hovering above its peak, low gilded lattice railings ringing its parapet, perched on billowing sunlit clouds, bold clean cartoon cel-shading, thick outlines, warm radiant sky, centered heroic structure",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook.png",
+					"name": "Rook"
+				},
+				"inferredFrom": {
+					"concept": [
+						"rook",
+						"bishop_rook",
+						"darkness_water_rook"
+					],
+					"theme": [
+						"air_light",
+						"air_light_bishop",
+						"air_light_king"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "air_light_queen",
+		"elements": [
+			"air",
+			"light"
+		],
+		"display_name": "Angelic Queen",
+		"chess_pieces": [
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Regal young sovereign woman in flowing ivory-and-gold gown with a jeweled spiked crown and a rich crimson mantle, broad radiant white-feathered wings sweeping upward, a soft luminous ring hovering above her hair, one hand raising a glowing orb of light, poised atop billowing sunlit clouds behind low gleaming golden lattice railings, bold clean cartoon cel-shading, warm radiant sky, centered heroic figure",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/queen.png",
+					"name": "Queen"
+				},
+				"inferredFrom": {
+					"concept": [
+						"queen",
+						"bishop_queen",
+						"darkness_water_bishop_queen"
+					],
+					"theme": [
+						"air_light",
+						"air_light_bishop",
+						"air_light_king"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "air_light_pawn_pawn",
+		"display_name": "Angelic Warrior",
+		"elements": [
+			"air",
+			"light"
+		],
+		"chess_pieces": [
+			"pawn",
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "A winged warrior clad in luminous ivory-and-gilt plate, open-faced plumed helm ringed by a glowing ring of light, vast white feathered wings spread wide, lunging mid-swing with a slender radiant blade, drifting soft feathers and warm sunbeams, low gleaming lattice rails on billowing sunlit clouds, bold cel-shaded fantasy, centered heroic figure, radiant golden sky.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_pawn.png",
+					"name": "Warrior",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_light_knight_pawn",
+		"display_name": "Angelic Cavalry",
+		"elements": [
+			"air",
+			"light"
+		],
+		"chess_pieces": [
+			"knight",
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Feathered-winged mounted lancer astride a rearing armored warhorse, both sheathed in gleaming ivory-and-gilt plate, vast white wings sweeping upward, a soft glowing ring of light above the visored helm, slender radiant lance lowered and streaming warm light, hooves striking through billowing sunlit clouds past low gleaming golden rails, drifting feathers, centered heroic figure on radiant golden sky.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_pawn.png",
+					"name": "Cavalry",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_light_bishop_pawn",
+		"display_name": "Angelic Paladin",
+		"elements": [
+			"air",
+			"light"
+		],
+		"chess_pieces": [
+			"bishop",
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Winged holy warrior sculpted with a rounded visored helm ridged into a small crown, cradling a broad kite shield and a heavy flanged mace, gleaming ivory-and-gilt plate, vast feathered white wings spread wide, a soft ring of light hovering above the helm, drifting feathers, low gleaming lattice railings on billowing sunlit clouds, centered heroic figure, radiant golden sky, bold cel-shaded fantasy.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_pawn.png",
+					"name": "Paladin",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_light_pawn_rook",
+		"display_name": "Angelic Barracks",
+		"elements": [
+			"air",
+			"light"
+		],
+		"chess_pieces": [
+			"pawn",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Winged sentinel keep with an arched gateway and crenellated parapet, its ivory-and-gilt walls sprouting vast white feathered wings, a softly glowing ring hovering at its peak, a rack of gleaming spears by the door, a small plumed guard in luminous gold plate holding a round shield, low golden lattice rails on billowing sunlit clouds, drifting feathers, bold cel-shading, radiant sky, centered structure.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_rook.png",
+					"name": "Barracks",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_light_pawn_queen",
+		"display_name": "Angelic Commander",
+		"elements": [
+			"air",
+			"light"
+		],
+		"chess_pieces": [
+			"pawn",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "A woman commander rallying troops, vast feathered wings spread from her shoulders, a soft glowing ring hovering above her flowing hair, gleaming ivory-and-gilt breastplate, thrusting a slender radiant baton skyward atop a raised platform, ranks of small winged soldiers gathering below along low gleaming golden railings, drifting feathers on billowing sunlit clouds, radiant golden sky, bold cel-shaded fantasy.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_queen.png",
+					"name": "Commander",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_light_knight_knight",
+		"display_name": "Angelic Beast",
+		"elements": [
+			"air",
+			"light"
+		],
+		"chess_pieces": [
+			"knight",
+			"knight"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Radiant celestial bull rearing mid-charge, powerful shoulders sheathed in gleaming ivory-and-gilt plating, vast snow-white feathered wings sweeping skyward, a soft luminous ring hovering above its lowered horned brow, glowing warm eyes, mane streaming, hooves cleaving through billowing sunlit clouds past low glinting golden rails, drifting feathers, centered heroic figure on a glowing golden sky.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_knight.png",
+					"name": "Beast",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_light_bishop_knight",
+		"display_name": "Angelic Cryptid",
+		"elements": [
+			"air",
+			"light"
+		],
+		"chess_pieces": [
+			"bishop",
+			"knight"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Winged serpentine cryptid coiling through billowing sunlit clouds, plush rounded body sheathed in downy ivory-and-gold plumage, broad feathered wings spread wide, a soft glowing ring hovering above its horned brow, luminous gentle eyes, drifting stray feathers, low gilded lattice railings glinting below, radiant heavenly sky, centered heroic figure, bold cel-shaded fantasy.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_knight.png",
+					"name": "Cryptid",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_light_knight_rook",
+		"display_name": "Angelic Stable",
+		"elements": [
+			"air",
+			"light"
+		],
+		"chess_pieces": [
+			"knight",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "A winged horse head peering from a cloud-woven stable, downy ivory-and-gold plumage sheathing its arched neck, broad feathered wings folded along glowing rails, a soft luminous ring hovering above its brow, gentle radiant eyes, drifting stray feathers, gilded lattice fences glinting through billowing sunlit haze, centered heroic figure, bold cel-shaded fantasy.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_rook.png",
+					"name": "Stable",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_light_knight_queen",
+		"display_name": "Angelic Monster",
+		"elements": [
+			"air",
+			"light"
+		],
+		"chess_pieces": [
+			"knight",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "A colossal winged behemoth rearing mid-lunge, hulking plated shoulders sheathed in downy ivory-and-gilt scales, swept-back horns crowned by a soft hovering luminous ring, vast snow-white plumed wings flung skyward shedding drifting feathers, glowing gentle eyes, taloned limbs cleaving billowing sunlit clouds past low glinting golden rails, centered heroic figure, radiant golden sky, bold cel-shaded fantasy.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_queen.png",
+					"name": "Monster",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_light_bishop_bishop",
+		"display_name": "Angelic Hierophant",
+		"elements": [
+			"air",
+			"light"
+		],
+		"chess_pieces": [
+			"bishop",
+			"bishop"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Bearded elder mage mid-incantation, ivory-and-gilt vestments flaring, tall peaked headdress, long flowing white beard, sweeping feathered wings spread wide, a soft glowing ring above his brow, both hands raised as spiraling ribbons of radiant golden power burst from his palms, drifting downy feathers, low gleaming lattice railings on billowing sunlit clouds, centered heroic figure, radiant golden sky, bold cel-shaded fantasy",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_bishop.png",
+					"name": "Hierophant",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_light_bishop_rook",
+		"display_name": "Angelic Arcane Tower",
+		"elements": [
+			"air",
+			"light"
+		],
+		"chess_pieces": [
+			"bishop",
+			"rook"
+		],
+		"ranged": true,
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Winged colossal spire crowned by a hovering luminous ring, ivory-and-gilt stonework sheathed in downy plumage, broad feathered wings sweeping from its ramparts, arched openings glowing with warm radiant light, drifting stray feathers, low gleaming lattice railings circling its base atop billowing sunlit clouds, centered heroic structure, bold cel-shaded fantasy, radiant golden sky.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_rook.png",
+					"name": "Arcane Tower",
+					"mode": "img2img",
+					"denoise": 0.6
+				},
+				"last": {
+					"seed": 1721428336,
+					"prompt": "Winged colossal spire crowned by a hovering luminous ring, ivory-and-gilt stonework sheathed in downy plumage, broad feathered wings sweeping from its ramparts, arched openings glowing with warm radiant light, drifting stray feathers, low gleaming lattice railings circling its base atop billowing sunlit clouds, centered heroic structure, bold cel-shaded fantasy, radiant golden sky., cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear",
+					"style": "",
+					"at": "2026-07-12"
+				}
+			}
+		}
+	},
+	{
+		"id": "air_light_bishop_queen",
+		"display_name": "Angelic Deity",
+		"elements": [
+			"air",
+			"light"
+		],
+		"chess_pieces": [
+			"bishop",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Serene goddess hovering cross-legged above sunlit billowing clouds, flowing ivory-and-gilt robes rippling with light, broad snowy feathered wings spread wide, a soft luminous ring glowing above her brow, gentle radiant eyes, palms cupping a warm sphere of golden light, drifting downy feathers, low gleaming lattice railings glinting below, radiant heavenly sky, centered figure, bold cel-shaded fantasy",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_queen.png",
+					"name": "Deity",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_light_rook_rook",
+		"display_name": "Angelic Turret",
+		"elements": [
+			"air",
+			"light"
+		],
+		"chess_pieces": [
+			"rook",
+			"rook"
+		],
+		"ranged": true,
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Winged siege turret with a wide fortified base and glowing arrow-slits, crowned by a swiveling top-mounted ballista aimed skyward, its ivory-and-gilt walls sprouting vast white feathered wings, a luminous ring hovering at its peak, gilded lattice rails ringing the parapet, perched on billowing sunlit clouds, drifting downy feathers, bold cel-shading, radiant sky, centered heroic structure.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook_rook.png",
+					"name": "Turret",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_light_queen_rook",
+		"display_name": "Angelic Castle",
+		"elements": [
+			"air",
+			"light"
+		],
+		"chess_pieces": [
+			"queen",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Winged fortress keep with a tall central crenellated turret flanked by two round towers, an arched gate spilling gentle golden light, vast snow-white feathered wings sweeping from its flanks shedding drifting downy plumes, a soft luminous ring hovering at its crown, low glinting golden rails on billowing sunlit clouds, centered heroic structure, radiant golden sky, bold cel-shaded fantasy",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook_queen.png",
+					"name": "Castle",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_light_queen_queen",
+		"display_name": "Angelic Hero",
+		"elements": [
+			"air",
+			"light"
+		],
+		"chess_pieces": [
+			"queen",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Radiant winged hero mid-leap, curly dark hair streaming, warm brown skin, glowing gentle eyes, a soft luminous ring hovering above her brow, ivory-and-gilt plate armor gleaming, sweeping snowy feathered wings flung skyward shedding downy plumes, hoisting an oversized shining greatsword mid-swing over billowing sunlit clouds, low glinting golden rails below, radiant heavenly sky, centered heroic figure, bold cel-shaded fantasy.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/queen_queen.png",
+					"name": "Hero",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	}
+]

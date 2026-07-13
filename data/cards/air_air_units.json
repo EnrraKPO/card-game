@@ -1,0 +1,669 @@
+[
+	{
+		"id": "air_air_pawn",
+		"display_name": "Pure Air Pawn",
+		"elements": [
+			"air",
+			"air"
+		],
+		"chess_pieces": [
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi footsoldier planting a spear of coiled glowing breeze, small round helmet of pale translucent cloud-crystal topped with a spherical vapor orb, body of swirling mist plated in windswept crystal, luminous white-cyan currents veining his chest, wispy scarf streaming sideways in a gust, boots trailing spiraling eddies, soft turquoise sky, bold outlines, painterly chibi rendering.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn.png",
+					"name": "Pawn",
+					"mode": "img2img",
+					"denoise": 0.6
+				},
+				"last": {
+					"seed": 1251173779,
+					"prompt": "Chibi rounded-body footsoldier bodied from swirling translucent pale-blue wind, domed knobbed helm with arched openings, glowing blue eyes, flowing scarf and pauldron, gripping a tall slender spear tipped with a glowing coiling-breeze flame, round shield bearing a raised spiral of rushing air, dashing across an open ridge as gusts spiral off its heels, luminous sky-blue haze, warm turquoise sky, thick clean outlines, bold saturated colors, dark fantasy digital painting, centered figure., cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear",
+					"style": "",
+					"at": "2026-07-12"
+				}
+			}
+		}
+	},
+	{
+		"id": "air_air_knight",
+		"display_name": "Pure Air Knight",
+		"elements": [
+			"air",
+			"air"
+		],
+		"chess_pieces": [
+			"knight"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi armored pony mid-leap through open sky, body sculpted of drifting silver-white cloudstuff, translucent gale-spun plates over its chest, mane and tail unraveling into ribbons of pale glowing mist, bright cyan currents rippling along its legs, each hoofbeat bursting into tiny spiraling whirlwinds, breezy aquamarine horizon, bold cartoon outlines, chunky stylized shading",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight.png",
+					"name": "Knight"
+				},
+				"inferredFrom": {
+					"anchor": "knight",
+					"theme": [
+						"air_air_pawn",
+						"air_air_knight",
+						"air_air_queen"
+					],
+					"mode": "concept"
+				}
+			}
+		}
+	},
+	{
+		"id": "air_air_bishop",
+		"display_name": "Pure Air Bishop",
+		"elements": [
+			"air",
+			"air"
+		],
+		"chess_pieces": [
+			"bishop"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi robed cleric in a tall cleft headdress sculpted from coiled cloud and pale windswept crystal, flowing vapor-white vestments veined with glowing cyan air-currents, raising a spiral-tipped staff of condensed breeze, clutching a tome bound in drifting mist, scarf and hems whipping in gusts, wind-blurred wisps spiraling around him, bold cartoon outlines, soft turquoise sky.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop.png",
+					"name": "Bishop",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_air_rook",
+		"display_name": "Pure Air Rook",
+		"elements": [
+			"air",
+			"air"
+		],
+		"chess_pieces": [
+			"rook"
+		],
+		"ranged": true,
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Squat crenellated watchtower built of translucent pale cloud-crystal blocks, seams glowing with white-cyan rushing currents, spiraling wisps of silver mist coiling around its battlements, a long ribbon of luminous vapor streaming sideways like a banner, tiny chibi sentry of swirling fog peeking from an arched lookout, eddies whirling at its base, soft turquoise sky, bold outlines, painterly chibi rendering.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook.png",
+					"name": "Rook",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_air_queen",
+		"display_name": "Pure Air Queen",
+		"elements": [
+			"air",
+			"air"
+		],
+		"chess_pieces": [
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi sovereign woman formed of drifting silver-white cloudstuff, tall spiraling crown of translucent wind-spun crystal, long hair unraveling into ribbons of pale glowing mist, flowing gown veined with luminous white-cyan currents, billowing vapor cape, one raised palm conjuring a churning sphere of coiled gale and spinning feathers, tiny whirlwinds circling her hem, breezy aquamarine sky, bold outlines, painterly chibi rendering.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/queen.png",
+					"name": "Queen",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_air_pawn_pawn",
+		"display_name": "Pure Air Warrior",
+		"elements": [
+			"air",
+			"air"
+		],
+		"chess_pieces": [
+			"pawn",
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi footsoldier braced in a sweeping updraft, long blade forged of compressed shrieking wind edged in glowing white-cyan, round shield a spinning disc of layered translucent gusts, full helmet of pale cloud-crystal hiding all but glowing eyes, light plates of silvery vapor rippling over a misty body, spiral eddies curling off his boots, breezy turquoise sky, bold outlines, painterly chibi rendering",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_pawn.png",
+					"name": "Warrior",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_air_knight_pawn",
+		"display_name": "Pure Air Cavalry",
+		"elements": [
+			"air",
+			"air"
+		],
+		"chess_pieces": [
+			"knight",
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi lancer astride a rearing steed of drifting silver-white cloudstuff, rider armored in translucent gale-spun crystal plates veined with luminous white-cyan currents, plume and banner unraveling into ribbons of glowing mist, lance of coiled spiraling breeze couched forward, hooves bursting into tiny whirlwinds mid-charge, breezy aquamarine sky, bold outlines, painterly chibi rendering.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_pawn.png",
+					"name": "Cavalry"
+				},
+				"last": {
+					"seed": 4055275065,
+					"prompt": "Charging armored rider on a galloping warhorse spun from swirling pale cloud-vapor, sleek pearl-and-silver plating laced with glowing cyan wind-veins, streaming misty mane and tail dissolving into curling gusts and floating feathers, hooves trailing spiraling air rings, a leveled lance leaking racing wind, luminous white-blue eyes, thick bold outlines, saturated stylized colors, radiant bright sky., cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear",
+					"style": "",
+					"at": "2026-07-12"
+				},
+				"inferredFrom": {
+					"anchor": "knight_pawn",
+					"theme": [
+						"air_air_pawn",
+						"air_air_knight",
+						"air_air_queen"
+					],
+					"mode": "concept"
+				}
+			}
+		}
+	},
+	{
+		"id": "air_air_bishop_pawn",
+		"display_name": "Pure Air Paladin",
+		"elements": [
+			"air",
+			"air"
+		],
+		"chess_pieces": [
+			"bishop",
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi paladin clad in massive plates of pale translucent gale-spun crystal over a body of swirling silver-white mist, closed rounded helm venting curls of vapor, hefting a blunt maul whose head is a churning knot of compressed whirlwind, tall shield emblazoned with a glowing spiral gust sigil, luminous white-cyan currents veining the armor, tiny eddies circling his boots, breezy aquamarine sky, bold outlines, painterly chibi rendering.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_pawn.png",
+					"name": "Paladin"
+				},
+				"inferredFrom": {
+					"anchor": "bishop_pawn",
+					"theme": [
+						"air_air_pawn",
+						"air_air_knight",
+						"air_air_queen"
+					],
+					"mode": "concept"
+				}
+			}
+		}
+	},
+	{
+		"id": "air_air_pawn_rook",
+		"display_name": "Pure Air Barracks",
+		"elements": [
+			"air",
+			"air"
+		],
+		"chess_pieces": [
+			"pawn",
+			"rook"
+		],
+		"ranged": true,
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi fortified training barracks built of swirling silver-white cloudstuff blocks, translucent wind-spun crystal battlements trailing ribbons of pale glowing mist, luminous white-cyan currents veining the archway, a rack of coiled-breeze spears crackling with tiny spiraling whirlwinds beside the door, one small mist-bodied recruit standing guard clutching a gale-forged spear, breezy aquamarine sky, bold outlines, painterly chibi rendering.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_rook.png",
+					"name": "Barracks",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_air_pawn_queen",
+		"display_name": "Pure Air Commander",
+		"elements": [
+			"air",
+			"air"
+		],
+		"chess_pieces": [
+			"pawn",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi female war-leader of drifting silver-white cloudstuff commanding from a floating spiral of condensed vapor, plumed helm of translucent wind-spun crystal, hair streaming into ribbons of glowing mist, gale-veined cuirass and billowing vapor cape, thrusting a baton of coiled luminous breeze toward misty spear-troopers wreathed in tiny whirlwinds below, breezy aquamarine sky, bold outlines, painterly chibi rendering.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_queen.png",
+					"name": "Commander",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_air_knight_knight",
+		"display_name": "Pure Air Beast",
+		"elements": [
+			"air",
+			"air"
+		],
+		"chess_pieces": [
+			"knight",
+			"knight"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi hulking bull mid-charge, massive body sculpted of churning silver-white cloudstuff, sweeping horns of translucent wind-spun crystal streaked with glowing cyan currents, shaggy mane unraveling into ribbons of pale mist, gale-spun crystal plate across its lowered brow, hooves erupting into spiraling whirlwinds, vapor cape billowing off its humped back, breezy aquamarine sky, bold outlines, painterly chibi rendering.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_knight.png",
+					"name": "Beast"
+				},
+				"inferredFrom": {
+					"anchor": "knight_knight",
+					"theme": [
+						"air_air_pawn",
+						"air_air_knight",
+						"air_air_queen"
+					],
+					"mode": "concept"
+				}
+			}
+		}
+	},
+	{
+		"id": "air_air_bishop_knight",
+		"display_name": "Pure Air Cryptid",
+		"elements": [
+			"air",
+			"air"
+		],
+		"chess_pieces": [
+			"bishop",
+			"knight"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi mythical steed rearing atop a drifting cloudbank, body of swirling silver-white vapor plated in translucent gale-spun crystal, single spiraling horn of coiled glowing breeze, mane and tail streaming into ribbons of luminous pale-cyan mist, hooves bursting tiny spinning whirlwinds, bright currents veining its flanks, breezy aquamarine sky, bold outlines, painterly chibi rendering",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_knight.png",
+					"name": "Cryptid",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_air_knight_rook",
+		"display_name": "Pure Air Stable",
+		"elements": [
+			"air",
+			"air"
+		],
+		"chess_pieces": [
+			"knight",
+			"rook"
+		],
+		"ranged": true,
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi stable perched on a drifting cloud island, walls of layered silver-white cloudstuff braced with beams of translucent wind-spun crystal, peaked roof shedding ribbons of pale glowing mist, a small pony of swirling vapor peering over the half-door with mane streaming into luminous white-cyan currents, tiny whirlwinds circling hay-like tufts of coiled breeze, breezy aquamarine sky, bold outlines, painterly chibi rendering.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_rook.png",
+					"name": "Stable",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_air_knight_queen",
+		"display_name": "Pure Air Monster",
+		"elements": [
+			"air",
+			"air"
+		],
+		"chess_pieces": [
+			"knight",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Colossal dragon sculpted of billowing silver-white cloudstuff, vast wings of sheer spinning gale trailing streaming vapor, horns and back-spines of translucent wind-spun crystal, luminous white-cyan currents veining its chest, roaring a spiraling vortex of coiled breeze and torn wisps, tail dissolving into ribbons of pale mist, tiny whirlwinds circling its claws, breezy aquamarine sky, bold outlines, painterly rendering.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_queen.png",
+					"name": "Monster"
+				},
+				"last": {
+					"seed": 2739500742,
+					"prompt": "Rearing colossal beast conjured entirely from living wind, hulking body coiling out of swirling white cloudbanks and rushing gusts, translucent pearl-and-silver form streaming into curling breezes, hollow luminous pale-blue eyes glowing in a faceless maw, clawed limbs dissolving into spiraling vapor rings, glowing cyan air-veins pulsing across its bulk, drifting mist and darting feathers, bold clean cel-shading, thick outlines, radiant open sky, centered heroic subject., cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear",
+					"style": "",
+					"at": "2026-07-12"
+				},
+				"inferredFrom": {
+					"anchor": "knight_queen",
+					"theme": [
+						"air_air_pawn",
+						"air_air_knight",
+						"air_air_queen"
+					],
+					"mode": "concept"
+				}
+			}
+		}
+	},
+	{
+		"id": "air_air_bishop_bishop",
+		"display_name": "Pure Air Hierophant",
+		"elements": [
+			"air",
+			"air"
+		],
+		"chess_pieces": [
+			"bishop",
+			"bishop"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi elder priest formed of drifting silver-white cloudstuff, long beard unraveling into ribbons of pale glowing mist, tall tapering mitre of translucent wind-spun crystal, layered vestments veined with luminous white-cyan currents, gripping a spiraling vapor staff crowned by a churning gale orb, raised hand summoning concentric rings of coiled breeze and spinning feathers, breezy aquamarine sky, bold outlines, painterly chibi rendering.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_bishop.png",
+					"name": "Hierophant",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_air_bishop_rook",
+		"display_name": "Pure Air Arcane Tower",
+		"elements": [
+			"air",
+			"air"
+		],
+		"chess_pieces": [
+			"bishop",
+			"rook"
+		],
+		"ranged": true,
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi arcane tower spiraling upward from coiled cloudstuff, walls of pale translucent wind-spun crystal veined with luminous white-cyan currents, battlements trailing ribbons of glowing mist, a churning vapor orb crowning its peak, small robed chibi magician at the glowing doorway raising a crystal staff wreathed in tiny whirlwinds, breezy aquamarine sky, bold outlines, painterly chibi rendering.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_rook.png",
+					"name": "Arcane Tower"
+				},
+				"inferredFrom": {
+					"anchor": "bishop_rook",
+					"theme": [
+						"air_air_pawn",
+						"air_air_knight",
+						"air_air_queen"
+					],
+					"mode": "concept"
+				}
+			}
+		}
+	},
+	{
+		"id": "air_air_bishop_queen",
+		"display_name": "Pure Air Deity",
+		"elements": [
+			"air",
+			"air"
+		],
+		"chess_pieces": [
+			"bishop",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi four-armed goddess sculpted of drifting silver-white cloudstuff, glowing eyes, great spinning disc of coiled gale haloing her head, tall spire of translucent wind-spun crystal rising from her brow, layered vapor robes veined with luminous white-cyan currents, each palm raised cradling a small churning whirlwind, one hand gripping a scepter of braided breeze, breezy aquamarine sky, bold outlines, painterly chibi rendering.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_queen.png",
+					"name": "Deity"
+				},
+				"inferredFrom": {
+					"anchor": "bishop_queen",
+					"theme": [
+						"air_air_pawn",
+						"air_air_knight",
+						"air_air_queen"
+					],
+					"mode": "concept"
+				}
+			}
+		}
+	},
+	{
+		"id": "air_air_rook_rook",
+		"display_name": "Pure Air Turret",
+		"elements": [
+			"air",
+			"air"
+		],
+		"chess_pieces": [
+			"rook",
+			"rook"
+		],
+		"ranged": true,
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Squat crenellated tower built of pale translucent cloud-crystal blocks veined with luminous white-cyan currents, front-mounted crimson-free banner of flowing vapor bearing a glowing spiral gust emblem, atop it a swiveling barrel-shaped gale-cannon launching a churning ring of compressed wind, tiny whirlwinds spiraling off its base, breezy aquamarine sky, bold outlines, painterly chibi rendering.",
+				"last": {
+					"seed": 523838508,
+					"prompt": "Squat crenellated tower built of pale translucent cloud-crystal blocks veined with luminous white-cyan currents, front-mounted crimson-free banner of flowing vapor bearing a glowing spiral gust emblem, atop it a swiveling barrel-shaped gale-cannon launching a churning ring of compressed wind, tiny whirlwinds spiraling off its base, breezy aquamarine sky, bold outlines, painterly chibi rendering., cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear",
+					"style": "",
+					"at": "2026-07-12"
+				}
+			}
+		}
+	},
+	{
+		"id": "air_air_queen_rook",
+		"display_name": "Pure Air Castle",
+		"elements": [
+			"air",
+			"air"
+		],
+		"chess_pieces": [
+			"queen",
+			"rook"
+		],
+		"ranged": true,
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi fortress stronghold hovering above a breezy aquamarine horizon, thick round towers sculpted of drifting silver-white cloudstuff, battlements of pale translucent wind-spun crystal, spiraling vapor turret roofs, long banners of streaming glowing mist, gate an arch of coiled churning gale veined with luminous white-cyan currents, tiny whirlwinds circling its floating foundations, bold outlines, painterly chibi rendering.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook_queen.png",
+					"name": "Castle",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_air_queen_queen",
+		"display_name": "Pure Air Hero",
+		"elements": [
+			"air",
+			"air"
+		],
+		"chess_pieces": [
+			"queen",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi warrior queen striding across a drifting cloud shelf, body wrapped in armor of translucent gale-spun crystal over swirling silver-white mist, long hair streaming into ribbons of pale luminous vapor, jagged tiara of wind-carved glass, both hands gripping a greatsword forged from a coiled roaring cyclone, spiraling eddies bursting at her boots, breezy aquamarine sky, bold outlines, painterly chibi rendering.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/queen_queen.png",
+					"name": "Hero",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	}
+]

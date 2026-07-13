@@ -86,33 +86,29 @@
 	},
 	{
 		"id": "air_fire_bishop",
+		"display_name": "Lightning Bishop",
 		"elements": [
 			"air",
 			"fire"
 		],
-		"display_name": "Lightning Bishop",
 		"chess_pieces": [
 			"bishop"
 		],
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "Chibi cartoon bishop standing on a round windswept dais, tall cleft mitre of storm-blue crystal edged in molten gold, flowing white robes veined with crackling lightning threads, gripping a spiraled crozier that arcs golden electricity, an amber-glowing tome under one arm, wind-torn scarf streaming, glowing eyes, sparks swirling around him, churning tempest clouds behind, thick outlines, bold saturated colors",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/bishop.png",
-					"name": "Bishop"
-				},
-				"inferredFrom": {
-					"concept": [
-						"bishop",
-						"bishop_bishop",
-						"bishop_knight"
-					],
-					"theme": [
-						"air_fire",
-						"air_fire_king",
-						"air_fire_knight"
-					]
+					"name": "Bishop",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
@@ -142,33 +138,30 @@
 	},
 	{
 		"id": "air_fire_queen",
+		"display_name": "Lightning Queen",
 		"elements": [
 			"air",
 			"fire"
 		],
-		"display_name": "Lightning Queen",
 		"chess_pieces": [
 			"queen"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "Chibi cartoon queen standing on a round windswept dais, long dark hair flowing in gusts, tall pointed crown of storm-blue crystal tipped with molten gold, white gown veined with crackling golden lightning threads, red wind-torn cape billowing, cradling a floating orb of caged blue-white electricity, glowing amber eyes, sparks and swirling air currents around her, tempest clouds behind, thick outlines, bold saturated colors",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/queen.png",
-					"name": "Queen"
-				},
-				"inferredFrom": {
-					"concept": [
-						"queen",
-						"bishop_queen",
-						"darkness_light_bishop_queen"
-					],
-					"theme": [
-						"air_fire",
-						"air_fire_bishop",
-						"air_fire_king"
-					]
+					"name": "Queen",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
@@ -482,6 +475,7 @@
 			"bishop",
 			"bishop"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -509,68 +503,62 @@
 	},
 	{
 		"id": "air_fire_bishop_rook",
+		"display_name": "Lightning Arcane Tower",
 		"elements": [
 			"air",
 			"fire"
 		],
-		"display_name": "Lightning Arcane Tower",
 		"chess_pieces": [
 			"bishop",
 			"rook"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "Cartoon chibi storm-spire tower crackling with power, walls of storm-blue crystal ridged with molten-gold trim, forked lightning arcing from its battlements, a swirling ring of white voltage crowning its cleft mitre-topped spire, tiny robed storm-priest guardian raising a sparking hand at its gate, whirling sparks, roiling tempest clouds behind, thick bold outlines, saturated colors",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/bishop_rook.png",
-					"name": "Arcane Tower"
-				},
-				"inferredFrom": {
-					"concept": [
-						"bishop_rook",
-						"darkness_light_bishop_rook",
-						"water_water_bishop_rook"
-					],
-					"theme": [
-						"air_fire_bishop",
-						"air_fire_bishop_bishop",
-						"air_fire_bishop_knight"
-					]
+					"name": "Arcane Tower",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
 	},
 	{
 		"id": "air_fire_bishop_queen",
+		"display_name": "Lightning Deity",
 		"elements": [
 			"air",
 			"fire"
 		],
-		"display_name": "Lightning Deity",
 		"chess_pieces": [
 			"bishop",
 			"queen"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "Majestic front-facing storm-goddess sovereign standing on a wind-scoured dais, towering fanned mitre-crown of storm-blue crystal ringed in molten-gold spikes, flowing pale robes veined with crackling voltage and gilded scrollwork, one hand raising a lightning-wreathed spiraled scepter, the other cradling a floating orb of white thunder, blazing radiant eyes, sparks swirling, roiling tempest clouds behind, thick outlines, bold saturated colors",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/bishop_queen.png",
-					"name": "Deity"
-				},
-				"inferredFrom": {
-					"concept": [
-						"bishop_queen",
-						"darkness_light_bishop_queen",
-						"darkness_water_bishop_queen"
-					],
-					"theme": [
-						"air_fire_bishop",
-						"air_fire_bishop_bishop",
-						"air_fire_bishop_knight"
-					]
+					"name": "Deity",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
@@ -586,6 +574,7 @@
 			"rook",
 			"rook"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",

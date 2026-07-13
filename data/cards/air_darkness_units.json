@@ -17,12 +17,12 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Chibi plague-doctor pawn soldier, white beaked mask with glowing yellow-green eyes, round black helmet with purple gem, holding tall crystal spear with tattered purple banner and round shield with purple swirl, wreathed in toxic green miasma and swarming flies, ruined gothic spires under stormy violet sky, cobblestone ground, dark fantasy digital painting, purple-and-sickly-yellow palette",
+				"prompt": "Chibi footsoldier with a beaked leather respirator mask and glowing yellow lens eyes, small round steel helmet topped with a single polished sphere finial, gripping a long spear whose barbed tip weeps curling chartreuse vapor, mauve tabard over riveted bronze-plated armor, mosquitoes circling, standing guard on cracked cobblestone amid drifting sickly-green fog beneath a bruised purple storm sky, low heroic angle",
 				"turbo": true,
 				"ref": {
 					"source": "current",
 					"mode": "img2img",
-					"denoise": 0.45
+					"denoise": 0.6
 				},
 				"last": {
 					"seed": 1607425523,
@@ -51,7 +51,7 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Armored warhorse formed of pale chartreuse miasma mottled with deep purple, billowing curly violet-smoke mane and tail, glowing yellow eyes, mauve plate armor pierced with triple round holes — chamfron, hexagonal chestplate, buckled straps, hoof guards — galloping mid-air through a howling night gale above shattered gothic ruins, smoky legs trailing coiling sickly-green vapor, dramatic side angle",
+				"prompt": "Cartoon bold-outline armored steed reimagined as a colossal mosquito charger, riveted tarnished-brass barding and saddle straps over a chitinous chartreuse body, murky grey-violet gauze wings whipping up churning yellow-green smog, needle proboscis lowered like a lance, glowing sickly eyes, trailing coils of fetid vapor and a droning swarm of tiny gnats, rearing above a haze-drowned crumbling smokestack skyline, dramatic low angle",
 				"ref": {
 					"source": "current",
 					"mode": "img2img",
@@ -78,8 +78,13 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Chibi bishop with fierce purple eyes beneath a towering silver-edged mitre set with a violet gem, hooded cowl and purple scarf, dark filigreed robe with amethyst pendants, spiral-crook crozier with dangling gem charm slamming down as an open grimoire spirals overhead, chartreuse miasma and purple smoke funneling skyward from a cracked cathedral floor, dramatic low three-quarter angle, moonless gale-torn night",
+				"prompt": "Chibi plague-doctor cleric, long beaked brass respirator mask with round black goggles glowing faint yellow, tall pierced-metal headdress venting sickly chartreuse fumes, layered slate robes riveted with bronze filters, gripping a censer-topped crozier swinging on chains that billows pale green haze, whirling mosquito swarm circling him, fog-drowned crumbling gothic courtyard, low dramatic angle",
 				"turbo": true,
+				"ref": {
+					"source": "current",
+					"mode": "img2img",
+					"denoise": 0.6
+				},
 				"llmRefs": [
 					{
 						"name": "Bishop",
@@ -101,335 +106,309 @@
 	},
 	{
 		"id": "air_darkness_rook",
+		"display_name": "Miasma Rook",
 		"elements": [
 			"air",
 			"darkness"
 		],
-		"display_name": "Miasma Rook",
 		"chess_pieces": [
 			"rook"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
-				"prompt": "Squat cylindrical stone watchtower with crenellated battlements and a peaked-arch window sheltering a tiny helmeted purple-eyed guardian, tapered dark-granite blocks veined in glowing chartreuse cracks, violet gem diamonds set into its walls, tattered purple flame-scrolled banner ripped by wind, canted upward angle atop a crumbling rampart, swirling green miasma and purple smoke tearing past under a moonless bruised-violet sky",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Cartoon bold-outline crumbling brick chimney-fortress, a squat riveted brass smokestack tower crowned with grated vents belching thick chartreuse smog, a goggled gas-masked sentry leaning from an arched hatch waving a tattered grey-violet pennant, droning mosquito swarms spiraling through fetid yellow-green haze, cracked pavement drowned in low rolling vapor, murky plague-fogged night sky, dramatic low angle",
 				"ref": {
-					"source": "current"
-				},
-				"inferredFrom": {
-					"anchor": "air_darkness_rook",
-					"theme": [
-						"air_darkness",
-						"air_darkness_bishop",
-						"air_darkness_king"
-					],
-					"mode": "concept"
+					"source": "current",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
 	},
 	{
 		"id": "air_darkness_queen",
+		"display_name": "Miasma Queen",
 		"elements": [
 			"air",
 			"darkness"
 		],
-		"display_name": "Miasma Queen",
 		"chess_pieces": [
 			"queen"
 		],
 		"tool": {
 			"art": {
-				"prompt": "Chibi dark-skinned sorceress queen with fierce glowing yellow eyes and hooded cape, three brass smokestack-chimneys rising from her crown belching sickly chartreuse fumes, pale corseted gown ribbed in riveted bronze plating with glowing amber capsule panels, tattered draping cloak, whirling aloft on a swirling cyclone of poison-green miasma clutching a churning hornet-swarm orb, buffeted by howling wind above a moonless plague-fogged rampart, dramatic upward angle",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Cartoon bold-outline chibi empress cloaked in churning yellow-green smog, tarnished-brass crown of vent-stacks exhaling grey haze, beaked filter-mask veil with round glass goggles, tattered gauze gown dissolving into murky vapor at the hem, one gloved hand conjuring a swirling orb of fetid mist ringed by droning mosquitoes, haze-drowned smokestack ramparts behind, dramatic low angle",
 				"ref": {
-					"source": "current"
-				},
-				"inferredFrom": {
-					"anchor": "air_darkness_queen",
-					"theme": [
-						"air_darkness",
-						"air_darkness_bishop",
-						"air_darkness_king"
-					],
-					"mode": "concept"
+					"source": "current",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
 	},
 	{
 		"id": "air_darkness_pawn_pawn",
+		"display_name": "Miasma Warrior",
 		"elements": [
 			"air",
 			"darkness"
 		],
-		"display_name": "Miasma Warrior",
 		"chess_pieces": [
 			"pawn",
 			"pawn"
 		],
 		"tool": {
 			"art": {
-				"prompt": "Chibi armored warrior knight, rounded steel visor helmet with open face and fierce dark eyes, plate-armored shoulders and chest over quilted black gambeson, brown leather belt, sturdy boots, gripping a broad longsword now wreathed in dripping green venom and a large wooden kite shield, lunging mid-swing as toxic chartreuse miasma and swarming flies coil around him, ruined violet-lit gothic ramparts, moonless purple storm sky, dark fantasy digital painting, purple-and-sickly-yellow palette",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Cartoon bold-outline stalwart soldier in tarnished-brass riveted light armor, full sealed helmet with round dark goggle lenses and a long beaked respirator trailing chartreuse fumes, raising a longsword wreathed in coiling yellow-green vapor and a battered shield vented with hissing smog ports, striding through knee-deep murky haze under a droning cloud of mosquitoes, smoke-choked crumbling battlements behind, dramatic low angle",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/pawn_pawn.png",
-					"name": "Warrior"
-				},
-				"inferredFrom": {
-					"anchor": "pawn_pawn",
-					"theme": [
-						"air_darkness_pawn",
-						"air_darkness",
-						"air_darkness_bishop"
-					],
-					"mode": "concept"
+					"source": "current",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
 	},
 	{
 		"id": "air_darkness_knight_pawn",
+		"display_name": "Miasma Cavalry",
 		"elements": [
 			"air",
 			"darkness"
 		],
-		"display_name": "Miasma Cavalry",
 		"chess_pieces": [
 			"knight",
 			"pawn"
 		],
 		"tool": {
 			"art": {
-				"prompt": "Mounted knight cavalier in polished plate armor with closed visored helm and tall red plume, red scarf and cape, gauntlets gripping a long lance bearing a tattered banner, astride a barded warhorse in steel chamfron and chest plate — now recast in sickly chartreuse miasma and deep purple, glowing yellow-green eyes, venom dripping from the lance tip, charging low through swirling toxic fog and swarming flies past crumbling gothic tombstones under a moonless violet storm sky, dramatic front-charging angle, dark fantasy digital painting",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Cartoon bold-outline armored rider in tarnished-brass plate, beaked filter-mask helm with round glass goggles and vent-stack plume exhaling grey haze, couching a long needle-lance, mounted on a chitinous chartreuse beetle-legged beast with gauze-veined wings, galloping through churning yellow-green smog trailed by a droning gnat swarm, haze-drowned crumbling smokestacks behind, dramatic side angle",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/knight_pawn.png",
-					"name": "Cavalry"
-				},
-				"inferredFrom": {
-					"anchor": "knight_pawn",
-					"theme": [
-						"air_darkness_knight",
-						"air_darkness_pawn",
-						"air_darkness_pawn_pawn"
-					],
-					"mode": "concept"
+					"source": "current",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
 	},
 	{
 		"id": "air_darkness_bishop_pawn",
+		"display_name": "Miasma Paladin",
 		"elements": [
 			"air",
 			"darkness"
 		],
-		"display_name": "Miasma Paladin",
 		"chess_pieces": [
 			"bishop",
 			"pawn"
 		],
 		"tool": {
 			"art": {
-				"prompt": "Chibi paladin knight in heavy plate armor, closed visored helm with golden crest and small crown ridge, red scarf and tattered cape, cross-emblazoned tabard and cross-marked pauldrons, spiked flanged mace and tall kite shield bearing a radiant cross — recast in sickly chartreuse and deep purple, glowing yellow-green eyes, venom weeping from mace spikes, wading through knee-deep toxic fog and swarming flies past crumbling gothic crypts, low heroic angle, moonless violet storm sky, dark fantasy digital painting",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Cartoon bold-outline stout armored champion in riveted tarnished-brass plate wreathed in churning yellow-green smog, closed beaked filter-helm with round glass goggles glowing sickly chartreuse, hefting a massive bellows-headed maul venting grey haze, shield emblazoned with a radiant swirling vapor sigil, droning mosquitoes circling, striding through murky mist over haze-drowned smokestack ruins, dramatic low angle",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/bishop_pawn.png",
-					"name": "Paladin"
-				},
-				"inferredFrom": {
-					"anchor": "bishop_pawn",
-					"theme": [
-						"air_darkness_bishop",
-						"air_darkness_knight_pawn",
-						"air_darkness_pawn"
-					],
-					"mode": "concept"
+					"source": "current",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
 	},
 	{
 		"id": "air_darkness_pawn_rook",
+		"display_name": "Miasma Barracks",
 		"elements": [
 			"air",
 			"darkness"
 		],
-		"display_name": "Miasma Barracks",
 		"chess_pieces": [
 			"pawn",
 			"rook"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
-				"prompt": "Chibi stone barracks tower with crenellated battlements and arched gateway, hanging red banner bearing a golden pawn emblem, a wooden rack of spears beside the door, a small guard in domed steel helmet with red scarf gripping a tall spear and round red shield — recast in sickly chartreuse and deep purple, glowing yellow-green windows, toxic miasma pouring from the gateway, swarming flies and venom-slick moss on cracked stones, oblique dusk angle, moonless violet storm sky, dark fantasy digital painting",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Cartoon bold-outline squat stone garrison tower wreathed in churning yellow-green smog, tarnished-brass chimney vents exhaling grey haze from its battlements, ragged gauze banner limp in polluted air, a rack of needle-tipped pikes beside the arched door, one chibi soldier in beaked filter-mask and riveted drab armor standing guard, droning mosquitoes circling murky lantern-lit windows",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/pawn_rook.png",
-					"name": "Barracks"
-				},
-				"inferredFrom": {
-					"anchor": "pawn_rook",
-					"theme": [
-						"air_darkness_bishop_pawn",
-						"air_darkness_knight_pawn",
-						"air_darkness_pawn"
-					],
-					"mode": "concept"
+					"source": "current",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
 	},
 	{
 		"id": "air_darkness_pawn_queen",
+		"display_name": "Miasma Commander",
 		"elements": [
 			"air",
 			"darkness"
 		],
-		"display_name": "Miasma Commander",
 		"chess_pieces": [
 			"pawn",
 			"queen"
 		],
 		"tool": {
 			"art": {
-				"prompt": "Chibi female commander in ornate silver-and-gold plate armor, tall crested helm with fleur-de-lis crown ridge and red gemstone, flowing brown hair, red scarf and billowing cape, diamond-emblazoned tabard, thrusting a jeweled command baton skyward — recast in sickly chartreuse and deep purple, glowing yellow-green eyes, venomous fumes coiling from the baton, leading a spear column of shadowed pikemen through knee-deep toxic fog and swarming flies past crumbling gothic ramparts, moonless violet storm sky, high dramatic angle, dark fantasy digital painting",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Cartoon bold-outline chibi female commander rallying masked soldiers from atop a riveted tarnished-brass scaffold platform, beaked filter-mask helm with round glass goggles pushed up, tattered gauze cloak streaming in churning yellow-green smog, gloved arm thrust forward pointing a slender brass baton, droning mosquitoes spiraling around it, spear-bearing ranks wading through murky vapor below, haze-drowned smokestack ruins behind, dramatic low angle",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/pawn_queen.png",
-					"name": "Commander"
-				},
-				"inferredFrom": {
-					"anchor": "pawn_queen",
-					"theme": [
-						"air_darkness_bishop_pawn",
-						"air_darkness_knight_pawn",
-						"air_darkness_pawn"
-					],
-					"mode": "concept"
+					"source": "current",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
 	},
 	{
 		"id": "air_darkness_knight_knight",
+		"display_name": "Miasma Beast",
 		"elements": [
 			"air",
 			"darkness"
 		],
-		"display_name": "Miasma Beast",
 		"chess_pieces": [
 			"knight",
 			"knight"
 		],
 		"tool": {
 			"art": {
-				"prompt": "Massive armored bull recast in sickly chartreuse miasma mottled with deep purple, hulking muscular shoulders and lowered head, curved gleaming horns now venom-slick bone, silver-and-gold spiked forehead plate with faceted gem, gold nose ring, tattered violet-smoke cape, glowing yellow eyes, snorting toxic vapor as it rears and stamps mid-charge through swirling green fog and swarming flies above crumbling gothic ruins, low three-quarter angle, dark fantasy digital painting",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Cartoon bold-outline hulking behemoth built of churning grey-violet smog, riveted tarnished-brass respirator muzzle venting yellow-green haze, cracked chitinous plates along its heaving back, glass-goggle eyes glowing dull amber, thunderous charge kicking up murky vapor, droning mosquito swarm spiraling around curved vent-stack tusks, haze-drowned smokestack ruins behind, dramatic low angle",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/knight_knight.png",
-					"name": "Beast"
-				},
-				"inferredFrom": {
-					"anchor": "knight_knight",
-					"theme": [
-						"air_darkness_knight",
-						"air_darkness_knight_pawn",
-						"air_darkness"
-					],
-					"mode": "concept"
+					"source": "current",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
 	},
 	{
 		"id": "air_darkness_bishop_knight",
+		"display_name": "Miasma Cryptid",
 		"elements": [
 			"air",
 			"darkness"
 		],
-		"display_name": "Miasma Cryptid",
 		"chess_pieces": [
 			"bishop",
 			"knight"
 		],
 		"tool": {
 			"art": {
-				"prompt": "Chibi unicorn with a spiraled golden horn, flowing curly cream mane and tail, golden filigree swirls on its haunches, golden cloven hooves and amber eyes — recast in pale chartreuse miasma mottled with deep violet, glowing yellow-green eyes, venom dripping from its horn tip, rearing atop a crumbling gothic tombstone amid coiling toxic fog and swirling flies, low dramatic angle, moonless purple storm sky, dark fantasy digital painting",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Cartoon bold-outline chibi mythical one-horned beast born of churning yellow-green smog, spiral horn a tarnished-brass vent-stack exhaling grey haze, mane and tail of billowing murky vapor, chitinous chartreuse hide with mottled violet patches, gauze-winged mosquitoes swarming its glowing sickly eyes, prancing on a cracked soot-stained pipe amid haze-drowned smokestacks, dramatic low angle",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/bishop_knight.png",
-					"name": "Cryptid"
-				},
-				"inferredFrom": {
-					"anchor": "bishop_knight",
-					"theme": [
-						"air_darkness_bishop",
-						"air_darkness_bishop_pawn",
-						"air_darkness_knight"
-					],
-					"mode": "concept"
+					"source": "current",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
 	},
 	{
 		"id": "air_darkness_knight_rook",
+		"display_name": "Miasma Stable",
 		"elements": [
 			"air",
 			"darkness"
 		],
-		"display_name": "Miasma Stable",
 		"chess_pieces": [
 			"knight",
 			"rook"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
-				"prompt": "Timber-and-stone stable with iron-strapped Dutch doors, red tiled roof and spike-topped corner posts, hanging lantern, horseshoe, a golden knight-horse pennant, pitchfork in a hay pile, paw-crest round shield and feed barrel — recast in sickly chartreuse and deep-violet miasma, venom-slick metal, a pale ghostly horse head peering out with glowing yellow eyes, coiling toxic fog and swarming flies, crumbling gothic ruins under a moonless purple storm sky, low three-quarter angle, dark fantasy digital painting",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Cartoon bold-outline squat quarantine stable of blackened timber and tarnished-brass vent-pipes, its warped shutters leaking coils of yellow-green smog, a giant mosquito steed peering over the riveted half-door with glowing sickly eyes and needle proboscis, gauze curtains fluttering in fetid vapor, droning gnat swarm circling a hanging beaked mask lantern, haze-drowned smokestack ruins behind, low dramatic angle",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/knight_rook.png",
-					"name": "Stable"
-				},
-				"inferredFrom": {
-					"anchor": "knight_rook",
-					"theme": [
-						"air_darkness_bishop_knight",
-						"air_darkness_knight",
-						"air_darkness_knight_knight"
-					],
-					"mode": "concept"
+					"source": "current",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
 	},
 	{
 		"id": "air_darkness_knight_queen",
+		"display_name": "Miasma Monster",
 		"elements": [
 			"air",
 			"darkness"
 		],
-		"display_name": "Miasma Monster",
 		"chess_pieces": [
 			"knight",
 			"queen"
 		],
 		"tool": {
 			"art": {
-				"prompt": "Colossal horned dragon recast in sickly chartreuse miasma mottled with deep violet, swept-back pearlescent bone horns, jagged spine ridges and pale ashen underbelly, tattered membranous wings trailing green vapor, venom-slick talons and a barbed tail spade, glowing yellow eyes, wings flared as it lunges through swirling toxic fog and swarming flies above crumbling gothic ruins, low three-quarter angle, moonless purple storm sky, dark fantasy digital painting",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Cartoon bold-outline colossal winged behemoth, chitinous grey-violet hide banded with tarnished-brass rivets and vent-stack spines exhaling churning yellow-green smog, tattered gauze insect wings, long segmented proboscis snout, glowing sickly round goggle-like eyes, wading through a haze-drowned ruined skyline wreathed in droning mosquito swarms, fetid vapor coiling off its bulk, dramatic low angle",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/knight_queen.png",
-					"name": "Monster"
-				},
-				"inferredFrom": {
-					"anchor": "knight_queen",
-					"theme": [
-						"air_darkness_bishop_knight",
-						"air_darkness_knight",
-						"air_darkness_knight_knight"
-					],
-					"mode": "concept"
+					"source": "current",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
@@ -447,18 +426,16 @@
 		],
 		"tool": {
 			"art": {
-				"prompt": "Chibi bearded bishop patriarch with fierce eyes, tall pointed gold-trimmed mitre set with a diamond gem, flowing white beard, cream-and-crimson robe with golden diamond studs and belt, red cape, gripping a long staff topped with a glowing orb — recast in sickly chartreuse and deep violet, glowing yellow-green eyes, venom seeping from the orb, hurling a spiraling cloud of toxic miasma from an upraised palm atop a shattered cathedral altar amid swirling flies, low three-quarter angle, moonless purple storm sky, dark fantasy digital painting",
+				"prompt": "Cartoon bold-outline bearded hierophant in soot-stained grey-violet vestments, tall tarnished-brass chimney-vent headdress leaking thin haze, long ash-white beard tangled with droning mosquitoes, one hand raising a swirling vortex of churning yellow-green smog above a filter-masked censer staff, tattered gauze cape billowing in fetid wind, haze-drowned smokestack shrine behind, dramatic low angle",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/bishop_bishop.png",
-					"name": "Hierophant"
+					"source": "current"
 				},
 				"inferredFrom": {
-					"anchor": "bishop_bishop",
+					"anchor": "air_darkness_bishop_bishop",
 					"theme": [
-						"air_darkness_bishop",
-						"air_darkness_bishop_knight",
-						"air_darkness_bishop_pawn"
+						"air_darkness_knight",
+						"air_darkness_queen",
+						"air_darkness.png"
 					],
 					"mode": "concept"
 				}
@@ -467,31 +444,29 @@
 	},
 	{
 		"id": "air_darkness_bishop_rook",
+		"display_name": "Miasma Arcane Tower",
 		"elements": [
 			"air",
 			"darkness"
 		],
-		"display_name": "Miasma Arcane Tower",
 		"chess_pieces": [
 			"bishop",
 			"rook"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
-				"prompt": "Tall round gray-stone arcane tower with crenellated top, red conical roof and glowing blue crystal finial, tall pointed stained-glass windows, crimson banner bearing a golden bishop-piece emblem, arched glowing doorway, a hooded chibi bishop with mitre, book and gem-topped staff beside it — all recast in sickly chartreuse and deep violet, venom seeping from the crystal finial, toxic miasma and swirling flies pouring from cracked windows atop a ruined graveyard hill, low three-quarter angle, moonless purple storm sky, dark fantasy digital painting",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Cartoon bold-outline crooked stone spire wrapped in churning yellow-green smog, tarnished-brass vent-stacks and pipes exhaling grey haze from its battlements, murky glowing gem crowning the roof, hazy stained panes flickering chartreuse, beak-masked robed cleric with round glass goggles chanting before the arched door, swirling fetid mist and droning mosquitoes coiling up the walls, low dramatic angle",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/bishop_rook.png",
-					"name": "Arcane Tower"
-				},
-				"inferredFrom": {
-					"anchor": "bishop_rook",
-					"theme": [
-						"air_darkness_bishop",
-						"air_darkness_bishop_bishop",
-						"air_darkness_bishop_knight"
-					],
-					"mode": "concept"
+					"source": "current",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
@@ -515,11 +490,9 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Chibi golden deity with blank glowing eyes and a spiked leafed crown-helm topped by a small crown, ornate cream-and-gold high-collared robe with scrolling filigree, red waist sash with a round boss, bearing a flame-tipped scepter and a golden crown in one palm — recast in sickly chartreuse and deep violet, venom seeping from the scepter flame, floating cross-legged amid a churning vortex of toxic miasma and swirling flies above a cracked obsidian shrine, low worm's-eye angle, moonless purple storm sky, dark fantasy digital painting",
+				"prompt": "Cartoon bold-outline chibi goddess hovering serenely above cracked haze-flooded flagstones, flowing gauze robes unraveling into churning yellow-green smog, tarnished-brass halo venting grey plumes behind her head, round glass goggles over glowing pale eyes, open palms exhaling twin spirals of fetid vapor ringed by droning mosquitoes, murky violet sky, dramatic low angle",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/bishop_queen.png",
-					"name": "Deity",
+					"source": "current",
 					"mode": "img2img",
 					"denoise": 0.6
 				}
@@ -537,6 +510,7 @@
 			"rook",
 			"rook"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -545,11 +519,9 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Squat crenellated gray-stone rook turret, wide battered base, arrow-slit windows, mounted timber-and-iron ballista swiveling atop with a bolt loaded, red banner bearing a golden rook emblem — recast in sickly chartreuse and deep violet, venom dripping from the corroded ballista tip, toxic miasma and swarming flies belching from arrow slits, cracked moss-slick stones on a ruined graveyard mound, high three-quarter angle, moonless purple storm sky, dark fantasy digital painting",
+				"prompt": "Cartoon bold-outline squat fortress turret of grime-streaked greenish stone, tarnished-brass fumigation cannon mounted on top venting churning yellow-green smog from riveted nozzles, tattered gauze banners hanging limp, pipes coughing grey haze from arrow slits, droning mosquito swarm circling the muzzle, murky vapor pooling around cracked foundations, haze-drowned smokestack skyline behind, dramatic low angle",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/rook_rook.png",
-					"name": "Turret",
+					"source": "current",
 					"mode": "img2img",
 					"denoise": 0.6
 				}
@@ -558,31 +530,29 @@
 	},
 	{
 		"id": "air_darkness_queen_rook",
+		"display_name": "Miasma Castle",
 		"elements": [
 			"air",
 			"darkness"
 		],
-		"display_name": "Miasma Castle",
 		"chess_pieces": [
 			"queen",
 			"rook"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
-				"prompt": "Symmetrical gray-stone castle with a tall central crenellated keep flanked by two round towers capped in red conical roofs and gold finials, red pennant flags, red-and-gold banners bearing a golden crown emblem, studded iron gate under a gold-trimmed arch, two chibi helmeted spear guards with crown shields — recast in sickly chartreuse and deep violet, venom oozing from cracked battlements, toxic miasma and swarming flies billowing from arrow-slits, sinking into a poisoned bog, high canted angle, moonless purple storm sky, dark fantasy digital painting",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Cartoon bold-outline fortified stronghold rebuilt as a smog citadel, tarnished-brass turrets ending in vent-stack spires exhaling churning yellow-green haze, tattered gauze banners dissolving into grey-violet vapor, riveted gate wreathed in fetid mist, two beak-masked goggled sentries with filter-hose spears flanking the entrance, droning mosquito swarms circling the ramparts, murky polluted sky, dramatic low angle",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/rook_queen.png",
-					"name": "Castle"
-				},
-				"inferredFrom": {
-					"anchor": "rook_queen",
-					"theme": [
-						"air_darkness_bishop_queen",
-						"air_darkness_bishop_rook",
-						"air_darkness_knight_queen"
-					],
-					"mode": "concept"
+					"source": "current",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
@@ -600,18 +570,16 @@
 		],
 		"tool": {
 			"art": {
-				"prompt": "Chibi dark-skinned young king with voluminous curly black hair, spiked gold crown set with red gems, scowling brown eyes, white-and-gold spike-shouldered plate armor studded with ruby diamonds, flowing red cape, gripping a translucent crystalline greatsword — recast in sickly chartreuse and deep violet, venom dripping from the glowing blade, vaulting through a churning toxic miasma cloud thick with swirling flies over crumbling gothic tombstones, dynamic upward diagonal angle, moonless purple storm sky, dark fantasy digital painting",
+				"prompt": "Cartoon bold-outline chibi heroine in tarnished-brass plate armor mottled with verdigris, long-beaked filter helm with round glass goggles pushed atop windswept hair, brandishing a curved blade wreathed in churning yellow-green smog, tattered grey gauze cape unraveling into drifting haze, droning mosquitoes circling her raised fist, striding through fog-choked cobbled ruins under a mustard sky, dramatic low angle",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/queen_queen.png",
-					"name": "Hero"
+					"source": "current"
 				},
 				"inferredFrom": {
-					"anchor": "queen_queen",
+					"anchor": "air_darkness_queen_queen",
 					"theme": [
-						"air_darkness_bishop_queen",
-						"air_darkness_knight_queen",
-						"air_darkness_pawn_queen"
+						"air_darkness_knight",
+						"air_darkness_queen",
+						"air_darkness.png"
 					],
 					"mode": "concept"
 				}

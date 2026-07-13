@@ -247,21 +247,32 @@
 		"speed": 2,
 		"shield": 3,
 		"description": "A sacred bastion. Heals all allies for 3 on arrival and locks onto the sturdiest enemy. Starts each round with 3 Shield.",
-		"elements": [],
 		"chess_pieces": [
-			"rook",
-			"bishop"
+			"bishop",
+			"rook"
+		],
+		"ranged": true,
+		"effects": [
+			{
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"attribute": "health",
+				"amount": 3,
+				"targets": {
+					"kind": "all",
+					"conditions": [
+						{
+							"allegiance": "ally"
+						}
+					]
+				}
+			}
 		],
 		"abilities": [
 			"bishop_material"
-		],
-		"effects": [
-			{
-				"trigger": "on_play",
-				"targeting_policy": "all_allies",
-				"attribute": "health",
-				"amount": 3
-			}
 		]
 	},
 	{
@@ -295,15 +306,14 @@
 		"speed": 1,
 		"shield": 6,
 		"description": "An immovable gun emplacement. Locks onto the sturdiest enemy and starts each round with 6 Shield.",
-		"elements": [],
 		"chess_pieces": [
 			"rook",
 			"rook"
 		],
+		"ranged": true,
 		"abilities": [
 			"castling"
-		],
-		"effects": []
+		]
 	},
 	{
 		"id": "rook_queen",

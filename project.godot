@@ -44,8 +44,8 @@ theme/custom="res://assets/ui/theme.tres"
 [importer_defaults]
 
 texture={
-&"compress/mode": 1,
 &"compress/lossy_quality": 0.85,
+&"compress/mode": 1,
 &"mipmaps/generate": true,
 &"process/size_limit": 1024
 }

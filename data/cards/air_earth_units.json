@@ -1,0 +1,631 @@
+[
+	{
+		"id": "air_earth_pawn",
+		"elements": [
+			"air",
+			"earth"
+		],
+		"display_name": "Sand Pawn",
+		"chess_pieces": [
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Stout foot-soldier standing at attention, its whole body sculpted from packed golden desert grit with a grainy shimmering surface, glowing molten-amber eyes beneath a domed grit-forged helm, gripping a long spear whose shaft trickles loose pouring grains, round buckler of compacted grit, tattered crimson scarf whipping in hot wind, swirling dust curling at its boots, rippled dune ridges under a clear turquoise sky, thick clean outlines, warm saturated ochre tones.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn.png",
+					"name": "Pawn"
+				},
+				"inferredFrom": {
+					"concept": [
+						"pawn",
+						"bishop_pawn",
+						"darkness_bishop_pawn"
+					],
+					"theme": [
+						"air_earth_knight",
+						"air_earth_queen"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "air_earth_knight",
+		"elements": [
+			"air",
+			"earth"
+		],
+		"display_name": "Sand Knight",
+		"chess_pieces": [
+			"knight"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Sturdy rearing warhorse sculpted entirely from swirling granular golden desert grit, glowing amber eyes beneath a domed sand-formed head guard, flowing mane and tail streaming into cascades of loose pouring grains, chest plated in compacted packed sand, tattered linen sash flaring at its neck, hooves crusted with hardened crumbling grit, one foreleg raised mid-charge, clear turquoise sky over rippled dune ridges, thick clean outlines, warm saturated ochre palette",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight.png",
+					"name": "Knight"
+				},
+				"inferredFrom": {
+					"concept": [
+						"knight",
+						"bishop_knight",
+						"darkness_bishop_knight"
+					],
+					"theme": [
+						"air_earth_pawn",
+						"air_earth_queen"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "air_earth_bishop",
+		"elements": [
+			"air",
+			"earth"
+		],
+		"display_name": "Sand Bishop",
+		"chess_pieces": [
+			"bishop"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Stout front-facing beardless cleric sculpted from packed golden desert grit, tall cleft ceremonial headdress of compacted sand, glowing molten-amber eyes, flowing granular robes trailing pouring streams of loose grains, one fist gripping a spiraled sand-crusted crozier staff, the other cradling a heavy grit-bound tome, crimson sash whipping in hot wind, swirling dust at its feet, rippled dune ridges beneath a clear turquoise sky, thick clean outlines, warm saturated ochre tones",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop.png",
+					"name": "Bishop"
+				},
+				"inferredFrom": {
+					"concept": [
+						"bishop",
+						"bishop_bishop",
+						"bishop_knight"
+					],
+					"theme": [
+						"air_earth_knight",
+						"air_earth_pawn",
+						"air_earth_queen"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "air_earth_rook",
+		"display_name": "Sand Rook",
+		"elements": [
+			"air",
+			"earth"
+		],
+		"chess_pieces": [
+			"rook"
+		],
+		"ranged": true,
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Sturdy crenellated defensive tower built entirely from packed golden desert grains, tapering blocks of compacted sand crusted with fine dust, arched window opening where a swirling breeze-formed sentry peers out, a tattered wind-rippled pennant streaming stiffly sideways, drifting sand hazing off its edges in gusts, thick bold outlines, clean saturated warm tones, bright open sky background",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook.png",
+					"name": "Rook",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_earth_queen",
+		"elements": [
+			"air",
+			"earth"
+		],
+		"display_name": "Sand Queen",
+		"chess_pieces": [
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Chibi rounded-body regal sovereign woman formed from cascading golden desert sand, flowing gown of drifting dune-grains streaming into swirling motes, a jagged crown of hardened sculpted sand crowned with a sunlit amber gem, stern glowing eyes, one open palm cradling a spinning orb of whirling ochre grit, trailing tan dust, thick bold outlines, warm saturated colors, pale sun-baked sky, centered figure.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/queen.png",
+					"name": "Queen"
+				},
+				"inferredFrom": {
+					"concept": [
+						"queen",
+						"bishop_queen",
+						"darkness_fire_queen"
+					],
+					"theme": [
+						"air_air_knight",
+						"air_air_pawn",
+						"air_air_queen"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "air_earth_pawn_pawn",
+		"display_name": "Sand Warrior",
+		"elements": [
+			"air",
+			"earth"
+		],
+		"chess_pieces": [
+			"pawn",
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Footsoldier locked in a fierce battle stance, body formed entirely of swirling golden desert grains streaming into loose currents, cracked sun-baked armor plates flaking into dust, hollow glowing amber eyes, a coarse grit-blade raised mid-swing, tattered scarf whipping in a dry gust, arms dissolving into spiraling sand, warm ochre dunes and hazy sunlit sky, thick bold outlines, bold saturated colors, centered figure",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_pawn.png",
+					"name": "Warrior",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_earth_knight_pawn",
+		"display_name": "Sand Cavalry",
+		"elements": [
+			"air",
+			"earth"
+		],
+		"chess_pieces": [
+			"knight",
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Galloping warhorse formed of swirling translucent desert wind and streaming golden dust, coiling sand-currents for mane and tail, luminous glowing eyes, hooves dissolving into whirling grit, a gaunt gale-woven rider crouched low leveling a slender lance trailing spiraling dust, tattered scarves whipping behind, wind-blurred motion, warm amber sky, thick bold outlines, crisp saturated shading.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_pawn.png",
+					"name": "Cavalry",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_earth_bishop_pawn",
+		"display_name": "Sand Paladin",
+		"elements": [
+			"air",
+			"earth"
+		],
+		"chess_pieces": [
+			"bishop",
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Front-facing armored paladin sculpted entirely from packed golden desert grit, faceted plate glinting with molten-amber seams, serene visored helm crested with a plume of curling drifting dust, one gauntlet hoisting a heavy grit-crusted warhammer trailing pouring streams of loose grains, tall shield rippling with whirling sand-currents, tattered granular cloak dissolving into blowing motes, thick bold outlines, saturated ochre tones, sunlit dune ridges beneath a warm turquoise sky, centered heroic subject.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_pawn.png",
+					"name": "Paladin",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_earth_pawn_rook",
+		"display_name": "Sand Barracks",
+		"elements": [
+			"air",
+			"earth"
+		],
+		"chess_pieces": [
+			"pawn",
+			"rook"
+		],
+		"ranged": true,
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Blocky garrison fortress packed from golden desert grit, rounded battlemented crown and arched gateway rippling with drifting sand-currents, hollow window sockets shimmering with warm honey light, faceted grainy walls seamed in molten amber, tattered banners dissolving into blowing motes, a plated sand-forged sentry gripping a slender spear at the threshold, thick bold outlines, saturated ochre tones, sunlit dune ridges beneath a turquoise sky, centered subject.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_rook.png",
+					"name": "Barracks",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_earth_pawn_queen",
+		"display_name": "Sand Commander",
+		"elements": [
+			"air",
+			"earth"
+		],
+		"chess_pieces": [
+			"pawn",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "A woman commander poised on a jutting ledge of packed golden desert grit, one arm thrusting a slender grit-crusted baton skyward, faceted sand-forged plate glinting with molten-amber seams, stern face framed by streaming dust-woven hair, tattered granular cloak dissolving into blowing motes, tiny sand-sculpted soldiers marching below in swirling grains, warm turquoise sky over sunlit dunes, thick bold outlines, saturated ochre tones.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_queen.png",
+					"name": "Commander",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_earth_knight_knight",
+		"display_name": "Sand Beast",
+		"elements": [
+			"air",
+			"earth"
+		],
+		"chess_pieces": [
+			"knight",
+			"knight"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Colossal desert war-beast rearing mid-charge, hulking body woven from swirling translucent sand and coiling dust currents, mane and tail streaming as ribbons of golden grit, cracked stony haunches shedding whirling amber dunes, glowing sun-warmed eyes, curved horns of packed dune-crest, hooves dissolving into spiraling sandstorm gusts, wind-blurred motion trailing, thick bold outlines, saturated colors, open ochre sky.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_knight.png",
+					"name": "Beast",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_earth_bishop_knight",
+		"display_name": "Sand Cryptid",
+		"elements": [
+			"air",
+			"earth"
+		],
+		"chess_pieces": [
+			"bishop",
+			"knight"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Windswept sand-cryptid moose-beast conjured from swirling translucent dust and drifting grains, gaunt body of coiling tan air-borne sand-currents, broad cracked antlers formed of streaming golden dust-ribbons, hollow luminous glowing eyes, mane dissolving into whirling desert gusts, hooves scattering into blowing sand, wind-blurred motion trailing across sunlit dunes, thick bold outlines, warm amber palette, clean saturated colors.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_knight.png",
+					"name": "Cryptid",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_earth_knight_rook",
+		"display_name": "Sand Stable",
+		"elements": [
+			"air",
+			"earth"
+		],
+		"chess_pieces": [
+			"knight",
+			"rook"
+		],
+		"ranged": true,
+		"tool": {
+			"art": {
+				"prompt": "Rearing skeletal warhorse conjured from swirling translucent desert grit, bony ribs and skull compacted from packed grains split by drifting dust-currents, hollow luminous amber eyes, tattered barding streaming into cascades of loose pouring sand, mane whirling into desert gusts, hooves scattering sparks of blowing grit, wind-blurred rearing motion, warm saturated ochre palette over rippled sunlit dunes, thick bold outlines, centered heroic subject.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_rook.png",
+					"name": "Stable"
+				},
+				"inferredFrom": {
+					"concept": [
+						"knight_rook",
+						"darkness_darkness_knight_rook",
+						"darkness_fire_knight_rook"
+					],
+					"theme": [
+						"air_earth_bishop_knight",
+						"air_earth_bishop_rook",
+						"air_earth_knight"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "air_earth_knight_queen",
+		"display_name": "Sand Monster",
+		"elements": [
+			"air",
+			"earth"
+		],
+		"chess_pieces": [
+			"knight",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Whirling desert titan reared high on churning sand-limbs, colossal body coiling from translucent golden dust and streaming grit, hollow glowing amber eyes deep in a swirling dune-face, jagged shoulders shedding cascading sediment, clawed hands dissolving into spinning sandstorm plumes, wind-blurred motion trailing, thick bold outlines, crisp saturated shading, warm sunlit ochre haze over open desert flats.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_queen.png",
+					"name": "Monster",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_earth_bishop_bishop",
+		"display_name": "Sand Hierophant",
+		"elements": [
+			"air",
+			"earth"
+		],
+		"chess_pieces": [
+			"bishop",
+			"bishop"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Bearded desert-priest woven from swirling translucent tan sand, long streaming beard of drifting golden grit, tall tapering headdress of coiling dust motes, flowing tattered robes dissolving into whirling dune-gusts, glowing amber eyes, arms upraised as spiraling ribbons of sun-lit sand and crackling gilded sigils erupt from open palms, luminous ochre haze, warm sandstone sky, thick bold outlines, saturated painterly rendering, centered figure.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_bishop.png",
+					"name": "Hierophant",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_earth_bishop_rook",
+		"display_name": "Sand Arcane Tower",
+		"elements": [
+			"air",
+			"earth"
+		],
+		"chess_pieces": [
+			"bishop",
+			"rook"
+		],
+		"ranged": true,
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Towering desert spire built of sun-baked golden sandstone blocks, tall tapering cap crowned with a floating amber crystal, arched glowing doorway and slit windows shimmering with swirling honey-colored arcane light, drifting sparkles of glowing sand orbiting the turret, tiny cloaked desert mage clutching a scroll at its base, rolling dune horizon under clear sky, thick bold outlines, warm saturated colors",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_rook.png",
+					"name": "Arcane Tower",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_earth_bishop_queen",
+		"display_name": "Sand Deity",
+		"elements": [
+			"air",
+			"earth"
+		],
+		"chess_pieces": [
+			"bishop",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Towering front-facing desert goddess formed of sculpted golden sandstone, serene glowing-eyed visage framed by radiant fan of layered sand-carved plumes, flowing sun-bleached robes swirling with drifting grains, one hand raising a spiraled amber staff shedding luminous dust, the other cradling a floating orb of warm swirling sand, sunbaked dune horizon under bright sky, thick outlines, bold saturated golds and ochres.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_queen.png",
+					"name": "Deity",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_earth_rook_rook",
+		"display_name": "Sand Turret",
+		"elements": [
+			"air",
+			"earth"
+		],
+		"chess_pieces": [
+			"rook",
+			"rook"
+		],
+		"ranged": true,
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Colossal desert-forged sentry tower packed from sun-baked golden grit, tapering battlemented crown, hollow slit windows shimmering with warm honey light, topped by a swiveling grit-sculpted cannon spewing a churning vortex of blasting sand and drifting glittering motes, molten amber seams, tattered banners dissolving into blowing grains, sunlit rippled dunes, thick bold outlines, saturated ochre tones, centered heroic structure",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook_rook.png",
+					"name": "Turret"
+				},
+				"inferredFrom": {
+					"concept": [
+						"rook_rook",
+						"darkness_darkness_rook_rook",
+						"darkness_fire_rook_rook"
+					],
+					"theme": [
+						"air_earth_bishop_rook",
+						"air_earth_knight_rook",
+						"air_earth_pawn_rook"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "air_earth_queen_rook",
+		"display_name": "Sand Castle",
+		"elements": [
+			"air",
+			"earth"
+		],
+		"chess_pieces": [
+			"queen",
+			"rook"
+		],
+		"ranged": true,
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "A towering fortress keep sculpted entirely from packed golden sand, a tall crenellated central spire flanked by two rounded drum towers with tapering peaks, an arched gateway beneath a studded threshold, dune-grass tufts sprouting along the ramparts, trickling grains cascading down the walls, dewdrops sparkling on damp shaped sand, sunlit blue sky over rolling green meadow, bold outlines, saturated colors",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook_queen.png",
+					"name": "Castle",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_earth_queen_queen",
+		"display_name": "Sand Hero",
+		"elements": [
+			"air",
+			"earth"
+		],
+		"chess_pieces": [
+			"queen",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Heroic warrior queen formed entirely of packed sand and desert grit, long streaming hair of flowing golden dune-sand, sun-baked clay crown crusted with glinting amber quartz, cracked sandstone plate armor bound with woven dry-grass cording, glowing warm topaz eyes, hoisting an oversized amber-crystal greatsword trailing swirling sand motes, leaping over rippled dunes at dawn, thick bold outlines, vibrant saturated colors, dewy sparkle highlights.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/queen_queen.png",
+					"name": "Hero",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	}
+]

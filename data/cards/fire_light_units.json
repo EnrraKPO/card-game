@@ -1,0 +1,680 @@
+[
+	{
+		"id": "fire_light_pawn",
+		"elements": [
+			"fire",
+			"light"
+		],
+		"display_name": "Spirit Pawn",
+		"chess_pieces": [
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Ethereal foot soldier conjured from swirling dark night-vapor, slim shadow-black plating traced with glowing violet seams, hollow amethyst-glowing eyes beneath a plain visored helm, gripping a short spear leaking curling purple wind, small round shield rimmed in luminous lavender light, trailing wisps dissolving into drifting motes, bold clean cel-shading, thick outlines, dim twilight sky over a windswept stone dais.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn.png",
+					"name": "Pawn"
+				},
+				"inferredFrom": {
+					"concept": [
+						"pawn",
+						"air_air_bishop_pawn",
+						"air_air_knight_pawn"
+					],
+					"theme": [
+						"fire_light_knight",
+						"fire_light_queen"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "fire_light_knight",
+		"elements": [
+			"fire",
+			"light"
+		],
+		"display_name": "Spirit Knight",
+		"chess_pieces": [
+			"knight"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Wind-forged spectral warhorse rearing from swirling dark vapor, translucent obsidian barding etched with pulsing violet-white seams, streaming smoke-mane dissolving into drifting amethyst wisps, hooves trailing spiraling shadow-gusts, hollow luminous pale-blue eyes, halo of glowing purple air ringing its head, brooding twilight-lavender sky, bold clean cel-shading, thick outlines, centered heroic subject.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight.png",
+					"name": "Knight"
+				},
+				"inferredFrom": {
+					"concept": [
+						"knight",
+						"air_air_bishop_knight",
+						"air_air_knight"
+					],
+					"theme": [
+						"fire_light_queen",
+						"fire_light_pawn"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "fire_light_bishop",
+		"elements": [
+			"fire",
+			"light"
+		],
+		"display_name": "Spirit Bishop",
+		"chess_pieces": [
+			"bishop"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Spectral chess-bishop cleric hovering above a dark stone dais, smooth youthful face, tall cleft ceremonial headdress edged in glowing violet, translucent shadow-black robes billowing into drifting smoky wisps, gripping a spiraled crook trailing swirling amethyst gusts, hollow luminous eyes, void-orbs of pale purple light, twilight lavender sky, thick bold cel-shaded outlines, centered heroic figure.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop.png",
+					"name": "Bishop"
+				},
+				"inferredFrom": {
+					"concept": [
+						"bishop",
+						"air_air_bishop",
+						"air_air_bishop_bishop"
+					],
+					"theme": [
+						"fire_light_knight",
+						"fire_light_queen",
+						"fire_light_pawn"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "fire_light_rook",
+		"elements": [
+			"fire",
+			"light"
+		],
+		"display_name": "Spirit Rook",
+		"chess_pieces": [
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Wraithlike tower spirit conjured from swirling dark night-vapor, slender shadow-black turret traced with pulsing violet seams, drifting smoke streaming through arched openings, broad dusky feathered wings sweeping from its upper battlements rimmed in amethyst light, hollow glowing lavender windows, a hovering void-ring of glowing purple air crowning its peak, trailing wisps dissolving into drifting motes, twilight sky, bold clean cel-shading, thick outlines, centered heroic structure on a dim windswept dais",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook.png",
+					"name": "Rook"
+				},
+				"inferredFrom": {
+					"concept": [
+						"rook",
+						"air_air_bishop_rook",
+						"air_air_knight_rook"
+					],
+					"theme": [
+						"fire_light_knight",
+						"fire_light_queen",
+						"fire_light_pawn"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "fire_light_queen",
+		"elements": [
+			"fire",
+			"light"
+		],
+		"display_name": "Spirit Queen",
+		"chess_pieces": [
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Wind-conjured regal spectral queen rising from swirling twilight vapor, translucent slender form of dark violet mist, hollow pale-blue glowing eyes above a serene shadowed face, streaming smoke-veil hair dissolving into drifting amethyst wisps, tall crown of luminous lavender air, gown unraveling into spiraling purple gusts, hands parting curling breezes, brooding dusk sky, bold clean cel-shading, thick outlines, centered heroic subject",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/queen.png",
+					"name": "Queen"
+				},
+				"inferredFrom": {
+					"concept": [
+						"queen",
+						"air_air_bishop_queen",
+						"air_air_knight_queen"
+					],
+					"theme": [
+						"fire_light_knight",
+						"fire_light_pawn"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "fire_light_pawn_pawn",
+		"elements": [
+			"fire",
+			"light"
+		],
+		"display_name": "Spirit Warrior",
+		"chess_pieces": [
+			"pawn",
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Ethereal foot warrior conjured from swirling twilight vapor, stocky rounded shadow-plating traced with glowing violet seams, hollow amethyst eyes beneath an open-faced helm, broad longsword and round shield leaking curling purple wind and drifting motes, planted in a firm guard, wisps spiraling from every joint, dim lavender sky over a windswept stone dais, bold clean cel-shading, thick outlines, centered heroic subject.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_pawn.png",
+					"name": "Warrior"
+				},
+				"inferredFrom": {
+					"concept": [
+						"pawn_pawn",
+						"air_air_pawn_pawn",
+						"air_darkness_pawn_pawn"
+					],
+					"theme": [
+						"fire_light_knight",
+						"fire_light_queen",
+						"fire_light_pawn"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "fire_light_knight_pawn",
+		"elements": [
+			"fire",
+			"light"
+		],
+		"display_name": "Spirit Cavalry",
+		"chess_pieces": [
+			"knight",
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Charging armored rider on a galloping warhorse conjured from swirling dusk vapor, translucent slate plating traced with pulsing violet-white seams, streaming smoke-mane and tail unraveling into drifting amethyst wisps, hooves spinning spiraling shadow-gusts, leveled spear leaking curling purple wind, hollow pale-blue glowing eyes, crown of luminous lavender air, bold clean cel-shading, thick outlines, brooding twilight sky, centered heroic subject.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_pawn.png",
+					"name": "Cavalry"
+				},
+				"inferredFrom": {
+					"concept": [
+						"knight_pawn",
+						"air_air_knight_pawn",
+						"air_darkness_knight_pawn"
+					],
+					"theme": [
+						"fire_light_knight",
+						"fire_light_queen",
+						"fire_light_pawn"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "fire_light_bishop_pawn",
+		"elements": [
+			"fire",
+			"light"
+		],
+		"display_name": "Spirit Paladin",
+		"chess_pieces": [
+			"bishop",
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Spectral paladin conjured from swirling twilight vapor, towering translucent violet-mist plate traced with pulsing pale-blue seams, serene hollow-eyed visored helm crested with a streaming plume dissolving into drifting amethyst wisps, one gauntlet raising a luminous warhammer trailing spiraling ghostly gusts, tall shield rimmed in glowing lavender currents, tattered cloak unraveling into curling wind, bold clean cel-shading, thick outlines, brooding dusk sky, centered heroic subject.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_pawn.png",
+					"name": "Paladin"
+				},
+				"inferredFrom": {
+					"concept": [
+						"bishop_pawn",
+						"air_air_bishop_pawn",
+						"air_darkness_bishop_pawn"
+					],
+					"theme": [
+						"fire_light_knight",
+						"fire_light_queen",
+						"fire_light_pawn"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "fire_light_pawn_rook",
+		"elements": [
+			"fire",
+			"light"
+		],
+		"display_name": "Spirit Barracks",
+		"chess_pieces": [
+			"pawn",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"prompt": "A slim helmeted sentry clutching a slender spear standing guard before an airy watchtower conjured from swirling twilight vapor, translucent violet-mist walls veined with pulsing lavender seams, arched hollow gateway breathing curling purple wind, glowing pale-blue windows, streaming smoke banners dissolving into drifting amethyst wisps, brooding dusk sky, bold clean cel-shading, thick outlines, centered subject, dark background",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_rook.png",
+					"name": "Barracks"
+				},
+				"inferredFrom": {
+					"concept": [
+						"pawn_rook",
+						"air_air_pawn_rook",
+						"air_darkness_pawn_rook"
+					],
+					"theme": [
+						"fire_light_knight",
+						"fire_light_queen",
+						"fire_light_pawn"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "fire_light_pawn_queen",
+		"elements": [
+			"fire",
+			"light"
+		],
+		"display_name": "Spirit Commander",
+		"chess_pieces": [
+			"pawn",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"prompt": "A commander of wind and shadow poised atop a floating spectral dais, translucent violet-mist form in dark plating traced with glowing lavender seams, thrusting a slender baton skyward leaking curling purple wind, streaming smoke-cloak dissolving into drifting amethyst wisps, hollow pale-blue glowing eyes, small column of shadow-soldiers marching below, brooding twilight sky, bold clean cel-shading, thick outlines.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_queen.png",
+					"name": "Commander"
+				},
+				"inferredFrom": {
+					"concept": [
+						"pawn_queen",
+						"air_air_pawn_queen",
+						"air_darkness_pawn_queen"
+					],
+					"theme": [
+						"fire_light_knight",
+						"fire_light_queen",
+						"fire_light_pawn"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "fire_light_knight_knight",
+		"elements": [
+			"fire",
+			"light"
+		],
+		"display_name": "Spirit Beast",
+		"chess_pieces": [
+			"knight",
+			"knight"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Colossal spectral warbeast rearing mid-charge, hulking translucent body of dark violet mist etched with pulsing lavender seams, sweeping horns of luminous amethyst light, hollow pale-blue glowing eyes, streaming smoke-mane dissolving into drifting purple wisps, hooves scattering spiraling shadow-gusts, halo of glowing dusk-air ringing its lowered head, brooding twilight sky, bold clean cel-shading, thick outlines, centered heroic subject",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_knight.png",
+					"name": "Beast"
+				},
+				"inferredFrom": {
+					"concept": [
+						"knight_knight",
+						"air_air_knight_knight",
+						"air_darkness_knight_knight"
+					],
+					"theme": [
+						"fire_light_knight",
+						"fire_light_queen",
+						"fire_light_pawn"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "fire_light_bishop_knight",
+		"elements": [
+			"fire",
+			"light"
+		],
+		"display_name": "Spirit Cryptid",
+		"chess_pieces": [
+			"bishop",
+			"knight"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Wild spirit-cat cryptid conjured from swirling dark night-vapor, translucent violet-mist body streaked with glowing lavender seams, hollow pale-blue luminous eyes, streaming smoke-mane dissolving into drifting amethyst wisps, curling gusts spiraling from padded paws, halo of glowing purple air around its head, brooding twilight sky, bold clean cel-shading, thick outlines, centered heroic subject.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_knight.png",
+					"name": "Cryptid"
+				},
+				"inferredFrom": {
+					"concept": [
+						"bishop_knight",
+						"air_air_bishop_knight",
+						"air_darkness_bishop_knight"
+					],
+					"theme": [
+						"fire_light_knight",
+						"fire_light_queen",
+						"fire_light_pawn"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "fire_light_knight_rook",
+		"elements": [
+			"fire",
+			"light"
+		],
+		"display_name": "Spirit Stable",
+		"chess_pieces": [
+			"knight",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"prompt": "A spectral warhorse rearing within a shadow-built archway of pale ghostly stalls, translucent violet-mist body, obsidian barding etched with pulsing lavender seams, hollow luminous blue eyes, wide smoke-feathered wings sweeping upward dissolving into amethyst wisps, streaming vapor mane, hooves trailing spiraling gusts, glowing purple ring above its skull, brooding twilight sky, bold clean cel-shading, thick outlines, centered heroic subject",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_rook.png",
+					"name": "Stable"
+				},
+				"inferredFrom": {
+					"concept": [
+						"knight_rook",
+						"air_air_knight_rook",
+						"air_darkness_knight_rook"
+					],
+					"theme": [
+						"fire_light_knight",
+						"fire_light_queen",
+						"fire_light_pawn"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "fire_light_knight_queen",
+		"elements": [
+			"fire",
+			"light"
+		],
+		"display_name": "Spirit Monster",
+		"chess_pieces": [
+			"knight",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Rearing colossal beast conjured wholly from swirling twilight vapor, hulking translucent body of deep violet mist coiling upward out of drifting amethyst cloudbanks, hollow luminous pale-blue eyes glowing in a faceless snarling maw, clawed limbs unraveling into spiraling purple gusts, pulsing lavender air-veins threading its bulk, brooding dusk sky, bold clean cel-shading, thick outlines, centered heroic subject.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_queen.png",
+					"name": "Monster"
+				},
+				"inferredFrom": {
+					"concept": [
+						"knight_queen",
+						"air_air_knight_queen",
+						"air_darkness_knight_queen"
+					],
+					"theme": [
+						"fire_light_knight",
+						"fire_light_queen",
+						"fire_light_pawn"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "fire_light_bishop_bishop",
+		"display_name": "Spirit Hierophant",
+		"elements": [
+			"fire",
+			"light"
+		],
+		"chess_pieces": [
+			"bishop",
+			"bishop"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Bearded spectral high priest conjured from swirling twilight vapor, long flowing beard trailing into drifting amethyst wisps, tall crested miter of luminous lavender air, translucent violet mist robes unraveling into curling gusts, hollow pale-blue glowing eyes, gripping a slender staff as spiraling purple whorls erupt from his raised palm, brooding dusk sky, bold clean cel-shading, thick outlines, centered heroic figure",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_bishop.png",
+					"name": "Hierophant"
+				},
+				"inferredFrom": {
+					"concept": [
+						"bishop_bishop",
+						"air_air_bishop_bishop",
+						"air_darkness_bishop_bishop"
+					],
+					"theme": [
+						"fire_light_knight",
+						"fire_light_queen",
+						"fire_light_pawn"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "fire_light_bishop_rook",
+		"elements": [
+			"fire",
+			"light"
+		],
+		"display_name": "Spirit Arcane Tower",
+		"chess_pieces": [
+			"bishop",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Spectral tower conjured from swirling twilight vapor, translucent slender spire of dark violet mist rising into brooding dusk sky, hollow pale-blue glowing openings along its shadowed heights, crenellated crown unraveling into drifting amethyst wisps, ghostly wings of luminous lavender air spreading from its upper battlements, a ring of glowing purple haze crowning its peak, base dissolving into spiraling shadow-gusts above pale drifting clouds, bold clean cel-shading, thick outlines, centered heroic subject",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_rook.png",
+					"name": "Arcane Tower"
+				},
+				"inferredFrom": {
+					"concept": [
+						"bishop_rook",
+						"air_air_bishop_rook",
+						"air_darkness_bishop_rook"
+					],
+					"theme": [
+						"fire_light_knight",
+						"fire_light_queen",
+						"fire_light_pawn"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "fire_light_bishop_queen",
+		"elements": [
+			"fire",
+			"light"
+		],
+		"display_name": "Spirit Deity",
+		"chess_pieces": [
+			"bishop",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Wind-conjured radiant goddess rising from swirling twilight vapor, serene alabaster face and long streaming hair unraveling into drifting amethyst wisps, translucent pale robes billowing into spiraling violet gusts, broad sweeping vaporous wings, a soft glowing lavender ring above her brow, hollow luminous pale-blue eyes, hands parting curling breezes, brooding dusk sky, bold clean cel-shading, thick outlines, centered heroic subject.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_queen.png",
+					"name": "Deity"
+				},
+				"inferredFrom": {
+					"concept": [
+						"bishop_queen",
+						"air_air_bishop_queen",
+						"air_darkness_bishop_queen"
+					],
+					"theme": [
+						"fire_light_knight",
+						"fire_light_queen",
+						"fire_light_pawn"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "fire_light_rook_rook",
+		"elements": [
+			"fire",
+			"light"
+		],
+		"display_name": "Spirit Turret",
+		"chess_pieces": [
+			"rook",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Squat crenellated ghost-stone turret rising from swirling twilight vapor, translucent violet-misted walls traced with glowing lavender seams, hollow arrow-slit windows leaking pale amethyst light, crowned by a swiveling top-mounted cannon of condensed shadow-air, its barrel exhaling spiraling purple gusts and drifting wisp-motes, luminous ring of glowing air above the peak, brooding dusk sky, bold clean cel-shading, thick outlines, centered heroic structure",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook_rook.png",
+					"name": "Turret"
+				},
+				"inferredFrom": {
+					"concept": [
+						"rook_rook",
+						"air_air_rook_rook",
+						"air_darkness_rook_rook"
+					],
+					"theme": [
+						"fire_light_knight",
+						"fire_light_queen",
+						"fire_light_pawn"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "fire_light_queen_rook",
+		"elements": [
+			"fire",
+			"light"
+		],
+		"display_name": "Spirit Castle",
+		"chess_pieces": [
+			"queen",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"prompt": "A soaring translucent fortress keep conjured from swirling twilight vapor, a tall cleft central turret between two rounded battlement towers, dark violet mist walls traced with pulsing lavender seams, hollow arches leaking curling purple wind, broad smoke-wings sweeping from its upper ramparts dissolving into drifting amethyst wisps, a ring of luminous pale-blue air hovering above the peak, perched on churning shadow-clouds, brooding dusk sky, bold clean cel-shading, thick outlines, centered heroic structure",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook_queen.png",
+					"name": "Castle"
+				},
+				"inferredFrom": {
+					"concept": [
+						"rook_queen",
+						"air_air_queen_rook",
+						"air_darkness_queen_rook"
+					],
+					"theme": [
+						"fire_light_knight",
+						"fire_light_queen",
+						"fire_light_pawn"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "fire_light_queen_queen",
+		"elements": [
+			"fire",
+			"light"
+		],
+		"display_name": "Spirit Hero",
+		"chess_pieces": [
+			"queen",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Wind-conjured heroic figure surging up from swirling twilight vapor, translucent violet-mist form of a young ruler, voluminous curly smoke-hair streaming into drifting amethyst wisps, hollow pale-blue glowing eyes, spiked crown of luminous lavender air, spike-shouldered plating traced with pulsing glowing seams, tattered cape unraveling into spiraling gusts, hoisting an oversized crystalline greatsword leaking purple wind mid-swing, brooding dusk sky, bold clean cel-shading, thick outlines, centered heroic subject",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/queen_queen.png",
+					"name": "Hero"
+				},
+				"inferredFrom": {
+					"concept": [
+						"queen_queen",
+						"air_air_queen_queen",
+						"air_darkness_queen_queen"
+					],
+					"theme": [
+						"fire_light_knight",
+						"fire_light_queen",
+						"fire_light_pawn"
+					]
+				}
+			}
+		}
+	}
+]

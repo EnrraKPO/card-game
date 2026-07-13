@@ -8,7 +8,29 @@
 		"display_name": "Undead Pawn",
 		"chess_pieces": [
 			"pawn"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Skeletal foot-soldier of bleached bone and blackened plate, hollow eye sockets burning ghost-green, a cracked spear gripped in bony fists, ribcage armor set with glowing teal crystal shards, tattered banner-cloth hanging in shreds, wisps of grave-mist curling from joints, standing on a glowing spectral sigil, tombstones and gothic spires in stormy gloom, bold saturated fantasy illustration",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn.png",
+					"name": "Pawn"
+				},
+				"inferredFrom": {
+					"concept": [
+						"pawn",
+						"air_fire_bishop_pawn",
+						"air_fire_knight_pawn"
+					],
+					"theme": [
+						"darkness_light_knight",
+						"darkness_light_queen",
+						"darkness_light_bishop"
+					]
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_light_knight",
@@ -19,7 +41,29 @@
 		"display_name": "Undead Knight",
 		"chess_pieces": [
 			"knight"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Chibi cartoon skeletal warhorse rearing mid-charge on a cracked graveyard dais, weathered bone-plated barding of blackened cracked stone traced with pale worn silver, ghostly teal fire blazing in its eye sockets and pouring from cracked ribs, tattered skull-emblazoned caparison streaming, wisps of green graveyard mist curling off bony hooves, glowing arcane sigil beneath, looming spired crypts behind, thick outlines, bold saturated colors",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight.png",
+					"name": "Knight"
+				},
+				"inferredFrom": {
+					"concept": [
+						"knight",
+						"air_fire_bishop_knight",
+						"air_fire_knight"
+					],
+					"theme": [
+						"darkness_light_pawn",
+						"darkness_light_queen",
+						"darkness_light_bishop"
+					]
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_light_bishop",
@@ -30,7 +74,29 @@
 		],
 		"chess_pieces": [
 			"bishop"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Skeletal robed prelate looming on a glowing spectral sigil, gaunt bone face beneath a tall cleft mitre carved of pale bone set with a haunting teal gem, tattered dark vestments trailing wisps of graveyard mist, skeletal hands clutching a spiraled staff crowned with a cold aquamarine crystal, hollow eye sockets burning ghostly green, spined bone pauldrons, brooding storm sky over gothic tombs, thick outlines, bold saturated painterly rendering",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop.png",
+					"name": "Bishop"
+				},
+				"inferredFrom": {
+					"concept": [
+						"bishop",
+						"air_fire_bishop",
+						"air_fire_bishop_bishop"
+					],
+					"theme": [
+						"darkness_light_knight",
+						"darkness_light_pawn",
+						"darkness_light_queen"
+					]
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_light_rook",
@@ -41,7 +107,30 @@
 		"display_name": "Undead Rook",
 		"chess_pieces": [
 			"rook"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Towering skeletal war-fortress of bleached bone and blackened cracked stone rearing from a graveyard crag, ramparts fused from stacked skulls veined with pale silver, hollow arched gate breathing ghost-green fire, a gaunt spectral steed lunging from within, tattered shroud-banners streaming off spined ramparts, teal grave-mist pouring down its walls, glowing arcane sigil at its base, brooding gothic tombs under a stormy sky, thick outlines, bold saturated colors",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook.png",
+					"name": "Rook"
+				},
+				"inferredFrom": {
+					"concept": [
+						"rook",
+						"air_fire_bishop_rook",
+						"air_fire_knight_rook"
+					],
+					"theme": [
+						"darkness_light_knight",
+						"darkness_light_pawn",
+						"darkness_light_queen",
+						"darkness_light_bishop"
+					]
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_light_queen",
@@ -52,7 +141,29 @@
 		"display_name": "Undead Queen",
 		"chess_pieces": [
 			"queen"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Skeletal queen sovereign standing on a glowing spectral sigil, tall cleft crown of pale bone crowned with a haunting teal gem, gaunt bone visage with hollow eye sockets burning ghost-green, tattered dark royal robes trailing curls of graveyard mist, one bony hand raising a spiraled aquamarine-crystal staff, the other cradling a hovering orb of cold teal flame, spined bone pauldrons, brooding storm sky over gothic tombs, thick outlines, bold saturated colors",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/queen.png",
+					"name": "Queen"
+				},
+				"inferredFrom": {
+					"concept": [
+						"queen",
+						"air_fire_bishop_queen",
+						"air_fire_knight_queen"
+					],
+					"theme": [
+						"darkness_light_knight",
+						"darkness_light_pawn",
+						"darkness_light_bishop"
+					]
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_light_pawn_pawn",
@@ -64,7 +175,30 @@
 		"chess_pieces": [
 			"pawn",
 			"pawn"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Skeletal footsoldier locked in a fierce battle stance, bleached bone limbs bound in blackened cracked plate, hollow sockets blazing ghost-green, stubby cleaver of grey bone raised mid-swing, tattered ragged banner streaming from a jagged pauldron, wisps of grave-mist curling from every joint, standing on a glowing spectral ring amid gothic tombs and stormy gloom, thick outlines, bold saturated colors.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_pawn.png",
+					"name": "Warrior"
+				},
+				"inferredFrom": {
+					"concept": [
+						"pawn_pawn",
+						"air_fire_pawn_pawn",
+						"earth_water_pawn_pawn"
+					],
+					"theme": [
+						"darkness_light_knight",
+						"darkness_light_pawn",
+						"darkness_light_queen",
+						"darkness_light_bishop"
+					]
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_light_knight_pawn",
@@ -76,7 +210,30 @@
 		"chess_pieces": [
 			"knight",
 			"pawn"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Charging skeletal warhorse of bleached bone and blackened plate barding, hollow eye sockets and cracked ribs pouring ghost-green fire, a gaunt bone rider crouched low leveling a splintered lance streaming teal flame, tattered shredded caparison whipping behind, glowing aquamarine crystal shards set in the barding, grave-mist curling off bony galloping hooves, brooding stormy graveyard sky, thick outlines, bold saturated colors.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_pawn.png",
+					"name": "Cavalry"
+				},
+				"inferredFrom": {
+					"concept": [
+						"knight_pawn",
+						"air_fire_knight_pawn",
+						"earth_water_knight_pawn"
+					],
+					"theme": [
+						"darkness_light_knight",
+						"darkness_light_pawn",
+						"darkness_light_queen",
+						"darkness_light_bishop"
+					]
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_light_bishop_pawn",
@@ -88,7 +245,30 @@
 		"chess_pieces": [
 			"bishop",
 			"pawn"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Undead skeletal paladin sculpted from bleached bone and blackened battle-plate, hollow visored helm ridged like a crown, sockets burning cold ghost-green fire, gauntleted grip on a heavy flanged mace and a tall cross-marked kite shield set with glowing teal shards, tattered mist-trailing tabard, grave-fog curling from joints, spectral sigil underfoot, gothic spires under a brooding storm sky, thick outlines, bold saturated colors",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_pawn.png",
+					"name": "Paladin"
+				},
+				"inferredFrom": {
+					"concept": [
+						"bishop_pawn",
+						"air_fire_bishop_pawn",
+						"earth_water_bishop_pawn"
+					],
+					"theme": [
+						"darkness_light_knight",
+						"darkness_light_pawn",
+						"darkness_light_queen",
+						"darkness_light_bishop"
+					]
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_light_pawn_rook",
@@ -100,7 +280,30 @@
 		"chess_pieces": [
 			"pawn",
 			"rook"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Skeletal-bone watchtower barracks looming on a glowing spectral sigil, rounded crenellated crown and arched gateway built of bleached bone plates set with cold teal crystal shards, hollow window sockets burning ghostly green, tattered shroud-banners streaming grave-mist, a gaunt bone sentry with domed helm and cracked spear guarding the door, brooding storm sky over gothic tombs, thick outlines, bold saturated colors, centered figure, dark background",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_rook.png",
+					"name": "Barracks"
+				},
+				"inferredFrom": {
+					"concept": [
+						"pawn_rook",
+						"air_fire_pawn_rook",
+						"earth_water_pawn_rook"
+					],
+					"theme": [
+						"darkness_light_knight",
+						"darkness_light_pawn",
+						"darkness_light_queen",
+						"darkness_light_bishop"
+					]
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_light_pawn_queen",
@@ -112,7 +315,30 @@
 		"chess_pieces": [
 			"pawn",
 			"queen"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "A commander of bone and grave-magic risen atop a mounded battlefield dais of blackened cracked stone, hollow eye sockets burning ghost-green, tattered dark officer's coat streaming graveyard mist, one gauntleted bony hand thrusting a short baton skyward to rally a marching column of small chibi skeletal soldiers below, spined bone pauldrons, teal crystal shards glinting, glowing spectral sigil underfoot, brooding storm sky over gothic tombs, thick outlines, bold saturated colors",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_queen.png",
+					"name": "Commander"
+				},
+				"inferredFrom": {
+					"concept": [
+						"pawn_queen",
+						"air_fire_pawn_queen",
+						"earth_water_pawn_queen"
+					],
+					"theme": [
+						"darkness_light_knight",
+						"darkness_light_pawn",
+						"darkness_light_queen",
+						"darkness_light_bishop"
+					]
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_light_knight_knight",
@@ -124,7 +350,30 @@
 		"chess_pieces": [
 			"knight",
 			"knight"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Colossal undead war-beast rearing mid-charge on a glowing spectral sigil, hulking body of bleached bone and cracked blackened armor plating, jagged ribs venting ghostly teal fire, hollow eye sockets blazing ghost-green, curved horns of pale bone set with cold aquamarine crystal, tattered caparison shredding in graveyard mist, brooding storm sky over gothic tombs, thick outlines, bold saturated colors",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_knight.png",
+					"name": "Beast"
+				},
+				"inferredFrom": {
+					"concept": [
+						"knight_knight",
+						"air_fire_knight_knight",
+						"earth_water_knight_knight"
+					],
+					"theme": [
+						"darkness_light_knight",
+						"darkness_light_pawn",
+						"darkness_light_queen",
+						"darkness_light_bishop"
+					]
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_light_bishop_knight",
@@ -136,7 +385,30 @@
 		"chess_pieces": [
 			"bishop",
 			"knight"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Skeletal spectral moose-beast cryptid wading through a haunted mire, gaunt bone-plated hide of bleached ivory and blackened stone, hollow eye sockets pouring cold teal fire, broad cracked antlers grown from luminous aquamarine crystal, wisps of green grave-mist curling off its ribs, tattered ghostly hide streaming, glowing spectral ring beneath its hooves, gothic tombs under a brooding storm sky, thick outlines, bold saturated colors",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_knight.png",
+					"name": "Cryptid"
+				},
+				"inferredFrom": {
+					"concept": [
+						"bishop_knight",
+						"air_fire_bishop_knight",
+						"earth_water_bishop_knight"
+					],
+					"theme": [
+						"darkness_light_knight",
+						"darkness_light_pawn",
+						"darkness_light_queen",
+						"darkness_light_bishop"
+					]
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_light_knight_rook",
@@ -148,7 +420,30 @@
 		"chess_pieces": [
 			"knight",
 			"rook"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Skeletal warhorse rearing in the arched gateway of a ruined bone-built stable, hollow eye sockets blazing ghost-green, cracked barding of blackened stone traced with worn silver, teal grave-fire pouring from its ribs, tattered skull-marked caparison streaming, wisps of graveyard mist curling off bony hooves, glowing spectral sigil below, gothic spires in stormy gloom, thick outlines, bold saturated colors",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_rook.png",
+					"name": "Stable"
+				},
+				"inferredFrom": {
+					"concept": [
+						"knight_rook",
+						"air_fire_knight_rook",
+						"earth_water_knight_rook"
+					],
+					"theme": [
+						"darkness_light_knight",
+						"darkness_light_pawn",
+						"darkness_light_queen",
+						"darkness_light_bishop"
+					]
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_light_knight_queen",
@@ -160,7 +455,30 @@
 		"chess_pieces": [
 			"knight",
 			"queen"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Skeletal dragon reanimated in death, rearing on hind legs, bleached bone hide plated with blackened cracked scales, exposed ribcage glowing with ghost-green fire, tattered rotting wing membranes trailing graveyard mist, hollow eye sockets burning teal, spined bone horns, standing on a luminous spectral sigil amid gothic tombs under a brooding storm sky, thick outlines, bold saturated colors",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_queen.png",
+					"name": "Monster"
+				},
+				"inferredFrom": {
+					"concept": [
+						"knight_queen",
+						"air_fire_knight_queen",
+						"earth_water_knight_queen"
+					],
+					"theme": [
+						"darkness_light_knight",
+						"darkness_light_pawn",
+						"darkness_light_queen",
+						"darkness_light_bishop"
+					]
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_light_bishop_bishop",
@@ -172,19 +490,61 @@
 		"chess_pieces": [
 			"bishop",
 			"bishop"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Bearded undead high priest with a long ghost-white beard, gaunt bone visage and hollow eye sockets blazing spectral green, tall cleft mitre of pale bone set with a haunting teal gem, tattered dark vestments trailing graveyard mist, raising a spiraled aquamarine staff as cold teal fire and crackling arcane sigils spiral from his upraised palm, glowing spectral disc underfoot, brooding storm sky over gothic tombs, thick outlines, bold saturated painterly rendering",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_bishop.png",
+					"name": "Hierophant"
+				},
+				"inferredFrom": {
+					"concept": [
+						"bishop_bishop",
+						"air_fire_bishop_bishop",
+						"earth_water_bishop_bishop"
+					],
+					"theme": [
+						"darkness_light_knight",
+						"darkness_light_pawn",
+						"darkness_light_queen",
+						"darkness_light_bishop"
+					]
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_light_bishop_rook",
+		"display_name": "Undead Arcane Tower",
 		"elements": [
 			"darkness",
 			"light"
 		],
-		"display_name": "Undead Arcane Tower",
 		"chess_pieces": [
 			"bishop",
 			"rook"
-		]
+		],
+		"ranged": true,
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Skeletal necromancer spire on a glowing spectral sigil, cleft crenellated crown and tall spined cap carved from bleached bone traced with worn silver, arched gateway and slit windows pouring ghostly teal fire and curling grave-mist, hollow skull motifs burning ghost-green, a gaunt bone-robed caster raising a spiraled aquamarine staff at its base, brooding storm sky over gothic tombs, thick outlines, bold saturated colors",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_rook.png",
+					"name": "Arcane Tower",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_light_bishop_queen",
@@ -196,19 +556,61 @@
 		"chess_pieces": [
 			"bishop",
 			"queen"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Towering front-facing skeletal goddess sovereign hovering above a glowing spectral ground-circle, gaunt pale bone visage with hollow sockets pouring ghost-green fire, tattered dark divine vestments trailing curls of graveyard mist, one skeletal hand raising a spiraled aquamarine-crystal scepter, the other cradling a floating orb of cold teal flame, spined bone shoulder-guards, brooding storm sky over gothic tombs, thick outlines, bold saturated colors",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_queen.png",
+					"name": "Deity"
+				},
+				"inferredFrom": {
+					"concept": [
+						"bishop_queen",
+						"air_fire_bishop_queen",
+						"earth_water_bishop_queen"
+					],
+					"theme": [
+						"darkness_light_knight",
+						"darkness_light_pawn",
+						"darkness_light_queen",
+						"darkness_light_bishop"
+					]
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_light_rook_rook",
+		"display_name": "Undead Turret",
 		"elements": [
 			"darkness",
 			"light"
 		],
-		"display_name": "Undead Turret",
 		"chess_pieces": [
 			"rook",
 			"rook"
-		]
+		],
+		"ranged": true,
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Skeletal fortress turret with a wide cracked base and hollow arrow-slit windows burning ghost-green, crowned by a swiveling top-mounted cannon carved of pale bleached bone and blackened plate, the barrel wreathed in cold teal graveflame and drifting grave-mist, spined bone buttresses, glowing spectral sigil beneath, brooding storm sky over gothic tombs, thick outlines, bold saturated colors",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook_rook.png",
+					"name": "Turret",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_light_queen_rook",
@@ -220,7 +622,30 @@
 		"chess_pieces": [
 			"queen",
 			"rook"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "A colossal fortress keep raised from bleached fused bone and blackened weathered stonework, a tall cleft central spire flanked by twin skull-crowned towers, hollow arched gates glowing ghost-green, teal grave-fire flickering along the ramparts, wisps of pale mist curling down the walls, aquamarine crystal shards embedded in the parapets, a moat of cold spectral fog, brooding storm sky over distant gothic tombs, thick bold outlines, saturated colors",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook_queen.png",
+					"name": "Castle"
+				},
+				"inferredFrom": {
+					"concept": [
+						"rook_queen",
+						"air_fire_queen_rook",
+						"earth_water_queen_rook"
+					],
+					"theme": [
+						"darkness_light_knight",
+						"darkness_light_pawn",
+						"darkness_light_queen",
+						"darkness_light_bishop"
+					]
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_light_queen_queen",
@@ -232,6 +657,29 @@
 		"chess_pieces": [
 			"queen",
 			"queen"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Skeletal warrior queen leaping mid-swing from a crumbling crypt ledge, long curly hair of bleached bone coils, cleft crown of pale bone set with a haunting teal gem, blackened cracked plate armor veined with worn silver, hollow sockets burning ghost-green, hoisting an oversized aquamarine-crystal greatsword trailing graveyard mist, glowing spectral sigil below, gothic spires under stormy gloom, thick outlines, bold saturated colors",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/queen_queen.png",
+					"name": "Hero"
+				},
+				"inferredFrom": {
+					"concept": [
+						"queen_queen",
+						"air_fire_queen_queen",
+						"earth_water_queen_queen"
+					],
+					"theme": [
+						"darkness_light_knight",
+						"darkness_light_pawn",
+						"darkness_light_queen",
+						"darkness_light_bishop"
+					]
+				}
+			}
+		}
 	}
 ]

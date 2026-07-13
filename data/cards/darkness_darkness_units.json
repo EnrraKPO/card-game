@@ -1,0 +1,618 @@
+[
+	{
+		"id": "darkness_darkness_pawn",
+		"elements": [
+			"darkness",
+			"darkness"
+		],
+		"display_name": "Pure Darkness Pawn",
+		"chess_pieces": [
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Lone armored footman forged from depthless obsidian shadow, plated in blackened metal etched with violet-glowing hollow rings, faceted onyx armor crossed by seams of cold amethyst light, gripping a short broad-bladed weapon leaking wisps of dark smoke, tattered inky cloak dissolving into drifting black fragments, thick bold outlines, saturated stylized colors, brooding twilight-purple sky over cracked stone.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn.png",
+					"name": "Pawn"
+				},
+				"inferredFrom": {
+					"concept": [
+						"pawn",
+						"air_air_bishop_pawn",
+						"air_air_knight_pawn"
+					],
+					"theme": [
+						"darkness_darkness_knight",
+						"darkness_darkness_queen"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_darkness_knight",
+		"elements": [
+			"darkness",
+			"darkness"
+		],
+		"display_name": "Pure Darkness Knight",
+		"chess_pieces": [
+			"knight"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Rearing spectral warhorse forged of living shadow rimmed in glowing violet light, obsidian plated barding trailing tattered wisps of dark flame, void-black mane streaming into curling smoke, hollow luminous purple eyes, hooves sunk in rippling pools of darkness, faint amethyst seams pulsing across its flanks, hazy lavender sky, distant jagged peaks",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight.png",
+					"name": "Knight"
+				},
+				"inferredFrom": {
+					"concept": [
+						"knight",
+						"air_air_bishop_knight",
+						"air_air_knight"
+					],
+					"theme": [
+						"darkness_darkness_pawn",
+						"darkness_darkness_queen"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_darkness_bishop",
+		"elements": [
+			"darkness",
+			"darkness"
+		],
+		"display_name": "Pure Darkness Bishop",
+		"chess_pieces": [
+			"bishop"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Stout youthful smooth-faced hierophant with cloud-pale hair beneath a tall cleft mitre of blackened plate, obsidian robes edged in tarnished silver and swallowing all light, glowing violet voids pulsing through onyx armor, raising a spiraled crook staff from which a ring of dark eclipse-fire spirals, standing on a shadowed stone dais, bold cel-shaded outlines, deep purple-black palette, dramatic eclipse glow, centered heroic figure",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop.png",
+					"name": "Bishop"
+				},
+				"inferredFrom": {
+					"concept": [
+						"bishop",
+						"air_air_bishop",
+						"air_air_bishop_bishop"
+					],
+					"theme": [
+						"darkness_darkness_knight",
+						"darkness_darkness_pawn",
+						"darkness_darkness_queen"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_darkness_rook",
+		"elements": [
+			"darkness",
+			"darkness"
+		],
+		"display_name": "Pure Darkness Rook",
+		"chess_pieces": [
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"prompt": "A towering slender fortress of depthless shadow rising into jagged battlements, rimmed in glowing violet light, faceted onyx walls streaked with pulsing amethyst seams, tattered wisps of dark flame curling from its arched openings, crumbling ramparts dissolving into drifting black fragments, rooted on rippling pools of blackness, brooding twilight-purple sky over distant cracked peaks, thick bold outlines, saturated stylized colors, centered heroic structure",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook.png",
+					"name": "Rook"
+				},
+				"inferredFrom": {
+					"concept": [
+						"rook",
+						"air_air_bishop_rook",
+						"air_air_knight_rook"
+					],
+					"theme": [
+						"darkness_darkness_knight",
+						"darkness_darkness_pawn",
+						"darkness_darkness_queen"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_darkness_queen",
+		"elements": [
+			"darkness",
+			"darkness"
+		],
+		"display_name": "Pure Darkness Queen",
+		"chess_pieces": [
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Pure obsidian-shadow queen suspended mid-air on curling ribbons of violet-glowing darkness, alabaster face wreathed in streaming void-black hair dissolving into smoke, tattered inky robes rippling into drifting fragments, broad shadow-wrought wings edged in cold amethyst light, a dim glowing ring hovering above her brow, hands parting spirals of dark vapor, brooding twilight-purple sky, centered heroic subject.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/queen.png",
+					"name": "Queen"
+				},
+				"inferredFrom": {
+					"concept": [
+						"queen",
+						"air_air_bishop_queen",
+						"air_air_knight_queen"
+					],
+					"theme": [
+						"darkness_darkness_knight",
+						"darkness_darkness_pawn"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_darkness_pawn_pawn",
+		"display_name": "Pure Darkness Warrior",
+		"elements": [
+			"darkness",
+			"darkness"
+		],
+		"chess_pieces": [
+			"pawn",
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "A stocky chibi footsoldier braced in a low fighting stance, body and plated armor carved from depthless living shadow, faceted onyx surfaces threaded with cold violet-glowing hollow seams, hollow luminous purple eyes, gripping a broad shadow-blade leaking wisps of dark smoke, tattered inky cloak dissolving into drifting black fragments, arms trailing curling void haze, brooding twilight-purple sky over cracked stone, thick bold outlines, saturated stylized colors, centered figure.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_pawn.png",
+					"name": "Warrior",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_darkness_knight_pawn",
+		"display_name": "Pure Darkness Cavalry",
+		"elements": [
+			"darkness",
+			"darkness"
+		],
+		"chess_pieces": [
+			"knight",
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Charging armored rider astride a galloping steed woven from depthless living shadow, faceted onyx barding crossed by seams of cold amethyst light, void-black mane and tail streaming into curling smoke, hollow violet-glowing eyes, a leveled lance leaking wisps of dark vapor, hooves dissolving into rippling darkness, tattered inky pennant fragmenting behind, brooding twilight-purple sky, thick bold outlines, saturated stylized colors.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_pawn.png",
+					"name": "Cavalry",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_darkness_bishop_pawn",
+		"display_name": "Pure Darkness Paladin",
+		"elements": [
+			"darkness",
+			"darkness"
+		],
+		"chess_pieces": [
+			"bishop",
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Pure obsidian-shadow paladin sculpted from depthless void-black armor, faceted plates crossed by seams of cold amethyst light, serene visored helm crested with a plume of curling dark smoke, one gauntlet raising a heavy warhammer leaking violet-glowing vapor, tall shield rippling with dim purple currents, tattered inky cloak dissolving into drifting fragments, thick bold outlines, saturated stylized colors, brooding twilight-purple sky, centered heroic subject.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_pawn.png",
+					"name": "Paladin",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_darkness_pawn_rook",
+		"display_name": "Pure Darkness Barracks",
+		"elements": [
+			"darkness",
+			"darkness"
+		],
+		"chess_pieces": [
+			"pawn",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Pure obsidian-shadow barracks of blackened depthless stone, rounded crenellated crown and arched gateway, hollow window sockets glowing cold amethyst, faceted onyx walls veined with violet-glowing seams, tattered inky banners dissolving into drifting black fragments and curling dark smoke, a plated shadow-wrought sentry gripping a slender spear at the door, thick bold outlines, brooding twilight-purple sky, centered figure, dark background.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_rook.png",
+					"name": "Barracks",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_darkness_pawn_queen",
+		"display_name": "Pure Darkness Commander",
+		"elements": [
+			"darkness",
+			"darkness"
+		],
+		"chess_pieces": [
+			"pawn",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "A commander of living shadow perched atop a raised platform of cracked black stone, thrusting a slender baton skyward, alabaster face amid streaming void-black hair dissolving into smoke, tattered inky officer's coat rippling into drifting fragments edged with cold amethyst light, small chibi shadow-soldiers marching below, brooding twilight-purple sky, thick bold outlines.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_queen.png",
+					"name": "Commander",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_darkness_knight_knight",
+		"display_name": "Pure Darkness Beast",
+		"elements": [
+			"darkness",
+			"darkness"
+		],
+		"chess_pieces": [
+			"knight",
+			"knight"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Colossal war-beast rearing mid-charge, its hulking body woven from coiling depthless shadow shot through with cold violet light, streaming void-black mane dissolving into curling smoke, sweeping horns edged in glowing amethyst seams, hollow luminous purple eyes, muscled flanks scattering into drifting inky fragments, hooves sunk in rippling pools of darkness, thick bold outlines, saturated stylized colors, brooding twilight-purple sky over cracked stone.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_knight.png",
+					"name": "Beast",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_darkness_bishop_knight",
+		"display_name": "Pure Darkness Cryptid",
+		"elements": [
+			"darkness",
+			"darkness"
+		],
+		"chess_pieces": [
+			"bishop",
+			"knight"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Void-black cryptid stag prowling through a moonless gloom, gaunt hide of living shadow rimmed in cold amethyst light, broad antlers spun from curling dark smoke, hollow luminous violet eyes, mane and tail dissolving into drifting inky fragments, hooves sinking into rippling pools of blackness, dim purple seams pulsing along its flanks, thick bold outlines, brooding twilight-purple sky.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_knight.png",
+					"name": "Cryptid",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_darkness_knight_rook",
+		"elements": [
+			"darkness",
+			"darkness"
+		],
+		"display_name": "Pure Darkness Stable",
+		"chess_pieces": [
+			"knight",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Rearing skeletal warhorse forged of depthless living shadow rimmed in cold violet light, bony ribs and skull sculpted from curling black smoke, hollow eyes burning pale amethyst, tattered inky barding dissolving into drifting fragments, void-black mane streaming into vapor, hooves sunk in rippling pools of darkness, a dim glowing ring above its skull, brooding twilight-purple sky, centered heroic subject.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_rook.png",
+					"name": "Stable"
+				},
+				"inferredFrom": {
+					"concept": [
+						"knight_rook",
+						"air_air_knight_rook",
+						"air_earth_knight_rook"
+					],
+					"theme": [
+						"darkness_darkness_knight",
+						"darkness_darkness_pawn",
+						"darkness_darkness_queen"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_darkness_knight_queen",
+		"display_name": "Pure Darkness Monster",
+		"elements": [
+			"darkness",
+			"darkness"
+		],
+		"chess_pieces": [
+			"knight",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Rearing colossal beast wrought from depthless living shadow, hulking body coiling out of curling ribbons of void-black smoke, hollow luminous violet eyes burning in a faceless maw, jagged obsidian shoulders shedding drifting inky fragments, clawed limbs dissolving into swirling dark vapor, cold amethyst seams pulsing across its bulk, brooding twilight-purple sky over cracked stone, centered heroic subject.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/knight_queen.png",
+					"name": "Monster",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_darkness_bishop_bishop",
+		"display_name": "Pure Darkness Hierophant",
+		"elements": [
+			"darkness",
+			"darkness"
+		],
+		"chess_pieces": [
+			"bishop",
+			"bishop"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Bearded high priest woven from depthless living shadow, long streaming beard dissolving into curling black smoke, tall tapering mitre crowned in cold amethyst light, tattered inky robes rippling into drifting dark fragments, hollow violet-glowing eyes, arms upraised as spiraling ribbons of void-black vapor and crackling amethyst sigils erupt from open palms, dim halo above his brow, brooding twilight-purple sky, thick bold outlines, saturated stylized rendering, centered heroic figure",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_bishop.png",
+					"name": "Hierophant",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_darkness_bishop_rook",
+		"display_name": "Pure Darkness Arcane Tower",
+		"elements": [
+			"darkness",
+			"darkness"
+		],
+		"chess_pieces": [
+			"bishop",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "A colossal spire of seamless obsidian-shadow stone, tapering ramparts crossed by cold amethyst seams, arched openings leaking curling violet-lit smoke, a dim glowing ring hovering above its jagged crown, tattered dark vapor streaming from slit windows, base sunk in rippling pools of blackness, brooding twilight-purple sky, centered heroic structure, thick bold outlines.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_rook.png",
+					"name": "Arcane Tower",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_darkness_bishop_queen",
+		"display_name": "Pure Darkness Deity",
+		"elements": [
+			"darkness",
+			"darkness"
+		],
+		"chess_pieces": [
+			"bishop",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Towering front-facing goddess sculpted from depthless living shadow, serene alabaster face wreathed in streaming void-black hair unraveling into curling smoke, translucent inky robes rippling into drifting dark fragments, broad shadow-forged wings edged in cold amethyst light, hands parting spiraling coils of violet-glowing vapor, faceted onyx skin veined with pulsing purple seams, brooding twilight-purple sky, thick bold outlines, saturated stylized colors, centered heroic subject.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/bishop_queen.png",
+					"name": "Deity",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_darkness_rook_rook",
+		"display_name": "Pure Darkness Turret",
+		"elements": [
+			"darkness",
+			"darkness"
+		],
+		"chess_pieces": [
+			"rook",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Weathered watchtower turret of blackened faceted stone, hollow arrow-slit windows leaking violet-glowing haze, crowned by a swiveling top-mounted cannon wrought from depthless shadow and cold-glinting metal, its barrel spewing a churning vortex of void-black smoke and drifting inky fragments rimmed in amethyst light, seams of pulsing purple across the base, a dim glowing ring hovering above, brooding twilight-purple sky, thick bold outlines, saturated stylized colors, centered heroic structure",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook_rook.png",
+					"name": "Turret",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_darkness_queen_rook",
+		"display_name": "Pure Darkness Castle",
+		"elements": [
+			"darkness",
+			"darkness"
+		],
+		"chess_pieces": [
+			"queen",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "A colossal fortress keep carved from depthless obsidian shadow, a tall cleft central spire flanked by two rounded drum towers plated in blackened stone etched with cold amethyst seams, a yawning gateway leaking curling violet-glowing vapor, tattered wisps of dark flame streaming from crumbling ramparts, a dim pulsing ring hovering above the peak, walls dissolving into drifting smoke fragments, brooding twilight-purple sky, thick bold outlines, centered heroic structure",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook_queen.png",
+					"name": "Castle",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "darkness_darkness_queen_queen",
+		"display_name": "Pure Darkness Hero",
+		"elements": [
+			"darkness",
+			"darkness"
+		],
+		"chess_pieces": [
+			"queen",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Pure obsidian-shadow warrior queen leaping mid-swing, streaming void-black hair dissolving into curling smoke, faceted dark plate armor crossed by seams of cold amethyst light, hollow violet-glowing eyes, tattered inky cape fraying into drifting fragments, hoisting an oversized greatsword leaking dark vapor, spiked crown crusted with dim glowing gems, brooding twilight-purple sky, low heroic angle, thick bold outlines.",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/queen_queen.png",
+					"name": "Hero",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	}
+]

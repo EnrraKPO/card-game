@@ -1,0 +1,217 @@
+[
+	{
+		"id": "light_pawn",
+		"elements": [
+			"light"
+		],
+		"display_name": "Light Pawn",
+		"chess_pieces": [
+			"pawn"
+		]
+	},
+	{
+		"id": "light_knight",
+		"elements": [
+			"light"
+		],
+		"display_name": "Light Knight",
+		"chess_pieces": [
+			"knight"
+		]
+	},
+	{
+		"id": "light_bishop",
+		"elements": [
+			"light"
+		],
+		"display_name": "Light Bishop",
+		"chess_pieces": [
+			"bishop"
+		]
+	},
+	{
+		"id": "light_rook",
+		"elements": [
+			"light"
+		],
+		"display_name": "Light Rook",
+		"chess_pieces": [
+			"rook"
+		]
+	},
+	{
+		"id": "light_queen",
+		"elements": [
+			"light"
+		],
+		"display_name": "Light Queen",
+		"chess_pieces": [
+			"queen"
+		]
+	},
+	{
+		"id": "light_pawn_pawn",
+		"elements": [
+			"light"
+		],
+		"display_name": "Light Warrior",
+		"chess_pieces": [
+			"pawn",
+			"pawn"
+		]
+	},
+	{
+		"id": "light_knight_pawn",
+		"elements": [
+			"light"
+		],
+		"display_name": "Light Cavalry",
+		"chess_pieces": [
+			"knight",
+			"pawn"
+		]
+	},
+	{
+		"id": "light_bishop_pawn",
+		"elements": [
+			"light"
+		],
+		"display_name": "Light Paladin",
+		"chess_pieces": [
+			"bishop",
+			"pawn"
+		]
+	},
+	{
+		"id": "light_pawn_rook",
+		"elements": [
+			"light"
+		],
+		"display_name": "Light Barracks",
+		"chess_pieces": [
+			"pawn",
+			"rook"
+		]
+	},
+	{
+		"id": "light_pawn_queen",
+		"elements": [
+			"light"
+		],
+		"display_name": "Light Commander",
+		"chess_pieces": [
+			"pawn",
+			"queen"
+		]
+	},
+	{
+		"id": "light_knight_knight",
+		"elements": [
+			"light"
+		],
+		"display_name": "Light Beast",
+		"chess_pieces": [
+			"knight",
+			"knight"
+		]
+	},
+	{
+		"id": "light_bishop_knight",
+		"elements": [
+			"light"
+		],
+		"display_name": "Light Cryptid",
+		"chess_pieces": [
+			"bishop",
+			"knight"
+		]
+	},
+	{
+		"id": "light_knight_rook",
+		"elements": [
+			"light"
+		],
+		"display_name": "Light Stable",
+		"chess_pieces": [
+			"knight",
+			"rook"
+		]
+	},
+	{
+		"id": "light_knight_queen",
+		"elements": [
+			"light"
+		],
+		"display_name": "Light Monster",
+		"chess_pieces": [
+			"knight",
+			"queen"
+		]
+	},
+	{
+		"id": "light_bishop_bishop",
+		"elements": [
+			"light"
+		],
+		"display_name": "Light Hierophant",
+		"chess_pieces": [
+			"bishop",
+			"bishop"
+		]
+	},
+	{
+		"id": "light_bishop_rook",
+		"elements": [
+			"light"
+		],
+		"display_name": "Light Arcane Tower",
+		"chess_pieces": [
+			"bishop",
+			"rook"
+		]
+	},
+	{
+		"id": "light_bishop_queen",
+		"elements": [
+			"light"
+		],
+		"display_name": "Light Deity",
+		"chess_pieces": [
+			"bishop",
+			"queen"
+		]
+	},
+	{
+		"id": "light_rook_rook",
+		"elements": [
+			"light"
+		],
+		"display_name": "Light Turret",
+		"chess_pieces": [
+			"rook",
+			"rook"
+		]
+	},
+	{
+		"id": "light_queen_rook",
+		"elements": [
+			"light"
+		],
+		"display_name": "Light Castle",
+		"chess_pieces": [
+			"queen",
+			"rook"
+		]
+	},
+	{
+		"id": "light_queen_queen",
+		"elements": [
+			"light"
+		],
+		"display_name": "Light Hero",
+		"chess_pieces": [
+			"queen",
+			"queen"
+		]
+	}
+]
