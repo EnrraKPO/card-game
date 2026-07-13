@@ -1,13 +1,21 @@
 class_name RelicTray
-extends HBoxContainer
+extends BoxContainer
 
-# A compact inline strip of the run's relics, designed to live INSIDE the top bar (no row of its
-# own — mobile screen space is tight). Layout: a "X/Y" slot count, then a small coloured chip per
-# owned relic. Hovering a chip describes its effect. Used interactive in the map HUD (tap a chip to
-# discard — see RunData.discard_relic) and read-only in combat. Rebuilt on entry and after a discard.
+# A compact inline strip of the run's relics. Two orientations from one component (set `vertical`
+# before the node enters the tree, like `interactive`): horizontal, living INSIDE the top bar (no
+# row of its own — mobile screen space is tight), and vertical, filling combat's left-edge relic
+# column now that combat shows no header at all. Layout: a "X/Y" slot count, then a small coloured
+# chip per owned relic. Hovering a chip describes its effect. Used interactive in the map HUD (tap
+# a chip to discard — see RunData.discard_relic) and read-only in combat. Rebuilt on entry and
+# after a discard.
 
 const CHIP := 34
 const CHIP_COMPACT := 44
+# Vertical-strip chips run MUCH larger: relics matter, the strip owns most of combat's left
+# rail, and its chips are the only place a firing relic announces itself — small enough to miss
+# defeats the point.
+const CHIP_VERTICAL := 64
+const CHIP_VERTICAL_COMPACT := 76
 
 # Map HUD = true (chips tappable to discard); combat = false (display only). Set before the node
 # enters the tree (refresh runs in _ready).
@@ -19,7 +27,9 @@ var _chips: Dictionary = {}   # relic_id -> Button, so a firing relic can glint 
 func _ready() -> void:
 	add_theme_constant_override("separation", 5)
 	alignment = BoxContainer.ALIGNMENT_BEGIN
-	size_flags_vertical = SIZE_SHRINK_CENTER
+	if not vertical:
+		size_flags_vertical = SIZE_SHRINK_CENTER   # centre in the header row; the vertical
+		# strip instead fills its column top-down (chips stack from the count label)
 	refresh()
 
 
@@ -57,23 +67,37 @@ func glint(relic_id: String) -> void:
 	tw.parallel().tween_property(chip, "modulate", Color.WHITE, 0.22)
 
 
-# "Relics 2/5" — the at-a-glance read of how many slots are used and how many remain.
+# "Relics 2/5" — the at-a-glance read of how many slots are used and how many remain. The vertical
+# strip is too narrow for the word, so there it's just "2/5" (the strip carries a "Relics" tooltip).
 func _make_count_label(used: int, capacity: int) -> Label:
 	var lbl := Label.new()
-	lbl.text = "Relics %d/%d " % [used, capacity]
 	lbl.add_theme_font_size_override("font_size", 22 if UIScale.is_compact() else 18)
 	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	lbl.size_flags_vertical = SIZE_SHRINK_CENTER
-	lbl.add_theme_color_override("font_color", Color("6b5636"))   # sits on the header_chip's cream
-																	# capsule (ScreenUI.SURFACE_DEEP)
+	if vertical:
+		lbl.text = "%d/%d" % [used, capacity]
+		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		lbl.add_theme_color_override("font_color", Color(0.72, 0.78, 0.92))   # on the dark
+		# track panel combat frames the strip with (ScreenUI.MANA_TRACK_BG)
+	else:
+		lbl.text = "Relics %d/%d " % [used, capacity]
+		lbl.size_flags_vertical = SIZE_SHRINK_CENTER
+		lbl.add_theme_color_override("font_color", Color("6b5636"))   # sits on the header_chip's
+																		# cream capsule (ScreenUI.SURFACE_DEEP)
 	return lbl
 
 
 func _make_chip(relic: RelicData) -> Button:
-	var s: int = CHIP_COMPACT if UIScale.is_compact() else CHIP
+	var s: int
+	if vertical:
+		s = CHIP_VERTICAL_COMPACT if UIScale.is_compact() else CHIP_VERTICAL
+	else:
+		s = CHIP_COMPACT if UIScale.is_compact() else CHIP
 	var btn := Button.new()
 	btn.custom_minimum_size = Vector2(s, s)
-	btn.size_flags_vertical = SIZE_SHRINK_CENTER
+	if vertical:
+		btn.size_flags_horizontal = SIZE_SHRINK_CENTER
+	else:
+		btn.size_flags_vertical = SIZE_SHRINK_CENTER
 	var tip := "%s — %s" % [relic.display_name, relic.description]
 	if interactive:
 		tip += "\n(tap to discard)"

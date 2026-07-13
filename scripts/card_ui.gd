@@ -189,11 +189,49 @@ func _ready() -> void:
 		add_child(_hold_timer)
 
 
-# Uniformly scales the fixed-size Canvas to fill the CardUI's current size.
+# Uniformly scales the fixed-size Canvas to fill the CardUI's current size. Textures resample
+# cleanly under that transform, but FONTS don't — glyphs rasterize once at their integer point
+# size, so an upscaled canvas stretches glyph bitmaps and the text goes soft. The companion
+# fix: whenever the canvas is displayed ABOVE native size, every label on it re-renders through
+# a font duplicate whose `oversampling` matches the scale — denser rasterization at identical
+# metrics, so layout never moves and the text is truly drawn at its on-screen size.
 func _apply_scale() -> void:
 	if _canvas == null or size.x <= 0.0:
 		return
-	_canvas.scale = Vector2.ONE * (size.x / NATIVE_SIZE.x)
+	var s := size.x / NATIVE_SIZE.x
+	_canvas.scale = Vector2.ONE * s
+	# Snap UP in half steps so text is never under-sampled and the cache stays small.
+	var factor: float = maxf(1.0, ceilf(s * 2.0) / 2.0)
+	if factor != _font_factor:
+		_font_factor = factor
+		_apply_font_oversampling()
+
+
+# One shared duplicate of the theme's card font per oversampling factor (glyph caches are per
+# resource, so a handful of duplicates serve every card in the game).
+static var _oversampled_fonts: Dictionary = {}   # factor -> FontFile
+
+var _font_factor := 1.0   # the factor currently applied to this card's labels
+
+
+# Points every label under the Canvas at the font matching _font_factor (or back at the plain
+# theme font at 1.0). Called when the scale factor changes AND after refresh() — refresh
+# rebuilds dynamic labels (composition chips, status pips) that must inherit the factor too.
+func _apply_font_oversampling() -> void:
+	if _canvas == null:
+		return
+	for lbl: Label in _canvas.find_children("*", "Label", true, false):
+		if _font_factor <= 1.0:
+			lbl.remove_theme_font_override("font")
+			continue
+		var base := lbl.get_theme_default_font() as FontFile
+		if base == null:
+			continue
+		if not _oversampled_fonts.has(_font_factor):
+			var dup: FontFile = base.duplicate()
+			dup.oversampling = _font_factor
+			_oversampled_fonts[_font_factor] = dup
+		lbl.add_theme_font_override("font", _oversampled_fonts[_font_factor])
 
 
 # ── Combat facing ────────────────────────────────────────────────────────────────
@@ -380,10 +418,20 @@ func refresh() -> void:
 	_refresh_statuses()
 	_refresh_ability_cue()
 	_refresh_autocast_brackets()
+	# The lines above rebuild dynamic labels (chips/pips) — re-point them at the current
+	# oversampled font so an enlarged card's WHOLE text stays crisp (see _apply_scale).
+	if _font_factor > 1.0:
+		_apply_font_oversampling()
 	# Non-empty tooltip_text is required for Godot to invoke _make_custom_tooltip;
 	# fall back to the name so the enlarged preview shows even without a description.
-	var desc := card_instance.data.description
-	tooltip_text = desc if not desc.is_empty() else card_instance.data.display_name
+	# TOUCH devices get no hover tooltip at all (empty text disables it): there's no real hover
+	# there, only emulated-mouse ghosts lingering under fingers — the long-press CardInspector
+	# is the touch path to card detail.
+	if DisplayServer.is_touchscreen_available():
+		tooltip_text = ""
+	else:
+		var desc := card_instance.data.description
+		tooltip_text = desc if not desc.is_empty() else card_instance.data.display_name
 
 
 # Global-space centre of the badge that displays a given stat, so combat VFX can pop a number

@@ -13,15 +13,17 @@ extends RefCounted
 
 const DEFAULTS := {
 	# Combat economy
-	"mana.initial":             1,    # mana crystals on turn 1 (then +1/turn up to mana.max)
-	"mana.max":                 10,   # the mana ceiling the per-turn ramp climbs toward
-	"mana.per_turn":            0,    # flat bonus crystals EVERY turn, stacked on top of the cap
+	"mana.initial":             1,    # mana crystals on turn 1 (then +1/turn, uncapped — mana
+									   # never stops growing; see Combat._begin_round)
+	"mana.max":                 10,   # UNUSED by the ramp since the uncap; still referenced by
+									   # the arcana upgrade tree — needs a redesign or removal
+	"mana.per_turn":            0,    # flat bonus crystals EVERY turn, stacked on the ramp
 	"hand.size.initial":        4,    # cards drawn into the opening hand
 	"draw.per_turn":            1,    # cards drawn at the start of each round
 	# Run economy
 	"gold.initial":             100,  # a run's starting gold
 	"king.max_health":          0,    # bonus added on top of the run King's card health
-	"relic.capacity":           5,    # how many relics a run may hold at once (tunable / moddable)
+	"relic.capacity":           10,   # how many relics a run may hold at once (tunable / moddable)
 	# Encounter rewards
 	"reward.essence":           0,    # bonus essence granted per combat win
 	"reward.king_piece_chance": 0.0,  # chance an Elite also drops a King Piece (0..1)

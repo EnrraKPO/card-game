@@ -65,6 +65,10 @@ func set_card(card: CardUI) -> void:
 		old_parent.remove_child(card)
 	add_child(card)
 	card.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	# The card is anchored to fill this slot — clear its own minimum size so the anchors really
+	# drive it. A carried-over minimum (the hand's card size, or card_ui.tscn's default on a King
+	# placed directly) would overrule the anchors and overflow any slot smaller than it.
+	card.custom_minimum_size = Vector2.ZERO
 	# CardUI._gui_input calls accept_event() on every click release (long-press/tooltip handling),
 	# which marks the event handled and stops it from ever bubbling to this slot's own _gui_input —
 	# MOUSE_FILTER_PASS doesn't help, since Godot only forwards an event to the parent if the child

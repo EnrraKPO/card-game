@@ -3,18 +3,31 @@ extends Control
 
 # Full-screen, tap-to-dismiss card detail overlay: the in-depth view of a card. Opened by
 # long-press on touch (hover tooltips don't exist there) and by RIGHT-CLICK on desktop — the
-# same shared CardTooltip panel (incl. the abilities section), enlarged and centred over a
-# dimmed scrim. Any press anywhere closes it. Built in code (no scene), mirroring the rest of
+# same shared CardTooltip panel (incl. the abilities section), scaled up to span the screen
+# height minus margins (readability is the whole point, especially on mobile) and centred over
+# a dimmed scrim. Any press anywhere closes it. Built in code (no scene), mirroring the rest of
 # the UI. See CardUI._gui_input.
+
+const MARGIN := 36.0       # breathing room between the panel and the screen edges
+const HINT_BLOCK := 46.0   # the close-hint row + its separation, reserved under the panel
+
+# Desktop cap: the card frame/nameplate are authored at the canvas's own 260×340, so past ~2×
+# the preview's textures are just upscaled pixels (fonts stay crisp — they're MSDF). Touch gets
+# no cap: on a phone, readability under a thumb outweighs texel-perfect frame art, so the panel
+# fills the screen height there.
+const DESKTOP_MAX_SCALE := 2.0
 
 var _inst: CardInstance
 var _show_cost: bool
 var _layer: CanvasLayer
 var _dismissing := false
+var _col: VBoxContainer
+var _panel: Control = null
 
 
 # Opens the inspector for `inst` above everything else (combat HUD, menus). `host` only supplies
-# the scene tree; the overlay parents to the tree root so it survives the originating card.
+# the viewport; the overlay parents to that viewport (not the originating card) so it survives
+# the card and stays inside whatever viewport the game runs in (window, embedded, render harness).
 static func open(host: Node, inst: CardInstance, show_cost := true) -> void:
 	if inst == null or host == null or not host.is_inside_tree():
 		return
@@ -25,7 +38,7 @@ static func open(host: Node, inst: CardInstance, show_cost := true) -> void:
 	layer.layer = 200
 	insp._layer = layer
 	layer.add_child(insp)
-	host.get_tree().root.add_child(layer)
+	host.get_viewport().add_child(layer)
 
 
 func _ready() -> void:
@@ -43,21 +56,59 @@ func _ready() -> void:
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(center)
 
-	var col := VBoxContainer.new()
-	col.alignment = BoxContainer.ALIGNMENT_CENTER
-	col.add_theme_constant_override("separation", 14)
-	center.add_child(col)
-
-	var panel := CardTooltip.build(_inst, _show_cost)
-	if panel != null:
-		col.add_child(panel)
+	_col = VBoxContainer.new()
+	_col.alignment = BoxContainer.ALIGNMENT_CENTER
+	_col.add_theme_constant_override("separation", 14)
+	center.add_child(_col)
 
 	var hint := Label.new()
 	hint.text = "Tap anywhere to close" if DisplayServer.is_touchscreen_available() \
 			else "Click anywhere to close"
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint.add_theme_font_size_override("font_size", 20)
 	hint.add_theme_color_override("font_color", Color(0.78, 0.78, 0.85))
-	col.add_child(hint)
+	_col.add_child(hint)
+
+	_mount_panel(_fit_scale())
+
+	# The estimate assumes the card preview is the panel's tallest part. A content-heavy detail
+	# column (long description, many abilities/charms/statuses) can outgrow it — measure the
+	# real panel after a layout pass and rebuild once at the corrected factor.
+	await get_tree().process_frame
+	if _dismissing or not is_inside_tree() or _panel == null:
+		return
+	var target := _target_h()
+	if _panel.size.y > target and _panel.size.y > 0.0:
+		_mount_panel(_fit_scale() * target / _panel.size.y)
+
+
+# (Re)builds the detail panel at `scale`, keeping it above the hint row.
+func _mount_panel(scale: float) -> void:
+	if _panel != null:
+		_panel.queue_free()
+	_panel = CardTooltip.build(_inst, _show_cost, scale)
+	if _panel != null:
+		_col.add_child(_panel)
+		_col.move_child(_panel, 0)
+
+
+func _target_h() -> float:
+	return get_viewport_rect().size.y - 2.0 * MARGIN - HINT_BLOCK
+
+
+# The factor that makes the panel span the screen height minus margins — capped by width so the
+# panel never runs off the sides, by DESKTOP_MAX_SCALE on non-touch (see there), and never below
+# the native 1.0 of the hover tooltip.
+func _fit_scale() -> float:
+	var vp := get_viewport_rect().size
+	# Native panel: preview height / assembled width + the 12px content margins on both sides.
+	var by_h := _target_h() / (CardTooltip.PREVIEW_SIZE.y + 24.0)
+	var native_w := CardTooltip.PREVIEW_SIZE.x + 14.0 + CardTooltip.COLUMN_WIDTH + 24.0
+	var by_w := (vp.x - 2.0 * MARGIN) / native_w
+	var s := minf(by_h, by_w)
+	if not DisplayServer.is_touchscreen_available():
+		s = minf(s, DESKTOP_MAX_SCALE)
+	return maxf(1.0, s)
 
 
 # Any press anywhere dismisses. _input runs ahead of GUI routing, so this fires even when the tap

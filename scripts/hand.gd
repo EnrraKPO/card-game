@@ -42,6 +42,8 @@ var _selected: CardUI  = null
 var _inspected: CardInstance = null
 var _nav_level: NavLevel = NavLevel.HAND
 
+var _card_size: Vector2 = CARD_SIZE   # current card footprint — see set_card_size
+
 var _panel: PanelContainer
 var _hand_box: BoxContainer
 var _gen_box: BoxContainer
@@ -56,18 +58,38 @@ var _desc_name_lbl: Label
 var _desc_text_lbl: Label
 var _desc_preview: CardUI = null
 
+# Pre-layout default for every card presented in the hand bar (hand cards, ability tokens,
+# the Abilities-list entries). The REAL size arrives via set_card_size: combat mirrors its
+# computed board-slot size here, so a card is the same object at the same scale whether it's
+# in the hand or on the field — one card size for the whole screen.
+const CARD_SIZE := Vector2(220, 288)
+
+# How far the hand bar deliberately hangs BELOW the screen's bottom edge (combat pulls its
+# body margin down by this much). The cropped band is dead card frame: the lowest stat gem
+# (the speed badge) ends at ~96% of the card's height — 288×4% ≈ 11.5px of empty border —
+# so 8 crops only frame while leaving the gems a few px of visible clearance.
+const BOTTOM_BLEED := 8.0
+
+# The bar's one vertical pad, above the cards (none below — see build_into). Public because it's
+# a term in combat's shared-card-size solve (_resize_board): bar height = card height + this.
+const PAD_TOP := 6.0
+
 # Card preview shown in the sidebar's description panel, sized to fill the full hand-bar
-# height (235) at the card's native 260:340 aspect ratio — AT LEAST the game's regular card
+# height at the card's native 260:340 aspect ratio — AT LEAST the game's regular card
 # size (160×210, see card_ui.tscn), not a shrunk-down "card inside a card". This is the
 # panel's whole focus; there's no reason for it to be smaller than an ordinary card.
-const DESC_PREVIEW_SIZE := Vector2(180, 235)
+const DESC_PREVIEW_SIZE := Vector2(205, 268)
 
 
 # ── UI construction ──────────────────────────────────────────────────────────────
 
-func build_into(parent: Control) -> void:
+# `left_widget` (optional) is mounted as the bar's LEFTMOST column, spanning the full bar
+# height — combat hands its mana gauge in here, since mana is what the hand spends.
+func build_into(parent: Control, left_widget: Control = null) -> void:
 	_panel = PanelContainer.new()
-	_panel.custom_minimum_size.y = 235.0
+	# Card height + the top pad only — the cards sit flush at the bar's bottom, whose last
+	# BOTTOM_BLEED px hang off-screen (see the consts above).
+	_panel.custom_minimum_size.y = _card_size.y + PAD_TOP
 	parent.add_child(_panel)
 	var panel := _panel
 
@@ -82,13 +104,18 @@ func build_into(parent: Control) -> void:
 	outer_row.size_flags_vertical   = Control.SIZE_EXPAND_FILL
 	panel.add_child(outer_row)
 
+	if left_widget != null:
+		outer_row.add_child(left_widget)
+
 	# Padding inside the hand bar so the first/last card isn't jammed against the screen edge and
-	# the row breathes off the top/bottom of the bar. The scroll (and its cards) live inside this.
+	# the row breathes off the top of the bar. NO bottom padding: the cards sit flush at the bar's
+	# bottom edge so the off-screen bleed (BOTTOM_BLEED) crops only their dead sub-gem frame, not
+	# empty panel. The scroll (and its cards) live inside this.
 	var pad := MarginContainer.new()
-	pad.add_theme_constant_override("margin_left", 28)
-	pad.add_theme_constant_override("margin_right", 28)
-	pad.add_theme_constant_override("margin_top", 12)
-	pad.add_theme_constant_override("margin_bottom", 12)
+	pad.add_theme_constant_override("margin_left", 20)
+	pad.add_theme_constant_override("margin_right", 20)
+	pad.add_theme_constant_override("margin_top", int(PAD_TOP))
+	pad.add_theme_constant_override("margin_bottom", 0)
 	pad.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	pad.size_flags_vertical   = Control.SIZE_EXPAND_FILL
 	outer_row.add_child(pad)
@@ -130,7 +157,8 @@ func build_into(parent: Control) -> void:
 	desc_text_wrap.add_theme_constant_override("margin_left", 14)
 	desc_text_wrap.add_theme_constant_override("margin_top", 10)
 	desc_text_wrap.add_theme_constant_override("margin_right", 10)
-	desc_text_wrap.add_theme_constant_override("margin_bottom", 10)
+	# The panel's last BOTTOM_BLEED px are off-screen — keep the text's clearance above that.
+	desc_text_wrap.add_theme_constant_override("margin_bottom", 10 + int(BOTTOM_BLEED))
 	desc_text_wrap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	desc_text_wrap.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_desc_hbox.add_child(desc_text_wrap)
@@ -168,7 +196,8 @@ func build_into(parent: Control) -> void:
 	nav_wrap.add_theme_constant_override("margin_left", 16)
 	nav_wrap.add_theme_constant_override("margin_right", 16)
 	nav_wrap.add_theme_constant_override("margin_top", 16)
-	nav_wrap.add_theme_constant_override("margin_bottom", 16)
+	# The buttons are interactable, so they must clear the off-screen bleed band entirely.
+	nav_wrap.add_theme_constant_override("margin_bottom", 16 + int(BOTTOM_BLEED))
 	nav_wrap.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	outer_row.add_child(nav_wrap)
 
@@ -230,7 +259,7 @@ func build_into(parent: Control) -> void:
 	# Card-height box with centred text: a bare label's own height won't centre inside the
 	# ScrollContainer (cards only look centred because they fill the row), so the label
 	# claims the same height a card row does and centres its text within it.
-	_no_abilities_lbl.custom_minimum_size.y = 210.0
+	_no_abilities_lbl.custom_minimum_size.y = _card_size.y
 	_no_abilities_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_no_abilities_lbl.visible = false
 	content.add_child(_no_abilities_lbl)
@@ -277,6 +306,7 @@ func _spawn_hand_card(inst: CardInstance) -> void:
 	inst.row = -1
 	inst.col = -1
 	var ui := CardUI.create(inst, true)
+	ui.custom_minimum_size = _card_size
 	_hand_cards.append(ui)
 	_hand_box.add_child(ui)
 	if ui.card_instance.is_spell:
@@ -289,6 +319,28 @@ func _spawn_hand_card(inst: CardInstance) -> void:
 func refresh() -> void:
 	for ui: CardUI in _hand_cards:
 		ui.refresh()
+
+
+# Adopts the board's computed slot size as the hand's card size (combat calls this from
+# _resize_board), resizing every presented card and the bar itself — a hand card and a fielded
+# card are the same object, so they render at the same scale. Changing the bar's height re-fires
+# combat's resize, but that solve reads only inputs this bar can't affect, so the second pass
+# lands on the identical size and stops there (see _resize_board — this invariant is what keeps
+# the two from resize-looping each other).
+func set_card_size(s: Vector2) -> void:
+	if s == _card_size:
+		return
+	_card_size = s
+	if _panel != null:
+		_panel.custom_minimum_size.y = s.y + PAD_TOP
+	if _no_abilities_lbl != null:
+		_no_abilities_lbl.custom_minimum_size.y = s.y
+	for ui: CardUI in _hand_cards:
+		ui.custom_minimum_size = s
+	for ui: CardUI in _gen_cards:
+		ui.custom_minimum_size = s
+	for ui: CardUI in _ability_entries:
+		ui.custom_minimum_size = s
 
 
 # ── Card inspection (description + activated abilities) ───────────────────────────
@@ -399,6 +451,7 @@ func _rebuild_abilities_view() -> void:
 		return
 	for inst: CardInstance in get_ability_units.call():
 		var ui := CardUI.create(inst, false)
+		ui.custom_minimum_size = _card_size
 		ui.draggable = false   # a menu entry, not the board unit — click inspects, never drags
 		ui.pressed.connect(func(): set_inspected(inst))
 		# Hovering an entry glows its board slot, same affordance as hovering an ability token.
@@ -450,6 +503,7 @@ func _rebuild_inspect_view() -> void:
 		tok.source_building = inst
 		tok.ability = ab
 		var ui := AbilityWidget.create_for(tok)
+		ui.custom_minimum_size = _card_size
 		_gen_cards.append(ui)
 		_gen_box.add_child(ui)   # entering the tree runs _ready, so set_generated is safe after
 		ui.set_generated()

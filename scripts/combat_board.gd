@@ -26,6 +26,14 @@ var get_mana: Callable            # func() -> int
 var can_autocast: Callable        # func(CardInstance, SlotUI) -> bool
 var _default_strategy := TargetingNearest.new()
 
+# Zone dressing: each half sits on its own faintly tinted field so "my side / their side" reads
+# at a glance — cool blue for the player, warm red for the enemy. Low alpha keeps the shared
+# backdrop showing through.
+const HALF_PAD := 8.0   # inner inset between a zone's edge and its slot grid (combat's
+						 # _resize_board budgets for it — keep the two in sync)
+const PLAYER_ZONE_BG := Color(0.36, 0.48, 0.78, 0.28)
+const ENEMY_ZONE_BG  := Color(0.72, 0.36, 0.42, 0.24)
+
 
 # ── Initialisation ─────────────────────────────────────────────────────────────
 
@@ -43,14 +51,29 @@ func setup_grids() -> void:
 
 
 func build_section(parent: BoxContainer, is_player: bool) -> void:
-	# A board half: the slot grid, centred in whatever area it's given so leftover space (after
-	# combat sizes the slots to fill) sits as balanced margins rather than a lopsided gap. No
-	# "Player"/"Enemy" label — the near/far halves read for themselves and the label only stole
-	# vertical room.
+	# A board half: a tinted zone panel (see the ZONE_BG consts) holding the slot grid, centred
+	# in whatever area it's given so leftover space (after combat sizes the slots to fill) sits
+	# as balanced margins rather than a lopsided gap. No "Player"/"Enemy" label — the tints and
+	# the near/far halves read for themselves and a label only stole vertical room.
+	var zone := Panel.new()
+	zone.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	zone.size_flags_vertical   = Control.SIZE_EXPAND_FILL
+	var zone_style := StyleBoxFlat.new()
+	zone_style.bg_color = PLAYER_ZONE_BG if is_player else ENEMY_ZONE_BG
+	zone_style.set_corner_radius_all(12)
+	zone.add_theme_stylebox_override("panel", zone_style)
+	parent.add_child(zone)
+
+	var pad := MarginContainer.new()
+	pad.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	pad.add_theme_constant_override("margin_left", int(HALF_PAD))
+	pad.add_theme_constant_override("margin_right", int(HALF_PAD))
+	pad.add_theme_constant_override("margin_top", int(HALF_PAD))
+	pad.add_theme_constant_override("margin_bottom", int(HALF_PAD))
+	zone.add_child(pad)
+
 	var center := CenterContainer.new()
-	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	center.size_flags_vertical   = Control.SIZE_EXPAND_FILL
-	parent.add_child(center)
+	pad.add_child(center)
 
 	var grid := GridContainer.new()
 	grid.columns = BoardData.COLS

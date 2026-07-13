@@ -2,16 +2,22 @@ extends Node
 # Throwaway render harness: boots autoloads + a real save, renders a screen (passed after `--`) into
 # an exact-size SubViewport, saves a PNG. e.g. godot --path . res://_render.tscn -- res://scenes/X.tscn
 const OUT := "res://_render_out.png"
-const RES := Vector2i(1920, 1080)
+var RES := Vector2i(1920, 1080)
 func _ready() -> void:
 	var args := OS.get_cmdline_user_args()
 	var scene_path: String = args[0] if args.size() > 0 else "res://scenes/game_world.tscn"
+	# Optional WxH arg (e.g. "1366x768") overrides the render resolution.
+	for a: String in args:
+		if a.contains("x") and a.split("x")[0].is_valid_int():
+			RES = Vector2i(int(a.split("x")[0]), int(a.split("x")[1]))
 	GameData.select_slot(0)
 	# Screens that read GameData.current_run need an active run with a populated deck.
 	for needs_run in ["combination", "shop", "deck_build", "rest", "relic_event", "event", "combat", "map", "stage_cleared"]:
 		if scene_path.contains(needs_run):
 			GameData.start_new_run()
 			GameData.current_run.charms.append_array(["sharpened", "sturdy", "swift", "warded"])
+			# Combat now shows relics on its own left-edge strip — give it chips to render.
+			GameData.current_run.relics.append_array(["battle_standard", "iron_aegis", "mana_font"])
 			break
 	# Deck builder / viewer need a target deck handed off (normally from the Decks screen).
 	if GameData.current_profile != null:
@@ -69,6 +75,11 @@ func _ready() -> void:
 	sv.add_child(shell)
 	shell.mount(scene_path)
 	await get_tree().process_frame
+	# "inspect": pop the full-screen CardInspector over the scene (a content-rich card).
+	if "inspect" in args:
+		var ci := CardInstance.from_data(CardData.get_card("rook"))
+		ci.owner = 0
+		CardInspector.open(shell, ci)
 	# Upgrades: select a specific tree tab (pass its id after the scene path).
 	if scene_path.contains("upgrades") and args.size() > 1:
 		for n: Node in sv.find_children("*", "Control", true, false):

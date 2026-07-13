@@ -8,7 +8,10 @@ const BATTLE_SPEEDS: Array[float] = [0.5, 1.0, 1.5, 2.0]
 # shield reads as taking the blow first (scaled by battle speed like every other combat beat).
 const SHIELD_LEAD := 0.14
 const RELIC_CUE_LEAD := 0.34   # let a firing relic's chip glint read before its effects' VFX
-const BOARD_HALVES_GAP := 40.0   # the visual gulf between the player half and the enemy half
+const BOARD_HALVES_GAP := 24.0   # the TOTAL gulf between the halves: divider + flanking gaps
+const HALVES_DIVIDER_W := 4.0   # the visible rule standing in the middle of that gulf
+const COL_SEP := 14.0   # board↔hand breathing room; also a term in _resize_board's height budget
+const TOP_MARGIN := 12.0   # the body's top inset; another _resize_board height-budget term
 
 enum Phase { CPU_PLACE, PLAYER_PLACE, COMBAT, TARGETING }
 
@@ -23,12 +26,15 @@ var _enemy_draw_pile: Array = []  # Array[CardInstance]
 
 var _mana_label: Label              # current-mana number on the vertical gauge
 var _mana_chunks_box: VBoxContainer  # one chunk per max-mana point; lit=available, dim=spent
-var _relic_tray: RelicTray   # read-only relic strip in the header; a firing relic glints its chip
+var _relic_tray: RelicTray   # read-only vertical relic strip on the screen's left edge (see
+							  # _build_relic_strip); a firing relic glints its chip
 var _done_btn: Button        # the chunky vertical "Ready" button (right of the board)
 var _speed_btn: Button
 var _battle_speed: float = 1.0   # 100%; reset each combat, cycled by the HUD dial
 
 var _board_row: HBoxContainer   # the two board halves; drives responsive slot sizing on resize
+var _arena_chrome_w: float = 0.0   # side margins + left rail + action column + separations —
+									# the fixed width around the board, _resize_board's width basis
 
 var _hand: Hand
 var _board: CombatBoard
@@ -46,22 +52,13 @@ var _inspected_ui: CardUI = null
 var _ghost_ui: Dictionary = {}   # CardInstance -> CardUI
 
 
+# Combat shows NO Shell header at all — every vertical pixel goes to the board and hand so the
+# cards read bigger (the whole point on mobile). Run info the header carried is redundant here
+# (King HP lives on the King's card; Gold/EXP don't matter mid-fight); relics move to the vertical
+# strip on the left edge (_build_relic_strip); the debug end-combat ✕ moves into the action
+# column. OS-back stays inert — there's no fleeing a fight.
 func get_chrome() -> Dictionary:
-	return {"fields": [ScreenUI.Field.ACT, ScreenUI.Field.HP, ScreenUI.Field.GOLD,
-		ScreenUI.Field.RELICS, ScreenUI.Field.EXP], "exit": _handle_combat_end,
-		"back": Callable(), "debug_close": true}
-
-
-# The relic strip is a live catalog field in the header; grab it here (once Shell has applied the
-# chrome) to glint a firing relic's chip (see _fire) and make it read-only so it never eats combat
-# input. The tray is now Shell's one persistent instance (see [[header-system]]) — Shell already
-# reset interactive to true before this runs, so flipping it back to false here must also rebuild
-# the chips (interactive is baked into each chip's tooltip/click-binding at refresh() time).
-func on_chrome_applied(handles: Dictionary) -> void:
-	_relic_tray = handles.get("fields", {}).get(ScreenUI.Field.RELICS)
-	if _relic_tray != null:
-		_relic_tray.interactive = false
-		_relic_tray.refresh()
+	return {"show_header": false, "back": Callable()}
 
 
 func _ready() -> void:
@@ -208,12 +205,12 @@ func _begin_round() -> void:
 	_turn      += 1
 	# Every number resolves through GameData.value: the player gets the upgraded values, the
 	# enemy reads the raw registry defaults so player upgrades never buff the CPU.
-	# Ramp climbs to the mana.max ceiling (turn-1 start is mana.initial); mana.per_turn is a
-	# flat bonus stacked on top every turn (so it can exceed the soft cap).
+	# The ramp is UNCAPPED by design — mana keeps growing every turn, the whole fight, for both
+	# sides (turn-1 start is mana.initial); mana.per_turn is a flat bonus stacked on top.
 	var ramp := GameData.value("mana.initial") if _turn == 1 else _turn
-	_max_mana   = mini(ramp, GameData.value("mana.max")) + GameData.value("mana.per_turn")
+	_max_mana   = ramp + GameData.value("mana.per_turn")
 	_mana       = _max_mana
-	_enemy_mana = mini(_turn, int(GameAttributes.default_value("mana.max")))
+	_enemy_mana = _turn
 	for _i in GameData.value("draw.per_turn"):
 		_hand.draw_one()
 	_enemy_draw_one()
@@ -856,43 +853,64 @@ func _on_spell_consumed(card_ui: CardUI, cost: int) -> void:
 # ── UI building ────────────────────────────────────────────────────────────────
 
 func _build_ui() -> void:
-	# The shared header (Act/HP/Gold/Relics/EXP) is Shell chrome now, not this screen's concern —
-	# see get_chrome(). This just builds the body: inset off the screen edges, holding the arena + hand.
-	var inset := int(UIScale.safe_inset())
+	# Combat declines the Shell header entirely (see get_chrome), so the body owns the full screen
+	# rect. Margins are pared to the bone — cards read bigger for every pixel reclaimed: sides keep
+	# the touch-safe inset, the top keeps token breathing room, and the BOTTOM is pulled BELOW the
+	# screen edge so the hand bar bleeds off it (only dead card frame is cropped — see
+	# Hand.BOTTOM_BLEED).
+	# Sides run tighter than the app-wide safe inset: combat is starved for horizontal space (the
+	# board is width-limited on 16:9), the left rail is display-only, and the right column's
+	# buttons are big targets well clear of edge-gesture zones.
+	var side := 16 if UIScale.is_compact() else 8
 	var body := MarginContainer.new()
 	body.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	body.add_theme_constant_override("margin_left", inset)
-	body.add_theme_constant_override("margin_right", inset)
-	body.add_theme_constant_override("margin_bottom", inset)
-	body.add_theme_constant_override("margin_top", 14)
+	body.add_theme_constant_override("margin_left", side)
+	body.add_theme_constant_override("margin_right", side)
+	body.add_theme_constant_override("margin_bottom", -int(Hand.BOTTOM_BLEED))
+	body.add_theme_constant_override("margin_top", int(TOP_MARGIN))
 	add_child(body)
 
 	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 16)
+	col.add_theme_constant_override("separation", int(COL_SEP))   # a small visible breath between
+	# the board and the hand bar — flush-to-flush read as one compressed block
 	body.add_child(col)
 
-	# The arena row: mana gauge hugs the LEFT of the board, the two board halves fill the middle, and
-	# the action column (speed + Ready) hugs the RIGHT. Gameplay controls live around the board they
-	# act on. All three stretch to the same height, so the row reads as one balanced band.
+	# The arena row: the relic strip hugs the LEFT of the board (full arena height — room for the
+	# 10-relic capacity at big chip sizes), the two board halves fill the middle, and the action
+	# column (speed + debug ✕ over Ready) hugs the RIGHT. Gameplay controls live around the board
+	# they act on. All three stretch to the same height, so the row reads as one balanced band.
+	# The mana gauge lives in the HAND bar below (its leftmost column) — mana is what the hand
+	# spends, so the readout sits with the cards it pays for.
 	var arena := HBoxContainer.new()
 	arena.size_flags_vertical = SIZE_EXPAND_FILL
-	arena.add_theme_constant_override("separation", 18)
+	arena.add_theme_constant_override("separation", 12)
 	col.add_child(arena)
 
-	arena.add_child(_build_mana_gauge())
+	var relic_strip := _build_relic_strip()
+	arena.add_child(relic_strip)
 
 	_board_row = HBoxContainer.new()
 	_board_row.size_flags_horizontal = SIZE_EXPAND_FILL
 	_board_row.size_flags_vertical = SIZE_EXPAND_FILL
-	_board_row.add_theme_constant_override("separation", int(BOARD_HALVES_GAP))
+	# The halves' gulf is divider + two flanking separations, totalling BOARD_HALVES_GAP (the
+	# width _resize_board budgets for).
+	_board_row.add_theme_constant_override("separation",
+		int((BOARD_HALVES_GAP - HALVES_DIVIDER_W) / 2.0))
 	arena.add_child(_board_row)
 
 	_board.build_section(_board_row, true)
+	_board_row.add_child(_make_halves_divider())
 	_board.build_section(_board_row, false)
 
-	arena.add_child(_build_action_column())
+	var actions := _build_action_column()
+	arena.add_child(actions)
 
-	_hand.build_into(col)
+	# The fixed width flanking the board — _resize_board's width basis (see there for why it must
+	# come from here and not from live container sizes).
+	_arena_chrome_w = side * 2.0 + relic_strip.custom_minimum_size.x \
+		+ actions.custom_minimum_size.x + 2.0 * 12.0
+
+	_hand.build_into(col, _build_mana_gauge())
 
 	# The board fills its area with the biggest cards that fit (recomputed on any resize), instead of
 	# a fixed grid marooned in empty space.
@@ -900,16 +918,63 @@ func _build_ui() -> void:
 	call_deferred("_resize_board")
 
 
-# The vertical mana gauge, hugging the LEFT of the board: one framed component with a "MANA" label
-# in a header cell at the TOP, the chunk stack in the middle (one chunk per point of max mana —
-# spent chunks dim, available ones lit, filling from the bottom), and the current/max count in a
-# matching footer cell at the BOTTOM. Labels and chunks never overlap. _refresh_mana rebuilds the
-# chunk count when max mana ramps and recolours them as mana is spent. Mana is gameplay state, so
-# it sits by the board, not the header.
+# The thin vertical rule between the player and enemy halves — with the zones now tinted in
+# their own colours, this is the hard line the two fields meet at.
+func _make_halves_divider() -> Control:
+	var divider := Panel.new()
+	divider.custom_minimum_size.x = HALVES_DIVIDER_W
+	divider.size_flags_vertical = SIZE_EXPAND_FILL
+	divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.16, 0.18, 0.32, 0.85)
+	sb.set_corner_radius_all(2)
+	divider.add_theme_stylebox_override("panel", sb)
+	return divider
+
+
+# The vertical relic strip, owning the whole left rail: with no header during combat this is
+# where the run's relics live — a full-height column of big chips, count at the top, framed like
+# the mana gauge in the hand bar so the two read as one family. Read-only here (discarding is the
+# map HUD's job), and combat keeps the handle to glint a firing relic's chip (see _fire_run_level).
+func _build_relic_strip() -> Control:
+	var strip := Panel.new()
+	strip.custom_minimum_size.x = 122.0 if UIScale.is_compact() else 92.0
+	strip.size_flags_vertical = SIZE_EXPAND_FILL
+	strip.tooltip_text = "Relics"
+	var track := StyleBoxFlat.new()
+	track.bg_color = ScreenUI.MANA_TRACK_BG
+	track.set_corner_radius_all(12)
+	track.set_border_width_all(2)
+	track.border_color = ScreenUI.MANA_TRACK_BORDER
+	strip.add_theme_stylebox_override("panel", track)
+
+	var pad := MarginContainer.new()
+	pad.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	pad.add_theme_constant_override("margin_left", 4)
+	pad.add_theme_constant_override("margin_right", 4)
+	pad.add_theme_constant_override("margin_top", 8)
+	pad.add_theme_constant_override("margin_bottom", 8)
+	strip.add_child(pad)
+
+	_relic_tray = RelicTray.new()
+	_relic_tray.vertical = true
+	_relic_tray.interactive = false   # display only — chips must never eat combat input
+	pad.add_child(_relic_tray)
+	return strip
+
+
+# The vertical mana gauge, anchoring the LEFT end of the hand bar (full bar height — mana is
+# what the hand spends, so the readout sits with the cards it pays for): one framed component
+# with a "MANA" label in a header cell at the TOP, the chunk stack in the middle (one chunk per
+# point of max mana — spent chunks dim, available ones lit, filling from the bottom), and the
+# current/max count in a matching footer cell at the BOTTOM. Labels and chunks never overlap.
+# _refresh_mana rebuilds the chunk count when max mana ramps and recolours them as mana is
+# spent. The ramp is uncapped, so the chunk floor/separation run tiny — a deep late-game stack
+# thins out instead of overflowing the gauge (the footer count stays the precise read).
 func _build_mana_gauge() -> Control:
 	var compact := UIScale.is_compact()
 	var gauge := Panel.new()
-	gauge.custom_minimum_size.x = 122.0 if compact else 86.0
+	gauge.custom_minimum_size.x = 122.0 if compact else 92.0
 	gauge.size_flags_vertical = SIZE_EXPAND_FILL
 	gauge.tooltip_text = "Mana"
 	var track := StyleBoxFlat.new()
@@ -924,7 +989,8 @@ func _build_mana_gauge() -> Control:
 	pad.add_theme_constant_override("margin_left", 6)
 	pad.add_theme_constant_override("margin_right", 6)
 	pad.add_theme_constant_override("margin_top", 6)
-	pad.add_theme_constant_override("margin_bottom", 6)
+	# The hand bar's last BOTTOM_BLEED px hang off-screen — keep the footer count clear of them.
+	pad.add_theme_constant_override("margin_bottom", 6 + int(Hand.BOTTOM_BLEED))
 	pad.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	gauge.add_child(pad)
 
@@ -948,7 +1014,7 @@ func _build_mana_gauge() -> Control:
 	# The chunk stack fills the middle of the gauge (one Panel per max-mana point).
 	_mana_chunks_box = VBoxContainer.new()
 	_mana_chunks_box.size_flags_vertical = SIZE_EXPAND_FILL
-	_mana_chunks_box.add_theme_constant_override("separation", 5)
+	_mana_chunks_box.add_theme_constant_override("separation", 2)
 	_mana_chunks_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	col.add_child(_mana_chunks_box)
 
@@ -956,7 +1022,7 @@ func _build_mana_gauge() -> Control:
 
 	# Footer cell: the current/max count, in a matching zone at the bottom (never over the chunks).
 	_mana_label = Label.new()
-	_mana_label.add_theme_font_size_override("font_size", 34 if compact else 26)
+	_mana_label.add_theme_font_size_override("font_size", 28 if compact else 22)
 	_mana_label.add_theme_color_override("font_color", Color(0.92, 0.96, 1.0))
 	_mana_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_mana_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -978,20 +1044,39 @@ func _gauge_divider() -> Panel:
 func _make_mana_chunk() -> Panel:
 	var chunk := Panel.new()
 	chunk.size_flags_vertical = SIZE_EXPAND_FILL
-	chunk.custom_minimum_size.y = 8.0   # a floor so many chunks never collapse to nothing
+	chunk.custom_minimum_size.y = 2.0   # a floor so many chunks never collapse to nothing —
+	# tiny, because the uncapped ramp can stack dozens of chunks into the fixed-height gauge
 	chunk.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return chunk
 
 
-# The action column, hugging the RIGHT of the board: the big "Ready" button on top, with the
-# battle-speed toggle tucked at the bottom. Both gameplay controls, kept by the board they drive.
+# The action column, hugging the RIGHT of the board: a thin top row pairing the battle-speed
+# toggle with the debug end-combat ✕ (homeless since the header left the screen), then the big
+# "Ready" button filling everything below. Squashed as narrow as its labels allow — its width
+# comes straight out of the board's card size.
 func _build_action_column() -> Control:
 	var compact := UIScale.is_compact()
 	var col := VBoxContainer.new()
-	col.custom_minimum_size.x = 240.0 if compact else 180.0
-	col.add_theme_constant_override("separation", 14)
+	col.custom_minimum_size.x = 200.0 if compact else 148.0
+	col.add_theme_constant_override("separation", 10)
 
-	# The key touch target — "Ready" — a chunky vertical button filling the top of the column.
+	# Battle-speed toggle — cycles the BATTLE_SPEEDS percentages, applied live as
+	# Engine.time_scale — thin, beside the debug ✕ (which fixes the row's height).
+	var top_row := HBoxContainer.new()
+	top_row.add_theme_constant_override("separation", 8)
+	col.add_child(top_row)
+
+	_speed_btn = ScreenUI.action_button("", _on_speed_pressed, Vector2.ZERO, 26 if compact else 20)
+	_speed_btn.size_flags_horizontal = SIZE_EXPAND_FILL
+	_speed_btn.size_flags_vertical = SIZE_EXPAND_FILL
+	top_row.add_child(_speed_btn)
+	_refresh_speed_btn()
+
+	var debug_close := ScreenUI.close_button(_handle_combat_end, true)
+	debug_close.tooltip_text = "Debug: end combat"
+	top_row.add_child(debug_close)
+
+	# The key touch target — "Ready" — a chunky vertical button filling the rest of the column.
 	# Green, from the glossy handoff's own "Ready" palette entry.
 	_done_btn = ScreenUI.action_button("", _on_done_pressed, Vector2.ZERO,
 		44 if compact else 30, ScreenUI.CHROME_READY)
@@ -1000,39 +1085,47 @@ func _build_action_column() -> Control:
 	_done_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	col.add_child(_done_btn)
 	_refresh_done_btn()
-
-	# Battle-speed toggle — cycles 1x → 2x → 4x, applied live as Engine.time_scale — at the bottom.
-	_speed_btn = ScreenUI.action_button("", _on_speed_pressed, Vector2.ZERO, 32 if compact else 20)
-	_speed_btn.custom_minimum_size.y = 96.0 if compact else 56.0
-	_speed_btn.size_flags_horizontal = SIZE_EXPAND_FILL
-	col.add_child(_speed_btn)
-	_refresh_speed_btn()
 	return col
 
 
-# Sizes every board slot to the largest card that fits the current board area (keeping the card
-# aspect), so the two 4×3 halves fill the space with big, tappable cards and even gaps — instead of
-# a fixed grid stranded in emptiness. Runs on any resize (window / form factor). Idempotent: bails
-# when the target size is unchanged, so setting the slots can't feed back into the resized signal.
+# Sizes every board slot AND the hand bar's cards to the largest shared card size that fits —
+# one card size for the whole screen, keeping the card aspect, so the halves fill their space
+# with big, tappable cards and even gaps. Runs on any resize (window / form factor).
+#
+# CRITICAL: the solve reads NOTHING the cards themselves influence — only the screen size and
+# the fixed chrome around the board (_arena_chrome_w, margins, pads). Live container sizes are
+# poisoned in both directions: the height feeds back through Hand.set_card_size (panel height →
+# board area → here again; integer rounding can cycle that loop forever — a layout-recursion
+# crash on combat entry at certain window sizes), and _board_row's width equals its CONTENT
+# minimum whenever the slots overflow a narrow window, so the board could never shrink back to
+# fit. From stable inputs, re-entry recomputes the identical target and stops.
 func _resize_board() -> void:
-	if _board_row == null:
-		return
-	var area := _board_row.size
-	if area.x < 1.0 or area.y < 1.0:
+	if size.x < 1.0 or size.y < 1.0 or _arena_chrome_w <= 0.0:
 		return
 
 	var cols := BoardData.COLS
 	var rows := BoardData.ROWS
 	var gap := float(BoardData.SLOT_GAP)
-	# Width splits across the two halves (minus the gulf between them); each half holds `cols`.
-	var half_w := (area.x - BOARD_HALVES_GAP) / 2.0
-	var slot_w_by_width := (half_w - (cols - 1) * gap) / float(cols)
-	var slot_w_by_height := ((area.y - (rows - 1) * gap) / float(rows)) / BoardData.SLOT_ASPECT
-	var slot_w := floorf(minf(slot_w_by_width, slot_w_by_height))
+	# Width splits across the two halves (minus the gulf between them); each half holds `cols`
+	# inside its zone panel's inner pad.
+	var half_w := (size.x - _arena_chrome_w - BOARD_HALVES_GAP) / 2.0
+	var slot_w_by_width := (half_w - 2.0 * CombatBoard.HALF_PAD - (cols - 1) * gap) / float(cols)
+	# Height: the body's column carries the board's `rows` cards + the hand's one card (same
+	# size), the row gaps, the zone panels' vertical pad, the column separation, and the hand
+	# bar's top pad. The hand bar's bottom edge deliberately sits BOTTOM_BLEED below the screen
+	# (see _build_ui).
+	var avail_h := size.y - TOP_MARGIN + Hand.BOTTOM_BLEED
+	var budget := avail_h - COL_SEP - Hand.PAD_TOP - 2.0 * CombatBoard.HALF_PAD \
+		- (rows - 1) * gap
+	var slot_h := budget / float(rows + 1)
+	var slot_w := floorf(minf(slot_w_by_width, slot_h / BoardData.SLOT_ASPECT))
 	if slot_w < 1.0:
 		return
 	var slot_size := Vector2(slot_w, floorf(slot_w * BoardData.SLOT_ASPECT))
 
+	# Before the slot bail — the hand can be stale even when the slots are already correct
+	# (it no-ops when unchanged).
+	_hand.set_card_size(slot_size)
 	if (_board.player_slots[0][0] as SlotUI).custom_minimum_size == slot_size:
 		return   # already correct → stop before we trigger another resize
 	for r in rows:
