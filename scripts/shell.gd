@@ -85,8 +85,72 @@ func _ready() -> void:
 	_footer_bar.visible = false
 	_outer.add_child(_footer_bar)
 
+	_build_dev_overlay()
+
 	if auto_start:
 		Nav.goto("res://scenes/entry_screen.tscn")
+
+
+# The two placeholder-mute dev toggles, as an always-on-top overlay reachable from EVERY screen
+# (added as a direct Shell child, above _outer, so it floats over content — combat included,
+# which has no header). Each toggle's PRESSED state = muting/hiding is ACTIVE (the DevFlags
+# placeholder flag is off), matching the "both active by default" default. The same flags flip
+# via F7/F8; DevFlags.changed keeps the buttons in sync either way.
+var _dev_sfx_btn: GlossyButton
+var _dev_vfx_btn: GlossyButton
+
+const _DEV_BTN := Vector2(190, 44)
+
+func _build_dev_overlay() -> void:
+	# A dev affordance — present in the editor and debug exports, gone from a release export (where
+	# placeholders are off anyway). The keyboard F7/F8 toggles remain regardless.
+	if not OS.is_debug_build():
+		return
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	# Pinned to the left edge, lifted high enough to clear the tallest bottom chrome any screen
+	# puts there — combat's hand bar (~250px, the screen where you most want to toggle these while
+	# judging feel), which also clears every menu screen's footer. The dev tool must never sit
+	# under gameplay chrome it would steal clicks from. Explicit anchors + offsets give it a real
+	# fixed rect — a zero-size anchored Container wouldn't lay its buttons out.
+	row.anchor_left = 0.0; row.anchor_right = 0.0
+	row.anchor_top = 1.0;  row.anchor_bottom = 1.0
+	row.offset_left = 12.0
+	row.offset_right = 12.0 + _DEV_BTN.x * 2.0 + 8.0
+	row.offset_bottom = -252.0
+	row.offset_top = -252.0 - _DEV_BTN.y
+	add_child(row)
+
+	_dev_sfx_btn = ScreenUI.action_button("", _on_dev_sfx_toggled, _DEV_BTN, 15,
+			ScreenUI.CHROME_DEBUG)
+	_dev_sfx_btn.toggle_mode = true
+	row.add_child(_dev_sfx_btn)
+
+	_dev_vfx_btn = ScreenUI.action_button("", _on_dev_vfx_toggled, _DEV_BTN, 15,
+			ScreenUI.CHROME_DEBUG)
+	_dev_vfx_btn.toggle_mode = true
+	row.add_child(_dev_vfx_btn)
+
+	DevFlags.changed.connect(_sync_dev_overlay)
+	_sync_dev_overlay()
+
+
+func _on_dev_sfx_toggled() -> void:
+	# Pressed = muting active = placeholder SFX off.
+	DevFlags.set_placeholder_sfx(not _dev_sfx_btn.button_pressed)
+
+
+func _on_dev_vfx_toggled() -> void:
+	DevFlags.set_placeholder_vfx(not _dev_vfx_btn.button_pressed)
+
+
+func _sync_dev_overlay() -> void:
+	var sfx_muted := not DevFlags.placeholder_sfx
+	var vfx_hidden := not DevFlags.placeholder_vfx
+	_dev_sfx_btn.button_pressed = sfx_muted
+	_dev_vfx_btn.button_pressed = vfx_hidden
+	_dev_sfx_btn.text = "Debug SFX: Muted" if sfx_muted else "Debug SFX: On"
+	_dev_vfx_btn.text = "Debug VFX: Hidden" if vfx_hidden else "Debug VFX: On"
 
 
 # Mounts the scene at `scene_path` as the current content and applies its declared chrome. Content

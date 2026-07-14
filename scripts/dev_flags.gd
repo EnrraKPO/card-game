@@ -2,11 +2,15 @@ extends Node
 
 # Development toggles that must survive restarts — currently the two PLACEHOLDER switches:
 # whether placeholder SFX (synth blips for sound events without a real asset) and placeholder
-# VFX (library entries not yet given a designed look) actually play. Both default ON — the
-# placeholders exist to prove hookups — and can be muted at will when their noise gets in the
-# way of judging the real content:
+# VFX (library entries not yet given a designed look) actually play. Both default OFF now that
+# the game is fully cue-populated — the placeholder noise gets in the way of judging the real
+# feel, so the default experience is clean and only real assets/designed looks play. Turn them
+# back ON to audition placeholder COVERAGE (which cues have a hookup at all):
 #
 #   F7 toggles placeholder SFX          F8 toggles placeholder VFX
+#
+# and the same two toggles live as on-screen dev buttons (see Shell._build_dev_overlay), whose
+# "active" state means muting/hiding is ON (i.e. the placeholder flag is off).
 #
 # Persisted to user://dev_flags.json. Consulted by Sfx (see Sfx.play/_placeholder path) and
 # Vfx (see Vfx.play/attach) — the flags only gate PLACEHOLDERS; events with real assets or
@@ -16,8 +20,8 @@ signal changed
 
 const _PATH := "user://dev_flags.json"
 
-var placeholder_sfx: bool = true
-var placeholder_vfx: bool = true
+var placeholder_sfx: bool = false
+var placeholder_vfx: bool = false
 
 
 func _ready() -> void:
@@ -32,8 +36,8 @@ func _load() -> void:
 	if json.parse(f.get_as_text()) != OK or not (json.data is Dictionary):
 		return
 	var d: Dictionary = json.data
-	placeholder_sfx = bool(d.get("placeholder_sfx", true))
-	placeholder_vfx = bool(d.get("placeholder_vfx", true))
+	placeholder_sfx = bool(d.get("placeholder_sfx", false))
+	placeholder_vfx = bool(d.get("placeholder_vfx", false))
 
 
 func _save() -> void:
