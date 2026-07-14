@@ -4,7 +4,9 @@
 		"display_name": "Health Damage",
 		"category": "combat",
 		"behavior": "burst",
-		"params": { "color": "ff4d4d" },
+		"params": {
+			"color": "ff4d4d"
+		},
 		"placeholder": false,
 		"concept": "Damage landing on a unit's health — the core negative beat of combat; must read instantly and stack cleanly when many units are hit at once.",
 		"explanation": "IMPLEMENTED (VFXPlayer/VFXEffectHealthDamage): a red impact flash on the card with a floating \"-N\" number; the card's HP snaps at the hit.",
@@ -15,7 +17,9 @@
 		"display_name": "Shield Hit",
 		"category": "combat",
 		"behavior": "flash",
-		"params": { "color": "7fd4ff" },
+		"params": {
+			"color": "7fd4ff"
+		},
 		"placeholder": false,
 		"concept": "An attack absorbed by a unit's shield — defense working; visually distinct from health damage so mitigation reads at a glance.",
 		"explanation": "IMPLEMENTED (VFXEffectShieldHit): a cyan shield flash over the card with the absorbed amount floating off.",
@@ -26,7 +30,9 @@
 		"display_name": "Shield Restored",
 		"category": "combat",
 		"behavior": "pulse",
-		"params": { "color": "7fd4ff" },
+		"params": {
+			"color": "7fd4ff"
+		},
 		"placeholder": false,
 		"concept": "Shield points granted to a unit — protection arriving; the positive mirror of the shield hit.",
 		"explanation": "IMPLEMENTED (VFXEffectShieldRestored): a cyan bloom over the card with a \"+N\" shield number.",
@@ -37,7 +43,9 @@
 		"display_name": "Heal",
 		"category": "combat",
 		"behavior": "pulse",
-		"params": { "color": "4dff6b" },
+		"params": {
+			"color": "4dff6b"
+		},
 		"placeholder": false,
 		"concept": "Health restored to a unit — relief; warm and soft against combat's percussive hits.",
 		"explanation": "IMPLEMENTED (VFXEffectHeal): a green glow swell on the card with a floating \"+N\".",
@@ -48,7 +56,9 @@
 		"display_name": "Stat Buff",
 		"category": "combat",
 		"behavior": "sparkle",
-		"params": { "color": "ffd94d" },
+		"params": {
+			"color": "ffd94d"
+		},
 		"placeholder": false,
 		"concept": "A stat raised on a unit (attack/speed/max health) — empowerment; golden and upward.",
 		"explanation": "IMPLEMENTED (VFXEffectBuff): golden upward sparkle on the card with the stat delta floating off.",
@@ -59,7 +69,9 @@
 		"display_name": "Stat Debuff",
 		"category": "combat",
 		"behavior": "flash",
-		"params": { "color": "c76bff" },
+		"params": {
+			"color": "c76bff"
+		},
 		"placeholder": false,
 		"concept": "A stat lowered on a unit — sapping; violet and downward, the buff's shadow.",
 		"explanation": "IMPLEMENTED (VFXEffectDebuff): a violet downward smear on the card with the negative delta floating off.",
@@ -70,7 +82,9 @@
 		"display_name": "Unit Death",
 		"category": "combat",
 		"behavior": "dissolve",
-		"params": { "color": "26203a" },
+		"params": {
+			"color": "26203a"
+		},
 		"placeholder": false,
 		"concept": "A unit leaving the board at zero health — the removal must feel physical, and its slot must clearly open up.",
 		"explanation": "IMPLEMENTED (VFXEffectDeath): the card darkens, collapses and fades out of its slot.",
@@ -81,7 +95,9 @@
 		"display_name": "Card Placed",
 		"category": "combat",
 		"behavior": "ring",
-		"params": { "color": "ffe9a8" },
+		"params": {
+			"color": "ffe9a8"
+		},
 		"placeholder": false,
 		"concept": "A card landing on a board slot — arrival; grounds the placement and confirms the slot taken.",
 		"explanation": "IMPLEMENTED (VFXEffectCardPlaced): a settling flash/ring where the card lands.",
@@ -92,7 +108,9 @@
 		"display_name": "Projectile — Orb",
 		"category": "combat",
 		"behavior": "travel",
-		"params": { "color": "ff8026" },
+		"params": {
+			"color": "ff8026"
+		},
 		"placeholder": false,
 		"concept": "Triggered/spell direct damage flying from its source to its target — causality made visible: THIS unit hurt THAT one.",
 		"explanation": "IMPLEMENTED (VFXEffectProjectile ORB): a round glowing ball on a straight line; impact flash + \"-N HP\" on arrival.",
@@ -103,7 +121,9 @@
 		"display_name": "Projectile — Bolt",
 		"category": "combat",
 		"behavior": "travel",
-		"params": { "color": "a6e5ff" },
+		"params": {
+			"color": "a6e5ff"
+		},
 		"placeholder": false,
 		"concept": "A ranged unit's auto-attack shot — physical ballistics, distinct from magic orbs.",
 		"explanation": "IMPLEMENTED (VFXEffectProjectile BOLT): a sharp streak on a gravity arc, nosing along its flight path with a fading trail; the caller resolves the damage.",
@@ -114,7 +134,9 @@
 		"display_name": "Source Glint",
 		"category": "combat",
 		"behavior": "glint",
-		"params": { "color": "fff2cc" },
+		"params": {
+			"color": "fff2cc"
+		},
 		"placeholder": false,
 		"concept": "The card whose ability fired flares once before its effects land — the CAUSE half of the cause→effect read.",
 		"explanation": "IMPLEMENTED (VFXEffectSourceGlint): a bright sheen flare over the acting card.",
@@ -125,7 +147,9 @@
 		"display_name": "Target Mark",
 		"category": "combat",
 		"behavior": "reticle",
-		"params": { "color": "ffe14d" },
+		"params": {
+			"color": "ffe14d"
+		},
 		"placeholder": false,
 		"concept": "A card singled out by an effect gets a reticle before the hit lands — the eye arrives before the impact.",
 		"explanation": "IMPLEMENTED (VFXEffectTargetMark): tinted corner brackets snap onto the card, colour-coded by what's about to happen to it.",
@@ -136,7 +160,9 @@
 		"display_name": "Miss",
 		"category": "combat",
 		"behavior": "float_label",
-		"params": { "color": "cfd4e0" },
+		"params": {
+			"color": "cfd4e0"
+		},
 		"placeholder": false,
 		"concept": "A negated attack (e.g. Blind) — the absence of damage needs a positive cue or it reads as a bug.",
 		"explanation": "IMPLEMENTED (VFXEffectMiss): a grey \"Miss\" label floats off the would-be victim in place of a damage number.",
@@ -147,7 +173,9 @@
 		"display_name": "Forge Combine Swirl",
 		"category": "lab",
 		"behavior": "sparkle",
-		"params": { "color": "b18cff" },
+		"params": {
+			"color": "b18cff"
+		},
 		"sustained": true,
 		"placeholder": false,
 		"concept": "The Forge's reaction while a card/charm is dragged near a valid combine target — chemistry in progress, paired with the mixing drone.",
@@ -159,20 +187,24 @@
 		"display_name": "Button Attention Glow",
 		"category": "ui",
 		"behavior": "glow",
-		"params": { "color": "ffd94d", "duration": 0.85 },
+		"params": {
+			"color": "ffd94d",
+			"duration": 0.85
+		},
 		"sustained": true,
 		"placeholder": false,
 		"concept": "A button that currently rewards pressing (something is actionable RIGHT NOW) breathes light — invitation, not alarm.",
 		"explanation": "IMPLEMENTED (GlossyButton.set_glow — candidate to migrate here): the button's tint gently breathes toward white and back, ~1.7s cycle.",
 		"prompt": "Sprite sheet of a soft golden halo breathing around a rounded rectangle, gentle pulsing outer glow, 8 frames on transparent background, 2d game effect"
 	},
-
 	{
 		"id": "projectile_fire",
 		"display_name": "Fire Projectile",
 		"category": "combat",
 		"behavior": "travel",
-		"params": { "color": "ff5a1f" },
+		"params": {
+			"color": "ff5a1f"
+		},
 		"placeholder": true,
 		"concept": "Fire-element direct damage in flight — the element must be readable mid-air, before the impact explains it.",
 		"explanation": "A roiling fireball with an ember trail; impact blooms into a brief flame burst.",
@@ -183,7 +215,9 @@
 		"display_name": "Water Projectile",
 		"category": "combat",
 		"behavior": "travel",
-		"params": { "color": "2f9dff" },
+		"params": {
+			"color": "2f9dff"
+		},
 		"placeholder": true,
 		"concept": "Water-element direct damage in flight — fluid and heavy, clearly not fire's crackle.",
 		"explanation": "A coherent water globule stretching along its flight, droplets shedding; impact splashes outward.",
@@ -194,7 +228,9 @@
 		"display_name": "Air Projectile",
 		"category": "combat",
 		"behavior": "travel",
-		"params": { "color": "bfe8e0" },
+		"params": {
+			"color": "bfe8e0"
+		},
 		"placeholder": true,
 		"concept": "Air-element direct damage in flight — fast, thin, almost invisible; speed is the identity.",
 		"explanation": "A compressed wind lance with spiral vortex lines; impact is a sharp radial gust.",
@@ -205,7 +241,9 @@
 		"display_name": "Earth Projectile",
 		"category": "combat",
 		"behavior": "travel",
-		"params": { "color": "b07a3d" },
+		"params": {
+			"color": "b07a3d"
+		},
 		"placeholder": true,
 		"concept": "Earth-element direct damage in flight — mass and inevitability; slower-reading, heavier.",
 		"explanation": "A tumbling shard of rock trailing grit; impact cracks into rubble fragments.",
@@ -216,7 +254,9 @@
 		"display_name": "Darkness Projectile",
 		"category": "combat",
 		"behavior": "travel",
-		"params": { "color": "7a3dcc" },
+		"params": {
+			"color": "7a3dcc"
+		},
 		"placeholder": true,
 		"concept": "Darkness-element direct damage in flight — wrong-feeling, light-eating; unease in motion.",
 		"explanation": "A void bolt that darkens rather than glows, purple-black wisps peeling off; impact implodes before it bursts.",
@@ -227,19 +267,295 @@
 		"display_name": "Light Projectile",
 		"category": "combat",
 		"behavior": "travel",
-		"params": { "color": "fff3b0" },
+		"params": {
+			"color": "fff3b0"
+		},
 		"placeholder": true,
 		"concept": "Light-element direct damage in flight — radiant judgment; clean, bright, unmistakably holy.",
 		"explanation": "A brilliant lance of light with lens-flare cross glints; impact is a white-gold flash.",
 		"prompt": "Sprite sheet of a radiant light lance projectile, brilliant white-gold beam with cross-shaped glints, 8 frames on transparent background, 2d game effect"
 	},
-
+	{
+		"id": "projectile_air_air",
+		"display_name": "Pure Air Projectile",
+		"category": "combat",
+		"behavior": "travel",
+		"params": {
+			"color": "dff4f0"
+		},
+		"placeholder": true,
+		"concept": "Pure Air-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
+		"explanation": "In flight: a compressed sphere of pure whirling wind, layered cyclone rings spinning around a clear core.",
+		"prompt": "Sprite sheet of a projectile: a compressed sphere of pure whirling wind, layered cyclone rings spinning around a clear core, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "projectile_air_darkness",
+		"display_name": "Miasma Projectile",
+		"category": "combat",
+		"behavior": "travel",
+		"params": {
+			"color": "8d79b8"
+		},
+		"placeholder": true,
+		"concept": "Miasma-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
+		"explanation": "In flight: a drifting glob of toxic fog, murky violet-green vapor coiling and shedding sickly tendrils.",
+		"prompt": "Sprite sheet of a projectile: a drifting glob of toxic fog, murky violet-green vapor coiling and shedding sickly tendrils, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "projectile_air_earth",
+		"display_name": "Sand Projectile",
+		"category": "combat",
+		"behavior": "travel",
+		"params": {
+			"color": "d9b36b"
+		},
+		"placeholder": true,
+		"concept": "Sand-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
+		"explanation": "In flight: a hissing spiral of driven sand, golden grit streaming in a tight sandstorm lance.",
+		"prompt": "Sprite sheet of a projectile: a hissing spiral of driven sand, golden grit streaming in a tight sandstorm lance, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "projectile_air_fire",
+		"display_name": "Lightning Projectile",
+		"category": "combat",
+		"behavior": "travel",
+		"params": {
+			"color": "ffe94d"
+		},
+		"placeholder": true,
+		"concept": "Lightning-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
+		"explanation": "In flight: a jagged lightning bolt, forked electric arcs crackling and snapping along its path.",
+		"prompt": "Sprite sheet of a projectile: a jagged lightning bolt, forked electric arcs crackling and snapping along its path, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "projectile_air_light",
+		"display_name": "Angelic Projectile",
+		"category": "combat",
+		"behavior": "travel",
+		"params": {
+			"color": "fff0cf"
+		},
+		"placeholder": true,
+		"concept": "Angelic-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
+		"explanation": "In flight: a soaring lance of feathered radiance, white wing-like light trails streaming behind.",
+		"prompt": "Sprite sheet of a projectile: a soaring lance of feathered radiance, white wing-like light trails streaming behind, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "projectile_air_water",
+		"display_name": "Storm Projectile",
+		"category": "combat",
+		"behavior": "travel",
+		"params": {
+			"color": "5b8fd4"
+		},
+		"placeholder": true,
+		"concept": "Storm-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
+		"explanation": "In flight: a churning squall orb, dark rain bands and small lightning flickers wrapped in wind.",
+		"prompt": "Sprite sheet of a projectile: a churning squall orb, dark rain bands and small lightning flickers wrapped in wind, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "projectile_darkness_darkness",
+		"display_name": "Pure Darkness Projectile",
+		"category": "combat",
+		"behavior": "travel",
+		"params": {
+			"color": "3d2a66"
+		},
+		"placeholder": true,
+		"concept": "Pure Darkness-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
+		"explanation": "In flight: a rift of absolute void, a light-swallowing black core ringed by collapsing purple wisps.",
+		"prompt": "Sprite sheet of a projectile: a rift of absolute void, a light-swallowing black core ringed by collapsing purple wisps, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "projectile_darkness_earth",
+		"display_name": "Stone Projectile",
+		"category": "combat",
+		"behavior": "travel",
+		"params": {
+			"color": "6e6478"
+		},
+		"placeholder": true,
+		"concept": "Stone-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
+		"explanation": "In flight: a hurled shard of obsidian, glassy black rock trailing slivers of shadow.",
+		"prompt": "Sprite sheet of a projectile: a hurled shard of obsidian, glassy black rock trailing slivers of shadow, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "projectile_darkness_fire",
+		"display_name": "Demonic Projectile",
+		"category": "combat",
+		"behavior": "travel",
+		"params": {
+			"color": "b0281f"
+		},
+		"placeholder": true,
+		"concept": "Demonic-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
+		"explanation": "In flight: a snarling hellfire bolt, black-cored crimson flames with ember claws raking the air.",
+		"prompt": "Sprite sheet of a projectile: a snarling hellfire bolt, black-cored crimson flames with ember claws raking the air, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "projectile_darkness_light",
+		"display_name": "Undead Projectile",
+		"category": "combat",
+		"behavior": "travel",
+		"params": {
+			"color": "9fbf8f"
+		},
+		"placeholder": true,
+		"concept": "Undead-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
+		"explanation": "In flight: a pale grave-light orb, sickly white-green glow flickering like a will-o-wisp.",
+		"prompt": "Sprite sheet of a projectile: a pale grave-light orb, sickly white-green glow flickering like a will-o-wisp, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "projectile_darkness_water",
+		"display_name": "Poison Projectile",
+		"category": "combat",
+		"behavior": "travel",
+		"params": {
+			"color": "7ddb4a"
+		},
+		"placeholder": true,
+		"concept": "Poison-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
+		"explanation": "In flight: a lobbed venom glob, viscous toxic green liquid stretching and dripping in flight.",
+		"prompt": "Sprite sheet of a projectile: a lobbed venom glob, viscous toxic green liquid stretching and dripping in flight, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "projectile_earth_earth",
+		"display_name": "Pure Earth Projectile",
+		"category": "combat",
+		"behavior": "travel",
+		"params": {
+			"color": "8f6a3d"
+		},
+		"placeholder": true,
+		"concept": "Pure Earth-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
+		"explanation": "In flight: a massive bedrock boulder, dense brown stone tumbling with slow inevitable weight.",
+		"prompt": "Sprite sheet of a projectile: a massive bedrock boulder, dense brown stone tumbling with slow inevitable weight, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "projectile_earth_fire",
+		"display_name": "Magma Projectile",
+		"category": "combat",
+		"behavior": "travel",
+		"params": {
+			"color": "ff7326"
+		},
+		"placeholder": true,
+		"concept": "Magma-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
+		"explanation": "In flight: a molten magma glob, orange-hot liquid rock with a cooling black crust cracking in flight.",
+		"prompt": "Sprite sheet of a projectile: a molten magma glob, orange-hot liquid rock with a cooling black crust cracking in flight, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "projectile_earth_light",
+		"display_name": "Nature Projectile",
+		"category": "combat",
+		"behavior": "travel",
+		"params": {
+			"color": "6fbf4a"
+		},
+		"placeholder": true,
+		"concept": "Nature-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
+		"explanation": "In flight: a seed of verdant light, spiraling leaves and vines growing along its flight path.",
+		"prompt": "Sprite sheet of a projectile: a seed of verdant light, spiraling leaves and vines growing along its flight path, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "projectile_earth_water",
+		"display_name": "Clay Projectile",
+		"category": "combat",
+		"behavior": "travel",
+		"params": {
+			"color": "b58a66"
+		},
+		"placeholder": true,
+		"concept": "Clay-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
+		"explanation": "In flight: a spinning slug of wet clay, earthen mass deforming and reshaping as it flies.",
+		"prompt": "Sprite sheet of a projectile: a spinning slug of wet clay, earthen mass deforming and reshaping as it flies, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "projectile_fire_fire",
+		"display_name": "Pure Fire Projectile",
+		"category": "combat",
+		"behavior": "travel",
+		"params": {
+			"color": "ff8c1a"
+		},
+		"placeholder": true,
+		"concept": "Pure Fire-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
+		"explanation": "In flight: a white-hot inferno sphere, layered flame shells roaring around a blinding core.",
+		"prompt": "Sprite sheet of a projectile: a white-hot inferno sphere, layered flame shells roaring around a blinding core, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "projectile_fire_light",
+		"display_name": "Spirit Projectile",
+		"category": "combat",
+		"behavior": "travel",
+		"params": {
+			"color": "ffdf9e"
+		},
+		"placeholder": true,
+		"concept": "Spirit-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
+		"explanation": "In flight: an ethereal soul-flame, translucent gold-white fire that ripples without smoke.",
+		"prompt": "Sprite sheet of a projectile: an ethereal soul-flame, translucent gold-white fire that ripples without smoke, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "projectile_fire_water",
+		"display_name": "Steam Projectile",
+		"category": "combat",
+		"behavior": "travel",
+		"params": {
+			"color": "cfd8dc"
+		},
+		"placeholder": true,
+		"concept": "Steam-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
+		"explanation": "In flight: a scalding steam jet, pale billowing vapor under pressure with hot droplet spray.",
+		"prompt": "Sprite sheet of a projectile: a scalding steam jet, pale billowing vapor under pressure with hot droplet spray, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "projectile_light_light",
+		"display_name": "Pure Light Projectile",
+		"category": "combat",
+		"behavior": "travel",
+		"params": {
+			"color": "fffbe0"
+		},
+		"placeholder": true,
+		"concept": "Pure Light-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
+		"explanation": "In flight: a beam-lance of absolute radiance, pure white light with prismatic edge glints.",
+		"prompt": "Sprite sheet of a projectile: a beam-lance of absolute radiance, pure white light with prismatic edge glints, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "projectile_light_water",
+		"display_name": "Rainbow Projectile",
+		"category": "combat",
+		"behavior": "travel",
+		"params": {
+			"color": "c77fff"
+		},
+		"placeholder": true,
+		"concept": "Rainbow-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
+		"explanation": "In flight: a prismatic spray arc, refracting droplets splitting light into a trailing rainbow band.",
+		"prompt": "Sprite sheet of a projectile: a prismatic spray arc, refracting droplets splitting light into a trailing rainbow band, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "projectile_water_water",
+		"display_name": "Pure Water Projectile",
+		"category": "combat",
+		"behavior": "travel",
+		"params": {
+			"color": "2f7fd9"
+		},
+		"placeholder": true,
+		"concept": "Pure Water-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
+		"explanation": "In flight: a deep-tide sphere, layered currents circulating inside a heavy translucent globe.",
+		"prompt": "Sprite sheet of a projectile: a deep-tide sphere, layered currents circulating inside a heavy translucent globe, 8 frames on transparent background, 2d game effect"
+	},
 	{
 		"id": "impact_fire",
 		"display_name": "Fire Impact",
 		"category": "combat",
 		"behavior": "burst",
-		"params": { "color": "ff5a1f" },
+		"params": {
+			"color": "ff5a1f"
+		},
 		"placeholder": true,
 		"concept": "Fire damage landing — the projectile's payoff, also used for fire effects that don't travel.",
 		"explanation": "A flame burst with embers scattering and a short-lived scorch bloom.",
@@ -250,7 +566,9 @@
 		"display_name": "Water Impact",
 		"category": "combat",
 		"behavior": "burst",
-		"params": { "color": "2f9dff" },
+		"params": {
+			"color": "2f9dff"
+		},
 		"placeholder": true,
 		"concept": "Water damage landing — a drenching splash; cold, heavy, momentary.",
 		"explanation": "A radial splash of droplets with a brief soaked sheen on the target.",
@@ -261,7 +579,9 @@
 		"display_name": "Air Impact",
 		"category": "combat",
 		"behavior": "burst",
-		"params": { "color": "bfe8e0" },
+		"params": {
+			"color": "bfe8e0"
+		},
 		"placeholder": true,
 		"concept": "Air damage landing — a slicing gust; the hit is felt as displacement, not heat.",
 		"explanation": "A sharp radial gust with curved slice lines and scattered leaves-of-wind.",
@@ -272,7 +592,9 @@
 		"display_name": "Earth Impact",
 		"category": "combat",
 		"behavior": "burst",
-		"params": { "color": "b07a3d" },
+		"params": {
+			"color": "b07a3d"
+		},
 		"placeholder": true,
 		"concept": "Earth damage landing — blunt geology; the heaviest-feeling impact in the set.",
 		"explanation": "A rubble crack: stone fragments and dust kicked up, with a brief ground-fissure read.",
@@ -283,7 +605,9 @@
 		"display_name": "Darkness Impact",
 		"category": "combat",
 		"behavior": "burst",
-		"params": { "color": "7a3dcc" },
+		"params": {
+			"color": "7a3dcc"
+		},
 		"placeholder": true,
 		"concept": "Darkness damage landing — an implosive wound; light leaves the point of impact.",
 		"explanation": "A brief inward collapse then a purple-black burst of shadow tendrils.",
@@ -294,19 +618,296 @@
 		"display_name": "Light Impact",
 		"category": "combat",
 		"behavior": "burst",
-		"params": { "color": "fff3b0" },
+		"params": {
+			"color": "fff3b0"
+		},
 		"placeholder": true,
 		"concept": "Light damage landing — purifying flash; blinding for a frame, then clean.",
 		"explanation": "A white-gold flash with radiating light rays and drifting motes.",
 		"prompt": "Sprite sheet of a holy light flash impact, white-gold radiant burst with light rays and sparkle motes, 8 frames on transparent background, 2d game effect"
 	},
-
+	{
+		"id": "impact_air_air",
+		"display_name": "Pure Air Impact",
+		"category": "combat",
+		"behavior": "burst",
+		"params": {
+			"color": "dff4f0"
+		},
+		"placeholder": true,
+		"concept": "Pure Air-element damage landing — the projectile's payoff, also used for pure air effects that don't travel.",
+		"explanation": "On impact: a clean radial windburst, concentric gust rings expanding with fine vortex curls.",
+		"prompt": "Sprite sheet of an impact: a clean radial windburst, concentric gust rings expanding with fine vortex curls, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "impact_air_darkness",
+		"display_name": "Miasma Impact",
+		"category": "combat",
+		"behavior": "burst",
+		"params": {
+			"color": "8d79b8"
+		},
+		"placeholder": true,
+		"concept": "Miasma-element damage landing — the projectile's payoff, also used for miasma effects that don't travel.",
+		"explanation": "On impact: a bursting pocket of noxious haze, poisonous vapor rolling outward low and heavy.",
+		"prompt": "Sprite sheet of an impact: a bursting pocket of noxious haze, poisonous vapor rolling outward low and heavy, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "impact_air_earth",
+		"display_name": "Sand Impact",
+		"category": "combat",
+		"behavior": "burst",
+		"params": {
+			"color": "d9b36b"
+		},
+		"placeholder": true,
+		"concept": "Sand-element damage landing — the projectile's payoff, also used for sand effects that don't travel.",
+		"explanation": "On impact: a scouring sandblast, golden grains exploding outward with stinging streaks.",
+		"prompt": "Sprite sheet of an impact: a scouring sandblast, golden grains exploding outward with stinging streaks, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "impact_air_fire",
+		"display_name": "Lightning Impact",
+		"category": "combat",
+		"behavior": "burst",
+		"params": {
+			"color": "ffe94d"
+		},
+		"placeholder": true,
+		"concept": "Lightning-element damage landing — the projectile's payoff, also used for lightning effects that don't travel.",
+		"explanation": "On impact: a thunderclap discharge, forked arcs lashing outward with a blinding electric flash.",
+		"prompt": "Sprite sheet of an impact: a thunderclap discharge, forked arcs lashing outward with a blinding electric flash, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "impact_air_light",
+		"display_name": "Angelic Impact",
+		"category": "combat",
+		"behavior": "burst",
+		"params": {
+			"color": "fff0cf"
+		},
+		"placeholder": true,
+		"concept": "Angelic-element damage landing — the projectile's payoff, also used for angelic effects that don't travel.",
+		"explanation": "On impact: a burst of holy wind, glowing feathers and light rays scattering in a gentle shockwave.",
+		"prompt": "Sprite sheet of an impact: a burst of holy wind, glowing feathers and light rays scattering in a gentle shockwave, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "impact_air_water",
+		"display_name": "Storm Impact",
+		"category": "combat",
+		"behavior": "burst",
+		"params": {
+			"color": "5b8fd4"
+		},
+		"placeholder": true,
+		"concept": "Storm-element damage landing — the projectile's payoff, also used for storm effects that don't travel.",
+		"explanation": "On impact: a cloudburst impact, driven rain and gust rings lashing outward from the strike.",
+		"prompt": "Sprite sheet of an impact: a cloudburst impact, driven rain and gust rings lashing outward from the strike, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "impact_darkness_darkness",
+		"display_name": "Pure Darkness Impact",
+		"category": "combat",
+		"behavior": "burst",
+		"params": {
+			"color": "3d2a66"
+		},
+		"placeholder": true,
+		"concept": "Pure Darkness-element damage landing — the projectile's payoff, also used for pure darkness effects that don't travel.",
+		"explanation": "On impact: an implosion of darkness, the impact point swallowing light before venting black tendrils.",
+		"prompt": "Sprite sheet of an impact: an implosion of darkness, the impact point swallowing light before venting black tendrils, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "impact_darkness_earth",
+		"display_name": "Stone Impact",
+		"category": "combat",
+		"behavior": "burst",
+		"params": {
+			"color": "6e6478"
+		},
+		"placeholder": true,
+		"concept": "Stone-element damage landing — the projectile's payoff, also used for stone effects that don't travel.",
+		"explanation": "On impact: a shattering of dark stone, obsidian fragments and shadow dust bursting outward.",
+		"prompt": "Sprite sheet of an impact: a shattering of dark stone, obsidian fragments and shadow dust bursting outward, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "impact_darkness_fire",
+		"display_name": "Demonic Impact",
+		"category": "combat",
+		"behavior": "burst",
+		"params": {
+			"color": "b0281f"
+		},
+		"placeholder": true,
+		"concept": "Demonic-element damage landing — the projectile's payoff, also used for demonic effects that don't travel.",
+		"explanation": "On impact: a hellish eruption, crimson-black fire bursting with clawing flame tongues and cinders.",
+		"prompt": "Sprite sheet of an impact: a hellish eruption, crimson-black fire bursting with clawing flame tongues and cinders, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "impact_darkness_light",
+		"display_name": "Undead Impact",
+		"category": "combat",
+		"behavior": "burst",
+		"params": {
+			"color": "9fbf8f"
+		},
+		"placeholder": true,
+		"concept": "Undead-element damage landing — the projectile's payoff, also used for undead effects that don't travel.",
+		"explanation": "On impact: a burst of necrotic light, pale green-white wisps and bone-dust motes drifting down.",
+		"prompt": "Sprite sheet of an impact: a burst of necrotic light, pale green-white wisps and bone-dust motes drifting down, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "impact_darkness_water",
+		"display_name": "Poison Impact",
+		"category": "combat",
+		"behavior": "burst",
+		"params": {
+			"color": "7ddb4a"
+		},
+		"placeholder": true,
+		"concept": "Poison-element damage landing — the projectile's payoff, also used for poison effects that don't travel.",
+		"explanation": "On impact: a splattering venom burst, corrosive green droplets sizzling where they land.",
+		"prompt": "Sprite sheet of an impact: a splattering venom burst, corrosive green droplets sizzling where they land, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "impact_earth_earth",
+		"display_name": "Pure Earth Impact",
+		"category": "combat",
+		"behavior": "burst",
+		"params": {
+			"color": "8f6a3d"
+		},
+		"placeholder": true,
+		"concept": "Pure Earth-element damage landing — the projectile's payoff, also used for pure earth effects that don't travel.",
+		"explanation": "On impact: a ground-shaking stone slam, deep fissure cracks and heavy rubble heaving outward.",
+		"prompt": "Sprite sheet of an impact: a ground-shaking stone slam, deep fissure cracks and heavy rubble heaving outward, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "impact_earth_fire",
+		"display_name": "Magma Impact",
+		"category": "combat",
+		"behavior": "burst",
+		"params": {
+			"color": "ff7326"
+		},
+		"placeholder": true,
+		"concept": "Magma-element damage landing — the projectile's payoff, also used for magma effects that don't travel.",
+		"explanation": "On impact: a lava splash, molten spatter and glowing cracks spreading from the impact.",
+		"prompt": "Sprite sheet of an impact: a lava splash, molten spatter and glowing cracks spreading from the impact, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "impact_earth_light",
+		"display_name": "Nature Impact",
+		"category": "combat",
+		"behavior": "burst",
+		"params": {
+			"color": "6fbf4a"
+		},
+		"placeholder": true,
+		"concept": "Nature-element damage landing — the projectile's payoff, also used for nature effects that don't travel.",
+		"explanation": "On impact: a bloom-burst, leaves petals and grass shoots springing out in a green ring.",
+		"prompt": "Sprite sheet of an impact: a bloom-burst, leaves petals and grass shoots springing out in a green ring, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "impact_earth_water",
+		"display_name": "Clay Impact",
+		"category": "combat",
+		"behavior": "burst",
+		"params": {
+			"color": "b58a66"
+		},
+		"placeholder": true,
+		"concept": "Clay-element damage landing — the projectile's payoff, also used for clay effects that don't travel.",
+		"explanation": "On impact: a heavy clay splat, thick earthen mud flattening outward and slowly sagging.",
+		"prompt": "Sprite sheet of an impact: a heavy clay splat, thick earthen mud flattening outward and slowly sagging, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "impact_fire_fire",
+		"display_name": "Pure Fire Impact",
+		"category": "combat",
+		"behavior": "burst",
+		"params": {
+			"color": "ff8c1a"
+		},
+		"placeholder": true,
+		"concept": "Pure Fire-element damage landing — the projectile's payoff, also used for pure fire effects that don't travel.",
+		"explanation": "On impact: an inferno detonation, white-cored fire bloom with rolling flame rings and ember rain.",
+		"prompt": "Sprite sheet of an impact: an inferno detonation, white-cored fire bloom with rolling flame rings and ember rain, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "impact_fire_light",
+		"display_name": "Spirit Impact",
+		"category": "combat",
+		"behavior": "burst",
+		"params": {
+			"color": "ffdf9e"
+		},
+		"placeholder": true,
+		"concept": "Spirit-element damage landing — the projectile's payoff, also used for spirit effects that don't travel.",
+		"explanation": "On impact: a soul-flare, translucent flame petals opening with drifting spirit motes.",
+		"prompt": "Sprite sheet of an impact: a soul-flare, translucent flame petals opening with drifting spirit motes, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "impact_fire_water",
+		"display_name": "Steam Impact",
+		"category": "combat",
+		"behavior": "burst",
+		"params": {
+			"color": "cfd8dc"
+		},
+		"placeholder": true,
+		"concept": "Steam-element damage landing — the projectile's payoff, also used for steam effects that don't travel.",
+		"explanation": "On impact: a boiling steam blast, white vapor mushrooming with scalding droplet spray.",
+		"prompt": "Sprite sheet of an impact: a boiling steam blast, white vapor mushrooming with scalding droplet spray, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "impact_light_light",
+		"display_name": "Pure Light Impact",
+		"category": "combat",
+		"behavior": "burst",
+		"params": {
+			"color": "fffbe0"
+		},
+		"placeholder": true,
+		"concept": "Pure Light-element damage landing — the projectile's payoff, also used for pure light effects that don't travel.",
+		"explanation": "On impact: a sunburst flash, blinding white core with long radiant rays and slow-fading glow.",
+		"prompt": "Sprite sheet of an impact: a sunburst flash, blinding white core with long radiant rays and slow-fading glow, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "impact_light_water",
+		"display_name": "Rainbow Impact",
+		"category": "combat",
+		"behavior": "burst",
+		"params": {
+			"color": "c77fff"
+		},
+		"placeholder": true,
+		"concept": "Rainbow-element damage landing — the projectile's payoff, also used for rainbow effects that don't travel.",
+		"explanation": "On impact: a prism-splash, droplets bursting into overlapping rainbow arcs and glitter.",
+		"prompt": "Sprite sheet of an impact: a prism-splash, droplets bursting into overlapping rainbow arcs and glitter, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "impact_water_water",
+		"display_name": "Pure Water Impact",
+		"category": "combat",
+		"behavior": "burst",
+		"params": {
+			"color": "2f7fd9"
+		},
+		"placeholder": true,
+		"concept": "Pure Water-element damage landing — the projectile's payoff, also used for pure water effects that don't travel.",
+		"explanation": "On impact: a tidal slam, a deep blue wave crest breaking outward with foam and spray.",
+		"prompt": "Sprite sheet of an impact: a tidal slam, a deep blue wave crest breaking outward with foam and spray, 8 frames on transparent background, 2d game effect"
+	},
 	{
 		"id": "combine_fire",
 		"display_name": "Fire Combine",
 		"category": "lab",
 		"behavior": "burst",
-		"params": { "color": "ff5a1f", "scale": 1.4 },
+		"params": {
+			"color": "ff5a1f",
+			"scale": 1.4
+		},
 		"placeholder": true,
 		"concept": "A Forge combine resolving into a fire-element result — the newborn card's element announces itself in the flash.",
 		"explanation": "The merge flash erupts as flame: a fire bloom swallowing both ingredients, the result card emerging from the embers.",
@@ -317,7 +918,10 @@
 		"display_name": "Water Combine",
 		"category": "lab",
 		"behavior": "burst",
-		"params": { "color": "2f9dff", "scale": 1.4 },
+		"params": {
+			"color": "2f9dff",
+			"scale": 1.4
+		},
 		"placeholder": true,
 		"concept": "A Forge combine resolving into a water-element result.",
 		"explanation": "The merge resolves as a liquid vortex collapsing into a droplet crown splash around the result.",
@@ -328,7 +932,10 @@
 		"display_name": "Air Combine",
 		"category": "lab",
 		"behavior": "burst",
-		"params": { "color": "bfe8e0", "scale": 1.4 },
+		"params": {
+			"color": "bfe8e0",
+			"scale": 1.4
+		},
 		"placeholder": true,
 		"concept": "A Forge combine resolving into an air-element result.",
 		"explanation": "The merge resolves as a twin cyclone twist that snaps into a clear-air shockwave ring.",
@@ -339,7 +946,10 @@
 		"display_name": "Earth Combine",
 		"category": "lab",
 		"behavior": "burst",
-		"params": { "color": "b07a3d", "scale": 1.4 },
+		"params": {
+			"color": "b07a3d",
+			"scale": 1.4
+		},
 		"placeholder": true,
 		"concept": "A Forge combine resolving into an earth-element result.",
 		"explanation": "The merge resolves as tectonic assembly: stone plates slamming together, dust ring, the result rising from the seam.",
@@ -350,7 +960,10 @@
 		"display_name": "Darkness Combine",
 		"category": "lab",
 		"behavior": "burst",
-		"params": { "color": "7a3dcc", "scale": 1.4 },
+		"params": {
+			"color": "7a3dcc",
+			"scale": 1.4
+		},
 		"placeholder": true,
 		"concept": "A Forge combine resolving into a darkness-element result.",
 		"explanation": "The merge resolves as an eclipse: both ingredients swallowed by a void ring, the result unveiled as the shadow peels back.",
@@ -361,19 +974,317 @@
 		"display_name": "Light Combine",
 		"category": "lab",
 		"behavior": "burst",
-		"params": { "color": "fff3b0", "scale": 1.4 },
+		"params": {
+			"color": "fff3b0",
+			"scale": 1.4
+		},
 		"placeholder": true,
 		"concept": "A Forge combine resolving into a light-element result.",
 		"explanation": "The merge resolves as a dawn flash: converging rays fusing into one radiant point that blooms outward.",
 		"prompt": "Sprite sheet of a light fusion dawn flash, converging golden rays fusing into a radiant bloom, 10 frames on transparent background, 2d game effect"
 	},
-
+	{
+		"id": "combine_air_air",
+		"display_name": "Pure Air Combine",
+		"category": "lab",
+		"behavior": "burst",
+		"params": {
+			"color": "dff4f0",
+			"scale": 1.4
+		},
+		"placeholder": true,
+		"concept": "A Forge combine resolving into a Pure Air (air+air) result — the newborn card's element announces itself in the flash.",
+		"explanation": "The merge resolves as: twin cyclones braiding into one great clear vortex that snaps into a ring of still air.",
+		"prompt": "Sprite sheet of a fusion effect: twin cyclones braiding into one great clear vortex that snaps into a ring of still air, 10 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "combine_air_darkness",
+		"display_name": "Miasma Combine",
+		"category": "lab",
+		"behavior": "burst",
+		"params": {
+			"color": "8d79b8",
+			"scale": 1.4
+		},
+		"placeholder": true,
+		"concept": "A Forge combine resolving into a Miasma (air+darkness) result — the newborn card's element announces itself in the flash.",
+		"explanation": "The merge resolves as: two vapor streams curdling together into a choking miasma cloud that settles over the result.",
+		"prompt": "Sprite sheet of a fusion effect: two vapor streams curdling together into a choking miasma cloud that settles over the result, 10 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "combine_air_earth",
+		"display_name": "Sand Combine",
+		"category": "lab",
+		"behavior": "burst",
+		"params": {
+			"color": "d9b36b",
+			"scale": 1.4
+		},
+		"placeholder": true,
+		"concept": "A Forge combine resolving into a Sand (air+earth) result — the newborn card's element announces itself in the flash.",
+		"explanation": "The merge resolves as: two dust devils winding into one column of golden sand that collapses into a dune swirl.",
+		"prompt": "Sprite sheet of a fusion effect: two dust devils winding into one column of golden sand that collapses into a dune swirl, 10 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "combine_air_fire",
+		"display_name": "Lightning Combine",
+		"category": "lab",
+		"behavior": "burst",
+		"params": {
+			"color": "ffe94d",
+			"scale": 1.4
+		},
+		"placeholder": true,
+		"concept": "A Forge combine resolving into a Lightning (air+fire) result — the newborn card's element announces itself in the flash.",
+		"explanation": "The merge resolves as: two charged streams arcing together into a single thunderbolt strike between them.",
+		"prompt": "Sprite sheet of a fusion effect: two charged streams arcing together into a single thunderbolt strike between them, 10 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "combine_air_light",
+		"display_name": "Angelic Combine",
+		"category": "lab",
+		"behavior": "burst",
+		"params": {
+			"color": "fff0cf",
+			"scale": 1.4
+		},
+		"placeholder": true,
+		"concept": "A Forge combine resolving into a Angelic (air+light) result — the newborn card's element announces itself in the flash.",
+		"explanation": "The merge resolves as: two ribbons of light folding together like closing wings, opening into a halo bloom.",
+		"prompt": "Sprite sheet of a fusion effect: two ribbons of light folding together like closing wings, opening into a halo bloom, 10 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "combine_air_water",
+		"display_name": "Storm Combine",
+		"category": "lab",
+		"behavior": "burst",
+		"params": {
+			"color": "5b8fd4",
+			"scale": 1.4
+		},
+		"placeholder": true,
+		"concept": "A Forge combine resolving into a Storm (air+water) result — the newborn card's element announces itself in the flash.",
+		"explanation": "The merge resolves as: wind and water spiraling into a miniature thunderhead that flashes once and rains out.",
+		"prompt": "Sprite sheet of a fusion effect: wind and water spiraling into a miniature thunderhead that flashes once and rains out, 10 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "combine_darkness_darkness",
+		"display_name": "Pure Darkness Combine",
+		"category": "lab",
+		"behavior": "burst",
+		"params": {
+			"color": "3d2a66",
+			"scale": 1.4
+		},
+		"placeholder": true,
+		"concept": "A Forge combine resolving into a Pure Darkness (darkness+darkness) result — the newborn card's element announces itself in the flash.",
+		"explanation": "The merge resolves as: two shadows folding into each other until a single void ring remains, then unveils the result.",
+		"prompt": "Sprite sheet of a fusion effect: two shadows folding into each other until a single void ring remains, then unveils the result, 10 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "combine_darkness_earth",
+		"display_name": "Stone Combine",
+		"category": "lab",
+		"behavior": "burst",
+		"params": {
+			"color": "6e6478",
+			"scale": 1.4
+		},
+		"placeholder": true,
+		"concept": "A Forge combine resolving into a Stone (darkness+earth) result — the newborn card's element announces itself in the flash.",
+		"explanation": "The merge resolves as: two masses of dark rock grinding together and fusing into one polished obsidian monolith flash.",
+		"prompt": "Sprite sheet of a fusion effect: two masses of dark rock grinding together and fusing into one polished obsidian monolith flash, 10 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "combine_darkness_fire",
+		"display_name": "Demonic Combine",
+		"category": "lab",
+		"behavior": "burst",
+		"params": {
+			"color": "b0281f",
+			"scale": 1.4
+		},
+		"placeholder": true,
+		"concept": "A Forge combine resolving into a Demonic (darkness+fire) result — the newborn card's element announces itself in the flash.",
+		"explanation": "The merge resolves as: two flames twisting into a horned infernal sigil that flares crimson-black and collapses.",
+		"prompt": "Sprite sheet of a fusion effect: two flames twisting into a horned infernal sigil that flares crimson-black and collapses, 10 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "combine_darkness_light",
+		"display_name": "Undead Combine",
+		"category": "lab",
+		"behavior": "burst",
+		"params": {
+			"color": "9fbf8f",
+			"scale": 1.4
+		},
+		"placeholder": true,
+		"concept": "A Forge combine resolving into a Undead (darkness+light) result — the newborn card's element announces itself in the flash.",
+		"explanation": "The merge resolves as: light and shadow curdling into a pale grave-glow that sinks and rises again around the result.",
+		"prompt": "Sprite sheet of a fusion effect: light and shadow curdling into a pale grave-glow that sinks and rises again around the result, 10 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "combine_darkness_water",
+		"display_name": "Poison Combine",
+		"category": "lab",
+		"behavior": "burst",
+		"params": {
+			"color": "7ddb4a",
+			"scale": 1.4
+		},
+		"placeholder": true,
+		"concept": "A Forge combine resolving into a Poison (darkness+water) result — the newborn card's element announces itself in the flash.",
+		"explanation": "The merge resolves as: two liquids swirling into a bubbling toxic brew that froths over and settles luminous green.",
+		"prompt": "Sprite sheet of a fusion effect: two liquids swirling into a bubbling toxic brew that froths over and settles luminous green, 10 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "combine_earth_earth",
+		"display_name": "Pure Earth Combine",
+		"category": "lab",
+		"behavior": "burst",
+		"params": {
+			"color": "8f6a3d",
+			"scale": 1.4
+		},
+		"placeholder": true,
+		"concept": "A Forge combine resolving into a Pure Earth (earth+earth) result — the newborn card's element announces itself in the flash.",
+		"explanation": "The merge resolves as: two boulders crushing together into one seamless megalith with a dust-ring shockwave.",
+		"prompt": "Sprite sheet of a fusion effect: two boulders crushing together into one seamless megalith with a dust-ring shockwave, 10 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "combine_earth_fire",
+		"display_name": "Magma Combine",
+		"category": "lab",
+		"behavior": "burst",
+		"params": {
+			"color": "ff7326",
+			"scale": 1.4
+		},
+		"placeholder": true,
+		"concept": "A Forge combine resolving into a Magma (earth+fire) result — the newborn card's element announces itself in the flash.",
+		"explanation": "The merge resolves as: stone and flame folding into a magma whirl that crusts over and cracks with inner glow.",
+		"prompt": "Sprite sheet of a fusion effect: stone and flame folding into a magma whirl that crusts over and cracks with inner glow, 10 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "combine_earth_light",
+		"display_name": "Nature Combine",
+		"category": "lab",
+		"behavior": "burst",
+		"params": {
+			"color": "6fbf4a",
+			"scale": 1.4
+		},
+		"placeholder": true,
+		"concept": "A Forge combine resolving into a Nature (earth+light) result — the newborn card's element announces itself in the flash.",
+		"explanation": "The merge resolves as: light sinking into soil as sprouting vines lace together into a flowering wreath around the result.",
+		"prompt": "Sprite sheet of a fusion effect: light sinking into soil as sprouting vines lace together into a flowering wreath around the result, 10 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "combine_earth_water",
+		"display_name": "Clay Combine",
+		"category": "lab",
+		"behavior": "burst",
+		"params": {
+			"color": "b58a66",
+			"scale": 1.4
+		},
+		"placeholder": true,
+		"concept": "A Forge combine resolving into a Clay (earth+water) result — the newborn card's element announces itself in the flash.",
+		"explanation": "The merge resolves as: earth and water kneading together like potter's clay, molded and smoothed into the result.",
+		"prompt": "Sprite sheet of a fusion effect: earth and water kneading together like potter's clay, molded and smoothed into the result, 10 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "combine_fire_fire",
+		"display_name": "Pure Fire Combine",
+		"category": "lab",
+		"behavior": "burst",
+		"params": {
+			"color": "ff8c1a",
+			"scale": 1.4
+		},
+		"placeholder": true,
+		"concept": "A Forge combine resolving into a Pure Fire (fire+fire) result — the newborn card's element announces itself in the flash.",
+		"explanation": "The merge resolves as: two blazes roaring into one white-hot pyre that flash-consumes itself into the result.",
+		"prompt": "Sprite sheet of a fusion effect: two blazes roaring into one white-hot pyre that flash-consumes itself into the result, 10 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "combine_fire_light",
+		"display_name": "Spirit Combine",
+		"category": "lab",
+		"behavior": "burst",
+		"params": {
+			"color": "ffdf9e",
+			"scale": 1.4
+		},
+		"placeholder": true,
+		"concept": "A Forge combine resolving into a Spirit (fire+light) result — the newborn card's element announces itself in the flash.",
+		"explanation": "The merge resolves as: two spirit flames entwining into a serene golden pillar that breathes once and settles.",
+		"prompt": "Sprite sheet of a fusion effect: two spirit flames entwining into a serene golden pillar that breathes once and settles, 10 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "combine_fire_water",
+		"display_name": "Steam Combine",
+		"category": "lab",
+		"behavior": "burst",
+		"params": {
+			"color": "cfd8dc",
+			"scale": 1.4
+		},
+		"placeholder": true,
+		"concept": "A Forge combine resolving into a Steam (fire+water) result — the newborn card's element announces itself in the flash.",
+		"explanation": "The merge resolves as: fire meeting water in a violent hiss, billowing steam clouds parting to reveal the result.",
+		"prompt": "Sprite sheet of a fusion effect: fire meeting water in a violent hiss, billowing steam clouds parting to reveal the result, 10 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "combine_light_light",
+		"display_name": "Pure Light Combine",
+		"category": "lab",
+		"behavior": "burst",
+		"params": {
+			"color": "fffbe0",
+			"scale": 1.4
+		},
+		"placeholder": true,
+		"concept": "A Forge combine resolving into a Pure Light (light+light) result — the newborn card's element announces itself in the flash.",
+		"explanation": "The merge resolves as: two radiances converging into one blinding star that resolves into a soft halo dawn.",
+		"prompt": "Sprite sheet of a fusion effect: two radiances converging into one blinding star that resolves into a soft halo dawn, 10 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "combine_light_water",
+		"display_name": "Rainbow Combine",
+		"category": "lab",
+		"behavior": "burst",
+		"params": {
+			"color": "c77fff",
+			"scale": 1.4
+		},
+		"placeholder": true,
+		"concept": "A Forge combine resolving into a Rainbow (light+water) result — the newborn card's element announces itself in the flash.",
+		"explanation": "The merge resolves as: light pouring through water into a full rainbow arch that bridges both ingredients.",
+		"prompt": "Sprite sheet of a fusion effect: light pouring through water into a full rainbow arch that bridges both ingredients, 10 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "combine_water_water",
+		"display_name": "Pure Water Combine",
+		"category": "lab",
+		"behavior": "burst",
+		"params": {
+			"color": "2f7fd9",
+			"scale": 1.4
+		},
+		"placeholder": true,
+		"concept": "A Forge combine resolving into a Pure Water (water+water) result — the newborn card's element announces itself in the flash.",
+		"explanation": "The merge resolves as: two tides spiraling into a whirlpool that draws down and geysers up around the result.",
+		"prompt": "Sprite sheet of a fusion effect: two tides spiraling into a whirlpool that draws down and geysers up around the result, 10 frames on transparent background, 2d game effect"
+	},
 	{
 		"id": "aura_burn",
 		"display_name": "Burning Aura",
 		"category": "status",
 		"behavior": "sparkle",
-		"params": { "color": "ff5a1f" },
+		"params": {
+			"color": "ff5a1f"
+		},
 		"sustained": true,
 		"placeholder": true,
 		"concept": "A unit carrying a burn status — ongoing fire damage must be visible between ticks, not only when it hurts.",
@@ -385,7 +1296,10 @@
 		"display_name": "Chilled Aura",
 		"category": "status",
 		"behavior": "glow",
-		"params": { "color": "9fd8ff", "duration": 1.4 },
+		"params": {
+			"color": "9fd8ff",
+			"duration": 1.4
+		},
 		"sustained": true,
 		"placeholder": true,
 		"concept": "A unit carrying a chill/slow status — sluggishness made visible; the card itself feels colder.",
@@ -397,7 +1311,9 @@
 		"display_name": "Poisoned Aura",
 		"category": "status",
 		"behavior": "sparkle",
-		"params": { "color": "7ddb4a" },
+		"params": {
+			"color": "7ddb4a"
+		},
 		"sustained": true,
 		"placeholder": true,
 		"concept": "A unit carrying poison/contagion — sickness that spreads; must look infectious, not enchanted.",
@@ -409,7 +1325,10 @@
 		"display_name": "Blinded Aura",
 		"category": "status",
 		"behavior": "glow",
-		"params": { "color": "5a5a6e", "duration": 1.1 },
+		"params": {
+			"color": "5a5a6e",
+			"duration": 1.1
+		},
 		"sustained": true,
 		"placeholder": true,
 		"concept": "A unit that will miss its attacks — its senses are clouded; the veil is on IT, not its target.",
@@ -421,7 +1340,10 @@
 		"display_name": "Enraged Aura",
 		"category": "status",
 		"behavior": "pulse",
-		"params": { "color": "ff3b3b", "duration": 0.4 },
+		"params": {
+			"color": "ff3b3b",
+			"duration": 0.4
+		},
 		"sustained": true,
 		"placeholder": true,
 		"concept": "A unit under an attack-up fury — barely contained aggression; the pulse should feel like a heartbeat.",
@@ -433,7 +1355,9 @@
 		"display_name": "Regenerating Aura",
 		"category": "status",
 		"behavior": "sparkle",
-		"params": { "color": "4dff6b" },
+		"params": {
+			"color": "4dff6b"
+		},
 		"sustained": true,
 		"placeholder": true,
 		"concept": "A unit healing over time — life returning in a slow drip; calm where burn is angry.",
@@ -445,7 +1369,10 @@
 		"display_name": "Shielded Aura",
 		"category": "status",
 		"behavior": "glow",
-		"params": { "color": "7fd4ff", "duration": 1.2 },
+		"params": {
+			"color": "7fd4ff",
+			"duration": 1.2
+		},
 		"sustained": true,
 		"placeholder": true,
 		"concept": "A unit holding a standing shield — the protection is a STATE, visible before anything tests it.",
@@ -457,20 +1384,24 @@
 		"display_name": "Cursed Aura",
 		"category": "status",
 		"behavior": "sparkle",
-		"params": { "color": "7a3dcc" },
+		"params": {
+			"color": "7a3dcc"
+		},
 		"sustained": true,
 		"placeholder": true,
 		"concept": "A unit under a lingering dark effect — dread with duration; something is WRONG with this card.",
 		"explanation": "Purple-black wisps crawling downward off the card against gravity's grain, with rare violet glints.",
 		"prompt": "Sprite sheet of dark purple wisps crawling downward with rare violet glints, looping curse aura, 8 frames on transparent background, 2d game effect"
 	},
-
 	{
 		"id": "death_large",
 		"display_name": "Big Unit Death",
 		"category": "combat",
 		"behavior": "burst",
-		"params": { "color": "8a7f9e", "scale": 1.6 },
+		"params": {
+			"color": "8a7f9e",
+			"scale": 1.6
+		},
 		"placeholder": true,
 		"concept": "A high-cost unit dying — a bigger fall than fodder; the board should feel the thud.",
 		"explanation": "The standard death plus a heavier debris burst and a slot-wide dust ring.",
@@ -481,7 +1412,11 @@
 		"display_name": "King Death",
 		"category": "combat",
 		"behavior": "burst",
-		"params": { "color": "ffd94d", "scale": 2.0, "duration": 0.9 },
+		"params": {
+			"color": "ffd94d",
+			"scale": 2,
+			"duration": 0.9
+		},
 		"placeholder": true,
 		"concept": "A King falling — the fight-deciding moment; the biggest single VFX in combat, win or lose.",
 		"explanation": "A crown-shattering slow burst: golden fragments, a screen-noticeable shockwave, then a long settling fade.",
@@ -492,7 +1427,9 @@
 		"display_name": "Goblin Death",
 		"category": "combat",
 		"behavior": "burst",
-		"params": { "color": "8fbf3d" },
+		"params": {
+			"color": "8fbf3d"
+		},
 		"placeholder": true,
 		"concept": "Goblin-tribe fodder dying — comic scrappiness even in defeat; keeps goblin fights light.",
 		"explanation": "A puff of green smoke with flying scrap (a dropped dagger, a flung boot).",
@@ -503,7 +1440,9 @@
 		"display_name": "Undead Death",
 		"category": "combat",
 		"behavior": "dissolve",
-		"params": { "color": "5a7a5e" },
+		"params": {
+			"color": "5a7a5e"
+		},
 		"placeholder": true,
 		"concept": "Undead-tribe fodder dying (again) — they don't fall, they come apart; returning to the grave.",
 		"explanation": "The card crumbles to bone-grey dust that sinks downward instead of scattering.",
@@ -514,19 +1453,24 @@
 		"display_name": "Golem Death",
 		"category": "combat",
 		"behavior": "burst",
-		"params": { "color": "9a8f80", "scale": 1.3 },
+		"params": {
+			"color": "9a8f80",
+			"scale": 1.3
+		},
 		"placeholder": true,
 		"concept": "Golem-tribe fodder dying — construction failing; rubble, not blood.",
 		"explanation": "The card cracks along seams then collapses into a pile of stone blocks with a dust cough.",
 		"prompt": "Sprite sheet of a stone construct cracking along seams and collapsing into blocks with dust, 10 frames on transparent background, 2d game effect"
 	},
-
 	{
 		"id": "king_hit_flash",
 		"display_name": "King Damaged",
 		"category": "combat",
 		"behavior": "flash",
-		"params": { "color": "ff3b3b", "duration": 0.5 },
+		"params": {
+			"color": "ff3b3b",
+			"duration": 0.5
+		},
 		"placeholder": true,
 		"concept": "Your King taking damage — run-life burning; must cut through combat noise and feel personal, pairing with the king-hit sound.",
 		"explanation": "A hard red flash on the King's card plus a brief red vignette pulse at the screen edges.",
@@ -537,7 +1481,10 @@
 		"display_name": "King Critical",
 		"category": "combat",
 		"behavior": "pulse",
-		"params": { "color": "ff3b3b", "duration": 0.55 },
+		"params": {
+			"color": "ff3b3b",
+			"duration": 0.55
+		},
 		"sustained": true,
 		"placeholder": true,
 		"concept": "The King below critical health — sustained danger; the fight's emotional register changes until it's resolved.",
@@ -549,7 +1496,9 @@
 		"display_name": "Summon Materialize",
 		"category": "combat",
 		"behavior": "ring",
-		"params": { "color": "b18cff" },
+		"params": {
+			"color": "b18cff"
+		},
 		"placeholder": true,
 		"concept": "An effect conjuring a unit onto the board (not hand-played) — arrival from elsewhere must read differently from placement.",
 		"explanation": "A magic circle spins up in the empty slot, light gathers inward, and the card resolves out of the glow.",
@@ -560,7 +1509,9 @@
 		"display_name": "Unit Move",
 		"category": "combat",
 		"behavior": "travel",
-		"params": { "color": "cfd4e0" },
+		"params": {
+			"color": "cfd4e0"
+		},
 		"placeholder": true,
 		"concept": "A unit relocating between slots — the move should leave a readable path so repositioning is followable.",
 		"explanation": "A brief motion streak between the two slots with small dust kicks at both ends.",
@@ -571,7 +1522,9 @@
 		"display_name": "Ability Activated",
 		"category": "combat",
 		"behavior": "glint",
-		"params": { "color": "d92bc4" },
+		"params": {
+			"color": "d92bc4"
+		},
 		"placeholder": true,
 		"concept": "A unit's activated ability firing — the fuchsia thread of the abilities UI carried onto the board moment.",
 		"explanation": "A fuchsia-tinted flare on the holder with a brief upward energy wisp — distinct from the generic source glint.",
@@ -582,7 +1535,9 @@
 		"display_name": "Autocast Armed",
 		"category": "combat",
 		"behavior": "reticle",
-		"params": { "color": "d92bc4" },
+		"params": {
+			"color": "d92bc4"
+		},
 		"placeholder": true,
 		"concept": "Arming a unit's autocast — readiness locked in; visually rhymes with the armed-brackets echo on the board card.",
 		"explanation": "Fuchsia corner brackets snap onto the holder and give one confirming pulse.",
@@ -593,7 +1548,9 @@
 		"display_name": "Spell Fizzle",
 		"category": "combat",
 		"behavior": "sparkle",
-		"params": { "color": "8a8fa3" },
+		"params": {
+			"color": "8a8fa3"
+		},
 		"placeholder": true,
 		"concept": "A spell failing to resolve (invalid target on release) — the magic dissipating without effect.",
 		"explanation": "Grey sparks sputtering downward off the card, dying before they travel anywhere.",
@@ -604,19 +1561,22 @@
 		"display_name": "Melee Swing Arc",
 		"category": "combat",
 		"behavior": "glint",
-		"params": { "color": "e8ecf4" },
+		"params": {
+			"color": "e8ecf4"
+		},
 		"placeholder": true,
 		"concept": "A melee unit's attack wind-up — the swing itself, preceding the hit landing on the target.",
 		"explanation": "A crescent slash arc sweeping across the attacker toward its target's direction.",
 		"prompt": "Sprite sheet of a crescent sword slash arc sweeping across, white blade streak, 6 frames on transparent background, 2d game effect"
 	},
-
 	{
 		"id": "ui_button_denied_shake",
 		"display_name": "Button Denied",
 		"category": "ui",
 		"behavior": "shake",
-		"params": { "scale": 0.8 },
+		"params": {
+			"scale": 0.8
+		},
 		"placeholder": true,
 		"concept": "Pressing a disabled/unaffordable action — the refusal should be felt on the button itself, paired with the denied sound.",
 		"explanation": "A tight little head-shake of the button: three quick horizontal jitters, no color change.",
@@ -627,7 +1587,9 @@
 		"display_name": "Badge Pop",
 		"category": "ui",
 		"behavior": "pop",
-		"params": { "scale": 1.2 },
+		"params": {
+			"scale": 1.2
+		},
 		"placeholder": true,
 		"concept": "A badge/counter changing value (reward count, materials, pips) — the change should catch the corner of the eye.",
 		"explanation": "The badge scales up with a back-ease overshoot and settles, one clean bounce.",
@@ -638,7 +1600,10 @@
 		"display_name": "Tab Switch Flash",
 		"category": "ui",
 		"behavior": "flash",
-		"params": { "color": "ffffff", "duration": 0.18 },
+		"params": {
+			"color": "ffffff",
+			"duration": 0.18
+		},
 		"placeholder": true,
 		"concept": "A tab/filter becoming active — a crisp confirmation of where you now are.",
 		"explanation": "A quick white sheen across the newly active tab, gone in a blink.",
@@ -649,7 +1614,10 @@
 		"display_name": "Error Flash",
 		"category": "ui",
 		"behavior": "flash",
-		"params": { "color": "ff3b3b", "duration": 0.35 },
+		"params": {
+			"color": "ff3b3b",
+			"duration": 0.35
+		},
 		"placeholder": true,
 		"concept": "Something actually went wrong — sharper than a denial; pairs with the error sound.",
 		"explanation": "A red edge-flash on the offending element, two quick beats.",
@@ -660,7 +1628,10 @@
 		"display_name": "Hover Glint",
 		"category": "ui",
 		"behavior": "glint",
-		"params": { "color": "ffffff", "duration": 0.2 },
+		"params": {
+			"color": "ffffff",
+			"duration": 0.2
+		},
 		"placeholder": true,
 		"concept": "Cursor entering an element that rewards attention — near-subliminal; the visual twin of the hover tick.",
 		"explanation": "The faintest sheen brightening, well under the glint used for combat causality.",
@@ -671,7 +1642,10 @@
 		"display_name": "Modal Open Bloom",
 		"category": "ui",
 		"behavior": "pulse",
-		"params": { "color": "ffffff", "duration": 0.3 },
+		"params": {
+			"color": "ffffff",
+			"duration": 0.3
+		},
 		"placeholder": true,
 		"concept": "A dialog/overlay arriving — a soft settling bloom so popups feel placed, not teleported.",
 		"explanation": "A single soft white halo swell around the modal as it lands.",
@@ -682,7 +1656,10 @@
 		"display_name": "Toast Glint",
 		"category": "ui",
 		"behavior": "glint",
-		"params": { "color": "cfd4e0", "duration": 0.4 },
+		"params": {
+			"color": "cfd4e0",
+			"duration": 0.4
+		},
 		"placeholder": true,
 		"concept": "A passive notification arriving — noticeable if you're looking, invisible if you're not.",
 		"explanation": "One slow quiet sheen across the toast as it settles into place.",
@@ -693,19 +1670,24 @@
 		"display_name": "Save Tick",
 		"category": "ui",
 		"behavior": "sparkle",
-		"params": { "color": "8fd0a0", "scale": 0.6 },
+		"params": {
+			"color": "8fd0a0",
+			"scale": 0.6
+		},
 		"placeholder": true,
 		"concept": "An autosave/persist completing — reassurance in the corner of the eye; never demands attention.",
 		"explanation": "Two or three tiny green glints near the save indicator, done in half a second.",
 		"prompt": "Sprite sheet of two tiny green check glints twinkling briefly, minimal save confirmation, 4 frames on transparent background, 2d game effect"
 	},
-
 	{
 		"id": "card_draw_flick",
 		"display_name": "Card Draw",
 		"category": "card",
 		"behavior": "glint",
-		"params": { "color": "ffe9a8", "duration": 0.25 },
+		"params": {
+			"color": "ffe9a8",
+			"duration": 0.25
+		},
 		"placeholder": true,
 		"concept": "A card arriving in hand — each draw should feel dealt, pairing with the card_draw sound's paper swish.",
 		"explanation": "A warm sheen sweeps the arriving card as it settles into the hand row.",
@@ -716,7 +1698,10 @@
 		"display_name": "Card Discard",
 		"category": "card",
 		"behavior": "dissolve",
-		"params": { "color": "3a3f52", "duration": 0.35 },
+		"params": {
+			"color": "3a3f52",
+			"duration": 0.35
+		},
 		"placeholder": true,
 		"concept": "A card leaving the hand for the discard pile — a dismissive exit, lighter than a death.",
 		"explanation": "The card grays and slides-fades out of the row with a small paper puff.",
@@ -727,7 +1712,9 @@
 		"display_name": "Card Selected",
 		"category": "card",
 		"behavior": "pop",
-		"params": { "scale": 0.9 },
+		"params": {
+			"scale": 0.9
+		},
 		"placeholder": true,
 		"concept": "Picking a card up for placement — the card is now in your grip; the hand's tactile counterpart to the select sound.",
 		"explanation": "The card lifts with a tiny overshoot scale and gains a soft underlying drop shadow.",
@@ -738,7 +1725,9 @@
 		"display_name": "Card Upgraded",
 		"category": "card",
 		"behavior": "sparkle",
-		"params": { "color": "ffd94d" },
+		"params": {
+			"color": "ffd94d"
+		},
 		"placeholder": true,
 		"concept": "A card permanently improving (event boost, upgrade) — a small ceremony; the card is now better than it was.",
 		"explanation": "Golden sparkles sweep the card top-to-bottom, ending on a brief full-card shine.",
@@ -749,7 +1738,10 @@
 		"display_name": "Card Reveal",
 		"category": "card",
 		"behavior": "flash",
-		"params": { "color": "fff3b0", "duration": 0.3 },
+		"params": {
+			"color": "fff3b0",
+			"duration": 0.3
+		},
 		"placeholder": true,
 		"concept": "A hidden card flipping face-up (rewards, offers) — anticipation resolving; pairs with the card_reveal sound's flourish.",
 		"explanation": "A bright flash at the flip's apex, settling into a brief edge glow on the revealed face.",
@@ -760,19 +1752,23 @@
 		"display_name": "Charm Pip Glint",
 		"category": "card",
 		"behavior": "sparkle",
-		"params": { "color": "b18cff", "scale": 0.6 },
+		"params": {
+			"color": "b18cff",
+			"scale": 0.6
+		},
 		"placeholder": true,
 		"concept": "A charm's presence on a card catching the light — occasional passive shimmer so enchanted cards feel enchanted.",
 		"explanation": "A single violet glint off the charm pip, rare and quick.",
 		"prompt": "Sprite sheet of a single violet star glint twinkling once, small enchantment sparkle, 4 frames on transparent background, 2d game effect"
 	},
-
 	{
 		"id": "mana_spend_wisp",
 		"display_name": "Mana Spent",
 		"category": "resource",
 		"behavior": "travel",
-		"params": { "color": "4da6ff" },
+		"params": {
+			"color": "4da6ff"
+		},
 		"placeholder": true,
 		"concept": "Mana paying a cost — the payment should visibly LEAVE the gauge toward what it bought.",
 		"explanation": "A small blue wisp flies from the mana gauge to the played card/slot and is absorbed.",
@@ -783,7 +1779,10 @@
 		"display_name": "Mana Refilled",
 		"category": "resource",
 		"behavior": "pulse",
-		"params": { "color": "4da6ff", "duration": 0.5 },
+		"params": {
+			"color": "4da6ff",
+			"duration": 0.5
+		},
 		"placeholder": true,
 		"concept": "The turn-start mana refill — the gauge surging back to full; part of the turn's fresh-breath moment.",
 		"explanation": "The gauge blooms blue bottom-to-top with a sparkle cap when it tops out.",
@@ -794,7 +1793,10 @@
 		"display_name": "Not Enough Mana",
 		"category": "resource",
 		"behavior": "flash",
-		"params": { "color": "4da6ff", "duration": 0.3 },
+		"params": {
+			"color": "4da6ff",
+			"duration": 0.3
+		},
 		"placeholder": true,
 		"concept": "Attempting a cast without the mana — the gauge itself should protest, pointing the eye at WHY the cast failed.",
 		"explanation": "The mana gauge flickers twice in pale blue — present but empty.",
@@ -805,7 +1807,9 @@
 		"display_name": "Gold Gained",
 		"category": "resource",
 		"behavior": "sparkle",
-		"params": { "color": "ffd94d" },
+		"params": {
+			"color": "ffd94d"
+		},
 		"placeholder": true,
 		"concept": "Gold entering the purse — coin joy at the counter; pairs with the coin-clink sound.",
 		"explanation": "Golden glints burst around the gold counter as the number ticks up.",
@@ -816,7 +1820,9 @@
 		"display_name": "Gold Spent",
 		"category": "resource",
 		"behavior": "float_label",
-		"params": { "color": "ffd94d" },
+		"params": {
+			"color": "ffd94d"
+		},
 		"placeholder": true,
 		"concept": "Paying gold — the cost should be seen leaving, not just a number quietly shrinking.",
 		"explanation": "A \"-N\" gold label slides off the counter toward the purchase, fading.",
@@ -827,7 +1833,9 @@
 		"display_name": "Materials Gained",
 		"category": "resource",
 		"behavior": "sparkle",
-		"params": { "color": "8fd0a0" },
+		"params": {
+			"color": "8fd0a0"
+		},
 		"placeholder": true,
 		"concept": "Crafting materials granted — bottled elements arriving; more mystical than coin.",
 		"explanation": "Element-tinted shimmer around the materials tray with tiny vial glints.",
@@ -838,19 +1846,23 @@
 		"display_name": "Experience Tally",
 		"category": "resource",
 		"behavior": "sparkle",
-		"params": { "color": "b18cff", "duration": 0.8 },
+		"params": {
+			"color": "b18cff",
+			"duration": 0.8
+		},
 		"placeholder": true,
 		"concept": "Run-end experience counting up toward upgrade points — accumulation should feel earned, tick by tick.",
 		"explanation": "Violet ticks pop along the XP bar as it fills, with a brighter pop at each threshold crossed.",
 		"prompt": "Sprite sheet of violet tick sparks popping along a filling bar with threshold flashes, tally accumulation, 10 frames on transparent background, 2d game effect"
 	},
-
 	{
 		"id": "map_node_select_ring",
 		"display_name": "Map Node Selected",
 		"category": "map",
 		"behavior": "ring",
-		"params": { "color": "ffe14d" },
+		"params": {
+			"color": "ffe14d"
+		},
 		"placeholder": true,
 		"concept": "Tapping a reachable map node — the pin-in-the-map moment; commitment about to happen.",
 		"explanation": "A golden ring pulses out from the node medallion, once.",
@@ -861,7 +1873,9 @@
 		"display_name": "Map Travel",
 		"category": "map",
 		"behavior": "travel",
-		"params": { "color": "ffe9a8" },
+		"params": {
+			"color": "ffe9a8"
+		},
 		"placeholder": true,
 		"concept": "The piece walking its chosen path — the journey between nodes should be watchable, not a teleport.",
 		"explanation": "A warm dotted trail lights up along the path segment as the marker moves, fading behind it.",
@@ -872,7 +1886,10 @@
 		"display_name": "Path Revealed",
 		"category": "map",
 		"behavior": "pulse",
-		"params": { "color": "cfd4e0", "duration": 0.6 },
+		"params": {
+			"color": "cfd4e0",
+			"duration": 0.6
+		},
 		"placeholder": true,
 		"concept": "New nodes/paths becoming visible — the unknown resolving into choices; ink spreading on parchment.",
 		"explanation": "Newly revealed nodes fade in under a spreading ink-wash shimmer.",
@@ -883,7 +1900,10 @@
 		"display_name": "Boss Node Menace",
 		"category": "map",
 		"behavior": "pulse",
-		"params": { "color": "b02e2e", "duration": 0.8 },
+		"params": {
+			"color": "b02e2e",
+			"duration": 0.8
+		},
 		"sustained": true,
 		"placeholder": true,
 		"concept": "The stage-boss node's standing presence — it should radiate low menace the whole time it's on screen.",
@@ -895,7 +1915,10 @@
 		"display_name": "Rest Site Warmth",
 		"category": "map",
 		"behavior": "glow",
-		"params": { "color": "ffb347", "duration": 1.3 },
+		"params": {
+			"color": "ffb347",
+			"duration": 1.3
+		},
 		"sustained": true,
 		"placeholder": true,
 		"concept": "Rest nodes advertising safety — a campfire's warmth visible from the road.",
@@ -907,7 +1930,10 @@
 		"display_name": "Stage Cleared",
 		"category": "map",
 		"behavior": "burst",
-		"params": { "color": "ffd94d", "scale": 1.8 },
+		"params": {
+			"color": "ffd94d",
+			"scale": 1.8
+		},
 		"placeholder": true,
 		"concept": "Beating a stage boss and advancing — a chapter closing; bigger than any single fight's win moment.",
 		"explanation": "A gold burst sweeps the map, the old stage's nodes glinting once before the fresh map draws in.",
@@ -918,20 +1944,25 @@
 		"display_name": "Event Node Mystery",
 		"category": "map",
 		"behavior": "sparkle",
-		"params": { "color": "b18cff", "scale": 0.7 },
+		"params": {
+			"color": "b18cff",
+			"scale": 0.7
+		},
 		"sustained": true,
 		"placeholder": true,
 		"concept": "The '?' event nodes advertising their riddle — curiosity bait; a wink, not a beacon.",
 		"explanation": "An occasional violet glint off the question-mark medallion, irregular timing.",
 		"prompt": "Sprite sheet of an occasional violet question glint twinkling irregularly, looping mystery sparkle, 6 frames on transparent background, 2d game effect"
 	},
-
 	{
 		"id": "shop_buy_flash",
 		"display_name": "Purchase Flash",
 		"category": "economy",
 		"behavior": "flash",
-		"params": { "color": "ffd94d", "duration": 0.3 },
+		"params": {
+			"color": "ffd94d",
+			"duration": 0.3
+		},
 		"placeholder": true,
 		"concept": "Completing a purchase — the deal sealed on the item itself; pairs with the shop_buy sound.",
 		"explanation": "A gold flash on the bought item as it leaves the shelf toward your inventory.",
@@ -942,7 +1973,9 @@
 		"display_name": "Can't Afford Shake",
 		"category": "economy",
 		"behavior": "shake",
-		"params": { "scale": 0.7 },
+		"params": {
+			"scale": 0.7
+		},
 		"placeholder": true,
 		"concept": "Trying to buy without enough gold — the price tag itself refuses.",
 		"explanation": "The item's price chip shakes side-to-side once, briefly tinting red.",
@@ -953,7 +1986,11 @@
 		"display_name": "Rewards Open",
 		"category": "economy",
 		"behavior": "pulse",
-		"params": { "color": "ffe9a8", "duration": 0.7, "scale": 1.5 },
+		"params": {
+			"color": "ffe9a8",
+			"duration": 0.7,
+			"scale": 1.5
+		},
 		"placeholder": true,
 		"concept": "The reward screen presenting its offers — the chest-lid moment; anticipation made visible.",
 		"explanation": "Soft golden rays fan out behind the reward offers as they slide in.",
@@ -964,7 +2001,9 @@
 		"display_name": "Card Reward Taken",
 		"category": "economy",
 		"behavior": "burst",
-		"params": { "color": "ffe14d" },
+		"params": {
+			"color": "ffe14d"
+		},
 		"placeholder": true,
 		"concept": "Claiming a card reward — the pick committed; the chosen card celebrates, the others bow out.",
 		"explanation": "A compact gold burst on the chosen card while the unchosen offers fade back.",
@@ -975,7 +2014,10 @@
 		"display_name": "Relic Acquired",
 		"category": "economy",
 		"behavior": "ring",
-		"params": { "color": "ccbc72", "scale": 1.4 },
+		"params": {
+			"color": "ccbc72",
+			"scale": 1.4
+		},
 		"placeholder": true,
 		"concept": "A relic joining the run — a permanent artifact deserves a weightier ceremony than a card.",
 		"explanation": "A slow expanding halo off the relic chip with lingering motes, heavier than the card burst.",
@@ -986,19 +2028,24 @@
 		"display_name": "Relic Discarded",
 		"category": "economy",
 		"behavior": "dissolve",
-		"params": { "color": "3a3f52", "duration": 0.6 },
+		"params": {
+			"color": "3a3f52",
+			"duration": 0.6
+		},
 		"placeholder": true,
 		"concept": "Voluntarily dropping a relic — deliberate letting-go; respectful, not trashy.",
 		"explanation": "The relic chip desaturates and dissolves upward into faint motes.",
 		"prompt": "Sprite sheet of an artifact desaturating and dissolving upward into motes, solemn release, 8 frames on transparent background, 2d game effect"
 	},
-
 	{
 		"id": "lab_token_pick_glint",
 		"display_name": "Token Picked",
 		"category": "lab",
 		"behavior": "glint",
-		"params": { "color": "b18cff", "duration": 0.2 },
+		"params": {
+			"color": "b18cff",
+			"duration": 0.2
+		},
 		"placeholder": true,
 		"concept": "Lifting a resource token in the Lab — tactile confirmation the drag has begun.",
 		"explanation": "A quick violet glint on the token as it lifts, with a small shadow appearing under it.",
@@ -1009,7 +2056,9 @@
 		"display_name": "Token Slotted",
 		"category": "lab",
 		"behavior": "ring",
-		"params": { "color": "8fd0a0" },
+		"params": {
+			"color": "8fd0a0"
+		},
 		"placeholder": true,
 		"concept": "A token landing in a valid slot — the machine accepts the piece; pairs with the snug-click sound.",
 		"explanation": "A green confirmation ring pulses from the socket as the token seats.",
@@ -1020,7 +2069,9 @@
 		"display_name": "Slot Rejected",
 		"category": "lab",
 		"behavior": "shake",
-		"params": { "scale": 1.0 },
+		"params": {
+			"scale": 1
+		},
 		"placeholder": true,
 		"concept": "Dropping a token where it doesn't belong — the machine spits it back; comedy over punishment.",
 		"explanation": "The slot shakes it off; the token bounces back toward its tray with a springy wobble.",
@@ -1031,7 +2082,9 @@
 		"display_name": "Refinery Working",
 		"category": "lab",
 		"behavior": "sparkle",
-		"params": { "color": "8fd0a0" },
+		"params": {
+			"color": "8fd0a0"
+		},
 		"sustained": true,
 		"placeholder": true,
 		"concept": "The Refinery mid-conversion — transmutation in progress; runs for the machine's whole work cycle.",
@@ -1043,19 +2096,25 @@
 		"display_name": "King Forged",
 		"category": "lab",
 		"behavior": "burst",
-		"params": { "color": "ffd94d", "scale": 2.0, "duration": 0.8 },
+		"params": {
+			"color": "ffd94d",
+			"scale": 2,
+			"duration": 0.8
+		},
 		"placeholder": true,
 		"concept": "The King Forge completing — the Lab's crown moment; a new King struck into existence deserves the Lab's biggest flash.",
 		"explanation": "An anvil-strike flash: white-gold burst, a crown silhouette resolving in the afterglow, slow ember fall.",
 		"prompt": "Sprite sheet of a mighty forge strike flash with a crown silhouette resolving in golden afterglow, royal creation burst, 12 frames on transparent background, 2d game effect"
 	},
-
 	{
 		"id": "upgrade_purchase_etch",
 		"display_name": "Upgrade Etched",
 		"category": "meta",
 		"behavior": "glint",
-		"params": { "color": "ffd94d", "duration": 0.6 },
+		"params": {
+			"color": "ffd94d",
+			"duration": 0.6
+		},
 		"placeholder": true,
 		"concept": "Buying a skill-tree node — permanent power inscribed into the profile; should feel chiseled, not clicked.",
 		"explanation": "The node's rune etches in with a traveling gold glint, then settles lit.",
@@ -1066,7 +2125,10 @@
 		"display_name": "Upgrade Locked",
 		"category": "meta",
 		"behavior": "flash",
-		"params": { "color": "5a5a6e", "duration": 0.25 },
+		"params": {
+			"color": "5a5a6e",
+			"duration": 0.25
+		},
 		"placeholder": true,
 		"concept": "Clicking an unaffordable/locked node — stone that won't yield yet.",
 		"explanation": "A grey dim-pulse on the node; its requirement chain briefly highlights.",
@@ -1077,7 +2139,10 @@
 		"display_name": "Charm Attached",
 		"category": "meta",
 		"behavior": "sparkle",
-		"params": { "color": "b18cff", "scale": 0.8 },
+		"params": {
+			"color": "b18cff",
+			"scale": 0.8
+		},
 		"placeholder": true,
 		"concept": "A charm enchanting a card — the clasp moment; small, precious, permanent-feeling.",
 		"explanation": "A violet clasp glint at the pip position, then a one-time shimmer across the card face.",
@@ -1088,7 +2153,9 @@
 		"display_name": "Card Added to Deck",
 		"category": "meta",
 		"behavior": "pop",
-		"params": { "scale": 1.0 },
+		"params": {
+			"scale": 1
+		},
 		"placeholder": true,
 		"concept": "Slotting a card into a deck — filing it into the binder; the deck list acknowledges its newest member.",
 		"explanation": "The card's new row pops once as it lands in the deck list.",
@@ -1099,7 +2166,10 @@
 		"display_name": "Card Removed from Deck",
 		"category": "meta",
 		"behavior": "dissolve",
-		"params": { "color": "3a3f52", "duration": 0.3 },
+		"params": {
+			"color": "3a3f52",
+			"duration": 0.3
+		},
 		"placeholder": true,
 		"concept": "Pulling a card out of a deck — the reverse slide; light, no judgment.",
 		"explanation": "The row grays and slides out with a quick fade.",
@@ -1110,7 +2180,11 @@
 		"display_name": "Embark",
 		"category": "meta",
 		"behavior": "pulse",
-		"params": { "color": "fff3b0", "duration": 0.9, "scale": 2.0 },
+		"params": {
+			"color": "fff3b0",
+			"duration": 0.9,
+			"scale": 2
+		},
 		"placeholder": true,
 		"concept": "Starting a new run — the adventure's first step; gates opening outward onto the journey.",
 		"explanation": "A screen-wide warm bloom sweeps outward from the Embark button as the map takes over.",
@@ -1121,19 +2195,25 @@
 		"display_name": "Level Up",
 		"category": "meta",
 		"behavior": "burst",
-		"params": { "color": "b18cff", "scale": 1.6 },
+		"params": {
+			"color": "b18cff",
+			"scale": 1.6
+		},
 		"placeholder": true,
 		"concept": "The profile crossing an experience threshold — personal growth; mid-sized fanfare between a card reward and a run victory.",
 		"explanation": "A violet-gold radiance burst around the level indicator with rising star motes.",
 		"prompt": "Sprite sheet of a violet-gold radiance burst with rising star motes, level-up fanfare, 10 frames on transparent background, 2d game effect"
 	},
-
 	{
 		"id": "screen_victory_rays",
 		"display_name": "Victory Rays",
 		"category": "screen",
 		"behavior": "pulse",
-		"params": { "color": "ffd94d", "duration": 1.0, "scale": 2.5 },
+		"params": {
+			"color": "ffd94d",
+			"duration": 1,
+			"scale": 2.5
+		},
 		"placeholder": true,
 		"concept": "The victory moment's screen dressing — triumphant light for the win banner; the fanfare's visual half.",
 		"explanation": "Slow golden god-rays rotating behind the victory banner, with drifting motes.",
@@ -1144,7 +2224,10 @@
 		"display_name": "Defeat Shroud",
 		"category": "screen",
 		"behavior": "dissolve",
-		"params": { "color": "1a1626", "duration": 1.2 },
+		"params": {
+			"color": "1a1626",
+			"duration": 1.2
+		},
 		"placeholder": true,
 		"concept": "The defeat moment's screen dressing — the run ending; somber and heavy, never mocking.",
 		"explanation": "A slow dark shroud closes over the battlefield from the edges inward before the Run Over screen.",
@@ -1155,7 +2238,10 @@
 		"display_name": "Screen Transition",
 		"category": "screen",
 		"behavior": "flash",
-		"params": { "color": "0e0c16", "duration": 0.35 },
+		"params": {
+			"color": "0e0c16",
+			"duration": 0.35
+		},
 		"placeholder": true,
 		"concept": "Navigating between screens — a consistent connective sweep so screen changes share one motion identity.",
 		"explanation": "A quick dark sweep wipes across during Nav.goto, revealing the new screen behind it.",
@@ -1166,7 +2252,11 @@
 		"display_name": "Stage Advance Bloom",
 		"category": "screen",
 		"behavior": "pulse",
-		"params": { "color": "fff3b0", "duration": 1.2, "scale": 2.5 },
+		"params": {
+			"color": "fff3b0",
+			"duration": 1.2,
+			"scale": 2.5
+		},
 		"placeholder": true,
 		"concept": "The between-stages breath — Stage Cleared resolving into a fresh map; one chapter's light carrying into the next.",
 		"explanation": "A warm full-screen bloom crests and settles as the new stage's map fades in beneath it.",
