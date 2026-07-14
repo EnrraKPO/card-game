@@ -58,6 +58,13 @@ func play(id: String, target: Control, opts: Dictionary = {}) -> void:
 	if vd.sustained:
 		attach(id, target)
 		return
+	# A freshly added Control has a zero rect until its container lays it out — playing on a
+	# just-spawned target (e.g. a drawn card) would draw a degenerate effect at its corner.
+	# One frame of patience puts the effect where the target actually lands.
+	if target.get_global_rect().size == Vector2.ZERO:
+		await get_tree().process_frame
+		if not is_instance_valid(target) or not target.is_inside_tree():
+			return
 	await _dispatch(vd, target, opts)
 
 
@@ -192,7 +199,10 @@ func _fx_pulse_once(vd: VFXData, target: Control, opts: Dictionary) -> void:
 	var rect := target.get_global_rect()
 	var color := _p_color(vd, opts, Color(1.0, 0.9, 0.5))
 	var grow := 14.0 * _p_scale(vd)
-	var fx := _make_rect(Color(color.r, color.g, color.b, 0.0), rect.size + Vector2(grow, grow) * 2.0)
+	# Full-alpha colour, fade driven by modulate ONLY — pixel alpha is the PRODUCT of the two,
+	# so a zero base alpha can never fade in no matter what modulate does.
+	var fx := _make_rect(Color(color.r, color.g, color.b, 1.0), rect.size + Vector2(grow, grow) * 2.0)
+	fx.modulate.a = 0.0
 	fx.global_position = rect.position - Vector2(grow, grow)
 	var dur := _p_dur(vd, 0.45)
 	var tw := fx.create_tween()
@@ -275,7 +285,8 @@ func _fx_sparkle(vd: VFXData, target: Control, opts: Dictionary) -> void:
 func _fx_glint(vd: VFXData, target: Control, opts: Dictionary) -> void:
 	var rect := target.get_global_rect()
 	var color := _p_color(vd, opts, Color(1.0, 1.0, 0.85))
-	var fx := _make_rect(Color(color.r, color.g, color.b, 0.0), rect.size)
+	var fx := _make_rect(Color(color.r, color.g, color.b, 1.0), rect.size)   # full-alpha base;
+	fx.modulate.a = 0.0   # modulate alone drives the fade (see _fx_pulse_once)
 	fx.global_position = rect.position
 	var dur := _p_dur(vd, 0.36)
 	var tw := fx.create_tween()
@@ -407,7 +418,8 @@ func _sustain_pulse(vd: VFXData, target: Control) -> Node:
 func _breathing_halo(vd: VFXData, target: Control, period: float, hi: float, lo: float) -> Node:
 	var color := vd.color_param("color", Color(1.0, 0.85, 0.4))
 	var grow := 10.0 * _p_scale(vd)
-	var fx := _make_rect(Color(color.r, color.g, color.b, 0.0), Vector2.ZERO)
+	var fx := _make_rect(Color(color.r, color.g, color.b, 1.0), Vector2.ZERO)   # full-alpha base;
+	fx.modulate.a = 0.0   # the breath drives modulate alone (see _fx_pulse_once)
 	_glue(fx, target, grow)
 	var tw := fx.create_tween().set_loops()
 	tw.tween_property(fx, "modulate:a", hi, period).set_trans(Tween.TRANS_SINE)

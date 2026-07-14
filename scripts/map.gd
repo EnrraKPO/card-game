@@ -474,7 +474,9 @@ func _rebuild_node_buttons() -> void:
 				med.tooltip_text = "%s — reward: %s" % [label, reward_summary]
 			if is_reachable:
 				var captured: MapNodeData = node
-				med.pressed.connect(func(): _on_node_selected(captured))
+				med.pressed.connect(func():
+					Vfx.play("map_node_select_ring", med)   # the pin-in-the-map ring
+					_on_node_selected(captured))
 			_canvas.add_child(med)
 
 

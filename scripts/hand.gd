@@ -314,6 +314,7 @@ func _spawn_hand_card(inst: CardInstance) -> void:
 	ui.custom_minimum_size = _card_size
 	_hand_cards.append(ui)
 	_hand_box.add_child(ui)
+	Vfx.play("card_draw_flick", ui)   # the dealt-card sheen (Vfx waits out the layout frame)
 	if ui.card_instance.is_spell:
 		if wire_spell_card.is_valid():
 			wire_spell_card.call(ui)

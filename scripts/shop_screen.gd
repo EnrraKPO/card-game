@@ -156,6 +156,7 @@ func _on_buy(rec: Dictionary) -> void:
 	GameData.current_run.gold -= rec["price"]
 	grant.apply()
 	rec["bought"] = true
+	Vfx.play("shop_buy_flash", rec["buy_btn"])   # the deal-sealed flash on the bought slot
 	_update_buy_buttons()
 
 

@@ -265,6 +265,7 @@ func _begin_round() -> void:
 			null, StatMutation.CH_SYSTEM))
 	await _do_cpu_placement()
 	Sfx.play("combat_turn_start")
+	Vfx.play("mana_refill_surge", _mana_chunks_box)   # the gauge blooms as it refills
 	_phase = Phase.PLAYER_PLACE
 	_board.placement_enabled = true
 	_set_placement_input(true)
@@ -751,6 +752,9 @@ func _handle_combat_end() -> void:
 	var player_won := _board.player_king_alive()
 	var enc := GameData.current_encounter
 	Sfx.play("combat_victory" if player_won else "combat_defeat")
+	# The screen-level dressing plays out BEFORE navigation (awaited — Nav.goto would cut it
+	# off mid-swell); target is the whole combat screen.
+	await Vfx.play("screen_victory_rays" if player_won else "screen_defeat_shroud", self)
 	if player_won:
 		# Apply the encounter's automatic rewards (gold + crafting materials) in one place,
 		# uniformly for boss and normal wins. The card-pick reward is handled by reward_screen.
