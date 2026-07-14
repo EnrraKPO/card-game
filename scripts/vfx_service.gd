@@ -62,6 +62,11 @@ func play(id: String, target: Control, opts: Dictionary = {}) -> void:
 		return
 	if target == null or not is_instance_valid(target) or not target.is_inside_tree():
 		return
+	# Companion SFX: the entry's paired sound fires atomically with the visual — the audio half
+	# of the cue lives in the library entry, never duplicated at call sites. (Direct attach()
+	# calls skip it; a sustained state's start only sounds when entered through play.)
+	if not vd.sfx.is_empty():
+		Sfx.play(vd.sfx)
 	if vd.sustained:
 		attach(id, target)
 		return

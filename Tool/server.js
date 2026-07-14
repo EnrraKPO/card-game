@@ -1002,6 +1002,11 @@ function validateItem(type, d) {
       if (!d.concept) return 'missing concept — what this moment means';
       if (!d.explanation) return 'missing explanation — what the effect looks like';
       if (!d.prompt) return 'missing prompt — the AI generation text for a future asset look';
+      if (d.sfx != null) {
+        if (typeof d.sfx !== 'string') return 'sfx must be a sound id string';
+        if (d.sfx && !scanGameJson('data/sounds').some(({ entry: s }) => s.id === d.sfx))
+          return `sfx "${d.sfx}" is not an installed sound id (data/sounds)`;
+      }
       if (d.params != null) {
         if (typeof d.params !== 'object' || Array.isArray(d.params)) return 'params must be an object';
         for (const k of ['color', 'color2'])
@@ -1054,6 +1059,7 @@ function gameVocab() {
     .filter(x => x.id);
   return {
     cards,
+    sounds: simple('data/sounds'),
     statuses: simple('data/statuses'),
     abilities: simple('data/abilities'),
     charms: simple('data/charms'),

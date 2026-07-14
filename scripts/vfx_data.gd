@@ -31,6 +31,9 @@ var behavior: String = "flash"
 var params: Dictionary = {}     # behavior skin: color/color2 (html), scale, duration, intensity
 var sustained: bool = false
 var placeholder: bool = true
+# Companion sound: a SoundData id Vfx.play fires atomically with the visual ("" = silent).
+# The audio half of the cue lives HERE, in data — call sites never pair the two by hand.
+var sfx: String = ""
 var concept: String = ""        # what this moment MEANS — why the effect exists
 var explanation: String = ""    # what it LOOKS like — the visual design
 var prompt: String = ""         # AI generation prompt for a future asset-backed look
@@ -72,6 +75,7 @@ static func _load_json(path: String) -> void:
 		v.params       = d.get("params", {})
 		v.sustained    = bool(d.get("sustained", false))
 		v.placeholder  = bool(d.get("placeholder", true))
+		v.sfx          = d.get("sfx", "")
 		v.concept      = d.get("concept", "")
 		v.explanation  = d.get("explanation", "")
 		v.prompt       = d.get("prompt", "")

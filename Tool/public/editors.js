@@ -953,7 +953,7 @@ const VfxEditor = {
   label: 'VFX',
   newItem: () => ({ id: '', display_name: '', category: 'ui', renderer: 'procedural',
     behavior: 'flash', params: {}, sustained: false, placeholder: true,
-    concept: '', explanation: '', prompt: '' }),
+    sfx: '', concept: '', explanation: '', prompt: '' }),
   form(draft, ctx, onChange) {
     if (!draft.params) draft.params = {};
     const wrap = el('div');
@@ -978,6 +978,12 @@ const VfxEditor = {
           fld('Colour', colorInput(draft.params, 'color', onChange), null, 'narrow'),
           fld('Scale', numInput(draft.params, 'scale', onChange, { step: 0.1, float: true, min: 0.2, max: 4, optional: true }), 'size/intensity multiplier', 'narrow'),
           fld('Duration (s)', numInput(draft.params, 'duration', onChange, { step: 0.05, float: true, min: 0.05, max: 5, optional: true }), 'blank = behavior default', 'narrow'),
+        ),
+        el('div', { class: 'frow' },
+          fld('Companion sound', selectInput(draft, 'sfx',
+            [{ value: '', label: '(none)' }].concat(
+              ((ctx.vocab && ctx.vocab.sounds) || []).map(s => ({ value: s.id, label: `${s.name} (${s.id})` }))),
+            onChange), 'a sound id Vfx.play fires atomically with this visual — the cue pairing lives here, not at call sites'),
         ),
         el('div', { class: 'frow' },
           el('button', { class: 'ghost', text: '▶ Preview', title: 'A rough in-browser sketch — the game’s tween is the authority',
@@ -1011,6 +1017,7 @@ const VfxEditor = {
     for (const k of ['scale', 'duration', 'intensity']) if ((d.params || {})[k] != null) params[k] = d.params[k];
     if (Object.keys(params).length) out.params = params;
     if (d.sustained) out.sustained = true;
+    if ((d.sfx || '').trim()) out.sfx = d.sfx.trim();
     out.placeholder = d.placeholder !== false;
     out.concept = d.concept || '';
     out.explanation = d.explanation || '';
@@ -1021,6 +1028,7 @@ const VfxEditor = {
     const lines = [`${d.display_name || d.id || 'Unnamed VFX'} — ${d.category || 'ui'} ${d.sustained ? 'sustained state' : 'one-shot'} riding "${d.behavior}".`];
     lines.push(d.placeholder === false ? 'Designed look — always plays.'
       : 'PLACEHOLDER — plays the procedural sketch; mutable in game with F8 until a look is designed.');
+    if (d.sfx) lines.push(`Fires companion sound "${d.sfx}" atomically.`);
     if (d.concept) lines.push(d.concept);
     return lines;
   },
