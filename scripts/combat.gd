@@ -512,10 +512,13 @@ func _resolve_attack(attacker: CardInstance) -> void:
 	var t_card := _board.get_card_ui(target)
 
 	if attacker.data.ranged:
-		# Ranged: hold position and fire a bolt; the hit lands when it arrives.
-		await _vfx.play(VFXEvent.projectile(
+		# Ranged: hold position and fire a bolt; the hit lands when it arrives. The bolt
+		# carries the attacker's composition so the library can fly its element-variant look.
+		var shot := VFXEvent.projectile(
 			a_card, t_card, attacker.get_attribute("attack"),
-			Color(0.65, 0.9, 1.0), VFXEvent.Projectile.BOLT, false))
+			Color(0.65, 0.9, 1.0), VFXEvent.Projectile.BOLT, false)
+		shot.composition = attacker.data.elements
+		await _vfx.play(shot)
 		await _apply_attack_damage(attacker, target, t_card)
 	else:
 		# Melee: lunge across and plunge INTO the target (overlapping from the side it approaches —

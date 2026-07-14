@@ -116,6 +116,28 @@ func register_custom(id: String, fn: Callable) -> void:
 	_custom[id] = fn
 
 
+# ── Element resolution ─────────────────────────────────────────────────────────────
+
+# (kind, composition) -> the element-variant entry id ("projectile_air_fire"), or `fallback`
+# when no variant serves it: empty composition, no such entry, or the variant is a placeholder
+# currently muted (F8) — a designed base look always beats silence. The id is the kind + the
+# SORTED composition, the same canonical form the 27-element space uses everywhere.
+func resolve(kind: String, composition: Array, fallback: String = "") -> String:
+	if composition.is_empty():
+		return fallback
+	var elems := PackedStringArray()
+	for e: String in composition:
+		elems.append(e)
+	elems.sort()
+	var id := "%s_%s" % [kind, "_".join(elems)]
+	var vd := VFXData.get_vfx(id)
+	if vd == null:
+		return fallback
+	if vd.placeholder and not DevFlags.placeholder_vfx:
+		return fallback
+	return id
+
+
 # ── Renderer dispatch ──────────────────────────────────────────────────────────────
 
 func _dispatch(vd: VFXData, target: Control, opts: Dictionary) -> void:

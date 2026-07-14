@@ -19,7 +19,26 @@ func setup(root: Node, get_card_ui: Callable) -> void:
 # The look is addressed BY LIBRARY ID (the combat_* entries, renderer "custom") and dispatched
 # by the Vfx service back into the designed class registered above — combat keeps choreography
 # and drawing, the library keeps the one address space every VFX resolves through.
+# ELEMENT RESOLUTION happens here first: when the event carries a composition, the library
+# answers with the element-variant look if one is live (projectile_/impact_<sorted comp>),
+# else the designed base class plays.
 func play(event: VFXEvent) -> void:
+	if event.type == VFXEvent.Type.PROJECTILE:
+		var vid := Vfx.resolve("projectile", event.composition)
+		if not vid.is_empty():
+			# Variant flight: the library's travel look flies + bursts in the element's skin.
+			await Vfx.play(vid, event.target, {"source": event.source})
+			# The designed projectile does its impact bookkeeping on arrival (damage number +
+			# HP snap); a variant's arrival is now — same bookkeeping, same designed number read.
+			if event.show_impact:
+				await play(VFXEvent.health_damage(event.target, event.amount))
+				if is_instance_valid(event.target):
+					event.target.refresh()
+			return
+	elif event.type == VFXEvent.Type.HEALTH_DAMAGE:
+		var iid := Vfx.resolve("impact", event.composition)
+		if not iid.is_empty():
+			Vfx.play(iid, event.target)   # the elemental burst under the designed number read
 	var id := _library_id(event)
 	if id.is_empty():
 		return
@@ -44,6 +63,11 @@ func play_results(results: Array, source_inst: CardInstance = null,
 	var source_ui: CardUI = null
 	if source_inst != null and source_inst.row >= 0:
 		source_ui = _get_card_ui.call(source_inst) as CardUI
+	# The source's composition rides every hit of this resolution, so damage can play its
+	# element-variant look — known here even when the source has no on-board UI.
+	var comp: Array = []
+	if source_inst != null and source_inst.data != null:
+		comp = source_inst.data.elements
 
 	# Layer 1 — the CONTAINER cue: glint the container whose effects are about to land, once, and only
 	# when the effects actually move a stat (a no-op resolution shouldn't flare). An empty cue id glints
@@ -88,7 +112,7 @@ func play_results(results: Array, source_inst: CardInstance = null,
 		if delta == 0:
 			continue
 		remaining[0] += 1
-		_play_target(card_ui, attr, delta, source_ui, remaining)
+		_play_target(card_ui, attr, delta, source_ui, comp, remaining)
 
 	if remaining[0] == 0:
 		return
@@ -149,21 +173,27 @@ func _play_status_applied(inst: CardInstance, status_id: String) -> void:
 # One affected card's slice of a (possibly multi-target) resolution, run concurrently with its
 # siblings: the tinted reticle leads (so the eye arrives first), then the effect's own VFX lands.
 # Ticks `remaining` down on completion so play_results knows when the whole burst has resolved.
-func _play_target(card_ui: CardUI, attr: String, delta: int, source_ui: CardUI, remaining: Array) -> void:
+func _play_target(card_ui: CardUI, attr: String, delta: int, source_ui: CardUI,
+		comp: Array, remaining: Array) -> void:
 	# Layer 2 — target reticle leads the hit, tinted by what's happening to this card.
 	await play(VFXEvent.target_mark(card_ui, _result_color(attr, delta)))
 	await _hold(MARK_LEAD)
 	# Layer 3 — the effect's own VFX. A projectile defers the HP snap to its own impact, so
-	# don't double-refresh here.
+	# don't double-refresh here. Damage carries the source's composition so the library can
+	# answer with the element-variant look (see play()).
 	var deferred := false
 	match attr:
 		"health":
 			if delta < 0:
 				if source_ui != null and is_instance_valid(source_ui) and source_ui != card_ui:
-					await play(VFXEvent.projectile(source_ui, card_ui, -delta))
+					var shot := VFXEvent.projectile(source_ui, card_ui, -delta)
+					shot.composition = comp
+					await play(shot)
 					deferred = true
 				else:
-					await play(VFXEvent.health_damage(card_ui, -delta))
+					var hit := VFXEvent.health_damage(card_ui, -delta)
+					hit.composition = comp
+					await play(hit)
 			else:
 				await play(VFXEvent.heal(card_ui, delta))
 		"shield":

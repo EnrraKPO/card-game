@@ -37,6 +37,10 @@ var variant:     TriggerVariant = TriggerVariant.GENERIC   # SOURCE_TRIGGER look
 # when false it only travels + bursts and the caller applies/labels the damage (auto-attacks,
 # which split shield vs health themselves).
 var show_impact: bool = true
+# The source's elemental composition (CardData.elements) — lets the library resolve an
+# element-variant look (projectile_/impact_<sorted composition>) for this event; empty plays
+# the designed base look. Filled by the choreography, which knows the firing card.
+var composition: Array = []
 
 
 static func health_damage(card: CardUI, dmg: int) -> VFXEvent:

@@ -812,6 +812,11 @@ func _on_mint() -> void:
 	var card_name: String = card.display_name if card != null else card_id
 	if Lab.mint(GameData.current_profile, card_id):
 		Sfx.combined()
+		# The craft announces the newborn card's element over its preview.
+		if card != null and _mint_preview != null:
+			var vid := Vfx.resolve("combine", card.elements)
+			if not vid.is_empty():
+				Vfx.play(vid, _mint_preview)
 		GameData.save_profile()
 		_rebuild_inventory()
 		_refresh_open()
@@ -881,6 +886,11 @@ func _on_forge() -> void:
 	var king_id := Lab.forge(GameData.current_profile, a, b)
 	if not king_id.is_empty():
 		Sfx.combined()
+		# The forge announces the new King's dual element over its preview.
+		if _forge_preview != null:
+			var vid := Vfx.resolve("combine", [a, b])
+			if not vid.is_empty():
+				Vfx.play(vid, _forge_preview)
 		GameData.save_profile()
 		_rebuild_inventory()
 		_refresh_open()

@@ -820,6 +820,19 @@ func _begin_fusion(src_idx: int, tgt_idx: int, result_dc: DeckCard, holder_a: Co
 	anim.finished.connect(_on_fuse_finished.bind(result_inst))
 	_combine_modal.add_child(anim)
 	_fuse_anim = anim
+
+	# The merge flash announces the newborn card's element: the combine element-variant bursts
+	# at the collision point exactly when the white flash commits the merge. No variant live
+	# (or placeholders muted) = the anim's own flash carries the moment, as before.
+	var combine_vid := Vfx.resolve("combine", result_inst.data.elements)
+	if not combine_vid.is_empty():
+		var marker := Control.new()
+		marker.mouse_filter = MOUSE_FILTER_IGNORE
+		marker.size = Vector2(120, 120)
+		_combine_modal.add_child(marker)   # dies with the modal
+		marker.global_position = center - marker.size * 0.5
+		anim.flashed.connect(func() -> void: Vfx.play(combine_vid, marker))
+
 	anim.play(a_inst, b_inst, result_inst, a_center, b_center, center, card_size, color_a, color_b, OK_COLOR)
 
 
