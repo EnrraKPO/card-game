@@ -363,3 +363,13 @@ table.mini input, table.mini select { padding: 4px 6px; }
 .chat-applied { color: var(--ok); font-size: 13px; }
 .chat-send-row { flex: none; display: flex; gap: 8px; margin-top: 10px; align-items: flex-end; }
 .chat-send-row textarea { flex: 1; resize: none; }
+
+/* ── VFX tab: the in-browser behavior preview stage ── */
+.vfx-demo-stage { position: relative; height: 130px; margin-top: 8px; border-radius: 8px;
+  background: #14121f; border: 1px solid #2c2842; overflow: hidden; }
+/* centered via calc, NOT a transform — the pop/shake previews animate `transform`
+   on this box and would clobber a translate-based centering */
+.vfx-demo-box { position: absolute; left: calc(50% - 42px); top: calc(50% - 52px);
+  width: 84px; height: 104px; border-radius: 8px;
+  background: #2c2842; border: 1px solid #4a4470; }
+.vfx-demo-overlay { position: absolute; pointer-events: none; }

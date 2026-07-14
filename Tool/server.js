@@ -53,10 +53,21 @@ const TYPES = {
   // assets/sound/ and are produced outside the tool (AI sound gen from each entry's prompt) —
   // no artDir; art generation for this type is reference-only.
   sound:      { label: 'Sound',           dataDir: 'data/sounds',     artDir: null,               artW: 1024, artH: 1024, rembg: false },
+  // vfx EVENTS: the game's full visual-effect library (data/vfx/vfx.json), played by id on any
+  // Control via the Vfx autoload. Procedural renderer only today; the prompt targets future
+  // asset-backed renderers (flipbook sprite sheets).
+  vfx:        { label: 'VFX',             dataDir: 'data/vfx',        artDir: null,               artW: 1024, artH: 1024, rembg: false },
 };
 
 // The sound library's category vocabulary — mirrors SoundData.category in the game.
 const SOUND_CATEGORIES = ['ui', 'card', 'combat', 'magic', 'resource', 'map', 'economy', 'lab', 'meta', 'ambient', 'music'];
+// The VFX library's vocabularies — mirror the game's VFXData/Vfx (keep in sync with
+// Vfx.BEHAVIORS / Vfx.SUSTAINED_BEHAVIORS / VFXData.category).
+const VFX_CATEGORIES = ['ui', 'card', 'combat', 'status', 'resource', 'map', 'economy', 'lab', 'meta', 'screen'];
+const VFX_BEHAVIORS = ['flash', 'pulse', 'pop', 'shake', 'ring', 'sparkle', 'glint', 'glow',
+  'float_label', 'burst', 'travel', 'reticle', 'dissolve'];
+const VFX_SUSTAINED = ['glow', 'pulse', 'sparkle'];
+const VFX_RENDERERS = ['procedural'];   // future: flipbook, scene, ...
 
 // ── small fs helpers ─────────────────────────────────────────────────────────
 function ensureDir(p) { fs.mkdirSync(p, { recursive: true }); }
@@ -979,6 +990,24 @@ function validateItem(type, d) {
       if (!d.prompt) return 'missing prompt — the AI sound-generation text';
       if (d.file && !/^[a-zA-Z0-9._-]+\.(mp3|ogg|wav)$/.test(d.file)) return 'file must be a bare .mp3/.ogg/.wav filename inside assets/sound/';
       if (d.volume_db != null && typeof d.volume_db !== 'number') return 'volume_db must be a number';
+      return null;
+    }
+    case 'vfx': {
+      if (!d.display_name) return 'missing display_name';
+      if (!VFX_CATEGORIES.includes(d.category)) return `category must be one of: ${VFX_CATEGORIES.join(', ')}`;
+      if (d.renderer && !VFX_RENDERERS.includes(d.renderer)) return `renderer must be one of: ${VFX_RENDERERS.join(', ')}`;
+      if (!VFX_BEHAVIORS.includes(d.behavior)) return `behavior must be one of: ${VFX_BEHAVIORS.join(', ')}`;
+      if (d.sustained && !VFX_SUSTAINED.includes(d.behavior)) return `sustained needs a sustain-capable behavior (${VFX_SUSTAINED.join(', ')})`;
+      if (!d.concept) return 'missing concept — what this moment means';
+      if (!d.explanation) return 'missing explanation — what the effect looks like';
+      if (!d.prompt) return 'missing prompt — the AI generation text for a future asset look';
+      if (d.params != null) {
+        if (typeof d.params !== 'object' || Array.isArray(d.params)) return 'params must be an object';
+        for (const k of ['color', 'color2'])
+          if (d.params[k] != null && !/^[0-9a-fA-F]{6}$/.test(d.params[k])) return `params.${k} must be a 6-digit hex colour`;
+        for (const k of ['scale', 'duration', 'intensity'])
+          if (d.params[k] != null && typeof d.params[k] !== 'number') return `params.${k} must be a number`;
+      }
       return null;
     }
   }

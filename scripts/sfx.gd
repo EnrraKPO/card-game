@@ -62,7 +62,10 @@ func play(id: String) -> void:
 	var stream := sd.stream()
 	if stream != null:
 		_play(stream, sd.volume_db)
-	else:
+	elif DevFlags.placeholder_sfx:
+		# No real asset = a PLACEHOLDER event. Clearly flagged as such (the synth blip is
+		# unmistakable) and mutable at will — F7 / DevFlags.placeholder_sfx silences every
+		# placeholder while leaving real assets playing.
 		_play(_placeholder(sd), _PLACEHOLDER_DB + sd.volume_db)
 
 
@@ -72,6 +75,9 @@ func loop_start(id: String) -> void:
 	var sd := SoundData.get_sound(id)
 	if sd == null:
 		push_warning("Sfx.loop_start: unknown sound event \"%s\"" % id)
+		return
+	# A loop with no real asset is a placeholder hum — same F7 gate as one-shot placeholders.
+	if not sd.has_asset() and not DevFlags.placeholder_sfx:
 		return
 	var p: AudioStreamPlayer = _loop_players.get(id, null)
 	if p == null:

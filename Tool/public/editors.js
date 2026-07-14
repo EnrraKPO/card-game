@@ -865,8 +865,179 @@ const SoundEditor = {
   artNote: 'Reference only — sounds have no art slot; assets are produced from the AI prompt in an audio generator.',
 };
 
+// ═════════════════════════════════ VFX ══════════════════════════════════════
+// One entry per visual effect the game will ever show — played BY ID on any Control via the
+// Vfx autoload. `behavior` picks the procedural primitive, `params` skin it; `renderer` is
+// the future asset-expansion seam ("procedural" only today). Placeholder entries (no designed
+// look yet) are clearly flagged and mutable in game via F8 / DevFlags.placeholder_vfx.
+const VFX_CATEGORIES = ['ui', 'card', 'combat', 'status', 'resource', 'map', 'economy', 'lab', 'meta', 'screen'];
+const VFX_BEHAVIORS = ['flash', 'pulse', 'pop', 'shake', 'ring', 'sparkle', 'glint', 'glow',
+  'float_label', 'burst', 'travel', 'reticle', 'dissolve'];
+const VFX_SUSTAINED = ['glow', 'pulse', 'sparkle'];
+
+// A rough in-browser sketch of each procedural primitive, animated on a demo box — enough to
+// judge colour and character; the game's tweens are the authority.
+function playVfxPreview(stage, d) {
+  stage.replaceChildren();
+  const color = '#' + (/^[0-9a-fA-F]{6}$/.test((d.params || {}).color || '') ? d.params.color : 'ffd94d');
+  const box = el('div', { class: 'vfx-demo-box' });
+  stage.append(box);
+  const scale = (d.params || {}).scale || 1;
+  const dur = ((d.params || {}).duration || 0.4) * 1000;
+  const overlay = (styles) => {
+    const o = el('div', { class: 'vfx-demo-overlay' });
+    Object.assign(o.style, styles);
+    stage.append(o);
+    return o;
+  };
+  const anim = (node, frames, ms, cleanup = true) => {
+    const a = node.animate(frames, { duration: ms, easing: 'ease-out' });
+    if (cleanup) a.onfinish = () => node.remove();
+    return a;
+  };
+  switch (d.behavior) {
+    case 'flash': case 'glint':
+      anim(overlay({ inset: '18%', background: color, opacity: 0.7 }), [{ opacity: 0.7 }, { opacity: 0 }], dur || 300);
+      break;
+    case 'pulse': case 'glow': {
+      // Sustained states loop a few breaths so the character reads; one-shots swell once.
+      const o = overlay({ inset: '10%', background: color, filter: 'blur(14px)', opacity: 0 });
+      o.animate([{ opacity: 0.08 }, { opacity: 0.45 }, { opacity: 0.08 }],
+        { duration: (dur || 900) * 2, iterations: d.sustained ? 3 : 1 }).onfinish = () => o.remove();
+      break;
+    }
+    case 'pop':
+      box.animate([{ transform: 'scale(1)' }, { transform: `scale(${1 + 0.18 * scale})` }, { transform: 'scale(1)' }], { duration: dur || 300, easing: 'cubic-bezier(.3,1.6,.6,1)' });
+      break;
+    case 'shake':
+      box.animate([0, 1, -1, 1, -1, 0].map(v => ({ transform: `translateX(${v * 6 * scale}px)` })), { duration: dur || 280 });
+      break;
+    case 'ring':
+      anim(overlay({ inset: '30%', border: `3px solid ${color}`, borderRadius: '50%', opacity: 1 }),
+        [{ transform: 'scale(0.3)', opacity: 1 }, { transform: `scale(${1.6 * scale})`, opacity: 0 }], dur || 400);
+      break;
+    case 'sparkle': case 'burst':
+      for (let i = 0; i < 8; i++) {
+        const p = overlay({ left: '50%', top: '50%', width: '7px', height: '7px', background: color, transform: 'rotate(45deg)' });
+        const a = d.behavior === 'burst' ? (Math.PI * 2 * i / 8) : (Math.random() * Math.PI * 2);
+        const r = d.behavior === 'burst' ? 60 * scale : 30;
+        const dy = d.behavior === 'sparkle' ? -30 : Math.sin(a) * r;
+        anim(p, [{ transform: 'translate(0,0) rotate(45deg)', opacity: 1 },
+          { transform: `translate(${Math.cos(a) * r}px, ${dy}px) rotate(45deg)`, opacity: 0 }], dur || 450);
+      }
+      break;
+    case 'float_label': {
+      const l = overlay({ left: '50%', top: '40%', color, fontWeight: '700', fontSize: '22px' });
+      l.textContent = '-3';
+      anim(l, [{ transform: 'translateY(0)', opacity: 1 }, { transform: 'translateY(-40px)', opacity: 0 }], dur || 800);
+      break;
+    }
+    case 'travel': {
+      const p = overlay({ left: '4%', top: '46%', width: '14px', height: '14px', background: color, borderRadius: '50%' });
+      anim(p, [{ transform: 'translateX(0)' }, { transform: 'translateX(200px)' }], dur || 300);
+      setTimeout(() => playVfxPreview(stage, Object.assign({}, d, { behavior: 'burst' })), dur || 300);
+      break;
+    }
+    case 'reticle':
+      anim(overlay({ inset: '14%', border: `3px solid ${color}`, opacity: 1 }),
+        [{ transform: 'scale(1.4)', opacity: 0.4 }, { transform: 'scale(1)', opacity: 1 }, { opacity: 0 }], dur || 400);
+      break;
+    case 'dissolve':
+      anim(overlay({ inset: '18%', background: color, opacity: 0 }),
+        [{ opacity: 0 }, { opacity: 0.75 }, { opacity: 0 }], dur || 500);
+      break;
+  }
+}
+
+const VfxEditor = {
+  label: 'VFX',
+  newItem: () => ({ id: '', display_name: '', category: 'ui', renderer: 'procedural',
+    behavior: 'flash', params: {}, sustained: false, placeholder: true,
+    concept: '', explanation: '', prompt: '' }),
+  form(draft, ctx, onChange) {
+    if (!draft.params) draft.params = {};
+    const wrap = el('div');
+    let stage;
+    wrap.append(
+      groupBox('Identity',
+        el('div', { class: 'frow' },
+          idField(draft, onChange, ctx.isNew),
+          fld('Name', textInput(draft, 'display_name', onChange)),
+          fld('Category', selectInput(draft, 'category', VFX_CATEGORIES.map(v => ({ value: v, label: v })), onChange), null, 'narrow'),
+        ),
+        el('div', { class: 'frow' },
+          el('div', { class: 'fld' }, checkInput(draft, 'placeholder', onChange, 'Placeholder — no designed look yet (mutable in game via F8)')),
+        ),
+      ),
+      groupBox('Look (procedural renderer)',
+        el('div', { class: 'frow' },
+          fld('Behavior', selectInput(draft, 'behavior', VFX_BEHAVIORS.map(v => ({ value: v, label: v })), onChange), 'the primitive this effect rides', 'narrow'),
+          el('div', { class: 'fld' }, checkInput(draft, 'sustained', onChange, `Sustained state (attach/detach; needs ${VFX_SUSTAINED.join('/')})`)),
+        ),
+        el('div', { class: 'frow' },
+          fld('Colour', colorInput(draft.params, 'color', onChange), null, 'narrow'),
+          fld('Scale', numInput(draft.params, 'scale', onChange, { step: 0.1, float: true, min: 0.2, max: 4, optional: true }), 'size/intensity multiplier', 'narrow'),
+          fld('Duration (s)', numInput(draft.params, 'duration', onChange, { step: 0.05, float: true, min: 0.05, max: 5, optional: true }), 'blank = behavior default', 'narrow'),
+        ),
+        el('div', { class: 'frow' },
+          el('button', { class: 'ghost', text: '▶ Preview', title: 'A rough in-browser sketch — the game’s tween is the authority',
+            onclick: e => { e.preventDefault(); playVfxPreview(stage, draft); } }),
+        ),
+        (stage = el('div', { class: 'vfx-demo-stage' })),
+      ),
+      groupBox('Design',
+        el('div', { class: 'frow' },
+          el('div', { class: 'fld wide' }, el('span', { class: 'lab', text: 'Concept — what this moment MEANS (why the effect exists)' }),
+            el('textarea', { value: draft.concept || '', oninput: e => { draft.concept = e.target.value; onChange(); } })),
+        ),
+        el('div', { class: 'frow' },
+          el('div', { class: 'fld wide' }, el('span', { class: 'lab', text: 'Explanation — what it LOOKS like (the visual design)' }),
+            el('textarea', { value: draft.explanation || '', oninput: e => { draft.explanation = e.target.value; onChange(); } })),
+        ),
+        el('div', { class: 'frow' },
+          el('div', { class: 'fld wide' }, el('span', { class: 'lab', text: 'AI generation prompt — for a future asset-backed look (flipbook sprite sheet)' }),
+            el('textarea', { value: draft.prompt || '', oninput: e => { draft.prompt = e.target.value; onChange(); } })),
+        ),
+      ),
+    );
+    return wrap;
+  },
+  serialize(d) {
+    const out = { id: d.id, display_name: d.display_name || slugToName(d.id),
+      category: d.category || 'ui', behavior: d.behavior || 'flash' };
+    if (d.renderer && d.renderer !== 'procedural') out.renderer = d.renderer;
+    const params = {};
+    for (const k of ['color', 'color2']) if ((d.params || {})[k]) params[k] = d.params[k];
+    for (const k of ['scale', 'duration', 'intensity']) if ((d.params || {})[k] != null) params[k] = d.params[k];
+    if (Object.keys(params).length) out.params = params;
+    if (d.sustained) out.sustained = true;
+    out.placeholder = d.placeholder !== false;
+    out.concept = d.concept || '';
+    out.explanation = d.explanation || '';
+    out.prompt = d.prompt || '';
+    return out;
+  },
+  summarize(d) {
+    const lines = [`${d.display_name || d.id || 'Unnamed VFX'} — ${d.category || 'ui'} ${d.sustained ? 'sustained state' : 'one-shot'} riding "${d.behavior}".`];
+    lines.push(d.placeholder === false ? 'Designed look — always plays.'
+      : 'PLACEHOLDER — plays the procedural sketch; mutable in game with F8 until a look is designed.');
+    if (d.concept) lines.push(d.concept);
+    return lines;
+  },
+  toDraft(g) {
+    const d = JSON.parse(JSON.stringify(g));
+    if (!d.params) d.params = {};
+    if (!d.renderer) d.renderer = 'procedural';
+    return d;
+  },
+  promptFor(d) {
+    return d.prompt || `Sprite sheet of a 2d game visual effect, ${d.display_name || slugToName(d.id)}, ${d.explanation || ''}, frames on transparent background`;
+  },
+  artNote: 'Reference only — the prompt targets a future flipbook/asset renderer; today every entry renders procedurally.',
+};
+
 const EDITORS = {
   card: CardEditor, relic: RelicEditor, status: StatusEditor, ability: AbilityEditor,
   charm: CharmEditor, upgrade: UpgradeEditor, encounter: EncounterEditor, nodeweights: NodeWeightsEditor,
-  sound: SoundEditor,
+  sound: SoundEditor, vfx: VfxEditor,
 };
