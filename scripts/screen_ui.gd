@@ -244,6 +244,19 @@ static func build_header() -> Dictionary:
 		refs[key] = built.ref
 		row.add_child(built.widget)
 
+	# The two placeholder mute/hide dev toggles, sat just left of the ✕. Built once as part of the
+	# persistent header (like every other piece); the Shell wires their behavior and DevFlags sync.
+	# Their visibility is the Shell's call (debug builds only) — see Shell._wire_dev_toggles.
+	var dev_sfx := action_button("", Callable(), Vector2(140, side_dev()), 15, CHROME_DEBUG)
+	dev_sfx.toggle_mode = true
+	dev_sfx.tooltip_text = "Placeholder SFX (F7) — OFF = the synth blips are muted"
+	row.add_child(dev_sfx)
+
+	var dev_vfx := action_button("", Callable(), Vector2(140, side_dev()), 15, CHROME_DEBUG)
+	dev_vfx.toggle_mode = true
+	dev_vfx.tooltip_text = "Placeholder VFX (F8) — OFF = the procedural sketches are hidden"
+	row.add_child(dev_vfx)
+
 	var close := close_button(Callable())
 	close.visible = false
 	row.add_child(close)
@@ -254,7 +267,12 @@ static func build_header() -> Dictionary:
 	row.add_child(debug_close)
 
 	return {"bar": bar, "title": title_lbl, "fields": fields, "refs": refs,
-		"close": close, "debug_close": debug_close}
+		"close": close, "debug_close": debug_close, "dev_sfx": dev_sfx, "dev_vfx": dev_vfx}
+
+
+# The close button's own square side — the dev toggles match it so the header row aligns.
+static func side_dev() -> float:
+	return BUTTON_HEIGHT_COMPACT - 16.0
 
 
 # The catalog builder: constructs ONE Field's widget, once, unconditionally (never returns null —
