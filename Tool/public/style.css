@@ -92,6 +92,9 @@ body {
 }
 .item-row:hover { background: var(--bg3); }
 .item-row.active { background: var(--bg3); border-color: var(--accent); }
+/* parked entries (enabled: false — backlog, no live cue site) read as visibly dormant */
+.item-row.parked { opacity: 0.45; }
+.item-row.parked:hover, .item-row.parked.active { opacity: 0.8; }
 .item-row .item-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .item-row .item-id { font-size: 11px; color: var(--fg-dim); }
 .pill {

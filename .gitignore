@@ -17,6 +17,9 @@ screenshots/
 # Art-generation scratch / preview dir
 /tmp/
 
+# VFX pixel-probe snapshots (regenerable scratch — see tests/_vfx_probe.gd)
+/_probe_out/
+
 # UI render-harness output images (regenerable scratch)
 /_render_out.png
 /_render_out.png.import

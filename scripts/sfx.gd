@@ -38,6 +38,10 @@ var _next := 0
 var _loop_players: Dictionary = {}       # event id -> AudioStreamPlayer (looped events only)
 var _loop_tweens: Dictionary = {}        # event id -> Tween (pitch ramps on looped events)
 var _placeholder_cache: Dictionary = {}  # event id -> AudioStreamWAV
+# The two cross-screen BED channels — one music track and one ambience loop at a time; a
+# screen states which bed it wants and the previous one stops. "" = silence the channel.
+var _music_id := ""
+var _ambience_id := ""
 
 
 func _ready() -> void:
@@ -67,6 +71,28 @@ func play(id: String) -> void:
 		# unmistakable) and mutable at will — F7 / DevFlags.placeholder_sfx silences every
 		# placeholder while leaving real assets playing.
 		_play(_placeholder(sd), _PLACEHOLDER_DB + sd.volume_db)
+
+
+# Declares the screen's music bed (music_* events). No-op when it's already playing, so
+# navigation between screens sharing a track never restarts it.
+func music(id: String) -> void:
+	_set_bed(id, "_music_id")
+
+
+# Declares the screen's ambience bed (amb_* events) — the music channel's quieter sibling.
+func ambience(id: String) -> void:
+	_set_bed(id, "_ambience_id")
+
+
+func _set_bed(id: String, field: String) -> void:
+	var current: String = get(field)
+	if id == current:
+		return
+	if not current.is_empty():
+		loop_stop(current)
+	set(field, id)
+	if not id.is_empty():
+		loop_start(id)
 
 
 # Starts a looped event (drone/ambience/music). Idempotent: re-calling while already playing

@@ -798,7 +798,7 @@ function playSoundPlaceholder(d) {
 const SoundEditor = {
   label: 'Sound',
   newItem: () => ({ id: '', display_name: '', category: 'ui', concept: '', prompt: '',
-    file: '', volume_db: 0, loop: false }),
+    file: '', volume_db: 0, loop: false, enabled: true }),
   form(draft, ctx, onChange) {
     const wrap = el('div');
     const hasFile = () => !!(draft.file || '').trim();
@@ -821,6 +821,10 @@ const SoundEditor = {
         ),
       ),
       groupBox('Playback',
+        el('div', { class: 'frow' },
+          el('div', { class: 'fld' }, checkInput(draft, 'enabled', onChange,
+            'Enabled — unticked = PARKED: no live cue site yet (kept as visible backlog, never deleted)')),
+        ),
         el('div', { class: 'frow' },
           fld('Asset file', textInput(draft, 'file', onChange, '(empty = placeholder synth)'),
             'bare filename inside assets/sound/ — .mp3/.ogg/.wav'),
@@ -847,6 +851,7 @@ const SoundEditor = {
   serialize(d) {
     const out = { id: d.id, display_name: d.display_name || slugToName(d.id),
       category: d.category || 'ui', concept: d.concept || '', prompt: d.prompt || '' };
+    if (d.enabled === false) out.enabled = false;   // parked — visible backlog
     if ((d.file || '').trim()) out.file = d.file.trim();
     if (d.volume_db) out.volume_db = d.volume_db;
     if (d.loop) out.loop = true;
@@ -854,12 +859,17 @@ const SoundEditor = {
   },
   summarize(d) {
     const lines = [`${d.display_name || d.id || 'Unnamed sound'} — ${d.category || 'ui'} ${d.loop ? 'loop' : 'one-shot'}.`];
+    if (d.enabled === false) lines.push('PARKED (enabled: false) — no live cue site yet; the game skips it at load.');
     lines.push(d.file ? `Plays assets/sound/${d.file}${d.volume_db ? ` at ${d.volume_db} dB` : ''}.`
       : 'No asset yet — the game plays a placeholder synth blip for this event.');
     if (d.concept) lines.push(d.concept);
     return lines;
   },
-  toDraft(g) { return JSON.parse(JSON.stringify(g)); },
+  toDraft(g) {
+    const d = JSON.parse(JSON.stringify(g));
+    if (d.enabled == null) d.enabled = true;
+    return d;
+  },
   promptFor(d) {
     return `Concept illustration of a sound: ${d.display_name || slugToName(d.id)}, ${d.concept || ''}, abstract audio waveform art`;
   },
@@ -953,7 +963,7 @@ function playVfxPreview(stage, d) {
 const VfxEditor = {
   label: 'VFX',
   newItem: () => ({ id: '', display_name: '', category: 'ui', renderer: 'procedural',
-    behavior: 'flash', params: {}, sustained: false, placeholder: true,
+    behavior: 'flash', params: {}, sustained: false, placeholder: true, enabled: true,
     sfx: '', concept: '', explanation: '', prompt: '' }),
   form(draft, ctx, onChange) {
     if (!draft.params) draft.params = {};
@@ -968,6 +978,8 @@ const VfxEditor = {
         ),
         el('div', { class: 'frow' },
           el('div', { class: 'fld' }, checkInput(draft, 'placeholder', onChange, 'Placeholder — no designed look yet (mutable in game via F8)')),
+          el('div', { class: 'fld' }, checkInput(draft, 'enabled', onChange,
+            'Enabled — unticked = PARKED: no live cue site yet (kept as visible backlog, never deleted)')),
         ),
       ),
       groupBox('Look (procedural renderer)',
@@ -1018,6 +1030,7 @@ const VfxEditor = {
     for (const k of ['scale', 'duration', 'intensity']) if ((d.params || {})[k] != null) params[k] = d.params[k];
     if (Object.keys(params).length) out.params = params;
     if (d.sustained) out.sustained = true;
+    if (d.enabled === false) out.enabled = false;   // parked — visible backlog
     if ((d.sfx || '').trim()) out.sfx = d.sfx.trim();
     out.placeholder = d.placeholder !== false;
     out.concept = d.concept || '';
@@ -1027,6 +1040,7 @@ const VfxEditor = {
   },
   summarize(d) {
     const lines = [`${d.display_name || d.id || 'Unnamed VFX'} — ${d.category || 'ui'} ${d.sustained ? 'sustained state' : 'one-shot'} riding "${d.behavior}".`];
+    if (d.enabled === false) lines.push('PARKED (enabled: false) — no live cue site yet; the game skips it at load.');
     lines.push(d.placeholder === false ? 'Designed look — always plays.'
       : 'PLACEHOLDER — plays the procedural sketch; mutable in game with F8 until a look is designed.');
     if (d.sfx) lines.push(`Fires companion sound "${d.sfx}" atomically.`);
@@ -1037,6 +1051,7 @@ const VfxEditor = {
     const d = JSON.parse(JSON.stringify(g));
     if (!d.params) d.params = {};
     if (!d.renderer) d.renderer = 'procedural';
+    if (d.enabled == null) d.enabled = true;
     return d;
   },
   promptFor(d) {

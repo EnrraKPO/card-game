@@ -101,6 +101,7 @@ func _arc_tangent(from: Vector2, to: Vector2, arc: float, t: float) -> Vector2:
 
 
 func _on_arrival() -> void:
+	Sfx.play("attack_projectile_impact")   # the shot's own thud, part of the designed look
 	var dst := _event.target
 	if dst != null and is_instance_valid(dst):
 		_burst(_center(dst), _event.color)

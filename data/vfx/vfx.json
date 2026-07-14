@@ -1330,6 +1330,7 @@
 	},
 	{
 		"id": "aura_burn",
+		"enabled": false,
 		"display_name": "Burning Aura",
 		"category": "status",
 		"behavior": "sparkle",
@@ -1344,6 +1345,7 @@
 	},
 	{
 		"id": "aura_chill",
+		"enabled": false,
 		"display_name": "Chilled Aura",
 		"category": "status",
 		"behavior": "glow",
@@ -1388,6 +1390,7 @@
 	},
 	{
 		"id": "aura_enraged",
+		"enabled": false,
 		"display_name": "Enraged Aura",
 		"category": "status",
 		"behavior": "pulse",
@@ -1403,6 +1406,7 @@
 	},
 	{
 		"id": "aura_regen",
+		"enabled": false,
 		"display_name": "Regenerating Aura",
 		"category": "status",
 		"behavior": "sparkle",
@@ -1417,6 +1421,7 @@
 	},
 	{
 		"id": "aura_shielded",
+		"enabled": false,
 		"display_name": "Shielded Aura",
 		"category": "status",
 		"behavior": "glow",
@@ -1432,6 +1437,7 @@
 	},
 	{
 		"id": "aura_curse",
+		"enabled": false,
 		"display_name": "Cursed Aura",
 		"category": "status",
 		"behavior": "sparkle",
@@ -1606,6 +1612,7 @@
 	},
 	{
 		"id": "spell_fizzle",
+		"enabled": false,
 		"display_name": "Spell Fizzle",
 		"category": "combat",
 		"behavior": "sparkle",
@@ -1647,6 +1654,7 @@
 	},
 	{
 		"id": "ui_badge_pop",
+		"enabled": false,
 		"display_name": "Badge Pop",
 		"category": "ui",
 		"behavior": "pop",
@@ -1690,6 +1698,7 @@
 	},
 	{
 		"id": "ui_hover_glint",
+		"enabled": false,
 		"display_name": "Hover Glint",
 		"category": "ui",
 		"behavior": "glint",
@@ -1735,6 +1744,7 @@
 	},
 	{
 		"id": "ui_save_tick",
+		"enabled": false,
 		"display_name": "Save Tick",
 		"category": "ui",
 		"behavior": "sparkle",
@@ -1805,6 +1815,7 @@
 	},
 	{
 		"id": "card_reveal_flare",
+		"enabled": false,
 		"display_name": "Card Reveal",
 		"category": "card",
 		"behavior": "flash",
@@ -1820,6 +1831,7 @@
 	},
 	{
 		"id": "card_charm_glint",
+		"enabled": false,
 		"display_name": "Charm Pip Glint",
 		"category": "card",
 		"behavior": "sparkle",
@@ -1878,6 +1890,7 @@
 	},
 	{
 		"id": "gold_gain_sparkle",
+		"enabled": false,
 		"display_name": "Gold Gained",
 		"category": "resource",
 		"behavior": "sparkle",
@@ -1906,6 +1919,7 @@
 	},
 	{
 		"id": "material_gain_shimmer",
+		"enabled": false,
 		"display_name": "Materials Gained",
 		"category": "resource",
 		"behavior": "sparkle",
@@ -1920,6 +1934,7 @@
 	},
 	{
 		"id": "xp_tally_ticks",
+		"enabled": false,
 		"display_name": "Experience Tally",
 		"category": "resource",
 		"behavior": "sparkle",
@@ -2053,6 +2068,7 @@
 	},
 	{
 		"id": "shop_denied_shake",
+		"enabled": false,
 		"display_name": "Can't Afford Shake",
 		"category": "economy",
 		"behavior": "shake",
@@ -2112,6 +2128,7 @@
 	},
 	{
 		"id": "relic_discard_fade",
+		"enabled": false,
 		"display_name": "Relic Discarded",
 		"category": "economy",
 		"behavior": "dissolve",
@@ -2215,6 +2232,7 @@
 	},
 	{
 		"id": "upgrade_denied_dim",
+		"enabled": false,
 		"display_name": "Upgrade Locked",
 		"category": "meta",
 		"behavior": "flash",
@@ -2245,6 +2263,7 @@
 	},
 	{
 		"id": "deck_add_pop",
+		"enabled": false,
 		"display_name": "Card Added to Deck",
 		"category": "meta",
 		"behavior": "pop",
@@ -2290,6 +2309,7 @@
 	},
 	{
 		"id": "level_up_radiance",
+		"enabled": false,
 		"display_name": "Level Up",
 		"category": "meta",
 		"behavior": "burst",

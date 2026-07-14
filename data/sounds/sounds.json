@@ -30,6 +30,7 @@
 	},
 	{
 		"id": "ui_screen_close",
+		"enabled": false,
 		"display_name": "Screen Close / Back",
 		"category": "ui",
 		"concept": "Backing out of a screen (✕, Back, Esc, OS back gesture). The mirrored partner of Screen Open — falling instead of rising.",
@@ -65,6 +66,7 @@
 	},
 	{
 		"id": "ui_hover_tick",
+		"enabled": false,
 		"display_name": "Hover Tick",
 		"category": "ui",
 		"concept": "Cursor entering an interactive element that rewards attention (list rows, map nodes). Near-subliminal.",
@@ -108,6 +110,7 @@
 	},
 	{
 		"id": "card_shuffle",
+		"enabled": false,
 		"display_name": "Deck Shuffle",
 		"category": "card",
 		"concept": "The draw pile being (re)shuffled — combat start, or the discard cycling back in.",
@@ -122,6 +125,7 @@
 	},
 	{
 		"id": "card_reveal",
+		"enabled": false,
 		"display_name": "Card Reveal",
 		"category": "card",
 		"concept": "A hidden card flipping face-up (rewards, offers). A flourish with a touch of sparkle — anticipation resolved.",
@@ -151,6 +155,7 @@
 	},
 	{
 		"id": "combat_ready",
+		"enabled": false,
 		"display_name": "Ready / End Placement",
 		"category": "combat",
 		"concept": "Committing the placement phase with the Ready button — the die is cast. Heavier than a normal button press.",
@@ -295,6 +300,7 @@
 	},
 	{
 		"id": "damage_burn_tick",
+		"enabled": false,
 		"display_name": "Burn Tick",
 		"category": "combat",
 		"concept": "Periodic fire damage pulsing on its carrier — a flare-up, the fiery sibling of the poison tick.",
@@ -402,6 +408,7 @@
 	},
 	{
 		"id": "gold_gain",
+		"enabled": false,
 		"display_name": "Gold Gained",
 		"category": "resource",
 		"concept": "Gold entering the purse (rewards, events) — classic coin joy, scaled small enough to stack.",
@@ -416,6 +423,7 @@
 	},
 	{
 		"id": "material_gain",
+		"enabled": false,
 		"display_name": "Materials Gained",
 		"category": "resource",
 		"concept": "Crafting materials (essences, king pieces) granted — more mystical than coin: bottled elements arriving.",
@@ -423,6 +431,7 @@
 	},
 	{
 		"id": "experience_gain",
+		"enabled": false,
 		"display_name": "Experience Gained",
 		"category": "resource",
 		"concept": "Run-end experience tallying up toward upgrade points — a counting-up ratchet with warmth.",
@@ -466,6 +475,7 @@
 	},
 	{
 		"id": "map_boss_reveal",
+		"enabled": false,
 		"display_name": "Boss Node Nears",
 		"category": "map",
 		"concept": "The boss node becoming reachable — a low warning presence: it knows you're coming.",
@@ -502,6 +512,7 @@
 	},
 	{
 		"id": "shop_denied",
+		"enabled": false,
 		"display_name": "Can't Afford",
 		"category": "economy",
 		"concept": "Trying to buy without enough gold — an empty purse shake; the merchant's polite refusal.",
@@ -530,6 +541,7 @@
 	},
 	{
 		"id": "relic_discard",
+		"enabled": false,
 		"display_name": "Relic Discarded",
 		"category": "economy",
 		"concept": "Voluntarily dropping a relic — deliberate letting-go; respectful, not trashy.",
@@ -598,6 +610,7 @@
 	},
 	{
 		"id": "forge_combine_fail",
+		"enabled": false,
 		"display_name": "Combine Rejected",
 		"category": "lab",
 		"concept": "An invalid combine attempt — the elements refusing each other; fizzled chemistry.",
@@ -641,6 +654,7 @@
 	},
 	{
 		"id": "upgrade_denied",
+		"enabled": false,
 		"display_name": "Upgrade Locked",
 		"category": "meta",
 		"concept": "Clicking an unaffordable or locked node — stone that won't yield yet.",
@@ -662,6 +676,7 @@
 	},
 	{
 		"id": "profile_level_up",
+		"enabled": false,
 		"display_name": "Level Up",
 		"category": "meta",
 		"concept": "The profile crossing an experience threshold and granting an upgrade point — personal growth fanfare, mid-sized.",

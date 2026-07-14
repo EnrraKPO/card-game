@@ -841,7 +841,8 @@ function renderItemList() {
       // recipe marker: stored on the entry, or landed just now by the running batch
       const hasRecipe = g.recipe || (run && run.doneIds.has(g.id));
       list.append(el('div', {
-        class: 'item-row tree-leaf' + (state.mode === 'game' && state.currentId === g.id ? ' active' : ''),
+        class: 'item-row tree-leaf' + (state.mode === 'game' && state.currentId === g.id ? ' active' : '')
+          + (g.parked ? ' parked' : ''),
         onclick: () => {
           if (!confirmDiscard()) return;
           openGameItem(g.id);
@@ -849,6 +850,7 @@ function renderItemList() {
       },
         g.art ? el('img', { class: 'thumb', loading: 'lazy', src: '/gameart/' + g.art }) : null,
         el('div', { class: 'item-name' }, el('div', { text: g.name }), el('div', { class: 'item-id', text: g.id })),
+        g.parked ? el('span', { class: 'pill', text: 'parked', title: 'enabled: false — no live cue site yet; visible backlog, never deleted' }) : null,
         g.edited ? el('span', { class: 'pill installed', text: 'edited' }) : null,
         hasRecipe ? el('span', { class: 'subtle', text: '✨', title: 'has an art recipe (prompt stored on the entry)' }) : null,
         (state.currentType === 'card' && !run) ? el('button', { class: 'ghost tiny', text: '✨',

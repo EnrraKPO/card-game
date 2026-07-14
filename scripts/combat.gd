@@ -160,6 +160,8 @@ func _ready() -> void:
 	var is_boss_fight := GameData.current_encounter != null \
 			and GameData.current_encounter.type == EncounterData.Type.BOSS
 	Sfx.play("combat_boss_intro" if is_boss_fight else "combat_start")
+	Sfx.music("music_boss" if is_boss_fight else "music_combat")
+	Sfx.ambience("amb_combat_battlefield")
 	_refresh()
 	_begin_round()
 
@@ -368,6 +370,7 @@ func _show_enemy_spell(inst: CardInstance, target: CardInstance) -> void:
 	banner.global_position = Vector2(size.x * 0.5 - 150.0, origin.y - 44.0)
 	banner.custom_minimum_size.x = 300.0
 
+	Sfx.play("spell_cast")   # the enemy's cast sounds like the player's
 	# Pop in, then hold so the player can read what was cast.
 	card.scale = Vector2(0.5, 0.5)
 	var pop := create_tween()

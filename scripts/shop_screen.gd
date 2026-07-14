@@ -30,6 +30,7 @@ var _compact := false
 
 func _ready() -> void:
 	Sfx.play("shop_enter")
+	Sfx.ambience("amb_shop_chatter")   # music keeps the map's bed — the shop is a map stop
 	_compact = UIScale.is_compact()
 	_build_ui()
 	_rebuild_deck()

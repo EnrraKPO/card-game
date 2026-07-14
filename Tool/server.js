@@ -3020,6 +3020,8 @@ async function handle(req, res) {
           chess_pieces: (e.data && e.data.chess_pieces) || undefined,
           // has an authored/inferred art recipe (tool.art prompt) — the ✨ marker
           recipe: (e.data && e.data.tool && e.data.tool.art && e.data.tool.art.prompt) ? true : undefined,
+          // parked = authored but disabled (no live cue site yet) — visible backlog, never deleted
+          parked: (e.data && e.data.enabled === false) ? true : undefined,
         }));
       }
       return send(res, 200, {

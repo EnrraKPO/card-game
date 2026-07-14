@@ -134,6 +134,8 @@ func _ready() -> void:
 			n.visited = true
 
 	Sfx.play("map_enter")
+	Sfx.music("music_map")
+	Sfx.ambience("amb_map_wind")
 	_build_scroll()
 	_build_forge_fab()
 	_build_zoom_slider()

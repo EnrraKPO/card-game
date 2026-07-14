@@ -26,6 +26,9 @@ func _ready() -> void:
 		Nav.goto.call_deferred("res://scenes/game_slots.tscn")
 		return
 
+	Sfx.music("music_title")   # the hub is home — the title bed, ambience off
+	Sfx.ambience("")
+
 	# Rebuild if the form factor flips (e.g. previewing mobile by resizing in the editor).
 	UIScale.layout_changed.connect(func(): get_tree().reload_current_scene(), CONNECT_ONE_SHOT)
 

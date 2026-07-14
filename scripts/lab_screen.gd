@@ -68,6 +68,8 @@ func _ready() -> void:
 		Nav.goto.call_deferred("res://scenes/game_slots.tscn")
 		return
 	Sfx.play("lab_enter")
+	Sfx.music("music_lab")
+	Sfx.ambience("amb_lab_bubbling")
 	UIScale.layout_changed.connect(func(): get_tree().reload_current_scene(), CONNECT_ONE_SHOT)
 	_compact = UIScale.is_compact()
 
