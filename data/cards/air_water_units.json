@@ -121,30 +121,30 @@
 	},
 	{
 		"id": "air_water_queen",
+		"display_name": "Storm Queen",
 		"elements": [
 			"air",
 			"water"
 		],
-		"display_name": "Storm Queen",
 		"chess_pieces": [
 			"queen"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "Chibi regal sorceress woman formed of churning storm-vapor, stern rain-washed face beneath a crown of coiled dark cloud beaded with silver droplets, long hair dissolving into streaming downpour, slate-grey gown rippling like windblown mist with pale silver trim, one hand raised cradling a swirling sphere of compressed rain and spiraling gale, drenched hilltop below, towering blue-black thunderheads behind, thick bold outlines, saturated stormy colors, centered figure.",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/queen.png",
-					"name": "Queen"
-				},
-				"inferredFrom": {
-					"anchor": "queen",
-					"theme": [
-						"air_water_pawn",
-						"air_water_knight",
-						"air_water_queen"
-					],
-					"mode": "concept"
+					"name": "Queen",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}

@@ -134,33 +134,30 @@
 	},
 	{
 		"id": "darkness_fire_queen",
+		"display_name": "Demonic Queen",
 		"elements": [
 			"darkness",
 			"fire"
 		],
-		"display_name": "Demonic Queen",
 		"chess_pieces": [
 			"queen"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "Winged front-facing demoness suspended on rising cinders, cruel pale beautiful face lit by molten inner fire, blazing ember eyes, flowing dark hair whipped sideways, tattered translucent robes of jagged crimson crystal shards, faceted shadow-violet gem armor threaded with glowing infernal-orange cracks, broad sweeping wings of red crystal, a searing dark halo above her brow, hands parting spirals of embers, deep black background, dramatic crimson glow, centered menacing figure, bold clean cel-shading, thick outlines",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/queen.png",
-					"name": "Queen"
-				},
-				"inferredFrom": {
-					"concept": [
-						"queen",
-						"air_air_bishop_queen",
-						"air_air_knight_queen"
-					],
-					"theme": [
-						"darkness_fire",
-						"darkness_fire_bishop",
-						"darkness_fire_king"
-					]
+					"name": "Queen",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}

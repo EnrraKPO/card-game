@@ -211,10 +211,9 @@
 		"health": 5,
 		"speed": 4,
 		"description": "The most powerful piece on the board. Always targets the highest ATK enemy, neutralising the greatest threat first.",
-		"elements": [],
 		"chess_pieces": [
 			"queen"
 		],
-		"effects": []
+		"ranged": true
 	}
 ]

@@ -130,33 +130,30 @@
 	},
 	{
 		"id": "earth_light_queen",
+		"display_name": "Nature Queen",
 		"elements": [
 			"earth",
 			"light"
 		],
-		"display_name": "Nature Queen",
 		"chess_pieces": [
 			"queen"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "Wind-borne front-facing forest goddess suspended on swirling verdant currents, smooth serene face and streaming hair of trailing vines and drifting spores, robes of faceted translucent green leaves veined with glowing golden light, broad sweeping foliage wings, a soft radiant crown of living foliage hovering above her brow, hands parting spirals of luminous pollen breeze, warm gold-green luminescence, dark starlit backdrop, bold clean cel-shading, thick outlines, centered heroic subject",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/queen.png",
-					"name": "Queen"
-				},
-				"inferredFrom": {
-					"concept": [
-						"queen",
-						"air_air_bishop_queen",
-						"air_air_knight_queen"
-					],
-					"theme": [
-						"earth_light",
-						"earth_light_bishop",
-						"earth_light_king"
-					]
+					"name": "Queen",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}

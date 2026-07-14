@@ -138,34 +138,30 @@
 	},
 	{
 		"id": "earth_water_queen",
+		"display_name": "Clay Queen",
 		"elements": [
 			"earth",
 			"water"
 		],
-		"display_name": "Clay Queen",
 		"chess_pieces": [
 			"queen"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "Chibi clay-sculpted sovereign queen seated cross-legged, tall many-pointed diadem-helm of packed wet earth atop a slick rounded head, high-collared robe modeled in dripping muddy brown with thumb-pressed grooves and glossy smears, cupping a small crown-shape in one palm, cracking drying skin oozing wet runnels, glowing amber eyes, warm ochre haze and faint teal mist, soft glowing ground circle, centered figure, dark fantasy digital painting",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/queen.png",
-					"name": "Queen"
-				},
-				"inferredFrom": {
-					"concept": [
-						"queen",
-						"air_darkness_bishop_queen",
-						"air_darkness_knight_queen"
-					],
-					"theme": [
-						"air_fire_knight",
-						"air_fire_pawn",
-						"air_fire_rook",
-						"earth_water_knight"
-					]
+					"name": "Queen",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}

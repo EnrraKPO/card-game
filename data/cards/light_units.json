@@ -49,13 +49,14 @@
 	},
 	{
 		"id": "light_queen",
+		"display_name": "Light Queen",
 		"elements": [
 			"light"
 		],
-		"display_name": "Light Queen",
 		"chess_pieces": [
 			"queen"
-		]
+		],
+		"ranged": true
 	},
 	{
 		"id": "light_pawn_pawn",

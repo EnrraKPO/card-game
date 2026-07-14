@@ -129,33 +129,30 @@
 	},
 	{
 		"id": "air_earth_queen",
+		"display_name": "Sand Queen",
 		"elements": [
 			"air",
 			"earth"
 		],
-		"display_name": "Sand Queen",
 		"chess_pieces": [
 			"queen"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "Chibi rounded-body regal sovereign woman formed from cascading golden desert sand, flowing gown of drifting dune-grains streaming into swirling motes, a jagged crown of hardened sculpted sand crowned with a sunlit amber gem, stern glowing eyes, one open palm cradling a spinning orb of whirling ochre grit, trailing tan dust, thick bold outlines, warm saturated colors, pale sun-baked sky, centered figure.",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/queen.png",
-					"name": "Queen"
-				},
-				"inferredFrom": {
-					"concept": [
-						"queen",
-						"bishop_queen",
-						"darkness_fire_queen"
-					],
-					"theme": [
-						"air_air_knight",
-						"air_air_pawn",
-						"air_air_queen"
-					]
+					"name": "Queen",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}

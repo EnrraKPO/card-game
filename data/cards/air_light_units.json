@@ -137,33 +137,30 @@
 	},
 	{
 		"id": "air_light_queen",
+		"display_name": "Angelic Queen",
 		"elements": [
 			"air",
 			"light"
 		],
-		"display_name": "Angelic Queen",
 		"chess_pieces": [
 			"queen"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "Regal young sovereign woman in flowing ivory-and-gold gown with a jeweled spiked crown and a rich crimson mantle, broad radiant white-feathered wings sweeping upward, a soft luminous ring hovering above her hair, one hand raising a glowing orb of light, poised atop billowing sunlit clouds behind low gleaming golden lattice railings, bold clean cartoon cel-shading, warm radiant sky, centered heroic figure",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/queen.png",
-					"name": "Queen"
-				},
-				"inferredFrom": {
-					"concept": [
-						"queen",
-						"bishop_queen",
-						"darkness_water_bishop_queen"
-					],
-					"theme": [
-						"air_light",
-						"air_light_bishop",
-						"air_light_king"
-					]
+					"name": "Queen",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}

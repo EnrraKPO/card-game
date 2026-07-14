@@ -143,6 +143,7 @@
 		"chess_pieces": [
 			"queen"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",

@@ -130,33 +130,30 @@
 	},
 	{
 		"id": "darkness_earth_queen",
+		"display_name": "Rock Queen",
 		"elements": [
 			"darkness",
 			"earth"
 		],
-		"display_name": "Rock Queen",
 		"chess_pieces": [
 			"queen"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "Rearing regal queen sculpted from jagged dark faceted rockstone, crown of splintered mineral shards rising to sharp peaks, gowned in layered stony plates streaming sideways in rushing gusts, cracked seams pulsing violet inner light, gilded fracture lines glinting gold, a soft radiant purple ring hovering above her fractured brow, wisps of pale luminous haze curling past, deep shadowed void, dramatic amethyst glow, bold clean cel-shading, thick outlines, centered heroic subject",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/queen.png",
-					"name": "Queen"
-				},
-				"inferredFrom": {
-					"concept": [
-						"queen",
-						"air_air_bishop_queen",
-						"air_air_knight_queen"
-					],
-					"theme": [
-						"darkness_earth",
-						"darkness_earth_bishop",
-						"darkness_earth_knight"
-					]
+					"name": "Queen",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}

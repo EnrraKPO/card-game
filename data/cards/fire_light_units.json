@@ -132,32 +132,30 @@
 	},
 	{
 		"id": "fire_light_queen",
+		"display_name": "Spirit Queen",
 		"elements": [
 			"fire",
 			"light"
 		],
-		"display_name": "Spirit Queen",
 		"chess_pieces": [
 			"queen"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "Wind-conjured regal spectral queen rising from swirling twilight vapor, translucent slender form of dark violet mist, hollow pale-blue glowing eyes above a serene shadowed face, streaming smoke-veil hair dissolving into drifting amethyst wisps, tall crown of luminous lavender air, gown unraveling into spiraling purple gusts, hands parting curling breezes, brooding dusk sky, bold clean cel-shading, thick outlines, centered heroic subject",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/queen.png",
-					"name": "Queen"
-				},
-				"inferredFrom": {
-					"concept": [
-						"queen",
-						"air_air_bishop_queen",
-						"air_air_knight_queen"
-					],
-					"theme": [
-						"fire_light_knight",
-						"fire_light_pawn"
-					]
+					"name": "Queen",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}

@@ -132,32 +132,30 @@
 	},
 	{
 		"id": "darkness_darkness_queen",
+		"display_name": "Pure Darkness Queen",
 		"elements": [
 			"darkness",
 			"darkness"
 		],
-		"display_name": "Pure Darkness Queen",
 		"chess_pieces": [
 			"queen"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "Pure obsidian-shadow queen suspended mid-air on curling ribbons of violet-glowing darkness, alabaster face wreathed in streaming void-black hair dissolving into smoke, tattered inky robes rippling into drifting fragments, broad shadow-wrought wings edged in cold amethyst light, a dim glowing ring hovering above her brow, hands parting spirals of dark vapor, brooding twilight-purple sky, centered heroic subject.",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/queen.png",
-					"name": "Queen"
-				},
-				"inferredFrom": {
-					"concept": [
-						"queen",
-						"air_air_bishop_queen",
-						"air_air_knight_queen"
-					],
-					"theme": [
-						"darkness_darkness_knight",
-						"darkness_darkness_pawn"
-					]
+					"name": "Queen",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}

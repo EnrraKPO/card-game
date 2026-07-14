@@ -49,13 +49,14 @@
 	},
 	{
 		"id": "water_queen",
+		"display_name": "Water Queen",
 		"elements": [
 			"water"
 		],
-		"display_name": "Water Queen",
 		"chess_pieces": [
 			"queen"
-		]
+		],
+		"ranged": true
 	},
 	{
 		"id": "water_pawn_pawn",

@@ -134,33 +134,30 @@
 	},
 	{
 		"id": "earth_fire_queen",
+		"display_name": "Magma Queen",
 		"elements": [
 			"earth",
 			"fire"
 		],
-		"display_name": "Magma Queen",
 		"chess_pieces": [
 			"queen"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "Regal front-facing molten sovereign woman hovering serenely on rising heat-haze currents, smooth incandescent face and streaming ribbons of white-hot fire for hair, flowing robes of rippling liquid fire seamed with cracked blackened crystal, broad sweeping wings of ember-glowing plumes, a ring of drifting sparks above her brow, hands parting spiraling whorls of flame, scorched glassy stone below, bold clean cel-shading, thick outlines, deep ember-orange and charcoal palette, radiant volcanic glow, centered heroic subject",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/queen.png",
-					"name": "Queen"
-				},
-				"inferredFrom": {
-					"concept": [
-						"queen",
-						"air_air_bishop_queen",
-						"air_air_knight_queen"
-					],
-					"theme": [
-						"earth_fire",
-						"earth_fire_bishop",
-						"earth_fire_king"
-					]
+					"name": "Queen",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}

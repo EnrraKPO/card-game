@@ -48,12 +48,13 @@
 	},
 	{
 		"id": "air_queen",
+		"display_name": "Air Queen",
 		"elements": [
 			"air"
 		],
-		"display_name": "Air Queen",
 		"chess_pieces": [
 			"queen"
-		]
+		],
+		"ranged": true
 	}
 ]

@@ -65,13 +65,14 @@
 	},
 	{
 		"id": "darkness_queen",
+		"display_name": "Darkness Queen",
 		"elements": [
 			"darkness"
 		],
-		"display_name": "Darkness Queen",
 		"chess_pieces": [
 			"queen"
-		]
+		],
+		"ranged": true
 	},
 	{
 		"id": "darkness_pawn_pawn",

@@ -156,6 +156,7 @@
 	{
 		"id": "darkness_water_queen",
 		"display_name": "Blight Queen",
+		"description": "Applies Poison 1 to the unit it strikes.",
 		"elements": [
 			"darkness",
 			"water"
@@ -163,14 +164,20 @@
 		"chess_pieces": [
 			"queen"
 		],
-		"description": "Applies Poison 1 to the unit it strikes.",
+		"ranged": true,
 		"effects": [
 			{
-				"trigger": "on_attack",
-				"targeting_policy": "attack_target",
+				"trigger": {
+					"kind": "dual_event",
+					"event": "attack",
+					"origin_of": "self"
+				},
 				"status": {
-					"id": "poison",
-					"stacks": 1
+					"id": "poison"
+				},
+				"targets": {
+					"kind": "participant",
+					"participant": "destination"
 				}
 			}
 		]

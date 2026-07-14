@@ -49,13 +49,14 @@
 	},
 	{
 		"id": "fire_queen",
+		"display_name": "Fire Queen",
 		"elements": [
 			"fire"
 		],
-		"display_name": "Fire Queen",
 		"chess_pieces": [
 			"queen"
-		]
+		],
+		"ranged": true
 	},
 	{
 		"id": "fire_pawn_pawn",

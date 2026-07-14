@@ -605,6 +605,7 @@
 		"chess_pieces": [
 			"queen"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -618,7 +619,9 @@
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/queen.png",
-					"name": "Queen"
+					"name": "Queen",
+					"mode": "img2img",
+					"denoise": 0.6
 				},
 				"llmHidden": [
 					"Composition: water + water + queen.",
@@ -629,15 +632,6 @@
 					"prompt": "Cartoon chibi queen formed of translucent living seawater, flowing gown of layered rolling waves, pearl-studded coral crown, long hair streaming into twin cascading waterfalls, one raised palm conjuring a glassy sphere of swirling tides, paired whirlpools spiraling around her hem, glistening turquoise droplets, calm ocean shallows and clear sky behind, bold outlines, bright sapphire-and-seafoam palette",
 					"style": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear, clean background",
 					"at": "2026-07-08"
-				},
-				"inferredFrom": {
-					"anchor": "queen",
-					"theme": [
-						"water_water_pawn",
-						"water_water_knight",
-						"water_water_queen"
-					],
-					"mode": "concept"
 				}
 			}
 		}

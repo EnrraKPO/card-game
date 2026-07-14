@@ -135,33 +135,30 @@
 	},
 	{
 		"id": "darkness_light_queen",
+		"display_name": "Undead Queen",
 		"elements": [
 			"darkness",
 			"light"
 		],
-		"display_name": "Undead Queen",
 		"chess_pieces": [
 			"queen"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "Skeletal queen sovereign standing on a glowing spectral sigil, tall cleft crown of pale bone crowned with a haunting teal gem, gaunt bone visage with hollow eye sockets burning ghost-green, tattered dark royal robes trailing curls of graveyard mist, one bony hand raising a spiraled aquamarine-crystal staff, the other cradling a hovering orb of cold teal flame, spined bone pauldrons, brooding storm sky over gothic tombs, thick outlines, bold saturated colors",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/queen.png",
-					"name": "Queen"
-				},
-				"inferredFrom": {
-					"concept": [
-						"queen",
-						"air_fire_bishop_queen",
-						"air_fire_knight_queen"
-					],
-					"theme": [
-						"darkness_light_knight",
-						"darkness_light_pawn",
-						"darkness_light_bishop"
-					]
+					"name": "Queen",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}

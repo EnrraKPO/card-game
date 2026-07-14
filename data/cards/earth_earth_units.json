@@ -134,33 +134,30 @@
 	},
 	{
 		"id": "earth_earth_queen",
+		"display_name": "Pure Earth Queen",
 		"elements": [
 			"earth",
 			"earth"
 		],
-		"display_name": "Pure Earth Queen",
 		"chess_pieces": [
 			"queen"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "Front-facing serene stone-skinned queen standing regal atop a cobbled dais, obsidian-dark figure carved from living rock, silver-etched plated shoulders and crown, glowing violet void-rings pulsing in her eyes and chest, robes of drifting soil and crumbling gravel, roots and mineral shards spiraling around her raised hands, jagged mountains under a moody violet-grey sky, bold clean cel-shading, thick outlines, centered heroic subject",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/queen.png",
-					"name": "Queen"
-				},
-				"inferredFrom": {
-					"concept": [
-						"queen",
-						"air_air_bishop_queen",
-						"air_air_knight_queen"
-					],
-					"theme": [
-						"darkness_darkness_knight",
-						"darkness_darkness_pawn",
-						"darkness_darkness_queen"
-					]
+					"name": "Queen",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
