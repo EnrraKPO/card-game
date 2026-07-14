@@ -264,6 +264,7 @@ func _begin_round() -> void:
 	Resolver.submit(StatMutation.make(_enemy_side, StatMutation.DRAW, 1,
 			null, StatMutation.CH_SYSTEM))
 	await _do_cpu_placement()
+	Sfx.play("combat_turn_start")
 	_phase = Phase.PLAYER_PLACE
 	_board.placement_enabled = true
 	_set_placement_input(true)
@@ -749,6 +750,7 @@ func _on_king_health_changed(current: int) -> void:
 func _handle_combat_end() -> void:
 	var player_won := _board.player_king_alive()
 	var enc := GameData.current_encounter
+	Sfx.play("combat_victory" if player_won else "combat_defeat")
 	if player_won:
 		# Apply the encounter's automatic rewards (gold + crafting materials) in one place,
 		# uniformly for boss and normal wins. The card-pick reward is handled by reward_screen.
@@ -789,6 +791,7 @@ func _handle_combat_end() -> void:
 
 func _on_board_unit_placed(inst: CardInstance, card_ui: CardUI, from_hand: bool, cost: int, results: Array) -> void:
 	if from_hand:
+		Sfx.play("combat_place_unit")
 		_pay_mana(_player_side, cost)
 		if card_ui.is_generated:
 			_consume_generated_token(card_ui)
@@ -887,6 +890,7 @@ func _on_targeting_ended() -> void:
 
 
 func _on_spell_consumed(card_ui: CardUI, cost: int) -> void:
+	Sfx.play("spell_cast")
 	_pay_mana(_player_side, cost)
 	# A rook-generated SPELL token (e.g. Castling) casts through this same path as a normal hand
 	# spell — but it must exhaust its source rook like a generated UNIT token does, not just drop

@@ -2,19 +2,18 @@ extends Node
 
 # THE sound-effect channel — every SFX anywhere in the app plays through this autoload, the audio
 # counterpart of ScreenUI's "one builder per look" rule: a given game moment always sounds the
-# same, and no scene owns audio nodes of its own. One named method per game moment (not a generic
-# play-by-path API) so call sites read as intent ("Sfx.combined()") and the asset behind a moment
-# can change in exactly one place.
+# same, and no scene owns audio nodes of its own.
+#
+# DATA-DRIVEN: every game moment is a SoundData event (data/sounds/*.json, managed in the Tool's
+# Sounds tab) played by id — Sfx.play("card_draw"). An event without a real asset plays a short
+# PROCEDURAL PLACEHOLDER blip (pitch derived from the id, character from the category), so every
+# event in the library is hooked and audible today; producing the real asset later is purely a
+# data/asset change, no code. The legacy named methods (button/combined/…) remain as thin
+# wrappers over library ids so historical call sites read unchanged.
 #
 # One-shots go through a small round-robin player pool so overlapping cues (e.g. two units struck
-# in quick succession) don't cut each other off. The Forge's mixing drone is the one looped sound
-# and owns a dedicated player with start/stop — see mixing_start.
-
-const _BUTTON := preload("res://assets/sound/button_press_thocky.mp3")
-const _COMBINED := preload("res://assets/sound/combined.mp3")
-const _ATTACK_DAMAGE := preload("res://assets/sound/attack_damage.mp3")
-const _SHIELD_BLOCK := preload("res://assets/sound/melee_shield_block.mp3")
-const _MIXING := preload("res://assets/sound/mixing.mp3")
+# in quick succession) don't cut each other off. LOOPED events (drones, ambience, music) each own
+# a dedicated player, keyed by event id — start with loop_start(id), stop with loop_stop(id).
 
 const _POOL_SIZE := 6
 
@@ -25,10 +24,20 @@ const _POOL_SIZE := 6
 const _MIXING_REACT_PITCH := 1.4
 const _MIXING_RAMP := 0.25
 
+# Placeholder synth shape: a short decaying sine blip. Loudness is deliberately restrained —
+# placeholders exist to prove the hookup, not to be mistaken for sound design.
+const _PLACEHOLDER_DB := -10.0
+const _PLACEHOLDER_RATE := 22050
+# Placeholder loops get a longer, quieter hum so an ambience/music slot is audibly "on" without
+# a 0.14s blip machine-gunning forever.
+const _PLACEHOLDER_LOOP_SECS := 1.2
+const _PLACEHOLDER_LOOP_DB := -22.0
+
 var _pool: Array[AudioStreamPlayer] = []
 var _next := 0
-var _mixing_player: AudioStreamPlayer
-var _mixing_tween: Tween
+var _loop_players: Dictionary = {}       # event id -> AudioStreamPlayer (looped events only)
+var _loop_tweens: Dictionary = {}        # event id -> Tween (pitch ramps on looped events)
+var _placeholder_cache: Dictionary = {}  # event id -> AudioStreamWAV
 
 
 func _ready() -> void:
@@ -36,63 +45,123 @@ func _ready() -> void:
 		var p := AudioStreamPlayer.new()
 		add_child(p)
 		_pool.append(p)
-	_mixing_player = AudioStreamPlayer.new()
-	# Loop the drone at the stream level (AudioStreamMP3.loop) rather than restarting it from
-	# `finished` — a signal-driven restart has an audible seam on every pass.
-	var loop_stream := _MIXING.duplicate() as AudioStreamMP3
-	loop_stream.loop = true
-	_mixing_player.stream = loop_stream
-	add_child(_mixing_player)
 
+
+# ── The event API — play any library event by id ─────────────────────────────────
+
+# One-shot playback of a sound event. Unknown ids are a loud mistake (a typo'd hookup should be
+# heard about immediately in development), missing assets are not — they play the placeholder.
+func play(id: String) -> void:
+	var sd := SoundData.get_sound(id)
+	if sd == null:
+		push_warning("Sfx.play: unknown sound event \"%s\"" % id)
+		return
+	if sd.loop:
+		loop_start(id)
+		return
+	var stream := sd.stream()
+	if stream != null:
+		_play(stream, sd.volume_db)
+	else:
+		_play(_placeholder(sd), _PLACEHOLDER_DB + sd.volume_db)
+
+
+# Starts a looped event (drone/ambience/music). Idempotent: re-calling while already playing
+# keeps the current loop rather than audibly restarting it.
+func loop_start(id: String) -> void:
+	var sd := SoundData.get_sound(id)
+	if sd == null:
+		push_warning("Sfx.loop_start: unknown sound event \"%s\"" % id)
+		return
+	var p: AudioStreamPlayer = _loop_players.get(id, null)
+	if p == null:
+		p = AudioStreamPlayer.new()
+		add_child(p)
+		_loop_players[id] = p
+		var stream := sd.stream()
+		if stream != null:
+			# Loop at the stream level rather than restarting from `finished` — a signal-driven
+			# restart has an audible seam on every pass. MP3/OggVorbis expose a `loop` bool;
+			# WAV loops through loop_mode instead — handle whichever this asset is.
+			var looped: AudioStream = stream.duplicate()
+			if looped is AudioStreamWAV:
+				(looped as AudioStreamWAV).loop_mode = AudioStreamWAV.LOOP_FORWARD
+			else:
+				looped.set("loop", true)
+			p.stream = looped
+			p.volume_db = sd.volume_db
+		else:
+			p.stream = _placeholder(sd)
+			p.volume_db = _PLACEHOLDER_LOOP_DB + sd.volume_db
+	if not p.playing:
+		p.play()
+
+
+func loop_stop(id: String) -> void:
+	var p: AudioStreamPlayer = _loop_players.get(id, null)
+	if p == null:
+		return
+	var tw: Tween = _loop_tweens.get(id, null)
+	if tw != null:
+		tw.kill()
+		_loop_tweens.erase(id)
+	p.stop()
+	p.pitch_scale = 1.0   # next start begins calm, not mid-rev
+
+
+# Ramps a running loop's pitch (and thus playback speed) toward `pitch` — the generic form of
+# the Forge drone's rev-up. Only meaningful while the loop runs; safe to call anytime.
+func loop_pitch(id: String, pitch: float, ramp: float = _MIXING_RAMP) -> void:
+	var p: AudioStreamPlayer = _loop_players.get(id, null)
+	if p == null:
+		return
+	var old: Tween = _loop_tweens.get(id, null)
+	if old != null:
+		old.kill()
+	var tw := create_tween()
+	tw.tween_property(p, "pitch_scale", pitch, ramp)
+	_loop_tweens[id] = tw
+
+
+# ── Legacy named moments (thin wrappers over library ids) ────────────────────────
 
 # Any button press, app-wide — called by GlossyButton itself (see its _on_down), never by screens.
 func button() -> void:
-	_play(_BUTTON)
+	play("ui_button_press")
 
 
 # Celebrates a successful merge of things into a new thing: the Forge screen's card combine, and
-# the Lab's forge/craft operations. Softened — at full volume the celebration overpowered the
-# moment instead of accenting it.
+# the Lab's forge/craft operations.
 func combined() -> void:
-	_play(_COMBINED, -25.0)
+	play("forge_combine_success")
 
 
-# An attack's damage landing on a unit's health. Softened: attacks fire constantly during the
-# auto-battle, so at full volume the barrage dominated combat.
+# An attack's damage landing on a unit's health.
 func attack_damage() -> void:
-	_play(_ATTACK_DAMAGE, -25.0)
+	play("attack_melee_hit")
 
 
 # An attack (fully or partly) caught by a unit's shield.
 func shield_block() -> void:
-	_play(_SHIELD_BLOCK)
+	play("shield_block")
 
 
-# The Forge's swirling-particles drone while a card/charm is being dragged. Looped — runs until
-# mixing_stop(). Idempotent: re-calling while already playing keeps the current loop rather than
-# audibly restarting it.
+# The Forge's swirling-particles drone while a card/charm is being dragged.
 func mixing_start() -> void:
-	if not _mixing_player.playing:
-		_mixing_player.play()
+	loop_start("forge_mixing_loop")
 
 
 # Revs the mixing drone up (two cards are reacting — a valid combine target is hovered) or back
-# down (hover left). Only meaningful while the loop runs; safe to call anytime.
+# down (hover left).
 func mixing_react(on: bool) -> void:
-	if _mixing_tween != null:
-		_mixing_tween.kill()
-	_mixing_tween = create_tween()
-	_mixing_tween.tween_property(_mixing_player, "pitch_scale",
-		_MIXING_REACT_PITCH if on else 1.0, _MIXING_RAMP)
+	loop_pitch("forge_mixing_loop", _MIXING_REACT_PITCH if on else 1.0)
 
 
 func mixing_stop() -> void:
-	if _mixing_tween != null:
-		_mixing_tween.kill()
-		_mixing_tween = null
-	_mixing_player.stop()
-	_mixing_player.pitch_scale = 1.0   # next drag starts calm, not mid-rev
+	loop_stop("forge_mixing_loop")
 
+
+# ── Playback internals ───────────────────────────────────────────────────────────
 
 # `db`: per-moment loudness trim relative to the asset's own level (0 = as authored, negative =
 # gentler) — the balancing knob when one asset is mastered hotter than the rest.
@@ -102,3 +171,45 @@ func _play(stream: AudioStream, db: float = 0.0) -> void:
 	p.stream = stream
 	p.volume_db = db
 	p.play()
+
+
+# Synthesizes the event's placeholder: a short sine blip whose pitch is derived from the event id
+# (so distinct events are audibly distinct) and whose length/shape comes from whether it loops.
+# Cached per id — the synth runs once per event per session.
+func _placeholder(sd: SoundData) -> AudioStreamWAV:
+	var cached: AudioStreamWAV = _placeholder_cache.get(sd.id, null)
+	if cached != null:
+		return cached
+	var freq := 240.0 + float(_id_hash(sd.id) % 720)
+	var secs := _PLACEHOLDER_LOOP_SECS if sd.loop else 0.14
+	var frames := int(_PLACEHOLDER_RATE * secs)
+	var data := PackedByteArray()
+	data.resize(frames * 2)   # 16-bit mono
+	for i in frames:
+		var t := float(i) / _PLACEHOLDER_RATE
+		# One-shots decay away like a struck tine; loops hold a gentle steady hum with a slow
+		# tremolo so a running loop placeholder is audibly alive but not abrasive.
+		var env: float = 0.55 + 0.45 * sin(TAU * 2.0 * t) if sd.loop else exp(-18.0 * t)
+		var v := sin(TAU * freq * t) * env
+		# A quiet octave-up partial gives the blip a little identity beyond a raw sine.
+		v += 0.25 * sin(TAU * freq * 2.0 * t) * env
+		var sample := int(clampf(v, -1.0, 1.0) * 12000.0)
+		data.encode_s16(i * 2, sample)
+	var wav := AudioStreamWAV.new()
+	wav.format = AudioStreamWAV.FORMAT_16_BITS
+	wav.mix_rate = _PLACEHOLDER_RATE
+	wav.data = data
+	if sd.loop:
+		wav.loop_mode = AudioStreamWAV.LOOP_FORWARD
+		wav.loop_end = frames
+	_placeholder_cache[sd.id] = wav
+	return wav
+
+
+# Deterministic tiny hash shared (by formula) with the Tool's in-browser preview, so the
+# placeholder you audition in the Sounds tab is the pitch you hear in game.
+static func _id_hash(id: String) -> int:
+	var h := 0
+	for i in id.length():
+		h = (h * 31 + id.unicode_at(i)) % 99991
+	return h

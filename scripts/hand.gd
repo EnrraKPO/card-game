@@ -294,6 +294,8 @@ func bind_side(side: CombatSide) -> void:
 
 
 func _on_cards_drawn(insts: Array) -> void:
+	if not insts.is_empty():
+		Sfx.play("card_draw")   # once per burst — a turn's multi-draw is one deal, not a drumroll
 	for inst: CardInstance in insts:
 		_spawn_hand_card(inst)
 

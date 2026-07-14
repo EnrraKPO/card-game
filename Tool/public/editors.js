@@ -758,7 +758,115 @@ const NodeWeightsEditor = {
   artNote: 'Reference only — node weights have no art.',
 };
 
+// ═════════════════════════════════ SOUND ════════════════════════════════════
+// One entry per sound EVENT the game will ever make. The library is exhaustive by design:
+// every eventual sound already has a definition — concept (design intent) + prompt (AI
+// sound-generation text) — and the game plays a procedural placeholder for any event whose
+// asset doesn't exist yet, so hookups never wait on audio production.
+const SOUND_CATEGORIES = ['ui', 'card', 'combat', 'magic', 'resource', 'map', 'economy', 'lab', 'meta', 'ambient', 'music'];
+
+// The in-browser twin of the game's placeholder synth (Sfx._placeholder): same id→pitch hash,
+// same decaying-sine shape — auditioning here is hearing what the game will play.
+function soundPlaceholderHash(id) {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) % 99991;
+  return h;
+}
+function playSoundPlaceholder(d) {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const freq = 240 + (soundPlaceholderHash(d.id || '') % 720);
+  const secs = d.loop ? 1.2 : 0.14;
+  const now = ctx.currentTime;
+  for (const [mult, amp] of [[1, 1], [2, 0.25]]) {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.frequency.value = freq * mult;
+    if (d.loop) {
+      gain.gain.setValueAtTime(0.12 * amp, now);
+    } else {
+      gain.gain.setValueAtTime(0.3 * amp, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + secs);
+    }
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + secs);
+  }
+  setTimeout(() => ctx.close(), secs * 1000 + 100);
+}
+
+const SoundEditor = {
+  label: 'Sound',
+  newItem: () => ({ id: '', display_name: '', category: 'ui', concept: '', prompt: '',
+    file: '', volume_db: 0, loop: false }),
+  form(draft, ctx, onChange) {
+    const wrap = el('div');
+    const hasFile = () => !!(draft.file || '').trim();
+    wrap.append(
+      groupBox('Identity',
+        el('div', { class: 'frow' },
+          idField(draft, onChange, ctx.isNew),
+          fld('Name', textInput(draft, 'display_name', onChange)),
+          fld('Category', selectInput(draft, 'category', SOUND_CATEGORIES.map(v => ({ value: v, label: v })), onChange), null, 'narrow'),
+        ),
+      ),
+      groupBox('Sound design',
+        el('div', { class: 'frow' },
+          el('div', { class: 'fld wide' }, el('span', { class: 'lab', text: 'Concept — what this moment is and how it should feel' }),
+            el('textarea', { value: draft.concept || '', oninput: e => { draft.concept = e.target.value; onChange(); } })),
+        ),
+        el('div', { class: 'frow' },
+          el('div', { class: 'fld wide' }, el('span', { class: 'lab', text: 'AI generation prompt — ready-to-paste text for a sound generator' }),
+            el('textarea', { value: draft.prompt || '', oninput: e => { draft.prompt = e.target.value; onChange(); } })),
+        ),
+      ),
+      groupBox('Playback',
+        el('div', { class: 'frow' },
+          fld('Asset file', textInput(draft, 'file', onChange, '(empty = placeholder synth)'),
+            'bare filename inside assets/sound/ — .mp3/.ogg/.wav'),
+          fld('Volume trim (dB)', numInput(draft, 'volume_db', onChange, { step: 1, float: true, min: -60, max: 12 }),
+            '0 = as authored, negative = gentler', 'narrow'),
+          el('div', { class: 'fld' }, checkInput(draft, 'loop', onChange, 'Looped bed (drone / ambience / music)')),
+        ),
+        el('div', { class: 'frow' },
+          el('button', { class: 'ghost', text: '▶ Preview placeholder',
+            title: 'The synth blip the game plays while this event has no asset (same pitch as in game)',
+            onclick: e => { e.preventDefault(); playSoundPlaceholder(draft); } }),
+          el('button', { class: 'ghost', text: '▶ Play asset',
+            title: hasFile() ? 'Play assets/sound/' + draft.file : 'No asset file set',
+            onclick: e => {
+              e.preventDefault();
+              if (!hasFile()) return;
+              new Audio('/gamesound/' + encodeURIComponent(draft.file.trim())).play();
+            } }),
+        ),
+      ),
+    );
+    return wrap;
+  },
+  serialize(d) {
+    const out = { id: d.id, display_name: d.display_name || slugToName(d.id),
+      category: d.category || 'ui', concept: d.concept || '', prompt: d.prompt || '' };
+    if ((d.file || '').trim()) out.file = d.file.trim();
+    if (d.volume_db) out.volume_db = d.volume_db;
+    if (d.loop) out.loop = true;
+    return out;
+  },
+  summarize(d) {
+    const lines = [`${d.display_name || d.id || 'Unnamed sound'} — ${d.category || 'ui'} ${d.loop ? 'loop' : 'one-shot'}.`];
+    lines.push(d.file ? `Plays assets/sound/${d.file}${d.volume_db ? ` at ${d.volume_db} dB` : ''}.`
+      : 'No asset yet — the game plays a placeholder synth blip for this event.');
+    if (d.concept) lines.push(d.concept);
+    return lines;
+  },
+  toDraft(g) { return JSON.parse(JSON.stringify(g)); },
+  promptFor(d) {
+    return `Concept illustration of a sound: ${d.display_name || slugToName(d.id)}, ${d.concept || ''}, abstract audio waveform art`;
+  },
+  artNote: 'Reference only — sounds have no art slot; assets are produced from the AI prompt in an audio generator.',
+};
+
 const EDITORS = {
   card: CardEditor, relic: RelicEditor, status: StatusEditor, ability: AbilityEditor,
   charm: CharmEditor, upgrade: UpgradeEditor, encounter: EncounterEditor, nodeweights: NodeWeightsEditor,
+  sound: SoundEditor,
 };

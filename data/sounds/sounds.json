@@ -1,0 +1,753 @@
+[
+	{
+		"id": "ui_button_press",
+		"display_name": "Button Press",
+		"category": "ui",
+		"concept": "The app-wide button click — every GlossyButton press. Chunky, tactile, satisfying; the game's most-heard sound, so it must never grate.",
+		"prompt": "A single thocky mechanical keyboard keypress, deep satisfying tactile click, short, no reverb tail, clean studio recording, 0.15 seconds",
+		"file": "button_press_thocky.mp3"
+	},
+	{
+		"id": "ui_button_denied",
+		"display_name": "Button Denied",
+		"category": "ui",
+		"concept": "Pressing a disabled or unaffordable action — a soft dull refusal, clearly negative but not punishing.",
+		"prompt": "A short muted dull thud with a slight downward pitch bend, soft wooden knock on a closed door, negative UI feedback, dry, 0.2 seconds"
+	},
+	{
+		"id": "ui_tab_switch",
+		"display_name": "Tab Switch",
+		"category": "ui",
+		"concept": "Switching between tabs or filter modes — a light paper flick, quicker and smaller than a full button press.",
+		"prompt": "A quick light paper card flick, single crisp snap of a playing card being flipped over a table, bright and short, 0.1 seconds"
+	},
+	{
+		"id": "ui_screen_open",
+		"display_name": "Screen Open",
+		"category": "ui",
+		"concept": "Navigating into a screen (map, deck, lab…). A soft whoosh-in that carries the feeling of arriving somewhere.",
+		"prompt": "A soft short air whoosh rising in pitch, smooth fabric swish opening forward, gentle UI transition, 0.3 seconds"
+	},
+	{
+		"id": "ui_screen_close",
+		"display_name": "Screen Close / Back",
+		"category": "ui",
+		"concept": "Backing out of a screen (✕, Back, Esc, OS back gesture). The mirrored partner of Screen Open — falling instead of rising.",
+		"prompt": "A soft short air whoosh falling in pitch, smooth fabric swish closing away, gentle UI dismissal, 0.3 seconds"
+	},
+	{
+		"id": "ui_modal_open",
+		"display_name": "Modal / Overlay Open",
+		"category": "ui",
+		"concept": "A dialog or overlay popping over the current screen (relic detail, confirm boxes). Smaller and closer than a full screen transition.",
+		"prompt": "A small soft pop with a subtle parchment unfurl, light and close, gentle UI popup, dry, 0.2 seconds"
+	},
+	{
+		"id": "ui_modal_close",
+		"display_name": "Modal / Overlay Close",
+		"category": "ui",
+		"concept": "Dismissing a dialog or overlay — the modal-open pop played backwards in spirit.",
+		"prompt": "A small soft reverse pop, quick parchment fold-away, light close-and-vanish UI cue, dry, 0.15 seconds"
+	},
+	{
+		"id": "ui_toast",
+		"display_name": "Toast / Notice",
+		"category": "ui",
+		"concept": "A passive notification sliding in (autosave, minor info). Must be ignorable — felt, not heard.",
+		"prompt": "A very soft single marimba note with fast decay, warm wooden tone, quiet notification chime, unobtrusive, 0.3 seconds"
+	},
+	{
+		"id": "ui_error",
+		"display_name": "Error",
+		"category": "ui",
+		"concept": "Something actually went wrong (invalid action, failed operation). Sharper than Button Denied; still short.",
+		"prompt": "A short low double-buzz, muted electronic error tone, two quick descending notes, dry and restrained, 0.3 seconds"
+	},
+	{
+		"id": "ui_hover_tick",
+		"display_name": "Hover Tick",
+		"category": "ui",
+		"concept": "Cursor entering an interactive element that rewards attention (list rows, map nodes). Near-subliminal.",
+		"prompt": "An extremely short quiet tick, single soft fingernail tap on wood, subtle UI hover feedback, 0.05 seconds"
+	},
+
+	{
+		"id": "card_hover",
+		"display_name": "Card Hover",
+		"category": "card",
+		"concept": "Mousing over a card in hand or a list — the faintest paper whisper, hinting the card is alive under the cursor.",
+		"prompt": "A single very soft playing card slide against felt, faint paper whisper, extremely quiet and short, 0.1 seconds"
+	},
+	{
+		"id": "card_select",
+		"display_name": "Card Select",
+		"category": "card",
+		"concept": "Picking a card up / selecting it for placement. A confident paper snap — the card is now in your grip.",
+		"prompt": "A crisp single playing card snap being picked up off a wooden table, confident paper flick, clean and short, 0.15 seconds"
+	},
+	{
+		"id": "card_deselect",
+		"display_name": "Card Deselect",
+		"category": "card",
+		"concept": "Putting a selected card back down without playing it. Softer, downward — releasing tension.",
+		"prompt": "A soft playing card laid gently back onto felt, quiet paper settle, relaxed and short, 0.15 seconds"
+	},
+	{
+		"id": "card_draw",
+		"display_name": "Card Draw",
+		"category": "card",
+		"concept": "A card sliding from the draw pile into hand. Draws come in bursts at turn start — the sound must layer pleasantly with itself.",
+		"prompt": "A single quick card dealt from a deck sliding across felt, smooth paper swish with a soft landing flick, 0.2 seconds"
+	},
+	{
+		"id": "card_discard",
+		"display_name": "Card Discard",
+		"category": "card",
+		"concept": "A card leaving the hand for the discard pile — a flick away, slightly dismissive.",
+		"prompt": "A playing card flicked away spinning briefly then landing flat on a table, quick paper flutter and slap, 0.3 seconds"
+	},
+	{
+		"id": "card_shuffle",
+		"display_name": "Deck Shuffle",
+		"category": "card",
+		"concept": "The draw pile being (re)shuffled — combat start, or the discard cycling back in.",
+		"prompt": "A quick riffle shuffle of a deck of playing cards, one clean shuffle motion with bridge finish, crisp paper, 0.8 seconds"
+	},
+	{
+		"id": "card_inspect_open",
+		"display_name": "Card Inspect",
+		"category": "card",
+		"concept": "Opening a card's detail view (inspector, hand-bar inspect). Leaning in to read — a page-turn intimacy.",
+		"prompt": "A single soft page turn of thick parchment, close and quiet, curious and gentle, 0.3 seconds"
+	},
+	{
+		"id": "card_reveal",
+		"display_name": "Card Reveal",
+		"category": "card",
+		"concept": "A hidden card flipping face-up (rewards, offers). A flourish with a touch of sparkle — anticipation resolved.",
+		"prompt": "A playing card flipped over with a crisp snap followed by a tiny bright shimmer, small magical flourish, 0.4 seconds"
+	},
+	{
+		"id": "card_upgrade",
+		"display_name": "Card Upgraded",
+		"category": "card",
+		"concept": "A card permanently improving (event node stat boost, charm attach). Warm, affirming, a little precious.",
+		"prompt": "A warm ascending three-note chime with a soft golden shimmer tail, small enchantment being applied, bright but gentle, 0.6 seconds"
+	},
+
+	{
+		"id": "combat_start",
+		"display_name": "Combat Start",
+		"category": "combat",
+		"concept": "The fight begins — battlefield fades in, decks are set. A short brass-and-drum call to arms, setting stakes without delaying play.",
+		"prompt": "A short war horn blast with a single deep battle drum hit, fantasy battle beginning fanfare, bold and brief, 1 second"
+	},
+	{
+		"id": "combat_turn_start",
+		"display_name": "Turn Start",
+		"category": "combat",
+		"concept": "A new round begins: mana refills, cards draw, units untap. A refreshing intake of breath — possibility restored.",
+		"prompt": "A soft bright upward sweep with a gentle bell accent, refreshing energy returning, clean and optimistic, 0.5 seconds"
+	},
+	{
+		"id": "combat_ready",
+		"display_name": "Ready / End Placement",
+		"category": "combat",
+		"concept": "Committing the placement phase with the Ready button — the die is cast. Heavier than a normal button press.",
+		"prompt": "A heavy deliberate stone slab sliding shut with a final thunk, committed and irreversible, deep and short, 0.5 seconds"
+	},
+	{
+		"id": "combat_place_unit",
+		"display_name": "Unit Placed",
+		"category": "combat",
+		"concept": "A unit card landing on a board slot — a solid, physical thump that makes the grid feel real.",
+		"prompt": "A solid card slammed down onto a stone surface with a satisfying deep thock, confident placement, dry, 0.25 seconds"
+	},
+	{
+		"id": "combat_place_building",
+		"display_name": "Building Placed",
+		"category": "combat",
+		"concept": "A building (rook) being rooted in place — heavier than a unit: masonry settling, permanence.",
+		"prompt": "Heavy stone blocks settling into place with a deep grinding thud and small rubble tics, fortress cornerstone laid, 0.6 seconds"
+	},
+	{
+		"id": "combat_unit_move",
+		"display_name": "Unit Moved",
+		"category": "combat",
+		"concept": "A fielded unit relocating to another slot — quick footsteps or a slide, lighter than placement.",
+		"prompt": "A quick short scuffle of armored footsteps sliding to a stop on stone, small tactical reposition, 0.3 seconds"
+	},
+	{
+		"id": "combat_enemy_place",
+		"display_name": "Enemy Unit Placed",
+		"category": "combat",
+		"concept": "The CPU placing its cards — placement's darker twin so the enemy's moves are audibly 'theirs'.",
+		"prompt": "A card placed onto stone with a low ominous undertone, slightly menacing muted impact, dark placement, 0.3 seconds"
+	},
+	{
+		"id": "combat_victory",
+		"display_name": "Victory",
+		"category": "combat",
+		"concept": "The enemy King falls — the fight is won. Triumphant but brief; the reward screen carries the celebration.",
+		"prompt": "A triumphant short brass fanfare with bright bell hits and a rising finish, victorious battle won, joyful, 2 seconds"
+	},
+	{
+		"id": "combat_defeat",
+		"display_name": "Defeat",
+		"category": "combat",
+		"concept": "Your King falls — the run ends here. Somber, heavy, final; never mocking.",
+		"prompt": "A low mournful horn with a slow descending resolve into silence, heavy defeat, somber and final, 2.5 seconds"
+	},
+	{
+		"id": "combat_king_hit",
+		"display_name": "King Damaged",
+		"category": "combat",
+		"concept": "Your King taking damage — this is run-life burning, so it must cut through the battle noise and feel personal.",
+		"prompt": "A deep resonant impact on a great bronze bell mixed with cracking stone, alarming royal blow, weighty and clear, 0.8 seconds"
+	},
+	{
+		"id": "combat_king_low",
+		"display_name": "King Critical",
+		"category": "combat",
+		"concept": "The King crossing into critical health — a danger sting that changes the emotional register of the fight.",
+		"prompt": "A tense low string sting with an anxious dissonant swell and a heartbeat thump, danger warning, urgent, 1.2 seconds"
+	},
+	{
+		"id": "combat_boss_intro",
+		"display_name": "Boss Encounter",
+		"category": "combat",
+		"concept": "A stage boss fight beginning — bigger dread than a normal combat start. The room gets colder.",
+		"prompt": "A massive low horn blast with a dark choir swell and a thunderous drum hit, terrifying boss arrival, epic dread, 2 seconds"
+	},
+
+	{
+		"id": "attack_melee_swing",
+		"display_name": "Melee Swing",
+		"category": "combat",
+		"concept": "The wind-up whoosh as a melee unit lunges at its target — precedes the hit landing.",
+		"prompt": "A quick sharp weapon swing whoosh cutting through air, single fast swipe, clean and aggressive, 0.2 seconds"
+	},
+	{
+		"id": "attack_melee_hit",
+		"display_name": "Melee Hit",
+		"category": "combat",
+		"concept": "An attack's damage landing on a unit's health. Fires constantly during auto-battle — kept soft so the barrage doesn't dominate.",
+		"prompt": "A solid melee weapon impact with a meaty thud and slight metallic ring, single clean combat hit, punchy, 0.3 seconds",
+		"file": "attack_damage.mp3",
+		"volume_db": -25
+	},
+	{
+		"id": "attack_ranged_shot",
+		"display_name": "Ranged Shot",
+		"category": "combat",
+		"concept": "A ranged unit (bishop, archers) loosing its projectile — the release, not the landing.",
+		"prompt": "A bowstring release with a sharp twang and arrow whistle departing, quick and taut, 0.3 seconds"
+	},
+	{
+		"id": "attack_projectile_travel",
+		"display_name": "Projectile Travel",
+		"category": "combat",
+		"concept": "The projectile VFX crossing the board — a short airy whistle that can pitch-vary per shot.",
+		"prompt": "A short arrow flight whistle whooshing past, doppler-like air cut, brief, 0.25 seconds"
+	},
+	{
+		"id": "attack_projectile_impact",
+		"display_name": "Projectile Impact",
+		"category": "combat",
+		"concept": "A ranged projectile striking its target — sharper and smaller than the melee hit.",
+		"prompt": "An arrow thudding into a wooden shield with a sharp crack and slight quiver vibration, precise impact, 0.3 seconds"
+	},
+	{
+		"id": "shield_block",
+		"display_name": "Shield Block",
+		"category": "combat",
+		"concept": "An attack fully or partly caught by a unit's shield — metallic denial, the armor doing its job.",
+		"prompt": "A sword clashing against a metal shield with a bright ringing clang, defensive block, metallic and clean, 0.4 seconds",
+		"file": "melee_shield_block.mp3"
+	},
+	{
+		"id": "shield_break",
+		"display_name": "Shield Break",
+		"category": "combat",
+		"concept": "A unit's shield pool depleted mid-hit — glassy shatter so the player hears defense failing, distinct from health damage.",
+		"prompt": "A magical barrier shattering like glass with crystalline fragments scattering, energy shield breaking, sharp and sparkling, 0.5 seconds"
+	},
+	{
+		"id": "unit_death",
+		"display_name": "Unit Death",
+		"category": "combat",
+		"concept": "A unit's health reaching zero and leaving the board. Neutral enough for both sides; a small defeat, not a gag.",
+		"prompt": "A brief grunt with armor clattering to stone ground, small fallen soldier, muted and quick, 0.5 seconds"
+	},
+	{
+		"id": "unit_death_large",
+		"display_name": "Big Unit Death",
+		"category": "combat",
+		"concept": "A high-cost/large unit dying — a heavier fall the player should feel through the mix.",
+		"prompt": "A heavy armored body crashing to the ground with a deep thud and metal scatter, large warrior felled, weighty, 0.7 seconds"
+	},
+	{
+		"id": "damage_poison_tick",
+		"display_name": "Poison Tick",
+		"category": "combat",
+		"concept": "Periodic poison/contagion damage pulsing on its carrier — wet, sickly, clearly not a weapon hit.",
+		"prompt": "A wet acidic bubbling hiss with a soft corrosive sizzle, poison damage pulse, sickly and brief, 0.4 seconds"
+	},
+	{
+		"id": "damage_burn_tick",
+		"display_name": "Burn Tick",
+		"category": "combat",
+		"concept": "Periodic fire damage pulsing on its carrier — a flare-up, the fiery sibling of the poison tick.",
+		"prompt": "A quick fire flare-up with crackling embers and a whoosh of flame, burning damage pulse, hot and brief, 0.4 seconds"
+	},
+	{
+		"id": "heal_apply",
+		"display_name": "Heal",
+		"category": "combat",
+		"concept": "Health restored to a unit (mender effects, rest bonuses in combat). Soft, warm, liquid light.",
+		"prompt": "A gentle warm chime with soft sparkling water droplets rising, restorative healing glow, soothing, 0.6 seconds"
+	},
+
+	{
+		"id": "spell_cast",
+		"display_name": "Spell Cast",
+		"category": "magic",
+		"concept": "A spell card being consumed and taking effect — the generic arcane release under any themed VFX.",
+		"prompt": "A magical energy release with an airy arcane whoosh and soft crystalline sparkle burst, spell being cast, mystical, 0.6 seconds"
+	},
+	{
+		"id": "spell_targeting",
+		"display_name": "Spell Targeting",
+		"category": "magic",
+		"concept": "Entering targeting mode — a held breath: soft rising shimmer that primes the pick without looping annoyance.",
+		"prompt": "A soft sustained magical shimmer rising gently and holding, anticipatory arcane hum, delicate, 0.8 seconds"
+	},
+	{
+		"id": "ability_tray_open",
+		"display_name": "Ability Tray Open",
+		"category": "magic",
+		"concept": "Opening the Abilities view / a unit's ability tray — unlatching a small toolbox of options.",
+		"prompt": "A small wooden case clicking open with a soft creak, compact toolbox unlatched, curious and short, 0.3 seconds"
+	},
+	{
+		"id": "ability_cast",
+		"display_name": "Ability Activated",
+		"category": "magic",
+		"concept": "A unit's activated ability firing (tray or autocast) — more grounded than a spell: the unit exerting itself.",
+		"prompt": "A focused energy pulse with a low resonant thrum and quick bright release, ability activation, purposeful, 0.5 seconds"
+	},
+	{
+		"id": "autocast_arm",
+		"display_name": "Autocast Armed",
+		"category": "magic",
+		"concept": "Arming an ability for autocast (right-click / long-press) — a weapon cocking: readiness, not release.",
+		"prompt": "A precise mechanical latch clicking into an armed position, crossbow being cocked, tight and ready, 0.25 seconds"
+	},
+	{
+		"id": "autocast_disarm",
+		"display_name": "Autocast Disarmed",
+		"category": "magic",
+		"concept": "Disarming the autocast — the latch released, tension let back down.",
+		"prompt": "A soft mechanical latch releasing with a small spring relax, crossbow being uncocked, gentle, 0.2 seconds"
+	},
+	{
+		"id": "status_apply_buff",
+		"display_name": "Buff Applied",
+		"category": "magic",
+		"concept": "A beneficial status landing on a unit — an upward gift; pairs with the pip appearing.",
+		"prompt": "A bright ascending sparkle with a soft harmonic bloom, positive enchantment settling on a target, uplifting and quick, 0.4 seconds"
+	},
+	{
+		"id": "status_apply_debuff",
+		"display_name": "Debuff Applied",
+		"category": "magic",
+		"concept": "A harmful status landing on a unit — a downward stain; the buff's shadowed mirror.",
+		"prompt": "A dark descending smear with a low dissonant undertone, curse settling onto a target, ominous and quick, 0.4 seconds"
+	},
+	{
+		"id": "status_expire",
+		"display_name": "Status Expired",
+		"category": "magic",
+		"concept": "A status wearing off naturally — a small dissolve, barely-there bookkeeping.",
+		"prompt": "A faint soft dissolve with tiny dispersing particles, small enchantment fading away, subtle, 0.3 seconds"
+	},
+	{
+		"id": "summon_token",
+		"display_name": "Token Summoned",
+		"category": "magic",
+		"concept": "An effect conjuring a new unit onto the board (not hand-played) — arrival from elsewhere.",
+		"prompt": "A magical materialization with a reverse-suction whoosh resolving into a soft solid thump, creature summoned into being, arcane, 0.6 seconds"
+	},
+
+	{
+		"id": "mana_spend",
+		"display_name": "Mana Spent",
+		"category": "resource",
+		"concept": "Mana draining to pay a cost — liquid energy leaving the gauge; scales with everything, so tiny.",
+		"prompt": "A quick soft liquid energy drain with a downward watery glissando, mana being spent, fluid and brief, 0.25 seconds"
+	},
+	{
+		"id": "mana_refill",
+		"display_name": "Mana Refilled",
+		"category": "resource",
+		"concept": "The turn-start mana refill — the gauge surging back to full; part of Turn Start's refreshing feel.",
+		"prompt": "A smooth liquid filling surge rising in pitch with a soft sparkling top-off, mana pool refilling, satisfying, 0.5 seconds"
+	},
+	{
+		"id": "mana_insufficient",
+		"display_name": "Not Enough Mana",
+		"category": "resource",
+		"concept": "Attempting a cast without the mana — a dry empty slosh: the well is dry. Distinct from generic denial.",
+		"prompt": "A hollow empty slosh with a dull fizzle, drained container shaken with nothing inside, dry refusal, 0.3 seconds"
+	},
+	{
+		"id": "gold_gain",
+		"display_name": "Gold Gained",
+		"category": "resource",
+		"concept": "Gold entering the purse (rewards, events) — classic coin joy, scaled small enough to stack.",
+		"prompt": "A small handful of gold coins dropping into a leather pouch with bright metallic clinks, treasure gained, cheerful, 0.5 seconds"
+	},
+	{
+		"id": "gold_spend",
+		"display_name": "Gold Spent",
+		"category": "resource",
+		"concept": "Paying gold (shop, events) — coins counted out and slid away; transactional, slightly reluctant.",
+		"prompt": "Coins sliding across a wooden counter with two soft metallic taps, payment counted out, transactional, 0.4 seconds"
+	},
+	{
+		"id": "material_gain",
+		"display_name": "Materials Gained",
+		"category": "resource",
+		"concept": "Crafting materials (essences, king pieces) granted — more mystical than coin: bottled elements arriving.",
+		"prompt": "Small glass vials clinking together with a soft magical chime undertone, alchemical ingredients collected, delicate, 0.5 seconds"
+	},
+	{
+		"id": "experience_gain",
+		"display_name": "Experience Gained",
+		"category": "resource",
+		"concept": "Run-end experience tallying up toward upgrade points — a counting-up ratchet with warmth.",
+		"prompt": "A quick ascending series of soft ticks accelerating with a warm bell finish, experience points tallying up, rewarding, 0.8 seconds"
+	},
+
+	{
+		"id": "map_enter",
+		"display_name": "Map Entered",
+		"category": "map",
+		"concept": "Arriving on the map screen — parchment unrolled, the journey laid out; pairs with Screen Open but bigger.",
+		"prompt": "A large parchment map unrolling with a paper flutter and a soft settling flap, journey overview revealed, adventurous, 0.7 seconds"
+	},
+	{
+		"id": "map_node_select",
+		"display_name": "Node Selected",
+		"category": "map",
+		"concept": "Tapping a reachable map node — plotting the next step; a pin pressed into the map.",
+		"prompt": "A firm pin press into thick parchment over cork with a small decisive tick, waypoint marked, precise, 0.2 seconds"
+	},
+	{
+		"id": "map_travel",
+		"display_name": "Travel",
+		"category": "map",
+		"concept": "Committing the move — the piece walking the path to the chosen node; footsteps on the road.",
+		"prompt": "A few brisk footsteps on a dirt road with light travel gear jingle, short journey between waypoints, adventurous and brief, 0.8 seconds"
+	},
+	{
+		"id": "map_node_reveal",
+		"display_name": "Path Revealed",
+		"category": "map",
+		"concept": "New nodes/paths becoming visible ahead — ink spreading across parchment; the unknown resolving.",
+		"prompt": "Ink strokes rapidly drawing across parchment with a soft quill scratch and a subtle magical shimmer, map revealing itself, mysterious, 0.6 seconds"
+	},
+	{
+		"id": "map_stage_advance",
+		"display_name": "Stage Cleared",
+		"category": "map",
+		"concept": "Beating a stage boss and advancing to a fresh map — a chapter closing; bigger than any single fight's victory.",
+		"prompt": "A grand page turn with a deep resonant gong and a rising hopeful string swell, chapter completed, momentous, 2 seconds"
+	},
+	{
+		"id": "map_boss_reveal",
+		"display_name": "Boss Node Nears",
+		"category": "map",
+		"concept": "The boss node becoming reachable — a low warning presence: it knows you're coming.",
+		"prompt": "A low distant war drum with a dark sustained undertone swelling briefly, approaching menace on the horizon, foreboding, 1.2 seconds"
+	},
+	{
+		"id": "map_event_open",
+		"display_name": "Event Node",
+		"category": "map",
+		"concept": "Entering a '?' event node — curiosity and risk in one sound; a question mark made audible.",
+		"prompt": "A curious plucked string arpeggio ending on an unresolved note with a faint whoosh, mysterious encounter beginning, intriguing, 0.8 seconds"
+	},
+	{
+		"id": "map_rest_heal",
+		"display_name": "Rest Site",
+		"category": "map",
+		"concept": "Resting and healing the King at a rest site — crackling campfire comfort, safety in the journey.",
+		"prompt": "A warm campfire crackle with a soft relieved exhale and gentle healing chime, restful recovery at camp, cozy, 1.5 seconds"
+	},
+
+	{
+		"id": "shop_enter",
+		"display_name": "Shop Entered",
+		"category": "economy",
+		"concept": "Walking into the shop — a doorbell and merchant ambience snapshot; commerce begins.",
+		"prompt": "A small brass shop bell jingling over a wooden door opening, welcoming merchant storefront, inviting, 0.7 seconds"
+	},
+	{
+		"id": "shop_buy",
+		"display_name": "Purchase",
+		"category": "economy",
+		"concept": "Completing a shop purchase — the deal sealed: coin down, goods handed over.",
+		"prompt": "Coins slapped onto a wooden counter followed by a satisfied register-like chime, deal completed, mercantile and positive, 0.6 seconds"
+	},
+	{
+		"id": "shop_denied",
+		"display_name": "Can't Afford",
+		"category": "economy",
+		"concept": "Trying to buy without enough gold — an empty purse shake; the merchant's polite refusal.",
+		"prompt": "A near-empty leather coin pouch shaken with one lonely coin rattling, insufficient funds, deflated and brief, 0.4 seconds"
+	},
+	{
+		"id": "reward_open",
+		"display_name": "Rewards Open",
+		"category": "economy",
+		"concept": "The post-combat reward screen presenting its offers — a chest-lid moment of anticipation.",
+		"prompt": "A treasure chest lid creaking open with a soft golden glow shimmer rising, rewards revealed, anticipatory, 0.8 seconds"
+	},
+	{
+		"id": "reward_card_taken",
+		"display_name": "Card Reward Taken",
+		"category": "economy",
+		"concept": "Claiming a card from the reward offer — the pick committed to the deck.",
+		"prompt": "A card snapped up decisively with a short affirming chime, prize claimed, satisfying, 0.4 seconds"
+	},
+	{
+		"id": "reward_relic_taken",
+		"display_name": "Relic Acquired",
+		"category": "economy",
+		"concept": "A relic joining the run — weightier than a card: a permanent artifact clunking into the tray.",
+		"prompt": "A heavy ornate artifact set down on velvet with a deep resonant hum and mystical shimmer, powerful relic acquired, ceremonious, 0.8 seconds"
+	},
+	{
+		"id": "relic_discard",
+		"display_name": "Relic Discarded",
+		"category": "economy",
+		"concept": "Voluntarily dropping a relic — deliberate letting-go; respectful, not trashy.",
+		"prompt": "A stone artifact placed down firmly with a fading resonance dissolving to quiet, relic relinquished, solemn and brief, 0.6 seconds"
+	},
+
+	{
+		"id": "lab_enter",
+		"display_name": "Laboratory Entered",
+		"category": "lab",
+		"concept": "Arriving in the Laboratory drag-world — bubbling glassware and quiet arcane machinery waking up.",
+		"prompt": "Glass flasks bubbling softly with a small arcane machine whirring to life, alchemist workshop awakening, curious, 1 second"
+	},
+	{
+		"id": "lab_token_pick",
+		"display_name": "Token Picked Up",
+		"category": "lab",
+		"concept": "Lifting a resource token in the Lab — a small solid object leaving its slot; the drag begins.",
+		"prompt": "A small glass gem plucked up from a wooden tray with a light tick, delicate object lifted, tactile, 0.15 seconds"
+	},
+	{
+		"id": "lab_token_drop",
+		"display_name": "Token Dropped",
+		"category": "lab",
+		"concept": "A token landing in a valid drop slot — the piece settling into machinery that accepts it.",
+		"prompt": "A small glass gem set into a fitted brass socket with a snug click, component slotted in, precise and satisfying, 0.2 seconds"
+	},
+	{
+		"id": "lab_slot_reject",
+		"display_name": "Slot Rejected",
+		"category": "lab",
+		"concept": "Dropping a token where it doesn't belong — a bounce-off; the machine spits it back.",
+		"prompt": "A small object bouncing off metal with a springy boing and a rattle settle, piece rejected by a socket, comedic and brief, 0.35 seconds"
+	},
+	{
+		"id": "lab_refine",
+		"display_name": "Refinery Run",
+		"category": "lab",
+		"concept": "The Refinery converting materials — grinding, distilling, transmutation in progress.",
+		"prompt": "An alchemical apparatus grinding and distilling with liquid gurgles and a steam hiss finish, materials being refined, industrious, 1.2 seconds"
+	},
+	{
+		"id": "lab_forge_king",
+		"display_name": "King Forged",
+		"category": "lab",
+		"concept": "The King Forge completing — the Lab's crown moment: a new King struck into existence.",
+		"prompt": "A mighty anvil strike with molten metal hiss and a triumphant deep choir swell, royal artifact forged, epic and ceremonious, 2 seconds"
+	},
+	{
+		"id": "forge_mixing_loop",
+		"display_name": "Forge Mixing Drone",
+		"category": "lab",
+		"concept": "The Forge's swirling-particles drone while a card/charm is dragged — loops for as long as the swirl runs; pitch rises while a valid combine target is hovered.",
+		"prompt": "A continuous magical swirling energy loop with soft particle whooshes and a low arcane hum, seamless loop, mesmerizing, 3 seconds",
+		"file": "mixing.mp3",
+		"loop": true
+	},
+	{
+		"id": "forge_combine_success",
+		"display_name": "Combine Success",
+		"category": "lab",
+		"concept": "A successful merge of things into a new thing — Forge card combine, Lab forge/craft. Softened so it accents rather than overpowers.",
+		"prompt": "A magical fusion burst with a bright harmonic bloom and sparkling resolve, two things becoming one, celebratory, 1 second",
+		"file": "combined.mp3",
+		"volume_db": -25
+	},
+	{
+		"id": "forge_combine_fail",
+		"display_name": "Combine Rejected",
+		"category": "lab",
+		"concept": "An invalid combine attempt — the elements refusing each other; fizzled chemistry.",
+		"prompt": "A damp magical fizzle with a short dissonant sputter dissolving to nothing, failed fusion, deflated, 0.5 seconds"
+	},
+
+	{
+		"id": "deck_card_add",
+		"display_name": "Card Added to Deck",
+		"category": "meta",
+		"concept": "Slotting a card into a deck on the Decks screen — filing it into the collection binder.",
+		"prompt": "A card slid firmly into a snug binder sleeve with a soft plastic-paper snap, collection updated, orderly, 0.25 seconds"
+	},
+	{
+		"id": "deck_card_remove",
+		"display_name": "Card Removed from Deck",
+		"category": "meta",
+		"concept": "Pulling a card out of a deck — the reverse slide; lighter, no judgment.",
+		"prompt": "A card slipped out of a binder sleeve with a quick soft paper slide, entry removed, light, 0.2 seconds"
+	},
+	{
+		"id": "deck_save",
+		"display_name": "Deck Saved",
+		"category": "meta",
+		"concept": "Confirming deck changes — the binder clapped shut; work preserved.",
+		"prompt": "A book closing with a soft firm thump and a page-settle flutter, work saved and shelved, conclusive, 0.4 seconds"
+	},
+	{
+		"id": "embark",
+		"display_name": "Embark on Run",
+		"category": "meta",
+		"concept": "Starting a new run from the Embark screen — the adventure's first step; gates opening outward.",
+		"prompt": "Heavy castle gates swinging open with a hopeful rising orchestral swell and distant birdsong, grand departure beginning, inspiring, 2 seconds"
+	},
+	{
+		"id": "upgrade_purchase",
+		"display_name": "Upgrade Purchased",
+		"category": "meta",
+		"concept": "Buying a skill-tree node with upgrade points — permanent power etched into the profile.",
+		"prompt": "A stone rune being chiseled and igniting with a warm magical pulse, permanent power inscribed, empowering, 0.8 seconds"
+	},
+	{
+		"id": "upgrade_denied",
+		"display_name": "Upgrade Locked",
+		"category": "meta",
+		"concept": "Clicking an unaffordable or locked node — stone that won't yield yet.",
+		"prompt": "A dull chisel tap on unyielding stone with a faint hollow knock, sealed inscription refusing, stubborn and brief, 0.3 seconds"
+	},
+	{
+		"id": "charm_attach",
+		"display_name": "Charm Attached",
+		"category": "meta",
+		"concept": "A charm enchanting a card — a small jewel clasped on; the card gains a whisper of magic.",
+		"prompt": "A tiny jeweled clasp clicking shut with a bright crystalline glint chime, small enchantment affixed, precious, 0.4 seconds"
+	},
+	{
+		"id": "victory_run",
+		"display_name": "Run Victory",
+		"category": "meta",
+		"concept": "Beating the final boss — the whole run won. The biggest celebration in the game; the victory screen's fanfare.",
+		"prompt": "A full triumphant orchestral fanfare with soaring brass, bells and a cheering crowd swell, ultimate victory achieved, glorious, 4 seconds"
+	},
+	{
+		"id": "profile_level_up",
+		"display_name": "Level Up",
+		"category": "meta",
+		"concept": "The profile crossing an experience threshold and granting an upgrade point — personal growth fanfare, mid-sized.",
+		"prompt": "A bright ascending arpeggio bursting into a radiant chord with a shimmering tail, level up achieved, exhilarating, 1.2 seconds"
+	},
+
+	{
+		"id": "amb_map_wind",
+		"display_name": "Map Ambience",
+		"category": "ambient",
+		"concept": "The map screen's bed: distant wind over hills, faint birds, parchment-age quiet. Loops under everything.",
+		"prompt": "A gentle ambient loop of soft wind over open hills with occasional distant birds and a calm airy openness, seamless loop, peaceful, 20 seconds",
+		"loop": true,
+		"volume_db": -18
+	},
+	{
+		"id": "amb_combat_battlefield",
+		"display_name": "Combat Ambience",
+		"category": "ambient",
+		"concept": "The battle's bed: low tension air, distant metal and murmurs — presence without melody, under the combat music.",
+		"prompt": "A low ambient loop of distant battlefield presence with faint metal clinks, low wind and a tense undercurrent, seamless loop, atmospheric, 20 seconds",
+		"loop": true,
+		"volume_db": -20
+	},
+	{
+		"id": "amb_lab_bubbling",
+		"display_name": "Lab Ambience",
+		"category": "ambient",
+		"concept": "The Laboratory's bed: bubbling flasks, ticking instruments, an arcane hum — busy quiet.",
+		"prompt": "An ambient loop of an alchemist laboratory with soft glass bubbling, gentle clockwork ticks and a low magical hum, seamless loop, studious, 20 seconds",
+		"loop": true,
+		"volume_db": -18
+	},
+	{
+		"id": "amb_shop_chatter",
+		"display_name": "Shop Ambience",
+		"category": "ambient",
+		"concept": "The shop's bed: soft marketplace murmur, occasional coin and cloth sounds — a living storefront.",
+		"prompt": "An ambient loop of a cozy fantasy shop interior with quiet marketplace murmur, occasional coin clinks and rustling goods, seamless loop, warm, 20 seconds",
+		"loop": true,
+		"volume_db": -18
+	},
+
+	{
+		"id": "music_title",
+		"display_name": "Title Music",
+		"category": "music",
+		"concept": "The title/hub theme — the game's identity in one loop: adventurous, a little mischievous, chess-and-alchemy fantasy.",
+		"prompt": "An adventurous fantasy orchestral loop with playful woodwinds, warm strings and a memorable heroic motif, title theme, seamless loop, inviting, 60 seconds",
+		"loop": true,
+		"volume_db": -12
+	},
+	{
+		"id": "music_map",
+		"display_name": "Map Music",
+		"category": "music",
+		"concept": "The journey theme — lighter than combat: plotting the route, wind in the hair, wanderlust.",
+		"prompt": "A light traveling fantasy loop with acoustic guitar, soft flute and gentle percussion, journey planning theme, seamless loop, wanderlust, 60 seconds",
+		"loop": true,
+		"volume_db": -14
+	},
+	{
+		"id": "music_combat",
+		"display_name": "Combat Music",
+		"category": "music",
+		"concept": "The standard battle theme — driving but not exhausting; auto-battles repeat, so it must survive many loops.",
+		"prompt": "A driving fantasy battle loop with rhythmic strings, martial percussion and a determined brass motif, tactical combat theme, seamless loop, energetic, 60 seconds",
+		"loop": true,
+		"volume_db": -14
+	},
+	{
+		"id": "music_boss",
+		"display_name": "Boss Music",
+		"category": "music",
+		"concept": "The boss battle theme — the combat theme's dangerous elder sibling: choir, dread, higher stakes.",
+		"prompt": "An intense epic boss battle loop with dark choir, pounding drums, urgent strings and a menacing brass theme, climactic confrontation, seamless loop, threatening, 60 seconds",
+		"loop": true,
+		"volume_db": -14
+	},
+	{
+		"id": "music_lab",
+		"display_name": "Lab Music",
+		"category": "music",
+		"concept": "The Laboratory theme — tinkering curiosity: plucked strings, celesta, clockwork whimsy.",
+		"prompt": "A whimsical curious loop with pizzicato strings, celesta, light clockwork percussion and a playful melody, inventor workshop theme, seamless loop, quirky, 60 seconds",
+		"loop": true,
+		"volume_db": -14
+	}
+]

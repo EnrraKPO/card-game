@@ -49,7 +49,14 @@ const TYPES = {
   upgrade:    { label: 'Upgrade Tree',    dataDir: 'data/upgrades',   artDir: 'assets/ui/upgrades', artW: 512, artH: 512, rembg: true },
   encounter:  { label: 'Encounter',      dataDir: 'data/encounters', artDir: null,               artW: 1024, artH: 1024, rembg: false },
   nodeweights:{ label: 'Map Node Weights',dataDir: 'data/map',        artDir: null,               artW: 1024, artH: 1024, rembg: false },
+  // sound EVENTS: the game's full SFX library (data/sounds/sounds.json). Audio assets live in
+  // assets/sound/ and are produced outside the tool (AI sound gen from each entry's prompt) —
+  // no artDir; art generation for this type is reference-only.
+  sound:      { label: 'Sound',           dataDir: 'data/sounds',     artDir: null,               artW: 1024, artH: 1024, rembg: false },
 };
+
+// The sound library's category vocabulary — mirrors SoundData.category in the game.
+const SOUND_CATEGORIES = ['ui', 'card', 'combat', 'magic', 'resource', 'map', 'economy', 'lab', 'meta', 'ambient', 'music'];
 
 // ── small fs helpers ─────────────────────────────────────────────────────────
 function ensureDir(p) { fs.mkdirSync(p, { recursive: true }); }
@@ -963,6 +970,15 @@ function validateItem(type, d) {
         if (typeof b.min_floor !== 'number' || typeof b.max_floor !== 'number') return 'bands need min_floor/max_floor';
         if (!b.weights || !Object.keys(b.weights).length) return 'bands need weights';
       }
+      return null;
+    }
+    case 'sound': {
+      if (!d.display_name) return 'missing display_name';
+      if (!SOUND_CATEGORIES.includes(d.category)) return `category must be one of: ${SOUND_CATEGORIES.join(', ')}`;
+      if (!d.concept) return 'missing concept — record what this moment is and how it should feel';
+      if (!d.prompt) return 'missing prompt — the AI sound-generation text';
+      if (d.file && !/^[a-zA-Z0-9._-]+\.(mp3|ogg|wav)$/.test(d.file)) return 'file must be a bare .mp3/.ogg/.wav filename inside assets/sound/';
+      if (d.volume_db != null && typeof d.volume_db !== 'number') return 'volume_db must be a number';
       return null;
     }
   }
@@ -3657,6 +3673,15 @@ async function handle(req, res) {
         return send(res, 200, fs.readFileSync(artPath(m[1], m[2])), 'image/png');
       }
       return send(res, 404, { error: 'no art' });
+    }
+    // existing game audio preview (read-only) — lets the Sounds tab audition a real asset
+    if (p.startsWith('/gamesound/')) {
+      const name = decodeURIComponent(p.slice('/gamesound/'.length));
+      if (!/^[a-zA-Z0-9._-]+\.(mp3|ogg|wav)$/.test(name)) return send(res, 400, { error: 'bad path' });
+      const abs = path.join(GAME_ROOT, 'assets', 'sound', name);
+      if (!fs.existsSync(abs)) return send(res, 404, { error: 'not found' });
+      const mime = name.endsWith('.mp3') ? 'audio/mpeg' : name.endsWith('.ogg') ? 'audio/ogg' : 'audio/wav';
+      return send(res, 200, fs.readFileSync(abs), mime);
     }
     // existing game art preview (read-only, for reference while authoring)
     if (p.startsWith('/gameart/')) {
