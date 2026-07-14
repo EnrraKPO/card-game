@@ -9,7 +9,8 @@ extends Node
 #   Vfx.detach("ui_button_attention", button)
 #
 # Call sites never know how an effect renders. The entry's `renderer` decides — "procedural"
-# (the tweened primitives below) is the only kind today; an asset-backed renderer later is a
+# (the tweened primitives below), or "custom" (a designed effect class registered at runtime
+# via register_custom — combat's 12 looks live there). An asset-backed renderer later is a
 # new arm in _dispatch/_attach_dispatch, entries switch over in data, call sites untouched.
 #
 # PLACEHOLDER GATING: entries flagged placeholder (no designed look yet) are muted wholesale
@@ -18,8 +19,8 @@ extends Node
 #
 # Combat's board choreography (VFXPlayer: reticle-leads-hit ordering, simultaneous bursts,
 # projectile damage deferral) intentionally stays where it is — that's sequencing, not looks.
-# This service is the LIBRARY's playback surface; VFXPlayer's effect classes are the designed
-# looks behind the combat_* base entries.
+# Its LOOKS, though, resolve through here: the combat_* entries carry renderer "custom" and
+# VFXPlayer registers its designed effect classes on them at setup — one library, one dispatch.
 
 # The procedural behavior vocabulary. Adding a primitive = a _fx_* method + a list entry here
 # (the Tool validates entries against this same list — keep them in sync).
@@ -33,6 +34,12 @@ const SUSTAINED_BEHAVIORS := ["glow", "pulse", "sparkle"]
 var _layer: CanvasLayer
 # Sustained states, keyed "<id>@<target instance id>" -> the state's root node.
 var _attached: Dictionary = {}
+# Custom renderers, entry id -> Callable(vd, target, opts). An entry with renderer "custom"
+# plays through the callable registered for its id; the callable owns its own drawing (combat
+# effects draw in the combat tree, not on this service's layer). Registered by the system that
+# owns the look (VFXPlayer at combat setup); re-registering overwrites, which keeps this
+# correct across scene reloads.
+var _custom: Dictionary = {}
 
 
 func _ready() -> void:
@@ -103,12 +110,25 @@ func _attach_key(id: String, target: Control) -> String:
 	return "%s@%d" % [id, target.get_instance_id()]
 
 
+# Registers the playback callable for a renderer-"custom" entry: fn(vd: VFXData,
+# target: Control, opts: Dictionary), awaited like any look. See _custom above.
+func register_custom(id: String, fn: Callable) -> void:
+	_custom[id] = fn
+
+
 # ── Renderer dispatch ──────────────────────────────────────────────────────────────
 
 func _dispatch(vd: VFXData, target: Control, opts: Dictionary) -> void:
 	match vd.renderer:
 		"procedural":
 			await _play_procedural(vd, target, opts)
+		"custom":
+			var fn: Callable = _custom.get(vd.id, Callable())
+			if fn.is_valid():
+				await fn.call(vd, target, opts)
+			else:
+				# The owning system isn't alive (e.g. a combat look outside combat) — no cue.
+				push_warning("Vfx: custom renderer for \"%s\" is not registered" % vd.id)
 		_:
 			# Future renderer kinds (flipbook/scene/...) land here as new arms.
 			push_warning("Vfx: unknown renderer \"%s\" on \"%s\"" % [vd.renderer, vd.id])

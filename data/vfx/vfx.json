@@ -3,6 +3,7 @@
 		"id": "combat_health_damage",
 		"display_name": "Health Damage",
 		"category": "combat",
+		"renderer": "custom",
 		"behavior": "burst",
 		"params": {
 			"color": "ff4d4d"
@@ -16,6 +17,7 @@
 		"id": "combat_shield_hit",
 		"display_name": "Shield Hit",
 		"category": "combat",
+		"renderer": "custom",
 		"behavior": "flash",
 		"params": {
 			"color": "7fd4ff"
@@ -29,6 +31,7 @@
 		"id": "combat_shield_restored",
 		"display_name": "Shield Restored",
 		"category": "combat",
+		"renderer": "custom",
 		"behavior": "pulse",
 		"params": {
 			"color": "7fd4ff"
@@ -42,6 +45,7 @@
 		"id": "combat_heal",
 		"display_name": "Heal",
 		"category": "combat",
+		"renderer": "custom",
 		"behavior": "pulse",
 		"params": {
 			"color": "4dff6b"
@@ -55,6 +59,7 @@
 		"id": "combat_buff",
 		"display_name": "Stat Buff",
 		"category": "combat",
+		"renderer": "custom",
 		"behavior": "sparkle",
 		"params": {
 			"color": "ffd94d"
@@ -68,6 +73,7 @@
 		"id": "combat_debuff",
 		"display_name": "Stat Debuff",
 		"category": "combat",
+		"renderer": "custom",
 		"behavior": "flash",
 		"params": {
 			"color": "c76bff"
@@ -81,6 +87,7 @@
 		"id": "combat_death",
 		"display_name": "Unit Death",
 		"category": "combat",
+		"renderer": "custom",
 		"behavior": "dissolve",
 		"params": {
 			"color": "26203a"
@@ -94,6 +101,7 @@
 		"id": "combat_card_placed",
 		"display_name": "Card Placed",
 		"category": "combat",
+		"renderer": "custom",
 		"behavior": "ring",
 		"params": {
 			"color": "ffe9a8"
@@ -107,6 +115,7 @@
 		"id": "combat_projectile_orb",
 		"display_name": "Projectile — Orb",
 		"category": "combat",
+		"renderer": "custom",
 		"behavior": "travel",
 		"params": {
 			"color": "ff8026"
@@ -120,6 +129,7 @@
 		"id": "combat_projectile_bolt",
 		"display_name": "Projectile — Bolt",
 		"category": "combat",
+		"renderer": "custom",
 		"behavior": "travel",
 		"params": {
 			"color": "a6e5ff"
@@ -133,6 +143,7 @@
 		"id": "combat_source_glint",
 		"display_name": "Source Glint",
 		"category": "combat",
+		"renderer": "custom",
 		"behavior": "glint",
 		"params": {
 			"color": "fff2cc"
@@ -146,6 +157,7 @@
 		"id": "combat_target_mark",
 		"display_name": "Target Mark",
 		"category": "combat",
+		"renderer": "custom",
 		"behavior": "reticle",
 		"params": {
 			"color": "ffe14d"
@@ -159,6 +171,7 @@
 		"id": "combat_miss",
 		"display_name": "Miss",
 		"category": "combat",
+		"renderer": "custom",
 		"behavior": "float_label",
 		"params": {
 			"color": "cfd4e0"

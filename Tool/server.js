@@ -67,7 +67,8 @@ const VFX_CATEGORIES = ['ui', 'card', 'combat', 'status', 'resource', 'map', 'ec
 const VFX_BEHAVIORS = ['flash', 'pulse', 'pop', 'shake', 'ring', 'sparkle', 'glint', 'glow',
   'float_label', 'burst', 'travel', 'reticle', 'dissolve'];
 const VFX_SUSTAINED = ['glow', 'pulse', 'sparkle'];
-const VFX_RENDERERS = ['procedural'];   // future: flipbook, scene, ...
+// 'custom' = a designed effect class registered in-game via Vfx.register_custom (combat looks).
+const VFX_RENDERERS = ['procedural', 'custom'];   // future: flipbook, scene, ...
 
 // ── small fs helpers ─────────────────────────────────────────────────────────
 function ensureDir(p) { fs.mkdirSync(p, { recursive: true }); }

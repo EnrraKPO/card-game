@@ -11,16 +11,19 @@ var relic_glint:     Callable
 func setup(root: Node, get_card_ui: Callable) -> void:
 	_root        = root
 	_get_card_ui = get_card_ui
+	for id: String in EFFECT_SCRIPTS:
+		Vfx.register_custom(id, _run_designed.bind(EFFECT_SCRIPTS[id]))
 
 
 # Fire-and-forget: call without await.  Blocking: await the call.
+# The look is addressed BY LIBRARY ID (the combat_* entries, renderer "custom") and dispatched
+# by the Vfx service back into the designed class registered above — combat keeps choreography
+# and drawing, the library keeps the one address space every VFX resolves through.
 func play(event: VFXEvent) -> void:
-	var effect := _make_effect(event.type)
-	if effect == null:
+	var id := _library_id(event)
+	if id.is_empty():
 		return
-	effect.setup(event, _root)
-	add_child(effect)
-	await effect.play()
+	await Vfx.play(id, event.target, {"event": event})
 
 
 # Plays an EffectSystem result array (await it). Three layers read as cause → effect: (1) the SOURCE
@@ -189,23 +192,58 @@ func _result_color(attr: String, delta: int) -> Color:
 		_:        return Color(1.0, 0.85, 0.2) if delta > 0 else Color(0.78, 0.42, 1.0)
 
 
-# ── Registry ───────────────────────────────────────────────────────────────────
-# Add a new match arm + a new effect file to support a new VFX type.
+# ── The designed looks, as library custom renderers ───────────────────────────
+# Each combat_* entry in data/vfx/vfx.json (renderer "custom") maps to one designed effect
+# class. Supporting a new VFX type = a new effect file + a row here + a library entry.
 
-func _make_effect(type: VFXEvent.Type) -> VFXEffect:
-	match type:
-		VFXEvent.Type.HEALTH_DAMAGE:   return VFXEffectHealthDamage.new()
-		VFXEvent.Type.SHIELD_HIT:      return VFXEffectShieldHit.new()
-		VFXEvent.Type.HEAL:            return VFXEffectHeal.new()
-		VFXEvent.Type.BUFF:            return VFXEffectBuff.new()
-		VFXEvent.Type.DEBUFF:          return VFXEffectDebuff.new()
-		VFXEvent.Type.DEATH:           return VFXEffectDeath.new()
-		VFXEvent.Type.CARD_PLACED:     return VFXEffectCardPlaced.new()
-		VFXEvent.Type.SHIELD_RESTORED: return VFXEffectShieldRestored.new()
-		VFXEvent.Type.PROJECTILE:      return VFXEffectProjectile.new()
-		VFXEvent.Type.SOURCE_TRIGGER:  return VFXEffectSourceGlint.new()
-		VFXEvent.Type.TARGET_MARK:     return VFXEffectTargetMark.new()
-		VFXEvent.Type.MISS:            return VFXEffectMiss.new()
+var EFFECT_SCRIPTS := {
+	"combat_health_damage":   VFXEffectHealthDamage,
+	"combat_shield_hit":      VFXEffectShieldHit,
+	"combat_heal":            VFXEffectHeal,
+	"combat_buff":            VFXEffectBuff,
+	"combat_debuff":          VFXEffectDebuff,
+	"combat_death":           VFXEffectDeath,
+	"combat_card_placed":     VFXEffectCardPlaced,
+	"combat_shield_restored": VFXEffectShieldRestored,
+	"combat_projectile_orb":  VFXEffectProjectile,
+	"combat_projectile_bolt": VFXEffectProjectile,
+	"combat_source_glint":    VFXEffectSourceGlint,
+	"combat_target_mark":     VFXEffectTargetMark,
+	"combat_miss":            VFXEffectMiss,
+}
+
+
+# The library id a VFXEvent plays as. The two projectile looks share one class; the event's
+# style picks the entry.
+func _library_id(event: VFXEvent) -> String:
+	match event.type:
+		VFXEvent.Type.HEALTH_DAMAGE:   return "combat_health_damage"
+		VFXEvent.Type.SHIELD_HIT:      return "combat_shield_hit"
+		VFXEvent.Type.HEAL:            return "combat_heal"
+		VFXEvent.Type.BUFF:            return "combat_buff"
+		VFXEvent.Type.DEBUFF:          return "combat_debuff"
+		VFXEvent.Type.DEATH:           return "combat_death"
+		VFXEvent.Type.CARD_PLACED:     return "combat_card_placed"
+		VFXEvent.Type.SHIELD_RESTORED: return "combat_shield_restored"
+		VFXEvent.Type.PROJECTILE:
+			if event.proj_style == VFXEvent.Projectile.BOLT:
+				return "combat_projectile_bolt"
+			return "combat_projectile_orb"
+		VFXEvent.Type.SOURCE_TRIGGER:  return "combat_source_glint"
+		VFXEvent.Type.TARGET_MARK:     return "combat_target_mark"
+		VFXEvent.Type.MISS:            return "combat_miss"
 		_:
-			push_warning("VFXPlayer: no effect registered for type %d" % type)
-			return null
+			push_warning("VFXPlayer: no library id for event type %d" % event.type)
+			return ""
+
+
+# The custom-renderer callable behind every combat entry: instantiate the designed class and
+# run it against the VFXEvent carried in opts, drawing into the combat tree exactly as before.
+func _run_designed(_vd: VFXData, _target: Control, opts: Dictionary, effect_script: GDScript) -> void:
+	var event: VFXEvent = opts.get("event")
+	if event == null:
+		return
+	var effect: VFXEffect = effect_script.new()
+	effect.setup(event, _root)
+	add_child(effect)
+	await effect.play()
