@@ -133,6 +133,7 @@ func _ready() -> void:
 		if n:
 			n.visited = true
 
+	Sfx.play("map_enter")
 	_build_scroll()
 	_build_forge_fab()
 	_build_zoom_slider()
@@ -425,10 +426,16 @@ func _finalize_positions(canvas_size: Vector2, floor_spacing: float, x_of: Dicti
 			node_positions[node.id] = Vector2(x, y)
 
 
+# Cue bookkeeping across medallion rebuilds: the current node's medallion (the travel trail's
+# launch point) and which node ids were already pickable (so only NEWLY revealed ones ink in).
+var _current_med: Control = null
+var _was_reachable: Array = []
+
 func _rebuild_node_buttons() -> void:
 	for child in _canvas.get_children():
 		if child.get_meta("map_node", false):
 			child.queue_free()
+	_current_med = null
 
 	var reachable: Array = map_data.get_reachable_nodes(current_node_id)
 	var reachable_ids: Array = reachable.map(func(n: MapNodeData) -> int: return n.id)
@@ -472,12 +479,32 @@ func _rebuild_node_buttons() -> void:
 			if not reward_summary.is_empty():
 				var label := caption if not caption.is_empty() else MapNodeData.get_label(node.type)
 				med.tooltip_text = "%s — reward: %s" % [label, reward_summary]
+			if is_current:
+				_current_med = med   # the travel trail's launch point (see the pressed cue)
 			if is_reachable:
 				var captured: MapNodeData = node
 				med.pressed.connect(func():
 					Vfx.play("map_node_select_ring", med)   # the pin-in-the-map ring
+					# Non-combat picks advance immediately — walk the trail now. (Combat picks
+					# advance only on a win; the trail would lie if the fight is lost.)
+					if captured.type not in [MapNodeData.Type.COMBAT, MapNodeData.Type.ELITE,
+							MapNodeData.Type.BOSS] \
+							and _current_med != null and is_instance_valid(_current_med):
+						Vfx.play("map_travel_trail", med, {"source": _current_med})
 					_on_node_selected(captured))
 			_canvas.add_child(med)
+			# Standing auras: special nodes advertise themselves. The boss radiates always
+			# (menace is a landmark); rest/event glow only while actually pickable.
+			if node.type == MapNodeData.Type.BOSS:
+				Vfx.attach("map_boss_node_pulse", med)
+			elif is_reachable and node.type == MapNodeData.Type.REST:
+				Vfx.attach("map_rest_glow", med)
+			elif is_reachable and node.type == MapNodeData.Type.EVENT:
+				Vfx.attach("map_event_shimmer", med)
+			# The unknown resolving into choice: a node newly become pickable announces itself.
+			if is_reachable and node.id not in _was_reachable:
+				Vfx.play("map_node_reveal_ink", med)
+	_was_reachable = reachable_ids
 
 
 func _on_node_selected(node: MapNodeData) -> void:

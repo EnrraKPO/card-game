@@ -88,6 +88,7 @@ func _ready() -> void:
 	_confirm_abandon.title = "Abandon run"
 	_confirm_abandon.dialog_text = "Abandon the current run? Your meta-progression is kept, but the run is lost."
 	_confirm_abandon.confirmed.connect(_on_abandon_confirmed)
+	ScreenUI.wire_modal_cues(_confirm_abandon)
 	add_child(_confirm_abandon)
 
 

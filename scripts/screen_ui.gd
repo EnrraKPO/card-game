@@ -426,6 +426,17 @@ static func action_button(text: String, action: Callable, min_size: Vector2 = Ve
 	return btn
 
 
+# THE modal cue wiring — the audio counterpart of every button being a GlossyButton: call once
+# after creating any native ConfirmationDialog/AcceptDialog and it sounds its open and close.
+# (Native dialogs are Windows, not Controls, so they can't take a Vfx overlay — sound carries
+# the moment; Control-based overlays play ui_modal_open_bloom themselves.)
+static func wire_modal_cues(dialog: Window) -> void:
+	dialog.about_to_popup.connect(func() -> void: Sfx.play("ui_modal_open"))
+	dialog.visibility_changed.connect(func() -> void:
+		if not dialog.visible:
+			Sfx.play("ui_modal_close"))
+
+
 # The standard top-right "✕" close button. `action` may be an empty Callable() — Shell builds
 # both header close buttons once with no action bound yet, then rebinds them per screen (see
 # Shell._rebind_button); an empty Callable here just means "not wired up yet." `debug`: the

@@ -53,6 +53,7 @@ func _on_continue_pressed() -> void:
 	var username := name_input.text.strip_edges()
 	if username.is_empty():
 		error_label.text = "Please enter a name."
+		Vfx.play("ui_error_flash", error_label)   # carries the error sound
 		return
 	GameData.username = username
 	Nav.goto("res://scenes/game_slots.tscn")

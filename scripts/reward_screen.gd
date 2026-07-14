@@ -23,6 +23,7 @@ func _ready() -> void:
 	# isn't meaningful until that reparent has actually happened. One frame is enough for it to
 	# settle (confirmed: self.size matches wrap's inset rect exactly after this).
 	await get_tree().process_frame
+	Vfx.play("reward_open_rays", self)   # the chest-lid moment (entry carries the open sound)
 
 	var compact := UIScale.is_compact()
 
@@ -437,7 +438,7 @@ func _make_card_offer(grant: Grant) -> Control:
 	ui.mouse_filter = Control.MOUSE_FILTER_STOP   # the offer card captures clicks to pick
 	if ui is CardUI:
 		(ui as CardUI).draggable = false
-		(ui as CardUI).pressed.connect(func() -> void: _pick(grant))
+		(ui as CardUI).pressed.connect(func() -> void: _pick(grant, ui))
 	wrap.add_child(ui)
 
 	var desc_lbl := _offer_label(data.description if data != null else "", 16, ScreenUI.TEXT_COLOR)
@@ -563,7 +564,7 @@ func _make_info_offer(grant: Grant, tag: String, accent: Color, icon: Texture2D,
 	)
 
 	if pickable:
-		btn.pressed.connect(func() -> void: _pick(grant))
+		btn.pressed.connect(func() -> void: _pick(grant, btn))
 	return btn
 
 
@@ -590,7 +591,21 @@ func _offer_label(text: String, font_size: int, col: Color) -> Label:
 	return lbl
 
 
-func _pick(grant: Grant) -> void:
+var _picked := false
+
+func _pick(grant: Grant, source: Control = null) -> void:
+	if _picked:   # the claim celebration is awaited — don't let a second click double-grant
+		return
+	_picked = true
+	# The claim celebrates on the offer itself (each entry carries its taken-sound), held so
+	# the navigation right after doesn't cut it mid-burst.
+	if source != null and is_instance_valid(source):
+		match grant.kind:
+			"relic": await Vfx.play("reward_relic_halo", source)
+			"charm": await Vfx.play("charm_attach_glint", source)
+			_:       await Vfx.play("reward_card_burst", source)
+	else:
+		Sfx.play("reward_card_taken")
 	grant.apply()
 	_finish()
 

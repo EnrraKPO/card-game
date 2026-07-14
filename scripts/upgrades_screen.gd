@@ -151,6 +151,8 @@ func _select_tree(tree_id: String) -> void:
 		var btn: Button = _tab_buttons[tid]
 		btn.button_pressed = tid == tree_id
 		btn.disabled = tid == tree_id   # the active tab reads as selected and isn't re-clickable
+		if tid == tree_id:
+			Vfx.play("ui_tab_flash", btn)   # crisp "you are HERE now" (carries the tab sound)
 	_tree_view.show_tree(tree)
 	_buy_btn.visible = false
 	if tree != null:
@@ -191,6 +193,8 @@ func _refresh_buy_btn() -> void:
 func _on_buy_pressed() -> void:
 	if _selected_node == null or not GameData.current_profile.purchase_upgrade(_selected_node):
 		return
+	# Permanent power inscribed: the etch on the action itself (carries the purchase sound).
+	Vfx.play("upgrade_purchase_etch", _buy_btn)
 	GameData.save_profile()
 	GameData.rebuild_modifiers()   # the purchase takes effect on the next run immediately
 	_tree_view.refresh_states()

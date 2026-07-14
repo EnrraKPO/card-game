@@ -191,6 +191,13 @@ func _attach_dispatch(vd: VFXData, target: Control) -> Node:
 				"glow":    return _sustain_glow(vd, target)
 				"pulse":   return _sustain_pulse(vd, target)
 				"sparkle": return _sustain_sparkle(vd, target)
+		"custom":
+			var fn: Callable = _custom.get(vd.id, Callable())
+			if fn.is_valid():
+				var node: Node = fn.call(vd, target)
+				if node != null and node.get_parent() == null:
+					_layer.add_child(node)   # in-tree so tree_exiting fires when detach frees it
+				return node
 	push_warning("Vfx.attach: \"%s\" (%s/%s) is not sustain-capable" % [vd.id, vd.renderer, vd.behavior])
 	return null
 

@@ -19,6 +19,7 @@ var _upgrade_btn: Button
 
 
 func _ready() -> void:
+	Sfx.play("map_event_open")
 	_attr = GameData.current_event_attr
 	if _attr.is_empty():
 		_attr = DeckCard.UPGRADABLE[0]
@@ -119,6 +120,7 @@ func _on_card_pressed(entry_idx: int) -> void:
 		if _selected_idx >= 0:
 			_entries[_selected_idx].ui.set_selected(false)
 		_selected_idx = entry_idx
+		Vfx.play("card_select_lift", _entries[entry_idx].ui)   # entry carries the select sound
 		_entries[entry_idx].ui.set_selected(true)
 	_refresh()
 
@@ -151,6 +153,10 @@ func _apply_upgrade() -> void:
 	var entry: Dictionary = _entries[_selected_idx]
 	var card_name: String = CardData.get_card(entry.card.id).display_name
 	GameData.current_run.gold -= _cost
+	# The training lands on the chosen card: the golden top-to-bottom shine (entry carries
+	# the upgrade sound), plus the spent gold sliding off the counter.
+	Vfx.play("card_upgrade_shine", entry.ui)
+	Vfx.play("gold_spend_slide", _gold_lbl, {"text": "-%d" % _cost})
 	# Permanent deck-card upgrade: an override mutation, routed through the Resolver like every
 	# other stat change (the DeckCard target form — see Resolver.submit).
 	Resolver.submit(StatMutation.make(entry.card, StringName(_attr), 1,

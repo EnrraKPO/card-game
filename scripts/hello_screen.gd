@@ -45,6 +45,7 @@ func _ready() -> void:
 	confirm_dialog.title = "Reset profile"
 	confirm_dialog.dialog_text = "This will erase your name and all save slots. Are you sure?"
 	confirm_dialog.confirmed.connect(_on_reset_confirmed)
+	ScreenUI.wire_modal_cues(confirm_dialog)
 	add_child(confirm_dialog)
 
 

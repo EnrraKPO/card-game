@@ -27,12 +27,14 @@ func _ready() -> void:
 	_confirm_delete = ConfirmationDialog.new()
 	_confirm_delete.title = "Delete save"
 	_confirm_delete.confirmed.connect(_on_delete_confirmed)
+	ScreenUI.wire_modal_cues(_confirm_delete)
 	add_child(_confirm_delete)
 
 	_confirm_reset = ConfirmationDialog.new()
 	_confirm_reset.title = "Reset profile"
 	_confirm_reset.dialog_text = "This erases your name and all saves. Are you sure?"
 	_confirm_reset.confirmed.connect(_on_reset_confirmed)
+	ScreenUI.wire_modal_cues(_confirm_reset)
 	add_child(_confirm_reset)
 
 	# Big title, near-full-width tall slot rows dividing the height — proportional coverage, no

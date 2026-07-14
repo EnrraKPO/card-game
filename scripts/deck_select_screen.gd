@@ -89,4 +89,7 @@ func _play(deck_id: String) -> void:
 	GameData.current_profile.select_deck(deck_id)
 	GameData.save_profile()
 	GameData.start_new_run()
+	# The adventure's first step: gates bloom over the whole screen (the entry carries the
+	# embark sound), held so the map navigation doesn't cut it.
+	await Vfx.play("embark_gates_bloom", self)
 	Nav.goto("res://scenes/map.tscn")

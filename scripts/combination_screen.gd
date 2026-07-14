@@ -656,6 +656,7 @@ func _confirm_combine(src_idx: int, tgt_idx: int, result_dc: DeckCard) -> void:
 			_close_combine_modal())
 	add_child(dim)
 	_combine_modal = dim
+	Vfx.play("ui_modal_open_bloom", dim)   # the overlay settles in (carries the modal sound)
 	_fusing = false
 
 	# CenterContainer centres the panel; empty space stays input-transparent so it falls to the dim.
@@ -868,6 +869,7 @@ func _show_result_toast(result_inst: CardInstance) -> void:
 	panel.add_theme_stylebox_override("panel", style)
 	center.add_child(panel)
 
+	Vfx.play("ui_toast_glint", panel)   # the "Forged!" notice announces itself (carries its sound)
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 14 if _compact else 10)
 	panel.add_child(col)

@@ -94,6 +94,10 @@ func _ready() -> void:
 	if not button_down.is_connected(_on_down):
 		button_down.connect(_on_down)
 		button_up.connect(_on_up)
+	# The ui_button_attention library entry (renderer "custom") resolves back to set_glow —
+	# any button instance registering is enough; re-registration overwrites harmlessly.
+	if not Engine.is_editor_hint():
+		Vfx.register_custom("ui_button_attention", GlossyButton._attention_state)
 	_apply()
 	call_deferred("_apply")   # size is not final until after layout
 	_was_disabled = disabled
@@ -268,6 +272,33 @@ func _set_glow_tint(t: float) -> void:
 
 func _on_resized() -> void:
 	_apply()
+
+
+# THE app-wide denied cue, the negative twin of _on_down's click: pressing a DISABLED button
+# answers with a refusal shake (its entry carries the denied sound) instead of dead silence.
+# Lives on the shared button class so every disabled button in the game refuses the same way.
+func _gui_input(event: InputEvent) -> void:
+	if not disabled or Engine.is_editor_hint():
+		return
+	var mb := event as InputEventMouseButton
+	if mb != null and mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT:
+		Vfx.play("ui_button_denied_shake", self)
+
+
+# The designed look behind ui_button_attention: the breathing tint IS set_glow, registered as
+# the entry's custom renderer so Vfx.attach on any GlossyButton resolves back to it. The
+# returned token carries the state — freeing it (detach, or the button leaving the tree)
+# settles the glow.
+static func _attention_state(_vd: VFXData, target: Control) -> Node:
+	var gb := target as GlossyButton
+	if gb == null:
+		return null
+	gb.set_glow(true)
+	var token := Node.new()
+	token.tree_exiting.connect(func() -> void:
+		if is_instance_valid(gb):
+			gb.set_glow(false))
+	return token
 
 
 func _on_down() -> void:

@@ -84,7 +84,7 @@ func _make_offer(grant: Grant, compact: bool) -> Control:
 	take.size_flags_horizontal = SIZE_SHRINK_CENTER
 	if grant.can_apply():
 		take.text = "Take"
-		take.pressed.connect(func() -> void: _pick(grant))
+		take.pressed.connect(func() -> void: _pick(grant, slot))
 	else:
 		take.text = "Inventory Full"
 		take.disabled = true
@@ -92,7 +92,16 @@ func _make_offer(grant: Grant, compact: bool) -> Control:
 	return slot
 
 
-func _pick(grant: Grant) -> void:
+var _picked := false
+
+func _pick(grant: Grant, source: Control = null) -> void:
+	if _picked:   # the halo is awaited — don't let a second click double-grant
+		return
+	_picked = true
+	# The relic joining the run celebrates on its offer (the entry carries the taken-sound),
+	# held so the navigation right after doesn't cut it.
+	if source != null and is_instance_valid(source):
+		await Vfx.play("reward_relic_halo", source)
 	grant.apply()
 	_finish()
 

@@ -301,10 +301,15 @@ func _on_cards_drawn(insts: Array) -> void:
 
 
 func _on_cards_discarded(insts: Array) -> void:
+	var any_discarded := false
 	for ui: CardUI in _hand_cards.duplicate():
 		if insts.has(ui.card_instance):
+			any_discarded = true
+			Vfx.play("card_discard_puff", ui)   # per card — each leaving card says goodbye
 			remove_card(ui)
 			ui.queue_free()
+	if any_discarded:
+		Sfx.play("card_discard")   # once per burst, like the draw sound
 
 
 func _spawn_hand_card(inst: CardInstance) -> void:
@@ -356,6 +361,7 @@ func set_card_size(s: Vector2) -> void:
 # Enemy units are inspectable too, for information — see _rebuild_inspect_view for the
 # interactive-vs-view-only split.
 func set_inspected(inst: CardInstance) -> void:
+	Sfx.play("card_inspect_open")
 	_inspected = inst
 	_rebuild_inspect_view()
 	_set_level(NavLevel.INSPECT)
@@ -481,7 +487,12 @@ func refresh_nav() -> void:
 	# plain hand and the single-card inspect view — but never on the Abilities list itself, and
 	# only while some unit actually has an ability to inspect.
 	_inspect_abilities_btn.visible = _nav_level != NavLevel.ABILITIES and has_abilities
-	_inspect_abilities_btn.set_glow(_inspect_abilities_btn.visible and has_usable)
+	# The attention state rides the LIBRARY (ui_button_attention resolves back to set_glow via
+	# its custom renderer) — same look as before, one address space.
+	if _inspect_abilities_btn.visible and has_usable:
+		Vfx.attach("ui_button_attention", _inspect_abilities_btn)
+	else:
+		Vfx.detach("ui_button_attention", _inspect_abilities_btn)
 	_back_btn.visible              = _nav_level != NavLevel.HAND
 
 
@@ -626,6 +637,7 @@ func selected() -> CardUI:
 
 func deselect() -> void:
 	if _selected != null:
+		Sfx.play("card_deselect")
 		_selected.set_selected(false)
 		_selected = null
 
@@ -638,6 +650,7 @@ func _toggle_select(ui: CardUI) -> void:
 	else:
 		deselect()
 		_selected = ui
+		Vfx.play("card_select_lift", ui)   # entry carries the select sound
 		ui.set_selected(true)
 
 

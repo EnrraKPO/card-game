@@ -53,11 +53,13 @@ func _build_ui() -> void:
 	_confirm_reset = ConfirmationDialog.new()
 	_confirm_reset.title = "Reset deck"
 	_confirm_reset.confirmed.connect(_do_reset)
+	ScreenUI.wire_modal_cues(_confirm_reset)
 	add_child(_confirm_reset)
 
 	_confirm_delete = ConfirmationDialog.new()
 	_confirm_delete.title = "Delete deck"
 	_confirm_delete.confirmed.connect(_do_delete)
+	ScreenUI.wire_modal_cues(_confirm_delete)
 	add_child(_confirm_delete)
 
 

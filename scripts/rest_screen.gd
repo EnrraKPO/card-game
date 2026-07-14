@@ -68,6 +68,7 @@ func _on_rest() -> void:
 	if run == null:
 		return
 	run.king_damage = maxi(0, run.king_damage - _heal_amount(run))
+	Sfx.play("map_rest_heal")
 	_rested = true
 	GameData.save_run()
 	_refresh()

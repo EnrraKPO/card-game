@@ -177,6 +177,9 @@ func _ready() -> void:
 	_apply_border_style()
 	refresh()
 	resized.connect(_apply_scale)
+	# The near-subliminal hover tick, on the shared card class so every card everywhere
+	# whispers the same way (placeholder-gated like all undesigned cues — F7 mutes it).
+	mouse_entered.connect(func() -> void: Sfx.play("card_hover"))
 	_apply_scale()
 	_apply_flip()   # honour a facing set before the nodes existed (see set_flipped)
 	# Arm long-press inspection only on touch devices; desktop relies on the hover tooltip.
@@ -833,6 +836,7 @@ func _gui_input(event: InputEvent) -> void:
 # pending release is then swallowed (see _gui_input) so the hold doesn't also select/play.
 func _on_long_press() -> void:
 	_did_inspect = true
+	Sfx.play("card_inspect_open")
 	CardInspector.open(self, card_instance, _show_cost)
 
 

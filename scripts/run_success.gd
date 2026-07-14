@@ -4,6 +4,7 @@ extends Control
 # keeping the save's meta-progression) and returns to the save's hub.
 
 func _ready() -> void:
+	Sfx.play("victory_run")
 	Nav.clear_back()   # terminal screen — the OS back gesture stays inert (use the on-screen button)
 	var compact := UIScale.is_compact()
 

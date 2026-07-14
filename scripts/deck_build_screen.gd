@@ -205,7 +205,9 @@ func _deck_valid() -> bool:
 
 func _add(card_id: String) -> void:
 	if _cards.size() >= OwnedDeck.MAX_CARDS or _count(card_id) >= _cap(card_id):
+		Sfx.play("ui_button_denied")   # full deck / at the copy cap — the filing is refused
 		return
+	Sfx.play("deck_card_add")
 	_cards.append(DeckCard.make(card_id))
 	_rebuild()
 
@@ -213,6 +215,7 @@ func _add(card_id: String) -> void:
 func _remove(card_id: String) -> void:
 	for i in range(_cards.size() - 1, -1, -1):
 		if _cards[i].id == card_id:
+			Sfx.play("deck_card_remove")
 			_cards.remove_at(i)
 			break
 	_rebuild()
@@ -226,6 +229,7 @@ func _toggle_king() -> void:
 func _on_save() -> void:
 	if not _deck_valid():
 		return
+	Sfx.play("deck_save")
 	_deck.cards = _cards
 	GameData.save_profile()
 	Nav.goto("res://scenes/deck_screen.tscn")

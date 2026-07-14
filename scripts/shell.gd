@@ -115,6 +115,9 @@ func mount(scene_path: String) -> void:
 	_apply_back(def)
 
 	_current_content = content
+	# THE app-wide screen-transition cue: every navigation arrives through this one hook
+	# (the entry carries the open sound) — no screen wires its own arrival.
+	Vfx.play("screen_transition_sweep", content)
 
 
 func _active_close(def: Dictionary) -> Button:

@@ -67,6 +67,7 @@ func _ready() -> void:
 	if GameData.current_profile == null or GameData.current_slot < 0:
 		Nav.goto.call_deferred("res://scenes/game_slots.tscn")
 		return
+	Sfx.play("lab_enter")
 	UIScale.layout_changed.connect(func(): get_tree().reload_current_scene(), CONNECT_ONE_SHOT)
 	_compact = UIScale.is_compact()
 
@@ -480,6 +481,7 @@ func _begin_token_drag(id: String) -> void:
 	_drag_follower.add_child(vis)
 	add_child(_drag_follower)   # last child of the screen → on top of the UI
 	_update_token_drag(get_global_mouse_position())
+	Vfx.play("lab_token_pick_glint", vis)   # tactile "the drag is live" (carries its sound)
 
 
 func _update_token_drag(pos: Vector2) -> void:
@@ -500,8 +502,13 @@ func _end_token_drag() -> void:
 func _resolve_token_drop() -> void:
 	var hit := get_global_mouse_position() + _drag_center
 	for slot: DropSlot in _open_slots():
-		if slot.get_global_rect().has_point(hit) and slot.can_accept.call(_drag_id):
-			slot.stage(_drag_id)
+		if slot.get_global_rect().has_point(hit):
+			if slot.can_accept.call(_drag_id):
+				slot.stage(_drag_id)
+			else:
+				# Dropped ON a slot that can't take it: the machine spits it back, honestly,
+				# instead of silently rerouting to some other slot.
+				Vfx.play("lab_slot_reject_bounce", slot)
 			return
 	_on_token_clicked(_drag_id)
 
@@ -592,6 +599,12 @@ func _update_refinery() -> void:
 
 func _on_refine() -> void:
 	if Lab.refine(GameData.current_profile, _refinery_slot.staged_id):
+		Sfx.play("lab_refine")
+		# The transmutation swirl runs for a beat over the refinery slot, then settles.
+		Vfx.attach("lab_refine_swirl", _refinery_slot)
+		get_tree().create_timer(1.4).timeout.connect(func() -> void:
+			if is_instance_valid(_refinery_slot):
+				Vfx.detach("lab_refine_swirl", _refinery_slot))
 		GameData.save_profile()
 		_rebuild_inventory()
 	_refresh_open()
@@ -886,8 +899,10 @@ func _on_forge() -> void:
 	var king_id := Lab.forge(GameData.current_profile, a, b)
 	if not king_id.is_empty():
 		Sfx.combined()
-		# The forge announces the new King's dual element over its preview.
+		# The Lab's crown moment: the King-forge burst (carries its sound), plus the new
+		# King's dual element announcing itself over the preview.
 		if _forge_preview != null:
+			Vfx.play("lab_forge_king_burst", _forge_preview)
 			var vid := Vfx.resolve("combine", [a, b])
 			if not vid.is_empty():
 				Vfx.play(vid, _forge_preview)

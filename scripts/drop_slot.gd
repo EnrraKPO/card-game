@@ -61,6 +61,7 @@ func stage(id: String) -> bool:
 	if not can_accept.call(id):
 		return false
 	staged_id = id
+	Vfx.play("lab_token_drop_ring", self)   # the machine accepts the piece (carries its sound)
 	_refresh()
 	on_changed.call()
 	return true

@@ -29,6 +29,7 @@ var _compact := false
 
 
 func _ready() -> void:
+	Sfx.play("shop_enter")
 	_compact = UIScale.is_compact()
 	_build_ui()
 	_rebuild_deck()
@@ -261,6 +262,7 @@ func _apply_remove() -> void:
 	if _selected_idx < 0 or GameData.current_run.gold < REMOVE_COST:
 		return
 	var deck_idx: int = _deck_entries[_selected_idx].deck_idx
+	Vfx.play("deck_remove_fade", _deck_entries[_selected_idx].ui)   # carries the remove sound
 	GameData.current_run.gold -= REMOVE_COST
 	GameData.current_run.deck.remove_at(deck_idx)
 	GameData.save_run()

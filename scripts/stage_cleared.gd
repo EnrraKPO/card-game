@@ -25,6 +25,11 @@ func _ready() -> void:
 	title.add_theme_color_override("font_color", Color("1f7a35"))
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(title)
+	# The chapter-closing beat: the screen blooms, the title bursts (which carries the
+	# stage-advance sound). Deferred one frame so the fresh layout has real rects.
+	(func() -> void:
+		Vfx.play("screen_stage_advance_bloom", self)
+		Vfx.play("map_stage_clear_burst", title)).call_deferred()
 
 	var subtitle := Label.new()
 	subtitle.text = "A charm awaits — press onward to choose your reward."

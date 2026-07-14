@@ -209,6 +209,7 @@
 		"id": "ui_button_attention",
 		"display_name": "Button Attention Glow",
 		"category": "ui",
+		"renderer": "custom",
 		"behavior": "glow",
 		"params": {
 			"color": "ffd94d",
@@ -1639,6 +1640,7 @@
 			"scale": 0.8
 		},
 		"placeholder": true,
+		"sfx": "ui_button_denied",
 		"concept": "Pressing a disabled/unaffordable action — the refusal should be felt on the button itself, paired with the denied sound.",
 		"explanation": "A tight little head-shake of the button: three quick horizontal jitters, no color change.",
 		"prompt": "Sprite sheet of a small refusal shake motion blur, subtle horizontal jitter ghosting, 4 frames on transparent background, 2d game effect"
@@ -1666,6 +1668,7 @@
 			"duration": 0.18
 		},
 		"placeholder": true,
+		"sfx": "ui_tab_switch",
 		"concept": "A tab/filter becoming active — a crisp confirmation of where you now are.",
 		"explanation": "A quick white sheen across the newly active tab, gone in a blink.",
 		"prompt": "Sprite sheet of a quick white sheen sweep across a tab shape, fast highlight pass, 4 frames on transparent background, 2d game effect"
@@ -1680,6 +1683,7 @@
 			"duration": 0.35
 		},
 		"placeholder": true,
+		"sfx": "ui_error",
 		"concept": "Something actually went wrong — sharper than a denial; pairs with the error sound.",
 		"explanation": "A red edge-flash on the offending element, two quick beats.",
 		"prompt": "Sprite sheet of a red warning edge flash blinking twice, error highlight, 6 frames on transparent background, 2d game effect"
@@ -1694,6 +1698,7 @@
 			"duration": 0.2
 		},
 		"placeholder": true,
+		"sfx": "ui_hover_tick",
 		"concept": "Cursor entering an element that rewards attention — near-subliminal; the visual twin of the hover tick.",
 		"explanation": "The faintest sheen brightening, well under the glint used for combat causality.",
 		"prompt": "Sprite sheet of a very subtle white sheen brightening and fading, minimal hover highlight, 4 frames on transparent background, 2d game effect"
@@ -1708,6 +1713,7 @@
 			"duration": 0.3
 		},
 		"placeholder": true,
+		"sfx": "ui_modal_open",
 		"concept": "A dialog/overlay arriving — a soft settling bloom so popups feel placed, not teleported.",
 		"explanation": "A single soft white halo swell around the modal as it lands.",
 		"prompt": "Sprite sheet of a soft white halo blooming once around a panel, gentle arrival glow, 6 frames on transparent background, 2d game effect"
@@ -1722,6 +1728,7 @@
 			"duration": 0.4
 		},
 		"placeholder": true,
+		"sfx": "ui_toast",
 		"concept": "A passive notification arriving — noticeable if you're looking, invisible if you're not.",
 		"explanation": "One slow quiet sheen across the toast as it settles into place.",
 		"prompt": "Sprite sheet of a slow quiet sheen passing over a small banner, subtle notification shine, 6 frames on transparent background, 2d game effect"
@@ -1777,6 +1784,7 @@
 			"scale": 0.9
 		},
 		"placeholder": true,
+		"sfx": "card_select",
 		"concept": "Picking a card up for placement — the card is now in your grip; the hand's tactile counterpart to the select sound.",
 		"explanation": "The card lifts with a tiny overshoot scale and gains a soft underlying drop shadow.",
 		"prompt": "Sprite sheet of a card lifting with a subtle scale bounce and drop shadow appearing, pick-up motion, 6 frames on transparent background, 2d game effect"
@@ -1790,6 +1798,7 @@
 			"color": "ffd94d"
 		},
 		"placeholder": true,
+		"sfx": "card_upgrade",
 		"concept": "A card permanently improving (event boost, upgrade) — a small ceremony; the card is now better than it was.",
 		"explanation": "Golden sparkles sweep the card top-to-bottom, ending on a brief full-card shine.",
 		"prompt": "Sprite sheet of golden sparkles sweeping down a card ending in a full shine, enhancement ceremony, 10 frames on transparent background, 2d game effect"
@@ -1804,6 +1813,7 @@
 			"duration": 0.3
 		},
 		"placeholder": true,
+		"sfx": "card_reveal",
 		"concept": "A hidden card flipping face-up (rewards, offers) — anticipation resolving; pairs with the card_reveal sound's flourish.",
 		"explanation": "A bright flash at the flip's apex, settling into a brief edge glow on the revealed face.",
 		"prompt": "Sprite sheet of a card flip flash at the turn apex with settling edge glow, reveal flourish, 8 frames on transparent background, 2d game effect"
@@ -1875,6 +1885,7 @@
 			"color": "ffd94d"
 		},
 		"placeholder": true,
+		"sfx": "gold_gain",
 		"concept": "Gold entering the purse — coin joy at the counter; pairs with the coin-clink sound.",
 		"explanation": "Golden glints burst around the gold counter as the number ticks up.",
 		"prompt": "Sprite sheet of golden coin glints bursting around a counter, treasure sparkle, 6 frames on transparent background, 2d game effect"
@@ -1888,6 +1899,7 @@
 			"color": "ffd94d"
 		},
 		"placeholder": true,
+		"sfx": "gold_spend",
 		"concept": "Paying gold — the cost should be seen leaving, not just a number quietly shrinking.",
 		"explanation": "A \"-N\" gold label slides off the counter toward the purchase, fading.",
 		"prompt": "Sprite sheet of a gold coin sliding away and fading with a minus glow, payment departure, 6 frames on transparent background, 2d game effect"
@@ -1901,6 +1913,7 @@
 			"color": "8fd0a0"
 		},
 		"placeholder": true,
+		"sfx": "material_gain",
 		"concept": "Crafting materials granted — bottled elements arriving; more mystical than coin.",
 		"explanation": "Element-tinted shimmer around the materials tray with tiny vial glints.",
 		"prompt": "Sprite sheet of small alchemical vials glinting with elemental shimmer, ingredient collection sparkle, 6 frames on transparent background, 2d game effect"
@@ -1915,6 +1928,7 @@
 			"duration": 0.8
 		},
 		"placeholder": true,
+		"sfx": "experience_gain",
 		"concept": "Run-end experience counting up toward upgrade points — accumulation should feel earned, tick by tick.",
 		"explanation": "Violet ticks pop along the XP bar as it fills, with a brighter pop at each threshold crossed.",
 		"prompt": "Sprite sheet of violet tick sparks popping along a filling bar with threshold flashes, tally accumulation, 10 frames on transparent background, 2d game effect"
@@ -1928,6 +1942,7 @@
 			"color": "ffe14d"
 		},
 		"placeholder": true,
+		"sfx": "map_node_select",
 		"concept": "Tapping a reachable map node — the pin-in-the-map moment; commitment about to happen.",
 		"explanation": "A golden ring pulses out from the node medallion, once.",
 		"prompt": "Sprite sheet of a golden selection ring pulsing outward from a round medallion, waypoint confirmation, 6 frames on transparent background, 2d game effect"
@@ -1941,6 +1956,7 @@
 			"color": "ffe9a8"
 		},
 		"placeholder": true,
+		"sfx": "map_travel",
 		"concept": "The piece walking its chosen path — the journey between nodes should be watchable, not a teleport.",
 		"explanation": "A warm dotted trail lights up along the path segment as the marker moves, fading behind it.",
 		"prompt": "Sprite sheet of a dotted golden trail lighting up along a path and fading, journey progress line, 8 frames on transparent background, 2d game effect"
@@ -1955,6 +1971,7 @@
 			"duration": 0.6
 		},
 		"placeholder": true,
+		"sfx": "map_node_reveal",
 		"concept": "New nodes/paths becoming visible — the unknown resolving into choices; ink spreading on parchment.",
 		"explanation": "Newly revealed nodes fade in under a spreading ink-wash shimmer.",
 		"prompt": "Sprite sheet of ink spreading across parchment revealing markings, map ink-wash reveal, 10 frames on transparent background, 2d game effect"
@@ -1999,6 +2016,7 @@
 			"scale": 1.8
 		},
 		"placeholder": true,
+		"sfx": "map_stage_advance",
 		"concept": "Beating a stage boss and advancing — a chapter closing; bigger than any single fight's win moment.",
 		"explanation": "A gold burst sweeps the map, the old stage's nodes glinting once before the fresh map draws in.",
 		"prompt": "Sprite sheet of a grand golden burst sweeping outward with trailing glints, chapter completion flare, 12 frames on transparent background, 2d game effect"
@@ -2028,6 +2046,7 @@
 			"duration": 0.3
 		},
 		"placeholder": true,
+		"sfx": "shop_buy",
 		"concept": "Completing a purchase — the deal sealed on the item itself; pairs with the shop_buy sound.",
 		"explanation": "A gold flash on the bought item as it leaves the shelf toward your inventory.",
 		"prompt": "Sprite sheet of a golden purchase flash with small coin glints, deal-sealed highlight, 6 frames on transparent background, 2d game effect"
@@ -2041,6 +2060,7 @@
 			"scale": 0.7
 		},
 		"placeholder": true,
+		"sfx": "shop_denied",
 		"concept": "Trying to buy without enough gold — the price tag itself refuses.",
 		"explanation": "The item's price chip shakes side-to-side once, briefly tinting red.",
 		"prompt": "Sprite sheet of a price tag shaking with a brief red tint, refusal jitter, 4 frames on transparent background, 2d game effect"
@@ -2056,6 +2076,7 @@
 			"scale": 1.5
 		},
 		"placeholder": true,
+		"sfx": "reward_open",
 		"concept": "The reward screen presenting its offers — the chest-lid moment; anticipation made visible.",
 		"explanation": "Soft golden rays fan out behind the reward offers as they slide in.",
 		"prompt": "Sprite sheet of soft golden light rays fanning out from behind, treasure presentation glow, 8 frames on transparent background, 2d game effect"
@@ -2069,6 +2090,7 @@
 			"color": "ffe14d"
 		},
 		"placeholder": true,
+		"sfx": "reward_card_taken",
 		"concept": "Claiming a card reward — the pick committed; the chosen card celebrates, the others bow out.",
 		"explanation": "A compact gold burst on the chosen card while the unchosen offers fade back.",
 		"prompt": "Sprite sheet of a compact golden celebration burst on a card, prize claim flash, 8 frames on transparent background, 2d game effect"
@@ -2083,6 +2105,7 @@
 			"scale": 1.4
 		},
 		"placeholder": true,
+		"sfx": "reward_relic_taken",
 		"concept": "A relic joining the run — a permanent artifact deserves a weightier ceremony than a card.",
 		"explanation": "A slow expanding halo off the relic chip with lingering motes, heavier than the card burst.",
 		"prompt": "Sprite sheet of a slow ornate halo ring expanding with lingering gold motes, artifact acquisition ceremony, 10 frames on transparent background, 2d game effect"
@@ -2097,6 +2120,7 @@
 			"duration": 0.6
 		},
 		"placeholder": true,
+		"sfx": "relic_discard",
 		"concept": "Voluntarily dropping a relic — deliberate letting-go; respectful, not trashy.",
 		"explanation": "The relic chip desaturates and dissolves upward into faint motes.",
 		"prompt": "Sprite sheet of an artifact desaturating and dissolving upward into motes, solemn release, 8 frames on transparent background, 2d game effect"
@@ -2111,6 +2135,7 @@
 			"duration": 0.2
 		},
 		"placeholder": true,
+		"sfx": "lab_token_pick",
 		"concept": "Lifting a resource token in the Lab — tactile confirmation the drag has begun.",
 		"explanation": "A quick violet glint on the token as it lifts, with a small shadow appearing under it.",
 		"prompt": "Sprite sheet of a small gem glinting as it lifts with a shadow forming below, pick-up sparkle, 4 frames on transparent background, 2d game effect"
@@ -2124,6 +2149,7 @@
 			"color": "8fd0a0"
 		},
 		"placeholder": true,
+		"sfx": "lab_token_drop",
 		"concept": "A token landing in a valid slot — the machine accepts the piece; pairs with the snug-click sound.",
 		"explanation": "A green confirmation ring pulses from the socket as the token seats.",
 		"prompt": "Sprite sheet of a green acceptance ring pulsing from a socket, slot confirmation, 6 frames on transparent background, 2d game effect"
@@ -2137,6 +2163,7 @@
 			"scale": 1
 		},
 		"placeholder": true,
+		"sfx": "lab_slot_reject",
 		"concept": "Dropping a token where it doesn't belong — the machine spits it back; comedy over punishment.",
 		"explanation": "The slot shakes it off; the token bounces back toward its tray with a springy wobble.",
 		"prompt": "Sprite sheet of a springy rejection bounce with wobble deformation, comic spit-back, 6 frames on transparent background, 2d game effect"
@@ -2166,6 +2193,7 @@
 			"duration": 0.8
 		},
 		"placeholder": true,
+		"sfx": "lab_forge_king",
 		"concept": "The King Forge completing — the Lab's crown moment; a new King struck into existence deserves the Lab's biggest flash.",
 		"explanation": "An anvil-strike flash: white-gold burst, a crown silhouette resolving in the afterglow, slow ember fall.",
 		"prompt": "Sprite sheet of a mighty forge strike flash with a crown silhouette resolving in golden afterglow, royal creation burst, 12 frames on transparent background, 2d game effect"
@@ -2180,6 +2208,7 @@
 			"duration": 0.6
 		},
 		"placeholder": true,
+		"sfx": "upgrade_purchase",
 		"concept": "Buying a skill-tree node — permanent power inscribed into the profile; should feel chiseled, not clicked.",
 		"explanation": "The node's rune etches in with a traveling gold glint, then settles lit.",
 		"prompt": "Sprite sheet of a rune etching itself with a traveling golden glint then glowing steady, inscription ceremony, 8 frames on transparent background, 2d game effect"
@@ -2194,6 +2223,7 @@
 			"duration": 0.25
 		},
 		"placeholder": true,
+		"sfx": "upgrade_denied",
 		"concept": "Clicking an unaffordable/locked node — stone that won't yield yet.",
 		"explanation": "A grey dim-pulse on the node; its requirement chain briefly highlights.",
 		"prompt": "Sprite sheet of a grey stone dim pulse with a faint chain highlight, locked refusal, 4 frames on transparent background, 2d game effect"
@@ -2208,6 +2238,7 @@
 			"scale": 0.8
 		},
 		"placeholder": true,
+		"sfx": "charm_attach",
 		"concept": "A charm enchanting a card — the clasp moment; small, precious, permanent-feeling.",
 		"explanation": "A violet clasp glint at the pip position, then a one-time shimmer across the card face.",
 		"prompt": "Sprite sheet of a jeweled clasp glint followed by a shimmer sweep, enchantment attachment, 8 frames on transparent background, 2d game effect"
@@ -2221,6 +2252,7 @@
 			"scale": 1
 		},
 		"placeholder": true,
+		"sfx": "deck_card_add",
 		"concept": "Slotting a card into a deck — filing it into the binder; the deck list acknowledges its newest member.",
 		"explanation": "The card's new row pops once as it lands in the deck list.",
 		"prompt": "Sprite sheet of a list row popping with a soft bounce as an item lands, filing confirmation, 4 frames on transparent background, 2d game effect"
@@ -2235,6 +2267,7 @@
 			"duration": 0.3
 		},
 		"placeholder": true,
+		"sfx": "deck_card_remove",
 		"concept": "Pulling a card out of a deck — the reverse slide; light, no judgment.",
 		"explanation": "The row grays and slides out with a quick fade.",
 		"prompt": "Sprite sheet of a list row graying and sliding out with a fade, light removal, 4 frames on transparent background, 2d game effect"
@@ -2250,6 +2283,7 @@
 			"scale": 2
 		},
 		"placeholder": true,
+		"sfx": "embark",
 		"concept": "Starting a new run — the adventure's first step; gates opening outward onto the journey.",
 		"explanation": "A screen-wide warm bloom sweeps outward from the Embark button as the map takes over.",
 		"prompt": "Sprite sheet of a grand warm light bloom sweeping outward like opening gates, departure flare, 10 frames on transparent background, 2d game effect"
@@ -2264,6 +2298,7 @@
 			"scale": 1.6
 		},
 		"placeholder": true,
+		"sfx": "profile_level_up",
 		"concept": "The profile crossing an experience threshold — personal growth; mid-sized fanfare between a card reward and a run victory.",
 		"explanation": "A violet-gold radiance burst around the level indicator with rising star motes.",
 		"prompt": "Sprite sheet of a violet-gold radiance burst with rising star motes, level-up fanfare, 10 frames on transparent background, 2d game effect"
@@ -2307,6 +2342,7 @@
 			"duration": 0.35
 		},
 		"placeholder": true,
+		"sfx": "ui_screen_open",
 		"concept": "Navigating between screens — a consistent connective sweep so screen changes share one motion identity.",
 		"explanation": "A quick dark sweep wipes across during Nav.goto, revealing the new screen behind it.",
 		"prompt": "Sprite sheet of a smooth dark wipe sweeping across a frame, screen transition curtain, 6 frames on transparent background, 2d game effect"
