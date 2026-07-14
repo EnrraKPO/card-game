@@ -10,23 +10,28 @@
 		"autocast": true,
 		"effects": [
 			{
-				"trigger": "on_play",
-				"targeting_policy": "manual",
-				"conditions": [
-					{
-						"status": "barrier",
-						"present": false
-					},
-					{
-						"composition": [
-							"rook"
-						],
-						"present": false
-					}
-				],
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
 				"status": {
-					"id": "barrier",
-					"stacks": 1
+					"id": "barrier"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"status": "barrier",
+							"present": false
+						},
+						{
+							"composition": [
+								"rook"
+							],
+							"present": false
+						}
+					]
 				}
 			}
 		]
@@ -39,6 +44,7 @@
 			"mana": 1,
 			"tap": true
 		},
+		"autocast": true,
 		"effects": [
 			{
 				"trigger": {
@@ -254,38 +260,6 @@
 		]
 	},
 	{
-		"id": "blight_material",
-		"display_name": "Blight Material",
-		"description": "Adds Blight (darkness + water) to one of your units, merging their compositions - or spawns a new Blight on one of your empty slots.",
-		"cost": {
-			"mana": 2,
-			"tap": true
-		},
-		"material": "darkness_water",
-		"effects": [
-			{
-				"kind": "custom",
-				"custom": "deliver_material",
-				"trigger": "on_play",
-				"targeting_policy": "manual_slot",
-				"conditions": [
-					{
-						"composition": [
-							"king",
-							"rook"
-						],
-						"present": false
-					},
-					{
-						"attribute": "element_count",
-						"comparator": "eq",
-						"value": 0
-					}
-				]
-			}
-		]
-	},
-	{
 		"id": "warding_charge",
 		"display_name": "Warding Castling",
 		"description": "Grants one unit without a Barrier an Empowered Barrier that blocks the next damaging attack and gives that unit +1 Attack while it holds.",
@@ -293,6 +267,7 @@
 			"mana": 1,
 			"tap": true
 		},
+		"autocast": true,
 		"effects": [
 			{
 				"trigger": {
@@ -329,7 +304,32 @@
 					"id": "swift_barrier"
 				}
 			}
-		]
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "wind elemental theme effects, air magic",
+				"turbo": true,
+				"ref": {
+					"source": "upload",
+					"path": "castling.png",
+					"name": "castling.png",
+					"mode": "img2img",
+					"denoise": 0.6
+				},
+				"last": {
+					"seed": 2270456377,
+					"prompt": "wind elemental theme effects, air magic",
+					"style": "cartoon art style, 2d illustration, clean bold outlines, minimal sticker read with thick outline, cell shaded vector graphics, optimized to read at small size, fantasy game illustration, simple background",
+					"at": "2026-07-14"
+				}
+			}
+		}
 	},
 	{
 		"id": "tide_charge",
@@ -339,6 +339,7 @@
 			"mana": 1,
 			"tap": true
 		},
+		"autocast": true,
 		"effects": [
 			{
 				"trigger": {
@@ -362,6 +363,7 @@
 			"mana": 1,
 			"tap": true
 		},
+		"autocast": true,
 		"effects": [
 			{
 				"trigger": {
@@ -385,6 +387,7 @@
 			"mana": 1,
 			"tap": true
 		},
+		"autocast": true,
 		"effects": [
 			{
 				"trigger": {
@@ -408,6 +411,7 @@
 			"mana": 1,
 			"tap": true
 		},
+		"autocast": true,
 		"effects": [
 			{
 				"trigger": {

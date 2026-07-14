@@ -362,6 +362,12 @@ const AbilityEditor = {
           el('div', { class: 'fld' }, checkInput(draft.cost, 'tap', onChange, 'Taps the holder (spends its action for the round)')),
         ),
       ),
+      groupBox('Activation',
+        el('div', { class: 'frow' },
+          el('div', { class: 'fld wide' }, checkInput(draft, 'autocast', onChange,
+            'Autocast-capable: shows corner brackets in the tray; the player can arm it (right-click / long-press) and fire by dragging the holder onto a target')),
+        ),
+      ),
       groupBox('Material (optional)',
         el('div', { class: 'frow' },
           fld('Delivered composition key', textInput(draft, 'material', onChange, 'e.g. pawn, queen, darkness_water'),
@@ -376,12 +382,14 @@ const AbilityEditor = {
   serialize(d) {
     const out = { id: d.id, display_name: d.display_name || slugToName(d.id), description: d.description || '',
       cost: { mana: (d.cost && d.cost.mana) || 0, tap: !d.cost || d.cost.tap !== false } };
+    if (d.autocast) out.autocast = true;
     if (d.material) out.material = d.material;
     out.effects = cleanEffects(d.effects);
     return out;
   },
   summarize(d) {
     const lines = [`${d.display_name || d.id || 'Unnamed ability'} — costs ${describeCost(d.cost)}.`];
+    if (d.autocast) lines.push('Autocast-capable: can be armed and fired by dragging the holder onto a target.');
     if (d.material) lines.push(`Delivers material: ${d.material}.`);
     for (const e of d.effects || []) lines.push(describeEffect(e, 'the holder'));
     lines.push('Cards hold it via their "Activated abilities" list; statuses can grant it temporarily.');

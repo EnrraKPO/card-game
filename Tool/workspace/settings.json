@@ -1,13 +1,14 @@
 {
   "comfyUrl": "http://127.0.0.1:8000",
-  "artStyle": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration. detailed background scene, neat, clear",
+  "artStyle": "cartoon art style, 2d illustration, clean bold outlines, minimal sticker read with thick outline, cell shaded vector graphics, optimized to read at small size, fantasy game illustration, simple background",
   "stylePresets": {
     "painterly": "rich glowing painterly illustration, volumetric god rays",
     "cartoon": "cartoon art style, 2d illustration, clean bold outlines, flat cell shading",
     "chibi": "cartoon art style, 2d illustration, clean bold outlines, flat cell shading, fantasy game illustration, chibi cartoon style",
     "cartoon w background clean": "cartoon art style, 2d illustration, clean bold outlines, flat cell shading, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear, clean",
     "cartoon w bg illustrious": "masterpiece, highest quality, newest, uhd, absurdres, cartoon art style, 2d illustration, clean bold outlines, flat cell shading, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear, clean",
-    "carton w bg and volumetric light": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric light, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear, "
+    "carton w bg and volumetric light": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric light, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear, ",
+    "sticker": "cartoon art style, 2d illustration, clean bold outlines, minimal sticker read with thick outline, cell shaded vector graphics, optimized to read at small size, fantasy game illustration, simple background"
   },
   "conceptPresets": {
     "Cryptid": "Select a magical creature to fit the elemental theme: "

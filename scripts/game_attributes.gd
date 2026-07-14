@@ -18,7 +18,7 @@ const DEFAULTS := {
 	"mana.max":                 10,   # UNUSED by the ramp since the uncap; still referenced by
 									   # the arcana upgrade tree — needs a redesign or removal
 	"mana.per_turn":            0,    # flat bonus crystals EVERY turn, stacked on the ramp
-	"hand.size.initial":        4,    # cards drawn into the opening hand
+	"hand.size.initial":        3,    # cards drawn into the opening hand
 	"draw.per_turn":            1,    # cards drawn at the start of each round
 	# Run economy
 	"gold.initial":             100,  # a run's starting gold

@@ -1,54 +1,387 @@
 [
-  { "id": "battle_standard", "display_name": "Battle Standard", "description": "Your units have +1 Attack.",
-	"color": "d98032", "letter": "A", "price": 90,
-	"effects": [ { "kind": "modifier", "key": "unit.attack", "amount": 1 } ] },
-
-  { "id": "iron_aegis", "display_name": "Iron Aegis", "description": "Your units have +1 Health.",
-	"color": "5fae4f", "letter": "H", "price": 90,
-	"effects": [ { "kind": "modifier", "key": "unit.health", "amount": 1 } ] },
-
-  { "id": "mana_font", "display_name": "Mana Font", "description": "Gain +1 mana every turn.",
-	"color": "5f8fd9", "letter": "M", "price": 110,
-	"effects": [ { "kind": "modifier", "key": "mana.per_turn", "amount": 1 } ] },
-
-  { "id": "scholars_tome", "display_name": "Scholar's Tome", "description": "Draw +1 card each round.",
-	"color": "5fb3d9", "letter": "D", "price": 110,
-	"effects": [ { "kind": "modifier", "key": "draw.per_turn", "amount": 1 } ] },
-
-  { "id": "crown_of_vigor", "display_name": "Crown of Vigor", "description": "Your King has +10 maximum Health.",
-	"color": "d9b94f", "letter": "K", "price": 100,
-	"effects": [ { "kind": "modifier", "key": "king.max_health", "amount": 10 } ] },
-
-  { "id": "vengeful_totem", "display_name": "Vengeful Totem", "description": "When one of your units dies, deal 2 damage to the nearest enemy.",
-	"color": "9b6fd9", "letter": "V", "price": 80,
-	"effects": [ { "kind": "triggered", "trigger": "on_death", "targeting_policy": "single_nearest", "attribute": "damage_taken", "amount": 2 } ] },
-
-  { "id": "war_drums", "display_name": "War Drums", "description": "When one of your units attacks, your other units gain +1 Attack for the rest of combat.",
-	"color": "c2603a", "letter": "W", "price": 120,
-	"effects": [ { "kind": "custom", "custom": "rallying_cry", "trigger": "on_attack" } ] },
-
-  { "id": "pollution_drain", "display_name": "Pollution Drain", "description": "Whenever an allied water or darkness unit is attacked, the attacker gets 1 Poison.",
-	"color": "5a8f3a", "letter": "P", "price": 90,
-	"effects": [ { "kind": "triggered", "trigger": "on_damage_taken", "subject_elements": ["water", "darkness"], "targeting_policy": "attacker", "status": { "id": "poison", "stacks": 1 } } ] },
-
-  { "id": "blinding_ward", "display_name": "Blinding Ward", "description": "Whenever an enemy attacks, or is attacked by a light unit, it gets 1 Blind.",
-	"color": "5a6a9f", "letter": "B", "price": 100,
-	"effects": [
-	  { "kind": "triggered", "trigger": "on_damage_taken", "targeting_policy": "attacker", "status": { "id": "blind", "stacks": 1 } },
-	  { "kind": "triggered", "trigger": "on_attack", "subject_elements": ["light"], "targeting_policy": "attack_target", "status": { "id": "blind", "stacks": 1 } }
-	] },
-
-  { "id": "menders_charm", "display_name": "Mender's Charm", "description": "Your healing effects restore +1 Health.",
-	"color": "6fce8f", "letter": "+", "price": 100,
-	"effects": [ { "kind": "interceptor", "intercept": "health", "of": { "participant": "source", "relation": "ally" },
-	  "conditions": [ { "mutation": "amount", "comparator": "gt", "value": 0 } ], "amount": 1 } ] },
-
-  { "id": "contagion_stone", "display_name": "Contagion Stone", "description": "Statuses you apply gain +1 stack.",
-	"color": "8f5aa0", "letter": "S", "price": 110,
-	"effects": [ { "kind": "interceptor", "intercept": "status", "of": { "participant": "source", "relation": "ally" }, "amount": 1 } ] },
-
-  { "id": "reapers_ledger", "display_name": "Reaper's Ledger", "description": "Whenever one of your darkness units is destroyed, draw a card.",
-	"color": "6a4a8f", "letter": "R", "price": 100,
-	"effects": [ { "kind": "triggered", "trigger": "on_death", "subject_elements": ["darkness"],
-	  "attribute": "draw", "amount": 1, "targets": { "kind": "side", "of": "own" } } ] }
+	{
+		"id": "battle_standard",
+		"display_name": "Battle Standard",
+		"description": "Your units have +1 Attack.",
+		"color": "d98032",
+		"letter": "A",
+		"price": 90,
+		"effects": [
+			{
+				"kind": "modifier",
+				"key": "unit.attack",
+				"amount": 1
+			}
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 512,
+				"height": 512,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": true,
+				"prompt": "Windswept war banner planted in cracked battlefield earth, tattered crimson pennant snapping in fierce gusts, gilded spearhead crest catching golden light, faint emboldening aura rippling outward toward unseen troops, motes of ember drifting, plain solid white background, icon",
+				"turbo": true,
+				"last": {
+					"seed": 871014898,
+					"prompt": "Windswept war banner planted in cracked battlefield earth, tattered crimson pennant snapping in fierce gusts, gilded spearhead crest catching golden light, faint emboldening aura rippling outward toward unseen troops, motes of ember drifting, plain solid white background, icon",
+					"style": "cartoon art style, 2d illustration, clean bold outlines, minimal sticker read with thick outline, cell shaded vector graphics, optimized to read at small size, fantasy game illustration, simple background",
+					"at": "2026-07-13"
+				}
+			}
+		}
+	},
+	{
+		"id": "iron_aegis",
+		"display_name": "Iron Aegis",
+		"description": "Your units have +1 Health.",
+		"color": "5fae4f",
+		"letter": "H",
+		"price": 90,
+		"effects": [
+			{
+				"kind": "modifier",
+				"key": "unit.health",
+				"amount": 1
+			}
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 512,
+				"height": 512,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": true,
+				"prompt": "Ornate stone and iron shield, riveted metal bands with gold trim, twin lion head reliefs on sides, glowing blue crystal gem centered on front, gear emblem on lid, sturdy handle, three-quarter view, cool gray palette with warm gold accents, soft blue glow, bold outlines, painterly stylized fantasy game art, transparent background",
+				"turbo": true,
+				"last": {
+					"seed": 662971949,
+					"prompt": "Ornate stone and iron shield, riveted metal bands with gold trim, twin lion head reliefs on sides, glowing blue crystal gem centered on front, gear emblem on lid, sturdy handle, three-quarter view, cool gray palette with warm gold accents, soft blue glow, bold outlines, painterly stylized fantasy game art, transparent background",
+					"style": "cartoon art style, 2d illustration, clean bold outlines, minimal sticker read with thick outline, cell shaded vector graphics, optimized to read at small size, fantasy game illustration, simple background",
+					"at": "2026-07-13"
+				}
+			}
+		}
+	},
+	{
+		"id": "mana_font",
+		"display_name": "Mana Font",
+		"description": "Gain +1 mana every turn.",
+		"color": "5f8fd9",
+		"letter": "M",
+		"price": 110,
+		"effects": [
+			{
+				"kind": "modifier",
+				"key": "mana.per_turn",
+				"amount": 1
+			}
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1024,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": true,
+				"prompt": "Radiant crystalline chalice overflowing with luminous blue mana that spills upward in defiance of gravity, glowing droplets rising like reversed rain, swirling arcane sigils of energy, pulsing sapphire light, floating gemstone vessel, on a plain solid white background",
+				"turbo": true,
+				"last": {
+					"seed": 659054128,
+					"prompt": "Radiant crystalline chalice overflowing with luminous blue mana that spills upward in defiance of gravity, glowing droplets rising like reversed rain, swirling arcane sigils of energy, pulsing sapphire light, floating gemstone vessel, on a plain solid white background",
+					"style": "cartoon art style, 2d illustration, clean bold outlines, minimal sticker read with thick outline, cell shaded vector graphics, optimized to read at small size, fantasy game illustration, simple background",
+					"at": "2026-07-13"
+				}
+			}
+		}
+	},
+	{
+		"id": "scholars_tome",
+		"display_name": "Scholar's Tome",
+		"description": "Draw +1 card each round.",
+		"color": "5fb3d9",
+		"letter": "D",
+		"price": 110,
+		"effects": [
+			{
+				"kind": "modifier",
+				"key": "draw.per_turn",
+				"amount": 1
+			}
+		]
+	},
+	{
+		"id": "crown_of_vigor",
+		"display_name": "Crown of Vigor",
+		"description": "Your King has +10 maximum Health.",
+		"color": "d9b94f",
+		"letter": "K",
+		"price": 100,
+		"effects": [
+			{
+				"kind": "modifier",
+				"key": "king.max_health",
+				"amount": 10
+			}
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1024,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": true,
+				"prompt": "Ornate golden crown with warm vitality, verdant life-energy swirling upward around it, a powerful heartbeat radiating amber light, muscular resilience aura, centered artifact, painterly fantasy rendering, plain solid white background",
+				"turbo": true,
+				"last": {
+					"seed": 1420394930,
+					"prompt": "Ornate golden crown with warm vitality, verdant life-energy swirling upward around it, a powerful heartbeat radiating amber light, muscular resilience aura, centered artifact, painterly fantasy rendering, plain solid white background",
+					"style": "cartoon art style, 2d illustration, clean bold outlines, minimal sticker read with thick outline, cell shaded vector graphics, optimized to read at small size, fantasy game illustration, simple background",
+					"at": "2026-07-13"
+				}
+			}
+		}
+	},
+	{
+		"id": "vengeful_totem",
+		"display_name": "Vengeful Totem",
+		"description": "When one of your units dies, deal 2 damage to the nearest enemy.",
+		"color": "9b6fd9",
+		"letter": "V",
+		"price": 80,
+		"effects": [
+			{
+				"kind": "triggered",
+				"trigger": "on_death",
+				"targeting_policy": "single_nearest",
+				"attribute": "damage_taken",
+				"amount": 2
+			}
+		]
+	},
+	{
+		"id": "war_drums",
+		"display_name": "War Drums",
+		"description": "When one of your units attacks, your other units gain +1 Attack for the rest of combat.",
+		"color": "c2603a",
+		"letter": "W",
+		"price": 120,
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "rallying_cry",
+				"trigger": "on_attack"
+			}
+		]
+	},
+	{
+		"id": "pollution_drain",
+		"display_name": "Pollution Drain",
+		"description": "Whenever an allied water or darkness unit is attacked, the attacker gets 1 Poison.",
+		"color": "5a8f3a",
+		"letter": "P",
+		"price": 90,
+		"effects": [
+			{
+				"kind": "triggered",
+				"trigger": "on_damage_taken",
+				"subject_elements": [
+					"water",
+					"darkness"
+				],
+				"targeting_policy": "attacker",
+				"status": {
+					"id": "poison",
+					"stacks": 1
+				}
+			}
+		]
+	},
+	{
+		"id": "blinding_ward",
+		"display_name": "Blinding Ward",
+		"description": "Whenever an enemy attacks, or is attacked by a light unit, it gets 1 Blind.",
+		"color": "5a6a9f",
+		"letter": "B",
+		"price": 100,
+		"effects": [
+			{
+				"kind": "triggered",
+				"trigger": {
+					"kind": "dual_event",
+					"event": "struck",
+					"destination_conditions": [
+						{
+							"composition": [
+								"light"
+							]
+						},
+						{
+							"allegiance": "ally"
+						}
+					]
+				},
+				"targeting_policy": "attacker",
+				"status": {
+					"id": "blind",
+					"stacks": 1
+				}
+			},
+			{
+				"kind": "triggered",
+				"trigger": {
+					"kind": "dual_event",
+					"event": "attack",
+					"origin_conditions": [
+						{
+							"composition": [
+								"light"
+							]
+						},
+						{
+							"allegiance": "ally"
+						}
+					]
+				},
+				"targeting_policy": "attack_target",
+				"status": {
+					"id": "blind",
+					"stacks": 1
+				}
+			}
+		]
+	},
+	{
+		"id": "menders_charm",
+		"display_name": "Mender's Charm",
+		"description": "Your healing effects restore +1 Health.",
+		"color": "6fce8f",
+		"letter": "+",
+		"price": 100,
+		"effects": [
+			{
+				"kind": "interceptor",
+				"intercept": "health",
+				"of": {
+					"participant": "source",
+					"relation": "ally"
+				},
+				"conditions": [
+					{
+						"mutation": "amount",
+						"comparator": "gt",
+						"value": 0
+					}
+				],
+				"amount": 1
+			}
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1024,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": true,
+				"prompt": "Soft-glowing celestial amulet cradling a mending droplet of luminous nectar, hairline fractures across a pale gemstone knitting themselves closed with threads of golden light, tiny upward motes of vitality, dewy warm radiance pulsing outward, ornate silver filigree shaped like clasped healing hands, on a plain solid white background",
+				"turbo": true,
+				"last": {
+					"seed": 233999689,
+					"prompt": "Soft-glowing celestial amulet cradling a mending droplet of luminous nectar, hairline fractures across a pale gemstone knitting themselves closed with threads of golden light, tiny upward motes of vitality, dewy warm radiance pulsing outward, ornate silver filigree shaped like clasped healing hands, on a plain solid white background",
+					"style": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration. detailed background scene, neat, clear",
+					"at": "2026-07-13"
+				}
+			}
+		}
+	},
+	{
+		"id": "contagion_stone",
+		"display_name": "Contagion Stone",
+		"description": "Statuses you apply gain +1 stack.",
+		"color": "8f5aa0",
+		"letter": "S",
+		"price": 110,
+		"effects": [
+			{
+				"kind": "interceptor",
+				"intercept": "status",
+				"of": {
+					"participant": "source",
+					"relation": "ally"
+				},
+				"amount": 1
+			}
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 512,
+				"height": 512,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": true,
+				"prompt": "Cracked black-green mineral orb pulsing with virulent plague-light, tendrils of luminous spores creeping outward and multiplying into a second swarm, sickly emerald mist curling upward, veins of festering purple corruption threading the stone, resting on a plain solid white background.",
+				"turbo": true,
+				"last": {
+					"seed": 4089127967,
+					"prompt": "Cracked black-green mineral orb pulsing with virulent plague-light, tendrils of luminous spores creeping outward and multiplying into a second swarm, sickly emerald mist curling upward, veins of festering purple corruption threading the stone, resting on a plain solid white background.",
+					"style": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration. detailed background scene, neat, clear",
+					"at": "2026-07-13"
+				}
+			}
+		}
+	},
+	{
+		"id": "reapers_ledger",
+		"display_name": "Reaper's Ledger",
+		"description": "Whenever one of your darkness units is destroyed, draw a card.",
+		"color": "6a4a8f",
+		"letter": "R",
+		"price": 100,
+		"effects": [
+			{
+				"trigger": {
+					"kind": "event",
+					"event": "death",
+					"of": "self",
+					"conditions": [
+						{
+							"composition": [
+								"darkness"
+							]
+						}
+					]
+				},
+				"attribute": "draw",
+				"amount": 1,
+				"targets": {
+					"kind": "side",
+					"of": "own"
+				}
+			}
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1024,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": true,
+				"prompt": "Ornate skeletal accountant's tome bound in black leather, clasped with bone fittings, wisps of shadow curling from its pages, spectral quill dipping into ink of swirling darkness, faint souls drifting upward and dissolving into fresh blank leaves, on a plain solid white background",
+				"turbo": true,
+				"last": {
+					"seed": 1961262933,
+					"prompt": "Ornate skeletal accountant's tome bound in black leather, clasped with bone fittings, wisps of shadow curling from its pages, spectral quill dipping into ink of swirling darkness, faint souls drifting upward and dissolving into fresh blank leaves, on a plain solid white background",
+					"style": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration. detailed background scene, neat, clear",
+					"at": "2026-07-13"
+				}
+			}
+		}
+	}
 ]

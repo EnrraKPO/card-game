@@ -4968,7 +4968,7 @@
     "original": null,
     "added": true,
     "at": "2026-07-13T20:28:34.333Z",
-    "fileHash": "537032ddf25992d99758e0ad2019e6fd191f41db"
+    "fileHash": "5179a5da969e7800dfcc4ba514c51dd32f523799"
   },
   "status/swift_barrier": {
     "file": "swift_barrier.json",
@@ -4996,21 +4996,21 @@
     "original": null,
     "added": true,
     "at": "2026-07-13T20:33:08.245Z",
-    "fileHash": "537032ddf25992d99758e0ad2019e6fd191f41db"
+    "fileHash": "5179a5da969e7800dfcc4ba514c51dd32f523799"
   },
   "ability/tide_charge": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T20:33:08.248Z",
-    "fileHash": "537032ddf25992d99758e0ad2019e6fd191f41db"
+    "fileHash": "5179a5da969e7800dfcc4ba514c51dd32f523799"
   },
   "ability/radiant_charge": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T20:33:08.250Z",
-    "fileHash": "537032ddf25992d99758e0ad2019e6fd191f41db"
+    "fileHash": "5179a5da969e7800dfcc4ba514c51dd32f523799"
   },
   "status/stalwart_barrier": {
     "file": "stalwart_barrier.json",
@@ -5024,7 +5024,7 @@
     "original": null,
     "added": true,
     "at": "2026-07-13T20:34:30.525Z",
-    "fileHash": "537032ddf25992d99758e0ad2019e6fd191f41db"
+    "fileHash": "5179a5da969e7800dfcc4ba514c51dd32f523799"
   },
   "status/umbral_barrier": {
     "file": "umbral_barrier.json",
@@ -5038,7 +5038,7 @@
     "original": null,
     "added": true,
     "at": "2026-07-13T20:35:48.234Z",
-    "fileHash": "537032ddf25992d99758e0ad2019e6fd191f41db"
+    "fileHash": "5179a5da969e7800dfcc4ba514c51dd32f523799"
   },
   "ability/knight_material": {
     "file": "abilities.json",
@@ -5075,7 +5075,7 @@
       ]
     },
     "at": "2026-07-13T22:32:15.675Z",
-    "fileHash": "537032ddf25992d99758e0ad2019e6fd191f41db"
+    "fileHash": "5179a5da969e7800dfcc4ba514c51dd32f523799"
   },
   "ability/pawn_material": {
     "file": "abilities.json",
@@ -5112,7 +5112,7 @@
       ]
     },
     "at": "2026-07-13T22:35:51.950Z",
-    "fileHash": "537032ddf25992d99758e0ad2019e6fd191f41db"
+    "fileHash": "5179a5da969e7800dfcc4ba514c51dd32f523799"
   },
   "ability/heal": {
     "file": "abilities.json",
@@ -5135,6 +5135,244 @@
       ]
     },
     "at": "2026-07-13T22:44:26.528Z",
-    "fileHash": "537032ddf25992d99758e0ad2019e6fd191f41db"
+    "fileHash": "5179a5da969e7800dfcc4ba514c51dd32f523799"
+  },
+  "relic/contagion_stone": {
+    "file": "relics.json",
+    "original": {
+      "id": "contagion_stone",
+      "display_name": "Contagion Stone",
+      "description": "Statuses you apply gain +1 stack.",
+      "color": "8f5aa0",
+      "letter": "S",
+      "price": 110,
+      "effects": [
+        {
+          "kind": "interceptor",
+          "intercept": "status",
+          "of": {
+            "participant": "source",
+            "relation": "ally"
+          },
+          "amount": 1
+        }
+      ]
+    },
+    "at": "2026-07-13T23:18:24.057Z",
+    "fileHash": "550f02fdba88b233ddbfa0245114d0d55123a329"
+  },
+  "relic/reapers_ledger": {
+    "file": "relics.json",
+    "original": {
+      "id": "reapers_ledger",
+      "display_name": "Reaper's Ledger",
+      "description": "Whenever one of your darkness units is destroyed, draw a card.",
+      "color": "6a4a8f",
+      "letter": "R",
+      "price": 100,
+      "effects": [
+        {
+          "kind": "triggered",
+          "trigger": "on_death",
+          "subject_elements": [
+            "darkness"
+          ],
+          "attribute": "draw",
+          "amount": 1,
+          "targets": {
+            "kind": "side",
+            "of": "own"
+          }
+        }
+      ]
+    },
+    "at": "2026-07-13T23:19:22.979Z",
+    "fileHash": "550f02fdba88b233ddbfa0245114d0d55123a329"
+  },
+  "relic/menders_charm": {
+    "file": "relics.json",
+    "original": {
+      "id": "menders_charm",
+      "display_name": "Mender's Charm",
+      "description": "Your healing effects restore +1 Health.",
+      "color": "6fce8f",
+      "letter": "+",
+      "price": 100,
+      "effects": [
+        {
+          "kind": "interceptor",
+          "intercept": "health",
+          "of": {
+            "participant": "source",
+            "relation": "ally"
+          },
+          "conditions": [
+            {
+              "mutation": "amount",
+              "comparator": "gt",
+              "value": 0
+            }
+          ],
+          "amount": 1
+        }
+      ]
+    },
+    "at": "2026-07-13T23:20:46.452Z",
+    "fileHash": "550f02fdba88b233ddbfa0245114d0d55123a329"
+  },
+  "relic/battle_standard": {
+    "file": "relics.json",
+    "original": {
+      "id": "battle_standard",
+      "display_name": "Battle Standard",
+      "description": "Your units have +1 Attack.",
+      "color": "d98032",
+      "letter": "A",
+      "price": 90,
+      "effects": [
+        {
+          "kind": "modifier",
+          "key": "unit.attack",
+          "amount": 1
+        }
+      ]
+    },
+    "at": "2026-07-13T23:23:17.444Z",
+    "fileHash": "550f02fdba88b233ddbfa0245114d0d55123a329"
+  },
+  "relic/crown_of_vigor": {
+    "file": "relics.json",
+    "original": {
+      "id": "crown_of_vigor",
+      "display_name": "Crown of Vigor",
+      "description": "Your King has +10 maximum Health.",
+      "color": "d9b94f",
+      "letter": "K",
+      "price": 100,
+      "effects": [
+        {
+          "kind": "modifier",
+          "key": "king.max_health",
+          "amount": 10
+        }
+      ]
+    },
+    "at": "2026-07-13T23:24:41.032Z",
+    "fileHash": "550f02fdba88b233ddbfa0245114d0d55123a329"
+  },
+  "relic/iron_aegis": {
+    "file": "relics.json",
+    "original": {
+      "id": "iron_aegis",
+      "display_name": "Iron Aegis",
+      "description": "Your units have +1 Health.",
+      "color": "5fae4f",
+      "letter": "H",
+      "price": 90,
+      "effects": [
+        {
+          "kind": "modifier",
+          "key": "unit.health",
+          "amount": 1
+        }
+      ]
+    },
+    "at": "2026-07-13T23:29:29.348Z",
+    "fileHash": "550f02fdba88b233ddbfa0245114d0d55123a329"
+  },
+  "relic/mana_font": {
+    "file": "relics.json",
+    "original": {
+      "id": "mana_font",
+      "display_name": "Mana Font",
+      "description": "Gain +1 mana every turn.",
+      "color": "5f8fd9",
+      "letter": "M",
+      "price": 110,
+      "effects": [
+        {
+          "kind": "modifier",
+          "key": "mana.per_turn",
+          "amount": 1
+        }
+      ]
+    },
+    "at": "2026-07-13T23:29:57.758Z",
+    "fileHash": "550f02fdba88b233ddbfa0245114d0d55123a329"
+  },
+  "ability/blight_material": {
+    "file": "abilities.json",
+    "original": {
+      "id": "blight_material",
+      "display_name": "Blight Material",
+      "description": "Adds Blight (darkness + water) to one of your units, merging their compositions - or spawns a new Blight on one of your empty slots.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "material": "darkness_water",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": "on_play",
+          "targeting_policy": "manual_slot",
+          "conditions": [
+            {
+              "composition": [
+                "king",
+                "rook"
+              ],
+              "present": false
+            },
+            {
+              "attribute": "element_count",
+              "comparator": "eq",
+              "value": 0
+            }
+          ]
+        }
+      ]
+    },
+    "deleted": true,
+    "at": "2026-07-13T23:39:11.499Z",
+    "fileHash": "5179a5da969e7800dfcc4ba514c51dd32f523799"
+  },
+  "ability/castling": {
+    "file": "abilities.json",
+    "original": {
+      "id": "castling",
+      "display_name": "Castling",
+      "description": "A defensive maneuver. Grants one unit without a Barrier a Barrier that blocks the next damaging attack.",
+      "cost": {
+        "mana": 1,
+        "tap": true
+      },
+      "autocast": true,
+      "effects": [
+        {
+          "trigger": "on_play",
+          "targeting_policy": "manual",
+          "conditions": [
+            {
+              "status": "barrier",
+              "present": false
+            },
+            {
+              "composition": [
+                "rook"
+              ],
+              "present": false
+            }
+          ],
+          "status": {
+            "id": "barrier",
+            "stacks": 1
+          }
+        }
+      ]
+    },
+    "at": "2026-07-14T00:02:04.308Z",
+    "fileHash": "5179a5da969e7800dfcc4ba514c51dd32f523799"
   }
 }
