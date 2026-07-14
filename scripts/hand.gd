@@ -415,6 +415,7 @@ func panel_contains(point: Vector2) -> bool:
 # (same availability rule as the amber board cue: a tapped unit's tap-costed abilities don't
 # count), as clickable entries that drill into the unit's inspection.
 func show_abilities() -> void:
+	Sfx.play("ability_tray_open")
 	deselect()
 	_leave_inspect()   # reachable from level 3 ("Back to Abilities") — drop that state first
 	_rebuild_abilities_view()

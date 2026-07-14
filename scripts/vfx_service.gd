@@ -135,12 +135,16 @@ func resolve(kind: String, composition: Array, fallback: String = "") -> String:
 		elems.append(e)
 	elems.sort()
 	var id := "%s_%s" % [kind, "_".join(elems)]
+	return id if live(id) else fallback
+
+
+# Whether an entry would actually show right now: it exists, and it isn't a placeholder
+# currently muted by F8. The gate variant pickers decide "variant or designed base" through.
+func live(id: String) -> bool:
 	var vd := VFXData.get_vfx(id)
 	if vd == null:
-		return fallback
-	if vd.placeholder and not DevFlags.placeholder_vfx:
-		return fallback
-	return id
+		return false
+	return not vd.placeholder or DevFlags.placeholder_vfx
 
 
 # ── Renderer dispatch ──────────────────────────────────────────────────────────────

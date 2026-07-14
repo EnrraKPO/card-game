@@ -9,6 +9,7 @@
 			"color": "ff4d4d"
 		},
 		"placeholder": false,
+		"sfx": "attack_melee_hit",
 		"concept": "Damage landing on a unit's health — the core negative beat of combat; must read instantly and stack cleanly when many units are hit at once.",
 		"explanation": "IMPLEMENTED (VFXPlayer/VFXEffectHealthDamage): a red impact flash on the card with a floating \"-N\" number; the card's HP snaps at the hit.",
 		"prompt": "Sprite sheet of a sharp red impact burst, radial crimson shards with a bright white core flash, 8 frames on transparent background, 2d game effect"
@@ -23,6 +24,7 @@
 			"color": "7fd4ff"
 		},
 		"placeholder": false,
+		"sfx": "shield_block",
 		"concept": "An attack absorbed by a unit's shield — defense working; visually distinct from health damage so mitigation reads at a glance.",
 		"explanation": "IMPLEMENTED (VFXEffectShieldHit): a cyan shield flash over the card with the absorbed amount floating off.",
 		"prompt": "Sprite sheet of a hexagonal energy shield rippling under an impact, cyan translucent barrier flare, 8 frames on transparent background, 2d game effect"
@@ -51,6 +53,7 @@
 			"color": "4dff6b"
 		},
 		"placeholder": false,
+		"sfx": "heal_apply",
 		"concept": "Health restored to a unit — relief; warm and soft against combat's percussive hits.",
 		"explanation": "IMPLEMENTED (VFXEffectHeal): a green glow swell on the card with a floating \"+N\".",
 		"prompt": "Sprite sheet of gentle green healing light, soft rising motes and a warm glow bloom, 8 frames on transparent background, 2d game effect"
@@ -65,6 +68,7 @@
 			"color": "ffd94d"
 		},
 		"placeholder": false,
+		"sfx": "stat_buff",
 		"concept": "A stat raised on a unit (attack/speed/max health) — empowerment; golden and upward.",
 		"explanation": "IMPLEMENTED (VFXEffectBuff): golden upward sparkle on the card with the stat delta floating off.",
 		"prompt": "Sprite sheet of golden empowerment sparkles rising, warm yellow light motes ascending with small star glints, 8 frames on transparent background, 2d game effect"
@@ -79,6 +83,7 @@
 			"color": "c76bff"
 		},
 		"placeholder": false,
+		"sfx": "stat_debuff",
 		"concept": "A stat lowered on a unit — sapping; violet and downward, the buff's shadow.",
 		"explanation": "IMPLEMENTED (VFXEffectDebuff): a violet downward smear on the card with the negative delta floating off.",
 		"prompt": "Sprite sheet of violet draining energy sinking downward, purple wisps pulling down with a dimming veil, 8 frames on transparent background, 2d game effect"
@@ -93,6 +98,7 @@
 			"color": "26203a"
 		},
 		"placeholder": false,
+		"sfx": "unit_death",
 		"concept": "A unit leaving the board at zero health — the removal must feel physical, and its slot must clearly open up.",
 		"explanation": "IMPLEMENTED (VFXEffectDeath): the card darkens, collapses and fades out of its slot.",
 		"prompt": "Sprite sheet of a dark dissolve, shadowy ash flakes scattering as a silhouette collapses and vanishes, 10 frames on transparent background, 2d game effect"
@@ -121,6 +127,7 @@
 			"color": "ff8026"
 		},
 		"placeholder": false,
+		"sfx": "attack_projectile_travel",
 		"concept": "Triggered/spell direct damage flying from its source to its target — causality made visible: THIS unit hurt THAT one.",
 		"explanation": "IMPLEMENTED (VFXEffectProjectile ORB): a round glowing ball on a straight line; impact flash + \"-N HP\" on arrival.",
 		"prompt": "Sprite sheet of a glowing magic orb projectile with a soft trailing tail, warm orange energy sphere, 6 frames on transparent background, 2d game effect"
@@ -135,6 +142,7 @@
 			"color": "a6e5ff"
 		},
 		"placeholder": false,
+		"sfx": "attack_ranged_shot",
 		"concept": "A ranged unit's auto-attack shot — physical ballistics, distinct from magic orbs.",
 		"explanation": "IMPLEMENTED (VFXEffectProjectile BOLT): a sharp streak on a gravity arc, nosing along its flight path with a fading trail; the caller resolves the damage.",
 		"prompt": "Sprite sheet of an arrow-like energy bolt with a motion streak, pale blue sharp projectile with trail, 6 frames on transparent background, 2d game effect"
@@ -149,6 +157,7 @@
 			"color": "fff2cc"
 		},
 		"placeholder": false,
+		"sfx": "effect_trigger",
 		"concept": "The card whose ability fired flares once before its effects land — the CAUSE half of the cause→effect read.",
 		"explanation": "IMPLEMENTED (VFXEffectSourceGlint): a bright sheen flare over the acting card.",
 		"prompt": "Sprite sheet of a bright lens-flare sheen sweeping across a rectangle, white-gold glint pass, 6 frames on transparent background, 2d game effect"
@@ -177,6 +186,7 @@
 			"color": "cfd4e0"
 		},
 		"placeholder": false,
+		"sfx": "attack_miss",
 		"concept": "A negated attack (e.g. Blind) — the absence of damage needs a positive cue or it reads as a bug.",
 		"explanation": "IMPLEMENTED (VFXEffectMiss): a grey \"Miss\" label floats off the would-be victim in place of a damage number.",
 		"prompt": "Sprite sheet of a puff of dodged air, small grey whiff swirl dissipating, 6 frames on transparent background, 2d game effect"
@@ -219,6 +229,7 @@
 			"color": "ff5a1f"
 		},
 		"placeholder": true,
+		"sfx": "attack_projectile_travel",
 		"concept": "Fire-element direct damage in flight — the element must be readable mid-air, before the impact explains it.",
 		"explanation": "A roiling fireball with an ember trail; impact blooms into a brief flame burst.",
 		"prompt": "Sprite sheet of a fireball projectile, roiling orange flames with trailing embers and smoke wisps, 8 frames on transparent background, 2d game effect"
@@ -232,6 +243,7 @@
 			"color": "2f9dff"
 		},
 		"placeholder": true,
+		"sfx": "attack_projectile_travel",
 		"concept": "Water-element direct damage in flight — fluid and heavy, clearly not fire's crackle.",
 		"explanation": "A coherent water globule stretching along its flight, droplets shedding; impact splashes outward.",
 		"prompt": "Sprite sheet of a water orb projectile, translucent blue liquid sphere stretching in flight with shedding droplets, 8 frames on transparent background, 2d game effect"
@@ -245,6 +257,7 @@
 			"color": "bfe8e0"
 		},
 		"placeholder": true,
+		"sfx": "attack_projectile_travel",
 		"concept": "Air-element direct damage in flight — fast, thin, almost invisible; speed is the identity.",
 		"explanation": "A compressed wind lance with spiral vortex lines; impact is a sharp radial gust.",
 		"prompt": "Sprite sheet of a wind lance projectile, pale spiraling air vortex with speed lines, 8 frames on transparent background, 2d game effect"
@@ -258,6 +271,7 @@
 			"color": "b07a3d"
 		},
 		"placeholder": true,
+		"sfx": "attack_projectile_travel",
 		"concept": "Earth-element direct damage in flight — mass and inevitability; slower-reading, heavier.",
 		"explanation": "A tumbling shard of rock trailing grit; impact cracks into rubble fragments.",
 		"prompt": "Sprite sheet of a tumbling rock shard projectile, brown stone chunk with dust and pebble trail, 8 frames on transparent background, 2d game effect"
@@ -271,6 +285,7 @@
 			"color": "7a3dcc"
 		},
 		"placeholder": true,
+		"sfx": "attack_projectile_travel",
 		"concept": "Darkness-element direct damage in flight — wrong-feeling, light-eating; unease in motion.",
 		"explanation": "A void bolt that darkens rather than glows, purple-black wisps peeling off; impact implodes before it bursts.",
 		"prompt": "Sprite sheet of a dark void projectile, purple-black energy bolt absorbing light with shadowy wisps, 8 frames on transparent background, 2d game effect"
@@ -284,6 +299,7 @@
 			"color": "fff3b0"
 		},
 		"placeholder": true,
+		"sfx": "attack_projectile_travel",
 		"concept": "Light-element direct damage in flight — radiant judgment; clean, bright, unmistakably holy.",
 		"explanation": "A brilliant lance of light with lens-flare cross glints; impact is a white-gold flash.",
 		"prompt": "Sprite sheet of a radiant light lance projectile, brilliant white-gold beam with cross-shaped glints, 8 frames on transparent background, 2d game effect"
@@ -297,6 +313,7 @@
 			"color": "dff4f0"
 		},
 		"placeholder": true,
+		"sfx": "attack_projectile_travel",
 		"concept": "Pure Air-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
 		"explanation": "In flight: a compressed sphere of pure whirling wind, layered cyclone rings spinning around a clear core.",
 		"prompt": "Sprite sheet of a projectile: a compressed sphere of pure whirling wind, layered cyclone rings spinning around a clear core, 8 frames on transparent background, 2d game effect"
@@ -310,6 +327,7 @@
 			"color": "8d79b8"
 		},
 		"placeholder": true,
+		"sfx": "attack_projectile_travel",
 		"concept": "Miasma-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
 		"explanation": "In flight: a drifting glob of toxic fog, murky violet-green vapor coiling and shedding sickly tendrils.",
 		"prompt": "Sprite sheet of a projectile: a drifting glob of toxic fog, murky violet-green vapor coiling and shedding sickly tendrils, 8 frames on transparent background, 2d game effect"
@@ -323,6 +341,7 @@
 			"color": "d9b36b"
 		},
 		"placeholder": true,
+		"sfx": "attack_projectile_travel",
 		"concept": "Sand-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
 		"explanation": "In flight: a hissing spiral of driven sand, golden grit streaming in a tight sandstorm lance.",
 		"prompt": "Sprite sheet of a projectile: a hissing spiral of driven sand, golden grit streaming in a tight sandstorm lance, 8 frames on transparent background, 2d game effect"
@@ -336,6 +355,7 @@
 			"color": "ffe94d"
 		},
 		"placeholder": true,
+		"sfx": "attack_projectile_travel",
 		"concept": "Lightning-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
 		"explanation": "In flight: a jagged lightning bolt, forked electric arcs crackling and snapping along its path.",
 		"prompt": "Sprite sheet of a projectile: a jagged lightning bolt, forked electric arcs crackling and snapping along its path, 8 frames on transparent background, 2d game effect"
@@ -349,6 +369,7 @@
 			"color": "fff0cf"
 		},
 		"placeholder": true,
+		"sfx": "attack_projectile_travel",
 		"concept": "Angelic-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
 		"explanation": "In flight: a soaring lance of feathered radiance, white wing-like light trails streaming behind.",
 		"prompt": "Sprite sheet of a projectile: a soaring lance of feathered radiance, white wing-like light trails streaming behind, 8 frames on transparent background, 2d game effect"
@@ -362,6 +383,7 @@
 			"color": "5b8fd4"
 		},
 		"placeholder": true,
+		"sfx": "attack_projectile_travel",
 		"concept": "Storm-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
 		"explanation": "In flight: a churning squall orb, dark rain bands and small lightning flickers wrapped in wind.",
 		"prompt": "Sprite sheet of a projectile: a churning squall orb, dark rain bands and small lightning flickers wrapped in wind, 8 frames on transparent background, 2d game effect"
@@ -375,6 +397,7 @@
 			"color": "3d2a66"
 		},
 		"placeholder": true,
+		"sfx": "attack_projectile_travel",
 		"concept": "Pure Darkness-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
 		"explanation": "In flight: a rift of absolute void, a light-swallowing black core ringed by collapsing purple wisps.",
 		"prompt": "Sprite sheet of a projectile: a rift of absolute void, a light-swallowing black core ringed by collapsing purple wisps, 8 frames on transparent background, 2d game effect"
@@ -388,6 +411,7 @@
 			"color": "6e6478"
 		},
 		"placeholder": true,
+		"sfx": "attack_projectile_travel",
 		"concept": "Stone-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
 		"explanation": "In flight: a hurled shard of obsidian, glassy black rock trailing slivers of shadow.",
 		"prompt": "Sprite sheet of a projectile: a hurled shard of obsidian, glassy black rock trailing slivers of shadow, 8 frames on transparent background, 2d game effect"
@@ -401,6 +425,7 @@
 			"color": "b0281f"
 		},
 		"placeholder": true,
+		"sfx": "attack_projectile_travel",
 		"concept": "Demonic-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
 		"explanation": "In flight: a snarling hellfire bolt, black-cored crimson flames with ember claws raking the air.",
 		"prompt": "Sprite sheet of a projectile: a snarling hellfire bolt, black-cored crimson flames with ember claws raking the air, 8 frames on transparent background, 2d game effect"
@@ -414,6 +439,7 @@
 			"color": "9fbf8f"
 		},
 		"placeholder": true,
+		"sfx": "attack_projectile_travel",
 		"concept": "Undead-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
 		"explanation": "In flight: a pale grave-light orb, sickly white-green glow flickering like a will-o-wisp.",
 		"prompt": "Sprite sheet of a projectile: a pale grave-light orb, sickly white-green glow flickering like a will-o-wisp, 8 frames on transparent background, 2d game effect"
@@ -427,6 +453,7 @@
 			"color": "7ddb4a"
 		},
 		"placeholder": true,
+		"sfx": "attack_projectile_travel",
 		"concept": "Poison-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
 		"explanation": "In flight: a lobbed venom glob, viscous toxic green liquid stretching and dripping in flight.",
 		"prompt": "Sprite sheet of a projectile: a lobbed venom glob, viscous toxic green liquid stretching and dripping in flight, 8 frames on transparent background, 2d game effect"
@@ -440,6 +467,7 @@
 			"color": "8f6a3d"
 		},
 		"placeholder": true,
+		"sfx": "attack_projectile_travel",
 		"concept": "Pure Earth-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
 		"explanation": "In flight: a massive bedrock boulder, dense brown stone tumbling with slow inevitable weight.",
 		"prompt": "Sprite sheet of a projectile: a massive bedrock boulder, dense brown stone tumbling with slow inevitable weight, 8 frames on transparent background, 2d game effect"
@@ -453,6 +481,7 @@
 			"color": "ff7326"
 		},
 		"placeholder": true,
+		"sfx": "attack_projectile_travel",
 		"concept": "Magma-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
 		"explanation": "In flight: a molten magma glob, orange-hot liquid rock with a cooling black crust cracking in flight.",
 		"prompt": "Sprite sheet of a projectile: a molten magma glob, orange-hot liquid rock with a cooling black crust cracking in flight, 8 frames on transparent background, 2d game effect"
@@ -466,6 +495,7 @@
 			"color": "6fbf4a"
 		},
 		"placeholder": true,
+		"sfx": "attack_projectile_travel",
 		"concept": "Nature-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
 		"explanation": "In flight: a seed of verdant light, spiraling leaves and vines growing along its flight path.",
 		"prompt": "Sprite sheet of a projectile: a seed of verdant light, spiraling leaves and vines growing along its flight path, 8 frames on transparent background, 2d game effect"
@@ -479,6 +509,7 @@
 			"color": "b58a66"
 		},
 		"placeholder": true,
+		"sfx": "attack_projectile_travel",
 		"concept": "Clay-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
 		"explanation": "In flight: a spinning slug of wet clay, earthen mass deforming and reshaping as it flies.",
 		"prompt": "Sprite sheet of a projectile: a spinning slug of wet clay, earthen mass deforming and reshaping as it flies, 8 frames on transparent background, 2d game effect"
@@ -492,6 +523,7 @@
 			"color": "ff8c1a"
 		},
 		"placeholder": true,
+		"sfx": "attack_projectile_travel",
 		"concept": "Pure Fire-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
 		"explanation": "In flight: a white-hot inferno sphere, layered flame shells roaring around a blinding core.",
 		"prompt": "Sprite sheet of a projectile: a white-hot inferno sphere, layered flame shells roaring around a blinding core, 8 frames on transparent background, 2d game effect"
@@ -505,6 +537,7 @@
 			"color": "ffdf9e"
 		},
 		"placeholder": true,
+		"sfx": "attack_projectile_travel",
 		"concept": "Spirit-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
 		"explanation": "In flight: an ethereal soul-flame, translucent gold-white fire that ripples without smoke.",
 		"prompt": "Sprite sheet of a projectile: an ethereal soul-flame, translucent gold-white fire that ripples without smoke, 8 frames on transparent background, 2d game effect"
@@ -518,6 +551,7 @@
 			"color": "cfd8dc"
 		},
 		"placeholder": true,
+		"sfx": "attack_projectile_travel",
 		"concept": "Steam-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
 		"explanation": "In flight: a scalding steam jet, pale billowing vapor under pressure with hot droplet spray.",
 		"prompt": "Sprite sheet of a projectile: a scalding steam jet, pale billowing vapor under pressure with hot droplet spray, 8 frames on transparent background, 2d game effect"
@@ -531,6 +565,7 @@
 			"color": "fffbe0"
 		},
 		"placeholder": true,
+		"sfx": "attack_projectile_travel",
 		"concept": "Pure Light-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
 		"explanation": "In flight: a beam-lance of absolute radiance, pure white light with prismatic edge glints.",
 		"prompt": "Sprite sheet of a projectile: a beam-lance of absolute radiance, pure white light with prismatic edge glints, 8 frames on transparent background, 2d game effect"
@@ -544,6 +579,7 @@
 			"color": "c77fff"
 		},
 		"placeholder": true,
+		"sfx": "attack_projectile_travel",
 		"concept": "Rainbow-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
 		"explanation": "In flight: a prismatic spray arc, refracting droplets splitting light into a trailing rainbow band.",
 		"prompt": "Sprite sheet of a projectile: a prismatic spray arc, refracting droplets splitting light into a trailing rainbow band, 8 frames on transparent background, 2d game effect"
@@ -557,6 +593,7 @@
 			"color": "2f7fd9"
 		},
 		"placeholder": true,
+		"sfx": "attack_projectile_travel",
 		"concept": "Pure Water-element direct damage in flight — the dual element's identity (per its king) must be readable mid-air, before the impact explains it.",
 		"explanation": "In flight: a deep-tide sphere, layered currents circulating inside a heavy translucent globe.",
 		"prompt": "Sprite sheet of a projectile: a deep-tide sphere, layered currents circulating inside a heavy translucent globe, 8 frames on transparent background, 2d game effect"
@@ -1416,6 +1453,7 @@
 			"scale": 1.6
 		},
 		"placeholder": true,
+		"sfx": "unit_death_large",
 		"concept": "A high-cost unit dying — a bigger fall than fodder; the board should feel the thud.",
 		"explanation": "The standard death plus a heavier debris burst and a slot-wide dust ring.",
 		"prompt": "Sprite sheet of a heavy collapse explosion, large debris chunks and a wide dust shockwave ring, 10 frames on transparent background, 2d game effect"
@@ -1431,6 +1469,7 @@
 			"duration": 0.9
 		},
 		"placeholder": true,
+		"sfx": "unit_death_large",
 		"concept": "A King falling — the fight-deciding moment; the biggest single VFX in combat, win or lose.",
 		"explanation": "A crown-shattering slow burst: golden fragments, a screen-noticeable shockwave, then a long settling fade.",
 		"prompt": "Sprite sheet of a golden crown shattering in slow motion, royal fragments and a massive light shockwave, 12 frames on transparent background, 2d game effect"
@@ -1444,6 +1483,7 @@
 			"color": "8fbf3d"
 		},
 		"placeholder": true,
+		"sfx": "unit_death",
 		"concept": "Goblin-tribe fodder dying — comic scrappiness even in defeat; keeps goblin fights light.",
 		"explanation": "A puff of green smoke with flying scrap (a dropped dagger, a flung boot).",
 		"prompt": "Sprite sheet of a green smoke puff with comic flying scraps, cartoon goblin defeat poof, 8 frames on transparent background, 2d game effect"
@@ -1457,6 +1497,7 @@
 			"color": "5a7a5e"
 		},
 		"placeholder": true,
+		"sfx": "unit_death",
 		"concept": "Undead-tribe fodder dying (again) — they don't fall, they come apart; returning to the grave.",
 		"explanation": "The card crumbles to bone-grey dust that sinks downward instead of scattering.",
 		"prompt": "Sprite sheet of a figure crumbling into bone dust sinking downward, pale green necrotic dissolve, 10 frames on transparent background, 2d game effect"
@@ -1471,6 +1512,7 @@
 			"scale": 1.3
 		},
 		"placeholder": true,
+		"sfx": "unit_death",
 		"concept": "Golem-tribe fodder dying — construction failing; rubble, not blood.",
 		"explanation": "The card cracks along seams then collapses into a pile of stone blocks with a dust cough.",
 		"prompt": "Sprite sheet of a stone construct cracking along seams and collapsing into blocks with dust, 10 frames on transparent background, 2d game effect"
@@ -1485,6 +1527,7 @@
 			"duration": 0.5
 		},
 		"placeholder": true,
+		"sfx": "combat_king_hit",
 		"concept": "Your King taking damage — run-life burning; must cut through combat noise and feel personal, pairing with the king-hit sound.",
 		"explanation": "A hard red flash on the King's card plus a brief red vignette pulse at the screen edges.",
 		"prompt": "Sprite sheet of an alarming red damage flash with a screen-edge vignette pulse, royal wound alert, 8 frames on transparent background, 2d game effect"
@@ -1513,6 +1556,7 @@
 			"color": "b18cff"
 		},
 		"placeholder": true,
+		"sfx": "summon_token",
 		"concept": "An effect conjuring a unit onto the board (not hand-played) — arrival from elsewhere must read differently from placement.",
 		"explanation": "A magic circle spins up in the empty slot, light gathers inward, and the card resolves out of the glow.",
 		"prompt": "Sprite sheet of a magic summoning circle spinning up with light gathering inward, arcane materialization, 10 frames on transparent background, 2d game effect"
@@ -1526,6 +1570,7 @@
 			"color": "cfd4e0"
 		},
 		"placeholder": true,
+		"sfx": "combat_unit_move",
 		"concept": "A unit relocating between slots — the move should leave a readable path so repositioning is followable.",
 		"explanation": "A brief motion streak between the two slots with small dust kicks at both ends.",
 		"prompt": "Sprite sheet of a quick dash motion streak with dust kicks at start and end, movement trail, 6 frames on transparent background, 2d game effect"
@@ -1539,6 +1584,7 @@
 			"color": "d92bc4"
 		},
 		"placeholder": true,
+		"sfx": "ability_cast",
 		"concept": "A unit's activated ability firing — the fuchsia thread of the abilities UI carried onto the board moment.",
 		"explanation": "A fuchsia-tinted flare on the holder with a brief upward energy wisp — distinct from the generic source glint.",
 		"prompt": "Sprite sheet of a magenta energy flare with an upward wisp, ability activation flash, 8 frames on transparent background, 2d game effect"
@@ -1552,6 +1598,7 @@
 			"color": "d92bc4"
 		},
 		"placeholder": true,
+		"sfx": "autocast_arm",
 		"concept": "Arming a unit's autocast — readiness locked in; visually rhymes with the armed-brackets echo on the board card.",
 		"explanation": "Fuchsia corner brackets snap onto the holder and give one confirming pulse.",
 		"prompt": "Sprite sheet of magenta corner brackets snapping in and pulsing once, armed lock-on marker, 6 frames on transparent background, 2d game effect"
@@ -1578,6 +1625,7 @@
 			"color": "e8ecf4"
 		},
 		"placeholder": true,
+		"sfx": "attack_melee_swing",
 		"concept": "A melee unit's attack wind-up — the swing itself, preceding the hit landing on the target.",
 		"explanation": "A crescent slash arc sweeping across the attacker toward its target's direction.",
 		"prompt": "Sprite sheet of a crescent sword slash arc sweeping across, white blade streak, 6 frames on transparent background, 2d game effect"
@@ -1783,6 +1831,7 @@
 			"color": "4da6ff"
 		},
 		"placeholder": true,
+		"sfx": "mana_spend",
 		"concept": "Mana paying a cost — the payment should visibly LEAVE the gauge toward what it bought.",
 		"explanation": "A small blue wisp flies from the mana gauge to the played card/slot and is absorbed.",
 		"prompt": "Sprite sheet of a small blue energy wisp with a soft trail being absorbed, mana payment stream, 6 frames on transparent background, 2d game effect"
@@ -1797,6 +1846,7 @@
 			"duration": 0.5
 		},
 		"placeholder": true,
+		"sfx": "mana_refill",
 		"concept": "The turn-start mana refill — the gauge surging back to full; part of the turn's fresh-breath moment.",
 		"explanation": "The gauge blooms blue bottom-to-top with a sparkle cap when it tops out.",
 		"prompt": "Sprite sheet of a blue energy gauge surging full with a sparkle crest, refill bloom, 8 frames on transparent background, 2d game effect"
@@ -1811,6 +1861,7 @@
 			"duration": 0.3
 		},
 		"placeholder": true,
+		"sfx": "mana_insufficient",
 		"concept": "Attempting a cast without the mana — the gauge itself should protest, pointing the eye at WHY the cast failed.",
 		"explanation": "The mana gauge flickers twice in pale blue — present but empty.",
 		"prompt": "Sprite sheet of a pale blue gauge flickering twice weakly, empty resource protest, 6 frames on transparent background, 2d game effect"

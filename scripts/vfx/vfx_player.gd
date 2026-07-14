@@ -39,10 +39,24 @@ func play(event: VFXEvent) -> void:
 		var iid := Vfx.resolve("impact", event.composition)
 		if not iid.is_empty():
 			Vfx.play(iid, event.target)   # the elemental burst under the designed number read
+		# The King wounded is the run's own life bleeding — a heavier, screen-worthy cue rides
+		# on top of the normal damage read.
+		if _is_king(event.target):
+			Vfx.play("king_hit_flash", event.target)
+	elif event.type == VFXEvent.Type.DEATH:
+		# A death may earn a variant dressing (king/tribe/large). It plays OVER the designed
+		# fade, which always runs — the card leaving its slot is non-negotiable.
+		var did := _death_variant(event.target)
+		if not did.is_empty():
+			Vfx.play(did, event.target)
 	var id := _library_id(event)
 	if id.is_empty():
 		return
 	await Vfx.play(id, event.target, {"event": event})
+	# A designed projectile resolves its impact internally (no HEALTH_DAMAGE event follows),
+	# so the King cue fires here on arrival.
+	if event.type == VFXEvent.Type.PROJECTILE and event.show_impact and _is_king(event.target):
+		Vfx.play("king_hit_flash", event.target)
 
 
 # Plays an EffectSystem result array (await it). Three layers read as cause → effect: (1) the SOURCE
@@ -80,6 +94,7 @@ func play_results(results: Array, source_inst: CardInstance = null,
 			var pip := source_ui.find_status_pip(cue_status_id)
 			if pip != null:
 				pip.flash_proc()
+				_status_tick_sfx(cue_status_id)
 		await _hold(SOURCE_HOLD)
 
 	# Launch each affected card's reticle + hit as its own sub-sequence and let them run together.
@@ -160,7 +175,9 @@ func _play_status_applied(inst: CardInstance, status_id: String) -> void:
 	if card_ui == null or not is_instance_valid(card_ui):
 		return
 	var sd := StatusData.get_status(status_id)
-	var tint := Color(0.55, 0.95, 0.6) if (sd == null or sd.beneficial) else Color(0.95, 0.55, 0.55)
+	var beneficial := sd == null or sd.beneficial
+	var tint := Color(0.55, 0.95, 0.6) if beneficial else Color(0.95, 0.55, 0.55)
+	Sfx.play("status_apply_buff" if beneficial else "status_apply_debuff")
 	await play(VFXEvent.target_mark(card_ui, tint))
 	card_ui.refresh()
 	await get_tree().process_frame   # let the freshly built pip lay out before it can pivot/pop
@@ -211,6 +228,38 @@ func _play_target(card_ui: CardUI, attr: String, delta: int, source_ui: CardUI,
 
 func _hold(seconds: float) -> void:
 	await get_tree().create_timer(seconds).timeout
+
+
+func _is_king(ui: CardUI) -> bool:
+	return ui != null and is_instance_valid(ui) and ui.card_instance != null \
+			and ui.card_instance.data != null and ui.card_instance.data.is_king
+
+
+# The death dressing a unit earns: the King's shatter, its tribe's signature, or the heavy
+# version for expensive units. "" = just the designed fade. Gated on Vfx.live so muted
+# placeholders fall back silently.
+const LARGE_DEATH_COST := 5
+
+func _death_variant(ui: CardUI) -> String:
+	if ui == null or not is_instance_valid(ui) or ui.card_instance == null:
+		return ""
+	var data := ui.card_instance.data
+	if data == null:
+		return ""
+	if data.is_king and Vfx.live("death_king"):
+		return "death_king"
+	if not data.tribe.is_empty() and Vfx.live("death_" + data.tribe):
+		return "death_" + data.tribe
+	if data.cost >= LARGE_DEATH_COST and Vfx.live("death_large"):
+		return "death_large"
+	return ""
+
+
+# A status proc's sound, when the library defines one for it (damage_poison_tick, …).
+func _status_tick_sfx(status_id: String) -> void:
+	var tick := "damage_%s_tick" % status_id
+	if SoundData.get_sound(tick) != null:
+		Sfx.play(tick)
 
 
 # The reticle/category tint for a result, by the same (attribute, sign) logic that routes the

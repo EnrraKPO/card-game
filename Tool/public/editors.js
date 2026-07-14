@@ -149,6 +149,7 @@ const CardEditor = {
     if (d.chess_pieces.length) out.chess_pieces = d.chess_pieces.slice().sort();
     if (d.is_king) out.is_king = true;
     if (d.enemy_only) out.enemy_only = true;
+    if (d.tribe) out.tribe = d.tribe;   // fodder-tribe tag (cue variants); no form input yet
     if (d.ranged) out.ranged = true;
     if (d.card_type) out.card_type = d.card_type;
     if (d.shield && d._derive_stats) out.shield = d.shield;

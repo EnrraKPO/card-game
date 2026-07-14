@@ -1,6 +1,7 @@
 [
 	{
 		"id": "goblin_warlord",
+		"tribe": "goblin",
 		"display_name": "Goblin Warlord",
 		"cost": 0,
 		"attack": 6,
@@ -13,13 +14,14 @@
 	},
 	{
 		"id": "bone_lich",
+		"tribe": "undead",
 		"display_name": "Bone Lich",
 		"cost": 0,
 		"attack": 4,
 		"health": 30,
 		"speed": 3,
 		"shield": 3,
-		"description": "The horde's dark master. He knits himself back together with every strike — destroy him to win. Starts each round with 3 Shield.",
+		"description": "The horde's dark master. He knits himself back together with every strike â€” destroy him to win. Starts each round with 3 Shield.",
 		"is_king": true,
 		"enemy_only": true,
 		"effects": [
@@ -44,6 +46,7 @@
 	},
 	{
 		"id": "stoneborn_warlord",
+		"tribe": "golem",
 		"display_name": "Stoneborn Warlord",
 		"cost": 0,
 		"attack": 4,

@@ -749,5 +749,40 @@
 		"prompt": "A whimsical curious loop with pizzicato strings, celesta, light clockwork percussion and a playful melody, inventor workshop theme, seamless loop, quirky, 60 seconds",
 		"loop": true,
 		"volume_db": -14
+		},
+	{
+		"id": "stat_buff",
+		"display_name": "Stat Buff",
+		"category": "magic",
+		"concept": "A stat raised on a unit by an effect (attack/speed/max health) - empowerment landing; brighter and rounder than a status chime.",
+		"prompt": "A short ascending magical chime with a warm shimmer tail, empowerment sound, bright and positive, one shot, 0.6 seconds"
+	},
+	{
+		"id": "stat_debuff",
+		"display_name": "Stat Debuff",
+		"category": "magic",
+		"concept": "A stat lowered on a unit by an effect - sapping; the buff chime's shadowed inverse, descending.",
+		"prompt": "A short descending dissonant chime with a hollow damped tail, weakening sound, dark and negative, one shot, 0.6 seconds"
+	},
+	{
+		"id": "effect_trigger",
+		"display_name": "Effect Trigger",
+		"category": "magic",
+		"concept": "A card's triggered ability firing (the source glint moment) - a soft causality tick; very frequent, must never fatigue.",
+		"prompt": "A very short soft arcane tick, a muted glassy pluck with a tiny sparkle, subtle trigger cue, one shot, 0.3 seconds"
+	},
+	{
+		"id": "attack_miss",
+		"display_name": "Attack Miss",
+		"category": "combat",
+		"concept": "An attack negated (Blind, 0 damage) - the whiff must be audible or the silence reads as a bug.",
+		"prompt": "A quick airy whoosh swishing past with no impact, dodged attack whiff, one shot, 0.5 seconds"
+	},
+	{
+		"id": "shield_regen",
+		"display_name": "Shield Regen",
+		"category": "combat",
+		"concept": "The whole board's per-turn shield refresh - ONE cue for the sweep (per-unit would be a barrage); calm, protective, routine.",
+		"prompt": "A soft crystalline shimmer sweep, protective energy settling over several points, gentle barrier hum swell, one shot, 1 second"
 	}
 ]

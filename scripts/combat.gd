@@ -157,6 +157,9 @@ func _ready() -> void:
 	# write rides submit, so even opening draws are interceptable by channel-aware effects).
 	Resolver.submit(StatMutation.make(_player_side, StatMutation.DRAW,
 			GameData.value("hand.size.initial"), null, StatMutation.CH_SYSTEM))
+	var is_boss_fight := GameData.current_encounter != null \
+			and GameData.current_encounter.type == EncounterData.Type.BOSS
+	Sfx.play("combat_boss_intro" if is_boss_fight else "combat_start")
 	_refresh()
 	_begin_round()
 
@@ -296,6 +299,7 @@ func _execute_enemy_action(action: Dictionary) -> void:
 			_pay_mana(_enemy_side, inst.data.cost)
 			_enemy_side.remove_from_hand(inst)
 			var results := _board.place_enemy_card(inst, action["row"], action["col"])
+			Sfx.play("combat_enemy_place")
 			_vfx.play(VFXEvent.card_placed(_board.get_card_ui(inst)))
 			await _animator.show_effect_results(results, inst)
 		EnemyAI.Action.CAST:
@@ -320,7 +324,8 @@ func _execute_enemy_action(action: Dictionary) -> void:
 				var mat := CardData.get_card(ab.material)
 				var m_inst := CardInstance.from_data(mat)
 				var m_results := _board.place_enemy_card(m_inst, action["row"], action["col"])
-				_vfx.play(VFXEvent.card_placed(_board.get_card_ui(m_inst)))
+				# A conjured unit MATERIALIZES (distinct from a card landing from a hand).
+				Vfx.play("summon_materialize", _board.get_card_ui(m_inst))
 				await _animator.show_effect_results(m_results, m_inst)
 			else:
 				# Present via the card-shaped ability view, like an enemy spell cast. source_building
@@ -334,6 +339,7 @@ func _execute_enemy_action(action: Dictionary) -> void:
 				await _show_enemy_spell(display, spell_target)
 		EnemyAI.Action.MOVE:
 			_board.move_enemy_card(action["inst"], action["row"], action["col"])
+			Vfx.play("unit_move_dash", _board.get_card_ui(action["inst"]))
 	await get_tree().create_timer(0.35).timeout
 
 
@@ -455,15 +461,19 @@ func _on_done_pressed() -> void:
 		_handle_combat_end()
 		return
 	await get_tree().create_timer(0.8).timeout
+	var any_shield_regen := false
 	for inst: CardInstance in _board.get_all_units():
 		var prev_shield := inst.current_shield
 		Resolver.restore_shield(inst)
 		var gained := inst.current_shield - prev_shield
 		if gained > 0:
+			any_shield_regen = true
 			var shield_ui := _board.get_card_ui(inst)
 			if shield_ui != null:
 				shield_ui.refresh()   # show the restored shield badge as the glint points at it
 				_vfx.play(VFXEvent.shield_restored(shield_ui, gained))
+	if any_shield_regen:
+		Sfx.play("shield_regen")   # ONE sound for the whole board's regen, not one per unit
 	_board.refresh()
 	await _begin_round()
 
@@ -539,6 +549,7 @@ func _resolve_attack(attacker: CardInstance) -> void:
 		a_card.modulate.a = 0.0
 		# Route the attacker's own VFX onto the ghost while it travels (see _ghost_ui).
 		_ghost_ui[attacker] = ghost
+		Vfx.play("attack_swing_arc", ghost)   # the swing reads over the lunge, concurrent
 		await _animator.play_lunge(ghost, overshoot)
 		_animator.shake_card(t_card)               # impact shake at the apex, over the rebound
 		await _animator.play_rebound(ghost, beside)
@@ -596,13 +607,15 @@ func _apply_attack_damage(attacker: CardInstance, target: CardInstance, t_card: 
 		# Shield reads FIRST: it takes the blow on its own badge (and only the badge — a held shield
 		# leaves the card unwounded). When the hit also bleeds through to HP, a brief halt lets the
 		# absorb land before the wound, so the shield is legible as the first thing that happened.
+		# Hit sounds ride the VFX entries (combat_shield_hit/combat_health_damage carry their
+		# sfx in data) — only the shield BREAK layer is contextual and fires here.
 		if outcome.shield_absorbed > 0:
-			Sfx.shield_block()
+			if target.current_shield <= 0:
+				Sfx.play("shield_break")
 			_vfx.play(VFXEvent.shield_hit(t_card, outcome.shield_absorbed))
 		if outcome.health_damage > 0:
 			if outcome.shield_absorbed > 0:
 				await get_tree().create_timer(SHIELD_LEAD).timeout
-			Sfx.attack_damage()
 			_vfx.play(VFXEvent.health_damage(t_card, outcome.health_damage))
 	_board.refresh()
 
@@ -745,10 +758,26 @@ func _apply_king_persistence() -> void:
 	pk.health_changed.connect(_on_king_health_changed)
 
 
+# The player King in its last quarter is the run itself in peril: a heartbeat glow rides the
+# card while critical, attached/detached on the threshold crossings (with one warning sting).
+const KING_CRITICAL_RATIO := 0.25
+var _king_critical := false
+
 func _on_king_health_changed(current: int) -> void:
 	var run := GameData.current_run
 	if run != null:
 		GameSignals.hp_changed.emit(current, run.king_max_health())
+		var critical := current > 0 \
+				and current <= int(ceil(run.king_max_health() * KING_CRITICAL_RATIO))
+		if critical != _king_critical:
+			_king_critical = critical
+			var king_ui := _board.get_card_ui(_board.get_player_king())
+			if king_ui != null:
+				if critical:
+					Sfx.play("combat_king_low")
+					Vfx.attach("king_critical_pulse", king_ui)
+				else:
+					Vfx.detach("king_critical_pulse", king_ui)
 
 
 func _handle_combat_end() -> void:
@@ -798,8 +827,11 @@ func _handle_combat_end() -> void:
 
 func _on_board_unit_placed(inst: CardInstance, card_ui: CardUI, from_hand: bool, cost: int, results: Array) -> void:
 	if from_hand:
-		Sfx.play("combat_place_unit")
+		Sfx.play("combat_place_building" if inst.data.is_building() else "combat_place_unit")
 		_pay_mana(_player_side, cost)
+		if cost > 0:
+			# The mana paying for the play flies from the gauge into the placed card.
+			Vfx.play("mana_spend_wisp", card_ui, {"source": _mana_chunks_box})
 		if card_ui.is_generated:
 			_consume_generated_token(card_ui)
 		else:
@@ -818,6 +850,8 @@ func _consume_generated_token(card_ui: CardUI) -> void:
 	_hand.remove_token(card_ui)
 	var holder: CardInstance = card_ui.card_instance.source_building
 	var ab: AbilityData = card_ui.card_instance.ability
+	if holder != null:
+		Vfx.play("ability_activate_flare", _board.get_card_ui(holder))
 	if holder != null and (ab == null or ab.tap):
 		_pay_tap(holder)
 	card_ui.clear_generated()
@@ -847,6 +881,7 @@ func _on_autocast_dropped(slot: SlotUI, card_ui: CardUI) -> void:
 
 # The autocast twin of _on_spell_consumed + _consume_generated_token: mana, then the tap.
 func _on_ability_autocast(holder: CardInstance, ab: AbilityData) -> void:
+	Vfx.play("ability_activate_flare", _board.get_card_ui(holder))
 	_pay_mana(_player_side, ab.mana)
 	if ab.tap:
 		_pay_tap(holder)
@@ -858,6 +893,10 @@ func _on_autocast_changed(holder: CardInstance) -> void:
 	var ui := _board.get_card_ui(holder)
 	if ui != null:
 		ui.refresh()
+		if holder.armed_autocast() != null:
+			Vfx.play("autocast_arm_brackets", ui)
+		else:
+			Sfx.play("autocast_disarm")
 
 
 func _on_board_slot_pressed(slot: SlotUI) -> void:
@@ -877,6 +916,9 @@ func _on_board_slot_pressed(slot: SlotUI) -> void:
 	if card == null:
 		return
 	if not _board.can_place_from_hand(card):
+		# When the block is the mana pool, say so: the gauge flickers "present but empty".
+		if card.card_instance.get_attribute("cost") > _player_side.mana:
+			Vfx.play("mana_insufficient_flicker", _mana_chunks_box)
 		return
 	_hand.deselect()
 	_board.do_place_unit(slot, card)
@@ -885,6 +927,7 @@ func _on_board_slot_pressed(slot: SlotUI) -> void:
 # ── Spell phase bridging ───────────────────────────────────────────────────────
 
 func _on_targeting_started() -> void:
+	Sfx.play("spell_targeting")
 	_phase = Phase.TARGETING
 	_set_placement_input(false)
 	_refresh_done_btn()
@@ -899,6 +942,8 @@ func _on_targeting_ended() -> void:
 func _on_spell_consumed(card_ui: CardUI, cost: int) -> void:
 	Sfx.play("spell_cast")
 	_pay_mana(_player_side, cost)
+	if cost > 0:
+		Vfx.play("mana_spend_wisp", card_ui, {"source": _mana_chunks_box})
 	# A rook-generated SPELL token (e.g. Castling) casts through this same path as a normal hand
 	# spell — but it must exhaust its source rook like a generated UNIT token does, not just drop
 	# out of the normal hand list (see _consume_generated_token).

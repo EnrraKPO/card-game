@@ -626,6 +626,27 @@ func _refresh_statuses() -> void:
 	for si: StatusInstance in stats:
 		_status_row.add_child(_make_status_pip(si))
 	_refresh_aura(stats)
+	_sync_status_auras(stats)
+
+
+# Library auras riding the card while statuses are held (aura_<status_id> entries, sustained):
+# attached on gain, detached on loss — a loss the player can see also gets the expiry sound.
+# Statuses without an aura entry still get the sound; the pip vanishing is their visual.
+var _held_status_auras: Dictionary = {}
+
+func _sync_status_auras(stats: Array) -> void:
+	var present: Dictionary = {}
+	for si: StatusInstance in stats:
+		present[str(si.data.id)] = true
+	for sid: String in present:
+		if not _held_status_auras.has(sid) and VFXData.get_vfx("aura_" + sid) != null:
+			Vfx.attach("aura_" + sid, self)
+		_held_status_auras[sid] = true
+	for sid: String in _held_status_auras.keys():
+		if not present.has(sid):
+			_held_status_auras.erase(sid)
+			Vfx.detach("aura_" + sid, self)
+			Sfx.play("status_expire")
 
 
 # A persistent "protected"-style frame over the whole card while an aura-declaring status

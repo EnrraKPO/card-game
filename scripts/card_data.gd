@@ -23,6 +23,9 @@ var targeting_strategy: TargetingStrategy
 # composition, so composition_key is empty and they're already absent from the collection
 # screen and the combine system; this flag covers the remaining reward/shop path.
 var enemy_only: bool = false
+# The fodder tribe this card belongs to ("goblin"/"undead"/"golem", "" for everyone else) —
+# set on the enemy tribe files; cues resolve tribe-flavoured variants through it (death_<tribe>).
+var tribe: String = ""
 # The ACTIVATED ABILITIES this card holds, by ability id (see AbilityData — definitions in
 # data/abilities/). Rook buildings author these ("abilities": ["castling"]); any card may.
 # Read through ability_ids(), which adds the derived fallback for un-authored rook combos.
@@ -140,6 +143,7 @@ static func build_from_dict(d: Dictionary) -> CardData:
 	card.elements     = Array(d.get("elements",     []), TYPE_STRING, "", null)
 	card.chess_pieces = Array(d.get("chess_pieces", []), TYPE_STRING, "", null)
 	card.enemy_only   = bool(d.get("enemy_only", false))
+	card.tribe        = str(d.get("tribe", ""))
 	card.abilities    = Array(d.get("abilities", []), TYPE_STRING, "", null)
 	card.ranged       = bool(d.get("ranged", false))
 	for e_data: Dictionary in d.get("effects", []):
@@ -218,6 +222,8 @@ func to_dict() -> Dictionary:
 	# (a "?"-event bump must not reset what a rook offers).
 	if not abilities.is_empty():
 		d["abilities"] = Array(abilities, TYPE_STRING, "", null)
+	if not tribe.is_empty():
+		d["tribe"] = tribe
 	return d
 
 
@@ -245,6 +251,7 @@ static func scaled(base: CardData, power: float) -> CardData:
 	c.elements      = base.elements.duplicate()
 	c.chess_pieces  = base.chess_pieces.duplicate()
 	c.enemy_only    = base.enemy_only
+	c.tribe         = base.tribe
 	c.abilities     = base.abilities.duplicate()
 	c.ranged        = base.ranged
 	c.effects       = base.effects
