@@ -23,9 +23,14 @@ signal autocast_changed(holder: CardInstance)
 
 # Wires a spell CardUI for drag-casting; injected by combat (SpellCaster.wire_spell_card).
 var wire_spell_card: Callable
-# The fielded player units with a currently offerable ability (func() -> Array[CardInstance]);
-# injected by combat — feeds the level-2 Abilities view.
+# The fielded player units that HAVE at least one activated ability, payable RIGHT NOW or not
+# (func() -> Array[CardInstance]); injected by combat — feeds the level-2 Abilities view and the
+# Inspect Abilities button's visibility.
 var get_ability_units: Callable
+# Whether a specific ability is castable this instant by its holder (func(holder, ab) -> bool:
+# tap not spent AND mana affordable); injected by combat. Splits "has the ability" from "can pay
+# for it" — drives the tray's spent-token grey and the Inspect Abilities button's usable-glow.
+var is_ability_usable: Callable
 # Card selection is only honoured while the orchestrator has placement input enabled
 # (i.e. during the player's placement phase). Toggled via set_input_enabled().
 var selection_enabled: bool = false
@@ -51,8 +56,7 @@ var _abilities_box: BoxContainer
 var _no_abilities_lbl: Label
 var _desc_panel: PanelContainer
 var _back_btn: Button
-var _inspect_abilities_btn: Button
-var _back_abilities_btn: Button
+var _inspect_abilities_btn: GlossyButton
 var _desc_hbox: HBoxContainer
 var _desc_name_lbl: Label
 var _desc_text_lbl: Label
@@ -210,34 +214,32 @@ func build_into(parent: Control, left_widget: Control = null) -> void:
 	# only stretches cleanly; squeezing the centre band doubles the baked rim into seams):
 	# the full-band Inspect button rides the short-portrait bake (170×280, ratio ≤ 0.68), and
 	# the Back pills ride the 48 bucket (136 wide) — every width stays at/above its bake's.
+	# No alignment override: every child is EXPAND_FILL, so there's nothing to center — the
+	# visible buttons split the column height between them, and a lone survivor takes it all.
 	var nav_box := VBoxContainer.new()
-	nav_box.alignment = BoxContainer.ALIGNMENT_CENTER
 	nav_box.add_theme_constant_override("separation", 10)
 	nav_wrap.add_child(nav_box)
 
-	# Level 1's action: open the Abilities list — a TALL, narrow button spanning the whole hand
-	# band (it's the hand bar's landmark), its label wrapping to two lines so it doesn't hoard
-	# width. Fuchsia: a deliberately loud accent — this is the gateway to abilities and must
-	# not read as chrome.
+	# The door to the Abilities list — a TALL, narrow button spanning the whole hand band (it's
+	# the hand bar's landmark), its label wrapping to two lines so it doesn't hoard width.
+	# Fuchsia: a deliberately loud accent — the gateway to abilities must not read as chrome.
+	# NOT a per-level button: it's offered wherever the Abilities list is meaningful (the plain
+	# hand AND the single-card inspect view), gated purely on there being abilities to inspect —
+	# see refresh_nav. EXPAND_FILL so it (or Back to hand) claims the whole column when alone.
 	_inspect_abilities_btn = ScreenUI.action_button("Inspect Abilities", show_abilities,
 			Vector2(140, 64), 22, INSPECT_ACCENT)
 	_inspect_abilities_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_inspect_abilities_btn.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	nav_box.add_child(_inspect_abilities_btn)
 
-	# Levels 2+3: straight back to the plain hand (the original inspection-exit behavior,
-	# routed through _on_back_to_hand only to also cover level 2, where nothing is inspected).
-	# Fixed-height pills (see the column comment), vertically centred by the nav box.
+	# Straight back to the plain hand, from either raised level (routed through _on_back_to_hand
+	# so it also covers Abilities, where nothing is inspected). EXPAND_FILL, same as the button
+	# above: when only one of the two shows, it fills the column — never a half-height button.
 	_back_btn = ScreenUI.action_button("← Back to hand", _on_back_to_hand, Vector2(140, 56), 18,
 			ScreenUI.CHROME_NEUTRAL)
+	_back_btn.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_back_btn.visible = false
 	nav_box.add_child(_back_btn)
-
-	# Level 3 only: up one level, back to the Abilities list — stacked under Back to hand.
-	_back_abilities_btn = ScreenUI.action_button("← Back to Abilities", _on_back_to_abilities,
-			Vector2(140, 56), 16, ScreenUI.CHROME_NEUTRAL)
-	_back_abilities_btn.visible = false
-	nav_box.add_child(_back_abilities_btn)
 
 	# The hand row and the ability-token row occupy the same space and are shown one at a time
 	# (see set_inspected/clear_inspected) — never both visible together. Both SHRINK_CENTER
@@ -384,6 +386,16 @@ func inspected() -> CardInstance:
 	return _inspected
 
 
+# Re-derives the inspect view's ability tray against the holder's CURRENT offerability —
+# called by combat after an ability is spent so a tapped-out unit's tray drops to the
+# "no activated abilities" state IN PLACE, without popping out of the inspect view (a
+# non-tap ability's token simply reappears, still castable). A no-op outside inspection.
+func refresh_inspect() -> void:
+	if _inspected == null:
+		return
+	_rebuild_inspect_view()
+
+
 # ── Hand-panel navigation (see NavLevel) ───────────────────────────────────────────
 
 func nav_level() -> NavLevel:
@@ -422,14 +434,9 @@ func _on_back_to_hand() -> void:
 	dismiss_to_hand()
 
 
-func _on_back_to_abilities() -> void:
-	show_abilities()
-
-
 # One switch for what each level shows: the three content rows swap in the same strip, the
-# nav column's visible buttons re-split its height (Inspect Abilities alone on level 1; Back
-# to hand alone on level 2; both Backs at half height on level 3). The sidebar (_desc_panel)
-# and token row are managed by the inspect enter/leave flows, not here.
+# sidebar (_desc_panel) and token row are managed by the inspect enter/leave flows, and the
+# nav column's buttons are handed off to refresh_nav (a pure function of level + availability).
 func _set_level(level: NavLevel) -> void:
 	_nav_level = level
 	_hand_box.visible      = level == NavLevel.HAND
@@ -441,9 +448,37 @@ func _set_level(level: NavLevel) -> void:
 	_desc_panel.visible    = level != NavLevel.HAND
 	if level != NavLevel.ABILITIES:
 		_clear_ability_entries()
-	_inspect_abilities_btn.visible = level == NavLevel.HAND
-	_back_btn.visible              = level != NavLevel.HAND
-	_back_abilities_btn.visible    = level == NavLevel.INSPECT
+	refresh_nav()
+
+
+# Owns the nav column's button visibility — a pure function of the current level and whether
+# any fielded unit still has an offerable ability. Called on every level change AND whenever
+# ability availability shifts under a stationary level: prune_tapped here, plus board changes
+# from combat (unit placed, turn-start untap — combat calls this). So Inspect Abilities
+# appears/vanishes in lockstep with there being abilities to inspect. Both buttons are
+# EXPAND_FILL, so whichever shows alone claims the whole column — never a half-height button.
+func refresh_nav() -> void:
+	if _inspect_abilities_btn == null:   # wired to mana_changed, which can fire before the bar builds
+		return
+	var has_abilities: bool = get_ability_units.is_valid() and not get_ability_units.call().is_empty()
+	# Glow when at least one of those abilities is castable RIGHT NOW — the button stays visible
+	# whether or not anything's payable (units still have abilities worth inspecting), but the
+	# pulse only invites a click when there's actually something to do this moment.
+	var has_usable := false
+	if has_abilities and is_ability_usable.is_valid():
+		for inst: CardInstance in get_ability_units.call():
+			for ab: AbilityData in inst.ability_list():
+				if is_ability_usable.call(inst, ab):
+					has_usable = true
+					break
+			if has_usable:
+				break
+	# Inspect Abilities: the door to the Abilities list, offered wherever it's meaningful — the
+	# plain hand and the single-card inspect view — but never on the Abilities list itself, and
+	# only while some unit actually has an ability to inspect.
+	_inspect_abilities_btn.visible = _nav_level != NavLevel.ABILITIES and has_abilities
+	_inspect_abilities_btn.set_glow(_inspect_abilities_btn.visible and has_usable)
+	_back_btn.visible              = _nav_level != NavLevel.HAND
 
 
 func _rebuild_abilities_view() -> void:
@@ -495,8 +530,6 @@ func _rebuild_inspect_view() -> void:
 	_desc_text_lbl.text = inst.data.description
 	var interactive := inst.owner == 0
 	for ab: AbilityData in inst.ability_list():
-		if ab.tap and inst.attack_exhausted:
-			continue
 		var tok := CardInstance.from_data(ab.display_card())
 		tok.owner = inst.owner
 		tok.row = -1
@@ -508,14 +541,21 @@ func _rebuild_inspect_view() -> void:
 		_gen_cards.append(ui)
 		_gen_box.add_child(ui)   # entering the tree runs _ready, so set_generated is safe after
 		ui.set_generated()
-		if interactive:
+		if not interactive:
+			ui.set_noninteractive()
+			continue
+		# The unit's whole ability roster is shown, payable or not. A currently-unpayable one
+		# (tapped out or unaffordable) rides the same spent grey as a tapped board unit and can't
+		# be drag-cast — but it still arms (right-click) and hovers, since arming survives tapping.
+		if is_ability_usable.is_valid() and is_ability_usable.call(inst, ab):
 			if wire_spell_card.is_valid():
 				wire_spell_card.call(ui)
-			ui.autocast_toggled.connect(_on_autocast_toggled)
-			ui.mouse_entered.connect(func(): token_hovered.emit(inst, true))
-			ui.mouse_exited.connect(func():  token_hovered.emit(inst, false))
 		else:
-			ui.set_noninteractive()
+			ui.draggable = false
+			ui.set_exhausted(true)
+		ui.autocast_toggled.connect(_on_autocast_toggled)
+		ui.mouse_entered.connect(func(): token_hovered.emit(inst, true))
+		ui.mouse_exited.connect(func():  token_hovered.emit(inst, false))
 	_hand_box.visible = false
 	_gen_box.visible = not _gen_cards.is_empty()
 	_no_abilities_lbl.visible = _gen_cards.is_empty()
@@ -541,6 +581,10 @@ func prune_tapped(holder: CardInstance) -> void:
 			remove_token(ui)
 			token_hovered.emit(holder, false)
 			ui.queue_free()
+	# The holder just tapped out, so the roster of ability-bearing units may have shrunk (to
+	# empty). Re-derive the Inspect Abilities button so it withdraws the moment nothing's left —
+	# this fires under a stationary level too (e.g. an autocast fired from the plain hand).
+	refresh_nav()
 
 
 func clear_tokens() -> void:

@@ -103,20 +103,34 @@ func _ready() -> void:
 	_spell_caster.setup(_board, _animator, func() -> int: return _player_side.mana)
 	_hand.bind_side(_player_side)
 	_player_side.mana_changed.connect(_refresh_mana)
+	# Mana changing shifts which abilities are affordable, so re-derive the Inspect Abilities glow
+	# (spending on a hand spell can leave nothing usable; a refill can revive it). Glow only — the
+	# inspect tray can't be open while hand spells cast, and ability casts rebuild it themselves.
+	_player_side.mana_changed.connect(_hand.refresh_nav)
 	_hand.wire_spell_card = _spell_caster.wire_spell_card
 	_hand.token_hovered.connect(_highlight_building)
 	_hand.inspect_changed.connect(_on_inspect_changed)
 	_hand.autocast_changed.connect(_on_autocast_changed)
 	# Feeds the hand's level-2 Abilities view: the fielded player units whose abilities are
 	# currently offerable (same rule as CardUI's amber ability cue).
+	# Every fielded player unit that HAS an activated ability — payable this moment or not. The
+	# inspect tray shows the full roster (unpayable ones greyed), so this gate is "has an ability
+	# to inspect", not "can act"; usable_glow below is what tracks payability.
 	_hand.get_ability_units = func() -> Array:
 		var out: Array = []
 		for r in BoardData.ROWS:
 			for c in BoardData.COLS:
 				var inst: CardInstance = _board.player_grid[r][c]
-				if inst != null and inst.has_available_abilities():
+				if inst != null and not inst.ability_list().is_empty():
 					out.append(inst)
 		return out
+
+	# Whether an ability is castable RIGHT NOW: its tap cost (if any) isn't already spent AND the
+	# player can afford its mana. Feeds the tray's spent-token grey and the Inspect Abilities glow.
+	_hand.is_ability_usable = func(holder: CardInstance, ab: AbilityData) -> bool:
+		if ab.tap and holder.attack_exhausted:
+			return false
+		return ab.mana <= _player_side.mana
 
 	_board.can_autocast = _spell_caster.autocast_drop_ok
 	_board.unit_placed.connect(_on_board_unit_placed)
@@ -782,6 +796,9 @@ func _on_board_unit_placed(inst: CardInstance, card_ui: CardUI, from_hand: bool,
 			_player_side.remove_from_hand(inst)
 			_hand.remove_card(card_ui)
 	_vfx.play(VFXEvent.card_placed(card_ui))
+	# A unit just entered (or an ability token left) the board, so the roster of ability-bearing
+	# units changed — re-derive the Inspect Abilities button against the new composition.
+	_hand.refresh_nav()
 	await _animator.show_effect_results(results, inst)
 
 
@@ -794,7 +811,9 @@ func _consume_generated_token(card_ui: CardUI) -> void:
 	if holder != null and (ab == null or ab.tap):
 		_pay_tap(holder)
 	card_ui.clear_generated()
-	_hand.clear_inspected()
+	# Stay in the inspect view (no auto-pop): re-derive the tray so a tapped-out unit shows its
+	# empty state in place. The Inspect Abilities button withdraws separately via _pay_tap's prune.
+	_hand.refresh_inspect()
 
 
 # Spends the holder's action for the round — the tap half of an ability's cost, shared by
@@ -1208,6 +1227,9 @@ func _refresh() -> void:
 	_refresh_mana()
 	_board.refresh()
 	_hand.refresh()
+	# Turn-start untap (and initial setup) change which units can offer abilities — the canonical
+	# resync is also where the Inspect Abilities button gets its first/renewed evaluation.
+	_hand.refresh_nav()
 	_refresh_done_btn()
 
 

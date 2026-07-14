@@ -81,6 +81,8 @@ var _skin: NinePatchRect
 var _bucket: Dictionary = {}
 var _bucket_key: String = ""
 var _is_pressed_look := false
+var _glow_on := false
+var _glow_tween: Tween
 var _was_disabled := false   # see _process — Button has no signal for `disabled` changing
 var _was_toggled := false    # see _process — persistent toggle_mode state (e.g. active tabs)
 
@@ -234,6 +236,34 @@ func _apply() -> void:
 	add_theme_color_override("font_shadow_color", o)
 	add_theme_constant_override("shadow_offset_x", 0)
 	add_theme_constant_override("shadow_offset_y", 3)
+
+
+# A subtle "there's something to do here" glow: gently breathes the recolor tint toward white and
+# back, so the whole baked silhouette brightens in place — no overlay to clip, no halo to fight the
+# nine-patch. Idempotent; call set_glow(false) to settle back to the flat base_color.
+func set_glow(on: bool) -> void:
+	if on == _glow_on:
+		return
+	_glow_on = on
+	if _glow_tween != null:
+		_glow_tween.kill()
+		_glow_tween = null
+	if on and not Engine.is_editor_hint():
+		_glow_tween = create_tween().set_loops()
+		_glow_tween.tween_method(_set_glow_tint, 0.0, 1.0, 0.85).set_trans(Tween.TRANS_SINE)
+		_glow_tween.tween_method(_set_glow_tint, 1.0, 0.0, 0.85).set_trans(Tween.TRANS_SINE)
+	else:
+		_set_glow_tint(0.0)   # restore the flat base tint
+
+
+# Drives ONLY the skin's recolor parameter (not the full _apply path), so the pulse is cheap and
+# doesn't re-touch fonts/margins each frame. t: 0 = base_color, 1 = a lightened accent.
+func _set_glow_tint(t: float) -> void:
+	if _skin == null:
+		return
+	var mat: ShaderMaterial = _skin.material
+	if mat != null:
+		mat.set_shader_parameter("base_color", base_color.lightened(0.28 * t))
 
 
 func _on_resized() -> void:
