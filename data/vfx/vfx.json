@@ -1368,6 +1368,7 @@
 			"color": "7ddb4a"
 		},
 		"sustained": true,
+		"enabled": false,
 		"placeholder": true,
 		"concept": "A unit carrying poison/contagion — sickness that spreads; must look infectious, not enchanted.",
 		"explanation": "Sickly green bubbles rising off the card, occasionally popping into small drips.",
@@ -1383,6 +1384,7 @@
 			"duration": 1.1
 		},
 		"sustained": true,
+		"enabled": false,
 		"placeholder": true,
 		"concept": "A unit that will miss its attacks — its senses are clouded; the veil is on IT, not its target.",
 		"explanation": "A grey haze hanging over the card's upper half, drifting like slow smoke across the art.",
