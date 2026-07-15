@@ -126,7 +126,8 @@
 					]
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "earth_light_queen",
@@ -276,7 +277,8 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "earth_light_pawn_queen",
@@ -396,7 +398,8 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "earth_light_knight_queen",
@@ -417,11 +420,11 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Colossal skeletal wyrm reborn as living forest, faceted translucent green bone plating veined with pulsing molten-gold sap, ribcage sprouting fresh curling shoots and drifting spores, antler-horns of pale rooted living wood, tattered wing membranes woven from unfurling verdant foliage, glowing amber life-light in hollow sockets, talons of dark loam scattering seedlings, snorting a burst of pollen-sparks, deep shadowed backdrop strewn with faint golden motes, thick bold outlines, saturated stylized colors, centered heroic subject",
+				"prompt": "Colossal seated dragon grown entirely of living wood and layered leaves, ridged bark scales, broad wings stretched like veined canopy foliage, curved petal-horns and blossom-crested brow, glowing amber eyes, moss-plated chest, thorny root-clawed feet, coiled vine tail tipped with a wooden bud, towering over a flowering meadow of wildflowers and grass, warm sunlit rays, vibrant green and gold palette, painterly fantasy game art, full-body vertical composition",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/knight_queen.png",
-					"name": "Monster",
+					"source": "upload",
+					"path": "snap_knight_queen.png",
+					"name": "snap_knight_queen.png",
 					"mode": "img2img",
 					"denoise": 0.6
 				}
@@ -486,7 +489,8 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "earth_light_bishop_queen",
@@ -546,7 +550,8 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "earth_light_queen_rook",
@@ -576,7 +581,8 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "earth_light_queen_queen",

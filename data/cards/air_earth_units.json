@@ -382,23 +382,19 @@
 		"ranged": true,
 		"tool": {
 			"art": {
-				"prompt": "Rearing skeletal warhorse conjured from swirling translucent desert grit, bony ribs and skull compacted from packed grains split by drifting dust-currents, hollow luminous amber eyes, tattered barding streaming into cascades of loose pouring sand, mane whirling into desert gusts, hooves scattering sparks of blowing grit, wind-blurred rearing motion, warm saturated ochre palette over rippled sunlit dunes, thick bold outlines, centered heroic subject.",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Small stable building of sun-baked sandstone blocks and pale bleached timber, arched doorway hung with flowing white linen drapes and a red sash, a grainy golden sand-horse peering out with glowing amber eyes and a mane of streaming grains, woven baskets of dry grass, dunes and clear blue sky behind, warm ochre palette, storybook painterly digital illustration, soft directional daylight.",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/knight_rook.png",
-					"name": "Stable"
-				},
-				"inferredFrom": {
-					"concept": [
-						"knight_rook",
-						"darkness_darkness_knight_rook",
-						"darkness_fire_knight_rook"
-					],
-					"theme": [
-						"air_earth_bishop_knight",
-						"air_earth_bishop_rook",
-						"air_earth_knight"
-					]
+					"source": "upload",
+					"path": "snap_knight_rook.png",
+					"name": "snap_knight_rook.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}

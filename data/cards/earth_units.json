@@ -12,40 +12,113 @@
 		],
 		"chess_pieces": [
 			"pawn"
-		]
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "chibi cartoon spear infantryman, domed steel helmet crowned with a smooth round knob, olive-and-cream padded tunic with cobblestone-patterned trim, mossy green scarf, gauntleted grip on a tall spear trailing a ragged banner, round shield with pebbled boss, brown boots, stern scowl, small pebbles hovering at his feet, dust swirling, warm green-to-gold gradient sky over rolling hills, bold outlines, painterly cel shading, low heroic angle",
+				"ref": {
+					"source": "upload",
+					"path": "snap_pawn.png",
+					"name": "snap_pawn.png",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
 	},
 	{
 		"id": "earth_knight",
+		"display_name": "Earth Knight",
 		"elements": [
 			"earth"
 		],
-		"display_name": "Earth Knight",
 		"chess_pieces": [
 			"knight"
-		]
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "chibi armored warhorse mount, sturdy chestnut destrier pawing forward, olive-and-gold plated chanfron and chest barding etched with cobblestone patterns, moss-green saddle blanket, dark cloak fluttering, hooves cracking dry soil sending pebbles airborne, faint verdant veins glowing along its flanks, thick bold outlines, painterly cel shading, warm green-to-gold gradient sky, rolling hills, low heroic angle",
+				"ref": {
+					"source": "upload",
+					"path": "snap_knight.png",
+					"name": "snap_knight.png",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
 	},
 	{
 		"id": "earth_bishop",
+		"display_name": "Earth Bishop",
 		"elements": [
 			"earth"
 		],
-		"display_name": "Earth Bishop",
 		"chess_pieces": [
 			"bishop"
-		]
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "chibi cartoon cleric-priest, tall cloven mitre helm banded in gold, olive-and-cream vestments with cobblestone hems, green sash draped across chest, clutching a heavy gilded tome under one arm, raising a curling golden crozier trailing floating pebbles, stern young face, warm green-to-gold gradient sky, rolling hills, thick outlines, painterly cel shading, low heroic angle",
+				"ref": {
+					"source": "upload",
+					"path": "snap_bishop.png",
+					"name": "snap_bishop.png",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
 	},
 	{
 		"id": "earth_rook",
+		"display_name": "Earth Rook",
 		"elements": [
 			"earth"
 		],
-		"display_name": "Earth Rook",
 		"chess_pieces": [
 			"rook"
 		],
+		"ranged": true,
 		"abilities": [
 			"stone_charge"
-		]
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi cartoon fortified watchtower, tapered blocky masonry base with battlement crown, arched window sheltering a tiny helmeted defender, olive-and-cream cobblestone banner marked with emerald gems, mossy green pennant draped down one side, small boulders levitating around the parapet, sturdy planted stance, thick bold outlines, painterly cel shading, warm green-to-gold gradient sky, rolling hills, low heroic angle",
+				"ref": {
+					"source": "upload",
+					"path": "snap_rook.png",
+					"name": "snap_rook.png",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
 	},
 	{
 		"id": "earth_queen",
@@ -56,6 +129,24 @@
 		"chess_pieces": [
 			"queen"
 		],
-		"ranged": true
+		"ranged": true,
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi sovereign earth queen, dark braided hair, tall golden peaked crown set with green gems, imperious raised chin, olive-and-cream royal gown embossed with cobblestone patterns, heavy fur-trimmed moss-green cloak sweeping wide, one hand conjuring a levitating cracked orb laced with glowing green veins ringed by orbiting pebbles, commanding three-quarter stance, warm green-to-gold gradient sky, rolling hills, thick outlines, painterly cartoon shading",
+				"ref": {
+					"source": "upload",
+					"path": "snap_queen.png",
+					"name": "snap_queen.png",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
 	}
 ]

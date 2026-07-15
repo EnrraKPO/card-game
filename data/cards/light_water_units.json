@@ -123,7 +123,8 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "light_water_queen",
@@ -273,7 +274,8 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "light_water_pawn_queen",
@@ -398,7 +400,8 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "light_water_knight_queen",
@@ -594,7 +597,8 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "light_water_queen_queen",

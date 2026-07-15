@@ -57,6 +57,6 @@
         "denoise": 0.85
       }
     ],
-    "anchor": "custom"
+    "anchor": "canonical"
   }
 }

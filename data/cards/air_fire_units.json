@@ -135,7 +135,8 @@
 				"prompt": "Chibi black stone rook tower crackling with golden lightning, glowing yellow energy veins between dark bricks, red banner with lightning bolt emblem, tiny helmeted guard peeking from arched window, crenellated top with ruby diamond gem, glowing magic circle on ground, storm-lit gothic cathedral spires behind, dark dramatic sky, vibrant gold-orange-black palette, polished stylized game illustration",
 				"turbo": true
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "air_fire_queen",
@@ -297,7 +298,8 @@
 					]
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "air_fire_pawn_queen",
@@ -429,7 +431,8 @@
 					]
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "air_fire_knight_queen",
@@ -627,7 +630,8 @@
 					]
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "air_fire_queen_queen",

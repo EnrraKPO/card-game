@@ -130,7 +130,8 @@
 					]
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "earth_fire_queen",
@@ -280,7 +281,8 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "earth_fire_pawn_queen",
@@ -374,34 +376,31 @@
 	},
 	{
 		"id": "earth_fire_knight_rook",
+		"display_name": "Magma Stable",
 		"elements": [
 			"earth",
 			"fire"
 		],
-		"display_name": "Magma Stable",
 		"chess_pieces": [
 			"knight",
 			"rook"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
-				"prompt": "Skeletal warhorse rearing in an arched gateway of dark stalls, its faceted body glowing molten orange threaded with rivers of white-hot fire, cracked obsidian barding weeping incandescent droplets, hollow amber eyes blazing, mane erupting into ember sparks and rising heat shimmer, wings of drifting flame, hooves striking cascades of searing glow, scorched glassy ground, brooding volcanic haze, bold cel-shaded outlines, centered heroic subject",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Small barn-like stable of interlocking obsidian beams and cracked basalt blocks veined with glowing molten seams, arched stall doorway breathing ember-heat, a fiery-maned horse with a molten-cracked hide peering out, dripping-lava horseshoe on the wall, smoldering hay bales, fractured volcanic ground, ember-purple sky, incandescent rim lighting, painterly stylized fantasy digital art",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/knight_rook.png",
-					"name": "Stable"
-				},
-				"inferredFrom": {
-					"concept": [
-						"knight_rook",
-						"air_air_knight_rook",
-						"air_darkness_knight_rook"
-					],
-					"theme": [
-						"earth_fire_bishop_knight",
-						"earth_fire_bishop_rook",
-						"earth_fire_knight"
-					]
+					"source": "upload",
+					"path": "snap_knight_rook.png",
+					"name": "snap_knight_rook.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
@@ -494,7 +493,8 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "earth_fire_bishop_queen",
@@ -554,7 +554,8 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "earth_fire_queen_rook",
@@ -584,7 +585,8 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "earth_fire_queen_queen",

@@ -92,7 +92,8 @@
 				"attribute": "max_health",
 				"amount": 2
 			}
-		]
+		],
+		"ranged": true
 	},
 	{
 		"id": "pawn_queen",
@@ -214,7 +215,8 @@
 					}
 				]
 			}
-		]
+		],
+		"ranged": true
 	},
 	{
 		"id": "bishop_bishop",
@@ -339,7 +341,8 @@
 				"attribute": "max_health",
 				"amount": 3
 			}
-		]
+		],
+		"ranged": true
 	},
 	{
 		"id": "queen_queen",

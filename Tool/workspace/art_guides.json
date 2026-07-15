@@ -2,19 +2,19 @@
   "concept": {
     "bishop_bishop": {
       "label": "Hierophant",
-      "positive": "bearded, casting powerful magic",
+      "positive": "bearded, casting powerful magic. Human character, but the identity is strongly element-bound.",
       "negative": "",
       "ref": {
-        "card": "bishop_bishop"
+        "upload": "snap_bishop_bishop.png"
       },
       "seeded": true
     },
     "bishop": {
       "label": "Bishop",
-      "positive": "Inspired by a chess bishop",
+      "positive": "Inspired by a chess bishop. Human character, but the identity is strongly element-bound.",
       "negative": "bearded",
       "ref": {
-        "card": "bishop"
+        "upload": "snap_bishop.png"
       },
       "seeded": true
     },
@@ -23,7 +23,7 @@
       "positive": "A magical or mythical creature linked to the elemental theme",
       "negative": "",
       "ref": {
-        "card": "bishop_knight"
+        "upload": "snap_bishop_knight.png"
       },
       "seeded": true
     },
@@ -32,7 +32,7 @@
       "positive": "goddess, divine figure",
       "negative": "crown",
       "ref": {
-        "card": "bishop_queen"
+        "upload": "snap_bishop_queen.png"
       },
       "seeded": true
     },
@@ -41,16 +41,16 @@
       "positive": "a female military leader rallying troops, standing above ground level in a platform, pointing with a baton",
       "negative": "crown, giant",
       "ref": {
-        "card": "pawn_queen"
+        "upload": "snap_pawn_queen.png"
       },
       "seeded": true
     },
     "rook_rook": {
       "label": "Turret",
-      "positive": "a weaponized turret, the concept of the weapon on top matches the element theme",
+      "positive": "a weaponized turret, the concept of the weapon on top matches the element theme. Reads as a building, but the materials and identity are strongly element-bound.",
       "negative": "",
       "ref": {
-        "card": "rook_rook"
+        "upload": "snap_rook_rook.png"
       },
       "seeded": true
     },
@@ -59,16 +59,16 @@
       "positive": "heavy armor, closed helmet, blunt weapon, sigil",
       "negative": "cross themed imagery",
       "ref": {
-        "card": "bishop_pawn"
+        "upload": "snap_bishop_pawn.png"
       },
       "seeded": true
     },
     "bishop_rook": {
       "label": "Arcane Tower",
-      "positive": "A magic tower with a priest magician standing at the front, the tower itself is imposing and endowed with magical energy",
+      "positive": "A magic tower with a priest magician standing at the front, the tower itself is imposing and endowed with magical energy. Reads as a building, but the materials and identity are strongly element-bound.",
       "negative": "",
       "ref": {
-        "card": "bishop_rook"
+        "upload": "snap_bishop_rook.png"
       },
       "seeded": true
     },
@@ -77,7 +77,7 @@
       "positive": "The king of a realm, a star character, identity strongly derived from elemental theme of his kingdom. Wears a crown and wields a scepter.",
       "negative": "",
       "ref": {
-        "card": "king"
+        "upload": "snap_king.png"
       },
       "seeded": true
     },
@@ -86,7 +86,7 @@
       "positive": "Any animal that can be connected to the elemental theme",
       "negative": "",
       "ref": {
-        "card": "knight"
+        "upload": "snap_knight.png"
       },
       "seeded": true
     },
@@ -95,7 +95,7 @@
       "positive": "A strong powerful beast associated with the elemental theme",
       "negative": "",
       "ref": {
-        "card": "knight_knight"
+        "upload": "snap_knight_knight.png"
       },
       "seeded": true
     },
@@ -104,7 +104,7 @@
       "positive": "A knight mounted on a beast",
       "negative": "",
       "ref": {
-        "card": "knight_pawn"
+        "upload": "snap_knight_pawn.png"
       },
       "seeded": true
     },
@@ -113,16 +113,16 @@
       "positive": "any legendary monster beast that can be associated to the element theme",
       "negative": "",
       "ref": {
-        "card": "knight_queen"
+        "upload": "snap_knight_queen.png"
       },
       "seeded": true
     },
     "knight_rook": {
       "label": "Stable",
-      "positive": "small barn-like building with an animal inside, the building must look like it belongs in the world of the element theme. The architecture and the materials of the building must fit the elemental theme.",
+      "positive": "small barn-like building with an animal inside, the building must look like it belongs in the world of the element theme.  Reads as a building, but the materials and identity are strongly element-bound.",
       "negative": "",
       "ref": {
-        "card": "knight_rook"
+        "upload": "snap_knight_rook.png"
       },
       "seeded": true
     },
@@ -131,7 +131,7 @@
       "positive": "Just a pawn, small round helmet with a spherical peg on top. Wields a spear.",
       "negative": "",
       "ref": {
-        "card": "pawn"
+        "upload": "snap_pawn.png"
       },
       "seeded": true
     },
@@ -140,52 +140,52 @@
       "positive": "Armored soldier with a long sword and a shield, wearing light armor and a full helmet.",
       "negative": "",
       "ref": {
-        "card": "pawn_pawn"
+        "upload": "snap_pawn_pawn.png"
       },
       "seeded": true
     },
     "pawn_rook": {
       "label": "Barracks",
-      "positive": "Building that looks like a training facility, weapons rack and a solder standing at the front.",
+      "positive": "Building that looks like a training facility, weapons rack and a solder standing at the front. Reads as a building, but the materials and identity are strongly element-bound.",
       "negative": "",
       "ref": {
-        "card": "pawn_rook"
+        "upload": "snap_pawn_rook.png"
       },
       "seeded": true
     },
     "queen": {
       "label": "Queen",
-      "positive": "magnificent queen from an elemental realm, all her identity must communicate the identity thematic of her realm",
+      "positive": "magnificent queen from an elemental realm, all her identity must communicate the identity thematic of her realm. Human character, but the identity is strongly element-bound.",
       "negative": "",
       "ref": {
-        "card": "queen"
+        "upload": "snap_queen.png"
       },
       "seeded": true
     },
     "queen_queen": {
       "label": "Hero",
-      "positive": "Start character, a powerful female hero, her identity is strongly driven by her elemental theme",
+      "positive": "Start character, a powerful female hero, her identity is strongly driven by her elemental theme. She is a human character, but her identity is strongly element-bound.",
       "negative": "",
       "ref": {
-        "card": "queen_queen"
+        "upload": "snap_queen_queen.png"
       },
       "seeded": true
     },
     "queen_rook": {
       "label": "Castle",
-      "positive": "",
+      "positive": "A big imposing castle.  Reads as a building, but the materials and identity are strongly element-bound.",
       "negative": "",
       "ref": {
-        "card": "rook_queen"
+        "upload": "snap_rook_queen.png"
       },
       "seeded": true
     },
     "rook": {
       "label": "Rook",
-      "positive": "",
+      "positive": "A tower, inspired by a chess rook. Reads as a building, but the materials and identity are strongly element-bound.",
       "negative": "",
       "ref": {
-        "card": "rook"
+        "upload": "snap_rook.png"
       },
       "seeded": true
     }
@@ -197,13 +197,13 @@
       "negative": "cool palette, storm theme",
       "refs": [
         {
-          "card": "air_fire_pawn"
+          "upload": "snap_air_fire_pawn.png"
         },
         {
-          "card": "air_fire_knight"
+          "upload": "snap_air_fire_knight.png"
         },
         {
-          "card": "air_fire_queen"
+          "upload": "snap_air_fire_queen.png"
         }
       ],
       "seeded": true
@@ -214,10 +214,10 @@
       "negative": "poison, fire, undead",
       "refs": [
         {
-          "card": "air_darkness_knight"
+          "upload": "snap_air_darkness_knight.png"
         },
         {
-          "card": "air_darkness_queen"
+          "upload": "snap_air_darkness_queen.png"
         },
         {
           "upload": "air_darkness.png"
@@ -231,13 +231,13 @@
       "negative": "rock, stone, fire, furance",
       "refs": [
         {
-          "card": "earth_water_pawn"
+          "upload": "snap_earth_water_pawn.png"
         },
         {
-          "card": "earth_water_knight"
+          "upload": "snap_earth_water_knight.png"
         },
         {
-          "card": "earth_water_queen"
+          "upload": "snap_earth_water_queen.png"
         }
       ],
       "seeded": true
@@ -248,13 +248,13 @@
       "negative": "",
       "refs": [
         {
-          "card": "air_light_pawn"
+          "upload": "snap_air_light_pawn.png"
         },
         {
-          "card": "air_light_knight"
+          "upload": "snap_air_light_knight.png"
         },
         {
-          "card": "air_light_queen"
+          "upload": "snap_air_light_queen.png"
         }
       ],
       "seeded": true
@@ -265,42 +265,16 @@
       "negative": "",
       "refs": [
         {
-          "card": "darkness_water_pawn"
+          "upload": "snap_darkness_water_pawn.png"
         },
         {
-          "card": "darkness_water_knight"
+          "upload": "snap_darkness_water_knight.png"
         },
         {
-          "card": "darkness_water_queen"
+          "upload": "snap_darkness_water_queen.png"
         }
       ],
       "seeded": true
-    },
-    "bishop_rook": {
-      "label": "Arcane Tower",
-      "positive": "A magic tower with a priest magician standing at the front, the tower itself is imposing and endowed with magical energy",
-      "negative": "",
-      "refs": [
-        {
-          "upload": "bishop_rook.png"
-        }
-      ]
-    },
-    "darnkess_light": {
-      "label": "Undead",
-      "positive": "focus on the undead theme (zombies, skeletons, ghosts, etc), add eerie ominous glow",
-      "negative": "spirit",
-      "refs": [
-        {
-          "upload": "darkness_light_pawn.png"
-        },
-        {
-          "upload": "darkness_light_queen.png"
-        },
-        {
-          "upload": "darkness_light_knight.png"
-        }
-      ]
     },
     "fire_water": {
       "label": "Steam",
@@ -308,13 +282,13 @@
       "negative": "",
       "refs": [
         {
-          "card": "fire_water_pawn"
+          "upload": "snap_fire_water_pawn.png"
         },
         {
-          "card": "fire_water_knight"
+          "upload": "snap_fire_water_knight.png"
         },
         {
-          "card": "fire_water_queen"
+          "upload": "snap_fire_water_queen.png"
         }
       ],
       "seeded": true
@@ -325,13 +299,13 @@
       "negative": "fire, smoke, heavy materials",
       "refs": [
         {
-          "card": "light_water_pawn"
+          "upload": "snap_light_water_pawn.png"
         },
         {
-          "card": "light_water_knight"
+          "upload": "snap_light_water_knight.png"
         },
         {
-          "card": "light_water_queen"
+          "upload": "snap_light_water_queen.png"
         }
       ],
       "seeded": true
@@ -342,13 +316,13 @@
       "negative": "fire, multicolored, rainbow, heavenly, angel",
       "refs": [
         {
-          "card": "light_light_pawn"
+          "upload": "snap_light_light_pawn.png"
         },
         {
-          "card": "light_light_knight"
+          "upload": "snap_light_light_knight.png"
         },
         {
-          "card": "light_light_queen"
+          "upload": "snap_light_light_queen.png"
         }
       ],
       "seeded": true
@@ -359,13 +333,13 @@
       "negative": "lava, magma, volcanic",
       "refs": [
         {
-          "card": "fire_fire_pawn"
+          "upload": "snap_fire_fire_pawn.png"
         },
         {
-          "card": "fire_fire_knight"
+          "upload": "snap_fire_fire_knight.png"
         },
         {
-          "card": "fire_fire_queen"
+          "upload": "snap_fire_fire_queen.png"
         }
       ],
       "seeded": true
@@ -376,13 +350,13 @@
       "negative": "lightning, electricity, thunder, electric",
       "refs": [
         {
-          "card": "air_water_pawn"
+          "upload": "snap_air_water_pawn.png"
         },
         {
-          "card": "air_water_knight"
+          "upload": "snap_air_water_knight.png"
         },
         {
-          "card": "air_water_queen"
+          "upload": "snap_air_water_queen.png"
         }
       ],
       "seeded": true
@@ -410,13 +384,13 @@
       "negative": "heaven, angel, holy",
       "refs": [
         {
-          "card": "air_air_pawn"
+          "upload": "snap_air_air_pawn.png"
         },
         {
-          "card": "air_air_knight"
+          "upload": "snap_air_air_knight.png"
         },
         {
-          "card": "air_air_queen"
+          "upload": "snap_air_air_queen.png"
         }
       ],
       "seeded": true
@@ -427,13 +401,13 @@
       "negative": "beach",
       "refs": [
         {
-          "card": "air_earth_pawn"
+          "upload": "snap_air_earth_pawn.png"
         },
         {
-          "card": "air_earth_knight"
+          "upload": "snap_air_earth_knight.png"
         },
         {
-          "card": "air_earth_queen"
+          "upload": "snap_air_earth_queen.png"
         }
       ],
       "seeded": true
@@ -444,30 +418,30 @@
       "negative": "demon, undead",
       "refs": [
         {
-          "card": "darkness_pawn"
+          "upload": "snap_darkness_pawn.png"
         },
         {
-          "card": "darkness_knight"
+          "upload": "snap_darkness_knight.png"
         },
         {
-          "card": "darkness_queen"
+          "upload": "snap_darkness_queen.png"
         }
       ],
       "seeded": true
     },
     "darkness_darkness": {
       "label": "Pure darkness",
-      "positive": "Units made of pure darkness",
-      "negative": "",
+      "positive": "Units made of pure darkness, crescent, black moon, pitch black smoke",
+      "negative": "fire",
       "refs": [
         {
-          "card": "darkness_darkness_pawn"
+          "upload": "snap_darkness_darkness_pawn.png"
         },
         {
-          "card": "darkness_darkness_knight"
+          "upload": "snap_darkness_darkness_knight.png"
         },
         {
-          "card": "darkness_darkness_queen"
+          "upload": "snap_darkness_darkness_queen.png"
         }
       ],
       "seeded": true
@@ -478,10 +452,10 @@
       "negative": "earth, ground",
       "refs": [
         {
-          "card": "darkness_earth_knight"
+          "upload": "snap_darkness_earth_knight.png"
         },
         {
-          "card": "darkness_earth_queen"
+          "upload": "snap_darkness_earth_queen.png"
         }
       ],
       "seeded": true
@@ -492,13 +466,13 @@
       "negative": "",
       "refs": [
         {
-          "card": "darkness_fire_pawn"
+          "upload": "snap_darkness_fire_pawn.png"
         },
         {
-          "card": "darkness_fire_knight"
+          "upload": "snap_darkness_fire_knight.png"
         },
         {
-          "card": "darkness_fire_queen"
+          "upload": "snap_darkness_fire_queen.png"
         }
       ],
       "seeded": true
@@ -509,13 +483,13 @@
       "negative": "spirit",
       "refs": [
         {
-          "card": "darkness_light_pawn"
+          "upload": "snap_darkness_light_pawn.png"
         },
         {
-          "card": "darkness_light_knight"
+          "upload": "snap_darkness_light_knight.png"
         },
         {
-          "card": "darkness_light_queen"
+          "upload": "snap_darkness_light_queen.png"
         }
       ],
       "seeded": true
@@ -539,17 +513,17 @@
     },
     "earth_earth": {
       "label": "Pure Earth",
-      "positive": "unit from an earth elemental realm, strong earth elemental theme, powerful earth magic",
-      "negative": "rock, crystal, nature",
+      "positive": "unit from an earth elemental realm, strong earth elemental theme, powerful earth magic, unit composed mainly by earth materials",
+      "negative": "rock, crystal, nature, stone, darkness",
       "refs": [
         {
-          "card": "earth_earth_pawn"
+          "upload": "snap_earth_earth_pawn.png"
         },
         {
-          "card": "earth_earth_knight"
+          "upload": "snap_earth_earth_knight.png"
         },
         {
-          "card": "earth_earth_queen"
+          "upload": "snap_earth_earth_queen.png"
         }
       ],
       "seeded": true
@@ -560,13 +534,13 @@
       "negative": "",
       "refs": [
         {
-          "card": "earth_fire_pawn"
+          "upload": "snap_earth_fire_pawn.png"
         },
         {
-          "card": "earth_fire_knight"
+          "upload": "snap_earth_fire_knight.png"
         },
         {
-          "card": "earth_fire_queen"
+          "upload": "snap_earth_fire_queen.png"
         }
       ],
       "seeded": true
@@ -577,10 +551,10 @@
       "negative": "",
       "refs": [
         {
-          "card": "earth_light_knight"
+          "upload": "snap_earth_light_knight.png"
         },
         {
-          "card": "earth_light_queen"
+          "upload": "snap_earth_light_queen.png"
         },
         {
           "upload": "earth_light_pawn.png"
@@ -611,13 +585,13 @@
       "negative": "zombie, demon",
       "refs": [
         {
-          "card": "fire_light_pawn"
+          "upload": "snap_fire_light_pawn.png"
         },
         {
-          "card": "fire_light_knight"
+          "upload": "snap_fire_light_knight.png"
         },
         {
-          "card": "fire_light_queen"
+          "upload": "snap_fire_light_queen.png"
         }
       ],
       "seeded": true
@@ -628,13 +602,13 @@
       "negative": "holy, angel, heaven, wings",
       "refs": [
         {
-          "card": "light_pawn"
+          "upload": "snap_light_pawn.png"
         },
         {
-          "card": "light_knight"
+          "upload": "snap_light_knight.png"
         },
         {
-          "card": "light_queen"
+          "upload": "snap_light_queen.png"
         }
       ],
       "seeded": true
@@ -645,13 +619,13 @@
       "negative": "",
       "refs": [
         {
-          "card": "water_pawn"
+          "upload": "snap_water_pawn.png"
         },
         {
-          "card": "water_knight"
+          "upload": "snap_water_knight.png"
         },
         {
-          "card": "water_queen"
+          "upload": "snap_water_queen.png"
         }
       ],
       "seeded": true
@@ -662,13 +636,13 @@
       "negative": "",
       "refs": [
         {
-          "card": "water_water_pawn"
+          "upload": "snap_water_water_pawn.png"
         },
         {
-          "card": "water_water_knight"
+          "upload": "snap_water_water_knight.png"
         },
         {
-          "card": "water_water_queen"
+          "upload": "snap_water_water_queen.png"
         }
       ],
       "seeded": true

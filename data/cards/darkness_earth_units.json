@@ -126,7 +126,8 @@
 					]
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "darkness_earth_queen",
@@ -276,7 +277,8 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "darkness_earth_pawn_queen",
@@ -370,34 +372,31 @@
 	},
 	{
 		"id": "darkness_earth_knight_rook",
+		"display_name": "Rock Stable",
 		"elements": [
 			"darkness",
 			"earth"
 		],
-		"display_name": "Rock Stable",
 		"chess_pieces": [
 			"knight",
 			"rook"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
-				"prompt": "Skeletal warhorse rearing from an arched gateway of stacked faceted dark stalls, hollow eye sockets seething with molten violet, cracked plated barding of splintered mineral, broad wings spread as jagged crystalline shards, streaming shard-spike mane, hooves striking bursts of amethyst sparks, gilded fracture veins, floating stone fragments, deep shadowed void, thick bold outlines, saturated stylized colors, centered heroic subject",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Small barn-like stable carved from faceted black volcanic glass, mortared dark stone blocks and jagged mineral buttresses, half-doors framed in polished obsidian, a spirited crystal-maned steed peering from the shadowed stall, violet vein-seams glowing along its plated flanks, hanging luminous cyan mineral lantern, mounded shimmering ore hay, standing in a torchlit cavern of purple-lit stalagmites, painterly fantasy illustration, bold outlines, warm amber and violet palette.",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/knight_rook.png",
-					"name": "Stable"
-				},
-				"inferredFrom": {
-					"concept": [
-						"knight_rook",
-						"air_air_knight_rook",
-						"air_fire_knight_rook"
-					],
-					"theme": [
-						"darkness_earth_bishop_knight",
-						"darkness_earth_knight",
-						"darkness_earth_knight_knight"
-					]
+					"source": "upload",
+					"path": "snap_knight_rook.png",
+					"name": "snap_knight_rook.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
@@ -490,7 +489,8 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "darkness_earth_bishop_queen",
@@ -550,7 +550,8 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "darkness_earth_queen_rook",
@@ -580,7 +581,8 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "darkness_earth_queen_queen",

@@ -134,7 +134,8 @@
 					]
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "earth_water_queen",
@@ -304,7 +305,8 @@
 					]
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "earth_water_pawn_queen",
@@ -447,7 +449,8 @@
 					]
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "earth_water_knight_queen",
@@ -468,11 +471,11 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "A hulking clay dragon rearing on thick stubby limbs, body sculpted from soft wet earth with glossy slick smears and thumb-pressed dents across a cracking drying hide, swept-back muddy horns dribbling wet brown runnels, sagging membranous wings of packed damp mud, glowing amber eyes, centered figure, dark background with warm ochre haze and faint teal mist, soft glowing ground circle, dark fantasy digital painting.",
+				"prompt": "Colossal winged dragon sculpted entirely from soft wet clay, glossy mud-slick scales dripping brown ooze, sweeping membranous wings of stretched terracotta hide, curved ochre horns and claws of dried sculpted earth, spined ridged tail coiling through a splashing marsh, warm tan and umber palette, hazy overcast sky, low heroic three-quarter angle, glossy claymation render, painterly stylized fantasy, centered full-body composition",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/knight_queen.png",
-					"name": "Monster",
+					"source": "upload",
+					"path": "snap_knight_queen.png",
+					"name": "snap_knight_queen.png",
 					"mode": "img2img",
 					"denoise": 0.6
 				}
@@ -640,7 +643,8 @@
 					]
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "earth_water_queen_queen",

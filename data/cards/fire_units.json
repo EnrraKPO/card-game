@@ -45,7 +45,8 @@
 		],
 		"abilities": [
 			"warding_charge"
-		]
+		],
+		"ranged": true
 	},
 	{
 		"id": "fire_queen",
@@ -100,7 +101,8 @@
 		"chess_pieces": [
 			"pawn",
 			"rook"
-		]
+		],
+		"ranged": true
 	},
 	{
 		"id": "fire_pawn_queen",
@@ -144,7 +146,8 @@
 		"chess_pieces": [
 			"knight",
 			"rook"
-		]
+		],
+		"ranged": true
 	},
 	{
 		"id": "fire_knight_queen",
@@ -177,7 +180,8 @@
 		"chess_pieces": [
 			"bishop",
 			"rook"
-		]
+		],
+		"ranged": true
 	},
 	{
 		"id": "fire_bishop_queen",
@@ -199,18 +203,38 @@
 		"chess_pieces": [
 			"rook",
 			"rook"
-		]
+		],
+		"ranged": true
 	},
 	{
 		"id": "fire_queen_rook",
+		"display_name": "Fire Castle",
 		"elements": [
 			"fire"
 		],
-		"display_name": "Fire Castle",
 		"chess_pieces": [
 			"queen",
 			"rook"
-		]
+		],
+		"ranged": true,
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Imposing multi-towered fortress of dark scorched brick veined with glowing ember seams, three crenellated spires capped with flame-shaped crimson roofs, hanging banners bearing gold flame crests, iron-studded gatehouse framed by braziers pouring bright fire, wisps of heat rising, warm orange desert gradient backdrop, bold cel-shaded fantasy cartoon style, heroic full-body composition",
+				"ref": {
+					"source": "upload",
+					"path": "snap_rook_queen.png",
+					"name": "snap_rook_queen.png",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
 	},
 	{
 		"id": "fire_queen_queen",

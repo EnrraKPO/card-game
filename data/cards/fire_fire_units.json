@@ -160,7 +160,8 @@
 				}
 			}
 		},
-		"display_name": "Pure Fire Rook"
+		"display_name": "Pure Fire Rook",
+		"ranged": true
 	},
 	{
 		"id": "fire_fire_queen",
@@ -314,7 +315,8 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "fire_fire_pawn_queen",
@@ -440,7 +442,8 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "fire_fire_knight_queen",
@@ -632,7 +635,8 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "fire_fire_queen_queen",

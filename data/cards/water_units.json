@@ -45,7 +45,8 @@
 		],
 		"abilities": [
 			"tide_charge"
-		]
+		],
+		"ranged": true
 	},
 	{
 		"id": "water_queen",
@@ -100,7 +101,8 @@
 		"chess_pieces": [
 			"pawn",
 			"rook"
-		]
+		],
+		"ranged": true
 	},
 	{
 		"id": "water_pawn_queen",
@@ -144,7 +146,8 @@
 		"chess_pieces": [
 			"knight",
 			"rook"
-		]
+		],
+		"ranged": true
 	},
 	{
 		"id": "water_knight_queen",
@@ -177,18 +180,37 @@
 		"chess_pieces": [
 			"bishop",
 			"rook"
-		]
+		],
+		"ranged": true
 	},
 	{
 		"id": "water_bishop_queen",
+		"display_name": "Water Deity",
 		"elements": [
 			"water"
 		],
-		"display_name": "Water Deity",
 		"chess_pieces": [
 			"bishop",
 			"queen"
-		]
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Serene aquatic goddess standing frontally, arms raised in blessing, glowing eyes, flowing white-and-deep-blue ceremonial robes trimmed with gold swirl patterns and sapphire teardrops, radiant rippling halo of spinning water behind her head, cresting wave headdress, one hand cradling a swirling water orb, calm shimmering sea underfoot, teal gradient sky, bold clean cartoon outlines, cel-shaded, cool aquatic palette, soft even lighting",
+				"ref": {
+					"source": "upload",
+					"path": "snap_bishop_queen.png",
+					"name": "snap_bishop_queen.png",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
 	},
 	{
 		"id": "water_rook_rook",
@@ -199,18 +221,38 @@
 		"chess_pieces": [
 			"rook",
 			"rook"
-		]
+		],
+		"ranged": true
 	},
 	{
 		"id": "water_queen_rook",
+		"display_name": "Water Castle",
 		"elements": [
 			"water"
 		],
-		"display_name": "Water Castle",
 		"chess_pieces": [
 			"queen",
 			"rook"
-		]
+		],
+		"ranged": true,
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Imposing multi-towered stronghold carved from glassy blue-tinged stone, tall central keep flanked by two conical-roofed spire towers, ramparts streaming with cascading waterfalls, glowing sapphire swirl crest above the gate, teal-and-cream banners rippling like currents, moat of turquoise water lapping the walls, splashing droplets, bold clean cartoon outlines, cel-shaded, cool aquatic palette, soft even lighting, gradient teal sky",
+				"ref": {
+					"source": "upload",
+					"path": "snap_rook_queen.png",
+					"name": "snap_rook_queen.png",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
 	},
 	{
 		"id": "water_queen_queen",

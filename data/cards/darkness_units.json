@@ -27,7 +27,25 @@
 					"of": "own"
 				}
 			}
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Chibi foot soldier, rounded dome helmet crowned with a small orb finial, planting a violet-crystal-tipped spear mid-stride, round shield swirling with dark energy, blackened plate over deep-purple tunic, tattered indigo cape and scarf, trailing violet smoke wisps, glowing amethyst eyes, starry twilight moor, floating debris, dramatic rim lighting, bold cartoon fantasy illustration, three-quarter full-body view",
+				"ref": {
+					"source": "upload",
+					"path": "snap_pawn.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_pawn.png",
+					"theme": [
+						"snap_darkness_pawn.png",
+						"snap_darkness_knight.png",
+						"snap_darkness_queen.png"
+					],
+					"mode": "concept"
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_knight",
@@ -37,7 +55,25 @@
 		"display_name": "Darkness Knight",
 		"chess_pieces": [
 			"knight"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Chibi armored warhorse mid-charge, obsidian coat with flowing indigo mane and tail, silvered blackplate barding etched with amethyst filigree, glowing violet crescent medallion at its chest, hooves trailing purple smoke, fierce eyes lit with lilac light, floating stardust and shadow wisps, twilight starfield plains, bold cartoon fantasy illustration, dramatic rim lighting",
+				"ref": {
+					"source": "upload",
+					"path": "snap_knight.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_knight.png",
+					"theme": [
+						"snap_darkness_pawn.png",
+						"snap_darkness_knight.png",
+						"snap_darkness_queen.png"
+					],
+					"mode": "concept"
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_bishop",
@@ -48,7 +84,25 @@
 		"chess_pieces": [
 			"bishop"
 		],
-		"ranged": true
+		"ranged": true,
+		"tool": {
+			"art": {
+				"prompt": "Chibi cleric-priest in a tall cleft mitre-style helm, cradling a heavy grimoire and raising a curling shepherd's-crook staff wreathed in swirling violet shadow-flame, robes of deep black and silver with amethyst-gem clasps, hood over stern young face, drifting dark wisps and floating gemstones, starry twilight plains, purple palette, dramatic rim lighting, bold clean-outline cartoon illustration, full-body three-quarter view",
+				"ref": {
+					"source": "upload",
+					"path": "snap_bishop.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_bishop.png",
+					"theme": [
+						"snap_darkness_pawn.png",
+						"snap_darkness_knight.png",
+						"snap_darkness_queen.png"
+					],
+					"mode": "concept"
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_rook",
@@ -61,7 +115,26 @@
 		],
 		"abilities": [
 			"umbral_charge"
-		]
+		],
+		"ranged": true,
+		"tool": {
+			"art": {
+				"prompt": "Squat crenellated stone watchtower with a tapered battered base, arched window slit and a helmeted sentry peering out, hung with a long amethyst pennant, built from dark obsidian-black blocks veined with glowing violet seams, wisps of purple shadow curling from its battlements, twilight starlit plains, thick clean outlines, bold cartoon game art, dramatic rim lighting",
+				"ref": {
+					"source": "upload",
+					"path": "snap_rook.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_rook.png",
+					"theme": [
+						"snap_darkness_pawn.png",
+						"snap_darkness_knight.png",
+						"snap_darkness_queen.png"
+					],
+					"mode": "concept"
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_queen",
@@ -72,7 +145,25 @@
 		"chess_pieces": [
 			"queen"
 		],
-		"ranged": true
+		"ranged": true,
+		"tool": {
+			"art": {
+				"prompt": "Chibi sovereign spellcaster woman, long jet-black hair, obsidian-and-silver pointed crown set with deep violet gems, floating full-front pose, flowing midnight robe with shadow-swept fur mantle and glowing amethyst filigree, one hand conjuring a swirling sphere of living gloom trailing dark ribbons, levitating violet shards, starlit dusk moor, deep purple palette, soft rim light, bold clean-outline cartoon fantasy illustration",
+				"ref": {
+					"source": "upload",
+					"path": "snap_queen.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_queen.png",
+					"theme": [
+						"snap_darkness_pawn.png",
+						"snap_darkness_knight.png",
+						"snap_darkness_queen.png"
+					],
+					"mode": "concept"
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_pawn_pawn",
@@ -83,7 +174,25 @@
 		"chess_pieces": [
 			"pawn",
 			"pawn"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Chibi armored footman mid-stride, raising a long straight blade wreathed in swirling violet shadow, a full visored helm hiding the face, dark blackened plate with silver trim over quilted charcoal cloth, a tall kite shield rimmed in glowing amethyst runes of drifting purple mist, brown leather boots and belt, twilight purple plains and starry sky, dark violet palette, dramatic rim lighting, floating shadow embers, bold clean-outline cartoon fantasy illustration",
+				"ref": {
+					"source": "upload",
+					"path": "snap_pawn_pawn.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_pawn_pawn.png",
+					"theme": [
+						"snap_darkness_pawn.png",
+						"snap_darkness_knight.png",
+						"snap_darkness_queen.png"
+					],
+					"mode": "concept"
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_knight_pawn",
@@ -94,7 +203,25 @@
 		"chess_pieces": [
 			"knight",
 			"pawn"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Armored lancer knight astride a barded charging steed, black-and-silver plate etched with violet crystal filigree, dark visored helm crowned with amethyst-glowing plume, couched lance trailing purple smoke wisps, tattered violet pennant, mount's mane streaming shadowy energy, hooves sparking violet light, starry twilight plains, deep purple palette, bold clean outlines, dramatic rim lighting, dynamic three-quarter charge",
+				"ref": {
+					"source": "upload",
+					"path": "snap_knight_pawn.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_knight_pawn.png",
+					"theme": [
+						"snap_darkness_pawn.png",
+						"snap_darkness_knight.png",
+						"snap_darkness_queen.png"
+					],
+					"mode": "concept"
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_bishop_pawn",
@@ -105,7 +232,25 @@
 		"chess_pieces": [
 			"bishop",
 			"pawn"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Chibi heavy-plated warrior in a fully closed visored helm, hefting a spiked flanged mace and a broad tower shield, silver-and-violet blackened plate armor with amethyst studs, tattered dark cape, glowing violet holy sigil radiating on the shield, purple wisps curling from the mace, stern stance, twilight starry plains, bold cartoon game art, dramatic rim lighting",
+				"ref": {
+					"source": "upload",
+					"path": "snap_bishop_pawn.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_bishop_pawn.png",
+					"theme": [
+						"snap_darkness_pawn.png",
+						"snap_darkness_knight.png",
+						"snap_darkness_queen.png"
+					],
+					"mode": "concept"
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_pawn_rook",
@@ -116,7 +261,26 @@
 		"chess_pieces": [
 			"pawn",
 			"rook"
-		]
+		],
+		"ranged": true,
+		"tool": {
+			"art": {
+				"prompt": "Squat crenellated stone barracks fortress carved from black obsidian bricks, arched doorway glowing with violet inner light, hanging dark banner sewn with amethyst gems, wooden weapon rack bristling with violet-tipped spears, chibi footman sentry in gray plate and purple scarf holding a crystal spear and round shield swirling with purple energy, floating violet wisps, twilight starry sky, deep purple hills, bold cartoon game art, dramatic rim lighting",
+				"ref": {
+					"source": "upload",
+					"path": "snap_pawn_rook.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_pawn_rook.png",
+					"theme": [
+						"snap_darkness_pawn.png",
+						"snap_darkness_knight.png",
+						"snap_darkness_queen.png"
+					],
+					"mode": "concept"
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_pawn_queen",
@@ -127,7 +291,25 @@
 		"chess_pieces": [
 			"pawn",
 			"queen"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Chibi armored female battle-commander atop a dark stone rampart, one arm thrust forward leveling a slender violet-tipped command rod, gray-and-silver plate over a fitted tunic, streaming amethyst cloak, dark braided hair, stern brow lit by glowing purple wisps, spear-bristling shadow troops surging below, twilight purple starlit fields, dramatic rim lighting, bold cartoon game art, full-body three-quarter view",
+				"ref": {
+					"source": "upload",
+					"path": "snap_pawn_queen.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_pawn_queen.png",
+					"theme": [
+						"snap_darkness_pawn.png",
+						"snap_darkness_knight.png",
+						"snap_darkness_queen.png"
+					],
+					"mode": "concept"
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_knight_knight",
@@ -138,7 +320,25 @@
 		"chess_pieces": [
 			"knight",
 			"knight"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Massive armored charging bull beast, head lowered with polished violet-sheened horns, black hide rippling with muscle, silver-and-amethyst faceplate and shattered-crystal nose ring, tattered dark cape streaming purple energy, hooves striking sparks of violet smoke, glowing wisps and floating debris, starry twilight plains, deep purple palette, bold cartoon outlines, dramatic rim lighting, full-body three-quarter charge",
+				"ref": {
+					"source": "upload",
+					"path": "snap_knight_knight.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_knight_knight.png",
+					"theme": [
+						"snap_darkness_pawn.png",
+						"snap_darkness_knight.png",
+						"snap_darkness_queen.png"
+					],
+					"mode": "concept"
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_bishop_knight",
@@ -149,7 +349,25 @@
 		"chess_pieces": [
 			"bishop",
 			"knight"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Majestic single-horned mythic steed, obsidian-black coat with silver filigree swirls along its flank, flowing violet-glowing mane and tail streaming with purple smoke wisps, a spiraled amethyst horn crackling with dark energy, pawing the ground amid floating gemstone shards, deep twilight plains and starry night sky, dramatic rim lighting, thick clean outlines, bold cartoon fantasy illustration, full-body three-quarter view",
+				"ref": {
+					"source": "upload",
+					"path": "snap_bishop_knight.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_bishop_knight.png",
+					"theme": [
+						"snap_darkness_pawn.png",
+						"snap_darkness_knight.png",
+						"snap_darkness_queen.png"
+					],
+					"mode": "concept"
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_knight_rook",
@@ -160,7 +378,26 @@
 		"chess_pieces": [
 			"knight",
 			"rook"
-		]
+		],
+		"ranged": true,
+		"tool": {
+			"art": {
+				"prompt": "Small fortified stable of blackened timber and dark slate stone bound with tarnished silver fittings, a shadowy warhorse peering from its half-door with glowing violet eyes and smoky mane, hanging amethyst-flame lantern, twilight banner and horseshoe charm, bundled dusk-blue hay, starry purple night meadow, clean bold-outline cartoon fantasy art, dramatic violet rim lighting, floating dark wisps",
+				"ref": {
+					"source": "upload",
+					"path": "snap_knight_rook.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_knight_rook.png",
+					"theme": [
+						"snap_darkness_pawn.png",
+						"snap_darkness_knight.png",
+						"snap_darkness_queen.png"
+					],
+					"mode": "concept"
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_knight_queen",
@@ -171,7 +408,25 @@
 		"chess_pieces": [
 			"knight",
 			"queen"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Colossal winged dragon perched on hind legs, obsidian-black scales edged in silver, membranous wings unfurled trailing violet smoke, amethyst-crystal spines cresting its spine, molten purple eyes and glowing shadow-mist breath, curling tail tipped with a gemstone barb, towering above tiny huts on starry twilight plains, bold clean cartoon outlines, dramatic rim lighting, deep purple palette.",
+				"ref": {
+					"source": "upload",
+					"path": "snap_knight_queen.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_knight_queen.png",
+					"theme": [
+						"snap_darkness_pawn.png",
+						"snap_darkness_knight.png",
+						"snap_darkness_queen.png"
+					],
+					"mode": "concept"
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_bishop_bishop",
@@ -182,7 +437,25 @@
 		"chess_pieces": [
 			"bishop",
 			"bishop"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Chibi bearded high priest, tall pointed mitre crowned with an amethyst gem, long flowing white beard, ornate black-and-silver ceremonial robe with violet crystal filigree and fur-trimmed collar, one hand raised channeling swirling dark violet spellwork, gripping a tall staff topped with a glowing purple crescent orb, levitating gemstones, starry twilight plains, deep purple palette, dramatic rim lighting, bold clean cartoon outlines, full-body view",
+				"ref": {
+					"source": "upload",
+					"path": "snap_bishop_bishop.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_bishop_bishop.png",
+					"theme": [
+						"snap_darkness_pawn.png",
+						"snap_darkness_knight.png",
+						"snap_darkness_queen.png"
+					],
+					"mode": "concept"
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_bishop_rook",
@@ -193,18 +466,55 @@
 		"chess_pieces": [
 			"bishop",
 			"rook"
-		]
+		],
+		"ranged": true,
+		"tool": {
+			"art": {
+				"prompt": "Towering stone spellcaster's turret wreathed in swirling violet magic, a chibi hooded priest-magician in black-and-silver robes with mitre hat standing at its arched glowing doorway, clutching an open grimoire and an amethyst-crowned staff, ringed spires flying dark purple wisps, floating violet gemstones, starry twilight hills, thick clean outlines, dramatic rim lighting",
+				"ref": {
+					"source": "upload",
+					"path": "snap_bishop_rook.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_bishop_rook.png",
+					"theme": [
+						"snap_darkness_pawn.png",
+						"snap_darkness_knight.png",
+						"snap_darkness_queen.png"
+					],
+					"mode": "concept"
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_bishop_queen",
+		"display_name": "Darkness Deity",
 		"elements": [
 			"darkness"
 		],
-		"display_name": "Darkness Deity",
 		"chess_pieces": [
 			"bishop",
 			"queen"
-		]
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi dark goddess with luminous violet eyes, flowing black-and-silver ceremonial robes threaded with amethyst filigree, radiant tiered headdress of dark crystalline spires, arms raised summoning swirling purple void-mist, cradling a glowing crescent-moon orb, levitating gemstone shards, starlit twilight plains, deep purple palette, dramatic rim lighting, clean bold-outline digital fantasy illustration, full-body front pose",
+				"ref": {
+					"source": "upload",
+					"path": "snap_bishop_queen.png",
+					"name": "snap_bishop_queen.png",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_rook_rook",
@@ -215,18 +525,56 @@
 		"chess_pieces": [
 			"rook",
 			"rook"
-		]
+		],
+		"ranged": true,
+		"tool": {
+			"art": {
+				"prompt": "Squat crenellated fortress tower of polished black-and-silver stone, mounted atop it a swiveling bolt-thrower forged from dark iron and amethyst crystal, loaded with a glowing violet spear-bolt, purple energy crackling along its firing arms, drifting shadow-smoke and floating debris, starry twilight plains with distant dark hills, thick clean outlines, bold cartoon fantasy illustration, dramatic violet rim lighting",
+				"ref": {
+					"source": "upload",
+					"path": "snap_rook_rook.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_rook_rook.png",
+					"theme": [
+						"snap_darkness_pawn.png",
+						"snap_darkness_knight.png",
+						"snap_darkness_queen.png"
+					],
+					"mode": "concept"
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_queen_rook",
+		"display_name": "Darkness Castle",
 		"elements": [
 			"darkness"
 		],
-		"display_name": "Darkness Castle",
 		"chess_pieces": [
 			"queen",
 			"rook"
-		]
+		],
+		"ranged": true,
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Imposing multi-towered fortress of polished black stone, conical spires tipped with amethyst crystals, tall central keep flanked by twin turrets, deep violet banners with silver filigree hanging from battlements, glowing violet-lit arrow slits and iron gate wreathed in purple smoke wisps, floating gemstone shards, starry twilight sky, thick clean outlines, dramatic rim lighting, bold cartoon fantasy illustration",
+				"ref": {
+					"source": "upload",
+					"path": "snap_rook_queen.png",
+					"name": "snap_rook_queen.png",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_queen_queen",
@@ -237,6 +585,24 @@
 		"chess_pieces": [
 			"queen",
 			"queen"
-		]
+		],
+		"tool": {
+			"art": {
+				"prompt": "Chibi warrior heroine, fierce dark-skinned face with wild curly hair, brandishing a glowing shadow-forged greatsword overhead, spiked black-and-silver plate armor with amethyst gems, tattered violet cape swirling, gauntlet trailing purple smoke wisps, planted battle stance, deep twilight plains under a starlit indigo sky, dramatic rim lighting, thick clean outlines, bold cartoon fantasy illustration, full-body view",
+				"ref": {
+					"source": "upload",
+					"path": "snap_queen_queen.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_queen_queen.png",
+					"theme": [
+						"snap_darkness_pawn.png",
+						"snap_darkness_knight.png",
+						"snap_darkness_queen.png"
+					],
+					"mode": "concept"
+				}
+			}
+		}
 	}
 ]

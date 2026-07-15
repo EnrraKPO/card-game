@@ -131,7 +131,8 @@
 					]
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "darkness_light_queen",
@@ -200,70 +201,60 @@
 	},
 	{
 		"id": "darkness_light_knight_pawn",
+		"display_name": "Undead Cavalry",
 		"elements": [
 			"darkness",
 			"light"
 		],
-		"display_name": "Undead Cavalry",
 		"chess_pieces": [
 			"knight",
 			"pawn"
 		],
 		"tool": {
 			"art": {
-				"prompt": "Charging skeletal warhorse of bleached bone and blackened plate barding, hollow eye sockets and cracked ribs pouring ghost-green fire, a gaunt bone rider crouched low leveling a splintered lance streaming teal flame, tattered shredded caparison whipping behind, glowing aquamarine crystal shards set in the barding, grave-mist curling off bony galloping hooves, brooding stormy graveyard sky, thick outlines, bold saturated colors.",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Skeletal armored lancer in cracked black-and-bronze plate with domed visored helm and glowing teal eye-sockets, hoisting a tattered ragged pennant-lance, riding a bone-armored decayed steed with skull-plated brow and crystalline hooves, tattered dark barding, charging through a fog-choked gothic graveyard of leaning tombstones, eerie teal glow, bone-white palette, moody painterly fantasy illustration",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/knight_pawn.png",
-					"name": "Cavalry"
-				},
-				"inferredFrom": {
-					"concept": [
-						"knight_pawn",
-						"air_fire_knight_pawn",
-						"earth_water_knight_pawn"
-					],
-					"theme": [
-						"darkness_light_knight",
-						"darkness_light_pawn",
-						"darkness_light_queen",
-						"darkness_light_bishop"
-					]
+					"source": "upload",
+					"path": "snap_knight_pawn.png",
+					"name": "snap_knight_pawn.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
 	},
 	{
 		"id": "darkness_light_bishop_pawn",
+		"display_name": "Undead Paladin",
 		"elements": [
 			"darkness",
 			"light"
 		],
-		"display_name": "Undead Paladin",
 		"chess_pieces": [
 			"bishop",
 			"pawn"
 		],
 		"tool": {
 			"art": {
-				"prompt": "Undead skeletal paladin sculpted from bleached bone and blackened battle-plate, hollow visored helm ridged like a crown, sockets burning cold ghost-green fire, gauntleted grip on a heavy flanged mace and a tall cross-marked kite shield set with glowing teal shards, tattered mist-trailing tabard, grave-fog curling from joints, spectral sigil underfoot, gothic spires under a brooding storm sky, thick outlines, bold saturated colors",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi armored guardian knight in heavy corroded bone-white and tarnished bronze plate, sealed grille helmet with glowing teal eye-slits, hefting a spiked skull-headed bludgeon and a broad round shield stamped with a radiant sundial sigil, tattered dark surcoat, standing on a luminous arcane summoning circle, gothic tombstone graveyard backdrop, teal gemstone accents, eerie cold lighting, detailed painterly fantasy illustration",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/bishop_pawn.png",
-					"name": "Paladin"
-				},
-				"inferredFrom": {
-					"concept": [
-						"bishop_pawn",
-						"air_fire_bishop_pawn",
-						"earth_water_bishop_pawn"
-					],
-					"theme": [
-						"darkness_light_knight",
-						"darkness_light_pawn",
-						"darkness_light_queen",
-						"darkness_light_bishop"
-					]
+					"source": "upload",
+					"path": "snap_bishop_pawn.png",
+					"name": "snap_bishop_pawn.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
@@ -301,7 +292,8 @@
 					]
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "darkness_light_pawn_queen",
@@ -340,35 +332,30 @@
 	},
 	{
 		"id": "darkness_light_knight_knight",
+		"display_name": "Undead Beast",
 		"elements": [
 			"darkness",
 			"light"
 		],
-		"display_name": "Undead Beast",
 		"chess_pieces": [
 			"knight",
 			"knight"
 		],
 		"tool": {
 			"art": {
-				"prompt": "Colossal undead war-beast rearing mid-charge on a glowing spectral sigil, hulking body of bleached bone and cracked blackened armor plating, jagged ribs venting ghostly teal fire, hollow eye sockets blazing ghost-green, curved horns of pale bone set with cold aquamarine crystal, tattered caparison shredding in graveyard mist, brooding storm sky over gothic tombs, thick outlines, bold saturated colors",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Massive skeletal armored bull charging low, bone-plated skull with heavy curved horns and glowing teal eye sockets, tattered draped shroud over exposed rib-cage and fleshless bony haunches, cracked bronze-and-bone barding, hooves striking a glowing arcane summoning circle, gothic graveyard of leaning tombstones and spired mausoleums, stormy sky, teal and bone-white palette, eerie ominous glow, detailed painterly fantasy illustration",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/knight_knight.png",
-					"name": "Beast"
-				},
-				"inferredFrom": {
-					"concept": [
-						"knight_knight",
-						"air_fire_knight_knight",
-						"earth_water_knight_knight"
-					],
-					"theme": [
-						"darkness_light_knight",
-						"darkness_light_pawn",
-						"darkness_light_queen",
-						"darkness_light_bishop"
-					]
+					"source": "upload",
+					"path": "snap_knight_knight.png",
+					"name": "snap_knight_knight.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
@@ -441,7 +428,8 @@
 					]
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "darkness_light_knight_queen",
@@ -612,70 +600,61 @@
 	},
 	{
 		"id": "darkness_light_queen_rook",
+		"display_name": "Undead Castle",
 		"elements": [
 			"darkness",
 			"light"
 		],
-		"display_name": "Undead Castle",
 		"chess_pieces": [
 			"queen",
 			"rook"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
-				"prompt": "A colossal fortress keep raised from bleached fused bone and blackened weathered stonework, a tall cleft central spire flanked by twin skull-crowned towers, hollow arched gates glowing ghost-green, teal grave-fire flickering along the ramparts, wisps of pale mist curling down the walls, aquamarine crystal shards embedded in the parapets, a moat of cold spectral fog, brooding storm sky over distant gothic tombs, thick bold outlines, saturated colors",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Towering fortress built from fused bone and cracked grave-stone, three spired towers roofed in tattered black shrouds, skull-carved battlements with glowing teal eye-sockets, rib-arched gatehouse jaws of iron teeth, hanging bone-white banners, arcane summoning circle at its base, gothic graveyard grounds with crooked tombstones, bone and teal palette, eerie ominous glow, stormy sky, detailed painterly fantasy illustration",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/rook_queen.png",
-					"name": "Castle"
-				},
-				"inferredFrom": {
-					"concept": [
-						"rook_queen",
-						"air_fire_queen_rook",
-						"earth_water_queen_rook"
-					],
-					"theme": [
-						"darkness_light_knight",
-						"darkness_light_pawn",
-						"darkness_light_queen",
-						"darkness_light_bishop"
-					]
+					"source": "upload",
+					"path": "snap_rook_queen.png",
+					"name": "snap_rook_queen.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
 	},
 	{
 		"id": "darkness_light_queen_queen",
+		"display_name": "Undead Hero",
 		"elements": [
 			"darkness",
 			"light"
 		],
-		"display_name": "Undead Hero",
 		"chess_pieces": [
 			"queen",
 			"queen"
 		],
 		"tool": {
 			"art": {
-				"prompt": "Skeletal warrior queen leaping mid-swing from a crumbling crypt ledge, long curly hair of bleached bone coils, cleft crown of pale bone set with a haunting teal gem, blackened cracked plate armor veined with worn silver, hollow sockets burning ghost-green, hoisting an oversized aquamarine-crystal greatsword trailing graveyard mist, glowing spectral sigil below, gothic spires under stormy gloom, thick outlines, bold saturated colors",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi human warrior queen with deathly pale skin and glowing pale-teal eyes, black curls, spiked crown of blackened bone set with luminous gems, cracked bone-plated armor over a crimson-and-charcoal tunic, tattered cape, hoisting a jagged crystalline greatsword wreathed in ghostly cyan light, planted on a glowing arcane sigil amid crooked tombstones, stormy graveyard sky, teal and bone-white palette, eerie ominous glow, detailed painterly fantasy illustration",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/queen_queen.png",
-					"name": "Hero"
-				},
-				"inferredFrom": {
-					"concept": [
-						"queen_queen",
-						"air_fire_queen_queen",
-						"earth_water_queen_queen"
-					],
-					"theme": [
-						"darkness_light_knight",
-						"darkness_light_pawn",
-						"darkness_light_queen",
-						"darkness_light_bishop"
-					]
+					"source": "upload",
+					"path": "snap_queen_queen.png",
+					"name": "snap_queen_queen.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}

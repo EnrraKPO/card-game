@@ -128,7 +128,8 @@
 					]
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "darkness_darkness_queen",
@@ -278,7 +279,8 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "darkness_darkness_pawn_queen",
@@ -372,34 +374,31 @@
 	},
 	{
 		"id": "darkness_darkness_knight_rook",
+		"display_name": "Pure Darkness Stable",
 		"elements": [
 			"darkness",
 			"darkness"
 		],
-		"display_name": "Pure Darkness Stable",
 		"chess_pieces": [
 			"knight",
 			"rook"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
-				"prompt": "Rearing skeletal warhorse forged of depthless living shadow rimmed in cold violet light, bony ribs and skull sculpted from curling black smoke, hollow eyes burning pale amethyst, tattered inky barding dissolving into drifting fragments, void-black mane streaming into vapor, hooves sunk in rippling pools of darkness, a dim glowing ring above its skull, brooding twilight-purple sky, centered heroic subject.",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Barn-like stable of solidified shadow, gnarled black timber and dark stone blocks bound in tarnished silver fittings, an eclipse-ring emblem banner, a horned steed of pure living darkness with glowing white eyes peering from the half-door, wisps of dark flame curling from the eaves, cracked lavender-lit ground, backlit violet rim glow, painterly dark fantasy style, full building front view",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/knight_rook.png",
-					"name": "Stable"
-				},
-				"inferredFrom": {
-					"concept": [
-						"knight_rook",
-						"air_air_knight_rook",
-						"air_earth_knight_rook"
-					],
-					"theme": [
-						"darkness_darkness_knight",
-						"darkness_darkness_pawn",
-						"darkness_darkness_queen"
-					]
+					"source": "upload",
+					"path": "snap_knight_rook.png",
+					"name": "snap_knight_rook.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
@@ -492,7 +491,8 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "darkness_darkness_bishop_queen",
@@ -552,7 +552,8 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "darkness_darkness_queen_rook",
@@ -573,16 +574,23 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "A colossal fortress keep carved from depthless obsidian shadow, a tall cleft central spire flanked by two rounded drum towers plated in blackened stone etched with cold amethyst seams, a yawning gateway leaking curling violet-glowing vapor, tattered wisps of dark flame streaming from crumbling ramparts, a dim pulsing ring hovering above the peak, walls dissolving into drifting smoke fragments, brooding twilight-purple sky, thick bold outlines, centered heroic structure",
+				"prompt": "Imposing three-towered fortress carved from solid living shadow, battlements dissolving into pitch-black smoke, tall central keep crowned by a silver crescent hovering above a black moon, wispy void banners trailing dark vapor, narrow windows glowing pale violet, two small shadow sentries flanking a heavy gate, cracked barren ground, hazy lavender sky, cool violet palette, backlit rim glow, painterly dark fantasy, full-scene low angle",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/rook_queen.png",
-					"name": "Castle",
-					"mode": "img2img",
-					"denoise": 0.6
+					"source": "upload",
+					"path": "snap_rook_queen.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_rook_queen.png",
+					"theme": [
+						"snap_darkness_darkness_pawn.png",
+						"snap_darkness_darkness_knight.png",
+						"snap_darkness_darkness_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "darkness_darkness_queen_queen",

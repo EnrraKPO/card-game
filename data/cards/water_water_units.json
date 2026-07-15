@@ -419,6 +419,8 @@
 	},
 	{
 		"id": "water_water_knight_rook",
+		"display_name": "Pure Water Stable",
+		"description": "Twin-water unit.",
 		"elements": [
 			"water",
 			"water"
@@ -427,27 +429,25 @@
 			"knight",
 			"rook"
 		],
-		"description": "Twin-water unit.",
+		"ranged": true,
 		"tool": {
 			"art": {
-				"prompt": "Cozy stable of pale wave-smoothed shell walls and branching pink coral beams, roof of overlapping mother-of-pearl shingles trickling with cascades, a plucky translucent seahorse steed of clear rippling currents peeking over the half-door, pearl-studded lintel, kelp-rope fence, drifting bubbles and algae ribbons, luminous turquoise glow within, bold outlines, luminous aqua palette",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Small barn-like stable building with a horse peering out the half-door, banner and hay outside, iron-braced timber and stone construction, cobbled entry, storybook game-asset rendering. Coral-and-driftwood stable cottage grown from smooth sea-worn timbers and pale reef stone, translucent glowing liquid roof frozen mid-ripple, pearl-studded silver bracings, a gentle liquid-bodied colt peering from the swaying half-door, pearl-clasp banner overhead, drifting algae garlands, bubble-strewn tidepool yard, rising godrays, teal aquamarine palette, glossy storybook illustration, full building centered.",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/knight_rook.png",
-					"name": "Stable"
-				},
-				"inferredFrom": {
-					"anchor": "knight_rook",
-					"theme": [
-						"water_water_pawn",
-						"water_water_knight",
-						"water_water_queen"
-					],
-					"mode": "concept"
+					"source": "upload",
+					"path": "snap_knight_rook.png",
+					"name": "snap_knight_rook.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"display_name": "Pure Water Stable"
+		}
 	},
 	{
 		"id": "water_water_pawn",
@@ -592,7 +592,8 @@
 				}
 			}
 		},
-		"display_name": "Pure Water Barracks"
+		"display_name": "Pure Water Barracks",
+		"ranged": true
 	},
 	{
 		"id": "water_water_queen",
@@ -729,7 +730,8 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "water_water_rook",
@@ -760,7 +762,8 @@
 				}
 			}
 		},
-		"display_name": "Pure Water Rook"
+		"display_name": "Pure Water Rook",
+		"ranged": true
 	},
 	{
 		"id": "water_water_rook_rook",
@@ -783,20 +786,13 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Squat crenellated fortress tower built of branching pink coral and pearl-studded shell blocks, kelp banner draped down its face, mounted atop it a swiveling ballista of translucent liquid glass loaded with a sharpened crystalline droplet bolt, arcing spray and foam churning at its base, drifting bubbles rising, bold outlines, luminous aqua palette, plain pale background",
+				"prompt": "Squat crenellated defensive tower crowned by a rotating ballista turret built entirely of glowing translucent blue liquid and polished coral masonry, pearl-studded battlements draped in algae banners, a swirling wave-charged spear-launcher poised to fire, resting in rippling shallows, rising bubbles and cyan godrays, teal aquamarine palette, bold-outlined storybook illustration, full structure centered.",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/rook_rook.png",
-					"name": "Turret"
-				},
-				"inferredFrom": {
-					"anchor": "rook_rook",
-					"theme": [
-						"water_water_pawn",
-						"water_water_knight",
-						"water_water_queen"
-					],
-					"mode": "concept"
+					"source": "upload",
+					"path": "snap_rook_rook.png",
+					"name": "snap_rook_rook.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}

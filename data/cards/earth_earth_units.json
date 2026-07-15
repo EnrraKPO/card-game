@@ -1,136 +1,121 @@
 [
 	{
 		"id": "earth_earth_pawn",
+		"display_name": "Pure Earth Pawn",
 		"elements": [
 			"earth",
 			"earth"
 		],
-		"display_name": "Pure Earth Pawn",
 		"chess_pieces": [
 			"pawn"
 		],
 		"tool": {
 			"art": {
-				"prompt": "Stout infantry sentinel hewn from dense obsidian-dark bedrock, jagged mineral plates edged in fine silver etching, deep-set eyes and chest seal burning with pale violet eclipse-ring light, gripping a heavy rough-hewn stone maul, cracked rocky pauldrons shedding crumbling pebbles, planted immovably on a cobbled dais, thick bold outlines, saturated dusky purple haze, brooding twilight sky.",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi foot-soldier spearman with a round dome helm topped by a small knob, spear and round shield — reimagined as an earth-realm native. Chibi spear-footman of packed clay and clumped soil, glowing amber eyes, rounded bronze dome helm crowned with a small clay sphere, olive-green tabard and belted sash, gripping a bronze-tipped spear, rimmed circular soil-clod shield, planted firm on cracked barren ground, warm umber and ochre palette, soft overcast light, painterly fantasy illustration",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/pawn.png",
-					"name": "Pawn"
-				},
-				"inferredFrom": {
-					"concept": [
-						"pawn",
-						"air_air_bishop_pawn",
-						"air_air_knight_pawn"
-					],
-					"theme": [
-						"darkness_darkness_knight",
-						"darkness_darkness_pawn",
-						"darkness_darkness_queen"
-					]
+					"source": "upload",
+					"path": "snap_pawn.png",
+					"name": "snap_pawn.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
 	},
 	{
 		"id": "earth_earth_knight",
+		"display_name": "Pure Earth Knight",
 		"elements": [
 			"earth",
 			"earth"
 		],
-		"display_name": "Pure Earth Knight",
 		"chess_pieces": [
 			"knight"
 		],
 		"tool": {
 			"art": {
-				"prompt": "Rearing armored warhorse hewn from dark craggy mountain rock, mossy stone-plate barding etched with deep fissures, mane and tail of tumbling pebbles and grit, glowing amethyst voids set in its chest guard and greaves, hooves cracking cobbled ground into rifts, dust and gravel spiraling upward, bold cartoon outlines, chunky shading, hazy violet twilight sky above a barren rocky plateau",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi armored charger warhorse, body sculpted from packed clay and clumped soil, glowing golden eyes, olive-green and bronze chestplate with spiral engravings, tattered ochre banner-scarf trailing from its neck, mane and tail of swirling loose earth, one hoof stamping and scattering dust plumes, cracked barren flatland, distant flat mesas, warm sepia palette, soft diffuse light, painterly fantasy illustration",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/knight.png",
-					"name": "Knight"
-				},
-				"inferredFrom": {
-					"concept": [
-						"knight",
-						"air_air_bishop_knight",
-						"air_air_knight"
-					],
-					"theme": [
-						"darkness_darkness_knight",
-						"darkness_darkness_pawn",
-						"darkness_darkness_queen"
-					]
+					"source": "upload",
+					"path": "snap_knight.png",
+					"name": "snap_knight.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
 	},
 	{
 		"id": "earth_earth_bishop",
+		"display_name": "Pure Earth Bishop",
 		"elements": [
 			"earth",
 			"earth"
 		],
-		"display_name": "Pure Earth Bishop",
 		"chess_pieces": [
 			"bishop"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
-				"prompt": "Beardless youthful smooth-faced cleric standing serene, tall cleft ceremonial headdress and heavy layered vestments of dark polished stone plating, glowing violet ring-sigils set into chest and shoulders, gripping a spiraled crook staff, clutching a rune-etched tome, trailing crumbling earthen dust, bold cel-shaded outlines, deep charcoal and lilac palette, luminous purple rim-light, cracked cobblestone dais, brooding twilight sky, centered heroic figure",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi earth-realm cleric packed from clumped soil and dried clay, glowing amber eyes under a tall cleft ochre headdress ringed with bronze, layered robe of stacked pebble-brown tiles and rust chevrons, cradling a heavy tome bound in olive leather, raising a spiraled bronze crozier trailing swirling dust motes, standing on cracked earthen ground, distant flat-topped mounds, warm sepia palette, soft diffuse light, painterly fantasy illustration",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/bishop.png",
-					"name": "Bishop"
-				},
-				"inferredFrom": {
-					"concept": [
-						"bishop",
-						"air_air_bishop",
-						"air_air_bishop_bishop"
-					],
-					"theme": [
-						"darkness_darkness_knight",
-						"darkness_darkness_pawn",
-						"darkness_darkness_queen"
-					]
+					"source": "upload",
+					"path": "snap_bishop.png",
+					"name": "snap_bishop.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"ranged": true
+		}
 	},
 	{
 		"id": "earth_earth_rook",
+		"display_name": "Pure Earth Rook",
 		"elements": [
 			"earth",
 			"earth"
 		],
-		"display_name": "Pure Earth Rook",
 		"chess_pieces": [
 			"rook"
 		],
 		"tool": {
 			"art": {
-				"prompt": "A massive squat fortress-tower of dark fractured slate and packed clay, jagged crenellations along its top, glowing violet eclipse-rings set into embrasures and the arched gate, silver-etched trim scrolling across rugged blockwork, roots and boulders gripping its base, jagged rock spires thrusting from cracked ground below, brooding purple sky, bold cel-shading, thick outlines, centered heroic structure",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Squat crenellated defensive tower built of packed clumped soil and clustered dirt bricks, tapered battered base, single arched window with a domed-helmed sentry peering out, tattered olive-green banner with bronze fittings, glowing amber seams pulsing through the earthen walls, dust drifting from mortar, barren cracked plain, distant hazy ridges, warm sepia palette, soft diffuse light, painterly fantasy illustration, low heroic angle",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/rook.png",
-					"name": "Rook"
-				},
-				"inferredFrom": {
-					"concept": [
-						"rook",
-						"air_air_bishop_rook",
-						"air_air_knight_rook"
-					],
-					"theme": [
-						"darkness_darkness_knight",
-						"darkness_darkness_pawn",
-						"darkness_darkness_queen"
-					]
+					"source": "upload",
+					"path": "snap_rook.png",
+					"name": "snap_rook.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "earth_earth_queen",
@@ -151,11 +136,47 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Front-facing serene stone-skinned queen standing regal atop a cobbled dais, obsidian-dark figure carved from living rock, silver-etched plated shoulders and crown, glowing violet void-rings pulsing in her eyes and chest, robes of drifting soil and crumbling gravel, roots and mineral shards spiraling around her raised hands, jagged mountains under a moody violet-grey sky, bold clean cel-shading, thick outlines, centered heroic subject",
+				"prompt": "Chibi earth queen with commanding scowl, thick coiled dark hair, tiered soil-formed diadem topped with a warm amber gem, flowing gown of packed ochre and rust clay draped in a heavy sepia-toned mantle, one hand cradling a hovering sphere of clumped brown earth crackling with golden power, wide dry plain, distant weathered ridgelines, muted overcast sky, warm earthen palette, soft diffuse light, painterly fantasy illustration",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/queen.png",
-					"name": "Queen",
+					"source": "upload",
+					"path": "snap_queen.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_queen.png",
+					"theme": [
+						"snap_earth_earth_pawn.png",
+						"snap_earth_earth_knight.png",
+						"snap_earth_earth_queen.png"
+					],
+					"mode": "concept"
+				}
+			}
+		}
+	},
+	{
+		"id": "earth_earth_pawn_pawn",
+		"display_name": "Pure Earth Warrior",
+		"elements": [
+			"earth",
+			"earth"
+		],
+		"chess_pieces": [
+			"pawn",
+			"pawn"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi earth-elemental foot soldier built of packed clay and clumped soil, glowing amber eyes beneath a domed dirt-forged helmet, gripping a broad blade of hardened mud, round bronze-rimmed shield of layered earth clods, olive-green cloth wraps dusted with grit, planted firmly on cracked barren flats under pale hazy sky, warm ochre and umber palette, soft diffuse light, painterly fantasy illustration",
+				"ref": {
+					"source": "upload",
+					"path": "snap_pawn_pawn.png",
+					"name": "snap_pawn_pawn.png",
 					"mode": "img2img",
 					"denoise": 0.6
 				}
@@ -163,205 +184,152 @@
 		}
 	},
 	{
-		"id": "earth_earth_pawn_pawn",
-		"elements": [
-			"earth",
-			"earth"
-		],
-		"display_name": "Pure Earth Warrior",
-		"chess_pieces": [
-			"pawn",
-			"pawn"
-		],
-		"tool": {
-			"art": {
-				"prompt": "Stocky chibi footsoldier braced in a rooted guard stance, dark stone-plated armor edged in silver and pulsing with cold violet halo-glow, broad blade and heavy round shield hewn from cracked earthy rock, boulders and jagged crystals rising around his boots, dust and pebbles hovering mid-air, planted on a cobbled circular dais, hazy purple twilight sky, thick bold outlines, deep shadowed palette.",
-				"ref": {
-					"source": "game",
-					"path": "assets/cards/pawn_pawn.png",
-					"name": "Warrior"
-				},
-				"inferredFrom": {
-					"concept": [
-						"pawn_pawn",
-						"air_air_pawn_pawn",
-						"air_darkness_pawn_pawn"
-					],
-					"theme": [
-						"darkness_darkness_knight",
-						"darkness_darkness_pawn",
-						"darkness_darkness_queen"
-					]
-				}
-			}
-		}
-	},
-	{
 		"id": "earth_earth_knight_pawn",
+		"display_name": "Pure Earth Cavalry",
 		"elements": [
 			"earth",
 			"earth"
 		],
-		"display_name": "Pure Earth Cavalry",
 		"chess_pieces": [
 			"knight",
 			"pawn"
 		],
 		"tool": {
 			"art": {
-				"prompt": "Charging armored lancer astride a rearing warhorse sculpted of dark stone and slate plate, jagged rocky barding etched with runic grooves, glowing violet voids set in helm and chest guard, a leveled lance trailing tumbling shards of earth, hooves cracking a paved circle and flinging gravel, obsidian mane whipping like torn shadow, cool charcoal and pale amethyst palette, brooding dusk sky over barren rocky plains, bold clean outlines.",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Armored lancer riding a charging soil-formed steed whose body is packed dirt and clumped earth, glowing amber eyes, domed helm of hardened clay with tattered green plume, spiral-engraved bronze and olive armor, gripping a long lance with a ragged green pennant, dust billowing from thundering hooves, cracked barren plain, distant weathered ridges, pale overcast sky, warm brown palette, soft diffuse light, painterly fantasy illustration, heroic low angle",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/knight_pawn.png",
-					"name": "Cavalry"
-				},
-				"inferredFrom": {
-					"concept": [
-						"knight_pawn",
-						"air_air_knight_pawn",
-						"air_darkness_knight_pawn"
-					],
-					"theme": [
-						"darkness_darkness_knight",
-						"darkness_darkness_pawn",
-						"darkness_darkness_queen"
-					]
+					"source": "upload",
+					"path": "snap_knight_pawn.png",
+					"name": "snap_knight_pawn.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
 	},
 	{
 		"id": "earth_earth_bishop_pawn",
+		"display_name": "Pure Earth Paladin",
 		"elements": [
 			"earth",
 			"earth"
 		],
-		"display_name": "Pure Earth Paladin",
 		"chess_pieces": [
 			"bishop",
 			"pawn"
 		],
 		"tool": {
 			"art": {
-				"prompt": "Towering armored paladin forged of obsidian-black plate and cracked dark stone, closed visored helm crested with a swept flowing plume, glowing violet eclipse-rings burning at eye slots and every joint, one gauntlet lifting a heavy stone warhammer, tall angular shield centered by a radiant purple ring, tattered cloak dissolving into shadowy motes, standing on a fractured slate dais, hazy lavender storm sky, bold outlines, saturated stylized colors",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi heavy-armored guardian formed of packed clumped soil, glowing amber eyes within a domed closed helm of bronze plating, sturdy shoulders draped in a tattered olive cloak, hefting a spiked bludgeon of hardened earth, round bronze-rimmed shield bearing a spiral engraving, planted firmly amid dirt mounds, barren cracked plain under pale sky, warm brown and ochre palette, soft diffuse light, painterly fantasy illustration",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/bishop_pawn.png",
-					"name": "Paladin"
-				},
-				"inferredFrom": {
-					"concept": [
-						"bishop_pawn",
-						"air_air_bishop_pawn",
-						"air_darkness_bishop_pawn"
-					],
-					"theme": [
-						"darkness_darkness_knight",
-						"darkness_darkness_pawn",
-						"darkness_darkness_queen"
-					]
+					"source": "upload",
+					"path": "snap_bishop_pawn.png",
+					"name": "snap_bishop_pawn.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
 	},
 	{
 		"id": "earth_earth_pawn_rook",
+		"display_name": "Pure Earth Barracks",
 		"elements": [
 			"earth",
 			"earth"
 		],
-		"display_name": "Pure Earth Barracks",
 		"chess_pieces": [
 			"pawn",
 			"rook"
 		],
 		"tool": {
 			"art": {
-				"prompt": "Squat fortress tower of jagged obsidian-black rock, crenellated crown and heavy arched gateway ringed with glowing violet eclipse-circles, silver-veined stone slabs and rugged boulder foundations, a hanging banner of shadowy cloth, a rack of blunt spears beside the entrance, a stout helmeted sentry in dark plate gripping a heavy pike, deep purple void-light spilling from hollow windows, cracked cobbled ground, dim violet dusk sky, thick outlines, bold saturated colors, centered structure, dark background",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Squat fortified training keep built from packed soil bricks and clumped dirt ramparts, arched doorway, tattered olive banner, a chibi earth-elemental sentry with glowing amber eyes and domed bronze helmet standing guard with spear and round bronze-rimmed shield, weapons rack of soil-forged spears, barren dusty plains, warm brown ochre palette, soft diffuse light, painterly fantasy illustration",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/pawn_rook.png",
-					"name": "Barracks"
-				},
-				"inferredFrom": {
-					"concept": [
-						"pawn_rook",
-						"air_air_pawn_rook",
-						"air_darkness_pawn_rook"
-					],
-					"theme": [
-						"darkness_darkness_knight",
-						"darkness_darkness_pawn",
-						"darkness_darkness_queen"
-					]
+					"source": "upload",
+					"path": "snap_pawn_rook.png",
+					"name": "snap_pawn_rook.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "earth_earth_pawn_queen",
+		"display_name": "Pure Earth Commander",
 		"elements": [
 			"earth",
 			"earth"
 		],
-		"display_name": "Pure Earth Commander",
 		"chess_pieces": [
 			"pawn",
 			"queen"
 		],
 		"tool": {
 			"art": {
-				"prompt": "Stalwart female battle-commander in glossy obsidian-black plate etched with silver filigree, streaming raven cape, standing atop a raised circular stone dais, thrusting a slender baton skyward, glowing violet eclipse-rings pulsing across her armor, a column of small shadowed spear-bearers rallying below on cracked cobblestone, hazy lavender storm sky, thick bold outlines, dramatic low angle",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi earth-elemental female commander formed of packed clay and clustered soil, glowing amber eyes, domed bronze helm with olive plume, fierce rallying stance atop a raised mound platform, thrusting a bronze baton skyward, dust streaming from a tattered ochre cloak, soil-bodied spearfolk marching below, barren rolling plains, warm sepia palette, soft diffuse light, painterly fantasy illustration",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/pawn_queen.png",
-					"name": "Commander"
-				},
-				"inferredFrom": {
-					"concept": [
-						"pawn_queen",
-						"air_air_pawn_queen",
-						"air_darkness_pawn_queen"
-					],
-					"theme": [
-						"darkness_darkness_knight",
-						"darkness_darkness_pawn",
-						"darkness_darkness_queen"
-					]
+					"source": "upload",
+					"path": "snap_pawn_queen.png",
+					"name": "snap_pawn_queen.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
 	},
 	{
 		"id": "earth_earth_knight_knight",
+		"display_name": "Pure Earth Beast",
 		"elements": [
 			"earth",
 			"earth"
 		],
-		"display_name": "Pure Earth Beast",
 		"chess_pieces": [
 			"knight",
 			"knight"
 		],
 		"tool": {
 			"art": {
-				"prompt": "Colossal armored bull-beast rearing mid-charge on a cracked stone dais, hulking body carved from dark packed soil and jagged rock, ridged silver plating on lowered head and curved stone horns, deep-violet glowing hollow orbs set into chest and hoof guards, clods of earth and pebbles crumbling off pounding hooves, dusty lavender sky, thick outlines, bold saturated colors",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Massive charging armored bull-beast with lowered horns, its bulk formed of packed soil and clumped earthen material, glowing amber eyes, bronze-plated brow guard with spiral engravings and horn caps, olive-green caparison draped over its back, dust bursting from pounding hooves across a barren cracked plain, distant low hills, muted overcast sky, warm earthen palette, painterly fantasy illustration, low-angle heroic charge.",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/knight_knight.png",
-					"name": "Beast"
-				},
-				"inferredFrom": {
-					"concept": [
-						"knight_knight",
-						"air_air_knight_knight",
-						"air_darkness_knight_knight"
-					],
-					"theme": [
-						"darkness_darkness_knight",
-						"darkness_darkness_pawn",
-						"darkness_darkness_queen"
-					]
+					"source": "upload",
+					"path": "snap_knight_knight.png",
+					"name": "snap_knight_knight.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
@@ -385,50 +353,53 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Rugged stone-hided beast cryptid rearing on a cracked bedrock plateau, hulking body of layered slate and mossy boulders, jagged crystal spines and craggy horns jutting from its brow, deep amber eyes glowing within fissured rock, mane of tumbling pebbles and dust, hooves splitting the ground into rising shards, thick bold outlines, saturated earthen palette, dramatic low angle, hazy mountain horizon",
+				"prompt": "Majestic single-horned mythic steed formed of packed dirt and clumped soil, glowing amber eyes, spiraling bronze horn, flowing mane and tail of swirling dust motes, olive-green and bronze filigree armor plates, warm ochre glow of ancient earthen magic swirling around its hooves, rearing on a cracked barren plain, distant mounded hills under pale sepia sky, painterly fantasy illustration, warm earthen palette, soft diffused light",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/bishop_knight.png",
-					"name": "Cryptid",
-					"mode": "img2img",
-					"denoise": 0.6
+					"source": "upload",
+					"path": "snap_bishop_knight.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_bishop_knight.png",
+					"theme": [
+						"snap_earth_earth_pawn.png",
+						"snap_earth_earth_knight.png",
+						"snap_earth_earth_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		}
 	},
 	{
 		"id": "earth_earth_knight_rook",
+		"display_name": "Pure Earth Stable",
 		"elements": [
 			"earth",
 			"earth"
 		],
-		"display_name": "Pure Earth Stable",
 		"chess_pieces": [
 			"knight",
 			"rook"
 		],
 		"tool": {
 			"art": {
-				"prompt": "Rearing armored steed of packed dark loam and mossy stone rearing before an arched gateway of raw earthen stalls, mane and tail of tumbling soil and crumbling clods, cracked slate barding with faint violet-glowing eclipse hollows, hooves striking a fractured cobbled dais, roots and pebbles scattering, hazy dusk-purple sky, deep obsidian shadows with soft lavender rim-light, glossy cel-shaded painting, centered heroic subject",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Small barn-like stable building housing a horse, packed-soil walls and clumped-dirt beams bound with weathered bronze fittings, an earthen steed with glowing amber eyes and a swirling mane of loose soil peering from the doorway, spiral-engraved olive-green trim, dust drifting from a mounded threshold, barren cracked plain, distant low hills, overcast pale sky, warm brown palette, soft diffuse light, painterly fantasy illustration.",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/knight_rook.png",
-					"name": "Stable"
-				},
-				"inferredFrom": {
-					"concept": [
-						"knight_rook",
-						"air_air_knight_rook",
-						"air_darkness_knight_rook"
-					],
-					"theme": [
-						"darkness_darkness_knight",
-						"darkness_darkness_pawn",
-						"darkness_darkness_queen"
-					]
+					"source": "upload",
+					"path": "snap_knight_rook.png",
+					"name": "snap_knight_rook.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "earth_earth_knight_queen",
@@ -449,11 +420,11 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Colossal earthen dragon rearing on hind legs, hide of packed dark loam and moss-veined boulders, jagged slate horns and crystalline spine ridges, obsidian scales rimmed in glowing violet light, deep-socketed eyes burning pale amethyst, cracked stone wings scattering pebbles and dust, clawed feet plated in weathered iron, standing atop a rocky dais, hazy purple twilight sky, bold clean cel-shading, thick outlines, centered heroic subject",
+				"prompt": "Colossal winged dragon formed of packed soil and clumped dirt, glowing amber eyes, curved bronze horns and spiral-engraved plating along its spine, wings of hardened earthen membrane, dust cascading from folded talons, majestic seated pose over cracked barren flatlands, distant dirt mounds under a pale hazy sky, warm ochre and rust palette, soft diffused light, painterly fantasy illustration",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/knight_queen.png",
-					"name": "Monster",
+					"source": "upload",
+					"path": "snap_knight_queen.png",
+					"name": "snap_knight_queen.png",
 					"mode": "img2img",
 					"denoise": 0.6
 				}
@@ -462,102 +433,91 @@
 	},
 	{
 		"id": "earth_earth_bishop_bishop",
+		"display_name": "Pure Earth Hierophant",
 		"elements": [
 			"earth",
 			"earth"
 		],
-		"display_name": "Pure Earth Hierophant",
 		"chess_pieces": [
 			"bishop",
 			"bishop"
 		],
 		"tool": {
 			"art": {
-				"prompt": "Bearded high priest with a long stony beard, tall crested mitre of carved granite veined in glowing violet, obsidian-black armored robes edged in dark silver plating, eyes burning with pale purple light, raising a heavy rune-graven staff as jagged rock shards and spiraling amethyst force erupt from his open palm, boots planted on a cracked stone dais, drifting shadow-black fragments, hazy lavender storm sky, distant barren peaks, bold cel-shaded outlines, centered heroic figure",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi bearded high priest formed of packed soil and clumped earth, glowing amber eyes, tall domed mitre of layered clay ridges banded in bronze, flowing robe of stacked ochre and rust clods with olive sash, raising one gnarled soil hand as swirling dust magic spirals upward, gripping a bronze-topped rod crowned with a glowing golden orb, cracked barren plain, warm sepia light, painterly fantasy illustration, heroic frontal pose.",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/bishop_bishop.png",
-					"name": "Hierophant"
-				},
-				"inferredFrom": {
-					"concept": [
-						"bishop_bishop",
-						"air_air_bishop_bishop",
-						"air_darkness_bishop_bishop"
-					],
-					"theme": [
-						"darkness_darkness_knight",
-						"darkness_darkness_pawn",
-						"darkness_darkness_queen"
-					]
+					"source": "upload",
+					"path": "snap_bishop_bishop.png",
+					"name": "snap_bishop_bishop.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
 	},
 	{
 		"id": "earth_earth_bishop_rook",
+		"display_name": "Pure Earth Arcane Tower",
 		"elements": [
 			"earth",
 			"earth"
 		],
-		"display_name": "Pure Earth Arcane Tower",
 		"chess_pieces": [
 			"bishop",
 			"rook"
 		],
 		"tool": {
 			"art": {
-				"prompt": "Towering slender spire of deep obsidian-black stone crowned with jagged crenellations, dark polished plating banded around its shaft, a void-black eclipse orb blazing with violet halo set into its upper face, smaller glowing purple voids embedded along battlements and arched openings, heavy earthen boulders fused around its rooted base, standing on a circular flagstone platform, hazy lavender storm sky, sharp cel-shading, thick outlines, centered heroic structure",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Towering spire of packed soil and clumped earthen bricks banded with bronze spirals, glowing amber-lit arched doorway, tattered olive-green banners, orbiting motes of golden dust circling its crown; before it stands a chibi robed magus of soil-brown vestments and ochre mitre, holding a bronze-topped staff and open tome trailing warm sparks, barren cracked plain, distant mounds, warm earthen palette, soft diffuse light, painterly fantasy illustration",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/bishop_rook.png",
-					"name": "Arcane Tower"
-				},
-				"inferredFrom": {
-					"concept": [
-						"bishop_rook",
-						"air_air_bishop_rook",
-						"air_darkness_bishop_rook"
-					],
-					"theme": [
-						"darkness_darkness_knight",
-						"darkness_darkness_pawn",
-						"darkness_darkness_queen"
-					]
+					"source": "upload",
+					"path": "snap_bishop_rook.png",
+					"name": "snap_bishop_rook.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "earth_earth_bishop_queen",
+		"display_name": "Pure Earth Deity",
 		"elements": [
 			"earth",
 			"earth"
 		],
-		"display_name": "Pure Earth Deity",
 		"chess_pieces": [
 			"bishop",
 			"queen"
 		],
 		"tool": {
 			"art": {
-				"prompt": "Front-facing towering earth goddess, serene stone-carved face and long flowing mineral hair, robe of layered slate and glowing violet fissures, arms outspread lifting floating boulders wreathed in pale purple light, roots and crystals sprouting around bare feet, standing rooted on a fractured stone dais, bold clean cel-shading, thick outlines, dusky lavender sky.",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Towering earth-elemental goddess sculpted from packed soil and clumped dirt, serene mask-like face with glowing amber eyes, arms raised in radiant benediction, halo of swirling dust behind her, ornate bronze and olive-green ceremonial mantle patterned with spiral engravings, ochre and rust layered gown, cradling a floating orb of clustered soil pebbles, warm sepia light, painterly fantasy illustration, symmetrical frontal pose",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/bishop_queen.png",
-					"name": "Deity"
-				},
-				"inferredFrom": {
-					"concept": [
-						"bishop_queen",
-						"air_air_bishop_queen",
-						"air_darkness_bishop_queen"
-					],
-					"theme": [
-						"darkness_darkness_knight",
-						"darkness_darkness_pawn",
-						"darkness_darkness_queen"
-					]
+					"source": "upload",
+					"path": "snap_bishop_queen.png",
+					"name": "snap_bishop_queen.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
@@ -573,6 +533,7 @@
 			"rook",
 			"rook"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -581,11 +542,11 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Squat crenellated tower of jet-black basalt, wide battered base fissured with hairline seams glowing violet, arrow-slit windows ringed in cold amethyst light, crowned by a swiveling top-mounted boulder-hurling arm of dark iron loaded with a hovering slab of levitating rubble haloed in purple energy, rooted on a fractured stone dais, brooding twilight sky, bold clean cel-shading, thick outlines, centered heroic structure",
+				"prompt": "Squat earth-elemental gun tower of packed soil clumps and hardened dirt walls banded with spiral-engraved bronze, glowing amber ember-slits, a swiveling soil-hurling ballista of dirt-caked timber and olive-green fittings mounted atop, flinging a compacted earthen bolt, dust plumes drifting, barren cracked plain, distant hazy ridges, warm ochre-brown palette, soft diffuse light, painterly fantasy illustration, low heroic angle",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/rook_rook.png",
-					"name": "Turret",
+					"source": "upload",
+					"path": "snap_rook_rook.png",
+					"name": "snap_rook_rook.png",
 					"mode": "img2img",
 					"denoise": 0.6
 				}
@@ -594,68 +555,61 @@
 	},
 	{
 		"id": "earth_earth_queen_rook",
+		"display_name": "Pure Earth Castle",
 		"elements": [
 			"earth",
 			"earth"
 		],
-		"display_name": "Pure Earth Castle",
 		"chess_pieces": [
 			"queen",
 			"rook"
 		],
 		"tool": {
 			"art": {
-				"prompt": "A symmetrical dark-obsidian fortress with a tall central spire flanked by two heavy round towers, deep-black stone edged in polished pewter trim, glowing violet eclipse-rings set into gates and rampart shields, thick shadowy banners rippling from the peaks, rooted on a raised cracked-earth stone plateau, moody lavender-gray sky, bold cel-shading, thick outlines, centered heroic structure",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Towering fortress fortification built from packed clumped soil and hardened dirt bricks, three dust-brown turrets with domed olive-green roofs, glowing amber slit windows, bronze-rimmed gates engraved with spirals, tattered ochre banners, dust swirling from crenellations, rooted in cracked barren plains, distant hazy mounds, warm sepia palette, soft diffuse light, painterly fantasy illustration, low heroic angle.",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/rook_queen.png",
-					"name": "Castle"
-				},
-				"inferredFrom": {
-					"concept": [
-						"rook_queen",
-						"air_air_queen_rook",
-						"air_darkness_queen_rook"
-					],
-					"theme": [
-						"darkness_darkness_knight",
-						"darkness_darkness_pawn",
-						"darkness_darkness_queen"
-					]
+					"source": "upload",
+					"path": "snap_rook_queen.png",
+					"name": "snap_rook_queen.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"ranged": true
 	},
 	{
 		"id": "earth_earth_queen_queen",
+		"display_name": "Pure Earth Hero",
 		"elements": [
 			"earth",
 			"earth"
 		],
-		"display_name": "Pure Earth Hero",
 		"chess_pieces": [
 			"queen",
 			"queen"
 		],
 		"tool": {
 			"art": {
-				"prompt": "Chibi dark-skinned young hero with voluminous curly black hair and fierce eyes, spiked crown, spike-shouldered armor of blackened polished plate rimmed with faint violet glow and inset dark eclipse orbs, flowing cape, hoisting a broad crystalline blade, rooted firm on cracked stone atop weathered earth, dusk-purple hazy sky, bold thick outlines, moody cel-shaded dark palette",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi crowned heroine sculpted from packed soil and clumped dirt, fierce brown gaze, voluminous braided earthen hair, ochre and rust plated armor with bronze spiral engravings and spiked pauldrons, tattered olive cape, hoisting a massive glowing spade-blade of compressed clay overhead, dust swirling around planted boots, wide heroic stance atop cracked barren plain, distant mounded hills, warm sepia palette, soft diffuse light, painterly fantasy illustration",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/queen_queen.png",
-					"name": "Hero"
-				},
-				"inferredFrom": {
-					"concept": [
-						"queen_queen",
-						"air_air_queen_queen",
-						"air_darkness_queen_queen"
-					],
-					"theme": [
-						"darkness_darkness_knight",
-						"darkness_darkness_pawn",
-						"darkness_darkness_queen"
-					]
+					"source": "upload",
+					"path": "snap_queen_queen.png",
+					"name": "snap_queen_queen.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}

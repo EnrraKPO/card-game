@@ -85,6 +85,7 @@ ensureDir(WORKSPACE);
 for (const t of Object.keys(TYPES)) ensureDir(path.join(WORKSPACE, t));
 ensureDir(path.join(WORKSPACE, 'art'));
 ensureDir(path.join(WORKSPACE, 'refs'));   // user-uploaded external reference images
+ensureDir(path.join(WORKSPACE, 'refs', '.captions'));   // art-derived caption sidecars for canonical assets
 
 // Uploaded reference filenames pass through URLs and the ComfyUI input folder — keep them tame.
 function safeRefName(name) { return String(name || 'reference.png').replace(/[^a-zA-Z0-9._-]/g, '_'); }
@@ -125,15 +126,24 @@ function getSettings() {
 // Hierophant), `theme` by sorted element-multiset ("air_fire" → Lightning).
 //   concept entry = { label, positive, negative, ref,  seeded }
 //   theme entry   = { label, positive, negative, refs, seeded }
-// A ref is {card: id} or {upload: filename} (workspace/refs). THE RULE (settled with
-// the user): composition identity is atomic — resolution is EXACT-multiset match only,
-// never component overlap ("air" may never pollute "air_fire"; "bishop" may never
-// pollute "bishop_rook"). Canonical refs are MANDATORY for canonical-anchored
-// generation: an unappointed slot refuses, it never silently degrades to a relative.
-// `seeded` marks that the default appointment pass ran for the key (concept ← the bare
-// piece card's art; theme ← the composition's pawn/knight/queen) so a deliberately
-// cleared slot is never re-seeded. Guide text stays opt-in via settings.useArtGuides;
-// canonical refs are independent of that switch.
+// A stored ref is ALWAYS {upload: filename} — a FROZEN art asset in workspace/refs,
+// immutable and severed from the game. {card: id} exists ONLY as an appoint-time input:
+// it means "snapshot this card's CURRENT art into a frozen asset now" (materializeRef),
+// and is never persisted. This is the settled rule (a long discussion): a canonical
+// reference is an art asset, never a live link into mutable game content — a card's
+// authoring prompt must NEVER masquerade as a theme definition (that was the earth_earth
+// darkness leak). The art is the single source of truth; the language description the
+// LLM reuses is a caption DERIVED FROM the frozen pixels (refCaption), regenerated
+// automatically whenever the asset's bytes change.
+//   THE RULE (settled with the user): composition identity is atomic — resolution is
+// EXACT-multiset match only, never component overlap ("air" may never pollute "air_fire";
+// "bishop" may never pollute "bishop_rook"). Canonical refs are MANDATORY for canonical-
+// anchored generation: an unappointed slot refuses, it never silently degrades.
+// `seeded` marks the ONE-TIME initial setup ran for the key (migrateCanonicalRefs, at
+// first startup: concept ← the bare piece card's art; theme ← the composition's
+// pawn/knight/queen — snapshotted, not linked). There is NO auto-seeding beyond that:
+// a slot cleared or a composition authored later stays unappointed until deliberately
+// appointed. Guide text stays opt-in via settings.useArtGuides; canonical refs are not.
 const GUIDES_PATH = path.join(WORKSPACE, 'art_guides.json');
 function getArtGuides() {
   const g = readJson(GUIDES_PATH, {});
@@ -181,44 +191,96 @@ function seedDefaultsFor(axis, key) {
   return { refs };
 }
 
-// Idempotent seeding pass: give every composition key that has never been seeded its
-// default appointments. Runs before every canonical read and on the guides GET — cheap,
-// and only ever touches keys without the `seeded` marker (a cleared slot stays cleared).
-function seedArtGuideRefs() {
-  const g = getArtGuides();
-  const comps = allCompositions();
-  let changed = false;
-  for (const [axis, keys] of [['concept', comps.concept], ['theme', comps.theme]]) {
-    for (const key of keys) {
-      const entry = g[axis][key] || (g[axis][key] = { label: '', positive: '', negative: '' });
-      if (entry.seeded) continue;
-      Object.assign(entry, seedDefaultsFor(axis, key));
-      entry.seeded = true;
-      changed = true;
-    }
-  }
-  if (changed) writeJson(GUIDES_PATH, g);
-  return g;
-}
-
-// Resolve one stored ref to a usable image (+ optional stored prompt, for card refs).
-// Returns { kind, id?, name, abs, art?, prompt? } or null when the ref no longer resolves
-// (card deleted / art removed / upload gone).
-function resolveCanonicalRef(ref) {
+// Snapshot a card's CURRENT art into a frozen workspace asset, returning {upload:name}.
+// This is how a {card} appointment is materialized: the bytes are copied once and the
+// link to the (mutable) game card is severed — nothing reads that card again. An already
+// -frozen {upload} ref passes through untouched. Null when the source has no usable art.
+function materializeRef(ref) {
   const r = normalizeCanonicalRef(ref);
   if (!r) return null;
-  if (r.upload) {
-    const abs = path.join(WORKSPACE, 'refs', r.upload);
-    return fs.existsSync(abs) ? { kind: 'upload', name: r.upload, abs } : null;
-  }
+  if (r.upload) return r;   // already a frozen asset
   const e = findGameEntry('card', r.card);
   if (!e || e.data.enemy_only) return null;
   const art = gameArtRel('card', e.id, e.data);
-  if (!art) return null;
-  const ta = e.data.tool && e.data.tool.art;
-  return { kind: 'card', id: e.id, name: e.data.display_name || e.id,
-    abs: path.join(GAME_ROOT, art), art,
-    prompt: (ta && (ta.prompt || (ta.last && ta.last.prompt))) || null };
+  const src = art && path.join(GAME_ROOT, art);
+  if (!src || !fs.existsSync(src)) return null;
+  const name = safeRefName(`snap_${e.id}.png`);
+  fs.copyFileSync(src, path.join(WORKSPACE, 'refs', name));
+  return { upload: name };
+}
+
+// The default appointments for a key, materialized to frozen assets (used by initial
+// setup and the per-key re-seed endpoint). Same shape the guide entry stores.
+function materializeDefaults(axis, key) {
+  const def = seedDefaultsFor(axis, key);
+  if (axis === 'concept') return { ref: def.ref ? materializeRef(def.ref) : null };
+  return { refs: (def.refs || []).map(materializeRef).filter(Boolean) };
+}
+
+// ONE-TIME initial setup: snapshot the spec'd default art into frozen assets for every
+// never-seeded composition, and convert any lingering {card} appointment to a frozen
+// snapshot. Guarded by a sentinel so it runs exactly once — there is NO auto-seeding
+// beyond this: later-authored compositions stay unappointed until deliberately appointed.
+const CANON_MIGRATED = path.join(WORKSPACE, '.canon_refs_migrated');
+function migrateCanonicalRefs() {
+  if (fs.existsSync(CANON_MIGRATED)) return;
+  const g = getArtGuides();
+  const comps = allCompositions();
+  for (const [axis, keys] of [['concept', comps.concept], ['theme', comps.theme]]) {
+    for (const key of keys) {
+      const entry = g[axis][key] || (g[axis][key] = { label: '', positive: '', negative: '' });
+      if (!entry.seeded) {
+        Object.assign(entry, materializeDefaults(axis, key));
+        entry.seeded = true;
+      } else if (axis === 'concept') {   // convert a lingering {card} link to a snapshot
+        if (entry.ref && entry.ref.card) entry.ref = materializeRef(entry.ref);
+      } else {
+        entry.refs = (Array.isArray(entry.refs) ? entry.refs : [])
+          .map(r => (r && r.card) ? materializeRef(r) : normalizeCanonicalRef(r)).filter(Boolean);
+      }
+    }
+  }
+  writeJson(GUIDES_PATH, g);
+  fs.writeFileSync(CANON_MIGRATED, new Date().toISOString());
+}
+
+// Resolve one stored ref to a FROZEN asset: { kind:'upload', name, abs } or null. Only
+// {upload} resolves — a {card} ref is not canonical (it must be materialized at appoint
+// time); an unmaterialized one reads as unappointed, which fails loud rather than
+// silently reaching back into mutable game content.
+function resolveCanonicalRef(ref) {
+  const r = normalizeCanonicalRef(ref);
+  if (!r || !r.upload) return null;
+  const abs = path.join(WORKSPACE, 'refs', r.upload);
+  return fs.existsSync(abs) ? { kind: 'upload', name: r.upload, abs } : null;
+}
+
+// ── canonical asset captions ─────────────────────────────────────────────────
+// A canonical reference's language description is DERIVED FROM its frozen art, cached in
+// a sidecar and regenerated lazily whenever the asset's bytes change (sha mismatch) or
+// no caption exists yet. The art is the sole source — a caption never carries any card's
+// authoring prompt. This gives inference the cheap-and-exact TEXT it wants without the
+// contamination of reusing a mutable input prompt.
+function captionSidecarPath(name) {
+  return path.join(WORKSPACE, 'refs', '.captions', safeRefName(name) + '.json');
+}
+async function captionAsset(abs) {
+  const out = await llmGenerate({
+    system: LLM_MATCH_SYSTEM_PROMPT,
+    prompt: 'Write the prompt that recreates this illustration.',
+    images: [fs.readFileSync(abs).toString('base64')],
+    options: { temperature: 0.4, num_predict: 200 },
+  });
+  return cleanLlmPrompt(out);
+}
+async function refCaption(name, abs) {
+  const sha = fileHash(abs);
+  const scPath = captionSidecarPath(name);
+  const cur = readJson(scPath, null);
+  if (cur && cur.sha === sha && cur.description) return cur.description;
+  const description = await captionAsset(abs);
+  writeJson(scPath, { sha, description, provider: getSettings().llmProvider, at: new Date().toISOString() });
+  return description;
 }
 
 // The MANDATORY canonical pools for a card. Exact-composition lookup only; a missing or
@@ -226,7 +288,7 @@ function resolveCanonicalRef(ref) {
 function canonicalConceptFor(pieces) {
   const key = compKey(pieces);
   if (!key) return null;   // no pieces (a pure spell) — concept simply doesn't apply
-  const entry = seedArtGuideRefs().concept[key];
+  const entry = getArtGuides().concept[key];
   const resolved = entry && entry.ref ? resolveCanonicalRef(entry.ref) : null;
   if (!resolved) throw new Error(`no canonical concept appointed for "${key}" — appoint it in ✨ Art guides`);
   return resolved;
@@ -234,7 +296,7 @@ function canonicalConceptFor(pieces) {
 function canonicalThemeFor(elements) {
   const key = compKey(elements);
   if (!key) return [];   // no elements (a bare piece card) — theme doesn't apply
-  const entry = seedArtGuideRefs().theme[key];
+  const entry = getArtGuides().theme[key];
   const resolved = (entry && Array.isArray(entry.refs) ? entry.refs : [])
     .map(resolveCanonicalRef).filter(Boolean);
   if (!resolved.length) throw new Error(`no canonical theme appointed for "${key}" — appoint it in ✨ Art guides`);
@@ -1706,8 +1768,7 @@ function resolveAnchor(entry) {
   }
   const c = canonicalConceptFor(entry.data.chess_pieces);   // throws when unappointed
   if (!c) throw new Error(`"${entry.id}" has no pieces — no canonical concept applies; use the current-art or custom anchor`);
-  return { id: c.id || c.name, abs: c.abs,
-    ref: c.kind === 'card' ? { source: 'game', path: c.art, name: c.name } : { source: 'upload', path: c.name } };
+  return { id: c.name, abs: c.abs, ref: { source: 'upload', path: c.name } };   // frozen asset
 }
 
 // Adherence = WHICH INSTRUCTIONS the prompt-writing LLM gets (the user's mental model,
@@ -1736,17 +1797,14 @@ async function llmInferAnchored(entry, anchor, adherence) {
   const theme = canonicalThemeFor(d.elements);   // mandatory when the card has elements
   const images = [fs.readFileSync(anchor.abs).toString('base64')];
   const themeLines = [];
-  // Anonymous role labels only — never a reference id (it spells out the composition). A
-  // card ref's stored prompt is a good example for the theme, so it rides along verbatim.
+  // The theme look rides in as ART-DERIVED captions of the frozen theme assets (cheap,
+  // exact, regenerated when the art changes) — never a card's authoring prompt, never an
+  // id (an id spells out the composition). Image 1 is the concept anchor; theme is text.
   let tn = 0;
   for (const r of theme) {
-    if (r.id && r.id === anchor.id) continue;   // the anchor already IS image 1
+    if (anchor.abs && r.abs === anchor.abs) continue;   // the anchor already IS image 1
     tn++;
-    if (r.prompt) themeLines.push(`- theme example ${tn}: "${r.prompt}"`);
-    else if (images.length < 3) {
-      images.push(fs.readFileSync(r.abs).toString('base64'));
-      themeLines.push(`- theme example ${tn}: see reference image ${images.length}`);
-    }
+    themeLines.push(`- theme example ${tn}: "${await refCaption(r.name, r.abs)}"`);
   }
   // "the theme" — never the element names. The look is shown by the theme examples and
   // their reference art; naming the elements is the leak we are closing.
@@ -1780,9 +1838,9 @@ async function llmInferAnchored(entry, anchor, adherence) {
     prompt: user, images, options: { temperature: 0.6, num_predict: 220 },
   });
   const recipe = { prompt: cleanLlmPrompt(out), ref: Object.assign({}, anchor.ref) };
-  recipe.inferredFrom = { anchor: anchor.id, theme: theme.map(r => r.id || r.name), mode: adherence };
+  recipe.inferredFrom = { anchor: anchor.id, theme: theme.map(r => r.name), mode: adherence };
   recipe.stats = { mode: adherence, relatives: theme.length + 1,
-    prompts: theme.filter(r => r.prompt).length, images: images.length, ms: Date.now() - started };
+    captions: tn, images: images.length, ms: Date.now() - started };
   return recipe;
 }
 
@@ -1790,41 +1848,30 @@ async function llmInferBlend(entry) {
   const started = Date.now();
   const d = entry.data;
   const { concept, theme } = canonicalPools(entry);   // mandatory — throws when unappointed
-  // Vision references are the expensive part (full-size art per image) — stored prompts
-  // are free and exact, so the more prompts the canonical refs already carry, the fewer
-  // images ride along: 0 prompts → up to 3 images … 3+ prompts → text-only.
-  // Budgeting: theme images outrank concept images (palette/materials are the visual
-  // signal; concepts describe well in text), and a pool with entries but no stored
-  // prompts always gets at least one image so it isn't silently dropped.
-  const promptCount = [...concept, ...theme].filter(r => r.prompt).length;
-  const imgCap = Math.max(0, 3 - promptCount);
-  const imgWorthy = r => !r.prompt;   // canonical refs always resolve to an image
-  const order = [];
-  for (let k = 0; k < 3; k++) {   // theme-first interleave
-    if (theme[k] && imgWorthy(theme[k])) order.push(theme[k]);
-    if (concept[k] && imgWorthy(concept[k])) order.push(concept[k]);
+  // Every canonical ref is a frozen art asset. Each contributes an ART-DERIVED caption
+  // (cheap, exact, regenerated when the asset changes) as text; a few also ride along as
+  // vision images (theme-first — palette/materials are the visual signal) so the model
+  // sees the actual look. Anonymous role labels only, never an id (an id like
+  // "air_fire_bishop_queen" spells out the composition — that is the leak we close).
+  const IMG_CAP = 3;
+  const imgOrder = [];
+  for (let k = 0; k < Math.max(theme.length, concept.length); k++) {   // theme-first interleave
+    if (theme[k]) imgOrder.push(theme[k]);
+    if (concept[k]) imgOrder.push(concept[k]);
   }
-  const chosen = new Set();
-  for (const r of order) if (chosen.size < imgCap) chosen.add(r);
-  for (const list of [concept, theme])
-    if (list.length && !list.some(r => r.prompt || chosen.has(r))) {
-      const best = list.find(imgWorthy);
-      if (best) chosen.add(best);
-    }
+  const imgSet = new Set(imgOrder.slice(0, IMG_CAP));
   const images = [];
   const conceptLines = [], themeLines = [];
-  // References go in under ANONYMOUS role labels, never by id — an id like
-  // "air_fire_bishop_queen" spells out the composition and taught the LLM to draw a chess
-  // bishop/queen. A card ref's stored prompt IS an example of good art for the family, so
-  // it rides along verbatim; only the composition-encoding id is withheld.
   for (const [list, out, role] of [[concept, conceptLines, 'concept'], [theme, themeLines, 'theme']]) {
     let n = 0;
     for (const r of list) {
       n++;
-      if (r.prompt) out.push(`- ${role} reference ${n}: "${r.prompt}"`);
-      else if (chosen.has(r)) {
+      const cap = await refCaption(r.name, r.abs);
+      if (imgSet.has(r)) {
         images.push(fs.readFileSync(r.abs).toString('base64'));
-        out.push(`- ${role} reference ${n}: see reference image ${images.length}`);
+        out.push(`- ${role} reference ${n} (see reference image ${images.length}): "${cap}"`);
+      } else {
+        out.push(`- ${role} reference ${n}: "${cap}"`);
       }
     }
   }
@@ -1856,17 +1903,14 @@ async function llmInferBlend(entry) {
     prompt: user, images, options: { temperature: 0.8, num_predict: 200 },
   });
   const recipe = { prompt: cleanLlmPrompt(out) };
-  // generation reference: the concept ref when it's a card (keeps the subject), else the
-  // first card theme ref — uploads deliver as upload-source refs
-  const refCand = [...concept, ...theme].find(r => r.kind === 'card')
-    || [...concept, ...theme][0] || null;
-  if (refCand) recipe.ref = refCand.kind === 'card'
-    ? { source: 'game', path: refCand.art, name: refCand.name }
-    : { source: 'upload', path: refCand.name };
-  recipe.inferredFrom = { concept: concept.map(r => r.id || r.name), theme: theme.map(r => r.id || r.name) };
+  // generation reference: the concept asset when present (keeps the subject), else the
+  // first theme asset — all canonical refs are frozen uploads now
+  const refCand = concept[0] || theme[0] || null;
+  if (refCand) recipe.ref = { source: 'upload', path: refCand.name };
+  recipe.inferredFrom = { concept: concept.map(r => r.name), theme: theme.map(r => r.name) };
   // what this inference actually cost — surfaced in the UI so slowness is explainable
-  recipe.stats = { mode: 'free', relatives: concept.length + theme.length, prompts: promptCount,
-    images: images.length, ms: Date.now() - started };
+  recipe.stats = { mode: 'free', relatives: concept.length + theme.length,
+    captions: concept.length + theme.length, images: images.length, ms: Date.now() - started };
   return recipe;
 }
 
@@ -3213,12 +3257,13 @@ async function handle(req, res) {
       writeJson(SETTINGS_PATH, s);
       return send(res, 200, { ok: true, settings: s });
     }
-    // Art guides + canonical references: composition-keyed, tool-bound. GET seeds any
-    // never-seeded composition first, then returns the table plus the composition keys the
-    // game actually uses (so the UI lists unappointed ones too). POST replaces the table
-    // wholesale (keys normalized to canonical sorted order), refs and seeded markers kept.
+    // Art guides + canonical references: composition-keyed, tool-bound. GET returns the
+    // table as stored (initial setup ran once at startup — no per-read seeding) plus the
+    // composition keys the game actually uses (so the UI lists unappointed ones too). POST
+    // replaces the table wholesale (keys normalized to canonical sorted order); any {card}
+    // ref is materialized to a frozen snapshot at appoint time, seeded markers kept.
     if (p === '/api/art-guides' && req.method === 'GET')
-      return send(res, 200, { ok: true, guides: seedArtGuideRefs(), compositions: allCompositions() });
+      return send(res, 200, { ok: true, guides: getArtGuides(), compositions: allCompositions() });
     if (p === '/api/art-guides' && req.method === 'POST') {
       const body = await readBody(req);
       const out = { concept: {}, theme: {} };
@@ -3229,9 +3274,10 @@ async function handle(req, res) {
           if (!key || !v || typeof v !== 'object') continue;
           const entry = { label: String(v.label || ''),
             positive: String(v.positive || ''), negative: String(v.negative || '') };
-          // canonical reference slots — concept holds one, theme holds a list
-          if (axis === 'concept') entry.ref = normalizeCanonicalRef(v.ref);
-          else entry.refs = (Array.isArray(v.refs) ? v.refs : []).map(normalizeCanonicalRef).filter(Boolean);
+          // canonical reference slots — concept holds one, theme holds a list. A {card}
+          // ref is snapshotted to a frozen asset here (materializeRef); only {upload} persists.
+          if (axis === 'concept') entry.ref = materializeRef(v.ref);
+          else entry.refs = (Array.isArray(v.refs) ? v.refs : []).map(materializeRef).filter(Boolean);
           if (v.seeded) entry.seeded = true;   // keep the marker: cleared slots stay cleared
           out[axis][key] = entry;
         }
@@ -3239,14 +3285,15 @@ async function handle(req, res) {
       writeJson(GUIDES_PATH, out);
       return send(res, 200, { ok: true, guides: out });
     }
-    // Re-apply the spec'd default appointments to ONE composition key (overwrites its refs).
+    // Re-apply the spec'd default appointments to ONE composition key (overwrites its refs),
+    // snapshotting the default cards' art into frozen assets.
     if (p === '/api/art-guides/seed' && req.method === 'POST') {
       const { axis, key } = await readBody(req);
       if (!['concept', 'theme'].includes(axis) || !key) return send(res, 400, { error: 'bad request' });
-      const g = seedArtGuideRefs();
+      const g = getArtGuides();
       const k = compKey(String(key).split('_').filter(Boolean));
       const entry = g[axis][k] || (g[axis][k] = { label: '', positive: '', negative: '' });
-      Object.assign(entry, seedDefaultsFor(axis, k));
+      Object.assign(entry, materializeDefaults(axis, k));
       entry.seeded = true;
       writeJson(GUIDES_PATH, g);
       return send(res, 200, { ok: true, guides: g });
@@ -3743,6 +3790,8 @@ async function handle(req, res) {
 }
 
 if (require.main === module) {
+  try { migrateCanonicalRefs(); }   // one-time: freeze canonical refs into workspace assets
+  catch (e) { console.error('canonical-ref migration failed (continuing):', e.message); }
   http.createServer(handle).listen(PORT, '127.0.0.1', () => {
     console.log(`CardGame Authoring Tool  →  http://127.0.0.1:${PORT}`);
     console.log(`Game root: ${GAME_ROOT}`);

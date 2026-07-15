@@ -296,7 +296,7 @@
 		"health": 20,
 		"speed": 3,
 		"shield": 5,
-		"is_king": true,
+		"description": "Ruler of darkness and earth. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
 		"elements": [
 			"darkness",
 			"earth"
@@ -304,27 +304,22 @@
 		"chess_pieces": [
 			"king"
 		],
-		"description": "Ruler of darkness and earth. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
-		"effects": [],
+		"is_king": true,
 		"tool": {
 			"art": {
-				"prompt": "A stout crowned monarch of living granite standing full-figure, boulder-broad shoulders fused with fractured slate armor, glowing violet cracks veining across grey stone flesh, a dark eclipse-ringed emblem sunken into his chest, deep-set eyes burning cold amethyst light, fists like carved cliffside crags, gripping a jagged rough-hewn stone scepter, gravel drifting from his heavy cloak, hazy twilight-purple background",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Stocky armored monarch sovereign, faceted black volcanic-glass plate armor with glowing violet seam veins, jagged mineral-spike crown set with a burning crimson gem, gripping a tall scepter topped by a pulsing purple crystal, heavy gemstone-studded shield, commanding wide stance, deep cavern of glittering amethyst columns, dim violet glow, bold outlines, painterly fantasy illustration.",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/king.png",
-					"name": "King"
-				},
-				"inferredFrom": {
-					"concept": [
-						"king",
-						"air_air_king",
-						"air_fire_king"
-					],
-					"theme": [
-						"darkness_darkness_knight",
-						"darkness_darkness_pawn",
-						"darkness_darkness_queen"
-					]
+					"source": "upload",
+					"path": "snap_king.png",
+					"name": "snap_king.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
@@ -481,23 +476,19 @@
 		"effects": [],
 		"tool": {
 			"art": {
-				"prompt": "A stout crowned monarch of living stone standing full-figure, dark plated armor of fused slate glowing along cracked violet seams, a radiant pale ring emblem set into the chestplate, deep-set luminous eyes, a heavy mantle of drifting gravel and dust unraveling at the hem, one fist gripping a blunt mountain-headed staff, boots planted on fractured cobbled ground, brooding lavender-gray sky.",
+				"prompt": "Chibi earth-elemental sovereign king built from packed soil and clumped dirt, glowing golden eyes, towering jagged bronze crown, thick soil-formed beard, layered ochre and rust plated armor with spiral engravings, heavy pauldroned dirt-woven cloak, raising a bronze scepter crowned with a swirling floating orb of clustered earth, warm brown palette, barren cracked plains, soft diffuse light, painterly fantasy illustration, heroic frontal stance",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/king.png",
-					"name": "King"
+					"source": "upload",
+					"path": "snap_king.png"
 				},
 				"inferredFrom": {
-					"concept": [
-						"king",
-						"air_air_king",
-						"air_darkness_king"
-					],
+					"anchor": "snap_king.png",
 					"theme": [
-						"darkness_darkness_knight",
-						"darkness_darkness_pawn",
-						"darkness_darkness_queen"
-					]
+						"snap_earth_earth_pawn.png",
+						"snap_earth_earth_knight.png",
+						"snap_earth_earth_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		}

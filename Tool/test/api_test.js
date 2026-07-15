@@ -657,7 +657,11 @@ async function main() {
       { id: 'bishop_rook', display_name: 'Bishop Rook', cost: 2, attack: 2, health: 4, speed: 2,
         chess_pieces: ['bishop', 'rook'], tool: { art: { prompt: 'a mitred tower-warden construct' } } },
       { id: 'darkness_earth_pawn', display_name: 'Dark Earth Pawn', cost: 1, attack: 1, health: 2, speed: 3,
-        elements: ['darkness', 'earth'], chess_pieces: ['pawn'] },
+        elements: ['darkness', 'earth'], chess_pieces: ['pawn'],
+        // a distinctive AUTHORING prompt: the old system rode this verbatim into every
+        // theme-mate's inference (the earth_earth darkness leak). A frozen canonical ref
+        // must NEVER surface it — the theme look comes from an art-derived caption instead.
+        tool: { art: { prompt: 'CONTAMINATION_PROBE obsidian void violet twilight' } } },
     ]));
     fs.writeFileSync(path.join(SANDBOX, 'assets/cards/bishop_rook.png'), PNG1x1);
     fs.writeFileSync(path.join(SANDBOX, 'assets/cards/darkness_earth_pawn.png'), PNG1x1);
@@ -679,25 +683,33 @@ async function main() {
     });
     await new Promise(ok => fakeKin.listen(8482, ok));
     await api('/api/settings', { llmProvider: 'ollama', ollamaUrl: 'http://127.0.0.1:8482' });
+    // Canonical refs are appointed explicitly now (no per-read auto-seeding): the seed
+    // endpoint SNAPSHOTS the default cards' art into frozen workspace assets (snap_<id>.png),
+    // severing the game link. concept bishop_rook ← bishop_rook.png; theme darkness_earth ←
+    // darkness_earth_pawn.png (darkness_earth_knight has no art, so it is not appointed).
+    await api('/api/art-guides/seed', { axis: 'concept', key: 'bishop_rook' });
+    await api('/api/art-guides/seed', { axis: 'theme', key: 'darkness_earth' });
     r = await api('/api/art/infer-recipe', { type: 'card', id: 'darkness_earth_bishop_rook' });
-    check('kin inference anchors on the bare piece version\'s IMAGE (same-concept default)',
+    check('kin inference anchors on the concept asset (frozen snapshot, same-concept default)',
       r.data.ok && r.data.prompt === KIN_PROMPT
-      && r.data.ref && r.data.ref.path === 'assets/cards/bishop_rook.png'
-      && r.data.inferredFrom.anchor === 'bishop_rook'
-      && r.data.inferredFrom.theme.includes('darkness_earth_pawn')
+      && r.data.ref && r.data.ref.source === 'upload' && r.data.ref.path === 'snap_bishop_rook.png'
+      && r.data.inferredFrom.anchor === 'snap_bishop_rook.png'
+      && r.data.inferredFrom.theme.includes('snap_darkness_earth_pawn.png')
       && r.data.stats.mode === 'concept', JSON.stringify(r.data));
-    check('same-concept mode carries the DESIGN and frees the presentation',
+    check('concept mode carries the CONCEPT and frees the presentation',
       kinReq && kinReq.prompt.includes('Reference image 1 is THE CONCEPT')
-      && /Inventory what makes the subject/.test(kinReq.prompt)
-      && /Same recognizable character, new presentation/.test(kinReq.prompt)
+      && /Identify the CONCEPT of reference image 1/.test(kinReq.prompt)
+      && /NEW VERSION of that concept/.test(kinReq.prompt)
       // the AUTHORED name rides in (concept + theme identity), but the composition-encoding
-      // id never appears — relatives enter by ANONYMOUS label, their prompts verbatim
+      // id never appears — the theme look enters as an ANONYMOUS art-derived caption
       && /Card name .*: Grave Bastion/.test(kinReq.prompt)
-      && /theme example \d+: "already authored"/.test(kinReq.prompt)
-      && /theme example \d+: see reference image 2/.test(kinReq.prompt)
+      && /theme example \d+: "/.test(kinReq.prompt)
       && !/Composition:/.test(kinReq.prompt)
       && !/bishop_rook|darkness_earth/.test(kinReq.prompt)
-      && (kinReq.images || []).length >= 2, kinReq && kinReq.prompt);
+      // image 1 is the concept anchor; the theme is described by caption, not shown
+      && (kinReq.images || []).length === 1, kinReq && kinReq.prompt);
+    check('a theme card\'s AUTHORING prompt never leaks into inference (the earth_earth fix)',
+      kinReq && !/CONTAMINATION_PROBE/.test(kinReq.prompt), kinReq && kinReq.prompt);
     r = await api('/api/art/infer-recipe', { type: 'card', id: 'darkness_earth_bishop_rook', adherence: 'replicate' });
     check('replicate mode carries the PICTURE (re-dress only)',
       r.data.ok && r.data.stats.mode === 'replicate'
@@ -705,11 +717,12 @@ async function main() {
       && /SAME illustration, re-themed/.test(kinReq.prompt)
       && !/darkness and earth/.test(kinReq.prompt), kinReq && kinReq.prompt);   // no element naming
     r = await api('/api/art/infer-recipe', { type: 'card', id: 'darkness_earth_bishop_rook', adherence: 'free' });
-    check('free adherence keeps the blend behavior (minus the composition line)',
+    check('free adherence keeps the blend behavior (concept + theme, art-derived captions)',
       r.data.ok && r.data.stats.mode === 'free'
-      && /CONCEPT relatives/.test(kinReq.prompt)
-      && /concept relative \d+: "a mitred tower-warden construct"/.test(kinReq.prompt)
+      && /CONCEPT references/.test(kinReq.prompt)
+      && /concept reference \d+[^\n]*: "/.test(kinReq.prompt)   // caption text, not a card's prompt
       && /Card name .*: Grave Bastion/.test(kinReq.prompt)   // authored name present
+      && !/CONTAMINATION_PROBE/.test(kinReq.prompt)   // theme card's authoring prompt stays out
       && !/Composition:/.test(kinReq.prompt)
       && !/bishop_rook|darkness_earth/.test(kinReq.prompt), kinReq && kinReq.prompt);   // no id leaks
     check('single-card inference writes nothing',
@@ -738,7 +751,7 @@ async function main() {
       && kinJob.results.find(x => x.id === 'darkness_earth_knight').skipped, JSON.stringify(kinJob));
     check('batch job persisted recipes, skipping authored ones',
       readSbox('data/cards/apitest_kin.json').find(e => e.id === 'darkness_earth_bishop_rook').tool.art.prompt === KIN_PROMPT
-      && readSbox('data/cards/apitest_kin.json').find(e => e.id === 'darkness_earth_bishop_rook').tool.art.ref.path === 'assets/cards/bishop_rook.png'
+      && readSbox('data/cards/apitest_kin.json').find(e => e.id === 'darkness_earth_bishop_rook').tool.art.ref.path === 'snap_bishop_rook.png'
       && readSbox('data/cards/apitest_kin.json').find(e => e.id === 'darkness_earth_knight').tool.art.prompt === 'already authored');
     check('running jobs surface in state for UI reattachment',
       Array.isArray((await api('/api/state')).data.inferJobs));
@@ -746,6 +759,8 @@ async function main() {
     fs.writeFileSync(path.join(SANDBOX, 'data/cards/apitest_kin2.json'), JSON.stringify([
       { id: 'darkness_earth_rook', display_name: 'Grave Turret', cost: 3, attack: 2, health: 9, speed: 1,
         elements: ['darkness', 'earth'], chess_pieces: ['rook'] }]));
+    // own art → anchors on itself (concept 'rook' isn't appointed); theme darkness_earth is
+    fs.writeFileSync(path.join(SANDBOX, 'assets/cards/darkness_earth_rook.png'), PNG1x1);
     r = await api('/api/art/infer-recipes', { type: 'card', file: 'apitest_kin2.json', adherence: 'replicate' });
     for (let i = 0; i < 100; i++) {
       await new Promise(ok => setTimeout(ok, 100));
