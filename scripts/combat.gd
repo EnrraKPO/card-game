@@ -608,6 +608,10 @@ func _apply_attack_damage(attacker: CardInstance, target: CardInstance, t_card: 
 		# The target's speed slipped the blow outright — an ACTIVE evade (sidestep + "Dodge!"),
 		# distinct from the grey whiff of a miss. Both land 0 damage; the cause differs.
 		_vfx.play(VFXEvent.dodge(t_card))
+		# The `dodge` event fires after `struck` (a dodged unit was still attacked): origin = the
+		# attacker whose blow was slipped, destination = the dodger. Lets "when an ally dodges…"
+		# reactions run (the dodger is the subject).
+		await _broadcast(GameEvent.make(&"dodge", attacker, target))
 	elif dmg <= 0:
 		# A 0-damage strike (blocked, or <=0 Attack) reads as "Miss" rather than a number.
 		_vfx.play(VFXEvent.miss(t_card))
@@ -641,8 +645,8 @@ func _event_ctx(event: GameEvent, holder: CardInstance) -> EffectContext:
 	ctx.subject = event.subject()
 	if event.id == &"attack":
 		ctx.attack_target = event.destination   # lets an attack effect target the unit being struck
-	elif event.id == &"struck":
-		ctx.attacker = event.origin             # lets a struck effect target the unit that struck
+	elif event.id == &"struck" or event.id == &"dodge":
+		ctx.attacker = event.origin             # struck/dodge: the unit that struck (the dodger is the subject)
 	return ctx
 
 

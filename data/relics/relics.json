@@ -417,5 +417,40 @@
 				}
 			}
 		]
+	},
+	{
+		"id": "zephyr_charm",
+		"display_name": "Zephyr Charm",
+		"description": "Whenever an allied air unit dodges an attack, it gains a Barrier.",
+		"color": "7ec8c0",
+		"letter": "Z",
+		"price": 100,
+		"effects": [
+			{
+				"kind": "triggered",
+				"trigger": {
+					"kind": "dual_event",
+					"event": "dodge",
+					"destination_conditions": [
+						{
+							"composition": [
+								"air"
+							]
+						},
+						{
+							"allegiance": "ally"
+						}
+					]
+				},
+				"targets": {
+					"kind": "participant",
+					"participant": "destination"
+				},
+				"status": {
+					"id": "barrier",
+					"stacks": 1
+				}
+			}
+		]
 	}
 ]

@@ -19,6 +19,7 @@ func run() -> void:
 	_dispatch()
 	_run_level_dispatch()
 	_kill_event()
+	_dodge_event()
 
 
 # A throwaway unit with known stats/composition, placed on a side.
@@ -325,3 +326,44 @@ func _kill_event() -> void:
 	# Round-trip: the cause survives a to_dict/parse cycle.
 	check_eq((rp.to_dict() as Dictionary).get("cause", ""), "poison",
 			"kill cause round-trips through to_dict")
+
+
+# The `dodge` event: a dual event (attacker → dodger) whose subject is the DODGER (destination),
+# powering "when an ally dodges…" reactions like the Zephyr Charm relic (air ally → Barrier).
+func _dodge_event() -> void:
+	var attacker := _unit(3, 1)               # enemy striker whose blow is slipped
+	var air_ally := _unit(2, 0, ["air"])      # the player's air dodger
+	var fire_ally := _unit(2, 0, ["fire"])    # a non-air ally
+
+	var ev := GameEvent.make(&"dodge", attacker, air_ally)
+	check_eq(ev.subject(), air_ally, "dodge subject is the dodger (the destination)")
+
+	# The Zephyr Charm resolver: dual dodge gated on the destination being an allied air unit,
+	# targeting that same dodger.
+	var relic := Effect.from_dict({
+		"kind": "triggered",
+		"trigger": {"kind": "dual_event", "event": "dodge",
+			"destination_conditions": [{"composition": ["air"]}, {"allegiance": "ally"}]},
+		"targets": {"kind": "participant", "participant": "destination"},
+		"status": {"id": "barrier", "stacks": 1},
+	})
+	var r := relic.trigger_resolver()
+	check(r is TriggerResolver.Dual and (r as TriggerResolver.Dual).event == &"dodge",
+			"native dodge parses to a dual dodge resolver")
+	# Anchored to the player (0): fires for an allied air dodger, not for a non-air ally, and not
+	# for an enemy air unit (ally is relative to the player).
+	check(r.fires(ev, null, 0), "dodge fires when an allied air unit dodges")
+	check(not r.fires(GameEvent.make(&"dodge", attacker, fire_ally), null, 0),
+			"dodge silent when the dodger isn't an air unit")
+	check(not r.fires(GameEvent.make(&"dodge", air_ally, _unit(2, 1, ["air"])), null, 0),
+			"dodge silent when the dodger is an enemy (ally anchored to the player)")
+
+	# End-to-end run-level dispatch: the relic hangs a Barrier on the dodging air ally.
+	GameData.current_modifiers = ModifierSet.new()
+	GameData.current_modifiers.add(relic)
+	var ctx := EffectContext.make(air_ally, [[air_ally]], [[attacker]])
+	ctx.subject = air_ally
+	var res := EffectSystem.trigger_global(ev, ctx)
+	check(not res.is_empty(), "run-level dodge reaction fires")
+	check(air_ally.find_status("barrier") != null, "the dodging air ally gains a Barrier")
+	GameData.current_modifiers = ModifierSet.new()

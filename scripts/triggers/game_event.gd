@@ -12,7 +12,10 @@ extends RefCounted
 # Dual events (origin + destination): attack (the swing, fired before the damage
 # resolves), struck (fired after the damage resolves — whether or not any landed),
 # kill (a unit died — origin = killer unit (attacks only), destination = the corpse;
-# fired just before `death`, both while the corpse is still on the board).
+# fired just before `death`, both while the corpse is still on the board),
+# dodge (a strike was avoided outright — origin = the attacker whose blow was slipped,
+# destination = the DODGER; fired after `struck`, only when the target's speed dodged
+# the hit — see Resolver dodge + combat). subject() is the dodger.
 
 var id: StringName = &""
 var origin: CardInstance = null
@@ -48,6 +51,6 @@ static func kill(p_killer: CardInstance, p_killed: CardInstance,
 # run-level perspective card, and the decay gate. For `struck` that was always the unit
 # taking the hit (the destination); for everything else it is the origin.
 func subject() -> CardInstance:
-	if (id == &"struck" or id == &"kill") and destination != null:
+	if (id == &"struck" or id == &"kill" or id == &"dodge") and destination != null:
 		return destination
 	return origin
