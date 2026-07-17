@@ -530,5 +530,57 @@
 				}
 			}
 		]
+	},
+	{
+		"id": "light_bless",
+		"display_name": "Light Blessing",
+		"description": "Blesses a unit of your choice with Light Blessing: for 2 turns it is treated as a light unit, and you gain 1 mana whenever it makes a kill.",
+		"cost": {
+			"mana": 1,
+			"tap": true
+		},
+		"autocast": true,
+		"effects": [
+			{
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual"
+				},
+				"status": {
+					"id": "light_blessing",
+					"stacks": 1
+				}
+			}
+		]
+	},
+	{
+		"id": "darkness_bless",
+		"display_name": "Darkness Blessing",
+		"description": "Blesses a unit of your choice with Darkness Blessing: for 2 turns it is treated as a darkness unit, and you draw a card whenever it makes a kill.",
+		"cost": {
+			"mana": 1,
+			"tap": true
+		},
+		"autocast": true,
+		"effects": [
+			{
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual"
+				},
+				"status": {
+					"id": "darkness_blessing",
+					"stacks": 1
+				}
+			}
+		]
 	}
 ]

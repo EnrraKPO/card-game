@@ -32,7 +32,10 @@
 		"chess_pieces": [
 			"bishop"
 		],
-		"ranged": true
+		"ranged": true,
+		"abilities": [
+			"light_bless"
+		]
 	},
 	{
 		"id": "light_rook",

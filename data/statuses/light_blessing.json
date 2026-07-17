@@ -1,0 +1,38 @@
+[
+	{
+		"id": "light_blessing",
+		"display_name": "Light Blessing",
+		"description": "For 2 turns: this unit is treated as a light unit, and you gain 1 mana whenever it makes a kill.",
+		"beneficial": true,
+		"color": "fff3b0",
+		"glyph": "◆",
+		"stacking": "refresh",
+		"default_duration": 2,
+		"effects": [
+			{
+				"trigger": {
+					"kind": "while"
+				},
+				"targets": {
+					"kind": "self"
+				},
+				"grants": [
+					"light"
+				]
+			},
+			{
+				"trigger": {
+					"kind": "dual_event",
+					"event": "kill",
+					"origin_of": "self"
+				},
+				"targets": {
+					"kind": "side",
+					"of": "own"
+				},
+				"attribute": "mana",
+				"amount": 1
+			}
+		]
+	}
+]

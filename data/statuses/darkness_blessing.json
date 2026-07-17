@@ -1,0 +1,38 @@
+[
+	{
+		"id": "darkness_blessing",
+		"display_name": "Darkness Blessing",
+		"description": "For 2 turns: this unit is treated as a darkness unit, and you draw a card whenever it makes a kill.",
+		"beneficial": true,
+		"color": "7a3dcc",
+		"glyph": "◆",
+		"stacking": "refresh",
+		"default_duration": 2,
+		"effects": [
+			{
+				"trigger": {
+					"kind": "while"
+				},
+				"targets": {
+					"kind": "self"
+				},
+				"grants": [
+					"darkness"
+				]
+			},
+			{
+				"trigger": {
+					"kind": "dual_event",
+					"event": "kill",
+					"origin_of": "self"
+				},
+				"targets": {
+					"kind": "side",
+					"of": "own"
+				},
+				"attribute": "draw",
+				"amount": 1
+			}
+		]
+	}
+]
