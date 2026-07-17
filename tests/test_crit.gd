@@ -36,6 +36,7 @@ func run() -> void:
 	_blocked_hit_never_crits()
 	_buildings_crit_both_ways()
 	Resolver.crit_enabled = prev
+	_proof_relics_load()
 	Resolver.set_crit_tuning({})   # drop the injected cache; later reads reload from disk
 
 
@@ -318,6 +319,29 @@ func _buildings_crit_both_ways() -> void:
 	var out2 := Resolver.submit(StatMutation.damage(wall, 4, _unit(1, 5, 0)))
 	check(out2.crit, "a building defender can be critically hit")
 	check_eq(out2.delta, -8, "the crit against the building deals full multiplied damage")
+
+
+# The proof-relic coverage matrix (see CRIT_DAMAGE_SPEC.md): every mechanical surface of crit
+# is proven by an authored, acquirable relic — chance modifier, multiplier modifier, `crit`
+# trigger, interception-multiply, interception-deny. This guards the CONTENT half of that
+# contract: all five load through the real RelicData pipeline with their effects parsed.
+func _proof_relics_load() -> void:
+	var want := {
+		"eagle_eye_charm": Effect.Kind.MODIFIER,       # crit chance modifier
+		"executioners_edge": Effect.Kind.MODIFIER,     # crit damage multiplier modifier
+		"berserkers_momentum": Effect.Kind.TRIGGERED,  # crit as an effect trigger
+		"warlords_fury": Effect.Kind.INTERCEPTOR,      # interception: multiply chance
+		"steady_hand_ward": Effect.Kind.INTERCEPTOR,   # interception: deny
+	}
+	for id: String in want:
+		var r: RelicData = RelicData.get_relic(id)
+		if r == null:
+			check(false, "proof relic '%s' is missing from the relic pool" % id)
+			continue
+		check(not r.effects.is_empty(), "proof relic '%s' parsed its effects" % id)
+		if not r.effects.is_empty():
+			check_eq((r.effects[0] as Effect).kind, want[id],
+					"proof relic '%s' carries the expected effect kind" % id)
 
 
 func _near(got: float, want: float, label: String) -> void:
