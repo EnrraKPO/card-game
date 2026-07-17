@@ -93,6 +93,11 @@ func get_attribute(attr: String) -> int:
 		# Folds written modifiers + live standing effects like the other stats; read by
 		# Resolver.dodge_chance, where it stacks on the speed-derived chance before the cap.
 		"dodge_bonus": return modifiers.get("dodge_bonus", 0) + LiveEffects.bonus(self, "dodge_bonus")
+		# Crit's two stored axes, same fold shape as dodge_bonus (base 0 — no innate card stat).
+		# crit_chance_bonus is percentage points on the chance; crit_multiplier_bonus is
+		# multiplier points ×100 (50 = +0.5×). Read by Resolver.crit_chance / crit_multiplier.
+		"crit_chance_bonus": return modifiers.get("crit_chance_bonus", 0) + LiveEffects.bonus(self, "crit_chance_bonus")
+		"crit_multiplier_bonus": return modifiers.get("crit_multiplier_bonus", 0) + LiveEffects.bonus(self, "crit_multiplier_bonus")
 		# Read-only composition counts, so conditions can query merge room with the ordinary
 		# attribute/comparator form (e.g. a pawn material: piece_count <= 1). Never modified.
 		"piece_count":   return data.chess_pieces.size()

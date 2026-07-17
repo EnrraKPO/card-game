@@ -37,6 +37,18 @@ const STATUS := &"status"
 # Resolver.dodge_chance and read straight back (never applied to any pool). Distinct from
 # DODGE_BONUS below, which is the STORED additive modifier folded INTO this chance. Floors at 0.
 const DODGE := &"dodge"
+# Transient crit-chance query (integer percentage points), the offensive mirror of DODGE — but
+# NOTE THE PARTICIPANT SWAP: this mutation's `target` is the ATTACKER (the unit whose crit
+# chance is being queried — `target` always means "whoever the quantity belongs to") and its
+# `source` is the DEFENDER being struck. An interceptor's participant "target" therefore means
+# "the unit landing the crit", NOT the unit being hit. Built + intercepted in
+# Resolver.crit_chance, read straight back, never applied to any pool. Floors at 0.
+const CRIT := &"crit_chance"
+# Transient crit-damage-multiplier query: the multiplier ×100 as integer points (200 = 2.0×),
+# so interceptor mul/add rewrites work on the same integer contract as everything else. Same
+# participant wiring as CRIT (target = the attacker). Built + intercepted in
+# Resolver.crit_multiplier, capped at tuning multiplier_max on the way out.
+const CRIT_MULT := &"crit_multiplier"
 
 # ── Stats: additive modifiers on a CardInstance (fold into get_attribute at read time) ──
 const ATTACK := &"attack"
@@ -45,6 +57,8 @@ const COST := &"cost"
 const MAX_HEALTH := &"max_health"
 const SHIELD := &"shield"   # per-round base shield (raises what each round's refill restores)
 const DODGE_BONUS := &"dodge_bonus"   # additive dodge-chance bonus in percentage points (see Resolver.dodge_chance)
+const CRIT_CHANCE_BONUS := &"crit_chance_bonus"           # additive crit-chance bonus in percentage points (see Resolver.crit_chance)
+const CRIT_MULTIPLIER_BONUS := &"crit_multiplier_bonus"   # additive crit-multiplier bonus in points ×100 (50 → +0.5×; see Resolver.crit_multiplier)
 
 # A DeckCard target instead treats `stat` as the card-definition FIELD to bump permanently
 # ("attack"/"health"/"speed"/"shield" — see DeckCard.UPGRADABLE and the "?" event).

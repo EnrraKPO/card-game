@@ -17,11 +17,29 @@ const DODGE_DEFAULT := {
 }
 static var _dodge_cfg: Dictionary = {}
 
-# Master switch for the dodge roll. On in the live game; the deterministic regression harness
-# turns it OFF so damage-math assertions aren't perturbed by a random avoid (the dodge suite
-# flips it back on around injected tuning). This is the ONLY randomness in the Resolver that
-# isn't authored per-effect, so it's the only one that needs a determinism seam.
+# Crit tuning — dodge's offensive sibling, same file, sibling "crit" key. The chance is
+# assembled in crit_chance() from the ATTACKER's speed (settled design: Speed is the precision
+# stat on both sides of an exchange — the defender's drives dodge, the attacker's drives crit):
+#     fixed_pct  +  per_speed_pct × attacker_speed  +  per_speed_diff_pct × max(0, atk − tgt speed)
+# capped at max_pct. `multiplier` is the crit damage factor (2.0 = double), raised by the
+# attacker's crit_multiplier_bonus (points ×100) and capped at multiplier_max — no relic makes
+# a hit infinite. Crit resolves AFTER interception, only on a hit that still deals > 0.
+const CRIT_DEFAULT := {
+	"fixed_pct": 5.0,
+	"per_speed_pct": 1.0,
+	"per_speed_diff_pct": 0.0,
+	"max_pct": 75.0,
+	"multiplier": 2.0,
+	"multiplier_max": 5.0,
+}
+static var _crit_cfg: Dictionary = {}
+
+# Master switches for the dodge/crit rolls. On in the live game; the deterministic regression
+# harness turns them OFF so damage-math assertions aren't perturbed by a random avoid or spike
+# (each feature's suite flips its own back on around injected tuning). These are the ONLY
+# randomness in the Resolver that isn't authored per-effect, so they're the only determinism seams.
 static var dodge_enabled := true
+static var crit_enabled := true
 
 # THE single writer of game-state numbers. Anything that wants to change a stat — combat, a
 # card effect, a custom hook, a map-event screen — builds a StatMutation and submits it here;
@@ -59,6 +77,12 @@ class Outcome:
 	# Distinct from an ordinary 0-delta whiff: presentation will branch on this to cue a dodge
 	# (VFX/SFX/event hooks are a follow-up task).
 	var dodged: bool = false
+	# DAMAGE form only: the strike was a CRITICAL — the attacker's blow landed harder, and the
+	# post-interception amount was multiplied up (see _submit / crit_chance). The seam for
+	# presentation (crit VFX/SFX) and the `crit` trigger event, exactly as `dodged` is for dodge.
+	# `crit_bonus_damage` is how much EXTRA the crit added beyond the base hit, for cueing.
+	var crit: bool = false
+	var crit_bonus_damage: int = 0
 	var interceptions: Array = []
 
 	static func make(p_target: Object, p_stat: StringName, p_delta: int) -> Outcome:
@@ -108,7 +132,22 @@ static func _submit(m: StatMutation) -> Outcome:
 		od.dodged = true
 		return od
 	var interceptions := _intercept(m)
+	# CRIT is resolved AFTER interception (settled design, the mirror of dodge-before-
+	# interception): a crit only ever procs on a hit that still deals damage once the defensive
+	# layer has spoken — a Barrier-blocked (or otherwise fully negated) strike is 0 and never
+	# rolls, so it raises no crit event/VFX while still consuming the block normally. The
+	# multiplier applies to the FINAL resolved amount; the dedicated anti-crit levers are the
+	# interceptable crit_chance / crit_multiplier queries themselves (see crit_chance).
+	var crit_bonus := 0
+	if m.stat == StatMutation.DAMAGE and m.channel == StatMutation.CH_ATTACK \
+			and crit_enabled and m.amount > 0 and randf() < crit_chance(m.source, inst):
+		var boosted := int(round(m.amount * crit_multiplier(m.source)))
+		crit_bonus = maxi(0, boosted - m.amount)
+		m.amount += crit_bonus
 	var out := _apply_to_instance(inst, m)
+	if crit_bonus > 0:
+		out.crit = true
+		out.crit_bonus_damage = crit_bonus
 	# The application form may have run nested gates of its own (a DAMAGE split intercepts
 	# its shield/health portions — see _apply_damage): keep those records, in firing order.
 	out.interceptions = interceptions + out.interceptions
@@ -333,6 +372,88 @@ static func set_dodge_tuning(cfg: Dictionary) -> void:
 			_dodge_cfg[k] = float(cfg[k])
 
 
+# The ATTACKER's chance (0..1) to land a critical hit on `target`, assembled from the data-driven
+# tuning: a fixed base, a per-speed term on the ATTACKER's speed, a one-sided per-speed-EDGE term
+# that only pays out when the attacker outspeeds its target, and the attacker's own
+# `crit_chance_bonus` — extra percentage points granted by standing effects, folded through
+# get_attribute like every other stat.
+#
+# PARTICIPANT ROLES ARE SWAPPED relative to dodge_chance — read carefully before copying either
+# pattern onto the other. The transient mutation's `target` is the ATTACKER (the unit whose crit
+# chance this is — `target` always means "whoever the queried quantity belongs to") and its
+# `source` is the DEFENDER being struck. An interceptor's participant "target" therefore means
+# "the unit landing the crit", NOT the unit being hit: "your fire units 3x crit" gates
+# participant target/relation ally; "enemies never crit" gates participant target/relation enemy.
+# Capped at max_pct. `target` may be null (a targetless query) — then the edge term and the
+# defender-side interceptors are simply absent. No building exclusion in either direction
+# (settled design): a rook can land a crit and can be crit against.
+static func crit_chance(attacker: CardInstance, target: CardInstance = null) -> float:
+	if attacker == null:
+		return 0.0
+	var cfg := _crit_config()
+	var spd := float(attacker.get_attribute("speed"))
+	var pct := float(cfg["fixed_pct"]) + float(cfg["per_speed_pct"]) * spd
+	if target != null:
+		var edge := spd - float(target.get_attribute("speed"))
+		if edge > 0.0:
+			pct += float(cfg["per_speed_diff_pct"]) * edge
+	pct += float(attacker.get_attribute("crit_chance_bonus"))
+	# Rewrite-only interception pass (never submitted/applied): target = the would-be critter,
+	# source = the defender, so interceptors gate on either party. Floors at 0 in _try_intercept.
+	var m := StatMutation.make(attacker, StatMutation.CRIT, maxi(0, int(round(pct))),
+			target, StatMutation.CH_ATTACK)
+	_intercept(m)
+	return clampf(minf(float(m.amount), float(cfg["max_pct"])), 0.0, 100.0) / 100.0
+
+
+# The ATTACKER's crit damage multiplier (e.g. 2.0 = a crit doubles the hit): tuning base +
+# the attacker's crit_multiplier_bonus (points ×100 — a +50 bonus on a 2.0 base is 2.5×), then
+# interceptable as its own query (stat "crit_multiplier", riding as integer points ×100 on the
+# same participant wiring as crit_chance), finally capped at multiplier_max and floored at 1.0
+# (a "crit" can never deal LESS than the base hit — intercept crit_chance to deny crits instead).
+static func crit_multiplier(attacker: CardInstance, target: CardInstance = null) -> float:
+	var cfg := _crit_config()
+	if attacker == null:
+		return float(cfg["multiplier"])
+	var pts := float(cfg["multiplier"]) * 100.0 + float(attacker.get_attribute("crit_multiplier_bonus"))
+	var m := StatMutation.make(attacker, StatMutation.CRIT_MULT, maxi(0, int(round(pts))),
+			target, StatMutation.CH_ATTACK)
+	_intercept(m)
+	return clampf(float(m.amount) / 100.0, 1.0, float(cfg["multiplier_max"]))
+
+
+# Lazily loads (and caches) the crit tuning from the shared combat_tuning.json ("crit" key),
+# falling back to CRIT_DEFAULT for the file or any missing key — mirrors _dodge_config.
+static func _crit_config() -> Dictionary:
+	if not _crit_cfg.is_empty():
+		return _crit_cfg
+	_crit_cfg = CRIT_DEFAULT.duplicate(true)
+	if FileAccess.file_exists(DODGE_TUNING_PATH):
+		var file := FileAccess.open(DODGE_TUNING_PATH, FileAccess.READ)
+		var json := JSON.new()
+		if file != null and json.parse(file.get_as_text()) == OK and json.data is Dictionary:
+			var crit: Variant = (json.data as Dictionary).get("crit")
+			if crit is Dictionary:
+				for k: String in CRIT_DEFAULT:
+					if (crit as Dictionary).get(k) != null:
+						_crit_cfg[k] = float((crit as Dictionary)[k])
+		else:
+			push_error("Resolver: bad combat_tuning.json — using crit defaults")
+	return _crit_cfg
+
+
+# Injects crit tuning directly, bypassing the JSON — the harness's determinism seam, mirroring
+# set_dodge_tuning. Unset keys keep their CRIT_DEFAULT value. Pass {} to force a disk reload.
+static func set_crit_tuning(cfg: Dictionary) -> void:
+	if cfg.is_empty():
+		_crit_cfg = {}
+		return
+	_crit_cfg = CRIT_DEFAULT.duplicate(true)
+	for k: String in CRIT_DEFAULT:
+		if cfg.get(k) != null:
+			_crit_cfg[k] = float(cfg[k])
+
+
 static func _apply_health(inst: CardInstance, amount: int) -> Outcome:
 	# Signed direct health change: negative wounds through the shield (poison); positive
 	# heals, clamped to effective max. Reports the delta that actually landed.
@@ -436,7 +557,8 @@ static func _try_intercept(e: Effect, stacks: int, holder: CardInstance, owner_s
 		m.amount += e.amount_int() * stacks   # additive rewrites scale by stacks, like stat deltas
 	if m.stat == StatMutation.DAMAGE or m.stat == StatMutation.STATUS \
 			or m.stat == StatMutation.DRAW or m.stat == StatMutation.DISCARD \
-			or m.stat == StatMutation.DODGE:
+			or m.stat == StatMutation.DODGE or m.stat == StatMutation.CRIT \
+			or m.stat == StatMutation.CRIT_MULT:
 		# Magnitude-form stats re-floor after every rewrite — an intercepted-away draw
 		# draws nothing; it never becomes a discard.
 		m.amount = maxi(0, m.amount)

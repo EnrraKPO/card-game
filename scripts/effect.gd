@@ -71,6 +71,8 @@ const CARD_ATTR := {
 	"unit.health":      "max_health",
 	"unit.speed":       "speed",
 	"unit.dodge_bonus": "dodge_bonus",
+	"unit.crit_chance_bonus":     "crit_chance_bonus",
+	"unit.crit_multiplier_bonus": "crit_multiplier_bonus",
 	"card.cost":        "cost",
 }
 
@@ -529,7 +531,7 @@ func is_composition_grant() -> bool:
 # The attributes the read-time fold actually serves (get_attribute consults LiveEffects
 # for exactly these). Pools (current health/shield, side resources) are stored state and
 # can never be standing targets — their BASE is what folds (see FOLDABLE_MAP).
-const FOLDABLE_ATTRS: Array[String] = ["max_health", "attack", "speed", "cost", "max_shield", "dodge_bonus"]
+const FOLDABLE_ATTRS: Array[String] = ["max_health", "attack", "speed", "cost", "max_shield", "dodge_bonus", "crit_chance_bonus", "crit_multiplier_bonus"]
 # Pool-named authored attributes → the base each one folds into when authored standing:
 # a "while +1 health" means max health, a "while +1 shield" means the shield base the
 # pool refreshes to (and reads against) — never the pool itself.
