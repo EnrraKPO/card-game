@@ -554,5 +554,49 @@
 				"amount": 1
 			}
 		]
+	},
+	{
+		"id": "eagle_eye_charm",
+		"display_name": "Eagle-Eye Charm",
+		"description": "All your air units get +25% Crit chance.",
+		"color": "c9a13a",
+		"letter": "E",
+		"price": 110,
+		"effects": [
+			{
+				"kind": "modifier",
+				"key": "unit.crit_chance_bonus",
+				"amount": 25,
+				"conditions": [
+					{
+						"composition": [
+							"air"
+						]
+					}
+				]
+			}
+		]
+	},
+	{
+		"id": "executioners_edge",
+		"display_name": "Executioner's Edge",
+		"description": "Your darkness units' critical hits deal +50% damage.",
+		"color": "5a2a6b",
+		"letter": "X",
+		"price": 120,
+		"effects": [
+			{
+				"kind": "modifier",
+				"key": "unit.crit_multiplier_bonus",
+				"amount": 50,
+				"conditions": [
+					{
+						"composition": [
+							"darkness"
+						]
+					}
+				]
+			}
+		]
 	}
 ]

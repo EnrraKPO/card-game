@@ -23,6 +23,8 @@ func suite_name() -> String:
 func run() -> void:
 	_chance_formula()
 	_multiplier_formula()
+	_crit_chance_bonus_fold()
+	_crit_multiplier_bonus_fold()
 	var prev := Resolver.crit_enabled
 	Resolver.crit_enabled = true
 	_certain_crit_multiplies_damage()
@@ -79,6 +81,64 @@ func _multiplier_formula() -> void:
 	# The floor: a multiplier can never dip below 1.0 (a crit never deals LESS than the base hit).
 	Resolver.set_crit_tuning({"multiplier": 0.5, "multiplier_max": 5.0})
 	_near(Resolver.crit_multiplier(_unit(3, 9, 0)), 1.0, "the multiplier floors at 1.0")
+
+
+# The `crit_chance_bonus` stat: extra crit percentage points, foldable by standing effects. A
+# written modifier and a run-level standing modifier (the Eagle-Eye Charm relic) both flow into
+# crit_chance — the attacker-side mirror of _dodge_bonus_fold.
+func _crit_chance_bonus_fold() -> void:
+	# Zero out the speed-derived terms so the bonus is the whole chance.
+	Resolver.set_crit_tuning({"fixed_pct": 0.0, "per_speed_pct": 0.0, "per_speed_diff_pct": 0.0, "max_pct": 100.0})
+	var u := _unit(5, 9, 0)
+	_near(Resolver.crit_chance(u), 0.0, "no bonus, zero rates → 0% crit")
+	Resolver.submit(StatMutation.make(u, StatMutation.CRIT_CHANCE_BONUS, 25, null, StatMutation.CH_SYSTEM))
+	check_eq(u.get_attribute("crit_chance_bonus"), 25, "a crit_chance_bonus modifier folds into get_attribute")
+	_near(Resolver.crit_chance(u), 0.25, "a +25 crit_chance_bonus adds 25% to the chance")
+
+	# The cap bounds the bonus too — no attacker crits every time past the ceiling.
+	Resolver.set_crit_tuning({"fixed_pct": 0.0, "per_speed_pct": 0.0, "max_pct": 20.0})
+	_near(Resolver.crit_chance(u), 0.20, "the cap ceils a bonus that would exceed it")
+
+	# The Eagle-Eye Charm relic: a run-level standing modifier granting +25 crit_chance_bonus to
+	# allied AIR units only — anchored to the player, gated by composition.
+	Resolver.set_crit_tuning({"fixed_pct": 0.0, "per_speed_pct": 0.0, "per_speed_diff_pct": 0.0, "max_pct": 100.0})
+	GameData.current_modifiers = ModifierSet.new()
+	GameData.current_modifiers.add(Effect.from_dict({
+		"kind": "modifier", "key": "unit.crit_chance_bonus", "amount": 25,
+		"conditions": [{"composition": ["air"]}],
+	}))
+	var air_ally := _unit(5, 9, 0, ["air"], 0)
+	var fire_ally := _unit(5, 9, 0, ["fire"], 0)
+	var air_enemy := _unit(5, 9, 0, ["air"], 1)
+	check_eq(air_ally.get_attribute("crit_chance_bonus"), 25, "the relic grants +25 crit chance to an allied air unit")
+	check_eq(fire_ally.get_attribute("crit_chance_bonus"), 0, "a non-air ally gets no crit-chance bonus")
+	check_eq(air_enemy.get_attribute("crit_chance_bonus"), 0, "an enemy air unit gets no player-scoped bonus")
+	_near(Resolver.crit_chance(air_ally), 0.25, "the granted bonus flows into the air unit's crit chance")
+	GameData.current_modifiers = ModifierSet.new()
+
+
+# The `crit_multiplier_bonus` stat — the axis dodge never had: extra multiplier points ×100,
+# foldable by standing effects (the Executioner's Edge relic) into crit_multiplier.
+func _crit_multiplier_bonus_fold() -> void:
+	Resolver.set_crit_tuning({"multiplier": 2.0, "multiplier_max": 5.0})
+	GameData.current_modifiers = ModifierSet.new()
+	GameData.current_modifiers.add(Effect.from_dict({
+		"kind": "modifier", "key": "unit.crit_multiplier_bonus", "amount": 50,
+		"conditions": [{"composition": ["darkness"]}],
+	}))
+	var dark_ally := _unit(5, 9, 0, ["darkness"], 0)
+	var fire_ally := _unit(5, 9, 0, ["fire"], 0)
+	var dark_enemy := _unit(5, 9, 0, ["darkness"], 1)
+	check_eq(dark_ally.get_attribute("crit_multiplier_bonus"), 50, "the relic grants +50 multiplier points to an allied darkness unit")
+	check_eq(fire_ally.get_attribute("crit_multiplier_bonus"), 0, "a non-darkness ally gets no multiplier bonus")
+	check_eq(dark_enemy.get_attribute("crit_multiplier_bonus"), 0, "an enemy darkness unit gets no player-scoped bonus")
+	_near(Resolver.crit_multiplier(dark_ally), 2.5, "the granted bonus lifts the darkness unit's crits to 2.5×")
+	_near(Resolver.crit_multiplier(fire_ally), 2.0, "a non-darkness ally keeps the base multiplier")
+
+	# multiplier_max caps the relic-boosted factor too.
+	Resolver.set_crit_tuning({"multiplier": 2.0, "multiplier_max": 2.2})
+	_near(Resolver.crit_multiplier(dark_ally), 2.2, "multiplier_max caps the relic-boosted factor")
+	GameData.current_modifiers = ModifierSet.new()
 
 
 # At a certain (100%, uncapped) chance the strike lands multiplied, and the outcome reports the
