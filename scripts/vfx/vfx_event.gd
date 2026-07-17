@@ -16,6 +16,7 @@ enum Type {
 	TARGET_MARK,      # a card singled out by an effect gets a tinted reticle
 	MISS,             # an attack negated (e.g. by Blind): a "Miss" label instead of a damage number
 	DODGE,            # the TARGET actively evaded an attack (speed dodge): a sidestep + "Dodge!" label
+	CRIT,             # the attack landed as a CRITICAL: a hot "Critical!" label ALONGSIDE the damage numbers
 }
 
 # SOURCE_TRIGGER look. Generic for now; the field is here so source glints can later branch by
@@ -92,6 +93,16 @@ static func miss(card: CardUI) -> VFXEvent:
 static func dodge(card: CardUI) -> VFXEvent:
 	var e := VFXEvent.new()
 	e.type = Type.DODGE; e.target = card
+	return e
+
+
+# A critical hit: real damage STILL lands (unlike dodge/miss), so this cue plays ALONGSIDE the
+# shield/health numbers, not instead of them — a hot "Critical!" label popping off the victim.
+# The attacker-side half of the cue (the Speed badge glint — speed drives crit) is wired at the
+# combat call site, since the event targets the card being hit.
+static func crit(card: CardUI) -> VFXEvent:
+	var e := VFXEvent.new()
+	e.type = Type.CRIT; e.target = card
 	return e
 
 

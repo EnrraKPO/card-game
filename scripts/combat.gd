@@ -616,6 +616,18 @@ func _apply_attack_damage(attacker: CardInstance, target: CardInstance, t_card: 
 		# A 0-damage strike (blocked, or <=0 Attack) reads as "Miss" rather than a number.
 		_vfx.play(VFXEvent.miss(t_card))
 	else:
+		if outcome.crit:
+			# A critical landed: the hot "Critical!" label plays ALONGSIDE the damage numbers below
+			# (real damage still lands — never instead of them), and the ATTACKER's Speed badge
+			# glints (speed drives crit, mirroring how a dodge glints the dodger's Speed). The
+			# attacker's live presentation may be its lunge ghost mid-melee — same routing as
+			# _get_card_ui in _ready.
+			_vfx.play(VFXEvent.crit(t_card))
+			var a_ui: CardUI = _ghost_ui.get(attacker)
+			if a_ui == null or not is_instance_valid(a_ui):
+				a_ui = _board.get_card_ui(attacker)
+			if a_ui != null and is_instance_valid(a_ui):
+				a_ui.flash_stat_proc("speed")
 		# Shield reads FIRST: it takes the blow on its own badge (and only the badge — a held shield
 		# leaves the card unwounded). When the hit also bleeds through to HP, a brief halt lets the
 		# absorb land before the wound, so the shield is legible as the first thing that happened.

@@ -207,6 +207,21 @@
 		"prompt": "Sprite sheet of a swift cyan motion-blur streak, quick sidestep afterimage with speed lines, 6 frames on transparent background, 2d game effect"
 	},
 	{
+		"id": "combat_crit",
+		"display_name": "Critical Hit",
+		"category": "combat",
+		"renderer": "custom",
+		"behavior": "float_label",
+		"params": {
+			"color": "ff6a3d"
+		},
+		"placeholder": false,
+		"sfx": "attack_crit",
+		"concept": "An attack lands unusually hard — needs to read as a POWERFUL escalation ALONGSIDE the normal damage numbers (real damage still lands, unlike a dodge), distinct from the target's own cyan Dodge cue.",
+		"explanation": "IMPLEMENTED (VFXEffectCrit): a hot red-orange \"Critical!\" label pops off the victim next to the ordinary damage readouts; the attacker's Speed badge glints at the combat call site (speed drives crit).",
+		"prompt": "Sprite sheet of a sharp red-orange impact burst, jagged energy crack radiating outward, 6 frames on transparent background, 2d game effect"
+	},
+	{
 		"id": "forge_combine_swirl",
 		"display_name": "Forge Combine Swirl",
 		"category": "lab",

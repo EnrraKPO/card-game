@@ -801,6 +801,13 @@
 		"prompt": "A swift sharp whoosh-swish with a quick nimble upward flick, agile sidestep dodge, one shot, 0.4 seconds"
 	},
 	{
+		"id": "attack_crit",
+		"display_name": "Attack Critical",
+		"category": "combat",
+		"concept": "An attack lands as a CRITICAL - a heavier, punchier impact than the normal hit, clearly distinct from the dodge whoosh: the sound of a blow landing unusually hard.",
+		"prompt": "A heavy punchy crunch impact with a deep thud and a sharp crack transient, powerful critical strike, one shot, 0.4 seconds"
+	},
+	{
 		"id": "shield_regen",
 		"display_name": "Shield Regen",
 		"category": "combat",

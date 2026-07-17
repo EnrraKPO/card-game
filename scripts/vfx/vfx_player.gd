@@ -290,6 +290,7 @@ var EFFECT_SCRIPTS := {
 	"combat_target_mark":     VFXEffectTargetMark,
 	"combat_miss":            VFXEffectMiss,
 	"combat_dodge":           VFXEffectDodge,
+	"combat_crit":            VFXEffectCrit,
 }
 
 
@@ -313,6 +314,7 @@ func _library_id(event: VFXEvent) -> String:
 		VFXEvent.Type.TARGET_MARK:     return "combat_target_mark"
 		VFXEvent.Type.MISS:            return "combat_miss"
 		VFXEvent.Type.DODGE:           return "combat_dodge"
+		VFXEvent.Type.CRIT:            return "combat_crit"
 		_:
 			push_warning("VFXPlayer: no library id for event type %d" % event.type)
 			return ""
