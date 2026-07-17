@@ -20,6 +20,7 @@ func suite_name() -> String:
 func run() -> void:
 	_chance_formula()
 	_dodge_bonus_fold()
+	_dodge_interception()
 	var prev := Resolver.dodge_enabled
 	Resolver.dodge_enabled = true
 	_certain_dodge_zeroes_attack()
@@ -85,6 +86,45 @@ func _dodge_bonus_fold() -> void:
 	check_eq(fire_ally.get_attribute("dodge_bonus"), 0, "a non-air ally gets no dodge bonus")
 	check_eq(air_enemy.get_attribute("dodge_bonus"), 0, "an enemy air unit gets no player-scoped bonus")
 	_near(Resolver.dodge_chance(air_ally), 0.25, "the granted bonus flows into the air unit's dodge chance")
+	GameData.current_modifiers = ModifierSet.new()
+
+
+# The assembled dodge rate is INTERCEPTABLE through the universal gate (stat "dodge"): a relic can
+# triple an air unit's dodge (Cyclone Totem, mul 3) or cancel enemy dodge (Trueshot Sigil, mul 0).
+func _dodge_interception() -> void:
+	# A flat 20% base so the multipliers read cleanly.
+	Resolver.set_dodge_tuning({"fixed_pct": 20.0, "per_speed_pct": 0.0, "per_speed_diff_pct": 0.0, "max_pct": 100.0})
+	var air_ally := _unit(0, 5, 0, ["air"], 0)
+	var fire_ally := _unit(0, 5, 0, ["fire"], 0)
+	var enemy := _unit(0, 5, 0, ["air"], 1)
+	var my_attacker := _unit(0, 5, 0, [], 0)
+	var foe_attacker := _unit(0, 5, 0, [], 1)
+	_near(Resolver.dodge_chance(air_ally, foe_attacker), 0.20, "base dodge with no interceptors")
+
+	# Cyclone Totem: the dodger (target) is an allied air unit → 3× the rate.
+	GameData.current_modifiers = ModifierSet.new()
+	GameData.current_modifiers.add(Effect.from_dict({
+		"kind": "interceptor", "intercept": "dodge", "op": "mul", "amount": 3,
+		"of": {"participant": "target", "relation": "ally"},
+		"conditions": [{"composition": ["air"]}]}))
+	_near(Resolver.dodge_chance(air_ally, foe_attacker), 0.60, "3x interceptor triples an air ally's dodge")
+	_near(Resolver.dodge_chance(fire_ally, foe_attacker), 0.20, "a non-air ally is untouched by the air interceptor")
+
+	# Trueshot Sigil: the dodger (target) is an enemy → dodge cancelled (mul 0).
+	GameData.current_modifiers = ModifierSet.new()
+	GameData.current_modifiers.add(Effect.from_dict({
+		"kind": "interceptor", "intercept": "dodge", "op": "mul", "amount": 0,
+		"of": {"participant": "target", "relation": "enemy"}}))
+	_near(Resolver.dodge_chance(enemy, my_attacker), 0.0, "cancel-dodge zeroes an enemy dodger")
+	_near(Resolver.dodge_chance(air_ally, foe_attacker), 0.20, "cancel-dodge (enemy) leaves an ally's dodge intact")
+
+	# The cap still bounds an amplified rate — no interceptor makes a unit untouchable.
+	Resolver.set_dodge_tuning({"fixed_pct": 20.0, "per_speed_pct": 0.0, "per_speed_diff_pct": 0.0, "max_pct": 75.0})
+	GameData.current_modifiers = ModifierSet.new()
+	GameData.current_modifiers.add(Effect.from_dict({
+		"kind": "interceptor", "intercept": "dodge", "op": "mul", "amount": 5,
+		"of": {"participant": "target", "relation": "ally"}}))
+	_near(Resolver.dodge_chance(air_ally, foe_attacker), 0.75, "the cap bounds a 5x-amplified rate (20%×5 → 75% cap)")
 	GameData.current_modifiers = ModifierSet.new()
 
 

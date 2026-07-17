@@ -474,5 +474,52 @@
 				]
 			}
 		]
+	},
+	{
+		"id": "cyclone_totem",
+		"display_name": "Cyclone Totem",
+		"description": "Your air units have 3x Dodge rate.",
+		"color": "4fc7c9",
+		"letter": "C",
+		"price": 140,
+		"effects": [
+			{
+				"kind": "interceptor",
+				"intercept": "dodge",
+				"op": "mul",
+				"amount": 3,
+				"of": {
+					"participant": "target",
+					"relation": "ally"
+				},
+				"conditions": [
+					{
+						"composition": [
+							"air"
+						]
+					}
+				]
+			}
+		]
+	},
+	{
+		"id": "trueshot_sigil",
+		"display_name": "Trueshot Sigil",
+		"description": "Enemy units cannot dodge.",
+		"color": "9f5a5a",
+		"letter": "T",
+		"price": 130,
+		"effects": [
+			{
+				"kind": "interceptor",
+				"intercept": "dodge",
+				"op": "mul",
+				"amount": 0,
+				"of": {
+					"participant": "target",
+					"relation": "enemy"
+				}
+			}
+		]
 	}
 ]

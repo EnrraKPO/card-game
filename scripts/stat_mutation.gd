@@ -31,6 +31,12 @@ const SHIELD_POOL := &"shield_pool"
 # interceptable ("statuses you apply gain +1 stack"). Floors at 0 like DAMAGE — an intercepted-
 # away application applies nothing, never removes stacks.
 const STATUS := &"status"
+# A transient, never-stored quantity: the TARGET's dodge chance (integer percentage points) for
+# one incoming attack, routed through the interception gate so a relic can rewrite it — "air
+# units 3x dodge" (mul 3), "cancel enemy dodge" (mul 0). Built + intercepted in
+# Resolver.dodge_chance and read straight back (never applied to any pool). Distinct from
+# DODGE_BONUS below, which is the STORED additive modifier folded INTO this chance. Floors at 0.
+const DODGE := &"dodge"
 
 # ── Stats: additive modifiers on a CardInstance (fold into get_attribute at read time) ──
 const ATTACK := &"attack"

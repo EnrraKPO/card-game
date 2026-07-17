@@ -267,9 +267,15 @@ static func _apply_damage(inst: CardInstance, m: StatMutation) -> Outcome:
 # pays out when the target outspeeds its attacker, and the target's own `dodge_bonus` — extra
 # percentage points granted by standing effects (a relic's "+25% dodge to air units"), folded
 # through get_attribute like every other stat. Speeds/bonus read through get_attribute, so
-# buffs/statuses/run bonuses count. Capped at max_pct (the bonus is bound by the cap too, so the
-# fastest units stay hittable), then floored/ceiled to a valid [0,1] probability. `attacker` may
-# be null (a sourceless hit) — then the edge term is simply absent.
+# buffs/statuses/run bonuses count.
+#
+# The assembled rate is then INTERCEPTABLE through the universal gate (stat "dodge", attack
+# channel): a relic can triple an air unit's dodge (mul 3) or cancel enemy dodge (mul 0), matched
+# by participant (target = the dodger, source = the attacker) + conditions like every other
+# interception. It rides as integer percentage points and is rewritten in place — never applied
+# to any pool (dodge is a query, not a state write). Finally capped at max_pct (so even a tripled
+# rate stays hittable) and floored/ceiled to a valid [0,1] probability. `attacker` may be null (a
+# sourceless hit) — then the edge term and the source-side interceptors are simply absent.
 static func dodge_chance(target: CardInstance, attacker: CardInstance = null) -> float:
 	if target == null:
 		return 0.0
@@ -281,7 +287,12 @@ static func dodge_chance(target: CardInstance, attacker: CardInstance = null) ->
 		if edge > 0.0:
 			pct += float(cfg["per_speed_diff_pct"]) * edge
 	pct += float(target.get_attribute("dodge_bonus"))
-	return clampf(minf(pct, float(cfg["max_pct"])), 0.0, 100.0) / 100.0
+	# Rewrite-only interception pass (never submitted/applied): source = attacker, target = the
+	# would-be dodger, so interceptors gate on either party. Floors at 0 inside _try_intercept.
+	var m := StatMutation.make(target, StatMutation.DODGE, maxi(0, int(round(pct))),
+			attacker, StatMutation.CH_ATTACK)
+	_intercept(m)
+	return clampf(minf(float(m.amount), float(cfg["max_pct"])), 0.0, 100.0) / 100.0
 
 
 # Lazily loads (and caches) the dodge tuning, falling back to DODGE_DEFAULT for the file or any
@@ -419,7 +430,8 @@ static func _try_intercept(e: Effect, stacks: int, holder: CardInstance, owner_s
 	else:
 		m.amount += e.amount_int() * stacks   # additive rewrites scale by stacks, like stat deltas
 	if m.stat == StatMutation.DAMAGE or m.stat == StatMutation.STATUS \
-			or m.stat == StatMutation.DRAW or m.stat == StatMutation.DISCARD:
+			or m.stat == StatMutation.DRAW or m.stat == StatMutation.DISCARD \
+			or m.stat == StatMutation.DODGE:
 		# Magnitude-form stats re-floor after every rewrite — an intercepted-away draw
 		# draws nothing; it never becomes a discard.
 		m.amount = maxi(0, m.amount)
