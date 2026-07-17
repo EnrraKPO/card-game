@@ -32,6 +32,9 @@ func run() -> void:
 	_impossible_crit_lands_base()
 	_crit_is_attack_channel_only()
 	_toggle_off_never_crits()
+	_dodge_beats_crit()
+	_blocked_hit_never_crits()
+	_buildings_crit_both_ways()
 	Resolver.crit_enabled = prev
 	Resolver.set_crit_tuning({})   # drop the injected cache; later reads reload from disk
 
@@ -247,6 +250,74 @@ func _toggle_off_never_crits() -> void:
 	check(not out.crit, "crit_enabled = false suppresses the roll entirely")
 	check_eq(out.delta, -4, "the strike lands at base damage with crit disabled")
 	Resolver.crit_enabled = true
+
+
+# ── The interaction guarantees (written proactively — dodge only found its versions of these
+# through user reports after shipping) ──
+
+# Dodge takes priority over crit: a dodged attack never also registers as a crit — the dodge
+# check short-circuits _submit before interception and the crit roll alike.
+func _dodge_beats_crit() -> void:
+	Resolver.set_crit_tuning({"fixed_pct": 100.0, "per_speed_pct": 0.0, "max_pct": 100.0})
+	Resolver.set_dodge_tuning({"fixed_pct": 100.0, "max_pct": 100.0})
+	var prev_dodge := Resolver.dodge_enabled
+	Resolver.dodge_enabled = true
+	var tgt := _unit(0, 9, 0)
+	var out := Resolver.submit(StatMutation.damage(tgt, 4, _unit(1, 5, 0)))
+	check(out.dodged, "with both certain, the strike is dodged")
+	check(not out.crit, "a dodged strike is never also a crit")
+	check_eq(out.crit_bonus_damage, 0, "a dodged strike adds no crit damage")
+	check_eq(tgt.current_health, 9, "the dodging unit is untouched")
+	Resolver.dodge_enabled = prev_dodge
+	Resolver.set_dodge_tuning({})
+
+
+# Crit never procs on zero damage (the settled crit-after-interception ordering): a
+# Barrier-blocked hit deals 0 → no crit roll, no crit flag — but the barrier IS consumed as an
+# ordinary block (only dodge preserves it). Companion: a PARTIALLY reduced hit that still
+# lands > 0 damage DOES crit, with the multiplier applied to the reduced amount.
+func _blocked_hit_never_crits() -> void:
+	Resolver.set_crit_tuning({"fixed_pct": 100.0, "per_speed_pct": 0.0, "max_pct": 100.0,
+			"multiplier": 3.0, "multiplier_max": 5.0})
+	var tgt := _unit(0, 9, 0)
+	tgt.apply_status("barrier", Effect.STATUS_DURATION_DEFAULT, 1, null)
+	var out := Resolver.submit(StatMutation.damage(tgt, 4, _unit(1, 5, 0)))
+	check_eq(out.delta, 0, "the barrier blocks the strike (0 damage)")
+	check(not out.crit, "a fully blocked hit never procs crit, however certain the rate")
+	check_eq(out.crit_bonus_damage, 0, "no crit bonus on a blocked hit")
+	check(tgt.find_status("barrier") == null, "the blocking barrier IS consumed (only dodge preserves it)")
+
+	# A halving interceptor (partial reduction, not negation): the crit rolls on what's LEFT —
+	# 6 halved to 3, then the certain 3.0× crit lands 9.
+	GameData.current_modifiers = ModifierSet.new()
+	GameData.current_modifiers.add(Effect.from_dict({
+		"kind": "interceptor", "intercept": "damage", "channel": "attack", "op": "mul", "amount": 0.5,
+		"of": {"participant": "target", "relation": "ally"}}))
+	var tgt2 := _unit(0, 20, 0)
+	var out2 := Resolver.submit(StatMutation.damage(tgt2, 6, _unit(1, 5, 0)))
+	check(out2.crit, "a partially reduced hit still crits")
+	check_eq(out2.delta, -9, "the multiplier applies to the REDUCED amount (6 → 3, ×3.0 = 9)")
+	check_eq(out2.crit_bonus_damage, 6, "the bonus is measured against the post-interception base (9 − 3)")
+	GameData.current_modifiers = ModifierSet.new()
+
+
+# No building exclusion, in either direction (settled design — the deliberate inverse of
+# _building_never_dodges): a rook attacker CAN land a crit, and a rook defender CAN be crit.
+func _buildings_crit_both_ways() -> void:
+	Resolver.set_crit_tuning({"fixed_pct": 100.0, "per_speed_pct": 0.0, "max_pct": 100.0,
+			"multiplier": 2.0, "multiplier_max": 5.0})
+	var out := Resolver.submit(StatMutation.damage(_unit(0, 20, 0), 4, _building()))
+	check(out.crit, "a building attacker lands a critical hit")
+	check_eq(out.delta, -8, "the building's crit deals full multiplied damage")
+
+	var wall := CardInstance.from_data(CardData.build_from_dict({
+		"id": "_test_crit_wall", "display_name": "Wall",
+		"cost": 1, "attack": 1, "health": 20, "speed": 0, "chess_pieces": ["rook"],
+	}))
+	wall.owner = 1
+	var out2 := Resolver.submit(StatMutation.damage(wall, 4, _unit(1, 5, 0)))
+	check(out2.crit, "a building defender can be critically hit")
+	check_eq(out2.delta, -8, "the crit against the building deals full multiplied damage")
 
 
 func _near(got: float, want: float, label: String) -> void:
