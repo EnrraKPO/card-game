@@ -103,6 +103,29 @@ async function main() {
       id: 'apitest_shieldwhile', effects: [{ trigger: { kind: 'while' }, targets: { kind: 'self' }, attribute: 'shield', amount: 1 }] } });
     check('standing shield accepted', r.status === 200, JSON.stringify(r.data).slice(0, 200));
     await api('/api/game/delete-entry', { type: 'status', id: 'apitest_shieldwhile' });
+    // ── composition grants (mirrors Effect._validate_grants: standing-only, union-only,
+    // canonical ids, no negative composition predicates — Layer-1 monotonicity) ──
+    r = await api('/api/game/save', { type: 'status', file: 'apitest_statuses.json', data: {
+      id: 'apitest_grant', effects: [{ trigger: { kind: 'while' }, targets: { kind: 'self' }, grants: ['fire'] }] } });
+    check('composition grant accepted', r.status === 200, JSON.stringify(r.data).slice(0, 200));
+    await api('/api/game/delete-entry', { type: 'status', id: 'apitest_grant' });
+    r = await api('/api/game/save', { type: 'status', file: 'apitest_statuses.json', data: {
+      id: 'apitest_badgrant1', effects: [{ trigger: { kind: 'while' },
+        targets: { kind: 'all', conditions: [{ composition: ['king'], present: false }] }, grants: ['fire'] }] } });
+    check('negative composition condition on a grant rejected',
+      r.status === 400 && /negative composition condition/.test(r.data.error), r.data.error);
+    r = await api('/api/game/save', { type: 'status', file: 'apitest_statuses.json', data: {
+      id: 'apitest_badgrant2', effects: [{ trigger: { kind: 'while' }, targets: { kind: 'self' }, grants: ['dragon'] }] } });
+    check('unknown component id in grants rejected',
+      r.status === 400 && /not an element or chess piece/.test(r.data.error), r.data.error);
+    r = await api('/api/game/save', { type: 'status', file: 'apitest_statuses.json', data: {
+      id: 'apitest_badgrant3', effects: [{ trigger: { kind: 'event', event: 'play' }, targets: { kind: 'self' }, grants: ['fire'] }] } });
+    check('grants on a non-while trigger rejected',
+      r.status === 400 && /requires a standing/.test(r.data.error), r.data.error);
+    r = await api('/api/game/save', { type: 'status', file: 'apitest_statuses.json', data: {
+      id: 'apitest_badgrant4', effects: [{ trigger: { kind: 'while' }, targets: { kind: 'self' }, grants: ['fire'], attribute: 'attack', amount: 1 }] } });
+    check('grants exclusive with the attribute payload',
+      r.status === 400 && /exclusive with/.test(r.data.error), r.data.error);
 
     // ── revert semantics: replaced → original; added → removed ──
     r = await api('/api/game/item?type=card&id=pawn');

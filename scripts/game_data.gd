@@ -33,7 +33,12 @@ var current_profile: ProfileData = null
 # later). Rebuilt whenever the profile changes or a run starts; the game systems read every
 # number through value() (globals) / LiveEffects.bonus (cards) / EffectSystem.trigger_global
 # (combat events). Empty default = no-op for every query.
-var current_modifiers: ModifierSet = ModifierSet.new()
+var current_modifiers: ModifierSet = ModifierSet.new():
+	set(v):
+		current_modifiers = v
+		# Whole-set swaps (rebuild_modifiers, test resets) may add/remove composition
+		# grants — drop the settled snapshot (see LiveEffects.effective_composition).
+		LiveEffects.invalidate_compositions()
 
 
 func _ready() -> void:

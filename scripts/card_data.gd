@@ -39,6 +39,17 @@ var ranged: bool = false
 # offensive/defensive stats by this fraction (see CardData.scaled / EncounterTemplateData).
 const POWER_STAT_GROWTH := 0.05
 
+# The canonical component-id vocabulary — everything a composition may contain, and therefore
+# everything a standing composition GRANT may confer (see Effect._validate_grants /
+# LiveEffects.effective_composition). Mirrors the Tool's ELEMENTS/PIECES (Tool/server.js),
+# like FOLDABLE_ATTRS — keep the two in step.
+const ELEMENT_IDS: Array[String] = ["fire", "water", "air", "earth", "darkness", "light"]
+const CHESS_PIECE_IDS: Array[String] = ["pawn", "knight", "bishop", "rook", "queen", "king"]
+
+
+static func is_component_id(component_id: String) -> bool:
+	return ELEMENT_IDS.has(component_id) or CHESS_PIECE_IDS.has(component_id)
+
 
 # A building is any unit carrying a rook in its composition. Buildings are
 # defensive structures: once placed on the board they are rooted and cannot be

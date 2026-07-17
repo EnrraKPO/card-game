@@ -122,6 +122,11 @@ var key: String = ""
 # The authored tracker spec — the effect's lifetime authority, bound to a host object at
 # go-live by EffectTracker.bind (see EffectTracker). Empty = the container-existence default.
 var tracker_spec: Dictionary = {}
+# Composition GRANT payload: while live, each resolved target COUNTS AS containing these
+# component ids for condition resolution — Layer 1 of the layered standing evaluation (see
+# LiveEffects.effective_composition). Union-only; the card's real composition (CardData,
+# shared identity) is never touched. Exclusive with the attribute/status payloads.
+var grants: Array[String] = []
 
 # ── INTERCEPTOR fields ──
 var intercept: StringName = &""   # the StatMutation stat this rewrites (e.g. "damage")
@@ -208,7 +213,12 @@ static func from_dict(d: Dictionary) -> Effect:
 		e.status_id       = str(st.get("id", ""))
 		e.status_duration = int(st.get("duration", STATUS_DURATION_DEFAULT))
 		e.status_stacks   = int(st.get("stacks", 1))
+	# Optional composition-grant payload — parsed for every kind so a misplaced "grants"
+	# key is caught by _validate_grants (fail loud) instead of silently ignored.
+	for g_v: Variant in (d.get("grants", []) as Array):
+		e.grants.append(str(g_v))
 	e._validate_standing(d)
+	e._validate_grants(d)
 	e._validate_side_targets(d)
 	# Mutation-form conditions predicate over a pending StatMutation — only the interceptor
 	# match ever evaluates them. Anywhere else they'd be a silently-vacuous gate: fail loud.
@@ -258,7 +268,8 @@ func _validate_standing(d: Dictionary) -> void:
 	# Membership, not mere presence: an attribute outside the folded set would be computed
 	# by LiveEffects and read by nobody — the silent-evaporation bug this guard exists for
 	# (found the hard way: a standing "shield" bonus before max_shield joined the fold).
-	if not standing_attribute() in FOLDABLE_ATTRS:
+	# A composition grant carries no attribute — its payload is the grants set instead.
+	if grants.is_empty() and not standing_attribute() in FOLDABLE_ATTRS:
 		push_error("Effect: standing (while) attribute '%s' is not foldable (%s) — %s"
 				% [standing_attribute(), ", ".join(FOLDABLE_ATTRS), d])
 	if not status_id.is_empty():
@@ -269,6 +280,29 @@ func _validate_standing(d: Dictionary) -> void:
 	# manual) have no meaning for a continuous fold.
 	if authored_native_targets and not str(_native_targets.get("kind", "all")) in ["all", "self"]:
 		push_error("Effect: standing (while) targets must be the 'self' or 'all' form — %s" % [d])
+
+
+# Load-time authoring validation for composition grants — FAIL LOUD, same house rule.
+# The Layer-1 fixed point (LiveEffects.effective_composition) is provably convergent only
+# while grants stay MONOTONE (union-only): a negative composition predicate on a grant
+# could un-grant another grant, and the iteration would have no defined answer — so the
+# monotonicity contract is enforced here, at load, not "resolved" arbitrarily at runtime.
+func _validate_grants(d: Dictionary) -> void:
+	if grants.is_empty():
+		return
+	if not is_standing():
+		push_error("Effect: 'grants' requires a standing (while) effect — %s" % [d])
+	if not attribute.is_empty() or not status_id.is_empty():
+		push_error("Effect: 'grants' is exclusive with the attribute/status payloads — %s" % [d])
+	for g: String in grants:
+		if not CardData.is_component_id(g):
+			push_error("Effect: unknown component id '%s' in grants (%s / %s) — %s"
+					% [g, ", ".join(CardData.ELEMENT_IDS), ", ".join(CardData.CHESS_PIECE_IDS), d])
+	for c: EffectCondition in conditions:
+		if (not c.composition.is_empty() and not c.present) \
+				or (c.has_element_set and not c.has_element):
+			push_error("Effect: a composition grant cannot carry a negative composition predicate "
+					+ "(Layer-1 monotonicity — grants only ever ADD) — %s" % [d])
 
 
 # Load-time cross-validation of the side-targeted vocabulary — FAIL LOUD both ways:
@@ -441,11 +475,14 @@ func to_dict() -> Dictionary:
 				idd["chance"] = chance
 			return idd
 		_:
-			var d := {
-				"trigger":   _trigger_out(),
-				"attribute": attribute,
-				"amount":    amount_int(),
-			}
+			var d := {"trigger": _trigger_out()}
+			if grants.is_empty():
+				d["attribute"] = attribute
+				d["amount"]    = amount_int()
+			else:
+				# A grant's payload IS the component set — no attribute/amount keys, matching
+				# the authored form byte-faithfully.
+				d["grants"] = grants.duplicate()
 			if authored_native_targets:
 				# the resolver owns the conditions in the native form — no top-level copy
 				d["targets"] = targets_resolver().to_dict()
@@ -479,6 +516,13 @@ func to_dict() -> Dictionary:
 # native {"trigger": {"kind": "while"}} and the legacy card-scoped modifier shim.
 func is_standing() -> bool:
 	return trigger_resolver() is TriggerResolver.While
+
+
+# A composition grant: a standing effect whose payload is a component set instead of a stat
+# fold. Folded by LiveEffects.effective_composition (Layer 1); naturally invisible to the
+# stat fold — its standing_attribute() is "", which never equals a foldable attr.
+func is_composition_grant() -> bool:
+	return is_standing() and not grants.is_empty()
 
 
 # The attributes the read-time fold actually serves (get_attribute consults LiveEffects

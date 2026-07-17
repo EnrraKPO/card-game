@@ -381,15 +381,29 @@ function renderEffect(e, ctx, onChange, onRemove) {
     card.append(body);
 
     if (kind === 'standing') {
-      // A STANDING effect: live while its tracker is, folded into stats at read time.
+      // A STANDING effect: live while its tracker is. Two payloads: a stat fold (read-time
+      // attribute delta) or a composition GRANT (the target COUNTS AS containing components
+      // for condition resolution — see the game's LiveEffects.effective_composition).
       normalizeTargets(e);
       if (!e.tracker) e.tracker = { kind: 'container' };
       const tgHolder = { kind: e.targets.kind };
-      body.append(el('div', { class: 'frow' },
+      const payload = { mode: Array.isArray(e.grants) ? 'grants' : 'stat' };
+      const payloadFlds = payload.mode === 'grants' ? [] : [
         fld('Stat', selectInput(e, 'attribute', ['attack', 'health', 'speed', 'cost']
           .map(a => ({ value: a, label: labelOf('standingAttr', a) })), localChange),
           'health here means MAX health — standing effects never write current health'),
         fld('By', numInput(e, 'amount', localChange, { float: true, step: 'any' }), 'per tracker intensity (× stacks)', 'narrow'),
+      ];
+      body.append(el('div', { class: 'frow' },
+        fld('Payload', selectInput(payload, 'mode', [
+          { value: 'stat', label: 'changes a stat' },
+          { value: 'grants', label: 'grants components (counts as…)' },
+        ], () => {
+          if (payload.mode === 'grants') { delete e.attribute; delete e.amount; e.grants = []; }
+          else { delete e.grants; e.attribute = 'attack'; e.amount = 1; }
+          onChange(); renderInto();
+        })),
+        ...payloadFlds,
         fld('Applies to', selectInput(tgHolder, 'kind', [
           { value: 'self', label: `${ctx.ownerNoun || 'the holder'} itself` },
           { value: 'all', label: 'every unit matching the conditions' },
@@ -397,6 +411,14 @@ function renderEffect(e, ctx, onChange, onRemove) {
         fld('Lives as long as', selectInput(e.tracker, 'kind', (ctx.vocab.trackerKinds || ['container', 'stacks'])
           .map(k => ({ value: k, label: labelOf('trackerKind', k) })), localChange)),
       ));
+      if (payload.mode === 'grants')
+        body.append(el('div', { class: 'frow' },
+          el('div', { class: 'fld wide' },
+            el('span', { class: 'lab', text: 'Counts as (elements / pieces)' }),
+            chipSet(e.grants, ctx.vocab.elements.concat(ctx.vocab.pieces), localChange,
+              id => labelOf('element', id) !== id ? labelOf('element', id) : labelOf('piece', id)),
+            el('span', { class: 'hint', text: 'the target counts as containing these for every condition while active — its real composition never changes; composition conditions on a grant must be positive (grants only ever ADD)' })),
+        ));
       if (e.targets.kind !== 'self')
         body.append(participantConditionSection(e.targets, 'conditions', ctx, localChange, 'TARGETS must satisfy:'));
     } else if (kind === 'modifier') {

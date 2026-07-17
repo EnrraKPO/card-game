@@ -8,7 +8,8 @@ fired() channel replacing owner stamping, Tool wording + run-scope affordance (s
 Tool NATIVE-form authoring DONE (stage 2d): standing effect kind + tracker select,
 "Whose event" of-gates, allegiance condition form, server vocab+validation for the new
 schema; the blocking Tool WIP was shelved at the user's request (git stash
-"Tool WIP shelved at user request"). Stage 3 (composition-as-derived) pending.
+"Tool WIP shelved at user request"). Stage 3 (composition-as-derived) BUILT 2026-07-15
+in condition-resolution scope — composition GRANTS + layered evaluation, see §11.
 Note: the tracker kind classes landed as `ContainerTracker`/`StacksTracker` (a bare
 `Container` inner class hides Godot's native Control class).
 Origin: the `charged.json` bug (a correct `relation: self` condition silently killed a
@@ -185,9 +186,18 @@ health (current health is untouched — today's status behavior, kept).
 container enumeration — `GameData.value` folds live global-payload effects from run-scope
 containers. `ModifierSet` as a separate aggregate dissolves into the enumeration.
 
-**Performance:** deliberately uncached. Board scale (≤ 24 units, a handful of statuses
-each) makes the scan trivial; caching would reintroduce the staleness class this design
-eliminates. Revisit only with a measured problem.
+**Performance:** the STAT fold is deliberately uncached. Board scale (≤ 24 units, a
+handful of statuses each) makes the scan trivial; caching would reintroduce the staleness
+class this design eliminates. Revisit only with a measured problem.
+
+**One deliberate exception (stage 3, BUILT):** the *effective composition* snapshot
+(`LiveEffects._comp_cache`, see §11) IS cached — it is a multi-pass fixed point, not a
+single scan, and it must present ONE settled world to every condition read. The staleness
+class is contained because the Resolver is the SINGLE stat/status writer: one hook in
+`Resolver.submit` plus the storage-level writers (status apply/remove/clear, transform,
+StatusEngine.advance, ModifierSet growth, board owner assignment) coarsely clears the
+whole cache, and reads recompute lazily. Do NOT "fix" this cache away — removing it makes
+every composition condition re-run the fixed point per read.
 
 ---
 
@@ -287,8 +297,11 @@ combat's VFX cue read of owner_kind (dispatch context instead).
    charged-class bug is fixed (holder now exists at evaluation).
 2. **Native authoring + validation.** `while` trigger kind, `card_type`/`has_element`
    conditions, load-time fail-loud, Tool editor support, re-author statuses natively.
-3. **(Deferred) composition-as-derived.** Route composition reads through the same lens;
-   unlocks "pawn units lose their pawn component". Nothing in steps 1–2 blocks it.
+3. **composition-as-derived (BUILT, 2026-07-15 — condition-resolution scope, see §11).**
+   Composition CONDITIONS read an effective composition (real ∪ live standing GRANTS);
+   identity reads (is_building/is_royalty, piece_count/element_count) deliberately stay
+   raw. The subtractive half ("pawn units lose their pawn component") is NOT built —
+   grants are union-only by contract (§11 monotonicity).
 
 ## 8. Universal interception (BUILT, 2026-07-13)
 
@@ -411,3 +424,44 @@ payloads delivered to a side.
   Remaining: shipping content using the payloads (a content decision — author via the
   Tool); a dedicated VFX cue for side results (today the hand/gauge reaction IS the
   presentation); chosen-discard UI (random-only, by design).
+
+## 11. Composition grants — layered standing evaluation (BUILT 2026-07-15)
+
+Stage 3 delivered, condition-resolution scope (agreed in discussion 2026-07-15). A
+standing effect may carry `"grants": [<component ids>]` instead of an attribute/amount:
+while live, its targets **count as containing** those components for every condition —
+the card's real composition (shared `CardData` identity) never moves, and identity reads
+(`is_building`/`is_royalty`, `piece_count`/`element_count`) deliberately stay raw.
+
+```json
+{ "trigger": { "kind": "while" }, "targets": { "kind": "self" }, "grants": ["fire"] }
+```
+
+- **Layered evaluation** — the general answer to "an effect changes what other effects'
+  conditions see". Priority is STRUCTURAL, derived from what an effect writes (never an
+  authored number): **Layer 1** settles effective composition (grants); **Layer 2** (the
+  stat fold) reads that settled snapshot through `LiveEffects.has_component` /
+  `has_any_element` — the only two composition-truth reads (`EffectCondition`).
+- **Monotone fixed point** (`LiveEffects.effective_composition`): per unit, grants union
+  into a working set until no pass adds an id; a grant's own composition/has_element
+  conditions read the WORKING set, so same-unit chains settle order-independently.
+  Convergence is guaranteed by the monotonicity CONTRACT: grants are union-only, and a
+  grant may not carry a negative composition predicate (`present: false` /
+  `has_element: false`) — fail-loud at load, game (`Effect._validate_grants`) and Tool
+  alike. The subtractive form ("loses its pawn component") is a future vocabulary with
+  its own ordering rules, NOT a relaxation of this validator. Per-unit suffices because
+  the condition grammar has no cross-unit predicate; if one lands, only the recompute
+  widens to a board-global pass (the lookup/invalidation API keeps its shape).
+- **Snapshot on change** — the settled set is cached (`_comp_cache`) and coarsely
+  invalidated by every relevant writer (see §3's exception note): `Resolver.submit`,
+  status apply/remove/clear + `transform`, `StatusEngine.advance` (the expiry writer),
+  `ModifierSet._add_owned` + the `current_modifiers` setter, board owner assignment.
+  Reads recompute lazily; outside combat everything degrades gracefully (no statuses,
+  allegiance gates fail closed on sideless instances).
+- **Stratification, rescoped**: `_in_condition` survives for Layer 2's ATTRIBUTE-form
+  gates only (grants never write stats, so no cycle); composition truth is never
+  stratified — it reads the settled snapshot at any depth.
+- Grants are invisible to the stat fold by construction (`standing_attribute()` is `""`);
+  intensity never multiplies a union — tracker VALIDITY alone gates a grant's existence.
+- Suite: `tests/test_composition_grants.gd` (chains, Layer-2 reads, expiry, fallback,
+  negative gates, round-trip); Tool rules in `api_test.js`.

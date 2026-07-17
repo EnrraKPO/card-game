@@ -48,6 +48,9 @@ static func advance(inst: CardInstance, event_id: StringName) -> void:
 		if not is_expired(si):
 			kept.append(si)
 	inst.statuses = kept
+	# The tick is how grant-carrying statuses expire — drop the composition snapshot so the
+	# next condition read sees the post-decay world (see LiveEffects).
+	LiveEffects.invalidate_compositions()
 
 
 static func _decays_on(si: StatusInstance, event_id: StringName) -> bool:

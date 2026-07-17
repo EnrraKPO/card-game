@@ -278,6 +278,11 @@ function describeEffect(e, ownerNoun) {
           ? ` (${e.targets.conditions.map(describeCondition).join(' and ')})` : '')
       : `${owner} itself`;
     const per = e.tracker && e.tracker.kind === 'stacks' ? ' per stack' : '';
+    if (Array.isArray(e.grants) && e.grants.length) {
+      // Composition grant: the target COUNTS AS containing these for condition resolution.
+      const ids = e.grants.map(g => labelOf('element', g) !== g ? labelOf('element', g) : labelOf('piece', g));
+      return `While active: ${tgt} counts as ${ids.join(', ')}.`;
+    }
     const attr = e.attribute === 'health' ? 'max Health' : labelOf('attr', e.attribute).split(' (')[0];
     return `While active: ${signed(e.amount || 0)} ${attr}${per} to ${tgt}.`;
   }

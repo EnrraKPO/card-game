@@ -146,6 +146,9 @@ func transform(new_data: CardData) -> void:
 		return
 	var damage := get_attribute("max_health") - current_health
 	data = new_data
+	# The data swap changes the BASE composition — invalidate before the health read below
+	# (its standing gates must see the new identity), not just via set_health's submit.
+	LiveEffects.invalidate_compositions()
 	Resolver.set_health(self, maxi(1, get_attribute("max_health") - damage))
 
 
@@ -158,6 +161,10 @@ func apply_status(status_id: String, duration: int = Effect.STATUS_DURATION_DEFA
 	var sdata := StatusData.get_status(status_id)
 	if sdata == null:
 		return
+	# Status storage write — a status may carry composition grants (see LiveEffects). The
+	# Resolver-routed path invalidates in submit too; hooking the storage level as well keeps
+	# direct callers (tests, remove/clear below) airtight at negligible cost.
+	LiveEffects.invalidate_compositions()
 	var existing := find_status(status_id)
 	if existing == null or sdata.stacking == StatusData.STACK_INDEPENDENT:
 		var si := StatusInstance.make(sdata, _initial_remaining(sdata, duration), clampi(stacks, 1, sdata.max_stacks), src)
@@ -184,10 +191,12 @@ func find_status(status_id: String) -> StatusInstance:
 
 func remove_status(status_id: String) -> void:
 	statuses = statuses.filter(func(si: StatusInstance) -> bool: return si.data.id != status_id)
+	LiveEffects.invalidate_compositions()
 
 
 func clear_statuses() -> void:
 	statuses.clear()
+	LiveEffects.invalidate_compositions()
 
 
 # The effective duration to apply: the caller's override, else the status's own default.

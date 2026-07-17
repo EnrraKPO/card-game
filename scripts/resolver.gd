@@ -43,6 +43,15 @@ class Outcome:
 
 
 static func submit(m: StatMutation) -> Outcome:
+	var out := _submit(m)
+	# Any committed write may change which standing effects reach whom — drop the settled
+	# composition snapshot (Layer 1); the next condition read recomputes lazily. The Resolver
+	# being the single stat/status writer is what makes this ONE hook cover them all.
+	LiveEffects.invalidate_compositions()
+	return out
+
+
+static func _submit(m: StatMutation) -> Outcome:
 	if m == null or m.target == null:
 		return Outcome.new()
 	if m.target is DeckCard:

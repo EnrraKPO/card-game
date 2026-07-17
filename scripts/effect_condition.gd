@@ -204,9 +204,12 @@ func evaluate(card: CardInstance, owner: int = -1) -> bool:
 	if not status_id.is_empty():
 		return (card.find_status(status_id) != null) == present
 	if not composition.is_empty():
+		# EFFECTIVE composition — the real one plus every live standing GRANT (see
+		# LiveEffects.effective_composition). Conditions are the one consumer of virtual
+		# components; identity reads (is_building/is_royalty, piece_count) stay raw.
 		var has := false
 		for id: String in composition:
-			if card.data.elements.has(id) or card.data.chess_pieces.has(id):
+			if LiveEffects.has_component(card, id):
 				has = true
 				break
 		return has == present
@@ -214,7 +217,8 @@ func evaluate(card: CardInstance, owner: int = -1) -> bool:
 		var want_unit := card_type == "unit"
 		return (card.data.card_type == CardData.CardType.UNIT) == want_unit
 	if has_element_set:
-		return card.data.elements.is_empty() != has_element
+		# Same lens as the composition form — a granted element must satisfy both alike.
+		return LiveEffects.has_any_element(card) == has_element
 	return _compare(card.get_attribute(attribute))
 
 

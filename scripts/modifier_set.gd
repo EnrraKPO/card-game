@@ -48,6 +48,9 @@ func add(e: Effect) -> void:
 func _add_owned(e: Effect, owner_kind: String, owner_id: String) -> void:
 	_mods.append(e)
 	_owners[e] = {"kind": owner_kind, "id": owner_id}
+	# A run-set effect may be a composition grant — new arrivals drop the settled snapshot
+	# (covers add/from_profile/for_run through this one funnel; see LiveEffects).
+	LiveEffects.invalidate_compositions()
 
 
 # The contributing container of an effect in this set — consumed by the grouped run-level

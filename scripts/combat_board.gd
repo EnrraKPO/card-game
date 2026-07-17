@@ -136,6 +136,7 @@ func place_kings(player_king_id: String = "king", enemy_king_id: String = "king"
 	ek.row = back; ek.col = BoardData.COLS - 1; ek.owner = 1
 	enemy_grid[back][BoardData.COLS - 1] = ek
 	enemy_slots[back][BoardData.COLS - 1].set_card(CardUI.create(ek))
+	LiveEffects.invalidate_compositions()   # owners set — allegiance-gated grants may now reach
 
 
 # ── Card operations ────────────────────────────────────────────────────────────
@@ -148,6 +149,7 @@ func can_place_from_hand(card_ui: CardUI) -> bool:
 
 func place_enemy_card(inst: CardInstance, r: int, c: int) -> Array:
 	inst.row = r; inst.col = c; inst.owner = 1
+	LiveEffects.invalidate_compositions()   # owner set — allegiance-gated grants may now reach
 	enemy_grid[r][c] = inst
 	var ui := CardUI.create(inst)
 	enemy_slots[r][c].set_card(ui)
@@ -165,6 +167,7 @@ func spawn_player_card(inst: CardInstance, r: int, c: int) -> Array:
 	if player_grid[r][c] != null:
 		return []
 	inst.row = r; inst.col = c; inst.owner = 0
+	LiveEffects.invalidate_compositions()   # owner set — allegiance-gated grants may now reach
 	player_grid[r][c] = inst
 	var ui := CardUI.create(inst)
 	(player_slots[r][c] as SlotUI).set_card(ui)
@@ -399,6 +402,7 @@ func do_place_unit(slot: SlotUI, card_ui: CardUI) -> void:
 	inst.row = slot.row; inst.col = slot.col; inst.owner = 0
 	player_grid[slot.row][slot.col] = inst
 	slot.set_card(card_ui)
+	LiveEffects.invalidate_compositions()   # owner set — allegiance-gated grants may now reach
 
 	_wire_unit_drag(card_ui)
 

@@ -908,6 +908,9 @@ function validateTargets(t, where) {
 function validateEffect(e, where) {
   if (!e || typeof e !== 'object') return `${where}: effect must be an object`;
   const kind = e.kind || (e.key ? 'modifier' : e.intercept ? 'interceptor' : e.custom ? 'custom' : 'triggered');
+  // Composition grants live on standing triggered effects only (mirrors Effect._validate_grants).
+  if (e.grants != null && kind !== 'triggered')
+    return `${where}: grants is only valid on a standing (while) effect`;
   if (kind === 'modifier') {
     if (!MODIFIER_KEYS.includes(e.key)) return `${where}: unknown modifier key "${e.key}"`;
     if (typeof e.amount !== 'number') return `${where}: modifier needs a numeric amount`;
@@ -944,20 +947,44 @@ function validateEffect(e, where) {
     if (sideTargeted && e.status && e.status.id)
       return `${where}: a side-targeted effect cannot apply a status`;
     const standing = e.trigger && typeof e.trigger === 'object' && e.trigger.kind === 'while';
+    const hasGrants = Array.isArray(e.grants) && e.grants.length > 0;
     if (standing) {
       // Mirrors the game's fail-loud rules (Effect._validate_standing): a standing effect
       // is a continuous stat fold — nothing else is meaningful on it, and only attributes
       // the read-time fold actually serves are legal (membership, not mere presence —
-      // anything else would be computed and read by nobody).
-      if (!e.attribute) return `${where}: a standing (while) effect needs an attribute to fold`;
-      if (!FOLDABLE_ATTRS.includes(FOLDABLE_MAP[e.attribute] || e.attribute))
+      // anything else would be computed and read by nobody). A composition GRANT is the
+      // one other standing payload: its component set replaces the attribute.
+      if (!e.attribute && !hasGrants)
+        return `${where}: a standing (while) effect needs an attribute to fold (or a grants set)`;
+      if (e.attribute && !FOLDABLE_ATTRS.includes(FOLDABLE_MAP[e.attribute] || e.attribute))
         return `${where}: attribute "${e.attribute}" cannot be standing — only `
           + `health/shield/${FOLDABLE_ATTRS.join('/')} fold at read time`;
       if (e.status && e.status.id) return `${where}: a standing (while) effect cannot apply a status`;
       const tk = e.targets && typeof e.targets === 'object' ? String(e.targets.kind || 'all') : 'all';
       if (!['self','all'].includes(tk)) return `${where}: standing targets must be "self" or "all"`;
     }
-    const hasPayload = e.attribute || (e.status && e.status.id);
+    if (e.grants != null) {
+      // Mirrors Effect._validate_grants: standing-only, union-only, canonical ids, and
+      // NO negative composition predicates (Layer-1 monotonicity — grants only ever ADD;
+      // the game's fixed point is provably convergent only while this holds).
+      if (!Array.isArray(e.grants) || !e.grants.length)
+        return `${where}: grants must be a non-empty array of component ids`;
+      for (const g of e.grants)
+        if (!ELEMENTS.includes(g) && !PIECES.includes(g))
+          return `${where}: "${g}" in grants is not an element or chess piece`;
+      if (!standing) return `${where}: grants requires a standing (while) trigger`;
+      if (e.attribute || (e.status && e.status.id))
+        return `${where}: grants is exclusive with the attribute/status payloads`;
+      const grantConds = [...(e.conditions || []),
+        ...((e.targets && typeof e.targets === 'object' && e.targets.conditions) || [])];
+      for (const c of grantConds) {
+        if (c && c.composition && c.present === false)
+          return `${where}: a composition grant cannot carry a negative composition condition (grants only ever ADD)`;
+        if (c && c.has_element === false)
+          return `${where}: a composition grant cannot carry has_element:false (grants only ever ADD)`;
+      }
+    }
+    const hasPayload = e.attribute || (e.status && e.status.id) || hasGrants;
     if (!hasPayload) return `${where}: effect does nothing — set an attribute change or a status to apply`;
   }
   return validateConditionList(e.conditions, where);
@@ -2045,6 +2072,11 @@ function effectsGrammarLines() {
     '   Use STANDING for any ongoing/aura wording ("while", "as long as", buffs from a status).',
     `   Standing attributes fold at read time — legal: health/shield/${FOLDABLE_ATTRS.join('/')}`,
     '   ("health" folds as max_health, "shield" as the shield base). Pools cannot be standing.',
+    '   COMPOSITION GRANT — the other standing payload: replace "attribute"/"amount" with',
+    `   "grants": [<element/piece ids>] and the target COUNTS AS containing those components`,
+    '   for every condition while the effect holds ("counts as fire", "treat as a rook") — its',
+    '   real composition never changes. Grants only ever ADD: composition conditions on a',
+    '   grant must be positive ("present": false and "has_element": false are rejected).',
     `3. MODIFIER — run-wide passive number change: {"kind":"modifier","key": one of ${MODIFIER_KEYS.join('/')},`,
     '   "amount": n, "conditions":[...]?}. Only for run-wide numbers, never for board effects.',
     '4. INTERCEPTOR — rewrites a pending stat change before it lands: {"kind":"interceptor",',
@@ -2081,6 +2113,7 @@ function effectsGrammarLines() {
     '  {"allegiance":"ally"|"enemy"} — side relative to the effect\'s owner (ally includes the holder)',
     '  {"status": <status id>, "present": false?} — carrying (or not carrying) a status',
     '  {"composition": [<elements/pieces>...], "present": false?} — made of any of these / none of these',
+    '    (standing "grants" count: a unit granted "fire" passes composition/has_element checks as fire)',
     '  {"card_type":"unit"|"spell"} | {"has_element": true|false}',
     `  {"attribute": one of ${COND_ATTRS.join('/')}, "comparator": one of ${COMPARATORS.join('/')}, "value": n}`,
     `  {"mutation":"amount", "comparator": one of ${COMPARATORS.join('/')}, "value": n} — INTERCEPTOR ONLY:`,
