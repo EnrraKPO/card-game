@@ -486,22 +486,22 @@ phase as the checkpoint to verify they actually hold once real code exists, not 
 
 ## Summary checklist (mirrors the dodge commit sequence)
 
-- [ ] Phase 1 commit: core resolution — `crit_chance`/`crit_multiplier` queries, both stats,
+- [x] Phase 1 commit: core resolution — `crit_chance`/`crit_multiplier` queries, both stats,
       both `CARD_ATTR`/`FOLDABLE_ATTRS` entries, `Outcome.crit`/`crit_bonus_damage`,
       `crit_enabled` toggle wired into `tests/_runner.gd`, pure-arithmetic + deterministic-roll
       tests, `data/combat_tuning.json` gets a `"crit"` key.
-- [ ] Phase 2 commit: VFX (`VFXEvent.CRIT`, `VFXEffectCrit`, `combat_crit` vfx.json entry) + SFX
+- [x] Phase 2 commit: VFX (`VFXEvent.CRIT`, `VFXEffectCrit`, `combat_crit` vfx.json entry) + SFX
       (`attack_crit` sounds.json entry) + combat.gd wiring (crit VFX + `flash_stat_proc("speed")`
       alongside the real damage numbers, not replacing them) + parse-check (these files aren't in
       the automated suite — `load()` them via a throwaway `--script` check like the dodge work did).
-- [ ] Phase 3 commit: Tool handle — extend `/api/combat-tuning` to carry `crit`, extend or sibling
+- [x] Phase 3 commit: Tool handle — extend `/api/combat-tuning` to carry `crit`, extend or sibling
       the `⚡ Dodge` modal.
-- [ ] Phase 4 commit: `crit` trigger event (subject = origin, register in `DUAL_EVENTS`, combat
+- [x] Phase 4 commit: `crit` trigger event (subject = origin, register in `DUAL_EVENTS`, combat
       broadcast + `_event_ctx` branch) + Berserker's Momentum relic + `_crit_event` test.
-- [ ] Phase 5 commit: Eagle-Eye Charm (chance) + Executioner's Edge (multiplier) relics +
+- [x] Phase 5 commit: Eagle-Eye Charm (chance) + Executioner's Edge (multiplier) relics +
       `_crit_chance_bonus_fold` / `_crit_multiplier_bonus_fold` tests.
-- [ ] Phase 6 commit: Warlord's Fury + Steady Hand Ward relics + `_crit_interception` test.
-- [ ] Phase 7 commit(s): the three interaction tests from the checklist above, written proactively
+- [x] Phase 6 commit: Warlord's Fury + Steady Hand Ward relics + `_crit_interception` test.
+- [x] Phase 7 commit(s): the three interaction tests from the checklist above, written proactively
       rather than reactively — this is the one place we're explicitly trying to avoid repeating a
       dodge mistake instead of just mirroring dodge's success.
 
