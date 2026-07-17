@@ -38,6 +38,7 @@ const SPEED := &"speed"
 const COST := &"cost"
 const MAX_HEALTH := &"max_health"
 const SHIELD := &"shield"   # per-round base shield (raises what each round's refill restores)
+const DODGE_BONUS := &"dodge_bonus"   # additive dodge-chance bonus in percentage points (see Resolver.dodge_chance)
 
 # A DeckCard target instead treats `stat` as the card-definition FIELD to bump permanently
 # ("attack"/"health"/"speed"/"shield" — see DeckCard.UPGRADABLE and the "?" event).

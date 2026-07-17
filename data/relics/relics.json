@@ -452,5 +452,27 @@
 				}
 			}
 		]
+	},
+	{
+		"id": "gale_sigil",
+		"display_name": "Gale Sigil",
+		"description": "All your air units get +25% Dodge.",
+		"color": "6fb7d6",
+		"letter": "G",
+		"price": 110,
+		"effects": [
+			{
+				"kind": "modifier",
+				"key": "unit.dodge_bonus",
+				"amount": 25,
+				"conditions": [
+					{
+						"composition": [
+							"air"
+						]
+					}
+				]
+			}
+		]
 	}
 ]

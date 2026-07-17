@@ -89,6 +89,10 @@ func get_attribute(attr: String) -> int:
 		"cost":       return data.cost   + modifiers.get("cost",       0) + LiveEffects.bonus(self, "cost")
 		"shield":     return current_shield
 		"max_shield": return data.shield + modifiers.get("shield", 0) + LiveEffects.bonus(self, "max_shield")
+		# Additive dodge-chance bonus in PERCENTAGE POINTS (base 0 — no innate card stat yet).
+		# Folds written modifiers + live standing effects like the other stats; read by
+		# Resolver.dodge_chance, where it stacks on the speed-derived chance before the cap.
+		"dodge_bonus": return modifiers.get("dodge_bonus", 0) + LiveEffects.bonus(self, "dodge_bonus")
 		# Read-only composition counts, so conditions can query merge room with the ordinary
 		# attribute/comparator form (e.g. a pawn material: piece_count <= 1). Never modified.
 		"piece_count":   return data.chess_pieces.size()

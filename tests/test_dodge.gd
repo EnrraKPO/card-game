@@ -19,6 +19,7 @@ func suite_name() -> String:
 
 func run() -> void:
 	_chance_formula()
+	_dodge_bonus_fold()
 	var prev := Resolver.dodge_enabled
 	Resolver.dodge_enabled = true
 	_certain_dodge_zeroes_attack()
@@ -52,6 +53,39 @@ func _chance_formula() -> void:
 	Resolver.set_dodge_tuning({"per_speed_pct": 1.0, "per_speed_diff_pct": 4.0, "max_pct": 20.0})
 	_near(Resolver.dodge_chance(_spd(6), _spd(0)), 0.20,
 			"raw 6% + 24% = 30% is capped to the 20% ceiling")
+
+
+# The `dodge_bonus` stat: extra dodge percentage points, foldable by standing effects. A written
+# modifier and a run-level standing modifier (the Gale Sigil relic) both flow into dodge_chance.
+func _dodge_bonus_fold() -> void:
+	# Zero out the speed-derived terms so the bonus is the whole chance.
+	Resolver.set_dodge_tuning({"fixed_pct": 0.0, "per_speed_pct": 0.0, "per_speed_diff_pct": 0.0, "max_pct": 100.0})
+	var u := _unit(0, 5, 0)
+	_near(Resolver.dodge_chance(u), 0.0, "no bonus, zero rates → 0% dodge")
+	Resolver.submit(StatMutation.make(u, StatMutation.DODGE_BONUS, 25, null, StatMutation.CH_SYSTEM))
+	check_eq(u.get_attribute("dodge_bonus"), 25, "a dodge_bonus modifier folds into get_attribute")
+	_near(Resolver.dodge_chance(u), 0.25, "a +25 dodge_bonus adds 25% to the chance")
+
+	# The cap bounds the bonus too — no unit is untouchable.
+	Resolver.set_dodge_tuning({"per_speed_pct": 0.0, "max_pct": 20.0})
+	_near(Resolver.dodge_chance(u), 0.20, "the cap ceils a bonus that would exceed it")
+
+	# The Gale Sigil relic: a run-level standing modifier granting +25 dodge_bonus to allied AIR
+	# units only — anchored to the player, gated by composition.
+	Resolver.set_dodge_tuning({"fixed_pct": 0.0, "per_speed_pct": 0.0, "per_speed_diff_pct": 0.0, "max_pct": 100.0})
+	GameData.current_modifiers = ModifierSet.new()
+	GameData.current_modifiers.add(Effect.from_dict({
+		"kind": "modifier", "key": "unit.dodge_bonus", "amount": 25,
+		"conditions": [{"composition": ["air"]}],
+	}))
+	var air_ally := _unit(0, 5, 0, ["air"], 0)
+	var fire_ally := _unit(0, 5, 0, ["fire"], 0)
+	var air_enemy := _unit(0, 5, 0, ["air"], 1)
+	check_eq(air_ally.get_attribute("dodge_bonus"), 25, "the relic grants +25 dodge to an allied air unit")
+	check_eq(fire_ally.get_attribute("dodge_bonus"), 0, "a non-air ally gets no dodge bonus")
+	check_eq(air_enemy.get_attribute("dodge_bonus"), 0, "an enemy air unit gets no player-scoped bonus")
+	_near(Resolver.dodge_chance(air_ally), 0.25, "the granted bonus flows into the air unit's dodge chance")
+	GameData.current_modifiers = ModifierSet.new()
 
 
 # At a certain (100%, uncapped) chance the target avoids the whole strike — no shield/health touched.
@@ -107,12 +141,14 @@ func _spd(speed: int) -> CardInstance:
 	return _unit(speed, 9, 0)
 
 
-# A bare unit with explicit speed / health / shield — no effects, so its stats are exactly what
-# get_attribute reads in the clean env.
-func _unit(speed: int, health: int, shield: int) -> CardInstance:
+# A bare unit with explicit speed / health / shield (+ optional composition / side) — no effects,
+# so its stats are exactly what get_attribute reads in the clean env. Always carries a pawn piece
+# so it's a UNIT (elements-only cards are SPELLs, which the stat fold deliberately skips).
+func _unit(speed: int, health: int, shield: int, elements: Array = [], owner: int = 0) -> CardInstance:
 	var inst := CardInstance.from_data(CardData.build_from_dict({
 		"id": "_test_dodge_unit", "display_name": "Nimble",
 		"cost": 1, "attack": 1, "health": health, "speed": speed, "shield": shield,
+		"elements": elements, "chess_pieces": ["pawn"],
 	}))
-	inst.owner = 0
+	inst.owner = owner
 	return inst

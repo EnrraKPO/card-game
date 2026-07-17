@@ -263,10 +263,13 @@ static func _apply_damage(inst: CardInstance, m: StatMutation) -> Outcome:
 
 
 # The target's chance (0..1) to dodge an incoming attack from `attacker`, assembled from the
-# data-driven tuning: a fixed base, a per-speed term, and a one-sided per-speed-EDGE term that
-# only pays out when the target outspeeds its attacker. Speeds read through get_attribute, so
-# buffs/statuses/run bonuses count. Capped at max_pct, then floored/ceiled to a valid [0,1]
-# probability. `attacker` may be null (a sourceless hit) — then the edge term is simply absent.
+# data-driven tuning: a fixed base, a per-speed term, a one-sided per-speed-EDGE term that only
+# pays out when the target outspeeds its attacker, and the target's own `dodge_bonus` — extra
+# percentage points granted by standing effects (a relic's "+25% dodge to air units"), folded
+# through get_attribute like every other stat. Speeds/bonus read through get_attribute, so
+# buffs/statuses/run bonuses count. Capped at max_pct (the bonus is bound by the cap too, so the
+# fastest units stay hittable), then floored/ceiled to a valid [0,1] probability. `attacker` may
+# be null (a sourceless hit) — then the edge term is simply absent.
 static func dodge_chance(target: CardInstance, attacker: CardInstance = null) -> float:
 	if target == null:
 		return 0.0
@@ -277,6 +280,7 @@ static func dodge_chance(target: CardInstance, attacker: CardInstance = null) ->
 		var edge := spd - float(attacker.get_attribute("speed"))
 		if edge > 0.0:
 			pct += float(cfg["per_speed_diff_pct"]) * edge
+	pct += float(target.get_attribute("dodge_bonus"))
 	return clampf(minf(pct, float(cfg["max_pct"])), 0.0, 100.0) / 100.0
 
 
