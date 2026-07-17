@@ -1,0 +1,35 @@
+[
+	{
+		"id": "fire_blessing",
+		"display_name": "Fire Blessing",
+		"description": "For 2 turns: +2 Attack, and this unit is treated as a fire unit.",
+		"beneficial": true,
+		"color": "ff5a1f",
+		"glyph": "◆",
+		"stacking": "refresh",
+		"default_duration": 2,
+		"effects": [
+			{
+				"trigger": {
+					"kind": "while"
+				},
+				"targets": {
+					"kind": "self"
+				},
+				"attribute": "attack",
+				"amount": 2
+			},
+			{
+				"trigger": {
+					"kind": "while"
+				},
+				"targets": {
+					"kind": "self"
+				},
+				"grants": [
+					"fire"
+				]
+			}
+		]
+	}
+]

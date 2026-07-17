@@ -1,0 +1,35 @@
+[
+	{
+		"id": "earth_blessing",
+		"display_name": "Earth Blessing",
+		"description": "For 2 turns: +1 Shield, and this unit is treated as an earth unit.",
+		"beneficial": true,
+		"color": "b07a3d",
+		"glyph": "◆",
+		"stacking": "refresh",
+		"effects": [
+			{
+				"trigger": {
+					"kind": "while"
+				},
+				"targets": {
+					"kind": "self"
+				},
+				"attribute": "shield",
+				"amount": 1
+			},
+			{
+				"trigger": {
+					"kind": "while"
+				},
+				"targets": {
+					"kind": "self"
+				},
+				"grants": [
+					"earth"
+				]
+			}
+		],
+		"default_duration": 2
+	}
+]

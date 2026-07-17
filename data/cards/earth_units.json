@@ -86,7 +86,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"abilities": [
+			"earth_bless"
+		]
 	},
 	{
 		"id": "earth_rook",

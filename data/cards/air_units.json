@@ -31,6 +31,9 @@
 		"display_name": "Air Bishop",
 		"chess_pieces": [
 			"bishop"
+		],
+		"abilities": [
+			"air_bless"
 		]
 	},
 	{

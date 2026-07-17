@@ -426,5 +426,109 @@
 				}
 			}
 		]
+	},
+	{
+		"id": "earth_bless",
+		"display_name": "Earth Blessing",
+		"description": "Blesses a unit of your choice with Earth Blessing: +1 Shield while it holds, and the unit is treated as an earth unit.",
+		"cost": {
+			"mana": 1,
+			"tap": true
+		},
+		"autocast": true,
+		"effects": [
+			{
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual"
+				},
+				"status": {
+					"id": "earth_blessing",
+					"stacks": 1
+				}
+			}
+		]
+	},
+	{
+		"id": "fire_bless",
+		"display_name": "Fire Blessing",
+		"description": "Blesses a unit of your choice with Fire Blessing: +2 Attack for 2 turns, and the unit is treated as a fire unit.",
+		"cost": {
+			"mana": 1,
+			"tap": true
+		},
+		"autocast": true,
+		"effects": [
+			{
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual"
+				},
+				"status": {
+					"id": "fire_blessing",
+					"stacks": 1
+				}
+			}
+		]
+	},
+	{
+		"id": "air_bless",
+		"display_name": "Air Blessing",
+		"description": "Blesses a unit of your choice with Air Blessing: +4 Speed for 2 turns, and the unit is treated as an air unit.",
+		"cost": {
+			"mana": 1,
+			"tap": true
+		},
+		"autocast": true,
+		"effects": [
+			{
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual"
+				},
+				"status": {
+					"id": "air_blessing",
+					"stacks": 1
+				}
+			}
+		]
+	},
+	{
+		"id": "water_bless",
+		"display_name": "Water Blessing",
+		"description": "Blesses a unit of your choice with Water Blessing: heals 1 Health at the start of each turn for 2 turns, and the unit is treated as a water unit.",
+		"cost": {
+			"mana": 1,
+			"tap": true
+		},
+		"autocast": true,
+		"effects": [
+			{
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual"
+				},
+				"status": {
+					"id": "water_blessing",
+					"stacks": 1
+				}
+			}
+		]
 	}
 ]
