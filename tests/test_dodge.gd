@@ -26,6 +26,7 @@ func run() -> void:
 	_certain_dodge_zeroes_attack()
 	_impossible_dodge_lands_in_full()
 	_dodge_is_attack_channel_only()
+	_dodge_preserves_barrier()
 	_toggle_off_never_dodges()
 	Resolver.dodge_enabled = prev
 	Resolver.set_dodge_tuning({})   # drop the injected cache; later reads reload from disk
@@ -159,6 +160,27 @@ func _dodge_is_attack_channel_only() -> void:
 	var out := Resolver.submit(StatMutation.make(tgt, StatMutation.HEALTH, -3, null))
 	check(not out.dodged, "a non-attack (poison/effect) wound is never dodged")
 	check_eq(tgt.current_health, 2, "the poison wound lands despite a certain dodge chance")
+
+
+# A dodged attack is resolved BEFORE interception, so it must NOT consume the target's barrier
+# (there was nothing to block) — the interaction the ordering fix exists for.
+func _dodge_preserves_barrier() -> void:
+	Resolver.set_dodge_tuning({"fixed_pct": 100.0, "max_pct": 100.0})
+	var tgt := _unit(1, 5, 0)
+	tgt.apply_status("barrier", Effect.STATUS_DURATION_DEFAULT, 1, null)
+	var out := Resolver.submit(StatMutation.damage(tgt, 4, _unit(1, 5, 0)))
+	check(out.dodged, "the strike is dodged")
+	check(out.interceptions.is_empty(), "a dodge runs no interception (barrier never fires)")
+	check(tgt.find_status("barrier") != null, "a dodged strike does NOT consume the barrier")
+
+	# With dodge impossible, the barrier blocks and IS consumed — the regression guard.
+	Resolver.set_dodge_tuning({"fixed_pct": 0.0, "per_speed_pct": 0.0, "per_speed_diff_pct": 0.0})
+	var tgt2 := _unit(1, 5, 0)
+	tgt2.apply_status("barrier", Effect.STATUS_DURATION_DEFAULT, 1, null)
+	var out2 := Resolver.submit(StatMutation.damage(tgt2, 4, _unit(1, 5, 0)))
+	check(not out2.dodged, "no dodge when the rate is 0")
+	check_eq(out2.delta, 0, "the barrier blocks the strike (0 damage)")
+	check(tgt2.find_status("barrier") == null, "a blocked (not dodged) strike DOES consume the barrier")
 
 
 # The master switch: with dodge disabled, even a certain-dodge target takes the full hit.

@@ -97,6 +97,16 @@ static func _submit(m: StatMutation) -> Outcome:
 	var inst := m.target as CardInstance
 	if inst == null:
 		return Outcome.new()
+	# DODGE is resolved BEFORE any interception: a dodged attack is avoided outright, so nothing
+	# about the hit happens — no shield split, and crucially no interceptor is consumed. A barrier
+	# is NOT spent on a strike the unit dodged (there was nothing to block), and blind never fires
+	# either. Attack-channel damage only; a real incoming hit (raw amount > 0, pre-interception)
+	# is the gate. See dodge_chance for the (itself interceptable) rate.
+	if m.stat == StatMutation.DAMAGE and m.channel == StatMutation.CH_ATTACK \
+			and dodge_enabled and m.amount > 0 and randf() < dodge_chance(inst, m.source):
+		var od := Outcome.make(inst, StatMutation.DAMAGE, 0)
+		od.dodged = true
+		return od
 	var interceptions := _intercept(m)
 	var out := _apply_to_instance(inst, m)
 	# The application form may have run nested gates of its own (a DAMAGE split intercepts
@@ -229,19 +239,10 @@ static func _apply_damage(inst: CardInstance, m: StatMutation) -> Outcome:
 	# channel carrying provenance as everywhere else. No re-flow: a rewritten portion never
 	# redistributes to the other. Portions are reductions by construction (see
 	# StatMutation.portion); a hit's untouched share commits exactly as split.
+	#
+	# DODGE is handled upstream in _submit (before interception, so a dodged hit spends no
+	# barrier); by the time a hit reaches here it was NOT dodged and resolves normally.
 	var amount := maxi(0, m.amount)
-	# DODGE — core combat, not an effect: an attack strike can be avoided outright based on the
-	# TARGET's agility (and its speed edge over the attacker — see dodge_chance). Rolled here (a
-	# resolution FORM of attack-channel damage, this file's domain) rather than in combat, so it
-	# sits after interception and before the shield split — a dodge zeroes the WHOLE hit, so
-	# nothing reaches shield or health. Only real attack hits roll: poison/effect wounds are
-	# HEALTH mutations (they never enter this form), and a hit already reduced to 0 (a whiff, or
-	# non-attack channel) has nothing to dodge.
-	if dodge_enabled and amount > 0 and m.channel == StatMutation.CH_ATTACK \
-			and randf() < dodge_chance(inst, m.source):
-		var od := Outcome.make(inst, StatMutation.DAMAGE, 0)
-		od.dodged = true
-		return od
 	var absorbed := mini(amount, inst.current_shield)
 	var records: Array = []
 	var sm := StatMutation.make(inst, StatMutation.SHIELD_POOL, -absorbed, m.source, m.channel)
