@@ -280,6 +280,10 @@ static func _apply_damage(inst: CardInstance, m: StatMutation) -> Outcome:
 static func dodge_chance(target: CardInstance, attacker: CardInstance = null) -> float:
 	if target == null:
 		return 0.0
+	# Buildings are rooted structures — they never dodge, whatever their speed or bonuses. A
+	# hard 0 before any tuning/bonus/interception: a relic can't grant a building dodge either.
+	if target.data != null and target.data.is_building():
+		return 0.0
 	var cfg := _dodge_config()
 	var spd := float(target.get_attribute("speed"))
 	var pct := float(cfg["fixed_pct"]) + float(cfg["per_speed_pct"]) * spd

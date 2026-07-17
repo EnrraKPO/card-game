@@ -21,6 +21,7 @@ func run() -> void:
 	_chance_formula()
 	_dodge_bonus_fold()
 	_dodge_interception()
+	_building_never_dodges()
 	var prev := Resolver.dodge_enabled
 	Resolver.dodge_enabled = true
 	_certain_dodge_zeroes_attack()
@@ -55,6 +56,21 @@ func _chance_formula() -> void:
 	Resolver.set_dodge_tuning({"per_speed_pct": 1.0, "per_speed_diff_pct": 4.0, "max_pct": 20.0})
 	_near(Resolver.dodge_chance(_spd(6), _spd(0)), 0.20,
 			"raw 6% + 24% = 30% is capped to the 20% ceiling")
+
+
+# A building (rook composition) is a rooted structure — it never dodges, whatever its speed,
+# bonus, or the tuning.
+func _building_never_dodges() -> void:
+	Resolver.set_dodge_tuning({"fixed_pct": 100.0, "per_speed_pct": 10.0, "per_speed_diff_pct": 0.0, "max_pct": 100.0})
+	var building := CardInstance.from_data(CardData.build_from_dict({
+		"id": "_test_dodge_building", "display_name": "Wall",
+		"cost": 1, "attack": 1, "health": 9, "speed": 9, "chess_pieces": ["rook"],
+	}))
+	building.owner = 0
+	check(building.data.is_building(), "the test unit is a building")
+	check_eq(Resolver.dodge_chance(building), 0.0, "a building never dodges (100% + high speed still 0)")
+	Resolver.submit(StatMutation.make(building, StatMutation.DODGE_BONUS, 50, null, StatMutation.CH_SYSTEM))
+	check_eq(Resolver.dodge_chance(building), 0.0, "a dodge_bonus can't make a building dodge")
 
 
 # The `dodge_bonus` stat: extra dodge percentage points, foldable by standing effects. A written
