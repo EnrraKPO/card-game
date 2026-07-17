@@ -794,6 +794,13 @@
 		"prompt": "A quick airy whoosh swishing past with no impact, dodged attack whiff, one shot, 0.5 seconds"
 	},
 	{
+		"id": "attack_dodge",
+		"display_name": "Attack Dodge",
+		"category": "combat",
+		"concept": "A unit's speed slips an attack - an ACTIVE evade cue (nimble, deliberate), snappier and more spirited than the plain airy whiff of a blinded miss.",
+		"prompt": "A swift sharp whoosh-swish with a quick nimble upward flick, agile sidestep dodge, one shot, 0.4 seconds"
+	},
+	{
 		"id": "shield_regen",
 		"display_name": "Shield Regen",
 		"category": "combat",

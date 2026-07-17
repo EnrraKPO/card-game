@@ -192,6 +192,21 @@
 		"prompt": "Sprite sheet of a puff of dodged air, small grey whiff swirl dissipating, 6 frames on transparent background, 2d game effect"
 	},
 	{
+		"id": "combat_dodge",
+		"display_name": "Dodge",
+		"category": "combat",
+		"renderer": "custom",
+		"behavior": "sidestep_label",
+		"params": {
+			"color": "8ceaff"
+		},
+		"placeholder": false,
+		"sfx": "attack_dodge",
+		"concept": "A unit's speed lets it slip an attack outright — the avoid must read as an ACTIVE evade (the target's agility), not the grey whiff of a blinded attacker.",
+		"explanation": "IMPLEMENTED (VFXEffectDodge): the target darts aside and snaps back while an agile cyan \"Dodge!\" label pops off it.",
+		"prompt": "Sprite sheet of a swift cyan motion-blur streak, quick sidestep afterimage with speed lines, 6 frames on transparent background, 2d game effect"
+	},
+	{
 		"id": "forge_combine_swirl",
 		"display_name": "Forge Combine Swirl",
 		"category": "lab",

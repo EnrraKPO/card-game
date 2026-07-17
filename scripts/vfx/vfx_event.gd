@@ -15,6 +15,7 @@ enum Type {
 	SOURCE_TRIGGER,   # the card whose ability fired flares (causality cue)
 	TARGET_MARK,      # a card singled out by an effect gets a tinted reticle
 	MISS,             # an attack negated (e.g. by Blind): a "Miss" label instead of a damage number
+	DODGE,            # the TARGET actively evaded an attack (speed dodge): a sidestep + "Dodge!" label
 }
 
 # SOURCE_TRIGGER look. Generic for now; the field is here so source glints can later branch by
@@ -83,6 +84,14 @@ static func death(card: CardUI) -> VFXEvent:
 static func miss(card: CardUI) -> VFXEvent:
 	var e := VFXEvent.new()
 	e.type = Type.MISS; e.target = card
+	return e
+
+
+# A dodged attack: the target slips aside and a "Dodge!" label pops. Distinct from MISS — a miss
+# is the ATTACKER whiffing (Blind), a dodge is the TARGET's own agility avoiding the blow.
+static func dodge(card: CardUI) -> VFXEvent:
+	var e := VFXEvent.new()
+	e.type = Type.DODGE; e.target = card
 	return e
 
 

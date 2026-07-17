@@ -604,7 +604,11 @@ func _apply_attack_damage(attacker: CardInstance, target: CardInstance, t_card: 
 	# (e.g. a relic blinding the attacker) run whether or not it connected. Only the readout
 	# differs.
 	await _broadcast(GameEvent.make(&"struck", attacker, target))
-	if dmg <= 0:
+	if outcome.dodged:
+		# The target's speed slipped the blow outright — an ACTIVE evade (sidestep + "Dodge!"),
+		# distinct from the grey whiff of a miss. Both land 0 damage; the cause differs.
+		_vfx.play(VFXEvent.dodge(t_card))
+	elif dmg <= 0:
 		# A 0-damage strike (blocked, or <=0 Attack) reads as "Miss" rather than a number.
 		_vfx.play(VFXEvent.miss(t_card))
 	else:
