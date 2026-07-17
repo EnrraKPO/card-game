@@ -17,6 +17,10 @@ func play() -> void:
 	if card == null or not is_instance_valid(card):
 		queue_free(); return
 	_sidestep(card)
+	# Glint the SPEED badge — a dodge is the unit's Speed at work, so the stat that caused it
+	# flares exactly like a status pip glints when its status procs.
+	if card.has_method("flash_stat_proc"):
+		card.flash_stat_proc("speed", Color(0.75, 0.97, 1.0, 0.9))
 	_float_label("Dodge!", DODGE_COLOR, "")
 	queue_free()
 
