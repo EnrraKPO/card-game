@@ -521,5 +521,38 @@
 				}
 			}
 		]
+	},
+	{
+		"id": "berserkers_momentum",
+		"display_name": "Berserker's Momentum",
+		"description": "Whenever an allied fire unit lands a critical hit, it gains 1 Attack.",
+		"color": "d9502f",
+		"letter": "B",
+		"price": 110,
+		"effects": [
+			{
+				"kind": "triggered",
+				"trigger": {
+					"kind": "dual_event",
+					"event": "crit",
+					"origin_conditions": [
+						{
+							"composition": [
+								"fire"
+							]
+						},
+						{
+							"allegiance": "ally"
+						}
+					]
+				},
+				"targets": {
+					"kind": "participant",
+					"participant": "origin"
+				},
+				"attribute": "attack",
+				"amount": 1
+			}
+		]
 	}
 ]

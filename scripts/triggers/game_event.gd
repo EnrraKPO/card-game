@@ -16,6 +16,11 @@ extends RefCounted
 # dodge (a strike was avoided outright — origin = the attacker whose blow was slipped,
 # destination = the DODGER; fired after `struck`, only when the target's speed dodged
 # the hit — see Resolver dodge + combat). subject() is the dodger.
+# crit (a strike landed as a CRITICAL — origin = the attacker who landed it, destination =
+# the unit hit; fired after the damage resolves, only when real damage landed multiplied —
+# a fully blocked hit never crits). subject() is the ATTACKER (the origin fallthrough below):
+# unlike struck/kill/dodge, crit is framed from the ACTING party's perspective ("it landed a
+# crit"), matching `attack`'s convention.
 
 var id: StringName = &""
 var origin: CardInstance = null
@@ -49,7 +54,10 @@ static func kill(p_killer: CardInstance, p_killed: CardInstance,
 # The unit the event is "about" from the legacy single-subject perspective — the bridge to
 # the pieces that still think in one subject: EffectContext.subject (SUBJECT targeting), the
 # run-level perspective card, and the decay gate. For `struck` that was always the unit
-# taking the hit (the destination); for everything else it is the origin.
+# taking the hit (the destination); for everything else it is the origin. NOTE: not every dual
+# event belongs in the destination list — struck/kill/dodge are framed from the AFFECTED
+# party's perspective ("it was struck / died / dodged"), while attack and crit are framed from
+# the ACTING party's ("it attacked / landed a crit") and deliberately fall through to origin.
 func subject() -> CardInstance:
 	if (id == &"struck" or id == &"kill" or id == &"dodge") and destination != null:
 		return destination

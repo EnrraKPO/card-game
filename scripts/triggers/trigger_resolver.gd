@@ -38,7 +38,7 @@ extends RefCounted
 #   ("of" values: "self" = the holder only; "any" (default) = anyone's event)
 
 const SIMPLE_EVENTS: Array[StringName] = [&"play", &"death", &"activate", &"turn_start", &"turn_end", &"permanent"]
-const DUAL_EVENTS: Array[StringName] = [&"attack", &"struck", &"kill", &"dodge"]
+const DUAL_EVENTS: Array[StringName] = [&"attack", &"struck", &"kill", &"dodge", &"crit"]
 
 # The allegiance anchor for condition evaluation is normally the HOLDER's side. Run-scope
 # effects (relics/upgrades) have no holder unit — they anchor to the PLAYER (0) instead, so

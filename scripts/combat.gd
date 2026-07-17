@@ -641,6 +641,12 @@ func _apply_attack_damage(attacker: CardInstance, target: CardInstance, t_card: 
 			if outcome.shield_absorbed > 0:
 				await get_tree().create_timer(SHIELD_LEAD).timeout
 			_vfx.play(VFXEvent.health_damage(t_card, outcome.health_damage))
+		if outcome.crit:
+			# The `crit` event fires after the hit's cues are queued (hit → numbers → reaction
+			# reads in causal order): origin = the attacker who landed it, destination = the unit
+			# hit. Unlike dodge, the SUBJECT is the origin — "when I land a crit" reactions run
+			# from the attacker's perspective (see GameEvent.subject).
+			await _broadcast(GameEvent.make(&"crit", attacker, target))
 	_board.refresh()
 
 
@@ -655,8 +661,8 @@ func _apply_attack_damage(attacker: CardInstance, target: CardInstance, t_card: 
 func _event_ctx(event: GameEvent, holder: CardInstance) -> EffectContext:
 	var ctx := _board.make_context(holder)
 	ctx.subject = event.subject()
-	if event.id == &"attack":
-		ctx.attack_target = event.destination   # lets an attack effect target the unit being struck
+	if event.id == &"attack" or event.id == &"crit":
+		ctx.attack_target = event.destination   # attack/crit: subject is the striker, expose who got hit
 	elif event.id == &"struck" or event.id == &"dodge":
 		ctx.attacker = event.origin             # struck/dodge: the unit that struck (the dodger is the subject)
 	return ctx

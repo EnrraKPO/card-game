@@ -20,6 +20,7 @@ func run() -> void:
 	_run_level_dispatch()
 	_kill_event()
 	_dodge_event()
+	_crit_event()
 
 
 # A throwaway unit with known stats/composition, placed on a side.
@@ -366,4 +367,49 @@ func _dodge_event() -> void:
 	var res := EffectSystem.trigger_global(ev, ctx)
 	check(not res.is_empty(), "run-level dodge reaction fires")
 	check(air_ally.find_status("barrier") != null, "the dodging air ally gains a Barrier")
+	GameData.current_modifiers = ModifierSet.new()
+
+
+# The `crit` dual event — the one dual event whose subject is the ORIGIN (the attacker who
+# landed the crit), matching `attack`'s acting-party framing, NOT the struck/kill/dodge
+# destination convention. The Berserker's Momentum relic rides it: origin_conditions +
+# participant "origin", the mirror image of Zephyr Charm's destination wiring.
+func _crit_event() -> void:
+	var fire_ally := _unit(2, 0, ["fire"])    # the player's fire attacker
+	var plain_ally := _unit(2, 0)             # a non-fire ally
+	var enemy_tgt := _unit(3, 1)              # the unit being crit
+
+	var ev := GameEvent.make(&"crit", fire_ally, enemy_tgt)
+	check_eq(ev.subject(), fire_ally, "crit subject is the ATTACKER (the origin)")
+
+	# The Berserker's Momentum resolver: dual crit gated on the ORIGIN being an allied fire
+	# unit, targeting that same attacker.
+	var relic := Effect.from_dict({
+		"kind": "triggered",
+		"trigger": {"kind": "dual_event", "event": "crit",
+			"origin_conditions": [{"composition": ["fire"]}, {"allegiance": "ally"}]},
+		"targets": {"kind": "participant", "participant": "origin"},
+		"attribute": "attack", "amount": 1,
+	})
+	var r := relic.trigger_resolver()
+	check(r is TriggerResolver.Dual and (r as TriggerResolver.Dual).event == &"crit",
+			"native crit parses to a dual crit resolver")
+	# Anchored to the player (0): fires for an allied fire attacker's crit, not for a non-fire
+	# ally's, and not for an enemy fire unit's (ally is relative to the player).
+	check(r.fires(ev, null, 0), "crit fires when an allied fire unit lands one")
+	check(not r.fires(GameEvent.make(&"crit", plain_ally, enemy_tgt), null, 0),
+			"crit silent when the attacker isn't a fire unit")
+	check(not r.fires(GameEvent.make(&"crit", _unit(2, 1, ["fire"]), fire_ally), null, 0),
+			"crit silent when the attacker is an enemy (ally anchored to the player)")
+
+	# End-to-end run-level dispatch: the relic bumps the critting attacker's Attack by 1.
+	GameData.current_modifiers = ModifierSet.new()
+	GameData.current_modifiers.add(relic)
+	var ctx := EffectContext.make(fire_ally, [[fire_ally]], [[enemy_tgt]])
+	ctx.subject = fire_ally
+	var before := int(fire_ally.get_attribute("attack"))
+	var res := EffectSystem.trigger_global(ev, ctx)
+	check(not res.is_empty(), "run-level crit reaction fires")
+	check_eq(int(fire_ally.get_attribute("attack")), before + 1,
+			"the critting fire ally gains 1 Attack")
 	GameData.current_modifiers = ModifierSet.new()
