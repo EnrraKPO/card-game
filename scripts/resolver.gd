@@ -79,6 +79,23 @@ static func _submit(m: StatMutation) -> Outcome:
 
 
 static func _apply_to_instance(inst: CardInstance, m: StatMutation) -> Outcome:
+	# The lethal crossing is stamped HERE, around the stat dispatch, so it covers every form
+	# that lowers health — the shield-split DAMAGE and the direct HEALTH (poison) alike. Only
+	# the FIRST mutation to take a live unit to <= 0 records the kill (the `pre > 0` guard);
+	# overkill from a later mutation can't overwrite the killer. The Resolver only RECORDS the
+	# cause — combat emits the event (its contract: events are never mutations).
+	var pre_health := inst.current_health
+	var out := _dispatch_apply(inst, m)
+	if pre_health > 0 and inst.current_health <= 0:
+		# An attack credits its striker as the killer unit; every other cause credits none —
+		# "died from poison"/"from an effect" is a causeful death with no killer UNIT.
+		inst.killed_by_unit = m.source if m.channel == StatMutation.CH_ATTACK else null
+		inst.killed_by_channel = m.channel
+		inst.killed_by_cause = m.cause
+	return out
+
+
+static func _dispatch_apply(inst: CardInstance, m: StatMutation) -> Outcome:
 	match m.stat:
 		StatMutation.DAMAGE:
 			return _apply_damage(inst, m)

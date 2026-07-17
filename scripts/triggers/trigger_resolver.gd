@@ -38,7 +38,7 @@ extends RefCounted
 #   ("of" values: "self" = the holder only; "any" (default) = anyone's event)
 
 const SIMPLE_EVENTS: Array[StringName] = [&"play", &"death", &"activate", &"turn_start", &"turn_end", &"permanent"]
-const DUAL_EVENTS: Array[StringName] = [&"attack", &"struck"]
+const DUAL_EVENTS: Array[StringName] = [&"attack", &"struck", &"kill"]
 
 # Legacy trigger key → (event id, whether the legacy single subject was the DESTINATION).
 # `permanent` is intercepted in from_legacy before this map is consulted: it becomes the
@@ -131,12 +131,19 @@ class Dual extends TriggerResolver:
 	var destination_of_holder := false
 	var origin_conditions: Array = []        # Array[EffectCondition] (predicates)
 	var destination_conditions: Array = []   # Array[EffectCondition] (predicates)
+	# The CAUSE gate (the `kill` event): when non-empty, the event's cause must match — a
+	# specific id ("poison" ⇒ event.cause_id) or a kind ("attack" ⇒ event.cause_kind). This
+	# is a structural gate like origin_of, not a unit predicate: the cause is not a unit, so
+	# it can't be an EffectCondition. Empty = fires regardless of cause.
+	var cause: StringName = &""
 
 	func listens(event_id: StringName) -> bool:
 		return event_id == event
 
 	func fires(p_event: GameEvent, holder: CardInstance) -> bool:
 		if p_event.id != event:
+			return false
+		if cause != &"" and p_event.cause_id != cause and p_event.cause_kind != cause:
 			return false
 		if origin_of_holder and p_event.origin != holder:
 			return false
@@ -152,6 +159,8 @@ class Dual extends TriggerResolver:
 			d["origin_of"] = "self"
 		if destination_of_holder:
 			d["destination_of"] = "self"
+		if cause != &"":
+			d["cause"] = String(cause)
 		if not origin_conditions.is_empty():
 			d["origin_conditions"] = TriggerResolver.conditions_to_dicts(origin_conditions)
 		if not destination_conditions.is_empty():
@@ -223,6 +232,7 @@ static func _from_native(d: Dictionary) -> TriggerResolver:
 					or _has_identity(d.get("destination_conditions", []))
 			dual.origin_conditions = _parse_conditions(d.get("origin_conditions", []))
 			dual.destination_conditions = _parse_conditions(d.get("destination_conditions", []))
+			dual.cause = StringName(str(d.get("cause", "")))
 			return dual
 		_:   # "event" (and anything unrecognised degrades to a simple event)
 			var simple := Simple.new()

@@ -18,6 +18,7 @@ func run() -> void:
 	_round_trip()
 	_dispatch()
 	_run_level_dispatch()
+	_kill_event()
 
 
 # A throwaway unit with known stats/composition, placed on a side.
@@ -262,3 +263,43 @@ func _run_level_dispatch() -> void:
 	var enemy_res := EffectSystem.trigger_global(GameEvent.make(&"attack", struck, striker), enemy_ctx)
 	check(enemy_res.is_empty(), "run-level tier stays player-side only")
 	GameData.current_modifiers = ModifierSet.new()
+
+
+# The `kill` event: a dual event (killer unit → corpse) with an extra structural CAUSE gate,
+# so "when I kill" and "when a unit dies from poison" are both authorable.
+func _kill_event() -> void:
+	var killer := _unit(3, 0)
+	var corpse := _unit(2, 1)
+
+	# "When I kill someone" — origin_of self, no cause filter (any cause counts).
+	var mine := Effect.from_dict({"trigger": {"kind": "dual_event", "event": "kill",
+			"origin_of": "self"}, "targeting_policy": "self", "attribute": "attack", "amount": 1})
+	var rm := mine.trigger_resolver()
+	check(rm is TriggerResolver.Dual and (rm as TriggerResolver.Dual).event == &"kill",
+			"native kill parses to a dual kill resolver")
+	check(rm.fires(GameEvent.kill(killer, corpse, &"attack", &""), killer),
+			"kill fires for the unit that landed the fatal blow")
+	check(not rm.fires(GameEvent.kill(corpse, killer, &"attack", &""), killer),
+			"kill silent when someone else did the killing")
+	# A causeless-unit kill (poison: killer unit null) can't satisfy origin_of self.
+	check(not rm.fires(GameEvent.kill(null, corpse, &"effect", &"poison"), killer),
+			"origin-self kill never fires when no unit is credited (poison)")
+
+	# "When a unit dies from poison" — a cause filter, no origin gate.
+	var pz := Effect.from_dict({"trigger": {"kind": "dual_event", "event": "kill",
+			"cause": "poison"}, "targeting_policy": "self", "attribute": "attack", "amount": 1})
+	var rp := pz.trigger_resolver()
+	var watcher := _unit(1, 0)
+	check(rp.fires(GameEvent.kill(null, corpse, &"effect", &"poison"), watcher),
+			"poison-cause kill fires regardless of who watches")
+	check(not rp.fires(GameEvent.kill(killer, corpse, &"attack", &""), watcher),
+			"poison-gated kill silent for an attack kill")
+	# The cause gate also matches a KIND ("attack"), not just a specific id.
+	var atk := Effect.from_dict({"trigger": {"kind": "dual_event", "event": "kill",
+			"cause": "attack"}, "targeting_policy": "self", "attribute": "attack", "amount": 1})
+	check(atk.trigger_resolver().fires(GameEvent.kill(killer, corpse, &"attack", &""), watcher),
+			"cause gate matches the attack kind")
+
+	# Round-trip: the cause survives a to_dict/parse cycle.
+	check_eq((rp.to_dict() as Dictionary).get("cause", ""), "poison",
+			"kill cause round-trips through to_dict")

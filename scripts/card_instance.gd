@@ -40,6 +40,16 @@ var charms: Array = []
 # EffectSystem.trigger.
 var statuses: Array = []
 
+# Provenance of the FATAL blow — stamped by the Resolver at the lethal HP crossing, read by
+# combat to fire the `kill` event before `death` (see GameEvent). `killed_by_unit` is the
+# killer UNIT, populated ONLY for an attack (an effect/poison kill credits no unit — that is
+# the deliberate rule: units kill by striking). `killed_by_channel` is the cause KIND
+# (attack/effect), `killed_by_cause` the specific id (a status id like "poison", else "").
+# `killed_by_channel == ""` means "died with no recorded cause" — fires `death` only.
+var killed_by_unit: CardInstance = null
+var killed_by_channel: StringName = &""
+var killed_by_cause: StringName = &""
+
 # Set true for the round when this unit spent its attack to generate a card
 # (see rook/building generation in combat.gd). Reset at the start of each round.
 var attack_exhausted: bool = false

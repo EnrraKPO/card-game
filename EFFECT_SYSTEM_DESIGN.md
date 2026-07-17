@@ -465,3 +465,52 @@ the card's real composition (shared `CardData` identity) never moves, and identi
   intensity never multiplies a union — tracker VALIDITY alone gates a grant's existence.
 - Suite: `tests/test_composition_grants.gd` (chains, Layer-2 reads, expiry, fallback,
   negative gates, round-trip); Tool rules in `api_test.js`.
+
+---
+
+## 12. The `kill` event — killer + cause provenance (BUILT 2026-07-17)
+
+A first-class **`kill`** GameEvent so "when I kill a unit" and "when a unit dies from
+poison" are authorable directly (previously impossible: `struck` is attack-path only and
+can't see spell/ability/poison kills; `death` carries only the corpse and structurally
+cannot name a killer).
+
+- **Shape.** Dual event: `origin` = the killer UNIT, `destination` = the killed unit
+  (the corpse, still on board). `subject()` = the corpse (mirrors `struck`). Fired just
+  **before** `death`, both while the corpse is on the board. `death` stays the corpse's
+  own perspective ("I died" / deathrattles / on-ally-death); `kill` is the killer's.
+- **The killer is a CAUSE, not always a unit.** `origin` is populated **only for an
+  attack** — the deliberate rule that units kill by striking. An effect/ability/poison
+  kill credits **no** unit (`origin` null); the cause names it instead. This matches the
+  authoring goal exactly: only attacks carry a unit killer.
+- **Cause = KIND + id.** The mutation's existing `channel` is the kind (`attack`/`effect`);
+  a new `StatMutation.cause` is the specific id — a status id (`"poison"`) for a status
+  tick, else `""`. `EffectSystem` stamps the status id as it dispatches a status-held
+  effect (the one dispatch tier that knows its container id); an attack self-identifies via
+  its channel. This is the general provenance `channel` gestured at but was too coarse for.
+- **Clean layering (respects §8 / [[arbitration_layer]]: Resolver = single writer, events
+  ≠ mutations).**
+  1. **Resolver STAMPS** at the lethal HP crossing (`_apply_to_instance`, around the stat
+     dispatch — covers shield-split DAMAGE and direct HEALTH/poison alike). The FIRST
+     mutation to cross a live unit to `<= 0` records `killed_by_unit` (= `source` only when
+     `channel == attack`), `killed_by_channel`, `killed_by_cause`. Overkill can't overwrite
+     (the `pre > 0` guard). The Resolver only RECORDS — it never emits.
+  2. **Combat EMITS.** All three death sites (attack path + the two `_broadcast`/
+     `_resolve_event` sweeps) call `_emit_kill(corpse)` before broadcasting `death`; it
+     reads the stamped provenance and broadcasts `kill`. One helper, no per-call-site
+     wiring — every death already funnels through these sweeps, which is what makes it
+     catch retaliation/proc/multi-victim kills for free (the trap `struck` fell into).
+  3. `kill` registered in `TriggerResolver.DUAL_EVENTS`; the `Dual` resolver gains a
+     structural **`cause` gate** (the cause is not a unit, so it can't be an
+     `EffectCondition`): non-empty matches `event.cause_id` OR `event.cause_kind`.
+- **Authoring.** `{"kind":"dual_event","event":"kill","origin_of":"self"}` = "when I kill"
+  (attacks only). `{"kind":"dual_event","event":"kill","cause":"poison"}` = "when a unit
+  dies from poison". Tool: `kill` in the dual-event vocab + a "Killed by" cause field
+  (kill-only), server validation mirrors the game.
+- **Instigator (deferred, unchanged).** The cause answers "died from poison", NOT "poison
+  **I** applied" — that needs the tick to carry `StatusInstance.source` (which already
+  stores the applier) as the cause's unit. Not wired; a clean future extension that needs
+  no reshape here. See [[statuses]] Phase 2.
+- **Suite.** `tests/test_resolver.gd` (`_kill_stamping`: attack credits striker, poison
+  credits none, overkill can't rewrite) + `tests/test_triggers.gd` (`_kill_event`: parse,
+  origin-self gating, cause-id/kind matching, round-trip).

@@ -130,6 +130,7 @@ const L = {
     death: 'When a unit dies',
     attack: 'When a unit attacks (before the hit)',
     struck: 'When a unit is struck (after the hit)',
+    kill: 'When a unit dies (names the killer / cause)',
     activate: 'When a unit takes its turn',
     turn_start: 'At round start (per unit)',
     turn_end: 'At round end (per unit)',
@@ -137,10 +138,11 @@ const L = {
   // Designer nouns for each event's participants (origin, destination).
   eventOrigin: {
     play: 'The played unit', death: 'The dying unit', attack: 'The attacker',
-    struck: 'The attacker', activate: 'The acting unit',
+    struck: 'The attacker', kill: 'The killer (attacks only)', activate: 'The acting unit',
     turn_start: 'The unit whose round it is', turn_end: 'The unit whose round it is',
   },
-  eventDestination: { attack: 'The unit being struck', struck: 'The struck unit' },
+  eventDestination: { attack: 'The unit being struck', struck: 'The struck unit',
+    kill: 'The unit that died' },
   // Identity ("self") is relative to the effect's HOLDER (the unit carrying it — the
   // status's carrier, the card itself); ally/enemy are SIDES relative to the effect's
   // OWNER, which every container has (a relic's owner is the player). See the game's

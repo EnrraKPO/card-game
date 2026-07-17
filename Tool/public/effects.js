@@ -169,7 +169,7 @@ function retargetTrigger(e, eventKey) {
   const t = e.trigger;
   const primary = (t.kind === 'dual_event' ? t.origin_conditions : t.conditions) || [];
   if (eventKey === 'transient') e.trigger = { kind: 'transient' };
-  else if (eventKey === 'attack' || eventKey === 'struck')
+  else if (eventKey === 'attack' || eventKey === 'struck' || eventKey === 'kill')
     e.trigger = { kind: 'dual_event', event: eventKey, origin_conditions: primary, destination_conditions: [] };
   else e.trigger = { kind: 'event', event: eventKey, conditions: primary };
 }
@@ -554,6 +554,15 @@ function renderEffect(e, ctx, onChange, onRemove) {
           fld('Origin is', ofSelect(t, 'origin_of', ctx, localChange)),
           fld('Destination is', ofSelect(t, 'destination_of', ctx, localChange)),
         ));
+        // The kill event alone carries a CAUSE gate — match only kills by a given cause
+        // ("poison" = a status id, or the kind "attack"/"effect"). Empty = any cause.
+        if (t.event === 'kill') {
+          const causeChange = () => { if (!t.cause) delete t.cause; localChange(); };
+          rows.push(el('div', { class: 'frow' },
+            fld('Killed by', textInput(t, 'cause', causeChange, 'any cause (e.g. poison, attack)'),
+              'match only this cause — a status id like "poison", or a kind ("attack")'),
+          ));
+        }
         rows.push(participantConditionSection(t, 'origin_conditions', ctx, localChange,
           'ORIGIN' + originHint(t.event) + ' must satisfy:'));
         rows.push(participantConditionSection(t, 'destination_conditions', ctx, localChange,

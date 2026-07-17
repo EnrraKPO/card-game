@@ -563,6 +563,7 @@ func _resolve_attack(attacker: CardInstance) -> void:
 		a_card.modulate.a = 1.0
 
 	if not target.is_alive():
+		await _emit_kill(target)
 		await _broadcast(GameEvent.make(&"death", target))
 		await _vfx.play(VFXEvent.death(t_card))
 		_board.remove_card(target)
@@ -678,6 +679,18 @@ func _fire_run_level(event: GameEvent) -> void:
 # death path (itself a broadcast). Legacy content is self-gated by its parsed resolver
 # conditions, so only participants ever produce results from it — bystander watching is the
 # new capability this opens (e.g. "whenever a darkness pawn dies…" on a fielded card).
+# Fires the `kill` event for a just-dead unit, immediately before its `death` — reading the
+# provenance the Resolver stamped at the fatal blow (CardInstance.killed_by_*). `kill` names
+# the killer (a unit for attacks; the cause id, e.g. "poison", otherwise) so "when I kill" and
+# "when a unit dies from poison" are authorable; `death` stays the corpse's own perspective.
+# A death with no recorded cause (killed_by_channel == "") fires `death` only.
+func _emit_kill(corpse: CardInstance) -> void:
+	if corpse.killed_by_channel == &"":
+		return
+	await _broadcast(GameEvent.kill(corpse.killed_by_unit, corpse,
+			corpse.killed_by_channel, corpse.killed_by_cause))
+
+
 func _broadcast(event: GameEvent, run_level: bool = true) -> void:
 	var holders: Array = []
 	if event.origin != null:
@@ -693,6 +706,7 @@ func _broadcast(event: GameEvent, run_level: bool = true) -> void:
 		# Swept only if this broadcast's procs killed it; a participant that ENTERED dead (the
 		# struck unit after a lethal hit) is the call site's death to handle, not ours.
 		if was_alive and not holder.is_alive() and event.id != &"death":
+			await _emit_kill(holder)
 			await _broadcast(GameEvent.make(&"death", holder))
 			var ui := _board.get_card_ui(holder)
 			if ui != null:
@@ -721,6 +735,7 @@ func _resolve_event(event_id: StringName, subject: CardInstance = null) -> void:
 		# per holder would multiply it).
 		await _fire(ev, holder)
 		if not holder.is_alive():
+			await _emit_kill(holder)
 			await _broadcast(GameEvent.make(&"death", holder))
 			var ui := _board.get_card_ui(holder)
 			if ui != null:

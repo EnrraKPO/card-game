@@ -76,6 +76,12 @@ var stat: StringName = HEALTH
 var amount: int = 0
 var source: CardInstance = null    # who caused it (null for system mutations)
 var channel: StringName = CH_EFFECT
+# Provenance for the `kill` event (see Resolver kill-stamping + GameEvent). `channel` is
+# the KIND of cause (attack/effect/…); `cause` is WHICH specific one — a status id for a
+# tick ("poison"), else "". Together they answer "what killed this unit": an attack, or
+# poison, or another effect. Set by the producing site (StatMutation.damage stamps the
+# attack kind; EffectSystem stamps the status id for a status-held effect).
+var cause: StringName = &""
 # STATUS-form metadata: which status is being applied and with what duration override
 # (`amount` carries the stack count — the interceptable magnitude, like every other form).
 var status_id: String = ""

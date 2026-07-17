@@ -777,7 +777,7 @@ function stripMeta(data) {
 const TRIGGERS = ['on_play','on_death','on_attack','on_damage_taken','permanent','on_turn_start','on_turn_end','on_activate'];
 // The native trigger-resolver schema (see scripts/triggers/trigger_resolver.gd).
 const SIMPLE_EVENTS = ['play','death','activate','turn_start','turn_end'];
-const DUAL_EVENTS = ['attack','struck'];
+const DUAL_EVENTS = ['attack','struck','kill'];
 const RELATIONS = ['self','ally','enemy'];   // legacy spelling; ally/enemy map to allegiance in-game
 const ALLEGIANCES = ['ally','enemy'];        // side vs the effect's OWNER — the native predicate form
 const PARTICIPANT_GATES = ['self','any'];    // trigger "of" gates (identity is structural, not a condition)
@@ -872,6 +872,12 @@ function validateTrigger(t, where) {
     if (!DUAL_EVENTS.includes(String(t.event))) return `${where}: "${t.event}" is not a dual event (${DUAL_EVENTS.join('/')})`;
     for (const k of ['origin_of', 'destination_of'])
       if (t[k] != null && !PARTICIPANT_GATES.includes(String(t[k]))) return `${where}: bad participant gate "${k}": "${t[k]}"`;
+    // The `cause` gate is unique to `kill` — a free-form provenance match (a status id like
+    // "poison", or the kind "attack"/"effect"); mirrors TriggerResolver.Dual.cause.
+    if (t.cause != null) {
+      if (t.event !== 'kill') return `${where}: "cause" gates only the kill event`;
+      if (typeof t.cause !== 'string' || !t.cause) return `${where}: "cause" must be a non-empty string`;
+    }
     return validateConditionList(t.origin_conditions, `${where} trigger origin`)
         || validateConditionList(t.destination_conditions, `${where} trigger destination`);
   }
@@ -2065,6 +2071,11 @@ function effectsGrammarLines() {
     '   "of"/"origin_of"/"destination_of":"self" = the event must involve the holder itself;',
     '   omit them to react to anyone\'s event. For dual events, origin = the acting unit',
     '   (e.g. attacker), destination = the receiving unit.',
+    '   The "kill" dual event fires when a unit dies: origin = the KILLER unit (present only',
+    '   for attack kills; absent for effect/poison kills), destination = the dead unit. Add',
+    '   "cause":"poison" (a status id) or "cause":"attack" to match only that kind of kill —',
+    '   e.g. "when a unit dies from poison" is {"event":"kill","cause":"poison"}; "when I kill"',
+    '   is {"event":"kill","origin_of":"self"} (attacks only, since only attacks credit a unit).',
     '2. STANDING — continuous stat change while the effect is active:',
     '   {"trigger": {"kind":"while"}, "targets": {"kind":"self"} or {"kind":"all","conditions":[...]?},',
     '   "attribute": ..., "amount": n, "tracker": {"kind":"stacks"}?}',

@@ -40,7 +40,10 @@ static func trigger_grouped(event: GameEvent, source: CardInstance, context: Eff
 		for effect: Effect in grp["effects"]:
 			if not effect.trigger_resolver().fires(event, source):
 				continue
-			sres.append_array(_run_effect(effect, source, context, event, int(grp["stacks"])))
+			# The status id rides down as the mutation CAUSE — so a poison tick that kills
+			# stamps `cause = "poison"`, and the `kill` event can name it (see Resolver).
+			sres.append_array(_run_effect(effect, source, context, event,
+					int(grp["stacks"]), StringName(grp["status_id"])))
 		if not sres.is_empty():
 			groups.append({"status_id": grp["status_id"], "results": sres})
 	return groups
@@ -107,7 +110,7 @@ static func trigger_global_grouped(event: GameEvent, context: EffectContext) -> 
 # reference the event's origin/destination. `amount_scale` multiplies stat/heal magnitudes
 # (used to scale a stacked status's effects).
 static func _run_effect(effect: Effect, source: CardInstance, context: EffectContext,
-		event: GameEvent = null, amount_scale: int = 1) -> Array:
+		event: GameEvent = null, amount_scale: int = 1, cause: StringName = &"") -> Array:
 	# Probabilistic gate (the effect's `chance`): roll once; on a miss the effect doesn't fire at all.
 	if effect.chance < 1.0 and randf() >= effect.chance:
 		return []
@@ -123,9 +126,9 @@ static func _run_effect(effect: Effect, source: CardInstance, context: EffectCon
 	for target: Object in effect.targets_resolver().resolve(event, source, context):
 		var r: Dictionary
 		if target is CombatSide:
-			r = _apply_side(effect, target as CombatSide, source, amount_scale)
+			r = _apply_side(effect, target as CombatSide, source, amount_scale, cause)
 		else:
-			r = _apply(effect, target as CardInstance, source, context, amount_scale)
+			r = _apply(effect, target as CardInstance, source, context, amount_scale, cause)
 		if not r.is_empty():
 			results.append(r)
 	return results
@@ -136,18 +139,18 @@ static func _run_effect(effect: Effect, source: CardInstance, context: EffectCon
 # A side-targeted payload (draw/discard/mana/max_mana — load-validated pairing): one
 # mutation on the side, same result-dict shape as the unit path so dispatchers/cues
 # treat it uniformly. Delta 0 (empty pile, intercepted away) is a no-op — no result.
-static func _apply_side(effect: Effect, side: CombatSide, source: CardInstance, amount_scale: int = 1) -> Dictionary:
+static func _apply_side(effect: Effect, side: CombatSide, source: CardInstance, amount_scale: int = 1, cause: StringName = &"") -> Dictionary:
 	var amount := effect.amount_int() * amount_scale
 	if amount == 0:
 		return {}
-	var out := Resolver.submit(StatMutation.make(side,
-			StatMutation.stat_for_attribute(effect.attribute), amount, source))
+	var out := Resolver.submit(_caused(StatMutation.make(side,
+			StatMutation.stat_for_attribute(effect.attribute), amount, source), cause))
 	if out.delta == 0:
 		return {}
 	return _with_interceptions({"target": side, "attribute": effect.attribute, "delta": out.delta}, out)
 
 
-static func _apply(effect: Effect, target: CardInstance, source: CardInstance, context: EffectContext, amount_scale: int = 1) -> Dictionary:
+static func _apply(effect: Effect, target: CardInstance, source: CardInstance, context: EffectContext, amount_scale: int = 1, cause: StringName = &"") -> Dictionary:
 	if effect.custom_apply.is_valid():
 		effect.custom_apply.call(target)
 		return {}
@@ -155,8 +158,8 @@ static func _apply(effect: Effect, target: CardInstance, source: CardInstance, c
 	# Routed through the Resolver (single-writer rule) so interceptors can rewrite the stack
 	# count — an application intercepted away (delta 0) applies nothing and cues nothing.
 	if not effect.status_id.is_empty():
-		var sout := Resolver.submit(StatMutation.status_apply(target, effect.status_id,
-				effect.status_duration, effect.status_stacks, source))
+		var sout := Resolver.submit(_caused(StatMutation.status_apply(target, effect.status_id,
+				effect.status_duration, effect.status_stacks, source), cause))
 		if sout.delta <= 0:
 			return {}
 		return _with_interceptions({"target": target, "status_applied": effect.status_id}, sout)
@@ -167,8 +170,8 @@ static func _apply(effect: Effect, target: CardInstance, source: CardInstance, c
 		# Direct health change — a signed HEALTH mutation. The Resolver owns the form (negative
 		# bypasses shield, e.g. poison; positive heals, clamped to max) and reports the delta
 		# that actually landed. The shield-routed pipeline lives on "damage_taken".
-		var out := Resolver.submit(StatMutation.make(target,
-				StatMutation.stat_for_attribute(effect.attribute), amount, source))
+		var out := Resolver.submit(_caused(StatMutation.make(target,
+				StatMutation.stat_for_attribute(effect.attribute), amount, source), cause))
 		if out.delta == 0:
 			return {}   # already full / 0 heal — nothing happened
 		return _with_interceptions({"target": target, "attribute": "health", "delta": out.delta}, out)
@@ -177,15 +180,22 @@ static func _apply(effect: Effect, target: CardInstance, source: CardInstance, c
 		# wounds health. HOW it splits is the Resolver's knowledge, not ours.
 		if amount <= 0:
 			return {}
-		var dout := Resolver.submit(StatMutation.make(target,
-				StatMutation.stat_for_attribute(effect.attribute), amount, source))
+		var dout := Resolver.submit(_caused(StatMutation.make(target,
+				StatMutation.stat_for_attribute(effect.attribute), amount, source), cause))
 		return _with_interceptions({"target": target, "attribute": "health", "delta": -amount}, dout)
 	else:
 		if amount == 0:
 			return {}
-		var mout := Resolver.submit(StatMutation.make(target,
-				StatMutation.stat_for_attribute(effect.attribute), amount, source))
+		var mout := Resolver.submit(_caused(StatMutation.make(target,
+				StatMutation.stat_for_attribute(effect.attribute), amount, source), cause))
 		return _with_interceptions({"target": target, "attribute": effect.attribute, "delta": amount}, mout)
+
+
+# Stamps the provenance cause onto a mutation just before submit — a passthrough so the
+# many make() sites above stay one-liners. See StatMutation.cause / the `kill` event.
+static func _caused(m: StatMutation, cause: StringName) -> StatMutation:
+	m.cause = cause
+	return m
 
 
 # Rides the Resolver's interception records on the result dict, so presentation can cue the

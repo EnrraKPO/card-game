@@ -16,6 +16,7 @@ func run() -> void:
 	_deck_card_target()
 	_vocabulary()
 	_null_safety()
+	_kill_stamping()
 
 
 func _damage_form() -> void:
@@ -99,3 +100,32 @@ func _null_safety() -> void:
 	check_eq(Resolver.submit(null).delta, 0, "null mutation -> empty outcome, no crash")
 	check_eq(Resolver.submit(StatMutation.make(null, StatMutation.HEALTH, 5, null)).delta, 0,
 			"null target -> empty outcome, no crash")
+
+
+# The Resolver records the fatal blow's provenance at the lethal HP crossing (killed_by_*),
+# which combat reads to fire the `kill` event.
+func _kill_stamping() -> void:
+	# An attack kill credits the striker as the killer unit; kind = attack.
+	var striker := unit("rook")
+	var victim := unit("pawn")   # low HP
+	victim.current_health = 1
+	victim.current_shield = 0
+	Resolver.submit(StatMutation.damage(victim, 99, striker))
+	check(victim.current_health <= 0, "attack took the victim to <= 0")
+	check_eq(victim.killed_by_unit, striker, "attack kill credits the striker as killer unit")
+	check_eq(victim.killed_by_channel, StatMutation.CH_ATTACK, "attack kill kind = attack")
+
+	# A poison-form kill (a HEALTH mutation carrying cause "poison") credits NO unit — the
+	# cause names it. This is the "died from poison" provenance.
+	var v2 := unit("pawn")
+	v2.current_health = 1
+	var pm := StatMutation.make(v2, StatMutation.HEALTH, -5, v2)   # holder = victim, as a real tick
+	pm.cause = &"poison"
+	Resolver.submit(pm)
+	check(v2.current_health <= 0, "poison took the victim to <= 0")
+	check_eq(v2.killed_by_unit, null, "poison kill credits no killer unit")
+	check_eq(v2.killed_by_cause, &"poison", "poison kill records the status id as the cause")
+
+	# Overkill by a later blow can't overwrite the first killer (the pre > 0 guard).
+	Resolver.submit(StatMutation.damage(v2, 99, striker))
+	check_eq(v2.killed_by_cause, &"poison", "a post-mortem blow doesn't rewrite the killer")
