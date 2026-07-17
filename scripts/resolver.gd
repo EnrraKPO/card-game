@@ -1,6 +1,17 @@
 class_name Resolver
 extends RefCounted
 
+# Dodge chance PER POINT of the target's effective speed — a nimble unit slips more attacks.
+# 0.01 = 1% per speed (a speed-5 unit dodges ~5% of strikes). Tuning knob for the core dodge
+# rule in _apply_damage; the total is clamped to [0, 1] in _dodge_chance.
+const DODGE_PER_SPEED := 0.01
+
+# Master switch for the dodge roll. On in the live game; the deterministic regression harness
+# turns it OFF so damage-math assertions aren't perturbed by a random avoid (the dodge suite
+# flips it back on around a seeded RNG). This is the ONLY randomness in the Resolver that isn't
+# authored per-effect, so it's the only one that needs a determinism seam.
+static var dodge_enabled := true
+
 # THE single writer of game-state numbers. Anything that wants to change a stat — combat, a
 # card effect, a custom hook, a map-event screen — builds a StatMutation and submits it here;
 # nothing else in the game mutates these values. Two things this centralisation buys:
@@ -32,6 +43,11 @@ class Outcome:
 	var delta: int = 0
 	var shield_absorbed: int = 0   # DAMAGE form only
 	var health_damage: int = 0     # DAMAGE form only
+	# DAMAGE form only: the strike was DODGED — the target avoided an attack outright, so the
+	# whole hit was zeroed before it could touch shield or health (see _apply_damage / dodge).
+	# Distinct from an ordinary 0-delta whiff: presentation will branch on this to cue a dodge
+	# (VFX/SFX/event hooks are a follow-up task).
+	var dodged: bool = false
 	var interceptions: Array = []
 
 	static func make(p_target: Object, p_stat: StringName, p_delta: int) -> Outcome:
@@ -203,6 +219,17 @@ static func _apply_damage(inst: CardInstance, m: StatMutation) -> Outcome:
 	# redistributes to the other. Portions are reductions by construction (see
 	# StatMutation.portion); a hit's untouched share commits exactly as split.
 	var amount := maxi(0, m.amount)
+	# DODGE — core combat, not an effect: an attack strike can be avoided outright based on the
+	# TARGET's agility. Rolled here (a resolution FORM of attack-channel damage, this file's
+	# domain) rather than in combat, so it sits after interception and before the shield split —
+	# a dodge zeroes the WHOLE hit, so nothing reaches shield or health. Only real attack hits
+	# roll: poison/effect wounds are HEALTH mutations (they never enter this form), and a hit
+	# already reduced to 0 (a whiff, or non-attack channel) has nothing to dodge.
+	if dodge_enabled and amount > 0 and m.channel == StatMutation.CH_ATTACK \
+			and randf() < _dodge_chance(inst):
+		var od := Outcome.make(inst, StatMutation.DAMAGE, 0)
+		od.dodged = true
+		return od
 	var absorbed := mini(amount, inst.current_shield)
 	var records: Array = []
 	var sm := StatMutation.make(inst, StatMutation.SHIELD_POOL, -absorbed, m.source, m.channel)
@@ -221,6 +248,12 @@ static func _apply_damage(inst: CardInstance, m: StatMutation) -> Outcome:
 	o.health_damage = pierce
 	o.interceptions = records
 	return o
+
+
+# The target's chance to dodge an incoming attack: DODGE_PER_SPEED per point of effective
+# speed (read through get_attribute, so buffs/statuses/run bonuses count), clamped to [0, 1].
+static func _dodge_chance(inst: CardInstance) -> float:
+	return clampf(inst.get_attribute("speed") * DODGE_PER_SPEED, 0.0, 1.0)
 
 
 static func _apply_health(inst: CardInstance, amount: int) -> Outcome:

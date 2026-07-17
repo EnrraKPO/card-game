@@ -22,6 +22,7 @@ const SUITES: Array = [
 	preload("res://tests/test_materials.gd"),
 	preload("res://tests/test_combat_side.gd"),
 	preload("res://tests/test_composition_grants.gd"),
+	preload("res://tests/test_dodge.gd"),
 ]
 
 
@@ -46,6 +47,9 @@ func _ready() -> void:
 # time and skew expectations). Nothing here touches disk; select_slot is deliberately avoided
 # because it writes a save file for a fresh slot.
 func _clean_env() -> void:
+	# Dodge is the one non-authored source of RNG in the Resolver; off by default here so the
+	# damage-math suites are deterministic. The dodge suite re-enables it around a seeded RNG.
+	Resolver.dodge_enabled = false
 	GameData.current_profile = ProfileData.from_dict({})
 	GameData.current_modifiers = ModifierSet.new()
 	GameData.current_run = null
