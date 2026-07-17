@@ -490,37 +490,34 @@ func _pop_node(node: Control, pivot: Vector2, peak: float) -> void:
 	tw.tween_property(node, "scale", Vector2.ONE, 0.20).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
 
 
-# A stat badge's PROC glint — the "this stat just fired" discharge, for when a stat directly
-# caused something (a dodge is the unit's Speed at work). Mirrors StatusPip.flash_proc so a stat
-# firing reads exactly like a status pip firing: a coloured sheen blooms over the badge and fades
-# while the badge pops. Purely transient — the badge returns to its authored scale.
-func flash_stat_proc(attr: String, color: Color = Color(1, 1, 1, 0.9)) -> void:
+# A stat badge's PROC glint — the "this stat just fired" cue, for when a stat directly caused
+# something (a dodge is the unit's Speed at work). The SAME effect a relic chip uses when it
+# fires (RelicTray.glint): a scale pop plus a brightness flash on the badge itself — no overlay,
+# so it reads on the badge's own (non-rectangular) art. Purely transient; the badge returns to
+# its authored scale and colour.
+func flash_stat_proc(attr: String) -> void:
 	var bg: Control = null
+	var lbl: Control = null
 	match attr:
-		"attack":               bg = _atk_bg
-		"health", "max_health": bg = _hp_bg
-		"shield":               bg = _shield_bg
-		"speed":                bg = _spd_bg
-		"cost":                 bg = _cost_bg
+		"attack":               bg = _atk_bg;    lbl = _atk_lbl
+		"health", "max_health": bg = _hp_bg;     lbl = _hp_lbl
+		"shield":               bg = _shield_bg; lbl = _shield_lbl
+		"speed":                bg = _spd_bg;    lbl = _spd_lbl
+		"cost":                 bg = _cost_bg;   lbl = _cost_lbl
 	if bg == null or not is_instance_valid(bg) or bg.size == Vector2.ZERO:
 		return
-	pulse_stat(attr, true)
-	# The sheen is a child of the badge, so it rides the badge's pop and clips to its place.
-	var flash := Panel.new()
-	flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	flash.z_index = 50
-	flash.size = bg.size
-	flash.pivot_offset = bg.size * 0.5
-	var fs := StyleBoxFlat.new()
-	fs.bg_color = color
-	fs.set_corner_radius_all(8)
-	flash.add_theme_stylebox_override("panel", fs)
-	bg.add_child(flash)
-	var ft := create_tween()
-	ft.set_parallel(true)
-	ft.tween_property(flash, "scale", Vector2(1.7, 1.7), 0.34).set_ease(Tween.EASE_OUT)
-	ft.tween_property(flash, "modulate:a", 0.0, 0.34).set_ease(Tween.EASE_OUT)
-	ft.chain().tween_callback(flash.queue_free)
+	pulse_stat(attr, true)   # the scale pop (icon + number about their shared centre)
+	_brighten(bg)            # + the relic-chip brightness flash on the badge's own art
+	if lbl != null and is_instance_valid(lbl):
+		_brighten(lbl)
+
+
+# A quick over-bright flash back to normal — the relic chip's "fired" discharge (RelicTray.glint),
+# applied to whatever node it's given so it works on any badge shape.
+func _brighten(node: Control) -> void:
+	var tw := create_tween()
+	tw.tween_property(node, "modulate", Color(1.7, 1.7, 1.7), 0.12)
+	tw.tween_property(node, "modulate", Color.WHITE, 0.22)
 
 
 # Rebuilds the composition chip strip from the card's elements + chess pieces.

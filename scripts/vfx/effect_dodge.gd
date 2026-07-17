@@ -18,9 +18,9 @@ func play() -> void:
 		queue_free(); return
 	_sidestep(card)
 	# Glint the SPEED badge — a dodge is the unit's Speed at work, so the stat that caused it
-	# flares exactly like a status pip glints when its status procs.
+	# flares with the same pop + brightness the relic chips use when they fire.
 	if card.has_method("flash_stat_proc"):
-		card.flash_stat_proc("speed", Color(0.75, 0.97, 1.0, 0.9))
+		card.flash_stat_proc("speed")
 	_float_label("Dodge!", DODGE_COLOR, "")
 	queue_free()
 
