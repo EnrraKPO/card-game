@@ -578,6 +578,53 @@
 		]
 	},
 	{
+		"id": "warlords_fury",
+		"display_name": "Warlord's Fury",
+		"description": "Your fire units have 3x Crit chance.",
+		"color": "c9502f",
+		"letter": "W",
+		"price": 140,
+		"effects": [
+			{
+				"kind": "interceptor",
+				"intercept": "crit_chance",
+				"op": "mul",
+				"amount": 3,
+				"of": {
+					"participant": "target",
+					"relation": "ally"
+				},
+				"conditions": [
+					{
+						"composition": [
+							"fire"
+						]
+					}
+				]
+			}
+		]
+	},
+	{
+		"id": "steady_hand_ward",
+		"display_name": "Steady Hand Ward",
+		"description": "Enemy units cannot land critical hits.",
+		"color": "6b6b7a",
+		"letter": "S",
+		"price": 130,
+		"effects": [
+			{
+				"kind": "interceptor",
+				"intercept": "crit_chance",
+				"op": "mul",
+				"amount": 0,
+				"of": {
+					"participant": "target",
+					"relation": "enemy"
+				}
+			}
+		]
+	},
+	{
 		"id": "executioners_edge",
 		"display_name": "Executioner's Edge",
 		"description": "Your darkness units' critical hits deal +50% damage.",
