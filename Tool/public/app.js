@@ -498,6 +498,110 @@ function renderCombatTuningModal(cfg) {
   update();
 }
 
+// ── 💥 crit / combat tuning editor ─────────────────────────────────────────────
+// Global combat balance for CRIT (Resolver.crit_chance / crit_multiplier) — the offensive mirror
+// of the dodge modal above, on the same file + endpoint (sibling "crit" key). Chance formula:
+// fixed + per_speed × the ATTACKER's speed + per_speed_diff × max(0, atk−tgt), capped at max.
+// Plus the damage-multiplier pair: multiplier (the crit factor) and multiplier_max (its ceiling,
+// bounding relic bonuses). Saves only the crit key — dodge tuning is never disturbed.
+function critDefaults() {
+  return { fixed_pct: 5, per_speed_pct: 1, per_speed_diff_pct: 0, max_pct: 75,
+    multiplier: 2.0, multiplier_max: 5.0 };
+}
+function openCritTuningModal() {
+  api('/api/combat-tuning').then(res => {
+    const cfg = critDefaults();
+    Object.assign(cfg, (res && res.config && res.config.crit) || {});
+    renderCritTuningModal(cfg);
+  }).catch(err => toast('Could not load combat tuning: ' + err.message, 'err'));
+}
+
+function renderCritTuningModal(cfg) {
+  // The game's chance formula, in percent (matches Resolver.crit_chance — attacker-owned).
+  const chance = (atkSpeed, tgtSpeed) => {
+    let pct = cfg.fixed_pct + cfg.per_speed_pct * atkSpeed;
+    const edge = atkSpeed - tgtSpeed;
+    if (edge > 0) pct += cfg.per_speed_diff_pct * edge;
+    return Math.max(0, Math.min(pct, cfg.max_pct));
+  };
+
+  // Attacker speed down the rows, target speed across the columns (the transpose of the dodge
+  // grid — crit's owner is the attacker), warm heat ramp to match the cue color.
+  const SPEEDS = [0, 1, 2, 3, 4, 5, 6];
+  const gridBox = el('div');
+  const heat = pct => {
+    const t = Math.min(pct / 100, 1);
+    const h = 18, s = 60, l = 22 + t * 30;               // red-orange, brightening with chance
+    return `hsl(${h} ${s}% ${l}%)`;
+  };
+  const update = () => {
+    const mult = Math.max(1, cfg.multiplier);
+    const head = el('tr', {},
+      el('th', { style: 'text-align:right;padding:4px 8px;font-size:12px', text: 'atk ╲ tgt' }),
+      ...SPEEDS.map(t => el('th', { style: 'padding:4px 8px;font-size:12px;font-weight:600', text: String(t) })));
+    const rows = SPEEDS.map(a => el('tr', {},
+      el('td', { style: 'text-align:right;padding:4px 8px;font-size:12px;font-weight:600', text: String(a) }),
+      ...SPEEDS.map(t => {
+        const pct = chance(a, t);
+        return el('td', { style: `padding:6px 8px;text-align:center;font-size:12px;background:${heat(pct)};color:#eee;border-radius:4px`,
+          text: pct.toFixed(0) + '%' });
+      })));
+    // Expected damage factor across the board: 1 + chance × (multiplier − 1), at a representative
+    // mid-table chance (equal speeds, speed 3) so the multiplier sliders read as real damage.
+    const midPct = chance(3, 3) / 100;
+    const expected = 1 + midPct * (mult - 1);
+    gridBox.replaceChildren(
+      el('table', { style: 'border-collapse:separate;border-spacing:3px;margin-top:4px' }, head, ...rows),
+      el('div', { class: 'hint', style: 'margin-top:8px',
+        text: 'Chance an attacker (row speed) crits a target (column speed). The diagonal & below are equal-or-slower attackers (per-speed only); above it the attacker outspeeds and earns the difference bonus. Capped at ' + cfg.max_pct + '%.' }),
+      el('div', { class: 'hint', style: 'margin-top:6px',
+        text: `Expected damage at speed 3 vs 3: ×${expected.toFixed(2)} (${(midPct * 100).toFixed(0)}% chance of a ×${mult.toFixed(1)} hit).` }));
+  };
+
+  const numRow = (label, sub, key, min, max, step) => {
+    let num;
+    const rng = el('input', { type: 'range', min, max, step, value: cfg[key], style: 'flex:1',
+      oninput: e => { cfg[key] = parseFloat(e.target.value); num.value = e.target.value; update(); } });
+    num = el('input', { type: 'number', min, step, value: cfg[key], style: 'width:66px',
+      oninput: e => { const v = parseFloat(e.target.value); if (!isNaN(v)) { cfg[key] = v; rng.value = v; update(); } } });
+    return el('div', { style: 'margin:7px 0' },
+      el('div', { style: 'display:flex;justify-content:space-between;font-size:13px;margin-bottom:2px' },
+        el('span', { text: label }), sub ? el('span', { class: 'subtle', text: sub }) : null),
+      el('div', { style: 'display:flex;align-items:center;gap:10px' }, rng, num));
+  };
+
+  const controls = el('div', { style: 'flex:1;min-width:280px' },
+    el('h3', { text: 'Crit chance', style: 'margin-top:0' }),
+    numRow('Fixed', 'flat base chance, every attacker', 'fixed_pct', 0, 100, 1),
+    numRow('Per speed', '× the attacker\'s own speed', 'per_speed_pct', 0, 25, 0.5),
+    numRow('Per speed advantage', '× how much the attacker outspeeds the target', 'per_speed_diff_pct', 0, 25, 0.5),
+    numRow('Max cap', 'hard ceiling on total crit chance', 'max_pct', 0, 100, 1),
+    el('h3', { text: 'Crit damage', style: 'margin-top:14px' }),
+    numRow('Multiplier', 'total damage = base × this on a crit', 'multiplier', 1, 5, 0.1),
+    numRow('Multiplier max', 'ceiling on relic-boosted multipliers', 'multiplier_max', 1, 10, 0.1));
+
+  update();
+  $('modal-root').replaceChildren(el('div', { class: 'modal', style: 'width:760px; max-height:88vh; overflow:auto' },
+    el('h2', {}, '💥 Crit tuning'),
+    el('div', { class: 'hint', text: 'An attacker\'s chance to land a CRITICAL — the post-interception damage is multiplied. '
+      + 'Chance = Fixed + Per-speed × the attacker\'s speed + Per-speed-advantage × how much faster the attacker is than its target, capped at Max. '
+      + 'Chance values are percentages; the multipliers are damage factors. Saves to data/combat_tuning.json — restart the game to apply.' }),
+    el('div', { style: 'display:flex;gap:26px;flex-wrap:wrap;margin-top:12px' },
+      controls,
+      el('div', { style: 'flex:1;min-width:330px' }, el('h3', { text: 'Live crit chance', style: 'margin-top:0' }), gridBox)),
+    el('div', { class: 'modal-actions' },
+      el('button', { class: 'ghost', text: 'Reset to defaults', onclick: () => renderCritTuningModal(critDefaults()) }),
+      el('button', { class: 'ghost', text: 'Cancel', onclick: () => $('modal-root').replaceChildren() }),
+      el('button', { class: 'primary', text: 'Save to game', onclick: async () => {
+        try {
+          await api('/api/combat-tuning', { crit: cfg });
+          $('modal-root').replaceChildren();
+          toast('Crit tuning saved — restart the game to apply', 'ok');
+        } catch (err) { toast('Save failed: ' + err.message, 'err'); }
+      } }))));
+  update();
+}
+
 // The bulk entry point: confirm + pick adherence, then start the server-side job.
 function openInferBatchModal(file) {
   const cfg = { adherence: kinDefault(), overwrite: false };
@@ -2766,6 +2870,7 @@ $('delete-btn').addEventListener('click', deleteItem);
 $('settings-btn').addEventListener('click', openSettings);
 $('offer-rarity-btn').addEventListener('click', openOfferRarityModal);
 $('dodge-btn').addEventListener('click', openCombatTuningModal);
+$('crit-btn').addEventListener('click', openCritTuningModal);
 $('chat-btn').addEventListener('click', openChatModal);
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && state.advancedOpen) closeAdvanced();

@@ -10,7 +10,7 @@
     "per_speed_pct": 1,
     "per_speed_diff_pct": 0,
     "max_pct": 75,
-    "multiplier": 2.0,
-    "multiplier_max": 5.0
+    "multiplier": 2,
+    "multiplier_max": 5
   }
 }

@@ -346,24 +346,29 @@ function offerRarityPool() {
   return out;
 }
 
-// ── combat tuning (dodge) ────────────────────────────────────────────────────
+// ── combat tuning (dodge + crit) ─────────────────────────────────────────────
 // Global combat balance knobs. Lives in the game's own data/combat_tuning.json (read by
-// Resolver._dodge_config). Mirror of the game's DODGE_DEFAULT so the tool round-trips the same
-// shape / fallbacks. All dodge rates are PERCENTAGES; the game assembles the chance as
-// fixed + per_speed×tgt_speed + per_speed_diff×max(0, tgt−atk speed), capped at max.
+// Resolver._dodge_config / _crit_config). Mirrors of the game's DODGE_DEFAULT / CRIT_DEFAULT so
+// the tool round-trips the same shape / fallbacks. All rates are PERCENTAGES. Dodge chance =
+// fixed + per_speed×tgt_speed + per_speed_diff×max(0, tgt−atk speed), capped at max. Crit is
+// the offensive mirror — the ATTACKER's speed drives it — plus the damage multiplier pair
+// (multiplier = the crit damage factor, multiplier_max its hard ceiling).
 const COMBAT_TUNING_PATH = path.join(GAME_ROOT, 'data/combat_tuning.json');
 const DODGE_DEFAULT = { fixed_pct: 0, per_speed_pct: 1, per_speed_diff_pct: 4, max_pct: 75 };
+const CRIT_DEFAULT = { fixed_pct: 5, per_speed_pct: 1, per_speed_diff_pct: 0, max_pct: 75,
+  multiplier: 2.0, multiplier_max: 5.0 };
+function mergeTuning(authored, defaults) {
+  const src = (authored && typeof authored === 'object') ? authored : {};
+  const num = (v, fb) => Number.isFinite(v) ? v : fb;
+  const out = {};
+  for (const k of Object.keys(defaults)) out[k] = num(src[k], defaults[k]);
+  return out;
+}
 function getCombatTuning() {
   const d = readJson(COMBAT_TUNING_PATH, {}) || {};
-  const dodge = (d.dodge && typeof d.dodge === 'object') ? d.dodge : {};
-  const num = (v, fb) => Number.isFinite(v) ? v : fb;
   return {
-    dodge: {
-      fixed_pct: num(dodge.fixed_pct, DODGE_DEFAULT.fixed_pct),
-      per_speed_pct: num(dodge.per_speed_pct, DODGE_DEFAULT.per_speed_pct),
-      per_speed_diff_pct: num(dodge.per_speed_diff_pct, DODGE_DEFAULT.per_speed_diff_pct),
-      max_pct: num(dodge.max_pct, DODGE_DEFAULT.max_pct),
-    },
+    dodge: mergeTuning(d.dodge, DODGE_DEFAULT),
+    crit: mergeTuning(d.crit, CRIT_DEFAULT),
   };
 }
 
@@ -3381,16 +3386,21 @@ async function handle(req, res) {
     if (p === '/api/combat-tuning' && req.method === 'GET')
       return send(res, 200, { ok: true, config: getCombatTuning() });
     if (p === '/api/combat-tuning' && req.method === 'POST') {
+      // The body may carry either or both keys; each is merged independently against the
+      // current config (a dodge-only save never disturbs crit, and vice versa). Negative
+      // values fall back to current (rates and multipliers are all >= 0 quantities).
       const body = await readBody(req);
       const cur = getCombatTuning();
-      const d = (body.dodge && typeof body.dodge === 'object') ? body.dodge : {};
-      const num = (v, fb) => Number.isFinite(v) && v >= 0 ? v : fb;
-      const out = { dodge: {
-        fixed_pct: num(d.fixed_pct, cur.dodge.fixed_pct),
-        per_speed_pct: num(d.per_speed_pct, cur.dodge.per_speed_pct),
-        per_speed_diff_pct: num(d.per_speed_diff_pct, cur.dodge.per_speed_diff_pct),
-        max_pct: num(d.max_pct, cur.dodge.max_pct),
-      } };
+      const posOnly = (merged, fallback) => {
+        const out = {};
+        for (const k of Object.keys(merged))
+          out[k] = merged[k] >= 0 ? merged[k] : fallback[k];
+        return out;
+      };
+      const out = {
+        dodge: posOnly(mergeTuning(body.dodge, cur.dodge), cur.dodge),
+        crit: posOnly(mergeTuning(body.crit, cur.crit), cur.crit),
+      };
       writeJson(COMBAT_TUNING_PATH, out);
       return send(res, 200, { ok: true, config: out });
     }
