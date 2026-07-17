@@ -157,6 +157,7 @@
 			{
 				"kind": "triggered",
 				"trigger": "on_death",
+				"subject": "ally",
 				"targeting_policy": "single_nearest",
 				"attribute": "damage_taken",
 				"amount": 2
@@ -174,7 +175,8 @@
 			{
 				"kind": "custom",
 				"custom": "rallying_cry",
-				"trigger": "on_attack"
+				"trigger": "on_attack",
+				"subject": "ally"
 			}
 		]
 	},
@@ -189,6 +191,7 @@
 			{
 				"kind": "triggered",
 				"trigger": "on_damage_taken",
+				"subject": "ally",
 				"subject_elements": [
 					"water",
 					"darkness"
@@ -348,12 +351,14 @@
 				"trigger": {
 					"kind": "event",
 					"event": "death",
-					"of": "self",
 					"conditions": [
 						{
 							"composition": [
 								"darkness"
 							]
+						},
+						{
+							"allegiance": "ally"
 						}
 					]
 				},
@@ -383,5 +388,34 @@
 				}
 			}
 		}
+	},
+	{
+		"id": "septic_ward",
+		"display_name": "Septic Ward",
+		"description": "Whenever a unit dies from poison, a random ally gains +1 Shield.",
+		"color": "5a8f3a",
+		"letter": "S",
+		"price": 100,
+		"effects": [
+			{
+				"kind": "triggered",
+				"trigger": {
+					"kind": "dual_event",
+					"event": "kill",
+					"cause": "poison"
+				},
+				"attribute": "shield",
+				"amount": 1,
+				"targets": {
+					"kind": "auto",
+					"criterion": "random",
+					"conditions": [
+						{
+							"allegiance": "ally"
+						}
+					]
+				}
+			}
+		]
 	}
 ]

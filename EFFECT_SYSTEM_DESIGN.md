@@ -514,3 +514,30 @@ cannot name a killer).
 - **Suite.** `tests/test_resolver.gd` (`_kill_stamping`: attack credits striker, poison
   credits none, overkill can't rewrite) + `tests/test_triggers.gd` (`_kill_event`: parse,
   origin-self gating, cause-id/kind matching, round-trip).
+
+---
+
+## 13. Run-level dispatch: player-anchored, any-side (BUILT 2026-07-17)
+
+Run-level triggered effects (relics/upgrades) used to fire ONLY for player-side events
+(`context.source.owner == 0`) — a blanket gate that made "when an enemy dies/attacks"
+inexpressible as a relic. Removed. Run-scope effects are the player's, so they now fire for
+**any** unit's event and **anchor allegiance to the player**:
+
+- **The gate** (`fires`) is called holderless with `owner = 0`. A run container has no holder
+  unit, so the identity gate (`of: self`) is inert when the holder is null, and `"ally"`/
+  `"enemy"` conditions read relative to the player regardless of whose event fired.
+- **Targeting** anchors the same way via `EffectContext.owner_anchor` (0 for run-scope):
+  `"ally"`/`"enemy"`/side `own`/`opponent` resolve against the player, while the SPATIAL
+  anchor (nearest/distance) stays the subject card. `TargetResolver._anchor` picks the
+  context anchor when set, else the holder's side (board effects unchanged).
+- **The plumbing**: `TriggerResolver.OWNER_FROM_HOLDER` sentinel + `anchor_owner()`;
+  `conditions_pass` takes an owner int (was a holder); `fires()` gains an `owner` param.
+  Board call sites and tests pass neither and get the holder's side — zero behavior change.
+- **"React to your units only" is now EXPLICIT**, an `{"allegiance":"ally"}` condition, not a
+  side gate. The legacy relics/upgrades that relied on the gate for that scope were backfilled
+  (`vengeful_totem`, `war_drums`, `pollution_drain`, `reapers_ledger`, `mysticism` nodes) so
+  their meaning is unchanged; `blinding_ward` already had explicit allegiance.
+- Enables `septic_ward` ("when a unit dies from poison, a random ally gains +1 Shield"):
+  fires on enemy poison deaths and correctly shields a PLAYER ally. Interceptors/modifiers
+  use separate paths and were unaffected. Suite: `test_triggers._run_level_dispatch`.

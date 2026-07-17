@@ -59,18 +59,19 @@ static func trigger(event: GameEvent, source: CardInstance, context: EffectConte
 
 
 # Fires RUN-LEVEL triggered effects (upgrades/relics/heroes) for an event — the counterpart to
-# trigger() for sources that aren't a card on the board. Resolved from the triggering card's
-# perspective (context.source = the event's subject); fires only for player-side events so
-# player upgrades react to the player's own units, not the enemy's. The perspective card also
-# serves as the resolver's HOLDER, so relation conditions read relative to it (a legacy
-# {"relation": "self"} gate passes trivially, preserving the old "global effects don't
-# subject-filter" behavior).
+# trigger() for sources that aren't a card on the board. Run-scope effects are the PLAYER's, so
+# they fire for ANY unit's event (yours OR the enemy's) and anchor allegiance to the player:
+# their `fires()` gate is called holderless with owner 0, and targeting reads that same anchor
+# via context.owner_anchor. "React only to your units" is then an explicit {"allegiance":"ally"}
+# condition, not a blanket side gate — which is what lets a relic say "when an enemy dies…".
+# context.source stays the triggering (subject) card, the SPATIAL anchor for nearest/distance.
 static func trigger_global(event: GameEvent, context: EffectContext) -> Array:
 	var results: Array = []
-	if context.source == null or context.source.owner != 0:
+	if context.source == null:
 		return results
+	context.owner_anchor = 0
 	for effect: Effect in GameData.current_modifiers.triggered(event.id):
-		if not effect.trigger_resolver().fires(event, context.source):
+		if not effect.trigger_resolver().fires(event, null, 0):
 			continue
 		results.append_array(_run_effect(effect, context.source, context, event))
 	return results
@@ -82,10 +83,11 @@ static func trigger_global(event: GameEvent, context: EffectContext) -> Array:
 static func trigger_global_grouped(event: GameEvent, context: EffectContext) -> Array:
 	var order: Array = []          # owner_ids in first-seen order
 	var by_owner: Dictionary = {}  # owner_id -> group dict
-	if context.source == null or context.source.owner != 0:
+	if context.source == null:
 		return order
+	context.owner_anchor = 0
 	for effect: Effect in GameData.current_modifiers.triggered(event.id):
-		if not effect.trigger_resolver().fires(event, context.source):
+		if not effect.trigger_resolver().fires(event, null, 0):
 			continue
 		var res := _run_effect(effect, context.source, context, event)
 		if res.is_empty():

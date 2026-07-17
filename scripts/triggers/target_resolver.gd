@@ -68,16 +68,25 @@ func _base_dict(kind: String) -> Dictionary:
 	return d
 
 
-func _passing(units: Array, holder: CardInstance) -> Array:
+func _passing(units: Array, owner: int) -> Array:
 	return units.filter(func(u: CardInstance) -> bool:
-		return TriggerResolver.conditions_pass(conditions, u, holder))
+		return TriggerResolver.conditions_pass(conditions, u, owner))
+
+
+# The allegiance anchor for THIS resolution: the run-scope player anchor when the context
+# carries one (relics/upgrades — see EffectContext.owner_anchor), else the holder's side.
+# Targeting stays spatially anchored on the holder; only "ally"/"enemy" reads shift.
+static func _anchor(holder: CardInstance, context: EffectContext) -> int:
+	if context != null:
+		return TriggerResolver.anchor_owner(holder, context.owner_anchor)
+	return TriggerResolver.anchor_owner(holder, TriggerResolver.OWNER_FROM_HOLDER)
 
 
 # ── Kinds ────────────────────────────────────────────────────────────────────────────
 
 class All extends TargetResolver:
 	func resolve(_event: GameEvent, holder: CardInstance, context: EffectContext) -> Array:
-		return _passing(TargetResolver.board_units(context), holder)
+		return _passing(TargetResolver.board_units(context), TargetResolver._anchor(holder, context))
 
 	func to_dict() -> Dictionary:
 		return _base_dict("all")
@@ -88,7 +97,7 @@ class Auto extends TargetResolver:
 	var count: int = 1
 
 	func resolve(_event: GameEvent, holder: CardInstance, context: EffectContext) -> Array:
-		var pool := _passing(TargetResolver.board_units(context), holder)
+		var pool := _passing(TargetResolver.board_units(context), TargetResolver._anchor(holder, context))
 		if pool.is_empty():
 			return pool
 		match criterion:
@@ -117,7 +126,7 @@ class Manual extends TargetResolver:
 	func resolve(_event: GameEvent, holder: CardInstance, context: EffectContext) -> Array:
 		if context.manual_target == null:
 			return []
-		return _passing([context.manual_target], holder)
+		return _passing([context.manual_target], TargetResolver._anchor(holder, context))
 
 	func to_dict() -> Dictionary:
 		return _base_dict("manual")
@@ -143,9 +152,12 @@ class Side extends TargetResolver:
 	var of: String = "own"
 
 	func resolve(_event: GameEvent, holder: CardInstance, context: EffectContext) -> Array:
-		if context == null or holder == null or holder.owner < 0:
+		if context == null:
 			return []
-		var want := holder.owner if of == "own" else 1 - holder.owner
+		var anchor := TargetResolver._anchor(holder, context)
+		if anchor < 0:
+			return []
+		var want := anchor if of == "own" else 1 - anchor
 		var side := context.side_for(want)
 		return [] if side == null else [side]
 
@@ -158,7 +170,7 @@ class Side extends TargetResolver:
 class Participant extends TargetResolver:
 	var participant: String = "holder"
 
-	func resolve(event: GameEvent, holder: CardInstance, _context: EffectContext) -> Array:
+	func resolve(event: GameEvent, holder: CardInstance, context: EffectContext) -> Array:
 		var unit: CardInstance = null
 		match participant:
 			"holder":      unit = holder
@@ -166,7 +178,7 @@ class Participant extends TargetResolver:
 			"destination": unit = event.destination if event != null else null
 		if unit == null:
 			return []
-		return _passing([unit], holder)
+		return _passing([unit], TargetResolver._anchor(holder, context))
 
 	func to_dict() -> Dictionary:
 		# participant "holder" serializes as its canonical spelling: the self kind.

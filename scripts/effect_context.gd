@@ -10,6 +10,11 @@ var attacker: CardInstance = null        # the unit that dealt the blow, during 
 # The SUBJECT: the unit the broadcast event is about (who activated / attacked / died). An effect's
 # subject_filter is evaluated against this relative to the holder; null for subject-less phase events.
 var subject: CardInstance = null
+# The allegiance anchor for target resolution — the side that "ally"/"enemy" read relative to.
+# Left at the sentinel for board effects (targeting anchors on the holder's own side); set to
+# the PLAYER side (0) for run-scope dispatch (relics/upgrades have no holder unit, so their
+# targeting anchors on the player regardless of whose event fired). See TargetResolver._anchor.
+var owner_anchor: int = -9999   # == TriggerResolver.OWNER_FROM_HOLDER
 
 
 # UI-flow extras for MANUAL_SLOT effects (material delivery): the picked slot (may be EMPTY —

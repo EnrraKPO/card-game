@@ -243,8 +243,9 @@ func _dispatch() -> void:
 
 
 func _run_level_dispatch() -> void:
-	# Run-level (relic-style) effects go through the same resolvers, keeping the legacy
-	# perspective trick: the event's subject is both perspective and holder.
+	# Run-level (relic-style) effects go through the same resolvers, anchored to the PLAYER:
+	# they fire for ANY unit's event, and "ally"/"enemy" read relative to the player (0), not
+	# the event's subject. context.source stays the subject (the spatial anchor).
 	var striker := _unit(3, 0)
 	var struck := _unit(2, 1)
 	GameData.current_modifiers = ModifierSet.new()
@@ -256,12 +257,33 @@ func _run_level_dispatch() -> void:
 	ctx.subject = striker
 	var res := EffectSystem.trigger_global(GameEvent.make(&"attack", striker, struck), ctx)
 	check(not res.is_empty() and striker.get_attribute("attack") == 4,
-			"run-level legacy effect fires from the subject's perspective")
-	# Enemy-side events never feed the player's run-level tier.
+			"run-level effect fires from the subject's perspective")
+
+	# An UNSCOPED run-level effect now fires for enemy-side events too (the old blanket
+	# player-side gate is gone — scoping is the effect's own job).
 	var enemy_ctx := EffectContext.make(struck, [[striker]], [[struck]])
 	enemy_ctx.subject = struck
 	var enemy_res := EffectSystem.trigger_global(GameEvent.make(&"attack", struck, striker), enemy_ctx)
-	check(enemy_res.is_empty(), "run-level tier stays player-side only")
+	check(not enemy_res.is_empty() and struck.get_attribute("attack") == 3,
+			"run-level tier now fires for enemy-side events (no blanket side gate)")
+
+	# An ally-scoped run-level effect anchors "ally" to the PLAYER even for an enemy event:
+	# an enemy attacking is NOT an ally, so it does not fire; a player attacking does.
+	GameData.current_modifiers = ModifierSet.new()
+	GameData.current_modifiers.add(Effect.from_dict({
+		"kind": "triggered", "trigger": "on_attack", "subject": "ally",
+		"targeting_policy": "subject", "attribute": "attack", "amount": 1,
+	}))
+	var p2 := _unit(3, 0)
+	var e2 := _unit(2, 1)
+	var ally_ctx := EffectContext.make(e2, [[p2]], [[e2]])
+	ally_ctx.subject = e2
+	var on_enemy := EffectSystem.trigger_global(GameEvent.make(&"attack", e2, p2), ally_ctx)
+	check(on_enemy.is_empty(), "ally-scoped run effect ignores an enemy's event (anchored to player)")
+	var ally_ctx2 := EffectContext.make(p2, [[p2]], [[e2]])
+	ally_ctx2.subject = p2
+	var on_ally := EffectSystem.trigger_global(GameEvent.make(&"attack", p2, e2), ally_ctx2)
+	check(not on_ally.is_empty(), "ally-scoped run effect fires for a player unit's event")
 	GameData.current_modifiers = ModifierSet.new()
 
 

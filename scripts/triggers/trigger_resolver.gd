@@ -40,6 +40,20 @@ extends RefCounted
 const SIMPLE_EVENTS: Array[StringName] = [&"play", &"death", &"activate", &"turn_start", &"turn_end", &"permanent"]
 const DUAL_EVENTS: Array[StringName] = [&"attack", &"struck", &"kill"]
 
+# The allegiance anchor for condition evaluation is normally the HOLDER's side. Run-scope
+# effects (relics/upgrades) have no holder unit — they anchor to the PLAYER (0) instead, so
+# "ally"/"enemy" read relative to the player no matter whose event fired. Callers pass an
+# explicit owner; this sentinel means "derive from the holder" (the board default).
+const OWNER_FROM_HOLDER := -9999
+
+
+# The allegiance side for a (holder, owner) pair: an explicit owner wins; otherwise the
+# holder's side, or -1 when there is no holder (matches nobody — fail-closed).
+static func anchor_owner(holder: CardInstance, owner: int) -> int:
+	if owner != OWNER_FROM_HOLDER:
+		return owner
+	return holder.owner if holder != null else -1
+
 # Legacy trigger key → (event id, whether the legacy single subject was the DESTINATION).
 # `permanent` is intercepted in from_legacy before this map is consulted: it becomes the
 # While kind (a standing effect) — the meaning that dangling slot always wanted.
@@ -61,8 +75,10 @@ func listens(_event_id: StringName) -> bool:
 	return false
 
 
-# The full activation gate: does this effect fire for this event, held by this unit?
-func fires(_event: GameEvent, _holder: CardInstance) -> bool:
+# The full activation gate: does this effect fire for this event, held by this unit? `owner`
+# is the allegiance anchor for conditions — omit it (OWNER_FROM_HOLDER) to derive from the
+# holder (board effects); run-scope callers pass the player side (0) with a null holder.
+func fires(_event: GameEvent, _holder: CardInstance, _owner: int = OWNER_FROM_HOLDER) -> bool:
 	return false
 
 
@@ -104,12 +120,15 @@ class Simple extends TriggerResolver:
 	func listens(event_id: StringName) -> bool:
 		return event_id == event
 
-	func fires(p_event: GameEvent, holder: CardInstance) -> bool:
+	func fires(p_event: GameEvent, holder: CardInstance, owner: int = TriggerResolver.OWNER_FROM_HOLDER) -> bool:
 		if p_event.id != event:
 			return false
-		if of_holder and p_event.origin != holder:
+		# The identity gate is structural against the holder — meaningless for a holderless
+		# run-scope container (a relic isn't a unit), so it's inert when holder is null.
+		if of_holder and holder != null and p_event.origin != holder:
 			return false
-		return TriggerResolver.conditions_pass(conditions, p_event.origin, holder)
+		return TriggerResolver.conditions_pass(conditions, p_event.origin,
+				TriggerResolver.anchor_owner(holder, owner))
 
 	# Legacy spells/units author their cast-time effects as "on_play"; the use path must
 	# keep applying them (see SpellCaster) even though a play event also exists for placement.
@@ -140,18 +159,20 @@ class Dual extends TriggerResolver:
 	func listens(event_id: StringName) -> bool:
 		return event_id == event
 
-	func fires(p_event: GameEvent, holder: CardInstance) -> bool:
+	func fires(p_event: GameEvent, holder: CardInstance, owner: int = TriggerResolver.OWNER_FROM_HOLDER) -> bool:
 		if p_event.id != event:
 			return false
 		if cause != &"" and p_event.cause_id != cause and p_event.cause_kind != cause:
 			return false
-		if origin_of_holder and p_event.origin != holder:
+		# Identity gates are inert for a holderless run-scope container (see Simple.fires).
+		if origin_of_holder and holder != null and p_event.origin != holder:
 			return false
-		if destination_of_holder and p_event.destination != holder:
+		if destination_of_holder and holder != null and p_event.destination != holder:
 			return false
-		if not TriggerResolver.conditions_pass(origin_conditions, p_event.origin, holder):
+		var anchor := TriggerResolver.anchor_owner(holder, owner)
+		if not TriggerResolver.conditions_pass(origin_conditions, p_event.origin, anchor):
 			return false
-		return TriggerResolver.conditions_pass(destination_conditions, p_event.destination, holder)
+		return TriggerResolver.conditions_pass(destination_conditions, p_event.destination, anchor)
 
 	func to_dict() -> Dictionary:
 		var d := {"kind": "dual_event", "event": String(event)}
@@ -270,14 +291,14 @@ static func conditions_to_dicts(conds: Array) -> Array:
 
 # All conditions must pass against the given participant; a non-empty list on a MISSING
 # participant fails (the agreed ruling: you can't gate on someone who isn't there).
-# Conditions are predicates over (unit, owner-side): the holder here only contributes its
-# SIDE (allegiance anchor) — identity gating is structural, never conditional.
-static func conditions_pass(conds: Array, unit: CardInstance, holder: CardInstance) -> bool:
+# Conditions are predicates over (unit, owner-side): `owner` is the allegiance anchor (the
+# holder's side for board effects, the player for run-scope — see anchor_owner). Identity
+# gating is structural, never conditional.
+static func conditions_pass(conds: Array, unit: CardInstance, owner: int) -> bool:
 	if conds.is_empty():
 		return true
 	if unit == null:
 		return false
-	var owner := -1 if holder == null else holder.owner
 	for c: EffectCondition in conds:
 		if not c.evaluate(unit, owner):
 			return false
