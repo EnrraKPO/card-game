@@ -346,6 +346,27 @@ function offerRarityPool() {
   return out;
 }
 
+// ── combat tuning (dodge) ────────────────────────────────────────────────────
+// Global combat balance knobs. Lives in the game's own data/combat_tuning.json (read by
+// Resolver._dodge_config). Mirror of the game's DODGE_DEFAULT so the tool round-trips the same
+// shape / fallbacks. All dodge rates are PERCENTAGES; the game assembles the chance as
+// fixed + per_speed×tgt_speed + per_speed_diff×max(0, tgt−atk speed), capped at max.
+const COMBAT_TUNING_PATH = path.join(GAME_ROOT, 'data/combat_tuning.json');
+const DODGE_DEFAULT = { fixed_pct: 0, per_speed_pct: 1, per_speed_diff_pct: 4, max_pct: 75 };
+function getCombatTuning() {
+  const d = readJson(COMBAT_TUNING_PATH, {}) || {};
+  const dodge = (d.dodge && typeof d.dodge === 'object') ? d.dodge : {};
+  const num = (v, fb) => Number.isFinite(v) ? v : fb;
+  return {
+    dodge: {
+      fixed_pct: num(dodge.fixed_pct, DODGE_DEFAULT.fixed_pct),
+      per_speed_pct: num(dodge.per_speed_pct, DODGE_DEFAULT.per_speed_pct),
+      per_speed_diff_pct: num(dodge.per_speed_diff_pct, DODGE_DEFAULT.per_speed_diff_pct),
+      max_pct: num(dodge.max_pct, DODGE_DEFAULT.max_pct),
+    },
+  };
+}
+
 // The authored guide lines for a card's composition, or [] when guides are off / none match.
 function artGuideLines(elements, pieces) {
   if (!getSettings().useArtGuides) return [];
@@ -3355,6 +3376,22 @@ async function handle(req, res) {
       for (const k of ['1', '2', '3', '4'])
         out.count_multiplier[k] = num(cm[k], cur.count_multiplier[k]);
       writeJson(OFFER_RARITY_PATH, out);
+      return send(res, 200, { ok: true, config: out });
+    }
+    if (p === '/api/combat-tuning' && req.method === 'GET')
+      return send(res, 200, { ok: true, config: getCombatTuning() });
+    if (p === '/api/combat-tuning' && req.method === 'POST') {
+      const body = await readBody(req);
+      const cur = getCombatTuning();
+      const d = (body.dodge && typeof body.dodge === 'object') ? body.dodge : {};
+      const num = (v, fb) => Number.isFinite(v) && v >= 0 ? v : fb;
+      const out = { dodge: {
+        fixed_pct: num(d.fixed_pct, cur.dodge.fixed_pct),
+        per_speed_pct: num(d.per_speed_pct, cur.dodge.per_speed_pct),
+        per_speed_diff_pct: num(d.per_speed_diff_pct, cur.dodge.per_speed_diff_pct),
+        max_pct: num(d.max_pct, cur.dodge.max_pct),
+      } };
+      writeJson(COMBAT_TUNING_PATH, out);
       return send(res, 200, { ok: true, config: out });
     }
     if (p === '/api/comfy/loras') {

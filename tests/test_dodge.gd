@@ -1,14 +1,16 @@
 extends TestCase
 
-# The core DODGE rule (Resolver._apply_damage): an attack strike can be avoided outright based
-# on the TARGET's speed — DODGE_PER_SPEED (1%) per point, clamped to [0, 1]. A dodge zeroes the
-# WHOLE hit before it touches shield or health, and reports Outcome.dodged so presentation can
-# cue it (VFX/SFX/event hooks are a follow-up). This is core combat, not an effect — it lives in
-# the Resolver's damage form, so it's proven here rather than in the effect suites.
+# The core DODGE rule (Resolver): an attack strike can be avoided outright based on the TARGET's
+# speed. The chance is DATA-DRIVEN (data/combat_tuning.json → Resolver.dodge_chance):
+#     fixed_pct + per_speed_pct × target_speed + per_speed_diff_pct × max(0, tgt − atk speed)
+# capped at max_pct. A dodge zeroes the WHOLE hit before shield/health and reports Outcome.dodged.
+# This is core combat, not an effect — so it's proven here rather than in the effect suites.
 #
-# Determinism without seeding: a speed >= 100 unit clamps to chance 1.0, and randf() is always
-# < 1.0 -> a guaranteed dodge; a speed-0 unit clamps to 0.0 -> randf() is never < 0.0 -> never
-# dodges. So the pass/fail assertions don't depend on the RNG stream at all.
+# Two halves: the CHANCE FORMULA is a pure function (no RNG — asserted directly against injected
+# tuning), and the ROLL is exercised only at the certain (100%) and impossible (0%) ends, where
+# the outcome is deterministic regardless of the RNG stream.
+
+const EPS := 0.0005
 
 
 func suite_name() -> String:
@@ -16,21 +18,47 @@ func suite_name() -> String:
 
 
 func run() -> void:
-	# The harness disables dodge for the damage-math suites; turn it on for this one, restore
-	# after (the runner only cleans the env once, before all suites).
+	_chance_formula()
 	var prev := Resolver.dodge_enabled
 	Resolver.dodge_enabled = true
 	_certain_dodge_zeroes_attack()
-	_zero_speed_never_dodges()
+	_impossible_dodge_lands_in_full()
 	_dodge_is_attack_channel_only()
 	_toggle_off_never_dodges()
 	Resolver.dodge_enabled = prev
+	Resolver.set_dodge_tuning({})   # drop the injected cache; later reads reload from disk
 
 
-# A guaranteed-dodge target (speed 100 -> chance clamps to 1.0) avoids the whole strike.
+# The pure chance function, against the shipped starting tuning (fixed 0, per-speed 1%, per-diff
+# 4%, cap 75%). No RNG involved — this is arithmetic.
+func _chance_formula() -> void:
+	Resolver.set_dodge_tuning({
+		"fixed_pct": 0.0, "per_speed_pct": 1.0, "per_speed_diff_pct": 4.0, "max_pct": 75.0,
+	})
+	_near(Resolver.dodge_chance(_spd(5)), 0.05, "per-speed only: 1% × speed 5 = 5%")
+	_near(Resolver.dodge_chance(_spd(6), _spd(2)), 0.22,
+			"faster target: 1%×6 + 4%×(6−2) = 6% + 16% = 22%")
+	_near(Resolver.dodge_chance(_spd(2), _spd(6)), 0.02,
+			"slower target: edge term is one-sided — just the 2% per-speed, no penalty")
+	_near(Resolver.dodge_chance(_spd(4), _spd(4)), 0.04,
+			"equal speed: no edge bonus, just 4% per-speed")
+	check_eq(Resolver.dodge_chance(null), 0.0, "a null target has no dodge chance")
+
+	# Fixed base stacks on top of the per-speed term.
+	Resolver.set_dodge_tuning({"fixed_pct": 10.0, "per_speed_pct": 1.0})
+	_near(Resolver.dodge_chance(_spd(3)), 0.13, "fixed 10% + 1%×speed 3 = 13%")
+
+	# The cap ceils the total, however large the terms get.
+	Resolver.set_dodge_tuning({"per_speed_pct": 1.0, "per_speed_diff_pct": 4.0, "max_pct": 20.0})
+	_near(Resolver.dodge_chance(_spd(6), _spd(0)), 0.20,
+			"raw 6% + 24% = 30% is capped to the 20% ceiling")
+
+
+# At a certain (100%, uncapped) chance the target avoids the whole strike — no shield/health touched.
 func _certain_dodge_zeroes_attack() -> void:
-	var tgt := _nimble(100, 5, 3)
-	var out := Resolver.submit(StatMutation.damage(tgt, 4, null))
+	Resolver.set_dodge_tuning({"fixed_pct": 100.0, "max_pct": 100.0})
+	var tgt := _unit(1, 5, 3)
+	var out := Resolver.submit(StatMutation.damage(tgt, 4, _unit(1, 5, 0)))
 	check(out.dodged, "a certain-dodge target flags the strike as dodged")
 	check_eq(out.delta, 0, "a dodged strike lands 0 total")
 	check_eq(out.shield_absorbed, 0, "a dodged strike touches no shield")
@@ -40,36 +68,48 @@ func _certain_dodge_zeroes_attack() -> void:
 	check(out.interceptions.is_empty(), "a dodge is not an interception (no phantom cue)")
 
 
-# A speed-0 target can never dodge (chance 0.0): the strike resolves in full.
-func _zero_speed_never_dodges() -> void:
-	var tgt := _nimble(0, 5, 0)
+# At a 0% chance the strike always resolves in full.
+func _impossible_dodge_lands_in_full() -> void:
+	Resolver.set_dodge_tuning({"fixed_pct": 0.0, "per_speed_pct": 0.0, "per_speed_diff_pct": 0.0})
+	var tgt := _unit(9, 5, 0)   # high speed, but every rate is 0
 	var out := Resolver.submit(StatMutation.damage(tgt, 4, null))
-	check(not out.dodged, "a speed-0 target never dodges")
-	check_eq(out.delta, -4, "the strike lands in full against a speed-0 target")
-	check_eq(tgt.current_health, 1, "the speed-0 target is wounded normally")
+	check(not out.dodged, "a 0%-tuning target never dodges, however fast")
+	check_eq(out.delta, -4, "the strike lands in full at 0% dodge")
+	check_eq(tgt.current_health, 1, "the target is wounded normally")
 
 
-# Dodge is attack-channel only: a poison-form HEALTH mutation is never dodged, however nimble.
+# Dodge is attack-channel only: a poison-form HEALTH mutation is never dodged, however certain.
 func _dodge_is_attack_channel_only() -> void:
-	var tgt := _nimble(100, 5, 0)
+	Resolver.set_dodge_tuning({"fixed_pct": 100.0, "max_pct": 100.0})
+	var tgt := _unit(1, 5, 0)
 	var out := Resolver.submit(StatMutation.make(tgt, StatMutation.HEALTH, -3, null))
 	check(not out.dodged, "a non-attack (poison/effect) wound is never dodged")
-	check_eq(tgt.current_health, 2, "the poison wound lands despite max dodge speed")
+	check_eq(tgt.current_health, 2, "the poison wound lands despite a certain dodge chance")
 
 
 # The master switch: with dodge disabled, even a certain-dodge target takes the full hit.
 func _toggle_off_never_dodges() -> void:
+	Resolver.set_dodge_tuning({"fixed_pct": 100.0, "max_pct": 100.0})
 	Resolver.dodge_enabled = false
-	var tgt := _nimble(100, 5, 0)
+	var tgt := _unit(1, 5, 0)
 	var out := Resolver.submit(StatMutation.damage(tgt, 4, null))
 	check(not out.dodged, "dodge_enabled = false suppresses the roll entirely")
 	check_eq(out.delta, -4, "the strike lands in full with dodge disabled")
 	Resolver.dodge_enabled = true
 
 
-# A bare unit with an explicit speed / health / shield — no effects, so its stats are exactly
-# what get_attribute reads in the clean env.
-func _nimble(speed: int, health: int, shield: int) -> CardInstance:
+func _near(got: float, want: float, label: String) -> void:
+	check(absf(got - want) < EPS, "%s (got %.4f)" % [label, got])
+
+
+# A bare unit with just a speed (health/shield default sensible), for the pure chance tests.
+func _spd(speed: int) -> CardInstance:
+	return _unit(speed, 9, 0)
+
+
+# A bare unit with explicit speed / health / shield — no effects, so its stats are exactly what
+# get_attribute reads in the clean env.
+func _unit(speed: int, health: int, shield: int) -> CardInstance:
 	var inst := CardInstance.from_data(CardData.build_from_dict({
 		"id": "_test_dodge_unit", "display_name": "Nimble",
 		"cost": 1, "attack": 1, "health": health, "speed": speed, "shield": shield,

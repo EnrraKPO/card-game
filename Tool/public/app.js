@@ -405,6 +405,96 @@ function renderOfferRarityModal(cfg, pool) {
           toast('Offer rarity saved — restart the game to apply', 'ok');
         } catch (err) { toast('Save failed: ' + err.message, 'err'); }
       } }))));
+}
+
+// ── ⚡ dodge / combat tuning editor ────────────────────────────────────────────
+// Global combat balance for DODGE (Resolver.dodge_chance). Reads data/combat_tuning.json, lets
+// the four rate knobs be tuned with a live chance table across speed match-ups (mirrors the
+// game formula: fixed + per_speed×tgt + per_speed_diff×max(0, tgt−atk), capped at max), saves
+// back to the game file.
+function dodgeDefaults() {
+  return { fixed_pct: 0, per_speed_pct: 1, per_speed_diff_pct: 4, max_pct: 75 };
+}
+function openCombatTuningModal() {
+  api('/api/combat-tuning').then(res => {
+    const cfg = dodgeDefaults();
+    Object.assign(cfg, (res && res.config && res.config.dodge) || {});
+    renderCombatTuningModal(cfg);
+  }).catch(err => toast('Could not load combat tuning: ' + err.message, 'err'));
+}
+
+function renderCombatTuningModal(cfg) {
+  // The game's chance formula, in percent (matches Resolver.dodge_chance).
+  const chance = (tgtSpeed, atkSpeed) => {
+    let pct = cfg.fixed_pct + cfg.per_speed_pct * tgtSpeed;
+    const edge = tgtSpeed - atkSpeed;
+    if (edge > 0) pct += cfg.per_speed_diff_pct * edge;
+    return Math.max(0, Math.min(pct, cfg.max_pct));
+  };
+
+  // A speed-vs-speed preview grid: target speed down the rows, attacker speed across the columns.
+  const SPEEDS = [0, 1, 2, 3, 4, 5, 6];
+  const gridBox = el('div');
+  const heat = pct => {
+    const t = Math.min(pct / 100, 1);                     // 0..1 toward the cap
+    const h = 145, s = 55, l = 22 + t * 30;               // green, brightening with chance
+    return `hsl(${h} ${s}% ${l}%)`;
+  };
+  const update = () => {
+    const head = el('tr', {},
+      el('th', { style: 'text-align:right;padding:4px 8px;font-size:12px', text: 'tgt ╲ atk' }),
+      ...SPEEDS.map(a => el('th', { style: 'padding:4px 8px;font-size:12px;font-weight:600', text: String(a) })));
+    const rows = SPEEDS.map(t => el('tr', {},
+      el('td', { style: 'text-align:right;padding:4px 8px;font-size:12px;font-weight:600', text: String(t) }),
+      ...SPEEDS.map(a => {
+        const pct = chance(t, a);
+        return el('td', { style: `padding:6px 8px;text-align:center;font-size:12px;background:${heat(pct)};color:#eee;border-radius:4px`,
+          text: pct.toFixed(0) + '%' });
+      })));
+    gridBox.replaceChildren(
+      el('table', { style: 'border-collapse:separate;border-spacing:3px;margin-top:4px' }, head, ...rows),
+      el('div', { class: 'hint', style: 'margin-top:8px',
+        text: 'Chance a target (row speed) dodges an attacker (column speed). The diagonal & below are equal-or-slower targets (per-speed only); above it the target outspeeds and earns the difference bonus. Capped at ' + cfg.max_pct + '%.' }));
+  };
+
+  const numRow = (label, sub, key, min, max, step) => {
+    let num;
+    const rng = el('input', { type: 'range', min, max, step, value: cfg[key], style: 'flex:1',
+      oninput: e => { cfg[key] = parseFloat(e.target.value); num.value = e.target.value; update(); } });
+    num = el('input', { type: 'number', min, step, value: cfg[key], style: 'width:66px',
+      oninput: e => { const v = parseFloat(e.target.value); if (!isNaN(v)) { cfg[key] = v; rng.value = v; update(); } } });
+    return el('div', { style: 'margin:7px 0' },
+      el('div', { style: 'display:flex;justify-content:space-between;font-size:13px;margin-bottom:2px' },
+        el('span', { text: label }), sub ? el('span', { class: 'subtle', text: sub }) : null),
+      el('div', { style: 'display:flex;align-items:center;gap:10px' }, rng, num));
+  };
+
+  const controls = el('div', { style: 'flex:1;min-width:280px' },
+    el('h3', { text: 'Dodge rates', style: 'margin-top:0' }),
+    numRow('Fixed', 'flat base chance, every unit', 'fixed_pct', 0, 100, 1),
+    numRow('Per speed', '× the target\'s own speed', 'per_speed_pct', 0, 25, 0.5),
+    numRow('Per speed advantage', '× how much the target outspeeds the attacker', 'per_speed_diff_pct', 0, 25, 0.5),
+    numRow('Max cap', 'hard ceiling on total dodge', 'max_pct', 0, 100, 1));
+
+  update();
+  $('modal-root').replaceChildren(el('div', { class: 'modal', style: 'width:760px; max-height:88vh; overflow:auto' },
+    el('h2', {}, '⚡ Dodge tuning'),
+    el('div', { class: 'hint', text: 'A unit\'s chance to avoid an attack outright (the whole hit is zeroed). '
+      + 'Chance = Fixed + Per-speed × the target\'s speed + Per-speed-advantage × how much faster the target is than its attacker, capped at Max. '
+      + 'All values are percentages. Saves to data/combat_tuning.json — restart the game to apply.' }),
+    el('div', { style: 'display:flex;gap:26px;flex-wrap:wrap;margin-top:12px' },
+      controls,
+      el('div', { style: 'flex:1;min-width:330px' }, el('h3', { text: 'Live dodge chance', style: 'margin-top:0' }), gridBox)),
+    el('div', { class: 'modal-actions' },
+      el('button', { class: 'ghost', text: 'Reset to defaults', onclick: () => renderCombatTuningModal(dodgeDefaults()) }),
+      el('button', { class: 'ghost', text: 'Cancel', onclick: () => $('modal-root').replaceChildren() }),
+      el('button', { class: 'primary', text: 'Save to game', onclick: async () => {
+        try {
+          await api('/api/combat-tuning', { dodge: cfg });
+          $('modal-root').replaceChildren();
+          toast('Dodge tuning saved — restart the game to apply', 'ok');
+        } catch (err) { toast('Save failed: ' + err.message, 'err'); }
+      } }))));
   update();
 }
 
@@ -2675,6 +2765,7 @@ $('enabled-check').addEventListener('change', e => {
 $('delete-btn').addEventListener('click', deleteItem);
 $('settings-btn').addEventListener('click', openSettings);
 $('offer-rarity-btn').addEventListener('click', openOfferRarityModal);
+$('dodge-btn').addEventListener('click', openCombatTuningModal);
 $('chat-btn').addEventListener('click', openChatModal);
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && state.advancedOpen) closeAdvanced();

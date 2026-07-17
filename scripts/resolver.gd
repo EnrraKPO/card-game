@@ -1,15 +1,26 @@
 class_name Resolver
 extends RefCounted
 
-# Dodge chance PER POINT of the target's effective speed — a nimble unit slips more attacks.
-# 0.01 = 1% per speed (a speed-5 unit dodges ~5% of strikes). Tuning knob for the core dodge
-# rule in _apply_damage; the total is clamped to [0, 1] in _dodge_chance.
-const DODGE_PER_SPEED := 0.01
+# Dodge tuning is DATA-DRIVEN — all four knobs live in res://data/combat_tuning.json (authored
+# via the Tool's ⚡ Dodge handle) so balance moves without a code edit. All rates are PERCENTAGES
+# of a strike being avoided; the chance is assembled in dodge_chance() as:
+#     fixed_pct  +  per_speed_pct × target_speed  +  per_speed_diff_pct × max(0, tgt − atk speed)
+# then capped at max_pct (so the fastest units are never untouchable). The speed-difference term
+# is ONE-SIDED: it only rewards a target that OUTSPEEDS its attacker; a slower target just loses
+# the bonus, never takes a penalty. See DODGE_DEFAULT for the shipped shape / fallbacks.
+const DODGE_TUNING_PATH := "res://data/combat_tuning.json"
+const DODGE_DEFAULT := {
+	"fixed_pct": 0.0,
+	"per_speed_pct": 1.0,
+	"per_speed_diff_pct": 4.0,
+	"max_pct": 75.0,
+}
+static var _dodge_cfg: Dictionary = {}
 
 # Master switch for the dodge roll. On in the live game; the deterministic regression harness
 # turns it OFF so damage-math assertions aren't perturbed by a random avoid (the dodge suite
-# flips it back on around a seeded RNG). This is the ONLY randomness in the Resolver that isn't
-# authored per-effect, so it's the only one that needs a determinism seam.
+# flips it back on around injected tuning). This is the ONLY randomness in the Resolver that
+# isn't authored per-effect, so it's the only one that needs a determinism seam.
 static var dodge_enabled := true
 
 # THE single writer of game-state numbers. Anything that wants to change a stat — combat, a
@@ -220,13 +231,14 @@ static func _apply_damage(inst: CardInstance, m: StatMutation) -> Outcome:
 	# StatMutation.portion); a hit's untouched share commits exactly as split.
 	var amount := maxi(0, m.amount)
 	# DODGE — core combat, not an effect: an attack strike can be avoided outright based on the
-	# TARGET's agility. Rolled here (a resolution FORM of attack-channel damage, this file's
-	# domain) rather than in combat, so it sits after interception and before the shield split —
-	# a dodge zeroes the WHOLE hit, so nothing reaches shield or health. Only real attack hits
-	# roll: poison/effect wounds are HEALTH mutations (they never enter this form), and a hit
-	# already reduced to 0 (a whiff, or non-attack channel) has nothing to dodge.
+	# TARGET's agility (and its speed edge over the attacker — see dodge_chance). Rolled here (a
+	# resolution FORM of attack-channel damage, this file's domain) rather than in combat, so it
+	# sits after interception and before the shield split — a dodge zeroes the WHOLE hit, so
+	# nothing reaches shield or health. Only real attack hits roll: poison/effect wounds are
+	# HEALTH mutations (they never enter this form), and a hit already reduced to 0 (a whiff, or
+	# non-attack channel) has nothing to dodge.
 	if dodge_enabled and amount > 0 and m.channel == StatMutation.CH_ATTACK \
-			and randf() < _dodge_chance(inst):
+			and randf() < dodge_chance(inst, m.source):
 		var od := Outcome.make(inst, StatMutation.DAMAGE, 0)
 		od.dodged = true
 		return od
@@ -250,10 +262,55 @@ static func _apply_damage(inst: CardInstance, m: StatMutation) -> Outcome:
 	return o
 
 
-# The target's chance to dodge an incoming attack: DODGE_PER_SPEED per point of effective
-# speed (read through get_attribute, so buffs/statuses/run bonuses count), clamped to [0, 1].
-static func _dodge_chance(inst: CardInstance) -> float:
-	return clampf(inst.get_attribute("speed") * DODGE_PER_SPEED, 0.0, 1.0)
+# The target's chance (0..1) to dodge an incoming attack from `attacker`, assembled from the
+# data-driven tuning: a fixed base, a per-speed term, and a one-sided per-speed-EDGE term that
+# only pays out when the target outspeeds its attacker. Speeds read through get_attribute, so
+# buffs/statuses/run bonuses count. Capped at max_pct, then floored/ceiled to a valid [0,1]
+# probability. `attacker` may be null (a sourceless hit) — then the edge term is simply absent.
+static func dodge_chance(target: CardInstance, attacker: CardInstance = null) -> float:
+	if target == null:
+		return 0.0
+	var cfg := _dodge_config()
+	var spd := float(target.get_attribute("speed"))
+	var pct := float(cfg["fixed_pct"]) + float(cfg["per_speed_pct"]) * spd
+	if attacker != null:
+		var edge := spd - float(attacker.get_attribute("speed"))
+		if edge > 0.0:
+			pct += float(cfg["per_speed_diff_pct"]) * edge
+	return clampf(minf(pct, float(cfg["max_pct"])), 0.0, 100.0) / 100.0
+
+
+# Lazily loads (and caches) the dodge tuning, falling back to DODGE_DEFAULT for the file or any
+# missing key so a partial/absent JSON still works (mirrors CardData._offer_config).
+static func _dodge_config() -> Dictionary:
+	if not _dodge_cfg.is_empty():
+		return _dodge_cfg
+	_dodge_cfg = DODGE_DEFAULT.duplicate(true)
+	if FileAccess.file_exists(DODGE_TUNING_PATH):
+		var file := FileAccess.open(DODGE_TUNING_PATH, FileAccess.READ)
+		var json := JSON.new()
+		if file != null and json.parse(file.get_as_text()) == OK and json.data is Dictionary:
+			var dodge: Variant = (json.data as Dictionary).get("dodge")
+			if dodge is Dictionary:
+				for k: String in DODGE_DEFAULT:
+					if (dodge as Dictionary).get(k) != null:
+						_dodge_cfg[k] = float((dodge as Dictionary)[k])
+		else:
+			push_error("Resolver: bad combat_tuning.json — using dodge defaults")
+	return _dodge_cfg
+
+
+# Injects dodge tuning directly, bypassing the JSON (the regression harness uses this to make
+# the roll deterministic — 100%/0% chances — and to exercise the formula in isolation). Unset
+# keys keep their DODGE_DEFAULT value. Pass {} to force a reload from disk on the next read.
+static func set_dodge_tuning(cfg: Dictionary) -> void:
+	if cfg.is_empty():
+		_dodge_cfg = {}
+		return
+	_dodge_cfg = DODGE_DEFAULT.duplicate(true)
+	for k: String in DODGE_DEFAULT:
+		if cfg.get(k) != null:
+			_dodge_cfg[k] = float(cfg[k])
 
 
 static func _apply_health(inst: CardInstance, amount: int) -> Outcome:
