@@ -149,7 +149,8 @@
 		"display_name": "Turn Start",
 		"category": "combat",
 		"concept": "A new round begins: mana refills, cards draw, units untap. A refreshing intake of breath — possibility restored.",
-		"prompt": "A soft bright upward sweep with a gentle bell accent, refreshing energy returning, clean and optimistic, 0.5 seconds"
+		"prompt": "bell tang",
+		"file": "combat_turn_start.wav"
 	},
 	{
 		"id": "combat_ready",
@@ -164,7 +165,8 @@
 		"display_name": "Unit Placed",
 		"category": "combat",
 		"concept": "A unit card landing on a board slot — a solid, physical thump that makes the grid feel real.",
-		"prompt": "A solid card slammed down onto a stone surface with a satisfying deep thock, confident placement, dry, 0.25 seconds"
+		"prompt": "gentle drop docking thud with soft confirmation feedback",
+		"file": "combat_place_unit.wav"
 	},
 	{
 		"id": "combat_place_building",
@@ -178,7 +180,8 @@
 		"display_name": "Unit Moved",
 		"category": "combat",
 		"concept": "A fielded unit relocating to another slot — quick footsteps or a slide, lighter than placement.",
-		"prompt": "A quick short scuffle of armored footsteps sliding to a stop on stone, small tactical reposition, 0.3 seconds"
+		"prompt": "soft plastic swipe with gentle docking \"clack\" thud. clean",
+		"file": "combat_unit_move.wav"
 	},
 	{
 		"id": "combat_enemy_place",
@@ -227,7 +230,8 @@
 		"display_name": "Melee Swing",
 		"category": "combat",
 		"concept": "The wind-up whoosh as a melee unit lunges at its target — precedes the hit landing.",
-		"prompt": "A quick sharp weapon swing whoosh cutting through air, single fast swipe, clean and aggressive, 0.2 seconds"
+		"prompt": "flipping slot machine",
+		"file": "attack_melee_swing.wav"
 	},
 	{
 		"id": "attack_melee_hit",
@@ -243,21 +247,24 @@
 		"display_name": "Ranged Shot",
 		"category": "combat",
 		"concept": "A ranged unit (bishop, archers) loosing its projectile — the release, not the landing.",
-		"prompt": "A bowstring release with a sharp twang and arrow whistle departing, quick and taut, 0.3 seconds"
+		"prompt": "A bowstring release with a sharp twang and arrow whistle departing, quick and taut, 0.3 seconds",
+		"file": "attack_ranged_shot.wav"
 	},
 	{
 		"id": "attack_projectile_travel",
 		"display_name": "Projectile Travel",
 		"category": "combat",
 		"concept": "The projectile VFX crossing the board — a short airy whistle that can pitch-vary per shot.",
-		"prompt": "A short arrow flight whistle whooshing past, doppler-like air cut, brief, 0.25 seconds"
+		"prompt": "frisbie",
+		"file": "attack_projectile_travel.wav"
 	},
 	{
 		"id": "attack_projectile_impact",
 		"display_name": "Projectile Impact",
 		"category": "combat",
 		"concept": "A ranged projectile striking its target — sharper and smaller than the melee hit.",
-		"prompt": "An arrow thudding into a wooden shield with a sharp crack and slight quiver vibration, precise impact, 0.3 seconds"
+		"prompt": "wet soft impact",
+		"file": "attack_projectile_impact.wav"
 	},
 	{
 		"id": "shield_block",
@@ -345,14 +352,16 @@
 		"display_name": "Autocast Armed",
 		"category": "magic",
 		"concept": "Arming an ability for autocast (right-click / long-press) — a weapon cocking: readiness, not release.",
-		"prompt": "A precise mechanical latch clicking into an armed position, crossbow being cocked, tight and ready, 0.25 seconds"
+		"prompt": "A precise mechanical latch clicking into an armed position, crossbow being cocked, tight and ready, 0.25 seconds",
+		"file": "autocast_arm.wav"
 	},
 	{
 		"id": "autocast_disarm",
 		"display_name": "Autocast Disarmed",
 		"category": "magic",
 		"concept": "Disarming the autocast — the latch released, tension let back down.",
-		"prompt": "A soft mechanical latch releasing with a small spring relax, crossbow being uncocked, gentle, 0.2 seconds"
+		"prompt": "A soft mechanical latch releasing with a small spring relax, crossbow being uncocked, gentle, 0.2 seconds",
+		"file": "autocast_disarm.wav"
 	},
 	{
 		"id": "status_apply_buff",
@@ -861,28 +870,32 @@
 		"display_name": "Effect Trigger",
 		"category": "magic",
 		"concept": "A card's triggered ability firing (the source glint moment) - a soft causality tick; very frequent, must never fatigue.",
-		"prompt": "A very short soft arcane tick, a muted glassy pluck with a tiny sparkle, subtle trigger cue, one shot, 0.3 seconds"
+		"prompt": "boincy spring boing, funny",
+		"file": "effect_trigger.wav"
 	},
 	{
 		"id": "attack_miss",
 		"display_name": "Attack Miss",
 		"category": "combat",
 		"concept": "An attack negated (Blind, 0 damage) - the whiff must be audible or the silence reads as a bug.",
-		"prompt": "A quick airy whoosh swishing past with no impact, dodged attack whiff, one shot, 0.5 seconds"
+		"prompt": "void woosh",
+		"file": "attack_miss.wav"
 	},
 	{
 		"id": "attack_dodge",
 		"display_name": "Attack Dodge",
 		"category": "combat",
 		"concept": "A unit's speed slips an attack - an ACTIVE evade cue (nimble, deliberate), snappier and more spirited than the plain airy whiff of a blinded miss.",
-		"prompt": "A swift sharp whoosh-swish with a quick nimble upward flick, agile sidestep dodge, one shot, 0.4 seconds"
+		"prompt": "mocking whistle, clean delivery",
+		"file": "attack_dodge.wav"
 	},
 	{
 		"id": "attack_crit",
 		"display_name": "Attack Critical",
 		"category": "combat",
 		"concept": "An attack lands as a CRITICAL - a heavier, punchier impact than the normal hit, clearly distinct from the dodge whoosh: the sound of a blow landing unusually hard.",
-		"prompt": "A heavy punchy crunch impact with a deep thud and a sharp crack transient, powerful critical strike, one shot, 0.4 seconds"
+		"prompt": "A heavy punchy impact with a deep thud and a sharp crack transient, powerful critical strike, one shot, low pitched percussion, bass.",
+		"file": "attack_crit.wav"
 	},
 	{
 		"id": "shield_regen",

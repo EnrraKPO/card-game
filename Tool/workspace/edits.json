@@ -5628,7 +5628,7 @@
       "file": "ability_cast.wav"
     },
     "at": "2026-07-18T06:50:38.092Z",
-    "fileHash": "0f1d9bc2b43645abf64c829aa10bdd9385addaf2"
+    "fileHash": "a95b0cae69a99484647b9edb624e4afabcf2384a"
   },
   "sound/ability_tray_open": {
     "file": "sounds.json",
@@ -5641,7 +5641,7 @@
       "file": "ability_tray_open.wav"
     },
     "at": "2026-07-18T06:51:23.388Z",
-    "fileHash": "0f1d9bc2b43645abf64c829aa10bdd9385addaf2"
+    "fileHash": "a95b0cae69a99484647b9edb624e4afabcf2384a"
   },
   "sound/amb_combat_battlefield": {
     "file": "sounds.json",
@@ -5656,6 +5656,189 @@
       "file": "amb_combat_battlefield.wav"
     },
     "at": "2026-07-18T07:00:47.265Z",
-    "fileHash": "0f1d9bc2b43645abf64c829aa10bdd9385addaf2"
+    "fileHash": "a95b0cae69a99484647b9edb624e4afabcf2384a"
+  },
+  "sound/attack_crit": {
+    "file": "sounds.json",
+    "original": {
+      "id": "attack_crit",
+      "display_name": "Attack Critical",
+      "category": "combat",
+      "concept": "An attack lands as a CRITICAL - a heavier, punchier impact than the normal hit, clearly distinct from the dodge whoosh: the sound of a blow landing unusually hard.",
+      "prompt": "A heavy punchy crunch impact with a deep thud and a sharp crack transient, powerful critical strike, one shot, 0.4 seconds",
+      "file": "attack_crit.wav"
+    },
+    "at": "2026-07-18T18:19:06.662Z",
+    "fileHash": "a95b0cae69a99484647b9edb624e4afabcf2384a"
+  },
+  "sound/attack_dodge": {
+    "file": "sounds.json",
+    "original": {
+      "id": "attack_dodge",
+      "display_name": "Attack Dodge",
+      "category": "combat",
+      "concept": "A unit's speed slips an attack - an ACTIVE evade cue (nimble, deliberate), snappier and more spirited than the plain airy whiff of a blinded miss.",
+      "prompt": "A swift sharp whoosh-swish with a quick nimble upward flick, agile sidestep dodge, one shot, 0.4 seconds",
+      "file": "attack_dodge.wav"
+    },
+    "at": "2026-07-18T18:21:15.799Z",
+    "fileHash": "a95b0cae69a99484647b9edb624e4afabcf2384a"
+  },
+  "sound/attack_melee_hit": {
+    "file": "sounds.json",
+    "original": {
+      "id": "attack_melee_hit",
+      "display_name": "Melee Hit",
+      "category": "combat",
+      "concept": "An attack's damage landing on a unit's health. Fires constantly during auto-battle — kept soft so the barrage doesn't dominate.",
+      "prompt": "A solid melee weapon impact with a meaty thud and slight metallic ring, single clean combat hit, punchy, 0.3 seconds",
+      "file": "attack_melee_hit.wav",
+      "volume_db": -25
+    },
+    "at": "2026-07-18T18:23:45.975Z",
+    "fileHash": "a95b0cae69a99484647b9edb624e4afabcf2384a"
+  },
+  "sound/attack_melee_swing": {
+    "file": "sounds.json",
+    "original": {
+      "id": "attack_melee_swing",
+      "display_name": "Melee Swing",
+      "category": "combat",
+      "concept": "The wind-up whoosh as a melee unit lunges at its target — precedes the hit landing.",
+      "prompt": "A quick sharp weapon swing whoosh cutting through air, single fast swipe, clean and aggressive, 0.2 seconds",
+      "file": "attack_melee_swing.wav"
+    },
+    "at": "2026-07-18T18:26:17.455Z",
+    "fileHash": "a95b0cae69a99484647b9edb624e4afabcf2384a"
+  },
+  "sound/attack_miss": {
+    "file": "sounds.json",
+    "original": {
+      "id": "attack_miss",
+      "display_name": "Attack Miss",
+      "category": "combat",
+      "concept": "An attack negated (Blind, 0 damage) - the whiff must be audible or the silence reads as a bug.",
+      "prompt": "A quick airy whoosh swishing past with no impact, dodged attack whiff, one shot, 0.5 seconds",
+      "file": "attack_miss.wav"
+    },
+    "at": "2026-07-18T18:27:28.577Z",
+    "fileHash": "a95b0cae69a99484647b9edb624e4afabcf2384a"
+  },
+  "sound/attack_projectile_impact": {
+    "file": "sounds.json",
+    "original": {
+      "id": "attack_projectile_impact",
+      "display_name": "Projectile Impact",
+      "category": "combat",
+      "concept": "A ranged projectile striking its target — sharper and smaller than the melee hit.",
+      "prompt": "An arrow thudding into a wooden shield with a sharp crack and slight quiver vibration, precise impact, 0.3 seconds",
+      "file": "attack_projectile_impact.wav"
+    },
+    "at": "2026-07-18T18:28:45.889Z",
+    "fileHash": "a95b0cae69a99484647b9edb624e4afabcf2384a"
+  },
+  "sound/attack_projectile_travel": {
+    "file": "sounds.json",
+    "original": {
+      "id": "attack_projectile_travel",
+      "display_name": "Projectile Travel",
+      "category": "combat",
+      "concept": "The projectile VFX crossing the board — a short airy whistle that can pitch-vary per shot.",
+      "prompt": "A short arrow flight whistle whooshing past, doppler-like air cut, brief, 0.25 seconds",
+      "file": "attack_projectile_travel.wav"
+    },
+    "at": "2026-07-18T18:30:53.707Z",
+    "fileHash": "a95b0cae69a99484647b9edb624e4afabcf2384a"
+  },
+  "sound/attack_ranged_shot": {
+    "file": "sounds.json",
+    "original": {
+      "id": "attack_ranged_shot",
+      "display_name": "Ranged Shot",
+      "category": "combat",
+      "concept": "A ranged unit (bishop, archers) loosing its projectile — the release, not the landing.",
+      "prompt": "A bowstring release with a sharp twang and arrow whistle departing, quick and taut, 0.3 seconds",
+      "file": "attack_ranged_shot.wav"
+    },
+    "at": "2026-07-18T18:31:24.866Z",
+    "fileHash": "a95b0cae69a99484647b9edb624e4afabcf2384a"
+  },
+  "sound/autocast_arm": {
+    "file": "sounds.json",
+    "original": {
+      "id": "autocast_arm",
+      "display_name": "Autocast Armed",
+      "category": "magic",
+      "concept": "Arming an ability for autocast (right-click / long-press) — a weapon cocking: readiness, not release.",
+      "prompt": "A precise mechanical latch clicking into an armed position, crossbow being cocked, tight and ready, 0.25 seconds",
+      "file": "autocast_arm.wav"
+    },
+    "at": "2026-07-18T18:31:53.179Z",
+    "fileHash": "a95b0cae69a99484647b9edb624e4afabcf2384a"
+  },
+  "sound/autocast_disarm": {
+    "file": "sounds.json",
+    "original": {
+      "id": "autocast_disarm",
+      "display_name": "Autocast Disarmed",
+      "category": "magic",
+      "concept": "Disarming the autocast — the latch released, tension let back down.",
+      "prompt": "A soft mechanical latch releasing with a small spring relax, crossbow being uncocked, gentle, 0.2 seconds",
+      "file": "autocast_disarm.wav"
+    },
+    "at": "2026-07-18T18:32:05.877Z",
+    "fileHash": "a95b0cae69a99484647b9edb624e4afabcf2384a"
+  },
+  "sound/combat_place_unit": {
+    "file": "sounds.json",
+    "original": {
+      "id": "combat_place_unit",
+      "display_name": "Unit Placed",
+      "category": "combat",
+      "concept": "A unit card landing on a board slot — a solid, physical thump that makes the grid feel real.",
+      "prompt": "A solid card slammed down onto a stone surface with a satisfying deep thock, confident placement, dry, 0.25 seconds",
+      "file": "combat_place_unit.wav"
+    },
+    "at": "2026-07-18T18:37:18.776Z",
+    "fileHash": "a95b0cae69a99484647b9edb624e4afabcf2384a"
+  },
+  "sound/combat_unit_move": {
+    "file": "sounds.json",
+    "original": {
+      "id": "combat_unit_move",
+      "display_name": "Unit Moved",
+      "category": "combat",
+      "concept": "A fielded unit relocating to another slot — quick footsteps or a slide, lighter than placement.",
+      "prompt": "A quick short scuffle of armored footsteps sliding to a stop on stone, small tactical reposition, 0.3 seconds",
+      "file": "combat_unit_move.wav"
+    },
+    "at": "2026-07-18T18:40:36.025Z",
+    "fileHash": "a95b0cae69a99484647b9edb624e4afabcf2384a"
+  },
+  "sound/combat_turn_start": {
+    "file": "sounds.json",
+    "original": {
+      "id": "combat_turn_start",
+      "display_name": "Turn Start",
+      "category": "combat",
+      "concept": "A new round begins: mana refills, cards draw, units untap. A refreshing intake of breath — possibility restored.",
+      "prompt": "A soft bright upward sweep with a gentle bell accent, refreshing energy returning, clean and optimistic, 0.5 seconds",
+      "file": "combat_turn_start.wav"
+    },
+    "at": "2026-07-18T18:45:35.048Z",
+    "fileHash": "a95b0cae69a99484647b9edb624e4afabcf2384a"
+  },
+  "sound/effect_trigger": {
+    "file": "sounds.json",
+    "original": {
+      "id": "effect_trigger",
+      "display_name": "Effect Trigger",
+      "category": "magic",
+      "concept": "A card's triggered ability firing (the source glint moment) - a soft causality tick; very frequent, must never fatigue.",
+      "prompt": "A very short soft arcane tick, a muted glassy pluck with a tiny sparkle, subtle trigger cue, one shot, 0.3 seconds",
+      "file": "effect_trigger.wav"
+    },
+    "at": "2026-07-18T18:57:33.492Z",
+    "fileHash": "a95b0cae69a99484647b9edb624e4afabcf2384a"
   }
 }
