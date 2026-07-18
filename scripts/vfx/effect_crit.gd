@@ -58,8 +58,10 @@ func _punch(card: Control, sev: float) -> void:
 	var pinch := 0.16 + 0.12 * sev
 	card.scale = Vector2(1.0 - pinch, 1.0 + pinch * 0.7)   # the blow has ALREADY landed
 	var tw := card.create_tween()
-	tw.tween_interval(0.06 + 0.06 * sev)   # a beat of full clench — hard hits linger compressed
-	tw.tween_property(card, "scale", Vector2.ONE, 0.45) \
+	tw.tween_interval(0.10 + 0.10 * sev)   # a real beat of full clench — hard hits stay crushed
+	# The long ring-out: nearly a second of elastic wobble, so the card keeps visibly
+	# reverberating well after the strike ("baaahm", not "bam-done").
+	tw.tween_property(card, "scale", Vector2.ONE, 0.90) \
 			.set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	tw.tween_callback(func() -> void:
 		if is_instance_valid(card):
@@ -74,14 +76,16 @@ func _punch(card: Control, sev: float) -> void:
 func _shake(card: Control, sev: float) -> void:
 	var origin := card.position
 	var amp := 10.0 + 14.0 * sev
-	var step := 0.045
+	var step := 0.055
 	card.position = origin + Vector2(amp, -amp * 0.4)   # the jolt has ALREADY happened
 	var st := card.create_tween()
 	st.tween_property(card, "position", origin + Vector2(-amp * 0.8, amp * 0.5), step)
-	st.tween_property(card, "position", origin + Vector2(amp * 0.55, amp * 0.3), step)
-	st.tween_property(card, "position", origin + Vector2(-amp * 0.35, -amp * 0.25), step)
-	st.tween_property(card, "position", origin + Vector2(amp * 0.18, amp * 0.12), step)
-	st.tween_property(card, "position", origin, step * 1.5).set_ease(Tween.EASE_OUT)
+	st.tween_property(card, "position", origin + Vector2(amp * 0.6, amp * 0.35), step)
+	st.tween_property(card, "position", origin + Vector2(-amp * 0.45, -amp * 0.3), step)
+	st.tween_property(card, "position", origin + Vector2(amp * 0.3, amp * 0.2), step)
+	st.tween_property(card, "position", origin + Vector2(-amp * 0.18, amp * 0.1), step)
+	st.tween_property(card, "position", origin + Vector2(amp * 0.08, -amp * 0.05), step)
+	st.tween_property(card, "position", origin, step * 2.0).set_ease(Tween.EASE_OUT)
 
 
 # The hot wash: SLAMS to full red-orange instantly (no ease-in — same principle as the punch)
@@ -89,15 +93,31 @@ func _shake(card: Control, sev: float) -> void:
 func _impact_flash(card: Control, sev: float) -> void:
 	card.modulate = Color(1.0, 0.5, 0.35)
 	var tw := card.create_tween()
-	tw.tween_property(card, "modulate", Color.WHITE, 0.35 + 0.25 * sev) \
+	tw.tween_property(card, "modulate", Color.WHITE, 0.70 + 0.50 * sev) \
 			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 
-# A hot shockwave ring erupting from the card's centre — the "impact radiates outward" read.
-# Final diameter and border weight scale with severity.
+# A hot shockwave ring erupting from the card's centre — the "impact radiates outward" read,
+# slowed so it visibly travels. Final diameter and border weight scale with severity; hard
+# hits (sev > 0.5) emit a delayed second AFTERSHOCK ring, so the blow keeps producing
+# consequences after the first beat.
 func _shockwave(card: Control, sev: float) -> void:
 	if _root == null:
 		return
+	_spawn_ring(_root, card, sev)
+	if sev > 0.5:
+		# The aftershock rides a root-bound timer (NOT this effect node — it frees at the end
+		# of play(), long before the delay elapses) and re-checks the card is still alive.
+		var root := _root
+		var t := _root.create_tween()
+		t.tween_interval(0.22)
+		t.tween_callback(func() -> void:
+			if is_instance_valid(card):
+				VFXEffectCrit._spawn_ring(root, card, sev * 0.6))
+
+
+# Static so the delayed aftershock can spawn one after this effect node is gone.
+static func _spawn_ring(root: Node, card: Control, sev: float) -> void:
 	var d := 60.0
 	var ring := Panel.new()
 	ring.size = Vector2(d, d)
@@ -112,15 +132,15 @@ func _shockwave(card: Control, sev: float) -> void:
 	sb.border_color = Color(CRIT_COLOR, 0.85)
 	sb.set_border_width_all(3 + int(3.0 * sev))
 	ring.add_theme_stylebox_override("panel", sb)
-	_root.add_child(ring)
+	root.add_child(ring)
 	var center: Vector2 = card.global_position + card.size * 0.5
 	ring.global_position = center - ring.size * 0.5   # AFTER add_child — see _float_label
 	ring.scale = Vector2(0.25, 0.25)
 	var grow := 1.4 + 1.6 * sev
-	var tw := _root.create_tween()
+	var tw := root.create_tween()
 	tw.set_parallel(true)
-	tw.tween_property(ring, "scale", Vector2(grow, grow), 0.34).set_ease(Tween.EASE_OUT)
-	tw.tween_property(ring, "modulate:a", 0.0, 0.36).set_ease(Tween.EASE_IN)
+	tw.tween_property(ring, "scale", Vector2(grow, grow), 0.55).set_ease(Tween.EASE_OUT)
+	tw.tween_property(ring, "modulate:a", 0.0, 0.60).set_ease(Tween.EASE_IN)
 	tw.chain().tween_callback(ring.queue_free)
 
 
@@ -152,8 +172,9 @@ func _crit_label(card: Control, sev: float) -> void:
 	var slam := _root.create_tween()
 	slam.tween_property(lbl, "scale", Vector2.ONE, 0.10).set_ease(Tween.EASE_IN)
 
-	# Then the familiar rise-and-fade, slightly longer than a number so the word lingers.
-	var life := LABEL_LIFE * 1.15
+	# Then the familiar rise-and-fade, clearly longer than a number — the word stays on
+	# screen through the whole elastic ring-out.
+	var life := LABEL_LIFE * 1.5
 	var rise := _root.create_tween()
 	rise.tween_property(lbl, "position:y", lbl.position.y - LABEL_RISE, life).set_ease(Tween.EASE_OUT)
 	var fade := _root.create_tween()
