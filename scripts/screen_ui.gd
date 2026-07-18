@@ -246,7 +246,10 @@ static func build_header() -> Dictionary:
 
 	# The settings gear — the header's one always-available action (audio settings today).
 	# A persistent piece like everything else; the Shell wires what pressing it opens.
-	var gear := action_button("⚙", Callable(), Vector2(side_dev(), side_dev()), 26)
+	var gear := action_button("", Callable(), Vector2(side_dev(), side_dev()), 26)
+	gear.icon = preload("res://assets/ui/icons/settings.png")
+	gear.expand_icon = true
+	gear.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	gear.tooltip_text = "Settings"
 	gear.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(gear)
