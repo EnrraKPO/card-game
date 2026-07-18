@@ -25,7 +25,7 @@ func play() -> void:
 	if card == null or not is_instance_valid(card):
 		queue_free(); return
 	var sev := _severity(card)
-	_flash(Color(1.0, 0.55, 0.4), 0.30 + 0.15 * sev)
+	_impact_flash(card, sev)
 	_punch(card, sev)
 	_shake(card, sev)
 	_shockwave(card, sev)
@@ -44,44 +44,53 @@ func _severity(card: Control) -> float:
 	return clampf(float(_event.amount) / max_hp, SEV_FLOOR, 1.0)
 
 
-# The blow itself: a volume-preserving SQUASH — the card pinches NARROWER while stretching
-# TALLER (like a body clenching under a blow from the side), then rebounds through a slight
-# opposite lean and settles. NOT a uniform scale-down: that read as the card "shrinking"
-# rather than being hit (user-reported). Depth scales with severity. Pivot centred so the
-# card clenches about its middle, then restored (other systems assume the default pivot).
+# The blow itself. THE IMPACT IS NOT ANIMATED — the card is ALREADY at full deformation
+# (pinched narrower + stretched taller, a body clenching under a lateral blow) the frame the
+# cue starts: easing INTO a deformation drains all the violence out of it, because by the
+# time an ease reaches full pinch the energy is spent. All the animation time goes to the
+# RECOVERY instead: a beat of held clench, then an elastic spring back to rest that
+# overshoots and wobbles through a couple of diminishing opposite leans — the springy
+# rebound reads as absorbed force. Depth scales with severity. Pivot centred so the card
+# clenches about its middle, then restored (other systems assume the default pivot).
 func _punch(card: Control, sev: float) -> void:
 	var prev_pivot := card.pivot_offset
 	card.pivot_offset = card.size * 0.5
-	# The pinched shape must be what the eye REGISTERS: snap into it fast, HOLD it, then settle
-	# straight back to normal. No opposite-shape overshoot on the way out — an earlier version
-	# rebounded through wider-and-shorter for longer than the pinch itself held, so the motion
-	# read as the inverse of the intended squash (user-reported).
-	var pinch := 0.12 + 0.10 * sev
+	var pinch := 0.16 + 0.12 * sev
+	card.scale = Vector2(1.0 - pinch, 1.0 + pinch * 0.7)   # the blow has ALREADY landed
 	var tw := card.create_tween()
-	tw.tween_property(card, "scale", Vector2(1.0 - pinch, 1.0 + pinch * 0.6), 0.05).set_ease(Tween.EASE_OUT)
-	tw.tween_interval(0.10 + 0.06 * sev)   # hold the clench — hard hits linger compressed
-	tw.tween_property(card, "scale", Vector2.ONE, 0.14).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_interval(0.06 + 0.06 * sev)   # a beat of full clench — hard hits linger compressed
+	tw.tween_property(card, "scale", Vector2.ONE, 0.45) \
+			.set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	tw.tween_callback(func() -> void:
 		if is_instance_valid(card):
 			card.pivot_offset = prev_pivot)
 
 
-# A violent jitter, noticeably harder than the ordinary hit tremble (_drain_card's amp 4):
-# amplitude and step count grow with severity. Bound to the card so it self-cancels if the
-# card is freed mid-shake; always returns to origin.
+# A violent jolt, not a tremble: the card is ALREADY knocked off position at frame zero (same
+# no-ease-in principle as _punch), then rattles back through decaying swings — big first,
+# dying out, so the motion has both the snap of impact and a tail long enough to register.
+# Amplitude scales with severity, well past the ordinary hit tremble (_drain_card's amp 4).
+# Bound to the card so it self-cancels if the card is freed mid-shake; ends at origin.
 func _shake(card: Control, sev: float) -> void:
 	var origin := card.position
-	var amp := 6.0 + 8.0 * sev
-	var step := 0.03
+	var amp := 10.0 + 14.0 * sev
+	var step := 0.045
+	card.position = origin + Vector2(amp, -amp * 0.4)   # the jolt has ALREADY happened
 	var st := card.create_tween()
-	st.tween_property(card, "position", origin + Vector2(amp, -amp * 0.5), step)
-	st.tween_property(card, "position", origin + Vector2(-amp, amp * 0.6), step)
-	st.tween_property(card, "position", origin + Vector2(amp * 0.8, amp * 0.4), step)
-	st.tween_property(card, "position", origin + Vector2(-amp * 0.7, -amp * 0.5), step)
-	if sev > 0.6:   # the hardest hits rattle longer
-		st.tween_property(card, "position", origin + Vector2(amp * 0.5, amp * 0.3), step)
-		st.tween_property(card, "position", origin + Vector2(-amp * 0.4, -amp * 0.2), step)
-	st.tween_property(card, "position", origin, step)
+	st.tween_property(card, "position", origin + Vector2(-amp * 0.8, amp * 0.5), step)
+	st.tween_property(card, "position", origin + Vector2(amp * 0.55, amp * 0.3), step)
+	st.tween_property(card, "position", origin + Vector2(-amp * 0.35, -amp * 0.25), step)
+	st.tween_property(card, "position", origin + Vector2(amp * 0.18, amp * 0.12), step)
+	st.tween_property(card, "position", origin, step * 1.5).set_ease(Tween.EASE_OUT)
+
+
+# The hot wash: SLAMS to full red-orange instantly (no ease-in — same principle as the punch)
+# and burns back down to normal, lingering longer on harder hits.
+func _impact_flash(card: Control, sev: float) -> void:
+	card.modulate = Color(1.0, 0.5, 0.35)
+	var tw := card.create_tween()
+	tw.tween_property(card, "modulate", Color.WHITE, 0.35 + 0.25 * sev) \
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 
 # A hot shockwave ring erupting from the card's centre — the "impact radiates outward" read.
