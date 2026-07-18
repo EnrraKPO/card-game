@@ -26,8 +26,7 @@ func play() -> void:
 		queue_free(); return
 	var sev := _severity(card)
 	_impact_flash(card, sev)
-	_punch(card, sev)
-	_shake(card, sev)
+	_stagger(card, sev)
 	_shockwave(card, sev)
 	_crit_label(card, sev)
 	queue_free()
@@ -44,48 +43,46 @@ func _severity(card: Control) -> float:
 	return clampf(float(_event.amount) / max_hp, SEV_FLOOR, 1.0)
 
 
-# The blow itself. THE IMPACT IS NOT ANIMATED — the card is ALREADY at full deformation
-# (pinched narrower + stretched taller, a body clenching under a lateral blow) the frame the
-# cue starts: easing INTO a deformation drains all the violence out of it, because by the
-# time an ease reaches full pinch the energy is spent. All the animation time goes to the
-# RECOVERY instead: a beat of held clench, then an elastic spring back to rest that
-# overshoots and wobbles through a couple of diminishing opposite leans — the springy
-# rebound reads as absorbed force. Depth scales with severity. Pivot centred so the card
-# clenches about its middle, then restored (other systems assume the default pivot).
-func _punch(card: Control, sev: float) -> void:
+# The blow itself: a DIRECTIONAL STAGGER. Squash-and-stretch was tried and rejected — a
+# symmetric deformation about the card's own centre has no direction, so it never read as
+# a blow coming FROM somewhere (user). Instead the card is knocked bodily AWAY from the
+# attacker — displaced sideways with a slight lift AND tilted off its base (pivot at the
+# bottom centre, rocking back on its heels) — then springs back upright.
+#
+# THE IMPACT IS NOT ANIMATED: the card is already displaced + tilted the frame the cue
+# starts (easing into an impact drains its violence). All the animation time goes to the
+# recovery — a held beat, then a long elastic ring-out that wobbles the card back through
+# diminishing counter-leans ("baaahm", not "bam-done"). Kick distance and tilt scale with
+# severity. Hit direction follows board sides, same convention as the dodge sidestep:
+# player units (owner 0) are struck from the right, enemies from the left.
+func _stagger(card: Control, sev: float) -> void:
+	var origin := card.position
 	var prev_pivot := card.pivot_offset
-	card.pivot_offset = card.size * 0.5
-	var pinch := 0.16 + 0.12 * sev
-	card.scale = Vector2(1.0 - pinch, 1.0 + pinch * 0.7)   # the blow has ALREADY landed
+	card.pivot_offset = Vector2(card.size.x * 0.5, card.size.y)   # rock about the base
+	var dir := -1.0 if _owner_of(card) == 0 else 1.0
+	var kick := 16.0 + 22.0 * sev
+	var tilt := 6.0 + 8.0 * sev
+	# The blow has ALREADY landed: knocked away and leaning off vertical at frame zero.
+	card.position = origin + Vector2(dir * kick, -kick * 0.12)
+	card.rotation_degrees = dir * tilt
 	var tw := card.create_tween()
-	tw.tween_interval(0.10 + 0.10 * sev)   # a real beat of full clench — hard hits stay crushed
-	# The long ring-out: nearly a second of elastic wobble, so the card keeps visibly
-	# reverberating well after the strike ("baaahm", not "bam-done").
-	tw.tween_property(card, "scale", Vector2.ONE, 0.90) \
+	tw.tween_interval(0.08 + 0.08 * sev)   # a beat off-balance — hard hits hang there longer
+	tw.tween_property(card, "position", origin, 0.85) \
 			.set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
-	tw.tween_callback(func() -> void:
+	tw.parallel().tween_property(card, "rotation_degrees", 0.0, 0.85) \
+			.set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	tw.chain().tween_callback(func() -> void:
 		if is_instance_valid(card):
 			card.pivot_offset = prev_pivot)
 
 
-# A violent jolt, not a tremble: the card is ALREADY knocked off position at frame zero (same
-# no-ease-in principle as _punch), then rattles back through decaying swings — big first,
-# dying out, so the motion has both the snap of impact and a tail long enough to register.
-# Amplitude scales with severity, well past the ordinary hit tremble (_drain_card's amp 4).
-# Bound to the card so it self-cancels if the card is freed mid-shake; ends at origin.
-func _shake(card: Control, sev: float) -> void:
-	var origin := card.position
-	var amp := 10.0 + 14.0 * sev
-	var step := 0.055
-	card.position = origin + Vector2(amp, -amp * 0.4)   # the jolt has ALREADY happened
-	var st := card.create_tween()
-	st.tween_property(card, "position", origin + Vector2(-amp * 0.8, amp * 0.5), step)
-	st.tween_property(card, "position", origin + Vector2(amp * 0.6, amp * 0.35), step)
-	st.tween_property(card, "position", origin + Vector2(-amp * 0.45, -amp * 0.3), step)
-	st.tween_property(card, "position", origin + Vector2(amp * 0.3, amp * 0.2), step)
-	st.tween_property(card, "position", origin + Vector2(-amp * 0.18, amp * 0.1), step)
-	st.tween_property(card, "position", origin + Vector2(amp * 0.08, -amp * 0.05), step)
-	st.tween_property(card, "position", origin, step * 2.0).set_ease(Tween.EASE_OUT)
+# The owning side of the board card, read off its CardInstance; defaults to player (0) so a
+# card without one still staggers a sensible way. (Same helper shape as VFXEffectDodge's.)
+func _owner_of(card: Control) -> int:
+	var ui := card as CardUI
+	if ui != null and ui.card_instance != null:
+		return ui.card_instance.owner
+	return 0
 
 
 # The hot wash: SLAMS to full red-orange instantly (no ease-in — same principle as the punch)
