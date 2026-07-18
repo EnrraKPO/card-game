@@ -52,11 +52,15 @@ func _severity(card: Control) -> float:
 func _punch(card: Control, sev: float) -> void:
 	var prev_pivot := card.pivot_offset
 	card.pivot_offset = card.size * 0.5
+	# The pinched shape must be what the eye REGISTERS: snap into it fast, HOLD it, then settle
+	# straight back to normal. No opposite-shape overshoot on the way out — an earlier version
+	# rebounded through wider-and-shorter for longer than the pinch itself held, so the motion
+	# read as the inverse of the intended squash (user-reported).
 	var pinch := 0.12 + 0.10 * sev
 	var tw := card.create_tween()
-	tw.tween_property(card, "scale", Vector2(1.0 - pinch, 1.0 + pinch * 0.6), 0.07).set_ease(Tween.EASE_OUT)
-	tw.tween_property(card, "scale", Vector2(1.05, 0.97), 0.10).set_ease(Tween.EASE_OUT)
-	tw.tween_property(card, "scale", Vector2.ONE, 0.12).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_property(card, "scale", Vector2(1.0 - pinch, 1.0 + pinch * 0.6), 0.05).set_ease(Tween.EASE_OUT)
+	tw.tween_interval(0.10 + 0.06 * sev)   # hold the clench — hard hits linger compressed
+	tw.tween_property(card, "scale", Vector2.ONE, 0.14).set_ease(Tween.EASE_IN_OUT)
 	tw.tween_callback(func() -> void:
 		if is_instance_valid(card):
 			card.pivot_offset = prev_pivot)
