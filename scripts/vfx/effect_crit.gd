@@ -44,16 +44,18 @@ func _severity(card: Control) -> float:
 	return clampf(float(_event.amount) / max_hp, SEV_FLOOR, 1.0)
 
 
-# The blow itself: a fast squash INTO the hit (compressed, like something heavy landed) that
-# rebounds past normal and settles — depth scales with severity. Pivot centred so the card
-# crunches about its middle, then restored (other systems assume the default pivot).
+# The blow itself: a volume-preserving SQUASH — the card pinches NARROWER while stretching
+# TALLER (like a body clenching under a blow from the side), then rebounds through a slight
+# opposite lean and settles. NOT a uniform scale-down: that read as the card "shrinking"
+# rather than being hit (user-reported). Depth scales with severity. Pivot centred so the
+# card clenches about its middle, then restored (other systems assume the default pivot).
 func _punch(card: Control, sev: float) -> void:
 	var prev_pivot := card.pivot_offset
 	card.pivot_offset = card.size * 0.5
-	var crush := 1.0 - (0.10 + 0.10 * sev)
+	var pinch := 0.12 + 0.10 * sev
 	var tw := card.create_tween()
-	tw.tween_property(card, "scale", Vector2(crush, crush), 0.06).set_ease(Tween.EASE_OUT)
-	tw.tween_property(card, "scale", Vector2(1.04, 1.04), 0.10).set_ease(Tween.EASE_OUT)
+	tw.tween_property(card, "scale", Vector2(1.0 - pinch, 1.0 + pinch * 0.6), 0.07).set_ease(Tween.EASE_OUT)
+	tw.tween_property(card, "scale", Vector2(1.05, 0.97), 0.10).set_ease(Tween.EASE_OUT)
 	tw.tween_property(card, "scale", Vector2.ONE, 0.12).set_ease(Tween.EASE_IN_OUT)
 	tw.tween_callback(func() -> void:
 		if is_instance_valid(card):
