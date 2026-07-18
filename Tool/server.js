@@ -95,6 +95,7 @@ const SETTINGS_PATH = path.join(WORKSPACE, 'settings.json');
 function getSettings() {
   const s = Object.assign({
     comfyUrl: 'http://127.0.0.1:8187', artStyle: '', stylePresets: {},
+    audiogenUrl: 'http://127.0.0.1:8188',   // local AudioGen SFX server (tools/audiogen)
     conceptPresets: {}, refHintPresets: {},   // named presets for the ✨ LLM guidance inputs
     flowPresets: {},   // named multi-step generation flows (JSON-encoded step arrays)
     kinAdherence: 'concept',   // ✨ inference default: what carries over from the anchor
@@ -354,6 +355,7 @@ function offerRarityPool() {
 // the offensive mirror — the ATTACKER's speed drives it — plus the damage multiplier pair
 // (multiplier = the crit damage factor, multiplier_max its hard ceiling).
 const COMBAT_TUNING_PATH = path.join(GAME_ROOT, 'data/combat_tuning.json');
+const AUDIO_TUNING_PATH = path.join(GAME_ROOT, 'data/audio.json');
 const DODGE_DEFAULT = { fixed_pct: 0, per_speed_pct: 1, per_speed_diff_pct: 4, max_pct: 75 };
 const CRIT_DEFAULT = { fixed_pct: 5, per_speed_pct: 1, per_speed_diff_pct: 0, max_pct: 75,
   multiplier: 2.0, multiplier_max: 5.0 };
@@ -1111,6 +1113,9 @@ function validateItem(type, d) {
       if (!d.concept) return 'missing concept — record what this moment is and how it should feel';
       if (!d.prompt) return 'missing prompt — the AI sound-generation text';
       if (d.file && !/^[a-zA-Z0-9._-]+\.(mp3|ogg|wav)$/.test(d.file)) return 'file must be a bare .mp3/.ogg/.wav filename inside assets/sound/';
+      if (d.dir != null && !/^[a-zA-Z0-9_-]+(\/[a-zA-Z0-9_-]+)*$/.test(d.dir)) return 'dir must be a folder path inside assets/ (e.g. music/combat)';
+      if (d.fade != null && (typeof d.fade !== 'number' || d.fade <= 0)) return 'fade must be a positive number of seconds';
+      if (d.trim != null && (typeof d.trim !== 'number' || d.trim < 0)) return 'trim must be a non-negative number of seconds';
       if (d.volume_db != null && typeof d.volume_db !== 'number') return 'volume_db must be a number';
       return null;
     }
@@ -1218,6 +1223,67 @@ let jobSeq = 1;
 function comfyFetch(urlPath, opts) {
   const base = getSettings().comfyUrl.replace(/\/$/, '');
   return fetch(base + urlPath, opts);
+}
+
+// ── AudioGen (SFX) ───────────────────────────────────────────────────────────
+// The sound twin of ComfyUI: a persistent local server (tools/audiogen/server.py)
+// holding Meta's AudioGen warm. The Tool generates CANDIDATE wavs per sound entry
+// into workspace/sfx/<id>/, the user auditions them, and installing one copies it
+// to assets/sound/ and stamps the entry's `file` field.
+function audiogenFetch(urlPath, opts) {
+  const base = getSettings().audiogenUrl.replace(/\/$/, '');
+  return fetch(base + urlPath, opts);
+}
+
+function sfxDir(id) { return path.join(WORKSPACE, 'sfx', id); }
+
+function listSfxCandidates(id) {
+  if (!validId(id) || !fs.existsSync(sfxDir(id))) return [];
+  return fs.readdirSync(sfxDir(id)).filter(f => f.endsWith('.wav')).sort();
+}
+
+// One synchronous generation round-trip (AudioGen holds the GPU; the queue is its own).
+async function sfxGenerate({ id, prompt, duration, count, seed }) {
+  if (!validId(id)) throw new Error('bad sound id');
+  if (!prompt || !String(prompt).trim()) throw new Error('prompt is required');
+  let rsp;
+  try {
+    rsp = await audiogenFetch('/generate', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: String(prompt), duration: duration || 2,
+        count: count || 3, seed, prefix: id }),
+    });
+  } catch (e) {
+    throw new Error('AudioGen server unreachable — start tools/audiogen/start_server.bat');
+  }
+  const data = await rsp.json().catch(() => ({}));
+  if (!rsp.ok || !data.ok) throw new Error(data.error || `AudioGen HTTP ${rsp.status}`);
+  ensureDir(sfxDir(id));
+  const files = [];
+  for (const abs of data.files || []) {
+    const name = path.basename(abs);
+    fs.copyFileSync(abs, path.join(sfxDir(id), name));
+    files.push(name);
+  }
+  return { files, seconds: data.seconds };
+}
+
+// Promote one candidate to THE game asset: assets/sound/<id>.wav + entry.file.
+function sfxInstall(id, candidate) {
+  if (!validId(id)) throw new Error('bad sound id');
+  if (!/^[\w-]+\.wav$/.test(candidate)) throw new Error('bad candidate name');
+  const src = path.join(sfxDir(id), candidate);
+  if (!fs.existsSync(src)) throw new Error(`no candidate "${candidate}" for "${id}"`);
+  const entry = findGameEntry('sound', id);
+  if (!entry) throw new Error(`sound "${id}" is not an installed game entry`);
+  ensureDir(path.join(GAME_ROOT, 'assets', 'sound'));
+  const assetName = id + '.wav';
+  fs.copyFileSync(src, path.join(GAME_ROOT, 'assets', 'sound', assetName));
+  if (entry.data.file !== assetName) {
+    entry.data.file = assetName;
+    replaceGameEntry('sound', id, entry.file, entry.data);
+  }
+  return assetName;
 }
 
 // ── model registry ───────────────────────────────────────────────────────────
@@ -3278,6 +3344,7 @@ async function handle(req, res) {
       const body = await readBody(req);
       const s = getSettings();
       if (body.comfyUrl) s.comfyUrl = String(body.comfyUrl);
+      if (body.audiogenUrl) s.audiogenUrl = String(body.audiogenUrl);
       // shared art style: one live prompt fragment + named presets, global across items;
       // the ✨ LLM guidance inputs (concept / how-to-use-references) get preset maps too
       if ('artStyle' in body) s.artStyle = String(body.artStyle || '');
@@ -3404,6 +3471,19 @@ async function handle(req, res) {
       writeJson(COMBAT_TUNING_PATH, out);
       return send(res, 200, { ok: true, config: out });
     }
+    if (p === '/api/audio-tuning' && req.method === 'GET')
+      return send(res, 200, { ok: true, config: Object.assign({ sfx_volume: 0.8, music_volume: 0.5 },
+        readJson(AUDIO_TUNING_PATH, {}) || {}) });
+    if (p === '/api/audio-tuning' && req.method === 'POST') {
+      const body = await readBody(req);
+      const cur = Object.assign({ sfx_volume: 0.8, music_volume: 0.5 }, readJson(AUDIO_TUNING_PATH, {}) || {});
+      for (const k of ['sfx_volume', 'music_volume']) {
+        const v = Number(body[k]);
+        if (Number.isFinite(v)) cur[k] = Math.min(1, Math.max(0, v));
+      }
+      writeJson(AUDIO_TUNING_PATH, cur);
+      return send(res, 200, { ok: true, config: cur });
+    }
     if (p === '/api/comfy/loras') {
       try {
         const r = await comfyFetch('/models/loras');
@@ -3419,6 +3499,46 @@ async function handle(req, res) {
         return send(res, 200, { ok: true, version: stats.system && stats.system.comfyui_version });
       } catch (e) {
         return send(res, 200, { ok: false, error: e.message });
+      }
+    }
+    if (p === '/api/audiogen/health') {
+      try {
+        const r = await audiogenFetch('/health');
+        const h = await r.json();
+        return send(res, 200, { ok: !!h.ok, model: h.model, device: h.device });
+      } catch (e) {
+        return send(res, 200, { ok: false, error: e.message });
+      }
+    }
+    if (p === '/api/sfx/generate' && req.method === 'POST') {
+      const body = await readBody(req);
+      try {
+        const out = await sfxGenerate(body);
+        return send(res, 200, { ok: true, files: out.files, seconds: out.seconds,
+          candidates: listSfxCandidates(String(body.id)) });
+      } catch (e) {
+        return send(res, 502, { error: e.message });
+      }
+    }
+    if (p === '/api/sfx/candidates') {
+      const id = String(url.searchParams.get('id') || '');
+      return send(res, 200, { candidates: listSfxCandidates(id) });
+    }
+    if (p === '/api/sfx/candidate-delete' && req.method === 'POST') {
+      const { id, file } = await readBody(req);
+      if (!validId(String(id)) || !/^[\w-]+\.wav$/.test(String(file)))
+        return send(res, 400, { error: 'bad request' });
+      const abs = path.join(sfxDir(String(id)), String(file));
+      if (fs.existsSync(abs)) fs.unlinkSync(abs);
+      return send(res, 200, { ok: true, candidates: listSfxCandidates(String(id)) });
+    }
+    if (p === '/api/sfx/install' && req.method === 'POST') {
+      const { id, file } = await readBody(req);
+      try {
+        const assetName = sfxInstall(String(id), String(file));
+        return send(res, 200, { ok: true, file: assetName });
+      } catch (e) {
+        return send(res, 400, { error: e.message });
       }
     }
     if (p === '/api/art/generate' && req.method === 'POST') {
@@ -3849,6 +3969,13 @@ async function handle(req, res) {
         return send(res, 200, fs.readFileSync(artPath(m[1], m[2])), 'image/png');
       }
       return send(res, 404, { error: 'no art' });
+    }
+    // generated SFX candidate audition (workspace/sfx/<id>/<file>.wav)
+    if (p.startsWith('/sfxwav/')) {
+      const m = p.match(/^\/sfxwav\/([a-z0-9_]+)\/([\w-]+\.wav)$/);
+      if (m && fs.existsSync(path.join(sfxDir(m[1]), m[2])))
+        return send(res, 200, fs.readFileSync(path.join(sfxDir(m[1]), m[2])), 'audio/wav');
+      return send(res, 404, { error: 'no such candidate' });
     }
     // existing game audio preview (read-only) — lets the Sounds tab audition a real asset
     if (p.startsWith('/gamesound/')) {

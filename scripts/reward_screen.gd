@@ -16,6 +16,7 @@ func get_chrome() -> Dictionary:
 
 
 func _ready() -> void:
+	Sfx.music("music_rewards")
 	UIScale.layout_changed.connect(func() -> void: get_tree().reload_current_scene(), CONNECT_ONE_SHOT)
 
 	# Shell mounts this screen as a child of `_lower_area` and only reparents it into the real,

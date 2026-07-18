@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://dpbswpc7vryiw"
+path="res://.godot/imported/Crown of Cinders.mp3-4bc574f87c50ee9f3fe07a911e820528.mp3str"
+
+[deps]
+
+source_file="res://assets/music/elite_encounter/Crown of Cinders.mp3"
+dest_files=["res://.godot/imported/Crown of Cinders.mp3-4bc574f87c50ee9f3fe07a911e820528.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

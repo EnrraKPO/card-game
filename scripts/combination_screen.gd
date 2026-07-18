@@ -91,6 +91,7 @@ func _ready() -> void:
 	# Rebuild the whole screen when the form-factor flips (desktop ↔ compact/touch), so the
 	# layout switches variants instead of the canvas just scaling down. Re-armed each _ready.
 	UIScale.layout_changed.connect(func(): get_tree().reload_current_scene(), CONNECT_ONE_SHOT)
+	Sfx.music("music_forge")
 	_build_ui()
 	_rebuild_deck()
 	_rebuild_charms()

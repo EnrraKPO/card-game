@@ -15,6 +15,7 @@ func get_chrome() -> Dictionary:
 
 
 func _ready() -> void:
+	Sfx.music("music_rest")
 	var vbox := VBoxContainer.new()
 	vbox.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	vbox.alignment = BoxContainer.ALIGNMENT_CENTER

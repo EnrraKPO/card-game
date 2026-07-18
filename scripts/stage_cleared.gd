@@ -7,6 +7,7 @@ const CHARM_CHOICES := 4
 
 
 func _ready() -> void:
+	Sfx.music("music_stage_completed")
 	Nav.clear_back()   # terminal screen — the OS back gesture stays inert (use the on-screen button)
 	var compact := UIScale.is_compact()
 

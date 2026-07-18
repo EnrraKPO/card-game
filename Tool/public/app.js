@@ -407,6 +407,51 @@ function renderOfferRarityModal(cfg, pool) {
       } }))));
 }
 
+// ── 🔊 audio defaults editor ──────────────────────────────────────────────────
+// The game's DEFAULT mixer volumes (data/audio.json) — what the in-game settings gear
+// starts from before the player touches anything. Percent model matches the game:
+// 80% = as-authored loudness (0 dB), 100% = a slight boost above it.
+function audioDefaults() {
+  return { sfx_volume: 0.8, music_volume: 0.5 };
+}
+function openAudioTuningModal() {
+  api('/api/audio-tuning').then(res => {
+    const cfg = audioDefaults();
+    Object.assign(cfg, (res && res.config) || {});
+    renderAudioTuningModal(cfg);
+  }).catch(err => toast('Could not load audio defaults: ' + err.message, 'err'));
+}
+
+function renderAudioTuningModal(cfg) {
+  const pctRow = (label, sub, key) => {
+    let num;
+    const rng = el('input', { type: 'range', min: 0, max: 100, step: 1, value: Math.round(cfg[key] * 100), style: 'flex:1',
+      oninput: e => { cfg[key] = parseFloat(e.target.value) / 100; num.value = e.target.value; } });
+    num = el('input', { type: 'number', min: 0, max: 100, step: 1, value: Math.round(cfg[key] * 100), style: 'width:66px',
+      oninput: e => { const v = parseFloat(e.target.value); if (!isNaN(v)) { cfg[key] = Math.min(100, Math.max(0, v)) / 100; rng.value = v; } } });
+    return el('div', { style: 'margin:10px 0' },
+      el('div', { style: 'display:flex;justify-content:space-between;font-size:13px;margin-bottom:2px' },
+        el('span', { text: label }), el('span', { class: 'subtle', text: sub })),
+      el('div', { style: 'display:flex;align-items:center;gap:10px' }, rng, num));
+  };
+  $('modal-root').replaceChildren(el('div', { class: 'modal', style: 'width:520px' },
+    el('h2', {}, '🔊 Audio defaults'),
+    el('div', { class: 'hint', text: 'Default mixer volumes shipped with the game — the in-game settings gear starts here, and a player\'s own choices override these on their device. '
+      + '80% plays sounds exactly as authored; 100% is a slight boost. Saves to data/audio.json — restart the game to apply.' }),
+    pctRow('Music volume', 'music + ambience beds', 'music_volume'),
+    pctRow('SFX volume', 'every one-shot cue and drone', 'sfx_volume'),
+    el('div', { class: 'modal-actions' },
+      el('button', { class: 'ghost', text: 'Reset to defaults', onclick: () => renderAudioTuningModal(audioDefaults()) }),
+      el('button', { class: 'ghost', text: 'Cancel', onclick: () => $('modal-root').replaceChildren() }),
+      el('button', { class: 'primary', text: 'Save to game', onclick: async () => {
+        try {
+          await api('/api/audio-tuning', cfg);
+          $('modal-root').replaceChildren();
+          toast('Audio defaults saved — restart the game to apply', 'ok');
+        } catch (err) { toast('Save failed: ' + err.message, 'err'); }
+      } }))));
+}
+
 // ── ⚡ dodge / combat tuning editor ────────────────────────────────────────────
 // Global combat balance for DODGE (Resolver.dodge_chance). Reads data/combat_tuning.json, lets
 // the four rate knobs be tuned with a live chance table across speed match-ups (mirrors the
@@ -2605,6 +2650,7 @@ async function checkComfy() {
 async function openSettings() {
   const s = {
     comfyUrl: state.settings.comfyUrl,
+    audiogenUrl: state.settings.audiogenUrl || 'http://127.0.0.1:8188',
     turboLora: state.settings.turboLora || '',
     turboSteps: state.settings.turboSteps || 8,
     turboStrength: state.settings.turboStrength == null ? 1.0 : state.settings.turboStrength,
@@ -2623,6 +2669,7 @@ async function openSettings() {
     el('h2', { text: 'Settings' }),
     fld('ComfyUI server URL', textInput(s, 'comfyUrl', () => {}, 'http://127.0.0.1:8187')),
     el('div', { class: 'hint', style: 'margin:8px 0 14px', text: 'The Flux 2 dev workflow needs flux2_dev_fp8mixed / mistral_3_small_flux2 / flux2-vae on that server.' }),
+    fld('AudioGen server URL', textInput(s, 'audiogenUrl', () => {}, 'http://127.0.0.1:8188'), 'local SFX generator (tools/audiogen/start_server.bat) for the Sounds tab'),
     fld('Turbo LoRA', loraInput, 'used when ⚡ Turbo is checked in the art panel; type to search the server’s LoRAs'),
     loraList,
     el('div', { class: 'frow', style: 'margin-top:10px' },
@@ -2871,6 +2918,7 @@ $('settings-btn').addEventListener('click', openSettings);
 $('offer-rarity-btn').addEventListener('click', openOfferRarityModal);
 $('dodge-btn').addEventListener('click', openCombatTuningModal);
 $('crit-btn').addEventListener('click', openCritTuningModal);
+$('audio-btn').addEventListener('click', openAudioTuningModal);
 $('chat-btn').addEventListener('click', openChatModal);
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && state.advancedOpen) closeAdvanced();

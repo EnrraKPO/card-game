@@ -27,6 +27,7 @@ UIScale="*res://scripts/ui_scale.gd"
 Nav="*res://scripts/nav.gd"
 GameSignals="*res://scripts/game_signals.gd"
 DevFlags="*res://scripts/dev_flags.gd"
+AudioSettings="*res://scripts/audio_settings.gd"
 Sfx="*res://scripts/sfx.gd"
 Vfx="*res://scripts/vfx_service.gd"
 

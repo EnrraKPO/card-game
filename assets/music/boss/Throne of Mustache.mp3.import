@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://drbgda5t8qibm"
+path="res://.godot/imported/Throne of Mustache.mp3-99b6bb7482aff7cd05c5ceff8be94ba1.mp3str"
+
+[deps]
+
+source_file="res://assets/music/boss/Throne of Mustache.mp3"
+dest_files=["res://.godot/imported/Throne of Mustache.mp3-99b6bb7482aff7cd05c5ceff8be94ba1.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

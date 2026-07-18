@@ -5616,5 +5616,46 @@
     "added": true,
     "at": "2026-07-17T19:17:40.109Z",
     "fileHash": "9a79185dddf17fc6ec4d215ba79d40e1a9d661ec"
+  },
+  "sound/ability_cast": {
+    "file": "sounds.json",
+    "original": {
+      "id": "ability_cast",
+      "display_name": "Ability Activated",
+      "category": "magic",
+      "concept": "A unit's activated ability firing (tray or autocast) — more grounded than a spell: the unit exerting itself.",
+      "prompt": "A focused energy pulse with a low resonant thrum and quick bright release, ability activation, purposeful, 0.5 seconds",
+      "file": "ability_cast.wav"
+    },
+    "at": "2026-07-18T06:50:38.092Z",
+    "fileHash": "0f1d9bc2b43645abf64c829aa10bdd9385addaf2"
+  },
+  "sound/ability_tray_open": {
+    "file": "sounds.json",
+    "original": {
+      "id": "ability_tray_open",
+      "display_name": "Ability Tray Open",
+      "category": "magic",
+      "concept": "Opening the Abilities view / a unit's ability tray — unlatching a small toolbox of options.",
+      "prompt": "A small wooden case clicking open with a soft creak, compact toolbox unlatched, curious and short, 0.3 seconds",
+      "file": "ability_tray_open.wav"
+    },
+    "at": "2026-07-18T06:51:23.388Z",
+    "fileHash": "0f1d9bc2b43645abf64c829aa10bdd9385addaf2"
+  },
+  "sound/amb_combat_battlefield": {
+    "file": "sounds.json",
+    "original": {
+      "id": "amb_combat_battlefield",
+      "display_name": "Combat Ambience",
+      "category": "ambient",
+      "concept": "The battle's bed: low tension air, distant metal and murmurs — presence without melody, under the combat music.",
+      "prompt": "A low ambient loop of distant battlefield presence with faint metal clinks, low wind and a tense undercurrent, seamless loop, atmospheric, 20 seconds",
+      "loop": true,
+      "volume_db": -20,
+      "file": "amb_combat_battlefield.wav"
+    },
+    "at": "2026-07-18T07:00:47.265Z",
+    "fileHash": "0f1d9bc2b43645abf64c829aa10bdd9385addaf2"
   }
 }

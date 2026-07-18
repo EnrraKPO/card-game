@@ -12,6 +12,7 @@ func get_chrome() -> Dictionary:
 
 
 func _ready() -> void:
+	Sfx.music("music_special_event")
 	var compact := UIScale.is_compact()
 	var vbox := VBoxContainer.new()
 	vbox.set_anchors_and_offsets_preset(PRESET_FULL_RECT)

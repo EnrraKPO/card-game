@@ -159,8 +159,10 @@ func _ready() -> void:
 			GameData.value("hand.size.initial"), null, StatMutation.CH_SYSTEM))
 	var is_boss_fight := GameData.current_encounter != null \
 			and GameData.current_encounter.type == EncounterData.Type.BOSS
+	var is_elite_fight := GameData.current_encounter != null \
+			and GameData.current_encounter.type == EncounterData.Type.ELITE
 	Sfx.play("combat_boss_intro" if is_boss_fight else "combat_start")
-	Sfx.music("music_boss" if is_boss_fight else "music_combat")
+	Sfx.music("music_boss" if is_boss_fight else ("music_elite" if is_elite_fight else "music_combat"))
 	Sfx.ambience("amb_combat_battlefield")
 	_refresh()
 	_begin_round()

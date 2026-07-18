@@ -72,7 +72,6 @@
 		"concept": "Cursor entering an interactive element that rewards attention (list rows, map nodes). Near-subliminal.",
 		"prompt": "An extremely short quiet tick, single soft fingernail tap on wood, subtle UI hover feedback, 0.05 seconds"
 	},
-
 	{
 		"id": "card_hover",
 		"display_name": "Card Hover",
@@ -138,7 +137,6 @@
 		"concept": "A card permanently improving (event node stat boost, charm attach). Warm, affirming, a little precious.",
 		"prompt": "A warm ascending three-note chime with a soft golden shimmer tail, small enchantment being applied, bright but gentle, 0.6 seconds"
 	},
-
 	{
 		"id": "combat_start",
 		"display_name": "Combat Start",
@@ -224,7 +222,6 @@
 		"concept": "A stage boss fight beginning — bigger dread than a normal combat start. The room gets colder.",
 		"prompt": "A massive low horn blast with a dark choir swell and a thunderous drum hit, terrifying boss arrival, epic dread, 2 seconds"
 	},
-
 	{
 		"id": "attack_melee_swing",
 		"display_name": "Melee Swing",
@@ -313,7 +310,6 @@
 		"concept": "Health restored to a unit (mender effects, rest bonuses in combat). Soft, warm, liquid light.",
 		"prompt": "A gentle warm chime with soft sparkling water droplets rising, restorative healing glow, soothing, 0.6 seconds"
 	},
-
 	{
 		"id": "spell_cast",
 		"display_name": "Spell Cast",
@@ -333,14 +329,16 @@
 		"display_name": "Ability Tray Open",
 		"category": "magic",
 		"concept": "Opening the Abilities view / a unit's ability tray — unlatching a small toolbox of options.",
-		"prompt": "A small wooden case clicking open with a soft creak, compact toolbox unlatched, curious and short, 0.3 seconds"
+		"prompt": "A small wooden case clicking open with a soft creak, compact toolbox unlatched, curious and shor",
+		"file": "ability_tray_open.wav"
 	},
 	{
 		"id": "ability_cast",
 		"display_name": "Ability Activated",
 		"category": "magic",
 		"concept": "A unit's activated ability firing (tray or autocast) — more grounded than a spell: the unit exerting itself.",
-		"prompt": "A focused energy pulse with a low resonant thrum and quick bright release, ability activation, purposeful, 0.5 seconds"
+		"prompt": "A focused energy pulse with a low resonant thrum and quick bright release, ability activation, purposeful,",
+		"file": "ability_cast.wav"
 	},
 	{
 		"id": "autocast_arm",
@@ -384,7 +382,6 @@
 		"concept": "An effect conjuring a new unit onto the board (not hand-played) — arrival from elsewhere.",
 		"prompt": "A magical materialization with a reverse-suction whoosh resolving into a soft solid thump, creature summoned into being, arcane, 0.6 seconds"
 	},
-
 	{
 		"id": "mana_spend",
 		"display_name": "Mana Spent",
@@ -437,7 +434,6 @@
 		"concept": "Run-end experience tallying up toward upgrade points — a counting-up ratchet with warmth.",
 		"prompt": "A quick ascending series of soft ticks accelerating with a warm bell finish, experience points tallying up, rewarding, 0.8 seconds"
 	},
-
 	{
 		"id": "map_enter",
 		"display_name": "Map Entered",
@@ -495,7 +491,6 @@
 		"concept": "Resting and healing the King at a rest site — crackling campfire comfort, safety in the journey.",
 		"prompt": "A warm campfire crackle with a soft relieved exhale and gentle healing chime, restful recovery at camp, cozy, 1.5 seconds"
 	},
-
 	{
 		"id": "shop_enter",
 		"display_name": "Shop Entered",
@@ -547,7 +542,6 @@
 		"concept": "Voluntarily dropping a relic — deliberate letting-go; respectful, not trashy.",
 		"prompt": "A stone artifact placed down firmly with a fading resonance dissolving to quiet, relic relinquished, solemn and brief, 0.6 seconds"
 	},
-
 	{
 		"id": "lab_enter",
 		"display_name": "Laboratory Entered",
@@ -616,7 +610,6 @@
 		"concept": "An invalid combine attempt — the elements refusing each other; fizzled chemistry.",
 		"prompt": "A damp magical fizzle with a short dissonant sputter dissolving to nothing, failed fusion, deflated, 0.5 seconds"
 	},
-
 	{
 		"id": "deck_card_add",
 		"display_name": "Card Added to Deck",
@@ -682,7 +675,6 @@
 		"concept": "The profile crossing an experience threshold and granting an upgrade point — personal growth fanfare, mid-sized.",
 		"prompt": "A bright ascending arpeggio bursting into a radiant chord with a shimmering tail, level up achieved, exhilarating, 1.2 seconds"
 	},
-
 	{
 		"id": "amb_map_wind",
 		"display_name": "Map Ambience",
@@ -698,8 +690,9 @@
 		"category": "ambient",
 		"concept": "The battle's bed: low tension air, distant metal and murmurs — presence without melody, under the combat music.",
 		"prompt": "A low ambient loop of distant battlefield presence with faint metal clinks, low wind and a tense undercurrent, seamless loop, atmospheric, 20 seconds",
-		"loop": true,
-		"volume_db": -20
+		"file": "amb_combat_battlefield.wav",
+		"volume_db": -20,
+		"loop": true
 	},
 	{
 		"id": "amb_lab_bubbling",
@@ -719,13 +712,13 @@
 		"loop": true,
 		"volume_db": -18
 	},
-
 	{
 		"id": "music_title",
 		"display_name": "Title Music",
 		"category": "music",
 		"concept": "The title/hub theme — the game's identity in one loop: adventurous, a little mischievous, chess-and-alchemy fantasy.",
 		"prompt": "An adventurous fantasy orchestral loop with playful woodwinds, warm strings and a memorable heroic motif, title theme, seamless loop, inviting, 60 seconds",
+		"dir": "music/frontend",
 		"loop": true,
 		"volume_db": -12
 	},
@@ -735,6 +728,7 @@
 		"category": "music",
 		"concept": "The journey theme — lighter than combat: plotting the route, wind in the hair, wanderlust.",
 		"prompt": "A light traveling fantasy loop with acoustic guitar, soft flute and gentle percussion, journey planning theme, seamless loop, wanderlust, 60 seconds",
+		"dir": "music/map",
 		"loop": true,
 		"volume_db": -14
 	},
@@ -744,6 +738,7 @@
 		"category": "music",
 		"concept": "The standard battle theme — driving but not exhausting; auto-battles repeat, so it must survive many loops.",
 		"prompt": "A driving fantasy battle loop with rhythmic strings, martial percussion and a determined brass motif, tactical combat theme, seamless loop, energetic, 60 seconds",
+		"dir": "music/combat",
 		"loop": true,
 		"volume_db": -14
 	},
@@ -753,6 +748,7 @@
 		"category": "music",
 		"concept": "The boss battle theme — the combat theme's dangerous elder sibling: choir, dread, higher stakes.",
 		"prompt": "An intense epic boss battle loop with dark choir, pounding drums, urgent strings and a menacing brass theme, climactic confrontation, seamless loop, threatening, 60 seconds",
+		"dir": "music/boss",
 		"loop": true,
 		"volume_db": -14
 	},
@@ -762,9 +758,90 @@
 		"category": "music",
 		"concept": "The Laboratory theme — tinkering curiosity: plucked strings, celesta, clockwork whimsy.",
 		"prompt": "A whimsical curious loop with pizzicato strings, celesta, light clockwork percussion and a playful melody, inventor workshop theme, seamless loop, quirky, 60 seconds",
+		"dir": "music/lab",
 		"loop": true,
 		"volume_db": -14
-		},
+	},
+	{
+		"id": "music_forge",
+		"display_name": "Forge Music",
+		"category": "music",
+		"concept": "The Forge/combination screen's theme — focused craft: hammering things into new shapes, anticipation of what emerges.",
+		"prompt": "A focused mystical crafting loop with deep resonant chimes, soft anvil rhythms, warm low strings and a slowly building motif, magical forge theme, seamless loop, industrious, 60 seconds",
+		"dir": "music/forge",
+		"loop": true,
+		"volume_db": -14
+	},
+	{
+		"id": "music_shop",
+		"display_name": "Shop Music",
+		"category": "music",
+		"concept": "The shop's theme — a merchant's welcome: lighter and cheekier than the map, coins and curiosities.",
+		"prompt": "A cheerful bustling market loop with accordion, plucked strings, light tambourine and a friendly mischievous melody, fantasy merchant theme, seamless loop, welcoming, 60 seconds",
+		"dir": "music/shop",
+		"loop": true,
+		"volume_db": -14
+	},
+	{
+		"id": "music_splash",
+		"display_name": "Splash Music",
+		"category": "music",
+		"concept": "The very first screen — the game saying hello: a short welcome before the hub takes over with the title theme.",
+		"prompt": "A warm inviting fantasy overture loop with gentle harp, soft strings and a hopeful rising motif, opening splash theme, seamless loop, welcoming, 60 seconds",
+		"dir": "music/splash",
+		"loop": true,
+		"volume_db": -14
+	},
+	{
+		"id": "music_elite",
+		"display_name": "Elite Combat Music",
+		"category": "music",
+		"concept": "The elite battle theme — between combat and boss: meaner than a regular fight, but not yet the end of the act.",
+		"prompt": "A tense driving fantasy battle loop with aggressive strings, heavy war drums and a dangerous minor-key brass motif, elite encounter theme, seamless loop, menacing, 60 seconds",
+		"dir": "music/elite_encounter",
+		"loop": true,
+		"volume_db": -14
+	},
+	{
+		"id": "music_rest",
+		"display_name": "Rest Site Music",
+		"category": "music",
+		"concept": "The rest site — a campfire exhale: safe, warm, patient; the run's one guilt-free pause.",
+		"prompt": "A calm restful fantasy loop with soft acoustic guitar, warm pads, gentle crackling ambience feel and a lullaby-like melody, campfire rest theme, seamless loop, soothing, 60 seconds",
+		"dir": "music/rest",
+		"loop": true,
+		"volume_db": -14
+	},
+	{
+		"id": "music_rewards",
+		"display_name": "Rewards Music",
+		"category": "music",
+		"concept": "The post-victory reward pick — spoils on the table: upbeat, celebratory, but brief-feeling (the player is just passing through).",
+		"prompt": "A bright celebratory fantasy loop with playful bells, plucked strings, light fanfare accents and a cheerful bouncing melody, victory spoils theme, seamless loop, rewarding, 60 seconds",
+		"dir": "music/rewards",
+		"loop": true,
+		"volume_db": -14
+	},
+	{
+		"id": "music_special_event",
+		"display_name": "Special Event Music",
+		"category": "music",
+		"concept": "The \"?\" event stops — curiosity with an edge: something unusual is on offer and it may not be free.",
+		"prompt": "A mysterious curious fantasy loop with music box, soft tremolo strings, sparse harp and an enigmatic wandering melody, strange encounter theme, seamless loop, intriguing, 60 seconds",
+		"dir": "music/special_event",
+		"loop": true,
+		"volume_db": -14
+	},
+	{
+		"id": "music_stage_completed",
+		"display_name": "Stage Completed Music",
+		"category": "music",
+		"concept": "The act-boss-down interlude — a real milestone: triumphant relief before the next stage begins.",
+		"prompt": "A triumphant warm fantasy loop with proud horns, soaring strings and a resolved victorious melody settling into calm, stage complete theme, seamless loop, accomplished, 60 seconds",
+		"dir": "music/stage_completed",
+		"loop": true,
+		"volume_db": -14
+	},
 	{
 		"id": "stat_buff",
 		"display_name": "Stat Buff",

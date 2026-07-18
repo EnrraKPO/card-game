@@ -5,7 +5,7 @@ var error_label: Label
 
 
 func _ready() -> void:
-	Sfx.music("music_title")
+	Sfx.music("music_splash")
 	Nav.clear_back()   # onboarding root — the OS back gesture stays inert (never quits)
 	if not GameData.username.is_empty():
 		# Deferred: changing scene mid-_ready trips the tree's "busy adding children" guard.

@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://mf3d8br58ehj"
+path="res://.godot/imported/Iron Feast Parade_2.mp3-e12bbc5c9e3bad649bb920fa46529de9.mp3str"
+
+[deps]
+
+source_file="res://assets/music/map/Iron Feast Parade_2.mp3"
+dest_files=["res://.godot/imported/Iron Feast Parade_2.mp3-e12bbc5c9e3bad649bb920fa46529de9.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

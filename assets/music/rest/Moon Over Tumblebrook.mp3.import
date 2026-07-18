@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://b3g2a3k75fhrq"
+path="res://.godot/imported/Moon Over Tumblebrook.mp3-3048fe31aa1e76be9a1afe88cfa807e1.mp3str"
+
+[deps]
+
+source_file="res://assets/music/rest/Moon Over Tumblebrook.mp3"
+dest_files=["res://.godot/imported/Moon Over Tumblebrook.mp3-3048fe31aa1e76be9a1afe88cfa807e1.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

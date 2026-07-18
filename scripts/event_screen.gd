@@ -19,6 +19,7 @@ var _upgrade_btn: Button
 
 
 func _ready() -> void:
+	Sfx.music("music_special_event")
 	Sfx.play("map_event_open")
 	_attr = GameData.current_event_attr
 	if _attr.is_empty():

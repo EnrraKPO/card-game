@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://b1pdgpmsh75g6"
+path="res://.godot/imported/Gift Box Parade.mp3-a74f03431c44cd3aa7308a1814218c4b.mp3str"
+
+[deps]
+
+source_file="res://assets/music/stage_completed/Gift Box Parade.mp3"
+dest_files=["res://.godot/imported/Gift Box Parade.mp3-a74f03431c44cd3aa7308a1814218c4b.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

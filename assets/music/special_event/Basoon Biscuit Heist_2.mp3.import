@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://dmxhr4073mdro"
+path="res://.godot/imported/Basoon Biscuit Heist_2.mp3-0ea96ead637adca8297baf1df23f59ea.mp3str"
+
+[deps]
+
+source_file="res://assets/music/special_event/Basoon Biscuit Heist_2.mp3"
+dest_files=["res://.godot/imported/Basoon Biscuit Heist_2.mp3-0ea96ead637adca8297baf1df23f59ea.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

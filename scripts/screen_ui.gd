@@ -244,6 +244,13 @@ static func build_header() -> Dictionary:
 		refs[key] = built.ref
 		row.add_child(built.widget)
 
+	# The settings gear — the header's one always-available action (audio settings today).
+	# A persistent piece like everything else; the Shell wires what pressing it opens.
+	var gear := action_button("⚙", Callable(), Vector2(side_dev(), side_dev()), 26)
+	gear.tooltip_text = "Settings"
+	gear.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(gear)
+
 	# The two placeholder mute/hide dev toggles, sat just left of the ✕. Built once as part of the
 	# persistent header (like every other piece); the Shell wires their behavior and DevFlags sync.
 	# Their visibility is the Shell's call (debug builds only) — see Shell._wire_dev_toggles.
@@ -266,7 +273,7 @@ static func build_header() -> Dictionary:
 	debug_close.visible = false
 	row.add_child(debug_close)
 
-	return {"bar": bar, "title": title_lbl, "fields": fields, "refs": refs,
+	return {"bar": bar, "title": title_lbl, "fields": fields, "refs": refs, "gear": gear,
 		"close": close, "debug_close": debug_close, "dev_sfx": dev_sfx, "dev_vfx": dev_vfx}
 
 

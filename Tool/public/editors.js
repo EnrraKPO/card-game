@@ -795,10 +795,71 @@ function playSoundPlaceholder(d) {
   setTimeout(() => ctx.close(), secs * 1000 + 100);
 }
 
+// ── AI SFX generation (local AudioGen server via the Tool backend) ───────────
+// Generate candidate wavs from the entry's prompt, audition them, install one as
+// THE asset (assets/sound/<id>.wav — also stamps the entry's `file` field).
+function soundGenBox(draft, ctx, onChange) {
+  const status = el('span', { class: 'lab', text: '' });
+  const list = el('div');
+  const durIn = el('input', { type: 'number', value: '2', min: '0.5', max: '10', step: '0.5' });
+  const cntIn = el('input', { type: 'number', value: '3', min: '1', max: '8', step: '1' });
+
+  const renderList = candidates => {
+    list.innerHTML = '';
+    for (const f of candidates) {
+      list.append(el('div', { class: 'frow' },
+        el('button', { class: 'ghost', text: '▶', title: 'Audition this candidate',
+          onclick: e => { e.preventDefault();
+            new Audio('/sfxwav/' + encodeURIComponent(draft.id) + '/' + encodeURIComponent(f)).play(); } }),
+        el('span', { class: 'lab', text: f }),
+        el('button', { class: 'ghost', text: '✓ Use', title: 'Install as assets/sound/' + draft.id + '.wav',
+          onclick: async e => { e.preventDefault();
+            try {
+              const out = await api('/api/sfx/install', { id: draft.id, file: f });
+              draft.file = out.file; onChange();
+              status.textContent = 'Installed as assets/sound/' + out.file;
+            } catch (err) { status.textContent = err.message; } } }),
+        el('button', { class: 'ghost', text: '🗑', title: 'Discard candidate',
+          onclick: async e => { e.preventDefault();
+            const out = await api('/api/sfx/candidate-delete', { id: draft.id, file: f });
+            renderList(out.candidates); } }),
+      ));
+    }
+  };
+
+  if (draft.id) api('/api/sfx/candidates?id=' + encodeURIComponent(draft.id))
+    .then(out => renderList(out.candidates)).catch(() => {});
+
+  return groupBox('AI generation — local AudioGen',
+    el('div', { class: 'frow' },
+      el('div', { class: 'fld narrow' }, el('span', { class: 'lab', text: 'Duration (s)' }), durIn),
+      el('div', { class: 'fld narrow' }, el('span', { class: 'lab', text: 'Variants' }), cntIn),
+      el('button', { class: 'ghost', text: '🎵 Generate',
+        title: 'Generate candidate wavs from the AI prompt above (needs tools/audiogen server running)',
+        onclick: async e => {
+          e.preventDefault();
+          if (!draft.id) { status.textContent = 'Save an id first'; return; }
+          if (!(draft.prompt || '').trim()) { status.textContent = 'Write an AI prompt first'; return; }
+          const btn = e.target; btn.disabled = true;
+          status.textContent = 'Generating… (first call after server start is slower)';
+          try {
+            const out = await api('/api/sfx/generate', { id: draft.id, prompt: draft.prompt,
+              duration: parseFloat(durIn.value) || 2, count: parseInt(cntIn.value, 10) || 3 });
+            status.textContent = `Done in ${out.seconds}s`;
+            renderList(out.candidates);
+          } catch (err) { status.textContent = err.message; }
+          btn.disabled = false;
+        } }),
+      status,
+    ),
+    list,
+  );
+}
+
 const SoundEditor = {
   label: 'Sound',
   newItem: () => ({ id: '', display_name: '', category: 'ui', concept: '', prompt: '',
-    file: '', volume_db: 0, loop: false, enabled: true }),
+    file: '', dir: '', volume_db: 0, loop: false, enabled: true }),
   form(draft, ctx, onChange) {
     const wrap = el('div');
     const hasFile = () => !!(draft.file || '').trim();
@@ -820,6 +881,7 @@ const SoundEditor = {
             el('textarea', { value: draft.prompt || '', oninput: e => { draft.prompt = e.target.value; onChange(); } })),
         ),
       ),
+      soundGenBox(draft, ctx, onChange),
       groupBox('Playback',
         el('div', { class: 'frow' },
           el('div', { class: 'fld' }, checkInput(draft, 'enabled', onChange,
@@ -828,9 +890,17 @@ const SoundEditor = {
         el('div', { class: 'frow' },
           fld('Asset file', textInput(draft, 'file', onChange, '(empty = placeholder synth)'),
             'bare filename inside assets/sound/ — .mp3/.ogg/.wav'),
+          fld('Random pool folder', textInput(draft, 'dir', onChange, 'e.g. music/combat'),
+            'folder inside assets/ — each time the event starts, ONE member is drawn at random (overrides Asset file)'),
           fld('Volume trim (dB)', numInput(draft, 'volume_db', onChange, { step: 1, float: true, min: -60, max: 12 }),
             '0 = as authored, negative = gentler', 'narrow'),
           el('div', { class: 'fld' }, checkInput(draft, 'loop', onChange, 'Looped bed (drone / ambience / music)')),
+        ),
+        el('div', { class: 'frow' },
+          fld('Crossfade (s)', numInput(draft, 'fade', onChange, { step: 0.1, float: true, min: 0.05, max: 10 }),
+            'looped mp3/ogg only: seam blend length, also the start/stop fade', 'narrow'),
+          fld('Edge trim (s)', numInput(draft, 'trim', onChange, { step: 0.1, float: true, min: 0, max: 10 }),
+            'looped mp3/ogg only: seconds cut off BOTH asset ends', 'narrow'),
         ),
         el('div', { class: 'frow' },
           el('button', { class: 'ghost', text: '▶ Preview placeholder',
@@ -853,14 +923,19 @@ const SoundEditor = {
       category: d.category || 'ui', concept: d.concept || '', prompt: d.prompt || '' };
     if (d.enabled === false) out.enabled = false;   // parked — visible backlog
     if ((d.file || '').trim()) out.file = d.file.trim();
+    if ((d.dir || '').trim()) out.dir = d.dir.trim();
     if (d.volume_db) out.volume_db = d.volume_db;
     if (d.loop) out.loop = true;
+    // fade/trim ship only when they differ from the game's defaults (1.5 / 0.5)
+    if (d.fade != null && d.fade !== 1.5) out.fade = d.fade;
+    if (d.trim != null && d.trim !== 0.5) out.trim = d.trim;
     return out;
   },
   summarize(d) {
     const lines = [`${d.display_name || d.id || 'Unnamed sound'} — ${d.category || 'ui'} ${d.loop ? 'loop' : 'one-shot'}.`];
     if (d.enabled === false) lines.push('PARKED (enabled: false) — no live cue site yet; the game skips it at load.');
-    lines.push(d.file ? `Plays assets/sound/${d.file}${d.volume_db ? ` at ${d.volume_db} dB` : ''}.`
+    if (d.dir) lines.push(`Random pool: draws one file from assets/${d.dir}/ each time it starts${d.volume_db ? ` at ${d.volume_db} dB` : ''}.`);
+    else lines.push(d.file ? `Plays assets/sound/${d.file}${d.volume_db ? ` at ${d.volume_db} dB` : ''}.`
       : 'No asset yet — the game plays a placeholder synth blip for this event.');
     if (d.concept) lines.push(d.concept);
     return lines;
@@ -868,6 +943,8 @@ const SoundEditor = {
   toDraft(g) {
     const d = JSON.parse(JSON.stringify(g));
     if (d.enabled == null) d.enabled = true;
+    if (d.fade == null) d.fade = 1.5;
+    if (d.trim == null) d.trim = 0.5;
     return d;
   },
   promptFor(d) {

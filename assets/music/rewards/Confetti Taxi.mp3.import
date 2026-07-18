@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://cuohd0qec281r"
+path="res://.godot/imported/Confetti Taxi.mp3-fa4db8ccf7305cd94c32362358c7631c.mp3str"
+
+[deps]
+
+source_file="res://assets/music/rewards/Confetti Taxi.mp3"
+dest_files=["res://.godot/imported/Confetti Taxi.mp3-fa4db8ccf7305cd94c32362358c7631c.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

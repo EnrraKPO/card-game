@@ -86,9 +86,16 @@ func _ready() -> void:
 	_outer.add_child(_footer_bar)
 
 	_wire_dev_toggles()
+	(_header.gear as Button).pressed.connect(_open_settings)
 
 	if auto_start:
 		Nav.goto("res://scenes/entry_screen.tscn")
+
+
+# ── The settings overlay (the header gear) ───────────────────────────────────────
+# A Control overlay in the game's own art style — see SettingsOverlay.
+func _open_settings() -> void:
+	SettingsOverlay.open(self)
 
 
 # The two placeholder mute/hide dev toggles live IN the header (built by ScreenUI.build_header,

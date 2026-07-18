@@ -83,6 +83,9 @@ func _ready() -> void:
 	# "relic": pop the RelicInspector (map variant, with the Discard button).
 	if "relic" in args:
 		RelicInspector.open(shell, RelicData.get_relic("battle_standard"), true)
+	# "settings": pop the header gear's settings overlay.
+	if "settings" in args:
+		SettingsOverlay.open(shell)
 	# Upgrades: select a specific tree tab (pass its id after the scene path).
 	if scene_path.contains("upgrades") and args.size() > 1:
 		for n: Node in sv.find_children("*", "Control", true, false):
