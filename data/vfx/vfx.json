@@ -217,8 +217,8 @@
 		},
 		"placeholder": false,
 		"sfx": "attack_crit",
-		"concept": "An attack lands unusually hard — needs to read as a POWERFUL escalation ALONGSIDE the normal damage numbers (real damage still lands, unlike a dodge), distinct from the target's own cyan Dodge cue.",
-		"explanation": "IMPLEMENTED (VFXEffectCrit): a hot red-orange \"Critical!\" label pops off the victim next to the ordinary damage readouts; the attacker's Speed badge glints at the combat call site (speed drives crit).",
+		"concept": "An attack lands unusually hard — needs to read as a POWERFUL escalation ALONGSIDE the normal damage numbers (real damage still lands, unlike a dodge), distinct from the target's own cyan Dodge cue. It has to feel like it HURTS, and hurt MORE the harder the hit.",
+		"explanation": "IMPLEMENTED (VFXEffectCrit), DAMAGE-SCALED: severity = landed damage / the victim's max health drives every knob. The victim flashes hot, takes a squash punch, shakes violently and emits a red-orange shockwave ring, under a slam-in \"CRITICAL!\" label whose size grows with severity. The attacker's Speed badge glints at the combat call site (speed drives crit).",
 		"prompt": "Sprite sheet of a sharp red-orange impact burst, jagged energy crack radiating outward, 6 frames on transparent background, 2d game effect"
 	},
 	{

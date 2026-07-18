@@ -97,12 +97,14 @@ static func dodge(card: CardUI) -> VFXEvent:
 
 
 # A critical hit: real damage STILL lands (unlike dodge/miss), so this cue plays ALONGSIDE the
-# shield/health numbers, not instead of them — a hot "Critical!" label popping off the victim.
-# The attacker-side half of the cue (the Speed badge glint — speed drives crit) is wired at the
-# combat call site, since the event targets the card being hit.
-static func crit(card: CardUI) -> VFXEvent:
+# shield/health numbers, not instead of them. `dmg` is the hit's TOTAL landed damage — the
+# effect scales its violence with it (relative to the victim's max health), so a graze-crit
+# stings and a near-lethal one erupts. The attacker-side half of the cue (the Speed badge
+# glint — speed drives crit) is wired at the combat call site, since the event targets the
+# card being hit.
+static func crit(card: CardUI, dmg: int = 0) -> VFXEvent:
 	var e := VFXEvent.new()
-	e.type = Type.CRIT; e.target = card
+	e.type = Type.CRIT; e.target = card; e.amount = dmg
 	return e
 
 

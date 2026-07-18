@@ -622,7 +622,7 @@ func _apply_attack_damage(attacker: CardInstance, target: CardInstance, t_card: 
 			# glints (speed drives crit, mirroring how a dodge glints the dodger's Speed). The
 			# attacker's live presentation may be its lunge ghost mid-melee — same routing as
 			# _get_card_ui in _ready.
-			_vfx.play(VFXEvent.crit(t_card))
+			_vfx.play(VFXEvent.crit(t_card, dmg))
 			var a_ui: CardUI = _ghost_ui.get(attacker)
 			if a_ui == null or not is_instance_valid(a_ui):
 				a_ui = _board.get_card_ui(attacker)
