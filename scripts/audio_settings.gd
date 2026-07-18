@@ -24,9 +24,11 @@ var mutes := {"music": false, "sfx": false}
 
 
 func _ready() -> void:
-	# The buses are created in code (not a bus-layout resource) so they exist wherever this
-	# autoload runs — the render harness and headless tests included. Must precede Sfx's
-	# player creation in autoload order (players name their bus at construction).
+	# The buses are DEFINED in default_bus_layout.tres — web exports silently ignore buses
+	# created at runtime (Godot bug, all audio routed to them is dead in the browser). This
+	# loop is only a fallback guard for contexts that skip the default layout, keeping the
+	# render harness and headless tests safe. Must precede Sfx's player creation in autoload
+	# order (players name their bus at construction).
 	for bus_name: String in _BUS_OF.values():
 		if AudioServer.get_bus_index(bus_name) == -1:
 			var idx := AudioServer.bus_count
