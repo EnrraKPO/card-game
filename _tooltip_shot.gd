@@ -24,7 +24,7 @@ func _ready() -> void:
 	rook.col = 1
 	rook.autocast_ability = "castling"
 
-	var pawn := CardInstance.from_data(CardData.get_card("pawn"))
+	var pawn := CardInstance.from_data(CardData.get_card("air_fire_king"))
 	pawn.owner = 0
 
 	# CenterContainer sizes each child to its MINIMUM size — the same thing the tooltip popup
@@ -37,6 +37,10 @@ func _ready() -> void:
 	center.add_child(row)
 	row.add_child(CardTooltip.build(rook, false))
 	row.add_child(CardTooltip.build(pawn, true))
+	# A native-tooltip body sample (what TipButton/TipPanel hovers pop), keyword-rich.
+	var tip := TextIcons.tooltip_body(
+		"Septic Ward — when a rook or bishop dies from poison, your king gains 2 shield.")
+	row.add_child(tip)
 
 	for _i in 8:
 		await get_tree().process_frame

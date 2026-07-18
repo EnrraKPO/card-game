@@ -442,9 +442,8 @@ func _make_card_offer(grant: Grant) -> Control:
 		(ui as CardUI).pressed.connect(func() -> void: _pick(grant, ui))
 	wrap.add_child(ui)
 
-	var desc_lbl := _offer_label(data.description if data != null else "", 16, ScreenUI.TEXT_COLOR)
-	desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	desc_lbl.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	var desc_text: String = data.description if data != null else ""
+	var desc_lbl := TextIcons.rich_label(desc_text, 16, ScreenUI.TEXT_COLOR, true)
 	wrap.add_child(desc_lbl)
 
 	# The card shrinks a deliberate fixed fraction of its cell's height to leave room for the
@@ -464,7 +463,8 @@ func _make_card_offer(grant: Grant) -> Control:
 		ui.size = Vector2(card_w, card_h)
 		desc_lbl.position = Vector2(0.0, card_h + GAP)
 		desc_lbl.size = Vector2(cw, desc_h)
-		desc_lbl.add_theme_font_size_override("font_size", clampi(roundi(cw / 15.0), 12, 22))
+		desc_lbl.add_theme_font_size_override("normal_font_size", clampi(roundi(cw / 15.0), 12, 22))
+		TextIcons.set_text(desc_lbl, desc_text, true)   # re-derive icon sizes from the new font
 	)
 	return wrap
 
@@ -499,7 +499,7 @@ func _make_charm_offer(grant: Grant) -> Control:
 # not pickable — an empty string means "always available".
 func _make_info_offer(grant: Grant, tag: String, accent: Color, icon: Texture2D, glyph: String,
 		name_text: String, desc_text: String, pickable: bool, full_text: String) -> Control:
-	var btn := Button.new()
+	var btn: Button = TextIcons.TipButton.new()   # tooltip renders keyword icons
 	btn.tooltip_text = grant.tooltip()
 	btn.disabled = not pickable
 	var style := StyleBoxFlat.new()
@@ -534,8 +534,7 @@ func _make_info_offer(grant: Grant, tag: String, accent: Color, icon: Texture2D,
 	var name_lbl := _offer_label(name_text, 20, ScreenUI.TEXT_COLOR)
 	name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	v.add_child(name_lbl)
-	var desc := _offer_label(desc_text, 16, Color("4a3d2e"))
-	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var desc := TextIcons.rich_label(desc_text, 16, Color("4a3d2e"), true)
 	v.add_child(desc)
 	var full_lbl: Label = null
 	if not pickable and not full_text.is_empty():
@@ -557,8 +556,9 @@ func _make_info_offer(grant: Grant, tag: String, accent: Color, icon: Texture2D,
 		tag_lbl.add_theme_font_size_override("font_size", clampi(roundi(16 * scale), 12, 26))
 		name_lbl.add_theme_font_size_override("font_size", clampi(roundi(20 * scale), 14, 32))
 		name_lbl.custom_minimum_size.x = w - 18
-		desc.add_theme_font_size_override("font_size", clampi(roundi(16 * scale), 12, 24))
+		desc.add_theme_font_size_override("normal_font_size", clampi(roundi(16 * scale), 12, 24))
 		desc.custom_minimum_size.x = w - 18
+		TextIcons.set_text(desc, desc_text, true)   # re-derive icon sizes from the new font
 		if full_lbl != null:
 			full_lbl.add_theme_font_size_override("font_size", clampi(roundi(16 * scale), 12, 24))
 		v.add_theme_constant_override("separation", clampi(roundi(8 * scale), 4, 14))

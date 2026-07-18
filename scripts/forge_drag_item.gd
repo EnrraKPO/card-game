@@ -23,6 +23,11 @@ func setup(content: Control, p: Dictionary) -> void:
 	add_child(content)
 
 
+# Charm chips' hosted tooltips (see setup) render keyword icons like every other rules text.
+func _make_custom_tooltip(for_text: String) -> Object:
+	return TextIcons.tooltip_body(for_text)
+
+
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton

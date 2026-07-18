@@ -52,7 +52,7 @@ func grant(_id: String, _count: int) -> void:
 # frameless (relic art carries its own frame + transparency); without one it falls back to the
 # coloured `letter` glyph.
 static func make_chip(letter: String, col: Color, tip: String, icon: Texture2D = null) -> Control:
-	var chip := Panel.new()
+	var chip: Panel = TextIcons.TipPanel.new()   # tooltip renders keyword icons
 	chip.custom_minimum_size = Vector2(64, 64)
 	chip.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	chip.tooltip_text = tip

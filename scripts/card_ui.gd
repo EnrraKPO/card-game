@@ -530,7 +530,8 @@ func _refresh_composition() -> void:
 		_comp_row.add_child(_make_comp_chip(pc, false))
 
 
-func _make_comp_chip(comp_id: String, is_element: bool) -> Control:
+# Static so the inline-text chip bake (_chip_bake.gd) can render THE chip, not a replica.
+static func _make_comp_chip(comp_id: String, is_element: bool) -> Control:
 	var info: Dictionary = COMP_VISUALS.get(
 		comp_id, { "color": Color(0.5, 0.5, 0.5), "letter": "?", "text": Color.WHITE })
 

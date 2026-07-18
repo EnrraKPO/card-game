@@ -11,7 +11,7 @@ var _tree_view: UpgradeTreeView
 var _tabs: HFlowContainer
 var _detail_icon: TextureRect
 var _detail_title: Label
-var _detail_body: Label
+var _detail_body: RichTextLabel
 var _buy_btn: Button
 var _exp_pad: MarginContainer
 var _tab_buttons: Dictionary = {}    # tree id -> Button
@@ -37,7 +37,7 @@ func _ready() -> void:
 	var trees := UpgradeTree.all()
 	if trees.is_empty():
 		_detail_title.text = "No upgrades authored yet"
-		_detail_body.text = "Add skill trees in data/upgrades/*.json and they'll appear here."
+		TextIcons.set_text(_detail_body, "Add skill trees in data/upgrades/*.json and they'll appear here.")
 		return
 	for tree: UpgradeTree in trees:
 		_tabs.add_child(_make_tab(tree))
@@ -127,9 +127,7 @@ func _build_body(root: Control) -> void:
 	_buy_btn.visible = false
 	head.add_child(_buy_btn)
 
-	_detail_body = Label.new()
-	_detail_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_detail_body.add_theme_font_size_override("font_size", 19 if _compact else 14)
+	_detail_body = TextIcons.rich_label("", 19 if _compact else 14)
 	_detail_body.size_flags_vertical = SIZE_EXPAND_FILL
 	dbox.add_child(_detail_body)
 
@@ -157,7 +155,7 @@ func _select_tree(tree_id: String) -> void:
 	_buy_btn.visible = false
 	if tree != null:
 		_detail_title.text = tree.display_name
-		_detail_body.text = tree.description
+		TextIcons.set_text(_detail_body, tree.description)
 		_detail_icon.texture = tree.icon
 		_detail_icon.visible = tree.icon != null
 
@@ -165,7 +163,7 @@ func _select_tree(tree_id: String) -> void:
 func _on_node_selected(node: UpgradeNode) -> void:
 	_selected_node = node
 	_detail_title.text = "%s   ·   Cost %d" % [node.display_name, node.cost]
-	_detail_body.text = node.description
+	TextIcons.set_text(_detail_body, node.description)
 	_refresh_buy_btn()
 
 

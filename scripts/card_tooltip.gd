@@ -87,9 +87,7 @@ static func build(inst: CardInstance, show_cost := true, scale := 1.0) -> Contro
 
 	var desc := inst.data.description
 	if not desc.is_empty():
-		var desc_lbl := Label.new()
-		desc_lbl.text = desc
-		vbox.add_child(_wrap_label(desc_lbl, col_w, int(18.0 * s), TEXT_MAIN))
+		vbox.add_child(_rich_label(desc, col_w, int(18.0 * s), TEXT_MAIN))
 
 	# Activated abilities: a SMALL ability-widget view per ability beside its description —
 	# the same visual the tray uses, so "this is an ability" reads identically everywhere.
@@ -109,9 +107,8 @@ static func build(inst: CardInstance, show_cost := true, scale := 1.0) -> Contro
 			var charm := CharmData.get_charm(charm_id)
 			if charm == null:
 				continue
-			var ch_lbl := Label.new()
-			ch_lbl.text = "%s  %s — %s" % [charm.letter, charm.display_name, charm.description]
-			vbox.add_child(_wrap_label(ch_lbl, col_w, int(15.0 * s), charm.color.lightened(0.35)))
+			var ch_line := "%s  %s — %s" % [charm.letter, charm.display_name, charm.description]
+			vbox.add_child(_rich_label(ch_line, col_w, int(15.0 * s), charm.color.lightened(0.35)))
 
 	# Active statuses: one line each (glyph, name, count, description), colour-matched to its pip.
 	if not inst.statuses.is_empty():
@@ -128,10 +125,8 @@ static func build(inst: CardInstance, show_cost := true, scale := 1.0) -> Contro
 			var line := "%s%s" % [sd.display_name, (" %d" % cnt) if cnt > 0 else ""]
 			if not sd.description.is_empty():
 				line += " — %s" % sd.description
-			var st_lbl := Label.new()
-			st_lbl.text = line
 			# The pip + the row's separation, so pip + text fill the column.
-			row.add_child(_wrap_label(st_lbl, col_w - 28.0 * s, int(15.0 * s),
+			row.add_child(_rich_label(line, col_w - 28.0 * s, int(15.0 * s),
 				sd.color.lightened(0.35)))
 			vbox.add_child(row)
 
@@ -157,15 +152,14 @@ static func _ability_row(inst: CardInstance, ab: AbilityData, s := 1.0) -> Contr
 	w.draggable = false
 	row.add_child(w)
 
-	var lbl := Label.new()
 	var line := ab.display_name
 	if not ab.description.is_empty():
 		line += " — " + ab.description
-	lbl.text = line
-	lbl.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	# Widget width + the row's separation leaves this much column for the text.
-	row.add_child(_wrap_label(lbl, (COLUMN_WIDTH - ABILITY_WIDGET_SIZE.x - 10.0) * s,
-		int(15.0 * s), TEXT_MAIN))
+	var lbl := _rich_label(line, (COLUMN_WIDTH - ABILITY_WIDGET_SIZE.x - 10.0) * s,
+		int(15.0 * s), TEXT_MAIN)
+	lbl.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(lbl)
 	return row
 
 
@@ -186,3 +180,13 @@ static func _wrap_label(lbl: Label, width: float, font_size: int, color: Color) 
 	lbl.add_theme_font_size_override("font_size", font_size)
 	lbl.add_theme_color_override("font_color", color)
 	return lbl
+
+
+# Rules-text counterpart of _wrap_label: a RichTextLabel so element/piece keywords render as
+# inline icons (TextIcons). Same SIZING RULE — width pinned so fit_content reports the real
+# rendered height instead of phantom lines.
+static func _rich_label(text: String, width: float, font_size: int, color: Color) -> RichTextLabel:
+	var rtl := TextIcons.rich_label(text, font_size, color)
+	rtl.custom_minimum_size.x = width
+	rtl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	return rtl

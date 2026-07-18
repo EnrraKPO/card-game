@@ -109,13 +109,8 @@ func _ready() -> void:
 	name_lbl.add_theme_color_override("font_color", CardTooltip.TEXT_TITLE)
 	inner.add_child(name_lbl)
 
-	var desc := Label.new()
-	desc.text = _relic.description
-	desc.autowrap_mode = TextServer.AUTOWRAP_WORD
+	var desc := TextIcons.rich_label(_relic.description, 30, CardTooltip.TEXT_MAIN, true)
 	desc.custom_minimum_size.x = DESC_WIDTH
-	desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	desc.add_theme_font_size_override("font_size", 30)
-	desc.add_theme_color_override("font_color", CardTooltip.TEXT_MAIN)
 	inner.add_child(desc)
 
 	if _can_discard:

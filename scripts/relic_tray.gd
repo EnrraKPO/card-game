@@ -94,7 +94,7 @@ func _make_chip(relic: RelicData) -> Button:
 		s = CHIP_VERTICAL_COMPACT if UIScale.is_compact() else CHIP_VERTICAL
 	else:
 		s = CHIP_COMPACT if UIScale.is_compact() else CHIP
-	var btn := Button.new()
+	var btn: Button = TextIcons.TipButton.new()   # tooltip renders keyword icons
 	btn.custom_minimum_size = Vector2(s, s)
 	if vertical:
 		btn.size_flags_horizontal = SIZE_SHRINK_CENTER

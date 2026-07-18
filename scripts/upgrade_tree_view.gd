@@ -116,7 +116,7 @@ func refresh_states() -> void:
 
 
 func _add_card(n: UpgradeNode, pos: Vector2, scale: float) -> void:
-	var btn := Button.new()
+	var btn: Button = TextIcons.TipButton.new()   # tooltip renders keyword icons
 	btn.position = pos
 	btn.custom_minimum_size = _card_size
 	btn.size = _card_size

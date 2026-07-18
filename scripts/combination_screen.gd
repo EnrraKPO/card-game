@@ -347,7 +347,7 @@ func _make_charm_item(charm_id: String, count: int) -> ForgeDragItem:
 
 func _make_charm_chip(charm_id: String, count: int, size: Vector2) -> Control:
 	var charm := CharmData.get_charm(charm_id)
-	var chip := Panel.new()
+	var chip: Panel = TextIcons.TipPanel.new()   # tooltip renders keyword icons
 	chip.custom_minimum_size = size
 	var style := StyleBoxFlat.new()
 	style.bg_color = (charm.color.lightened(0.1) if charm != null else Color(0.4, 0.4, 0.5))
@@ -900,13 +900,8 @@ func _show_result_toast(result_inst: CardInstance) -> void:
 
 	var desc := result_inst.data.description
 	if not desc.is_empty():
-		var desc_lbl := Label.new()
-		desc_lbl.text = desc
-		desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD
-		desc_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		var desc_lbl := TextIcons.rich_label(desc, 20 if _compact else 14, Color("3a2f22"), true)
 		desc_lbl.custom_minimum_size.x = 360.0 if _compact else 280.0
-		desc_lbl.add_theme_font_size_override("font_size", 20 if _compact else 14)
-		desc_lbl.add_theme_color_override("font_color", Color("3a2f22"))
 		col.add_child(desc_lbl)
 
 	var hint := Label.new()
@@ -960,13 +955,10 @@ func _make_combine_cell(inst: CardInstance, cs: Vector2) -> Control:
 
 	var desc := inst.data.description
 	if not desc.is_empty():
-		var desc_lbl := Label.new()
-		desc_lbl.text = desc
-		desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD
-		desc_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		desc_lbl.custom_minimum_size.x = 300.0 if _compact else 220.0   # wider than the card so text wraps to fewer lines
-		desc_lbl.add_theme_font_size_override("font_size", 18 if _compact else 14)
-		desc_lbl.add_theme_color_override("font_color", Color("3a2f22"))   # dark text — modal panel is light SURFACE_DEEP
+		# Dark text (modal panel is light SURFACE_DEEP); wider than the card so text wraps to
+		# fewer lines.
+		var desc_lbl := TextIcons.rich_label(desc, 18 if _compact else 14, Color("3a2f22"), true)
+		desc_lbl.custom_minimum_size.x = 300.0 if _compact else 220.0
 		cell.add_child(desc_lbl)
 
 	return cell

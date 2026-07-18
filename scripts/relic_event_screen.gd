@@ -70,12 +70,8 @@ func _make_offer(grant: Grant, compact: bool) -> Control:
 	slot.add_child(name_lbl)
 
 	var relic := RelicData.get_relic(grant.id)
-	var desc := Label.new()
-	desc.text = relic.description if relic != null else ""
-	desc.add_theme_font_size_override("font_size", 18 if compact else 13)
-	desc.add_theme_color_override("font_color", Color("4a3d2e"))
-	desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var desc := TextIcons.rich_label(relic.description if relic != null else "",
+		18 if compact else 13, Color("4a3d2e"), true)
 	desc.custom_minimum_size = Vector2(220.0 if compact else 180.0, 0)
 	slot.add_child(desc)
 
