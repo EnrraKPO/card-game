@@ -54,9 +54,6 @@ static func create_new(profile: ProfileData = null) -> RunData:
 		run.king_id = ProfileData.STARTING_KING
 		run.deck    = _deck_from_variants(DeckData.get_deck(DeckData.FALLBACK_ID))
 	run.act = 1
-	# Starting charm inventory — generous for now so the forge/shop charm flow is testable;
-	# trim once charms are properly earned through rewards.
-	run.charms = ["sharpened", "sharpened", "vampiric", "warded", "rallying", "thorned"]
 	return run
 
 
