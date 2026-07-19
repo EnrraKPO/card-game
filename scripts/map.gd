@@ -95,7 +95,7 @@ func get_chrome() -> Dictionary:
 		actions.append({"label": "Debug Items",
 				"action": func() -> void: Nav.goto("res://scenes/debug_shop.tscn"), "align": "right"})
 	return {"fields": [ScreenUI.Field.ACT, ScreenUI.Field.HP, ScreenUI.Field.GOLD,
-			ScreenUI.Field.RELICS, ScreenUI.Field.EXP], "exit": _on_quit_pressed,
+			ScreenUI.Field.MINERAL, ScreenUI.Field.RELICS, ScreenUI.Field.EXP], "exit": _on_quit_pressed,
 		"show_footer": true, "inset": false, "footer_actions": actions}
 
 

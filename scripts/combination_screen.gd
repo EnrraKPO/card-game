@@ -101,7 +101,7 @@ func _ready() -> void:
 func get_chrome() -> Dictionary:
 	return {"title": "Forge", "exit": _leave,
 		"fields": [ScreenUI.Field.ACT, ScreenUI.Field.HP, ScreenUI.Field.GOLD,
-			ScreenUI.Field.RELICS, ScreenUI.Field.EXP],
+			ScreenUI.Field.MINERAL, ScreenUI.Field.RELICS, ScreenUI.Field.EXP],
 		"show_footer": true}
 
 
@@ -615,7 +615,9 @@ func _clear_hover_visuals() -> void:
 func _resolve_drag() -> void:
 	var payload := _drag
 	var hover := _hover_idx
-	var did := hover >= 0 and bool(_evaluate_target(payload, hover).get("ok", false))
+	var verdict: Dictionary = _evaluate_target(payload, hover) if hover >= 0 else {}
+	# "affordable" only exists on combine verdicts (mineral cost); enchants default to true.
+	var did: bool = bool(verdict.get("ok", false)) and bool(verdict.get("affordable", true))
 	# Capture what's needed before teardown clears state.
 	var src_idx: int = int(payload.get("idx", -1))
 	var charm_id: String = str(payload.get("id", ""))
@@ -686,6 +688,18 @@ func _confirm_combine(src_idx: int, tgt_idx: int, result_dc: DeckCard) -> void:
 	prompt.autowrap_mode = TextServer.AUTOWRAP_WORD
 	prompt.add_theme_font_size_override("font_size", 24 if _compact else 16)
 	col.add_child(prompt)
+
+	# The merge's Magic Mineral price (unaffordable pairs never reach this modal — every
+	# path here gates on the verdict's "affordable").
+	var cost := ForgeCosts.merge_cost(_entries[src_idx].data as CardData,
+			_entries[tgt_idx].data as CardData)
+	var cost_lbl := Label.new()
+	cost_lbl.text = "Cost: %d Magic Mineral  (you have %d)" \
+			% [cost, GameData.current_run.magic_mineral]
+	cost_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	cost_lbl.add_theme_font_size_override("font_size", 24 if _compact else 16)
+	cost_lbl.add_theme_color_override("font_color", Materials.color(Materials.MAGIC_MINERAL))
+	col.add_child(cost_lbl)
 
 	var cs := Vector2(190, 249) if _compact else Vector2(150, 196)   # keeps the 260×340 aspect
 	var row := HBoxContainer.new()
@@ -1013,8 +1027,17 @@ func _evaluate_target(payload: Dictionary, target_idx: int) -> Dictionary:
 		var rdc := DeckCard.make(result.id)
 		for charm_id: String in _merged_parent_charms([_entries[int(payload.idx)].card, tgt.card], result):
 			rdc.add_charm(charm_id)
-		return {"ok": true, "status": "Result: %s" % result.display_name, "color": OK_COLOR,
-			"preview": rdc.make_instance(), "result_dc": rdc}
+		# Merging costs Magic Mineral (see ForgeCosts). An unaffordable pair still previews its
+		# result (ok stays true) but can't be forged — every action path gates on "affordable".
+		var cost := ForgeCosts.merge_cost(a, b)
+		var have: int = GameData.current_run.magic_mineral if GameData.current_run != null else 0
+		if have < cost:
+			return {"ok": true, "affordable": false, "cost": cost,
+				"status": "Result: %s\nNeeds %d Magic Mineral — you have %d" % [result.display_name, cost, have],
+				"color": BAD_COLOR, "preview": rdc.make_instance(), "result_dc": rdc}
+		return {"ok": true, "affordable": true, "cost": cost,
+			"status": "Result: %s\nCost: %d Magic Mineral (you have %d)" % [result.display_name, cost, have],
+			"color": OK_COLOR, "preview": rdc.make_instance(), "result_dc": rdc}
 	else:
 		var charm := CharmData.get_charm(str(payload.id))
 		var data: CardData = tgt.data
@@ -1189,7 +1212,8 @@ func _refresh_forge() -> void:
 			if bool(verdict.get("ok", false)):
 				result_inst = verdict.get("preview", null)
 				_result_deck_card = verdict.get("result_dc", null)
-				can_act = true
+				# A valid pair still previews when unaffordable, but the button stays off.
+				can_act = bool(verdict.get("affordable", true))
 		elif a_inst != null or b_inst != null:
 			status = "Select another card to combine."
 		else:
@@ -1298,7 +1322,7 @@ func _on_combine_pressed() -> void:
 	if _sel_a < 0 or _sel_b < 0:
 		return
 	var verdict := _evaluate_target({"kind": "card", "idx": _sel_a}, _sel_b)
-	if not bool(verdict.get("ok", false)):
+	if not bool(verdict.get("ok", false)) or not bool(verdict.get("affordable", true)):
 		return
 	_start_panel_fusion(_sel_a, _sel_b, verdict.get("result_dc", null))
 
@@ -1308,6 +1332,14 @@ func _on_combine_pressed() -> void:
 func _do_combine(src_idx: int, tgt_idx: int, result_dc: DeckCard) -> void:
 	if result_dc == null or src_idx < 0:
 		return
+	# The mineral spend — recomputed here (the single commit point for both the modal and the
+	# panel path) so it can never drift from what the preview quoted. Every route in already
+	# gated on affordability; the guard is belt-and-braces against a stale UI.
+	var cost := ForgeCosts.merge_cost(_entries[src_idx].data as CardData,
+			_entries[tgt_idx].data as CardData)
+	if GameData.current_run.magic_mineral < cost:
+		return
+	GameData.current_run.magic_mineral -= cost
 	var src_deck: int = int(_entries[src_idx].deck_idx)
 	var tgt_deck: int = int(_entries[tgt_idx].deck_idx)
 	# Remove both source cards highest-deck-index-first to avoid index shifting.

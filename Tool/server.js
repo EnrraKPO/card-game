@@ -394,7 +394,7 @@ const MATERIAL_IDS = [
 const ECONOMY_DEFAULT = {
   initial: { materials: {}, upgrade_points: 0 },
   debug: {
-    enabled: true, gold: -1,
+    enabled: true, gold: -1, magic_mineral: -1,
     materials: Object.assign({ king_piece: 21 },
       ...MAT_PIECES.filter(p => p !== 'king').map(p => ({ [p + '_piece']: 10 })),
       ...MAT_ELEMENTS.map(e => ({ [e + '_stone']: 10 }))),
@@ -415,6 +415,8 @@ function economyBag(src, def, isDebug) {
   if (isDebug) {
     out.enabled = typeof s.enabled === 'boolean' ? s.enabled : def.enabled;
     out.gold = (Number.isFinite(s.gold) && s.gold >= 0) ? Math.round(s.gold) : -1;
+    out.magic_mineral = (Number.isFinite(s.magic_mineral) && s.magic_mineral >= 0)
+      ? Math.round(s.magic_mineral) : -1;
   }
   return out;
 }
@@ -434,8 +436,14 @@ function getEconomy() {
 const GAME_ATTRS_PATH = path.join(GAME_ROOT, 'data/game_attributes.json');
 const GAME_ATTRS_DEFAULT = {
   'mana.initial': 1, 'mana.max': 10, 'mana.per_turn': 0, 'hand.size.initial': 3,
-  'draw.per_turn': 1, 'gold.initial': 100, 'king.max_health': 0, 'relic.capacity': 10,
+  'draw.per_turn': 1, 'gold.initial': 100, 'magic_mineral.initial': 5,
+  'king.max_health': 0, 'relic.capacity': 10,
   'reward.essence': 0, 'reward.king_piece_chance': 0.0,
+  'reward.gold.combat': 0, 'reward.gold.elite': 0, 'reward.gold.boss': 0,
+  'reward.magic_mineral.combat': 2, 'reward.magic_mineral.elite': 3, 'reward.magic_mineral.boss': 5,
+  'forge.cost.per_piece': 2, 'forge.cost.per_element': 1,
+  'forge.cost.element_only': 0, 'forge.cost.piece_op': 1,
+  'shop.magic_mineral.price': 25,
 };
 function getGameAttrs() {
   const d = readJson(GAME_ATTRS_PATH, {}) || {};
@@ -899,7 +907,12 @@ const SUBJECTS = ['self','ally','enemy','any'];
 const COMPARATORS = ['gt','gte','lt','lte','eq','neq'];
 const MODIFIER_KEYS = ['unit.attack','unit.health','unit.speed','card.cost',
   'mana.initial','mana.max','mana.per_turn','hand.size.initial','draw.per_turn',
-  'gold.initial','king.max_health','relic.capacity','reward.essence','reward.king_piece_chance'];
+  'gold.initial','magic_mineral.initial','king.max_health','relic.capacity',
+  'reward.essence','reward.king_piece_chance',
+  'reward.gold.combat','reward.gold.elite','reward.gold.boss',
+  'reward.magic_mineral.combat','reward.magic_mineral.elite','reward.magic_mineral.boss',
+  'forge.cost.per_piece','forge.cost.per_element','forge.cost.element_only','forge.cost.piece_op',
+  'shop.magic_mineral.price'];
 const CUSTOM_HOOKS = ['rallying_cry','deliver_material'];
 const EFFECT_ATTRS = ['health','max_health','damage_taken','attack','speed','shield','cost'];
 // Side stats: only valid with targets {"kind":"side"} and vice versa (mirrors

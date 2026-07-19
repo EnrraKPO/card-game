@@ -9,6 +9,10 @@ extends RefCounted
 var king_damage: int = 0 : set = _set_king_damage
 var king_id: String = ProfileData.STARTING_KING   # which King card this run is played with (from the profile)
 var gold: int : set = _set_gold
+# Magic Mineral: the run-scoped forge resource — consumed by card merges (ForgeCosts), earned
+# from combat wins (GameData.apply_encounter_rewards) and grantable/purchasable through the
+# "currency" ItemKind. Lives on the RUN (gone when it ends), unlike the profile material bag.
+var magic_mineral: int : set = _set_magic_mineral
 var deck: Array   # Array[DeckCard] — each entry carries its own permanent mods
 var act: int : set = _set_act
 var charms: Array = []   # owned, unapplied charm ids (inventory); applied in the forge
@@ -29,6 +33,11 @@ func _set_gold(v: int) -> void:
 	GameSignals.gold_changed.emit(v)
 
 
+func _set_magic_mineral(v: int) -> void:
+	magic_mineral = v
+	GameSignals.mineral_changed.emit(v)
+
+
 func _set_act(v: int) -> void:
 	act = v
 	GameSignals.act_changed.emit(v)
@@ -46,6 +55,9 @@ static func create_new(profile: ProfileData = null) -> RunData:
 	# the debug economy override is enabled with a gold amount set, that pins the purse instead.
 	var debug_gold := EconomyConfig.gold_override()
 	run.gold = debug_gold if debug_gold >= 0 else GameData.value("gold.initial")
+	var debug_mineral := EconomyConfig.mineral_override()
+	run.magic_mineral = debug_mineral if debug_mineral >= 0 \
+			else GameData.value("magic_mineral.initial")
 	var deck := profile.get_selected_deck() if profile != null else null
 	if deck != null:
 		run.king_id = deck.king_id
@@ -66,6 +78,8 @@ static func from_dict(data: Dictionary) -> RunData:
 		run.king_damage = maxi(0, int(data["max_health"]) - int(data["health"]))
 	run.king_id = data.get("king_id", ProfileData.STARTING_KING)
 	run.gold = int(data.get("gold", GameAttributes.default_value("gold.initial")))
+	run.magic_mineral = int(data.get("magic_mineral",
+			GameAttributes.default_value("magic_mineral.initial")))
 	run.deck = _deck_from_variants(data.get("deck", []))
 	run.act  = data.get("act",  1)
 	run.charms = data.get("charms", [])
@@ -81,6 +95,7 @@ func to_dict() -> Dictionary:
 		"king_damage": king_damage,
 		"king_id":     king_id,
 		"gold":        gold,
+		"magic_mineral": magic_mineral,
 		"deck":        deck_data,
 		"act":         act,
 		"charms":      charms,

@@ -22,11 +22,28 @@ const DEFAULTS := {
 	"draw.per_turn":            1,    # cards drawn at the start of each round
 	# Run economy
 	"gold.initial":             100,  # a run's starting gold
+	"magic_mineral.initial":    5,    # a run's starting Magic Mineral (the forge-merge resource)
 	"king.max_health":          0,    # bonus added on top of the run King's card health
 	"relic.capacity":           10,   # how many relics a run may hold at once (tunable / moddable)
-	# Encounter rewards
+	# Encounter rewards. Gold/mineral pay: the encounter's AUTHORED roll (per-template, may be 0)
+	# PLUS the tool-driven per-node-type default below — see GameData.reward_gold/reward_mineral.
 	"reward.essence":           0,    # bonus essence granted per combat win
 	"reward.king_piece_chance": 0.0,  # chance an Elite also drops a King Piece (0..1)
+	"reward.gold.combat":         0,  # default gold per normal-fight win (on top of the authored roll)
+	"reward.gold.elite":          0,
+	"reward.gold.boss":           0,
+	"reward.magic_mineral.combat": 2, # default Magic Mineral per normal-fight win
+	"reward.magic_mineral.elite":  3,
+	"reward.magic_mineral.boss":   5,
+	# Forge merge costs (Magic Mineral — see ForgeCosts.merge_cost): per-component rates count the
+	# RESULT card's composition; exactly one flat applies per merge (element_only when both inputs
+	# are pure-element cards, piece_op when at least one input holds a chess piece).
+	"forge.cost.per_piece":     2,
+	"forge.cost.per_element":   1,
+	"forge.cost.element_only":  0,
+	"forge.cost.piece_op":      1,
+	# Shop
+	"shop.magic_mineral.price": 25,   # gold price of one Magic Mineral in the shop
 }
 
 

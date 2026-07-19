@@ -9,11 +9,12 @@ extends RefCounted
 #   • initial — the SHIPPING economy: resources every fresh profile starts with.
 #   • debug   — dev overrides: while `enabled` AND the launch is a debug launch
 #               (DebugConfig.enabled(), the git-ignored debug.json), this bag REPLACES
-#               `initial` wholesale (materials + upgrade points), and its `gold` (when
-#               >= 0) pins the run's starting purse to a fixed amount. gold = -1 means
-#               "no override" — the purse keeps resolving through
-#               GameData.value("gold.initial"), so attribute tuning and upgrade modifiers
-#               stay observable while the debug bag is on.
+#               `initial` wholesale (materials + upgrade points), and its `gold` /
+#               `magic_mineral` (when >= 0) pin the run's starting purse / mineral stock
+#               to a fixed amount. -1 means "no override" — the value keeps resolving
+#               through GameData.value("gold.initial" / "magic_mineral.initial"), so
+#               attribute tuning and upgrade modifiers stay observable while the debug
+#               bag is on.
 #
 # Materials are keyed by Materials ids: bare element = essence, "<element>_stone",
 # "<chesspiece>_piece", and "magic_mineral" (Materials.MAGIC_MINERAL).
@@ -37,7 +38,8 @@ static func _defaults() -> Dictionary:
 		debug_materials[Materials.stone_id(element)] = 10
 	return {
 		"initial": {"materials": {}, "upgrade_points": 0},
-		"debug": {"enabled": true, "gold": -1, "materials": debug_materials, "upgrade_points": 12},
+		"debug": {"enabled": true, "gold": -1, "magic_mineral": -1,
+			"materials": debug_materials, "upgrade_points": 12},
 	}
 
 
@@ -81,6 +83,9 @@ static func _merge_bag(dst: Dictionary, src: Dictionary) -> void:
 	var gold: Variant = src.get("gold")
 	if gold is float or gold is int:
 		dst["gold"] = maxi(-1, int(gold))
+	var mineral: Variant = src.get("magic_mineral")
+	if mineral is float or mineral is int:
+		dst["magic_mineral"] = maxi(-1, int(mineral))
 
 
 # Injects a config directly, bypassing the JSON (the regression harness uses this to
@@ -125,3 +130,11 @@ static func gold_override() -> int:
 	if not debug_enabled():
 		return -1
 	return int((_config()["debug"] as Dictionary).get("gold", -1))
+
+
+# The debug starting-Magic-Mineral override, or -1 for none (normal magic_mineral.initial
+# resolution). The mineral is RUN-scoped (RunData.magic_mineral), not a profile material.
+static func mineral_override() -> int:
+	if not debug_enabled():
+		return -1
+	return int((_config()["debug"] as Dictionary).get("magic_mineral", -1))

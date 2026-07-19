@@ -18,6 +18,7 @@ func run() -> void:
 	_debug_bag()
 	_launch_gate()
 	_sanitizing()
+	_reward_totals()
 	EconomyConfig.set_config({})        # restore disk-backed config for whatever runs next
 	DebugConfig.set_override(true)      # restore the runner's pinned debug mode
 
@@ -35,6 +36,7 @@ func _launch_gate() -> void:
 	check_eq(int(mats.get("fire", 0)), 5, "release launch: the initial bag applies")
 	check_eq(int(mats.get("water_stone", 0)), 0, "release launch: the debug bag contributes nothing")
 	check_eq(EconomyConfig.gold_override(), -1, "release launch: no gold pin")
+	check_eq(EconomyConfig.mineral_override(), -1, "release launch: no mineral pin")
 	check_eq(EconomyConfig.starting_upgrade_points(), 2, "release launch: initial upgrade points")
 	DebugConfig.set_override(true)
 	check_eq(EconomyConfig.gold_override(), 5000, "debug launch: the same config pins gold again")
@@ -57,6 +59,7 @@ func _defaults() -> void:
 	EconomyConfig.set_config({"initial": {}, "debug": {}})
 	check(EconomyConfig.debug_enabled(), "debug bag is enabled by default (the dev seed)")
 	check_eq(EconomyConfig.gold_override(), -1, "no gold override by default")
+	check_eq(EconomyConfig.mineral_override(), -1, "no magic-mineral override by default")
 	var mats := EconomyConfig.starting_materials()
 	check_eq(int(mats.get("king_piece", 0)), 21, "seed: 21 King Pieces")
 	check_eq(int(mats.get("pawn_piece", 0)), 10, "seed: 10 of each other piece token")
@@ -88,14 +91,18 @@ func _initial_bag() -> void:
 func _debug_bag() -> void:
 	EconomyConfig.set_config({
 		"initial": {"materials": {"fire": 5}, "upgrade_points": 2},
-		"debug": {"enabled": true, "gold": 5000, "materials": {"water_stone": 7}, "upgrade_points": 3},
+		"debug": {"enabled": true, "gold": 5000, "magic_mineral": 40,
+			"materials": {"water_stone": 7}, "upgrade_points": 3},
 	})
 	var mats := EconomyConfig.starting_materials()
 	check_eq(int(mats.get("water_stone", 0)), 7, "an enabled debug bag REPLACES the initial bag")
 	check_eq(int(mats.get("fire", 0)), 0, "…the initial materials do not leak through")
 	check_eq(EconomyConfig.starting_upgrade_points(), 3, "debug upgrade points apply")
 	check_eq(EconomyConfig.gold_override(), 5000, "debug gold pins the purse")
-	check_eq(RunData.create_new().gold, 5000, "a fresh run starts at the pinned gold")
+	check_eq(EconomyConfig.mineral_override(), 40, "debug magic mineral pins the run stock")
+	var run := RunData.create_new()
+	check_eq(run.gold, 5000, "a fresh run starts at the pinned gold")
+	check_eq(run.magic_mineral, 40, "a fresh run starts at the pinned magic mineral")
 	var p := ProfileData.create_default()
 	check_eq(p.materials.count("water_stone"), 7, "a fresh profile receives the debug bag")
 	check_eq(p.materials.count("king_piece"), 0, "…and none of the default seed")
@@ -103,8 +110,12 @@ func _debug_bag() -> void:
 	EconomyConfig.set_config({
 		"initial": {}, "debug": {"enabled": true, "gold": -1, "materials": {}, "upgrade_points": 0}})
 	check_eq(EconomyConfig.gold_override(), -1, "debug gold -1 = no override even while enabled")
-	check_eq(RunData.create_new().gold, GameData.value("gold.initial"),
+	check_eq(EconomyConfig.mineral_override(), -1, "an absent debug magic_mineral = no override")
+	var unpinned := RunData.create_new()
+	check_eq(unpinned.gold, GameData.value("gold.initial"),
 			"…so the run purse keeps riding gold.initial")
+	check_eq(unpinned.magic_mineral, GameData.value("magic_mineral.initial"),
+			"…and the mineral stock keeps riding magic_mineral.initial")
 
 
 func _sanitizing() -> void:
@@ -117,3 +128,31 @@ func _sanitizing() -> void:
 	check(not mats.has("fire"), "negative counts are dropped")
 	check_eq(int(mats.get("water", 0)), 2, "float counts are truncated to ints")
 	check_eq(int(mats.get("earth", 0)), 6, "well-formed counts pass")
+
+
+# Encounter pay = the AUTHORED per-template roll + the TOOL-DRIVEN per-node-type default
+# (GameData.reward_gold / reward_mineral), and apply_encounter_rewards banks exactly those
+# totals into the run. Expectations are relative to GameData.value so the suite is immune
+# to authored game_attributes.json values.
+func _reward_totals() -> void:
+	EconomyConfig.set_config({"initial": {}, "debug": {"enabled": false}})
+	var enc := EncounterData.new()
+	enc.type = EncounterData.Type.ELITE
+	enc.gold_reward = 10
+	enc.mineral_reward = 4
+	check_eq(GameData.reward_gold(enc), 10 + GameData.value("reward.gold.elite"),
+			"gold total = authored roll + elite default")
+	check_eq(GameData.reward_mineral(enc), 4 + GameData.value("reward.magic_mineral.elite"),
+			"mineral total = authored roll + elite default")
+	enc.type = EncounterData.Type.COMBAT
+	check_eq(GameData.reward_mineral(enc), 4 + GameData.value("reward.magic_mineral.combat"),
+			"the node type picks its own default")
+	var run := RunData.create_new()
+	GameData.current_run = run
+	var gold_before := run.gold
+	var mineral_before := run.magic_mineral
+	GameData.apply_encounter_rewards(enc)
+	check_eq(run.gold, gold_before + GameData.reward_gold(enc), "apply banks the gold total")
+	check_eq(run.magic_mineral, mineral_before + GameData.reward_mineral(enc),
+			"apply banks the mineral total")
+	GameData.current_run = null

@@ -15,7 +15,8 @@ var enemy_pool: Array = []   # Array[{ "id": String, "weight": float }]
 # generic "king"; tribe encounters name a themed Captain (an is_king enemy_only card).
 var enemy_king: String = "king"
 var pick_count: Array = [1, 1]    # [min, max] inclusive
-var gold_reward: Array = [0, 0]   # [min, max] inclusive
+var gold_reward: Array = [0, 0]      # [min, max] inclusive
+var mineral_reward: Array = [0, 0]   # [min, max] authored Magic Mineral (default rides on top)
 var exp_reward: int = 1           # profile experience for winning this fight (special fights author more)
 var ai: String = "default"
 var reward_pool: String = "default"
@@ -109,6 +110,8 @@ static func _from_dict(d: Dictionary) -> EncounterTemplateData:
 	t.pick_count  = [pc[0], pc[0] if pc.size() < 2 else pc[1]]
 	var gr: Array = d.get("gold_reward", [0, 0])
 	t.gold_reward = [gr[0], gr[0] if gr.size() < 2 else gr[1]]
+	var mr: Array = d.get("mineral_reward", [0, 0])
+	t.mineral_reward = [mr[0], mr[0] if mr.size() < 2 else mr[1]]
 	for e: Dictionary in d.get("enemy_pool", []):
 		t.enemy_pool.append({"id": e.get("id", ""), "weight": e.get("weight", 1.0)})
 	return t
@@ -168,6 +171,7 @@ func instantiate(rng: RandomNumberGenerator, power: float = 0.0) -> EncounterDat
 	enc.enemy_deck = deck
 
 	enc.gold_reward = rng.randi_range(gold_reward[0], gold_reward[1])
+	enc.mineral_reward = rng.randi_range(mineral_reward[0], mineral_reward[1])
 	enc.exp_reward  = exp_reward
 	if enc.type == EncounterData.Type.ELITE:
 		# Elites ("epic" fights) grant a special reward instead of cards: a choice of relics and charms.

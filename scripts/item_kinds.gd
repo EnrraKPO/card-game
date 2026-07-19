@@ -13,6 +13,7 @@ static func _static_init() -> void:
 	_kinds["card"]  = ItemKindCard.new()
 	_kinds["charm"] = ItemKindCharm.new()
 	_kinds["relic"] = ItemKindRelic.new()
+	_kinds["currency"] = ItemKindCurrency.new()
 
 
 # The handler for a kind key, or null if unknown (callers guard).

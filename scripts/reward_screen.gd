@@ -84,8 +84,15 @@ func _ready() -> void:
 	# a standalone reward (e.g. the post-stage charm) has none of these — just the pick.
 	var granted_cards: Array[String] = []
 	if not standalone and GameData.current_encounter != null:
-		var gold_gained: int = GameData.current_encounter.gold_reward
+		# Authored roll + tool-driven per-type default — the same totals apply_encounter_rewards
+		# banked at combat end, so the pills always match what the run actually received.
+		var gold_gained: int = GameData.reward_gold(GameData.current_encounter)
 		summary_strip.add_child(_reward_stat("Gold", "+%d" % gold_gained, Color("9c7a10"), compact))
+
+		var mineral_gained: int = GameData.reward_mineral(GameData.current_encounter)
+		if mineral_gained > 0:
+			summary_strip.add_child(_reward_stat("Magic Mineral", "+%d" % mineral_gained,
+					Materials.color(Materials.MAGIC_MINERAL), compact))
 
 		# Experience was banked at combat end (GameData.apply_encounter_rewards) — show it for feedback.
 		var exp_gained: int = GameData.current_encounter.exp_reward

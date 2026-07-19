@@ -5,8 +5,20 @@
   "hand.size.initial": 3,
   "draw.per_turn": 1,
   "gold.initial": 100,
+  "magic_mineral.initial": 3,
   "king.max_health": 0,
   "relic.capacity": 10,
   "reward.essence": 0,
-  "reward.king_piece_chance": 0
+  "reward.king_piece_chance": 0,
+  "reward.gold.combat": 0,
+  "reward.gold.elite": 0,
+  "reward.gold.boss": 0,
+  "reward.magic_mineral.combat": 1,
+  "reward.magic_mineral.elite": 2,
+  "reward.magic_mineral.boss": 3,
+  "forge.cost.per_piece": 0,
+  "forge.cost.per_element": 0,
+  "forge.cost.element_only": 0,
+  "forge.cost.piece_op": 1,
+  "shop.magic_mineral.price": 15
 }

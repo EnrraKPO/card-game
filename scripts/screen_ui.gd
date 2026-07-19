@@ -61,12 +61,12 @@ const BAR_HEIGHT_COMPACT := BUTTON_HEIGHT_COMPACT + BAR_V_PAD * 2.0
 # (GameData.current_run / current_profile), so a screen never passes a value in and the same fact
 # always renders identically everywhere. Turn/Mana are deliberately NOT here — they're combat
 # gameplay state, not run status, and live in combat's own HUD.
-enum Field { ACT, HP, GOLD, RELICS, EXP }
+enum Field { ACT, HP, GOLD, MINERAL, RELICS, EXP }
 
 # WHERE each field sits is a property of the catalog, NOT of any screen — so the same field always
 # lands in the same place, in the same order, in every header. A screen only chooses WHICH fields to
 # show; these two ordered lists decide the rest (left cluster · flexible gap · right cluster · ✕).
-const _LEFT_FIELDS := [Field.ACT, Field.HP, Field.GOLD, Field.RELICS]
+const _LEFT_FIELDS := [Field.ACT, Field.HP, Field.GOLD, Field.MINERAL, Field.RELICS]
 const _RIGHT_FIELDS := [Field.EXP]
 
 
@@ -310,6 +310,12 @@ static func _build_field(key: int) -> Dictionary:
 			var gold := stat("Gold", "", Color("9c7a10"))
 			GameSignals.gold_changed.connect(func(v: int) -> void: _refresh_stat(gold, str(v)))
 			return {"widget": gold, "ref": gold}
+		Field.MINERAL:
+			# Magic Mineral — the run's forge-merge resource (a darker cut of Materials'
+			# arcane teal, so the chip tag reads at header scale like Gold's does).
+			var mineral := stat("Mineral", "", Color("1e6e5c"))
+			GameSignals.mineral_changed.connect(func(v: int) -> void: _refresh_stat(mineral, str(v)))
+			return {"widget": mineral, "ref": mineral}
 		Field.RELICS:
 			var tray := RelicTray.new()
 			GameSignals.relics_changed.connect(tray.refresh)   # full rebuild — tray already does this
@@ -338,6 +344,9 @@ static func sync_field(key: int, widget: Control) -> void:
 		Field.GOLD:
 			if run != null:
 				_refresh_stat(widget, str(run.gold))
+		Field.MINERAL:
+			if run != null:
+				_refresh_stat(widget, str(run.magic_mineral))
 		Field.RELICS:
 			widget.get_child(0).refresh()   # the chip's one child is the RelicTray
 		Field.EXP:

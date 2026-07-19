@@ -121,14 +121,35 @@ func grant_experience(amount: int) -> int:
 	return gained
 
 
-# The one place an encounter's AUTOMATIC win rewards are applied: gold → the run, crafting
-# materials + experience → the profile. (The card-pick reward stays interactive in reward_screen.)
-# Caller persists the run; grant_materials / grant_experience persist the profile.
+# Every encounter number is either AUTHORED (per-template roll) or TOOL-DRIVEN (the per-node-type
+# reward.* attribute defaults) — these resolve the total a win actually pays: authored + default.
+# The reward screen reads the same helpers, so display always matches what was banked.
+func reward_gold(enc: EncounterData) -> int:
+	return enc.gold_reward + value("reward.gold." + _reward_suffix(enc.type))
+
+
+func reward_mineral(enc: EncounterData) -> int:
+	return enc.mineral_reward + value("reward.magic_mineral." + _reward_suffix(enc.type))
+
+
+func _reward_suffix(t: EncounterData.Type) -> String:
+	match t:
+		EncounterData.Type.ELITE:
+			return "elite"
+		EncounterData.Type.BOSS:
+			return "boss"
+	return "combat"
+
+
+# The one place an encounter's AUTOMATIC win rewards are applied: gold + Magic Mineral → the run,
+# crafting materials + experience → the profile. (The card-pick reward stays interactive in
+# reward_screen.) Caller persists the run; grant_materials / grant_experience persist the profile.
 func apply_encounter_rewards(enc: EncounterData) -> void:
 	if enc == null:
 		return
 	if current_run != null:
-		current_run.gold += enc.gold_reward
+		current_run.gold += reward_gold(enc)
+		current_run.magic_mineral += reward_mineral(enc)
 	# The matching element CARD for each essence reward is now OPT-IN on the reward screen
 	# (Accept/Reject), so it's not forced into the deck — only the essence is auto-granted here.
 	grant_materials(enc.material_rewards)

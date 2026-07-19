@@ -12,6 +12,7 @@ const SHOP_KINDS := [
 	{"kind": "card",  "count": 4, "label": "Buy Cards"},
 	{"kind": "charm", "count": 3, "label": "Buy Charms"},
 	{"kind": "relic", "count": 2, "label": "Buy Relics"},
+	{"kind": "currency", "count": 1, "label": "Buy Resources"},
 ]
 
 # One entry per offered item: { "grant": Grant, "price": int, "buy_btn": Button, "bought": bool }
@@ -38,7 +39,8 @@ func _ready() -> void:
 
 
 func get_chrome() -> Dictionary:
-	return {"title": "Shop", "exit": _leave, "fields": [ScreenUI.Field.EXP, ScreenUI.Field.GOLD],
+	return {"title": "Shop", "exit": _leave,
+		"fields": [ScreenUI.Field.EXP, ScreenUI.Field.GOLD, ScreenUI.Field.MINERAL],
 		"show_footer": true}
 
 

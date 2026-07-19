@@ -14,6 +14,8 @@ var relic_offer: String = ""         # optional relic id offered alongside the c
 # INSTEAD of the card pool + single relic. Elites use it for their relic/charm choice.
 var reward_offers: Array = []
 var gold_reward: int = 0             # gold granted on win, set by EncounterTemplateData
+var mineral_reward: int = 0          # authored Magic Mineral on win (the tool-driven per-type
+                                     # default stacks on top — see GameData.reward_mineral)
 var exp_reward: int = 1              # profile experience granted on win (1 by default; special fights more)
 var material_rewards: Dictionary = {}  # profile crafting resources (id→count) granted on win
 var ai: EnemyAI = null               # null falls back to default EnemyAI in combat

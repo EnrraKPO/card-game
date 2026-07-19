@@ -7,6 +7,7 @@ extends Node
 # fields were snapshots, taken once at mount, so e.g. King HP never ticked down during a fight).
 
 signal gold_changed(value: int)
+signal mineral_changed(value: int)
 signal hp_changed(current: int, max_hp: int)
 signal act_changed(act: int)
 signal relics_changed()

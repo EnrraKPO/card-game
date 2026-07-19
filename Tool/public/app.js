@@ -627,8 +627,14 @@ function critSection(cfg) {
 // overrides on top of the code defaults (an absent file = pure defaults).
 function gameAttrDefaults() {
   return { 'mana.initial': 1, 'mana.max': 10, 'mana.per_turn': 0, 'hand.size.initial': 3,
-    'draw.per_turn': 1, 'gold.initial': 100, 'king.max_health': 0, 'relic.capacity': 10,
-    'reward.essence': 0, 'reward.king_piece_chance': 0 };
+    'draw.per_turn': 1, 'gold.initial': 100, 'magic_mineral.initial': 5,
+    'king.max_health': 0, 'relic.capacity': 10,
+    'reward.essence': 0, 'reward.king_piece_chance': 0,
+    'reward.gold.combat': 0, 'reward.gold.elite': 0, 'reward.gold.boss': 0,
+    'reward.magic_mineral.combat': 2, 'reward.magic_mineral.elite': 3, 'reward.magic_mineral.boss': 5,
+    'forge.cost.per_piece': 2, 'forge.cost.per_element': 1,
+    'forge.cost.element_only': 0, 'forge.cost.piece_op': 1,
+    'shop.magic_mineral.price': 25 };
 }
 
 function gameAttributesSection(cfg) {
@@ -665,11 +671,24 @@ function gameAttributesSection(cfg) {
         row('hand.size.initial', 'Opening hand', 'cards drawn into the opening hand', 0, 10, 1),
         row('draw.per_turn', 'Draw per turn', 'cards drawn at the start of each round', 0, 5, 1)),
       col('Run economy',
+        row('magic_mineral.initial', 'Starting Magic Mineral', 'the run\'s forge-merge resource at run start', 0, 50, 1),
         row('king.max_health', 'King bonus health', 'added on top of the run King card\'s health', 0, 100, 1),
         row('relic.capacity', 'Relic capacity', 'how many relics a run may hold at once', 1, 30, 1)),
       col('Encounter rewards',
         row('reward.essence', 'Bonus essence', 'extra essence granted per combat win', 0, 20, 1),
-        pctRow('reward.king_piece_chance', 'King piece chance', '% chance an Elite also drops a King Piece'))),
+        pctRow('reward.king_piece_chance', 'King piece chance', '% chance an Elite also drops a King Piece'),
+        row('reward.gold.combat', 'Gold — normal fight', 'default gold per win, on top of the encounter\'s authored roll', 0, 200, 1),
+        row('reward.gold.elite', 'Gold — elite', '', 0, 200, 1),
+        row('reward.gold.boss', 'Gold — boss', '', 0, 500, 1),
+        row('reward.magic_mineral.combat', 'Mineral — normal fight', 'default Magic Mineral per win, on top of the authored roll', 0, 20, 1),
+        row('reward.magic_mineral.elite', 'Mineral — elite', '', 0, 20, 1),
+        row('reward.magic_mineral.boss', 'Mineral — boss', '', 0, 50, 1)),
+      col('Forge & shop',
+        row('forge.cost.per_piece', 'Cost per chess piece', 'mineral per piece component in the merge RESULT', 0, 20, 1),
+        row('forge.cost.per_element', 'Cost per element', 'mineral per element component in the merge result', 0, 20, 1),
+        row('forge.cost.element_only', 'Element-only surcharge', 'flat mineral when BOTH inputs are pure-element cards', 0, 20, 1),
+        row('forge.cost.piece_op', 'Piece-merge surcharge', 'flat mineral when at least one input holds a chess piece', 0, 20, 1),
+        row('shop.magic_mineral.price', 'Mineral shop price', 'gold price of one Magic Mineral in the shop', 0, 500, 5))),
     el('div', { class: 'modal-actions' },
       el('button', { class: 'ghost', text: 'Reset to defaults', onclick: () => root.replaceWith(gameAttributesSection(Object.assign(cfg, gameAttrDefaults()))) }),
       el('button', { class: 'primary', text: 'Save to game', onclick: async () => {
@@ -694,7 +713,7 @@ function economyDefaults() {
   for (const e of ECO_ELEMENTS) debugMats[e + '_stone'] = 10;
   return {
     initial: { materials: {}, upgrade_points: 0 },
-    debug: { enabled: true, gold: -1, materials: debugMats, upgrade_points: 12 },
+    debug: { enabled: true, gold: -1, magic_mineral: -1, materials: debugMats, upgrade_points: 12 },
   };
 }
 
@@ -717,6 +736,14 @@ function economySection(cfg, ga) {
         'Pins the run\'s starting gold while debug is enabled; -1 = no override (normal starting gold applies)')
       : numField('Gold', () => ga['gold.initial'], v => { ga['gold.initial'] = Math.max(0, v); }, 0,
         'The gold.initial attribute — upgrade modifiers stack on top of it');
+    // Magic Mineral is RUN-scoped (the forge-merge resource), not a profile material — the
+    // initial column edits the magic_mineral.initial attribute; the debug column pins it
+    // like gold (-1 = no override).
+    const mineralRow = isDebug
+      ? numField('Magic Mineral', () => bag.magic_mineral, v => { bag.magic_mineral = Math.max(-1, v); }, -1,
+        'Pins the run\'s starting Magic Mineral while debug is enabled; -1 = no override (magic_mineral.initial applies)')
+      : numField('Magic Mineral', () => ga['magic_mineral.initial'], v => { ga['magic_mineral.initial'] = Math.max(0, v); }, 0,
+        'The magic_mineral.initial attribute — upgrade modifiers stack on top of it');
     return el('div', { style: 'flex:1;min-width:250px;max-width:340px' },
       el('h3', { text: isDebug ? 'Debug overrides' : 'Initial resources', style: 'margin-top:0' }),
       isDebug
@@ -725,13 +752,12 @@ function economySection(cfg, ga) {
           el('input', { type: 'checkbox', checked: bag.enabled, onchange: e => { bag.enabled = e.target.checked; } }),
           ' Enabled — replaces the initial resources (debug launches only)')
         : el('div', { class: 'hint', text: 'What every fresh profile/run starts with in the shipping game.' }),
-      group('Purse', [goldRow,
+      group('Purse', [goldRow, mineralRow,
         numField('Upgrade points', () => bag.upgrade_points, v => { bag.upgrade_points = Math.max(0, v); }, 0,
           'Spendable points for the Upgrades skill trees')]),
       group('Elemental essence', ECO_ELEMENTS.map(e => matField(bag, e, cap(e)))),
       group('Elemental stones', ECO_ELEMENTS.map(e => matField(bag, e + '_stone', cap(e) + ' Stone'))),
-      group('Chess pieces', ECO_PIECES.map(p => matField(bag, p + '_piece', cap(p) + ' Piece'))),
-      group('Special', [matField(bag, 'magic_mineral', 'Magic Mineral')]));
+      group('Chess pieces', ECO_PIECES.map(p => matField(bag, p + '_piece', cap(p) + ' Piece'))));
   };
 
   root = el('div', { class: 'panel tuning-section' },
@@ -746,6 +772,7 @@ function economySection(cfg, ga) {
       el('button', { class: 'ghost', text: 'Reset to defaults', onclick: () => {
         Object.assign(cfg, economyDefaults());
         ga['gold.initial'] = gameAttrDefaults()['gold.initial'];
+        ga['magic_mineral.initial'] = gameAttrDefaults()['magic_mineral.initial'];
         root.replaceWith(economySection(cfg, ga));
       } }),
       el('button', { class: 'primary', text: 'Save to game', onclick: async () => {

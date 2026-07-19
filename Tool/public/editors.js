@@ -582,17 +582,20 @@ const EncounterEditor = {
   label: 'Encounter',
   newItem: () => ({ id: '', node_type: 'combat', min_floor: 0, max_floor: 999, weight: 1,
     enemy_king: '', power_bonus: 0, enemy_pool: [], pick_count: [14, 20],
-    gold_reward: [20, 40], exp_reward: 1, relic_reward: 0, ai: 'default', reward_pool: 'default' }),
+    gold_reward: [20, 40], mineral_reward: [0, 0], exp_reward: 1, relic_reward: 0, ai: 'default', reward_pool: 'default' }),
   form(draft, ctx, onChange) {
     if (!draft.enemy_pool) draft.enemy_pool = [];
     if (!Array.isArray(draft.pick_count)) draft.pick_count = [14, 20];
     if (!Array.isArray(draft.gold_reward)) draft.gold_reward = [0, 0];
+    if (!Array.isArray(draft.mineral_reward)) draft.mineral_reward = [0, 0];
     const wrap = el('div');
     const kings = cardIdOptions(ctx, c => c.is_king);
     const pcObj = { min: draft.pick_count[0], max: draft.pick_count[1] };
     const grObj = { min: draft.gold_reward[0], max: draft.gold_reward[1] };
+    const mrObj = { min: draft.mineral_reward[0], max: draft.mineral_reward[1] };
     const syncPc = () => { draft.pick_count = [pcObj.min, pcObj.max]; };
     const syncGr = () => { draft.gold_reward = [grObj.min, grObj.max]; };
+    const syncMr = () => { draft.mineral_reward = [mrObj.min, mrObj.max]; };
 
     wrap.append(
       groupBox('Template',
@@ -627,6 +630,10 @@ const EncounterEditor = {
           fld('Deck size max', numInput(pcObj, 'max', () => { syncPc(); onChange(); }, { min: 1 }), 'cards sampled with replacement', 'narrow'),
           fld('Gold min', numInput(grObj, 'min', () => { syncGr(); onChange(); }, { min: 0 }), null, 'narrow'),
           fld('Gold max', numInput(grObj, 'max', () => { syncGr(); onChange(); }, { min: 0 }), null, 'narrow'),
+        ),
+        el('div', { class: 'frow' },
+          fld('Mineral min', numInput(mrObj, 'min', () => { syncMr(); onChange(); }, { min: 0 }), 'extra Magic Mineral on top of the tool default', 'narrow'),
+          fld('Mineral max', numInput(mrObj, 'max', () => { syncMr(); onChange(); }, { min: 0 }), null, 'narrow'),
         ),
         el('div', { class: 'frow' },
           fld('Experience', numInput(draft, 'exp_reward', onChange, { min: 0 }), 'profile XP toward upgrade points', 'narrow'),
@@ -671,6 +678,7 @@ const EncounterEditor = {
     out.enemy_pool = (d.enemy_pool || []).map(p => ({ id: p.id, weight: p.weight == null ? 1 : p.weight }));
     out.pick_count = d.pick_count.slice(0, 2);
     if (d.gold_reward && (d.gold_reward[0] || d.gold_reward[1])) out.gold_reward = d.gold_reward.slice(0, 2);
+    if (d.mineral_reward && (d.mineral_reward[0] || d.mineral_reward[1])) out.mineral_reward = d.mineral_reward.slice(0, 2);
     if (d.exp_reward != null) out.exp_reward = d.exp_reward;
     if (d.ai && d.ai !== 'default') out.ai = d.ai; else out.ai = 'default';
     out.reward_pool = d.reward_pool || 'default';
@@ -682,7 +690,9 @@ const EncounterEditor = {
     lines.push(`Enemy King: ${d.enemy_king || 'generic crown King'}${d.power_bonus ? `, power +${d.power_bonus}` : ''}.`);
     lines.push(`Deck: ${d.pick_count[0]}–${d.pick_count[1]} cards from ${(d.enemy_pool || []).length} pool entries.`);
     const g = d.gold_reward || [0, 0];
-    lines.push(`Win: ${g[0]}–${g[1]} gold, ${d.exp_reward || 0} XP${d.relic_reward ? `, ${Math.round(d.relic_reward * 100)}% relic drop` : ''}.`);
+    const m = d.mineral_reward || [0, 0];
+    const mineral = (m[0] || m[1]) ? `, ${m[0]}–${m[1]} extra mineral` : '';
+    lines.push(`Win: ${g[0]}–${g[1]} gold${mineral}, ${d.exp_reward || 0} XP${d.relic_reward ? `, ${Math.round(d.relic_reward * 100)}% relic drop` : ''}.`);
     return lines;
   },
   toDraft(g) {
@@ -690,6 +700,7 @@ const EncounterEditor = {
     if (!d.enemy_pool) d.enemy_pool = [];
     if (!Array.isArray(d.pick_count)) d.pick_count = [1, 1];
     if (!Array.isArray(d.gold_reward)) d.gold_reward = [0, 0];
+    if (!Array.isArray(d.mineral_reward)) d.mineral_reward = [0, 0];
     if (d.weight == null) d.weight = 1;
     if (d.exp_reward == null) d.exp_reward = 1;
     return d;
