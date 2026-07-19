@@ -1240,9 +1240,13 @@ func _build_action_column() -> Control:
 	top_row.add_child(_speed_btn)
 	_refresh_speed_btn()
 
-	var debug_close := ScreenUI.close_button(_handle_combat_end, true)
-	debug_close.tooltip_text = "Debug: end combat"
-	top_row.add_child(debug_close)
+	# The ✕ normally fixes this row's height — pin the height explicitly so the layout stays
+	# identical when the ✕ is absent (non-debug launches).
+	top_row.custom_minimum_size.y = ScreenUI.BUTTON_HEIGHT_COMPACT - 16.0
+	if DebugConfig.enabled():
+		var debug_close := ScreenUI.close_button(_handle_combat_end, true)
+		debug_close.tooltip_text = "Debug: end combat"
+		top_row.add_child(debug_close)
 
 	# The key touch target — "Ready" — a chunky vertical button filling the rest of the column,
 	# all the way down through the hand bar's band. Green, from the glossy handoff's own "Ready"

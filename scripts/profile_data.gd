@@ -50,18 +50,12 @@ static func create_default() -> ProfileData:
 		var deck := p._seed_deck(king_id)
 		if p.selected_deck_id.is_empty():
 			p.selected_deck_id = deck.id
-	# TEMP dev seed for testing the Lab/Forge: enough King Pieces to forge every King (21),
-	# a stock of every elemental stone, and chess-piece tokens to mint cards with. Remove
-	# once the materials economy is balanced.
-	p.materials.add(Materials.piece_id("king"), 21)
-	for piece: String in Materials.PIECES:
-		if piece != "king":
-			p.materials.add(Materials.piece_id(piece), 10)
-	for element: String in Materials.ELEMENTS:
-		p.materials.add(Materials.stone_id(element), 10)
-	# TEMP dev seed: spendable upgrade points so the Upgrades trees are testable before the
-	# experience grind fills them. Remove once experience pacing is tuned.
-	p.upgrade_points = 12
+	# Starting resources are data-driven (data/economy.json via EconomyConfig, authored in
+	# the Tool's 🎛 Tuning ▸ 💰 Economy): the shipping `initial` bag, or the `debug` bag
+	# while its dev override is enabled (the old TEMP Lab/Forge seed lives on as the
+	# debug-bag default).
+	p.materials.add_many(EconomyConfig.starting_materials())
+	p.upgrade_points = EconomyConfig.starting_upgrade_points()
 	return p
 
 

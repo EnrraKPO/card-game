@@ -376,3 +376,21 @@ table.mini input, table.mini select { padding: 4px 6px; }
   width: 84px; height: 104px; border-radius: 8px;
   background: #2c2842; border: 1px solid #4a4470; }
 .vfx-demo-overlay { position: absolute; pointer-events: none; }
+
+/* ── 🎛 tuning tab: full-width stack of global tuning sections ── */
+#tuning-body { max-width: 1040px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+#tuning-body > .hint { margin: 0 2px; }
+.tuning-section h2 { margin: 0 0 8px; font-size: 17px; }
+/* the display:flex rules above beat the [hidden] UA default - restate it stronger */
+#sidebar[hidden], #tuning-body[hidden] { display: none; }
+#tuning-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+#tuning-tabs button {
+  padding: 7px 14px; border-radius: var(--radius); border: 1px solid var(--line);
+  background: var(--bg3); color: var(--fg-dim); cursor: pointer; font-size: 13px;
+}
+#tuning-tabs button:hover { color: var(--fg); border-color: var(--fg-dim); }
+#tuning-tabs button.active { background: var(--accent); color: #1a1408; border-color: var(--accent); font-weight: 600; }
+.eco-group { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--fg-dim);
+  font-weight: 600; margin-bottom: 4px; }
+.eco-row { display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  font-size: 13px; margin: 3px 0; }

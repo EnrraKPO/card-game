@@ -42,8 +42,10 @@ static func create_new(profile: ProfileData = null) -> RunData:
 	var run := RunData.new()
 	run.king_damage = 0
 	# Starting purse resolved through the registry (base + any gold.initial modifier). GameData
-	# rebuilds the modifier set from this profile before create_new (see start_new_run).
-	run.gold        = GameData.value("gold.initial")
+	# rebuilds the modifier set from this profile before create_new (see start_new_run). While
+	# the debug economy override is enabled with a gold amount set, that pins the purse instead.
+	var debug_gold := EconomyConfig.gold_override()
+	run.gold = debug_gold if debug_gold >= 0 else GameData.value("gold.initial")
 	var deck := profile.get_selected_deck() if profile != null else null
 	if deck != null:
 		run.king_id = deck.king_id

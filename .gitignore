@@ -36,3 +36,6 @@ tools/_icon_preview/
 # Krita autosave / scratch files (keep real .kra sources if ever added)
 *-autosave.kra
 .~lock.*
+
+# Local launch config (debug mode switch, seeded by DebugConfig) - per-machine, never committed
+/debug.json

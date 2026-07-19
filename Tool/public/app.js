@@ -306,26 +306,21 @@ function renderArtGuidesPage(guides, comps, axis, key) {
       el('button', { class: 'primary', text: 'Save', onclick: () => persist('Saved.') }))));
 }
 
-// ── ⚖ offer rarity editor ─────────────────────────────────────────────────────
-// Global tuning for how likely each card is to be offered (reward/shop/stage-clear). Reads
+// ── 🎛 Tuning tab: every global tuning knob as one view of sections ──────────
+// Each section below is one global config surface (its own data file + endpoint); the tab
+// loads them all and stacks them. Sections save independently — exactly the files the old
+// scattered topbar modals wrote.
+
+// ⚖ Offer rarity — how likely each card is to be offered (reward/shop/stage-clear). Reads
 // data/offer_rarity.json + the real offerable pool from the server, previews the distribution
 // live client-side (mirrors CardData.offer_weight), saves the config back to the game file.
 function offerRarityDefaults() {
   return { piece: { pawn: 4, knight: 5, bishop: 5, rook: 5, queen: 20, king: 5 },
     element: 10, count: { '1': 1, '2': 2, '3': 3, '4': 4 } };
 }
-function openOfferRarityModal() {
-  api('/api/offer-rarity').then(res => {
-    const c = (res && res.config) || {};
-    const cfg = offerRarityDefaults();
-    Object.assign(cfg.piece, c.piece_rarity || {});
-    if (Number.isFinite(c.element_rarity)) cfg.element = c.element_rarity;
-    Object.assign(cfg.count, c.count_multiplier || {});
-    renderOfferRarityModal(cfg, (res && res.pool) || []);
-  }).catch(err => toast('Could not load offer rarity: ' + err.message, 'err'));
-}
 
-function renderOfferRarityModal(cfg, pool) {
+function offerRaritySection(cfg, pool) {
+  let root;
   const TIER = ['', '#5c8a54', '#c0912f', '#cc7433', '#8a5fb0'];
   const PIECES = ['pawn', 'knight', 'bishop', 'rook', 'queen'];
   const COUNTS = [1, 2, 3, 4];
@@ -387,7 +382,7 @@ function renderOfferRarityModal(cfg, pool) {
     ...COUNTS.map(n => numRow(n + (n === 1 ? ' component' : ' components'), '× rarity',
       () => cfg.count[String(n)], v => cfg.count[String(n)] = v, 0.25, 30, 0.25)));
 
-  $('modal-root').replaceChildren(el('div', { class: 'modal', style: 'width:820px; max-height:88vh; overflow:auto' },
+  root = el('div', { class: 'panel tuning-section' },
     el('h2', {}, '⚖ Offer rarity'),
     el('div', { class: 'hint', text: 'How likely each card is to be offered as a reward, in shops, and on stage clear. '
       + 'Higher rarity = shown less often; every extra component multiplies a card\'s rarity up. '
@@ -396,33 +391,30 @@ function renderOfferRarityModal(cfg, pool) {
       controls,
       el('div', { style: 'flex:1;min-width:290px' }, el('h3', { text: 'Live offer distribution' }), distBox)),
     el('div', { class: 'modal-actions' },
-      el('button', { class: 'ghost', text: 'Reset to defaults', onclick: () => renderOfferRarityModal(offerRarityDefaults(), pool) }),
-      el('button', { class: 'ghost', text: 'Cancel', onclick: () => $('modal-root').replaceChildren() }),
+      el('button', { class: 'ghost', text: 'Reset to defaults', onclick: () => {
+        const d = offerRarityDefaults();
+        Object.assign(cfg.piece, d.piece); cfg.element = d.element; Object.assign(cfg.count, d.count);
+        root.replaceWith(offerRaritySection(cfg, pool));
+      } }),
       el('button', { class: 'primary', text: 'Save to game', onclick: async () => {
         try {
           await api('/api/offer-rarity', { piece_rarity: cfg.piece, element_rarity: cfg.element, count_multiplier: cfg.count });
-          $('modal-root').replaceChildren();
           toast('Offer rarity saved — restart the game to apply', 'ok');
         } catch (err) { toast('Save failed: ' + err.message, 'err'); }
-      } }))));
+      } })));
+  update();
+  return root;
 }
 
-// ── 🔊 audio defaults editor ──────────────────────────────────────────────────
-// The game's DEFAULT mixer volumes (data/audio.json) — what the in-game settings gear
-// starts from before the player touches anything. Percent model matches the game:
-// 80% = as-authored loudness (0 dB), 100% = a slight boost above it.
+// 🔊 Audio defaults — the game's DEFAULT mixer volumes (data/audio.json) — what the in-game
+// settings gear starts from before the player touches anything. Percent model matches the
+// game: 80% = as-authored loudness (0 dB), 100% = a slight boost above it.
 function audioDefaults() {
   return { sfx_volume: 0.8, music_volume: 0.5 };
 }
-function openAudioTuningModal() {
-  api('/api/audio-tuning').then(res => {
-    const cfg = audioDefaults();
-    Object.assign(cfg, (res && res.config) || {});
-    renderAudioTuningModal(cfg);
-  }).catch(err => toast('Could not load audio defaults: ' + err.message, 'err'));
-}
 
-function renderAudioTuningModal(cfg) {
+function audioSection(cfg) {
+  let root;
   const pctRow = (label, sub, key) => {
     let num;
     const rng = el('input', { type: 'range', min: 0, max: 100, step: 1, value: Math.round(cfg[key] * 100), style: 'flex:1',
@@ -434,41 +426,34 @@ function renderAudioTuningModal(cfg) {
         el('span', { text: label }), el('span', { class: 'subtle', text: sub })),
       el('div', { style: 'display:flex;align-items:center;gap:10px' }, rng, num));
   };
-  $('modal-root').replaceChildren(el('div', { class: 'modal', style: 'width:520px' },
+  root = el('div', { class: 'panel tuning-section' },
     el('h2', {}, '🔊 Audio defaults'),
     el('div', { class: 'hint', text: 'Default mixer volumes shipped with the game — the in-game settings gear starts here, and a player\'s own choices override these on their device. '
       + '80% plays sounds exactly as authored; 100% is a slight boost. Saves to data/audio.json — restart the game to apply.' }),
-    pctRow('Music volume', 'music + ambience beds', 'music_volume'),
-    pctRow('SFX volume', 'every one-shot cue and drone', 'sfx_volume'),
+    el('div', { style: 'max-width:520px' },
+      pctRow('Music volume', 'music + ambience beds', 'music_volume'),
+      pctRow('SFX volume', 'every one-shot cue and drone', 'sfx_volume')),
     el('div', { class: 'modal-actions' },
-      el('button', { class: 'ghost', text: 'Reset to defaults', onclick: () => renderAudioTuningModal(audioDefaults()) }),
-      el('button', { class: 'ghost', text: 'Cancel', onclick: () => $('modal-root').replaceChildren() }),
+      el('button', { class: 'ghost', text: 'Reset to defaults', onclick: () => root.replaceWith(audioSection(Object.assign(cfg, audioDefaults()))) }),
       el('button', { class: 'primary', text: 'Save to game', onclick: async () => {
         try {
           await api('/api/audio-tuning', cfg);
-          $('modal-root').replaceChildren();
           toast('Audio defaults saved — restart the game to apply', 'ok');
         } catch (err) { toast('Save failed: ' + err.message, 'err'); }
-      } }))));
+      } })));
+  return root;
 }
 
-// ── ⚡ dodge / combat tuning editor ────────────────────────────────────────────
-// Global combat balance for DODGE (Resolver.dodge_chance). Reads data/combat_tuning.json, lets
-// the four rate knobs be tuned with a live chance table across speed match-ups (mirrors the
-// game formula: fixed + per_speed×tgt + per_speed_diff×max(0, tgt−atk), capped at max), saves
-// back to the game file.
+// ⚡ Dodge — global combat balance for DODGE (Resolver.dodge_chance). Reads
+// data/combat_tuning.json, lets the four rate knobs be tuned with a live chance table across
+// speed match-ups (mirrors the game formula: fixed + per_speed×tgt + per_speed_diff×max(0,
+// tgt−atk), capped at max), saves back to the game file.
 function dodgeDefaults() {
   return { fixed_pct: 0, per_speed_pct: 1, per_speed_diff_pct: 4, max_pct: 75 };
 }
-function openCombatTuningModal() {
-  api('/api/combat-tuning').then(res => {
-    const cfg = dodgeDefaults();
-    Object.assign(cfg, (res && res.config && res.config.dodge) || {});
-    renderCombatTuningModal(cfg);
-  }).catch(err => toast('Could not load combat tuning: ' + err.message, 'err'));
-}
 
-function renderCombatTuningModal(cfg) {
+function dodgeSection(cfg) {
+  let root;
   // The game's chance formula, in percent (matches Resolver.dodge_chance).
   const chance = (tgtSpeed, atkSpeed) => {
     let pct = cfg.fixed_pct + cfg.per_speed_pct * tgtSpeed;
@@ -521,8 +506,7 @@ function renderCombatTuningModal(cfg) {
     numRow('Per speed advantage', '× how much the target outspeeds the attacker', 'per_speed_diff_pct', 0, 25, 0.5),
     numRow('Max cap', 'hard ceiling on total dodge', 'max_pct', 0, 100, 1));
 
-  update();
-  $('modal-root').replaceChildren(el('div', { class: 'modal', style: 'width:760px; max-height:88vh; overflow:auto' },
+  root = el('div', { class: 'panel tuning-section' },
     el('h2', {}, '⚡ Dodge tuning'),
     el('div', { class: 'hint', text: 'A unit\'s chance to avoid an attack outright (the whole hit is zeroed). '
       + 'Chance = Fixed + Per-speed × the target\'s speed + Per-speed-advantage × how much faster the target is than its attacker, capped at Max. '
@@ -531,37 +515,30 @@ function renderCombatTuningModal(cfg) {
       controls,
       el('div', { style: 'flex:1;min-width:330px' }, el('h3', { text: 'Live dodge chance', style: 'margin-top:0' }), gridBox)),
     el('div', { class: 'modal-actions' },
-      el('button', { class: 'ghost', text: 'Reset to defaults', onclick: () => renderCombatTuningModal(dodgeDefaults()) }),
-      el('button', { class: 'ghost', text: 'Cancel', onclick: () => $('modal-root').replaceChildren() }),
+      el('button', { class: 'ghost', text: 'Reset to defaults', onclick: () => root.replaceWith(dodgeSection(Object.assign(cfg, dodgeDefaults()))) }),
       el('button', { class: 'primary', text: 'Save to game', onclick: async () => {
         try {
           await api('/api/combat-tuning', { dodge: cfg });
-          $('modal-root').replaceChildren();
           toast('Dodge tuning saved — restart the game to apply', 'ok');
         } catch (err) { toast('Save failed: ' + err.message, 'err'); }
-      } }))));
+      } })));
   update();
+  return root;
 }
 
-// ── 💥 crit / combat tuning editor ─────────────────────────────────────────────
-// Global combat balance for CRIT (Resolver.crit_chance / crit_multiplier) — the offensive mirror
-// of the dodge modal above, on the same file + endpoint (sibling "crit" key). Chance formula:
-// fixed + per_speed × the ATTACKER's speed + per_speed_diff × max(0, atk−tgt), capped at max.
-// Plus the damage-multiplier pair: multiplier (the crit factor) and multiplier_max (its ceiling,
-// bounding relic bonuses). Saves only the crit key — dodge tuning is never disturbed.
+// 💥 Crit — global combat balance for CRIT (Resolver.crit_chance / crit_multiplier) — the
+// offensive mirror of the dodge section above, on the same file + endpoint (sibling "crit"
+// key). Chance formula: fixed + per_speed × the ATTACKER's speed + per_speed_diff × max(0,
+// atk−tgt), capped at max. Plus the damage-multiplier pair: multiplier (the crit factor) and
+// multiplier_max (its ceiling, bounding relic bonuses). Saves only the crit key — dodge
+// tuning is never disturbed.
 function critDefaults() {
   return { fixed_pct: 5, per_speed_pct: 1, per_speed_diff_pct: 0, max_pct: 75,
     multiplier: 2.0, multiplier_max: 5.0 };
 }
-function openCritTuningModal() {
-  api('/api/combat-tuning').then(res => {
-    const cfg = critDefaults();
-    Object.assign(cfg, (res && res.config && res.config.crit) || {});
-    renderCritTuningModal(cfg);
-  }).catch(err => toast('Could not load combat tuning: ' + err.message, 'err'));
-}
 
-function renderCritTuningModal(cfg) {
+function critSection(cfg) {
+  let root;
   // The game's chance formula, in percent (matches Resolver.crit_chance — attacker-owned).
   const chance = (atkSpeed, tgtSpeed) => {
     let pct = cfg.fixed_pct + cfg.per_speed_pct * atkSpeed;
@@ -625,8 +602,7 @@ function renderCritTuningModal(cfg) {
     numRow('Multiplier', 'total damage = base × this on a crit', 'multiplier', 1, 5, 0.1),
     numRow('Multiplier max', 'ceiling on relic-boosted multipliers', 'multiplier_max', 1, 10, 0.1));
 
-  update();
-  $('modal-root').replaceChildren(el('div', { class: 'modal', style: 'width:760px; max-height:88vh; overflow:auto' },
+  root = el('div', { class: 'panel tuning-section' },
     el('h2', {}, '💥 Crit tuning'),
     el('div', { class: 'hint', text: 'An attacker\'s chance to land a CRITICAL — the post-interception damage is multiplied. '
       + 'Chance = Fixed + Per-speed × the attacker\'s speed + Per-speed-advantage × how much faster the attacker is than its target, capped at Max. '
@@ -635,16 +611,220 @@ function renderCritTuningModal(cfg) {
       controls,
       el('div', { style: 'flex:1;min-width:330px' }, el('h3', { text: 'Live crit chance', style: 'margin-top:0' }), gridBox)),
     el('div', { class: 'modal-actions' },
-      el('button', { class: 'ghost', text: 'Reset to defaults', onclick: () => renderCritTuningModal(critDefaults()) }),
-      el('button', { class: 'ghost', text: 'Cancel', onclick: () => $('modal-root').replaceChildren() }),
+      el('button', { class: 'ghost', text: 'Reset to defaults', onclick: () => root.replaceWith(critSection(Object.assign(cfg, critDefaults()))) }),
       el('button', { class: 'primary', text: 'Save to game', onclick: async () => {
         try {
           await api('/api/combat-tuning', { crit: cfg });
-          $('modal-root').replaceChildren();
           toast('Crit tuning saved — restart the game to apply', 'ok');
         } catch (err) { toast('Save failed: ' + err.message, 'err'); }
-      } }))));
+      } })));
   update();
+  return root;
+}
+
+// 👑 Game attributes — the global run/match numbers (GameAttributes.DEFAULTS): every game
+// system reads these through GameData.value(key). Saves data/game_attributes.json as
+// overrides on top of the code defaults (an absent file = pure defaults).
+function gameAttrDefaults() {
+  return { 'mana.initial': 1, 'mana.max': 10, 'mana.per_turn': 0, 'hand.size.initial': 3,
+    'draw.per_turn': 1, 'gold.initial': 100, 'king.max_health': 0, 'relic.capacity': 10,
+    'reward.essence': 0, 'reward.king_piece_chance': 0 };
+}
+
+function gameAttributesSection(cfg) {
+  let root;
+  const numRow = (label, sub, get, set, min, max, step) => {
+    let num;
+    const rng = el('input', { type: 'range', min, max, step, value: get(), style: 'flex:1',
+      oninput: e => { set(parseFloat(e.target.value)); num.value = e.target.value; } });
+    num = el('input', { type: 'number', min, step, value: get(), style: 'width:66px',
+      oninput: e => { const v = parseFloat(e.target.value); if (!isNaN(v)) { set(v); rng.value = v; } } });
+    return el('div', { style: 'margin:7px 0' },
+      el('div', { style: 'display:flex;justify-content:space-between;font-size:13px;margin-bottom:2px' },
+        el('span', { text: label }), sub ? el('span', { class: 'subtle', text: sub }) : null),
+      el('div', { style: 'display:flex;align-items:center;gap:10px' }, rng, num));
+  };
+  const row = (key, label, sub, min, max, step) =>
+    numRow(label, sub, () => cfg[key], v => { cfg[key] = v; }, min, max, step);
+  const pctRow = (key, label, sub) =>
+    numRow(label, sub, () => Math.round(cfg[key] * 100),
+      v => { cfg[key] = Math.min(100, Math.max(0, v)) / 100; }, 0, 100, 1);
+  const col = (title, ...rows) =>
+    el('div', { style: 'flex:1;min-width:250px' },
+      el('h3', { text: title, style: 'margin-top:0' }), ...rows);
+
+  root = el('div', { class: 'panel tuning-section' },
+    el('h2', {}, '👑 Game attributes'),
+    el('div', { class: 'hint', text: 'The global run/match numbers — every system reads these through GameData.value(), '
+      + 'and upgrades/relics stack their modifiers on top. Saves to data/game_attributes.json as overrides on the code defaults — restart the game to apply.' }),
+    el('div', { style: 'display:flex;gap:26px;flex-wrap:wrap;margin-top:12px' },
+      col('Combat economy',
+        row('mana.initial', 'Starting mana', 'crystals on turn 1 (then +1/turn, uncapped)', 0, 10, 1),
+        row('mana.per_turn', 'Bonus mana per turn', 'flat extra crystals, stacked on the ramp', 0, 5, 1),
+        row('mana.max', 'Mana max', 'UNUSED by the uncapped ramp; still read by arcana upgrades', 0, 20, 1),
+        row('hand.size.initial', 'Opening hand', 'cards drawn into the opening hand', 0, 10, 1),
+        row('draw.per_turn', 'Draw per turn', 'cards drawn at the start of each round', 0, 5, 1)),
+      col('Run economy',
+        row('king.max_health', 'King bonus health', 'added on top of the run King card\'s health', 0, 100, 1),
+        row('relic.capacity', 'Relic capacity', 'how many relics a run may hold at once', 1, 30, 1)),
+      col('Encounter rewards',
+        row('reward.essence', 'Bonus essence', 'extra essence granted per combat win', 0, 20, 1),
+        pctRow('reward.king_piece_chance', 'King piece chance', '% chance an Elite also drops a King Piece'))),
+    el('div', { class: 'modal-actions' },
+      el('button', { class: 'ghost', text: 'Reset to defaults', onclick: () => root.replaceWith(gameAttributesSection(Object.assign(cfg, gameAttrDefaults()))) }),
+      el('button', { class: 'primary', text: 'Save to game', onclick: async () => {
+        try {
+          await api('/api/game-attributes', cfg);
+          toast('Game attributes saved — restart the game to apply', 'ok');
+        } catch (err) { toast('Save failed: ' + err.message, 'err'); }
+      } })));
+  return root;
+}
+
+// 💰 Economy — the starting resources (data/economy.json via EconomyConfig): what a fresh
+// profile/run begins with. Two bags side by side — Initial (the shipping economy) and Debug
+// (dev overrides: while enabled they REPLACE the initial bag; gold -1 = no override). The
+// initial gold knob is the gold.initial attribute (so upgrade modifiers keep stacking on
+// it) and saves through /api/game-attributes; everything else saves to /api/economy.
+const ECO_ELEMENTS = ['fire', 'water', 'air', 'earth', 'darkness', 'light'];
+const ECO_PIECES = ['pawn', 'knight', 'bishop', 'rook', 'queen', 'king'];
+function economyDefaults() {
+  const debugMats = { king_piece: 21 };
+  for (const p of ECO_PIECES) if (p !== 'king') debugMats[p + '_piece'] = 10;
+  for (const e of ECO_ELEMENTS) debugMats[e + '_stone'] = 10;
+  return {
+    initial: { materials: {}, upgrade_points: 0 },
+    debug: { enabled: true, gold: -1, materials: debugMats, upgrade_points: 12 },
+  };
+}
+
+function economySection(cfg, ga) {
+  let root;
+  const numField = (label, get, set, min, title) => el('div', { class: 'eco-row', title: title || '' },
+    el('span', { text: label }),
+    el('input', { type: 'number', min, step: 1, value: get(), style: 'width:70px',
+      oninput: e => { const v = parseFloat(e.target.value); if (!isNaN(v)) set(Math.round(v)); } }));
+  const matField = (bag, id, label) =>
+    numField(label, () => bag.materials[id] || 0,
+      v => { if (v > 0) bag.materials[id] = v; else delete bag.materials[id]; }, 0);
+  const group = (title, rows) => el('div', { style: 'margin-top:12px' },
+    el('div', { class: 'eco-group', text: title }), ...rows);
+  const cap = s => s[0].toUpperCase() + s.slice(1);
+
+  const bagCol = (bag, isDebug) => {
+    const goldRow = isDebug
+      ? numField('Gold', () => bag.gold, v => { bag.gold = Math.max(-1, v); }, -1,
+        'Pins the run\'s starting gold while debug is enabled; -1 = no override (normal starting gold applies)')
+      : numField('Gold', () => ga['gold.initial'], v => { ga['gold.initial'] = Math.max(0, v); }, 0,
+        'The gold.initial attribute — upgrade modifiers stack on top of it');
+    return el('div', { style: 'flex:1;min-width:250px;max-width:340px' },
+      el('h3', { text: isDebug ? 'Debug overrides' : 'Initial resources', style: 'margin-top:0' }),
+      isDebug
+        ? el('label', { class: 'check', style: 'display:block;margin:6px 0 2px',
+          title: 'While enabled AND the game launches in debug mode (the git-ignored debug.json at the project root, on by default), this whole bag REPLACES the initial resources for fresh profiles/runs' },
+          el('input', { type: 'checkbox', checked: bag.enabled, onchange: e => { bag.enabled = e.target.checked; } }),
+          ' Enabled — replaces the initial resources (debug launches only)')
+        : el('div', { class: 'hint', text: 'What every fresh profile/run starts with in the shipping game.' }),
+      group('Purse', [goldRow,
+        numField('Upgrade points', () => bag.upgrade_points, v => { bag.upgrade_points = Math.max(0, v); }, 0,
+          'Spendable points for the Upgrades skill trees')]),
+      group('Elemental essence', ECO_ELEMENTS.map(e => matField(bag, e, cap(e)))),
+      group('Elemental stones', ECO_ELEMENTS.map(e => matField(bag, e + '_stone', cap(e) + ' Stone'))),
+      group('Chess pieces', ECO_PIECES.map(p => matField(bag, p + '_piece', cap(p) + ' Piece'))),
+      group('Special', [matField(bag, 'magic_mineral', 'Magic Mineral')]));
+  };
+
+  root = el('div', { class: 'panel tuning-section' },
+    el('h2', {}, '💰 Economy'),
+    el('div', { class: 'hint', text: 'The starting resources of a fresh profile/run. Initial = the shipping economy; '
+      + 'Debug = dev overrides that replace it entirely while enabled — and only when the game launches in debug mode '
+      + '(the git-ignored debug.json at the project root; on by default). Saves to data/economy.json '
+      + '(initial gold to data/game_attributes.json) — restart the game to apply.' }),
+    el('div', { style: 'display:flex;gap:34px;flex-wrap:wrap;margin-top:12px' },
+      bagCol(cfg.initial, false), bagCol(cfg.debug, true)),
+    el('div', { class: 'modal-actions' },
+      el('button', { class: 'ghost', text: 'Reset to defaults', onclick: () => {
+        Object.assign(cfg, economyDefaults());
+        ga['gold.initial'] = gameAttrDefaults()['gold.initial'];
+        root.replaceWith(economySection(cfg, ga));
+      } }),
+      el('button', { class: 'primary', text: 'Save to game', onclick: async () => {
+        try {
+          await api('/api/economy', { initial: cfg.initial, debug: cfg.debug });
+          await api('/api/game-attributes', ga);
+          toast('Economy saved — restart the game to apply', 'ok');
+        } catch (err) { toast('Save failed: ' + err.message, 'err'); }
+      } })));
+  return root;
+}
+
+// The tab body: load every global config in parallel, fold each onto its client defaults
+// (missing keys keep their defaults — same round-trip the old modals did), then one sub-tab
+// per section. The configs live in this closure, so unsaved edits survive sub-tab switches.
+async function renderTuningView() {
+  const box = $('tuning-body');
+  box.replaceChildren(el('div', { class: 'subtle', style: 'padding:20px', text: 'Loading tuning…' }));
+  try {
+    const [offer, combat, audio, attrs, econ, dbg] = await Promise.all([
+      api('/api/offer-rarity'), api('/api/combat-tuning'), api('/api/audio-tuning'),
+      api('/api/game-attributes'), api('/api/economy'), api('/api/debug-mode')]);
+    const oc = offerRarityDefaults();
+    const c = offer.config || {};
+    Object.assign(oc.piece, c.piece_rarity || {});
+    if (Number.isFinite(c.element_rarity)) oc.element = c.element_rarity;
+    Object.assign(oc.count, c.count_multiplier || {});
+    const dodge = Object.assign(dodgeDefaults(), (combat.config && combat.config.dodge) || {});
+    const crit = Object.assign(critDefaults(), (combat.config && combat.config.crit) || {});
+    const aud = Object.assign(audioDefaults(), audio.config || {});
+    const ga = Object.assign(gameAttrDefaults(), attrs.config || {});
+    const eco = economyDefaults();
+    if (econ.config) {
+      Object.assign(eco.initial, econ.config.initial || {});
+      Object.assign(eco.debug, econ.config.debug || {});
+    }
+    const SECTIONS = [
+      { key: 'offer', label: '⚖ Offer rarity', build: () => offerRaritySection(oc, offer.pool || []) },
+      { key: 'economy', label: '💰 Economy', build: () => economySection(eco, ga) },
+      { key: 'dodge', label: '⚡ Dodge', build: () => dodgeSection(dodge) },
+      { key: 'crit', label: '💥 Crit', build: () => critSection(crit) },
+      { key: 'audio', label: '🔊 Audio', build: () => audioSection(aud) },
+      { key: 'attrs', label: '👑 Game attributes', build: () => gameAttributesSection(ga) },
+    ];
+    const bar = el('div', { id: 'tuning-tabs' });
+    const content = el('div');
+    const show = key => {
+      state.tuningTab = key;
+      bar.replaceChildren(...SECTIONS.map(s => el('button', {
+        class: s.key === key ? 'active' : '', text: s.label, onclick: () => show(s.key) })));
+      content.replaceChildren(SECTIONS.find(s => s.key === key).build());
+    };
+    // The debug-mode handle: maps to the LOCAL debug.json at the game root (git-ignored,
+    // per-machine; the game treats an absent file as debug ON). Saves immediately on flip,
+    // creating the file if it doesn't exist yet.
+    const dbgToggle = el('label', { class: 'check', id: 'debug-mode-toggle',
+      title: 'Whether the game launches in DEBUG MODE — writes debug.json at the project root (git-ignored, '
+        + 'per-machine; absent = debug ON). Debug mode gates the debug economy bag and the in-game debug '
+        + 'buttons (Debug Items, DSFX/DVFX, end-combat ✕). Saves immediately; restart the game to apply.' },
+      el('input', { type: 'checkbox', checked: dbg.enabled, onchange: async e => {
+        try {
+          const r = await api('/api/debug-mode', { enabled: e.target.checked });
+          toast('Debug mode ' + (r.enabled ? 'ON' : 'OFF') + ' — saved to debug.json; restart the game to apply', 'ok');
+        } catch (err) {
+          e.target.checked = !e.target.checked;
+          toast('Save failed: ' + err.message, 'err');
+        }
+      } }),
+      ' 🐞 Debug mode');
+    box.replaceChildren(
+      el('div', { style: 'display:flex;align-items:center;gap:18px' },
+        el('div', { class: 'hint', style: 'flex:1',
+          text: 'Every global tuning knob in one place. Each section saves to its own game data file — restart the game to apply.' }),
+        dbgToggle),
+      bar, content);
+    show(SECTIONS.some(s => s.key === state.tuningTab) ? state.tuningTab : 'offer');
+  } catch (err) {
+    box.replaceChildren(el('div', { class: 'subtle', style: 'padding:20px', text: 'Failed to load tuning: ' + err.message }));
+  }
 }
 
 // The bulk entry point: confirm + pick adherence, then start the server-side job.
@@ -908,10 +1088,10 @@ function attachInferPoll(file, jobId) {
 }
 
 // ── sidebar ──────────────────────────────────────────────────────────────────
-const TAB_ORDER = ['card', 'relic', 'status', 'ability', 'charm', 'upgrade', 'encounter', 'nodeweights', 'sound', 'vfx'];
+const TAB_ORDER = ['card', 'relic', 'status', 'ability', 'charm', 'upgrade', 'encounter', 'nodeweights', 'sound', 'vfx', 'tuning'];
 const TAB_LABELS = { card: '🃏 Cards', relic: '🏺 Relics', status: '☠ Statuses', ability: '✨ Abilities',
   charm: '🔮 Charms', upgrade: '🌳 Upgrades', encounter: '⚔ Encounters', nodeweights: '🗺 Map Nodes',
-  sound: '🔊 Sounds', vfx: '🎇 VFX' };
+  sound: '🔊 Sounds', vfx: '🎇 VFX', tuning: '🎛 Tuning' };
 
 function renderTabs() {
   const tabs = $('type-tabs');
@@ -1005,6 +1185,9 @@ function renderCompFilterBar() {
 }
 
 function renderItemList() {
+  // The Tuning tab is a single full-width view of global config — no item list at all.
+  $('sidebar').hidden = state.currentType === 'tuning';
+  if (state.currentType === 'tuning') return;
   $('item-list-title').textContent = state.types[state.currentType] ? state.types[state.currentType].label + 's' : '';
   $('gen-set-btn').hidden = state.currentType !== 'card';
   const list = $('item-list');
@@ -1206,7 +1389,14 @@ function clientDeployPreview(type, serialized) {
 }
 
 function renderEditor() {
-  const empty = $('editor-empty'), body = $('editor-body');
+  const empty = $('editor-empty'), body = $('editor-body'), tuning = $('tuning-body');
+  if (state.currentType === 'tuning') {
+    empty.hidden = true; body.hidden = true;
+    // only (re)load on entry — background re-renders must not clobber in-progress edits
+    if (tuning.hidden) { tuning.hidden = false; renderTuningView(); }
+    return;
+  }
+  tuning.hidden = true;
   if (!state.draft) { empty.hidden = false; body.hidden = true; renderEmptyKinPanel(); return; }
   empty.hidden = true; body.hidden = false;
   const ed = EDITORS[state.currentType];
@@ -2915,10 +3105,6 @@ $('enabled-check').addEventListener('change', e => {
 });
 $('delete-btn').addEventListener('click', deleteItem);
 $('settings-btn').addEventListener('click', openSettings);
-$('offer-rarity-btn').addEventListener('click', openOfferRarityModal);
-$('dodge-btn').addEventListener('click', openCombatTuningModal);
-$('crit-btn').addEventListener('click', openCritTuningModal);
-$('audio-btn').addEventListener('click', openAudioTuningModal);
 $('chat-btn').addEventListener('click', openChatModal);
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && state.advancedOpen) closeAdvanced();

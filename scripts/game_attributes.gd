@@ -30,8 +30,38 @@ const DEFAULTS := {
 }
 
 
+# Authored overrides on the DEFAULTS above — the Tool's 🎛 Tuning tab writes this file; an
+# absent file (or key) means the code default. Registered keys only: a stray key in the JSON
+# never invents a new attribute.
+const OVERRIDES_PATH := "res://data/game_attributes.json"
+static var _overrides: Dictionary = {}
+static var _overrides_loaded := false
+
+
+# Lazily loads (and caches) the authored overrides, tolerating a partial/absent/bad JSON
+# (mirrors Resolver._dodge_config).
+static func _override_config() -> Dictionary:
+	if _overrides_loaded:
+		return _overrides
+	_overrides_loaded = true
+	if FileAccess.file_exists(OVERRIDES_PATH):
+		var file := FileAccess.open(OVERRIDES_PATH, FileAccess.READ)
+		var json := JSON.new()
+		if file != null and json.parse(file.get_as_text()) == OK and json.data is Dictionary:
+			for k: String in DEFAULTS:
+				var v: Variant = (json.data as Dictionary).get(k)
+				if v is float or v is int:
+					_overrides[k] = float(v)
+		else:
+			push_error("GameAttributes: bad game_attributes.json — using code defaults")
+	return _overrides
+
+
 # The base value for a key (0 for an unregistered key, so a stray modifier still resolves).
 static func default_value(key: String) -> float:
+	var overrides := _override_config()
+	if overrides.has(key):
+		return float(overrides[key])
 	return float(DEFAULTS.get(key, 0))
 
 

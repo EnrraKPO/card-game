@@ -24,6 +24,7 @@ const SUITES: Array = [
 	preload("res://tests/test_composition_grants.gd"),
 	preload("res://tests/test_dodge.gd"),
 	preload("res://tests/test_crit.gd"),
+	preload("res://tests/test_economy.gd"),
 ]
 
 
@@ -52,6 +53,9 @@ func _clean_env() -> void:
 	# the damage-math suites are deterministic. Each feature's suite re-enables its own.
 	Resolver.dodge_enabled = false
 	Resolver.crit_enabled = false
+	# Pin debug mode ON regardless of the local (git-ignored) debug.json, so profile seeding
+	# is identical on every machine. The economy suite exercises both launch modes itself.
+	DebugConfig.set_override(true)
 	GameData.current_profile = ProfileData.from_dict({})
 	GameData.current_modifiers = ModifierSet.new()
 	GameData.current_run = null

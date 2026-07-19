@@ -101,15 +101,16 @@ func _open_settings() -> void:
 # The two placeholder mute/hide dev toggles live IN the header (built by ScreenUI.build_header,
 # sat next to the ✕). Here we wire their behavior: each toggle's PRESSED state = the placeholder
 # flag is ON (playing); OFF/unpressed = muted/hidden, the default. F7/F8 flip the same flags, and
-# DevFlags.changed keeps the buttons in sync either way. Debug builds only (labeled "Debug", and
-# placeholders are off in release regardless) — hidden otherwise.
+# DevFlags.changed keeps the buttons in sync either way. Debug launches only (debug builds with
+# debug mode on — DebugConfig / the local debug.json; placeholders are off in release
+# regardless) — hidden otherwise.
 var _dev_sfx_btn: GlossyButton
 var _dev_vfx_btn: GlossyButton
 
 func _wire_dev_toggles() -> void:
 	_dev_sfx_btn = _header.dev_sfx
 	_dev_vfx_btn = _header.dev_vfx
-	if not OS.is_debug_build():
+	if not OS.is_debug_build() or not DebugConfig.enabled():
 		_dev_sfx_btn.visible = false
 		_dev_vfx_btn.visible = false
 		return

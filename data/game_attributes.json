@@ -1,0 +1,12 @@
+{
+  "mana.initial": 1,
+  "mana.max": 20,
+  "mana.per_turn": 0,
+  "hand.size.initial": 3,
+  "draw.per_turn": 1,
+  "gold.initial": 100,
+  "king.max_health": 0,
+  "relic.capacity": 10,
+  "reward.essence": 0,
+  "reward.king_piece_chance": 0
+}

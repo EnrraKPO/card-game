@@ -90,13 +90,13 @@ var _node_diam := NODE_DIAM
 
 
 func get_chrome() -> Dictionary:
+	var actions: Array = [{"label": "Save & Quit", "action": _on_quit_pressed}]
+	if DebugConfig.enabled():
+		actions.append({"label": "Debug Items",
+				"action": func() -> void: Nav.goto("res://scenes/debug_shop.tscn"), "align": "right"})
 	return {"fields": [ScreenUI.Field.ACT, ScreenUI.Field.HP, ScreenUI.Field.GOLD,
 			ScreenUI.Field.RELICS, ScreenUI.Field.EXP], "exit": _on_quit_pressed,
-		"show_footer": true, "inset": false, "footer_actions": [
-			{"label": "Save & Quit", "action": _on_quit_pressed},
-			{"label": "Debug Items", "action": func(): Nav.goto("res://scenes/debug_shop.tscn"),
-				"align": "right"},
-		]}
+		"show_footer": true, "inset": false, "footer_actions": actions}
 
 
 func _ready() -> void:

@@ -3,23 +3,32 @@ extends RefCounted
 
 # Display + lookup helpers for profile crafting resources (the meta economy). Lightweight
 # seed of a future MaterialData registry — for now names derive from the element cards and
-# colours live here. Materials are an id→count bag on ProfileData, in three categories:
+# colours live here. Materials are an id→count bag on ProfileData, in four categories:
 #   • essence — element ids ("fire".."light"); raw drops, refined in the Lab.
 #   • stone   — "<element>_stone"; essence refined one tier up (see Lab.refine).
 #   • piece   — "<chesspiece>_piece" (pawn..king); chess-piece tokens spent on king-alchemy
 #               (the King Forge consumes "king_piece") and future piece crafting.
+#   • mineral — "magic_mineral"; a non-elemental resource whose sinks are still being
+#               designed (reserved in the economy now so it can be granted/tuned).
 
 const ELEMENTS := ["fire", "water", "air", "earth", "darkness", "light"]
 const PIECES := ["pawn", "knight", "bishop", "rook", "queen", "king"]
 
 const STONE_SUFFIX := "_stone"
 const PIECE_SUFFIX := "_piece"
+const MAGIC_MINERAL := "magic_mineral"
 
 # Illustrated art for tokens. Piece/stone filenames match the id ("king_piece.png",
 # "fire_stone.png"); essence ids are the bare element, so their art is "<element>_essence.png".
 const PIECE_ART_DIR := "res://assets/ui/pieces/"
 const STONE_ART_DIR := "res://assets/ui/stones/"
 const ESSENCE_ART_DIR := "res://assets/ui/essences/"
+const MINERAL_ART_DIR := "res://assets/ui/minerals/"
+
+# Non-elemental, non-piece materials get their own palette (magic mineral: arcane teal).
+const MINERAL_COLOR := {
+	"magic_mineral": Color(0.40, 0.85, 0.75),
+}
 
 const ELEMENT_COLOR := {
 	"fire":     Color(0.90, 0.35, 0.20),
@@ -71,12 +80,28 @@ static func piece_id(piece: String) -> String:
 	return piece + PIECE_SUFFIX
 
 
-# Category of a material id: "piece", "stone", or "essence".
+# Every valid material id — the vocabulary the economy config and granting surfaces
+# validate against (mirrored by the Tool's economy editor).
+static func all_ids() -> Array:
+	var ids: Array = []
+	for element: String in ELEMENTS:
+		ids.append(element)
+	for element: String in ELEMENTS:
+		ids.append(stone_id(element))
+	for piece: String in PIECES:
+		ids.append(piece_id(piece))
+	ids.append(MAGIC_MINERAL)
+	return ids
+
+
+# Category of a material id: "piece", "stone", "mineral", or "essence".
 static func category(id: String) -> String:
 	if is_piece(id):
 		return "piece"
 	if is_stone(id):
 		return "stone"
+	if id == MAGIC_MINERAL:
+		return "mineral"
 	return "essence"
 
 
@@ -107,6 +132,8 @@ static func short_name(id: String) -> String:
 static func color(id: String) -> Color:
 	if is_piece(id):
 		return PIECE_COLOR.get(piece_of(id), Color(0.85, 0.78, 0.50))
+	if MINERAL_COLOR.has(id):
+		return MINERAL_COLOR[id]
 	return ELEMENT_COLOR.get(element_of(id), Color.WHITE)
 
 
@@ -129,6 +156,8 @@ static func texture(id: String) -> Texture2D:
 		path = STONE_ART_DIR + id + ".png"
 	elif id in ELEMENTS:
 		path = ESSENCE_ART_DIR + id + "_essence.png"
+	elif id == MAGIC_MINERAL:
+		path = MINERAL_ART_DIR + id + ".png"   # no art yet — resolves once the asset lands
 	else:
 		return null
 	if not ResourceLoader.exists(path):

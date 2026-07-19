@@ -366,6 +366,85 @@ function mergeTuning(authored, defaults) {
   for (const k of Object.keys(defaults)) out[k] = num(src[k], defaults[k]);
   return out;
 }
+// ── debug mode (local launch config) ─────────────────────────────────────────
+// The per-machine debug.json at the game root (read by the game's DebugConfig; git-ignored,
+// never shipped). The game treats an ABSENT file as debug ON — the toggle materializes the
+// file on first write, then flips it in place.
+const DEBUG_MODE_PATH = path.join(GAME_ROOT, 'debug.json');
+function getDebugMode() {
+  const d = readJson(DEBUG_MODE_PATH, null);
+  return { enabled: !(d && d.enabled === false), exists: fs.existsSync(DEBUG_MODE_PATH) };
+}
+
+// ── economy (starting resources) ─────────────────────────────────────────────
+// The data-driven starting economy (scripts/economy_config.gd): what a fresh profile/run
+// begins with. Two bags — `initial` (the shipping economy) and `debug` (dev overrides:
+// while enabled it REPLACES initial; gold -1 = no override, keep gold.initial). Lives in
+// the game's own data/economy.json. Mirror of the game's defaults (the old TEMP dev seed
+// as the debug bag) so the tool round-trips the same shape / fallbacks.
+const ECONOMY_PATH = path.join(GAME_ROOT, 'data/economy.json');
+const MAT_ELEMENTS = ['fire', 'water', 'air', 'earth', 'darkness', 'light'];
+const MAT_PIECES = ['pawn', 'knight', 'bishop', 'rook', 'queen', 'king'];
+const MATERIAL_IDS = [
+  ...MAT_ELEMENTS,                          // essences (bare element id)
+  ...MAT_ELEMENTS.map(e => e + '_stone'),   // stones
+  ...MAT_PIECES.map(p => p + '_piece'),     // chess-piece tokens
+  'magic_mineral',
+];
+const ECONOMY_DEFAULT = {
+  initial: { materials: {}, upgrade_points: 0 },
+  debug: {
+    enabled: true, gold: -1,
+    materials: Object.assign({ king_piece: 21 },
+      ...MAT_PIECES.filter(p => p !== 'king').map(p => ({ [p + '_piece']: 10 })),
+      ...MAT_ELEMENTS.map(e => ({ [e + '_stone']: 10 }))),
+    upgrade_points: 12,
+  },
+};
+// Sanitizes one bag against its default: materials taken wholesale when authored (known
+// ids, positive integer counts), scalars replaced when well-typed.
+function economyBag(src, def, isDebug) {
+  const s = (src && typeof src === 'object') ? src : {};
+  const out = { materials: {}, upgrade_points: def.upgrade_points };
+  const mats = (s.materials && typeof s.materials === 'object') ? s.materials : def.materials;
+  for (const id of MATERIAL_IDS) {
+    const v = Number(mats[id]);
+    if (Number.isFinite(v) && v > 0) out.materials[id] = Math.round(v);
+  }
+  if (Number.isFinite(s.upgrade_points) && s.upgrade_points >= 0) out.upgrade_points = Math.round(s.upgrade_points);
+  if (isDebug) {
+    out.enabled = typeof s.enabled === 'boolean' ? s.enabled : def.enabled;
+    out.gold = (Number.isFinite(s.gold) && s.gold >= 0) ? Math.round(s.gold) : -1;
+  }
+  return out;
+}
+function getEconomy() {
+  const d = readJson(ECONOMY_PATH, {}) || {};
+  return {
+    initial: economyBag(d.initial, ECONOMY_DEFAULT.initial, false),
+    debug: economyBag(d.debug, ECONOMY_DEFAULT.debug, true),
+  };
+}
+
+// ── game attributes ──────────────────────────────────────────────────────────
+// The global run/match numbers (GameAttributes.DEFAULTS in scripts/game_attributes.gd).
+// Lives in the game's own data/game_attributes.json, read by GameAttributes.default_value
+// as overrides on the code defaults — an absent file means pure defaults. Mirror of the
+// game's DEFAULTS so the tool round-trips the same shape / fallbacks.
+const GAME_ATTRS_PATH = path.join(GAME_ROOT, 'data/game_attributes.json');
+const GAME_ATTRS_DEFAULT = {
+  'mana.initial': 1, 'mana.max': 10, 'mana.per_turn': 0, 'hand.size.initial': 3,
+  'draw.per_turn': 1, 'gold.initial': 100, 'king.max_health': 0, 'relic.capacity': 10,
+  'reward.essence': 0, 'reward.king_piece_chance': 0.0,
+};
+function getGameAttrs() {
+  const d = readJson(GAME_ATTRS_PATH, {}) || {};
+  const out = {};
+  for (const k of Object.keys(GAME_ATTRS_DEFAULT))
+    out[k] = Number.isFinite(d[k]) ? d[k] : GAME_ATTRS_DEFAULT[k];
+  return out;
+}
+
 function getCombatTuning() {
   const d = readJson(COMBAT_TUNING_PATH, {}) || {};
   return {
@@ -3482,6 +3561,40 @@ async function handle(req, res) {
         if (Number.isFinite(v)) cur[k] = Math.min(1, Math.max(0, v));
       }
       writeJson(AUDIO_TUNING_PATH, cur);
+      return send(res, 200, { ok: true, config: cur });
+    }
+    if (p === '/api/debug-mode' && req.method === 'GET')
+      return send(res, 200, Object.assign({ ok: true }, getDebugMode()));
+    if (p === '/api/debug-mode' && req.method === 'POST') {
+      const body = await readBody(req);
+      const enabled = body.enabled !== false;
+      writeJson(DEBUG_MODE_PATH, { enabled });
+      return send(res, 200, { ok: true, enabled, exists: true });
+    }
+    if (p === '/api/economy' && req.method === 'GET')
+      return send(res, 200, { ok: true, config: getEconomy(), material_ids: MATERIAL_IDS });
+    if (p === '/api/economy' && req.method === 'POST') {
+      const body = await readBody(req);
+      const out = {
+        initial: economyBag(body.initial, ECONOMY_DEFAULT.initial, false),
+        debug: economyBag(body.debug, ECONOMY_DEFAULT.debug, true),
+      };
+      writeJson(ECONOMY_PATH, out);
+      return send(res, 200, { ok: true, config: out });
+    }
+    if (p === '/api/game-attributes' && req.method === 'GET')
+      return send(res, 200, { ok: true, config: getGameAttrs() });
+    if (p === '/api/game-attributes' && req.method === 'POST') {
+      // Only registered keys land in the file; all values are >= 0 quantities (bad ones fall
+      // back to current), and the king-piece chance is a 0..1 probability.
+      const body = await readBody(req);
+      const cur = getGameAttrs();
+      for (const k of Object.keys(GAME_ATTRS_DEFAULT)) {
+        const v = Number(body[k]);
+        if (Number.isFinite(v) && v >= 0) cur[k] = v;
+      }
+      cur['reward.king_piece_chance'] = Math.min(1, cur['reward.king_piece_chance']);
+      writeJson(GAME_ATTRS_PATH, cur);
       return send(res, 200, { ok: true, config: cur });
     }
     if (p === '/api/comfy/loras') {
