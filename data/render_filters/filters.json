@@ -28,5 +28,19 @@
 		},
 		"concept": "A thing lit from WITHIN rather than surrounded — the quieter half of an 'this is live' treatment, and what keeps a glowing object from reading as a sticker with a halo behind it.",
 		"explanation": "Blurs the silhouette's ABSENCE and masks it by the silhouette, so light lands just inside the outline and fades toward the middle. pad = 0 because it never spills, and layer = \"above\" because the light is inside the shape and must draw over the art it lights."
+	},
+	{
+		"id": "luminescence",
+		"display_name": "Luminescence",
+		"shader": "res://assets/ui/shaders/filter_luminescence.gdshader",
+		"pad": 0.0,
+		"layer": "above",
+		"params": {
+			"glow_color": "ffc46b",
+			"intensity": 0.35,
+			"luma_bias": 0.7
+		},
+		"concept": "The WHOLE object lit from within, as though the thing itself were the light source — the treatment for 'this is live/charged', where an edge-only inner glow would read as a mere outline effect rather than as the material glowing.",
+		"explanation": "Lifts every pixel the silhouette covers, weighted by the art's own luminance so highlights take the light and shadows keep their darkness — a flat lift would read as a coloured sticker over the art and erase the shading that gives the object form. luma_bias dials flat-vs-following. Additive, pad 0, drawn above the source."
 	}
 ]
