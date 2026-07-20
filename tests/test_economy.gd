@@ -18,6 +18,23 @@ func run() -> void:
 	_debug_bag()
 	_launch_gate()
 	_sanitizing()
+	_forge_alert_ack()
+
+
+# The map Forge "!" badge remembers WHERE it was acknowledged, so it can stay quiet until the
+# next completed map event. That only works if the mark survives a save/load — otherwise
+# quitting and resuming resurrects a cue the player already answered.
+func _forge_alert_ack() -> void:
+	var run := RunData.create_new()
+	check_eq(run.forge_alert_ack, "", "a fresh run has acknowledged nothing")
+	run.forge_alert_ack = "2:17"
+	var revived := RunData.from_dict(run.to_dict())
+	check_eq(revived.forge_alert_ack, "2:17", "the acknowledgement survives a save/load round trip")
+	# Legacy saves predate the field; they must load as "not yet acknowledged", not crash.
+	var legacy := run.to_dict()
+	legacy.erase("forge_alert_ack")
+	check_eq(RunData.from_dict(legacy).forge_alert_ack, "",
+			"a save written before the field loads as unacknowledged")
 	_reward_totals()
 	EconomyConfig.set_config({})        # restore disk-backed config for whatever runs next
 	DebugConfig.set_override(true)      # restore the runner's pinned debug mode

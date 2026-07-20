@@ -5411,7 +5411,7 @@
       "prompt": "Sprite sheet of sickly green poison bubbles rising and popping, looping toxic aura, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-14T12:50:33.586Z",
-    "fileHash": "05847817294d3c09bbbb8dd05bfa45a9050cba1b"
+    "fileHash": "cdabc4a40de24ba191ec3b7267034b763133992e"
   },
   "vfx/aura_blind": {
     "file": "vfx.json",
@@ -5431,7 +5431,7 @@
       "prompt": "Sprite sheet of grey smoky haze drifting across a face area, looping blindness veil, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-14T12:50:35.887Z",
-    "fileHash": "05847817294d3c09bbbb8dd05bfa45a9050cba1b"
+    "fileHash": "cdabc4a40de24ba191ec3b7267034b763133992e"
   },
   "card/pawn_rook": {
     "file": "chess_combined.json",
@@ -6073,5 +6073,34 @@
     },
     "at": "2026-07-20T04:49:36.700Z",
     "fileHash": "138a9c0d3613151467bf4b54586b1a64c73e5129"
+  },
+  "vfx/map_forge_alert_glow": {
+    "file": "vfx.json",
+    "original": {
+      "id": "map_forge_alert_glow",
+      "display_name": "Map Forge Alert Glow",
+      "category": "ui",
+      "renderer": "filter",
+      "behavior": "glow",
+      "params": {
+        "filter": "glow",
+        "glow_color": "ffa51e",
+        "spread": 46,
+        "falloff": 2,
+        "animate": {
+          "param": "intensity",
+          "from": 0.55,
+          "to": 1.25,
+          "period": 1.6
+        }
+      },
+      "sustained": true,
+      "placeholder": false,
+      "concept": "The map's Forge button while the run is holding unspent Magic Mineral — the one action that can turn that currency into a card is worth walking to, so the button radiates light instead of merely tinting.",
+      "explanation": "IMPLEMENTED (map): the first entry on renderer \"filter\" — the look is the `glow` RenderFilter (a shader deriving light from the button art's own alpha silhouette), and this entry owns only when it runs and the intensity breath. Nothing here describes the button's shape, because the filter reads it.",
+      "prompt": "Sprite sheet of a golden light halo breathing outward around a circular button, smooth soft radial falloff extending past the rim, 8 frames on transparent background, 2d game effect"
+    },
+    "at": "2026-07-20T18:34:03.607Z",
+    "fileHash": "cdabc4a40de24ba191ec3b7267034b763133992e"
   }
 }

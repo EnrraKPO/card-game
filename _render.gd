@@ -47,6 +47,10 @@ func _ready() -> void:
 		var start: MapNodeData = md.floors[0][0]
 		GameData.current_map_state.visited_nodes = [start.id]
 		GameData.current_map_state.current_node_id = start.connections[0]
+	# "forgeack": pretend the player already acknowledged the Forge "!" at this map position.
+	if scene_path.contains("map") and "forgeack" in args:
+		GameData.current_run.forge_alert_ack = "%d:%d" % [GameData.current_run.act,
+				GameData.current_map_state.current_node_id]
 	if scene_path.contains("map") and args.size() > 1 and "zoomed" in args:
 		MapScreen._zoom_level = 1.6
 	if scene_path.contains("reward") and args.size() > 1 and "charm" in args:

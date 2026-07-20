@@ -259,7 +259,7 @@
 		"params": {
 			"filter": "glow",
 			"glow_color": "ccccff",
-			"spread": 46,
+			"spread": 34,
 			"falloff": 2,
 			"animate": {
 				"param": "intensity",

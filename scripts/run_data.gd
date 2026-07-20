@@ -16,6 +16,13 @@ var magic_mineral: int : set = _set_magic_mineral
 var deck: Array   # Array[DeckCard] — each entry carries its own permanent mods
 var act: int : set = _set_act
 var charms: Array = []   # owned, unapplied charm ids (inventory); applied in the forge
+# Where the player last acknowledged the map Forge button's "!" badge, as "<act>:<node id>".
+# The badge is an ATTENTION cue, not a status light: once seen (hovered or clicked) it should
+# stay quiet until something changes. Storing the map POSITION rather than a bool makes
+# "reappears after the next completed map event" fall out for free — moving onto a new node is
+# what completing an event does — with no reset hook anywhere. Act-qualified because node ids
+# repeat across a run's stages.
+var forge_alert_ack: String = ""
 var relics: Array = []   # owned relic ids (run-unique); each folds its Effects into the run ModifierSet
 
 
@@ -84,6 +91,7 @@ static func from_dict(data: Dictionary) -> RunData:
 	run.act  = data.get("act",  1)
 	run.charms = data.get("charms", [])
 	run.relics = data.get("relics", [])
+	run.forge_alert_ack = str(data.get("forge_alert_ack", ""))
 	return run
 
 
@@ -100,6 +108,7 @@ func to_dict() -> Dictionary:
 		"act":         act,
 		"charms":      charms,
 		"relics":      relics,
+		"forge_alert_ack": forge_alert_ack,
 	}
 
 

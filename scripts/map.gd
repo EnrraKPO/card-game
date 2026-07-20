@@ -80,13 +80,13 @@ const BADGE_AT := Vector2(0.71, 0.29)
 ## Forge button CENTRE as a fraction of the screen (0 = left/top, 1 = right/bottom). The map
 ## nodes sit in a centred band with empty side margins, so pull X in from 1.0 to bring the
 ## button nearer the content. Drag these in the Inspector, then run, to place it exactly.
-@export_range(0.0, 1.0, 0.01) var forge_pos_x := 0.84
-@export_range(0.0, 1.0, 0.01) var forge_pos_y := 0.5
+@export_range(0.0, 1.0, 0.01) var forge_pos_x := 0.90
+@export_range(0.0, 1.0, 0.01) var forge_pos_y := 0.18
 ## Forge button diameter, px (desktop / compact-phone).
-@export_range(64.0, 600.0, 2.0) var forge_diam := 336.0
+@export_range(64.0, 600.0, 2.0) var forge_diam := 252.0
 ## Same authored value as desktop on purpose: compact already applies its own content-scale
 ## bump, so a larger number here lands visually oversized and eats the map.
-@export_range(80.0, 700.0, 2.0) var forge_diam_compact := 336.0
+@export_range(80.0, 700.0, 2.0) var forge_diam_compact := 252.0
 ## Attention badge diameter, ×forge button diameter. It sits on the button's upper-right.
 @export_range(0.15, 0.6, 0.01) var forge_badge_mult := 0.38
 
@@ -213,10 +213,19 @@ func _build_forge_fab() -> void:
 	UIScale.tip(btn, "Forge — combine two cards into one")
 	for s in ["normal", "hover", "pressed", "focus", "disabled"]:
 		btn.add_theme_stylebox_override(s, StyleBoxEmpty.new())
-	btn.pressed.connect(func(): _node_kinds[MapNodeData.Type.FORGE].enter(null, self))
+	btn.pressed.connect(func() -> void:
+		_acknowledge_forge_alert()
+		_node_kinds[MapNodeData.Type.FORGE].enter(null, self))
 	# Tactile feedback on the art itself (the button has no visual of its own): brighten on hover,
 	# sink darker on press.
-	btn.mouse_entered.connect(func() -> void: if not btn.button_pressed: tex.modulate = Color(1.12, 1.12, 1.12))
+	btn.mouse_entered.connect(func() -> void:
+		if not btn.button_pressed:
+			tex.modulate = Color(1.12, 1.12, 1.12)
+		# Hover dismisses the badge — but NOT on touch, where emulate_mouse_from_touch parks a
+		# ghost cursor wherever the last tap landed. That phantom hover would silently retire a
+		# cue the player never saw. Touch acknowledges by tapping. See [[tooltip-touch-gate]].
+		if not UIScale.is_touch():
+			_acknowledge_forge_alert())
 	btn.mouse_exited.connect(func() -> void: tex.modulate = Color.WHITE)
 	btn.button_down.connect(func() -> void: tex.modulate = Color(0.85, 0.85, 0.85))
 	btn.button_up.connect(func() -> void: tex.modulate = Color.WHITE)
@@ -255,22 +264,50 @@ func _bang_texture() -> Texture2D:
 	return FORGE_BANG_SVG
 
 
-# "Unused mineral" = the run is holding Magic Mineral it hasn't spent at the Forge yet. While
-# that's true the button shows the ! badge and breathes a warm gold; otherwise it sits quiet.
+# "Unused mineral" = the run is holding Magic Mineral it hasn't spent at the Forge yet. Two
+# different jobs, deliberately split:
+#   the GLOW is a STATUS LIGHT — on for as long as the mineral is unspent, full stop;
+#   the "!" is an ATTENTION CUE — it asks to be looked at once, and goes quiet once it has been
+#   (hover or click), returning only after the next completed map event still finds mineral in
+#   hand. A cue that never stops shouting stops being a cue.
 func _refresh_forge_alert() -> void:
 	var run := GameData.current_run
-	_set_forge_alert(run != null and run.magic_mineral > 0)
+	var lit: bool = run != null and run.magic_mineral > 0
+	_set_forge_glow(lit)
+	_set_forge_badge(lit and run.forge_alert_ack != _forge_alert_key())
 
 
-func _set_forge_alert(on: bool) -> void:
-	if _forge_badge == null or _forge_fab == null:
+func _set_forge_glow(on: bool) -> void:
+	if _forge_fab == null:
 		return
-	_forge_badge.visible = on
 	for cue: String in FORGE_ALERT_CUES:
 		if on:
 			Vfx.attach(cue, _forge_fab)
 		else:
 			Vfx.detach(cue, _forge_fab)
+
+
+func _set_forge_badge(on: bool) -> void:
+	if _forge_badge != null:
+		_forge_badge.visible = on
+
+
+# The map position the badge's "seen" state is pinned to — see RunData.forge_alert_ack.
+func _forge_alert_key() -> String:
+	var run := GameData.current_run
+	var act: int = run.act if run != null else 0
+	return "%d:%d" % [act, GameData.current_map_state.current_node_id]
+
+
+# Hovering or clicking the button IS the acknowledgement. Persisted immediately so quitting
+# right after doesn't resurrect a cue the player already answered.
+func _acknowledge_forge_alert() -> void:
+	var run := GameData.current_run
+	if run == null or _forge_badge == null or not _forge_badge.visible:
+		return
+	run.forge_alert_ack = _forge_alert_key()
+	GameData.save_run()
+	_set_forge_badge(false)
 
 
 # A chunky vertical zoom slider (+ on top, − below, map-app style) floating over the left
