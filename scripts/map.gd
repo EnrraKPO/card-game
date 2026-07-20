@@ -19,6 +19,17 @@ static var _zoom_level := 1.0
 # _build_forge_fab, which shows this directly instead of drawing its own circle + anvil).
 const FORGE_FAB_TEX := preload("res://assets/buttons/forge.png")
 
+# The "unused mineral" attention badge that rides on top of the Forge button. The SVG is
+# placeholder art; dropping a PNG at BANG_PNG_PATH overrides it with no code change.
+const FORGE_BANG_SVG := preload("res://assets/ui/alert_bang.svg")
+const FORGE_BANG_PNG_PATH := "res://assets/ui/alert_bang.png"
+# The sustained glow shown while unspent Magic Mineral is in hand.
+const FORGE_ALERT_GLOW := "map_forge_alert_glow"
+# Badge CENTRE as a fraction of the Forge button's box. Well inside the corner: the art's
+# visible disc is only ~0.83 of the box, so a corner-ward badge floats off it entirely. This
+# lands on the upper-right rim, overlapping the face.
+const BADGE_AT := Vector2(0.71, 0.29)
+
 # --- Tunable in the Inspector (select the Map root node in map.tscn, drag the sliders,
 # --- then run to see the result). Spacing is a multiple of node diameter, so it scales with
 # --- node size. Lane spacing is still capped to the viewport width so nodes never clip.
@@ -70,8 +81,12 @@ const FORGE_FAB_TEX := preload("res://assets/buttons/forge.png")
 @export_range(0.0, 1.0, 0.01) var forge_pos_x := 0.84
 @export_range(0.0, 1.0, 0.01) var forge_pos_y := 0.5
 ## Forge button diameter, px (desktop / compact-phone).
-@export_range(64.0, 240.0, 2.0) var forge_diam := 112.0
-@export_range(80.0, 280.0, 2.0) var forge_diam_compact := 150.0
+@export_range(64.0, 600.0, 2.0) var forge_diam := 336.0
+## Same authored value as desktop on purpose: compact already applies its own content-scale
+## bump, so a larger number here lands visually oversized and eats the map.
+@export_range(80.0, 700.0, 2.0) var forge_diam_compact := 336.0
+## Attention badge diameter, ×forge button diameter. It sits on the button's upper-right.
+@export_range(0.15, 0.6, 0.01) var forge_badge_mult := 0.38
 
 var map_data: MapData
 var current_node_id: int
@@ -87,6 +102,10 @@ var _scroll: ScrollContainer
 var _canvas: MapCanvas
 var _compact := false
 var _node_diam := NODE_DIAM
+
+# Forge button pieces kept for the "unused mineral" highlight (see _set_forge_alert).
+var _forge_fab: Control
+var _forge_badge: Control
 
 
 func get_chrome() -> Dictionary:
@@ -200,6 +219,58 @@ func _build_forge_fab() -> void:
 	btn.button_down.connect(func() -> void: tex.modulate = Color(0.85, 0.85, 0.85))
 	btn.button_up.connect(func() -> void: tex.modulate = Color.WHITE)
 	fab.add_child(btn)
+
+	# Attention badge, centred on BADGE_AT of the button box — a fraction, not the corner,
+	# because the button art carries transparent padding and a corner-anchored badge floats
+	# off the visible circle. Added after the Button so it draws on top; it ignores the mouse,
+	# so the whole face stays clickable.
+	var bd := diam * forge_badge_mult
+	var badge := TextureRect.new()
+	badge.texture = _bang_texture()
+	badge.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	badge.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	badge.anchor_left = BADGE_AT.x; badge.anchor_right = BADGE_AT.x
+	badge.anchor_top = BADGE_AT.y; badge.anchor_bottom = BADGE_AT.y
+	badge.offset_left = -bd * 0.5; badge.offset_right = bd * 0.5
+	badge.offset_top = -bd * 0.5; badge.offset_bottom = bd * 0.5
+	badge.visible = false
+	fab.add_child(badge)
+
+	_forge_fab = fab
+	_forge_badge = badge
+	GameSignals.mineral_changed.connect(func(_v: int) -> void: _refresh_forge_alert())
+	_refresh_forge_alert()
+
+
+# Placeholder SVG today; a PNG dropped at FORGE_BANG_PNG_PATH silently wins, so swapping in
+# final art is a file drop with no code change.
+func _bang_texture() -> Texture2D:
+	if ResourceLoader.exists(FORGE_BANG_PNG_PATH):
+		var png := load(FORGE_BANG_PNG_PATH)
+		if png is Texture2D:
+			return png
+	return FORGE_BANG_SVG
+
+
+# "Unused mineral" = the run is holding Magic Mineral it hasn't spent at the Forge yet. While
+# that's true the button shows the ! badge and breathes a warm gold; otherwise it sits quiet.
+func _refresh_forge_alert() -> void:
+	var run := GameData.current_run
+	_set_forge_alert(run != null and run.magic_mineral > 0)
+
+
+func _set_forge_alert(on: bool) -> void:
+	if _forge_badge == null or _forge_fab == null:
+		return
+	_forge_badge.visible = on
+	# A real glow: the sustained "radiance" behavior draws additive layers OUTSIDE the button's
+	# rect on the VFX layer, so light spills past the rim. Tinting the button's modulate would
+	# only repaint pixels inside it, which is not a glow.
+	if on:
+		Vfx.attach(FORGE_ALERT_GLOW, _forge_fab)
+	else:
+		Vfx.detach(FORGE_ALERT_GLOW, _forge_fab)
 
 
 # A chunky vertical zoom slider (+ on top, − below, map-app style) floating over the left
