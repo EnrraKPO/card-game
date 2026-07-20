@@ -15,8 +15,11 @@ const WS_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'cardgame-toolws-'));
 const PORT = 8477;
 const BASE = `http://127.0.0.1:${PORT}`;
 
-for (const d of ['data/cards', 'data/statuses', 'data/abilities', 'data/charms', 'data/relics', 'data/upgrades', 'data/encounters', 'data/map', 'assets/cards/enemies', 'assets/relics', 'assets/abilities'])
+for (const d of ['data/cards', 'data/statuses', 'data/abilities', 'data/charms', 'data/relics', 'data/upgrades', 'data/encounters', 'data/map', 'data/render_filters', 'assets/cards/enemies', 'assets/relics', 'assets/abilities', 'assets/ui/shaders'])
   fs.mkdirSync(path.join(SANDBOX, d), { recursive: true });
+// render-filter validation checks the shader actually exists in the project, so the sandbox
+// needs a real file at the res:// path the tests use.
+fs.writeFileSync(path.join(SANDBOX, 'assets/ui/shaders/filter_glow.gdshader'), 'shader_type canvas_item;\n');
 fs.writeFileSync(path.join(SANDBOX, 'data/cards/base.json'), JSON.stringify([
   { id: 'pawn', display_name: 'Pawn', cost: 1, attack: 1, health: 2, speed: 3, chess_pieces: ['pawn'] },
   { id: 'goblin_cutter', display_name: 'Goblin Cutter', cost: 1, attack: 2, health: 1, speed: 4, enemy_only: true },
@@ -674,6 +677,52 @@ async function main() {
       r.status === 200
       && readSbox('data/cards/apitest_move_src.json').some(e => e.id === 'apitest_mover' && e.attack === 2)
       && !readSbox('data/cards/apitest_move_dst.json').some(e => e.id === 'apitest_mover'));
+
+    // ── render filters: a new content type whose params are arbitrary shader uniforms ──
+    const SHADER = 'res://assets/ui/shaders/filter_glow.gdshader';
+    r = await api('/api/game/save', { type: 'render_filter', file: 'filters.json', data: {
+      id: 'apitest_glow', display_name: 'Test Glow', shader: SHADER, pad: 72, layer: 'behind',
+      params: { glow_color: 'ffa51e', spread: 46, falloff: 2 },
+      concept: 'c', explanation: 'e' } });
+    check('render filter saves', r.status === 200 && r.data.action === 'added', JSON.stringify(r.data));
+    let rf = readSbox('data/render_filters/filters.json');
+    check('render filter round-trips params verbatim', rf[0].params.glow_color === 'ffa51e'
+      && rf[0].params.spread === 46 && rf[0].layer === 'behind', JSON.stringify(rf[0]));
+    check('render filter appears in state tree', (await api('/api/state')).data.game.render_filter
+      .some(x => x.id === 'apitest_glow'));
+    check('render filter ids exposed as vocab', (await api('/api/state')).data.vocab.renderFilters
+      .some(x => x.id === 'apitest_glow'));
+    check('shaders exposed as vocab', (await api('/api/state')).data.vocab.shaders
+      .some(x => x.id === SHADER));
+
+    const badFilter = (over, label, rx) => api('/api/game/save', { type: 'render_filter', file: 'filters.json',
+      data: Object.assign({ id: 'apitest_bad_filter', display_name: 'B', shader: SHADER, pad: 72,
+        layer: 'behind', params: {}, concept: 'c', explanation: 'e' }, over) })
+      .then(res => check(label, res.status === 400 && rx.test(res.data.error || ''), res.data.error));
+    await badFilter({ shader: 'res://nope.gdshader' }, 'missing shader file rejected', /does not exist/);
+    await badFilter({ shader: 'assets/x.png' }, 'non-shader path rejected', /res:\/\/.*gdshader/);
+    await badFilter({ layer: 'sideways' }, 'unknown layer rejected', /layer must be one of/);
+    await badFilter({ pad: -3 }, 'negative pad rejected', /pad must be/);
+    // The invariant that actually bites: the effect renders into a quad padded by `pad`, so a
+    // wider spread is silently clipped rather than drawn.
+    await badFilter({ pad: 20, params: { spread: 46 } }, 'spread wider than pad rejected', /exceeds pad/);
+    await badFilter({ params: { 'Glow Color': 'ffa51e' } }, 'non-uniform param key rejected', /uniform name/);
+    await badFilter({ params: { glow_color: 'nothex' } }, 'non-number non-colour param rejected', /number or a 6-digit hex/);
+
+    // A VFX entry on renderer "filter" must keep its arbitrary uniform params — the procedural
+    // whitelist would otherwise strip them on save.
+    fs.mkdirSync(path.join(SANDBOX, 'data/vfx'), { recursive: true });
+    r = await api('/api/game/save', { type: 'vfx', file: 'vfx.json', data: {
+      id: 'apitest_filter_cue', display_name: 'Filter Cue', category: 'ui', renderer: 'filter',
+      behavior: 'glow', sustained: true, placeholder: false,
+      params: { filter: 'apitest_glow', glow_color: 'ffa51e', spread: 46,
+        animate: { param: 'intensity', from: 0.5, to: 1.2, period: 1.6 } },
+      concept: 'c', explanation: 'e', prompt: 'p' } });
+    check('vfx renderer "filter" accepted', r.status === 200, JSON.stringify(r.data));
+    const vfxRow = readSbox('data/vfx/vfx.json')[0];
+    check('filter vfx keeps its uniform params + animate block',
+      vfxRow.params.filter === 'apitest_glow' && vfxRow.params.spread === 46
+      && vfxRow.params.animate.param === 'intensity', JSON.stringify(vfxRow.params));
 
     // ── ✨ recipe inference: concept from piece-relatives, theme from element-relatives ──
     fs.writeFileSync(path.join(SANDBOX, 'data/cards/apitest_kin_lib.json'), JSON.stringify([

@@ -57,6 +57,12 @@ const TYPES = {
   // Control via the Vfx autoload. Procedural renderer only today; the prompt targets future
   // asset-backed renderers (flipbook sprite sheets).
   vfx:        { label: 'VFX',             dataDir: 'data/vfx',        artDir: null,               artW: 1024, artH: 1024, rembg: false },
+  // RENDER FILTERS: parametrized GPU effects (data/render_filters/) applied to a texture-bearing
+  // Control, whose look is derived from the SOURCE TEXTURE'S OWN ALPHA — as opposed to the VFX
+  // library's procedural behaviors, which draw primitives sized to a target's bounding box and
+  // cannot follow a shape. A VFX entry with renderer "filter" names one of these. No artDir: a
+  // filter's "art" is its shader.
+  render_filter: { label: 'Render Filter', dataDir: 'data/render_filters', artDir: null,          artW: 1024, artH: 1024, rembg: false },
 };
 
 // The sound library's category vocabulary — mirrors SoundData.category in the game.
@@ -68,7 +74,12 @@ const VFX_BEHAVIORS = ['flash', 'pulse', 'pop', 'shake', 'ring', 'sparkle', 'gli
   'float_label', 'burst', 'travel', 'reticle', 'dissolve', 'radiance'];
 const VFX_SUSTAINED = ['glow', 'pulse', 'sparkle', 'radiance'];
 // 'custom' = a designed effect class registered in-game via Vfx.register_custom (combat looks).
-const VFX_RENDERERS = ['procedural', 'custom'];   // future: flipbook, scene, ...
+// 'filter' = the look is a RenderFilter (data/render_filters); the VFX entry only owns when it
+// runs and how its params animate.
+const VFX_RENDERERS = ['procedural', 'custom', 'filter'];   // future: flipbook, scene, ...
+// Where a filter draws relative to its source. "behind" is the default and the reason a glow
+// doesn't wash out an opaque face — the source occludes the bright core.
+const FILTER_LAYERS = ['behind', 'above'];
 
 // ── small fs helpers ─────────────────────────────────────────────────────────
 function ensureDir(p) { fs.mkdirSync(p, { recursive: true }); }
@@ -1236,6 +1247,32 @@ function validateItem(type, d) {
       }
       return null;
     }
+    case 'render_filter': {
+      if (!d.display_name) return 'missing display_name';
+      if (typeof d.shader !== 'string' || !/^res:\/\/.*\.gdshader$/.test(d.shader))
+        return 'shader must be a res:// path to a .gdshader file';
+      if (!fs.existsSync(path.join(GAME_ROOT, d.shader.replace(/^res:\/\//, ''))))
+        return `shader "${d.shader}" does not exist in the project`;
+      if (typeof d.pad !== 'number' || d.pad < 0) return 'pad must be a non-negative number of px';
+      if (d.layer != null && !FILTER_LAYERS.includes(d.layer))
+        return `layer must be one of: ${FILTER_LAYERS.join(', ')}`;
+      if (d.params != null) {
+        if (typeof d.params !== 'object' || Array.isArray(d.params)) return 'params must be an object';
+        for (const [k, v] of Object.entries(d.params)) {
+          if (!/^[a-z0-9_]+$/.test(k)) return `params key "${k}" must be a shader uniform name (lowercase/underscore)`;
+          if (typeof v === 'number') continue;
+          if (typeof v === 'string' && /^[0-9a-fA-F]{6}$/.test(v)) continue;
+          return `params.${k} must be a number or a 6-digit hex colour`;
+        }
+        // The effect is clipped to the layer's padded quad, so a spread wider than the padding
+        // silently cuts off at the quad's edge — catch it here rather than in a render.
+        if (typeof d.params.spread === 'number' && d.params.spread > d.pad)
+          return `params.spread (${d.params.spread}) exceeds pad (${d.pad}) — the effect would clip at the quad's edge`;
+      }
+      if (!d.concept) return 'missing concept — what this filter is for';
+      if (!d.explanation) return 'missing explanation — what it looks like and how it works';
+      return null;
+    }
   }
   return 'unknown type';
 }
@@ -1262,6 +1299,20 @@ function scanGameJson(dirRel) {
   return out;
 }
 
+// Every .gdshader under the project, as res:// paths — the vocabulary a Render Filter's shader
+// field picks from. Walks assets/ only; shaders live with the art they skin.
+function scanShaders(rel = 'assets', out = []) {
+  const dir = path.join(GAME_ROOT, rel);
+  if (!fs.existsSync(dir)) return out;
+  for (const f of fs.readdirSync(dir, { withFileTypes: true })) {
+    const sub = rel + '/' + f.name;
+    if (f.isDirectory()) scanShaders(sub, out);
+    else if (f.name.endsWith('.gdshader')) out.push({ id: 'res://' + sub, name: f.name });
+  }
+  return out;
+}
+
+
 function gameVocab() {
   const cards = [];
   for (const { entry: c } of scanGameJson('data/cards')) {
@@ -1285,6 +1336,10 @@ function gameVocab() {
     charms: simple('data/charms'),
     relics: simple('data/relics'),
     upgrades: simple('data/upgrades'),
+    renderFilters: simple('data/render_filters'),
+    // Every .gdshader in the project, so a filter's shader is picked from a list rather than
+    // typed as a res:// path from memory.
+    shaders: scanShaders(),
     encounters: scanGameJson('data/encounters').map(({ entry: e }) => ({ id: e.id, name: e.id, node_type: e.node_type })).filter(x => x.id),
     elements: ELEMENTS,
     pieces: PIECES,

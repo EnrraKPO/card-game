@@ -972,7 +972,65 @@ const SoundEditor = {
 const VFX_CATEGORIES = ['ui', 'card', 'combat', 'status', 'resource', 'map', 'economy', 'lab', 'meta', 'screen'];
 const VFX_BEHAVIORS = ['flash', 'pulse', 'pop', 'shake', 'ring', 'sparkle', 'glint', 'glow',
   'float_label', 'burst', 'travel', 'reticle', 'dissolve'];
-const VFX_SUSTAINED = ['glow', 'pulse', 'sparkle'];
+const VFX_SUSTAINED = ['glow', 'pulse', 'sparkle', 'radiance'];
+// 'custom' = an effect class registered in-game via Vfx.register_custom. 'filter' = the look is
+// a RenderFilter (its own tab); the VFX entry then owns only WHEN it runs and how it animates.
+const VFX_RENDERERS = ['procedural', 'custom', 'filter'];
+const FILTER_LAYERS = ['behind', 'above'];
+
+// Editor for a flat "shader uniform name -> number|hex colour" dictionary. Render filters key
+// their params by uniform name precisely so there is no mapping table to keep in sync with the
+// shader, which means the set of keys is per-filter and cannot be a fixed set of fields.
+// `skip` hides reserved keys the caller renders itself (e.g. a VFX entry's filter/animate).
+function uniformParamsBox(params, onChange, skip) {
+  const box = el('div');
+  const hidden = skip || [];
+  const rebuild = () => {
+    box.textContent = '';
+    for (const key of Object.keys(params)) {
+      if (hidden.includes(key)) continue;
+      const isColor = typeof params[key] === 'string';
+      // Key renames commit on blur, not per keystroke — rebuilding mid-type would steal focus.
+      const keyInput = el('input', { type: 'text', value: key, class: 'uniform-key',
+        onchange: e => {
+          const next = e.target.value.trim();
+          if (!next || next === key) { e.target.value = key; return; }
+          const copy = {};
+          for (const k of Object.keys(params)) copy[k === key ? next : k] = params[k];
+          for (const k of Object.keys(params)) delete params[k];
+          Object.assign(params, copy);
+          onChange(); rebuild();
+        } });
+      const typeSel = el('select', {
+        onchange: e => {
+          params[key] = e.target.value === 'colour' ? 'ffffff' : 0;
+          onChange(); rebuild();
+        } },
+        el('option', { value: 'number', text: 'number', selected: !isColor }),
+        el('option', { value: 'colour', text: 'colour', selected: isColor }));
+      const valInput = isColor
+        ? colorInput(params, key, onChange)
+        : numInput(params, key, onChange, { step: 0.1, float: true });
+      box.append(el('div', { class: 'frow' },
+        fld('Uniform', keyInput, null, 'narrow'),
+        fld('Type', typeSel, null, 'narrow'),
+        fld('Value', valInput, null, 'narrow'),
+        el('button', { class: 'ghost', text: '✕', title: 'Remove this uniform',
+          onclick: e => { e.preventDefault(); delete params[key]; onChange(); rebuild(); } })));
+    }
+    box.append(el('div', { class: 'frow' },
+      el('button', { class: 'ghost', text: '+ Add uniform',
+        onclick: e => {
+          e.preventDefault();
+          let n = 1, k = 'uniform_1';
+          while (Object.prototype.hasOwnProperty.call(params, k)) k = 'uniform_' + (++n);
+          params[k] = 0;
+          onChange(); rebuild();
+        } })));
+  };
+  rebuild();
+  return box;
+}
 
 // A rough in-browser sketch of each procedural primitive, animated on a demo box — enough to
 // judge colour and character; the game's tweens are the authority.
@@ -1048,6 +1106,65 @@ function playVfxPreview(stage, d) {
   }
 }
 
+// The "look" half of a procedural VFX entry: pick a primitive, skin it.
+function vfxProceduralLook(draft, ctx, onChange) {
+  let stage;
+  const box = groupBox('Look (procedural renderer)',
+    el('div', { class: 'frow' },
+      fld('Behavior', selectInput(draft, 'behavior', VFX_BEHAVIORS.map(v => ({ value: v, label: v })), onChange), 'the primitive this effect rides', 'narrow'),
+      el('div', { class: 'fld' }, checkInput(draft, 'sustained', onChange, `Sustained state (attach/detach; needs ${VFX_SUSTAINED.join('/')})`)),
+    ),
+    el('div', { class: 'frow' },
+      fld('Colour', colorInput(draft.params, 'color', onChange), null, 'narrow'),
+      fld('Scale', numInput(draft.params, 'scale', onChange, { step: 0.1, float: true, min: 0.2, max: 4, optional: true }), 'size/intensity multiplier', 'narrow'),
+      fld('Duration (s)', numInput(draft.params, 'duration', onChange, { step: 0.05, float: true, min: 0.05, max: 5, optional: true }), 'blank = behavior default', 'narrow'),
+    ),
+    el('div', { class: 'frow' },
+      fld('Companion sound', selectInput(draft, 'sfx',
+        [{ value: '', label: '(none)' }].concat(
+          ((ctx.vocab && ctx.vocab.sounds) || []).map(s => ({ value: s.id, label: `${s.name} (${s.id})` }))),
+        onChange), 'a sound id Vfx.play fires atomically with this visual — the cue pairing lives here, not at call sites'),
+    ),
+    el('div', { class: 'frow' },
+      el('button', { class: 'ghost', text: '▶ Preview', title: 'A rough in-browser sketch — the game’s tween is the authority',
+        onclick: e => { e.preventDefault(); playVfxPreview(stage, draft); } }),
+    ),
+    (stage = el('div', { class: 'vfx-demo-stage' })),
+  );
+  return box;
+}
+
+// The "look" half of a filter-backed VFX entry: the look itself lives in the Render Filter, so
+// all this owns is WHICH filter, which of its uniforms to override, and how one of them moves.
+function vfxFilterLook(draft, ctx, onChange) {
+  if (!draft.params.animate) draft.params.animate = {};
+  const an = draft.params.animate;
+  return groupBox('Look (render filter)',
+    el('div', { class: 'frow' },
+      fld('Filter', selectInput(draft.params, 'filter',
+        [{ value: '', label: '(pick a filter)' }].concat(
+          ((ctx.vocab && ctx.vocab.renderFilters) || []).map(f => ({ value: f.id, label: `${f.name} (${f.id})` }))),
+        onChange), 'the RenderFilter whose shader draws this effect — authored in the Render Filter tab'),
+      el('div', { class: 'fld' }, checkInput(draft, 'sustained', onChange, 'Sustained state (attach/detach) — filters are states, not one-shots')),
+    ),
+    el('div', { class: 'frow' },
+      fld('Companion sound', selectInput(draft, 'sfx',
+        [{ value: '', label: '(none)' }].concat(
+          ((ctx.vocab && ctx.vocab.sounds) || []).map(s => ({ value: s.id, label: `${s.name} (${s.id})` }))),
+        onChange), 'a sound id Vfx.play fires atomically with this visual'),
+    ),
+    el('h3', { text: 'Uniform overrides — layered over the filter’s own defaults' }),
+    uniformParamsBox(draft.params, onChange, ['filter', 'animate']),
+    el('h3', { text: 'Animation — breathes one uniform back and forth forever' }),
+    el('div', { class: 'frow' },
+      fld('Uniform', textInput(an, 'param', onChange, 'e.g. intensity'), 'blank = no animation', 'narrow'),
+      fld('From', numInput(an, 'from', onChange, { step: 0.05, float: true, optional: true }), null, 'narrow'),
+      fld('To', numInput(an, 'to', onChange, { step: 0.05, float: true, optional: true }), null, 'narrow'),
+      fld('Half-period (s)', numInput(an, 'period', onChange, { step: 0.1, float: true, min: 0.05, optional: true }), 'time for one direction', 'narrow'),
+    ),
+  );
+}
+
 const VfxEditor = {
   label: 'VFX',
   newItem: () => ({ id: '', display_name: '', category: 'ui', renderer: 'procedural',
@@ -1056,13 +1173,24 @@ const VfxEditor = {
   form(draft, ctx, onChange) {
     if (!draft.params) draft.params = {};
     const wrap = el('div');
-    let stage;
+    // The "look" half swaps wholesale with the renderer: a procedural entry skins a primitive,
+    // a filter entry picks a RenderFilter and overrides its uniforms. Rebuilt in place so
+    // switching renderer never leaves the other kind's fields (or its params) on screen.
+    const lookHost = el('div');
+    const renderLook = () => {
+      lookHost.textContent = '';
+      lookHost.append(draft.renderer === 'filter'
+        ? vfxFilterLook(draft, ctx, onChange)
+        : vfxProceduralLook(draft, ctx, onChange));
+    };
     wrap.append(
       groupBox('Identity',
         el('div', { class: 'frow' },
           idField(draft, onChange, ctx.isNew),
           fld('Name', textInput(draft, 'display_name', onChange)),
           fld('Category', selectInput(draft, 'category', VFX_CATEGORIES.map(v => ({ value: v, label: v })), onChange), null, 'narrow'),
+          fld('Renderer', selectInput(draft, 'renderer', VFX_RENDERERS.map(v => ({ value: v, label: v })),
+            () => { renderLook(); onChange(); }), 'how it renders', 'narrow'),
         ),
         el('div', { class: 'frow' },
           el('div', { class: 'fld' }, checkInput(draft, 'placeholder', onChange, 'Placeholder — no designed look yet (mutable in game via F8)')),
@@ -1070,28 +1198,7 @@ const VfxEditor = {
             'Enabled — unticked = PARKED: no live cue site yet (kept as visible backlog, never deleted)')),
         ),
       ),
-      groupBox('Look (procedural renderer)',
-        el('div', { class: 'frow' },
-          fld('Behavior', selectInput(draft, 'behavior', VFX_BEHAVIORS.map(v => ({ value: v, label: v })), onChange), 'the primitive this effect rides', 'narrow'),
-          el('div', { class: 'fld' }, checkInput(draft, 'sustained', onChange, `Sustained state (attach/detach; needs ${VFX_SUSTAINED.join('/')})`)),
-        ),
-        el('div', { class: 'frow' },
-          fld('Colour', colorInput(draft.params, 'color', onChange), null, 'narrow'),
-          fld('Scale', numInput(draft.params, 'scale', onChange, { step: 0.1, float: true, min: 0.2, max: 4, optional: true }), 'size/intensity multiplier', 'narrow'),
-          fld('Duration (s)', numInput(draft.params, 'duration', onChange, { step: 0.05, float: true, min: 0.05, max: 5, optional: true }), 'blank = behavior default', 'narrow'),
-        ),
-        el('div', { class: 'frow' },
-          fld('Companion sound', selectInput(draft, 'sfx',
-            [{ value: '', label: '(none)' }].concat(
-              ((ctx.vocab && ctx.vocab.sounds) || []).map(s => ({ value: s.id, label: `${s.name} (${s.id})` }))),
-            onChange), 'a sound id Vfx.play fires atomically with this visual — the cue pairing lives here, not at call sites'),
-        ),
-        el('div', { class: 'frow' },
-          el('button', { class: 'ghost', text: '▶ Preview', title: 'A rough in-browser sketch — the game’s tween is the authority',
-            onclick: e => { e.preventDefault(); playVfxPreview(stage, draft); } }),
-        ),
-        (stage = el('div', { class: 'vfx-demo-stage' })),
-      ),
+      lookHost,
       groupBox('Design',
         el('div', { class: 'frow' },
           el('div', { class: 'fld wide' }, el('span', { class: 'lab', text: 'Concept — what this moment MEANS (why the effect exists)' }),
@@ -1107,6 +1214,7 @@ const VfxEditor = {
         ),
       ),
     );
+    renderLook();
     return wrap;
   },
   serialize(d) {
@@ -1114,8 +1222,23 @@ const VfxEditor = {
       category: d.category || 'ui', behavior: d.behavior || 'flash' };
     if (d.renderer && d.renderer !== 'procedural') out.renderer = d.renderer;
     const params = {};
-    for (const k of ['color', 'color2']) if ((d.params || {})[k]) params[k] = d.params[k];
-    for (const k of ['scale', 'duration', 'intensity']) if ((d.params || {})[k] != null) params[k] = d.params[k];
+    if (d.renderer === 'filter') {
+      // A filter entry's params are shader uniform names plus the reserved filter/animate keys
+      // — an arbitrary set the procedural whitelist below would silently strip. Pass them
+      // through verbatim; the filter, not this editor, defines what is meaningful.
+      for (const [k, v] of Object.entries(d.params || {})) {
+        if (k === 'animate') continue;
+        if (v !== '' && v != null) params[k] = v;
+      }
+      const an = (d.params || {}).animate || {};
+      if ((an.param || '').trim()) {
+        params.animate = { param: an.param.trim(), from: Number(an.from) || 0,
+          to: an.to == null ? 1 : Number(an.to), period: Number(an.period) || 1 };
+      }
+    } else {
+      for (const k of ['color', 'color2']) if ((d.params || {})[k]) params[k] = d.params[k];
+      for (const k of ['scale', 'duration', 'intensity']) if ((d.params || {})[k] != null) params[k] = d.params[k];
+    }
     if (Object.keys(params).length) out.params = params;
     if (d.sustained) out.sustained = true;
     if (d.enabled === false) out.enabled = false;   // parked — visible backlog
@@ -1148,8 +1271,94 @@ const VfxEditor = {
   artNote: 'Reference only — the prompt targets a future flipbook/asset renderer; today every entry renders procedurally.',
 };
 
+const RenderFilterEditor = {
+  label: 'Render Filter',
+  newItem: () => ({ id: '', display_name: '', shader: '', pad: 64, layer: 'behind',
+    params: {}, enabled: true, concept: '', explanation: '' }),
+  form(draft, ctx, onChange) {
+    if (!draft.params) draft.params = {};
+    const wrap = el('div');
+    wrap.append(
+      groupBox('Identity',
+        el('div', { class: 'frow' },
+          idField(draft, onChange, ctx.isNew),
+          fld('Name', textInput(draft, 'display_name', onChange)),
+        ),
+        el('div', { class: 'frow' },
+          el('div', { class: 'fld' }, checkInput(draft, 'enabled', onChange,
+            'Enabled — unticked = PARKED: authored but not applied anywhere yet')),
+        ),
+      ),
+      groupBox('Filter',
+        el('div', { class: 'frow' },
+          fld('Shader', selectInput(draft, 'shader',
+            [{ value: '', label: '(pick a shader)' }].concat(
+              ((ctx.vocab && ctx.vocab.shaders) || []).map(s => ({ value: s.id, label: `${s.name} — ${s.id}` }))),
+            onChange), 'the .gdshader that does the work; it reads the source texture’s alpha'),
+        ),
+        el('div', { class: 'frow' },
+          fld('Pad (px)', numInput(draft, 'pad', onChange, { step: 1, float: true, min: 0 }),
+            'spill room — must exceed spread', 'narrow'),
+          fld('Layer', selectInput(draft, 'layer', FILTER_LAYERS.map(v => ({ value: v, label: v })), onChange),
+            'behind = source occludes the core', 'narrow'),
+        ),
+      ),
+      groupBox('Default parameters — keyed BY SHADER UNIFORM NAME, set on the material verbatim',
+        uniformParamsBox(draft.params, onChange),
+      ),
+      groupBox('Design',
+        el('div', { class: 'frow' },
+          el('div', { class: 'fld wide' }, el('span', { class: 'lab', text: 'Concept — what this filter is FOR (which moments it exists to serve)' }),
+            el('textarea', { value: draft.concept || '', oninput: e => { draft.concept = e.target.value; onChange(); } })),
+        ),
+        el('div', { class: 'frow' },
+          el('div', { class: 'fld wide' }, el('span', { class: 'lab', text: 'Explanation — what it looks like and how the shader achieves it' }),
+            el('textarea', { value: draft.explanation || '', oninput: e => { draft.explanation = e.target.value; onChange(); } })),
+        ),
+      ),
+    );
+    return wrap;
+  },
+  serialize(d) {
+    const out = { id: d.id, display_name: d.display_name || slugToName(d.id),
+      shader: d.shader || '', pad: typeof d.pad === 'number' ? d.pad : 0,
+      layer: d.layer || 'behind' };
+    const params = {};
+    for (const [k, v] of Object.entries(d.params || {})) if (k && v != null) params[k] = v;
+    out.params = params;
+    if (d.enabled === false) out.enabled = false;   // parked — visible backlog
+    out.concept = d.concept || '';
+    out.explanation = d.explanation || '';
+    return out;
+  },
+  summarize(d) {
+    const lines = [`${d.display_name || d.id || 'Unnamed filter'} — a GPU filter derived from the source texture’s own alpha, drawn ${d.layer || 'behind'} it.`];
+    if (d.enabled === false) lines.push('PARKED (enabled: false) — the game skips it at load.');
+    if (d.shader) lines.push(`Shader: ${d.shader}`);
+    lines.push(`Spills up to ${d.pad || 0}px past the source (the padded quad it renders into).`);
+    const keys = Object.keys(d.params || {});
+    if (keys.length) lines.push(`Sets uniforms: ${keys.join(', ')}.`);
+    const spread = (d.params || {}).spread;
+    if (typeof spread === 'number' && typeof d.pad === 'number' && spread > d.pad)
+      lines.push(`⚠ spread (${spread}) exceeds pad (${d.pad}) — the effect will clip at the quad’s edge.`);
+    lines.push('Applied via RenderFilters.apply, or by a VFX entry with renderer "filter" (which adds when it runs and how it animates).');
+    if (d.concept) lines.push(d.concept);
+    return lines;
+  },
+  toDraft(g) {
+    const d = JSON.parse(JSON.stringify(g));
+    if (!d.params) d.params = {};
+    if (!d.layer) d.layer = 'behind';
+    if (d.pad == null) d.pad = 0;
+    if (d.enabled == null) d.enabled = true;
+    return d;
+  },
+  promptFor(d) { return d.explanation || ''; },
+  artNote: 'Render filters have no art: the shader IS the look. This panel is unused for this type.',
+};
+
 const EDITORS = {
   card: CardEditor, relic: RelicEditor, status: StatusEditor, ability: AbilityEditor,
   charm: CharmEditor, upgrade: UpgradeEditor, encounter: EncounterEditor, nodeweights: NodeWeightsEditor,
-  sound: SoundEditor, vfx: VfxEditor,
+  sound: SoundEditor, vfx: VfxEditor, render_filter: RenderFilterEditor,
 };

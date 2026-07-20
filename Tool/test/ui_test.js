@@ -18,8 +18,10 @@ const BASE = `http://127.0.0.1:${PORT}`;
 const CHROME = ['C:/Program Files/Google/Chrome/Application/chrome.exe',
   'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'].find(fs.existsSync);
 
-for (const d of ['data/cards', 'data/statuses', 'data/abilities', 'data/charms', 'data/relics', 'data/upgrades', 'data/encounters', 'data/map', 'assets/cards/enemies'])
+for (const d of ['data/cards', 'data/statuses', 'data/abilities', 'data/charms', 'data/relics', 'data/upgrades', 'data/encounters', 'data/map', 'data/render_filters', 'data/vfx', 'assets/cards/enemies', 'assets/ui/shaders'])
   fs.mkdirSync(path.join(SANDBOX, d), { recursive: true });
+// render-filter validation requires the shader to exist under the game root
+fs.writeFileSync(path.join(SANDBOX, 'assets/ui/shaders/filter_glow.gdshader'), 'shader_type canvas_item;\n');
 fs.writeFileSync(path.join(SANDBOX, 'data/cards/base.json'), JSON.stringify([
   { id: 'pawn', display_name: 'Pawn', cost: 1, attack: 1, health: 2, speed: 3, chess_pieces: ['pawn'] },
   { id: 'lone_pawn', display_name: 'Lone Pawn', cost: 1, attack: 1, health: 1, speed: 1, chess_pieces: ['pawn'] },
@@ -184,6 +186,63 @@ async function main() {
     check('Revert appears', await page.evaluate(() => !document.getElementById('revert-btn').hidden));
     await page.click('#revert-btn'); await sleep(500);
     check('Revert restores the original', readSbox('data/cards/base.json')[0].attack === 1);
+
+    // ═══ RENDER FILTERS: a content type whose params are ARBITRARY shader uniforms, so the
+    // ═══ editor builds its param rows dynamically instead of from a fixed field list.
+    await clickTab('Filters');
+    await clickBtn('+ New');
+    await setFld('ID', 'uitest_glow');
+    await setFld('Name', 'UI Test Glow');
+    await setFld('Shader', 'res://assets/ui/shaders/filter_glow.gdshader');
+    await setFld('Pad (px)', 72);
+    await setFld('Layer', 'behind');
+    check('filter form offers the project’s shaders', await page.evaluate(() =>
+      [...document.querySelectorAll('#form-col select')].some(s =>
+        [...s.options].some(o => o.value.endsWith('filter_glow.gdshader')))));
+
+    // Add a uniform row, rename its key, give it a value — the dynamic half of the editor.
+    await clickBtn('+ Add uniform');
+    await page.evaluate(() => {
+      const fld = [...document.querySelectorAll('#form-col .fld')]
+        .find(f => { const s = f.querySelector('span.lab'); return s && s.textContent === 'Uniform'; });
+      const inp = fld.querySelector('input');
+      inp.value = 'spread';
+      inp.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    await sleep(120);
+    await page.evaluate(() => {
+      const fld = [...document.querySelectorAll('#form-col .fld')]
+        .find(f => { const s = f.querySelector('span.lab'); return s && s.textContent === 'Value'; });
+      const inp = fld.querySelector('input');
+      inp.value = '46';
+      inp.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await sleep(120);
+    await page.evaluate(() => {
+      for (const ta of document.querySelectorAll('#form-col textarea')) {
+        ta.value = 'authored by ui_test'; ta.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    });
+    await shot('render_filter_tab');
+    await saveToGame('filters.json');
+    const rf = readSbox('data/render_filters/filters.json')[0];
+    check('render filter saved from the UI', rf && rf.id === 'uitest_glow' && rf.pad === 72, JSON.stringify(rf));
+    check('renamed uniform key round-trips with its value', rf && rf.params.spread === 46,
+      JSON.stringify(rf && rf.params));
+
+    // The VFX editor swaps its whole "look" half on renderer — a filter entry must offer the
+    // filter picker (and NOT the procedural behavior field), or its params get stripped on save.
+    await clickTab('VFX');
+    await clickBtn('+ New');
+    await setFld('Renderer', 'filter');
+    check('renderer "filter" swaps in the filter picker', await page.evaluate(() =>
+      [...document.querySelectorAll('#form-col .fld span.lab')].some(s => s.textContent === 'Filter')));
+    check('renderer "filter" hides the procedural behavior field', await page.evaluate(() =>
+      ![...document.querySelectorAll('#form-col .fld span.lab')].some(s => s.textContent === 'Behavior')));
+    await setFld('Renderer', 'procedural');
+    check('switching back restores the procedural fields', await page.evaluate(() =>
+      [...document.querySelectorAll('#form-col .fld span.lab')].some(s => s.textContent === 'Behavior')));
+    await clickTab('Cards');   // hand the tab state back — the sections below assume Cards
 
     // ═══ ENABLED kill-switch ═══
     await openEntry('ui_units.json', 'ui_stinger');
