@@ -634,7 +634,8 @@ function gameAttrDefaults() {
     'reward.magic_mineral.combat': 2, 'reward.magic_mineral.elite': 3, 'reward.magic_mineral.boss': 5,
     'forge.cost.per_piece': 2, 'forge.cost.per_element': 1,
     'forge.cost.element_only': 0, 'forge.cost.piece_op': 1,
-    'shop.magic_mineral.price': 25 };
+    'shop.magic_mineral.price': 25,
+    'ux.hold.duration': 0.4, 'ux.hold.tolerance': 44 };
 }
 
 function gameAttributesSection(cfg) {
@@ -688,7 +689,11 @@ function gameAttributesSection(cfg) {
         row('forge.cost.per_element', 'Cost per element', 'mineral per element component in the merge result', 0, 20, 1),
         row('forge.cost.element_only', 'Element-only surcharge', 'flat mineral when BOTH inputs are pure-element cards', 0, 20, 1),
         row('forge.cost.piece_op', 'Piece-merge surcharge', 'flat mineral when at least one input holds a chess piece', 0, 20, 1),
-        row('shop.magic_mineral.price', 'Mineral shop price', 'gold price of one Magic Mineral in the shop', 0, 500, 5))),
+        row('shop.magic_mineral.price', 'Mineral shop price', 'gold price of one Magic Mineral in the shop', 0, 500, 5)),
+      col('UX',
+        row('ux.hold.duration', 'Hold to inspect', 'seconds a touch must be held to open the card details modal', 0.1, 1.5, 0.05),
+        row('ux.hold.tolerance', 'Hold drag tolerance', 'viewport px the finger may drift and still count as a hold — '
+          + 'a drag starting inside this is provisional and the hold takes it back', 0, 150, 2))),
     el('div', { class: 'modal-actions' },
       el('button', { class: 'ghost', text: 'Reset to defaults', onclick: () => root.replaceWith(gameAttributesSection(Object.assign(cfg, gameAttrDefaults()))) }),
       el('button', { class: 'primary', text: 'Save to game', onclick: async () => {

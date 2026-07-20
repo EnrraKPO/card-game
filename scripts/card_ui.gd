@@ -27,13 +27,14 @@ var is_generated: bool = false
 # Touch card inspection: hover tooltips don't fire on a touchscreen, so a long-press
 # (hold still ~0.4s) opens the full-screen CardInspector instead. Desktop keeps the
 # hover tooltip and is left untouched (the timer only arms when a touchscreen exists).
-const LONG_PRESS_SEC := 0.4
-# Fingers are never still. Godot starts a drag at ~10px of drift — well under what a real
-# "hold" gesture wobbles — so a tight threshold here meant most touch holds got eaten by an
-# accidental drag and the inspector never opened. The hold now TOLERATES drift up to this
-# many viewport px: a drag may start underneath it, and if the finger then settles, the
-# timeout cancels that drag and opens the inspector anyway (see _on_long_press).
-const LONG_PRESS_MOVE := 44.0
+# Both gesture windows are tunable (Tool 🎛 Tuning → UX, keys ux.hold.*) and read once per
+# card at _ready. Fingers are never still: Godot starts a drag at ~10px of drift — well under
+# what a real "hold" wobbles — so a tight tolerance meant most touch holds got eaten by an
+# accidental drag and the inspector never opened. The hold TOLERATES drift up to the
+# tolerance: a drag may start underneath it, and if the finger then settles, the timeout
+# cancels that drag and opens the inspector anyway (see _on_long_press).
+var _long_press_sec := 0.4
+var _long_press_move := 44.0
 var _hold_timer: Timer = null
 var _press_origin := Vector2.ZERO   # viewport coords, to match InputEventMouse.global_position
 var _did_inspect := false
@@ -192,9 +193,11 @@ func _ready() -> void:
 	_touch_inspect = DisplayServer.is_touchscreen_available()
 	set_process(false)   # only polls while a drag is racing a pending hold (see _get_drag_data)
 	if _touch_inspect:
+		_long_press_sec = GameData.value_f("ux.hold.duration")
+		_long_press_move = GameData.value_f("ux.hold.tolerance")
 		_hold_timer = Timer.new()
 		_hold_timer.one_shot = true
-		_hold_timer.wait_time = LONG_PRESS_SEC
+		_hold_timer.wait_time = _long_press_sec
 		_hold_timer.timeout.connect(_on_long_press)
 		add_child(_hold_timer)
 
@@ -869,7 +872,7 @@ func _gui_input(event: InputEvent) -> void:
 # Drift past the tolerance means a real drag/scroll, not an inspect — abandon the hold.
 func _check_hold_drift(where: Vector2) -> void:
 	if _hold_timer != null and not _hold_timer.is_stopped() \
-			and where.distance_to(_press_origin) > LONG_PRESS_MOVE:
+			and where.distance_to(_press_origin) > _long_press_move:
 		_end_hold()
 
 
@@ -912,7 +915,7 @@ func _get_drag_data(at_position: Vector2) -> Variant:
 	# A drag beginning does NOT settle the gesture any more: while the finger is still inside
 	# the hold tolerance the drag is provisional, and a completed hold takes it back.
 	if _hold_timer != null and not _hold_timer.is_stopped():
-		if get_viewport().get_mouse_position().distance_to(_press_origin) > LONG_PRESS_MOVE:
+		if get_viewport().get_mouse_position().distance_to(_press_origin) > _long_press_move:
 			_end_hold()
 		else:
 			_hold_dragging = true

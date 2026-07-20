@@ -444,6 +444,8 @@ const GAME_ATTRS_DEFAULT = {
   'forge.cost.per_piece': 2, 'forge.cost.per_element': 1,
   'forge.cost.element_only': 0, 'forge.cost.piece_op': 1,
   'shop.magic_mineral.price': 25,
+  // Input feel (touch gesture windows) — see GameAttributes' "ux." block.
+  'ux.hold.duration': 0.4, 'ux.hold.tolerance': 44,
 };
 function getGameAttrs() {
   const d = readJson(GAME_ATTRS_PATH, {}) || {};

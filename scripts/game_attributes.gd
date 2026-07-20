@@ -44,6 +44,12 @@ const DEFAULTS := {
 	"forge.cost.piece_op":      1,
 	# Shop
 	"shop.magic_mineral.price": 25,   # gold price of one Magic Mineral in the shop
+	# Input feel. Not run/match numbers like the rest — these are the touch gesture windows,
+	# registered here so they ride the same tool/override plumbing rather than earning their
+	# own config file. Read once per CardUI at _ready; no modifier ever targets them.
+	"ux.hold.duration":         0.4,  # seconds a touch must be held to open the card inspector
+	"ux.hold.tolerance":        44.0, # viewport px the finger may drift and still count as a hold
+									   # (a drag starting inside this is provisional — see CardUI)
 }
 
 
