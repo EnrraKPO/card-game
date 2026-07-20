@@ -83,9 +83,10 @@
 		"display_name": "Pawn Material",
 		"description": "Adds Pawn to one of your units, merging their compositions - or spawns a new Pawn on one of your empty slots.",
 		"cost": {
-			"mana": 1,
+			"mana": 2,
 			"tap": true
 		},
+		"autocast": true,
 		"material": "pawn",
 		"effects": [
 			{
@@ -144,9 +145,10 @@
 		"display_name": "Knight Material",
 		"description": "Adds Knight to one of your units, merging their compositions - or spawns a new Knight on one of your empty slots.",
 		"cost": {
-			"mana": 2,
+			"mana": 3,
 			"tap": true
 		},
+		"autocast": true,
 		"material": "knight",
 		"effects": [
 			{
@@ -200,30 +202,37 @@
 		"display_name": "Bishop Material",
 		"description": "Adds Bishop to one of your units, merging their compositions - or spawns a new Bishop on one of your empty slots.",
 		"cost": {
-			"mana": 2,
+			"mana": 3,
 			"tap": true
 		},
+		"autocast": true,
 		"material": "bishop",
 		"effects": [
 			{
 				"kind": "custom",
 				"custom": "deliver_material",
-				"trigger": "on_play",
-				"targeting_policy": "manual_slot",
-				"conditions": [
-					{
-						"composition": [
-							"king",
-							"rook"
-						],
-						"present": false
-					},
-					{
-						"attribute": "piece_count",
-						"comparator": "lte",
-						"value": 1
-					}
-				]
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "piece_count",
+							"comparator": "lte",
+							"value": 1
+						}
+					]
+				}
 			}
 		]
 	},
@@ -232,30 +241,37 @@
 		"display_name": "Queen Material",
 		"description": "Adds Queen to one of your units, merging their compositions - or spawns a new Queen on one of your empty slots.",
 		"cost": {
-			"mana": 4,
+			"mana": 5,
 			"tap": true
 		},
+		"autocast": true,
 		"material": "queen",
 		"effects": [
 			{
 				"kind": "custom",
 				"custom": "deliver_material",
-				"trigger": "on_play",
-				"targeting_policy": "manual_slot",
-				"conditions": [
-					{
-						"composition": [
-							"king",
-							"rook"
-						],
-						"present": false
-					},
-					{
-						"attribute": "piece_count",
-						"comparator": "lte",
-						"value": 1
-					}
-				]
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "piece_count",
+							"comparator": "lte",
+							"value": 1
+						}
+					]
+				}
 			}
 		]
 	},
@@ -291,6 +307,7 @@
 			"mana": 1,
 			"tap": true
 		},
+		"autocast": true,
 		"effects": [
 			{
 				"trigger": {

@@ -69,16 +69,22 @@
 		"attack": 1,
 		"health": 4,
 		"speed": 1,
-		"description": "Fortify a unit with +3 Max HP.",
+		"description": "Fortify a unit with +3 Shield.",
 		"elements": [
 			"earth"
 		],
 		"chess_pieces": [],
 		"effects": [
 			{
-				"trigger": "on_play",
-				"targeting_policy": "manual",
-				"attribute": "max_health",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual"
+				},
+				"attribute": "shield",
 				"amount": 3
 			}
 		]
@@ -90,17 +96,36 @@
 		"attack": 3,
 		"health": 1,
 		"speed": 2,
-		"description": "Sap a unit's strength, reducing its Attack by 2.",
+		"description": "Sacrifice a unit, dealing 6 damage to it, then draw a card.",
 		"elements": [
 			"darkness"
 		],
 		"chess_pieces": [],
 		"effects": [
 			{
-				"trigger": "on_play",
-				"targeting_policy": "manual",
-				"attribute": "attack",
-				"amount": -2
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual"
+				},
+				"attribute": "health",
+				"amount": -6
+			},
+			{
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "side",
+					"of": "own"
+				},
+				"attribute": "draw",
+				"amount": 1
 			}
 		]
 	},
@@ -111,17 +136,24 @@
 		"attack": 0,
 		"health": 3,
 		"speed": 2,
-		"description": "Empower a unit with +3 Attack.",
+		"description": "Channel radiant energy: gain 1 mana.",
 		"elements": [
 			"light"
 		],
 		"chess_pieces": [],
 		"effects": [
 			{
-				"trigger": "on_play",
-				"targeting_policy": "manual",
-				"attribute": "attack",
-				"amount": 3
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "side",
+					"of": "own"
+				},
+				"attribute": "mana",
+				"amount": 1
 			}
 		]
 	},

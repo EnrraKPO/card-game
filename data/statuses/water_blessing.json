@@ -2,7 +2,7 @@
 	{
 		"id": "water_blessing",
 		"display_name": "Water Blessing",
-		"description": "For 2 turns: heals 1 Health at the start of each turn, and this unit is treated as a water unit.",
+		"description": "For 2 turns: +2 Max HP (and heals 2 Health on application), and this unit is treated as a water unit.",
 		"beneficial": true,
 		"color": "2f9dff",
 		"glyph": "◆",
@@ -11,15 +11,13 @@
 		"effects": [
 			{
 				"trigger": {
-					"kind": "event",
-					"event": "turn_start",
-					"of": "self"
+					"kind": "while"
 				},
 				"targets": {
 					"kind": "self"
 				},
-				"attribute": "health",
-				"amount": 1
+				"attribute": "max_health",
+				"amount": 2
 			},
 			{
 				"trigger": {
@@ -31,6 +29,19 @@
 				"grants": [
 					"water"
 				]
+			},
+			{
+				"trigger": {
+					"kind": "event",
+					"event": "turn_start",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "self"
+				},
+				"attribute": "health",
+				"amount": 2,
+				"conditions": []
 			}
 		]
 	}

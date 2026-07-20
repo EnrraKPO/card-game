@@ -2,12 +2,12 @@
 	{
 		"id": "light_blessing",
 		"display_name": "Light Blessing",
-		"description": "For 2 turns: this unit is treated as a light unit, and you gain 1 mana whenever it makes a kill.",
+		"description": "For 2 turns: +1 Speed, and this unit is treated as a light unit and heals 1 Health at the start of each round.",
 		"beneficial": true,
 		"color": "fff3b0",
 		"glyph": "◆",
-		"stacking": "refresh",
 		"default_duration": 2,
+		"stacking": "refresh",
 		"effects": [
 			{
 				"trigger": {
@@ -22,15 +22,24 @@
 			},
 			{
 				"trigger": {
-					"kind": "dual_event",
-					"event": "kill",
-					"origin_of": "self"
+					"kind": "while"
 				},
 				"targets": {
-					"kind": "side",
-					"of": "own"
+					"kind": "self"
 				},
-				"attribute": "mana",
+				"attribute": "speed",
+				"amount": 2
+			},
+			{
+				"trigger": {
+					"kind": "event",
+					"event": "turn_start",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "self"
+				},
+				"attribute": "health",
 				"amount": 1
 			}
 		]

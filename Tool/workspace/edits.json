@@ -411,7 +411,7 @@
       "effects": []
     },
     "at": "2026-07-07T05:14:16.621Z",
-    "fileHash": "3c7a75ff441627063615a99735d1432541132664"
+    "fileHash": "c81dc2cbab530d8ca68d6bf64f0eef0ad94b3766"
   },
   "card/water_water_bishop": {
     "file": "water_water_units.json",
@@ -4968,7 +4968,7 @@
     "original": null,
     "added": true,
     "at": "2026-07-13T20:28:34.333Z",
-    "fileHash": "9a79185dddf17fc6ec4d215ba79d40e1a9d661ec"
+    "fileHash": "6db6e216db9066369338f6c43651ad41e9292b4d"
   },
   "status/swift_barrier": {
     "file": "swift_barrier.json",
@@ -4996,21 +4996,21 @@
     "original": null,
     "added": true,
     "at": "2026-07-13T20:33:08.245Z",
-    "fileHash": "9a79185dddf17fc6ec4d215ba79d40e1a9d661ec"
+    "fileHash": "6db6e216db9066369338f6c43651ad41e9292b4d"
   },
   "ability/tide_charge": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T20:33:08.248Z",
-    "fileHash": "9a79185dddf17fc6ec4d215ba79d40e1a9d661ec"
+    "fileHash": "6db6e216db9066369338f6c43651ad41e9292b4d"
   },
   "ability/radiant_charge": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T20:33:08.250Z",
-    "fileHash": "9a79185dddf17fc6ec4d215ba79d40e1a9d661ec"
+    "fileHash": "6db6e216db9066369338f6c43651ad41e9292b4d"
   },
   "status/stalwart_barrier": {
     "file": "stalwart_barrier.json",
@@ -5024,7 +5024,7 @@
     "original": null,
     "added": true,
     "at": "2026-07-13T20:34:30.525Z",
-    "fileHash": "9a79185dddf17fc6ec4d215ba79d40e1a9d661ec"
+    "fileHash": "6db6e216db9066369338f6c43651ad41e9292b4d"
   },
   "status/umbral_barrier": {
     "file": "umbral_barrier.json",
@@ -5038,7 +5038,7 @@
     "original": null,
     "added": true,
     "at": "2026-07-13T20:35:48.234Z",
-    "fileHash": "9a79185dddf17fc6ec4d215ba79d40e1a9d661ec"
+    "fileHash": "6db6e216db9066369338f6c43651ad41e9292b4d"
   },
   "ability/knight_material": {
     "file": "abilities.json",
@@ -5075,7 +5075,7 @@
       ]
     },
     "at": "2026-07-13T22:32:15.675Z",
-    "fileHash": "9a79185dddf17fc6ec4d215ba79d40e1a9d661ec"
+    "fileHash": "6db6e216db9066369338f6c43651ad41e9292b4d"
   },
   "ability/pawn_material": {
     "file": "abilities.json",
@@ -5112,7 +5112,7 @@
       ]
     },
     "at": "2026-07-13T22:35:51.950Z",
-    "fileHash": "9a79185dddf17fc6ec4d215ba79d40e1a9d661ec"
+    "fileHash": "6db6e216db9066369338f6c43651ad41e9292b4d"
   },
   "ability/heal": {
     "file": "abilities.json",
@@ -5135,7 +5135,7 @@
       ]
     },
     "at": "2026-07-13T22:44:26.528Z",
-    "fileHash": "9a79185dddf17fc6ec4d215ba79d40e1a9d661ec"
+    "fileHash": "6db6e216db9066369338f6c43651ad41e9292b4d"
   },
   "relic/contagion_stone": {
     "file": "relics.json",
@@ -5336,7 +5336,7 @@
     },
     "deleted": true,
     "at": "2026-07-13T23:39:11.499Z",
-    "fileHash": "9a79185dddf17fc6ec4d215ba79d40e1a9d661ec"
+    "fileHash": "6db6e216db9066369338f6c43651ad41e9292b4d"
   },
   "ability/castling": {
     "file": "abilities.json",
@@ -5373,7 +5373,7 @@
       ]
     },
     "at": "2026-07-14T00:02:04.308Z",
-    "fileHash": "9a79185dddf17fc6ec4d215ba79d40e1a9d661ec"
+    "fileHash": "6db6e216db9066369338f6c43651ad41e9292b4d"
   },
   "card/queen": {
     "file": "materials.json",
@@ -5392,7 +5392,7 @@
       "effects": []
     },
     "at": "2026-07-14T05:14:14.482Z",
-    "fileHash": "3c7a75ff441627063615a99735d1432541132664"
+    "fileHash": "c81dc2cbab530d8ca68d6bf64f0eef0ad94b3766"
   },
   "vfx/aura_poison": {
     "file": "vfx.json",
@@ -5545,7 +5545,7 @@
     "original": null,
     "added": true,
     "at": "2026-07-16T03:53:21.012Z",
-    "fileHash": "9a79185dddf17fc6ec4d215ba79d40e1a9d661ec"
+    "fileHash": "6db6e216db9066369338f6c43651ad41e9292b4d"
   },
   "status/fire_blessing": {
     "file": "fire_blessing.json",
@@ -5566,56 +5566,56 @@
     "original": null,
     "added": true,
     "at": "2026-07-16T04:46:09.269Z",
-    "fileHash": "aa21802f61c73f2a94f5056cee730127d3d0cabb"
+    "fileHash": "a7abb07291c6c746374f6f03c7c8fb39a4dd996f"
   },
   "ability/fire_bless": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-16T04:46:09.273Z",
-    "fileHash": "9a79185dddf17fc6ec4d215ba79d40e1a9d661ec"
+    "fileHash": "6db6e216db9066369338f6c43651ad41e9292b4d"
   },
   "ability/air_bless": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-16T04:46:09.278Z",
-    "fileHash": "9a79185dddf17fc6ec4d215ba79d40e1a9d661ec"
+    "fileHash": "6db6e216db9066369338f6c43651ad41e9292b4d"
   },
   "ability/water_bless": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-16T04:46:09.282Z",
-    "fileHash": "9a79185dddf17fc6ec4d215ba79d40e1a9d661ec"
+    "fileHash": "6db6e216db9066369338f6c43651ad41e9292b4d"
   },
   "status/light_blessing": {
     "file": "light_blessing.json",
     "original": null,
     "added": true,
     "at": "2026-07-17T19:16:56.403Z",
-    "fileHash": "80863fb2e5e28ac3810b8839ca42f241b80e53aa"
+    "fileHash": "42bcbfacb5f1cbded4bc18f1bdf410e1dd51ff16"
   },
   "ability/light_bless": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-17T19:16:56.407Z",
-    "fileHash": "9a79185dddf17fc6ec4d215ba79d40e1a9d661ec"
+    "fileHash": "6db6e216db9066369338f6c43651ad41e9292b4d"
   },
   "status/darkness_blessing": {
     "file": "darkness_blessing.json",
     "original": null,
     "added": true,
     "at": "2026-07-17T19:17:40.106Z",
-    "fileHash": "b7b720d4b165dcc7a70639e1c74c9a3af88546bf"
+    "fileHash": "854ba6287267ed45e5a242b467be3630b4dc1ad4"
   },
   "ability/darkness_bless": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-17T19:17:40.109Z",
-    "fileHash": "9a79185dddf17fc6ec4d215ba79d40e1a9d661ec"
+    "fileHash": "6db6e216db9066369338f6c43651ad41e9292b4d"
   },
   "sound/ability_cast": {
     "file": "sounds.json",
@@ -5840,5 +5840,238 @@
     },
     "at": "2026-07-18T18:57:33.492Z",
     "fileHash": "a95b0cae69a99484647b9edb624e4afabcf2384a"
+  },
+  "ability/bishop_material": {
+    "file": "abilities.json",
+    "original": {
+      "id": "bishop_material",
+      "display_name": "Bishop Material",
+      "description": "Adds Bishop to one of your units, merging their compositions - or spawns a new Bishop on one of your empty slots.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "material": "bishop",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": "on_play",
+          "targeting_policy": "manual_slot",
+          "conditions": [
+            {
+              "composition": [
+                "king",
+                "rook"
+              ],
+              "present": false
+            },
+            {
+              "attribute": "piece_count",
+              "comparator": "lte",
+              "value": 1
+            }
+          ]
+        }
+      ]
+    },
+    "at": "2026-07-20T04:35:13.837Z",
+    "fileHash": "6db6e216db9066369338f6c43651ad41e9292b4d"
+  },
+  "ability/queen_material": {
+    "file": "abilities.json",
+    "original": {
+      "id": "queen_material",
+      "display_name": "Queen Material",
+      "description": "Adds Queen to one of your units, merging their compositions - or spawns a new Queen on one of your empty slots.",
+      "cost": {
+        "mana": 4,
+        "tap": true
+      },
+      "material": "queen",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": "on_play",
+          "targeting_policy": "manual_slot",
+          "conditions": [
+            {
+              "composition": [
+                "king",
+                "rook"
+              ],
+              "present": false
+            },
+            {
+              "attribute": "piece_count",
+              "comparator": "lte",
+              "value": 1
+            }
+          ]
+        }
+      ]
+    },
+    "at": "2026-07-20T04:35:20.214Z",
+    "fileHash": "6db6e216db9066369338f6c43651ad41e9292b4d"
+  },
+  "card/earth": {
+    "file": "materials.json",
+    "original": {
+      "id": "earth",
+      "display_name": "Earth",
+      "cost": 1,
+      "attack": 1,
+      "health": 4,
+      "speed": 1,
+      "description": "Fortify a unit with +3 Max HP.",
+      "elements": [
+        "earth"
+      ],
+      "chess_pieces": [],
+      "effects": [
+        {
+          "trigger": "on_play",
+          "targeting_policy": "manual",
+          "attribute": "max_health",
+          "amount": 3
+        }
+      ]
+    },
+    "at": "2026-07-20T04:49:36.599Z",
+    "fileHash": "c81dc2cbab530d8ca68d6bf64f0eef0ad94b3766"
+  },
+  "card/earth_earth": {
+    "file": "combined.json",
+    "original": {
+      "id": "earth_earth",
+      "display_name": "Pure Earth",
+      "cost": 2,
+      "attack": 4,
+      "health": 6,
+      "speed": 2,
+      "description": "Unyielding bedrock. Fortify a unit with +6 Max HP.",
+      "elements": [
+        "earth",
+        "earth"
+      ],
+      "chess_pieces": [],
+      "effects": [
+        {
+          "trigger": "on_play",
+          "targeting_policy": "manual",
+          "attribute": "max_health",
+          "amount": 6
+        }
+      ]
+    },
+    "at": "2026-07-20T04:49:36.617Z",
+    "fileHash": "138a9c0d3613151467bf4b54586b1a64c73e5129"
+  },
+  "card/darkness": {
+    "file": "materials.json",
+    "original": {
+      "id": "darkness",
+      "display_name": "Darkness",
+      "cost": 1,
+      "attack": 3,
+      "health": 1,
+      "speed": 2,
+      "description": "Sap a unit's strength, reducing its Attack by 2.",
+      "elements": [
+        "darkness"
+      ],
+      "chess_pieces": [],
+      "effects": [
+        {
+          "trigger": "on_play",
+          "targeting_policy": "manual",
+          "attribute": "attack",
+          "amount": -2
+        }
+      ]
+    },
+    "at": "2026-07-20T04:49:36.632Z",
+    "fileHash": "c81dc2cbab530d8ca68d6bf64f0eef0ad94b3766"
+  },
+  "card/darkness_darkness": {
+    "file": "combined.json",
+    "original": {
+      "id": "darkness_darkness",
+      "display_name": "Pure Darkness",
+      "cost": 2,
+      "attack": 4,
+      "health": 6,
+      "speed": 2,
+      "description": "A total eclipse. Reduce a unit's Attack by 4.",
+      "elements": [
+        "darkness",
+        "darkness"
+      ],
+      "chess_pieces": [],
+      "effects": [
+        {
+          "trigger": "on_play",
+          "targeting_policy": "manual",
+          "attribute": "attack",
+          "amount": -4
+        }
+      ]
+    },
+    "at": "2026-07-20T04:49:36.653Z",
+    "fileHash": "138a9c0d3613151467bf4b54586b1a64c73e5129"
+  },
+  "card/light": {
+    "file": "materials.json",
+    "original": {
+      "id": "light",
+      "display_name": "Light",
+      "cost": 1,
+      "attack": 0,
+      "health": 3,
+      "speed": 2,
+      "description": "Empower a unit with +3 Attack.",
+      "elements": [
+        "light"
+      ],
+      "chess_pieces": [],
+      "effects": [
+        {
+          "trigger": "on_play",
+          "targeting_policy": "manual",
+          "attribute": "attack",
+          "amount": 3
+        }
+      ]
+    },
+    "at": "2026-07-20T04:49:36.674Z",
+    "fileHash": "c81dc2cbab530d8ca68d6bf64f0eef0ad94b3766"
+  },
+  "card/light_light": {
+    "file": "combined.json",
+    "original": {
+      "id": "light_light",
+      "display_name": "Pure Light",
+      "cost": 2,
+      "attack": 4,
+      "health": 6,
+      "speed": 2,
+      "description": "Radiant brilliance. Empower a unit with +6 Attack.",
+      "elements": [
+        "light",
+        "light"
+      ],
+      "chess_pieces": [],
+      "effects": [
+        {
+          "trigger": "on_play",
+          "targeting_policy": "manual",
+          "attribute": "attack",
+          "amount": 6
+        }
+      ]
+    },
+    "at": "2026-07-20T04:49:36.700Z",
+    "fileHash": "138a9c0d3613151467bf4b54586b1a64c73e5129"
   }
 }

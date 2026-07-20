@@ -8,10 +8,11 @@ extends Control
 #  • Tap/click: tap a card into slot A, a second into slot B → Combine. Or tap a charm (it goes to
 #    slot A), then tap a card (slot B) → Enchant. Tapping a filled slot clears it.
 #  • Drag: drag a card onto another (combine), or a charm onto a card (enchant); the dragged item
-#    and the hovered target fill the slots live, and dropping is the same as pressing the button.
-# COMBINE goes through a Cancel/Forge confirm modal (_confirm_combine) — it's destructive (both
-# originals consumed). ENCHANT applies directly (it just spends the charm). While dragging, the
-# floating item carries a particle aura and a vortex links it to a valid target (VFX in ForgeFX).
+#    and the hovered target fill the slots live for the preview. Dropping a CARD just APPOINTS the
+#    pair into slot A/B — same as tapping them one at a time — so the station's Combine button is
+#    still the one destructive commit point. Dropping a CHARM applies directly (it just spends the
+#    charm; non-destructive, no confirmation needed). While dragging, the floating item carries a
+#    particle aura and a vortex links it to a valid target (VFX in ForgeFX).
 # On a touch device a dragged charm lifts above the finger (which would otherwise hide it), with the
 # hit-test following the chip; on desktop it stays centred on the cursor at its normal size.
 
@@ -39,7 +40,7 @@ var _deck_grid: GridContainer
 var _scroll: ScrollContainer
 var _charm_col: HBoxContainer
 var _card_size := CARD_SIZE
-const CHARM_SIZE := Vector2(96, 96)
+const CHARM_SIZE := Vector2(82, 82)   # scaled with SHELF_H so chips still fit the shelf's shorter interior
 
 # Bottom strip (door + charm shelf over a wallpaper backdrop) — ALL fixed constants (user
 # directive): this footprint never changes with deck size or window size, and never eats into
@@ -47,9 +48,9 @@ const CHARM_SIZE := Vector2(96, 96)
 var _door: TextureButton
 var _shelf: Control
 const DOOR_ASPECT := 512.0 / 768.0   # door.svg's native w/h
-const STRIP_H := 260.0               # the door's fixed height (may bleed past the window on short screens)
-const WALLPAPER_H := 190.0           # between SHELF_H and STRIP_H, bottom-anchored under the door
-const SHELF_H := 130.0               # roughly half the door's height
+const STRIP_H := 221.0               # the door's fixed height (may bleed past the window on short screens); 15% smaller than the original 260 to give the card scroll more room
+const WALLPAPER_H := 161.5           # between SHELF_H and STRIP_H, bottom-anchored under the door
+const SHELF_H := 110.5               # roughly half the door's height
 # The shelf sits centred on the WALLPAPER's span (not the door's full height) — precomputed as a
 # fixed top margin from the strip's own top edge.
 const SHELF_TOP_MARGIN := STRIP_H - WALLPAPER_H + (WALLPAPER_H - SHELF_H) * 0.5
@@ -60,7 +61,7 @@ var _slot_a: Control
 var _slot_b: Control
 var _result_slot: Control
 var _result_info: VBoxContainer
-var _result_text_scroll: ScrollContainer
+var _result_text_box: Control
 var _ability_strip: HBoxContainer
 var _mineral_value: Label
 var _preview_status: Label
@@ -96,19 +97,16 @@ var _link: ForgeLink = null
 var _hover_idx: int = -1
 # Carried from a valid combine hover so the drop doesn't recompute.
 var _result_deck_card: DeckCard = null
-# The in-scene combine-confirmation overlay (null when closed). Combining is destructive (both
-# originals are consumed), so BOTH the Combine button and a drop go through this gate.
+# The in-scene fusion overlay (null when closed) — the input-blocking backdrop the Combine button's
+# fusion animation + result toast play out over (see _start_panel_fusion / _begin_fusion).
 var _combine_modal: Control = null
 # The merge VFX painted over slots A+B while a valid combine is previewed (visual only — no drone).
 # _panel_fx_key identifies the shown pair so a rebuilt panel only respawns the FX when it changes.
 var _panel_fx: ForgeMergeFX = null
 var _panel_fx_key := ""
-# Fusion-animation state, live only between hitting "Forge" and dismissing the result toast. While
-# _fusing is true the confirm dim ignores clicks/Esc so the sequence can't be cut off mid-flight.
+# Fusion-animation state, live only between hitting "Combine" and dismissing the result toast. While
+# _fusing is true the modal dim ignores clicks/Esc so the sequence can't be cut off mid-flight.
 var _fusing := false
-var _confirm_fx: ForgeMergeFX = null   # the confirm modal's swirl (freed when the fusion takes over)
-var _fuse_panel: Control = null        # the static A+B→result preview panel (hidden during the fusion)
-var _fuse_holders: Array = []          # [holder_a, holder_b] — source card rects the fusion flies from
 var _fuse_anim: ForgeFuseAnim = null
 
 
@@ -189,6 +187,16 @@ func _build_ui() -> void:
 	strip_layer.custom_minimum_size.y = STRIP_H
 	left.add_child(strip_layer)
 
+	# The wallpaper backdrop spans the FULL pad width (not just the left/card-table column) so it
+	# continues underneath the station panel — the station's opaque background then covers its
+	# right portion, reading as one continuous stripe running behind both columns. `pad` is a
+	# MarginContainer, which force-fits any direct child to its whole rect (ignoring anchors) — so
+	# the anchored bottom-band wallpaper needs a plain (non-Container) full-rect Control between
+	# them, same trick as `strip_layer` above. Inserted behind `body` so the station draws over it.
+	var backdrop_layer := Control.new()
+	pad.add_child(backdrop_layer)
+	pad.move_child(backdrop_layer, 0)
+
 	var wallpaper := TextureRect.new()
 	wallpaper.texture = EnvArt.tex("crafting", "wall_stripe")
 	wallpaper.stretch_mode = TextureRect.STRETCH_TILE
@@ -201,7 +209,7 @@ func _build_ui() -> void:
 	wallpaper.anchor_bottom = 1.0
 	wallpaper.offset_top = -WALLPAPER_H
 	wallpaper.offset_bottom = 0.0
-	strip_layer.add_child(wallpaper)
+	backdrop_layer.add_child(wallpaper)
 
 	var strip := HBoxContainer.new()
 	strip.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
@@ -226,6 +234,7 @@ func _build_ui() -> void:
 	var shelf_cell := MarginContainer.new()
 	shelf_cell.size_flags_horizontal = SIZE_EXPAND_FILL
 	shelf_cell.add_theme_constant_override("margin_top", int(SHELF_TOP_MARGIN))
+	shelf_cell.add_theme_constant_override("margin_right", 20)
 	strip.add_child(shelf_cell)
 
 	var shelf := PanelContainer.new()
@@ -339,7 +348,7 @@ func _build_ui() -> void:
 	# Text band under the cluster: the result read (name + cost + rules, font SHRINKS with length)
 	# on the left, the result's ability tokens on the right. A visible box marks it as the read
 	# area — its own surface with an inner margin, content pinned top-left. FIXED MINIMUM height —
-	# length changes re-size the font (in extremis scroll) INSIDE it; nothing around it ever moves.
+	# length changes re-size the font to fit INSIDE it (never scroll); nothing around it ever moves.
 	# The band's wrapper takes the column's leftover height (the cluster above and the Combine
 	# button below both pack to their own content), and the box FILLS it — margins on all four
 	# sides match (12px), so it reads as a small even gap against the slots above and the button
@@ -361,15 +370,18 @@ func _build_ui() -> void:
 	band.custom_minimum_size.y = 170
 	band.add_theme_constant_override("separation", 10)
 	band_panel.add_child(band)
-	var text_scroll := ScrollContainer.new()
-	text_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	text_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	text_scroll.size_flags_horizontal = SIZE_EXPAND_FILL
-	band.add_child(text_scroll)
-	_result_text_scroll = text_scroll
+	# Plain Control, not a ScrollContainer: the read never scrolls — _shrink_result_text always
+	# shrinks the font until it fits instead (clip_contents is just a safety net against a stray
+	# overflow, not an intended path).
+	var text_box := Control.new()
+	text_box.clip_contents = true
+	text_box.size_flags_horizontal = SIZE_EXPAND_FILL
+	band.add_child(text_box)
+	_result_text_box = text_box
 	var band_col := VBoxContainer.new()
 	band_col.size_flags_horizontal = SIZE_EXPAND_FILL
-	text_scroll.add_child(band_col)
+	band_col.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	text_box.add_child(band_col)
 	# The status line (invalid pair / cost verdict) lives INSIDE the fixed text box, above the
 	# result read — appearing/disappearing must never move the layout around it.
 	_preview_status = Label.new()
@@ -842,130 +854,26 @@ func _resolve_drag() -> void:
 	var payload := _drag
 	var hover := _hover_idx
 	var verdict: Dictionary = _evaluate_target(payload, hover) if hover >= 0 else {}
-	# "affordable" only exists on combine verdicts (mineral cost); enchants default to true.
-	var did: bool = bool(verdict.get("ok", false)) and bool(verdict.get("affordable", true))
+	var ok: bool = bool(verdict.get("ok", false))
 	# Capture what's needed before teardown clears state.
 	var src_idx: int = int(payload.get("idx", -1))
 	var charm_id: String = str(payload.get("id", ""))
-	var result_dc: DeckCard = _result_deck_card
 	_cancel_drag()
-	if not did:
+	if not ok:
 		return
-	# Dropping a card on another opens the SAME confirm gate as the Combine button — combining is
-	# destructive (both originals are consumed). Charms enchant the card they're dropped on.
 	if payload.get("kind") == "card":
-		_confirm_combine(src_idx, hover, result_dc)
+		# Dropping a card onto another just APPOINTS the pair into the station's ingredient slots —
+		# the same result as tapping them one at a time. Combining itself (destructive: both
+		# originals consumed) still needs an explicit press of the station's Combine button.
+		_sel_a = src_idx
+		_sel_b = hover
+		_sel_charm = ""
+		_update_selection_highlights()
+		_refresh_forge()
 	else:
+		# Charms enchant the card they're dropped on directly — non-destructive, no confirmation
+		# needed (it just spends the charm).
 		_do_enchant(charm_id, hover)
-
-
-# A modal showing the two cards being spent and the card they forge into (all with descriptions),
-# gated behind Cancel/Forge — combining is destructive, so it's the confirm step for BOTH the
-# Combine button and a drop. Built as an in-scene overlay (not a Window) so its cards share the
-# deck's MSAA + mipmaps. Indices stay valid: the dim swallows input so nothing reshuffles the deck,
-# and the deck isn't rebuilt until the user confirms.
-func _confirm_combine(src_idx: int, tgt_idx: int, result_dc: DeckCard) -> void:
-	if result_dc == null or src_idx < 0 or tgt_idx < 0:
-		return
-	var a_inst: CardInstance = (_entries[src_idx].card as DeckCard).make_instance()
-	var b_inst: CardInstance = (_entries[tgt_idx].card as DeckCard).make_instance()
-	var result_inst := result_dc.make_instance()
-
-	# Full-screen dim that blocks the deck behind; a click on it (outside the panel) cancels.
-	var dim := ColorRect.new()
-	dim.color = Color(0, 0, 0, 0.6)
-	dim.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	dim.mouse_filter = MOUSE_FILTER_STOP
-	# A click on the dim (outside the panel) closes — but NOT mid-fusion, where it would abort the
-	# sequence. After the fusion, this same handler is what dismisses the result toast on "click out".
-	dim.gui_input.connect(func(e: InputEvent) -> void:
-		if _fusing:
-			return
-		if e is InputEventMouseButton and (e as InputEventMouseButton).pressed:
-			_close_combine_modal())
-	add_child(dim)
-	_combine_modal = dim
-	Vfx.play("ui_modal_open_bloom", dim)   # the overlay settles in (carries the modal sound)
-	_fusing = false
-
-	# CenterContainer centres the panel; empty space stays input-transparent so it falls to the dim.
-	var center := CenterContainer.new()
-	center.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	center.mouse_filter = MOUSE_FILTER_IGNORE
-	dim.add_child(center)
-
-	var panel := PanelContainer.new()
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(ScreenUI.SURFACE_DEEP, 0.98)
-	style.set_border_width_all(2)
-	style.border_color = ScreenUI.SURFACE_DEEP_BORDER
-	style.set_corner_radius_all(10)
-	style.set_content_margin_all(18)
-	panel.add_theme_stylebox_override("panel", style)
-	center.add_child(panel)
-
-	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 12)
-	panel.add_child(col)
-
-	var prompt := Label.new()
-	prompt.text = "Forge these two cards into one? Both originals are consumed."
-	prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	prompt.autowrap_mode = TextServer.AUTOWRAP_WORD
-	prompt.add_theme_font_size_override("font_size", 16)
-	col.add_child(prompt)
-
-	# The merge's Magic Mineral price (unaffordable pairs never reach this modal — every
-	# path here gates on the verdict's "affordable").
-	var cost := ForgeCosts.merge_cost(_entries[src_idx].data as CardData,
-			_entries[tgt_idx].data as CardData)
-	var cost_lbl := Label.new()
-	cost_lbl.text = "Cost: %d Magic Mineral  (you have %d)" \
-			% [cost, GameData.current_run.magic_mineral]
-	cost_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	cost_lbl.add_theme_font_size_override("font_size", 16)
-	cost_lbl.add_theme_color_override("font_color", Materials.color(Materials.MAGIC_MINERAL))
-	col.add_child(cost_lbl)
-
-	var cs := Vector2(150, 196)   # keeps the 260×340 aspect
-	var row := HBoxContainer.new()
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 14)
-	var cell_a := _make_combine_cell(a_inst, cs)
-	var cell_b := _make_combine_cell(b_inst, cs)
-	row.add_child(cell_a)
-	row.add_child(_make_combine_op("+", cs.y))
-	row.add_child(cell_b)
-	row.add_child(_make_combine_op("→", cs.y))
-	row.add_child(_make_combine_cell(result_inst, cs))
-	col.add_child(row)
-
-	# Swirl + link the two consumed cards (result stays clean) with the mixing drone, so the fusion
-	# reads and sounds exactly like a drag. The FX lives in `dim` (full-rect, above the panel) so it
-	# draws over the cards; it tracks each card holder's rect (the holder is the cell's first child).
-	# The drone stops in _close_combine_modal — every dismissal path (Cancel, Forge, Esc, dim-click)
-	# routes through it.
-	var fx := ForgeMergeFX.new()
-	dim.add_child(fx)
-	fx.bind(cell_a.get_child(0), cell_b.get_child(0),
-		_color_for_card(a_inst.data), _color_for_card(b_inst.data), OK_COLOR)
-	Sfx.mixing_start()
-	Sfx.mixing_react(true)
-	# Kept so the fusion can hide the static preview and reuse the card rects it flies from.
-	_confirm_fx = fx
-	_fuse_panel = panel
-	_fuse_holders = [cell_a.get_child(0), cell_b.get_child(0)]
-
-	var buttons := HBoxContainer.new()
-	buttons.size_flags_horizontal = SIZE_EXPAND_FILL   # span the panel so the two targets are wide
-	buttons.add_theme_constant_override("separation", 16)
-	var cancel_btn := _modal_button("Cancel", ScreenUI.CHROME_NEUTRAL)
-	var forge_btn := _modal_button("Forge", ScreenUI.CHROME_CONFIRM)
-	cancel_btn.pressed.connect(_close_combine_modal)
-	forge_btn.pressed.connect(_start_fuse.bind(src_idx, tgt_idx, result_dc))
-	buttons.add_child(cancel_btn)
-	buttons.add_child(forge_btn)
-	col.add_child(buttons)
 
 
 func _close_combine_modal() -> void:
@@ -974,12 +882,9 @@ func _close_combine_modal() -> void:
 		Sfx.mixing_stop()   # the modal's swirl drone (FX itself is freed with the dim)
 		_combine_modal.queue_free()
 		_combine_modal = null
-	# Children (confirm FX, fusion, toast) are freed with the dim — just drop our references.
+	# Children (fusion, toast) are freed with the dim — just drop our references.
 	_fusing = false
-	_confirm_fx = null
-	_fuse_panel = null
 	_fuse_anim = null
-	_fuse_holders = []
 	# The panel path hides its static slot cards during the fusion — restore them (no-op otherwise).
 	if _slot_a != null:
 		_slot_a.visible = true
@@ -989,24 +894,10 @@ func _close_combine_modal() -> void:
 		_result_slot.visible = true
 
 
-# "Forge" pressed in the confirm modal (the drag-drop path) → play the fusion over the confirm dim.
-# The reaction drone keeps going as the cards fly together and stops at the flash (see _on_fuse_flash).
-func _start_fuse(src_idx: int, tgt_idx: int, result_dc: DeckCard) -> void:
-	if _fusing or _combine_modal == null or _fuse_holders.size() < 2:
-		return
-	_fusing = true
-	if _confirm_fx != null:
-		_confirm_fx.queue_free()   # drop the confirm swirl on the now-hidden cards; the fusion has its own
-		_confirm_fx = null
-	if _fuse_panel != null:
-		_fuse_panel.visible = false   # drop the static A+B→result preview; the fusion takes the stage
-	_begin_fusion(src_idx, tgt_idx, result_dc, _fuse_holders[0], _fuse_holders[1])
-
-
-# Panel "Combine" pressed → no confirm modal (the panel already shows A+B→result). Build the same
-# input-blocking backdrop the modal uses (reusing _combine_modal so close/Esc/toast all work), hide
-# the static slot cards, and play the fusion right on where they sit. Silent until the flash (the
-# side panel has no reaction drone — only the combined SFX at impact).
+# Panel "Combine" pressed — the panel already shows A+B→result, so this is the single destructive
+# commit point (no confirm modal). Build the input-blocking backdrop (reusing _combine_modal so
+# close/Esc/toast all work), hide the static slot cards, and play the fusion right on where they
+# sit. Silent until the flash (the side panel has no reaction drone — only the combined SFX at impact).
 func _start_panel_fusion(src_idx: int, tgt_idx: int, result_dc: DeckCard) -> void:
 	if _fusing or _combine_modal != null or result_dc == null:
 		return
@@ -1158,62 +1049,6 @@ func _show_result_toast(result_inst: CardInstance) -> void:
 	_fusing = false
 	center.modulate.a = 0.0
 	create_tween().tween_property(center, "modulate:a", 1.0, 0.18)
-
-
-# A big, easy-to-hit modal button. Each one EXPAND_FILLs half the button row, so on top of the
-# generous min height they stretch wide across the panel — no fiddly aiming for confirm/cancel.
-func _modal_button(text: String, color: Color) -> Button:
-	var b := ScreenUI.action_button(text, Callable(), Vector2(220, 64), 26, color)
-	b.size_flags_horizontal = SIZE_EXPAND_FILL
-	return b
-
-
-# One column of the combine modal: an enlarged card over its name + wrapped description. Cells FILL
-# the row's height (default) so every card sits flush at the top and the three line up, regardless of
-# how tall each description wraps.
-func _make_combine_cell(inst: CardInstance, cs: Vector2) -> Control:
-	var cell := VBoxContainer.new()
-	cell.size_flags_vertical = SIZE_FILL
-	cell.add_theme_constant_override("separation", 6)
-
-	var holder := Control.new()
-	holder.custom_minimum_size = cs
-	holder.size_flags_horizontal = SIZE_SHRINK_CENTER
-	holder.size_flags_vertical = SIZE_SHRINK_BEGIN   # keep the card at its size, pinned to the top
-	var card := CardUI.create(inst)
-	card.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	card.mouse_filter = MOUSE_FILTER_IGNORE
-	holder.add_child(card)
-	cell.add_child(holder)
-
-	var name_lbl := Label.new()
-	name_lbl.text = inst.data.display_name
-	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_lbl.add_theme_font_size_override("font_size", 16)
-	cell.add_child(name_lbl)
-
-	var desc := inst.data.description
-	if not desc.is_empty():
-		# Dark text (modal panel is light SURFACE_DEEP); wider than the card so text wraps to
-		# fewer lines.
-		var desc_lbl := TextIcons.rich_label(desc, 14, Color("3a2f22"), true)
-		desc_lbl.custom_minimum_size.x = 220.0
-		cell.add_child(desc_lbl)
-
-	return cell
-
-
-# The "+" / "→" glyph between cells. Sized to the card's height and pinned to the top so the glyph
-# centres on the cards (not on the taller, description-driven cell).
-func _make_combine_op(glyph: String, card_h: float) -> Control:
-	var lbl := Label.new()
-	lbl.text = glyph
-	lbl.custom_minimum_size.y = card_h
-	lbl.size_flags_vertical = SIZE_SHRINK_BEGIN
-	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	lbl.add_theme_font_size_override("font_size", 28)
-	lbl.add_theme_color_override("font_color", Color("5a4a38"))
-	return lbl
 
 
 # Tears down the in-flight drag visuals and restores the hidden source. Safe to call anytime.
@@ -1568,14 +1403,14 @@ func _apply_result_text(lbl: RichTextLabel, d: CardData, body_size: int) -> void
 
 
 # The band is fixed-height, so the read starts BIG and steps its font down until the MEASURED
-# content height fits the box (the band's scroll stays as the in-extremis fallback below the
-# floor). Async: measures need a frame of layout; the label guard covers panel repaints that
-# free it mid-loop.
+# content height fits the box — it always compresses to fit, never scrolls (the floor is small
+# enough that only an absurdly long description would ever bottom out there). Async: measures
+# need a frame of layout; the label guard covers panel repaints that free it mid-loop.
 func _shrink_result_text(lbl: RichTextLabel, d: CardData) -> void:
 	var size := 28
 	await get_tree().process_frame
-	while is_instance_valid(lbl) and _result_text_scroll != null and size > 14 \
-			and float(lbl.get_content_height()) + _status_height() > _result_text_scroll.size.y:
+	while is_instance_valid(lbl) and _result_text_box != null and size > 8 \
+			and float(lbl.get_content_height()) + _status_height() > _result_text_box.size.y:
 		size -= 2
 		_apply_result_text(lbl, d, size)
 		await get_tree().process_frame
