@@ -28,11 +28,17 @@ var is_generated: bool = false
 # (hold still ~0.4s) opens the full-screen CardInspector instead. Desktop keeps the
 # hover tooltip and is left untouched (the timer only arms when a touchscreen exists).
 const LONG_PRESS_SEC := 0.4
-const LONG_PRESS_MOVE := 14.0   # px of drift that reclassifies the hold as a drag/scroll
+# Fingers are never still. Godot starts a drag at ~10px of drift — well under what a real
+# "hold" gesture wobbles — so a tight threshold here meant most touch holds got eaten by an
+# accidental drag and the inspector never opened. The hold now TOLERATES drift up to this
+# many viewport px: a drag may start underneath it, and if the finger then settles, the
+# timeout cancels that drag and opens the inspector anyway (see _on_long_press).
+const LONG_PRESS_MOVE := 44.0
 var _hold_timer: Timer = null
-var _press_origin := Vector2.ZERO
+var _press_origin := Vector2.ZERO   # viewport coords, to match InputEventMouse.global_position
 var _did_inspect := false
 var _touch_inspect := false
+var _hold_dragging := false   # a drag started while the hold was still viable
 
 @onready var _frame: TextureRect = $Canvas/Frame
 @onready var _art: TextureRect  = %Art
@@ -184,6 +190,7 @@ func _ready() -> void:
 	_apply_flip()   # honour a facing set before the nodes existed (see set_flipped)
 	# Arm long-press inspection only on touch devices; desktop relies on the hover tooltip.
 	_touch_inspect = DisplayServer.is_touchscreen_available()
+	set_process(false)   # only polls while a drag is racing a pending hold (see _get_drag_data)
 	if _touch_inspect:
 		_hold_timer = Timer.new()
 		_hold_timer.one_shot = true
@@ -841,13 +848,12 @@ func _gui_input(event: InputEvent) -> void:
 		if mb.button_index == MOUSE_BUTTON_LEFT:
 			if mb.pressed:
 				# Begin a potential long-press; a quick release fires `pressed` as before.
-				_press_origin = mb.position
+				_press_origin = mb.global_position
 				_did_inspect = false
 				if _hold_timer != null:
 					_hold_timer.start()
 			else:
-				if _hold_timer != null:
-					_hold_timer.stop()
+				_end_hold()
 				if not _did_inspect:   # a long-press already opened the inspector — don't also select
 					pressed.emit()
 				accept_event()
@@ -857,16 +863,39 @@ func _gui_input(event: InputEvent) -> void:
 			CardInspector.open(self, card_instance, _show_cost)
 			accept_event()
 	elif event is InputEventMouseMotion:
-		# Drift past the threshold means a drag/scroll, not an inspect — abandon the hold.
-		if _hold_timer != null and not _hold_timer.is_stopped() \
-				and (event as InputEventMouseMotion).position.distance_to(_press_origin) > LONG_PRESS_MOVE:
-			_hold_timer.stop()
+		_check_hold_drift((event as InputEventMouseMotion).global_position)
 
 
-# Long-press fired with the finger held still: open the full-screen detail inspector. The
-# pending release is then swallowed (see _gui_input) so the hold doesn't also select/play.
+# Drift past the tolerance means a real drag/scroll, not an inspect — abandon the hold.
+func _check_hold_drift(where: Vector2) -> void:
+	if _hold_timer != null and not _hold_timer.is_stopped() \
+			and where.distance_to(_press_origin) > LONG_PRESS_MOVE:
+		_end_hold()
+
+
+# Once a drag is in flight the motion events go to the drag machinery, not to _gui_input, so
+# the drift check has to poll instead. Only runs while a tolerated drag is pending.
+func _process(_delta: float) -> void:
+	_check_hold_drift(get_viewport().get_mouse_position())
+
+
+func _end_hold() -> void:
+	_hold_dragging = false
+	set_process(false)
+	if _hold_timer != null:
+		_hold_timer.stop()
+
+
+# Long-press fired with the finger settled inside the tolerance: open the full-screen detail
+# inspector. If a drag had already started under the tolerance it loses the gesture and is
+# cancelled here. The pending release is then swallowed (see _gui_input) so the hold doesn't
+# also select/play.
 func _on_long_press() -> void:
 	_did_inspect = true
+	var was_dragging := _hold_dragging
+	_end_hold()
+	if was_dragging:
+		get_viewport().gui_cancel_drag()
 	Sfx.play("card_inspect_open")
 	CardInspector.open(self, card_instance, _show_cost)
 
@@ -880,9 +909,14 @@ func make_ghost_view() -> CardUI:
 func _get_drag_data(at_position: Vector2) -> Variant:
 	if not draggable or card_instance == null:
 		return null
-	# A real drag won the gesture — cancel any pending long-press inspect.
-	if _hold_timer != null:
-		_hold_timer.stop()
+	# A drag beginning does NOT settle the gesture any more: while the finger is still inside
+	# the hold tolerance the drag is provisional, and a completed hold takes it back.
+	if _hold_timer != null and not _hold_timer.is_stopped():
+		if get_viewport().get_mouse_position().distance_to(_press_origin) > LONG_PRESS_MOVE:
+			_end_hold()
+		else:
+			_hold_dragging = true
+			set_process(true)
 	# The opponent's fielded units are not the player's to pick up.
 	if card_instance.row >= 0 and card_instance.owner == 1:
 		return null
@@ -906,6 +940,7 @@ func _get_drag_data(at_position: Vector2) -> Variant:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_DRAG_END:
 		modulate.a = 1.0   # the source is no longer hidden during drags; kept as a safety reset
+		_end_hold()
 		if card_instance != null and card_instance.is_spell:
 			spell_drag_ended.emit(self)
 		elif card_instance != null and card_instance.row >= 0:
