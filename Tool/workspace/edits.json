@@ -411,7 +411,7 @@
       "effects": []
     },
     "at": "2026-07-07T05:14:16.621Z",
-    "fileHash": "b9e4f62cda1913448da7ae9d3a9d60eab447ac23"
+    "fileHash": "3c7a75ff441627063615a99735d1432541132664"
   },
   "card/water_water_bishop": {
     "file": "water_water_units.json",
@@ -5392,7 +5392,7 @@
       "effects": []
     },
     "at": "2026-07-14T05:14:14.482Z",
-    "fileHash": "b9e4f62cda1913448da7ae9d3a9d60eab447ac23"
+    "fileHash": "3c7a75ff441627063615a99735d1432541132664"
   },
   "vfx/aura_poison": {
     "file": "vfx.json",

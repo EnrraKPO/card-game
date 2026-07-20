@@ -11,10 +11,9 @@ extends Node
 
 signal layout_changed
 
-# Mobile zoom for fixed-size content — mainly the combat board, which has no compact
-# layout of its own (it just scales). Menus use fill-based compact layouts that adapt to
-# any factor, so this only really affects gameplay.
-const MOBILE_FACTOR := 1.35
+# Mobile zoom is DEAD (user directive 2026-07-19): BIG comes from the layouts themselves
+# filling the screen, not from magnification. One picture, identical on every device.
+const MOBILE_FACTOR := 1.0
 # Window narrower than this (px) counts as compact — real for handhelds, and the knob for
 # previewing the mobile layout in the editor by shrinking the run window.
 const COMPACT_WIDTH := 1100.0

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="768" height="1536">
+  <!-- Placeholder alchemy station: dark wood panel with a faint alembic watermark. -->
+  <defs>
+    <linearGradient id="wood" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#463225"/>
+      <stop offset="100%" stop-color="#332417"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="752" height="1520" rx="28" fill="url(#wood)"/>
+  <rect x="8" y="8" width="752" height="1520" rx="28" fill="none" stroke="#241a10" stroke-width="12"/>
+  <rect x="26" y="26" width="716" height="1484" rx="20" fill="none" stroke="#5e4a32" stroke-width="4"/>
+  <!-- Alembic watermark, low contrast so UI content stays readable over it. -->
+  <g opacity="0.12" stroke="#e8d9b0" stroke-width="14" fill="none">
+    <circle cx="384" cy="1040" r="190"/>
+    <path d="M330,880 L330,700 L438,700 L438,880"/>
+    <path d="M438,760 L600,620 L600,560"/>
+    <ellipse cx="384" cy="1090" rx="140" ry="70"/>
+  </g>
+</svg>

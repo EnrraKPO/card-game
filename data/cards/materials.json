@@ -135,22 +135,6 @@
 		"description": "A humble foot soldier. Attacks the nearest enemy.",
 		"chess_pieces": [
 			"pawn"
-		],
-		"effects": [
-			{
-				"trigger": {
-					"kind": "event",
-					"event": "play",
-					"of": "self"
-				},
-				"targets": {
-					"kind": "self"
-				},
-				"status": {
-					"id": "charged",
-					"stacks": 4
-				}
-			}
 		]
 	},
 	{

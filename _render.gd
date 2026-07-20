@@ -18,7 +18,21 @@ func _ready() -> void:
 			GameData.current_run.charms.append_array(["sharpened", "sturdy", "swift", "warded"])
 			# Combat now shows relics on its own left-edge strip — give it chips to render.
 			GameData.current_run.relics.append_array(["battle_standard", "iron_aegis", "mana_font"])
+			# Optional "deckN" arg (e.g. deck23): pad the run deck to N cards by repeating it.
+			for a: String in args:
+				if a.begins_with("deck") and a.trim_prefix("deck").is_valid_int():
+					var deck: Array = GameData.current_run.deck
+					var base := deck.size()
+					var i := 0
+					while deck.size() < int(a.trim_prefix("deck")):
+						deck.append(DeckCard.make((deck[i % base] as DeckCard).id))
+						i += 1
 			break
+	# Crafting screen "merged": append a combined (2-piece) card to the deck — with it, incompatible
+	# pairings (3+ pieces) become reachable for testing the invalid status / gray-out states.
+	if scene_path.contains("combination") and "merged" in args:
+		var mc := CardData.combine(CardData.get_card("pawn"), CardData.get_card("pawn"))
+		GameData.current_run.deck.append(DeckCard.make(mc.id))
 	# Deck builder / viewer need a target deck handed off (normally from the Decks screen).
 	if GameData.current_profile != null:
 		var did: String = GameData.current_profile.selected_deck_id
@@ -75,6 +89,26 @@ func _ready() -> void:
 	sv.add_child(shell)
 	shell.mount(scene_path)
 	await get_tree().process_frame
+	# Crafting screen "pair": pre-select two deck cards so the station previews a merge.
+	# "pair" = first two; "pairI-J" (e.g. pair12-13) selects specific entry indices.
+	for a: String in args:
+		if scene_path.contains("combination") and a.begins_with("pair"):
+			var ij := a.trim_prefix("pair").split("-")
+			var i := int(ij[0]) if ij.size() == 2 else 0
+			var j := int(ij[1]) if ij.size() == 2 else 1
+			for n: Node in sv.find_children("*", "Control", true, false):
+				if n.has_method("_on_tap"):
+					n.call("_on_tap", {"kind": "card", "idx": i})
+					if j != i:   # pairI-I = a SINGLE selection (one filled slot)
+						n.call("_on_tap", {"kind": "card", "idx": j})
+					break
+	# Crafting screen "drag": simulate an in-flight drag of the LAST deck entry (combine with
+	# "merged" so the dragged 2-piece card grays out its incompatible targets).
+	if scene_path.contains("combination") and "drag" in args:
+		for n: Node in sv.find_children("*", "Control", true, false):
+			if n.has_method("_begin_drag"):
+				n.call("_begin_drag", {"kind": "card", "idx": GameData.current_run.deck.size() - 1})
+				break
 	# "inspect": pop the full-screen CardInspector over the scene (a content-rich card).
 	if "inspect" in args:
 		var ci := CardInstance.from_data(CardData.get_card("rook"))

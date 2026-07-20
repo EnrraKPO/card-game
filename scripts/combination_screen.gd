@@ -1,7 +1,10 @@
 extends Control
 
-# The Forge. COMBINE two deck cards into one, or ENCHANT a card with a charm. Both actions share the
-# right-hand panel (slot A + slot B → result + action button) and support two input styles:
+# The CRAFTING screen (map "forge" nodes) — a diegetic alchemy-room: no Shell chrome, the exit is an
+# in-world door button on the left rail, and the dressing comes from EnvArt("crafting", ...) slots.
+# Layout: [card table over a bottom strip (door + charm row)] · [alchemy station].
+# COMBINE two deck cards into one, or ENCHANT a card with a charm. Both actions share the
+# station column (slot A + slot B → result + action button) and support two input styles:
 #  • Tap/click: tap a card into slot A, a second into slot B → Combine. Or tap a charm (it goes to
 #    slot A), then tap a card (slot B) → Enchant. Tapping a filled slot clears it.
 #  • Drag: drag a card onto another (combine), or a charm onto a card (enchant); the dragged item
@@ -18,6 +21,8 @@ var _entries: Array = []
 
 # Must match the CardUI root custom_minimum_size in scenes/card_ui.tscn so the deck grid scales.
 const CARD_SIZE := Vector2(160, 210)
+# Native card aspect (260×340) — _fit_cards sizes the table grid with it.
+const CARD_ASPECT := 340.0 / 260.0
 # All particle VFX tuning lives in ForgeFX (ForgeFX.AURA / ForgeFX.LINK).
 
 const OK_COLOR   := Color(0.4, 1.0, 0.55)
@@ -26,20 +31,27 @@ const WARN_COLOR := Color(1.0, 0.6, 0.3)
 const IDLE_COLOR := Color(0.7, 0.7, 0.8)
 
 const DRAG_THRESHOLD := 12.0   # px the pointer must travel before a press becomes a drag (vs a tap)
+# The deck grid's BASE gap. _fit_cards inflates the live separations above this to absorb the
+# fit remainder — never read the separation back from the grid (it returns the inflated value).
+const GRID_SEP := 16.0
 
 var _deck_grid: GridContainer
 var _scroll: ScrollContainer
-var _charm_row: HBoxContainer
-var _compact := false
+var _charm_col: HBoxContainer
 var _card_size := CARD_SIZE
+const CHARM_SIZE := Vector2(116, 116)
 
-# Right-hand forge panel: two ingredient slots, the forged result, a status line, the Combine button.
+# Station column: two ingredient slots, the result (card + name + full description), a status line,
+# the Mineral balance and the Combine button.
 var _slot_a: Control
 var _slot_b: Control
 var _result_slot: Control
+var _result_info: VBoxContainer
+var _result_text_scroll: ScrollContainer
+var _ability_strip: HBoxContainer
+var _mineral_value: Label
 var _preview_status: Label
 var _combine_btn: Button
-var _panel_header: Label
 
 # Click-to-select flow (the no-drag path): entry indices of the chosen pair (-1 = empty).
 var _sel_a: int = -1
@@ -88,9 +100,6 @@ var _fuse_anim: ForgeFuseAnim = null
 
 
 func _ready() -> void:
-	# Rebuild the whole screen when the form-factor flips (desktop ↔ compact/touch), so the
-	# layout switches variants instead of the canvas just scaling down. Re-armed each _ready.
-	UIScale.layout_changed.connect(func(): get_tree().reload_current_scene(), CONNECT_ONE_SHOT)
 	Sfx.music("music_forge")
 	_build_ui()
 	_rebuild_deck()
@@ -99,10 +108,10 @@ func _ready() -> void:
 
 
 func get_chrome() -> Dictionary:
-	return {"title": "Forge", "exit": _leave,
-		"fields": [ScreenUI.Field.ACT, ScreenUI.Field.HP, ScreenUI.Field.GOLD,
-			ScreenUI.Field.MINERAL, ScreenUI.Field.RELICS, ScreenUI.Field.EXP],
-		"show_footer": true}
+	# Diegetic room: no Shell chrome at all. The left-rail door button is the visible exit; the OS
+	# back gesture / Esc still leaves via `back`. Mineral (the only run stat that matters here)
+	# renders at the station instead of a header chip.
+	return {"show_header": false, "show_footer": false, "back": _leave}
 
 
 func _exit_tree() -> void:
@@ -113,136 +122,225 @@ func _exit_tree() -> void:
 
 
 func _build_ui() -> void:
-	_compact = UIScale.is_compact()
-	_card_size = Vector2(230, 302) if _compact else CARD_SIZE
+	_card_size = CARD_SIZE   # refined by _fit_cards on layout
 
-	# ── Body ───────────────────────────────────────────────────────────────────
+	# ── Table surface: full-bleed environment art behind everything ──────────────
+	var bg := TextureRect.new()
+	bg.texture = EnvArt.tex("crafting", "table_bg")
+	bg.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	bg.mouse_filter = MOUSE_FILTER_IGNORE
+	add_child(bg)
+
+	# ── Body: [charm shelf + door] · [card table] · [alchemy station] ────────────
+	var pad := MarginContainer.new()
+	pad.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	for side: String in ["left", "right", "top", "bottom"]:
+		pad.add_theme_constant_override("margin_" + side, 14)   # keep content off the table's rim art
+	add_child(pad)
+
 	var body := HBoxContainer.new()
-	body.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	body.add_theme_constant_override("separation", 0)
-	add_child(body)
+	body.add_theme_constant_override("separation", 14)
+	pad.add_child(body)
 
-	# Left: scrollable deck grid + charm row beneath it.
+	# Left column: the card table with a bottom strip under it — the exit door in the corner, the
+	# charm shelf as a horizontal row. The strip sits in the grid's natural remainder (fit-all cards
+	# rarely divide the height evenly), so the charms cost the table almost nothing. Everything on
+	# it is a drag SOURCE or the exit — never a drop target — so a flicked drag can't end there.
 	var left := VBoxContainer.new()
 	left.size_flags_horizontal = SIZE_EXPAND_FILL
 	left.size_flags_vertical   = SIZE_EXPAND_FILL
-	left.size_flags_stretch_ratio = 2.2
-	left.add_theme_constant_override("separation", 8)
+	left.size_flags_stretch_ratio = 2.37
+	left.add_theme_constant_override("separation", 14)
 	body.add_child(left)
 
+	# The card table — the whole deck, fit-to-space (see _fit_cards).
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_horizontal = SIZE_EXPAND_FILL
 	scroll.size_flags_vertical   = SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	# SHOW_NEVER (not DISABLED): the fitted grid's min width must NOT propagate up, or it deadlocks
+	# the HBox into pushing the station off-screen after _fit_cards sizes the cards.
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
 	scroll.vertical_scroll_mode   = ScrollContainer.SCROLL_MODE_AUTO
-	scroll.resized.connect(_relayout_columns)
+	scroll.resized.connect(_fit_cards)
 	left.add_child(scroll)
 	_scroll = scroll
 
+	# Bottom strip: door + charm row, one shelf-height band.
+	var strip := HBoxContainer.new()
+	strip.add_theme_constant_override("separation", 14)
+	left.add_child(strip)
+
+	var door := TextureButton.new()
+	door.texture_normal = EnvArt.tex("crafting", "door")
+	door.ignore_texture_size = true
+	door.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	door.custom_minimum_size = Vector2(120, 140)
+	door.tooltip_text = "Leave"
+	door.pressed.connect(_leave)
+	door.mouse_entered.connect(func() -> void: door.modulate = Color(1.18, 1.18, 1.18))
+	door.mouse_exited.connect(func() -> void: door.modulate = Color.WHITE)
+	strip.add_child(door)
+
+	var shelf := PanelContainer.new()
+	shelf.size_flags_horizontal = SIZE_EXPAND_FILL
+	var shelf_style := StyleBoxTexture.new()
+	shelf_style.texture = EnvArt.tex("crafting", "charm_shelf")
+	shelf_style.set_content_margin_all(12)
+	shelf.add_theme_stylebox_override("panel", shelf_style)
+	strip.add_child(shelf)
+
+	var shelf_scroll := ScrollContainer.new()
+	shelf_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	shelf_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	shelf.add_child(shelf_scroll)
+	_charm_col = HBoxContainer.new()
+	_charm_col.size_flags_vertical = SIZE_EXPAND_FILL
+	_charm_col.add_theme_constant_override("separation", 12)
+	shelf_scroll.add_child(_charm_col)
+
+	# The fitted spread is usually a touch narrower than the viewport (whole columns only) — the
+	# wrap centres it so the leftover reads as even table margin, not a dead strip on one side
+	# (ScrollContainer itself pins its child top-left regardless of shrink flags).
+	var grid_wrap := VBoxContainer.new()
+	grid_wrap.size_flags_horizontal = SIZE_EXPAND_FILL
+	grid_wrap.size_flags_vertical = SIZE_EXPAND_FILL
+	grid_wrap.alignment = BoxContainer.ALIGNMENT_CENTER   # small decks sit mid-table, not top-stuck
+	scroll.add_child(grid_wrap)
 	_deck_grid = GridContainer.new()
-	_deck_grid.columns = 3 if _compact else 4
-	_deck_grid.add_theme_constant_override("h_separation", 12)
-	_deck_grid.add_theme_constant_override("v_separation", 12)
-	_deck_grid.size_flags_horizontal = SIZE_EXPAND_FILL
-	scroll.add_child(_deck_grid)
+	_deck_grid.columns = 4
+	_deck_grid.add_theme_constant_override("h_separation", int(GRID_SEP))
+	_deck_grid.add_theme_constant_override("v_separation", int(GRID_SEP))
+	_deck_grid.size_flags_horizontal = SIZE_SHRINK_CENTER
+	grid_wrap.add_child(_deck_grid)
 
-	var charm_label := Label.new()
-	charm_label.text = "Charms — drag one onto a card to enchant it"
-	charm_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	charm_label.add_theme_font_size_override("font_size", 22 if _compact else 14)
-	charm_label.modulate = IDLE_COLOR
-	left.add_child(charm_label)
-
-	_charm_row = HBoxContainer.new()
-	_charm_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	_charm_row.add_theme_constant_override("separation", 10)
-	left.add_child(_charm_row)
-
-	# Right: the forge panel — two ingredient slots (A + B), the forged result, a status line and the
-	# Combine button. Tapping deck cards fills the slots; dragging shows the dragged/hovered pair.
-	var right_panel := PanelContainer.new()
-	right_panel.size_flags_horizontal = SIZE_EXPAND_FILL
-	right_panel.size_flags_vertical   = SIZE_EXPAND_FILL
-	right_panel.size_flags_stretch_ratio = 1.0
-	var right_style := StyleBoxFlat.new()
-	right_style.bg_color = ScreenUI.SURFACE_COLOR
-	right_style.border_color = ScreenUI.SURFACE_BORDER
-	right_style.set_border_width_all(2)
-	right_style.set_corner_radius_all(12)
-	right_panel.add_theme_stylebox_override("panel", right_style)
-	body.add_child(right_panel)
-
-	var right_pad := MarginContainer.new()
-	for side in ["left", "right", "top", "bottom"]:
-		right_pad.add_theme_constant_override("margin_" + side, 24)
-	right_panel.add_child(right_pad)
+	# Right: the alchemy station — ingredient slots (A + B), the result with its full description,
+	# the Mineral balance, a status line and the Combine button.
+	var station := PanelContainer.new()
+	station.size_flags_horizontal = SIZE_EXPAND_FILL
+	station.size_flags_vertical   = SIZE_EXPAND_FILL
+	station.size_flags_stretch_ratio = 1.0
+	var station_style := StyleBoxTexture.new()
+	station_style.texture = EnvArt.tex("crafting", "station")
+	station_style.set_content_margin_all(24)
+	station.add_theme_stylebox_override("panel", station_style)
+	body.add_child(station)
 
 	var right := VBoxContainer.new()
-	right.add_theme_constant_override("separation", 14)
-	right_pad.add_child(right)
+	right.add_theme_constant_override("separation", 12)
+	station.add_child(right)
 
-	_panel_header = Label.new()
-	_panel_header.text = "Combine"
-	_panel_header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_panel_header.add_theme_font_size_override("font_size", 30 if _compact else 24)
-	_panel_header.modulate = IDLE_COLOR
-	right.add_child(_panel_header)
+	# Mineral balance — the currency merges spend; it lives at the station since there's no header.
+	var chip := PanelContainer.new()
+	var chip_style := StyleBoxFlat.new()
+	chip_style.bg_color = Color("2a9178")
+	chip_style.set_corner_radius_all(12)
+	chip_style.set_content_margin_all(14)
+	chip.add_theme_stylebox_override("panel", chip_style)
+	right.add_child(chip)
+	var chip_row := HBoxContainer.new()
+	chip_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	chip_row.add_theme_constant_override("separation", 14)
+	chip.add_child(chip_row)
+	var chip_tag := Label.new()
+	chip_tag.text = "Mineral"
+	chip_tag.add_theme_font_size_override("font_size", 32)
+	chip_tag.add_theme_color_override("font_color", Color(1, 1, 1, 0.85))
+	chip_row.add_child(chip_tag)
+	_mineral_value = Label.new()
+	_mineral_value.add_theme_font_size_override("font_size", 32)
+	_mineral_value.add_theme_color_override("font_color", Color.WHITE)
+	chip_row.add_child(_mineral_value)
+	GameSignals.mineral_changed.connect(func(v: int) -> void: _mineral_value.text = str(v))
+	if GameData.current_run != null:
+		_mineral_value.text = str(GameData.current_run.magic_mineral)
 
-	# Slots + result scroll within the pane so a short window never overflows; the Combine button
-	# below stays pinned and always reachable.
-	var rscroll := ScrollContainer.new()
-	rscroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	rscroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	rscroll.size_flags_vertical = SIZE_EXPAND_FILL
-	right.add_child(rscroll)
-	var rcol := VBoxContainer.new()
-	rcol.size_flags_horizontal = SIZE_EXPAND_FILL
-	rcol.size_flags_vertical = SIZE_EXPAND_FILL
-	rcol.alignment = BoxContainer.ALIGNMENT_CENTER
-	rcol.add_theme_constant_override("separation", 12)
-	rscroll.add_child(rcol)
+	# Slot cluster: the two ingredients stacked VERTICALLY on the left (A over "+" over B) with the
+	# RESULT as the big card beside them, spanning the pair's height — the whole merge reads
+	# left-to-right as one equation: (A + B) → result. Sizes come from _fit_station — the initial
+	# minimums here stay conservatively SMALL: an oversized first-frame minimum inflates the whole
+	# body before the fit pass runs, which overflowed the screen on small windows.
+	_slot_size = Vector2(90, 118)
+	var cluster := HBoxContainer.new()
+	cluster.alignment = BoxContainer.ALIGNMENT_CENTER
+	cluster.add_theme_constant_override("separation", 8)
+	right.add_child(cluster)
 
-	_slot_size = Vector2(150, 196) if _compact else Vector2(122, 160)
-	var result_size := Vector2(212, 277) if _compact else Vector2(178, 233)
-
-	var ing := HBoxContainer.new()
-	ing.alignment = BoxContainer.ALIGNMENT_CENTER
-	ing.add_theme_constant_override("separation", 14)
-	rcol.add_child(ing)
-	var sa := _make_card_slot(_slot_size, "Tap a\ncard")
+	var ing_col := VBoxContainer.new()
+	ing_col.alignment = BoxContainer.ALIGNMENT_CENTER
+	ing_col.add_theme_constant_override("separation", 0)
+	cluster.add_child(ing_col)
+	var sa := _make_card_slot(_slot_size, "")
 	_slot_a = sa["holder"]
-	ing.add_child(sa["slot"])
-	var plus := Label.new()
-	plus.text = "+"
-	plus.add_theme_font_size_override("font_size", 40 if _compact else 32)
-	plus.modulate = IDLE_COLOR
-	plus.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	ing.add_child(plus)
-	var sb := _make_card_slot(_slot_size, "Tap a\ncard")
+	ing_col.add_child(sa["slot"])
+	var plus := _strip_glyph("+", 32)
+	plus.size_flags_horizontal = SIZE_SHRINK_CENTER
+	ing_col.add_child(plus)
+	var sb := _make_card_slot(_slot_size, "")
 	_slot_b = sb["holder"]
-	ing.add_child(sb["slot"])
+	ing_col.add_child(sb["slot"])
 
-	var arrow := Label.new()
-	arrow.text = "↓"
-	arrow.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	arrow.add_theme_font_size_override("font_size", 40 if _compact else 32)
-	arrow.modulate = IDLE_COLOR
-	rcol.add_child(arrow)
+	cluster.add_child(_strip_glyph("→", 48))
 
-	var sr := _make_card_slot(result_size, "Result")
+	var sr := _make_card_slot(Vector2(140, 183), "")
 	_result_slot = sr["holder"]
-	rcol.add_child(sr["slot"])
+	cluster.add_child(sr["slot"])
+	right.resized.connect(_fit_station.bind(right))
 
+	# Text band under the cluster: the result read (name + cost + rules, font SHRINKS with length)
+	# on the left, the result's ability tokens on the right. A visible box marks it as the read
+	# area — its own surface with an inner margin, content pinned top-left. FIXED height — length
+	# changes re-size the font (in extremis scroll) INSIDE it; nothing around it ever moves.
+	# The band's wrapper takes the column's leftover height (the cluster above packs to its content),
+	# and the box centres vertically inside it — the read floats in the free space, never bottom-stuck.
+	var band_margin := MarginContainer.new()
+	band_margin.size_flags_vertical = SIZE_EXPAND_FILL
+	band_margin.add_theme_constant_override("margin_left", 12)
+	band_margin.add_theme_constant_override("margin_right", 12)
+	right.add_child(band_margin)
+	var band_panel := PanelContainer.new()
+	band_panel.size_flags_vertical = SIZE_SHRINK_CENTER
+	var band_style := StyleBoxFlat.new()
+	band_style.bg_color = Color(0, 0, 0, 0.28)
+	band_style.set_corner_radius_all(10)
+	band_style.set_content_margin_all(14)
+	band_panel.add_theme_stylebox_override("panel", band_style)
+	band_margin.add_child(band_panel)
+	var band := HBoxContainer.new()
+	band.custom_minimum_size.y = 170
+	band.add_theme_constant_override("separation", 10)
+	band_panel.add_child(band)
+	var text_scroll := ScrollContainer.new()
+	text_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	text_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	text_scroll.size_flags_horizontal = SIZE_EXPAND_FILL
+	band.add_child(text_scroll)
+	_result_text_scroll = text_scroll
+	var band_col := VBoxContainer.new()
+	band_col.size_flags_horizontal = SIZE_EXPAND_FILL
+	text_scroll.add_child(band_col)
+	# The status line (invalid pair / cost verdict) lives INSIDE the fixed text box, above the
+	# result read — appearing/disappearing must never move the layout around it.
 	_preview_status = Label.new()
-	_preview_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_preview_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_preview_status.add_theme_font_size_override("font_size", 22 if _compact else 17)
-	_preview_status.custom_minimum_size.x = 200.0
-	rcol.add_child(_preview_status)
+	_preview_status.add_theme_font_size_override("font_size", 24)
+	# Explicit colour + outline (not modulate over the theme's label colour, which muddies it) so
+	# the verdict pops from the dark box; _refresh_forge overrides the colour per verdict.
+	_preview_status.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
+	_preview_status.add_theme_constant_override("outline_size", 4)
+	_preview_status.size_flags_horizontal = SIZE_EXPAND_FILL
+	band_col.add_child(_preview_status)
+	_result_info = VBoxContainer.new()
+	_result_info.size_flags_horizontal = SIZE_EXPAND_FILL
+	band_col.add_child(_result_info)
+	_ability_strip = HBoxContainer.new()
+	_ability_strip.alignment = BoxContainer.ALIGNMENT_CENTER
+	_ability_strip.add_theme_constant_override("separation", 6)
+	band.add_child(_ability_strip)
 
 	_combine_btn = ScreenUI.action_button("Combine", _on_combine_pressed,
-		Vector2(0, 110) if _compact else Vector2(0, 72), 32 if _compact else 26,
-		ScreenUI.CHROME_CONFIRM)
+		Vector2(0, 100), 32, ScreenUI.CHROME_CONFIRM)
 	_combine_btn.size_flags_horizontal = SIZE_EXPAND_FILL
 	right.add_child(_combine_btn)
 
@@ -255,19 +353,92 @@ func _build_ui() -> void:
 
 # ── Deck display ────────────────────────────────────────────────────────────────
 
-# Pack as many card columns as the scroll viewport can hold, so the grid fills the
-# width instead of sitting at a fixed 4. Re-run whenever the viewport resizes.
-func _relayout_columns() -> void:
-	if _scroll == null or _deck_grid == null:
+# Fit-all: pick the column count that shows the WHOLE deck at the largest card size (native
+# aspect) — deck sizes are bounded, so scrolling here is pointless (user directive) and stays a
+# floor-degradation path only. Ties prefer fewer remainder holes, then the wider spread.
+func _fit_cards() -> void:
+	if _scroll == null or _deck_grid == null or _entries.is_empty():
 		return
-	var bar := _scroll.get_v_scroll_bar()
-	var bar_w := bar.size.x if bar.visible else 0.0
-	var avail := _scroll.size.x - bar_w
-	if avail <= 0.0:
+	var avail := _scroll.size
+	if avail.x <= 0.0 or avail.y <= 0.0:
 		return
-	var h_sep := float(_deck_grid.get_theme_constant("h_separation"))
-	var cols := int(floor((avail + h_sep) / (_card_size.x + h_sep)))
-	_deck_grid.columns = maxi(cols, 1)
+	var sep := GRID_SEP
+	var n := _entries.size()
+	var floor_w := 150.0
+	var best_w := 0.0
+	var best_cols := 1
+	for cols in range(1, n + 1):
+		var rows := int(ceil(float(n) / float(cols)))
+		var w := (avail.x - float(cols - 1) * sep) / float(cols)
+		var h_cap := (avail.y - float(rows - 1) * sep) / float(rows)
+		w = minf(w, h_cap / CARD_ASPECT)
+		if w > best_w + 0.5:
+			best_w = w
+			best_cols = cols
+		elif absf(w - best_w) <= 0.5:
+			# Tie on card size → prefer the layout with FEWER remainder holes (a ragged last row
+			# is dead cells; excess width instead flows to the rail). Same holes → wider spread.
+			# Always adopt THIS column count's width — keeping the old one overflowed the row.
+			var rem_new := (cols - (n % cols)) % cols
+			var rem_best := (best_cols - (n % best_cols)) % best_cols
+			if rem_new < rem_best or (rem_new == rem_best and cols > best_cols):
+				best_w = w
+				best_cols = cols
+	if best_w < floor_w:
+		# Absurdly large deck: clamp to the touch floor and let the grid scroll (bar gets a lane).
+		best_w = floor_w
+		var bar_w := _scroll.get_v_scroll_bar().get_combined_minimum_size().x
+		best_cols = maxi(int((avail.x - bar_w + sep) / (floor_w + sep)), 1)
+	# Elastic gutters: whole cards at a fixed aspect can't fill both dimensions exactly, so the
+	# integer-grid remainder is spent on the separations instead — each axis's slack is split into
+	# one share per column/row (SHRINK_CENTER turns the odd share into equal half-gap edges), so
+	# the spread always reads as touching all four table edges. Slack in a scrolling grid's long
+	# axis is 0 by construction (maxf guards the sign).
+	var rows_n := int(ceil(float(n) / float(best_cols)))
+	var grid_w := float(best_cols) * best_w + float(best_cols - 1) * sep
+	var grid_h := float(rows_n) * best_w * CARD_ASPECT + float(rows_n - 1) * sep
+	var h_extra := maxf(avail.x - grid_w, 0.0) / float(best_cols)
+	var v_extra := maxf(avail.y - grid_h, 0.0) / float(rows_n)
+	_deck_grid.add_theme_constant_override("h_separation", int(sep + h_extra))
+	_deck_grid.add_theme_constant_override("v_separation", int(sep + v_extra))
+
+	var new_size := Vector2(best_w, best_w * CARD_ASPECT)
+	if new_size.distance_to(_card_size) < 1.0 and _deck_grid.columns == best_cols:
+		return
+	_card_size = new_size
+	_deck_grid.columns = best_cols
+	for e: Dictionary in _entries:
+		(e.item as Control).custom_minimum_size = _card_size
+		(e.ui as Control).custom_minimum_size = _card_size
+
+
+# Sizes the slot cluster from the station column's measured rect. The column splits between the
+# stacked ingredient pair and the result at a fixed width ratio (result dominates), then each side
+# is capped by the height left after the fixed rows (chip + text band + status/button ≈ 340).
+# Never driven by the preview text, so a changing description can't move or resize anything.
+func _fit_station(right: Control) -> void:
+	if _result_slot == null:
+		return
+	var avail := right.size
+	if avail.x <= 0.0 or avail.y <= 0.0:
+		return
+	# Height budget from the VIEWPORT, not right.size: the sizes computed here become the column's
+	# own minimums, so measuring ourselves feeds back (an inflated first layout re-justifies itself
+	# and the screen sticks overflowed). The viewport can't be inflated by us: window minus the
+	# outer pad + station margins (~76) is the honest ceiling on the column's height.
+	var avail_y := minf(avail.y, get_viewport_rect().size.y - 80.0)
+	var cluster_h := maxf(avail_y - 420.0, 180.0)
+	var lanes := 76.0    # the "→" lane + the cluster's separations
+	var glyph_h := 46.0  # the "+" lane between the stacked ingredients (glyph line height)
+	var ratio := 0.6     # ingredient card width as a share of the result's
+	var res_w := (avail.x - lanes) / (1.0 + ratio)
+	var ing_w := res_w * ratio
+	res_w = minf(res_w, cluster_h / CARD_ASPECT)
+	ing_w = minf(ing_w, (cluster_h - glyph_h) * 0.5 / CARD_ASPECT)
+	_slot_size = Vector2(ing_w, ing_w * CARD_ASPECT)
+	(_slot_a.get_parent() as Control).custom_minimum_size = _slot_size
+	(_slot_b.get_parent() as Control).custom_minimum_size = _slot_size
+	(_result_slot.get_parent() as Control).custom_minimum_size = Vector2(res_w, res_w * CARD_ASPECT)
 
 
 func _rebuild_deck() -> void:
@@ -307,13 +478,14 @@ func _rebuild_deck() -> void:
 		_entries.append({ "card": dc, "deck_idx": i, "data": data, "ui": ui, "item": item })
 		_deck_grid.add_child(item)
 
+	_fit_cards()   # deck count changed — resize the table's cards to fit the new spread
 	_refresh_forge()
 
 
 # ── Charm inventory ──────────────────────────────────────────────────────────────
 
 func _rebuild_charms() -> void:
-	for child in _charm_row.get_children():
+	for child in _charm_col.get_children():
 		child.queue_free()
 
 	var counts: Dictionary = {}
@@ -323,20 +495,24 @@ func _rebuild_charms() -> void:
 	if counts.is_empty():
 		var empty := Label.new()
 		empty.text = "(no charms)"
-		empty.add_theme_font_size_override("font_size", 20 if _compact else 14)
-		empty.add_theme_color_override("font_color", Color("5a4a38"))
-		_charm_row.add_child(empty)
+		empty.size_flags_horizontal = SIZE_EXPAND_FILL   # centre in the row, not left-stuck
+		empty.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		empty.add_theme_font_size_override("font_size", 18)
+		empty.add_theme_color_override("font_color", Color(0.9, 0.85, 0.75, 0.6))
+		_charm_col.add_child(empty)
 		return
 
 	for charm_id: String in counts:
-		_charm_row.add_child(_make_charm_item(charm_id, counts[charm_id]))
+		_charm_col.add_child(_make_charm_item(charm_id, counts[charm_id]))
 
 
 # A draggable charm chip (with ×N count). Dragging it onto a card enchants that card.
 func _make_charm_item(charm_id: String, count: int) -> ForgeDragItem:
-	var size := Vector2(84, 84) if _compact else Vector2(56, 56)
+	var size := CHARM_SIZE
 	var item := ForgeDragItem.new()
 	item.custom_minimum_size = size
+	# Fixed square badge centred in the shelf row's height.
+	item.size_flags_vertical = SIZE_SHRINK_CENTER
 	item.setup(_make_charm_chip(charm_id, count, size), {"kind": "charm", "id": charm_id})
 	var charm := CharmData.get_charm(charm_id)
 	if charm != null:
@@ -365,7 +541,7 @@ func _make_charm_chip(charm_id: String, count: int, size: Vector2) -> Control:
 	lbl.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
-	lbl.add_theme_font_size_override("font_size", 30 if _compact else 20)
+	lbl.add_theme_font_size_override("font_size", maxi(int(size.x * 0.3), 20))
 	lbl.add_theme_color_override("font_color", Color(0.98, 0.98, 1.0))
 	lbl.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.7))
 	lbl.add_theme_constant_override("outline_size", 3)
@@ -439,7 +615,7 @@ func _make_follower_visual(payload: Dictionary) -> Control:
 # The dragged charm chip's size — normal (same as before). Touch visibility is handled by LIFTING
 # the chip above the finger (see _begin_drag), not by enlarging it; desktop needs neither.
 func _charm_follower_size() -> Vector2:
-	return Vector2(96, 96) if _compact else Vector2(64, 64)
+	return Vector2(64, 64)
 
 
 # Drives the dragged card's wobble: it eases in while a link is active, out when it breaks.
@@ -535,7 +711,7 @@ func _auto_scroll(delta: float) -> void:
 	if _scroll == null:
 		return
 	var rect := _scroll.get_global_rect()
-	var zone := 140.0 if _compact else 90.0   # edge band that triggers scrolling
+	var zone := 110.0   # edge band that triggers scrolling
 	var speed := 1100.0                        # px/sec at the very edge
 	var y := get_global_mouse_position().y
 	var dv := 0.0
@@ -674,19 +850,19 @@ func _confirm_combine(src_idx: int, tgt_idx: int, result_dc: DeckCard) -> void:
 	style.set_border_width_all(2)
 	style.border_color = ScreenUI.SURFACE_DEEP_BORDER
 	style.set_corner_radius_all(10)
-	style.set_content_margin_all(28 if _compact else 18)
+	style.set_content_margin_all(18)
 	panel.add_theme_stylebox_override("panel", style)
 	center.add_child(panel)
 
 	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 18 if _compact else 12)
+	col.add_theme_constant_override("separation", 12)
 	panel.add_child(col)
 
 	var prompt := Label.new()
 	prompt.text = "Forge these two cards into one? Both originals are consumed."
 	prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	prompt.autowrap_mode = TextServer.AUTOWRAP_WORD
-	prompt.add_theme_font_size_override("font_size", 24 if _compact else 16)
+	prompt.add_theme_font_size_override("font_size", 16)
 	col.add_child(prompt)
 
 	# The merge's Magic Mineral price (unaffordable pairs never reach this modal — every
@@ -697,14 +873,14 @@ func _confirm_combine(src_idx: int, tgt_idx: int, result_dc: DeckCard) -> void:
 	cost_lbl.text = "Cost: %d Magic Mineral  (you have %d)" \
 			% [cost, GameData.current_run.magic_mineral]
 	cost_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	cost_lbl.add_theme_font_size_override("font_size", 24 if _compact else 16)
+	cost_lbl.add_theme_font_size_override("font_size", 16)
 	cost_lbl.add_theme_color_override("font_color", Materials.color(Materials.MAGIC_MINERAL))
 	col.add_child(cost_lbl)
 
-	var cs := Vector2(190, 249) if _compact else Vector2(150, 196)   # keeps the 260×340 aspect
+	var cs := Vector2(150, 196)   # keeps the 260×340 aspect
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 18 if _compact else 14)
+	row.add_theme_constant_override("separation", 14)
 	var cell_a := _make_combine_cell(a_inst, cs)
 	var cell_b := _make_combine_cell(b_inst, cs)
 	row.add_child(cell_a)
@@ -732,7 +908,7 @@ func _confirm_combine(src_idx: int, tgt_idx: int, result_dc: DeckCard) -> void:
 
 	var buttons := HBoxContainer.new()
 	buttons.size_flags_horizontal = SIZE_EXPAND_FILL   # span the panel so the two targets are wide
-	buttons.add_theme_constant_override("separation", 24 if _compact else 16)
+	buttons.add_theme_constant_override("separation", 16)
 	var cancel_btn := _modal_button("Cancel", ScreenUI.CHROME_NEUTRAL)
 	var forge_btn := _modal_button("Forge", ScreenUI.CHROME_CONFIRM)
 	cancel_btn.pressed.connect(_close_combine_modal)
@@ -880,23 +1056,23 @@ func _show_result_toast(result_inst: CardInstance) -> void:
 	style.set_border_width_all(2)
 	style.border_color = ScreenUI.SURFACE_DEEP_BORDER
 	style.set_corner_radius_all(10)
-	style.set_content_margin_all(28 if _compact else 20)
+	style.set_content_margin_all(20)
 	panel.add_theme_stylebox_override("panel", style)
 	center.add_child(panel)
 
 	Vfx.play("ui_toast_glint", panel)   # the "Forged!" notice announces itself (carries its sound)
 	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 14 if _compact else 10)
+	col.add_theme_constant_override("separation", 10)
 	panel.add_child(col)
 
 	var title := Label.new()
 	title.text = "Forged!"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 32 if _compact else 24)
+	title.add_theme_font_size_override("font_size", 24)
 	title.add_theme_color_override("font_color", OK_COLOR)
 	col.add_child(title)
 
-	var cs := Vector2(300, 393) if _compact else Vector2(230, 301)
+	var cs := Vector2(230, 301)
 	var holder := Control.new()
 	holder.custom_minimum_size = cs
 	holder.size_flags_horizontal = SIZE_SHRINK_CENTER
@@ -909,19 +1085,19 @@ func _show_result_toast(result_inst: CardInstance) -> void:
 	var name_lbl := Label.new()
 	name_lbl.text = result_inst.data.display_name
 	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_lbl.add_theme_font_size_override("font_size", 26 if _compact else 18)
+	name_lbl.add_theme_font_size_override("font_size", 18)
 	col.add_child(name_lbl)
 
 	var desc := result_inst.data.description
 	if not desc.is_empty():
-		var desc_lbl := TextIcons.rich_label(desc, 20 if _compact else 14, Color("3a2f22"), true)
-		desc_lbl.custom_minimum_size.x = 360.0 if _compact else 280.0
+		var desc_lbl := TextIcons.rich_label(desc, 14, Color("3a2f22"), true)
+		desc_lbl.custom_minimum_size.x = 280.0
 		col.add_child(desc_lbl)
 
 	var hint := Label.new()
 	hint.text = "Tap anywhere to continue"
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hint.add_theme_font_size_override("font_size", 18 if _compact else 13)
+	hint.add_theme_font_size_override("font_size", 13)
 	hint.add_theme_color_override("font_color", Color("5a4a38"))
 	col.add_child(hint)
 
@@ -937,8 +1113,7 @@ func _show_result_toast(result_inst: CardInstance) -> void:
 # A big, easy-to-hit modal button. Each one EXPAND_FILLs half the button row, so on top of the
 # generous min height they stretch wide across the panel — no fiddly aiming for confirm/cancel.
 func _modal_button(text: String, color: Color) -> Button:
-	var b := ScreenUI.action_button(text, Callable(),
-		Vector2(300, 120) if _compact else Vector2(220, 64), 40 if _compact else 26, color)
+	var b := ScreenUI.action_button(text, Callable(), Vector2(220, 64), 26, color)
 	b.size_flags_horizontal = SIZE_EXPAND_FILL
 	return b
 
@@ -964,15 +1139,15 @@ func _make_combine_cell(inst: CardInstance, cs: Vector2) -> Control:
 	var name_lbl := Label.new()
 	name_lbl.text = inst.data.display_name
 	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_lbl.add_theme_font_size_override("font_size", 20 if _compact else 16)
+	name_lbl.add_theme_font_size_override("font_size", 16)
 	cell.add_child(name_lbl)
 
 	var desc := inst.data.description
 	if not desc.is_empty():
 		# Dark text (modal panel is light SURFACE_DEEP); wider than the card so text wraps to
 		# fewer lines.
-		var desc_lbl := TextIcons.rich_label(desc, 18 if _compact else 14, Color("3a2f22"), true)
-		desc_lbl.custom_minimum_size.x = 300.0 if _compact else 220.0
+		var desc_lbl := TextIcons.rich_label(desc, 14, Color("3a2f22"), true)
+		desc_lbl.custom_minimum_size.x = 220.0
 		cell.add_child(desc_lbl)
 
 	return cell
@@ -986,7 +1161,7 @@ func _make_combine_op(glyph: String, card_h: float) -> Control:
 	lbl.custom_minimum_size.y = card_h
 	lbl.size_flags_vertical = SIZE_SHRINK_BEGIN
 	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	lbl.add_theme_font_size_override("font_size", 36 if _compact else 28)
+	lbl.add_theme_font_size_override("font_size", 28)
 	lbl.add_theme_color_override("font_color", Color("5a4a38"))
 	return lbl
 
@@ -1031,12 +1206,14 @@ func _evaluate_target(payload: Dictionary, target_idx: int) -> Dictionary:
 		# result (ok stays true) but can't be forged — every action path gates on "affordable".
 		var cost := ForgeCosts.merge_cost(a, b)
 		var have: int = GameData.current_run.magic_mineral if GameData.current_run != null else 0
+		# The result's name/description render at the station (see _refresh_forge) — the status
+		# line only carries the cost verdict.
 		if have < cost:
 			return {"ok": true, "affordable": false, "cost": cost,
-				"status": "Result: %s\nNeeds %d Magic Mineral — you have %d" % [result.display_name, cost, have],
+				"status": "Needs %d Mineral — you have %d" % [cost, have],
 				"color": BAD_COLOR, "preview": rdc.make_instance(), "result_dc": rdc}
-		return {"ok": true, "affordable": true, "cost": cost,
-			"status": "Result: %s\nCost: %d Magic Mineral (you have %d)" % [result.display_name, cost, have],
+		# Affordable: the cost renders on the Combine button itself — no status text needed.
+		return {"ok": true, "affordable": true, "cost": cost, "status": "",
 			"color": OK_COLOR, "preview": rdc.make_instance(), "result_dc": rdc}
 	else:
 		var charm := CharmData.get_charm(str(payload.id))
@@ -1064,6 +1241,16 @@ func _merged_parent_charms(parents: Array, result_card: CardData) -> Array:
 	return out
 
 
+# A dim "+" / "→" glyph for the station's ingredient strip, centred on the tokens' height.
+func _strip_glyph(glyph: String, font_size: int) -> Label:
+	var lbl := Label.new()
+	lbl.text = glyph
+	lbl.add_theme_font_size_override("font_size", font_size)
+	lbl.modulate = IDLE_COLOR
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	return lbl
+
+
 # A card-shaped slot (framed PanelContainer) with an inner holder + a placeholder label shown while
 # empty. Returns {"slot": the framed control to add, "holder": the Control to fill via _set_holder_card}.
 func _make_card_slot(card_size: Vector2, placeholder: String) -> Dictionary:
@@ -1072,10 +1259,11 @@ func _make_card_slot(card_size: Vector2, placeholder: String) -> Dictionary:
 	slot.size_flags_horizontal = SIZE_SHRINK_CENTER
 	slot.size_flags_vertical = SIZE_SHRINK_CENTER
 	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(1, 1, 1, 0.05)
+	# Legible against the station's dark wood (was tuned for the old light chrome panel).
+	sb.bg_color = Color(1, 1, 1, 0.10)
 	sb.set_corner_radius_all(10)
 	sb.set_border_width_all(2)
-	sb.border_color = Color(1, 1, 1, 0.16)
+	sb.border_color = Color(1, 1, 1, 0.32)
 	slot.add_theme_stylebox_override("panel", sb)
 
 	var holder := Control.new()
@@ -1089,7 +1277,7 @@ func _make_card_slot(card_size: Vector2, placeholder: String) -> Dictionary:
 	ph.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	ph.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	ph.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	ph.add_theme_font_size_override("font_size", 22 if _compact else 16)
+	ph.add_theme_font_size_override("font_size", 16)
 	ph.add_theme_color_override("font_color", Color("5a4a38"))
 	ph.mouse_filter = MOUSE_FILTER_IGNORE
 	holder.add_child(ph)
@@ -1150,6 +1338,7 @@ func _refresh_forge() -> void:
 	var color := IDLE_COLOR
 	var can_act := false                  # is the action button enabled
 	var enchanting := false               # true = Enchant action, false = Combine
+	var cost_i := -1                      # the previewed merge's Mineral cost (-1 = no valid pair)
 	# Click-to-clear is only wired in the selection flow (set below); during a drag the slots show
 	# transient drag/hover content and must not be clearable.
 	var a_click := Callable()
@@ -1166,8 +1355,9 @@ func _refresh_forge() -> void:
 			color = verdict.get("color", IDLE_COLOR)
 			if bool(verdict.get("ok", false)):
 				result_inst = verdict.get("preview", null)
+				cost_i = int(verdict.get("cost", -1))
 		else:
-			status = "Drop onto another card to combine."
+			status = ""   # the room's metaphor carries the how-to; no instructional text
 	elif not _drag.is_empty() and _drag.get("kind") == "charm":
 		enchanting = true
 		a_charm = str(_drag.get("id", ""))
@@ -1179,7 +1369,7 @@ func _refresh_forge() -> void:
 			if bool(verdict.get("ok", false)):
 				result_inst = verdict.get("preview", null)
 		else:
-			status = "Drop the charm onto a card to enchant it."
+			status = ""
 	elif _sel_charm != "":
 		# Enchant mode (click flow): charm in slot A, the tapped target card (kept in _sel_a) in slot B.
 		enchanting = true
@@ -1212,12 +1402,13 @@ func _refresh_forge() -> void:
 			if bool(verdict.get("ok", false)):
 				result_inst = verdict.get("preview", null)
 				_result_deck_card = verdict.get("result_dc", null)
+				cost_i = int(verdict.get("cost", -1))
 				# A valid pair still previews when unaffordable, but the button stays off.
 				can_act = bool(verdict.get("affordable", true))
 		elif a_inst != null or b_inst != null:
-			status = "Select another card to combine."
+			status = ""
 		else:
-			status = "Tap two cards to combine, or a charm then a card to enchant.\n(Dragging works too.)"
+			status = ""
 
 	if a_charm != "":
 		_set_holder_charm(_slot_a, a_charm)
@@ -1225,15 +1416,126 @@ func _refresh_forge() -> void:
 		_set_holder_card(_slot_a, a_inst, a_click)
 	_set_holder_card(_slot_b, b_inst, b_click)
 	_set_holder_card(_result_slot, result_inst)
+
+	# The station's full result read: "Name (cost): rules text" — name bigger and cream, mana cost
+	# in mana blue, so the header pops from the body. BBCode is hand-assembled here because
+	# TextIcons.enrich escapes any brackets living in the SOURCE text.
+	for c in _result_info.get_children():
+		c.queue_free()
+	if result_inst != null:
+		var d: CardData = result_inst.data
+		var lbl := TextIcons.rich_label("", 28, Color(0.93, 0.90, 0.84))
+		lbl.size_flags_horizontal = SIZE_EXPAND_FILL
+		_apply_result_text(lbl, d, 28)
+		_result_info.add_child(lbl)
+		_shrink_result_text(lbl, d)
+
+	# The result's activated abilities as small tray-style tokens beside the text — the same visual
+	# the tooltip/tray use, so "this is an ability" reads identically everywhere. Info-only here.
+	for c in _ability_strip.get_children():
+		c.queue_free()
+	if result_inst != null:
+		for ab: AbilityData in result_inst.ability_list():
+			var tok := CardInstance.from_data(ab.display_card())
+			tok.owner = 0
+			tok.row = -1
+			tok.col = -1
+			tok.source_building = result_inst
+			tok.ability = ab
+			var w := AbilityWidget.create_for(tok)
+			w.custom_minimum_size = Vector2(84, 110)
+			w.size_flags_vertical = SIZE_SHRINK_CENTER
+			w.mouse_filter = MOUSE_FILTER_IGNORE
+			w.draggable = false
+			_ability_strip.add_child(w)
+
 	_preview_status.text = status
-	_preview_status.modulate = color
-	_panel_header.text = "Enchant" if enchanting else "Combine"
-	_combine_btn.text = "Enchant" if enchanting else "Combine"
+	_preview_status.visible = not status.is_empty()   # an empty line must not reserve height
+	_preview_status.add_theme_color_override("font_color", color.lightened(0.15))
+	# The merge price rides the action button itself — the decision and its cost in one place.
+	if enchanting:
+		_combine_btn.text = "Enchant"
+	else:
+		_combine_btn.text = "Combine" if cost_i < 0 else "Combine — %d Mineral" % cost_i
 	_combine_btn.disabled = not can_act
 
 	# Swirl the two ingredient slots whenever a valid COMBINE is previewed (never for enchant, which
 	# has no "two cards fusing" read). Slots A/B are stable holders, so the FX just tracks their rects.
 	_update_panel_fx(result_inst if not enchanting else null, a_inst, b_inst)
+	_update_card_dimming()
+
+
+# Grays out the deck cards the CURRENT source can't pair with, so valid targets read at a glance.
+# The source is the in-flight drag, the selected charm, or a lone filled combine slot; with no
+# source (or a completed pair) every card returns to full strength. Runs on every panel repaint —
+# drag start/end and selection changes all funnel through _refresh_forge.
+func _update_card_dimming() -> void:
+	var payload: Dictionary = {}
+	if not _drag.is_empty():
+		payload = _drag
+	elif _sel_charm != "":
+		payload = {"kind": "charm", "id": _sel_charm}
+	elif _sel_a >= 0 and _sel_b < 0:
+		payload = {"kind": "card", "idx": _sel_a}
+	elif _sel_b >= 0 and _sel_a < 0:
+		payload = {"kind": "card", "idx": _sel_b}
+	var src := int(payload.get("idx", -1)) if payload.get("kind", "") == "card" else -1
+	for i in _entries.size():
+		var item: Control = _entries[i].item
+		if item == null:
+			continue
+		if not _drag.is_empty() and _drag.get("kind") == "card" and i == int(_drag.get("idx", -1)):
+			continue   # the dragged source keeps its stronger ghost dim (set in _begin_drag)
+		var dim := not payload.is_empty() and i != src and not _can_pair(payload, i)
+		item.modulate.a = 0.35 if dim else 1.0
+
+
+# Whether the payload could pair with the card at `idx` — combine within the composition limits,
+# or a charm the card can bear and doesn't already. Structure only: affordability never grays a
+# card (the status line carries the cost verdict).
+func _can_pair(payload: Dictionary, idx: int) -> bool:
+	var data: CardData = _entries[idx].data
+	if payload.get("kind", "") == "card":
+		var src := int(payload.get("idx", -1))
+		if src < 0 or src >= _entries.size():
+			return true
+		return CardData.can_combine(_entries[src].data, data)
+	var charm := CharmData.get_charm(str(payload.get("id", "")))
+	if charm == null:
+		return false
+	return charm.can_attach_to(data) and str(payload.get("id", "")) not in (_entries[idx].card as DeckCard).charms
+
+
+# Writes the result read at `body_size`: "Name (cost): rules" — name a step larger and cream,
+# mana cost in mana blue, so the header pops from the body. BBCode is hand-assembled because
+# TextIcons.enrich escapes any brackets living in the SOURCE text.
+func _apply_result_text(lbl: RichTextLabel, d: CardData, body_size: int) -> void:
+	lbl.add_theme_font_size_override("normal_font_size", body_size)
+	var head := "[font_size=%d][color=#f5e9c9]%s[/color][/font_size] [color=#8fd0ff](%d)[/color]" \
+			% [body_size + 4, d.display_name, d.cost]
+	var body := TextIcons.enrich(d.description, body_size)
+	lbl.text = head + (": " + body if not d.description.is_empty() else "")
+
+
+# The band is fixed-height, so the read starts BIG and steps its font down until the MEASURED
+# content height fits the box (the band's scroll stays as the in-extremis fallback below the
+# floor). Async: measures need a frame of layout; the label guard covers panel repaints that
+# free it mid-loop.
+func _shrink_result_text(lbl: RichTextLabel, d: CardData) -> void:
+	var size := 28
+	await get_tree().process_frame
+	while is_instance_valid(lbl) and _result_text_scroll != null and size > 14 \
+			and float(lbl.get_content_height()) + _status_height() > _result_text_scroll.size.y:
+		size -= 2
+		_apply_result_text(lbl, d, size)
+		await get_tree().process_frame
+
+
+# The box height the status line takes away from the result read (it shares the text box).
+func _status_height() -> float:
+	if _preview_status == null or not _preview_status.visible:
+		return 0.0
+	return _preview_status.get_combined_minimum_size().y
 
 
 # A press on a deck card / charm: held as pending until release (tap) or movement (drag).
@@ -1281,8 +1583,8 @@ func _update_selection_highlights() -> void:
 		var ui: CardUI = _entries[i].ui
 		if ui != null:
 			ui.set_selected(i == _sel_a or i == _sel_b)
-	# Brighten the selected charm chip in the tray, dim the rest, so the active charm reads.
-	for child in _charm_row.get_children():
+	# Brighten the selected charm chip on the shelf, dim the rest, so the active charm reads.
+	for child in _charm_col.get_children():
 		if child is ForgeDragItem:
 			var cid: String = str((child as ForgeDragItem).payload.get("id", ""))
 			child.modulate = Color(1.25, 1.25, 1.25) if cid == _sel_charm else Color.WHITE
@@ -1367,7 +1669,8 @@ func _do_enchant(charm_id: String, tgt_idx: int) -> void:
 	_rebuild_charms()
 	# _rebuild_deck refreshed the panel to the idle prompt; overwrite with the success message.
 	_preview_status.text = "Enchanted %s with %s!" % [data.display_name, CharmData.get_charm(charm_id).display_name]
-	_preview_status.modulate = OK_COLOR
+	_preview_status.visible = true
+	_preview_status.add_theme_color_override("font_color", OK_COLOR)
 
 
 # ── Particles ──────────────────────────────────────────────────────────────────
