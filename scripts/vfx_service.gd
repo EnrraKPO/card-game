@@ -25,9 +25,9 @@ extends Node
 # The procedural behavior vocabulary. Adding a primitive = a _fx_* method + a list entry here
 # (the Tool validates entries against this same list — keep them in sync).
 const BEHAVIORS := ["flash", "pulse", "pop", "shake", "ring", "sparkle", "glint", "glow",
-		"float_label", "burst", "travel", "reticle", "dissolve"]
+		"float_label", "burst", "travel", "reticle", "dissolve", "radiance"]
 # Behaviors that can run as a SUSTAINED state (attach/detach) as well as a one-shot.
-const SUSTAINED_BEHAVIORS := ["glow", "pulse", "sparkle"]
+const SUSTAINED_BEHAVIORS := ["glow", "pulse", "sparkle", "radiance"]
 
 # All effect nodes draw on one dedicated layer above the UI, positioned in global canvas
 # coordinates — effects never join a container's layout or clip inside a target's rect.
@@ -180,6 +180,7 @@ func _play_procedural(vd: VFXData, target: Control, opts: Dictionary) -> void:
 		"travel":      await _fx_travel(vd, target, opts)
 		"reticle":     await _fx_reticle(vd, target, opts)
 		"dissolve":    await _fx_dissolve(vd, target, opts)
+		"radiance":    await _fx_radiance_once(vd, target, opts)
 		_:
 			push_warning("Vfx: unknown behavior \"%s\" on \"%s\"" % [vd.behavior, vd.id])
 
@@ -188,9 +189,10 @@ func _attach_dispatch(vd: VFXData, target: Control) -> Node:
 	match vd.renderer:
 		"procedural":
 			match vd.behavior:
-				"glow":    return _sustain_glow(vd, target)
-				"pulse":   return _sustain_pulse(vd, target)
-				"sparkle": return _sustain_sparkle(vd, target)
+				"glow":     return _sustain_glow(vd, target)
+				"pulse":    return _sustain_pulse(vd, target)
+				"sparkle":  return _sustain_sparkle(vd, target)
+				"radiance": return _sustain_radiance(vd, target)
 		"custom":
 			var fn: Callable = _custom.get(vd.id, Callable())
 			if fn.is_valid():
@@ -233,6 +235,20 @@ func _make_rect(color: Color, size: Vector2) -> ColorRect:
 	r.material = mat
 	_layer.add_child(r)
 	return r
+
+
+# The "radiance" behavior's draw node: additive-blended, sized to the target's rect (glued or set
+# once by the caller) — see _HaloFx for the actual layered falloff.
+func _make_halo(vd: VFXData, opts: Dictionary) -> _HaloFx:
+	var fx := _HaloFx.new()
+	fx.color = _p_color(vd, opts, Color(1.0, 0.9, 0.6))
+	fx.reach = 18.0 * _p_scale(vd)
+	fx.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var mat := CanvasItemMaterial.new()
+	mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	fx.material = mat
+	_layer.add_child(fx)
+	return fx
 
 
 # ── One-shot primitives ────────────────────────────────────────────────────────────
@@ -359,6 +375,23 @@ func _fx_glow_once(vd: VFXData, target: Control, opts: Dictionary) -> void:
 	await _fx_pulse_once(vd, target, opts)
 
 
+# A genuine soft radiance: layered rounded rects growing outward with falling alpha (additive),
+# so the target reads as the BRIGHT CORE of a light bleeding into its surroundings — unlike
+# glow/pulse's single flat rect (a uniform block that pops in/out with a hard edge), this fades
+# smoothly to nothing at its outer edge. One-shot: a single breathe in and out.
+func _fx_radiance_once(vd: VFXData, target: Control, opts: Dictionary) -> void:
+	var fx := _make_halo(vd, opts)
+	var rect := target.get_global_rect()
+	fx.global_position = rect.position
+	fx.size = rect.size
+	var dur := _p_dur(vd, 0.5)
+	var tw := fx.create_tween()
+	tw.tween_property(fx, "energy", 1.0, dur * 0.4).set_trans(Tween.TRANS_SINE)
+	tw.tween_property(fx, "energy", 0.0, dur * 0.6).set_trans(Tween.TRANS_SINE)
+	await tw.finished
+	fx.queue_free()
+
+
 # Floating text rising off the target — numbers ("-3"), words ("Miss"), whatever opts carries.
 func _fx_float_label(vd: VFXData, target: Control, opts: Dictionary) -> void:
 	var amount: int = int(opts.get("amount", 0))
@@ -473,6 +506,19 @@ func _sustain_pulse(vd: VFXData, target: Control) -> Node:
 	return _breathing_halo(vd, target, _p_dur(vd, 0.45), 0.42, 0.05)
 
 
+# The genuine-radiance sibling of glow/pulse: same breathing idea, but the light itself falls off
+# smoothly outward (see _make_halo/_HaloFx) instead of a single flat rect popping in and out with
+# a hard edge — use this one when the effect needs to actually read as light bleeding outward.
+func _sustain_radiance(vd: VFXData, target: Control) -> Node:
+	var fx := _make_halo(vd, {})
+	_glue(fx, target, 0.0)   # the halo's own layers provide the reach; the base rect just tracks the target
+	var period := _p_dur(vd, 0.9)
+	var tw := fx.create_tween().set_loops()
+	tw.tween_property(fx, "energy", 1.0, period).set_trans(Tween.TRANS_SINE)
+	tw.tween_property(fx, "energy", 0.3, period).set_trans(Tween.TRANS_SINE)
+	return fx
+
+
 func _breathing_halo(vd: VFXData, target: Control, period: float, hi: float, lo: float) -> Node:
 	var color := vd.color_param("color", Color(1.0, 0.85, 0.4))
 	var grow := 10.0 * _p_scale(vd)
@@ -511,7 +557,7 @@ func _sustain_sparkle(vd: VFXData, target: Control) -> Node:
 
 # Keeps an overlay rect tracking the target's global rect (grown by `grow` on every side),
 # re-synced each frame — cheap, and survives the target moving, resizing, or scrolling.
-func _glue(fx: ColorRect, target: Control, grow: float) -> void:
+func _glue(fx: Control, target: Control, grow: float) -> void:
 	var sync := func() -> void:
 		if not is_instance_valid(target) or not target.is_inside_tree():
 			return
@@ -549,3 +595,34 @@ class _ReticleFx extends Control:
 			var origin: Vector2 = corner + Vector2(-dx * spread, -dy * spread)
 			draw_line(origin, origin + Vector2(dx * arm, 0), color, w, true)
 			draw_line(origin, origin + Vector2(0, dy * arm), color, w, true)
+
+
+# The "radiance" behavior's look: several rounded rects, growing outward from the base rect
+# (0 = flush with it) toward `reach` px past it, alpha falling off toward the outer layers —
+# stacked ADDITIVE, so the base rect's own footprint accumulates every layer's contribution
+# (brightest, reading as the light's core) while the rim only carries the outermost, faintest
+# layer. That gradient is what actually reads as "radiance" — a single flat rect (glow/pulse's
+# look) has no such falloff, so it just pops as a hard-edged block.
+class _HaloFx extends Control:
+	const LAYERS := 6
+	const BASE_CORNER := 14.0
+	var color := Color.WHITE
+	var reach := 18.0
+	var energy := 0.0:
+		set(v): energy = v; queue_redraw()
+	func _draw() -> void:
+		if energy <= 0.001:
+			return
+		var sb := StyleBoxFlat.new()
+		var span := float(LAYERS - 1)
+		for i in LAYERS:
+			var f := float(i) / span   # 0 = innermost (flush with the target) → 1 = outermost
+			var grow := reach * f
+			var corner := BASE_CORNER + grow
+			sb.set_corner_radius_all(int(corner))
+			var col := color
+			# Squared falloff: most layers stay faint, the innermost couple carry the visible
+			# brightness — reads as a core with a long soft tail, not a linear-fading blob.
+			col.a = energy * 0.22 * pow(1.0 - f, 2.0)
+			sb.bg_color = col
+			draw_style_box(sb, Rect2(Vector2.ZERO, size).grow(grow))

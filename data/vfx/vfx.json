@@ -236,6 +236,37 @@
 		"prompt": "Sprite sheet of arcane particles swirling in a vortex between two points, violet alchemical energy stream, 10 frames on transparent background, 2d game effect"
 	},
 	{
+		"id": "forge_result_radiance",
+		"display_name": "Forge Result Radiance",
+		"category": "lab",
+		"behavior": "radiance",
+		"params": {
+			"color": "fff3b0",
+			"scale": 1.4
+		},
+		"sustained": true,
+		"placeholder": false,
+		"concept": "The station's result slot showing a valid combine/enchant outcome — the newly forged card should read as prized before the player commits, drawing the eye without demanding a click.",
+		"explanation": "IMPLEMENTED (combination_screen): a warm golden light breathes outward past the slot's frame with a true soft falloff (layered rounded glow, not a flat rect) — a bright core over the card fading smoothly into the station's wood backdrop.",
+		"prompt": "Sprite sheet of a warm golden light softly breathing around a framed card, gentle radiant halo with a smooth soft falloff extending past the frame, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "forge_combine_ready_glow",
+		"display_name": "Forge Combine Ready Glow",
+		"category": "lab",
+		"behavior": "radiance",
+		"params": {
+			"color": "ffd94d",
+			"scale": 1.2,
+			"duration": 0.6
+		},
+		"sustained": true,
+		"placeholder": false,
+		"concept": "The station's Combine/Enchant button once the loaded ingredients form a valid, affordable pairing — an invitation to press it, distinct from GlossyButton's own contained press-tint.",
+		"explanation": "IMPLEMENTED (combination_screen): a golden light breathes outward past the button's edges with a true soft falloff (layered rounded glow, not a flat rect) — a brighter, slightly quicker breath than the result card's ambient radiance, since this one is meant to draw the eye.",
+		"prompt": "Sprite sheet of a golden light halo breathing outward around a button's silhouette with a smooth soft falloff, inviting radiant pulse extending past the edges, 8 frames on transparent background, 2d game effect"
+	},
+	{
 		"id": "ui_button_attention",
 		"display_name": "Button Attention Glow",
 		"category": "ui",

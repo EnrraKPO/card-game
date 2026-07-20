@@ -1343,6 +1343,21 @@ func _refresh_forge() -> void:
 	else:
 		_combine_btn.text = "Combine" if cost_i < 0 else "Combine — %d Mineral" % cost_i
 	_combine_btn.disabled = not can_act
+	# The button radiates outward whenever pressing it does something right now — an actual halo
+	# past its edges (forge_combine_ready_glow), not GlossyButton's own contained press-tint
+	# (ui_button_attention reads as "inside the button", which doesn't sell as an invitation here).
+	if can_act:
+		Vfx.attach("forge_combine_ready_glow", _combine_btn)
+	else:
+		Vfx.detach("forge_combine_ready_glow", _combine_btn)
+	# The result card breathes a warm radiance whenever a valid outcome is previewed — draws the eye
+	# to what's about to be forged/enchanted without demanding a click. _result_slot is the stable
+	# holder (only its child CardUI gets swapped by _set_holder_card), so the sustained state
+	# survives repeated repaints instead of restarting every frame the preview stays valid.
+	if result_inst != null:
+		Vfx.attach("forge_result_radiance", _result_slot)
+	else:
+		Vfx.detach("forge_result_radiance", _result_slot)
 
 	# Swirl the two ingredient slots whenever a valid COMBINE is previewed (never for enchant, which
 	# has no "two cards fusing" read). Slots A/B are stable holders, so the FX just tracks their rects.

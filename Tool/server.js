@@ -65,8 +65,8 @@ const SOUND_CATEGORIES = ['ui', 'card', 'combat', 'magic', 'resource', 'map', 'e
 // Vfx.BEHAVIORS / Vfx.SUSTAINED_BEHAVIORS / VFXData.category).
 const VFX_CATEGORIES = ['ui', 'card', 'combat', 'status', 'resource', 'map', 'economy', 'lab', 'meta', 'screen'];
 const VFX_BEHAVIORS = ['flash', 'pulse', 'pop', 'shake', 'ring', 'sparkle', 'glint', 'glow',
-  'float_label', 'burst', 'travel', 'reticle', 'dissolve'];
-const VFX_SUSTAINED = ['glow', 'pulse', 'sparkle'];
+  'float_label', 'burst', 'travel', 'reticle', 'dissolve', 'radiance'];
+const VFX_SUSTAINED = ['glow', 'pulse', 'sparkle', 'radiance'];
 // 'custom' = a designed effect class registered in-game via Vfx.register_custom (combat looks).
 const VFX_RENDERERS = ['procedural', 'custom'];   // future: flipbook, scene, ...
 
