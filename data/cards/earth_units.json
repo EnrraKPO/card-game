@@ -2,7 +2,7 @@
 	{
 		"id": "earth_pawn",
 		"display_name": "Earth Pawn",
-		"cost": 1,
+		"cost": 2,
 		"attack": 1,
 		"health": 3,
 		"speed": 1,
@@ -58,7 +58,12 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"cost": 3,
+		"attack": 2,
+		"health": 3,
+		"speed": 2,
+		"shield": 1
 	},
 	{
 		"id": "earth_bishop",
@@ -89,7 +94,12 @@
 		},
 		"abilities": [
 			"earth_bless"
-		]
+		],
+		"cost": 3,
+		"attack": 1,
+		"health": 4,
+		"speed": 1,
+		"shield": 1
 	},
 	{
 		"id": "earth_rook",
@@ -121,7 +131,12 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"cost": 4,
+		"attack": 1,
+		"health": 7,
+		"speed": 1,
+		"shield": 3
 	},
 	{
 		"id": "earth_queen",
@@ -150,6 +165,11 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"cost": 6,
+		"attack": 5,
+		"health": 5,
+		"speed": 3,
+		"shield": 1
 	}
 ]

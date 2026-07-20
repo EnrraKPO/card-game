@@ -2,8 +2,8 @@
 	{
 		"id": "darkness_pawn",
 		"display_name": "Darkness Pawn",
-		"cost": 1,
-		"attack": 1,
+		"cost": 2,
+		"attack": 2,
 		"health": 2,
 		"speed": 1,
 		"description": "When this unit is destroyed, draw a card.",
@@ -45,7 +45,8 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"shield": 1
 	},
 	{
 		"id": "darkness_knight",
@@ -73,7 +74,12 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 3,
+		"attack": 3,
+		"health": 2,
+		"speed": 2,
+		"shield": 1
 	},
 	{
 		"id": "darkness_bishop",
@@ -105,7 +111,12 @@
 		},
 		"abilities": [
 			"darkness_bless"
-		]
+		],
+		"cost": 3,
+		"attack": 2,
+		"health": 3,
+		"speed": 1,
+		"shield": 1
 	},
 	{
 		"id": "darkness_rook",
@@ -137,7 +148,12 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 4,
+		"attack": 2,
+		"health": 6,
+		"speed": 1,
+		"shield": 3
 	},
 	{
 		"id": "darkness_queen",
@@ -166,7 +182,12 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 6,
+		"attack": 6,
+		"health": 4,
+		"speed": 3,
+		"shield": 1
 	},
 	{
 		"id": "darkness_pawn_pawn",
@@ -195,7 +216,12 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 3,
+		"attack": 3,
+		"health": 3,
+		"speed": 1,
+		"shield": 2
 	},
 	{
 		"id": "darkness_knight_pawn",
@@ -224,7 +250,12 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 4,
+		"attack": 4,
+		"health": 4,
+		"speed": 2,
+		"shield": 2
 	},
 	{
 		"id": "darkness_bishop_pawn",
@@ -253,7 +284,16 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 4,
+		"attack": 3,
+		"health": 4,
+		"speed": 1,
+		"shield": 3,
+		"abilities": [
+			"heal",
+			"darkness_bless"
+		]
 	},
 	{
 		"id": "darkness_pawn_rook",
@@ -283,7 +323,16 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 5,
+		"attack": 3,
+		"health": 7,
+		"speed": 1,
+		"shield": 2,
+		"abilities": [
+			"umbral_charge",
+			"pawn_material"
+		]
 	},
 	{
 		"id": "darkness_pawn_queen",
@@ -312,7 +361,12 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 7,
+		"attack": 6,
+		"health": 4,
+		"speed": 3,
+		"shield": 1
 	},
 	{
 		"id": "darkness_knight_knight",
@@ -370,7 +424,16 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 5,
+		"attack": 4,
+		"health": 5,
+		"speed": 3,
+		"shield": 1,
+		"abilities": [
+			"heal",
+			"darkness_bless"
+		]
 	},
 	{
 		"id": "darkness_knight_rook",

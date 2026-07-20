@@ -26,7 +26,14 @@ func apply(id: String, target: Control, overrides: Dictionary = {}) -> RenderFil
 		return null
 	var key := _key(id, target)
 	if _applied.has(key):
-		return get_layer(id, target)
+		var existing := get_layer(id, target)
+		# A layer mid-queue_free (Vfx.detach frees the node it was handed — see there) is still
+		# is_instance_valid until the deferred delete actually runs, so that alone can't tell a
+		# live layer from a doomed one about to vanish out from under a fresh attach this same
+		# frame. is_queued_for_deletion catches that window; falling through re-creates instead.
+		if existing != null and not existing.is_queued_for_deletion():
+			return existing
+		_applied.erase(key)
 
 	# Shape-sourced filters derive their silhouette analytically, so they need no texture at all —
 	# which is the whole point of them: a procedural button has no pixels to hand us.
@@ -67,17 +74,19 @@ func apply(id: String, target: Control, overrides: Dictionary = {}) -> RenderFil
 
 func clear(id: String, target: Control) -> void:
 	var key := _key(id, target)
-	var layer: Node = _applied.get(key, null)
-	if layer == null:
+	if not _applied.has(key):
 		return
+	var raw: Variant = _applied[key]   # Variant, not typed Node — see Vfx.detach for why
 	_applied.erase(key)
-	if is_instance_valid(layer):
-		layer.queue_free()
+	if is_instance_valid(raw):
+		(raw as Node).queue_free()
 
 
 func get_layer(id: String, target: Control) -> RenderFilterLayer:
 	var found: Variant = _applied.get(_key(id, target), null)
-	return found if found is RenderFilterLayer else null
+	if is_instance_valid(found) and found is RenderFilterLayer:
+		return found
+	return null
 
 
 func _key(id: String, target: Control) -> String:

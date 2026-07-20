@@ -173,11 +173,11 @@
 		"id": "bishop",
 		"display_name": "Bishop",
 		"cost": 2,
-		"attack": 3,
-		"health": 2,
-		"speed": 3,
+		"attack": 1,
+		"health": 4,
+		"speed": 1,
 		"ranged": true,
-		"description": "A swift diagonal attacker. Strikes the most wounded enemy from afar, finishing off weakened units.",
+		"description": "A ranged attacker. Strikes the enemy with the lowest Health from afar.",
 		"elements": [],
 		"chess_pieces": [
 			"bishop"
@@ -191,9 +191,9 @@
 		"id": "knight",
 		"display_name": "Knight",
 		"cost": 2,
-		"attack": 3,
+		"attack": 2,
 		"health": 3,
-		"speed": 4,
+		"speed": 2,
 		"description": "Leaps over the entire frontmost enemy column to strike targets behind it. Falls back to the front column only if no other targets exist.",
 		"elements": [],
 		"chess_pieces": [
@@ -205,11 +205,11 @@
 		"id": "rook",
 		"display_name": "Rook",
 		"cost": 3,
-		"attack": 4,
-		"health": 6,
+		"attack": 1,
+		"health": 7,
 		"speed": 1,
-		"shield": 3,
-		"description": "A stalwart fortress. Locks onto the highest HP enemy. Starts each round with 3 Shield.",
+		"shield": 2,
+		"description": "A stalwart fortress. Locks onto the enemy with the lowest Health from afar. Starts each round with 2 Shield.",
 		"elements": [],
 		"chess_pieces": [
 			"rook"
@@ -222,11 +222,11 @@
 	{
 		"id": "queen",
 		"display_name": "Queen",
-		"cost": 4,
+		"cost": 5,
 		"attack": 5,
 		"health": 5,
-		"speed": 4,
-		"description": "The most powerful piece on the board. Always targets the highest ATK enemy, neutralising the greatest threat first.",
+		"speed": 3,
+		"description": "The most powerful piece on the board. Always targets the highest-cost enemy, neutralising the most valuable target first.",
 		"chess_pieces": [
 			"queen"
 		],

@@ -80,7 +80,7 @@
 	},
 	{
 		"id": "pawn_material",
-		"display_name": "Pawn Material",
+		"display_name": "Conscription",
 		"description": "Adds Pawn to one of your units, merging their compositions - or spawns a new Pawn on one of your empty slots.",
 		"cost": {
 			"mana": 2,
@@ -142,7 +142,7 @@
 	},
 	{
 		"id": "knight_material",
-		"display_name": "Knight Material",
+		"display_name": "Taming",
 		"description": "Adds Knight to one of your units, merging their compositions - or spawns a new Knight on one of your empty slots.",
 		"cost": {
 			"mana": 3,
@@ -199,7 +199,7 @@
 	},
 	{
 		"id": "bishop_material",
-		"display_name": "Bishop Material",
+		"display_name": "Scholarship",
 		"description": "Adds Bishop to one of your units, merging their compositions - or spawns a new Bishop on one of your empty slots.",
 		"cost": {
 			"mana": 3,
@@ -238,7 +238,7 @@
 	},
 	{
 		"id": "queen_material",
-		"display_name": "Queen Material",
+		"display_name": "Coronation",
 		"description": "Adds Queen to one of your units, merging their compositions - or spawns a new Queen on one of your empty slots.",
 		"cost": {
 			"mana": 5,
@@ -446,7 +446,7 @@
 	},
 	{
 		"id": "earth_bless",
-		"display_name": "Earth Blessing",
+		"display_name": "Bless by Earth",
 		"description": "Blesses a unit of your choice with Earth Blessing: +1 Shield while it holds, and the unit is treated as an earth unit.",
 		"cost": {
 			"mana": 1,
@@ -464,15 +464,14 @@
 					"kind": "manual"
 				},
 				"status": {
-					"id": "earth_blessing",
-					"stacks": 1
+					"id": "earth_blessing"
 				}
 			}
 		]
 	},
 	{
 		"id": "fire_bless",
-		"display_name": "Fire Blessing",
+		"display_name": "Bless by Fire",
 		"description": "Blesses a unit of your choice with Fire Blessing: +2 Attack for 2 turns, and the unit is treated as a fire unit.",
 		"cost": {
 			"mana": 1,
@@ -490,15 +489,14 @@
 					"kind": "manual"
 				},
 				"status": {
-					"id": "fire_blessing",
-					"stacks": 1
+					"id": "fire_blessing"
 				}
 			}
 		]
 	},
 	{
 		"id": "air_bless",
-		"display_name": "Air Blessing",
+		"display_name": "Bless by Air",
 		"description": "Blesses a unit of your choice with Air Blessing: +4 Speed for 2 turns, and the unit is treated as an air unit.",
 		"cost": {
 			"mana": 1,
@@ -516,15 +514,14 @@
 					"kind": "manual"
 				},
 				"status": {
-					"id": "air_blessing",
-					"stacks": 1
+					"id": "air_blessing"
 				}
 			}
 		]
 	},
 	{
 		"id": "water_bless",
-		"display_name": "Water Blessing",
+		"display_name": "Bless by Water",
 		"description": "Blesses a unit of your choice with Water Blessing: heals 1 Health at the start of each turn for 2 turns, and the unit is treated as a water unit.",
 		"cost": {
 			"mana": 1,
@@ -542,15 +539,14 @@
 					"kind": "manual"
 				},
 				"status": {
-					"id": "water_blessing",
-					"stacks": 1
+					"id": "water_blessing"
 				}
 			}
 		]
 	},
 	{
 		"id": "light_bless",
-		"display_name": "Light Blessing",
+		"display_name": "Bless by Light",
 		"description": "Blesses a unit of your choice with Light Blessing: for 2 turns it is treated as a light unit, and you gain 1 mana whenever it makes a kill.",
 		"cost": {
 			"mana": 1,
@@ -568,15 +564,14 @@
 					"kind": "manual"
 				},
 				"status": {
-					"id": "light_blessing",
-					"stacks": 1
+					"id": "light_blessing"
 				}
 			}
 		]
 	},
 	{
 		"id": "darkness_bless",
-		"display_name": "Darkness Blessing",
+		"display_name": "Bless by Darkness",
 		"description": "Blesses a unit of your choice with Darkness Blessing: for 2 turns it is treated as a darkness unit, and you draw a card whenever it makes a kill.",
 		"cost": {
 			"mana": 1,
@@ -594,8 +589,94 @@
 					"kind": "manual"
 				},
 				"status": {
-					"id": "darkness_blessing",
-					"stacks": 1
+					"id": "darkness_blessing"
+				}
+			}
+		]
+	},
+	{
+		"id": "rally",
+		"display_name": "Rally",
+		"description": "Target Pawn permanently gains +1 Attack and +1 Speed.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"effects": [
+			{
+				"trigger": {
+					"kind": "event",
+					"event": "activate",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"pawn"
+							]
+						}
+					]
+				},
+				"attribute": "attack",
+				"amount": 1
+			},
+			{
+				"trigger": {
+					"kind": "event",
+					"event": "activate",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"pawn"
+							]
+						}
+					]
+				},
+				"attribute": "speed",
+				"amount": 1
+			}
+		]
+	},
+	{
+		"id": "light_pawn_training",
+		"display_name": "Bless by Light",
+		"description": "Adds Light to one of your Pawn units, merging their compositions. Can only target an existing Pawn unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "light",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"pawn"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
 				}
 			}
 		]

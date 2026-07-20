@@ -2,10 +2,10 @@
 	{
 		"id": "light_pawn",
 		"display_name": "Light Pawn",
-		"cost": 0,
+		"cost": 1,
 		"attack": 1,
-		"health": 3,
-		"speed": 1,
+		"health": 4,
+		"speed": 2,
 		"elements": [
 			"light"
 		],
@@ -21,7 +21,11 @@
 		"display_name": "Light Knight",
 		"chess_pieces": [
 			"knight"
-		]
+		],
+		"cost": 2,
+		"attack": 2,
+		"health": 4,
+		"speed": 3
 	},
 	{
 		"id": "light_bishop",
@@ -35,7 +39,11 @@
 		"ranged": true,
 		"abilities": [
 			"light_bless"
-		]
+		],
+		"cost": 2,
+		"attack": 1,
+		"health": 5,
+		"speed": 2
 	},
 	{
 		"id": "light_rook",
@@ -49,7 +57,12 @@
 		"abilities": [
 			"radiant_charge"
 		],
-		"ranged": true
+		"ranged": true,
+		"cost": 3,
+		"attack": 1,
+		"health": 8,
+		"speed": 2,
+		"shield": 2
 	},
 	{
 		"id": "light_queen",
@@ -60,7 +73,11 @@
 		"chess_pieces": [
 			"queen"
 		],
-		"ranged": true
+		"ranged": true,
+		"cost": 5,
+		"attack": 5,
+		"health": 6,
+		"speed": 4
 	},
 	{
 		"id": "light_pawn_pawn",
@@ -71,7 +88,12 @@
 		"chess_pieces": [
 			"pawn",
 			"pawn"
-		]
+		],
+		"cost": 2,
+		"attack": 2,
+		"health": 5,
+		"speed": 2,
+		"shield": 1
 	},
 	{
 		"id": "light_knight_pawn",
@@ -82,7 +104,12 @@
 		"chess_pieces": [
 			"knight",
 			"pawn"
-		]
+		],
+		"cost": 3,
+		"attack": 3,
+		"health": 6,
+		"speed": 3,
+		"shield": 1
 	},
 	{
 		"id": "light_bishop_pawn",
@@ -93,6 +120,15 @@
 		"chess_pieces": [
 			"bishop",
 			"pawn"
+		],
+		"cost": 3,
+		"attack": 2,
+		"health": 6,
+		"speed": 2,
+		"shield": 2,
+		"abilities": [
+			"heal",
+			"light_bless"
 		]
 	},
 	{
@@ -105,7 +141,16 @@
 			"pawn",
 			"rook"
 		],
-		"ranged": true
+		"ranged": true,
+		"cost": 4,
+		"attack": 2,
+		"health": 9,
+		"speed": 2,
+		"shield": 1,
+		"abilities": [
+			"light_pawn_training",
+			"pawn_material"
+		]
 	},
 	{
 		"id": "light_pawn_queen",
@@ -116,7 +161,11 @@
 		"chess_pieces": [
 			"pawn",
 			"queen"
-		]
+		],
+		"cost": 6,
+		"attack": 5,
+		"health": 6,
+		"speed": 4
 	},
 	{
 		"id": "light_knight_knight",
@@ -138,6 +187,14 @@
 		"chess_pieces": [
 			"bishop",
 			"knight"
+		],
+		"cost": 4,
+		"attack": 3,
+		"health": 7,
+		"speed": 4,
+		"abilities": [
+			"heal",
+			"light_bless"
 		]
 	},
 	{

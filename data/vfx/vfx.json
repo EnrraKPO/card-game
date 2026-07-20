@@ -244,9 +244,14 @@
 		"params": {
 			"filter": "luminescence_rrect",
 			"glow_color": "fff3b0",
-			"corner_radius": 10.0,
+			"corner_radius": 10,
 			"luma_bias": 0.55,
-			"animate": {"param": "intensity", "from": 0.1, "to": 0.26, "period": 1.1}
+			"animate": {
+				"param": "intensity",
+				"from": 0.1,
+				"to": 0.26,
+				"period": 1.1
+			}
 		},
 		"sustained": true,
 		"placeholder": false,
@@ -263,9 +268,14 @@
 		"params": {
 			"filter": "glow_rrect",
 			"glow_color": "fff3b0",
-			"spread": 30.0,
-			"corner_radius": 10.0,
-			"animate": {"param": "intensity", "from": 0.45, "to": 1.0, "period": 1.1}
+			"spread": 30,
+			"corner_radius": 10,
+			"animate": {
+				"param": "intensity",
+				"from": 0.45,
+				"to": 1,
+				"period": 1.1
+			}
 		},
 		"sustained": true,
 		"placeholder": false,
@@ -282,7 +292,7 @@
 		"params": {
 			"filter": "glow",
 			"glow_color": "ccccff",
-			"spread": 34,
+			"spread": 46,
 			"falloff": 2,
 			"animate": {
 				"param": "intensity",
@@ -307,7 +317,12 @@
 			"filter": "luminescence",
 			"glow_color": "ffc46b",
 			"luma_bias": 0.88,
-			"animate": {"param": "intensity", "from": 0.22, "to": 0.5, "period": 1.6}
+			"animate": {
+				"param": "intensity",
+				"from": 0.22,
+				"to": 0.5,
+				"period": 1.6
+			}
 		},
 		"sustained": true,
 		"placeholder": false,
@@ -324,9 +339,14 @@
 		"params": {
 			"filter": "luminescence_rrect",
 			"glow_color": "ffe8a8",
-			"corner_radius": 18.0,
+			"corner_radius": 18,
 			"luma_bias": 0.55,
-			"animate": {"param": "intensity", "from": 0.12, "to": 0.3, "period": 0.85}
+			"animate": {
+				"param": "intensity",
+				"from": 0.12,
+				"to": 0.3,
+				"period": 0.85
+			}
 		},
 		"sustained": true,
 		"placeholder": false,
@@ -343,9 +363,14 @@
 		"params": {
 			"filter": "glow_rrect",
 			"glow_color": "ffd94d",
-			"spread": 30.0,
-			"corner_radius": 18.0,
-			"animate": {"param": "intensity", "from": 0.5, "to": 1.15, "period": 0.85}
+			"spread": 30,
+			"corner_radius": 18,
+			"animate": {
+				"param": "intensity",
+				"from": 0.5,
+				"to": 1.15,
+				"period": 0.85
+			}
 		},
 		"sustained": true,
 		"placeholder": false,

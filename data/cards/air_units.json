@@ -2,10 +2,10 @@
 	{
 		"id": "air_pawn",
 		"display_name": "Air Pawn",
-		"cost": 1,
+		"cost": 2,
 		"attack": 1,
 		"health": 3,
-		"speed": 4,
+		"speed": 5,
 		"elements": [
 			"air"
 		],
@@ -21,7 +21,11 @@
 		"display_name": "Air Knight",
 		"chess_pieces": [
 			"knight"
-		]
+		],
+		"cost": 3,
+		"attack": 2,
+		"health": 3,
+		"speed": 6
 	},
 	{
 		"id": "air_bishop",
@@ -34,7 +38,11 @@
 		],
 		"abilities": [
 			"air_bless"
-		]
+		],
+		"cost": 3,
+		"attack": 1,
+		"health": 4,
+		"speed": 5
 	},
 	{
 		"id": "air_rook",
@@ -48,7 +56,12 @@
 		"abilities": [
 			"gale_charge"
 		],
-		"ranged": true
+		"ranged": true,
+		"cost": 4,
+		"attack": 1,
+		"health": 7,
+		"speed": 5,
+		"shield": 2
 	},
 	{
 		"id": "air_queen",
@@ -59,6 +72,10 @@
 		"chess_pieces": [
 			"queen"
 		],
-		"ranged": true
+		"ranged": true,
+		"cost": 6,
+		"attack": 5,
+		"health": 5,
+		"speed": 7
 	}
 ]

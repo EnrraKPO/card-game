@@ -110,12 +110,18 @@ func attach(id: String, target: Control) -> void:
 
 func detach(id: String, target: Control) -> void:
 	var key := _attach_key(id, target)
-	var node: Node = _attached.get(key, null)
-	if node == null:
+	if not _attached.has(key):
 		return
+	# Fetched as Variant, not typed Node: a stale entry can point at an object queue_free already
+	# doomed (or already gone) elsewhere — e.g. RenderFilters' own cache handing back a layer that
+	# was mid-deletion (see apply()'s is_queued_for_deletion guard). Converting straight to a typed
+	# Node prints "invalid previously freed instance" for that case; is_instance_valid on the raw
+	# Variant checks safely instead. The key is erased regardless so a dead entry never wedges this
+	# state permanently un-attachable.
+	var raw: Variant = _attached[key]
 	_attached.erase(key)
-	if is_instance_valid(node):
-		node.queue_free()
+	if is_instance_valid(raw):
+		(raw as Node).queue_free()
 
 
 func _attach_key(id: String, target: Control) -> String:

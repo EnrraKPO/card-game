@@ -2,7 +2,7 @@
 	{
 		"id": "fire_pawn",
 		"display_name": "Fire Pawn",
-		"cost": 1,
+		"cost": 2,
 		"attack": 3,
 		"health": 3,
 		"speed": 1,
@@ -21,7 +21,11 @@
 		"display_name": "Fire Knight",
 		"chess_pieces": [
 			"knight"
-		]
+		],
+		"cost": 3,
+		"attack": 4,
+		"health": 3,
+		"speed": 2
 	},
 	{
 		"id": "fire_bishop",
@@ -35,7 +39,11 @@
 		"ranged": true,
 		"abilities": [
 			"fire_bless"
-		]
+		],
+		"cost": 3,
+		"attack": 3,
+		"health": 4,
+		"speed": 1
 	},
 	{
 		"id": "fire_rook",
@@ -49,7 +57,12 @@
 		"abilities": [
 			"warding_charge"
 		],
-		"ranged": true
+		"ranged": true,
+		"cost": 4,
+		"attack": 3,
+		"health": 7,
+		"speed": 1,
+		"shield": 2
 	},
 	{
 		"id": "fire_queen",
@@ -60,7 +73,11 @@
 		"chess_pieces": [
 			"queen"
 		],
-		"ranged": true
+		"ranged": true,
+		"cost": 6,
+		"attack": 7,
+		"health": 5,
+		"speed": 3
 	},
 	{
 		"id": "fire_pawn_pawn",
@@ -71,7 +88,12 @@
 		"chess_pieces": [
 			"pawn",
 			"pawn"
-		]
+		],
+		"cost": 3,
+		"attack": 4,
+		"health": 4,
+		"speed": 1,
+		"shield": 1
 	},
 	{
 		"id": "fire_knight_pawn",
@@ -82,7 +104,12 @@
 		"chess_pieces": [
 			"knight",
 			"pawn"
-		]
+		],
+		"cost": 4,
+		"attack": 5,
+		"health": 5,
+		"speed": 2,
+		"shield": 1
 	},
 	{
 		"id": "fire_bishop_pawn",
@@ -93,6 +120,15 @@
 		"chess_pieces": [
 			"bishop",
 			"pawn"
+		],
+		"cost": 4,
+		"attack": 4,
+		"health": 5,
+		"speed": 1,
+		"shield": 2,
+		"abilities": [
+			"heal",
+			"fire_bless"
 		]
 	},
 	{
@@ -105,7 +141,16 @@
 			"pawn",
 			"rook"
 		],
-		"ranged": true
+		"ranged": true,
+		"cost": 5,
+		"attack": 4,
+		"health": 8,
+		"speed": 1,
+		"shield": 1,
+		"abilities": [
+			"warding_charge",
+			"pawn_material"
+		]
 	},
 	{
 		"id": "fire_pawn_queen",
@@ -116,7 +161,11 @@
 		"chess_pieces": [
 			"pawn",
 			"queen"
-		]
+		],
+		"cost": 7,
+		"attack": 7,
+		"health": 5,
+		"speed": 3
 	},
 	{
 		"id": "fire_knight_knight",
@@ -138,6 +187,14 @@
 		"chess_pieces": [
 			"bishop",
 			"knight"
+		],
+		"cost": 5,
+		"attack": 5,
+		"health": 6,
+		"speed": 3,
+		"abilities": [
+			"heal",
+			"fire_bless"
 		]
 	},
 	{
