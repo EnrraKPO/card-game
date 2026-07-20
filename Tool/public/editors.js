@@ -976,7 +976,8 @@ const VFX_SUSTAINED = ['glow', 'pulse', 'sparkle', 'radiance'];
 // 'custom' = an effect class registered in-game via Vfx.register_custom. 'filter' = the look is
 // a RenderFilter (its own tab); the VFX entry then owns only WHEN it runs and how it animates.
 const VFX_RENDERERS = ['procedural', 'custom', 'filter'];
-const FILTER_LAYERS = ['behind', 'above'];
+const FILTER_LAYERS = ['behind', 'above', 'overlay'];
+const FILTER_SOURCES = ['texture', 'rounded_rect'];
 
 // Editor for a flat "shader uniform name -> number|hex colour" dictionary. Render filters key
 // their params by uniform name precisely so there is no mapping table to keep in sync with the
@@ -1274,7 +1275,7 @@ const VfxEditor = {
 const RenderFilterEditor = {
   label: 'Render Filter',
   newItem: () => ({ id: '', display_name: '', shader: '', pad: 64, layer: 'behind',
-    params: {}, enabled: true, concept: '', explanation: '' }),
+    source: 'texture', params: {}, enabled: true, concept: '', explanation: '' }),
   form(draft, ctx, onChange) {
     if (!draft.params) draft.params = {};
     const wrap = el('div');
@@ -1300,7 +1301,9 @@ const RenderFilterEditor = {
           fld('Pad (px)', numInput(draft, 'pad', onChange, { step: 1, float: true, min: 0 }),
             'spill room — must exceed spread', 'narrow'),
           fld('Layer', selectInput(draft, 'layer', FILTER_LAYERS.map(v => ({ value: v, label: v })), onChange),
-            'behind = source occludes the core', 'narrow'),
+            'behind = source occludes the core; overlay = escapes clipping ancestors', 'narrow'),
+          fld('Source', selectInput(draft, 'source', FILTER_SOURCES.map(v => ({ value: v, label: v })), onChange),
+            'where the silhouette comes from', 'narrow'),
         ),
       ),
       groupBox('Default parameters — keyed BY SHADER UNIFORM NAME, set on the material verbatim',
@@ -1322,7 +1325,7 @@ const RenderFilterEditor = {
   serialize(d) {
     const out = { id: d.id, display_name: d.display_name || slugToName(d.id),
       shader: d.shader || '', pad: typeof d.pad === 'number' ? d.pad : 0,
-      layer: d.layer || 'behind' };
+      layer: d.layer || 'behind', source: d.source || 'texture' };
     const params = {};
     for (const [k, v] of Object.entries(d.params || {})) if (k && v != null) params[k] = v;
     out.params = params;
@@ -1349,6 +1352,7 @@ const RenderFilterEditor = {
     const d = JSON.parse(JSON.stringify(g));
     if (!d.params) d.params = {};
     if (!d.layer) d.layer = 'behind';
+    if (!d.source) d.source = 'texture';
     if (d.pad == null) d.pad = 0;
     if (d.enabled == null) d.enabled = true;
     return d;

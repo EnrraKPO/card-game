@@ -48,6 +48,13 @@ func _ready() -> void:
 	add_child(_layer)
 
 
+# The overlay layer, for effects that must escape the UI tree's clipping. A RenderFilter whose
+# spill would be cut off by a clip_contents ancestor draws here instead, tracking its target's
+# global rect — see RenderFilters/`layer: "overlay"`.
+func overlay_layer() -> CanvasLayer:
+	return _layer
+
+
 # ── The event API — play any library effect by id, on any Control ─────────────────
 
 # One-shot playback (fire-and-forget, or await for completion). `opts` carries the anchors the

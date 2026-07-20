@@ -29,6 +29,14 @@ var shader: String = ""
 var pad: float = 0.0
 var params: Dictionary = {}
 var layer: String = "behind"    # behind|above
+# WHERE THE SILHOUETTE COMES FROM. "texture" (default) reads the source texture's alpha — the
+# general case, and the only one that can follow arbitrary art. "rounded_rect" describes the
+# shape analytically instead, for targets that have no texture to sample: a procedurally drawn
+# GlossyButton, or a composed card scene whose art is nested and rectangular. For a rounded-rect
+# control the analytic shape is EXACT, so this is not a return to bounding-box approximation —
+# it is the same silhouette by a cheaper route. `corner_radius` is a normal shader param, so it
+# is set per call site (a button and a card round differently).
+var source: String = "texture"  # texture|rounded_rect
 var concept: String = ""
 var explanation: String = ""
 
@@ -67,6 +75,7 @@ static func _load_json(path: String) -> void:
 		rf.pad          = float(d.get("pad", 0.0))
 		rf.params       = d.get("params", {})
 		rf.layer        = d.get("layer", "behind")
+		rf.source       = d.get("source", "texture")
 		rf.concept      = d.get("concept", "")
 		rf.explanation  = d.get("explanation", "")
 		if not rf.id.is_empty():

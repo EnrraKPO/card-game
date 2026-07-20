@@ -22,6 +22,8 @@ var pad: float = 0.0
 
 var _target: Control
 var _shader_mat: ShaderMaterial
+var _shape := false
+var _overlay := false
 
 
 func setup(fd: RenderFilterData, target: Control, tex: Texture2D, overrides: Dictionary) -> void:
@@ -42,13 +44,23 @@ func setup(fd: RenderFilterData, target: Control, tex: Texture2D, overrides: Dic
 	_shader_mat.shader = sh
 	material = _shader_mat
 
-	_shader_mat.set_shader_parameter("src_tex", tex)
+	# Shape-sourced filters describe their silhouette analytically and never sample a texture;
+	# tex is null for them. shape_mode tells the shader which branch to take.
+	_shape = fd.source == "rounded_rect"
+	_shader_mat.set_shader_parameter("shape_mode", 1 if _shape else 0)
+	if tex != null:
+		_shader_mat.set_shader_parameter("src_tex", tex)
 	# Entry defaults first, call-site overrides second — both keyed by shader uniform name.
 	for key: String in fd.params:
 		_shader_mat.set_shader_parameter(key, RenderFilterData.coerce(fd.params[key]))
 	for key: String in overrides:
 		_shader_mat.set_shader_parameter(key, RenderFilterData.coerce(overrides[key]))
 
+	_overlay = fd.layer == "overlay"
+	# Overlay layers live outside the target's subtree, so they must track its POSITION too, not
+	# just its size — item_rect_changed covers both.
+	if _overlay:
+		target.item_rect_changed.connect(_sync)
 	target.resized.connect(_sync)
 	_sync()
 
@@ -60,7 +72,11 @@ func _sync() -> void:
 	if _target == null or not is_instance_valid(_target):
 		return
 	var quad := _target.size + Vector2(pad, pad) * 2.0
-	position = Vector2(-pad, -pad)
+	if _overlay:
+		# Not our target's child: place by its GLOBAL rect on the overlay canvas.
+		global_position = _target.get_global_rect().position - Vector2(pad, pad)
+	else:
+		position = Vector2(-pad, -pad)
 	size = quad
 	if _shader_mat == null or quad.x <= 0.0 or quad.y <= 0.0:
 		return
@@ -68,6 +84,9 @@ func _sync() -> void:
 	# Where the source sits inside our padded quad, in our UV space.
 	_shader_mat.set_shader_parameter("u_src_rect", Vector4(
 			pad / quad.x, pad / quad.y, _target.size.x / quad.x, _target.size.y / quad.y))
+	# Shape filters work in px against the target's own rect, so they need its size directly —
+	# a UV-space rect alone can't tell a 220x64 button from a 140x183 card.
+	_shader_mat.set_shader_parameter("u_src_size", _target.size)
 
 
 # The handle the VFX layer animates: any shader uniform, by name.

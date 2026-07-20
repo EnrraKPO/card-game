@@ -236,13 +236,36 @@
 		"prompt": "Sprite sheet of arcane particles swirling in a vortex between two points, violet alchemical energy stream, 10 frames on transparent background, 2d game effect"
 	},
 	{
+		"id": "forge_result_inner",
+		"display_name": "Forge Result Inner Light",
+		"category": "lab",
+		"renderer": "filter",
+		"behavior": "glow",
+		"params": {
+			"filter": "luminescence_rrect",
+			"glow_color": "fff3b0",
+			"corner_radius": 10.0,
+			"luma_bias": 0.55,
+			"animate": {"param": "intensity", "from": 0.1, "to": 0.26, "period": 1.1}
+		},
+		"sustained": true,
+		"placeholder": false,
+		"concept": "The quiet half of the previewed result: the card about to be forged glows from within, so it reads as the prize rather than as art with a halo pasted behind it.",
+		"explanation": "IMPLEMENTED (combination_screen): the `luminescence_rrect` RenderFilter on the result slot, breathing with its outer glow. Shape-sourced because the slot holds a composed CardUI scene, not a single texture.",
+		"prompt": "Sprite sheet of a warm light glowing from inside a rounded card, soft inner light fading toward the edges, 8 frames on transparent background, 2d game effect"
+	},
+	{
 		"id": "forge_result_radiance",
 		"display_name": "Forge Result Radiance",
 		"category": "lab",
-		"behavior": "radiance",
+		"renderer": "filter",
+		"behavior": "glow",
 		"params": {
-			"color": "fff3b0",
-			"scale": 1.4
+			"filter": "glow_rrect",
+			"glow_color": "fff3b0",
+			"spread": 30.0,
+			"corner_radius": 10.0,
+			"animate": {"param": "intensity", "from": 0.45, "to": 1.0, "period": 1.1}
 		},
 		"sustained": true,
 		"placeholder": false,
@@ -293,14 +316,36 @@
 		"prompt": "Sprite sheet of a warm light glowing from inside a circular metal button, soft inner rim light fading toward the centre, 8 frames on transparent background, 2d game effect"
 	},
 	{
+		"id": "forge_combine_ready_inner",
+		"display_name": "Forge Combine Ready Inner Light",
+		"category": "lab",
+		"renderer": "filter",
+		"behavior": "glow",
+		"params": {
+			"filter": "luminescence_rrect",
+			"glow_color": "ffe8a8",
+			"corner_radius": 18.0,
+			"luma_bias": 0.55,
+			"animate": {"param": "intensity", "from": 0.12, "to": 0.3, "period": 0.85}
+		},
+		"sustained": true,
+		"placeholder": false,
+		"concept": "The quiet half of the Combine button's ready state: paired with its outer glow so the button itself reads as charged, not as a flat control with a halo behind it.",
+		"explanation": "IMPLEMENTED (combination_screen): the `luminescence_rrect` RenderFilter, breathing on the same 0.85s period as the outer glow so the two land as one light. The button is procedurally drawn, so the silhouette comes from its real rounded-rect shape rather than a texture.",
+		"prompt": "Sprite sheet of a warm light glowing from inside a rounded rectangular button, soft inner light fading toward the edges, 8 frames on transparent background, 2d game effect"
+	},
+	{
 		"id": "forge_combine_ready_glow",
 		"display_name": "Forge Combine Ready Glow",
 		"category": "lab",
-		"behavior": "radiance",
+		"renderer": "filter",
+		"behavior": "glow",
 		"params": {
-			"color": "ffd94d",
-			"scale": 1.2,
-			"duration": 0.6
+			"filter": "glow_rrect",
+			"glow_color": "ffd94d",
+			"spread": 30.0,
+			"corner_radius": 18.0,
+			"animate": {"param": "intensity", "from": 0.5, "to": 1.15, "period": 0.85}
 		},
 		"sustained": true,
 		"placeholder": false,

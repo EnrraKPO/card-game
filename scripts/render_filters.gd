@@ -28,20 +28,31 @@ func apply(id: String, target: Control, overrides: Dictionary = {}) -> RenderFil
 	if _applied.has(key):
 		return get_layer(id, target)
 
+	# Shape-sourced filters derive their silhouette analytically, so they need no texture at all —
+	# which is the whole point of them: a procedural button has no pixels to hand us.
 	var tex: Texture2D = overrides.get("texture", null)
-	if tex == null:
+	if tex == null and fd.source != "rounded_rect":
 		tex = _resolve_texture(target)
-	if tex == null:
-		push_warning("RenderFilters.apply: no source texture found on \"%s\" for filter \"%s\" — a filter reads the source's pixels, so it needs one" % [target.name, id])
-		return null
+		if tex == null:
+			push_warning("RenderFilters.apply: no source texture found on \"%s\" for filter \"%s\" — a texture-sourced filter reads the source's pixels, so it needs one (use a rounded_rect source for procedural or composed targets)" % [target.name, id])
+			return null
 
 	var layer := RenderFilterLayer.new()
-	target.add_child(layer)
-	# Sibling order decides what a filter sits under. "behind" goes to index 0 so it is beneath
-	# the target's other children too (show_behind_parent in setup() puts it under the target
-	# itself); "above" must stay LAST or those same siblings would cover the light it adds.
-	if fd.layer != "above":
-		target.move_child(layer, 0)
+	if fd.layer == "overlay":
+		# A filter parented to its target inherits every ancestor's clip_contents, so a spilling
+		# effect gets cut off by any clipping holder above it — invisibly, since the part that
+		# survives is the part inside the silhouette, which such filters deliberately leave
+		# empty. Overlay filters draw on the VFX CanvasLayer in GLOBAL coordinates instead,
+		# outside the UI tree entirely. Safe only for effects that add nothing over the target
+		# itself (a hollow outer glow); anything that fills the silhouette would wash it out.
+		Vfx.overlay_layer().add_child(layer)
+	else:
+		target.add_child(layer)
+		# Sibling order decides what a filter sits under. "behind" goes to index 0 so it is
+		# beneath the target's other children too (show_behind_parent in setup() puts it under
+		# the target itself); "above" must stay LAST or those siblings would cover its light.
+		if fd.layer != "above":
+			target.move_child(layer, 0)
 	var skin := overrides.duplicate()
 	skin.erase("texture")
 	layer.setup(fd, target, tex, skin)

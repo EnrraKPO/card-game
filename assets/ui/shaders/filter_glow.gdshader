@@ -28,8 +28,32 @@ uniform float spread = 40.0;      // how far the light reaches past the silhouet
 uniform float intensity = 1.0;    // brightness multiplier — the handle animation drives
 uniform float falloff = 2.0;      // >1 concentrates light near the edge; 1.0 = linear fade
 
+// SOURCE MODE — where the silhouette comes from. 0 = the source texture's alpha (the general
+// case). 1 = an ANALYTIC rounded rect, for targets that have no texture to sample: a procedural
+// GlossyButton, or a composed card scene. This is not the bounding-box approximation this
+// system was built to replace — for a rounded-rect control the analytic shape IS the exact
+// silhouette, and being exact it needs no tap-averaging at all: the signed distance gives a
+// perfectly smooth falloff for free, cheaper and cleaner than sampling ever is.
+uniform int shape_mode = 0;
+uniform vec2 u_src_size = vec2(64.0, 64.0);   // the source's size in px (shape mode)
+uniform float corner_radius = 18.0;           // the target's REAL corner radius, px (shape mode)
+
 const int RINGS = 3;
 const int TAPS = 12;
+
+// Signed distance to a rounded rect, in px: negative inside, positive outside.
+float rrect_sd(vec2 p, vec2 half_size, float r) {
+	r = min(r, min(half_size.x, half_size.y));
+	vec2 q = abs(p) - half_size + vec2(r);
+	return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
+}
+
+// Distance from this fragment to the analytic silhouette's edge, px.
+float shape_distance(vec2 uv) {
+	vec2 s = (uv - u_src_rect.xy) / u_src_rect.zw;   // 0..1 across the source
+	vec2 p = (s - 0.5) * u_src_size;                 // px, centred on the source
+	return rrect_sd(p, u_src_size * 0.5, corner_radius);
+}
 
 // Alpha of the source at a UV in OUR space, or 0 outside it. `lod` picks how blurred a mip to
 // read — wider rings read coarser levels, which is what keeps a large spread cheap and smooth.
@@ -42,6 +66,18 @@ float src_alpha(vec2 uv, float lod) {
 }
 
 void fragment() {
+	if (shape_mode == 1) {
+		// Exact silhouette -> exact falloff, no sampling. Inside the shape the value saturates,
+		// which is occluded anyway since the glow draws behind an opaque target.
+		float sd = shape_distance(UV);
+		float d = max(sd, 0.0);
+		float a = pow(clamp(1.0 - d / max(spread, 0.001), 0.0, 1.0), falloff);
+		// Zero INSIDE the silhouette (1px antialiased). Behind an opaque target that costs
+		// nothing, and it makes the same filter safe to draw ABOVE one — which matters because
+		// clipping/container parents don't always leave the "behind" slot available.
+		a *= clamp(sd + 0.5, 0.0, 1.0);
+		COLOR = vec4(glow_color.rgb, glow_color.a * clamp(a * intensity, 0.0, 1.0));
+	} else {
 	float acc = 0.0;
 	float wsum = 0.0;
 
@@ -67,4 +103,5 @@ void fragment() {
 
 	float a = clamp(acc / max(wsum, 0.0001) * intensity, 0.0, 1.0);
 	COLOR = vec4(glow_color.rgb, glow_color.a * a);
+	}
 }

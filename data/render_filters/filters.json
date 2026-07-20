@@ -42,5 +42,38 @@
 		},
 		"concept": "The WHOLE object lit from within, as though the thing itself were the light source — the treatment for 'this is live/charged', where an edge-only inner glow would read as a mere outline effect rather than as the material glowing.",
 		"explanation": "Lifts every pixel the silhouette covers, weighted by the art's own luminance so highlights take the light and shadows keep their darkness — a flat lift would read as a coloured sticker over the art and erase the shading that gives the object form. luma_bias dials flat-vs-following. Additive, pad 0, drawn above the source."
+	},
+	{
+		"id": "glow_rrect",
+		"display_name": "Outer Glow (rounded rect)",
+		"shader": "res://assets/ui/shaders/filter_glow.gdshader",
+		"source": "rounded_rect",
+		"pad": 56.0,
+		"layer": "overlay",
+		"params": {
+			"glow_color": "ffa51e",
+			"spread": 34.0,
+			"intensity": 1.0,
+			"falloff": 2.0,
+			"corner_radius": 18.0
+		},
+		"concept": "The outer glow for targets that have no texture to derive a silhouette from — a procedurally drawn GlossyButton, or a composed card scene. Same light, same intent as `glow`; only where the shape comes from differs.",
+		"explanation": "Takes the silhouette as an analytic rounded rect instead of sampling alpha. For a rounded-rect control that IS the exact shape, and being exact it needs no tap-averaging: the signed distance gives a perfectly smooth falloff for free, cheaper and cleaner than sampling. Set corner_radius per call site — a button and a card round differently."
+	},
+	{
+		"id": "luminescence_rrect",
+		"display_name": "Luminescence (rounded rect)",
+		"shader": "res://assets/ui/shaders/filter_luminescence.gdshader",
+		"source": "rounded_rect",
+		"pad": 0.0,
+		"layer": "above",
+		"params": {
+			"glow_color": "ffc46b",
+			"intensity": 0.3,
+			"luma_bias": 0.6,
+			"corner_radius": 18.0
+		},
+		"concept": "Whole-body luminescence for targets with no texture to read — the companion to `luminescence` for procedural or composed controls.",
+		"explanation": "With no pixels to sample there is no art luminance to follow, so luma_bias weights by INWARD DEPTH instead: dim at the rim, full in the body. Same intent as the texture version — a dead-flat lift reads as a coloured sticker rather than as light."
 	}
 ]

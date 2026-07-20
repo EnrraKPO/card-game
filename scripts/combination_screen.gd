@@ -55,6 +55,14 @@ const SHELF_H := 110.5               # roughly half the door's height
 # fixed top margin from the strip's own top edge.
 const SHELF_TOP_MARGIN := STRIP_H - WALLPAPER_H + (WALLPAPER_H - SHELF_H) * 0.5
 
+# Each "this is live" state is TWO cues, one light: an outer glow spilling past the edge and a
+# dim inner luminescence, breathing on the same period. Both ride shape-sourced RenderFilters —
+# the Combine button is drawn procedurally and the result slot holds a composed CardUI scene, so
+# neither has a texture whose alpha a filter could read; their real rounded-rect shape is the
+# silhouette instead.
+const COMBINE_READY_CUES := ["forge_combine_ready_glow", "forge_combine_ready_inner"]
+const RESULT_READY_CUES := ["forge_result_radiance", "forge_result_inner"]
+
 # Station column: two ingredient slots, the result (card + name + full description), a status line,
 # the Mineral balance and the Combine button.
 var _slot_a: Control
@@ -1346,18 +1354,20 @@ func _refresh_forge() -> void:
 	# The button radiates outward whenever pressing it does something right now — an actual halo
 	# past its edges (forge_combine_ready_glow), not GlossyButton's own contained press-tint
 	# (ui_button_attention reads as "inside the button", which doesn't sell as an invitation here).
-	if can_act:
-		Vfx.attach("forge_combine_ready_glow", _combine_btn)
-	else:
-		Vfx.detach("forge_combine_ready_glow", _combine_btn)
+	for cue: String in COMBINE_READY_CUES:
+		if can_act:
+			Vfx.attach(cue, _combine_btn)
+		else:
+			Vfx.detach(cue, _combine_btn)
 	# The result card breathes a warm radiance whenever a valid outcome is previewed — draws the eye
 	# to what's about to be forged/enchanted without demanding a click. _result_slot is the stable
 	# holder (only its child CardUI gets swapped by _set_holder_card), so the sustained state
 	# survives repeated repaints instead of restarting every frame the preview stays valid.
-	if result_inst != null:
-		Vfx.attach("forge_result_radiance", _result_slot)
-	else:
-		Vfx.detach("forge_result_radiance", _result_slot)
+	for cue: String in RESULT_READY_CUES:
+		if result_inst != null:
+			Vfx.attach(cue, _result_slot)
+		else:
+			Vfx.detach(cue, _result_slot)
 
 	# Swirl the two ingredient slots whenever a valid COMBINE is previewed (never for enchant, which
 	# has no "two cards fusing" read). Slots A/B are stable holders, so the FX just tracks their rects.

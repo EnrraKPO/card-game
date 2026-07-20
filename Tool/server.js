@@ -79,7 +79,10 @@ const VFX_SUSTAINED = ['glow', 'pulse', 'sparkle', 'radiance'];
 const VFX_RENDERERS = ['procedural', 'custom', 'filter'];   // future: flipbook, scene, ...
 // Where a filter draws relative to its source. "behind" is the default and the reason a glow
 // doesn't wash out an opaque face — the source occludes the bright core.
-const FILTER_LAYERS = ['behind', 'above'];
+const FILTER_LAYERS = ['behind', 'above', 'overlay'];
+// Where a filter's silhouette comes from. 'texture' reads the source's alpha; 'rounded_rect'
+// describes the shape analytically, for procedural or composed targets with no texture.
+const FILTER_SOURCES = ['texture', 'rounded_rect'];
 
 // ── small fs helpers ─────────────────────────────────────────────────────────
 function ensureDir(p) { fs.mkdirSync(p, { recursive: true }); }
@@ -1256,6 +1259,8 @@ function validateItem(type, d) {
       if (typeof d.pad !== 'number' || d.pad < 0) return 'pad must be a non-negative number of px';
       if (d.layer != null && !FILTER_LAYERS.includes(d.layer))
         return `layer must be one of: ${FILTER_LAYERS.join(', ')}`;
+      if (d.source != null && !FILTER_SOURCES.includes(d.source))
+        return `source must be one of: ${FILTER_SOURCES.join(', ')}`;
       if (d.params != null) {
         if (typeof d.params !== 'object' || Array.isArray(d.params)) return 'params must be an object';
         for (const [k, v] of Object.entries(d.params)) {
