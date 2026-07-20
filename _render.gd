@@ -126,7 +126,14 @@ func _ready() -> void:
 			if n.has_method("_select_tree"):
 				n.call("_select_tree", args[1])
 				break
-	for i in 8:
+	# Vfx is an autoload: its CanvasLayer hangs off the root, OUTSIDE this SubViewport, so
+	# attached effects (glows/radiance) never reach the capture. Reparent it in.
+	var vlayer: CanvasLayer = Vfx._layer
+	if vlayer != null and vlayer.get_parent() != null:
+		vlayer.get_parent().remove_child(vlayer)
+		sv.add_child(vlayer)
+	# Sustained radiance breathes from zero — let it climb to a visible phase before capture.
+	for i in 40:
 		await get_tree().process_frame
 	sv.get_texture().get_image().save_png(OUT)
 	print("RENDERED ", scene_path, " @ ", RES)

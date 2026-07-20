@@ -1,0 +1,17 @@
+[
+	{
+		"id": "glow",
+		"display_name": "Outer Glow",
+		"shader": "res://assets/ui/shaders/filter_glow.gdshader",
+		"pad": 72.0,
+		"layer": "behind",
+		"params": {
+			"glow_color": "ffa51e",
+			"spread": 46.0,
+			"intensity": 1.0,
+			"falloff": 2.0
+		},
+		"concept": "Light radiating out of a thing, derived from the thing's own silhouette — the general 'this is live/ready/important' treatment, and the reason the filter system exists: the VFX library's procedural halos are sized to a bounding box and cannot follow a shape.",
+		"explanation": "Rings of alpha taps at increasing distance, weighted by a falloff curve, each ring reading a coarser mipmap so a wide spread stays cheap and smooth. Rendered behind the source, so an opaque face occludes the core and the light reads as coming from behind it. `pad` must exceed `spread` or the glow clips at the quad's edge."
+	}
+]

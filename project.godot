@@ -32,6 +32,7 @@ DevFlags="*res://scripts/dev_flags.gd"
 AudioSettings="*res://scripts/audio_settings.gd"
 Sfx="*res://scripts/sfx.gd"
 Vfx="*res://scripts/vfx_service.gd"
+RenderFilters="*res://scripts/render_filters.gd"
 
 [display]
 

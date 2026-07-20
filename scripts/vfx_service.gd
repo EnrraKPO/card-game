@@ -193,6 +193,8 @@ func _attach_dispatch(vd: VFXData, target: Control) -> Node:
 				"pulse":    return _sustain_pulse(vd, target)
 				"sparkle":  return _sustain_sparkle(vd, target)
 				"radiance": return _sustain_radiance(vd, target)
+		"filter":
+			return _sustain_filter(vd, target)
 		"custom":
 			var fn: Callable = _custom.get(vd.id, Callable())
 			if fn.is_valid():
@@ -517,6 +519,46 @@ func _sustain_radiance(vd: VFXData, target: Control) -> Node:
 	tw.tween_property(fx, "energy", 1.0, period).set_trans(Tween.TRANS_SINE)
 	tw.tween_property(fx, "energy", 0.3, period).set_trans(Tween.TRANS_SINE)
 	return fx
+
+
+# renderer "filter": the look is a RenderFilter (a shader reading the source texture's pixels),
+# and this entry owns WHEN it is on and how its params move. `params.filter` names the filter;
+# every other param is forwarded as a shader-uniform override; the optional `params.animate`
+# block breathes one uniform between two values forever:
+#
+#   "params": { "filter": "glow", "spread": 46,
+#               "animate": {"param": "intensity", "from": 0.5, "to": 1.2, "period": 1.6} }
+#
+# Note the returned node belongs to the TARGET's subtree, not this service's overlay layer —
+# that is the point of a filter (it draws behind the source, not over the whole UI). detach()
+# frees it either way.
+func _sustain_filter(vd: VFXData, target: Control) -> Node:
+	var fid := str(vd.params.get("filter", ""))
+	if fid.is_empty():
+		push_warning("Vfx: entry \"%s\" is renderer \"filter\" but names no params.filter" % vd.id)
+		return null
+	var overrides: Dictionary = {}
+	for key: String in vd.params:
+		if key == "filter" or key == "animate":
+			continue
+		overrides[key] = vd.params[key]
+	var layer: RenderFilterLayer = RenderFilters.apply(fid, target, overrides)
+	if layer == null:
+		return null
+
+	var anim: Dictionary = vd.params.get("animate", {})
+	if not anim.is_empty():
+		var pname := str(anim.get("param", ""))
+		var lo := float(anim.get("from", 0.0))
+		var hi := float(anim.get("to", 1.0))
+		var period := maxf(0.05, float(anim.get("period", 1.0)))
+		if not pname.is_empty():
+			var tw: Tween = layer.create_tween().set_loops()
+			tw.tween_method(func(v: float) -> void: layer.set_param(pname, v),
+					lo, hi, period).set_trans(Tween.TRANS_SINE)
+			tw.tween_method(func(v: float) -> void: layer.set_param(pname, v),
+					hi, lo, period).set_trans(Tween.TRANS_SINE)
+	return layer
 
 
 func _breathing_halo(vd: VFXData, target: Control, period: float, hi: float, lo: float) -> Node:
