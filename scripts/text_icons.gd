@@ -36,11 +36,15 @@ const TIP_MAX_WIDTH := 560.0
 # as usual, the override swaps the popup's plain label for an enriched RichTextLabel.
 class TipButton extends Button:
 	func _make_custom_tooltip(for_text: String) -> Object:
+		if UIScale.is_touch():
+			return null
 		return TextIcons.tooltip_body(for_text)
 
 
 class TipPanel extends Panel:
 	func _make_custom_tooltip(for_text: String) -> Object:
+		if UIScale.is_touch():
+			return null
 		return TextIcons.tooltip_body(for_text)
 
 

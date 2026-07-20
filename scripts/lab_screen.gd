@@ -206,7 +206,7 @@ func _make_artifact_object(key: String, tex: Texture2D) -> Control:
 	btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
 	btn.size_flags_horizontal = SIZE_EXPAND_FILL
 	btn.size_flags_vertical = SIZE_EXPAND_FILL
-	btn.tooltip_text = SUBTITLES.get(key, NAMES.get(key, key))
+	UIScale.tip(btn, str(SUBTITLES.get(key, NAMES.get(key, key))))
 	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	btn.pressed.connect(_open.bind(key))
 	btn.mouse_entered.connect(func() -> void: btn.modulate = Color(1.18, 1.18, 1.18))

@@ -122,7 +122,7 @@ func _add_card(n: UpgradeNode, pos: Vector2, scale: float) -> void:
 	btn.size = _card_size
 	btn.clip_text = true
 	btn.focus_mode = Control.FOCUS_NONE
-	btn.tooltip_text = "%s\nCost: %d\n\n%s" % [n.display_name, n.cost, n.description]
+	UIScale.tip(btn, "%s\nCost: %d\n\n%s" % [n.display_name, n.cost, n.description])
 	btn.pressed.connect(func() -> void: node_selected.emit(n))
 	add_child(btn)
 

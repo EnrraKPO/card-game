@@ -26,10 +26,32 @@ const SAFE_INSET_COMPACT := 40.0
 const SAFE_INSET_DESKTOP := 28.0
 
 var _compact := false
+# Latched true by the first real touch event — see is_touch(). Never cleared.
+var _touched := false
 
 
 func is_compact() -> bool:
 	return _compact
+
+
+# Touch devices have no hover: a finger either presses or isn't there. What Godot's
+# emulate_mouse_from_touch leaves behind is a ghost cursor parked wherever you last tapped,
+# which then trips hover tooltips over whatever sits under it. So NO hover tooltip anywhere on
+# touch — card detail is the long-press CardInspector, and the rest were never readable anyway.
+#
+# Two sources, because the static one can lie: DisplayServer.is_touchscreen_available() is a
+# capability probe, and mobile browsers have been known to under-report it. A real
+# InputEventScreenTouch is proof, so the first one ever seen latches touch mode for good
+# (_input below). The latch can only ever turn touch ON — a stray mouse never turns it off.
+func is_touch() -> bool:
+	return _touched or DisplayServer.is_touchscreen_available()
+
+
+# THE tooltip setter for the whole game. Godot only invokes _make_custom_tooltip when
+# tooltip_text is non-empty, so clearing the text is what actually disables a tooltip —
+# both the rich custom panels and the plain native label. Always assign through here.
+func tip(control: Control, text: String) -> void:
+	control.tooltip_text = "" if is_touch() else text
 
 
 # Edge clearance for interactables, in viewport units. Larger on touch (see SAFE_INSET_*).
@@ -40,6 +62,26 @@ func safe_inset() -> float:
 func _ready() -> void:
 	get_window().size_changed.connect(_apply)
 	_apply()
+
+
+# Watch for the first real touch (see is_touch). Anything already on screen was built while we
+# still believed we were on a mouse, so it carries live tooltip_text — sweep it away once. The
+# tooltip only fires after a hover delay, and this runs on the very touch that would arm it, so
+# the sweep lands first. Everything built afterwards goes through tip() and is born clean.
+func _input(event: InputEvent) -> void:
+	if _touched or not (event is InputEventScreenTouch):
+		return
+	_touched = true
+	set_process_input(false)   # one-shot: the latch never clears, so stop listening
+	_strip_tooltips(get_tree().root)
+
+
+func _strip_tooltips(node: Node) -> void:
+	var control := node as Control
+	if control != null:
+		control.tooltip_text = ""
+	for child in node.get_children():
+		_strip_tooltips(child)
 
 
 func _apply() -> void:

@@ -507,7 +507,7 @@ func _make_charm_offer(grant: Grant) -> Control:
 func _make_info_offer(grant: Grant, tag: String, accent: Color, icon: Texture2D, glyph: String,
 		name_text: String, desc_text: String, pickable: bool, full_text: String) -> Control:
 	var btn: Button = TextIcons.TipButton.new()   # tooltip renders keyword icons
-	btn.tooltip_text = grant.tooltip()
+	UIScale.tip(btn, grant.tooltip())
 	btn.disabled = not pickable
 	var style := StyleBoxFlat.new()
 	style.bg_color = ScreenUI.SURFACE_DEEP

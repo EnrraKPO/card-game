@@ -25,6 +25,8 @@ func setup(content: Control, p: Dictionary) -> void:
 
 # Charm chips' hosted tooltips (see setup) render keyword icons like every other rules text.
 func _make_custom_tooltip(for_text: String) -> Object:
+	if UIScale.is_touch():
+		return null
 	return TextIcons.tooltip_body(for_text)
 
 

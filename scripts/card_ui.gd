@@ -435,16 +435,10 @@ func refresh() -> void:
 	# oversampled font so an enlarged card's WHOLE text stays crisp (see _apply_scale).
 	if _font_factor > 1.0:
 		_apply_font_oversampling()
-	# Non-empty tooltip_text is required for Godot to invoke _make_custom_tooltip;
-	# fall back to the name so the enlarged preview shows even without a description.
-	# TOUCH devices get no hover tooltip at all (empty text disables it): there's no real hover
-	# there, only emulated-mouse ghosts lingering under fingers — the long-press CardInspector
-	# is the touch path to card detail.
-	if DisplayServer.is_touchscreen_available():
-		tooltip_text = ""
-	else:
-		var desc := card_instance.data.description
-		tooltip_text = desc if not desc.is_empty() else card_instance.data.display_name
+	# Fall back to the name so the enlarged hover preview shows even without a description.
+	# UIScale.tip suppresses it entirely on touch (no hover there — long-press inspect instead).
+	var desc := card_instance.data.description
+	UIScale.tip(self, desc if not desc.is_empty() else card_instance.data.display_name)
 
 
 # Global-space centre of the badge that displays a given stat, so combat VFX can pop a number
@@ -552,7 +546,7 @@ static func _make_comp_chip(comp_id: String, is_element: bool) -> Control:
 	chip.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	chip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	chip.tooltip_text = comp_id.capitalize()
+	UIScale.tip(chip, comp_id.capitalize())
 
 	var style := StyleBoxFlat.new()
 	style.bg_color = info.color
@@ -838,6 +832,8 @@ func _make_status_pip(si: StatusInstance) -> Control:
 
 # The rich hover panel is the shared CardTooltip, so it matches everywhere a card is shown.
 func _make_custom_tooltip(_for_text: String) -> Object:
+	if UIScale.is_touch():
+		return null   # belt-and-braces: UIScale.tip already blanks the text on touch
 	return CardTooltip.build(card_instance, _show_cost)
 
 

@@ -55,7 +55,7 @@ static func make_chip(letter: String, col: Color, tip: String, icon: Texture2D =
 	var chip: Panel = TextIcons.TipPanel.new()   # tooltip renders keyword icons
 	chip.custom_minimum_size = Vector2(64, 64)
 	chip.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	chip.tooltip_text = tip
+	UIScale.tip(chip, tip)
 	if icon != null:
 		chip.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 		chip.add_child(_fill_icon(icon))

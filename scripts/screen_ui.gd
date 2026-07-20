@@ -139,7 +139,7 @@ static func experience_bar_compact(profile: ProfileData, compact: bool = false, 
 	var tip := "Experience — %d / %d to the next upgrade point" % [profile.experience, ProfileData.EXP_PER_UPGRADE_POINT]
 	if pts > 0:
 		tip += "\n%d upgrade point%s available — spend them at the hub." % [pts, "" if pts == 1 else "s"]
-	row.tooltip_text = tip
+	UIScale.tip(row, tip)
 
 	var tag := Label.new()
 	tag.text = "EXP"
@@ -180,7 +180,7 @@ static func experience_bar_compact(profile: ProfileData, compact: bool = false, 
 		pip.add_theme_font_size_override("font_size", 18 if compact else 14)
 		pip.add_theme_color_override("font_color", Color(0.95, 0.84, 0.34))
 		pip.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		pip.tooltip_text = tip
+		UIScale.tip(pip, tip)
 		row.add_child(pip)
 	return row
 
@@ -250,7 +250,7 @@ static func build_header() -> Dictionary:
 	gear.icon = preload("res://assets/ui/icons/settings.png")
 	gear.expand_icon = true
 	gear.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	gear.tooltip_text = "Settings"
+	UIScale.tip(gear, "Settings")
 	gear.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(gear)
 
@@ -259,12 +259,12 @@ static func build_header() -> Dictionary:
 	# Their visibility is the Shell's call (debug builds only) — see Shell._wire_dev_toggles.
 	var dev_sfx := action_button("", Callable(), Vector2(140, side_dev()), 15, CHROME_DEBUG)
 	dev_sfx.toggle_mode = true
-	dev_sfx.tooltip_text = "Placeholder SFX (F7) — OFF = the synth blips are muted"
+	UIScale.tip(dev_sfx, "Placeholder SFX (F7) — OFF = the synth blips are muted")
 	row.add_child(dev_sfx)
 
 	var dev_vfx := action_button("", Callable(), Vector2(140, side_dev()), 15, CHROME_DEBUG)
 	dev_vfx.toggle_mode = true
-	dev_vfx.tooltip_text = "Placeholder VFX (F8) — OFF = the procedural sketches are hidden"
+	UIScale.tip(dev_vfx, "Placeholder VFX (F8) — OFF = the procedural sketches are hidden")
 	row.add_child(dev_vfx)
 
 	var close := close_button(Callable())
@@ -272,7 +272,7 @@ static func build_header() -> Dictionary:
 	row.add_child(close)
 
 	var debug_close := close_button(Callable(), true)
-	debug_close.tooltip_text = "Debug: end combat"
+	UIScale.tip(debug_close, "Debug: end combat")
 	debug_close.visible = false
 	row.add_child(debug_close)
 
@@ -487,7 +487,7 @@ static func close_button(action: Callable, debug: bool = false) -> Button:
 	var min_size := Vector2(side, side)
 	var btn := action_button(CLOSE_GLYPH, action, min_size, 32,
 		CHROME_DEBUG if debug else CHROME_NEUTRAL)
-	btn.tooltip_text = "Close"
+	UIScale.tip(btn, "Close")
 	btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	return btn
 

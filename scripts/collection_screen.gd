@@ -162,7 +162,7 @@ func _build_catalogue() -> void:
 func _tile(label: String, art_id: String, path: String, has_art: bool) -> Control:
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 1)
-	v.tooltip_text = "%s\n%s.png%s" % [label, art_id, "" if has_art else "  (missing)"]
+	UIScale.tip(v, "%s\n%s.png%s" % [label, art_id, "" if has_art else "  (missing)"])
 
 	var tex := TextureRect.new()
 	tex.texture = load(path) if has_art else _placeholder

@@ -153,7 +153,7 @@ func _meta_button(label: String, scene_path: String) -> Button:
 	btn.size_flags_vertical = SIZE_EXPAND_FILL
 	if scene_path.is_empty():
 		btn.disabled = true
-		btn.tooltip_text = "Coming soon"
+		UIScale.tip(btn, "Coming soon")
 	else:
 		btn.pressed.connect(func(): Nav.goto(scene_path))
 	return btn

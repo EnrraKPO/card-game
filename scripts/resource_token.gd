@@ -61,7 +61,7 @@ func _build() -> void:
 	# Illustrated tokens (chess pieces) show their art with the name in the tooltip; resources
 	# without art (essences/stones) fall back to a coloured name label.
 	if art != null:
-		tooltip_text = Materials.display_name(material_id)
+		UIScale.tip(self, Materials.display_name(material_id))
 		var icon := TextureRect.new()
 		icon.texture = art
 		# Fill the token (minus the count strip) and keep aspect; IGNORE_SIZE so the full-res

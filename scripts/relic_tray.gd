@@ -100,7 +100,7 @@ func _make_chip(relic: RelicData) -> Button:
 		btn.size_flags_horizontal = SIZE_SHRINK_CENTER
 	else:
 		btn.size_flags_vertical = SIZE_SHRINK_CENTER
-	btn.tooltip_text = "%s — %s" % [relic.display_name, relic.description]
+	UIScale.tip(btn, "%s — %s" % [relic.display_name, relic.description])
 	if relic.icon != null:
 		_style_icon_chip(btn, relic.icon)
 	else:

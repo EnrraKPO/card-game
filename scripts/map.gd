@@ -189,7 +189,7 @@ func _build_forge_fab() -> void:
 	var btn := Button.new()
 	btn.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	btn.focus_mode = Control.FOCUS_NONE
-	btn.tooltip_text = "Forge — combine two cards into one"
+	UIScale.tip(btn, "Forge — combine two cards into one")
 	for s in ["normal", "hover", "pressed", "focus", "disabled"]:
 		btn.add_theme_stylebox_override(s, StyleBoxEmpty.new())
 	btn.pressed.connect(func(): _node_kinds[MapNodeData.Type.FORGE].enter(null, self))
@@ -234,7 +234,7 @@ func _build_zoom_slider() -> void:
 	slider.step = 0.05
 	slider.value = _zoom_level
 	slider.focus_mode = Control.FOCUS_NONE
-	slider.tooltip_text = "Zoom"
+	UIScale.tip(slider, "Zoom")
 	slider.custom_minimum_size = Vector2(96.0, 380.0) if _compact else Vector2(64.0, 300.0)
 	slider.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	# Chunky track + gold fill + big round grabber (the theme defaults are tiny desktop-ware).
@@ -480,7 +480,7 @@ func _rebuild_node_buttons() -> void:
 			med.position = pos - Vector2(_node_diam, _node_diam) / 2.0
 			if not reward_summary.is_empty():
 				var label := caption if not caption.is_empty() else MapNodeData.get_label(node.type)
-				med.tooltip_text = "%s — reward: %s" % [label, reward_summary]
+				UIScale.tip(med, "%s — reward: %s" % [label, reward_summary])
 			if is_current:
 				_current_med = med   # the travel trail's launch point (see the pressed cue)
 			if is_reachable:

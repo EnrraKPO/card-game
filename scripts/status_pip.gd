@@ -14,8 +14,7 @@ var status: StatusInstance
 func setup(si: StatusInstance) -> void:
 	status = si
 	var sd := si.data
-	# Non-empty tooltip_text is required for Godot to invoke _make_custom_tooltip at all.
-	tooltip_text = sd.display_name
+	UIScale.tip(self, sd.display_name)
 
 	# Per-status colour onto the badge fill (the stylebox is local-to-scene, so this is per-instance).
 	var sb := get_theme_stylebox("panel") as StyleBoxFlat
@@ -121,7 +120,7 @@ func _color_ring(col: Color) -> void:
 
 
 func _make_custom_tooltip(_for_text: String) -> Object:
-	if status == null:
+	if status == null or UIScale.is_touch():
 		return null
 	var sd: StatusData = status.data
 	var panel := PanelContainer.new()

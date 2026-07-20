@@ -1104,7 +1104,7 @@ func _build_relic_strip() -> Control:
 	var strip := Panel.new()
 	strip.custom_minimum_size.x = 122.0 if UIScale.is_compact() else 92.0
 	strip.size_flags_vertical = SIZE_EXPAND_FILL
-	strip.tooltip_text = "Relics"
+	UIScale.tip(strip, "Relics")
 	var track := StyleBoxFlat.new()
 	track.bg_color = ScreenUI.MANA_TRACK_BG
 	track.set_corner_radius_all(12)
@@ -1141,7 +1141,7 @@ func _build_mana_gauge() -> Control:
 	var gauge := Panel.new()
 	gauge.custom_minimum_size.x = 122.0 if compact else 92.0
 	gauge.size_flags_vertical = SIZE_EXPAND_FILL
-	gauge.tooltip_text = "Mana"
+	UIScale.tip(gauge, "Mana")
 	var track := StyleBoxFlat.new()
 	track.bg_color = ScreenUI.MANA_TRACK_BG
 	track.set_corner_radius_all(12)
@@ -1245,7 +1245,7 @@ func _build_action_column() -> Control:
 	top_row.custom_minimum_size.y = ScreenUI.BUTTON_HEIGHT_COMPACT - 16.0
 	if DebugConfig.enabled():
 		var debug_close := ScreenUI.close_button(_handle_combat_end, true)
-		debug_close.tooltip_text = "Debug: end combat"
+		UIScale.tip(debug_close, "Debug: end combat")
 		top_row.add_child(debug_close)
 
 	# The key touch target — "Ready" — a chunky vertical button filling the rest of the column,

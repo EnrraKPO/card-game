@@ -222,7 +222,7 @@ func _build_ui() -> void:
 	door.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
 	door.custom_minimum_size = Vector2(STRIP_H * DOOR_ASPECT, STRIP_H)
 	door.size_flags_vertical = SIZE_SHRINK_END
-	door.tooltip_text = "Leave"
+	UIScale.tip(door, "Leave")
 	door.pressed.connect(_leave)
 	door.mouse_entered.connect(func() -> void: door.modulate = Color(1.18, 1.18, 1.18))
 	door.mouse_exited.connect(func() -> void: door.modulate = Color.WHITE)
@@ -578,7 +578,7 @@ func _make_charm_item(charm_id: String, count: int) -> ForgeDragItem:
 	item.setup(_make_charm_chip(charm_id, count, size), {"kind": "charm", "id": charm_id})
 	var charm := CharmData.get_charm(charm_id)
 	if charm != null:
-		item.tooltip_text = "%s — %s" % [charm.display_name, charm.description]
+		UIScale.tip(item, "%s — %s" % [charm.display_name, charm.description])
 	item.grab.connect(_on_press)
 	return item
 
@@ -594,7 +594,7 @@ func _make_charm_chip(charm_id: String, count: int, size: Vector2) -> Control:
 	style.border_color = Color(0.04, 0.04, 0.06, 0.9)
 	chip.add_theme_stylebox_override("panel", style)
 	if charm != null:
-		chip.tooltip_text = "%s — %s" % [charm.display_name, charm.description]
+		UIScale.tip(chip, "%s — %s" % [charm.display_name, charm.description])
 
 	var lbl := Label.new()
 	lbl.text = (charm.letter if charm != null else "✦")
