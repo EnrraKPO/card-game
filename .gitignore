@@ -20,11 +20,17 @@ screenshots/
 # VFX pixel-probe snapshots (regenerable scratch — see tests/_vfx_probe.gd)
 /_probe_out/
 
-# UI render-harness output images (regenerable scratch)
-/_render_out.png
-/_render_out.png.import
+# UI render-harness output images (regenerable scratch — see _render.gd / _render.tscn).
+# Broad on purpose: every ad-hoc probe writes another root-level _<name>.png and these were
+# accumulating in the repo (12 of them removed in 8c390c7).
+/_render*.png
+/_render*.png.import
+/_*_shot.png
+/_*_shot.png.import
 /_shot_out.png
 /_shot_out.png.import
+/_nav_*.png
+/_nav_*.png.import
 
 # Icon rasterization / contact-sheet build output (regenerable scratch)
 tools/_icon_preview/
