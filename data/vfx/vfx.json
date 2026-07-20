@@ -254,20 +254,43 @@
 		"id": "map_forge_alert_glow",
 		"display_name": "Map Forge Alert Glow",
 		"category": "ui",
-		"renderer": "filter",
 		"behavior": "glow",
+		"renderer": "filter",
 		"params": {
 			"filter": "glow",
-			"glow_color": "ffa51e",
-			"spread": 46.0,
-			"falloff": 2.0,
-			"animate": {"param": "intensity", "from": 0.55, "to": 1.25, "period": 1.6}
+			"glow_color": "ccccff",
+			"spread": 46,
+			"falloff": 2,
+			"animate": {
+				"param": "intensity",
+				"from": 0.55,
+				"to": 1.25,
+				"period": 1.6
+			}
 		},
 		"sustained": true,
 		"placeholder": false,
 		"concept": "The map's Forge button while the run is holding unspent Magic Mineral — the one action that can turn that currency into a card is worth walking to, so the button radiates light instead of merely tinting.",
 		"explanation": "IMPLEMENTED (map): the first entry on renderer \"filter\" — the look is the `glow` RenderFilter (a shader deriving light from the button art's own alpha silhouette), and this entry owns only when it runs and the intensity breath. Nothing here describes the button's shape, because the filter reads it.",
 		"prompt": "Sprite sheet of a golden light halo breathing outward around a circular button, smooth soft radial falloff extending past the rim, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "map_forge_alert_inner",
+		"display_name": "Map Forge Alert Inner Light",
+		"category": "ui",
+		"renderer": "filter",
+		"behavior": "glow",
+		"params": {
+			"filter": "inner_glow",
+			"glow_color": "ffc46b",
+			"spread": 26.0,
+			"animate": {"param": "intensity", "from": 0.35, "to": 0.8, "period": 1.6}
+		},
+		"sustained": true,
+		"placeholder": false,
+		"concept": "The quiet half of the map Forge button's unspent-Mineral state: paired with the outer glow so the button reads as lit from within, not as flat art with a halo pasted behind it.",
+		"explanation": "IMPLEMENTED (map): the `inner_glow` RenderFilter, breathing on the same 1.6s period as the outer glow so the two read as one light rather than two effects. Deliberately dim — it should be felt before it is noticed.",
+		"prompt": "Sprite sheet of a warm light glowing from inside a circular metal button, soft inner rim light fading toward the centre, 8 frames on transparent background, 2d game effect"
 	},
 	{
 		"id": "forge_combine_ready_glow",

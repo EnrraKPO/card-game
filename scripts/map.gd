@@ -23,8 +23,10 @@ const FORGE_FAB_TEX := preload("res://assets/buttons/forge.png")
 # placeholder art; dropping a PNG at BANG_PNG_PATH overrides it with no code change.
 const FORGE_BANG_SVG := preload("res://assets/ui/alert_bang.svg")
 const FORGE_BANG_PNG_PATH := "res://assets/ui/alert_bang.png"
-# The sustained glow shown while unspent Magic Mineral is in hand.
-const FORGE_ALERT_GLOW := "map_forge_alert_glow"
+# The sustained cues shown while unspent Magic Mineral is in hand. Two entries, one state: an
+# outer glow spilling past the rim and a dim inner light, breathing on the same period so they
+# read as one light rather than two effects.
+const FORGE_ALERT_CUES := ["map_forge_alert_glow", "map_forge_alert_inner"]
 # Badge CENTRE as a fraction of the Forge button's box. Well inside the corner: the art's
 # visible disc is only ~0.83 of the box, so a corner-ward badge floats off it entirely. This
 # lands on the upper-right rim, overlapping the face.
@@ -264,13 +266,11 @@ func _set_forge_alert(on: bool) -> void:
 	if _forge_badge == null or _forge_fab == null:
 		return
 	_forge_badge.visible = on
-	# A real glow: the sustained "radiance" behavior draws additive layers OUTSIDE the button's
-	# rect on the VFX layer, so light spills past the rim. Tinting the button's modulate would
-	# only repaint pixels inside it, which is not a glow.
-	if on:
-		Vfx.attach(FORGE_ALERT_GLOW, _forge_fab)
-	else:
-		Vfx.detach(FORGE_ALERT_GLOW, _forge_fab)
+	for cue: String in FORGE_ALERT_CUES:
+		if on:
+			Vfx.attach(cue, _forge_fab)
+		else:
+			Vfx.detach(cue, _forge_fab)
 
 
 # A chunky vertical zoom slider (+ on top, − below, map-app style) floating over the left

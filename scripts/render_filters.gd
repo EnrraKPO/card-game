@@ -37,9 +37,11 @@ func apply(id: String, target: Control, overrides: Dictionary = {}) -> RenderFil
 
 	var layer := RenderFilterLayer.new()
 	target.add_child(layer)
-	# A child is drawn after (over) the parent; show_behind_parent inside setup() flips that for
-	# "behind" filters. Index 0 additionally keeps it under the target's other children.
-	target.move_child(layer, 0)
+	# Sibling order decides what a filter sits under. "behind" goes to index 0 so it is beneath
+	# the target's other children too (show_behind_parent in setup() puts it under the target
+	# itself); "above" must stay LAST or those same siblings would cover the light it adds.
+	if fd.layer != "above":
+		target.move_child(layer, 0)
 	var skin := overrides.duplicate()
 	skin.erase("texture")
 	layer.setup(fd, target, tex, skin)

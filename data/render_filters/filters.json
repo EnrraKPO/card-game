@@ -13,5 +13,20 @@
 		},
 		"concept": "Light radiating out of a thing, derived from the thing's own silhouette — the general 'this is live/ready/important' treatment, and the reason the filter system exists: the VFX library's procedural halos are sized to a bounding box and cannot follow a shape.",
 		"explanation": "Rings of alpha taps at increasing distance, weighted by a falloff curve, each ring reading a coarser mipmap so a wide spread stays cheap and smooth. Rendered behind the source, so an opaque face occludes the core and the light reads as coming from behind it. `pad` must exceed `spread` or the glow clips at the quad's edge."
+	},
+	{
+		"id": "inner_glow",
+		"display_name": "Inner Glow",
+		"shader": "res://assets/ui/shaders/filter_inner_glow.gdshader",
+		"pad": 0.0,
+		"layer": "above",
+		"params": {
+			"glow_color": "ffc46b",
+			"spread": 26.0,
+			"intensity": 0.5,
+			"falloff": 2.0
+		},
+		"concept": "A thing lit from WITHIN rather than surrounded — the quieter half of an 'this is live' treatment, and what keeps a glowing object from reading as a sticker with a halo behind it.",
+		"explanation": "Blurs the silhouette's ABSENCE and masks it by the silhouette, so light lands just inside the outline and fades toward the middle. pad = 0 because it never spills, and layer = \"above\" because the light is inside the shape and must draw over the art it lights."
 	}
 ]

@@ -1264,9 +1264,11 @@ function validateItem(type, d) {
           if (typeof v === 'string' && /^[0-9a-fA-F]{6}$/.test(v)) continue;
           return `params.${k} must be a number or a 6-digit hex colour`;
         }
-        // The effect is clipped to the layer's padded quad, so a spread wider than the padding
-        // silently cuts off at the quad's edge — catch it here rather than in a render.
-        if (typeof d.params.spread === 'number' && d.params.spread > d.pad)
+        // The effect is clipped to the layer's padded quad, so an OUTWARD spread wider than the
+        // padding silently cuts off at the quad's edge — catch it here rather than in a render.
+        // pad 0 is exempt: it declares a filter that never spills, whose spread runs INWARD from
+        // the silhouette (inner glow), where the quad is the source and nothing can clip.
+        if (d.pad > 0 && typeof d.params.spread === 'number' && d.params.spread > d.pad)
           return `params.spread (${d.params.spread}) exceeds pad (${d.pad}) — the effect would clip at the quad's edge`;
       }
       if (!d.concept) return 'missing concept — what this filter is for';

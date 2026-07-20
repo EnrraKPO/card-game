@@ -707,6 +707,12 @@ async function main() {
     // wider spread is silently clipped rather than drawn.
     await badFilter({ pad: 20, params: { spread: 46 } }, 'spread wider than pad rejected', /exceeds pad/);
     await badFilter({ params: { 'Glow Color': 'ffa51e' } }, 'non-uniform param key rejected', /uniform name/);
+    // …but an INWARD filter (inner glow) legitimately declares pad 0 and spreads into the
+    // silhouette, where there is no quad edge to clip against.
+    r = await api('/api/game/save', { type: 'render_filter', file: 'filters.json', data: {
+      id: 'apitest_inner', display_name: 'Test Inner', shader: SHADER, pad: 0, layer: 'above',
+      params: { spread: 26 }, concept: 'c', explanation: 'e' } });
+    check('inward filter (pad 0) accepts a spread', r.status === 200, JSON.stringify(r.data));
     await badFilter({ params: { glow_color: 'nothex' } }, 'non-number non-colour param rejected', /number or a 6-digit hex/);
 
     // A VFX entry on renderer "filter" must keep its arbitrary uniform params — the procedural
