@@ -39,7 +39,20 @@ var _deck_grid: GridContainer
 var _scroll: ScrollContainer
 var _charm_col: HBoxContainer
 var _card_size := CARD_SIZE
-const CHARM_SIZE := Vector2(116, 116)
+const CHARM_SIZE := Vector2(96, 96)
+
+# Bottom strip (door + charm shelf over a wallpaper backdrop) — ALL fixed constants (user
+# directive): this footprint never changes with deck size or window size, and never eats into
+# the card scroll's space above it (the scroll just gets whatever's left, same as always).
+var _door: TextureButton
+var _shelf: Control
+const DOOR_ASPECT := 512.0 / 768.0   # door.svg's native w/h
+const STRIP_H := 260.0               # the door's fixed height (may bleed past the window on short screens)
+const WALLPAPER_H := 190.0           # between SHELF_H and STRIP_H, bottom-anchored under the door
+const SHELF_H := 130.0               # roughly half the door's height
+# The shelf sits centred on the WALLPAPER's span (not the door's full height) — precomputed as a
+# fixed top margin from the strip's own top edge.
+const SHELF_TOP_MARGIN := STRIP_H - WALLPAPER_H + (WALLPAPER_H - SHELF_H) * 0.5
 
 # Station column: two ingredient slots, the result (card + name + full description), a status line,
 # the Mineral balance and the Combine button.
@@ -167,29 +180,64 @@ func _build_ui() -> void:
 	left.add_child(scroll)
 	_scroll = scroll
 
-	# Bottom strip: door + charm row, one shelf-height band.
+	# Bottom strip: door + charm row over a wallpaper backdrop — a FIXED-height band (user
+	# directive: this footprint never resizes with deck count or window size, and never eats into
+	# the card scroll above it; the scroll just gets whatever's left, exactly like any other row in
+	# this VBox). `strip_layer` is a plain (non-Container) Control so the wallpaper and the strip
+	# itself can freely OVERLAP as two full-rect anchored layers, wallpaper behind.
+	var strip_layer := Control.new()
+	strip_layer.custom_minimum_size.y = STRIP_H
+	left.add_child(strip_layer)
+
+	var wallpaper := TextureRect.new()
+	wallpaper.texture = EnvArt.tex("crafting", "wall_stripe")
+	wallpaper.stretch_mode = TextureRect.STRETCH_TILE
+	wallpaper.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	wallpaper.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
+	wallpaper.mouse_filter = MOUSE_FILTER_IGNORE
+	wallpaper.anchor_left = 0.0
+	wallpaper.anchor_right = 1.0
+	wallpaper.anchor_top = 1.0
+	wallpaper.anchor_bottom = 1.0
+	wallpaper.offset_top = -WALLPAPER_H
+	wallpaper.offset_bottom = 0.0
+	strip_layer.add_child(wallpaper)
+
 	var strip := HBoxContainer.new()
+	strip.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	strip.add_theme_constant_override("separation", 14)
-	left.add_child(strip)
+	strip_layer.add_child(strip)
 
 	var door := TextureButton.new()
 	door.texture_normal = EnvArt.tex("crafting", "door")
 	door.ignore_texture_size = true
 	door.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
-	door.custom_minimum_size = Vector2(120, 140)
+	door.custom_minimum_size = Vector2(STRIP_H * DOOR_ASPECT, STRIP_H)
+	door.size_flags_vertical = SIZE_SHRINK_END
 	door.tooltip_text = "Leave"
 	door.pressed.connect(_leave)
 	door.mouse_entered.connect(func() -> void: door.modulate = Color(1.18, 1.18, 1.18))
 	door.mouse_exited.connect(func() -> void: door.modulate = Color.WHITE)
 	strip.add_child(door)
+	_door = door
+
+	# Shelf cell: fills the row's full height (matching the door) so its fixed SHELF_TOP_MARGIN
+	# lands the shelf centred on the WALLPAPER's span rather than the door's taller one.
+	var shelf_cell := MarginContainer.new()
+	shelf_cell.size_flags_horizontal = SIZE_EXPAND_FILL
+	shelf_cell.add_theme_constant_override("margin_top", int(SHELF_TOP_MARGIN))
+	strip.add_child(shelf_cell)
 
 	var shelf := PanelContainer.new()
 	shelf.size_flags_horizontal = SIZE_EXPAND_FILL
+	shelf.size_flags_vertical = SIZE_SHRINK_BEGIN
+	shelf.custom_minimum_size.y = SHELF_H
 	var shelf_style := StyleBoxTexture.new()
 	shelf_style.texture = EnvArt.tex("crafting", "charm_shelf")
 	shelf_style.set_content_margin_all(12)
 	shelf.add_theme_stylebox_override("panel", shelf_style)
-	strip.add_child(shelf)
+	shelf_cell.add_child(shelf)
+	_shelf = shelf
 
 	var shelf_scroll := ScrollContainer.new()
 	shelf_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
@@ -290,17 +338,19 @@ func _build_ui() -> void:
 
 	# Text band under the cluster: the result read (name + cost + rules, font SHRINKS with length)
 	# on the left, the result's ability tokens on the right. A visible box marks it as the read
-	# area — its own surface with an inner margin, content pinned top-left. FIXED height — length
-	# changes re-size the font (in extremis scroll) INSIDE it; nothing around it ever moves.
-	# The band's wrapper takes the column's leftover height (the cluster above packs to its content),
-	# and the box centres vertically inside it — the read floats in the free space, never bottom-stuck.
+	# area — its own surface with an inner margin, content pinned top-left. FIXED MINIMUM height —
+	# length changes re-size the font (in extremis scroll) INSIDE it; nothing around it ever moves.
+	# The band's wrapper takes the column's leftover height (the cluster above and the Combine
+	# button below both pack to their own content), and the box FILLS it — margins on all four
+	# sides match (12px), so it reads as a small even gap against the slots above and the button
+	# below, the same way the side margins read against the column's edges.
 	var band_margin := MarginContainer.new()
 	band_margin.size_flags_vertical = SIZE_EXPAND_FILL
-	band_margin.add_theme_constant_override("margin_left", 12)
-	band_margin.add_theme_constant_override("margin_right", 12)
+	for side: String in ["left", "right", "top", "bottom"]:
+		band_margin.add_theme_constant_override("margin_" + side, 12)
 	right.add_child(band_margin)
 	var band_panel := PanelContainer.new()
-	band_panel.size_flags_vertical = SIZE_SHRINK_CENTER
+	band_panel.size_flags_vertical = SIZE_EXPAND_FILL
 	var band_style := StyleBoxFlat.new()
 	band_style.bg_color = Color(0, 0, 0, 0.28)
 	band_style.set_corner_radius_all(10)
@@ -541,7 +591,7 @@ func _make_charm_chip(charm_id: String, count: int, size: Vector2) -> Control:
 	lbl.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
-	lbl.add_theme_font_size_override("font_size", maxi(int(size.x * 0.3), 20))
+	lbl.add_theme_font_size_override("font_size", maxi(int(size.x * 0.3), 14))
 	lbl.add_theme_color_override("font_color", Color(0.98, 0.98, 1.0))
 	lbl.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.7))
 	lbl.add_theme_constant_override("outline_size", 3)

@@ -10,6 +10,7 @@
     "carton w bg and volumetric light": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric light, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear, ",
     "sticker": "cartoon art style, 2d illustration, clean bold outlines, minimal sticker read with thick outline, cell shaded vector graphics, optimized to read at small size, fantasy game illustration, simple background"
   },
+  "audiogenUrl": "http://127.0.0.1:8188",
   "conceptPresets": {
     "Cryptid": "Select a magical creature to fit the elemental theme: "
   },

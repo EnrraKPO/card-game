@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="400">
+  <!-- Placeholder wallpaper strip behind the door + charm shelf: thick light-blue/cream bands,
+       tileable horizontally (240px = two full stripe pairs). -->
+  <rect x="0" y="0" width="240" height="400" fill="#f6efd9"/>
+  <rect x="0" y="0" width="60" height="400" fill="#cfe7f2"/>
+  <rect x="120" y="0" width="60" height="400" fill="#cfe7f2"/>
+  <rect x="59" y="0" width="2" height="400" fill="#b9d4de" opacity="0.6"/>
+  <rect x="0" y="0" width="2" height="400" fill="#b9d4de" opacity="0.6"/>
+  <rect x="119" y="0" width="2" height="400" fill="#b9d4de" opacity="0.6"/>
+  <rect x="179" y="0" width="2" height="400" fill="#b9d4de" opacity="0.6"/>
+  <rect x="60" y="0" width="2" height="400" fill="#e3dcc2" opacity="0.6"/>
+  <rect x="180" y="0" width="2" height="400" fill="#e3dcc2" opacity="0.6"/>
+</svg>

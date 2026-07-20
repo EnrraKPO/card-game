@@ -11,23 +11,19 @@
 		],
 		"tool": {
 			"art": {
-				"prompt": "Hunched infernal footsoldier carved from smoky faceted violet crystal, faceted plates split by molten crimson glowing seams, sweeping curved horns crowning a fanged crystalline helm, one clawed fist gripping a jagged shard-blade trailing ember sparks, searing orange eyes blazing, wisps of drifting red fire and floating cinders, dark void backdrop with faint glowing circular rune-light, thick bold outlines, saturated stylized colors.",
+				"prompt": "Chibi imp foot soldier in cracked black obsidian armor with a rounded horned helmet topped by a glowing red spherical stud, small pointed ears and glowing green eyes peeking from beneath the visor, gripping a jagged red-tipped bone spear and a round crimson demon-crested buckler, standing braced on scorched cracked earth, jagged dark peaks and stormy purple sky behind, dramatic infernal glow, dark fantasy painterly illustration.",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/pawn.png",
-					"name": "Pawn"
+					"source": "upload",
+					"path": "snap_pawn.png"
 				},
 				"inferredFrom": {
-					"concept": [
-						"pawn",
-						"air_air_bishop_pawn",
-						"air_air_knight_pawn"
-					],
+					"anchor": "snap_pawn.png",
 					"theme": [
-						"darkness_fire",
-						"darkness_fire_bishop",
-						"darkness_fire_king"
-					]
+						"snap_darkness_fire_pawn.png",
+						"snap_darkness_fire_knight.png",
+						"snap_darkness_fire_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		}
@@ -44,23 +40,19 @@
 		],
 		"tool": {
 			"art": {
-				"prompt": "Rearing armored warhorse forged of faceted crimson-and-violet crystal shards, glowing molten-orange veins pulsing across its plated barding, blazing golden-fire eyes, spiraling infernal horns of jagged translucent gemstone, mane streaming as dark ember smoke, hooves striking sparks of burning red light, drifting cinders and faint glowing sigils, thick bold outlines, deep shadowed void background.",
+				"prompt": "Rearing charger with obsidian-plated armor and glowing red-veined chest guard, curled ram-like horns and jagged bat ears, mane of flickering green flame, smoldering red eyes, cracked magma-etched hooves trailing embers, torn crimson sash whipping in the wind, muscular stylized fantasy creature, three-quarter view, purple-to-orange infernal hellscape with jagged obsidian spires and lava-veined ground, dramatic saturated red-green painterly digital illustration.",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/knight.png",
-					"name": "Knight"
+					"source": "upload",
+					"path": "snap_knight.png"
 				},
 				"inferredFrom": {
-					"concept": [
-						"knight",
-						"air_air_bishop_knight",
-						"air_air_knight"
-					],
+					"anchor": "snap_knight.png",
 					"theme": [
-						"darkness_fire",
-						"darkness_fire_bishop",
-						"darkness_fire_king"
-					]
+						"snap_darkness_fire_pawn.png",
+						"snap_darkness_fire_knight.png",
+						"snap_darkness_fire_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		}
@@ -77,23 +69,19 @@
 		],
 		"tool": {
 			"art": {
-				"prompt": "Smooth-faced hierophant with cruel horned crystalline mitre, pale beardless face lit by molten inner fire, faceted low-poly armor of shadow-violet gems threaded with glowing infernal-orange cracks, blazing ember eyes, spreading tattered wings of jagged red crystal shards, raising a spiraled dark crook loosing embers, hovering over a burning ritual circle, deep black background, dramatic crimson glow, centered menacing figure",
+				"prompt": "Chibi demonic cleric with towering split-horned mitre of cracked obsidian and glowing red veins, hooded shadowed face with glowing green eyes, flowing tattered black robe trimmed in molten red, clutching a spiraled bone-and-magma crozier topped with a curling ram horn, cradling a bound grimoire wrapped in chains with a pulsing green rune-eye, standing on cracked scorched ground, purple stormy hellscape with jagged obsidian peaks, dramatic infernal glow, dark fantasy digital painting.",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/bishop.png",
-					"name": "Bishop"
+					"source": "upload",
+					"path": "snap_bishop.png"
 				},
 				"inferredFrom": {
-					"concept": [
-						"bishop",
-						"air_air_bishop",
-						"air_air_bishop_bishop"
-					],
+					"anchor": "snap_bishop.png",
 					"theme": [
-						"darkness_fire",
-						"darkness_fire_king",
-						"darkness_fire_knight"
-					]
+						"snap_darkness_fire_pawn.png",
+						"snap_darkness_fire_knight.png",
+						"snap_darkness_fire_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		},
@@ -111,23 +99,19 @@
 		],
 		"tool": {
 			"art": {
-				"prompt": "A cloven-hoofed bone steed rearing within a jagged archway of blackened gothic stalls, hollow sockets pouring molten orange fire, faceted shadow-violet plating veined with glowing infernal cracks, tattered wings of splintered red crystal shards flaring upward, a smoldering ring of embers hovering above its skull, deep black background, dramatic crimson glow, centered menacing subject",
+				"prompt": "Squat crenellated stone tower rebuilt from cracked black obsidian blocks veined with glowing magma, jagged demonic horns curling from its battlements, a molten green-fire banner hanging between clawed bone hooks, a small horned imp peering from a jagged arch window with glowing green eyes, tapered fanged base gripping scorched earth, purple-orange hellscape sky, dramatic infernal glow.",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/rook.png",
-					"name": "Rook"
+					"source": "upload",
+					"path": "snap_rook.png"
 				},
 				"inferredFrom": {
-					"concept": [
-						"rook",
-						"air_air_bishop_rook",
-						"air_air_knight_rook"
-					],
+					"anchor": "snap_rook.png",
 					"theme": [
-						"darkness_fire",
-						"darkness_fire_bishop",
-						"darkness_fire_king"
-					]
+						"snap_darkness_fire_pawn.png",
+						"snap_darkness_fire_knight.png",
+						"snap_darkness_fire_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		},
@@ -152,13 +136,19 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Winged front-facing demoness suspended on rising cinders, cruel pale beautiful face lit by molten inner fire, blazing ember eyes, flowing dark hair whipped sideways, tattered translucent robes of jagged crimson crystal shards, faceted shadow-violet gem armor threaded with glowing infernal-orange cracks, broad sweeping wings of red crystal, a searing dark halo above her brow, hands parting spirals of embers, deep black background, dramatic crimson glow, centered menacing figure, bold clean cel-shading, thick outlines",
+				"prompt": "Chibi crowned sorceress-queen with dark ashen skin and glowing green facial markings, hair of flickering green flame beneath a jagged red spiked crown, wrapped in a voluminous crimson robe with cracked molten seams and obsidian pauldrons, calmly conjuring a crackling green-cored fireball above her open palm, standing on a lava-veined dais before jagged obsidian spires, purple infernal sky, saturated red-green painterly digital illustration.",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/queen.png",
-					"name": "Queen",
-					"mode": "img2img",
-					"denoise": 0.6
+					"source": "upload",
+					"path": "snap_queen.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_queen.png",
+					"theme": [
+						"snap_darkness_fire_pawn.png",
+						"snap_darkness_fire_knight.png",
+						"snap_darkness_fire_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		}
@@ -182,13 +172,19 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Stocky footsoldier braced in a low battle stance, body hewn from smoky faceted purple crystal split by molten glowing-orange fissures, jagged spiked pauldrons and a fanged crystalline helm sprouting curved horns, blazing ember eyes, one gauntleted fist swinging a cracked shard-blade shedding sparks, drifting red cinders and coiling smoke, faint circular ritual glow beneath scorched feet, dark void backdrop, thick bold outlines, saturated stylized colors, centered menacing figure.",
+				"prompt": "Chibi demonic foot soldier in cracked obsidian breastplate with glowing red seams, full horned black helmet hiding a green-eyed glare, wielding a long blackened blade wreathed in red ember light and a round crimson-runed shield with green flame trim, standing braced on scorched cracked ground, jagged dark peaks under a purple stormy sky, dramatic infernal lighting, dark fantasy digital painting.",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/pawn_pawn.png",
-					"name": "Warrior",
-					"mode": "img2img",
-					"denoise": 0.6
+					"source": "upload",
+					"path": "snap_pawn_pawn.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_pawn_pawn.png",
+					"theme": [
+						"snap_darkness_fire_pawn.png",
+						"snap_darkness_fire_knight.png",
+						"snap_darkness_fire_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		}
@@ -212,13 +208,19 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Demonic warhorse charging low, its galloping body hewn from smoky faceted purple crystal split by molten crimson fissures, plated barding sprouting curved horns, blazing ember eyes, hooves striking sparks and coiling smoke, a horned crystalline rider crouched forward leveling a jagged shard-lance shedding cinders, drifting red embers, faint circular ritual glow, dark void backdrop, thick bold outlines, saturated stylized colors.",
+				"prompt": "Chibi horned knight riding a rearing black-hided beast with jagged obsidian horns and glowing green flaming mane, rider clad in cracked red magma-plated armor with glowing green eye-slits and a dripping green flame plume, wielding a barbed obsidian lance trailing red spectral pennant, cracked lava-veined ground, purple stormy hellscape backdrop with jagged dark peaks, dramatic infernal glow, saturated red-green palette, painterly digital illustration.",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/knight_pawn.png",
-					"name": "Cavalry",
-					"mode": "img2img",
-					"denoise": 0.6
+					"source": "upload",
+					"path": "snap_knight_pawn.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_knight_pawn.png",
+					"theme": [
+						"snap_darkness_fire_pawn.png",
+						"snap_darkness_fire_knight.png",
+						"snap_darkness_fire_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		}
@@ -242,13 +244,19 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Towering demonic paladin hewn from smoky faceted violet crystal, layered plate armor split by molten orange fissures, a fanged visored helm crowned with sweeping curved horns and a crest of jagged shards, blazing ember eyes behind the visor, one gauntlet raising a spiked warhammer trailing sparks, tall shield glowing with infernal seams, tattered cloak streaming into coiling smoke, drifting red cinders, faint ritual glow beneath scorched feet, deep black void, thick bold outlines, saturated stylized colors, centered menacing figure",
+				"prompt": "Chibi hulking sentinel in obsidian-black heavy plate armor with jagged horned crest and glowing red visor slits sealed shut, thick charred pauldrons rimmed in molten red, gripping a massive spiked flanged mace wreathed in green fire, other arm bearing a jagged obsidian shield emblazoned with a glowing green fanged sigil, tattered red cape, standing on scorched cracked ground, purple-orange infernal sky, dramatic hellish glow, vibrant painterly digital illustration.",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/bishop_pawn.png",
-					"name": "Paladin",
-					"mode": "img2img",
-					"denoise": 0.6
+					"source": "upload",
+					"path": "snap_bishop_pawn.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_bishop_pawn.png",
+					"theme": [
+						"snap_darkness_fire_pawn.png",
+						"snap_darkness_fire_knight.png",
+						"snap_darkness_fire_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		}
@@ -272,13 +280,19 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Hulking demonic garrison-keep hewn from smoky faceted violet crystal, rounded battlemented crown and yawning fanged gateway split by molten crimson fissures, hollow windows pouring searing orange fire, curved horns jutting from its ramparts, tattered banners smoldering into coiling smoke and drifting cinders, a horned crystalline sentry clutching a jagged shard-lance at the threshold, faint circular ritual glow beneath scorched foundations, thick bold outlines, saturated stylized colors, centered menacing figure, dark void backdrop.",
+				"prompt": "Squat fortified keep of jagged black obsidian bricks fused with cracked red magma seams, arched maw-like gateway framed by curling horns, a tattered green-flame banner hanging above the entrance, a rack of jagged bone-and-iron spears jutting from cracked stone beside the door, a chibi horned demon guard in obsidian plate with glowing red edges and green eyes standing sentry with spear and round crest shield, purple stormy hellscape sky, jagged infernal peaks, dramatic saturated red-green painterly digital illustration.",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/pawn_rook.png",
-					"name": "Barracks",
-					"mode": "img2img",
-					"denoise": 0.6
+					"source": "upload",
+					"path": "snap_pawn_rook.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_pawn_rook.png",
+					"theme": [
+						"snap_darkness_fire_pawn.png",
+						"snap_darkness_fire_knight.png",
+						"snap_darkness_fire_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		},
@@ -303,13 +317,19 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "A commanding woman perched on a jutting ledge of smoky faceted violet crystal, one arm thrusting a slender jagged shard-baton skyward, layered plate armor split by molten crimson fissures, sweeping curved horns framing her stern face, blazing ember eyes, tattered cloak streaming into coiling smoke, tiny horned crystalline soldiers marching below in drifting red cinders, faint circular ritual glow, dark void, thick bold outlines, saturated stylized colors.",
+				"prompt": "Chibi female fiend commander in cracked obsidian plate armor with glowing red seams and green-eyed horned helm, jagged bat-wing cloak trailing red smoke, standing atop a lava-veined stone rampart, pointing an obsidian baton tipped with green flame toward the horizon, ranks of small horned imp soldiers marching below with red-glowing spears, cracked magma ground, purple stormy hellscape sky, dramatic infernal lighting, dark fantasy digital painting.",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/pawn_queen.png",
-					"name": "Commander",
-					"mode": "img2img",
-					"denoise": 0.6
+					"source": "upload",
+					"path": "snap_pawn_queen.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_pawn_queen.png",
+					"theme": [
+						"snap_darkness_fire_pawn.png",
+						"snap_darkness_fire_knight.png",
+						"snap_darkness_fire_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		}
@@ -333,13 +353,19 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Colossal horned war-beast rearing mid-charge, its hulking muscled body hewn from faceted crimson-and-violet crystal split by molten-orange fissures, blazing golden-fire eyes, spiraling infernal horns of jagged translucent gemstone, streaming ember-smoke mane, hooves striking sparks and coiling smoke, drifting glowing cinders, faint circular ritual glow, dark shadowed void backdrop, thick bold outlines, saturated stylized colors.",
+				"prompt": "Massive armored bull-like beast charging low with head lowered, obsidian-black hide cracked with glowing magma-red veins, curved bone-white horns wreathed in green flame, a molten-forged brow plate etched with a demon crest, green fire pluming from flared nostrils and a smoldering nose ring, tattered crimson hide draped over hunched shoulders, hooved feet cracking scorched stone, jagged obsidian spires and a stormy purple-orange hellscape behind it, dramatic infernal lighting, saturated red-green palette, painterly dark fantasy illustration.",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/knight_knight.png",
-					"name": "Beast",
-					"mode": "img2img",
-					"denoise": 0.6
+					"source": "upload",
+					"path": "snap_knight_knight.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_knight_knight.png",
+					"theme": [
+						"snap_darkness_fire_pawn.png",
+						"snap_darkness_fire_knight.png",
+						"snap_darkness_fire_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		}
@@ -363,13 +389,19 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Dark cryptid stag beast conjured from coiling black smoke and faceted crimson-violet gemstone, gaunt body threaded with molten-orange fissures, sweeping jagged translucent horns of glowing infernal shards, blazing ember eyes, mane and tail streaming into curling dark cinders, hooves striking sparks of burning red light, drifting glowing sigils, thick bold outlines, deep shadowed void.",
+				"prompt": "Demonic unicorn-like cryptid rearing on cracked obsidian ground, sinewy jet-black hide etched with glowing red veins, a jagged blood-red spiraling horn, wild flowing mane of green witchfire, glowing green predator eyes, cloven magma-cracked hooves, small curved black horns behind the ears, gaunt demonic musculature, purple-to-red hellscape sky, jagged obsidian spires silhouetted behind, dramatic infernal glow, saturated red-green painterly digital illustration.",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/bishop_knight.png",
-					"name": "Cryptid",
-					"mode": "img2img",
-					"denoise": 0.6
+					"source": "upload",
+					"path": "snap_bishop_knight.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_bishop_knight.png",
+					"theme": [
+						"snap_darkness_fire_pawn.png",
+						"snap_darkness_fire_knight.png",
+						"snap_darkness_fire_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		}
@@ -394,13 +426,19 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Small stout stable building of black obsidian timbers and cracked-magma stone, glowing red seams between beams, curved horns jutting from the peaked roof, green flame lanterns flanking the doorway, a horned dark warhorse with green blazing mane peering out over the barn door, hay smoldering faintly, lava-veined ground, purple infernal sky, dramatic painterly digital illustration.",
+				"prompt": "Small stable hut built from cracked black obsidian slabs and bone-studded charred timber, jagged horned spikes crowning its cracked red-tile roof, twin doors bound in glowing red-veined iron hanging open to reveal a snorting hellish steed with glowing green eyes and a flickering green flame mane peeking out, a tattered crimson banner marked with a clawed sigil hanging above the archway, smoldering lava-cracked ground, bundled ashen hay and a rusted trident-fork leaning against cracked obsidian brick, dark fantasy digital painting, purple-orange infernal sky glow.",
 				"ref": {
 					"source": "upload",
-					"path": "snap_knight_rook.png",
-					"name": "snap_knight_rook.png",
-					"mode": "img2img",
-					"denoise": 0.6
+					"path": "snap_knight_rook.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_knight_rook.png",
+					"theme": [
+						"snap_darkness_fire_pawn.png",
+						"snap_darkness_fire_knight.png",
+						"snap_darkness_fire_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		}
@@ -424,13 +462,19 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Towering demonic winged beast reared high on clawed hind legs, hulking body hewn from faceted crimson-and-violet crystal split by molten-orange fissures, blazing golden-fire eyes deep in a snarling horned skull, spiraling jagged translucent horns, vast membranous wings streaming curling ember-smoke, hooked talons striking showers of burning red sparks, drifting glowing cinders, faint circular ritual glow, deep shadowed void backdrop, thick bold outlines, saturated stylized shading, centered heroic subject.",
+				"prompt": "Massive winged horned beast, obsidian scales cracked with glowing red magma veins, curved black horns and jagged bone spines lining its spine, sickly green flame breath curling from bared fangs, membranous wings edged in dripping green fire, molten claws gouging cracked infernal ground, towering over jagged obsidian spires, purple-orange stormy hellscape backdrop, dramatic saturated red-green infernal glow, dark fantasy painterly illustration.",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/knight_queen.png",
-					"name": "Monster",
-					"mode": "img2img",
-					"denoise": 0.6
+					"source": "upload",
+					"path": "snap_knight_queen.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_knight_queen.png",
+					"theme": [
+						"snap_darkness_fire_pawn.png",
+						"snap_darkness_fire_knight.png",
+						"snap_darkness_fire_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		}
@@ -454,13 +498,19 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Bearded infernal high-priest carved from smoky faceted violet crystal, long streaming beard of coiling black cinders, tall horned mitre of jagged glowing shards, tattered robes split by molten-orange fissures, blazing ember eyes, arms upraised loosing spiraling whorls of burning red arcane light and drifting sigils from open palms, deep black void, thick bold outlines, saturated stylized rendering, centered menacing figure",
+				"prompt": "Chibi bearded demonic high priest, curved obsidian horns crowning a tall cracked-red miter, molten-veined black robes with glowing green trim, long fanged beard lit by inner green fire, one clawed hand raised weaving a crackling green sigil circle, the other gripping a jagged bone-and-magma staff topped with a pulsing red demon-eye orb, standing on scorched cracked stone, purple-orange hellscape sky, dramatic infernal glow, saturated red-green painterly digital illustration.",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/bishop_bishop.png",
-					"name": "Hierophant",
-					"mode": "img2img",
-					"denoise": 0.6
+					"source": "upload",
+					"path": "snap_bishop_bishop.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_bishop_bishop.png",
+					"theme": [
+						"snap_darkness_fire_pawn.png",
+						"snap_darkness_fire_knight.png",
+						"snap_darkness_fire_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		}
@@ -484,13 +534,19 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "A soaring slender spire of smoky faceted violet crystal, tall tapering cap threaded with molten-orange fissures, arched doorway and slit windows blazing with spiraling infernal-red arcane light, jagged glowing shards jutting from its upper battlements, drifting burning sigils orbiting the peak, ember-lit ritual circle at its base, deep black void, thick bold outlines, centered menacing structure.",
+				"prompt": "Chibi hooded cultist magician in tattered obsidian-and-crimson vestments, clutching a bound grimoire and a horned red-tipped staff, standing before a jagged obsidian spire tower wrapped in cracked magma veins, arched windows glowing venomous green, a molten crimson banner emblazoned with a clawed demon sigil hanging beneath twisted horn-like battlements, swirling green flame wisps and embers orbiting the spire, cracked lava-veined ground, dark stone pines silhouetted against a purple-to-orange infernal sky, dramatic hellish glow, saturated red-green palette, detailed painterly fantasy illustration.",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/bishop_rook.png",
-					"name": "Arcane Tower",
-					"mode": "img2img",
-					"denoise": 0.6
+					"source": "upload",
+					"path": "snap_bishop_rook.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_bishop_rook.png",
+					"theme": [
+						"snap_darkness_fire_pawn.png",
+						"snap_darkness_fire_knight.png",
+						"snap_darkness_fire_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		},
@@ -515,13 +571,19 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Towering front-facing dark goddess conjured from coiling black smoke and faceted crimson-violet crystal, serene feminine visage lit by molten inner fire, blazing ember eyes, long streaming hair dissolving into curling cinders, tattered flowing robes split by glowing orange fissures, sweeping jagged translucent wings of glowing infernal shards, arms upraised loosing spiraling whorls of burning red light and drifting sigils, deep shadowed void, thick bold outlines, saturated stylized rendering, centered menacing figure",
+				"prompt": "Four-armed towering goddess with obsidian-black skin and cracked magma veins, jagged horned headdress crowned in dripping green flame, glowing red eyes, holding a serrated red-hot scepter and cradling a small clawed effigy in offering, draped in tattered crimson robes etched with green glowing sigils, arms raised bestowing infernal blessing, standing before jagged obsidian spires under a churning purple-red hellsky.",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/bishop_queen.png",
-					"name": "Deity",
-					"mode": "img2img",
-					"denoise": 0.6
+					"source": "upload",
+					"path": "snap_bishop_queen.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_bishop_queen.png",
+					"theme": [
+						"snap_darkness_fire_pawn.png",
+						"snap_darkness_fire_knight.png",
+						"snap_darkness_fire_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		}
@@ -545,13 +607,19 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Hulking fortress turret carved from smoky faceted violet crystal veined with molten crimson fissures, narrow slit windows pouring searing orange fire, crowned by a swiveling top-mounted horned cannon of jagged shard-plating, its fanged barrel belching a churning gout of hellfire and coiling ember smoke, tattered smoldering banners, drifting cinders, faint ritual glow beneath scorched foundations, thick bold outlines, saturated stylized colors, centered menacing structure, dark void backdrop",
+				"prompt": "Squat round stone-walled turret with arrow-slit windows and a sloped buttressed base, crowned by a massive rotating ballista built from black cracked obsidian and demon bone, its taut sinew cords glowing molten red, twin curved horn-spikes flanking a barbed harpoon bolt dripping green fire, green flaming eyes set into the stonework, red-veined cracks pulsing across the walls, jagged black spires and dark flame silhouettes on a purple-orange hellscape horizon, cracked lava-veined ground, dramatic infernal glow, saturated red-green painterly digital illustration.",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/rook_rook.png",
-					"name": "Turret",
-					"mode": "img2img",
-					"denoise": 0.6
+					"source": "upload",
+					"path": "snap_rook_rook.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_rook_rook.png",
+					"theme": [
+						"snap_darkness_fire_pawn.png",
+						"snap_darkness_fire_knight.png",
+						"snap_darkness_fire_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		},
@@ -576,13 +644,19 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "A cleft-turreted dark fortress keep sculpted from faceted crimson-and-violet crystal, a tall spired central tower between two rounded battlement towers, molten-orange fissures snaking down the walls, arched gateway and slit windows blazing with spiraling infernal-red light, jagged shards jutting from the ramparts, drifting burning cinders and curling ember-smoke, a faint glowing ritual circle at its base, deep shadowed void, thick bold outlines, saturated stylized shading, centered menacing structure.",
+				"prompt": "Massive fortress of black obsidian ramparts fused with cracked magma veins, twisted horned spires jutting like fangs from crenellated towers, molten green fissures glowing between stone blocks, tattered crimson banners bearing a clawed demonic sigil, arched gate wreathed in green flame with fanged iron portcullis, two horned demon guards flanking the entrance with glowing red eyes and spears, jagged obsidian ground, purple stormy hellscape sky behind, dramatic infernal glow, vibrant painterly digital illustration.",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/rook_queen.png",
-					"name": "Castle",
-					"mode": "img2img",
-					"denoise": 0.6
+					"source": "upload",
+					"path": "snap_rook_queen.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_rook_queen.png",
+					"theme": [
+						"snap_darkness_fire_pawn.png",
+						"snap_darkness_fire_knight.png",
+						"snap_darkness_fire_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		},
@@ -607,13 +681,19 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "A demonic warrior queen leaping mid-swing from a jagged ledge, body hewn from faceted crimson-and-violet crystal split by molten-orange fissures, blazing ember eyes, long streaming hair dissolving into curling cinders, spiked crown of glowing embers, cracked plate armor seamed with burning light, crimson cloak trailing smoke, hoisting an oversized translucent shard-greatsword scattering red sparks, drifting cinders, deep shadowed void, thick bold outlines, saturated stylized shading, centered heroic figure.",
+				"prompt": "Chibi crowned female warrior hero, dusky skin with faint glowing green cracked markings, wild dark hair licked by curling green flame, jagged black obsidian crown fused with a ring of small curved horns, spiked crimson molten-cracked armor with glowing red joints, wielding a massive great-blade of hardened magma edged in green fire, tattered blood-red cape, crouched atop a cracked lava-veined outcrop, jagged obsidian spires and purple-orange infernal sky behind her, saturated red-green palette, dramatic hellish glow, detailed painterly fantasy illustration.",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/queen_queen.png",
-					"name": "Hero",
-					"mode": "img2img",
-					"denoise": 0.6
+					"source": "upload",
+					"path": "snap_queen_queen.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_queen_queen.png",
+					"theme": [
+						"snap_darkness_fire_pawn.png",
+						"snap_darkness_fire_knight.png",
+						"snap_darkness_fire_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		}
