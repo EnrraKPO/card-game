@@ -1,0 +1,13 @@
+[
+  { "id": "beast_wolf", "prompt": "A lean feral wolf with matted grey fur and glowing amber eyes, bared fangs dripping, stalking low through misty pine forest, hungry snarl, facing left" },
+  { "id": "beast_boar", "prompt": "A hulking wild boar with iron-hard hide plates and chipped upturned tusks, stamping the ground and snorting steam, autumn forest undergrowth, stubborn furious eyes, facing left" },
+  { "id": "beast_hyena", "prompt": "A scruffy spotted hyena mid-cackle, unhinged grin full of crooked teeth, drooling, bone scraps scattered around a moonlit savanna, wild crazed eyes, facing left" },
+  { "id": "beast_panther", "prompt": "A sleek black panther with silver fang markings, coiled to pounce from a jungle branch at night, gleaming green eyes, shadow tendrils curling off its fur, moonbeams through canopy, facing left" },
+  { "id": "beast_bear", "prompt": "A massive brown bear rearing with claws spread, old battle scars across its muzzle, roaring with rage-red eyes, splintered trees around a mountain clearing, facing left" },
+  { "id": "beast_direwolf", "prompt": "A huge direwolf alpha with a thick storm-grey mane and one torn ear, standing proud on a rocky outcrop, two smaller wolf silhouettes behind it, full moon and mist, commanding stare, facing left" },
+  { "id": "beast_ape", "prompt": "A mighty silverback gorilla chieftain pounding its chest, tribal bone necklace and red war paint stripes, jungle ruins behind, leaves scattering from the shockwave, fierce bellowing, facing left" },
+  { "id": "beast_behemoth", "prompt": "A colossal shaggy behemoth beast with a mane of thorny brambles and moss growing on its back, tree-trunk legs, small birds fleeing, lumbering through a shattered forest at dusk, ancient furious eyes, facing left" },
+  { "id": "beast_alpha", "prompt": "A regal monstrous alpha wolf king with a scarred muzzle, jagged black crown-like horn ridge, blood-red cape of matted fur, standing atop a bone pile, pack eyes glowing in the darkness behind, facing left" },
+  { "id": "beast_ancient", "prompt": "An ancient colossal tortoise-boar hybrid beast, its thorny shell-back carved with a hundred old hunter scars and broken spears still lodged in it, moss and small trees growing on its shell, slow burning glare, twilight valley, facing left" },
+  { "id": "beast_ragnor", "prompt": "A nightmarish giant apex predator beast, part wolf part bear, impossibly wide jaw unhinged mid-roar, rows of fangs, gaunt ribs showing endless hunger, carcass-strewn blighted valley, terrifying boss presence, facing left" }
+]

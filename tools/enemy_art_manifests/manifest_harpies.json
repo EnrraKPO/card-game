@@ -1,0 +1,12 @@
+[
+  { "id": "harpy_fledgling", "prompt": "A small scruffy young harpy girl with stubby brown wings and oversized talon feet, wobbling on a cliff nest of twigs, determined pout, feathers askew, mountain sky, facing left" },
+  { "id": "harpy_winddancer", "prompt": "A graceful harpy dancer spinning mid-air, teal and white plumage, ribbon-like feather trails spiraling around her, serene smiling eyes closed, sunlit canyon updraft with floating petals, facing left" },
+  { "id": "harpy_talon", "prompt": "A fierce harpy warrior diving with both taloned feet extended forward, twin steel claw blades strapped to her legs, russet and black feathers swept back, battle cry, storm clouds behind, facing left" },
+  { "id": "harpy_shrieker", "prompt": "A wild-eyed harpy mid-scream with beak-like mouth wide open, visible concentric sound-wave rings blasting outward, ragged violet feathers blown back by her own shriek, cracked cliff perch, facing left" },
+  { "id": "harpy_galecaller", "prompt": "A mystical shaman harpy with storm-grey plumage and glowing wind runes on her spread wings, singing skyward, spiral gusts and leaves swirling around her raised talons, mountain peak altar, facing left" },
+  { "id": "harpy_thief", "prompt": "A sly grinning harpy rogue clutching a stolen glittering hourglass, sleek midnight-blue feathers, darting through the air with speed lines behind her, small bag of loot on her hip, twilight rooftops below, facing left" },
+  { "id": "harpy_stormwing", "prompt": "A battle-scarred veteran harpy matron with huge slate-grey wings crackling with static, leather straps and old war trophies, twin talon gauntlets raised, commanding scowl, thunderstorm sky, facing left" },
+  { "id": "harpy_queen", "prompt": "A majestic harpy queen with a golden circlet and sweeping white-and-sky-blue plumage, elegant cruel smile, perched on a floating marble spire throne above the clouds, wind swirling her feather cloak, facing left" },
+  { "id": "harpy_tempest", "prompt": "A fearsome elite harpy with wings of living storm cloud and lightning veining her dark feathers, one glowing cyclone eye, hovering inside the calm center of a swirling tempest ring, imperious glare, facing left" },
+  { "id": "harpy_boss_roc", "prompt": "A colossal harpy boss monster, half woman half hurricane roc, three pairs of vast shredding wings blurred with speed, feathers becoming wind blades, glowing eyes, an entire storm system spiraling behind her over jagged peaks, epic scale, facing left" }
+]

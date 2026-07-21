@@ -1,0 +1,14 @@
+[
+  { "id": "slime_droplet", "prompt": "A single tiny slime droplet creature with one huge cute eye, teardrop-shaped translucent green body, sitting on a giant mossy leaf, dew drops around it, facing left" },
+  { "id": "slime_blue", "prompt": "A springy blue slime creature caught mid-bounce high in the air, gleeful face, squashed-stretched jelly body with motion lines, sunny meadow with flowers below, facing left" },
+  { "id": "slime_sticky", "prompt": "A gooey olive-green slime creature dripping long sticky strands of glue-like goo, mischievous grin, stuck leaves and twigs on its body, swampy forest floor, ropes of slime trailing, facing left" },
+  { "id": "slime_toxic", "prompt": "A bubbling toxic slime creature, sickly purple-green translucent body full of rising poison bubbles, hazard-green glow, dead grass and warning mushrooms around it, dripping venom, facing left" },
+  { "id": "slime_magma", "prompt": "A molten magma slime creature, glowing orange lava body under a cracked dark crust, embers and small flames rising, scorched volcanic rock terrain, heat shimmer, facing left" },
+  { "id": "slime_gluttonous", "prompt": "An enormously fat slime creature with a huge open mouth, swallowed bones a boot and a sword visibly floating inside its translucent green belly, greedy expression, picnic of debris around it, facing left" },
+  { "id": "slime_big", "prompt": "A towering giant slime creature like a wobbling wall of green jelly, small worried face high up on its mass, tiny slime droplets pooling at its base, forest clearing dwarfed by it, facing left" },
+  { "id": "slime_mega", "prompt": "A colossal hill-sized slime creature rolling over a valley, trees and a fence being engulfed by its vast translucent green body, serene unbothered face, birds flying away, epic scale, facing left" },
+  { "id": "slime_king_gel", "prompt": "A regal slime monarch, large emerald jelly body with a golden crown half-sunken into its head, an absorbed scepter and coins floating inside it, smug royal expression, throne room of dripping slime, facing left" },
+  { "id": "slime_amalgam", "prompt": "A grotesque amalgam of many fused slimes in different colors, multiple mismatched eyes and mouths across one heaving mass, absorbed shields swords and bones floating inside, dark bog with glowing spores, imposing, facing left" },
+  { "id": "slime_overlord", "prompt": "A vast majestic slime leviathan rising like an ocean wave, deep teal translucent body with a glowing molten core visible in its chest, coral crown, small waves of slime rippling outward, stormy sky, epic boss, facing left" },
+  { "id": "slime_overlord_reborn", "prompt": "A small furious slime creature of boiling energy, incandescent magma core barely contained in a thin translucent shell, steam venting, crackling sparks, scorched ground, fierce glowing eyes, coiled to strike, facing left" }
+]
