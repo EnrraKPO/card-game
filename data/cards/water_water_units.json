@@ -56,7 +56,11 @@
 				}
 			}
 		},
-		"display_name": "Pure Water Bishop"
+		"display_name": "Pure Water Bishop",
+		"cost": 4,
+		"attack": 1,
+		"health": 8,
+		"speed": 1
 	},
 	{
 		"id": "water_water_bishop_bishop",
@@ -99,7 +103,11 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 6,
+		"attack": 2,
+		"health": 10,
+		"speed": 1
 	},
 	{
 		"id": "water_water_bishop_knight",
@@ -136,7 +144,11 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 6,
+		"attack": 3,
+		"health": 10,
+		"speed": 3
 	},
 	{
 		"id": "water_water_bishop_pawn",
@@ -174,7 +186,12 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 5,
+		"attack": 2,
+		"health": 9,
+		"speed": 1,
+		"shield": 2
 	},
 	{
 		"id": "water_water_bishop_queen",
@@ -212,7 +229,11 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 8,
+		"attack": 5,
+		"health": 11,
+		"speed": 3
 	},
 	{
 		"id": "water_water_bishop_rook",
@@ -256,7 +277,16 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"abilities": [
+			"water_bishop_training_pure",
+			"bishop_material"
+		],
+		"cost": 7,
+		"attack": 2,
+		"health": 13,
+		"speed": 1,
+		"shield": 2
 	},
 	{
 		"id": "water_water_knight",
@@ -287,7 +317,11 @@
 				}
 			}
 		},
-		"display_name": "Pure Water Knight"
+		"display_name": "Pure Water Knight",
+		"cost": 4,
+		"attack": 2,
+		"health": 7,
+		"speed": 2
 	},
 	{
 		"id": "water_water_knight_knight",
@@ -325,7 +359,11 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 6,
+		"attack": 3,
+		"health": 9,
+		"speed": 3
 	},
 	{
 		"id": "water_water_knight_pawn",
@@ -369,7 +407,12 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 5,
+		"attack": 3,
+		"health": 9,
+		"speed": 2,
+		"shield": 1
 	},
 	{
 		"id": "water_water_knight_queen",
@@ -415,7 +458,11 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 8,
+		"attack": 6,
+		"health": 11,
+		"speed": 4
 	},
 	{
 		"id": "water_water_knight_rook",
@@ -447,7 +494,16 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"abilities": [
+			"water_knight_training_pure",
+			"knight_material"
+		],
+		"cost": 7,
+		"attack": 3,
+		"health": 12,
+		"speed": 2,
+		"shield": 2
 	},
 	{
 		"id": "water_water_pawn",
@@ -484,7 +540,11 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 3,
+		"attack": 1,
+		"health": 7,
+		"speed": 1
 	},
 	{
 		"id": "water_water_pawn_pawn",
@@ -528,7 +588,12 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 4,
+		"attack": 2,
+		"health": 8,
+		"speed": 1,
+		"shield": 1
 	},
 	{
 		"id": "water_water_pawn_queen",
@@ -560,7 +625,11 @@
 				}
 			}
 		},
-		"display_name": "Pure Water Commander"
+		"display_name": "Pure Water Commander",
+		"cost": 8,
+		"attack": 5,
+		"health": 9,
+		"speed": 3
 	},
 	{
 		"id": "water_water_pawn_rook",
@@ -593,7 +662,16 @@
 			}
 		},
 		"display_name": "Pure Water Barracks",
-		"ranged": true
+		"ranged": true,
+		"abilities": [
+			"water_pawn_training_pure",
+			"pawn_material"
+		],
+		"cost": 6,
+		"attack": 2,
+		"health": 12,
+		"speed": 1,
+		"shield": 1
 	},
 	{
 		"id": "water_water_queen",
@@ -635,7 +713,11 @@
 					"at": "2026-07-08"
 				}
 			}
-		}
+		},
+		"cost": 7,
+		"attack": 5,
+		"health": 9,
+		"speed": 3
 	},
 	{
 		"id": "water_water_queen_queen",
@@ -682,7 +764,11 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 10,
+		"attack": 8,
+		"health": 12,
+		"speed": 3
 	},
 	{
 		"id": "water_water_queen_rook",
@@ -731,7 +817,16 @@
 				}
 			}
 		},
-		"ranged": true
+		"ranged": true,
+		"abilities": [
+			"water_queen_training_pure",
+			"queen_material"
+		],
+		"cost": 9,
+		"attack": 5,
+		"health": 14,
+		"speed": 2,
+		"shield": 2
 	},
 	{
 		"id": "water_water_rook",
@@ -763,7 +858,12 @@
 			}
 		},
 		"display_name": "Pure Water Rook",
-		"ranged": true
+		"ranged": true,
+		"cost": 5,
+		"attack": 1,
+		"health": 11,
+		"speed": 1,
+		"shield": 2
 	},
 	{
 		"id": "water_water_rook_rook",
@@ -795,6 +895,11 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"cost": 8,
+		"attack": 2,
+		"health": 15,
+		"speed": 1,
+		"shield": 4
 	}
 ]

@@ -148,8 +148,8 @@
 		"speed": 1,
 		"shield": 1,
 		"abilities": [
-			"warding_charge",
-			"pawn_material"
+			"pawn_material",
+			"fire_pawn_training"
 		]
 	},
 	{
@@ -207,7 +207,11 @@
 			"knight",
 			"rook"
 		],
-		"ranged": true
+		"ranged": true,
+		"abilities": [
+			"fire_knight_training",
+			"knight_material"
+		]
 	},
 	{
 		"id": "fire_knight_queen",
@@ -241,7 +245,11 @@
 			"bishop",
 			"rook"
 		],
-		"ranged": true
+		"ranged": true,
+		"abilities": [
+			"fire_bishop_training",
+			"bishop_material"
+		]
 	},
 	{
 		"id": "fire_bishop_queen",
@@ -294,7 +302,11 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"abilities": [
+			"fire_queen_training",
+			"queen_material"
+		]
 	},
 	{
 		"id": "fire_queen_queen",

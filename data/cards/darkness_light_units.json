@@ -30,7 +30,12 @@
 					]
 				}
 			}
-		}
+		},
+		"cost": 2,
+		"attack": 2,
+		"health": 3,
+		"speed": 2,
+		"shield": 1
 	},
 	{
 		"id": "darkness_light_knight",
@@ -63,7 +68,12 @@
 					]
 				}
 			}
-		}
+		},
+		"cost": 3,
+		"attack": 3,
+		"health": 3,
+		"speed": 3,
+		"shield": 1
 	},
 	{
 		"id": "darkness_light_bishop",
@@ -97,7 +107,12 @@
 				}
 			}
 		},
-		"ranged": true
+		"ranged": true,
+		"cost": 3,
+		"attack": 2,
+		"health": 4,
+		"speed": 2,
+		"shield": 1
 	},
 	{
 		"id": "darkness_light_rook",
@@ -132,7 +147,12 @@
 				}
 			}
 		},
-		"ranged": true
+		"ranged": true,
+		"cost": 4,
+		"attack": 2,
+		"health": 7,
+		"speed": 2,
+		"shield": 3
 	},
 	{
 		"id": "darkness_light_queen",
@@ -162,7 +182,12 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"cost": 6,
+		"attack": 6,
+		"health": 5,
+		"speed": 4,
+		"shield": 1
 	},
 	{
 		"id": "darkness_light_pawn_pawn",
@@ -197,7 +222,12 @@
 					]
 				}
 			}
-		}
+		},
+		"cost": 3,
+		"attack": 3,
+		"health": 4,
+		"speed": 2,
+		"shield": 2
 	},
 	{
 		"id": "darkness_light_knight_pawn",
@@ -227,7 +257,12 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"cost": 4,
+		"attack": 4,
+		"health": 5,
+		"speed": 3,
+		"shield": 2
 	},
 	{
 		"id": "darkness_light_bishop_pawn",
@@ -257,7 +292,12 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"cost": 4,
+		"attack": 3,
+		"health": 5,
+		"speed": 2,
+		"shield": 3
 	},
 	{
 		"id": "darkness_light_pawn_rook",
@@ -293,7 +333,16 @@
 				}
 			}
 		},
-		"ranged": true
+		"ranged": true,
+		"abilities": [
+			"darkness_pawn_material",
+			"light_pawn_material"
+		],
+		"cost": 5,
+		"attack": 3,
+		"health": 8,
+		"speed": 2,
+		"shield": 2
 	},
 	{
 		"id": "darkness_light_pawn_queen",
@@ -328,7 +377,12 @@
 					]
 				}
 			}
-		}
+		},
+		"cost": 7,
+		"attack": 6,
+		"health": 5,
+		"speed": 4,
+		"shield": 1
 	},
 	{
 		"id": "darkness_light_knight_knight",
@@ -358,7 +412,12 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"cost": 5,
+		"attack": 4,
+		"health": 5,
+		"speed": 4,
+		"shield": 1
 	},
 	{
 		"id": "darkness_light_bishop_knight",
@@ -393,7 +452,12 @@
 					]
 				}
 			}
-		}
+		},
+		"cost": 5,
+		"attack": 4,
+		"health": 6,
+		"speed": 4,
+		"shield": 1
 	},
 	{
 		"id": "darkness_light_knight_rook",
@@ -429,7 +493,16 @@
 				}
 			}
 		},
-		"ranged": true
+		"ranged": true,
+		"abilities": [
+			"darkness_knight_material",
+			"light_knight_material"
+		],
+		"cost": 6,
+		"attack": 4,
+		"health": 8,
+		"speed": 3,
+		"shield": 3
 	},
 	{
 		"id": "darkness_light_knight_queen",
@@ -464,7 +537,12 @@
 					]
 				}
 			}
-		}
+		},
+		"cost": 7,
+		"attack": 7,
+		"health": 7,
+		"speed": 5,
+		"shield": 1
 	},
 	{
 		"id": "darkness_light_bishop_bishop",
@@ -499,7 +577,12 @@
 					]
 				}
 			}
-		}
+		},
+		"cost": 5,
+		"attack": 3,
+		"health": 6,
+		"speed": 2,
+		"shield": 1
 	},
 	{
 		"id": "darkness_light_bishop_rook",
@@ -530,7 +613,16 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"abilities": [
+			"darkness_bishop_material",
+			"light_bishop_material"
+		],
+		"cost": 6,
+		"attack": 3,
+		"health": 9,
+		"speed": 2,
+		"shield": 3
 	},
 	{
 		"id": "darkness_light_bishop_queen",
@@ -565,7 +657,12 @@
 					]
 				}
 			}
-		}
+		},
+		"cost": 7,
+		"attack": 6,
+		"health": 7,
+		"speed": 4,
+		"shield": 1
 	},
 	{
 		"id": "darkness_light_rook_rook",
@@ -596,7 +693,12 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"cost": 7,
+		"attack": 3,
+		"health": 11,
+		"speed": 2,
+		"shield": 5
 	},
 	{
 		"id": "darkness_light_queen_rook",
@@ -627,7 +729,16 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"abilities": [
+			"darkness_queen_material",
+			"light_queen_material"
+		],
+		"cost": 8,
+		"attack": 6,
+		"health": 10,
+		"speed": 3,
+		"shield": 3
 	},
 	{
 		"id": "darkness_light_queen_queen",
@@ -657,6 +768,11 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"cost": 9,
+		"attack": 9,
+		"health": 8,
+		"speed": 4,
+		"shield": 1
 	}
 ]

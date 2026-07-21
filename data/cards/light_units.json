@@ -207,7 +207,11 @@
 			"knight",
 			"rook"
 		],
-		"ranged": true
+		"ranged": true,
+		"abilities": [
+			"light_knight_training",
+			"knight_material"
+		]
 	},
 	{
 		"id": "light_knight_queen",
@@ -241,7 +245,11 @@
 			"bishop",
 			"rook"
 		],
-		"ranged": true
+		"ranged": true,
+		"abilities": [
+			"light_bishop_training",
+			"bishop_material"
+		]
 	},
 	{
 		"id": "light_bishop_queen",
@@ -312,7 +320,11 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"abilities": [
+			"light_queen_training",
+			"queen_material"
+		]
 	},
 	{
 		"id": "light_queen_queen",

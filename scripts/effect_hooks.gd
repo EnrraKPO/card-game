@@ -32,21 +32,38 @@ static func get_hook(id: String) -> Callable:
 # pick time by the MANUAL_SLOT targeting flow; the guards here are backstops. The enemy AI
 # never routes here — its v1 policy always spawns, handled in combat's GENERATE branch.
 static func _deliver_material(ctx: EffectContext) -> Array:
-	if ctx.ability == null or ctx.ability.material.is_empty():
+	# Material key: the per-EFFECT override (ctx.effect.material) wins, else the ability's own
+	# `material`. Lets one ability deliver several DIFFERENT materials from separate effects
+	# (e.g. an elemental Conscription: deliver a pawn, then an element).
+	var mat_key := ""
+	if ctx.effect != null and not ctx.effect.material.is_empty():
+		mat_key = ctx.effect.material
+	elif ctx.ability != null:
+		mat_key = ctx.ability.material
+	if mat_key.is_empty():
 		return []
-	var material := CardData.get_card(ctx.ability.material)
+	var material := CardData.get_card(mat_key)
 	if material == null:
 		return []
-	if ctx.manual_target != null:
-		if not CardData.can_combine(ctx.manual_target.data, material) \
-				or ctx.manual_target.data.chess_pieces.has("king") \
-				or ctx.manual_target.data.chess_pieces.has("rook"):
+	# The effective MERGE target: an explicitly-picked unit, OR the current occupant of a picked
+	# slot. That occupant may have been spawned by a PRIOR effect in this same activation — which
+	# is what lets a two-part delivery ("a pawn, then a fire") build a fire_pawn on an EMPTY slot:
+	# the first effect spawns the pawn, the second finds it here and merges the fire onto it.
+	var target: CardInstance = ctx.manual_target
+	if target == null and ctx.manual_slot != null and ctx.board_node != null:
+		target = ctx.board_node.player_grid[ctx.manual_slot.row][ctx.manual_slot.col]
+	if target != null:                                    # ── MERGE onto the (possibly just-spawned) unit
+		if not CardData.can_combine(target.data, material) \
+				or target.data.chess_pieces.has("king") \
+				or target.data.chess_pieces.has("rook"):
 			return []
-		ctx.manual_target.transform(CardData.combine(ctx.manual_target.data, material))
+		target.transform(CardData.combine(target.data, material))
 		if ctx.board_node != null:
 			ctx.board_node.refresh()
-		return [{"target": ctx.manual_target}]
-	if ctx.manual_slot != null and ctx.board_node != null:
+		return [{"target": target}]
+	if ctx.manual_slot != null and ctx.board_node != null:   # ── SPAWN on the empty slot
+		if material.chess_pieces.is_empty():
+			return []   # never spawn a piece-less (element-only) material as a board unit
 		var inst := CardInstance.from_data(material)
 		inst.owner = 0
 		Resolver.fill_health(inst)   # after owner is set, so run-wide unit bonuses fold in

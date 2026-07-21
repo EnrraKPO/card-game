@@ -26,6 +26,10 @@ var board_node: CombatBoard = null
 # The activated ability being resolved, when this dispatch is an ability activation — how
 # hooks read the ability's parameters (e.g. deliver_material's material key). Null otherwise.
 var ability: AbilityData = null
+# The specific Effect currently being applied, so a CUSTOM hook can read PER-EFFECT
+# parameters (e.g. deliver_material's per-effect `material` override). Set by EffectSystem
+# immediately before the hook runs; null outside CUSTOM dispatch.
+var effect: Effect = null
 
 # The two CombatSides, for side-targeted effects ("draw 2" — see TargetResolver.Side).
 # Injected wherever a combat is live (CombatBoard.make_context); null in contexts built

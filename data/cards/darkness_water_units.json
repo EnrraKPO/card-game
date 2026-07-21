@@ -49,7 +49,12 @@
 					"at": "2026-07-07"
 				}
 			}
-		}
+		},
+		"cost": 3,
+		"attack": 2,
+		"health": 4,
+		"speed": 1,
+		"shield": 1
 	},
 	{
 		"id": "darkness_water_knight",
@@ -107,7 +112,12 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 4,
+		"attack": 3,
+		"health": 4,
+		"speed": 2,
+		"shield": 1
 	},
 	{
 		"id": "darkness_water_bishop",
@@ -154,7 +164,12 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 4,
+		"attack": 2,
+		"health": 5,
+		"speed": 1,
+		"shield": 1
 	},
 	{
 		"id": "darkness_water_rook",
@@ -198,7 +213,12 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 5,
+		"attack": 2,
+		"health": 8,
+		"speed": 1,
+		"shield": 3
 	},
 	{
 		"id": "darkness_water_queen",
@@ -245,7 +265,12 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 7,
+		"attack": 6,
+		"health": 6,
+		"speed": 3,
+		"shield": 1
 	},
 	{
 		"id": "darkness_water_pawn_pawn",
@@ -292,7 +317,12 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"cost": 4,
+		"attack": 3,
+		"health": 5,
+		"speed": 1,
+		"shield": 2
 	},
 	{
 		"id": "darkness_water_knight_pawn",
@@ -339,7 +369,12 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"cost": 5,
+		"attack": 4,
+		"health": 6,
+		"speed": 2,
+		"shield": 2
 	},
 	{
 		"id": "darkness_water_bishop_pawn",
@@ -386,7 +421,12 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"cost": 5,
+		"attack": 3,
+		"health": 6,
+		"speed": 1,
+		"shield": 3
 	},
 	{
 		"id": "darkness_water_pawn_rook",
@@ -434,7 +474,16 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"abilities": [
+			"darkness_pawn_material",
+			"water_pawn_material"
+		],
+		"cost": 6,
+		"attack": 3,
+		"health": 9,
+		"speed": 1,
+		"shield": 2
 	},
 	{
 		"id": "darkness_water_pawn_queen",
@@ -481,7 +530,12 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"cost": 8,
+		"attack": 6,
+		"health": 6,
+		"speed": 3,
+		"shield": 1
 	},
 	{
 		"id": "darkness_water_knight_knight",
@@ -528,15 +582,20 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"cost": 6,
+		"attack": 4,
+		"health": 6,
+		"speed": 3,
+		"shield": 1
 	},
 	{
 		"id": "darkness_water_bishop_knight",
 		"display_name": "Blight Basilisk",
 		"cost": 6,
-		"attack": 2,
-		"health": 14,
-		"speed": 2,
+		"attack": 4,
+		"health": 7,
+		"speed": 3,
 		"shield": 1,
 		"description": "Applies Poison 1 to the unit it strikes.",
 		"elements": [
@@ -652,7 +711,16 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"abilities": [
+			"darkness_knight_material",
+			"water_knight_material"
+		],
+		"cost": 7,
+		"attack": 4,
+		"health": 9,
+		"speed": 2,
+		"shield": 3
 	},
 	{
 		"id": "darkness_water_knight_queen",
@@ -699,7 +767,12 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"cost": 8,
+		"attack": 7,
+		"health": 8,
+		"speed": 4,
+		"shield": 1
 	},
 	{
 		"id": "darkness_water_bishop_bishop",
@@ -747,7 +820,12 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 6,
+		"attack": 3,
+		"health": 7,
+		"speed": 1,
+		"shield": 1
 	},
 	{
 		"id": "darkness_water_bishop_rook",
@@ -795,7 +873,16 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"abilities": [
+			"darkness_bishop_material",
+			"water_bishop_material"
+		],
+		"cost": 7,
+		"attack": 3,
+		"health": 10,
+		"speed": 1,
+		"shield": 3
 	},
 	{
 		"id": "darkness_water_bishop_queen",
@@ -842,7 +929,12 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 8,
+		"attack": 6,
+		"health": 8,
+		"speed": 3,
+		"shield": 1
 	},
 	{
 		"id": "darkness_water_rook_rook",
@@ -890,7 +982,12 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"cost": 8,
+		"attack": 3,
+		"health": 12,
+		"speed": 1,
+		"shield": 5
 	},
 	{
 		"id": "darkness_water_queen_rook",
@@ -938,7 +1035,16 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"abilities": [
+			"darkness_queen_material",
+			"water_queen_material"
+		],
+		"cost": 9,
+		"attack": 6,
+		"health": 11,
+		"speed": 2,
+		"shield": 3
 	},
 	{
 		"id": "darkness_water_queen_queen",
@@ -985,6 +1091,11 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"cost": 10,
+		"attack": 9,
+		"health": 9,
+		"speed": 3,
+		"shield": 1
 	}
 ]

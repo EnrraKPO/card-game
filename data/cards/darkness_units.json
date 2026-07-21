@@ -330,8 +330,8 @@
 		"speed": 1,
 		"shield": 2,
 		"abilities": [
-			"umbral_charge",
-			"pawn_material"
+			"pawn_material",
+			"darkness_pawn_training"
 		]
 	},
 	{
@@ -463,7 +463,11 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"abilities": [
+			"darkness_knight_training",
+			"knight_material"
+		]
 	},
 	{
 		"id": "darkness_knight_queen",
@@ -551,7 +555,11 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"abilities": [
+			"darkness_bishop_training",
+			"bishop_material"
+		]
 	},
 	{
 		"id": "darkness_bishop_queen",
@@ -640,7 +648,11 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"abilities": [
+			"darkness_queen_training",
+			"queen_material"
+		]
 	},
 	{
 		"id": "darkness_queen_queen",

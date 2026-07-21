@@ -334,7 +334,6 @@
 			}
 		],
 		"abilities": [
-			"castling",
 			"heal",
 			"bishop_material"
 		]

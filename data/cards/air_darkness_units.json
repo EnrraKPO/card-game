@@ -31,7 +31,12 @@
 					"at": "2026-07-08"
 				}
 			}
-		}
+		},
+		"cost": 3,
+		"attack": 2,
+		"health": 2,
+		"speed": 5,
+		"shield": 1
 	},
 	{
 		"id": "air_darkness_knight",
@@ -58,7 +63,12 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"cost": 4,
+		"attack": 3,
+		"health": 2,
+		"speed": 6,
+		"shield": 1
 	},
 	{
 		"id": "air_darkness_bishop",
@@ -103,7 +113,12 @@
 				}
 			}
 		},
-		"ranged": true
+		"ranged": true,
+		"cost": 4,
+		"attack": 2,
+		"health": 3,
+		"speed": 5,
+		"shield": 1
 	},
 	{
 		"id": "air_darkness_rook",
@@ -131,7 +146,12 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"cost": 5,
+		"attack": 2,
+		"health": 6,
+		"speed": 5,
+		"shield": 3
 	},
 	{
 		"id": "air_darkness_queen",
@@ -159,7 +179,12 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"cost": 7,
+		"attack": 6,
+		"health": 4,
+		"speed": 7,
+		"shield": 1
 	},
 	{
 		"id": "air_darkness_pawn_pawn",
@@ -187,7 +212,12 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"cost": 4,
+		"attack": 3,
+		"health": 3,
+		"speed": 5,
+		"shield": 2
 	},
 	{
 		"id": "air_darkness_knight_pawn",
@@ -215,7 +245,12 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"cost": 5,
+		"attack": 4,
+		"health": 4,
+		"speed": 6,
+		"shield": 2
 	},
 	{
 		"id": "air_darkness_bishop_pawn",
@@ -243,7 +278,12 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"cost": 5,
+		"attack": 3,
+		"health": 4,
+		"speed": 5,
+		"shield": 3
 	},
 	{
 		"id": "air_darkness_pawn_rook",
@@ -272,7 +312,16 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"abilities": [
+			"air_pawn_material",
+			"darkness_pawn_material"
+		],
+		"cost": 6,
+		"attack": 3,
+		"health": 7,
+		"speed": 5,
+		"shield": 2
 	},
 	{
 		"id": "air_darkness_pawn_queen",
@@ -300,7 +349,12 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"cost": 8,
+		"attack": 6,
+		"health": 4,
+		"speed": 7,
+		"shield": 1
 	},
 	{
 		"id": "air_darkness_knight_knight",
@@ -328,7 +382,12 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"cost": 6,
+		"attack": 4,
+		"health": 4,
+		"speed": 7,
+		"shield": 1
 	},
 	{
 		"id": "air_darkness_bishop_knight",
@@ -356,7 +415,12 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"cost": 6,
+		"attack": 4,
+		"health": 5,
+		"speed": 7,
+		"shield": 1
 	},
 	{
 		"id": "air_darkness_knight_rook",
@@ -385,7 +449,16 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"abilities": [
+			"air_knight_material",
+			"darkness_knight_material"
+		],
+		"cost": 7,
+		"attack": 4,
+		"health": 7,
+		"speed": 6,
+		"shield": 3
 	},
 	{
 		"id": "air_darkness_knight_queen",
@@ -413,7 +486,12 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"cost": 8,
+		"attack": 7,
+		"health": 6,
+		"speed": 8,
+		"shield": 1
 	},
 	{
 		"id": "air_darkness_bishop_bishop",
@@ -442,7 +520,12 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 6,
+		"attack": 3,
+		"health": 5,
+		"speed": 5,
+		"shield": 1
 	},
 	{
 		"id": "air_darkness_bishop_rook",
@@ -471,7 +554,16 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"abilities": [
+			"air_bishop_material",
+			"darkness_bishop_material"
+		],
+		"cost": 7,
+		"attack": 3,
+		"health": 8,
+		"speed": 5,
+		"shield": 3
 	},
 	{
 		"id": "air_darkness_bishop_queen",
@@ -499,7 +591,12 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"cost": 8,
+		"attack": 6,
+		"health": 6,
+		"speed": 7,
+		"shield": 1
 	},
 	{
 		"id": "air_darkness_rook_rook",
@@ -528,7 +625,12 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"cost": 8,
+		"attack": 3,
+		"health": 10,
+		"speed": 5,
+		"shield": 5
 	},
 	{
 		"id": "air_darkness_queen_rook",
@@ -557,7 +659,16 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"abilities": [
+			"air_queen_material",
+			"darkness_queen_material"
+		],
+		"cost": 9,
+		"attack": 6,
+		"health": 9,
+		"speed": 6,
+		"shield": 3
 	},
 	{
 		"id": "air_darkness_queen_queen",
@@ -586,6 +697,11 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 10,
+		"attack": 9,
+		"health": 7,
+		"speed": 7,
+		"shield": 1
 	}
 ]

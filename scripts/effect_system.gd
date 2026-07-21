@@ -118,6 +118,7 @@ static func _run_effect(effect: Effect, source: CardInstance, context: EffectCon
 		return []
 	if effect.kind == Effect.Kind.CUSTOM:
 		var hook := EffectHooks.get_hook(effect.custom_id)
+		context.effect = effect   # expose per-effect params to the hook (e.g. deliver_material's material)
 		return hook.call(context) if hook.is_valid() else []
 	# THE targeting socket: the effect's injected resolver returns the affected target(s)
 	# from the same shared context the trigger saw (see TargetResolver). The array is

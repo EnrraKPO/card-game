@@ -26,7 +26,11 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 3,
+		"attack": 1,
+		"health": 5,
+		"speed": 5
 	},
 	{
 		"id": "air_water_knight",
@@ -55,7 +59,11 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 4,
+		"attack": 2,
+		"health": 5,
+		"speed": 6
 	},
 	{
 		"id": "air_water_bishop",
@@ -85,7 +93,11 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"cost": 4,
+		"attack": 1,
+		"health": 6,
+		"speed": 5
 	},
 	{
 		"id": "air_water_rook",
@@ -115,7 +127,12 @@
 				}
 			}
 		},
-		"ranged": true
+		"ranged": true,
+		"cost": 5,
+		"attack": 1,
+		"health": 9,
+		"speed": 5,
+		"shield": 2
 	},
 	{
 		"id": "air_water_queen",
@@ -151,7 +168,11 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 7,
+		"attack": 5,
+		"health": 7,
+		"speed": 7
 	},
 	{
 		"id": "air_water_pawn_pawn",
@@ -187,7 +208,12 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 4,
+		"attack": 2,
+		"health": 6,
+		"speed": 5,
+		"shield": 1
 	},
 	{
 		"id": "air_water_knight_pawn",
@@ -223,7 +249,12 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 5,
+		"attack": 3,
+		"health": 7,
+		"speed": 6,
+		"shield": 1
 	},
 	{
 		"id": "air_water_bishop_pawn",
@@ -259,7 +290,12 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 5,
+		"attack": 2,
+		"health": 7,
+		"speed": 5,
+		"shield": 2
 	},
 	{
 		"id": "air_water_pawn_rook",
@@ -296,7 +332,16 @@
 				}
 			}
 		},
-		"ranged": true
+		"ranged": true,
+		"abilities": [
+			"air_pawn_material",
+			"water_pawn_material"
+		],
+		"cost": 6,
+		"attack": 2,
+		"health": 10,
+		"speed": 5,
+		"shield": 1
 	},
 	{
 		"id": "air_water_pawn_queen",
@@ -332,7 +377,11 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 8,
+		"attack": 5,
+		"health": 7,
+		"speed": 7
 	},
 	{
 		"id": "air_water_knight_knight",
@@ -368,7 +417,11 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 6,
+		"attack": 3,
+		"health": 7,
+		"speed": 7
 	},
 	{
 		"id": "air_water_bishop_knight",
@@ -404,7 +457,11 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 6,
+		"attack": 3,
+		"health": 8,
+		"speed": 7
 	},
 	{
 		"id": "air_water_knight_rook",
@@ -447,7 +504,16 @@
 				}
 			}
 		},
-		"ranged": true
+		"ranged": true,
+		"abilities": [
+			"air_knight_material",
+			"water_knight_material"
+		],
+		"cost": 7,
+		"attack": 3,
+		"health": 10,
+		"speed": 6,
+		"shield": 2
 	},
 	{
 		"id": "air_water_knight_queen",
@@ -483,7 +549,11 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 8,
+		"attack": 6,
+		"health": 9,
+		"speed": 8
 	},
 	{
 		"id": "air_water_bishop_bishop",
@@ -519,7 +589,11 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 6,
+		"attack": 2,
+		"health": 8,
+		"speed": 5
 	},
 	{
 		"id": "air_water_bishop_rook",
@@ -556,7 +630,16 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"abilities": [
+			"air_bishop_material",
+			"water_bishop_material"
+		],
+		"cost": 7,
+		"attack": 2,
+		"health": 11,
+		"speed": 5,
+		"shield": 2
 	},
 	{
 		"id": "air_water_bishop_queen",
@@ -592,7 +675,11 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 8,
+		"attack": 5,
+		"health": 9,
+		"speed": 7
 	},
 	{
 		"id": "air_water_rook_rook",
@@ -629,7 +716,12 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 8,
+		"attack": 2,
+		"health": 13,
+		"speed": 5,
+		"shield": 4
 	},
 	{
 		"id": "air_water_queen_rook",
@@ -666,7 +758,16 @@
 				}
 			}
 		},
-		"ranged": true
+		"ranged": true,
+		"abilities": [
+			"air_queen_material",
+			"water_queen_material"
+		],
+		"cost": 9,
+		"attack": 5,
+		"health": 12,
+		"speed": 6,
+		"shield": 2
 	},
 	{
 		"id": "air_water_queen_queen",
@@ -702,6 +803,10 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 10,
+		"attack": 8,
+		"health": 10,
+		"speed": 7
 	}
 ]

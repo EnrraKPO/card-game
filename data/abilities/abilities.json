@@ -500,7 +500,7 @@
 		"description": "Blesses a unit of your choice with Air Blessing: +4 Speed for 2 turns, and the unit is treated as an air unit.",
 		"cost": {
 			"mana": 1,
-			"tap": true
+			"tap": false
 		},
 		"autocast": true,
 		"effects": [
@@ -646,7 +646,7 @@
 	},
 	{
 		"id": "light_pawn_training",
-		"display_name": "Bless by Light",
+		"display_name": "Light Combat Drill",
 		"description": "Adds Light to one of your Pawn units, merging their compositions. Can only target an existing Pawn unit — never an empty slot.",
 		"cost": {
 			"mana": 2,
@@ -670,6 +670,3929 @@
 							"composition": [
 								"pawn"
 							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "water_pawn_training",
+		"display_name": "Water Combat Drill",
+		"description": "Adds Water to one of your Pawn units, merging their compositions. Can only target an existing Pawn unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "water",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"pawn"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "fire_pawn_training",
+		"display_name": "Fire Combat Drill",
+		"description": "Adds Fire to one of your Pawn units, merging their compositions. Can only target an existing Pawn unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "fire",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"pawn"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "darkness_pawn_training",
+		"display_name": "Darkness Combat Drill",
+		"description": "Adds Darkness to one of your Pawn units, merging their compositions. Can only target an existing Pawn unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "darkness",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"pawn"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "earth_pawn_training",
+		"display_name": "Earth Combat Drill",
+		"description": "Adds Earth to one of your Pawn units, merging their compositions. Can only target an existing Pawn unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "earth",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"pawn"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "air_pawn_training",
+		"display_name": "Air Combat Drill",
+		"description": "Adds Air to one of your Pawn units, merging their compositions. Can only target an existing Pawn unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "air",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"pawn"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "light_bishop_training",
+		"display_name": "Light Sacrament",
+		"description": "Adds Light to one of your Bishop units, merging their compositions. Can only target an existing Bishop unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "light",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"bishop"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "water_bishop_training",
+		"display_name": "Water Sacrament",
+		"description": "Adds Water to one of your Bishop units, merging their compositions. Can only target an existing Bishop unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "water",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"bishop"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "fire_bishop_training",
+		"display_name": "Fire Sacrament",
+		"description": "Adds Fire to one of your Bishop units, merging their compositions. Can only target an existing Bishop unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "fire",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"bishop"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "darkness_bishop_training",
+		"display_name": "Darkness Sacrament",
+		"description": "Adds Darkness to one of your Bishop units, merging their compositions. Can only target an existing Bishop unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "darkness",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"bishop"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "earth_bishop_training",
+		"display_name": "Earth Sacrament",
+		"description": "Adds Earth to one of your Bishop units, merging their compositions. Can only target an existing Bishop unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "earth",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"bishop"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "air_bishop_training",
+		"display_name": "Air Sacrament",
+		"description": "Adds Air to one of your Bishop units, merging their compositions. Can only target an existing Bishop unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "air",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"bishop"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "light_queen_training",
+		"display_name": "Light Etiquette",
+		"description": "Adds Light to one of your Queen units, merging their compositions. Can only target an existing Queen unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "light",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"queen"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "water_queen_training",
+		"display_name": "Water Etiquette",
+		"description": "Adds Water to one of your Queen units, merging their compositions. Can only target an existing Queen unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "water",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"queen"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "fire_queen_training",
+		"display_name": "Fire Etiquette",
+		"description": "Adds Fire to one of your Queen units, merging their compositions. Can only target an existing Queen unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "fire",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"queen"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "darkness_queen_training",
+		"display_name": "Darkness Etiquette",
+		"description": "Adds Darkness to one of your Queen units, merging their compositions. Can only target an existing Queen unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "darkness",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"queen"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "earth_queen_training",
+		"display_name": "Earth Etiquette",
+		"description": "Adds Earth to one of your Queen units, merging their compositions. Can only target an existing Queen unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "earth",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"queen"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "air_queen_training",
+		"display_name": "Air Etiquette",
+		"description": "Adds Air to one of your Queen units, merging their compositions. Can only target an existing Queen unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "air",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"queen"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "light_knight_training",
+		"display_name": "Light Tricks",
+		"description": "Adds Light to one of your Knight units, merging their compositions. Can only target an existing Knight unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "light",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"knight"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "water_knight_training",
+		"display_name": "Water Tricks",
+		"description": "Adds Water to one of your Knight units, merging their compositions. Can only target an existing Knight unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "water",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"knight"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "fire_knight_training",
+		"display_name": "Fire Tricks",
+		"description": "Adds Fire to one of your Knight units, merging their compositions. Can only target an existing Knight unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "fire",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"knight"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "darkness_knight_training",
+		"display_name": "Darkness Tricks",
+		"description": "Adds Darkness to one of your Knight units, merging their compositions. Can only target an existing Knight unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "darkness",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"knight"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "earth_knight_training",
+		"display_name": "Earth Tricks",
+		"description": "Adds Earth to one of your Knight units, merging their compositions. Can only target an existing Knight unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "earth",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"knight"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "air_knight_training",
+		"display_name": "Air Tricks",
+		"description": "Adds Air to one of your Knight units, merging their compositions. Can only target an existing Knight unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "air",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"knight"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "air_pawn_training_pure",
+		"display_name": "Pure Air Combat Drill",
+		"description": "Adds up to 2 Air to one of your Pawn units, merging their compositions — delivered as Air, then Air again if it still fits. Can only target an existing Pawn unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "air",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"pawn"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"pawn"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "air_bishop_training_pure",
+		"display_name": "Pure Air Sacrament",
+		"description": "Adds up to 2 Air to one of your Bishop units, merging their compositions — delivered as Air, then Air again if it still fits. Can only target an existing Bishop unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "air",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"bishop"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"bishop"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "air_knight_training_pure",
+		"display_name": "Pure Air Tricks",
+		"description": "Adds up to 2 Air to one of your Knight units, merging their compositions — delivered as Air, then Air again if it still fits. Can only target an existing Knight unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "air",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"knight"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"knight"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "air_queen_training_pure",
+		"display_name": "Pure Air Etiquette",
+		"description": "Adds up to 2 Air to one of your Queen units, merging their compositions — delivered as Air, then Air again if it still fits. Can only target an existing Queen unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "air",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"queen"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"queen"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "darkness_pawn_training_pure",
+		"display_name": "Pure Darkness Combat Drill",
+		"description": "Adds up to 2 Darkness to one of your Pawn units, merging their compositions — delivered as Darkness, then Darkness again if it still fits. Can only target an existing Pawn unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "darkness",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"pawn"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"pawn"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "darkness_bishop_training_pure",
+		"display_name": "Pure Darkness Sacrament",
+		"description": "Adds up to 2 Darkness to one of your Bishop units, merging their compositions — delivered as Darkness, then Darkness again if it still fits. Can only target an existing Bishop unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "darkness",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"bishop"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"bishop"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "darkness_knight_training_pure",
+		"display_name": "Pure Darkness Tricks",
+		"description": "Adds up to 2 Darkness to one of your Knight units, merging their compositions — delivered as Darkness, then Darkness again if it still fits. Can only target an existing Knight unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "darkness",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"knight"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"knight"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "darkness_queen_training_pure",
+		"display_name": "Pure Darkness Etiquette",
+		"description": "Adds up to 2 Darkness to one of your Queen units, merging their compositions — delivered as Darkness, then Darkness again if it still fits. Can only target an existing Queen unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "darkness",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"queen"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"queen"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "earth_pawn_training_pure",
+		"display_name": "Pure Earth Combat Drill",
+		"description": "Adds up to 2 Earth to one of your Pawn units, merging their compositions — delivered as Earth, then Earth again if it still fits. Can only target an existing Pawn unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "earth",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"pawn"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"pawn"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "earth_bishop_training_pure",
+		"display_name": "Pure Earth Sacrament",
+		"description": "Adds up to 2 Earth to one of your Bishop units, merging their compositions — delivered as Earth, then Earth again if it still fits. Can only target an existing Bishop unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "earth",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"bishop"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"bishop"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "earth_knight_training_pure",
+		"display_name": "Pure Earth Tricks",
+		"description": "Adds up to 2 Earth to one of your Knight units, merging their compositions — delivered as Earth, then Earth again if it still fits. Can only target an existing Knight unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "earth",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"knight"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"knight"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "earth_queen_training_pure",
+		"display_name": "Pure Earth Etiquette",
+		"description": "Adds up to 2 Earth to one of your Queen units, merging their compositions — delivered as Earth, then Earth again if it still fits. Can only target an existing Queen unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "earth",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"queen"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"queen"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "fire_pawn_training_pure",
+		"display_name": "Pure Fire Combat Drill",
+		"description": "Adds up to 2 Fire to one of your Pawn units, merging their compositions — delivered as Fire, then Fire again if it still fits. Can only target an existing Pawn unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "fire",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"pawn"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"pawn"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "fire_bishop_training_pure",
+		"display_name": "Pure Fire Sacrament",
+		"description": "Adds up to 2 Fire to one of your Bishop units, merging their compositions — delivered as Fire, then Fire again if it still fits. Can only target an existing Bishop unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "fire",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"bishop"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"bishop"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "fire_knight_training_pure",
+		"display_name": "Pure Fire Tricks",
+		"description": "Adds up to 2 Fire to one of your Knight units, merging their compositions — delivered as Fire, then Fire again if it still fits. Can only target an existing Knight unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "fire",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"knight"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"knight"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "fire_queen_training_pure",
+		"display_name": "Pure Fire Etiquette",
+		"description": "Adds up to 2 Fire to one of your Queen units, merging their compositions — delivered as Fire, then Fire again if it still fits. Can only target an existing Queen unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "fire",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"queen"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"queen"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "light_pawn_training_pure",
+		"display_name": "Pure Light Combat Drill",
+		"description": "Adds up to 2 Light to one of your Pawn units, merging their compositions — delivered as Light, then Light again if it still fits. Can only target an existing Pawn unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "light",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"pawn"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"pawn"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "light_bishop_training_pure",
+		"display_name": "Pure Light Sacrament",
+		"description": "Adds up to 2 Light to one of your Bishop units, merging their compositions — delivered as Light, then Light again if it still fits. Can only target an existing Bishop unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "light",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"bishop"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"bishop"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "light_knight_training_pure",
+		"display_name": "Pure Light Tricks",
+		"description": "Adds up to 2 Light to one of your Knight units, merging their compositions — delivered as Light, then Light again if it still fits. Can only target an existing Knight unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "light",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"knight"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"knight"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "light_queen_training_pure",
+		"display_name": "Pure Light Etiquette",
+		"description": "Adds up to 2 Light to one of your Queen units, merging their compositions — delivered as Light, then Light again if it still fits. Can only target an existing Queen unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "light",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"queen"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"queen"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "water_pawn_training_pure",
+		"display_name": "Pure Water Combat Drill",
+		"description": "Adds up to 2 Water to one of your Pawn units, merging their compositions — delivered as Water, then Water again if it still fits. Can only target an existing Pawn unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "water",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"pawn"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"pawn"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "water_bishop_training_pure",
+		"display_name": "Pure Water Sacrament",
+		"description": "Adds up to 2 Water to one of your Bishop units, merging their compositions — delivered as Water, then Water again if it still fits. Can only target an existing Bishop unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "water",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"bishop"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"bishop"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "water_knight_training_pure",
+		"display_name": "Pure Water Tricks",
+		"description": "Adds up to 2 Water to one of your Knight units, merging their compositions — delivered as Water, then Water again if it still fits. Can only target an existing Knight unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "water",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"knight"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"knight"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "water_queen_training_pure",
+		"display_name": "Pure Water Etiquette",
+		"description": "Adds up to 2 Water to one of your Queen units, merging their compositions — delivered as Water, then Water again if it still fits. Can only target an existing Queen unit — never an empty slot.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "water",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"queen"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual",
+					"conditions": [
+						{
+							"composition": [
+								"queen"
+							]
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "air_pawn_material",
+		"display_name": "Air Conscription",
+		"description": "Deliver up to 1 Pawn and 1 Air to a target unit — or to an empty slot, spawning a Pawn and merging the Air onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "pawn",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "pawn",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "piece_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "air",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "air_bishop_material",
+		"display_name": "Air Scholarship",
+		"description": "Deliver up to 1 Bishop and 1 Air to a target unit — or to an empty slot, spawning a Bishop and merging the Air onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "bishop",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "bishop",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "piece_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "air",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "air_knight_material",
+		"display_name": "Air Taming",
+		"description": "Deliver up to 1 Knight and 1 Air to a target unit — or to an empty slot, spawning a Knight and merging the Air onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "knight",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "knight",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "piece_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "air",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "air_queen_material",
+		"display_name": "Air Coronation",
+		"description": "Deliver up to 1 Queen and 1 Air to a target unit — or to an empty slot, spawning a Queen and merging the Air onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "queen",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "queen",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "piece_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "air",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "darkness_pawn_material",
+		"display_name": "Darkness Conscription",
+		"description": "Deliver up to 1 Pawn and 1 Darkness to a target unit — or to an empty slot, spawning a Pawn and merging the Darkness onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "pawn",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "pawn",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "piece_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "darkness",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "darkness_bishop_material",
+		"display_name": "Darkness Scholarship",
+		"description": "Deliver up to 1 Bishop and 1 Darkness to a target unit — or to an empty slot, spawning a Bishop and merging the Darkness onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "bishop",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "bishop",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "piece_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "darkness",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "darkness_knight_material",
+		"display_name": "Darkness Taming",
+		"description": "Deliver up to 1 Knight and 1 Darkness to a target unit — or to an empty slot, spawning a Knight and merging the Darkness onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "knight",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "knight",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "piece_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "darkness",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "darkness_queen_material",
+		"display_name": "Darkness Coronation",
+		"description": "Deliver up to 1 Queen and 1 Darkness to a target unit — or to an empty slot, spawning a Queen and merging the Darkness onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "queen",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "queen",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "piece_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "darkness",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "earth_pawn_material",
+		"display_name": "Earth Conscription",
+		"description": "Deliver up to 1 Pawn and 1 Earth to a target unit — or to an empty slot, spawning a Pawn and merging the Earth onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "pawn",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "pawn",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "piece_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "earth",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "earth_bishop_material",
+		"display_name": "Earth Scholarship",
+		"description": "Deliver up to 1 Bishop and 1 Earth to a target unit — or to an empty slot, spawning a Bishop and merging the Earth onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "bishop",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "bishop",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "piece_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "earth",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "earth_knight_material",
+		"display_name": "Earth Taming",
+		"description": "Deliver up to 1 Knight and 1 Earth to a target unit — or to an empty slot, spawning a Knight and merging the Earth onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "knight",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "knight",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "piece_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "earth",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "earth_queen_material",
+		"display_name": "Earth Coronation",
+		"description": "Deliver up to 1 Queen and 1 Earth to a target unit — or to an empty slot, spawning a Queen and merging the Earth onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "queen",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "queen",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "piece_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "earth",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "fire_pawn_material",
+		"display_name": "Fire Conscription",
+		"description": "Deliver up to 1 Pawn and 1 Fire to a target unit — or to an empty slot, spawning a Pawn and merging the Fire onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "pawn",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "pawn",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "piece_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "fire",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "fire_bishop_material",
+		"display_name": "Fire Scholarship",
+		"description": "Deliver up to 1 Bishop and 1 Fire to a target unit — or to an empty slot, spawning a Bishop and merging the Fire onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "bishop",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "bishop",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "piece_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "fire",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "fire_knight_material",
+		"display_name": "Fire Taming",
+		"description": "Deliver up to 1 Knight and 1 Fire to a target unit — or to an empty slot, spawning a Knight and merging the Fire onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "knight",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "knight",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "piece_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "fire",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "fire_queen_material",
+		"display_name": "Fire Coronation",
+		"description": "Deliver up to 1 Queen and 1 Fire to a target unit — or to an empty slot, spawning a Queen and merging the Fire onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "queen",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "queen",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "piece_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "fire",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "light_pawn_material",
+		"display_name": "Light Conscription",
+		"description": "Deliver up to 1 Pawn and 1 Light to a target unit — or to an empty slot, spawning a Pawn and merging the Light onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "pawn",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "pawn",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "piece_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "light",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "light_bishop_material",
+		"display_name": "Light Scholarship",
+		"description": "Deliver up to 1 Bishop and 1 Light to a target unit — or to an empty slot, spawning a Bishop and merging the Light onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "bishop",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "bishop",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "piece_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "light",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "light_knight_material",
+		"display_name": "Light Taming",
+		"description": "Deliver up to 1 Knight and 1 Light to a target unit — or to an empty slot, spawning a Knight and merging the Light onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "knight",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "knight",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "piece_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "light",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "light_queen_material",
+		"display_name": "Light Coronation",
+		"description": "Deliver up to 1 Queen and 1 Light to a target unit — or to an empty slot, spawning a Queen and merging the Light onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "queen",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "queen",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "piece_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "light",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "water_pawn_material",
+		"display_name": "Water Conscription",
+		"description": "Deliver up to 1 Pawn and 1 Water to a target unit — or to an empty slot, spawning a Pawn and merging the Water onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "pawn",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "pawn",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "piece_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "water",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "water_bishop_material",
+		"display_name": "Water Scholarship",
+		"description": "Deliver up to 1 Bishop and 1 Water to a target unit — or to an empty slot, spawning a Bishop and merging the Water onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "bishop",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "bishop",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "piece_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "water",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "water_knight_material",
+		"display_name": "Water Taming",
+		"description": "Deliver up to 1 Knight and 1 Water to a target unit — or to an empty slot, spawning a Knight and merging the Water onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "knight",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "knight",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "piece_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "water",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "element_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			}
+		]
+	},
+	{
+		"id": "water_queen_material",
+		"display_name": "Water Coronation",
+		"description": "Deliver up to 1 Queen and 1 Water to a target unit — or to an empty slot, spawning a Queen and merging the Water onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"cost": {
+			"mana": 2,
+			"tap": true
+		},
+		"autocast": true,
+		"material": "queen",
+		"effects": [
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "queen",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
+						},
+						{
+							"attribute": "piece_count",
+							"comparator": "lt",
+							"value": 2
+						}
+					]
+				}
+			},
+			{
+				"kind": "custom",
+				"custom": "deliver_material",
+				"material": "water",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual_slot",
+					"conditions": [
+						{
+							"composition": [
+								"king",
+								"rook"
+							],
+							"present": false
 						},
 						{
 							"attribute": "element_count",

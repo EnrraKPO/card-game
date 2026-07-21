@@ -32,7 +32,11 @@
 					"at": "2026-07-12"
 				}
 			}
-		}
+		},
+		"cost": 3,
+		"attack": 1,
+		"health": 3,
+		"speed": 9
 	},
 	{
 		"id": "air_air_knight",
@@ -68,7 +72,11 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 4,
+		"attack": 2,
+		"health": 3,
+		"speed": 10
 	},
 	{
 		"id": "air_air_bishop",
@@ -98,7 +106,11 @@
 				}
 			}
 		},
-		"ranged": true
+		"ranged": true,
+		"cost": 4,
+		"attack": 1,
+		"health": 4,
+		"speed": 9
 	},
 	{
 		"id": "air_air_rook",
@@ -128,7 +140,12 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"cost": 5,
+		"attack": 1,
+		"health": 7,
+		"speed": 9,
+		"shield": 2
 	},
 	{
 		"id": "air_air_queen",
@@ -158,7 +175,11 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"cost": 7,
+		"attack": 5,
+		"health": 5,
+		"speed": 11
 	},
 	{
 		"id": "air_air_pawn_pawn",
@@ -188,7 +209,12 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"cost": 4,
+		"attack": 2,
+		"health": 4,
+		"speed": 9,
+		"shield": 1
 	},
 	{
 		"id": "air_air_knight_pawn",
@@ -231,7 +257,12 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 5,
+		"attack": 3,
+		"health": 5,
+		"speed": 10,
+		"shield": 1
 	},
 	{
 		"id": "air_air_bishop_pawn",
@@ -268,7 +299,12 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 5,
+		"attack": 2,
+		"health": 5,
+		"speed": 9,
+		"shield": 2
 	},
 	{
 		"id": "air_air_pawn_rook",
@@ -299,7 +335,16 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"abilities": [
+			"air_pawn_training_pure",
+			"pawn_material"
+		],
+		"cost": 6,
+		"attack": 2,
+		"health": 8,
+		"speed": 9,
+		"shield": 1
 	},
 	{
 		"id": "air_air_pawn_queen",
@@ -329,7 +374,11 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"cost": 8,
+		"attack": 5,
+		"health": 5,
+		"speed": 11
 	},
 	{
 		"id": "air_air_knight_knight",
@@ -366,7 +415,11 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 6,
+		"attack": 3,
+		"health": 5,
+		"speed": 11
 	},
 	{
 		"id": "air_air_bishop_knight",
@@ -396,7 +449,11 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"cost": 6,
+		"attack": 3,
+		"health": 6,
+		"speed": 11
 	},
 	{
 		"id": "air_air_knight_rook",
@@ -427,7 +484,16 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"abilities": [
+			"air_knight_training_pure",
+			"knight_material"
+		],
+		"cost": 7,
+		"attack": 3,
+		"health": 8,
+		"speed": 10,
+		"shield": 2
 	},
 	{
 		"id": "air_air_knight_queen",
@@ -470,7 +536,11 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 8,
+		"attack": 6,
+		"health": 7,
+		"speed": 12
 	},
 	{
 		"id": "air_air_bishop_bishop",
@@ -500,7 +570,11 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"cost": 6,
+		"attack": 2,
+		"health": 6,
+		"speed": 9
 	},
 	{
 		"id": "air_air_bishop_rook",
@@ -538,7 +612,16 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"abilities": [
+			"air_bishop_training_pure",
+			"bishop_material"
+		],
+		"cost": 7,
+		"attack": 2,
+		"health": 9,
+		"speed": 9,
+		"shield": 2
 	},
 	{
 		"id": "air_air_bishop_queen",
@@ -575,7 +658,11 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 8,
+		"attack": 5,
+		"health": 7,
+		"speed": 11
 	},
 	{
 		"id": "air_air_rook_rook",
@@ -605,7 +692,12 @@
 					"at": "2026-07-12"
 				}
 			}
-		}
+		},
+		"cost": 8,
+		"attack": 2,
+		"health": 11,
+		"speed": 9,
+		"shield": 4
 	},
 	{
 		"id": "air_air_queen_rook",
@@ -636,7 +728,16 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"abilities": [
+			"air_queen_training_pure",
+			"queen_material"
+		],
+		"cost": 9,
+		"attack": 5,
+		"health": 10,
+		"speed": 10,
+		"shield": 2
 	},
 	{
 		"id": "air_air_queen_queen",
@@ -666,6 +767,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"cost": 10,
+		"attack": 8,
+		"health": 8,
+		"speed": 11
 	}
 ]

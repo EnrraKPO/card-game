@@ -26,7 +26,12 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 3,
+		"attack": 4,
+		"health": 2,
+		"speed": 1,
+		"shield": 1
 	},
 	{
 		"id": "darkness_fire_knight",
@@ -55,7 +60,12 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 4,
+		"attack": 5,
+		"health": 2,
+		"speed": 2,
+		"shield": 1
 	},
 	{
 		"id": "darkness_fire_bishop",
@@ -85,7 +95,12 @@
 				}
 			}
 		},
-		"ranged": true
+		"ranged": true,
+		"cost": 4,
+		"attack": 4,
+		"health": 3,
+		"speed": 1,
+		"shield": 1
 	},
 	{
 		"id": "darkness_fire_rook",
@@ -115,7 +130,12 @@
 				}
 			}
 		},
-		"ranged": true
+		"ranged": true,
+		"cost": 5,
+		"attack": 4,
+		"health": 6,
+		"speed": 1,
+		"shield": 3
 	},
 	{
 		"id": "darkness_fire_queen",
@@ -151,7 +171,12 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 7,
+		"attack": 8,
+		"health": 4,
+		"speed": 3,
+		"shield": 1
 	},
 	{
 		"id": "darkness_fire_pawn_pawn",
@@ -187,7 +212,12 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 4,
+		"attack": 5,
+		"health": 3,
+		"speed": 1,
+		"shield": 2
 	},
 	{
 		"id": "darkness_fire_knight_pawn",
@@ -223,7 +253,12 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 5,
+		"attack": 6,
+		"health": 4,
+		"speed": 2,
+		"shield": 2
 	},
 	{
 		"id": "darkness_fire_bishop_pawn",
@@ -259,7 +294,12 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 5,
+		"attack": 5,
+		"health": 4,
+		"speed": 1,
+		"shield": 3
 	},
 	{
 		"id": "darkness_fire_pawn_rook",
@@ -296,7 +336,16 @@
 				}
 			}
 		},
-		"ranged": true
+		"ranged": true,
+		"abilities": [
+			"darkness_pawn_material",
+			"fire_pawn_material"
+		],
+		"cost": 6,
+		"attack": 5,
+		"health": 7,
+		"speed": 1,
+		"shield": 2
 	},
 	{
 		"id": "darkness_fire_pawn_queen",
@@ -332,7 +381,12 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 8,
+		"attack": 8,
+		"health": 4,
+		"speed": 3,
+		"shield": 1
 	},
 	{
 		"id": "darkness_fire_knight_knight",
@@ -368,7 +422,12 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 6,
+		"attack": 6,
+		"health": 4,
+		"speed": 3,
+		"shield": 1
 	},
 	{
 		"id": "darkness_fire_bishop_knight",
@@ -404,7 +463,12 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 6,
+		"attack": 6,
+		"health": 5,
+		"speed": 3,
+		"shield": 1
 	},
 	{
 		"id": "darkness_fire_knight_rook",
@@ -441,7 +505,16 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"abilities": [
+			"darkness_knight_material",
+			"fire_knight_material"
+		],
+		"cost": 7,
+		"attack": 6,
+		"health": 7,
+		"speed": 2,
+		"shield": 3
 	},
 	{
 		"id": "darkness_fire_knight_queen",
@@ -477,7 +550,12 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 8,
+		"attack": 9,
+		"health": 6,
+		"speed": 4,
+		"shield": 1
 	},
 	{
 		"id": "darkness_fire_bishop_bishop",
@@ -513,7 +591,12 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 6,
+		"attack": 5,
+		"health": 5,
+		"speed": 1,
+		"shield": 1
 	},
 	{
 		"id": "darkness_fire_bishop_rook",
@@ -550,7 +633,16 @@
 				}
 			}
 		},
-		"ranged": true
+		"ranged": true,
+		"abilities": [
+			"darkness_bishop_material",
+			"fire_bishop_material"
+		],
+		"cost": 7,
+		"attack": 5,
+		"health": 8,
+		"speed": 1,
+		"shield": 3
 	},
 	{
 		"id": "darkness_fire_bishop_queen",
@@ -586,7 +678,12 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 8,
+		"attack": 8,
+		"health": 6,
+		"speed": 3,
+		"shield": 1
 	},
 	{
 		"id": "darkness_fire_rook_rook",
@@ -623,7 +720,12 @@
 				}
 			}
 		},
-		"ranged": true
+		"ranged": true,
+		"cost": 8,
+		"attack": 5,
+		"health": 10,
+		"speed": 1,
+		"shield": 5
 	},
 	{
 		"id": "darkness_fire_queen_rook",
@@ -660,7 +762,16 @@
 				}
 			}
 		},
-		"ranged": true
+		"ranged": true,
+		"abilities": [
+			"darkness_queen_material",
+			"fire_queen_material"
+		],
+		"cost": 9,
+		"attack": 8,
+		"health": 9,
+		"speed": 2,
+		"shield": 3
 	},
 	{
 		"id": "darkness_fire_queen_queen",
@@ -696,6 +807,11 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"cost": 10,
+		"attack": 11,
+		"health": 7,
+		"speed": 3,
+		"shield": 1
 	}
 ]

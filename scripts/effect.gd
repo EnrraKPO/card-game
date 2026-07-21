@@ -110,6 +110,10 @@ var conditions: Array = []   # Array[EffectCondition]
 var attribute: String = ""
 var custom_id: String = ""           # CUSTOM: id into EffectHooks
 var custom_apply: Callable           # programmatic inline hook (not data-authored)
+# CUSTOM (deliver_material): a per-EFFECT material key that overrides the ability's own
+# `material`. Empty = fall back to ctx.ability.material. Lets one ability deliver several
+# DIFFERENT materials from separate effects (e.g. deliver a pawn, then an element).
+var material: String = ""
 
 # Generic "apply a status" payload: any TRIGGERED effect may grant a status to each resolved
 # target (in place of / as well as a stat delta). Empty status_id = this effect applies no status.
@@ -199,6 +203,7 @@ static func from_dict(d: Dictionary) -> Effect:
 	elif kind_str == "custom" or (kind_str.is_empty() and d.has("custom")):
 		e.kind             = Kind.CUSTOM
 		e.custom_id        = d.get("custom", "")
+		e.material         = str(d.get("material", ""))
 		e._parse_trigger(d)
 		e._parse_targets(d)
 	else:
@@ -446,6 +451,8 @@ func to_dict() -> Dictionary:
 				"custom":  custom_id,
 				"trigger": _trigger_out(),
 			}
+			if not material.is_empty():
+				cd["material"] = material
 			if authored_native_targets:
 				cd["targets"] = targets_resolver().to_dict()
 			else:
