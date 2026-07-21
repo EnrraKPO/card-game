@@ -113,6 +113,8 @@ var _forge_badge: Control
 func get_chrome() -> Dictionary:
 	var actions: Array = [{"label": "Save & Quit", "action": _on_quit_pressed}]
 	if DebugConfig.enabled():
+		actions.append({"label": "Combat Gym",
+				"action": func() -> void: Nav.goto("res://scenes/combat_gym.tscn"), "align": "right"})
 		actions.append({"label": "Debug Items",
 				"action": func() -> void: Nav.goto("res://scenes/debug_shop.tscn"), "align": "right"})
 	return {"fields": [ScreenUI.Field.ACT, ScreenUI.Field.HP, ScreenUI.Field.GOLD,

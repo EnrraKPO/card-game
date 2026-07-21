@@ -55,6 +55,11 @@ static func power_for_depth(global_floor: int) -> float:
 static var _all: Array = []  # Array[EncounterTemplateData]
 
 
+# Every loaded template — the Combat Gym's listing source (selection flows use pick_for).
+static func all() -> Array:
+	return _all
+
+
 # ── Loading ─────────────────────────────────────────────────────────────────
 
 static func _static_init() -> void:

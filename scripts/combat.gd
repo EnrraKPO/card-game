@@ -846,6 +846,12 @@ func _handle_combat_end() -> void:
 	# The screen-level dressing plays out BEFORE navigation (awaited — Nav.goto would cut it
 	# off mid-swell); target is the whole combat screen.
 	await Vfx.play("screen_victory_rays" if player_won else "screen_defeat_shroud", self)
+	# A practice (Combat Gym) fight leaves no footprint: no rewards, no king-damage carry, no
+	# map advance, no save, and defeat does NOT end the run — straight back to the gym.
+	if enc != null and enc.practice:
+		GameData.current_encounter = null
+		Nav.goto("res://scenes/combat_gym.tscn")
+		return
 	if player_won:
 		# Apply the encounter's automatic rewards (gold + crafting materials) in one place,
 		# uniformly for boss and normal wins. The card-pick reward is handled by reward_screen.

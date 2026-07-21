@@ -22,6 +22,11 @@ var ai: EnemyAI = null               # null falls back to default EnemyAI in com
 
 var outcome: Outcome = Outcome.PENDING
 
+# A Combat Gym launch (see combat_gym.gd): the fight plays out exactly like the real thing,
+# but its ENDING writes nothing — no rewards, no king-damage carry, no map advance, no save,
+# no run end on defeat — and navigation returns to the gym instead of the map/reward flow.
+var practice: bool = false
+
 # Set by map.gd so combat can advance the run state after a win.
 # completing_node_id: the node to mark as visited (was current when combat started).
 # destination_node_id: the node to set as current after the win (the node clicked).
