@@ -930,7 +930,8 @@ const MODIFIER_KEYS = ['unit.attack','unit.health','unit.speed','card.cost',
   'forge.cost.per_piece','forge.cost.per_element','forge.cost.element_only','forge.cost.piece_op',
   'shop.magic_mineral.price'];
 const CUSTOM_HOOKS = ['rallying_cry','deliver_material'];
-const EFFECT_ATTRS = ['health','max_health','damage_taken','attack','speed','shield','cost'];
+const EFFECT_ATTRS = ['health','max_health','damage_taken','attack','speed','shield','cost',
+  'dodge_bonus','crit_chance_bonus','crit_multiplier_bonus','strikes'];
 // Side stats: only valid with targets {"kind":"side"} and vice versa (mirrors
 // Effect._validate_side_targets — see EFFECT_SYSTEM_DESIGN.md §10).
 const SIDE_ATTRS = ['draw','discard','mana','max_mana'];
@@ -943,7 +944,8 @@ const INTERCEPT_STATS = ['damage','health','shield_pool','status',
 // targets (mirrors Effect.FOLDABLE_ATTRS/FOLDABLE_MAP: pool-named attributes fold as
 // their base — "health" means max_health, "shield" the shield base the pool follows).
 const FOLDABLE_MAP = { health: 'max_health', shield: 'max_shield' };
-const FOLDABLE_ATTRS = ['max_health', 'attack', 'speed', 'cost', 'max_shield'];
+const FOLDABLE_ATTRS = ['max_health', 'attack', 'speed', 'cost', 'max_shield',
+  'dodge_bonus', 'crit_chance_bonus', 'crit_multiplier_bonus', 'strikes'];
 const COND_ATTRS = ['health','attack','speed','cost','piece_count','element_count'];
 const ELEMENTS = ['fire','water','air','earth','darkness','light'];
 const PIECES = ['pawn','knight','bishop','rook','queen','king'];
@@ -1088,6 +1090,15 @@ function validateEffect(e, where) {
       return `${where}: side-targeted attribute must be one of ${SIDE_ATTRS.join('/')}`;
     if (sideTargeted && e.status && e.status.id)
       return `${where}: a side-targeted effect cannot apply a status`;
+    // The "spawn units" payload (mirrors Effect.spawn_id/spawn_count): triggered-only,
+    // never standing, never side-targeted; card-id existence is the game loader's check.
+    if (e.spawn != null) {
+      if (typeof e.spawn !== 'object' || !e.spawn.id)
+        return `${where}: spawn must be an object naming a card id ({"id": ..., "count": n})`;
+      if (e.spawn.count != null && (!Number.isInteger(e.spawn.count) || e.spawn.count < 1))
+        return `${where}: spawn count must be a positive integer`;
+      if (sideTargeted) return `${where}: a side-targeted effect cannot spawn units`;
+    }
     const standing = e.trigger && typeof e.trigger === 'object' && e.trigger.kind === 'while';
     const hasGrants = Array.isArray(e.grants) && e.grants.length > 0;
     if (standing) {
@@ -1102,6 +1113,7 @@ function validateEffect(e, where) {
         return `${where}: attribute "${e.attribute}" cannot be standing — only `
           + `health/shield/${FOLDABLE_ATTRS.join('/')} fold at read time`;
       if (e.status && e.status.id) return `${where}: a standing (while) effect cannot apply a status`;
+      if (e.spawn && e.spawn.id) return `${where}: a standing (while) effect cannot spawn units`;
       const tk = e.targets && typeof e.targets === 'object' ? String(e.targets.kind || 'all') : 'all';
       if (!['self','all'].includes(tk)) return `${where}: standing targets must be "self" or "all"`;
     }
@@ -1126,8 +1138,8 @@ function validateEffect(e, where) {
           return `${where}: a composition grant cannot carry has_element:false (grants only ever ADD)`;
       }
     }
-    const hasPayload = e.attribute || (e.status && e.status.id) || hasGrants;
-    if (!hasPayload) return `${where}: effect does nothing — set an attribute change or a status to apply`;
+    const hasPayload = e.attribute || (e.status && e.status.id) || hasGrants || (e.spawn && e.spawn.id);
+    if (!hasPayload) return `${where}: effect does nothing — set an attribute change, a status to apply, or units to spawn`;
   }
   return validateConditionList(e.conditions, where);
 }

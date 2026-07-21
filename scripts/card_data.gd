@@ -34,6 +34,10 @@ var abilities: Array[String] = []
 # (see combat.gd::_resolve_attack). Authored per-card — NOT derived from composition, so e.g.
 # the base Bishop is ranged but most bishop-composed units aren't unless they opt in.
 var ranged: bool = false
+# Attacks per combat round (the multi-strike stat — see combat._resolve_attack's strike loop).
+# Base 1 for everyone; authored higher for flurry units (harpies and friends). Foldable, so
+# standing effects/statuses can grant extra strikes at read time (CardInstance.get_attribute).
+var strikes: int = 1
 
 # Procedural enemy power scaling: each point of encounter `power` grows a scaled card's
 # offensive/defensive stats by this fraction (see CardData.scaled / EncounterTemplateData).
@@ -157,6 +161,7 @@ static func build_from_dict(d: Dictionary) -> CardData:
 	card.tribe        = str(d.get("tribe", ""))
 	card.abilities    = Array(d.get("abilities", []), TYPE_STRING, "", null)
 	card.ranged       = bool(d.get("ranged", false))
+	card.strikes      = maxi(1, int(d.get("strikes", 1)))
 	for e_data: Dictionary in d.get("effects", []):
 		card.effects.append(Effect.from_dict(e_data))
 	if d.has("card_type"):
@@ -235,6 +240,10 @@ func to_dict() -> Dictionary:
 		d["abilities"] = Array(abilities, TYPE_STRING, "", null)
 	if not tribe.is_empty():
 		d["tribe"] = tribe
+	# Conditional like tribe/abilities: the overwhelming single-strike majority keeps its
+	# serialized shape byte-identical to before the stat existed.
+	if strikes != 1:
+		d["strikes"] = strikes
 	return d
 
 
@@ -265,6 +274,7 @@ static func scaled(base: CardData, power: float) -> CardData:
 	c.tribe         = base.tribe
 	c.abilities     = base.abilities.duplicate()
 	c.ranged        = base.ranged
+	c.strikes       = base.strikes
 	c.effects       = base.effects
 	c.targeting_strategy = base.targeting_strategy
 	c.image         = base.image

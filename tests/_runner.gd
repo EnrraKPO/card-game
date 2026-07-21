@@ -25,6 +25,7 @@ const SUITES: Array = [
 	preload("res://tests/test_dodge.gd"),
 	preload("res://tests/test_crit.gd"),
 	preload("res://tests/test_economy.gd"),
+	preload("res://tests/test_spawn_strikes.gd"),
 	preload("res://tests/test_forge_costs.gd"),
 ]
 

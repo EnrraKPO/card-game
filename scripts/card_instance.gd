@@ -98,6 +98,10 @@ func get_attribute(attr: String) -> int:
 		# multiplier points ×100 (50 = +0.5×). Read by Resolver.crit_chance / crit_multiplier.
 		"crit_chance_bonus": return modifiers.get("crit_chance_bonus", 0) + LiveEffects.bonus(self, "crit_chance_bonus")
 		"crit_multiplier_bonus": return modifiers.get("crit_multiplier_bonus", 0) + LiveEffects.bonus(self, "crit_multiplier_bonus")
+		# Attacks per combat round (combat._resolve_attack loops this many strikes). Base is the
+		# card's authored stat (1 for almost everyone); written modifiers and live standing
+		# effects fold in like any stat, floored at 1 — a debuff can't strip the basic attack.
+		"strikes": return maxi(1, data.strikes + modifiers.get("strikes", 0) + LiveEffects.bonus(self, "strikes"))
 		# Read-only composition counts, so conditions can query merge room with the ordinary
 		# attribute/comparator form (e.g. a pawn material: piece_count <= 1). Never modified.
 		"piece_count":   return data.chess_pieces.size()

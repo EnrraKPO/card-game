@@ -516,13 +516,26 @@ func _run_combat() -> void:
 		await _resolve_attack(attacker)
 
 
-# Plays out a single attacker's strike: target lookup, delivery (melee lunge or ranged
-# bolt), damage + triggered effects, and the target's death or survival.
+# Plays out a single attacker's turn: `strikes` full strike sequences (base 1 — the
+# multi-strike stat; standing effects can add more). Each strike re-acquires its target,
+# so a slain victim doesn't soak the follow-ups; the attacker dying mid-flurry (retaliation,
+# a deathrattle) or a king falling ends the flurry immediately.
 func _resolve_attack(attacker: CardInstance) -> void:
-	var target := _board.find_target(attacker)
-	if target == null:
-		return
+	var strikes := attacker.get_attribute("strikes")
+	for _i in strikes:
+		if not attacker.is_alive() or attacker.attack_exhausted:
+			break
+		var target := _board.find_target(attacker)
+		if target == null:
+			break
+		await _perform_strike(attacker, target)
+		if _board.any_king_dead():
+			break
 
+
+# One full strike sequence against an acquired target: delivery (melee lunge or ranged
+# bolt), damage + triggered effects, and the target's death or survival.
+func _perform_strike(attacker: CardInstance, target: CardInstance) -> void:
 	var a_card := _board.get_card_ui(attacker)
 	var t_card := _board.get_card_ui(target)
 

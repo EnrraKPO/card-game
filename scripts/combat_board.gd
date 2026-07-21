@@ -252,6 +252,24 @@ func player_king_alive() -> bool:
 
 
 func cleanup_effect_deaths() -> void:
+	_sweep_dead()
+	# Flush queued effect spawns now that corpses have left their slots (an on-death split
+	# reclaims where its parent stood). A spawn fires ON_PLAY effects, which may kill units
+	# and queue further spawns — the loop drains it all; the guard keeps reentrant cleanup
+	# calls (from a spawn's own play trigger) from recursing into a second flush.
+	if _flushing_spawns:
+		return
+	_flushing_spawns = true
+	while not _pending_spawns.is_empty():
+		var s: Dictionary = _pending_spawns.pop_front()
+		for _i in int(s["count"]):
+			if not _spawn_from_queue(s):
+				break   # that side's board is full — the surplus fizzles
+		_sweep_dead()
+	_flushing_spawns = false
+
+
+func _sweep_dead() -> void:
 	for r in BoardData.ROWS:
 		for c in BoardData.COLS:
 			var p: CardInstance = player_grid[r][c]
@@ -260,6 +278,65 @@ func cleanup_effect_deaths() -> void:
 			var e: CardInstance = enemy_grid[r][c]
 			if e != null and not e.is_alive():
 				remove_card(e)
+
+
+# ── Effect-driven spawning (the `spawn` payload — see EffectSystem._apply) ─────
+
+# Units conjured by effects, pending placement. Queued rather than placed immediately so an
+# on-death spawn resolves AFTER the corpse leaves the board; cleanup_effect_deaths flushes.
+var _pending_spawns: Array = []   # [{ "id": String, "count": int, "owner": int, "row": int, "col": int }]
+var _flushing_spawns := false
+
+
+func queue_spawn(card_id: String, count: int, anchor: CardInstance) -> void:
+	_pending_spawns.append({"id": card_id, "count": maxi(1, count),
+			"owner": anchor.owner, "row": anchor.row, "col": anchor.col})
+
+
+# Places one queued spawn into its anchor slot if free, else the nearest empty slot on that
+# side. Fires the arrival's ON_PLAY effects like any other placement. False = side full.
+func _spawn_from_queue(s: Dictionary) -> bool:
+	var data := CardData.get_card(str(s["id"]))
+	if data == null:
+		push_error("CombatBoard: spawn payload names unknown card '%s'" % s["id"])
+		return true   # a bad id is handled (loudly), not a full board
+	var owner := int(s["owner"])
+	var slot := _nearest_empty(owner, int(s["row"]), int(s["col"]))
+	if slot.is_empty():
+		return false
+	var inst := CardInstance.from_data(data)
+	inst.owner = owner
+	Resolver.fill_health(inst)   # after owner is set, so run-wide unit bonuses fold in
+	inst.row = slot[0]; inst.col = slot[1]
+	var grid: Array = player_grid if owner == 0 else enemy_grid
+	var slots: Array = player_slots if owner == 0 else enemy_slots
+	grid[slot[0]][slot[1]] = inst
+	LiveEffects.invalidate_compositions()   # owner set — allegiance-gated grants may now reach
+	var ui := CardUI.create(inst)
+	(slots[slot[0]][slot[1]] as SlotUI).set_card(ui)
+	if owner == 0:
+		_wire_unit_drag(ui)
+	Vfx.play("summon_materialize", ui)
+	EffectSystem.trigger(GameEvent.make(&"play", inst), inst, make_context(inst))
+	refresh()
+	return true
+
+
+# The nearest empty slot to (row, col) on `owner`'s side by Manhattan distance (the anchor
+# itself when free). [] = that side is full.
+func _nearest_empty(owner: int, row: int, col: int) -> Array:
+	var grid: Array = player_grid if owner == 0 else enemy_grid
+	var best: Array = []
+	var best_d := 999
+	for r in BoardData.ROWS:
+		for c in BoardData.COLS:
+			if grid[r][c] != null:
+				continue
+			var d := absi(r - row) + absi(c - col)
+			if d < best_d:
+				best_d = d
+				best = [r, c]
+	return best
 
 
 func refresh() -> void:

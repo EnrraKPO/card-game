@@ -121,6 +121,15 @@ var status_id: String = ""
 var status_duration: int = STATUS_DURATION_DEFAULT   # sentinel = use the status's own default
 var status_stacks: int = 1
 
+# Generic "spawn units" payload: any TRIGGERED effect may conjure new units onto the board.
+# For each resolved TARGET, `spawn_count` copies of card `spawn_id` are queued on that target's
+# SIDE, anchored at its slot — the board flushes the queue after its death sweep, so an on-death
+# split reclaims the corpse's own slot (see CombatBoard.queue_spawn). This one payload powers
+# splits, broodmother summons, reinforcements, and phase-change bosses (a dying king spawning
+# its next form keeps the fight alive — any_king_dead scans the live board). Empty = none.
+var spawn_id: String = ""
+var spawn_count: int = 1
+
 # ── MODIFIER fields (legacy authored form; card-scoped ones parse into STANDING effects) ──
 var scope: Scope = Scope.GLOBAL
 var key: String = ""
@@ -221,6 +230,11 @@ static func from_dict(d: Dictionary) -> Effect:
 		e.status_id       = str(st.get("id", ""))
 		e.status_duration = int(st.get("duration", STATUS_DURATION_DEFAULT))
 		e.status_stacks   = int(st.get("stacks", 1))
+	# Optional "spawn units" payload, valid on any event-driven (TRIGGERED) effect.
+	var sp: Dictionary = d.get("spawn", {})
+	if not sp.is_empty():
+		e.spawn_id    = str(sp.get("id", ""))
+		e.spawn_count = maxi(1, int(sp.get("count", 1)))
 	# Optional composition-grant payload — parsed for every kind so a misplaced "grants"
 	# key is caught by _validate_grants (fail loud) instead of silently ignored.
 	for g_v: Variant in (d.get("grants", []) as Array):
@@ -282,6 +296,8 @@ func _validate_standing(d: Dictionary) -> void:
 				% [standing_attribute(), ", ".join(FOLDABLE_ATTRS), d])
 	if not status_id.is_empty():
 		push_error("Effect: a standing (while) effect cannot apply a status — %s" % [d])
+	if not spawn_id.is_empty():
+		push_error("Effect: a standing (while) effect cannot spawn units — %s" % [d])
 	if kind == Kind.CUSTOM:
 		push_error("Effect: a custom hook cannot be standing (while) — %s" % [d])
 	# Standing membership is self or condition-based; selection policies (nearest/random/
@@ -329,6 +345,8 @@ func _validate_side_targets(d: Dictionary) -> void:
 				% [attribute, StatMutation.SIDE_STATS, d])
 	if not status_id.is_empty():
 		push_error("Effect: a side-targeted effect cannot apply a status — %s" % [d])
+	if not spawn_id.is_empty():
+		push_error("Effect: a side-targeted effect cannot spawn units — %s" % [d])
 	if not (_native_targets.get("conditions", []) as Array).is_empty():
 		push_error("Effect: side targets take no conditions (players have nothing to predicate on) — %s" % [d])
 
@@ -514,6 +532,8 @@ func to_dict() -> Dictionary:
 				d["tracker"] = tracker_spec.duplicate()
 			if not status_id.is_empty():
 				d["status"] = {"id": status_id, "duration": status_duration, "stacks": status_stacks}
+			if not spawn_id.is_empty():
+				d["spawn"] = {"id": spawn_id, "count": spawn_count}
 			return d
 
 
@@ -538,7 +558,7 @@ func is_composition_grant() -> bool:
 # The attributes the read-time fold actually serves (get_attribute consults LiveEffects
 # for exactly these). Pools (current health/shield, side resources) are stored state and
 # can never be standing targets — their BASE is what folds (see FOLDABLE_MAP).
-const FOLDABLE_ATTRS: Array[String] = ["max_health", "attack", "speed", "cost", "max_shield", "dodge_bonus", "crit_chance_bonus", "crit_multiplier_bonus"]
+const FOLDABLE_ATTRS: Array[String] = ["max_health", "attack", "speed", "cost", "max_shield", "dodge_bonus", "crit_chance_bonus", "crit_multiplier_bonus", "strikes"]
 # Pool-named authored attributes → the base each one folds into when authored standing:
 # a "while +1 health" means max health, a "while +1 shield" means the shield base the
 # pool refreshes to (and reads against) — never the pool itself.

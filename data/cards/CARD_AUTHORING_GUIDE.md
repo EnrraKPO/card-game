@@ -37,6 +37,8 @@ A file can contain a single card or an array of cards.
 | `description` | string | No | Flavour or ability text shown in the tooltip on hover. |
 | `effects` | array | No | List of effects triggered at various moments. Defaults to empty. |
 | `abilities` | array | No | ACTIVATED ABILITIES this card holds, by id — definitions live in `data/abilities/` (see `ABILITY_AUTHORING_GUIDE.md` there). How rook buildings offer Castling and the materials; any card may hold abilities. A rook building with none authored falls back to the derived rule (Castling for pure rooks, a synthesized material delivery for its remainder). |
+| `ranged` | bool | No | Fires a projectile at its auto-attack target instead of the melee lunge. Authored per-card, never derived from composition. |
+| `strikes` | int | No | Attacks per combat round (default 1). Each strike is a full sequence that re-acquires its target — a slain victim doesn't soak the follow-ups; the attacker dying mid-flurry or a king falling ends it. Foldable like any stat: a standing effect/status can grant extra strikes (`"attribute": "strikes"`), and the read floors at 1. |
 
 ---
 
@@ -186,6 +188,23 @@ target the `targeting_policy` resolves.
 | `id` | string | The status to apply (must exist in `data/statuses/`) |
 | `duration` | int | Optional — overrides the status's own default duration |
 | `stacks` | int | Optional — stacks to add (default 1; combines per the status's stacking rule) |
+
+### `spawn` — conjure units onto the board (optional)
+
+A triggered effect may carry a **spawn payload** instead of (or beside a) stat change: for each
+resolved target, `count` copies of the named card are queued on that **target's side**, anchored
+at its slot. The board flushes the queue after its death sweep, so an on-death split lands where
+the corpse stood — the nearest empty slots take any overflow, and a full side fizzles the surplus.
+Spawned units arrive like any placement (their ON_PLAY effects fire, `summon_materialize` cues).
+
+```json
+{ "trigger": "on_death", "targeting_policy": "self", "spawn": { "id": "slime_blob", "count": 2 } }
+```
+
+This one payload powers splits, broodmother summons, reinforcements — and **phase-change
+bosses**: a dying `is_king` unit whose on-death effect spawns its next form keeps the fight
+alive (the win check scans the live board). Spawn counts are authored, never stack-scaled.
+Standing (`while`) and side-targeted effects cannot spawn (fail-loud at load).
 
 ### `conditions` — filter valid targets (optional)
 
