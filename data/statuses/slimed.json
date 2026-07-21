@@ -1,0 +1,16 @@
+{
+  "id": "slimed",
+  "display_name": "Slimed",
+  "description": "Clinging goo drags every movement: −1 Speed per stack.",
+  "beneficial": false,
+  "color": "6fae4e",
+  "glyph": "~",
+  "default_duration": 2,
+  "decay": "duration",
+  "stacking": "stack",
+  "max_stacks": 5,
+  "effects": [
+    { "trigger": { "kind": "while" }, "targets": { "kind": "self" },
+      "tracker": { "kind": "stacks" }, "attribute": "speed", "amount": -1 }
+  ]
+}

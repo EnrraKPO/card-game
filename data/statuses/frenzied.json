@@ -1,0 +1,17 @@
+{
+  "id": "frenzied",
+  "display_name": "Frenzied",
+  "description": "Whipped into a killing fever: +1 Attack and +1 Speed per stack.",
+  "beneficial": true,
+  "color": "d1442e",
+  "glyph": "!",
+  "decay": "none",
+  "stacking": "stack",
+  "max_stacks": 9,
+  "effects": [
+    { "trigger": { "kind": "while" }, "targets": { "kind": "self" },
+      "tracker": { "kind": "stacks" }, "attribute": "attack", "amount": 1 },
+    { "trigger": { "kind": "while" }, "targets": { "kind": "self" },
+      "tracker": { "kind": "stacks" }, "attribute": "speed", "amount": 1 }
+  ]
+}

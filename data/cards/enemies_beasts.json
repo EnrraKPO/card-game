@@ -1,0 +1,122 @@
+[
+  {
+    "id": "beast_wolf",
+    "display_name": "Ravenous Wolf",
+    "cost": 2, "attack": 2, "health": 2, "speed": 4,
+    "description": "A kill only sharpens its hunger: gains Frenzied (+1 Attack, +1 Speed) whenever it slays a unit.",
+    "enemy_only": true, "tribe": "beast", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": { "kind": "dual_event", "event": "kill", "origin_of": "self" },
+        "targets": { "kind": "self" }, "status": { "id": "frenzied", "stacks": 1 } }
+    ]
+  },
+  {
+    "id": "beast_boar",
+    "display_name": "Ironhide Boar",
+    "cost": 2, "attack": 2, "health": 5, "speed": 2,
+    "description": "Hurting it is a mistake: +2 Attack every time it takes a hit.",
+    "enemy_only": true, "tribe": "beast", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_damage_taken", "targeting_policy": "self", "attribute": "attack", "amount": 2 }
+    ]
+  },
+  {
+    "id": "beast_hyena",
+    "display_name": "Cackling Hyena",
+    "cost": 3, "attack": 2, "health": 3, "speed": 3,
+    "description": "Laughs at every funeral — gains +1 Attack whenever ANY unit dies, friend or foe.",
+    "enemy_only": true, "tribe": "beast", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": { "kind": "event", "event": "death" },
+        "targets": { "kind": "self" }, "attribute": "attack", "amount": 1 }
+    ]
+  },
+  {
+    "id": "beast_panther",
+    "display_name": "Shadowfang Panther",
+    "cost": 3, "attack": 3, "health": 2, "speed": 5,
+    "description": "A blur of muscle and malice: +15% dodge and +15% crit chance.",
+    "enemy_only": true, "tribe": "beast", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": { "kind": "while" }, "targets": { "kind": "self" }, "attribute": "dodge_bonus", "amount": 15 },
+      { "trigger": { "kind": "while" }, "targets": { "kind": "self" }, "attribute": "crit_chance_bonus", "amount": 15 }
+    ]
+  },
+  {
+    "id": "beast_bear",
+    "display_name": "Rageclaw Bear",
+    "cost": 4, "attack": 3, "health": 7, "speed": 2,
+    "description": "Slow to anger, impossible to calm: +1 Attack every time it takes a hit.",
+    "enemy_only": true, "tribe": "beast", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_damage_taken", "targeting_policy": "self", "attribute": "attack", "amount": 1 }
+    ]
+  },
+  {
+    "id": "beast_direwolf",
+    "display_name": "Direwolf Packlead",
+    "cost": 4, "attack": 3, "health": 4, "speed": 4,
+    "description": "Never hunts alone — a Ravenous Wolf lopes in beside it when it arrives.",
+    "enemy_only": true, "tribe": "beast", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_play", "targeting_policy": "self", "spawn": { "id": "beast_wolf", "count": 1 } }
+    ]
+  },
+  {
+    "id": "beast_ape",
+    "display_name": "Silverback Warchief",
+    "cost": 5, "attack": 4, "health": 8, "speed": 2,
+    "description": "Beats its chest on arrival, rallying the whole pack with +1 Attack.",
+    "enemy_only": true, "tribe": "beast", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_play", "targeting_policy": "all_allies", "attribute": "attack", "amount": 1 }
+    ]
+  },
+  {
+    "id": "beast_behemoth",
+    "display_name": "Thornmane Behemoth",
+    "cost": 7, "attack": 6, "health": 12, "speed": 2,
+    "description": "A siege engine with a heartbeat. +1 Attack whenever it takes a hit.",
+    "enemy_only": true, "tribe": "beast", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_damage_taken", "targeting_policy": "self", "attribute": "attack", "amount": 1 }
+    ]
+  },
+  {
+    "id": "beast_alpha",
+    "display_name": "Fenrik, the Alpha",
+    "cost": 0, "attack": 5, "health": 36, "speed": 3, "shield": 2,
+    "is_king": true, "enemy_only": true, "tribe": "beast",
+    "description": "The pack answers to one voice. Every kill feeds him: heals 3 whenever he slays a unit. Bring him down to win.",
+    "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": { "kind": "dual_event", "event": "kill", "origin_of": "self" },
+        "targets": { "kind": "self" }, "attribute": "health", "amount": 3 }
+    ]
+  },
+  {
+    "id": "beast_ancient",
+    "display_name": "Old Thornback",
+    "cost": 0, "attack": 6, "health": 44, "speed": 2, "shield": 4,
+    "is_king": true, "enemy_only": true, "tribe": "beast",
+    "description": "Hunters have carved a hundred scars into its hide, and each one made it meaner: +1 Attack every time it takes a hit. Destroy it to win.",
+    "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_damage_taken", "targeting_policy": "self", "attribute": "attack", "amount": 1 }
+    ]
+  },
+  {
+    "id": "beast_ragnor",
+    "display_name": "Ragnor, the Endless Hunger",
+    "cost": 0, "attack": 7, "health": 55, "speed": 3, "shield": 3,
+    "is_king": true, "enemy_only": true, "tribe": "beast",
+    "description": "It has never once stopped eating. Every unit it kills feeds it +2 Attack and 4 healing — kill it before it kills everything. Destroy it to win.",
+    "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": { "kind": "dual_event", "event": "kill", "origin_of": "self" },
+        "targets": { "kind": "self" }, "attribute": "attack", "amount": 2 },
+      { "trigger": { "kind": "dual_event", "event": "kill", "origin_of": "self" },
+        "targets": { "kind": "self" }, "attribute": "health", "amount": 4 }
+    ]
+  }
+]

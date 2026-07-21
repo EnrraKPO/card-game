@@ -1,0 +1,145 @@
+[
+  {
+    "id": "slime_droplet",
+    "display_name": "Slime Droplet",
+    "cost": 1, "attack": 1, "health": 1, "speed": 2,
+    "description": "The smallest a slime can get. Barely a threat — but they do add up.",
+    "enemy_only": true, "tribe": "slime", "elements": [], "chess_pieces": [], "effects": []
+  },
+  {
+    "id": "slime_green",
+    "display_name": "Green Slime",
+    "cost": 2, "attack": 1, "health": 3, "speed": 1,
+    "description": "Pop it and it just gets smaller: splits into 2 Droplets on death.",
+    "enemy_only": true, "tribe": "slime", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_death", "targeting_policy": "self", "spawn": { "id": "slime_droplet", "count": 2 } }
+    ]
+  },
+  {
+    "id": "slime_blue",
+    "display_name": "Bouncing Slime",
+    "cost": 2, "attack": 2, "health": 2, "speed": 3,
+    "description": "So springy that blows tend to glance right off (+20% dodge).",
+    "enemy_only": true, "tribe": "slime", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": { "kind": "while" }, "targets": { "kind": "self" }, "attribute": "dodge_bonus", "amount": 20 }
+    ]
+  },
+  {
+    "id": "slime_sticky",
+    "display_name": "Sticky Slime",
+    "cost": 2, "attack": 1, "health": 4, "speed": 2,
+    "description": "Leaves clinging goo on whatever it slaps: its target is Slimed (−1 Speed).",
+    "enemy_only": true, "tribe": "slime", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_attack", "targeting_policy": "attack_target", "status": { "id": "slimed", "stacks": 1 } }
+    ]
+  },
+  {
+    "id": "slime_toxic",
+    "display_name": "Toxic Slime",
+    "cost": 3, "attack": 1, "health": 4, "speed": 1,
+    "description": "A bubbling vat on the move — applies 2 Poison to whatever it hits.",
+    "enemy_only": true, "tribe": "slime", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_attack", "targeting_policy": "attack_target", "status": { "id": "poison", "stacks": 2 } }
+    ]
+  },
+  {
+    "id": "slime_magma",
+    "display_name": "Magma Slime",
+    "cost": 3, "attack": 2, "health": 3, "speed": 1,
+    "description": "Runs hot. Bursts on death, scalding every opposing unit for 1.",
+    "enemy_only": true, "tribe": "slime", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_death", "targeting_policy": "all_enemies", "attribute": "damage_taken", "amount": 1 }
+    ]
+  },
+  {
+    "id": "slime_gluttonous",
+    "display_name": "Gluttonous Slime",
+    "cost": 4, "attack": 2, "health": 5, "speed": 1,
+    "description": "Slurps up every fallen ally: +1 Attack and +1 Health whenever one dies.",
+    "enemy_only": true, "tribe": "slime", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": { "kind": "event", "event": "death", "conditions": [ { "allegiance": "ally" } ] },
+        "targets": { "kind": "self" }, "attribute": "max_health", "amount": 1 },
+      { "trigger": { "kind": "event", "event": "death", "conditions": [ { "allegiance": "ally" } ] },
+        "targets": { "kind": "self" }, "attribute": "health", "amount": 1 },
+      { "trigger": { "kind": "event", "event": "death", "conditions": [ { "allegiance": "ally" } ] },
+        "targets": { "kind": "self" }, "attribute": "attack", "amount": 1 }
+    ]
+  },
+  {
+    "id": "slime_big",
+    "display_name": "Giant Slime",
+    "cost": 4, "attack": 3, "health": 7, "speed": 1,
+    "description": "A wobbling wall of goo. Splits into 2 Green Slimes on death.",
+    "enemy_only": true, "tribe": "slime", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_death", "targeting_policy": "self", "spawn": { "id": "slime_green", "count": 2 } }
+    ]
+  },
+  {
+    "id": "slime_mega",
+    "display_name": "Colossal Slime",
+    "cost": 6, "attack": 5, "health": 10, "speed": 1,
+    "description": "A rolling hill with appetite. Splits into 2 Giant Slimes on death — killing it is only the beginning.",
+    "enemy_only": true, "tribe": "slime", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_death", "targeting_policy": "self", "spawn": { "id": "slime_big", "count": 2 } }
+    ]
+  },
+  {
+    "id": "slime_king_gel",
+    "display_name": "The Royal Gel",
+    "cost": 0, "attack": 4, "health": 34, "speed": 2, "shield": 2,
+    "is_king": true, "enemy_only": true, "tribe": "slime",
+    "description": "Sovereign of the ooze, wearing a crown it digested along with its previous owner. Grows crueler (+1 Attack) each time a subject pops. Cut it down to win.",
+    "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": { "kind": "event", "event": "death", "conditions": [ { "allegiance": "ally" } ] },
+        "targets": { "kind": "self" }, "attribute": "attack", "amount": 1 }
+    ]
+  },
+  {
+    "id": "slime_amalgam",
+    "display_name": "The Amalgam",
+    "cost": 0, "attack": 5, "health": 40, "speed": 1, "shield": 4,
+    "is_king": true, "enemy_only": true, "tribe": "slime",
+    "description": "Every slime that ever died in this bog is still in there, somewhere. Absorbs each fallen ally for +1 Attack and +2 Health. Destroy it to win.",
+    "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": { "kind": "event", "event": "death", "conditions": [ { "allegiance": "ally" } ] },
+        "targets": { "kind": "self" }, "attribute": "max_health", "amount": 2 },
+      { "trigger": { "kind": "event", "event": "death", "conditions": [ { "allegiance": "ally" } ] },
+        "targets": { "kind": "self" }, "attribute": "health", "amount": 2 },
+      { "trigger": { "kind": "event", "event": "death", "conditions": [ { "allegiance": "ally" } ] },
+        "targets": { "kind": "self" }, "attribute": "attack", "amount": 1 }
+    ]
+  },
+  {
+    "id": "slime_overlord",
+    "display_name": "Slimeon, the Boundless",
+    "cost": 0, "attack": 6, "health": 50, "speed": 2, "shield": 4,
+    "is_king": true, "enemy_only": true, "tribe": "slime",
+    "description": "An ocean pretending to be a monster. Slimes whatever it strikes — and killing it only frees what boils at its core. Destroy BOTH forms to win.",
+    "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_attack", "targeting_policy": "attack_target", "status": { "id": "slimed", "stacks": 2 } },
+      { "trigger": "on_death", "targeting_policy": "self", "spawn": { "id": "slime_overlord_reborn", "count": 1 } }
+    ]
+  },
+  {
+    "id": "slime_overlord_reborn",
+    "display_name": "Slimeon Reborn",
+    "cost": 0, "attack": 9, "health": 28, "speed": 4, "strikes": 2,
+    "is_king": true, "enemy_only": true, "tribe": "slime",
+    "description": "The Overlord's boiling core, freed of its bulk — twice as fast, twice as angry, striking twice a round. This one stays dead.",
+    "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": { "kind": "while" }, "targets": { "kind": "self" }, "attribute": "dodge_bonus", "amount": 15 }
+    ]
+  }
+]

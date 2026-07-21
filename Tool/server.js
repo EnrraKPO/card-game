@@ -908,7 +908,7 @@ function stripMeta(data) {
 const TRIGGERS = ['on_play','on_death','on_attack','on_damage_taken','permanent','on_turn_start','on_turn_end','on_activate'];
 // The native trigger-resolver schema (see scripts/triggers/trigger_resolver.gd).
 const SIMPLE_EVENTS = ['play','death','activate','turn_start','turn_end'];
-const DUAL_EVENTS = ['attack','struck','kill'];
+const DUAL_EVENTS = ['attack','struck','kill','dodge','crit'];
 const RELATIONS = ['self','ally','enemy'];   // legacy spelling; ally/enemy map to allegiance in-game
 const ALLEGIANCES = ['ally','enemy'];        // side vs the effect's OWNER — the native predicate form
 const PARTICIPANT_GATES = ['self','any'];    // trigger "of" gates (identity is structural, not a condition)
