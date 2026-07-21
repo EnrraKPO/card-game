@@ -1,0 +1,106 @@
+[
+  {
+    "id": "insect_burrow",
+    "node_type": "combat",
+    "min_floor": 0, "max_floor": 5,
+    "min_stage": 1, "max_stage": 1,
+    "weight": 1.0,
+    "enemy_king": "insect_hive_tyrant",
+    "enemy_pool": [
+      { "id": "insect_larva",  "weight": 3 },
+      { "id": "insect_worker", "weight": 2 },
+      { "id": "insect_vespid", "weight": 2 }
+    ],
+    "pick_count": [5, 8],
+    "gold_reward": [18, 28],
+    "exp_reward": 1,
+    "ai": "default",
+    "reward_pool": "default"
+  },
+  {
+    "id": "insect_hatchery",
+    "node_type": "combat",
+    "min_floor": 3, "max_floor": 999,
+    "min_stage": 1, "max_stage": 2,
+    "weight": 1.0,
+    "enemy_king": "insect_hive_tyrant",
+    "enemy_pool": [
+      { "id": "insect_cocoon", "weight": 3 },
+      { "id": "insect_vespid", "weight": 2 },
+      { "id": "insect_beetle", "weight": 2 },
+      { "id": "insect_worker", "weight": 2 },
+      { "id": "insect_locust", "weight": 1 }
+    ],
+    "pick_count": [7, 10],
+    "gold_reward": [22, 34],
+    "exp_reward": 1,
+    "ai": "default",
+    "reward_pool": "default"
+  },
+  {
+    "id": "insect_swarmfront",
+    "node_type": "combat",
+    "min_floor": 0, "max_floor": 999,
+    "min_stage": 2, "max_stage": 3,
+    "weight": 1.0,
+    "enemy_king": "insect_hive_tyrant",
+    "enemy_pool": [
+      { "id": "insect_mantis",      "weight": 2 },
+      { "id": "insect_locust",      "weight": 2 },
+      { "id": "insect_beetle",      "weight": 2 },
+      { "id": "insect_broodmother", "weight": 2 },
+      { "id": "insect_vespid",      "weight": 1 },
+      { "id": "insect_cocoon",      "weight": 1 }
+    ],
+    "pick_count": [9, 12],
+    "gold_reward": [25, 40],
+    "exp_reward": 2,
+    "ai": "default",
+    "reward_pool": "default"
+  },
+  {
+    "id": "insect_elite_mantis_prime",
+    "node_type": "elite",
+    "min_floor": 0, "max_floor": 999,
+    "min_stage": 1, "max_stage": 999,
+    "weight": 1.0,
+    "enemy_king": "insect_mantis_prime",
+    "power_bonus": 2.0,
+    "enemy_pool": [
+      { "id": "insect_mantis",      "weight": 3 },
+      { "id": "insect_vespid",      "weight": 2 },
+      { "id": "insect_beetle",      "weight": 2 },
+      { "id": "insect_locust",      "weight": 2 },
+      { "id": "insect_broodmother", "weight": 1 }
+    ],
+    "pick_count": [6, 8],
+    "gold_reward": [40, 60],
+    "exp_reward": 3,
+    "ai": "default",
+    "reward_pool": "default",
+    "relic_reward": 0.5
+  },
+  {
+    "id": "insect_boss_hive_queen",
+    "node_type": "boss",
+    "min_floor": 0, "max_floor": 999,
+    "min_stage": 1, "max_stage": 999,
+    "weight": 1.0,
+    "enemy_king": "insect_hive_queen",
+    "power_bonus": 4.0,
+    "enemy_pool": [
+      { "id": "insect_worker",      "weight": 2 },
+      { "id": "insect_vespid",      "weight": 2 },
+      { "id": "insect_beetle",      "weight": 2 },
+      { "id": "insect_mantis",      "weight": 2 },
+      { "id": "insect_broodmother", "weight": 2 },
+      { "id": "insect_locust",      "weight": 1 }
+    ],
+    "pick_count": [7, 9],
+    "gold_reward": [75, 100],
+    "exp_reward": 5,
+    "ai": "default",
+    "reward_pool": "default",
+    "relic_reward": 1.0
+  }
+]

@@ -1,0 +1,103 @@
+[
+  {
+    "id": "harpy_fledgling",
+    "display_name": "Harpy Fledgling",
+    "cost": 1, "attack": 1, "health": 2, "speed": 4,
+    "description": "Barely out of the nest, but already fast enough to be annoying.",
+    "enemy_only": true, "tribe": "harpy", "elements": [], "chess_pieces": [],
+    "effects": []
+  },
+  {
+    "id": "harpy_winddancer",
+    "display_name": "Harpy Winddancer",
+    "cost": 2, "attack": 2, "health": 2, "speed": 5,
+    "description": "Fights the way she dances — mostly out of reach (+25% dodge).",
+    "enemy_only": true, "tribe": "harpy", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": { "kind": "while" }, "targets": { "kind": "self" }, "attribute": "dodge_bonus", "amount": 25 }
+    ]
+  },
+  {
+    "id": "harpy_talon",
+    "display_name": "Twin-Talon Harpy",
+    "cost": 3, "attack": 2, "health": 3, "speed": 4, "strikes": 2,
+    "description": "Two talons, two victims: strikes twice each round, re-picking her target between swipes.",
+    "enemy_only": true, "tribe": "harpy", "elements": [], "chess_pieces": [],
+    "effects": []
+  },
+  {
+    "id": "harpy_shrieker",
+    "display_name": "Shrieker Harpy",
+    "cost": 3, "attack": 1, "health": 4, "speed": 3, "ranged": true,
+    "description": "Her scream travels farther than she does. On arrival it Blinds the nearest foe (50% miss, 2 attacks).",
+    "enemy_only": true, "tribe": "harpy", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_play", "targeting_policy": "single_nearest", "status": { "id": "blind", "stacks": 2 } }
+    ]
+  },
+  {
+    "id": "harpy_galecaller",
+    "display_name": "Harpy Galecaller",
+    "cost": 4, "attack": 2, "health": 4, "speed": 3,
+    "description": "Sings the storm down onto the flock: every ally gains Tailwind (+2 Speed) when she arrives.",
+    "enemy_only": true, "tribe": "harpy", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_play", "targeting_policy": "all_allies", "status": { "id": "tailwind", "stacks": 1 } }
+    ]
+  },
+  {
+    "id": "harpy_thief",
+    "display_name": "Zephyr Thief",
+    "cost": 4, "attack": 3, "health": 3, "speed": 6,
+    "description": "Steals the wind from your wings: her strikes are aimed at speed itself (−1 Speed to whatever she hits).",
+    "enemy_only": true, "tribe": "harpy", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_attack", "targeting_policy": "attack_target", "attribute": "speed", "amount": -1 }
+    ]
+  },
+  {
+    "id": "harpy_stormwing",
+    "display_name": "Stormwing Matron",
+    "cost": 6, "attack": 4, "health": 6, "speed": 5, "strikes": 2,
+    "description": "A veteran of a hundred sky-raids: strikes twice, and the second-fastest thing on any battlefield she visits.",
+    "enemy_only": true, "tribe": "harpy", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": { "kind": "while" }, "targets": { "kind": "self" }, "attribute": "dodge_bonus", "amount": 15 }
+    ]
+  },
+  {
+    "id": "harpy_queen",
+    "display_name": "Skysovereign Vezara",
+    "cost": 0, "attack": 5, "health": 34, "speed": 4, "shield": 3,
+    "is_king": true, "enemy_only": true, "tribe": "harpy",
+    "description": "Queen of the high shriek. The gale answers her moods — she dodges a quarter of all blows. Ground her to win.",
+    "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": { "kind": "while" }, "targets": { "kind": "self" }, "attribute": "dodge_bonus", "amount": 25 }
+    ]
+  },
+  {
+    "id": "harpy_tempest",
+    "display_name": "Aellai, Eye of the Tempest",
+    "cost": 0, "attack": 6, "health": 42, "speed": 5, "shield": 3,
+    "is_king": true, "enemy_only": true, "tribe": "harpy",
+    "description": "The storm has a center and it hates you. Dodges a third of all blows, and every dodge stokes her (+1 Attack). Ground her to win.",
+    "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": { "kind": "while" }, "targets": { "kind": "self" }, "attribute": "dodge_bonus", "amount": 33 },
+      { "trigger": { "kind": "dual_event", "event": "dodge", "destination_of": "self" },
+        "targets": { "kind": "self" }, "attribute": "attack", "amount": 1 }
+    ]
+  },
+  {
+    "id": "harpy_boss_roc",
+    "display_name": "Kyrraxa, the Hundred-Gale",
+    "cost": 0, "attack": 7, "health": 52, "speed": 6, "shield": 4, "strikes": 3,
+    "is_king": true, "enemy_only": true, "tribe": "harpy",
+    "description": "Half harpy, half hurricane. Strikes THREE times a round, each swipe on a fresh victim, and dodges a quarter of everything thrown back. Ground her to win.",
+    "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": { "kind": "while" }, "targets": { "kind": "self" }, "attribute": "dodge_bonus", "amount": 25 }
+    ]
+  }
+]

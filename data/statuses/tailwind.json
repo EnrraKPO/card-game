@@ -1,0 +1,16 @@
+{
+  "id": "tailwind",
+  "display_name": "Tailwind",
+  "description": "Riding the gale: +2 Speed per stack while it lasts.",
+  "beneficial": true,
+  "color": "8fd0e8",
+  "glyph": "≋",
+  "default_duration": 2,
+  "decay": "duration",
+  "stacking": "stack",
+  "max_stacks": 3,
+  "effects": [
+    { "trigger": { "kind": "while" }, "targets": { "kind": "self" },
+      "tracker": { "kind": "stacks" }, "attribute": "speed", "amount": 2 }
+  ]
+}
