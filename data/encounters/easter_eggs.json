@@ -2,63 +2,138 @@
   {
     "id": "egg_kpop_concert",
     "node_type": "combat",
-    "min_floor": 0, "max_floor": 999,
-    "min_stage": 1, "max_stage": 999,
+    "min_floor": 0,
+    "max_floor": 999,
+    "min_stage": 1,
+    "max_stage": 999,
     "weight": 0.07,
     "enemy_king": "kpop_bias",
     "enemy_pool": [
-      { "id": "kpop_fan",      "weight": 3 },
-      { "id": "kpop_hypeman",  "weight": 2 },
-      { "id": "kpop_dancer",   "weight": 2 },
-      { "id": "kpop_vocalist", "weight": 2 },
-      { "id": "kpop_rapper",   "weight": 2 }
+      {
+        "id": "kpop_fan",
+        "weight": 3
+      },
+      {
+        "id": "kpop_hypeman",
+        "weight": 2
+      },
+      {
+        "id": "kpop_dancer",
+        "weight": 2
+      },
+      {
+        "id": "kpop_vocalist",
+        "weight": 2
+      },
+      {
+        "id": "kpop_rapper",
+        "weight": 2
+      }
     ],
-    "pick_count": [7, 10],
-    "gold_reward": [45, 70],
+    "pick_count": [
+      7,
+      10
+    ],
+    "gold_reward": [
+      45,
+      70
+    ],
     "exp_reward": 3,
     "ai": "default",
     "reward_pool": "default",
-    "relic_reward": 0.25
+    "relic_reward": 0.25,
+    "tribes": [
+      "idol"
+    ]
   },
   {
     "id": "egg_football_scrimmage",
     "node_type": "combat",
-    "min_floor": 0, "max_floor": 999,
-    "min_stage": 1, "max_stage": 999,
+    "min_floor": 0,
+    "max_floor": 999,
+    "min_stage": 1,
+    "max_stage": 999,
     "weight": 0.07,
     "enemy_king": "fb_coach",
     "enemy_pool": [
-      { "id": "fb_lineman",     "weight": 3 },
-      { "id": "fb_referee",     "weight": 1 },
-      { "id": "fb_runningback", "weight": 2 },
-      { "id": "fb_mascot",      "weight": 1 },
-      { "id": "fb_quarterback", "weight": 2 }
+      {
+        "id": "fb_lineman",
+        "weight": 3
+      },
+      {
+        "id": "fb_referee",
+        "weight": 1
+      },
+      {
+        "id": "fb_runningback",
+        "weight": 2
+      },
+      {
+        "id": "fb_mascot",
+        "weight": 1
+      },
+      {
+        "id": "fb_quarterback",
+        "weight": 2
+      }
     ],
-    "pick_count": [7, 10],
-    "gold_reward": [45, 70],
+    "pick_count": [
+      7,
+      10
+    ],
+    "gold_reward": [
+      45,
+      70
+    ],
     "exp_reward": 3,
     "ai": "default",
     "reward_pool": "default",
-    "relic_reward": 0.25
+    "relic_reward": 0.25,
+    "tribes": [
+      "gridiron"
+    ]
   },
   {
     "id": "egg_mimic_den",
     "node_type": "combat",
-    "min_floor": 0, "max_floor": 999,
-    "min_stage": 1, "max_stage": 999,
+    "min_floor": 0,
+    "max_floor": 999,
+    "min_stage": 1,
+    "max_stage": 999,
     "weight": 0.06,
     "enemy_king": "mimic_landlord",
     "enemy_pool": [
-      { "id": "mimic_lamp",  "weight": 2 },
-      { "id": "mimic_rug",   "weight": 2 },
-      { "id": "mimic_table", "weight": 2 },
-      { "id": "mimic_chest", "weight": 2 }
+      {
+        "id": "mimic_lamp",
+        "weight": 2
+      },
+      {
+        "id": "mimic_rug",
+        "weight": 2
+      },
+      {
+        "id": "mimic_table",
+        "weight": 2
+      },
+      {
+        "id": "mimic_chest",
+        "weight": 2
+      }
     ],
-    "pick_count": [6, 9],
-    "gold_reward": [70, 110],
+    "pick_count": [
+      6,
+      9
+    ],
+    "gold_reward": [
+      70,
+      110
+    ],
     "exp_reward": 3,
     "ai": "default",
     "reward_pool": "default",
-    "relic_reward": 0.4
+    "relic_reward": 0.4,
+    "tribes": [
+      "mimic"
+    ]
   }
 ]

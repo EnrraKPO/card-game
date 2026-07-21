@@ -1125,14 +1125,23 @@ const TAB_LABELS = { card: '🃏 Cards', relic: '🏺 Relics', status: '☠ Stat
   charm: '🔮 Charms', upgrade: '🌳 Upgrades', encounter: '⚔ Encounters', nodeweights: '🗺 Map Nodes',
   sound: '🔊 Sounds', vfx: '🎇 VFX', render_filter: '🔆 Filters', tuning: '🎛 Tuning' };
 
+// The ⚔ Encounters tab is the ENEMY HUB: tribes + enemy units (by tribe) + encounter
+// templates share its sidebar. Selecting a tribe or an enemy unit flips state.currentType
+// under the hood (the editor machinery is type-keyed), so the hub flag keeps the ⚔ tab
+// highlighted and the hub sidebar rendered while any of its entries is open.
+function inEnemyHub() {
+  return state.enemyHub && ['encounter', 'tribe', 'card'].includes(state.currentType);
+}
+
 function renderTabs() {
   const tabs = $('type-tabs');
   tabs.replaceChildren();
+  const active = inEnemyHub() || state.currentType === 'tribe' ? 'encounter' : state.currentType;
   for (const t of TAB_ORDER) {
     tabs.append(el('button', {
-      class: state.currentType === t ? 'active' : '',
+      class: active === t ? 'active' : '',
       text: TAB_LABELS[t] || t,
-      onclick: () => { if (!confirmDiscard()) return; state.currentType = t; state.currentId = null; state.draft = null; renderTabs(); renderItemList(); renderEditor(); },
+      onclick: () => { if (!confirmDiscard()) return; state.currentType = t; state.enemyHub = t === 'encounter'; state.currentId = null; state.draft = null; renderTabs(); renderItemList(); renderEditor(); },
     }));
   }
 }
@@ -1216,10 +1225,112 @@ function renderCompFilterBar() {
   return el('div', { class: 'comp-filter-bar' }, realmRow('piece'), realmRow('element'));
 }
 
+// ── the enemy hub sidebar (⚔ Encounters tab): tribes → enemy units by tribe → templates ──
+function renderEnemyHubList() {
+  state.enemyHub = true;
+  $('item-list-title').textContent = 'Enemy Hub';
+  $('gen-set-btn').hidden = true;
+  const list = $('item-list');
+  list.replaceChildren();
+  const search = el('input', {
+    type: 'text', placeholder: 'filter…', value: state.gameFilter,
+    style: 'margin:0 4px 8px; width:calc(100% - 8px)',
+    oninput: e => { state.gameFilter = e.target.value; renderItemList(); },
+  });
+  list.append(search);
+  const q = state.gameFilter.trim().toLowerCase();
+  const match = g => !q || g.id.includes(q) || (g.name || '').toLowerCase().includes(q);
+  if (!state.gameTree.hub) state.gameTree.hub = {};
+  const expand = state.gameTree.hub;
+  const open = (type, id) => { if (!confirmDiscard()) return; state.currentType = type; openGameItem(id); renderTabs(); };
+  const fresh = type => { if (!confirmDiscard()) return; state.currentType = type; newItem(); renderTabs(); };
+  const isActive = (type, id) => state.mode === 'game' && state.currentType === type && state.currentId === id;
+  const section = (key, title, count, addType) => el('div', {
+    class: 'tree-file' + (expand[key] !== false || q ? ' open' : ''),
+    onclick: () => { expand[key] = expand[key] === false; renderItemList(); },
+  },
+    el('span', { class: 'tree-arrow', text: (expand[key] !== false || q) ? '▾' : '▸' }),
+    el('span', { class: 'tree-file-name', text: title }),
+    el('span', { class: 'subtle', text: count + '' }),
+    addType ? el('button', { class: 'ghost tiny', text: '＋', title: 'New ' + addType,
+      onclick: e => { e.stopPropagation(); fresh(addType); } }) : null);
+  const row = (type, g, extraPills) => el('div', {
+    class: 'item-row tree-leaf' + (isActive(type, g.id) ? ' active' : '') + (g.parked ? ' parked' : ''),
+    onclick: () => open(type, g.id),
+  },
+    g.art ? el('img', { class: 'thumb', loading: 'lazy', src: '/gameart/' + g.art }) : null,
+    el('div', { class: 'item-name' }, el('div', { text: g.name }), el('div', { class: 'item-id', text: g.id })),
+    g.edited ? el('span', { class: 'pill installed', text: 'edited' }) : null,
+    ...(extraPills || []));
+
+  // ── Tribes ──
+  const tribes = (state.game.tribe || []).slice().sort((a, b) => a.id.localeCompare(b.id));
+  const tribeName = id => { const t = tribes.find(x => x.id === id); return t ? t.name : id; };
+  const shownTribes = tribes.filter(match);
+  list.append(section('tribes', '🧬 Tribes', tribes.length, 'tribe'));
+  if (expand.tribes !== false || q) for (const t of shownTribes) list.append(row('tribe', t));
+
+  // ── Enemy units, grouped by tribe ──
+  const enemies = (state.game.card || []).filter(g => g.enemy_only);
+  const byTribe = new Map();
+  for (const g of enemies.filter(match)) {
+    const k = g.tribe || '(no tribe)';
+    if (!byTribe.has(k)) byTribe.set(k, []);
+    byTribe.get(k).push(g);
+  }
+  list.append(section('enemies', '👹 Enemy Units', enemies.length, 'card'));
+  if (expand.enemies !== false || q) {
+    for (const k of [...byTribe.keys()].sort()) {
+      const units = byTribe.get(k).sort((a, b) => a.id.localeCompare(b.id));
+      const ek = 'et:' + k;
+      list.append(el('div', {
+        class: 'tree-file' + (expand[ek] || q ? ' open' : ''), style: 'padding-left:18px',
+        onclick: () => { expand[ek] = !expand[ek]; renderItemList(); },
+      },
+        el('span', { class: 'tree-arrow', text: (expand[ek] || q) ? '▾' : '▸' }),
+        el('span', { class: 'tree-file-name', text: k === '(no tribe)' ? k : tribeName(k) }),
+        el('span', { class: 'subtle', text: units.length + '' })));
+      if (expand[ek] || q) for (const g of units)
+        list.append(row('card', g, [g.recipe ? el('span', { class: 'subtle', text: '✨', title: 'has an art recipe' }) : null]));
+    }
+  }
+
+  // ── Encounter templates, grouped by file (as ever) ──
+  const encounters = (state.game.encounter || []).slice().sort((a, b) => a.id.localeCompare(b.id));
+  const byFile = new Map();
+  for (const g of encounters.filter(match)) {
+    if (!byFile.has(g.file)) byFile.set(g.file, []);
+    byFile.get(g.file).push(g);
+  }
+  list.append(section('encounters', '⚔ Encounters', encounters.length, 'encounter'));
+  if (expand.encounters !== false || q) {
+    for (const file of [...byFile.keys()].sort()) {
+      const entries = byFile.get(file);
+      const fk = 'ef:' + file;
+      const holdsCurrent = entries.some(g => isActive('encounter', g.id));
+      const fOpen = q || (expand[fk] != null ? expand[fk] : holdsCurrent);
+      list.append(el('div', {
+        class: 'tree-file' + (fOpen ? ' open' : ''), style: 'padding-left:18px',
+        onclick: () => { expand[fk] = !fOpen; renderItemList(); },
+      },
+        el('span', { class: 'tree-arrow', text: fOpen ? '▾' : '▸' }),
+        el('span', { class: 'tree-file-name', text: file }),
+        el('span', { class: 'subtle', text: entries.length + '' })));
+      if (fOpen) for (const g of entries) list.append(row('encounter', g));
+    }
+  }
+  if (q) { search.focus(); const v = search.value; search.value = ''; search.value = v; }
+}
+
 function renderItemList() {
   // The Tuning tab is a single full-width view of global config — no item list at all.
   $('sidebar').hidden = state.currentType === 'tuning';
   if (state.currentType === 'tuning') return;
+  // The ⚔ Encounters tab renders the enemy hub instead of a single-type list.
+  if (state.currentType === 'encounter' || state.currentType === 'tribe' || inEnemyHub()) {
+    renderEnemyHubList();
+    return;
+  }
   $('item-list-title').textContent = state.types[state.currentType] ? state.types[state.currentType].label + 's' : '';
   $('gen-set-btn').hidden = state.currentType !== 'card';
   const list = $('item-list');
@@ -1237,6 +1348,8 @@ function renderItemList() {
   if (state.currentType === 'card') list.append(renderCompFilterBar());
   const q = state.gameFilter.trim().toLowerCase();
   let filtered = q ? gameItems.filter(g => g.id.includes(q) || (g.name || '').toLowerCase().includes(q)) : gameItems;
+  // enemy units live in the ⚔ Encounters tab's hub (grouped by tribe), not the main card list
+  if (state.currentType === 'card') filtered = filtered.filter(g => !g.enemy_only);
   const compActive = state.currentType === 'card' && compFilterActive();
   if (compActive) filtered = filtered.filter(cardPassesCompFilter);
   if (!filtered.length) list.append(el('div', { class: 'subtle', style: 'padding:10px', text: 'Nothing matches the filters.' }));
@@ -2242,7 +2355,12 @@ async function startArt(statusEl, btn, recipe) {
   await saveStyleNow();
   const last = recipe && a.lastGen ? a.lastGen : null;
   const base = last ? last.prompt : (a.prompt || EDITORS[state.currentType].promptFor(state.draft));
-  const style = last ? (last.style || '') : (state.settings.artStyle || '').trim();
+  // An enemy unit's TRIBE contributes its canonical style fragment ahead of the shared style
+  // (fresh generations only — a recipe re-run reproduces exactly the style it recorded).
+  const tribeStyle = (!last && state.currentType === 'card' && state.draft.enemy_only && state.draft.tribe)
+    ? (((state.game.tribe || []).find(t => t.id === state.draft.tribe) || {}).style || '') : '';
+  const style = last ? (last.style || '')
+    : [tribeStyle, (state.settings.artStyle || '').trim()].filter(Boolean).join(', ');
   // a random seed resolves HERE, not server-side, so the recipe records what actually ran
   const seed = last ? last.seed
     : (a.seed != null && a.seed >= 0 ? a.seed : Math.floor(Math.random() * 2 ** 32));

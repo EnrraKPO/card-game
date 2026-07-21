@@ -2,104 +2,231 @@
   {
     "id": "beast_hunting_pack",
     "node_type": "combat",
-    "min_floor": 0, "max_floor": 5,
-    "min_stage": 1, "max_stage": 1,
-    "weight": 1.0,
+    "min_floor": 0,
+    "max_floor": 5,
+    "min_stage": 1,
+    "max_stage": 1,
+    "weight": 1,
     "enemy_king": "beast_alpha",
     "enemy_pool": [
-      { "id": "beast_wolf",  "weight": 3 },
-      { "id": "beast_boar",  "weight": 2 },
-      { "id": "beast_hyena", "weight": 2 }
+      {
+        "id": "beast_wolf",
+        "weight": 3
+      },
+      {
+        "id": "beast_boar",
+        "weight": 2
+      },
+      {
+        "id": "beast_hyena",
+        "weight": 2
+      }
     ],
-    "pick_count": [5, 7],
-    "gold_reward": [18, 28],
+    "pick_count": [
+      5,
+      7
+    ],
+    "gold_reward": [
+      18,
+      28
+    ],
     "exp_reward": 1,
     "ai": "default",
-    "reward_pool": "default"
+    "reward_pool": "default",
+    "tribes": [
+      "beast"
+    ]
   },
   {
     "id": "beast_bloodwood",
     "node_type": "combat",
-    "min_floor": 3, "max_floor": 999,
-    "min_stage": 1, "max_stage": 2,
-    "weight": 1.0,
+    "min_floor": 3,
+    "max_floor": 999,
+    "min_stage": 1,
+    "max_stage": 2,
+    "weight": 1,
     "enemy_king": "beast_alpha",
     "enemy_pool": [
-      { "id": "beast_wolf",     "weight": 2 },
-      { "id": "beast_panther",  "weight": 2 },
-      { "id": "beast_bear",     "weight": 2 },
-      { "id": "beast_hyena",    "weight": 1 },
-      { "id": "beast_direwolf", "weight": 1 }
+      {
+        "id": "beast_wolf",
+        "weight": 2
+      },
+      {
+        "id": "beast_panther",
+        "weight": 2
+      },
+      {
+        "id": "beast_bear",
+        "weight": 2
+      },
+      {
+        "id": "beast_hyena",
+        "weight": 1
+      },
+      {
+        "id": "beast_direwolf",
+        "weight": 1
+      }
     ],
-    "pick_count": [7, 9],
-    "gold_reward": [22, 34],
+    "pick_count": [
+      7,
+      9
+    ],
+    "gold_reward": [
+      22,
+      34
+    ],
     "exp_reward": 1,
     "ai": "default",
-    "reward_pool": "default"
+    "reward_pool": "default",
+    "tribes": [
+      "beast"
+    ]
   },
   {
     "id": "beast_apex_valley",
     "node_type": "combat",
-    "min_floor": 0, "max_floor": 999,
-    "min_stage": 2, "max_stage": 3,
-    "weight": 1.0,
+    "min_floor": 0,
+    "max_floor": 999,
+    "min_stage": 2,
+    "max_stage": 3,
+    "weight": 1,
     "enemy_king": "beast_alpha",
     "enemy_pool": [
-      { "id": "beast_panther",  "weight": 2 },
-      { "id": "beast_bear",     "weight": 2 },
-      { "id": "beast_ape",      "weight": 2 },
-      { "id": "beast_direwolf", "weight": 2 },
-      { "id": "beast_behemoth", "weight": 1 }
+      {
+        "id": "beast_panther",
+        "weight": 2
+      },
+      {
+        "id": "beast_bear",
+        "weight": 2
+      },
+      {
+        "id": "beast_ape",
+        "weight": 2
+      },
+      {
+        "id": "beast_direwolf",
+        "weight": 2
+      },
+      {
+        "id": "beast_behemoth",
+        "weight": 1
+      }
     ],
-    "pick_count": [9, 12],
-    "gold_reward": [25, 40],
+    "pick_count": [
+      9,
+      12
+    ],
+    "gold_reward": [
+      25,
+      40
+    ],
     "exp_reward": 2,
     "ai": "default",
-    "reward_pool": "default"
+    "reward_pool": "default",
+    "tribes": [
+      "beast"
+    ]
   },
   {
     "id": "beast_elite_thornback",
     "node_type": "elite",
-    "min_floor": 0, "max_floor": 999,
-    "min_stage": 1, "max_stage": 999,
-    "weight": 1.0,
+    "min_floor": 0,
+    "max_floor": 999,
+    "min_stage": 1,
+    "max_stage": 999,
+    "weight": 1,
     "enemy_king": "beast_ancient",
-    "power_bonus": 2.0,
+    "power_bonus": 2,
     "enemy_pool": [
-      { "id": "beast_boar",     "weight": 2 },
-      { "id": "beast_bear",     "weight": 3 },
-      { "id": "beast_ape",      "weight": 2 },
-      { "id": "beast_direwolf", "weight": 2 },
-      { "id": "beast_behemoth", "weight": 1 }
+      {
+        "id": "beast_boar",
+        "weight": 2
+      },
+      {
+        "id": "beast_bear",
+        "weight": 3
+      },
+      {
+        "id": "beast_ape",
+        "weight": 2
+      },
+      {
+        "id": "beast_direwolf",
+        "weight": 2
+      },
+      {
+        "id": "beast_behemoth",
+        "weight": 1
+      }
     ],
-    "pick_count": [6, 8],
-    "gold_reward": [40, 60],
+    "pick_count": [
+      6,
+      8
+    ],
+    "gold_reward": [
+      40,
+      60
+    ],
     "exp_reward": 3,
     "ai": "default",
     "reward_pool": "default",
-    "relic_reward": 0.5
+    "relic_reward": 0.5,
+    "tribes": [
+      "beast"
+    ]
   },
   {
     "id": "beast_boss_ragnor",
     "node_type": "boss",
-    "min_floor": 0, "max_floor": 999,
-    "min_stage": 1, "max_stage": 999,
-    "weight": 1.0,
+    "min_floor": 0,
+    "max_floor": 999,
+    "min_stage": 1,
+    "max_stage": 999,
+    "weight": 1,
     "enemy_king": "beast_ragnor",
-    "power_bonus": 4.0,
+    "power_bonus": 4,
     "enemy_pool": [
-      { "id": "beast_wolf",     "weight": 2 },
-      { "id": "beast_panther",  "weight": 2 },
-      { "id": "beast_bear",     "weight": 2 },
-      { "id": "beast_direwolf", "weight": 2 },
-      { "id": "beast_ape",      "weight": 2 },
-      { "id": "beast_behemoth", "weight": 2 }
+      {
+        "id": "beast_wolf",
+        "weight": 2
+      },
+      {
+        "id": "beast_panther",
+        "weight": 2
+      },
+      {
+        "id": "beast_bear",
+        "weight": 2
+      },
+      {
+        "id": "beast_direwolf",
+        "weight": 2
+      },
+      {
+        "id": "beast_ape",
+        "weight": 2
+      },
+      {
+        "id": "beast_behemoth",
+        "weight": 2
+      }
     ],
-    "pick_count": [7, 9],
-    "gold_reward": [75, 100],
+    "pick_count": [
+      7,
+      9
+    ],
+    "gold_reward": [
+      75,
+      100
+    ],
     "exp_reward": 5,
     "ai": "default",
     "reward_pool": "default",
-    "relic_reward": 1.0
+    "relic_reward": 1,
+    "tribes": [
+      "beast"
+    ]
   }
 ]

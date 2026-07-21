@@ -28,6 +28,14 @@ function abilityIds(ctx) {
   return [...new Set([...game, ...ws])];
 }
 
+// Tribe entities (data/tribes) — options for the card editor's tribe select and the
+// encounter editor's tribes label. Read from the live game state (app.js global).
+function tribeOptions() {
+  const list = (typeof state !== 'undefined' && state.game && state.game.tribe) ? state.game.tribe : [];
+  return list.slice().sort((a, b) => a.id.localeCompare(b.id))
+    .map(t => ({ value: t.id, label: `${t.name} (${t.id})` }));
+}
+
 function cardIdOptions(ctx, filter) {
   const f = filter || (() => true);
   const game = ctx.vocab.cards.filter(f)
@@ -96,6 +104,10 @@ const CardEditor = {
           el('div', { class: 'fld' }, checkInput(draft, 'ranged', onChange, 'Ranged — fires a projectile instead of lunging')),
           el('div', { class: 'fld' }, checkInput(draft, 'is_king', onChange, 'King unit (win/lose condition)')),
           el('div', { class: 'fld' }, checkInput(draft, 'enemy_only', onChange, 'Enemy-only (CPU fodder, never offered to the player). Tick this + King for an enemy CAPTAIN. Enemy art deploys to assets/cards/enemies/.')),
+          fld('Tribe', tribeOptions().length
+            ? selectInput(draft, 'tribe', tribeOptions(), onChange, { optional: true, emptyLabel: '(none)' })
+            : textInput(draft, 'tribe', onChange, 'tribe id'),
+            'groups enemy units in ⚔ Encounters; the tribe\'s canonical style joins art generation', 'narrow'),
         ),
         el('div', { class: 'frow' },
           fld('Plays as', selectInput(draft, 'card_type', [
@@ -577,6 +589,71 @@ const UpgradeEditor = {
   artNote: 'Installed to assets/ui/upgrades/<id>.png — the tree\'s emblem on the Upgrades screen (nodes themselves stay glyphs). Background removal recommended.',
 };
 
+// ═══════════════════════════════ TRIBE ══════════════════════════════════════
+// The enemy hub's organizational entity (data/tribes): a tribe's canonical STYLE
+// reference — prompt fragment + optional anchor image — steers every member unit's
+// art generation; per-unit canonical CONCEPT lives on each card's own art recipe.
+const TribeEditor = {
+  label: 'Tribe',
+  newItem: () => ({ id: '', display_name: '', description: '', style: '', style_ref: '' }),
+  form(draft, ctx, onChange) {
+    const wrap = el('div');
+    const preview = el('img', { class: 'thumb', style: 'max-width:220px; max-height:220px; width:auto; height:auto; border-radius:8px',
+      src: draft.style_ref ? '/gameart/' + draft.style_ref : '' });
+    preview.hidden = !draft.style_ref;
+    preview.onerror = () => { preview.hidden = true; };
+    wrap.append(
+      groupBox('Identity',
+        el('div', { class: 'frow' },
+          idField(draft, onChange, ctx.isNew),
+          fld('Name', textInput(draft, 'display_name', onChange, 'Slimes')),
+        ),
+        el('div', { class: 'frow' },
+          el('div', { class: 'fld wide' }, el('span', { class: 'lab', text: 'Description' }),
+            el('textarea', { value: draft.description || '',
+              placeholder: 'what this tribe IS — its mechanical identity and flavor, for the hub listing',
+              oninput: e => { draft.description = e.target.value; onChange(); } })),
+        ),
+      ),
+      groupBox('Canonical style reference',
+        el('div', { class: 'frow' },
+          el('div', { class: 'fld wide' }, el('span', { class: 'lab', text: 'Style fragment' }),
+            el('textarea', { value: draft.style || '',
+              placeholder: 'the tribe\'s canonical look, as a prompt fragment — automatically joined into every member unit\'s art generation',
+              oninput: e => { draft.style = e.target.value; onChange(); } })),
+        ),
+        el('div', { class: 'frow' },
+          fld('Anchor image', textInput(draft, 'style_ref', () => {
+            preview.src = draft.style_ref ? '/gameart/' + draft.style_ref : '';
+            preview.hidden = !draft.style_ref;
+            onChange();
+          }, 'assets/cards/enemies/<id>.png'), 'a member unit\'s art that best embodies the tribe\'s look'),
+        ),
+        el('div', { class: 'frow' }, preview),
+      ),
+    );
+    return wrap;
+  },
+  serialize(d) {
+    const out = { id: d.id, display_name: d.display_name };
+    if (d.description) out.description = d.description;
+    if (d.style) out.style = d.style;
+    if (d.style_ref) out.style_ref = d.style_ref;
+    return out;
+  },
+  summarize(d) {
+    const lines = [`${d.display_name || d.id || 'Unnamed'} — an enemy tribe.`];
+    if (d.description) lines.push(d.description);
+    lines.push(d.style ? `Canonical style: ${d.style}` : 'No canonical style yet — member art generation uses only the shared style.');
+    if (d.style_ref) lines.push(`Anchor image: ${d.style_ref}`);
+    return lines;
+  },
+  promptFor(d) {
+    return `Group portrait of the ${d.display_name || slugToName(d.id)} enemy tribe, ${d.style || 'fantasy game enemies'}, banner illustration`;
+  },
+  artNote: 'Tribes have no in-game art slot — generation here produces workspace reference imagery only.',
+};
+
 // ═══════════════════════════════ ENCOUNTER ══════════════════════════════════
 const EncounterEditor = {
   label: 'Encounter',
@@ -616,6 +693,27 @@ const EncounterEditor = {
             'each point grows enemy stats ~5%', 'narrow'),
         ),
       ),
+      // organizational label only — groups this encounter under its tribes in the ⚔ hub
+      (() => {
+        if (!Array.isArray(draft.tribes)) draft.tribes = [];
+        const box = groupBox('Tribes (organizational label)');
+        const row = el('div', { class: 'frow', style: 'flex-wrap:wrap; gap:6px' });
+        for (const t of tribeOptions()) {
+          const on = () => draft.tribes.includes(t.value);
+          const btn = el('button', { class: 'ghost small' + (on() ? ' active' : ''), text: t.label,
+            onclick: e => {
+              e.preventDefault();
+              if (on()) draft.tribes = draft.tribes.filter(x => x !== t.value);
+              else draft.tribes.push(t.value);
+              btn.className = 'ghost small' + (on() ? ' active' : '');
+              onChange();
+            } });
+          row.append(btn);
+        }
+        if (!tribeOptions().length) row.append(el('span', { class: 'subtle', text: 'no tribes authored yet — add them in the ⚔ Encounters tab' }));
+        box.append(row);
+        return box;
+      })(),
       groupBox('Enemy side',
         el('div', { class: 'frow' },
           fld('Enemy King / Captain', kings.length
@@ -675,6 +773,7 @@ const EncounterEditor = {
     if (d.max_stage != null && d.max_stage !== 999) out.max_stage = d.max_stage;
     if (d.enemy_king) out.enemy_king = d.enemy_king;
     if (d.power_bonus) out.power_bonus = d.power_bonus;
+    if (d.tribes && d.tribes.length) out.tribes = d.tribes.slice();
     out.enemy_pool = (d.enemy_pool || []).map(p => ({ id: p.id, weight: p.weight == null ? 1 : p.weight }));
     out.pick_count = d.pick_count.slice(0, 2);
     if (d.gold_reward && (d.gold_reward[0] || d.gold_reward[1])) out.gold_reward = d.gold_reward.slice(0, 2);
@@ -687,6 +786,7 @@ const EncounterEditor = {
   },
   summarize(d) {
     const lines = [`${d.id || 'Unnamed'} — a ${d.node_type} fight on floors ${d.min_floor || 0}–${d.max_floor == null ? 999 : d.max_floor}.`];
+    if (d.tribes && d.tribes.length) lines.push(`Tribes: ${d.tribes.join(', ')}.`);
     lines.push(`Enemy King: ${d.enemy_king || 'generic crown King'}${d.power_bonus ? `, power +${d.power_bonus}` : ''}.`);
     lines.push(`Deck: ${d.pick_count[0]}–${d.pick_count[1]} cards from ${(d.enemy_pool || []).length} pool entries.`);
     const g = d.gold_reward || [0, 0];
@@ -1364,5 +1464,5 @@ const RenderFilterEditor = {
 const EDITORS = {
   card: CardEditor, relic: RelicEditor, status: StatusEditor, ability: AbilityEditor,
   charm: CharmEditor, upgrade: UpgradeEditor, encounter: EncounterEditor, nodeweights: NodeWeightsEditor,
-  sound: SoundEditor, vfx: VfxEditor, render_filter: RenderFilterEditor,
+  sound: SoundEditor, vfx: VfxEditor, render_filter: RenderFilterEditor, tribe: TribeEditor,
 };

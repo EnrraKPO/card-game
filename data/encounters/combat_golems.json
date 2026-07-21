@@ -1,5 +1,6 @@
 {
   "id": "stone_legion",
+  "tribes": ["golem"],
   "node_type": "combat",
   "min_floor": 0, "max_floor": 999,
   "min_stage": 1, "max_stage": 999,

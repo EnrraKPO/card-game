@@ -2,85 +2,189 @@
   {
     "id": "dino_lost_valley",
     "node_type": "combat",
-    "min_floor": 0, "max_floor": 999,
-    "min_stage": 2, "max_stage": 3,
-    "weight": 1.0,
+    "min_floor": 0,
+    "max_floor": 999,
+    "min_stage": 2,
+    "max_stage": 3,
+    "weight": 1,
     "enemy_king": "dino_packmother",
     "enemy_pool": [
-      { "id": "dino_compy",  "weight": 3 },
-      { "id": "dino_raptor", "weight": 2 },
-      { "id": "dino_pachy",  "weight": 2 },
-      { "id": "dino_stego",  "weight": 1 }
+      {
+        "id": "dino_compy",
+        "weight": 3
+      },
+      {
+        "id": "dino_raptor",
+        "weight": 2
+      },
+      {
+        "id": "dino_pachy",
+        "weight": 2
+      },
+      {
+        "id": "dino_stego",
+        "weight": 1
+      }
     ],
-    "pick_count": [7, 10],
-    "gold_reward": [26, 40],
+    "pick_count": [
+      7,
+      10
+    ],
+    "gold_reward": [
+      26,
+      40
+    ],
     "exp_reward": 2,
     "ai": "default",
-    "reward_pool": "default"
+    "reward_pool": "default",
+    "tribes": [
+      "dino"
+    ]
   },
   {
     "id": "dino_extinction_stampede",
     "node_type": "combat",
-    "min_floor": 3, "max_floor": 999,
-    "min_stage": 3, "max_stage": 3,
-    "weight": 1.0,
+    "min_floor": 3,
+    "max_floor": 999,
+    "min_stage": 3,
+    "max_stage": 3,
+    "weight": 1,
     "enemy_king": "dino_packmother",
     "enemy_pool": [
-      { "id": "dino_raptor",     "weight": 2 },
-      { "id": "dino_pachy",      "weight": 2 },
-      { "id": "dino_stego",      "weight": 2 },
-      { "id": "dino_trike",      "weight": 2 },
-      { "id": "dino_rex_junior", "weight": 1 }
+      {
+        "id": "dino_raptor",
+        "weight": 2
+      },
+      {
+        "id": "dino_pachy",
+        "weight": 2
+      },
+      {
+        "id": "dino_stego",
+        "weight": 2
+      },
+      {
+        "id": "dino_trike",
+        "weight": 2
+      },
+      {
+        "id": "dino_rex_junior",
+        "weight": 1
+      }
     ],
-    "pick_count": [9, 12],
-    "gold_reward": [30, 46],
+    "pick_count": [
+      9,
+      12
+    ],
+    "gold_reward": [
+      30,
+      46
+    ],
     "exp_reward": 2,
     "ai": "default",
-    "reward_pool": "default"
+    "reward_pool": "default",
+    "tribes": [
+      "dino"
+    ]
   },
   {
     "id": "dino_elite_carnotaur",
     "node_type": "elite",
-    "min_floor": 0, "max_floor": 999,
-    "min_stage": 2, "max_stage": 999,
-    "weight": 1.0,
+    "min_floor": 0,
+    "max_floor": 999,
+    "min_stage": 2,
+    "max_stage": 999,
+    "weight": 1,
     "enemy_king": "dino_carno",
-    "power_bonus": 2.0,
+    "power_bonus": 2,
     "enemy_pool": [
-      { "id": "dino_raptor",     "weight": 3 },
-      { "id": "dino_pachy",      "weight": 2 },
-      { "id": "dino_stego",      "weight": 2 },
-      { "id": "dino_trike",      "weight": 2 },
-      { "id": "dino_rex_junior", "weight": 1 }
+      {
+        "id": "dino_raptor",
+        "weight": 3
+      },
+      {
+        "id": "dino_pachy",
+        "weight": 2
+      },
+      {
+        "id": "dino_stego",
+        "weight": 2
+      },
+      {
+        "id": "dino_trike",
+        "weight": 2
+      },
+      {
+        "id": "dino_rex_junior",
+        "weight": 1
+      }
     ],
-    "pick_count": [6, 8],
-    "gold_reward": [45, 65],
+    "pick_count": [
+      6,
+      8
+    ],
+    "gold_reward": [
+      45,
+      65
+    ],
     "exp_reward": 3,
     "ai": "default",
     "reward_pool": "default",
-    "relic_reward": 0.5
+    "relic_reward": 0.5,
+    "tribes": [
+      "dino"
+    ]
   },
   {
     "id": "dino_boss_tyrannus",
     "node_type": "boss",
-    "min_floor": 0, "max_floor": 999,
-    "min_stage": 2, "max_stage": 999,
-    "weight": 1.0,
+    "min_floor": 0,
+    "max_floor": 999,
+    "min_stage": 2,
+    "max_stage": 999,
+    "weight": 1,
     "enemy_king": "dino_rex",
-    "power_bonus": 4.0,
+    "power_bonus": 4,
     "enemy_pool": [
-      { "id": "dino_compy",      "weight": 1 },
-      { "id": "dino_raptor",     "weight": 2 },
-      { "id": "dino_pachy",      "weight": 2 },
-      { "id": "dino_stego",      "weight": 2 },
-      { "id": "dino_trike",      "weight": 2 },
-      { "id": "dino_rex_junior", "weight": 2 }
+      {
+        "id": "dino_compy",
+        "weight": 1
+      },
+      {
+        "id": "dino_raptor",
+        "weight": 2
+      },
+      {
+        "id": "dino_pachy",
+        "weight": 2
+      },
+      {
+        "id": "dino_stego",
+        "weight": 2
+      },
+      {
+        "id": "dino_trike",
+        "weight": 2
+      },
+      {
+        "id": "dino_rex_junior",
+        "weight": 2
+      }
     ],
-    "pick_count": [7, 9],
-    "gold_reward": [80, 110],
+    "pick_count": [
+      7,
+      9
+    ],
+    "gold_reward": [
+      80,
+      110
+    ],
     "exp_reward": 5,
     "ai": "default",
     "reward_pool": "default",
-    "relic_reward": 1.0
+    "relic_reward": 1,
+    "tribes": [
+      "dino"
+    ]
   }
 ]

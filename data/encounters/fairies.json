@@ -2,62 +2,137 @@
   {
     "id": "fairy_glade",
     "node_type": "combat",
-    "min_floor": 0, "max_floor": 6,
-    "min_stage": 1, "max_stage": 1,
-    "weight": 1.0,
+    "min_floor": 0,
+    "max_floor": 6,
+    "min_stage": 1,
+    "max_stage": 1,
+    "weight": 1,
     "enemy_king": "fairy_queen_mab",
     "enemy_pool": [
-      { "id": "fairy_sprite",    "weight": 3 },
-      { "id": "fairy_dustling",  "weight": 2 },
-      { "id": "fairy_thornwisp", "weight": 2 }
+      {
+        "id": "fairy_sprite",
+        "weight": 3
+      },
+      {
+        "id": "fairy_dustling",
+        "weight": 2
+      },
+      {
+        "id": "fairy_thornwisp",
+        "weight": 2
+      }
     ],
-    "pick_count": [5, 8],
-    "gold_reward": [18, 28],
+    "pick_count": [
+      5,
+      8
+    ],
+    "gold_reward": [
+      18,
+      28
+    ],
     "exp_reward": 1,
     "ai": "default",
-    "reward_pool": "default"
+    "reward_pool": "default",
+    "tribes": [
+      "fairy"
+    ]
   },
   {
     "id": "fairy_wild_hunt",
     "node_type": "combat",
-    "min_floor": 3, "max_floor": 999,
-    "min_stage": 1, "max_stage": 3,
-    "weight": 1.0,
+    "min_floor": 3,
+    "max_floor": 999,
+    "min_stage": 1,
+    "max_stage": 3,
+    "weight": 1,
     "enemy_king": "fairy_queen_mab",
     "enemy_pool": [
-      { "id": "fairy_sprite",    "weight": 1 },
-      { "id": "fairy_dustling",  "weight": 2 },
-      { "id": "fairy_thornwisp", "weight": 2 },
-      { "id": "fairy_glimmer",   "weight": 2 },
-      { "id": "fairy_puck",      "weight": 2 },
-      { "id": "fairy_oakguard",  "weight": 1 }
+      {
+        "id": "fairy_sprite",
+        "weight": 1
+      },
+      {
+        "id": "fairy_dustling",
+        "weight": 2
+      },
+      {
+        "id": "fairy_thornwisp",
+        "weight": 2
+      },
+      {
+        "id": "fairy_glimmer",
+        "weight": 2
+      },
+      {
+        "id": "fairy_puck",
+        "weight": 2
+      },
+      {
+        "id": "fairy_oakguard",
+        "weight": 1
+      }
     ],
-    "pick_count": [7, 10],
-    "gold_reward": [22, 36],
+    "pick_count": [
+      7,
+      10
+    ],
+    "gold_reward": [
+      22,
+      36
+    ],
     "exp_reward": 1,
     "ai": "default",
-    "reward_pool": "default"
+    "reward_pool": "default",
+    "tribes": [
+      "fairy"
+    ]
   },
   {
     "id": "fairy_elite_erlking",
     "node_type": "elite",
-    "min_floor": 0, "max_floor": 999,
-    "min_stage": 1, "max_stage": 999,
-    "weight": 1.0,
+    "min_floor": 0,
+    "max_floor": 999,
+    "min_stage": 1,
+    "max_stage": 999,
+    "weight": 1,
     "enemy_king": "fairy_erlking",
-    "power_bonus": 2.0,
+    "power_bonus": 2,
     "enemy_pool": [
-      { "id": "fairy_dustling",  "weight": 2 },
-      { "id": "fairy_thornwisp", "weight": 2 },
-      { "id": "fairy_glimmer",   "weight": 2 },
-      { "id": "fairy_puck",      "weight": 3 },
-      { "id": "fairy_oakguard",  "weight": 2 }
+      {
+        "id": "fairy_dustling",
+        "weight": 2
+      },
+      {
+        "id": "fairy_thornwisp",
+        "weight": 2
+      },
+      {
+        "id": "fairy_glimmer",
+        "weight": 2
+      },
+      {
+        "id": "fairy_puck",
+        "weight": 3
+      },
+      {
+        "id": "fairy_oakguard",
+        "weight": 2
+      }
     ],
-    "pick_count": [6, 8],
-    "gold_reward": [40, 60],
+    "pick_count": [
+      6,
+      8
+    ],
+    "gold_reward": [
+      40,
+      60
+    ],
     "exp_reward": 3,
     "ai": "default",
     "reward_pool": "default",
-    "relic_reward": 0.5
+    "relic_reward": 0.5,
+    "tribes": [
+      "fairy"
+    ]
   }
 ]

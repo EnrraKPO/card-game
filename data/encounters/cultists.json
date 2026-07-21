@@ -2,105 +2,235 @@
   {
     "id": "cult_procession",
     "node_type": "combat",
-    "min_floor": 0, "max_floor": 5,
-    "min_stage": 1, "max_stage": 1,
-    "weight": 1.0,
+    "min_floor": 0,
+    "max_floor": 5,
+    "min_stage": 1,
+    "max_stage": 1,
+    "weight": 1,
     "enemy_king": "cult_high_priest",
     "enemy_pool": [
-      { "id": "cult_acolyte",  "weight": 3 },
-      { "id": "cult_offering", "weight": 2 },
-      { "id": "cult_zealot",   "weight": 2 }
+      {
+        "id": "cult_acolyte",
+        "weight": 3
+      },
+      {
+        "id": "cult_offering",
+        "weight": 2
+      },
+      {
+        "id": "cult_zealot",
+        "weight": 2
+      }
     ],
-    "pick_count": [5, 8],
-    "gold_reward": [18, 28],
+    "pick_count": [
+      5,
+      8
+    ],
+    "gold_reward": [
+      18,
+      28
+    ],
     "exp_reward": 1,
     "ai": "default",
-    "reward_pool": "default"
+    "reward_pool": "default",
+    "tribes": [
+      "cultist"
+    ]
   },
   {
     "id": "cult_blood_rite",
     "node_type": "combat",
-    "min_floor": 3, "max_floor": 999,
-    "min_stage": 1, "max_stage": 2,
-    "weight": 1.0,
+    "min_floor": 3,
+    "max_floor": 999,
+    "min_stage": 1,
+    "max_stage": 2,
+    "weight": 1,
     "enemy_king": "cult_high_priest",
     "enemy_pool": [
-      { "id": "cult_acolyte",     "weight": 2 },
-      { "id": "cult_offering",    "weight": 2 },
-      { "id": "cult_zealot",      "weight": 2 },
-      { "id": "cult_bloodpriest", "weight": 2 },
-      { "id": "cult_summoner",    "weight": 1 }
+      {
+        "id": "cult_acolyte",
+        "weight": 2
+      },
+      {
+        "id": "cult_offering",
+        "weight": 2
+      },
+      {
+        "id": "cult_zealot",
+        "weight": 2
+      },
+      {
+        "id": "cult_bloodpriest",
+        "weight": 2
+      },
+      {
+        "id": "cult_summoner",
+        "weight": 1
+      }
     ],
-    "pick_count": [7, 10],
-    "gold_reward": [22, 34],
+    "pick_count": [
+      7,
+      10
+    ],
+    "gold_reward": [
+      22,
+      34
+    ],
     "exp_reward": 1,
     "ai": "default",
-    "reward_pool": "default"
+    "reward_pool": "default",
+    "tribes": [
+      "cultist"
+    ]
   },
   {
     "id": "cult_inner_sanctum",
     "node_type": "combat",
-    "min_floor": 0, "max_floor": 999,
-    "min_stage": 2, "max_stage": 3,
-    "weight": 1.0,
+    "min_floor": 0,
+    "max_floor": 999,
+    "min_stage": 2,
+    "max_stage": 3,
+    "weight": 1,
     "enemy_king": "cult_high_priest",
     "enemy_pool": [
-      { "id": "cult_zealot",       "weight": 2 },
-      { "id": "cult_bloodpriest",  "weight": 2 },
-      { "id": "cult_summoner",     "weight": 2 },
-      { "id": "cult_horrorspawn",  "weight": 2 },
-      { "id": "cult_flesh_horror", "weight": 1 },
-      { "id": "cult_offering",     "weight": 1 }
+      {
+        "id": "cult_zealot",
+        "weight": 2
+      },
+      {
+        "id": "cult_bloodpriest",
+        "weight": 2
+      },
+      {
+        "id": "cult_summoner",
+        "weight": 2
+      },
+      {
+        "id": "cult_horrorspawn",
+        "weight": 2
+      },
+      {
+        "id": "cult_flesh_horror",
+        "weight": 1
+      },
+      {
+        "id": "cult_offering",
+        "weight": 1
+      }
     ],
-    "pick_count": [9, 12],
-    "gold_reward": [25, 40],
+    "pick_count": [
+      9,
+      12
+    ],
+    "gold_reward": [
+      25,
+      40
+    ],
     "exp_reward": 2,
     "ai": "default",
-    "reward_pool": "default"
+    "reward_pool": "default",
+    "tribes": [
+      "cultist"
+    ]
   },
   {
     "id": "cult_elite_prophet",
     "node_type": "elite",
-    "min_floor": 0, "max_floor": 999,
-    "min_stage": 1, "max_stage": 999,
-    "weight": 1.0,
+    "min_floor": 0,
+    "max_floor": 999,
+    "min_stage": 1,
+    "max_stage": 999,
+    "weight": 1,
     "enemy_king": "cult_prophet",
-    "power_bonus": 2.0,
+    "power_bonus": 2,
     "enemy_pool": [
-      { "id": "cult_zealot",       "weight": 2 },
-      { "id": "cult_bloodpriest",  "weight": 2 },
-      { "id": "cult_summoner",     "weight": 2 },
-      { "id": "cult_horrorspawn",  "weight": 2 },
-      { "id": "cult_flesh_horror", "weight": 1 }
+      {
+        "id": "cult_zealot",
+        "weight": 2
+      },
+      {
+        "id": "cult_bloodpriest",
+        "weight": 2
+      },
+      {
+        "id": "cult_summoner",
+        "weight": 2
+      },
+      {
+        "id": "cult_horrorspawn",
+        "weight": 2
+      },
+      {
+        "id": "cult_flesh_horror",
+        "weight": 1
+      }
     ],
-    "pick_count": [6, 8],
-    "gold_reward": [40, 60],
+    "pick_count": [
+      6,
+      8
+    ],
+    "gold_reward": [
+      40,
+      60
+    ],
     "exp_reward": 3,
     "ai": "default",
     "reward_pool": "default",
-    "relic_reward": 0.5
+    "relic_reward": 0.5,
+    "tribes": [
+      "cultist"
+    ]
   },
   {
     "id": "cult_boss_hierophant",
     "node_type": "boss",
-    "min_floor": 0, "max_floor": 999,
-    "min_stage": 1, "max_stage": 999,
-    "weight": 1.0,
+    "min_floor": 0,
+    "max_floor": 999,
+    "min_stage": 1,
+    "max_stage": 999,
+    "weight": 1,
     "enemy_king": "cult_hierophant",
-    "power_bonus": 4.0,
+    "power_bonus": 4,
     "enemy_pool": [
-      { "id": "cult_acolyte",      "weight": 1 },
-      { "id": "cult_offering",     "weight": 2 },
-      { "id": "cult_zealot",       "weight": 2 },
-      { "id": "cult_bloodpriest",  "weight": 2 },
-      { "id": "cult_summoner",     "weight": 2 },
-      { "id": "cult_flesh_horror", "weight": 2 }
+      {
+        "id": "cult_acolyte",
+        "weight": 1
+      },
+      {
+        "id": "cult_offering",
+        "weight": 2
+      },
+      {
+        "id": "cult_zealot",
+        "weight": 2
+      },
+      {
+        "id": "cult_bloodpriest",
+        "weight": 2
+      },
+      {
+        "id": "cult_summoner",
+        "weight": 2
+      },
+      {
+        "id": "cult_flesh_horror",
+        "weight": 2
+      }
     ],
-    "pick_count": [7, 9],
-    "gold_reward": [75, 100],
+    "pick_count": [
+      7,
+      9
+    ],
+    "gold_reward": [
+      75,
+      100
+    ],
     "exp_reward": 5,
     "ai": "default",
     "reward_pool": "default",
-    "relic_reward": 1.0
+    "relic_reward": 1,
+    "tribes": [
+      "cultist"
+    ]
   }
 ]

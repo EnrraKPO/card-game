@@ -1,0 +1,121 @@
+[
+  {
+    "id": "goblin",
+    "display_name": "Goblins",
+    "description": "The classic warband: reckless cutters, screaming fanatics, walking powder kegs.",
+    "style": "scrappy green-skinned goblins with oversized ears and crooked teeth, patched leather and scavenged iron, torchlit war camp clutter",
+    "style_ref": "assets/cards/enemies/goblin_cutter.png"
+  },
+  {
+    "id": "undead",
+    "display_name": "Undead",
+    "description": "Skeletons, ghouls and their deathless masters — they mend, you don't.",
+    "style": "moonlit undead with cracked bone and tattered burial cloth, sickly green soul-glow in eye sockets, misty graveyard earth",
+    "style_ref": "assets/cards/enemies/skeleton_grunt.png"
+  },
+  {
+    "id": "golem",
+    "display_name": "Golems",
+    "description": "Slow slabs of living stone and iron. Out-patient them if you can.",
+    "style": "massive constructs of fitted stone blocks and riveted iron, glowing runic core seams, quarry dust and scattered rubble",
+    "style_ref": "assets/cards/enemies/stone_sentinel.png"
+  },
+  {
+    "id": "slime",
+    "display_name": "Slimes",
+    "description": "Split-on-death cascades and absorption — killing them is only the beginning.",
+    "style": "glossy translucent jelly creatures with simple expressive faces, wobbling highlights and drips, mossy bog terrain",
+    "style_ref": "assets/cards/enemies/slime_king_gel.png"
+  },
+  {
+    "id": "beast",
+    "display_name": "Beasts",
+    "description": "Feral packs that enrage when hurt and feed on every kill.",
+    "style": "feral predatory beasts with matted fur and glowing eyes, bared fangs and old scars, misty pine forest and moonlight",
+    "style_ref": "assets/cards/enemies/beast_alpha.png"
+  },
+  {
+    "id": "harpy",
+    "display_name": "Harpies",
+    "description": "The sky-raiders: multi-strike talons, dodge, and stolen wind.",
+    "style": "winged harpy women with sweeping plumage and taloned feet, wind spirals and scattered feathers, storm-lit mountain peaks",
+    "style_ref": "assets/cards/enemies/harpy_queen.png"
+  },
+  {
+    "id": "alien",
+    "display_name": "Aliens",
+    "description": "Energy shields, tractor beams, replication, and a very large mothership.",
+    "style": "retro sci-fi chrome saucers and grey visitors, glowing teal energy shields and beam light, night farmland under saucer glow",
+    "style_ref": "assets/cards/enemies/alien_commander.png"
+  },
+  {
+    "id": "insect",
+    "display_name": "Insects",
+    "description": "The swarm: grubs, cocoons that hatch when broken, and broodmother pressure.",
+    "style": "chitinous hive insects with amber honeycomb architecture, iridescent wings and compound eyes, warm hive-glow lighting",
+    "style_ref": "assets/cards/enemies/insect_hive_queen.png"
+  },
+  {
+    "id": "pirate",
+    "display_name": "Pirates",
+    "description": "Powder kegs, kill ledgers, suspicious stew, and one very literate kraken.",
+    "style": "swashbuckling pirates in tricorn hats and striped shirts, wooden ship decks with rigging and cannon smoke, golden-hour sea light",
+    "style_ref": "assets/cards/enemies/pirate_captain.png"
+  },
+  {
+    "id": "cultist",
+    "display_name": "Cultists",
+    "description": "A sacrifice economy — every death feeds someone, and the digging is nearly done.",
+    "style": "hooded cultists in purple and crimson vestments, glowing ritual circles and candle-lit crypts, eldritch violet void light",
+    "style_ref": "assets/cards/enemies/cult_high_priest.png"
+  },
+  {
+    "id": "troll",
+    "display_name": "Trolls",
+    "description": "Everything regenerates. Out-damage the healing or go around.",
+    "style": "hulking warty trolls with mossy green-grey hide, wounds knitting with green regrowth glow, bridges and boulder-strewn valleys",
+    "style_ref": "assets/cards/enemies/troll_chieftain.png"
+  },
+  {
+    "id": "fairy",
+    "display_name": "Fairies",
+    "description": "Tricksters of the hollow: blinding dust, stolen speed, and infuriating dodges.",
+    "style": "luminous mischievous fae with gossamer wings and sparkle trails, moonlit mushroom rings and glowing glades, soft magical bloom",
+    "style_ref": "assets/cards/enemies/fairy_queen_mab.png"
+  },
+  {
+    "id": "dino",
+    "display_name": "Dinosaurs",
+    "description": "The endgame valley: crits, spike retaliation, and the Extinction himself.",
+    "style": "prehistoric dinosaurs with scarred scaled hide, jungle ferns and volcanic skies, primal stampede energy",
+    "style_ref": "assets/cards/enemies/dino_rex.png"
+  },
+  {
+    "id": "corporate",
+    "display_name": "Corporate",
+    "description": "Synergy huddles, budget cuts, and a CEO with a golden parachute.",
+    "style": "corporate office satire with fluorescent-lit cubicles and glass boardrooms, suits and lanyards and hovering charts, deadpan menace",
+    "style_ref": "assets/cards/enemies/corp_ceo.png"
+  },
+  {
+    "id": "idol",
+    "display_name": "K-Pop Idols",
+    "description": "The surprise concert. The choreography IS the defense.",
+    "style": "dazzling K-pop stage performance with sweeping spotlights and LED floors, confetti and lightstick oceans, idol glamour sparkle",
+    "style_ref": "assets/cards/enemies/kpop_bias.png"
+  },
+  {
+    "id": "gridiron",
+    "display_name": "Football Mutants",
+    "description": "The scrimmage nobody scheduled. Beware the mascot.",
+    "style": "mutant football players in stretched jerseys and cracked helmets, floodlit stadium turf with chalk lines, sports-poster drama",
+    "style_ref": "assets/cards/enemies/fb_coach.png"
+  },
+  {
+    "id": "mimic",
+    "display_name": "Mimics",
+    "description": "The furniture uprising. The house always wins — literally.",
+    "style": "household objects revealing fanged mimic mouths and lolling tongues, cozy dungeon interiors turning sinister, comedic horror reveal",
+    "style_ref": "assets/cards/enemies/mimic_landlord.png"
+  }
+]

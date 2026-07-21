@@ -48,6 +48,11 @@ const TYPES = {
   // upgrade trees carry an EMBLEM shown on the Upgrades screen's detail strip
   upgrade:    { label: 'Upgrade Tree',    dataDir: 'data/upgrades',   artDir: 'assets/ui/upgrades', artW: 512, artH: 512, rembg: true },
   encounter:  { label: 'Encounter',      dataDir: 'data/encounters', artDir: null,               artW: 1024, artH: 1024, rembg: false },
+  // enemy TRIBES: the organizational entity behind the Encounters tab's enemy hub — each tribe
+  // carries a canonical STYLE reference (prompt fragment + optional anchor image) that steers
+  // every member unit's art generation. The game has no loader yet; a real data file so future
+  // in-game reads (display names, tribe-flavored cues) need no migration.
+  tribe:      { label: 'Tribe',           dataDir: 'data/tribes',     artDir: null,               artW: 1024, artH: 1024, rembg: false },
   nodeweights:{ label: 'Map Node Weights',dataDir: 'data/map',        artDir: null,               artW: 1024, artH: 1024, rembg: false },
   // sound EVENTS: the game's full SFX library (data/sounds/sounds.json). Audio assets live in
   // assets/sound/ and are produced outside the tool (AI sound gen from each entry's prompt) —
@@ -1217,6 +1222,18 @@ function validateItem(type, d) {
       for (const p of d.enemy_pool) if (!p.id) return 'every enemy_pool entry needs a card id';
       if (!Array.isArray(d.pick_count) || d.pick_count.length !== 2) return 'pick_count must be [min, max]';
       if (d.pick_count[0] > d.pick_count[1]) return 'pick_count min > max';
+      // organizational label only (Encounters-tab grouping) — no pool-membership validation
+      if (d.tribes != null) {
+        if (!Array.isArray(d.tribes)) return 'tribes must be an array of tribe ids';
+        for (const t of d.tribes) if (!validId(t)) return `tribe id "${t}" must be lowercase letters, digits and underscores`;
+      }
+      return null;
+    }
+    case 'tribe': {
+      if (!d.display_name) return 'missing display_name';
+      if (d.style != null && typeof d.style !== 'string') return 'style must be a string (the canonical style prompt fragment)';
+      if (d.style_ref != null && typeof d.style_ref !== 'string') return 'style_ref must be an image path string';
+      if (d.description != null && typeof d.description !== 'string') return 'description must be a string';
       return null;
     }
     case 'nodeweights': {
@@ -3370,6 +3387,12 @@ async function handle(req, res) {
           recipe: (e.data && e.data.tool && e.data.tool.art && e.data.tool.art.prompt) ? true : undefined,
           // parked = authored but disabled (no live cue site yet) — visible backlog, never deleted
           parked: (e.data && e.data.enabled === false) ? true : undefined,
+          // enemy identity, for the Encounters tab's enemy hub (cards only): enemy_only cards
+          // leave the main card list and group by tribe there instead
+          enemy_only: (e.data && e.data.enemy_only) ? true : undefined,
+          tribe: (e.data && e.data.tribe) || undefined,
+          // a tribe entry's canonical style fragment — joined into member units' art generation
+          style: (t === 'tribe' && e.data && e.data.style) || undefined,
         }));
       }
       return send(res, 200, {

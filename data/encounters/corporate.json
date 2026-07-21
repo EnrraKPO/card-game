@@ -2,86 +2,193 @@
   {
     "id": "corp_open_office",
     "node_type": "combat",
-    "min_floor": 2, "max_floor": 999,
-    "min_stage": 1, "max_stage": 2,
-    "weight": 1.0,
+    "min_floor": 2,
+    "max_floor": 999,
+    "min_stage": 1,
+    "max_stage": 2,
+    "weight": 1,
     "enemy_king": "corp_vp",
     "enemy_pool": [
-      { "id": "corp_intern",         "weight": 3 },
-      { "id": "corp_middle_manager", "weight": 2 },
-      { "id": "corp_hr",             "weight": 2 },
-      { "id": "corp_security",       "weight": 1 }
+      {
+        "id": "corp_intern",
+        "weight": 3
+      },
+      {
+        "id": "corp_middle_manager",
+        "weight": 2
+      },
+      {
+        "id": "corp_hr",
+        "weight": 2
+      },
+      {
+        "id": "corp_security",
+        "weight": 1
+      }
     ],
-    "pick_count": [6, 9],
-    "gold_reward": [24, 36],
+    "pick_count": [
+      6,
+      9
+    ],
+    "gold_reward": [
+      24,
+      36
+    ],
     "exp_reward": 1,
     "ai": "default",
-    "reward_pool": "default"
+    "reward_pool": "default",
+    "tribes": [
+      "corporate"
+    ]
   },
   {
     "id": "corp_quarterly_review",
     "node_type": "combat",
-    "min_floor": 0, "max_floor": 999,
-    "min_stage": 2, "max_stage": 3,
-    "weight": 1.0,
+    "min_floor": 0,
+    "max_floor": 999,
+    "min_stage": 2,
+    "max_stage": 3,
+    "weight": 1,
     "enemy_king": "corp_vp",
     "enemy_pool": [
-      { "id": "corp_middle_manager", "weight": 2 },
-      { "id": "corp_sales_shark",    "weight": 2 },
-      { "id": "corp_lawyer",         "weight": 2 },
-      { "id": "corp_consultant",     "weight": 1 },
-      { "id": "corp_security",       "weight": 2 },
-      { "id": "corp_intern",         "weight": 1 }
+      {
+        "id": "corp_middle_manager",
+        "weight": 2
+      },
+      {
+        "id": "corp_sales_shark",
+        "weight": 2
+      },
+      {
+        "id": "corp_lawyer",
+        "weight": 2
+      },
+      {
+        "id": "corp_consultant",
+        "weight": 1
+      },
+      {
+        "id": "corp_security",
+        "weight": 2
+      },
+      {
+        "id": "corp_intern",
+        "weight": 1
+      }
     ],
-    "pick_count": [8, 11],
-    "gold_reward": [28, 44],
+    "pick_count": [
+      8,
+      11
+    ],
+    "gold_reward": [
+      28,
+      44
+    ],
     "exp_reward": 2,
     "ai": "default",
-    "reward_pool": "default"
+    "reward_pool": "default",
+    "tribes": [
+      "corporate"
+    ]
   },
   {
     "id": "corp_elite_cfo",
     "node_type": "elite",
-    "min_floor": 0, "max_floor": 999,
-    "min_stage": 1, "max_stage": 999,
-    "weight": 1.0,
+    "min_floor": 0,
+    "max_floor": 999,
+    "min_stage": 1,
+    "max_stage": 999,
+    "weight": 1,
     "enemy_king": "corp_cfo",
-    "power_bonus": 2.0,
+    "power_bonus": 2,
     "enemy_pool": [
-      { "id": "corp_middle_manager", "weight": 2 },
-      { "id": "corp_sales_shark",    "weight": 2 },
-      { "id": "corp_lawyer",         "weight": 3 },
-      { "id": "corp_consultant",     "weight": 1 },
-      { "id": "corp_security",       "weight": 2 }
+      {
+        "id": "corp_middle_manager",
+        "weight": 2
+      },
+      {
+        "id": "corp_sales_shark",
+        "weight": 2
+      },
+      {
+        "id": "corp_lawyer",
+        "weight": 3
+      },
+      {
+        "id": "corp_consultant",
+        "weight": 1
+      },
+      {
+        "id": "corp_security",
+        "weight": 2
+      }
     ],
-    "pick_count": [6, 8],
-    "gold_reward": [45, 65],
+    "pick_count": [
+      6,
+      8
+    ],
+    "gold_reward": [
+      45,
+      65
+    ],
     "exp_reward": 3,
     "ai": "default",
     "reward_pool": "default",
-    "relic_reward": 0.5
+    "relic_reward": 0.5,
+    "tribes": [
+      "corporate"
+    ]
   },
   {
     "id": "corp_boss_ceo",
     "node_type": "boss",
-    "min_floor": 0, "max_floor": 999,
-    "min_stage": 1, "max_stage": 999,
-    "weight": 1.0,
+    "min_floor": 0,
+    "max_floor": 999,
+    "min_stage": 1,
+    "max_stage": 999,
+    "weight": 1,
     "enemy_king": "corp_ceo",
-    "power_bonus": 4.0,
+    "power_bonus": 4,
     "enemy_pool": [
-      { "id": "corp_intern",         "weight": 2 },
-      { "id": "corp_middle_manager", "weight": 2 },
-      { "id": "corp_sales_shark",    "weight": 2 },
-      { "id": "corp_lawyer",         "weight": 2 },
-      { "id": "corp_consultant",     "weight": 1 },
-      { "id": "corp_security",       "weight": 2 }
+      {
+        "id": "corp_intern",
+        "weight": 2
+      },
+      {
+        "id": "corp_middle_manager",
+        "weight": 2
+      },
+      {
+        "id": "corp_sales_shark",
+        "weight": 2
+      },
+      {
+        "id": "corp_lawyer",
+        "weight": 2
+      },
+      {
+        "id": "corp_consultant",
+        "weight": 1
+      },
+      {
+        "id": "corp_security",
+        "weight": 2
+      }
     ],
-    "pick_count": [7, 9],
-    "gold_reward": [85, 120],
+    "pick_count": [
+      7,
+      9
+    ],
+    "gold_reward": [
+      85,
+      120
+    ],
     "exp_reward": 5,
     "ai": "default",
     "reward_pool": "default",
-    "relic_reward": 1.0
+    "relic_reward": 1,
+    "tribes": [
+      "corporate"
+    ]
   }
 ]
