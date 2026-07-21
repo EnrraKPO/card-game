@@ -1,0 +1,116 @@
+[
+  {
+    "id": "alien_probe",
+    "display_name": "Scout Probe",
+    "cost": 1, "attack": 1, "health": 1, "speed": 3, "ranged": true,
+    "description": "A chirping chrome eyeball. Transmits its findings as it dies: the invaders draw a card.",
+    "enemy_only": true, "tribe": "alien", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_death", "targets": { "kind": "side", "of": "own" }, "attribute": "draw", "amount": 1 }
+    ]
+  },
+  {
+    "id": "alien_drone",
+    "display_name": "Harvest Drone",
+    "cost": 2, "attack": 2, "health": 3, "speed": 2, "shield": 2,
+    "description": "A field-shielded collector that files everything under 'specimen'.",
+    "enemy_only": true, "tribe": "alien", "elements": [], "chess_pieces": [],
+    "effects": []
+  },
+  {
+    "id": "alien_grey",
+    "display_name": "Grey Visitor",
+    "cost": 2, "attack": 2, "health": 3, "speed": 3,
+    "description": "It means you no harm — the dampening field it projects on arrival (−1 Attack to the nearest foe) is strictly for science.",
+    "enemy_only": true, "tribe": "alien", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_play", "targeting_policy": "single_nearest", "attribute": "attack", "amount": -1 }
+    ]
+  },
+  {
+    "id": "alien_shieldnode",
+    "display_name": "Aegis Node",
+    "cost": 3, "attack": 1, "health": 5, "speed": 1, "shield": 4, "ranged": true,
+    "description": "A floating generator pylon. On arrival it projects a Barrier over 2 random allies.",
+    "enemy_only": true, "tribe": "alien", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_play",
+        "targets": { "kind": "auto", "criterion": "random", "count": 2, "conditions": [ { "allegiance": "ally" }, { "status": "barrier", "present": false } ] },
+        "status": { "id": "barrier", "stacks": 1 } }
+    ]
+  },
+  {
+    "id": "alien_vivisector",
+    "display_name": "Vivisector",
+    "cost": 3, "attack": 3, "health": 3, "speed": 3,
+    "description": "Its instruments are very precise and very unpleasant: whatever it cuts is left Withered.",
+    "enemy_only": true, "tribe": "alien", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_attack", "targeting_policy": "attack_target", "status": { "id": "withered", "stacks": 2 } }
+    ]
+  },
+  {
+    "id": "alien_replicator",
+    "display_name": "Replicator Frame",
+    "cost": 4, "attack": 3, "health": 4, "speed": 2,
+    "description": "Break it and the nanite swarm simply reassigns: releases 2 Scout Probes on death.",
+    "enemy_only": true, "tribe": "alien", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_death", "targeting_policy": "self", "spawn": { "id": "alien_probe", "count": 2 } }
+    ]
+  },
+  {
+    "id": "alien_saucer",
+    "display_name": "Saucer Adept",
+    "cost": 5, "attack": 3, "health": 5, "speed": 4, "shield": 2, "ranged": true, "strikes": 2,
+    "description": "Twin beam arrays, twin targets: fires twice each round.",
+    "enemy_only": true, "tribe": "alien", "elements": [], "chess_pieces": [],
+    "effects": []
+  },
+  {
+    "id": "alien_commander",
+    "display_name": "Zk'tal, Fleet Commander",
+    "cost": 0, "attack": 4, "health": 32, "speed": 3, "shield": 4,
+    "is_king": true, "enemy_only": true, "tribe": "alien",
+    "description": "Coordinates the landing party with cold precision, re-projecting a Barrier onto a random ally at every round's end. Destroy it to win.",
+    "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_turn_end",
+        "targets": { "kind": "auto", "criterion": "random", "count": 1, "conditions": [ { "allegiance": "ally" }, { "status": "barrier", "present": false } ] },
+        "status": { "id": "barrier", "stacks": 1 } }
+    ]
+  },
+  {
+    "id": "alien_abductor",
+    "display_name": "The Abductor",
+    "cost": 0, "attack": 5, "health": 38, "speed": 3, "shield": 6,
+    "is_king": true, "enemy_only": true, "tribe": "alien",
+    "description": "Its tractor beam drags the fight its way: every strike saps its victim's Attack and Speed by 1. Destroy it to win — before your army is dragged aboard.",
+    "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_attack", "targeting_policy": "attack_target", "attribute": "attack", "amount": -1 },
+      { "trigger": "on_attack", "targeting_policy": "attack_target", "attribute": "speed", "amount": -1 }
+    ]
+  },
+  {
+    "id": "alien_mothership",
+    "display_name": "The Mothership",
+    "cost": 0, "attack": 6, "health": 48, "speed": 2, "shield": 8, "ranged": true,
+    "is_king": true, "enemy_only": true, "tribe": "alien",
+    "description": "A city-sized hull blotting out the sky. Its fabricator bays release a Harvest Drone at every round's end — and its command saucer detaches when the hull falls. Destroy BOTH to win.",
+    "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_turn_end", "targeting_policy": "self", "spawn": { "id": "alien_drone", "count": 1 } },
+      { "trigger": "on_death", "targeting_policy": "self", "spawn": { "id": "alien_mothership_core", "count": 1 } }
+    ]
+  },
+  {
+    "id": "alien_mothership_core",
+    "display_name": "Command Saucer",
+    "cost": 0, "attack": 8, "health": 22, "speed": 5, "shield": 2, "ranged": true, "strikes": 2,
+    "is_king": true, "enemy_only": true, "tribe": "alien",
+    "description": "The Mothership's escaping brain — small, furious, and armed with both beam arrays. Shoot it down to win.",
+    "elements": [], "chess_pieces": [],
+    "effects": []
+  }
+]
