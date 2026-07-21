@@ -1,0 +1,105 @@
+[
+  {
+    "id": "pirate_shore_party",
+    "node_type": "combat",
+    "min_floor": 0, "max_floor": 5,
+    "min_stage": 1, "max_stage": 1,
+    "weight": 1.0,
+    "enemy_king": "pirate_captain",
+    "enemy_pool": [
+      { "id": "pirate_deckhand",      "weight": 3 },
+      { "id": "pirate_parrot",        "weight": 2 },
+      { "id": "pirate_powder_monkey", "weight": 2 }
+    ],
+    "pick_count": [5, 7],
+    "gold_reward": [22, 32],
+    "exp_reward": 1,
+    "ai": "default",
+    "reward_pool": "default"
+  },
+  {
+    "id": "pirate_boarding_action",
+    "node_type": "combat",
+    "min_floor": 3, "max_floor": 999,
+    "min_stage": 1, "max_stage": 2,
+    "weight": 1.0,
+    "enemy_king": "pirate_captain",
+    "enemy_pool": [
+      { "id": "pirate_deckhand",      "weight": 2 },
+      { "id": "pirate_gunner",        "weight": 2 },
+      { "id": "pirate_powder_monkey", "weight": 2 },
+      { "id": "pirate_swashbuckler",  "weight": 1 },
+      { "id": "pirate_cook",          "weight": 1 }
+    ],
+    "pick_count": [7, 9],
+    "gold_reward": [26, 38],
+    "exp_reward": 1,
+    "ai": "default",
+    "reward_pool": "default"
+  },
+  {
+    "id": "pirate_ghost_fleet",
+    "node_type": "combat",
+    "min_floor": 0, "max_floor": 999,
+    "min_stage": 2, "max_stage": 3,
+    "weight": 1.0,
+    "enemy_king": "pirate_captain",
+    "enemy_pool": [
+      { "id": "pirate_gunner",       "weight": 2 },
+      { "id": "pirate_swashbuckler", "weight": 2 },
+      { "id": "pirate_first_mate",   "weight": 2 },
+      { "id": "pirate_deck_cannon",  "weight": 2 },
+      { "id": "pirate_cook",         "weight": 1 }
+    ],
+    "pick_count": [9, 12],
+    "gold_reward": [30, 45],
+    "exp_reward": 2,
+    "ai": "default",
+    "reward_pool": "default"
+  },
+  {
+    "id": "pirate_elite_dreadbeard",
+    "node_type": "elite",
+    "min_floor": 0, "max_floor": 999,
+    "min_stage": 1, "max_stage": 999,
+    "weight": 1.0,
+    "enemy_king": "pirate_dreadbeard",
+    "power_bonus": 2.0,
+    "enemy_pool": [
+      { "id": "pirate_gunner",       "weight": 2 },
+      { "id": "pirate_swashbuckler", "weight": 2 },
+      { "id": "pirate_first_mate",   "weight": 3 },
+      { "id": "pirate_deck_cannon",  "weight": 2 },
+      { "id": "pirate_cook",         "weight": 1 }
+    ],
+    "pick_count": [6, 8],
+    "gold_reward": [45, 65],
+    "exp_reward": 3,
+    "ai": "default",
+    "reward_pool": "default",
+    "relic_reward": 0.5
+  },
+  {
+    "id": "pirate_boss_kraken",
+    "node_type": "boss",
+    "min_floor": 0, "max_floor": 999,
+    "min_stage": 1, "max_stage": 999,
+    "weight": 1.0,
+    "enemy_king": "pirate_kraken",
+    "power_bonus": 4.0,
+    "enemy_pool": [
+      { "id": "pirate_deckhand",      "weight": 2 },
+      { "id": "pirate_gunner",        "weight": 2 },
+      { "id": "pirate_swashbuckler",  "weight": 2 },
+      { "id": "pirate_first_mate",    "weight": 2 },
+      { "id": "pirate_deck_cannon",   "weight": 2 },
+      { "id": "pirate_powder_monkey", "weight": 1 }
+    ],
+    "pick_count": [7, 9],
+    "gold_reward": [80, 110],
+    "exp_reward": 5,
+    "ai": "default",
+    "reward_pool": "default",
+    "relic_reward": 1.0
+  }
+]

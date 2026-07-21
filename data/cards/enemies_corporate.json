@@ -1,0 +1,117 @@
+[
+  {
+    "id": "corp_intern",
+    "display_name": "Unpaid Intern",
+    "cost": 1, "attack": 1, "health": 2, "speed": 3,
+    "description": "Compensated in experience. The exit interview yields valuable insights: the company draws a card when they quit (die).",
+    "enemy_only": true, "tribe": "corporate", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_death", "targets": { "kind": "side", "of": "own" }, "attribute": "draw", "amount": 1 }
+    ]
+  },
+  {
+    "id": "corp_middle_manager",
+    "display_name": "Middle Manager",
+    "cost": 3, "attack": 2, "health": 4, "speed": 2,
+    "description": "Calls a synergy alignment huddle on arrival: +1 Attack to the whole org chart.",
+    "enemy_only": true, "tribe": "corporate", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_play", "targeting_policy": "all_allies", "attribute": "attack", "amount": 1 }
+    ]
+  },
+  {
+    "id": "corp_hr",
+    "display_name": "HR Representative",
+    "cost": 3, "attack": 1, "health": 5, "speed": 2,
+    "description": "Assigns the nearest opponent mandatory training videos: Blinded for their next 2 attacks (50% miss).",
+    "enemy_only": true, "tribe": "corporate", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_play", "targeting_policy": "single_nearest", "status": { "id": "blind", "stacks": 2 } }
+    ]
+  },
+  {
+    "id": "corp_sales_shark",
+    "display_name": "Sales Shark",
+    "cost": 4, "attack": 4, "health": 3, "speed": 4,
+    "description": "ABC: Always Be Closing. Every closed deal (kill) is +1 Attack toward quota.",
+    "enemy_only": true, "tribe": "corporate", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": { "kind": "dual_event", "event": "kill", "origin_of": "self" },
+        "targets": { "kind": "self" }, "attribute": "attack", "amount": 1 }
+    ]
+  },
+  {
+    "id": "corp_lawyer",
+    "display_name": "Legal Counsel",
+    "cost": 4, "attack": 2, "health": 6, "speed": 2, "shield": 3,
+    "description": "Arrives pre-wrapped in injunctions: starts with a 2-charge Barrier. Please direct all attacks to their attorney.",
+    "enemy_only": true, "tribe": "corporate", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_play", "targeting_policy": "self", "status": { "id": "barrier", "stacks": 2 } }
+    ]
+  },
+  {
+    "id": "corp_consultant",
+    "display_name": "External Consultant",
+    "cost": 5, "attack": 3, "health": 3, "speed": 3,
+    "description": "Delivers a 200-slide efficiency review on arrival: EVERY unit on the field — both sides — loses 1 Attack. Invoices separately.",
+    "enemy_only": true, "tribe": "corporate", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_play", "targeting_policy": "all", "attribute": "attack", "amount": -1 }
+    ]
+  },
+  {
+    "id": "corp_security",
+    "display_name": "Corporate Security",
+    "cost": 4, "attack": 3, "health": 7, "speed": 1, "shield": 2,
+    "description": "You're going to need a visitor badge for that assault.",
+    "enemy_only": true, "tribe": "corporate", "elements": [], "chess_pieces": [], "effects": []
+  },
+  {
+    "id": "corp_vp",
+    "display_name": "VP of Synergy",
+    "cost": 0, "attack": 4, "health": 34, "speed": 3, "shield": 3,
+    "is_king": true, "enemy_only": true, "tribe": "corporate",
+    "description": "Nobody knows what synergy is, but the quarterly targets keep rising: +1 Attack to all reports at every round's end. Disrupt him to win.",
+    "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_turn_end", "targeting_policy": "all_allies", "attribute": "attack", "amount": 1 }
+    ]
+  },
+  {
+    "id": "corp_cfo",
+    "display_name": "The CFO",
+    "cost": 0, "attack": 5, "health": 40, "speed": 2, "shield": 6,
+    "is_king": true, "enemy_only": true, "tribe": "corporate",
+    "description": "Every attack against the company is a line item, and she cuts budgets accordingly: attackers lose 1 Attack per swing. Zero her out to win.",
+    "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_damage_taken", "targeting_policy": "attacker", "attribute": "attack", "amount": -1 }
+    ]
+  },
+  {
+    "id": "corp_ceo",
+    "display_name": "The CEO",
+    "cost": 0, "attack": 6, "health": 50, "speed": 3, "shield": 5,
+    "is_king": true, "enemy_only": true, "tribe": "corporate",
+    "description": "The hiring pipeline never sleeps (an Unpaid Intern onboards every round) and every hostile takeover (kill) is +1 Attack. Terminating him triggers the severance clause — destroy THAT too to win.",
+    "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_turn_end", "targeting_policy": "self", "spawn": { "id": "corp_intern", "count": 1 } },
+      { "trigger": { "kind": "dual_event", "event": "kill", "origin_of": "self" },
+        "targets": { "kind": "self" }, "attribute": "attack", "amount": 1 },
+      { "trigger": "on_death", "targeting_policy": "self", "spawn": { "id": "corp_golden_parachute", "count": 1 } }
+    ]
+  },
+  {
+    "id": "corp_golden_parachute",
+    "display_name": "The Golden Parachute",
+    "cost": 0, "attack": 7, "health": 24, "speed": 5, "shield": 2,
+    "is_king": true, "enemy_only": true, "tribe": "corporate",
+    "description": "He's escaping with the severance package! Fast, slippery (+25% dodge), and worth eight figures. Ground him before he reaches the helipad to win.",
+    "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": { "kind": "while" }, "targets": { "kind": "self" }, "attribute": "dodge_bonus", "amount": 25 }
+    ]
+  }
+]

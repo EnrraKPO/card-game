@@ -1,0 +1,95 @@
+[
+  {
+    "id": "dino_compy",
+    "display_name": "Compy Pack",
+    "cost": 1, "attack": 1, "health": 1, "speed": 4,
+    "description": "Where there's one, there's — yep. When one dies, half the time another skitters out of the bushes.",
+    "enemy_only": true, "tribe": "dino", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_death", "targeting_policy": "self", "spawn": { "id": "dino_compy", "count": 1 }, "chance": 0.5 }
+    ]
+  },
+  {
+    "id": "dino_raptor",
+    "display_name": "Velociraptor",
+    "cost": 3, "attack": 3, "health": 3, "speed": 5,
+    "description": "Clever girl. Goes for exactly the wrong artery (+20% crit chance).",
+    "enemy_only": true, "tribe": "dino", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": { "kind": "while" }, "targets": { "kind": "self" }, "attribute": "crit_chance_bonus", "amount": 20 }
+    ]
+  },
+  {
+    "id": "dino_pachy",
+    "display_name": "Pachy Rammer",
+    "cost": 4, "attack": 4, "health": 6, "speed": 2,
+    "description": "Its skull is nine inches of solid commitment: crits land half again harder (+50% crit damage).",
+    "enemy_only": true, "tribe": "dino", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": { "kind": "while" }, "targets": { "kind": "self" }, "attribute": "crit_multiplier_bonus", "amount": 50 }
+    ]
+  },
+  {
+    "id": "dino_stego",
+    "display_name": "Stegoback Bulwark",
+    "cost": 5, "attack": 3, "health": 9, "speed": 1, "shield": 4,
+    "description": "Swinging at it is a design flaw on your part: attackers take 2 damage back from its plates.",
+    "enemy_only": true, "tribe": "dino", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_damage_taken", "targeting_policy": "attacker", "attribute": "damage_taken", "amount": 2 }
+    ]
+  },
+  {
+    "id": "dino_trike",
+    "display_name": "Trikehorn Matron",
+    "cost": 6, "attack": 5, "health": 11, "speed": 1, "shield": 3,
+    "description": "Three horns, zero negotiations.",
+    "enemy_only": true, "tribe": "dino", "elements": [], "chess_pieces": [], "effects": []
+  },
+  {
+    "id": "dino_rex_junior",
+    "display_name": "Rex Junior",
+    "cost": 7, "attack": 6, "health": 9, "speed": 3,
+    "description": "Still growing into the arms. Every kill gives it a Frenzied taste for more.",
+    "enemy_only": true, "tribe": "dino", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": { "kind": "dual_event", "event": "kill", "origin_of": "self" },
+        "targets": { "kind": "self" }, "status": { "id": "frenzied", "stacks": 1 } }
+    ]
+  },
+  {
+    "id": "dino_packmother",
+    "display_name": "Sharptooth Packmother",
+    "cost": 0, "attack": 5, "health": 36, "speed": 4, "shield": 2,
+    "is_king": true, "enemy_only": true, "tribe": "dino",
+    "description": "The valley hunts as one, and she is its appetite. A Compy Pack scurries in at every round's end. Fell her to win.",
+    "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_turn_end", "targeting_policy": "self", "spawn": { "id": "dino_compy", "count": 1 } }
+    ]
+  },
+  {
+    "id": "dino_carno",
+    "display_name": "Carnotaur Alpha",
+    "cost": 0, "attack": 7, "health": 44, "speed": 3, "shield": 3,
+    "is_king": true, "enemy_only": true, "tribe": "dino",
+    "description": "Bred by the valley for one job. Every kill sharpens it: +2 Attack per victim. Drop it before the math gets away from you.",
+    "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": { "kind": "dual_event", "event": "kill", "origin_of": "self" },
+        "targets": { "kind": "self" }, "attribute": "attack", "amount": 2 }
+    ]
+  },
+  {
+    "id": "dino_rex",
+    "display_name": "TYRANNUS, the Extinction",
+    "cost": 0, "attack": 9, "health": 62, "speed": 3, "shield": 4, "strikes": 2,
+    "is_king": true, "enemy_only": true, "tribe": "dino",
+    "description": "The asteroid missed one. Two strikes a round, nine tons each, and every kill heals it 5. Finish what the sky started to win.",
+    "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": { "kind": "dual_event", "event": "kill", "origin_of": "self" },
+        "targets": { "kind": "self" }, "attribute": "health", "amount": 5 }
+    ]
+  }
+]

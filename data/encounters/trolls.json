@@ -1,0 +1,61 @@
+[
+  {
+    "id": "troll_toll_bridge",
+    "node_type": "combat",
+    "min_floor": 2, "max_floor": 999,
+    "min_stage": 1, "max_stage": 2,
+    "weight": 1.0,
+    "enemy_king": "troll_chieftain",
+    "enemy_pool": [
+      { "id": "troll_whelp",        "weight": 3 },
+      { "id": "troll_bridgekeeper", "weight": 2 },
+      { "id": "troll_stonehide",    "weight": 1 }
+    ],
+    "pick_count": [5, 7],
+    "gold_reward": [22, 34],
+    "exp_reward": 1,
+    "ai": "default",
+    "reward_pool": "default"
+  },
+  {
+    "id": "troll_warcamp",
+    "node_type": "combat",
+    "min_floor": 0, "max_floor": 999,
+    "min_stage": 2, "max_stage": 3,
+    "weight": 1.0,
+    "enemy_king": "troll_chieftain",
+    "enemy_pool": [
+      { "id": "troll_bridgekeeper", "weight": 2 },
+      { "id": "troll_stonehide",    "weight": 2 },
+      { "id": "troll_berserker",    "weight": 2 },
+      { "id": "troll_shaman",       "weight": 1 }
+    ],
+    "pick_count": [7, 10],
+    "gold_reward": [26, 40],
+    "exp_reward": 2,
+    "ai": "default",
+    "reward_pool": "default"
+  },
+  {
+    "id": "troll_elite_old_gorge",
+    "node_type": "elite",
+    "min_floor": 0, "max_floor": 999,
+    "min_stage": 1, "max_stage": 999,
+    "weight": 1.0,
+    "enemy_king": "troll_ancient_gorge",
+    "power_bonus": 2.0,
+    "enemy_pool": [
+      { "id": "troll_whelp",        "weight": 2 },
+      { "id": "troll_bridgekeeper", "weight": 2 },
+      { "id": "troll_stonehide",    "weight": 2 },
+      { "id": "troll_berserker",    "weight": 2 },
+      { "id": "troll_shaman",       "weight": 2 }
+    ],
+    "pick_count": [6, 8],
+    "gold_reward": [40, 60],
+    "exp_reward": 3,
+    "ai": "default",
+    "reward_pool": "default",
+    "relic_reward": 0.5
+  }
+]

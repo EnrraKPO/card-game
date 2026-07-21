@@ -1,0 +1,119 @@
+[
+  {
+    "id": "cult_acolyte",
+    "display_name": "Hooded Acolyte",
+    "cost": 1, "attack": 1, "health": 2, "speed": 2,
+    "description": "Joined for the robes. Stayed for the eldritch dread.",
+    "enemy_only": true, "tribe": "cultist", "elements": [], "chess_pieces": [], "effects": []
+  },
+  {
+    "id": "cult_offering",
+    "display_name": "Willing Offering",
+    "cost": 1, "attack": 0, "health": 1, "speed": 1,
+    "description": "It smiles as it steps forward. When it dies — and it WILL die — every cultist gains +1 Attack and +1 Health.",
+    "enemy_only": true, "tribe": "cultist", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_death", "targeting_policy": "all_allies", "attribute": "attack", "amount": 1 },
+      { "trigger": "on_death", "targeting_policy": "all_allies", "attribute": "max_health", "amount": 1 },
+      { "trigger": "on_death", "targeting_policy": "all_allies", "attribute": "health", "amount": 1 }
+    ]
+  },
+  {
+    "id": "cult_zealot",
+    "display_name": "Flagellant Zealot",
+    "cost": 2, "attack": 3, "health": 2, "speed": 3,
+    "description": "Pain is proof of devotion: +1 Attack every time it takes a hit.",
+    "enemy_only": true, "tribe": "cultist", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_damage_taken", "targeting_policy": "self", "attribute": "attack", "amount": 1 }
+    ]
+  },
+  {
+    "id": "cult_bloodpriest",
+    "display_name": "Blood Priest",
+    "cost": 3, "attack": 2, "health": 4, "speed": 2,
+    "description": "Declares every death an offering: all cultists gain +1 Attack whenever an ally dies.",
+    "enemy_only": true, "tribe": "cultist", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": { "kind": "event", "event": "death", "conditions": [ { "allegiance": "ally" } ] },
+        "targets": { "kind": "all", "conditions": [ { "allegiance": "ally" } ] }, "attribute": "attack", "amount": 1 }
+    ]
+  },
+  {
+    "id": "cult_summoner",
+    "display_name": "Void Summoner",
+    "cost": 4, "attack": 2, "health": 4, "speed": 2,
+    "description": "The circle is already drawn. Kill her and what she was calling steps through anyway.",
+    "enemy_only": true, "tribe": "cultist", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_death", "targeting_policy": "self", "spawn": { "id": "cult_horrorspawn", "count": 1 } }
+    ]
+  },
+  {
+    "id": "cult_horrorspawn",
+    "display_name": "Horrorspawn",
+    "cost": 3, "attack": 3, "health": 3, "speed": 3,
+    "description": "A knot of eyes and appetite, freshly through the veil.",
+    "enemy_only": true, "tribe": "cultist", "elements": [], "chess_pieces": [], "effects": []
+  },
+  {
+    "id": "cult_flesh_horror",
+    "display_name": "Flesh Horror",
+    "cost": 6, "attack": 5, "health": 9, "speed": 1,
+    "description": "An answered prayer, regrettably. Feeds on what it kills: heals 3 per victim.",
+    "enemy_only": true, "tribe": "cultist", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": { "kind": "dual_event", "event": "kill", "origin_of": "self" },
+        "targets": { "kind": "self" }, "attribute": "health", "amount": 3 }
+    ]
+  },
+  {
+    "id": "cult_high_priest",
+    "display_name": "High Priest Malachar",
+    "cost": 0, "attack": 4, "health": 32, "speed": 3, "shield": 3,
+    "is_king": true, "enemy_only": true, "tribe": "cultist",
+    "description": "Every fallen follower is a coin in his purse: +1 Attack and 2 healing per ally death. Strike him down to win.",
+    "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": { "kind": "event", "event": "death", "conditions": [ { "allegiance": "ally" } ] },
+        "targets": { "kind": "self" }, "attribute": "attack", "amount": 1 },
+      { "trigger": { "kind": "event", "event": "death", "conditions": [ { "allegiance": "ally" } ] },
+        "targets": { "kind": "self" }, "attribute": "health", "amount": 2 }
+    ]
+  },
+  {
+    "id": "cult_prophet",
+    "display_name": "The Veiled Prophet",
+    "cost": 0, "attack": 5, "health": 40, "speed": 2, "shield": 5,
+    "is_king": true, "enemy_only": true, "tribe": "cultist",
+    "description": "Speaks tomorrow's obituaries aloud: a random foe gains 2 Poison at every round's end. Silence the Prophet to win.",
+    "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_turn_end",
+        "targets": { "kind": "auto", "criterion": "random", "count": 1, "conditions": [ { "allegiance": "enemy" } ] },
+        "status": { "id": "poison", "stacks": 2 } }
+    ]
+  },
+  {
+    "id": "cult_hierophant",
+    "display_name": "Hierophant Ozmun",
+    "cost": 0, "attack": 5, "health": 42, "speed": 2, "shield": 4,
+    "is_king": true, "enemy_only": true, "tribe": "cultist",
+    "description": "He has spent forty years digging for something under this map, growing +1 Attack per offered ally. Kill him and you'll meet it. Destroy WHAT COMES AFTER to win.",
+    "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": { "kind": "event", "event": "death", "conditions": [ { "allegiance": "ally" } ] },
+        "targets": { "kind": "self" }, "attribute": "attack", "amount": 1 },
+      { "trigger": "on_death", "targeting_policy": "self", "spawn": { "id": "cult_elder_god", "count": 1 } }
+    ]
+  },
+  {
+    "id": "cult_elder_god",
+    "display_name": "Vhal'Zhoth, the Awakened",
+    "cost": 0, "attack": 10, "health": 36, "speed": 3, "strikes": 2,
+    "is_king": true, "enemy_only": true, "tribe": "cultist",
+    "description": "The digging is over. Two strikes a round, ten mouths each. Put it back to sleep — permanently — to win.",
+    "elements": [], "chess_pieces": [],
+    "effects": []
+  }
+]

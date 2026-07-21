@@ -1,0 +1,97 @@
+[
+  {
+    "id": "goblin_sapper_crew",
+    "node_type": "combat",
+    "min_floor": 2, "max_floor": 999,
+    "min_stage": 1, "max_stage": 2,
+    "weight": 1.0,
+    "enemy_king": "goblin_warlord",
+    "enemy_pool": [
+      { "id": "goblin_bomber",  "weight": 4 },
+      { "id": "goblin_cutter",  "weight": 2 },
+      { "id": "goblin_fanatic", "weight": 2 }
+    ],
+    "pick_count": [6, 9],
+    "gold_reward": [22, 34],
+    "exp_reward": 1,
+    "ai": "default",
+    "reward_pool": "default"
+  },
+  {
+    "id": "goblin_grave_robbers",
+    "node_type": "combat",
+    "min_floor": 3, "max_floor": 999,
+    "min_stage": 1, "max_stage": 3,
+    "weight": 1.0,
+    "enemy_king": "bone_lich",
+    "enemy_pool": [
+      { "id": "goblin_cutter",  "weight": 2 },
+      { "id": "goblin_bomber",  "weight": 1 },
+      { "id": "skeleton_grunt", "weight": 2 },
+      { "id": "ghoul",          "weight": 2 },
+      { "id": "bone_archer",    "weight": 1 }
+    ],
+    "pick_count": [7, 10],
+    "gold_reward": [24, 38],
+    "exp_reward": 1,
+    "ai": "default",
+    "reward_pool": "default"
+  },
+  {
+    "id": "undead_gravetide",
+    "node_type": "combat",
+    "min_floor": 0, "max_floor": 999,
+    "min_stage": 2, "max_stage": 3,
+    "weight": 1.0,
+    "enemy_king": "bone_lich",
+    "enemy_pool": [
+      { "id": "skeleton_grunt", "weight": 3 },
+      { "id": "ghoul",          "weight": 3 },
+      { "id": "bone_archer",    "weight": 2 },
+      { "id": "vampire_lord",   "weight": 1 }
+    ],
+    "pick_count": [9, 13],
+    "gold_reward": [26, 40],
+    "exp_reward": 2,
+    "ai": "default",
+    "reward_pool": "default"
+  },
+  {
+    "id": "golem_foundry_line",
+    "node_type": "combat",
+    "min_floor": 0, "max_floor": 999,
+    "min_stage": 2, "max_stage": 3,
+    "weight": 1.0,
+    "enemy_king": "stoneborn_warlord",
+    "enemy_pool": [
+      { "id": "stone_sentinel",  "weight": 2 },
+      { "id": "iron_bulwark",    "weight": 3 },
+      { "id": "granite_smasher", "weight": 2 },
+      { "id": "colossus",        "weight": 1 }
+    ],
+    "pick_count": [7, 10],
+    "gold_reward": [28, 42],
+    "exp_reward": 2,
+    "ai": "default",
+    "reward_pool": "default"
+  },
+  {
+    "id": "undead_vampire_court",
+    "node_type": "combat",
+    "min_floor": 4, "max_floor": 999,
+    "min_stage": 2, "max_stage": 3,
+    "weight": 1.0,
+    "enemy_king": "bone_lich",
+    "enemy_pool": [
+      { "id": "vampire_lord",   "weight": 3 },
+      { "id": "ghoul",          "weight": 2 },
+      { "id": "bone_archer",    "weight": 2 },
+      { "id": "skeleton_grunt", "weight": 1 }
+    ],
+    "pick_count": [8, 11],
+    "gold_reward": [30, 46],
+    "exp_reward": 2,
+    "ai": "default",
+    "reward_pool": "default"
+  }
+]

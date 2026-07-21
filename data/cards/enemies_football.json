@@ -1,0 +1,58 @@
+[
+  {
+    "id": "fb_lineman",
+    "display_name": "Mutant Lineman",
+    "cost": 2, "attack": 1, "health": 6, "speed": 1, "shield": 2,
+    "description": "Three hundred pounds of genetically questionable offensive line. You shall not rush.",
+    "enemy_only": true, "tribe": "gridiron", "elements": [], "chess_pieces": [], "effects": []
+  },
+  {
+    "id": "fb_referee",
+    "display_name": "Rogue Referee",
+    "cost": 2, "attack": 1, "health": 3, "speed": 3,
+    "description": "Nobody knows whose side he's on. Opens play by carding the nearest opponent: Blinded (50% miss, 2 attacks).",
+    "enemy_only": true, "tribe": "gridiron", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_play", "targeting_policy": "single_nearest", "status": { "id": "blind", "stacks": 2 } }
+    ]
+  },
+  {
+    "id": "fb_runningback",
+    "display_name": "Juke King Runningback",
+    "cost": 3, "attack": 3, "health": 3, "speed": 5,
+    "description": "Ankles have been broken just watching him (+20% dodge).",
+    "enemy_only": true, "tribe": "gridiron", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": { "kind": "while" }, "targets": { "kind": "self" }, "attribute": "dodge_bonus", "amount": 20 }
+    ]
+  },
+  {
+    "id": "fb_mascot",
+    "display_name": "The Mascot",
+    "cost": 3, "attack": 1, "health": 4, "speed": 3,
+    "description": "Nobody knows what animal it's supposed to be, but the crowd goes WILD: allied units have +1 Attack while it's on the field.",
+    "enemy_only": true, "tribe": "gridiron", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": { "kind": "while" }, "targets": { "kind": "all", "conditions": [ { "allegiance": "ally" } ] },
+        "attribute": "attack", "amount": 1 }
+    ]
+  },
+  {
+    "id": "fb_quarterback",
+    "display_name": "Cannon-Arm Quarterback",
+    "cost": 4, "attack": 4, "health": 4, "speed": 3, "ranged": true,
+    "description": "His spiral has been clocked at highway speeds. Throws from the pocket, hits like a truck.",
+    "enemy_only": true, "tribe": "gridiron", "elements": [], "chess_pieces": [], "effects": []
+  },
+  {
+    "id": "fb_coach",
+    "display_name": "Coach Grimjaw",
+    "cost": 0, "attack": 5, "health": 38, "speed": 2, "shield": 4,
+    "is_king": true, "enemy_only": true, "tribe": "gridiron",
+    "description": "Half drill sergeant, half cryptid, all clipboard. Runs conditioning at every round's end: +1 Speed to the whole roster. Fire the coach to win.",
+    "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_turn_end", "targeting_policy": "all_allies", "attribute": "speed", "amount": 1 }
+    ]
+  }
+]

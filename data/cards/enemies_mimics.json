@@ -1,0 +1,50 @@
+[
+  {
+    "id": "mimic_lamp",
+    "display_name": "Lamp Mimic",
+    "cost": 2, "attack": 1, "health": 3, "speed": 3,
+    "description": "Was providing mood lighting. Now providing a blinding flash: the nearest foe is Blinded (50% miss, 2 attacks).",
+    "enemy_only": true, "tribe": "mimic", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_play", "targeting_policy": "single_nearest", "status": { "id": "blind", "stacks": 2 } }
+    ]
+  },
+  {
+    "id": "mimic_rug",
+    "display_name": "Rug Mimic",
+    "cost": 3, "attack": 2, "health": 4, "speed": 2,
+    "description": "It really ties the room together, and also your ankles: −1 Speed to whatever it bites.",
+    "enemy_only": true, "tribe": "mimic", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_attack", "targeting_policy": "attack_target", "attribute": "speed", "amount": -1 }
+    ]
+  },
+  {
+    "id": "mimic_table",
+    "display_name": "Table Mimic",
+    "cost": 3, "attack": 2, "health": 6, "speed": 1, "shield": 1,
+    "description": "Load-bearing furniture with a grudge and surprisingly good posture.",
+    "enemy_only": true, "tribe": "mimic", "elements": [], "chess_pieces": [], "effects": []
+  },
+  {
+    "id": "mimic_chest",
+    "display_name": "Chest Mimic",
+    "cost": 4, "attack": 4, "health": 4, "speed": 1,
+    "description": "The classic. You knew better and you opened it anyway (+25% crit chance).",
+    "enemy_only": true, "tribe": "mimic", "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": { "kind": "while" }, "targets": { "kind": "self" }, "attribute": "crit_chance_bonus", "amount": 25 }
+    ]
+  },
+  {
+    "id": "mimic_landlord",
+    "display_name": "The Landlord",
+    "cost": 0, "attack": 6, "health": 44, "speed": 1, "shield": 5,
+    "is_king": true, "enemy_only": true, "tribe": "mimic",
+    "description": "The entire house was the mimic. Every blow against it gets a door slammed on the offender (2 damage back). The security deposit was never coming back. Evict it to win.",
+    "elements": [], "chess_pieces": [],
+    "effects": [
+      { "trigger": "on_damage_taken", "targeting_policy": "attacker", "attribute": "damage_taken", "amount": 2 }
+    ]
+  }
+]

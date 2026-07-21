@@ -1,0 +1,84 @@
+[
+  {
+    "id": "slime_elite_rolling_tide",
+    "node_type": "elite",
+    "min_floor": 0, "max_floor": 999,
+    "min_stage": 2, "max_stage": 999,
+    "weight": 1.0,
+    "enemy_king": "slime_amalgam",
+    "power_bonus": 2.5,
+    "enemy_pool": [
+      { "id": "slime_mega",       "weight": 3 },
+      { "id": "slime_big",        "weight": 3 },
+      { "id": "slime_gluttonous", "weight": 2 }
+    ],
+    "pick_count": [5, 7],
+    "gold_reward": [45, 65],
+    "exp_reward": 3,
+    "ai": "default",
+    "reward_pool": "default",
+    "relic_reward": 0.5
+  },
+  {
+    "id": "beast_elite_bloodmoon_hunt",
+    "node_type": "elite",
+    "min_floor": 0, "max_floor": 999,
+    "min_stage": 2, "max_stage": 999,
+    "weight": 1.0,
+    "enemy_king": "beast_alpha",
+    "power_bonus": 2.5,
+    "enemy_pool": [
+      { "id": "beast_wolf",     "weight": 3 },
+      { "id": "beast_direwolf", "weight": 3 },
+      { "id": "beast_panther",  "weight": 2 },
+      { "id": "beast_hyena",    "weight": 2 }
+    ],
+    "pick_count": [7, 9],
+    "gold_reward": [45, 65],
+    "exp_reward": 3,
+    "ai": "default",
+    "reward_pool": "default",
+    "relic_reward": 0.5
+  },
+  {
+    "id": "harpy_elite_skyfall",
+    "node_type": "elite",
+    "min_floor": 0, "max_floor": 999,
+    "min_stage": 2, "max_stage": 999,
+    "weight": 1.0,
+    "enemy_king": "harpy_tempest",
+    "power_bonus": 2.5,
+    "enemy_pool": [
+      { "id": "harpy_talon",     "weight": 3 },
+      { "id": "harpy_stormwing", "weight": 3 },
+      { "id": "harpy_thief",     "weight": 2 }
+    ],
+    "pick_count": [6, 8],
+    "gold_reward": [45, 65],
+    "exp_reward": 3,
+    "ai": "default",
+    "reward_pool": "default",
+    "relic_reward": 0.5
+  },
+  {
+    "id": "cult_elite_feast_of_the_veil",
+    "node_type": "elite",
+    "min_floor": 0, "max_floor": 999,
+    "min_stage": 2, "max_stage": 999,
+    "weight": 1.0,
+    "enemy_king": "cult_prophet",
+    "power_bonus": 2.5,
+    "enemy_pool": [
+      { "id": "cult_offering",     "weight": 3 },
+      { "id": "cult_bloodpriest",  "weight": 3 },
+      { "id": "cult_flesh_horror", "weight": 2 },
+      { "id": "cult_horrorspawn",  "weight": 2 }
+    ],
+    "pick_count": [7, 9],
+    "gold_reward": [45, 65],
+    "exp_reward": 3,
+    "ai": "default",
+    "reward_pool": "default",
+    "relic_reward": 0.5
+  }
+]
