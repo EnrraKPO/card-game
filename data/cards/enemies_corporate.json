@@ -70,7 +70,7 @@
   {
     "id": "corp_vp",
     "display_name": "VP of Synergy",
-    "cost": 0, "attack": 4, "health": 34, "speed": 3, "shield": 3,
+    "cost": 0, "attack": 1, "health": 34, "speed": 3, "shield": 3,
     "is_king": true, "enemy_only": true, "tribe": "corporate",
     "description": "Nobody knows what synergy is, but the quarterly targets keep rising: +1 Attack to all reports at every round's end. Disrupt him to win.",
     "elements": [], "chess_pieces": [],
@@ -81,7 +81,7 @@
   {
     "id": "corp_cfo",
     "display_name": "The CFO",
-    "cost": 0, "attack": 5, "health": 40, "speed": 2, "shield": 6,
+    "cost": 0, "attack": 2, "health": 40, "speed": 2, "shield": 6,
     "is_king": true, "enemy_only": true, "tribe": "corporate",
     "description": "Every attack against the company is a line item, and she cuts budgets accordingly: attackers lose 1 Attack per swing. Zero her out to win.",
     "elements": [], "chess_pieces": [],
@@ -92,7 +92,7 @@
   {
     "id": "corp_ceo",
     "display_name": "The CEO",
-    "cost": 0, "attack": 6, "health": 50, "speed": 3, "shield": 5,
+    "cost": 0, "attack": 3, "health": 50, "speed": 3, "shield": 5,
     "is_king": true, "enemy_only": true, "tribe": "corporate",
     "description": "The hiring pipeline never sleeps (an Unpaid Intern onboards every round) and every hostile takeover (kill) is +1 Attack. Terminating him triggers the severance clause — destroy THAT too to win.",
     "elements": [], "chess_pieces": [],
@@ -106,7 +106,7 @@
   {
     "id": "corp_golden_parachute",
     "display_name": "The Golden Parachute",
-    "cost": 0, "attack": 7, "health": 24, "speed": 5, "shield": 2,
+    "cost": 0, "attack": 4, "health": 24, "speed": 5, "shield": 2,
     "is_king": true, "enemy_only": true, "tribe": "corporate",
     "description": "He's escaping with the severance package! Fast, slippery (+25% dodge), and worth eight figures. Ground him before he reaches the helipad to win.",
     "elements": [], "chess_pieces": [],

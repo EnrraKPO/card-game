@@ -60,7 +60,7 @@
   {
     "id": "dino_packmother",
     "display_name": "Sharptooth Packmother",
-    "cost": 0, "attack": 5, "health": 36, "speed": 4, "shield": 2,
+    "cost": 0, "attack": 2, "health": 36, "speed": 4, "shield": 2,
     "is_king": true, "enemy_only": true, "tribe": "dino",
     "description": "The valley hunts as one, and she is its appetite. A Compy Pack scurries in at every round's end. Fell her to win.",
     "elements": [], "chess_pieces": [],
@@ -71,7 +71,7 @@
   {
     "id": "dino_carno",
     "display_name": "Carnotaur Alpha",
-    "cost": 0, "attack": 7, "health": 44, "speed": 3, "shield": 3,
+    "cost": 0, "attack": 3, "health": 44, "speed": 3, "shield": 3,
     "is_king": true, "enemy_only": true, "tribe": "dino",
     "description": "Bred by the valley for one job. Every kill sharpens it: +2 Attack per victim. Drop it before the math gets away from you.",
     "elements": [], "chess_pieces": [],
@@ -83,7 +83,7 @@
   {
     "id": "dino_rex",
     "display_name": "TYRANNUS, the Extinction",
-    "cost": 0, "attack": 9, "health": 62, "speed": 3, "shield": 4, "strikes": 2,
+    "cost": 0, "attack": 4, "health": 62, "speed": 3, "shield": 4, "strikes": 2,
     "is_king": true, "enemy_only": true, "tribe": "dino",
     "description": "The asteroid missed one. Two strikes a round, nine tons each, and every kill heals it 5. Finish what the sky started to win.",
     "elements": [], "chess_pieces": [],

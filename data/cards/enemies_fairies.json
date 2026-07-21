@@ -62,7 +62,7 @@
   {
     "id": "fairy_queen_mab",
     "display_name": "Queen Mab of the Hollow",
-    "cost": 0, "attack": 4, "health": 32, "speed": 5, "shield": 3,
+    "cost": 0, "attack": 1, "health": 32, "speed": 5, "shield": 3,
     "is_king": true, "enemy_only": true, "tribe": "fairy",
     "description": "Her court finds you HILARIOUS. Dodges a third of all blows and Blinds whoever dares strike her. Catch her to win.",
     "elements": [], "chess_pieces": [],
@@ -74,7 +74,7 @@
   {
     "id": "fairy_erlking",
     "display_name": "The Erlking",
-    "cost": 0, "attack": 6, "health": 44, "speed": 4, "shield": 4,
+    "cost": 0, "attack": 2, "health": 44, "speed": 4, "shield": 4,
     "is_king": true, "enemy_only": true, "tribe": "fairy",
     "description": "The old crown of the wild hunt. Every strike of his antlered lance saps 1 Speed, and the forest keeps him laughing past a quarter of your blows. End the hunt to win.",
     "elements": [], "chess_pieces": [],

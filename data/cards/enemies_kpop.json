@@ -52,7 +52,7 @@
   {
     "id": "kpop_bias",
     "display_name": "BIAS, the Ultimate Idol",
-    "cost": 0, "attack": 5, "health": 36, "speed": 5, "shield": 3,
+    "cost": 0, "attack": 1, "health": 36, "speed": 5, "shield": 3,
     "is_king": true, "enemy_only": true, "tribe": "idol",
     "description": "That smile has a body count. Dodges a quarter of everything (the cameras must never catch a hit) and leads an encore at every round's end: Tailwind for the whole group. End the world tour to win.",
     "elements": [], "chess_pieces": [],

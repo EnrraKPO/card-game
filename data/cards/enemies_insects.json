@@ -75,7 +75,7 @@
   {
     "id": "insect_hive_tyrant",
     "display_name": "Vrix, Hive Tyrant",
-    "cost": 0, "attack": 4, "health": 34, "speed": 2, "shield": 3,
+    "cost": 0, "attack": 1, "health": 34, "speed": 2, "shield": 3,
     "is_king": true, "enemy_only": true, "tribe": "insect",
     "description": "The hive's will on six legs. Extrudes a fresh Hive Grub at every round's end. Crush him to win.",
     "elements": [], "chess_pieces": [],
@@ -86,7 +86,7 @@
   {
     "id": "insect_mantis_prime",
     "display_name": "Mantis Prime",
-    "cost": 0, "attack": 6, "health": 40, "speed": 4, "shield": 2, "strikes": 2,
+    "cost": 0, "attack": 2, "health": 40, "speed": 4, "shield": 2, "strikes": 2,
     "is_king": true, "enemy_only": true, "tribe": "insect",
     "description": "The perfected blade the hive keeps for special occasions. Strikes twice a round, each on a fresh victim. Break it to win.",
     "elements": [], "chess_pieces": [],
@@ -95,7 +95,7 @@
   {
     "id": "insect_hive_queen",
     "display_name": "Zellixa, the Hive Queen",
-    "cost": 0, "attack": 5, "health": 48, "speed": 2, "shield": 5,
+    "cost": 0, "attack": 3, "health": 48, "speed": 2, "shield": 5,
     "is_king": true, "enemy_only": true, "tribe": "insect",
     "description": "Mother of every chitinous thing on this map. Lays a Sealed Cocoon at every round's end — deal with them early or meet what hatches. Slay her to win.",
     "elements": [], "chess_pieces": [],

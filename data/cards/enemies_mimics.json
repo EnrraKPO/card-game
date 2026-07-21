@@ -39,7 +39,7 @@
   {
     "id": "mimic_landlord",
     "display_name": "The Landlord",
-    "cost": 0, "attack": 6, "health": 44, "speed": 1, "shield": 5,
+    "cost": 0, "attack": 1, "health": 44, "speed": 1, "shield": 5,
     "is_king": true, "enemy_only": true, "tribe": "mimic",
     "description": "The entire house was the mimic. Every blow against it gets a door slammed on the offender (2 damage back). The security deposit was never coming back. Evict it to win.",
     "elements": [], "chess_pieces": [],

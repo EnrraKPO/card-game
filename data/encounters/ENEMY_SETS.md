@@ -18,10 +18,10 @@ Two engine mechanics were added for this content (see the card guide):
 | Aliens | shields, side-draw tech, replication | Probes make the CPU draw on death; Aegis Nodes project Barriers; tractor-drain Abductor | **The Mothership** (fabricates drones) → phase 2: Command Saucer |
 | Insects | swarm, cocoons, aura | Sealed Cocoon self-ripens & hatches on ANY death; Locust aura; broodmothers | **Zellixa, the Hive Queen** (lays a cocoon each round) |
 | Pirates | chaos kegs, kill ledgers, grog | Powder Monkey damages BOTH sides; Sea Cook heals crew; First Mate notches kills | **The Kraken, Debt Collector** (3 tentacle strikes) |
-| Cultists | sacrifice economy | Willing Offering wants to die; Blood Priest converts ally deaths to attack | **Hierophant Ozmun** → phase 2: **Vhal'Zhoth**, the god he dug up (10 atk, 2 strikes) |
+| Cultists | sacrifice economy | Willing Offering wants to die; Blood Priest converts ally deaths to attack | **Hierophant Ozmun** → phase 2: **Vhal'Zhoth**, the god he dug up (double-striker) |
 | Trolls | regeneration | Everything heals every round; Old Gorge (elite) heals 4 + enrages | — (elite tribe) |
 | Fairies | dodge, Blind, trickery | Queen Mab blinds whoever hits her; Puck steals speed for himself | — (elite tribe) |
-| Dinosaurs | crit, retaliation, endgame stats | Raptor +crit; Stegoback thorns; Compies keep coming (50%) | **TYRANNUS, the Extinction** (9 atk ×2 strikes, heals 5 per kill) |
+| Dinosaurs | crit, retaliation, endgame stats | Raptor +crit; Stegoback thorns; Compies keep coming (50%) | **TYRANNUS, the Extinction** (double-striker, heals 5 per kill) |
 | Corporate | buzzword warfare | Interns draw on death ("exit interview"); Consultant debuffs BOTH sides | **The CEO** (hires interns, takeover stacks) → phase 2: **The Golden Parachute** |
 
 **Easter eggs** (combat templates at weight ~0.06–0.07 — rare surprises, better-than-normal
@@ -33,6 +33,10 @@ Classic tribes got expansion templates in `classic_expansion.json` (sapper crews
 robbers goblin×undead mix, gravetide, foundry line, vampire court); four cross-band extra
 elites live in `extra_elites.json`.
 
-Balancing posture (per the program brief): stage-1 fodder sits just under a common pawn
-(1/2/1); endgame non-captains push to ~6/12; bosses to 9-attack double-strikers. The
-depth-driven `power` scaling still multiplies on top.
+Balancing posture (revised after early playtests): stage-1 fodder sits just under a common
+pawn (1/2/1); endgame non-captains push to ~6/12. **Captains hold the attack-1 baseline** —
+a king is on the board from turn one, so raw captain attack one-shots 3-health units; their
+menace lives in EFFECTS (snowballs, drains, retaliation, spawns) and bulk instead. Careful
+raises only: elite kings 2 (stage-2+ elite 3), bosses 3 — or 2 when multi-strike carries
+the pressure — and phase-2 climax forms 4. The depth-driven `power` scaling still
+multiplies on top.

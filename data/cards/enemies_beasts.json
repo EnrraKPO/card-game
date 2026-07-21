@@ -85,7 +85,7 @@
   {
     "id": "beast_alpha",
     "display_name": "Fenrik, the Alpha",
-    "cost": 0, "attack": 5, "health": 36, "speed": 3, "shield": 2,
+    "cost": 0, "attack": 1, "health": 36, "speed": 3, "shield": 2,
     "is_king": true, "enemy_only": true, "tribe": "beast",
     "description": "The pack answers to one voice. Every kill feeds him: heals 3 whenever he slays a unit. Bring him down to win.",
     "elements": [], "chess_pieces": [],
@@ -97,7 +97,7 @@
   {
     "id": "beast_ancient",
     "display_name": "Old Thornback",
-    "cost": 0, "attack": 6, "health": 44, "speed": 2, "shield": 4,
+    "cost": 0, "attack": 2, "health": 44, "speed": 2, "shield": 4,
     "is_king": true, "enemy_only": true, "tribe": "beast",
     "description": "Hunters have carved a hundred scars into its hide, and each one made it meaner: +1 Attack every time it takes a hit. Destroy it to win.",
     "elements": [], "chess_pieces": [],
@@ -108,7 +108,7 @@
   {
     "id": "beast_ragnor",
     "display_name": "Ragnor, the Endless Hunger",
-    "cost": 0, "attack": 7, "health": 55, "speed": 3, "shield": 3,
+    "cost": 0, "attack": 3, "health": 55, "speed": 3, "shield": 3,
     "is_king": true, "enemy_only": true, "tribe": "beast",
     "description": "It has never once stopped eating. Every unit it kills feeds it +2 Attack and 4 healing — kill it before it kills everything. Destroy it to win.",
     "elements": [], "chess_pieces": [],

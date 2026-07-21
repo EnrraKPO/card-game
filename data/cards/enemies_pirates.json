@@ -74,7 +74,7 @@
   {
     "id": "pirate_captain",
     "display_name": "Captain Rummy Bones",
-    "cost": 0, "attack": 5, "health": 34, "speed": 3, "shield": 3,
+    "cost": 0, "attack": 1, "health": 34, "speed": 3, "shield": 3,
     "is_king": true, "enemy_only": true, "tribe": "pirate",
     "description": "Half legend, half rum, all menace. Every kill goes in the ledger: +1 Attack per unit he fells. Send him to the depths to win.",
     "elements": [], "chess_pieces": [],
@@ -86,7 +86,7 @@
   {
     "id": "pirate_dreadbeard",
     "display_name": "Admiral Dreadbeard",
-    "cost": 0, "attack": 6, "health": 42, "speed": 3, "shield": 4,
+    "cost": 0, "attack": 2, "health": 42, "speed": 3, "shield": 4,
     "is_king": true, "enemy_only": true, "tribe": "pirate",
     "description": "His beard has its own bounty. Every strike keelhauls its victim: −1 Attack and −1 Speed. Sink him to win.",
     "elements": [], "chess_pieces": [],
@@ -98,7 +98,7 @@
   {
     "id": "pirate_kraken",
     "display_name": "The Kraken, Debt Collector",
-    "cost": 0, "attack": 6, "health": 58, "speed": 2, "shield": 5, "strikes": 3,
+    "cost": 0, "attack": 2, "health": 58, "speed": 2, "shield": 5, "strikes": 3,
     "is_king": true, "enemy_only": true, "tribe": "pirate",
     "description": "Every crew owes it something, and today it collects from YOU. Three tentacles, three strikes a round, each seizing a fresh victim. Destroy it to win.",
     "elements": [], "chess_pieces": [],
