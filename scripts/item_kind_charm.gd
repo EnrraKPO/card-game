@@ -20,7 +20,7 @@ func make_offer_ui(id: String) -> Control:
 	var c := CharmData.get_charm(id)
 	if c == null:
 		return Control.new()
-	return ItemKind.make_chip(c.letter, c.color, tooltip(id))
+	return ItemKind.make_chip(c.letter, c.color, tooltip(id), c.icon)
 
 
 func display_name(id: String) -> String:

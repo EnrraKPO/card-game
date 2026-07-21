@@ -44,7 +44,7 @@ const TYPES = {
   status:     { label: 'Status',          dataDir: 'data/statuses',   artDir: 'assets/ui/status', artSuffix: '_status', artW: 512, artH: 512, rembg: true },
   // ability art is formatted like card art (user directive): portrait canvas, no rembg
   ability:    { label: 'Ability',         dataDir: 'data/abilities',  artDir: 'assets/abilities', artW: 1024, artH: 1536, rembg: false },
-  charm:      { label: 'Charm',           dataDir: 'data/charms',     artDir: null,               artW: 512,  artH: 512,  rembg: true  },
+  charm:      { label: 'Charm',           dataDir: 'data/charms',     artDir: 'assets/charms',    artW: 512,  artH: 512,  rembg: true  },
   // upgrade trees carry an EMBLEM shown on the Upgrades screen's detail strip
   upgrade:    { label: 'Upgrade Tree',    dataDir: 'data/upgrades',   artDir: 'assets/ui/upgrades', artW: 512, artH: 512, rembg: true },
   encounter:  { label: 'Encounter',      dataDir: 'data/encounters', artDir: null,               artW: 1024, artH: 1024, rembg: false },

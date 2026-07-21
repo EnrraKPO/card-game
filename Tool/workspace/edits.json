@@ -4891,70 +4891,70 @@
     "original": null,
     "added": true,
     "at": "2026-07-13T19:52:06.316Z",
-    "fileHash": "061085c3bd0d47514778346453b28f30247b7d58"
+    "fileHash": "e7656e3daea58b199b81928b5eb798d3ab9d5a61"
   },
   "card/air_knight": {
     "file": "air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T19:52:06.324Z",
-    "fileHash": "061085c3bd0d47514778346453b28f30247b7d58"
+    "fileHash": "e7656e3daea58b199b81928b5eb798d3ab9d5a61"
   },
   "card/air_bishop": {
     "file": "air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T19:52:06.330Z",
-    "fileHash": "061085c3bd0d47514778346453b28f30247b7d58"
+    "fileHash": "e7656e3daea58b199b81928b5eb798d3ab9d5a61"
   },
   "card/air_rook": {
     "file": "air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T19:52:06.336Z",
-    "fileHash": "061085c3bd0d47514778346453b28f30247b7d58"
+    "fileHash": "e7656e3daea58b199b81928b5eb798d3ab9d5a61"
   },
   "card/air_queen": {
     "file": "air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T19:52:06.343Z",
-    "fileHash": "061085c3bd0d47514778346453b28f30247b7d58"
+    "fileHash": "e7656e3daea58b199b81928b5eb798d3ab9d5a61"
   },
   "card/earth_pawn": {
     "file": "earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T19:52:47.350Z",
-    "fileHash": "9ff938fc8f15e0d99d8bc37400ebbaebad7e246d"
+    "fileHash": "f15884621c26023628a13f3f6d67a50611f3109f"
   },
   "card/earth_knight": {
     "file": "earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T19:52:47.357Z",
-    "fileHash": "9ff938fc8f15e0d99d8bc37400ebbaebad7e246d"
+    "fileHash": "f15884621c26023628a13f3f6d67a50611f3109f"
   },
   "card/earth_bishop": {
     "file": "earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T19:52:47.363Z",
-    "fileHash": "9ff938fc8f15e0d99d8bc37400ebbaebad7e246d"
+    "fileHash": "f15884621c26023628a13f3f6d67a50611f3109f"
   },
   "card/earth_rook": {
     "file": "earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T19:52:47.369Z",
-    "fileHash": "9ff938fc8f15e0d99d8bc37400ebbaebad7e246d"
+    "fileHash": "f15884621c26023628a13f3f6d67a50611f3109f"
   },
   "card/earth_queen": {
     "file": "earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T19:52:47.375Z",
-    "fileHash": "9ff938fc8f15e0d99d8bc37400ebbaebad7e246d"
+    "fileHash": "f15884621c26023628a13f3f6d67a50611f3109f"
   },
   "status/empowered_barrier": {
     "file": "empowered_barrier.json",
@@ -6589,5 +6589,215 @@
     "added": true,
     "at": "2026-07-20T22:35:57.201Z",
     "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+  },
+  "card/air_pawn_pawn": {
+    "file": "air_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-21T04:39:38.499Z",
+    "fileHash": "e7656e3daea58b199b81928b5eb798d3ab9d5a61"
+  },
+  "card/air_knight_pawn": {
+    "file": "air_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-21T04:39:38.507Z",
+    "fileHash": "e7656e3daea58b199b81928b5eb798d3ab9d5a61"
+  },
+  "card/air_bishop_pawn": {
+    "file": "air_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-21T04:39:38.516Z",
+    "fileHash": "e7656e3daea58b199b81928b5eb798d3ab9d5a61"
+  },
+  "card/air_pawn_rook": {
+    "file": "air_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-21T04:39:38.522Z",
+    "fileHash": "e7656e3daea58b199b81928b5eb798d3ab9d5a61"
+  },
+  "card/air_pawn_queen": {
+    "file": "air_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-21T04:39:38.529Z",
+    "fileHash": "e7656e3daea58b199b81928b5eb798d3ab9d5a61"
+  },
+  "card/air_knight_knight": {
+    "file": "air_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-21T04:39:38.536Z",
+    "fileHash": "e7656e3daea58b199b81928b5eb798d3ab9d5a61"
+  },
+  "card/air_bishop_knight": {
+    "file": "air_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-21T04:39:38.542Z",
+    "fileHash": "e7656e3daea58b199b81928b5eb798d3ab9d5a61"
+  },
+  "card/air_knight_rook": {
+    "file": "air_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-21T04:39:38.548Z",
+    "fileHash": "e7656e3daea58b199b81928b5eb798d3ab9d5a61"
+  },
+  "card/air_knight_queen": {
+    "file": "air_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-21T04:39:38.554Z",
+    "fileHash": "e7656e3daea58b199b81928b5eb798d3ab9d5a61"
+  },
+  "card/air_bishop_bishop": {
+    "file": "air_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-21T04:39:38.560Z",
+    "fileHash": "e7656e3daea58b199b81928b5eb798d3ab9d5a61"
+  },
+  "card/air_bishop_rook": {
+    "file": "air_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-21T04:39:38.566Z",
+    "fileHash": "e7656e3daea58b199b81928b5eb798d3ab9d5a61"
+  },
+  "card/air_bishop_queen": {
+    "file": "air_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-21T04:39:38.573Z",
+    "fileHash": "e7656e3daea58b199b81928b5eb798d3ab9d5a61"
+  },
+  "card/air_rook_rook": {
+    "file": "air_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-21T04:39:38.579Z",
+    "fileHash": "e7656e3daea58b199b81928b5eb798d3ab9d5a61"
+  },
+  "card/air_queen_rook": {
+    "file": "air_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-21T04:39:38.585Z",
+    "fileHash": "e7656e3daea58b199b81928b5eb798d3ab9d5a61"
+  },
+  "card/air_queen_queen": {
+    "file": "air_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-21T04:39:38.591Z",
+    "fileHash": "e7656e3daea58b199b81928b5eb798d3ab9d5a61"
+  },
+  "card/earth_pawn_pawn": {
+    "file": "earth_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-21T04:39:49.757Z",
+    "fileHash": "f15884621c26023628a13f3f6d67a50611f3109f"
+  },
+  "card/earth_knight_pawn": {
+    "file": "earth_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-21T04:39:49.763Z",
+    "fileHash": "f15884621c26023628a13f3f6d67a50611f3109f"
+  },
+  "card/earth_bishop_pawn": {
+    "file": "earth_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-21T04:39:49.771Z",
+    "fileHash": "f15884621c26023628a13f3f6d67a50611f3109f"
+  },
+  "card/earth_pawn_rook": {
+    "file": "earth_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-21T04:39:49.778Z",
+    "fileHash": "f15884621c26023628a13f3f6d67a50611f3109f"
+  },
+  "card/earth_pawn_queen": {
+    "file": "earth_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-21T04:39:49.785Z",
+    "fileHash": "f15884621c26023628a13f3f6d67a50611f3109f"
+  },
+  "card/earth_knight_knight": {
+    "file": "earth_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-21T04:39:49.792Z",
+    "fileHash": "f15884621c26023628a13f3f6d67a50611f3109f"
+  },
+  "card/earth_bishop_knight": {
+    "file": "earth_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-21T04:39:49.799Z",
+    "fileHash": "f15884621c26023628a13f3f6d67a50611f3109f"
+  },
+  "card/earth_knight_rook": {
+    "file": "earth_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-21T04:39:49.805Z",
+    "fileHash": "f15884621c26023628a13f3f6d67a50611f3109f"
+  },
+  "card/earth_knight_queen": {
+    "file": "earth_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-21T04:39:49.812Z",
+    "fileHash": "f15884621c26023628a13f3f6d67a50611f3109f"
+  },
+  "card/earth_bishop_bishop": {
+    "file": "earth_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-21T04:39:49.818Z",
+    "fileHash": "f15884621c26023628a13f3f6d67a50611f3109f"
+  },
+  "card/earth_bishop_rook": {
+    "file": "earth_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-21T04:39:49.824Z",
+    "fileHash": "f15884621c26023628a13f3f6d67a50611f3109f"
+  },
+  "card/earth_bishop_queen": {
+    "file": "earth_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-21T04:39:49.831Z",
+    "fileHash": "f15884621c26023628a13f3f6d67a50611f3109f"
+  },
+  "card/earth_rook_rook": {
+    "file": "earth_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-21T04:39:49.837Z",
+    "fileHash": "f15884621c26023628a13f3f6d67a50611f3109f"
+  },
+  "card/earth_queen_rook": {
+    "file": "earth_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-21T04:39:49.843Z",
+    "fileHash": "f15884621c26023628a13f3f6d67a50611f3109f"
+  },
+  "card/earth_queen_queen": {
+    "file": "earth_units.json",
+    "original": null,
+    "added": true,
+    "at": "2026-07-21T04:39:49.849Z",
+    "fileHash": "f15884621c26023628a13f3f6d67a50611f3109f"
   }
 }

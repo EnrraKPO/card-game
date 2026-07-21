@@ -77,5 +77,222 @@
 		"attack": 5,
 		"health": 5,
 		"speed": 7
+	},
+	{
+		"id": "air_pawn_pawn",
+		"elements": [
+			"air"
+		],
+		"display_name": "Air Warrior",
+		"chess_pieces": [
+			"pawn",
+			"pawn"
+		]
+	},
+	{
+		"id": "air_knight_pawn",
+		"elements": [
+			"air"
+		],
+		"display_name": "Air Cavalry",
+		"chess_pieces": [
+			"knight",
+			"pawn"
+		]
+	},
+	{
+		"id": "air_bishop_pawn",
+		"elements": [
+			"air"
+		],
+		"display_name": "Air Paladin",
+		"chess_pieces": [
+			"bishop",
+			"pawn"
+		]
+	},
+	{
+		"id": "air_pawn_rook",
+		"elements": [
+			"air"
+		],
+		"display_name": "Air Barracks",
+		"chess_pieces": [
+			"pawn",
+			"rook"
+		],
+		"abilities": [
+			"pawn_material",
+			"air_pawn_training"
+		]
+	},
+	{
+		"id": "air_pawn_queen",
+		"elements": [
+			"air"
+		],
+		"display_name": "Air Commander",
+		"chess_pieces": [
+			"pawn",
+			"queen"
+		]
+	},
+	{
+		"id": "air_knight_knight",
+		"elements": [
+			"air"
+		],
+		"display_name": "Air Beast",
+		"chess_pieces": [
+			"knight",
+			"knight"
+		]
+	},
+	{
+		"id": "air_bishop_knight",
+		"elements": [
+			"air"
+		],
+		"display_name": "Air Cryptid",
+		"chess_pieces": [
+			"bishop",
+			"knight"
+		]
+	},
+	{
+		"id": "air_knight_rook",
+		"elements": [
+			"air"
+		],
+		"display_name": "Air Stable",
+		"chess_pieces": [
+			"knight",
+			"rook"
+		],
+		"abilities": [
+			"air_knight_training",
+			"knight_material"
+		]
+	},
+	{
+		"id": "air_knight_queen",
+		"elements": [
+			"air"
+		],
+		"display_name": "Air Monster",
+		"chess_pieces": [
+			"knight",
+			"queen"
+		]
+	},
+	{
+		"id": "air_bishop_bishop",
+		"elements": [
+			"air"
+		],
+		"display_name": "Air Hierophant",
+		"chess_pieces": [
+			"bishop",
+			"bishop"
+		]
+	},
+	{
+		"id": "air_bishop_rook",
+		"elements": [
+			"air"
+		],
+		"display_name": "Air Arcane Tower",
+		"chess_pieces": [
+			"bishop",
+			"rook"
+		],
+		"abilities": [
+			"air_bishop_training",
+			"bishop_material"
+		]
+	},
+	{
+		"id": "air_bishop_queen",
+		"display_name": "Air Deity",
+		"elements": [
+			"air"
+		],
+		"chess_pieces": [
+			"bishop",
+			"queen"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Four-armed towering divine figure with a tall radiant halo-disc behind her head, front-facing symmetrical pose, pale blue and white flowing robes trimmed with silver swirl embroidery, wind-swept sash ribbons streaming upward, one raised hand conjuring a spiraling cyclone of feathers and cloud wisps, other hand cradling a floating crystalline air-orb, holding a tall crystalline wind-spear wrapped in fluttering cloth, drifting feathers and soft gusts swirling around her, standing atop a cloud-wreathed stone platform under a bright open sky, flat cel-shaded cartoon style, bold black outlines, vibrant saturated colors, soft even lighting.",
+				"ref": {
+					"source": "upload",
+					"path": "snap_bishop_queen.png",
+					"name": "snap_bishop_queen.png",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
+	},
+	{
+		"id": "air_rook_rook",
+		"elements": [
+			"air"
+		],
+		"display_name": "Air Turret",
+		"chess_pieces": [
+			"rook",
+			"rook"
+		]
+	},
+	{
+		"id": "air_queen_rook",
+		"elements": [
+			"air"
+		],
+		"display_name": "Air Castle",
+		"chess_pieces": [
+			"queen",
+			"rook"
+		],
+		"tool": {
+			"art": {
+				"prompt": "Massive fortress with soaring twin turrets and a central keep built from pale windswept stone streaked with silvery-blue mineral veins, roofs of curved sky-blue crystal shingles trailing tattered cloth pennants that whip in gale winds, swirling cyclone currents and drifting feathers coiling around the spires, gates framed in wind-carved archways with a floating spiral-air emblem banner, guarded by two small chibi armored sentries with wind-spears, perched on a windswept grassy hill with streaming cloud wisps and distant misty peaks, bright blue sky, flat cel-shaded cartoon style, bold black outlines, vibrant saturated colors, soft even lighting.",
+				"ref": {
+					"source": "upload",
+					"path": "snap_rook_queen.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_rook_queen.png",
+					"theme": [
+						"air_pawn.png",
+						"air_queen.png",
+						"air_knight.png"
+					],
+					"mode": "concept"
+				}
+			}
+		},
+		"abilities": [
+			"air_queen_training",
+			"queen_material"
+		]
+	},
+	{
+		"id": "air_queen_queen",
+		"elements": [
+			"air"
+		],
+		"display_name": "Air Hero",
+		"chess_pieces": [
+			"queen",
+			"queen"
+		]
 	}
 ]

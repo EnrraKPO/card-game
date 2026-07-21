@@ -488,12 +488,13 @@ func _make_relic_offer(grant: Grant) -> Control:
 		"Inventory Full")
 
 
-# Charm offers are rendered like relics — a card-sized info panel, click to pick — but from
-# CharmData (glyph + colour, no icon art) and always pickable (charms have no capacity cap).
+# Charm offers are rendered like relics — a card-sized info panel, click to pick — from
+# CharmData (icon art when authored, glyph + colour otherwise) and always pickable (charms
+# have no capacity cap).
 func _make_charm_offer(grant: Grant) -> Control:
 	var charm := CharmData.get_charm(grant.id)
 	var accent := charm.color if charm != null else Color(0.72, 0.72, 0.80)
-	return _make_info_offer(grant, "CHARM", accent, null,
+	return _make_info_offer(grant, "CHARM", accent, charm.icon if charm != null else null,
 		charm.letter if charm != null else "✦",
 		charm.display_name if charm != null else grant.display_name(),
 		charm.description if charm != null else "",

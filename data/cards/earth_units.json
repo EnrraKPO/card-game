@@ -171,5 +171,186 @@
 		"health": 5,
 		"speed": 3,
 		"shield": 1
+	},
+	{
+		"id": "earth_pawn_pawn",
+		"elements": [
+			"earth"
+		],
+		"display_name": "Earth Warrior",
+		"chess_pieces": [
+			"pawn",
+			"pawn"
+		]
+	},
+	{
+		"id": "earth_knight_pawn",
+		"elements": [
+			"earth"
+		],
+		"display_name": "Earth Cavalry",
+		"chess_pieces": [
+			"knight",
+			"pawn"
+		]
+	},
+	{
+		"id": "earth_bishop_pawn",
+		"elements": [
+			"earth"
+		],
+		"display_name": "Earth Paladin",
+		"chess_pieces": [
+			"bishop",
+			"pawn"
+		]
+	},
+	{
+		"id": "earth_pawn_rook",
+		"elements": [
+			"earth"
+		],
+		"display_name": "Earth Barracks",
+		"chess_pieces": [
+			"pawn",
+			"rook"
+		],
+		"abilities": [
+			"pawn_material",
+			"earth_pawn_training"
+		]
+	},
+	{
+		"id": "earth_pawn_queen",
+		"elements": [
+			"earth"
+		],
+		"display_name": "Earth Commander",
+		"chess_pieces": [
+			"pawn",
+			"queen"
+		]
+	},
+	{
+		"id": "earth_knight_knight",
+		"elements": [
+			"earth"
+		],
+		"display_name": "Earth Beast",
+		"chess_pieces": [
+			"knight",
+			"knight"
+		]
+	},
+	{
+		"id": "earth_bishop_knight",
+		"elements": [
+			"earth"
+		],
+		"display_name": "Earth Cryptid",
+		"chess_pieces": [
+			"bishop",
+			"knight"
+		]
+	},
+	{
+		"id": "earth_knight_rook",
+		"elements": [
+			"earth"
+		],
+		"display_name": "Earth Stable",
+		"chess_pieces": [
+			"knight",
+			"rook"
+		],
+		"abilities": [
+			"earth_knight_training",
+			"knight_material"
+		]
+	},
+	{
+		"id": "earth_knight_queen",
+		"elements": [
+			"earth"
+		],
+		"display_name": "Earth Monster",
+		"chess_pieces": [
+			"knight",
+			"queen"
+		]
+	},
+	{
+		"id": "earth_bishop_bishop",
+		"elements": [
+			"earth"
+		],
+		"display_name": "Earth Hierophant",
+		"chess_pieces": [
+			"bishop",
+			"bishop"
+		]
+	},
+	{
+		"id": "earth_bishop_rook",
+		"elements": [
+			"earth"
+		],
+		"display_name": "Earth Arcane Tower",
+		"chess_pieces": [
+			"bishop",
+			"rook"
+		],
+		"abilities": [
+			"earth_bishop_training",
+			"bishop_material"
+		]
+	},
+	{
+		"id": "earth_bishop_queen",
+		"elements": [
+			"earth"
+		],
+		"display_name": "Earth Deity",
+		"chess_pieces": [
+			"bishop",
+			"queen"
+		]
+	},
+	{
+		"id": "earth_rook_rook",
+		"elements": [
+			"earth"
+		],
+		"display_name": "Earth Turret",
+		"chess_pieces": [
+			"rook",
+			"rook"
+		]
+	},
+	{
+		"id": "earth_queen_rook",
+		"elements": [
+			"earth"
+		],
+		"display_name": "Earth Castle",
+		"chess_pieces": [
+			"queen",
+			"rook"
+		],
+		"abilities": [
+			"earth_queen_training",
+			"queen_material"
+		]
+	},
+	{
+		"id": "earth_queen_queen",
+		"elements": [
+			"earth"
+		],
+		"display_name": "Earth Hero",
+		"chess_pieces": [
+			"queen",
+			"queen"
+		]
 	}
 ]

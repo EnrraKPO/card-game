@@ -13,6 +13,8 @@ var display_name: String
 var description: String
 var color: Color = Color(0.72, 0.72, 0.8)   # charm pip colour on the card
 var letter: String = "✦"                     # short glyph shown on the pip
+var icon: Texture2D = null                    # optional illustration; when present it replaces the
+											   # coloured letter chip everywhere the charm is shown
 var stats: Dictionary = {}    # attribute -> int delta (attack/health/speed/shield/cost)
 var effects: Array = []       # Array[Dictionary], the same effect schema cards use
 # Which cards this charm may attach to: "unit" (default — combat charms), "spell"
@@ -53,6 +55,11 @@ static func _load_json(path: String) -> void:
 		c.description  = d.get("description", "")
 		c.color        = Color.html(str(d.get("color", "b8b8c8")))
 		c.letter       = d.get("letter", "✦")
+		# Art is by-convention (assets/charms/<id>.png), same pattern relic_data uses for relic art —
+		# no path in the JSON. Absent art is fine: the letter+colour chip is the fallback everywhere.
+		var art_path := "res://assets/charms/%s.png" % c.id
+		if ResourceLoader.exists(art_path):
+			c.icon = load(art_path)
 		c.stats        = d.get("stats", {})
 		c.effects      = d.get("effects", [])
 		c.targets      = d.get("targets", "unit")

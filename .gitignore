@@ -39,6 +39,9 @@ tools/_icon_preview/
 *~
 .aider*
 
+# Python bytecode cache (tools/*.py)
+__pycache__/
+
 # Krita autosave / scratch files (keep real .kra sources if ever added)
 *-autosave.kra
 .~lock.*
