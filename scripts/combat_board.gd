@@ -37,6 +37,10 @@ func make_context(src: CardInstance) -> EffectContext:
 	var ctx := EffectContext.make(src, player_grid, enemy_grid)
 	ctx.player_side = player_side
 	ctx.enemy_side = enemy_side
+	# Board access rides every in-combat context (spawn payloads queue through it; CUSTOM
+	# hooks board-procedure through it). SpellCaster's own injection becomes redundant but
+	# harmless — this is the one context builder, so nothing in combat can miss it.
+	ctx.board_node = self
 	return ctx
 
 # Zone dressing: each half sits on its own faintly tinted field so "my side / their side" reads
