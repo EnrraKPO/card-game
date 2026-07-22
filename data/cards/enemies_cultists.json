@@ -10,7 +10,7 @@
     "id": "cult_offering",
     "display_name": "Willing Offering",
     "cost": 1, "attack": 0, "health": 1, "speed": 1,
-    "description": "It smiles as it steps forward. When it dies — and it WILL die — every cultist gains +1 Attack and +1 Health.",
+    "description": "It smiles as it steps forward. When it dies — and it WILL die — every cultist gains +1 <attack> and +1 <health>.",
     "enemy_only": true, "tribe": "cultist", "elements": [], "chess_pieces": [],
     "effects": [
       { "trigger": "on_death", "targeting_policy": "all_allies", "attribute": "attack", "amount": 1 },
@@ -22,7 +22,7 @@
     "id": "cult_zealot",
     "display_name": "Flagellant Zealot",
     "cost": 2, "attack": 3, "health": 2, "speed": 3,
-    "description": "Pain is proof of devotion: +1 Attack every time it takes a hit.",
+    "description": "Pain is proof of devotion: +1 <attack> every time it takes a hit.",
     "enemy_only": true, "tribe": "cultist", "elements": [], "chess_pieces": [],
     "effects": [
       { "trigger": "on_damage_taken", "targeting_policy": "self", "attribute": "attack", "amount": 1 }
@@ -32,7 +32,7 @@
     "id": "cult_bloodpriest",
     "display_name": "Blood Priest",
     "cost": 3, "attack": 2, "health": 4, "speed": 2,
-    "description": "Declares every death an offering: all cultists gain +1 Attack whenever an ally dies.",
+    "description": "Declares every death an offering: all cultists gain +1 <attack> whenever an ally dies.",
     "enemy_only": true, "tribe": "cultist", "elements": [], "chess_pieces": [],
     "effects": [
       { "trigger": { "kind": "event", "event": "death", "conditions": [ { "allegiance": "ally" } ] },
@@ -72,7 +72,7 @@
     "display_name": "High Priest Malachar",
     "cost": 0, "attack": 1, "health": 32, "speed": 3, "shield": 3,
     "is_king": true, "enemy_only": true, "tribe": "cultist",
-    "description": "Every fallen follower is a coin in his purse: +1 Attack and 2 healing per ally death. Strike him down to win.",
+    "description": "Every fallen follower is a coin in his purse: +1 <attack> and 2 healing per ally death. Strike him down to win.",
     "elements": [], "chess_pieces": [],
     "effects": [
       { "trigger": { "kind": "event", "event": "death", "conditions": [ { "allegiance": "ally" } ] },
@@ -99,7 +99,7 @@
     "display_name": "Hierophant Ozmun",
     "cost": 0, "attack": 2, "health": 42, "speed": 2, "shield": 4,
     "is_king": true, "enemy_only": true, "tribe": "cultist",
-    "description": "He has spent forty years digging for something under this map, growing +1 Attack per offered ally. Kill him and you'll meet it. Destroy WHAT COMES AFTER to win.",
+    "description": "He has spent forty years digging for something under this map, growing +1 <attack> per offered ally. Kill him and you'll meet it. Destroy WHAT COMES AFTER to win.",
     "elements": [], "chess_pieces": [],
     "effects": [
       { "trigger": { "kind": "event", "event": "death", "conditions": [ { "allegiance": "ally" } ] },

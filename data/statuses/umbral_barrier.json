@@ -2,7 +2,7 @@
 	{
 		"id": "umbral_barrier",
 		"display_name": "Umbral Barrier",
-		"description": "Blocks the next attack that would deal damage to this unit. While it holds, units striking the carrier lose 1 Attack. A blocked strike reads as a Miss; a harmless whiff doesn't spend the Barrier.",
+		"description": "Blocks the next attack that would deal damage to this unit. While it holds, units striking the carrier lose 1 <attack>. A blocked strike reads as a Miss; a harmless whiff doesn't spend the Barrier.",
 		"beneficial": true,
 		"color": "8fd0ff",
 		"glyph": "◈",

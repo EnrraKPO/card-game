@@ -106,7 +106,7 @@ func _build_buttons() -> Control:
 	# A single Continue when there's no call-to-action; otherwise the Lab jump is the primary
 	# action and "Not now" the dismiss.
 	if not _lab_cta:
-		var cont := ScreenUI.action_button("Continue", _close, Vector2(0, 84), 32,
+		var cont := ScreenUI.action_button(Loc.t("common.continue"), _close, Vector2(0, 84), 32,
 			ScreenUI.CHROME_CONFIRM)
 		cont.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		return cont
@@ -114,12 +114,12 @@ func _build_buttons() -> Control:
 	var rows := VBoxContainer.new()
 	rows.add_theme_constant_override("separation", 14)
 
-	var to_lab := ScreenUI.action_button("Forge a King in the Lab  →", _go_to_lab,
+	var to_lab := ScreenUI.action_button(Loc.t("milestone.forge_king"), _go_to_lab,
 		Vector2(0, 92), 32, ScreenUI.CHROME_CONFIRM)
 	to_lab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	rows.add_child(to_lab)
 
-	var later := ScreenUI.action_button("Not now", _close, Vector2(0, 72), 26,
+	var later := ScreenUI.action_button(Loc.t("milestone.not_now"), _close, Vector2(0, 72), 26,
 		ScreenUI.CHROME_NEUTRAL)
 	later.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	rows.add_child(later)

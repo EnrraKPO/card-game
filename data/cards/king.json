@@ -8,6 +8,6 @@
   "shield": 5,
   "is_king": true,
   "chess_pieces": ["king"],
-  "description": "Your ruler. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+  "description": "Your ruler. If the <king> falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 <shield>.",
   "effects": []
 }

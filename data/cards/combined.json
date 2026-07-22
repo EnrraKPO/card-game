@@ -28,7 +28,7 @@
 		"attack": 4,
 		"health": 6,
 		"speed": 2,
-		"description": "Scald a unit with a blinding cloud, dealing 2 damage and reducing its Speed by 2.",
+		"description": "Scald a unit with a blinding cloud, dealing 2 damage and reducing its <speed> by 2.",
 		"elements": [
 			"fire",
 			"water"
@@ -78,7 +78,7 @@
 		"attack": 4,
 		"health": 6,
 		"speed": 2,
-		"description": "Corrupt a unit with infernal power, reducing its Attack by 4.",
+		"description": "Corrupt a unit with infernal power, reducing its <attack> by 4.",
 		"elements": [
 			"fire",
 			"darkness"
@@ -100,7 +100,7 @@
 		"attack": 4,
 		"health": 6,
 		"speed": 2,
-		"description": "Ignite a unit's inner spirit, granting +4 Attack.",
+		"description": "Ignite a unit's inner spirit, granting +4 <attack>.",
 		"elements": [
 			"fire",
 			"light"
@@ -144,7 +144,7 @@
 		"attack": 4,
 		"health": 6,
 		"speed": 2,
-		"description": "A roaring gale. Grant a unit +4 Speed.",
+		"description": "A roaring gale. Grant a unit +4 <speed>.",
 		"elements": [
 			"air",
 			"air"
@@ -166,7 +166,7 @@
 		"attack": 4,
 		"health": 6,
 		"speed": 2,
-		"description": "A surging tide. Restore 8 HP to a unit.",
+		"description": "A surging tide. Restore 8 <hp> to a unit.",
 		"elements": [
 			"water",
 			"water"
@@ -188,7 +188,7 @@
 		"attack": 4,
 		"health": 6,
 		"speed": 2,
-		"description": "Unyielding bedrock. Fortify a unit with +6 Shield.",
+		"description": "Unyielding bedrock. Fortify a unit with +6 <shield>.",
 		"elements": [
 			"earth",
 			"earth"
@@ -257,7 +257,7 @@
 		"attack": 4,
 		"health": 6,
 		"speed": 2,
-		"description": "A radiant surge. Gain 2 mana.",
+		"description": "A radiant surge. Gain 2 <mana>.",
 		"elements": [
 			"light",
 			"light"
@@ -308,7 +308,7 @@
 		"attack": 4,
 		"health": 6,
 		"speed": 2,
-		"description": "Whip up a blinding sandstorm, reducing all enemies' Speed by 2.",
+		"description": "Whip up a blinding sandstorm, reducing all enemies' <speed> by 2.",
 		"elements": [
 			"air",
 			"earth"
@@ -330,7 +330,7 @@
 		"attack": 4,
 		"health": 6,
 		"speed": 2,
-		"description": "Spread a toxic gas cloud, weakening all enemies' Attack by 2.",
+		"description": "Spread a toxic gas cloud, weakening all enemies' <attack> by 2.",
 		"elements": [
 			"air",
 			"darkness"
@@ -352,7 +352,7 @@
 		"attack": 4,
 		"health": 6,
 		"speed": 2,
-		"description": "Bless a unit with heavenly grace, granting +2 Attack and +3 Speed.",
+		"description": "Bless a unit with heavenly grace, granting +2 <attack> and +3 <speed>.",
 		"elements": [
 			"air",
 			"light"
@@ -380,7 +380,7 @@
 		"attack": 4,
 		"health": 6,
 		"speed": 2,
-		"description": "Bog down a unit in thick mud, reducing its Speed by 3.",
+		"description": "Bog down a unit in thick mud, reducing its <speed> by 3.",
 		"elements": [
 			"water",
 			"earth"
@@ -402,7 +402,7 @@
 		"attack": 4,
 		"health": 6,
 		"speed": 2,
-		"description": "Poison a unit: deal 3 damage, reduce its Attack by 2, and apply Poison 1.",
+		"description": "Poison a unit: deal 3 damage, reduce its <attack> by 2, and apply Poison 1.",
 		"elements": [
 			"water",
 			"darkness"
@@ -438,7 +438,7 @@
 		"attack": 4,
 		"health": 6,
 		"speed": 2,
-		"description": "Restore a unit's vitality, healing 6 HP.",
+		"description": "Restore a unit's vitality, healing 6 <hp>.",
 		"elements": [
 			"water",
 			"light"
@@ -460,7 +460,7 @@
 		"attack": 4,
 		"health": 6,
 		"speed": 2,
-		"description": "Bolster a unit with natural vitality, granting +6 Max HP.",
+		"description": "Bolster a unit with natural vitality, granting +6 Max <hp>.",
 		"elements": [
 			"earth",
 			"light"
@@ -482,7 +482,7 @@
 		"attack": 4,
 		"health": 6,
 		"speed": 2,
-		"description": "Petrify a unit, granting +5 Max HP but reducing its Speed by 1.",
+		"description": "Petrify a unit, granting +5 Max <hp> but reducing its <speed> by 1.",
 		"elements": [
 			"earth",
 			"darkness"
@@ -510,7 +510,7 @@
 		"attack": 4,
 		"health": 6,
 		"speed": 2,
-		"description": "Curse a unit with undeath, dealing 3 damage and reducing its Max HP by 3.",
+		"description": "Curse a unit with undeath, dealing 3 damage and reducing its Max <hp> by 3.",
 		"elements": [
 			"light",
 			"darkness"

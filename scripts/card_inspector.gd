@@ -62,8 +62,8 @@ func _ready() -> void:
 	center.add_child(_col)
 
 	var hint := Label.new()
-	hint.text = "Tap anywhere to close" if DisplayServer.is_touchscreen_available() \
-			else "Click anywhere to close"
+	hint.text = Loc.t("common.tap_close") if DisplayServer.is_touchscreen_available() \
+			else Loc.t("common.click_close")
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.add_theme_font_size_override("font_size", 20)
 	hint.add_theme_color_override("font_color", Color(0.78, 0.78, 0.85))

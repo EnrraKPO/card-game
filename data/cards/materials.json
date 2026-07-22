@@ -27,7 +27,7 @@
 		"attack": 0,
 		"health": 4,
 		"speed": 1,
-		"description": "Restore 4 HP to a unit.",
+		"description": "Restore 4 <hp> to a unit.",
 		"elements": [
 			"water"
 		],
@@ -48,7 +48,7 @@
 		"attack": 1,
 		"health": 1,
 		"speed": 5,
-		"description": "Grant a unit +2 Speed.",
+		"description": "Grant a unit +2 <speed>.",
 		"elements": [
 			"air"
 		],
@@ -69,7 +69,7 @@
 		"attack": 1,
 		"health": 4,
 		"speed": 1,
-		"description": "Fortify a unit with +3 Shield.",
+		"description": "Fortify a unit with +3 <shield>.",
 		"elements": [
 			"earth"
 		],
@@ -136,7 +136,7 @@
 		"attack": 0,
 		"health": 3,
 		"speed": 2,
-		"description": "Channel radiant energy: gain 1 mana.",
+		"description": "Channel radiant energy: gain 1 <mana>.",
 		"elements": [
 			"light"
 		],
@@ -177,7 +177,7 @@
 		"health": 4,
 		"speed": 1,
 		"ranged": true,
-		"description": "A ranged attacker. Strikes the enemy with the lowest Health from afar.",
+		"description": "A ranged attacker. Strikes the enemy with the lowest <health> from afar.",
 		"elements": [],
 		"chess_pieces": [
 			"bishop"
@@ -209,7 +209,7 @@
 		"health": 7,
 		"speed": 1,
 		"shield": 2,
-		"description": "A stalwart fortress. Locks onto the enemy with the lowest Health from afar. Starts each round with 2 Shield.",
+		"description": "A stalwart fortress. Locks onto the enemy with the lowest <health> from afar. Starts each round with 2 <shield>.",
 		"elements": [],
 		"chess_pieces": [
 			"rook"

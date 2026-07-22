@@ -3,7 +3,7 @@
     "id": "kpop_fan",
     "display_name": "Devoted Fan",
     "cost": 1, "attack": 0, "health": 2, "speed": 2,
-    "description": "Armed with a lightstick and zero self-preservation. Their sacrifice fuels the show: all allies +1 Attack when they go down.",
+    "description": "Armed with a lightstick and zero self-preservation. Their sacrifice fuels the show: all allies +1 <attack> when they go down.",
     "enemy_only": true, "tribe": "idol", "elements": [], "chess_pieces": [],
     "effects": [
       { "trigger": "on_death", "targeting_policy": "all_allies", "attribute": "attack", "amount": 1 }
@@ -13,7 +13,7 @@
     "id": "kpop_hypeman",
     "display_name": "Hype Squad Captain",
     "cost": 2, "attack": 1, "health": 3, "speed": 4,
-    "description": "ARE YOU READY?! Hands the whole group Tailwind (+2 Speed) the moment the lights hit.",
+    "description": "ARE YOU READY?! Hands the whole group Tailwind (+2 <speed>) the moment the lights hit.",
     "enemy_only": true, "tribe": "idol", "elements": [], "chess_pieces": [],
     "effects": [
       { "trigger": "on_play", "targeting_policy": "all_allies", "status": { "id": "tailwind", "stacks": 1 } }
@@ -43,7 +43,7 @@
     "id": "kpop_rapper",
     "display_name": "Rap Line",
     "cost": 3, "attack": 3, "health": 4, "speed": 3,
-    "description": "Every bar lands somewhere it hurts: strikes carry a diss track (−1 Attack to the target).",
+    "description": "Every bar lands somewhere it hurts: strikes carry a diss track (−1 <attack> to the target).",
     "enemy_only": true, "tribe": "idol", "elements": [], "chess_pieces": [],
     "effects": [
       { "trigger": "on_attack", "targeting_policy": "attack_target", "attribute": "attack", "amount": -1 }

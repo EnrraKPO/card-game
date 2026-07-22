@@ -1,7 +1,7 @@
 {
 	"id": "empowered",
 	"display_name": "Empowered",
-	"description": "Gains +2 Attack while active.",
+	"description": "Gains +2 <attack> while active.",
 	"beneficial": true,
 	"color": "e0a93b",
 	"glyph": "↑",

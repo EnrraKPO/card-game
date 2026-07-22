@@ -1,9 +1,15 @@
 class_name TextIcons
 extends RefCounted
 
-# Inline keyword icons for rules text: element and piece words are REPLACED by their icon
-# wherever rules text renders through a RichTextLabel (see rich_label). Whole words only,
-# case-insensitive, never applied to titles/names — callers opt in per text surface.
+# Inline keyword icons for rules text. Game terms are authored as EXPLICIT `<id>` markup
+# (e.g. "<pawn>", "<attack>") — never bare words — so incidental prose ("a holy knight",
+# "Fire the coach") is left untouched and, crucially, a translated string can't collide with
+# the icon pass. Each marked term resolves to EITHER its chip [img] icon (when the surface
+# shows icons AND the term has one, i.e. the 6 elements + 6 pieces) OR its appointed word for
+# the active language (Loc "term.<id>", covering the icon-less stat terms and every non-icon
+# surface). The icon pass matches the stable id, so it is language-independent; localization
+# is just the Loc lookup for the leftovers. Rules text renders through rich_label; callers opt
+# in per text surface.
 
 # Bakes of the ACTUAL card composition chips (tinted container + icon), rendered by
 # _chip_bake.tscn — rerun that scene whenever the chip style changes. Keyword icons in text
@@ -48,23 +54,51 @@ class TipPanel extends Panel:
 		return TextIcons.tooltip_body(for_text)
 
 
-# Plain rules text -> BBCode with keywords swapped for [img] chip icons sized to the given
-# font size (proportional: a touch over the font size so the chip reads at line height —
-# its rim eats a few px). The input is treated as PLAIN text: literal '[' is escaped so
-# authored brackets can't inject BBCode.
-static func enrich(text: String, font_size: int) -> String:
+# Rules text -> BBCode. Every `<id>` term markup is replaced by its chip [img] icon (when
+# `icons` and the term HAS an icon, sized proportionally to the font — a touch over it so the
+# chip reads at line height, its rim eating a few px) or else by the appointed word for the
+# active language (Loc "term.<id>"). Bare words are NEVER matched — only explicit markup. The
+# surrounding prose is treated as PLAIN text: literal '[' is escaped so authored brackets
+# (and the resolved words) can't inject BBCode. Pass icons=false for plain-text surfaces.
+static func enrich(text: String, font_size: int, icons := true) -> String:
 	if _regex == null:
 		_regex = RegEx.new()
-		_regex.compile("(?i)\\b(" + "|".join(PackedStringArray(ICONS.keys())) + ")\\b")
-	var src := text.replace("[", "[lb]")
+		_regex.compile("<([a-z0-9_]+)>")
 	var icon_px := int(font_size * 1.3)
 	var out := ""
 	var last := 0
-	for m: RegExMatch in _regex.search_all(src):
-		out += src.substr(last, m.get_start() - last)
-		out += "[img=%dx%d]%s[/img]" % [icon_px, icon_px, ICONS[m.get_string(1).to_lower()]]
+	for m: RegExMatch in _regex.search_all(text):
+		out += _escape(text.substr(last, m.get_start() - last))
+		var id := m.get_string(1)
+		if icons and ICONS.has(id):
+			out += "[img=%dx%d]%s[/img]" % [icon_px, icon_px, ICONS[id]]
+		else:
+			out += _escape(Loc.t("term." + id))
 		last = m.get_end()
-	out += src.substr(last)
+	out += _escape(text.substr(last))
+	return out
+
+
+static func _escape(s: String) -> String:
+	return s.replace("[", "[lb]")
+
+
+# Markup resolved to PLAIN words, for surfaces without a RichTextLabel — native tooltips and
+# plain Labels, which can render neither an [img] icon nor BBCode. Each <id> becomes its
+# appointed word for the active language (these surfaces showed the bare English word before
+# markup, so this preserves them while making them translatable). No '[' escaping: the output
+# is literal text, not BBCode.
+static func plain(text: String) -> String:
+	if _regex == null:
+		_regex = RegEx.new()
+		_regex.compile("<([a-z0-9_]+)>")
+	var out := ""
+	var last := 0
+	for m: RegExMatch in _regex.search_all(text):
+		out += text.substr(last, m.get_start() - last)
+		out += Loc.t("term." + m.get_string(1))
+		last = m.get_end()
+	out += text.substr(last)
 	return out
 
 

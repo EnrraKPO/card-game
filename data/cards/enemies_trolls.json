@@ -30,7 +30,7 @@
     "id": "troll_berserker",
     "display_name": "Troll Berserker",
     "cost": 5, "attack": 4, "health": 8, "speed": 2,
-    "description": "The wounds close as fast as you make them — heals 2 each round and hits harder (+1 Attack) every time you try.",
+    "description": "The wounds close as fast as you make them — heals 2 each round and hits harder (+1 <attack>) every time you try.",
     "enemy_only": true, "tribe": "troll", "elements": [], "chess_pieces": [],
     "effects": [
       { "trigger": "on_turn_end", "targeting_policy": "self", "attribute": "health", "amount": 2 },
@@ -63,7 +63,7 @@
     "display_name": "Old Gorge, the Unkillable",
     "cost": 0, "attack": 2, "health": 46, "speed": 1, "shield": 5,
     "is_king": true, "enemy_only": true, "tribe": "troll",
-    "description": "A landslide that got up. Heals 4 at every round's end and grows +1 Attack per wound taken. Outpace the healing to win.",
+    "description": "A landslide that got up. Heals 4 at every round's end and grows +1 <attack> per wound taken. Outpace the healing to win.",
     "elements": [], "chess_pieces": [],
     "effects": [
       { "trigger": "on_turn_end", "targeting_policy": "self", "attribute": "health", "amount": 4 },

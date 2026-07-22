@@ -1,7 +1,7 @@
 {
 	"id": "withered",
 	"display_name": "Withered",
-	"description": "Loses 1 Health at the end of each turn. Stacks.",
+	"description": "Loses 1 <health> at the end of each turn. Stacks.",
 	"beneficial": false,
 	"color": "7a9b58",
 	"glyph": "☠",

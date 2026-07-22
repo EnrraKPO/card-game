@@ -30,7 +30,7 @@
     "id": "slime_sticky",
     "display_name": "Sticky Slime",
     "cost": 2, "attack": 1, "health": 4, "speed": 2,
-    "description": "Leaves clinging goo on whatever it slaps: its target is Slimed (−1 Speed).",
+    "description": "Leaves clinging goo on whatever it slaps: its target is Slimed (−1 <speed>).",
     "enemy_only": true, "tribe": "slime", "elements": [], "chess_pieces": [],
     "effects": [
       { "trigger": "on_attack", "targeting_policy": "attack_target", "status": { "id": "slimed", "stacks": 1 } }
@@ -60,7 +60,7 @@
     "id": "slime_gluttonous",
     "display_name": "Gluttonous Slime",
     "cost": 4, "attack": 2, "health": 5, "speed": 1,
-    "description": "Slurps up every fallen ally: +1 Attack and +1 Health whenever one dies.",
+    "description": "Slurps up every fallen ally: +1 <attack> and +1 <health> whenever one dies.",
     "enemy_only": true, "tribe": "slime", "elements": [], "chess_pieces": [],
     "effects": [
       { "trigger": { "kind": "event", "event": "death", "conditions": [ { "allegiance": "ally" } ] },
@@ -96,7 +96,7 @@
     "display_name": "The Royal Gel",
     "cost": 0, "attack": 1, "health": 34, "speed": 2, "shield": 2,
     "is_king": true, "enemy_only": true, "tribe": "slime",
-    "description": "Sovereign of the ooze, wearing a crown it digested along with its previous owner. Grows crueler (+1 Attack) each time a subject pops. Cut it down to win.",
+    "description": "Sovereign of the ooze, wearing a crown it digested along with its previous owner. Grows crueler (+1 <attack>) each time a subject pops. Cut it down to win.",
     "elements": [], "chess_pieces": [],
     "effects": [
       { "trigger": { "kind": "event", "event": "death", "conditions": [ { "allegiance": "ally" } ] },
@@ -108,7 +108,7 @@
     "display_name": "The Amalgam",
     "cost": 0, "attack": 2, "health": 40, "speed": 1, "shield": 4,
     "is_king": true, "enemy_only": true, "tribe": "slime",
-    "description": "Every slime that ever died in this bog is still in there, somewhere. Absorbs each fallen ally for +1 Attack and +2 Health. Destroy it to win.",
+    "description": "Every slime that ever died in this bog is still in there, somewhere. Absorbs each fallen ally for +1 <attack> and +2 <health>. Destroy it to win.",
     "elements": [], "chess_pieces": [],
     "effects": [
       { "trigger": { "kind": "event", "event": "death", "conditions": [ { "allegiance": "ally" } ] },

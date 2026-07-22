@@ -12,7 +12,7 @@ const MODULE_PAD := 20.0
 
 
 func get_chrome() -> Dictionary:
-	return {"title": "Reward", "exit": _skip, "show_footer": true}
+	return {"title": Loc.t("reward.title"), "exit": _skip, "show_footer": true}
 
 
 func _ready() -> void:
@@ -62,9 +62,9 @@ func _ready() -> void:
 
 	var title := Label.new()
 	if standalone:
-		title.text = GameData.pending_reward_title if not GameData.pending_reward_title.is_empty() else "Choose a Reward"
+		title.text = GameData.pending_reward_title if not GameData.pending_reward_title.is_empty() else Loc.t("reward.choose_default")
 	else:
-		title.text = "Victory!  Choose a Reward"
+		title.text = Loc.t("reward.victory")
 	title.add_theme_font_size_override("font_size", 40 if compact else 32)
 	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	header_row.add_child(title)
@@ -87,17 +87,17 @@ func _ready() -> void:
 		# Authored roll + tool-driven per-type default — the same totals apply_encounter_rewards
 		# banked at combat end, so the pills always match what the run actually received.
 		var gold_gained: int = GameData.reward_gold(GameData.current_encounter)
-		summary_strip.add_child(_reward_stat("Gold", "+%d" % gold_gained, Color("9c7a10"), compact))
+		summary_strip.add_child(_reward_stat(Loc.t("screen_ui.gold"), "+%d" % gold_gained, Color("9c7a10"), compact))
 
 		var mineral_gained: int = GameData.reward_mineral(GameData.current_encounter)
 		if mineral_gained > 0:
-			summary_strip.add_child(_reward_stat("Magic Mineral", "+%d" % mineral_gained,
+			summary_strip.add_child(_reward_stat(Loc.t("reward.stat_mineral"), "+%d" % mineral_gained,
 					Materials.color(Materials.MAGIC_MINERAL), compact))
 
 		# Experience was banked at combat end (GameData.apply_encounter_rewards) — show it for feedback.
 		var exp_gained: int = GameData.current_encounter.exp_reward
 		if exp_gained > 0:
-			summary_strip.add_child(_reward_stat("Exp", "+%d" % exp_gained, Color("1f5c8a"), compact))
+			summary_strip.add_child(_reward_stat(Loc.t("reward.stat_exp"), "+%d" % exp_gained, Color("1f5c8a"), compact))
 
 		# Crafting resources earned this fight (already banked). Each elemental essence reward also
 		# grants the matching element CARD to the deck — collected here and shown as actual cards below
@@ -115,7 +115,7 @@ func _ready() -> void:
 	# so it's centered over the reward grid's own column, not the full screen width — it was
 	# visually off-center whenever the bonus-card side column was present.
 	var choose_lbl := Label.new()
-	choose_lbl.text = "Pick one:"
+	choose_lbl.text = Loc.t("reward.pick_one")
 	choose_lbl.add_theme_font_size_override("font_size", 40 if compact else 30)
 	choose_lbl.add_theme_color_override("font_color", Color("5a4a38"))
 	choose_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -229,7 +229,7 @@ func _ready() -> void:
 		offer_controls.append(_make_offer(grant, compact))
 	reward_grid.set_cards(offer_controls)
 
-	var skip_btn := ScreenUI.action_button("Skip Reward", _skip,
+	var skip_btn := ScreenUI.action_button(Loc.t("reward.skip"), _skip,
 		Vector2(440, 140) if compact else Vector2(380, 120), 40 if compact else 30,
 		ScreenUI.CHROME_NEUTRAL)
 	skip_btn.size_flags_horizontal = SIZE_SHRINK_CENTER
@@ -332,7 +332,7 @@ func _build_element_offers(content_row: HBoxContainer, ids: Array[String], compa
 	side_panel.add_child(side_col)
 
 	var recv_lbl := Label.new()
-	recv_lbl.text = "Bonus card:"
+	recv_lbl.text = Loc.t("reward.bonus_card")
 	recv_lbl.add_theme_font_size_override("font_size", 36 if compact else 26)
 	recv_lbl.add_theme_color_override("font_color", Color("5a4a38"))
 	recv_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -384,7 +384,7 @@ func _build_element_offers(content_row: HBoxContainer, ids: Array[String], compa
 		slot.add_child(ui)
 
 		var desc_lbl := Label.new()
-		desc_lbl.text = data.description
+		desc_lbl.text = TextIcons.plain(data.description)
 		desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		desc_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		desc_lbl.add_theme_font_size_override("font_size", desc_font)
@@ -396,11 +396,11 @@ func _build_element_offers(content_row: HBoxContainer, ids: Array[String], compa
 
 		var toggle := CheckButton.new()
 		toggle.button_pressed = true   # Accept by default
-		toggle.text = "Accept"
+		toggle.text = Loc.t("reward.accept")
 		toggle.add_theme_font_size_override("font_size", 30 if compact else 22)
 		toggle.custom_minimum_size = Vector2(card_w, toggle_h)
 		toggle.toggled.connect(func(on: bool) -> void:
-			toggle.text = "Accept" if on else "Reject"
+			toggle.text = Loc.t("reward.accept") if on else Loc.t("reward.reject")
 			ui.modulate = Color(1, 1, 1, 1) if on else Color(1, 1, 1, 0.35)
 		)
 		slot.add_child(toggle)
@@ -479,13 +479,13 @@ func _make_card_offer(grant: Grant) -> Control:
 func _make_relic_offer(grant: Grant) -> Control:
 	var relic := RelicData.get_relic(grant.id)
 	var accent := relic.color if relic != null else Color(0.80, 0.74, 0.45)
-	return _make_info_offer(grant, "RELIC", accent,
+	return _make_info_offer(grant, Loc.t("reward.tag_relic"), accent,
 		relic.icon if relic != null else null,
 		relic.letter if relic != null else "✦",
 		grant.display_name(),
 		relic.description if relic != null else "",
 		grant.can_apply(),
-		"Inventory Full")
+		Loc.t("reward.inventory_full"))
 
 
 # Charm offers are rendered like relics — a card-sized info panel, click to pick — from
@@ -494,7 +494,7 @@ func _make_relic_offer(grant: Grant) -> Control:
 func _make_charm_offer(grant: Grant) -> Control:
 	var charm := CharmData.get_charm(grant.id)
 	var accent := charm.color if charm != null else Color(0.72, 0.72, 0.80)
-	return _make_info_offer(grant, "CHARM", accent, charm.icon if charm != null else null,
+	return _make_info_offer(grant, Loc.t("reward.tag_charm"), accent, charm.icon if charm != null else null,
 		charm.letter if charm != null else "✦",
 		charm.display_name if charm != null else grant.display_name(),
 		charm.description if charm != null else "",

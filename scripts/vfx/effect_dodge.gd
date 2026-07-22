@@ -21,7 +21,7 @@ func play() -> void:
 	# flares with the same pop + brightness the relic chips use when they fire.
 	if card.has_method("flash_stat_proc"):
 		card.flash_stat_proc("speed")
-	_float_label("Dodge!", DODGE_COLOR, "")
+	_float_label(Loc.t("combat.dodge_label"), DODGE_COLOR, "")
 	queue_free()
 
 

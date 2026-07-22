@@ -11,7 +11,7 @@ var _rested: bool = false
 
 
 func get_chrome() -> Dictionary:
-	return {"title": "Rest Site", "exit": _on_continue, "show_footer": true}
+	return {"title": Loc.t("rest.title"), "exit": _on_continue, "show_footer": true}
 
 
 func _ready() -> void:
@@ -23,7 +23,7 @@ func _ready() -> void:
 	add_child(vbox)
 
 	var subtitle := Label.new()
-	subtitle.text = "Your King recovers %d%% of maximum health." % int(HEAL_PERCENT * 100)
+	subtitle.text = Loc.t("rest.subtitle", {"pct": int(HEAL_PERCENT * 100)})
 	subtitle.add_theme_font_size_override("font_size", 30)
 	subtitle.add_theme_color_override("font_color", Color("5a4a38"))
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -48,15 +48,15 @@ func _refresh() -> void:
 		_hp_label.text = ""
 		_rest_btn.disabled = true
 		return
-	_hp_label.text = "HP  %d / %d" % [run.king_health(), run.king_max_health()]
+	_hp_label.text = Loc.t("rest.hp", {"cur": run.king_health(), "max": run.king_max_health()})
 	var full: bool = run.king_damage <= 0
 	_rest_btn.disabled = full or _rested
 	if _rested:
-		_rest_btn.text = "Rested"
+		_rest_btn.text = Loc.t("rest.rested")
 	elif full:
-		_rest_btn.text = "Already at full health"
+		_rest_btn.text = Loc.t("rest.full")
 	else:
-		_rest_btn.text = "Rest  (+%d HP)" % _heal_amount(run)
+		_rest_btn.text = Loc.t("rest.rest_btn", {"n": _heal_amount(run)})
 
 
 func _heal_amount(run: RunData) -> int:

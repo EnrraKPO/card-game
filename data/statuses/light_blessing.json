@@ -2,7 +2,7 @@
 	{
 		"id": "light_blessing",
 		"display_name": "Light Blessing",
-		"description": "For 2 turns: +1 Speed, and this unit is treated as a light unit and heals 1 Health at the start of each round.",
+		"description": "For 2 turns: +1 <speed>, and this unit is treated as a <light> unit and heals 1 <health> at the start of each round.",
 		"beneficial": true,
 		"color": "fff3b0",
 		"glyph": "◆",

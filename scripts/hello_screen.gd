@@ -16,17 +16,17 @@ func _ready() -> void:
 	center.add_child(vbox)
 
 	var hello_label := Label.new()
-	hello_label.text = "Hello %s!" % GameData.username
+	hello_label.text = Loc.t("hello.greeting", {"name": GameData.username})
 	hello_label.add_theme_font_size_override("font_size", 72 if compact else 80)
 	hello_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(hello_label)
 
-	var play_btn := ScreenUI.action_button("Play", _on_play_pressed,
+	var play_btn := ScreenUI.action_button(Loc.t("common.play"), _on_play_pressed,
 		Vector2(560, 140) if compact else Vector2(440, 112), 44 if compact else 36,
 		ScreenUI.CHROME_CONFIRM)
 	vbox.add_child(play_btn)
 
-	var reset_btn := ScreenUI.action_button("Reset profile", _on_reset_pressed, Vector2.ZERO,
+	var reset_btn := ScreenUI.action_button(Loc.t("common.reset_profile"), _on_reset_pressed, Vector2.ZERO,
 		24 if compact else 18, ScreenUI.CHROME_DANGER)
 	reset_btn.anchor_left = 1.0
 	reset_btn.anchor_top = 1.0
@@ -42,8 +42,8 @@ func _ready() -> void:
 	add_child(reset_btn)
 
 	confirm_dialog = ConfirmationDialog.new()
-	confirm_dialog.title = "Reset profile"
-	confirm_dialog.dialog_text = "This will erase your name and all save slots. Are you sure?"
+	confirm_dialog.title = Loc.t("common.reset_profile")
+	confirm_dialog.dialog_text = Loc.t("hello.reset_confirm")
 	confirm_dialog.confirmed.connect(_on_reset_confirmed)
 	ScreenUI.wire_modal_cues(confirm_dialog)
 	add_child(confirm_dialog)

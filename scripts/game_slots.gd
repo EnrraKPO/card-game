@@ -14,7 +14,7 @@ func get_chrome() -> Dictionary:
 	# true still gets it the standard Shell-built footer + inset margin, just with a
 	# "Reset profile" action instead of the usual Back (there's nowhere to go back to here).
 	return {"show_header": false, "show_footer": true, "footer_actions": [
-		{"label": "Reset profile", "action": func(): _confirm_reset.popup_centered(),
+		{"label": Loc.t("common.reset_profile"), "action": func(): _confirm_reset.popup_centered(),
 			"align": "right"},
 	]}
 
@@ -25,14 +25,14 @@ func _ready() -> void:
 	UIScale.layout_changed.connect(func(): get_tree().reload_current_scene(), CONNECT_ONE_SHOT)
 
 	_confirm_delete = ConfirmationDialog.new()
-	_confirm_delete.title = "Delete save"
+	_confirm_delete.title = Loc.t("game_slots.delete_title")
 	_confirm_delete.confirmed.connect(_on_delete_confirmed)
 	ScreenUI.wire_modal_cues(_confirm_delete)
 	add_child(_confirm_delete)
 
 	_confirm_reset = ConfirmationDialog.new()
-	_confirm_reset.title = "Reset profile"
-	_confirm_reset.dialog_text = "This erases your name and all saves. Are you sure?"
+	_confirm_reset.title = Loc.t("common.reset_profile")
+	_confirm_reset.dialog_text = Loc.t("game_slots.reset_confirm")
 	_confirm_reset.confirmed.connect(_on_reset_confirmed)
 	ScreenUI.wire_modal_cues(_confirm_reset)
 	add_child(_confirm_reset)
@@ -45,7 +45,7 @@ func _ready() -> void:
 	add_child(vbox)
 
 	var title := Label.new()
-	title.text = "Select Save"
+	title.text = Loc.t("game_slots.title")
 	title.add_theme_font_size_override("font_size", 64)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(title)
@@ -66,7 +66,7 @@ func _ready() -> void:
 		slot_btn.size_flags_vertical = SIZE_EXPAND_FILL
 		row.add_child(slot_btn)
 
-		var del_btn := ScreenUI.action_button("Delete", func(): _on_delete_pressed(idx),
+		var del_btn := ScreenUI.action_button(Loc.t("common.delete"), func(): _on_delete_pressed(idx),
 			Vector2(240, 0), 28, ScreenUI.CHROME_DANGER)
 		del_btn.size_flags_vertical = SIZE_EXPAND_FILL
 		del_btn.disabled = not started
@@ -76,12 +76,13 @@ func _ready() -> void:
 
 func _slot_label(slot: int, started: bool) -> String:
 	if not started:
-		return "Slot %d  —  New Game" % (slot + 1)
+		return Loc.t("game_slots.slot_new", {"n": slot + 1})
 	var profile := GameData.peek_profile(slot)
 	var king := CardData.get_card(profile.get_selected_king())
 	var king_name: String = king.display_name if king != null else profile.get_selected_king()
-	var run_state := "Run in progress" if GameData.slot_has_run(slot) else "No active run"
-	return "Slot %d  —  %s · %s" % [slot + 1, king_name, run_state]
+	var run_state := Loc.t("game_slots.run_in_progress") if GameData.slot_has_run(slot) \
+		else Loc.t("game_slots.no_active_run")
+	return Loc.t("game_slots.slot_active", {"n": slot + 1, "king": king_name, "state": run_state})
 
 
 func _on_slot_selected(slot: int) -> void:
@@ -91,7 +92,7 @@ func _on_slot_selected(slot: int) -> void:
 
 func _on_delete_pressed(slot: int) -> void:
 	_pending_delete_slot = slot
-	_confirm_delete.dialog_text = "Delete Slot %d? This erases its progress and cannot be undone." % (slot + 1)
+	_confirm_delete.dialog_text = Loc.t("game_slots.delete_confirm", {"n": slot + 1})
 	_confirm_delete.popup_centered()
 
 

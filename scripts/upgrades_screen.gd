@@ -36,7 +36,7 @@ func _ready() -> void:
 
 	var trees := UpgradeTree.all()
 	if trees.is_empty():
-		_detail_title.text = "No upgrades authored yet"
+		_detail_title.text = Loc.t("upgrades.none")
 		TextIcons.set_text(_detail_body, "Add skill trees in data/upgrades/*.json and they'll appear here.")
 		return
 	for tree: UpgradeTree in trees:
@@ -45,7 +45,7 @@ func _ready() -> void:
 
 
 func get_chrome() -> Dictionary:
-	return {"title": "Upgrades", "exit": func(): Nav.goto("res://scenes/game_world.tscn"),
+	return {"title": Loc.t("upgrades.title"), "exit": func(): Nav.goto("res://scenes/game_world.tscn"),
 		"show_footer": true}
 
 
@@ -162,7 +162,7 @@ func _select_tree(tree_id: String) -> void:
 
 func _on_node_selected(node: UpgradeNode) -> void:
 	_selected_node = node
-	_detail_title.text = "%s   ·   Cost %d" % [node.display_name, node.cost]
+	_detail_title.text = Loc.t("upgrades.detail_title", {"name": node.display_name, "n": node.cost})
 	TextIcons.set_text(_detail_body, node.description)
 	_refresh_buy_btn()
 
@@ -175,16 +175,16 @@ func _refresh_buy_btn() -> void:
 	var profile := GameData.current_profile
 	_buy_btn.visible = true
 	if profile.owns_upgrade(_selected_node.id):
-		_buy_btn.text = "Owned"
+		_buy_btn.text = Loc.t("upgrades.owned")
 		_buy_btn.disabled = true
 	elif not profile.upgrade_unlocked(_selected_node):
-		_buy_btn.text = "Locked"
+		_buy_btn.text = Loc.t("upgrades.locked")
 		_buy_btn.disabled = true
 	elif profile.upgrade_points < _selected_node.cost:
-		_buy_btn.text = "Need %d points" % _selected_node.cost
+		_buy_btn.text = Loc.t("upgrades.need_points", {"n": _selected_node.cost})
 		_buy_btn.disabled = true
 	else:
-		_buy_btn.text = "Purchase  (%d)" % _selected_node.cost
+		_buy_btn.text = Loc.t("upgrades.purchase", {"n": _selected_node.cost})
 		_buy_btn.disabled = false
 
 

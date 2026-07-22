@@ -18,19 +18,19 @@ func _ready() -> void:
 	center.add_child(vbox)
 
 	var title := Label.new()
-	title.text = "Run Over"
+	title.text = Loc.t("run_over.title")
 	title.add_theme_font_size_override("font_size", 56)
 	title.add_theme_color_override("font_color", Color("8a2020"))
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(title)
 
 	var subtitle := Label.new()
-	subtitle.text = "Your King has fallen. The run ends here."
+	subtitle.text = Loc.t("run_over.subtitle")
 	subtitle.add_theme_font_size_override("font_size", 30 if compact else 26)
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(subtitle)
 
-	var continue_btn := ScreenUI.action_button("Return to your realm", _on_continue,
+	var continue_btn := ScreenUI.action_button(Loc.t("common.return_realm"), _on_continue,
 		Vector2(380, 96) if compact else Vector2(360, 78), 32 if compact else 26,
 		ScreenUI.CHROME_NEUTRAL)
 	continue_btn.size_flags_horizontal = SIZE_SHRINK_CENTER

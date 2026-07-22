@@ -21,7 +21,7 @@ func _ready() -> void:
 	center.add_child(vbox)
 
 	var title := Label.new()
-	title.text = "Stage %d Cleared!" % GameData.current_run.act
+	title.text = Loc.t("stage_cleared.title", {"n": GameData.current_run.act})
 	title.add_theme_font_size_override("font_size", 52 if compact else 40)
 	title.add_theme_color_override("font_color", Color("1f7a35"))
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -33,12 +33,12 @@ func _ready() -> void:
 		Vfx.play("map_stage_clear_burst", title)).call_deferred()
 
 	var subtitle := Label.new()
-	subtitle.text = "A charm awaits — press onward to choose your reward."
+	subtitle.text = Loc.t("stage_cleared.subtitle")
 	subtitle.add_theme_font_size_override("font_size", 30 if compact else 26)
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(subtitle)
 
-	var onward := ScreenUI.action_button("Onward  →", _advance,
+	var onward := ScreenUI.action_button(Loc.t("stage_cleared.onward"), _advance,
 		Vector2(280, 88) if compact else Vector2(240, 76), 32 if compact else 26,
 		ScreenUI.CHROME_CONFIRM)
 	onward.size_flags_horizontal = SIZE_SHRINK_CENTER
@@ -60,6 +60,6 @@ func _advance() -> void:
 		return
 
 	GameData.pending_reward_offers = offers
-	GameData.pending_reward_title = "Stage Cleared — Choose a Charm"
+	GameData.pending_reward_title = Loc.t("stage_cleared.reward_title")
 	GameData.pending_reward_advance_stage = true
 	Nav.goto("res://scenes/reward_screen.tscn")

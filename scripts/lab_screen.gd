@@ -18,11 +18,12 @@ extends Control
 # artifact validates/spends on its action button. See Lab.
 
 const ARTIFACTS := ["refinery", "card_forge", "king_forge"]
-const NAMES := {"refinery": "Refinery", "card_forge": "Card Forge", "king_forge": "King Forge"}
+# NAMES/SUBTITLES values are localization KEYS (resolved through Loc at use — a const can't call Loc.t).
+const NAMES := {"refinery": "lab.name_refinery", "card_forge": "lab.name_card_forge", "king_forge": "lab.name_king_forge"}
 const SUBTITLES := {
-	"refinery":   "Drop an essence, then refine 10 of it into 1 matching stone.",
-	"card_forge": "Drop stones + chess pieces to mint a unit card into your collection.",
-	"king_forge": "Drop 1 King Piece + 2 stones — the two stones' elements choose the King.",
+	"refinery":   "lab.blurb_refinery",
+	"card_forge": "lab.blurb_card_forge",
+	"king_forge": "lab.blurb_king_forge",
 }
 
 var _compact := false
@@ -113,7 +114,7 @@ func _add_background() -> void:
 func get_chrome() -> Dictionary:
 	# The header ✕ always leaves the Lab outright; the OS-back gesture is smarter — from an open
 	# crafting panel it closes the panel back to the room first (see _back_or_close below).
-	return {"title": "Laboratory", "fields": [ScreenUI.Field.EXP], "exit": _leave,
+	return {"title": Loc.t("lab.title"), "fields": [ScreenUI.Field.EXP], "exit": _leave,
 		"back": _back_or_close, "show_footer": true, "inset": false}
 
 
@@ -211,7 +212,7 @@ func _make_artifact_object(key: String, tex: Texture2D) -> Control:
 	btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
 	btn.size_flags_horizontal = SIZE_EXPAND_FILL
 	btn.size_flags_vertical = SIZE_EXPAND_FILL
-	UIScale.tip(btn, str(SUBTITLES.get(key, NAMES.get(key, key))))
+	UIScale.tip(btn, Loc.t(str(SUBTITLES.get(key, NAMES.get(key, key)))))
 	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	btn.pressed.connect(_open.bind(key))
 	btn.mouse_entered.connect(func() -> void: btn.modulate = Color(1.18, 1.18, 1.18))
@@ -219,7 +220,7 @@ func _make_artifact_object(key: String, tex: Texture2D) -> Control:
 	cell.add_child(btn)
 
 	var name_lbl := Label.new()
-	name_lbl.text = NAMES.get(key, key)
+	name_lbl.text = Loc.t(NAMES.get(key, key))
 	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_lbl.add_theme_font_size_override("font_size", 36 if _compact else 30)
 	name_lbl.add_theme_color_override("font_outline_color", Color(0.02, 0.02, 0.05, 0.9))
@@ -287,19 +288,19 @@ func _build_craft_panel(key: String) -> Control:
 	var header := HBoxContainer.new()
 	header.add_theme_constant_override("separation", 16)
 	box.add_child(header)
-	var back := ScreenUI.action_button("‹ Lab", _close_artifact,
+	var back := ScreenUI.action_button(Loc.t("lab.back"), _close_artifact,
 		Vector2(200, 96) if _compact else Vector2(150, 60), 28 if _compact else 22,
 		ScreenUI.CHROME_NEUTRAL)
 	header.add_child(back)
 	var title := Label.new()
-	title.text = NAMES.get(key, key)
+	title.text = Loc.t(NAMES.get(key, key))
 	title.add_theme_font_size_override("font_size", 42 if _compact else 34)
 	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	title.size_flags_horizontal = SIZE_EXPAND_FILL
 	header.add_child(title)
 
 	var sub := Label.new()
-	sub.text = SUBTITLES.get(key, "")
+	sub.text = Loc.t(SUBTITLES.get(key, ""))
 	sub.add_theme_font_size_override("font_size", 24 if _compact else 19)
 	sub.add_theme_color_override("font_color", Color(0.72, 0.74, 0.82))
 	sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -361,7 +362,7 @@ func _build_inventory_panel() -> Control:
 	pad.add_child(box)
 
 	var title := Label.new()
-	title.text = "Resources" if not _compact else "Resources  ·  drag or tap onto the artifact's slots"
+	title.text = Loc.t("lab.resources") if not _compact else Loc.t("lab.resources_compact")
 	title.add_theme_font_size_override("font_size", 26 if _compact else 22)
 	title.add_theme_color_override("font_color", Color(0.78, 0.8, 0.9))
 	box.add_child(title)
@@ -403,7 +404,7 @@ func _rebuild_inventory() -> void:
 	var ids := _owned_material_ids()
 	if ids.is_empty():
 		var hint := Label.new()
-		hint.text = "No resources yet — earn essence from encounters, then refine it here."
+		hint.text = Loc.t("lab.no_resources")
 		hint.add_theme_font_size_override("font_size", 24 if _compact else 18)
 		hint.add_theme_color_override("font_color", Color(0.7, 0.72, 0.8))
 		_inventory.add_child(hint)
@@ -423,13 +424,13 @@ func _on_token_clicked(id: String) -> void:
 	if _open_key.is_empty():
 		return
 	if not _relevant_to_open(id):
-		_set_open_status("The %s can't use that." % NAMES.get(_open_key, _open_key))
+		_set_open_status(Loc.t("lab.cant_use", {"artifact": Loc.t(NAMES.get(_open_key, _open_key))}))
 		return
 	for slot: DropSlot in _open_slots():
 		if slot.staged_id.is_empty() and slot.can_accept.call(id):
 			slot.stage(id)
 			return
-	_set_open_status("No empty slots available — tap a filled slot to clear it.")
+	_set_open_status(Loc.t("lab.no_slots"))
 
 
 # ── Manual resource gesture (tap vs drag) ────────────────────────────────────────────────
@@ -567,7 +568,7 @@ func _refinery_body(box: VBoxContainer) -> void:
 	var slots := _slot_grid(1)
 	left.add_child(slots)
 
-	_refinery_slot = DropSlot.new().setup("Essence", _compact)
+	_refinery_slot = DropSlot.new().setup(Loc.t("lab.slot_essence"), _compact)
 	_refinery_slot.can_accept = func(id: String) -> bool: return id in Materials.ELEMENTS
 	_refinery_slot.on_changed = _update_refinery
 	slots.add_child(_refinery_slot)
@@ -579,7 +580,7 @@ func _refinery_body(box: VBoxContainer) -> void:
 	_refine_status.custom_minimum_size.x = 240.0   # keep autowrap from inflating min height (see sub)
 	right.add_child(_refine_status)
 
-	_refine_btn = ScreenUI.action_button("Refine", _on_refine,
+	_refine_btn = ScreenUI.action_button(Loc.t("lab.refine"), _on_refine,
 		Vector2(0, 116) if _compact else Vector2(0, 80), 32 if _compact else 26,
 		ScreenUI.CHROME_CONFIRM)
 	_refine_btn.size_flags_horizontal = SIZE_FILL
@@ -589,18 +590,18 @@ func _refinery_body(box: VBoxContainer) -> void:
 func _update_refinery() -> void:
 	var el := _refinery_slot.staged_id
 	if el.is_empty():
-		_refine_status.text = "Drop an essence to refine."
+		_refine_status.text = Loc.t("lab.refine_prompt")
 		_refine_btn.disabled = true
 		return
 	var have := GameData.current_profile.materials.count(el)
 	if have >= Lab.REFINE_RATIO:
-		_refine_status.text = "Refine %d %s → 1 %s." % [
-			Lab.REFINE_RATIO, Materials.short_name(el),
-			Materials.display_name(Materials.stone_id(el))]
+		_refine_status.text = Loc.t("lab.refine_status", {
+			"n": Lab.REFINE_RATIO, "essence": Materials.short_name(el),
+			"stone": Materials.display_name(Materials.stone_id(el))})
 		_refine_btn.disabled = false
 	else:
-		_refine_status.text = "Need %d %s (have %d)." % [
-			Lab.REFINE_RATIO, Materials.display_name(el), have]
+		_refine_status.text = Loc.t("lab.refine_need", {
+			"n": Lab.REFINE_RATIO, "mat": Materials.display_name(el), "have": have})
 		_refine_btn.disabled = true
 
 
@@ -766,14 +767,14 @@ func _card_forge_body(box: VBoxContainer) -> void:
 	var slots := _slot_grid(2)
 	_mint_stone_slots.clear()
 	for i in 2:
-		var slot := DropSlot.new().setup("Stone", _compact)
+		var slot := DropSlot.new().setup(Loc.t("lab.slot_stone"), _compact)
 		slot.can_accept = func(id: String) -> bool: return Materials.is_stone(id)
 		slot.on_changed = _update_card_forge
 		slots.add_child(slot)
 		_mint_stone_slots.append(slot)
 	_mint_piece_slots.clear()
 	for i in 2:
-		var slot := DropSlot.new().setup("Piece", _compact)
+		var slot := DropSlot.new().setup(Loc.t("lab.slot_piece"), _compact)
 		slot.can_accept = func(id: String) -> bool: return Materials.is_piece(id) and Materials.piece_of(id) != "king"
 		slot.on_changed = _update_card_forge
 		slots.add_child(slot)
@@ -781,7 +782,7 @@ func _card_forge_body(box: VBoxContainer) -> void:
 
 	_mint_preview = _make_preview_holder()
 	_mint_status = _make_forge_status()
-	_mint_btn = _make_forge_button("Craft Card", _on_mint)
+	_mint_btn = _make_forge_button(Loc.t("lab.craft_card"), _on_mint)
 	_assemble_forge(box, slots, _mint_preview, _mint_status, _mint_btn)
 
 
@@ -807,7 +808,7 @@ func _update_card_forge() -> void:
 	var card_id := _staged_card_id()
 	if card_id.is_empty():
 		_clear_preview(_mint_preview)
-		_mint_status.text = "Drop ingredients to design a card."
+		_mint_status.text = Loc.t("lab.mint_prompt")
 		_mint_btn.disabled = true
 		return
 
@@ -816,13 +817,13 @@ func _update_card_forge() -> void:
 	_set_preview(_mint_preview, card_id, true)
 
 	if not Lab.is_mintable(card_id):
-		_mint_status.text = "Can't craft %s here." % card_name
+		_mint_status.text = Loc.t("lab.cant_craft", {"name": card_name})
 		_mint_btn.disabled = true
 	elif not Lab.can_mint(GameData.current_profile, card_id):
-		_mint_status.text = "Costs %s." % Materials.summary(Lab.card_cost(card_id))
+		_mint_status.text = Loc.t("lab.mint_cost", {"cost": Materials.summary(Lab.card_cost(card_id))})
 		_mint_btn.disabled = true
 	else:
-		_mint_status.text = "Craft %s  (own %d)" % [card_name, GameData.current_profile.collection.count(card_id)]
+		_mint_status.text = Loc.t("lab.mint_craft", {"name": card_name, "n": GameData.current_profile.collection.count(card_id)})
 		_mint_btn.disabled = false
 
 
@@ -840,7 +841,7 @@ func _on_mint() -> void:
 		GameData.save_profile()
 		_rebuild_inventory()
 		_refresh_open()
-		_mint_status.text = "Crafted %s!  (own %d)" % [card_name, GameData.current_profile.collection.count(card_id)]
+		_mint_status.text = Loc.t("lab.mint_crafted", {"name": card_name, "n": GameData.current_profile.collection.count(card_id)})
 
 
 # ── King Forge ──────────────────────────────────────────────────────────────────────────
@@ -848,14 +849,14 @@ func _on_mint() -> void:
 func _king_forge_body(box: VBoxContainer) -> void:
 	var slots := _slot_grid(3)
 
-	_king_slot = DropSlot.new().setup("King Piece", _compact)
+	_king_slot = DropSlot.new().setup(Loc.t("lab.slot_king_piece"), _compact)
 	_king_slot.can_accept = func(id: String) -> bool: return id == Lab.KING_PIECE
 	_king_slot.on_changed = _update_forge
 	slots.add_child(_king_slot)
 
 	_stone_slots.clear()
 	for i in 2:
-		var slot := DropSlot.new().setup("Stone", _compact)
+		var slot := DropSlot.new().setup(Loc.t("lab.slot_stone"), _compact)
 		slot.can_accept = func(id: String) -> bool: return Materials.is_stone(id)
 		slot.on_changed = _update_forge
 		slots.add_child(slot)
@@ -863,7 +864,7 @@ func _king_forge_body(box: VBoxContainer) -> void:
 
 	_forge_preview = _make_preview_holder()
 	_forge_status = _make_forge_status()
-	_forge_btn = _make_forge_button("Forge King", _on_forge)
+	_forge_btn = _make_forge_button(Loc.t("lab.forge_king"), _on_forge)
 	_assemble_forge(box, slots, _forge_preview, _forge_status, _forge_btn)
 
 
@@ -876,7 +877,7 @@ func _update_forge() -> void:
 	var b := _staged_element(_stone_slots[1])
 	if a.is_empty() or b.is_empty():
 		_clear_preview(_forge_preview)
-		_forge_status.text = "Drop two stones to choose a King."
+		_forge_status.text = Loc.t("lab.forge_prompt")
 		_forge_btn.disabled = true
 		return
 
@@ -887,16 +888,16 @@ func _update_forge() -> void:
 
 	var profile := GameData.current_profile
 	if king_id in profile.unlocked_kings:
-		_forge_status.text = "%s already forged." % king_name
+		_forge_status.text = Loc.t("lab.forge_already", {"king": king_name})
 		_forge_btn.disabled = true
 	elif _king_slot.staged_id.is_empty():
-		_forge_status.text = "Add a King Piece to forge the %s." % king_name
+		_forge_status.text = Loc.t("lab.forge_add_piece", {"king": king_name})
 		_forge_btn.disabled = true
 	elif not Lab.can_forge(profile, a, b):
-		_forge_status.text = "Not enough stones for the %s." % king_name
+		_forge_status.text = Loc.t("lab.forge_need_stones", {"king": king_name})
 		_forge_btn.disabled = true
 	else:
-		_forge_status.text = "Forge the %s!" % king_name
+		_forge_status.text = Loc.t("lab.forge_ready", {"king": king_name})
 		_forge_btn.disabled = false
 
 
@@ -955,7 +956,7 @@ func _show_king_celebration(king_id: String) -> void:
 	pad.add_child(box)
 
 	var heading := Label.new()
-	heading.text = "New King Forged!"
+	heading.text = Loc.t("lab.new_king")
 	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	heading.add_theme_font_size_override("font_size", 42 if _compact else 32)
 	heading.add_theme_color_override("font_color", Materials.color(Materials.piece_id("king")))
@@ -966,7 +967,7 @@ func _show_king_celebration(king_id: String) -> void:
 	box.add_child(thumb)
 
 	var sub := Label.new()
-	sub.text = "%s — its deck is unlocked!" % king_name
+	sub.text = Loc.t("lab.king_unlocked", {"king": king_name})
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	sub.add_theme_font_size_override("font_size", 26 if _compact else 19)
 	box.add_child(sub)
@@ -982,7 +983,7 @@ func _show_king_celebration(king_id: String) -> void:
 		scroll.add_child(DeckUI.deck_grid(deck, card_w))
 		box.add_child(scroll)
 
-	var btn := ScreenUI.action_button("Continue", func(): overlay.queue_free(),
+	var btn := ScreenUI.action_button(Loc.t("common.continue"), func(): overlay.queue_free(),
 		Vector2(0, 84) if _compact else Vector2(200, 44), 26 if _compact else 18,
 		ScreenUI.CHROME_CONFIRM)
 	btn.size_flags_horizontal = SIZE_SHRINK_CENTER

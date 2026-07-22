@@ -2,7 +2,7 @@
 	{
 		"id": "air_blessing",
 		"display_name": "Air Blessing",
-		"description": "For 2 turns: +4 Speed, and this unit is treated as an air unit.",
+		"description": "For 2 turns: +4 <speed>, and this unit is treated as an <air> unit.",
 		"beneficial": true,
 		"color": "bfe8e0",
 		"glyph": "◆",

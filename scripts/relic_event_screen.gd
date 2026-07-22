@@ -8,7 +8,7 @@ const OFFER_COUNT := 2
 
 
 func get_chrome() -> Dictionary:
-	return {"title": "Shrine", "exit": _finish, "show_footer": true}
+	return {"title": Loc.t("relic_event.title"), "exit": _finish, "show_footer": true}
 
 
 func _ready() -> void:
@@ -21,13 +21,13 @@ func _ready() -> void:
 	add_child(vbox)
 
 	var title := Label.new()
-	title.text = "An Ancient Shrine"
+	title.text = Loc.t("relic_event.heading")
 	title.add_theme_font_size_override("font_size", 44 if compact else 44)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(title)
 
 	var blurb := Label.new()
-	blurb.text = "Claim one relic to carry for the rest of your run."
+	blurb.text = Loc.t("relic_event.blurb")
 	blurb.add_theme_font_size_override("font_size", 24 if compact else 18)
 	blurb.add_theme_color_override("font_color", Color("6b5636"))
 	blurb.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -38,7 +38,7 @@ func _ready() -> void:
 
 	if ids.is_empty():
 		var none := Label.new()
-		none.text = "The shrine lies dormant. (No new relics to offer.)"
+		none.text = Loc.t("relic_event.dormant")
 		none.add_theme_font_size_override("font_size", 22 if compact else 16)
 		none.add_theme_color_override("font_color", Color("5a4a38"))
 		none.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -80,10 +80,10 @@ func _make_offer(grant: Grant, compact: bool) -> Control:
 		ScreenUI.CHROME_CONFIRM)
 	take.size_flags_horizontal = SIZE_SHRINK_CENTER
 	if grant.can_apply():
-		take.text = "Take"
+		take.text = Loc.t("relic_event.take")
 		take.pressed.connect(func() -> void: _pick(grant, slot))
 	else:
-		take.text = "Inventory Full"
+		take.text = Loc.t("reward.inventory_full")
 		take.disabled = true
 	slot.add_child(take)
 	return slot

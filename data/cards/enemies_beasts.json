@@ -3,7 +3,7 @@
     "id": "beast_wolf",
     "display_name": "Ravenous Wolf",
     "cost": 2, "attack": 2, "health": 2, "speed": 4,
-    "description": "A kill only sharpens its hunger: gains Frenzied (+1 Attack, +1 Speed) whenever it slays a unit.",
+    "description": "A kill only sharpens its hunger: gains Frenzied (+1 <attack>, +1 <speed>) whenever it slays a unit.",
     "enemy_only": true, "tribe": "beast", "elements": [], "chess_pieces": [],
     "effects": [
       { "trigger": { "kind": "dual_event", "event": "kill", "origin_of": "self" },
@@ -14,7 +14,7 @@
     "id": "beast_boar",
     "display_name": "Ironhide Boar",
     "cost": 2, "attack": 2, "health": 5, "speed": 2,
-    "description": "Hurting it is a mistake: +2 Attack every time it takes a hit.",
+    "description": "Hurting it is a mistake: +2 <attack> every time it takes a hit.",
     "enemy_only": true, "tribe": "beast", "elements": [], "chess_pieces": [],
     "effects": [
       { "trigger": "on_damage_taken", "targeting_policy": "self", "attribute": "attack", "amount": 2 }
@@ -24,7 +24,7 @@
     "id": "beast_hyena",
     "display_name": "Cackling Hyena",
     "cost": 3, "attack": 2, "health": 3, "speed": 3,
-    "description": "Laughs at every funeral — gains +1 Attack whenever ANY unit dies, friend or foe.",
+    "description": "Laughs at every funeral — gains +1 <attack> whenever ANY unit dies, friend or foe.",
     "enemy_only": true, "tribe": "beast", "elements": [], "chess_pieces": [],
     "effects": [
       { "trigger": { "kind": "event", "event": "death" },
@@ -46,7 +46,7 @@
     "id": "beast_bear",
     "display_name": "Rageclaw Bear",
     "cost": 4, "attack": 3, "health": 7, "speed": 2,
-    "description": "Slow to anger, impossible to calm: +1 Attack every time it takes a hit.",
+    "description": "Slow to anger, impossible to calm: +1 <attack> every time it takes a hit.",
     "enemy_only": true, "tribe": "beast", "elements": [], "chess_pieces": [],
     "effects": [
       { "trigger": "on_damage_taken", "targeting_policy": "self", "attribute": "attack", "amount": 1 }
@@ -66,7 +66,7 @@
     "id": "beast_ape",
     "display_name": "Silverback Warchief",
     "cost": 5, "attack": 4, "health": 8, "speed": 2,
-    "description": "Beats its chest on arrival, rallying the whole pack with +1 Attack.",
+    "description": "Beats its chest on arrival, rallying the whole pack with +1 <attack>.",
     "enemy_only": true, "tribe": "beast", "elements": [], "chess_pieces": [],
     "effects": [
       { "trigger": "on_play", "targeting_policy": "all_allies", "attribute": "attack", "amount": 1 }
@@ -76,7 +76,7 @@
     "id": "beast_behemoth",
     "display_name": "Thornmane Behemoth",
     "cost": 7, "attack": 6, "health": 12, "speed": 2,
-    "description": "A siege engine with a heartbeat. +1 Attack whenever it takes a hit.",
+    "description": "A siege engine with a heartbeat. +1 <attack> whenever it takes a hit.",
     "enemy_only": true, "tribe": "beast", "elements": [], "chess_pieces": [],
     "effects": [
       { "trigger": "on_damage_taken", "targeting_policy": "self", "attribute": "attack", "amount": 1 }
@@ -99,7 +99,7 @@
     "display_name": "Old Thornback",
     "cost": 0, "attack": 2, "health": 44, "speed": 2, "shield": 4,
     "is_king": true, "enemy_only": true, "tribe": "beast",
-    "description": "Hunters have carved a hundred scars into its hide, and each one made it meaner: +1 Attack every time it takes a hit. Destroy it to win.",
+    "description": "Hunters have carved a hundred scars into its hide, and each one made it meaner: +1 <attack> every time it takes a hit. Destroy it to win.",
     "elements": [], "chess_pieces": [],
     "effects": [
       { "trigger": "on_damage_taken", "targeting_policy": "self", "attribute": "attack", "amount": 1 }
@@ -110,7 +110,7 @@
     "display_name": "Ragnor, the Endless Hunger",
     "cost": 0, "attack": 3, "health": 55, "speed": 3, "shield": 3,
     "is_king": true, "enemy_only": true, "tribe": "beast",
-    "description": "It has never once stopped eating. Every unit it kills feeds it +2 Attack and 4 healing — kill it before it kills everything. Destroy it to win.",
+    "description": "It has never once stopped eating. Every unit it kills feeds it +2 <attack> and 4 healing — kill it before it kills everything. Destroy it to win.",
     "elements": [], "chess_pieces": [],
     "effects": [
       { "trigger": { "kind": "dual_event", "event": "kill", "origin_of": "self" },

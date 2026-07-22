@@ -7,7 +7,7 @@
 		"health": 20,
 		"speed": 3,
 		"shield": 5,
-		"description": "Ruler of pure air. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+		"description": "Ruler of pure <air>. If the <king> falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 <shield>.",
 		"elements": [
 			"air",
 			"air"
@@ -49,7 +49,7 @@
 		"health": 20,
 		"speed": 3,
 		"shield": 5,
-		"description": "Ruler of air and darkness. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+		"description": "Ruler of <air> and <darkness>. If the <king> falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 <shield>.",
 		"elements": [
 			"air",
 			"darkness"
@@ -90,7 +90,7 @@
 		"health": 20,
 		"speed": 3,
 		"shield": 5,
-		"description": "Ruler of air and earth. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+		"description": "Ruler of <air> and <earth>. If the <king> falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 <shield>.",
 		"elements": [
 			"air",
 			"earth"
@@ -130,7 +130,7 @@
 		"health": 20,
 		"speed": 3,
 		"shield": 5,
-		"description": "Ruler of air and fire. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+		"description": "Ruler of <air> and <fire>. If the <king> falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 <shield>.",
 		"elements": [
 			"air",
 			"fire"
@@ -166,7 +166,7 @@
 		"health": 20,
 		"speed": 3,
 		"shield": 5,
-		"description": "Ruler of air and light. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+		"description": "Ruler of <air> and <light>. If the <king> falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 <shield>.",
 		"elements": [
 			"air",
 			"light"
@@ -202,7 +202,7 @@
 		"health": 20,
 		"speed": 3,
 		"shield": 5,
-		"description": "Ruler of air and water. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+		"description": "Ruler of <air> and <water>. If the <king> falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 <shield>.",
 		"elements": [
 			"air",
 			"water"
@@ -238,7 +238,7 @@
 		"health": 20,
 		"speed": 3,
 		"shield": 5,
-		"description": "Ruler of pure darkness. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+		"description": "Ruler of pure <darkness>. If the <king> falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 <shield>.",
 		"elements": [
 			"darkness",
 			"darkness"
@@ -274,7 +274,7 @@
 		"health": 20,
 		"speed": 3,
 		"shield": 5,
-		"description": "Ruler of darkness and earth. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+		"description": "Ruler of <darkness> and <earth>. If the <king> falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 <shield>.",
 		"elements": [
 			"darkness",
 			"earth"
@@ -310,7 +310,7 @@
 		"health": 20,
 		"speed": 3,
 		"shield": 5,
-		"description": "Ruler of darkness and fire. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+		"description": "Ruler of <darkness> and <fire>. If the <king> falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 <shield>.",
 		"elements": [
 			"darkness",
 			"fire"
@@ -354,7 +354,7 @@
 		"chess_pieces": [
 			"king"
 		],
-		"description": "Ruler of darkness and light. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+		"description": "Ruler of <darkness> and <light>. If the <king> falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 <shield>.",
 		"effects": [],
 		"tool": {
 			"art": {
@@ -387,7 +387,7 @@
 		"health": 20,
 		"speed": 3,
 		"shield": 5,
-		"description": "Ruler of darkness and water. If the King falls, the battle is lost. Attacks the nearest enemy, applying Poison 1. Starts each round with 5 Shield.",
+		"description": "Ruler of <darkness> and <water>. If the <king> falls, the battle is lost. Attacks the nearest enemy, applying Poison 1. Starts each round with 5 <shield>.",
 		"elements": [
 			"darkness",
 			"water"
@@ -439,7 +439,7 @@
 		"health": 20,
 		"speed": 3,
 		"shield": 5,
-		"description": "Ruler of pure earth. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+		"description": "Ruler of pure <earth>. If the <king> falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 <shield>.",
 		"elements": [
 			"earth",
 			"earth"
@@ -483,7 +483,7 @@
 		"chess_pieces": [
 			"king"
 		],
-		"description": "Ruler of fire and earth. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+		"description": "Ruler of <fire> and <earth>. If the <king> falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 <shield>.",
 		"effects": [],
 		"tool": {
 			"art": {
@@ -516,7 +516,7 @@
 		"health": 20,
 		"speed": 3,
 		"shield": 5,
-		"description": "Ruler of earth and light. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+		"description": "Ruler of <earth> and <light>. If the <king> falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 <shield>.",
 		"elements": [
 			"earth",
 			"light"
@@ -552,7 +552,7 @@
 		"health": 20,
 		"speed": 3,
 		"shield": 5,
-		"description": "Ruler of earth and water. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+		"description": "Ruler of <earth> and <water>. If the <king> falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 <shield>.",
 		"elements": [
 			"earth",
 			"water"
@@ -588,7 +588,7 @@
 		"health": 20,
 		"speed": 3,
 		"shield": 5,
-		"description": "Ruler of pure fire. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+		"description": "Ruler of pure <fire>. If the <king> falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 <shield>.",
 		"elements": [
 			"fire",
 			"fire"
@@ -632,7 +632,7 @@
 		"chess_pieces": [
 			"king"
 		],
-		"description": "Ruler of fire and light. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+		"description": "Ruler of <fire> and <light>. If the <king> falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 <shield>.",
 		"effects": [],
 		"tool": {
 			"art": {
@@ -673,7 +673,7 @@
 		"chess_pieces": [
 			"king"
 		],
-		"description": "Ruler of fire and water. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+		"description": "Ruler of <fire> and <water>. If the <king> falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 <shield>.",
 		"effects": [],
 		"tool": {
 			"art": {
@@ -714,7 +714,7 @@
 		"chess_pieces": [
 			"king"
 		],
-		"description": "Ruler of pure light. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+		"description": "Ruler of pure <light>. If the <king> falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 <shield>.",
 		"effects": [],
 		"tool": {
 			"art": {
@@ -755,7 +755,7 @@
 		"chess_pieces": [
 			"king"
 		],
-		"description": "Ruler of light and water. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+		"description": "Ruler of <light> and <water>. If the <king> falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 <shield>.",
 		"effects": [],
 		"tool": {
 			"art": {
@@ -796,7 +796,7 @@
 		"chess_pieces": [
 			"king"
 		],
-		"description": "Ruler of pure water. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
+		"description": "Ruler of pure <water>. If the <king> falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 <shield>.",
 		"effects": [],
 		"tool": {
 			"art": {

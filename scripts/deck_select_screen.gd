@@ -12,7 +12,7 @@ func _ready() -> void:
 
 
 func get_chrome() -> Dictionary:
-	return {"title": "Choose a Deck for This Run",
+	return {"title": Loc.t("deck_select.title"),
 		"exit": func(): Nav.goto("res://scenes/game_world.tscn"), "show_footer": true}
 
 
@@ -72,7 +72,7 @@ func _make_deck_card(od: OwnedDeck, ordinal: int) -> Control:
 	banner.add_child(name_lbl)
 
 	var count_lbl := Label.new()
-	count_lbl.text = "%d cards" % od.cards.size()
+	count_lbl.text = Loc.t("game_world.deck_cards", {"n": od.cards.size()})
 	count_lbl.add_theme_font_size_override("font_size", 22 if compact else 16)
 	count_lbl.add_theme_color_override("font_color", Color(0.8, 0.82, 0.9))
 	count_lbl.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))

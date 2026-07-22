@@ -2,7 +2,7 @@
 	{
 		"id": "empowered_barrier",
 		"display_name": "Empowered Barrier",
-		"description": "Blocks the next attack that would deal damage to this unit, and grants +1 Attack while it holds. A blocked strike reads as a Miss; a harmless whiff doesn't spend the Barrier.",
+		"description": "Blocks the next attack that would deal damage to this unit, and grants +1 <attack> while it holds. A blocked strike reads as a Miss; a harmless whiff doesn't spend the Barrier.",
 		"beneficial": true,
 		"color": "8fd0ff",
 		"glyph": "◈",

@@ -16,7 +16,7 @@ var _confirm_abandon: ConfirmationDialog
 
 
 func get_chrome() -> Dictionary:
-	return {"title": "%s's Realm" % GameData.username,
+	return {"title": Loc.t("game_world.realm_title", {"name": GameData.username}),
 		"exit": func(): Nav.goto("res://scenes/game_slots.tscn"), "show_footer": true}
 
 
@@ -66,16 +66,16 @@ func _ready() -> void:
 	row.size_flags_stretch_ratio = 2.0
 	row.add_theme_constant_override("separation", 28)
 	actions.add_child(row)
-	row.add_child(_meta_button("Upgrades", "res://scenes/upgrades_screen.tscn"))
-	row.add_child(_meta_button("Decks", "res://scenes/deck_screen.tscn"))
+	row.add_child(_meta_button(Loc.t("game_world.upgrades"), "res://scenes/upgrades_screen.tscn"))
+	row.add_child(_meta_button(Loc.t("game_world.decks"), "res://scenes/deck_screen.tscn"))
 	if SHOW_COLLECTION:
-		row.add_child(_meta_button("Collection", "res://scenes/collection_screen.tscn"))
-	var lab_btn := _meta_button("Lab", "res://scenes/lab_screen.tscn")
+		row.add_child(_meta_button(Loc.t("game_world.collection"), "res://scenes/collection_screen.tscn"))
+	var lab_btn := _meta_button(Loc.t("game_world.lab"), "res://scenes/lab_screen.tscn")
 	row.add_child(lab_btn)
 	if _lab_is_new():
 		_mark_button_new(lab_btn)
 
-	var embark := ScreenUI.action_button("Continue Run" if has_run else "Embark", _on_embark,
+	var embark := ScreenUI.action_button(Loc.t("game_world.continue_run") if has_run else Loc.t("game_world.embark"), _on_embark,
 		Vector2.ZERO, 44, ScreenUI.CHROME_CONFIRM)
 	embark.size_flags_horizontal = SIZE_EXPAND_FILL
 	embark.size_flags_vertical = SIZE_EXPAND_FILL
@@ -83,7 +83,7 @@ func _ready() -> void:
 	actions.add_child(embark)
 
 	if has_run:
-		var abandon := ScreenUI.action_button("Abandon run", func(): _confirm_abandon.popup_centered(),
+		var abandon := ScreenUI.action_button(Loc.t("game_world.abandon"), func(): _confirm_abandon.popup_centered(),
 			Vector2.ZERO, 28, ScreenUI.CHROME_DANGER)
 		abandon.size_flags_horizontal = SIZE_EXPAND_FILL
 		abandon.size_flags_vertical = SIZE_EXPAND_FILL
@@ -91,8 +91,8 @@ func _ready() -> void:
 		actions.add_child(abandon)
 
 	_confirm_abandon = ConfirmationDialog.new()
-	_confirm_abandon.title = "Abandon run"
-	_confirm_abandon.dialog_text = "Abandon the current run? Your meta-progression is kept, but the run is lost."
+	_confirm_abandon.title = Loc.t("game_world.abandon")
+	_confirm_abandon.dialog_text = Loc.t("game_world.abandon_confirm")
 	_confirm_abandon.confirmed.connect(_on_abandon_confirmed)
 	ScreenUI.wire_modal_cues(_confirm_abandon)
 	add_child(_confirm_abandon)
@@ -130,7 +130,7 @@ func _mark_button_new(btn: Button) -> void:
 	Vfx.attach("map_forge_alert_glow", btn)   # the same attention glow the map's Forge button uses
 
 	var badge := Label.new()
-	badge.text = "NEW"
+	badge.text = Loc.t("common.new")
 	badge.add_theme_font_size_override("font_size", 20)
 	badge.add_theme_color_override("font_color", Color(0.12, 0.1, 0.02))
 	badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -174,8 +174,8 @@ func _build_loadout_panel() -> Control:
 	var deck := profile.get_selected_deck()
 	var king := CardData.get_card(deck.king_id) if deck != null else null
 	var king_name: String = king.display_name if king != null else profile.get_selected_king()
-	_add_stat(box, "King", king_name)
-	_add_stat(box, "Deck", "%d cards" % (deck.cards.size() if deck != null else 0))
+	_add_stat(box, Loc.t("game_world.stat_king"), king_name)
+	_add_stat(box, Loc.t("game_world.stat_deck"), Loc.t("game_world.deck_cards", {"n": deck.cards.size() if deck != null else 0}))
 	box.add_child(ScreenUI.experience_bar(profile))
 
 	# Crafting resources earned from runs (essences / King Pieces) — scrolls within its own share
@@ -211,7 +211,7 @@ func _meta_button(label: String, scene_path: String) -> Button:
 	btn.size_flags_vertical = SIZE_EXPAND_FILL
 	if scene_path.is_empty():
 		btn.disabled = true
-		UIScale.tip(btn, "Coming soon")
+		UIScale.tip(btn, Loc.t("common.coming_soon"))
 	else:
 		btn.pressed.connect(func(): Nav.goto(scene_path))
 	return btn

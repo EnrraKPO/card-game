@@ -13,7 +13,7 @@
     "id": "mimic_rug",
     "display_name": "Rug Mimic",
     "cost": 3, "attack": 2, "health": 4, "speed": 2,
-    "description": "It really ties the room together, and also your ankles: −1 Speed to whatever it bites.",
+    "description": "It really ties the room together, and also your ankles: −1 <speed> to whatever it bites.",
     "enemy_only": true, "tribe": "mimic", "elements": [], "chess_pieces": [],
     "effects": [
       { "trigger": "on_attack", "targeting_policy": "attack_target", "attribute": "speed", "amount": -1 }

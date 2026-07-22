@@ -39,7 +39,7 @@
     "id": "harpy_galecaller",
     "display_name": "Harpy Galecaller",
     "cost": 4, "attack": 2, "health": 4, "speed": 3,
-    "description": "Sings the storm down onto the flock: every ally gains Tailwind (+2 Speed) when she arrives.",
+    "description": "Sings the storm down onto the flock: every ally gains Tailwind (+2 <speed>) when she arrives.",
     "enemy_only": true, "tribe": "harpy", "elements": [], "chess_pieces": [],
     "effects": [
       { "trigger": "on_play", "targeting_policy": "all_allies", "status": { "id": "tailwind", "stacks": 1 } }
@@ -49,7 +49,7 @@
     "id": "harpy_thief",
     "display_name": "Zephyr Thief",
     "cost": 4, "attack": 3, "health": 3, "speed": 6,
-    "description": "Steals the wind from your wings: her strikes are aimed at speed itself (−1 Speed to whatever she hits).",
+    "description": "Steals the wind from your wings: her strikes are aimed at speed itself (−1 <speed> to whatever she hits).",
     "enemy_only": true, "tribe": "harpy", "elements": [], "chess_pieces": [],
     "effects": [
       { "trigger": "on_attack", "targeting_policy": "attack_target", "attribute": "speed", "amount": -1 }
@@ -81,7 +81,7 @@
     "display_name": "Aellai, Eye of the Tempest",
     "cost": 0, "attack": 2, "health": 42, "speed": 5, "shield": 3,
     "is_king": true, "enemy_only": true, "tribe": "harpy",
-    "description": "The storm has a center and it hates you. Dodges a third of all blows, and every dodge stokes her (+1 Attack). Ground her to win.",
+    "description": "The storm has a center and it hates you. Dodges a third of all blows, and every dodge stokes her (+1 <attack>). Ground her to win.",
     "elements": [], "chess_pieces": [],
     "effects": [
       { "trigger": { "kind": "while" }, "targets": { "kind": "self" }, "attribute": "dodge_bonus", "amount": 33 },

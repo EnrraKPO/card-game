@@ -230,7 +230,7 @@ func _build_ui() -> void:
 	door.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
 	door.custom_minimum_size = Vector2(STRIP_H * DOOR_ASPECT, STRIP_H)
 	door.size_flags_vertical = SIZE_SHRINK_END
-	UIScale.tip(door, "Leave")
+	UIScale.tip(door, Loc.t("combine.leave"))
 	door.pressed.connect(_leave)
 	door.mouse_entered.connect(func() -> void: door.modulate = Color(1.18, 1.18, 1.18))
 	door.mouse_exited.connect(func() -> void: door.modulate = Color.WHITE)
@@ -309,7 +309,7 @@ func _build_ui() -> void:
 	chip_row.add_theme_constant_override("separation", 14)
 	chip.add_child(chip_row)
 	var chip_tag := Label.new()
-	chip_tag.text = "Mineral"
+	chip_tag.text = Loc.t("screen_ui.mineral")
 	chip_tag.add_theme_font_size_override("font_size", 32)
 	chip_tag.add_theme_color_override("font_color", Color(1, 1, 1, 0.85))
 	chip_row.add_child(chip_tag)
@@ -409,7 +409,7 @@ func _build_ui() -> void:
 	_ability_strip.add_theme_constant_override("separation", 6)
 	band.add_child(_ability_strip)
 
-	_combine_btn = ScreenUI.action_button("Combine", _on_combine_pressed,
+	_combine_btn = ScreenUI.action_button(Loc.t("combine.combine"), _on_combine_pressed,
 		Vector2(0, 100), 32, ScreenUI.CHROME_CONFIRM)
 	_combine_btn.size_flags_horizontal = SIZE_EXPAND_FILL
 	right.add_child(_combine_btn)
@@ -564,7 +564,7 @@ func _rebuild_charms() -> void:
 
 	if counts.is_empty():
 		var empty := Label.new()
-		empty.text = "(no charms)"
+		empty.text = Loc.t("combine.no_charms")
 		empty.size_flags_horizontal = SIZE_EXPAND_FILL   # centre in the row, not left-stuck
 		empty.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		empty.add_theme_font_size_override("font_size", 18)
@@ -1015,7 +1015,7 @@ func _show_result_toast(result_inst: CardInstance) -> void:
 	panel.add_child(col)
 
 	var title := Label.new()
-	title.text = "Forged!"
+	title.text = Loc.t("combine.forged")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 24)
 	title.add_theme_color_override("font_color", OK_COLOR)
@@ -1044,7 +1044,7 @@ func _show_result_toast(result_inst: CardInstance) -> void:
 		col.add_child(desc_lbl)
 
 	var hint := Label.new()
-	hint.text = "Tap anywhere to continue"
+	hint.text = Loc.t("combine.tap_continue")
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.add_theme_font_size_override("font_size", 13)
 	hint.add_theme_color_override("font_color", Color("5a4a38"))
@@ -1090,7 +1090,7 @@ func _evaluate_target(payload: Dictionary, target_idx: int) -> Dictionary:
 		var a: CardData = _entries[int(payload.idx)].data
 		var b: CardData = tgt.data
 		if not CardData.can_combine(a, b):
-			return {"ok": false, "status": "Exceeds the combination limit (2 elements + 2 chess pieces)", "color": BAD_COLOR}
+			return {"ok": false, "status": Loc.t("combine.status_limit"), "color": BAD_COLOR}
 		var result := CardData.combine(a, b)
 		var rdc := DeckCard.make(result.id)
 		for charm_id: String in _merged_parent_charms([_entries[int(payload.idx)].card, tgt.card], result):
@@ -1103,7 +1103,7 @@ func _evaluate_target(payload: Dictionary, target_idx: int) -> Dictionary:
 		# line only carries the cost verdict.
 		if have < cost:
 			return {"ok": true, "affordable": false, "cost": cost,
-				"status": "Needs %d Mineral — you have %d" % [cost, have],
+				"status": Loc.t("combine.status_need_mineral", {"cost": cost, "have": have}),
 				"color": BAD_COLOR, "preview": rdc.make_instance(), "result_dc": rdc}
 		# Affordable: the cost renders on the Combine button itself — no status text needed.
 		return {"ok": true, "affordable": true, "cost": cost, "status": "",
@@ -1114,12 +1114,12 @@ func _evaluate_target(payload: Dictionary, target_idx: int) -> Dictionary:
 		if charm == null:
 			return {"ok": false}
 		if not charm.can_attach_to(data):
-			return {"ok": false, "status": "%s can't bear the %s charm." % [data.display_name, charm.display_name], "color": BAD_COLOR}
+			return {"ok": false, "status": Loc.t("combine.status_cant_bear", {"card": data.display_name, "charm": charm.display_name}), "color": BAD_COLOR}
 		if str(payload.id) in (tgt.card as DeckCard).charms:
-			return {"ok": false, "status": "%s already bears %s." % [data.display_name, charm.display_name], "color": WARN_COLOR}
+			return {"ok": false, "status": Loc.t("combine.status_already", {"card": data.display_name, "charm": charm.display_name}), "color": WARN_COLOR}
 		var preview_dc := (tgt.card as DeckCard).clone()
 		preview_dc.add_charm(str(payload.id))
-		return {"ok": true, "status": "Enchant %s with %s" % [data.display_name, charm.display_name],
+		return {"ok": true, "status": Loc.t("combine.status_enchant", {"card": data.display_name, "charm": charm.display_name}),
 			"color": OK_COLOR, "preview": preview_dc.make_instance()}
 
 
@@ -1279,7 +1279,7 @@ func _refresh_forge() -> void:
 				result_inst = verdict.get("preview", null)
 				can_act = true
 		else:
-			status = "Tap a card to enchant it with %s." % charm_name
+			status = Loc.t("combine.tap_to_enchant", {"charm": charm_name})
 	else:
 		# Combine mode (click flow): two selected cards.
 		a_click = _clear_slot_a
@@ -1347,9 +1347,9 @@ func _refresh_forge() -> void:
 	_preview_status.add_theme_color_override("font_color", color.lightened(0.15))
 	# The merge price rides the action button itself — the decision and its cost in one place.
 	if enchanting:
-		_combine_btn.text = "Enchant"
+		_combine_btn.text = Loc.t("combine.enchant")
 	else:
-		_combine_btn.text = "Combine" if cost_i < 0 else "Combine — %d Mineral" % cost_i
+		_combine_btn.text = Loc.t("combine.combine") if cost_i < 0 else Loc.t("combine.combine_cost", {"n": cost_i})
 	_combine_btn.disabled = not can_act
 	# The button radiates outward whenever pressing it does something right now — an actual halo
 	# past its edges (forge_combine_ready_glow), not GlossyButton's own contained press-tint
@@ -1578,7 +1578,7 @@ func _do_enchant(charm_id: String, tgt_idx: int) -> void:
 	_rebuild_deck()
 	_rebuild_charms()
 	# _rebuild_deck refreshed the panel to the idle prompt; overwrite with the success message.
-	_preview_status.text = "Enchanted %s with %s!" % [data.display_name, CharmData.get_charm(charm_id).display_name]
+	_preview_status.text = Loc.t("combine.enchanted", {"card": data.display_name, "charm": CharmData.get_charm(charm_id).display_name})
 	_preview_status.visible = true
 	_preview_status.add_theme_color_override("font_color", OK_COLOR)
 

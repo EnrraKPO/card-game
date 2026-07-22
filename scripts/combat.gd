@@ -362,7 +362,7 @@ func _show_enemy_spell(inst: CardInstance, target: CardInstance) -> void:
 	card.global_position = origin
 
 	var banner := Label.new()
-	banner.text = "Enemy casts %s" % inst.data.display_name
+	banner.text = Loc.t("combat.enemy_casts", {"name": inst.data.display_name})
 	banner.add_theme_font_size_override("font_size", 22)
 	banner.modulate         = Color(1.0, 0.55, 0.3)
 	banner.z_index          = 40
@@ -1136,7 +1136,7 @@ func _build_relic_strip() -> Control:
 	var strip := Panel.new()
 	strip.custom_minimum_size.x = 122.0 if UIScale.is_compact() else 92.0
 	strip.size_flags_vertical = SIZE_EXPAND_FILL
-	UIScale.tip(strip, "Relics")
+	UIScale.tip(strip, Loc.t("combat.relics_tip"))
 	var track := StyleBoxFlat.new()
 	track.bg_color = ScreenUI.MANA_TRACK_BG
 	track.set_corner_radius_all(12)
@@ -1173,7 +1173,7 @@ func _build_mana_gauge() -> Control:
 	var gauge := Panel.new()
 	gauge.custom_minimum_size.x = 122.0 if compact else 92.0
 	gauge.size_flags_vertical = SIZE_EXPAND_FILL
-	UIScale.tip(gauge, "Mana")
+	UIScale.tip(gauge, Loc.t("combat.mana_tip"))
 	var track := StyleBoxFlat.new()
 	track.bg_color = ScreenUI.MANA_TRACK_BG
 	track.set_corner_radius_all(12)
@@ -1198,7 +1198,7 @@ func _build_mana_gauge() -> Control:
 
 	# Header cell: the "MANA" label.
 	var tag := Label.new()
-	tag.text = "MANA"
+	tag.text = Loc.t("combat.mana_tag")
 	tag.add_theme_font_size_override("font_size", 22 if compact else 16)
 	tag.add_theme_color_override("font_color", Color(0.72, 0.78, 0.92))
 	tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -1415,16 +1415,16 @@ func _refresh_done_btn() -> void:
 		return
 	match _phase:
 		Phase.PLAYER_PLACE:
-			_done_label.text   = "Ready"
+			_done_label.text   = Loc.t("combat.ready")
 			_done_btn.disabled = false
 		Phase.CPU_PLACE:
-			_done_label.text   = "CPU\nplacing…"
+			_done_label.text   = Loc.t("combat.cpu_placing")
 			_done_btn.disabled = true
 		Phase.COMBAT:
-			_done_label.text   = "Battle…"
+			_done_label.text   = Loc.t("combat.battle")
 			_done_btn.disabled = true
 		Phase.TARGETING:
-			_done_label.text   = "Select\na target…"
+			_done_label.text   = Loc.t("combat.select_target")
 			_done_btn.disabled = true
 	# The caption is a child Label, outside the button's own disabled styling — dim it manually.
 	_done_label.modulate.a = 0.55 if _done_btn.disabled else 1.0

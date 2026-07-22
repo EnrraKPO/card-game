@@ -151,7 +151,7 @@ func _make_custom_tooltip(_for_text: String) -> Object:
 
 	if not sd.description.is_empty():
 		var desc := Label.new()
-		desc.text = sd.description
+		desc.text = TextIcons.plain(sd.description)
 		desc.autowrap_mode = TextServer.AUTOWRAP_WORD
 		desc.custom_minimum_size.x = 240.0
 		desc.add_theme_font_size_override("font_size", 14)

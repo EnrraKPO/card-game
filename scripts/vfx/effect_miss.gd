@@ -7,5 +7,5 @@ extends VFXEffect
 func play() -> void:
 	if _event.target == null or not is_instance_valid(_event.target):
 		queue_free(); return
-	_float_label("Miss", Color(0.82, 0.84, 0.92), "")
+	_float_label(Loc.t("combat.miss_label"), Color(0.82, 0.84, 0.92), "")
 	queue_free()

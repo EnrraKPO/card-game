@@ -24,7 +24,7 @@ var _grid: FitGrid
 func get_chrome() -> Dictionary:
 	# A mid-embark ritual — the run already exists, so there's no bailing back to the hub: title
 	# only, no exit/close, inert OS-back.
-	return {"title": "Empower Your King", "fields": [], "back": Callable(), "inset": true}
+	return {"title": Loc.t("king_picks.title"), "fields": [], "back": Callable(), "inset": true}
 
 
 func _ready() -> void:
@@ -77,8 +77,8 @@ func _ready() -> void:
 # Lays out a fresh pick: three distinct random single-element cards, header + pips updated.
 func _start_round() -> void:
 	_busy = false
-	_title.text = "Choose an element to add to your deck"
-	_progress.text = "Pick %d of %d" % [_round + 1, PICKS]
+	_title.text = Loc.t("king_picks.prompt")
+	_progress.text = Loc.t("king_picks.progress", {"n": _round + 1, "total": PICKS})
 	_rebuild_pips()
 
 	var pool: Array = Materials.ELEMENTS.duplicate()

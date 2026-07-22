@@ -149,7 +149,7 @@ func _crit_label(card: Control, sev: float) -> void:
 		return
 	var size := int(round(28.0 + 18.0 * sev))
 	var lbl := Label.new()
-	lbl.text = "CRITICAL!"
+	lbl.text = Loc.t("combat.crit_label")
 	lbl.add_theme_font_override("font", NUMBER_FONT)
 	lbl.add_theme_font_size_override("font_size", size)
 	lbl.add_theme_color_override("font_color", CRIT_COLOR)

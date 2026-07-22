@@ -114,14 +114,14 @@ func _ready() -> void:
 	inner.add_child(desc)
 
 	if _can_discard:
-		_discard_btn = ScreenUI.action_button("Discard this relic", _do_discard,
+		_discard_btn = ScreenUI.action_button(Loc.t("relic_inspector.discard"), _do_discard,
 			Vector2(320, 72), 24, ScreenUI.CHROME_DANGER)
 		_discard_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		inner.add_child(_discard_btn)
 
 	var hint := Label.new()
-	hint.text = "Tap anywhere to close" if DisplayServer.is_touchscreen_available() \
-			else "Click anywhere to close"
+	hint.text = Loc.t("common.tap_close") if DisplayServer.is_touchscreen_available() \
+			else Loc.t("common.click_close")
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.add_theme_font_size_override("font_size", 20)
 	hint.add_theme_color_override("font_color", Color(0.78, 0.78, 0.85))

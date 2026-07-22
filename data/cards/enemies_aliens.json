@@ -21,7 +21,7 @@
     "id": "alien_grey",
     "display_name": "Grey Visitor",
     "cost": 2, "attack": 2, "health": 3, "speed": 3,
-    "description": "It means you no harm — the dampening field it projects on arrival (−1 Attack to the nearest foe) is strictly for science.",
+    "description": "It means you no harm — the dampening field it projects on arrival (−1 <attack> to the nearest foe) is strictly for science.",
     "enemy_only": true, "tribe": "alien", "elements": [], "chess_pieces": [],
     "effects": [
       { "trigger": "on_play", "targeting_policy": "single_nearest", "attribute": "attack", "amount": -1 }
@@ -85,7 +85,7 @@
     "display_name": "The Abductor",
     "cost": 0, "attack": 2, "health": 38, "speed": 3, "shield": 6,
     "is_king": true, "enemy_only": true, "tribe": "alien",
-    "description": "Its tractor beam drags the fight its way: every strike saps its victim's Attack and Speed by 1. Destroy it to win — before your army is dragged aboard.",
+    "description": "Its tractor beam drags the fight its way: every strike saps its victim's <attack> and <speed> by 1. Destroy it to win — before your army is dragged aboard.",
     "elements": [], "chess_pieces": [],
     "effects": [
       { "trigger": "on_attack", "targeting_policy": "attack_target", "attribute": "attack", "amount": -1 },

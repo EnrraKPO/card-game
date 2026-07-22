@@ -2,7 +2,7 @@
 	{
 		"id": "mending_barrier",
 		"display_name": "Mending Barrier",
-		"description": "Blocks the next attack that would deal damage to this unit, and heals it 1 Health at the start of each round while it holds. A blocked strike reads as a Miss; a harmless whiff doesn't spend the Barrier.",
+		"description": "Blocks the next attack that would deal damage to this unit, and heals it 1 <health> at the start of each round while it holds. A blocked strike reads as a Miss; a harmless whiff doesn't spend the Barrier.",
 		"beneficial": true,
 		"color": "8fd0ff",
 		"glyph": "◈",

@@ -81,7 +81,7 @@ func _make_count_label(used: int, capacity: int) -> Label:
 		lbl.add_theme_color_override("font_color", Color(0.72, 0.78, 0.92))   # on the dark
 		# track panel combat frames the strip with (ScreenUI.MANA_TRACK_BG)
 	else:
-		lbl.text = "Relics %d/%d " % [used, capacity]
+		lbl.text = Loc.t("relic_tray.count", {"used": used, "cap": capacity})
 		lbl.size_flags_vertical = SIZE_SHRINK_CENTER
 		lbl.add_theme_color_override("font_color", Color("6b5636"))   # sits on the header_chip's
 																		# cream capsule (ScreenUI.SURFACE_DEEP)

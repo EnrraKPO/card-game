@@ -252,7 +252,7 @@ func build_into(parent: Control, left_widget: Control = null) -> void:
 	# NOT a per-level button: it's offered wherever the Abilities list is meaningful (the plain
 	# hand AND the single-card inspect view), gated purely on there being abilities to inspect —
 	# see refresh_nav. EXPAND_FILL so it (or Back to hand) claims the whole column when alone.
-	_inspect_abilities_btn = ScreenUI.action_button("Inspect Abilities", show_abilities,
+	_inspect_abilities_btn = ScreenUI.action_button(Loc.t("hand.inspect_abilities"), show_abilities,
 			Vector2(175, 64), 28, INSPECT_ACCENT)
 	_inspect_abilities_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_inspect_abilities_btn.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -262,7 +262,7 @@ func build_into(parent: Control, left_widget: Control = null) -> void:
 	# Straight back to the plain hand, from either raised level (routed through _on_back_to_hand
 	# so it also covers Abilities, where nothing is inspected). EXPAND_FILL, same as the button
 	# above: when only one of the two shows, it fills the column — never a half-height button.
-	_back_btn = ScreenUI.action_button("← Back to hand\n(Click anywhere)",
+	_back_btn = ScreenUI.action_button(Loc.t("hand.back_to_hand"),
 			_on_back_to_hand, Vector2(175, 56), 20, ScreenUI.CHROME_NEUTRAL)
 	_back_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_back_btn.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -300,7 +300,7 @@ func build_into(parent: Control, left_widget: Control = null) -> void:
 	# Shown in the token row's place when the inspected unit offers no activated abilities,
 	# so the inspect view says why that space is empty instead of just being empty.
 	_no_abilities_lbl = Label.new()
-	_no_abilities_lbl.text = "This unit doesn't have activated abilities"
+	_no_abilities_lbl.text = Loc.t("hand.no_abilities")
 	_no_abilities_lbl.add_theme_font_size_override("font_size", 20)
 	_no_abilities_lbl.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 0.55))
 	# Card-height box with centred text: a bare label's own height won't centre inside the
@@ -467,7 +467,7 @@ func show_abilities() -> void:
 	_rebuild_abilities_view()
 	# The sidebar doubles as the level's hint (no preview here — that's inspect-only).
 	_desc_name_lbl.text = ""
-	_desc_text_lbl.text = "Click a unit to inspect its abilities."
+	_desc_text_lbl.text = Loc.t("hand.click_to_inspect")
 	_fit_desc_width()
 	_set_level(NavLevel.ABILITIES)
 
@@ -609,7 +609,7 @@ func _rebuild_inspect_view() -> void:
 	_desc_hbox.move_child(_desc_preview, 0)
 
 	_desc_name_lbl.text = inst.data.display_name
-	_desc_text_lbl.text = inst.data.description
+	_desc_text_lbl.text = TextIcons.plain(inst.data.description)
 	_fit_desc_width()
 	# Ability display cards fill their frame (and armed brackets) right to the edge — unlike a unit
 	# card, whose bottom band is dead frame the bar can afford to bleed off-screen (BOTTOM_BLEED).

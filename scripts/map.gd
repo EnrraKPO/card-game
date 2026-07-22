@@ -111,7 +111,7 @@ var _forge_badge: Control
 
 
 func get_chrome() -> Dictionary:
-	var actions: Array = [{"label": "Save & Quit", "action": _on_quit_pressed}]
+	var actions: Array = [{"label": Loc.t("map.save_quit"), "action": _on_quit_pressed}]
 	if DebugConfig.enabled():
 		actions.append({"label": "Combat Gym",
 				"action": func() -> void: Nav.goto("res://scenes/combat_gym.tscn"), "align": "right"})
@@ -212,7 +212,7 @@ func _build_forge_fab() -> void:
 	var btn := Button.new()
 	btn.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	btn.focus_mode = Control.FOCUS_NONE
-	UIScale.tip(btn, "Forge — combine two cards into one")
+	UIScale.tip(btn, Loc.t("map.forge_tip"))
 	for s in ["normal", "hover", "pressed", "focus", "disabled"]:
 		btn.add_theme_stylebox_override(s, StyleBoxEmpty.new())
 	btn.pressed.connect(func() -> void:
@@ -344,7 +344,7 @@ func _build_zoom_slider() -> void:
 	slider.step = 0.05
 	slider.value = _zoom_level
 	slider.focus_mode = Control.FOCUS_NONE
-	UIScale.tip(slider, "Zoom")
+	UIScale.tip(slider, Loc.t("map.zoom_tip"))
 	slider.custom_minimum_size = Vector2(96.0, 380.0) if _compact else Vector2(64.0, 300.0)
 	slider.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	# Chunky track + gold fill + big round grabber (the theme defaults are tiny desktop-ware).
@@ -574,7 +574,7 @@ func _rebuild_node_buttons() -> void:
 
 			var caption := ""
 			if node.type == MapNodeData.Type.BOSS and GameData.current_run.act >= MapData.STAGES:
-				caption = "Final Boss"
+				caption = Loc.t("map.final_boss")
 
 			var reward_summary := ""
 			var reward_color := Color(0.8, 0.82, 0.9)
@@ -590,7 +590,7 @@ func _rebuild_node_buttons() -> void:
 			med.position = pos - Vector2(_node_diam, _node_diam) / 2.0
 			if not reward_summary.is_empty():
 				var label := caption if not caption.is_empty() else MapNodeData.get_label(node.type)
-				UIScale.tip(med, "%s — reward: %s" % [label, reward_summary])
+				UIScale.tip(med, Loc.t("map.node_reward", {"label": label, "reward": reward_summary}))
 			if is_current:
 				_current_med = med   # the travel trail's launch point (see the pressed cue)
 			if is_reachable:

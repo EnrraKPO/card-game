@@ -50,7 +50,7 @@ func _find_deck(deck_id: String) -> OwnedDeck:
 # ── layout ──────────────────────────────────────────────────────────────────────────────
 
 func get_chrome() -> Dictionary:
-	return {"title": "Edit Deck", "exit": _on_back, "show_footer": true}
+	return {"title": Loc.t("deck_build.title"), "exit": _on_back, "show_footer": true}
 
 
 func _build_ui() -> void:
@@ -63,7 +63,7 @@ func _build_ui() -> void:
 	var toolbar := HBoxContainer.new()
 	toolbar.add_child(Control.new())
 	toolbar.get_child(0).size_flags_horizontal = SIZE_EXPAND_FILL
-	_save_btn = ScreenUI.action_button("Save", _on_save,
+	_save_btn = ScreenUI.action_button(Loc.t("common.save"), _on_save,
 		Vector2(220, 96) if _compact else Vector2(160, 56), 30 if _compact else 22,
 		ScreenUI.CHROME_CONFIRM)
 	toolbar.add_child(_save_btn)
@@ -121,7 +121,7 @@ func _build_pool_pane() -> Control:
 	var box := _pane_box(panel)
 
 	var title := Label.new()
-	title.text = "Available  (tap to add)"
+	title.text = Loc.t("deck_build.available")
 	title.add_theme_font_size_override("font_size", 28 if _compact else 20)
 	box.add_child(title)
 
@@ -242,7 +242,7 @@ func _on_back() -> void:
 # ── render ──────────────────────────────────────────────────────────────────────────────
 
 func _rebuild() -> void:
-	_deck_header.text = "Deck  %d / %d  (min %d)" % [_cards.size(), OwnedDeck.MAX_CARDS, OwnedDeck.MIN_CARDS]
+	_deck_header.text = Loc.t("deck_build.header", {"n": _cards.size(), "max": OwnedDeck.MAX_CARDS, "min": OwnedDeck.MIN_CARDS})
 	_rebuild_king()
 
 	for child in _deck_flow.get_children():
@@ -250,7 +250,7 @@ func _rebuild() -> void:
 	for id: String in _distinct_deck_ids():
 		var over := _count(id) > _cap(id)
 		var color := Color(1.0, 0.5, 0.5) if over else Color(0.8, 0.82, 0.9)
-		_deck_flow.add_child(_card_tile(id, "x%d" % _count(id), color, false, _remove.bind(id)))
+		_deck_flow.add_child(_card_tile(id, Loc.t("deck_build.count_deck", {"n": _count(id)}), color, false, _remove.bind(id)))
 
 	for child in _pool_flow.get_children():
 		child.queue_free()
@@ -259,7 +259,7 @@ func _rebuild() -> void:
 		var cap := _cap(id)
 		var have := _count(id)
 		var maxed := have >= cap or full
-		_pool_flow.add_child(_card_tile(id, "%d / %d" % [have, cap],
+		_pool_flow.add_child(_card_tile(id, Loc.t("deck_build.count_pool", {"have": have, "cap": cap}),
 			Color(0.6, 0.62, 0.72), maxed, _add.bind(id)))
 
 	_status.text = _status_text()
@@ -291,29 +291,29 @@ func _rebuild_king() -> void:
 	row.add_child(side)
 
 	var lbl := Label.new()
-	lbl.text = "King"
+	lbl.text = Loc.t("deck_build.king")
 	lbl.add_theme_font_size_override("font_size", 22 if _compact else 14)
 	side.add_child(lbl)
 
-	var btn := ScreenUI.action_button("Restore King" if not _king_present else "Remove King",
+	var btn := ScreenUI.action_button(Loc.t("deck_build.restore_king") if not _king_present else Loc.t("deck_build.remove_king"),
 		_toggle_king, Vector2(160, 44), 18 if _compact else 12, ScreenUI.CHROME_NEUTRAL)
 	side.add_child(btn)
 
 
 func _status_text() -> String:
 	if not _king_present:
-		return "Restore the King to save — its innate cards are disabled without it."
+		return Loc.t("deck_build.status_no_king")
 	var n := _cards.size()
 	if n < OwnedDeck.MIN_CARDS:
-		return "Add %d more — decks need at least %d cards." % [OwnedDeck.MIN_CARDS - n, OwnedDeck.MIN_CARDS]
+		return Loc.t("deck_build.status_too_few", {"n": OwnedDeck.MIN_CARDS - n, "min": OwnedDeck.MIN_CARDS})
 	if n > OwnedDeck.MAX_CARDS:
-		return "Remove %d — decks hold at most %d cards." % [n - OwnedDeck.MAX_CARDS, OwnedDeck.MAX_CARDS]
+		return Loc.t("deck_build.status_too_many", {"n": n - OwnedDeck.MAX_CARDS, "max": OwnedDeck.MAX_CARDS})
 	for id: String in _distinct_deck_ids():
 		if _count(id) > _cap(id):
 			var card := CardData.get_card(id)
-			return "Too many %s (%d, own %d)." % [
-				card.display_name if card != null else id, _count(id), _cap(id)]
-	return "Deck ready — %d cards." % n
+			return Loc.t("deck_build.status_over_cap", {
+				"name": card.display_name if card != null else id, "n": _count(id), "cap": _cap(id)})
+	return Loc.t("deck_build.status_ready", {"n": n})
 
 
 # A card thumbnail with a caption below; `on_click` fires on tap (CardUI.pressed).

@@ -1,7 +1,7 @@
 {
   "id": "tailwind",
   "display_name": "Tailwind",
-  "description": "Riding the gale: +2 Speed per stack while it lasts.",
+  "description": "Riding the gale: +2 <speed> per stack while it lasts.",
   "beneficial": true,
   "color": "8fd0e8",
   "glyph": "≋",

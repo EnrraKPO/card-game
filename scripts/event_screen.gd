@@ -29,7 +29,7 @@ func _ready() -> void:
 
 
 func get_chrome() -> Dictionary:
-	return {"title": "Event", "exit": _leave, "show_footer": true}
+	return {"title": Loc.t("event.title"), "exit": _leave, "show_footer": true}
 
 
 func _build_ui() -> void:
@@ -40,14 +40,13 @@ func _build_ui() -> void:
 	add_child(root)
 
 	var title := Label.new()
-	title.text = "A Wandering Trainer"
+	title.text = Loc.t("event.trainer_title")
 	title.add_theme_font_size_override("font_size", 52 if _compact else 44)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	root.add_child(title)
 
 	var blurb := Label.new()
-	blurb.text = "Permanently raise a unit's %s by +1. Each training costs double the last." \
-		% DeckCard.attr_label(_attr)
+	blurb.text = Loc.t("event.blurb", {"stat": DeckCard.attr_label(_attr)})
 	blurb.add_theme_font_size_override("font_size", 26 if _compact else 22)
 	blurb.add_theme_color_override("font_color", Color("6b5636"))
 	blurb.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -128,11 +127,11 @@ func _on_card_pressed(entry_idx: int) -> void:
 
 func _refresh() -> void:
 	var gold: int = GameData.current_run.gold
-	_gold_lbl.text = "Gold  %d" % gold
-	_upgrade_btn.text = "Upgrade %s  (%d Gold)" % [DeckCard.attr_label(_attr), _cost]
+	_gold_lbl.text = Loc.t("event.gold", {"n": gold})
+	_upgrade_btn.text = Loc.t("event.upgrade_btn", {"stat": DeckCard.attr_label(_attr), "n": _cost})
 
 	if _selected_idx < 0:
-		_status_lbl.text = "Select a unit to train"
+		_status_lbl.text = Loc.t("event.select_prompt")
 		_status_lbl.add_theme_color_override("font_color", Color("5a5248"))
 		_upgrade_btn.disabled = true
 		return
@@ -140,10 +139,10 @@ func _refresh() -> void:
 	var can_afford := gold >= _cost
 	var card_name: String = CardData.get_card(_entries[_selected_idx].card.id).display_name
 	if can_afford:
-		_status_lbl.text = "Train %s  (+1 %s)" % [card_name, DeckCard.attr_label(_attr)]
+		_status_lbl.text = Loc.t("event.train", {"name": card_name, "stat": DeckCard.attr_label(_attr)})
 		_status_lbl.add_theme_color_override("font_color", Color("1f7a35"))
 	else:
-		_status_lbl.text = "Not enough gold to train %s" % card_name
+		_status_lbl.text = Loc.t("event.not_enough", {"name": card_name})
 		_status_lbl.add_theme_color_override("font_color", Color("8a2020"))
 	_upgrade_btn.disabled = not can_afford
 
@@ -166,7 +165,7 @@ func _apply_upgrade() -> void:
 	_cost *= 2
 	GameData.save_run()
 	_rebuild_deck()
-	_status_lbl.text = "%s gained +1 %s." % [card_name, DeckCard.attr_label(_attr)]
+	_status_lbl.text = Loc.t("event.gained", {"name": card_name, "stat": DeckCard.attr_label(_attr)})
 	_status_lbl.add_theme_color_override("font_color", Color("1f7a35"))
 
 

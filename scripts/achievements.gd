@@ -20,8 +20,8 @@ const FIRST_MATCH := "first_match"
 
 const DEFS := {
 	FIRST_MATCH: {
-		"title": "First Steps",
-		"body": "You finished your first match and earned a King Piece — the key to forging new Kings.",
+		"title": "achievement.first_match.title",
+		"body": "achievement.first_match.body",
 		"king_pieces": 1,
 		"celebrate": true,   # queue a hub celebration modal on unlock
 		"lab_cta": true,     # that modal offers a jump straight to the Lab
@@ -65,5 +65,6 @@ static func celebrate(id: String, host: Node) -> void:
 	var icon: Texture2D = null
 	if int(def.get("king_pieces", 0)) > 0:
 		icon = Materials.texture(Materials.piece_id("king"))
-	MilestoneCelebration.open(host, def.get("title", "Achievement"), def.get("body", ""),
+	# title/body are localization KEYS (see DEFS) — resolve them for display.
+	MilestoneCelebration.open(host, Loc.t(str(def.get("title", ""))), Loc.t(str(def.get("body", ""))),
 		icon, bool(def.get("lab_cta", false)))

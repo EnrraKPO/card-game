@@ -24,13 +24,13 @@ var material_rewards: Dictionary = {}
 
 static func get_label(t: Type) -> String:
 	match t:
-		Type.COMBAT: return "Fight"
-		Type.ELITE:  return "Elite"
+		Type.COMBAT: return Loc.t("map.node_fight")
+		Type.ELITE:  return Loc.t("map.node_elite")
 		Type.EVENT:  return "?"
-		Type.SHOP:   return "Shop"
-		Type.REST:   return "Rest"
-		Type.BOSS:   return "Boss"
-		Type.FORGE:  return "Forge"
+		Type.SHOP:   return Loc.t("map.node_shop")
+		Type.REST:   return Loc.t("map.node_rest")
+		Type.BOSS:   return Loc.t("map.node_boss")
+		Type.FORGE:  return Loc.t("map.node_forge")
 	return "?"
 
 

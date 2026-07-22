@@ -2,7 +2,7 @@
 	{
 		"id": "fire_blessing",
 		"display_name": "Fire Blessing",
-		"description": "For 2 turns: +2 Attack, and this unit is treated as a fire unit.",
+		"description": "For 2 turns: +2 <attack>, and this unit is treated as a <fire> unit.",
 		"beneficial": true,
 		"color": "ff5a1f",
 		"glyph": "◆",

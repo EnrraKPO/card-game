@@ -73,7 +73,7 @@
     "display_name": "Carnotaur Alpha",
     "cost": 0, "attack": 3, "health": 44, "speed": 3, "shield": 3,
     "is_king": true, "enemy_only": true, "tribe": "dino",
-    "description": "Bred by the valley for one job. Every kill sharpens it: +2 Attack per victim. Drop it before the math gets away from you.",
+    "description": "Bred by the valley for one job. Every kill sharpens it: +2 <attack> per victim. Drop it before the math gets away from you.",
     "elements": [], "chess_pieces": [],
     "effects": [
       { "trigger": { "kind": "dual_event", "event": "kill", "origin_of": "self" },

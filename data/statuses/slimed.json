@@ -1,7 +1,7 @@
 {
   "id": "slimed",
   "display_name": "Slimed",
-  "description": "Clinging goo drags every movement: −1 Speed per stack.",
+  "description": "Clinging goo drags every movement: −1 <speed> per stack.",
   "beneficial": false,
   "color": "6fae4e",
   "glyph": "~",

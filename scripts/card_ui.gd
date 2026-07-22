@@ -438,7 +438,8 @@ func refresh() -> void:
 	# Fall back to the name so the enlarged hover preview shows even without a description.
 	# UIScale.tip suppresses it entirely on touch (no hover there — long-press inspect instead).
 	var desc := card_instance.data.description
-	UIScale.tip(self, desc if not desc.is_empty() else card_instance.data.display_name)
+	# The card's native fallback tooltip can't render icons/BBCode — resolve markup to words.
+	UIScale.tip(self, TextIcons.plain(desc) if not desc.is_empty() else card_instance.data.display_name)
 
 
 # Global-space centre of the badge that displays a given stat, so combat VFX can pop a number

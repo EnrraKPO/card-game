@@ -1,7 +1,7 @@
 {
 	"id": "charged",
 	"display_name": "Charged",
-	"description": "This unit is charged with energy: +1 Attack and +1 Speed per stack.",
+	"description": "This unit is charged with energy: +1 <attack> and +1 <speed> per stack.",
 	"beneficial": true,
 	"color": "8fd0ff",
 	"glyph": "✦",

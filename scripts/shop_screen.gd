@@ -8,11 +8,12 @@ extends Control
 const REMOVE_COST := 50
 
 # Which item kinds the shop sells, in display order, with how many of each to offer.
+# `label` is a localization KEY (resolved through Loc at row-build time — a const can't call Loc.t).
 const SHOP_KINDS := [
-	{"kind": "card",  "count": 4, "label": "Buy Cards"},
-	{"kind": "charm", "count": 3, "label": "Buy Charms"},
-	{"kind": "relic", "count": 2, "label": "Buy Relics"},
-	{"kind": "currency", "count": 1, "label": "Buy Resources"},
+	{"kind": "card",  "count": 4, "label": "shop.buy_cards"},
+	{"kind": "charm", "count": 3, "label": "shop.buy_charms"},
+	{"kind": "relic", "count": 2, "label": "shop.buy_relics"},
+	{"kind": "currency", "count": 1, "label": "shop.buy_resources"},
 ]
 
 # One entry per offered item: { "grant": Grant, "price": int, "buy_btn": Button, "bought": bool }
@@ -39,7 +40,7 @@ func _ready() -> void:
 
 
 func get_chrome() -> Dictionary:
-	return {"title": "Shop", "exit": _leave,
+	return {"title": Loc.t("shop.title"), "exit": _leave,
 		"fields": [ScreenUI.Field.EXP, ScreenUI.Field.GOLD, ScreenUI.Field.MINERAL],
 		"show_footer": true}
 
@@ -91,7 +92,7 @@ func _build_kind_row(entry: Dictionary) -> Control:
 	box.add_theme_constant_override("separation", 8)
 
 	var label := Label.new()
-	label.text = "  " + str(entry.get("label", ""))
+	label.text = "  " + Loc.t(str(entry.get("label", "")))
 	label.add_theme_font_size_override("font_size", 28 if _compact else 24)
 	box.add_child(label)
 
@@ -110,7 +111,7 @@ func _build_kind_row(entry: Dictionary) -> Control:
 		row.add_child(_make_offer_slot(Grant.make(kind_key, id)))
 	if ids.is_empty():
 		var none := Label.new()
-		none.text = "  (sold out)"
+		none.text = "  " + Loc.t("shop.sold_out")
 		none.add_theme_color_override("font_color", Color("5a4a38"))
 		row.add_child(none)
 	return box
@@ -136,13 +137,13 @@ func _make_offer_slot(grant: Grant) -> Control:
 
 	var price := grant.price()
 	var price_lbl := Label.new()
-	price_lbl.text = "%d Gold" % price
+	price_lbl.text = Loc.t("shop.price", {"n": price})
 	price_lbl.add_theme_font_size_override("font_size", 22 if _compact else 19)
 	price_lbl.add_theme_color_override("font_color", Color("9c7a10"))
 	price_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	slot.add_child(price_lbl)
 
-	var buy_btn := ScreenUI.action_button("Buy", Callable(),
+	var buy_btn := ScreenUI.action_button(Loc.t("shop.buy"), Callable(),
 		Vector2(0, 96) if _compact else Vector2(0, 64), 28 if _compact else 22,
 		ScreenUI.CHROME_CONFIRM)
 	buy_btn.size_flags_horizontal = SIZE_EXPAND_FILL
@@ -172,11 +173,11 @@ func _update_buy_buttons() -> void:
 		var grantable: bool = grant.can_apply()
 		rec["buy_btn"].disabled = rec["bought"] or not affordable or not grantable
 		if rec["bought"]:
-			rec["buy_btn"].text = "Bought"
+			rec["buy_btn"].text = Loc.t("shop.bought")
 		elif not grantable:
-			rec["buy_btn"].text = "Full"   # e.g. relic capacity reached
+			rec["buy_btn"].text = Loc.t("shop.full")   # e.g. relic capacity reached
 		else:
-			rec["buy_btn"].text = "Buy"
+			rec["buy_btn"].text = Loc.t("shop.buy")
 
 
 # ── Remove panel ─────────────────────────────────────────────────────────────
@@ -188,7 +189,7 @@ func _build_remove_panel() -> Control:
 	panel.add_theme_constant_override("separation", 16)
 
 	var label := Label.new()
-	label.text = "  Remove a Card"
+	label.text = "  " + Loc.t("shop.remove_title")
 	label.add_theme_font_size_override("font_size", 28 if _compact else 24)
 	panel.add_child(label)
 
@@ -203,7 +204,7 @@ func _build_remove_panel() -> Control:
 	_remove_status_lbl.add_theme_font_size_override("font_size", 26 if _compact else 22)
 	panel.add_child(_remove_status_lbl)
 
-	_remove_btn = ScreenUI.action_button("Remove (%d Gold)" % REMOVE_COST, _apply_remove,
+	_remove_btn = ScreenUI.action_button(Loc.t("shop.remove_btn", {"n": REMOVE_COST}), _apply_remove,
 		Vector2(0, 120) if _compact else Vector2(0, 84), 30 if _compact else 26,
 		ScreenUI.CHROME_DANGER)
 	_remove_btn.disabled = true
@@ -251,14 +252,14 @@ func _on_deck_card_pressed(entry_idx: int) -> void:
 
 func _update_remove_panel() -> void:
 	if _selected_idx < 0:
-		_remove_status_lbl.text = "Select a card to remove"
+		_remove_status_lbl.text = Loc.t("shop.remove_prompt")
 		_remove_btn.disabled = true
 		return
 	var card_name: String = _deck_entries[_selected_idx].data.display_name
 	var can_afford: bool = GameData.current_run.gold >= REMOVE_COST
-	_remove_status_lbl.text = "Remove %s?" % card_name
+	_remove_status_lbl.text = Loc.t("shop.remove_confirm", {"name": card_name})
 	if not can_afford:
-		_remove_status_lbl.text += "  (not enough gold)"
+		_remove_status_lbl.text += "  " + Loc.t("shop.not_enough_gold")
 	_remove_btn.disabled = not can_afford
 
 

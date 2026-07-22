@@ -2,7 +2,7 @@
 	{
 		"id": "darkness_blessing",
 		"display_name": "Darkness Blessing",
-		"description": "For 2 turns: +1 Attack, +1 Shield, and this unit is treated as a darkness unit.",
+		"description": "For 2 turns: +1 <attack>, +1 <shield>, and this unit is treated as a <darkness> unit.",
 		"beneficial": true,
 		"color": "7a3dcc",
 		"glyph": "◆",

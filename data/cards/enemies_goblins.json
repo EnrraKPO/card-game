@@ -10,7 +10,7 @@
     "id": "goblin_fanatic",
     "display_name": "Goblin Fanatic",
     "cost": 2, "attack": 4, "health": 3, "speed": 4,
-    "description": "Dies screaming â€” the pack flies into a frenzy, gaining +1 Attack.",
+    "description": "Dies screaming â€” the pack flies into a frenzy, gaining +1 <attack>.",
     "enemy_only": true, "tribe": "goblin", "elements": [], "chess_pieces": [],
     "effects": [
       { "trigger": "on_death", "targeting_policy": "all_allies", "attribute": "attack", "amount": 1 }
@@ -30,7 +30,7 @@
     "id": "goblin_warboss",
     "display_name": "Goblin Warboss",
     "cost": 4, "attack": 5, "health": 6, "speed": 3,
-    "description": "Bellows the war-cry, rallying the whole warband with +1 Attack.",
+    "description": "Bellows the war-cry, rallying the whole warband with +1 <attack>.",
     "enemy_only": true, "tribe": "goblin", "elements": [], "chess_pieces": [],
     "effects": [
       { "trigger": "on_play", "targeting_policy": "all_allies", "attribute": "attack", "amount": 1 }

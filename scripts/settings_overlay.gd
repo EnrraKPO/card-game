@@ -53,6 +53,13 @@ func _ready() -> void:
 	_panel.add_theme_stylebox_override("panel", style)
 	center.add_child(_panel)
 
+	_fill_panel()
+	Vfx.play("ui_modal_open_bloom", _panel)   # settles in; the cue carries the modal sound
+
+
+# Builds the panel's contents. Kept separate from _ready so a language switch can rebuild it
+# in place (this overlay is code-built, so re-picking the locale means re-emitting the copy).
+func _fill_panel() -> void:
 	var inner := VBoxContainer.new()
 	# Full design width where it fits, else shrink to the screen (portrait phones) — the rows
 	# are containers, so everything inside tracks the narrower panel.
@@ -61,20 +68,54 @@ func _ready() -> void:
 	_panel.add_child(inner)
 
 	var title := Label.new()
-	title.text = "Settings"
+	title.text = Loc.t("settings.title")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 52)
 	title.add_theme_color_override("font_color", CardTooltip.TEXT_TITLE)
 	inner.add_child(title)
 
-	inner.add_child(_mixer_row("Music", "music"))
-	inner.add_child(_mixer_row("Sound effects", "sfx"))
+	inner.add_child(_language_row())
+	inner.add_child(_mixer_row(Loc.t("settings.music"), "music"))
+	inner.add_child(_mixer_row(Loc.t("settings.sfx"), "sfx"))
 
-	var done := ScreenUI.action_button("Done", _close, Vector2(0, 96), 34)
+	var done := ScreenUI.action_button(Loc.t("settings.done"), _close, Vector2(0, 96), 34)
 	done.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	inner.add_child(done)
 
-	Vfx.play("ui_modal_open_bloom", _panel)   # settles in; the cue carries the modal sound
+
+# Swaps the whole panel body for the newly-selected language (Loc has already switched).
+func _rebuild() -> void:
+	for child in _panel.get_children():
+		_panel.remove_child(child)
+		child.queue_free()
+	_fill_panel()
+
+
+# The language picker: one big highlighted button per shipped language (the active one wears
+# the confirm chrome). Picking a new one flips the locale and rebuilds the panel in place.
+func _language_row() -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 24)
+
+	var name_lbl := Label.new()
+	name_lbl.text = Loc.t("settings.language")
+	name_lbl.add_theme_font_size_override("font_size", 40)
+	name_lbl.add_theme_color_override("font_color", CardTooltip.TEXT_MAIN)
+	name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	row.add_child(name_lbl)
+
+	for lang: String in Loc.LANGS:
+		var active := Loc.locale() == lang
+		var btn := ScreenUI.action_button(Loc.language_name(lang), Callable(), Vector2(220, 84), 28,
+			ScreenUI.CHROME_CONFIRM if active else ScreenUI.CHROME_NEUTRAL)
+		if not active:
+			var pick := lang
+			btn.pressed.connect(func() -> void:
+				Loc.set_locale(pick)
+				_rebuild())
+		row.add_child(btn)
+	return row
 
 
 func _mixer_row(label_text: String, kind: String) -> Control:
@@ -97,10 +138,10 @@ func _mixer_row(label_text: String, kind: String) -> Control:
 		ScreenUI.CHROME_DANGER if AudioSettings.muted(kind) else ScreenUI.CHROME_NEUTRAL)
 	mute.toggle_mode = true
 	mute.button_pressed = AudioSettings.muted(kind)
-	mute.text = "Muted" if AudioSettings.muted(kind) else "Mute"
+	mute.text = Loc.t("settings.muted") if AudioSettings.muted(kind) else Loc.t("settings.mute")
 	mute.toggled.connect(func(on: bool) -> void:
 		AudioSettings.set_muted(kind, on)
-		mute.text = "Muted" if on else "Mute"
+		mute.text = Loc.t("settings.muted") if on else Loc.t("settings.mute")
 		mute.base_color = ScreenUI.CHROME_DANGER if on else ScreenUI.CHROME_NEUTRAL)
 	top.add_child(mute)
 	row.add_child(top)

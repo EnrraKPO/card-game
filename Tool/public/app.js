@@ -860,6 +860,141 @@ async function renderTuningView() {
   }
 }
 
+// ── 🌐 Localization tab: every UI string, one row per key, a column per language ──────
+// English is canonical (its key set governs the files); a blank cell in another language
+// falls back to English in-game, so the English text shows greyed as that cell's placeholder.
+// Edits live in the closure and save together to data/locale/<lang>.json via /api/locale.
+async function renderLocaleView() {
+  const box = $('localization-body');
+  box.replaceChildren(el('div', { class: 'subtle', style: 'padding:20px', text: 'Loading strings…' }));
+  try {
+    const r = await api('/api/locale');
+    const langs = r.langs || ['en', 'es'];
+    const names = r.names || {};
+    const tables = {};
+    for (const lang of langs) tables[lang] = Object.assign({}, r.tables[lang] || {});
+    const view = { filter: '' };
+
+    const keyList = () => {
+      const set = new Set();
+      for (const lang of langs) for (const k of Object.keys(tables[lang])) set.add(k);
+      let keys = [...set].sort();
+      const q = view.filter.trim().toLowerCase();
+      if (q) keys = keys.filter(k => k.toLowerCase().includes(q)
+        || langs.some(lang => String(tables[lang][k] || '').toLowerCase().includes(q)));
+      return keys;
+    };
+
+    let grid;
+    const buildGrid = () => {
+      const keys = keyList();
+      const header = el('div', { class: 'loc-row loc-head' },
+        el('div', { class: 'loc-key', text: 'Key' }),
+        ...langs.map(lang => el('div', { class: 'loc-val', text: names[lang] || lang })),
+        el('div', { class: 'loc-actions' }));
+      const rows = keys.map(k => {
+        const inputs = {};
+        const valCells = langs.map(lang => {
+          const inp = el('input', { type: 'text', value: tables[lang][k] || '',
+            placeholder: lang === 'en' ? '(empty)' : (tables.en[k] || ''),
+            oninput: e => { const v = e.target.value; if (v) tables[lang][k] = v; else delete tables[lang][k]; } });
+          inputs[lang] = inp;
+          return el('div', { class: 'loc-val' }, inp);
+        });
+        // ✨ auto-translate: LLM-fill every non-English cell from the English value.
+        const tbtn = el('button', { class: 'ghost tiny', text: '✨',
+          title: 'Auto-translate the English into the other languages (LLM). <term> and {value} tokens are kept intact.' });
+        tbtn.onclick = async () => {
+          const src = tables.en[k] || '';
+          if (!src.trim()) { toast('Fill in the English first', 'err'); return; }
+          tbtn.disabled = true; tbtn.textContent = '…';
+          for (const lang of langs) {
+            if (lang === 'en') continue;
+            try {
+              const r = await api('/api/locale/translate', { text: src, lang, key: k });
+              if (r.ok && r.translation) { tables[lang][k] = r.translation; inputs[lang].value = r.translation; }
+              else toast('Translate failed: ' + (r.error || '?'), 'err');
+            } catch (e) { toast('Translate failed: ' + e.message, 'err'); }
+          }
+          tbtn.disabled = false; tbtn.textContent = '✨';
+        };
+        const dbtn = el('button', { class: 'ghost tiny', text: '✕', title: 'Delete this key from every language',
+          onclick: () => { for (const lang of langs) delete tables[lang][k]; buildGrid(); } });
+        return el('div', { class: 'loc-row' },
+          el('div', { class: 'loc-key' }, el('code', { text: k })),
+          ...valCells,
+          el('div', { class: 'loc-actions' }, tbtn, dbtn));
+      });
+      const newGrid = el('div', { class: 'loc-grid' }, header, ...rows,
+        keys.length ? null : el('div', { class: 'subtle', style: 'padding:16px', text: 'No strings match.' }));
+      if (grid) grid.replaceWith(newGrid); else grid = newGrid;
+      grid = newGrid;
+    };
+    buildGrid();
+
+    const searchInput = el('input', { type: 'search', placeholder: 'Filter keys or text…', style: 'width:260px',
+      oninput: e => { view.filter = e.target.value; buildGrid(); } });
+    const newKeyInput = el('input', { type: 'text', placeholder: 'new.key.name', style: 'width:240px' });
+    const addKey = () => {
+      const k = newKeyInput.value.trim();
+      if (!k) return;
+      if (!/^[a-z0-9_.]+$/.test(k)) { toast('Keys use lowercase words, dots and underscores only', 'err'); return; }
+      if (!tables.en[k]) tables.en[k] = '';
+      newKeyInput.value = '';
+      view.filter = ''; searchInput.value = '';
+      buildGrid();
+    };
+    newKeyInput.addEventListener('keydown', e => { if (e.key === 'Enter') addKey(); });
+
+    // Bulk ✨: LLM-fill every blank non-English cell across the CURRENTLY FILTERED rows, so the
+    // filter scopes the batch (e.g. search "shop." then fill just those).
+    const bulkBtn = el('button', { class: 'ghost', text: '✨ Fill empties',
+      title: 'LLM-translate every blank cell in the currently filtered rows' });
+    bulkBtn.onclick = async () => {
+      const jobs = [];
+      for (const k of keyList()) {
+        if (!(tables.en[k] || '').trim()) continue;
+        for (const lang of langs) if (lang !== 'en' && !(tables[lang][k] || '').trim()) jobs.push([k, lang]);
+      }
+      if (!jobs.length) { toast('No empty cells in the filtered rows', 'ok'); return; }
+      if (!confirm(`Auto-translate ${jobs.length} empty cell(s) with the LLM?`)) return;
+      bulkBtn.disabled = true;
+      let done = 0, failed = 0;
+      for (const [k, lang] of jobs) {
+        try {
+          const r = await api('/api/locale/translate', { text: tables.en[k], lang, key: k });
+          if (r.ok && r.translation) { tables[lang][k] = r.translation; done++; } else failed++;
+        } catch { failed++; }
+        if ((done + failed) % 10 === 0) toast(`Translating… ${done + failed}/${jobs.length}`, 'ok');
+      }
+      bulkBtn.disabled = false;
+      buildGrid();
+      toast(`Translated ${done}/${jobs.length}${failed ? ` (${failed} failed)` : ''} — review, then Save`, failed ? 'err' : 'ok');
+    };
+
+    box.replaceChildren(
+      el('div', { class: 'panel tuning-section' },
+        el('h2', {}, '🌐 Localization'),
+        el('div', { class: 'hint', text: 'Every UI string, one row per key. English is canonical — a blank cell in '
+          + 'another language falls back to the English text (shown greyed as the placeholder). Use {name} for values '
+          + 'filled in at runtime. Saves to data/locale/<lang>.json — restart the game to apply.' }),
+        el('div', { class: 'loc-toolbar' },
+          searchInput,
+          bulkBtn,
+          el('div', { style: 'flex:1' }),
+          newKeyInput,
+          el('button', { class: 'ghost', text: '+ Add key', onclick: addKey })),
+        grid,
+        el('div', { class: 'modal-actions' },
+          el('button', { class: 'primary', text: 'Save to game', onclick: async () => {
+            try { await api('/api/locale', { tables }); toast('Localization saved — restart the game to apply', 'ok'); }
+            catch (err) { toast('Save failed: ' + err.message, 'err'); }
+          } }))));
+  } catch (err) {
+    box.replaceChildren(el('div', { class: 'subtle', style: 'padding:20px', text: 'Failed to load localization: ' + err.message }));
+  }
+}
+
 // The bulk entry point: confirm + pick adherence, then start the server-side job.
 function openInferBatchModal(file) {
   const cfg = { adherence: kinDefault(), overwrite: false };
@@ -1122,10 +1257,10 @@ function attachInferPoll(file, jobId) {
 }
 
 // ── sidebar ──────────────────────────────────────────────────────────────────
-const TAB_ORDER = ['card', 'relic', 'status', 'ability', 'charm', 'upgrade', 'encounter', 'nodeweights', 'sound', 'vfx', 'render_filter', 'tuning'];
+const TAB_ORDER = ['card', 'relic', 'status', 'ability', 'charm', 'upgrade', 'encounter', 'nodeweights', 'sound', 'vfx', 'render_filter', 'tuning', 'localization'];
 const TAB_LABELS = { card: '🃏 Cards', relic: '🏺 Relics', status: '☠ Statuses', ability: '✨ Abilities',
   charm: '🔮 Charms', upgrade: '🌳 Upgrades', encounter: '⚔ Encounters', nodeweights: '🗺 Map Nodes',
-  sound: '🔊 Sounds', vfx: '🎇 VFX', render_filter: '🔆 Filters', tuning: '🎛 Tuning' };
+  sound: '🔊 Sounds', vfx: '🎇 VFX', render_filter: '🔆 Filters', tuning: '🎛 Tuning', localization: '🌐 Localization' };
 
 // The ⚔ Encounters tab is the ENEMY HUB: tribes + enemy units (by tribe) + encounter
 // templates share its sidebar. Selecting a tribe or an enemy unit flips state.currentType
@@ -1326,9 +1461,10 @@ function renderEnemyHubList() {
 }
 
 function renderItemList() {
-  // The Tuning tab is a single full-width view of global config — no item list at all.
-  $('sidebar').hidden = state.currentType === 'tuning';
-  if (state.currentType === 'tuning') return;
+  // The Tuning and Localization tabs are single full-width views — no item list at all.
+  const fullWidth = state.currentType === 'tuning' || state.currentType === 'localization';
+  $('sidebar').hidden = fullWidth;
+  if (fullWidth) return;
   // The ⚔ Encounters tab renders the enemy hub instead of a single-type list.
   if (state.currentType === 'encounter' || state.currentType === 'tribe' || inEnemyHub()) {
     renderEnemyHubList();
@@ -1548,14 +1684,19 @@ function clientDeployPreview(type, serialized) {
 }
 
 function renderEditor() {
-  const empty = $('editor-empty'), body = $('editor-body'), tuning = $('tuning-body');
+  const empty = $('editor-empty'), body = $('editor-body'), tuning = $('tuning-body'), locale = $('localization-body');
   if (state.currentType === 'tuning') {
-    empty.hidden = true; body.hidden = true;
+    empty.hidden = true; body.hidden = true; locale.hidden = true;
     // only (re)load on entry — background re-renders must not clobber in-progress edits
     if (tuning.hidden) { tuning.hidden = false; renderTuningView(); }
     return;
   }
-  tuning.hidden = true;
+  if (state.currentType === 'localization') {
+    empty.hidden = true; body.hidden = true; tuning.hidden = true;
+    if (locale.hidden) { locale.hidden = false; renderLocaleView(); }
+    return;
+  }
+  tuning.hidden = true; locale.hidden = true;
   if (!state.draft) { empty.hidden = false; body.hidden = true; renderEmptyKinPanel(); return; }
   empty.hidden = true; body.hidden = false;
   const ed = EDITORS[state.currentType];

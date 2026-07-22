@@ -2,7 +2,7 @@
 	{
 		"id": "battle_standard",
 		"display_name": "Battle Standard",
-		"description": "Your units have +1 Attack.",
+		"description": "Your units have +1 <attack>.",
 		"color": "d98032",
 		"letter": "A",
 		"price": 90,
@@ -35,7 +35,7 @@
 	{
 		"id": "iron_aegis",
 		"display_name": "Iron Aegis",
-		"description": "Your units have +1 Health.",
+		"description": "Your units have +1 <health>.",
 		"color": "5fae4f",
 		"letter": "H",
 		"price": 90,
@@ -68,7 +68,7 @@
 	{
 		"id": "mana_font",
 		"display_name": "Mana Font",
-		"description": "Gain +1 mana every turn.",
+		"description": "Gain +1 <mana> every turn.",
 		"color": "5f8fd9",
 		"letter": "M",
 		"price": 110,
@@ -116,7 +116,7 @@
 	{
 		"id": "crown_of_vigor",
 		"display_name": "Crown of Vigor",
-		"description": "Your King has +10 maximum Health.",
+		"description": "Your <king> has +10 maximum <health>.",
 		"color": "d9b94f",
 		"letter": "K",
 		"price": 100,
@@ -167,7 +167,7 @@
 	{
 		"id": "war_drums",
 		"display_name": "War Drums",
-		"description": "When one of your units attacks, your other units gain +1 Attack for the rest of combat.",
+		"description": "When one of your units attacks, your other units gain +1 <attack> for the rest of combat.",
 		"color": "c2603a",
 		"letter": "W",
 		"price": 120,
@@ -183,7 +183,7 @@
 	{
 		"id": "pollution_drain",
 		"display_name": "Pollution Drain",
-		"description": "Whenever an allied water or darkness unit is attacked, the attacker gets 1 Poison.",
+		"description": "Whenever an allied <water> or <darkness> unit is attacked, the attacker gets 1 Poison.",
 		"color": "5a8f3a",
 		"letter": "P",
 		"price": 90,
@@ -207,7 +207,7 @@
 	{
 		"id": "blinding_ward",
 		"display_name": "Blinding Ward",
-		"description": "Whenever an enemy attacks, or is attacked by a light unit, it gets 1 Blind.",
+		"description": "Whenever an enemy attacks, or is attacked by a <light> unit, it gets 1 Blind.",
 		"color": "5a6a9f",
 		"letter": "B",
 		"price": 100,
@@ -261,7 +261,7 @@
 	{
 		"id": "menders_charm",
 		"display_name": "Mender's Charm",
-		"description": "Your healing effects restore +1 Health.",
+		"description": "Your healing effects restore +1 <health>.",
 		"color": "6fce8f",
 		"letter": "+",
 		"price": 100,
@@ -342,7 +342,7 @@
 	{
 		"id": "reapers_ledger",
 		"display_name": "Reaper's Ledger",
-		"description": "Whenever one of your darkness units is destroyed, draw a card.",
+		"description": "Whenever one of your <darkness> units is destroyed, draw a card.",
 		"color": "6a4a8f",
 		"letter": "R",
 		"price": 100,
@@ -392,7 +392,7 @@
 	{
 		"id": "septic_ward",
 		"display_name": "Septic Ward",
-		"description": "Whenever a unit dies from poison, a random ally gains +1 Shield.",
+		"description": "Whenever a unit dies from poison, a random ally gains +1 <shield>.",
 		"color": "5a8f3a",
 		"letter": "S",
 		"price": 100,
@@ -421,7 +421,7 @@
 	{
 		"id": "zephyr_charm",
 		"display_name": "Zephyr Charm",
-		"description": "Whenever an allied air unit dodges an attack, it gains a Barrier.",
+		"description": "Whenever an allied <air> unit dodges an attack, it gains a Barrier.",
 		"color": "7ec8c0",
 		"letter": "Z",
 		"price": 100,
@@ -456,7 +456,7 @@
 	{
 		"id": "gale_sigil",
 		"display_name": "Gale Sigil",
-		"description": "All your air units get +25% Dodge.",
+		"description": "All your <air> units get +25% Dodge.",
 		"color": "6fb7d6",
 		"letter": "G",
 		"price": 110,
@@ -478,7 +478,7 @@
 	{
 		"id": "cyclone_totem",
 		"display_name": "Cyclone Totem",
-		"description": "Your air units have 3x Dodge rate.",
+		"description": "Your <air> units have 3x Dodge rate.",
 		"color": "4fc7c9",
 		"letter": "C",
 		"price": 140,
@@ -525,7 +525,7 @@
 	{
 		"id": "berserkers_momentum",
 		"display_name": "Berserker's Momentum",
-		"description": "Whenever an allied fire unit lands a critical hit, it gains 1 Attack.",
+		"description": "Whenever an allied <fire> unit lands a critical hit, it gains 1 <attack>.",
 		"color": "d9502f",
 		"letter": "B",
 		"price": 110,
@@ -558,7 +558,7 @@
 	{
 		"id": "eagle_eye_charm",
 		"display_name": "Eagle-Eye Charm",
-		"description": "All your air units get +25% Crit chance.",
+		"description": "All your <air> units get +25% Crit chance.",
 		"color": "c9a13a",
 		"letter": "E",
 		"price": 110,
@@ -580,7 +580,7 @@
 	{
 		"id": "warlords_fury",
 		"display_name": "Warlord's Fury",
-		"description": "Your fire units have 3x Crit chance.",
+		"description": "Your <fire> units have 3x Crit chance.",
 		"color": "c9502f",
 		"letter": "W",
 		"price": 140,
@@ -627,7 +627,7 @@
 	{
 		"id": "executioners_edge",
 		"display_name": "Executioner's Edge",
-		"description": "Your darkness units' critical hits deal +50% damage.",
+		"description": "Your <darkness> units' critical hits deal +50% damage.",
 		"color": "5a2a6b",
 		"letter": "X",
 		"price": 120,

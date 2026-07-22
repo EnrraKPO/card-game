@@ -2,7 +2,7 @@
 	{
 		"id": "water_blessing",
 		"display_name": "Water Blessing",
-		"description": "For 2 turns: +2 Max HP (and heals 2 Health on application), and this unit is treated as a water unit.",
+		"description": "For 2 turns: +2 Max <hp> (and heals 2 <health> on application), and this unit is treated as a <water> unit.",
 		"beneficial": true,
 		"color": "2f9dff",
 		"glyph": "◆",

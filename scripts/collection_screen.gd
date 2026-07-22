@@ -81,7 +81,7 @@ func _authored_by_composition() -> Dictionary:
 # ── Build ────────────────────────────────────────────────────────────────────────────────
 
 func get_chrome() -> Dictionary:
-	return {"title": "Collection", "exit": _on_back, "show_footer": true}
+	return {"title": Loc.t("collection.title"), "exit": _on_back, "show_footer": true}
 
 
 func _build_ui() -> void:
@@ -156,13 +156,13 @@ func _build_catalogue() -> void:
 		var tile := _tile(label, art_id, path, has_art)
 		_grid.add_child(tile)
 		_tiles.append({"ctrl": tile, "has_art": has_art})
-	_summary.text = "Art: %d / %d   " % [with_art, keys.size()]
+	_summary.text = Loc.t("collection.art_count", {"n": with_art, "total": keys.size()})
 
 
 func _tile(label: String, art_id: String, path: String, has_art: bool) -> Control:
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 1)
-	UIScale.tip(v, "%s\n%s.png%s" % [label, art_id, "" if has_art else "  (missing)"])
+	UIScale.tip(v, "%s\n%s.png%s" % [label, art_id, "" if has_art else "  " + Loc.t("collection.missing")])
 
 	var tex := TextureRect.new()
 	tex.texture = load(path) if has_art else _placeholder
@@ -183,7 +183,7 @@ func _tile(label: String, art_id: String, path: String, has_art: bool) -> Contro
 	v.add_child(id_lbl)
 
 	var tag := Label.new()
-	tag.text = "art" if has_art else "missing"
+	tag.text = Loc.t("collection.tag_art") if has_art else Loc.t("collection.tag_missing")
 	tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	tag.add_theme_font_size_override("font_size", 15 if _compact else 10)
 	tag.add_theme_color_override("font_color",

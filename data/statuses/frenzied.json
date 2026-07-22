@@ -1,7 +1,7 @@
 {
   "id": "frenzied",
   "display_name": "Frenzied",
-  "description": "Whipped into a killing fever: +1 Attack and +1 Speed per stack.",
+  "description": "Whipped into a killing fever: +1 <attack> and +1 <speed> per stack.",
   "beneficial": true,
   "color": "d1442e",
   "glyph": "!",

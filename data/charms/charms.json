@@ -1,17 +1,17 @@
 [
-  { "id": "sharpened", "display_name": "Sharpened", "description": "+2 Attack.",
+  { "id": "sharpened", "display_name": "Sharpened", "description": "+2 <attack>.",
     "color": "d98032", "letter": "A", "stats": { "attack": 2 } },
 
-  { "id": "sturdy", "display_name": "Sturdy", "description": "+3 Health.",
+  { "id": "sturdy", "display_name": "Sturdy", "description": "+3 <health>.",
     "color": "5fae4f", "letter": "H", "stats": { "health": 3 } },
 
-  { "id": "swift", "display_name": "Swift", "description": "+2 Speed.",
+  { "id": "swift", "display_name": "Swift", "description": "+2 <speed>.",
     "color": "5fb3d9", "letter": "S", "stats": { "speed": 2 } },
 
-  { "id": "warded", "display_name": "Warded", "description": "Starts each round with +2 Shield.",
+  { "id": "warded", "display_name": "Warded", "description": "Starts each round with +2 <shield>.",
     "color": "5f8fd9", "letter": "D", "stats": { "shield": 2 } },
 
-  { "id": "vampiric", "display_name": "Vampiric", "description": "Heals 1 Health whenever this unit attacks.",
+  { "id": "vampiric", "display_name": "Vampiric", "description": "Heals 1 <health> whenever this unit attacks.",
     "color": "b03052", "letter": "V",
     "effects": [ { "trigger": "on_attack", "targeting_policy": "self", "attribute": "health", "amount": 1 } ] },
 
@@ -19,7 +19,7 @@
     "color": "8a6f4f", "letter": "T",
     "effects": [ { "trigger": "on_damage_taken", "targeting_policy": "single_nearest", "attribute": "damage_taken", "amount": 2 } ] },
 
-  { "id": "rallying", "display_name": "Rallying", "description": "When played, all allies gain +1 Attack.",
+  { "id": "rallying", "display_name": "Rallying", "description": "When played, all allies gain +1 <attack>.",
     "color": "d9b94f", "letter": "R", "targets": "any",
     "effects": [ { "trigger": "on_play", "targeting_policy": "all_allies", "attribute": "attack", "amount": 1 } ] }
 ]

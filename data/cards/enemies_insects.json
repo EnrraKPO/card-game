@@ -48,7 +48,7 @@
     "id": "insect_locust",
     "display_name": "Locust Chorus",
     "cost": 3, "attack": 2, "health": 3, "speed": 3,
-    "description": "The hum gets into everything: allied units move +1 Speed while the chorus lives.",
+    "description": "The hum gets into everything: allied units move +1 <speed> while the chorus lives.",
     "enemy_only": true, "tribe": "insect", "elements": [], "chess_pieces": [],
     "effects": [
       { "trigger": { "kind": "while" }, "targets": { "kind": "all", "conditions": [ { "allegiance": "ally" } ] },

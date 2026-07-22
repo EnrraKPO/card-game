@@ -34,7 +34,7 @@ func _ready() -> void:
 
 
 func get_chrome() -> Dictionary:
-	return {"title": "Decks", "exit": func(): Nav.goto("res://scenes/game_world.tscn"),
+	return {"title": Loc.t("deck_screen.title"), "exit": func(): Nav.goto("res://scenes/game_world.tscn"),
 		"show_footer": true}
 
 
@@ -51,13 +51,13 @@ func _build_ui() -> void:
 	_build_king_picker()
 
 	_confirm_reset = ConfirmationDialog.new()
-	_confirm_reset.title = "Reset deck"
+	_confirm_reset.title = Loc.t("deck_screen.reset_title")
 	_confirm_reset.confirmed.connect(_do_reset)
 	ScreenUI.wire_modal_cues(_confirm_reset)
 	add_child(_confirm_reset)
 
 	_confirm_delete = ConfirmationDialog.new()
-	_confirm_delete.title = "Delete deck"
+	_confirm_delete.title = Loc.t("deck_screen.delete_title")
 	_confirm_delete.confirmed.connect(_do_delete)
 	ScreenUI.wire_modal_cues(_confirm_delete)
 	add_child(_confirm_delete)
@@ -111,13 +111,13 @@ func _build_preview_pane() -> Control:
 
 	_set_active_btn = _make_action_button("", _on_set_active, ScreenUI.CHROME_NEUTRAL)
 	actions.add_child(_set_active_btn)
-	_view_btn = _make_action_button("View Deck →", _on_view_deck, ScreenUI.CHROME_NEUTRAL)
+	_view_btn = _make_action_button(Loc.t("deck_screen.view"), _on_view_deck, ScreenUI.CHROME_NEUTRAL)
 	actions.add_child(_view_btn)
-	_edit_btn = _make_action_button("Edit Deck →", _on_edit_deck, ScreenUI.CHROME_NEUTRAL)
+	_edit_btn = _make_action_button(Loc.t("deck_screen.edit"), _on_edit_deck, ScreenUI.CHROME_NEUTRAL)
 	actions.add_child(_edit_btn)
-	_reset_btn = _make_action_button("Reset", _on_reset, ScreenUI.CHROME_DANGER)
+	_reset_btn = _make_action_button(Loc.t("deck_screen.reset"), _on_reset, ScreenUI.CHROME_DANGER)
 	actions.add_child(_reset_btn)
-	_delete_btn = _make_action_button("Delete", _on_delete, ScreenUI.CHROME_DANGER)
+	_delete_btn = _make_action_button(Loc.t("common.delete"), _on_delete, ScreenUI.CHROME_DANGER)
 	actions.add_child(_delete_btn)
 	return panel
 
@@ -145,7 +145,7 @@ func _build_king_picker() -> void:
 	_king_picker.add_child(pad)
 
 	var prompt := Label.new()
-	prompt.text = "New deck for which King?"
+	prompt.text = Loc.t("deck_screen.new_deck_prompt")
 	prompt.add_theme_font_size_override("font_size", 28 if _compact else 18)
 	prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(prompt)
@@ -158,7 +158,7 @@ func _build_king_picker() -> void:
 			26 if _compact else 16, ScreenUI.CHROME_NEUTRAL)
 		box.add_child(btn)
 
-	var cancel := ScreenUI.action_button("Cancel", func(): _king_picker.visible = false,
+	var cancel := ScreenUI.action_button(Loc.t("common.cancel"), func(): _king_picker.visible = false,
 		Vector2(0, 64) if _compact else Vector2.ZERO, 22 if _compact else 14, ScreenUI.CHROME_NEUTRAL)
 	box.add_child(cancel)
 
@@ -206,9 +206,9 @@ func _make_deck_tile(od: OwnedDeck, ordinal: int) -> Control:
 
 	var badge_text := ""
 	if od.id == GameData.current_profile.selected_deck_id:
-		badge_text = "√ ACTIVE"
+		badge_text = Loc.t("deck_screen.badge_active")
 	if ordinal > 1:
-		badge_text += ("   " if not badge_text.is_empty() else "") + "(%d)" % ordinal
+		badge_text += ("   " if not badge_text.is_empty() else "") + Loc.t("deck_screen.ordinal", {"n": ordinal})
 	if not badge_text.is_empty():
 		var badge := Label.new()
 		badge.text = badge_text
@@ -227,7 +227,7 @@ func _make_deck_tile(od: OwnedDeck, ordinal: int) -> Control:
 
 # A card-shaped "+ New Deck" tile sitting in the grid alongside the decks.
 func _make_new_deck_tile() -> Control:
-	var btn := ScreenUI.action_button("+\nNew Deck", func(): _king_picker.visible = true,
+	var btn := ScreenUI.action_button(Loc.t("deck_screen.new_deck"), func(): _king_picker.visible = true,
 		Vector2.ZERO, 22 if _compact else 16, ScreenUI.CHROME_NEUTRAL)
 	btn.size_flags_horizontal = SIZE_FILL
 	btn.size_flags_vertical = SIZE_FILL
@@ -270,15 +270,15 @@ func _update_preview() -> void:
 		return
 
 	var is_active := od.id == GameData.current_profile.selected_deck_id
-	_preview_title.text = "%s  ·  %d cards%s" % [
-		DeckUI.deck_label(od, _previewed_ordinal(od)), od.cards.size(),
-		"   (active)" if is_active else ""]
+	_preview_title.text = Loc.t("deck_screen.preview_title", {
+		"name": DeckUI.deck_label(od, _previewed_ordinal(od)), "n": od.cards.size(),
+		"suffix": Loc.t("deck_screen.active_suffix") if is_active else ""})
 	_preview_grid.set_cards(DeckUI.deck_cards(od))
 
 	# "√" not "✓" — the bundled button font (Baloo2-ExtraBold) has no glyph for U+2713 at all,
 	# which renders broken on web/mobile builds (no reliable system-font fallback there); see
 	# ScreenUI.CLOSE_GLYPH for the same issue on the header's close button.
-	_set_active_btn.text = "Active √" if is_active else "Set as Active"
+	_set_active_btn.text = Loc.t("deck_screen.active") if is_active else Loc.t("deck_screen.set_active")
 	_set_active_btn.disabled = is_active
 	_view_btn.disabled = false
 	_edit_btn.disabled = false
@@ -306,8 +306,8 @@ func _on_reset() -> void:
 	var od := _previewed_deck()
 	if od == null:
 		return
-	_confirm_reset.dialog_text = "Reset \"%s\" to its default King template? Any customisation is lost." \
-		% DeckUI.deck_label(od, _previewed_ordinal(od))
+	_confirm_reset.dialog_text = Loc.t("deck_screen.reset_confirm",
+		{"name": DeckUI.deck_label(od, _previewed_ordinal(od))})
 	_confirm_reset.popup_centered()
 
 
@@ -324,8 +324,8 @@ func _on_delete() -> void:
 	var od := _previewed_deck()
 	if od == null or not GameData.current_profile.can_delete_deck(od.id):
 		return
-	_confirm_delete.dialog_text = "Delete \"%s\"? This can't be undone." \
-		% DeckUI.deck_label(od, _previewed_ordinal(od))
+	_confirm_delete.dialog_text = Loc.t("deck_screen.delete_confirm",
+		{"name": DeckUI.deck_label(od, _previewed_ordinal(od))})
 	_confirm_delete.popup_centered()
 
 

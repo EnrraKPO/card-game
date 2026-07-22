@@ -478,6 +478,21 @@ function getGameAttrs() {
   return out;
 }
 
+// ── localization (UI string tables) ──────────────────────────────────────────
+// The game's localized copy (scripts/loc.gd): one flat dict of dotted key → string per
+// shipped language, in data/locale/<lang>.json. English is the canonical table (every key
+// lives there); other languages may leave a key out to fall back to English. The Tool's 🌐
+// Localization tab edits every table side by side.
+const LOCALE_DIR = path.join(GAME_ROOT, 'data/locale');
+const LOCALE_LANGS = ['en', 'es'];
+const LOCALE_NAMES = { en: 'English', es: 'Español' };
+function getLocale() {
+  const tables = {};
+  for (const lang of LOCALE_LANGS)
+    tables[lang] = readJson(path.join(LOCALE_DIR, lang + '.json'), {}) || {};
+  return tables;
+}
+
 function getCombatTuning() {
   const d = readJson(COMBAT_TUNING_PATH, {}) || {};
   return {
@@ -2024,6 +2039,31 @@ async function llmGenerate(body) {
     case 'openai':      return openaiGenerate(body);
     default:            return ollamaGenerate(body);
   }
+}
+
+// ── LLM translation (🌐 Localization tab) ────────────────────────────────────
+// Translates one English UI string into a target language, routed through the same
+// provider as every other ✨ feature. The prompt is strict about leaving the two token
+// classes UNTOUCHED: <id> term markup (resolves to an icon/glossary word at runtime) and
+// {name} placeholders (runtime values) — translating either would break rendering.
+async function llmTranslate(text, lang, langName, key) {
+  const sys =
+    `You are a professional video-game UI translator. Translate the English string into ${langName} ` +
+    `(locale "${lang}"). This is short game interface copy — match that concise, punchy register.\n` +
+    `Rules, all mandatory:\n` +
+    `- Output ONLY the translated string. No quotes, no notes, no alternatives, no explanation.\n` +
+    `- Leave EVERY <word> token exactly as-is, unchanged and in the same position (they are game-term icons).\n` +
+    `- Leave EVERY {word} token exactly as-is (they are runtime values substituted later).\n` +
+    `- Preserve leading/trailing spaces and symbols such as → · ‹ › — and the general punctuation.\n` +
+    `- If the string is already language-neutral (a proper noun, a number, a bare symbol), return it unchanged.`;
+  const user = `Translation key (for context only): ${key}\nEnglish: ${text}\n${langName}:`;
+  const out = await llmGenerate({ system: sys, prompt: user, options: { temperature: 0.2, num_predict: 300 } });
+  let s = String(out.response || '').trim();
+  // Some models echo a leading "Spanish:" label or wrap the answer in quotes/fences — strip those.
+  s = s.replace(/^```[^\n]*\n?|\n?```$/g, '').trim();
+  s = s.replace(new RegExp('^' + langName + '\\s*[:\\-]\\s*', 'i'), '').trim();
+  if (s.length >= 2 && /^["'“](.*)["'”]$/s.test(s)) s = s.replace(/^["'“]|["'”]$/g, '').trim();
+  return s;
 }
 
 // One vision generation with the multi-image crash fallback. Some model runners
@@ -3807,6 +3847,43 @@ async function handle(req, res) {
       };
       writeJson(ECONOMY_PATH, out);
       return send(res, 200, { ok: true, config: out });
+    }
+    if (p === '/api/locale' && req.method === 'GET')
+      return send(res, 200, { ok: true, langs: LOCALE_LANGS, names: LOCALE_NAMES, tables: getLocale() });
+    if (p === '/api/locale/translate' && req.method === 'POST') {
+      const body = await readBody(req);
+      const text = String(body.text || '');
+      const lang = String(body.lang || '');
+      if (!text.trim() || !LOCALE_LANGS.includes(lang) || lang === 'en')
+        return send(res, 200, { ok: false, error: 'need non-empty text and a non-English target language' });
+      try {
+        const translation = await llmTranslate(text, lang, LOCALE_NAMES[lang] || lang, String(body.key || ''));
+        return send(res, 200, { ok: !!translation, translation, error: translation ? '' : 'empty result' });
+      } catch (e) {
+        return send(res, 200, { ok: false, error: e.message });
+      }
+    }
+    if (p === '/api/locale' && req.method === 'POST') {
+      // English is canonical: its key set (sorted) governs every file. Other languages keep
+      // only their non-empty translations — an absent/blank key falls back to English in-game.
+      const body = await readBody(req);
+      const tables = (body && body.tables) || {};
+      const en = (tables.en && typeof tables.en === 'object') ? tables.en : getLocale().en;
+      const keys = Object.keys(en).filter(k => typeof k === 'string' && k.length).sort();
+      const enOut = {};
+      for (const k of keys) enOut[k] = String(en[k] == null ? '' : en[k]);
+      writeJson(path.join(LOCALE_DIR, 'en.json'), enOut);
+      for (const lang of LOCALE_LANGS) {
+        if (lang === 'en') continue;
+        const src = (tables[lang] && typeof tables[lang] === 'object') ? tables[lang] : {};
+        const out = {};
+        for (const k of keys) {
+          const v = src[k];
+          if (typeof v === 'string' && v.length) out[k] = v;
+        }
+        writeJson(path.join(LOCALE_DIR, lang + '.json'), out);
+      }
+      return send(res, 200, { ok: true, tables: getLocale() });
     }
     if (p === '/api/game-attributes' && req.method === 'GET')
       return send(res, 200, { ok: true, config: getGameAttrs() });

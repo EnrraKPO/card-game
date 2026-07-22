@@ -101,7 +101,8 @@ static func experience_bar(profile: ProfileData, compact: bool = false) -> Contr
 
 	var pts := profile.upgrade_points
 	var header := Label.new()
-	header.text = "Experience   ·   %d upgrade point%s" % [pts, "" if pts == 1 else "s"]
+	header.text = Loc.t("screen_ui.exp_header_one") if pts == 1 \
+		else Loc.t("screen_ui.exp_header_many", {"n": pts})
 	header.add_theme_font_size_override("font_size", 20 if compact else 15)
 	box.add_child(header)
 
@@ -114,7 +115,7 @@ static func experience_bar(profile: ProfileData, compact: bool = false) -> Contr
 	box.add_child(bar)
 
 	var sub := Label.new()
-	sub.text = "%d / %d to next point" % [profile.experience, ProfileData.EXP_PER_UPGRADE_POINT]
+	sub.text = Loc.t("screen_ui.exp_to_next", {"cur": profile.experience, "max": ProfileData.EXP_PER_UPGRADE_POINT})
 	sub.add_theme_font_size_override("font_size", 14 if compact else 11)
 	sub.add_theme_color_override("font_color", Color("5a4a38"))   # muted warm brown — this widget
 															 # sits directly on the light app
@@ -136,13 +137,14 @@ static func experience_bar_compact(profile: ProfileData, compact: bool = false, 
 	if expand:
 		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var pts := profile.upgrade_points
-	var tip := "Experience — %d / %d to the next upgrade point" % [profile.experience, ProfileData.EXP_PER_UPGRADE_POINT]
+	var tip := Loc.t("screen_ui.exp_tip", {"cur": profile.experience, "max": ProfileData.EXP_PER_UPGRADE_POINT})
 	if pts > 0:
-		tip += "\n%d upgrade point%s available — spend them at the hub." % [pts, "" if pts == 1 else "s"]
+		tip += "\n" + (Loc.t("screen_ui.exp_tip_points_one") if pts == 1 \
+			else Loc.t("screen_ui.exp_tip_points_many", {"n": pts}))
 	UIScale.tip(row, tip)
 
 	var tag := Label.new()
-	tag.text = "EXP"
+	tag.text = Loc.t("screen_ui.exp_tag")
 	tag.add_theme_font_size_override("font_size", 18 if compact else 15)
 	tag.add_theme_color_override("font_color", Color("6b5636"))   # sits on the header_chip's cream
 																	# capsule (ScreenUI.SURFACE_DEEP)
@@ -250,7 +252,7 @@ static func build_header() -> Dictionary:
 	gear.icon = preload("res://assets/ui/icons/settings.png")
 	gear.expand_icon = true
 	gear.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	UIScale.tip(gear, "Settings")
+	UIScale.tip(gear, Loc.t("settings.title"))
 	gear.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(gear)
 
@@ -300,20 +302,20 @@ static func _build_field(key: int) -> Dictionary:
 			act.add_theme_font_size_override("font_size", 34 if compact else 22)
 			act.add_theme_color_override("font_color", TEXT_COLOR)   # not in a dark chip
 			act.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-			GameSignals.act_changed.connect(func(a: int) -> void: act.text = "Act %d" % a)
+			GameSignals.act_changed.connect(func(a: int) -> void: act.text = Loc.t("screen_ui.act", {"n": a}))
 			return {"widget": act, "ref": act}
 		Field.HP:
-			var hp := stat("HP", "", Color("1f7a35"))
+			var hp := stat(Loc.t("screen_ui.hp"), "", Color("1f7a35"))
 			GameSignals.hp_changed.connect(func(cur: int, mx: int) -> void: _refresh_stat(hp, "%d / %d" % [cur, mx]))
 			return {"widget": hp, "ref": hp}
 		Field.GOLD:
-			var gold := stat("Gold", "", Color("9c7a10"))
+			var gold := stat(Loc.t("screen_ui.gold"), "", Color("9c7a10"))
 			GameSignals.gold_changed.connect(func(v: int) -> void: _refresh_stat(gold, str(v)))
 			return {"widget": gold, "ref": gold}
 		Field.MINERAL:
 			# Magic Mineral — the run's forge-merge resource (a darker cut of Materials'
 			# arcane teal, so the chip tag reads at header scale like Gold's does).
-			var mineral := stat("Mineral", "", Color("1e6e5c"))
+			var mineral := stat(Loc.t("screen_ui.mineral"), "", Color("1e6e5c"))
 			GameSignals.mineral_changed.connect(func(v: int) -> void: _refresh_stat(mineral, str(v)))
 			return {"widget": mineral, "ref": mineral}
 		Field.RELICS:
@@ -337,7 +339,7 @@ static func sync_field(key: int, widget: Control) -> void:
 	match key:
 		Field.ACT:
 			if run != null:
-				(widget as Label).text = "Act %d" % run.act
+				(widget as Label).text = Loc.t("screen_ui.act", {"n": run.act})
 		Field.HP:
 			if run != null:
 				_refresh_stat(widget, "%d / %d" % [run.king_health(), run.king_max_health()])
@@ -487,7 +489,7 @@ static func close_button(action: Callable, debug: bool = false) -> Button:
 	var min_size := Vector2(side, side)
 	var btn := action_button(CLOSE_GLYPH, action, min_size, 32,
 		CHROME_DEBUG if debug else CHROME_NEUTRAL)
-	UIScale.tip(btn, "Close")
+	UIScale.tip(btn, Loc.t("common.close"))
 	btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	return btn
 
@@ -507,7 +509,7 @@ static func footer_button(text: String, action: Callable) -> Button:
 
 # The standard bottom-left "Back" button — just the common case of footer_button().
 static func back_button(action: Callable) -> Button:
-	return footer_button("‹ Back", action)
+	return footer_button(Loc.t("common.back"), action)
 
 
 # THE footer bar shell — a PanelContainer wrapping a padded HBoxContainer, the same fixed height

@@ -20,11 +20,11 @@ func _deck() -> OwnedDeck:
 
 func get_chrome() -> Dictionary:
 	var od := _deck()
-	var title := "Deck"
+	var title := Loc.t("deck_view.title_fallback")
 	if od != null:
 		var king := CardData.get_card(od.king_id)
 		var king_name: String = king.display_name if king != null else od.king_id
-		title = "%s  ·  %d cards" % [king_name, od.cards.size()]
+		title = Loc.t("deck_view.title", {"name": king_name, "n": od.cards.size()})
 	return {"title": title, "exit": func(): Nav.goto("res://scenes/deck_screen.tscn"),
 		"show_footer": true}
 

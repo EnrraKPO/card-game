@@ -30,7 +30,7 @@
     "id": "fb_mascot",
     "display_name": "The Mascot",
     "cost": 3, "attack": 1, "health": 4, "speed": 3,
-    "description": "Nobody knows what animal it's supposed to be, but the crowd goes WILD: allied units have +1 Attack while it's on the field.",
+    "description": "Nobody knows what animal it's supposed to be, but the crowd goes WILD: allied units have +1 <attack> while it's on the field.",
     "enemy_only": true, "tribe": "gridiron", "elements": [], "chess_pieces": [],
     "effects": [
       { "trigger": { "kind": "while" }, "targets": { "kind": "all", "conditions": [ { "allegiance": "ally" } ] },
@@ -49,7 +49,7 @@
     "display_name": "Coach Grimjaw",
     "cost": 0, "attack": 1, "health": 38, "speed": 2, "shield": 4,
     "is_king": true, "enemy_only": true, "tribe": "gridiron",
-    "description": "Half drill sergeant, half cryptid, all clipboard. Runs conditioning at every round's end: +1 Speed to the whole roster. Fire the coach to win.",
+    "description": "Half drill sergeant, half cryptid, all clipboard. Runs conditioning at every round's end: +1 <speed> to the whole roster. Fire the coach to win.",
     "elements": [], "chess_pieces": [],
     "effects": [
       { "trigger": "on_turn_end", "targeting_policy": "all_allies", "attribute": "speed", "amount": 1 }

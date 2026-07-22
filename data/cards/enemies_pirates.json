@@ -3,7 +3,7 @@
     "id": "pirate_parrot",
     "display_name": "Foul-Mouthed Parrot",
     "cost": 1, "attack": 1, "health": 1, "speed": 5,
-    "description": "Knows exactly one hundred insults and no restraint: the nearest foe loses 1 Attack out of sheer demoralization.",
+    "description": "Knows exactly one hundred insults and no restraint: the nearest foe loses 1 <attack> out of sheer demoralization.",
     "enemy_only": true, "tribe": "pirate", "elements": [], "chess_pieces": [],
     "effects": [
       { "trigger": "on_play", "targeting_policy": "single_nearest", "attribute": "attack", "amount": -1 }
@@ -57,7 +57,7 @@
     "id": "pirate_first_mate",
     "display_name": "First Mate Cutlass",
     "cost": 4, "attack": 4, "health": 4, "speed": 3,
-    "description": "Keeps a notch on her blade for every kill — and every notch is +1 Attack.",
+    "description": "Keeps a notch on her blade for every kill — and every notch is +1 <attack>.",
     "enemy_only": true, "tribe": "pirate", "elements": [], "chess_pieces": [],
     "effects": [
       { "trigger": { "kind": "dual_event", "event": "kill", "origin_of": "self" },
@@ -76,7 +76,7 @@
     "display_name": "Captain Rummy Bones",
     "cost": 0, "attack": 1, "health": 34, "speed": 3, "shield": 3,
     "is_king": true, "enemy_only": true, "tribe": "pirate",
-    "description": "Half legend, half rum, all menace. Every kill goes in the ledger: +1 Attack per unit he fells. Send him to the depths to win.",
+    "description": "Half legend, half rum, all menace. Every kill goes in the ledger: +1 <attack> per unit he fells. Send him to the depths to win.",
     "elements": [], "chess_pieces": [],
     "effects": [
       { "trigger": { "kind": "dual_event", "event": "kill", "origin_of": "self" },
@@ -88,7 +88,7 @@
     "display_name": "Admiral Dreadbeard",
     "cost": 0, "attack": 2, "health": 42, "speed": 3, "shield": 4,
     "is_king": true, "enemy_only": true, "tribe": "pirate",
-    "description": "His beard has its own bounty. Every strike keelhauls its victim: −1 Attack and −1 Speed. Sink him to win.",
+    "description": "His beard has its own bounty. Every strike keelhauls its victim: −1 <attack> and −1 <speed>. Sink him to win.",
     "elements": [], "chess_pieces": [],
     "effects": [
       { "trigger": "on_attack", "targeting_policy": "attack_target", "attribute": "attack", "amount": -1 },

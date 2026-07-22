@@ -2,7 +2,7 @@
 	{
 		"id": "stalwart_barrier",
 		"display_name": "Stalwart Barrier",
-		"description": "Blocks the next attack that would damage this unit's Health, and grants +1 Shield while it holds. Damage absorbed by Shield passes through and doesn't spend the Barrier.",
+		"description": "Blocks the next attack that would damage this unit's <health>, and grants +1 <shield> while it holds. Damage absorbed by <shield> passes through and doesn't spend the Barrier.",
 		"beneficial": true,
 		"color": "8fd0ff",
 		"glyph": "◈",

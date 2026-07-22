@@ -25,11 +25,10 @@ static func make(card_id: String) -> DeckCard:
 
 
 static func attr_label(attr: String) -> String:
-	match attr:
-		"attack": return "Attack"
-		"health": return "Health"
-		"speed":  return "Speed"
-		"shield": return "Shield"
+	# The upgradable stats are the same words as the rules-text glossary — reuse those keys so
+	# a stat name reads identically (and localizes) everywhere. See [[localization]] term.*.
+	if attr in UPGRADABLE:
+		return Loc.t("term." + attr)
 	return attr.capitalize()
 
 
