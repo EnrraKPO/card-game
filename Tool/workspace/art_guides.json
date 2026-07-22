@@ -530,17 +530,14 @@
     },
     "earth_fire": {
       "label": "Magma",
-      "positive": "molten rock, volcanic, lava, magma, units from a magma element realm, strong magma magic",
-      "negative": "",
+      "positive": "units from a lava realm, unit made of lava, lava is the core identifier, lava in liquid form, magma textures, volcanic, units from a magma element realm, strong magma magic, red orange palette",
+      "negative": "metal, flames, fire",
       "refs": [
         {
           "upload": "snap_earth_fire_pawn.png"
         },
         {
           "upload": "snap_earth_fire_knight.png"
-        },
-        {
-          "upload": "snap_earth_fire_queen.png"
         }
       ],
       "seeded": true

@@ -45,17 +45,17 @@
         "model": "krea2",
         "samples": 1,
         "turbo": false,
+        "denoise": 0.55
+      },
+      {
+        "model": "krea2",
+        "samples": 2,
+        "denoise": 0.7
+      },
+      {
+        "model": "krea2",
+        "samples": 2,
         "denoise": 0.75
-      },
-      {
-        "model": "krea2",
-        "samples": 1,
-        "denoise": 0.8
-      },
-      {
-        "model": "krea2",
-        "samples": 1,
-        "denoise": 0.85
       }
     ],
     "anchor": "canonical"
