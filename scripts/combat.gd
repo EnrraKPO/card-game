@@ -523,7 +523,10 @@ func _run_combat() -> void:
 func _resolve_attack(attacker: CardInstance) -> void:
 	var strikes := attacker.get_attribute("strikes")
 	for _i in strikes:
-		if not attacker.is_alive() or attacker.attack_exhausted:
+		# A re-entrant effect from an earlier strike (an on-death/on-attack trigger) can pull the
+		# attacker OFF the board without killing it (a bounce, push, or relocation leaves health > 0),
+		# so "still alive" isn't enough — it must still hold a slot to swing from.
+		if not attacker.is_alive() or attacker.attack_exhausted or _board.get_card_ui(attacker) == null:
 			break
 		var target := _board.find_target(attacker)
 		if target == null:
@@ -538,6 +541,12 @@ func _resolve_attack(attacker: CardInstance) -> void:
 func _perform_strike(attacker: CardInstance, target: CardInstance) -> void:
 	var a_card := _board.get_card_ui(attacker)
 	var t_card := _board.get_card_ui(target)
+	# Either combatant can be yanked off the board between target acquisition and impact by a
+	# re-entrant effect (an on-death trigger from a prior strike bouncing/relocating a live unit,
+	# or a spawn reshuffle). With no slot to read a global_position from, there is nothing to swing:
+	# skip this strike rather than crash. The flurry's own liveness re-check ends the sequence next.
+	if a_card == null or t_card == null:
+		return
 
 	if attacker.data.ranged:
 		# Ranged: hold position and fire a bolt; the hit lands when it arrives. The bolt
