@@ -2,7 +2,7 @@
 	{
 		"id": "darkness_pawn",
 		"display_name": "Darkness Pawn",
-		"cost": 2,
+		"cost": 1,
 		"attack": 2,
 		"health": 2,
 		"speed": 1,
@@ -75,7 +75,7 @@
 				}
 			}
 		},
-		"cost": 3,
+		"cost": 2,
 		"attack": 3,
 		"health": 2,
 		"speed": 2,
@@ -112,7 +112,7 @@
 		"abilities": [
 			"darkness_bless"
 		],
-		"cost": 3,
+		"cost": 2,
 		"attack": 2,
 		"health": 3,
 		"speed": 1,
@@ -149,7 +149,7 @@
 				}
 			}
 		},
-		"cost": 4,
+		"cost": 3,
 		"attack": 2,
 		"health": 6,
 		"speed": 1,
@@ -183,7 +183,7 @@
 				}
 			}
 		},
-		"cost": 6,
+		"cost": 5,
 		"attack": 6,
 		"health": 4,
 		"speed": 3,
@@ -217,7 +217,7 @@
 				}
 			}
 		},
-		"cost": 3,
+		"cost": 2,
 		"attack": 3,
 		"health": 3,
 		"speed": 1,
@@ -251,7 +251,7 @@
 				}
 			}
 		},
-		"cost": 4,
+		"cost": 3,
 		"attack": 4,
 		"health": 4,
 		"speed": 2,
@@ -285,7 +285,7 @@
 				}
 			}
 		},
-		"cost": 4,
+		"cost": 3,
 		"attack": 3,
 		"health": 4,
 		"speed": 1,
@@ -324,7 +324,7 @@
 				}
 			}
 		},
-		"cost": 5,
+		"cost": 4,
 		"attack": 3,
 		"health": 7,
 		"speed": 1,
@@ -362,7 +362,7 @@
 				}
 			}
 		},
-		"cost": 7,
+		"cost": 6,
 		"attack": 6,
 		"health": 4,
 		"speed": 3,
@@ -425,7 +425,7 @@
 				}
 			}
 		},
-		"cost": 5,
+		"cost": 4,
 		"attack": 4,
 		"health": 5,
 		"speed": 3,

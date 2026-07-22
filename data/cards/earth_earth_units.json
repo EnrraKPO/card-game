@@ -27,7 +27,7 @@
 				}
 			}
 		},
-		"cost": 3,
+		"cost": 1,
 		"attack": 1,
 		"health": 3,
 		"speed": 1,
@@ -61,7 +61,7 @@
 				}
 			}
 		},
-		"cost": 4,
+		"cost": 2,
 		"attack": 2,
 		"health": 3,
 		"speed": 2,
@@ -70,6 +70,11 @@
 	{
 		"id": "earth_earth_bishop",
 		"display_name": "Pure Earth Bishop",
+		"cost": 2,
+		"attack": 1,
+		"health": 4,
+		"speed": 1,
+		"shield": 2,
 		"elements": [
 			"earth",
 			"earth"
@@ -95,12 +100,7 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 4,
-		"attack": 1,
-		"health": 4,
-		"speed": 1,
-		"shield": 2
+		}
 	},
 	{
 		"id": "earth_earth_rook",
@@ -131,7 +131,7 @@
 			}
 		},
 		"ranged": true,
-		"cost": 5,
+		"cost": 3,
 		"attack": 1,
 		"health": 7,
 		"speed": 1,
@@ -172,7 +172,7 @@
 				}
 			}
 		},
-		"cost": 7,
+		"cost": 5,
 		"attack": 5,
 		"health": 5,
 		"speed": 3,
@@ -207,7 +207,7 @@
 				}
 			}
 		},
-		"cost": 4,
+		"cost": 2,
 		"attack": 2,
 		"health": 4,
 		"speed": 1,
@@ -242,7 +242,7 @@
 				}
 			}
 		},
-		"cost": 5,
+		"cost": 3,
 		"attack": 3,
 		"health": 5,
 		"speed": 2,
@@ -277,7 +277,7 @@
 				}
 			}
 		},
-		"cost": 5,
+		"cost": 3,
 		"attack": 2,
 		"health": 5,
 		"speed": 1,
@@ -317,7 +317,7 @@
 			"earth_pawn_training_pure",
 			"pawn_material"
 		],
-		"cost": 6,
+		"cost": 4,
 		"attack": 2,
 		"health": 8,
 		"speed": 1,
@@ -352,7 +352,7 @@
 				}
 			}
 		},
-		"cost": 8,
+		"cost": 6,
 		"attack": 5,
 		"health": 5,
 		"speed": 3,
@@ -387,7 +387,7 @@
 				}
 			}
 		},
-		"cost": 6,
+		"cost": 4,
 		"attack": 3,
 		"health": 5,
 		"speed": 3,
@@ -428,7 +428,7 @@
 				}
 			}
 		},
-		"cost": 6,
+		"cost": 4,
 		"attack": 3,
 		"health": 6,
 		"speed": 3,
@@ -468,7 +468,7 @@
 			"earth_knight_training_pure",
 			"knight_material"
 		],
-		"cost": 7,
+		"cost": 5,
 		"attack": 3,
 		"health": 8,
 		"speed": 2,
@@ -503,7 +503,7 @@
 				}
 			}
 		},
-		"cost": 8,
+		"cost": 6,
 		"attack": 6,
 		"health": 7,
 		"speed": 4,
@@ -538,7 +538,7 @@
 				}
 			}
 		},
-		"cost": 6,
+		"cost": 4,
 		"attack": 2,
 		"health": 6,
 		"speed": 1,
@@ -578,7 +578,7 @@
 			"earth_bishop_training_pure",
 			"bishop_material"
 		],
-		"cost": 7,
+		"cost": 5,
 		"attack": 2,
 		"health": 9,
 		"speed": 1,
@@ -613,7 +613,7 @@
 				}
 			}
 		},
-		"cost": 8,
+		"cost": 6,
 		"attack": 5,
 		"health": 7,
 		"speed": 3,
@@ -649,7 +649,7 @@
 				}
 			}
 		},
-		"cost": 8,
+		"cost": 6,
 		"attack": 2,
 		"health": 11,
 		"speed": 1,
@@ -689,7 +689,7 @@
 			"earth_queen_training_pure",
 			"queen_material"
 		],
-		"cost": 9,
+		"cost": 7,
 		"attack": 5,
 		"health": 10,
 		"speed": 2,
@@ -724,7 +724,7 @@
 				}
 			}
 		},
-		"cost": 10,
+		"cost": 8,
 		"attack": 8,
 		"health": 8,
 		"speed": 3,

@@ -2,6 +2,11 @@
 	{
 		"id": "earth_light_pawn",
 		"display_name": "Nature Pawn",
+		"cost": 0,
+		"attack": 1,
+		"health": 4,
+		"speed": 2,
+		"shield": 1,
 		"elements": [
 			"earth",
 			"light"
@@ -17,141 +22,129 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Sturdy young footsoldier sculpted from faceted living leaf-crystal, plated in overlapping emerald petal-scales veined with molten golden light, a bark-hewn helm sprouting a single curling tendril, gauntlet gripping a rooted stone maul crackling with amber sap-glow, tiny drifting spores and floating pollen sparks, glowing veins pulsing through translucent green, dark shadowed depths, thick bold outlines, saturated stylized colors.",
+				"prompt": "Chibi foot-soldier spearman, domed knob-topped helmet, spear and round shield, stout full-body stance. Chibi grove-soldier spearman, glowing amber eyes, round bark helmet crowned with a mossy bud, budding vine spear and woven-leaf round shield, petal scarf trailing, planted stance in a sun-dappled blossoming clearing, teal-to-gold sky, lush green and warm-brown palette, drifting pollen sparkles, painterly fantasy game art, full-body composition",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/pawn.png",
-					"name": "Pawn",
+					"source": "upload",
+					"path": "snap_pawn.png",
+					"name": "snap_pawn.png",
 					"mode": "img2img",
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 2,
-		"attack": 1,
-		"health": 4,
-		"speed": 2,
-		"shield": 1
+		}
 	},
 	{
 		"id": "earth_light_knight",
+		"display_name": "Nature Knight",
+		"cost": 1,
+		"attack": 2,
+		"health": 4,
+		"speed": 3,
+		"shield": 1,
 		"elements": [
 			"earth",
 			"light"
 		],
-		"display_name": "Nature Knight",
 		"chess_pieces": [
 			"knight"
 		],
 		"tool": {
 			"art": {
-				"prompt": "Rearing armored warhorse grown from living emerald leaf-plated barding, faceted crystalline hide veined with glowing golden sap, mane of unfurling verdant foliage, hooves of dark rooted loam trailing sprouting tendrils, luminous amber life-light pulsing through vein-seams, drifting spores and floating seeds, centered on a deep black background scattered with faint golden motes.",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Spirited armored warhorse steed reimagined in living flora, sturdy body of braided vines and moss-green hide, chest plate of overlapping bark scales, headpiece woven from twisting roots, mane and tail cascading petals and curling tendrils, a trailing scarf of red blossoms, one hoof of pale carved wood pawing forward, sunlit blooming grassland, vibrant emerald and gold palette, warm painterly fantasy game art",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/knight.png",
-					"name": "Knight"
-				},
-				"inferredFrom": {
-					"concept": [
-						"knight",
-						"air_air_bishop_knight",
-						"air_air_knight"
-					],
-					"theme": [
-						"earth_light",
-						"earth_light_bishop",
-						"earth_light_king"
-					]
+					"source": "upload",
+					"path": "snap_knight.png",
+					"name": "snap_knight.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 3,
-		"attack": 2,
-		"health": 4,
-		"speed": 3,
-		"shield": 1
+		}
 	},
 	{
 		"id": "earth_light_bishop",
-		"elements": [
-			"earth",
-			"light"
-		],
 		"display_name": "Nature Bishop",
-		"chess_pieces": [
-			"bishop"
-		],
-		"tool": {
-			"art": {
-				"prompt": "Youthful smooth-faced hierophant of the wild, serene beardless features, towering leaf-cleft crown of living foliage, robes woven from crystalline emerald leaves veined with glowing golden light, cradling a moss-bound grimoire trailing curling vines, raising a gnarled root-staff sprouting fresh shoots and drifting spores, centered heroic figure, faceted verdant panes, warm gold-green luminescence, dark starlit backdrop",
-				"ref": {
-					"source": "game",
-					"path": "assets/cards/bishop.png",
-					"name": "Bishop"
-				},
-				"inferredFrom": {
-					"concept": [
-						"bishop",
-						"air_air_bishop",
-						"air_air_bishop_bishop"
-					],
-					"theme": [
-						"earth_light",
-						"earth_light_king",
-						"earth_light_knight"
-					]
-				}
-			}
-		},
-		"ranged": true,
-		"cost": 3,
+		"cost": 1,
 		"attack": 1,
 		"health": 5,
 		"speed": 2,
-		"shield": 1
-	},
-	{
-		"id": "earth_light_rook",
+		"shield": 1,
 		"elements": [
 			"earth",
 			"light"
 		],
-		"display_name": "Nature Rook",
 		"chess_pieces": [
-			"rook"
+			"bishop"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
-				"prompt": "A towering slender keep of living verdant stalks and moss-clad trunks, crowned with sprouting crenellations of unfurling leaves, arched openings trailing curling vines and drifting luminous spores, faceted emerald panes veined with warm golden radiance, broad leaf-feathered wings sweeping from its upper ramparts, a soft glowing ring hovering above its peak, rooted in blossoming meadow, bold clean cel-shading, dark starlit backdrop, centered heroic structure",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "chibi robed forest priest with calm glowing green eyes, tall cleft petal-mitre of layered leaves crowning a mossy hood, flowing bark-and-vine vestments trailing blossoms, one hand raising a curling living staff sprouting a spiral tendril, other cradling a moss-bound tome, sunlit blooming glade, vibrant green and gold palette, sparkles, painterly fantasy game art",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/rook.png",
-					"name": "Rook"
-				},
-				"inferredFrom": {
-					"concept": [
-						"rook",
-						"air_air_bishop_rook",
-						"air_air_knight_rook"
-					],
-					"theme": [
-						"earth_light",
-						"earth_light_bishop",
-						"earth_light_king"
-					]
+					"source": "upload",
+					"path": "snap_bishop.png",
+					"name": "snap_bishop.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"ranged": true,
-		"cost": 4,
+		}
+	},
+	{
+		"id": "earth_light_rook",
+		"display_name": "Nature Rook",
+		"cost": 2,
 		"attack": 1,
 		"health": 8,
 		"speed": 2,
-		"shield": 3
+		"shield": 3,
+		"elements": [
+			"earth",
+			"light"
+		],
+		"chess_pieces": [
+			"rook"
+		],
+		"ranged": true,
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Sturdy defensive tower fortress with crenellated top and arched window, built entirely of thick woven roots and gnarled living wood, walls sheathed in overlapping green leaves and climbing vines, blossoming flowers studding the battlements, a leaf-guardian peering from the window, sunlit flowering meadow, vibrant green and warm brown palette, sparkling dewdrops, painterly fantasy game art",
+				"ref": {
+					"source": "upload",
+					"path": "snap_rook.png",
+					"name": "snap_rook.png",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
 	},
 	{
 		"id": "earth_light_queen",
 		"display_name": "Nature Queen",
+		"cost": 4,
+		"attack": 5,
+		"health": 6,
+		"speed": 4,
+		"shield": 1,
 		"elements": [
 			"earth",
 			"light"
@@ -168,25 +161,25 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Wind-borne front-facing forest goddess suspended on swirling verdant currents, smooth serene face and streaming hair of trailing vines and drifting spores, robes of faceted translucent green leaves veined with glowing golden light, broad sweeping foliage wings, a soft radiant crown of living foliage hovering above her brow, hands parting spirals of luminous pollen breeze, warm gold-green luminescence, dark starlit backdrop, bold clean cel-shading, thick outlines, centered heroic subject",
+				"prompt": "chibi regal sorceress-queen with stern proud gaze, towering crown of budding twigs and blossoms, flowing bark-and-petal gown draped with a trailing moss-lined leafy mantle, one upraised palm cradling a swirling glowing sphere of spinning seeds and drifting petals, standing in a sunlit blooming grove, vibrant green and gold palette, warm rays, sparkles, painterly fantasy game art",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/queen.png",
-					"name": "Queen",
+					"source": "upload",
+					"path": "snap_queen.png",
+					"name": "snap_queen.png",
 					"mode": "img2img",
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 6,
-		"attack": 5,
-		"health": 6,
-		"speed": 4,
-		"shield": 1
+		}
 	},
 	{
 		"id": "earth_light_pawn_pawn",
 		"display_name": "Nature Warrior",
+		"cost": 1,
+		"attack": 2,
+		"health": 5,
+		"speed": 2,
+		"shield": 2,
 		"elements": [
 			"earth",
 			"light"
@@ -203,25 +196,25 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Stocky chibi footsoldier braced in a firm guard, plated in overlapping emerald petal-scales veined with molten golden light, a bark-hewn helm crowned by a single curling shoot, gauntlets gripping a broad rooted blade and round shield trailing fresh sprouting vines, drifting spores and glowing pollen sparks swirling around him, translucent verdant panes pulsing with warm sap-glow, dark shadowed backdrop, thick bold outlines, saturated stylized colors.",
+				"prompt": "chibi leaf-plated foot soldier with fierce glowing green eyes, domed helmet of woven bark sprouting tiny buds, raised sword of hardened pale wood with a sharpened thorn edge, round shield of layered petals and vine-lashed timber, moss-quilted armor, standing braced in a sunlit blossoming meadow, vibrant greens and warm browns, sparkles, painterly fantasy game art",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/pawn_pawn.png",
-					"name": "Warrior",
+					"source": "upload",
+					"path": "snap_pawn_pawn.png",
+					"name": "snap_pawn_pawn.png",
 					"mode": "img2img",
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 3,
-		"attack": 2,
-		"health": 5,
-		"speed": 2,
-		"shield": 2
+		}
 	},
 	{
 		"id": "earth_light_knight_pawn",
 		"display_name": "Nature Cavalry",
+		"cost": 2,
+		"attack": 3,
+		"health": 6,
+		"speed": 3,
+		"shield": 2,
 		"elements": [
 			"earth",
 			"light"
@@ -238,25 +231,25 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Charging armored lancer astride a galloping warhorse, both plated in overlapping emerald petal-scales veined with molten golden light, a bark-hewn helm sprouting a curling shoot, leveled lance of rooted living wood trailing fresh sprouting vines, hooves of dark loam kicking up curling tendrils and drifting spores, glowing amber sap pulsing through translucent green plating, floating pollen sparks, deep shadowed backdrop scattered with faint golden motes, thick bold outlines, saturated stylized colors.",
+				"prompt": "Armored lancer knight astride a charging steed, reborn in living greenwood, bark-plated rider with a mossy helm crowned by a plume of red blossoms, gripping a slender branch lance trailing a leaf pennant, mounted on a mighty vine-muscled beast with flower-woven mane and root-hardened hooves, thundering across a sunlit blooming meadow, vibrant greens and warm gold, sparkling dew, painterly fantasy game art",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/knight_pawn.png",
-					"name": "Cavalry",
+					"source": "upload",
+					"path": "snap_knight_pawn.png",
+					"name": "snap_knight_pawn.png",
 					"mode": "img2img",
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 4,
-		"attack": 3,
-		"health": 6,
-		"speed": 3,
-		"shield": 2
+		}
 	},
 	{
 		"id": "earth_light_bishop_pawn",
 		"display_name": "Nature Paladin",
+		"cost": 2,
+		"attack": 2,
+		"health": 6,
+		"speed": 2,
+		"shield": 3,
 		"elements": [
 			"earth",
 			"light"
@@ -273,25 +266,25 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Towering armored guardian forged from translucent emerald leaf-crystal, overlapping petal-scale plates threaded with molten golden veins, bark-hewn visored helm crowned by a curling green shoot, one gauntlet lifting a rooted stone warhammer crackling with amber sap-light, tall shield sprouting fresh vines, drifting spores and glowing pollen sparks, thick bold outlines, saturated verdant tones, dark shadowed backdrop",
+				"prompt": "Sturdy chibi guardian knight in heavy bark-plated armor and a closed wooden domed helmet with a leaf-crest visor, glowing golden eyes, hefting a knotted-root spiked mace, forearm bearing a broad leaf-shield emblazoned with a radiant tree sigil, planted firmly in a sunlit blossoming meadow, blue-to-gold sky, lush green and warm-brown palette, sparkles, painterly fantasy game art",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/bishop_pawn.png",
-					"name": "Paladin",
+					"source": "upload",
+					"path": "snap_bishop_pawn.png",
+					"name": "snap_bishop_pawn.png",
 					"mode": "img2img",
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 4,
-		"attack": 2,
-		"health": 6,
-		"speed": 2,
-		"shield": 3
+		}
 	},
 	{
 		"id": "earth_light_pawn_rook",
 		"display_name": "Nature Barracks",
+		"cost": 3,
+		"attack": 2,
+		"health": 9,
+		"speed": 2,
+		"shield": 2,
 		"elements": [
 			"earth",
 			"light"
@@ -299,6 +292,11 @@
 		"chess_pieces": [
 			"pawn",
 			"rook"
+		],
+		"ranged": true,
+		"abilities": [
+			"earth_pawn_material",
+			"light_pawn_material"
 		],
 		"tool": {
 			"art": {
@@ -308,30 +306,25 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Verdant stone garrison tower with rounded leafy battlements and an arched gateway, walls of overlapping petal-scales veined with molten golden light, hollow windows glowing warm sap-radiance, curling vines and hanging living banners trailing from its ramparts, a slim helmeted watcher clutching a rooted spear at the door, drifting spores and pollen sparks, thick bold outlines, saturated colors, centered structure, dark shadowed backdrop.",
+				"prompt": "Sturdy fortified barracks tower grown from thick living tree-trunk walls and knotted root buttresses, arched doorway of woven bark, hanging blossom banner, a stout weapons rack of spears tipped with sharpened thorns, a chibi leaf-armored guard in a wooden helmet clutching a vine-wrapped spear and round leaf shield, sunlit flowering meadow, vibrant greens and warm gold, painterly fantasy game art",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/pawn_rook.png",
-					"name": "Barracks",
+					"source": "upload",
+					"path": "snap_pawn_rook.png",
+					"name": "snap_pawn_rook.png",
 					"mode": "img2img",
 					"denoise": 0.6
 				}
 			}
-		},
-		"ranged": true,
-		"abilities": [
-			"earth_pawn_material",
-			"light_pawn_material"
-		],
-		"cost": 5,
-		"attack": 2,
-		"health": 9,
-		"speed": 2,
-		"shield": 2
+		}
 	},
 	{
 		"id": "earth_light_pawn_queen",
 		"display_name": "Nature Commander",
+		"cost": 5,
+		"attack": 5,
+		"health": 6,
+		"speed": 4,
+		"shield": 1,
 		"elements": [
 			"earth",
 			"light"
@@ -348,25 +341,25 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "A commander poised on a raised platform of translucent green leaf-crystal veined with molten gold, thrusting a rooted living-wood baton skyward, plated in overlapping emerald petal-scales, bark-hewn helm sprouting a curling shoot, billowing cape, glowing amber sap pulsing through her armor, drifting pollen sparks, a chibi column of small leaf-armored spear-bearers rallying below, thick bold outlines, saturated verdant tones, dark shadowed backdrop.",
+				"prompt": "Chibi female leaf-armored war-marshal atop a raised mossy root-and-bark rampart, stern green eyes, bark helm sprouting blossoms, flowing petal cloak, thrusting a slender flowering baton to command a marching column of vine-armored spear-troops below, sunlit blooming meadow, blue-to-gold sky, vibrant greens and browns, sparkles, painterly fantasy game art",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/pawn_queen.png",
-					"name": "Commander",
+					"source": "upload",
+					"path": "snap_pawn_queen.png",
+					"name": "snap_pawn_queen.png",
 					"mode": "img2img",
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 7,
-		"attack": 5,
-		"health": 6,
-		"speed": 4,
-		"shield": 1
+		}
 	},
 	{
 		"id": "earth_light_knight_knight",
 		"display_name": "Nature Beast",
+		"cost": 3,
+		"attack": 3,
+		"health": 6,
+		"speed": 4,
+		"shield": 1,
 		"elements": [
 			"earth",
 			"light"
@@ -383,21 +376,16 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Colossal bull-beast rearing mid-charge, its massive muscled body plated in overlapping emerald leaf-scales veined with pulsing molten-gold sap, sweeping horns of pale rooted living wood, forehead crowned in faceted amber gems, hooves of dark loam scattering curling tendrils and drifting spores, glowing life-light seeping through translucent green plating, snorting a burst of pollen-sparks, deep shadowed backdrop strewn with faint golden motes, thick bold outlines, saturated stylized colors",
+				"prompt": "Massive charging horned bull-beast reimagined in living forest form, bulk body of woven bark and packed moss, broad head lowered mid-charge with polished pale-wood horns and a mossy mane, faceplate of interlocking leaves, hooves of hardened root, blossoms bursting where feet strike sunlit flowering meadow, vibrant green and gold palette, warm rays, painterly fantasy illustration",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/knight_knight.png",
-					"name": "Beast",
+					"source": "upload",
+					"path": "snap_knight_knight.png",
+					"name": "snap_knight_knight.png",
 					"mode": "img2img",
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 5,
-		"attack": 3,
-		"health": 6,
-		"speed": 4,
-		"shield": 1
+		}
 	},
 	{
 		"id": "earth_light_bishop_knight",
@@ -418,17 +406,23 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Emerald leaf-crystal stag cryptid bounding through darkness, faceted translucent verdant hide veined with molten golden sap-light, antlers of unfurling crystalline foliage sprouting fresh shoots and curling tendrils, mane streaming into drifting spores, hooves of dark rooted loam trailing sprouting vines, luminous amber eyes, floating seeds and glowing pollen sparks, deep black backdrop scattered with faint golden motes",
+				"prompt": "Graceful single-horned forest stag-steed woven from braided vines and moss-furred hide, spiraling horn of polished twisting heartwood tipped with a glowing bud, flowing mane and tail of trailing ferns and cascading petals, hooves of pale carved rootwood, stepping proudly through a sun-dappled blossoming glade, drifting seed-sparkles, lush green and amber palette, warm painterly fantasy illustration, full-body vertical composition",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/bishop_knight.png",
-					"name": "Cryptid",
-					"mode": "img2img",
-					"denoise": 0.6
+					"source": "upload",
+					"path": "snap_bishop_knight.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_bishop_knight.png",
+					"theme": [
+						"snap_earth_light_knight.png",
+						"snap_earth_light_queen.png",
+						"earth_light_pawn.png"
+					],
+					"mode": "concept"
 				}
 			}
 		},
-		"cost": 5,
+		"cost": 3,
 		"attack": 3,
 		"health": 7,
 		"speed": 4,
@@ -437,6 +431,11 @@
 	{
 		"id": "earth_light_knight_rook",
 		"display_name": "Nature Stable",
+		"cost": 4,
+		"attack": 3,
+		"health": 9,
+		"speed": 3,
+		"shield": 3,
 		"elements": [
 			"earth",
 			"light"
@@ -444,6 +443,11 @@
 		"chess_pieces": [
 			"knight",
 			"rook"
+		],
+		"ranged": true,
+		"abilities": [
+			"earth_knight_material",
+			"light_knight_material"
 		],
 		"tool": {
 			"art": {
@@ -453,30 +457,25 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Living stable arch grown of woven emerald leaf-panels and rooted timber, doors of unfurling foliage, a translucent verdant horse peering out from the stall with luminous amber eyes, faceted crystalline hide veined in glowing golden sap, mane of sprouting green tendrils, hooves scattering loam and drifting spores, deep shadowed backdrop strewn with faint golden motes, bold stylized outlines, centered heroic subject",
+				"prompt": "Cozy stable-cottage grown from a hollow living tree, thick root-buttress walls and woven-branch beams, thatched roof of overlapping broad leaves and blooming vines, arched doorway of braided saplings, a gentle antlered forest steed peering out over a mossy half-door, hanging flower-lanterns and a bundle of golden meadow-grass, sunlit blossoming glade, vibrant greens and warm browns, painterly fantasy game art",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/knight_rook.png",
-					"name": "Stable",
+					"source": "upload",
+					"path": "snap_knight_rook.png",
+					"name": "snap_knight_rook.png",
 					"mode": "img2img",
 					"denoise": 0.6
 				}
 			}
-		},
-		"ranged": true,
-		"abilities": [
-			"earth_knight_material",
-			"light_knight_material"
-		],
-		"cost": 6,
-		"attack": 3,
-		"health": 9,
-		"speed": 3,
-		"shield": 3
+		}
 	},
 	{
 		"id": "earth_light_knight_queen",
 		"display_name": "Nature Monster",
+		"cost": 5,
+		"attack": 6,
+		"health": 8,
+		"speed": 5,
+		"shield": 1,
 		"elements": [
 			"earth",
 			"light"
@@ -493,7 +492,7 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Colossal seated dragon grown entirely of living wood and layered leaves, ridged bark scales, broad wings stretched like veined canopy foliage, curved petal-horns and blossom-crested brow, glowing amber eyes, moss-plated chest, thorny root-clawed feet, coiled vine tail tipped with a wooden bud, towering over a flowering meadow of wildflowers and grass, warm sunlit rays, vibrant green and gold palette, painterly fantasy game art, full-body vertical composition",
+				"prompt": "Colossal winged dragon-beast grown of woven vines and layered leaf-scales, curved horns of pale polished wood, blossom-studded ridges down its spine, membranous wings like translucent stretched leaves veined in gold, glowing amber eyes, dwarfing tiny cottages as it towers over a sunlit blooming meadow, roots trailing from its claws, vibrant greens and warm gold palette, painterly fantasy illustration, full-body composition",
 				"ref": {
 					"source": "upload",
 					"path": "snap_knight_queen.png",
@@ -502,16 +501,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 7,
-		"attack": 6,
-		"health": 8,
-		"speed": 5,
-		"shield": 1
+		}
 	},
 	{
 		"id": "earth_light_bishop_bishop",
 		"display_name": "Nature Hierophant",
+		"cost": 3,
+		"attack": 2,
+		"health": 7,
+		"speed": 2,
+		"shield": 1,
 		"elements": [
 			"earth",
 			"light"
@@ -528,25 +527,25 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Bearded elder wild-priest with a long flowing beard and a towering crystalline-leaf crown veined with molten golden light, robes of faceted translucent green panes threaded with amber sap-glow, lifting a gnarled root-staff as spiraling verdant whorls, drifting spores, and glowing pollen sparks burst from his open palm, centered heroic figure, bold cel-shaded outlines, dark starlit backdrop scattered with faint golden motes",
+				"prompt": "Chibi bearded high-priest sorcerer, tall pointed miter grown from woven bark and curling tendrils crowned with a glowing dewy bud, flowing white beard, moss-and-petal vestments with amber-sap trim, raising one hand as a swirling ring of spinning seeds and pollen-light blooms behind him, gripping a rooted staff topped with a radiant blossom-orb, sunlit flowering glade, vibrant green and gold palette, warm rays, painterly fantasy game art, full-body vertical composition",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/bishop_bishop.png",
-					"name": "Hierophant",
+					"source": "upload",
+					"path": "snap_bishop_bishop.png",
+					"name": "snap_bishop_bishop.png",
 					"mode": "img2img",
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 5,
-		"attack": 2,
-		"health": 7,
-		"speed": 2,
-		"shield": 1
+		}
 	},
 	{
 		"id": "earth_light_bishop_rook",
 		"display_name": "Nature Arcane Tower",
+		"cost": 4,
+		"attack": 2,
+		"health": 10,
+		"speed": 2,
+		"shield": 3,
 		"elements": [
 			"earth",
 			"light"
@@ -554,6 +553,11 @@
 		"chess_pieces": [
 			"bishop",
 			"rook"
+		],
+		"ranged": true,
+		"abilities": [
+			"earth_bishop_material",
+			"light_bishop_material"
 		],
 		"tool": {
 			"art": {
@@ -563,30 +567,25 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "A towering round spire of faceted translucent green stone veined with molten golden light, crenellated crown sprouting fresh leafy shoots and curling tendrils, tall pointed windows glowing amber, an arched doorway spilling warm pollen-glow, drifting spores and floating seeds swirling around its battlements, a gnarled root-wrapped base sinking into dark loam, centered heroic structure, bold cel-shaded outlines, deep starlit backdrop scattered with faint golden motes",
+				"prompt": "Towering living-wood spire braided from thick roots and mossy trunks, bark shingles and a canopy-crowned peak glowing with a radiant seed-crystal, arched doorway spilling golden light, floating pollen orbs orbiting the top, a small robed leaf-mantled priest at its base cradling an open bloom-book and gripping a blossoming staff, sunlit flowering meadow, vibrant green and gold palette, warm painterly fantasy game art",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/bishop_rook.png",
-					"name": "Arcane Tower",
+					"source": "upload",
+					"path": "snap_bishop_rook.png",
+					"name": "snap_bishop_rook.png",
 					"mode": "img2img",
 					"denoise": 0.6
 				}
 			}
-		},
-		"ranged": true,
-		"abilities": [
-			"earth_bishop_material",
-			"light_bishop_material"
-		],
-		"cost": 6,
-		"attack": 2,
-		"health": 10,
-		"speed": 2,
-		"shield": 3
+		}
 	},
 	{
 		"id": "earth_light_bishop_queen",
 		"display_name": "Nature Deity",
+		"cost": 5,
+		"attack": 5,
+		"health": 8,
+		"speed": 4,
+		"shield": 1,
 		"elements": [
 			"earth",
 			"light"
@@ -603,25 +602,25 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Serene goddess figure floating with arms outstretched, smooth luminous face and long streaming hair of unfurling verdant foliage, robes of faceted translucent green panes veined with molten golden sap-light, palms releasing spiraling whorls of drifting spores and glowing pollen sparks, sprouting vines curling from her trailing hem, luminous amber eyes, deep black backdrop scattered with faint golden motes",
+				"prompt": "Serene forest goddess with luminous amber eyes, robes woven of overlapping green leaves and soft petals, headdress of curling branch-antlers and blooming buds, one hand raised in blessing spilling drifting blossoms, other cradling a glowing sprouting seed, radiant golden halo of sunlit foliage, bark-plated shoulders, standing in a mossy sunlit grove, vibrant greens and warm gold, painterly fantasy game art.",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/bishop_queen.png",
-					"name": "Deity",
+					"source": "upload",
+					"path": "snap_bishop_queen.png",
+					"name": "snap_bishop_queen.png",
 					"mode": "img2img",
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 7,
-		"attack": 5,
-		"health": 8,
-		"speed": 4,
-		"shield": 1
+		}
 	},
 	{
 		"id": "earth_light_rook_rook",
 		"display_name": "Nature Turret",
+		"cost": 5,
+		"attack": 2,
+		"health": 12,
+		"speed": 2,
+		"shield": 5,
 		"elements": [
 			"earth",
 			"light"
@@ -630,6 +629,7 @@
 			"rook",
 			"rook"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -638,26 +638,25 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Broad squat watchtower turret of woven living green trunks and moss-slick stone, hollow arched openings glowing warm golden sap-radiance, crowned by a swiveling top-mounted ballista sculpted from rooted timber and vine-wrapped iron, its loaded bolt sprouting thorned barbs and dripping fresh sap, curling tendrils and drifting luminous spores, rooted in blossoming meadow, bold cel-shading, dark shadowed backdrop, centered heroic structure",
+				"prompt": "Squat crenellated defense tower grown from thick braided living roots and mossy bark-plated stone, crowned by a swiveling flower-and-vine ballista that launches a sharpened thorn-tipped bolt, draped leaf banner bearing a woven-branch emblem, rooted in a sunlit blossoming meadow, vibrant green and gold palette, warm rays, sparkles, painterly fantasy game art",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/rook_rook.png",
-					"name": "Turret",
+					"source": "upload",
+					"path": "snap_rook_rook.png",
+					"name": "snap_rook_rook.png",
 					"mode": "img2img",
 					"denoise": 0.6
 				}
 			}
-		},
-		"ranged": true,
-		"cost": 7,
-		"attack": 2,
-		"health": 12,
-		"speed": 2,
-		"shield": 5
+		}
 	},
 	{
 		"id": "earth_light_queen_rook",
 		"display_name": "Nature Castle",
+		"cost": 6,
+		"attack": 5,
+		"health": 11,
+		"speed": 3,
+		"shield": 3,
 		"elements": [
 			"earth",
 			"light"
@@ -666,6 +665,11 @@
 			"queen",
 			"rook"
 		],
+		"ranged": true,
+		"abilities": [
+			"earth_queen_material",
+			"light_queen_material"
+		],
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -674,30 +678,25 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "A colossal fortress keep of faceted translucent green stone veined with molten golden sap-light, tall cleft central turret flanked by two round battlement towers crowned with sprouting leafy shoots and curling tendrils, pointed windows glowing warm amber, arched gate spilling drifting spores and pollen sparks, gnarled root-wrapped base sinking into dark loam, bold cel-shaded outlines, centered heroic structure, deep starlit backdrop scattered with faint golden motes",
+				"prompt": "Towering living fortress grown from massive braided tree-trunks and mossy bark walls, three great spires crowned with dense leafy canopies for roofs, glowing amber blossoms lighting arrow-slit windows, hanging vine banners spilling wildflowers, root-woven gatehouse of interlaced timber, tiny leaf-armored spear guardians below, sunlit flowering meadow, vibrant green and gold palette, painterly fantasy game art, full vertical composition",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/rook_queen.png",
-					"name": "Castle",
+					"source": "upload",
+					"path": "snap_rook_queen.png",
+					"name": "snap_rook_queen.png",
 					"mode": "img2img",
 					"denoise": 0.6
 				}
 			}
-		},
-		"ranged": true,
-		"abilities": [
-			"earth_queen_material",
-			"light_queen_material"
-		],
-		"cost": 8,
-		"attack": 5,
-		"health": 11,
-		"speed": 3,
-		"shield": 3
+		}
 	},
 	{
 		"id": "earth_light_queen_queen",
 		"display_name": "Nature Hero",
+		"cost": 7,
+		"attack": 8,
+		"health": 9,
+		"speed": 4,
+		"shield": 1,
 		"elements": [
 			"earth",
 			"light"
@@ -714,20 +713,15 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "A leaf-armored young hero with voluminous curly dark hair and warm brown skin, spiked crown of budding gold, plated in overlapping emerald petal-scales veined with molten amber sap, billowing living-vine cape, hoisting an oversized translucent green sap-lit greatsword mid-swing, leaping from a mossy ridge, drifting pollen sparks and swirling seeds, thick bold outlines, saturated verdant tones, dark shadowed backdrop scattered with faint golden motes.",
+				"prompt": "Chibi crowned warrior-royal heroine, fierce brown eyes, gauntlets gripping a towering great blade — recast as a woodland sovereign. Chibi warrior-queen heroine, determined brown eyes, curly leaf-tangled hair crowned with a spiked circlet of braided twigs and blossoms, bark-plated armor edged in petals, wielding a colossal living-wood greatblade sprouting fresh sprigs, flowing mossy cape, planted boldly in a sunlit blooming glade, sparkling dew, vibrant green and gold palette, warm painterly fantasy game art",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/queen_queen.png",
-					"name": "Hero",
+					"source": "upload",
+					"path": "snap_queen_queen.png",
+					"name": "snap_queen_queen.png",
 					"mode": "img2img",
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 9,
-		"attack": 8,
-		"health": 9,
-		"speed": 4,
-		"shield": 1
+		}
 	}
 ]

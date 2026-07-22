@@ -32,7 +32,7 @@
 				}
 			}
 		},
-		"cost": 3,
+		"cost": 1,
 		"attack": 2,
 		"health": 2,
 		"speed": 5,
@@ -64,7 +64,7 @@
 				}
 			}
 		},
-		"cost": 4,
+		"cost": 2,
 		"attack": 3,
 		"health": 2,
 		"speed": 6,
@@ -114,7 +114,7 @@
 			}
 		},
 		"ranged": true,
-		"cost": 4,
+		"cost": 2,
 		"attack": 2,
 		"health": 3,
 		"speed": 5,
@@ -147,7 +147,7 @@
 				}
 			}
 		},
-		"cost": 5,
+		"cost": 3,
 		"attack": 2,
 		"health": 6,
 		"speed": 5,
@@ -180,7 +180,7 @@
 				}
 			}
 		},
-		"cost": 7,
+		"cost": 5,
 		"attack": 6,
 		"health": 4,
 		"speed": 7,
@@ -213,7 +213,7 @@
 				}
 			}
 		},
-		"cost": 4,
+		"cost": 2,
 		"attack": 3,
 		"health": 3,
 		"speed": 5,
@@ -246,7 +246,7 @@
 				}
 			}
 		},
-		"cost": 5,
+		"cost": 3,
 		"attack": 4,
 		"health": 4,
 		"speed": 6,
@@ -279,7 +279,7 @@
 				}
 			}
 		},
-		"cost": 5,
+		"cost": 3,
 		"attack": 3,
 		"health": 4,
 		"speed": 5,
@@ -317,7 +317,7 @@
 			"air_pawn_material",
 			"darkness_pawn_material"
 		],
-		"cost": 6,
+		"cost": 4,
 		"attack": 3,
 		"health": 7,
 		"speed": 5,
@@ -350,7 +350,7 @@
 				}
 			}
 		},
-		"cost": 8,
+		"cost": 6,
 		"attack": 6,
 		"health": 4,
 		"speed": 7,
@@ -383,7 +383,7 @@
 				}
 			}
 		},
-		"cost": 6,
+		"cost": 4,
 		"attack": 4,
 		"health": 4,
 		"speed": 7,
@@ -416,7 +416,7 @@
 				}
 			}
 		},
-		"cost": 6,
+		"cost": 4,
 		"attack": 4,
 		"health": 5,
 		"speed": 7,
@@ -454,7 +454,7 @@
 			"air_knight_material",
 			"darkness_knight_material"
 		],
-		"cost": 7,
+		"cost": 5,
 		"attack": 4,
 		"health": 7,
 		"speed": 6,
@@ -487,7 +487,7 @@
 				}
 			}
 		},
-		"cost": 8,
+		"cost": 6,
 		"attack": 7,
 		"health": 6,
 		"speed": 8,
@@ -521,7 +521,7 @@
 				}
 			}
 		},
-		"cost": 6,
+		"cost": 4,
 		"attack": 3,
 		"health": 5,
 		"speed": 5,
@@ -559,7 +559,7 @@
 			"air_bishop_material",
 			"darkness_bishop_material"
 		],
-		"cost": 7,
+		"cost": 5,
 		"attack": 3,
 		"health": 8,
 		"speed": 5,
@@ -592,7 +592,7 @@
 				}
 			}
 		},
-		"cost": 8,
+		"cost": 6,
 		"attack": 6,
 		"health": 6,
 		"speed": 7,
@@ -626,7 +626,7 @@
 				}
 			}
 		},
-		"cost": 8,
+		"cost": 6,
 		"attack": 3,
 		"health": 10,
 		"speed": 5,
@@ -664,7 +664,7 @@
 			"air_queen_material",
 			"darkness_queen_material"
 		],
-		"cost": 9,
+		"cost": 7,
 		"attack": 6,
 		"health": 9,
 		"speed": 6,
@@ -698,7 +698,7 @@
 				}
 			}
 		},
-		"cost": 10,
+		"cost": 8,
 		"attack": 9,
 		"health": 7,
 		"speed": 7,

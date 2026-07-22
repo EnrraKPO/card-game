@@ -33,7 +33,7 @@
 				}
 			}
 		},
-		"cost": 3,
+		"cost": 1,
 		"attack": 1,
 		"health": 3,
 		"speed": 9
@@ -73,7 +73,7 @@
 				}
 			}
 		},
-		"cost": 4,
+		"cost": 2,
 		"attack": 2,
 		"health": 3,
 		"speed": 10
@@ -81,6 +81,10 @@
 	{
 		"id": "air_air_bishop",
 		"display_name": "Pure Air Bishop",
+		"cost": 2,
+		"attack": 1,
+		"health": 4,
+		"speed": 9,
 		"elements": [
 			"air",
 			"air"
@@ -88,6 +92,7 @@
 		"chess_pieces": [
 			"bishop"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -103,14 +108,15 @@
 					"name": "Bishop",
 					"mode": "img2img",
 					"denoise": 0.6
+				},
+				"last": {
+					"seed": 129626861,
+					"prompt": "Chibi robed cleric in a tall cleft headdress sculpted from coiled cloud and pale windswept crystal, flowing vapor-white vestments veined with glowing cyan air-currents, raising a spiral-tipped staff of condensed breeze, clutching a tome bound in drifting mist, scarf and hems whipping in gusts, wind-blurred wisps spiraling around him, bold cartoon outlines, soft turquoise sky.",
+					"style": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric light, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear,",
+					"at": "2026-07-21"
 				}
 			}
-		},
-		"ranged": true,
-		"cost": 4,
-		"attack": 1,
-		"health": 4,
-		"speed": 9
+		}
 	},
 	{
 		"id": "air_air_rook",
@@ -141,7 +147,7 @@
 				}
 			}
 		},
-		"cost": 5,
+		"cost": 3,
 		"attack": 1,
 		"health": 7,
 		"speed": 9,
@@ -176,7 +182,7 @@
 				}
 			}
 		},
-		"cost": 7,
+		"cost": 5,
 		"attack": 5,
 		"health": 5,
 		"speed": 11
@@ -210,7 +216,7 @@
 				}
 			}
 		},
-		"cost": 4,
+		"cost": 2,
 		"attack": 2,
 		"health": 4,
 		"speed": 9,
@@ -258,7 +264,7 @@
 				}
 			}
 		},
-		"cost": 5,
+		"cost": 3,
 		"attack": 3,
 		"health": 5,
 		"speed": 10,
@@ -300,7 +306,7 @@
 				}
 			}
 		},
-		"cost": 5,
+		"cost": 3,
 		"attack": 2,
 		"health": 5,
 		"speed": 9,
@@ -340,7 +346,7 @@
 			"air_pawn_training_pure",
 			"pawn_material"
 		],
-		"cost": 6,
+		"cost": 4,
 		"attack": 2,
 		"health": 8,
 		"speed": 9,
@@ -375,7 +381,7 @@
 				}
 			}
 		},
-		"cost": 8,
+		"cost": 6,
 		"attack": 5,
 		"health": 5,
 		"speed": 11
@@ -416,7 +422,7 @@
 				}
 			}
 		},
-		"cost": 6,
+		"cost": 4,
 		"attack": 3,
 		"health": 5,
 		"speed": 11
@@ -450,7 +456,7 @@
 				}
 			}
 		},
-		"cost": 6,
+		"cost": 4,
 		"attack": 3,
 		"health": 6,
 		"speed": 11
@@ -489,7 +495,7 @@
 			"air_knight_training_pure",
 			"knight_material"
 		],
-		"cost": 7,
+		"cost": 5,
 		"attack": 3,
 		"health": 8,
 		"speed": 10,
@@ -537,7 +543,7 @@
 				}
 			}
 		},
-		"cost": 8,
+		"cost": 6,
 		"attack": 6,
 		"health": 7,
 		"speed": 12
@@ -571,7 +577,7 @@
 				}
 			}
 		},
-		"cost": 6,
+		"cost": 4,
 		"attack": 2,
 		"health": 6,
 		"speed": 9
@@ -617,7 +623,7 @@
 			"air_bishop_training_pure",
 			"bishop_material"
 		],
-		"cost": 7,
+		"cost": 5,
 		"attack": 2,
 		"health": 9,
 		"speed": 9,
@@ -659,7 +665,7 @@
 				}
 			}
 		},
-		"cost": 8,
+		"cost": 6,
 		"attack": 5,
 		"health": 7,
 		"speed": 11
@@ -693,7 +699,7 @@
 				}
 			}
 		},
-		"cost": 8,
+		"cost": 6,
 		"attack": 2,
 		"health": 11,
 		"speed": 9,
@@ -733,7 +739,7 @@
 			"air_queen_training_pure",
 			"queen_material"
 		],
-		"cost": 9,
+		"cost": 7,
 		"attack": 5,
 		"health": 10,
 		"speed": 10,
@@ -768,7 +774,7 @@
 				}
 			}
 		},
-		"cost": 10,
+		"cost": 8,
 		"attack": 8,
 		"health": 8,
 		"speed": 11

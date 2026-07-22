@@ -11,27 +11,23 @@
 		],
 		"tool": {
 			"art": {
-				"prompt": "Skeletal foot-soldier of bleached bone and blackened plate, hollow eye sockets burning ghost-green, a cracked spear gripped in bony fists, ribcage armor set with glowing teal crystal shards, tattered banner-cloth hanging in shreds, wisps of grave-mist curling from joints, standing on a glowing spectral sigil, tombstones and gothic spires in stormy gloom, bold saturated fantasy illustration",
+				"prompt": "Chibi rotting zombie foot-soldier in cracked bone-and-bronze armor, domed helmet crowned with a small round skull-knob, glowing teal eyes and sunken gray flesh, gripping a jagged rusted spear and battered round shield, tattered banner-scrap, standing on a faint arcane summoning circle, gothic graveyard of leaning tombstones, teal and bone-white palette, eerie cool lighting, detailed painterly fantasy illustration",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/pawn.png",
-					"name": "Pawn"
+					"source": "upload",
+					"path": "snap_pawn.png"
 				},
 				"inferredFrom": {
-					"concept": [
-						"pawn",
-						"air_fire_bishop_pawn",
-						"air_fire_knight_pawn"
-					],
+					"anchor": "snap_pawn.png",
 					"theme": [
-						"darkness_light_knight",
-						"darkness_light_queen",
-						"darkness_light_bishop"
-					]
+						"snap_darkness_light_pawn.png",
+						"snap_darkness_light_knight.png",
+						"snap_darkness_light_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		},
-		"cost": 2,
+		"cost": 0,
 		"attack": 2,
 		"health": 3,
 		"speed": 2,
@@ -49,27 +45,23 @@
 		],
 		"tool": {
 			"art": {
-				"prompt": "Chibi cartoon skeletal warhorse rearing mid-charge on a cracked graveyard dais, weathered bone-plated barding of blackened cracked stone traced with pale worn silver, ghostly teal fire blazing in its eye sockets and pouring from cracked ribs, tattered skull-emblazoned caparison streaming, wisps of green graveyard mist curling off bony hooves, glowing arcane sigil beneath, looming spired crypts behind, thick outlines, bold saturated colors",
+				"prompt": "Chibi skeletal warhorse charging, weathered bone body draped in cracked black-and-bronze barding, glowing teal eye sockets, tattered crimson scarf whipping from its neck, skull-crested chestplate, crystalline hooves striking a luminous arcane summoning ring, gothic graveyard of leaning tombstones and spired crypts under a stormy sky, teal and bone-white palette, eerie cool lighting, detailed painterly fantasy illustration",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/knight.png",
-					"name": "Knight"
+					"source": "upload",
+					"path": "snap_knight.png"
 				},
 				"inferredFrom": {
-					"concept": [
-						"knight",
-						"air_fire_bishop_knight",
-						"air_fire_knight"
-					],
+					"anchor": "snap_knight.png",
 					"theme": [
-						"darkness_light_pawn",
-						"darkness_light_queen",
-						"darkness_light_bishop"
-					]
+						"snap_darkness_light_pawn.png",
+						"snap_darkness_light_knight.png",
+						"snap_darkness_light_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		},
-		"cost": 3,
+		"cost": 1,
 		"attack": 3,
 		"health": 3,
 		"speed": 3,
@@ -87,28 +79,24 @@
 		],
 		"tool": {
 			"art": {
-				"prompt": "Skeletal robed prelate looming on a glowing spectral sigil, gaunt bone face beneath a tall cleft mitre carved of pale bone set with a haunting teal gem, tattered dark vestments trailing wisps of graveyard mist, skeletal hands clutching a spiraled staff crowned with a cold aquamarine crystal, hollow eye sockets burning ghostly green, spined bone pauldrons, brooding storm sky over gothic tombs, thick outlines, bold saturated painterly rendering",
+				"prompt": "Chibi undead skeletal high priest in tattered bone-white robes and a cracked mitred bone helm split like antlers, hollow sockets burning eerie teal, one skeletal hand raising a curled crook-topped staff wreathed in ghostly cyan flame, other cradling a chained grimoire, standing on a glowing arcane circle, gothic graveyard of leaning mausoleums, teal-and-bone palette, dark ominous lighting, painterly fantasy render",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/bishop.png",
-					"name": "Bishop"
+					"source": "upload",
+					"path": "snap_bishop.png"
 				},
 				"inferredFrom": {
-					"concept": [
-						"bishop",
-						"air_fire_bishop",
-						"air_fire_bishop_bishop"
-					],
+					"anchor": "snap_bishop.png",
 					"theme": [
-						"darkness_light_knight",
-						"darkness_light_pawn",
-						"darkness_light_queen"
-					]
+						"snap_darkness_light_pawn.png",
+						"snap_darkness_light_knight.png",
+						"snap_darkness_light_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		},
 		"ranged": true,
-		"cost": 3,
+		"cost": 1,
 		"attack": 2,
 		"health": 4,
 		"speed": 2,
@@ -126,29 +114,24 @@
 		],
 		"tool": {
 			"art": {
-				"prompt": "Towering skeletal war-fortress of bleached bone and blackened cracked stone rearing from a graveyard crag, ramparts fused from stacked skulls veined with pale silver, hollow arched gate breathing ghost-green fire, a gaunt spectral steed lunging from within, tattered shroud-banners streaming off spined ramparts, teal grave-mist pouring down its walls, glowing arcane sigil at its base, brooding gothic tombs under a stormy sky, thick outlines, bold saturated colors",
+				"prompt": "Squat crenellated defensive tower built from fused bone and mortared skulls, jagged rib-buttresses flaring at the base, a hollow arched window where a helmed skeletal watcher peers out with glowing teal eyes, tattered black funeral pennant hanging from bronze pegs, arcane summoning circle etched at its foundation, gothic graveyard of spired mausoleums, teal and bone-white palette, eerie cold glow, dark moody lighting, detailed painterly fantasy illustration",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/rook.png",
-					"name": "Rook"
+					"source": "upload",
+					"path": "snap_rook.png"
 				},
 				"inferredFrom": {
-					"concept": [
-						"rook",
-						"air_fire_bishop_rook",
-						"air_fire_knight_rook"
-					],
+					"anchor": "snap_rook.png",
 					"theme": [
-						"darkness_light_knight",
-						"darkness_light_pawn",
-						"darkness_light_queen",
-						"darkness_light_bishop"
-					]
+						"snap_darkness_light_pawn.png",
+						"snap_darkness_light_knight.png",
+						"snap_darkness_light_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		},
 		"ranged": true,
-		"cost": 4,
+		"cost": 2,
 		"attack": 2,
 		"health": 7,
 		"speed": 2,
@@ -173,17 +156,23 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Skeletal queen sovereign standing on a glowing spectral sigil, tall cleft crown of pale bone crowned with a haunting teal gem, gaunt bone visage with hollow eye sockets burning ghost-green, tattered dark royal robes trailing curls of graveyard mist, one bony hand raising a spiraled aquamarine-crystal staff, the other cradling a hovering orb of cold teal flame, spined bone pauldrons, brooding storm sky over gothic tombs, thick outlines, bold saturated colors",
+				"prompt": "Chibi undead sovereign woman with gaunt gray decayed skin and hollow glowing cyan eyes, tall spiked crown of fused bone, tattered gilded gown over rusted plate, torn ashen cape, conjuring a swirling teal necrotic orb above an outstretched clawed hand, standing on a luminous arcane summoning circle, gothic tombstone graveyard, bone-white and teal palette, eerie ominous glow, detailed painterly fantasy illustration",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/queen.png",
-					"name": "Queen",
-					"mode": "img2img",
-					"denoise": 0.6
+					"source": "upload",
+					"path": "snap_queen.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_queen.png",
+					"theme": [
+						"snap_darkness_light_pawn.png",
+						"snap_darkness_light_knight.png",
+						"snap_darkness_light_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		},
-		"cost": 6,
+		"cost": 4,
 		"attack": 6,
 		"health": 5,
 		"speed": 4,
@@ -202,28 +191,23 @@
 		],
 		"tool": {
 			"art": {
-				"prompt": "Skeletal footsoldier locked in a fierce battle stance, bleached bone limbs bound in blackened cracked plate, hollow sockets blazing ghost-green, stubby cleaver of grey bone raised mid-swing, tattered ragged banner streaming from a jagged pauldron, wisps of grave-mist curling from every joint, standing on a glowing spectral ring amid gothic tombs and stormy gloom, thick outlines, bold saturated colors.",
+				"prompt": "Chibi undead skeleton foot-soldier in cracked black-and-bronze plate and a domed full helm over a fleshless jaw, glowing teal eye-sockets, raising a pitted longsword and hefting a rotting bone-braced shield, standing on a glowing arcane circle, gothic graveyard of leaning tombstones and spired crypts, teal gemstone accents, eerie cold lighting, detailed painterly fantasy illustration",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/pawn_pawn.png",
-					"name": "Warrior"
+					"source": "upload",
+					"path": "snap_pawn_pawn.png"
 				},
 				"inferredFrom": {
-					"concept": [
-						"pawn_pawn",
-						"air_fire_pawn_pawn",
-						"earth_water_pawn_pawn"
-					],
+					"anchor": "snap_pawn_pawn.png",
 					"theme": [
-						"darkness_light_knight",
-						"darkness_light_pawn",
-						"darkness_light_queen",
-						"darkness_light_bishop"
-					]
+						"snap_darkness_light_pawn.png",
+						"snap_darkness_light_knight.png",
+						"snap_darkness_light_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		},
-		"cost": 3,
+		"cost": 1,
 		"attack": 3,
 		"health": 4,
 		"speed": 2,
@@ -248,17 +232,23 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Skeletal armored lancer in cracked black-and-bronze plate with domed visored helm and glowing teal eye-sockets, hoisting a tattered ragged pennant-lance, riding a bone-armored decayed steed with skull-plated brow and crystalline hooves, tattered dark barding, charging through a fog-choked gothic graveyard of leaning tombstones, eerie teal glow, bone-white palette, moody painterly fantasy illustration",
+				"prompt": "Skeletal lancer knight in cracked bone-plate armor and rotting tabard, glowing teal eye-sockets in a domed helm, hoisting a tattered banner-lance, riding a bone-armored decayed steed with luminous teal eyes and crystalline hooves, charging across a mist-shrouded graveyard of leaning tombstones and spired mausoleums, glowing arcane circle underfoot, stormy sky, teal and bone-white palette, eerie ominous lighting, detailed painterly fantasy illustration.",
 				"ref": {
 					"source": "upload",
-					"path": "snap_knight_pawn.png",
-					"name": "snap_knight_pawn.png",
-					"mode": "img2img",
-					"denoise": 0.6
+					"path": "snap_knight_pawn.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_knight_pawn.png",
+					"theme": [
+						"snap_darkness_light_pawn.png",
+						"snap_darkness_light_knight.png",
+						"snap_darkness_light_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		},
-		"cost": 4,
+		"cost": 2,
 		"attack": 4,
 		"health": 5,
 		"speed": 3,
@@ -283,17 +273,23 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Chibi armored guardian knight in heavy corroded bone-white and tarnished bronze plate, sealed grille helmet with glowing teal eye-slits, hefting a spiked skull-headed bludgeon and a broad round shield stamped with a radiant sundial sigil, tattered dark surcoat, standing on a luminous arcane summoning circle, gothic tombstone graveyard backdrop, teal gemstone accents, eerie cold lighting, detailed painterly fantasy illustration",
+				"prompt": "Chibi armored crusader-knight in heavy plate, closed visored helmet, spiked mace and heavy tabard shield, stout guardian silhouette — reimagined as an undead sentinel. Chibi undead paladin in cracked bone-white and tarnished bronze plate, sealed domed helmet glowing teal through the eye slits, gripping a heavy skull-headed bludgeon, bearing a broad shield etched with a radiant arcane sigil, tattered ghoul-green tabard, standing on a glowing summoning circle, gothic graveyard of leaning tombstones, teal gemstone accents, eerie cold lighting, detailed painterly fantasy illustration",
 				"ref": {
 					"source": "upload",
-					"path": "snap_bishop_pawn.png",
-					"name": "snap_bishop_pawn.png",
-					"mode": "img2img",
-					"denoise": 0.6
+					"path": "snap_bishop_pawn.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_bishop_pawn.png",
+					"theme": [
+						"snap_darkness_light_pawn.png",
+						"snap_darkness_light_knight.png",
+						"snap_darkness_light_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		},
-		"cost": 4,
+		"cost": 2,
 		"attack": 3,
 		"health": 5,
 		"speed": 2,
@@ -312,24 +308,19 @@
 		],
 		"tool": {
 			"art": {
-				"prompt": "Skeletal-bone watchtower barracks looming on a glowing spectral sigil, rounded crenellated crown and arched gateway built of bleached bone plates set with cold teal crystal shards, hollow window sockets burning ghostly green, tattered shroud-banners streaming grave-mist, a gaunt bone sentry with domed helm and cracked spear guarding the door, brooding storm sky over gothic tombs, thick outlines, bold saturated colors, centered figure, dark background",
+				"prompt": "Squat fortified stone barracks tower built from cracked bone-white blocks and blackened mortar, arched gateway breathing eerie teal light, tattered banner hung above, a spear rack of jagged weapons beside it, a helmeted skeletal guard in dented bronze armor with glowing teal eyes standing watch at the doorway, gothic graveyard turf, stormy dark sky, painterly stylized fantasy render",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/pawn_rook.png",
-					"name": "Barracks"
+					"source": "upload",
+					"path": "snap_pawn_rook.png"
 				},
 				"inferredFrom": {
-					"concept": [
-						"pawn_rook",
-						"air_fire_pawn_rook",
-						"earth_water_pawn_rook"
-					],
+					"anchor": "snap_pawn_rook.png",
 					"theme": [
-						"darkness_light_knight",
-						"darkness_light_pawn",
-						"darkness_light_queen",
-						"darkness_light_bishop"
-					]
+						"snap_darkness_light_pawn.png",
+						"snap_darkness_light_knight.png",
+						"snap_darkness_light_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		},
@@ -338,7 +329,7 @@
 			"darkness_pawn_material",
 			"light_pawn_material"
 		],
-		"cost": 5,
+		"cost": 3,
 		"attack": 3,
 		"health": 8,
 		"speed": 2,
@@ -357,28 +348,23 @@
 		],
 		"tool": {
 			"art": {
-				"prompt": "A commander of bone and grave-magic risen atop a mounded battlefield dais of blackened cracked stone, hollow eye sockets burning ghost-green, tattered dark officer's coat streaming graveyard mist, one gauntleted bony hand thrusting a short baton skyward to rally a marching column of small chibi skeletal soldiers below, spined bone pauldrons, teal crystal shards glinting, glowing spectral sigil underfoot, brooding storm sky over gothic tombs, thick outlines, bold saturated colors",
+				"prompt": "Chibi undead female warlord in cracked bone-white and blackened bronze armor, glowing teal eye sockets, tattered dark cape, thrusting a bone baton to command her ranks, standing atop a crumbling tombstone rampart, rows of skeletal spear-soldiers marching below through a fog-choked graveyard, glowing arcane circle beneath, teal and bone palette, eerie ominous glow, detailed painterly fantasy illustration",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/pawn_queen.png",
-					"name": "Commander"
+					"source": "upload",
+					"path": "snap_pawn_queen.png"
 				},
 				"inferredFrom": {
-					"concept": [
-						"pawn_queen",
-						"air_fire_pawn_queen",
-						"earth_water_pawn_queen"
-					],
+					"anchor": "snap_pawn_queen.png",
 					"theme": [
-						"darkness_light_knight",
-						"darkness_light_pawn",
-						"darkness_light_queen",
-						"darkness_light_bishop"
-					]
+						"snap_darkness_light_pawn.png",
+						"snap_darkness_light_knight.png",
+						"snap_darkness_light_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		},
-		"cost": 7,
+		"cost": 5,
 		"attack": 6,
 		"health": 5,
 		"speed": 4,
@@ -403,17 +389,23 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Massive skeletal armored bull charging low, bone-plated skull with heavy curved horns and glowing teal eye sockets, tattered draped shroud over exposed rib-cage and fleshless bony haunches, cracked bronze-and-bone barding, hooves striking a glowing arcane summoning circle, gothic graveyard of leaning tombstones and spired mausoleums, stormy sky, teal and bone-white palette, eerie ominous glow, detailed painterly fantasy illustration",
+				"prompt": "Massive skeletal-undead armored bull lowering its horned skull to charge, exposed rib bones and rotting sinew over hulking muscle, glowing teal eye sockets, tarnished bronze faceplate and horn-caps, cracked bone hooves striking arcane summoning glyphs, ragged shroud draped over its spine, gothic graveyard of leaning tombstones, teal and bone palette, eerie ominous glow, detailed painterly fantasy illustration",
 				"ref": {
 					"source": "upload",
-					"path": "snap_knight_knight.png",
-					"name": "snap_knight_knight.png",
-					"mode": "img2img",
-					"denoise": 0.6
+					"path": "snap_knight_knight.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_knight_knight.png",
+					"theme": [
+						"snap_darkness_light_pawn.png",
+						"snap_darkness_light_knight.png",
+						"snap_darkness_light_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		},
-		"cost": 5,
+		"cost": 3,
 		"attack": 4,
 		"health": 5,
 		"speed": 4,
@@ -432,28 +424,23 @@
 		],
 		"tool": {
 			"art": {
-				"prompt": "Skeletal spectral moose-beast cryptid wading through a haunted mire, gaunt bone-plated hide of bleached ivory and blackened stone, hollow eye sockets pouring cold teal fire, broad cracked antlers grown from luminous aquamarine crystal, wisps of green grave-mist curling off its ribs, tattered ghostly hide streaming, glowing spectral ring beneath its hooves, gothic tombs under a brooding storm sky, thick outlines, bold saturated colors",
+				"prompt": "Undead skeletal unicorn cryptid, gleaming bone body with cracked spiral horn and glowing teal eye sockets, tattered ghostly mane trailing wisps of cold luminous vapor, crystalline hooves striking a radiant arcane summoning ring, gothic graveyard of leaning tombstones and spired mausoleums, teal and bone-white palette, eerie ominous glow, painterly stylized fantasy illustration",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/bishop_knight.png",
-					"name": "Cryptid"
+					"source": "upload",
+					"path": "snap_bishop_knight.png"
 				},
 				"inferredFrom": {
-					"concept": [
-						"bishop_knight",
-						"air_fire_bishop_knight",
-						"earth_water_bishop_knight"
-					],
+					"anchor": "snap_bishop_knight.png",
 					"theme": [
-						"darkness_light_knight",
-						"darkness_light_pawn",
-						"darkness_light_queen",
-						"darkness_light_bishop"
-					]
+						"snap_darkness_light_pawn.png",
+						"snap_darkness_light_knight.png",
+						"snap_darkness_light_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		},
-		"cost": 5,
+		"cost": 3,
 		"attack": 4,
 		"health": 6,
 		"speed": 4,
@@ -472,24 +459,19 @@
 		],
 		"tool": {
 			"art": {
-				"prompt": "Skeletal warhorse rearing in the arched gateway of a ruined bone-built stable, hollow eye sockets blazing ghost-green, cracked barding of blackened stone traced with worn silver, teal grave-fire pouring from its ribs, tattered skull-marked caparison streaming, wisps of graveyard mist curling off bony hooves, glowing spectral sigil below, gothic spires in stormy gloom, thick outlines, bold saturated colors",
+				"prompt": "Small stone-and-timber stable building, walls of stacked tombstones and coffin planks bound with rusted iron, sagging skull-crested roof, a bone-armored steed with hollow glowing teal eye-sockets peering from the half-door, tattered banner overhead, lantern of cold cyan flame, mounds of gray withered straw, gothic graveyard yard, bone-white and teal palette, eerie mist, painterly fantasy illustration",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/knight_rook.png",
-					"name": "Stable"
+					"source": "upload",
+					"path": "snap_knight_rook.png"
 				},
 				"inferredFrom": {
-					"concept": [
-						"knight_rook",
-						"air_fire_knight_rook",
-						"earth_water_knight_rook"
-					],
+					"anchor": "snap_knight_rook.png",
 					"theme": [
-						"darkness_light_knight",
-						"darkness_light_pawn",
-						"darkness_light_queen",
-						"darkness_light_bishop"
-					]
+						"snap_darkness_light_pawn.png",
+						"snap_darkness_light_knight.png",
+						"snap_darkness_light_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		},
@@ -498,7 +480,7 @@
 			"darkness_knight_material",
 			"light_knight_material"
 		],
-		"cost": 6,
+		"cost": 4,
 		"attack": 4,
 		"health": 8,
 		"speed": 3,
@@ -517,28 +499,23 @@
 		],
 		"tool": {
 			"art": {
-				"prompt": "Skeletal dragon reanimated in death, rearing on hind legs, bleached bone hide plated with blackened cracked scales, exposed ribcage glowing with ghost-green fire, tattered rotting wing membranes trailing graveyard mist, hollow eye sockets burning teal, spined bone horns, standing on a luminous spectral sigil amid gothic tombs under a brooding storm sky, thick outlines, bold saturated colors",
+				"prompt": "Colossal skeletal winged dragon reared over a moonlit graveyard, bone-plated ribcage and exposed spine, tattered rotting wing-membranes stretched wide, glowing teal eye sockets and jaws, cracked bronze horns, decayed sinew clinging to fanged skull, arcane summoning circle beneath clawed talons, spired mausoleums, bone-white and teal palette, eerie ominous glow, painterly fantasy illustration",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/knight_queen.png",
-					"name": "Monster"
+					"source": "upload",
+					"path": "snap_knight_queen.png"
 				},
 				"inferredFrom": {
-					"concept": [
-						"knight_queen",
-						"air_fire_knight_queen",
-						"earth_water_knight_queen"
-					],
+					"anchor": "snap_knight_queen.png",
 					"theme": [
-						"darkness_light_knight",
-						"darkness_light_pawn",
-						"darkness_light_queen",
-						"darkness_light_bishop"
-					]
+						"snap_darkness_light_pawn.png",
+						"snap_darkness_light_knight.png",
+						"snap_darkness_light_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		},
-		"cost": 7,
+		"cost": 5,
 		"attack": 7,
 		"health": 7,
 		"speed": 5,
@@ -557,28 +534,23 @@
 		],
 		"tool": {
 			"art": {
-				"prompt": "Bearded undead high priest with a long ghost-white beard, gaunt bone visage and hollow eye sockets blazing spectral green, tall cleft mitre of pale bone set with a haunting teal gem, tattered dark vestments trailing graveyard mist, raising a spiraled aquamarine staff as cold teal fire and crackling arcane sigils spiral from his upraised palm, glowing spectral disc underfoot, brooding storm sky over gothic tombs, thick outlines, bold saturated painterly rendering",
+				"prompt": "Chibi undead high priest with gaunt bearded skull-like face and hollow glowing teal eye-sockets, tall cracked bone mitre and tattered black-and-gold vestments over exposed ribs, one skeletal hand raised channeling wisps, other gripping a towering staff crowned by a pulsing cyan orb, standing on a luminous arcane summoning ring, gothic crypt of coffins and spired mausoleums, teal and bone-white palette, eerie ominous glow, detailed painterly fantasy illustration",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/bishop_bishop.png",
-					"name": "Hierophant"
+					"source": "upload",
+					"path": "snap_bishop_bishop.png"
 				},
 				"inferredFrom": {
-					"concept": [
-						"bishop_bishop",
-						"air_fire_bishop_bishop",
-						"earth_water_bishop_bishop"
-					],
+					"anchor": "snap_bishop_bishop.png",
 					"theme": [
-						"darkness_light_knight",
-						"darkness_light_pawn",
-						"darkness_light_queen",
-						"darkness_light_bishop"
-					]
+						"snap_darkness_light_pawn.png",
+						"snap_darkness_light_knight.png",
+						"snap_darkness_light_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		},
-		"cost": 5,
+		"cost": 3,
 		"attack": 3,
 		"health": 6,
 		"speed": 2,
@@ -604,13 +576,19 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Skeletal necromancer spire on a glowing spectral sigil, cleft crenellated crown and tall spined cap carved from bleached bone traced with worn silver, arched gateway and slit windows pouring ghostly teal fire and curling grave-mist, hollow skull motifs burning ghost-green, a gaunt bone-robed caster raising a spiraled aquamarine staff at its base, brooding storm sky over gothic tombs, thick outlines, bold saturated colors",
+				"prompt": "Towering bone-and-blackstone spire ribbed with fused skeletal remains, glowing teal cracks pulsing along its walls, tattered crimson mausoleum flag draped down the front, arched crypt doorway seeping eerie cyan light, robed skeletal priest-magician standing before it clutching an open grimoire and skull-topped staff, arcane summoning circle underfoot, gothic graveyard, bone-white and teal palette, dark moody lighting, painterly fantasy illustration",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/bishop_rook.png",
-					"name": "Arcane Tower",
-					"mode": "img2img",
-					"denoise": 0.6
+					"source": "upload",
+					"path": "snap_bishop_rook.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_bishop_rook.png",
+					"theme": [
+						"snap_darkness_light_pawn.png",
+						"snap_darkness_light_knight.png",
+						"snap_darkness_light_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		},
@@ -618,7 +596,7 @@
 			"darkness_bishop_material",
 			"light_bishop_material"
 		],
-		"cost": 6,
+		"cost": 4,
 		"attack": 3,
 		"health": 9,
 		"speed": 2,
@@ -637,28 +615,23 @@
 		],
 		"tool": {
 			"art": {
-				"prompt": "Towering front-facing skeletal goddess sovereign hovering above a glowing spectral ground-circle, gaunt pale bone visage with hollow sockets pouring ghost-green fire, tattered dark divine vestments trailing curls of graveyard mist, one skeletal hand raising a spiraled aquamarine-crystal scepter, the other cradling a floating orb of cold teal flame, spined bone shoulder-guards, brooding storm sky over gothic tombs, thick outlines, bold saturated colors",
+				"prompt": "Towering skeletal goddess draped in tattered bone-white funeral robes stitched with pale cyan runework, hollow sockets blazing eerie teal, arms raised in a solemn blessing, one bony hand offering a floating necrotic orb, gauze of ghost-light haloing her skull, standing amid a glowing arcane circle in a gothic graveyard of spired mausoleums, teal and bone palette, ominous cool lighting, detailed painterly fantasy illustration",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/bishop_queen.png",
-					"name": "Deity"
+					"source": "upload",
+					"path": "snap_bishop_queen.png"
 				},
 				"inferredFrom": {
-					"concept": [
-						"bishop_queen",
-						"air_fire_bishop_queen",
-						"earth_water_bishop_queen"
-					],
+					"anchor": "snap_bishop_queen.png",
 					"theme": [
-						"darkness_light_knight",
-						"darkness_light_pawn",
-						"darkness_light_queen",
-						"darkness_light_bishop"
-					]
+						"snap_darkness_light_pawn.png",
+						"snap_darkness_light_knight.png",
+						"snap_darkness_light_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		},
-		"cost": 7,
+		"cost": 5,
 		"attack": 6,
 		"health": 7,
 		"speed": 4,
@@ -684,17 +657,23 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Skeletal fortress turret with a wide cracked base and hollow arrow-slit windows burning ghost-green, crowned by a swiveling top-mounted cannon carved of pale bleached bone and blackened plate, the barrel wreathed in cold teal graveflame and drifting grave-mist, spined bone buttresses, glowing spectral sigil beneath, brooding storm sky over gothic tombs, thick outlines, bold saturated colors",
+				"prompt": "Squat crenellated tower built of fused bone and blackened stone, mounted atop a spinning bolt-thrower fashioned from rib-cage struts and a giant fanged jawbone launcher aimed skyward, glowing teal eye-sockets peering from arrow slits, ragged tattered pennant, gothic graveyard of leaning tombstones, arcane summoning circle at its base, bone-white and teal palette, eerie cool lighting, detailed painterly fantasy illustration",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/rook_rook.png",
-					"name": "Turret",
-					"mode": "img2img",
-					"denoise": 0.6
+					"source": "upload",
+					"path": "snap_rook_rook.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_rook_rook.png",
+					"theme": [
+						"snap_darkness_light_pawn.png",
+						"snap_darkness_light_knight.png",
+						"snap_darkness_light_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		},
-		"cost": 7,
+		"cost": 5,
 		"attack": 3,
 		"health": 11,
 		"speed": 2,
@@ -720,13 +699,19 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Towering fortress built from fused bone and cracked grave-stone, three spired towers roofed in tattered black shrouds, skull-carved battlements with glowing teal eye-sockets, rib-arched gatehouse jaws of iron teeth, hanging bone-white banners, arcane summoning circle at its base, gothic graveyard grounds with crooked tombstones, bone and teal palette, eerie ominous glow, stormy sky, detailed painterly fantasy illustration",
+				"prompt": "Towering fortress built from fused bone and cracked black stone, skull-crowned turrets with jagged crenellations, tattered dark banners bearing crossed bones, glowing teal light seeping from arrow-slit windows, twin skeletal sentries flanking an iron gate of ribs and fangs, gothic graveyard grounds with crooked tombstones, stormy sky, bone-white and teal palette, eerie ominous glow, detailed painterly fantasy illustration",
 				"ref": {
 					"source": "upload",
-					"path": "snap_rook_queen.png",
-					"name": "snap_rook_queen.png",
-					"mode": "img2img",
-					"denoise": 0.6
+					"path": "snap_rook_queen.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_rook_queen.png",
+					"theme": [
+						"snap_darkness_light_pawn.png",
+						"snap_darkness_light_knight.png",
+						"snap_darkness_light_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		},
@@ -734,7 +719,7 @@
 			"darkness_queen_material",
 			"light_queen_material"
 		],
-		"cost": 8,
+		"cost": 6,
 		"attack": 6,
 		"health": 10,
 		"speed": 3,
@@ -759,17 +744,23 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Chibi human warrior queen with deathly pale skin and glowing pale-teal eyes, black curls, spiked crown of blackened bone set with luminous gems, cracked bone-plated armor over a crimson-and-charcoal tunic, tattered cape, hoisting a jagged crystalline greatsword wreathed in ghostly cyan light, planted on a glowing arcane sigil amid crooked tombstones, stormy graveyard sky, teal and bone-white palette, eerie ominous glow, detailed painterly fantasy illustration",
+				"prompt": "Chibi crowned female champion with gaunt grey-pallid skin and hollow glowing teal eyes, cracked bone-plated armor over a tattered crimson cape, spiked skeletal pauldrons, hoisting a jagged blade wreathed in eerie luminous mist, sunken determined snarl, standing atop a glowing sigil amid mist-choked tombstones and spired mausoleums, teal and bone-white palette, ominous cool lighting, detailed painterly fantasy illustration",
 				"ref": {
 					"source": "upload",
-					"path": "snap_queen_queen.png",
-					"name": "snap_queen_queen.png",
-					"mode": "img2img",
-					"denoise": 0.6
+					"path": "snap_queen_queen.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_queen_queen.png",
+					"theme": [
+						"snap_darkness_light_pawn.png",
+						"snap_darkness_light_knight.png",
+						"snap_darkness_light_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		},
-		"cost": 9,
+		"cost": 7,
 		"attack": 9,
 		"health": 8,
 		"speed": 4,

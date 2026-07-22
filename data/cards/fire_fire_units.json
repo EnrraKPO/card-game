@@ -47,7 +47,7 @@
 				}
 			}
 		},
-		"cost": 3,
+		"cost": 1,
 		"attack": 5,
 		"health": 3,
 		"speed": 1
@@ -102,7 +102,7 @@
 				}
 			}
 		},
-		"cost": 4,
+		"cost": 2,
 		"attack": 6,
 		"health": 3,
 		"speed": 2
@@ -136,7 +136,7 @@
 			}
 		},
 		"ranged": true,
-		"cost": 4,
+		"cost": 2,
 		"attack": 5,
 		"health": 4,
 		"speed": 1
@@ -174,7 +174,7 @@
 		},
 		"display_name": "Pure Fire Rook",
 		"ranged": true,
-		"cost": 5,
+		"cost": 3,
 		"attack": 5,
 		"health": 7,
 		"speed": 1,
@@ -213,7 +213,7 @@
 				}
 			}
 		},
-		"cost": 7,
+		"cost": 5,
 		"attack": 9,
 		"health": 5,
 		"speed": 3
@@ -247,7 +247,7 @@
 				}
 			}
 		},
-		"cost": 4,
+		"cost": 2,
 		"attack": 6,
 		"health": 4,
 		"speed": 1,
@@ -282,7 +282,7 @@
 				}
 			}
 		},
-		"cost": 5,
+		"cost": 3,
 		"attack": 7,
 		"health": 5,
 		"speed": 2,
@@ -317,7 +317,7 @@
 				}
 			}
 		},
-		"cost": 5,
+		"cost": 3,
 		"attack": 6,
 		"health": 5,
 		"speed": 1,
@@ -357,7 +357,7 @@
 			"fire_pawn_training_pure",
 			"pawn_material"
 		],
-		"cost": 6,
+		"cost": 4,
 		"attack": 6,
 		"health": 8,
 		"speed": 1,
@@ -392,7 +392,7 @@
 				}
 			}
 		},
-		"cost": 8,
+		"cost": 6,
 		"attack": 9,
 		"health": 5,
 		"speed": 3
@@ -426,7 +426,7 @@
 				}
 			}
 		},
-		"cost": 6,
+		"cost": 4,
 		"attack": 7,
 		"health": 5,
 		"speed": 3
@@ -466,7 +466,7 @@
 				}
 			}
 		},
-		"cost": 6,
+		"cost": 4,
 		"attack": 7,
 		"health": 6,
 		"speed": 3
@@ -505,7 +505,7 @@
 			"fire_knight_training_pure",
 			"knight_material"
 		],
-		"cost": 7,
+		"cost": 5,
 		"attack": 7,
 		"health": 8,
 		"speed": 2,
@@ -514,7 +514,7 @@
 	{
 		"id": "fire_fire_knight_queen",
 		"display_name": "Pure Fire Monster",
-		"cost": 8,
+		"cost": 6,
 		"attack": 10,
 		"health": 7,
 		"speed": 4,
@@ -580,7 +580,7 @@
 				}
 			}
 		},
-		"cost": 6,
+		"cost": 4,
 		"attack": 6,
 		"health": 6,
 		"speed": 1
@@ -619,7 +619,7 @@
 			"fire_bishop_training_pure",
 			"bishop_material"
 		],
-		"cost": 7,
+		"cost": 5,
 		"attack": 6,
 		"health": 9,
 		"speed": 1,
@@ -628,6 +628,10 @@
 	{
 		"id": "fire_fire_bishop_queen",
 		"display_name": "Pure Fire Deity",
+		"cost": 6,
+		"attack": 9,
+		"health": 7,
+		"speed": 3,
 		"elements": [
 			"fire",
 			"fire"
@@ -653,11 +657,7 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 8,
-		"attack": 9,
-		"health": 7,
-		"speed": 3
+		}
 	},
 	{
 		"id": "fire_fire_rook_rook",
@@ -689,7 +689,7 @@
 				}
 			}
 		},
-		"cost": 8,
+		"cost": 6,
 		"attack": 6,
 		"health": 11,
 		"speed": 1,
@@ -729,7 +729,7 @@
 			"fire_queen_training_pure",
 			"queen_material"
 		],
-		"cost": 9,
+		"cost": 7,
 		"attack": 9,
 		"health": 10,
 		"speed": 2,
@@ -764,7 +764,7 @@
 				}
 			}
 		},
-		"cost": 10,
+		"cost": 8,
 		"attack": 12,
 		"health": 8,
 		"speed": 3

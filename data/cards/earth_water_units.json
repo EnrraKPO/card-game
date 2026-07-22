@@ -1,165 +1,150 @@
 [
 	{
 		"id": "earth_water_pawn",
+		"display_name": "Clay Pawn",
+		"cost": 1,
+		"attack": 1,
+		"health": 5,
+		"speed": 1,
+		"shield": 1,
 		"elements": [
 			"earth",
 			"water"
 		],
-		"display_name": "Clay Pawn",
 		"chess_pieces": [
 			"pawn"
 		],
 		"tool": {
 			"art": {
-				"prompt": "Chibi foot soldier sculpted from damp reddish-brown earth, hand-pressed faceted body glistening with wet sheen, sagging molded shoulder guards and drooping helmet oozing sludge, tiny cracked round shield and stubby blunt cudgel, hollow blank sockets, thick globs sliding from its joints, wading through soft mud amid warm mystical glow and drifting motes, dark shadowed backdrop, richly textured fantasy digital painting",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi foot-soldier sculpted entirely from glossy wet clay, big-headed proportions, round domed helmet topped with a smooth clay ball peg, glowing warm eyes and stern scowl, gripping a tipped spear, small oval shield strapped on, dripping muddy tunic, planted in a splashing puddle of soft ochre mud, warm terracotta and tan palette, hazy overcast sky, low heroic angle, centered full-body, glossy claymation texture, painterly stylized fantasy render.",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/pawn.png",
-					"name": "Pawn"
-				},
-				"inferredFrom": {
-					"concept": [
-						"pawn",
-						"air_darkness_bishop_pawn",
-						"air_darkness_knight_pawn"
-					],
-					"theme": [
-						"air_fire_knight",
-						"air_fire_pawn",
-						"air_fire_rook",
-						"earth_water_knight"
-					]
+					"source": "upload",
+					"path": "snap_pawn.png",
+					"name": "snap_pawn.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 3,
-		"attack": 1,
-		"health": 5,
-		"speed": 1,
-		"shield": 1
+		}
 	},
 	{
 		"id": "earth_water_knight",
+		"display_name": "Clay Knight",
+		"cost": 2,
+		"attack": 2,
+		"health": 5,
+		"speed": 2,
+		"shield": 1,
 		"elements": [
 			"earth",
 			"water"
 		],
-		"display_name": "Clay Knight",
 		"chess_pieces": [
 			"knight"
 		],
 		"tool": {
 			"art": {
-				"prompt": "Small chibi-proportioned foot knight sculpted from soft wet clay, rounded helm and stubby raised shield of packed damp earth, glossy slick smears and thumb-pressed dents across a cracking drying surface, muddy brown haunches dribbling wet runnels, glowing amber eyes, dark background with warm ochre conjuring haze and faint teal mist curling upward, soft glowing ground circle, centered figure, dark fantasy digital painting",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi warhorse sculpted from soft wet clay, big-headed proportions, glowing amber eyes, dripping molded mane and tail flinging droplets, ceramic chestplate and helm of glazed brown earthenware, one foreleg pawing forward, splattering through a churned mud bog, warm terracotta and tan palette against hazy blue-gray sky, glossy claymation texture, low heroic angle, painterly stylized fantasy render, centered full-body",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/knight.png",
-					"name": "Knight"
-				},
-				"inferredFrom": {
-					"concept": [
-						"knight",
-						"air_darkness_bishop_knight",
-						"air_darkness_knight"
-					],
-					"theme": [
-						"air_fire_knight",
-						"air_fire_pawn",
-						"air_fire_rook",
-						"earth_water_pawn"
-					]
+					"source": "upload",
+					"path": "snap_knight.png",
+					"name": "snap_knight.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 4,
-		"attack": 2,
-		"health": 5,
-		"speed": 2,
-		"shield": 1
+		}
 	},
 	{
 		"id": "earth_water_bishop",
-		"elements": [
-			"earth",
-			"water"
-		],
 		"display_name": "Clay Bishop",
-		"chess_pieces": [
-			"bishop"
-		],
-		"tool": {
-			"art": {
-				"prompt": "Damp hand-sculpted mitred prelate figure formed from wet reddish-brown earth, faceted molded surface glistening with a slick sheen, sagging draped robe and tall peaked headpiece drooping at the tip, hollow blank sockets, gripping a curling shepherd's staff oozing sludge from its coiled crook, mud dripping from sleeves and hem, soft warm mystical glow, drifting motes, dark shadowed backdrop, richly textured fantasy digital painting",
-				"ref": {
-					"source": "game",
-					"path": "assets/cards/bishop.png",
-					"name": "Bishop"
-				},
-				"inferredFrom": {
-					"concept": [
-						"bishop",
-						"air_darkness_bishop",
-						"air_darkness_bishop_bishop"
-					],
-					"theme": [
-						"air_fire_knight",
-						"air_fire_pawn",
-						"air_fire_rook",
-						"earth_water_knight"
-					]
-				}
-			}
-		},
-		"ranged": true,
-		"cost": 4,
+		"cost": 2,
 		"attack": 1,
 		"health": 6,
 		"speed": 1,
-		"shield": 1
-	},
-	{
-		"id": "earth_water_rook",
+		"shield": 1,
 		"elements": [
 			"earth",
 			"water"
 		],
-		"display_name": "Clay Rook",
 		"chess_pieces": [
-			"rook"
+			"bishop"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
-				"prompt": "Muddy fortress turret of packed wet earth, crenellated crown slumping under its own weight, glossy slick smears and thumb-pressed dents scoring a cracking drying surface, muddy runnels dribbling down its flanks, a tiny stubby earthen sentry peeking from a sagging arched window, glowing amber eyes, faint teal mist curling up from a soft glowing ground circle, warm ochre haze, dark background, centered figure, dark fantasy digital painting",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi clay-sculpted cleric priest, big-headed proportions, glowing amber eyes and solemn look, tall cleft ceramic mitre of wet molded earth, flowing mud-slicked robes with sculpted trim, clutching a slab tablet of raw clay, raising a spiraled crook staff dripping soft ooze, standing in a churned mire, warm terracotta and tan palette, hazy sky, glossy claymation texture, painterly fantasy render, low heroic angle, centered full-body",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/rook.png",
-					"name": "Rook"
-				},
-				"inferredFrom": {
-					"concept": [
-						"rook",
-						"air_darkness_bishop_rook",
-						"air_darkness_knight_rook"
-					],
-					"theme": [
-						"air_fire_knight",
-						"air_fire_pawn",
-						"air_fire_rook",
-						"earth_water_knight"
-					]
+					"source": "upload",
+					"path": "snap_bishop.png",
+					"name": "snap_bishop.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"ranged": true,
-		"cost": 5,
+		}
+	},
+	{
+		"id": "earth_water_rook",
+		"display_name": "Clay Rook",
+		"cost": 3,
 		"attack": 1,
 		"health": 9,
 		"speed": 1,
-		"shield": 3
+		"shield": 3,
+		"elements": [
+			"earth",
+			"water"
+		],
+		"chess_pieces": [
+			"rook"
+		],
+		"ranged": true,
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Squat crenellated defensive watchtower of hand-sculpted wet clay, thick dripping mud-brick walls with glossy sloped base, tiny glowing orange-eyed helmeted sentry peering from an arched window slit, sagging tan banner of pressed clay, wisps of soft ochre steam, standing in a splashing muddy bog, warm terracotta palette, hazy blue-gray sky, low heroic angle, painterly claymation render, centered composition",
+				"ref": {
+					"source": "upload",
+					"path": "snap_rook.png",
+					"name": "snap_rook.png",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
 	},
 	{
 		"id": "earth_water_queen",
 		"display_name": "Clay Queen",
+		"cost": 5,
+		"attack": 5,
+		"health": 7,
+		"speed": 3,
+		"shield": 1,
 		"elements": [
 			"earth",
 			"water"
@@ -176,141 +161,121 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Chibi clay-sculpted sovereign queen seated cross-legged, tall many-pointed diadem-helm of packed wet earth atop a slick rounded head, high-collared robe modeled in dripping muddy brown with thumb-pressed grooves and glossy smears, cupping a small crown-shape in one palm, cracking drying skin oozing wet runnels, glowing amber eyes, warm ochre haze and faint teal mist, soft glowing ground circle, centered figure, dark fantasy digital painting",
+				"prompt": "Regal chibi sorceress-queen with big-headed proportions and stern glare, tall many-pointed crown of hardened wet earth, voluminous dark hair, dripping sculpted gown with tiered slip-molded skirt and glossy caped mantle, one hand cradling a swirling orb of churning brown slurry, standing in a rain-pocked marsh courtyard, warm ochre and terracotta palette against muted teal, hazy overcast sky, soft cinematic lighting, glossy claymation render",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/queen.png",
-					"name": "Queen",
+					"source": "upload",
+					"path": "snap_queen.png",
+					"name": "snap_queen.png",
 					"mode": "img2img",
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 7,
-		"attack": 5,
-		"health": 7,
-		"speed": 3,
-		"shield": 1
+		}
 	},
 	{
 		"id": "earth_water_pawn_pawn",
+		"display_name": "Clay Warrior",
+		"cost": 2,
+		"attack": 2,
+		"health": 6,
+		"speed": 1,
+		"shield": 2,
 		"elements": [
 			"earth",
 			"water"
 		],
-		"display_name": "Clay Warrior",
 		"chess_pieces": [
 			"pawn",
 			"pawn"
 		],
 		"tool": {
 			"art": {
-				"prompt": "Chibi armored footsoldier sculpted from soft wet clay, rounded open-faced helm and stubby broad blade of packed damp earth, glossy slick smears and thumb-pressed dents cracking across a drying surface, muddy runnels dribbling off shoulders and raised shield, glowing amber eyes, lunging mid-swing, warm ochre haze and faint teal mist over a soft glowing ground circle, centered figure, dark fantasy digital painting",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi clay-sculpted foot soldier with glowing amber eyes and determined scowl, molded from wet earthen paste, full rounded helmet dripping muddy runnels, sculpted paste chestplate and gauntlets, hoisting a long tapered clay blade, broad ceramic-shard shield braced forward, boots sunk in a splashing mud puddle, warm terracotta and tan palette, hazy overcast sky, glossy claymation sheen, painterly fantasy render, low heroic angle, centered full-body composition",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/pawn_pawn.png",
-					"name": "Warrior"
-				},
-				"inferredFrom": {
-					"concept": [
-						"pawn_pawn",
-						"air_darkness_pawn_pawn",
-						"air_fire_pawn_pawn"
-					],
-					"theme": [
-						"air_fire_knight",
-						"air_fire_pawn",
-						"air_fire_rook",
-						"earth_water_knight"
-					]
+					"source": "upload",
+					"path": "snap_pawn_pawn.png",
+					"name": "snap_pawn_pawn.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 4,
-		"attack": 2,
-		"health": 6,
-		"speed": 1,
-		"shield": 2
+		}
 	},
 	{
 		"id": "earth_water_knight_pawn",
+		"display_name": "Clay Cavalry",
+		"cost": 3,
+		"attack": 3,
+		"health": 7,
+		"speed": 2,
+		"shield": 2,
 		"elements": [
 			"earth",
 			"water"
 		],
-		"display_name": "Clay Cavalry",
 		"chess_pieces": [
 			"knight",
 			"pawn"
 		],
 		"tool": {
 			"art": {
-				"prompt": "Mud-sculpted mounted lancer astride a barded warhorse, both packed from slick wet earth, glossy thumb-pressed dents and dribbling brown runnels down flank and cape, drying cracks webbing a rounded visored helm, stubby lowered lance trailing sludgy droplets, glowing amber eyes, charging low through faint teal haze over a soft glowing ground circle, dark ochre background, centered figure, dark fantasy digital painting.",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Sculpted wet-clay lancer knight astride a broad muscular clay steed, dripping brown helm with slick ridged crest, glossy terracotta plate armor with pale ceramic trim, gripping a long tapered clay lance, hooves flinging thick mud in mid-charge across a soaked marsh, warm ochre and tan palette, hazy overcast sky, glossy claymation texture, low heroic three-quarter angle, painterly stylized fantasy render",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/knight_pawn.png",
-					"name": "Cavalry"
-				},
-				"inferredFrom": {
-					"concept": [
-						"knight_pawn",
-						"air_darkness_knight_pawn",
-						"air_fire_knight_pawn"
-					],
-					"theme": [
-						"air_fire_knight",
-						"air_fire_pawn",
-						"air_fire_rook",
-						"earth_water_knight"
-					]
+					"source": "upload",
+					"path": "snap_knight_pawn.png",
+					"name": "snap_knight_pawn.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 5,
-		"attack": 3,
-		"health": 7,
-		"speed": 2,
-		"shield": 2
+		}
 	},
 	{
 		"id": "earth_water_bishop_pawn",
+		"display_name": "Clay Paladin",
+		"cost": 3,
+		"attack": 2,
+		"health": 7,
+		"speed": 1,
+		"shield": 3,
 		"elements": [
 			"earth",
 			"water"
 		],
-		"display_name": "Clay Paladin",
 		"chess_pieces": [
 			"bishop",
 			"pawn"
 		],
 		"tool": {
 			"art": {
-				"prompt": "Chibi foot paladin sculpted from soft wet clay, rounded visored helm ridged like a tiny crown, stubby raised kite shield and a thick flanged mace all of packed damp earth, glossy slick smears and thumb-pressed dents over a cracking drying surface, muddy runnels dribbling off pauldrons, glowing amber eyes, warm ochre conjuring haze and curling teal mist, soft luminous ground ring, centered figure, dark fantasy digital painting",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi clay-sculpted heavy knight, big-headed proportions, closed dripping-mud helmet with narrow slit and glowing orange eyes, thick sculpted terracotta plate armor with pale trim, gauntleted fist hefting a knobbed spiked clay mace, tall oval pottery shield bearing an embossed swirling sigil, stern stance in a splashing marsh puddle, warm ochre and tan palette, hazy blue-gray sky, glossy claymation texture, painterly fantasy render, low heroic angle, centered full-body composition",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/bishop_pawn.png",
-					"name": "Paladin"
-				},
-				"inferredFrom": {
-					"concept": [
-						"bishop_pawn",
-						"air_darkness_bishop_pawn",
-						"air_fire_bishop_pawn"
-					],
-					"theme": [
-						"air_fire_knight",
-						"air_fire_pawn",
-						"air_fire_rook",
-						"earth_water_knight"
-					]
+					"source": "upload",
+					"path": "snap_bishop_pawn.png",
+					"name": "snap_bishop_pawn.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 5,
-		"attack": 2,
-		"health": 7,
-		"speed": 1,
-		"shield": 3
+		}
 	},
 	{
 		"id": "earth_water_pawn_rook",
@@ -325,24 +290,19 @@
 		],
 		"tool": {
 			"art": {
-				"prompt": "Muddy watchtower barracks slumped from soft wet packed earth, rounded crenellated top and arched gateway oozing glossy slick clay, thumb-pressed dents and cracking drying smears, a slick spear-rack and stubby earthen guard with domed helm and round shield beside the door, glowing amber eyes, warm ochre haze and curling teal mist, soft luminous ground circle, dark background, centered figure, dark fantasy digital painting",
+				"prompt": "Squat fortified training keep sculpted entirely from wet molded clay, glossy terracotta walls with thumb-pressed brickwork and drooping crenellations, arched doorway oozing soft mud, hanging banner of hardened clay, chibi guard in dripping helmet gripping a spear and round shield beside a rack of clay-tipped spears, marshy puddled ground, warm ochre and tan palette, hazy blue-gray sky, glossy claymation texture, painterly stylized fantasy render, low heroic angle",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/pawn_rook.png",
-					"name": "Barracks"
+					"source": "upload",
+					"path": "snap_pawn_rook.png"
 				},
 				"inferredFrom": {
-					"concept": [
-						"pawn_rook",
-						"air_darkness_pawn_rook",
-						"air_fire_pawn_rook"
-					],
+					"anchor": "snap_pawn_rook.png",
 					"theme": [
-						"air_fire_knight",
-						"air_fire_pawn",
-						"air_fire_rook",
-						"earth_water_knight"
-					]
+						"snap_earth_water_pawn.png",
+						"snap_earth_water_knight.png",
+						"snap_earth_water_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		},
@@ -351,7 +311,7 @@
 			"earth_pawn_material",
 			"water_pawn_material"
 		],
-		"cost": 6,
+		"cost": 4,
 		"attack": 2,
 		"health": 10,
 		"speed": 1,
@@ -360,6 +320,11 @@
 	{
 		"id": "earth_water_pawn_queen",
 		"display_name": "Clay Commander",
+		"cost": 6,
+		"attack": 5,
+		"health": 7,
+		"speed": 3,
+		"shield": 1,
 		"elements": [
 			"earth",
 			"water"
@@ -376,25 +341,25 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "A muddy war-leader shaped from soft wet earth, sculpted from slick packed clay, raised on a mounded platform of dripping mud, thrusting a stubby baton upward to rally a column of small clay soldiers slogging below, glossy thumb-pressed dents and cracking drying skin, wet runnels streaming down, glowing amber eyes, warm ochre haze and curling teal mist, soft glowing ground circle, dark fantasy digital painting",
+				"prompt": "Chibi female commander sculpted from wet brown clay, glowing amber eyes, stern determined face, dripping mud-caked helmet and flowing muddy cape, extending a smooth clay baton to rally forward, standing atop a raised sculpted-earth rampart above marching mud-formed spearmen, warm terracotta and tan palette, soft overcast sky, glossy claymation texture, low heroic angle, painterly stylized fantasy render.",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/pawn_queen.png",
-					"name": "Commander",
+					"source": "upload",
+					"path": "snap_pawn_queen.png",
+					"name": "snap_pawn_queen.png",
 					"mode": "img2img",
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 8,
-		"attack": 5,
-		"health": 7,
-		"speed": 3,
-		"shield": 1
+		}
 	},
 	{
 		"id": "earth_water_knight_knight",
 		"display_name": "Clay Beast",
+		"cost": 4,
+		"attack": 3,
+		"health": 7,
+		"speed": 3,
+		"shield": 1,
 		"elements": [
 			"earth",
 			"water"
@@ -411,36 +376,25 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Muddy clay-sculpted war-bull rearing mid-charge, hulking shoulders and lowered head packed from wet earth, thick curved horns of smooth drying clay, thumb-pressed dents and glossy slick smears cracking across its haunches, dribbling brown runnels, glowing amber eyes, dark background with warm ochre haze and faint teal mist, soft glowing ground circle, centered figure, dark fantasy digital painting",
+				"prompt": "Massive hunched clay-bodied bull beast sculpted from soft wet earth, glowing orange eyes, thick curved horns of hardened tan clay, dripping muddy hide with sculpted plate over its brow, lowered charging stance, splattering hooves flinging wet muck, warm terracotta and brown palette, hazy overcast sky, glossy claymation texture, painterly stylized fantasy render, heroic low angle, centered full-body",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/knight_knight.png",
-					"name": "Beast"
-				},
-				"inferredFrom": {
-					"concept": [
-						"knight_knight",
-						"air_darkness_knight_knight",
-						"air_fire_knight_knight"
-					],
-					"theme": [
-						"air_fire_knight",
-						"air_fire_pawn",
-						"air_fire_rook",
-						"earth_water_knight"
-					]
+					"source": "upload",
+					"path": "snap_knight_knight.png",
+					"name": "snap_knight_knight.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 6,
-		"attack": 3,
-		"health": 7,
-		"speed": 3,
-		"shield": 1
+		}
 	},
 	{
 		"id": "earth_water_bishop_knight",
 		"display_name": "Clay Cryptid",
+		"cost": 4,
+		"attack": 3,
+		"health": 8,
+		"speed": 3,
+		"shield": 1,
 		"elements": [
 			"earth",
 			"water"
@@ -457,13 +411,10 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "A colossal chibi cryptid beast sculpted from soft wet clay, plump rounded body of packed dripping earth, stubby clawed limbs sinking into muddy runnels, glossy thumb-pressed dents cracking across its drying hide, snuffling snout and tiny curled hornlets, glowing amber eyes, warm ochre conjuring haze and faint teal mist curling from a soft glowing ground circle, centered figure, dark fantasy digital painting.",
+				"prompt": "Sculpted wet-clay unicorn cryptid, glossy terracotta body slick with dripping mud, glowing amber eyes, single spiraling horn of hardened ochre clay, flowing mane and tail of soft molded slip that oozes and curls, swirling ochre glaze markings along its flank, prancing through a splashing marsh, warm tan and terracotta palette, hazy blue-gray sky, painterly claymation render, heroic three-quarter angle, centered full-body",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/bishop_knight.png",
-					"name": "Cryptid",
-					"mode": "img2img",
-					"denoise": 0.75
+					"source": "upload",
+					"path": "snap_bishop_knight.png"
 				},
 				"concept": "avoid the unicorn theme, use a different mystical beast to represent clay and mud",
 				"last": {
@@ -471,63 +422,67 @@
 					"prompt": "A colossal chibi cryptid beast sculpted from soft wet clay, plump rounded body of packed dripping earth, stubby clawed limbs sinking into muddy runnels, glossy thumb-pressed dents cracking across its drying hide, snuffling snout and tiny curled hornlets, glowing amber eyes, warm ochre conjuring haze and faint teal mist curling from a soft glowing ground circle, centered figure, dark fantasy digital painting.",
 					"style": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear",
 					"at": "2026-07-08"
+				},
+				"inferredFrom": {
+					"anchor": "snap_bishop_knight.png",
+					"theme": [
+						"snap_earth_water_pawn.png",
+						"snap_earth_water_knight.png",
+						"snap_earth_water_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
-		},
-		"cost": 6,
-		"attack": 3,
-		"health": 8,
-		"speed": 3,
-		"shield": 1
+		}
 	},
 	{
 		"id": "earth_water_knight_rook",
+		"display_name": "Clay Stable",
+		"cost": 5,
+		"attack": 3,
+		"health": 10,
+		"speed": 2,
+		"shield": 3,
 		"elements": [
 			"earth",
 			"water"
 		],
-		"display_name": "Clay Stable",
 		"chess_pieces": [
 			"knight",
 			"rook"
 		],
-		"tool": {
-			"art": {
-				"prompt": "Wet clay stable hut with sagging mud-daubed walls, thumb-pressed arched doorway and drooping earthen roof, a slick clay horse head with glowing amber eyes leaning out, glossy wet runnels dribbling down cracking drying flanks, warm ochre haze and faint teal mist, soft glowing ground circle, centered figure, dark fantasy digital painting",
-				"ref": {
-					"source": "game",
-					"path": "assets/cards/knight_rook.png",
-					"name": "Stable"
-				},
-				"inferredFrom": {
-					"concept": [
-						"knight_rook",
-						"air_darkness_knight_rook",
-						"air_fire_knight_rook"
-					],
-					"theme": [
-						"air_fire_knight",
-						"air_fire_pawn",
-						"air_fire_rook",
-						"earth_water_knight"
-					]
-				}
-			}
-		},
 		"ranged": true,
 		"abilities": [
 			"earth_knight_material",
 			"water_knight_material"
 		],
-		"cost": 7,
-		"attack": 3,
-		"health": 10,
-		"speed": 2,
-		"shield": 3
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Small barn-like stable building housing a horse, sculpted entirely from wet muddy clay, hand-shaped terracotta walls with dripping ridges, a sagging thatched roof of dried marsh reeds, slick chestnut clay steed peeking through the doorway with glowing amber eyes, hanging pennant of pressed clay, warm ochre and tan palette against hazy gray sky, glossy claymation texture, painterly stylized fantasy render, low three-quarter angle, centered composition, muddy puddles below.",
+				"ref": {
+					"source": "upload",
+					"path": "snap_knight_rook.png",
+					"name": "snap_knight_rook.png",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
 	},
 	{
 		"id": "earth_water_knight_queen",
 		"display_name": "Clay Monster",
+		"cost": 6,
+		"attack": 6,
+		"health": 9,
+		"speed": 4,
+		"shield": 1,
 		"elements": [
 			"earth",
 			"water"
@@ -544,7 +499,7 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Colossal winged dragon sculpted entirely from soft wet clay, glossy mud-slick scales dripping brown ooze, sweeping membranous wings of stretched terracotta hide, curved ochre horns and claws of dried sculpted earth, spined ridged tail coiling through a splashing marsh, warm tan and umber palette, hazy overcast sky, low heroic three-quarter angle, glossy claymation render, painterly stylized fantasy, centered full-body composition",
+				"prompt": "Colossal winged claymation dragon sculpted from wet muddy earth, glossy terracotta and tan sculpted body, glowing molten-orange eyes, dripping soft-clay wings spread wide, ridged pottery-shard spines down its back, curved horns and talons of hardened ochre clay, rearing over a marshy puddle-strewn field, warm brown and burnt-orange palette, hazy blue-gray sky, low heroic three-quarter angle, painterly stylized fantasy render",
 				"ref": {
 					"source": "upload",
 					"path": "snap_knight_queen.png",
@@ -553,16 +508,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 8,
-		"attack": 6,
-		"health": 9,
-		"speed": 4,
-		"shield": 1
+		}
 	},
 	{
 		"id": "earth_water_bishop_bishop",
 		"display_name": "Clay Hierophant",
+		"cost": 4,
+		"attack": 2,
+		"health": 8,
+		"speed": 1,
+		"shield": 1,
 		"elements": [
 			"earth",
 			"water"
@@ -579,25 +534,25 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Chibi bearded patriarch sculpted from soft wet earth, tall rounded mitre and flowing beard formed of packed damp mud, robe of glossy slick smears cracking as it dries, glowing amber eyes, raising a dribbling staff as thick ochre conjuring haze spirals from his upraised palm, thumb-pressed dents across his surface, faint teal mist curling upward, soft glowing ground circle, centered figure, dark background, dark fantasy digital painting",
+				"prompt": "Bearded chibi high-priest sculpted from wet earthen clay, tall pointed molded headdress dripping soft mud, flowing robes of layered slick brown material with pale trim, one raised hand conjuring a swirling glowing vortex of liquid clay, gripping a long ridged staff crowned with a wet ceramic orb, standing in a splashing puddled marsh, warm terracotta and tan palette, hazy blue sky, glossy sculpted claymation texture, painterly stylized fantasy render, low heroic angle, centered full-body composition",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/bishop_bishop.png",
-					"name": "Hierophant",
+					"source": "upload",
+					"path": "snap_bishop_bishop.png",
+					"name": "snap_bishop_bishop.png",
 					"mode": "img2img",
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 6,
-		"attack": 2,
-		"health": 8,
-		"speed": 1,
-		"shield": 1
+		}
 	},
 	{
 		"id": "earth_water_bishop_rook",
 		"display_name": "Clay Arcane Tower",
+		"cost": 5,
+		"attack": 2,
+		"health": 11,
+		"speed": 1,
+		"shield": 3,
 		"elements": [
 			"earth",
 			"water"
@@ -607,6 +562,10 @@
 			"rook"
 		],
 		"ranged": true,
+		"abilities": [
+			"earth_bishop_material",
+			"water_bishop_material"
+		],
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -615,25 +574,16 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Wet clay wizard spire on a round earthen dais, rounded crenellated crown and stubby conical cap sculpted from packed damp mud, thumb-pressed dents and glossy slick smears cracking as it dries, arched glowing doorway, tall slit openings oozing muddy runnels, a chibi robed mud-caster with staff at its base, glowing amber eyes, warm ochre haze and teal mist, soft glowing ground circle, centered, dark fantasy digital painting",
+				"prompt": "Towering sculpted wet-clay wizard spire, mud-slick tiered walls oozing rich brown slip, glowing amber-lit arched doorway, ribbon-of-light runes spiraling around its peak, a big-headed chibi robed clay priest before it clutching a dripping ceramic staff and open molded tome, warm terracotta and ochre palette, hazy blue-gray sky, marshy puddled ground, glossy sculpted claymation texture, painterly stylized fantasy render, heroic low angle",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/bishop_rook.png",
-					"name": "Arcane Tower",
+					"source": "upload",
+					"path": "snap_bishop_rook.png",
+					"name": "snap_bishop_rook.png",
 					"mode": "img2img",
 					"denoise": 0.6
 				}
 			}
-		},
-		"abilities": [
-			"earth_bishop_material",
-			"water_bishop_material"
-		],
-		"cost": 7,
-		"attack": 2,
-		"health": 11,
-		"speed": 1,
-		"shield": 3
+		}
 	},
 	{
 		"id": "earth_water_bishop_queen",
@@ -654,23 +604,29 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Towering front-facing serene goddess sculpted from soft wet reddish earth, faceted molded surface glistening with slick sheen, sagging draped mantle formed of packed damp mud, arms outspread as thick ochre haze curls from open palms, hollow glowing amber sockets, thumb-pressed dents cracking across her drying form, mud dripping from sleeves, faint teal mist rising, soft glowing ground halo, centered figure, dark background, richly textured dark fantasy digital painting",
+				"prompt": "Serene sculpted goddess of soft wet earth, big-headed chibi proportions, glowing warm amber eyes, headdress of upswept sculpted-mud fronds, layered dripping robes of glossy tan and terracotta slip, raised open palms trailing wet clay droplets, holding a slender ridged mud staff, radiant ochre halo of swirling silt behind her, standing in a splashing marsh puddle, hazy blue-gray sky, glossy claymation texture, painterly stylized fantasy render, low heroic angle, centered full-body composition",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/bishop_queen.png",
-					"name": "Deity",
-					"mode": "img2img",
-					"denoise": 0.6
+					"source": "upload",
+					"path": "snap_bishop_queen.png"
 				},
 				"last": {
 					"seed": 1034682192,
 					"prompt": "Towering front-facing serene goddess sculpted from soft wet reddish earth, faceted molded surface glistening with slick sheen, sagging draped mantle formed of packed damp mud, arms outspread as thick ochre haze curls from open palms, hollow glowing amber sockets, thumb-pressed dents cracking across her drying form, mud dripping from sleeves, faint teal mist rising, soft glowing ground halo, centered figure, dark background, richly textured dark fantasy digital painting, cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear",
 					"style": "",
 					"at": "2026-07-12"
+				},
+				"inferredFrom": {
+					"anchor": "snap_bishop_queen.png",
+					"theme": [
+						"snap_earth_water_pawn.png",
+						"snap_earth_water_knight.png",
+						"snap_earth_water_queen.png"
+					],
+					"mode": "concept"
 				}
 			}
 		},
-		"cost": 8,
+		"cost": 6,
 		"attack": 5,
 		"health": 9,
 		"speed": 3,
@@ -679,6 +635,11 @@
 	{
 		"id": "earth_water_rook_rook",
 		"display_name": "Clay Turret",
+		"cost": 6,
+		"attack": 2,
+		"health": 13,
+		"speed": 1,
+		"shield": 5,
 		"elements": [
 			"earth",
 			"water"
@@ -696,70 +657,65 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Squat weaponized turret with a wide battered base, arrow-slit windows, and a swiveling top-mounted ballista aimed skyward — everything sculpted from soft wet packed earth, glossy slick thumb-pressed smears, muddy runnels dribbling down cracking drying surfaces, glowing amber eyes in the slits, warm ochre haze and curling teal mist, soft glowing ground circle, centered figure, dark fantasy digital painting",
+				"prompt": "Squat crenellated defensive tower sculpted from wet muddy clay, glossy terracotta and tan surface with dripping runnels, a mounted bolt-thrower of hardened clay and rope loaded with a dripping ceramic dart on its rotating platform, glowing amber slit windows, rooted in a splashing marsh puddle, low heroic angle, warm ochre palette, hazy blue-gray sky, glossy claymation texture, painterly stylized fantasy render",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/rook_rook.png",
-					"name": "Turret",
+					"source": "upload",
+					"path": "snap_rook_rook.png",
+					"name": "snap_rook_rook.png",
 					"mode": "img2img",
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 8,
-		"attack": 2,
-		"health": 13,
-		"speed": 1,
-		"shield": 5
+		}
 	},
 	{
 		"id": "earth_water_queen_rook",
+		"display_name": "Clay Castle",
+		"cost": 7,
+		"attack": 5,
+		"health": 12,
+		"speed": 2,
+		"shield": 3,
 		"elements": [
 			"earth",
 			"water"
 		],
-		"display_name": "Clay Castle",
 		"chess_pieces": [
 			"queen",
 			"rook"
 		],
-		"tool": {
-			"art": {
-				"prompt": "Muddy fortress keep sculpted from soft wet clay, a tall central turret flanked by two rounded towers, glossy thumb-pressed dents and slick smears across a cracking drying surface, muddy runnels dribbling down the ramparts, drooping earthen pennants, tiny glowing amber-eyed guard peeking from an arched slot, warm ochre haze, faint teal mist, soft glowing ground circle, centered, dark fantasy digital painting",
-				"ref": {
-					"source": "game",
-					"path": "assets/cards/rook_queen.png",
-					"name": "Castle"
-				},
-				"inferredFrom": {
-					"concept": [
-						"rook_queen",
-						"air_darkness_queen_rook",
-						"air_fire_queen_rook"
-					],
-					"theme": [
-						"air_fire_knight",
-						"air_fire_pawn",
-						"air_fire_rook",
-						"earth_water_knight"
-					]
-				}
-			}
-		},
 		"ranged": true,
 		"abilities": [
 			"earth_queen_material",
 			"water_queen_material"
 		],
-		"cost": 9,
-		"attack": 5,
-		"health": 12,
-		"speed": 2,
-		"shield": 3
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Imposing sculpted castle fortress molded from wet earthen clay, three glossy terracotta towers with dripping conical roofs, thick hand-shaped ramparts oozing damp mud, arched sculpted gateway of packed clay, tiny guard figurines in a splashing puddle courtyard, warm ochre and tan palette, hazy blue-gray sky, low heroic angle, glossy claymation texture, painterly stylized fantasy render, centered composition",
+				"ref": {
+					"source": "upload",
+					"path": "snap_rook_queen.png",
+					"name": "snap_rook_queen.png",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
 	},
 	{
 		"id": "earth_water_queen_queen",
 		"display_name": "Clay Hero",
+		"cost": 8,
+		"attack": 8,
+		"health": 10,
+		"speed": 3,
+		"shield": 1,
 		"elements": [
 			"earth",
 			"water"
@@ -776,31 +732,15 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Chibi warrior queen sculpted from soft wet clay, long curly hair molded in slick earthen coils, rounded crown pressed with thumb-dents and set with glossy dark pebbles, packed-mud plate armor cracking as it dries, wielding an oversized dripping clay greatsword mid-swing, leaping from a crumbling muddy ledge, glowing amber eyes, warm ochre haze, faint teal mist, centered figure, dark fantasy digital painting.",
+				"prompt": "Chibi crowned female warrior-hero, big-headed sculpted claymation proportions, glowing amber eyes and fierce scowl, thick voluminous hair molded from wet earthen coils, spiked pauldrons and layered plate armor of glossy sculpted tan and terracotta clay, tattered mud-soaked cape, gripping a dripping oozing blade forged of soft wet clay, planting one boot in a splashing marsh puddle, low heroic angle, warm ochre palette, hazy overcast sky, painterly stylized render",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/queen_queen.png",
-					"name": "Hero"
-				},
-				"inferredFrom": {
-					"concept": [
-						"queen_queen",
-						"air_darkness_queen_queen",
-						"air_fire_queen_queen"
-					],
-					"theme": [
-						"air_fire_knight",
-						"air_fire_pawn",
-						"air_fire_rook",
-						"earth_water_knight"
-					]
+					"source": "upload",
+					"path": "snap_queen_queen.png",
+					"name": "snap_queen_queen.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 10,
-		"attack": 8,
-		"health": 10,
-		"speed": 3,
-		"shield": 1
+		}
 	}
 ]

@@ -27,7 +27,7 @@
 				}
 			}
 		},
-		"cost": 1,
+		"cost": 0,
 		"attack": 1,
 		"health": 5,
 		"speed": 3
@@ -58,7 +58,7 @@
 				}
 			}
 		},
-		"cost": 2,
+		"cost": 0,
 		"attack": 2,
 		"health": 5,
 		"speed": 4
@@ -97,7 +97,7 @@
 			}
 		},
 		"ranged": true,
-		"cost": 2,
+		"cost": 0,
 		"attack": 1,
 		"health": 6,
 		"speed": 3
@@ -135,7 +135,7 @@
 			}
 		},
 		"ranged": true,
-		"cost": 3,
+		"cost": 1,
 		"attack": 1,
 		"health": 9,
 		"speed": 3,
@@ -170,7 +170,7 @@
 				}
 			}
 		},
-		"cost": 5,
+		"cost": 3,
 		"attack": 5,
 		"health": 7,
 		"speed": 5
@@ -204,7 +204,7 @@
 				}
 			}
 		},
-		"cost": 2,
+		"cost": 0,
 		"attack": 2,
 		"health": 6,
 		"speed": 3,
@@ -239,7 +239,7 @@
 				}
 			}
 		},
-		"cost": 3,
+		"cost": 1,
 		"attack": 3,
 		"health": 7,
 		"speed": 4,
@@ -274,7 +274,7 @@
 				}
 			}
 		},
-		"cost": 3,
+		"cost": 1,
 		"attack": 2,
 		"health": 7,
 		"speed": 3,
@@ -314,7 +314,7 @@
 			"light_pawn_training_pure",
 			"pawn_material"
 		],
-		"cost": 4,
+		"cost": 2,
 		"attack": 2,
 		"health": 10,
 		"speed": 3,
@@ -349,7 +349,7 @@
 				}
 			}
 		},
-		"cost": 6,
+		"cost": 4,
 		"attack": 5,
 		"health": 7,
 		"speed": 5
@@ -383,7 +383,7 @@
 				}
 			}
 		},
-		"cost": 4,
+		"cost": 2,
 		"attack": 3,
 		"health": 7,
 		"speed": 5
@@ -417,7 +417,7 @@
 				}
 			}
 		},
-		"cost": 4,
+		"cost": 2,
 		"attack": 3,
 		"health": 8,
 		"speed": 5
@@ -456,7 +456,7 @@
 			"light_knight_training_pure",
 			"knight_material"
 		],
-		"cost": 5,
+		"cost": 3,
 		"attack": 3,
 		"health": 10,
 		"speed": 4,
@@ -491,7 +491,7 @@
 				}
 			}
 		},
-		"cost": 6,
+		"cost": 4,
 		"attack": 6,
 		"health": 9,
 		"speed": 6
@@ -525,7 +525,7 @@
 				}
 			}
 		},
-		"cost": 4,
+		"cost": 2,
 		"attack": 2,
 		"health": 8,
 		"speed": 3
@@ -564,7 +564,7 @@
 			"light_bishop_training_pure",
 			"bishop_material"
 		],
-		"cost": 5,
+		"cost": 3,
 		"attack": 2,
 		"health": 11,
 		"speed": 3,
@@ -599,7 +599,7 @@
 				}
 			}
 		},
-		"cost": 6,
+		"cost": 4,
 		"attack": 5,
 		"health": 9,
 		"speed": 5
@@ -634,7 +634,7 @@
 				}
 			}
 		},
-		"cost": 6,
+		"cost": 4,
 		"attack": 2,
 		"health": 13,
 		"speed": 3,
@@ -674,7 +674,7 @@
 			"light_queen_training_pure",
 			"queen_material"
 		],
-		"cost": 7,
+		"cost": 5,
 		"attack": 5,
 		"health": 12,
 		"speed": 4,
@@ -709,7 +709,7 @@
 				}
 			}
 		},
-		"cost": 8,
+		"cost": 6,
 		"attack": 8,
 		"health": 10,
 		"speed": 5

@@ -27,7 +27,7 @@
 				}
 			}
 		},
-		"cost": 3,
+		"cost": 1,
 		"attack": 1,
 		"health": 5,
 		"speed": 5
@@ -60,7 +60,7 @@
 				}
 			}
 		},
-		"cost": 4,
+		"cost": 2,
 		"attack": 2,
 		"health": 5,
 		"speed": 6
@@ -94,7 +94,7 @@
 				}
 			}
 		},
-		"cost": 4,
+		"cost": 2,
 		"attack": 1,
 		"health": 6,
 		"speed": 5
@@ -128,7 +128,7 @@
 			}
 		},
 		"ranged": true,
-		"cost": 5,
+		"cost": 3,
 		"attack": 1,
 		"health": 9,
 		"speed": 5,
@@ -169,7 +169,7 @@
 				}
 			}
 		},
-		"cost": 7,
+		"cost": 5,
 		"attack": 5,
 		"health": 7,
 		"speed": 7
@@ -209,7 +209,7 @@
 				}
 			}
 		},
-		"cost": 4,
+		"cost": 2,
 		"attack": 2,
 		"health": 6,
 		"speed": 5,
@@ -250,7 +250,7 @@
 				}
 			}
 		},
-		"cost": 5,
+		"cost": 3,
 		"attack": 3,
 		"health": 7,
 		"speed": 6,
@@ -291,7 +291,7 @@
 				}
 			}
 		},
-		"cost": 5,
+		"cost": 3,
 		"attack": 2,
 		"health": 7,
 		"speed": 5,
@@ -337,7 +337,7 @@
 			"air_pawn_material",
 			"water_pawn_material"
 		],
-		"cost": 6,
+		"cost": 4,
 		"attack": 2,
 		"health": 10,
 		"speed": 5,
@@ -378,7 +378,7 @@
 				}
 			}
 		},
-		"cost": 8,
+		"cost": 6,
 		"attack": 5,
 		"health": 7,
 		"speed": 7
@@ -418,7 +418,7 @@
 				}
 			}
 		},
-		"cost": 6,
+		"cost": 4,
 		"attack": 3,
 		"health": 7,
 		"speed": 7
@@ -458,7 +458,7 @@
 				}
 			}
 		},
-		"cost": 6,
+		"cost": 4,
 		"attack": 3,
 		"health": 8,
 		"speed": 7
@@ -509,7 +509,7 @@
 			"air_knight_material",
 			"water_knight_material"
 		],
-		"cost": 7,
+		"cost": 5,
 		"attack": 3,
 		"health": 10,
 		"speed": 6,
@@ -550,7 +550,7 @@
 				}
 			}
 		},
-		"cost": 8,
+		"cost": 6,
 		"attack": 6,
 		"health": 9,
 		"speed": 8
@@ -590,7 +590,7 @@
 				}
 			}
 		},
-		"cost": 6,
+		"cost": 4,
 		"attack": 2,
 		"health": 8,
 		"speed": 5
@@ -635,7 +635,7 @@
 			"air_bishop_material",
 			"water_bishop_material"
 		],
-		"cost": 7,
+		"cost": 5,
 		"attack": 2,
 		"health": 11,
 		"speed": 5,
@@ -676,7 +676,7 @@
 				}
 			}
 		},
-		"cost": 8,
+		"cost": 6,
 		"attack": 5,
 		"health": 9,
 		"speed": 7
@@ -717,7 +717,7 @@
 				}
 			}
 		},
-		"cost": 8,
+		"cost": 6,
 		"attack": 2,
 		"health": 13,
 		"speed": 5,
@@ -763,7 +763,7 @@
 			"air_queen_material",
 			"water_queen_material"
 		],
-		"cost": 9,
+		"cost": 7,
 		"attack": 5,
 		"health": 12,
 		"speed": 6,
@@ -804,7 +804,7 @@
 				}
 			}
 		},
-		"cost": 10,
+		"cost": 8,
 		"attack": 8,
 		"health": 10,
 		"speed": 7

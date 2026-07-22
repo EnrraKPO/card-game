@@ -2,7 +2,7 @@
 	{
 		"id": "earth_pawn",
 		"display_name": "Earth Pawn",
-		"cost": 2,
+		"cost": 1,
 		"attack": 1,
 		"health": 3,
 		"speed": 1,
@@ -59,7 +59,7 @@
 				}
 			}
 		},
-		"cost": 3,
+		"cost": 2,
 		"attack": 2,
 		"health": 3,
 		"speed": 2,
@@ -95,7 +95,7 @@
 		"abilities": [
 			"earth_bless"
 		],
-		"cost": 3,
+		"cost": 2,
 		"attack": 1,
 		"health": 4,
 		"speed": 1,
@@ -132,7 +132,7 @@
 				}
 			}
 		},
-		"cost": 4,
+		"cost": 3,
 		"attack": 1,
 		"health": 7,
 		"speed": 1,
@@ -166,7 +166,7 @@
 				}
 			}
 		},
-		"cost": 6,
+		"cost": 5,
 		"attack": 5,
 		"health": 5,
 		"speed": 3,
@@ -181,7 +181,12 @@
 		"chess_pieces": [
 			"pawn",
 			"pawn"
-		]
+		],
+		"cost": 2,
+		"attack": 2,
+		"health": 4,
+		"speed": 1,
+		"shield": 2
 	},
 	{
 		"id": "earth_knight_pawn",
@@ -192,7 +197,12 @@
 		"chess_pieces": [
 			"knight",
 			"pawn"
-		]
+		],
+		"cost": 3,
+		"attack": 3,
+		"health": 5,
+		"speed": 2,
+		"shield": 2
 	},
 	{
 		"id": "earth_bishop_pawn",
@@ -203,7 +213,12 @@
 		"chess_pieces": [
 			"bishop",
 			"pawn"
-		]
+		],
+		"cost": 3,
+		"attack": 2,
+		"health": 5,
+		"speed": 1,
+		"shield": 3
 	},
 	{
 		"id": "earth_pawn_rook",
@@ -218,7 +233,12 @@
 		"abilities": [
 			"pawn_material",
 			"earth_pawn_training"
-		]
+		],
+		"cost": 4,
+		"attack": 2,
+		"health": 8,
+		"speed": 1,
+		"shield": 2
 	},
 	{
 		"id": "earth_pawn_queen",
@@ -229,7 +249,12 @@
 		"chess_pieces": [
 			"pawn",
 			"queen"
-		]
+		],
+		"cost": 6,
+		"attack": 5,
+		"health": 5,
+		"speed": 3,
+		"shield": 1
 	},
 	{
 		"id": "earth_knight_knight",
@@ -240,7 +265,12 @@
 		"chess_pieces": [
 			"knight",
 			"knight"
-		]
+		],
+		"cost": 4,
+		"attack": 3,
+		"health": 5,
+		"speed": 3,
+		"shield": 1
 	},
 	{
 		"id": "earth_bishop_knight",
@@ -251,7 +281,12 @@
 		"chess_pieces": [
 			"bishop",
 			"knight"
-		]
+		],
+		"cost": 4,
+		"attack": 3,
+		"health": 6,
+		"speed": 3,
+		"shield": 1
 	},
 	{
 		"id": "earth_knight_rook",
@@ -266,7 +301,12 @@
 		"abilities": [
 			"earth_knight_training",
 			"knight_material"
-		]
+		],
+		"cost": 5,
+		"attack": 3,
+		"health": 8,
+		"speed": 2,
+		"shield": 3
 	},
 	{
 		"id": "earth_knight_queen",
@@ -277,7 +317,12 @@
 		"chess_pieces": [
 			"knight",
 			"queen"
-		]
+		],
+		"cost": 6,
+		"attack": 6,
+		"health": 7,
+		"speed": 4,
+		"shield": 1
 	},
 	{
 		"id": "earth_bishop_bishop",
@@ -288,7 +333,12 @@
 		"chess_pieces": [
 			"bishop",
 			"bishop"
-		]
+		],
+		"cost": 4,
+		"attack": 2,
+		"health": 6,
+		"speed": 1,
+		"shield": 1
 	},
 	{
 		"id": "earth_bishop_rook",
@@ -303,18 +353,46 @@
 		"abilities": [
 			"earth_bishop_training",
 			"bishop_material"
-		]
+		],
+		"cost": 5,
+		"attack": 2,
+		"health": 9,
+		"speed": 1,
+		"shield": 3
 	},
 	{
 		"id": "earth_bishop_queen",
+		"display_name": "Earth Deity",
 		"elements": [
 			"earth"
 		],
-		"display_name": "Earth Deity",
 		"chess_pieces": [
 			"bishop",
 			"queen"
-		]
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi cartoon earth goddess, radiant carved stone-hued skin with glowing amber eyes, towering leafy fanned headdress, ornate cream-and-olive ceremonial gown patterned with cobblestone spirals, fur-trimmed deep green mantle, arms raised in benediction spilling warm golden light, floating pebbles drifting around her, front-facing divine pose, rolling hills, warm green-to-gold gradient sky, thick outlines, painterly cel shading",
+				"ref": {
+					"source": "upload",
+					"path": "snap_bishop_queen.png",
+					"name": "snap_bishop_queen.png",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		},
+		"cost": 6,
+		"attack": 5,
+		"health": 7,
+		"speed": 3,
+		"shield": 1
 	},
 	{
 		"id": "earth_rook_rook",
@@ -325,14 +403,19 @@
 		"chess_pieces": [
 			"rook",
 			"rook"
-		]
+		],
+		"cost": 6,
+		"attack": 2,
+		"health": 11,
+		"speed": 1,
+		"shield": 5
 	},
 	{
 		"id": "earth_queen_rook",
+		"display_name": "Earth Castle",
 		"elements": [
 			"earth"
 		],
-		"display_name": "Earth Castle",
 		"chess_pieces": [
 			"queen",
 			"rook"
@@ -340,7 +423,30 @@
 		"abilities": [
 			"earth_queen_training",
 			"queen_material"
-		]
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Towering fortified stronghold with a tall central keep, flanking round turrets and battlemented walls, olive-and-cream masonry veined with glowing green seams, gilded parapets and gemmed archway, hanging emerald banners with cobblestone patterns, heavy studded gate, earthen mounds swirling upward at its base, warm green-to-gold gradient sky, rolling hills, bold outlines, painterly cartoon game art, low-angle heroic view",
+				"ref": {
+					"source": "upload",
+					"path": "snap_rook_queen.png",
+					"name": "snap_rook_queen.png",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		},
+		"cost": 7,
+		"attack": 5,
+		"health": 10,
+		"speed": 2,
+		"shield": 3
 	},
 	{
 		"id": "earth_queen_queen",
@@ -351,6 +457,11 @@
 		"chess_pieces": [
 			"queen",
 			"queen"
-		]
+		],
+		"cost": 8,
+		"attack": 8,
+		"health": 8,
+		"speed": 3,
+		"shield": 1
 	}
 ]

@@ -57,7 +57,7 @@
 			}
 		},
 		"display_name": "Pure Water Bishop",
-		"cost": 4,
+		"cost": 2,
 		"attack": 1,
 		"health": 8,
 		"speed": 1
@@ -104,7 +104,7 @@
 				}
 			}
 		},
-		"cost": 6,
+		"cost": 4,
 		"attack": 2,
 		"health": 10,
 		"speed": 1
@@ -145,7 +145,7 @@
 				}
 			}
 		},
-		"cost": 6,
+		"cost": 4,
 		"attack": 3,
 		"health": 10,
 		"speed": 3
@@ -187,7 +187,7 @@
 				}
 			}
 		},
-		"cost": 5,
+		"cost": 3,
 		"attack": 2,
 		"health": 9,
 		"speed": 1,
@@ -230,7 +230,7 @@
 				}
 			}
 		},
-		"cost": 8,
+		"cost": 6,
 		"attack": 5,
 		"health": 11,
 		"speed": 3
@@ -282,7 +282,7 @@
 			"water_bishop_training_pure",
 			"bishop_material"
 		],
-		"cost": 7,
+		"cost": 5,
 		"attack": 2,
 		"health": 13,
 		"speed": 1,
@@ -318,7 +318,7 @@
 			}
 		},
 		"display_name": "Pure Water Knight",
-		"cost": 4,
+		"cost": 2,
 		"attack": 2,
 		"health": 7,
 		"speed": 2
@@ -360,7 +360,7 @@
 				}
 			}
 		},
-		"cost": 6,
+		"cost": 4,
 		"attack": 3,
 		"health": 9,
 		"speed": 3
@@ -408,7 +408,7 @@
 				}
 			}
 		},
-		"cost": 5,
+		"cost": 3,
 		"attack": 3,
 		"health": 9,
 		"speed": 2,
@@ -459,7 +459,7 @@
 				}
 			}
 		},
-		"cost": 8,
+		"cost": 6,
 		"attack": 6,
 		"health": 11,
 		"speed": 4
@@ -499,7 +499,7 @@
 			"water_knight_training_pure",
 			"knight_material"
 		],
-		"cost": 7,
+		"cost": 5,
 		"attack": 3,
 		"health": 12,
 		"speed": 2,
@@ -541,7 +541,7 @@
 				}
 			}
 		},
-		"cost": 3,
+		"cost": 1,
 		"attack": 1,
 		"health": 7,
 		"speed": 1
@@ -589,7 +589,7 @@
 				}
 			}
 		},
-		"cost": 4,
+		"cost": 2,
 		"attack": 2,
 		"health": 8,
 		"speed": 1,
@@ -626,7 +626,7 @@
 			}
 		},
 		"display_name": "Pure Water Commander",
-		"cost": 8,
+		"cost": 6,
 		"attack": 5,
 		"health": 9,
 		"speed": 3
@@ -667,7 +667,7 @@
 			"water_pawn_training_pure",
 			"pawn_material"
 		],
-		"cost": 6,
+		"cost": 4,
 		"attack": 2,
 		"health": 12,
 		"speed": 1,
@@ -714,7 +714,7 @@
 				}
 			}
 		},
-		"cost": 7,
+		"cost": 5,
 		"attack": 5,
 		"health": 9,
 		"speed": 3
@@ -765,7 +765,7 @@
 				}
 			}
 		},
-		"cost": 10,
+		"cost": 8,
 		"attack": 8,
 		"health": 12,
 		"speed": 3
@@ -822,7 +822,7 @@
 			"water_queen_training_pure",
 			"queen_material"
 		],
-		"cost": 9,
+		"cost": 7,
 		"attack": 5,
 		"health": 14,
 		"speed": 2,
@@ -859,7 +859,7 @@
 		},
 		"display_name": "Pure Water Rook",
 		"ranged": true,
-		"cost": 5,
+		"cost": 3,
 		"attack": 1,
 		"health": 11,
 		"speed": 1,
@@ -896,7 +896,7 @@
 				}
 			}
 		},
-		"cost": 8,
+		"cost": 6,
 		"attack": 2,
 		"health": 15,
 		"speed": 1,

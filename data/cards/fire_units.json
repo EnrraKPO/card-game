@@ -2,7 +2,7 @@
 	{
 		"id": "fire_pawn",
 		"display_name": "Fire Pawn",
-		"cost": 2,
+		"cost": 1,
 		"attack": 3,
 		"health": 3,
 		"speed": 1,
@@ -22,7 +22,7 @@
 		"chess_pieces": [
 			"knight"
 		],
-		"cost": 3,
+		"cost": 2,
 		"attack": 4,
 		"health": 3,
 		"speed": 2
@@ -40,7 +40,7 @@
 		"abilities": [
 			"fire_bless"
 		],
-		"cost": 3,
+		"cost": 2,
 		"attack": 3,
 		"health": 4,
 		"speed": 1
@@ -58,7 +58,7 @@
 			"warding_charge"
 		],
 		"ranged": true,
-		"cost": 4,
+		"cost": 3,
 		"attack": 3,
 		"health": 7,
 		"speed": 1,
@@ -74,7 +74,7 @@
 			"queen"
 		],
 		"ranged": true,
-		"cost": 6,
+		"cost": 5,
 		"attack": 7,
 		"health": 5,
 		"speed": 3
@@ -89,7 +89,7 @@
 			"pawn",
 			"pawn"
 		],
-		"cost": 3,
+		"cost": 2,
 		"attack": 4,
 		"health": 4,
 		"speed": 1,
@@ -105,7 +105,7 @@
 			"knight",
 			"pawn"
 		],
-		"cost": 4,
+		"cost": 3,
 		"attack": 5,
 		"health": 5,
 		"speed": 2,
@@ -121,7 +121,7 @@
 			"bishop",
 			"pawn"
 		],
-		"cost": 4,
+		"cost": 3,
 		"attack": 4,
 		"health": 5,
 		"speed": 1,
@@ -142,7 +142,7 @@
 			"rook"
 		],
 		"ranged": true,
-		"cost": 5,
+		"cost": 4,
 		"attack": 4,
 		"health": 8,
 		"speed": 1,
@@ -162,7 +162,7 @@
 			"pawn",
 			"queen"
 		],
-		"cost": 7,
+		"cost": 6,
 		"attack": 7,
 		"health": 5,
 		"speed": 3
@@ -188,7 +188,7 @@
 			"bishop",
 			"knight"
 		],
-		"cost": 5,
+		"cost": 4,
 		"attack": 5,
 		"health": 6,
 		"speed": 3,

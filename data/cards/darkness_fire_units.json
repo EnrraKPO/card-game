@@ -11,7 +11,7 @@
 		],
 		"tool": {
 			"art": {
-				"prompt": "Chibi imp foot soldier in cracked black obsidian armor with a rounded horned helmet topped by a glowing red spherical stud, small pointed ears and glowing green eyes peeking from beneath the visor, gripping a jagged red-tipped bone spear and a round crimson demon-crested buckler, standing braced on scorched cracked earth, jagged dark peaks and stormy purple sky behind, dramatic infernal glow, dark fantasy painterly illustration.",
+				"prompt": "Chibi infantry footman warrior, round dome helmet topped with a glowing spherical spike and green eyes peering beneath, jagged black obsidian armor traced with molten red seams, tattered crimson scarf, gripping a barbed green-flame spear and studded round shield with a snarling demon sigil, standing braced on lava-cracked stone, purple stormy sky, jagged infernal peaks, dramatic dark fantasy digital painting",
 				"ref": {
 					"source": "upload",
 					"path": "snap_pawn.png"
@@ -27,7 +27,7 @@
 				}
 			}
 		},
-		"cost": 3,
+		"cost": 1,
 		"attack": 4,
 		"health": 2,
 		"speed": 1,
@@ -35,54 +35,72 @@
 	},
 	{
 		"id": "darkness_fire_knight",
+		"display_name": "Demonic Knight",
+		"cost": 2,
+		"attack": 5,
+		"health": 2,
+		"speed": 2,
+		"shield": 1,
 		"elements": [
 			"darkness",
 			"fire"
 		],
-		"display_name": "Demonic Knight",
 		"chess_pieces": [
 			"knight"
 		],
 		"tool": {
 			"art": {
-				"prompt": "Rearing charger with obsidian-plated armor and glowing red-veined chest guard, curled ram-like horns and jagged bat ears, mane of flickering green flame, smoldering red eyes, cracked magma-etched hooves trailing embers, torn crimson sash whipping in the wind, muscular stylized fantasy creature, three-quarter view, purple-to-orange infernal hellscape with jagged obsidian spires and lava-veined ground, dramatic saturated red-green painterly digital illustration.",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi demonic warhorse charging, glossy black hide with cracked molten-red seams, curved obsidian horns, green flaming mane and tail streaming, chest plating of dark scorched metal edged in glowing red, green blazing eyes, hooves striking sparks, three-quarter dynamic pose, purple stormy hellscape with jagged spires and drifting green embers, saturated red-green infernal glow, dramatic painterly dark fantasy illustration",
 				"ref": {
 					"source": "upload",
-					"path": "snap_knight.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_knight.png",
-					"theme": [
-						"snap_darkness_fire_pawn.png",
-						"snap_darkness_fire_knight.png",
-						"snap_darkness_fire_queen.png"
-					],
-					"mode": "concept"
+					"path": "snap_knight.png",
+					"name": "snap_knight.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 4,
-		"attack": 5,
-		"health": 2,
-		"speed": 2,
-		"shield": 1
+		}
 	},
 	{
 		"id": "darkness_fire_bishop",
+		"display_name": "Demonic Bishop",
+		"cost": 2,
+		"attack": 4,
+		"health": 3,
+		"speed": 1,
+		"shield": 1,
 		"elements": [
 			"darkness",
 			"fire"
 		],
-		"display_name": "Demonic Bishop",
 		"chess_pieces": [
 			"bishop"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
-				"prompt": "Chibi demonic cleric with towering split-horned mitre of cracked obsidian and glowing red veins, hooded shadowed face with glowing green eyes, flowing tattered black robe trimmed in molten red, clutching a spiraled bone-and-magma crozier topped with a curling ram horn, cradling a bound grimoire wrapped in chains with a pulsing green rune-eye, standing on cracked scorched ground, purple stormy hellscape with jagged obsidian peaks, dramatic infernal glow, dark fantasy digital painting.",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi demonic high-priest cleric, cloven-horned crimson mitre over an obsidian half-helm, ivory-and-magma vestments with green-glowing sigils, curved-crook staff crowned in swirling green corefire, cradling a spiked grimoire seeping red embers, glowing green eyes, casting an unholy blessing, purple stormy sky, jagged obsidian spires, lava-veined ground, dramatic infernal glow, detailed dark fantasy digital painting.",
 				"ref": {
 					"source": "upload",
 					"path": "snap_bishop.png"
+				},
+				"last": {
+					"seed": 3285147837,
+					"prompt": "Chibi demonic cleric with towering split-horned mitre of cracked obsidian and glowing red veins, hooded shadowed face with glowing green eyes, flowing tattered black robe trimmed in molten red, clutching a spiraled bone-and-magma crozier topped with a curling ram horn, cradling a bound grimoire wrapped in chains with a pulsing green rune-eye, standing on cracked scorched ground, purple stormy hellscape with jagged obsidian peaks, dramatic infernal glow, dark fantasy digital painting.",
+					"style": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric light, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear,",
+					"at": "2026-07-21"
 				},
 				"inferredFrom": {
 					"anchor": "snap_bishop.png",
@@ -94,52 +112,51 @@
 					"mode": "concept"
 				}
 			}
-		},
-		"ranged": true,
-		"cost": 4,
-		"attack": 4,
-		"health": 3,
-		"speed": 1,
-		"shield": 1
+		}
 	},
 	{
 		"id": "darkness_fire_rook",
+		"display_name": "Demonic Rook",
+		"cost": 3,
+		"attack": 4,
+		"health": 6,
+		"speed": 1,
+		"shield": 3,
 		"elements": [
 			"darkness",
 			"fire"
 		],
-		"display_name": "Demonic Rook",
 		"chess_pieces": [
 			"rook"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
-				"prompt": "Squat crenellated stone tower rebuilt from cracked black obsidian blocks veined with glowing magma, jagged demonic horns curling from its battlements, a molten green-fire banner hanging between clawed bone hooks, a small horned imp peering from a jagged arch window with glowing green eyes, tapered fanged base gripping scorched earth, purple-orange hellscape sky, dramatic infernal glow.",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Squat crenellated defensive tower of black obsidian blocks veined with glowing red molten cracks, curved horn-like spikes crowning its battlements, a jagged arrow slit窗 spilling green flame where a green-eyed sentinel lurks, a tattered crimson demon-crest banner, lava-veined ground, purple stormy sky, jagged infernal peaks, dramatic dark fantasy digital painting",
 				"ref": {
 					"source": "upload",
-					"path": "snap_rook.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_rook.png",
-					"theme": [
-						"snap_darkness_fire_pawn.png",
-						"snap_darkness_fire_knight.png",
-						"snap_darkness_fire_queen.png"
-					],
-					"mode": "concept"
+					"path": "snap_rook.png",
+					"name": "snap_rook.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"ranged": true,
-		"cost": 5,
-		"attack": 4,
-		"health": 6,
-		"speed": 1,
-		"shield": 3
+		}
 	},
 	{
 		"id": "darkness_fire_queen",
 		"display_name": "Demonic Queen",
+		"cost": 5,
+		"attack": 8,
+		"health": 4,
+		"speed": 3,
+		"shield": 1,
 		"elements": [
 			"darkness",
 			"fire"
@@ -156,31 +173,25 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Chibi crowned sorceress-queen with dark ashen skin and glowing green facial markings, hair of flickering green flame beneath a jagged red spiked crown, wrapped in a voluminous crimson robe with cracked molten seams and obsidian pauldrons, calmly conjuring a crackling green-cored fireball above her open palm, standing on a lava-veined dais before jagged obsidian spires, purple infernal sky, saturated red-green painterly digital illustration.",
+				"prompt": "Chibi demonic sorceress-queen, ashen skin with glowing green infernal markings, crimson molten-cracked gown and horned spiked crown, flowing tattered red cape, wisps of green flame hair, conjuring a swirling green-cored orb of hellfire above her upturned palm, standing regal on a lava-veined obsidian dais, jagged spires and purple stormy sky behind, saturated red-green infernal glow, detailed anime dark fantasy illustration",
 				"ref": {
 					"source": "upload",
-					"path": "snap_queen.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_queen.png",
-					"theme": [
-						"snap_darkness_fire_pawn.png",
-						"snap_darkness_fire_knight.png",
-						"snap_darkness_fire_queen.png"
-					],
-					"mode": "concept"
+					"path": "snap_queen.png",
+					"name": "snap_queen.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 7,
-		"attack": 8,
-		"health": 4,
-		"speed": 3,
-		"shield": 1
+		}
 	},
 	{
 		"id": "darkness_fire_pawn_pawn",
 		"display_name": "Demonic Warrior",
+		"cost": 2,
+		"attack": 5,
+		"health": 3,
+		"speed": 1,
+		"shield": 2,
 		"elements": [
 			"darkness",
 			"fire"
@@ -197,31 +208,25 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Chibi demonic foot soldier in cracked obsidian breastplate with glowing red seams, full horned black helmet hiding a green-eyed glare, wielding a long blackened blade wreathed in red ember light and a round crimson-runed shield with green flame trim, standing braced on scorched cracked ground, jagged dark peaks under a purple stormy sky, dramatic infernal lighting, dark fantasy digital painting.",
+				"prompt": "Chibi demonic sword-and-shield warrior in horned black obsidian plate armor veined with molten red cracks, full visored helmet with glowing green eyeslits, raising a green-flamed longsword, bracing a spiked crimson round shield with a snarling demon-face crest, cracked lava-veined ground, jagged obsidian spires, moody purple sky, dramatic infernal glow, dark fantasy digital painting",
 				"ref": {
 					"source": "upload",
-					"path": "snap_pawn_pawn.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_pawn_pawn.png",
-					"theme": [
-						"snap_darkness_fire_pawn.png",
-						"snap_darkness_fire_knight.png",
-						"snap_darkness_fire_queen.png"
-					],
-					"mode": "concept"
+					"path": "snap_pawn_pawn.png",
+					"name": "snap_pawn_pawn.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 4,
-		"attack": 5,
-		"health": 3,
-		"speed": 1,
-		"shield": 2
+		}
 	},
 	{
 		"id": "darkness_fire_knight_pawn",
 		"display_name": "Demonic Cavalry",
+		"cost": 3,
+		"attack": 6,
+		"health": 4,
+		"speed": 2,
+		"shield": 2,
 		"elements": [
 			"darkness",
 			"fire"
@@ -238,31 +243,25 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Chibi horned knight riding a rearing black-hided beast with jagged obsidian horns and glowing green flaming mane, rider clad in cracked red magma-plated armor with glowing green eye-slits and a dripping green flame plume, wielding a barbed obsidian lance trailing red spectral pennant, cracked lava-veined ground, purple stormy hellscape backdrop with jagged dark peaks, dramatic infernal glow, saturated red-green palette, painterly digital illustration.",
+				"prompt": "Chibi armored lancer astride a charging horned beast-steed, obsidian-black armor with molten-cracked red seams and glowing green joints, horned helm streaming green flame plume, leveling a red-tipped lance wreathed in green fire, beast with magma-veined hide and blazing green eyes trampling cracked lava ground, purple infernal sky, jagged obsidian spires, dramatic hellish glow, saturated red-green palette, detailed dark fantasy digital painting",
 				"ref": {
 					"source": "upload",
-					"path": "snap_knight_pawn.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_knight_pawn.png",
-					"theme": [
-						"snap_darkness_fire_pawn.png",
-						"snap_darkness_fire_knight.png",
-						"snap_darkness_fire_queen.png"
-					],
-					"mode": "concept"
+					"path": "snap_knight_pawn.png",
+					"name": "snap_knight_pawn.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 5,
-		"attack": 6,
-		"health": 4,
-		"speed": 2,
-		"shield": 2
+		}
 	},
 	{
 		"id": "darkness_fire_bishop_pawn",
 		"display_name": "Demonic Paladin",
+		"cost": 3,
+		"attack": 5,
+		"health": 4,
+		"speed": 1,
+		"shield": 3,
 		"elements": [
 			"darkness",
 			"fire"
@@ -279,31 +278,25 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Chibi hulking sentinel in obsidian-black heavy plate armor with jagged horned crest and glowing red visor slits sealed shut, thick charred pauldrons rimmed in molten red, gripping a massive spiked flanged mace wreathed in green fire, other arm bearing a jagged obsidian shield emblazoned with a glowing green fanged sigil, tattered red cape, standing on scorched cracked ground, purple-orange infernal sky, dramatic hellish glow, vibrant painterly digital illustration.",
+				"prompt": "Chibi armored holy warrior, closed horned helmet with glowing green eyeslits, heavy obsidian-black plate armor edged in glowing red, spiked mace with a molten-red demonic sigil head, round shield bearing a red demon crest, tattered crimson cape, standing on cracked lava-veined stone, moody purple stormy sky, jagged infernal peaks, dramatic dark fantasy digital painting",
 				"ref": {
 					"source": "upload",
-					"path": "snap_bishop_pawn.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_bishop_pawn.png",
-					"theme": [
-						"snap_darkness_fire_pawn.png",
-						"snap_darkness_fire_knight.png",
-						"snap_darkness_fire_queen.png"
-					],
-					"mode": "concept"
+					"path": "snap_bishop_pawn.png",
+					"name": "snap_bishop_pawn.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 5,
-		"attack": 5,
-		"health": 4,
-		"speed": 1,
-		"shield": 3
+		}
 	},
 	{
 		"id": "darkness_fire_pawn_rook",
 		"display_name": "Demonic Barracks",
+		"cost": 4,
+		"attack": 5,
+		"health": 7,
+		"speed": 1,
+		"shield": 2,
 		"elements": [
 			"darkness",
 			"fire"
@@ -311,6 +304,11 @@
 		"chess_pieces": [
 			"pawn",
 			"rook"
+		],
+		"ranged": true,
+		"abilities": [
+			"darkness_pawn_material",
+			"fire_pawn_material"
 		],
 		"tool": {
 			"art": {
@@ -320,32 +318,16 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Squat fortified keep of jagged black obsidian bricks fused with cracked red magma seams, arched maw-like gateway framed by curling horns, a tattered green-flame banner hanging above the entrance, a rack of jagged bone-and-iron spears jutting from cracked stone beside the door, a chibi horned demon guard in obsidian plate with glowing red edges and green eyes standing sentry with spear and round crest shield, purple stormy hellscape sky, jagged infernal peaks, dramatic saturated red-green painterly digital illustration.",
+				"prompt": "Squat fortified barracks tower of black obsidian blocks veined with glowing red magma, jagged horned battlements, arched doorway breathing green fire, crimson crest banner, wooden rack of red-tipped horned spears beside it, a small horned guard in cracked lava armor and green eyes on watch, lava-veined ground, purple stormy sky, dark fantasy digital painting",
 				"ref": {
 					"source": "upload",
-					"path": "snap_pawn_rook.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_pawn_rook.png",
-					"theme": [
-						"snap_darkness_fire_pawn.png",
-						"snap_darkness_fire_knight.png",
-						"snap_darkness_fire_queen.png"
-					],
-					"mode": "concept"
+					"path": "snap_pawn_rook.png",
+					"name": "snap_pawn_rook.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"ranged": true,
-		"abilities": [
-			"darkness_pawn_material",
-			"fire_pawn_material"
-		],
-		"cost": 6,
-		"attack": 5,
-		"health": 7,
-		"speed": 1,
-		"shield": 2
+		}
 	},
 	{
 		"id": "darkness_fire_pawn_queen",
@@ -366,7 +348,7 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Chibi female fiend commander in cracked obsidian plate armor with glowing red seams and green-eyed horned helm, jagged bat-wing cloak trailing red smoke, standing atop a lava-veined stone rampart, pointing an obsidian baton tipped with green flame toward the horizon, ranks of small horned imp soldiers marching below with red-glowing spears, cracked magma ground, purple stormy hellscape sky, dramatic infernal lighting, dark fantasy digital painting.",
+				"prompt": "Chibi female demonic war-commander in molten-cracked crimson obsidian armor and tattered green cape, small curved horns, glowing green eyes, thrusting a red-glowing baton to command marching horned spear-troops below, standing atop a cracked lava-veined battlement, purple stormy sky, jagged obsidian spires, dramatic infernal glow, dark fantasy digital painting",
 				"ref": {
 					"source": "upload",
 					"path": "snap_pawn_queen.png"
@@ -382,7 +364,7 @@
 				}
 			}
 		},
-		"cost": 8,
+		"cost": 6,
 		"attack": 8,
 		"health": 4,
 		"speed": 3,
@@ -391,6 +373,11 @@
 	{
 		"id": "darkness_fire_knight_knight",
 		"display_name": "Demonic Beast",
+		"cost": 4,
+		"attack": 6,
+		"health": 4,
+		"speed": 3,
+		"shield": 1,
 		"elements": [
 			"darkness",
 			"fire"
@@ -407,31 +394,25 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Massive armored bull-like beast charging low with head lowered, obsidian-black hide cracked with glowing magma-red veins, curved bone-white horns wreathed in green flame, a molten-forged brow plate etched with a demon crest, green fire pluming from flared nostrils and a smoldering nose ring, tattered crimson hide draped over hunched shoulders, hooved feet cracking scorched stone, jagged obsidian spires and a stormy purple-orange hellscape behind it, dramatic infernal lighting, saturated red-green palette, painterly dark fantasy illustration.",
+				"prompt": "Hulking horned charging bull-beast, obsidian-black hide with molten red cracks veining its muscles, curved horns wreathed in green flame, glowing green eyes, crimson magma-plated headguard and spiked shoulder armor, snarling head lowered mid-charge, hooves striking cracked lava-veined ground, purple infernal sky, dark flame silhouettes, saturated red-green glow, dramatic painterly dark fantasy illustration",
 				"ref": {
 					"source": "upload",
-					"path": "snap_knight_knight.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_knight_knight.png",
-					"theme": [
-						"snap_darkness_fire_pawn.png",
-						"snap_darkness_fire_knight.png",
-						"snap_darkness_fire_queen.png"
-					],
-					"mode": "concept"
+					"path": "snap_knight_knight.png",
+					"name": "snap_knight_knight.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 6,
-		"attack": 6,
-		"health": 4,
-		"speed": 3,
-		"shield": 1
+		}
 	},
 	{
 		"id": "darkness_fire_bishop_knight",
 		"display_name": "Demonic Cryptid",
+		"cost": 4,
+		"attack": 6,
+		"health": 5,
+		"speed": 3,
+		"shield": 1,
 		"elements": [
 			"darkness",
 			"fire"
@@ -448,27 +429,16 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Demonic unicorn-like cryptid rearing on cracked obsidian ground, sinewy jet-black hide etched with glowing red veins, a jagged blood-red spiraling horn, wild flowing mane of green witchfire, glowing green predator eyes, cloven magma-cracked hooves, small curved black horns behind the ears, gaunt demonic musculature, purple-to-red hellscape sky, jagged obsidian spires silhouetted behind, dramatic infernal glow, saturated red-green painterly digital illustration.",
+				"prompt": "Majestic single-horned equine cryptid reimagined for a demon realm, jet-black coat with molten crimson-cracked skin, a spiraling glowing red horn, green flaming mane and tail, curved secondary horns, glowing green eyes, cracked lava-veined ground, purple stormy sky over jagged obsidian peaks, dramatic infernal glow, vibrant painterly dark fantasy illustration",
 				"ref": {
 					"source": "upload",
-					"path": "snap_bishop_knight.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_bishop_knight.png",
-					"theme": [
-						"snap_darkness_fire_pawn.png",
-						"snap_darkness_fire_knight.png",
-						"snap_darkness_fire_queen.png"
-					],
-					"mode": "concept"
+					"path": "snap_bishop_knight.png",
+					"name": "snap_bishop_knight.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 6,
-		"attack": 6,
-		"health": 5,
-		"speed": 3,
-		"shield": 1
+		}
 	},
 	{
 		"id": "darkness_fire_knight_rook",
@@ -490,7 +460,7 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Small stable hut built from cracked black obsidian slabs and bone-studded charred timber, jagged horned spikes crowning its cracked red-tile roof, twin doors bound in glowing red-veined iron hanging open to reveal a snorting hellish steed with glowing green eyes and a flickering green flame mane peeking out, a tattered crimson banner marked with a clawed sigil hanging above the archway, smoldering lava-cracked ground, bundled ashen hay and a rusted trident-fork leaning against cracked obsidian brick, dark fantasy digital painting, purple-orange infernal sky glow.",
+				"prompt": "Small fortified stable building housing a horned warhorse, hewn from black obsidian beams and cracked magma-veined stonework with iron-spiked gables, a green-flame lantern hanging beside its arched doorway, glowing-eyed demonic steed with a green fiery mane peering out over the half-door, crimson banner fluttering, smoldering ash-strewn ground, purple infernal sky, jagged dark spires, painterly dark fantasy illustration",
 				"ref": {
 					"source": "upload",
 					"path": "snap_knight_rook.png"
@@ -510,7 +480,7 @@
 			"darkness_knight_material",
 			"fire_knight_material"
 		],
-		"cost": 7,
+		"cost": 5,
 		"attack": 6,
 		"health": 7,
 		"speed": 2,
@@ -519,6 +489,11 @@
 	{
 		"id": "darkness_fire_knight_queen",
 		"display_name": "Demonic Monster",
+		"cost": 6,
+		"attack": 9,
+		"health": 6,
+		"speed": 4,
+		"shield": 1,
 		"elements": [
 			"darkness",
 			"fire"
@@ -535,31 +510,25 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Massive winged horned beast, obsidian scales cracked with glowing red magma veins, curved black horns and jagged bone spines lining its spine, sickly green flame breath curling from bared fangs, membranous wings edged in dripping green fire, molten claws gouging cracked infernal ground, towering over jagged obsidian spires, purple-orange stormy hellscape backdrop, dramatic saturated red-green infernal glow, dark fantasy painterly illustration.",
+				"prompt": "Colossal winged serpent-drake reared upright, obsidian-black scales cracked with molten crimson veins, curved horns and jagged green flaming crest, tattered membranous wings edged in glowing red, venomous green fire pouring from its maw, claws of dark horn, perched on a lava-veined crag amid purple infernal sky and jagged spires, saturated red-green glow, dramatic painterly dark fantasy.",
 				"ref": {
 					"source": "upload",
-					"path": "snap_knight_queen.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_knight_queen.png",
-					"theme": [
-						"snap_darkness_fire_pawn.png",
-						"snap_darkness_fire_knight.png",
-						"snap_darkness_fire_queen.png"
-					],
-					"mode": "concept"
+					"path": "snap_knight_queen.png",
+					"name": "snap_knight_queen.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 8,
-		"attack": 9,
-		"health": 6,
-		"speed": 4,
-		"shield": 1
+		}
 	},
 	{
 		"id": "darkness_fire_bishop_bishop",
 		"display_name": "Demonic Hierophant",
+		"cost": 4,
+		"attack": 5,
+		"health": 5,
+		"speed": 1,
+		"shield": 1,
 		"elements": [
 			"darkness",
 			"fire"
@@ -576,31 +545,25 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Chibi bearded demonic high priest, curved obsidian horns crowning a tall cracked-red miter, molten-veined black robes with glowing green trim, long fanged beard lit by inner green fire, one clawed hand raised weaving a crackling green sigil circle, the other gripping a jagged bone-and-magma staff topped with a pulsing red demon-eye orb, standing on scorched cracked stone, purple-orange hellscape sky, dramatic infernal glow, saturated red-green painterly digital illustration.",
+				"prompt": "Chibi demonic high priest, stern bearded elder with long white beard and glowing green eyes, tall horned obsidian mitre with red gem, molten-cracked crimson and black vestments trimmed in dark gold, one hand raised conjuring swirling green-cored energy, gripping a tall staff topped with a red-flaring orb, standing on lava-veined stone, purple infernal sky, gothic spires, saturated red-green palette, dramatic glow, detailed anime fantasy illustration",
 				"ref": {
 					"source": "upload",
-					"path": "snap_bishop_bishop.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_bishop_bishop.png",
-					"theme": [
-						"snap_darkness_fire_pawn.png",
-						"snap_darkness_fire_knight.png",
-						"snap_darkness_fire_queen.png"
-					],
-					"mode": "concept"
+					"path": "snap_bishop_bishop.png",
+					"name": "snap_bishop_bishop.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 6,
-		"attack": 5,
-		"health": 5,
-		"speed": 1,
-		"shield": 1
+		}
 	},
 	{
 		"id": "darkness_fire_bishop_rook",
 		"display_name": "Demonic Arcane Tower",
+		"cost": 5,
+		"attack": 5,
+		"health": 8,
+		"speed": 1,
+		"shield": 3,
 		"elements": [
 			"darkness",
 			"fire"
@@ -608,6 +571,11 @@
 		"chess_pieces": [
 			"bishop",
 			"rook"
+		],
+		"ranged": true,
+		"abilities": [
+			"darkness_bishop_material",
+			"fire_bishop_material"
 		],
 		"tool": {
 			"art": {
@@ -617,36 +585,25 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Chibi hooded cultist magician in tattered obsidian-and-crimson vestments, clutching a bound grimoire and a horned red-tipped staff, standing before a jagged obsidian spire tower wrapped in cracked magma veins, arched windows glowing venomous green, a molten crimson banner emblazoned with a clawed demon sigil hanging beneath twisted horn-like battlements, swirling green flame wisps and embers orbiting the spire, cracked lava-veined ground, dark stone pines silhouetted against a purple-to-orange infernal sky, dramatic hellish glow, saturated red-green palette, detailed painterly fantasy illustration.",
+				"prompt": "Towering demonic spire of black obsidian and cracked crimson magma stone, glowing green-veined runes climbing its walls, jagged horned battlements, a molten arched doorway pulsing green light, a hooded priest-magician sorcerer at its base in crimson robes gripping a horn-tipped staff crowned with a green flame, orbiting emerald wisps, purple stormy sky, lava-veined ground, dramatic infernal glow, detailed dark fantasy digital painting",
 				"ref": {
 					"source": "upload",
-					"path": "snap_bishop_rook.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_bishop_rook.png",
-					"theme": [
-						"snap_darkness_fire_pawn.png",
-						"snap_darkness_fire_knight.png",
-						"snap_darkness_fire_queen.png"
-					],
-					"mode": "concept"
+					"path": "snap_bishop_rook.png",
+					"name": "snap_bishop_rook.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"ranged": true,
-		"abilities": [
-			"darkness_bishop_material",
-			"fire_bishop_material"
-		],
-		"cost": 7,
-		"attack": 5,
-		"health": 8,
-		"speed": 1,
-		"shield": 3
+		}
 	},
 	{
 		"id": "darkness_fire_bishop_queen",
 		"display_name": "Demonic Deity",
+		"cost": 6,
+		"attack": 8,
+		"health": 6,
+		"speed": 3,
+		"shield": 1,
 		"elements": [
 			"darkness",
 			"fire"
@@ -663,31 +620,25 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Four-armed towering goddess with obsidian-black skin and cracked magma veins, jagged horned headdress crowned in dripping green flame, glowing red eyes, holding a serrated red-hot scepter and cradling a small clawed effigy in offering, draped in tattered crimson robes etched with green glowing sigils, arms raised bestowing infernal blessing, standing before jagged obsidian spires under a churning purple-red hellsky.",
+				"prompt": "Towering demonic goddess, ash-grey skin with glowing green sacred markings, curved black horns and voluminous crimson molten-cracked ceremonial robes, arms raised in dark benediction, green flame halo blazing behind her, wielding an obsidian scepter tipped with green fire, standing on a lava-veined altar, gothic spires and purple infernal sky, saturated red-green palette, detailed anime dark-fantasy illustration.",
 				"ref": {
 					"source": "upload",
-					"path": "snap_bishop_queen.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_bishop_queen.png",
-					"theme": [
-						"snap_darkness_fire_pawn.png",
-						"snap_darkness_fire_knight.png",
-						"snap_darkness_fire_queen.png"
-					],
-					"mode": "concept"
+					"path": "snap_bishop_queen.png",
+					"name": "snap_bishop_queen.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 8,
-		"attack": 8,
-		"health": 6,
-		"speed": 3,
-		"shield": 1
+		}
 	},
 	{
 		"id": "darkness_fire_rook_rook",
 		"display_name": "Demonic Turret",
+		"cost": 6,
+		"attack": 5,
+		"health": 10,
+		"speed": 1,
+		"shield": 5,
 		"elements": [
 			"darkness",
 			"fire"
@@ -696,6 +647,7 @@
 			"rook",
 			"rook"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -704,32 +656,25 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Squat round stone-walled turret with arrow-slit windows and a sloped buttressed base, crowned by a massive rotating ballista built from black cracked obsidian and demon bone, its taut sinew cords glowing molten red, twin curved horn-spikes flanking a barbed harpoon bolt dripping green fire, green flaming eyes set into the stonework, red-veined cracks pulsing across the walls, jagged black spires and dark flame silhouettes on a purple-orange hellscape horizon, cracked lava-veined ground, dramatic infernal glow, saturated red-green painterly digital illustration.",
+				"prompt": "Squat crenellated defensive tower topped with a swiveling ballista-style projectile weapon, rebuilt from cracked obsidian blocks veined with molten red, glowing green arrow-slits, a mounted bone-and-sinew launcher tipped with a green-flaming barbed bolt, curved horns jutting from the battlements, tattered crimson banner bearing a green demon sigil, cracked lava ground, purple stormy hellscape sky, dramatic infernal lighting, dark fantasy digital painting",
 				"ref": {
 					"source": "upload",
-					"path": "snap_rook_rook.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_rook_rook.png",
-					"theme": [
-						"snap_darkness_fire_pawn.png",
-						"snap_darkness_fire_knight.png",
-						"snap_darkness_fire_queen.png"
-					],
-					"mode": "concept"
+					"path": "snap_rook_rook.png",
+					"name": "snap_rook_rook.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"ranged": true,
-		"cost": 8,
-		"attack": 5,
-		"health": 10,
-		"speed": 1,
-		"shield": 5
+		}
 	},
 	{
 		"id": "darkness_fire_queen_rook",
 		"display_name": "Demonic Castle",
+		"cost": 7,
+		"attack": 8,
+		"health": 9,
+		"speed": 2,
+		"shield": 3,
 		"elements": [
 			"darkness",
 			"fire"
@@ -738,6 +683,11 @@
 			"queen",
 			"rook"
 		],
+		"ranged": true,
+		"abilities": [
+			"darkness_queen_material",
+			"fire_queen_material"
+		],
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -746,36 +696,25 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Massive fortress of black obsidian ramparts fused with cracked magma veins, twisted horned spires jutting like fangs from crenellated towers, molten green fissures glowing between stone blocks, tattered crimson banners bearing a clawed demonic sigil, arched gate wreathed in green flame with fanged iron portcullis, two horned demon guards flanking the entrance with glowing red eyes and spears, jagged obsidian ground, purple stormy hellscape sky behind, dramatic infernal glow, vibrant painterly digital illustration.",
+				"prompt": "Imposing multi-towered fortress carved from black obsidian and cracked red magma stone, glowing green molten veins pulsing through its walls, curved horn-like spires topped with tattered crimson banners, green-flame torches at arrow slits, iron portcullis gate framed by jagged fangs, standing on a lava-veined cliff, purple stormy sky, dramatic infernal glow, dark fantasy digital painting.",
 				"ref": {
 					"source": "upload",
-					"path": "snap_rook_queen.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_rook_queen.png",
-					"theme": [
-						"snap_darkness_fire_pawn.png",
-						"snap_darkness_fire_knight.png",
-						"snap_darkness_fire_queen.png"
-					],
-					"mode": "concept"
+					"path": "snap_rook_queen.png",
+					"name": "snap_rook_queen.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"ranged": true,
-		"abilities": [
-			"darkness_queen_material",
-			"fire_queen_material"
-		],
-		"cost": 9,
-		"attack": 8,
-		"health": 9,
-		"speed": 2,
-		"shield": 3
+		}
 	},
 	{
 		"id": "darkness_fire_queen_queen",
 		"display_name": "Demonic Hero",
+		"cost": 8,
+		"attack": 11,
+		"health": 7,
+		"speed": 3,
+		"shield": 1,
 		"elements": [
 			"darkness",
 			"fire"
@@ -792,26 +731,15 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Chibi crowned female warrior hero, dusky skin with faint glowing green cracked markings, wild dark hair licked by curling green flame, jagged black obsidian crown fused with a ring of small curved horns, spiked crimson molten-cracked armor with glowing red joints, wielding a massive great-blade of hardened magma edged in green fire, tattered blood-red cape, crouched atop a cracked lava-veined outcrop, jagged obsidian spires and purple-orange infernal sky behind her, saturated red-green palette, dramatic hellish glow, detailed painterly fantasy illustration.",
+				"prompt": "Chibi demonic heroine warrior, dark skin with glowing green sigils, wild green-flame curls, spiked crimson molten-cracked armor with jeweled red gems, short curved horns, hoisting a green-cored greatsword overhead, tattered black cloak, fierce green eyes, planted on a lava-veined crag, gothic obsidian spires, purple infernal sky, saturated red-green glow, detailed anime dark fantasy illustration",
 				"ref": {
 					"source": "upload",
-					"path": "snap_queen_queen.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_queen_queen.png",
-					"theme": [
-						"snap_darkness_fire_pawn.png",
-						"snap_darkness_fire_knight.png",
-						"snap_darkness_fire_queen.png"
-					],
-					"mode": "concept"
+					"path": "snap_queen_queen.png",
+					"name": "snap_queen_queen.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 10,
-		"attack": 11,
-		"health": 7,
-		"speed": 3,
-		"shield": 1
+		}
 	}
 ]

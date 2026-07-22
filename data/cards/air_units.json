@@ -2,7 +2,7 @@
 	{
 		"id": "air_pawn",
 		"display_name": "Air Pawn",
-		"cost": 2,
+		"cost": 1,
 		"attack": 1,
 		"health": 3,
 		"speed": 5,
@@ -22,7 +22,7 @@
 		"chess_pieces": [
 			"knight"
 		],
-		"cost": 3,
+		"cost": 2,
 		"attack": 2,
 		"health": 3,
 		"speed": 6
@@ -39,7 +39,7 @@
 		"abilities": [
 			"air_bless"
 		],
-		"cost": 3,
+		"cost": 2,
 		"attack": 1,
 		"health": 4,
 		"speed": 5
@@ -57,7 +57,7 @@
 			"gale_charge"
 		],
 		"ranged": true,
-		"cost": 4,
+		"cost": 3,
 		"attack": 1,
 		"health": 7,
 		"speed": 5,
@@ -73,7 +73,7 @@
 			"queen"
 		],
 		"ranged": true,
-		"cost": 6,
+		"cost": 5,
 		"attack": 5,
 		"health": 5,
 		"speed": 7
@@ -87,7 +87,12 @@
 		"chess_pieces": [
 			"pawn",
 			"pawn"
-		]
+		],
+		"cost": 2,
+		"attack": 2,
+		"health": 4,
+		"speed": 5,
+		"shield": 1
 	},
 	{
 		"id": "air_knight_pawn",
@@ -98,7 +103,12 @@
 		"chess_pieces": [
 			"knight",
 			"pawn"
-		]
+		],
+		"cost": 3,
+		"attack": 3,
+		"health": 5,
+		"speed": 6,
+		"shield": 1
 	},
 	{
 		"id": "air_bishop_pawn",
@@ -109,7 +119,12 @@
 		"chess_pieces": [
 			"bishop",
 			"pawn"
-		]
+		],
+		"cost": 3,
+		"attack": 2,
+		"health": 5,
+		"speed": 5,
+		"shield": 2
 	},
 	{
 		"id": "air_pawn_rook",
@@ -124,7 +139,12 @@
 		"abilities": [
 			"pawn_material",
 			"air_pawn_training"
-		]
+		],
+		"cost": 4,
+		"attack": 2,
+		"health": 8,
+		"speed": 5,
+		"shield": 1
 	},
 	{
 		"id": "air_pawn_queen",
@@ -135,7 +155,12 @@
 		"chess_pieces": [
 			"pawn",
 			"queen"
-		]
+		],
+		"cost": 6,
+		"attack": 5,
+		"health": 5,
+		"speed": 7,
+		"shield": 0
 	},
 	{
 		"id": "air_knight_knight",
@@ -146,7 +171,11 @@
 		"chess_pieces": [
 			"knight",
 			"knight"
-		]
+		],
+		"cost": 4,
+		"attack": 3,
+		"health": 5,
+		"speed": 7
 	},
 	{
 		"id": "air_bishop_knight",
@@ -157,7 +186,11 @@
 		"chess_pieces": [
 			"bishop",
 			"knight"
-		]
+		],
+		"cost": 4,
+		"attack": 3,
+		"health": 6,
+		"speed": 7
 	},
 	{
 		"id": "air_knight_rook",
@@ -172,7 +205,12 @@
 		"abilities": [
 			"air_knight_training",
 			"knight_material"
-		]
+		],
+		"cost": 5,
+		"attack": 3,
+		"health": 8,
+		"speed": 6,
+		"shield": 2
 	},
 	{
 		"id": "air_knight_queen",
@@ -183,7 +221,11 @@
 		"chess_pieces": [
 			"knight",
 			"queen"
-		]
+		],
+		"cost": 6,
+		"attack": 6,
+		"health": 7,
+		"speed": 8
 	},
 	{
 		"id": "air_bishop_bishop",
@@ -194,7 +236,11 @@
 		"chess_pieces": [
 			"bishop",
 			"bishop"
-		]
+		],
+		"cost": 4,
+		"attack": 2,
+		"health": 6,
+		"speed": 5
 	},
 	{
 		"id": "air_bishop_rook",
@@ -209,7 +255,12 @@
 		"abilities": [
 			"air_bishop_training",
 			"bishop_material"
-		]
+		],
+		"cost": 5,
+		"attack": 2,
+		"health": 9,
+		"speed": 5,
+		"shield": 2
 	},
 	{
 		"id": "air_bishop_queen",
@@ -229,7 +280,7 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Four-armed towering divine figure with a tall radiant halo-disc behind her head, front-facing symmetrical pose, pale blue and white flowing robes trimmed with silver swirl embroidery, wind-swept sash ribbons streaming upward, one raised hand conjuring a spiraling cyclone of feathers and cloud wisps, other hand cradling a floating crystalline air-orb, holding a tall crystalline wind-spear wrapped in fluttering cloth, drifting feathers and soft gusts swirling around her, standing atop a cloud-wreathed stone platform under a bright open sky, flat cel-shaded cartoon style, bold black outlines, vibrant saturated colors, soft even lighting.",
+				"prompt": "Chibi air-goddess deity, serene pale-glowing eyes, flowing silver-white ceremonial robes with pale-blue swirl embroidery and drifting feathered sashes, breeze-lifted hair, one hand raised summoning a spinning cloud sphere while the other offers curling wind currents, feathery headdress of layered soft plumes, floating leaves and whirling air spirals around her, grassy hilltop under bright blue cloud-streaked sky, bold ink outlines, flat cel-shaded coloring, soft daylight.",
 				"ref": {
 					"source": "upload",
 					"path": "snap_bishop_queen.png",
@@ -238,7 +289,11 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"cost": 6,
+		"attack": 5,
+		"health": 7,
+		"speed": 7
 	},
 	{
 		"id": "air_rook_rook",
@@ -249,40 +304,50 @@
 		"chess_pieces": [
 			"rook",
 			"rook"
-		]
+		],
+		"cost": 6,
+		"attack": 2,
+		"health": 11,
+		"speed": 5,
+		"shield": 4
 	},
 	{
 		"id": "air_queen_rook",
+		"display_name": "Air Castle",
 		"elements": [
 			"air"
 		],
-		"display_name": "Air Castle",
 		"chess_pieces": [
 			"queen",
 			"rook"
 		],
-		"tool": {
-			"art": {
-				"prompt": "Massive fortress with soaring twin turrets and a central keep built from pale windswept stone streaked with silvery-blue mineral veins, roofs of curved sky-blue crystal shingles trailing tattered cloth pennants that whip in gale winds, swirling cyclone currents and drifting feathers coiling around the spires, gates framed in wind-carved archways with a floating spiral-air emblem banner, guarded by two small chibi armored sentries with wind-spears, perched on a windswept grassy hill with streaming cloud wisps and distant misty peaks, bright blue sky, flat cel-shaded cartoon style, bold black outlines, vibrant saturated colors, soft even lighting.",
-				"ref": {
-					"source": "upload",
-					"path": "snap_rook_queen.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_rook_queen.png",
-					"theme": [
-						"air_pawn.png",
-						"air_queen.png",
-						"air_knight.png"
-					],
-					"mode": "concept"
-				}
-			}
-		},
 		"abilities": [
 			"air_queen_training",
 			"queen_material"
-		]
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Imposing three-tower fortress carved from pale cloud-white and silver-blue stone, tall central keep flanked by twin spired towers, conical roofs shaped like swirling gusts, rippling sky-blue pennants and spiral-embossed banners, floating feathers and drifting breeze currents wreathing the battlements, tiny scarf-clad spear guards at an arched gate, rolling green hill, bright blue sky with soft clouds, distant misty mountains, bold ink outlines, flat cel-shaded storybook style, soft daylight.",
+				"ref": {
+					"source": "upload",
+					"path": "snap_rook_queen.png",
+					"name": "snap_rook_queen.png",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		},
+		"cost": 7,
+		"attack": 5,
+		"health": 10,
+		"speed": 6,
+		"shield": 2
 	},
 	{
 		"id": "air_queen_queen",
@@ -293,6 +358,10 @@
 		"chess_pieces": [
 			"queen",
 			"queen"
-		]
+		],
+		"cost": 8,
+		"attack": 8,
+		"health": 8,
+		"speed": 7
 	}
 ]

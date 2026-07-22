@@ -31,7 +31,7 @@
 				}
 			}
 		},
-		"cost": 2,
+		"cost": 0,
 		"attack": 1,
 		"health": 6,
 		"speed": 2
@@ -64,7 +64,7 @@
 				}
 			}
 		},
-		"cost": 3,
+		"cost": 1,
 		"attack": 2,
 		"health": 6,
 		"speed": 3
@@ -103,7 +103,7 @@
 			}
 		},
 		"ranged": true,
-		"cost": 3,
+		"cost": 1,
 		"attack": 1,
 		"health": 7,
 		"speed": 2
@@ -137,7 +137,7 @@
 			}
 		},
 		"ranged": true,
-		"cost": 4,
+		"cost": 2,
 		"attack": 1,
 		"health": 10,
 		"speed": 2,
@@ -172,7 +172,7 @@
 				}
 			}
 		},
-		"cost": 6,
+		"cost": 4,
 		"attack": 5,
 		"health": 8,
 		"speed": 4
@@ -206,7 +206,7 @@
 				}
 			}
 		},
-		"cost": 3,
+		"cost": 1,
 		"attack": 2,
 		"health": 7,
 		"speed": 2,
@@ -241,7 +241,7 @@
 				}
 			}
 		},
-		"cost": 4,
+		"cost": 2,
 		"attack": 3,
 		"health": 8,
 		"speed": 3,
@@ -276,7 +276,7 @@
 				}
 			}
 		},
-		"cost": 4,
+		"cost": 2,
 		"attack": 2,
 		"health": 8,
 		"speed": 2,
@@ -316,7 +316,7 @@
 			"light_pawn_material",
 			"water_pawn_material"
 		],
-		"cost": 5,
+		"cost": 3,
 		"attack": 2,
 		"health": 11,
 		"speed": 2,
@@ -351,7 +351,7 @@
 				}
 			}
 		},
-		"cost": 7,
+		"cost": 5,
 		"attack": 5,
 		"health": 8,
 		"speed": 4
@@ -385,7 +385,7 @@
 				}
 			}
 		},
-		"cost": 5,
+		"cost": 3,
 		"attack": 3,
 		"health": 8,
 		"speed": 4
@@ -424,7 +424,7 @@
 				}
 			}
 		},
-		"cost": 5,
+		"cost": 3,
 		"attack": 3,
 		"health": 9,
 		"speed": 4
@@ -463,7 +463,7 @@
 			"light_knight_material",
 			"water_knight_material"
 		],
-		"cost": 6,
+		"cost": 4,
 		"attack": 3,
 		"health": 11,
 		"speed": 3,
@@ -503,7 +503,7 @@
 				}
 			}
 		},
-		"cost": 7,
+		"cost": 5,
 		"attack": 6,
 		"health": 10,
 		"speed": 5
@@ -542,7 +542,7 @@
 				}
 			}
 		},
-		"cost": 5,
+		"cost": 3,
 		"attack": 2,
 		"health": 9,
 		"speed": 2
@@ -581,7 +581,7 @@
 			"light_bishop_material",
 			"water_bishop_material"
 		],
-		"cost": 6,
+		"cost": 4,
 		"attack": 2,
 		"health": 12,
 		"speed": 2,
@@ -620,7 +620,7 @@
 				}
 			}
 		},
-		"cost": 7,
+		"cost": 5,
 		"attack": 5,
 		"health": 10,
 		"speed": 4
@@ -655,7 +655,7 @@
 				}
 			}
 		},
-		"cost": 7,
+		"cost": 5,
 		"attack": 2,
 		"health": 14,
 		"speed": 2,
@@ -695,7 +695,7 @@
 			"light_queen_material",
 			"water_queen_material"
 		],
-		"cost": 8,
+		"cost": 6,
 		"attack": 5,
 		"health": 13,
 		"speed": 3,
@@ -730,7 +730,7 @@
 				}
 			}
 		},
-		"cost": 9,
+		"cost": 7,
 		"attack": 8,
 		"health": 11,
 		"speed": 4

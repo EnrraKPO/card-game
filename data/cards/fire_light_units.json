@@ -27,7 +27,7 @@
 				}
 			}
 		},
-		"cost": 2,
+		"cost": 0,
 		"attack": 3,
 		"health": 4,
 		"speed": 2
@@ -60,44 +60,44 @@
 				}
 			}
 		},
-		"cost": 3,
+		"cost": 1,
 		"attack": 4,
 		"health": 4,
 		"speed": 3
 	},
 	{
 		"id": "fire_light_bishop",
+		"display_name": "Spirit Bishop",
+		"cost": 1,
+		"attack": 3,
+		"health": 5,
+		"speed": 2,
 		"elements": [
 			"fire",
 			"light"
 		],
-		"display_name": "Spirit Bishop",
 		"chess_pieces": [
 			"bishop"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "chibi cleric priest with a glowing blue flame-energy face, tall cleft ceremonial miter and white-gold flowing vestments edged in cool light, gripping a curling crook-topped staff wreathed in azure fire, cradling a spectral tome pulsing with sapphire embers, hovering pale flames at his feet, dark ominous hall, luminous cobalt rim glow, painterly fantasy game art",
 				"ref": {
 					"source": "upload",
-					"path": "snap_bishop.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_bishop.png",
-					"theme": [
-						"snap_fire_light_pawn.png",
-						"snap_fire_light_knight.png",
-						"snap_fire_light_queen.png"
-					],
-					"mode": "concept"
+					"path": "snap_bishop.png",
+					"name": "snap_bishop.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"ranged": true,
-		"cost": 3,
-		"attack": 3,
-		"health": 5,
-		"speed": 2
+		}
 	},
 	{
 		"id": "fire_light_rook",
@@ -128,7 +128,7 @@
 				}
 			}
 		},
-		"cost": 4,
+		"cost": 2,
 		"attack": 3,
 		"health": 8,
 		"speed": 2,
@@ -169,7 +169,7 @@
 				}
 			}
 		},
-		"cost": 6,
+		"cost": 4,
 		"attack": 7,
 		"health": 6,
 		"speed": 4
@@ -203,7 +203,7 @@
 				}
 			}
 		},
-		"cost": 3,
+		"cost": 1,
 		"attack": 4,
 		"health": 5,
 		"speed": 2,
@@ -238,7 +238,7 @@
 				}
 			}
 		},
-		"cost": 4,
+		"cost": 2,
 		"attack": 5,
 		"health": 6,
 		"speed": 3,
@@ -273,7 +273,7 @@
 				}
 			}
 		},
-		"cost": 4,
+		"cost": 2,
 		"attack": 4,
 		"health": 6,
 		"speed": 2,
@@ -313,7 +313,7 @@
 			"fire_pawn_material",
 			"light_pawn_material"
 		],
-		"cost": 5,
+		"cost": 3,
 		"attack": 4,
 		"health": 9,
 		"speed": 2,
@@ -348,7 +348,7 @@
 				}
 			}
 		},
-		"cost": 7,
+		"cost": 5,
 		"attack": 7,
 		"health": 6,
 		"speed": 4
@@ -382,44 +382,44 @@
 				}
 			}
 		},
-		"cost": 5,
+		"cost": 3,
 		"attack": 5,
 		"health": 6,
 		"speed": 4
 	},
 	{
 		"id": "fire_light_bishop_knight",
+		"display_name": "Spirit Cryptid",
+		"cost": 3,
+		"attack": 5,
+		"health": 7,
+		"speed": 4,
 		"elements": [
 			"fire",
 			"light"
 		],
-		"display_name": "Spirit Cryptid",
 		"chess_pieces": [
 			"bishop",
 			"knight"
 		],
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "Majestic single-horned steed reborn in ghostly cobalt flame, spiraling luminous horn of blue fire, mane and swirling tail streaming as licking sapphire flames, coat of pale flickering ember-white, glowing white eyes, wisps of spectral smoke curling from hooves, prancing through a shadowed misty hollow, cool blue rim glow, ominous darkness, painterly fantasy game illustration, dynamic full-body pose",
 				"ref": {
 					"source": "upload",
-					"path": "snap_bishop_knight.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_bishop_knight.png",
-					"theme": [
-						"snap_fire_light_pawn.png",
-						"snap_fire_light_knight.png",
-						"snap_fire_light_queen.png"
-					],
-					"mode": "concept"
+					"path": "snap_bishop_knight.png",
+					"name": "snap_bishop_knight.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 5,
-		"attack": 5,
-		"health": 7,
-		"speed": 4
+		}
 	},
 	{
 		"id": "fire_light_knight_rook",
@@ -455,7 +455,7 @@
 			"fire_knight_material",
 			"light_knight_material"
 		],
-		"cost": 6,
+		"cost": 4,
 		"attack": 5,
 		"health": 9,
 		"speed": 3,
@@ -490,7 +490,7 @@
 				}
 			}
 		},
-		"cost": 7,
+		"cost": 5,
 		"attack": 8,
 		"health": 8,
 		"speed": 5
@@ -498,6 +498,10 @@
 	{
 		"id": "fire_light_bishop_bishop",
 		"display_name": "Spirit Hierophant",
+		"cost": 3,
+		"attack": 4,
+		"health": 7,
+		"speed": 2,
 		"elements": [
 			"fire",
 			"light"
@@ -517,23 +521,13 @@
 				"prompt": "chibi bearded high priest wreathed in blue flame, luminous cobalt-fire face and glowing eyes, tall pointed mitre and flowing white-and-gold ceremonial robes edged in burning sapphire, raising a spiraling vortex of blue fire from one hand, gripping a tall staff crowned with a blazing azure orb, dark ominous temple, cool rim glow, painterly fantasy game art",
 				"ref": {
 					"source": "upload",
-					"path": "snap_bishop_bishop.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_bishop_bishop.png",
-					"theme": [
-						"snap_fire_light_pawn.png",
-						"snap_fire_light_knight.png",
-						"snap_fire_light_queen.png"
-					],
-					"mode": "concept"
+					"path": "snap_bishop_bishop.png",
+					"name": "snap_bishop_bishop.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 5,
-		"attack": 4,
-		"health": 7,
-		"speed": 2
+		}
 	},
 	{
 		"id": "fire_light_bishop_rook",
@@ -569,7 +563,7 @@
 			"fire_bishop_material",
 			"light_bishop_material"
 		],
-		"cost": 6,
+		"cost": 4,
 		"attack": 4,
 		"health": 10,
 		"speed": 2,
@@ -604,7 +598,7 @@
 				}
 			}
 		},
-		"cost": 7,
+		"cost": 5,
 		"attack": 7,
 		"health": 8,
 		"speed": 4
@@ -639,7 +633,7 @@
 				}
 			}
 		},
-		"cost": 7,
+		"cost": 5,
 		"attack": 4,
 		"health": 12,
 		"speed": 2,
@@ -679,7 +673,7 @@
 			"fire_queen_material",
 			"light_queen_material"
 		],
-		"cost": 8,
+		"cost": 6,
 		"attack": 7,
 		"health": 11,
 		"speed": 3,
@@ -714,7 +708,7 @@
 				}
 			}
 		},
-		"cost": 9,
+		"cost": 7,
 		"attack": 10,
 		"health": 9,
 		"speed": 4

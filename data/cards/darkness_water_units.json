@@ -50,7 +50,7 @@
 				}
 			}
 		},
-		"cost": 3,
+		"cost": 1,
 		"attack": 2,
 		"health": 4,
 		"speed": 1,
@@ -113,7 +113,7 @@
 				}
 			}
 		},
-		"cost": 4,
+		"cost": 2,
 		"attack": 3,
 		"health": 4,
 		"speed": 2,
@@ -165,7 +165,7 @@
 				}
 			}
 		},
-		"cost": 4,
+		"cost": 2,
 		"attack": 2,
 		"health": 5,
 		"speed": 1,
@@ -214,7 +214,7 @@
 				}
 			}
 		},
-		"cost": 5,
+		"cost": 3,
 		"attack": 2,
 		"health": 8,
 		"speed": 1,
@@ -266,7 +266,7 @@
 				}
 			}
 		},
-		"cost": 7,
+		"cost": 5,
 		"attack": 6,
 		"health": 6,
 		"speed": 3,
@@ -318,7 +318,7 @@
 				}
 			}
 		},
-		"cost": 4,
+		"cost": 2,
 		"attack": 3,
 		"health": 5,
 		"speed": 1,
@@ -370,7 +370,7 @@
 				}
 			}
 		},
-		"cost": 5,
+		"cost": 3,
 		"attack": 4,
 		"health": 6,
 		"speed": 2,
@@ -422,7 +422,7 @@
 				}
 			}
 		},
-		"cost": 5,
+		"cost": 3,
 		"attack": 3,
 		"health": 6,
 		"speed": 1,
@@ -479,7 +479,7 @@
 			"darkness_pawn_material",
 			"water_pawn_material"
 		],
-		"cost": 6,
+		"cost": 4,
 		"attack": 3,
 		"health": 9,
 		"speed": 1,
@@ -531,7 +531,7 @@
 				}
 			}
 		},
-		"cost": 8,
+		"cost": 6,
 		"attack": 6,
 		"health": 6,
 		"speed": 3,
@@ -583,7 +583,7 @@
 				}
 			}
 		},
-		"cost": 6,
+		"cost": 4,
 		"attack": 4,
 		"health": 6,
 		"speed": 3,
@@ -592,7 +592,7 @@
 	{
 		"id": "darkness_water_bishop_knight",
 		"display_name": "Blight Basilisk",
-		"cost": 6,
+		"cost": 4,
 		"attack": 4,
 		"health": 7,
 		"speed": 3,
@@ -716,7 +716,7 @@
 			"darkness_knight_material",
 			"water_knight_material"
 		],
-		"cost": 7,
+		"cost": 5,
 		"attack": 4,
 		"health": 9,
 		"speed": 2,
@@ -768,7 +768,7 @@
 				}
 			}
 		},
-		"cost": 8,
+		"cost": 6,
 		"attack": 7,
 		"health": 8,
 		"speed": 4,
@@ -821,7 +821,7 @@
 				}
 			}
 		},
-		"cost": 6,
+		"cost": 4,
 		"attack": 3,
 		"health": 7,
 		"speed": 1,
@@ -878,7 +878,7 @@
 			"darkness_bishop_material",
 			"water_bishop_material"
 		],
-		"cost": 7,
+		"cost": 5,
 		"attack": 3,
 		"health": 10,
 		"speed": 1,
@@ -930,7 +930,7 @@
 				}
 			}
 		},
-		"cost": 8,
+		"cost": 6,
 		"attack": 6,
 		"health": 8,
 		"speed": 3,
@@ -983,7 +983,7 @@
 				}
 			}
 		},
-		"cost": 8,
+		"cost": 6,
 		"attack": 3,
 		"health": 12,
 		"speed": 1,
@@ -1040,7 +1040,7 @@
 			"darkness_queen_material",
 			"water_queen_material"
 		],
-		"cost": 9,
+		"cost": 7,
 		"attack": 6,
 		"health": 11,
 		"speed": 2,
@@ -1092,7 +1092,7 @@
 				}
 			}
 		},
-		"cost": 10,
+		"cost": 8,
 		"attack": 9,
 		"health": 9,
 		"speed": 3,
