@@ -118,11 +118,13 @@ function getSettings() {
     conceptPresets: {}, refHintPresets: {},   // named presets for the ✨ LLM guidance inputs
     flowPresets: {},   // named multi-step generation flows (JSON-encoded step arrays)
     kinAdherence: 'concept',   // ✨ inference default: what carries over from the anchor
-    // Anchor source for ✨ inference: 'current' = the card's own art (else its canonical
-    // concept) | 'canonical' = always the canonical concept ref | 'custom' = the card's
-    // stored recipe reference. (kinThemeMode/kinThemeRefs — the old flat global theme
-    // list — is gone: theme now flows ONLY through canonical appointments in art guides.)
-    kinAnchorMode: 'current',
+    // Anchor source for ✨ inference: 'installed' = the card's deployed game art | 'workspace'
+    // = the card's workspace draft (both fall back to the canonical concept when the card has
+    // none) | 'canonical' = always the canonical concept ref | 'custom' = the card's stored
+    // recipe reference. (The old ambiguous 'current' — workspace-if-present-else-installed — is
+    // retired: it let a stale draft masquerade as current. kinThemeMode/kinThemeRefs, the old
+    // flat global theme list, is likewise gone: theme flows ONLY through canonical appointments.)
+    kinAnchorMode: 'installed',
     useArtGuides: false,       // opt-in: inject the composition-keyed art_guides into every ✨ writer
     kinSteer: '',              // always-on free-text creative direction; empty = contributes nothing
     turboLora: 'Flux_2-Turbo-LoRA_comfyui.safetensors',  // the user's Flux 2 turbo LoRA
@@ -135,8 +137,10 @@ function getSettings() {
     claudeModel: 'claude-opus-4-8',   // cloud providers use ONE model for every ✨ feature
     openaiModel: 'gpt-5.5',
   }, readJson(SETTINGS_PATH, {}));
-  // legacy value migration: 'base' (bare-piece hunting) became 'canonical' (appointed ref)
+  // legacy value migration: 'base' (bare-piece hunting) became 'canonical' (appointed ref);
+  // 'current' (workspace-if-present-else-installed) split into explicit sources → 'installed'
   if (s.kinAnchorMode === 'base') s.kinAnchorMode = 'canonical';
+  if (s.kinAnchorMode === 'current') s.kinAnchorMode = 'installed';
   return s;
 }
 
@@ -1716,21 +1720,50 @@ function buildFluxWorkflow(prompt, w, h, steps, guidance, seed, prefix, rembg, r
   });
 }
 
-// The image "current art" refers to for an item: the workspace-generated art when it
-// exists (what the art panel shows as your working image), else the game's installed art.
-function currentArtAbs(type, id) {
-  // "Current art" = the image the art panel shows as your working art: the workspace-
-  // generated image when present, else the deployed in-game art. This mirrors
-  // buildArtPreviews / the Flip button ("workspace art preferred, else in-game art"),
-  // so every "current" consumer (Flow & batch anchors, recipe inference, single-image
-  // reference, recreate-from-art) uses the image you're actually looking at.
-  if (fs.existsSync(artPath(type, id))) return artPath(type, id);
+// Two EXPLICIT art sources for an item — the old ambiguous "current art" (workspace-if-
+// present-else-installed) is gone, because a stale workspace draft silently masqueraded as
+// "current" and re-contaminated prompts. Callers now name the source they want:
+//   installed — the art the GAME actually ships (assets/…/<id>.png). The safe, deployed image.
+//   workspace — the tool's working draft (Tool/workspace/art/…/<id>.png). May be undeployed.
+// Neither falls back to the other; a missing source returns null and the caller decides.
+function installedArtAbs(type, id) {
   const wsItem = readJson(itemPath(type, id), null);
   const gameEntry = wsItem ? null : findGameEntry(type, id);
   const data = wsItem || (gameEntry && gameEntry.data) || {};
   const rel = gameArtRel(type, id, data);
-  if (rel) return path.join(GAME_ROOT, rel);
+  return rel ? path.join(GAME_ROOT, rel) : null;
+}
+function workspaceArtAbs(type, id) {
+  return fs.existsSync(artPath(type, id)) ? artPath(type, id) : null;
+}
+// Resolve a named source to an absolute path. Legacy 'current' migrates to 'installed'
+// (the deployed art — what the game ships), matching the settings/recipe migration.
+function artAbsForSource(type, id, source) {
+  const s = source === 'current' ? 'installed' : source;
+  if (s === 'workspace') return workspaceArtAbs(type, id);
+  if (s === 'installed') return installedArtAbs(type, id);
   return null;
+}
+
+// Divergence guard: the "Workspace art" source and the "Installed art" source can differ —
+// a workspace draft may never have been deployed. When both exist and their bytes differ, the
+// art panel should flag it so an undeployed draft can't quietly stand in for what the game
+// ships. (This is exactly how darkness leaked back into several elemental-king prompts, before
+// the sources were split.) Report the divergence for the UI.
+//   source: which of the two an item currently has ('workspace' if a draft exists, else
+//           'installed' when only deployed art exists, else null)
+//   stale : a workspace draft exists, installed art also exists, and their bytes differ —
+//           i.e. the workspace draft is NOT the image the game uses
+function currentArtInfo(type, id, data) {
+  const ws = artPath(type, id);
+  const hasWs = fs.existsSync(ws);
+  const rel = data ? gameArtRel(type, id, data) : null;
+  const gameAbs = rel ? path.join(GAME_ROOT, rel) : null;
+  let stale = false;
+  if (hasWs && gameAbs) {
+    try { stale = fileHash(ws) !== fileHash(gameAbs); } catch (e) { stale = false; }
+  }
+  return { source: hasWs ? 'workspace' : (gameAbs ? 'game' : null), stale, gameArt: rel };
 }
 
 // Push a local image into ComfyUI's input folder (POST /upload/image, multipart).
@@ -2074,8 +2107,10 @@ const LLM_MATCH_SYSTEM_PROMPT = [
 ].join('\n');
 
 async function llmPromptFromArt(type, id, concept, refHint, guides) {
-  const abs = currentArtAbs(type, id);
-  if (!abs) throw new Error('this item has no current art to analyze');
+  // "Match art" always reads the INSTALLED (deployed) art — the image the game ships — so it
+  // can never be hijacked by an undeployed workspace draft.
+  const abs = installedArtAbs(type, id);
+  if (!abs) throw new Error('this item has no installed game art to analyze');
   const user = [
     'Write the prompt that recreates this illustration.',
     ...(guides || []),   // opt-in authored composition direction (authoritative)
@@ -2118,25 +2153,28 @@ function canonicalPools(entry) {
 }
 
 // The anchor image for anchored adherence modes, per the user-selected anchor source:
-//   current   — the card's own working art; a card with none uses its canonical concept
+//   installed — the card's deployed game art; a card with none uses its canonical concept
+//   workspace — the card's workspace draft; a card with none uses its canonical concept
 //   canonical — always the canonical concept ref, ignoring own art
 //   custom    — the card's stored recipe reference (tool.art.ref)
 // Missing/unresolvable → throws (mandatory; the old silent fall-to-free is gone).
 function resolveAnchor(entry) {
   assertCanonicalEligible(entry);
-  const mode = getSettings().kinAnchorMode;
+  let mode = getSettings().kinAnchorMode;
+  if (mode === 'current') mode = 'installed';   // legacy value → the deployed art
   if (mode === 'custom') {
     const ref = entry.data.tool && entry.data.tool.art && entry.data.tool.art.ref;
     const abs = ref ? resolveBatchAnchorRef(entry, ref) : null;
     if (!abs) throw new Error(`no custom reference stored on "${entry.id}" — set one in the art panel, or switch the anchor source`);
     return { id: entry.id, abs, ref: Object.assign({}, ref) };
   }
-  if (mode !== 'canonical') {   // 'current'
-    const own = currentArtAbs('card', entry.id);
-    if (own) return { id: entry.id, abs: own, ref: { source: 'current' } };
+  if (mode === 'installed' || mode === 'workspace') {
+    const own = artAbsForSource('card', entry.id, mode);
+    if (own) return { id: entry.id, abs: own, ref: { source: mode } };
+    // chosen source has no image → fall through to the canonical concept (safety net)
   }
   const c = canonicalConceptFor(entry.data.chess_pieces);   // throws when unappointed
-  if (!c) throw new Error(`"${entry.id}" has no pieces — no canonical concept applies; use the current-art or custom anchor`);
+  if (!c) throw new Error(`"${entry.id}" has no pieces — no canonical concept applies; use the installed-art, workspace-art or custom anchor`);
   return { id: c.name, abs: c.abs, ref: { source: 'upload', path: c.name } };   // frozen asset
 }
 
@@ -2836,7 +2874,7 @@ function deployArtIfPossible(type, id) {
 // drives ComfyUI and lands the image; the generation queue's worker calls it when this
 // job reaches the front. (Was startArtJob, which fired run() immediately; the queue owns
 // firing now — see enqueue/pump.)
-async function prepareArtJob({ type, id, prompt, negative, width, height, steps, guidance, seed, rembg, useRef, refUpload, refGameArt, refMode, denoise, turbo, model }) {
+async function prepareArtJob({ type, id, prompt, negative, width, height, steps, guidance, seed, rembg, useRef, refUpload, refGameArt, refSource, refMode, denoise, turbo, model }) {
   const t = TYPES[type];
   if (!t) throw new Error('unknown type');
   if (!validId(id)) throw new Error('bad item id');
@@ -2862,8 +2900,10 @@ async function prepareArtJob({ type, id, prompt, negative, width, height, steps,
       refAbs = path.join(WORKSPACE, 'refs', safeRefName(refUpload));
       if (!fs.existsSync(refAbs)) throw new Error('uploaded reference image not found — upload it again');
     } else {
-      refAbs = currentArtAbs(type, id);
-      if (!refAbs) throw new Error('this item has no current art to use as input');
+      // an item's own art as the reference — the caller names which source (installed | workspace)
+      const src = refSource === 'workspace' ? 'workspace' : 'installed';   // legacy/blank → installed
+      refAbs = artAbsForSource(type, id, src);
+      if (!refAbs) throw new Error(`this item has no ${src} art to use as input`);
     }
     refName = await uploadRefImage(refAbs, `tool_ref_${type}_${id}.png`);
   }
@@ -3113,7 +3153,8 @@ function flowBatchJobForIds(ids) {
 // A recipe-style stored reference ({source: current|game|upload, path}) → abs path or null.
 function resolveBatchAnchorRef(entry, ref) {
   if (!ref) return null;
-  if (ref.source === 'current') return currentArtAbs('card', entry.id);
+  if (ref.source === 'current' || ref.source === 'installed' || ref.source === 'workspace')
+    return artAbsForSource('card', entry.id, ref.source);
   if (ref.source === 'game') return gameArtAbs(String(ref.path || ''));
   if (ref.source === 'upload') {
     const abs = path.join(WORKSPACE, 'refs', safeRefName(ref.path));
@@ -3122,13 +3163,15 @@ function resolveBatchAnchorRef(entry, ref) {
   return null;
 }
 
-// Policies: 'current' (own art; none → from scratch), 'canonical' (the appointed concept
-// ref — MANDATORY, throws when unappointed), 'custom' (the card's stored recipe ref).
-// Legacy stored names: 'base' → canonical, 'recipe' → custom.
+// Policies: 'installed'/'workspace' (the card's own art from that source; none → from scratch),
+// 'canonical' (the appointed concept ref — MANDATORY, throws when unappointed), 'custom' (the
+// card's stored recipe ref). Legacy stored names: 'base' → canonical, 'recipe' → custom,
+// 'current' → installed (the deployed art).
 function resolveBatchAnchor(entry, policy) {
   if (policy === 'base') policy = 'canonical';
   if (policy === 'recipe') policy = 'custom';
-  if (policy === 'current') return currentArtAbs('card', entry.id);
+  if (policy === 'current' || policy === 'installed' || policy === 'workspace')
+    return artAbsForSource('card', entry.id, policy);
   if (policy === 'canonical') {
     assertCanonicalEligible(entry);
     const c = canonicalConceptFor(entry.data.chess_pieces);   // throws when unappointed
@@ -3487,9 +3530,12 @@ async function handle(req, res) {
       const found = findGameEntry(type, id);
       if (!found) return send(res, 404, { error: 'not found' });
       const edits = getEdits();
+      const artInfo = currentArtInfo(type, id, found.data);
       return send(res, 200, { id: found.id, file: found.file, data: found.data,
         edited: !!edits[type + '/' + id], hasArt: fs.existsSync(artPath(type, id)),
-        gameArt: gameArtRel(type, id, found.data) });
+        gameArt: gameArtRel(type, id, found.data),
+        // precedence guard: workspace draft diverges from the installed game art
+        artSource: artInfo.source, artStale: artInfo.stale });
     }
     if (p === '/api/game/save' && req.method === 'POST') {
       const { type, file, data } = await readBody(req);
@@ -3633,9 +3679,10 @@ async function handle(req, res) {
         s.kinAdherence = body.kinAdherence;
       }
       if ('kinAnchorMode' in body) {
-        if (!['current', 'canonical', 'custom'].includes(body.kinAnchorMode))
+        const mode = body.kinAnchorMode === 'current' ? 'installed' : body.kinAnchorMode;   // legacy
+        if (!['installed', 'workspace', 'canonical', 'custom'].includes(mode))
           return send(res, 400, { error: `bad kinAnchorMode "${body.kinAnchorMode}"` });
-        s.kinAnchorMode = body.kinAnchorMode;
+        s.kinAnchorMode = mode;
       }
       // kinThemeMode/kinThemeRefs are gone: theme references live in art guides now
       if ('useArtGuides' in body) s.useArtGuides = !!body.useArtGuides;
@@ -3644,7 +3691,7 @@ async function handle(req, res) {
         if (body.quickFlow != null) {
           const qfErr = validateFlowSpec(body.quickFlow.steps);
           if (qfErr) return send(res, 400, { error: 'Quick Flow: ' + qfErr });
-          if (!['none', 'current', 'canonical', 'custom', 'base', 'recipe'].includes(body.quickFlow.anchor || 'custom'))
+          if (!['none', 'installed', 'workspace', 'current', 'canonical', 'custom', 'base', 'recipe'].includes(body.quickFlow.anchor || 'custom'))
             return send(res, 400, { error: 'Quick Flow: bad anchor policy' });
         }
         s.quickFlow = body.quickFlow;
@@ -3869,7 +3916,8 @@ async function handle(req, res) {
       // the step-1 ANCHOR: the concept image the whole tree grows from
       let anchorAbs = null;
       if (anchor && anchor.source && anchor.source !== 'none') {
-        if (anchor.source === 'current') anchorAbs = currentArtAbs(type, id);
+        if (anchor.source === 'current' || anchor.source === 'installed' || anchor.source === 'workspace')
+          anchorAbs = artAbsForSource(type, id, anchor.source);
         else if (anchor.source === 'canonical') {
           // the appointed canonical concept ref (cards only; mandatory — refuse when missing)
           if (type !== 'card') return send(res, 400, { error: 'canonical references are cards-only' });
@@ -4109,7 +4157,7 @@ async function handle(req, res) {
         return send(res, 200, { ok: true, prompt });
       } catch (e) { return send(res, 502, { error: e.message }); }
     }
-    // Vision-analyze the item's current art → a prompt that recreates it.
+    // Vision-analyze the item's INSTALLED (deployed) art → a prompt that recreates it.
     if (p === '/api/art/prompt-from-art' && req.method === 'POST') {
       const { type, id, concept, refHint } = await readBody(req);
       if (!TYPES[type] || !validId(id)) return send(res, 400, { error: 'bad request' });
@@ -4120,7 +4168,7 @@ async function handle(req, res) {
           llmPromptFromArt(type, id, concept ? String(concept) : '', refHint ? String(refHint) : '', guides));
         return send(res, 200, { ok: true, prompt });
       } catch (e) {
-        return send(res, /no current art/.test(e.message) ? 400 : 502, { error: e.message });
+        return send(res, /no installed game art/.test(e.message) ? 400 : 502, { error: e.message });
       }
     }
     // ✨ recipe inference for ONE card. Default: returns the recipe, writes nothing

@@ -230,8 +230,8 @@ async function main() {
     // generating with an uploaded ref must NOT demand the item's own current art
     r = await api('/api/art/generate', { type: 'card', id: 'apitest_noart', prompt: 'x',
       useRef: true, refUpload: 'my_ref_.png', model: 'krea2', refMode: 'img2img', denoise: 0.6 });
-    check('uploaded ref bypasses the current-art requirement',
-      (r.data.error || '') !== 'this item has no current art to use as input',
+    check('uploaded ref bypasses the own-art requirement',
+      (r.data.error || '') !== 'this item has no installed art to use as input',
       r.data.error);
 
     // ── client-side pixel edits (flip) write back through /api/art/put ──
@@ -275,8 +275,8 @@ async function main() {
     // ── game art as the image-model reference ──
     r = await api('/api/art/generate', { type: 'card', id: 'apitest_noart2', prompt: 'x',
       useRef: true, refGameArt: 'assets/cards/bishop_queen.png', model: 'krea2', refMode: 'img2img' });
-    check('game-art ref bypasses the current-art requirement',
-      (r.data.error || '') !== 'this item has no current art to use as input', r.data.error);
+    check('game-art ref bypasses the own-art requirement',
+      (r.data.error || '') !== 'this item has no installed art to use as input', r.data.error);
     r = await api('/api/art/generate', { type: 'card', id: 'apitest_noart2', prompt: 'x',
       useRef: true, refGameArt: '../secrets.png', model: 'krea2', refMode: 'img2img' });
     check('game-art ref path is validated', /reference game art not found/.test(r.data.error || ''), r.data.error);
@@ -323,10 +323,12 @@ async function main() {
     r = await api('/api/art/prompt', { type: 'card', name: 'Pawn', summary: [],
       refArts: ['../oops.png'] });
     check('llm ref art path is validated', r.status === 400 && /reference art not found/.test(r.data.error || ''));
-    // vision analysis of the item's CURRENT art → a recreating prompt (apitest_flip has
-    // workspace art from the /api/art/put test above)
+    // vision analysis of the item's INSTALLED (deployed) art → a recreating prompt.
+    // "Match art" always reads the deployed art, never a workspace draft, so give apitest_flip
+    // installed art here (its workspace draft from /api/art/put above is deliberately ignored).
+    fs.writeFileSync(path.join(SANDBOX, 'assets/cards/apitest_flip.png'), PNG1x1);
     r = await api('/api/art/prompt-from-art', { type: 'card', id: 'apitest_flip' });
-    check('prompt-from-art analyzes the current art',
+    check('prompt-from-art analyzes the installed art',
       r.data.ok && r.data.prompt === 'a spectral pawn knight wreathed in venom mist, painterly'
       && llmReq.body.images.length === 1 && llmReq.body.images[0] === PNG1x1.toString('base64')
       && /recreate/i.test(llmReq.body.system));
@@ -341,7 +343,7 @@ async function main() {
     check('prompt-from-art without guidance stays bare',
       r.data.ok && !/Concept direction|as a reference/.test(llmReq.body.prompt));
     r = await api('/api/art/prompt-from-art', { type: 'card', id: 'apitest_no_art_at_all' });
-    check('prompt-from-art without art rejected', r.status === 400 && /no current art/.test(r.data.error || ''));
+    check('prompt-from-art without art rejected', r.status === 400 && /no installed game art/.test(r.data.error || ''));
     fakeOllama.close();
 
     // ── ✨ effects from words: generate → validate → retry, on a scripted fake ──
@@ -887,19 +889,23 @@ async function main() {
     check('bad kinAdherence rejected', r.status === 400);
     await api('/api/settings', { kinAdherence: 'concept' });
 
-    // ── feature 2: anchor-mode + theme-select toggles (global settings) ──
-    // anchor mode 'base' skips the card's OWN art. darkness_earth_pawn HAS own art, so
-    // current mode anchors on it (ref.source 'current') and base mode must not.
+    // ── feature 2: anchor-mode toggles (global settings) ──
+    // darkness_earth_pawn HAS installed (deployed) art, so 'installed' mode anchors on it
+    // (ref.source 'installed'); 'canonical' mode ignores own art (anchor = the appointed concept).
+    r = await api('/api/settings', { kinAnchorMode: 'installed' });
+    check('kinAnchorMode installed persists', r.data.settings.kinAnchorMode === 'installed');
     r = await api('/api/art/infer-recipe', { type: 'card', id: 'darkness_earth_pawn' });
-    check('anchor mode current: own-art card anchors on itself',
-      r.data.ref && r.data.ref.source === 'current', JSON.stringify(r.data.ref));
-    r = await api('/api/settings', { kinAnchorMode: 'base' });
-    check('kinAnchorMode persists', r.data.settings.kinAnchorMode === 'base');
+    check('anchor mode installed: own-art card anchors on its deployed art',
+      r.data.ref && r.data.ref.source === 'installed', JSON.stringify(r.data.ref));
+    r = await api('/api/settings', { kinAnchorMode: 'canonical' });
+    check('kinAnchorMode canonical persists', r.data.settings.kinAnchorMode === 'canonical');
     r = await api('/api/art/infer-recipe', { type: 'card', id: 'darkness_earth_pawn' });
-    check('anchor mode base: own art skipped (anchor is no longer the card itself)',
-      !r.data.ref || r.data.ref.source !== 'current', JSON.stringify(r.data.ref));
+    check('anchor mode canonical: own art skipped (anchor is the appointed concept, not the card)',
+      !r.data.ref || r.data.ref.source !== 'installed', JSON.stringify(r.data.ref));
+    check('legacy kinAnchorMode "current" migrates to installed',
+      (await api('/api/settings', { kinAnchorMode: 'current' })).data.settings.kinAnchorMode === 'installed');
     check('bad kinAnchorMode rejected', (await api('/api/settings', { kinAnchorMode: 'bogus' })).status === 400);
-    await api('/api/settings', { kinAnchorMode: 'current' });
+    await api('/api/settings', { kinAnchorMode: 'installed' });
 
     // theme mode 'select' REPLACES the auto element-family theme with the hand-picked refs
     await api('/api/art/infer-recipe', { type: 'card', id: 'darkness_earth_bishop_rook', adherence: 'free' });

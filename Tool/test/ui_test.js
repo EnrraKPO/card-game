@@ -398,7 +398,7 @@ async function main() {
       const f = [...document.querySelectorAll('#art-panel .fld')]
         .find(fl => fl.querySelector('.lab') && fl.querySelector('.lab').textContent === 'Reference image');
       const sel = f.querySelector('select');
-      sel.value = 'current'; sel.dispatchEvent(new Event('change', { bubbles: true }));
+      sel.value = 'installed'; sel.dispatchEvent(new Event('change', { bubbles: true }));
     });
     await sleep(150);
     check('krea2 refMode selector appears with both modes', await page.evaluate(() => {
@@ -672,14 +672,13 @@ async function main() {
         && labs.some(t => t.includes('Flow presets'))
         && /4 images will be generated/.test(m.textContent);   // default flux×1 → krea×3
     }));
-    check('flow anchor offers current art, the base piece art and an upload', await page.evaluate(() => {
+    check('flow anchor offers installed art, the canonical concept and an upload', await page.evaluate(() => {
       const m = document.querySelector('.modal');
       const fldEl = [...m.querySelectorAll('.fld')]
         .find(f => f.querySelector('.lab') && f.querySelector('.lab').textContent.includes('Anchor'));
       if (!fldEl) return false;
       const opts = [...fldEl.querySelectorAll('select option')].map(o => o.textContent);
-      return opts.some(t => t.includes('Current art'))
-        && opts.some(t => t.includes('Base piece art: Pawn'))
+      return opts.some(t => t.includes('Installed art'))
         && !!m.querySelector('input[type=file]');
     }));
     await page.evaluate(() => {

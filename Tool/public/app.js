@@ -60,7 +60,7 @@ const KIN_MODES = [
   { value: 'free', label: 'Free — just the idea: loose family blend' },
 ];
 function kinDefault() { return state.settings.kinAdherence || 'concept'; }
-function kinAnchorMode() { return state.settings.kinAnchorMode || 'current'; }
+function kinAnchorMode() { const m = state.settings.kinAnchorMode || 'installed'; return m === 'current' ? 'installed' : m; }
 // The ✨ kin controls are ONE global source of truth: every setter persists and refreshes
 // the list so all three entry points (per-card quick, per-file batch, editor) read the same.
 function setKinField(key, v) {
@@ -76,7 +76,8 @@ function setKinDefault(v) { setKinField('kinAdherence', v); }
 // Anchor source for ✨ inference. Theme references are NOT selected here anymore — they
 // are canonical appointments per element composition, managed in ✨ Art guides.
 const KIN_ANCHOR_MODES = [
-  { value: 'current', label: 'Anchor: current art — the card\'s own art (canonical concept when it has none)' },
+  { value: 'installed', label: 'Anchor: installed art — the card\'s deployed game art (canonical concept when it has none)' },
+  { value: 'workspace', label: 'Anchor: workspace art — the card\'s workspace draft (canonical concept when it has none)' },
   { value: 'canonical', label: 'Anchor: canonical — always the appointed canonical concept ref' },
   { value: 'custom', label: 'Anchor: custom — the card\'s stored recipe reference' },
 ];
@@ -869,7 +870,7 @@ function openInferBatchModal(file) {
     el('div', { class: 'frow', style: 'margin:10px 0' },
       fld('What carries over from each card\'s anchor image',
         selectInput(cfg, 'adherence', KIN_MODES, () => {}),
-        'anchor source = the kin bar setting (current art / canonical / custom) — remembered as the default')),
+        'anchor source = the kin bar setting (installed art / workspace art / canonical / custom) — remembered as the default')),
     el('div', { class: 'fld', style: 'margin:6px 0' },
       checkInput(cfg, 'overwrite', () => {}, 'Overwrite existing recipes (re-infer cards that already have one)')),
     el('div', { class: 'modal-actions' },
@@ -1016,7 +1017,8 @@ function openFlowBatchMonitor(file) {
 
 // Step-1 anchor policies for Quick Flow runs — what each card's tree grows from.
 const QF_ANCHOR_MODES = [
-  { value: 'current', label: 'Current art — each card\'s own working art (none → from scratch)' },
+  { value: 'installed', label: 'Installed art — each card\'s deployed game art (none → from scratch)' },
+  { value: 'workspace', label: 'Workspace art — each card\'s working draft (none → from scratch)' },
   { value: 'canonical', label: 'Canonical — each card\'s appointed canonical concept ref (refuses if unappointed)' },
   { value: 'custom', label: 'Custom — each card\'s stored recipe reference (none → from scratch)' },
   { value: 'none', label: 'None — every card starts from scratch (step 1 is pure text-to-image)' },
@@ -1500,6 +1502,8 @@ async function openGameItem(id) {
   state.gameEdited = g.edited;
   state.gameHasArt = !!g.hasArt;
   state.gameArt = g.gameArt || null;
+  // precedence guard: workspace draft diverges from the installed game art (see currentArtInfo)
+  state.artStale = !!g.artStale;
   state.draft = ed.toDraft ? ed.toDraft(g.data) : JSON.parse(JSON.stringify(g.data));
   state.draft.enabled = g.data.enabled !== false;
   state.dirty = false;
@@ -1516,6 +1520,7 @@ function newItem() {
   state.gameEdited = false;
   state.gameHasArt = false;
   state.gameArt = null;
+  state.artStale = false;
   state.draft = EDITORS[state.currentType].newItem();
   state.draft.enabled = true;
   state.dirty = false;
@@ -1749,7 +1754,7 @@ function artDraftFromMeta(m) {
   a.rembg = !!m.rembg;
   a.turbo = !!m.turbo;
   if (m.ref && m.ref.source) {
-    a.refSource = m.ref.source;
+    a.refSource = m.ref.source === 'current' ? 'installed' : m.ref.source;   // legacy → deployed art
     if (m.ref.source === 'upload') { a.refUpload = m.ref.path; a.refUploadLabel = m.ref.name || m.ref.path; }
     if (m.ref.source === 'game') { a.refGameArt = m.ref.path; a.refGameName = m.ref.name || ''; }
     if (m.ref.mode) a.refMode = m.ref.mode;
@@ -1843,20 +1848,21 @@ function buildArtControls(rerender, advanced) {
       styleArea),
   );
 
-  // ── reference image: the item's current art, an uploaded external image, or another
+  // ── reference image: the item's installed or workspace art, an uploaded external image, or another
   // card's game art picked in the advanced mode's reference browser ──
-  const artAvail = !!state.gameArt || state.gameHasArt;
-  const refSrcLabel = state.gameArt ? 'the in-game art' : 'the latest generated image';
-  if (a.useRef && !a.refSource) a.refSource = 'current';   // drafts from the checkbox era
+  if (a.useRef && !a.refSource) a.refSource = 'installed';   // drafts from the checkbox era
+  if (a.refSource === 'current') a.refSource = 'installed';  // legacy value → the deployed art
   if (!a.refSource || !mdl.supportsRef) a.refSource = mdl.supportsRef ? a.refSource || 'none' : 'none';
-  if (a.refSource === 'current' && !artAvail) a.refSource = 'none';   // offering it would only error
+  if (a.refSource === 'installed' && !state.gameArt) a.refSource = 'none';   // offering it would only error
+  if (a.refSource === 'workspace' && !state.gameHasArt) a.refSource = 'none';
   if (a.refSource === 'game' && !a.refGameArt) a.refSource = 'none';
   const refActive = a.refSource !== 'none';
   const refRow = el('div', { class: 'frow' },
     fld('Reference image', mdl.supportsRef
       ? selectInput(a, 'refSource', [
           { value: 'none', label: 'None' },
-          artAvail ? { value: 'current', label: `Current art (${refSrcLabel})` } : null,
+          state.gameArt ? { value: 'installed', label: 'Installed art (the deployed game art)' } : null,
+          state.gameHasArt ? { value: 'workspace', label: 'Workspace art (the working draft)' } : null,
           a.refGameArt ? { value: 'game', label: `Game art: ${a.refGameName || a.refGameArt}` } : null,
           { value: 'upload', label: 'Uploaded image…' },
         ].filter(Boolean), () => { noChange(); rerender(); })
@@ -1998,10 +2004,10 @@ function buildArtControls(rerender, advanced) {
               btn.disabled = false; btn.textContent = '✨ kin';
             } }) : null,
           el('button', { class: 'ghost tiny', text: '🔎 match art',
-            disabled: !(state.gameArt || state.gameHasArt),
-            title: (state.gameArt || state.gameHasArt)
-              ? 'Vision-analyze the item’s current art and write a prompt that recreates it — for faithful variations (the LLM guidance inputs apply here too)'
-              : 'Vision-analyze the current art — no current art yet',
+            disabled: !state.gameArt,
+            title: state.gameArt
+              ? 'Vision-analyze the item’s INSTALLED (deployed) art and write a prompt that recreates it — for faithful variations (the LLM guidance inputs apply here too)'
+              : 'Vision-analyze the installed art — no installed game art yet',
             onclick: async e => {
               const btn = e.target;
               btn.disabled = true; btn.textContent = '🔎 looking…';
@@ -2025,7 +2031,7 @@ function buildArtControls(rerender, advanced) {
       ? el('div', { class: 'frow' },
           fld('✨ kin — what carries over from the anchor image (global default)',
             selectInput({ get v() { return kinDefault(); }, set v(x) { setKinDefault(x); } }, 'v', KIN_MODES, () => {}),
-            'anchor source = the kin bar setting (current art / canonical / custom)'))
+            'anchor source = the kin bar setting (installed art / workspace art / canonical / custom)'))
       : null,
     // optional creative direction for the ✨ prompt writer (fullscreen view only — the
     // values still apply from the compact panel's ✨ button, they persist on the draft).
@@ -2132,6 +2138,25 @@ function buildArtPreviews(rerender) {
   const hasArt = state.gameHasArt;
   if (hasArt && installedArt) {
     out.push(el('div', { class: 'lab subtle', style: 'margin-top:10px', text: 'Generated (workspace)' }));
+    // Divergence guard: the "Workspace art" source and the "Installed art" source differ here —
+    // this draft was never deployed. The ✨ "Workspace art" anchor/reference describes THIS image,
+    // not what the game ships (the "Installed art" source). Flagged so an off-theme/stale draft
+    // can't be mistaken for the deployed art — the trap that let darkness leak into king prompts.
+    if (state.artStale) {
+      out.push(el('div', { class: 'warn-banner', style: 'margin-top:6px;padding:8px 10px;border:1px solid #b8860b;border-radius:6px;background:rgba(184,134,11,0.12);font-size:12px' },
+        el('div', { style: 'font-weight:600;margin-bottom:2px', text: '⚠ Workspace draft ≠ installed game art' }),
+        el('div', { class: 'hint', text: 'This workspace draft was never deployed, so it differs from the installed art. The ✨ “Workspace art” anchor/reference and generation input describe THIS image — the game still ships the installed art. If the draft looks off (stale/off-theme), discard it.' }),
+        el('button', { class: 'ghost small', style: 'margin-top:6px', text: '↩ Discard draft, use installed art',
+          onclick: async () => {
+            try {
+              await api('/api/art/delete', { type: state.currentType, id: state.currentId });
+              state.gameHasArt = false; state.artStale = false;
+              await refreshState(true); renderSidePanels(); renderItemList();
+              toast('Workspace draft discarded — now using the installed game art.', 'ok');
+            } catch (e) { toast(e.message, 'err'); }
+          } }),
+      ));
+    }
   }
   // Flip works off whichever image is current (workspace art preferred, else in-game art)
   // and always lands in the WORKSPACE — deploying the flip stays an explicit act.
@@ -2383,6 +2408,8 @@ async function startArt(statusEl, btn, recipe) {
       useRef: !!a.refSource && a.refSource !== 'none',
       refUpload: a.refSource === 'upload' ? a.refUpload : undefined,
       refGameArt: a.refSource === 'game' ? a.refGameArt : undefined,
+      // installed | workspace — which of the item's own images to use as the reference
+      refSource: (a.refSource === 'installed' || a.refSource === 'workspace') ? a.refSource : undefined,
       refMode: a.refMode, denoise: a.denoise,
       turbo: !!a.turbo && !!(state.artModels[a.model || 'flux2'] || {}).supportsTurbo,
       model: a.model || 'flux2',
@@ -2792,14 +2819,16 @@ function openFlowModal() {
   ];
   const cfg = state.flowSteps;
   const a0 = artDraft();
-  // step-1 ANCHOR: the concept image the whole tree grows from. Choices: current art,
+  // step-1 ANCHOR: the concept image the whole tree grows from. Choices: installed or workspace art,
   // the composition's CANONICAL concept ref (appointed in ✨ Art guides — mandatory,
   // refuses when unappointed), the recipe's own reference, an upload — defaulting to
   // the recipe's pick when there is one, "none" otherwise.
-  const anchorCfg = { source: (a0.refSource && a0.refSource !== 'none') ? a0.refSource : 'none' };
+  const a0src = a0.refSource === 'current' ? 'installed' : a0.refSource;   // legacy → installed
+  const anchorCfg = { source: (a0src && a0src !== 'none') ? a0src : 'none' };
   const buildAnchorOpts = () => [
     { value: 'none', label: 'None — from scratch' },
-    (state.gameArt || state.gameHasArt) ? { value: 'current', label: 'Current art' } : null,
+    state.gameArt ? { value: 'installed', label: 'Installed art (deployed)' } : null,
+    state.gameHasArt ? { value: 'workspace', label: 'Workspace art (draft)' } : null,
     (type === 'card' && (state.draft && (state.draft.chess_pieces || []).length))
       ? { value: 'canonical', label: 'Canonical concept (appointed in ✨ Art guides)' } : null,
     a0.refGameArt ? { value: 'game', label: `Custom reference: ${a0.refGameName || a0.refGameArt}` } : null,
@@ -3034,7 +3063,7 @@ function openFlowModal() {
         title: 'Appoint THIS flow (steps + anchor policy) as the Quick Flow — then one click runs it '
           + 'per card or per file from the list, auto-picking a random last-step image as the art',
         onclick: async () => {
-          const policyMap = { none: 'none', current: 'current', canonical: 'canonical', game: 'custom', upload: 'none' };
+          const policyMap = { none: 'none', installed: 'installed', workspace: 'workspace', current: 'installed', canonical: 'canonical', game: 'custom', upload: 'none' };
           const policy = policyMap[anchorCfg.source] || 'custom';
           const qf = { steps: cfg.map(st => Object.assign({}, st)), anchor: policy };
           try {

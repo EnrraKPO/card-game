@@ -107,11 +107,17 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Chibi sand-elemental king made of swirling golden sand, spiked crown and hollow helm with glowing purple eyes, gripping a sand-wreathed scepter, arm holding a round purple-glowing shield, flowing white-gold robe with rope belt, dissolving into sand at base, standing on desert rock, pastel sky, curling purple flame accents, stylized cartoon fantasy digital painting, bold outlines, dramatic lighting",
+				"prompt": "chibi stylized desert sand king, stocky bearded warrior facing forward, ornate golden sandstone crown, hourglass-topped scepter in one hand, spiral-engraved shield in other, flowing white and gold robes with diamond motifs, swirling sand-magic tendrils, arched desert palace with domed towers, warm amber palette, soft radiant lighting, painterly anime rendering",
 				"ref": {
-					"source": "current",
+					"source": "installed",
 					"mode": "img2img",
 					"denoise": 0.6
+				},
+				"last": {
+					"seed": 4239802263,
+					"prompt": "chibi stylized desert sand king, stocky bearded warrior facing forward, ornate golden sandstone crown, hourglass-topped scepter in one hand, spiral-engraved shield in other, flowing white and gold robes with diamond motifs, swirling sand-magic tendrils, arched desert palace with domed towers, warm amber palette, soft radiant lighting, painterly anime rendering, cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric light, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear,",
+					"style": "",
+					"at": "2026-07-22"
 				}
 			}
 		}
@@ -196,7 +202,7 @@
 		"health": 20,
 		"speed": 3,
 		"shield": 5,
-		"is_king": true,
+		"description": "Ruler of air and water. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
 		"elements": [
 			"air",
 			"water"
@@ -204,27 +210,22 @@
 		"chess_pieces": [
 			"king"
 		],
-		"description": "Ruler of air and water. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
-		"effects": [],
+		"is_king": true,
 		"tool": {
 			"art": {
-				"prompt": "A stout crowned monarch standing full-bodied on cracked stone, obsidian-black armor rimmed with glowing violet light, thunderhead-gray fur cloak billowing like storm clouds, gripping a lightning-forked scepter crackling with pale purple energy, hollow luminous eyes, wispy dark vapor curling from his shoulders, brooding twilight sky, painterly bold-outlined game art.",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi storm-king, stern bearded warrior with glowing blue eyes, jeweled silver crown, holding a tall trident scepter and ornate swirl-etched shield, deep-blue fur-lined regal robe and cloak, front-facing heroic stance, dark storm-cloud sky, driving rain, raging swirling winds, wet stone plaza, gothic castle backdrop, sapphire-and-silver palette, dramatic moody lighting, detailed anime fantasy illustration",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/king.png",
-					"name": "King"
-				},
-				"inferredFrom": {
-					"concept": [
-						"king",
-						"darkness_darkness_king",
-						"darkness_fire_king"
-					],
-					"theme": [
-						"darkness_darkness_knight",
-						"darkness_darkness_pawn",
-						"darkness_darkness_queen"
-					]
+					"name": "King",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
@@ -486,7 +487,7 @@
 		"effects": [],
 		"tool": {
 			"art": {
-				"prompt": "Stout crowned monarch standing full-figure on cracked scorched stone, obsidian plate armor veined with molten orange fissures glowing from within, a blazing ember ring emblem on the chestplate, eyes like white-hot coals, a tattered cloak fraying into drifting sparks and smoke, gripping a slender scepter crowned with a churning fireball, brooding ashen sky streaked with rising heat.",
+				"prompt": "Chibi stern lava king, glowing molten-crack armor of blackened obsidian and lava, tall jagged crown with red gem, thick brown beard, glowing orange eyes, gripping crook scepter, obsidian shield, ragged cracked-magma cape, front-facing symmetrical stance, volcanic castle and crimson banners backdrop, red-orange magma glow, dark rim lighting, detailed anime game-art",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/king.png",
@@ -532,7 +533,7 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "A stout crowned monarch standing full-figure, glossy dark armor edged in etched silver, chestplate bearing a glowing pale-violet ring like a hollow eclipse, luminous purple eyes, a crown of curling budding branches, tattered mossy cloak fraying into drifting leaves and vines, gripping a slender staff sprouting curling tendrils, misty twilight sky over cracked stone.",
+				"prompt": "chibi forest king, big-headed heroic dwarf with brown beard, twig-branch crown with green gem, leaf-scale robe and green cape with white blossoms, gold filigree, gripping vine-wrapped wooden scepter and tree-emblem shield, enchanted glowing forest, dappled golden light, verdant green gold palette, glowing rune circle, detailed painterly fantasy game art",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/king.png",
@@ -635,7 +636,7 @@
 		"effects": [],
 		"tool": {
 			"art": {
-				"prompt": "A stout crowned monarch of drifting souls standing full-figure, obsidian plate armor rimmed with cold violet luminescence, a hollow glowing pale ring upon the breastplate, eyes like burning lilac voids, a spectral robe fraying into wisps of pale ghostly haze, one hand raising a slender staff crowned with a ring of floating wraith-light, standing on cracked dark stone beneath a hazy twilight sky",
+				"prompt": "chibi stylized fantasy king, stern glowing blue eyes, dark beard, jeweled crown and armor wreathed in blue fire, gripping a flame-topped scepter and glowing kite shield, white-and-gold robes with blue cape, standing in ominous dark cathedral hall, torch flames, luminous sapphire palette, radiant rim light, painterly game-art rendering",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/king.png",
