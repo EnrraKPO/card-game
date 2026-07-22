@@ -395,6 +395,30 @@
 		"prompt": "Sprite sheet of a soft golden halo breathing around a rounded rectangle, gentle pulsing outer glow, 8 frames on transparent background, 2d game effect"
 	},
 	{
+		"id": "inspect_abilities_ready_glow",
+		"display_name": "Inspect Abilities Ready Glow",
+		"category": "combat",
+		"renderer": "filter",
+		"behavior": "glow",
+		"params": {
+			"filter": "glow_rrect",
+			"glow_color": "ff45d8",
+			"spread": 34,
+			"corner_radius": 20,
+			"animate": {
+				"param": "intensity",
+				"from": 0.5,
+				"to": 1.2,
+				"period": 0.9
+			}
+		},
+		"sustained": true,
+		"placeholder": false,
+		"concept": "Combat's Inspect Abilities button while at least one fielded unit has an ability castable RIGHT NOW — a fuchsia light radiating past the button's edge, distinct from GlossyButton's own contained tint, saying 'there is something to do in here'.",
+		"explanation": "IMPLEMENTED (hand.gd refresh_nav): the glow_rrect RenderFilter breathing its intensity, matched to the button's fuchsia accent. The button is a procedurally drawn GlossyButton, so the silhouette comes from its real rounded-rect shape, not a texture.",
+		"prompt": "Sprite sheet of a fuchsia light halo breathing outward around a button's silhouette with a smooth soft falloff, inviting radiant pulse extending past the edges, 8 frames on transparent background, 2d game effect"
+	},
+	{
 		"id": "projectile_fire",
 		"display_name": "Fire Projectile",
 		"category": "combat",

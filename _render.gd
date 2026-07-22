@@ -134,8 +134,12 @@ func _ready() -> void:
 				if "longdesc" in args:
 					rk.data.description = "A truly enormous wall of rules text that goes on and on and on, well past any reasonable card, precisely to prove the inspect panel refuses to grow one pixel taller no matter how much prose is crammed into it. More. And more. And even more still."
 				hand.set_inspected(rk)
-			else:
+			elif "list" in args:
 				hand.show_abilities()
+			else:
+				# Stay on the plain hand: the Inspect Abilities button shows here (glowing when an
+				# ability is castable now).
+				hand.refresh_nav()
 			await get_tree().process_frame
 	# "inspect": pop the full-screen CardInspector over the scene (a content-rich card).
 	if "inspect" in args:

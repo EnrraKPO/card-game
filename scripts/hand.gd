@@ -537,12 +537,13 @@ func refresh_nav() -> void:
 	# single-card inspect view — that view is already about a unit's abilities, and dropping the
 	# button there frees width for the description), and only while some unit has an ability.
 	_inspect_abilities_btn.visible = _nav_level == NavLevel.HAND and has_abilities
-	# The attention state rides the LIBRARY (ui_button_attention resolves back to set_glow via
-	# its custom renderer) — same look as before, one address space.
+	# When at least one ability is castable RIGHT NOW, a true outer glow radiates past the button's
+	# edge (a shape-sourced glow_rrect RenderFilter, since the button is procedural and has no
+	# texture to read) — a real halo, not GlossyButton's contained tint pulse.
 	if _inspect_abilities_btn.visible and has_usable:
-		Vfx.attach("ui_button_attention", _inspect_abilities_btn)
+		Vfx.attach("inspect_abilities_ready_glow", _inspect_abilities_btn)
 	else:
-		Vfx.detach("ui_button_attention", _inspect_abilities_btn)
+		Vfx.detach("inspect_abilities_ready_glow", _inspect_abilities_btn)
 	_back_btn.visible              = _nav_level != NavLevel.HAND
 
 
