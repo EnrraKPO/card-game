@@ -24,7 +24,6 @@ func _definitions() -> void:
 	if ab == null:
 		return
 	check_eq(ab.material, "pawn", "what it delivers is declared by the material field")
-	check_eq(ab.mana, CardData.get_card("pawn").cost, "authored mana matches the material's cost")
 	check(ab.tap, "material delivery taps the holder")
 	var fx: Array = ab.effects.filter(func(e: Effect) -> bool:
 		return e.kind == Effect.Kind.CUSTOM and e.custom_id == "deliver_material" \

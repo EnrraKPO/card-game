@@ -119,7 +119,7 @@ func _poison_tick_and_decay() -> void:
 	var hp0 := u.current_health
 	EffectSystem.trigger(GameEvent.make(&"activate", u), u, ctx_for(u))
 	check_eq(u.current_health, hp0 - 3, "poison ticks its CURRENT stack count (3), bypassing shield")
-	check_eq(u.current_shield, CardData.get_card("rook").shield, "poison never touches shield")
+	check_eq(u.current_shield, u.data.shield, "poison never touches shield")
 	StatusEngine.advance(u, &"activate")
 	var si := u.find_status("poison")
 	check(si != null and si.stacks == 2, "poison decays one stack AFTER ticking")
