@@ -100,7 +100,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "earth_earth_rook",
@@ -281,7 +284,10 @@
 		"attack": 2,
 		"health": 5,
 		"speed": 1,
-		"shield": 4
+		"shield": 4,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "earth_earth_pawn_rook",
@@ -432,7 +438,10 @@
 		"attack": 3,
 		"health": 6,
 		"speed": 3,
-		"shield": 2
+		"shield": 2,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "earth_earth_knight_rook",
@@ -512,6 +521,11 @@
 	{
 		"id": "earth_earth_bishop_bishop",
 		"display_name": "Pure Earth Hierophant",
+		"cost": 4,
+		"attack": 2,
+		"health": 6,
+		"speed": 1,
+		"shield": 2,
 		"elements": [
 			"earth",
 			"earth"
@@ -519,6 +533,10 @@
 		"chess_pieces": [
 			"bishop",
 			"bishop"
+		],
+		"ranged": true,
+		"abilities": [
+			"heal"
 		],
 		"tool": {
 			"art": {
@@ -537,16 +555,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 4,
-		"attack": 2,
-		"health": 6,
-		"speed": 1,
-		"shield": 2
+		}
 	},
 	{
 		"id": "earth_earth_bishop_rook",
 		"display_name": "Pure Earth Arcane Tower",
+		"cost": 5,
+		"attack": 2,
+		"health": 9,
+		"speed": 1,
+		"shield": 4,
 		"elements": [
 			"earth",
 			"earth"
@@ -554,6 +572,11 @@
 		"chess_pieces": [
 			"bishop",
 			"rook"
+		],
+		"ranged": true,
+		"abilities": [
+			"earth_bishop_training_pure",
+			"bishop_material"
 		],
 		"tool": {
 			"art": {
@@ -572,17 +595,7 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"ranged": true,
-		"abilities": [
-			"earth_bishop_training_pure",
-			"bishop_material"
-		],
-		"cost": 5,
-		"attack": 2,
-		"health": 9,
-		"speed": 1,
-		"shield": 4
+		}
 	},
 	{
 		"id": "earth_earth_bishop_queen",
@@ -617,7 +630,10 @@
 		"attack": 5,
 		"health": 7,
 		"speed": 3,
-		"shield": 2
+		"shield": 2,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "earth_earth_rook_rook",

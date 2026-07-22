@@ -108,7 +108,10 @@
 		"attack": 2,
 		"health": 3,
 		"speed": 1,
-		"shield": 2
+		"shield": 2,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "darkness_earth_rook",
@@ -287,7 +290,10 @@
 		"attack": 3,
 		"health": 4,
 		"speed": 1,
-		"shield": 4
+		"shield": 4,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "darkness_earth_pawn_rook",
@@ -432,7 +438,10 @@
 		"attack": 4,
 		"health": 5,
 		"speed": 3,
-		"shield": 2
+		"shield": 2,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "darkness_earth_knight_rook",
@@ -512,6 +521,11 @@
 	{
 		"id": "darkness_earth_bishop_bishop",
 		"display_name": "Rock Hierophant",
+		"cost": 4,
+		"attack": 3,
+		"health": 5,
+		"speed": 1,
+		"shield": 2,
 		"elements": [
 			"darkness",
 			"earth"
@@ -519,6 +533,10 @@
 		"chess_pieces": [
 			"bishop",
 			"bishop"
+		],
+		"ranged": true,
+		"abilities": [
+			"heal"
 		],
 		"tool": {
 			"art": {
@@ -537,16 +555,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 4,
-		"attack": 3,
-		"health": 5,
-		"speed": 1,
-		"shield": 2
+		}
 	},
 	{
 		"id": "darkness_earth_bishop_rook",
 		"display_name": "Rock Arcane Tower",
+		"cost": 5,
+		"attack": 3,
+		"health": 8,
+		"speed": 1,
+		"shield": 4,
 		"elements": [
 			"darkness",
 			"earth"
@@ -554,6 +572,11 @@
 		"chess_pieces": [
 			"bishop",
 			"rook"
+		],
+		"ranged": true,
+		"abilities": [
+			"darkness_bishop_material",
+			"earth_bishop_material"
 		],
 		"tool": {
 			"art": {
@@ -572,17 +595,7 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"ranged": true,
-		"abilities": [
-			"darkness_bishop_material",
-			"earth_bishop_material"
-		],
-		"cost": 5,
-		"attack": 3,
-		"health": 8,
-		"speed": 1,
-		"shield": 4
+		}
 	},
 	{
 		"id": "darkness_earth_bishop_queen",
@@ -617,7 +630,10 @@
 		"attack": 6,
 		"health": 6,
 		"speed": 3,
-		"shield": 2
+		"shield": 2,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "darkness_earth_rook_rook",

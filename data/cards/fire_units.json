@@ -38,7 +38,8 @@
 		],
 		"ranged": true,
 		"abilities": [
-			"fire_bless"
+			"fire_bless",
+			"heal"
 		],
 		"cost": 2,
 		"attack": 3,
@@ -226,21 +227,25 @@
 	},
 	{
 		"id": "fire_bishop_bishop",
+		"display_name": "Fire Hierophant",
 		"elements": [
 			"fire"
 		],
-		"display_name": "Fire Hierophant",
 		"chess_pieces": [
 			"bishop",
 			"bishop"
+		],
+		"ranged": true,
+		"abilities": [
+			"heal"
 		]
 	},
 	{
 		"id": "fire_bishop_rook",
+		"display_name": "Fire Arcane Tower",
 		"elements": [
 			"fire"
 		],
-		"display_name": "Fire Arcane Tower",
 		"chess_pieces": [
 			"bishop",
 			"rook"
@@ -260,6 +265,9 @@
 		"chess_pieces": [
 			"bishop",
 			"queen"
+		],
+		"abilities": [
+			"heal"
 		]
 	},
 	{

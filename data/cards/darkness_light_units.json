@@ -100,7 +100,10 @@
 		"attack": 2,
 		"health": 4,
 		"speed": 2,
-		"shield": 1
+		"shield": 1,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "darkness_light_rook",
@@ -293,7 +296,10 @@
 		"attack": 3,
 		"health": 5,
 		"speed": 2,
-		"shield": 3
+		"shield": 3,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "darkness_light_pawn_rook",
@@ -444,7 +450,10 @@
 		"attack": 4,
 		"health": 6,
 		"speed": 4,
-		"shield": 1
+		"shield": 1,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "darkness_light_knight_rook",
@@ -523,42 +532,51 @@
 	},
 	{
 		"id": "darkness_light_bishop_bishop",
-		"elements": [
-			"darkness",
-			"light"
-		],
 		"display_name": "Undead Hierophant",
-		"chess_pieces": [
-			"bishop",
-			"bishop"
-		],
-		"tool": {
-			"art": {
-				"prompt": "Chibi undead high priest with gaunt bearded skull-like face and hollow glowing teal eye-sockets, tall cracked bone mitre and tattered black-and-gold vestments over exposed ribs, one skeletal hand raised channeling wisps, other gripping a towering staff crowned by a pulsing cyan orb, standing on a luminous arcane summoning ring, gothic crypt of coffins and spired mausoleums, teal and bone-white palette, eerie ominous glow, detailed painterly fantasy illustration",
-				"ref": {
-					"source": "upload",
-					"path": "snap_bishop_bishop.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_bishop_bishop.png",
-					"theme": [
-						"snap_darkness_light_pawn.png",
-						"snap_darkness_light_knight.png",
-						"snap_darkness_light_queen.png"
-					],
-					"mode": "concept"
-				}
-			}
-		},
 		"cost": 3,
 		"attack": 3,
 		"health": 6,
 		"speed": 2,
-		"shield": 1
+		"shield": 1,
+		"elements": [
+			"darkness",
+			"light"
+		],
+		"chess_pieces": [
+			"bishop",
+			"bishop"
+		],
+		"ranged": true,
+		"abilities": [
+			"heal"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi undead high priest with gaunt bearded skull-like face and hollow glowing teal eye-sockets, tall cracked bone mitre and tattered black-and-gold vestments over exposed ribs, one skeletal hand raised channeling wisps, other gripping a towering staff crowned by a pulsing cyan orb, standing on a luminous arcane summoning ring, gothic crypt of coffins and spired mausoleums, teal and bone-white palette, eerie ominous glow, detailed painterly fantasy illustration",
+				"ref": {
+					"source": "upload",
+					"path": "snap_bishop_bishop.png",
+					"name": "snap_bishop_bishop.png",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_light_bishop_rook",
 		"display_name": "Undead Arcane Tower",
+		"cost": 4,
+		"attack": 3,
+		"health": 9,
+		"speed": 2,
+		"shield": 3,
 		"elements": [
 			"darkness",
 			"light"
@@ -568,6 +586,10 @@
 			"rook"
 		],
 		"ranged": true,
+		"abilities": [
+			"darkness_bishop_material",
+			"light_bishop_material"
+		],
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -579,28 +601,13 @@
 				"prompt": "Towering bone-and-blackstone spire ribbed with fused skeletal remains, glowing teal cracks pulsing along its walls, tattered crimson mausoleum flag draped down the front, arched crypt doorway seeping eerie cyan light, robed skeletal priest-magician standing before it clutching an open grimoire and skull-topped staff, arcane summoning circle underfoot, gothic graveyard, bone-white and teal palette, dark moody lighting, painterly fantasy illustration",
 				"ref": {
 					"source": "upload",
-					"path": "snap_bishop_rook.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_bishop_rook.png",
-					"theme": [
-						"snap_darkness_light_pawn.png",
-						"snap_darkness_light_knight.png",
-						"snap_darkness_light_queen.png"
-					],
-					"mode": "concept"
+					"path": "snap_bishop_rook.png",
+					"name": "snap_bishop_rook.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"abilities": [
-			"darkness_bishop_material",
-			"light_bishop_material"
-		],
-		"cost": 4,
-		"attack": 3,
-		"health": 9,
-		"speed": 2,
-		"shield": 3
+		}
 	},
 	{
 		"id": "darkness_light_bishop_queen",
@@ -635,7 +642,10 @@
 		"attack": 6,
 		"health": 7,
 		"speed": 4,
-		"shield": 1
+		"shield": 1,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "darkness_light_rook_rook",

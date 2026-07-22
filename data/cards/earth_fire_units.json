@@ -99,7 +99,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "earth_fire_rook",
@@ -279,7 +282,10 @@
 		"attack": 4,
 		"health": 5,
 		"speed": 1,
-		"shield": 3
+		"shield": 3,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "earth_fire_pawn_rook",
@@ -434,7 +440,10 @@
 		"attack": 5,
 		"health": 6,
 		"speed": 3,
-		"shield": 1
+		"shield": 1,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "earth_fire_knight_rook",
@@ -514,6 +523,11 @@
 	{
 		"id": "earth_fire_bishop_bishop",
 		"display_name": "Magma Hierophant",
+		"cost": 4,
+		"attack": 4,
+		"health": 6,
+		"speed": 1,
+		"shield": 1,
 		"elements": [
 			"earth",
 			"fire"
@@ -521,6 +535,10 @@
 		"chess_pieces": [
 			"bishop",
 			"bishop"
+		],
+		"ranged": true,
+		"abilities": [
+			"heal"
 		],
 		"tool": {
 			"art": {
@@ -533,23 +551,13 @@
 				"prompt": "Chibi bearded high-priest sorcerer, tall pointed hardened-rock headdress cracked with molten glowing seams, layered robes of cooled black crust veined with liquid orange, glowing yellow eyes, one hand raised trailing radiant heat shimmer, gripping a long rocky staff crowned with a churning molten orb, standing on fractured volcanic ground with lava rivers, teal smoky sky, dramatic infernal rim lighting, painterly stylized fantasy digital art, vivid red-orange palette",
 				"ref": {
 					"source": "upload",
-					"path": "snap_bishop_bishop.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_bishop_bishop.png",
-					"theme": [
-						"snap_earth_fire_pawn.png",
-						"snap_earth_fire_knight.png"
-					],
-					"mode": "concept"
+					"path": "snap_bishop_bishop.png",
+					"name": "snap_bishop_bishop.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 4,
-		"attack": 4,
-		"health": 6,
-		"speed": 1,
-		"shield": 1
+		}
 	},
 	{
 		"id": "earth_fire_bishop_rook",
@@ -624,7 +632,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "earth_fire_rook_rook",

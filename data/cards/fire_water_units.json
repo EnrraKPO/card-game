@@ -104,7 +104,10 @@
 		"cost": 2,
 		"attack": 3,
 		"health": 6,
-		"speed": 1
+		"speed": 1,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "fire_water_rook",
@@ -296,7 +299,10 @@
 		"attack": 4,
 		"health": 7,
 		"speed": 1,
-		"shield": 2
+		"shield": 2,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "fire_water_pawn_rook",
@@ -446,7 +452,10 @@
 		"cost": 4,
 		"attack": 5,
 		"health": 8,
-		"speed": 3
+		"speed": 3,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "fire_water_knight_rook",
@@ -562,11 +571,19 @@
 		"cost": 4,
 		"attack": 4,
 		"health": 8,
-		"speed": 1
+		"speed": 1,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "fire_water_bishop_rook",
 		"display_name": "Steam Arcane Tower",
+		"cost": 5,
+		"attack": 4,
+		"health": 11,
+		"speed": 1,
+		"shield": 2,
 		"elements": [
 			"fire",
 			"water"
@@ -576,6 +593,10 @@
 			"rook"
 		],
 		"ranged": true,
+		"abilities": [
+			"fire_bishop_material",
+			"water_bishop_material"
+		],
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -593,16 +614,7 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"abilities": [
-			"fire_bishop_material",
-			"water_bishop_material"
-		],
-		"cost": 5,
-		"attack": 4,
-		"health": 11,
-		"speed": 1,
-		"shield": 2
+		}
 	},
 	{
 		"id": "fire_water_bishop_queen",
@@ -644,7 +656,10 @@
 		"cost": 6,
 		"attack": 7,
 		"health": 9,
-		"speed": 3
+		"speed": 3,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "fire_water_rook_rook",

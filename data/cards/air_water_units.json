@@ -97,7 +97,10 @@
 		"cost": 2,
 		"attack": 1,
 		"health": 6,
-		"speed": 5
+		"speed": 5,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "air_water_rook",
@@ -295,7 +298,10 @@
 		"attack": 2,
 		"health": 7,
 		"speed": 5,
-		"shield": 2
+		"shield": 2,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "air_water_pawn_rook",
@@ -461,7 +467,10 @@
 		"cost": 4,
 		"attack": 3,
 		"health": 8,
-		"speed": 7
+		"speed": 7,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "air_water_knight_rook",
@@ -558,6 +567,10 @@
 	{
 		"id": "air_water_bishop_bishop",
 		"display_name": "Storm Hierophant",
+		"cost": 4,
+		"attack": 2,
+		"health": 8,
+		"speed": 5,
 		"elements": [
 			"air",
 			"water"
@@ -565,6 +578,10 @@
 		"chess_pieces": [
 			"bishop",
 			"bishop"
+		],
+		"ranged": true,
+		"abilities": [
+			"heal"
 		],
 		"tool": {
 			"art": {
@@ -577,27 +594,22 @@
 				"prompt": "Chibi bearded high-priest sorcerer, robed spellcaster archetype channeling magic through a tall staff, stern authoritative pose, re-embodied for the storm theme. Stout chibi bearded high priest formed of dark churning cloud-vapor, flowing white mist-beard, tall pointed peaked headdress and heavy rain-soaked ceremonial robes of slate-grey and deep blue, raising one hand to conjure swirling gale winds, gripping a tall gnarled staff crowned with a spinning vortex orb, driving rain streaking sideways, wet reflective ground, ominous rust-red storm sky, dramatic rim lighting, dark fantasy digital painting, front-facing commanding pose",
 				"ref": {
 					"source": "upload",
-					"path": "snap_bishop_bishop.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_bishop_bishop.png",
-					"theme": [
-						"snap_air_water_pawn.png",
-						"snap_air_water_knight.png",
-						"snap_air_water_queen.png"
-					],
-					"mode": "concept"
+					"path": "snap_bishop_bishop.png",
+					"name": "snap_bishop_bishop.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 4,
-		"attack": 2,
-		"health": 8,
-		"speed": 5
+		}
 	},
 	{
 		"id": "air_water_bishop_rook",
 		"display_name": "Storm Arcane Tower",
+		"cost": 5,
+		"attack": 2,
+		"health": 11,
+		"speed": 5,
+		"shield": 2,
 		"elements": [
 			"air",
 			"water"
@@ -607,6 +619,10 @@
 			"rook"
 		],
 		"ranged": true,
+		"abilities": [
+			"air_bishop_material",
+			"water_bishop_material"
+		],
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -618,28 +634,13 @@
 				"prompt": "Towering stone spellcaster's spire built of rain-slick dark slate and riveted iron, conical roof streaming windswept banners, glowing arched doorway pulsing pale white magic, a small robed priest-mage of churning storm-smoke standing before it clutching a tome and crystalline crook staff, embossed raincloud sigil, driving rain and swirling gusts, wet reflective ground, ominous crimson-purple sky, dramatic moody lighting, detailed dark fantasy digital painting",
 				"ref": {
 					"source": "upload",
-					"path": "snap_bishop_rook.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_bishop_rook.png",
-					"theme": [
-						"snap_air_water_pawn.png",
-						"snap_air_water_knight.png",
-						"snap_air_water_queen.png"
-					],
-					"mode": "concept"
+					"path": "snap_bishop_rook.png",
+					"name": "snap_bishop_rook.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"abilities": [
-			"air_bishop_material",
-			"water_bishop_material"
-		],
-		"cost": 5,
-		"attack": 2,
-		"health": 11,
-		"speed": 5,
-		"shield": 2
+		}
 	},
 	{
 		"id": "air_water_bishop_queen",
@@ -679,7 +680,10 @@
 		"cost": 6,
 		"attack": 5,
 		"health": 9,
-		"speed": 7
+		"speed": 7,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "air_water_rook_rook",

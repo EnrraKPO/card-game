@@ -118,7 +118,10 @@
 		"attack": 2,
 		"health": 3,
 		"speed": 5,
-		"shield": 1
+		"shield": 1,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "air_darkness_rook",
@@ -283,7 +286,10 @@
 		"attack": 3,
 		"health": 4,
 		"speed": 5,
-		"shield": 3
+		"shield": 3,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "air_darkness_pawn_rook",
@@ -420,7 +426,10 @@
 		"attack": 4,
 		"health": 5,
 		"speed": 7,
-		"shield": 1
+		"shield": 1,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "air_darkness_knight_rook",
@@ -495,41 +504,49 @@
 	},
 	{
 		"id": "air_darkness_bishop_bishop",
-		"elements": [
-			"air",
-			"darkness"
-		],
 		"display_name": "Miasma Hierophant",
-		"chess_pieces": [
-			"bishop",
-			"bishop"
-		],
-		"tool": {
-			"art": {
-				"prompt": "Cartoon bold-outline bearded hierophant in soot-stained grey-violet vestments, tall tarnished-brass chimney-vent headdress leaking thin haze, long ash-white beard tangled with droning mosquitoes, one hand raising a swirling vortex of churning yellow-green smog above a filter-masked censer staff, tattered gauze cape billowing in fetid wind, haze-drowned smokestack shrine behind, dramatic low angle",
-				"ref": {
-					"source": "current"
-				},
-				"inferredFrom": {
-					"anchor": "air_darkness_bishop_bishop",
-					"theme": [
-						"air_darkness_knight",
-						"air_darkness_queen",
-						"air_darkness.png"
-					],
-					"mode": "concept"
-				}
-			}
-		},
 		"cost": 4,
 		"attack": 3,
 		"health": 5,
 		"speed": 5,
-		"shield": 1
+		"shield": 1,
+		"elements": [
+			"air",
+			"darkness"
+		],
+		"chess_pieces": [
+			"bishop",
+			"bishop"
+		],
+		"ranged": true,
+		"abilities": [
+			"heal"
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Cartoon bold-outline bearded hierophant in soot-stained grey-violet vestments, tall tarnished-brass chimney-vent headdress leaking thin haze, long ash-white beard tangled with droning mosquitoes, one hand raising a swirling vortex of churning yellow-green smog above a filter-masked censer staff, tattered gauze cape billowing in fetid wind, haze-drowned smokestack shrine behind, dramatic low angle",
+				"ref": {
+					"source": "current",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
 	},
 	{
 		"id": "air_darkness_bishop_rook",
 		"display_name": "Miasma Arcane Tower",
+		"cost": 5,
+		"attack": 3,
+		"health": 8,
+		"speed": 5,
+		"shield": 3,
 		"elements": [
 			"air",
 			"darkness"
@@ -539,6 +556,10 @@
 			"rook"
 		],
 		"ranged": true,
+		"abilities": [
+			"air_bishop_material",
+			"darkness_bishop_material"
+		],
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -554,16 +575,7 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"abilities": [
-			"air_bishop_material",
-			"darkness_bishop_material"
-		],
-		"cost": 5,
-		"attack": 3,
-		"health": 8,
-		"speed": 5,
-		"shield": 3
+		}
 	},
 	{
 		"id": "air_darkness_bishop_queen",
@@ -596,7 +608,10 @@
 		"attack": 6,
 		"health": 6,
 		"speed": 7,
-		"shield": 1
+		"shield": 1,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "air_darkness_rook_rook",

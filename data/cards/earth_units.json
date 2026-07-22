@@ -93,7 +93,8 @@
 			}
 		},
 		"abilities": [
-			"earth_bless"
+			"earth_bless",
+			"heal"
 		],
 		"cost": 2,
 		"attack": 1,
@@ -218,7 +219,10 @@
 		"attack": 2,
 		"health": 5,
 		"speed": 1,
-		"shield": 3
+		"shield": 3,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "earth_pawn_rook",
@@ -286,7 +290,10 @@
 		"attack": 3,
 		"health": 6,
 		"speed": 3,
-		"shield": 1
+		"shield": 1,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "earth_knight_rook",
@@ -326,26 +333,35 @@
 	},
 	{
 		"id": "earth_bishop_bishop",
-		"elements": [
-			"earth"
-		],
 		"display_name": "Earth Hierophant",
-		"chess_pieces": [
-			"bishop",
-			"bishop"
-		],
 		"cost": 4,
 		"attack": 2,
 		"health": 6,
 		"speed": 1,
-		"shield": 1
-	},
-	{
-		"id": "earth_bishop_rook",
+		"shield": 1,
 		"elements": [
 			"earth"
 		],
+		"chess_pieces": [
+			"bishop",
+			"bishop"
+		],
+		"ranged": true,
+		"abilities": [
+			"heal"
+		]
+	},
+	{
+		"id": "earth_bishop_rook",
 		"display_name": "Earth Arcane Tower",
+		"cost": 5,
+		"attack": 2,
+		"health": 9,
+		"speed": 1,
+		"shield": 3,
+		"elements": [
+			"earth"
+		],
 		"chess_pieces": [
 			"bishop",
 			"rook"
@@ -353,12 +369,7 @@
 		"abilities": [
 			"earth_bishop_training",
 			"bishop_material"
-		],
-		"cost": 5,
-		"attack": 2,
-		"health": 9,
-		"speed": 1,
-		"shield": 3
+		]
 	},
 	{
 		"id": "earth_bishop_queen",
@@ -392,7 +403,10 @@
 		"attack": 5,
 		"health": 7,
 		"speed": 3,
-		"shield": 1
+		"shield": 1,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "earth_rook_rook",

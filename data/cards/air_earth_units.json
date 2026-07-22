@@ -106,7 +106,10 @@
 		"attack": 1,
 		"health": 4,
 		"speed": 5,
-		"shield": 1
+		"shield": 1,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "air_earth_rook",
@@ -281,7 +284,10 @@
 		"attack": 2,
 		"health": 5,
 		"speed": 5,
-		"shield": 3
+		"shield": 3,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "air_earth_pawn_rook",
@@ -426,7 +432,10 @@
 		"attack": 3,
 		"health": 6,
 		"speed": 7,
-		"shield": 1
+		"shield": 1,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "air_earth_knight_rook",
@@ -506,6 +515,11 @@
 	{
 		"id": "air_earth_bishop_bishop",
 		"display_name": "Sand Hierophant",
+		"cost": 4,
+		"attack": 2,
+		"health": 6,
+		"speed": 5,
+		"shield": 1,
 		"elements": [
 			"air",
 			"earth"
@@ -513,6 +527,10 @@
 		"chess_pieces": [
 			"bishop",
 			"bishop"
+		],
+		"ranged": true,
+		"abilities": [
+			"heal"
 		],
 		"tool": {
 			"art": {
@@ -531,16 +549,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 4,
-		"attack": 2,
-		"health": 6,
-		"speed": 5,
-		"shield": 1
+		}
 	},
 	{
 		"id": "air_earth_bishop_rook",
 		"display_name": "Sand Arcane Tower",
+		"cost": 5,
+		"attack": 2,
+		"health": 9,
+		"speed": 5,
+		"shield": 3,
 		"elements": [
 			"air",
 			"earth"
@@ -550,6 +568,10 @@
 			"rook"
 		],
 		"ranged": true,
+		"abilities": [
+			"air_bishop_material",
+			"earth_bishop_material"
+		],
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -567,16 +589,7 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"abilities": [
-			"air_bishop_material",
-			"earth_bishop_material"
-		],
-		"cost": 5,
-		"attack": 2,
-		"health": 9,
-		"speed": 5,
-		"shield": 3
+		}
 	},
 	{
 		"id": "air_earth_bishop_queen",
@@ -611,7 +624,10 @@
 		"attack": 5,
 		"health": 7,
 		"speed": 7,
-		"shield": 1
+		"shield": 1,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "air_earth_rook_rook",

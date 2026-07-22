@@ -37,7 +37,8 @@
 			"bishop"
 		],
 		"abilities": [
-			"air_bless"
+			"air_bless",
+			"heal"
 		],
 		"cost": 2,
 		"attack": 1,
@@ -124,7 +125,10 @@
 		"attack": 2,
 		"health": 5,
 		"speed": 5,
-		"shield": 2
+		"shield": 2,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "air_pawn_rook",
@@ -190,7 +194,10 @@
 		"cost": 4,
 		"attack": 3,
 		"health": 6,
-		"speed": 7
+		"speed": 7,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "air_knight_rook",
@@ -229,25 +236,34 @@
 	},
 	{
 		"id": "air_bishop_bishop",
+		"display_name": "Air Hierophant",
+		"cost": 4,
+		"attack": 2,
+		"health": 6,
+		"speed": 5,
 		"elements": [
 			"air"
 		],
-		"display_name": "Air Hierophant",
 		"chess_pieces": [
 			"bishop",
 			"bishop"
 		],
-		"cost": 4,
-		"attack": 2,
-		"health": 6,
-		"speed": 5
+		"ranged": true,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "air_bishop_rook",
+		"display_name": "Air Arcane Tower",
+		"cost": 5,
+		"attack": 2,
+		"health": 9,
+		"speed": 5,
+		"shield": 2,
 		"elements": [
 			"air"
 		],
-		"display_name": "Air Arcane Tower",
 		"chess_pieces": [
 			"bishop",
 			"rook"
@@ -255,12 +271,7 @@
 		"abilities": [
 			"air_bishop_training",
 			"bishop_material"
-		],
-		"cost": 5,
-		"attack": 2,
-		"health": 9,
-		"speed": 5,
-		"shield": 2
+		]
 	},
 	{
 		"id": "air_bishop_queen",
@@ -293,7 +304,10 @@
 		"cost": 6,
 		"attack": 5,
 		"health": 7,
-		"speed": 7
+		"speed": 7,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "air_rook_rook",

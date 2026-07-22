@@ -38,7 +38,8 @@
 		],
 		"ranged": true,
 		"abilities": [
-			"water_bless"
+			"water_bless",
+			"heal"
 		],
 		"cost": 2,
 		"attack": 1,
@@ -226,21 +227,25 @@
 	},
 	{
 		"id": "water_bishop_bishop",
+		"display_name": "Water Hierophant",
 		"elements": [
 			"water"
 		],
-		"display_name": "Water Hierophant",
 		"chess_pieces": [
 			"bishop",
 			"bishop"
+		],
+		"ranged": true,
+		"abilities": [
+			"heal"
 		]
 	},
 	{
 		"id": "water_bishop_rook",
+		"display_name": "Water Arcane Tower",
 		"elements": [
 			"water"
 		],
-		"display_name": "Water Arcane Tower",
 		"chess_pieces": [
 			"bishop",
 			"rook"
@@ -278,7 +283,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "water_rook_rook",

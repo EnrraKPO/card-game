@@ -110,7 +110,10 @@
 		"attack": 3,
 		"health": 2,
 		"speed": 1,
-		"shield": 2
+		"shield": 2,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "darkness_darkness_rook",
@@ -289,7 +292,10 @@
 		"attack": 4,
 		"health": 3,
 		"speed": 1,
-		"shield": 4
+		"shield": 4,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "darkness_darkness_pawn_rook",
@@ -434,7 +440,10 @@
 		"attack": 5,
 		"health": 4,
 		"speed": 3,
-		"shield": 2
+		"shield": 2,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "darkness_darkness_knight_rook",
@@ -514,6 +523,11 @@
 	{
 		"id": "darkness_darkness_bishop_bishop",
 		"display_name": "Pure Darkness Hierophant",
+		"cost": 4,
+		"attack": 4,
+		"health": 4,
+		"speed": 1,
+		"shield": 2,
 		"elements": [
 			"darkness",
 			"darkness"
@@ -521,6 +535,10 @@
 		"chess_pieces": [
 			"bishop",
 			"bishop"
+		],
+		"ranged": true,
+		"abilities": [
+			"heal"
 		],
 		"tool": {
 			"art": {
@@ -539,16 +557,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 4,
-		"attack": 4,
-		"health": 4,
-		"speed": 1,
-		"shield": 2
+		}
 	},
 	{
 		"id": "darkness_darkness_bishop_rook",
 		"display_name": "Pure Darkness Arcane Tower",
+		"cost": 5,
+		"attack": 4,
+		"health": 7,
+		"speed": 1,
+		"shield": 4,
 		"elements": [
 			"darkness",
 			"darkness"
@@ -556,6 +574,11 @@
 		"chess_pieces": [
 			"bishop",
 			"rook"
+		],
+		"ranged": true,
+		"abilities": [
+			"darkness_bishop_training_pure",
+			"bishop_material"
 		],
 		"tool": {
 			"art": {
@@ -574,17 +597,7 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"ranged": true,
-		"abilities": [
-			"darkness_bishop_training_pure",
-			"bishop_material"
-		],
-		"cost": 5,
-		"attack": 4,
-		"health": 7,
-		"speed": 1,
-		"shield": 4
+		}
 	},
 	{
 		"id": "darkness_darkness_bishop_queen",
@@ -619,7 +632,10 @@
 		"attack": 7,
 		"health": 5,
 		"speed": 3,
-		"shield": 2
+		"shield": 2,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "darkness_darkness_rook_rook",

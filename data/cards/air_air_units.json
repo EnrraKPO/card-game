@@ -116,7 +116,10 @@
 					"at": "2026-07-21"
 				}
 			}
-		}
+		},
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "air_air_rook",
@@ -310,7 +313,10 @@
 		"attack": 2,
 		"health": 5,
 		"speed": 9,
-		"shield": 2
+		"shield": 2,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "air_air_pawn_rook",
@@ -459,7 +465,10 @@
 		"cost": 4,
 		"attack": 3,
 		"health": 6,
-		"speed": 11
+		"speed": 11,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "air_air_knight_rook",
@@ -551,6 +560,10 @@
 	{
 		"id": "air_air_bishop_bishop",
 		"display_name": "Pure Air Hierophant",
+		"cost": 4,
+		"attack": 2,
+		"health": 6,
+		"speed": 9,
 		"elements": [
 			"air",
 			"air"
@@ -558,6 +571,10 @@
 		"chess_pieces": [
 			"bishop",
 			"bishop"
+		],
+		"ranged": true,
+		"abilities": [
+			"heal"
 		],
 		"tool": {
 			"art": {
@@ -576,15 +593,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 4,
-		"attack": 2,
-		"health": 6,
-		"speed": 9
+		}
 	},
 	{
 		"id": "air_air_bishop_rook",
 		"display_name": "Pure Air Arcane Tower",
+		"cost": 5,
+		"attack": 2,
+		"health": 9,
+		"speed": 9,
+		"shield": 2,
 		"elements": [
 			"air",
 			"air"
@@ -594,6 +612,10 @@
 			"rook"
 		],
 		"ranged": true,
+		"abilities": [
+			"air_bishop_training_pure",
+			"bishop_material"
+		],
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -606,28 +628,12 @@
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/bishop_rook.png",
-					"name": "Arcane Tower"
-				},
-				"inferredFrom": {
-					"anchor": "bishop_rook",
-					"theme": [
-						"air_air_pawn",
-						"air_air_knight",
-						"air_air_queen"
-					],
-					"mode": "concept"
+					"name": "Arcane Tower",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"abilities": [
-			"air_bishop_training_pure",
-			"bishop_material"
-		],
-		"cost": 5,
-		"attack": 2,
-		"health": 9,
-		"speed": 9,
-		"shield": 2
+		}
 	},
 	{
 		"id": "air_air_bishop_queen",
@@ -668,7 +674,10 @@
 		"cost": 6,
 		"attack": 5,
 		"health": 7,
-		"speed": 11
+		"speed": 11,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "air_air_rook_rook",

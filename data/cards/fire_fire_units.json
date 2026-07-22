@@ -139,7 +139,10 @@
 		"cost": 2,
 		"attack": 5,
 		"health": 4,
-		"speed": 1
+		"speed": 1,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "fire_fire_rook",
@@ -321,7 +324,10 @@
 		"attack": 6,
 		"health": 5,
 		"speed": 1,
-		"shield": 2
+		"shield": 2,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "fire_fire_pawn_rook",
@@ -469,7 +475,10 @@
 		"cost": 4,
 		"attack": 7,
 		"health": 6,
-		"speed": 3
+		"speed": 3,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "fire_fire_knight_rook",
@@ -548,6 +557,10 @@
 	{
 		"id": "fire_fire_bishop_bishop",
 		"display_name": "Pure Fire Hierophant",
+		"cost": 4,
+		"attack": 6,
+		"health": 6,
+		"speed": 1,
 		"elements": [
 			"fire",
 			"fire"
@@ -555,6 +568,10 @@
 		"chess_pieces": [
 			"bishop",
 			"bishop"
+		],
+		"ranged": true,
+		"abilities": [
+			"heal"
 		],
 		"tool": {
 			"art": {
@@ -579,15 +596,16 @@
 					"at": "2026-07-08"
 				}
 			}
-		},
-		"cost": 4,
-		"attack": 6,
-		"health": 6,
-		"speed": 1
+		}
 	},
 	{
 		"id": "fire_fire_bishop_rook",
 		"display_name": "Pure Fire Arcane Tower",
+		"cost": 5,
+		"attack": 6,
+		"health": 9,
+		"speed": 1,
+		"shield": 2,
 		"elements": [
 			"fire",
 			"fire"
@@ -597,6 +615,10 @@
 			"rook"
 		],
 		"ranged": true,
+		"abilities": [
+			"fire_bishop_training_pure",
+			"bishop_material"
+		],
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -614,16 +636,7 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"abilities": [
-			"fire_bishop_training_pure",
-			"bishop_material"
-		],
-		"cost": 5,
-		"attack": 6,
-		"health": 9,
-		"speed": 1,
-		"shield": 2
+		}
 	},
 	{
 		"id": "fire_fire_bishop_queen",
@@ -657,7 +670,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "fire_fire_rook_rook",

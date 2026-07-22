@@ -24,7 +24,7 @@
       ]
     },
     "at": "2026-07-06T03:29:10.127Z",
-    "fileHash": "edd05fc63079566c52fccb0c126cde6713e3096c",
+    "fileHash": "b329e42afd93c86463048b3ea765b31083d466fb",
     "movedFrom": "darkness_water_poison_units.json"
   },
   "card/darkness_water_bishop": {
@@ -52,7 +52,7 @@
       ]
     },
     "at": "2026-07-06T03:30:31.771Z",
-    "fileHash": "edd05fc63079566c52fccb0c126cde6713e3096c",
+    "fileHash": "b329e42afd93c86463048b3ea765b31083d466fb",
     "movedFrom": "darkness_water_poison_units.json"
   },
   "card/darkness_water_bishop_knight": {
@@ -80,7 +80,7 @@
       ]
     },
     "at": "2026-07-06T03:30:40.272Z",
-    "fileHash": "edd05fc63079566c52fccb0c126cde6713e3096c",
+    "fileHash": "b329e42afd93c86463048b3ea765b31083d466fb",
     "movedFrom": "darkness_water_poison_units.json"
   },
   "status/barrier": {
@@ -201,7 +201,7 @@
       ]
     },
     "at": "2026-07-06T16:55:44.254Z",
-    "fileHash": "edd05fc63079566c52fccb0c126cde6713e3096c",
+    "fileHash": "b329e42afd93c86463048b3ea765b31083d466fb",
     "movedFrom": "darkness_water_poison_units.json"
   },
   "card/frost_adept": {
@@ -251,140 +251,140 @@
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.707Z",
-    "fileHash": "a7772b9a6563602e879aca180bf05aae34da6cfd"
+    "fileHash": "435a1fdb9a6197d2b928ce788a42a459e512495b"
   },
   "card/fire_water_knight": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.712Z",
-    "fileHash": "a7772b9a6563602e879aca180bf05aae34da6cfd"
+    "fileHash": "435a1fdb9a6197d2b928ce788a42a459e512495b"
   },
   "card/fire_water_bishop": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.714Z",
-    "fileHash": "a7772b9a6563602e879aca180bf05aae34da6cfd"
+    "fileHash": "435a1fdb9a6197d2b928ce788a42a459e512495b"
   },
   "card/fire_water_rook": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.717Z",
-    "fileHash": "a7772b9a6563602e879aca180bf05aae34da6cfd"
+    "fileHash": "435a1fdb9a6197d2b928ce788a42a459e512495b"
   },
   "card/fire_water_queen": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.719Z",
-    "fileHash": "a7772b9a6563602e879aca180bf05aae34da6cfd"
+    "fileHash": "435a1fdb9a6197d2b928ce788a42a459e512495b"
   },
   "card/fire_water_pawn_pawn": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.721Z",
-    "fileHash": "a7772b9a6563602e879aca180bf05aae34da6cfd"
+    "fileHash": "435a1fdb9a6197d2b928ce788a42a459e512495b"
   },
   "card/fire_water_knight_pawn": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.724Z",
-    "fileHash": "a7772b9a6563602e879aca180bf05aae34da6cfd"
+    "fileHash": "435a1fdb9a6197d2b928ce788a42a459e512495b"
   },
   "card/fire_water_bishop_pawn": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.727Z",
-    "fileHash": "a7772b9a6563602e879aca180bf05aae34da6cfd"
+    "fileHash": "435a1fdb9a6197d2b928ce788a42a459e512495b"
   },
   "card/fire_water_pawn_rook": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.729Z",
-    "fileHash": "a7772b9a6563602e879aca180bf05aae34da6cfd"
+    "fileHash": "435a1fdb9a6197d2b928ce788a42a459e512495b"
   },
   "card/fire_water_pawn_queen": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.731Z",
-    "fileHash": "a7772b9a6563602e879aca180bf05aae34da6cfd"
+    "fileHash": "435a1fdb9a6197d2b928ce788a42a459e512495b"
   },
   "card/fire_water_knight_knight": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.733Z",
-    "fileHash": "a7772b9a6563602e879aca180bf05aae34da6cfd"
+    "fileHash": "435a1fdb9a6197d2b928ce788a42a459e512495b"
   },
   "card/fire_water_bishop_knight": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.735Z",
-    "fileHash": "a7772b9a6563602e879aca180bf05aae34da6cfd"
+    "fileHash": "435a1fdb9a6197d2b928ce788a42a459e512495b"
   },
   "card/fire_water_knight_rook": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.737Z",
-    "fileHash": "a7772b9a6563602e879aca180bf05aae34da6cfd"
+    "fileHash": "435a1fdb9a6197d2b928ce788a42a459e512495b"
   },
   "card/fire_water_knight_queen": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.739Z",
-    "fileHash": "a7772b9a6563602e879aca180bf05aae34da6cfd"
+    "fileHash": "435a1fdb9a6197d2b928ce788a42a459e512495b"
   },
   "card/fire_water_bishop_bishop": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.741Z",
-    "fileHash": "a7772b9a6563602e879aca180bf05aae34da6cfd"
+    "fileHash": "435a1fdb9a6197d2b928ce788a42a459e512495b"
   },
   "card/fire_water_bishop_rook": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.743Z",
-    "fileHash": "a7772b9a6563602e879aca180bf05aae34da6cfd"
+    "fileHash": "435a1fdb9a6197d2b928ce788a42a459e512495b"
   },
   "card/fire_water_bishop_queen": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.745Z",
-    "fileHash": "a7772b9a6563602e879aca180bf05aae34da6cfd"
+    "fileHash": "435a1fdb9a6197d2b928ce788a42a459e512495b"
   },
   "card/fire_water_rook_rook": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.748Z",
-    "fileHash": "a7772b9a6563602e879aca180bf05aae34da6cfd"
+    "fileHash": "435a1fdb9a6197d2b928ce788a42a459e512495b"
   },
   "card/fire_water_queen_rook": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.750Z",
-    "fileHash": "a7772b9a6563602e879aca180bf05aae34da6cfd"
+    "fileHash": "435a1fdb9a6197d2b928ce788a42a459e512495b"
   },
   "card/fire_water_queen_queen": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.752Z",
-    "fileHash": "a7772b9a6563602e879aca180bf05aae34da6cfd"
+    "fileHash": "435a1fdb9a6197d2b928ce788a42a459e512495b"
   },
   "status/charged": {
     "file": "charged.json",
@@ -427,7 +427,7 @@
       "description": "Twin-water unit."
     },
     "at": "2026-07-07T19:42:11.105Z",
-    "fileHash": "c5dcb11006d10632bdc16b16f1ff23c2341e5d15"
+    "fileHash": "55cab18f5c5a6f4182f697714d322c0726da1225"
   },
   "card/darkness_water_knight": {
     "file": "darkness_water_units.json",
@@ -454,7 +454,7 @@
       ]
     },
     "at": "2026-07-07T21:49:59.225Z",
-    "fileHash": "edd05fc63079566c52fccb0c126cde6713e3096c",
+    "fileHash": "b329e42afd93c86463048b3ea765b31083d466fb",
     "movedFrom": "darkness_water_poison_units.json"
   },
   "card/darkness_water_pawn": {
@@ -482,7 +482,7 @@
       ]
     },
     "at": "2026-07-07T23:15:58.333Z",
-    "fileHash": "edd05fc63079566c52fccb0c126cde6713e3096c",
+    "fileHash": "b329e42afd93c86463048b3ea765b31083d466fb",
     "movedFrom": "darkness_water_poison_units.json"
   },
   "card/fire_fire_pawn": {
@@ -490,140 +490,140 @@
     "original": null,
     "added": true,
     "at": "2026-07-07T23:17:24.311Z",
-    "fileHash": "f3201374ed17c34d0751b721be4dc6f4484ddaf0"
+    "fileHash": "7b611c5d68a74e95b0aeb54735a7f4e90f478605"
   },
   "card/fire_fire_knight": {
     "file": "fire_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T23:17:24.322Z",
-    "fileHash": "f3201374ed17c34d0751b721be4dc6f4484ddaf0"
+    "fileHash": "7b611c5d68a74e95b0aeb54735a7f4e90f478605"
   },
   "card/fire_fire_bishop": {
     "file": "fire_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T23:17:24.330Z",
-    "fileHash": "f3201374ed17c34d0751b721be4dc6f4484ddaf0"
+    "fileHash": "7b611c5d68a74e95b0aeb54735a7f4e90f478605"
   },
   "card/fire_fire_rook": {
     "file": "fire_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T23:17:24.345Z",
-    "fileHash": "f3201374ed17c34d0751b721be4dc6f4484ddaf0"
+    "fileHash": "7b611c5d68a74e95b0aeb54735a7f4e90f478605"
   },
   "card/fire_fire_queen": {
     "file": "fire_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T23:17:24.356Z",
-    "fileHash": "f3201374ed17c34d0751b721be4dc6f4484ddaf0"
+    "fileHash": "7b611c5d68a74e95b0aeb54735a7f4e90f478605"
   },
   "card/fire_fire_pawn_pawn": {
     "file": "fire_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T23:17:24.363Z",
-    "fileHash": "f3201374ed17c34d0751b721be4dc6f4484ddaf0"
+    "fileHash": "7b611c5d68a74e95b0aeb54735a7f4e90f478605"
   },
   "card/fire_fire_knight_pawn": {
     "file": "fire_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T23:17:24.369Z",
-    "fileHash": "f3201374ed17c34d0751b721be4dc6f4484ddaf0"
+    "fileHash": "7b611c5d68a74e95b0aeb54735a7f4e90f478605"
   },
   "card/fire_fire_bishop_pawn": {
     "file": "fire_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T23:17:24.377Z",
-    "fileHash": "f3201374ed17c34d0751b721be4dc6f4484ddaf0"
+    "fileHash": "7b611c5d68a74e95b0aeb54735a7f4e90f478605"
   },
   "card/fire_fire_pawn_rook": {
     "file": "fire_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T23:17:24.386Z",
-    "fileHash": "f3201374ed17c34d0751b721be4dc6f4484ddaf0"
+    "fileHash": "7b611c5d68a74e95b0aeb54735a7f4e90f478605"
   },
   "card/fire_fire_pawn_queen": {
     "file": "fire_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T23:17:24.391Z",
-    "fileHash": "f3201374ed17c34d0751b721be4dc6f4484ddaf0"
+    "fileHash": "7b611c5d68a74e95b0aeb54735a7f4e90f478605"
   },
   "card/fire_fire_knight_knight": {
     "file": "fire_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T23:17:24.397Z",
-    "fileHash": "f3201374ed17c34d0751b721be4dc6f4484ddaf0"
+    "fileHash": "7b611c5d68a74e95b0aeb54735a7f4e90f478605"
   },
   "card/fire_fire_bishop_knight": {
     "file": "fire_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T23:17:24.419Z",
-    "fileHash": "f3201374ed17c34d0751b721be4dc6f4484ddaf0"
+    "fileHash": "7b611c5d68a74e95b0aeb54735a7f4e90f478605"
   },
   "card/fire_fire_knight_rook": {
     "file": "fire_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T23:17:24.433Z",
-    "fileHash": "f3201374ed17c34d0751b721be4dc6f4484ddaf0"
+    "fileHash": "7b611c5d68a74e95b0aeb54735a7f4e90f478605"
   },
   "card/fire_fire_knight_queen": {
     "file": "fire_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T23:17:24.453Z",
-    "fileHash": "f3201374ed17c34d0751b721be4dc6f4484ddaf0"
+    "fileHash": "7b611c5d68a74e95b0aeb54735a7f4e90f478605"
   },
   "card/fire_fire_bishop_bishop": {
     "file": "fire_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T23:17:24.460Z",
-    "fileHash": "f3201374ed17c34d0751b721be4dc6f4484ddaf0"
+    "fileHash": "7b611c5d68a74e95b0aeb54735a7f4e90f478605"
   },
   "card/fire_fire_bishop_rook": {
     "file": "fire_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T23:17:24.465Z",
-    "fileHash": "f3201374ed17c34d0751b721be4dc6f4484ddaf0"
+    "fileHash": "7b611c5d68a74e95b0aeb54735a7f4e90f478605"
   },
   "card/fire_fire_bishop_queen": {
     "file": "fire_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T23:17:24.472Z",
-    "fileHash": "f3201374ed17c34d0751b721be4dc6f4484ddaf0"
+    "fileHash": "7b611c5d68a74e95b0aeb54735a7f4e90f478605"
   },
   "card/fire_fire_rook_rook": {
     "file": "fire_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T23:17:24.478Z",
-    "fileHash": "f3201374ed17c34d0751b721be4dc6f4484ddaf0"
+    "fileHash": "7b611c5d68a74e95b0aeb54735a7f4e90f478605"
   },
   "card/fire_fire_queen_rook": {
     "file": "fire_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T23:17:24.483Z",
-    "fileHash": "f3201374ed17c34d0751b721be4dc6f4484ddaf0"
+    "fileHash": "7b611c5d68a74e95b0aeb54735a7f4e90f478605"
   },
   "card/fire_fire_queen_queen": {
     "file": "fire_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T23:17:24.488Z",
-    "fileHash": "f3201374ed17c34d0751b721be4dc6f4484ddaf0"
+    "fileHash": "7b611c5d68a74e95b0aeb54735a7f4e90f478605"
   },
   "card/water_water_bishop_bishop": {
     "file": "water_water_units.json",
@@ -640,7 +640,7 @@
       "description": "Twin-water unit."
     },
     "at": "2026-07-08T00:09:33.514Z",
-    "fileHash": "c5dcb11006d10632bdc16b16f1ff23c2341e5d15"
+    "fileHash": "55cab18f5c5a6f4182f697714d322c0726da1225"
   },
   "card/water_water_bishop_knight": {
     "file": "water_water_units.json",
@@ -657,7 +657,7 @@
       "description": "Twin-water unit."
     },
     "at": "2026-07-08T00:09:53.882Z",
-    "fileHash": "c5dcb11006d10632bdc16b16f1ff23c2341e5d15"
+    "fileHash": "55cab18f5c5a6f4182f697714d322c0726da1225"
   },
   "card/water_water_bishop_pawn": {
     "file": "water_water_units.json",
@@ -674,7 +674,7 @@
       "description": "Twin-water unit."
     },
     "at": "2026-07-08T00:10:13.642Z",
-    "fileHash": "c5dcb11006d10632bdc16b16f1ff23c2341e5d15"
+    "fileHash": "55cab18f5c5a6f4182f697714d322c0726da1225"
   },
   "card/water_water_bishop_queen": {
     "file": "water_water_units.json",
@@ -691,7 +691,7 @@
       "description": "Twin-water unit."
     },
     "at": "2026-07-08T00:10:33.280Z",
-    "fileHash": "c5dcb11006d10632bdc16b16f1ff23c2341e5d15"
+    "fileHash": "55cab18f5c5a6f4182f697714d322c0726da1225"
   },
   "card/water_water_bishop_rook": {
     "file": "water_water_units.json",
@@ -708,7 +708,7 @@
       "description": "Twin-water unit."
     },
     "at": "2026-07-08T00:10:51.135Z",
-    "fileHash": "c5dcb11006d10632bdc16b16f1ff23c2341e5d15"
+    "fileHash": "55cab18f5c5a6f4182f697714d322c0726da1225"
   },
   "card/water_water_knight": {
     "file": "water_water_units.json",
@@ -724,7 +724,7 @@
       "description": "Twin-water unit."
     },
     "at": "2026-07-08T00:11:08.480Z",
-    "fileHash": "c5dcb11006d10632bdc16b16f1ff23c2341e5d15"
+    "fileHash": "55cab18f5c5a6f4182f697714d322c0726da1225"
   },
   "card/water_water_knight_knight": {
     "file": "water_water_units.json",
@@ -741,7 +741,7 @@
       "description": "Twin-water unit."
     },
     "at": "2026-07-08T00:11:27.950Z",
-    "fileHash": "c5dcb11006d10632bdc16b16f1ff23c2341e5d15"
+    "fileHash": "55cab18f5c5a6f4182f697714d322c0726da1225"
   },
   "card/water_water_knight_pawn": {
     "file": "water_water_units.json",
@@ -758,7 +758,7 @@
       "description": "Twin-water unit."
     },
     "at": "2026-07-08T00:11:46.600Z",
-    "fileHash": "c5dcb11006d10632bdc16b16f1ff23c2341e5d15"
+    "fileHash": "55cab18f5c5a6f4182f697714d322c0726da1225"
   },
   "card/water_water_knight_queen": {
     "file": "water_water_units.json",
@@ -775,7 +775,7 @@
       "description": "Twin-water unit."
     },
     "at": "2026-07-08T00:12:09.677Z",
-    "fileHash": "c5dcb11006d10632bdc16b16f1ff23c2341e5d15"
+    "fileHash": "55cab18f5c5a6f4182f697714d322c0726da1225"
   },
   "card/water_water_knight_rook": {
     "file": "water_water_units.json",
@@ -792,7 +792,7 @@
       "description": "Twin-water unit."
     },
     "at": "2026-07-08T00:12:29.243Z",
-    "fileHash": "c5dcb11006d10632bdc16b16f1ff23c2341e5d15"
+    "fileHash": "55cab18f5c5a6f4182f697714d322c0726da1225"
   },
   "card/water_water_pawn": {
     "file": "water_water_units.json",
@@ -808,7 +808,7 @@
       "description": "Twin-water unit."
     },
     "at": "2026-07-08T00:12:51.829Z",
-    "fileHash": "c5dcb11006d10632bdc16b16f1ff23c2341e5d15"
+    "fileHash": "55cab18f5c5a6f4182f697714d322c0726da1225"
   },
   "card/water_water_pawn_pawn": {
     "file": "water_water_units.json",
@@ -825,7 +825,7 @@
       "description": "Twin-water unit."
     },
     "at": "2026-07-08T00:13:09.578Z",
-    "fileHash": "c5dcb11006d10632bdc16b16f1ff23c2341e5d15"
+    "fileHash": "55cab18f5c5a6f4182f697714d322c0726da1225"
   },
   "card/water_water_pawn_queen": {
     "file": "water_water_units.json",
@@ -842,7 +842,7 @@
       "description": "Twin-water unit."
     },
     "at": "2026-07-08T00:13:29.561Z",
-    "fileHash": "c5dcb11006d10632bdc16b16f1ff23c2341e5d15"
+    "fileHash": "55cab18f5c5a6f4182f697714d322c0726da1225"
   },
   "card/water_water_pawn_rook": {
     "file": "water_water_units.json",
@@ -859,7 +859,7 @@
       "description": "Twin-water unit."
     },
     "at": "2026-07-08T00:13:44.660Z",
-    "fileHash": "c5dcb11006d10632bdc16b16f1ff23c2341e5d15"
+    "fileHash": "55cab18f5c5a6f4182f697714d322c0726da1225"
   },
   "card/water_water_queen": {
     "file": "water_water_units.json",
@@ -875,7 +875,7 @@
       "description": "Twin-water unit."
     },
     "at": "2026-07-08T00:14:01.608Z",
-    "fileHash": "c5dcb11006d10632bdc16b16f1ff23c2341e5d15"
+    "fileHash": "55cab18f5c5a6f4182f697714d322c0726da1225"
   },
   "card/water_water_queen_queen": {
     "file": "water_water_units.json",
@@ -892,7 +892,7 @@
       "description": "Twin-water unit."
     },
     "at": "2026-07-08T00:14:21.727Z",
-    "fileHash": "c5dcb11006d10632bdc16b16f1ff23c2341e5d15"
+    "fileHash": "55cab18f5c5a6f4182f697714d322c0726da1225"
   },
   "card/water_water_queen_rook": {
     "file": "water_water_units.json",
@@ -909,7 +909,7 @@
       "description": "Twin-water unit."
     },
     "at": "2026-07-08T00:14:40.083Z",
-    "fileHash": "c5dcb11006d10632bdc16b16f1ff23c2341e5d15"
+    "fileHash": "55cab18f5c5a6f4182f697714d322c0726da1225"
   },
   "card/water_water_rook": {
     "file": "water_water_units.json",
@@ -925,7 +925,7 @@
       "description": "Twin-water unit."
     },
     "at": "2026-07-08T00:14:58.097Z",
-    "fileHash": "c5dcb11006d10632bdc16b16f1ff23c2341e5d15"
+    "fileHash": "55cab18f5c5a6f4182f697714d322c0726da1225"
   },
   "card/water_water_rook_rook": {
     "file": "water_water_units.json",
@@ -942,7 +942,7 @@
       "description": "Twin-water unit."
     },
     "at": "2026-07-08T00:15:18.060Z",
-    "fileHash": "c5dcb11006d10632bdc16b16f1ff23c2341e5d15"
+    "fileHash": "55cab18f5c5a6f4182f697714d322c0726da1225"
   },
   "card/air_fire_king": {
     "file": "elemental_kings.json",
@@ -966,7 +966,7 @@
       "effects": []
     },
     "at": "2026-07-08T05:03:56.598Z",
-    "fileHash": "9945d8a0fcdee230a69451a335b6ad4e878bff75"
+    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
   },
   "card/air_darkness_king": {
     "file": "elemental_kings.json",
@@ -990,427 +990,427 @@
       "effects": []
     },
     "at": "2026-07-08T05:16:43.756Z",
-    "fileHash": "9945d8a0fcdee230a69451a335b6ad4e878bff75"
+    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
   },
   "card/air_darkness_pawn": {
     "file": "air_darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:22:12.871Z",
-    "fileHash": "8d55eb53391afd495bed0ad48564a4630e7cc7fc"
+    "fileHash": "ecfd7f866c887d3d2e0a0ff6d82569511fbc8e47"
   },
   "card/air_darkness_knight": {
     "file": "air_darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:22:12.876Z",
-    "fileHash": "8d55eb53391afd495bed0ad48564a4630e7cc7fc"
+    "fileHash": "ecfd7f866c887d3d2e0a0ff6d82569511fbc8e47"
   },
   "card/air_darkness_bishop": {
     "file": "air_darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:22:12.879Z",
-    "fileHash": "8d55eb53391afd495bed0ad48564a4630e7cc7fc"
+    "fileHash": "ecfd7f866c887d3d2e0a0ff6d82569511fbc8e47"
   },
   "card/air_darkness_rook": {
     "file": "air_darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:22:12.882Z",
-    "fileHash": "8d55eb53391afd495bed0ad48564a4630e7cc7fc"
+    "fileHash": "ecfd7f866c887d3d2e0a0ff6d82569511fbc8e47"
   },
   "card/air_darkness_queen": {
     "file": "air_darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:22:12.885Z",
-    "fileHash": "8d55eb53391afd495bed0ad48564a4630e7cc7fc"
+    "fileHash": "ecfd7f866c887d3d2e0a0ff6d82569511fbc8e47"
   },
   "card/air_darkness_pawn_pawn": {
     "file": "air_darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:22:12.888Z",
-    "fileHash": "8d55eb53391afd495bed0ad48564a4630e7cc7fc"
+    "fileHash": "ecfd7f866c887d3d2e0a0ff6d82569511fbc8e47"
   },
   "card/air_darkness_knight_pawn": {
     "file": "air_darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:22:12.891Z",
-    "fileHash": "8d55eb53391afd495bed0ad48564a4630e7cc7fc"
+    "fileHash": "ecfd7f866c887d3d2e0a0ff6d82569511fbc8e47"
   },
   "card/air_darkness_bishop_pawn": {
     "file": "air_darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:22:12.894Z",
-    "fileHash": "8d55eb53391afd495bed0ad48564a4630e7cc7fc"
+    "fileHash": "ecfd7f866c887d3d2e0a0ff6d82569511fbc8e47"
   },
   "card/air_darkness_pawn_rook": {
     "file": "air_darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:22:12.897Z",
-    "fileHash": "8d55eb53391afd495bed0ad48564a4630e7cc7fc"
+    "fileHash": "ecfd7f866c887d3d2e0a0ff6d82569511fbc8e47"
   },
   "card/air_darkness_pawn_queen": {
     "file": "air_darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:22:12.900Z",
-    "fileHash": "8d55eb53391afd495bed0ad48564a4630e7cc7fc"
+    "fileHash": "ecfd7f866c887d3d2e0a0ff6d82569511fbc8e47"
   },
   "card/air_darkness_knight_knight": {
     "file": "air_darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:22:12.903Z",
-    "fileHash": "8d55eb53391afd495bed0ad48564a4630e7cc7fc"
+    "fileHash": "ecfd7f866c887d3d2e0a0ff6d82569511fbc8e47"
   },
   "card/air_darkness_bishop_knight": {
     "file": "air_darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:22:12.906Z",
-    "fileHash": "8d55eb53391afd495bed0ad48564a4630e7cc7fc"
+    "fileHash": "ecfd7f866c887d3d2e0a0ff6d82569511fbc8e47"
   },
   "card/air_darkness_knight_rook": {
     "file": "air_darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:22:12.908Z",
-    "fileHash": "8d55eb53391afd495bed0ad48564a4630e7cc7fc"
+    "fileHash": "ecfd7f866c887d3d2e0a0ff6d82569511fbc8e47"
   },
   "card/air_darkness_knight_queen": {
     "file": "air_darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:22:12.912Z",
-    "fileHash": "8d55eb53391afd495bed0ad48564a4630e7cc7fc"
+    "fileHash": "ecfd7f866c887d3d2e0a0ff6d82569511fbc8e47"
   },
   "card/air_darkness_bishop_bishop": {
     "file": "air_darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:22:12.915Z",
-    "fileHash": "8d55eb53391afd495bed0ad48564a4630e7cc7fc"
+    "fileHash": "ecfd7f866c887d3d2e0a0ff6d82569511fbc8e47"
   },
   "card/air_darkness_bishop_rook": {
     "file": "air_darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:22:12.918Z",
-    "fileHash": "8d55eb53391afd495bed0ad48564a4630e7cc7fc"
+    "fileHash": "ecfd7f866c887d3d2e0a0ff6d82569511fbc8e47"
   },
   "card/air_darkness_bishop_queen": {
     "file": "air_darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:22:12.920Z",
-    "fileHash": "8d55eb53391afd495bed0ad48564a4630e7cc7fc"
+    "fileHash": "ecfd7f866c887d3d2e0a0ff6d82569511fbc8e47"
   },
   "card/air_darkness_rook_rook": {
     "file": "air_darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:22:12.923Z",
-    "fileHash": "8d55eb53391afd495bed0ad48564a4630e7cc7fc"
+    "fileHash": "ecfd7f866c887d3d2e0a0ff6d82569511fbc8e47"
   },
   "card/air_darkness_queen_rook": {
     "file": "air_darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:22:12.927Z",
-    "fileHash": "8d55eb53391afd495bed0ad48564a4630e7cc7fc"
+    "fileHash": "ecfd7f866c887d3d2e0a0ff6d82569511fbc8e47"
   },
   "card/air_darkness_queen_queen": {
     "file": "air_darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:22:12.930Z",
-    "fileHash": "8d55eb53391afd495bed0ad48564a4630e7cc7fc"
+    "fileHash": "ecfd7f866c887d3d2e0a0ff6d82569511fbc8e47"
   },
   "card/air_fire_pawn": {
     "file": "air_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:30:12.949Z",
-    "fileHash": "6eb18eb99e17128385a33b36b7b7e0355fdf4675"
+    "fileHash": "23b6a0281ee59e9e3e6d7ad0af6f8473bc17c31b"
   },
   "card/air_fire_knight": {
     "file": "air_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:30:12.953Z",
-    "fileHash": "6eb18eb99e17128385a33b36b7b7e0355fdf4675"
+    "fileHash": "23b6a0281ee59e9e3e6d7ad0af6f8473bc17c31b"
   },
   "card/air_fire_bishop": {
     "file": "air_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:30:12.955Z",
-    "fileHash": "6eb18eb99e17128385a33b36b7b7e0355fdf4675"
+    "fileHash": "23b6a0281ee59e9e3e6d7ad0af6f8473bc17c31b"
   },
   "card/air_fire_rook": {
     "file": "air_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:30:12.958Z",
-    "fileHash": "6eb18eb99e17128385a33b36b7b7e0355fdf4675"
+    "fileHash": "23b6a0281ee59e9e3e6d7ad0af6f8473bc17c31b"
   },
   "card/air_fire_queen": {
     "file": "air_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:30:12.961Z",
-    "fileHash": "6eb18eb99e17128385a33b36b7b7e0355fdf4675"
+    "fileHash": "23b6a0281ee59e9e3e6d7ad0af6f8473bc17c31b"
   },
   "card/air_fire_pawn_pawn": {
     "file": "air_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:30:12.964Z",
-    "fileHash": "6eb18eb99e17128385a33b36b7b7e0355fdf4675"
+    "fileHash": "23b6a0281ee59e9e3e6d7ad0af6f8473bc17c31b"
   },
   "card/air_fire_knight_pawn": {
     "file": "air_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:30:12.966Z",
-    "fileHash": "6eb18eb99e17128385a33b36b7b7e0355fdf4675"
+    "fileHash": "23b6a0281ee59e9e3e6d7ad0af6f8473bc17c31b"
   },
   "card/air_fire_bishop_pawn": {
     "file": "air_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:30:12.969Z",
-    "fileHash": "6eb18eb99e17128385a33b36b7b7e0355fdf4675"
+    "fileHash": "23b6a0281ee59e9e3e6d7ad0af6f8473bc17c31b"
   },
   "card/air_fire_pawn_rook": {
     "file": "air_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:30:12.972Z",
-    "fileHash": "6eb18eb99e17128385a33b36b7b7e0355fdf4675"
+    "fileHash": "23b6a0281ee59e9e3e6d7ad0af6f8473bc17c31b"
   },
   "card/air_fire_pawn_queen": {
     "file": "air_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:30:12.975Z",
-    "fileHash": "6eb18eb99e17128385a33b36b7b7e0355fdf4675"
+    "fileHash": "23b6a0281ee59e9e3e6d7ad0af6f8473bc17c31b"
   },
   "card/air_fire_knight_knight": {
     "file": "air_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:30:12.978Z",
-    "fileHash": "6eb18eb99e17128385a33b36b7b7e0355fdf4675"
+    "fileHash": "23b6a0281ee59e9e3e6d7ad0af6f8473bc17c31b"
   },
   "card/air_fire_bishop_knight": {
     "file": "air_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:30:12.980Z",
-    "fileHash": "6eb18eb99e17128385a33b36b7b7e0355fdf4675"
+    "fileHash": "23b6a0281ee59e9e3e6d7ad0af6f8473bc17c31b"
   },
   "card/air_fire_knight_rook": {
     "file": "air_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:30:12.983Z",
-    "fileHash": "6eb18eb99e17128385a33b36b7b7e0355fdf4675"
+    "fileHash": "23b6a0281ee59e9e3e6d7ad0af6f8473bc17c31b"
   },
   "card/air_fire_knight_queen": {
     "file": "air_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:30:12.986Z",
-    "fileHash": "6eb18eb99e17128385a33b36b7b7e0355fdf4675"
+    "fileHash": "23b6a0281ee59e9e3e6d7ad0af6f8473bc17c31b"
   },
   "card/air_fire_bishop_bishop": {
     "file": "air_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:30:12.988Z",
-    "fileHash": "6eb18eb99e17128385a33b36b7b7e0355fdf4675"
+    "fileHash": "23b6a0281ee59e9e3e6d7ad0af6f8473bc17c31b"
   },
   "card/air_fire_bishop_rook": {
     "file": "air_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:30:12.991Z",
-    "fileHash": "6eb18eb99e17128385a33b36b7b7e0355fdf4675"
+    "fileHash": "23b6a0281ee59e9e3e6d7ad0af6f8473bc17c31b"
   },
   "card/air_fire_bishop_queen": {
     "file": "air_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:30:12.994Z",
-    "fileHash": "6eb18eb99e17128385a33b36b7b7e0355fdf4675"
+    "fileHash": "23b6a0281ee59e9e3e6d7ad0af6f8473bc17c31b"
   },
   "card/air_fire_rook_rook": {
     "file": "air_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:30:12.997Z",
-    "fileHash": "6eb18eb99e17128385a33b36b7b7e0355fdf4675"
+    "fileHash": "23b6a0281ee59e9e3e6d7ad0af6f8473bc17c31b"
   },
   "card/air_fire_queen_rook": {
     "file": "air_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:30:12.999Z",
-    "fileHash": "6eb18eb99e17128385a33b36b7b7e0355fdf4675"
+    "fileHash": "23b6a0281ee59e9e3e6d7ad0af6f8473bc17c31b"
   },
   "card/air_fire_queen_queen": {
     "file": "air_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:30:13.002Z",
-    "fileHash": "6eb18eb99e17128385a33b36b7b7e0355fdf4675"
+    "fileHash": "23b6a0281ee59e9e3e6d7ad0af6f8473bc17c31b"
   },
   "card/darkness_light_pawn": {
     "file": "darkness_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:32:17.133Z",
-    "fileHash": "52d7e3a3192e46aaca7ace6ce6a5e2ebfc88a464"
+    "fileHash": "5a805237d63c389461d0153b7340444ac0a0cd2a"
   },
   "card/darkness_light_knight": {
     "file": "darkness_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:32:17.137Z",
-    "fileHash": "52d7e3a3192e46aaca7ace6ce6a5e2ebfc88a464"
+    "fileHash": "5a805237d63c389461d0153b7340444ac0a0cd2a"
   },
   "card/darkness_light_bishop": {
     "file": "darkness_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:32:17.140Z",
-    "fileHash": "52d7e3a3192e46aaca7ace6ce6a5e2ebfc88a464"
+    "fileHash": "5a805237d63c389461d0153b7340444ac0a0cd2a"
   },
   "card/darkness_light_rook": {
     "file": "darkness_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:32:17.144Z",
-    "fileHash": "52d7e3a3192e46aaca7ace6ce6a5e2ebfc88a464"
+    "fileHash": "5a805237d63c389461d0153b7340444ac0a0cd2a"
   },
   "card/darkness_light_queen": {
     "file": "darkness_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:32:17.146Z",
-    "fileHash": "52d7e3a3192e46aaca7ace6ce6a5e2ebfc88a464"
+    "fileHash": "5a805237d63c389461d0153b7340444ac0a0cd2a"
   },
   "card/darkness_light_pawn_pawn": {
     "file": "darkness_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:32:17.149Z",
-    "fileHash": "52d7e3a3192e46aaca7ace6ce6a5e2ebfc88a464"
+    "fileHash": "5a805237d63c389461d0153b7340444ac0a0cd2a"
   },
   "card/darkness_light_knight_pawn": {
     "file": "darkness_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:32:17.152Z",
-    "fileHash": "52d7e3a3192e46aaca7ace6ce6a5e2ebfc88a464"
+    "fileHash": "5a805237d63c389461d0153b7340444ac0a0cd2a"
   },
   "card/darkness_light_bishop_pawn": {
     "file": "darkness_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:32:17.155Z",
-    "fileHash": "52d7e3a3192e46aaca7ace6ce6a5e2ebfc88a464"
+    "fileHash": "5a805237d63c389461d0153b7340444ac0a0cd2a"
   },
   "card/darkness_light_pawn_rook": {
     "file": "darkness_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:32:17.158Z",
-    "fileHash": "52d7e3a3192e46aaca7ace6ce6a5e2ebfc88a464"
+    "fileHash": "5a805237d63c389461d0153b7340444ac0a0cd2a"
   },
   "card/darkness_light_pawn_queen": {
     "file": "darkness_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:32:17.161Z",
-    "fileHash": "52d7e3a3192e46aaca7ace6ce6a5e2ebfc88a464"
+    "fileHash": "5a805237d63c389461d0153b7340444ac0a0cd2a"
   },
   "card/darkness_light_knight_knight": {
     "file": "darkness_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:32:17.163Z",
-    "fileHash": "52d7e3a3192e46aaca7ace6ce6a5e2ebfc88a464"
+    "fileHash": "5a805237d63c389461d0153b7340444ac0a0cd2a"
   },
   "card/darkness_light_bishop_knight": {
     "file": "darkness_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:32:17.166Z",
-    "fileHash": "52d7e3a3192e46aaca7ace6ce6a5e2ebfc88a464"
+    "fileHash": "5a805237d63c389461d0153b7340444ac0a0cd2a"
   },
   "card/darkness_light_knight_rook": {
     "file": "darkness_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:32:17.169Z",
-    "fileHash": "52d7e3a3192e46aaca7ace6ce6a5e2ebfc88a464"
+    "fileHash": "5a805237d63c389461d0153b7340444ac0a0cd2a"
   },
   "card/darkness_light_knight_queen": {
     "file": "darkness_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:32:17.172Z",
-    "fileHash": "52d7e3a3192e46aaca7ace6ce6a5e2ebfc88a464"
+    "fileHash": "5a805237d63c389461d0153b7340444ac0a0cd2a"
   },
   "card/darkness_light_bishop_bishop": {
     "file": "darkness_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:32:17.175Z",
-    "fileHash": "52d7e3a3192e46aaca7ace6ce6a5e2ebfc88a464"
+    "fileHash": "5a805237d63c389461d0153b7340444ac0a0cd2a"
   },
   "card/darkness_light_bishop_rook": {
     "file": "darkness_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:32:17.178Z",
-    "fileHash": "52d7e3a3192e46aaca7ace6ce6a5e2ebfc88a464"
+    "fileHash": "5a805237d63c389461d0153b7340444ac0a0cd2a"
   },
   "card/darkness_light_bishop_queen": {
     "file": "darkness_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:32:17.181Z",
-    "fileHash": "52d7e3a3192e46aaca7ace6ce6a5e2ebfc88a464"
+    "fileHash": "5a805237d63c389461d0153b7340444ac0a0cd2a"
   },
   "card/darkness_light_rook_rook": {
     "file": "darkness_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:32:17.185Z",
-    "fileHash": "52d7e3a3192e46aaca7ace6ce6a5e2ebfc88a464"
+    "fileHash": "5a805237d63c389461d0153b7340444ac0a0cd2a"
   },
   "card/darkness_light_queen_rook": {
     "file": "darkness_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:32:17.188Z",
-    "fileHash": "52d7e3a3192e46aaca7ace6ce6a5e2ebfc88a464"
+    "fileHash": "5a805237d63c389461d0153b7340444ac0a0cd2a"
   },
   "card/darkness_light_queen_queen": {
     "file": "darkness_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T05:32:17.191Z",
-    "fileHash": "52d7e3a3192e46aaca7ace6ce6a5e2ebfc88a464"
+    "fileHash": "5a805237d63c389461d0153b7340444ac0a0cd2a"
   },
   "card/queen_queen": {
     "file": "chess_combined.json",
@@ -1437,987 +1437,987 @@
       ]
     },
     "at": "2026-07-08T05:48:20.745Z",
-    "fileHash": "7a9cfbe7174ffc3861bb01fdc53c1b59e6d2fc07"
+    "fileHash": "387d0a59ee14cc0a18c6bb3c0ab5eea6ee521449"
   },
   "card/earth_water_pawn": {
     "file": "earth_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T19:06:00.537Z",
-    "fileHash": "e28250dd92e9c41337ba61d81471b0299324523f"
+    "fileHash": "33d3c37542a472a09eb347b4100afa3c6682348e"
   },
   "card/earth_water_knight": {
     "file": "earth_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T19:06:00.542Z",
-    "fileHash": "e28250dd92e9c41337ba61d81471b0299324523f"
+    "fileHash": "33d3c37542a472a09eb347b4100afa3c6682348e"
   },
   "card/earth_water_bishop": {
     "file": "earth_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T19:06:00.546Z",
-    "fileHash": "e28250dd92e9c41337ba61d81471b0299324523f"
+    "fileHash": "33d3c37542a472a09eb347b4100afa3c6682348e"
   },
   "card/earth_water_rook": {
     "file": "earth_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T19:06:00.549Z",
-    "fileHash": "e28250dd92e9c41337ba61d81471b0299324523f"
+    "fileHash": "33d3c37542a472a09eb347b4100afa3c6682348e"
   },
   "card/earth_water_queen": {
     "file": "earth_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T19:06:00.552Z",
-    "fileHash": "e28250dd92e9c41337ba61d81471b0299324523f"
+    "fileHash": "33d3c37542a472a09eb347b4100afa3c6682348e"
   },
   "card/earth_water_pawn_pawn": {
     "file": "earth_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T19:06:00.555Z",
-    "fileHash": "e28250dd92e9c41337ba61d81471b0299324523f"
+    "fileHash": "33d3c37542a472a09eb347b4100afa3c6682348e"
   },
   "card/earth_water_knight_pawn": {
     "file": "earth_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T19:06:00.558Z",
-    "fileHash": "e28250dd92e9c41337ba61d81471b0299324523f"
+    "fileHash": "33d3c37542a472a09eb347b4100afa3c6682348e"
   },
   "card/earth_water_bishop_pawn": {
     "file": "earth_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T19:06:00.561Z",
-    "fileHash": "e28250dd92e9c41337ba61d81471b0299324523f"
+    "fileHash": "33d3c37542a472a09eb347b4100afa3c6682348e"
   },
   "card/earth_water_pawn_rook": {
     "file": "earth_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T19:06:00.565Z",
-    "fileHash": "e28250dd92e9c41337ba61d81471b0299324523f"
+    "fileHash": "33d3c37542a472a09eb347b4100afa3c6682348e"
   },
   "card/earth_water_pawn_queen": {
     "file": "earth_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T19:06:00.568Z",
-    "fileHash": "e28250dd92e9c41337ba61d81471b0299324523f"
+    "fileHash": "33d3c37542a472a09eb347b4100afa3c6682348e"
   },
   "card/earth_water_knight_knight": {
     "file": "earth_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T19:06:00.571Z",
-    "fileHash": "e28250dd92e9c41337ba61d81471b0299324523f"
+    "fileHash": "33d3c37542a472a09eb347b4100afa3c6682348e"
   },
   "card/earth_water_bishop_knight": {
     "file": "earth_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T19:06:00.575Z",
-    "fileHash": "e28250dd92e9c41337ba61d81471b0299324523f"
+    "fileHash": "33d3c37542a472a09eb347b4100afa3c6682348e"
   },
   "card/earth_water_knight_rook": {
     "file": "earth_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T19:06:00.578Z",
-    "fileHash": "e28250dd92e9c41337ba61d81471b0299324523f"
+    "fileHash": "33d3c37542a472a09eb347b4100afa3c6682348e"
   },
   "card/earth_water_knight_queen": {
     "file": "earth_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T19:06:00.581Z",
-    "fileHash": "e28250dd92e9c41337ba61d81471b0299324523f"
+    "fileHash": "33d3c37542a472a09eb347b4100afa3c6682348e"
   },
   "card/earth_water_bishop_bishop": {
     "file": "earth_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T19:06:00.584Z",
-    "fileHash": "e28250dd92e9c41337ba61d81471b0299324523f"
+    "fileHash": "33d3c37542a472a09eb347b4100afa3c6682348e"
   },
   "card/earth_water_bishop_rook": {
     "file": "earth_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T19:06:00.587Z",
-    "fileHash": "e28250dd92e9c41337ba61d81471b0299324523f"
+    "fileHash": "33d3c37542a472a09eb347b4100afa3c6682348e"
   },
   "card/earth_water_bishop_queen": {
     "file": "earth_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T19:06:00.590Z",
-    "fileHash": "e28250dd92e9c41337ba61d81471b0299324523f"
+    "fileHash": "33d3c37542a472a09eb347b4100afa3c6682348e"
   },
   "card/earth_water_rook_rook": {
     "file": "earth_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T19:06:00.593Z",
-    "fileHash": "e28250dd92e9c41337ba61d81471b0299324523f"
+    "fileHash": "33d3c37542a472a09eb347b4100afa3c6682348e"
   },
   "card/earth_water_queen_rook": {
     "file": "earth_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T19:06:00.597Z",
-    "fileHash": "e28250dd92e9c41337ba61d81471b0299324523f"
+    "fileHash": "33d3c37542a472a09eb347b4100afa3c6682348e"
   },
   "card/earth_water_queen_queen": {
     "file": "earth_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T19:06:00.600Z",
-    "fileHash": "e28250dd92e9c41337ba61d81471b0299324523f"
+    "fileHash": "33d3c37542a472a09eb347b4100afa3c6682348e"
   },
   "card/light_water_pawn": {
     "file": "light_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T23:50:20.878Z",
-    "fileHash": "4fa68d152cc37e9b1ce46fe2face339a63722aa1"
+    "fileHash": "25252dfe38c2ee8682d9418f0f91c208439e152a"
   },
   "card/light_water_knight": {
     "file": "light_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T23:50:20.890Z",
-    "fileHash": "4fa68d152cc37e9b1ce46fe2face339a63722aa1"
+    "fileHash": "25252dfe38c2ee8682d9418f0f91c208439e152a"
   },
   "card/light_water_bishop": {
     "file": "light_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T23:50:20.899Z",
-    "fileHash": "4fa68d152cc37e9b1ce46fe2face339a63722aa1"
+    "fileHash": "25252dfe38c2ee8682d9418f0f91c208439e152a"
   },
   "card/light_water_rook": {
     "file": "light_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T23:50:20.907Z",
-    "fileHash": "4fa68d152cc37e9b1ce46fe2face339a63722aa1"
+    "fileHash": "25252dfe38c2ee8682d9418f0f91c208439e152a"
   },
   "card/light_water_queen": {
     "file": "light_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T23:50:20.912Z",
-    "fileHash": "4fa68d152cc37e9b1ce46fe2face339a63722aa1"
+    "fileHash": "25252dfe38c2ee8682d9418f0f91c208439e152a"
   },
   "card/light_water_pawn_pawn": {
     "file": "light_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T23:50:20.918Z",
-    "fileHash": "4fa68d152cc37e9b1ce46fe2face339a63722aa1"
+    "fileHash": "25252dfe38c2ee8682d9418f0f91c208439e152a"
   },
   "card/light_water_knight_pawn": {
     "file": "light_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T23:50:20.926Z",
-    "fileHash": "4fa68d152cc37e9b1ce46fe2face339a63722aa1"
+    "fileHash": "25252dfe38c2ee8682d9418f0f91c208439e152a"
   },
   "card/light_water_bishop_pawn": {
     "file": "light_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T23:50:20.931Z",
-    "fileHash": "4fa68d152cc37e9b1ce46fe2face339a63722aa1"
+    "fileHash": "25252dfe38c2ee8682d9418f0f91c208439e152a"
   },
   "card/light_water_pawn_rook": {
     "file": "light_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T23:50:20.940Z",
-    "fileHash": "4fa68d152cc37e9b1ce46fe2face339a63722aa1"
+    "fileHash": "25252dfe38c2ee8682d9418f0f91c208439e152a"
   },
   "card/light_water_pawn_queen": {
     "file": "light_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T23:50:20.946Z",
-    "fileHash": "4fa68d152cc37e9b1ce46fe2face339a63722aa1"
+    "fileHash": "25252dfe38c2ee8682d9418f0f91c208439e152a"
   },
   "card/light_water_knight_knight": {
     "file": "light_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T23:50:20.953Z",
-    "fileHash": "4fa68d152cc37e9b1ce46fe2face339a63722aa1"
+    "fileHash": "25252dfe38c2ee8682d9418f0f91c208439e152a"
   },
   "card/light_water_bishop_knight": {
     "file": "light_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T23:50:20.969Z",
-    "fileHash": "4fa68d152cc37e9b1ce46fe2face339a63722aa1"
+    "fileHash": "25252dfe38c2ee8682d9418f0f91c208439e152a"
   },
   "card/light_water_knight_rook": {
     "file": "light_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T23:50:20.974Z",
-    "fileHash": "4fa68d152cc37e9b1ce46fe2face339a63722aa1"
+    "fileHash": "25252dfe38c2ee8682d9418f0f91c208439e152a"
   },
   "card/light_water_knight_queen": {
     "file": "light_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T23:50:20.977Z",
-    "fileHash": "4fa68d152cc37e9b1ce46fe2face339a63722aa1"
+    "fileHash": "25252dfe38c2ee8682d9418f0f91c208439e152a"
   },
   "card/light_water_bishop_bishop": {
     "file": "light_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T23:50:20.980Z",
-    "fileHash": "4fa68d152cc37e9b1ce46fe2face339a63722aa1"
+    "fileHash": "25252dfe38c2ee8682d9418f0f91c208439e152a"
   },
   "card/light_water_bishop_rook": {
     "file": "light_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T23:50:20.991Z",
-    "fileHash": "4fa68d152cc37e9b1ce46fe2face339a63722aa1"
+    "fileHash": "25252dfe38c2ee8682d9418f0f91c208439e152a"
   },
   "card/light_water_bishop_queen": {
     "file": "light_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T23:50:20.996Z",
-    "fileHash": "4fa68d152cc37e9b1ce46fe2face339a63722aa1"
+    "fileHash": "25252dfe38c2ee8682d9418f0f91c208439e152a"
   },
   "card/light_water_rook_rook": {
     "file": "light_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T23:50:21.007Z",
-    "fileHash": "4fa68d152cc37e9b1ce46fe2face339a63722aa1"
+    "fileHash": "25252dfe38c2ee8682d9418f0f91c208439e152a"
   },
   "card/light_water_queen_rook": {
     "file": "light_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T23:50:21.012Z",
-    "fileHash": "4fa68d152cc37e9b1ce46fe2face339a63722aa1"
+    "fileHash": "25252dfe38c2ee8682d9418f0f91c208439e152a"
   },
   "card/light_water_queen_queen": {
     "file": "light_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-08T23:50:21.020Z",
-    "fileHash": "4fa68d152cc37e9b1ce46fe2face339a63722aa1"
+    "fileHash": "25252dfe38c2ee8682d9418f0f91c208439e152a"
   },
   "card/light_light_pawn": {
     "file": "light_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-09T01:02:49.512Z",
-    "fileHash": "7a5e4bcb328323b48d6fe36eba9ea5d1063853fa"
+    "fileHash": "fc8cda126303eb0db28abff59a1bc82ee578d587"
   },
   "card/light_light_knight": {
     "file": "light_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-09T01:02:49.520Z",
-    "fileHash": "7a5e4bcb328323b48d6fe36eba9ea5d1063853fa"
+    "fileHash": "fc8cda126303eb0db28abff59a1bc82ee578d587"
   },
   "card/light_light_bishop": {
     "file": "light_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-09T01:02:49.526Z",
-    "fileHash": "7a5e4bcb328323b48d6fe36eba9ea5d1063853fa"
+    "fileHash": "fc8cda126303eb0db28abff59a1bc82ee578d587"
   },
   "card/light_light_rook": {
     "file": "light_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-09T01:02:49.532Z",
-    "fileHash": "7a5e4bcb328323b48d6fe36eba9ea5d1063853fa"
+    "fileHash": "fc8cda126303eb0db28abff59a1bc82ee578d587"
   },
   "card/light_light_queen": {
     "file": "light_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-09T01:02:49.538Z",
-    "fileHash": "7a5e4bcb328323b48d6fe36eba9ea5d1063853fa"
+    "fileHash": "fc8cda126303eb0db28abff59a1bc82ee578d587"
   },
   "card/light_light_pawn_pawn": {
     "file": "light_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-09T01:02:49.544Z",
-    "fileHash": "7a5e4bcb328323b48d6fe36eba9ea5d1063853fa"
+    "fileHash": "fc8cda126303eb0db28abff59a1bc82ee578d587"
   },
   "card/light_light_knight_pawn": {
     "file": "light_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-09T01:02:49.550Z",
-    "fileHash": "7a5e4bcb328323b48d6fe36eba9ea5d1063853fa"
+    "fileHash": "fc8cda126303eb0db28abff59a1bc82ee578d587"
   },
   "card/light_light_bishop_pawn": {
     "file": "light_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-09T01:02:49.557Z",
-    "fileHash": "7a5e4bcb328323b48d6fe36eba9ea5d1063853fa"
+    "fileHash": "fc8cda126303eb0db28abff59a1bc82ee578d587"
   },
   "card/light_light_pawn_rook": {
     "file": "light_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-09T01:02:49.564Z",
-    "fileHash": "7a5e4bcb328323b48d6fe36eba9ea5d1063853fa"
+    "fileHash": "fc8cda126303eb0db28abff59a1bc82ee578d587"
   },
   "card/light_light_pawn_queen": {
     "file": "light_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-09T01:02:49.572Z",
-    "fileHash": "7a5e4bcb328323b48d6fe36eba9ea5d1063853fa"
+    "fileHash": "fc8cda126303eb0db28abff59a1bc82ee578d587"
   },
   "card/light_light_knight_knight": {
     "file": "light_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-09T01:02:49.576Z",
-    "fileHash": "7a5e4bcb328323b48d6fe36eba9ea5d1063853fa"
+    "fileHash": "fc8cda126303eb0db28abff59a1bc82ee578d587"
   },
   "card/light_light_bishop_knight": {
     "file": "light_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-09T01:02:49.581Z",
-    "fileHash": "7a5e4bcb328323b48d6fe36eba9ea5d1063853fa"
+    "fileHash": "fc8cda126303eb0db28abff59a1bc82ee578d587"
   },
   "card/light_light_knight_rook": {
     "file": "light_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-09T01:02:49.592Z",
-    "fileHash": "7a5e4bcb328323b48d6fe36eba9ea5d1063853fa"
+    "fileHash": "fc8cda126303eb0db28abff59a1bc82ee578d587"
   },
   "card/light_light_knight_queen": {
     "file": "light_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-09T01:02:49.607Z",
-    "fileHash": "7a5e4bcb328323b48d6fe36eba9ea5d1063853fa"
+    "fileHash": "fc8cda126303eb0db28abff59a1bc82ee578d587"
   },
   "card/light_light_bishop_bishop": {
     "file": "light_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-09T01:02:49.617Z",
-    "fileHash": "7a5e4bcb328323b48d6fe36eba9ea5d1063853fa"
+    "fileHash": "fc8cda126303eb0db28abff59a1bc82ee578d587"
   },
   "card/light_light_bishop_rook": {
     "file": "light_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-09T01:02:49.625Z",
-    "fileHash": "7a5e4bcb328323b48d6fe36eba9ea5d1063853fa"
+    "fileHash": "fc8cda126303eb0db28abff59a1bc82ee578d587"
   },
   "card/light_light_bishop_queen": {
     "file": "light_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-09T01:02:49.632Z",
-    "fileHash": "7a5e4bcb328323b48d6fe36eba9ea5d1063853fa"
+    "fileHash": "fc8cda126303eb0db28abff59a1bc82ee578d587"
   },
   "card/light_light_rook_rook": {
     "file": "light_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-09T01:02:49.638Z",
-    "fileHash": "7a5e4bcb328323b48d6fe36eba9ea5d1063853fa"
+    "fileHash": "fc8cda126303eb0db28abff59a1bc82ee578d587"
   },
   "card/light_light_queen_rook": {
     "file": "light_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-09T01:02:49.643Z",
-    "fileHash": "7a5e4bcb328323b48d6fe36eba9ea5d1063853fa"
+    "fileHash": "fc8cda126303eb0db28abff59a1bc82ee578d587"
   },
   "card/light_light_queen_queen": {
     "file": "light_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-09T01:02:49.650Z",
-    "fileHash": "7a5e4bcb328323b48d6fe36eba9ea5d1063853fa"
+    "fileHash": "fc8cda126303eb0db28abff59a1bc82ee578d587"
   },
   "card/air_air_pawn": {
     "file": "air_air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:07.427Z",
-    "fileHash": "77385484782abd3d520df3f929734250cc7c93a2"
+    "fileHash": "8eb9bf3d56de2c9ca04479181e7ab4d66c31342b"
   },
   "card/air_air_knight": {
     "file": "air_air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:07.441Z",
-    "fileHash": "77385484782abd3d520df3f929734250cc7c93a2"
+    "fileHash": "8eb9bf3d56de2c9ca04479181e7ab4d66c31342b"
   },
   "card/air_air_bishop": {
     "file": "air_air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:07.453Z",
-    "fileHash": "77385484782abd3d520df3f929734250cc7c93a2"
+    "fileHash": "8eb9bf3d56de2c9ca04479181e7ab4d66c31342b"
   },
   "card/air_air_rook": {
     "file": "air_air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:07.469Z",
-    "fileHash": "77385484782abd3d520df3f929734250cc7c93a2"
+    "fileHash": "8eb9bf3d56de2c9ca04479181e7ab4d66c31342b"
   },
   "card/air_air_queen": {
     "file": "air_air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:07.480Z",
-    "fileHash": "77385484782abd3d520df3f929734250cc7c93a2"
+    "fileHash": "8eb9bf3d56de2c9ca04479181e7ab4d66c31342b"
   },
   "card/air_air_pawn_pawn": {
     "file": "air_air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:07.490Z",
-    "fileHash": "77385484782abd3d520df3f929734250cc7c93a2"
+    "fileHash": "8eb9bf3d56de2c9ca04479181e7ab4d66c31342b"
   },
   "card/air_air_knight_pawn": {
     "file": "air_air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:07.502Z",
-    "fileHash": "77385484782abd3d520df3f929734250cc7c93a2"
+    "fileHash": "8eb9bf3d56de2c9ca04479181e7ab4d66c31342b"
   },
   "card/air_air_bishop_pawn": {
     "file": "air_air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:07.510Z",
-    "fileHash": "77385484782abd3d520df3f929734250cc7c93a2"
+    "fileHash": "8eb9bf3d56de2c9ca04479181e7ab4d66c31342b"
   },
   "card/air_air_pawn_rook": {
     "file": "air_air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:07.514Z",
-    "fileHash": "77385484782abd3d520df3f929734250cc7c93a2"
+    "fileHash": "8eb9bf3d56de2c9ca04479181e7ab4d66c31342b"
   },
   "card/air_air_pawn_queen": {
     "file": "air_air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:07.518Z",
-    "fileHash": "77385484782abd3d520df3f929734250cc7c93a2"
+    "fileHash": "8eb9bf3d56de2c9ca04479181e7ab4d66c31342b"
   },
   "card/air_air_knight_knight": {
     "file": "air_air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:07.534Z",
-    "fileHash": "77385484782abd3d520df3f929734250cc7c93a2"
+    "fileHash": "8eb9bf3d56de2c9ca04479181e7ab4d66c31342b"
   },
   "card/air_air_bishop_knight": {
     "file": "air_air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:07.543Z",
-    "fileHash": "77385484782abd3d520df3f929734250cc7c93a2"
+    "fileHash": "8eb9bf3d56de2c9ca04479181e7ab4d66c31342b"
   },
   "card/air_air_knight_rook": {
     "file": "air_air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:07.551Z",
-    "fileHash": "77385484782abd3d520df3f929734250cc7c93a2"
+    "fileHash": "8eb9bf3d56de2c9ca04479181e7ab4d66c31342b"
   },
   "card/air_air_knight_queen": {
     "file": "air_air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:07.556Z",
-    "fileHash": "77385484782abd3d520df3f929734250cc7c93a2"
+    "fileHash": "8eb9bf3d56de2c9ca04479181e7ab4d66c31342b"
   },
   "card/air_air_bishop_bishop": {
     "file": "air_air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:07.559Z",
-    "fileHash": "77385484782abd3d520df3f929734250cc7c93a2"
+    "fileHash": "8eb9bf3d56de2c9ca04479181e7ab4d66c31342b"
   },
   "card/air_air_bishop_rook": {
     "file": "air_air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:07.563Z",
-    "fileHash": "77385484782abd3d520df3f929734250cc7c93a2"
+    "fileHash": "8eb9bf3d56de2c9ca04479181e7ab4d66c31342b"
   },
   "card/air_air_bishop_queen": {
     "file": "air_air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:07.567Z",
-    "fileHash": "77385484782abd3d520df3f929734250cc7c93a2"
+    "fileHash": "8eb9bf3d56de2c9ca04479181e7ab4d66c31342b"
   },
   "card/air_air_rook_rook": {
     "file": "air_air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:07.573Z",
-    "fileHash": "77385484782abd3d520df3f929734250cc7c93a2"
+    "fileHash": "8eb9bf3d56de2c9ca04479181e7ab4d66c31342b"
   },
   "card/air_air_queen_rook": {
     "file": "air_air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:07.577Z",
-    "fileHash": "77385484782abd3d520df3f929734250cc7c93a2"
+    "fileHash": "8eb9bf3d56de2c9ca04479181e7ab4d66c31342b"
   },
   "card/air_air_queen_queen": {
     "file": "air_air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:07.581Z",
-    "fileHash": "77385484782abd3d520df3f929734250cc7c93a2"
+    "fileHash": "8eb9bf3d56de2c9ca04479181e7ab4d66c31342b"
   },
   "card/air_earth_pawn": {
     "file": "air_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:21.138Z",
-    "fileHash": "ae34655b725e807e034f36949a60965087c10050"
+    "fileHash": "66ca0eb5fc5d6bff26ecbeb2d7892de9147747a4"
   },
   "card/air_earth_knight": {
     "file": "air_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:21.150Z",
-    "fileHash": "ae34655b725e807e034f36949a60965087c10050"
+    "fileHash": "66ca0eb5fc5d6bff26ecbeb2d7892de9147747a4"
   },
   "card/air_earth_bishop": {
     "file": "air_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:21.159Z",
-    "fileHash": "ae34655b725e807e034f36949a60965087c10050"
+    "fileHash": "66ca0eb5fc5d6bff26ecbeb2d7892de9147747a4"
   },
   "card/air_earth_rook": {
     "file": "air_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:21.164Z",
-    "fileHash": "ae34655b725e807e034f36949a60965087c10050"
+    "fileHash": "66ca0eb5fc5d6bff26ecbeb2d7892de9147747a4"
   },
   "card/air_earth_queen": {
     "file": "air_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:21.172Z",
-    "fileHash": "ae34655b725e807e034f36949a60965087c10050"
+    "fileHash": "66ca0eb5fc5d6bff26ecbeb2d7892de9147747a4"
   },
   "card/air_earth_pawn_pawn": {
     "file": "air_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:21.178Z",
-    "fileHash": "ae34655b725e807e034f36949a60965087c10050"
+    "fileHash": "66ca0eb5fc5d6bff26ecbeb2d7892de9147747a4"
   },
   "card/air_earth_knight_pawn": {
     "file": "air_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:21.182Z",
-    "fileHash": "ae34655b725e807e034f36949a60965087c10050"
+    "fileHash": "66ca0eb5fc5d6bff26ecbeb2d7892de9147747a4"
   },
   "card/air_earth_bishop_pawn": {
     "file": "air_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:21.195Z",
-    "fileHash": "ae34655b725e807e034f36949a60965087c10050"
+    "fileHash": "66ca0eb5fc5d6bff26ecbeb2d7892de9147747a4"
   },
   "card/air_earth_pawn_rook": {
     "file": "air_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:21.200Z",
-    "fileHash": "ae34655b725e807e034f36949a60965087c10050"
+    "fileHash": "66ca0eb5fc5d6bff26ecbeb2d7892de9147747a4"
   },
   "card/air_earth_pawn_queen": {
     "file": "air_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:21.218Z",
-    "fileHash": "ae34655b725e807e034f36949a60965087c10050"
+    "fileHash": "66ca0eb5fc5d6bff26ecbeb2d7892de9147747a4"
   },
   "card/air_earth_knight_knight": {
     "file": "air_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:21.224Z",
-    "fileHash": "ae34655b725e807e034f36949a60965087c10050"
+    "fileHash": "66ca0eb5fc5d6bff26ecbeb2d7892de9147747a4"
   },
   "card/air_earth_bishop_knight": {
     "file": "air_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:21.228Z",
-    "fileHash": "ae34655b725e807e034f36949a60965087c10050"
+    "fileHash": "66ca0eb5fc5d6bff26ecbeb2d7892de9147747a4"
   },
   "card/air_earth_knight_rook": {
     "file": "air_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:21.239Z",
-    "fileHash": "ae34655b725e807e034f36949a60965087c10050"
+    "fileHash": "66ca0eb5fc5d6bff26ecbeb2d7892de9147747a4"
   },
   "card/air_earth_knight_queen": {
     "file": "air_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:21.243Z",
-    "fileHash": "ae34655b725e807e034f36949a60965087c10050"
+    "fileHash": "66ca0eb5fc5d6bff26ecbeb2d7892de9147747a4"
   },
   "card/air_earth_bishop_bishop": {
     "file": "air_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:21.246Z",
-    "fileHash": "ae34655b725e807e034f36949a60965087c10050"
+    "fileHash": "66ca0eb5fc5d6bff26ecbeb2d7892de9147747a4"
   },
   "card/air_earth_bishop_rook": {
     "file": "air_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:21.254Z",
-    "fileHash": "ae34655b725e807e034f36949a60965087c10050"
+    "fileHash": "66ca0eb5fc5d6bff26ecbeb2d7892de9147747a4"
   },
   "card/air_earth_bishop_queen": {
     "file": "air_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:21.257Z",
-    "fileHash": "ae34655b725e807e034f36949a60965087c10050"
+    "fileHash": "66ca0eb5fc5d6bff26ecbeb2d7892de9147747a4"
   },
   "card/air_earth_rook_rook": {
     "file": "air_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:21.261Z",
-    "fileHash": "ae34655b725e807e034f36949a60965087c10050"
+    "fileHash": "66ca0eb5fc5d6bff26ecbeb2d7892de9147747a4"
   },
   "card/air_earth_queen_rook": {
     "file": "air_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:21.266Z",
-    "fileHash": "ae34655b725e807e034f36949a60965087c10050"
+    "fileHash": "66ca0eb5fc5d6bff26ecbeb2d7892de9147747a4"
   },
   "card/air_earth_queen_queen": {
     "file": "air_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:21.270Z",
-    "fileHash": "ae34655b725e807e034f36949a60965087c10050"
+    "fileHash": "66ca0eb5fc5d6bff26ecbeb2d7892de9147747a4"
   },
   "card/air_water_pawn": {
     "file": "air_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:51.665Z",
-    "fileHash": "1468e48fb39e72d7e26f3aac7e47969b1543f9b1"
+    "fileHash": "7282eb8ac2159b9af87f257d047e970368b79416"
   },
   "card/air_water_knight": {
     "file": "air_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:51.679Z",
-    "fileHash": "1468e48fb39e72d7e26f3aac7e47969b1543f9b1"
+    "fileHash": "7282eb8ac2159b9af87f257d047e970368b79416"
   },
   "card/air_water_bishop": {
     "file": "air_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:51.690Z",
-    "fileHash": "1468e48fb39e72d7e26f3aac7e47969b1543f9b1"
+    "fileHash": "7282eb8ac2159b9af87f257d047e970368b79416"
   },
   "card/air_water_rook": {
     "file": "air_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:51.702Z",
-    "fileHash": "1468e48fb39e72d7e26f3aac7e47969b1543f9b1"
+    "fileHash": "7282eb8ac2159b9af87f257d047e970368b79416"
   },
   "card/air_water_queen": {
     "file": "air_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:51.714Z",
-    "fileHash": "1468e48fb39e72d7e26f3aac7e47969b1543f9b1"
+    "fileHash": "7282eb8ac2159b9af87f257d047e970368b79416"
   },
   "card/air_water_pawn_pawn": {
     "file": "air_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:51.727Z",
-    "fileHash": "1468e48fb39e72d7e26f3aac7e47969b1543f9b1"
+    "fileHash": "7282eb8ac2159b9af87f257d047e970368b79416"
   },
   "card/air_water_knight_pawn": {
     "file": "air_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:51.739Z",
-    "fileHash": "1468e48fb39e72d7e26f3aac7e47969b1543f9b1"
+    "fileHash": "7282eb8ac2159b9af87f257d047e970368b79416"
   },
   "card/air_water_bishop_pawn": {
     "file": "air_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:51.743Z",
-    "fileHash": "1468e48fb39e72d7e26f3aac7e47969b1543f9b1"
+    "fileHash": "7282eb8ac2159b9af87f257d047e970368b79416"
   },
   "card/air_water_pawn_rook": {
     "file": "air_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:51.747Z",
-    "fileHash": "1468e48fb39e72d7e26f3aac7e47969b1543f9b1"
+    "fileHash": "7282eb8ac2159b9af87f257d047e970368b79416"
   },
   "card/air_water_pawn_queen": {
     "file": "air_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:51.750Z",
-    "fileHash": "1468e48fb39e72d7e26f3aac7e47969b1543f9b1"
+    "fileHash": "7282eb8ac2159b9af87f257d047e970368b79416"
   },
   "card/air_water_knight_knight": {
     "file": "air_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:51.754Z",
-    "fileHash": "1468e48fb39e72d7e26f3aac7e47969b1543f9b1"
+    "fileHash": "7282eb8ac2159b9af87f257d047e970368b79416"
   },
   "card/air_water_bishop_knight": {
     "file": "air_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:51.771Z",
-    "fileHash": "1468e48fb39e72d7e26f3aac7e47969b1543f9b1"
+    "fileHash": "7282eb8ac2159b9af87f257d047e970368b79416"
   },
   "card/air_water_knight_rook": {
     "file": "air_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:51.778Z",
-    "fileHash": "1468e48fb39e72d7e26f3aac7e47969b1543f9b1"
+    "fileHash": "7282eb8ac2159b9af87f257d047e970368b79416"
   },
   "card/air_water_knight_queen": {
     "file": "air_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:51.790Z",
-    "fileHash": "1468e48fb39e72d7e26f3aac7e47969b1543f9b1"
+    "fileHash": "7282eb8ac2159b9af87f257d047e970368b79416"
   },
   "card/air_water_bishop_bishop": {
     "file": "air_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:51.805Z",
-    "fileHash": "1468e48fb39e72d7e26f3aac7e47969b1543f9b1"
+    "fileHash": "7282eb8ac2159b9af87f257d047e970368b79416"
   },
   "card/air_water_bishop_rook": {
     "file": "air_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:51.812Z",
-    "fileHash": "1468e48fb39e72d7e26f3aac7e47969b1543f9b1"
+    "fileHash": "7282eb8ac2159b9af87f257d047e970368b79416"
   },
   "card/air_water_bishop_queen": {
     "file": "air_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:51.819Z",
-    "fileHash": "1468e48fb39e72d7e26f3aac7e47969b1543f9b1"
+    "fileHash": "7282eb8ac2159b9af87f257d047e970368b79416"
   },
   "card/air_water_rook_rook": {
     "file": "air_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:51.825Z",
-    "fileHash": "1468e48fb39e72d7e26f3aac7e47969b1543f9b1"
+    "fileHash": "7282eb8ac2159b9af87f257d047e970368b79416"
   },
   "card/air_water_queen_rook": {
     "file": "air_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:51.831Z",
-    "fileHash": "1468e48fb39e72d7e26f3aac7e47969b1543f9b1"
+    "fileHash": "7282eb8ac2159b9af87f257d047e970368b79416"
   },
   "card/air_water_queen_queen": {
     "file": "air_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:51.839Z",
-    "fileHash": "1468e48fb39e72d7e26f3aac7e47969b1543f9b1"
+    "fileHash": "7282eb8ac2159b9af87f257d047e970368b79416"
   },
   "card/air_light_pawn": {
     "file": "air_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:17:09.818Z",
-    "fileHash": "0039c1b57d260b02db8f2b5a755f375584f0b812"
+    "fileHash": "c84289380945566c53a245fa179ca897b6c00a22"
   },
   "card/air_light_knight": {
     "file": "air_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:17:09.831Z",
-    "fileHash": "0039c1b57d260b02db8f2b5a755f375584f0b812"
+    "fileHash": "c84289380945566c53a245fa179ca897b6c00a22"
   },
   "card/air_light_bishop": {
     "file": "air_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:17:09.842Z",
-    "fileHash": "0039c1b57d260b02db8f2b5a755f375584f0b812"
+    "fileHash": "c84289380945566c53a245fa179ca897b6c00a22"
   },
   "card/air_light_rook": {
     "file": "air_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:17:09.850Z",
-    "fileHash": "0039c1b57d260b02db8f2b5a755f375584f0b812"
+    "fileHash": "c84289380945566c53a245fa179ca897b6c00a22"
   },
   "card/air_light_queen": {
     "file": "air_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:17:09.854Z",
-    "fileHash": "0039c1b57d260b02db8f2b5a755f375584f0b812"
+    "fileHash": "c84289380945566c53a245fa179ca897b6c00a22"
   },
   "card/air_light_pawn_pawn": {
     "file": "air_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:17:09.859Z",
-    "fileHash": "0039c1b57d260b02db8f2b5a755f375584f0b812"
+    "fileHash": "c84289380945566c53a245fa179ca897b6c00a22"
   },
   "card/air_light_knight_pawn": {
     "file": "air_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:17:09.862Z",
-    "fileHash": "0039c1b57d260b02db8f2b5a755f375584f0b812"
+    "fileHash": "c84289380945566c53a245fa179ca897b6c00a22"
   },
   "card/air_light_bishop_pawn": {
     "file": "air_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:17:09.871Z",
-    "fileHash": "0039c1b57d260b02db8f2b5a755f375584f0b812"
+    "fileHash": "c84289380945566c53a245fa179ca897b6c00a22"
   },
   "card/air_light_pawn_rook": {
     "file": "air_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:17:09.880Z",
-    "fileHash": "0039c1b57d260b02db8f2b5a755f375584f0b812"
+    "fileHash": "c84289380945566c53a245fa179ca897b6c00a22"
   },
   "card/air_light_pawn_queen": {
     "file": "air_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:17:09.885Z",
-    "fileHash": "0039c1b57d260b02db8f2b5a755f375584f0b812"
+    "fileHash": "c84289380945566c53a245fa179ca897b6c00a22"
   },
   "card/air_light_knight_knight": {
     "file": "air_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:17:09.890Z",
-    "fileHash": "0039c1b57d260b02db8f2b5a755f375584f0b812"
+    "fileHash": "c84289380945566c53a245fa179ca897b6c00a22"
   },
   "card/air_light_bishop_knight": {
     "file": "air_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:17:09.894Z",
-    "fileHash": "0039c1b57d260b02db8f2b5a755f375584f0b812"
+    "fileHash": "c84289380945566c53a245fa179ca897b6c00a22"
   },
   "card/air_light_knight_rook": {
     "file": "air_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:17:09.904Z",
-    "fileHash": "0039c1b57d260b02db8f2b5a755f375584f0b812"
+    "fileHash": "c84289380945566c53a245fa179ca897b6c00a22"
   },
   "card/air_light_knight_queen": {
     "file": "air_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:17:09.911Z",
-    "fileHash": "0039c1b57d260b02db8f2b5a755f375584f0b812"
+    "fileHash": "c84289380945566c53a245fa179ca897b6c00a22"
   },
   "card/air_light_bishop_bishop": {
     "file": "air_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:17:09.922Z",
-    "fileHash": "0039c1b57d260b02db8f2b5a755f375584f0b812"
+    "fileHash": "c84289380945566c53a245fa179ca897b6c00a22"
   },
   "card/air_light_bishop_rook": {
     "file": "air_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:17:09.927Z",
-    "fileHash": "0039c1b57d260b02db8f2b5a755f375584f0b812"
+    "fileHash": "c84289380945566c53a245fa179ca897b6c00a22"
   },
   "card/air_light_bishop_queen": {
     "file": "air_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:17:09.934Z",
-    "fileHash": "0039c1b57d260b02db8f2b5a755f375584f0b812"
+    "fileHash": "c84289380945566c53a245fa179ca897b6c00a22"
   },
   "card/air_light_rook_rook": {
     "file": "air_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:17:09.941Z",
-    "fileHash": "0039c1b57d260b02db8f2b5a755f375584f0b812"
+    "fileHash": "c84289380945566c53a245fa179ca897b6c00a22"
   },
   "card/air_light_queen_rook": {
     "file": "air_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:17:09.950Z",
-    "fileHash": "0039c1b57d260b02db8f2b5a755f375584f0b812"
+    "fileHash": "c84289380945566c53a245fa179ca897b6c00a22"
   },
   "card/air_light_queen_queen": {
     "file": "air_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:17:09.955Z",
-    "fileHash": "0039c1b57d260b02db8f2b5a755f375584f0b812"
+    "fileHash": "c84289380945566c53a245fa179ca897b6c00a22"
   },
   "card/rook_rook": {
     "file": "chess_combined.json",
@@ -2441,7 +2441,7 @@
       "effects": []
     },
     "at": "2026-07-12T07:23:23.507Z",
-    "fileHash": "7a9cfbe7174ffc3861bb01fdc53c1b59e6d2fc07"
+    "fileHash": "387d0a59ee14cc0a18c6bb3c0ab5eea6ee521449"
   },
   "card/darkness_water_bishop_rook": {
     "file": "darkness_water_units.json",
@@ -2469,7 +2469,7 @@
       "display_name": "Blight Arcane Tower"
     },
     "at": "2026-07-12T07:24:48.937Z",
-    "fileHash": "edd05fc63079566c52fccb0c126cde6713e3096c",
+    "fileHash": "b329e42afd93c86463048b3ea765b31083d466fb",
     "movedFrom": "darkness_water_poison_units.json"
   },
   "card/bishop_rook": {
@@ -2501,427 +2501,427 @@
       ]
     },
     "at": "2026-07-12T07:24:59.800Z",
-    "fileHash": "7a9cfbe7174ffc3861bb01fdc53c1b59e6d2fc07"
+    "fileHash": "387d0a59ee14cc0a18c6bb3c0ab5eea6ee521449"
   },
   "card/earth_fire_pawn": {
     "file": "earth_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:07.642Z",
-    "fileHash": "72afcc7962adf5f82985d2319178828ced665443"
+    "fileHash": "0a1c14e7f3944189d5025b7a6fa12a1bc8bfbe6d"
   },
   "card/earth_fire_knight": {
     "file": "earth_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:07.648Z",
-    "fileHash": "72afcc7962adf5f82985d2319178828ced665443"
+    "fileHash": "0a1c14e7f3944189d5025b7a6fa12a1bc8bfbe6d"
   },
   "card/earth_fire_bishop": {
     "file": "earth_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:07.652Z",
-    "fileHash": "72afcc7962adf5f82985d2319178828ced665443"
+    "fileHash": "0a1c14e7f3944189d5025b7a6fa12a1bc8bfbe6d"
   },
   "card/earth_fire_rook": {
     "file": "earth_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:07.655Z",
-    "fileHash": "72afcc7962adf5f82985d2319178828ced665443"
+    "fileHash": "0a1c14e7f3944189d5025b7a6fa12a1bc8bfbe6d"
   },
   "card/earth_fire_queen": {
     "file": "earth_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:07.659Z",
-    "fileHash": "72afcc7962adf5f82985d2319178828ced665443"
+    "fileHash": "0a1c14e7f3944189d5025b7a6fa12a1bc8bfbe6d"
   },
   "card/earth_fire_pawn_pawn": {
     "file": "earth_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:07.663Z",
-    "fileHash": "72afcc7962adf5f82985d2319178828ced665443"
+    "fileHash": "0a1c14e7f3944189d5025b7a6fa12a1bc8bfbe6d"
   },
   "card/earth_fire_knight_pawn": {
     "file": "earth_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:07.666Z",
-    "fileHash": "72afcc7962adf5f82985d2319178828ced665443"
+    "fileHash": "0a1c14e7f3944189d5025b7a6fa12a1bc8bfbe6d"
   },
   "card/earth_fire_bishop_pawn": {
     "file": "earth_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:07.670Z",
-    "fileHash": "72afcc7962adf5f82985d2319178828ced665443"
+    "fileHash": "0a1c14e7f3944189d5025b7a6fa12a1bc8bfbe6d"
   },
   "card/earth_fire_pawn_rook": {
     "file": "earth_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:07.673Z",
-    "fileHash": "72afcc7962adf5f82985d2319178828ced665443"
+    "fileHash": "0a1c14e7f3944189d5025b7a6fa12a1bc8bfbe6d"
   },
   "card/earth_fire_pawn_queen": {
     "file": "earth_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:07.677Z",
-    "fileHash": "72afcc7962adf5f82985d2319178828ced665443"
+    "fileHash": "0a1c14e7f3944189d5025b7a6fa12a1bc8bfbe6d"
   },
   "card/earth_fire_knight_knight": {
     "file": "earth_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:07.680Z",
-    "fileHash": "72afcc7962adf5f82985d2319178828ced665443"
+    "fileHash": "0a1c14e7f3944189d5025b7a6fa12a1bc8bfbe6d"
   },
   "card/earth_fire_bishop_knight": {
     "file": "earth_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:07.684Z",
-    "fileHash": "72afcc7962adf5f82985d2319178828ced665443"
+    "fileHash": "0a1c14e7f3944189d5025b7a6fa12a1bc8bfbe6d"
   },
   "card/earth_fire_knight_rook": {
     "file": "earth_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:07.687Z",
-    "fileHash": "72afcc7962adf5f82985d2319178828ced665443"
+    "fileHash": "0a1c14e7f3944189d5025b7a6fa12a1bc8bfbe6d"
   },
   "card/earth_fire_knight_queen": {
     "file": "earth_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:07.691Z",
-    "fileHash": "72afcc7962adf5f82985d2319178828ced665443"
+    "fileHash": "0a1c14e7f3944189d5025b7a6fa12a1bc8bfbe6d"
   },
   "card/earth_fire_bishop_bishop": {
     "file": "earth_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:07.695Z",
-    "fileHash": "72afcc7962adf5f82985d2319178828ced665443"
+    "fileHash": "0a1c14e7f3944189d5025b7a6fa12a1bc8bfbe6d"
   },
   "card/earth_fire_bishop_rook": {
     "file": "earth_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:07.698Z",
-    "fileHash": "72afcc7962adf5f82985d2319178828ced665443"
+    "fileHash": "0a1c14e7f3944189d5025b7a6fa12a1bc8bfbe6d"
   },
   "card/earth_fire_bishop_queen": {
     "file": "earth_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:07.702Z",
-    "fileHash": "72afcc7962adf5f82985d2319178828ced665443"
+    "fileHash": "0a1c14e7f3944189d5025b7a6fa12a1bc8bfbe6d"
   },
   "card/earth_fire_rook_rook": {
     "file": "earth_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:07.705Z",
-    "fileHash": "72afcc7962adf5f82985d2319178828ced665443"
+    "fileHash": "0a1c14e7f3944189d5025b7a6fa12a1bc8bfbe6d"
   },
   "card/earth_fire_queen_rook": {
     "file": "earth_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:07.709Z",
-    "fileHash": "72afcc7962adf5f82985d2319178828ced665443"
+    "fileHash": "0a1c14e7f3944189d5025b7a6fa12a1bc8bfbe6d"
   },
   "card/earth_fire_queen_queen": {
     "file": "earth_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:07.713Z",
-    "fileHash": "72afcc7962adf5f82985d2319178828ced665443"
+    "fileHash": "0a1c14e7f3944189d5025b7a6fa12a1bc8bfbe6d"
   },
   "card/darkness_fire_pawn": {
     "file": "darkness_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:21.086Z",
-    "fileHash": "f3e9ef96faad35e4a481975188ee5a50c9ef0bef"
+    "fileHash": "1895848150196dc3ebe4a85e601d6fe4cd103efe"
   },
   "card/darkness_fire_knight": {
     "file": "darkness_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:21.091Z",
-    "fileHash": "f3e9ef96faad35e4a481975188ee5a50c9ef0bef"
+    "fileHash": "1895848150196dc3ebe4a85e601d6fe4cd103efe"
   },
   "card/darkness_fire_bishop": {
     "file": "darkness_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:21.094Z",
-    "fileHash": "f3e9ef96faad35e4a481975188ee5a50c9ef0bef"
+    "fileHash": "1895848150196dc3ebe4a85e601d6fe4cd103efe"
   },
   "card/darkness_fire_rook": {
     "file": "darkness_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:21.098Z",
-    "fileHash": "f3e9ef96faad35e4a481975188ee5a50c9ef0bef"
+    "fileHash": "1895848150196dc3ebe4a85e601d6fe4cd103efe"
   },
   "card/darkness_fire_queen": {
     "file": "darkness_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:21.102Z",
-    "fileHash": "f3e9ef96faad35e4a481975188ee5a50c9ef0bef"
+    "fileHash": "1895848150196dc3ebe4a85e601d6fe4cd103efe"
   },
   "card/darkness_fire_pawn_pawn": {
     "file": "darkness_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:21.106Z",
-    "fileHash": "f3e9ef96faad35e4a481975188ee5a50c9ef0bef"
+    "fileHash": "1895848150196dc3ebe4a85e601d6fe4cd103efe"
   },
   "card/darkness_fire_knight_pawn": {
     "file": "darkness_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:21.110Z",
-    "fileHash": "f3e9ef96faad35e4a481975188ee5a50c9ef0bef"
+    "fileHash": "1895848150196dc3ebe4a85e601d6fe4cd103efe"
   },
   "card/darkness_fire_bishop_pawn": {
     "file": "darkness_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:21.114Z",
-    "fileHash": "f3e9ef96faad35e4a481975188ee5a50c9ef0bef"
+    "fileHash": "1895848150196dc3ebe4a85e601d6fe4cd103efe"
   },
   "card/darkness_fire_pawn_rook": {
     "file": "darkness_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:21.118Z",
-    "fileHash": "f3e9ef96faad35e4a481975188ee5a50c9ef0bef"
+    "fileHash": "1895848150196dc3ebe4a85e601d6fe4cd103efe"
   },
   "card/darkness_fire_pawn_queen": {
     "file": "darkness_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:21.122Z",
-    "fileHash": "f3e9ef96faad35e4a481975188ee5a50c9ef0bef"
+    "fileHash": "1895848150196dc3ebe4a85e601d6fe4cd103efe"
   },
   "card/darkness_fire_knight_knight": {
     "file": "darkness_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:21.125Z",
-    "fileHash": "f3e9ef96faad35e4a481975188ee5a50c9ef0bef"
+    "fileHash": "1895848150196dc3ebe4a85e601d6fe4cd103efe"
   },
   "card/darkness_fire_bishop_knight": {
     "file": "darkness_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:21.129Z",
-    "fileHash": "f3e9ef96faad35e4a481975188ee5a50c9ef0bef"
+    "fileHash": "1895848150196dc3ebe4a85e601d6fe4cd103efe"
   },
   "card/darkness_fire_knight_rook": {
     "file": "darkness_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:21.133Z",
-    "fileHash": "f3e9ef96faad35e4a481975188ee5a50c9ef0bef"
+    "fileHash": "1895848150196dc3ebe4a85e601d6fe4cd103efe"
   },
   "card/darkness_fire_knight_queen": {
     "file": "darkness_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:21.137Z",
-    "fileHash": "f3e9ef96faad35e4a481975188ee5a50c9ef0bef"
+    "fileHash": "1895848150196dc3ebe4a85e601d6fe4cd103efe"
   },
   "card/darkness_fire_bishop_bishop": {
     "file": "darkness_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:21.140Z",
-    "fileHash": "f3e9ef96faad35e4a481975188ee5a50c9ef0bef"
+    "fileHash": "1895848150196dc3ebe4a85e601d6fe4cd103efe"
   },
   "card/darkness_fire_bishop_rook": {
     "file": "darkness_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:21.144Z",
-    "fileHash": "f3e9ef96faad35e4a481975188ee5a50c9ef0bef"
+    "fileHash": "1895848150196dc3ebe4a85e601d6fe4cd103efe"
   },
   "card/darkness_fire_bishop_queen": {
     "file": "darkness_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:21.148Z",
-    "fileHash": "f3e9ef96faad35e4a481975188ee5a50c9ef0bef"
+    "fileHash": "1895848150196dc3ebe4a85e601d6fe4cd103efe"
   },
   "card/darkness_fire_rook_rook": {
     "file": "darkness_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:21.153Z",
-    "fileHash": "f3e9ef96faad35e4a481975188ee5a50c9ef0bef"
+    "fileHash": "1895848150196dc3ebe4a85e601d6fe4cd103efe"
   },
   "card/darkness_fire_queen_rook": {
     "file": "darkness_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:21.157Z",
-    "fileHash": "f3e9ef96faad35e4a481975188ee5a50c9ef0bef"
+    "fileHash": "1895848150196dc3ebe4a85e601d6fe4cd103efe"
   },
   "card/darkness_fire_queen_queen": {
     "file": "darkness_fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:21.161Z",
-    "fileHash": "f3e9ef96faad35e4a481975188ee5a50c9ef0bef"
+    "fileHash": "1895848150196dc3ebe4a85e601d6fe4cd103efe"
   },
   "card/fire_light_pawn": {
     "file": "fire_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:27.420Z",
-    "fileHash": "51028e925ff7bd84cef58ef50f90e268f99ce53d"
+    "fileHash": "64e5bf1141ed41ef13f41aa94f6dae55b80ba6c7"
   },
   "card/fire_light_knight": {
     "file": "fire_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:27.425Z",
-    "fileHash": "51028e925ff7bd84cef58ef50f90e268f99ce53d"
+    "fileHash": "64e5bf1141ed41ef13f41aa94f6dae55b80ba6c7"
   },
   "card/fire_light_bishop": {
     "file": "fire_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:27.429Z",
-    "fileHash": "51028e925ff7bd84cef58ef50f90e268f99ce53d"
+    "fileHash": "64e5bf1141ed41ef13f41aa94f6dae55b80ba6c7"
   },
   "card/fire_light_rook": {
     "file": "fire_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:27.432Z",
-    "fileHash": "51028e925ff7bd84cef58ef50f90e268f99ce53d"
+    "fileHash": "64e5bf1141ed41ef13f41aa94f6dae55b80ba6c7"
   },
   "card/fire_light_queen": {
     "file": "fire_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:27.436Z",
-    "fileHash": "51028e925ff7bd84cef58ef50f90e268f99ce53d"
+    "fileHash": "64e5bf1141ed41ef13f41aa94f6dae55b80ba6c7"
   },
   "card/fire_light_pawn_pawn": {
     "file": "fire_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:27.440Z",
-    "fileHash": "51028e925ff7bd84cef58ef50f90e268f99ce53d"
+    "fileHash": "64e5bf1141ed41ef13f41aa94f6dae55b80ba6c7"
   },
   "card/fire_light_knight_pawn": {
     "file": "fire_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:27.443Z",
-    "fileHash": "51028e925ff7bd84cef58ef50f90e268f99ce53d"
+    "fileHash": "64e5bf1141ed41ef13f41aa94f6dae55b80ba6c7"
   },
   "card/fire_light_bishop_pawn": {
     "file": "fire_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:27.448Z",
-    "fileHash": "51028e925ff7bd84cef58ef50f90e268f99ce53d"
+    "fileHash": "64e5bf1141ed41ef13f41aa94f6dae55b80ba6c7"
   },
   "card/fire_light_pawn_rook": {
     "file": "fire_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:27.452Z",
-    "fileHash": "51028e925ff7bd84cef58ef50f90e268f99ce53d"
+    "fileHash": "64e5bf1141ed41ef13f41aa94f6dae55b80ba6c7"
   },
   "card/fire_light_pawn_queen": {
     "file": "fire_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:27.456Z",
-    "fileHash": "51028e925ff7bd84cef58ef50f90e268f99ce53d"
+    "fileHash": "64e5bf1141ed41ef13f41aa94f6dae55b80ba6c7"
   },
   "card/fire_light_knight_knight": {
     "file": "fire_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:27.460Z",
-    "fileHash": "51028e925ff7bd84cef58ef50f90e268f99ce53d"
+    "fileHash": "64e5bf1141ed41ef13f41aa94f6dae55b80ba6c7"
   },
   "card/fire_light_bishop_knight": {
     "file": "fire_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:27.464Z",
-    "fileHash": "51028e925ff7bd84cef58ef50f90e268f99ce53d"
+    "fileHash": "64e5bf1141ed41ef13f41aa94f6dae55b80ba6c7"
   },
   "card/fire_light_knight_rook": {
     "file": "fire_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:27.467Z",
-    "fileHash": "51028e925ff7bd84cef58ef50f90e268f99ce53d"
+    "fileHash": "64e5bf1141ed41ef13f41aa94f6dae55b80ba6c7"
   },
   "card/fire_light_knight_queen": {
     "file": "fire_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:27.471Z",
-    "fileHash": "51028e925ff7bd84cef58ef50f90e268f99ce53d"
+    "fileHash": "64e5bf1141ed41ef13f41aa94f6dae55b80ba6c7"
   },
   "card/fire_light_bishop_bishop": {
     "file": "fire_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:27.475Z",
-    "fileHash": "51028e925ff7bd84cef58ef50f90e268f99ce53d"
+    "fileHash": "64e5bf1141ed41ef13f41aa94f6dae55b80ba6c7"
   },
   "card/fire_light_bishop_rook": {
     "file": "fire_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:27.479Z",
-    "fileHash": "51028e925ff7bd84cef58ef50f90e268f99ce53d"
+    "fileHash": "64e5bf1141ed41ef13f41aa94f6dae55b80ba6c7"
   },
   "card/fire_light_bishop_queen": {
     "file": "fire_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:27.483Z",
-    "fileHash": "51028e925ff7bd84cef58ef50f90e268f99ce53d"
+    "fileHash": "64e5bf1141ed41ef13f41aa94f6dae55b80ba6c7"
   },
   "card/fire_light_rook_rook": {
     "file": "fire_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:27.487Z",
-    "fileHash": "51028e925ff7bd84cef58ef50f90e268f99ce53d"
+    "fileHash": "64e5bf1141ed41ef13f41aa94f6dae55b80ba6c7"
   },
   "card/fire_light_queen_rook": {
     "file": "fire_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:27.491Z",
-    "fileHash": "51028e925ff7bd84cef58ef50f90e268f99ce53d"
+    "fileHash": "64e5bf1141ed41ef13f41aa94f6dae55b80ba6c7"
   },
   "card/fire_light_queen_queen": {
     "file": "fire_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:55:27.495Z",
-    "fileHash": "51028e925ff7bd84cef58ef50f90e268f99ce53d"
+    "fileHash": "64e5bf1141ed41ef13f41aa94f6dae55b80ba6c7"
   },
   "card/darkness_water_rook": {
     "file": "darkness_water_units.json",
@@ -2952,7 +2952,7 @@
     },
     "movedFrom": "darkness_water_poison_units.json",
     "at": "2026-07-12T07:55:50.767Z",
-    "fileHash": "edd05fc63079566c52fccb0c126cde6713e3096c"
+    "fileHash": "b329e42afd93c86463048b3ea765b31083d466fb"
   },
   "card/darkness_water_queen": {
     "file": "darkness_water_units.json",
@@ -2980,7 +2980,7 @@
     },
     "movedFrom": "darkness_water_poison_units.json",
     "at": "2026-07-12T07:55:50.772Z",
-    "fileHash": "edd05fc63079566c52fccb0c126cde6713e3096c"
+    "fileHash": "b329e42afd93c86463048b3ea765b31083d466fb"
   },
   "card/darkness_water_pawn_pawn": {
     "file": "darkness_water_units.json",
@@ -3009,7 +3009,7 @@
     },
     "movedFrom": "darkness_water_poison_units.json",
     "at": "2026-07-12T07:55:50.777Z",
-    "fileHash": "edd05fc63079566c52fccb0c126cde6713e3096c"
+    "fileHash": "b329e42afd93c86463048b3ea765b31083d466fb"
   },
   "card/darkness_water_knight_pawn": {
     "file": "darkness_water_units.json",
@@ -3038,7 +3038,7 @@
     },
     "movedFrom": "darkness_water_poison_units.json",
     "at": "2026-07-12T07:55:50.781Z",
-    "fileHash": "edd05fc63079566c52fccb0c126cde6713e3096c"
+    "fileHash": "b329e42afd93c86463048b3ea765b31083d466fb"
   },
   "card/darkness_water_bishop_pawn": {
     "file": "darkness_water_units.json",
@@ -3067,7 +3067,7 @@
     },
     "movedFrom": "darkness_water_poison_units.json",
     "at": "2026-07-12T07:55:50.786Z",
-    "fileHash": "edd05fc63079566c52fccb0c126cde6713e3096c"
+    "fileHash": "b329e42afd93c86463048b3ea765b31083d466fb"
   },
   "card/darkness_water_pawn_rook": {
     "file": "darkness_water_units.json",
@@ -3096,7 +3096,7 @@
     },
     "movedFrom": "darkness_water_poison_units.json",
     "at": "2026-07-12T07:55:50.791Z",
-    "fileHash": "edd05fc63079566c52fccb0c126cde6713e3096c"
+    "fileHash": "b329e42afd93c86463048b3ea765b31083d466fb"
   },
   "card/darkness_water_pawn_queen": {
     "file": "darkness_water_units.json",
@@ -3125,7 +3125,7 @@
     },
     "movedFrom": "darkness_water_poison_units.json",
     "at": "2026-07-12T07:55:50.795Z",
-    "fileHash": "edd05fc63079566c52fccb0c126cde6713e3096c"
+    "fileHash": "b329e42afd93c86463048b3ea765b31083d466fb"
   },
   "card/darkness_water_knight_knight": {
     "file": "darkness_water_units.json",
@@ -3154,7 +3154,7 @@
     },
     "movedFrom": "darkness_water_poison_units.json",
     "at": "2026-07-12T07:55:50.800Z",
-    "fileHash": "edd05fc63079566c52fccb0c126cde6713e3096c"
+    "fileHash": "b329e42afd93c86463048b3ea765b31083d466fb"
   },
   "card/darkness_water_knight_rook": {
     "file": "darkness_water_units.json",
@@ -3183,7 +3183,7 @@
     },
     "movedFrom": "darkness_water_poison_units.json",
     "at": "2026-07-12T07:55:50.810Z",
-    "fileHash": "edd05fc63079566c52fccb0c126cde6713e3096c"
+    "fileHash": "b329e42afd93c86463048b3ea765b31083d466fb"
   },
   "card/darkness_water_knight_queen": {
     "file": "darkness_water_units.json",
@@ -3212,7 +3212,7 @@
     },
     "movedFrom": "darkness_water_poison_units.json",
     "at": "2026-07-12T07:55:50.814Z",
-    "fileHash": "edd05fc63079566c52fccb0c126cde6713e3096c"
+    "fileHash": "b329e42afd93c86463048b3ea765b31083d466fb"
   },
   "card/darkness_water_rook_rook": {
     "file": "darkness_water_units.json",
@@ -3241,7 +3241,7 @@
     },
     "movedFrom": "darkness_water_poison_units.json",
     "at": "2026-07-12T07:55:50.832Z",
-    "fileHash": "edd05fc63079566c52fccb0c126cde6713e3096c"
+    "fileHash": "b329e42afd93c86463048b3ea765b31083d466fb"
   },
   "card/darkness_water_queen_rook": {
     "file": "darkness_water_units.json",
@@ -3270,7 +3270,7 @@
     },
     "movedFrom": "darkness_water_poison_units.json",
     "at": "2026-07-12T07:55:50.837Z",
-    "fileHash": "edd05fc63079566c52fccb0c126cde6713e3096c"
+    "fileHash": "b329e42afd93c86463048b3ea765b31083d466fb"
   },
   "card/darkness_water_queen_queen": {
     "file": "darkness_water_units.json",
@@ -3299,987 +3299,987 @@
     },
     "movedFrom": "darkness_water_poison_units.json",
     "at": "2026-07-12T07:55:50.841Z",
-    "fileHash": "edd05fc63079566c52fccb0c126cde6713e3096c"
+    "fileHash": "b329e42afd93c86463048b3ea765b31083d466fb"
   },
   "card/earth_light_pawn": {
     "file": "earth_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:14.701Z",
-    "fileHash": "e942e4d9460f03e130787ece674668ec4a7c718a"
+    "fileHash": "24f07770c513ff7d87a986791fe0adadf9ca3111"
   },
   "card/earth_light_knight": {
     "file": "earth_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:14.707Z",
-    "fileHash": "e942e4d9460f03e130787ece674668ec4a7c718a"
+    "fileHash": "24f07770c513ff7d87a986791fe0adadf9ca3111"
   },
   "card/earth_light_bishop": {
     "file": "earth_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:14.711Z",
-    "fileHash": "e942e4d9460f03e130787ece674668ec4a7c718a"
+    "fileHash": "24f07770c513ff7d87a986791fe0adadf9ca3111"
   },
   "card/earth_light_rook": {
     "file": "earth_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:14.716Z",
-    "fileHash": "e942e4d9460f03e130787ece674668ec4a7c718a"
+    "fileHash": "24f07770c513ff7d87a986791fe0adadf9ca3111"
   },
   "card/earth_light_queen": {
     "file": "earth_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:14.721Z",
-    "fileHash": "e942e4d9460f03e130787ece674668ec4a7c718a"
+    "fileHash": "24f07770c513ff7d87a986791fe0adadf9ca3111"
   },
   "card/earth_light_pawn_pawn": {
     "file": "earth_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:14.725Z",
-    "fileHash": "e942e4d9460f03e130787ece674668ec4a7c718a"
+    "fileHash": "24f07770c513ff7d87a986791fe0adadf9ca3111"
   },
   "card/earth_light_knight_pawn": {
     "file": "earth_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:14.729Z",
-    "fileHash": "e942e4d9460f03e130787ece674668ec4a7c718a"
+    "fileHash": "24f07770c513ff7d87a986791fe0adadf9ca3111"
   },
   "card/earth_light_bishop_pawn": {
     "file": "earth_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:14.733Z",
-    "fileHash": "e942e4d9460f03e130787ece674668ec4a7c718a"
+    "fileHash": "24f07770c513ff7d87a986791fe0adadf9ca3111"
   },
   "card/earth_light_pawn_rook": {
     "file": "earth_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:14.737Z",
-    "fileHash": "e942e4d9460f03e130787ece674668ec4a7c718a"
+    "fileHash": "24f07770c513ff7d87a986791fe0adadf9ca3111"
   },
   "card/earth_light_pawn_queen": {
     "file": "earth_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:14.741Z",
-    "fileHash": "e942e4d9460f03e130787ece674668ec4a7c718a"
+    "fileHash": "24f07770c513ff7d87a986791fe0adadf9ca3111"
   },
   "card/earth_light_knight_knight": {
     "file": "earth_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:14.745Z",
-    "fileHash": "e942e4d9460f03e130787ece674668ec4a7c718a"
+    "fileHash": "24f07770c513ff7d87a986791fe0adadf9ca3111"
   },
   "card/earth_light_bishop_knight": {
     "file": "earth_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:14.749Z",
-    "fileHash": "e942e4d9460f03e130787ece674668ec4a7c718a"
+    "fileHash": "24f07770c513ff7d87a986791fe0adadf9ca3111"
   },
   "card/earth_light_knight_rook": {
     "file": "earth_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:14.753Z",
-    "fileHash": "e942e4d9460f03e130787ece674668ec4a7c718a"
+    "fileHash": "24f07770c513ff7d87a986791fe0adadf9ca3111"
   },
   "card/earth_light_knight_queen": {
     "file": "earth_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:14.757Z",
-    "fileHash": "e942e4d9460f03e130787ece674668ec4a7c718a"
+    "fileHash": "24f07770c513ff7d87a986791fe0adadf9ca3111"
   },
   "card/earth_light_bishop_bishop": {
     "file": "earth_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:14.761Z",
-    "fileHash": "e942e4d9460f03e130787ece674668ec4a7c718a"
+    "fileHash": "24f07770c513ff7d87a986791fe0adadf9ca3111"
   },
   "card/earth_light_bishop_rook": {
     "file": "earth_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:14.765Z",
-    "fileHash": "e942e4d9460f03e130787ece674668ec4a7c718a"
+    "fileHash": "24f07770c513ff7d87a986791fe0adadf9ca3111"
   },
   "card/earth_light_bishop_queen": {
     "file": "earth_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:14.769Z",
-    "fileHash": "e942e4d9460f03e130787ece674668ec4a7c718a"
+    "fileHash": "24f07770c513ff7d87a986791fe0adadf9ca3111"
   },
   "card/earth_light_rook_rook": {
     "file": "earth_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:14.773Z",
-    "fileHash": "e942e4d9460f03e130787ece674668ec4a7c718a"
+    "fileHash": "24f07770c513ff7d87a986791fe0adadf9ca3111"
   },
   "card/earth_light_queen_rook": {
     "file": "earth_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:14.777Z",
-    "fileHash": "e942e4d9460f03e130787ece674668ec4a7c718a"
+    "fileHash": "24f07770c513ff7d87a986791fe0adadf9ca3111"
   },
   "card/earth_light_queen_queen": {
     "file": "earth_light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:14.781Z",
-    "fileHash": "e942e4d9460f03e130787ece674668ec4a7c718a"
+    "fileHash": "24f07770c513ff7d87a986791fe0adadf9ca3111"
   },
   "card/darkness_pawn": {
     "file": "darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:25.118Z",
-    "fileHash": "913368fc4c1c74ab60c59c62688cfc786c476f90"
+    "fileHash": "5bc7a3130bf147a308c645c9907c5d23fbd02d5d"
   },
   "card/darkness_knight": {
     "file": "darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:25.123Z",
-    "fileHash": "913368fc4c1c74ab60c59c62688cfc786c476f90"
+    "fileHash": "5bc7a3130bf147a308c645c9907c5d23fbd02d5d"
   },
   "card/darkness_bishop": {
     "file": "darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:25.127Z",
-    "fileHash": "913368fc4c1c74ab60c59c62688cfc786c476f90"
+    "fileHash": "5bc7a3130bf147a308c645c9907c5d23fbd02d5d"
   },
   "card/darkness_rook": {
     "file": "darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:25.132Z",
-    "fileHash": "913368fc4c1c74ab60c59c62688cfc786c476f90"
+    "fileHash": "5bc7a3130bf147a308c645c9907c5d23fbd02d5d"
   },
   "card/darkness_queen": {
     "file": "darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:25.136Z",
-    "fileHash": "913368fc4c1c74ab60c59c62688cfc786c476f90"
+    "fileHash": "5bc7a3130bf147a308c645c9907c5d23fbd02d5d"
   },
   "card/darkness_pawn_pawn": {
     "file": "darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:25.140Z",
-    "fileHash": "913368fc4c1c74ab60c59c62688cfc786c476f90"
+    "fileHash": "5bc7a3130bf147a308c645c9907c5d23fbd02d5d"
   },
   "card/darkness_knight_pawn": {
     "file": "darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:25.144Z",
-    "fileHash": "913368fc4c1c74ab60c59c62688cfc786c476f90"
+    "fileHash": "5bc7a3130bf147a308c645c9907c5d23fbd02d5d"
   },
   "card/darkness_bishop_pawn": {
     "file": "darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:25.148Z",
-    "fileHash": "913368fc4c1c74ab60c59c62688cfc786c476f90"
+    "fileHash": "5bc7a3130bf147a308c645c9907c5d23fbd02d5d"
   },
   "card/darkness_pawn_rook": {
     "file": "darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:25.153Z",
-    "fileHash": "913368fc4c1c74ab60c59c62688cfc786c476f90"
+    "fileHash": "5bc7a3130bf147a308c645c9907c5d23fbd02d5d"
   },
   "card/darkness_pawn_queen": {
     "file": "darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:25.157Z",
-    "fileHash": "913368fc4c1c74ab60c59c62688cfc786c476f90"
+    "fileHash": "5bc7a3130bf147a308c645c9907c5d23fbd02d5d"
   },
   "card/darkness_knight_knight": {
     "file": "darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:25.161Z",
-    "fileHash": "913368fc4c1c74ab60c59c62688cfc786c476f90"
+    "fileHash": "5bc7a3130bf147a308c645c9907c5d23fbd02d5d"
   },
   "card/darkness_bishop_knight": {
     "file": "darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:25.165Z",
-    "fileHash": "913368fc4c1c74ab60c59c62688cfc786c476f90"
+    "fileHash": "5bc7a3130bf147a308c645c9907c5d23fbd02d5d"
   },
   "card/darkness_knight_rook": {
     "file": "darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:25.170Z",
-    "fileHash": "913368fc4c1c74ab60c59c62688cfc786c476f90"
+    "fileHash": "5bc7a3130bf147a308c645c9907c5d23fbd02d5d"
   },
   "card/darkness_knight_queen": {
     "file": "darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:25.173Z",
-    "fileHash": "913368fc4c1c74ab60c59c62688cfc786c476f90"
+    "fileHash": "5bc7a3130bf147a308c645c9907c5d23fbd02d5d"
   },
   "card/darkness_bishop_bishop": {
     "file": "darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:25.178Z",
-    "fileHash": "913368fc4c1c74ab60c59c62688cfc786c476f90"
+    "fileHash": "5bc7a3130bf147a308c645c9907c5d23fbd02d5d"
   },
   "card/darkness_bishop_rook": {
     "file": "darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:25.182Z",
-    "fileHash": "913368fc4c1c74ab60c59c62688cfc786c476f90"
+    "fileHash": "5bc7a3130bf147a308c645c9907c5d23fbd02d5d"
   },
   "card/darkness_bishop_queen": {
     "file": "darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:25.186Z",
-    "fileHash": "913368fc4c1c74ab60c59c62688cfc786c476f90"
+    "fileHash": "5bc7a3130bf147a308c645c9907c5d23fbd02d5d"
   },
   "card/darkness_rook_rook": {
     "file": "darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:25.191Z",
-    "fileHash": "913368fc4c1c74ab60c59c62688cfc786c476f90"
+    "fileHash": "5bc7a3130bf147a308c645c9907c5d23fbd02d5d"
   },
   "card/darkness_queen_rook": {
     "file": "darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:25.195Z",
-    "fileHash": "913368fc4c1c74ab60c59c62688cfc786c476f90"
+    "fileHash": "5bc7a3130bf147a308c645c9907c5d23fbd02d5d"
   },
   "card/darkness_queen_queen": {
     "file": "darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:25.198Z",
-    "fileHash": "913368fc4c1c74ab60c59c62688cfc786c476f90"
+    "fileHash": "5bc7a3130bf147a308c645c9907c5d23fbd02d5d"
   },
   "card/water_pawn": {
     "file": "water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:30.843Z",
-    "fileHash": "07c35968e4bc45cafd9249eab4963a77f917fe04"
+    "fileHash": "a4569a72a3dc1b9d30d0ad6a8a46698a61c155de"
   },
   "card/water_knight": {
     "file": "water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:30.848Z",
-    "fileHash": "07c35968e4bc45cafd9249eab4963a77f917fe04"
+    "fileHash": "a4569a72a3dc1b9d30d0ad6a8a46698a61c155de"
   },
   "card/water_bishop": {
     "file": "water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:30.852Z",
-    "fileHash": "07c35968e4bc45cafd9249eab4963a77f917fe04"
+    "fileHash": "a4569a72a3dc1b9d30d0ad6a8a46698a61c155de"
   },
   "card/water_rook": {
     "file": "water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:30.856Z",
-    "fileHash": "07c35968e4bc45cafd9249eab4963a77f917fe04"
+    "fileHash": "a4569a72a3dc1b9d30d0ad6a8a46698a61c155de"
   },
   "card/water_queen": {
     "file": "water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:30.860Z",
-    "fileHash": "07c35968e4bc45cafd9249eab4963a77f917fe04"
+    "fileHash": "a4569a72a3dc1b9d30d0ad6a8a46698a61c155de"
   },
   "card/water_pawn_pawn": {
     "file": "water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:30.864Z",
-    "fileHash": "07c35968e4bc45cafd9249eab4963a77f917fe04"
+    "fileHash": "a4569a72a3dc1b9d30d0ad6a8a46698a61c155de"
   },
   "card/water_knight_pawn": {
     "file": "water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:30.868Z",
-    "fileHash": "07c35968e4bc45cafd9249eab4963a77f917fe04"
+    "fileHash": "a4569a72a3dc1b9d30d0ad6a8a46698a61c155de"
   },
   "card/water_bishop_pawn": {
     "file": "water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:30.872Z",
-    "fileHash": "07c35968e4bc45cafd9249eab4963a77f917fe04"
+    "fileHash": "a4569a72a3dc1b9d30d0ad6a8a46698a61c155de"
   },
   "card/water_pawn_rook": {
     "file": "water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:30.876Z",
-    "fileHash": "07c35968e4bc45cafd9249eab4963a77f917fe04"
+    "fileHash": "a4569a72a3dc1b9d30d0ad6a8a46698a61c155de"
   },
   "card/water_pawn_queen": {
     "file": "water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:30.880Z",
-    "fileHash": "07c35968e4bc45cafd9249eab4963a77f917fe04"
+    "fileHash": "a4569a72a3dc1b9d30d0ad6a8a46698a61c155de"
   },
   "card/water_knight_knight": {
     "file": "water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:30.884Z",
-    "fileHash": "07c35968e4bc45cafd9249eab4963a77f917fe04"
+    "fileHash": "a4569a72a3dc1b9d30d0ad6a8a46698a61c155de"
   },
   "card/water_bishop_knight": {
     "file": "water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:30.888Z",
-    "fileHash": "07c35968e4bc45cafd9249eab4963a77f917fe04"
+    "fileHash": "a4569a72a3dc1b9d30d0ad6a8a46698a61c155de"
   },
   "card/water_knight_rook": {
     "file": "water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:30.892Z",
-    "fileHash": "07c35968e4bc45cafd9249eab4963a77f917fe04"
+    "fileHash": "a4569a72a3dc1b9d30d0ad6a8a46698a61c155de"
   },
   "card/water_knight_queen": {
     "file": "water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:30.896Z",
-    "fileHash": "07c35968e4bc45cafd9249eab4963a77f917fe04"
+    "fileHash": "a4569a72a3dc1b9d30d0ad6a8a46698a61c155de"
   },
   "card/water_bishop_bishop": {
     "file": "water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:30.900Z",
-    "fileHash": "07c35968e4bc45cafd9249eab4963a77f917fe04"
+    "fileHash": "a4569a72a3dc1b9d30d0ad6a8a46698a61c155de"
   },
   "card/water_bishop_rook": {
     "file": "water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:30.905Z",
-    "fileHash": "07c35968e4bc45cafd9249eab4963a77f917fe04"
+    "fileHash": "a4569a72a3dc1b9d30d0ad6a8a46698a61c155de"
   },
   "card/water_bishop_queen": {
     "file": "water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:30.910Z",
-    "fileHash": "07c35968e4bc45cafd9249eab4963a77f917fe04"
+    "fileHash": "a4569a72a3dc1b9d30d0ad6a8a46698a61c155de"
   },
   "card/water_rook_rook": {
     "file": "water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:30.915Z",
-    "fileHash": "07c35968e4bc45cafd9249eab4963a77f917fe04"
+    "fileHash": "a4569a72a3dc1b9d30d0ad6a8a46698a61c155de"
   },
   "card/water_queen_rook": {
     "file": "water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:30.919Z",
-    "fileHash": "07c35968e4bc45cafd9249eab4963a77f917fe04"
+    "fileHash": "a4569a72a3dc1b9d30d0ad6a8a46698a61c155de"
   },
   "card/water_queen_queen": {
     "file": "water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:30.924Z",
-    "fileHash": "07c35968e4bc45cafd9249eab4963a77f917fe04"
+    "fileHash": "a4569a72a3dc1b9d30d0ad6a8a46698a61c155de"
   },
   "card/light_pawn": {
     "file": "light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:46.216Z",
-    "fileHash": "01d1f37657f34531a283dab99616df2f0eb6e83b"
+    "fileHash": "fac2938871587024d9f0dfa3e974b106a46057a6"
   },
   "card/light_knight": {
     "file": "light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:46.221Z",
-    "fileHash": "01d1f37657f34531a283dab99616df2f0eb6e83b"
+    "fileHash": "fac2938871587024d9f0dfa3e974b106a46057a6"
   },
   "card/light_bishop": {
     "file": "light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:46.226Z",
-    "fileHash": "01d1f37657f34531a283dab99616df2f0eb6e83b"
+    "fileHash": "fac2938871587024d9f0dfa3e974b106a46057a6"
   },
   "card/light_rook": {
     "file": "light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:46.230Z",
-    "fileHash": "01d1f37657f34531a283dab99616df2f0eb6e83b"
+    "fileHash": "fac2938871587024d9f0dfa3e974b106a46057a6"
   },
   "card/light_queen": {
     "file": "light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:46.235Z",
-    "fileHash": "01d1f37657f34531a283dab99616df2f0eb6e83b"
+    "fileHash": "fac2938871587024d9f0dfa3e974b106a46057a6"
   },
   "card/light_pawn_pawn": {
     "file": "light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:46.239Z",
-    "fileHash": "01d1f37657f34531a283dab99616df2f0eb6e83b"
+    "fileHash": "fac2938871587024d9f0dfa3e974b106a46057a6"
   },
   "card/light_knight_pawn": {
     "file": "light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:46.243Z",
-    "fileHash": "01d1f37657f34531a283dab99616df2f0eb6e83b"
+    "fileHash": "fac2938871587024d9f0dfa3e974b106a46057a6"
   },
   "card/light_bishop_pawn": {
     "file": "light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:46.248Z",
-    "fileHash": "01d1f37657f34531a283dab99616df2f0eb6e83b"
+    "fileHash": "fac2938871587024d9f0dfa3e974b106a46057a6"
   },
   "card/light_pawn_rook": {
     "file": "light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:46.252Z",
-    "fileHash": "01d1f37657f34531a283dab99616df2f0eb6e83b"
+    "fileHash": "fac2938871587024d9f0dfa3e974b106a46057a6"
   },
   "card/light_pawn_queen": {
     "file": "light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:46.257Z",
-    "fileHash": "01d1f37657f34531a283dab99616df2f0eb6e83b"
+    "fileHash": "fac2938871587024d9f0dfa3e974b106a46057a6"
   },
   "card/light_knight_knight": {
     "file": "light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:46.262Z",
-    "fileHash": "01d1f37657f34531a283dab99616df2f0eb6e83b"
+    "fileHash": "fac2938871587024d9f0dfa3e974b106a46057a6"
   },
   "card/light_bishop_knight": {
     "file": "light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:46.266Z",
-    "fileHash": "01d1f37657f34531a283dab99616df2f0eb6e83b"
+    "fileHash": "fac2938871587024d9f0dfa3e974b106a46057a6"
   },
   "card/light_knight_rook": {
     "file": "light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:46.271Z",
-    "fileHash": "01d1f37657f34531a283dab99616df2f0eb6e83b"
+    "fileHash": "fac2938871587024d9f0dfa3e974b106a46057a6"
   },
   "card/light_knight_queen": {
     "file": "light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:46.275Z",
-    "fileHash": "01d1f37657f34531a283dab99616df2f0eb6e83b"
+    "fileHash": "fac2938871587024d9f0dfa3e974b106a46057a6"
   },
   "card/light_bishop_bishop": {
     "file": "light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:46.280Z",
-    "fileHash": "01d1f37657f34531a283dab99616df2f0eb6e83b"
+    "fileHash": "fac2938871587024d9f0dfa3e974b106a46057a6"
   },
   "card/light_bishop_rook": {
     "file": "light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:46.284Z",
-    "fileHash": "01d1f37657f34531a283dab99616df2f0eb6e83b"
+    "fileHash": "fac2938871587024d9f0dfa3e974b106a46057a6"
   },
   "card/light_bishop_queen": {
     "file": "light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:46.288Z",
-    "fileHash": "01d1f37657f34531a283dab99616df2f0eb6e83b"
+    "fileHash": "fac2938871587024d9f0dfa3e974b106a46057a6"
   },
   "card/light_rook_rook": {
     "file": "light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:46.292Z",
-    "fileHash": "01d1f37657f34531a283dab99616df2f0eb6e83b"
+    "fileHash": "fac2938871587024d9f0dfa3e974b106a46057a6"
   },
   "card/light_queen_rook": {
     "file": "light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:46.296Z",
-    "fileHash": "01d1f37657f34531a283dab99616df2f0eb6e83b"
+    "fileHash": "fac2938871587024d9f0dfa3e974b106a46057a6"
   },
   "card/light_queen_queen": {
     "file": "light_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:56:46.300Z",
-    "fileHash": "01d1f37657f34531a283dab99616df2f0eb6e83b"
+    "fileHash": "fac2938871587024d9f0dfa3e974b106a46057a6"
   },
   "card/darkness_earth_pawn": {
     "file": "darkness_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:57:03.151Z",
-    "fileHash": "2de4183698d658f2bdf40a583ef2b6600f7a8e79"
+    "fileHash": "45c3ee163b840bdad1f8abfb2fb2613614a5047f"
   },
   "card/darkness_earth_knight": {
     "file": "darkness_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:57:03.156Z",
-    "fileHash": "2de4183698d658f2bdf40a583ef2b6600f7a8e79"
+    "fileHash": "45c3ee163b840bdad1f8abfb2fb2613614a5047f"
   },
   "card/darkness_earth_bishop": {
     "file": "darkness_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:57:03.161Z",
-    "fileHash": "2de4183698d658f2bdf40a583ef2b6600f7a8e79"
+    "fileHash": "45c3ee163b840bdad1f8abfb2fb2613614a5047f"
   },
   "card/darkness_earth_rook": {
     "file": "darkness_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:57:03.166Z",
-    "fileHash": "2de4183698d658f2bdf40a583ef2b6600f7a8e79"
+    "fileHash": "45c3ee163b840bdad1f8abfb2fb2613614a5047f"
   },
   "card/darkness_earth_queen": {
     "file": "darkness_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:57:03.171Z",
-    "fileHash": "2de4183698d658f2bdf40a583ef2b6600f7a8e79"
+    "fileHash": "45c3ee163b840bdad1f8abfb2fb2613614a5047f"
   },
   "card/darkness_earth_pawn_pawn": {
     "file": "darkness_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:57:03.176Z",
-    "fileHash": "2de4183698d658f2bdf40a583ef2b6600f7a8e79"
+    "fileHash": "45c3ee163b840bdad1f8abfb2fb2613614a5047f"
   },
   "card/darkness_earth_knight_pawn": {
     "file": "darkness_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:57:03.180Z",
-    "fileHash": "2de4183698d658f2bdf40a583ef2b6600f7a8e79"
+    "fileHash": "45c3ee163b840bdad1f8abfb2fb2613614a5047f"
   },
   "card/darkness_earth_bishop_pawn": {
     "file": "darkness_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:57:03.185Z",
-    "fileHash": "2de4183698d658f2bdf40a583ef2b6600f7a8e79"
+    "fileHash": "45c3ee163b840bdad1f8abfb2fb2613614a5047f"
   },
   "card/darkness_earth_pawn_rook": {
     "file": "darkness_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:57:03.190Z",
-    "fileHash": "2de4183698d658f2bdf40a583ef2b6600f7a8e79"
+    "fileHash": "45c3ee163b840bdad1f8abfb2fb2613614a5047f"
   },
   "card/darkness_earth_pawn_queen": {
     "file": "darkness_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:57:03.195Z",
-    "fileHash": "2de4183698d658f2bdf40a583ef2b6600f7a8e79"
+    "fileHash": "45c3ee163b840bdad1f8abfb2fb2613614a5047f"
   },
   "card/darkness_earth_knight_knight": {
     "file": "darkness_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:57:03.199Z",
-    "fileHash": "2de4183698d658f2bdf40a583ef2b6600f7a8e79"
+    "fileHash": "45c3ee163b840bdad1f8abfb2fb2613614a5047f"
   },
   "card/darkness_earth_bishop_knight": {
     "file": "darkness_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:57:03.205Z",
-    "fileHash": "2de4183698d658f2bdf40a583ef2b6600f7a8e79"
+    "fileHash": "45c3ee163b840bdad1f8abfb2fb2613614a5047f"
   },
   "card/darkness_earth_knight_rook": {
     "file": "darkness_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:57:03.209Z",
-    "fileHash": "2de4183698d658f2bdf40a583ef2b6600f7a8e79"
+    "fileHash": "45c3ee163b840bdad1f8abfb2fb2613614a5047f"
   },
   "card/darkness_earth_knight_queen": {
     "file": "darkness_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:57:03.214Z",
-    "fileHash": "2de4183698d658f2bdf40a583ef2b6600f7a8e79"
+    "fileHash": "45c3ee163b840bdad1f8abfb2fb2613614a5047f"
   },
   "card/darkness_earth_bishop_bishop": {
     "file": "darkness_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:57:03.218Z",
-    "fileHash": "2de4183698d658f2bdf40a583ef2b6600f7a8e79"
+    "fileHash": "45c3ee163b840bdad1f8abfb2fb2613614a5047f"
   },
   "card/darkness_earth_bishop_rook": {
     "file": "darkness_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:57:03.223Z",
-    "fileHash": "2de4183698d658f2bdf40a583ef2b6600f7a8e79"
+    "fileHash": "45c3ee163b840bdad1f8abfb2fb2613614a5047f"
   },
   "card/darkness_earth_bishop_queen": {
     "file": "darkness_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:57:03.227Z",
-    "fileHash": "2de4183698d658f2bdf40a583ef2b6600f7a8e79"
+    "fileHash": "45c3ee163b840bdad1f8abfb2fb2613614a5047f"
   },
   "card/darkness_earth_rook_rook": {
     "file": "darkness_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:57:03.231Z",
-    "fileHash": "2de4183698d658f2bdf40a583ef2b6600f7a8e79"
+    "fileHash": "45c3ee163b840bdad1f8abfb2fb2613614a5047f"
   },
   "card/darkness_earth_queen_rook": {
     "file": "darkness_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:57:03.236Z",
-    "fileHash": "2de4183698d658f2bdf40a583ef2b6600f7a8e79"
+    "fileHash": "45c3ee163b840bdad1f8abfb2fb2613614a5047f"
   },
   "card/darkness_earth_queen_queen": {
     "file": "darkness_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:57:03.240Z",
-    "fileHash": "2de4183698d658f2bdf40a583ef2b6600f7a8e79"
+    "fileHash": "45c3ee163b840bdad1f8abfb2fb2613614a5047f"
   },
   "card/earth_earth_pawn": {
     "file": "earth_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T08:16:15.491Z",
-    "fileHash": "84f09ba511570ab85d8a8031010e77e2dfe32cb4"
+    "fileHash": "1a8b42ab6ee1e4841cb6d26ce3e022f9b0a4239b"
   },
   "card/earth_earth_knight": {
     "file": "earth_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T08:16:15.496Z",
-    "fileHash": "84f09ba511570ab85d8a8031010e77e2dfe32cb4"
+    "fileHash": "1a8b42ab6ee1e4841cb6d26ce3e022f9b0a4239b"
   },
   "card/earth_earth_bishop": {
     "file": "earth_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T08:16:15.502Z",
-    "fileHash": "84f09ba511570ab85d8a8031010e77e2dfe32cb4"
+    "fileHash": "1a8b42ab6ee1e4841cb6d26ce3e022f9b0a4239b"
   },
   "card/earth_earth_rook": {
     "file": "earth_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T08:16:15.507Z",
-    "fileHash": "84f09ba511570ab85d8a8031010e77e2dfe32cb4"
+    "fileHash": "1a8b42ab6ee1e4841cb6d26ce3e022f9b0a4239b"
   },
   "card/earth_earth_queen": {
     "file": "earth_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T08:16:15.511Z",
-    "fileHash": "84f09ba511570ab85d8a8031010e77e2dfe32cb4"
+    "fileHash": "1a8b42ab6ee1e4841cb6d26ce3e022f9b0a4239b"
   },
   "card/earth_earth_pawn_pawn": {
     "file": "earth_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T08:16:15.516Z",
-    "fileHash": "84f09ba511570ab85d8a8031010e77e2dfe32cb4"
+    "fileHash": "1a8b42ab6ee1e4841cb6d26ce3e022f9b0a4239b"
   },
   "card/earth_earth_knight_pawn": {
     "file": "earth_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T08:16:15.521Z",
-    "fileHash": "84f09ba511570ab85d8a8031010e77e2dfe32cb4"
+    "fileHash": "1a8b42ab6ee1e4841cb6d26ce3e022f9b0a4239b"
   },
   "card/earth_earth_bishop_pawn": {
     "file": "earth_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T08:16:15.526Z",
-    "fileHash": "84f09ba511570ab85d8a8031010e77e2dfe32cb4"
+    "fileHash": "1a8b42ab6ee1e4841cb6d26ce3e022f9b0a4239b"
   },
   "card/earth_earth_pawn_rook": {
     "file": "earth_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T08:16:15.530Z",
-    "fileHash": "84f09ba511570ab85d8a8031010e77e2dfe32cb4"
+    "fileHash": "1a8b42ab6ee1e4841cb6d26ce3e022f9b0a4239b"
   },
   "card/earth_earth_pawn_queen": {
     "file": "earth_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T08:16:15.535Z",
-    "fileHash": "84f09ba511570ab85d8a8031010e77e2dfe32cb4"
+    "fileHash": "1a8b42ab6ee1e4841cb6d26ce3e022f9b0a4239b"
   },
   "card/earth_earth_knight_knight": {
     "file": "earth_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T08:16:15.540Z",
-    "fileHash": "84f09ba511570ab85d8a8031010e77e2dfe32cb4"
+    "fileHash": "1a8b42ab6ee1e4841cb6d26ce3e022f9b0a4239b"
   },
   "card/earth_earth_bishop_knight": {
     "file": "earth_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T08:16:15.544Z",
-    "fileHash": "84f09ba511570ab85d8a8031010e77e2dfe32cb4"
+    "fileHash": "1a8b42ab6ee1e4841cb6d26ce3e022f9b0a4239b"
   },
   "card/earth_earth_knight_rook": {
     "file": "earth_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T08:16:15.550Z",
-    "fileHash": "84f09ba511570ab85d8a8031010e77e2dfe32cb4"
+    "fileHash": "1a8b42ab6ee1e4841cb6d26ce3e022f9b0a4239b"
   },
   "card/earth_earth_knight_queen": {
     "file": "earth_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T08:16:15.554Z",
-    "fileHash": "84f09ba511570ab85d8a8031010e77e2dfe32cb4"
+    "fileHash": "1a8b42ab6ee1e4841cb6d26ce3e022f9b0a4239b"
   },
   "card/earth_earth_bishop_bishop": {
     "file": "earth_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T08:16:15.570Z",
-    "fileHash": "84f09ba511570ab85d8a8031010e77e2dfe32cb4"
+    "fileHash": "1a8b42ab6ee1e4841cb6d26ce3e022f9b0a4239b"
   },
   "card/earth_earth_bishop_rook": {
     "file": "earth_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T08:16:15.576Z",
-    "fileHash": "84f09ba511570ab85d8a8031010e77e2dfe32cb4"
+    "fileHash": "1a8b42ab6ee1e4841cb6d26ce3e022f9b0a4239b"
   },
   "card/earth_earth_bishop_queen": {
     "file": "earth_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T08:16:15.581Z",
-    "fileHash": "84f09ba511570ab85d8a8031010e77e2dfe32cb4"
+    "fileHash": "1a8b42ab6ee1e4841cb6d26ce3e022f9b0a4239b"
   },
   "card/earth_earth_rook_rook": {
     "file": "earth_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T08:16:15.585Z",
-    "fileHash": "84f09ba511570ab85d8a8031010e77e2dfe32cb4"
+    "fileHash": "1a8b42ab6ee1e4841cb6d26ce3e022f9b0a4239b"
   },
   "card/earth_earth_queen_rook": {
     "file": "earth_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T08:16:15.590Z",
-    "fileHash": "84f09ba511570ab85d8a8031010e77e2dfe32cb4"
+    "fileHash": "1a8b42ab6ee1e4841cb6d26ce3e022f9b0a4239b"
   },
   "card/earth_earth_queen_queen": {
     "file": "earth_earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T08:16:15.594Z",
-    "fileHash": "84f09ba511570ab85d8a8031010e77e2dfe32cb4"
+    "fileHash": "1a8b42ab6ee1e4841cb6d26ce3e022f9b0a4239b"
   },
   "card/darkness_darkness_pawn": {
     "file": "darkness_darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T08:16:45.004Z",
-    "fileHash": "d76ff62818adfff4d39b7195cf598cc396d0b660"
+    "fileHash": "3628489a7c2471b68a592979aa566a64bee68f23"
   },
   "card/darkness_darkness_knight": {
     "file": "darkness_darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T08:16:45.011Z",
-    "fileHash": "d76ff62818adfff4d39b7195cf598cc396d0b660"
+    "fileHash": "3628489a7c2471b68a592979aa566a64bee68f23"
   },
   "card/darkness_darkness_bishop": {
     "file": "darkness_darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T08:16:45.015Z",
-    "fileHash": "d76ff62818adfff4d39b7195cf598cc396d0b660"
+    "fileHash": "3628489a7c2471b68a592979aa566a64bee68f23"
   },
   "card/darkness_darkness_rook": {
     "file": "darkness_darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T08:16:45.034Z",
-    "fileHash": "d76ff62818adfff4d39b7195cf598cc396d0b660"
+    "fileHash": "3628489a7c2471b68a592979aa566a64bee68f23"
   },
   "card/darkness_darkness_queen": {
     "file": "darkness_darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T08:16:45.039Z",
-    "fileHash": "d76ff62818adfff4d39b7195cf598cc396d0b660"
+    "fileHash": "3628489a7c2471b68a592979aa566a64bee68f23"
   },
   "card/darkness_darkness_pawn_pawn": {
     "file": "darkness_darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T08:16:45.044Z",
-    "fileHash": "d76ff62818adfff4d39b7195cf598cc396d0b660"
+    "fileHash": "3628489a7c2471b68a592979aa566a64bee68f23"
   },
   "card/darkness_darkness_knight_pawn": {
     "file": "darkness_darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T08:16:45.050Z",
-    "fileHash": "d76ff62818adfff4d39b7195cf598cc396d0b660"
+    "fileHash": "3628489a7c2471b68a592979aa566a64bee68f23"
   },
   "card/darkness_darkness_bishop_pawn": {
     "file": "darkness_darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T08:16:45.055Z",
-    "fileHash": "d76ff62818adfff4d39b7195cf598cc396d0b660"
+    "fileHash": "3628489a7c2471b68a592979aa566a64bee68f23"
   },
   "card/darkness_darkness_pawn_rook": {
     "file": "darkness_darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T08:16:45.059Z",
-    "fileHash": "d76ff62818adfff4d39b7195cf598cc396d0b660"
+    "fileHash": "3628489a7c2471b68a592979aa566a64bee68f23"
   },
   "card/darkness_darkness_pawn_queen": {
     "file": "darkness_darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T08:16:45.064Z",
-    "fileHash": "d76ff62818adfff4d39b7195cf598cc396d0b660"
+    "fileHash": "3628489a7c2471b68a592979aa566a64bee68f23"
   },
   "card/darkness_darkness_knight_knight": {
     "file": "darkness_darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T08:16:45.069Z",
-    "fileHash": "d76ff62818adfff4d39b7195cf598cc396d0b660"
+    "fileHash": "3628489a7c2471b68a592979aa566a64bee68f23"
   },
   "card/darkness_darkness_bishop_knight": {
     "file": "darkness_darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T08:16:45.074Z",
-    "fileHash": "d76ff62818adfff4d39b7195cf598cc396d0b660"
+    "fileHash": "3628489a7c2471b68a592979aa566a64bee68f23"
   },
   "card/darkness_darkness_knight_rook": {
     "file": "darkness_darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T08:16:45.080Z",
-    "fileHash": "d76ff62818adfff4d39b7195cf598cc396d0b660"
+    "fileHash": "3628489a7c2471b68a592979aa566a64bee68f23"
   },
   "card/darkness_darkness_knight_queen": {
     "file": "darkness_darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T08:16:45.085Z",
-    "fileHash": "d76ff62818adfff4d39b7195cf598cc396d0b660"
+    "fileHash": "3628489a7c2471b68a592979aa566a64bee68f23"
   },
   "card/darkness_darkness_bishop_bishop": {
     "file": "darkness_darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T08:16:45.090Z",
-    "fileHash": "d76ff62818adfff4d39b7195cf598cc396d0b660"
+    "fileHash": "3628489a7c2471b68a592979aa566a64bee68f23"
   },
   "card/darkness_darkness_bishop_rook": {
     "file": "darkness_darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T08:16:45.094Z",
-    "fileHash": "d76ff62818adfff4d39b7195cf598cc396d0b660"
+    "fileHash": "3628489a7c2471b68a592979aa566a64bee68f23"
   },
   "card/darkness_darkness_bishop_queen": {
     "file": "darkness_darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T08:16:45.099Z",
-    "fileHash": "d76ff62818adfff4d39b7195cf598cc396d0b660"
+    "fileHash": "3628489a7c2471b68a592979aa566a64bee68f23"
   },
   "card/darkness_darkness_rook_rook": {
     "file": "darkness_darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T08:16:45.104Z",
-    "fileHash": "d76ff62818adfff4d39b7195cf598cc396d0b660"
+    "fileHash": "3628489a7c2471b68a592979aa566a64bee68f23"
   },
   "card/darkness_darkness_queen_rook": {
     "file": "darkness_darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T08:16:45.110Z",
-    "fileHash": "d76ff62818adfff4d39b7195cf598cc396d0b660"
+    "fileHash": "3628489a7c2471b68a592979aa566a64bee68f23"
   },
   "card/darkness_darkness_queen_queen": {
     "file": "darkness_darkness_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T08:16:45.115Z",
-    "fileHash": "d76ff62818adfff4d39b7195cf598cc396d0b660"
+    "fileHash": "3628489a7c2471b68a592979aa566a64bee68f23"
   },
   "card/air_air_king": {
     "file": "elemental_kings.json",
@@ -4303,7 +4303,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:16:53.171Z",
-    "fileHash": "9945d8a0fcdee230a69451a335b6ad4e878bff75"
+    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
   },
   "card/air_earth_king": {
     "file": "elemental_kings.json",
@@ -4327,7 +4327,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:16:53.180Z",
-    "fileHash": "9945d8a0fcdee230a69451a335b6ad4e878bff75"
+    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
   },
   "card/air_light_king": {
     "file": "elemental_kings.json",
@@ -4351,7 +4351,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:17:12.373Z",
-    "fileHash": "9945d8a0fcdee230a69451a335b6ad4e878bff75"
+    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
   },
   "card/air_water_king": {
     "file": "elemental_kings.json",
@@ -4375,7 +4375,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:17:12.377Z",
-    "fileHash": "9945d8a0fcdee230a69451a335b6ad4e878bff75"
+    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
   },
   "card/darkness_darkness_king": {
     "file": "elemental_kings.json",
@@ -4399,7 +4399,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:17:25.803Z",
-    "fileHash": "9945d8a0fcdee230a69451a335b6ad4e878bff75"
+    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
   },
   "card/darkness_earth_king": {
     "file": "elemental_kings.json",
@@ -4423,7 +4423,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:17:25.807Z",
-    "fileHash": "9945d8a0fcdee230a69451a335b6ad4e878bff75"
+    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
   },
   "card/darkness_fire_king": {
     "file": "elemental_kings.json",
@@ -4447,7 +4447,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:17:25.811Z",
-    "fileHash": "9945d8a0fcdee230a69451a335b6ad4e878bff75"
+    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
   },
   "card/darkness_light_king": {
     "file": "elemental_kings.json",
@@ -4471,7 +4471,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:17:46.114Z",
-    "fileHash": "9945d8a0fcdee230a69451a335b6ad4e878bff75"
+    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
   },
   "card/darkness_water_king": {
     "file": "elemental_kings.json",
@@ -4504,7 +4504,7 @@
       ]
     },
     "at": "2026-07-12T09:17:46.118Z",
-    "fileHash": "9945d8a0fcdee230a69451a335b6ad4e878bff75"
+    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
   },
   "card/earth_earth_king": {
     "file": "elemental_kings.json",
@@ -4528,7 +4528,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:17:46.122Z",
-    "fileHash": "9945d8a0fcdee230a69451a335b6ad4e878bff75"
+    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
   },
   "card/earth_fire_king": {
     "file": "elemental_kings.json",
@@ -4552,7 +4552,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:18:04.630Z",
-    "fileHash": "9945d8a0fcdee230a69451a335b6ad4e878bff75"
+    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
   },
   "card/earth_light_king": {
     "file": "elemental_kings.json",
@@ -4576,7 +4576,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:18:04.634Z",
-    "fileHash": "9945d8a0fcdee230a69451a335b6ad4e878bff75"
+    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
   },
   "card/earth_water_king": {
     "file": "elemental_kings.json",
@@ -4600,7 +4600,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:18:04.638Z",
-    "fileHash": "9945d8a0fcdee230a69451a335b6ad4e878bff75"
+    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
   },
   "card/fire_fire_king": {
     "file": "elemental_kings.json",
@@ -4624,7 +4624,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:18:20.606Z",
-    "fileHash": "9945d8a0fcdee230a69451a335b6ad4e878bff75"
+    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
   },
   "card/fire_light_king": {
     "file": "elemental_kings.json",
@@ -4648,7 +4648,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:18:20.611Z",
-    "fileHash": "9945d8a0fcdee230a69451a335b6ad4e878bff75"
+    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
   },
   "card/fire_water_king": {
     "file": "elemental_kings.json",
@@ -4672,7 +4672,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:18:20.615Z",
-    "fileHash": "9945d8a0fcdee230a69451a335b6ad4e878bff75"
+    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
   },
   "card/light_light_king": {
     "file": "elemental_kings.json",
@@ -4696,7 +4696,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:18:37.021Z",
-    "fileHash": "9945d8a0fcdee230a69451a335b6ad4e878bff75"
+    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
   },
   "card/light_water_king": {
     "file": "elemental_kings.json",
@@ -4720,7 +4720,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:18:37.025Z",
-    "fileHash": "9945d8a0fcdee230a69451a335b6ad4e878bff75"
+    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
   },
   "card/water_water_king": {
     "file": "elemental_kings.json",
@@ -4744,217 +4744,217 @@
       "effects": []
     },
     "at": "2026-07-12T09:18:37.029Z",
-    "fileHash": "9945d8a0fcdee230a69451a335b6ad4e878bff75"
+    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
   },
   "card/fire_pawn": {
     "file": "fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T02:00:15.518Z",
-    "fileHash": "c299dfe85d1fccb3c6a87f6729e96eb5fa25341f"
+    "fileHash": "be31c868d5c014b02337162d1e36e2bb2aad8227"
   },
   "card/fire_knight": {
     "file": "fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T02:00:15.524Z",
-    "fileHash": "c299dfe85d1fccb3c6a87f6729e96eb5fa25341f"
+    "fileHash": "be31c868d5c014b02337162d1e36e2bb2aad8227"
   },
   "card/fire_bishop": {
     "file": "fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T02:00:15.529Z",
-    "fileHash": "c299dfe85d1fccb3c6a87f6729e96eb5fa25341f"
+    "fileHash": "be31c868d5c014b02337162d1e36e2bb2aad8227"
   },
   "card/fire_rook": {
     "file": "fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T02:00:15.534Z",
-    "fileHash": "c299dfe85d1fccb3c6a87f6729e96eb5fa25341f"
+    "fileHash": "be31c868d5c014b02337162d1e36e2bb2aad8227"
   },
   "card/fire_queen": {
     "file": "fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T02:00:15.540Z",
-    "fileHash": "c299dfe85d1fccb3c6a87f6729e96eb5fa25341f"
+    "fileHash": "be31c868d5c014b02337162d1e36e2bb2aad8227"
   },
   "card/fire_pawn_pawn": {
     "file": "fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T02:00:15.547Z",
-    "fileHash": "c299dfe85d1fccb3c6a87f6729e96eb5fa25341f"
+    "fileHash": "be31c868d5c014b02337162d1e36e2bb2aad8227"
   },
   "card/fire_knight_pawn": {
     "file": "fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T02:00:15.552Z",
-    "fileHash": "c299dfe85d1fccb3c6a87f6729e96eb5fa25341f"
+    "fileHash": "be31c868d5c014b02337162d1e36e2bb2aad8227"
   },
   "card/fire_bishop_pawn": {
     "file": "fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T02:00:15.560Z",
-    "fileHash": "c299dfe85d1fccb3c6a87f6729e96eb5fa25341f"
+    "fileHash": "be31c868d5c014b02337162d1e36e2bb2aad8227"
   },
   "card/fire_pawn_rook": {
     "file": "fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T02:00:15.567Z",
-    "fileHash": "c299dfe85d1fccb3c6a87f6729e96eb5fa25341f"
+    "fileHash": "be31c868d5c014b02337162d1e36e2bb2aad8227"
   },
   "card/fire_pawn_queen": {
     "file": "fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T02:00:15.573Z",
-    "fileHash": "c299dfe85d1fccb3c6a87f6729e96eb5fa25341f"
+    "fileHash": "be31c868d5c014b02337162d1e36e2bb2aad8227"
   },
   "card/fire_knight_knight": {
     "file": "fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T02:00:15.580Z",
-    "fileHash": "c299dfe85d1fccb3c6a87f6729e96eb5fa25341f"
+    "fileHash": "be31c868d5c014b02337162d1e36e2bb2aad8227"
   },
   "card/fire_bishop_knight": {
     "file": "fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T02:00:15.585Z",
-    "fileHash": "c299dfe85d1fccb3c6a87f6729e96eb5fa25341f"
+    "fileHash": "be31c868d5c014b02337162d1e36e2bb2aad8227"
   },
   "card/fire_knight_rook": {
     "file": "fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T02:00:15.590Z",
-    "fileHash": "c299dfe85d1fccb3c6a87f6729e96eb5fa25341f"
+    "fileHash": "be31c868d5c014b02337162d1e36e2bb2aad8227"
   },
   "card/fire_knight_queen": {
     "file": "fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T02:00:15.595Z",
-    "fileHash": "c299dfe85d1fccb3c6a87f6729e96eb5fa25341f"
+    "fileHash": "be31c868d5c014b02337162d1e36e2bb2aad8227"
   },
   "card/fire_bishop_bishop": {
     "file": "fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T02:00:15.600Z",
-    "fileHash": "c299dfe85d1fccb3c6a87f6729e96eb5fa25341f"
+    "fileHash": "be31c868d5c014b02337162d1e36e2bb2aad8227"
   },
   "card/fire_bishop_rook": {
     "file": "fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T02:00:15.607Z",
-    "fileHash": "c299dfe85d1fccb3c6a87f6729e96eb5fa25341f"
+    "fileHash": "be31c868d5c014b02337162d1e36e2bb2aad8227"
   },
   "card/fire_bishop_queen": {
     "file": "fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T02:00:15.613Z",
-    "fileHash": "c299dfe85d1fccb3c6a87f6729e96eb5fa25341f"
+    "fileHash": "be31c868d5c014b02337162d1e36e2bb2aad8227"
   },
   "card/fire_rook_rook": {
     "file": "fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T02:00:15.620Z",
-    "fileHash": "c299dfe85d1fccb3c6a87f6729e96eb5fa25341f"
+    "fileHash": "be31c868d5c014b02337162d1e36e2bb2aad8227"
   },
   "card/fire_queen_rook": {
     "file": "fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T02:00:15.625Z",
-    "fileHash": "c299dfe85d1fccb3c6a87f6729e96eb5fa25341f"
+    "fileHash": "be31c868d5c014b02337162d1e36e2bb2aad8227"
   },
   "card/fire_queen_queen": {
     "file": "fire_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T02:00:15.630Z",
-    "fileHash": "c299dfe85d1fccb3c6a87f6729e96eb5fa25341f"
+    "fileHash": "be31c868d5c014b02337162d1e36e2bb2aad8227"
   },
   "card/air_pawn": {
     "file": "air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T19:52:06.316Z",
-    "fileHash": "4a3fa6ee86dea62ae776e6c615a54232815f3c77"
+    "fileHash": "c281df62c4a4f4ffda0bfd2f253029f60d96b4ad"
   },
   "card/air_knight": {
     "file": "air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T19:52:06.324Z",
-    "fileHash": "4a3fa6ee86dea62ae776e6c615a54232815f3c77"
+    "fileHash": "c281df62c4a4f4ffda0bfd2f253029f60d96b4ad"
   },
   "card/air_bishop": {
     "file": "air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T19:52:06.330Z",
-    "fileHash": "4a3fa6ee86dea62ae776e6c615a54232815f3c77"
+    "fileHash": "c281df62c4a4f4ffda0bfd2f253029f60d96b4ad"
   },
   "card/air_rook": {
     "file": "air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T19:52:06.336Z",
-    "fileHash": "4a3fa6ee86dea62ae776e6c615a54232815f3c77"
+    "fileHash": "c281df62c4a4f4ffda0bfd2f253029f60d96b4ad"
   },
   "card/air_queen": {
     "file": "air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T19:52:06.343Z",
-    "fileHash": "4a3fa6ee86dea62ae776e6c615a54232815f3c77"
+    "fileHash": "c281df62c4a4f4ffda0bfd2f253029f60d96b4ad"
   },
   "card/earth_pawn": {
     "file": "earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T19:52:47.350Z",
-    "fileHash": "516d58a735199326584a34c0aa145b2f37598e67"
+    "fileHash": "2355727524a75373b7a1af8bff3314bd67223e86"
   },
   "card/earth_knight": {
     "file": "earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T19:52:47.357Z",
-    "fileHash": "516d58a735199326584a34c0aa145b2f37598e67"
+    "fileHash": "2355727524a75373b7a1af8bff3314bd67223e86"
   },
   "card/earth_bishop": {
     "file": "earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T19:52:47.363Z",
-    "fileHash": "516d58a735199326584a34c0aa145b2f37598e67"
+    "fileHash": "2355727524a75373b7a1af8bff3314bd67223e86"
   },
   "card/earth_rook": {
     "file": "earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T19:52:47.369Z",
-    "fileHash": "516d58a735199326584a34c0aa145b2f37598e67"
+    "fileHash": "2355727524a75373b7a1af8bff3314bd67223e86"
   },
   "card/earth_queen": {
     "file": "earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T19:52:47.375Z",
-    "fileHash": "516d58a735199326584a34c0aa145b2f37598e67"
+    "fileHash": "2355727524a75373b7a1af8bff3314bd67223e86"
   },
   "status/empowered_barrier": {
     "file": "empowered_barrier.json",
@@ -5462,7 +5462,7 @@
       ]
     },
     "at": "2026-07-14T22:31:39.279Z",
-    "fileHash": "7a9cfbe7174ffc3861bb01fdc53c1b59e6d2fc07"
+    "fileHash": "387d0a59ee14cc0a18c6bb3c0ab5eea6ee521449"
   },
   "card/knight_rook": {
     "file": "chess_combined.json",
@@ -5500,7 +5500,7 @@
       ]
     },
     "at": "2026-07-14T22:31:39.294Z",
-    "fileHash": "7a9cfbe7174ffc3861bb01fdc53c1b59e6d2fc07"
+    "fileHash": "387d0a59ee14cc0a18c6bb3c0ab5eea6ee521449"
   },
   "card/rook_queen": {
     "file": "chess_combined.json",
@@ -5531,7 +5531,7 @@
       ]
     },
     "at": "2026-07-14T22:31:39.344Z",
-    "fileHash": "7a9cfbe7174ffc3861bb01fdc53c1b59e6d2fc07"
+    "fileHash": "387d0a59ee14cc0a18c6bb3c0ab5eea6ee521449"
   },
   "status/earth_blessing": {
     "file": "earth_blessing.json",
@@ -6194,7 +6194,7 @@
       ]
     },
     "at": "2026-07-20T21:16:26.759Z",
-    "fileHash": "7a9cfbe7174ffc3861bb01fdc53c1b59e6d2fc07"
+    "fileHash": "387d0a59ee14cc0a18c6bb3c0ab5eea6ee521449"
   },
   "card/knight_pawn": {
     "file": "chess_combined.json",
@@ -6222,7 +6222,7 @@
       ]
     },
     "at": "2026-07-20T21:16:26.770Z",
-    "fileHash": "7a9cfbe7174ffc3861bb01fdc53c1b59e6d2fc07"
+    "fileHash": "387d0a59ee14cc0a18c6bb3c0ab5eea6ee521449"
   },
   "card/bishop_pawn": {
     "file": "chess_combined.json",
@@ -6250,7 +6250,7 @@
       ]
     },
     "at": "2026-07-20T21:16:26.805Z",
-    "fileHash": "7a9cfbe7174ffc3861bb01fdc53c1b59e6d2fc07"
+    "fileHash": "387d0a59ee14cc0a18c6bb3c0ab5eea6ee521449"
   },
   "card/pawn_queen": {
     "file": "chess_combined.json",
@@ -6278,7 +6278,7 @@
       ]
     },
     "at": "2026-07-20T21:16:26.825Z",
-    "fileHash": "7a9cfbe7174ffc3861bb01fdc53c1b59e6d2fc07"
+    "fileHash": "387d0a59ee14cc0a18c6bb3c0ab5eea6ee521449"
   },
   "card/bishop_knight": {
     "file": "chess_combined.json",
@@ -6305,7 +6305,7 @@
       ]
     },
     "at": "2026-07-20T21:16:26.840Z",
-    "fileHash": "7a9cfbe7174ffc3861bb01fdc53c1b59e6d2fc07"
+    "fileHash": "387d0a59ee14cc0a18c6bb3c0ab5eea6ee521449"
   },
   "ability/rally": {
     "file": "abilities.json",
@@ -6339,7 +6339,7 @@
       ]
     },
     "at": "2026-07-20T21:27:23.831Z",
-    "fileHash": "7a9cfbe7174ffc3861bb01fdc53c1b59e6d2fc07"
+    "fileHash": "387d0a59ee14cc0a18c6bb3c0ab5eea6ee521449"
   },
   "card/bishop_bishop": {
     "file": "chess_combined.json",
@@ -6366,7 +6366,7 @@
       ]
     },
     "at": "2026-07-20T21:27:23.857Z",
-    "fileHash": "7a9cfbe7174ffc3861bb01fdc53c1b59e6d2fc07"
+    "fileHash": "387d0a59ee14cc0a18c6bb3c0ab5eea6ee521449"
   },
   "card/bishop_queen": {
     "file": "chess_combined.json",
@@ -6393,7 +6393,7 @@
       ]
     },
     "at": "2026-07-20T21:27:23.907Z",
-    "fileHash": "7a9cfbe7174ffc3861bb01fdc53c1b59e6d2fc07"
+    "fileHash": "387d0a59ee14cc0a18c6bb3c0ab5eea6ee521449"
   },
   "card/knight_queen": {
     "file": "chess_combined.json",
@@ -6420,7 +6420,7 @@
       ]
     },
     "at": "2026-07-20T21:27:23.969Z",
-    "fileHash": "7a9cfbe7174ffc3861bb01fdc53c1b59e6d2fc07"
+    "fileHash": "387d0a59ee14cc0a18c6bb3c0ab5eea6ee521449"
   },
   "ability/light_pawn_training": {
     "file": "abilities.json",
@@ -6595,209 +6595,209 @@
     "original": null,
     "added": true,
     "at": "2026-07-21T04:39:38.499Z",
-    "fileHash": "4a3fa6ee86dea62ae776e6c615a54232815f3c77"
+    "fileHash": "c281df62c4a4f4ffda0bfd2f253029f60d96b4ad"
   },
   "card/air_knight_pawn": {
     "file": "air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-21T04:39:38.507Z",
-    "fileHash": "4a3fa6ee86dea62ae776e6c615a54232815f3c77"
+    "fileHash": "c281df62c4a4f4ffda0bfd2f253029f60d96b4ad"
   },
   "card/air_bishop_pawn": {
     "file": "air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-21T04:39:38.516Z",
-    "fileHash": "4a3fa6ee86dea62ae776e6c615a54232815f3c77"
+    "fileHash": "c281df62c4a4f4ffda0bfd2f253029f60d96b4ad"
   },
   "card/air_pawn_rook": {
     "file": "air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-21T04:39:38.522Z",
-    "fileHash": "4a3fa6ee86dea62ae776e6c615a54232815f3c77"
+    "fileHash": "c281df62c4a4f4ffda0bfd2f253029f60d96b4ad"
   },
   "card/air_pawn_queen": {
     "file": "air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-21T04:39:38.529Z",
-    "fileHash": "4a3fa6ee86dea62ae776e6c615a54232815f3c77"
+    "fileHash": "c281df62c4a4f4ffda0bfd2f253029f60d96b4ad"
   },
   "card/air_knight_knight": {
     "file": "air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-21T04:39:38.536Z",
-    "fileHash": "4a3fa6ee86dea62ae776e6c615a54232815f3c77"
+    "fileHash": "c281df62c4a4f4ffda0bfd2f253029f60d96b4ad"
   },
   "card/air_bishop_knight": {
     "file": "air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-21T04:39:38.542Z",
-    "fileHash": "4a3fa6ee86dea62ae776e6c615a54232815f3c77"
+    "fileHash": "c281df62c4a4f4ffda0bfd2f253029f60d96b4ad"
   },
   "card/air_knight_rook": {
     "file": "air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-21T04:39:38.548Z",
-    "fileHash": "4a3fa6ee86dea62ae776e6c615a54232815f3c77"
+    "fileHash": "c281df62c4a4f4ffda0bfd2f253029f60d96b4ad"
   },
   "card/air_knight_queen": {
     "file": "air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-21T04:39:38.554Z",
-    "fileHash": "4a3fa6ee86dea62ae776e6c615a54232815f3c77"
+    "fileHash": "c281df62c4a4f4ffda0bfd2f253029f60d96b4ad"
   },
   "card/air_bishop_bishop": {
     "file": "air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-21T04:39:38.560Z",
-    "fileHash": "4a3fa6ee86dea62ae776e6c615a54232815f3c77"
+    "fileHash": "c281df62c4a4f4ffda0bfd2f253029f60d96b4ad"
   },
   "card/air_bishop_rook": {
     "file": "air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-21T04:39:38.566Z",
-    "fileHash": "4a3fa6ee86dea62ae776e6c615a54232815f3c77"
+    "fileHash": "c281df62c4a4f4ffda0bfd2f253029f60d96b4ad"
   },
   "card/air_bishop_queen": {
     "file": "air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-21T04:39:38.573Z",
-    "fileHash": "4a3fa6ee86dea62ae776e6c615a54232815f3c77"
+    "fileHash": "c281df62c4a4f4ffda0bfd2f253029f60d96b4ad"
   },
   "card/air_rook_rook": {
     "file": "air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-21T04:39:38.579Z",
-    "fileHash": "4a3fa6ee86dea62ae776e6c615a54232815f3c77"
+    "fileHash": "c281df62c4a4f4ffda0bfd2f253029f60d96b4ad"
   },
   "card/air_queen_rook": {
     "file": "air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-21T04:39:38.585Z",
-    "fileHash": "4a3fa6ee86dea62ae776e6c615a54232815f3c77"
+    "fileHash": "c281df62c4a4f4ffda0bfd2f253029f60d96b4ad"
   },
   "card/air_queen_queen": {
     "file": "air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-21T04:39:38.591Z",
-    "fileHash": "4a3fa6ee86dea62ae776e6c615a54232815f3c77"
+    "fileHash": "c281df62c4a4f4ffda0bfd2f253029f60d96b4ad"
   },
   "card/earth_pawn_pawn": {
     "file": "earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-21T04:39:49.757Z",
-    "fileHash": "516d58a735199326584a34c0aa145b2f37598e67"
+    "fileHash": "2355727524a75373b7a1af8bff3314bd67223e86"
   },
   "card/earth_knight_pawn": {
     "file": "earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-21T04:39:49.763Z",
-    "fileHash": "516d58a735199326584a34c0aa145b2f37598e67"
+    "fileHash": "2355727524a75373b7a1af8bff3314bd67223e86"
   },
   "card/earth_bishop_pawn": {
     "file": "earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-21T04:39:49.771Z",
-    "fileHash": "516d58a735199326584a34c0aa145b2f37598e67"
+    "fileHash": "2355727524a75373b7a1af8bff3314bd67223e86"
   },
   "card/earth_pawn_rook": {
     "file": "earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-21T04:39:49.778Z",
-    "fileHash": "516d58a735199326584a34c0aa145b2f37598e67"
+    "fileHash": "2355727524a75373b7a1af8bff3314bd67223e86"
   },
   "card/earth_pawn_queen": {
     "file": "earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-21T04:39:49.785Z",
-    "fileHash": "516d58a735199326584a34c0aa145b2f37598e67"
+    "fileHash": "2355727524a75373b7a1af8bff3314bd67223e86"
   },
   "card/earth_knight_knight": {
     "file": "earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-21T04:39:49.792Z",
-    "fileHash": "516d58a735199326584a34c0aa145b2f37598e67"
+    "fileHash": "2355727524a75373b7a1af8bff3314bd67223e86"
   },
   "card/earth_bishop_knight": {
     "file": "earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-21T04:39:49.799Z",
-    "fileHash": "516d58a735199326584a34c0aa145b2f37598e67"
+    "fileHash": "2355727524a75373b7a1af8bff3314bd67223e86"
   },
   "card/earth_knight_rook": {
     "file": "earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-21T04:39:49.805Z",
-    "fileHash": "516d58a735199326584a34c0aa145b2f37598e67"
+    "fileHash": "2355727524a75373b7a1af8bff3314bd67223e86"
   },
   "card/earth_knight_queen": {
     "file": "earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-21T04:39:49.812Z",
-    "fileHash": "516d58a735199326584a34c0aa145b2f37598e67"
+    "fileHash": "2355727524a75373b7a1af8bff3314bd67223e86"
   },
   "card/earth_bishop_bishop": {
     "file": "earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-21T04:39:49.818Z",
-    "fileHash": "516d58a735199326584a34c0aa145b2f37598e67"
+    "fileHash": "2355727524a75373b7a1af8bff3314bd67223e86"
   },
   "card/earth_bishop_rook": {
     "file": "earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-21T04:39:49.824Z",
-    "fileHash": "516d58a735199326584a34c0aa145b2f37598e67"
+    "fileHash": "2355727524a75373b7a1af8bff3314bd67223e86"
   },
   "card/earth_bishop_queen": {
     "file": "earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-21T04:39:49.831Z",
-    "fileHash": "516d58a735199326584a34c0aa145b2f37598e67"
+    "fileHash": "2355727524a75373b7a1af8bff3314bd67223e86"
   },
   "card/earth_rook_rook": {
     "file": "earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-21T04:39:49.837Z",
-    "fileHash": "516d58a735199326584a34c0aa145b2f37598e67"
+    "fileHash": "2355727524a75373b7a1af8bff3314bd67223e86"
   },
   "card/earth_queen_rook": {
     "file": "earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-21T04:39:49.843Z",
-    "fileHash": "516d58a735199326584a34c0aa145b2f37598e67"
+    "fileHash": "2355727524a75373b7a1af8bff3314bd67223e86"
   },
   "card/earth_queen_queen": {
     "file": "earth_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-21T04:39:49.849Z",
-    "fileHash": "516d58a735199326584a34c0aa145b2f37598e67"
+    "fileHash": "2355727524a75373b7a1af8bff3314bd67223e86"
   }
 }

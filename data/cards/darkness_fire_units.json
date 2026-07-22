@@ -112,7 +112,10 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "darkness_fire_rook",
@@ -287,7 +290,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "darkness_fire_pawn_rook",
@@ -438,7 +444,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "darkness_fire_knight_rook",
@@ -537,6 +546,10 @@
 			"bishop",
 			"bishop"
 		],
+		"ranged": true,
+		"abilities": [
+			"heal"
+		],
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -629,7 +642,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "darkness_fire_rook_rook",

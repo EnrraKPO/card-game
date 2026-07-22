@@ -66,11 +66,10 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Chibi plague monarch standing regally, gaunt gray-green face with glowing yellow eyes above a tarnished brass crown leaking curling chartreuse fumes, ragged mauve robe over riveted bronze plating, gripping a tall scepter topped with a churning orb of violet smoke and circling mosquitoes, sickly green haze pooling at his boots, hazy fog-choked backdrop",
+				"prompt": "Stout crowned monarch-warrior, armored, cape flowing, gripping an ornate scepter, shield at side, commanding heroic stance. Regal armored monarch clad in soot-stained plate and a tattered fume-wreathed mantle, brass-riveted crown venting curling vapor, raising a chimney-topped scepter belching swirling sickly-green haze, mosquito swarm circling, low heroic angle over smog-choked ruined smokestacks, bold ink outlines, painterly cartoon style, muted olive and rusted-red palette, ominous backlighting",
 				"ref": {
 					"source": "game",
-					"path": "assets/cards/king.png",
-					"name": "King",
+					"path": "snap_king.png",
 					"mode": "img2img",
 					"denoise": 0.6
 				},
@@ -91,7 +90,7 @@
 		"health": 20,
 		"speed": 3,
 		"shield": 5,
-		"is_king": true,
+		"description": "Ruler of air and earth. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
 		"elements": [
 			"air",
 			"earth"
@@ -99,27 +98,22 @@
 		"chess_pieces": [
 			"king"
 		],
-		"description": "Ruler of air and earth. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
-		"effects": [],
+		"is_king": true,
 		"tool": {
 			"art": {
-				"prompt": "A stout armored monarch formed of shifting golden sand, jagged crown of fused dune-glass crowning a hollow shadowed face lit by two glowing violet ringed eyes, gripping a tall sand-swirled staff and a round dark shield haloed by an amethyst eclipse, robes crumbling into drifting grains, wispy purple dust curling around cracked desert stone, hazy dusk plateau behind, full-body centered figure",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi sand-elemental king made of swirling golden sand, glowing purple eyes, sand crown, flowing white cloth robe with rope belt, gripping tall sand scepter, holding round shield with dark purple glowing gem, wispy sand tendrils, purple flame accents, standing on desert rock, pastel dusk sky, bold outlines, stylized cartoon painterly render",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/king.png",
-					"name": "King"
-				},
-				"inferredFrom": {
-					"concept": [
-						"king",
-						"darkness_darkness_king",
-						"darkness_fire_king"
-					],
-					"theme": [
-						"darkness_darkness_knight",
-						"darkness_darkness_pawn",
-						"darkness_darkness_queen"
-					]
+					"name": "King",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
@@ -132,7 +126,7 @@
 		"health": 20,
 		"speed": 3,
 		"shield": 5,
-		"is_king": true,
+		"description": "Ruler of air and fire. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
 		"elements": [
 			"air",
 			"fire"
@@ -140,27 +134,22 @@
 		"chess_pieces": [
 			"king"
 		],
-		"description": "Ruler of air and fire. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
-		"effects": [],
+		"is_king": true,
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "Stout crowned monarch warrior standing full-body, thick amber-glowing beard, molten-gold crackling energy arcing along his gauntlets, a jagged golden bolt-tipped scepter in one fist and a sunfire-forged round shield in the other, robes of ember-orange and burnished copper, sparks of warm electric light dancing around him, soft glowing warm background, bold clean illustration",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/king.png",
-					"name": "King"
-				},
-				"inferredFrom": {
-					"concept": [
-						"king",
-						"darkness_darkness_king",
-						"darkness_light_king"
-					],
-					"theme": [
-						"darkness_darkness_knight",
-						"darkness_darkness_pawn",
-						"darkness_darkness_queen"
-					]
+					"name": "King",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
@@ -173,7 +162,7 @@
 		"health": 20,
 		"speed": 3,
 		"shield": 5,
-		"is_king": true,
+		"description": "Ruler of air and light. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
 		"elements": [
 			"air",
 			"light"
@@ -181,27 +170,22 @@
 		"chess_pieces": [
 			"king"
 		],
-		"description": "Ruler of air and light. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
-		"effects": [],
+		"is_king": true,
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "stout armored monarch with a radiant golden halo, broad white feathered wings arched behind him, robes of ivory and gold trimmed with soft plumage, gripping a luminous scepter, standing among low golden pickets amid drifting sunlit clouds, bold clean outlines, heavenly gilded palette, centered heroic figure on airy sky backdrop",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/king.png",
-					"name": "King"
-				},
-				"inferredFrom": {
-					"concept": [
-						"king",
-						"darkness_darkness_king",
-						"darkness_fire_king"
-					],
-					"theme": [
-						"darkness_darkness_knight",
-						"darkness_darkness_pawn",
-						"darkness_darkness_queen"
-					]
+					"name": "King",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
@@ -255,7 +239,7 @@
 		"health": 20,
 		"speed": 3,
 		"shield": 5,
-		"is_king": true,
+		"description": "Ruler of pure darkness. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
 		"elements": [
 			"darkness",
 			"darkness"
@@ -263,27 +247,22 @@
 		"chess_pieces": [
 			"king"
 		],
-		"description": "Ruler of pure darkness. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
-		"effects": [],
+		"is_king": true,
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "A stout crowned monarch wrought of solid living shadow standing full-figure, obsidian plate armor traced with cold silver edges, a glowing violet eclipse-ring emblem on the chestplate, pale amethyst light bleeding from hollow eyes, a tattered cloak fraying into curling black smoke, gripping a dark scepter crowned with a small crescent of pale light, hazy dusk plateau of cracked stone behind, full-body centered figure",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/king.png",
-					"name": "King"
-				},
-				"inferredFrom": {
-					"concept": [
-						"king",
-						"air_air_king",
-						"air_earth_king"
-					],
-					"theme": [
-						"darkness_darkness_knight",
-						"darkness_darkness_pawn",
-						"darkness_darkness_queen"
-					]
+					"name": "King",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
@@ -332,7 +311,7 @@
 		"health": 20,
 		"speed": 3,
 		"shield": 5,
-		"is_king": true,
+		"description": "Ruler of darkness and fire. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
 		"elements": [
 			"darkness",
 			"fire"
@@ -340,27 +319,22 @@
 		"chess_pieces": [
 			"king"
 		],
-		"description": "Ruler of darkness and fire. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
-		"effects": [],
+		"is_king": true,
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "A stout crowned monarch of living shadow standing full-figure, obsidian-black plate armor edged in glowing violet light, jagged horned crown above a hollow face lit by two burning amethyst eyes, a ragged smoke-torn cloak dissolving into curling darkness, gripping a barbed scepter crowned with a purple-ringed void, standing on cracked stone before a hazy twilight plateau, centered figure",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/king.png",
-					"name": "King"
-				},
-				"inferredFrom": {
-					"concept": [
-						"king",
-						"air_air_king",
-						"air_earth_king"
-					],
-					"theme": [
-						"darkness_darkness_knight",
-						"darkness_darkness_pawn",
-						"darkness_darkness_queen"
-					]
+					"name": "King",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
@@ -414,7 +388,7 @@
 		"health": 20,
 		"speed": 3,
 		"shield": 5,
-		"is_king": true,
+		"description": "Ruler of darkness and water. If the King falls, the battle is lost. Attacks the nearest enemy, applying Poison 1. Starts each round with 5 Shield.",
 		"elements": [
 			"darkness",
 			"water"
@@ -422,36 +396,38 @@
 		"chess_pieces": [
 			"king"
 		],
-		"description": "Ruler of darkness and water. If the King falls, the battle is lost. Attacks the nearest enemy, applying Poison 1. Starts each round with 5 Shield.",
+		"is_king": true,
 		"effects": [
 			{
-				"trigger": "on_attack",
-				"targeting_policy": "attack_target",
+				"trigger": {
+					"kind": "dual_event",
+					"event": "attack",
+					"origin_of": "self"
+				},
 				"status": {
-					"id": "poison",
-					"stacks": 1
+					"id": "poison"
+				},
+				"targets": {
+					"kind": "participant",
+					"participant": "destination"
 				}
 			}
 		],
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "A stout crowned monarch of congealing green venom standing full-figure, tarnished plate armor slick with dripping ooze, a pale glowing bleached-bone-and-crossed-shafts emblem seared onto the chestplate, sunken hollow-socketed skull face lit by two toxic luminous eyes, a ragged cloak sloughing into viscous emerald drips, gripping a gnarled staff crowned with bubbling poison, sickly acid-hazed background",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/king.png",
-					"name": "King"
-				},
-				"inferredFrom": {
-					"concept": [
-						"king",
-						"air_air_king",
-						"air_earth_king"
-					],
-					"theme": [
-						"darkness_darkness_knight",
-						"darkness_darkness_pawn",
-						"darkness_darkness_queen"
-					]
+					"name": "King",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
@@ -464,7 +440,7 @@
 		"health": 20,
 		"speed": 3,
 		"shield": 5,
-		"is_king": true,
+		"description": "Ruler of pure earth. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
 		"elements": [
 			"earth",
 			"earth"
@@ -472,23 +448,22 @@
 		"chess_pieces": [
 			"king"
 		],
-		"description": "Ruler of pure earth. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
-		"effects": [],
+		"is_king": true,
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "Chibi earth-elemental sovereign king built from packed soil and clumped dirt, glowing golden eyes, towering jagged bronze crown, thick soil-formed beard, layered ochre and rust plated armor with spiral engravings, heavy pauldroned dirt-woven cloak, raising a bronze scepter crowned with a swirling floating orb of clustered earth, warm brown palette, barren cracked plains, soft diffuse light, painterly fantasy illustration, heroic frontal stance",
 				"ref": {
 					"source": "upload",
-					"path": "snap_king.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_king.png",
-					"theme": [
-						"snap_earth_earth_pawn.png",
-						"snap_earth_earth_knight.png",
-						"snap_earth_earth_queen.png"
-					],
-					"mode": "concept"
+					"path": "snap_king.png",
+					"name": "snap_king.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
@@ -542,7 +517,7 @@
 		"health": 20,
 		"speed": 3,
 		"shield": 5,
-		"is_king": true,
+		"description": "Ruler of earth and light. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
 		"elements": [
 			"earth",
 			"light"
@@ -550,27 +525,22 @@
 		"chess_pieces": [
 			"king"
 		],
-		"description": "Ruler of earth and light. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
-		"effects": [],
+		"is_king": true,
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "A stout crowned monarch standing full-figure, glossy dark armor edged in etched silver, chestplate bearing a glowing pale-violet ring like a hollow eclipse, luminous purple eyes, a crown of curling budding branches, tattered mossy cloak fraying into drifting leaves and vines, gripping a slender staff sprouting curling tendrils, misty twilight sky over cracked stone.",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/king.png",
-					"name": "King"
-				},
-				"inferredFrom": {
-					"concept": [
-						"king",
-						"air_air_king",
-						"air_darkness_king"
-					],
-					"theme": [
-						"darkness_darkness_knight",
-						"darkness_darkness_pawn",
-						"darkness_darkness_queen"
-					]
+					"name": "King",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
@@ -583,7 +553,7 @@
 		"health": 20,
 		"speed": 3,
 		"shield": 5,
-		"is_king": true,
+		"description": "Ruler of earth and water. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
 		"elements": [
 			"earth",
 			"water"
@@ -591,27 +561,22 @@
 		"chess_pieces": [
 			"king"
 		],
-		"description": "Ruler of earth and water. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
-		"effects": [],
+		"is_king": true,
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "A stout crowned monarch standing full-body sculpted entirely from glistening wet earthen paste, thick brown ridges oozing and dripping, cracked drying ridges along heavy shoulders, sagging molded crown slumping over hollow smeared eyes, one dense fist gripping a lumpy dripping staff, sludge pooling at his feet, moody desaturated haze background.",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/king.png",
-					"name": "King"
-				},
-				"inferredFrom": {
-					"concept": [
-						"king",
-						"air_air_king",
-						"air_darkness_king"
-					],
-					"theme": [
-						"darkness_darkness_knight",
-						"darkness_darkness_pawn",
-						"darkness_darkness_queen"
-					]
+					"name": "King",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
@@ -624,7 +589,7 @@
 		"health": 20,
 		"speed": 3,
 		"shield": 5,
-		"is_king": true,
+		"description": "Ruler of pure fire. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
 		"elements": [
 			"fire",
 			"fire"
@@ -632,27 +597,22 @@
 		"chess_pieces": [
 			"king"
 		],
-		"description": "Ruler of pure fire. If the King falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 Shield.",
-		"effects": [],
+		"is_king": true,
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "A stout crowned monarch of living flame standing full-figure, plated armor forged of glowing molten embers edged with flickering tongues of fire, a radiant blazing ring emblem upon the chest, eyes like burning coals, a cloak dissolving into rising sparks and drifting cinders, one gauntleted hand gripping a slender scepter crowned with a churning fireball, hazy ember-lit backdrop.",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/king.png",
-					"name": "King"
-				},
-				"inferredFrom": {
-					"concept": [
-						"king",
-						"air_air_king",
-						"air_darkness_king"
-					],
-					"theme": [
-						"darkness_darkness_knight",
-						"darkness_darkness_pawn",
-						"darkness_darkness_queen"
-					]
+					"name": "King",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}

@@ -169,7 +169,10 @@
 		"attack": 2,
 		"health": 5,
 		"speed": 1,
-		"shield": 1
+		"shield": 1,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "darkness_water_rook",
@@ -426,7 +429,10 @@
 		"attack": 3,
 		"health": 6,
 		"speed": 1,
-		"shield": 3
+		"shield": 3,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "darkness_water_pawn_rook",
@@ -663,7 +669,10 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "darkness_water_knight_rook",
@@ -825,11 +834,19 @@
 		"attack": 3,
 		"health": 7,
 		"speed": 1,
-		"shield": 1
+		"shield": 1,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "darkness_water_bishop_rook",
 		"display_name": "Blight Arcane Tower",
+		"cost": 5,
+		"attack": 3,
+		"health": 10,
+		"speed": 1,
+		"shield": 3,
 		"description": "Applies Poison 1 to the unit it strikes.",
 		"elements": [
 			"darkness",
@@ -856,6 +873,10 @@
 				}
 			}
 		],
+		"abilities": [
+			"darkness_bishop_material",
+			"water_bishop_material"
+		],
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -873,16 +894,7 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"abilities": [
-			"darkness_bishop_material",
-			"water_bishop_material"
-		],
-		"cost": 5,
-		"attack": 3,
-		"health": 10,
-		"speed": 1,
-		"shield": 3
+		}
 	},
 	{
 		"id": "darkness_water_bishop_queen",
@@ -934,7 +946,10 @@
 		"attack": 6,
 		"health": 8,
 		"speed": 3,
-		"shield": 1
+		"shield": 1,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "darkness_water_rook_rook",

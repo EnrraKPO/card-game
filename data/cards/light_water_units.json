@@ -106,7 +106,10 @@
 		"cost": 1,
 		"attack": 1,
 		"health": 7,
-		"speed": 2
+		"speed": 2,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "light_water_rook",
@@ -280,7 +283,10 @@
 		"attack": 2,
 		"health": 8,
 		"speed": 2,
-		"shield": 2
+		"shield": 2,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "light_water_pawn_rook",
@@ -427,7 +433,10 @@
 		"cost": 3,
 		"attack": 3,
 		"health": 9,
-		"speed": 4
+		"speed": 4,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "light_water_knight_rook",
@@ -510,46 +519,50 @@
 	},
 	{
 		"id": "light_water_bishop_bishop",
+		"display_name": "Rainbow Hierophant",
+		"cost": 3,
+		"attack": 2,
+		"health": 9,
+		"speed": 2,
 		"elements": [
 			"light",
 			"water"
 		],
-		"display_name": "Rainbow Hierophant",
 		"chess_pieces": [
 			"bishop",
 			"bishop"
 		],
+		"ranged": true,
+		"abilities": [
+			"heal"
+		],
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "Chibi-proportioned bearded high priest woven of luminous translucent dew rippling through every spectral hue, tall pointed mitre and layered robes shimmering in shifting rainbow color, crowned and studded with faceted refracting gems scattering colored sparks, glowing prismatic eyes, both palms raised unleashing a spiraling burst of radiant multicolored magic, iridescent droplets beading off his form, colored reflections across a dark polished floor, centered heroic pose, deep misty void.",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/bishop_bishop.png",
-					"name": "Hierophant"
-				},
-				"inferredFrom": {
-					"concept": [
-						"bishop_bishop",
-						"air_darkness_bishop_bishop",
-						"air_fire_bishop_bishop"
-					],
-					"theme": [
-						"light_water_knight",
-						"light_water_pawn",
-						"light_water_rook",
-						"light_water_queen"
-					]
+					"name": "Hierophant",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 3,
-		"attack": 2,
-		"health": 9,
-		"speed": 2
+		}
 	},
 	{
 		"id": "light_water_bishop_rook",
 		"display_name": "Rainbow Arcane Tower",
+		"cost": 4,
+		"attack": 2,
+		"health": 12,
+		"speed": 2,
+		"shield": 2,
 		"elements": [
 			"light",
 			"water"
@@ -559,6 +572,10 @@
 			"rook"
 		],
 		"ranged": true,
+		"abilities": [
+			"light_bishop_material",
+			"water_bishop_material"
+		],
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -576,16 +593,7 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"abilities": [
-			"light_bishop_material",
-			"water_bishop_material"
-		],
-		"cost": 4,
-		"attack": 2,
-		"health": 12,
-		"speed": 2,
-		"shield": 2
+		}
 	},
 	{
 		"id": "light_water_bishop_queen",
@@ -623,7 +631,10 @@
 		"cost": 5,
 		"attack": 5,
 		"health": 10,
-		"speed": 4
+		"speed": 4,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "light_water_rook_rook",

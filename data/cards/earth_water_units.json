@@ -100,7 +100,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "earth_water_rook",
@@ -275,7 +278,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "earth_water_pawn_rook",
@@ -433,7 +439,10 @@
 					"mode": "concept"
 				}
 			}
-		}
+		},
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "earth_water_knight_rook",
@@ -525,6 +534,10 @@
 		"chess_pieces": [
 			"bishop",
 			"bishop"
+		],
+		"ranged": true,
+		"abilities": [
+			"heal"
 		],
 		"tool": {
 			"art": {
@@ -630,7 +643,10 @@
 		"attack": 5,
 		"health": 9,
 		"speed": 3,
-		"shield": 1
+		"shield": 1,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "earth_water_rook_rook",

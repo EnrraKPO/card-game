@@ -100,7 +100,10 @@
 		"cost": 0,
 		"attack": 1,
 		"health": 6,
-		"speed": 3
+		"speed": 3,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "light_light_rook",
@@ -278,7 +281,10 @@
 		"attack": 2,
 		"health": 7,
 		"speed": 3,
-		"shield": 2
+		"shield": 2,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "light_light_pawn_rook",
@@ -420,7 +426,10 @@
 		"cost": 2,
 		"attack": 3,
 		"health": 8,
-		"speed": 5
+		"speed": 5,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "light_light_knight_rook",
@@ -499,6 +508,10 @@
 	{
 		"id": "light_light_bishop_bishop",
 		"display_name": "Pure Light Hierophant",
+		"cost": 2,
+		"attack": 2,
+		"health": 8,
+		"speed": 3,
 		"elements": [
 			"light",
 			"light"
@@ -506,6 +519,10 @@
 		"chess_pieces": [
 			"bishop",
 			"bishop"
+		],
+		"ranged": true,
+		"abilities": [
+			"heal"
 		],
 		"tool": {
 			"art": {
@@ -524,15 +541,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 2,
-		"attack": 2,
-		"health": 8,
-		"speed": 3
+		}
 	},
 	{
 		"id": "light_light_bishop_rook",
 		"display_name": "Pure Light Arcane Tower",
+		"cost": 3,
+		"attack": 2,
+		"health": 11,
+		"speed": 3,
+		"shield": 2,
 		"elements": [
 			"light",
 			"light"
@@ -542,6 +560,10 @@
 			"rook"
 		],
 		"ranged": true,
+		"abilities": [
+			"light_bishop_training_pure",
+			"bishop_material"
+		],
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -559,16 +581,7 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"abilities": [
-			"light_bishop_training_pure",
-			"bishop_material"
-		],
-		"cost": 3,
-		"attack": 2,
-		"health": 11,
-		"speed": 3,
-		"shield": 2
+		}
 	},
 	{
 		"id": "light_light_bishop_queen",
@@ -602,7 +615,10 @@
 		"cost": 4,
 		"attack": 5,
 		"health": 9,
-		"speed": 5
+		"speed": 5,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "light_light_rook_rook",

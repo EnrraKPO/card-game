@@ -334,8 +334,8 @@
 			}
 		],
 		"abilities": [
-			"heal",
-			"bishop_material"
+			"bishop_material",
+			"heal"
 		]
 	},
 	{

@@ -97,7 +97,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "fire_light_rook",
@@ -277,7 +280,10 @@
 		"attack": 4,
 		"health": 6,
 		"speed": 2,
-		"shield": 2
+		"shield": 2,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "fire_light_pawn_rook",
@@ -419,7 +425,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "fire_light_knight_rook",
@@ -510,6 +519,10 @@
 			"bishop",
 			"bishop"
 		],
+		"ranged": true,
+		"abilities": [
+			"heal"
+		],
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -532,6 +545,11 @@
 	{
 		"id": "fire_light_bishop_rook",
 		"display_name": "Spirit Arcane Tower",
+		"cost": 4,
+		"attack": 4,
+		"health": 10,
+		"speed": 2,
+		"shield": 2,
 		"elements": [
 			"fire",
 			"light"
@@ -541,6 +559,10 @@
 			"rook"
 		],
 		"ranged": true,
+		"abilities": [
+			"fire_bishop_material",
+			"light_bishop_material"
+		],
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -558,16 +580,7 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"abilities": [
-			"fire_bishop_material",
-			"light_bishop_material"
-		],
-		"cost": 4,
-		"attack": 4,
-		"health": 10,
-		"speed": 2,
-		"shield": 2
+		}
 	},
 	{
 		"id": "fire_light_bishop_queen",
@@ -601,7 +614,10 @@
 		"cost": 5,
 		"attack": 7,
 		"health": 8,
-		"speed": 4
+		"speed": 4,
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "fire_light_rook_rook",

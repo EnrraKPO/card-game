@@ -38,7 +38,8 @@
 		],
 		"ranged": true,
 		"abilities": [
-			"light_bless"
+			"light_bless",
+			"heal"
 		],
 		"cost": 1,
 		"attack": 1,
@@ -226,21 +227,25 @@
 	},
 	{
 		"id": "light_bishop_bishop",
+		"display_name": "Light Hierophant",
 		"elements": [
 			"light"
 		],
-		"display_name": "Light Hierophant",
 		"chess_pieces": [
 			"bishop",
 			"bishop"
+		],
+		"ranged": true,
+		"abilities": [
+			"heal"
 		]
 	},
 	{
 		"id": "light_bishop_rook",
+		"display_name": "Light Arcane Tower",
 		"elements": [
 			"light"
 		],
-		"display_name": "Light Arcane Tower",
 		"chess_pieces": [
 			"bishop",
 			"rook"
@@ -278,7 +283,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "light_rook_rook",

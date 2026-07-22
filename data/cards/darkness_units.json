@@ -110,7 +110,8 @@
 			}
 		},
 		"abilities": [
-			"darkness_bless"
+			"darkness_bless",
+			"heal"
 		],
 		"cost": 2,
 		"attack": 2,
@@ -500,66 +501,70 @@
 	},
 	{
 		"id": "darkness_bishop_bishop",
+		"display_name": "Darkness Hierophant",
 		"elements": [
 			"darkness"
 		],
-		"display_name": "Darkness Hierophant",
 		"chess_pieces": [
 			"bishop",
 			"bishop"
 		],
+		"ranged": true,
+		"abilities": [
+			"heal"
+		],
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "Chibi bearded high priest, tall pointed mitre crowned with an amethyst gem, long flowing white beard, ornate black-and-silver ceremonial robe with violet crystal filigree and fur-trimmed collar, one hand raised channeling swirling dark violet spellwork, gripping a tall staff topped with a glowing purple crescent orb, levitating gemstones, starry twilight plains, deep purple palette, dramatic rim lighting, bold clean cartoon outlines, full-body view",
 				"ref": {
 					"source": "upload",
-					"path": "snap_bishop_bishop.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_bishop_bishop.png",
-					"theme": [
-						"snap_darkness_pawn.png",
-						"snap_darkness_knight.png",
-						"snap_darkness_queen.png"
-					],
-					"mode": "concept"
+					"path": "snap_bishop_bishop.png",
+					"name": "snap_bishop_bishop.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
 	},
 	{
 		"id": "darkness_bishop_rook",
+		"display_name": "Darkness Arcane Tower",
 		"elements": [
 			"darkness"
 		],
-		"display_name": "Darkness Arcane Tower",
 		"chess_pieces": [
 			"bishop",
 			"rook"
 		],
 		"ranged": true,
-		"tool": {
-			"art": {
-				"prompt": "Towering stone spellcaster's turret wreathed in swirling violet magic, a chibi hooded priest-magician in black-and-silver robes with mitre hat standing at its arched glowing doorway, clutching an open grimoire and an amethyst-crowned staff, ringed spires flying dark purple wisps, floating violet gemstones, starry twilight hills, thick clean outlines, dramatic rim lighting",
-				"ref": {
-					"source": "upload",
-					"path": "snap_bishop_rook.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_bishop_rook.png",
-					"theme": [
-						"snap_darkness_pawn.png",
-						"snap_darkness_knight.png",
-						"snap_darkness_queen.png"
-					],
-					"mode": "concept"
-				}
-			}
-		},
 		"abilities": [
 			"darkness_bishop_training",
 			"bishop_material"
-		]
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Towering stone spellcaster's turret wreathed in swirling violet magic, a chibi hooded priest-magician in black-and-silver robes with mitre hat standing at its arched glowing doorway, clutching an open grimoire and an amethyst-crowned staff, ringed spires flying dark purple wisps, floating violet gemstones, starry twilight hills, thick clean outlines, dramatic rim lighting",
+				"ref": {
+					"source": "upload",
+					"path": "snap_bishop_rook.png",
+					"name": "snap_bishop_rook.png",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
 	},
 	{
 		"id": "darkness_bishop_queen",
@@ -588,7 +593,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"abilities": [
+			"heal"
+		]
 	},
 	{
 		"id": "darkness_rook_rook",
