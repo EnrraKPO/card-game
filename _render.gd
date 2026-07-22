@@ -113,6 +113,30 @@ func _ready() -> void:
 			if n.has_method("_begin_drag"):
 				n.call("_begin_drag", {"kind": "card", "idx": GameData.current_run.deck.size() - 1})
 				break
+	# "abilities": field an ability-holder (rook/castling) on the player board and open the
+	# hand's level-2 Abilities view — i.e. the "Inspect Abilities" button pressed ON.
+	if scene_path.contains("combat") and "abilities" in args:
+		var combat: Node = null
+		for n: Node in sv.find_children("*", "Node", true, false):
+			if n.has_method("get_chrome") and n.get("_board") != null:
+				combat = n
+				break
+		if combat != null:
+			var board = combat.get("_board")
+			var hand = combat.get("_hand")
+			var rk := CardInstance.from_data(CardData.get_card("rook"))
+			board.spawn_player_card(rk, 2, 1)
+			if "armed" in args:
+				rk.autocast_ability = "castling"
+			await get_tree().process_frame
+			if "inspectunit" in args:
+				# "longdesc": stress the fixed-height guarantee with a wall of text.
+				if "longdesc" in args:
+					rk.data.description = "A truly enormous wall of rules text that goes on and on and on, well past any reasonable card, precisely to prove the inspect panel refuses to grow one pixel taller no matter how much prose is crammed into it. More. And more. And even more still."
+				hand.set_inspected(rk)
+			else:
+				hand.show_abilities()
+			await get_tree().process_frame
 	# "inspect": pop the full-screen CardInspector over the scene (a content-rich card).
 	if "inspect" in args:
 		var ci := CardInstance.from_data(CardData.get_card("rook"))

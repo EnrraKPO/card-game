@@ -54,10 +54,18 @@ var _hand_box: BoxContainer
 var _gen_box: BoxContainer
 var _abilities_box: BoxContainer
 var _no_abilities_lbl: Label
+# The card strip + its greed. In HAND the scroll fills the bar (cards spread across it); in the
+# raised levels it shrinks to its content so the description panel hugs the abilities and the
+# freed width collapses into _inspect_spacer, keeping the nav column pinned right (see _set_level).
+var _pad: MarginContainer
+var _scroll: ScrollContainer
+var _inspect_spacer: Control
 var _desc_panel: PanelContainer
 var _back_btn: Button
 var _inspect_abilities_btn: GlossyButton
 var _desc_hbox: HBoxContainer
+var _desc_clip: Control        # fixed-height clip that severs the text's min-height (see build_into)
+var _desc_col: VBoxContainer   # the name+description column; width fitted to its text (see _fit_desc_width)
 var _desc_name_lbl: Label
 var _desc_text_lbl: Label
 var _desc_preview: CardUI = null
@@ -81,11 +89,13 @@ const PAD_TOP := 6.0
 # The Inspect Abilities button's base colour — fuchsia, deliberately loud (see its build site).
 const INSPECT_ACCENT := Color("d92bc4")
 
-# Card preview shown in the sidebar's description panel, sized to fill the full hand-bar
-# height at the card's native 260:340 aspect ratio — AT LEAST the game's regular card
-# size (160×210, see card_ui.tscn), not a shrunk-down "card inside a card". This is the
-# panel's whole focus; there's no reason for it to be smaller than an ordinary card.
-const DESC_PREVIEW_SIZE := Vector2(205, 268)
+# The arming hint appended to every AUTOCAST ability's description in the inspect view, in gold so
+# it reads as a control affordance (how to enable quick cast) rather than part of the rules text.
+const QUICKCAST_HINT := "(Tap and hold/Right click to enable quick cast)"
+const QUICKCAST_COLOR := Color("ffc94a")
+# Light body text for the ability descriptions, which sit on the dark hand-bar strip (the unit
+# description, by contrast, sits on the light SURFACE_DEEP sidebar and stays dark — see build_into).
+const ABILITY_TEXT_COLOR := Color(0.95, 0.93, 0.86)
 
 
 # ── UI construction ──────────────────────────────────────────────────────────────
@@ -120,21 +130,21 @@ func build_into(parent: Control, left_widget: Control = null) -> void:
 	# is dead space. NO bottom padding: the cards sit flush at the bar's bottom edge so the
 	# off-screen bleed (BOTTOM_BLEED) crops only their dead sub-gem frame, not empty panel. The
 	# scroll (and its cards) live inside this.
-	var pad := MarginContainer.new()
-	pad.add_theme_constant_override("margin_left", 0)
-	pad.add_theme_constant_override("margin_right", 20)
-	pad.add_theme_constant_override("margin_top", int(PAD_TOP))
-	pad.add_theme_constant_override("margin_bottom", 0)
-	pad.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	pad.size_flags_vertical   = Control.SIZE_EXPAND_FILL
-	outer_row.add_child(pad)
+	_pad = MarginContainer.new()
+	_pad.add_theme_constant_override("margin_left", 0)
+	_pad.add_theme_constant_override("margin_right", 20)
+	_pad.add_theme_constant_override("margin_top", int(PAD_TOP))
+	_pad.add_theme_constant_override("margin_bottom", 0)
+	_pad.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_pad.size_flags_vertical   = Control.SIZE_EXPAND_FILL
+	outer_row.add_child(_pad)
 
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.size_flags_vertical   = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	scroll.vertical_scroll_mode   = ScrollContainer.SCROLL_MODE_DISABLED
-	pad.add_child(scroll)
+	_scroll = ScrollContainer.new()
+	_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_scroll.size_flags_vertical   = Control.SIZE_EXPAND_FILL
+	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_scroll.vertical_scroll_mode   = ScrollContainer.SCROLL_MODE_DISABLED
+	_pad.add_child(_scroll)
 
 	# The inspect sidebar: one panel, hidden entirely outside inspection (see
 	# set_inspected/clear_inspected). Flush to the bar's own edges — no corner rounding (nothing
@@ -150,6 +160,14 @@ func build_into(parent: Control, left_widget: Control = null) -> void:
 	desc_style.bg_color = ScreenUI.SURFACE_DEEP
 	desc_style.set_content_margin_all(0)
 	_desc_panel.add_theme_stylebox_override("panel", desc_style)
+
+	# Eats the width freed in the raised levels (scroll shrunk to its abilities, description fitted
+	# to its text). Placed BEFORE the description panel so the description stays pinned to the RIGHT
+	# (against the nav column), not floating left against the abilities. Collapsed (zero-flex) in
+	# HAND, where the scroll itself does the filling. See _set_level.
+	_inspect_spacer = Control.new()
+	_inspect_spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	outer_row.add_child(_inspect_spacer)
 	outer_row.add_child(_desc_panel)
 
 	_desc_hbox = HBoxContainer.new()
@@ -172,27 +190,33 @@ func build_into(parent: Control, left_widget: Control = null) -> void:
 	desc_text_wrap.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_desc_hbox.add_child(desc_text_wrap)
 
-	var desc_vbox := VBoxContainer.new()
-	desc_vbox.custom_minimum_size.x = 260.0   # wide enough that the description rarely wraps
-	# past 2-3 lines — a too-narrow column was forcing enough wrap to blow past the fixed
-	# panel height and squash the rest of the sidebar.
-	desc_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	desc_vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL   # top-aligned, matching the
-	# preview's own top alignment below — SHRINK_CENTER here (short text, tall box) floated the
-	# whole column in the middle with dead space above/below it, reading as "shrunk".
-	desc_vbox.add_theme_constant_override("separation", 12)
-	desc_text_wrap.add_child(desc_vbox)
+	# THE fixed-height guarantee: a plain Control (NOT a container) never adds its children's
+	# minimum size to its own, so however tall the description wraps, it can't push the hand bar
+	# past its fixed height — the panel's own preview card is the only height driver. Its width IS
+	# fitted to the text (see _fit_desc_width); overflow past the fixed height is clipped (keep
+	# ability-card descriptions short — a marquee is the agreed policy if that ever bites).
+	_desc_clip = Control.new()
+	_desc_clip.clip_contents = true
+	_desc_clip.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	_desc_clip.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	desc_text_wrap.add_child(_desc_clip)
+
+	_desc_col = VBoxContainer.new()
+	# Fills the clip via anchors (not container flow — that's what severs the min-height feedback).
+	_desc_col.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_desc_col.add_theme_constant_override("separation", 12)
+	_desc_clip.add_child(_desc_col)
 
 	_desc_name_lbl = Label.new()
-	_desc_name_lbl.add_theme_font_size_override("font_size", 24)
-	desc_vbox.add_child(_desc_name_lbl)
+	_desc_name_lbl.add_theme_font_size_override("font_size", 28)
+	_desc_col.add_child(_desc_name_lbl)
 
 	_desc_text_lbl = Label.new()
 	_desc_text_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_desc_text_lbl.add_theme_font_size_override("font_size", 18)
+	_desc_text_lbl.add_theme_font_size_override("font_size", 26)
 	_desc_text_lbl.add_theme_color_override("font_color", Color("3a2f22"))
 	_desc_text_lbl.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	desc_vbox.add_child(_desc_text_lbl)
+	_desc_col.add_child(_desc_text_lbl)
 
 	# The navigation button column at the far right of the bar — ALWAYS visible (unlike the
 	# sidebar), one column for every level so the actions live in the same place throughout.
@@ -214,9 +238,11 @@ func build_into(parent: Control, left_widget: Control = null) -> void:
 	# only stretches cleanly; squeezing the centre band doubles the baked rim into seams):
 	# the full-band Inspect button rides the short-portrait bake (170×280, ratio ≤ 0.68), and
 	# the Back pills ride the 48 bucket (136 wide) — every width stays at/above its bake's.
-	# No alignment override: every child is EXPAND_FILL, so there's nothing to center — the
-	# visible buttons split the column height between them, and a lone survivor takes it all.
-	var nav_box := VBoxContainer.new()
+	# Laid out side by side (HBox): on the inspect view both buttons show at once — they sit
+	# horizontally, each full height (EXPAND_FILL vertical), each keeping its own width
+	# (SHRINK_CENTER horizontal) rather than splitting a column. A lone survivor (hand → Inspect,
+	# abilities → Back) simply occupies its width, full height.
+	var nav_box := HBoxContainer.new()
 	nav_box.add_theme_constant_override("separation", 10)
 	nav_wrap.add_child(nav_box)
 
@@ -227,19 +253,30 @@ func build_into(parent: Control, left_widget: Control = null) -> void:
 	# hand AND the single-card inspect view), gated purely on there being abilities to inspect —
 	# see refresh_nav. EXPAND_FILL so it (or Back to hand) claims the whole column when alone.
 	_inspect_abilities_btn = ScreenUI.action_button("Inspect Abilities", show_abilities,
-			Vector2(140, 64), 22, INSPECT_ACCENT)
+			Vector2(175, 64), 28, INSPECT_ACCENT)
 	_inspect_abilities_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_inspect_abilities_btn.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_inspect_abilities_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	nav_box.add_child(_inspect_abilities_btn)
 
 	# Straight back to the plain hand, from either raised level (routed through _on_back_to_hand
 	# so it also covers Abilities, where nothing is inspected). EXPAND_FILL, same as the button
 	# above: when only one of the two shows, it fills the column — never a half-height button.
-	_back_btn = ScreenUI.action_button("← Back to hand", _on_back_to_hand, Vector2(140, 56), 18,
-			ScreenUI.CHROME_NEUTRAL)
+	_back_btn = ScreenUI.action_button("← Back to hand\n(Click anywhere)",
+			_on_back_to_hand, Vector2(175, 56), 20, ScreenUI.CHROME_NEUTRAL)
+	_back_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_back_btn.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_back_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_back_btn.visible = false
 	nav_box.add_child(_back_btn)
+	# The shared GlossyButton styleboxes are empty (zero text inset) — fine for short single-word
+	# labels, but this two-line label otherwise runs edge-to-edge and paints over the glossy rim.
+	# A small content margin (now that the button is in the tree, so _build's overrides exist)
+	# holds the wrapped text inside the visible border. Horizontal only — vertical is already roomy.
+	for st: String in ["normal", "hover", "pressed", "focus", "disabled"]:
+		var sb: StyleBox = _back_btn.get_theme_stylebox(st)
+		sb.content_margin_left = 16.0
+		sb.content_margin_right = 16.0
 
 	# The hand row and the ability-token row occupy the same space and are shown one at a time
 	# (see set_inspected/clear_inspected) — never both visible together. Both SHRINK_CENTER
@@ -247,7 +284,7 @@ func build_into(parent: Control, left_widget: Control = null) -> void:
 	var content := HBoxContainer.new()
 	content.add_theme_constant_override("separation", 12)
 	content.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	scroll.add_child(content)
+	_scroll.add_child(content)
 
 	_hand_box = HBoxContainer.new()
 	_hand_box.add_theme_constant_override("separation", 12)
@@ -348,10 +385,13 @@ func set_card_size(s: Vector2) -> void:
 		_no_abilities_lbl.custom_minimum_size.y = s.y
 	for ui: CardUI in _hand_cards:
 		ui.custom_minimum_size = s
+	# Tokens and Abilities-list entries ride the shrunk tray size (clears the bottom crop whole —
+	# see _tray_card_size), so keep them there on resize instead of re-inflating to full card size.
+	var tray := _tray_card_size()
 	for ui: CardUI in _gen_cards:
-		ui.custom_minimum_size = s
+		ui.custom_minimum_size = tray
 	for ui: CardUI in _ability_entries:
-		ui.custom_minimum_size = s
+		ui.custom_minimum_size = tray
 
 
 # ── Card inspection (description + activated abilities) ───────────────────────────
@@ -428,6 +468,7 @@ func show_abilities() -> void:
 	# The sidebar doubles as the level's hint (no preview here — that's inspect-only).
 	_desc_name_lbl.text = ""
 	_desc_text_lbl.text = "Click a unit to inspect its abilities."
+	_fit_desc_width()
 	_set_level(NavLevel.ABILITIES)
 
 
@@ -456,6 +497,15 @@ func _set_level(level: NavLevel) -> void:
 	# The sidebar serves both raised levels: the unit detail at INSPECT (filled by
 	# _rebuild_inspect_view), the "click a unit" hint at ABILITIES (set by show_abilities).
 	_desc_panel.visible    = level != NavLevel.HAND
+	# Greed handoff: HAND lets the scroll fill the bar (cards spread across it); the raised levels
+	# shrink the scroll to its abilities (horizontal scroll off so it reports its content width) so
+	# the description hugs the abilities, and the spacer takes the freed width — nav stays right.
+	var raised := level != NavLevel.HAND
+	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED if raised \
+			else ScrollContainer.SCROLL_MODE_AUTO
+	_pad.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN if raised else Control.SIZE_EXPAND_FILL
+	_inspect_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL if raised \
+			else Control.SIZE_SHRINK_BEGIN
 	if level != NavLevel.ABILITIES:
 		_clear_ability_entries()
 	refresh_nav()
@@ -483,10 +533,10 @@ func refresh_nav() -> void:
 					break
 			if has_usable:
 				break
-	# Inspect Abilities: the door to the Abilities list, offered wherever it's meaningful — the
-	# plain hand and the single-card inspect view — but never on the Abilities list itself, and
-	# only while some unit actually has an ability to inspect.
-	_inspect_abilities_btn.visible = _nav_level != NavLevel.ABILITIES and has_abilities
+	# Inspect Abilities: the door to the Abilities list, offered only on the plain hand (NOT in the
+	# single-card inspect view — that view is already about a unit's abilities, and dropping the
+	# button there frees width for the description), and only while some unit has an ability.
+	_inspect_abilities_btn.visible = _nav_level == NavLevel.HAND and has_abilities
 	# The attention state rides the LIBRARY (ui_button_attention resolves back to set_glow via
 	# its custom renderer) — same look as before, one address space.
 	if _inspect_abilities_btn.visible and has_usable:
@@ -496,13 +546,26 @@ func refresh_nav() -> void:
 	_back_btn.visible              = _nav_level != NavLevel.HAND
 
 
+# A card sized to sit FULLY on-screen in the hand strip — shrunk in from _card_size (kept to the
+# card aspect) so its bottom (frame, stat gems, autocast brackets) clears the off-screen crop
+# (BOTTOM_BLEED) instead of riding it like a hand card's dead frame. Used for the ability tokens
+# and the Abilities-list holder cards — both show corner brackets that must stay whole.
+func _tray_card_size() -> Vector2:
+	var h := _card_size.y - 2.0 * BOTTOM_BLEED - 6.0
+	return Vector2(roundf(h * _card_size.x / _card_size.y), roundf(h))
+
+
 func _rebuild_abilities_view() -> void:
 	_clear_ability_entries()
 	if not get_ability_units.is_valid():
 		return
+	var entry_size := _tray_card_size()
 	for inst: CardInstance in get_ability_units.call():
 		var ui := CardUI.create(inst, false)
-		ui.custom_minimum_size = _card_size
+		# Shrunk to clear the bottom crop whole — an armed holder's autocast brackets sit near the
+		# card edge and bled off when these entries rode the full-size hand-card crop.
+		ui.custom_minimum_size = entry_size
+		ui.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		ui.draggable = false   # a menu entry, not the board unit — click inspects, never drags
 		ui.pressed.connect(func(): set_inspected(inst))
 		# Hovering an entry glows its board slot, same affordance as hovering an ability token.
@@ -533,7 +596,10 @@ func _rebuild_inspect_view() -> void:
 	if _desc_preview != null:
 		_desc_preview.queue_free()
 	_desc_preview = CardUI.create(inst, false)
-	_desc_preview.custom_minimum_size = DESC_PREVIEW_SIZE
+	# Mirror the live card footprint — a fixed oversized preview (DESC_PREVIEW_SIZE) stood taller
+	# than a real card and dragged the whole panel above the other views' height. At _card_size the
+	# inspect panel is exactly _card_size.y + PAD_TOP, identical to the hand/abilities states.
+	_desc_preview.custom_minimum_size = _card_size
 	_desc_preview.size_flags_vertical = Control.SIZE_SHRINK_BEGIN   # top-aligned with the text
 	# column beside it (see desc_vbox) — SHRINK_CENTER paired with a shorter text block created
 	# mismatched empty bands above/below both, reading as "shrunk into the middle".
@@ -543,6 +609,12 @@ func _rebuild_inspect_view() -> void:
 
 	_desc_name_lbl.text = inst.data.display_name
 	_desc_text_lbl.text = inst.data.description
+	_fit_desc_width()
+	# Ability display cards fill their frame (and armed brackets) right to the edge — unlike a unit
+	# card, whose bottom band is dead frame the bar can afford to bleed off-screen (BOTTOM_BLEED).
+	# So they ride the slightly-shorter tray size (see _tray_card_size) that clears the crop whole.
+	var tray_size := _tray_card_size()
+	var tray_h := tray_size.y
 	var interactive := inst.owner == 0
 	for ab: AbilityData in inst.ability_list():
 		var tok := CardInstance.from_data(ab.display_card())
@@ -552,9 +624,18 @@ func _rebuild_inspect_view() -> void:
 		tok.source_building = inst
 		tok.ability = ab
 		var ui := AbilityWidget.create_for(tok)
-		ui.custom_minimum_size = _card_size
+		ui.custom_minimum_size = tray_size
+		ui.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		_gen_cards.append(ui)
-		_gen_box.add_child(ui)   # entering the tree runs _ready, so set_generated is safe after
+		# Each ability shows its illustration beside a large-text description (the widget alone
+		# doesn't say what it does). The row is the _gen_box child; the widget stays tracked in
+		# _gen_cards for arming/hover/refresh and is freed via its row (see clear_tokens).
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 16)
+		row.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(ui)
+		row.add_child(_ability_text_col(ab, tray_h))
+		_gen_box.add_child(row)   # entering the tree runs _ready, so set_generated is safe after
 		ui.set_generated()
 		if not interactive:
 			ui.set_noninteractive()
@@ -577,6 +658,56 @@ func _rebuild_inspect_view() -> void:
 	_desc_panel.visible = true
 
 
+# Sizes the description column to the CURRENT text: as wide as the text wants on a single line,
+# capped so a long description wraps instead of ballooning the sidebar (and floored so a one-word
+# name/description still reads). Short descriptions — the norm for ability-bearing cards — collapse
+# the column, which (the sidebar sizing to its content) releases that width to the ability strip.
+func _fit_desc_width() -> void:
+	if _desc_clip == null:
+		return
+	const MAX_W := 440.0
+	const MIN_W := 90.0
+	var tf := _desc_text_lbl.get_theme_font("font")
+	var nf := _desc_name_lbl.get_theme_font("font")
+	var tw := tf.get_string_size(_desc_text_lbl.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 26).x
+	var nw := nf.get_string_size(_desc_name_lbl.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 28).x
+	_desc_clip.custom_minimum_size.x = clampf(maxf(tw, nw), MIN_W, MAX_W)
+
+
+# The text beside an ability's illustration in the inspect view: the ability name over its
+# large-text description, with (for autocast abilities) the gold quick-cast arming hint appended.
+# ONE fixed-size RichTextLabel — height pinned to the illustration's height so a long description
+# can never grow the fixed-height hand bar (it clips as a last resort; the font is chosen so the
+# current abilities fit). Width pinned to the strip (see the measured scroll width). Light text:
+# this sits on the dark hand-bar strip, not the light description sidebar.
+#
+# The description is enriched for keyword icons FIRST (TextIcons.enrich escapes its `[`), THEN the
+# gold hint's own BBCode is appended un-escaped — passing the whole thing through rich_label would
+# escape the [color] tag into literal text.
+func _ability_text_col(ab: AbilityData, col_h: float) -> Control:
+	const COL_W := 280.0
+	var body := "[font_size=22][b]%s[/b][/font_size]\n" % ab.display_name
+	body += TextIcons.enrich(ab.description, 19)
+	if ab.autocast:
+		# The hint is a control affordance, not rules text — a notch smaller than the description
+		# so it reads as secondary and (with the description) fits the fixed one-card-tall strip.
+		body += "\n[font_size=15][color=#%s]%s[/color][/font_size]" \
+				% [QUICKCAST_COLOR.to_html(false), QUICKCAST_HINT]
+	var rtl := RichTextLabel.new()
+	rtl.bbcode_enabled = true
+	rtl.fit_content = false          # fixed size — must NOT report content height and grow the bar
+	rtl.scroll_active = false
+	rtl.clip_contents = true         # last resort if a description still overruns the fixed box
+	rtl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	rtl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	rtl.add_theme_font_size_override("normal_font_size", 19)
+	rtl.add_theme_color_override("default_color", ABILITY_TEXT_COLOR)
+	rtl.text = body
+	rtl.custom_minimum_size = Vector2(COL_W, col_h)
+	rtl.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	return rtl
+
+
 # Arming one ability implicitly disarms the holder's other one (single autocast_ability
 # field) — refresh EVERY tray widget so the disarmed sibling's brackets dim too, then let
 # the orchestrator update the holder's board card.
@@ -595,7 +726,9 @@ func prune_tapped(holder: CardInstance) -> void:
 				and inst.ability != null and inst.ability.tap:
 			remove_token(ui)
 			token_hovered.emit(holder, false)
-			ui.queue_free()
+			# The widget lives inside its ability row (see _rebuild_inspect_view) — free the row.
+			var row := ui.get_parent()
+			(row if row != null else ui).queue_free()
 	# The holder just tapped out, so the roster of ability-bearing units may have shrunk (to
 	# empty). Re-derive the Inspect Abilities button so it withdraws the moment nothing's left —
 	# this fires under a stationary level too (e.g. an autocast fired from the plain hand).
@@ -606,7 +739,10 @@ func clear_tokens() -> void:
 	for ui: CardUI in _gen_cards:
 		if ui.card_instance != null:
 			token_hovered.emit(ui.card_instance.source_building, false)
-		ui.queue_free()
+	# The widgets are now nested inside per-ability rows (see _rebuild_inspect_view) — free the
+	# rows, which frees their widget + description children with them.
+	for child: Node in _gen_box.get_children():
+		child.queue_free()
 	_gen_cards.clear()
 	_gen_box.visible = false
 
