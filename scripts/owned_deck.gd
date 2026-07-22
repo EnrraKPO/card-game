@@ -18,6 +18,11 @@ var id: String                  # unique instance id within the profile (e.g. "d
 var name: String = ""           # player-facing label
 var king_id: String = "king"    # the King this deck is played with
 var cards: Array = []           # Array[DeckCard]
+# True only for the profile's original starter deck (seeded at profile creation). Marks the
+# "base King deck" so its run-start earns the elemental pick ritual (see king_reward_picks) —
+# custom decks the player later builds on the King do NOT get it. Provenance, not identity:
+# survives edits/reset, but a clone() of this deck is a fresh custom deck (flag not copied).
+var is_base_template: bool = false
 
 
 # How many copies of `card_id` this deck currently holds.
@@ -78,7 +83,8 @@ func to_dict() -> Dictionary:
 	var card_data: Array = []
 	for dc: DeckCard in cards:
 		card_data.append(dc.to_dict())
-	return {"id": id, "name": name, "king_id": king_id, "cards": card_data}
+	return {"id": id, "name": name, "king_id": king_id, "cards": card_data,
+		"is_base_template": is_base_template}
 
 
 static func from_dict(data: Dictionary) -> OwnedDeck:
@@ -86,6 +92,7 @@ static func from_dict(data: Dictionary) -> OwnedDeck:
 	od.id = data.get("id", "")
 	od.name = data.get("name", "")
 	od.king_id = data.get("king_id", "king")
+	od.is_base_template = bool(data.get("is_base_template", false))
 	for v in data.get("cards", []):
 		od.cards.append(DeckCard.from_variant(v))
 	return od

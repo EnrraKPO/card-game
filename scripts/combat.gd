@@ -861,6 +861,10 @@ func _handle_combat_end() -> void:
 		GameData.current_encounter = null
 		Nav.goto("res://scenes/combat_gym.tscn")
 		return
+	# One-time milestone checks fire for any real (non-practice) match completion — win OR loss.
+	# The reward lands quietly here; any celebration is queued and shown at the next hub visit
+	# (see Achievements / game_world), where its "visit the Lab" nudge is actually actionable.
+	Achievements.record_match_completed()
 	if player_won:
 		# Apply the encounter's automatic rewards (gold + crafting materials) in one place,
 		# uniformly for boss and normal wins. The card-pick reward is handled by reward_screen.

@@ -70,7 +70,10 @@ func _ready() -> void:
 	row.add_child(_meta_button("Decks", "res://scenes/deck_screen.tscn"))
 	if SHOW_COLLECTION:
 		row.add_child(_meta_button("Collection", "res://scenes/collection_screen.tscn"))
-	row.add_child(_meta_button("Lab", "res://scenes/lab_screen.tscn"))
+	var lab_btn := _meta_button("Lab", "res://scenes/lab_screen.tscn")
+	row.add_child(lab_btn)
+	if _lab_is_new():
+		_mark_button_new(lab_btn)
 
 	var embark := ScreenUI.action_button("Continue Run" if has_run else "Embark", _on_embark,
 		Vector2.ZERO, 44, ScreenUI.CHROME_CONFIRM)
@@ -93,6 +96,61 @@ func _ready() -> void:
 	_confirm_abandon.confirmed.connect(_on_abandon_confirmed)
 	ScreenUI.wire_modal_cues(_confirm_abandon)
 	add_child(_confirm_abandon)
+
+	# Any milestone earned mid-run celebrates here, where its Lab nudge is actionable — deferred a
+	# frame so the modal settles over the fully-built hub.
+	_show_pending_celebration.call_deferred()
+
+
+# ── FTUE: milestone celebration + Lab "New" badge ─────────────────────────────────────
+
+# Drains ONE queued achievement celebration (the rest, if any, wait for the next hub visit) and
+# shows its modal. Persists the drain so it never re-fires.
+func _show_pending_celebration() -> void:
+	var profile := GameData.current_profile
+	if profile == null:
+		return
+	var id := profile.pop_celebration()
+	if id == "":
+		return
+	GameData.save_profile()
+	Achievements.celebrate(id, self)
+
+
+# The Lab button wears a "New" badge once the player has earned their first King Piece (the
+# first-match milestone) until they first open the Lab.
+func _lab_is_new() -> bool:
+	var profile := GameData.current_profile
+	return profile != null and not profile.lab_visited \
+		and profile.has_achievement(Achievements.FIRST_MATCH)
+
+
+# Pins a small glowing "NEW" pill to a button's top-right corner and gives it an attention glow.
+func _mark_button_new(btn: Button) -> void:
+	Vfx.attach("map_forge_alert_glow", btn)   # the same attention glow the map's Forge button uses
+
+	var badge := Label.new()
+	badge.text = "NEW"
+	badge.add_theme_font_size_override("font_size", 20)
+	badge.add_theme_color_override("font_color", Color(0.12, 0.1, 0.02))
+	badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	badge.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	var style := StyleBoxFlat.new()
+	style.bg_color = Materials.color(Materials.piece_id("king"))
+	style.set_corner_radius_all(10)
+	style.set_content_margin_all(6)
+	style.content_margin_left = 14
+	style.content_margin_right = 14
+	badge.add_theme_stylebox_override("normal", style)
+	# Pin it inside the button's top-right corner (grow left/down from that corner, inset a touch
+	# so the whole pill stays within the button and never clips against the screen edge).
+	badge.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	badge.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	badge.grow_vertical = Control.GROW_DIRECTION_END
+	badge.offset_right = -12
+	badge.offset_top = 12
+	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	btn.add_child(badge)
 
 
 func _build_loadout_panel() -> Control:

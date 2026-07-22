@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://b1kqx7n3rwpk2"]
+
+[ext_resource type="Script" path="res://scripts/king_reward_picks.gd" id="1"]
+
+[node name="KingRewardPicks" type="Control"]
+script = ExtResource("1")

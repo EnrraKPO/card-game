@@ -73,6 +73,11 @@ func _ready() -> void:
 	UIScale.layout_changed.connect(func(): get_tree().reload_current_scene(), CONNECT_ONE_SHOT)
 	_compact = UIScale.is_compact()
 
+	# First visit clears the hub's "New" Lab badge (the FTUE nudge earned by the first King Piece).
+	if not GameData.current_profile.lab_visited:
+		GameData.current_profile.lab_visited = true
+		GameData.save_profile()
+
 	_add_background()
 	_build_layout()       # opens in the "room" view — the big artifact objects
 	_rebuild_inventory()  # populate the resource tray (room view shows the full inventory)

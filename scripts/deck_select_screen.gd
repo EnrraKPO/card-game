@@ -89,6 +89,12 @@ func _play(deck_id: String) -> void:
 	GameData.current_profile.select_deck(deck_id)
 	GameData.save_profile()
 	GameData.start_new_run()
+	# The base King deck runs a one-time elemental pick ritual before the map — the picker adds
+	# its choices to the run deck, then plays the embark and heads to the map itself.
+	var od := GameData.current_profile.get_selected_deck()
+	if od != null and od.is_base_template:
+		Nav.goto("res://scenes/king_reward_picks.tscn")
+		return
 	# The adventure's first step: gates bloom over the whole screen (the entry carries the
 	# embark sound), held so the map navigation doesn't cut it.
 	await Vfx.play("embark_gates_bloom", self)

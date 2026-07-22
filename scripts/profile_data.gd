@@ -41,6 +41,16 @@ var materials: MaterialBag = MaterialBag.new()
 # Crafted cards the player OWNS (card id -> count) — minted from materials in the Lab and
 # drawn from when building decks. Innate King cards are NOT here (see CardCollection).
 var collection: CardCollection = CardCollection.new()
+# One-time milestone ids the player has met (see Achievements). Not user-facing yet — the
+# layer just records unlocks here so each achievement fires (and pays out) exactly once.
+var unlocked_achievements: Array = []   # Array[String]
+# Achievement ids whose celebration modal is queued but not yet shown. Unlocks happen mid-run
+# (in combat); the celebration is deferred to the next hub visit, which drains this. Persisted
+# so the celebration still fires if the run that earned it is saved & quit before returning home.
+var pending_celebrations: Array = []    # Array[String]
+# FTUE flag: has the player ever opened the Lab? Drives the hub's "New" badge on the Lab button
+# (shown once they've earned their first King Piece), which clears the first time they visit.
+var lab_visited: bool = false
 
 
 static func create_default() -> ProfileData:
@@ -48,6 +58,8 @@ static func create_default() -> ProfileData:
 	for king_id: String in STARTING_KINGS:
 		p.unlocked_kings.append(king_id)
 		var deck := p._seed_deck(king_id)
+		# The starter deck earns the elemental pick ritual at run start (see king_reward_picks).
+		deck.is_base_template = true
 		if p.selected_deck_id.is_empty():
 			p.selected_deck_id = deck.id
 	# Starting resources are data-driven (data/economy.json via EconomyConfig, authored in
@@ -71,6 +83,9 @@ static func from_dict(data: Dictionary) -> ProfileData:
 	p.next_deck_uid = int(data.get("next_deck_uid", 0))
 	p.materials = MaterialBag.from_dict(data.get("materials", {}))
 	p.collection = CardCollection.from_dict(data.get("collection", {}))
+	p.unlocked_achievements = data.get("unlocked_achievements", [])
+	p.pending_celebrations = data.get("pending_celebrations", [])
+	p.lab_visited = bool(data.get("lab_visited", false))
 	if data.has("decks"):
 		for d in data.get("decks", []):
 			p.decks.append(OwnedDeck.from_dict(d))
@@ -90,6 +105,13 @@ static func from_dict(data: Dictionary) -> ProfileData:
 	if p.get_selected_deck() == null:
 		var fallback := p._seed_deck(STARTING_KING)
 		p.selected_deck_id = fallback.id
+	# Backfill the base-template marker for saves made before it existed: the profile's first
+	# base-King deck is its starter. (New profiles set it in create_default.)
+	if not p.decks.any(func(od: OwnedDeck) -> bool: return od.is_base_template):
+		for od: OwnedDeck in p.decks:
+			if od.king_id == STARTING_KING:
+				od.is_base_template = true
+				break
 	return p
 
 
@@ -107,6 +129,9 @@ func to_dict() -> Dictionary:
 		"owned_upgrades":   owned_upgrades,
 		"materials":        materials.to_dict(),
 		"collection":       collection.to_dict(),
+		"unlocked_achievements": unlocked_achievements,
+		"pending_celebrations":  pending_celebrations,
+		"lab_visited":           lab_visited,
 	}
 
 
@@ -178,6 +203,32 @@ func purchase_upgrade(node: UpgradeNode) -> bool:
 	upgrade_points -= node.cost
 	owned_upgrades.append(node.id)
 	return true
+
+
+# ── Achievements ────────────────────────────────────────────────────────────────────
+
+func has_achievement(id: String) -> bool:
+	return id in unlocked_achievements
+
+
+# Records a met achievement. Returns false (no-op) if already held. Caller persists
+# (Achievements does, via GameData.grant_materials / save_profile).
+func unlock_achievement(id: String) -> bool:
+	if id in unlocked_achievements:
+		return false
+	unlocked_achievements.append(id)
+	return true
+
+
+# Queues an achievement's celebration for the next hub visit (idempotent). Caller persists.
+func queue_celebration(id: String) -> void:
+	if id not in pending_celebrations:
+		pending_celebrations.append(id)
+
+
+# Removes and returns the next queued celebration id, or "" if none. Caller persists.
+func pop_celebration() -> String:
+	return pending_celebrations.pop_front() if not pending_celebrations.is_empty() else ""
 
 
 # ── Deck / King access ────────────────────────────────────────────────────────────
