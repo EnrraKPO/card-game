@@ -966,7 +966,7 @@
       "effects": []
     },
     "at": "2026-07-08T05:03:56.598Z",
-    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
+    "fileHash": "0476137f8f8bf8ad0bb71dc70843a073f7dbe6e8"
   },
   "card/air_darkness_king": {
     "file": "elemental_kings.json",
@@ -990,7 +990,7 @@
       "effects": []
     },
     "at": "2026-07-08T05:16:43.756Z",
-    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
+    "fileHash": "0476137f8f8bf8ad0bb71dc70843a073f7dbe6e8"
   },
   "card/air_darkness_pawn": {
     "file": "air_darkness_units.json",
@@ -4303,7 +4303,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:16:53.171Z",
-    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
+    "fileHash": "0476137f8f8bf8ad0bb71dc70843a073f7dbe6e8"
   },
   "card/air_earth_king": {
     "file": "elemental_kings.json",
@@ -4327,7 +4327,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:16:53.180Z",
-    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
+    "fileHash": "0476137f8f8bf8ad0bb71dc70843a073f7dbe6e8"
   },
   "card/air_light_king": {
     "file": "elemental_kings.json",
@@ -4351,7 +4351,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:17:12.373Z",
-    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
+    "fileHash": "0476137f8f8bf8ad0bb71dc70843a073f7dbe6e8"
   },
   "card/air_water_king": {
     "file": "elemental_kings.json",
@@ -4375,7 +4375,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:17:12.377Z",
-    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
+    "fileHash": "0476137f8f8bf8ad0bb71dc70843a073f7dbe6e8"
   },
   "card/darkness_darkness_king": {
     "file": "elemental_kings.json",
@@ -4399,7 +4399,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:17:25.803Z",
-    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
+    "fileHash": "0476137f8f8bf8ad0bb71dc70843a073f7dbe6e8"
   },
   "card/darkness_earth_king": {
     "file": "elemental_kings.json",
@@ -4423,7 +4423,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:17:25.807Z",
-    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
+    "fileHash": "0476137f8f8bf8ad0bb71dc70843a073f7dbe6e8"
   },
   "card/darkness_fire_king": {
     "file": "elemental_kings.json",
@@ -4447,7 +4447,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:17:25.811Z",
-    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
+    "fileHash": "0476137f8f8bf8ad0bb71dc70843a073f7dbe6e8"
   },
   "card/darkness_light_king": {
     "file": "elemental_kings.json",
@@ -4471,7 +4471,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:17:46.114Z",
-    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
+    "fileHash": "0476137f8f8bf8ad0bb71dc70843a073f7dbe6e8"
   },
   "card/darkness_water_king": {
     "file": "elemental_kings.json",
@@ -4504,7 +4504,7 @@
       ]
     },
     "at": "2026-07-12T09:17:46.118Z",
-    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
+    "fileHash": "0476137f8f8bf8ad0bb71dc70843a073f7dbe6e8"
   },
   "card/earth_earth_king": {
     "file": "elemental_kings.json",
@@ -4528,7 +4528,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:17:46.122Z",
-    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
+    "fileHash": "0476137f8f8bf8ad0bb71dc70843a073f7dbe6e8"
   },
   "card/earth_fire_king": {
     "file": "elemental_kings.json",
@@ -4552,7 +4552,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:18:04.630Z",
-    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
+    "fileHash": "0476137f8f8bf8ad0bb71dc70843a073f7dbe6e8"
   },
   "card/earth_light_king": {
     "file": "elemental_kings.json",
@@ -4576,7 +4576,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:18:04.634Z",
-    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
+    "fileHash": "0476137f8f8bf8ad0bb71dc70843a073f7dbe6e8"
   },
   "card/earth_water_king": {
     "file": "elemental_kings.json",
@@ -4600,7 +4600,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:18:04.638Z",
-    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
+    "fileHash": "0476137f8f8bf8ad0bb71dc70843a073f7dbe6e8"
   },
   "card/fire_fire_king": {
     "file": "elemental_kings.json",
@@ -4624,7 +4624,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:18:20.606Z",
-    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
+    "fileHash": "0476137f8f8bf8ad0bb71dc70843a073f7dbe6e8"
   },
   "card/fire_light_king": {
     "file": "elemental_kings.json",
@@ -4648,7 +4648,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:18:20.611Z",
-    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
+    "fileHash": "0476137f8f8bf8ad0bb71dc70843a073f7dbe6e8"
   },
   "card/fire_water_king": {
     "file": "elemental_kings.json",
@@ -4672,7 +4672,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:18:20.615Z",
-    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
+    "fileHash": "0476137f8f8bf8ad0bb71dc70843a073f7dbe6e8"
   },
   "card/light_light_king": {
     "file": "elemental_kings.json",
@@ -4696,7 +4696,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:18:37.021Z",
-    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
+    "fileHash": "0476137f8f8bf8ad0bb71dc70843a073f7dbe6e8"
   },
   "card/light_water_king": {
     "file": "elemental_kings.json",
@@ -4720,7 +4720,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:18:37.025Z",
-    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
+    "fileHash": "0476137f8f8bf8ad0bb71dc70843a073f7dbe6e8"
   },
   "card/water_water_king": {
     "file": "elemental_kings.json",
@@ -4744,7 +4744,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:18:37.029Z",
-    "fileHash": "8a42dffe2e9bbc4915f74875f51d2da3b0e227b3"
+    "fileHash": "0476137f8f8bf8ad0bb71dc70843a073f7dbe6e8"
   },
   "card/fire_pawn": {
     "file": "fire_units.json",

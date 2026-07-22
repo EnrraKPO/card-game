@@ -107,11 +107,9 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Chibi sand-elemental king made of swirling golden sand, glowing purple eyes, sand crown, flowing white cloth robe with rope belt, gripping tall sand scepter, holding round shield with dark purple glowing gem, wispy sand tendrils, purple flame accents, standing on desert rock, pastel dusk sky, bold outlines, stylized cartoon painterly render",
+				"prompt": "Chibi sand-elemental king made of swirling golden sand, spiked crown and hollow helm with glowing purple eyes, gripping a sand-wreathed scepter, arm holding a round purple-glowing shield, flowing white-gold robe with rope belt, dissolving into sand at base, standing on desert rock, pastel sky, curling purple flame accents, stylized cartoon fantasy digital painting, bold outlines, dramatic lighting",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/king.png",
-					"name": "King",
+					"source": "current",
 					"mode": "img2img",
 					"denoise": 0.6
 				}
