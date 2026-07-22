@@ -1230,6 +1230,7 @@ function renderEnemyHubList() {
   state.enemyHub = true;
   $('item-list-title').textContent = 'Enemy Hub';
   $('gen-set-btn').hidden = true;
+  $('bulk-edit-btn').hidden = true;
   const list = $('item-list');
   list.replaceChildren();
   const search = el('input', {
@@ -1333,6 +1334,7 @@ function renderItemList() {
   }
   $('item-list-title').textContent = state.types[state.currentType] ? state.types[state.currentType].label + 's' : '';
   $('gen-set-btn').hidden = state.currentType !== 'card';
+  $('bulk-edit-btn').hidden = state.currentType !== 'card';
   const list = $('item-list');
   list.replaceChildren();
   // ── THE list: the game's data files (files → entries) — nothing else exists ──
@@ -1352,6 +1354,13 @@ function renderItemList() {
   if (state.currentType === 'card') filtered = filtered.filter(g => !g.enemy_only);
   const compActive = state.currentType === 'card' && compFilterActive();
   if (compActive) filtered = filtered.filter(cardPassesCompFilter);
+  // the ≡ Bulk… button acts on exactly this filtered set — remember its ids + count
+  if (state.currentType === 'card') {
+    state.bulkIds = filtered.map(g => g.id);
+    const bb = $('bulk-edit-btn');
+    bb.textContent = `≡ Bulk (${filtered.length})`;
+    bb.disabled = !filtered.length;
+  }
   if (!filtered.length) list.append(el('div', { class: 'subtle', style: 'padding:10px', text: 'Nothing matches the filters.' }));
 
   // group by file
@@ -2513,6 +2522,84 @@ function defaultSetCardName(els, pieces) {
   return [elName, pieceName].filter(Boolean).join(' ');
 }
 
+// ≡ Bulk edit — act on the whole currently-filtered card set at once. Four actions: set a
+// stat to a constant, pump a stat by ±delta (relative, so uneven values stay relative),
+// grant an ability id, grant authored effect(s). Each posts to /api/game/bulk, which writes
+// every entry through the normal per-card save (backups + Revert + validation intact).
+function openBulkEditor() {
+  const ids = (state.bulkIds || []).slice();
+  const n = ids.length;
+  if (!n) { toast('No cards match the current filter.', 'err'); return; }
+  const STATS = [
+    { value: 'cost', label: 'Mana cost' }, { value: 'attack', label: 'Attack' },
+    { value: 'health', label: 'Health' }, { value: 'speed', label: 'Speed' },
+    { value: 'shield', label: 'Shield' },
+  ];
+  const close = () => $('modal-root').replaceChildren();
+  async function run(ops, verb) {
+    let out;
+    try { out = await api('/api/game/bulk', { type: 'card', ids, ops }); }
+    catch (e) { toast('Bulk edit failed: ' + e.message, 'err'); return; }
+    const bits = [`${verb}: ${out.updated} updated`];
+    if (out.skipped) bits.push(`${out.skipped} unchanged`);
+    if (out.errors && out.errors.length) { bits.push(`${out.errors.length} failed`); console.warn('bulk errors', out.errors); }
+    toast(bits.join(' · '), out.errors && out.errors.length ? 'err' : 'ok');
+    state.gameEdited = true;
+    await refreshState(true);
+    close();
+  }
+
+  const setCfg = { attr: 'cost', value: 0 };
+  const setBox = groupBox('Set a stat',
+    el('div', { class: 'frow' },
+      fld('Attribute', selectInput(setCfg, 'attr', STATS, () => {}), null, 'narrow'),
+      fld('Value', numInput(setCfg, 'value', () => {}), null, 'narrow'),
+      el('button', { class: 'primary', text: 'Set on all', onclick: () =>
+        run([{ kind: 'set', attr: setCfg.attr, value: setCfg.value }], `Set ${setCfg.attr}=${setCfg.value}`) })),
+    el('div', { class: 'hint', text: 'Writes the same value to every matched card (added if missing). Clamped to the stat’s floor.' }));
+
+  const pumpCfg = { attr: 'cost', delta: -1 };
+  const pump = d => run([{ kind: 'pump', attr: pumpCfg.attr, delta: d }], `${pumpCfg.attr} ${d >= 0 ? '+' : ''}${d}`);
+  const pumpBox = groupBox('Pump a stat (±, relative)',
+    el('div', { class: 'frow' },
+      fld('Attribute', selectInput(pumpCfg, 'attr', STATS, () => {}), null, 'narrow'),
+      el('button', { class: 'ghost', text: '−1', onclick: () => pump(-1) }),
+      el('button', { class: 'ghost', text: '+1', onclick: () => pump(1) }),
+      fld('Custom delta', numInput(pumpCfg, 'delta', () => {}), null, 'narrow'),
+      el('button', { class: 'primary', text: 'Apply delta', onclick: () => pump(pumpCfg.delta) })),
+    el('div', { class: 'hint', text: 'Adds the delta to each card’s current value — uneven starting values stay relative. Cards that derive their stats (no explicit value) are skipped. Clamped to the stat’s floor.' }));
+
+  const abils = abilityIds(editorCtx());
+  const abCfg = { ability: abils[0] || '' };
+  const abBox = groupBox('Grant an ability',
+    abils.length
+      ? el('div', { class: 'frow' },
+          fld('Ability', selectInput(abCfg, 'ability', abils, () => {})),
+          el('button', { class: 'primary', text: 'Grant to all', onclick: () => {
+            if (abCfg.ability) run([{ kind: 'grant_ability', ability: abCfg.ability }], `Grant ${abCfg.ability}`); } }))
+      : el('div', { class: 'hint', text: 'No abilities defined yet — create some in the Abilities tab first.' }),
+    el('div', { class: 'hint', text: 'Adds the ability id to every matched card that doesn’t already have it.' }));
+
+  const fxScratch = { effects: [] };
+  const fxWrap = el('div');
+  renderEffectList(fxWrap, fxScratch.effects, fxCtx(editorCtx(), 'each matched card'), () => {});
+  const fxBox = groupBox('Grant an effect',
+    fxWrap,
+    el('div', { class: 'frow', style: 'margin-top:8px' },
+      el('button', { class: 'primary', text: 'Grant to all', onclick: () => {
+        const eff = fxScratch.effects.map(cleanEffectForDeploy);
+        if (!eff.length) { toast('Author at least one effect first.', 'err'); return; }
+        run(eff.map(e => ({ kind: 'grant_effect', effect: e })), `Grant ${eff.length} effect(s)`); } })),
+    el('div', { class: 'hint', text: 'Appends the authored effect(s) to every matched card’s effect list.' }));
+
+  const modal = el('div', { class: 'modal', style: 'width:680px; max-height:88vh; overflow:auto' },
+    el('h2', { text: `Bulk edit — ${n} card${n === 1 ? '' : 's'} match the filter` }),
+    el('div', { class: 'hint', text: `Every action applies to ALL ${n} filtered cards at once. Each writes through the normal per-card save, so Revert still works per card.` }),
+    setBox, pumpBox, abBox, fxBox,
+    el('div', { class: 'modal-actions' }, el('button', { class: 'ghost', text: 'Close', onclick: close })));
+  $('modal-root').replaceChildren(modal);
+}
+
 function openSetGenerator() {
   const cfg = { a: 'water', b: '', singles: true, pairs: true, spell: false,
     description: '', effects: [], install: true };
@@ -3245,6 +3332,7 @@ async function applyChatChanges(m) {
 // ── boot ─────────────────────────────────────────────────────────────────────
 $('new-item-btn').addEventListener('click', newItem);
 $('gen-set-btn').addEventListener('click', openSetGenerator);
+$('bulk-edit-btn').addEventListener('click', openBulkEditor);
 $('save-btn').addEventListener('click', gameSave);
 $('revert-btn').addEventListener('click', gameRevert);
 $('enabled-check').addEventListener('change', e => {

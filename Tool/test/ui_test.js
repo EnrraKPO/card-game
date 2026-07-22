@@ -187,6 +187,29 @@ async function main() {
     await page.click('#revert-btn'); await sleep(500);
     check('Revert restores the original', readSbox('data/cards/base.json')[0].attack === 1);
 
+    // ═══ BULK EDIT the whole filtered card set (≡ Bulk…) ═══
+    await clickTab('Cards'); await sleep(200);
+    check('Bulk button shows the filtered card count', await page.evaluate(() => {
+      const b = document.getElementById('bulk-edit-btn');
+      return b && !b.hidden && /Bulk \(\d+\)/.test(b.textContent);
+    }));
+    const speedOf = id => readSbox('data/cards/base.json').find(c => c.id === id).speed;
+    const pawnSpeed = speedOf('pawn'), goblinSpeed = speedOf('goblin');
+    await page.click('#bulk-edit-btn'); await sleep(200);
+    check('bulk modal opens', await page.evaluate(() => !!document.querySelector('.modal')));
+    await shot('05_bulk');
+    // in the Pump box: target speed, click +1 — applies to every filtered (non-enemy) card
+    await page.evaluate(() => {
+      const box = [...document.querySelectorAll('.modal .fgroup')].find(g => g.querySelector('h3').textContent.startsWith('Pump'));
+      const sel = box.querySelector('select');
+      sel.value = 'speed'; sel.dispatchEvent(new Event('change', { bubbles: true }));
+      [...box.querySelectorAll('button')].find(b => b.textContent.trim() === '+1').click();
+    });
+    await sleep(500);
+    check('bulk pump raised speed on player cards', speedOf('pawn') === pawnSpeed + 1);
+    check('bulk pump left enemy-only cards untouched (filtered out)', speedOf('goblin') === goblinSpeed);
+    check('bulk modal closed after applying', await page.evaluate(() => !document.querySelector('.modal')));
+
     // ═══ RENDER FILTERS: a content type whose params are ARBITRARY shader uniforms, so the
     // ═══ editor builds its param rows dynamically instead of from a fixed field list.
     await clickTab('Filters');

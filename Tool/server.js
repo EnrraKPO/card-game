@@ -639,6 +639,65 @@ function saveGameEntry(type, file, data) {
   return { file: TYPES[type].dataDir + '/' + file, action: 'added', art };
 }
 
+// ── bulk edits across many entries at once ───────────────────────────────────────────
+// The card list's "Bulk edit" acts on the whole currently-filtered set. Every entry is
+// written through saveGameEntry, so per-entry backups, the edits manifest (→ Revert) and
+// validation all apply exactly as a single hand-edit would. One request can carry several
+// ops (applied in order to each entry). Returns a per-run tally.
+//
+// The game rejects negatives on these stats, so numeric ops clamp to a per-attribute floor.
+const BULK_STAT_MIN = { cost: 0, health: 1, shield: 0, attack: 0, speed: 0 };
+
+function applyBulkOp(data, op) {
+  const clamp = (attr, v) => BULK_STAT_MIN[attr] != null ? Math.max(BULK_STAT_MIN[attr], v) : v;
+  if (op.kind === 'set') {
+    if (typeof op.attr !== 'string') return false;
+    const v = clamp(op.attr, Math.round(Number(op.value) || 0));
+    if (data[op.attr] === v) return false;
+    data[op.attr] = v; return true;
+  }
+  if (op.kind === 'pump') {
+    if (typeof op.attr !== 'string') return false;
+    // an absent value (e.g. a composition card that derives its stats) has no baseline to
+    // pump from — skip it rather than inventing a 0 the author never set.
+    if (typeof data[op.attr] !== 'number') return false;
+    const v = clamp(op.attr, data[op.attr] + Math.round(Number(op.delta) || 0));
+    if (data[op.attr] === v) return false;
+    data[op.attr] = v; return true;
+  }
+  if (op.kind === 'grant_ability') {
+    if (!validId(op.ability)) return false;
+    if (!Array.isArray(data.abilities)) data.abilities = [];
+    if (data.abilities.includes(op.ability)) return false;
+    data.abilities.push(op.ability); return true;
+  }
+  if (op.kind === 'grant_effect') {
+    if (!op.effect || typeof op.effect !== 'object') return false;
+    if (!Array.isArray(data.effects)) data.effects = [];
+    data.effects.push(JSON.parse(JSON.stringify(op.effect))); return true;
+  }
+  throw new Error('unknown bulk op: ' + op.kind);
+}
+
+// updated = entries actually changed & saved; skipped = matched but the op(s) were a no-op
+// (e.g. pump on a derived-stat card, or a value already at target); errors = per-id failures.
+function bulkEditEntries(type, ids, ops) {
+  let updated = 0, skipped = 0;
+  const errors = [];
+  for (const id of ids) {
+    const found = findGameEntry(type, id);
+    if (!found) { errors.push({ id, error: 'not found' }); continue; }
+    const data = JSON.parse(JSON.stringify(found.data));   // never mutate the cached entry
+    let touched = false;
+    try { for (const op of ops) touched = applyBulkOp(data, op) || touched; }
+    catch (e) { errors.push({ id, error: e.message }); continue; }
+    if (!touched) { skipped++; continue; }
+    try { saveGameEntry(type, found.file, data); updated++; }
+    catch (e) { errors.push({ id, error: e.message }); }
+  }
+  return { updated, skipped, errors };
+}
+
 // Remove an entry from its file (snapshot kept: Revert re-adds it). An emptied file is
 // deleted outright.
 function deleteGameEntry(type, id) {
@@ -3437,6 +3496,14 @@ async function handle(req, res) {
       if (!TYPES[type] || !data || !validId(data.id)) return send(res, 400, { error: 'bad request' });
       try {
         return send(res, 200, Object.assign({ ok: true }, saveGameEntry(type, String(file || 'authored.json'), data)));
+      } catch (e) { return send(res, 400, { error: e.message }); }
+    }
+    if (p === '/api/game/bulk' && req.method === 'POST') {
+      const { type, ids, ops } = await readBody(req);
+      if (!TYPES[type] || !Array.isArray(ids) || !Array.isArray(ops) || !ops.length)
+        return send(res, 400, { error: 'bad request' });
+      try {
+        return send(res, 200, Object.assign({ ok: true }, bulkEditEntries(type, ids, ops)));
       } catch (e) { return send(res, 400, { error: e.message }); }
     }
     if (p === '/api/game/delete-entry' && req.method === 'POST') {

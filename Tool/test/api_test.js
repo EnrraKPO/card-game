@@ -130,6 +130,41 @@ async function main() {
     check('grants exclusive with the attribute payload',
       r.status === 400 && /exclusive with/.test(r.data.error), r.data.error);
 
+    // ── bulk edits across a filtered set (set / pump / grant ability / grant effect) ──
+    for (const c of [
+      { id: 'bulk_a', display_name: 'A', cost: 3, attack: 2, health: 2, speed: 3 },
+      { id: 'bulk_b', display_name: 'B', cost: 1, attack: 2, health: 2, speed: 3 },
+      { id: 'bulk_c', display_name: 'C', cost: 2, attack: 2, health: 2, speed: 3 },
+    ]) await api('/api/game/save', { type: 'card', file: 'bulk_units.json', data: c });
+    // a derived-stats composition card has no explicit cost — pump must skip it
+    await api('/api/game/save', { type: 'card', file: 'bulk_units.json', data: {
+      id: 'bulk_derived', display_name: 'D', _derive_stats: true, elements: ['fire'], chess_pieces: ['pawn', 'pawn'] } });
+    const bulkIds = ['bulk_a', 'bulk_b', 'bulk_c', 'bulk_derived'];
+    const bulkById = id => readSbox('data/cards/bulk_units.json').find(e => e.id === id);
+
+    r = await api('/api/game/bulk', { type: 'card', ids: bulkIds, ops: [{ kind: 'pump', attr: 'cost', delta: -1 }] });
+    check('bulk pump: 3 updated, 1 skipped (derived)', r.status === 200 && r.data.updated === 3 && r.data.skipped === 1, JSON.stringify(r.data));
+    check('bulk pump decrements uneven values relatively', bulkById('bulk_a').cost === 2 && bulkById('bulk_c').cost === 1);
+    check('bulk pump floors at 0 (1→0, never negative)', bulkById('bulk_b').cost === 0);
+    check('bulk pump leaves derived-stats card untouched', bulkById('bulk_derived').cost === undefined);
+
+    r = await api('/api/game/bulk', { type: 'card', ids: bulkIds, ops: [{ kind: 'set', attr: 'shield', value: 2 }] });
+    check('bulk set writes the constant to every card', r.data.updated === 4 && ['bulk_a', 'bulk_b', 'bulk_c', 'bulk_derived'].every(id => bulkById(id).shield === 2));
+
+    r = await api('/api/game/bulk', { type: 'card', ids: ['bulk_a', 'bulk_b'], ops: [{ kind: 'grant_ability', ability: 'zap_bolt' }] });
+    check('bulk grant ability adds the id once', r.data.updated === 2 && bulkById('bulk_a').abilities.join() === 'zap_bolt');
+    r = await api('/api/game/bulk', { type: 'card', ids: ['bulk_a'], ops: [{ kind: 'grant_ability', ability: 'zap_bolt' }] });
+    check('bulk grant ability is idempotent (already present → skipped)', r.data.updated === 0 && r.data.skipped === 1 && bulkById('bulk_a').abilities.length === 1);
+
+    r = await api('/api/game/bulk', { type: 'card', ids: ['bulk_a', 'bulk_b'], ops: [{ kind: 'grant_effect',
+      effect: { trigger: { kind: 'event', event: 'play' }, targets: { kind: 'self' }, attribute: 'attack', amount: 1 } }] });
+    check('bulk grant effect appends a valid effect', r.data.updated === 2 && (bulkById('bulk_b').effects || []).length === 1);
+    // a malformed effect is rejected per-entry by the normal validation gate
+    r = await api('/api/game/bulk', { type: 'card', ids: ['bulk_a'], ops: [{ kind: 'grant_effect',
+      effect: { trigger: { kind: 'event', event: 'bogus_event' }, targets: { kind: 'all' }, attribute: 'attack', amount: 1 } }] });
+    check('bulk grant effect surfaces per-entry validation errors', r.status === 200 && r.data.updated === 0 && (r.data.errors || []).length === 1, JSON.stringify(r.data));
+    for (const id of bulkIds) await api('/api/game/delete-entry', { type: 'card', id });
+
     // ── revert semantics: replaced → original; added → removed ──
     r = await api('/api/game/item?type=card&id=pawn');
     await api('/api/game/save', { type: 'card', file: 'base.json', data: Object.assign({}, r.data.data, { attack: 7 }) });
