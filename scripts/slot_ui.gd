@@ -1,19 +1,22 @@
 class_name SlotUI
 extends Panel
 
-signal card_dropped(card_ui: CardUI)
 signal pressed
 
 var row: int = -1
 var col: int = -1
 var owner_id: int = -1
-var accept_check: Callable
-# Gate for the AUTOCAST drop gesture — a fielded unit with an armed autocast ability dropped
-# onto this slot's occupant (see CombatBoard). Occupied slots reject unit drops otherwise.
-var autocast_check: Callable   # func(CardUI, SlotUI) -> bool
+# The combat-wide interaction session (see Interaction): the drop gate and drop commit ask it
+# for this slot's ROLE under the current action — the SAME predicate that lit this slot's cue,
+# so the visuals and the drop verdict can never disagree. Null outside combat (tooling shots).
+var interaction: Interaction = null
 
 var _card_ui: CardUI = null
-var _targetable: bool = false
+var _targetable: bool = false   # presentation only (the highlight border) — set via present()
+# Cursor-hover during a STATIC moving/placing selection (see CombatBoard's hover tracking):
+# a strong white outline on whatever the cursor points at, and — when this slot wears the MOVE
+# cue — the arrow bobs while hovered, exactly as it does during a live drag.
+var _hovered: bool = false
 
 # ── Slot cue overlay ────────────────────────────────────────────────────────────
 # A small icon layer drawn ABOVE any occupant, communicating what this slot means right now:
@@ -30,13 +33,35 @@ var _arrow: TextureRect         # the reposition arrow, shown above the ring in 
 var _arrow_top_y: float = 0.0
 var _arrow_bottom_y: float = 0.0
 var _arrow_tween: Tween
+# MOVE-cue composition (set by _apply_icon_geometry, read by the arrow layout): the spot pool's
+# top edge and the arrow box side, so the chunky arrow can be parked just above the pool.
+var _spot_top: float = 0.0
+var _arrow_side: float = 0.0
 # The attack-target crosshair — an INDEPENDENT overlay (not part of the Cue state machine): it
 # marks the enemy a selected/dragged friendly unit will strike, and coexists with that unit's
 # own move cues. The red glow that pairs with it rides the target CARD via Vfx (see CombatBoard).
 var _attack_icon: TextureRect
-# A translucent preview of the unit that would land in THIS slot if the drag were released now
-# (see CombatBoard's drag phantom). Mounted/unmounted by the board.
+# A preview of the unit that would land in THIS slot if the drag were released now (see
+# CombatBoard's drag phantom). Rendered as a holographic PROJECTION — cooler, brighter and less
+# saturated than the card really is — so it reads clearly apart from the warm, dim, translucent
+# ghost the cursor drags (DragGhost.GHOST_TINT). The look comes from a cool near-white WASH laid over
+# the card: mixing toward a bright cool colour lowers saturation, raises brightness and biases the
+# hue all at once, without a per-node shader (which blanks the card's clipped, COVER-fit art node).
+# Mounted/unmounted by the board.
 var _phantom: CardUI = null
+
+# The projection wash: colour is the cool near-white the card is mixed toward; its alpha is how far.
+const PHANTOM_WASH := Color(0.70, 0.84, 1.05, 0.5)
+const PHANTOM_ALPHA := 0.9   # the card itself — more present than the see-through drag ghost
+
+# The valid-target cue on an OCCUPIED slot: instead of stamping the green reticle glyph over the
+# unit, the card itself lights up from within with a warm golden glow (see "target_valid_glow").
+# An inner light, chosen so it never collides with the red OUTER menace glow (attack_target_glow)
+# or the corner crosshair that may share the same card. Empty valid slots (MANUAL_SLOT spawn spots)
+# have no card to light, so they fall back to the reticle glyph. Tracked so we detach from the exact
+# card that was lit, even if occupancy shifts before the gesture clears.
+const TARGET_VALID_GLOW := "target_valid_glow"
+var _glow_card: CardUI = null
 
 
 func _ready() -> void:
@@ -57,7 +82,11 @@ func _apply_style() -> void:
 	# Still themeable via ScreenUI.SLOT_* (backed by UIPalette's own "Combat board" group).
 	var style := StyleBoxFlat.new()
 	style.bg_color = ScreenUI.SLOT_EMPTY
-	if _targetable:
+	if _hovered:
+		# The pointing-at-it read outranks the other borders while it lasts.
+		style.set_border_width_all(5)
+		style.border_color = Color.WHITE
+	elif _targetable:
 		style.set_border_width_all(3)
 		style.border_color = ScreenUI.SLOT_BORDER_HIGHLIGHT
 	else:
@@ -108,27 +137,42 @@ func _notification(what: int) -> void:
 # shorter side. The OPEN marker is the exception — it fills half the slot to echo its shape.
 const ICON_FACTOR := 0.44
 
+# MOVE cue ("reposition here") composition. The spot is a foreshortened ellipse — a spotlight pool
+# seen in perspective — biased toward the slot's lower edge, with the chunky arrow bobbing just
+# above it. All relative to the slot so it reads at any board scale.
+const SPOT_W := 0.58          # pool width as a fraction of the slot width
+const SPOT_ASPECT := 0.30     # pool height / width — very slender, a strong perspective foreshorten
+const ARROW_W := 0.46         # arrowhead box side as a fraction of the pool width
+const ARROW_GAP := 0.30       # gap between arrowhead base and pool, as a fraction of pool height
+const SPOT_BIAS := 0.06       # nudge the whole composition down so the pool hugs the lower edge
+const MOVE_CUE_ALPHA := 0.85  # the whole move cue rides a touch of transparency so it reads as a
+                              # gentle, non-intrusive hint rather than a bright call to attention
+
 
 # Sizes/positions the glyphs relative to the slot's current size (combat resizes slots to fill
 # the board), so the cue reads at any board scale. Keeps the MOVE arrow's bob endpoints current.
 func _layout_cue() -> void:
-	_apply_icon_geometry()
-	var s := size
-	var side := minf(s.x, s.y) * ICON_FACTOR   # the (square) ring the arrow bobs above
-	var ring_top := s.y * 0.5 - side * 0.5
-	var a := side * 0.55
-	_arrow.size = Vector2(a, a)
-	_arrow.position.x = (s.x - a) * 0.5
-	_arrow_top_y = ring_top - a * 1.15      # parked, clear above the ring
-	_arrow_bottom_y = ring_top - a * 0.55   # dipped toward the ring
+	_apply_icon_geometry()   # sets the pool box AND, for MOVE, _spot_top / _arrow_side
+	_layout_arrow()          # size/position the arrow relative to the pool just laid out
 	if _arrow_tween == null or not _arrow_tween.is_valid():
 		_arrow.position.y = _arrow_top_y
 	elif _cue == Cue.MOVE:
 		_restart_arrow_bob()   # endpoints moved — rebuild the loop around them
 
 	_position_attack_icon()
-	if _phantom != null and is_instance_valid(_phantom):
-		_phantom.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_fit_phantom()
+
+
+# Sizes the arrow and sets its bob endpoints from the pool position (_spot_top) computed by
+# _apply_icon_geometry — so it always parks its base just above the current pool. Must run AFTER
+# _apply_icon_geometry, since a stale _spot_top (e.g. from the NONE state) would fling it off-slot.
+func _layout_arrow() -> void:
+	var s := size
+	var a := _arrow_side if _cue == Cue.MOVE else minf(s.x, s.y) * 0.24
+	_arrow.size = Vector2(a, a)
+	_arrow.position.x = (s.x - a) * 0.5
+	_arrow_top_y = _spot_top - a               # parked, base sitting just above the pool
+	_arrow_bottom_y = _arrow_top_y + a * 0.28  # a gentle dip toward the pool
 
 
 # The attack crosshair COMPOSES with any centre cue instead of colliding with it — a slot can show
@@ -159,6 +203,20 @@ func _apply_icon_geometry() -> void:
 		var h := s.y * 0.5
 		_icon.size = Vector2(w, h)
 		_icon.position = Vector2((s.x - w) * 0.5, (s.y - h) * 0.5)
+	elif _cue == Cue.MOVE:
+		# Spotlight pool (foreshortened ellipse) + the chunky arrow above it, laid out as one
+		# vertically-centred composition — with the arrow up top, the pool naturally lands in the
+		# lower half; SPOT_BIAS nudges it a touch further toward the slot's bottom edge.
+		_icon.stretch_mode = TextureRect.STRETCH_SCALE
+		var w := s.x * SPOT_W
+		var h := w * SPOT_ASPECT
+		_arrow_side = w * ARROW_W
+		var gap := h * ARROW_GAP
+		var total := _arrow_side + gap + h
+		var top := (s.y - total) * 0.5 + s.y * SPOT_BIAS
+		_spot_top = top + _arrow_side + gap
+		_icon.size = Vector2(w, h)
+		_icon.position = Vector2((s.x - w) * 0.5, _spot_top)
 	else:
 		_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		var side := minf(s.x, s.y) * ICON_FACTOR
@@ -170,7 +228,13 @@ func _apply_icon_geometry() -> void:
 func set_cue(cue: int, animated: bool = false) -> void:
 	_cue = cue
 	_stop_arrow_bob()
+	# Any cue change ends the previous valid-target glow; the TARGET_OK branch re-lights it if it
+	# still applies. Idempotent (Vfx de-dupes), so a TARGET_OK→TARGET_OK refresh doesn't churn.
+	_clear_valid_glow()
 	_apply_icon_geometry()   # glyph box depends on the cue (OPEN fills half the slot)
+	# Only the move cue is deliberately softened; the other glyphs stay at full strength.
+	_icon.modulate = Color(1.0, 1.0, 1.0, MOVE_CUE_ALPHA) if cue == Cue.MOVE else Color.WHITE
+	_arrow.modulate = Color(1.0, 1.0, 1.0, MOVE_CUE_ALPHA)
 	match cue:
 		Cue.OPEN:
 			_icon.texture = BoardGlyphs.tex("open")
@@ -179,13 +243,25 @@ func set_cue(cue: int, animated: bool = false) -> void:
 		Cue.MOVE:
 			_icon.texture = BoardGlyphs.tex("move_ring")
 			_icon.visible = true
-			_arrow.visible = true
+			# The arrow belongs to MOTION: a live drag (animated) or a hover on a static
+			# selection (set_hovered) shows it bobbing; a resting static cue is just the
+			# spotlight pool. Geometry is laid out either way so the arrow can appear on
+			# hover without the pool shifting.
+			_arrow.visible = animated
+			_layout_arrow()   # _apply_icon_geometry (above) just set _spot_top — place the arrow to it
 			_arrow.position.y = _arrow_top_y
 			if animated:
 				_restart_arrow_bob()
 		Cue.TARGET_OK:
-			_icon.texture = BoardGlyphs.tex("target_ok")
-			_icon.visible = true
+			# An occupied valid target lights the CARD from within (golden inner glow) rather than
+			# stamping the reticle over it; an empty valid slot (MANUAL_SLOT spawn spot) has nothing
+			# to light, so it keeps the reticle glyph.
+			if _card_ui != null:
+				_light_valid_glow()
+				_icon.visible = false
+			else:
+				_icon.texture = BoardGlyphs.tex("target_ok")
+				_icon.visible = true
 			_arrow.visible = false
 		Cue.TARGET_BAD:
 			_icon.texture = BoardGlyphs.tex("target_bad")
@@ -212,13 +288,47 @@ func set_open_hints(enabled: bool) -> void:
 	reset_cue()
 
 
+# Cursor-hover presentation during a static moving/placing selection: the strong white outline,
+# plus — on a MOVE-cue slot — the arrow APPEARING and bobbing while hovered (the same animation
+# a live drag shows; the resting static cue is spotlight-only). Driven by CombatBoard's hover
+# tracking; reversible and cue-preserving.
+func set_hovered(on: bool) -> void:
+	if on == _hovered:
+		return
+	_hovered = on
+	_apply_style()
+	if _cue == Cue.MOVE:
+		_arrow.visible = on
+		if on:
+			_restart_arrow_bob()
+		else:
+			_stop_arrow_bob()
+			_arrow.position.y = _arrow_top_y
+
+
+# Lights the current occupant from within as a valid target (golden inner glow). Tracks the exact
+# card lit so _clear_valid_glow detaches from that node even if the slot's occupant later changes.
+func _light_valid_glow() -> void:
+	if _card_ui == null or _card_ui == _glow_card:
+		return
+	_clear_valid_glow()
+	_glow_card = _card_ui
+	Vfx.attach(TARGET_VALID_GLOW, _glow_card)
+
+
+func _clear_valid_glow() -> void:
+	if _glow_card != null and is_instance_valid(_glow_card):
+		Vfx.detach(TARGET_VALID_GLOW, _glow_card)
+	_glow_card = null
+
+
 func _restart_arrow_bob() -> void:
 	_stop_arrow_bob()
 	_arrow.position.y = _arrow_top_y
 	_arrow_tween = create_tween().set_loops()
-	_arrow_tween.tween_property(_arrow, "position:y", _arrow_bottom_y, 0.5) \
+	_arrow_tween.tween_property(_arrow, "position:y", _arrow_bottom_y, 0.65) \
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	_arrow_tween.tween_property(_arrow, "position:y", _arrow_top_y, 0.5) \
+	_arrow_tween.tween_property(_arrow, "position:y", _arrow_top_y, 0.65) \
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 
@@ -236,20 +346,32 @@ func set_attack_marker(enabled: bool) -> void:
 		_position_attack_icon()   # centred alone, cornered when a centre cue shares the slot
 
 
-# Mounts a translucent preview of the unit that would land here on release (drag phantom), or
-# clears it when `ghost` is null. The ghost is display-only — it never intercepts input.
+# Mounts the landing PROJECTION of the unit that would drop here on release (drag phantom), or
+# clears it when `ghost` is null. Display-only — it never intercepts input. The projected look is a
+# cool near-white wash (PHANTOM_WASH) laid over the whole card as its last child, so it sits above
+# the art AND the badges and recolours them together — cooler, brighter, less saturated.
 func mount_phantom(ghost: CardUI) -> void:
 	unmount_phantom()
 	_phantom = ghost
 	if ghost == null:
 		return
 	ghost.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	ghost.modulate = Color(0.85, 0.9, 1.0, 0.5)
 	ghost.z_index = 0
-	add_child(ghost)
+	ghost.modulate = Color(1.0, 1.0, 1.0, PHANTOM_ALPHA)
+	add_child(ghost)   # facing derives from the slot on reparent (CardUI NOTIFICATION_PARENTED)
 	ghost.custom_minimum_size = Vector2.ZERO
 	ghost.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	ghost.set_flipped(owner_id == 1)
+	var wash := ColorRect.new()
+	wash.name = "_PhantomWash"
+	wash.color = PHANTOM_WASH
+	wash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ghost.add_child(wash)   # last child → drawn over every card layer
+	wash.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+
+func _fit_phantom() -> void:
+	if _phantom != null and is_instance_valid(_phantom):
+		_phantom.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 
 func unmount_phantom() -> void:
@@ -279,6 +401,10 @@ func set_card(card: CardUI) -> void:
 		if card.pressed.is_connected(old_slot._on_card_pressed):
 			card.pressed.disconnect(old_slot._on_card_pressed)
 		old_slot.remove_child(card)
+		# The vacated slot re-derives its resting look (idle OPEN marker on an empty own slot)
+		# like every other emptying path — without this, a click-move (which resets the board
+		# BEFORE committing) leaves the old slot bare until the next full present.
+		old_slot.reset_cue()
 	elif old_parent != null:
 		old_parent.remove_child(card)
 	add_child(card)
@@ -287,6 +413,10 @@ func set_card(card: CardUI) -> void:
 	# drive it. A carried-over minimum (the hand's card size, or card_ui.tscn's default on a King
 	# placed directly) would overrule the anchors and overflow any slot smaller than it.
 	card.custom_minimum_size = Vector2.ZERO
+	# Becoming a board occupant sheds hand-bound presentation (play-me glow / dim / selection
+	# tint) — hand states are re-derived by the Hand for cards IN the hand; a card that left
+	# can't truthfully wear them, and nobody else is positioned to clear them.
+	card.shed_hand_state()
 	# CardUI._gui_input calls accept_event() on every click release (long-press/tooltip handling),
 	# which marks the event handled and stops it from ever bubbling to this slot's own _gui_input —
 	# MOUSE_FILTER_PASS doesn't help, since Godot only forwards an event to the parent if the child
@@ -294,11 +424,9 @@ func set_card(card: CardUI) -> void:
 	# GUI event propagation (see Combat._on_board_slot_pressed, the click-to-open-ability-tray path).
 	if not card.pressed.is_connected(_on_card_pressed):
 		card.pressed.connect(_on_card_pressed)
-	# Face the opponent: the card is authored in the PLAYER's orientation, so player cards (and the
-	# hand, which never flips) read identically with no change. Enemy cards (right half, facing
-	# left) mirror that layout so the two armies read as mirror images across the board. See
-	# CardUI.set_flipped.
-	card.set_flipped(owner_id == 1)
+	# Facing is DERIVED from which side's slot holds the card (CardUI's NOTIFICATION_PARENTED
+	# hook fired during add_child above): player cards keep the authored orientation, enemy
+	# cards mirror so the two armies read as mirror images across the board.
 	reset_cue()   # now occupied — clear any lingering open/move marker
 
 
@@ -325,32 +453,29 @@ func _gui_input(event: InputEvent) -> void:
 			accept_event()
 
 
+# The drop gate = "what is my ROLE under the current action?" — asked of the Interaction
+# session, which is the same authority that lit this slot's cue. The role also feeds the drag
+# ghost's verdict (DESTINATION → the unit copy, TARGET_VALID/INVALID → the cast views; the
+# ghost's own no-ability fallback keeps spell drags on the plain copy).
 func _can_drop_data(_at: Vector2, data: Variant) -> bool:
 	if not (data is CardUI):
 		return false
-	var card_ui := data as CardUI
-	if card_ui.card_instance.is_spell:
-		# Spells drop only on ELIGIBLE slots: during a spell drag the board marks targetable
-		# exactly the valid picks (occupied units passing the spell's conditions — and for
-		# MANUAL_SLOT spells, eligible EMPTY own slots too), so an invalid drop is rejected at
-		# hover time. See SpellCaster._on_spell_drag_started.
-		return _targetable
-	if _card_ui != null:
-		# The one unit-onto-occupied-slot gesture: an armed autocast ability fired by dragging
-		# its holder onto a valid target. Everything else stays rejected as before. Either way
-		# the verdict feeds the drag ghost, which presents cast-vs-not-appliable accordingly.
-		var can_cast := autocast_check.is_valid() and bool(autocast_check.call(card_ui, self))
-		DragGhost.report(DragGhost.State.CAST_OK if can_cast else DragGhost.State.CAST_INVALID, self)
-		return can_cast
-	var can_move := true
-	if accept_check.is_valid():
-		can_move = bool(accept_check.call(card_ui, self))
-	if can_move:
-		# A valid move spot shows the unit itself on the ghost; an invalid empty slot reports
-		# nothing and lets the ghost fall back to its default presentation.
-		DragGhost.report(DragGhost.State.UNIT, self)
-	return can_move
+	if interaction == null:
+		return false
+	match interaction.role_of(self):
+		Interaction.Role.DESTINATION:
+			DragGhost.report(DragGhost.State.UNIT, self)
+			return true
+		Interaction.Role.TARGET_VALID:
+			DragGhost.report(DragGhost.State.CAST_OK, self)
+			return true
+		Interaction.Role.TARGET_INVALID:
+			DragGhost.report(DragGhost.State.CAST_INVALID, self)
+			return false
+		_:
+			return false
 
 
-func _drop_data(_at: Vector2, data: Variant) -> void:
-	card_dropped.emit(data as CardUI)
+func _drop_data(_at: Vector2, _data: Variant) -> void:
+	if interaction != null:
+		interaction.commit_drop(self)   # re-validates via the same role predicate, then commits

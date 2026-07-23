@@ -330,6 +330,30 @@
 		"prompt": "Sprite sheet of a soft warm golden light gently breathing behind a framed card, subtle smooth radial falloff just past the frame edge, 8 frames on transparent background, 2d game effect"
 	},
 	{
+		"id": "target_valid_glow",
+		"display_name": "Valid Target Glow",
+		"category": "combat",
+		"behavior": "glow",
+		"renderer": "filter",
+		"params": {
+			"filter": "luminescence_rrect",
+			"glow_color": "ffd873",
+			"corner_radius": 10,
+			"luma_bias": 0.5,
+			"animate": {
+				"param": "intensity",
+				"from": 0.3,
+				"to": 0.55,
+				"period": 1.0
+			}
+		},
+		"sustained": true,
+		"placeholder": false,
+		"concept": "A unit that is a valid pick for the spell/ability being aimed — the card lights up from WITHIN with a warm golden glow, saying 'pick me' without stamping a marker over the art. Deliberately an INNER light so it never collides with the red outer menace glow (attack_target_glow) or the corner crosshair that may share the same card.",
+		"explanation": "IMPLEMENTED (combat targeting): the `luminescence_rrect` RenderFilter on the occupant CardUI, breathing gently. Shape-sourced (rounded rect) because the target is a composed card scene, not a single texture. Replaces the green reticle glyph on OCCUPIED valid slots; empty valid slots (MANUAL_SLOT spawn spots) keep the reticle since there is no card to light.",
+		"prompt": "Sprite sheet of a warm golden light glowing from inside a rounded card, soft inner light fading toward the center, 8 frames on transparent background, 2d game effect"
+	},
+	{
 		"id": "map_forge_alert_glow",
 		"display_name": "Map Forge Alert Glow",
 		"category": "ui",

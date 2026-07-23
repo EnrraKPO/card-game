@@ -185,6 +185,15 @@ func _ready() -> void:
 	_apply_border_style()
 	refresh()
 	resized.connect(_apply_scale)
+	# The self-derivation poll (see derive_presentation): every card re-consults its own
+	# situation on a slow beat, so no state can outlive the facts it derives from even if
+	# every cue is missed. Outside combat (CombatContext.current == null, no playable_check)
+	# each tick is a no-op.
+	_presentation_poll = Timer.new()
+	_presentation_poll.wait_time = PRESENTATION_POLL_SECS
+	_presentation_poll.autostart = true
+	_presentation_poll.timeout.connect(derive_presentation)
+	add_child(_presentation_poll)
 	# The near-subliminal hover tick, on the shared card class so every card everywhere
 	# whispers the same way (placeholder-gated like all undesigned cues — F7 mutes it).
 	mouse_entered.connect(func() -> void: Sfx.play("card_hover"))
@@ -372,6 +381,10 @@ func _apply_border_style() -> void:
 # The source building is stored on the instance (card_instance.source_building).
 func set_generated() -> void:
 	is_generated = true
+	# An ENEMY unit's ability token is view-only — a fact of the token's OWN model (its
+	# instance carries the holder's owner), derived here rather than pushed by the tray.
+	if card_instance != null and card_instance.owner == 1:
+		set_noninteractive()
 	if _border != null:
 		_apply_border_style()
 
@@ -399,7 +412,68 @@ func set_exhausted(exhausted: bool) -> void:
 # the card's true silhouette and radiates on the overlay layer, so it never clips (escapes the hand
 # ScrollContainer) and is hollow over every child — badges and status pips stay fully visible.
 # Idempotent: safe to call every mana change (Vfx.attach/detach de-dupe, so no re-bake churn).
-func set_playable(playable: bool) -> void:
+# ── Playability: DERIVED, never stored ──────────────────────────────────────────
+# The card OWNS the question "should I wear the play-me glow?" and answers it by consulting
+# live facts through `playable_check` (injected by the Hand: parented in the hand row +
+# selection enabled + affordable). Nothing pushes glow state in from outside — callers only
+# ask for a re-derive (refresh_playable) — so a stale caller can affect WHEN the question is
+# asked, never what the answer is. The card re-derives PROACTIVELY: on any reparent (played,
+# moved — see NOTIFICATION_PARENTED) and on the presentation self-poll, so even a missed cue
+# self-corrects within a beat instead of persisting until someone remembers it.
+var playable_check: Callable   # func(CardUI) -> bool
+var _presentation_poll: Timer = null
+
+const PRESENTATION_POLL_SECS := 0.75
+
+
+# Installs the playability rule. Hand-spawned cards only — CardUI serves many non-combat
+# screens whose cards must never be dimmed by a false verdict, so without an installed check
+# refresh_playable does nothing at all.
+func set_playable_check(cb: Callable) -> void:
+	playable_check = cb
+	refresh_playable()
+
+
+# ── Presentation derivation ─────────────────────────────────────────────────────
+# EVERY combat presentation state the card can wear is DERIVED here from declared facts —
+# CombatContext (selection / inspection / the preview world) and the card's own situation
+# (parent slot, its instance's flags). Nothing outside pushes verdicts; signals are only
+# "re-check now" cues, and the poll + reparent hooks make the derivation self-correcting.
+# Each applier is idempotent, so re-deriving is always safe.
+#
+# Eligibility guards (they decide which states CAN apply, preventing the appliers — several
+# share `modulate` — from stomping presentations owned by other contexts):
+#   • selection tint: only selectable card views (hand cards / tray tokens), never a
+#     noninteractive enemy token (owns a dim), a drag-ghost view (owns its tint) or an
+#     inspector/preview copy.
+#   • board states (exhaust grey / inspect cue / threat glow): only a slot's OCCUPANT — a
+#     landing phantom mounted in a slot is a projection, not the unit.
+func derive_presentation() -> void:
+	refresh_playable()
+	var slot := get_parent() as SlotUI
+	if slot != null:
+		set_flipped(slot.owner_id == 1)   # facing derives from which side's slot holds me
+	var ctx := CombatContext.current
+	if ctx == null:
+		return
+	if not _noninteractive and (playable_check.is_valid() or is_generated):
+		set_selected(ctx.is_selected(self))
+	if slot != null and slot.get_card() == self and card_instance != null:
+		set_exhausted(card_instance.attack_exhausted)
+		set_inspected(ctx.inspected_instance() == card_instance)
+		set_threat_highlight(ctx.menaces_pivot(card_instance))
+
+
+# Re-derives the glow/dim from current facts. Safe to call from anywhere at any time.
+func refresh_playable() -> void:
+	if not playable_check.is_valid():
+		return
+	_apply_playable(bool(playable_check.call(self)))
+
+
+# Presentation ONLY — the single place the glow/dim lands; the verdict always arrives through
+# refresh_playable's derivation, never as externally pushed state.
+func _apply_playable(playable: bool) -> void:
 	if _canvas == null:
 		return
 	if playable:
@@ -410,10 +484,25 @@ func set_playable(playable: bool) -> void:
 		_canvas.modulate = Color(0.93, 0.93, 0.93)
 
 
+# Sheds every HAND-BOUND presentation state: the play-me glow, the unaffordable dim, the
+# selection tint. Called by SlotUI.set_card — the one door every card passes through on its
+# way onto the board — because these states are facts about hand life ("affordable to play",
+# "selected to place") that no fielded card can truthfully wear. Cleared at the door rather
+# than by whoever played the card, so no play path can leak them (Hand.refresh_playable only
+# walks cards still IN the hand — it can never reach a card that already left).
+func shed_hand_state() -> void:
+	Vfx.detach("card_playable_glow", self)
+	if _canvas != null:
+		_canvas.modulate = Color.WHITE   # neutral — neither the glow'd nor the dimmed hand look
+	set_selected(false)
+
+
 # An inspected ENEMY unit's ability tokens are shown for information only — not castable.
 # IGNORE blocks click/hover/long-press-inspect entirely; the dimmed alpha (distinct from
 # set_exhausted's opaque grey) reads as "look, don't touch".
+var _noninteractive: bool = false
 func set_noninteractive() -> void:
+	_noninteractive = true   # excludes this view from selection derivation (it owns its dim)
 	draggable = false
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	modulate = Color(1.0, 1.0, 1.0, 0.62)
@@ -545,10 +634,23 @@ func flash_stat_proc(attr: String) -> void:
 		_brighten(lbl)
 
 
-# Sustained "this unit threatens you" cue on the Attack badge — paired with the board's
-# incoming-threat glow (CombatBoard attack preview). A slow warm-red pulse on the badge art + its
-# number so the eye lands on WHICH stat is the threat. Reversible; restores the authored look.
+# Sustained "this unit threatens the preview pivot" cue: the incoming-threat card glow + a
+# slow warm-red pulse on the Attack badge and its number, so the eye lands on WHICH stat is
+# the threat. Derived (see derive_presentation: "does MY targeting resolve to the pivot in the
+# declared world?"); the change-guard makes re-derivation free — repeated same-verdict calls
+# don't churn the tween or the glow bake.
+var _threat_on: bool = false
+
 func set_threat_highlight(on: bool) -> void:
+	if on == _threat_on:
+		return
+	_threat_on = on
+	# The card-level menace glow rides the same verdict as the badge flare — one derived
+	# state, one applier (this was a separate push pair on the board before).
+	if on:
+		Vfx.attach("attack_target_glow", self)
+	else:
+		Vfx.detach("attack_target_glow", self)
 	if _atk_bg == null or not is_instance_valid(_atk_bg):
 		return
 	if _threat_tw != null and _threat_tw.is_valid():
@@ -1016,3 +1118,11 @@ func _notification(what: int) -> void:
 			spell_drag_ended.emit(self)
 		elif card_instance != null and not card_instance.is_spell:
 			unit_drag_ended.emit(self)
+	elif what == NOTIFICATION_PARENTED:
+		# A reparent (played onto the board, moved, mounted) changes the answer to most
+		# derived questions. Facing derives IMMEDIATELY (a deferred flip would flash one
+		# wrong-facing frame); the rest re-derives deferred, once the transition settles.
+		var slot := get_parent() as SlotUI
+		if slot != null:
+			set_flipped(slot.owner_id == 1)
+		derive_presentation.call_deferred()

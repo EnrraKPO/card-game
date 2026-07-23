@@ -13,10 +13,15 @@ const HALVES_DIVIDER_W := 4.0   # the visible rule standing in the middle of tha
 const COL_SEP := 14.0   # board↔hand breathing room; also a term in _resize_board's height budget
 const TOP_MARGIN := 12.0   # the body's top inset; another _resize_board height-budget term
 
-enum Phase { CPU_PLACE, PLAYER_PLACE, COMBAT, TARGETING }
+# Turn structure ONLY. "What is the player's gesture doing" (targeting, placing, moving,
+# aiming an autocast) lives in the Interaction session, not here — see INTERACTION_DESIGN.md.
+enum Phase { CPU_PLACE, PLAYER_PLACE, COMBAT }
 
 var _phase: Phase = Phase.CPU_PLACE
 var _turn: int    = 0
+# Whether a MODAL aiming session currently locks placement input (the old TARGETING phase's
+# job) — tracked so _on_interaction_changed only toggles the lock on transitions.
+var _modal_lock: bool = false
 
 # The two sides' resource state (mana / hand / draw pile) — one object each, mutated ONLY
 # through Resolver.submit (side stats: draw/discard/mana/max_mana). The player's Hand bar
@@ -44,10 +49,8 @@ var _board: CombatBoard
 var _animator: CombatAnimator
 var _spell_caster: SpellCaster
 var _vfx: VFXPlayer
+var _interaction: Interaction   # THE owner of the current player gesture (see Interaction)
 
-# The board CardUI currently highlighted as "inspected" (see _on_inspect_changed), tracked so
-# it can be cleared when the inspection moves to a different unit or closes.
-var _inspected_ui: CardUI = null
 
 # While a melee attacker is lunging, its real card is hidden and a ghost duplicate does the
 # travelling. This maps such an attacker → its ghost so the attacker's own VFX (the on-attack
@@ -75,13 +78,20 @@ func _ready() -> void:
 	_animator     = CombatAnimator.new()
 	_spell_caster = SpellCaster.new()
 	_vfx          = VFXPlayer.new()
+	_interaction  = Interaction.new()
 	add_child(_hand)
 	add_child(_board)
 	add_child(_animator)
 	add_child(_spell_caster)
 	add_child(_vfx)
+	add_child(_interaction)
+
+	# The declared-state surface cards consult (selection / inspection / preview world) —
+	# see CombatContext + CardUI.derive_presentation. Cleared in _exit_tree.
+	CombatContext.install(_hand, _board, _interaction)
 
 	_board.setup_grids()
+	_board.interaction  = _interaction   # before _build_ui — build_section hands it to every slot
 	_board.player_side  = _player_side
 	_board.enemy_side   = _enemy_side
 	_board.is_hand_card = func(cu: CardUI) -> bool: return _hand.contains(cu)
@@ -100,7 +110,7 @@ func _ready() -> void:
 			_relic_tray.glint(relic_id)
 	_animator.setup(self, _get_card_ui, _vfx)
 
-	_spell_caster.setup(_board, _animator, func() -> int: return _player_side.mana)
+	_spell_caster.setup(_board, _animator, func() -> int: return _player_side.mana, _interaction)
 	_hand.bind_side(_player_side)
 	_player_side.mana_changed.connect(_refresh_mana)
 	# Mana changing shifts which abilities are affordable, so re-derive the Inspect Abilities glow
@@ -140,8 +150,11 @@ func _ready() -> void:
 	_board.unit_placed.connect(_on_board_unit_placed)
 	_board.slot_pressed.connect(_on_board_slot_pressed)
 	_board.autocast_dropped.connect(_on_autocast_dropped)
-	_spell_caster.targeting_started.connect(_on_targeting_started)
-	_spell_caster.targeting_ended.connect(_on_targeting_ended)
+	# Order matters: the orchestrator's gating runs FIRST (a modal session locking placement
+	# input resets cues via set_open_hints), THEN the board paints the action's cues over the
+	# freshly-reset board.
+	_interaction.changed.connect(_on_interaction_changed)
+	_interaction.changed.connect(_board.present)
 	_spell_caster.spell_consumed.connect(_on_spell_consumed)
 	_spell_caster.ability_autocast.connect(_on_ability_autocast)
 
@@ -176,17 +189,42 @@ func _ready() -> void:
 # way out (win, loss, or back) so menus/map/other scenes are never left running fast.
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
+	CombatContext.clear()   # card derivations no-op outside combat
 
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
-		if mb.button_index == MOUSE_BUTTON_RIGHT and mb.pressed \
-				and _spell_caster.is_targeting():
-			_spell_caster.cancel_targeting()
-			get_viewport().set_input_as_handled()
+		if mb.button_index == MOUSE_BUTTON_RIGHT and mb.pressed:
+			if _interaction.modal_active():
+				# Aiming session: right-click is its cancel.
+				_interaction.end_action()
+				get_viewport().set_input_as_handled()
+			elif not get_viewport().gui_is_dragging() and not _click_engages(true):
+				# The universal back-out: a right-click that does NOT itself engage anything
+				# (a card's details view, an ability token's autocast toggle) clears the
+				# selection, the inspection, and whatever selection action was live.
+				_hand.deselect()
+				_hand.dismiss_to_hand()
+				_interaction.end_action()
+				get_viewport().set_input_as_handled()
 		elif mb.button_index == MOUSE_BUTTON_LEFT and not mb.pressed:
 			_maybe_dismiss_hand_view(mb.position)
+
+
+# Whether a click at the cursor's position ENGAGES an interactive control rather than landing
+# on dead panel/background space — walked up from the GUI's actual hovered control, so it
+# needs no registry of rects. Left clicks engage cards, buttons and scrollbars; right clicks
+# only cards (the details view / autocast toggle — buttons don't respond to right-click).
+func _click_engages(right_click: bool = false) -> bool:
+	var c := get_viewport().gui_get_hovered_control()
+	while c != null:
+		if c is CardUI:
+			return true
+		if not right_click and (c is BaseButton or c is ScrollBar):
+			return true
+		c = c.get_parent() as Control   # a non-Control ancestor ends the walk
+	return false
 
 
 # Clicking anywhere OUTSIDE the hand panel while it's past its base level dismisses back to
@@ -198,13 +236,35 @@ func _input(event: InputEvent) -> void:
 # RELEASE (where slots/cards act); skipped during spell targeting (which owns stray clicks)
 # and mid-drag (a failed drop must not also close the view).
 func _maybe_dismiss_hand_view(point: Vector2) -> void:
-	if _hand.nav_level() == Hand.NavLevel.HAND:
-		return
-	if _spell_caster.is_targeting():
+	if _interaction.modal_active():
 		return
 	if get_viewport().gui_is_dragging():
 		return
+	# A click that will COMMIT the live action is not an "outside click": clicking a move
+	# destination while a fielded unit is selected must engage the move, not dismiss the
+	# inspection first (this _input runs BEFORE GUI delivery — dismissing here ends the
+	# selection action via inspect_changed, and the slot press would then land on nothing).
+	if _interaction.active():
+		var slot := _board.slot_at_mouse()
+		if slot != null:
+			var role := _interaction.role_of(slot)
+			if role == Interaction.Role.DESTINATION or role == Interaction.Role.TARGET_VALID:
+				return
 	if _hand.panel_contains(point):
+		# Inside the hand panel: a click on anything interactive (card, token, button,
+		# scrollbar) belongs to that control; DEAD panel space backs out — selection cleared,
+		# inspect view dismissed to the plain hand.
+		if _click_engages():
+			return
+		_hand.deselect()
+		_hand.dismiss_to_hand()
+		return
+	if _hand.nav_level() == Hand.NavLevel.HAND:
+		# Already at the plain hand: a dead-space click still clears any lingering selection.
+		# Board slots are NOT dead space — their own press manages selection (commit, switch,
+		# or the mana-flicker feedback), so leave clicks on them alone.
+		if _board.slot_at_mouse() == null and not _click_engages():
+			_hand.deselect()
 		return
 	_hand.dismiss_to_hand()
 
@@ -324,10 +384,10 @@ func _execute_enemy_action(action: Dictionary) -> void:
 			var ab: AbilityData = action["ability"]
 			_pay_mana(_enemy_side, ab.mana)
 			if ab.tap:
-				holder.attack_exhausted = true
+				holder.attack_exhausted = true   # the fact; the card derives its grey from it
 				var b_ui := _board.get_card_ui(holder)
 				if b_ui != null:
-					b_ui.set_exhausted(true)
+					b_ui.derive_presentation()   # re-check cue — instant instead of a poll beat
 			if not ab.material.is_empty():
 				var mat := CardData.get_card(ab.material)
 				var m_inst := CardInstance.from_data(mat)
@@ -423,10 +483,8 @@ func _cast_enemy_spell(inst: CardInstance, target: CardInstance) -> void:
 # that spent its attack generating a card last round.
 func _reset_exhaustion() -> void:
 	for inst: CardInstance in _board.get_all_units():
-		inst.attack_exhausted = false
-		var ui := _board.get_card_ui(inst)
-		if ui != null:
-			ui.set_exhausted(false)
+		inst.attack_exhausted = false   # the fact; cards derive their grey from it
+	_board.derive_cards()   # re-check cue for the whole board
 
 
 # Toggles the gold targeting glow on a building's board slot, used to point out
@@ -437,24 +495,17 @@ func _highlight_building(inst: CardInstance, on: bool) -> void:
 	(_board.player_slots[inst.row][inst.col] as SlotUI).set_targetable(on)
 
 
-# Mirrors Hand's inspected card as a board highlight (see CardUI.set_inspected).
+# The inspection DECLARATION changed (Hand._inspected is the fact; board cards derive their
+# cyan highlight from it — no tracked "_inspected_ui" to remember and un-push).
 func _on_inspect_changed(inst: CardInstance) -> void:
-	if _inspected_ui != null and is_instance_valid(_inspected_ui):
-		_inspected_ui.set_inspected(false)
-	_inspected_ui = null
 	if inst == null:
-		# Inspection ended (a unit was DESELECTED). The board cues raised alongside the highlight —
-		# move ring/arrow + the attack crosshair/glow (see _on_board_slot_pressed) — don't clear
-		# themselves, so drop them back to idle here or they linger with nothing selected. Only
-		# meaningful during placement (combat owns the board otherwise; spell targeting has its own).
-		if _phase == Phase.PLAYER_PLACE and not _spell_caster.is_targeting():
-			_board.refresh_idle_cues()
-			_board.clear_attack_preview()
-		return
-	var ui := _board.get_card_ui(inst)
-	if ui != null:
-		ui.set_inspected(true)
-		_inspected_ui = ui
+		# Inspection ended (a unit was DESELECTED). The static selection cues were raised by a
+		# click-session action (see _on_board_slot_pressed) — end it and the board resets
+		# structurally. Never touches a modal aiming session or a live drag (those own the board).
+		if _interaction.active() and not _interaction.current().modal \
+				and not _interaction.current().is_drag:
+			_interaction.end_action()
+	_refresh_card_presentation()   # re-check cue for the new declaration
 
 
 func _on_done_pressed() -> void:
@@ -916,6 +967,10 @@ func _handle_combat_end() -> void:
 
 func _on_board_unit_placed(inst: CardInstance, card_ui: CardUI, from_hand: bool, cost: int, results: Array) -> void:
 	if from_hand:
+		# The placed card may still be the hand's live selection (the click-place path commits
+		# through the Interaction session, which doesn't know the hand) — clear it before the
+		# card leaves the hand so no stale selection survives the placement.
+		_hand.deselect()
 		Sfx.play("combat_place_building" if inst.data.is_building() else "combat_place_unit")
 		_pay_mana(_player_side, cost)
 		if cost > 0:
@@ -952,18 +1007,19 @@ func _consume_generated_token(card_ui: CardUI) -> void:
 # Spends the holder's action for the round — the tap half of an ability's cost, shared by
 # the tray-token path above and the autocast path (_on_ability_autocast).
 func _pay_tap(holder: CardInstance) -> void:
-	holder.attack_exhausted = true
+	holder.attack_exhausted = true   # the fact; the card derives its grey from it
 	_highlight_building(holder, false)
 	var holder_ui := _board.get_card_ui(holder)
 	if holder_ui != null:
-		holder_ui.set_exhausted(true)
+		holder_ui.derive_presentation()   # re-check cue — instant instead of a poll beat
 	_hand.prune_tapped(holder)
 
 
 # ── Autocast (armed ability fired by dragging the holder onto a target) ─────────
 
-# The drop passed the eligibility gate (SlotUI.autocast_check → SpellCaster.autocast_drop_ok);
-# hand it to the caster, which re-validates and emits ability_autocast for payment below.
+# The AUTOCAST action committed on a valid occupied slot (role predicate →
+# SpellCaster.autocast_drop_ok); hand it to the caster, which re-validates and emits
+# ability_autocast for payment below.
 func _on_autocast_dropped(slot: SlotUI, card_ui: CardUI) -> void:
 	await _spell_caster.activate_autocast(card_ui.card_instance, slot)
 
@@ -989,8 +1045,11 @@ func _on_autocast_changed(holder: CardInstance) -> void:
 
 
 func _on_board_slot_pressed(slot: SlotUI) -> void:
-	if _spell_caster.is_targeting():
-		return  # spell_caster handles via its own slot_pressed connection
+	# The Interaction session gets every press first: a live click session commits on a valid
+	# pick (spell target, placement spot); a modal session swallows invalid picks and stays
+	# aiming. Only unconsumed presses fall through to inspection/selection below.
+	if _interaction.handle_slot_press(slot):
+		return
 	if _phase != Phase.PLAYER_PLACE:
 		return
 	var occupant := slot.get_card()
@@ -1000,41 +1059,45 @@ func _on_board_slot_pressed(slot: SlotUI) -> void:
 		# placement-related.
 		_hand.deselect()
 		_hand.set_inspected(occupant.card_instance)
-		# Selecting a movable unit reveals where it can go — static ring+arrow cues (they animate
-		# only once the player actually drags) — and lights the enemy it will strike (red crosshair
-		# + glow), so it's clear the unit CAN be repositioned and what it currently threatens.
-		if _board.is_movable_unit(occupant.card_instance):
-			_board.show_move_cues(occupant, false)
-			_board.show_attack_preview(occupant.card_instance)
-		else:
-			_board.refresh_idle_cues()
-			_board.clear_attack_preview()
+		# Selecting ANY fielded unit begins a static UNIT action. What shows falls out of the
+		# roles: a movable player unit gets ring+arrow destinations + its attack projection; an
+		# enemy unit or rooted building yields no destinations (role_of returns NONE everywhere),
+		# leaving just the projection — who it hits (crosshair) and who hits it (menace glow).
+		_interaction.begin(_board.make_unit_action(occupant, false, false))
 		return
+	# Empty slot, nothing committed: placement itself went through handle_slot_press (the
+	# selection began a UNIT action) — what's left is FEEDBACK for a blocked selection.
 	var card := _hand.selected()
 	if card == null:
 		return
-	if not _board.can_place_from_hand(card):
+	if not _board.can_place_from_hand(card) \
+			and card.card_instance.get_attribute("cost") > _player_side.mana:
 		# When the block is the mana pool, say so: the gauge flickers "present but empty".
-		if card.card_instance.get_attribute("cost") > _player_side.mana:
-			Vfx.play("mana_insufficient_flicker", _mana_chunks_box)
-		return
-	_hand.deselect()
-	_board.do_place_unit(slot, card)
+		Vfx.play("mana_insufficient_flicker", _mana_chunks_box)
 
 
-# ── Spell phase bridging ───────────────────────────────────────────────────────
+# ── Interaction bridging ───────────────────────────────────────────────────────
 
-func _on_targeting_started() -> void:
-	Sfx.play("spell_targeting")
-	_phase = Phase.TARGETING
-	_set_placement_input(false)
+# The orchestrator's whole stake in a gesture: a MODAL aiming session locks placement input
+# (the old TARGETING phase's job) and re-derives the Ready button. Cue rendering is entirely
+# the board's present(); cleanup is the session ending itself.
+func _on_interaction_changed(action: Interaction.Action) -> void:
+	var lock := action != null and action.modal
+	if lock != _modal_lock:
+		_modal_lock = lock
+		if lock:
+			Sfx.play("spell_targeting")
+		if _phase == Phase.PLAYER_PLACE:
+			_set_placement_input(not lock)
 	_refresh_done_btn()
+	_refresh_card_presentation()   # aiming-source selection etc. derive from the session
 
 
-func _on_targeting_ended() -> void:
-	_phase = Phase.PLAYER_PLACE
-	_set_placement_input(true)
-	_refresh_done_btn()
+# The one "re-check now" broadcast: every card view (board occupants, hand row, tray tokens)
+# re-derives from the declarations. Carries no verdicts — a redundant call is always safe.
+func _refresh_card_presentation() -> void:
+	_board.derive_cards()
+	_hand.derive_cards()
 
 
 func _on_spell_consumed(card_ui: CardUI, cost: int) -> void:
@@ -1435,16 +1498,18 @@ func _refresh_done_btn() -> void:
 		return
 	match _phase:
 		Phase.PLAYER_PLACE:
-			_done_label.text   = Loc.t("combat.ready")
-			_done_btn.disabled = false
+			if _interaction != null and _interaction.modal_active():
+				# A modal aiming session owns the board — Ready waits for the pick/cancel.
+				_done_label.text   = Loc.t("combat.select_target")
+				_done_btn.disabled = true
+			else:
+				_done_label.text   = Loc.t("combat.ready")
+				_done_btn.disabled = false
 		Phase.CPU_PLACE:
 			_done_label.text   = Loc.t("combat.cpu_placing")
 			_done_btn.disabled = true
 		Phase.COMBAT:
 			_done_label.text   = Loc.t("combat.battle")
-			_done_btn.disabled = true
-		Phase.TARGETING:
-			_done_label.text   = Loc.t("combat.select_target")
 			_done_btn.disabled = true
 	# The caption is a child Label, outside the button's own disabled styling — dim it manually.
 	_done_label.modulate.a = 0.55 if _done_btn.disabled else 1.0
@@ -1458,7 +1523,7 @@ func _set_placement_input(enabled: bool) -> void:
 	_hand.set_input_enabled(enabled)
 	_board.set_open_hints(enabled)   # idle "open here" markers only while placement is live
 	if not enabled:
-		_board.clear_attack_preview()   # a leftover crosshair/glow can't outlive the placement phase
+		_board.clear_preview()   # a leftover preview declaration can't outlive the placement phase
 	var filter := Control.MOUSE_FILTER_STOP if enabled else Control.MOUSE_FILTER_IGNORE
 	for r in BoardData.ROWS:
 		for c in BoardData.COLS:
@@ -1467,15 +1532,14 @@ func _set_placement_input(enabled: bool) -> void:
 				p.mouse_filter = filter
 
 
-# A hand unit was selected (or deselected): show the static "place here" ring+arrow on valid
-# empty slots for the selection, or clear back to the idle markers. Never fights spell targeting
-# (which owns the board while a spell is being aimed).
+# A hand unit was selected (or deselected): a selection IS a static UNIT action — the board
+# renders its "place here" cues from it, and deselection ends it. Never fights a modal aiming
+# session (which owns the board) or a live drag (which owns the gesture).
 func _on_hand_selection_changed(ui: CardUI) -> void:
-	if _spell_caster.is_targeting():
+	_refresh_card_presentation()   # the selection declaration changed — cards re-derive
+	if _interaction.modal_active():
 		return
 	if ui != null and not ui.card_instance.is_spell:
-		_board.show_move_cues(ui, false)   # static "place here" ring+arrow (animates only on drag)
-		_board.clear_attack_preview()      # a hand card isn't placed yet — its target waits for a drag
-	else:
-		_board.refresh_idle_cues()
-		_board.clear_attack_preview()
+		_interaction.begin(_board.make_unit_action(ui, false, false))
+	elif _interaction.active() and not _interaction.current().is_drag:
+		_interaction.end_action()

@@ -151,7 +151,8 @@ func _ready() -> void:
 				break
 		if cb != null:
 			var board = cb.get("_board")
-			board.place_enemy_card(CardInstance.from_data(CardData.get_card("pawn")), 1, 0)
+			var ep := CardInstance.from_data(CardData.get_card("pawn"))
+			board.place_enemy_card(ep, 1, 0)
 			# An enemy in the bishop's lane — it targets our bishop, so it wears the incoming-threat
 			# glow + attack-badge highlight (distinct from the crosshair on the bishop's OWN target).
 			var pawn03 := CardInstance.from_data(CardData.get_card("pawn"))
@@ -167,19 +168,47 @@ func _ready() -> void:
 			await get_tree().process_frame
 			# "dragstart": exercise the drag-start selection fix — a fielded unit's drag with the
 			# cursor still on its origin (no landing-slot hover) must still show its attack preview.
-			if "dragstart" in args:
+			if "handdrag" in args:
+				# A hand-card PLACEMENT drag with the phantom on a landing slot: the menace
+				# read must derive from the DECLARED spot (the hand card's own row is -1 —
+				# measuring from it was the "menace never updates" defect). The fielded bishop
+				# is removed first so the pivot is the enemies' only nearby mark — with it, a
+				# correct derivation MUST light all three enemies; the broken one lit none.
+				board.player_grid[atk.row][atk.col] = null
+				(board.player_slots[1][3] as SlotUI).clear_card()
+				var hand = cb.get("_hand")
+				board._on_unit_drag_started(hand._hand_cards[0])
+				await get_tree().process_frame
+				board.set_process(false)   # freeze BEFORE mounting (no real cursor here)
+				board._set_phantom_slot(board.player_slots[1][1])
+			elif "dragstart" in args:
 				board._on_unit_drag_started(board.get_card_ui(atk))
+			elif "enemysel" in args:
+				# Selecting an ENEMY unit: same action, no destinations fall out of the roles —
+				# just its projection (crosshair on ITS target, menace glow on who targets it).
+				board.interaction.begin(board.make_unit_action(board.get_card_ui(ep), false, false))
 			else:
-				board.show_move_cues(board.get_card_ui(atk), false)
-				board.show_attack_preview(atk)
+				# Stage the selection through the real path: a static UNIT action renders the
+				# move cues AND the attack preview from one declaration (see Interaction).
+				board.interaction.begin(board.make_unit_action(board.get_card_ui(atk), false, false))
 			# "reticle": also mark the bishop's target enemy as a valid autocast target, so the slot
 			# shows BOTH the green reticle (centre) AND the attack crosshair (top-right) composed.
 			if "reticle" in args:
 				var tgt = board._projected_target(atk, atk.row, atk.col)
 				if tgt != null:
 					(board.enemy_slots[tgt.row][tgt.col] as SlotUI).set_cue(SlotUI.Cue.TARGET_OK)
-			var pslot = board.player_slots[0][1]
-			pslot.mount_phantom(board.get_card_ui(atk).make_ghost_view())
+			if "enemysel" not in args and "handdrag" not in args:
+				# The [0][1] phantom belongs to the player-selection staging (handdrag mounts
+				# its own and removed atk from the board entirely).
+				var pslot = board.player_slots[0][1]
+				pslot.mount_phantom(board.get_card_ui(atk).make_ghost_view())
+			# "hover": the cursor-hover read on a static selection — thick white outline on the
+			# hovered destination slot, its MOVE arrow bobbing (frozen mid-bob in the shot).
+			# Processing off first: the live poll would instantly re-derive from the real cursor
+			# (parked at 0,0 in a harness run) and clear the staged hover.
+			if "hover" in args:
+				board.set_process(false)
+				board._set_hover_slot(board.player_slots[2][1])
 			await get_tree().process_frame
 	# "armeddrag": the armed-autocast drag hybrid — empty own slots show MOVE (priority), occupied
 	# invalid slots show the red X (a valid cast target would show the green reticle).
@@ -196,7 +225,7 @@ func _ready() -> void:
 			board2.spawn_player_card(rk2, 1, 3)
 			rk2.autocast_ability = "castling"
 			await get_tree().process_frame
-			board2.show_move_and_cast_cues(board2.get_card_ui(rk2), false)
+			board2.interaction.begin(board2.make_autocast_action(board2.get_card_ui(rk2)))
 			await get_tree().process_frame
 	# "inspect": pop the full-screen CardInspector over the scene (a content-rich card).
 	if "inspect" in args:

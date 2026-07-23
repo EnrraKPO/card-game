@@ -1,9 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
-  <!-- "Reposition here" landing ring — pairs with slot_move_arrow above it. Placeholder art:
-       drop a slot_move_ring.png next to this file and the game picks it up (see BoardGlyphs). -->
-  <g fill="none">
-    <circle cx="64" cy="64" r="40" stroke="#0b0f22" stroke-opacity="0.5" stroke-width="14"/>
-    <circle cx="64" cy="64" r="40" stroke="#f2c018" stroke-width="8"/>
-  </g>
-  <circle cx="64" cy="64" r="7" fill="#f2c018"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="184" height="56" viewBox="0 0 184 56">
+  <!-- "Reposition here" landing spot — a circular spotlight pool seen in STRONG perspective, so it
+       reads as a very slender ellipse. Flat body + a thick outline, nothing else (no gradient/glow),
+       kept gentle on purpose. Placeholder art: drop a slot_move_ring.png next to this file and the
+       game picks it up (see BoardGlyphs). -->
+  <ellipse cx="92" cy="28" rx="80" ry="18"
+           fill="#f2c018" fill-opacity="0.5"
+           stroke="#0b0f22" stroke-opacity="0.5" stroke-width="9"/>
 </svg>

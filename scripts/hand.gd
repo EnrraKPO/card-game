@@ -343,11 +343,12 @@ func bind_side(side: CombatSide) -> void:
 # uniform for units and spells. While input is off (combat resolving) NOTHING is playable, so every
 # card falls to the dim with no misleading glow. Call on draw / mana change / input toggle. No-op
 # until a side is bound.
+# A timing HINT only ("mana just changed — re-check now instead of waiting for your poll").
+# Carries no state: each card re-derives its own verdict through the check installed at spawn,
+# so calling this with a stale list can only cause a redundant correct check, never a wrong glow.
 func refresh_playable() -> void:
-	if _side == null:
-		return
 	for ui: CardUI in _hand_cards:
-		ui.set_playable(selection_enabled and ui.card_instance.get_attribute("cost") <= _side.mana)
+		ui.refresh_playable()
 
 
 func _on_cards_drawn(insts: Array) -> void:
@@ -377,6 +378,12 @@ func _spawn_hand_card(inst: CardInstance) -> void:
 	ui.custom_minimum_size = _card_size
 	_hand_cards.append(ui)
 	_hand_box.add_child(ui)
+	# The playability RULE, installed once — the card derives its own glow from live facts
+	# from here on (see CardUI.set_playable_check). Parent test, not our _hand_cards list:
+	# the node tree is the structural truth a stale bookkeeping list can't contradict.
+	ui.set_playable_check(func(c: CardUI) -> bool:
+		return c.get_parent() == _hand_box and selection_enabled \
+			and _side != null and c.card_instance.get_attribute("cost") <= _side.mana)
 	Vfx.play("card_draw_flick", ui)   # the dealt-card sheen (Vfx waits out the layout frame)
 	if ui.card_instance.is_spell:
 		if wire_spell_card.is_valid():
@@ -660,10 +667,9 @@ func _rebuild_inspect_view() -> void:
 		row.add_child(ui)
 		row.add_child(_ability_text_col(ab, tray_h))
 		_gen_box.add_child(row)   # entering the tree runs _ready, so set_generated is safe after
-		ui.set_generated()
+		ui.set_generated()   # an enemy unit's token derives its own view-only dim (owner == 1)
 		if not interactive:
-			ui.set_noninteractive()
-			continue
+			continue   # enemy roster: informational only — no cast wiring, no arming
 		# The unit's whole ability roster is shown, payable or not. A currently-unpayable one
 		# (tapped out or unaffordable) rides the same spent grey as a tapped board unit and can't
 		# be drag-cast — but it still arms (right-click) and hovers, since arming survives tapping.
@@ -795,10 +801,12 @@ func selected() -> CardUI:
 	return _selected
 
 
+# Selection is a DECLARATION: this sets/clears WHICH card is selected and emits the cue;
+# every card derives its own tint from the declaration (CombatContext.is_selected) — no card
+# is ever told "you are (de)selected", so a cleared selection cannot leave residue anywhere.
 func deselect() -> void:
 	if _selected != null:
 		Sfx.play("card_deselect")
-		_selected.set_selected(false)
 		_selected = null
 		selection_changed.emit(null)
 
@@ -812,8 +820,7 @@ func _toggle_select(ui: CardUI) -> void:
 		deselect()
 		_selected = ui
 		Vfx.play("card_select_lift", ui)   # entry carries the select sound
-		ui.set_selected(true)
-		selection_changed.emit(ui)
+		selection_changed.emit(ui)   # the declaration; the card derives its own tint from it
 
 
 # ── Queries + input gating ───────────────────────────────────────────────────────
@@ -822,6 +829,20 @@ func _toggle_select(ui: CardUI) -> void:
 # "from hand" for the board's placement/mana checks too.
 func contains(ui: CardUI) -> bool:
 	return _hand_cards.has(ui) or _gen_cards.has(ui)
+
+
+# The declared inspection — consulted by card derivation (CombatContext.inspected_instance).
+func inspected_instance() -> CardInstance:
+	return _inspected
+
+
+# The "re-check now" cue for every card view the hand owns (hand row + tray tokens) — routed
+# by Combat on declaration changes; carries no verdicts.
+func derive_cards() -> void:
+	for ui: CardUI in _hand_cards:
+		ui.derive_presentation()
+	for ui: CardUI in _gen_cards:
+		ui.derive_presentation()
 
 
 func set_input_enabled(enabled: bool) -> void:

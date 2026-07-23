@@ -1,8 +1,11 @@
 class_name SpellCaster
 extends Node
 
-signal targeting_started
-signal targeting_ended
+# The SPELL-RULES expert: eligibility, execution and costs for spells, tray ability tokens and
+# autocast activations. It owns NO gesture state — aiming a spell is an Interaction action
+# (built by make_cast_action below); the session lifecycle, cue rendering, drop gating and
+# click routing all live with Interaction/CombatBoard. See INTERACTION_DESIGN.md.
+
 signal spell_consumed(card_ui: CardUI, mana_cost: int)
 # An armed autocast ability is about to resolve (holder dropped onto a valid target); the
 # orchestrator pays its costs (mana + tap) — the tray-token flow's spell_consumed equivalent.
@@ -11,25 +14,18 @@ signal ability_autocast(holder: CardInstance, ab: AbilityData)
 var board: CombatBoard
 var animator: CombatAnimator
 var get_mana: Callable  # func() -> int
-
-var _is_targeting: bool  = false
-var _pending_spell: CardUI = null
-var _targeting_spell: CardUI = null    # the spell whose click-targeting session is active
-var _targeting_slot_mode: bool = false # true while the active session picks a SLOT (MANUAL_SLOT)
-
-signal _target_chosen(target: CardInstance)
-signal _slot_chosen(slot: SlotUI)
+var interaction: Interaction
 
 
-func setup(p_board: CombatBoard, p_animator: CombatAnimator, p_get_mana: Callable) -> void:
-	board    = p_board
-	animator = p_animator
-	get_mana = p_get_mana
-	board.slot_pressed.connect(_on_slot_pressed)
-	board.spell_dropped.connect(_on_spell_dropped)
+func setup(p_board: CombatBoard, p_animator: CombatAnimator, p_get_mana: Callable,
+		p_interaction: Interaction) -> void:
+	board       = p_board
+	animator    = p_animator
+	get_mana    = p_get_mana
+	interaction = p_interaction
 
 
-# ── Public API ─────────────────────────────────────────────────────────────────
+# ── Spell input → Interaction actions ──────────────────────────────────────────
 
 func wire_spell_card(ui: CardUI) -> void:
 	ui.pressed.connect(func(): _on_spell_card_pressed(ui))
@@ -37,101 +33,64 @@ func wire_spell_card(ui: CardUI) -> void:
 	ui.spell_drag_ended.connect(_on_spell_drag_ended)
 
 
-func is_targeting() -> bool:
-	return _is_targeting
-
-
-func cancel_targeting() -> void:
-	if _is_targeting:
-		if _targeting_slot_mode:
-			_slot_chosen.emit(null)
-		else:
-			_target_chosen.emit(null)
-
-
-# ── Spell input handlers ───────────────────────────────────────────────────────
-
+# Click: begins a MODAL aiming session (the board captures presses until a valid pick or a
+# cancel). Pressing the spell already being aimed toggles the session off.
 func _on_spell_card_pressed(card_ui: CardUI) -> void:
-	if not _can_afford(card_ui):
-		return
-	if _needs_slot(card_ui):
-		# Slot-mode (MANUAL_SLOT, e.g. material delivery): the pick is a SLOT — occupied means
-		# merge onto its unit, empty means the effect's spawn case.
-		card_ui.set_selected(true)
-		var slot := await _request_slot(card_ui)
-		card_ui.set_selected(false)
-		if slot == null:
-			return
-		var occupant := slot.get_card()
-		await _execute_spell(card_ui,
-				occupant.card_instance if occupant != null else null, slot)
-		return
-	var needs_target := card_ui.card_instance.data.effects.any(func(e: Effect) -> bool:
-		return e.trigger == Effect.Trigger.ON_PLAY \
-			and e.targeting_policy == Effect.TargetingPolicy.MANUAL)
-	var manual_target: CardInstance = null
-	if needs_target:
-		card_ui.set_selected(true)
-		manual_target = await _request_target(card_ui)
-		card_ui.set_selected(false)
-		if manual_target == null:
-			return
-	await _execute_spell(card_ui, manual_target)
-
-
-func _on_spell_dropped(slot: SlotUI, card_ui: CardUI) -> void:
-	if not card_ui.card_instance.is_spell:
+	if interaction.modal_active():
+		if interaction.current().source == card_ui:
+			interaction.end_action()
 		return
 	if not _can_afford(card_ui):
 		return
-	if _needs_slot(card_ui):
-		# Slot-mode drop: an eligible EMPTY own slot is a valid pick (the spawn case).
-		if not _slot_eligible(card_ui.card_instance, slot):
-			return
-		var occupant := slot.get_card()
-		await _execute_spell(card_ui,
-				occupant.card_instance if occupant != null else null, slot)
-		return
-	var target_ui := slot.get_card()
-	if target_ui == null:
-		return
-	if not _eligible(card_ui.card_instance, target_ui.card_instance):
-		return   # ineligible pick (e.g. Castling onto an already-Barriered unit) — spell kept
-	await _execute_spell(card_ui, target_ui.card_instance)
+	interaction.begin(make_cast_action(card_ui, false))
 
 
+# Drag: the same action in drag form (non-modal — it lives and dies with the drag). A live
+# click session keeps the board; the drag ghost still travels but changes nothing.
 func _on_spell_drag_started(card_ui: CardUI) -> void:
-	if _is_targeting:
-		return  # click-targeting session already active
-	_pending_spell = card_ui
-	if _needs_slot(card_ui):
-		board.set_slots_targetable_by_slot(true, _slot_eligibility_of(card_ui))
-	else:
-		board.set_slots_targetable(true, _eligibility_of(card_ui))
-	board.set_board_card_filters(false)
+	if interaction.modal_active():
+		return
+	interaction.begin(make_cast_action(card_ui, true))
 
 
 func _on_spell_drag_ended(card_ui: CardUI) -> void:
-	board.set_slots_targetable(false)
-	board.set_board_card_filters(true)
-	if _pending_spell == card_ui:
-		_pending_spell = null
+	interaction.end_drag(card_ui)
 
 
-func _on_slot_pressed(slot: SlotUI) -> void:
-	if not _is_targeting:
-		return
-	if _targeting_slot_mode:
-		if _targeting_spell != null \
-				and _slot_eligible(_targeting_spell.card_instance, slot):
-			_slot_chosen.emit(slot)
-		return   # ineligible slot — stay in targeting, let the player choose again
-	var card := slot.get_card()
-	if card == null:
-		return
-	if _targeting_spell != null and not _eligible(_targeting_spell.card_instance, card.card_instance):
-		return   # ineligible pick — stay in targeting, let the player choose again
-	_target_chosen.emit(card.card_instance)
+# The cast action: ONE description covering hand spells and tray ability tokens, click and
+# drag. Occupant-targeted spells judge slots by their occupant; MANUAL_SLOT spells (material
+# delivery) judge the SLOT itself, so eligible EMPTY own slots are valid picks (the spawn
+# case). Commit re-validates affordability and resolves — the exact checks the old drop/press
+# handlers ran, now downstream of the same predicate that lit the cues.
+func make_cast_action(card_ui: CardUI, is_drag: bool) -> Interaction.Action:
+	var act := Interaction.Action.new()
+	act.source = card_ui
+	act.is_drag = is_drag
+	act.modal = not is_drag
+	var slot_mode := _needs_slot(card_ui)
+	act.kind = Interaction.Action.Kind.CAST_SLOT if slot_mode else Interaction.Action.Kind.CAST
+	if slot_mode:
+		act.role_check = func(slot: SlotUI) -> int:
+			if _slot_eligible(card_ui.card_instance, slot):
+				return Interaction.Role.TARGET_VALID
+			return Interaction.Role.TARGET_INVALID
+	else:
+		act.role_check = func(slot: SlotUI) -> int:
+			var occ := slot.get_card()
+			if occ != null and _eligible(card_ui.card_instance, occ.card_instance):
+				return Interaction.Role.TARGET_VALID
+			return Interaction.Role.TARGET_INVALID
+	act.on_commit = func(slot: SlotUI) -> void:
+		if not _can_afford(card_ui):
+			return
+		var occ := slot.get_card()
+		await _execute_spell(card_ui,
+				occ.card_instance if occ != null else null,
+				slot if slot_mode else null)
+	# No selection push here: a modal session's source DERIVES its selected tint from the
+	# session itself (CombatContext.is_selected) — beginning/ending the session is the whole
+	# story, with no set/clear pair to keep symmetric.
+	return act
 
 
 # ── Core spell execution ───────────────────────────────────────────────────────
@@ -175,38 +134,6 @@ func _resolve_on_play(effects: Array, src: CardInstance, ab: AbilityData,
 		board.cleanup_effect_deaths()
 
 
-func _request_target(spell_ui: CardUI) -> CardInstance:
-	if board.get_all_units().is_empty():
-		return null
-	_is_targeting = true
-	_targeting_spell = spell_ui
-	board.set_slots_targetable(true, _eligibility_of(spell_ui))
-	targeting_started.emit()
-	var target: CardInstance = await _target_chosen
-	board.set_slots_targetable(false)
-	_is_targeting = false
-	_targeting_spell = null
-	targeting_ended.emit()
-	return target
-
-
-# The slot-mode targeting session (MANUAL_SLOT effects): same shape as _request_target, but
-# the pick is a SLOT — eligible empty slots included — resolved via _slot_chosen.
-func _request_slot(spell_ui: CardUI) -> SlotUI:
-	_is_targeting = true
-	_targeting_slot_mode = true
-	_targeting_spell = spell_ui
-	board.set_slots_targetable_by_slot(true, _slot_eligibility_of(spell_ui))
-	targeting_started.emit()
-	var slot: SlotUI = await _slot_chosen
-	board.set_slots_targetable(false)
-	_is_targeting = false
-	_targeting_slot_mode = false
-	_targeting_spell = null
-	targeting_ended.emit()
-	return slot
-
-
 func _can_afford(card_ui: CardUI) -> bool:
 	return card_ui.card_instance.get_attribute("cost") <= get_mana.call()
 
@@ -236,12 +163,6 @@ func _manual_effects_eligible(effects: Array, target: CardInstance) -> bool:
 	return not has_manual
 
 
-# The per-occupant predicate handed to CombatBoard.set_slots_targetable.
-func _eligibility_of(spell_ui: CardUI) -> Callable:
-	return func(occupant: CardInstance) -> bool:
-		return _eligible(spell_ui.card_instance, occupant)
-
-
 # ── Slot-mode eligibility (MANUAL_SLOT effects, e.g. material delivery) ─────────
 
 func _needs_slot(card_ui: CardUI) -> bool:
@@ -266,18 +187,12 @@ func _slot_eligible(spell: CardInstance, slot: SlotUI) -> bool:
 	return false
 
 
-# The per-slot predicate handed to CombatBoard.set_slots_targetable_by_slot.
-func _slot_eligibility_of(spell_ui: CardUI) -> Callable:
-	return func(slot: SlotUI) -> bool:
-		return _slot_eligible(spell_ui.card_instance, slot)
-
-
 # ── Autocast (an armed ability fired by dragging its holder onto a target) ──────
 
 # Whether dropping dragged unit `holder` onto `slot` fires its armed autocast ability:
 # armed + fielded player unit + payable (untapped if tap-costed, mana affordable) + the
-# occupant passes the ability's manual-effect conditions. Consulted both at drop-accept
-# time (SlotUI.autocast_check via CombatBoard.can_autocast) and again at execution.
+# occupant passes the ability's manual-effect conditions. Consulted by the AUTOCAST action's
+# role predicate (cue + drop gate, via CombatBoard.can_autocast) and again at execution.
 func autocast_drop_ok(holder: CardInstance, slot: SlotUI) -> bool:
 	if holder == null or holder.row < 0 or holder.owner != 0:
 		return false
