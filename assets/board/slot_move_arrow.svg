@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <!-- Downward arrow that bobs toward the ring while dragging (see SlotUI). Placeholder art:
+       drop a slot_move_arrow.png next to this file and the game picks it up (see BoardGlyphs). -->
+  <g fill="#f2c018" stroke="#0b0f22" stroke-opacity="0.5" stroke-width="9" stroke-linejoin="round">
+    <path d="M52 20 h24 v40 h20 L64 100 L32 60 h20 z"/>
+  </g>
+</svg>

@@ -30,6 +30,16 @@ var player_side: CombatSide = null
 var enemy_side: CombatSide = null
 var _default_strategy := TargetingNearest.new()
 
+# Attack-target preview. Two DISTINCT signals about a selected/dragged friendly unit at a spot:
+#   • crosshair (`_preview_slot`) — the enemy OUR unit would strike (its outgoing target).
+#   • glow (`_glow_cards`, `attack_target_glow`) — the enemies that would strike OUR unit AT THAT
+#     spot (incoming threats); each enemy whose own targeting picks our unit if it stood there.
+# Drag phantom: the unit being dragged for a move/place and the slot showing its landing preview.
+var _preview_slot: SlotUI = null
+var _glow_cards: Array = []   # CardUI[] currently wearing the incoming-threat glow
+var _drag_card: CardUI = null
+var _phantom_slot: SlotUI = null
+
 
 # The one context builder for live-combat effect dispatch: grids + the sides. Every
 # in-combat EffectContext comes through here so a side target is never silently missing.
@@ -365,10 +375,16 @@ func set_slots_targetable(enabled: bool, eligible: Callable = Callable()) -> voi
 
 
 func _set_slot_targetable(slot: SlotUI, occupant: CardInstance, enabled: bool, eligible: Callable) -> void:
-	if not enabled or not eligible.is_valid():
-		slot.set_targetable(enabled)
+	if not enabled:
+		slot.set_targetable(false)
+		slot.reset_cue()
 		return
-	slot.set_targetable(occupant != null and bool(eligible.call(occupant)))
+	var ok := true
+	if eligible.is_valid():
+		ok = occupant != null and bool(eligible.call(occupant))
+	slot.set_targetable(ok)
+	# A targeted spell/effect: valid picks show the green reticle, everything else a red X.
+	slot.set_cue(SlotUI.Cue.TARGET_OK if ok else SlotUI.Cue.TARGET_BAD)
 
 
 # Slot-level variant for MANUAL_SLOT effects (material delivery): `eligible` judges the SLOT
@@ -377,10 +393,241 @@ func _set_slot_targetable(slot: SlotUI, occupant: CardInstance, enabled: bool, e
 func set_slots_targetable_by_slot(enabled: bool, eligible: Callable) -> void:
 	for r in BoardData.ROWS:
 		for c in BoardData.COLS:
+			_set_slot_targetable_by(player_slots[r][c] as SlotUI, enabled, eligible)
+			_set_slot_targetable_by(enemy_slots[r][c] as SlotUI, enabled, eligible)
+
+
+func _set_slot_targetable_by(slot: SlotUI, enabled: bool, eligible: Callable) -> void:
+	if not enabled:
+		slot.set_targetable(false)
+		slot.reset_cue()
+		return
+	var ok := bool(eligible.call(slot))
+	slot.set_targetable(ok)
+	slot.set_cue(SlotUI.Cue.TARGET_OK if ok else SlotUI.Cue.TARGET_BAD)
+
+
+# Resets every slot to its resting look (idle "open" marker on empty own slots, else nothing) —
+# the one-shot clear used when a move/selection gesture ends.
+func refresh_idle_cues() -> void:
+	for r in BoardData.ROWS:
+		for c in BoardData.COLS:
+			(player_slots[r][c] as SlotUI).reset_cue()
+			(enemy_slots[r][c] as SlotUI).reset_cue()
+
+
+# Toggles the idle "open here" marker on empty player slots — combat turns it on only while
+# unit placement input is live (see Combat._set_placement_input).
+func set_open_hints(enabled: bool) -> void:
+	for r in BoardData.ROWS:
+		for c in BoardData.COLS:
+			(player_slots[r][c] as SlotUI).set_open_hints(enabled)
+			(enemy_slots[r][c] as SlotUI).set_open_hints(enabled)
+
+
+# A fielded PLAYER unit that can be repositioned (not a rooted building). Selecting one lights
+# the board's move cues — see Combat._on_board_slot_pressed.
+func is_movable_unit(inst: CardInstance) -> bool:
+	return inst != null and inst.owner == 0 and inst.row >= 0 and not inst.data.is_building()
+
+
+# Reposition/place mode: empty valid destinations on the player's side show the ring + arrow
+# (bobbing while `animated`, parked for a static selection); every other slot stays at rest. No
+# red X here — a move isn't a targeted effect, so irrelevant slots read neutral.
+func show_move_cues(card_ui: CardUI, animated: bool) -> void:
+	for r in BoardData.ROWS:
+		for c in BoardData.COLS:
 			var ps := player_slots[r][c] as SlotUI
-			var es := enemy_slots[r][c] as SlotUI
-			ps.set_targetable(enabled and bool(eligible.call(ps)))
-			es.set_targetable(enabled and bool(eligible.call(es)))
+			if ps.get_card() == null and _can_drop_on_player_slot(card_ui, ps):
+				ps.set_cue(SlotUI.Cue.MOVE, animated)
+			else:
+				ps.reset_cue()
+			(enemy_slots[r][c] as SlotUI).reset_cue()
+
+
+# Dragging a unit that has an armed autocast ability: the drop can either MOVE it (empty own slot)
+# or CAST on a valid unit, so both readings show at once, with MOVE taking priority — empty valid
+# destinations get the ring+arrow, valid cast targets the green reticle, every other slot the red X.
+func show_move_and_cast_cues(card_ui: CardUI, animated: bool) -> void:
+	for r in BoardData.ROWS:
+		for c in BoardData.COLS:
+			_cue_hybrid_slot(player_slots[r][c] as SlotUI, card_ui, animated, true)
+			_cue_hybrid_slot(enemy_slots[r][c] as SlotUI, card_ui, animated, false)
+
+
+func _cue_hybrid_slot(slot: SlotUI, card_ui: CardUI, animated: bool, is_player: bool) -> void:
+	if slot.get_card() == null:
+		# Empty: a move destination (own side, droppable) wins; anything else is an invalid target.
+		if is_player and _can_drop_on_player_slot(card_ui, slot):
+			slot.set_cue(SlotUI.Cue.MOVE, animated)
+		else:
+			slot.set_cue(SlotUI.Cue.TARGET_BAD)
+	elif _can_autocast_on_slot(card_ui, slot):
+		slot.set_cue(SlotUI.Cue.TARGET_OK)
+	else:
+		slot.set_cue(SlotUI.Cue.TARGET_BAD)
+
+
+# Connects a hand unit card's drag so it lights move/place cues like a fielded unit does. Injected
+# into Hand as `wire_unit_card`; _wire_unit_drag's guard makes re-entry harmless.
+func wire_unit_card(card_ui: CardUI) -> void:
+	_wire_unit_drag(card_ui)
+
+
+# ── Attack-target preview ───────────────────────────────────────────────────────
+# Shows the combat consequences of standing a friendly unit at a spot, as two separate signals:
+#   • a red crosshair on the enemy OUR unit would strike (outgoing target), and
+#   • a red glow on every enemy that would strike OUR unit there (incoming threats).
+# So the player reads "who I hit" and "who hits me" independently before committing.
+
+# Previews for `attacker` FROM ITS CURRENT POSITION (a selected fielded unit). For a hypothetical
+# landing spot, see _preview_target_at.
+func show_attack_preview(attacker: CardInstance) -> void:
+	_preview_target_at(attacker, attacker.row, attacker.col)
+
+
+func clear_attack_preview() -> void:
+	if _preview_slot != null:
+		_preview_slot.set_attack_marker(false)
+		_preview_slot = null
+	for card: CardUI in _glow_cards:
+		if card != null and is_instance_valid(card):
+			Vfx.detach("attack_target_glow", card)
+			card.set_threat_highlight(false)
+	_glow_cards = []
+
+
+func _preview_target_at(attacker: CardInstance, row: int, col: int) -> void:
+	clear_attack_preview()
+	if attacker == null:
+		return
+	# Outgoing: crosshair on the enemy our unit would hit from (row, col).
+	_mark_crosshair(_projected_target(attacker, row, col))
+	# Incoming: glow on every enemy that would hit our unit if it stood at (row, col).
+	for e: CardInstance in _incoming_attackers(attacker, row, col):
+		var card := (enemy_slots[e.row][e.col] as SlotUI).get_card()
+		if card != null:
+			Vfx.attach("attack_target_glow", card)
+			card.set_threat_highlight(true)
+			_glow_cards.append(card)
+
+
+# The unit `attacker` would strike if it stood at (row, col) — its own targeting strategy run over
+# the enemy grid. Restores the real position afterward (find_target only READS row/col, so the
+# temporary move is invisible to everything else on this synchronous call).
+func _projected_target(attacker: CardInstance, row: int, col: int) -> CardInstance:
+	if attacker == null:
+		return null
+	var save_r := attacker.row
+	var save_c := attacker.col
+	attacker.row = row
+	attacker.col = col
+	var strategy: TargetingStrategy = attacker.data.targeting_strategy \
+		if attacker.data != null else _default_strategy
+	var t: CardInstance = strategy.find_target(attacker, enemy_grid)   # friendly unit → enemy grid
+	attacker.row = save_r
+	attacker.col = save_c
+	return t
+
+
+# The enemies that would auto-attack `defender` if it stood at (row, col): each enemy whose own
+# targeting strategy, run over the player grid, resolves to `defender`. We install `defender` into
+# a hypothetical player grid at (row, col) — clearing its old cell so a MOVE preview reflects the
+# vacated spot, and a hand placement adds it where it isn't yet — then restore the grid exactly.
+func _incoming_attackers(defender: CardInstance, row: int, col: int) -> Array:
+	var result: Array = []
+	if defender == null:
+		return result
+	var save_r := defender.row
+	var save_c := defender.col
+	var was_on_board: bool = player_grid[save_r][save_c] == defender
+	if was_on_board:
+		player_grid[save_r][save_c] = null
+	var displaced: CardInstance = player_grid[row][col]
+	player_grid[row][col] = defender
+	defender.row = row
+	defender.col = col
+	for r in range(enemy_grid.size()):
+		for c in range(enemy_grid[r].size()):
+			var e: CardInstance = enemy_grid[r][c]
+			if e == null:
+				continue
+			var strategy: TargetingStrategy = e.data.targeting_strategy \
+				if e.data != null else _default_strategy
+			if strategy.find_target(e, player_grid) == defender:
+				result.append(e)
+	# Restore (order matters when (row, col) == the old cell).
+	player_grid[row][col] = displaced
+	defender.row = save_r
+	defender.col = save_c
+	if was_on_board:
+		player_grid[save_r][save_c] = defender
+	return result
+
+
+func _mark_crosshair(target: CardInstance) -> void:
+	if target == null or target.owner != 1:
+		return
+	var slot := enemy_slots[target.row][target.col] as SlotUI
+	slot.set_attack_marker(true)
+	_preview_slot = slot
+
+
+# ── Drag phantom ────────────────────────────────────────────────────────────────
+# While a unit is dragged for a move/place, the slot under the cursor shows a translucent preview
+# of where it would land, and that landing spot drives the attack preview above.
+
+func _begin_drag_phantom(card_ui: CardUI) -> void:
+	_drag_card = card_ui
+	set_process(true)
+
+
+func _end_drag_phantom() -> void:
+	set_process(false)
+	_set_phantom_slot(null)
+	_drag_card = null
+
+
+func _process(_delta: float) -> void:
+	if _drag_card == null or not is_instance_valid(_drag_card):
+		return
+	var slot := _hovered_move_slot()
+	if slot != _phantom_slot:
+		_set_phantom_slot(slot)
+
+
+func _set_phantom_slot(slot: SlotUI) -> void:
+	if slot == _phantom_slot:
+		return
+	if _phantom_slot != null:
+		_phantom_slot.unmount_phantom()
+		# Restore the arrow the phantom replaced — but only if the slot is still an empty spot
+		# (on drop it now holds the placed unit, and the drag-end reset will clear it anyway).
+		if _phantom_slot.get_card() == null:
+			_phantom_slot.set_cue(SlotUI.Cue.MOVE, true)
+	_phantom_slot = slot
+	if slot != null and _drag_card != null:
+		slot.set_cue(SlotUI.Cue.NONE)                  # the phantom IS the "lands here" signal
+		slot.mount_phantom(_drag_card.make_ghost_view())
+		_preview_target_at(_drag_card.card_instance, slot.row, slot.col)
+	elif _drag_card != null and not (is_hand_card.is_valid() and is_hand_card.call(_drag_card)):
+		# Off any landing slot — fall back to previewing from where the unit actually stands, so a
+		# fielded unit's map info persists through the whole drag, not just while over a new slot.
+		show_attack_preview(_drag_card.card_instance)
+
+
+# The empty player slot under the cursor that would accept the dragged unit ([] → none).
+func _hovered_move_slot() -> SlotUI:
+	for r in BoardData.ROWS:
+		for c in BoardData.COLS:
+			var ps := player_slots[r][c] as SlotUI
+			if ps.get_card() != null:
+				continue
+			if not _can_drop_on_player_slot(_drag_card, ps):
+				continue
+			if ps.get_global_rect().has_point(ps.get_global_mouse_position()):
+				return ps
+	return null
 
 
 func set_board_card_filters(enabled: bool) -> void:
@@ -453,15 +700,30 @@ func _wire_unit_drag(card_ui: CardUI) -> void:
 # highlight only lights when something is actually armed.
 func _on_unit_drag_started(card_ui: CardUI) -> void:
 	set_board_card_filters(false)
-	if card_ui.card_instance.armed_autocast() == null:
-		return
-	set_slots_targetable_by_slot(true, func(slot: SlotUI) -> bool:
-		return slot.get_card() != null and _can_autocast_on_slot(card_ui, slot))
+	# An armed unit's drag can both move AND cast, so it shows the hybrid pass (move here / valid
+	# target / invalid target); a plain unit's drag is a pure reposition. Either way the empty
+	# valid spots carry a landing phantom + its attack preview.
+	if card_ui.card_instance.armed_autocast() != null:
+		show_move_and_cast_cues(card_ui, true)
+	else:
+		show_move_cues(card_ui, true)
+	# Treat the drag as a SELECTION from frame one: light the unit's attack preview from where it
+	# currently stands, so its map info (crosshair + incoming-threat glow) shows immediately on a
+	# click-hold or a gentle drag — not only once the cursor reaches a different slot. Once the
+	# cursor DOES hover a landing slot the phantom re-previews from there; off any slot it falls
+	# back to this origin preview (see _set_phantom_slot).
+	if is_hand_card.is_valid() and is_hand_card.call(card_ui):
+		clear_attack_preview()   # a hand card isn't on the board yet — no origin to preview from
+	else:
+		show_attack_preview(card_ui.card_instance)
+	_begin_drag_phantom(card_ui)
 
 
 func _on_unit_drag_ended(_card_ui: CardUI) -> void:
 	set_board_card_filters(true)
-	set_slots_targetable(false)
+	_end_drag_phantom()
+	clear_attack_preview()
+	set_slots_targetable(false)   # clears both the targetable gate and every drag cue
 
 
 func do_place_unit(slot: SlotUI, card_ui: CardUI) -> void:

@@ -102,6 +102,11 @@ void fragment() {
 	}
 
 	float a = clamp(acc / max(wsum, 0.0001) * intensity, 0.0, 1.0);
+	// Hollow the interior: an OUTER glow is the blurred halo MINUS the source itself, so where the
+	// source is opaque the glow vanishes. Without this the fill only stays hidden when the glow is
+	// drawn BEHIND the source; on an overlay (drawn ON TOP) it would wash the whole silhouette —
+	// and it is exactly what keeps a composited card glow off the card's own badges/pips.
+	a *= 1.0 - src_alpha(UV, 0.0);
 	COLOR = vec4(glow_color.rgb, glow_color.a * a);
 	}
 }

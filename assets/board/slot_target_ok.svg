@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <!-- Valid target: green reticle. Placeholder art — drop a slot_target_ok.png next to this
+       file and the game picks it up (see BoardGlyphs). -->
+  <g fill="none" stroke="#0b0f22" stroke-opacity="0.5" stroke-width="15" stroke-linecap="round">
+    <circle cx="64" cy="64" r="38"/>
+    <path d="M64 12 v18 M64 98 v18 M12 64 h18 M98 64 h18"/>
+  </g>
+  <g fill="none" stroke="#31d24e" stroke-width="8" stroke-linecap="round">
+    <circle cx="64" cy="64" r="38"/>
+    <path d="M64 12 v18 M64 98 v18 M12 64 h18 M98 64 h18"/>
+  </g>
+  <circle cx="64" cy="64" r="7" fill="#31d24e"/>
+</svg>

@@ -57,6 +57,7 @@ var _hold_dragging := false   # a drag started while the hold was still viable
 @onready var _hp_lbl: Label     = %HpLabel
 @onready var _comp_row: BoxContainer = %CompRow
 @onready var _status_row: BoxContainer = %StatusRow   # authored under Canvas; position it in the editor
+var _threat_tw: Tween = null   # looping pulse on the Attack badge while flagged an incoming threat
 @onready var _border: Panel     = %Border
 @onready var _canvas: Control   = $Canvas
 # The status-aura overlay (see _refresh_aura) — created lazily, only for cards that carry an
@@ -391,6 +392,24 @@ func set_exhausted(exhausted: bool) -> void:
 	modulate = Color(0.6, 0.6, 0.68) if exhausted else Color.WHITE
 
 
+# Hand-affordance: a card the player can play RIGHT NOW wears a soft outer glow; one that can't
+# sits 7% dimmer. The dim rides `_canvas.modulate` (all the card art hangs under Canvas), NOT the
+# root `modulate` — so it composes multiplicatively with the root-level selection/exhaust tints
+# instead of overwriting them. The glow is a COMPOSITED GlowFx (see GlowFx/SilhouetteBaker): it reads
+# the card's true silhouette and radiates on the overlay layer, so it never clips (escapes the hand
+# ScrollContainer) and is hollow over every child — badges and status pips stay fully visible.
+# Idempotent: safe to call every mana change (Vfx.attach/detach de-dupe, so no re-bake churn).
+func set_playable(playable: bool) -> void:
+	if _canvas == null:
+		return
+	if playable:
+		Vfx.attach("card_playable_glow", self)
+		_canvas.modulate = Color.WHITE
+	else:
+		Vfx.detach("card_playable_glow", self)
+		_canvas.modulate = Color(0.93, 0.93, 0.93)
+
+
 # An inspected ENEMY unit's ability tokens are shown for information only — not castable.
 # IGNORE blocks click/hover/long-press-inspect entirely; the dimmed alpha (distinct from
 # set_exhausted's opaque grey) reads as "look, don't touch".
@@ -524,6 +543,46 @@ func flash_stat_proc(attr: String) -> void:
 	_brighten(bg)            # + the relic-chip brightness flash on the badge's own art
 	if lbl != null and is_instance_valid(lbl):
 		_brighten(lbl)
+
+
+# Sustained "this unit threatens you" cue on the Attack badge — paired with the board's
+# incoming-threat glow (CombatBoard attack preview). A slow warm-red pulse on the badge art + its
+# number so the eye lands on WHICH stat is the threat. Reversible; restores the authored look.
+func set_threat_highlight(on: bool) -> void:
+	if _atk_bg == null or not is_instance_valid(_atk_bg):
+		return
+	if _threat_tw != null and _threat_tw.is_valid():
+		_threat_tw.kill()
+		_threat_tw = null
+	# Pulse between a SUSTAINED warm tint and a hotter peak — never back to plain white, so the
+	# badge always reads as flagged (a dip to white would look like the highlight blinked off).
+	var has_lbl := _atk_lbl != null and is_instance_valid(_atk_lbl)
+	# The badge art is ALREADY red, so a red tint barely reads — pulse toward a bright warm FLARE
+	# (over-bright, gold-white) that visibly lights the badge up against its own colour.
+	var warm := Color(1.7, 1.15, 0.8) if on else Color.WHITE
+	var hot := Color(2.6, 2.2, 1.3)
+	_atk_bg.modulate = warm
+	if has_lbl:
+		_atk_lbl.modulate = warm
+	# Bump the badge 10% larger while flagged — icon AND number about their shared centre so they
+	# scale as one rigid unit (same pivot trick as pulse_stat). Sustained; reset to authored size
+	# on clear so the fixed Canvas layout is never permanently disturbed.
+	var scl := Vector2(1.1, 1.1) if on else Vector2.ONE
+	_atk_bg.pivot_offset = _atk_bg.size * 0.5
+	_atk_bg.scale = scl
+	if has_lbl:
+		_atk_lbl.pivot_offset = (_atk_bg.position + _atk_bg.size * 0.5) - _atk_lbl.position
+		_atk_lbl.scale = scl
+	if not on:
+		return
+	_threat_tw = create_tween().set_loops()
+	# Step to the hot peak, then back to warm; the badge art and its number pulse together.
+	_threat_tw.tween_property(_atk_bg, "modulate", hot, 0.55)
+	if has_lbl:
+		_threat_tw.parallel().tween_property(_atk_lbl, "modulate", hot, 0.55)
+	_threat_tw.tween_property(_atk_bg, "modulate", warm, 0.55)
+	if has_lbl:
+		_threat_tw.parallel().tween_property(_atk_lbl, "modulate", warm, 0.55)
 
 
 # A quick over-bright flash back to normal — the relic chip's "fired" discharge (RelicTray.glint),
@@ -938,7 +997,10 @@ func _get_drag_data(at_position: Vector2) -> Variant:
 		return null
 	if card_instance.is_spell:
 		spell_drag_started.emit(self)
-	elif card_instance.row >= 0:
+	elif not card_instance.is_spell:
+		# Any non-spell unit drag — fielded (a MOVE) or from the hand (a PLACE). Combat wires both
+		# to the board's move/place cues (see CombatBoard.wire_unit_card). The signal is inert on
+		# screens that don't listen (collection/deck/shop never connect it).
 		unit_drag_started.emit(self)
 	# The real card stays fully visible in place; the cursor carries a clearly-distinct ghost
 	# copy (context-sensitive when an autocast ability is armed — see DragGhost).
@@ -952,5 +1014,5 @@ func _notification(what: int) -> void:
 		_end_hold()
 		if card_instance != null and card_instance.is_spell:
 			spell_drag_ended.emit(self)
-		elif card_instance != null and card_instance.row >= 0:
+		elif card_instance != null and not card_instance.is_spell:
 			unit_drag_ended.emit(self)

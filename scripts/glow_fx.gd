@@ -1,0 +1,122 @@
+class_name GlowFx
+extends ColorRect
+
+# A real outer glow for ANY Control. It reads the widget's true composited silhouette (via
+# SilhouetteBaker — the widget AND all descendants) and radiates from that outline on the global
+# overlay CanvasLayer, so it:
+#   • never clips — it lives outside the UI tree, past every ScrollContainer / panel / clip,
+#   • never covers a child — the shader is hollow wherever the silhouette is opaque, and the
+#     silhouette contains every child (badge, status pip, whatever), measured, never assumed.
+# Reuses filter_glow.gdshader in texture mode. Drive it through Vfx.attach/detach like any sustained
+# effect; it cleans itself up when freed or when its widget leaves the tree.
+
+const SHADER_PATH := "res://assets/ui/shaders/filter_glow.gdshader"
+
+var _widget: Control
+var _baker: SilhouetteBaker
+var _mat: ShaderMaterial
+var _pad: float = 48.0            # spill room around the silhouette; must exceed `spread`
+var _base_intensity: float = 1.0
+var _tween: Tween
+var _ready_to_sync := false
+
+
+# `params` mirrors a vfx.json entry's params: glow_color (hex), spread, falloff, intensity, and an
+# optional `animate` {param, from, to, period} that breathes the intensity.
+func setup(widget: Control, params: Dictionary) -> void:
+	_widget = widget
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	color = Color.WHITE
+	visible = false                # stays hidden until the silhouette is baked
+
+	var spread := float(params.get("spread", 40.0))
+	_pad = spread + 12.0
+	_base_intensity = float(params.get("intensity", 1.0))
+
+	_mat = ShaderMaterial.new()
+	_mat.shader = load(SHADER_PATH)
+	_mat.set_shader_parameter("shape_mode", 0)                 # sample a real silhouette texture
+	_mat.set_shader_parameter("spread", spread)
+	_mat.set_shader_parameter("falloff", float(params.get("falloff", 2.0)))
+	_mat.set_shader_parameter("glow_color", _parse_color(params.get("glow_color", "ffffff")))
+	_mat.set_shader_parameter("intensity", _base_intensity)
+	material = _mat
+
+	if widget.item_rect_changed.is_connected(_on_widget_moved):
+		return
+	widget.item_rect_changed.connect(_on_widget_moved)
+	widget.resized.connect(_on_widget_resized)
+	widget.tree_exiting.connect(_on_widget_gone, CONNECT_ONE_SHOT)
+
+	_baker = SilhouetteBaker.new()
+	await _baker.bake(widget, self)
+	if not is_instance_valid(self) or _widget == null or not is_instance_valid(_widget):
+		return
+	if _baker.texture == null:
+		return
+	_mat.set_shader_parameter("src_tex", _baker.texture)
+	_ready_to_sync = true
+	_sync()
+	visible = true
+	_start_breathing(params)
+
+
+func _on_widget_moved() -> void:
+	if _ready_to_sync:
+		_sync()
+
+
+# A resize (or flip) changes the outline — re-bake the silhouette, then re-place.
+func _on_widget_resized() -> void:
+	if _widget == null or not is_instance_valid(_widget):
+		return
+	await _baker.bake(_widget, self)
+	if not is_instance_valid(self) or _baker.texture == null:
+		return
+	_mat.set_shader_parameter("src_tex", _baker.texture)
+	_sync()
+
+
+func _on_widget_gone() -> void:
+	queue_free()
+
+
+# Place our padded quad over the widget's silhouette bbox in GLOBAL space (we're on the overlay
+# layer, not the widget's child), and tell the shader where the silhouette sits inside that quad.
+func _sync() -> void:
+	if _widget == null or not is_instance_valid(_widget) or _mat == null:
+		return
+	var origin := _widget.global_position + _baker.offset
+	var quad := _baker.bbox + Vector2(_pad, _pad) * 2.0
+	if quad.x <= 0.0 or quad.y <= 0.0:
+		return
+	global_position = origin - Vector2(_pad, _pad)
+	size = quad
+	_mat.set_shader_parameter("u_size", quad)
+	_mat.set_shader_parameter("u_src_rect", Vector4(
+			_pad / quad.x, _pad / quad.y, _baker.bbox.x / quad.x, _baker.bbox.y / quad.y))
+
+
+func _start_breathing(params: Dictionary) -> void:
+	var anim: Dictionary = params.get("animate", {})
+	if anim.is_empty() or str(anim.get("param", "")) != "intensity":
+		return
+	var lo := float(anim.get("from", _base_intensity))
+	var hi := float(anim.get("to", _base_intensity))
+	var period := maxf(0.05, float(anim.get("period", 1.0)))
+	if _tween != null and _tween.is_valid():
+		_tween.kill()
+	_tween = create_tween().set_loops()
+	_tween.tween_method(_set_intensity, lo, hi, period).set_trans(Tween.TRANS_SINE)
+	_tween.tween_method(_set_intensity, hi, lo, period).set_trans(Tween.TRANS_SINE)
+
+
+func _set_intensity(v: float) -> void:
+	if _mat != null:
+		_mat.set_shader_parameter("intensity", v)
+
+
+func _parse_color(v: Variant) -> Color:
+	if v is Color:
+		return v
+	return Color.html(str(v))

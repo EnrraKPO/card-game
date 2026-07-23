@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <!-- Attack-target lock: a red crosshair marking the unit this attacker will strike. Placeholder
+       art — drop a slot_attack.png next to this file and the game picks it up (see BoardGlyphs). -->
+  <g fill="none" stroke="#0b0f22" stroke-opacity="0.55" stroke-width="16" stroke-linecap="round">
+    <circle cx="64" cy="64" r="34"/>
+    <path d="M64 6 v26 M64 96 v26 M6 64 h26 M96 64 h26"/>
+  </g>
+  <g fill="none" stroke="#ff3b30" stroke-width="9" stroke-linecap="round">
+    <circle cx="64" cy="64" r="34"/>
+    <path d="M64 6 v26 M64 96 v26 M6 64 h26 M96 64 h26"/>
+  </g>
+  <circle cx="64" cy="64" r="8" fill="#ff3b30"/>
+</svg>

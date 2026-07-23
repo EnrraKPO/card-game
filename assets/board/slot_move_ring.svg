@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <!-- "Reposition here" landing ring — pairs with slot_move_arrow above it. Placeholder art:
+       drop a slot_move_ring.png next to this file and the game picks it up (see BoardGlyphs). -->
+  <g fill="none">
+    <circle cx="64" cy="64" r="40" stroke="#0b0f22" stroke-opacity="0.5" stroke-width="14"/>
+    <circle cx="64" cy="64" r="40" stroke="#f2c018" stroke-width="8"/>
+  </g>
+  <circle cx="64" cy="64" r="7" fill="#f2c018"/>
+</svg>

@@ -207,6 +207,14 @@ func _attach_dispatch(vd: VFXData, target: Control) -> Node:
 				"sparkle":  return _sustain_sparkle(vd, target)
 				"radiance": return _sustain_radiance(vd, target)
 		"filter":
+			# STANDARD for outer glows: the `glow_rrect` filter (the outer-glow shader) now ALWAYS
+			# runs composited — it reads the target's TRUE silhouette (it + all children) and draws
+			# on the overlay layer, so it never clips and never covers a child (badge, status pip,
+			# anything). `composited: true` opts any other entry in; `composited: false` opts out.
+			# Inner effects (luminescence_rrect / inner_glow) are NOT outer glows and stay analytic.
+			var is_glow: bool = str(vd.params.get("filter", "")) == "glow_rrect"
+			if bool(vd.params.get("composited", is_glow)):
+				return _sustain_composited_glow(vd, target)
 			return _sustain_filter(vd, target)
 		"custom":
 			var fn: Callable = _custom.get(vd.id, Callable())
@@ -545,6 +553,16 @@ func _sustain_radiance(vd: VFXData, target: Control) -> Node:
 # Note the returned node belongs to the TARGET's subtree, not this service's overlay layer —
 # that is the point of a filter (it draws behind the source, not over the whole UI). detach()
 # frees it either way.
+# The general outer glow: a GlowFx on the overlay layer, driven by the target's real composited
+# silhouette (see GlowFx / SilhouetteBaker). Escapes all clipping, never covers a child. Params
+# (glow_color/spread/falloff/intensity/animate) come straight from the vfx.json entry.
+func _sustain_composited_glow(vd: VFXData, target: Control) -> Node:
+	var g := GlowFx.new()
+	_layer.add_child(g)               # the overlay CanvasLayer — outside the UI tree's clipping
+	g.setup(target, vd.params)        # async bake inside; the glow reveals once its silhouette lands
+	return g
+
+
 func _sustain_filter(vd: VFXData, target: Control) -> Node:
 	var fid := str(vd.params.get("filter", ""))
 	if fid.is_empty():

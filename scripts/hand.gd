@@ -20,9 +20,15 @@ signal inspect_changed(inst: CardInstance)
 # Emitted when an ability widget's autocast toggle changes a holder's armed state, so the
 # orchestrator can refresh that unit's board card (the armed-brackets echo).
 signal autocast_changed(holder: CardInstance)
+# The selected hand unit changed (null = nothing selected). Combat lights the board's static
+# "place here" cues for the selection (see Combat._on_hand_selection_changed).
+signal selection_changed(ui: CardUI)
 
 # Wires a spell CardUI for drag-casting; injected by combat (SpellCaster.wire_spell_card).
 var wire_spell_card: Callable
+# Wires a hand UNIT card so its drag lights the board's move/place cues; injected by combat
+# (CombatBoard.wire_unit_card). Mirrors wire_spell_card.
+var wire_unit_card: Callable
 # The fielded player units that HAVE at least one activated ability, payable RIGHT NOW or not
 # (func() -> Array[CardInstance]); injected by combat — feeds the level-2 Abilities view and the
 # Inspect Abilities button's visibility.
@@ -46,6 +52,7 @@ var _ability_entries: Array = []  # Array[CardUI] — the level-2 Abilities view
 var _selected: CardUI  = null
 var _inspected: CardInstance = null
 var _nav_level: NavLevel = NavLevel.HAND
+var _side: CombatSide = null   # the player resources this hand spends (see bind_side); mana gates playability
 
 var _card_size: Vector2 = CARD_SIZE   # current card footprint — see set_card_size
 
@@ -326,8 +333,21 @@ func build_into(parent: Control, left_widget: Control = null) -> void:
 # discarded cards drop theirs. All draw/discard STATE changes happen on the side (via
 # the Resolver); this is the one place the hand UI learns about them.
 func bind_side(side: CombatSide) -> void:
+	_side = side
 	side.cards_drawn.connect(_on_cards_drawn)
 	side.cards_discarded.connect(_on_cards_discarded)
+
+
+# Soft affordance across the whole hand: each card wears a play-me glow if the player can afford
+# it right now, or a 3% dim if not (CardUI.set_playable). Mana is the gate — kept simple and
+# uniform for units and spells. While input is off (combat resolving) NOTHING is playable, so every
+# card falls to the dim with no misleading glow. Call on draw / mana change / input toggle. No-op
+# until a side is bound.
+func refresh_playable() -> void:
+	if _side == null:
+		return
+	for ui: CardUI in _hand_cards:
+		ui.set_playable(selection_enabled and ui.card_instance.get_attribute("cost") <= _side.mana)
 
 
 func _on_cards_drawn(insts: Array) -> void:
@@ -335,6 +355,7 @@ func _on_cards_drawn(insts: Array) -> void:
 		Sfx.play("card_draw")   # once per burst — a turn's multi-draw is one deal, not a drumroll
 	for inst: CardInstance in insts:
 		_spawn_hand_card(inst)
+	refresh_playable()   # new cards get their play-me glow / dim immediately
 
 
 func _on_cards_discarded(insts: Array) -> void:
@@ -362,6 +383,8 @@ func _spawn_hand_card(inst: CardInstance) -> void:
 			wire_spell_card.call(ui)
 	else:
 		ui.pressed.connect(func(): _toggle_select(ui))
+		if wire_unit_card.is_valid():
+			wire_unit_card.call(ui)   # light the board's place cues while this card is dragged
 
 
 func refresh() -> void:
@@ -777,6 +800,7 @@ func deselect() -> void:
 		Sfx.play("card_deselect")
 		_selected.set_selected(false)
 		_selected = null
+		selection_changed.emit(null)
 
 
 func _toggle_select(ui: CardUI) -> void:
@@ -789,6 +813,7 @@ func _toggle_select(ui: CardUI) -> void:
 		_selected = ui
 		Vfx.play("card_select_lift", ui)   # entry carries the select sound
 		ui.set_selected(true)
+		selection_changed.emit(ui)
 
 
 # ── Queries + input gating ───────────────────────────────────────────────────────
@@ -806,3 +831,4 @@ func set_input_enabled(enabled: bool) -> void:
 		ui.mouse_filter = filter
 	for ui: CardUI in _gen_cards:
 		ui.mouse_filter = filter
+	refresh_playable()   # entering/leaving placement flips whether the play-me glow may show

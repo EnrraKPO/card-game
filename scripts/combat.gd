@@ -107,7 +107,11 @@ func _ready() -> void:
 	# (spending on a hand spell can leave nothing usable; a refill can revive it). Glow only — the
 	# inspect tray can't be open while hand spells cast, and ability casts rebuild it themselves.
 	_player_side.mana_changed.connect(_hand.refresh_nav)
+	# Mana also gates which hand cards are affordable — re-derive their play-me glow / 3% dim.
+	_player_side.mana_changed.connect(_hand.refresh_playable)
 	_hand.wire_spell_card = _spell_caster.wire_spell_card
+	_hand.wire_unit_card = _board.wire_unit_card   # hand-unit drags light the board's place cues
+	_hand.selection_changed.connect(_on_hand_selection_changed)
 	_hand.token_hovered.connect(_highlight_building)
 	_hand.inspect_changed.connect(_on_inspect_changed)
 	_hand.autocast_changed.connect(_on_autocast_changed)
@@ -439,6 +443,13 @@ func _on_inspect_changed(inst: CardInstance) -> void:
 		_inspected_ui.set_inspected(false)
 	_inspected_ui = null
 	if inst == null:
+		# Inspection ended (a unit was DESELECTED). The board cues raised alongside the highlight —
+		# move ring/arrow + the attack crosshair/glow (see _on_board_slot_pressed) — don't clear
+		# themselves, so drop them back to idle here or they linger with nothing selected. Only
+		# meaningful during placement (combat owns the board otherwise; spell targeting has its own).
+		if _phase == Phase.PLAYER_PLACE and not _spell_caster.is_targeting():
+			_board.refresh_idle_cues()
+			_board.clear_attack_preview()
 		return
 	var ui := _board.get_card_ui(inst)
 	if ui != null:
@@ -989,6 +1000,15 @@ func _on_board_slot_pressed(slot: SlotUI) -> void:
 		# placement-related.
 		_hand.deselect()
 		_hand.set_inspected(occupant.card_instance)
+		# Selecting a movable unit reveals where it can go — static ring+arrow cues (they animate
+		# only once the player actually drags) — and lights the enemy it will strike (red crosshair
+		# + glow), so it's clear the unit CAN be repositioned and what it currently threatens.
+		if _board.is_movable_unit(occupant.card_instance):
+			_board.show_move_cues(occupant, false)
+			_board.show_attack_preview(occupant.card_instance)
+		else:
+			_board.refresh_idle_cues()
+			_board.clear_attack_preview()
 		return
 	var card := _hand.selected()
 	if card == null:
@@ -1436,9 +1456,26 @@ func _refresh_done_btn() -> void:
 # can be repositioned during placement.
 func _set_placement_input(enabled: bool) -> void:
 	_hand.set_input_enabled(enabled)
+	_board.set_open_hints(enabled)   # idle "open here" markers only while placement is live
+	if not enabled:
+		_board.clear_attack_preview()   # a leftover crosshair/glow can't outlive the placement phase
 	var filter := Control.MOUSE_FILTER_STOP if enabled else Control.MOUSE_FILTER_IGNORE
 	for r in BoardData.ROWS:
 		for c in BoardData.COLS:
 			var p: CardUI = (_board.player_slots[r][c] as SlotUI).get_card()
 			if p:
 				p.mouse_filter = filter
+
+
+# A hand unit was selected (or deselected): show the static "place here" ring+arrow on valid
+# empty slots for the selection, or clear back to the idle markers. Never fights spell targeting
+# (which owns the board while a spell is being aimed).
+func _on_hand_selection_changed(ui: CardUI) -> void:
+	if _spell_caster.is_targeting():
+		return
+	if ui != null and not ui.card_instance.is_spell:
+		_board.show_move_cues(ui, false)   # static "place here" ring+arrow (animates only on drag)
+		_board.clear_attack_preview()      # a hand card isn't placed yet — its target waits for a drag
+	else:
+		_board.refresh_idle_cues()
+		_board.clear_attack_preview()

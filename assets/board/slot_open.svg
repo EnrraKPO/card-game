@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="122" height="160" viewBox="0 0 122 160">
+  <!-- Idle "this slot is open" marker: a rounded rectangle echoing the slot's own shape, drawn at
+       ~half the slot size (see SlotUI._apply_icon_geometry, which stretches this to fill). Placeholder
+       art — drop a slot_open.png next to this file and the game picks it up (see BoardGlyphs). -->
+  <g fill="none" stroke-linejoin="round">
+    <rect x="8" y="8" width="106" height="144" rx="14" stroke="#0b0f22" stroke-opacity="0.5" stroke-width="10"/>
+    <rect x="8" y="8" width="106" height="144" rx="14" stroke="#cfd6ff" stroke-opacity="0.5" stroke-width="5"/>
+  </g>
+</svg>

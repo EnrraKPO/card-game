@@ -26,15 +26,19 @@ var _shape := false
 var _overlay := false
 
 
-func setup(fd: RenderFilterData, target: Control, tex: Texture2D, overrides: Dictionary) -> void:
+# layer_mode is the EFFECTIVE layer ("behind"/"above"/"overlay") — usually fd.layer, but a call
+# site may override it (RenderFilters.apply), so parenting and tracking must follow that, not fd.
+func setup(fd: RenderFilterData, target: Control, tex: Texture2D, overrides: Dictionary, layer_mode: String = "") -> void:
 	filter_id = fd.id
 	pad = fd.pad
 	_target = target
+	if layer_mode.is_empty():
+		layer_mode = fd.layer
 
 	name = "RenderFilter_" + fd.id
 	color = Color.WHITE          # the fragment shader replaces this wholesale
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	show_behind_parent = fd.layer != "above"
+	show_behind_parent = layer_mode != "above"
 
 	var sh: Shader = load(fd.shader)
 	if sh == null:
@@ -56,7 +60,7 @@ func setup(fd: RenderFilterData, target: Control, tex: Texture2D, overrides: Dic
 	for key: String in overrides:
 		_shader_mat.set_shader_parameter(key, RenderFilterData.coerce(overrides[key]))
 
-	_overlay = fd.layer == "overlay"
+	_overlay = layer_mode == "overlay"
 	# Overlay layers live outside the target's subtree, so they must track its POSITION too, not
 	# just its size — item_rect_changed covers both.
 	if _overlay:

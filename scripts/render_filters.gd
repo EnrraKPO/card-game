@@ -45,7 +45,12 @@ func apply(id: String, target: Control, overrides: Dictionary = {}) -> RenderFil
 			return null
 
 	var layer := RenderFilterLayer.new()
-	if fd.layer == "overlay":
+	# A call site can override the filter's authored layer (e.g. a shared "overlay" glow parented
+	# "behind" a specific unclipped target so that target's own children — a card's stat badges —
+	# draw ON TOP of it instead of being washed out). Layer is a per-application property, not part
+	# of the silhouette skin, so it's erased from the skin below like "texture".
+	var eff_layer := str(overrides.get("layer", fd.layer))
+	if eff_layer == "overlay":
 		# A filter parented to its target inherits every ancestor's clip_contents, so a spilling
 		# effect gets cut off by any clipping holder above it — invisibly, since the part that
 		# survives is the part inside the silhouette, which such filters deliberately leave
@@ -58,11 +63,12 @@ func apply(id: String, target: Control, overrides: Dictionary = {}) -> RenderFil
 		# Sibling order decides what a filter sits under. "behind" goes to index 0 so it is
 		# beneath the target's other children too (show_behind_parent in setup() puts it under
 		# the target itself); "above" must stay LAST or those siblings would cover its light.
-		if fd.layer != "above":
+		if eff_layer != "above":
 			target.move_child(layer, 0)
 	var skin := overrides.duplicate()
 	skin.erase("texture")
-	layer.setup(fd, target, tex, skin)
+	skin.erase("layer")
+	layer.setup(fd, target, tex, skin, eff_layer)
 
 	_applied[key] = layer
 	target.tree_exiting.connect(func() -> void: clear(id, target), CONNECT_ONE_SHOT)

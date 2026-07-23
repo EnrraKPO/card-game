@@ -284,6 +284,52 @@
 		"prompt": "Sprite sheet of a warm golden light softly breathing around a framed card, gentle radiant halo with a smooth soft falloff extending past the frame, 8 frames on transparent background, 2d game effect"
 	},
 	{
+		"id": "attack_target_glow",
+		"display_name": "Attack Target Glow",
+		"category": "combat",
+		"behavior": "glow",
+		"renderer": "filter",
+		"params": {
+			"composited": true,
+			"glow_color": "ff2a20",
+			"spread": 28,
+			"animate": {
+				"param": "intensity",
+				"from": 0.55,
+				"to": 1.15,
+				"period": 0.9
+			}
+		},
+		"sustained": true,
+		"placeholder": false,
+		"concept": "The enemy a selected/dragged unit will strike — its target reads as menaced, a red light pulsing outward from the card so the player sees who this unit hits before committing to a spot.",
+		"explanation": "IMPLEMENTED (combat_board attack preview): a composited GlowFx — reads the target CardUI's TRUE silhouette (card + all badges/pips) and radiates on the overlay layer, so it never clips and never covers a badge; attached while a friendly unit is selected or dragged, paired with the red crosshair slot marker.",
+		"prompt": "Sprite sheet of an aggressive red light halo breathing outward around a framed card, smooth soft radial falloff extending past the frame, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "card_playable_glow",
+		"display_name": "Card Playable Glow",
+		"category": "combat",
+		"behavior": "glow",
+		"renderer": "filter",
+		"params": {
+			"composited": true,
+			"glow_color": "ffcf5c",
+			"spread": 40,
+			"animate": {
+				"param": "intensity",
+				"from": 0.85,
+				"to": 1.4,
+				"period": 1.3
+			}
+		},
+		"sustained": true,
+		"placeholder": false,
+		"concept": "A hand card the player can afford right now — a soft warm-gold light breathes gently outward past the card, inviting a play without shouting; unaffordable cards instead sit a touch dimmer.",
+		"explanation": "IMPLEMENTED (hand playability): a composited GlowFx reading the card's TRUE silhouette (card + all badges) and radiating on the overlay layer — never clipped by the hand ScrollContainer, never covers a badge. Attached to affordable hand cards via CardUI.set_playable; unaffordable cards get a 7% _canvas dim instead. Refreshed on draw / mana change / input toggle.",
+		"prompt": "Sprite sheet of a soft warm golden light gently breathing behind a framed card, subtle smooth radial falloff just past the frame edge, 8 frames on transparent background, 2d game effect"
+	},
+	{
 		"id": "map_forge_alert_glow",
 		"display_name": "Map Forge Alert Glow",
 		"category": "ui",

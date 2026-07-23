@@ -141,6 +141,63 @@ func _ready() -> void:
 				# ability is castable now).
 				hand.refresh_nav()
 			await get_tree().process_frame
+	# "attackpreview": stage the attack-target preview — a selected friendly unit lighting the
+	# enemy it will strike (red crosshair + glow), plus a landing phantom in an empty slot.
+	if scene_path.contains("combat") and "attackpreview" in args:
+		var cb: Node = null
+		for n: Node in sv.find_children("*", "Node", true, false):
+			if n.has_method("get_chrome") and n.get("_board") != null:
+				cb = n
+				break
+		if cb != null:
+			var board = cb.get("_board")
+			board.place_enemy_card(CardInstance.from_data(CardData.get_card("pawn")), 1, 0)
+			# An enemy in the bishop's lane — it targets our bishop, so it wears the incoming-threat
+			# glow + attack-badge highlight (distinct from the crosshair on the bishop's OWN target).
+			var pawn03 := CardInstance.from_data(CardData.get_card("pawn"))
+			# Give it status pips (which overhang the card edge) to PROVE the composited glow leaves
+			# every child uncovered — the glow is hollow over the real silhouette, pips included.
+			for sid in ["barrier", "empowered"]:
+				var sd := StatusData.get_status(sid)
+				if sd != null:
+					pawn03.statuses.append(StatusInstance.make(sd, 2, 2, null))
+			board.place_enemy_card(pawn03, 0, 3)
+			var atk := CardInstance.from_data(CardData.get_card("bishop"))
+			board.spawn_player_card(atk, 1, 3)
+			await get_tree().process_frame
+			# "dragstart": exercise the drag-start selection fix — a fielded unit's drag with the
+			# cursor still on its origin (no landing-slot hover) must still show its attack preview.
+			if "dragstart" in args:
+				board._on_unit_drag_started(board.get_card_ui(atk))
+			else:
+				board.show_move_cues(board.get_card_ui(atk), false)
+				board.show_attack_preview(atk)
+			# "reticle": also mark the bishop's target enemy as a valid autocast target, so the slot
+			# shows BOTH the green reticle (centre) AND the attack crosshair (top-right) composed.
+			if "reticle" in args:
+				var tgt = board._projected_target(atk, atk.row, atk.col)
+				if tgt != null:
+					(board.enemy_slots[tgt.row][tgt.col] as SlotUI).set_cue(SlotUI.Cue.TARGET_OK)
+			var pslot = board.player_slots[0][1]
+			pslot.mount_phantom(board.get_card_ui(atk).make_ghost_view())
+			await get_tree().process_frame
+	# "armeddrag": the armed-autocast drag hybrid — empty own slots show MOVE (priority), occupied
+	# invalid slots show the red X (a valid cast target would show the green reticle).
+	if scene_path.contains("combat") and "armeddrag" in args:
+		var cb2: Node = null
+		for n: Node in sv.find_children("*", "Node", true, false):
+			if n.has_method("get_chrome") and n.get("_board") != null:
+				cb2 = n
+				break
+		if cb2 != null:
+			var board2 = cb2.get("_board")
+			board2.place_enemy_card(CardInstance.from_data(CardData.get_card("pawn")), 1, 0)
+			var rk2 := CardInstance.from_data(CardData.get_card("rook"))
+			board2.spawn_player_card(rk2, 1, 3)
+			rk2.autocast_ability = "castling"
+			await get_tree().process_frame
+			board2.show_move_and_cast_cues(board2.get_card_ui(rk2), false)
+			await get_tree().process_frame
 	# "inspect": pop the full-screen CardInspector over the scene (a content-rich card).
 	if "inspect" in args:
 		var ci := CardInstance.from_data(CardData.get_card("rook"))
