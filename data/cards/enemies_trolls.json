@@ -50,7 +50,7 @@
   {
     "id": "troll_chieftain",
     "display_name": "Chieftain Gnarl",
-    "cost": 0, "attack": 1, "health": 38, "speed": 2, "shield": 3,
+    "cost": 0, "attack": 1, "health": 16, "speed": 2, "shield": 3,
     "is_king": true, "enemy_only": true, "tribe": "troll",
     "description": "Has been killed eleven times and finds it increasingly funny. Heals 3 at every round's end. Make the twelfth stick to win.",
     "elements": [], "chess_pieces": [],
@@ -61,7 +61,7 @@
   {
     "id": "troll_ancient_gorge",
     "display_name": "Old Gorge, the Unkillable",
-    "cost": 0, "attack": 2, "health": 46, "speed": 1, "shield": 5,
+    "cost": 0, "attack": 2, "health": 19, "speed": 1, "shield": 5,
     "is_king": true, "enemy_only": true, "tribe": "troll",
     "description": "A landslide that got up. Heals 4 at every round's end and grows +1 <attack> per wound taken. Outpace the healing to win.",
     "elements": [], "chess_pieces": [],

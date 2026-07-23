@@ -70,7 +70,7 @@
   {
     "id": "cult_high_priest",
     "display_name": "High Priest Malachar",
-    "cost": 0, "attack": 1, "health": 32, "speed": 3, "shield": 3,
+    "cost": 0, "attack": 1, "health": 13, "speed": 3, "shield": 3,
     "is_king": true, "enemy_only": true, "tribe": "cultist",
     "description": "Every fallen follower is a coin in his purse: +1 <attack> and 2 healing per ally death. Strike him down to win.",
     "elements": [], "chess_pieces": [],
@@ -84,7 +84,7 @@
   {
     "id": "cult_prophet",
     "display_name": "The Veiled Prophet",
-    "cost": 0, "attack": 2, "health": 40, "speed": 2, "shield": 5,
+    "cost": 0, "attack": 2, "health": 17, "speed": 2, "shield": 5,
     "is_king": true, "enemy_only": true, "tribe": "cultist",
     "description": "Speaks tomorrow's obituaries aloud: a random foe gains 2 Poison at every round's end. Silence the Prophet to win.",
     "elements": [], "chess_pieces": [],
@@ -97,7 +97,7 @@
   {
     "id": "cult_hierophant",
     "display_name": "Hierophant Ozmun",
-    "cost": 0, "attack": 2, "health": 7, "speed": 2, "shield": 4,
+    "cost": 0, "attack": 2, "health": 13, "speed": 2, "shield": 4,
     "is_king": true, "enemy_only": true, "tribe": "cultist",
     "description": "He has spent forty years digging for something under this map, growing +1 <attack> per offered ally. Kill him and you'll meet it. Destroy WHAT COMES AFTER to win.",
     "elements": [], "chess_pieces": [],

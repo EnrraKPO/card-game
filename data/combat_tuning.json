@@ -2,7 +2,7 @@
   "dodge": {
     "fixed_pct": 0,
     "per_speed_pct": 1,
-    "per_speed_diff_pct": 4,
+    "per_speed_diff_pct": 2.5,
     "max_pct": 80
   },
   "crit": {

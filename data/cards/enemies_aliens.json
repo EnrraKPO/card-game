@@ -70,7 +70,7 @@
   {
     "id": "alien_commander",
     "display_name": "Zk'tal, Fleet Commander",
-    "cost": 0, "attack": 1, "health": 32, "speed": 3, "shield": 4,
+    "cost": 0, "attack": 1, "health": 13, "speed": 3, "shield": 4,
     "is_king": true, "enemy_only": true, "tribe": "alien",
     "description": "Coordinates the landing party with cold precision, re-projecting a Barrier onto a random ally at every round's end. Destroy it to win.",
     "elements": [], "chess_pieces": [],
@@ -83,7 +83,7 @@
   {
     "id": "alien_abductor",
     "display_name": "The Abductor",
-    "cost": 0, "attack": 2, "health": 38, "speed": 3, "shield": 6,
+    "cost": 0, "attack": 2, "health": 16, "speed": 3, "shield": 6,
     "is_king": true, "enemy_only": true, "tribe": "alien",
     "description": "Its tractor beam drags the fight its way: every strike saps its victim's <attack> and <speed> by 1. Destroy it to win — before your army is dragged aboard.",
     "elements": [], "chess_pieces": [],
@@ -95,7 +95,7 @@
   {
     "id": "alien_mothership",
     "display_name": "The Mothership",
-    "cost": 0, "attack": 3, "health": 8, "speed": 2, "shield": 8, "ranged": true,
+    "cost": 0, "attack": 3, "health": 15, "speed": 2, "shield": 8, "ranged": true,
     "is_king": true, "enemy_only": true, "tribe": "alien",
     "description": "A city-sized hull blotting out the sky. Its fabricator bays release a Harvest Drone at every round's end — and its command saucer detaches when the hull falls. Destroy BOTH to win.",
     "elements": [], "chess_pieces": [],

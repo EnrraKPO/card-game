@@ -47,7 +47,7 @@
   {
     "id": "fb_coach",
     "display_name": "Coach Grimjaw",
-    "cost": 0, "attack": 1, "health": 38, "speed": 2, "shield": 4,
+    "cost": 0, "attack": 1, "health": 16, "speed": 2, "shield": 4,
     "is_king": true, "enemy_only": true, "tribe": "gridiron",
     "description": "Half drill sergeant, half cryptid, all clipboard. Runs conditioning at every round's end: +1 <speed> to the whole roster. Fire the coach to win.",
     "elements": [], "chess_pieces": [],
