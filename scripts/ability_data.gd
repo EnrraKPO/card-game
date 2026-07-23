@@ -20,8 +20,23 @@ extends RefCounted
 const ABILITY_ART_DIR := "res://assets/abilities/"
 
 var id: String
-var display_name: String
-var description: String = ""
+# Localized text lives in Loc under `ability.<id>.name`/`.desc`, not the data file. Getter reads
+# Loc at access time; `_override` is the fallback for runtime-composed abilities (e.g. "Material"
+# abilities) that have no Loc key. See CardData for the same pattern.
+var _name_override := ""
+var display_name: String:
+	get:
+		var s := Loc.opt("ability.%s.name" % id)
+		return s if s != "" else _name_override
+	set(value):
+		_name_override = value
+var _desc_override := ""
+var description: String:
+	get:
+		var s := Loc.opt("ability.%s.desc" % id)
+		return s if s != "" else _desc_override
+	set(value):
+		_desc_override = value
 var mana: int = 0
 var tap: bool = true
 # Autocast-capable: the widget shows corner brackets and the player can ARM it (right-click /
@@ -70,8 +85,7 @@ static func _load_json(path: String) -> void:
 static func from_dict(d: Dictionary) -> AbilityData:
 	var ab := AbilityData.new()
 	ab.id           = str(d.get("id", ""))
-	ab.display_name = str(d.get("display_name", ab.id.capitalize()))
-	ab.description  = str(d.get("description", ""))
+	# display_name/description resolve through Loc by id (see the property getters) — not read here.
 	var cost: Dictionary = d.get("cost", {})
 	ab.mana         = int(cost.get("mana", 0))
 	ab.tap          = bool(cost.get("tap", true))
@@ -105,9 +119,6 @@ static func material_ability(elems: Array, chess: Array) -> AbilityData:
 		return null
 	var ab := from_dict({
 		"id": ab_id,
-		"display_name": remainder.display_name + " Material",
-		"description": "Adds %s to one of your units, merging their compositions - or spawns a new %s on one of your empty slots." \
-				% [remainder.display_name, remainder.display_name],
 		"cost": {"mana": remainder.cost, "tap": true},
 		"material": key,
 		"effects": [{
@@ -120,6 +131,11 @@ static func material_ability(elems: Array, chess: Array) -> AbilityData:
 			],
 		}],
 	})
+	# Runtime-composed ability (no Loc key): its text lives only in the override. Uses the
+	# remainder card's localized name; the English scaffolding is the parked derived-string case.
+	ab.display_name = remainder.display_name + " Material"
+	ab.description = "Adds %s to one of your units, merging their compositions - or spawns a new %s on one of your empty slots." \
+			% [remainder.display_name, remainder.display_name]
 	_all[ab_id] = ab
 	return ab
 

@@ -95,7 +95,7 @@
   {
     "id": "alien_mothership",
     "display_name": "The Mothership",
-    "cost": 0, "attack": 3, "health": 48, "speed": 2, "shield": 8, "ranged": true,
+    "cost": 0, "attack": 3, "health": 8, "speed": 2, "shield": 8, "ranged": true,
     "is_king": true, "enemy_only": true, "tribe": "alien",
     "description": "A city-sized hull blotting out the sky. Its fabricator bays release a Harvest Drone at every round's end — and its command saucer detaches when the hull falls. Destroy BOTH to win.",
     "elements": [], "chess_pieces": [],
@@ -107,7 +107,7 @@
   {
     "id": "alien_mothership_core",
     "display_name": "Command Saucer",
-    "cost": 0, "attack": 4, "health": 22, "speed": 5, "shield": 2, "ranged": true, "strikes": 2,
+    "cost": 0, "attack": 4, "health": 9, "speed": 5, "shield": 2, "ranged": true, "strikes": 2,
     "is_king": true, "enemy_only": true, "tribe": "alien",
     "description": "The Mothership's escaping brain — small, furious, and armed with both beam arrays. Shoot it down to win.",
     "elements": [], "chess_pieces": [],

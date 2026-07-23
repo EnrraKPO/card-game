@@ -7,8 +7,21 @@ extends RefCounted
 # for now — this only loads and exposes the authored content for the screen to render.
 
 var id: String
-var display_name: String
-var description: String
+# Localized text (Loc `upgrade.<id>.name`/`.desc`), not read from the data file. See CardData.
+var _name_override := ""
+var display_name: String:
+	get:
+		var s := Loc.opt("upgrade.%s.name" % id)
+		return s if s != "" else _name_override
+	set(value):
+		_name_override = value
+var _desc_override := ""
+var description: String:
+	get:
+		var s := Loc.opt("upgrade.%s.desc" % id)
+		return s if s != "" else _desc_override
+	set(value):
+		_desc_override = value
 var color: Color = Color(0.55, 0.6, 0.85)   # tree accent (tabs, link lines)
 var icon: Texture2D = null   # optional tree emblem — assets/ui/upgrades/<id>.png (see below)
 var nodes: Array[UpgradeNode] = []
@@ -42,8 +55,7 @@ static func _load_json(path: String) -> void:
 			continue
 		var t := UpgradeTree.new()
 		t.id           = d.get("id", "")
-		t.display_name = d.get("display_name", "")
-		t.description  = d.get("description", "")
+		# display_name/description resolve through Loc by id (see the property getters).
 		t.color        = Color.html(str(d.get("color", "8c99d9")))
 		for nd: Dictionary in d.get("nodes", []):
 			t.nodes.append(UpgradeNode.from_dict(nd))

@@ -98,7 +98,7 @@
   {
     "id": "pirate_kraken",
     "display_name": "The Kraken, Debt Collector",
-    "cost": 0, "attack": 2, "health": 58, "speed": 2, "shield": 5, "strikes": 3,
+    "cost": 0, "attack": 2, "health": 10, "speed": 2, "shield": 5, "strikes": 3,
     "is_king": true, "enemy_only": true, "tribe": "pirate",
     "description": "Every crew owes it something, and today it collects from YOU. Three tentacles, three strikes a round, each seizing a fresh victim. Destroy it to win.",
     "elements": [], "chess_pieces": [],

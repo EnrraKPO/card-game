@@ -493,6 +493,46 @@ function getLocale() {
   return tables;
 }
 
+// Write the locale tables back to disk. English is canonical: its (sorted) key set governs
+// every file; other languages keep only their non-empty translations for those keys, so an
+// absent/blank cell falls back to English in-game.
+function writeLocale(tables) {
+  const en = (tables.en && typeof tables.en === 'object') ? tables.en : getLocale().en;
+  const keys = Object.keys(en).filter(k => typeof k === 'string' && k.length).sort();
+  const enOut = {};
+  for (const k of keys) enOut[k] = String(en[k] == null ? '' : en[k]);
+  writeJson(path.join(LOCALE_DIR, 'en.json'), enOut);
+  for (const lang of LOCALE_LANGS) {
+    if (lang === 'en') continue;
+    const src = (tables[lang] && typeof tables[lang] === 'object') ? tables[lang] : {};
+    const out = {};
+    for (const k of keys) {
+      const v = src[k];
+      if (typeof v === 'string' && v.length) out[k] = v;
+    }
+    writeJson(path.join(LOCALE_DIR, lang + '.json'), out);
+  }
+}
+
+// Merge a partial slice of keys into the on-disk tables without disturbing the rest — the
+// per-record save path (each container writes only its own `<type>.<id>.name/.desc` cells).
+// entries = { "<key>": { en: "…", es: "…" } }; a blank/absent cell deletes that key's value.
+function mergeLocale(entries) {
+  const tables = getLocale();
+  for (const key of Object.keys(entries || {})) {
+    if (!/^[a-z0-9_.]+$/.test(key)) continue;
+    const cell = entries[key] || {};
+    for (const lang of LOCALE_LANGS) {
+      if (!(lang in cell)) continue;
+      const v = String(cell[lang] == null ? '' : cell[lang]);
+      tables[lang] = tables[lang] || {};
+      if (v) tables[lang][key] = v; else delete tables[lang][key];
+    }
+  }
+  writeLocale(tables);
+  return tables;
+}
+
 function getCombatTuning() {
   const d = readJson(COMBAT_TUNING_PATH, {}) || {};
   return {
@@ -2062,6 +2102,41 @@ async function llmTranslate(text, lang, langName, key) {
   // Some models echo a leading "Spanish:" label or wrap the answer in quotes/fences — strip those.
   s = s.replace(/^```[^\n]*\n?|\n?```$/g, '').trim();
   s = s.replace(new RegExp('^' + langName + '\\s*[:\\-]\\s*', 'i'), '').trim();
+  if (s.length >= 2 && /^["'“](.*)["'”]$/s.test(s)) s = s.replace(/^["'“]|["'”]$/g, '').trim();
+  return s;
+}
+
+// ── LLM description-from-definition (per-record ✦ "From effects") ─────────────
+// Writes the CANONICAL English description for an effect container from its mechanical
+// definition. The description is 100% mechanical — a plain statement of what the effects do,
+// zero lore. Game terms are emitted as <id> term tags (the same markup TextIcons renders):
+// the 6 elements, the 6 pieces, and the stat words. body = { typeLabel, name, lines, tags }
+// where `lines` are the tool's own human-readable effect summary (the mechanical truth) and
+// `tags` is the allowed tag vocabulary.
+const DESCRIBE_TAGS_FALLBACK = ['air','darkness','earth','fire','light','water',
+  'pawn','bishop','knight','rook','queen','king','attack','health','hp','mana','shield','speed'];
+async function llmDescribe(body) {
+  const typeLabel = String(body.typeLabel || 'card');
+  const name = String(body.name || '');
+  const lines = Array.isArray(body.lines) ? body.lines.filter(l => l && String(l).trim()) : [];
+  const tags = (Array.isArray(body.tags) && body.tags.length ? body.tags : DESCRIBE_TAGS_FALLBACK)
+    .map(t => String(t)).filter(t => /^[a-z0-9_]+$/.test(t));
+  if (!lines.length) return '';
+  const sys =
+    `You write the rules text for a card game. Given a ${typeLabel}'s mechanical definition, ` +
+    `write ONE concise player-facing description of exactly what it does.\n` +
+    `Rules, all mandatory:\n` +
+    `- 100% MECHANICAL. State only what the effects do — no lore, flavour, story, or adjectives of mood.\n` +
+    `- Wrap every game term in <id> tags, using ONLY these ids: ${tags.join(', ')}. ` +
+    `E.g. "+2 <attack>", "a <fire> <pawn>". Never tag a word that is not in that list; never invent ids.\n` +
+    `- Refer to numbers and conditions exactly as the definition gives them. Do not add or drop effects.\n` +
+    `- Output ONLY the description. No quotes, no notes, no name, no trailing period commentary.\n` +
+    `- Keep it tight — one or two sentences, imperative game-rules register.`;
+  const user = [name ? `Name: ${name}` : '', 'Mechanical definition:', ...lines.map(l => '- ' + l), '', 'Description:']
+    .filter(x => x !== null).join('\n');
+  const out = await llmGenerate({ system: sys, prompt: user, options: { temperature: 0.2, num_predict: 240 } });
+  let s = String(out.response || '').trim();
+  s = s.replace(/^```[^\n]*\n?|\n?```$/g, '').trim();
   if (s.length >= 2 && /^["'“](.*)["'”]$/s.test(s)) s = s.replace(/^["'“]|["'”]$/g, '').trim();
   return s;
 }
@@ -3864,26 +3939,26 @@ async function handle(req, res) {
       }
     }
     if (p === '/api/locale' && req.method === 'POST') {
-      // English is canonical: its key set (sorted) governs every file. Other languages keep
-      // only their non-empty translations — an absent/blank key falls back to English in-game.
       const body = await readBody(req);
-      const tables = (body && body.tables) || {};
-      const en = (tables.en && typeof tables.en === 'object') ? tables.en : getLocale().en;
-      const keys = Object.keys(en).filter(k => typeof k === 'string' && k.length).sort();
-      const enOut = {};
-      for (const k of keys) enOut[k] = String(en[k] == null ? '' : en[k]);
-      writeJson(path.join(LOCALE_DIR, 'en.json'), enOut);
-      for (const lang of LOCALE_LANGS) {
-        if (lang === 'en') continue;
-        const src = (tables[lang] && typeof tables[lang] === 'object') ? tables[lang] : {};
-        const out = {};
-        for (const k of keys) {
-          const v = src[k];
-          if (typeof v === 'string' && v.length) out[k] = v;
-        }
-        writeJson(path.join(LOCALE_DIR, lang + '.json'), out);
-      }
+      writeLocale((body && body.tables) || {});
       return send(res, 200, { ok: true, tables: getLocale() });
+    }
+    if (p === '/api/locale/set' && req.method === 'POST') {
+      // Per-record merge: write only the given keys' cells, leave every other key intact.
+      const body = await readBody(req);
+      mergeLocale((body && body.entries) || {});
+      return send(res, 200, { ok: true });
+    }
+    if (p === '/api/locale/describe' && req.method === 'POST') {
+      // "Complete description from effect definition": the payload → a mechanical English
+      // description written with <id> term tags, ready to become the canonical string.
+      const body = await readBody(req);
+      try {
+        const description = await llmDescribe(body || {});
+        return send(res, 200, { ok: !!description, description, error: description ? '' : 'empty result' });
+      } catch (e) {
+        return send(res, 200, { ok: false, error: e.message });
+      }
     }
     if (p === '/api/game-attributes' && req.method === 'GET')
       return send(res, 200, { ok: true, config: getGameAttrs() });

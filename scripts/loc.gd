@@ -60,6 +60,14 @@ func t_in(lang: String, key: String, params: Dictionary = {}) -> String:
 	return s
 
 
+# Like t(), but a MISSING key resolves to "" instead of the raw key — for content whose
+# absence should read as empty, not as a visible placeholder (container name/desc, keyed by
+# id: an unmapped container simply has no text rather than showing "card.foo.name").
+func opt(key: String, params: Dictionary = {}) -> String:
+	var s := t(key, params)
+	return "" if s == key else s
+
+
 func set_locale(lang: String) -> void:
 	if lang == _lang or not (lang in LANGS):
 		return

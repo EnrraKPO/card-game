@@ -9,8 +9,21 @@ extends RefCounted
 # Data-driven from data/relics/*.json.
 
 var id: String
-var display_name: String
-var description: String
+# Localized text (Loc `relic.<id>.name`/`.desc`), not read from the data file. See CardData.
+var _name_override := ""
+var display_name: String:
+	get:
+		var s := Loc.opt("relic.%s.name" % id)
+		return s if s != "" else _name_override
+	set(value):
+		_name_override = value
+var _desc_override := ""
+var description: String:
+	get:
+		var s := Loc.opt("relic.%s.desc" % id)
+		return s if s != "" else _desc_override
+	set(value):
+		_desc_override = value
 var color: Color = Color(0.80, 0.74, 0.45)   # chip colour in the relic tray / offers
 var letter: String = "✦"                      # short glyph shown on the chip when there's no icon
 var icon: Texture2D = null                     # optional illustration; when present it replaces the
@@ -48,8 +61,7 @@ static func _load_json(path: String) -> void:
 			continue
 		var r := RelicData.new()
 		r.id           = d.get("id", "")
-		r.display_name = d.get("display_name", "")
-		r.description  = d.get("description", "")
+		# display_name/description resolve through Loc by id (see the property getters).
 		r.color        = Color.html(str(d.get("color", "ccbc72")))
 		r.letter       = d.get("letter", "✦")
 		# Art is by-convention (assets/relics/<id>.png), same pattern card_data uses for card art —

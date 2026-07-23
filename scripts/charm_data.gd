@@ -9,8 +9,21 @@ extends RefCounted
 # Data-driven from data/charms/*.json.
 
 var id: String
-var display_name: String
-var description: String
+# Localized text (Loc `charm.<id>.name`/`.desc`), not read from the data file. See CardData.
+var _name_override := ""
+var display_name: String:
+	get:
+		var s := Loc.opt("charm.%s.name" % id)
+		return s if s != "" else _name_override
+	set(value):
+		_name_override = value
+var _desc_override := ""
+var description: String:
+	get:
+		var s := Loc.opt("charm.%s.desc" % id)
+		return s if s != "" else _desc_override
+	set(value):
+		_desc_override = value
 var color: Color = Color(0.72, 0.72, 0.8)   # charm pip colour on the card
 var letter: String = "✦"                     # short glyph shown on the pip
 var icon: Texture2D = null                    # optional illustration; when present it replaces the
@@ -51,8 +64,7 @@ static func _load_json(path: String) -> void:
 			continue
 		var c := CharmData.new()
 		c.id           = d.get("id", "")
-		c.display_name = d.get("display_name", "")
-		c.description  = d.get("description", "")
+		# display_name/description resolve through Loc by id (see the property getters).
 		c.color        = Color.html(str(d.get("color", "b8b8c8")))
 		c.letter       = d.get("letter", "✦")
 		# Art is by-convention (assets/charms/<id>.png), same pattern relic_data uses for relic art —

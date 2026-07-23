@@ -84,6 +84,10 @@ func make_instance() -> CardInstance:
 		var data := CardData.build_from_dict(def)
 		if data == null:
 			return null
+		# Restore the snapshot's text into the override: for an authored card Loc still wins by
+		# id, but a runtime-derived composite carries its only copy of the name/desc here.
+		data.display_name = str(def.get("display_name", ""))
+		data.description  = str(def.get("description", ""))
 		inst = CardInstance.from_data(data)
 	inst.charms = charms.duplicate()   # display only; mechanics are baked into the data above
 	return inst

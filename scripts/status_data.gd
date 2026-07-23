@@ -32,8 +32,21 @@ const PHASE_ACTIVATE := "activate"
 const PHASE_ATTACK := "attack"       # counts down each time the unit attacks (e.g. Blind charges)
 
 var id: String
-var display_name: String
-var description: String
+# Localized text (Loc `status.<id>.name`/`.desc`), not read from the data file. See CardData.
+var _name_override := ""
+var display_name: String:
+	get:
+		var s := Loc.opt("status.%s.name" % id)
+		return s if s != "" else _name_override
+	set(value):
+		_name_override = value
+var _desc_override := ""
+var description: String:
+	get:
+		var s := Loc.opt("status.%s.desc" % id)
+		return s if s != "" else _desc_override
+	set(value):
+		_desc_override = value
 var color: Color = Color(0.75, 0.75, 0.82)
 var glyph: String = "✦"
 var beneficial: bool = true     # picks the apply VFX + default pip read
@@ -87,8 +100,7 @@ static func _load_json(path: String) -> void:
 static func from_dict(d: Dictionary) -> StatusData:
 	var s := StatusData.new()
 	s.id               = str(d.get("id", ""))
-	s.display_name     = str(d.get("display_name", s.id.capitalize()))
-	s.description      = str(d.get("description", ""))
+	# display_name/description resolve through Loc by id (see the property getters).
 	s.color            = Color.html(str(d.get("color", "bfbfd2")))
 	s.glyph            = str(d.get("glyph", d.get("letter", "✦")))
 	s.beneficial       = bool(d.get("beneficial", true))

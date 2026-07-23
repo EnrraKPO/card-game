@@ -4968,7 +4968,7 @@
     "original": null,
     "added": true,
     "at": "2026-07-13T20:28:34.333Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "status/swift_barrier": {
     "file": "swift_barrier.json",
@@ -4996,21 +4996,21 @@
     "original": null,
     "added": true,
     "at": "2026-07-13T20:33:08.245Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "ability/tide_charge": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T20:33:08.248Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "ability/radiant_charge": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T20:33:08.250Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "status/stalwart_barrier": {
     "file": "stalwart_barrier.json",
@@ -5024,7 +5024,7 @@
     "original": null,
     "added": true,
     "at": "2026-07-13T20:34:30.525Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "status/umbral_barrier": {
     "file": "umbral_barrier.json",
@@ -5038,7 +5038,7 @@
     "original": null,
     "added": true,
     "at": "2026-07-13T20:35:48.234Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "ability/knight_material": {
     "file": "abilities.json",
@@ -5075,7 +5075,7 @@
       ]
     },
     "at": "2026-07-13T22:32:15.675Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "ability/pawn_material": {
     "file": "abilities.json",
@@ -5112,7 +5112,7 @@
       ]
     },
     "at": "2026-07-13T22:35:51.950Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "ability/heal": {
     "file": "abilities.json",
@@ -5135,7 +5135,7 @@
       ]
     },
     "at": "2026-07-13T22:44:26.528Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "relic/contagion_stone": {
     "file": "relics.json",
@@ -5336,7 +5336,7 @@
     },
     "deleted": true,
     "at": "2026-07-13T23:39:11.499Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "ability/castling": {
     "file": "abilities.json",
@@ -5373,7 +5373,7 @@
       ]
     },
     "at": "2026-07-14T00:02:04.308Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "card/queen": {
     "file": "materials.json",
@@ -5545,7 +5545,7 @@
     "original": null,
     "added": true,
     "at": "2026-07-16T03:53:21.012Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "status/fire_blessing": {
     "file": "fire_blessing.json",
@@ -5573,21 +5573,21 @@
     "original": null,
     "added": true,
     "at": "2026-07-16T04:46:09.273Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "ability/air_bless": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-16T04:46:09.278Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "ability/water_bless": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-16T04:46:09.282Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "status/light_blessing": {
     "file": "light_blessing.json",
@@ -5601,7 +5601,7 @@
     "original": null,
     "added": true,
     "at": "2026-07-17T19:16:56.407Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "status/darkness_blessing": {
     "file": "darkness_blessing.json",
@@ -5615,7 +5615,7 @@
     "original": null,
     "added": true,
     "at": "2026-07-17T19:17:40.109Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "sound/ability_cast": {
     "file": "sounds.json",
@@ -5876,7 +5876,7 @@
       ]
     },
     "at": "2026-07-20T04:35:13.837Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "ability/queen_material": {
     "file": "abilities.json",
@@ -5913,7 +5913,7 @@
       ]
     },
     "at": "2026-07-20T04:35:20.214Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "card/earth": {
     "file": "materials.json",
@@ -6312,7 +6312,7 @@
     "original": null,
     "added": true,
     "at": "2026-07-20T21:16:26.846Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "card/knight_knight": {
     "file": "chess_combined.json",
@@ -6427,168 +6427,168 @@
     "original": null,
     "added": true,
     "at": "2026-07-20T21:57:38.729Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "ability/water_pawn_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:31:40.231Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "ability/fire_pawn_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:31:40.237Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "ability/darkness_pawn_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:31:40.242Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "ability/earth_pawn_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:31:40.248Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "ability/air_pawn_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:31:40.251Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "ability/light_bishop_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:33:01.977Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "ability/water_bishop_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:33:01.983Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "ability/fire_bishop_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:33:01.987Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "ability/darkness_bishop_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:33:01.992Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "ability/earth_bishop_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:33:01.996Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "ability/air_bishop_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:33:02.000Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "ability/light_queen_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:34:23.946Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "ability/water_queen_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:34:23.951Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "ability/fire_queen_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:34:23.956Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "ability/darkness_queen_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:34:23.962Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "ability/earth_queen_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:34:23.967Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "ability/air_queen_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:34:23.974Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "ability/light_knight_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:35:57.174Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "ability/water_knight_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:35:57.180Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "ability/fire_knight_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:35:57.185Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "ability/darkness_knight_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:35:57.191Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "ability/earth_knight_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:35:57.196Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "ability/air_knight_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:35:57.201Z",
-    "fileHash": "59b727e671af6d6d4c6d7925828c6f665198ae6b"
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   },
   "card/air_pawn_pawn": {
     "file": "air_units.json",
@@ -6799,5 +6799,353 @@
     "added": true,
     "at": "2026-07-21T04:39:49.849Z",
     "fileHash": "2355727524a75373b7a1af8bff3314bd67223e86"
+  },
+  "ability/air_bishop_training_pure": {
+    "file": "abilities.json",
+    "original": {
+      "id": "air_bishop_training_pure",
+      "display_name": "Pure Air Sacrament",
+      "description": "Adds up to 2 <air> to one of your <bishop> units, merging their compositions — delivered as <air>, then <air> again if it still fits.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "air",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "bishop"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "bishop"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T01:53:44.780Z",
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+  },
+  "ability/air_bishop_material": {
+    "file": "abilities.json",
+    "original": {
+      "id": "air_bishop_material",
+      "display_name": "Air Scholarship",
+      "description": "Deliver up to 1 <bishop> and 1 <air> to a target unit — or to an empty slot, spawning a <bishop> and merging the <air> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "bishop",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "bishop",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "piece_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "air",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T01:53:59.354Z",
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+  },
+  "ability/air_knight_material": {
+    "file": "abilities.json",
+    "original": {
+      "id": "air_knight_material",
+      "display_name": "Air Taming",
+      "description": "Deliver up to 1 <knight> and 1 <air> to a target unit — or to an empty slot, spawning a <knight> and merging the <air> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "knight",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "knight",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "piece_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "air",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T01:55:03.785Z",
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+  },
+  "ability/air_knight_training_pure": {
+    "file": "abilities.json",
+    "original": {
+      "id": "air_knight_training_pure",
+      "display_name": "Pure Air Tricks",
+      "description": "Adds up to 2 <air> to one of your <knight> units, merging their compositions — delivered as <air>, then <air> again if it still fits.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "air",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "knight"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "knight"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T01:55:23.990Z",
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+  },
+  "ability/air_pawn_material": {
+    "file": "abilities.json",
+    "original": {
+      "id": "air_pawn_material",
+      "display_name": "Air Conscription",
+      "description": "Deliver up to 1 <pawn> and 1 <air> to a target unit — or to an empty slot, spawning a <pawn> and merging the <air> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "pawn",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "pawn",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "piece_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "air",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T01:55:29.615Z",
+    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
   }
 }

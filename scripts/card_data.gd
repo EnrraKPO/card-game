@@ -4,7 +4,17 @@ extends RefCounted
 enum CardType { UNIT, SPELL }
 
 var id: String
-var display_name: String
+# Player-facing text is localized: it lives in data/locale/<lang>.json under `card.<id>.name`
+# / `.desc` (see Loc), NOT in the card's data file. The getter reads Loc at access time (so a
+# language switch updates live) and falls back to `_name_override` only when Loc has no key —
+# for runtime-derived cards (unit-merge composites via _derive) that exist in no data file.
+var _name_override := ""
+var display_name: String:
+	get:
+		var s := Loc.opt("card.%s.name" % id)
+		return s if s != "" else _name_override
+	set(value):
+		_name_override = value
 var cost: int
 var attack: int
 var health: int
@@ -12,7 +22,13 @@ var speed: int
 var shield: int
 var is_king: bool
 var card_type: CardType = CardType.UNIT
-var description: String = ""
+var _desc_override := ""
+var description: String:
+	get:
+		var s := Loc.opt("card.%s.desc" % id)
+		return s if s != "" else _desc_override
+	set(value):
+		_desc_override = value
 var effects: Array = []  # Array[Effect]
 var image: Texture2D = null
 var elements: Array[String] = []
@@ -147,14 +163,15 @@ static func _load_json(path: String) -> void:
 static func build_from_dict(d: Dictionary) -> CardData:
 	var card := CardData.new()
 	card.id           = d.get("id", "")
-	card.display_name = d.get("display_name", "")
+	# display_name/description are NOT read from the data file — they resolve through Loc by id
+	# (see the property getters). The field stays in the JSON as dormant authoring source until
+	# it is stripped in a later pass.
 	card.cost         = int(d.get("cost", 0))
 	card.attack       = int(d.get("attack", 0))
 	card.health       = int(d.get("health", 1))
 	card.speed        = int(d.get("speed", 1))
 	card.is_king      = d.get("is_king", false)
 	card.shield       = int(d.get("shield", 0))
-	card.description  = d.get("description", "")
 	card.elements     = Array(d.get("elements",     []), TYPE_STRING, "", null)
 	card.chess_pieces = Array(d.get("chess_pieces", []), TYPE_STRING, "", null)
 	card.enemy_only   = bool(d.get("enemy_only", false))

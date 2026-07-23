@@ -83,7 +83,7 @@
   {
     "id": "dino_rex",
     "display_name": "TYRANNUS, the Extinction",
-    "cost": 0, "attack": 4, "health": 62, "speed": 3, "shield": 4, "strikes": 2,
+    "cost": 0, "attack": 4, "health": 11, "speed": 3, "shield": 4, "strikes": 2,
     "is_king": true, "enemy_only": true, "tribe": "dino",
     "description": "The asteroid missed one. Two strikes a round, nine tons each, and every kill heals it 5. Finish what the sky started to win.",
     "elements": [], "chess_pieces": [],

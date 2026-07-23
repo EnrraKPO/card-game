@@ -92,7 +92,7 @@
   {
     "id": "corp_ceo",
     "display_name": "The CEO",
-    "cost": 0, "attack": 3, "health": 50, "speed": 3, "shield": 5,
+    "cost": 0, "attack": 3, "health": 8, "speed": 3, "shield": 5,
     "is_king": true, "enemy_only": true, "tribe": "corporate",
     "description": "The hiring pipeline never sleeps (an Unpaid Intern onboards every round) and every hostile takeover (kill) is +1 <attack>. Terminating him triggers the severance clause — destroy THAT too to win.",
     "elements": [], "chess_pieces": [],
@@ -106,7 +106,7 @@
   {
     "id": "corp_golden_parachute",
     "display_name": "The Golden Parachute",
-    "cost": 0, "attack": 4, "health": 24, "speed": 5, "shield": 2,
+    "cost": 0, "attack": 4, "health": 9, "speed": 5, "shield": 2,
     "is_king": true, "enemy_only": true, "tribe": "corporate",
     "description": "He's escaping with the severance package! Fast, slippery (+25% dodge), and worth eight figures. Ground him before he reaches the helipad to win.",
     "elements": [], "chess_pieces": [],

@@ -108,7 +108,7 @@
   {
     "id": "beast_ragnor",
     "display_name": "Ragnor, the Endless Hunger",
-    "cost": 0, "attack": 3, "health": 55, "speed": 3, "shield": 3,
+    "cost": 0, "attack": 3, "health": 9, "speed": 3, "shield": 3,
     "is_king": true, "enemy_only": true, "tribe": "beast",
     "description": "It has never once stopped eating. Every unit it kills feeds it +2 <attack> and 4 healing — kill it before it kills everything. Destroy it to win.",
     "elements": [], "chess_pieces": [],

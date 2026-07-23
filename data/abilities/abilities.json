@@ -497,7 +497,7 @@
 	{
 		"id": "air_bless",
 		"display_name": "Bless by Air",
-		"description": "Blesses a unit of your choice with <air> Blessing: +4 <speed> for 2 turns, and the unit is treated as an <air> unit.",
+		"description": "Blesses a unit with +4 <speed> for 2 turns, and the unit is treated as an <air> unit.",
 		"cost": {
 			"mana": 1,
 			"tap": false
@@ -1054,7 +1054,7 @@
 	{
 		"id": "air_bishop_training",
 		"display_name": "Air Sacrament",
-		"description": "Adds <air> to one of your <bishop> units, merging their compositions. Can only target an existing <bishop> unit — never an empty slot.",
+		"description": "Adds <air> to one of your <bishop> units, merging their compositions.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -1498,7 +1498,7 @@
 	{
 		"id": "air_knight_training",
 		"display_name": "Air Tricks",
-		"description": "Adds <air> to one of your <knight> units, merging their compositions. Can only target an existing <knight> unit — never an empty slot.",
+		"description": "Adds <air> to one of your <knight> units, merging their compositions.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -1596,7 +1596,7 @@
 	{
 		"id": "air_bishop_training_pure",
 		"display_name": "Pure Air Sacrament",
-		"description": "Adds up to 2 <air> to one of your <bishop> units, merging their compositions — delivered as <air>, then <air> again if it still fits. Can only target an existing <bishop> unit — never an empty slot.",
+		"description": "Adds up to 2 <air> to one of your <bishop> units, merging their compositions.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -1657,7 +1657,7 @@
 	{
 		"id": "air_knight_training_pure",
 		"display_name": "Pure Air Tricks",
-		"description": "Adds up to 2 <air> to one of your <knight> units, merging their compositions — delivered as <air>, then <air> again if it still fits. Can only target an existing <knight> unit — never an empty slot.",
+		"description": "Adds up to 2 <air> to one of your <knight> units, merging their compositions.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -2999,7 +2999,7 @@
 	{
 		"id": "air_pawn_material",
 		"display_name": "Air Conscription",
-		"description": "Deliver up to 1 <pawn> and 1 <air> to a target unit — or to an empty slot, spawning a <pawn> and merging the <air> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"description": "Deliver up to 1 <pawn> and 1 <air> to a target unit — or to an empty slot, spawning a <pawn> and merging the <air> onto it.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -3066,7 +3066,7 @@
 	{
 		"id": "air_bishop_material",
 		"display_name": "Air Scholarship",
-		"description": "Deliver up to 1 <bishop> and 1 <air> to a target unit — or to an empty slot, spawning a <bishop> and merging the <air> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"description": "Deliver up to 1 <bishop> and 1 <air> to a target unit — or to an empty slot, spawning a <bishop> and merging the <air> onto it.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -3133,7 +3133,7 @@
 	{
 		"id": "air_knight_material",
 		"display_name": "Air Taming",
-		"description": "Deliver up to 1 <knight> and 1 <air> to a target unit — or to an empty slot, spawning a <knight> and merging the <air> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"description": "Deliver up to 1 <knight> and 1 <air> to a target unit — or to an empty slot, spawning a <knight> and merging the <air> onto it.",
 		"cost": {
 			"mana": 2,
 			"tap": true

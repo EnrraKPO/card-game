@@ -110,6 +110,205 @@ function groupBox(title, ...children) {
   return el('div', { class: 'fgroup' }, el('h3', { text: title }), ...children);
 }
 
+// ── localized container text (name + description) ────────────────────────────
+// Player-facing container text lives in the localization map (data/locale/<lang>.json,
+// keyed `<type>.<id>.name/.desc`), NOT the content file. The editor edits a _loc slice on
+// the record — { en:{name,desc}, es:{name,desc} } — and mirrors the English into the
+// record's display_name/description so list labels, summaries and art prompts keep reading
+// them (a transitional mirror; the game itself reads only the locale). See locFields.
+const LOC_TAGS = ['air', 'darkness', 'earth', 'fire', 'light', 'water',
+  'pawn', 'bishop', 'knight', 'rook', 'queen', 'king',
+  'attack', 'health', 'hp', 'mana', 'shield', 'speed'];
+
+function locGet(type, id, lang, f) {
+  const t = (typeof state !== 'undefined' && state.locale && state.locale[lang]) || {};
+  return (id && t[`${type}.${id}.${f}`]) || '';
+}
+
+// Ensure a record carries its _loc slice, seeding from the on-disk locale (or, for a record
+// not yet in the map, its legacy display_name/description). Idempotent: the working copy wins
+// once present, so edits are never clobbered by a re-render.
+function ensureLoc(holder, type) {
+  if (holder._loc) return holder._loc;
+  const id = holder.id || '';
+  holder._loc = {
+    en: { name: locGet(type, id, 'en', 'name') || holder.display_name || '',
+          desc: locGet(type, id, 'en', 'desc') || holder.description || '' },
+    es: { name: locGet(type, id, 'es', 'name'), desc: locGet(type, id, 'es', 'desc') },
+  };
+  // Keep the transitional content-field mirror in step with the locale source from the start,
+  // so list labels / summaries / art prompts read the same English the map holds.
+  holder.display_name = holder._loc.en.name;
+  holder.description = holder._loc.en.desc;
+  return holder._loc;
+}
+
+// The English → content-field mirror + change signal, shared by the boxes and the ✦/✨ buttons.
+function locSync(holder, onChange) {
+  holder.display_name = holder._loc.en.name;
+  holder.description = holder._loc.en.desc;
+  onChange();
+}
+
+// The per-record Text panel: canonical English name + description, Spanish name + description,
+// a ✦ "From effects" button (LLM writes the English description from the effect definition),
+// and a ✨ "Translate" button (LLM fills Spanish from English, tags/{values} preserved).
+// `opts`: { type, onChange, describeLines() -> [strings], typeLabel }.
+function locFields(holder, opts) {
+  opts = opts || {};
+  const type = opts.type;
+  const onChange = opts.onChange || (() => {});
+  ensureLoc(holder, type);
+  const loc = holder._loc;
+
+  const enName = el('input', { type: 'text', value: loc.en.name || '', placeholder: 'English name',
+    oninput: e => { loc.en.name = e.target.value; locSync(holder, onChange); } });
+  const enDesc = el('textarea', { value: loc.en.desc || '',
+    placeholder: 'Mechanical description — wrap game terms in tags, e.g. +2 <attack>, a <fire> <pawn>',
+    oninput: e => { loc.en.desc = e.target.value; locSync(holder, onChange); } });
+  const esName = el('input', { type: 'text', value: loc.es.name || '', placeholder: loc.en.name || '(español)',
+    oninput: e => { loc.es.name = e.target.value; onChange(); } });
+  const esDesc = el('textarea', { value: loc.es.desc || '', placeholder: loc.en.desc || '(descripción)',
+    oninput: e => { loc.es.desc = e.target.value; onChange(); } });
+
+  const fromBtn = el('button', { class: 'ghost tiny', text: '✦ From effects',
+    title: "Write the English description from this item's effects (LLM). Emits <id> term tags." });
+  fromBtn.onclick = async () => {
+    const lines = opts.describeLines ? opts.describeLines() : [];
+    if (!lines.length) { toast('No effects to describe yet', 'err'); return; }
+    fromBtn.disabled = true; const t0 = fromBtn.textContent; fromBtn.textContent = '…';
+    try {
+      const r = await api('/api/locale/describe',
+        { typeLabel: opts.typeLabel || type, name: loc.en.name, lines, tags: LOC_TAGS });
+      if (r.ok && r.description) { loc.en.desc = r.description; enDesc.value = r.description; locSync(holder, onChange); toast('Description written — review it', 'ok'); }
+      else toast('Describe failed: ' + (r.error || '?'), 'err');
+    } catch (e) { toast('Describe failed: ' + e.message, 'err'); }
+    fromBtn.disabled = false; fromBtn.textContent = t0;
+  };
+
+  const trBtn = el('button', { class: 'ghost tiny', text: '✨ Translate → ES',
+    title: 'Translate the English name + description into Spanish (LLM). Tags and {values} are kept intact.' });
+  trBtn.onclick = async () => {
+    if (!(loc.en.name || '').trim() && !(loc.en.desc || '').trim()) { toast('Fill in the English first', 'err'); return; }
+    trBtn.disabled = true; const t0 = trBtn.textContent; trBtn.textContent = '…';
+    try {
+      if ((loc.en.name || '').trim()) {
+        const r = await api('/api/locale/translate', { text: loc.en.name, lang: 'es', key: `${type}.${holder.id}.name` });
+        if (r.ok && r.translation) { loc.es.name = r.translation; esName.value = r.translation; }
+      }
+      if ((loc.en.desc || '').trim()) {
+        const r = await api('/api/locale/translate', { text: loc.en.desc, lang: 'es', key: `${type}.${holder.id}.desc` });
+        if (r.ok && r.translation) { loc.es.desc = r.translation; esDesc.value = r.translation; }
+      }
+      onChange(); toast('Translated to Spanish — review it', 'ok');
+    } catch (e) { toast('Translate failed: ' + e.message, 'err'); }
+    trBtn.disabled = false; trBtn.textContent = t0;
+  };
+
+  const enDescBtns = el('span', { class: 'loc-inline-btns' });
+  if (opts.describeLines) enDescBtns.append(fromBtn);
+  return el('div', { class: 'loc-fields' },
+    el('div', { class: 'frow' }, fld('Name (English)', enName)),
+    el('div', { class: 'fld wide' }, el('span', { class: 'lab' }, 'Description (English)', enDescBtns), enDesc),
+    el('div', { class: 'frow' }, fld('Nombre (Español)', esName)),
+    el('div', { class: 'fld wide' }, el('span', { class: 'lab' }, 'Descripción (Español)',
+      el('span', { class: 'loc-inline-btns' }, trBtn)), esDesc));
+}
+
+// The six player-facing effect-container types the localization panel + bulk tools act on.
+const CONTAINER_TYPES = ['card', 'relic', 'status', 'ability', 'charm', 'upgrade'];
+
+// The bulk localization bar under the item list: run ✦ generate / ✨ translate across the
+// whole FILTERED set (the same records the list shows), scoping the batch by the active filter.
+function renderLocBulkBar(type, records) {
+  const bar = el('div', { class: 'loc-bulk-bar' });
+  const genBtn = el('button', { class: 'ghost small', text: `✦ Descriptions (${records.length})`,
+    title: 'Generate the English description from effects for every listed entry that has effects (LLM). Review before it ships.' });
+  genBtn.onclick = () => bulkLoc('describe', type, records, genBtn);
+  const trBtn = el('button', { class: 'ghost small', text: `✨ Translate → ES (${records.length})`,
+    title: "Translate every listed entry's English name + description into Spanish (LLM). Tags/{values} preserved." });
+  trBtn.onclick = () => bulkLoc('translate', type, records, trBtn);
+  bar.append(genBtn, trBtn);
+  return bar;
+}
+
+// One localizable subject = one id + its effects. Upgrades expand into the tree PLUS each node,
+// since every node carries its own upgrade.<id> text.
+function locSubjects(type, records) {
+  const subjects = [];
+  for (const g of records) {
+    const d = g.data || {};
+    subjects.push({ id: g.id, effects: d.effects || [], subject: `this ${type}` });
+    if (type === 'upgrade') for (const n of d.nodes || [])
+      if (n && n.id) subjects.push({ id: n.id, effects: n.effects || [], subject: 'this upgrade' });
+  }
+  return subjects;
+}
+
+async function bulkLoc(mode, type, records, btn) {
+  const enText = (id, f) => (state.locale && state.locale.en && state.locale.en[`${type}.${id}.${f}`]) || '';
+  const subjects = locSubjects(type, records);
+  const label = mode === 'describe' ? 'Generate descriptions' : 'Translate to Spanish';
+  if (!confirm(`${label} for ${subjects.length} entr${subjects.length === 1 ? 'y' : 'ies'} with the LLM?\nResults are written to the locale files — review them, they are not final.`)) return;
+  btn.disabled = true; const t0 = btn.textContent;
+  const entries = {};
+  let done = 0, failed = 0, skipped = 0;
+  for (const s of subjects) {
+    try {
+      if (mode === 'describe') {
+        const lines = (s.effects || []).map(e => describeEffect(e, s.subject));
+        if (!lines.length) { skipped++; }
+        else {
+          const r = await api('/api/locale/describe', { typeLabel: type, name: enText(s.id, 'name'), lines, tags: LOC_TAGS });
+          if (r.ok && r.description) { (entries[`${type}.${s.id}.desc`] = entries[`${type}.${s.id}.desc`] || {}).en = r.description; done++; }
+          else failed++;
+        }
+      } else {
+        const nm = enText(s.id, 'name'), ds = enText(s.id, 'desc');
+        if (!nm && !ds) { skipped++; }
+        else {
+          if (nm) { const r = await api('/api/locale/translate', { text: nm, lang: 'es', key: `${type}.${s.id}.name` }); if (r.ok && r.translation) (entries[`${type}.${s.id}.name`] = entries[`${type}.${s.id}.name`] || {}).es = r.translation; }
+          if (ds) { const r = await api('/api/locale/translate', { text: ds, lang: 'es', key: `${type}.${s.id}.desc` }); if (r.ok && r.translation) (entries[`${type}.${s.id}.desc`] = entries[`${type}.${s.id}.desc`] || {}).es = r.translation; }
+          done++;
+        }
+      }
+    } catch { failed++; }
+    btn.textContent = `… ${done + failed + skipped}/${subjects.length}`;
+  }
+  if (Object.keys(entries).length) {
+    try {
+      await api('/api/locale/set', { entries });
+      state.locale = state.locale || { en: {}, es: {} };
+      for (const [key, cell] of Object.entries(entries)) for (const lang of ['en', 'es']) if (lang in cell) {
+        state.locale[lang] = state.locale[lang] || {};
+        if (cell[lang]) state.locale[lang][key] = cell[lang]; else delete state.locale[lang][key];
+      }
+    } catch (e) { toast('Bulk locale write failed: ' + e.message, 'err'); }
+  }
+  btn.disabled = false; btn.textContent = t0;
+  toast(`${label}: ${done} done${skipped ? `, ${skipped} skipped` : ''}${failed ? `, ${failed} failed` : ''}`, failed ? 'err' : 'ok');
+  // Reflect fresh values in the open editor if it's clean (unsaved edits are left untouched).
+  if (state.draft && state.draft.id && !state.dirty) {
+    delete state.draft._loc;
+    for (const n of state.draft.nodes || []) delete n._loc;
+    renderEditor();
+  }
+}
+
+// Collect a draft's locale entries for /api/locale/set: the record itself plus, for upgrades,
+// each of its nodes (which share the upgrade.<id> namespace). Blank cells clear that key.
+function collectLocEntries(type, draft) {
+  const entries = {};
+  const put = (kt, id, loc) => {
+    if (!id || !loc) return;
+    entries[`${kt}.${id}.name`] = { en: (loc.en.name || '').trim(), es: (loc.es.name || '').trim() };
+    entries[`${kt}.${id}.desc`] = { en: (loc.en.desc || '').trim(), es: (loc.es.desc || '').trim() };
+  };
+  put(type, draft.id, draft._loc);
+  if (type === 'upgrade') for (const n of draft.nodes || []) put('upgrade', n.id, n._loc);
+  return entries;
+}
+
 // ── designer-facing labels ───────────────────────────────────────────────────
 const L = {
   trigger: {

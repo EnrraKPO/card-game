@@ -4,6 +4,7 @@
 
 const state = {
   types: {}, items: {}, game: {}, vocab: null, settings: {},
+  locale: { en: {}, es: {} },   // container name/desc source of truth (data/locale/<lang>.json)
   currentType: 'card', currentId: null,
   draft: null, isNew: false, dirty: false,
   mode: 'ws',           // 'ws' = workspace item, 'game' = editing existing game content in place
@@ -36,7 +37,8 @@ async function api(path, body) {
 }
 
 async function refreshState(keepEditor) {
-  const s = await api('/api/state');
+  const [s, loc] = await Promise.all([api('/api/state'), api('/api/locale').catch(() => null)]);
+  if (loc && loc.tables) state.locale = loc.tables;
   state.types = s.types; state.items = s.items; state.game = s.game || {};
   state.vocab = s.vocab; state.settings = s.settings;
   state.artModels = s.artModels || { flux2: { label: 'Flux 2 dev', steps: 20, guidance: 4.0, supportsRef: true, supportsTurbo: true } };
@@ -1500,6 +1502,7 @@ function renderItemList() {
     bb.disabled = !filtered.length;
   }
   if (!filtered.length) list.append(el('div', { class: 'subtle', style: 'padding:10px', text: 'Nothing matches the filters.' }));
+  if (CONTAINER_TYPES.includes(state.currentType) && filtered.length) list.append(renderLocBulkBar(state.currentType, filtered));
 
   // group by file
   const byFile = new Map();
@@ -1790,6 +1793,19 @@ async function gameSave(quiet) {
     state.gameFile = out.file.split('/').pop();
     state.gameEdited = true;
     state.dirty = false;
+    // Persist the localized name/description — the game's source of truth (the content-file
+    // mirror written above is transitional). Merges only this record's keys.
+    try {
+      const entries = collectLocEntries(state.currentType, state.draft);
+      if (Object.keys(entries).length) {
+        await api('/api/locale/set', { entries });
+        state.locale = state.locale || { en: {}, es: {} };
+        for (const [key, cell] of Object.entries(entries)) for (const lang of ['en', 'es']) {
+          state.locale[lang] = state.locale[lang] || {};
+          if (cell[lang]) state.locale[lang][key] = cell[lang]; else delete state.locale[lang][key];
+        }
+      }
+    } catch (e) { toast('Saved, but the localized text failed to write: ' + e.message, 'err'); }
     if (!quiet) toast(`Saved into ${out.file}` + (out.art ? ' (+ art)' : ''), 'ok');
   } catch (e) { showValidation(e.message); return false; }
   await refreshState(true);

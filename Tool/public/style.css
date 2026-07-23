@@ -170,6 +170,15 @@ label.check { display: flex; align-items: center; gap: 8px; cursor: pointer; }
 .fld.wide { flex-basis: 100%; }
 .fld > span.lab { font-size: 12px; color: var(--fg-dim); }
 .fld .hint { font-size: 11px; color: #6d7690; }
+
+/* localized container text (name + description, per language) */
+.loc-fields { display: flex; flex-direction: column; gap: 10px; }
+.loc-fields > .fld.wide { margin: 0; }
+.loc-fields .lab { display: flex; align-items: center; gap: 8px; }
+.loc-inline-btns { display: inline-flex; gap: 6px; margin-left: auto; }
+.loc-fields textarea { min-height: 52px; }
+.loc-bulk-bar { display: flex; gap: 6px; padding: 0 4px 8px; flex-wrap: wrap; }
+.loc-bulk-bar button { flex: 1; min-width: 120px; }
 .chipset { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip {
   padding: 5px 12px; border-radius: 16px; border: 1px solid var(--line); cursor: pointer;

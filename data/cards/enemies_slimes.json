@@ -122,7 +122,7 @@
   {
     "id": "slime_overlord",
     "display_name": "Slimeon, the Boundless",
-    "cost": 0, "attack": 3, "health": 50, "speed": 2, "shield": 4,
+    "cost": 0, "attack": 3, "health": 8, "speed": 2, "shield": 4,
     "is_king": true, "enemy_only": true, "tribe": "slime",
     "description": "An ocean pretending to be a monster. Slimes whatever it strikes — and killing it only frees what boils at its core. Destroy BOTH forms to win.",
     "elements": [], "chess_pieces": [],
@@ -134,7 +134,7 @@
   {
     "id": "slime_overlord_reborn",
     "display_name": "Slimeon Reborn",
-    "cost": 0, "attack": 4, "health": 28, "speed": 4, "strikes": 2,
+    "cost": 0, "attack": 4, "health": 9, "speed": 4, "strikes": 2,
     "is_king": true, "enemy_only": true, "tribe": "slime",
     "description": "The Overlord's boiling core, freed of its bulk — twice as fast, twice as angry, striking twice a round. This one stays dead.",
     "elements": [], "chess_pieces": [],
