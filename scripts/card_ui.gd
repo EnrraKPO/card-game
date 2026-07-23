@@ -438,6 +438,15 @@ func refresh() -> void:
 	# Fall back to the name so the enlarged hover preview shows even without a description.
 	# UIScale.tip suppresses it entirely on touch (no hover there — long-press inspect instead).
 	var desc := card_instance.data.description
+	# The auto-attack targeting line rides after the authored text here too (units only), so the
+	# native tooltip matches the rich CardTooltip.
+	var targeting := card_instance.data.targeting_line()
+	if not targeting.is_empty():
+		desc = (desc + "\n" + targeting) if not desc.is_empty() else targeting
+	# The rooted-building note rides after the authored/targeting text too (buildings only).
+	var building := card_instance.data.building_line()
+	if not building.is_empty():
+		desc = (desc + "\n" + building) if not desc.is_empty() else building
 	# The card's native fallback tooltip can't render icons/BBCode — resolve markup to words.
 	UIScale.tip(self, TextIcons.plain(desc) if not desc.is_empty() else card_instance.data.display_name)
 

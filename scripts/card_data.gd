@@ -33,6 +33,13 @@ var effects: Array = []  # Array[Effect]
 var image: Texture2D = null
 var elements: Array[String] = []
 var chess_pieces: Array[String] = []
+# The AUTO-ATTACK targeting policy — how this unit picks which enemy its auto-attack hits
+# (see TARGET_POLICIES / effective_target_policy). Authored per-card in the tool; "" means
+# AUTO — derive it from the chess composition exactly as before (pawns/fodder → nearest,
+# knight → leaper, bishop → wounded, rook → tank, queen → threat). Setting it overrides that.
+# It resolves the concrete `targeting_strategy` below, and a localized one-line description of
+# it is appended to the card's rules text on display (see targeting_line).
+var target_policy: String = ""
 var targeting_strategy: TargetingStrategy
 # Enemy-only fodder cards (tribes the CPU fights with). Kept out of every player-facing
 # pool — reward offers and shop stock (random_non_kings). They carry no element/chess
@@ -179,6 +186,7 @@ static func build_from_dict(d: Dictionary) -> CardData:
 	card.abilities    = Array(d.get("abilities", []), TYPE_STRING, "", null)
 	card.ranged       = bool(d.get("ranged", false))
 	card.strikes      = maxi(1, int(d.get("strikes", 1)))
+	card.target_policy = str(d.get("target_policy", ""))
 	for e_data: Dictionary in d.get("effects", []):
 		card.effects.append(Effect.from_dict(e_data))
 	if d.has("card_type"):
@@ -187,7 +195,7 @@ static func build_from_dict(d: Dictionary) -> CardData:
 		card.card_type = CardType.SPELL
 	else:
 		card.card_type = CardType.UNIT
-	card.targeting_strategy = _make_targeting_strategy(card.chess_pieces)
+	card.targeting_strategy = _strategy_for_policy(card.effective_target_policy())
 	# Enemy fodder/captain art is organised under cards/enemies/ to keep it out of the
 	# main (player-facing) card art folder.
 	var art_dir := "res://assets/cards/enemies/" if card.enemy_only else "res://assets/cards/"
@@ -261,6 +269,10 @@ func to_dict() -> Dictionary:
 	# serialized shape byte-identical to before the stat existed.
 	if strikes != 1:
 		d["strikes"] = strikes
+	# Only the authored override is serialised — an AUTO ("") card keeps its byte-identical
+	# pre-policy shape, and the strategy re-derives from the composition on load.
+	if not target_policy.is_empty():
+		d["target_policy"] = target_policy
 	return d
 
 
@@ -292,6 +304,7 @@ static func scaled(base: CardData, power: float) -> CardData:
 	c.abilities     = base.abilities.duplicate()
 	c.ranged        = base.ranged
 	c.strikes       = base.strikes
+	c.target_policy = base.target_policy
 	c.effects       = base.effects
 	c.targeting_strategy = base.targeting_strategy
 	c.image         = base.image
@@ -471,22 +484,62 @@ static func _derive(elems: Array, chess: Array, key: String) -> CardData:
 	c.health       = int(s["health"])
 	c.speed        = int(s["speed"])
 	c.card_type          = CardType.SPELL if (chess.is_empty() and not elems.is_empty()) else CardType.UNIT
-	c.targeting_strategy = _make_targeting_strategy(chess)
+	c.targeting_strategy = _strategy_for_policy(_derived_policy(chess))
 	var art := "res://assets/cards/%s.png" % key
 	c.image = load(art) if ResourceLoader.exists(art) \
 		else load("res://assets/cards/placeholder.png")
 	return c
 
 
-static func _make_targeting_strategy(chess_pieces: Array) -> TargetingStrategy:
+# The authorable auto-attack targeting policies (the semantic vocabulary, decoupled from the
+# chess pieces that historically implied them). Mirrors the tool's TARGET_POLICIES select and the
+# `targeting.<policy>.desc` locale keys — keep the three in step. "" (unlisted) means AUTO/derive.
+const TARGET_POLICIES: Array[String] = ["nearest", "leaper", "wounded", "tank", "threat"]
+
+
+# The policy this card's auto-attack actually uses: the authored override when set, otherwise the
+# one derived from the chess composition (backward-compatible with every pre-policy card).
+func effective_target_policy() -> String:
+	return target_policy if not target_policy.is_empty() else _derived_policy(chess_pieces)
+
+
+# The localized one-line rules-text description of this card's auto-attack targeting, appended
+# after the authored description on every board unit (see CardTooltip / CardUI). Spells never
+# auto-attack, so they get nothing. Carries <term> markup, so TextIcons resolves the icons/words.
+func targeting_line() -> String:
+	if card_type == CardType.SPELL:
+		return ""
+	return Loc.t("targeting.%s.desc" % effective_target_policy())
+
+
+# The localized one-line rules-text note that marks a building as rooted, appended after the
+# authored description on buildings only (see CardTooltip / CardUI). Non-buildings get nothing.
+func building_line() -> String:
+	if not is_building():
+		return ""
+	return Loc.t("building.line")
+
+
+# The legacy composition → policy mapping (the AUTO default). First non-pawn piece wins; a pure
+# pawn / element / fodder composition falls through to nearest.
+static func _derived_policy(chess_pieces: Array) -> String:
 	for piece: String in chess_pieces:
 		match piece:
 			"pawn": continue
-			"knight": return TargetingKnight.new()
-			"bishop": return TargetingBishop.new()
-			"rook":   return TargetingRook.new()
-			"queen":  return TargetingQueen.new()
-	return TargetingNearest.new()
+			"knight": return "leaper"
+			"bishop": return "wounded"
+			"rook":   return "tank"
+			"queen":  return "threat"
+	return "nearest"
+
+
+static func _strategy_for_policy(policy: String) -> TargetingStrategy:
+	match policy:
+		"leaper":  return TargetingKnight.new()
+		"wounded": return TargetingBishop.new()
+		"tank":    return TargetingRook.new()
+		"threat":  return TargetingQueen.new()
+		_:         return TargetingNearest.new()
 
 
 static func _derive_name(elems: Array, chess: Array) -> String:

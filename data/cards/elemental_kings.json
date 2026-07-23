@@ -387,7 +387,7 @@
 		"health": 20,
 		"speed": 3,
 		"shield": 5,
-		"description": "Ruler of <darkness> and <water>. If the <king> falls, the battle is lost. Attacks the nearest enemy, applying Poison 1. Starts each round with 5 <shield>.",
+		"description": "Attacks the nearest enemy, applying Poison 1.",
 		"elements": [
 			"darkness",
 			"water"

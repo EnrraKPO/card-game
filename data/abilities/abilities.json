@@ -2,7 +2,7 @@
 	{
 		"id": "castling",
 		"display_name": "Castling",
-		"description": "A defensive maneuver. Grants one unit without a Barrier a Barrier that blocks the next damaging attack.",
+		"description": "Grants a Barrier that blocks the next damaging attack.",
 		"cost": {
 			"mana": 1,
 			"tap": true
@@ -81,7 +81,7 @@
 	{
 		"id": "pawn_material",
 		"display_name": "Conscription",
-		"description": "Adds <pawn> to one of your units, merging their compositions - or spawns a new <pawn> on one of your empty slots.",
+		"description": "Adds <pawn> to one of your units, merging their compositions.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -127,7 +127,7 @@
 				"prompt": "Single black chess pawn on a table, centered upright on a chess board, bold dark outlines, flat cel-shaded cartoon vector style, charcoal-grey body with soft slate-blue highlights on sphere head and base, glossy sheen accents, clean minimal composition, gentle even lighting",
 				"turbo": true,
 				"ref": {
-					"source": "current",
+					"source": "installed",
 					"mode": "img2img",
 					"denoise": 0.6
 				},
@@ -239,7 +239,7 @@
 	{
 		"id": "queen_material",
 		"display_name": "Coronation",
-		"description": "Adds <queen> to one of your units, merging their compositions - or spawns a new <queen> on one of your empty slots.",
+		"description": "Adds <queen> to one of your units, merging their compositions.",
 		"cost": {
 			"mana": 5,
 			"tap": true
@@ -647,7 +647,7 @@
 	{
 		"id": "light_pawn_training",
 		"display_name": "Light Combat Drill",
-		"description": "Adds <light> to one of your <pawn> units, merging their compositions. Can only target an existing <pawn> unit — never an empty slot.",
+		"description": "Adds <light> to one of your <pawn> units, merging their compositions.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -684,7 +684,7 @@
 	{
 		"id": "water_pawn_training",
 		"display_name": "Water Combat Drill",
-		"description": "Adds <water> to one of your <pawn> units, merging their compositions. Can only target an existing <pawn> unit — never an empty slot.",
+		"description": "Adds <water> to one of your <pawn> units, merging their compositions.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -721,7 +721,7 @@
 	{
 		"id": "fire_pawn_training",
 		"display_name": "Fire Combat Drill",
-		"description": "Adds <fire> to one of your <pawn> units, merging their compositions. Can only target an existing <pawn> unit — never an empty slot.",
+		"description": "Adds <fire> to one of your <pawn> units, merging their compositions.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -758,7 +758,7 @@
 	{
 		"id": "darkness_pawn_training",
 		"display_name": "Darkness Combat Drill",
-		"description": "Adds <darkness> to one of your <pawn> units, merging their compositions. Can only target an existing <pawn> unit — never an empty slot.",
+		"description": "Adds <darkness> to one of your <pawn> units, merging their compositions.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -795,7 +795,7 @@
 	{
 		"id": "earth_pawn_training",
 		"display_name": "Earth Combat Drill",
-		"description": "Adds <earth> to one of your <pawn> units, merging their compositions. Can only target an existing <pawn> unit — never an empty slot.",
+		"description": "Adds <earth> to one of your <pawn> units, merging their compositions.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -832,7 +832,7 @@
 	{
 		"id": "air_pawn_training",
 		"display_name": "Air Combat Drill",
-		"description": "Adds <air> to one of your <pawn> units, merging their compositions. Can only target an existing <pawn> unit — never an empty slot.",
+		"description": "Adds <air> to one of your <pawn> units, merging their compositions.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -1535,7 +1535,7 @@
 	{
 		"id": "air_pawn_training_pure",
 		"display_name": "Pure Air Combat Drill",
-		"description": "Adds up to 2 <air> to one of your <pawn> units, merging their compositions — delivered as <air>, then <air> again if it still fits. Can only target an existing <pawn> unit — never an empty slot.",
+		"description": "Adds up to 2 <air> to one of your <pawn> units, merging their compositions — delivered as <air>, then <air> again if it still fits.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -1718,7 +1718,7 @@
 	{
 		"id": "air_queen_training_pure",
 		"display_name": "Pure Air Etiquette",
-		"description": "Adds up to 2 <air> to one of your <queen> units, merging their compositions — delivered as <air>, then <air> again if it still fits. Can only target an existing <queen> unit — never an empty slot.",
+		"description": "Adds up to 2 <air> to one of your <queen> units, merging their compositions.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -1779,7 +1779,7 @@
 	{
 		"id": "darkness_pawn_training_pure",
 		"display_name": "Pure Darkness Combat Drill",
-		"description": "Adds up to 2 <darkness> to one of your <pawn> units, merging their compositions — delivered as <darkness>, then <darkness> again if it still fits. Can only target an existing <pawn> unit — never an empty slot.",
+		"description": "Adds up to 2 <darkness> to one of your <pawn> units, merging their compositions — delivered as <darkness>, then <darkness> again if it still fits.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -1840,7 +1840,7 @@
 	{
 		"id": "darkness_bishop_training_pure",
 		"display_name": "Pure Darkness Sacrament",
-		"description": "Adds up to 2 <darkness> to one of your <bishop> units, merging their compositions — delivered as <darkness>, then <darkness> again if it still fits. Can only target an existing <bishop> unit — never an empty slot.",
+		"description": "Adds up to 2 <darkness> to one of your <bishop> units, merging their compositions.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -1901,7 +1901,7 @@
 	{
 		"id": "darkness_knight_training_pure",
 		"display_name": "Pure Darkness Tricks",
-		"description": "Adds up to 2 <darkness> to one of your <knight> units, merging their compositions — delivered as <darkness>, then <darkness> again if it still fits. Can only target an existing <knight> unit — never an empty slot.",
+		"description": "Adds up to 2 <darkness> to one of your <knight> units, merging their compositions.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -1962,7 +1962,7 @@
 	{
 		"id": "darkness_queen_training_pure",
 		"display_name": "Pure Darkness Etiquette",
-		"description": "Adds up to 2 <darkness> to one of your <queen> units, merging their compositions — delivered as <darkness>, then <darkness> again if it still fits. Can only target an existing <queen> unit — never an empty slot.",
+		"description": "Adds up to 2 <darkness> to one of your <queen> units, merging their compositions.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -2023,7 +2023,7 @@
 	{
 		"id": "earth_pawn_training_pure",
 		"display_name": "Pure Earth Combat Drill",
-		"description": "Adds up to 2 <earth> to one of your <pawn> units, merging their compositions — delivered as <earth>, then <earth> again if it still fits. Can only target an existing <pawn> unit — never an empty slot.",
+		"description": "Adds up to 2 <earth> to one of your <pawn> units, merging their compositions.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -2084,7 +2084,7 @@
 	{
 		"id": "earth_bishop_training_pure",
 		"display_name": "Pure Earth Sacrament",
-		"description": "Adds up to 2 <earth> to one of your <bishop> units, merging their compositions — delivered as <earth>, then <earth> again if it still fits. Can only target an existing <bishop> unit — never an empty slot.",
+		"description": "Adds up to 2 <earth> to one of your <bishop> units, merging their compositions.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -2145,7 +2145,7 @@
 	{
 		"id": "earth_knight_training_pure",
 		"display_name": "Pure Earth Tricks",
-		"description": "Adds up to 2 <earth> to one of your <knight> units, merging their compositions — delivered as <earth>, then <earth> again if it still fits. Can only target an existing <knight> unit — never an empty slot.",
+		"description": "Adds up to 2 <earth> to one of your <knight> units, merging their compositions.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -2267,7 +2267,7 @@
 	{
 		"id": "fire_pawn_training_pure",
 		"display_name": "Pure Fire Combat Drill",
-		"description": "Adds up to 2 <fire> to one of your <pawn> units, merging their compositions — delivered as <fire>, then <fire> again if it still fits. Can only target an existing <pawn> unit — never an empty slot.",
+		"description": "Adds up to 2 <fire> to one of your <pawn> units, merging their compositions.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -2328,7 +2328,7 @@
 	{
 		"id": "fire_bishop_training_pure",
 		"display_name": "Pure Fire Sacrament",
-		"description": "Adds up to 2 <fire> to one of your <bishop> units, merging their compositions — delivered as <fire>, then <fire> again if it still fits. Can only target an existing <bishop> unit — never an empty slot.",
+		"description": "Adds up to 2 <fire> to one of your <bishop> units, merging their compositions.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -2389,7 +2389,7 @@
 	{
 		"id": "fire_knight_training_pure",
 		"display_name": "Pure Fire Tricks",
-		"description": "Adds up to 2 <fire> to one of your <knight> units, merging their compositions — delivered as <fire>, then <fire> again if it still fits. Can only target an existing <knight> unit — never an empty slot.",
+		"description": "Adds up to 2 <fire> to one of your <knight> units, merging their compositions.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -2450,7 +2450,7 @@
 	{
 		"id": "fire_queen_training_pure",
 		"display_name": "Pure Fire Etiquette",
-		"description": "Adds up to 2 <fire> to one of your <queen> units, merging their compositions — delivered as <fire>, then <fire> again if it still fits. Can only target an existing <queen> unit — never an empty slot.",
+		"description": "Adds up to 2 <fire> to one of your <queen> units, merging their compositions.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -2511,7 +2511,7 @@
 	{
 		"id": "light_pawn_training_pure",
 		"display_name": "Pure Light Combat Drill",
-		"description": "Adds up to 2 <light> to one of your <pawn> units, merging their compositions — delivered as <light>, then <light> again if it still fits. Can only target an existing <pawn> unit — never an empty slot.",
+		"description": "Adds up to 2 <light> to one of your <pawn> units, merging their compositions.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -2572,7 +2572,7 @@
 	{
 		"id": "light_bishop_training_pure",
 		"display_name": "Pure Light Sacrament",
-		"description": "Adds up to 2 <light> to one of your <bishop> units, merging their compositions — delivered as <light>, then <light> again if it still fits. Can only target an existing <bishop> unit — never an empty slot.",
+		"description": "Adds up to 2 <light> to one of your <bishop> units, merging their compositions.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -2633,7 +2633,7 @@
 	{
 		"id": "light_knight_training_pure",
 		"display_name": "Pure Light Tricks",
-		"description": "Adds up to 2 <light> to one of your <knight> units, merging their compositions — delivered as <light>, then <light> again if it still fits. Can only target an existing <knight> unit — never an empty slot.",
+		"description": "Adds up to 2 <light> to one of your <knight> units, merging their compositions.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -2694,7 +2694,7 @@
 	{
 		"id": "light_queen_training_pure",
 		"display_name": "Pure Light Etiquette",
-		"description": "Adds up to 2 <light> to one of your <queen> units, merging their compositions — delivered as <light>, then <light> again if it still fits. Can only target an existing <queen> unit — never an empty slot.",
+		"description": "Adds up to 2 <light> to one of your <queen> units, merging their compositions.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -2755,7 +2755,7 @@
 	{
 		"id": "water_pawn_training_pure",
 		"display_name": "Pure Water Combat Drill",
-		"description": "Adds up to 2 <water> to one of your <pawn> units, merging their compositions — delivered as <water>, then <water> again if it still fits. Can only target an existing <pawn> unit — never an empty slot.",
+		"description": "Adds up to 2 <water> to one of your <pawn> units, merging their compositions — delivered as <water>, then <water> again if it still fits.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -2816,7 +2816,7 @@
 	{
 		"id": "water_bishop_training_pure",
 		"display_name": "Pure Water Sacrament",
-		"description": "Adds up to 2 <water> to one of your <bishop> units, merging their compositions — delivered as <water>, then <water> again if it still fits. Can only target an existing <bishop> unit — never an empty slot.",
+		"description": "Adds up to 2 <water> to one of your <bishop> units, merging their compositions.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -2877,7 +2877,7 @@
 	{
 		"id": "water_knight_training_pure",
 		"display_name": "Pure Water Tricks",
-		"description": "Adds up to 2 <water> to one of your <knight> units, merging their compositions — delivered as <water>, then <water> again if it still fits. Can only target an existing <knight> unit — never an empty slot.",
+		"description": "Adds up to 2 <water> to one of your <knight> units, merging their compositions.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -2938,7 +2938,7 @@
 	{
 		"id": "water_queen_training_pure",
 		"display_name": "Pure Water Etiquette",
-		"description": "Adds up to 2 <water> to one of your <queen> units, merging their compositions — delivered as <water>, then <water> again if it still fits. Can only target an existing <queen> unit — never an empty slot.",
+		"description": "Adds up to 2 <water> to one of your <queen> units, merging their compositions.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -3200,7 +3200,7 @@
 	{
 		"id": "air_queen_material",
 		"display_name": "Air Coronation",
-		"description": "Deliver up to 1 <queen> and 1 <air> to a target unit — or to an empty slot, spawning a <queen> and merging the <air> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"description": "Deliver up to 1 <queen> and 1 <air> to a target unit — or to an empty slot, spawning a <queen> and merging the <air> onto it. ",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -3267,7 +3267,7 @@
 	{
 		"id": "darkness_pawn_material",
 		"display_name": "Darkness Conscription",
-		"description": "Deliver up to 1 <pawn> and 1 <darkness> to a target unit — or to an empty slot, spawning a <pawn> and merging the <darkness> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"description": "Deliver up to 1 <pawn> and 1 <darkness> to a target unit — or to an empty slot, spawning a <pawn> and merging the <darkness> onto it.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -3334,7 +3334,7 @@
 	{
 		"id": "darkness_bishop_material",
 		"display_name": "Darkness Scholarship",
-		"description": "Deliver up to 1 <bishop> and 1 <darkness> to a target unit — or to an empty slot, spawning a <bishop> and merging the <darkness> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"description": "Deliver up to 1 <bishop> and 1 <darkness> to a target unit — or to an empty slot, spawning a <bishop> and merging the <darkness> onto it.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -3401,7 +3401,7 @@
 	{
 		"id": "darkness_knight_material",
 		"display_name": "Darkness Taming",
-		"description": "Deliver up to 1 <knight> and 1 <darkness> to a target unit — or to an empty slot, spawning a <knight> and merging the <darkness> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"description": "Deliver up to 1 <knight> and 1 <darkness> to a target unit — or to an empty slot, spawning a <knight> and merging the <darkness> onto it.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -3468,7 +3468,7 @@
 	{
 		"id": "darkness_queen_material",
 		"display_name": "Darkness Coronation",
-		"description": "Deliver up to 1 <queen> and 1 <darkness> to a target unit — or to an empty slot, spawning a <queen> and merging the <darkness> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"description": "Deliver up to 1 <queen> and 1 <darkness> to a target unit — or to an empty slot, spawning a <queen> and merging the <darkness> onto it.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -3535,7 +3535,7 @@
 	{
 		"id": "earth_pawn_material",
 		"display_name": "Earth Conscription",
-		"description": "Deliver up to 1 <pawn> and 1 <earth> to a target unit — or to an empty slot, spawning a <pawn> and merging the <earth> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"description": "Deliver up to 1 <pawn> and 1 <earth> to a target unit — or to an empty slot, spawning a <pawn> and merging the <earth> onto it.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -3602,7 +3602,7 @@
 	{
 		"id": "earth_bishop_material",
 		"display_name": "Earth Scholarship",
-		"description": "Deliver up to 1 <bishop> and 1 <earth> to a target unit — or to an empty slot, spawning a <bishop> and merging the <earth> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"description": "Deliver up to 1 <bishop> and 1 <earth> to a target unit — or to an empty slot, spawning a <bishop> and merging the <earth> onto it.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -3669,7 +3669,7 @@
 	{
 		"id": "earth_knight_material",
 		"display_name": "Earth Taming",
-		"description": "Deliver up to 1 <knight> and 1 <earth> to a target unit — or to an empty slot, spawning a <knight> and merging the <earth> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"description": "Deliver up to 1 <knight> and 1 <earth> to a target unit — or to an empty slot, spawning a <knight> and merging the <earth> onto it.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -3736,7 +3736,7 @@
 	{
 		"id": "earth_queen_material",
 		"display_name": "Earth Coronation",
-		"description": "Deliver up to 1 <queen> and 1 <earth> to a target unit — or to an empty slot, spawning a <queen> and merging the <earth> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"description": "Deliver up to 1 <queen> and 1 <earth> to a target unit — or to an empty slot, spawning a <queen> and merging the <earth> onto it.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -3803,7 +3803,7 @@
 	{
 		"id": "fire_pawn_material",
 		"display_name": "Fire Conscription",
-		"description": "Deliver up to 1 <pawn> and 1 <fire> to a target unit — or to an empty slot, spawning a <pawn> and merging the <fire> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"description": "Deliver up to 1 <pawn> and 1 <fire> to a target unit — or to an empty slot, spawning a <pawn> and merging the <fire> onto it.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -3870,7 +3870,7 @@
 	{
 		"id": "fire_bishop_material",
 		"display_name": "Fire Scholarship",
-		"description": "Deliver up to 1 <bishop> and 1 <fire> to a target unit — or to an empty slot, spawning a <bishop> and merging the <fire> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"description": "Deliver up to 1 <bishop> and 1 <fire> to a target unit — or to an empty slot, spawning a <bishop> and merging the <fire> onto it.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -3937,7 +3937,7 @@
 	{
 		"id": "fire_knight_material",
 		"display_name": "Fire Taming",
-		"description": "Deliver up to 1 <knight> and 1 <fire> to a target unit — or to an empty slot, spawning a <knight> and merging the <fire> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"description": "Deliver up to 1 <knight> and 1 <fire> to a target unit — or to an empty slot, spawning a <knight> and merging the <fire> onto it.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -4004,7 +4004,7 @@
 	{
 		"id": "fire_queen_material",
 		"display_name": "Fire Coronation",
-		"description": "Deliver up to 1 <queen> and 1 <fire> to a target unit — or to an empty slot, spawning a <queen> and merging the <fire> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"description": "Deliver up to 1 <queen> and 1 <fire> to a target unit — or to an empty slot, spawning a <queen> and merging the <fire> onto it.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -4071,7 +4071,7 @@
 	{
 		"id": "light_pawn_material",
 		"display_name": "Light Conscription",
-		"description": "Deliver up to 1 <pawn> and 1 <light> to a target unit — or to an empty slot, spawning a <pawn> and merging the <light> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"description": "Deliver up to 1 <pawn> and 1 <light> to a target unit — or to an empty slot, spawning a <pawn> and merging the <light> onto it",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -4138,7 +4138,7 @@
 	{
 		"id": "light_bishop_material",
 		"display_name": "Light Scholarship",
-		"description": "Deliver up to 1 <bishop> and 1 <light> to a target unit — or to an empty slot, spawning a <bishop> and merging the <light> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"description": "Deliver up to 1 <bishop> and 1 <light> to a target unit — or to an empty slot, spawning a <bishop> and merging the <light> onto it.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -4205,7 +4205,7 @@
 	{
 		"id": "light_knight_material",
 		"display_name": "Light Taming",
-		"description": "Deliver up to 1 <knight> and 1 <light> to a target unit — or to an empty slot, spawning a <knight> and merging the <light> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"description": "Deliver up to 1 <knight> and 1 <light> to a target unit — or to an empty slot, spawning a <knight> and merging the <light> onto it.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -4272,7 +4272,7 @@
 	{
 		"id": "light_queen_material",
 		"display_name": "Light Coronation",
-		"description": "Deliver up to 1 <queen> and 1 <light> to a target unit — or to an empty slot, spawning a <queen> and merging the <light> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"description": "Deliver up to 1 <queen> and 1 <light> to a target unit — or to an empty slot, spawning a <queen> and merging the <light> onto it.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -4339,7 +4339,7 @@
 	{
 		"id": "water_pawn_material",
 		"display_name": "Water Conscription",
-		"description": "Deliver up to 1 <pawn> and 1 <water> to a target unit — or to an empty slot, spawning a <pawn> and merging the <water> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"description": "Deliver up to 1 <pawn> and 1 <water> to a target unit — or to an empty slot, spawning a <pawn> and merging the <water> onto it.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -4406,7 +4406,7 @@
 	{
 		"id": "water_bishop_material",
 		"display_name": "Water Scholarship",
-		"description": "Deliver up to 1 <bishop> and 1 <water> to a target unit — or to an empty slot, spawning a <bishop> and merging the <water> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"description": "Deliver up to 1 <bishop> and 1 <water> to a target unit — or to an empty slot, spawning a <bishop> and merging the <water> onto it.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -4473,7 +4473,7 @@
 	{
 		"id": "water_knight_material",
 		"display_name": "Water Taming",
-		"description": "Deliver up to 1 <knight> and 1 <water> to a target unit — or to an empty slot, spawning a <knight> and merging the <water> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"description": "Deliver up to 1 <knight> and 1 <water> to a target unit — or to an empty slot, spawning a <knight> and merging the <water> onto it.",
 		"cost": {
 			"mana": 2,
 			"tap": true
@@ -4540,7 +4540,7 @@
 	{
 		"id": "water_queen_material",
 		"display_name": "Water Coronation",
-		"description": "Deliver up to 1 <queen> and 1 <water> to a target unit — or to an empty slot, spawning a <queen> and merging the <water> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+		"description": "Deliver up to 1 <queen> and 1 <water> to a target unit — or to an empty slot, spawning a <queen> and merging the <water> onto it.",
 		"cost": {
 			"mana": 2,
 			"tap": true

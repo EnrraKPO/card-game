@@ -262,6 +262,12 @@
 	},
 	{
 		"id": "fire_water_bishop_pawn",
+		"display_name": "Steam Paladin",
+		"cost": 3,
+		"attack": 4,
+		"health": 7,
+		"speed": 1,
+		"shield": 2,
 		"elements": [
 			"fire",
 			"water"
@@ -270,39 +276,27 @@
 			"bishop",
 			"pawn"
 		],
-		"description": "Steam unit. ",
-		"display_name": "Steam Paladin",
+		"abilities": [
+			"heal"
+		],
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "Steam-fueled paladin knight forged of riveted brass and dark polished timber, hinged piston limbs, a closed visored helm with a valved copper crest and amber pressure-glass eyes, bolted cross-marked chest plating and engraved pauldrons, gripping a piston-jointed flanged mace and a tall bolted kite shield, jets of white steam hissing from shoulder and flank vents, standing among hazy azure spires beneath a warm pink sky, low heroic angle, richly detailed digital painting",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/bishop_pawn.png",
-					"name": "Paladin"
-				},
-				"inferredFrom": {
-					"concept": [
-						"bishop_pawn",
-						"air_darkness_bishop_pawn",
-						"air_fire_bishop_pawn"
-					],
-					"theme": [
-						"fire_water_knight",
-						"fire_water_pawn",
-						"fire_water_queen",
-						"fire_water_rook"
-					]
+					"name": "Paladin",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 3,
-		"attack": 4,
-		"health": 7,
-		"speed": 1,
-		"shield": 2,
-		"abilities": [
-			"heal"
-		]
+		}
 	},
 	{
 		"id": "fire_water_pawn_rook",

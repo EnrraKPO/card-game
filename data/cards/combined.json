@@ -404,29 +404,45 @@
 		"speed": 2,
 		"description": "Poison a unit: deal 3 damage, reduce its <attack> by 2, and apply Poison 1.",
 		"elements": [
-			"water",
-			"darkness"
+			"darkness",
+			"water"
 		],
-		"chess_pieces": [],
 		"effects": [
 			{
-				"trigger": "on_play",
-				"targeting_policy": "manual",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
 				"attribute": "damage_taken",
-				"amount": 3
+				"amount": 3,
+				"targets": {
+					"kind": "manual"
+				}
 			},
 			{
-				"trigger": "on_play",
-				"targeting_policy": "manual",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
 				"attribute": "attack",
-				"amount": -2
+				"amount": -2,
+				"targets": {
+					"kind": "manual"
+				}
 			},
 			{
-				"trigger": "on_play",
-				"targeting_policy": "manual",
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
 				"status": {
-					"id": "poison",
-					"stacks": 1
+					"id": "poison"
+				},
+				"targets": {
+					"kind": "manual"
 				}
 			}
 		]

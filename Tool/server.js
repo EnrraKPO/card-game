@@ -1072,6 +1072,9 @@ const FOLDABLE_ATTRS = ['max_health', 'attack', 'speed', 'cost', 'max_shield',
 const COND_ATTRS = ['health','attack','speed','cost','piece_count','element_count'];
 const ELEMENTS = ['fire','water','air','earth','darkness','light'];
 const PIECES = ['pawn','knight','bishop','rook','queen','king'];
+// Auto-attack targeting policies (mirrors CardData.TARGET_POLICIES and the editor's select /
+// the targeting.<policy>.desc locale keys). "" / absent = auto (derived from the composition).
+const TARGET_POLICIES = ['nearest','leaper','wounded','tank','threat'];
 
 function validateConditionList(list, where, allowMutation) {
   for (let i = 0; i < (list || []).length; i++) {
@@ -1292,6 +1295,7 @@ function validateItem(type, d) {
       }
       for (const el of d.elements || []) if (!ELEMENTS.includes(el)) return `unknown element "${el}"`;
       for (const p of d.chess_pieces || []) if (!PIECES.includes(p)) return `unknown chess piece "${p}"`;
+      if (d.target_policy && !TARGET_POLICIES.includes(d.target_policy)) return `bad target_policy "${d.target_policy}"`;
       return validateEffects(d.effects, 'card');
     }
     case 'relic': {

@@ -24,7 +24,7 @@
       ]
     },
     "at": "2026-07-06T03:29:10.127Z",
-    "fileHash": "b329e42afd93c86463048b3ea765b31083d466fb",
+    "fileHash": "f97ab2d16fd80e471f04e7d79f367a71af40b754",
     "movedFrom": "darkness_water_poison_units.json"
   },
   "card/darkness_water_bishop": {
@@ -52,7 +52,7 @@
       ]
     },
     "at": "2026-07-06T03:30:31.771Z",
-    "fileHash": "b329e42afd93c86463048b3ea765b31083d466fb",
+    "fileHash": "f97ab2d16fd80e471f04e7d79f367a71af40b754",
     "movedFrom": "darkness_water_poison_units.json"
   },
   "card/darkness_water_bishop_knight": {
@@ -80,7 +80,7 @@
       ]
     },
     "at": "2026-07-06T03:30:40.272Z",
-    "fileHash": "b329e42afd93c86463048b3ea765b31083d466fb",
+    "fileHash": "f97ab2d16fd80e471f04e7d79f367a71af40b754",
     "movedFrom": "darkness_water_poison_units.json"
   },
   "status/barrier": {
@@ -201,7 +201,7 @@
       ]
     },
     "at": "2026-07-06T16:55:44.254Z",
-    "fileHash": "b329e42afd93c86463048b3ea765b31083d466fb",
+    "fileHash": "f97ab2d16fd80e471f04e7d79f367a71af40b754",
     "movedFrom": "darkness_water_poison_units.json"
   },
   "card/frost_adept": {
@@ -251,140 +251,140 @@
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.707Z",
-    "fileHash": "435a1fdb9a6197d2b928ce788a42a459e512495b"
+    "fileHash": "d423f803d21aa8b966b514f3a11b33155fd09b37"
   },
   "card/fire_water_knight": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.712Z",
-    "fileHash": "435a1fdb9a6197d2b928ce788a42a459e512495b"
+    "fileHash": "d423f803d21aa8b966b514f3a11b33155fd09b37"
   },
   "card/fire_water_bishop": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.714Z",
-    "fileHash": "435a1fdb9a6197d2b928ce788a42a459e512495b"
+    "fileHash": "d423f803d21aa8b966b514f3a11b33155fd09b37"
   },
   "card/fire_water_rook": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.717Z",
-    "fileHash": "435a1fdb9a6197d2b928ce788a42a459e512495b"
+    "fileHash": "d423f803d21aa8b966b514f3a11b33155fd09b37"
   },
   "card/fire_water_queen": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.719Z",
-    "fileHash": "435a1fdb9a6197d2b928ce788a42a459e512495b"
+    "fileHash": "d423f803d21aa8b966b514f3a11b33155fd09b37"
   },
   "card/fire_water_pawn_pawn": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.721Z",
-    "fileHash": "435a1fdb9a6197d2b928ce788a42a459e512495b"
+    "fileHash": "d423f803d21aa8b966b514f3a11b33155fd09b37"
   },
   "card/fire_water_knight_pawn": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.724Z",
-    "fileHash": "435a1fdb9a6197d2b928ce788a42a459e512495b"
+    "fileHash": "d423f803d21aa8b966b514f3a11b33155fd09b37"
   },
   "card/fire_water_bishop_pawn": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.727Z",
-    "fileHash": "435a1fdb9a6197d2b928ce788a42a459e512495b"
+    "fileHash": "d423f803d21aa8b966b514f3a11b33155fd09b37"
   },
   "card/fire_water_pawn_rook": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.729Z",
-    "fileHash": "435a1fdb9a6197d2b928ce788a42a459e512495b"
+    "fileHash": "d423f803d21aa8b966b514f3a11b33155fd09b37"
   },
   "card/fire_water_pawn_queen": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.731Z",
-    "fileHash": "435a1fdb9a6197d2b928ce788a42a459e512495b"
+    "fileHash": "d423f803d21aa8b966b514f3a11b33155fd09b37"
   },
   "card/fire_water_knight_knight": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.733Z",
-    "fileHash": "435a1fdb9a6197d2b928ce788a42a459e512495b"
+    "fileHash": "d423f803d21aa8b966b514f3a11b33155fd09b37"
   },
   "card/fire_water_bishop_knight": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.735Z",
-    "fileHash": "435a1fdb9a6197d2b928ce788a42a459e512495b"
+    "fileHash": "d423f803d21aa8b966b514f3a11b33155fd09b37"
   },
   "card/fire_water_knight_rook": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.737Z",
-    "fileHash": "435a1fdb9a6197d2b928ce788a42a459e512495b"
+    "fileHash": "d423f803d21aa8b966b514f3a11b33155fd09b37"
   },
   "card/fire_water_knight_queen": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.739Z",
-    "fileHash": "435a1fdb9a6197d2b928ce788a42a459e512495b"
+    "fileHash": "d423f803d21aa8b966b514f3a11b33155fd09b37"
   },
   "card/fire_water_bishop_bishop": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.741Z",
-    "fileHash": "435a1fdb9a6197d2b928ce788a42a459e512495b"
+    "fileHash": "d423f803d21aa8b966b514f3a11b33155fd09b37"
   },
   "card/fire_water_bishop_rook": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.743Z",
-    "fileHash": "435a1fdb9a6197d2b928ce788a42a459e512495b"
+    "fileHash": "d423f803d21aa8b966b514f3a11b33155fd09b37"
   },
   "card/fire_water_bishop_queen": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.745Z",
-    "fileHash": "435a1fdb9a6197d2b928ce788a42a459e512495b"
+    "fileHash": "d423f803d21aa8b966b514f3a11b33155fd09b37"
   },
   "card/fire_water_rook_rook": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.748Z",
-    "fileHash": "435a1fdb9a6197d2b928ce788a42a459e512495b"
+    "fileHash": "d423f803d21aa8b966b514f3a11b33155fd09b37"
   },
   "card/fire_water_queen_rook": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.750Z",
-    "fileHash": "435a1fdb9a6197d2b928ce788a42a459e512495b"
+    "fileHash": "d423f803d21aa8b966b514f3a11b33155fd09b37"
   },
   "card/fire_water_queen_queen": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.752Z",
-    "fileHash": "435a1fdb9a6197d2b928ce788a42a459e512495b"
+    "fileHash": "d423f803d21aa8b966b514f3a11b33155fd09b37"
   },
   "status/charged": {
     "file": "charged.json",
@@ -411,7 +411,7 @@
       "effects": []
     },
     "at": "2026-07-07T05:14:16.621Z",
-    "fileHash": "6a338eae141352737f9831a23f8e281b031b9b4b"
+    "fileHash": "af9982f0829bb3c597e0441d1303716f57e3e875"
   },
   "card/water_water_bishop": {
     "file": "water_water_units.json",
@@ -427,7 +427,7 @@
       "description": "Twin-water unit."
     },
     "at": "2026-07-07T19:42:11.105Z",
-    "fileHash": "55cab18f5c5a6f4182f697714d322c0726da1225"
+    "fileHash": "8ff89642747ac5638be6beb52e60569fc5078eb3"
   },
   "card/darkness_water_knight": {
     "file": "darkness_water_units.json",
@@ -454,7 +454,7 @@
       ]
     },
     "at": "2026-07-07T21:49:59.225Z",
-    "fileHash": "b329e42afd93c86463048b3ea765b31083d466fb",
+    "fileHash": "f97ab2d16fd80e471f04e7d79f367a71af40b754",
     "movedFrom": "darkness_water_poison_units.json"
   },
   "card/darkness_water_pawn": {
@@ -482,7 +482,7 @@
       ]
     },
     "at": "2026-07-07T23:15:58.333Z",
-    "fileHash": "b329e42afd93c86463048b3ea765b31083d466fb",
+    "fileHash": "f97ab2d16fd80e471f04e7d79f367a71af40b754",
     "movedFrom": "darkness_water_poison_units.json"
   },
   "card/fire_fire_pawn": {
@@ -640,7 +640,7 @@
       "description": "Twin-water unit."
     },
     "at": "2026-07-08T00:09:33.514Z",
-    "fileHash": "55cab18f5c5a6f4182f697714d322c0726da1225"
+    "fileHash": "8ff89642747ac5638be6beb52e60569fc5078eb3"
   },
   "card/water_water_bishop_knight": {
     "file": "water_water_units.json",
@@ -657,7 +657,7 @@
       "description": "Twin-water unit."
     },
     "at": "2026-07-08T00:09:53.882Z",
-    "fileHash": "55cab18f5c5a6f4182f697714d322c0726da1225"
+    "fileHash": "8ff89642747ac5638be6beb52e60569fc5078eb3"
   },
   "card/water_water_bishop_pawn": {
     "file": "water_water_units.json",
@@ -674,7 +674,7 @@
       "description": "Twin-water unit."
     },
     "at": "2026-07-08T00:10:13.642Z",
-    "fileHash": "55cab18f5c5a6f4182f697714d322c0726da1225"
+    "fileHash": "8ff89642747ac5638be6beb52e60569fc5078eb3"
   },
   "card/water_water_bishop_queen": {
     "file": "water_water_units.json",
@@ -691,7 +691,7 @@
       "description": "Twin-water unit."
     },
     "at": "2026-07-08T00:10:33.280Z",
-    "fileHash": "55cab18f5c5a6f4182f697714d322c0726da1225"
+    "fileHash": "8ff89642747ac5638be6beb52e60569fc5078eb3"
   },
   "card/water_water_bishop_rook": {
     "file": "water_water_units.json",
@@ -708,7 +708,7 @@
       "description": "Twin-water unit."
     },
     "at": "2026-07-08T00:10:51.135Z",
-    "fileHash": "55cab18f5c5a6f4182f697714d322c0726da1225"
+    "fileHash": "8ff89642747ac5638be6beb52e60569fc5078eb3"
   },
   "card/water_water_knight": {
     "file": "water_water_units.json",
@@ -724,7 +724,7 @@
       "description": "Twin-water unit."
     },
     "at": "2026-07-08T00:11:08.480Z",
-    "fileHash": "55cab18f5c5a6f4182f697714d322c0726da1225"
+    "fileHash": "8ff89642747ac5638be6beb52e60569fc5078eb3"
   },
   "card/water_water_knight_knight": {
     "file": "water_water_units.json",
@@ -741,7 +741,7 @@
       "description": "Twin-water unit."
     },
     "at": "2026-07-08T00:11:27.950Z",
-    "fileHash": "55cab18f5c5a6f4182f697714d322c0726da1225"
+    "fileHash": "8ff89642747ac5638be6beb52e60569fc5078eb3"
   },
   "card/water_water_knight_pawn": {
     "file": "water_water_units.json",
@@ -758,7 +758,7 @@
       "description": "Twin-water unit."
     },
     "at": "2026-07-08T00:11:46.600Z",
-    "fileHash": "55cab18f5c5a6f4182f697714d322c0726da1225"
+    "fileHash": "8ff89642747ac5638be6beb52e60569fc5078eb3"
   },
   "card/water_water_knight_queen": {
     "file": "water_water_units.json",
@@ -775,7 +775,7 @@
       "description": "Twin-water unit."
     },
     "at": "2026-07-08T00:12:09.677Z",
-    "fileHash": "55cab18f5c5a6f4182f697714d322c0726da1225"
+    "fileHash": "8ff89642747ac5638be6beb52e60569fc5078eb3"
   },
   "card/water_water_knight_rook": {
     "file": "water_water_units.json",
@@ -792,7 +792,7 @@
       "description": "Twin-water unit."
     },
     "at": "2026-07-08T00:12:29.243Z",
-    "fileHash": "55cab18f5c5a6f4182f697714d322c0726da1225"
+    "fileHash": "8ff89642747ac5638be6beb52e60569fc5078eb3"
   },
   "card/water_water_pawn": {
     "file": "water_water_units.json",
@@ -808,7 +808,7 @@
       "description": "Twin-water unit."
     },
     "at": "2026-07-08T00:12:51.829Z",
-    "fileHash": "55cab18f5c5a6f4182f697714d322c0726da1225"
+    "fileHash": "8ff89642747ac5638be6beb52e60569fc5078eb3"
   },
   "card/water_water_pawn_pawn": {
     "file": "water_water_units.json",
@@ -825,7 +825,7 @@
       "description": "Twin-water unit."
     },
     "at": "2026-07-08T00:13:09.578Z",
-    "fileHash": "55cab18f5c5a6f4182f697714d322c0726da1225"
+    "fileHash": "8ff89642747ac5638be6beb52e60569fc5078eb3"
   },
   "card/water_water_pawn_queen": {
     "file": "water_water_units.json",
@@ -842,7 +842,7 @@
       "description": "Twin-water unit."
     },
     "at": "2026-07-08T00:13:29.561Z",
-    "fileHash": "55cab18f5c5a6f4182f697714d322c0726da1225"
+    "fileHash": "8ff89642747ac5638be6beb52e60569fc5078eb3"
   },
   "card/water_water_pawn_rook": {
     "file": "water_water_units.json",
@@ -859,7 +859,7 @@
       "description": "Twin-water unit."
     },
     "at": "2026-07-08T00:13:44.660Z",
-    "fileHash": "55cab18f5c5a6f4182f697714d322c0726da1225"
+    "fileHash": "8ff89642747ac5638be6beb52e60569fc5078eb3"
   },
   "card/water_water_queen": {
     "file": "water_water_units.json",
@@ -875,7 +875,7 @@
       "description": "Twin-water unit."
     },
     "at": "2026-07-08T00:14:01.608Z",
-    "fileHash": "55cab18f5c5a6f4182f697714d322c0726da1225"
+    "fileHash": "8ff89642747ac5638be6beb52e60569fc5078eb3"
   },
   "card/water_water_queen_queen": {
     "file": "water_water_units.json",
@@ -892,7 +892,7 @@
       "description": "Twin-water unit."
     },
     "at": "2026-07-08T00:14:21.727Z",
-    "fileHash": "55cab18f5c5a6f4182f697714d322c0726da1225"
+    "fileHash": "8ff89642747ac5638be6beb52e60569fc5078eb3"
   },
   "card/water_water_queen_rook": {
     "file": "water_water_units.json",
@@ -909,7 +909,7 @@
       "description": "Twin-water unit."
     },
     "at": "2026-07-08T00:14:40.083Z",
-    "fileHash": "55cab18f5c5a6f4182f697714d322c0726da1225"
+    "fileHash": "8ff89642747ac5638be6beb52e60569fc5078eb3"
   },
   "card/water_water_rook": {
     "file": "water_water_units.json",
@@ -925,7 +925,7 @@
       "description": "Twin-water unit."
     },
     "at": "2026-07-08T00:14:58.097Z",
-    "fileHash": "55cab18f5c5a6f4182f697714d322c0726da1225"
+    "fileHash": "8ff89642747ac5638be6beb52e60569fc5078eb3"
   },
   "card/water_water_rook_rook": {
     "file": "water_water_units.json",
@@ -942,7 +942,7 @@
       "description": "Twin-water unit."
     },
     "at": "2026-07-08T00:15:18.060Z",
-    "fileHash": "55cab18f5c5a6f4182f697714d322c0726da1225"
+    "fileHash": "8ff89642747ac5638be6beb52e60569fc5078eb3"
   },
   "card/air_fire_king": {
     "file": "elemental_kings.json",
@@ -966,7 +966,7 @@
       "effects": []
     },
     "at": "2026-07-08T05:03:56.598Z",
-    "fileHash": "e50c70b804dc33b5c14260bcf68103eb9158c67f"
+    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
   },
   "card/air_darkness_king": {
     "file": "elemental_kings.json",
@@ -990,7 +990,7 @@
       "effects": []
     },
     "at": "2026-07-08T05:16:43.756Z",
-    "fileHash": "e50c70b804dc33b5c14260bcf68103eb9158c67f"
+    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
   },
   "card/air_darkness_pawn": {
     "file": "air_darkness_units.json",
@@ -1437,7 +1437,7 @@
       ]
     },
     "at": "2026-07-08T05:48:20.745Z",
-    "fileHash": "387d0a59ee14cc0a18c6bb3c0ab5eea6ee521449"
+    "fileHash": "ea6a7903dfce19fd2f3853155ac5a62e732895db"
   },
   "card/earth_water_pawn": {
     "file": "earth_water_units.json",
@@ -1864,140 +1864,140 @@
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:07.427Z",
-    "fileHash": "8eb9bf3d56de2c9ca04479181e7ab4d66c31342b"
+    "fileHash": "a27e1149097bac1d6c253e4fb2fcd041e9a04672"
   },
   "card/air_air_knight": {
     "file": "air_air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:07.441Z",
-    "fileHash": "8eb9bf3d56de2c9ca04479181e7ab4d66c31342b"
+    "fileHash": "a27e1149097bac1d6c253e4fb2fcd041e9a04672"
   },
   "card/air_air_bishop": {
     "file": "air_air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:07.453Z",
-    "fileHash": "8eb9bf3d56de2c9ca04479181e7ab4d66c31342b"
+    "fileHash": "a27e1149097bac1d6c253e4fb2fcd041e9a04672"
   },
   "card/air_air_rook": {
     "file": "air_air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:07.469Z",
-    "fileHash": "8eb9bf3d56de2c9ca04479181e7ab4d66c31342b"
+    "fileHash": "a27e1149097bac1d6c253e4fb2fcd041e9a04672"
   },
   "card/air_air_queen": {
     "file": "air_air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:07.480Z",
-    "fileHash": "8eb9bf3d56de2c9ca04479181e7ab4d66c31342b"
+    "fileHash": "a27e1149097bac1d6c253e4fb2fcd041e9a04672"
   },
   "card/air_air_pawn_pawn": {
     "file": "air_air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:07.490Z",
-    "fileHash": "8eb9bf3d56de2c9ca04479181e7ab4d66c31342b"
+    "fileHash": "a27e1149097bac1d6c253e4fb2fcd041e9a04672"
   },
   "card/air_air_knight_pawn": {
     "file": "air_air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:07.502Z",
-    "fileHash": "8eb9bf3d56de2c9ca04479181e7ab4d66c31342b"
+    "fileHash": "a27e1149097bac1d6c253e4fb2fcd041e9a04672"
   },
   "card/air_air_bishop_pawn": {
     "file": "air_air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:07.510Z",
-    "fileHash": "8eb9bf3d56de2c9ca04479181e7ab4d66c31342b"
+    "fileHash": "a27e1149097bac1d6c253e4fb2fcd041e9a04672"
   },
   "card/air_air_pawn_rook": {
     "file": "air_air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:07.514Z",
-    "fileHash": "8eb9bf3d56de2c9ca04479181e7ab4d66c31342b"
+    "fileHash": "a27e1149097bac1d6c253e4fb2fcd041e9a04672"
   },
   "card/air_air_pawn_queen": {
     "file": "air_air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:07.518Z",
-    "fileHash": "8eb9bf3d56de2c9ca04479181e7ab4d66c31342b"
+    "fileHash": "a27e1149097bac1d6c253e4fb2fcd041e9a04672"
   },
   "card/air_air_knight_knight": {
     "file": "air_air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:07.534Z",
-    "fileHash": "8eb9bf3d56de2c9ca04479181e7ab4d66c31342b"
+    "fileHash": "a27e1149097bac1d6c253e4fb2fcd041e9a04672"
   },
   "card/air_air_bishop_knight": {
     "file": "air_air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:07.543Z",
-    "fileHash": "8eb9bf3d56de2c9ca04479181e7ab4d66c31342b"
+    "fileHash": "a27e1149097bac1d6c253e4fb2fcd041e9a04672"
   },
   "card/air_air_knight_rook": {
     "file": "air_air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:07.551Z",
-    "fileHash": "8eb9bf3d56de2c9ca04479181e7ab4d66c31342b"
+    "fileHash": "a27e1149097bac1d6c253e4fb2fcd041e9a04672"
   },
   "card/air_air_knight_queen": {
     "file": "air_air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:07.556Z",
-    "fileHash": "8eb9bf3d56de2c9ca04479181e7ab4d66c31342b"
+    "fileHash": "a27e1149097bac1d6c253e4fb2fcd041e9a04672"
   },
   "card/air_air_bishop_bishop": {
     "file": "air_air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:07.559Z",
-    "fileHash": "8eb9bf3d56de2c9ca04479181e7ab4d66c31342b"
+    "fileHash": "a27e1149097bac1d6c253e4fb2fcd041e9a04672"
   },
   "card/air_air_bishop_rook": {
     "file": "air_air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:07.563Z",
-    "fileHash": "8eb9bf3d56de2c9ca04479181e7ab4d66c31342b"
+    "fileHash": "a27e1149097bac1d6c253e4fb2fcd041e9a04672"
   },
   "card/air_air_bishop_queen": {
     "file": "air_air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:07.567Z",
-    "fileHash": "8eb9bf3d56de2c9ca04479181e7ab4d66c31342b"
+    "fileHash": "a27e1149097bac1d6c253e4fb2fcd041e9a04672"
   },
   "card/air_air_rook_rook": {
     "file": "air_air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:07.573Z",
-    "fileHash": "8eb9bf3d56de2c9ca04479181e7ab4d66c31342b"
+    "fileHash": "a27e1149097bac1d6c253e4fb2fcd041e9a04672"
   },
   "card/air_air_queen_rook": {
     "file": "air_air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:07.577Z",
-    "fileHash": "8eb9bf3d56de2c9ca04479181e7ab4d66c31342b"
+    "fileHash": "a27e1149097bac1d6c253e4fb2fcd041e9a04672"
   },
   "card/air_air_queen_queen": {
     "file": "air_air_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:07.581Z",
-    "fileHash": "8eb9bf3d56de2c9ca04479181e7ab4d66c31342b"
+    "fileHash": "a27e1149097bac1d6c253e4fb2fcd041e9a04672"
   },
   "card/air_earth_pawn": {
     "file": "air_earth_units.json",
@@ -2441,7 +2441,7 @@
       "effects": []
     },
     "at": "2026-07-12T07:23:23.507Z",
-    "fileHash": "387d0a59ee14cc0a18c6bb3c0ab5eea6ee521449"
+    "fileHash": "ea6a7903dfce19fd2f3853155ac5a62e732895db"
   },
   "card/darkness_water_bishop_rook": {
     "file": "darkness_water_units.json",
@@ -2469,7 +2469,7 @@
       "display_name": "Blight Arcane Tower"
     },
     "at": "2026-07-12T07:24:48.937Z",
-    "fileHash": "b329e42afd93c86463048b3ea765b31083d466fb",
+    "fileHash": "f97ab2d16fd80e471f04e7d79f367a71af40b754",
     "movedFrom": "darkness_water_poison_units.json"
   },
   "card/bishop_rook": {
@@ -2501,7 +2501,7 @@
       ]
     },
     "at": "2026-07-12T07:24:59.800Z",
-    "fileHash": "387d0a59ee14cc0a18c6bb3c0ab5eea6ee521449"
+    "fileHash": "ea6a7903dfce19fd2f3853155ac5a62e732895db"
   },
   "card/earth_fire_pawn": {
     "file": "earth_fire_units.json",
@@ -2952,7 +2952,7 @@
     },
     "movedFrom": "darkness_water_poison_units.json",
     "at": "2026-07-12T07:55:50.767Z",
-    "fileHash": "b329e42afd93c86463048b3ea765b31083d466fb"
+    "fileHash": "f97ab2d16fd80e471f04e7d79f367a71af40b754"
   },
   "card/darkness_water_queen": {
     "file": "darkness_water_units.json",
@@ -2980,7 +2980,7 @@
     },
     "movedFrom": "darkness_water_poison_units.json",
     "at": "2026-07-12T07:55:50.772Z",
-    "fileHash": "b329e42afd93c86463048b3ea765b31083d466fb"
+    "fileHash": "f97ab2d16fd80e471f04e7d79f367a71af40b754"
   },
   "card/darkness_water_pawn_pawn": {
     "file": "darkness_water_units.json",
@@ -3009,7 +3009,7 @@
     },
     "movedFrom": "darkness_water_poison_units.json",
     "at": "2026-07-12T07:55:50.777Z",
-    "fileHash": "b329e42afd93c86463048b3ea765b31083d466fb"
+    "fileHash": "f97ab2d16fd80e471f04e7d79f367a71af40b754"
   },
   "card/darkness_water_knight_pawn": {
     "file": "darkness_water_units.json",
@@ -3038,7 +3038,7 @@
     },
     "movedFrom": "darkness_water_poison_units.json",
     "at": "2026-07-12T07:55:50.781Z",
-    "fileHash": "b329e42afd93c86463048b3ea765b31083d466fb"
+    "fileHash": "f97ab2d16fd80e471f04e7d79f367a71af40b754"
   },
   "card/darkness_water_bishop_pawn": {
     "file": "darkness_water_units.json",
@@ -3067,7 +3067,7 @@
     },
     "movedFrom": "darkness_water_poison_units.json",
     "at": "2026-07-12T07:55:50.786Z",
-    "fileHash": "b329e42afd93c86463048b3ea765b31083d466fb"
+    "fileHash": "f97ab2d16fd80e471f04e7d79f367a71af40b754"
   },
   "card/darkness_water_pawn_rook": {
     "file": "darkness_water_units.json",
@@ -3096,7 +3096,7 @@
     },
     "movedFrom": "darkness_water_poison_units.json",
     "at": "2026-07-12T07:55:50.791Z",
-    "fileHash": "b329e42afd93c86463048b3ea765b31083d466fb"
+    "fileHash": "f97ab2d16fd80e471f04e7d79f367a71af40b754"
   },
   "card/darkness_water_pawn_queen": {
     "file": "darkness_water_units.json",
@@ -3125,7 +3125,7 @@
     },
     "movedFrom": "darkness_water_poison_units.json",
     "at": "2026-07-12T07:55:50.795Z",
-    "fileHash": "b329e42afd93c86463048b3ea765b31083d466fb"
+    "fileHash": "f97ab2d16fd80e471f04e7d79f367a71af40b754"
   },
   "card/darkness_water_knight_knight": {
     "file": "darkness_water_units.json",
@@ -3154,7 +3154,7 @@
     },
     "movedFrom": "darkness_water_poison_units.json",
     "at": "2026-07-12T07:55:50.800Z",
-    "fileHash": "b329e42afd93c86463048b3ea765b31083d466fb"
+    "fileHash": "f97ab2d16fd80e471f04e7d79f367a71af40b754"
   },
   "card/darkness_water_knight_rook": {
     "file": "darkness_water_units.json",
@@ -3183,7 +3183,7 @@
     },
     "movedFrom": "darkness_water_poison_units.json",
     "at": "2026-07-12T07:55:50.810Z",
-    "fileHash": "b329e42afd93c86463048b3ea765b31083d466fb"
+    "fileHash": "f97ab2d16fd80e471f04e7d79f367a71af40b754"
   },
   "card/darkness_water_knight_queen": {
     "file": "darkness_water_units.json",
@@ -3212,7 +3212,7 @@
     },
     "movedFrom": "darkness_water_poison_units.json",
     "at": "2026-07-12T07:55:50.814Z",
-    "fileHash": "b329e42afd93c86463048b3ea765b31083d466fb"
+    "fileHash": "f97ab2d16fd80e471f04e7d79f367a71af40b754"
   },
   "card/darkness_water_rook_rook": {
     "file": "darkness_water_units.json",
@@ -3241,7 +3241,7 @@
     },
     "movedFrom": "darkness_water_poison_units.json",
     "at": "2026-07-12T07:55:50.832Z",
-    "fileHash": "b329e42afd93c86463048b3ea765b31083d466fb"
+    "fileHash": "f97ab2d16fd80e471f04e7d79f367a71af40b754"
   },
   "card/darkness_water_queen_rook": {
     "file": "darkness_water_units.json",
@@ -3270,7 +3270,7 @@
     },
     "movedFrom": "darkness_water_poison_units.json",
     "at": "2026-07-12T07:55:50.837Z",
-    "fileHash": "b329e42afd93c86463048b3ea765b31083d466fb"
+    "fileHash": "f97ab2d16fd80e471f04e7d79f367a71af40b754"
   },
   "card/darkness_water_queen_queen": {
     "file": "darkness_water_units.json",
@@ -3299,7 +3299,7 @@
     },
     "movedFrom": "darkness_water_poison_units.json",
     "at": "2026-07-12T07:55:50.841Z",
-    "fileHash": "b329e42afd93c86463048b3ea765b31083d466fb"
+    "fileHash": "f97ab2d16fd80e471f04e7d79f367a71af40b754"
   },
   "card/earth_light_pawn": {
     "file": "earth_light_units.json",
@@ -4303,7 +4303,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:16:53.171Z",
-    "fileHash": "e50c70b804dc33b5c14260bcf68103eb9158c67f"
+    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
   },
   "card/air_earth_king": {
     "file": "elemental_kings.json",
@@ -4327,7 +4327,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:16:53.180Z",
-    "fileHash": "e50c70b804dc33b5c14260bcf68103eb9158c67f"
+    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
   },
   "card/air_light_king": {
     "file": "elemental_kings.json",
@@ -4351,7 +4351,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:17:12.373Z",
-    "fileHash": "e50c70b804dc33b5c14260bcf68103eb9158c67f"
+    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
   },
   "card/air_water_king": {
     "file": "elemental_kings.json",
@@ -4375,7 +4375,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:17:12.377Z",
-    "fileHash": "e50c70b804dc33b5c14260bcf68103eb9158c67f"
+    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
   },
   "card/darkness_darkness_king": {
     "file": "elemental_kings.json",
@@ -4399,7 +4399,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:17:25.803Z",
-    "fileHash": "e50c70b804dc33b5c14260bcf68103eb9158c67f"
+    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
   },
   "card/darkness_earth_king": {
     "file": "elemental_kings.json",
@@ -4423,7 +4423,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:17:25.807Z",
-    "fileHash": "e50c70b804dc33b5c14260bcf68103eb9158c67f"
+    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
   },
   "card/darkness_fire_king": {
     "file": "elemental_kings.json",
@@ -4447,7 +4447,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:17:25.811Z",
-    "fileHash": "e50c70b804dc33b5c14260bcf68103eb9158c67f"
+    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
   },
   "card/darkness_light_king": {
     "file": "elemental_kings.json",
@@ -4471,7 +4471,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:17:46.114Z",
-    "fileHash": "e50c70b804dc33b5c14260bcf68103eb9158c67f"
+    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
   },
   "card/darkness_water_king": {
     "file": "elemental_kings.json",
@@ -4504,7 +4504,7 @@
       ]
     },
     "at": "2026-07-12T09:17:46.118Z",
-    "fileHash": "e50c70b804dc33b5c14260bcf68103eb9158c67f"
+    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
   },
   "card/earth_earth_king": {
     "file": "elemental_kings.json",
@@ -4528,7 +4528,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:17:46.122Z",
-    "fileHash": "e50c70b804dc33b5c14260bcf68103eb9158c67f"
+    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
   },
   "card/earth_fire_king": {
     "file": "elemental_kings.json",
@@ -4552,7 +4552,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:18:04.630Z",
-    "fileHash": "e50c70b804dc33b5c14260bcf68103eb9158c67f"
+    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
   },
   "card/earth_light_king": {
     "file": "elemental_kings.json",
@@ -4576,7 +4576,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:18:04.634Z",
-    "fileHash": "e50c70b804dc33b5c14260bcf68103eb9158c67f"
+    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
   },
   "card/earth_water_king": {
     "file": "elemental_kings.json",
@@ -4600,7 +4600,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:18:04.638Z",
-    "fileHash": "e50c70b804dc33b5c14260bcf68103eb9158c67f"
+    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
   },
   "card/fire_fire_king": {
     "file": "elemental_kings.json",
@@ -4624,7 +4624,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:18:20.606Z",
-    "fileHash": "e50c70b804dc33b5c14260bcf68103eb9158c67f"
+    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
   },
   "card/fire_light_king": {
     "file": "elemental_kings.json",
@@ -4648,7 +4648,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:18:20.611Z",
-    "fileHash": "e50c70b804dc33b5c14260bcf68103eb9158c67f"
+    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
   },
   "card/fire_water_king": {
     "file": "elemental_kings.json",
@@ -4672,7 +4672,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:18:20.615Z",
-    "fileHash": "e50c70b804dc33b5c14260bcf68103eb9158c67f"
+    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
   },
   "card/light_light_king": {
     "file": "elemental_kings.json",
@@ -4696,7 +4696,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:18:37.021Z",
-    "fileHash": "e50c70b804dc33b5c14260bcf68103eb9158c67f"
+    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
   },
   "card/light_water_king": {
     "file": "elemental_kings.json",
@@ -4720,7 +4720,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:18:37.025Z",
-    "fileHash": "e50c70b804dc33b5c14260bcf68103eb9158c67f"
+    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
   },
   "card/water_water_king": {
     "file": "elemental_kings.json",
@@ -4744,7 +4744,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:18:37.029Z",
-    "fileHash": "e50c70b804dc33b5c14260bcf68103eb9158c67f"
+    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
   },
   "card/fire_pawn": {
     "file": "fire_units.json",
@@ -4968,7 +4968,7 @@
     "original": null,
     "added": true,
     "at": "2026-07-13T20:28:34.333Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "status/swift_barrier": {
     "file": "swift_barrier.json",
@@ -4996,21 +4996,21 @@
     "original": null,
     "added": true,
     "at": "2026-07-13T20:33:08.245Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "ability/tide_charge": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T20:33:08.248Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "ability/radiant_charge": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T20:33:08.250Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "status/stalwart_barrier": {
     "file": "stalwart_barrier.json",
@@ -5024,7 +5024,7 @@
     "original": null,
     "added": true,
     "at": "2026-07-13T20:34:30.525Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "status/umbral_barrier": {
     "file": "umbral_barrier.json",
@@ -5038,7 +5038,7 @@
     "original": null,
     "added": true,
     "at": "2026-07-13T20:35:48.234Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "ability/knight_material": {
     "file": "abilities.json",
@@ -5075,7 +5075,7 @@
       ]
     },
     "at": "2026-07-13T22:32:15.675Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "ability/pawn_material": {
     "file": "abilities.json",
@@ -5112,7 +5112,7 @@
       ]
     },
     "at": "2026-07-13T22:35:51.950Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "ability/heal": {
     "file": "abilities.json",
@@ -5135,7 +5135,7 @@
       ]
     },
     "at": "2026-07-13T22:44:26.528Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "relic/contagion_stone": {
     "file": "relics.json",
@@ -5336,7 +5336,7 @@
     },
     "deleted": true,
     "at": "2026-07-13T23:39:11.499Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "ability/castling": {
     "file": "abilities.json",
@@ -5373,7 +5373,7 @@
       ]
     },
     "at": "2026-07-14T00:02:04.308Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "card/queen": {
     "file": "materials.json",
@@ -5392,7 +5392,7 @@
       "effects": []
     },
     "at": "2026-07-14T05:14:14.482Z",
-    "fileHash": "6a338eae141352737f9831a23f8e281b031b9b4b"
+    "fileHash": "af9982f0829bb3c597e0441d1303716f57e3e875"
   },
   "vfx/aura_poison": {
     "file": "vfx.json",
@@ -5462,7 +5462,7 @@
       ]
     },
     "at": "2026-07-14T22:31:39.279Z",
-    "fileHash": "387d0a59ee14cc0a18c6bb3c0ab5eea6ee521449"
+    "fileHash": "ea6a7903dfce19fd2f3853155ac5a62e732895db"
   },
   "card/knight_rook": {
     "file": "chess_combined.json",
@@ -5500,7 +5500,7 @@
       ]
     },
     "at": "2026-07-14T22:31:39.294Z",
-    "fileHash": "387d0a59ee14cc0a18c6bb3c0ab5eea6ee521449"
+    "fileHash": "ea6a7903dfce19fd2f3853155ac5a62e732895db"
   },
   "card/rook_queen": {
     "file": "chess_combined.json",
@@ -5531,7 +5531,7 @@
       ]
     },
     "at": "2026-07-14T22:31:39.344Z",
-    "fileHash": "387d0a59ee14cc0a18c6bb3c0ab5eea6ee521449"
+    "fileHash": "ea6a7903dfce19fd2f3853155ac5a62e732895db"
   },
   "status/earth_blessing": {
     "file": "earth_blessing.json",
@@ -5545,7 +5545,7 @@
     "original": null,
     "added": true,
     "at": "2026-07-16T03:53:21.012Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "status/fire_blessing": {
     "file": "fire_blessing.json",
@@ -5573,21 +5573,21 @@
     "original": null,
     "added": true,
     "at": "2026-07-16T04:46:09.273Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "ability/air_bless": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-16T04:46:09.278Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "ability/water_bless": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-16T04:46:09.282Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "status/light_blessing": {
     "file": "light_blessing.json",
@@ -5601,7 +5601,7 @@
     "original": null,
     "added": true,
     "at": "2026-07-17T19:16:56.407Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "status/darkness_blessing": {
     "file": "darkness_blessing.json",
@@ -5615,7 +5615,7 @@
     "original": null,
     "added": true,
     "at": "2026-07-17T19:17:40.109Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "sound/ability_cast": {
     "file": "sounds.json",
@@ -5876,7 +5876,7 @@
       ]
     },
     "at": "2026-07-20T04:35:13.837Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "ability/queen_material": {
     "file": "abilities.json",
@@ -5913,7 +5913,7 @@
       ]
     },
     "at": "2026-07-20T04:35:20.214Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "card/earth": {
     "file": "materials.json",
@@ -5939,7 +5939,7 @@
       ]
     },
     "at": "2026-07-20T04:49:36.599Z",
-    "fileHash": "6a338eae141352737f9831a23f8e281b031b9b4b"
+    "fileHash": "af9982f0829bb3c597e0441d1303716f57e3e875"
   },
   "card/earth_earth": {
     "file": "combined.json",
@@ -5966,7 +5966,7 @@
       ]
     },
     "at": "2026-07-20T04:49:36.617Z",
-    "fileHash": "138a9c0d3613151467bf4b54586b1a64c73e5129"
+    "fileHash": "ff46c00c8907aafe9eb87721c4ae826cdccaed75"
   },
   "card/darkness": {
     "file": "materials.json",
@@ -5992,7 +5992,7 @@
       ]
     },
     "at": "2026-07-20T04:49:36.632Z",
-    "fileHash": "6a338eae141352737f9831a23f8e281b031b9b4b"
+    "fileHash": "af9982f0829bb3c597e0441d1303716f57e3e875"
   },
   "card/darkness_darkness": {
     "file": "combined.json",
@@ -6019,7 +6019,7 @@
       ]
     },
     "at": "2026-07-20T04:49:36.653Z",
-    "fileHash": "138a9c0d3613151467bf4b54586b1a64c73e5129"
+    "fileHash": "ff46c00c8907aafe9eb87721c4ae826cdccaed75"
   },
   "card/light": {
     "file": "materials.json",
@@ -6045,7 +6045,7 @@
       ]
     },
     "at": "2026-07-20T04:49:36.674Z",
-    "fileHash": "6a338eae141352737f9831a23f8e281b031b9b4b"
+    "fileHash": "af9982f0829bb3c597e0441d1303716f57e3e875"
   },
   "card/light_light": {
     "file": "combined.json",
@@ -6072,7 +6072,7 @@
       ]
     },
     "at": "2026-07-20T04:49:36.700Z",
-    "fileHash": "138a9c0d3613151467bf4b54586b1a64c73e5129"
+    "fileHash": "ff46c00c8907aafe9eb87721c4ae826cdccaed75"
   },
   "vfx/map_forge_alert_glow": {
     "file": "vfx.json",
@@ -6124,7 +6124,7 @@
       "effects": []
     },
     "at": "2026-07-20T21:16:26.694Z",
-    "fileHash": "6a338eae141352737f9831a23f8e281b031b9b4b"
+    "fileHash": "af9982f0829bb3c597e0441d1303716f57e3e875"
   },
   "card/knight": {
     "file": "materials.json",
@@ -6143,7 +6143,7 @@
       "effects": []
     },
     "at": "2026-07-20T21:16:26.710Z",
-    "fileHash": "6a338eae141352737f9831a23f8e281b031b9b4b"
+    "fileHash": "af9982f0829bb3c597e0441d1303716f57e3e875"
   },
   "card/rook": {
     "file": "materials.json",
@@ -6166,7 +6166,7 @@
       "effects": []
     },
     "at": "2026-07-20T21:16:26.728Z",
-    "fileHash": "6a338eae141352737f9831a23f8e281b031b9b4b"
+    "fileHash": "af9982f0829bb3c597e0441d1303716f57e3e875"
   },
   "card/pawn_pawn": {
     "file": "chess_combined.json",
@@ -6194,7 +6194,7 @@
       ]
     },
     "at": "2026-07-20T21:16:26.759Z",
-    "fileHash": "387d0a59ee14cc0a18c6bb3c0ab5eea6ee521449"
+    "fileHash": "ea6a7903dfce19fd2f3853155ac5a62e732895db"
   },
   "card/knight_pawn": {
     "file": "chess_combined.json",
@@ -6222,7 +6222,7 @@
       ]
     },
     "at": "2026-07-20T21:16:26.770Z",
-    "fileHash": "387d0a59ee14cc0a18c6bb3c0ab5eea6ee521449"
+    "fileHash": "ea6a7903dfce19fd2f3853155ac5a62e732895db"
   },
   "card/bishop_pawn": {
     "file": "chess_combined.json",
@@ -6250,7 +6250,7 @@
       ]
     },
     "at": "2026-07-20T21:16:26.805Z",
-    "fileHash": "387d0a59ee14cc0a18c6bb3c0ab5eea6ee521449"
+    "fileHash": "ea6a7903dfce19fd2f3853155ac5a62e732895db"
   },
   "card/pawn_queen": {
     "file": "chess_combined.json",
@@ -6278,7 +6278,7 @@
       ]
     },
     "at": "2026-07-20T21:16:26.825Z",
-    "fileHash": "387d0a59ee14cc0a18c6bb3c0ab5eea6ee521449"
+    "fileHash": "ea6a7903dfce19fd2f3853155ac5a62e732895db"
   },
   "card/bishop_knight": {
     "file": "chess_combined.json",
@@ -6305,14 +6305,14 @@
       ]
     },
     "at": "2026-07-20T21:16:26.840Z",
-    "fileHash": "387d0a59ee14cc0a18c6bb3c0ab5eea6ee521449"
+    "fileHash": "ea6a7903dfce19fd2f3853155ac5a62e732895db"
   },
   "ability/rally": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T21:16:26.846Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "card/knight_knight": {
     "file": "chess_combined.json",
@@ -6339,7 +6339,7 @@
       ]
     },
     "at": "2026-07-20T21:27:23.831Z",
-    "fileHash": "387d0a59ee14cc0a18c6bb3c0ab5eea6ee521449"
+    "fileHash": "ea6a7903dfce19fd2f3853155ac5a62e732895db"
   },
   "card/bishop_bishop": {
     "file": "chess_combined.json",
@@ -6366,7 +6366,7 @@
       ]
     },
     "at": "2026-07-20T21:27:23.857Z",
-    "fileHash": "387d0a59ee14cc0a18c6bb3c0ab5eea6ee521449"
+    "fileHash": "ea6a7903dfce19fd2f3853155ac5a62e732895db"
   },
   "card/bishop_queen": {
     "file": "chess_combined.json",
@@ -6393,7 +6393,7 @@
       ]
     },
     "at": "2026-07-20T21:27:23.907Z",
-    "fileHash": "387d0a59ee14cc0a18c6bb3c0ab5eea6ee521449"
+    "fileHash": "ea6a7903dfce19fd2f3853155ac5a62e732895db"
   },
   "card/knight_queen": {
     "file": "chess_combined.json",
@@ -6420,175 +6420,175 @@
       ]
     },
     "at": "2026-07-20T21:27:23.969Z",
-    "fileHash": "387d0a59ee14cc0a18c6bb3c0ab5eea6ee521449"
+    "fileHash": "ea6a7903dfce19fd2f3853155ac5a62e732895db"
   },
   "ability/light_pawn_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T21:57:38.729Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "ability/water_pawn_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:31:40.231Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "ability/fire_pawn_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:31:40.237Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "ability/darkness_pawn_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:31:40.242Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "ability/earth_pawn_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:31:40.248Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "ability/air_pawn_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:31:40.251Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "ability/light_bishop_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:33:01.977Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "ability/water_bishop_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:33:01.983Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "ability/fire_bishop_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:33:01.987Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "ability/darkness_bishop_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:33:01.992Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "ability/earth_bishop_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:33:01.996Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "ability/air_bishop_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:33:02.000Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "ability/light_queen_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:34:23.946Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "ability/water_queen_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:34:23.951Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "ability/fire_queen_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:34:23.956Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "ability/darkness_queen_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:34:23.962Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "ability/earth_queen_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:34:23.967Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "ability/air_queen_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:34:23.974Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "ability/light_knight_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:35:57.174Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "ability/water_knight_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:35:57.180Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "ability/fire_knight_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:35:57.185Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "ability/darkness_knight_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:35:57.191Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "ability/earth_knight_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:35:57.196Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "ability/air_knight_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:35:57.201Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "card/air_pawn_pawn": {
     "file": "air_units.json",
@@ -6864,7 +6864,7 @@
       ]
     },
     "at": "2026-07-23T01:53:44.780Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "ability/air_bishop_material": {
     "file": "abilities.json",
@@ -6936,7 +6936,7 @@
       ]
     },
     "at": "2026-07-23T01:53:59.354Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "ability/air_knight_material": {
     "file": "abilities.json",
@@ -7008,7 +7008,7 @@
       ]
     },
     "at": "2026-07-23T01:55:03.785Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "ability/air_knight_training_pure": {
     "file": "abilities.json",
@@ -7074,7 +7074,7 @@
       ]
     },
     "at": "2026-07-23T01:55:23.990Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
   },
   "ability/air_pawn_material": {
     "file": "abilities.json",
@@ -7146,6 +7146,2965 @@
       ]
     },
     "at": "2026-07-23T01:55:29.615Z",
-    "fileHash": "28b8775253f5c135d234a9df37987e21571b925b"
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/air_pawn_training_pure": {
+    "file": "abilities.json",
+    "original": {
+      "id": "air_pawn_training_pure",
+      "display_name": "Pure Air Combat Drill",
+      "description": "Adds up to 2 <air> to one of your <pawn> units, merging their compositions — delivered as <air>, then <air> again if it still fits. Can only target an existing <pawn> unit — never an empty slot.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "air",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "pawn"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "pawn"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:52:16.837Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/air_queen_material": {
+    "file": "abilities.json",
+    "original": {
+      "id": "air_queen_material",
+      "display_name": "Air Coronation",
+      "description": "Deliver up to 1 <queen> and 1 <air> to a target unit — or to an empty slot, spawning a <queen> and merging the <air> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "queen",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "queen",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "piece_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "air",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:52:20.429Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/darkness_bishop_material": {
+    "file": "abilities.json",
+    "original": {
+      "id": "darkness_bishop_material",
+      "display_name": "Darkness Scholarship",
+      "description": "Deliver up to 1 <bishop> and 1 <darkness> to a target unit — or to an empty slot, spawning a <bishop> and merging the <darkness> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "bishop",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "bishop",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "piece_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "darkness",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:52:57.548Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/darkness_bishop_training_pure": {
+    "file": "abilities.json",
+    "original": {
+      "id": "darkness_bishop_training_pure",
+      "display_name": "Pure Darkness Sacrament",
+      "description": "Adds up to 2 <darkness> to one of your <bishop> units, merging their compositions — delivered as <darkness>, then <darkness> again if it still fits. Can only target an existing <bishop> unit — never an empty slot.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "darkness",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "bishop"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "bishop"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:53:08.673Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/air_queen_training_pure": {
+    "file": "abilities.json",
+    "original": {
+      "id": "air_queen_training_pure",
+      "display_name": "Pure Air Etiquette",
+      "description": "Adds up to 2 <air> to one of your <queen> units, merging their compositions — delivered as <air>, then <air> again if it still fits. Can only target an existing <queen> unit — never an empty slot.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "air",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "queen"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "queen"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:53:17.128Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/darkness_knight_material": {
+    "file": "abilities.json",
+    "original": {
+      "id": "darkness_knight_material",
+      "display_name": "Darkness Taming",
+      "description": "Deliver up to 1 <knight> and 1 <darkness> to a target unit — or to an empty slot, spawning a <knight> and merging the <darkness> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "knight",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "knight",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "piece_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "darkness",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:54:16.896Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/darkness_knight_training_pure": {
+    "file": "abilities.json",
+    "original": {
+      "id": "darkness_knight_training_pure",
+      "display_name": "Pure Darkness Tricks",
+      "description": "Adds up to 2 <darkness> to one of your <knight> units, merging their compositions — delivered as <darkness>, then <darkness> again if it still fits. Can only target an existing <knight> unit — never an empty slot.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "darkness",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "knight"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "knight"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:54:24.274Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/darkness_pawn_material": {
+    "file": "abilities.json",
+    "original": {
+      "id": "darkness_pawn_material",
+      "display_name": "Darkness Conscription",
+      "description": "Deliver up to 1 <pawn> and 1 <darkness> to a target unit — or to an empty slot, spawning a <pawn> and merging the <darkness> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "pawn",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "pawn",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "piece_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "darkness",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:54:30.750Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/darkness_pawn_training_pure": {
+    "file": "abilities.json",
+    "original": {
+      "id": "darkness_pawn_training_pure",
+      "display_name": "Pure Darkness Combat Drill",
+      "description": "Adds up to 2 <darkness> to one of your <pawn> units, merging their compositions — delivered as <darkness>, then <darkness> again if it still fits. Can only target an existing <pawn> unit — never an empty slot.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "darkness",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "pawn"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "pawn"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:54:41.768Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/darkness_queen_material": {
+    "file": "abilities.json",
+    "original": {
+      "id": "darkness_queen_material",
+      "display_name": "Darkness Coronation",
+      "description": "Deliver up to 1 <queen> and 1 <darkness> to a target unit — or to an empty slot, spawning a <queen> and merging the <darkness> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "queen",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "queen",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "piece_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "darkness",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:54:47.428Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/darkness_queen_training_pure": {
+    "file": "abilities.json",
+    "original": {
+      "id": "darkness_queen_training_pure",
+      "display_name": "Pure Darkness Etiquette",
+      "description": "Adds up to 2 <darkness> to one of your <queen> units, merging their compositions — delivered as <darkness>, then <darkness> again if it still fits. Can only target an existing <queen> unit — never an empty slot.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "darkness",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "queen"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "queen"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:54:56.556Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/earth_bishop_material": {
+    "file": "abilities.json",
+    "original": {
+      "id": "earth_bishop_material",
+      "display_name": "Earth Scholarship",
+      "description": "Deliver up to 1 <bishop> and 1 <earth> to a target unit — or to an empty slot, spawning a <bishop> and merging the <earth> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "bishop",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "bishop",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "piece_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "earth",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:55:01.314Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/earth_bishop_training_pure": {
+    "file": "abilities.json",
+    "original": {
+      "id": "earth_bishop_training_pure",
+      "display_name": "Pure Earth Sacrament",
+      "description": "Adds up to 2 <earth> to one of your <bishop> units, merging their compositions — delivered as <earth>, then <earth> again if it still fits. Can only target an existing <bishop> unit — never an empty slot.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "earth",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "bishop"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "bishop"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:55:09.776Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/earth_knight_material": {
+    "file": "abilities.json",
+    "original": {
+      "id": "earth_knight_material",
+      "display_name": "Earth Taming",
+      "description": "Deliver up to 1 <knight> and 1 <earth> to a target unit — or to an empty slot, spawning a <knight> and merging the <earth> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "knight",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "knight",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "piece_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "earth",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:55:17.881Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/earth_knight_training_pure": {
+    "file": "abilities.json",
+    "original": {
+      "id": "earth_knight_training_pure",
+      "display_name": "Pure Earth Tricks",
+      "description": "Adds up to 2 <earth> to one of your <knight> units, merging their compositions — delivered as <earth>, then <earth> again if it still fits. Can only target an existing <knight> unit — never an empty slot.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "earth",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "knight"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "knight"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:55:32.026Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/earth_pawn_material": {
+    "file": "abilities.json",
+    "original": {
+      "id": "earth_pawn_material",
+      "display_name": "Earth Conscription",
+      "description": "Deliver up to 1 <pawn> and 1 <earth> to a target unit — or to an empty slot, spawning a <pawn> and merging the <earth> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "pawn",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "pawn",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "piece_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "earth",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:55:35.743Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/earth_pawn_training_pure": {
+    "file": "abilities.json",
+    "original": {
+      "id": "earth_pawn_training_pure",
+      "display_name": "Pure Earth Combat Drill",
+      "description": "Adds up to 2 <earth> to one of your <pawn> units, merging their compositions — delivered as <earth>, then <earth> again if it still fits. Can only target an existing <pawn> unit — never an empty slot.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "earth",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "pawn"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "pawn"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:55:56.036Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/earth_queen_material": {
+    "file": "abilities.json",
+    "original": {
+      "id": "earth_queen_material",
+      "display_name": "Earth Coronation",
+      "description": "Deliver up to 1 <queen> and 1 <earth> to a target unit — or to an empty slot, spawning a <queen> and merging the <earth> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "queen",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "queen",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "piece_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "earth",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:55:59.060Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/fire_bishop_material": {
+    "file": "abilities.json",
+    "original": {
+      "id": "fire_bishop_material",
+      "display_name": "Fire Scholarship",
+      "description": "Deliver up to 1 <bishop> and 1 <fire> to a target unit — or to an empty slot, spawning a <bishop> and merging the <fire> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "bishop",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "bishop",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "piece_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "fire",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:56:14.471Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/fire_bishop_training_pure": {
+    "file": "abilities.json",
+    "original": {
+      "id": "fire_bishop_training_pure",
+      "display_name": "Pure Fire Sacrament",
+      "description": "Adds up to 2 <fire> to one of your <bishop> units, merging their compositions — delivered as <fire>, then <fire> again if it still fits. Can only target an existing <bishop> unit — never an empty slot.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "fire",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "bishop"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "bishop"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:56:22.398Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/fire_knight_material": {
+    "file": "abilities.json",
+    "original": {
+      "id": "fire_knight_material",
+      "display_name": "Fire Taming",
+      "description": "Deliver up to 1 <knight> and 1 <fire> to a target unit — or to an empty slot, spawning a <knight> and merging the <fire> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "knight",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "knight",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "piece_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "fire",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:56:29.484Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/fire_knight_training_pure": {
+    "file": "abilities.json",
+    "original": {
+      "id": "fire_knight_training_pure",
+      "display_name": "Pure Fire Tricks",
+      "description": "Adds up to 2 <fire> to one of your <knight> units, merging their compositions — delivered as <fire>, then <fire> again if it still fits. Can only target an existing <knight> unit — never an empty slot.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "fire",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "knight"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "knight"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:56:37.296Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/fire_pawn_material": {
+    "file": "abilities.json",
+    "original": {
+      "id": "fire_pawn_material",
+      "display_name": "Fire Conscription",
+      "description": "Deliver up to 1 <pawn> and 1 <fire> to a target unit — or to an empty slot, spawning a <pawn> and merging the <fire> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "pawn",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "pawn",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "piece_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "fire",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:56:44.973Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/fire_pawn_training_pure": {
+    "file": "abilities.json",
+    "original": {
+      "id": "fire_pawn_training_pure",
+      "display_name": "Pure Fire Combat Drill",
+      "description": "Adds up to 2 <fire> to one of your <pawn> units, merging their compositions — delivered as <fire>, then <fire> again if it still fits. Can only target an existing <pawn> unit — never an empty slot.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "fire",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "pawn"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "pawn"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:56:59.804Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/fire_queen_material": {
+    "file": "abilities.json",
+    "original": {
+      "id": "fire_queen_material",
+      "display_name": "Fire Coronation",
+      "description": "Deliver up to 1 <queen> and 1 <fire> to a target unit — or to an empty slot, spawning a <queen> and merging the <fire> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "queen",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "queen",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "piece_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "fire",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:57:04.332Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/fire_queen_training_pure": {
+    "file": "abilities.json",
+    "original": {
+      "id": "fire_queen_training_pure",
+      "display_name": "Pure Fire Etiquette",
+      "description": "Adds up to 2 <fire> to one of your <queen> units, merging their compositions — delivered as <fire>, then <fire> again if it still fits. Can only target an existing <queen> unit — never an empty slot.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "fire",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "queen"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "queen"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:57:11.547Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/light_bishop_material": {
+    "file": "abilities.json",
+    "original": {
+      "id": "light_bishop_material",
+      "display_name": "Light Scholarship",
+      "description": "Deliver up to 1 <bishop> and 1 <light> to a target unit — or to an empty slot, spawning a <bishop> and merging the <light> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "bishop",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "bishop",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "piece_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "light",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:57:24.162Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/light_bishop_training_pure": {
+    "file": "abilities.json",
+    "original": {
+      "id": "light_bishop_training_pure",
+      "display_name": "Pure Light Sacrament",
+      "description": "Adds up to 2 <light> to one of your <bishop> units, merging their compositions — delivered as <light>, then <light> again if it still fits. Can only target an existing <bishop> unit — never an empty slot.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "light",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "bishop"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "bishop"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:57:31.740Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/light_knight_material": {
+    "file": "abilities.json",
+    "original": {
+      "id": "light_knight_material",
+      "display_name": "Light Taming",
+      "description": "Deliver up to 1 <knight> and 1 <light> to a target unit — or to an empty slot, spawning a <knight> and merging the <light> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "knight",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "knight",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "piece_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "light",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:57:41.268Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/light_knight_training_pure": {
+    "file": "abilities.json",
+    "original": {
+      "id": "light_knight_training_pure",
+      "display_name": "Pure Light Tricks",
+      "description": "Adds up to 2 <light> to one of your <knight> units, merging their compositions — delivered as <light>, then <light> again if it still fits. Can only target an existing <knight> unit — never an empty slot.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "light",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "knight"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "knight"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:57:47.285Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/light_pawn_material": {
+    "file": "abilities.json",
+    "original": {
+      "id": "light_pawn_material",
+      "display_name": "Light Conscription",
+      "description": "Deliver up to 1 <pawn> and 1 <light> to a target unit — or to an empty slot, spawning a <pawn> and merging the <light> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "pawn",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "pawn",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "piece_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "light",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:57:52.329Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/light_pawn_training_pure": {
+    "file": "abilities.json",
+    "original": {
+      "id": "light_pawn_training_pure",
+      "display_name": "Pure Light Combat Drill",
+      "description": "Adds up to 2 <light> to one of your <pawn> units, merging their compositions — delivered as <light>, then <light> again if it still fits. Can only target an existing <pawn> unit — never an empty slot.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "light",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "pawn"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "pawn"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:58:05.089Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/light_queen_material": {
+    "file": "abilities.json",
+    "original": {
+      "id": "light_queen_material",
+      "display_name": "Light Coronation",
+      "description": "Deliver up to 1 <queen> and 1 <light> to a target unit — or to an empty slot, spawning a <queen> and merging the <light> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "queen",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "queen",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "piece_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "light",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:58:09.642Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/light_queen_training_pure": {
+    "file": "abilities.json",
+    "original": {
+      "id": "light_queen_training_pure",
+      "display_name": "Pure Light Etiquette",
+      "description": "Adds up to 2 <light> to one of your <queen> units, merging their compositions — delivered as <light>, then <light> again if it still fits. Can only target an existing <queen> unit — never an empty slot.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "light",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "queen"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "queen"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:58:17.003Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/water_bishop_material": {
+    "file": "abilities.json",
+    "original": {
+      "id": "water_bishop_material",
+      "display_name": "Water Scholarship",
+      "description": "Deliver up to 1 <bishop> and 1 <water> to a target unit — or to an empty slot, spawning a <bishop> and merging the <water> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "bishop",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "bishop",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "piece_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "water",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:58:46.004Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/water_bishop_training_pure": {
+    "file": "abilities.json",
+    "original": {
+      "id": "water_bishop_training_pure",
+      "display_name": "Pure Water Sacrament",
+      "description": "Adds up to 2 <water> to one of your <bishop> units, merging their compositions — delivered as <water>, then <water> again if it still fits. Can only target an existing <bishop> unit — never an empty slot.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "water",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "bishop"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "bishop"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:58:54.848Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/water_knight_material": {
+    "file": "abilities.json",
+    "original": {
+      "id": "water_knight_material",
+      "display_name": "Water Taming",
+      "description": "Deliver up to 1 <knight> and 1 <water> to a target unit — or to an empty slot, spawning a <knight> and merging the <water> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "knight",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "knight",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "piece_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "water",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:59:03.734Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/water_knight_training_pure": {
+    "file": "abilities.json",
+    "original": {
+      "id": "water_knight_training_pure",
+      "display_name": "Pure Water Tricks",
+      "description": "Adds up to 2 <water> to one of your <knight> units, merging their compositions — delivered as <water>, then <water> again if it still fits. Can only target an existing <knight> unit — never an empty slot.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "water",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "knight"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "knight"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:59:10.341Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/water_pawn_material": {
+    "file": "abilities.json",
+    "original": {
+      "id": "water_pawn_material",
+      "display_name": "Water Conscription",
+      "description": "Deliver up to 1 <pawn> and 1 <water> to a target unit — or to an empty slot, spawning a <pawn> and merging the <water> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "pawn",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "pawn",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "piece_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "water",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:59:15.159Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/water_pawn_training_pure": {
+    "file": "abilities.json",
+    "original": {
+      "id": "water_pawn_training_pure",
+      "display_name": "Pure Water Combat Drill",
+      "description": "Adds up to 2 <water> to one of your <pawn> units, merging their compositions — delivered as <water>, then <water> again if it still fits. Can only target an existing <pawn> unit — never an empty slot.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "water",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "pawn"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "pawn"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:59:28.865Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/water_queen_material": {
+    "file": "abilities.json",
+    "original": {
+      "id": "water_queen_material",
+      "display_name": "Water Coronation",
+      "description": "Deliver up to 1 <queen> and 1 <water> to a target unit — or to an empty slot, spawning a <queen> and merging the <water> onto it. Each lands only if there is room; a unit already holding 2 pieces and 2 elements can't be targeted.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "queen",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "queen",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "piece_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "material": "water",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual_slot",
+            "conditions": [
+              {
+                "composition": [
+                  "king",
+                  "rook"
+                ],
+                "present": false
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:59:34.958Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "ability/water_queen_training_pure": {
+    "file": "abilities.json",
+    "original": {
+      "id": "water_queen_training_pure",
+      "display_name": "Pure Water Etiquette",
+      "description": "Adds up to 2 <water> to one of your <queen> units, merging their compositions — delivered as <water>, then <water> again if it still fits. Can only target an existing <queen> unit — never an empty slot.",
+      "cost": {
+        "mana": 2,
+        "tap": true
+      },
+      "autocast": true,
+      "material": "water",
+      "effects": [
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "queen"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        },
+        {
+          "kind": "custom",
+          "custom": "deliver_material",
+          "trigger": {
+            "kind": "event",
+            "event": "play",
+            "of": "self"
+          },
+          "targets": {
+            "kind": "manual",
+            "conditions": [
+              {
+                "composition": [
+                  "queen"
+                ]
+              },
+              {
+                "attribute": "element_count",
+                "comparator": "lt",
+                "value": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T02:59:41.389Z",
+    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+  },
+  "card/darkness_water": {
+    "file": "combined.json",
+    "original": {
+      "id": "darkness_water",
+      "display_name": "Blight",
+      "cost": 2,
+      "attack": 4,
+      "health": 6,
+      "speed": 2,
+      "description": "Poison a unit: deal 3 damage, reduce its <attack> by 2, and apply Poison 1.",
+      "elements": [
+        "water",
+        "darkness"
+      ],
+      "chess_pieces": [],
+      "effects": [
+        {
+          "trigger": "on_play",
+          "targeting_policy": "manual",
+          "attribute": "damage_taken",
+          "amount": 3
+        },
+        {
+          "trigger": "on_play",
+          "targeting_policy": "manual",
+          "attribute": "attack",
+          "amount": -2
+        },
+        {
+          "trigger": "on_play",
+          "targeting_policy": "manual",
+          "status": {
+            "id": "poison",
+            "stacks": 1
+          }
+        }
+      ]
+    },
+    "at": "2026-07-23T03:06:43.318Z",
+    "fileHash": "ff46c00c8907aafe9eb87721c4ae826cdccaed75"
+  },
+  "card/king": {
+    "file": "king.json",
+    "original": {
+      "id": "king",
+      "display_name": "King",
+      "cost": 0,
+      "attack": 1,
+      "health": 20,
+      "speed": 3,
+      "shield": 5,
+      "is_king": true,
+      "chess_pieces": [
+        "king"
+      ],
+      "description": "Your ruler. If the <king> falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 <shield>.",
+      "effects": []
+    },
+    "at": "2026-07-23T03:29:09.081Z",
+    "fileHash": "2b68bfea03f4b09fdef0441f61883889a3340da2"
   }
 }

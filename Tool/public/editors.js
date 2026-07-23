@@ -66,7 +66,7 @@ const CardEditor = {
     id: '', display_name: '', description: '', art_instructions: '',
     cost: 1, attack: 2, health: 3, speed: 3, shield: 0,
     elements: [], chess_pieces: [], effects: [], abilities: [],
-    ranged: false, is_king: false, enemy_only: false,
+    ranged: false, is_king: false, enemy_only: false, target_policy: '',
     _derive_stats: false,
   }),
   form(draft, ctx, onChange) {
@@ -109,6 +109,14 @@ const CardEditor = {
             { value: 'unit', label: 'Unit (fielded on the board)' },
             { value: 'spell', label: 'Spell (cast, never fielded)' },
           ], onChange, { optional: true, emptyLabel: 'auto — elements-only = spell, otherwise unit' })),
+          fld('Auto-attack target', selectInput(draft, 'target_policy', [
+            { value: 'nearest', label: 'Nearest — the closest enemy' },
+            { value: 'leaper', label: 'Leaper — jumps the front column to the backline' },
+            { value: 'wounded', label: 'Wounded — the enemy with the lowest health' },
+            { value: 'tank', label: 'Tank — the enemy with the highest health' },
+            { value: 'threat', label: 'Threat — the enemy with the highest attack' },
+          ], onChange, { optional: true, emptyLabel: 'auto — from chess composition' }),
+            'how this unit picks whom to auto-attack; a matching line is appended to the card text (spells never auto-attack)'),
         ),
       ),
       groupBox('Text (shown on the card)', locFields(draft, { type: 'card', typeLabel: 'card', onChange,
@@ -160,6 +168,7 @@ const CardEditor = {
     if (d.enemy_only) out.enemy_only = true;
     if (d.tribe) out.tribe = d.tribe;   // fodder-tribe tag (cue variants); no form input yet
     if (d.ranged) out.ranged = true;
+    if (d.target_policy) out.target_policy = d.target_policy;   // "" = auto (derive from composition)
     if (d.card_type) out.card_type = d.card_type;
     if (d.shield && d._derive_stats) out.shield = d.shield;
     if (d.effects.length) out.effects = cleanEffects(d.effects);
@@ -185,6 +194,7 @@ const CardEditor = {
     if (d._derive_stats) lines.push('Stats derived from the composition by the game.');
     else lines.push(`Cost ${d.cost} · ATK ${d.attack} · HP ${d.health} · SPD ${d.speed}${d.shield ? ' · Shield ' + d.shield : ''}.`);
     if (d.ranged) lines.push('Attacks at range (projectile).');
+    if (d.target_policy) lines.push(`Auto-attack targets: ${d.target_policy}.`);
     if (d.is_king) lines.push('KING — losing it loses the fight.');
     if (d.enemy_only) lines.push('Enemy-only: never appears in player pools.');
     for (const a of d.abilities || []) lines.push(`Offers activated ability: ${a}.`);

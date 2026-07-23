@@ -153,7 +153,11 @@
 	{
 		"id": "water_water_bishop_pawn",
 		"display_name": "Pure Water Paladin",
-		"description": "Twin-<water> unit.",
+		"cost": 3,
+		"attack": 2,
+		"health": 9,
+		"speed": 1,
+		"shield": 2,
 		"elements": [
 			"water",
 			"water"
@@ -161,6 +165,9 @@
 		"chess_pieces": [
 			"bishop",
 			"pawn"
+		],
+		"abilities": [
+			"heal"
 		],
 		"tool": {
 			"art": {
@@ -174,27 +181,12 @@
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/bishop_pawn.png",
-					"name": "Paladin"
-				},
-				"inferredFrom": {
-					"anchor": "bishop_pawn",
-					"theme": [
-						"water_water_pawn",
-						"water_water_knight",
-						"water_water_queen"
-					],
-					"mode": "concept"
+					"name": "Paladin",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 3,
-		"attack": 2,
-		"health": 9,
-		"speed": 1,
-		"shield": 2,
-		"abilities": [
-			"heal"
-		]
+		}
 	},
 	{
 		"id": "water_water_bishop_queen",
@@ -289,6 +281,11 @@
 	},
 	{
 		"id": "water_water_knight",
+		"display_name": "Pure Water Knight",
+		"cost": 2,
+		"attack": 2,
+		"health": 7,
+		"speed": 2,
 		"elements": [
 			"water",
 			"water"
@@ -296,36 +293,32 @@
 		"chess_pieces": [
 			"knight"
 		],
-		"description": "Twin-<water> unit.",
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "Plucky armored seahorse steed coiled mid-prance, body of clear rippling currents, translucent sapphire barding trimmed with branching pink coral, a pearl-studded breastplate and kelp-strap harness, flowing mane of streaming foam, luminous turquoise eyes, algae ribbons trailing from the saddle, drifting bubbles rising around it, bold outlines, luminous aqua palette, plain pale background",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/knight.png",
-					"name": "Knight"
-				},
-				"inferredFrom": {
-					"anchor": "knight",
-					"theme": [
-						"water_water_pawn",
-						"water_water_knight",
-						"water_water_queen"
-					],
-					"mode": "concept"
+					"name": "Knight",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"display_name": "Pure Water Knight",
-		"cost": 2,
-		"attack": 2,
-		"health": 7,
-		"speed": 2
+		}
 	},
 	{
 		"id": "water_water_knight_knight",
 		"display_name": "Pure Water Beast",
-		"description": "Twin-<water> unit.",
+		"cost": 4,
+		"attack": 3,
+		"health": 9,
+		"speed": 3,
 		"elements": [
 			"water",
 			"water"
@@ -346,28 +339,21 @@
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/knight_knight.png",
-					"name": "Beast"
-				},
-				"inferredFrom": {
-					"anchor": "knight_knight",
-					"theme": [
-						"water_water_pawn",
-						"water_water_knight",
-						"water_water_queen"
-					],
-					"mode": "concept"
+					"name": "Beast",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 4,
-		"attack": 3,
-		"health": 9,
-		"speed": 3
+		}
 	},
 	{
 		"id": "water_water_knight_pawn",
 		"display_name": "Pure Water Cavalry",
-		"description": "Twin-<water> unit.",
+		"cost": 3,
+		"attack": 3,
+		"health": 9,
+		"speed": 2,
+		"shield": 1,
 		"elements": [
 			"water",
 			"water"
@@ -388,30 +374,18 @@
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/knight_pawn.png",
-					"name": "Cavalry"
+					"name": "Cavalry",
+					"mode": "img2img",
+					"denoise": 0.6
 				},
 				"last": {
 					"seed": 524508333,
 					"prompt": "chibi water-elemental knight in ornate coral armor riding a galloping blue water-horse, glowing eyes, holding a radiant ice spear with pennant, flowing water manes, dynamic three-quarter pose, sunbeams through misty sky, distant pagoda and cliffs, ocean below, painterly cel-shaded anime style, cool coral-and-blue palette, bold outlines",
 					"style": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear",
 					"at": "2026-07-12"
-				},
-				"inferredFrom": {
-					"anchor": "knight_pawn",
-					"theme": [
-						"water_water_pawn",
-						"water_water_knight",
-						"water_water_queen"
-					],
-					"mode": "concept"
 				}
 			}
-		},
-		"cost": 3,
-		"attack": 3,
-		"health": 9,
-		"speed": 2,
-		"shield": 1
+		}
 	},
 	{
 		"id": "water_water_knight_queen",
@@ -466,7 +440,11 @@
 	{
 		"id": "water_water_knight_rook",
 		"display_name": "Pure Water Stable",
-		"description": "Twin-<water> unit.",
+		"cost": 5,
+		"attack": 3,
+		"health": 12,
+		"speed": 2,
+		"shield": 2,
 		"elements": [
 			"water",
 			"water"
@@ -476,6 +454,10 @@
 			"rook"
 		],
 		"ranged": true,
+		"abilities": [
+			"water_knight_training_pure",
+			"knight_material"
+		],
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -493,21 +475,15 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"abilities": [
-			"water_knight_training_pure",
-			"knight_material"
-		],
-		"cost": 5,
-		"attack": 3,
-		"health": 12,
-		"speed": 2,
-		"shield": 2
+		}
 	},
 	{
 		"id": "water_water_pawn",
 		"display_name": "Pure Water Pawn",
-		"description": "Twin-<water> unit.",
+		"cost": 1,
+		"attack": 1,
+		"health": 7,
+		"speed": 1,
 		"elements": [
 			"water",
 			"water"
@@ -527,28 +503,21 @@
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/pawn.png",
-					"name": "Pawn"
-				},
-				"inferredFrom": {
-					"anchor": "pawn",
-					"theme": [
-						"water_water_pawn",
-						"water_water_knight",
-						"water_water_queen"
-					],
-					"mode": "concept"
+					"name": "Pawn",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 1,
-		"attack": 1,
-		"health": 7,
-		"speed": 1
+		}
 	},
 	{
 		"id": "water_water_pawn_pawn",
 		"display_name": "Pure Water Warrior",
-		"description": "Twin-<water> unit.",
+		"cost": 2,
+		"attack": 2,
+		"health": 8,
+		"speed": 1,
+		"shield": 1,
 		"elements": [
 			"water",
 			"water"
@@ -569,33 +538,26 @@
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/pawn_pawn.png",
-					"name": "Warrior"
+					"name": "Warrior",
+					"mode": "img2img",
+					"denoise": 0.6
 				},
 				"last": {
 					"seed": 1407098448,
 					"prompt": "Translucent living-water footsoldier sculpted from clear flowing currents, stocky rounded warrior planted in a firm guard, ridged reef-pink armor branching across chest and shoulders, closed visored helm crested with spraying foam, calm glowing turquoise eyes, gripping a wave-curled short sword and raised buckler dripping bright droplets, misting spray swirling upward, luminous aqua palette, bold outlines, plain pale background., cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear",
 					"style": "",
 					"at": "2026-07-12"
-				},
-				"inferredFrom": {
-					"anchor": "pawn_pawn",
-					"theme": [
-						"water_water_pawn",
-						"water_water_knight",
-						"water_water_queen"
-					],
-					"mode": "concept"
 				}
 			}
-		},
-		"cost": 2,
-		"attack": 2,
-		"health": 8,
-		"speed": 1,
-		"shield": 1
+		}
 	},
 	{
 		"id": "water_water_pawn_queen",
+		"display_name": "Pure Water Commander",
+		"cost": 6,
+		"attack": 5,
+		"health": 9,
+		"speed": 3,
 		"elements": [
 			"water",
 			"water"
@@ -604,34 +566,33 @@
 			"pawn",
 			"queen"
 		],
-		"description": "Twin-<water> unit.",
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "Chibi female commander of clear rippling living water rallying tiny bubble-bodied spear troops, standing atop a branching pink coral dais draped with a kelp banner, pointing forward with a pearl-tipped liquid-glass baton, foaming cape streaming behind, pearl-domed helm, algae sash, luminous turquoise eyes, drifting bubbles rising, bold outlines, luminous aqua palette, plain pale background",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/pawn_queen.png",
-					"name": "Commander"
-				},
-				"inferredFrom": {
-					"anchor": "pawn_queen",
-					"theme": [
-						"water_water_pawn",
-						"water_water_knight",
-						"water_water_queen"
-					],
-					"mode": "concept"
+					"name": "Commander",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"display_name": "Pure Water Commander",
-		"cost": 6,
-		"attack": 5,
-		"health": 9,
-		"speed": 3
+		}
 	},
 	{
 		"id": "water_water_pawn_rook",
+		"display_name": "Pure Water Barracks",
+		"cost": 4,
+		"attack": 2,
+		"health": 12,
+		"speed": 1,
+		"shield": 1,
 		"elements": [
 			"water",
 			"water"
@@ -640,42 +601,37 @@
 			"pawn",
 			"rook"
 		],
-		"description": "Twin-<water> unit.",
-		"tool": {
-			"art": {
-				"prompt": "Sturdy squat training bastion built from branching pink coral blocks and pearl-domed battlements, translucent flowing-water banner rippling above an arched doorway glowing turquoise, a rack of coral-shafted spears tipped with crystalline droplets beside it, one chubby living-water footsoldier with pearl helm standing guard, algae tufts and drifting bubbles, bold outlines, luminous aqua palette",
-				"ref": {
-					"source": "game",
-					"path": "assets/cards/pawn_rook.png",
-					"name": "Barracks"
-				},
-				"inferredFrom": {
-					"anchor": "pawn_rook",
-					"theme": [
-						"water_water_pawn",
-						"water_water_knight",
-						"water_water_queen"
-					],
-					"mode": "concept"
-				}
-			}
-		},
-		"display_name": "Pure Water Barracks",
 		"ranged": true,
 		"abilities": [
 			"water_pawn_training_pure",
 			"pawn_material"
 		],
-		"cost": 4,
-		"attack": 2,
-		"health": 12,
-		"speed": 1,
-		"shield": 1
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Sturdy squat training bastion built from branching pink coral blocks and pearl-domed battlements, translucent flowing-water banner rippling above an arched doorway glowing turquoise, a rack of coral-shafted spears tipped with crystalline droplets beside it, one chubby living-water footsoldier with pearl helm standing guard, algae tufts and drifting bubbles, bold outlines, luminous aqua palette",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/pawn_rook.png",
+					"name": "Barracks",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
 	},
 	{
 		"id": "water_water_queen",
 		"display_name": "Pure Water Queen",
-		"description": "Twin-<water> unit.",
+		"cost": 5,
+		"attack": 5,
+		"health": 9,
+		"speed": 3,
 		"elements": [
 			"water",
 			"water"
@@ -712,11 +668,7 @@
 					"at": "2026-07-08"
 				}
 			}
-		},
-		"cost": 5,
-		"attack": 5,
-		"health": 9,
-		"speed": 3
+		}
 	},
 	{
 		"id": "water_water_queen_queen",
@@ -772,7 +724,11 @@
 	{
 		"id": "water_water_queen_rook",
 		"display_name": "Pure Water Castle",
-		"description": "Twin-<water> unit.",
+		"cost": 7,
+		"attack": 5,
+		"health": 14,
+		"speed": 2,
+		"shield": 2,
 		"elements": [
 			"water",
 			"water"
@@ -780,6 +736,11 @@
 		"chess_pieces": [
 			"queen",
 			"rook"
+		],
+		"ranged": true,
+		"abilities": [
+			"water_queen_training_pure",
+			"queen_material"
 		],
 		"tool": {
 			"art": {
@@ -793,7 +754,9 @@
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/rook_queen.png",
-					"name": "Castle"
+					"name": "Castle",
+					"mode": "img2img",
+					"denoise": 0.6
 				},
 				"llmHidden": [
 					"Composition: water + water + queen + rook.",
@@ -804,31 +767,18 @@
 					"prompt": "Cartoon chibi grand castle keep sculpted from flowing living seawater, translucent aquamarine walls veined with pearl, crystal-foam dome atop its central spire, twin tide cascades pouring from the ramparts into a swirling whirlpool moat, coral buttresses and drifting bubbles, misty turquoise spray, sunlit lagoon shore behind, bold outlines, bright sapphire-and-seafoam palette",
 					"style": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, fantasy game illustration, optimized to read at small size, chibi cartoon style. detailed background scene, neat, clear, clean background",
 					"at": "2026-07-08"
-				},
-				"inferredFrom": {
-					"anchor": "rook_queen",
-					"theme": [
-						"water_water_pawn",
-						"water_water_knight",
-						"water_water_queen"
-					],
-					"mode": "concept"
 				}
 			}
-		},
-		"ranged": true,
-		"abilities": [
-			"water_queen_training_pure",
-			"queen_material"
-		],
-		"cost": 7,
-		"attack": 5,
-		"health": 14,
-		"speed": 2,
-		"shield": 2
+		}
 	},
 	{
 		"id": "water_water_rook",
+		"display_name": "Pure Water Rook",
+		"cost": 3,
+		"attack": 1,
+		"health": 11,
+		"speed": 1,
+		"shield": 2,
 		"elements": [
 			"water",
 			"water"
@@ -836,38 +786,34 @@
 		"chess_pieces": [
 			"rook"
 		],
-		"description": "Twin-<water> unit.",
+		"ranged": true,
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "Sturdy crenellated watchtower built from branching pink coral blocks and pearl-domed battlements, walls of clear rippling currents cascading like a contained waterfall, kelp banner swaying from pearl studs, a tiny living-water guard with turquoise eyes peeking from an arched window, foam pooling at the wide flared base, drifting bubbles rising, bold outlines, luminous aqua palette, plain pale background",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/rook.png",
-					"name": "Rook"
-				},
-				"inferredFrom": {
-					"anchor": "rook",
-					"theme": [
-						"water_water_pawn",
-						"water_water_knight",
-						"water_water_queen"
-					],
-					"mode": "concept"
+					"name": "Rook",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"display_name": "Pure Water Rook",
-		"ranged": true,
-		"cost": 3,
-		"attack": 1,
-		"health": 11,
-		"speed": 1,
-		"shield": 2
+		}
 	},
 	{
 		"id": "water_water_rook_rook",
 		"display_name": "Pure Water Turret",
-		"description": "Twin-<water> unit.",
+		"cost": 6,
+		"attack": 2,
+		"health": 15,
+		"speed": 1,
+		"shield": 4,
 		"elements": [
 			"water",
 			"water"
@@ -894,11 +840,6 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 6,
-		"attack": 2,
-		"health": 15,
-		"speed": 1,
-		"shield": 4
+		}
 	}
 ]

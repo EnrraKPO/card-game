@@ -164,7 +164,6 @@
 		"attack": 1,
 		"health": 3,
 		"speed": 1,
-		"description": "A humble foot soldier. Attacks the nearest enemy.",
 		"chess_pieces": [
 			"pawn"
 		]
@@ -176,16 +175,13 @@
 		"attack": 1,
 		"health": 4,
 		"speed": 1,
-		"ranged": true,
-		"description": "A ranged attacker. Strikes the enemy with the lowest <health> from afar.",
-		"elements": [],
 		"chess_pieces": [
 			"bishop"
 		],
+		"ranged": true,
 		"abilities": [
 			"heal"
-		],
-		"effects": []
+		]
 	},
 	{
 		"id": "knight",
@@ -194,12 +190,9 @@
 		"attack": 2,
 		"health": 3,
 		"speed": 2,
-		"description": "Leaps over the entire frontmost enemy column to strike targets behind it. Falls back to the front column only if no other targets exist.",
-		"elements": [],
 		"chess_pieces": [
 			"knight"
-		],
-		"effects": []
+		]
 	},
 	{
 		"id": "rook",
@@ -209,15 +202,12 @@
 		"health": 7,
 		"speed": 1,
 		"shield": 2,
-		"description": "A stalwart fortress. Locks onto the enemy with the lowest <health> from afar. Starts each round with 2 <shield>.",
-		"elements": [],
 		"chess_pieces": [
 			"rook"
 		],
 		"abilities": [
 			"castling"
-		],
-		"effects": []
+		]
 	},
 	{
 		"id": "queen",
@@ -226,7 +216,6 @@
 		"attack": 5,
 		"health": 5,
 		"speed": 3,
-		"description": "The most powerful piece on the board. Always targets the highest-cost enemy, neutralising the most valuable target first.",
 		"chess_pieces": [
 			"queen"
 		],

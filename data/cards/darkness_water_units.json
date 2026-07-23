@@ -2,6 +2,11 @@
 	{
 		"id": "darkness_water_pawn",
 		"display_name": "Blight Pawn",
+		"cost": 1,
+		"attack": 2,
+		"health": 4,
+		"speed": 1,
+		"shield": 1,
 		"description": "Applies Poison 1 to the unit it strikes.",
 		"elements": [
 			"darkness",
@@ -49,16 +54,16 @@
 					"at": "2026-07-07"
 				}
 			}
-		},
-		"cost": 1,
-		"attack": 2,
-		"health": 4,
-		"speed": 1,
-		"shield": 1
+		}
 	},
 	{
 		"id": "darkness_water_knight",
 		"display_name": "Blight Knight",
+		"cost": 2,
+		"attack": 3,
+		"health": 4,
+		"speed": 2,
+		"shield": 1,
 		"description": "Applies Poison 1 to the unit it strikes.",
 		"elements": [
 			"darkness",
@@ -94,34 +99,28 @@
 				"prompt": "Chibi armored cavalry warhorse mount, sturdy build, barded chest and headplate, spirited stance — reimagined poison-native. Chibi armored cavalry warhorse of glistening viscous green sludge, oozing muscular body dripping toxic droplets, violet plate barding and skull-and-crossbones chestguard, tattered acid-green scarf, snorting venomous vapor, one hoof stamping bubbling ooze, glossy cel-shaded fantasy style, bold outlines, crimson blighted sky, steaming poisonous mire, dramatic backlighting",
 				"ref": {
 					"source": "upload",
-					"path": "snap_knight.png"
+					"path": "snap_knight.png",
+					"name": "snap_knight.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				},
 				"last": {
 					"seed": 261525328,
 					"prompt": "Rearing horse made of translucent toxic green slime, glowing acid-yellow body dripping goo, flowing liquid mane, dark purple armored barding and bridle adorned with skull-and-crossbones emblems, puddles and rising vapor wisps, cracked barren wasteland, deep crimson-red sky, dramatic backlit glow, bold outlines, painterly fantasy illustration, vibrant chartreuse and violet palette",
 					"style": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric light, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear,",
 					"at": "2026-07-07"
-				},
-				"inferredFrom": {
-					"anchor": "snap_knight.png",
-					"theme": [
-						"snap_darkness_water_pawn.png",
-						"snap_darkness_water_knight.png",
-						"snap_darkness_water_queen.png"
-					],
-					"mode": "concept"
 				}
 			}
-		},
-		"cost": 2,
-		"attack": 3,
-		"health": 4,
-		"speed": 2,
-		"shield": 1
+		}
 	},
 	{
 		"id": "darkness_water_bishop",
 		"display_name": "Blight Bishop",
+		"cost": 2,
+		"attack": 2,
+		"health": 5,
+		"speed": 1,
+		"shield": 1,
 		"description": "Applies Poison 1 to the unit it strikes.",
 		"elements": [
 			"darkness",
@@ -147,36 +146,37 @@
 				}
 			}
 		],
+		"abilities": [
+			"heal"
+		],
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "Chibi cleric-priest with towering pointed mitre and glowing green ooze-slime body, tarnished purple robes trailing venom, gripping a tall crook-topped staff dripping viscous poison, cradling a bubbling toxin-stained tome, skull-and-crossbones emblem on chest, hollow acid-green eyes, standing in pooling sludge, crimson miasmic wasteland, bold cel-shaded cartoon style, dramatic rim lighting",
 				"ref": {
 					"source": "upload",
-					"path": "snap_bishop.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_bishop.png",
-					"theme": [
-						"snap_darkness_water_pawn.png",
-						"snap_darkness_water_knight.png",
-						"snap_darkness_water_queen.png"
-					],
-					"mode": "concept"
+					"path": "snap_bishop.png",
+					"name": "snap_bishop.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 2,
-		"attack": 2,
-		"health": 5,
-		"speed": 1,
-		"shield": 1,
-		"abilities": [
-			"heal"
-		]
+		}
 	},
 	{
 		"id": "darkness_water_rook",
 		"display_name": "Blight Rook",
+		"cost": 3,
+		"attack": 2,
+		"health": 8,
+		"speed": 1,
+		"shield": 3,
+		"description": "Applies Poison 1 to the unit it strikes.",
 		"elements": [
 			"darkness",
 			"water"
@@ -184,48 +184,53 @@
 		"chess_pieces": [
 			"rook"
 		],
+		"ranged": true,
+		"effects": [
+			{
+				"trigger": {
+					"kind": "dual_event",
+					"event": "attack",
+					"origin_of": "self"
+				},
+				"status": {
+					"id": "poison"
+				},
+				"targets": {
+					"kind": "participant",
+					"participant": "destination"
+				}
+			}
+		],
 		"abilities": [
 			"blight_material"
 		],
-		"description": "Applies Poison 1 to the unit it strikes.",
-		"effects": [
-			{
-				"trigger": "on_attack",
-				"targeting_policy": "attack_target",
-				"status": {
-					"id": "poison",
-					"stacks": 1
-				}
-			}
-		],
-		"ranged": true,
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "Squat crenellated defensive stone tower with an arched sentry window and a guard peering out, its blocky masonry now oozing viscous toxic-green sludge from every seam, battlements sculpted into grinning bleached skulls and crossed bone struts, a tattered purple banner marked with a dripping acid-green skull draped down its face, potion-vat glow leaking through cracks, crimson smoky sky, cracked steaming wasteland, glossy cel-shaded painterly fantasy, bold outlines, dramatic backlighting",
 				"ref": {
 					"source": "upload",
-					"path": "snap_rook.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_rook.png",
-					"theme": [
-						"snap_darkness_water_pawn.png",
-						"snap_darkness_water_knight.png",
-						"snap_darkness_water_queen.png"
-					],
-					"mode": "concept"
+					"path": "snap_rook.png",
+					"name": "snap_rook.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 3,
-		"attack": 2,
-		"health": 8,
-		"speed": 1,
-		"shield": 3
+		}
 	},
 	{
 		"id": "darkness_water_queen",
 		"display_name": "Blight Queen",
+		"cost": 5,
+		"attack": 6,
+		"health": 6,
+		"speed": 3,
+		"shield": 1,
 		"description": "Applies Poison 1 to the unit it strikes.",
 		"elements": [
 			"darkness",
@@ -253,31 +258,31 @@
 		],
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "Chibi sovereign spellcaster woman, tall bone-crested crown of fused fangs, cradling a bubbling green orb of dripping venomous slime that crackles with sickly vapor, flowing acid-stained gown with corroded gauntlets and a tattered ooze-drenched mantle, cold violet glare, standing amid steaming toxic pools, glossy cel-shaded fantasy style, crimson murky sky, dramatic backlighting",
 				"ref": {
 					"source": "upload",
-					"path": "snap_queen.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_queen.png",
-					"theme": [
-						"snap_darkness_water_pawn.png",
-						"snap_darkness_water_knight.png",
-						"snap_darkness_water_queen.png"
-					],
-					"mode": "concept"
+					"path": "snap_queen.png",
+					"name": "snap_queen.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 5,
-		"attack": 6,
-		"health": 6,
-		"speed": 3,
-		"shield": 1
+		}
 	},
 	{
 		"id": "darkness_water_pawn_pawn",
 		"display_name": "Blight Warrior",
+		"cost": 2,
+		"attack": 3,
+		"health": 5,
+		"speed": 1,
+		"shield": 2,
 		"description": "Applies Poison 1 to the unit it strikes.",
 		"elements": [
 			"darkness",
@@ -320,16 +325,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 2,
-		"attack": 3,
-		"health": 5,
-		"speed": 1,
-		"shield": 2
+		}
 	},
 	{
 		"id": "darkness_water_knight_pawn",
 		"display_name": "Blight Cavalry",
+		"cost": 3,
+		"attack": 4,
+		"health": 6,
+		"speed": 2,
+		"shield": 2,
 		"description": "Applies Poison 1 to the unit it strikes.",
 		"elements": [
 			"darkness",
@@ -372,16 +377,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 3,
-		"attack": 4,
-		"health": 6,
-		"speed": 2,
-		"shield": 2
+		}
 	},
 	{
 		"id": "darkness_water_bishop_pawn",
 		"display_name": "Blight Paladin",
+		"cost": 3,
+		"attack": 3,
+		"health": 6,
+		"speed": 1,
+		"shield": 3,
 		"description": "Applies Poison 1 to the unit it strikes.",
 		"elements": [
 			"darkness",
@@ -407,6 +412,9 @@
 				}
 			}
 		],
+		"abilities": [
+			"heal"
+		],
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -424,19 +432,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 3,
-		"attack": 3,
-		"health": 6,
-		"speed": 1,
-		"shield": 3,
-		"abilities": [
-			"heal"
-		]
+		}
 	},
 	{
 		"id": "darkness_water_pawn_rook",
 		"display_name": "Blight Barracks",
+		"cost": 4,
+		"attack": 3,
+		"health": 9,
+		"speed": 1,
+		"shield": 2,
 		"description": "Applies Poison 1 to the unit it strikes.",
 		"elements": [
 			"darkness",
@@ -463,6 +468,10 @@
 				}
 			}
 		],
+		"abilities": [
+			"darkness_pawn_material",
+			"water_pawn_material"
+		],
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -480,20 +489,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"abilities": [
-			"darkness_pawn_material",
-			"water_pawn_material"
-		],
-		"cost": 4,
-		"attack": 3,
-		"health": 9,
-		"speed": 1,
-		"shield": 2
+		}
 	},
 	{
 		"id": "darkness_water_pawn_queen",
 		"display_name": "Blight Commander",
+		"cost": 6,
+		"attack": 6,
+		"health": 6,
+		"speed": 3,
+		"shield": 1,
 		"description": "Applies Poison 1 to the unit it strikes.",
 		"elements": [
 			"darkness",
@@ -536,16 +541,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 6,
-		"attack": 6,
-		"health": 6,
-		"speed": 3,
-		"shield": 1
+		}
 	},
 	{
 		"id": "darkness_water_knight_knight",
 		"display_name": "Blight Beast",
+		"cost": 4,
+		"attack": 4,
+		"health": 6,
+		"speed": 3,
+		"shield": 1,
 		"description": "Applies Poison 1 to the unit it strikes.",
 		"elements": [
 			"darkness",
@@ -588,12 +593,7 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 4,
-		"attack": 4,
-		"health": 6,
-		"speed": 3,
-		"shield": 1
+		}
 	},
 	{
 		"id": "darkness_water_bishop_knight",
@@ -617,11 +617,7 @@
 				"trigger": {
 					"kind": "dual_event",
 					"event": "attack",
-					"origin_conditions": [
-						{
-							"relation": "self"
-						}
-					]
+					"origin_of": "self"
 				},
 				"status": {
 					"id": "poison",
@@ -636,11 +632,7 @@
 				"trigger": {
 					"kind": "dual_event",
 					"event": "struck",
-					"destination_conditions": [
-						{
-							"relation": "self"
-						}
-					]
+					"destination_of": "self"
 				},
 				"targets": {
 					"kind": "participant",
@@ -652,31 +644,36 @@
 				}
 			}
 		],
+		"abilities": [
+			"heal"
+		],
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "Majestic serpentine unicorn-beast of glossy toxic-green sludge, single dripping venom-fanged horn spiraling from its scaled brow, viscous ooze cascading from its flowing mane, purple bone-plated barding etched with a bleached skull-and-crossbones crest, glowing violet eyes, rearing over a bubbling acid mire, crimson smog sky, glossy cel-shaded fantasy style, dramatic backlighting",
 				"ref": {
 					"source": "upload",
-					"path": "snap_bishop_knight.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_bishop_knight.png",
-					"theme": [
-						"snap_darkness_water_pawn.png",
-						"snap_darkness_water_knight.png",
-						"snap_darkness_water_queen.png"
-					],
-					"mode": "concept"
+					"path": "snap_bishop_knight.png",
+					"name": "snap_bishop_knight.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"abilities": [
-			"heal"
-		]
+		}
 	},
 	{
 		"id": "darkness_water_knight_rook",
 		"display_name": "Blight Stable",
+		"cost": 5,
+		"attack": 4,
+		"health": 9,
+		"speed": 2,
+		"shield": 3,
 		"description": "Applies Poison 1 to the unit it strikes.",
 		"elements": [
 			"darkness",
@@ -703,6 +700,10 @@
 				}
 			}
 		],
+		"abilities": [
+			"darkness_knight_material",
+			"water_knight_material"
+		],
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -720,20 +721,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"abilities": [
-			"darkness_knight_material",
-			"water_knight_material"
-		],
-		"cost": 5,
-		"attack": 4,
-		"health": 9,
-		"speed": 2,
-		"shield": 3
+		}
 	},
 	{
 		"id": "darkness_water_knight_queen",
 		"display_name": "Blight Monster",
+		"cost": 6,
+		"attack": 7,
+		"health": 8,
+		"speed": 4,
+		"shield": 1,
 		"description": "Applies Poison 1 to the unit it strikes.",
 		"elements": [
 			"darkness",
@@ -776,16 +773,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 6,
-		"attack": 7,
-		"health": 8,
-		"speed": 4,
-		"shield": 1
+		}
 	},
 	{
 		"id": "darkness_water_bishop_bishop",
 		"display_name": "Blight Hierophant",
+		"cost": 4,
+		"attack": 3,
+		"health": 7,
+		"speed": 1,
+		"shield": 1,
 		"description": "Applies Poison 1 to the unit it strikes.",
 		"elements": [
 			"darkness",
@@ -812,32 +809,27 @@
 				}
 			}
 		],
+		"abilities": [
+			"heal"
+		],
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "Chibi bearded high priest, tall crested mitre and flowing white beard, ornate robes and towering staff, one hand raised mid-incantation, glowing conjuration behind him. Chibi bearded high priest wreathed in toxic ooze, towering purple crested mitre and slime-drenched white beard, viscous acid-green vestments with dripping skull-and-crossbones sigils, raising a gnarled staff topped with a bubbling green skull orb, spraying venomous sludge, angry violet eyes, crimson gothic sanctum of steaming poison vats, eerie green mist, glossy cel-shaded fantasy, dramatic backlighting",
 				"ref": {
 					"source": "upload",
-					"path": "snap_bishop_bishop.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_bishop_bishop.png",
-					"theme": [
-						"snap_darkness_water_pawn.png",
-						"snap_darkness_water_knight.png",
-						"snap_darkness_water_queen.png"
-					],
-					"mode": "concept"
+					"path": "snap_bishop_bishop.png",
+					"name": "snap_bishop_bishop.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 4,
-		"attack": 3,
-		"health": 7,
-		"speed": 1,
-		"shield": 1,
-		"abilities": [
-			"heal"
-		]
+		}
 	},
 	{
 		"id": "darkness_water_bishop_rook",
@@ -899,6 +891,11 @@
 	{
 		"id": "darkness_water_bishop_queen",
 		"display_name": "Blight Goddess",
+		"cost": 6,
+		"attack": 6,
+		"health": 8,
+		"speed": 3,
+		"shield": 1,
 		"description": "Applies Poison 1 to the unit it strikes.",
 		"elements": [
 			"darkness",
@@ -924,36 +921,36 @@
 				}
 			}
 		],
+		"abilities": [
+			"heal"
+		],
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "Serene toxic-slime goddess, radiant green halo of dripping venom, tall spined headdress of purple bone plates, ornate acid-drenched robes with glowing skull-and-crossbones sigils, arms lifted in blessing spilling luminous ooze, gripping a bubbling green potion staff, glossy vibrant anime fantasy illustration, symmetrical centered pose, crimson gothic sanctum, eerie green mist, dramatic backlighting",
 				"ref": {
 					"source": "upload",
-					"path": "snap_bishop_queen.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_bishop_queen.png",
-					"theme": [
-						"snap_darkness_water_pawn.png",
-						"snap_darkness_water_knight.png",
-						"snap_darkness_water_queen.png"
-					],
-					"mode": "concept"
+					"path": "snap_bishop_queen.png",
+					"name": "snap_bishop_queen.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 6,
-		"attack": 6,
-		"health": 8,
-		"speed": 3,
-		"shield": 1,
-		"abilities": [
-			"heal"
-		]
+		}
 	},
 	{
 		"id": "darkness_water_rook_rook",
 		"display_name": "Blight Turret",
+		"cost": 6,
+		"attack": 3,
+		"health": 12,
+		"speed": 1,
+		"shield": 5,
 		"description": "Applies Poison 1 to the unit it strikes.",
 		"elements": [
 			"darkness",
@@ -997,16 +994,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 6,
-		"attack": 3,
-		"health": 12,
-		"speed": 1,
-		"shield": 5
+		}
 	},
 	{
 		"id": "darkness_water_queen_rook",
 		"display_name": "Blight Castle",
+		"cost": 7,
+		"attack": 6,
+		"health": 11,
+		"speed": 2,
+		"shield": 3,
 		"description": "Applies Poison 1 to the unit it strikes.",
 		"elements": [
 			"darkness",
@@ -1033,6 +1030,10 @@
 				}
 			}
 		],
+		"abilities": [
+			"darkness_queen_material",
+			"water_queen_material"
+		],
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -1050,20 +1051,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"abilities": [
-			"darkness_queen_material",
-			"water_queen_material"
-		],
-		"cost": 7,
-		"attack": 6,
-		"health": 11,
-		"speed": 2,
-		"shield": 3
+		}
 	},
 	{
 		"id": "darkness_water_queen_queen",
 		"display_name": "Blight Hero",
+		"cost": 8,
+		"attack": 9,
+		"health": 9,
+		"speed": 3,
+		"shield": 1,
 		"description": "Applies Poison 1 to the unit it strikes.",
 		"elements": [
 			"darkness",
@@ -1106,11 +1103,6 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 8,
-		"attack": 9,
-		"health": 9,
-		"speed": 3,
-		"shield": 1
+		}
 	}
 ]

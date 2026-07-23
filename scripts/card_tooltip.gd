@@ -88,6 +88,18 @@ static func build(inst: CardInstance, show_cost := true, scale := 1.0) -> Contro
 	if not desc.is_empty():
 		vbox.add_child(_rich_label(desc, col_w, int(18.0 * s), TEXT_MAIN))
 
+	# Auto-attack targeting policy, appended after the authored text as its own line (units only;
+	# spells return "" — see CardData.targeting_line). Colour-dimmed to read as a system rule.
+	var targeting := inst.data.targeting_line()
+	if not targeting.is_empty():
+		vbox.add_child(_rich_label(targeting, col_w, int(15.0 * s), TEXT_SECTION))
+
+	# Rooted-building note, appended after the authored/targeting text as its own line (buildings
+	# only; non-buildings return "" — see CardData.building_line). Colour-dimmed as a system rule.
+	var building := inst.data.building_line()
+	if not building.is_empty():
+		vbox.add_child(_rich_label(building, col_w, int(15.0 * s), TEXT_SECTION))
+
 	# Activated abilities: a SMALL ability-widget view per ability beside its description —
 	# the same visual the tray uses, so "this is an ability" reads identically everywhere.
 	# Info-only here (mouse-ignored, not draggable); activation stays in the tray.
