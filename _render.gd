@@ -109,6 +109,19 @@ func _ready() -> void:
 					if j != i:   # pairI-I = a SINGLE selection (one filled slot)
 						n.call("_on_tap", {"kind": "card", "idx": j})
 					break
+	# Crafting screen "charmsel": select the first charm only (the charm-chip Highlight state).
+	if scene_path.contains("combination") and "charmsel" in args:
+		for n: Node in sv.find_children("*", "Control", true, false):
+			if n.has_method("_on_tap"):
+				n.call("_on_tap", {"kind": "charm", "id": GameData.current_run.charms[0]})
+				break
+	# Crafting screen "charmpair": stage the ATTACH merge — select the first charm, then tap a card.
+	if scene_path.contains("combination") and "charmpair" in args:
+		for n: Node in sv.find_children("*", "Control", true, false):
+			if n.has_method("_on_tap"):
+				n.call("_on_tap", {"kind": "charm", "id": GameData.current_run.charms[0]})
+				n.call("_on_tap", {"kind": "card", "idx": 0})
+				break
 	# Crafting screen "drag": simulate an in-flight drag of the LAST deck entry (combine with
 	# "merged" so the dragged 2-piece card grays out its incompatible targets).
 	if scene_path.contains("combination") and "drag" in args:
