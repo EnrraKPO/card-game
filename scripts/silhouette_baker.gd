@@ -68,6 +68,11 @@ func _render_clone(widget: Control, host: Node, dup_flags: int) -> Image:
 	# (offset may be negative where the subtree overhangs) exactly at the viewport's (0, 0).
 	clone.position = -offset
 	clone.size = widget.size
+	# The silhouette is baked in the widget's UNSCALED local space (offset/bbox are measured
+	# there too) — a highlighted/scaled widget's transform is applied at DRAW time by the
+	# consumer (GlowFx._sync), so the bake stays valid across a scale animation.
+	clone.scale = Vector2.ONE
+	clone.rotation = 0.0
 	holder.add_child(clone)
 	host.add_child(vp)
 	# Let it lay out and render, then read it back. Two frames is belt-and-braces for the clone's
@@ -82,9 +87,11 @@ func _render_clone(widget: Control, host: Node, dup_flags: int) -> Image:
 
 
 # The subtree's bounding box in the widget's LOCAL space: union of the widget's own rect and every
-# visible descendant Control's rect, expressed relative to the widget's global origin.
+# visible descendant Control's rect. Descendant rects are mapped through the widget's inverse
+# global transform, so the measure is SCALE-NORMALIZED — a widget mid-scale-animation (the
+# Highlight treatment) measures the same local bbox as at rest. (Assumes no rotation.)
 func _measure(widget: Control) -> void:
-	var wpos := widget.global_position
+	var inv := widget.get_global_transform().affine_inverse()
 	var min_p := Vector2.ZERO                 # the widget's own origin is (0,0) in its own space
 	var max_p := widget.size
 	for n: Node in widget.find_children("*", "Control", true, false):
@@ -92,8 +99,9 @@ func _measure(widget: Control) -> void:
 		if not c.is_visible_in_tree() or c.size == Vector2.ZERO:
 			continue
 		var gr := c.get_global_rect()
-		var rp := gr.position - wpos
-		min_p = Vector2(minf(min_p.x, rp.x), minf(min_p.y, rp.y))
-		max_p = Vector2(maxf(max_p.x, rp.x + gr.size.x), maxf(max_p.y, rp.y + gr.size.y))
+		var p1: Vector2 = inv * gr.position
+		var p2: Vector2 = inv * gr.end
+		min_p = Vector2(minf(min_p.x, p1.x), minf(min_p.y, p1.y))
+		max_p = Vector2(maxf(max_p.x, p2.x), maxf(max_p.y, p2.y))
 	offset = min_p
 	bbox = max_p - min_p

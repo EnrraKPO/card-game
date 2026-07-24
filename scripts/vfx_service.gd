@@ -46,6 +46,9 @@ func _ready() -> void:
 	_layer = CanvasLayer.new()
 	_layer.layer = 90
 	add_child(_layer)
+	# The canonical selection Highlight (grow + outline + glow, see HighlightFx) is a core UI
+	# treatment owned by no single screen — registered here so it's live everywhere from boot.
+	register_custom("highlight", HighlightFx.state)
 
 
 # The overlay layer, for effects that must escape the UI tree's clipping. A RenderFilter whose

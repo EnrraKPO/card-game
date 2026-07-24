@@ -29,17 +29,7 @@ func setup(widget: Control, params: Dictionary) -> void:
 	color = Color.WHITE
 	visible = false                # stays hidden until the silhouette is baked
 
-	var spread := float(params.get("spread", 40.0))
-	_pad = spread + 12.0
-	_base_intensity = float(params.get("intensity", 1.0))
-
-	_mat = ShaderMaterial.new()
-	_mat.shader = load(SHADER_PATH)
-	_mat.set_shader_parameter("shape_mode", 0)                 # sample a real silhouette texture
-	_mat.set_shader_parameter("spread", spread)
-	_mat.set_shader_parameter("falloff", float(params.get("falloff", 2.0)))
-	_mat.set_shader_parameter("glow_color", _parse_color(params.get("glow_color", "ffffff")))
-	_mat.set_shader_parameter("intensity", _base_intensity)
+	_configure(params)             # subclass hook: builds _mat + sets _pad/_base_intensity
 	material = _mat
 
 	if widget.item_rect_changed.is_connected(_on_widget_moved):
@@ -60,6 +50,23 @@ func setup(widget: Control, params: Dictionary) -> void:
 	_sync()
 	_apply_visibility()
 	_start_breathing(params)
+
+
+# Builds the ShaderMaterial and sets _pad/_base_intensity from the entry's params. The base is
+# the plain outer glow; HighlightFx overrides this with its outline+glow shader (and its widget
+# scale-up). Called from setup with _widget already assigned.
+func _configure(params: Dictionary) -> void:
+	var spread := float(params.get("spread", 40.0))
+	_pad = spread + 12.0
+	_base_intensity = float(params.get("intensity", 1.0))
+
+	_mat = ShaderMaterial.new()
+	_mat.shader = load(SHADER_PATH)
+	_mat.set_shader_parameter("shape_mode", 0)                 # sample a real silhouette texture
+	_mat.set_shader_parameter("spread", spread)
+	_mat.set_shader_parameter("falloff", float(params.get("falloff", 2.0)))
+	_mat.set_shader_parameter("glow_color", _parse_color(params.get("glow_color", "ffffff")))
+	_mat.set_shader_parameter("intensity", _base_intensity)
 
 
 func _on_widget_moved() -> void:
@@ -108,18 +115,24 @@ func _on_widget_gone() -> void:
 
 # Place our padded quad over the widget's silhouette bbox in GLOBAL space (we're on the overlay
 # layer, not the widget's child), and tell the shader where the silhouette sits inside that quad.
+# TRANSFORM-AWARE: offset/bbox are measured in the widget's unscaled local space (see
+# SilhouetteBaker), so they're mapped through the widget's live global transform here — a widget
+# mid-scale (the Highlight treatment) keeps its outline/glow hugging the enlarged silhouette,
+# while the pad stays constant screen px. (Assumes no rotation.)
 func _sync() -> void:
 	if _widget == null or not is_instance_valid(_widget) or _mat == null:
 		return
-	var origin := _widget.global_position + _baker.offset
-	var quad := _baker.bbox + Vector2(_pad, _pad) * 2.0
+	var xf := _widget.get_global_transform()
+	var origin: Vector2 = xf * _baker.offset
+	var sbbox := _baker.bbox * xf.get_scale()
+	var quad := sbbox + Vector2(_pad, _pad) * 2.0
 	if quad.x <= 0.0 or quad.y <= 0.0:
 		return
 	global_position = origin - Vector2(_pad, _pad)
 	size = quad
 	_mat.set_shader_parameter("u_size", quad)
 	_mat.set_shader_parameter("u_src_rect", Vector4(
-			_pad / quad.x, _pad / quad.y, _baker.bbox.x / quad.x, _baker.bbox.y / quad.y))
+			_pad / quad.x, _pad / quad.y, sbbox.x / quad.x, sbbox.y / quad.y))
 
 
 func _start_breathing(params: Dictionary) -> void:

@@ -2027,6 +2027,27 @@
 		"prompt": "Sprite sheet of two tiny green check glints twinkling briefly, minimal save confirmation, 4 frames on transparent background, 2d game effect"
 	},
 	{
+		"id": "highlight",
+		"display_name": "Selection Highlight",
+		"category": "ui",
+		"renderer": "custom",
+		"behavior": "glow",
+		"params": {
+			"scale": 1.15,
+			"outline_color": "ffffff",
+			"outline_width": 6,
+			"glow_color": "ffffff",
+			"glow_intensity": 1.0,
+			"glow_span": 30,
+			"glow_spread": 2.0
+		},
+		"sustained": true,
+		"placeholder": false,
+		"concept": "THE canonical 'this is selected / active' treatment for any widget, anywhere — one visual language for selection (forge source card now, combat selection next), defined once and tuned here, never per-screen.",
+		"explanation": "IMPLEMENTED (HighlightFx): the widget grows in place by `scale` (pure canvas transform — its layout size never changes, nothing around it moves) while a thick `outline_color` outline of `outline_width` px hugs its true composited silhouette, wrapped in a dense outer glow reaching `glow_span` px past the outline; `glow_spread` shapes the glow's density (higher = packed near the outline) and `glow_intensity` its brightness. Rides the composited-silhouette overlay path, so it never clips and never covers a badge or pip.",
+		"prompt": "Sprite sheet of a bright white outline flaring around a playing card with a dense soft white glow radiating outward, selection highlight effect, 8 frames on transparent background, 2d game effect"
+	},
+	{
 		"id": "card_draw_flick",
 		"display_name": "Card Draw",
 		"category": "card",
