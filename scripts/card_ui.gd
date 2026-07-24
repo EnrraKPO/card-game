@@ -606,9 +606,11 @@ func set_stat_tooltips(texts: Dictionary) -> void:
 		ready.connect(_apply_stat_tooltips, CONNECT_ONE_SHOT)
 
 
-# Each badge texture catches the hover; its number label is made mouse-transparent so the hover
-# lands on the badge beneath. A non-empty per-badge tooltip also stops the lookup from walking up
-# to the card root (whose tooltip is the whole-card panel). Via UIScale.tip, so touch stays clean.
+# A StatBadgeTip overlay laid over each badge catches the hover and provides the rich, colour-named
+# tooltip; the badge's number label is made mouse-transparent so the hover lands on the overlay
+# beneath. Owning the tooltip per-badge also stops the lookup from walking up to the card root
+# (whose tooltip is the whole-card panel). StatBadgeTip.attach routes through UIScale.tip, so touch
+# stays clean. Each tip is a {title, color, body} from CardTooltip.stat_tips.
 func _apply_stat_tooltips() -> void:
 	var badges := {
 		"health": [_hp_bg, _hp_lbl],
@@ -621,9 +623,9 @@ func _apply_stat_tooltips() -> void:
 			continue
 		var bg: Control = badges[stat][0]
 		var lbl: Control = badges[stat][1]
+		var tip: Dictionary = _pending_stat_tips[stat]
 		if bg != null:
-			bg.mouse_filter = Control.MOUSE_FILTER_STOP
-			UIScale.tip(bg, str(_pending_stat_tips[stat]))
+			StatBadgeTip.attach(bg, tip["title"], tip["color"], tip["body"])
 		if lbl != null:
 			lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 

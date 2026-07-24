@@ -231,6 +231,30 @@ func _ready() -> void:
 			board2.interaction.begin(board2.make_autocast_action(board2.get_card_ui(rk2)))
 			await get_tree().process_frame
 	# "inspect": pop the full-screen CardInspector over the scene (a content-rich card).
+	# "stattip": a single stat badge's rich hover tooltip (colour-named), built directly since a real
+	# hover can't be staged. Pass stat=<health|shield|attack|speed> to pick which.
+	if "stattip" in args:
+		var stat := "speed"
+		var scid := "knight"
+		for a: String in args:
+			if a.begins_with("stat="):
+				stat = a.trim_prefix("stat=")
+			if a.begins_with("card="):
+				scid = a.trim_prefix("card=")
+		var stips := CardTooltip.stat_tips(CardInstance.from_data(CardData.get_card(scid)))
+		var st: Dictionary = stips[stat]
+		var sbt := StatBadgeTip.new()
+		sbt._title = st["title"]
+		sbt._title_color = st["color"]
+		sbt._body = st["body"]
+		var tipnode: Control = sbt._make_custom_tooltip("")
+		var scc := CenterContainer.new()
+		scc.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		scc.add_child(tipnode)
+		var scl := CanvasLayer.new()
+		scl.layer = 200
+		scl.add_child(scc)
+		sv.add_child(scl)
 	# "hovertip": the compact hover CardTooltip (normally only shown by a real mouse hover),
 	# centered on the scene so its yellow expand-footnote can be eyeballed.
 	if "hovertip" in args:

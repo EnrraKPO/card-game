@@ -300,13 +300,20 @@ static func _stat_row(icon_tex: Texture2D, value: int, num_color: Color, stat_co
 	return row
 
 
-# The card's own explanations, keyed by stat, for the card-badge hover tooltips (term name + rule,
-# with the live formula appended to Speed) — the same text the glossary column shows.
+# The card's own explanations, keyed by stat, for the card-badge hover tooltips — each a
+# {title, color, body}: the stat's name in its glossary colour over the plain-language rule (with
+# the live formula appended to Speed's body). Consumed by CardUI.set_stat_tooltips (StatBadgeTip).
 static func stat_tips(inst: CardInstance) -> Dictionary:
+	var colors := {
+		"health": HEALTH_COLOR, "shield": SHIELD_COLOR,
+		"attack": ATTACK_COLOR, "speed": SPEED_COLOR,
+	}
 	var tips := {}
 	for k: String in ["health", "shield", "attack", "speed"]:
-		tips[k] = Loc.t("term." + k) + " — " + Loc.t("statguide." + k)
-	tips["speed"] += "\n\n" + _crit_dodge_note(inst)
+		var body := Loc.t("statguide." + k)
+		if k == "speed":
+			body += "\n\n" + _crit_dodge_note(inst)
+		tips[k] = {"title": Loc.t("term." + k), "color": colors[k], "body": body}
 	return tips
 
 
