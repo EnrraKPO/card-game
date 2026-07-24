@@ -458,10 +458,41 @@ func derive_presentation() -> void:
 		return
 	if not _noninteractive and (playable_check.is_valid() or is_generated):
 		set_selected(ctx.is_selected(self))
+	var tags: Array[Dictionary] = []
 	if slot != null and slot.get_card() == self and card_instance != null:
 		set_exhausted(card_instance.attack_exhausted)
 		set_inspected(ctx.inspected_instance() == card_instance)
-		set_threat_highlight(ctx.menaces_pivot(card_instance))
+		var menacing := ctx.menaces_pivot(card_instance)
+		set_threat_highlight(menacing)
+		# The word for each visual cue, from the SAME verdict that lights the cue — so a tag can
+		# never disagree with the glow/crosshair it explains. Both can apply at once (a unit that
+		# attacks the pivot AND is the pivot's own victim wears both sets).
+		#
+		# Each flag also carries the ODDS of the exchange it names, asked of the Resolver — the same
+		# functions the actual swing rolls against, so the preview cannot drift from the resolution
+		# (they are pure queries: crit_chance/dodge_chance run a rewrite-only interception pass and
+		# submit nothing). Both are speed-scaled, which is why they hang off the Speed badge.
+		var pivot := ctx.pivot()
+		if ctx.is_pivot_target(card_instance):
+			# The pivot swings at ME: its crit chance, my chance to dodge it.
+			tags.append({"id": "current_target"})
+			tags.append({"id": "crit_taken",
+				"params": {"n": _as_pct(Resolver.crit_chance(pivot, card_instance))}})
+			tags.append({"id": "dodge_taken",
+				"params": {"n": _as_pct(Resolver.dodge_chance(card_instance, pivot))}})
+		if menacing:
+			# I swing at the pivot: my crit chance, the pivot's chance to dodge me.
+			tags.append({"id": "menacing"})
+			tags.append({"id": "crit_dealt",
+				"params": {"n": _as_pct(Resolver.crit_chance(card_instance, pivot))}})
+			tags.append({"id": "dodge_dealt",
+				"params": {"n": _as_pct(Resolver.dodge_chance(pivot, card_instance))}})
+	_apply_tags(tags)
+
+
+# Resolver rates are 0..1; the tags speak in whole percent.
+func _as_pct(rate: float) -> int:
+	return int(round(rate * 100.0))
 
 
 # Re-derives the glow/dim from current facts. Safe to call from anywhere at any time.
@@ -557,6 +588,44 @@ func refresh() -> void:
 		desc = (desc + "\n" + building) if not desc.is_empty() else building
 	# The card's native fallback tooltip can't render icons/BBCode — resolve markup to words.
 	UIScale.tip(self, TextIcons.plain(desc) if not desc.is_empty() else card_instance.data.display_name)
+
+
+# Attaches per-badge hover tooltips to THIS card's own stat badges — a stat→text map keyed
+# "health", "shield", "attack", "speed". Used only by the CardInspector's enlarged card, so
+# pointing at a number explains it (and NOT the board cards, which show the whole-card tooltip).
+# Deferred to _ready when necessary: CardUI.create returns before _ready runs, so the @onready
+# badge refs are null at build time — applying then would silently no-op (the bug that made the
+# card's own full tooltip leak through instead).
+var _pending_stat_tips: Dictionary = {}
+
+func set_stat_tooltips(texts: Dictionary) -> void:
+	_pending_stat_tips = texts
+	if is_node_ready():
+		_apply_stat_tooltips()
+	else:
+		ready.connect(_apply_stat_tooltips, CONNECT_ONE_SHOT)
+
+
+# Each badge texture catches the hover; its number label is made mouse-transparent so the hover
+# lands on the badge beneath. A non-empty per-badge tooltip also stops the lookup from walking up
+# to the card root (whose tooltip is the whole-card panel). Via UIScale.tip, so touch stays clean.
+func _apply_stat_tooltips() -> void:
+	var badges := {
+		"health": [_hp_bg, _hp_lbl],
+		"shield": [_shield_bg, _shield_lbl],
+		"attack": [_atk_bg, _atk_lbl],
+		"speed":  [_spd_bg, _spd_lbl],
+	}
+	for stat: String in badges:
+		if not _pending_stat_tips.has(stat):
+			continue
+		var bg: Control = badges[stat][0]
+		var lbl: Control = badges[stat][1]
+		if bg != null:
+			bg.mouse_filter = Control.MOUSE_FILTER_STOP
+			UIScale.tip(bg, str(_pending_stat_tips[stat]))
+		if lbl != null:
+			lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 
 # Global-space centre of the badge that displays a given stat, so combat VFX can pop a number
@@ -685,6 +754,243 @@ func set_threat_highlight(on: bool) -> void:
 	_threat_tw.tween_property(_atk_bg, "modulate", warm, 0.55)
 	if has_lbl:
 		_threat_tw.parallel().tween_property(_atk_lbl, "modulate", warm, 0.55)
+
+
+# ── Presentation tags ───────────────────────────────────────────────────────────
+# The WORDS for the card's combat cues: a stack of small coloured labels under the nameplate that
+# name what a visual state means ("Current Target" for the crosshair, "Targeted by:" for the red
+# menace glow). A cue teaches its meaning once and then stands alone; until then the tag says it
+# outright.
+#
+# GENERAL, not one-off: a tag is an id in TAGS (text key, its two colours, and WHERE it hangs) and
+# the card wears a LIST of them, derived in derive_presentation from the same verdicts that light
+# the cues. Adding a future tag (rooted, exhausted, silenced…) is one table entry plus one line in
+# the derivation — no new node plumbing, no new push path. Like every other presentation state here
+# the list is derived and never pushed, so a card that leaves the board (or the combat screen) sheds
+# its tags on the next derive rather than needing anyone to remember to clear them.
+#
+# `place` picks one of the PLACEMENTS below; each is a holder built lazily on first use, so a tag
+# added later can pick an existing spot or declare a new one without touching the appliers.
+# `ol` is the text's outline — chosen AWAY from the font colour (a light halo behind dark text, a
+# dark one behind light text) so the lettering holds its shape over both the tag's own fill and the
+# busy card art a wide tag overhangs.
+#
+# The two hues are the two SIDES of the declared exchange, and every tag inherits the hue of the
+# cue it elaborates: gold = what the pivot does to this card (it is the pivot's victim), red = what
+# this card does to the pivot (it menaces the pivot). A card that is both wears both sets.
+const TAG_GOLD := Color("f2c319")
+const TAG_GOLD_OL := Color("fff4cc")
+const TAG_RED := Color("c02a22")
+const TAG_RED_OL := Color("360705")
+
+const TAGS := {
+	"current_target": {"loc": "combat.tag_current_target", "bg": TAG_GOLD, "fg": Color.BLACK,
+		"ol": TAG_GOLD_OL, "place": "below_name"},
+	# Worn by a unit whose auto-attack resolves ONTO the pivot — the red menace glow's caption.
+	"menacing": {"loc": "combat.tag_menacing", "bg": TAG_RED, "fg": Color.WHITE,
+		"ol": TAG_RED_OL, "place": "left_of_name"},
+	# The odds of the exchange, beside the Speed badge — the stat both quantities are driven by
+	# (Resolver.crit_chance / dodge_chance are speed-scaled), so the number sits next to its cause.
+	# Gold pair: the pivot ATTACKS this card. Red pair: this card attacks the pivot.
+	#
+	# Whose number is it? One rule, applied everywhere: an UNQUALIFIED label is the card the chip
+	# hangs off, "Your …" is the selected unit. So the gold pair reads "Your Crit" (your unit's crit
+	# on this victim) + "Dodge" (this victim's own dodge), and the red pair reads "Crit" (this
+	# attacker's crit) + "Your Dodge" (your unit's dodge against it) — each chip names its owner.
+	"crit_taken": {"loc": "combat.tag_crit_own", "bg": TAG_GOLD, "fg": Color.BLACK,
+		"ol": TAG_GOLD_OL, "place": "beside_speed"},
+	"dodge_taken": {"loc": "combat.tag_dodge", "bg": TAG_GOLD, "fg": Color.BLACK,
+		"ol": TAG_GOLD_OL, "place": "beside_speed"},
+	"crit_dealt": {"loc": "combat.tag_crit", "bg": TAG_RED, "fg": Color.WHITE,
+		"ol": TAG_RED_OL, "place": "beside_speed"},
+	"dodge_dealt": {"loc": "combat.tag_dodge_own", "bg": TAG_RED, "fg": Color.WHITE,
+		"ol": TAG_RED_OL, "place": "beside_speed"},
+}
+
+# Native-canvas geometry (the card is authored at NATIVE_SIZE and scaled as one unit, so these are
+# plain authored coordinates). Both bands are read off the nameplate's authored anchors — see
+# NameBg in card_ui.tscn: it spans x 50 → 216 and y -4 → 43.6.
+const TAG_HEIGHT := 40.0
+const TAG_SPACING := 4.0
+const TAG_FONT_SIZE := 24
+const TAG_OUTLINE := 10        # text outline, in native px — thick enough to read over card art
+const TAG_BORDER := 4.0        # the tag's own rim
+const TAG_CORNER := 9
+const TAG_GAP := 4.0           # breathing room between a tag stack and the widget it hangs off
+const TAG_Z := 60              # above the board's cards/slots, below full-screen overlay layers
+const NAME_LEFT := 50.0        # nameplate's left edge
+const NAME_MID_Y := 19.8       # nameplate's vertical centre — fallback for _name_band_mid()
+const TAG_TOP := 49.0          # first row of the below-name stack, clearing the nameplate
+
+# Where each placement hangs. Every tag box sizes to ITS OWN TEXT and is then positioned outright
+# in native canvas coords, so a longer translation widens the tag instead of truncating it.
+#   • "below_name"    — centred under the nameplate. Its mirror image is itself, which is why it's
+#                       absent from _flip_nodes.
+#   • "left_of_name"  — on the name's own band, right edge tucked against the nameplate and growing
+#                       leftwards. It is NOT clamped to the card: the nameplate is authored centred,
+#                       leaving only ~50px of the 260px card to its left, so any tag wider than that
+#                       hangs off the card's left edge. That is deliberate — the tag sits BESIDE the
+#                       name, never over it, and the card's own art and nameplate stay untouched.
+#   • "beside_speed"  — stacked against the Speed badge, on the badge's OUTWARD side (away from the
+#                       card's centre), so it follows the badge when a flipped card mirrors its
+#                       stat cluster instead of needing its own mirrored copy.
+const PLACEMENTS := {
+	"below_name": {"align": "centre_below"},
+	"left_of_name": {"align": "right_edge_at_name"},
+	"beside_speed": {"align": "outward_of_speed"},
+}
+
+var _tag_holders: Dictionary = {}   # place -> VBoxContainer, built on first use
+var _tags_sig: String = ""          # id+params of what is currently mounted — the change guard
+
+
+# The single place tags land. Each entry is {"id": <TAGS key>, "params": {…}}, params filling the
+# {placeholders} in the tag's localized text. Idempotent: the guard compares ids AND their values,
+# so a re-derive is free while a CHANGED number (a buff shifting the odds) still repaints.
+func _apply_tags(specs: Array[Dictionary]) -> void:
+	var sig := ""
+	for s: Dictionary in specs:
+		sig += String(s.get("id", "")) + str(s.get("params", {})) + ";"
+	if sig == _tags_sig:
+		return
+	_tags_sig = sig
+	# Group by placement first, so each holder is rebuilt once from the full list it owns.
+	var by_place: Dictionary = {}
+	for s: Dictionary in specs:
+		var id: String = String(s.get("id", ""))
+		if not TAGS.has(id):
+			continue
+		var place: String = (TAGS[id] as Dictionary)["place"]
+		if not by_place.has(place):
+			by_place[place] = [] as Array[Dictionary]
+		(by_place[place] as Array[Dictionary]).append(s)
+	for place: String in PLACEMENTS:
+		var mine: Array[Dictionary] = by_place.get(place, [] as Array[Dictionary])
+		if mine.is_empty() and not _tag_holders.has(place):
+			continue   # never built, nothing to wear — don't build it just to hide it
+		_fill_holder(place, mine)
+	# The tags are labels under the Canvas like any other — keep them on this card's oversampled
+	# font so an enlarged card's tag text stays as crisp as its name (see _apply_scale).
+	if _font_factor > 1.0:
+		_apply_font_oversampling()
+
+
+func _fill_holder(place: String, specs: Array[Dictionary]) -> void:
+	var holder: VBoxContainer = _tag_holders.get(place, null)
+	if holder == null:
+		holder = _build_holder(place)
+	for child in holder.get_children():
+		holder.remove_child(child)
+		child.queue_free()
+	for s: Dictionary in specs:
+		holder.add_child(_make_tag(s))
+	holder.visible = not specs.is_empty()
+	if specs.is_empty():
+		return
+	# Size the holder to exactly the stack it now carries, then place it per its placement rule.
+	# The width is the widest tag's own text (capped at the card), never a fixed fraction; the
+	# height is the SUM OF THE CHIPS' OWN minimums, not a constant — TAG_HEIGHT is only a floor, and
+	# the real row height is taller (the thick text outline adds to the font's line height). Forcing
+	# the constant here squashed every chip.
+	var n := float(specs.size())
+	var h := maxf(n - 1.0, 0.0) * TAG_SPACING
+	for c in holder.get_children():
+		h += maxf((c as Control).get_combined_minimum_size().y, TAG_HEIGHT)
+	var w: float = holder.get_combined_minimum_size().x
+	var align: String = (PLACEMENTS[place] as Dictionary)["align"]
+	if align == "centre_below":
+		# The below-name stack DOES stay on the card (it has the full width to sit in).
+		w = minf(w, NATIVE_SIZE.x - 6.0)
+		holder.position = Vector2((NATIVE_SIZE.x - w) * 0.5, TAG_TOP)
+	elif align == "outward_of_speed":
+		# Hard against the Speed badge, on whichever side faces AWAY from the card's centre — so a
+		# flipped card's mirrored badge takes its numbers with it, no mirrored placement rule needed.
+		var r := _badge_rect(_spd_bg, Rect2(-9.0, 253.0, 68.0, 73.0))
+		var outward_left := r.position.x + r.size.x * 0.5 < NATIVE_SIZE.x * 0.5
+		var x := (r.position.x - TAG_GAP - w) if outward_left else (r.end.x + TAG_GAP)
+		holder.position = Vector2(x, r.position.y + r.size.y * 0.5 - h * 0.5)
+	else:
+		# Right edge against the nameplate, growing left — x goes negative, and that's the point.
+		# Vertically it centres on the NAME's own band, so tag and name share a baseline and read
+		# as one sentence: "Targeted by: <name>".
+		holder.position = Vector2(NAME_LEFT - TAG_GAP - w, _name_band_mid() - h * 0.5)
+	holder.size = Vector2(w, h)
+
+
+# A badge's live rect in Canvas coords, falling back to its authored rect before layout resolves it
+# (or if the badge is momentarily scaled — see set_threat_highlight — the position still holds).
+func _badge_rect(badge: Control, authored: Rect2) -> Rect2:
+	if badge != null and is_instance_valid(badge) and badge.size != Vector2.ZERO:
+		return Rect2(badge.position, badge.size)
+	return authored
+
+
+# The vertical centre of the NAME's text, read off the live label (which is centre-aligned in its
+# own rect) rather than hardcoded — so if the nameplate is ever re-authored the tag follows it.
+# Falls back to the authored constant before layout has resolved the label's rect.
+func _name_band_mid() -> float:
+	if _name_label != null and is_instance_valid(_name_label) and _name_label.size.y > 0.0:
+		return _name_label.position.y + _name_label.size.y * 0.5
+	return NAME_MID_Y
+
+
+func _build_holder(place: String) -> VBoxContainer:
+	var holder := VBoxContainer.new()
+	holder.name = "TagCol_" + place
+	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE   # pure caption; never eats a card click
+	holder.add_theme_constant_override("separation", int(TAG_SPACING))
+	# A tag that hangs off the card lands in a NEIGHBOURING slot's airspace, and slots later in the
+	# board's tree paint over it — the stack beside the Speed badge was being buried by the slot next
+	# door. Lift the whole holder above the board's ordinary card/slot layer so an overhanging tag is
+	# always readable, whichever direction it grows.
+	holder.z_index = TAG_Z
+	# Both placements keep the default top-left anchors and are positioned outright in _fill_holder,
+	# because their size follows the TEXT, not a fraction of the card.
+	# Added last so the tags sit above the frame and the art, like the badges do.
+	_canvas.add_child(holder)
+	_tag_holders[place] = holder
+	return holder
+
+
+func _make_tag(entry: Dictionary) -> Control:
+	var spec: Dictionary = TAGS[String(entry["id"])]
+	var params: Dictionary = entry.get("params", {})
+	var bg: Color = spec["bg"]
+	var fg: Color = spec["fg"]
+	var ol: Color = spec["ol"]
+	var loc_key: String = spec["loc"]
+	var box := PanelContainer.new()
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.custom_minimum_size = Vector2(0.0, TAG_HEIGHT)
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = bg
+	sb.set_corner_radius_all(TAG_CORNER)
+	sb.set_content_margin_all(4.0)
+	sb.content_margin_left = 12.0
+	sb.content_margin_right = 12.0
+	# A THICK rim in the tag's own hue, darkened — the same "moulded chip" treatment the stat badges
+	# wear, so a tag reads as part of the card's art rather than as a debug overlay. A near-black rim
+	# would flatten it; a dark tint of the fill keeps the colour identity at a glance.
+	sb.set_border_width_all(int(TAG_BORDER))
+	sb.border_color = bg.darkened(0.62)
+	# Lifted off the card with a soft drop shadow, so a tag overhanging busy art still reads.
+	sb.shadow_size = 5
+	sb.shadow_offset = Vector2(0.0, 2.0)
+	sb.shadow_color = Color(0.0, 0.0, 0.0, 0.45)
+	box.add_theme_stylebox_override("panel", sb)
+	var lbl := Label.new()
+	lbl.text = Loc.t(loc_key, params)
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	# NOT clip_text: a clipping Label reports a ~zero minimum width, which collapsed the whole tag
+	# box to its margins. The box sizes to this text, so there is nothing to clip.
+	lbl.add_theme_color_override("font_color", fg)
+	lbl.add_theme_color_override("font_outline_color", ol)
+	lbl.add_theme_constant_override("outline_size", TAG_OUTLINE)
+	lbl.add_theme_font_size_override("font_size", TAG_FONT_SIZE)
+	box.add_child(lbl)
+	return box
 
 
 # A quick over-bright flash back to normal — the relic chip's "fired" discharge (RelicTray.glint),

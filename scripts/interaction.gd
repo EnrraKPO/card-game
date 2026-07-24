@@ -117,14 +117,20 @@ func role_of(slot: SlotUI) -> int:
 
 
 # Drop commit: Godot's drag-drop landed on `slot`. Re-validates via the SAME predicate that
-# lit the cue, then commits. The action itself ends with the drag (end_drag), not here.
+# lit the cue, then commits. The action ENDS HERE, before committing — same order as the click
+# path (handle_slot_press): a move reparents the dragged card, and reparenting the node that
+# started the drag eats its NOTIFICATION_DRAG_END, so end_drag would never fire and the gesture's
+# preview (menace/crosshair cues) would strand. Ending here doesn't rely on that notification.
+# end_action is idempotent, so a DRAG_END that does still arrive is a harmless no-op.
 func commit_drop(slot: SlotUI) -> bool:
 	if _action == null:
 		return false
 	var role := role_of(slot)
 	if role != Role.DESTINATION and role != Role.TARGET_VALID:
 		return false
-	_action.commit(slot)
+	var act := _action
+	end_action(act)
+	act.commit(slot)
 	return true
 
 

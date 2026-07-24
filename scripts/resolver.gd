@@ -309,6 +309,18 @@ static func _apply_damage(inst: CardInstance, m: StatMutation) -> Outcome:
 # through get_attribute like every other stat. Speeds/bonus read through get_attribute, so
 # buffs/statuses/run bonuses count.
 #
+# Public read of the assembled tuning shapes (a duplicate, so callers can't mutate the cache) —
+# for UI that EXPLAINS the dodge/crit rules to the player rather than resolving a hit (the card
+# inspector's stat guide surfaces the coefficients + caps here). The chances themselves stay the
+# authoritative dodge_chance/crit_chance below.
+static func dodge_tuning() -> Dictionary:
+	return _dodge_config().duplicate(true)
+
+
+static func crit_tuning() -> Dictionary:
+	return _crit_config().duplicate(true)
+
+
 # The assembled rate is then INTERCEPTABLE through the universal gate (stat "dodge", attack
 # channel): a relic can triple an air unit's dodge (mul 3) or cancel enemy dodge (mul 0), matched
 # by participant (target = the dodger, source = the attacker) + conditions like every other

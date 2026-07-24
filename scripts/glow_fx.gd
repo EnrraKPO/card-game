@@ -46,6 +46,7 @@ func setup(widget: Control, params: Dictionary) -> void:
 		return
 	widget.item_rect_changed.connect(_on_widget_moved)
 	widget.resized.connect(_on_widget_resized)
+	widget.visibility_changed.connect(_on_widget_visibility)
 	widget.tree_exiting.connect(_on_widget_gone, CONNECT_ONE_SHOT)
 
 	_baker = SilhouetteBaker.new()
@@ -57,13 +58,37 @@ func setup(widget: Control, params: Dictionary) -> void:
 	_mat.set_shader_parameter("src_tex", _baker.texture)
 	_ready_to_sync = true
 	_sync()
-	visible = true
+	_apply_visibility()
 	_start_breathing(params)
 
 
 func _on_widget_moved() -> void:
 	if _ready_to_sync:
 		_sync()
+
+
+# THE rule that keeps a glow from outliving what it belongs to. We draw on the overlay layer,
+# outside the widget's branch, so hiding that branch hides the widget and nothing else — the glow
+# has no parent whose visibility could carry it. (What this fixes: the hand row is switched off
+# wholesale when the inspect view opens (Hand._set_level), so every hand card's glow went on
+# radiating over a panel whose card wasn't drawn at all.) `visibility_changed` covers the widget's
+# own flag AND any ancestor's, which is the case that actually bites — a card is almost never
+# hidden directly, its row is.
+func _on_widget_visibility() -> void:
+	_apply_visibility()
+
+
+# Mirrors the widget's EFFECTIVE visibility. Gated on the bake: before the silhouette lands we're
+# deliberately hidden regardless, and this must not reveal an unpainted quad. Re-syncs on the way
+# back in because `item_rect_changed` doesn't fire while hidden — a layout that shifted under a
+# dark branch would otherwise place the glow at a stale rect for a frame.
+func _apply_visibility() -> void:
+	if not _ready_to_sync or _widget == null or not is_instance_valid(_widget):
+		return
+	var showing := _widget.is_visible_in_tree()
+	if showing:
+		_sync()
+	visible = showing
 
 
 # A resize (or flip) changes the outline — re-bake the silhouette, then re-place.

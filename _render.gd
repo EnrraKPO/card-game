@@ -10,6 +10,9 @@ func _ready() -> void:
 	for a: String in args:
 		if a.contains("x") and a.split("x")[0].is_valid_int():
 			RES = Vector2i(int(a.split("x")[0]), int(a.split("x")[1]))
+	for a: String in args:
+		if a.begins_with("loc="):
+			Loc._lang = a.trim_prefix("loc=")   # non-persistent locale override for screenshots
 	GameData.select_slot(0)
 	# Screens that read GameData.current_run need an active run with a populated deck.
 	for needs_run in ["combination", "shop", "deck_build", "rest", "relic_event", "event", "combat", "map", "stage_cleared"]:
@@ -228,8 +231,28 @@ func _ready() -> void:
 			board2.interaction.begin(board2.make_autocast_action(board2.get_card_ui(rk2)))
 			await get_tree().process_frame
 	# "inspect": pop the full-screen CardInspector over the scene (a content-rich card).
+	# "hovertip": the compact hover CardTooltip (normally only shown by a real mouse hover),
+	# centered on the scene so its yellow expand-footnote can be eyeballed.
+	if "hovertip" in args:
+		var hid := "knight"
+		for a: String in args:
+			if a.begins_with("card="):
+				hid = a.trim_prefix("card=")
+		var tip := CardTooltip.build(CardInstance.from_data(CardData.get_card(hid)), true)
+		var cc := CenterContainer.new()
+		cc.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		cc.add_child(tip)
+		var cl := CanvasLayer.new()
+		cl.layer = 200
+		cl.add_child(cc)
+		sv.add_child(cl)
 	if "inspect" in args:
-		var ci := CardInstance.from_data(CardData.get_card("rook"))
+		CardInspector._show_descriptions = "nodesc" not in args
+		var insp_id := "rook"
+		for a: String in args:
+			if a.begins_with("card="):
+				insp_id = a.trim_prefix("card=")
+		var ci := CardInstance.from_data(CardData.get_card(insp_id))
 		ci.owner = 0
 		CardInspector.open(shell, ci)
 	# "relic": pop the RelicInspector (map variant, with the Discard button).

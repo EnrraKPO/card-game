@@ -54,3 +54,8 @@ func menaces_pivot(inst: CardInstance) -> bool:
 
 func is_pivot_target(inst: CardInstance) -> bool:
 	return board != null and board.is_pivot_target(inst)
+
+
+# The other party in every threat exchange — see CombatBoard.pivot.
+func pivot() -> CardInstance:
+	return board.pivot() if board != null else null

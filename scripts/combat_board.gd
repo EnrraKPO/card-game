@@ -583,6 +583,12 @@ func _rebuild_preview_world() -> void:
 	_pivot.col = save_c
 
 
+# The declared pivot itself — the OTHER party in every exchange a threat cue describes, so a card
+# can quantify that exchange (its crit/dodge odds against the pivot) rather than only flag it.
+func pivot() -> CardInstance:
+	return _pivot
+
+
 # "Am I the pivot's victim?" — a compare against the memoized answer.
 func is_pivot_target(inst: CardInstance) -> bool:
 	return inst != null and inst == _pivot_target
@@ -642,8 +648,13 @@ func _begin_drag_phantom(card_ui: CardUI) -> void:
 
 func _end_drag_phantom() -> void:
 	set_process(false)
-	_set_phantom_slot(null)
+	# Clear _drag_card BEFORE tearing down the phantom slot. _set_phantom_slot(null) has a fallback
+	# that RE-DECLARES the preview from the drag unit's standing position whenever _drag_card is
+	# still set (so a fielded unit's map info survives moving OFF a landing slot mid-drag) — but at
+	# teardown that fallback would immediately undo the clear_preview() present() just ran, stranding
+	# the menace/crosshair cues on the board after the drop. Nulling first makes the teardown inert.
 	_drag_card = null
+	_set_phantom_slot(null)
 
 
 func _process(_delta: float) -> void:
