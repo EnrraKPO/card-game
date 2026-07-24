@@ -8,7 +8,10 @@ extends Control
 # Attached only by CardUI.set_stat_tooltips (the inspector), so board cards keep their whole-card
 # hover tooltip untouched.
 
-const TIP_WIDTH := 300.0
+# Sized to read comfortably on a small screen — the body matches the game's default tooltip font
+# (theme TooltipLabel = 30), wrapped at a width that keeps a sensible line length at that size.
+const TIP_WIDTH := 560.0
+const TIP_FONT := 30
 
 var _title: String
 var _title_color: Color
@@ -34,8 +37,8 @@ func _make_custom_tooltip(_for_text: String) -> Object:
 	style.bg_color = CardTooltip.BG_COLOR
 	style.set_border_width_all(1)
 	style.border_color = CardTooltip.BORDER_COLOR
-	style.set_corner_radius_all(6)
-	style.set_content_margin_all(9.0)
+	style.set_corner_radius_all(8)
+	style.set_content_margin_all(13.0)
 	panel.add_theme_stylebox_override("panel", style)
 
 	var rtl := RichTextLabel.new()
@@ -43,7 +46,7 @@ func _make_custom_tooltip(_for_text: String) -> Object:
 	rtl.fit_content = true
 	rtl.autowrap_mode = TextServer.AUTOWRAP_WORD
 	rtl.custom_minimum_size.x = TIP_WIDTH
-	rtl.add_theme_font_size_override("normal_font_size", 15)
+	rtl.add_theme_font_size_override("normal_font_size", TIP_FONT)
 	rtl.add_theme_color_override("default_color", CardTooltip.TEXT_MAIN)
 	# The name in its stat colour, the rule beneath it in the normal body colour.
 	rtl.text = "[color=#%s]%s[/color]\n%s" % [_title_color.to_html(false), _title, _body]
