@@ -16,6 +16,8 @@ var magic_mineral: int : set = _set_magic_mineral
 var deck: Array   # Array[DeckCard] — each entry carries its own permanent mods
 var act: int : set = _set_act
 var charms: Array = []   # owned, unapplied charm ids (inventory); applied in the forge
+# The freebie every run opens with — see create_new for why it exists and why it's this one.
+const STARTING_CHARM := "sturdy"
 # Where the player last acknowledged the map Forge button's "!" badge, as "<act>:<node id>".
 # The badge is an ATTENTION cue, not a status light: once seen (hovered or clicked) it should
 # stay quiet until something changes. Storing the map POSITION rather than a bool makes
@@ -73,6 +75,13 @@ static func create_new(profile: ProfileData = null) -> RunData:
 		run.king_id = ProfileData.STARTING_KING
 		run.deck    = _deck_from_variants(DeckData.get_deck(DeckData.FALLBACK_ID))
 	run.act = 1
+	# Every run opens with one charm in the bag, gratis. It is not a balance lever — it is the
+	# forge's tutorial: the Attach flow is otherwise invisible until the game happens to award a
+	# charm, so a player can reach the first Forge with nothing to do there. `sturdy` (+3 health)
+	# is the authored health charm and the safest possible thing to hand out blind — it improves
+	# any unit, on any deck, with no rule to read.
+	if CharmData.get_charm(STARTING_CHARM) != null:
+		run.charms.append(STARTING_CHARM)
 	return run
 
 

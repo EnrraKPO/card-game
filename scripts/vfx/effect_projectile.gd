@@ -19,9 +19,16 @@ const ORB_TRAVEL := 0.22
 
 # Bolt physics. Duration scales with distance (constant nominal speed), clamped so close and
 # far shots both stay readable. Arc height is a fraction of the distance, also clamped.
+#
+# The clamps are deliberately WIDE ENOUGH TO LET THE PHYSICS SHOW. Measured across the real board a
+# shot spans 162px (adjacent) to 585px (near-corner), i.e. 0.14s–0.51s of nominal flight — so the
+# old 0.42 floor padded a point-blank shot by 3x and made it lob exactly as slowly as a cross-board
+# one, and the old 0.72 ceiling was unreachable on a board this size. The floor now only catches
+# genuinely tiny distances, and the ceiling sits just above the longest real shot.
 const BOLT_SPEED := 1150.0      # px/sec nominal
-const BOLT_MIN_DUR := 0.42
-const BOLT_MAX_DUR := 0.72
+const BOLT_MIN_DUR := 0.18
+const BOLT_MAX_DUR := 0.55
+const BOLT_FLOOR := 0.12        # absolute floor after pacing — below this the shot can't be read
 const BOLT_ARC_FRAC := 0.24     # apex height as a fraction of travel distance
 const BOLT_ARC_MIN := 55.0
 const BOLT_ARC_MAX := 240.0
@@ -54,7 +61,10 @@ func _fly_orb(from: Vector2, to: Vector2) -> void:
 	orb.global_position = from - orb.size * 0.5
 	var tw := _root.create_tween()
 	tw.set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
-	tw.tween_property(orb, "global_position", to - orb.size * 0.5, ORB_TRAVEL)
+	# Paced for the same reason as the bolt: the orb also gates its own impact, so the dial
+	# compresses it rather than overlapping it.
+	tw.tween_property(orb, "global_position", to - orb.size * 0.5,
+			maxf(BOLT_FLOOR, Vfx.paced(ORB_TRAVEL)))
 	await tw.finished
 	orb.queue_free()
 
@@ -63,7 +73,11 @@ func _fly_orb(from: Vector2, to: Vector2) -> void:
 # speed and a gravity-accelerated descent, like a real lob.
 func _fly_bolt(from: Vector2, to: Vector2) -> void:
 	var dist := from.distance_to(to)
-	var dur := clampf(dist / BOLT_SPEED, BOLT_MIN_DUR, BOLT_MAX_DUR)
+	# Physics first, then the dial: the shot's distance decides its nominal flight, and the player's
+	# pacing compresses that (see Vfx.paced — an atomic cue gives up LENGTH where an overlappable
+	# one gives up its tail). Without this the bolt was the only beat in combat immune to the
+	# setting, and it read as sluggish precisely when everything around it had been sped up.
+	var dur := maxf(BOLT_FLOOR, Vfx.paced(clampf(dist / BOLT_SPEED, BOLT_MIN_DUR, BOLT_MAX_DUR)))
 	var arc := clampf(dist * BOLT_ARC_FRAC, BOLT_ARC_MIN, BOLT_ARC_MAX)
 
 	var bolt := _make_bolt(_event.color)

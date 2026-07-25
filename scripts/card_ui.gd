@@ -1112,35 +1112,27 @@ func _refresh_charms() -> void:
 		_charm_col.add_child(_make_charm_pip(charm_id))
 
 
+const CHARM_PIP_PX := 34.0
+
 func _make_charm_pip(charm_id: String) -> Control:
+	# The charm draws its own face (art when it has any, the coloured letter chip when it doesn't) —
+	# see CharmData.badge. This used to hand-roll the letter chip and never consult the art, which is
+	# why charms with painted assets still showed a placeholder glyph on the card.
 	var charm := CharmData.get_charm(charm_id)
-	var color: Color = charm.color if charm != null else Color(0.7, 0.7, 0.75)
-	var glyph: String = charm.letter if charm != null else "✦"
-
+	if charm != null:
+		return charm.badge(CHARM_PIP_PX)
+	# An id with no definition behind it (stale save, removed content) still holds its slot.
 	var pip := Panel.new()
-	pip.custom_minimum_size = Vector2(34, 34)
+	pip.custom_minimum_size = Vector2(CHARM_PIP_PX, CHARM_PIP_PX)
 	pip.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	pip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	pip.size_flags_vertical   = Control.SIZE_SHRINK_CENTER
 	pip.mouse_filter = Control.MOUSE_FILTER_IGNORE
-
 	var style := StyleBoxFlat.new()
-	style.bg_color = color
-	style.set_corner_radius_all(17)   # circular, to read distinctly from the square piece chips
+	style.bg_color = Color(0.7, 0.7, 0.75)
+	style.set_corner_radius_all(17)
 	style.set_border_width_all(3)
 	style.border_color = Color(0.04, 0.04, 0.06, 0.9)
 	pip.add_theme_stylebox_override("panel", style)
-
-	var lbl := Label.new()
-	lbl.text = glyph
-	lbl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lbl.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
-	lbl.add_theme_font_size_override("font_size", 20)
-	lbl.add_theme_color_override("font_color", Color(0.98, 0.98, 1.0))
-	lbl.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.7))
-	lbl.add_theme_constant_override("outline_size", 3)
-	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	pip.add_child(lbl)
 	return pip
 
 

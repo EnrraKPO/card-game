@@ -83,6 +83,79 @@ static func get_charm(p_id: String) -> CharmData:
 	return _all.get(p_id, null)
 
 
+# ── The charm's face ──────────────────────────────────────────────────────────────
+# ONE builder for every surface that shows a charm — the pip on a card, the chip on the forge's
+# charm rail, an item chip in a shop or reward. `icon` has always been documented as replacing the
+# coloured letter chip "everywhere the charm is shown", but each surface hand-rolled its own
+# coloured-circle-plus-letter and never asked for the art, so all seven charms shipped their
+# painted asset and none of them ever appeared. Building the face here is what makes the field's
+# promise true by construction: a new surface gets the art for free, and a charm with no art (a
+# newly authored one, before its asset exists) still falls back to the letter chip.
+#
+# `px` sizes the badge; `count` > 1 stamps a ×N corner, for the surfaces that stack charms.
+func badge(px: float, count: int = 1) -> Control:
+	var chip: Panel = TextIcons.TipPanel.new()   # tooltip renders keyword icons
+	chip.custom_minimum_size = Vector2(px, px)
+	chip.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	chip.size_flags_vertical   = Control.SIZE_SHRINK_CENTER
+	chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if icon != null:
+		# The art carries its own frame — no coloured disc behind it, nothing to letterbox against.
+		chip.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+		var tex := TextureRect.new()
+		tex.texture = icon
+		tex.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		tex.expand_mode  = TextureRect.EXPAND_IGNORE_SIZE
+		tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		chip.add_child(tex)
+	else:
+		var style := StyleBoxFlat.new()
+		style.bg_color = color
+		style.set_corner_radius_all(int(px * 0.5))   # circular — reads apart from the square piece chips
+		style.set_border_width_all(maxi(2, int(px * 0.09)))
+		style.border_color = Color(0.04, 0.04, 0.06, 0.9)
+		chip.add_theme_stylebox_override("panel", style)
+		chip.add_child(_centred_label(letter, maxi(int(px * 0.55), 14)))
+	if count > 1:
+		# Over the art, the count needs its own dark backing to stay legible on any painting.
+		var tag := _centred_label("×%d" % count, maxi(int(px * 0.3), 13))
+		tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		tag.vertical_alignment   = VERTICAL_ALIGNMENT_BOTTOM
+		chip.add_child(tag)
+	return chip
+
+
+# A bare art rect for INLINE use — beside a line of text in a tooltip, where the badge's chip
+# framing would be too heavy. Null when the charm has no art, so callers can skip the slot
+# entirely (same contract as StatusData.icon_rect, which the tooltip already follows).
+func icon_rect(px: float) -> TextureRect:
+	if icon == null:
+		return null
+	var r := TextureRect.new()
+	r.texture = icon
+	r.custom_minimum_size = Vector2(px, px)
+	r.expand_mode  = TextureRect.EXPAND_IGNORE_SIZE
+	r.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	r.size_flags_vertical = Control.SIZE_SHRINK_BEGIN   # top-align with the label's first line
+	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return r
+
+
+func _centred_label(text: String, font_px: int) -> Label:
+	var lbl := Label.new()
+	lbl.text = text
+	lbl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
+	lbl.add_theme_font_size_override("font_size", font_px)
+	lbl.add_theme_color_override("font_color", Color(0.98, 0.98, 1.0))
+	lbl.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.85))
+	lbl.add_theme_constant_override("outline_size", 4)
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return lbl
+
+
 # Whether this charm may be attached to the given card. The King is never a valid
 # target (deck-side changes can't reach the board King); otherwise it's by `targets`.
 func can_attach_to(card: CardData) -> bool:

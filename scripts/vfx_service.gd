@@ -287,6 +287,27 @@ func _span_of(vd: VFXData) -> float:
 	return maxf(0.0, vd.num_param("duration", fallback))
 
 
+# The dial applied to a duration that CANNOT be handed off partway through — an ATOMIC cue whose
+# ending is the beat everything after it waits for. A ranged bolt is the case: the damage genuinely
+# cannot read before the shot lands, so nothing may overlap its flight.
+#
+# Such a cue used to escape pacing entirely, which made it the one beat in combat that didn't answer
+# to the player's setting. At Snappy every other beat collapsed toward its head while the bolt flew
+# for exactly as long as at Step by step — so the harder pacing was turned up, the more ranged stood
+# out as the only slow thing left on the board.
+#
+# Overlap and compression are the same taste expressed two ways: a cue that can share its tail gives
+# up that tail, and a cue that can't gives up length instead. So the dial COMPRESSES what it cannot
+# overlap, down to PACED_FLOOR of the authored duration at the ceiling — never to nothing, because
+# an atomic cue that plays too fast to read defeats the point of gating on it.
+const PACED_FLOOR := 0.45   # the most a fully-snappy dial may compress an atomic duration
+
+func paced(seconds: float) -> float:
+	if seconds <= 0.0:
+		return 0.0
+	return seconds * lerpf(1.0, PACED_FLOOR, overlap() / 0.95)
+
+
 # ── Transient displacement: one mover per widget ───────────────────────────────────
 # Motion that DISPLACES a widget in place — an impact shake, a wound tremble, a dodge sidestep, a
 # crit stagger — as opposed to the overlay effects above, which draw beside it. Every such animation

@@ -91,6 +91,14 @@ func _ready() -> void:
 			eoffers.append(Grant.make("charm", cid))
 		enc.reward_offers = eoffers
 		GameData.current_encounter = enc
+	# "charmed": attach charms to the first deck cards so the on-card pips render.
+	if "charmed" in args and GameData.current_run != null:
+		var dk: Array = GameData.current_run.deck
+		if dk.size() > 2:
+			(dk[0] as DeckCard).add_charm("sturdy")
+			(dk[0] as DeckCard).add_charm("vampiric")
+			(dk[1] as DeckCard).add_charm("thorned")
+			(dk[2] as DeckCard).add_charm("rallying")
 	var sv := SubViewport.new()
 	sv.size = RES
 	sv.render_target_update_mode = SubViewport.UPDATE_ALWAYS
@@ -349,6 +357,8 @@ func _ready() -> void:
 				insp_id = a.trim_prefix("card=")
 		var ci := CardInstance.from_data(CardData.get_card(insp_id))
 		ci.owner = 0
+		if "charmed" in args:
+			ci.charms = ["sturdy", "vampiric", "thorned"]
 		CardInspector.open(shell, ci)
 	# "relic": pop the RelicInspector (map variant, with the Discard button).
 	if "relic" in args:

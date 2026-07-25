@@ -187,8 +187,21 @@ static func build_details(inst: CardInstance, s := 1.0, max_h := 0.0) -> Contain
 			var charm := CharmData.get_charm(charm_id)
 			if charm == null:
 				continue
-			var ch_line := "%s  %s — %s" % [charm.letter, charm.display_name, charm.description]
-			blocks.append(_rich_label(ch_line, col_w, int(15.0 * s), charm.color.lightened(0.35)))
+			# The charm's art leads its line, exactly as a status pip leads its own below — the
+			# inspector was showing the letter glyph even for charms that ship a painting. A charm
+			# with no art keeps the glyph, so the column still reads as a list either way.
+			var ch_icon := charm.icon_rect(22.0 * s)
+			var ch_line := "%s — %s" % [charm.display_name, charm.description]
+			if ch_icon == null:
+				blocks.append(_rich_label("%s  %s" % [charm.letter, ch_line], col_w,
+					int(15.0 * s), charm.color.lightened(0.35)))
+				continue
+			var ch_row := HBoxContainer.new()
+			ch_row.add_theme_constant_override("separation", int(6.0 * s))
+			ch_row.add_child(ch_icon)
+			ch_row.add_child(_rich_label(ch_line, col_w - 28.0 * s, int(15.0 * s),
+				charm.color.lightened(0.35)))
+			blocks.append(ch_row)
 
 	# Active statuses: one line each (glyph, name, count, description), colour-matched to its pip.
 	if not inst.statuses.is_empty():

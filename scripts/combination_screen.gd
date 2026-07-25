@@ -345,31 +345,23 @@ func _make_charm_item(charm_id: String, count: int) -> ForgeDragItem:
 
 
 func _make_charm_chip(charm_id: String, count: int, size: Vector2) -> Control:
+	# The charm's own face — art when it has any (see CharmData.badge). The rail used to draw a
+	# coloured disc with the charm's letter and never look at the asset, so every painted charm
+	# showed as a placeholder here and in the drag follower this chip feeds.
 	var charm := CharmData.get_charm(charm_id)
-	var chip: Panel = TextIcons.TipPanel.new()   # tooltip renders keyword icons
+	if charm == null:
+		var missing: Panel = TextIcons.TipPanel.new()
+		missing.custom_minimum_size = size
+		var ms := StyleBoxFlat.new()
+		ms.bg_color = Color(0.4, 0.4, 0.5)
+		ms.set_corner_radius_all(int(size.x * 0.5))
+		ms.set_border_width_all(2)
+		ms.border_color = Color(0.04, 0.04, 0.06, 0.9)
+		missing.add_theme_stylebox_override("panel", ms)
+		return missing
+	var chip := charm.badge(size.x, count)
 	chip.custom_minimum_size = size
-	var style := StyleBoxFlat.new()
-	style.bg_color = (charm.color.lightened(0.1) if charm != null else Color(0.4, 0.4, 0.5))
-	style.set_corner_radius_all(int(size.x * 0.5))
-	style.set_border_width_all(2)
-	style.border_color = Color(0.04, 0.04, 0.06, 0.9)
-	chip.add_theme_stylebox_override("panel", style)
-	if charm != null:
-		UIScale.tip(chip, "%s — %s" % [charm.display_name, charm.description])
-
-	var lbl := Label.new()
-	lbl.text = (charm.letter if charm != null else "✦")
-	if count > 1:
-		lbl.text += " ×%d" % count
-	lbl.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lbl.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
-	lbl.add_theme_font_size_override("font_size", maxi(int(size.x * 0.3), 14))
-	lbl.add_theme_color_override("font_color", Color(0.98, 0.98, 1.0))
-	lbl.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.7))
-	lbl.add_theme_constant_override("outline_size", 3)
-	lbl.mouse_filter = MOUSE_FILTER_IGNORE
-	chip.add_child(lbl)
+	UIScale.tip(chip, "%s — %s" % [charm.display_name, charm.description])
 	return chip
 
 
@@ -1373,7 +1365,9 @@ func _show_result_toast(result_inst: CardInstance, title_text: String) -> void:
 	_modal.add_child(center)
 
 	var panel := PanelContainer.new()
-	panel.mouse_filter = MOUSE_FILTER_STOP   # swallow clicks — only a click OUTSIDE (on the dim) closes
+	# The toast says "tap anywhere", so anywhere has to mean anywhere — including the panel itself
+	# (see the catcher at the end of this method, which is what actually guarantees it).
+	panel.mouse_filter = MOUSE_FILTER_IGNORE
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(ScreenUI.SURFACE_DEEP, 0.98)
 	style.set_border_width_all(2)
@@ -1452,6 +1446,24 @@ func _show_result_toast(result_inst: CardInstance, title_text: String) -> void:
 	tw.set_parallel(true)
 	tw.tween_property(center, "modulate:a", 1.0, 0.18)
 	tw.tween_property(panel, "scale", Vector2.ONE, 0.24).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+	# THE DISMISS SURFACE. The hint promises a tap anywhere continues, and the dim behind the toast
+	# only delivers that for taps that MISS the panel — the panel and its contents (the result card,
+	# the details block, every label inside them) each answer for their own rect, so a tap on the very
+	# thing the player is looking at did nothing. Rather than chase mouse_filter through that whole
+	# subtree — and have the promise silently break again the next time the toast grows a child —
+	# one transparent catcher goes over the lot. Added last, so it sits above the toast in input
+	# order, and it lives on the modal layer so it dies with the rest of it.
+	var catcher := Control.new()
+	catcher.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	catcher.mouse_filter = MOUSE_FILTER_STOP
+	catcher.gui_input.connect(func(e: InputEvent) -> void:
+		if _fusing:
+			return
+		if e is InputEventMouseButton and (e as InputEventMouseButton).pressed:
+			_swallow_release = true   # this click is INTERACTIVE (it closes) — eat its release
+			_close_modal())
+	_modal.add_child(catcher)
 
 
 # ── Apply ──────────────────────────────────────────────────────────────────────
