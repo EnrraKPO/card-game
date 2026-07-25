@@ -18,6 +18,7 @@ extends VFXEffect
 const CRIT_COLOR := Color(1.0, 0.42, 0.24)   # hot red-orange — escalation, distinct from the
 											 # cyan of Dodge and the grey of Miss
 const SEV_FLOOR := 0.35                      # minimum intensity: every crit reads as one
+const RINGOUT   := 0.85                      # the elastic recovery — the cue's long tail
 
 
 # Span: the stagger's off-balance hang plus the label slam. The elastic recovery (0.85) and
@@ -72,10 +73,19 @@ func _stagger(card: Control, sev: float) -> void:
 	card.position = origin + Vector2(dir * kick, -kick * 0.12)
 	card.rotation_degrees = dir * tilt
 	var tw := card.create_tween()
-	tw.tween_interval(0.08 + 0.08 * sev)   # a beat off-balance — hard hits hang there longer
-	tw.tween_property(card, "position", origin, 0.85) \
+	var hang := 0.08 + 0.08 * sev
+	# THE STAGGER IS THE CARD'S WHOLE REACTION TO THIS BLOW. The damage numbers that land right
+	# behind a crit carry their own negative-event reaction (the grey wash + tremble in
+	# VFXEffect._drain_card), and it used to claim this same card a frame later — cancelling the
+	# stagger and snapping the card upright barely after the kick, so a crit read as a cut-off
+	# twitch instead of the long elastic ring-out below. Claiming the card for the stagger's full
+	# length makes the drain stand down: a crit already says "this unit was hit", harder and hotter,
+	# and a grey wash over the hot flash would only fight it.
+	Vfx.claim_reaction(card, hang + RINGOUT)
+	tw.tween_interval(hang)   # a beat off-balance — hard hits hang there longer
+	tw.tween_property(card, "position", origin, RINGOUT) \
 			.set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
-	tw.parallel().tween_property(card, "rotation_degrees", 0.0, 0.85) \
+	tw.parallel().tween_property(card, "rotation_degrees", 0.0, RINGOUT) \
 			.set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	tw.chain().tween_callback(func() -> void:
 		if is_instance_valid(card):

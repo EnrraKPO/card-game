@@ -303,12 +303,21 @@ func _span_of(vd: VFXData) -> float:
 # TRUE rest it recorded on first claim, and hands that rest to the new mover; hold() then registers
 # the new tween so the next claimant can cancel it in turn.
 const _MOVER := "vfx_mover"        # the running displacement Tween
-const _REST  := "vfx_mover_rest"   # {pos, rot, scale} as of the first uncontested claim
+const _REST  := "vfx_mover_rest"   # the full transform as of the first uncontested claim
 
 
 # Claims `target` for a displacement, returning the position it must be handed back to.
+#
+# The snapshot covers PIVOT as well as pos/rot/scale, because a cancelled mover cannot clean up
+# after itself: a cue that rocks a card about its base (the crit stagger) sets pivot_offset and
+# restores it in a chained callback on its own tween — the very tween the next claimant kills. That
+# leaves the card pivoting about its bottom edge forever, so every later scale/rotate on it (the
+# selection grow, the canonical Highlight) is silently wrong, and it compounds across a fight.
+# Restoring the whole transform here means cancellation is complete BY CONSTRUCTION, and no mover
+# has to be written defensively against being interrupted.
 func begin_displace(target: Control) -> Vector2:
-	var rest := {"pos": target.position, "rot": target.rotation_degrees, "scale": target.scale}
+	var rest := {"pos": target.position, "rot": target.rotation_degrees,
+			"scale": target.scale, "pivot": target.pivot_offset}
 	var prev: Variant = target.get_meta(_MOVER, null)
 	if prev != null and is_instance_valid(prev) and (prev as Tween).is_valid():
 		# Something is mid-motion: its recorded rest is the truth, the live transform is not.
@@ -317,6 +326,7 @@ func begin_displace(target: Control) -> Vector2:
 		target.position         = rest["pos"]
 		target.rotation_degrees = rest["rot"]
 		target.scale            = rest["scale"]
+		target.pivot_offset     = rest.get("pivot", target.pivot_offset)
 	target.set_meta(_REST, rest)
 	return rest["pos"]
 
@@ -324,6 +334,34 @@ func begin_displace(target: Control) -> Vector2:
 # Registers the displacement tween begun after a begin_displace claim.
 func hold_displace(target: Control, tw: Tween) -> void:
 	target.set_meta(_MOVER, tw)
+
+
+# ── Reaction claims: when a big cue speaks for the card ────────────────────────────
+# Exclusivity above decides who moves a card; this decides who gets to REACT on it at all.
+#
+# The routine negative-event reaction (VFXEffect._drain_card's grey wash + tremble) fires off the
+# damage numbers, which land a frame behind a crit on the same card. Both are the card answering
+# the SAME blow, and the crit's answer is the louder one — so a crit claims the card for the length
+# of its stagger and the drain stands down rather than talking over it.
+#
+# Deliberately a claim with a DURATION rather than a running-tween handle: it has to outlive the
+# effect node that made it (a designed effect frees itself at the end of play(), long before its
+# tweens finish), and it must not be silently released when some other cue cancels the mover.
+const _REACT_UNTIL := "vfx_reaction_until"
+
+
+# Claims `target`'s reaction for `seconds` — a lesser cue on the same card will yield.
+func claim_reaction(target: Control, seconds: float) -> void:
+	if target == null or not is_instance_valid(target):
+		return
+	target.set_meta(_REACT_UNTIL, Time.get_ticks_msec() + int(seconds * 1000.0))
+
+
+# Whether a bigger cue is currently speaking for this card.
+func reaction_claimed(target: Control) -> bool:
+	if target == null or not is_instance_valid(target) or not target.has_meta(_REACT_UNTIL):
+		return false
+	return int(target.get_meta(_REACT_UNTIL)) > Time.get_ticks_msec()
 
 
 # ── Element resolution ─────────────────────────────────────────────────────────────

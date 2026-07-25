@@ -787,6 +787,26 @@ func _apply_attack_damage(attacker: CardInstance, target: CardInstance, t_card: 
 	# resolution is already complete; this is pure playback in resolution order.
 	await _vfx.play_interceptions(outcome.interceptions)
 	var dmg := -outcome.delta
+	# THE CRIT CUE IS PART OF THE BLOW, so it fires the moment the blow is known — here, not down in
+	# the readout below. It used to sit with the damage numbers, on the far side of `struck`, so on
+	# any strike carrying an on-hit reaction the "CRITICAL!" headline arrived after that reaction's
+	# own cues had played: the hit landed, something else happened, and only then was the hit
+	# announced as critical. Fired here it still overlaps the numbers (it is a long, unawaited cue
+	# with a ~1s tail), but it can no longer drift away from the impact it belongs to.
+	#
+	# Still AFTER the interception cues, deliberately: the Resolver rolls crit only on what survives
+	# interception (see Resolver._submit), so the rewriter reading first is the true causal order.
+	if outcome.crit:
+		# Real damage still lands — this cue sits ALONGSIDE the shield/health numbers, never
+		# instead of them. The ATTACKER's Speed badge glints too (speed drives crit, mirroring how
+		# a dodge glints the dodger's Speed); mid-melee its live presentation is its lunge ghost,
+		# so the stand-in routing applies exactly as in _get_card_ui.
+		_vfx.play(VFXEvent.crit(t_card, dmg))
+		var a_ui := _ctx.stand_in_for(attacker)
+		if a_ui == null:
+			a_ui = _board.get_card_ui(attacker)
+		if a_ui != null and is_instance_valid(a_ui):
+			a_ui.flash_stat_proc("speed")
 	# Resolve the attack-driven decay AFTER submit (the Resolver needs the status alive to query
 	# its interceptors) and BEFORE the strike's on-hit reactions below. A charge is spent per
 	# attack (hit or miss); a Blind that an effect applies in *reaction* to this attack (a relic
@@ -813,18 +833,7 @@ func _apply_attack_damage(attacker: CardInstance, target: CardInstance, t_card: 
 		# A 0-damage strike (blocked, or <=0 Attack) reads as "Miss" rather than a number.
 		await _vfx.play(VFXEvent.miss(t_card))
 	else:
-		if outcome.crit:
-			# A critical landed: the hot "Critical!" label plays ALONGSIDE the damage numbers below
-			# (real damage still lands — never instead of them), and the ATTACKER's Speed badge
-			# glints (speed drives crit, mirroring how a dodge glints the dodger's Speed). The
-			# attacker's live presentation may be its lunge ghost mid-melee — same routing as
-			# _get_card_ui in _ready.
-			_vfx.play(VFXEvent.crit(t_card, dmg))
-			var a_ui: CardUI = _ghost_ui.get(attacker)
-			if a_ui == null or not is_instance_valid(a_ui):
-				a_ui = _board.get_card_ui(attacker)
-			if a_ui != null and is_instance_valid(a_ui):
-				a_ui.flash_stat_proc("speed")
+		# (The crit cue itself fired at the moment of resolution above — see there for why.)
 		# Shield reads FIRST: it takes the blow on its own badge (and only the badge — a held shield
 		# leaves the card unwounded). When the hit also bleeds through to HP, a brief halt lets the
 		# absorb land before the wound, so the shield is legible as the first thing that happened.

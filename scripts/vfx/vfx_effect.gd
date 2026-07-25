@@ -176,6 +176,11 @@ func _stat_glint(anchor_attr: String, color: Color, positive: bool, react_card: 
 func _drain_card(card: Control) -> void:
 	if _root == null or card == null or not is_instance_valid(card):
 		return
+	# A louder cue is already the card's answer to this blow (a crit stagger) — don't talk over it.
+	# See Vfx.claim_reaction: the drain's wash would fight the crit's hot flash, and its tremble
+	# would cancel the stagger outright through the displacement claim.
+	if Vfx.reaction_claimed(card):
+		return
 	var now := Time.get_ticks_msec()
 	if card.has_meta("vfx_drain_until") and int(card.get_meta("vfx_drain_until")) > now:
 		return
