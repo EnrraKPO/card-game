@@ -446,8 +446,10 @@ func set_playable_check(cb: Callable) -> void:
 #   • selection tint: only selectable card views (hand cards / tray tokens), never a
 #     noninteractive enemy token (owns a dim), a drag-ghost view (owns its tint) or an
 #     inspector/preview copy.
-#   • board states (exhaust grey / inspect cue / threat glow): only a slot's OCCUPANT — a
-#     landing phantom mounted in a slot is a projection, not the unit.
+#   • board states (concealment / exhaust grey / inspect cue / threat glow): only a slot's
+#     OCCUPANT — a landing phantom mounted in a slot is a projection, not the unit, and an
+#     attacker's lunge ghost hangs off the combat root rather than a slot, so it can never
+#     conceal itself for being its own stand-in.
 func derive_presentation() -> void:
 	refresh_playable()
 	var slot := get_parent() as SlotUI
@@ -460,6 +462,9 @@ func derive_presentation() -> void:
 		set_selected(ctx.is_selected(self))
 	var tags: Array[Dictionary] = []
 	if slot != null and slot.get_card() == self and card_instance != null:
+		# Concealment first: it decides whether this view is on screen AT ALL, so it can't be
+		# expressed by any of the tints below and none of them can overrule it.
+		set_concealed(ctx.is_concealed(card_instance))
 		set_exhausted(card_instance.attack_exhausted)
 		set_inspected(ctx.inspected_instance() == card_instance)
 		var menacing := ctx.menaces_pivot(card_instance)
@@ -1326,6 +1331,21 @@ func _make_custom_tooltip(_for_text: String) -> Object:
 
 func set_selected(selected: bool) -> void:
 	modulate = Color(0.65, 1.0, 1.5) if selected else Color.WHITE
+
+
+# Concealment: this unit is out on a stand-in — its lunge ghost is doing the travelling — so the
+# original hides where it stands and the ghost is the only copy on screen.
+#
+# SHARP, never a fade. The swap is meant to be invisible machinery behind "the unit flew at its
+# target"; any transition on it would show two copies of the unit for exactly as long as it lasted,
+# which is the artefact this exists to prevent.
+#
+# `visible` rather than an alpha poke, deliberately: it is a channel of its own that no tint applier
+# can stomp (set_exhausted / set_selected / set_noninteractive all write `modulate` wholesale, alpha
+# included), and it takes any attached GlowFx with it — a threat glow left radiating around an empty
+# slot would give the concealment away just as loudly as the card itself.
+func set_concealed(concealed: bool) -> void:
+	visible = not concealed
 
 
 func _gui_input(event: InputEvent) -> void:

@@ -66,12 +66,14 @@ var _animator: CombatAnimator
 var _spell_caster: SpellCaster
 var _vfx: VFXPlayer
 var _interaction: Interaction   # THE owner of the current player gesture (see Interaction)
+var _ctx: CombatContext         # the declared surface cards consult — installed in _ready
 
 
-# While a melee attacker is lunging, its real card is hidden and a ghost duplicate does the
-# travelling. This maps such an attacker → its ghost so the attacker's own VFX (the on-attack
-# glint / self-buff) plays on the card the player is actually watching, not the hidden origin one.
-var _ghost_ui: Dictionary = {}   # CardInstance -> CardUI
+# While a melee attacker is lunging, its real card is concealed and a ghost duplicate does the
+# travelling. That mapping is DECLARED STATE, not combat's private bookkeeping — it lives in
+# CombatContext.stand_in_for, because two different readers consult it: the VFX layer (so the
+# attacker's own glints play on the card the player is watching) and the concealed card itself
+# (which hides on its own derivation). See CombatContext's stand-in section.
 # Units currently IN MOTION across the board, CardInstance -> the tween carrying them. A unit in
 # flight is not a valid stage for a cue about it: every combat number and glint stamps its position
 # once, at spawn, onto the combat root — so a badge glint on a moving card is left behind the moment
@@ -116,7 +118,7 @@ func _ready() -> void:
 
 	# The declared-state surface cards consult (selection / inspection / preview world) —
 	# see CombatContext + CardUI.derive_presentation. Cleared in _exit_tree.
-	CombatContext.install(_hand, _board, _interaction, _player_side)
+	_ctx = CombatContext.install(_hand, _board, _interaction, _player_side)
 
 	_board.setup_grids()
 	_board.interaction  = _interaction   # before _build_ui — build_section hands it to every slot
@@ -126,10 +128,8 @@ func _ready() -> void:
 	_board.get_mana     = func() -> int:            return _player_side.mana
 
 	var _get_card_ui: Callable = func(inst: CardInstance) -> CardUI:
-		var ghost: CardUI = _ghost_ui.get(inst)
-		if ghost != null and is_instance_valid(ghost):
-			return ghost
-		return _board.get_card_ui(inst)
+		var stand_in := _ctx.stand_in_for(inst)
+		return stand_in if stand_in != null else _board.get_card_ui(inst)
 	_vfx.setup(self, _get_card_ui)
 	_vfx.await_settled = _await_settled
 	# Relic-owned interception cues glint the tray chip; the tray lives in combat's chrome,
@@ -670,9 +670,13 @@ func _perform_strike(attacker: CardInstance, target: CardInstance) -> void:
 		# the two fight over the attacker's card.
 		await _await_settled(attacker)
 		var ghost := _animator.spawn_ghost(a_card)
-		a_card.modulate.a = 0.0
-		# Route the attacker's own VFX onto the ghost while it travels (see _ghost_ui).
-		_ghost_ui[attacker] = ghost
+		# Declaring the stand-in IS the hide: the original card consults this on its next derivation
+		# and conceals itself, and the attacker's own VFX routes onto the ghost (see CombatContext).
+		# The re-derive that follows is a "re-check now" cue carrying no verdict — the card still
+		# decides for itself — but it makes the concealment land on THIS frame rather than whenever
+		# the 0.75s presentation poll next comes round, which is what keeps the swap seamless.
+		_ctx.declare_stand_in(attacker, ghost)
+		a_card.derive_presentation()
 		Vfx.play("attack_swing_arc", ghost)   # the swing reads over the lunge, concurrent
 		await _animator.play_lunge(ghost, overshoot)
 		_animator.shake_card(t_card)               # impact shake at the apex, over the rebound
@@ -692,11 +696,15 @@ func _perform_strike(attacker: CardInstance, target: CardInstance) -> void:
 		# never freed early no matter how the handoff and the damage race.
 		retreat.finished.connect(func() -> void:
 			_transit.erase(attacker)
-			_ghost_ui.erase(attacker)
+			# Withdrawing the stand-in is the whole of un-hiding: the card re-derives and finds
+			# itself on screen again, wearing whatever it should be wearing NOW — an exhaust grey it
+			# earned by swinging, a threat glow the exchange just changed — instead of the opacity
+			# it happened to have when it left.
+			_ctx.clear_stand_in(attacker)
 			if is_instance_valid(ghost):
 				ghost.queue_free()
 			if is_instance_valid(a_card):
-				a_card.modulate.a = 1.0)
+				a_card.derive_presentation())
 		await _apply_attack_damage(attacker, target, t_card)
 		if withdraw.time_left > 0.0:
 			await withdraw.timeout

@@ -252,6 +252,38 @@ func _ready() -> void:
 				board.set_process(false)
 				board._set_hover_slot(board.player_slots[2][1])
 			await get_tree().process_frame
+	# "lunge": a frame FROZEN mid-strike — the attacker out on its stand-in ghost, its real card
+	# concealed in its slot. Then re-derives the concealed card and re-runs the tint appliers that
+	# used to stomp the hide (set_exhausted / set_selected both write `modulate` wholesale), so the
+	# shot proves the concealment survives exactly what broke it: ONE bishop on screen, its home
+	# slot empty. Add "clobber" to also hammer it with the appliers directly.
+	if scene_path.contains("combat") and "lunge" in args:
+		var cb3: Node = null
+		for n: Node in sv.find_children("*", "Node", true, false):
+			if n.has_method("get_chrome") and n.get("_board") != null:
+				cb3 = n
+				break
+		if cb3 != null:
+			var board3 = cb3.get("_board")
+			var victim := CardInstance.from_data(CardData.get_card("pawn"))
+			board3.place_enemy_card(victim, 1, 0)
+			var striker := CardInstance.from_data(CardData.get_card("bishop"))
+			board3.spawn_player_card(striker, 1, 3)
+			await get_tree().process_frame
+			var s_card: CardUI = board3.get_card_ui(striker)
+			var v_card: CardUI = board3.get_card_ui(victim)
+			var ghost3: CardUI = cb3.get("_animator").spawn_ghost(s_card)
+			CombatContext.current.declare_stand_in(striker, ghost3)
+			s_card.derive_presentation()
+			# Park the ghost where the lunge's rebound leaves it — beside the victim.
+			ghost3.global_position = Vector2(
+				v_card.global_position.x + v_card.size.x + 12.0, v_card.global_position.y)
+			if "clobber" in args:
+				striker.attack_exhausted = true
+				s_card.set_exhausted(true)
+				s_card.set_selected(true)
+				s_card.derive_presentation()
+			await get_tree().process_frame
 	# "armeddrag": the armed-autocast drag hybrid — empty own slots show MOVE (priority), occupied
 	# invalid slots show the red X (a valid cast target would show the green reticle).
 	if scene_path.contains("combat") and "armeddrag" in args:

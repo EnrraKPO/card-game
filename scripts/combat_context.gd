@@ -60,6 +60,45 @@ func inspected_instance() -> CardInstance:
 	return hand.inspected_instance() if hand != null else null
 
 
+# ── Stand-ins: where a unit is REALLY being drawn right now ───────────────────────
+# A lunging attacker never leaves its slot — a ghost duplicate does the travelling while the real
+# card is concealed in place. So during a strike "which view IS this unit?" has two answers, and
+# BOTH of them are consulted here rather than pushed:
+#
+#   • the VFX layer asks stand_in_for(), so a cue about the attacker (its on-attack glint, a Speed
+#     badge flashing on a crit) plays on the card the player is actually watching;
+#   • the concealed original asks is_concealed() on its own derivation and hides itself.
+#
+# Declaring the stand-in is therefore THE WHOLE of hiding the source — there is no second step, and
+# no window in which the two can disagree. Hiding used to be an alpha poke at the original card, and
+# the pull-presentation appliers (set_exhausted / set_selected, both writing `modulate` wholesale)
+# silently republished it at full opacity on the next re-derive — so the unit appeared to clone
+# itself beside its own ghost instead of flying out of its slot.
+var _stand_in: Dictionary = {}   # CardInstance -> CardUI
+
+
+func declare_stand_in(inst: CardInstance, view: CardUI) -> void:
+	if inst == null or view == null:
+		return
+	_stand_in[inst] = view
+
+
+func clear_stand_in(inst: CardInstance) -> void:
+	_stand_in.erase(inst)
+
+
+# The unit's travelling view, or null if it is being drawn in its own slot. Freed views read as
+# absent, so a stand-in that was torn down without its entry being erased self-heals rather than
+# leaving a unit invisible forever.
+func stand_in_for(inst: CardInstance) -> CardUI:
+	var view := _stand_in.get(inst) as CardUI
+	return view if view != null and is_instance_valid(view) else null
+
+
+func is_concealed(inst: CardInstance) -> bool:
+	return stand_in_for(inst) != null
+
+
 # Threat questions delegate to the board, which owns the declared preview world (grids are its
 # domain). "Do I menace the pivot?" / "am I the pivot's victim?" — see CombatBoard.
 func menaces_pivot(inst: CardInstance) -> bool:
