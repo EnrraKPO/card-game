@@ -65,38 +65,50 @@ func _ready() -> void:
 	_layout()
 
 
-# Picks the one scale used for the whole session of this overlay: measure the two text columns'
-# natural heights (at scale 1) and size the card so the TALLEST of card/stats/details just fills
-# the screen height. Fixed here so a later toggle can rebuild without anything changing size.
+# Picks the one scale used for the whole session of this overlay. Fixed here so a later toggle
+# can rebuild without anything changing size.
+# HEIGHT: the CARD is the anchor — the details COLUMN-FLOW sideways under the same height budget
+# (see CardTooltip.build_details max_h), so a text-heavy card widens its read instead of
+# shrinking the card. Only the stat guide (always one column) can still bind the height.
+# WIDTH: the flowed details' width is dynamic by design, so measure the real flowed panel at the
+# candidate scale and step down until the three-column layout fits — each shrink also shortens
+# the blocks, so a few passes converge.
 func _compute_scale() -> float:
 	var vp := get_viewport_rect().size
 	var avail_h := vp.y - 2.0 * MARGIN - HINT_BLOCK
 
-	var guide: Control = null
+	var tallest := CardTooltip.PREVIEW_SIZE.y
 	if CardTooltip.has_stat_guide(_inst):
-		guide = CardTooltip.build_stat_guide(_inst, 1.0, true)
+		var guide := CardTooltip.build_stat_guide(_inst, 1.0, true)
 		guide.modulate.a = 0.0
 		add_child(guide)
-	var details := _details_panel(1.0)
-	details.modulate.a = 0.0
-	add_child(details)
-	await get_tree().process_frame
-
-	var tallest := CardTooltip.PREVIEW_SIZE.y
-	if guide != null:
+		await get_tree().process_frame
+		if _dismissing or not is_inside_tree():
+			return 1.0
 		tallest = maxf(tallest, guide.get_combined_minimum_size().y)
 		guide.queue_free()
-	tallest = maxf(tallest, details.get_combined_minimum_size().y)
-	details.queue_free()
-
-	var by_h := avail_h / tallest
-	# Width: two equal side columns + the card + two gaps must fit between the margins.
-	var side_w := maxf(CardTooltip.GUIDE_WIDTH, CardTooltip.COLUMN_WIDTH + 2.0 * DETAIL_PAD)
-	var by_w := (vp.x - 2.0 * MARGIN) / (2.0 * side_w + CardTooltip.PREVIEW_SIZE.x + 2.0 * GAP)
-	var s := minf(by_h, by_w)
+	var s := avail_h / tallest
 	if not DisplayServer.is_touchscreen_available():
 		s = minf(s, DESKTOP_MAX_SCALE)
-	return maxf(1.0, s)
+	s = maxf(1.0, s)
+
+	for i in 4:
+		var details := _details_panel(s)
+		details.modulate.a = 0.0
+		add_child(details)
+		await get_tree().process_frame
+		if _dismissing or not is_inside_tree():
+			details.queue_free()
+			return s
+		var det_w := details.get_combined_minimum_size().x
+		details.queue_free()
+		# The card stays centred, so BOTH side cells reserve the wider side's width.
+		var side_w := maxf(CardTooltip.GUIDE_WIDTH * s, det_w)
+		var needed := 2.0 * side_w + CardTooltip.PREVIEW_SIZE.x * s + 2.0 * GAP + 2.0 * MARGIN
+		if needed <= vp.x or s <= 1.0:
+			break
+		s = maxf(s * (vp.x - 2.0 * MARGIN - 2.0 * GAP) / (needed - 2.0 * MARGIN - 2.0 * GAP), 1.0)
+	return s
 
 
 # Lays the overlay out as three columns whose CENTRE is the card: two equal expand-fill side cells
@@ -186,7 +198,10 @@ func _details_panel(s: float) -> PanelContainer:
 	style.set_content_margin_all(DETAIL_PAD * s)
 	panel.add_theme_stylebox_override("panel", style)
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.add_child(CardTooltip.build_details(_inst, s))
+	# Column-flow budget: the same height the whole overlay works to — an ability-heavy card
+	# grows this panel in COLUMNS (width), never taller than the screen.
+	var flow_h := get_viewport_rect().size.y - 2.0 * MARGIN - HINT_BLOCK - 2.0 * DETAIL_PAD * s
+	panel.add_child(CardTooltip.build_details(_inst, s, flow_h))
 	return panel
 
 

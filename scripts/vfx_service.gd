@@ -29,9 +29,15 @@ const BEHAVIORS := ["flash", "pulse", "pop", "shake", "ring", "sparkle", "glint"
 # Behaviors that can run as a SUSTAINED state (attach/detach) as well as a one-shot.
 const SUSTAINED_BEHAVIORS := ["glow", "pulse", "sparkle", "radiance"]
 
-# All effect nodes draw on one dedicated layer above the UI, positioned in global canvas
+# All effect nodes draw on dedicated overlay layers above the UI, positioned in global canvas
 # coordinates — effects never join a container's layout or clip inside a target's rect.
 var _layer: CanvasLayer
+# Overlay BANDS (the "coarse depth bands" design from the composited-glow work): an effect
+# draws just above ITS OWN widget's canvas layer, never on one global top. A table card's glow
+# sits under a modal's scrim; a widget INSIDE the modal's layer glows above it — including a
+# glow on the modal panel itself. Key = the target's CanvasLayer index; _layer is the base band
+# for widgets living in the plain screen canvas.
+var _bands: Dictionary = {}
 # Sustained states, keyed "<id>@<target instance id>" -> the state's root node.
 var _attached: Dictionary = {}
 # Custom renderers, entry id -> Callable(vd, target, opts). An entry with renderer "custom"
@@ -56,6 +62,30 @@ func _ready() -> void:
 # global rect — see RenderFilters/`layer: "overlay"`.
 func overlay_layer() -> CanvasLayer:
 	return _layer
+
+
+# The overlay band for effects on `target`: the layer just above the CanvasLayer the target
+# lives on (created lazily per band), or the base band for plain-canvas widgets. Determined by
+# construction — the target's own ancestry — never by hand-assigned depths, so an effect can't
+# contradict what the screen shows: under a scrim when its widget is, above it when its widget
+# rides the modal's layer.
+func overlay_layer_for(target: Control) -> CanvasLayer:
+	var n: Node = target
+	while n != null and not (n is CanvasLayer):
+		n = n.get_parent()
+	if n == null or (n as CanvasLayer).layer <= _layer.layer:
+		return _layer   # base canvas (or something already under the base band)
+	var lidx: int = (n as CanvasLayer).layer
+	var band: Variant = _bands.get(lidx)
+	if band == null or not is_instance_valid(band):
+		var made := CanvasLayer.new()
+		made.layer = lidx + 1
+		# Parent beside the base band (not under it): the render harness reparents these into
+		# its capture viewport, and late-created bands must land wherever the base band lives.
+		_layer.get_parent().add_child(made)
+		_bands[lidx] = made
+		band = made
+	return band
 
 
 # ── The event API — play any library effect by id, on any Control ─────────────────
@@ -561,7 +591,9 @@ func _sustain_radiance(vd: VFXData, target: Control) -> Node:
 # (glow_color/spread/falloff/intensity/animate) come straight from the vfx.json entry.
 func _sustain_composited_glow(vd: VFXData, target: Control) -> Node:
 	var g := GlowFx.new()
-	_layer.add_child(g)               # the overlay CanvasLayer — outside the UI tree's clipping
+	# The target's own BAND — outside the UI tree's clipping, and depth-correct against modals
+	# (a modal widget's glow rises above the scrim; a table widget's stays under it).
+	overlay_layer_for(target).add_child(g)
 	g.setup(target, vd.params)        # async bake inside; the glow reveals once its silhouette lands
 	return g
 

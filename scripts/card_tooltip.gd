@@ -94,7 +94,10 @@ static func build(inst: CardInstance, show_cost := true, scale := 1.0,
 	preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hbox.add_child(preview)
 
-	hbox.add_child(build_details(inst, s))
+	# Height budget = the preview card's own height: a content-heavy card (multiple abilities,
+	# charms, statuses) flows into EXTRA COLUMNS beside the card instead of growing a tall
+	# skinny panel past it.
+	hbox.add_child(build_details(inst, s, PREVIEW_SIZE.y * s))
 
 	# The stat glossary, prepended as the leftmost column so it reads before the card itself. The
 	# same explanations also ride the card's OWN stat badges as hover tooltips (see set_stat_tooltips).
@@ -119,23 +122,27 @@ static func build(inst: CardInstance, show_cost := true, scale := 1.0,
 	return panel
 
 
-# The card's detail column (name, generated-token note, description, targeting/building rules,
+# The card's detail read (name, generated-token note, description, targeting/building rules,
 # abilities, charms, statuses) — the right-hand half of the hover panel, reused verbatim by the
-# CardInspector. Vertically SHRINK_CENTER so it sits centred beside a taller card.
-static func build_details(inst: CardInstance, s := 1.0) -> VBoxContainer:
+# CardInspector and the Forge's merge framing. Vertically SHRINK_CENTER so it sits centred
+# beside a taller card.
+#
+# `max_h` (px, at scale s) is the COLUMN-FLOW budget: content that would run taller than it
+# flows into additional columns to the RIGHT instead of growing the panel down — a card with
+# many abilities widens its read, it never pushes the surrounding UI away (0 = no budget, one
+# column that grows freely). Section headers stay glued to their first row, so a column never
+# ends on a dangling title.
+static func build_details(inst: CardInstance, s := 1.0, max_h := 0.0) -> Container:
 	var col_w := COLUMN_WIDTH * s
-	var vbox := VBoxContainer.new()
-	vbox.custom_minimum_size.x = col_w
-	vbox.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	vbox.add_theme_constant_override("separation", int(6.0 * s))
+	var blocks: Array = []   # Controls, in read order; "keep_with_next" meta glues headers down
 
 	var name_lbl := Label.new()
 	name_lbl.text = inst.data.display_name
 	name_lbl.add_theme_font_size_override("font_size", int(22.0 * s))
 	name_lbl.add_theme_color_override("font_color", TEXT_TITLE)
-	vbox.add_child(name_lbl)
+	blocks.append(name_lbl)
 
-	vbox.add_child(HSeparator.new())
+	blocks.append(_glued(HSeparator.new()))
 
 	# Generated tokens explain their hidden cost: playing one taps the rook.
 	if inst.source_building != null:
@@ -144,49 +151,49 @@ static func build_details(inst: CardInstance, s := 1.0) -> VBoxContainer:
 		# symbol glyphs (⚒, ✓, ●, the old ✕), which render broken on web/mobile builds where
 		# there's no system-font fallback; see ScreenUI.CLOSE_GLYPH for the same issue.
 		note.text = Loc.t("card_tooltip.generated", {"name": inst.source_building.data.display_name})
-		vbox.add_child(_wrap_label(note, col_w, int(15.0 * s), TEXT_NOTE))
+		blocks.append(_wrap_label(note, col_w, int(15.0 * s), TEXT_NOTE))
 
 	var desc := inst.data.description
 	if not desc.is_empty():
-		vbox.add_child(_rich_label(desc, col_w, int(18.0 * s), TEXT_MAIN))
+		blocks.append(_rich_label(desc, col_w, int(18.0 * s), TEXT_MAIN))
 
 	# Auto-attack targeting policy, appended after the authored text as its own line (units only;
 	# spells return "" — see CardData.targeting_line). Colour-dimmed to read as a system rule.
 	var targeting := inst.data.targeting_line()
 	if not targeting.is_empty():
-		vbox.add_child(_rich_label(targeting, col_w, int(15.0 * s), TEXT_SECTION))
+		blocks.append(_rich_label(targeting, col_w, int(15.0 * s), TEXT_SECTION))
 
 	# Rooted-building note, appended after the authored/targeting text as its own line (buildings
 	# only; non-buildings return "" — see CardData.building_line). Colour-dimmed as a system rule.
 	var building := inst.data.building_line()
 	if not building.is_empty():
-		vbox.add_child(_rich_label(building, col_w, int(15.0 * s), TEXT_SECTION))
+		blocks.append(_rich_label(building, col_w, int(15.0 * s), TEXT_SECTION))
 
 	# Activated abilities: a SMALL ability-widget view per ability beside its description —
 	# the same visual the tray uses, so "this is an ability" reads identically everywhere.
 	# Info-only here (mouse-ignored, not draggable); activation stays in the tray.
 	var abilities: Array = inst.ability_list()
 	if not abilities.is_empty():
-		vbox.add_child(HSeparator.new())
-		vbox.add_child(_section_title(Loc.t("card_tooltip.section_abilities"), s))
+		blocks.append(_glued(HSeparator.new()))
+		blocks.append(_glued(_section_title(Loc.t("card_tooltip.section_abilities"), s)))
 		for ab: AbilityData in abilities:
-			vbox.add_child(_ability_row(inst, ab, s))
+			blocks.append(_ability_row(inst, ab, s))
 
 	# Charm detail: one line per attached charm, colour-matched to its on-card pip.
 	if not inst.charms.is_empty():
-		vbox.add_child(HSeparator.new())
-		vbox.add_child(_section_title(Loc.t("card_tooltip.section_charms"), s))
+		blocks.append(_glued(HSeparator.new()))
+		blocks.append(_glued(_section_title(Loc.t("card_tooltip.section_charms"), s)))
 		for charm_id: String in inst.charms:
 			var charm := CharmData.get_charm(charm_id)
 			if charm == null:
 				continue
 			var ch_line := "%s  %s — %s" % [charm.letter, charm.display_name, charm.description]
-			vbox.add_child(_rich_label(ch_line, col_w, int(15.0 * s), charm.color.lightened(0.35)))
+			blocks.append(_rich_label(ch_line, col_w, int(15.0 * s), charm.color.lightened(0.35)))
 
 	# Active statuses: one line each (glyph, name, count, description), colour-matched to its pip.
 	if not inst.statuses.is_empty():
-		vbox.add_child(HSeparator.new())
-		vbox.add_child(_section_title(Loc.t("card_tooltip.section_statuses"), s))
+		blocks.append(_glued(HSeparator.new()))
+		blocks.append(_glued(_section_title(Loc.t("card_tooltip.section_statuses"), s)))
 		for si: StatusInstance in inst.statuses:
 			var sd: StatusData = si.data
 			var cnt := si.count()
@@ -201,9 +208,62 @@ static func build_details(inst: CardInstance, s := 1.0) -> VBoxContainer:
 			# The pip + the row's separation, so pip + text fill the column.
 			row.add_child(_rich_label(line, col_w - 28.0 * s, int(15.0 * s),
 				sd.color.lightened(0.35)))
-			vbox.add_child(row)
+			blocks.append(row)
 
-	return vbox
+	return _flow_columns(blocks, max_h if max_h > 0.0 else INF, col_w, s)
+
+
+# Tags a header-ish block (separator / section title) to travel WITH the block after it when the
+# column flow breaks — a column must never end on a title whose content starts the next one.
+static func _glued(c: Control) -> Control:
+	c.set_meta("keep_with_next", true)
+	return c
+
+
+# Packs `blocks` top-down into columns capped at `max_h`, left to right. Greedy: a block (plus
+# any glued headers riding on it) that would overflow the current column starts the next one.
+# Heights come from get_combined_minimum_size — reliable here because every wrapped label has
+# its width PINNED (the SIZING RULE up top). One column (max_h = INF) reproduces the classic
+# single-column read exactly.
+static func _flow_columns(blocks: Array, max_h: float, col_w: float, s: float) -> Container:
+	var sep_v := 6.0 * s
+	var root := HBoxContainer.new()
+	root.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	root.add_theme_constant_override("separation", int(18.0 * s))
+	var col := _new_flow_col(col_w, sep_v)
+	root.add_child(col)
+	var acc := 0.0
+	var carry: Array = []   # glued headers awaiting the block they belong to
+	for b: Control in blocks:
+		if b.has_meta("keep_with_next"):
+			carry.append(b)
+			continue
+		var group: Array = carry + [b]
+		carry = []
+		var gh := 0.0
+		for g: Control in group:
+			gh += g.get_combined_minimum_size().y + sep_v
+		if acc > 0.0 and acc + gh > max_h:
+			col = _new_flow_col(col_w, sep_v)
+			root.add_child(col)
+			acc = 0.0
+			# A fresh column doesn't open with a separator rule — drop leading HSeparators.
+			while not group.is_empty() and group[0] is HSeparator:
+				(group.pop_front() as Control).queue_free()
+		for g: Control in group:
+			col.add_child(g)
+		acc += gh
+	for g: Control in carry:   # trailing glued blocks (malformed list) — never drop content
+		col.add_child(g)
+	return root
+
+
+static func _new_flow_col(col_w: float, sep_v: float) -> VBoxContainer:
+	var col := VBoxContainer.new()
+	col.custom_minimum_size.x = col_w
+	col.size_flags_vertical = Control.SIZE_SHRINK_BEGIN   # columns top-align with each other
+	col.add_theme_constant_override("separation", int(sep_v))
+	return col
 
 
 # Whether the stat-guide column applies to this card: units carry Health/Shield/Attack/Speed,

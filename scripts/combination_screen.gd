@@ -21,9 +21,9 @@ extends Control
 # "item": ForgeDragItem, "combinable": bool (false = can't source a merge, still an enchant target) }
 var _entries: Array = []
 
-# Must match the CardUI root custom_minimum_size in scenes/card_ui.tscn so the deck grid scales.
+# Fallback card size (before the FitGrid's first layout lands) — see _live_card_size.
 const CARD_SIZE := Vector2(160, 210)
-# Native card aspect (260×340) — _fit_cards sizes the table grid with it.
+# Native card aspect (260×340) — the merge framing sizes its result/component cards with it.
 const CARD_ASPECT := 340.0 / 260.0
 # All particle VFX tuning lives in ForgeFX (ForgeFX.AURA / ForgeFX.LINK).
 
@@ -31,18 +31,15 @@ const OK_COLOR   := Color(0.4, 1.0, 0.55)
 const BAD_COLOR  := Color(1.0, 0.4, 0.4)
 
 const DRAG_THRESHOLD := 12.0   # px the pointer must travel before a press becomes a drag (vs a tap)
-# The deck grid's BASE gap. _fit_cards inflates the live separations above this to absorb the
-# fit remainder — never read the separation back from the grid (it returns the inflated value).
-const GRID_SEP := 16.0
-# Reserved lanes above and below the card spread — guaranteed room for the selection tips (the
-# "pick a target" pill above the highlighted card, the cancel hint below it), so they NEVER have
-# to fold onto the cards even for edge rows.
-const TIP_LANE := 56.0
+# The merge framing's decision-row height — deliberately tall (the old 92 + 25%): the commit is
+# the screen's one primary action while the framing is up, it should be hard to miss.
+const MERGE_BTN_H := 115.0
 
-var _deck_grid: GridContainer
+# THE shared fit-all card grid (see FitGrid): sizes the whole deck to the table, centres the
+# ragged last row (no remainder holes, ever), degrades to scrolling only at the touch floor.
+var _fit_grid: FitGrid
 var _scroll: ScrollContainer
 var _charm_col: VBoxContainer
-var _card_size := CARD_SIZE
 const CHARM_SIZE := Vector2(82, 82)
 
 # Each "this is live" state is TWO cues, one light: an outer glow spilling past the edge and a
@@ -58,16 +55,42 @@ var _sel: Dictionary = {}
 # The widget currently wearing the canonical selection Highlight (grow + outline + glow — see
 # HighlightFx / the `highlight` vfx entry); null = none.
 var _hl_item: Control = null
-# Floating tips riding OUTSIDE the highlighted source, tracked to it every frame in _process:
-# above it, what to do next ("Pick another card to merge" / the enchant equivalent); below it,
-# how to back out ("Right click to cancel"). The spread reserves TIP_LANE for each.
+# Floating tip riding OUTSIDE the highlighted source (above it), tracked to it every frame in
+# _process — it floats in the grid's own uniform gap above the card.
 var _sel_tip: PanelContainer = null
 var _sel_tip_label: Label = null
-var _cancel_tip: PanelContainer = null
+# The round purple ENGAGE buttons riding every VALID partner card's bottom edge while a source
+# is selected — THE tap path into the merge (tapping a card's body always just selects it).
+# Always visible, never hover-summoned: the player must see where they can go, not chase it.
+# Icon-only (the selected card + tip already say what's happening); the full "Merge with X" /
+# "Attach to X" line rides the tooltip. entry idx -> the fab Control. Fabs PERSIST across
+# selection changes — only genuinely appearing/disappearing ones pop; tooltips refresh in
+# place (per-fab "tip_sig" meta).
+var _merge_btns: Dictionary = {}
+# The engage button's diameter: a FAT fraction of the card it rides — it's the primary action
+# on that card, it should read like one. Clamped for absurd card sizes.
+const MERGE_BTN_RATIO := 0.58
+const MERGE_BTN_MIN := 96.0
+const MERGE_BTN_MAX := 176.0
+# How much of the button hangs BELOW the card's bottom edge — mostly inside the card, so the
+# spread's limited breathing room stays readable.
+const MERGE_BTN_OVERHANG := 0.30
+# THE Forge button — the same circular art the map's Forge fab shows (glossy circle + anvil
+# baked in). One button identity for "engage the forge", everywhere it appears.
+const MERGE_FAB_TEX := preload("res://assets/buttons/forge.png")
 
 # The open merge procedure ({} = closed): {"src": payload, "tgt": entry idx, "verdict": Dictionary}.
 var _merge: Dictionary = {}
+# The merge modal rides its OWN CanvasLayer, ABOVE the table's Vfx overlay band — so the
+# selected card's highlight stays attached through the merge (dimmed under the scrim with the
+# rest of the table), while effects on modal widgets land in the modal's band above the scrim
+# (see Vfx.overlay_layer_for).
+const MODAL_LAYER := 100
+var _modal_layer: CanvasLayer = null
 var _modal: Control = null          # the dim backdrop — also hosts the fusion anim + result toast
+# A press that closed the modal must consume its own RELEASE too — otherwise the release
+# arrives with the modal already gone and reads as a dead-space click (which deselects).
+var _swallow_release := false
 var _cluster: Control = null        # the framing cluster (freed on commit, before the fusion)
 var _comp_holders: Array = []       # the two component visuals — the fusion's fly-from points
 var _result_holder: Control = null  # the enlarged result card's holder (wears the radiance cues)
@@ -115,11 +138,15 @@ func get_chrome() -> Dictionary:
 		"exit": _leave, "back": _back_or_cancel, "show_footer": true, "inset": false}
 
 
-# OS back / Esc: an open merge closes back to the table first; otherwise leave the room.
+# OS back / Esc peels state before it ever leaves the room: an open merge closes first, then a
+# live selection clears, and only a clean table navigates away.
 func _back_or_cancel() -> void:
 	if _modal != null:
 		if not _fusing:
 			_close_modal()
+		return
+	if not _sel.is_empty():
+		_sel = {}
 		return
 	_leave()
 
@@ -132,8 +159,6 @@ func _exit_tree() -> void:
 
 
 func _build_ui() -> void:
-	_card_size = CARD_SIZE   # refined by _fit_cards on layout
-
 	# ── Table surface: full-bleed environment art behind everything ──────────────
 	var bg := TextureRect.new()
 	bg.texture = EnvArt.tex("crafting", "table_bg")
@@ -177,40 +202,27 @@ func _build_ui() -> void:
 	_charm_col.add_theme_constant_override("separation", 12)
 	bar_scroll.add_child(_charm_col)
 
-	# The card table — the whole deck, fit-to-space (see _fit_cards).
+	# The card table — the whole deck on the SHARED fit-all grid (FitGrid, same as Decks/events/
+	# King picks): largest cards that all fit, centred ragged last row (no remainder holes,
+	# ever), degrades to scrolling only at the touch floor.
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_horizontal = SIZE_EXPAND_FILL
 	scroll.size_flags_vertical   = SIZE_EXPAND_FILL
-	# SHOW_NEVER (not DISABLED): the fitted grid's min width must NOT propagate up, or it deadlocks
-	# the HBox after _fit_cards sizes the cards.
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
 	scroll.vertical_scroll_mode   = ScrollContainer.SCROLL_MODE_AUTO
-	scroll.resized.connect(_fit_cards)
 	body.add_child(scroll)
 	_scroll = scroll
 
-	# The fitted spread is usually a touch narrower than the viewport (whole columns only) — the
-	# wrap centres it so the leftover reads as even table margin, not a dead strip on one side
-	# (ScrollContainer itself pins its child top-left regardless of shrink flags).
-	# The tip lanes: fixed top/bottom margins keeping the spread clear of the floating selection
-	# pills (see TIP_LANE). _fit_cards subtracts them from its height budget.
-	var grid_pad := MarginContainer.new()
-	grid_pad.size_flags_horizontal = SIZE_EXPAND_FILL
-	grid_pad.size_flags_vertical = SIZE_EXPAND_FILL
-	grid_pad.add_theme_constant_override("margin_top", int(TIP_LANE))
-	grid_pad.add_theme_constant_override("margin_bottom", int(TIP_LANE))
-	scroll.add_child(grid_pad)
-	var grid_wrap := VBoxContainer.new()
-	grid_wrap.size_flags_horizontal = SIZE_EXPAND_FILL
-	grid_wrap.size_flags_vertical = SIZE_EXPAND_FILL
-	grid_wrap.alignment = BoxContainer.ALIGNMENT_CENTER   # small decks sit mid-table, not top-stuck
-	grid_pad.add_child(grid_wrap)
-	_deck_grid = GridContainer.new()
-	_deck_grid.columns = 4
-	_deck_grid.add_theme_constant_override("h_separation", int(GRID_SEP))
-	_deck_grid.add_theme_constant_override("v_separation", int(GRID_SEP))
-	_deck_grid.size_flags_horizontal = SIZE_SHRINK_CENTER
-	grid_wrap.add_child(_deck_grid)
+	# FitGrid fills the WHOLE scroll area (no reserved tip lanes — those added a top/bottom-only
+	# inset that broke the uniform border: the vertical card-to-edge gap then didn't match the
+	# between-row gap). The selection pills float in the grid's own uniform gap instead.
+	_fit_grid = FitGrid.new()
+	_fit_grid.uniform_gap = true        # card gaps == border gaps, per axis (see FitGrid)
+	_fit_grid.separation = 28.0         # the minimum gap everywhere — a touch of breathing room
+	_fit_grid.min_card_width = 150.0    # the touch floor — absurd decks degrade to scrolling
+	_fit_grid.size_flags_horizontal = SIZE_EXPAND_FILL
+	_fit_grid.size_flags_vertical = SIZE_EXPAND_FILL
+	scroll.add_child(_fit_grid)
 
 	# Drag overlay: floats above everything, never eats input.
 	_overlay = Control.new()
@@ -218,15 +230,12 @@ func _build_ui() -> void:
 	_overlay.mouse_filter = MOUSE_FILTER_IGNORE
 	add_child(_overlay)
 
-	# The selection tips: dark pills floating just above and below the highlighted source
-	# card/chip — never over the card itself (the spread's TIP_LANE margins guarantee the room).
+	# The selection tip: a dark pill floating just above the highlighted source card/chip, in the
+	# grid's uniform top gap (clamped on-screen by _track_sel_tip).
 	_sel_tip = _make_tip_pill(22, Color(0.98, 0.97, 0.92), 0.66)
 	_sel_tip_label = _sel_tip.get_child(0) as Label
+	_sel_tip.z_index = 5   # the instruction always reads OVER the engage fabs it may overlap
 	_overlay.add_child(_sel_tip)
-	var cancel_pill := _make_tip_pill(19, Color(0.88, 0.86, 0.80), 0.55)
-	(cancel_pill.get_child(0) as Label).text = Loc.t("combine.cancel_hint")
-	_overlay.add_child(cancel_pill)
-	_cancel_tip = cancel_pill
 
 
 # A floating hint pill (dark rounded backdrop + one label), hidden until a selection shows it.
@@ -251,74 +260,23 @@ func _make_tip_pill(font_size: int, font_color: Color, bg_alpha: float) -> Panel
 
 # ── Deck display ────────────────────────────────────────────────────────────────
 
-# Fit-all: pick the column count that shows the WHOLE deck at the largest card size (native
-# aspect) — deck sizes are bounded, so scrolling here is pointless (user directive) and stays a
-# floor-degradation path only. Ties prefer fewer remainder holes, then the wider spread.
-func _fit_cards() -> void:
-	if _scroll == null or _deck_grid == null or _entries.is_empty():
-		return
-	var avail := _scroll.size
-	avail.y = maxf(avail.y - TIP_LANE * 2.0, 50.0)   # the tip lanes are off the grid's budget
-	if avail.x <= 0.0 or avail.y <= 0.0:
-		return
-	var sep := GRID_SEP
-	var n := _entries.size()
-	var floor_w := 150.0
-	var best_w := 0.0
-	var best_cols := 1
-	for cols in range(1, n + 1):
-		var rows := int(ceil(float(n) / float(cols)))
-		var w := (avail.x - float(cols - 1) * sep) / float(cols)
-		var h_cap := (avail.y - float(rows - 1) * sep) / float(rows)
-		w = minf(w, h_cap / CARD_ASPECT)
-		if w > best_w + 0.5:
-			best_w = w
-			best_cols = cols
-		elif absf(w - best_w) <= 0.5:
-			# Tie on card size → prefer the layout with FEWER remainder holes (a ragged last row
-			# is dead cells; excess width instead flows to the rail). Same holes → wider spread.
-			# Always adopt THIS column count's width — keeping the old one overflowed the row.
-			var rem_new := (cols - (n % cols)) % cols
-			var rem_best := (best_cols - (n % best_cols)) % best_cols
-			if rem_new < rem_best or (rem_new == rem_best and cols > best_cols):
-				best_w = w
-				best_cols = cols
-	if best_w < floor_w:
-		# Absurdly large deck: clamp to the touch floor and let the grid scroll (bar gets a lane).
-		best_w = floor_w
-		var bar_w := _scroll.get_v_scroll_bar().get_combined_minimum_size().x
-		best_cols = maxi(int((avail.x - bar_w + sep) / (floor_w + sep)), 1)
-	# Elastic gutters: whole cards at a fixed aspect can't fill both dimensions exactly, so the
-	# integer-grid remainder is spent on the separations instead — each axis's slack is split into
-	# one share per column/row (SHRINK_CENTER turns the odd share into equal half-gap edges), so
-	# the spread always reads as touching all four table edges. Slack in a scrolling grid's long
-	# axis is 0 by construction (maxf guards the sign).
-	var rows_n := int(ceil(float(n) / float(best_cols)))
-	var grid_w := float(best_cols) * best_w + float(best_cols - 1) * sep
-	var grid_h := float(rows_n) * best_w * CARD_ASPECT + float(rows_n - 1) * sep
-	var h_extra := maxf(avail.x - grid_w, 0.0) / float(best_cols)
-	var v_extra := maxf(avail.y - grid_h, 0.0) / float(rows_n)
-	_deck_grid.add_theme_constant_override("h_separation", int(sep + h_extra))
-	_deck_grid.add_theme_constant_override("v_separation", int(sep + v_extra))
-
-	var new_size := Vector2(best_w, best_w * CARD_ASPECT)
-	if new_size.distance_to(_card_size) < 1.0 and _deck_grid.columns == best_cols:
-		return
-	_card_size = new_size
-	_deck_grid.columns = best_cols
-	for e: Dictionary in _entries:
-		(e.item as Control).custom_minimum_size = _card_size
-		(e.ui as Control).custom_minimum_size = _card_size
+# The live fitted card size (FitGrid drives every item's rect) — for the drag follower and the
+# aura radii. Falls back to CARD_SIZE before the first layout lands.
+func _live_card_size() -> Vector2:
+	if not _entries.is_empty():
+		var it: Control = _entries[0].item
+		if is_instance_valid(it) and it.size.x > 0.0:
+			return it.size
+	return CARD_SIZE
 
 
 func _rebuild_deck() -> void:
 	_cancel_drag()
-	for child in _deck_grid.get_children():
-		child.queue_free()
 	_entries.clear()
 	_sel = {}
 	_hl_item = null   # its wearer is being freed; the attach auto-detaches on tree_exiting
 
+	var items: Array = []
 	var deck: Array = GameData.current_run.deck.duplicate()
 	for i in deck.size():
 		var dc: DeckCard = deck[i]
@@ -327,14 +285,12 @@ func _rebuild_deck() -> void:
 			continue
 		var ui := CardUI.create(dc.make_instance())
 		ui.draggable = false   # the Forge drives its own drag; CardUI's combat drag stays off
-		ui.custom_minimum_size = _card_size
 
 		var combinable := data.elements.size() > 0 or data.chess_pieces.size() > 0
 
 		# Every card is wrapped so it can be a drop TARGET (rect hit-test) and receive taps (a
 		# charm's enchant target); only combinable cards can SOURCE a merge (drag or first tap).
 		var item := ForgeDragItem.new()
-		item.custom_minimum_size = _card_size
 		item.setup(ui, {"kind": "card", "idx": _entries.size()})
 		# Hover detail comes from the CardUI's OWN standard tooltip (ForgeDragItem leaves the card on
 		# MOUSE_FILTER_PASS) — the same path the rest of the game uses; nothing bespoke here.
@@ -342,11 +298,10 @@ func _rebuild_deck() -> void:
 
 		_entries.append({ "card": dc, "deck_idx": i, "data": data, "ui": ui, "item": item,
 			"combinable": combinable })
-		_deck_grid.add_child(item)
+		items.append(item)
 
-	_fit_cards()   # deck count changed — resize the table's cards to fit the new spread
-	_update_selection_highlights()
-	_update_card_dimming()
+	_fit_grid.set_cards(items)   # the shared grid sizes and lays out the whole spread
+	_present()
 
 
 # ── Charm inventory ──────────────────────────────────────────────────────────────
@@ -454,14 +409,18 @@ func _begin_drag(payload: Dictionary) -> void:
 	_follower.add_child(_aura)
 	Sfx.mixing_start()   # the aura's audio half — loops for exactly as long as the particles swirl
 
-	# Leave the dragged source IN PLACE as a dimmed "ghost": its grid slot stays occupied, so the
-	# grid never reflows mid-drag. Cards staying put avoids accidental drops on one that slid under
-	# the pointer. The follower in the overlay is what the player actually moves.
-	if payload.kind == "card":
-		_entries[payload.idx].item.modulate.a = 0.28
+	# Dragging IS selecting: the lifted card/charm becomes the declared source, and stays
+	# selected after the drop wherever it lands (the merge adopts it; a drop on nothing keeps
+	# it). _present derives the rest (tip hidden mid-drag, dimming from this payload).
+	_sel = payload.duplicate()
 
-	_update_selection_highlights()   # hides the selection tip while the drag is in flight
-	_update_card_dimming()           # gray out what this source can't pair with
+	# The dragged source's spot reads EMPTY: the card is fully hidden (alpha 0) but its item
+	# keeps its layout slot, so the grid never reflows mid-drag and no card slides under the
+	# pointer. The follower in the overlay IS the card while the gesture lasts; everything
+	# snaps back to normal (visible + highlighted-as-selected) when the drag ends.
+	if payload.kind == "card":
+		_entries[payload.idx].item.modulate.a = 0.0
+
 	_update_drag(get_global_mouse_position())
 
 
@@ -469,8 +428,8 @@ func _make_follower_visual(payload: Dictionary) -> Control:
 	if payload.kind == "card":
 		var inst: CardInstance = _entries[payload.idx].card.make_instance()
 		var ui := CardUI.create(inst)
-		ui.custom_minimum_size = _card_size
-		ui.size = _card_size
+		ui.custom_minimum_size = _live_card_size()
+		ui.size = _live_card_size()
 		ui.modulate.a = 0.85
 		return ui
 	var size := _charm_follower_size()
@@ -486,10 +445,9 @@ func _charm_follower_size() -> Vector2:
 	return Vector2(64, 64)
 
 
-# Keeps the floating tips glued to the highlighted source — above (what to do) and below (how to
-# cancel). The source moves under them (scroll, refit, the highlight's own grow animation), so
-# they follow every frame they're shown. The spread's TIP_LANE margins guarantee the room; the
-# clamps here are only a spill guard, never a re-flow.
+# Keeps the floating tip glued above the highlighted source — the source moves under it
+# (scroll, refit, the highlight's own grow animation), so it follows every frame it's shown.
+# It sits in the grid's uniform top gap; the clamp only guards against spilling off-screen.
 func _track_sel_tip() -> void:
 	if _sel_tip == null or not _sel_tip.visible or _hl_item == null or not is_instance_valid(_hl_item):
 		return
@@ -500,16 +458,12 @@ func _track_sel_tip() -> void:
 	pos.x = clampf(pos.x, 6.0, ov.end.x - sz.x - 6.0)
 	pos.y = maxf(pos.y, ov.position.y + 6.0)
 	_sel_tip.global_position = pos
-	var csz := _cancel_tip.size
-	var cpos := Vector2(r.get_center().x - csz.x * 0.5, r.end.y + 10.0)
-	cpos.x = clampf(cpos.x, 6.0, ov.end.x - csz.x - 6.0)
-	cpos.y = minf(cpos.y, ov.end.y - csz.y - 6.0)
-	_cancel_tip.global_position = cpos
 
 
-# Drives the dragged card's wobble: it eases in while a link is active, out when it breaks.
+# Per-frame: reconcile the presentation from the declared state, then drive the dragged card's
+# wobble (easing in while a link is active, out when it breaks).
 func _process(delta: float) -> void:
-	_track_sel_tip()
+	_present()
 	if _follower_visual == null:
 		return
 	_auto_scroll(delta)
@@ -563,6 +517,11 @@ func _input(event: InputEvent) -> void:
 			_begin_drag(p)
 	elif event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
+		# A press that closed the modal (see _open_merge's dim handler) already did its work —
+		# its release must not be re-read as a dead-space click. One physical click, one meaning.
+		if not mb.pressed and _swallow_release:
+			_swallow_release = false
+			return
 		if mb.button_index == MOUSE_BUTTON_LEFT and not mb.pressed:
 			# NOTE: do NOT set_input_as_handled() here. _input runs before Godot's GUI layer; eating
 			# the button-up means the GUI never sees it, so Godot keeps thinking the button is held
@@ -575,25 +534,24 @@ func _input(event: InputEvent) -> void:
 				var p := _pending
 				_pending = {}
 				_on_tap(p)
-			elif not _sel.is_empty():
+			elif not _sel.is_empty() and not _click_on_ui(get_global_mouse_position()):
 				# A click that never grabbed a card or charm — empty table, rail, any dead space —
-				# drops the selection back to the clean grid.
+				# is the ONE deselecting act (besides tapping the source again). NEVER on our own
+				# floating buttons: _input runs BEFORE the GUI, so clearing here would gut the
+				# selection an instant before the button's pressed (fires on release) reads it.
 				_sel = {}
-				_update_selection_highlights()
-				_update_card_dimming()
 		elif mb.button_index == MOUSE_BUTTON_RIGHT and mb.pressed:
 			if not _drag.is_empty():
 				_cancel_drag()   # right-click aborts the drag without merging
 				get_viewport().set_input_as_handled()
 			elif not _pending.is_empty():
 				_pending = {}
-			elif not _sel.is_empty() and _target_under(get_global_mouse_position()) < 0:
+			elif not _sel.is_empty() and _target_under(get_global_mouse_position()) < 0 \
+					and not _click_on_ui(get_global_mouse_position()):
 				# Right-click on dead space drops the selection. ON a card the event falls
 				# through untouched to the GUI, where CardUI opens the full CardInspector —
 				# right-click = card details, the same language as everywhere else.
 				_sel = {}
-				_update_selection_highlights()
-				_update_card_dimming()
 				get_viewport().set_input_as_handled()
 
 
@@ -720,8 +678,6 @@ func _cancel_drag() -> void:
 			_entries[idx].item.modulate.a = 1.0   # un-ghost the source back to normal
 	_drag = {}
 	_hover_idx = -1
-	_update_selection_highlights()   # the tip returns if a click-selection is still active
-	_update_card_dimming()
 
 
 # ── Validity + preview ──────────────────────────────────────────────────────────
@@ -802,8 +758,10 @@ func _on_press(payload: Dictionary) -> void:
 	_press_pos = get_global_mouse_position()
 
 
-# A tap (press+release without dragging). The first tap picks the SOURCE (card or charm); the
-# second tap picks the TARGET card and — when the pairing is valid — opens the merge framing.
+# A tap (press+release without dragging). Tapping ALWAYS selects — a card's body never opens
+# the merge (browsing must be friction-free; a stale selection must never hijack a click). The
+# merge lives on the per-target "Merge with X" buttons and the drag. Pure state mutation —
+# _present derives all the visuals.
 func _on_tap(payload: Dictionary) -> void:
 	if payload.get("kind") == "charm":
 		var cid := str(payload.get("id", ""))
@@ -811,35 +769,30 @@ func _on_tap(payload: Dictionary) -> void:
 			_sel = {}                          # tapping the selected charm again deselects it
 		else:
 			_sel = {"kind": "charm", "id": cid}
-		_update_selection_highlights()
-		_update_card_dimming()
 		return
 
 	var idx := int(payload.idx)
-	if _sel.is_empty():
-		if bool(_entries[idx].combinable):     # non-combinable cards can't source a merge
-			_sel = {"kind": "card", "idx": idx}
-	elif _sel.get("kind", "") == "card" and int(_sel.get("idx", -1)) == idx:
+	if _sel.get("kind", "") == "card" and int(_sel.get("idx", -1)) == idx:
 		_sel = {}                              # tapping the source again deselects it
-	else:
-		var verdict := _evaluate_target(_sel, idx)
-		if bool(verdict.get("ok", false)):
-			_open_merge(_sel, idx, verdict)
-			return
-		elif bool(_entries[idx].combinable):
-			_sel = {"kind": "card", "idx": idx}   # invalid pairing — reseat the selection here
-	_update_selection_highlights()
-	_update_card_dimming()
+	elif bool(_entries[idx].combinable):       # non-combinable cards can't source a merge
+		_sel = {"kind": "card", "idx": idx}
 
 
-# The selected source — card or charm chip alike — wears the canonical Highlight treatment
-# (grow + white outline + glow, all tool-tunable on the `highlight` vfx entry). One language
-# for "this is picked", here and (soon) in combat. While the merge modal is up the SELECTION
-# persists but the treatment is suppressed (the highlight lives on the overlay layer, which
-# draws ABOVE the modal dim — it would glow through); closing the modal restores it.
-func _update_selection_highlights() -> void:
+# THE sole presenter: derives every visual consequence of the declared state (_sel, _drag,
+# _modal) — who wears the canonical Highlight, the floating tips, the pairability dimming.
+# Polled from _process (idempotent, cheap): transitions just MUTATE STATE and the presentation
+# self-heals next frame, so no path can forget a visual pairing — the class of bug the old
+# per-transition attach/detach bookkeeping kept producing. The selected source keeps its
+# highlight through an open merge: the modal scrim rides a HIGHER CanvasLayer (MODAL_LAYER)
+# than the table's effect band, so the whole table — card and highlight alike — dims under it.
+func _present() -> void:
+	if _hl_item != null and not is_instance_valid(_hl_item):
+		_hl_item = null   # its wearer was freed (deck rebuild) — the attach auto-detached
 	var want: Control = null
-	if _modal == null:
+	# Mid-drag, NOTHING wears the highlight: the dragged source's spot reads empty (the
+	# follower is the card now), and outlining a hidden widget would bake a ghost silhouette.
+	# The selection itself persists — the highlight returns the frame the drag ends.
+	if _drag.is_empty():
 		if _sel.get("kind", "") == "card":
 			var idx := int(_sel.get("idx", -1))
 			if idx >= 0 and idx < _entries.size():
@@ -851,15 +804,15 @@ func _update_selection_highlights() -> void:
 					want = child
 					break
 	if want != _hl_item:
-		if _hl_item != null and is_instance_valid(_hl_item):
+		if _hl_item != null:
 			Vfx.detach("highlight", _hl_item)
 		_hl_item = want
 		if want != null:
 			Vfx.attach("highlight", want)
-	# The floating tips ride with the highlight (hidden mid-drag — the drag IS the affordance).
-	var show_tip := want != null and _drag.is_empty()
+	# The floating tip rides with the highlight — hidden mid-drag (the drag IS the affordance)
+	# and under an open merge (the framing carries the read there).
+	var show_tip := want != null and _drag.is_empty() and _modal == null
 	_sel_tip.visible = show_tip
-	_cancel_tip.visible = show_tip
 	if show_tip:
 		if _sel.get("kind", "") == "charm":
 			var charm := CharmData.get_charm(str(_sel.get("id", "")))
@@ -868,6 +821,121 @@ func _update_selection_highlights() -> void:
 		else:
 			_sel_tip_label.text = Loc.t("combine.pick_target")
 		_track_sel_tip()
+	_reconcile_merge_buttons()
+	_update_card_dimming()
+
+
+# The round engage buttons on valid partner cards — THE tap path into the merge (a tap on a
+# card's body always just selects). One on EVERY valid partner whenever a source is selected:
+# always on, never hover-summoned. Reconciled every frame like the rest of the presentation.
+# A fab that stays valid across a selection change NEVER re-animates — only genuine appear/
+# disappear transitions pop.
+func _reconcile_merge_buttons() -> void:
+	var want: Dictionary = {}
+	if not _sel.is_empty() and _modal == null and _drag.is_empty():
+		var src_idx := int(_sel.get("idx", -1)) if _sel.get("kind", "") == "card" else -1
+		for i in _entries.size():
+			if i != src_idx and _can_pair(_sel, i):
+				want[i] = true
+
+	for i: int in _merge_btns.keys():
+		if not want.has(i):
+			_pop_out_btn(_merge_btns[i])
+			_merge_btns.erase(i)
+	var tip_key := "combine.attach_to" if _sel.get("kind", "") == "charm" else "combine.merge_with"
+	for i: int in want:
+		var fresh := not _merge_btns.has(i)
+		if fresh:
+			_merge_btns[i] = _make_merge_button(i)
+		var fab: Control = _merge_btns[i]
+		# Riding the card's bottom edge, centred — mostly INSIDE the card, only
+		# MERGE_BTN_OVERHANG of it hanging below: unmissable without eating the table's gaps.
+		var r := (_entries[i].item as Control).get_global_rect()
+		var d := clampf(r.size.x * MERGE_BTN_RATIO, MERGE_BTN_MIN, MERGE_BTN_MAX)
+		fab.size = Vector2(d, d)
+		# Raw `position`, NOT global_position: the global setter compensates for the pivot-scale
+		# transform, which would pin the VISUAL top-left corner mid-pop — the "expanding from a
+		# corner" artifact. The layout position is scale-independent, so the pivot-centred pop
+		# breathes in place.
+		fab.position = Vector2(r.get_center().x - d * 0.5,
+				r.end.y - d * (1.0 - MERGE_BTN_OVERHANG)) - _overlay.global_position
+		fab.pivot_offset = fab.size * 0.5   # scale pops grow from the button's centre
+		# Tooltip tracks the live pairing (kind + target name) without rebuilding the fab.
+		var tip_sig := tip_key + "|" + (_entries[i].data as CardData).display_name
+		if fresh or str(fab.get_meta("tip_sig", "")) != tip_sig:
+			fab.set_meta("tip_sig", tip_sig)
+			UIScale.tip(fab.get_meta("btn") as Control,
+					Loc.t(tip_key, {"name": (_entries[i].data as CardData).display_name}))
+		if fresh:
+			fab.scale = Vector2(0.15, 0.15)
+			var tw := fab.create_tween()
+			tw.tween_property(fab, "scale", Vector2.ONE, 0.22) \
+					.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+
+# Shrinks a retiring engage fab to nothing, then frees it — the counterpart of the pop-in.
+# Mid-pop clicks are harmless: _on_merge_btn re-validates against the live state.
+func _pop_out_btn(b: Variant) -> void:
+	if not is_instance_valid(b):
+		return
+	var c := b as Control
+	var tw := c.create_tween()
+	tw.tween_property(c, "scale", Vector2.ZERO, 0.12) \
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tw.tween_callback(c.queue_free)
+
+
+# The engage affordance IS the map's Forge button, small: the same baked circular art (see
+# Map._build_forge_fab — the art is the whole face) with a transparent Button overlaid for the
+# click, tooltip and the same hover-brighten / press-sink feedback. The specific "Merge with
+# X"/"Attach to X" line rides the tooltip.
+func _make_merge_button(idx: int) -> Control:
+	var fab := Control.new()   # sized per-card by the reconcile
+
+	var tex := TextureRect.new()
+	tex.texture = MERGE_FAB_TEX
+	tex.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	tex.mouse_filter = MOUSE_FILTER_IGNORE
+	fab.add_child(tex)
+
+	var btn := Button.new()
+	btn.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	btn.focus_mode = Control.FOCUS_NONE
+	for s: String in ["normal", "hover", "pressed", "focus", "disabled"]:
+		btn.add_theme_stylebox_override(s, StyleBoxEmpty.new())
+	fab.set_meta("btn", btn)   # the reconcile owns the tooltip (it tracks the live pairing)
+	btn.pressed.connect(_on_merge_btn.bind(idx))
+	btn.mouse_entered.connect(func() -> void:
+		if not btn.button_pressed:
+			tex.modulate = Color(1.12, 1.12, 1.12))
+	btn.mouse_exited.connect(func() -> void: tex.modulate = Color.WHITE)
+	btn.button_down.connect(func() -> void: tex.modulate = Color(0.85, 0.85, 0.85))
+	btn.button_up.connect(func() -> void: tex.modulate = Color.WHITE)
+	fab.add_child(btn)
+
+	_overlay.add_child(fab)
+	return fab
+
+
+# Whether `p` sits on one of the screen's own floating engage fabs — clicks there are commands
+# for those buttons, never dead-space deselects.
+func _click_on_ui(p: Vector2) -> bool:
+	for i: int in _merge_btns:
+		var b: Variant = _merge_btns[i]
+		if is_instance_valid(b) and (b as Control).get_global_rect().has_point(p):
+			return true
+	return false
+
+
+func _on_merge_btn(idx: int) -> void:
+	if _sel.is_empty() or _modal != null or not _drag.is_empty() \
+			or idx < 0 or idx >= _entries.size():
+		return
+	var verdict := _evaluate_target(_sel, idx)
+	if bool(verdict.get("ok", false)):
+		_open_merge(_sel, idx, verdict)
 
 
 # Grays out the deck cards the CURRENT source can't pair with, so valid targets read at a glance.
@@ -900,11 +968,16 @@ func _open_merge(src: Dictionary, tgt_idx: int, verdict: Dictionary) -> void:
 	if _modal != null:
 		return
 	_cancel_drag()
-	# The SOURCE stays selected through the procedure — cancelling drops back to it, ready to
-	# try another target. (Its highlight is suppressed while the modal is up; a COMMIT clears
-	# the selection via _rebuild_deck.) A drag-initiated merge adopts its source the same way.
+	# The SOURCE stays selected through the whole procedure — every exit (Cancel, tap-out,
+	# right-click, Esc) drops back to it still selected; only a COMMIT moves the selection (to
+	# the forged result). Its highlight stays worn under the scrim (see MODAL_LAYER). A
+	# drag-initiated merge adopts its source the same way.
 	_sel = src
 	_merge = {"src": src, "tgt": tgt_idx, "verdict": verdict}
+
+	_modal_layer = CanvasLayer.new()
+	_modal_layer.layer = MODAL_LAYER
+	add_child(_modal_layer)
 
 	# The dim backdrop — readability for the framing, and the tap-out-to-cancel surface. It also
 	# hosts the fusion animation + result toast after the commit.
@@ -916,11 +989,10 @@ func _open_merge(src: Dictionary, tgt_idx: int, verdict: Dictionary) -> void:
 		if _fusing:
 			return
 		if e is InputEventMouseButton and (e as InputEventMouseButton).pressed:
+			_swallow_release = true   # this click is INTERACTIVE (it closes) — eat its release
 			_close_modal())
-	add_child(dim)
+	_modal_layer.add_child(dim)
 	_modal = dim
-	_update_selection_highlights()   # modal up → highlight+tip suppressed (selection kept)
-	_update_card_dimming()
 
 	# Capture the anchor BEFORE any layout below: the framing centres on the target card's spot.
 	var anchor := (_entries[tgt_idx].item as Control).get_global_rect().get_center()
@@ -934,7 +1006,7 @@ func _build_cluster(src: Dictionary, tgt_idx: int, verdict: Dictionary) -> void:
 	var result_inst: CardInstance = verdict.get("preview", null)
 
 	# Sizes flow from the RESULT card: comfortably larger than a grid card, capped by the screen.
-	var res_h := clampf(_card_size.y * 1.7, 300.0, size.y * 0.52)
+	var res_h := clampf(_live_card_size().y * 1.7, 300.0, size.y * 0.52)
 	var res_w := res_h / CARD_ASPECT
 	var plus_h := 42.0
 	var comp_h := (res_h - plus_h) * 0.5
@@ -998,8 +1070,14 @@ func _build_cluster(src: Dictionary, tgt_idx: int, verdict: Dictionary) -> void:
 		# tooltip works, and right-click opens the full CardInspector.
 		big.mouse_filter = MOUSE_FILTER_STOP
 		holder.add_child(big)
-		for cue: String in RESULT_READY_CUES:
-			Vfx.attach(cue, holder)
+		# The composited radiance is attached LATER (after _place_cluster sizes/positions the
+		# framing), so its first silhouette bake lands on the real, settled rect.
+
+	# Small breathing gap between the result card and its read — the description box shouldn't
+	# hug the card's frame.
+	var det_margin := MarginContainer.new()
+	det_margin.add_theme_constant_override("margin_left", 18)
+	row.add_child(det_margin)
 
 	# Details column: verdict line (only when blocking) over THE standard card read —
 	# CardTooltip.build_details, the exact composition every hover panel and the CardInspector
@@ -1009,7 +1087,7 @@ func _build_cluster(src: Dictionary, tgt_idx: int, verdict: Dictionary) -> void:
 	var det_col := VBoxContainer.new()
 	det_col.size_flags_vertical = SIZE_SHRINK_CENTER
 	det_col.add_theme_constant_override("separation", 10)
-	row.add_child(det_col)
+	det_margin.add_child(det_col)
 	var det_s := 1.3
 	var status := str(verdict.get("status", ""))
 	if not status.is_empty():
@@ -1031,49 +1109,103 @@ func _build_cluster(src: Dictionary, tgt_idx: int, verdict: Dictionary) -> void:
 		det_style.set_content_margin_all(12)
 		det_panel.add_theme_stylebox_override("panel", det_style)
 		det_panel.size_flags_vertical = SIZE_SHRINK_CENTER
-		det_panel.add_child(CardTooltip.build_details(result_inst, det_s))
+		# Column-flow budget = the result card's height: an ability-heavy result widens the
+		# framing with extra read columns instead of pushing the buttons down (the modal's
+		# width is free real estate; its height is not).
+		det_panel.add_child(CardTooltip.build_details(result_inst, det_s, res_h))
 		det_col.add_child(det_panel)
 
-	# The decision row: Cancel, then the big chunky commit button (with the Mineral cost on it).
-	var buttons := HBoxContainer.new()
-	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
-	buttons.add_theme_constant_override("separation", 16)
+	# The decision row: Cancel pinned to the framing's FAR LEFT, the big commit button centred ON
+	# the result card and ~30% wider than it — the primary action reads as belonging to the card,
+	# not to the panel. A plain Control (not an HBox): the commit anchors to the CARD's centre,
+	# which only exists once the row is laid out — _place_cluster does the actual placement.
+	var buttons := Control.new()
+	buttons.custom_minimum_size.y = MERGE_BTN_H
 	col.add_child(buttons)
 	var cancel := ScreenUI.action_button(Loc.t("common.cancel"), _close_modal,
-		Vector2(200, 92), 26, ScreenUI.CHROME_NEUTRAL)
+		Vector2(150, MERGE_BTN_H), 26, ScreenUI.CHROME_NEUTRAL)
 	buttons.add_child(cancel)
 	var commit_text: String = Loc.t("combine.attach") if enchanting \
 		else Loc.t("combine.combine_cost", {"n": int(verdict.get("cost", 0))})
 	var commit := ScreenUI.action_button(commit_text, _commit_merge,
-		Vector2(340, 92), 30, ScreenUI.CHROME_CONFIRM)
+		Vector2(0, MERGE_BTN_H), 32, ScreenUI.CHROME_CONFIRM)
 	commit.disabled = not bool(verdict.get("affordable", true))
 	buttons.add_child(commit)
 	_commit_btn = commit
-	if not commit.disabled:
-		for cue: String in COMBINE_READY_CUES:
-			Vfx.attach(cue, commit)
+	# The commit button's ready-glow is attached LATER (see _place_cluster) — same reason as the
+	# result radiance: bake on the settled rect, not the pre-layout zero-size one.
 
 
 # Positions the framing over the target card's grid spot (clamped fully on-screen) and pops it in.
 func _place_cluster(global_anchor: Vector2) -> void:
 	var panel := _cluster
 	panel.modulate.a = 0.0
-	await get_tree().process_frame   # the cluster needs a layout pass before its size is real
+	# TWO frames, then size from the COMPUTED MINIMUM — not `panel.size`. The cluster is parented
+	# to a plain ColorRect (not a container), so nothing stretches it: read too early, panel.size
+	# is (0,0), the placement anchors the TOP-LEFT at the card and the framing overflows the
+	# screen. get_combined_minimum_size is bottom-up and reliable once the nested column-flow
+	# labels have had a layout pass to report their real heights.
+	await get_tree().process_frame
+	await get_tree().process_frame
 	if not is_instance_valid(panel) or _modal == null:
 		return
-	var local_anchor: Vector2 = _modal.get_global_transform().affine_inverse() * global_anchor
-	var pos := local_anchor - panel.size * 0.5
+	var psize := panel.get_combined_minimum_size()
+	if psize.x < 1.0 or psize.y < 1.0:
+		psize = panel.size
+	panel.size = psize
+	panel.pivot_offset = psize * 0.5
+
+	# Never overflow: a framing larger than the screen (an ability-heavy result flowing into extra
+	# columns) is scaled down uniformly to fit within the margins.
 	var margin := 12.0
-	pos.x = clampf(pos.x, margin, maxf(_modal.size.x - panel.size.x - margin, margin))
-	pos.y = clampf(pos.y, margin, maxf(_modal.size.y - panel.size.y - margin, margin))
-	panel.position = pos
-	panel.pivot_offset = panel.size * 0.5
-	panel.scale = Vector2(0.92, 0.92)
+	var avail := _modal.size - Vector2(margin, margin) * 2.0
+	var fit := clampf(minf(minf(avail.x / psize.x, avail.y / psize.y), 1.0), 0.3, 1.0)
+	var scaled := psize * fit
+
+	# Centre the (scaled) framing on the target card's spot, clamped fully on-screen.
+	var center: Vector2 = _modal.get_global_transform().affine_inverse() * global_anchor
+	center.x = clampf(center.x, margin + scaled.x * 0.5,
+			maxf(_modal.size.x - margin - scaled.x * 0.5, margin + scaled.x * 0.5))
+	center.y = clampf(center.y, margin + scaled.y * 0.5,
+			maxf(_modal.size.y - margin - scaled.y * 0.5, margin + scaled.y * 0.5))
+	panel.position = center - psize * 0.5   # unscaled top-left; the pivot-centred scale holds `center`
+
+	# One frame for the children to lay out at the assigned size before the button geo reads their
+	# rects (still at scale 1 here, so global rects == panel-local — the scale is applied after).
+	await get_tree().process_frame
+	if not is_instance_valid(panel) or _modal == null:
+		return
+
+	# Decision-row geometry: Cancel hugs the row's far left; the commit button sits centred under
+	# the RESULT CARD, ~30% wider than it — it belongs to the card, visually and spatially.
+	if _commit_btn != null and _result_holder != null and is_instance_valid(_result_holder):
+		var buttons := _commit_btn.get_parent() as Control
+		var cancel := buttons.get_child(0) as Control
+		cancel.position = Vector2.ZERO
+		var w := _result_holder.size.x * 1.3
+		var cx := _result_holder.global_position.x + _result_holder.size.x * 0.5 \
+				- buttons.global_position.x
+		_commit_btn.size = Vector2(w, MERGE_BTN_H)
+		_commit_btn.position = Vector2(
+			clampf(cx - w * 0.5, cancel.size.x + 14.0, maxf(buttons.size.x - w, cancel.size.x + 14.0)),
+			0.0)
+
+	panel.scale = Vector2(fit, fit) * 0.92
 	var tw := create_tween()
 	tw.set_parallel(true)
 	tw.tween_property(panel, "modulate:a", 1.0, 0.14)
 	tw.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tw.tween_property(panel, "scale", Vector2.ONE, 0.18)
+	tw.tween_property(panel, "scale", Vector2(fit, fit), 0.18)
+
+	# NOW attach the composited cues — the framing is sized, positioned and about to settle at
+	# `fit`, so each silhouette bakes on a real rect and (with GlowFx's continuous follow) tracks
+	# the pop tween and the fit-scale without drifting.
+	if _result_holder != null and is_instance_valid(_result_holder):
+		for cue: String in RESULT_READY_CUES:
+			Vfx.attach(cue, _result_holder)
+	if _commit_btn != null and is_instance_valid(_commit_btn) and not _commit_btn.disabled:
+		for cue: String in COMBINE_READY_CUES:
+			Vfx.attach(cue, _commit_btn)
 
 
 # A component mini-card for the framing's ingredients column.
@@ -1115,18 +1247,18 @@ func _glyph(glyph: String, font_size: int) -> Label:
 	return lbl
 
 
-# Cancels the merge procedure back to the clean table. Safe to call anytime outside a fusion.
+# Closes the merge procedure back to the table — the SELECTION is untouched (closing the modal
+# is an interactive act, never a deselect). Safe to call anytime outside a fusion.
 func _close_modal() -> void:
 	if _fusing:
 		return
 	_drop_cluster()
-	if _modal != null:
-		_modal.queue_free()
-		_modal = null
+	if _modal_layer != null:
+		_modal_layer.queue_free()   # takes the dim + fusion + toast with it
+	_modal_layer = null
+	_modal = null
 	_merge = {}
 	_fuse_anim = null
-	_update_selection_highlights()
-	_update_card_dimming()
 
 
 # Frees the framing cluster (detaching its sustained cues first) but keeps the dim backdrop —
@@ -1167,24 +1299,33 @@ func _commit_merge() -> void:
 
 # ── Fusion (combine commit) ─────────────────────────────────────────────────────
 
-# Flies clones of the two component cards from their framing spots into the result's spot,
-# commits the merge at the flash, and reveals the result toast.
+# Flies the two GRID cards (as clones, at their real grid size + spots) together into their
+# midpoint, commits the merge at the flash, and reveals the result toast. The clones read as the
+# actual table cards lifting off and slamming together, not something conjured by the modal.
 func _start_fusion(src_idx: int, tgt_idx: int, result_dc: DeckCard) -> void:
 	if _fusing or result_dc == null or _modal == null:
 		return
 	_fusing = true
 
-	# Capture the fly-from/to geometry BEFORE the framing is dropped.
-	var a_gc := (_comp_holders[0] as Control).get_global_rect().get_center()
-	var b_gc := (_comp_holders[1] as Control).get_global_rect().get_center()
-	var center := _result_holder.get_global_rect().get_center()
-	var fly_size := (_comp_holders[0] as Control).size
+	# Fly FROM the two grid cards' own spots (their rect CENTRES — unaffected by the source's
+	# highlight scale, which is pivot-centred), to their midpoint, at real grid size. This is
+	# what makes the fusion read as the table cards themselves converging.
+	var a_gc := (_entries[src_idx].item as Control).get_global_rect().get_center()
+	var b_gc := (_entries[tgt_idx].item as Control).get_global_rect().get_center()
+	var center := (a_gc + b_gc) * 0.5
+	var fly_size := _live_card_size()
 
 	var a_inst := (_entries[src_idx].card as DeckCard).make_instance()
 	var b_inst := (_entries[tgt_idx].card as DeckCard).make_instance()
 	var result_inst := result_dc.make_instance()
 	var color_a := _color_for_card(_entries[src_idx].data)
 	var color_b := _color_for_card(_entries[tgt_idx].data)
+
+	# Hide the two grid originals for the fly: the bright clones ARE those cards now, and a dim
+	# original left under the scrim would read as a ghost. _do_combine rebuilds the deck at the
+	# flash, so these are freed then anyway.
+	(_entries[src_idx].item as Control).visible = false
+	(_entries[tgt_idx].item as Control).visible = false
 
 	_drop_cluster()
 
@@ -1219,9 +1360,10 @@ func _on_fuse_finished(result_inst: CardInstance) -> void:
 	_show_result_toast(result_inst, Loc.t("combine.forged"))
 
 
-# The dismissible result toast: the new card centred over the dim with its name + description.
-# Clicking the dim (outside the card) closes the whole modal; the card panel swallows its own
-# clicks, so it's a true "click out to dismiss". The merge is already committed by this point.
+# The celebration toast: a BIG, readable reveal of the forged card centred over the dim — the
+# new card blown up beside its full read, taking real advantage of the screen. Clicking the dim
+# (outside the panel) closes the whole modal; the panel swallows its own clicks, so it's a true
+# "click out to dismiss". The merge is already committed by this point.
 func _show_result_toast(result_inst: CardInstance, title_text: String) -> void:
 	if _modal == null or result_inst == null:
 		return
@@ -1236,59 +1378,80 @@ func _show_result_toast(result_inst: CardInstance, title_text: String) -> void:
 	style.bg_color = Color(ScreenUI.SURFACE_DEEP, 0.98)
 	style.set_border_width_all(2)
 	style.border_color = ScreenUI.SURFACE_DEEP_BORDER
-	style.set_corner_radius_all(10)
-	style.set_content_margin_all(20)
+	style.set_corner_radius_all(18)
+	style.set_content_margin_all(36)
 	panel.add_theme_stylebox_override("panel", style)
 	center.add_child(panel)
 
 	Vfx.play("ui_toast_glint", panel)   # the notice announces itself (carries its sound)
 	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 10)
+	col.alignment = BoxContainer.ALIGNMENT_CENTER
+	col.add_theme_constant_override("separation", 22)
 	panel.add_child(col)
 
+	# A big celebratory banner.
 	var title := Label.new()
 	title.text = title_text
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 24)
+	title.add_theme_font_size_override("font_size", 52)
 	title.add_theme_color_override("font_color", OK_COLOR)
+	title.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.55))
+	title.add_theme_constant_override("outline_size", 5)
 	col.add_child(title)
 
-	var cs := Vector2(230, 301)
+	# The star: the forged card blown up, beside its full read (same dark surface as the framing
+	# / inspector, column-flowing to the card's height for an ability-heavy result).
+	var card_h := clampf(size.y * 0.55, 380.0, 660.0)
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 30)
+	col.add_child(row)
+
 	var holder := Control.new()
-	holder.custom_minimum_size = cs
-	holder.size_flags_horizontal = SIZE_SHRINK_CENTER
+	holder.custom_minimum_size = Vector2(card_h / CARD_ASPECT, card_h)
+	holder.size_flags_vertical = SIZE_SHRINK_CENTER
 	var card := CardUI.create(result_inst)
 	card.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	card.custom_minimum_size = Vector2.ZERO
 	card.mouse_filter = MOUSE_FILTER_IGNORE
 	holder.add_child(card)
-	col.add_child(holder)
+	row.add_child(holder)
 
-	var name_lbl := Label.new()
-	name_lbl.text = result_inst.data.display_name
-	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_lbl.add_theme_font_size_override("font_size", 18)
-	col.add_child(name_lbl)
-
-	var desc := result_inst.data.description
-	if not desc.is_empty():
-		var desc_lbl := TextIcons.rich_label(desc, 14, Color("3a2f22"), true)
-		desc_lbl.custom_minimum_size.x = 280.0
-		col.add_child(desc_lbl)
+	var det_panel := PanelContainer.new()
+	var det_style := StyleBoxFlat.new()
+	det_style.bg_color = CardTooltip.BG_COLOR
+	det_style.set_border_width_all(1)
+	det_style.border_color = CardTooltip.BORDER_COLOR
+	det_style.set_corner_radius_all(10)
+	det_style.set_content_margin_all(18)
+	det_panel.add_theme_stylebox_override("panel", det_style)
+	det_panel.size_flags_vertical = SIZE_SHRINK_CENTER
+	det_panel.add_child(CardTooltip.build_details(result_inst, 1.45, card_h))
+	row.add_child(det_panel)
 
 	var hint := Label.new()
 	hint.text = Loc.t("combine.tap_continue")
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hint.add_theme_font_size_override("font_size", 13)
-	hint.add_theme_color_override("font_color", Color("5a4a38"))
+	hint.add_theme_font_size_override("font_size", 22)
+	hint.add_theme_color_override("font_color", Color(0.74, 0.74, 0.82))
 	col.add_child(hint)
 
-	# The toast now covers the reveal — drop the animation and re-arm click-to-dismiss.
+	# The toast now covers the reveal — drop the animation and re-arm click-to-dismiss. It pops in
+	# (fade + slight scale) as its own little celebration beat.
 	if _fuse_anim != null:
 		_fuse_anim.queue_free()
 		_fuse_anim = null
 	_fusing = false
 	center.modulate.a = 0.0
-	create_tween().tween_property(center, "modulate:a", 1.0, 0.18)
+	await get_tree().process_frame
+	if not is_instance_valid(panel) or _modal == null:
+		return
+	panel.pivot_offset = panel.size * 0.5
+	panel.scale = Vector2(0.9, 0.9)
+	var tw := create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(center, "modulate:a", 1.0, 0.18)
+	tw.tween_property(panel, "scale", Vector2.ONE, 0.24).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 # ── Apply ──────────────────────────────────────────────────────────────────────
@@ -1318,16 +1481,25 @@ func _do_combine(src_idx: int, tgt_idx: int, result_dc: DeckCard) -> void:
 	GameData.save_run()
 	Sfx.combined()
 	_rebuild_deck()
+	# The forged card arrives SELECTED — the natural next act is merging it again (chain-
+	# forging), and the highlight marks where the result landed once the toast clears.
+	if insert_at < _entries.size() and bool(_entries[insert_at].combinable):
+		_sel = {"kind": "card", "idx": insert_at}
 
 
 func _do_enchant(charm_id: String, tgt_idx: int) -> void:
 	var dc: DeckCard = _entries[tgt_idx].card
+	var tgt_deck: int = int(_entries[tgt_idx].deck_idx)
 	dc.add_charm(charm_id)
 	GameData.current_run.charms.erase(charm_id)
 	GameData.save_run()
 	Sfx.combined()
 	_rebuild_deck()
 	_rebuild_charms()
+	# The enchanted card arrives SELECTED (deck order is unchanged, so its entry index holds) —
+	# same chain-forging convention as a combine commit.
+	if tgt_deck < _entries.size() and bool(_entries[tgt_deck].combinable):
+		_sel = {"kind": "card", "idx": tgt_deck}
 
 
 # ── Particles ──────────────────────────────────────────────────────────────────
@@ -1338,7 +1510,8 @@ func _do_enchant(charm_id: String, tgt_idx: int) -> void:
 func _card_aura_radii() -> Vector2:
 	var fscale := float(ForgeFX.AURA["radius_scale"])
 	var margin := float(ForgeFX.AURA["margin"])
-	return Vector2(_card_size.x * 0.5 * fscale + margin, _card_size.y * 0.5 * fscale + margin)
+	var cs := _live_card_size()
+	return Vector2(cs.x * 0.5 * fscale + margin, cs.y * 0.5 * fscale + margin)
 
 
 func _aura_radii(payload: Dictionary) -> Vector2:

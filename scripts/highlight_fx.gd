@@ -32,7 +32,9 @@ var _grow_tween: Tween
 # The vfx.json `highlight` entry's renderer-"custom" state hook (see Vfx.register_custom).
 static func state(vd: VFXData, target: Control) -> Node:
 	var h := HighlightFx.new()
-	Vfx.overlay_layer().add_child(h)   # outside the UI tree — outline/glow escape all clipping
+	# The target's own overlay BAND: outside the UI tree (no clipping), and depth-correct —
+	# a table card's highlight stays under a modal's scrim, a modal widget's rises above it.
+	Vfx.overlay_layer_for(target).add_child(h)
 	h.setup(target, vd.params)
 	return h
 

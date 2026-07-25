@@ -73,6 +73,11 @@ func _render_clone(widget: Control, host: Node, dup_flags: int) -> Image:
 	# consumer (GlowFx._sync), so the bake stays valid across a scale animation.
 	clone.scale = Vector2.ONE
 	clone.rotation = 0.0
+	# And at FULL opacity: the silhouette is the widget's SHAPE, not its current tint — baking
+	# a ghosted/dimmed widget (duplicate copies modulate) would produce a semi-transparent
+	# silhouette that renders as broken, stacked-alpha outlines.
+	clone.modulate = Color.WHITE
+	clone.self_modulate = Color.WHITE
 	holder.add_child(clone)
 	host.add_child(vp)
 	# Let it lay out and render, then read it back. Two frames is belt-and-braces for the clone's

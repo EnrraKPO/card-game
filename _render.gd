@@ -96,8 +96,9 @@ func _ready() -> void:
 	sv.add_child(shell)
 	shell.mount(scene_path)
 	await get_tree().process_frame
-	# Crafting screen "pair": pre-select two deck cards so the station previews a merge.
-	# "pair" = first two; "pairI-J" (e.g. pair12-13) selects specific entry indices.
+	# Crafting screen "pair": select a source card and (via its per-target merge button path)
+	# open the merge framing. "pair" = first two; "pairI-J" selects specific entry indices;
+	# "pairI-I" = a SINGLE selection (no merge opened).
 	for a: String in args:
 		if scene_path.contains("combination") and a.begins_with("pair"):
 			var ij := a.trim_prefix("pair").split("-")
@@ -106,21 +107,34 @@ func _ready() -> void:
 			for n: Node in sv.find_children("*", "Control", true, false):
 				if n.has_method("_on_tap"):
 					n.call("_on_tap", {"kind": "card", "idx": i})
-					if j != i:   # pairI-I = a SINGLE selection (one filled slot)
-						n.call("_on_tap", {"kind": "card", "idx": j})
+					if j != i:
+						n.call("_on_merge_btn", j)
 					break
+	# Crafting screen "toast": run AFTER a pair opens a merge (e.g. "pair10-12 toast") — drops the
+	# framing and jumps straight to the celebration result toast for that pairing.
+	if scene_path.contains("combination") and "toast" in args:
+		for n: Node in sv.find_children("*", "Control", true, false):
+			if n.has_method("_show_result_toast"):
+				var merge_d: Dictionary = n.get("_merge")
+				if merge_d != null and not merge_d.is_empty():
+					n.call("_drop_cluster")
+					var verdict: Dictionary = merge_d.get("verdict", {})
+					n.call("_show_result_toast", verdict.get("preview"), "¡Forjado!")
+				break
+		await get_tree().process_frame
 	# Crafting screen "charmsel": select the first charm only (the charm-chip Highlight state).
 	if scene_path.contains("combination") and "charmsel" in args:
 		for n: Node in sv.find_children("*", "Control", true, false):
 			if n.has_method("_on_tap"):
 				n.call("_on_tap", {"kind": "charm", "id": GameData.current_run.charms[0]})
 				break
-	# Crafting screen "charmpair": stage the ATTACH merge — select the first charm, then tap a card.
+	# Crafting screen "charmpair": stage the ATTACH merge — select the first charm, then commit
+	# to a bearer through the per-target button path.
 	if scene_path.contains("combination") and "charmpair" in args:
 		for n: Node in sv.find_children("*", "Control", true, false):
 			if n.has_method("_on_tap"):
 				n.call("_on_tap", {"kind": "charm", "id": GameData.current_run.charms[0]})
-				n.call("_on_tap", {"kind": "card", "idx": 0})
+				n.call("_on_merge_btn", 0)
 				break
 	# Crafting screen "drag": simulate an in-flight drag of the LAST deck entry (combine with
 	# "merged" so the dragged 2-piece card grays out its incompatible targets).
@@ -304,12 +318,14 @@ func _ready() -> void:
 			if n.has_method("_select_tree"):
 				n.call("_select_tree", args[1])
 				break
-	# Vfx is an autoload: its CanvasLayer hangs off the root, OUTSIDE this SubViewport, so
-	# attached effects (glows/radiance) never reach the capture. Reparent it in.
-	var vlayer: CanvasLayer = Vfx._layer
-	if vlayer != null and vlayer.get_parent() != null:
-		vlayer.get_parent().remove_child(vlayer)
-		sv.add_child(vlayer)
+	# Vfx is an autoload: its overlay CanvasLayers (the base band + any per-band layers a staged
+	# modal created) hang off the root, OUTSIDE this SubViewport, so attached effects
+	# (glows/radiance/highlights) never reach the capture. Reparent them all in. Bands created
+	# AFTER this land beside the base band automatically (Vfx parents them at _layer's parent).
+	for vc: Node in Vfx.get_children().duplicate():
+		if vc is CanvasLayer:
+			Vfx.remove_child(vc)
+			sv.add_child(vc)
 	# Sustained radiance breathes from zero — let it climb to a visible phase before capture.
 	for i in 40:
 		await get_tree().process_frame
