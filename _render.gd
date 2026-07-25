@@ -13,6 +13,12 @@ func _ready() -> void:
 	for a: String in args:
 		if a.begins_with("loc="):
 			Loc._lang = a.trim_prefix("loc=")   # non-persistent locale override for screenshots
+		if a.begins_with("pace="):
+			# Non-persistent pacing override (index into Vfx.PACING) — sets the in-memory preference
+			# WITHOUT Vfx.set_overlap, so shooting the pacing states never writes the dev machine's
+			# own user:// settings. Same shape as the locale override above.
+			var pi := int(a.trim_prefix("pace="))
+			Vfx._overlap_pref = float(Vfx.PACING[clampi(pi, 0, Vfx.PACING.size() - 1)]["overlap"])
 	GameData.select_slot(0)
 	# Screens that read GameData.current_run need an active run with a populated deck.
 	for needs_run in ["combination", "shop", "deck_build", "rest", "relic_event", "event", "combat", "map", "stage_cleared"]:
@@ -154,7 +160,13 @@ func _ready() -> void:
 		if combat != null:
 			var board = combat.get("_board")
 			var hand = combat.get("_hand")
-			var rk := CardInstance.from_data(CardData.get_card("rook"))
+			# "holder=<card id>": field a specific ability-bearing unit (e.g. holder=knight_rook,
+			# whose TWO abilities stress the inspect strip's width).
+			var holder_id := "rook"
+			for a: String in args:
+				if a.begins_with("holder="):
+					holder_id = a.trim_prefix("holder=")
+			var rk := CardInstance.from_data(CardData.get_card(holder_id))
 			board.spawn_player_card(rk, 2, 1)
 			if "armed" in args:
 				rk.autocast_ability = "castling"

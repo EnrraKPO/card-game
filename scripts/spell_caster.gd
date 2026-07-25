@@ -134,8 +134,14 @@ func _resolve_on_play(effects: Array, src: CardInstance, ab: AbilityData,
 		board.cleanup_effect_deaths()
 
 
+# Whether this view may cast RIGHT NOW: mana covers the cost AND the view itself says it's
+# activatable (an ability widget consults its holder's tap state — see CardUI.castable_now).
+# The token's non-mana costs used to be gated by simply not wiring an unusable widget, which
+# only held for as long as the tray's build-time verdict stayed true; asking the view keeps
+# the gate honest for the whole life of the widget.
 func _can_afford(card_ui: CardUI) -> bool:
-	return card_ui.card_instance.get_attribute("cost") <= get_mana.call()
+	return card_ui.castable_now() \
+			and card_ui.card_instance.get_attribute("cost") <= get_mana.call()
 
 
 # ── Target eligibility ─────────────────────────────────────────────────────────

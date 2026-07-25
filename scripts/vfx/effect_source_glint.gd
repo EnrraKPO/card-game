@@ -11,6 +11,13 @@ const HALO_DUR  := 0.2
 const GLINT_COLOR := Color(1.0, 0.95, 0.7)   # warm white-gold, ability-agnostic for now
 
 
+# Span: the halo's initial flare + the card's pop-out (0.10). This is a POINTER cue —
+# it has said "this one fired" the instant it flares; the halo's outward bloom and the card settling
+# back are tail, and combat reads on top of them.
+func _init() -> void:
+	span = 0.16
+
+
 func play() -> void:
 	var card := _event.target
 	if card == null or not is_instance_valid(card):

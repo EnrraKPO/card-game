@@ -1,6 +1,12 @@
 class_name VFXEffectDebuff
 extends VFXEffect
 
+
+# Span: the glint's inward snap; the drain wash and number are tail.
+func _init() -> void:
+	span = 0.30
+
+
 func play() -> void:
 	if _event.target == null:
 		queue_free(); return

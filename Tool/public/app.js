@@ -638,7 +638,8 @@ function gameAttrDefaults() {
     'forge.cost.per_piece': 2, 'forge.cost.per_element': 1,
     'forge.cost.element_only': 0, 'forge.cost.piece_op': 1,
     'shop.magic_mineral.price': 25,
-    'ux.hold.duration': 0.4, 'ux.hold.tolerance': 44 };
+    'ux.hold.duration': 0.4, 'ux.hold.tolerance': 44,
+    'vfx.overlap': 0.5 };
 }
 
 function gameAttributesSection(cfg) {
@@ -696,7 +697,12 @@ function gameAttributesSection(cfg) {
       col('UX',
         row('ux.hold.duration', 'Hold to inspect', 'seconds a touch must be held to open the card details modal', 0.1, 1.5, 0.05),
         row('ux.hold.tolerance', 'Hold drag tolerance', 'viewport px the finger may drift and still count as a hold — '
-          + 'a drag starting inside this is provisional and the hold takes it back', 0, 150, 2))),
+          + 'a drag starting inside this is provisional and the hold takes it back', 0, 150, 2),
+        row('vfx.overlap', 'Animation overlap', 'THE combat fluidity dial: how much of each cue’s tail the NEXT cue '
+          + 'overlaps. 0 = strictly one-at-a-time (every animation plays to its last frame before the next starts — '
+          + 'choppy); 0.5 = the next beat starts halfway through the current one, so cues cross-fade and the '
+          + 'sequence never sits in dead air. Order never changes — only how much of a cue counts as its moment. '
+          + 'Individual effects can override it with their own “overlap” param (0 = must finish).', 0, 0.9, 0.05))),
     el('div', { class: 'modal-actions' },
       el('button', { class: 'ghost', text: 'Reset to defaults', onclick: () => root.replaceWith(gameAttributesSection(Object.assign(cfg, gameAttrDefaults()))) }),
       el('button', { class: 'primary', text: 'Save to game', onclick: async () => {

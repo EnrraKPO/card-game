@@ -140,6 +140,18 @@ static func material_ability(elems: Array, chess: Array) -> AbilityData:
 	return ab
 
 
+# THE usability rule — one definition, consulted by everything that presents or gates an
+# ability: the tray widget's own derivation (AbilityWidget.is_usable), the Inspect Abilities
+# button's ready-glow, and the cast gate. Pure query of live facts, so no two consumers can
+# ever disagree about whether an ability is castable this moment.
+func usable_by(holder: CardInstance, mana: int) -> bool:
+	if holder == null:
+		return false
+	if tap and holder.attack_exhausted:
+		return false
+	return self.mana <= mana
+
+
 # The card-shaped VIEW of this ability for the tray (interim UX: abilities present alongside
 # cards). Purely presentational — never registered, in no pool; shares this ability's effects
 # so the targeting/eligibility flows read them unchanged. Art: assets/abilities/<id>.png,

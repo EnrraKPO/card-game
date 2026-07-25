@@ -1,6 +1,12 @@
 class_name VFXEffectCardPlaced
 extends VFXEffect
 
+
+# Span: the gold flash's read; its fade back to white is tail.
+func _init() -> void:
+	span = 0.22
+
+
 func play() -> void:
 	if _event.target == null:
 		queue_free(); return

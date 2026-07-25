@@ -37,7 +37,7 @@ func spawn_ghost(source: CardUI) -> CardUI:
 func shake_card(card: CardUI) -> void:
 	if card == null:
 		return
-	var origin := card.position
+	var origin := Vfx.begin_displace(card)   # one mover per card — see Vfx's displacement section
 	var d      := 6.0
 	var t      := 0.04
 	var tw     := create_tween()
@@ -46,6 +46,7 @@ func shake_card(card: CardUI) -> void:
 	tw.tween_property(card, "position", origin + Vector2(d * 0.5,  0), t)
 	tw.tween_property(card, "position", origin + Vector2(-d * 0.5, 0), t)
 	tw.tween_property(card, "position", origin,                        t)
+	Vfx.hold_displace(card, tw)
 	await tw.finished
 
 
@@ -70,11 +71,16 @@ func play_rebound(ghost: CardUI, rest_pos: Vector2) -> void:
 	await tw.finished
 
 
-# Glide back home from the attack position, once the strike's VFX and triggered effects have
-# all resolved.
-func play_retreat(ghost: CardUI, home_pos: Vector2) -> void:
+# Glide back home from the attack position. STARTS the retreat and hands back its tween rather
+# than awaiting it: the attacker leaves the moment it has connected, and the target's suffering
+# (damage numbers, triggered glints, deaths) plays out WHILE it travels home. Standing around
+# waiting for the victim to finish reacting is what made a strike read as a stall. The caller
+# awaits the returned tween once it also needs the ghost gone.
+const RETREAT_DUR := 0.2   # the withdrawal's span — what its handoff is computed from
+
+func start_retreat(ghost: CardUI, home_pos: Vector2) -> Tween:
 	var tw := create_tween()
 	tw.set_ease(Tween.EASE_OUT)
 	tw.set_trans(Tween.TRANS_QUAD)
-	tw.tween_property(ghost, "global_position", home_pos, 0.2)
-	await tw.finished
+	tw.tween_property(ghost, "global_position", home_pos, RETREAT_DUR)
+	return tw

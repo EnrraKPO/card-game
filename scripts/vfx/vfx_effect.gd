@@ -4,13 +4,33 @@ extends Node
 var _event: VFXEvent
 var _root:  Node
 
+# How long this look actually PLAYS, in seconds — its span, not its handoff. The sequencer starts
+# the next beat partway through it (span × (1 - overlap); see Vfx.handoff), so the tail of this cue
+# runs under the head of the next one instead of the sequence waiting in dead air.
+#
+# Set it in _init() to the look's COMMUNICATIVE core — the part that carries the meaning — NOT the
+# length of its longest tween. Almost every look is core + TAIL, and the tail is meant to be played
+# over: a floating number drifts away, a wash fades, a reticle dissolves, a crit rings on. Sizing a
+# span to the full tween is the classic mistake — it makes the sequence stall while finished-looking
+# animations run out their fades.
+#
+# The sharpest case is a POINTER cue (the source glint, the target reticle): it exists only to move
+# the eye, and it has done that the instant it snaps. Those spans are barely over their snap-in
+# time, so the hit they point at lands almost on top of them.
+#
+# span = 0.0 means ATOMIC: this look's completion IS its beat, and the sequencer awaits play() to
+# the last frame. Correct only when finishing is load-bearing — a projectile whose landing is the
+# impact, a death fade whose card is removed the instant it ends.
+var span: float = 0.0
+
 
 func setup(event: VFXEvent, root: Node) -> void:
 	_event = event
 	_root  = root
 
 
-# Override in subclasses. May use `await` internally to block the caller.
+# Override in subclasses. May use `await` internally to block the caller (see `span`: an atomic
+# look is awaited to completion; a spanned look plays on in the background past its handoff).
 func play() -> void:
 	queue_free()
 
@@ -174,8 +194,10 @@ func _drain_card(card: Control) -> void:
 	wt.tween_property(wash, "color:a", 0.0, 0.28)
 	wt.tween_callback(wash.queue_free)
 
-	# 2D jitter back to origin. Bound to the card so it auto-cancels if the card is freed mid-shake.
-	var origin := card.position
+	# 2D jitter back to origin. Bound to the card so it auto-cancels if the card is freed mid-shake,
+	# and claimed through Vfx so it can't run alongside another displacement (an impact shake, a
+	# dodge, a crit stagger) — see the displacement section in Vfx for why that matters.
+	var origin := Vfx.begin_displace(card)
 	var amp := 4.0
 	var step := 0.035
 	var st := card.create_tween()
@@ -184,3 +206,4 @@ func _drain_card(card: Control) -> void:
 	st.tween_property(card, "position", origin + Vector2(amp * 0.7, amp * 0.5), step)
 	st.tween_property(card, "position", origin + Vector2(-amp * 0.6, -amp * 0.4), step)
 	st.tween_property(card, "position", origin, step)
+	Vfx.hold_displace(card, st)

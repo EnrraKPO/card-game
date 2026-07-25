@@ -1,6 +1,12 @@
 class_name VFXEffectHeal
 extends VFXEffect
 
+
+# Span: the positive glint's bloom to full; the rising number is tail.
+func _init() -> void:
+	span = 0.26
+
+
 func play() -> void:
 	if _event.target == null:
 		queue_free(); return

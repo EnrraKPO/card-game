@@ -55,6 +55,7 @@ func _ready() -> void:
 	# The canonical selection Highlight (grow + outline + glow, see HighlightFx) is a core UI
 	# treatment owned by no single screen — registered here so it's live everywhere from boot.
 	register_custom("highlight", HighlightFx.state)
+	_load_prefs()
 
 
 # The overlay layer, for effects that must escape the UI tree's clipping. A RenderFilter whose
@@ -167,6 +168,164 @@ func register_custom(id: String, fn: Callable) -> void:
 	_custom[id] = fn
 
 
+# ── Sequencing: span vs handoff ────────────────────────────────────────────────────
+#
+# THE fluidity rule for every sequenced cue in the game. A cue has two times, and they are not
+# the same:
+#
+#   SPAN    — how long it plays.
+#   HANDOFF — when the next beat may start.
+#
+# A reticle snapping onto a card has said its piece the moment it lands; the rest of its span is
+# it getting out of the way. So `await Vfx.play(...)` returns at the HANDOFF and the look plays on
+# in the background, letting the next cue's head run under this one's tail. Cues stay strictly
+# ORDERED — this only decides how much of a cue's span counts as "its moment".
+#
+# One global dial (`vfx.overlap`, GameAttributes → the Tool's 🎛 Tuning tab) sets the fraction of
+# every cue's tail the next beat overlaps, so tuning the game's whole combat rhythm is one number.
+# An entry overrides it with its own `overlap` param when its look needs a different feel — and
+# `"overlap": 0` declares the entry ATOMIC: it is awaited to its last frame, for the cases where
+# finishing is load-bearing (a screen transition that must complete before navigation).
+#
+# Effects have the matching escape hatch in code: a VFXEffect leaving `span` at 0 is atomic and
+# awaited outright (VFXEffectProjectile, VFXEffectDeath).
+
+# Fallback spans for the procedural primitives — each behavior's own default animation length,
+# mirroring the `_p_dur(vd, …)` fallback inside its _fx_* method. An entry's `duration` param
+# overrides it, exactly as it overrides the primitive's own timing.
+const BEHAVIOR_SPANS := {
+	"flash": 0.28, "pulse": 0.45, "pop": 0.30, "shake": 0.28, "ring": 0.40,
+	"sparkle": 0.50, "glint": 0.36, "glow": 0.45, "float_label": 0.80, "burst": 0.40,
+	"travel": 0.26, "reticle": 0.40, "dissolve": 0.50, "radiance": 0.50,
+}
+
+
+# ── Combat pacing: the player's own dial ───────────────────────────────────────────
+# Overlap is a matter of TASTE as much as tuning. A player who wants to follow every beat can turn
+# it down — at 0 the sequence is strictly one-at-a-time, each cue playing to its last frame before
+# the next begins — and one who wants combat to flow can leave it up. Exposed in Settings ⚙.
+#
+# Two layers, mirroring AudioSettings over data/audio.json: the GameAttributes value is the SHIPPED
+# default (designer-tuned, editable in the Tool's 🎛 Tuning tab), and the player's own choice
+# persists to user:// and wins over it. Untouched (-1) = follow the shipped default, so re-tuning
+# the game's baseline still reaches everyone who never opened the setting.
+const _PREF_PATH := "user://vfx_settings.json"
+
+# The player-facing presets, slowest first — the settings overlay renders one button per entry and
+# `pacing_key` names the active one. Values, not labels: the copy lives in the locale tables.
+const PACING := [
+	{"key": "steps",   "overlap": 0.0},    # every beat plays out in full before the next begins
+	{"key": "chill",   "overlap": 0.28},
+	{"key": "flowing", "overlap": 0.5},
+	{"key": "fast",    "overlap": 0.72},
+	{"key": "snappy",  "overlap": 0.95},   # the dial's ceiling — beats barely clear their own heads
+]
+
+var _overlap_pref: float = -1.0
+
+
+# The global overlap dial, live (re-read per cue, so changing it mid-fight takes effect at once).
+func overlap() -> float:
+	var v := _overlap_pref if _overlap_pref >= 0.0 else GameAttributes.default_value("vfx.overlap")
+	return clampf(v, 0.0, 0.95)
+
+
+func set_overlap(pct: float) -> void:
+	_overlap_pref = clampf(pct, 0.0, 0.95)
+	_save_prefs()
+
+
+# The preset key whose overlap is closest to the live value — what the settings overlay highlights.
+# Closest rather than exact so a Tool-tuned default (or an old saved value) still lights a button.
+func pacing_key() -> String:
+	var live := overlap()
+	var best: String = str(PACING[0]["key"])
+	var best_d := 999.0
+	for p: Dictionary in PACING:
+		var d := absf(float(p["overlap"]) - live)
+		if d < best_d:
+			best_d = d
+			best = str(p["key"])
+	return best
+
+
+func _load_prefs() -> void:
+	if not FileAccess.file_exists(_PREF_PATH):
+		return
+	var f := FileAccess.open(_PREF_PATH, FileAccess.READ)
+	if f == null:
+		return
+	var json := JSON.new()
+	if json.parse(f.get_as_text()) != OK or not (json.data is Dictionary):
+		return   # a corrupt prefs file is not worth an error — fall back to the shipped default
+	var raw: Variant = (json.data as Dictionary).get("overlap")
+	if raw is float or raw is int:
+		_overlap_pref = clampf(float(raw), 0.0, 0.95)
+
+
+func _save_prefs() -> void:
+	var f := FileAccess.open(_PREF_PATH, FileAccess.WRITE)
+	if f == null:
+		return
+	f.store_string(JSON.stringify({"overlap": _overlap_pref}))
+
+
+# When the next beat may start, for a cue of length `span`. `vd` may be null (callers pacing a cue
+# that has no library entry — a relic chip glinting in its tray); it then rides the global dial.
+# Returns `span` itself for an atomic cue, so callers can compare the two to detect that case.
+func handoff(span: float, vd: VFXData = null) -> float:
+	if span <= 0.0:
+		return 0.0
+	var frac := overlap()
+	if vd != null:
+		frac = clampf(vd.num_param("overlap", frac), 0.0, 0.95)
+	return span * (1.0 - frac)
+
+
+func _span_of(vd: VFXData) -> float:
+	var fallback: float = float(BEHAVIOR_SPANS.get(vd.behavior, 0.35))
+	return maxf(0.0, vd.num_param("duration", fallback))
+
+
+# ── Transient displacement: one mover per widget ───────────────────────────────────
+# Motion that DISPLACES a widget in place — an impact shake, a wound tremble, a dodge sidestep, a
+# crit stagger — as opposed to the overlay effects above, which draw beside it. Every such animation
+# ends by handing the widget back exactly where its layout put it, and that is only safe if ONE of
+# them runs at a time:
+#
+#   * Two tweens writing the same `position` fight for it every frame — the visible symptom is
+#     jagged, stuttering motion rather than either animation.
+#   * Worse, the second one captures a MID-MOTION position as its "rest" and restores to that, so
+#     the widget is left permanently offset and each further cue compounds the drift.
+#
+# Serialized cues made collisions rare; overlapping ones make them routine, so exclusivity has to be
+# enforced rather than hoped for. begin() cancels whatever was running, snaps the widget back to the
+# TRUE rest it recorded on first claim, and hands that rest to the new mover; hold() then registers
+# the new tween so the next claimant can cancel it in turn.
+const _MOVER := "vfx_mover"        # the running displacement Tween
+const _REST  := "vfx_mover_rest"   # {pos, rot, scale} as of the first uncontested claim
+
+
+# Claims `target` for a displacement, returning the position it must be handed back to.
+func begin_displace(target: Control) -> Vector2:
+	var rest := {"pos": target.position, "rot": target.rotation_degrees, "scale": target.scale}
+	var prev: Variant = target.get_meta(_MOVER, null)
+	if prev != null and is_instance_valid(prev) and (prev as Tween).is_valid():
+		# Something is mid-motion: its recorded rest is the truth, the live transform is not.
+		rest = target.get_meta(_REST, rest)
+		(prev as Tween).kill()
+		target.position         = rest["pos"]
+		target.rotation_degrees = rest["rot"]
+		target.scale            = rest["scale"]
+	target.set_meta(_REST, rest)
+	return rest["pos"]
+
+
+# Registers the displacement tween begun after a begin_displace claim.
+func hold_displace(target: Control, tw: Tween) -> void:
+	target.set_meta(_MOVER, tw)
+
+
 # ── Element resolution ─────────────────────────────────────────────────────────────
 
 # (kind, composition) -> the element-variant entry id ("projectile_air_fire"), or `fallback`
@@ -198,7 +357,16 @@ func live(id: String) -> bool:
 func _dispatch(vd: VFXData, target: Control, opts: Dictionary) -> void:
 	match vd.renderer:
 		"procedural":
-			await _play_procedural(vd, target, opts)
+			# Return at the HANDOFF, not the end (see "Sequencing" above): the primitive keeps
+			# playing — and frees itself — while the caller's next beat starts under its tail. An
+			# atomic entry ("overlap": 0) is awaited outright.
+			var span: float = _span_of(vd)
+			var lead: float = handoff(span, vd)
+			if lead >= span:
+				await _play_procedural(vd, target, opts)
+			else:
+				_play_procedural(vd, target, opts)
+				await get_tree().create_timer(lead).timeout
 		"custom":
 			var fn: Callable = _custom.get(vd.id, Callable())
 			if fn.is_valid():
@@ -361,13 +529,14 @@ func _fx_pop(vd: VFXData, target: Control, _opts: Dictionary) -> void:
 
 # A brief positional jitter of the target itself, restored exactly.
 func _fx_shake(vd: VFXData, target: Control, _opts: Dictionary) -> void:
-	var origin := target.position
+	var origin := begin_displace(target)   # exclusive — see the displacement section above
 	var strength := 6.0 * _p_scale(vd)
 	var tw := target.create_tween()
 	for i in 4:
 		var off := Vector2(randf_range(-strength, strength), randf_range(-strength, strength))
 		tw.tween_property(target, "position", origin + off, _p_dur(vd, 0.28) / 5.0)
 	tw.tween_property(target, "position", origin, _p_dur(vd, 0.28) / 5.0)
+	hold_displace(target, tw)
 	await tw.finished
 	if is_instance_valid(target):
 		target.position = origin

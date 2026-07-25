@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <!-- Combat pacing glyph: 1 chevron — one per step up the pacing dial (1 = step by step …
+       5 = snappy), following the play / fast-forward convention.
+
+       TWO CHANNELS, deliberately. Chevron COUNT is the literal reading, but at the ~30px these
+       actually render at, counting stops working past three — four and five slivers are the same
+       smear to the eye. So the face also runs a cool-to-hot ramp (silver → gold → red) that
+       separates every tier at a glance, with the count there for anyone who looks closer.
+
+       INSET MATTERS: these ride `expand_icon`, which stretches the texture across the button's WHOLE
+       rect, while the icon bake is a CIRCLE — a glyph drawn edge to edge gets clipped by the rim, so
+       the band stays inside it at every count and density is bought with thinner chevrons instead.
+
+       Same recipe as alert_bang.svg (dark halo, dark outline, then the face), which is what keeps
+       even the hot variants legible over the button art. Drop a matching .png beside one to swap. -->
+  <defs>
+    <linearGradient id="face" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#ffffff"/>
+      <stop offset="45%"  stop-color="#eaf1fb"/>
+      <stop offset="100%" stop-color="#b9c7dd"/>
+    </linearGradient>
+    <g id="glyph">
+      <path d="M64 72 L192 128 L64 184 Z"/>
+    </g>
+  </defs>
+
+  <use href="#glyph" fill="#101828" opacity="0.35" transform="translate(0,5)"/>
+  <use href="#glyph" fill="#1b2436" stroke="#1b2436" stroke-width="16" stroke-linejoin="round"/>
+  <use href="#glyph" fill="url(#face)"/>
+</svg>

@@ -17,15 +17,29 @@ static var current: CombatContext = null
 var hand: Hand = null
 var board: CombatBoard = null
 var interaction: Interaction = null
+var side: CombatSide = null   # the PLAYER's side — the resource facts affordability derives from
 
 
-static func install(p_hand: Hand, p_board: CombatBoard, p_interaction: Interaction) -> CombatContext:
+static func install(p_hand: Hand, p_board: CombatBoard, p_interaction: Interaction,
+		p_side: CombatSide) -> CombatContext:
 	var ctx := CombatContext.new()
 	ctx.hand = p_hand
 	ctx.board = p_board
 	ctx.interaction = p_interaction
+	ctx.side = p_side
 	current = ctx
 	return ctx
+
+
+# Live player mana — the one resource fact every affordability question asks. Consulted, so a
+# view can answer "can I be paid for right now?" without anyone pushing the answer at it.
+func player_mana() -> int:
+	return side.mana if side != null else 0
+
+
+# Whether an ability is castable RIGHT NOW (see AbilityData.usable_by).
+func ability_usable(holder: CardInstance, ab: AbilityData) -> bool:
+	return ab != null and ab.usable_by(holder, player_mana())
 
 
 static func clear() -> void:

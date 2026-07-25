@@ -12,6 +12,12 @@ const DASH_OUT    := 0.09                     # quick flick out…
 const DASH_BACK   := 0.16                     # …and a slightly softer settle home
 
 
+# Span: the sidestep's flick out (0.09) and most of its settle — the snap-back tail and
+# the label's drift play under whatever comes next.
+func _init() -> void:
+	span = 0.26
+
+
 func play() -> void:
 	var card := _event.target
 	if card == null or not is_instance_valid(card):
@@ -30,12 +36,13 @@ func play() -> void:
 # board layout. Player units (owner 0) sit on the left and slip left; enemy units slip right —
 # away from where the attacker lunges in from.
 func _sidestep(card: Control) -> void:
-	var origin := card.position
+	var origin := Vfx.begin_displace(card)   # one mover per card — see Vfx's displacement section
 	var dir := -1.0 if _owner_of(card) == 0 else 1.0
 	var away := origin + Vector2(dir * DASH_PX, -DASH_PX * 0.35)
 	var tw := card.create_tween()
 	tw.tween_property(card, "position", away, DASH_OUT).set_ease(Tween.EASE_OUT)
 	tw.tween_property(card, "position", origin, DASH_BACK).set_ease(Tween.EASE_OUT)
+	Vfx.hold_displace(card, tw)
 
 
 # The owning side of the board card, read off its CardInstance; defaults to player (0) so a

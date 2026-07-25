@@ -22,5 +22,6 @@
   "forge.cost.piece_op": 1,
   "shop.magic_mineral.price": 15,
   "ux.hold.duration": 0.4,
-  "ux.hold.tolerance": 44
+  "ux.hold.tolerance": 44,
+  "vfx.overlap": 0.7
 }

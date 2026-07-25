@@ -1,6 +1,12 @@
 class_name VFXEffectBuff
 extends VFXEffect
 
+
+# Span: the badge pulse under the glint's bloom; the rising number is tail.
+func _init() -> void:
+	span = 0.26
+
+
 func play() -> void:
 	if _event.target == null:
 		queue_free(); return

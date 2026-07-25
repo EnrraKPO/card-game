@@ -6,6 +6,11 @@ var _get_card_ui:    Callable  # func(CardInstance) -> CardUI
 # The relic-chip cue for relic-owned interceptions — func(relic_id: String). Injected by
 # combat (the tray lives in its chrome); invalid = no chip on screen, cue skipped.
 var relic_glint:     Callable
+# Blocks until a unit is standing still — func(inst: CardInstance) -> void, injected by combat
+# (see Combat._await_settled). A cue is drawn ON a card, and a card in flight is not a stage: the
+# cue would be stamped where the card WAS. So any cue anchored to a unit settles it first. Invalid
+# outside combat (the gym, tests) = nothing ever travels, no gate needed.
+var await_settled:   Callable
 
 
 func setup(root: Node, get_card_ui: Callable) -> void:
@@ -67,16 +72,25 @@ func play(event: VFXEvent) -> void:
 # source unit is on the board, health damage flies in as a projectile from it (the impact snaps HP +
 # shows the number on arrival); otherwise damage resolves on the target in place.
 # CALLERS MUST AWAIT THIS before cleanup_effect_deaths(), or a killed target is freed mid-sequence.
-const SOURCE_HOLD := 0.22   # beat after the caster glints, before its effects start landing
-const MARK_LEAD   := 0.24   # the reticle reads as "look at THIS card" before its badge cue fires
-const STEP_HOLD   := 0.30   # beat after the burst resolves, before returning
-const CHIP_LEAD   := 0.34   # beat after a relic chip glints, before the rewritten effect lands
+#
+# PACING is NOT held here. Every beat below simply awaits its own cue, which returns at that cue's
+# handoff (see the "Sequencing" section in Vfx): the glint's tail runs under the reticle, the
+# reticle's under the hit. The four fixed sleeps this used to carry — SOURCE_HOLD, MARK_LEAD,
+# STEP_HOLD, CHIP_LEAD — were dead air between finished animations, and are now the one global
+# `vfx.overlap` dial. The two spans below are the exceptions: cues drawn by somebody else (a
+# status pip, a relic tray chip) with no library entry to read a span from.
+const PIP_SPAN  := 0.30   # a status pip's proc flash (StatusPip.flash_proc)
+const CHIP_SPAN := 0.34   # a relic chip glinting in the tray (RelicTray.glint)
 
 func play_results(results: Array, source_inst: CardInstance = null,
 		cue_status_id: String = "", show_cue: bool = true) -> void:
 	var source_ui: CardUI = null
 	if source_inst != null and source_inst.row >= 0:
-		source_ui = _get_card_ui.call(source_inst) as CardUI
+		# The ACTOR settles before its ability is presented: a unit still withdrawing from its own
+		# strike glints, and fires any projectile, from where it has come to rest — not from a card
+		# sliding away underneath the cue. Covers the whole resolution, since source_ui is also the
+		# origin every damage bolt below flies from.
+		source_ui = await _stage(source_inst)
 	# The source's composition rides every hit of this resolution, so damage can play its
 	# element-variant look — known here even when the source has no on-board UI.
 	var comp: Array = []
@@ -95,7 +109,7 @@ func play_results(results: Array, source_inst: CardInstance = null,
 			if pip != null:
 				pip.flash_proc()
 				_status_tick_sfx(cue_status_id)
-		await _hold(SOURCE_HOLD)
+				await _hold(Vfx.handoff(PIP_SPAN))
 
 	# Launch each affected card's reticle + hit as its own sub-sequence and let them run together.
 	# `remaining` is a mutable box (Array so the concurrent calls share one counter); each sub-
@@ -127,13 +141,17 @@ func play_results(results: Array, source_inst: CardInstance = null,
 		if delta == 0:
 			continue
 		remaining[0] += 1
-		_play_target(card_ui, attr, delta, source_ui, comp, remaining)
+		# `inst`, not the UI resolved above: a target that is itself travelling (a retaliation
+		# striking the attacker mid-withdrawal) settles first, then its stage is re-resolved — by
+		# then the ghost has landed and the cue anchors to where the unit actually is.
+		_play_target(inst, attr, delta, source_ui, comp, remaining)
 
 	if remaining[0] == 0:
 		return
+	# Drain to the last hit's HANDOFF, not its last frame — the burst's tails keep playing while
+	# the caller moves on to whatever comes next.
 	while remaining[0] > 0:
 		await get_tree().process_frame
-	await _hold(STEP_HOLD)
 
 
 # Plays the cue for each interception record (Outcome.interceptions, or a result dict's
@@ -147,32 +165,28 @@ func play_interceptions(records: Array) -> void:
 		if kind == "relic":
 			if relic_glint.is_valid():
 				relic_glint.call(str(rec.get("owner_id", "")))
-				await _hold(CHIP_LEAD)
+				await _hold(Vfx.handoff(CHIP_SPAN))
 			continue
 		if kind != "status" and kind != "card":
 			continue
 		var holder: CardInstance = rec.get("holder")
-		if holder == null or holder.row < 0:
-			continue
-		var ui := _get_card_ui.call(holder) as CardUI
-		if ui == null or not is_instance_valid(ui):
+		var ui: CardUI = await _stage(holder)
+		if ui == null:
 			continue
 		if kind == "status":
 			var pip := ui.find_status_pip(str(rec.get("owner_id", "")))
 			if pip != null:
 				pip.flash_proc()
+				await _hold(Vfx.handoff(PIP_SPAN))
 		else:
 			await play(VFXEvent.source_trigger(ui))
-		await _hold(SOURCE_HOLD)
 
 
 # A status landing on a card: a benefit-tinted reticle on the card, then refresh so the new/updated
 # pip exists, then pop that pip so the gained stack reads. No stat number — the pip carries the count.
 func _play_status_applied(inst: CardInstance, status_id: String) -> void:
-	if inst == null or inst.row < 0:
-		return
-	var card_ui: CardUI = _get_card_ui.call(inst) as CardUI
-	if card_ui == null or not is_instance_valid(card_ui):
+	var card_ui: CardUI = await _stage(inst)
+	if card_ui == null:
 		return
 	var sd := StatusData.get_status(status_id)
 	var beneficial := sd == null or sd.beneficial
@@ -184,17 +198,21 @@ func _play_status_applied(inst: CardInstance, status_id: String) -> void:
 	var pip := card_ui.find_status_pip(status_id)
 	if pip != null:
 		pip.flash_applied()
-	await _hold(MARK_LEAD)
+		await _hold(Vfx.handoff(PIP_SPAN))
 
 
 # One affected card's slice of a (possibly multi-target) resolution, run concurrently with its
 # siblings: the tinted reticle leads (so the eye arrives first), then the effect's own VFX lands.
 # Ticks `remaining` down on completion so play_results knows when the whole burst has resolved.
-func _play_target(card_ui: CardUI, attr: String, delta: int, source_ui: CardUI,
+func _play_target(inst: CardInstance, attr: String, delta: int, source_ui: CardUI,
 		comp: Array, remaining: Array) -> void:
-	# Layer 2 — target reticle leads the hit, tinted by what's happening to this card.
+	var card_ui: CardUI = await _stage(inst)
+	if card_ui == null:
+		remaining[0] -= 1   # nothing to draw on — release the counter or play_results never drains
+		return
+	# Layer 2 — target reticle leads the hit, tinted by what's happening to this card. The await
+	# returns once the reticle has SNAPPED IN (its handoff); its fade plays out under the hit.
 	await play(VFXEvent.target_mark(card_ui, _result_color(attr, delta)))
-	await _hold(MARK_LEAD)
 	# Layer 3 — the effect's own VFX. A projectile defers the HP snap to its own impact, so
 	# don't double-refresh here. Damage carries the source's composition so the library can
 	# answer with the element-variant look (see play()).
@@ -224,6 +242,21 @@ func _play_target(card_ui: CardUI, attr: String, delta: int, source_ui: CardUI,
 	if not deferred and is_instance_valid(card_ui):
 		card_ui.refresh()
 	remaining[0] -= 1
+
+
+# THE one place a unit becomes a place to draw on: settle it, then resolve its card. Every cue
+# anchored to a unit goes through here, which is what makes "a moving card is not a stage" a single
+# rule rather than a check remembered at each call site. Returns null when the unit has no on-board
+# surface (off the board, or swept between resolution and playback).
+func _stage(inst: CardInstance) -> CardUI:
+	if inst == null:
+		return null
+	if await_settled.is_valid():
+		await await_settled.call(inst)
+	if inst.row < 0:
+		return null
+	var ui := _get_card_ui.call(inst) as CardUI
+	return ui if ui != null and is_instance_valid(ui) else null
 
 
 func _hold(seconds: float) -> void:
@@ -322,6 +355,9 @@ func _library_id(event: VFXEvent) -> String:
 
 # The custom-renderer callable behind every combat entry: instantiate the designed class and
 # run it against the VFXEvent carried in opts, drawing into the combat tree exactly as before.
+# Returns at the look's HANDOFF (see Vfx's "Sequencing" section) — the class declares its own
+# span, the dial decides how much of it counts as its moment, and the tail plays on under the
+# next beat. A class that leaves span at 0 is ATOMIC and awaited to its last frame.
 func _run_designed(_vd: VFXData, _target: Control, opts: Dictionary, effect_script: GDScript) -> void:
 	var event: VFXEvent = opts.get("event")
 	if event == null:
@@ -329,4 +365,14 @@ func _run_designed(_vd: VFXData, _target: Control, opts: Dictionary, effect_scri
 	var effect: VFXEffect = effect_script.new()
 	effect.setup(event, _root)
 	add_child(effect)
-	await effect.play()
+	# ONLY a declared-atomic look (span 0) is awaited through play(). "Its handoff equals its span"
+	# is NOT the same statement, and collapsing the two inverted the whole dial: nearly every
+	# designed look builds its tweens and returns immediately (only Death and Projectile await
+	# themselves), so at overlap 0 — where handoff == span — `await effect.play()` returned in zero
+	# frames and Step by step ran with NO pacing at all, faster than every other setting. A spanned
+	# look is always paced by the timer, which at overlap 0 waits its full span.
+	if effect.span <= 0.0:
+		await effect.play()
+		return
+	effect.play()
+	await get_tree().create_timer(Vfx.handoff(effect.span, _vd)).timeout

@@ -1,6 +1,12 @@
 class_name VFXEffectShieldHit
 extends VFXEffect
 
+
+# Span: the badge glint's snap — no card drain follows, so the absorb reads fast.
+func _init() -> void:
+	span = 0.26
+
+
 func play() -> void:
 	if _event.target == null:
 		queue_free(); return

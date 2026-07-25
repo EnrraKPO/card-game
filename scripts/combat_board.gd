@@ -218,13 +218,35 @@ func move_enemy_card(inst: CardInstance, r: int, c: int) -> void:
 	(enemy_slots[r][c] as SlotUI).set_card(ui)
 
 
-func remove_card(inst: CardInstance) -> void:
-	var slots := player_slots if inst.owner == 0 else enemy_slots
-	var board := player_grid  if inst.owner == 0 else enemy_grid
-	var card_ui: CardUI = (slots[inst.row][inst.col] as SlotUI).clear_card()
+# A unit leaves PLAY — state only, and instantly. Targeting, the king checks and the next attacker
+# stop seeing it the moment this returns. Its card is deliberately left standing exactly where it
+# is, untouched, for whoever is presenting the death to dispose of once they're done (see
+# drop_card_view); the returned CardUI is that card, still parented and laid out by its slot.
+#
+# State and view are separate on purpose. Bundling them — clearing the grid AND destroying the card
+# in one call — is what used to force a death animation to block: the only way to keep the card on
+# screen was to delay the state change. Nothing about the board waits on an animation now.
+func retire_unit(inst: CardInstance) -> CardUI:
+	var board := player_grid if inst.owner == 0 else enemy_grid
 	board[inst.row][inst.col] = null
-	if card_ui:
+	return get_card_ui(inst)
+
+
+# Disposes of a retired unit's card, once its send-off has played. Clears the slot only if that card
+# is STILL the one standing there — if anything has moved in since, the newcomer is not ours to
+# remove — but always frees the card itself.
+func drop_card_view(inst: CardInstance, card_ui: CardUI) -> void:
+	var slots := player_slots if inst.owner == 0 else enemy_slots
+	var slot := slots[inst.row][inst.col] as SlotUI
+	if slot != null and slot.get_card() == card_ui:
+		slot.clear_card()
+	if is_instance_valid(card_ui):
 		card_ui.queue_free()
+
+
+# State and view together, with no send-off: the unit leaves play and its card vanishes on the spot.
+func remove_card(inst: CardInstance) -> void:
+	drop_card_view(inst, retire_unit(inst))
 
 
 func get_card_ui(inst: CardInstance) -> CardUI:

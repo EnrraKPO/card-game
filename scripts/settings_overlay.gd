@@ -10,22 +10,34 @@ extends Control
 # Two mixer rows (Music / SFX), each a big Mute toggle + a fat 0–100% slider driving
 # AudioSettings live — you hear the level while dragging, there is no Apply step.
 
-const PANEL_WIDTH := 860.0
+# Two columns of settings side by side. The game is landscape-only, so the panel always has far
+# more width than height to spend — a single tall column overflowed an 800px-high phone screen the
+# moment a fourth setting was added, while a third of the viewport's width sat empty beside it.
+const PANEL_WIDTH := 1240.0
+const COLUMN_SEP := 56.0
+const PACING_PER_ROW := 3
 const SLIDER_HEIGHT := 84.0
 
 var _layer: CanvasLayer
 var _panel: PanelContainer
 
 
-static func open(host: Node) -> void:
+# Emitted as the overlay dismisses, so a screen showing the SAME settings on its own chrome can
+# re-read them (combat's pacing button mirrors the pacing picker — either surface may have moved it).
+signal closed
+
+
+# Returns the overlay so a caller can connect `closed`; null if the host isn't mounted.
+static func open(host: Node) -> SettingsOverlay:
 	if host == null or not host.is_inside_tree():
-		return
+		return null
 	var overlay := SettingsOverlay.new()
 	var layer := CanvasLayer.new()
 	layer.layer = 200
 	overlay._layer = layer
 	layer.add_child(overlay)
 	host.get_viewport().add_child(layer)
+	return overlay
 
 
 func _ready() -> void:
@@ -74,9 +86,24 @@ func _fill_panel() -> void:
 	title.add_theme_color_override("font_color", CardTooltip.TEXT_TITLE)
 	inner.add_child(title)
 
-	inner.add_child(_language_row())
-	inner.add_child(_mixer_row(Loc.t("settings.music"), "music"))
-	inner.add_child(_mixer_row(Loc.t("settings.sfx"), "sfx"))
+	# Left column = the game's presentation (how it reads); right = the mixer (how it sounds).
+	var columns := HBoxContainer.new()
+	columns.add_theme_constant_override("separation", int(COLUMN_SEP))
+	inner.add_child(columns)
+
+	var left := VBoxContainer.new()
+	left.add_theme_constant_override("separation", 30)
+	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	left.add_child(_language_row())
+	left.add_child(_pacing_row())
+	columns.add_child(left)
+
+	var right := VBoxContainer.new()
+	right.add_theme_constant_override("separation", 30)
+	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	right.add_child(_mixer_row(Loc.t("settings.music"), "music"))
+	right.add_child(_mixer_row(Loc.t("settings.sfx"), "sfx"))
+	columns.add_child(right)
 
 	var done := ScreenUI.action_button(Loc.t("settings.done"), _close, Vector2(0, 96), 34)
 	done.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -94,27 +121,71 @@ func _rebuild() -> void:
 # The language picker: one big highlighted button per shipped language (the active one wears
 # the confirm chrome). Picking a new one flips the locale and rebuilds the panel in place.
 func _language_row() -> Control:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 24)
+	var row := VBoxContainer.new()
+	row.add_theme_constant_override("separation", 14)
+	row.add_child(_row_label(Loc.t("settings.language")))
 
-	var name_lbl := Label.new()
-	name_lbl.text = Loc.t("settings.language")
-	name_lbl.add_theme_font_size_override("font_size", 40)
-	name_lbl.add_theme_color_override("font_color", CardTooltip.TEXT_MAIN)
-	name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	name_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	row.add_child(name_lbl)
-
+	# Buttons share the column's width rather than taking a fixed 220 — in a half-width column a
+	# fixed pair would crowd the label off its own row.
+	var picks := HBoxContainer.new()
+	picks.add_theme_constant_override("separation", 20)
 	for lang: String in Loc.LANGS:
 		var active := Loc.locale() == lang
-		var btn := ScreenUI.action_button(Loc.language_name(lang), Callable(), Vector2(220, 84), 28,
+		var btn := ScreenUI.action_button(Loc.language_name(lang), Callable(), Vector2(0, 84), 28,
 			ScreenUI.CHROME_CONFIRM if active else ScreenUI.CHROME_NEUTRAL)
+		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		if not active:
 			var pick := lang
 			btn.pressed.connect(func() -> void:
 				Loc.set_locale(pick)
 				_rebuild())
-		row.add_child(btn)
+		picks.add_child(btn)
+	row.add_child(picks)
+	return row
+
+
+# The shared setting caption — every row in both columns wears the same heading treatment.
+func _row_label(text: String) -> Label:
+	var lbl := Label.new()
+	lbl.text = text
+	lbl.add_theme_font_size_override("font_size", 40)
+	lbl.add_theme_color_override("font_color", CardTooltip.TEXT_MAIN)
+	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	return lbl
+
+
+# Combat pacing: how much each animation overlaps the next (Vfx.PACING). Built like the language
+# picker — one big button per preset, the active one wearing the confirm chrome — because this is a
+# taste choice between three named feels, not a number the player should have to reason about. The
+# change is live: the dial is re-read per cue, so the next fight (or the one already running behind
+# this overlay) uses it immediately, with no Apply step.
+func _pacing_row() -> Control:
+	var row := VBoxContainer.new()
+	row.add_theme_constant_override("separation", 14)
+
+	row.add_child(_row_label(Loc.t("settings.pacing")))
+
+	# Wrapped at PACING_PER_ROW: five presets across a half-width column would leave each button too
+	# narrow for its own label. Every button still EXPAND_FILLs its row, so a short final row spreads
+	# to fill the width rather than leaving a hole.
+	var active := Vfx.pacing_key()
+	var picks: HBoxContainer = null
+	for i in Vfx.PACING.size():
+		if i % PACING_PER_ROW == 0:
+			picks = HBoxContainer.new()
+			picks.add_theme_constant_override("separation", 20)
+			row.add_child(picks)
+		var key := str(Vfx.PACING[i]["key"])
+		var on := key == active
+		var btn := ScreenUI.action_button(Loc.t("settings.pacing." + key), Callable(),
+			Vector2(0, 84), 26, ScreenUI.CHROME_CONFIRM if on else ScreenUI.CHROME_NEUTRAL)
+		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		if not on:
+			var pick := float(Vfx.PACING[i]["overlap"])
+			btn.pressed.connect(func() -> void:
+				Vfx.set_overlap(pick)
+				_rebuild())   # re-emit the row so the chrome follows the new choice
+		picks.add_child(btn)
 	return row
 
 
@@ -209,6 +280,7 @@ func _big_slider() -> HSlider:
 
 
 func _close() -> void:
+	closed.emit()
 	if _layer != null:
 		_layer.queue_free()
 

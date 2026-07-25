@@ -515,6 +515,14 @@ func _apply_playable(playable: bool) -> void:
 		_canvas.modulate = Color(0.93, 0.93, 0.93)
 
 
+# Whether this view may BEGIN an activation right now, on grounds OTHER than its mana cost
+# (which every caster checks separately). Ordinary card views always may; AbilityWidget
+# overrides it with the usability it derives, so the cast gate and the spent grey always
+# answer from the same derivation.
+func castable_now() -> bool:
+	return true
+
+
 # Sheds every HAND-BOUND presentation state: the play-me glow, the unaffordable dim, the
 # selection tint. Called by SlotUI.set_card — the one door every card passes through on its
 # way onto the board — because these states are facts about hand life ("affordable to play",

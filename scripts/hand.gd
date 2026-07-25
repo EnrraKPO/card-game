@@ -61,12 +61,11 @@ var _hand_box: BoxContainer
 var _gen_box: BoxContainer
 var _abilities_box: BoxContainer
 var _no_abilities_lbl: Label
-# The card strip + its greed. In HAND the scroll fills the bar (cards spread across it); in the
-# raised levels it shrinks to its content so the description panel hugs the abilities and the
-# freed width collapses into _inspect_spacer, keeping the nav column pinned right (see _set_level).
+# The card strip. It ALWAYS fills the width the fixed columns (mana gauge, description sidebar,
+# nav) leave over and scrolls its overflow — at every level. See the fixed-width guarantee at its
+# build site: the bar's width is the screen's to give, never the strip's content's to demand.
 var _pad: MarginContainer
 var _scroll: ScrollContainer
-var _inspect_spacer: Control
 var _desc_panel: PanelContainer
 var _back_btn: Button
 var _inspect_abilities_btn: GlossyButton
@@ -92,6 +91,17 @@ const BOTTOM_BLEED := 8.0
 # The bar's one vertical pad, above the cards (none below — see build_into). Public because it's
 # a term in combat's shared-card-size solve (_resize_board): bar height = card height + this.
 const PAD_TOP := 6.0
+
+# The inspect sidebar's WIDTH BUDGET and its text sizing. The cap is a budget decision, not a
+# readability one: the sidebar is REFERENCE (what the unit you already clicked is), the ability
+# strip beside it is the ACTIONABLE content, and the two compete for one fixed-width bar. At the
+# old 440 the sidebar took half the bar and starved the strip to less than a single ability row;
+# 240 leaves a full row readable with the next one peeking in as the scroll affordance. The
+# description then fits its (fixed) box by shrinking a step at a time — see _fit_desc_font.
+const DESC_MAX_W := 240.0
+const DESC_NAME_FONT := 28
+const DESC_FONT_MAX := 26
+const DESC_FONT_MIN := 16
 
 # The Inspect Abilities button's base colour — fuchsia, deliberately loud (see its build site).
 const INSPECT_ACCENT := Color("d92bc4")
@@ -146,6 +156,15 @@ func build_into(parent: Control, left_widget: Control = null) -> void:
 	_pad.size_flags_vertical   = Control.SIZE_EXPAND_FILL
 	outer_row.add_child(_pad)
 
+	# THE fixed-WIDTH guarantee (the sibling of _desc_clip's fixed-height one below): the strip is
+	# the bar's only column whose content has no upper bound — N ability rows at INSPECT, every
+	# ability-bearing unit at ABILITIES — so it must NEVER report that content's width as a minimum.
+	# Horizontal scrolling stays enabled at EVERY level, which is what keeps a ScrollContainer's own
+	# minimum width at zero; the strip then takes exactly the width the fixed columns leave, and
+	# overflow scrolls. This used to flip to SCROLL_MODE_DISABLED at the raised levels (so the strip
+	# would report its content width and hug the description) — a unit with two abilities then pushed
+	# the bar's minimum ~800px past the screen, and since the bar is the widest thing in combat's
+	# body column it dragged the BOARD off-screen with it, taking the nav column (Ready included).
 	_scroll = ScrollContainer.new()
 	_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_scroll.size_flags_vertical   = Control.SIZE_EXPAND_FILL
@@ -168,13 +187,6 @@ func build_into(parent: Control, left_widget: Control = null) -> void:
 	desc_style.set_content_margin_all(0)
 	_desc_panel.add_theme_stylebox_override("panel", desc_style)
 
-	# Eats the width freed in the raised levels (scroll shrunk to its abilities, description fitted
-	# to its text). Placed BEFORE the description panel so the description stays pinned to the RIGHT
-	# (against the nav column), not floating left against the abilities. Collapsed (zero-flex) in
-	# HAND, where the scroll itself does the filling. See _set_level.
-	_inspect_spacer = Control.new()
-	_inspect_spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	outer_row.add_child(_inspect_spacer)
 	outer_row.add_child(_desc_panel)
 
 	_desc_hbox = HBoxContainer.new()
@@ -215,12 +227,12 @@ func build_into(parent: Control, left_widget: Control = null) -> void:
 	_desc_clip.add_child(_desc_col)
 
 	_desc_name_lbl = Label.new()
-	_desc_name_lbl.add_theme_font_size_override("font_size", 28)
+	_desc_name_lbl.add_theme_font_size_override("font_size", DESC_NAME_FONT)
 	_desc_col.add_child(_desc_name_lbl)
 
 	_desc_text_lbl = Label.new()
 	_desc_text_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_desc_text_lbl.add_theme_font_size_override("font_size", 26)
+	_desc_text_lbl.add_theme_font_size_override("font_size", DESC_FONT_MAX)   # a ceiling — see _fit_desc_font
 	_desc_text_lbl.add_theme_color_override("font_color", Color("3a2f22"))
 	_desc_text_lbl.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_desc_col.add_child(_desc_text_lbl)
@@ -349,6 +361,10 @@ func bind_side(side: CombatSide) -> void:
 func refresh_playable() -> void:
 	for ui: CardUI in _hand_cards:
 		ui.refresh_playable()
+	# Mana gates the ability tray too: a tray widget derives its usable/spent look from the same
+	# live mana, so it takes the same cue rather than waiting out its poll.
+	for ui: CardUI in _gen_cards:
+		ui.derive_presentation()
 
 
 func _on_cards_drawn(insts: Array) -> void:
@@ -422,6 +438,9 @@ func set_card_size(s: Vector2) -> void:
 		ui.custom_minimum_size = tray
 	for ui: CardUI in _ability_entries:
 		ui.custom_minimum_size = tray
+	# The sidebar's text is fitted against the bar's height, which is derived from the card size —
+	# so a resize has to re-fit it (see _fit_desc_font).
+	_fit_desc_width()
 
 
 # ── Card inspection (description + activated abilities) ───────────────────────────
@@ -527,15 +546,6 @@ func _set_level(level: NavLevel) -> void:
 	# The sidebar serves both raised levels: the unit detail at INSPECT (filled by
 	# _rebuild_inspect_view), the "click a unit" hint at ABILITIES (set by show_abilities).
 	_desc_panel.visible    = level != NavLevel.HAND
-	# Greed handoff: HAND lets the scroll fill the bar (cards spread across it); the raised levels
-	# shrink the scroll to its abilities (horizontal scroll off so it reports its content width) so
-	# the description hugs the abilities, and the spacer takes the freed width — nav stays right.
-	var raised := level != NavLevel.HAND
-	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED if raised \
-			else ScrollContainer.SCROLL_MODE_AUTO
-	_pad.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN if raised else Control.SIZE_EXPAND_FILL
-	_inspect_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL if raised \
-			else Control.SIZE_SHRINK_BEGIN
 	if level != NavLevel.ABILITIES:
 		_clear_ability_entries()
 	refresh_nav()
@@ -673,12 +683,12 @@ func _rebuild_inspect_view() -> void:
 		# The unit's whole ability roster is shown, payable or not. A currently-unpayable one
 		# (tapped out or unaffordable) rides the same spent grey as a tapped board unit and can't
 		# be drag-cast — but it still arms (right-click) and hovers, since arming survives tapping.
-		if is_ability_usable.is_valid() and is_ability_usable.call(inst, ab):
-			if wire_spell_card.is_valid():
-				wire_spell_card.call(ui)
-		else:
-			ui.draggable = false
-			ui.set_exhausted(true)
+		# The widget DERIVES that verdict itself, continuously (AbilityWidget.is_usable); the tray
+		# wires the cast path unconditionally and lets the gate live where the grey does, so mana
+		# spent elsewhere or a holder that just attacked can't leave a stale castable token here.
+		if wire_spell_card.is_valid():
+			wire_spell_card.call(ui)
+		ui.derive_presentation()   # land the grey/draggable before the first frame shows
 		ui.autocast_toggled.connect(_on_autocast_toggled)
 		ui.mouse_entered.connect(func(): token_hovered.emit(inst, true))
 		ui.mouse_exited.connect(func():  token_hovered.emit(inst, false))
@@ -692,16 +702,44 @@ func _rebuild_inspect_view() -> void:
 # capped so a long description wraps instead of ballooning the sidebar (and floored so a one-word
 # name/description still reads). Short descriptions — the norm for ability-bearing cards — collapse
 # the column, which (the sidebar sizing to its content) releases that width to the ability strip.
+# The cap is a WIDTH BUDGET decision, not a readability one: the sidebar is REFERENCE (what the
+# unit you already clicked is), the ability strip beside it is the ACTIONABLE content, and they
+# compete for the same fixed bar. At 440 the sidebar took half the bar and starved the strip to
+# less than one ability row; 240 leaves a full row visible with the next one peeking in as the
+# scroll affordance. A description longer than the cap wraps down its (fixed-height) column.
 func _fit_desc_width() -> void:
 	if _desc_clip == null:
 		return
-	const MAX_W := 440.0
 	const MIN_W := 90.0
 	var tf := _desc_text_lbl.get_theme_font("font")
 	var nf := _desc_name_lbl.get_theme_font("font")
-	var tw := tf.get_string_size(_desc_text_lbl.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 26).x
-	var nw := nf.get_string_size(_desc_name_lbl.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 28).x
-	_desc_clip.custom_minimum_size.x = clampf(maxf(tw, nw), MIN_W, MAX_W)
+	var tw := tf.get_string_size(_desc_text_lbl.text, HORIZONTAL_ALIGNMENT_LEFT, -1, DESC_FONT_MAX).x
+	var nw := nf.get_string_size(_desc_name_lbl.text, HORIZONTAL_ALIGNMENT_LEFT, -1, DESC_NAME_FONT).x
+	var w := clampf(maxf(tw, nw), MIN_W, DESC_MAX_W)
+	_desc_clip.custom_minimum_size.x = w
+	_fit_desc_font(w)
+
+
+# The column is fixed in BOTH axes now (width by the budget above, height by _desc_clip), so a
+# description too long for the box has to give somewhere. It gives in FONT SIZE, not in clipped
+# words: the largest step from the theme's 26 down whose wrapped height fits wins. Before this the
+# box just cut the last line off mid-sentence — the accepted-but-ugly fallback the fixed-height
+# note calls out — which the narrower column made routine instead of rare.
+func _fit_desc_font(w: float) -> void:
+	var nf := _desc_name_lbl.get_theme_font("font")
+	var tf := _desc_text_lbl.get_theme_font("font")
+	# The box's own height, known from the bar's geometry (card + top pad, less the text wrap's
+	# insets) rather than measured — this runs before layout has sized anything.
+	var avail := _card_size.y + PAD_TOP - (10.0 + 10.0 + BOTTOM_BLEED) \
+			- nf.get_height(DESC_NAME_FONT) - 12.0   # name line + the column's separation
+	var fs := DESC_FONT_MAX
+	while fs > DESC_FONT_MIN:
+		var h := tf.get_multiline_string_size(_desc_text_lbl.text,
+				HORIZONTAL_ALIGNMENT_LEFT, w, fs).y
+		if h <= avail:
+			break
+		fs -= 2
+	_desc_text_lbl.add_theme_font_size_override("font_size", fs)
 
 
 # The text beside an ability's illustration in the inspect view: the ability name over its

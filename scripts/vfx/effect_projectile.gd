@@ -11,6 +11,9 @@ extends VFXEffect
 #          is false and we only burst.
 # When show_impact is true the damage was already applied to the data; we defer the target's
 # HP-bar snap to _on_arrival() so it drops exactly as the shot lands.
+#
+# ATOMIC (span stays 0): a shot has said nothing until it lands — the arrival IS the beat, and its
+# flight time is distance-driven anyway, so there is no fixed span to hand off partway through.
 
 const ORB_TRAVEL := 0.22
 

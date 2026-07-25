@@ -50,6 +50,14 @@ const DEFAULTS := {
 	"ux.hold.duration":         0.4,  # seconds a touch must be held to open the card inspector
 	"ux.hold.tolerance":        44.0, # viewport px the finger may drift and still count as a hold
 									   # (a drag starting inside this is provisional — see CardUI)
+	# Animation feel. THE fluidity dial for every sequenced cue in the game (see Vfx.handoff): the
+	# fraction of a cue's tail the NEXT beat is allowed to overlap. 0 = strictly one-at-a-time (each
+	# cue plays to its last frame before the next starts — the old, choppy behaviour); 0.5 = the
+	# next beat starts halfway through the current one, so tails cross-fade under heads and the
+	# sequence never sits in dead air. Cues stay strictly ORDERED either way — this only decides
+	# how much of a cue's span counts as "its moment". An individual effect overrides it with its
+	# own `overlap` param (0 = atomic, my completion IS my beat).
+	"vfx.overlap":              0.5,
 }
 
 

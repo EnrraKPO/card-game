@@ -1,6 +1,12 @@
 class_name VFXEffectShieldRestored
 extends VFXEffect
 
+
+# Span: the positive glint's bloom to full.
+func _init() -> void:
+	span = 0.26
+
+
 func play() -> void:
 	if _event.target == null:
 		queue_free(); return

@@ -1,6 +1,13 @@
 class_name VFXEffectHealthDamage
 extends VFXEffect
 
+
+# Span: the stat glint's inward snap (0.30). The card's grey-drain wash and the floating
+# number are tail — the wound has registered before either finishes.
+func _init() -> void:
+	span = 0.30
+
+
 func play() -> void:
 	if _event.target == null:
 		queue_free(); return

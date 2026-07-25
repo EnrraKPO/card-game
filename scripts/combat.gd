@@ -1,13 +1,28 @@
 extends Control
 
 # Selectable battle speeds the HUD toggle cycles through (applied as Engine.time_scale). Shown as
-# percentages; every fight starts at 100% (1.0) — the dial is per-combat, not remembered.
-const BATTLE_SPEEDS: Array[float] = [0.5, 1.0, 1.5, 2.0]
+# multipliers; every fight starts at x1 — the dial is per-combat, not remembered. Ordered so the
+# cycle climbs from normal through the speed-ups and only then offers slow-motion, since that is
+# the rare pick: x1 → x1.5 → x2 → x0.5 → x1.
+const BATTLE_SPEEDS: Array[float] = [1.0, 1.5, 2.0, 0.5]
 
-# Beat between a shield absorbing part of a hit and the bleed-through HP damage landing, so the
-# shield reads as taking the blow first (scaled by battle speed like every other combat beat).
-const SHIELD_LEAD := 0.14
-const RELIC_CUE_LEAD := 0.34   # let a firing relic's chip glint read before its effects' VFX
+# The pacing glyphs, slowest first — one chevron per step up in overlap, indexed by Vfx.PACING
+# (which is likewise ordered slowest first). The play/fast-forward convention, so the button reads
+# without a label.
+const PACE_ICONS := [
+	preload("res://assets/ui/icons/pace_1.svg"),
+	preload("res://assets/ui/icons/pace_2.svg"),
+	preload("res://assets/ui/icons/pace_3.svg"),
+	preload("res://assets/ui/icons/pace_4.svg"),
+	preload("res://assets/ui/icons/pace_5.svg"),
+]
+
+# Combat holds NO animation timing of its own. It declares what happens and in what causal order;
+# each cue's own span and the global `vfx.overlap` dial decide the clock (see the "Sequencing"
+# section in Vfx). The fixed sleeps that used to live here — SHIELD_LEAD, RELIC_CUE_LEAD, the flat
+# post-strike beat — were dead air between finished animations; awaiting the cue itself now returns
+# at its handoff, so the next beat starts under the previous one's tail instead of after it.
+const RELIC_CHIP_SPAN := 0.34   # a relic chip glinting in its tray — a cue with no library entry
 const BOARD_HALVES_GAP := 24.0   # the TOTAL gulf between the halves: divider + flanking gaps
 const HALVES_DIVIDER_W := 4.0   # the visible rule standing in the middle of that gulf
 const COL_SEP := 14.0   # board↔hand breathing room; also a term in _resize_board's height budget
@@ -38,6 +53,7 @@ var _done_label: Label       # the Ready button's caption — bottom-anchored in
 							  # the word sits on the hand band, aligned with Inspect Abilities
 							  # (Button has no vertical text alignment; see _build_action_column)
 var _speed_btn: Button
+var _pacing_btn: Button
 var _battle_speed: float = 1.0   # 100%; reset each combat, cycled by the HUD dial
 
 var _board_row: HBoxContainer   # the two board halves; drives responsive slot sizing on resize
@@ -56,6 +72,18 @@ var _interaction: Interaction   # THE owner of the current player gesture (see I
 # travelling. This maps such an attacker → its ghost so the attacker's own VFX (the on-attack
 # glint / self-buff) plays on the card the player is actually watching, not the hidden origin one.
 var _ghost_ui: Dictionary = {}   # CardInstance -> CardUI
+# Units currently IN MOTION across the board, CardInstance -> the tween carrying them. A unit in
+# flight is not a valid stage for a cue about it: every combat number and glint stamps its position
+# once, at spawn, onto the combat root — so a badge glint on a moving card is left behind the moment
+# it appears — and the card-level reactions (the grey drain's tremble, the dodge sidestep) tween the
+# very `position` the move is already driving, so the two fight and the loser snaps.
+#
+# The presentation layer therefore SETTLES a unit before cueing on it (see _await_settled, lent to
+# VFXPlayer at setup). This is a presentation gate only: the Resolver wrote the mutation long before
+# any of this draws, so waiting changes what the player SEES, never what resolved or in what order.
+# One rule, no per-effect authoring — an on-attack self-buff, a retaliation striking the attacker
+# mid-withdrawal, and anything authored later all read correctly by construction.
+var _transit: Dictionary = {}   # CardInstance -> Tween
 
 
 # Combat shows NO Shell header at all — every vertical pixel goes to the board and hand so the
@@ -88,7 +116,7 @@ func _ready() -> void:
 
 	# The declared-state surface cards consult (selection / inspection / preview world) —
 	# see CombatContext + CardUI.derive_presentation. Cleared in _exit_tree.
-	CombatContext.install(_hand, _board, _interaction)
+	CombatContext.install(_hand, _board, _interaction, _player_side)
 
 	_board.setup_grids()
 	_board.interaction  = _interaction   # before _build_ui — build_section hands it to every slot
@@ -103,6 +131,7 @@ func _ready() -> void:
 			return ghost
 		return _board.get_card_ui(inst)
 	_vfx.setup(self, _get_card_ui)
+	_vfx.await_settled = _await_settled
 	# Relic-owned interception cues glint the tray chip; the tray lives in combat's chrome,
 	# so combat lends the presenter this one reach into it.
 	_vfx.relic_glint = func(relic_id: String) -> void:
@@ -139,12 +168,11 @@ func _ready() -> void:
 					out.append(inst)
 		return out
 
-	# Whether an ability is castable RIGHT NOW: its tap cost (if any) isn't already spent AND the
-	# player can afford its mana. Feeds the tray's spent-token grey and the Inspect Abilities glow.
+	# Whether an ability is castable RIGHT NOW — THE rule lives on AbilityData (usable_by), so the
+	# Inspect Abilities glow here, the tray widget's own derivation and the cast gate all read one
+	# definition and can never drift apart.
 	_hand.is_ability_usable = func(holder: CardInstance, ab: AbilityData) -> bool:
-		if ab.tap and holder.attack_exhausted:
-			return false
-		return ab.mana <= _player_side.mana
+		return ab.usable_by(holder, _player_side.mana)
 
 	_board.can_autocast = _spell_caster.autocast_drop_ok
 	_board.unit_placed.connect(_on_board_unit_placed)
@@ -622,9 +650,12 @@ func _perform_strike(attacker: CardInstance, target: CardInstance) -> void:
 	else:
 		# Melee: lunge across and plunge INTO the target (overlapping from the side it approaches —
 		# player units from the target's left, enemy units from its right), bounce back out to the
-		# attack position beside it, and HOLD there while the strike's damage + triggered effects (e.g.
-		# bishop_pawn's heal-on-attack) resolve next to the target — only then retreat home. The lunge
-		# and rebound chain with no pause at the overshoot, so the hit keeps its momentum on impact.
+		# attack position beside it, and LEAVE — the strike's damage + triggered effects (numbers,
+		# glints, the target's death) all play out while the attacker is already gliding home. The
+		# lunge and rebound chain with no pause at the overshoot, so the hit keeps its momentum on
+		# impact, and the withdrawal keeps that same momentum instead of parking the attacker beside
+		# its victim to watch it suffer. One continuous move-hit-leave, with the consequences
+		# unfolding underneath it.
 		var a_home := a_card.global_position
 		var gap := 12.0
 		var beside_x: float = (t_card.global_position.x - a_card.size.x - gap) if attacker.owner == 0 \
@@ -634,6 +665,10 @@ func _perform_strike(attacker: CardInstance, target: CardInstance) -> void:
 		# home), so the rebound retraces the exact vector the lunge came in on — a real recoil off the
 		# hit, not a step to the side.
 		var overshoot := beside + (beside - a_home).normalized() * (a_card.size.x * 0.3)
+		# A unit must be standing still before it can start another move. Without this, the second
+		# swing of a multi-strike flurry spawns a ghost while the first is still gliding home, and
+		# the two fight over the attacker's card.
+		await _await_settled(attacker)
 		var ghost := _animator.spawn_ghost(a_card)
 		a_card.modulate.a = 0.0
 		# Route the attacker's own VFX onto the ghost while it travels (see _ghost_ui).
@@ -642,24 +677,90 @@ func _perform_strike(attacker: CardInstance, target: CardInstance) -> void:
 		await _animator.play_lunge(ghost, overshoot)
 		_animator.shake_card(t_card)               # impact shake at the apex, over the rebound
 		await _animator.play_rebound(ghost, beside)
+		# The withdrawal and the consequences run CONCURRENTLY: the retreat starts on the rebound's
+		# heel while the damage, its numbers and every triggered glint resolve underneath it.
+		var retreat := _animator.start_retreat(ghost, a_home)
+		_transit[attacker] = retreat
+		# MOVEMENT IS A BEAT: the withdrawal hands off through the same `vfx.overlap` dial as every
+		# cue, so it obeys the player's pacing setting instead of being unconditionally concurrent.
+		# At Flowing the next unit winds up while this one is still gliding; at Step by step the
+		# handoff equals the full span, so the attacker is home before anything else begins. The
+		# timer starts WITH the retreat and is awaited at the end of the strike — the damage
+		# resolving usually outlasts it, in which case there is nothing left to wait for.
+		var withdraw := get_tree().create_timer(Vfx.handoff(CombatAnimator.RETREAT_DUR))
+		# Teardown rides the tween's own completion rather than the await chain, so the ghost is
+		# never freed early no matter how the handoff and the damage race.
+		retreat.finished.connect(func() -> void:
+			_transit.erase(attacker)
+			_ghost_ui.erase(attacker)
+			if is_instance_valid(ghost):
+				ghost.queue_free()
+			if is_instance_valid(a_card):
+				a_card.modulate.a = 1.0)
 		await _apply_attack_damage(attacker, target, t_card)
-		await _animator.play_retreat(ghost, a_home)
-		_ghost_ui.erase(attacker)
-		ghost.queue_free()
-		a_card.modulate.a = 1.0
+		if withdraw.time_left > 0.0:
+			await withdraw.timeout
 
 	if not target.is_alive():
 		await _emit_kill(target)
 		await _broadcast(GameEvent.make(&"death", target))
-		await _vfx.play(VFXEvent.death(t_card))
-		_board.remove_card(target)
+		await _bury(target)   # the death BEAT; the fade itself plays on past it
 	else:
+		# No trailing beat: the strike's own damage cues were awaited to their handoffs above and
+		# are still playing. The next attacker winds up under them rather than after them.
 		t_card.refresh()
-		await get_tree().create_timer(0.2).timeout
 
 	# A triggered/run-level effect resolved during this attack (e.g. an upgrade's on-death
 	# retaliation) may have killed a bystander; sweep any secondary deaths off the board.
 	_board.cleanup_effect_deaths()
+
+
+# A unit LEAVES PLAY the instant it dies — slot free, targeting blind to it, sequence carrying
+# straight on — and its card then fades in place, owing nothing to anyone. Death used to be a hard
+# 0.4s stop mid-combat purely because board state and card disposal were one operation
+# (CombatBoard.remove_card), so the only way to keep the card visible was to delay the state change.
+# Splitting the two removes the stall without moving a single node.
+#
+# Deliberately NOT awaited by its callers (it is a coroutine only so it can dispose of the card when
+# the fade ends). The single death-presentation path — every site that used to hand-roll
+# "await the death VFX, then remove_card" now calls this.
+func _bury(inst: CardInstance) -> void:
+	# State first, and only state: the unit is out of play this instant. The card is left standing
+	# in its own slot — same parent, same anchors, same scale — and simply fades where it stood.
+	# Nothing is reparented and nothing about the board is waiting on the fade.
+	var corpse := _board.retire_unit(inst)
+	if corpse == null:
+		return
+	_fade_out(inst, corpse)   # plays on past the beat below; disposes of the card at its end
+	# A death is a BEAT like any other, so it hands off through the overlap dial: at Flowing combat
+	# carries on while the corpse is still fading, at Step by step it waits the fade out in full.
+	await get_tree().create_timer(Vfx.handoff(VFXEffectDeath.FADE_DUR)).timeout
+
+
+# The corpse's send-off, deliberately outliving the death beat. Awaits the fade IN FULL — unlike the
+# beat above — because the card is freed at the end of it.
+func _fade_out(inst: CardInstance, corpse: CardUI) -> void:
+	await _vfx.play(VFXEvent.death(corpse))
+	_board.drop_card_view(inst, corpse)
+
+
+# Blocks until `inst` is standing still, so a cue about it draws on a stage that won't move out from
+# under it (see _transit). No-op for a unit that isn't travelling — which is every unit but the one
+# attacker mid-withdrawal, since units act strictly one at a time.
+#
+# Gates on the TWEEN finishing, deliberately, NOT on the ghost being cleaned up: the ghost is freed
+# after _apply_attack_damage returns, and the cues that need this gate run INSIDE it — waiting on
+# the cleanup would deadlock. The tween runs on the scene clock, independent of the await chain.
+func _await_settled(inst: CardInstance) -> void:
+	if inst == null:
+		return
+	var tw: Variant = _transit.get(inst)
+	if tw == null or not is_instance_valid(tw):
+		return
+	var tween := tw as Tween
+	if not tween.is_valid() or not tween.is_running():
+		return
+	await tween.finished
 
 
 # Applies a strike's damage at the moment of impact: ON_ATTACK trigger, the (shield-split)
@@ -690,17 +791,19 @@ func _apply_attack_damage(attacker: CardInstance, target: CardInstance, t_card: 
 	# (e.g. a relic blinding the attacker) run whether or not it connected. Only the readout
 	# differs.
 	await _broadcast(GameEvent.make(&"struck", attacker, target))
+	# Each cue below is AWAITED — not to its last frame, but to its handoff, so the next beat of the
+	# strike starts while it is still playing out. That await IS the pacing; there is no sleep.
 	if outcome.dodged:
 		# The target's speed slipped the blow outright — an ACTIVE evade (sidestep + "Dodge!"),
 		# distinct from the grey whiff of a miss. Both land 0 damage; the cause differs.
-		_vfx.play(VFXEvent.dodge(t_card))
+		await _vfx.play(VFXEvent.dodge(t_card))
 		# The `dodge` event fires after `struck` (a dodged unit was still attacked): origin = the
 		# attacker whose blow was slipped, destination = the dodger. Lets "when an ally dodges…"
 		# reactions run (the dodger is the subject).
 		await _broadcast(GameEvent.make(&"dodge", attacker, target))
 	elif dmg <= 0:
 		# A 0-damage strike (blocked, or <=0 Attack) reads as "Miss" rather than a number.
-		_vfx.play(VFXEvent.miss(t_card))
+		await _vfx.play(VFXEvent.miss(t_card))
 	else:
 		if outcome.crit:
 			# A critical landed: the hot "Critical!" label plays ALONGSIDE the damage numbers below
@@ -722,11 +825,11 @@ func _apply_attack_damage(attacker: CardInstance, target: CardInstance, t_card: 
 		if outcome.shield_absorbed > 0:
 			if target.current_shield <= 0:
 				Sfx.play("shield_break")
-			_vfx.play(VFXEvent.shield_hit(t_card, outcome.shield_absorbed))
+			# Awaited: the absorb's handoff is exactly the "shield took the blow FIRST" beat the old
+			# SHIELD_LEAD sleep faked, except the badge is still visibly reacting as the wound lands.
+			await _vfx.play(VFXEvent.shield_hit(t_card, outcome.shield_absorbed))
 		if outcome.health_damage > 0:
-			if outcome.shield_absorbed > 0:
-				await get_tree().create_timer(SHIELD_LEAD).timeout
-			_vfx.play(VFXEvent.health_damage(t_card, outcome.health_damage))
+			await _vfx.play(VFXEvent.health_damage(t_card, outcome.health_damage))
 		if outcome.crit:
 			# The `crit` event fires after the hit's cues are queued (hit → numbers → reaction
 			# reads in causal order): origin = the attacker who landed it, destination = the unit
@@ -781,7 +884,7 @@ func _fire_run_level(event: GameEvent) -> void:
 			continue
 		if str(grp["owner_kind"]) == "relic" and _relic_tray != null:
 			_relic_tray.glint(str(grp["owner_id"]))
-			await get_tree().create_timer(RELIC_CUE_LEAD).timeout
+			await get_tree().create_timer(Vfx.handoff(RELIC_CHIP_SPAN)).timeout
 		await _animator.show_effect_results(rres, persp, "", false)
 
 
@@ -820,10 +923,7 @@ func _broadcast(event: GameEvent, run_level: bool = true) -> void:
 		if was_alive and not holder.is_alive() and event.id != &"death":
 			await _emit_kill(holder)
 			await _broadcast(GameEvent.make(&"death", holder))
-			var ui := _board.get_card_ui(holder)
-			if ui != null:
-				await _vfx.play(VFXEvent.death(ui))
-			_board.remove_card(holder)
+			await _bury(holder)
 	if run_level:
 		await _fire_run_level(event)
 
@@ -849,10 +949,7 @@ func _resolve_event(event_id: StringName, subject: CardInstance = null) -> void:
 		if not holder.is_alive():
 			await _emit_kill(holder)
 			await _broadcast(GameEvent.make(&"death", holder))
-			var ui := _board.get_card_ui(holder)
-			if ui != null:
-				await _vfx.play(VFXEvent.death(ui))
-			_board.remove_card(holder)
+			await _bury(holder)
 	for holder: CardInstance in units:
 		if subject == null or subject == holder:
 			StatusEngine.advance(holder, event_id)
@@ -1343,25 +1440,53 @@ func _build_action_column() -> Control:
 	col.custom_minimum_size.x = 200.0 if compact else 192.0
 	col.add_theme_constant_override("separation", 10)
 
-	# Battle-speed toggle — cycles the BATTLE_SPEEDS percentages, applied live as
-	# Engine.time_scale — thin, beside the debug ✕ (which fixes the row's height).
+	# The presentation row — the three dials the player may want mid-fight, side by side: how much
+	# the animations overlap (pacing), how fast the clock runs (speed), and the full settings panel.
+	# All three share the row equally; at the column's width that lands each of them near-square,
+	# inside GlossyButton's icon-shape band, so they take the square bake rather than a squashed
+	# nine-patch (see the width-floor note above — that floor is a LANDSCAPE-bake constraint and
+	# doesn't apply to icon-shaped buttons).
+	var side := ScreenUI.BUTTON_HEIGHT_COMPACT - 16.0
 	var top_row := HBoxContainer.new()
 	top_row.add_theme_constant_override("separation", 8)
+	top_row.custom_minimum_size.y = side
 	col.add_child(top_row)
 
-	_speed_btn = ScreenUI.action_button("", _on_speed_pressed, Vector2.ZERO, 26 if compact else 20)
+	_pacing_btn = ScreenUI.action_button("", _on_pacing_pressed, Vector2(0, side))
+	_pacing_btn.expand_icon = true
+	_pacing_btn.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_pacing_btn.size_flags_horizontal = SIZE_EXPAND_FILL
+	top_row.add_child(_pacing_btn)
+	_refresh_pacing_btn()
+
+	_speed_btn = ScreenUI.action_button("", _on_speed_pressed, Vector2(0, side), 26 if compact else 20)
 	_speed_btn.size_flags_horizontal = SIZE_EXPAND_FILL
-	_speed_btn.size_flags_vertical = SIZE_EXPAND_FILL
 	top_row.add_child(_speed_btn)
 	_refresh_speed_btn()
 
-	# The ✕ normally fixes this row's height — pin the height explicitly so the layout stays
-	# identical when the ✕ is absent (non-debug launches).
-	top_row.custom_minimum_size.y = ScreenUI.BUTTON_HEIGHT_COMPACT - 16.0
+	# The panel carries the SAME pacing picker as the button beside it, so re-read it on dismiss —
+	# otherwise a change made in the panel leaves this button showing a stale chevron count.
+	var open_settings := func() -> void:
+		var overlay := SettingsOverlay.open(self)
+		if overlay != null:
+			overlay.closed.connect(_refresh_pacing_btn)
+	var gear := ScreenUI.action_button("", open_settings, Vector2(0, side))
+	gear.icon = preload("res://assets/ui/icons/settings.png")
+	gear.expand_icon = true
+	gear.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	gear.size_flags_horizontal = SIZE_EXPAND_FILL
+	UIScale.tip(gear, Loc.t("settings.title"))
+	top_row.add_child(gear)
+
+	# Debug tools get their OWN row, present only in debug builds — so a debug affordance never
+	# takes width from a control the player actually uses. Full-width: the row exists or it doesn't.
 	if DebugConfig.enabled():
 		var debug_close := ScreenUI.close_button(_handle_combat_end, true)
+		debug_close.size_flags_horizontal = SIZE_EXPAND_FILL
+		debug_close.size_flags_vertical = Control.SIZE_FILL
+		debug_close.custom_minimum_size = Vector2(0, side)
 		UIScale.tip(debug_close, "Debug: end combat")
-		top_row.add_child(debug_close)
+		col.add_child(debug_close)
 
 	# The key touch target — "Ready" — a chunky vertical button filling the rest of the column,
 	# all the way down through the hand bar's band. Green, from the glossy handoff's own "Ready"
@@ -1480,7 +1605,7 @@ func _refresh_mana() -> void:
 
 
 # Advance to the next battle speed, applying it immediately (live time_scale). Per-combat only —
-# not persisted, so the next fight starts back at 100%.
+# not persisted, so the next fight starts back at x1.
 func _on_speed_pressed() -> void:
 	var i := BATTLE_SPEEDS.find(_battle_speed)
 	_battle_speed = BATTLE_SPEEDS[(i + 1) % BATTLE_SPEEDS.size()]
@@ -1488,9 +1613,38 @@ func _on_speed_pressed() -> void:
 	_refresh_speed_btn()
 
 
+# Advance to the next pacing preset. UNLIKE speed, this IS the player's persisted setting — the same
+# value the settings panel writes (Vfx.set_overlap) — because it's a standing preference for how
+# combat should read, not a per-fight scrub. The two dials are deliberately separate: speed changes
+# how fast the clock runs, pacing changes how much the animations overlap.
+func _on_pacing_pressed() -> void:
+	Vfx.set_overlap(float(Vfx.PACING[(_pacing_index() + 1) % Vfx.PACING.size()]["overlap"]))
+	_refresh_pacing_btn()
+
+
+func _pacing_index() -> int:
+	var key := Vfx.pacing_key()
+	for i in Vfx.PACING.size():
+		if str(Vfx.PACING[i]["key"]) == key:
+			return i
+	return 0
+
+
+func _refresh_pacing_btn() -> void:
+	if _pacing_btn == null:
+		return
+	var i := _pacing_index()
+	_pacing_btn.icon = PACE_ICONS[i]
+	UIScale.tip(_pacing_btn, "%s: %s" % [Loc.t("settings.pacing"),
+			Loc.t("settings.pacing." + str(Vfx.PACING[i]["key"]))])
+
+
 func _refresh_speed_btn() -> void:
 	if _speed_btn:
-		_speed_btn.text = "%d%%" % roundi(_battle_speed * 100.0)
+		# "x1" / "x1.5" / "x2" / "x0.5" — one decimal, with a bare ".0" trimmed off so the whole
+		# multipliers stay short in a button this narrow.
+		_speed_btn.text = "x" + String.num(_battle_speed, 1).trim_suffix(".0")
+		UIScale.tip(_speed_btn, Loc.t("settings.speed"))
 
 
 func _refresh_done_btn() -> void:

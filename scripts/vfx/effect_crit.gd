@@ -20,6 +20,12 @@ const CRIT_COLOR := Color(1.0, 0.42, 0.24)   # hot red-orange — escalation, di
 const SEV_FLOOR := 0.35                      # minimum intensity: every crit reads as one
 
 
+# Span: the stagger's off-balance hang plus the label slam. The elastic recovery (0.85) and
+# the headline's long rise are deliberately TAIL — a crit keeps ringing while combat moves on.
+func _init() -> void:
+	span = 0.40
+
+
 func play() -> void:
 	var card := _event.target
 	if card == null or not is_instance_valid(card):
@@ -56,7 +62,7 @@ func _severity(card: Control) -> float:
 # severity. Hit direction follows board sides, same convention as the dodge sidestep:
 # player units (owner 0) are struck from the right, enemies from the left.
 func _stagger(card: Control, sev: float) -> void:
-	var origin := card.position
+	var origin := Vfx.begin_displace(card)   # one mover per card — see Vfx's displacement section
 	var prev_pivot := card.pivot_offset
 	card.pivot_offset = Vector2(card.size.x * 0.5, card.size.y)   # rock about the base
 	var dir := -1.0 if _owner_of(card) == 0 else 1.0
@@ -74,6 +80,7 @@ func _stagger(card: Control, sev: float) -> void:
 	tw.chain().tween_callback(func() -> void:
 		if is_instance_valid(card):
 			card.pivot_offset = prev_pivot)
+	Vfx.hold_displace(card, tw)
 
 
 # The owning side of the board card, read off its CardInstance; defaults to player (0) so a

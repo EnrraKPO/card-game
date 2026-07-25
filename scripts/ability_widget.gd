@@ -62,6 +62,46 @@ func _is_armed() -> bool:
 	return ab != null and holder != null and holder.autocast_ability == ab.id
 
 
+# ── Usability: DERIVED, never pushed ───────────────────────────────────────────────
+# "Can this ability be cast RIGHT NOW?" is the widget's OWN question, answered by consulting
+# live facts — its holder's tap state and the player's mana (CombatContext.ability_usable, the
+# same rule the Inspect Abilities glow and the cast gate use). Nothing tells the widget it went
+# unusable: the tray used to freeze the verdict at build time and push draggable/grey once, so a
+# widget went stale the moment mana was spent elsewhere or its holder attacked. Now it re-derives
+# on every cue, on reparent, and on the inherited presentation poll — a missed cue self-corrects
+# within a beat instead of lying until the whole view is rebuilt.
+#
+# An ENEMY unit's roster is informational (set_noninteractive owns its own dim), so it derives
+# nothing here — it is never castable and must not wear the spent grey.
+func is_usable() -> bool:
+	if _noninteractive:
+		return false
+	var ctx := CombatContext.current
+	return ctx != null and ctx.ability_usable(_holder(), _ability())
+
+
+# The cast gate (see CardUI.castable_now) reads the SAME derivation that draws the grey, so the
+# look and the behavior cannot disagree.
+func castable_now() -> bool:
+	return is_usable()
+
+
+func derive_presentation() -> void:
+	super()
+	_refresh_brackets()
+	# Eligibility, the same marker CardUI's own appliers use (`is_generated` = a real TRAY token):
+	# a tooltip preview widget and a drag-ghost view are copies that own their tint, so they derive
+	# no usability — only the live tray offer does. Enemy rosters are excluded by is_usable itself.
+	if not is_generated or _noninteractive or CombatContext.current == null:
+		return
+	# Precedence matches a board unit's (super applies selection, the spent grey lands over it):
+	# an unusable widget can't be aimed in the first place, so the two never actually collide.
+	var usable := is_usable()
+	draggable = usable
+	if not usable:
+		set_exhausted(true)
+
+
 # ── Procedural frame + brackets ────────────────────────────────────────────────────
 
 func _build_ability_chrome() -> void:

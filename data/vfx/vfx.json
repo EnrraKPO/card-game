@@ -2393,6 +2393,7 @@
 		"category": "economy",
 		"behavior": "burst",
 		"params": {
+			"overlap": 0,
 			"color": "ffe14d"
 		},
 		"placeholder": true,
@@ -2407,6 +2408,7 @@
 		"category": "economy",
 		"behavior": "ring",
 		"params": {
+			"overlap": 0,
 			"color": "ccbc72",
 			"scale": 1.4
 		},
@@ -2542,6 +2544,7 @@
 		"category": "meta",
 		"behavior": "sparkle",
 		"params": {
+			"overlap": 0,
 			"color": "b18cff",
 			"scale": 0.8
 		},
@@ -2587,6 +2590,7 @@
 		"category": "meta",
 		"behavior": "pulse",
 		"params": {
+			"overlap": 0,
 			"color": "fff3b0",
 			"duration": 0.9,
 			"scale": 2
@@ -2619,6 +2623,7 @@
 		"category": "screen",
 		"behavior": "pulse",
 		"params": {
+			"overlap": 0,
 			"color": "ffd94d",
 			"duration": 1,
 			"scale": 2.5
@@ -2634,6 +2639,7 @@
 		"category": "screen",
 		"behavior": "dissolve",
 		"params": {
+			"overlap": 0,
 			"color": "1a1626",
 			"duration": 1.2
 		},

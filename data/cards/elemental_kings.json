@@ -336,11 +336,10 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Faceted black obsidian sovereign looking right, jagged mineral crown, scepter of polished dark crystal, shield of carved volcanic glass with glowing violet veins, heavy armor of matte charcoal rock, royal cloak of deep purple velvet, standing on a circular flagstone dais, luminous cyan energy seeping from joints, painterly fantasy style, bold outlines",
+				"prompt": "Broad-shouldered bearded monarch in three-quarter profile facing right, skin like polished dark volcanic glass threaded with glowing violet seams, jagged mineral spike diadem, faceted slate mantle over plated armor, raising a long shard-tipped staff crowned by a levitating dark polyhedron, cavern hall of lilac-lit pillars, faceted low-poly forms, bold outlines, painterly fantasy illustration, ochre-and-violet palette",
 				"ref": {
-					"source": "upload",
+					"source": "game",
 					"path": "snap_king.png",
-					"name": "snap_king.png",
 					"mode": "img2img",
 					"denoise": 0.6
 				},

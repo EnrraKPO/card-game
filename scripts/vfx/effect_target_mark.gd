@@ -9,6 +9,12 @@ extends VFXEffect
 const MARK_DUR := 0.32
 
 
+# Span: the reticle's snap-in (0.12). A POINTER cue: it has said "look at THIS card" the
+# moment it lands — the bright hold and fade are tail the hit plays over.
+func _init() -> void:
+	span = 0.14
+
+
 func play() -> void:
 	var card := _event.target
 	if card == null or not is_instance_valid(card):

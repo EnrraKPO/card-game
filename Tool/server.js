@@ -469,6 +469,8 @@ const GAME_ATTRS_DEFAULT = {
   'shop.magic_mineral.price': 25,
   // Input feel (touch gesture windows) — see GameAttributes' "ux." block.
   'ux.hold.duration': 0.4, 'ux.hold.tolerance': 44,
+  // Animation feel — the combat sequencer's overlap dial; see GameAttributes' "vfx." block.
+  'vfx.overlap': 0.5,
 };
 function getGameAttrs() {
   const d = readJson(GAME_ATTRS_PATH, {}) || {};
