@@ -49,10 +49,55 @@ func bump(field: String, amount: int = 1) -> void:
 	override = def
 
 
-# Attaches a charm (once — no duplicate of the same charm).
-func add_charm(charm_id: String) -> void:
-	if charm_id not in charms:
-		charms.append(charm_id)
+# ── Charm capacity ────────────────────────────────────────────────────────────────
+# A card bears ONE CHARM PER COMPONENT. A plain Pawn is one component and holds one charm; a
+# forged two-piece card holds two, and the widest compositions the forge allows (two elements
+# plus two pieces) hold four. So enchanting capacity is earned the same way everything else on a
+# card is — by merging — and the charm rail can't be dumped onto whichever card was picked first.
+#
+# The rule lives here rather than in CharmData.can_attach_to because capacity is a fact about the
+# BEARER's current load, not about the charm: can_attach_to answers "is this charm legal on this
+# kind of card" from CardData alone, and has no idea what is already attached.
+func card_data() -> CardData:
+	if not override.is_empty():
+		return CardData.build_from_dict(override)
+	return CardData.get_card(id)
+
+
+# The rule itself takes the card's definition rather than reading it back, so a caller that
+# ALREADY holds the CardData (the forge asks this of every deck entry on every hover) doesn't
+# rebuild an overridden card's definition from its dict just to count its components.
+static func charm_capacity_of(data: CardData) -> int:
+	return data.component_count() if data != null else 0
+
+
+static func charm_room_of(data: CardData, current: Array) -> int:
+	return maxi(0, charm_capacity_of(data) - current.size())
+
+
+static func can_bear_charm_on(data: CardData, current: Array, charm_id: String) -> bool:
+	return charm_id not in current and charm_room_of(data, current) > 0
+
+
+func charm_capacity() -> int:
+	return charm_capacity_of(card_data())
+
+
+func charm_room() -> int:
+	return charm_room_of(card_data(), charms)
+
+
+func can_bear_charm(charm_id: String) -> bool:
+	return can_bear_charm_on(card_data(), charms, charm_id)
+
+
+# Attaches a charm (once — no duplicate of the same charm, and never past capacity). Returns
+# whether it went on, so a caller that skipped the check still can't silently overfill a card.
+func add_charm(charm_id: String) -> bool:
+	if not can_bear_charm(charm_id):
+		return false
+	charms.append(charm_id)
+	return true
 
 
 # Merges a charm's definition-patch (stat bumps + extra effects) into a def dict, so the

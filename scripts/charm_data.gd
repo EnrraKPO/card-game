@@ -99,23 +99,33 @@ func badge(px: float, count: int = 1) -> Control:
 	chip.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	chip.size_flags_vertical   = Control.SIZE_SHRINK_CENTER
 	chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# The CONTAINER is always drawn — the charm's colour behind a dark rim — exactly as a status pip
+	# and a composition chip are. On a card the badge sits over painted art, and a bare cut-out
+	# icon had nothing to separate it from whatever was behind it; the disc gives it a consistent
+	# silhouette, a readable backdrop, and makes a charm read as the same KIND of thing as the
+	# status and component badges it shares the card with.
+	var style := StyleBoxFlat.new()
+	style.bg_color = color
+	style.set_corner_radius_all(int(px * 0.5))   # circular — reads apart from the square piece chips
+	style.set_border_width_all(maxi(2, int(px * 0.09)))
+	style.border_color = Color(0.04, 0.04, 0.06, 0.9)
+	chip.add_theme_stylebox_override("panel", style)
 	if icon != null:
-		# The art carries its own frame — no coloured disc behind it, nothing to letterbox against.
-		chip.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+		# Inset so the disc reads as a rim around the art, never a hairline behind it (the same
+		# 3-in-36 proportion the composition chips use).
+		var inset := maxf(2.0, px * 0.083)
 		var tex := TextureRect.new()
 		tex.texture = icon
 		tex.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		tex.offset_left   = inset
+		tex.offset_top    = inset
+		tex.offset_right  = -inset
+		tex.offset_bottom = -inset
 		tex.expand_mode  = TextureRect.EXPAND_IGNORE_SIZE
 		tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		chip.add_child(tex)
 	else:
-		var style := StyleBoxFlat.new()
-		style.bg_color = color
-		style.set_corner_radius_all(int(px * 0.5))   # circular — reads apart from the square piece chips
-		style.set_border_width_all(maxi(2, int(px * 0.09)))
-		style.border_color = Color(0.04, 0.04, 0.06, 0.9)
-		chip.add_theme_stylebox_override("panel", style)
 		chip.add_child(_centred_label(letter, maxi(int(px * 0.55), 14)))
 	if count > 1:
 		# Over the art, the count needs its own dark backing to stay legible on any painting.

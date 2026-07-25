@@ -78,6 +78,14 @@ static func is_component_id(component_id: String) -> bool:
 	return ELEMENT_IDS.has(component_id) or CHESS_PIECE_IDS.has(component_id)
 
 
+# How many components this card is made of — the size of its composition, elements and chess
+# pieces together. A base card is 1; combining raises it, up to the 2-elements-plus-2-pieces
+# ceiling can_combine enforces. Read by rarity (a wider card is rarer) and by charm capacity
+# (a card bears one charm per component — see DeckCard.charm_capacity).
+func component_count() -> int:
+	return elements.size() + chess_pieces.size()
+
+
 # A building is any unit carrying a rook in its composition. Buildings are
 # defensive structures: once placed on the board they are rooted and cannot be
 # repositioned (enforced in CardUI._get_drag_data and CombatBoard.do_place_unit).
@@ -367,7 +375,7 @@ static func offer_weight(card: CardData) -> float:
 		rarity *= float(piece_rarity.get(piece, 5.0))
 	# Extra penalty scaling with the number of components: multi-piece cards fall off faster
 	# than the per-component product alone. Counts beyond the table fall back to the count itself.
-	var components := card.elements.size() + card.chess_pieces.size()
+	var components := card.component_count()
 	rarity *= float(count_mult.get(str(components), float(components)))
 
 	return 1.0 / rarity if rarity > 0.0 else 0.0

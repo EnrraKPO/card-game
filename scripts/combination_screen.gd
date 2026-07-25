@@ -708,16 +708,29 @@ func _evaluate_target(payload: Dictionary, target_idx: int) -> Dictionary:
 			return {"ok": false, "status": Loc.t("combine.status_cant_bear", {"card": data.display_name, "charm": charm.display_name}), "color": BAD_COLOR}
 		if str(payload.id) in (tgt.card as DeckCard).charms:
 			return {"ok": false, "status": Loc.t("combine.status_already", {"card": data.display_name, "charm": charm.display_name}), "color": BAD_COLOR}
+		# One charm per component: a card that has filled its slots says so, and says how to earn
+		# more — merging is what widens a composition (see DeckCard.charm_capacity).
+		if (tgt.card as DeckCard).charm_room() <= 0:
+			return {"ok": false, "status": Loc.t("combine.status_charms_full",
+				{"card": data.display_name, "max": (tgt.card as DeckCard).charm_capacity()}),
+				"color": BAD_COLOR}
 		var preview_dc := (tgt.card as DeckCard).clone()
 		preview_dc.add_charm(str(payload.id))
 		return {"ok": true, "status": "", "color": OK_COLOR, "preview": preview_dc.make_instance()}
 
 
-# Union of both parents' charms still valid on the combined result.
+# Union of both parents' charms still valid on the combined result, capped at what the result can
+# bear. The arithmetic says a merge can't overflow — the result's components are the sum of its
+# parents', and each parent was itself within capacity — but a card charmed before the capacity
+# rule existed can carry more than it should, and inheritance must not launder that into the new
+# card. Parent order wins the tie, so the first-picked card's enchantments carry over first.
 func _merged_parent_charms(parents: Array, result_card: CardData) -> Array:
 	var out: Array = []
+	var room := result_card.component_count()
 	for dc: DeckCard in parents:
 		for charm_id: String in dc.charms:
+			if out.size() >= room:
+				return out
 			var charm := CharmData.get_charm(charm_id)
 			if charm != null and charm.can_attach_to(result_card) and charm_id not in out:
 				out.append(charm_id)
@@ -737,7 +750,10 @@ func _can_pair(payload: Dictionary, idx: int) -> bool:
 	var charm := CharmData.get_charm(str(payload.get("id", "")))
 	if charm == null:
 		return false
-	return charm.can_attach_to(data) and str(payload.get("id", "")) not in (_entries[idx].card as DeckCard).charms
+	# Capacity grays a full card exactly as "already wearing this one" does — both are structural
+	# facts about the pairing, which is what this gate is for.
+	return charm.can_attach_to(data) and DeckCard.can_bear_charm_on(
+		data, (_entries[idx].card as DeckCard).charms, str(payload.get("id", "")))
 
 
 # ── Selection (tap flow) ────────────────────────────────────────────────────────
@@ -1502,7 +1518,11 @@ func _do_combine(src_idx: int, tgt_idx: int, result_dc: DeckCard) -> void:
 func _do_enchant(charm_id: String, tgt_idx: int) -> void:
 	var dc: DeckCard = _entries[tgt_idx].card
 	var tgt_deck: int = int(_entries[tgt_idx].deck_idx)
-	dc.add_charm(charm_id)
+	# Spend the charm only if it actually went on. The verdict already refused a full card, so this
+	# can't normally fail — but consuming an inventory charm that never attached is the one way this
+	# flow could destroy a player's item, and the check costs nothing.
+	if not dc.add_charm(charm_id):
+		return
 	GameData.current_run.charms.erase(charm_id)
 	GameData.save_run()
 	Sfx.combined()

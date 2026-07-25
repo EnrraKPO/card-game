@@ -95,10 +95,11 @@ func _ready() -> void:
 	if "charmed" in args and GameData.current_run != null:
 		var dk: Array = GameData.current_run.deck
 		if dk.size() > 2:
+			# One charm each: a base card is ONE component, so it bears exactly one
+			# (see DeckCard.charm_capacity).
 			(dk[0] as DeckCard).add_charm("sturdy")
-			(dk[0] as DeckCard).add_charm("vampiric")
-			(dk[1] as DeckCard).add_charm("thorned")
-			(dk[2] as DeckCard).add_charm("rallying")
+			(dk[1] as DeckCard).add_charm("vampiric")
+			(dk[2] as DeckCard).add_charm("thorned")
 	var sv := SubViewport.new()
 	sv.size = RES
 	sv.render_target_update_mode = SubViewport.UPDATE_ALWAYS

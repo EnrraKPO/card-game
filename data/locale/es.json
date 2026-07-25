@@ -309,6 +309,7 @@
   "combine.pick_target": "Arrastra o elige otra carta para fusionar",
   "combine.status_already": "{card} ya tiene el <charm>.",
   "combine.status_cant_bear": "{card} no puede soportar el amuleto {charm}.",
+  "combine.status_charms_full": "{card} ya está completamente encantado ({max} amuletos). Fusiónalo para hacer sitio.",
   "combine.status_enchant": "Encanta {card} con {charm}",
   "combine.status_limit": "Supera el límite de combinación (2 elementos + 2 piezas de ajedrez)",
   "combine.status_need_mineral": "Requiere {cost} de Mineral — tienes {have}",

@@ -1252,6 +1252,7 @@
   "combine.pick_target": "Drag or pick another card to merge",
   "combine.status_already": "{card} already bears {charm}.",
   "combine.status_cant_bear": "{card} can't bear the {charm} charm.",
+  "combine.status_charms_full": "{card} is fully enchanted ({max} charms). Merge it to make room.",
   "combine.status_enchant": "Enchant {card} with {charm}",
   "combine.status_limit": "Exceeds the combination limit (2 elements + 2 chess pieces)",
   "combine.status_need_mineral": "Needs {cost} Mineral — you have {have}",
