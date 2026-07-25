@@ -966,7 +966,7 @@
       "effects": []
     },
     "at": "2026-07-08T05:03:56.598Z",
-    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
+    "fileHash": "64361400af82123dde2a992197e0aa0c5c61d2af"
   },
   "card/air_darkness_king": {
     "file": "elemental_kings.json",
@@ -990,7 +990,7 @@
       "effects": []
     },
     "at": "2026-07-08T05:16:43.756Z",
-    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
+    "fileHash": "64361400af82123dde2a992197e0aa0c5c61d2af"
   },
   "card/air_darkness_pawn": {
     "file": "air_darkness_units.json",
@@ -4303,7 +4303,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:16:53.171Z",
-    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
+    "fileHash": "64361400af82123dde2a992197e0aa0c5c61d2af"
   },
   "card/air_earth_king": {
     "file": "elemental_kings.json",
@@ -4327,7 +4327,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:16:53.180Z",
-    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
+    "fileHash": "64361400af82123dde2a992197e0aa0c5c61d2af"
   },
   "card/air_light_king": {
     "file": "elemental_kings.json",
@@ -4351,7 +4351,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:17:12.373Z",
-    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
+    "fileHash": "64361400af82123dde2a992197e0aa0c5c61d2af"
   },
   "card/air_water_king": {
     "file": "elemental_kings.json",
@@ -4375,7 +4375,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:17:12.377Z",
-    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
+    "fileHash": "64361400af82123dde2a992197e0aa0c5c61d2af"
   },
   "card/darkness_darkness_king": {
     "file": "elemental_kings.json",
@@ -4399,7 +4399,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:17:25.803Z",
-    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
+    "fileHash": "64361400af82123dde2a992197e0aa0c5c61d2af"
   },
   "card/darkness_earth_king": {
     "file": "elemental_kings.json",
@@ -4423,7 +4423,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:17:25.807Z",
-    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
+    "fileHash": "64361400af82123dde2a992197e0aa0c5c61d2af"
   },
   "card/darkness_fire_king": {
     "file": "elemental_kings.json",
@@ -4447,7 +4447,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:17:25.811Z",
-    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
+    "fileHash": "64361400af82123dde2a992197e0aa0c5c61d2af"
   },
   "card/darkness_light_king": {
     "file": "elemental_kings.json",
@@ -4471,7 +4471,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:17:46.114Z",
-    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
+    "fileHash": "64361400af82123dde2a992197e0aa0c5c61d2af"
   },
   "card/darkness_water_king": {
     "file": "elemental_kings.json",
@@ -4504,7 +4504,7 @@
       ]
     },
     "at": "2026-07-12T09:17:46.118Z",
-    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
+    "fileHash": "64361400af82123dde2a992197e0aa0c5c61d2af"
   },
   "card/earth_earth_king": {
     "file": "elemental_kings.json",
@@ -4528,7 +4528,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:17:46.122Z",
-    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
+    "fileHash": "64361400af82123dde2a992197e0aa0c5c61d2af"
   },
   "card/earth_fire_king": {
     "file": "elemental_kings.json",
@@ -4552,7 +4552,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:18:04.630Z",
-    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
+    "fileHash": "64361400af82123dde2a992197e0aa0c5c61d2af"
   },
   "card/earth_light_king": {
     "file": "elemental_kings.json",
@@ -4576,7 +4576,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:18:04.634Z",
-    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
+    "fileHash": "64361400af82123dde2a992197e0aa0c5c61d2af"
   },
   "card/earth_water_king": {
     "file": "elemental_kings.json",
@@ -4600,7 +4600,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:18:04.638Z",
-    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
+    "fileHash": "64361400af82123dde2a992197e0aa0c5c61d2af"
   },
   "card/fire_fire_king": {
     "file": "elemental_kings.json",
@@ -4624,7 +4624,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:18:20.606Z",
-    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
+    "fileHash": "64361400af82123dde2a992197e0aa0c5c61d2af"
   },
   "card/fire_light_king": {
     "file": "elemental_kings.json",
@@ -4648,7 +4648,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:18:20.611Z",
-    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
+    "fileHash": "64361400af82123dde2a992197e0aa0c5c61d2af"
   },
   "card/fire_water_king": {
     "file": "elemental_kings.json",
@@ -4672,7 +4672,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:18:20.615Z",
-    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
+    "fileHash": "64361400af82123dde2a992197e0aa0c5c61d2af"
   },
   "card/light_light_king": {
     "file": "elemental_kings.json",
@@ -4696,7 +4696,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:18:37.021Z",
-    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
+    "fileHash": "64361400af82123dde2a992197e0aa0c5c61d2af"
   },
   "card/light_water_king": {
     "file": "elemental_kings.json",
@@ -4720,7 +4720,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:18:37.025Z",
-    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
+    "fileHash": "64361400af82123dde2a992197e0aa0c5c61d2af"
   },
   "card/water_water_king": {
     "file": "elemental_kings.json",
@@ -4744,7 +4744,7 @@
       "effects": []
     },
     "at": "2026-07-12T09:18:37.029Z",
-    "fileHash": "9e537ca15639e9a50983081c8832b9fb7365880b"
+    "fileHash": "64361400af82123dde2a992197e0aa0c5c61d2af"
   },
   "card/fire_pawn": {
     "file": "fire_units.json",
@@ -4968,7 +4968,7 @@
     "original": null,
     "added": true,
     "at": "2026-07-13T20:28:34.333Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "status/swift_barrier": {
     "file": "swift_barrier.json",
@@ -4996,21 +4996,21 @@
     "original": null,
     "added": true,
     "at": "2026-07-13T20:33:08.245Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/tide_charge": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T20:33:08.248Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/radiant_charge": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-13T20:33:08.250Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "status/stalwart_barrier": {
     "file": "stalwart_barrier.json",
@@ -5024,7 +5024,7 @@
     "original": null,
     "added": true,
     "at": "2026-07-13T20:34:30.525Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "status/umbral_barrier": {
     "file": "umbral_barrier.json",
@@ -5038,7 +5038,7 @@
     "original": null,
     "added": true,
     "at": "2026-07-13T20:35:48.234Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/knight_material": {
     "file": "abilities.json",
@@ -5075,7 +5075,7 @@
       ]
     },
     "at": "2026-07-13T22:32:15.675Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/pawn_material": {
     "file": "abilities.json",
@@ -5112,7 +5112,7 @@
       ]
     },
     "at": "2026-07-13T22:35:51.950Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/heal": {
     "file": "abilities.json",
@@ -5135,7 +5135,7 @@
       ]
     },
     "at": "2026-07-13T22:44:26.528Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "relic/contagion_stone": {
     "file": "relics.json",
@@ -5336,7 +5336,7 @@
     },
     "deleted": true,
     "at": "2026-07-13T23:39:11.499Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/castling": {
     "file": "abilities.json",
@@ -5373,7 +5373,7 @@
       ]
     },
     "at": "2026-07-14T00:02:04.308Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "card/queen": {
     "file": "materials.json",
@@ -5545,7 +5545,7 @@
     "original": null,
     "added": true,
     "at": "2026-07-16T03:53:21.012Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "status/fire_blessing": {
     "file": "fire_blessing.json",
@@ -5573,21 +5573,21 @@
     "original": null,
     "added": true,
     "at": "2026-07-16T04:46:09.273Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/air_bless": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-16T04:46:09.278Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/water_bless": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-16T04:46:09.282Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "status/light_blessing": {
     "file": "light_blessing.json",
@@ -5601,7 +5601,7 @@
     "original": null,
     "added": true,
     "at": "2026-07-17T19:16:56.407Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "status/darkness_blessing": {
     "file": "darkness_blessing.json",
@@ -5615,7 +5615,7 @@
     "original": null,
     "added": true,
     "at": "2026-07-17T19:17:40.109Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "sound/ability_cast": {
     "file": "sounds.json",
@@ -5876,7 +5876,7 @@
       ]
     },
     "at": "2026-07-20T04:35:13.837Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/queen_material": {
     "file": "abilities.json",
@@ -5913,7 +5913,7 @@
       ]
     },
     "at": "2026-07-20T04:35:20.214Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "card/earth": {
     "file": "materials.json",
@@ -6312,7 +6312,7 @@
     "original": null,
     "added": true,
     "at": "2026-07-20T21:16:26.846Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "card/knight_knight": {
     "file": "chess_combined.json",
@@ -6427,168 +6427,168 @@
     "original": null,
     "added": true,
     "at": "2026-07-20T21:57:38.729Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/water_pawn_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:31:40.231Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/fire_pawn_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:31:40.237Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/darkness_pawn_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:31:40.242Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/earth_pawn_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:31:40.248Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/air_pawn_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:31:40.251Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/light_bishop_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:33:01.977Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/water_bishop_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:33:01.983Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/fire_bishop_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:33:01.987Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/darkness_bishop_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:33:01.992Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/earth_bishop_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:33:01.996Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/air_bishop_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:33:02.000Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/light_queen_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:34:23.946Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/water_queen_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:34:23.951Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/fire_queen_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:34:23.956Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/darkness_queen_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:34:23.962Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/earth_queen_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:34:23.967Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/air_queen_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:34:23.974Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/light_knight_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:35:57.174Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/water_knight_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:35:57.180Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/fire_knight_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:35:57.185Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/darkness_knight_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:35:57.191Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/earth_knight_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:35:57.196Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/air_knight_training": {
     "file": "abilities.json",
     "original": null,
     "added": true,
     "at": "2026-07-20T22:35:57.201Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "card/air_pawn_pawn": {
     "file": "air_units.json",
@@ -6864,7 +6864,7 @@
       ]
     },
     "at": "2026-07-23T01:53:44.780Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/air_bishop_material": {
     "file": "abilities.json",
@@ -6936,7 +6936,7 @@
       ]
     },
     "at": "2026-07-23T01:53:59.354Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/air_knight_material": {
     "file": "abilities.json",
@@ -7008,7 +7008,7 @@
       ]
     },
     "at": "2026-07-23T01:55:03.785Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/air_knight_training_pure": {
     "file": "abilities.json",
@@ -7074,7 +7074,7 @@
       ]
     },
     "at": "2026-07-23T01:55:23.990Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/air_pawn_material": {
     "file": "abilities.json",
@@ -7146,7 +7146,7 @@
       ]
     },
     "at": "2026-07-23T01:55:29.615Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/air_pawn_training_pure": {
     "file": "abilities.json",
@@ -7212,7 +7212,7 @@
       ]
     },
     "at": "2026-07-23T02:52:16.837Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/air_queen_material": {
     "file": "abilities.json",
@@ -7284,7 +7284,7 @@
       ]
     },
     "at": "2026-07-23T02:52:20.429Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/darkness_bishop_material": {
     "file": "abilities.json",
@@ -7356,7 +7356,7 @@
       ]
     },
     "at": "2026-07-23T02:52:57.548Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/darkness_bishop_training_pure": {
     "file": "abilities.json",
@@ -7422,7 +7422,7 @@
       ]
     },
     "at": "2026-07-23T02:53:08.673Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/air_queen_training_pure": {
     "file": "abilities.json",
@@ -7488,7 +7488,7 @@
       ]
     },
     "at": "2026-07-23T02:53:17.128Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/darkness_knight_material": {
     "file": "abilities.json",
@@ -7560,7 +7560,7 @@
       ]
     },
     "at": "2026-07-23T02:54:16.896Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/darkness_knight_training_pure": {
     "file": "abilities.json",
@@ -7626,7 +7626,7 @@
       ]
     },
     "at": "2026-07-23T02:54:24.274Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/darkness_pawn_material": {
     "file": "abilities.json",
@@ -7698,7 +7698,7 @@
       ]
     },
     "at": "2026-07-23T02:54:30.750Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/darkness_pawn_training_pure": {
     "file": "abilities.json",
@@ -7764,7 +7764,7 @@
       ]
     },
     "at": "2026-07-23T02:54:41.768Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/darkness_queen_material": {
     "file": "abilities.json",
@@ -7836,7 +7836,7 @@
       ]
     },
     "at": "2026-07-23T02:54:47.428Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/darkness_queen_training_pure": {
     "file": "abilities.json",
@@ -7902,7 +7902,7 @@
       ]
     },
     "at": "2026-07-23T02:54:56.556Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/earth_bishop_material": {
     "file": "abilities.json",
@@ -7974,7 +7974,7 @@
       ]
     },
     "at": "2026-07-23T02:55:01.314Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/earth_bishop_training_pure": {
     "file": "abilities.json",
@@ -8040,7 +8040,7 @@
       ]
     },
     "at": "2026-07-23T02:55:09.776Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/earth_knight_material": {
     "file": "abilities.json",
@@ -8112,7 +8112,7 @@
       ]
     },
     "at": "2026-07-23T02:55:17.881Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/earth_knight_training_pure": {
     "file": "abilities.json",
@@ -8178,7 +8178,7 @@
       ]
     },
     "at": "2026-07-23T02:55:32.026Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/earth_pawn_material": {
     "file": "abilities.json",
@@ -8250,7 +8250,7 @@
       ]
     },
     "at": "2026-07-23T02:55:35.743Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/earth_pawn_training_pure": {
     "file": "abilities.json",
@@ -8316,7 +8316,7 @@
       ]
     },
     "at": "2026-07-23T02:55:56.036Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/earth_queen_material": {
     "file": "abilities.json",
@@ -8388,7 +8388,7 @@
       ]
     },
     "at": "2026-07-23T02:55:59.060Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/fire_bishop_material": {
     "file": "abilities.json",
@@ -8460,7 +8460,7 @@
       ]
     },
     "at": "2026-07-23T02:56:14.471Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/fire_bishop_training_pure": {
     "file": "abilities.json",
@@ -8526,7 +8526,7 @@
       ]
     },
     "at": "2026-07-23T02:56:22.398Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/fire_knight_material": {
     "file": "abilities.json",
@@ -8598,7 +8598,7 @@
       ]
     },
     "at": "2026-07-23T02:56:29.484Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/fire_knight_training_pure": {
     "file": "abilities.json",
@@ -8664,7 +8664,7 @@
       ]
     },
     "at": "2026-07-23T02:56:37.296Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/fire_pawn_material": {
     "file": "abilities.json",
@@ -8736,7 +8736,7 @@
       ]
     },
     "at": "2026-07-23T02:56:44.973Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/fire_pawn_training_pure": {
     "file": "abilities.json",
@@ -8802,7 +8802,7 @@
       ]
     },
     "at": "2026-07-23T02:56:59.804Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/fire_queen_material": {
     "file": "abilities.json",
@@ -8874,7 +8874,7 @@
       ]
     },
     "at": "2026-07-23T02:57:04.332Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/fire_queen_training_pure": {
     "file": "abilities.json",
@@ -8940,7 +8940,7 @@
       ]
     },
     "at": "2026-07-23T02:57:11.547Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/light_bishop_material": {
     "file": "abilities.json",
@@ -9012,7 +9012,7 @@
       ]
     },
     "at": "2026-07-23T02:57:24.162Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/light_bishop_training_pure": {
     "file": "abilities.json",
@@ -9078,7 +9078,7 @@
       ]
     },
     "at": "2026-07-23T02:57:31.740Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/light_knight_material": {
     "file": "abilities.json",
@@ -9150,7 +9150,7 @@
       ]
     },
     "at": "2026-07-23T02:57:41.268Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/light_knight_training_pure": {
     "file": "abilities.json",
@@ -9216,7 +9216,7 @@
       ]
     },
     "at": "2026-07-23T02:57:47.285Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/light_pawn_material": {
     "file": "abilities.json",
@@ -9288,7 +9288,7 @@
       ]
     },
     "at": "2026-07-23T02:57:52.329Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/light_pawn_training_pure": {
     "file": "abilities.json",
@@ -9354,7 +9354,7 @@
       ]
     },
     "at": "2026-07-23T02:58:05.089Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/light_queen_material": {
     "file": "abilities.json",
@@ -9426,7 +9426,7 @@
       ]
     },
     "at": "2026-07-23T02:58:09.642Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/light_queen_training_pure": {
     "file": "abilities.json",
@@ -9492,7 +9492,7 @@
       ]
     },
     "at": "2026-07-23T02:58:17.003Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/water_bishop_material": {
     "file": "abilities.json",
@@ -9564,7 +9564,7 @@
       ]
     },
     "at": "2026-07-23T02:58:46.004Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/water_bishop_training_pure": {
     "file": "abilities.json",
@@ -9630,7 +9630,7 @@
       ]
     },
     "at": "2026-07-23T02:58:54.848Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/water_knight_material": {
     "file": "abilities.json",
@@ -9702,7 +9702,7 @@
       ]
     },
     "at": "2026-07-23T02:59:03.734Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/water_knight_training_pure": {
     "file": "abilities.json",
@@ -9768,7 +9768,7 @@
       ]
     },
     "at": "2026-07-23T02:59:10.341Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/water_pawn_material": {
     "file": "abilities.json",
@@ -9840,7 +9840,7 @@
       ]
     },
     "at": "2026-07-23T02:59:15.159Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/water_pawn_training_pure": {
     "file": "abilities.json",
@@ -9906,7 +9906,7 @@
       ]
     },
     "at": "2026-07-23T02:59:28.865Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/water_queen_material": {
     "file": "abilities.json",
@@ -9978,7 +9978,7 @@
       ]
     },
     "at": "2026-07-23T02:59:34.958Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "ability/water_queen_training_pure": {
     "file": "abilities.json",
@@ -10044,7 +10044,7 @@
       ]
     },
     "at": "2026-07-23T02:59:41.389Z",
-    "fileHash": "509cba53c117979c9bcaef030360a8b8fbd62cc0"
+    "fileHash": "9bbcd26353cb539a3965a71c875607c4132ca15d"
   },
   "card/darkness_water": {
     "file": "combined.json",

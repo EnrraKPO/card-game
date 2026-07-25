@@ -447,7 +447,7 @@
 	{
 		"id": "earth_bless",
 		"display_name": "Bless by Earth",
-		"description": "Blesses a unit of your choice with <earth> Blessing: +1 <shield> while it holds, and the unit is treated as an <earth> unit.",
+		"description": "Target unit is treated as an <earth> unit for 2 turns. It gains +1 <shield> for the duration.",
 		"cost": {
 			"mana": 1,
 			"tap": true
@@ -472,7 +472,7 @@
 	{
 		"id": "fire_bless",
 		"display_name": "Bless by Fire",
-		"description": "Blesses a unit of your choice with <fire> Blessing: +2 <attack> for 2 turns, and the unit is treated as a <fire> unit.",
+		"description": "Target unit is treated as a <fire> unit for 2 turns. It gains +2 <attack> for the duration.",
 		"cost": {
 			"mana": 1,
 			"tap": true
@@ -497,7 +497,7 @@
 	{
 		"id": "air_bless",
 		"display_name": "Bless by Air",
-		"description": "Blesses a unit with +4 <speed> for 2 turns, and the unit is treated as an <air> unit.",
+		"description": "Target unit is treated as an <air> unit for 2 turns. It gains +4 <speed> for the duration.",
 		"cost": {
 			"mana": 1,
 			"tap": false
@@ -522,7 +522,7 @@
 	{
 		"id": "water_bless",
 		"display_name": "Bless by Water",
-		"description": "Blesses a unit of your choice with <water> Blessing: heals 1 <health> at the start of each turn for 2 turns, and the unit is treated as a <water> unit.",
+		"description": "Target unit is treated as an <water> unit for 2 turns. For the duration, it heals 1 <health> every turn.",
 		"cost": {
 			"mana": 1,
 			"tap": true
@@ -547,7 +547,7 @@
 	{
 		"id": "light_bless",
 		"display_name": "Bless by Light",
-		"description": "Blesses a unit of your choice with <light> Blessing: for 2 turns it is treated as a <light> unit, and you gain 1 <mana> whenever it makes a kill.",
+		"description": "Target unit is treated as a <light> unit for 2 turns. For the duration, you gain 1 <mana> whenever it makes a kill.",
 		"cost": {
 			"mana": 1,
 			"tap": true
@@ -572,7 +572,7 @@
 	{
 		"id": "darkness_bless",
 		"display_name": "Bless by Darkness",
-		"description": "Blesses a unit of your choice with <darkness> Blessing: for 2 turns it is treated as a <darkness> unit, and you draw a card whenever it makes a kill.",
+		"description": "Target unit is treated as a <darkness> unit for 2 turns, and you draw a card whenever it makes a kill.",
 		"cost": {
 			"mana": 1,
 			"tap": true

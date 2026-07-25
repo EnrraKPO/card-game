@@ -24,19 +24,25 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Chibi bearded monarch standing proud, crown of coiled cloud and spun silver mist, ornate scepter topped with a spinning sphere of compressed breeze, translucent windswept-crystal armor traced with glowing pale-cyan currents, long cape of streaming vapor whipping in gusts, spiraling wisps of luminous wind circling his boots, soft turquoise sky, bold clean outlines, painterly detailed illustration",
+				"prompt": "Chibi king facing right, crown of translucent white crystal, scepter of swirling silver vapor, armor made of polished pearl and iridescent glass, billowing cape of flowing clouds, bold clean outlines, painterly cartoon fantasy style, airy pastel palette of teal and white, bright daylight, soft luminous rim lighting.",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/king.png",
-					"name": "King",
-					"mode": "img2img",
-					"denoise": 0.6
+					"source": "upload",
+					"path": "snap_king.png"
 				},
 				"last": {
 					"seed": 984415987,
 					"prompt": "Chibi bearded monarch standing proud, crown of coiled cloud and spun silver mist, ornate scepter topped with a spinning sphere of compressed breeze, translucent windswept-crystal armor traced with glowing pale-cyan currents, long cape of streaming vapor whipping in gusts, spiraling wisps of luminous wind circling his boots, soft turquoise sky, bold clean outlines, painterly detailed illustration, cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear",
 					"style": "",
 					"at": "2026-07-12"
+				},
+				"inferredFrom": {
+					"anchor": "snap_king.png",
+					"theme": [
+						"snap_air_air_pawn.png",
+						"snap_air_air_knight.png",
+						"snap_air_air_queen.png"
+					],
+					"mode": "replicate"
 				}
 			}
 		}
@@ -66,18 +72,25 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Stout crowned monarch-warrior, armored, cape flowing, gripping an ornate scepter, shield at side, commanding heroic stance. Regal armored monarch clad in soot-stained plate and a tattered fume-wreathed mantle, brass-riveted crown venting curling vapor, raising a chimney-topped scepter belching swirling sickly-green haze, mosquito swarm circling, low heroic angle over smog-choked ruined smokestacks, bold ink outlines, painterly cartoon style, muted olive and rusted-red palette, ominous backlighting",
+				"prompt": "Chibi monarch facing right, crown of rusted iron pipes venting sulfurous yellow gas, scepter of tarnished brass dripping thick green sludge, shield with a corroded metal crest, tattered olive-drab cloak, swarming mosquitoes, sickly chartreuse haze, bold outlines, stylized comic art, muted ochre and acidic green palette.",
 				"ref": {
-					"source": "game",
-					"path": "snap_king.png",
-					"mode": "img2img",
-					"denoise": 0.6
+					"source": "upload",
+					"path": "snap_king.png"
 				},
 				"last": {
 					"seed": 636521760,
 					"prompt": "Chibi plague monarch standing regally, gaunt gray-green face with glowing yellow eyes above a tarnished brass crown leaking curling chartreuse fumes, ragged mauve robe over riveted bronze plating, gripping a tall scepter topped with a churning orb of violet smoke and circling mosquitoes, sickly green haze pooling at his boots, hazy fog-choked backdrop",
 					"style": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear",
 					"at": "2026-07-12"
+				},
+				"inferredFrom": {
+					"anchor": "snap_king.png",
+					"theme": [
+						"snap_air_darkness_knight.png",
+						"snap_air_darkness_queen.png",
+						"air_darkness.png"
+					],
+					"mode": "replicate"
 				}
 			}
 		}
@@ -107,17 +120,25 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "chibi stylized desert sand king, stocky bearded warrior facing forward, ornate golden sandstone crown, hourglass-topped scepter in one hand, spiral-engraved shield in other, flowing white and gold robes with diamond motifs, swirling sand-magic tendrils, arched desert palace with domed towers, warm amber palette, soft radiant lighting, painterly anime rendering",
+				"prompt": "Chibi stylized desert monarch looking right, ornate golden crown with red gem, white linen robes and flowing white cape, holding a golden scepter and a shield etched with sun motifs, standing on warm ochre dunes under a vibrant blue sky, soft painterly digital illustration, warm gold palette, soft directional light",
 				"ref": {
-					"source": "installed",
-					"mode": "img2img",
-					"denoise": 0.6
+					"source": "upload",
+					"path": "snap_king.png"
 				},
 				"last": {
 					"seed": 4239802263,
 					"prompt": "chibi stylized desert sand king, stocky bearded warrior facing forward, ornate golden sandstone crown, hourglass-topped scepter in one hand, spiral-engraved shield in other, flowing white and gold robes with diamond motifs, swirling sand-magic tendrils, arched desert palace with domed towers, warm amber palette, soft radiant lighting, painterly anime rendering, cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric light, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear,",
 					"style": "",
 					"at": "2026-07-22"
+				},
+				"inferredFrom": {
+					"anchor": "snap_king.png",
+					"theme": [
+						"snap_air_earth_pawn.png",
+						"snap_air_earth_knight.png",
+						"snap_air_earth_queen.png"
+					],
+					"mode": "replicate"
 				}
 			}
 		}
@@ -147,13 +168,19 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Stout crowned monarch warrior standing full-body, thick amber-glowing beard, molten-gold crackling energy arcing along his gauntlets, a jagged golden bolt-tipped scepter in one fist and a sunfire-forged round shield in the other, robes of ember-orange and burnished copper, sparks of warm electric light dancing around him, soft glowing warm background, bold clean illustration",
+				"prompt": "chibi king looking right, crimson and gold plate armor, crown of jagged golden energy, scepter crackling with electric bolts, shield emblazoned with a lightning bolt, fur-lined red cape, glowing amber eyes, standing on green grass under a warm sunset sky, bold clean cartoon fantasy illustration, vibrant red gold amber palette",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/king.png",
-					"name": "King",
-					"mode": "img2img",
-					"denoise": 0.6
+					"source": "upload",
+					"path": "snap_king.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_king.png",
+					"theme": [
+						"snap_air_fire_pawn.png",
+						"snap_air_fire_knight.png",
+						"snap_air_fire_queen.png"
+					],
+					"mode": "replicate"
 				}
 			}
 		}
@@ -183,13 +210,19 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "stout armored monarch with a radiant golden halo, broad white feathered wings arched behind him, robes of ivory and gold trimmed with soft plumage, gripping a luminous scepter, standing among low golden pickets amid drifting sunlit clouds, bold clean outlines, heavenly gilded palette, centered heroic figure on airy sky backdrop",
+				"prompt": "Chibi royal figure looking right, white and gold plate armor with azure fabric, ornate golden crown, holding a shimmering golden scepter and shield, large white feathered wings, glowing halo, standing on reflective golden tiles, bright blue sky with fluffy clouds, vibrant celestial palette, smooth digital rendering.",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/king.png",
-					"name": "King",
-					"mode": "img2img",
-					"denoise": 0.6
+					"source": "upload",
+					"path": "snap_king.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_king.png",
+					"theme": [
+						"snap_air_light_pawn.png",
+						"snap_air_light_knight.png",
+						"snap_air_light_queen.png"
+					],
+					"mode": "replicate"
 				}
 			}
 		}
@@ -219,13 +252,19 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Chibi storm-king, stern bearded warrior with glowing blue eyes, jeweled silver crown, holding a tall trident scepter and ornate swirl-etched shield, deep-blue fur-lined regal robe and cloak, front-facing heroic stance, dark storm-cloud sky, driving rain, raging swirling winds, wet stone plaza, gothic castle backdrop, sapphire-and-silver palette, dramatic moody lighting, detailed anime fantasy illustration",
+				"prompt": "Chibi king facing right, crown of polished obsidian and dark rain-glass, scepter of swirling grey mist and silver, armor made of churning charcoal smoke and riveted slate, flowing cape of heavy storm-clouds, standing in driving rain, deep crimson misty background, glowing white eyes, dramatic rim lighting, detailed fantasy digital painting",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/king.png",
-					"name": "King",
-					"mode": "img2img",
-					"denoise": 0.6
+					"source": "upload",
+					"path": "snap_king.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_king.png",
+					"theme": [
+						"snap_air_water_pawn.png",
+						"snap_air_water_knight.png",
+						"snap_air_water_queen.png"
+					],
+					"mode": "replicate"
 				}
 			}
 		}
@@ -255,13 +294,19 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "A stout crowned monarch wrought of solid living shadow standing full-figure, obsidian plate armor traced with cold silver edges, a glowing violet eclipse-ring emblem on the chestplate, pale amethyst light bleeding from hollow eyes, a tattered cloak fraying into curling black smoke, gripping a dark scepter crowned with a small crescent of pale light, hazy dusk plateau of cracked stone behind, full-body centered figure",
+				"prompt": "Chibi royal figure looking right, crown of obsidian with a black moon jewel, scepter of void-glass, shield etched with a crescent eclipse, armor made of solidified shadow and pitch-black smoke, flowing tattered cape of midnight velvet, glowing white eyes, deep violet and charcoal palette, backlit rim lighting, standing on a barren plain.",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/king.png",
-					"name": "King",
-					"mode": "img2img",
-					"denoise": 0.6
+					"source": "upload",
+					"path": "snap_king.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_king.png",
+					"theme": [
+						"snap_darkness_darkness_pawn.png",
+						"snap_darkness_darkness_knight.png",
+						"snap_darkness_darkness_queen.png"
+					],
+					"mode": "replicate"
 				}
 			}
 		}
@@ -274,7 +319,7 @@
 		"health": 20,
 		"speed": 3,
 		"shield": 5,
-		"description": "Ruler of <darkness> and <earth>. If the <king> falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 <shield>.",
+		"description": "Ruler of <darkness> and <earth>. If the <king> falls, the battle is lost. Starts each round with 5 <shield>.",
 		"elements": [
 			"darkness",
 			"earth"
@@ -291,13 +336,19 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Stocky armored monarch sovereign, faceted black volcanic-glass plate armor with glowing violet seam veins, jagged mineral-spike crown set with a burning crimson gem, gripping a tall scepter topped by a pulsing purple crystal, heavy gemstone-studded shield, commanding wide stance, deep cavern of glittering amethyst columns, dim violet glow, bold outlines, painterly fantasy illustration.",
+				"prompt": "Faceted black obsidian sovereign looking right, jagged mineral crown, scepter of polished dark crystal, shield of carved volcanic glass with glowing violet veins, heavy armor of matte charcoal rock, royal cloak of deep purple velvet, standing on a circular flagstone dais, luminous cyan energy seeping from joints, painterly fantasy style, bold outlines",
 				"ref": {
 					"source": "upload",
 					"path": "snap_king.png",
 					"name": "snap_king.png",
 					"mode": "img2img",
 					"denoise": 0.6
+				},
+				"last": {
+					"seed": 341424301,
+					"prompt": "Faceted black obsidian sovereign looking right, jagged mineral crown, scepter of polished dark crystal, shield of carved volcanic glass with glowing violet veins, heavy armor of matte charcoal rock, royal cloak of deep purple velvet, standing on a circular flagstone dais, luminous cyan energy seeping from joints, painterly fantasy style, bold outlines, cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric light, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear,",
+					"style": "",
+					"at": "2026-07-25"
 				}
 			}
 		}
@@ -327,13 +378,19 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "A stout crowned monarch of living shadow standing full-figure, obsidian-black plate armor edged in glowing violet light, jagged horned crown above a hollow face lit by two burning amethyst eyes, a ragged smoke-torn cloak dissolving into curling darkness, gripping a barbed scepter crowned with a purple-ringed void, standing on cracked stone before a hazy twilight plateau, centered figure",
+				"prompt": "Chibi demonic sovereign looking right, curved black horns, glowing green eyes, ornate crimson and obsidian armor with molten cracks, spiked red crown, holding a jagged green-crystal scepter and heavy shield with a red crest, standing on scorched earth, purple stormy sky, dramatic infernal lighting, vibrant painterly digital illustration",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/king.png",
-					"name": "King",
-					"mode": "img2img",
-					"denoise": 0.6
+					"source": "upload",
+					"path": "snap_king.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_king.png",
+					"theme": [
+						"snap_darkness_fire_pawn.png",
+						"snap_darkness_fire_knight.png",
+						"snap_darkness_fire_queen.png"
+					],
+					"mode": "replicate"
 				}
 			}
 		}
@@ -358,23 +415,19 @@
 		"effects": [],
 		"tool": {
 			"art": {
-				"prompt": "A gaunt crowned monarch of grave-cold bone standing full-figure, tarnished blackened plate armor edged in glowing violet light, a dark eclipse emblem ringed in amethyst glow on the chestplate, hollow sockets burning pale purple, a fraying shroud dissolving into curling ashen wisps, gripping a bone-wound staff crowned by a haloed void, cracked stone dais under a hazy twilight sky",
+				"prompt": "Chibi skeletal monarch looking right, cracked bone crown with teal gemstone, weathered black iron plate armor, tattered charcoal cloak, gripping a bone scepter and skull-embossed shield, glowing cyan eyes, standing on an arcane circle in a gothic graveyard, eerie teal lighting, detailed digital fantasy painting",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/king.png",
-					"name": "King"
+					"source": "upload",
+					"path": "snap_king.png"
 				},
 				"inferredFrom": {
-					"concept": [
-						"king",
-						"air_air_king",
-						"air_earth_king"
-					],
+					"anchor": "snap_king.png",
 					"theme": [
-						"darkness_darkness_knight",
-						"darkness_darkness_pawn",
-						"darkness_darkness_queen"
-					]
+						"snap_darkness_light_pawn.png",
+						"snap_darkness_light_knight.png",
+						"snap_darkness_light_queen.png"
+					],
+					"mode": "replicate"
 				}
 			}
 		}
@@ -420,13 +473,19 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "A stout crowned monarch of congealing green venom standing full-figure, tarnished plate armor slick with dripping ooze, a pale glowing bleached-bone-and-crossed-shafts emblem seared onto the chestplate, sunken hollow-socketed skull face lit by two toxic luminous eyes, a ragged cloak sloughing into viscous emerald drips, gripping a gnarled staff crowned with bubbling poison, sickly acid-hazed background",
+				"prompt": "Chibi king facing right, ornate purple crown with a glowing green gem, scepter dripping viscous neon-green slime, shield featuring a skull and crossbones, deep violet armor with toxic green filigree, flowing crimson cape, standing in bubbling acid ooze, bold cel-shaded style, vivid green and deep red palette, dramatic backlighting.",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/king.png",
-					"name": "King",
-					"mode": "img2img",
-					"denoise": 0.6
+					"source": "upload",
+					"path": "snap_king.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_king.png",
+					"theme": [
+						"snap_darkness_water_pawn.png",
+						"snap_darkness_water_knight.png",
+						"snap_darkness_water_queen.png"
+					],
+					"mode": "replicate"
 				}
 			}
 		}
@@ -456,13 +515,19 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Chibi earth-elemental sovereign king built from packed soil and clumped dirt, glowing golden eyes, towering jagged bronze crown, thick soil-formed beard, layered ochre and rust plated armor with spiral engravings, heavy pauldroned dirt-woven cloak, raising a bronze scepter crowned with a swirling floating orb of clustered earth, warm brown palette, barren cracked plains, soft diffuse light, painterly fantasy illustration, heroic frontal stance",
+				"prompt": "Chibi sovereign looking right, body formed of packed soil and clustered pebbles, crown and scepter made of polished bronze and amber, royal mantle of tattered olive-green fabric with fur trim, holding a heavy shield of pressed earth and gold filigree, standing on barren plains under a pale blue sky, warm brown palette, painterly fantasy illustration.",
 				"ref": {
 					"source": "upload",
-					"path": "snap_king.png",
-					"name": "snap_king.png",
-					"mode": "img2img",
-					"denoise": 0.6
+					"path": "snap_king.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_king.png",
+					"theme": [
+						"snap_earth_earth_pawn.png",
+						"snap_earth_earth_knight.png",
+						"snap_earth_earth_queen.png"
+					],
+					"mode": "replicate"
 				}
 			}
 		}
@@ -487,23 +552,18 @@
 		"effects": [],
 		"tool": {
 			"art": {
-				"prompt": "Chibi stern lava king, glowing molten-crack armor of blackened obsidian and lava, tall jagged crown with red gem, thick brown beard, glowing orange eyes, gripping crook scepter, obsidian shield, ragged cracked-magma cape, front-facing symmetrical stance, volcanic castle and crimson banners backdrop, red-orange magma glow, dark rim lighting, detailed anime game-art",
+				"prompt": "Chibi sovereign looking right, crown of jagged obsidian with a glowing red core, scepter of solidified magma, shield of cooling basalt with flowing orange veins, robes of liquid lava and dark volcanic rock, thick beard of molten slag, standing on scorched earth, deep crimson and gold palette, stylized fantasy digital art",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/king.png",
-					"name": "King"
+					"source": "upload",
+					"path": "snap_king.png"
 				},
 				"inferredFrom": {
-					"concept": [
-						"king",
-						"air_air_king",
-						"air_darkness_king"
-					],
+					"anchor": "snap_king.png",
 					"theme": [
-						"darkness_darkness_knight",
-						"darkness_darkness_pawn",
-						"darkness_darkness_queen"
-					]
+						"snap_earth_fire_pawn.png",
+						"snap_earth_fire_knight.png"
+					],
+					"mode": "replicate"
 				}
 			}
 		}
@@ -533,13 +593,19 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "chibi forest king, big-headed heroic dwarf with brown beard, twig-branch crown with green gem, leaf-scale robe and green cape with white blossoms, gold filigree, gripping vine-wrapped wooden scepter and tree-emblem shield, enchanted glowing forest, dappled golden light, verdant green gold palette, glowing rune circle, detailed painterly fantasy game art",
+				"prompt": "chibi royal figure looking right, crown of woven branches and blooming jasmine, scepter carved from ancient polished root with a glowing emerald gem, armor made of hardened bark and overlapping emerald leaves, cloak of thick moss and wildflowers, standing in a sunlit meadow, vibrant green and gold palette, painterly fantasy style",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/king.png",
-					"name": "King",
-					"mode": "img2img",
-					"denoise": 0.6
+					"source": "upload",
+					"path": "snap_king.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_king.png",
+					"theme": [
+						"snap_earth_light_knight.png",
+						"snap_earth_light_queen.png",
+						"earth_light_pawn.png"
+					],
+					"mode": "replicate"
 				}
 			}
 		}
@@ -569,13 +635,19 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "A stout crowned monarch standing full-body sculpted entirely from glistening wet earthen paste, thick brown ridges oozing and dripping, cracked drying ridges along heavy shoulders, sagging molded crown slumping over hollow smeared eyes, one dense fist gripping a lumpy dripping staff, sludge pooling at his feet, moody desaturated haze background.",
+				"prompt": "Chibi royal figure looking right, sculpted from wet glossy brown clay, wearing a heavy mud-textured crown and thick ceramic armor, gripping a scepter and holding a rounded shield, draped in a dripping terracotta cape with fur trim, standing in a muddy marsh, warm ochre palette, soft overcast lighting, painterly stylized fantasy render, centered full-body composition.",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/king.png",
-					"name": "King",
-					"mode": "img2img",
-					"denoise": 0.6
+					"source": "upload",
+					"path": "snap_king.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_king.png",
+					"theme": [
+						"snap_earth_water_pawn.png",
+						"snap_earth_water_knight.png",
+						"snap_earth_water_queen.png"
+					],
+					"mode": "replicate"
 				}
 			}
 		}
@@ -605,13 +677,19 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "A stout crowned monarch of living flame standing full-figure, plated armor forged of glowing molten embers edged with flickering tongues of fire, a radiant blazing ring emblem upon the chest, eyes like burning coals, a cloak dissolving into rising sparks and drifting cinders, one gauntleted hand gripping a slender scepter crowned with a churning fireball, hazy ember-lit backdrop.",
+				"prompt": "Chibi monarch looking right, crown of solidified orange light, scepter of white-hot flame, armor forged from glowing ember-gold metal, flowing cape of living fire, holding a shield with a burning sun emblem, standing on scorched earth, deep indigo sky backdrop, warm radiant glow, bold stylized cartoon illustration",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/king.png",
-					"name": "King",
-					"mode": "img2img",
-					"denoise": 0.6
+					"source": "upload",
+					"path": "snap_king.png"
+				},
+				"inferredFrom": {
+					"anchor": "snap_king.png",
+					"theme": [
+						"snap_fire_fire_pawn.png",
+						"snap_fire_fire_knight.png",
+						"snap_fire_fire_queen.png"
+					],
+					"mode": "replicate"
 				}
 			}
 		}
@@ -636,23 +714,19 @@
 		"effects": [],
 		"tool": {
 			"art": {
-				"prompt": "chibi stylized fantasy king, stern glowing blue eyes, dark beard, jeweled crown and armor wreathed in blue fire, gripping a flame-topped scepter and glowing kite shield, white-and-gold robes with blue cape, standing in ominous dark cathedral hall, torch flames, luminous sapphire palette, radiant rim light, painterly game-art rendering",
+				"prompt": "chibi royal figure looking right, crown of cobalt fire, scepter of flickering blue flames, ornate polished silver armor with luminous sapphire accents, heavy cloak of shimmering midnight silk, dark void background, intense cool blue rim lighting, vibrant spectral glow, painterly digital fantasy art, full-body centered composition",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/king.png",
-					"name": "King"
+					"source": "upload",
+					"path": "snap_king.png"
 				},
 				"inferredFrom": {
-					"concept": [
-						"king",
-						"air_air_king",
-						"air_darkness_king"
-					],
+					"anchor": "snap_king.png",
 					"theme": [
-						"darkness_darkness_knight",
-						"darkness_darkness_pawn",
-						"darkness_darkness_queen"
-					]
+						"snap_fire_light_pawn.png",
+						"snap_fire_light_knight.png",
+						"snap_fire_light_queen.png"
+					],
+					"mode": "replicate"
 				}
 			}
 		}
@@ -677,23 +751,19 @@
 		"effects": [],
 		"tool": {
 			"art": {
-				"prompt": "A stout crowned monarch standing full-body, riveted brass-and-iron plate armor slick with condensation, a glowing pressure-gauge emblem on the chestplate, hissing steam vents jetting white plumes from shoulder pipes, molten-orange eyes behind a valved visor, a cog-toothed crown, one gauntlet gripping a piston-headed staff, boiler-warm mist coiling over cracked pavement, dim smoky sky.",
+				"prompt": "chibi royal figure looking right, ornate brass gear crown venting white vapor, copper plated armor with glowing orange furnace vents, holding a mechanical scepter and riveted metal shield, bold outlines, painterly cartoon style, warm gold and teal palette, pastel pink sky background with distant metallic spires, soft cinematic lighting",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/king.png",
-					"name": "King"
+					"source": "upload",
+					"path": "snap_king.png"
 				},
 				"inferredFrom": {
-					"concept": [
-						"king",
-						"air_air_king",
-						"air_darkness_king"
-					],
+					"anchor": "snap_king.png",
 					"theme": [
-						"darkness_darkness_knight",
-						"darkness_darkness_pawn",
-						"darkness_darkness_queen"
-					]
+						"snap_fire_water_pawn.png",
+						"snap_fire_water_knight.png",
+						"snap_fire_water_queen.png"
+					],
+					"mode": "replicate"
 				}
 			}
 		}
@@ -718,23 +788,19 @@
 		"effects": [],
 		"tool": {
 			"art": {
-				"prompt": "A stout crowned monarch woven entirely of radiant white luminescence, standing full-figure atop a circular stone dais, translucent glowing plate armor rippling with soft pearl brilliance, a bright hollow ring blazing on the chestplate, serene beaming eyes, a flowing cloak of streaming pale light dissolving into drifting sparks, gripping a slender scepter tipped with a shining orb, dim silver landscape beyond.",
+				"prompt": "Chibi king looking right, ornate crown of solidified brilliance, scepter of concentrated radiance, shield with a luminous geometric crest, armor forged from polished white gold and shimmering light, flowing translucent cape, standing on a sun-drenched meadow, warm golden palette, bold cel-shaded style, intense inner glow, radiant backlit atmosphere.",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/king.png",
-					"name": "King"
+					"source": "upload",
+					"path": "snap_king.png"
 				},
 				"inferredFrom": {
-					"concept": [
-						"king",
-						"air_air_king",
-						"air_darkness_king"
-					],
+					"anchor": "snap_king.png",
 					"theme": [
-						"darkness_darkness_knight",
-						"darkness_darkness_pawn",
-						"darkness_darkness_queen"
-					]
+						"snap_light_light_pawn.png",
+						"snap_light_light_knight.png",
+						"snap_light_light_queen.png"
+					],
+					"mode": "replicate"
 				}
 			}
 		}
@@ -759,23 +825,19 @@
 		"effects": [],
 		"tool": {
 			"art": {
-				"prompt": "A stout crowned monarch standing full-figure, translucent armor shimmering with iridescent prismatic sheen, a glowing multicolored ring emblem on the chest, eyes like faceted jewels casting rainbow refractions, a flowing cloak dissolving into shimmering droplets of dew, gripping a slender scepter crowned with a many-hued cut gem scattering spectral light, softly glimmering pastel background.",
+				"prompt": "Chibi royal figure looking right, iridescent prismatic armor, flowing holographic cloak, faceted rainbow gemstone crown, holding a crystalline scepter and a shimmering translucent shield, bold black outlines, glowing white eyes, sparkling refraction flares, soft pastel background, reflective floor, luminous multicolored palette, clean stylized cel-shaded illustration",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/king.png",
-					"name": "King"
+					"source": "upload",
+					"path": "snap_king.png"
 				},
 				"inferredFrom": {
-					"concept": [
-						"king",
-						"air_air_king",
-						"air_darkness_king"
-					],
+					"anchor": "snap_king.png",
 					"theme": [
-						"darkness_darkness_knight",
-						"darkness_darkness_pawn",
-						"darkness_darkness_queen"
-					]
+						"snap_light_water_pawn.png",
+						"snap_light_water_knight.png",
+						"snap_light_water_queen.png"
+					],
+					"mode": "replicate"
 				}
 			}
 		}
@@ -800,23 +862,19 @@
 		"effects": [],
 		"tool": {
 			"art": {
-				"prompt": "Stout crowned monarch of living water standing full-figure, translucent aquamarine plate armor beaded with running droplets, a glowing pale ring emblem on the breastplate, luminous eyes like clear pools, a flowing cloak dissolving into cascading rivulets, gripping a slender scepter crested with a coiling spout, misty teal glow rimming his silhouette, cracked stone dais wet with spreading water, pale twilight sky.",
+				"prompt": "Chibi king looking right, translucent aquamarine liquid armor, flowing water cloak, crown of iridescent pearls and white coral, gripping a crystalline scepter of swirling currents, holding a wave-patterned shield, standing on a sandy seabed, rising bubbles, luminous cyan glow, bold-outlined storybook illustration, full-body centered pose.",
 				"ref": {
-					"source": "game",
-					"path": "assets/cards/king.png",
-					"name": "King"
+					"source": "upload",
+					"path": "snap_king.png"
 				},
 				"inferredFrom": {
-					"concept": [
-						"king",
-						"air_air_king",
-						"air_darkness_king"
-					],
+					"anchor": "snap_king.png",
 					"theme": [
-						"darkness_darkness_knight",
-						"darkness_darkness_pawn",
-						"darkness_darkness_queen"
-					]
+						"snap_water_water_pawn.png",
+						"snap_water_water_knight.png",
+						"snap_water_water_queen.png"
+					],
+					"mode": "replicate"
 				}
 			}
 		}
