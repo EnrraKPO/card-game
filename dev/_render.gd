@@ -1,7 +1,7 @@
 extends Node
 # Throwaway render harness: boots autoloads + a real save, renders a screen (passed after `--`) into
-# an exact-size SubViewport, saves a PNG. e.g. godot --path . res://_render.tscn -- res://scenes/X.tscn
-const OUT := "res://_render_out.png"
+# an exact-size SubViewport, saves a PNG. e.g. godot --path . res://dev/_render.tscn -- res://scenes/X.tscn
+const OUT := "res://dev/_render_out.png"
 var RES := Vector2i(1920, 1080)
 func _ready() -> void:
 	var args := OS.get_cmdline_user_args()

@@ -1,7 +1,7 @@
 extends Node
 # Throwaway: renders each SlotUI cue state side by side so the glyphs can be eyeballed.
-# godot --headless --path . res://_slot_cue_shot.tscn ; view _slot_cue_out.png
-const OUT := "res://_slot_cue_out.png"
+# godot --headless --path . res://dev/_slot_cue_shot.tscn ; view _slot_cue_out.png
+const OUT := "res://dev/_slot_cue_out.png"
 
 
 func _ready() -> void:

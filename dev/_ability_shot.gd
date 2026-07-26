@@ -1,7 +1,7 @@
 extends Node
 # Throwaway visual check for AbilityWidget + autocast brackets: renders three widget states
 # (non-autocast material, capable-but-off, armed) and the board-side armed echo to a PNG.
-const OUT := "res://_ability_shot.png"
+const OUT := "res://dev/_ability_shot.png"
 const RES := Vector2i(1400, 560)
 
 

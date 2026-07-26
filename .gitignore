@@ -20,17 +20,16 @@ screenshots/
 # VFX pixel-probe snapshots (regenerable scratch — see tests/_vfx_probe.gd)
 /_probe_out/
 
-# UI render-harness output images (regenerable scratch — see _render.gd / _render.tscn).
-# Broad on purpose: every ad-hoc probe writes another root-level _<name>.png and these were
-# accumulating in the repo (12 of them removed in 8c390c7).
-/_render*.png
-/_render*.png.import
-/_*_shot.png
-/_*_shot.png.import
-/_shot_out.png
-/_shot_out.png.import
-/_nav_*.png
-/_nav_*.png.import
+# UI render-harness output images (regenerable scratch — see dev/_render.gd / dev/_render.tscn).
+# The harness scripts live in dev/ and write their PNGs beside themselves; every ad-hoc probe
+# adds another one, so ignore the whole class rather than naming each (12 were removed in
+# 8c390c7 back when they landed at the repo root).
+/dev/*.png
+/dev/*.png.import
+
+# Legacy root-level harness output (kept so a stale script writing to res:// still stays out).
+/_*.png
+/_*.png.import
 
 # Icon rasterization / contact-sheet build output (regenerable scratch)
 tools/_icon_preview/

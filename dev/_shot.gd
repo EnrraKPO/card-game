@@ -19,6 +19,6 @@ func _run() -> void:
 	var img := root.get_texture().get_image()
 	if img == null:
 		print("IMG NULL"); quit(); return
-	img.save_png("res://_shot_out.png")
+	img.save_png("res://dev/_shot_out.png")
 	print("SAVED ", img.get_size())
 	quit()

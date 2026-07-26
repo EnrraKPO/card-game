@@ -2,7 +2,7 @@ extends Node
 # Throwaway visual check for DragGhost: the three context states of an armed rook's drag
 # ghost (UNIT / CAST_OK / CAST_INVALID) plus a plain hand-card ghost, next to a real card
 # for contrast. Run WITHOUT --headless (dummy renderer nulls SubViewport textures).
-const OUT := "res://_ghost_shot.png"
+const OUT := "res://dev/_ghost_shot.png"
 const RES := Vector2i(1700, 560)
 const CARD_SIZE := Vector2(220.0, 288.0)
 

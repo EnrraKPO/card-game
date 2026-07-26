@@ -8,13 +8,14 @@ Every full-screen menu must **fill the screen with big, chunky, proportionally-s
 ## THE WORKFLOW (the breakthrough — use it every time)
 This machine has a GPU; Godot can render scenes to PNGs that you can open with the Read tool. **Render → look → fix → render, yourself.** Never guess-and-wait for the user.
 
-Harness files at repo root (throwaway, promote to `tools/` later): `_render.gd` + `_render.tscn`.
+Harness files live in `dev/` (scratch, kept out of the game proper): `dev/_render.gd` + `dev/_render.tscn`.
 Render any screen at exact 1920×1080:
 ```
-"D:/Godot/Godot_v4.6.3-stable_win64_console.exe" --path . res://_render.tscn -- res://scenes/<screen>.tscn
+"D:/Godot/Godot_v4.6.3-stable_win64_console.exe" --path . res://dev/_render.tscn -- res://scenes/<screen>.tscn
 ```
-Output: `res://_render_out.png` — open it with Read to SEE the result. It boots autoloads + selects save slot 0, so screens needing a profile work. For a screen needing different state, edit `_render.gd`.
-Save per-screen copies for the user to spot-check: `cp _render_out.png screenshots/<screen>_new.png`.
+Output: `res://dev/_render_out.png` — open it with Read to SEE the result. It boots autoloads + selects save slot 0, so screens needing a profile work. For a screen needing different state, edit `dev/_render.gd`.
+Save per-screen copies for the user to spot-check: `cp dev/_render_out.png screenshots/<screen>_new.png`.
+One-off probes (`dev/_slot_cue_shot.gd`, `dev/_tooltip_shot.gd`, …) follow the same shape — put new ones in `dev/`, never at the repo root.
 
 Parse-check edited scripts (warnings are errors for this user):
 ```
@@ -60,6 +61,6 @@ Shared helpers: `ScreenUI` (`screen_ui.gd`) — `frame/scaffold/frame_centered`,
 - Primary actions are *prominent but proportionate* (bigger, not 4×). Don't let one element swallow the screen; don't bunch a cluster in the middle.
 
 ## Housekeeping before committing
-- Promote the harness to a real tool, e.g. `tools/render_screen.gd` + `.tscn`, OR delete the scratch files: `_render.gd`, `_render.tscn`, `_render.gd.uid`, `_render.tscn.uid`, `_shot.gd`, `_shot_out.png`, `_render_out.png`. Don't commit the throwaways.
+- New probe scripts go in `dev/`, not the repo root. Their PNG output (`dev/*.png`) is gitignored — the scripts themselves are committed so the next session can re-run them.
 - `screenshots/*_new.png` are review artifacts — keep or drop as the user prefers.
 - Commit only when the user asks; branch off main first.

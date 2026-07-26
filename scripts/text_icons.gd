@@ -12,7 +12,7 @@ extends RefCounted
 # in per text surface.
 
 # Bakes of the ACTUAL card composition chips (tinted container + icon), rendered by
-# _chip_bake.tscn — rerun that scene whenever the chip style changes. Keyword icons in text
+# dev/_chip_bake.tscn — rerun that scene whenever the chip style changes. Keyword icons in text
 # thus look exactly like the chips on the card face.
 const ICONS := {
 	"air":      "res://assets/ui/icons/text/air.png",

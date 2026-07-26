@@ -2,7 +2,7 @@ extends Node
 # Throwaway visual check: the CardTooltip (shared by hover + CardInspector) for a rook with
 # Castling ARMED — the abilities section should show a small ability widget beside the
 # description. Run WITHOUT --headless.
-const OUT := "res://_tooltip_shot.png"
+const OUT := "res://dev/_tooltip_shot.png"
 const RES := Vector2i(1500, 720)
 
 

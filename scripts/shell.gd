@@ -51,7 +51,7 @@ var _footer_back: Button           # the ONE persistent Back button — see head
 var _footer_custom: Array = []     # this screen's footer_actions nodes — the one per-mount exception
 
 # Set to false (before adding Shell to the tree) to skip the real app's initial route — used by
-# the render harness (_render.gd), which mounts a specific scene itself instead.
+# the render harness (dev/_render.gd), which mounts a specific scene itself instead.
 var auto_start := true
 
 
