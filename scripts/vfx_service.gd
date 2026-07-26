@@ -25,9 +25,9 @@ extends Node
 # The procedural behavior vocabulary. Adding a primitive = a _fx_* method + a list entry here
 # (the Tool validates entries against this same list — keep them in sync).
 const BEHAVIORS := ["flash", "pulse", "pop", "shake", "ring", "sparkle", "glint", "glow",
-		"float_label", "burst", "travel", "reticle", "dissolve", "radiance"]
+		"float_label", "burst", "travel", "reticle", "dissolve", "radiance", "emit"]
 # Behaviors that can run as a SUSTAINED state (attach/detach) as well as a one-shot.
-const SUSTAINED_BEHAVIORS := ["glow", "pulse", "sparkle", "radiance"]
+const SUSTAINED_BEHAVIORS := ["glow", "pulse", "sparkle", "radiance", "emit"]
 
 # All effect nodes draw on dedicated overlay layers above the UI, positioned in global canvas
 # coordinates — effects never join a container's layout or clip inside a target's rect.
@@ -196,7 +196,7 @@ func register_custom(id: String, fn: Callable) -> void:
 const BEHAVIOR_SPANS := {
 	"flash": 0.28, "pulse": 0.45, "pop": 0.30, "shake": 0.28, "ring": 0.40,
 	"sparkle": 0.50, "glint": 0.36, "glow": 0.45, "float_label": 0.80, "burst": 0.40,
-	"travel": 0.26, "reticle": 0.40, "dissolve": 0.50, "radiance": 0.50,
+	"travel": 0.26, "reticle": 0.40, "dissolve": 0.50, "radiance": 0.50, "emit": 1.60,
 }
 
 
@@ -454,6 +454,7 @@ func _play_procedural(vd: VFXData, target: Control, opts: Dictionary) -> void:
 		"reticle":     await _fx_reticle(vd, target, opts)
 		"dissolve":    await _fx_dissolve(vd, target, opts)
 		"radiance":    await _fx_radiance_once(vd, target, opts)
+		"emit":        await _fx_emit_once(vd, target, opts)
 		_:
 			push_warning("Vfx: unknown behavior \"%s\" on \"%s\"" % [vd.behavior, vd.id])
 
@@ -466,6 +467,7 @@ func _attach_dispatch(vd: VFXData, target: Control) -> Node:
 				"pulse":    return _sustain_pulse(vd, target)
 				"sparkle":  return _sustain_sparkle(vd, target)
 				"radiance": return _sustain_radiance(vd, target)
+				"emit":     return _sustain_emit(vd, target)
 		"filter":
 			# STANDARD for outer glows: the `glow_rrect` filter (the outer-glow shader) now ALWAYS
 			# runs composited — it reads the target's TRUE silhouette (it + all children) and draws
@@ -777,6 +779,66 @@ func _fx_dissolve(vd: VFXData, target: Control, opts: Dictionary) -> void:
 	fx.queue_free()
 
 
+# ── The "emit" behavior: a stream rising out of a FEATURE of the target's art ──────
+#
+# Every other primitive treats its target as ONE rect. This one doesn't: art often has a place
+# where something comes OUT — a flask's mouth, a chimney, a wound, a censer — and a cue that
+# ignores it (spawning across the whole widget) reads as glitter pasted over a picture rather
+# than as the picture doing something. So the entry DECLARES the feature, in fractions of the
+# target's rect, and the stream spans exactly that and nowhere else:
+#
+#   "params": { "origin": {"x": 0.33, "y": 0.08, "w": 0.30, "h": 0.07}, "shape": "ellipse",
+#               "particle": "bubble", "rate": 5, "rise": 0.30, "drift": 0.05 }
+#
+# Fractions, not pixels, because the same art is laid out at several sizes (desktop/compact) —
+# a mouth is at the same place in the picture at any diameter. Everything the particles measure
+# (size, rise, drift) is likewise a fraction of the target, so the whole effect scales with the
+# widget by construction and never needs a per-screen number.
+func _make_emitter(vd: VFXData, target: Control) -> _EmitFx:
+	var fx := _EmitFx.new()
+	fx.target = target
+	fx.color = vd.color_param("color", Color(0.8, 1.0, 0.6))
+	var org: Dictionary = vd.params.get("origin", {}) if vd.params.get("origin") is Dictionary else {}
+	fx.origin = Rect2(float(org.get("x", 0.0)), float(org.get("y", 0.0)),
+			float(org.get("w", 1.0)), float(org.get("h", 1.0)))
+	fx.ellipse = str(vd.params.get("shape", "rect")) == "ellipse"
+	fx.particle = str(vd.params.get("particle", "bubble"))
+	fx.rate = maxf(0.0, vd.num_param("rate", 5.0)) * _p_scale(vd)
+	fx.size_min = maxf(0.001, vd.num_param("size_min", 0.02))
+	fx.size_max = maxf(fx.size_min, vd.num_param("size_max", 0.05))
+	fx.rise = vd.num_param("rise", 0.30)
+	fx.drift = vd.num_param("drift", 0.04)
+	fx.life_min = maxf(0.1, vd.num_param("life_min", 1.2))
+	fx.life_max = maxf(fx.life_min, vd.num_param("life_max", 2.0))
+	fx.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var mat := CanvasItemMaterial.new()
+	mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	fx.material = mat
+	overlay_layer_for(target).add_child(fx)
+	return fx
+
+
+# One-shot form: a single puff of `count` particles out of the feature, then the node retires
+# itself once the last one has faded (a burp, where the sustained form is a simmer).
+func _fx_emit_once(vd: VFXData, target: Control, _opts: Dictionary) -> void:
+	var fx := _make_emitter(vd, target)
+	fx.spawning = false
+	var count := int(vd.num_param("count", 6.0) * _p_scale(vd))
+	for i in count:
+		fx.spawn_one()
+	fx.free_when_empty = true
+	await get_tree().create_timer(fx.life_max).timeout
+
+
+# Sustained form: the stream runs for as long as the state is attached. detach() frees the node.
+func _sustain_emit(vd: VFXData, target: Control) -> Node:
+	var fx := _make_emitter(vd, target)
+	# Seeded mid-flight, so attaching (entering the screen) shows a stream already in progress
+	# rather than an empty mouth that takes a couple of seconds to fill.
+	fx.prime()
+	return fx
+
+
 # ── Sustained primitives (attach/detach states) ────────────────────────────────────
 # Each returns the state's root node; detach frees it. The node keeps itself glued to the
 # target's rect so a moving/resizing target carries its aura along.
@@ -939,6 +1001,129 @@ class _ReticleFx extends Control:
 # (brightest, reading as the light's core) while the rim only carries the outermost, faintest
 # layer. That gradient is what actually reads as "radiance" — a single flat rect (glow/pulse's
 # look) has no such falloff, so it just pops as a hard-edged block.
+# The "emit" behavior's draw node (see _make_emitter). ONE node draws the whole stream — every
+# particle lives in the target's NORMALIZED space (0..1 of its rect) and is converted to pixels
+# at draw time, so a target that moves, scales or relayouts carries its stream along without a
+# single particle having to be repositioned.
+class _EmitFx extends Control:
+	var target: Control
+	var color := Color.WHITE
+	var origin := Rect2(0, 0, 1, 1)   # the emitting feature, in fractions of the target's rect
+	var ellipse := false              # spawn inside the region's inscribed ellipse, not its box
+	var particle := "bubble"          # bubble (hollow, rimmed, specular) | mote (soft dot)
+	var rate := 5.0                   # particles per second
+	var size_min := 0.02              # radius, in fractions of the target's SHORTER side
+	var size_max := 0.05
+	var rise := 0.30                  # travel before dying, in fractions of the target's height
+	var drift := 0.04                 # sideways wander amplitude, in fractions of its width
+	var life_min := 1.2
+	var life_max := 2.0
+	var spawning := true              # false = a fixed puff (see _fx_emit_once)
+	var free_when_empty := false
+
+	var _parts: Array[Dictionary] = []
+	var _accum := 0.0
+
+	func _ready() -> void:
+		z_index = 1
+		_sync_rect()
+
+	# One particle, born somewhere in the feature. `x`/`y` are its birthplace in normalized
+	# target space; everything else is its own variation of the entry's skin.
+	func spawn_one(age := 0.0) -> void:
+		var p := Vector2(randf(), randf())
+		if ellipse:
+			# Rejection-free polar pick, area-uniform (sqrt), then squashed onto the region's box —
+			# an ellipse rather than a rect matters here: a flask mouth IS an ellipse, and corner
+			# spawns would sit on the glass rim instead of over the opening.
+			var a := randf() * TAU
+			var r := sqrt(randf()) * 0.5
+			p = Vector2(0.5 + cos(a) * r, 0.5 + sin(a) * r)
+		_parts.append({
+			"x": origin.position.x + p.x * origin.size.x,
+			"y": origin.position.y + p.y * origin.size.y,
+			"r": randf_range(size_min, size_max),
+			"life": randf_range(life_min, life_max),
+			"age": age,
+			# Each bubble wanders on its own phase and speed, so the stream never reads as a
+			# column of clones marching in step.
+			"phase": randf() * TAU,
+			"wob": randf_range(0.7, 1.6),
+			"lean": randf_range(-1.0, 1.0),
+		})
+
+	# Fills the stream with particles already partway through their lives — what a simmer that has
+	# been running all along looks like, as opposed to one that starts the moment you look at it.
+	func prime() -> void:
+		if rate <= 0.0:
+			return
+		var mid := (life_min + life_max) * 0.5
+		for i in int(rate * mid):
+			spawn_one(randf() * mid)
+
+	func _process(delta: float) -> void:
+		if target == null or not is_instance_valid(target) or not target.is_inside_tree():
+			queue_free()
+			return
+		_sync_rect()
+		visible = target.is_visible_in_tree()
+		if spawning and rate > 0.0:
+			_accum += delta * rate
+			while _accum >= 1.0:
+				_accum -= 1.0
+				spawn_one()
+		var alive: Array[Dictionary] = []
+		for p: Dictionary in _parts:
+			p["age"] = float(p["age"]) + delta
+			if float(p["age"]) < float(p["life"]):
+				alive.append(p)
+		_parts = alive
+		if _parts.is_empty() and not spawning and free_when_empty:
+			queue_free()
+			return
+		queue_redraw()
+
+	# Glued to the target's global rect — the same tracking _glue does for the halo primitives,
+	# done per frame here because particles are re-drawn every frame anyway.
+	func _sync_rect() -> void:
+		var rect := target.get_global_rect()
+		global_position = rect.position
+		size = rect.size
+
+	func _draw() -> void:
+		if size.x <= 0.0 or size.y <= 0.0:
+			return
+		var unit := minf(size.x, size.y)
+		for p: Dictionary in _parts:
+			var t: float = clampf(float(p["age"]) / float(p["life"]), 0.0, 1.0)
+			# Rising: quick off the surface, easing as it climbs — and swelling slightly on the
+			# way up, the way a real bubble does as the pressure around it drops.
+			var climb: float = pow(t, 0.78)
+			var wander: float = sin(float(p["phase"]) + t * TAU * float(p["wob"])) * drift \
+					+ float(p["lean"]) * drift * 0.5 * t
+			var c := Vector2((float(p["x"]) + wander) * size.x,
+					(float(p["y"]) - climb * rise) * size.y)
+			var r: float = float(p["r"]) * unit * (1.0 + 0.35 * t)
+			# In fast, out slow: a bubble breaking the surface is abrupt, its dissipation isn't.
+			var a: float = smoothstep(0.0, 0.12, t) * (1.0 - smoothstep(0.55, 1.0, t))
+			if a <= 0.003 or r <= 0.4:
+				continue
+			_draw_particle(c, r, a)
+
+	func _draw_particle(c: Vector2, r: float, a: float) -> void:
+		if particle == "mote":
+			draw_circle(c, r, Color(color.r, color.g, color.b, a * 0.85))
+			return
+		# A bubble is mostly its RIM: a faint fill, a bright edge, and one specular dot up-left —
+		# the same read as the painted bubbles inside the flask, so the ones leaving it look like
+		# they came from the same picture.
+		draw_circle(c, r, Color(color.r, color.g, color.b, a * 0.20))
+		draw_arc(c, r * 0.86, 0.0, TAU, 20, Color(color.r, color.g, color.b, a * 0.85),
+				maxf(1.0, r * 0.22), true)
+		draw_circle(c - Vector2(r * 0.32, r * 0.32), maxf(0.8, r * 0.22),
+				Color(1, 1, 1, a * 0.65))
+
+
 class _HaloFx extends Control:
 	const LAYERS := 6
 	const BASE_CORNER := 14.0

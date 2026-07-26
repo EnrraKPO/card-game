@@ -125,32 +125,13 @@ func _lab_is_new() -> bool:
 		and profile.has_achievement(Achievements.FIRST_MATCH)
 
 
-# Pins a small glowing "NEW" pill to a button's top-right corner and gives it an attention glow.
+# Pins a glowing "NEW" pill inside a button's top-right corner and breathes the button itself.
+# A STATUS mark, not an attention one: it stands for "you have never opened this", so it is not
+# armed to self-dismiss — it goes away when the profile says the Lab has been visited.
 func _mark_button_new(btn: Button) -> void:
-	Vfx.attach("map_forge_alert_glow", btn)   # the same attention glow the map's Forge button uses
-
-	var badge := Label.new()
-	badge.text = Loc.t("common.new")
-	badge.add_theme_font_size_override("font_size", 20)
-	badge.add_theme_color_override("font_color", Color(0.12, 0.1, 0.02))
-	badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	badge.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	var style := StyleBoxFlat.new()
-	style.bg_color = Materials.color(Materials.piece_id("king"))
-	style.set_corner_radius_all(10)
-	style.set_content_margin_all(6)
-	style.content_margin_left = 14
-	style.content_margin_right = 14
-	badge.add_theme_stylebox_override("normal", style)
-	# Pin it inside the button's top-right corner (grow left/down from that corner, inset a touch
-	# so the whole pill stays within the button and never clips against the screen edge).
-	badge.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	badge.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	badge.grow_vertical = Control.GROW_DIRECTION_END
-	badge.offset_right = -12
-	badge.offset_top = 12
-	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	btn.add_child(badge)
+	AttentionBadge.pin(btn, {"kind": "pill", "text": Loc.t("common.new"), "at": "top_right",
+			"size": 0.18, "color": Materials.color(Materials.piece_id("king")),
+			"host_glow": true})
 
 
 func _build_loadout_panel() -> Control:

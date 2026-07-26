@@ -56,6 +56,15 @@ func _ready() -> void:
 		var start: MapNodeData = md.floors[0][0]
 		GameData.current_map_state.visited_nodes = [start.id]
 		GameData.current_map_state.current_node_id = start.connections[0]
+	# "labnew": force the world screen's Lab button into its "NEW" state (first King Piece earned,
+	# Lab never opened) — the AttentionBadge pill + host glow.
+	if scene_path.contains("game_world") and "labnew" in args and GameData.current_profile != null:
+		GameData.current_profile.lab_visited = false
+		GameData.current_profile.unlocked_achievements.append(Achievements.FIRST_MATCH)
+	# "nomineral": spend the run's Magic Mineral, so the Forge button shows its UNLIT state (no
+	# glow, no inner light, no bubbling — the whole alert state is one gate).
+	if scene_path.contains("map") and "nomineral" in args:
+		GameData.current_run.magic_mineral = 0
 	# "forgeack": pretend the player already acknowledged the Forge "!" at this map position.
 	if scene_path.contains("map") and "forgeack" in args:
 		GameData.current_run.forge_alert_ack = "%d:%d" % [GameData.current_run.act,
@@ -384,6 +393,35 @@ func _ready() -> void:
 	# Sustained radiance breathes from zero — let it climb to a visible phase before capture.
 	for i in 40:
 		await get_tree().process_frame
+	# "forgehover": simulate hovering the Forge button, to prove the badge's acknowledgement wiring
+	# end to end — the mark goes quiet, its glow detaches with it, and the screen persists "seen".
+	if scene_path.contains("map") and "forgehover" in args:
+		for b: Node in sv.find_children("*", "AttentionBadge", true, false):
+			var ab := b as AttentionBadge
+			for ch: Node in ab.host.get_children():
+				if ch is Button:
+					(ch as Button).mouse_entered.emit()
+			print("VFX ack: shown=%s attached=%s persisted=\"%s\""
+					% [ab.shown, Vfx._attached.keys(), GameData.current_run.forge_alert_ack])
+		await get_tree().process_frame
+	# "vfxdump": list what the VFX overlay bands are actually drawing at capture time — the answer
+	# to "is this glow missing, or is it there and the capture can't see it?", which a screenshot
+	# cannot distinguish (composited GlowFx quads have historically not survived the harness).
+	if "vfxdump" in args:
+		for b: Node in sv.find_children("*", "AttentionBadge", true, false):
+			var ab := b as AttentionBadge
+			print("VFX badge kind=%s shown=%s glow=%s rect=%s host=%s"
+					% [ab.kind, ab.shown, ab.glow_id, ab.get_global_rect(), ab.host])
+		print("VFX attached states: ", Vfx._attached.keys())
+		var bands: Array[Node] = sv.find_children("*", "CanvasLayer", true, false)
+		print("VFX bands in capture: %d (Vfx autoload still holds %d children)"
+				% [bands.size(), Vfx.get_child_count()])
+		for band: Node in bands:
+			print("VFX band %s children=%d" % [band.name, band.get_child_count()])
+			for fx: Node in band.get_children():
+				var c := fx as Control
+				if c != null:
+					print("VFX   %s visible=%s rect=%s" % [c.get_class(), c.visible, c.get_global_rect()])
 	sv.get_texture().get_image().save_png(OUT)
 	print("RENDERED ", scene_path, " @ ", RES)
 	get_tree().quit()

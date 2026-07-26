@@ -1056,8 +1056,8 @@ const SoundEditor = {
 // look yet) are clearly flagged and mutable in game via F8 / DevFlags.placeholder_vfx.
 const VFX_CATEGORIES = ['ui', 'card', 'combat', 'status', 'resource', 'map', 'economy', 'lab', 'meta', 'screen'];
 const VFX_BEHAVIORS = ['flash', 'pulse', 'pop', 'shake', 'ring', 'sparkle', 'glint', 'glow',
-  'float_label', 'burst', 'travel', 'reticle', 'dissolve'];
-const VFX_SUSTAINED = ['glow', 'pulse', 'sparkle', 'radiance'];
+  'float_label', 'burst', 'travel', 'reticle', 'dissolve', 'radiance', 'emit'];
+const VFX_SUSTAINED = ['glow', 'pulse', 'sparkle', 'radiance', 'emit'];
 // 'custom' = an effect class registered in-game via Vfx.register_custom. 'filter' = the look is
 // a RenderFilter (its own tab); the VFX entry then owns only WHEN it runs and how it animates.
 const VFX_RENDERERS = ['procedural', 'custom', 'filter'];

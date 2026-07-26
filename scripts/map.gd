@@ -19,18 +19,18 @@ static var _zoom_level := 1.0
 # _build_forge_fab, which shows this directly instead of drawing its own circle + anvil).
 const FORGE_FAB_TEX := preload("res://assets/buttons/forge.png")
 
-# The "unused mineral" attention badge that rides on top of the Forge button. The SVG is
-# placeholder art; dropping a PNG at BANG_PNG_PATH overrides it with no code change.
-const FORGE_BANG_SVG := preload("res://assets/ui/alert_bang.svg")
-const FORGE_BANG_PNG_PATH := "res://assets/ui/alert_bang.png"
-# The sustained cues shown while unspent Magic Mineral is in hand. Two entries, one state: an
+# The sustained cues shown while unspent Magic Mineral is in hand. Three entries, ONE state: an
 # outer glow spilling past the rim and a dim inner light, breathing on the same period so they
-# read as one light rather than two effects.
-const FORGE_ALERT_CUES := ["map_forge_alert_glow", "map_forge_alert_inner"]
-# Badge CENTRE as a fraction of the Forge button's box. Well inside the corner: the art's
-# visible disc is only ~0.83 of the box, so a corner-ward badge floats off it entirely. This
-# lands on the upper-right rim, overlapping the face.
-const BADGE_AT := Vector2(0.71, 0.29)
+# read as one light rather than two effects — plus the flask's reaction (bubbles rising out of
+# its mouth). The reaction is deliberately part of the LIT state, not idle decoration: a flask
+# that simmers regardless says nothing, one that starts simmering when there is mineral to spend
+# says the same thing the light does, in the art's own language.
+const FORGE_ALERT_CUES := ["map_forge_alert_glow", "map_forge_alert_inner", "map_forge_bubbles"]
+# Badge CENTRE as a fraction of the Forge button's box (AttentionBadge places it). OFF the glass,
+# level with the widest part of the flask body: the art carries ~12% transparent padding, so 0.93
+# clears the silhouette without floating away from it. Deliberately not above the button — that
+# is where the bubbles rise, and a mark parked in the stream fights the cue beside it.
+const BADGE_AT := Vector2(0.93, 0.40)
 
 # --- Tunable in the Inspector (select the Map root node in map.tscn, drag the sliders,
 # --- then run to see the result). Spacing is a multiple of node diameter, so it scales with
@@ -77,18 +77,24 @@ const BADGE_AT := Vector2(0.71, 0.29)
 @export_range(1.0, 2.5, 0.05) var zoom_max := 1.8
 
 @export_group("Forge Button")
-## Forge button CENTRE as a fraction of the screen (0 = left/top, 1 = right/bottom). The map
-## nodes sit in a centred band with empty side margins, so pull X in from 1.0 to bring the
-## button nearer the content. Drag these in the Inspector, then run, to place it exactly.
-@export_range(0.0, 1.0, 0.01) var forge_pos_x := 0.90
-@export_range(0.0, 1.0, 0.01) var forge_pos_y := 0.18
+## Forge button CENTRE as a fraction of the screen (0 = left/top, 1 = right/bottom). It lives in
+## the LEFT margin, vertically centred: the map's nodes sit in a centred band, so the two side
+## margins are the only regions that stay clear of content at any seed, and the left one is now
+## free (the zoom slider moved to the right edge). X is pulled in off the edge rather than hugging
+## it — far enough from the node band to never overlap a medallion or its caption, far enough from
+## the edge to read as a placed control rather than something falling off the screen. Drag these
+## in the Inspector, then run, to place it exactly.
+@export_range(0.0, 1.0, 0.01) var forge_pos_x := 0.125
+@export_range(0.0, 1.0, 0.01) var forge_pos_y := 0.5
 ## Forge button diameter, px (desktop / compact-phone).
 @export_range(64.0, 600.0, 2.0) var forge_diam := 252.0
 ## Same authored value as desktop on purpose: compact already applies its own content-scale
 ## bump, so a larger number here lands visually oversized and eats the map.
 @export_range(80.0, 700.0, 2.0) var forge_diam_compact := 252.0
-## Attention badge diameter, ×forge button diameter. It sits on the button's upper-right.
-@export_range(0.15, 0.6, 0.01) var forge_badge_mult := 0.38
+## Attention badge height, ×forge button diameter. The "!" is a tall narrow glyph, so its box
+## overstates how much of the button it occupies — it needs to be bigger than a square marker
+## would to carry the same weight.
+@export_range(0.15, 0.8, 0.01) var forge_badge_mult := 0.5
 
 var map_data: MapData
 var current_node_id: int
@@ -107,7 +113,10 @@ var _node_diam := NODE_DIAM
 
 # Forge button pieces kept for the "unused mineral" highlight (see _set_forge_alert).
 var _forge_fab: Control
-var _forge_badge: Control
+var _forge_badge: AttentionBadge
+# The zoom slider's panel, kept for _side_reserves — the map keeps its content out of the bands
+# these two floating controls occupy.
+var _zoom_panel: Control
 
 
 func get_chrome() -> Dictionary:
@@ -216,54 +225,31 @@ func _build_forge_fab() -> void:
 	for s in ["normal", "hover", "pressed", "focus", "disabled"]:
 		btn.add_theme_stylebox_override(s, StyleBoxEmpty.new())
 	btn.pressed.connect(func() -> void:
-		_acknowledge_forge_alert()
 		_node_kinds[MapNodeData.Type.FORGE].enter(null, self))
 	# Tactile feedback on the art itself (the button has no visual of its own): brighten on hover,
-	# sink darker on press.
+	# sink darker on press. (Dismissing the "!" on hover/press is the badge's own business — it is
+	# armed below, touch gate included.)
 	btn.mouse_entered.connect(func() -> void:
 		if not btn.button_pressed:
-			tex.modulate = Color(1.12, 1.12, 1.12)
-		# Hover dismisses the badge — but NOT on touch, where emulate_mouse_from_touch parks a
-		# ghost cursor wherever the last tap landed. That phantom hover would silently retire a
-		# cue the player never saw. Touch acknowledges by tapping. See [[tooltip-touch-gate]].
-		if not UIScale.is_touch():
-			_acknowledge_forge_alert())
+			tex.modulate = Color(1.12, 1.12, 1.12))
 	btn.mouse_exited.connect(func() -> void: tex.modulate = Color.WHITE)
 	btn.button_down.connect(func() -> void: tex.modulate = Color(0.85, 0.85, 0.85))
 	btn.button_up.connect(func() -> void: tex.modulate = Color.WHITE)
 	fab.add_child(btn)
 
-	# Attention badge, centred on BADGE_AT of the button box — a fraction, not the corner,
-	# because the button art carries transparent padding and a corner-anchored badge floats
-	# off the visible circle. Added after the Button so it draws on top; it ignores the mouse,
-	# so the whole face stays clickable.
-	var bd := diam * forge_badge_mult
-	var badge := TextureRect.new()
-	badge.texture = _bang_texture()
-	badge.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	badge.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	badge.anchor_left = BADGE_AT.x; badge.anchor_right = BADGE_AT.x
-	badge.anchor_top = BADGE_AT.y; badge.anchor_bottom = BADGE_AT.y
-	badge.offset_left = -bd * 0.5; badge.offset_right = bd * 0.5
-	badge.offset_top = -bd * 0.5; badge.offset_bottom = bd * 0.5
-	badge.visible = false
-	fab.add_child(badge)
+	# The "!" — a standard AttentionBadge (mark + its own dense glow + the answered-once
+	# lifecycle), so this screen states only what is specific to it: which mark, where, how big.
+	# Armed: hovering or pressing the button IS the acknowledgement, and the badge persists that
+	# through _acknowledge_forge_alert.
+	var badge := AttentionBadge.pin(fab, {"kind": "bang", "at": BADGE_AT,
+			"size": forge_badge_mult, "shown": false})
+	badge.arm_ack(btn)   # the transparent Button over the art is what ever sees a hover/press
+	badge.acknowledged.connect(_acknowledge_forge_alert)
 
 	_forge_fab = fab
 	_forge_badge = badge
 	GameSignals.mineral_changed.connect(func(_v: int) -> void: _refresh_forge_alert())
 	_refresh_forge_alert()
-
-
-# Placeholder SVG today; a PNG dropped at FORGE_BANG_PNG_PATH silently wins, so swapping in
-# final art is a file drop with no code change.
-func _bang_texture() -> Texture2D:
-	if ResourceLoader.exists(FORGE_BANG_PNG_PATH):
-		var png := load(FORGE_BANG_PNG_PATH)
-		if png is Texture2D:
-			return png
-	return FORGE_BANG_SVG
 
 
 # "Unused mineral" = the run is holding Magic Mineral it hasn't spent at the Forge yet. Two
@@ -291,7 +277,7 @@ func _set_forge_glow(on: bool) -> void:
 
 func _set_forge_badge(on: bool) -> void:
 	if _forge_badge != null:
-		_forge_badge.visible = on
+		_forge_badge.shown = on   # takes the badge's own glow with it (see AttentionBadge)
 
 
 # The map position the badge's "seen" state is pinned to — see RunData.forge_alert_ack.
@@ -301,20 +287,23 @@ func _forge_alert_key() -> String:
 	return "%d:%d" % [act, GameData.current_map_state.current_node_id]
 
 
-# Hovering or clicking the button IS the acknowledgement. Persisted immediately so quitting
-# right after doesn't resurrect a cue the player already answered.
+# The badge has been answered (it handles the gesture and the touch gate; see AttentionBadge) —
+# all that is left is remembering it, which is this screen's business because WHERE the player
+# was standing is what "seen" means for this cue. Persisted immediately so quitting right after
+# doesn't resurrect a cue the player already answered.
 func _acknowledge_forge_alert() -> void:
 	var run := GameData.current_run
-	if run == null or _forge_badge == null or not _forge_badge.visible:
+	if run == null:
 		return
 	run.forge_alert_ack = _forge_alert_key()
 	GameData.save_run()
-	_set_forge_badge(false)
 
 
-# A chunky vertical zoom slider (+ on top, − below, map-app style) floating over the left
-# edge of the map area, vertically centred — the one region that stays clear of map content
-# on both desktop (empty side margins) and compact (node rows hug the top/bottom corners).
+# A chunky vertical zoom slider (+ on top, − below, map-app style) floating over the RIGHT
+# edge of the map area, vertically centred — the map's side margins are the regions that stay
+# clear of content, and the slider takes the right one so the Forge flask can own the left
+# (a control the player touches occasionally yields the more prominent side to the one action
+# that is always available). It sits beside the scroll bar, not over it.
 # Dragging it rebuilds the map live at the new node scale (spacing is a multiple of node
 # diameter, so the whole layout grows with it and the canvas pans/scrolls).
 func _build_zoom_slider() -> void:
@@ -322,9 +311,10 @@ func _build_zoom_slider() -> void:
 	# sitting over the map rather than loose parts mixed into the nodes.
 	var panel := PanelContainer.new()
 	panel.z_index = 60
-	panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER_LEFT,
-			Control.PRESET_MODE_MINSIZE, 32 if _compact else 22)
-	panel.grow_horizontal = Control.GROW_DIRECTION_END
+	# The margin clears the scroll container's own vertical scroll bar, which rides the same edge.
+	panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER_RIGHT,
+			Control.PRESET_MODE_MINSIZE, 44 if _compact else 34)
+	panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	panel.grow_vertical = Control.GROW_DIRECTION_BOTH
 	var bg := StyleBoxFlat.new()
 	bg.bg_color = Color(0.10, 0.10, 0.20, 0.55)
@@ -332,6 +322,7 @@ func _build_zoom_slider() -> void:
 	bg.set_content_margin_all(16.0 if _compact else 12.0)
 	panel.add_theme_stylebox_override("panel", bg)
 	add_child(panel)
+	_zoom_panel = panel
 
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 14 if _compact else 10)
@@ -508,6 +499,30 @@ func _calculate_positions(canvas_size: Vector2, floor_spacing: float, pad_bottom
 	_finalize_positions(canvas_size, floor_spacing, x_of, lane_spacing, pad_bottom)
 
 
+# The screen-edge bands the floating controls own — the Forge button on the left, the zoom
+# slider on the right. The node graph is fitted into what is LEFT of them, so a wide-spreading
+# seed can't drop a medallion under a control: with the graph fit-to-width and centred, its left
+# edge moves by 200px+ between seeds, which makes "there's usually room there" a coin flip rather
+# than a layout. Measured off the real widgets (not their authored numbers) so moving or resizing
+# either one re-reserves automatically.
+#
+# Exact at zoom 1, where the canvas is the viewport. Zoomed in, the canvas is wider and pans, so
+# content can still travel under a control — inherent to a floating control over a scrolling map,
+# and the reason these live in the margins rather than over the middle.
+const CONTROL_GUTTER := 72.0   # air past the widget: enough for a node's CAPTION, which is wider
+                               # than the medallion it hangs under (~95px of overhang each side at
+                               # zoom 1), plus room for the control's own glow to spill
+
+func _side_reserves() -> Vector2:
+	var left := 0.0
+	var right := 0.0
+	if _forge_fab != null and _forge_fab.size.x > 0.0:
+		left = _forge_fab.position.x + _forge_fab.size.x + CONTROL_GUTTER
+	if _zoom_panel != null and _zoom_panel.size.x > 0.0:
+		right = size.x - _zoom_panel.position.x + CONTROL_GUTTER
+	return Vector2(maxf(0.0, left), maxf(0.0, right))
+
+
 # Fit the relaxed x-coordinates into the viewport width (shrink only if too wide), centre
 # them, add optional organic jitter, and pair with the floor y.
 func _finalize_positions(canvas_size: Vector2, floor_spacing: float, x_of: Dictionary,
@@ -518,10 +533,19 @@ func _finalize_positions(canvas_size: Vector2, floor_spacing: float, x_of: Dicti
 		min_x = minf(min_x, x_of[id])
 		max_x = maxf(max_x, x_of[id])
 	var span: float = maxf(max_x - min_x, 1.0)
-	var avail: float = canvas_size.x - _node_diam - 16.0
+	# The band the graph may use: the canvas minus the floating controls' gutters (see
+	# _side_reserves). Both the fit and the centring work in that band, so reserving space on one
+	# side shifts the graph rather than squashing it against the other.
+	var reserve := _side_reserves()
+	var band_lo: float = reserve.x
+	var band_hi: float = canvas_size.x - reserve.y
+	if band_hi - band_lo < _node_diam * 3.0:
+		band_lo = 0.0                 # a viewport too narrow to honour the gutters keeps the map
+		band_hi = canvas_size.x       # whole and lets the controls overlap — content wins
+	var avail: float = band_hi - band_lo - _node_diam - 16.0
 	var scale: float = minf(1.0, avail / span)
 	var graph_center: float = (min_x + max_x) * 0.5
-	var canvas_center: float = canvas_size.x * 0.5
+	var canvas_center: float = (band_lo + band_hi) * 0.5
 	var usable_h: float = canvas_size.y - V_PAD_TOP - pad_bottom
 	var half: float = _node_diam * 0.5
 	var jitter := RandomNumberGenerator.new()
@@ -534,7 +558,9 @@ func _finalize_positions(canvas_size: Vector2, floor_spacing: float, x_of: Dicti
 				jitter.seed = GameData.current_map_state.map_seed ^ (node.id * 2654435761)
 				x += jitter.randf_range(-1.0, 1.0) * lane_spacing * organic_jitter
 				y += jitter.randf_range(-1.0, 1.0) * floor_spacing * organic_jitter * 0.5
-			x = clampf(x, half + 4.0, canvas_size.x - half - 4.0)
+			# Clamped to the reserved band, not the raw canvas — otherwise jitter (or a graph too
+			# wide to shrink further) could push a node straight back under a control.
+			x = clampf(x, band_lo + half + 4.0, band_hi - half - 4.0)
 			node_positions[node.id] = Vector2(x, y)
 
 

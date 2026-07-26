@@ -3,7 +3,7 @@ extends RefCounted
 
 # The board-slot state icons (see SlotUI). Ships as SVG placeholder art with a PNG-override hook:
 # drop a <id>.png next to the <id>.svg in assets/board/ and the game uses the PNG instead — the
-# exact convention map.gd uses for the forge alert badge (_bang_texture). One resolver, cached.
+# exact convention AttentionBadge uses for its marks (AttentionBadge._art_for). One resolver, cached.
 
 const DIR := "res://assets/board/"
 

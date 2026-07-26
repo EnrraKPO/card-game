@@ -5411,7 +5411,7 @@
       "prompt": "Sprite sheet of sickly green poison bubbles rising and popping, looping toxic aura, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-14T12:50:33.586Z",
-    "fileHash": "b92e44841ae1b21baa69d3e6ff23f3277fda5d37"
+    "fileHash": "dce04fc3eec19d12650d48d5b7a9a9f9ecf53a8c"
   },
   "vfx/aura_blind": {
     "file": "vfx.json",
@@ -5431,7 +5431,7 @@
       "prompt": "Sprite sheet of grey smoky haze drifting across a face area, looping blindness veil, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-14T12:50:35.887Z",
-    "fileHash": "b92e44841ae1b21baa69d3e6ff23f3277fda5d37"
+    "fileHash": "dce04fc3eec19d12650d48d5b7a9a9f9ecf53a8c"
   },
   "card/pawn_rook": {
     "file": "chess_combined.json",
@@ -6101,7 +6101,7 @@
       "prompt": "Sprite sheet of a golden light halo breathing outward around a circular button, smooth soft radial falloff extending past the rim, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-20T18:34:03.607Z",
-    "fileHash": "b92e44841ae1b21baa69d3e6ff23f3277fda5d37"
+    "fileHash": "dce04fc3eec19d12650d48d5b7a9a9f9ecf53a8c"
   },
   "card/bishop": {
     "file": "materials.json",

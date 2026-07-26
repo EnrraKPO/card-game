@@ -76,8 +76,8 @@ const SOUND_CATEGORIES = ['ui', 'card', 'combat', 'magic', 'resource', 'map', 'e
 // Vfx.BEHAVIORS / Vfx.SUSTAINED_BEHAVIORS / VFXData.category).
 const VFX_CATEGORIES = ['ui', 'card', 'combat', 'status', 'resource', 'map', 'economy', 'lab', 'meta', 'screen'];
 const VFX_BEHAVIORS = ['flash', 'pulse', 'pop', 'shake', 'ring', 'sparkle', 'glint', 'glow',
-  'float_label', 'burst', 'travel', 'reticle', 'dissolve', 'radiance'];
-const VFX_SUSTAINED = ['glow', 'pulse', 'sparkle', 'radiance'];
+  'float_label', 'burst', 'travel', 'reticle', 'dissolve', 'radiance', 'emit'];
+const VFX_SUSTAINED = ['glow', 'pulse', 'sparkle', 'radiance', 'emit'];
 // 'custom' = a designed effect class registered in-game via Vfx.register_custom (combat looks).
 // 'filter' = the look is a RenderFilter (data/render_filters); the VFX entry only owns when it
 // runs and how its params animate.
