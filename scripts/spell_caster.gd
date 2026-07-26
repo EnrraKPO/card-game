@@ -67,19 +67,13 @@ func make_cast_action(card_ui: CardUI, is_drag: bool) -> Interaction.Action:
 	act.source = card_ui
 	act.is_drag = is_drag
 	act.modal = not is_drag
-	var slot_mode := _needs_slot(card_ui)
+	var effects: Array = card_ui.card_instance.data.effects
+	var slot_mode := _effects_need_slot(effects)
 	act.kind = Interaction.Action.Kind.CAST_SLOT if slot_mode else Interaction.Action.Kind.CAST
-	if slot_mode:
-		act.role_check = func(slot: SlotUI) -> int:
-			if _slot_eligible(card_ui.card_instance, slot):
-				return Interaction.Role.TARGET_VALID
-			return Interaction.Role.TARGET_INVALID
-	else:
-		act.role_check = func(slot: SlotUI) -> int:
-			var occ := slot.get_card()
-			if occ != null and _eligible(card_ui.card_instance, occ.card_instance):
-				return Interaction.Role.TARGET_VALID
-			return Interaction.Role.TARGET_INVALID
+	act.role_check = func(slot: SlotUI) -> int:
+		if effects_target_ok(effects, slot):
+			return Interaction.Role.TARGET_VALID
+		return Interaction.Role.TARGET_INVALID
 	act.on_commit = func(slot: SlotUI) -> void:
 		if not _can_afford(card_ui):
 			return
@@ -146,17 +140,11 @@ func _can_afford(card_ui: CardUI) -> bool:
 
 # ── Target eligibility ─────────────────────────────────────────────────────────
 
-# Whether `target` is a valid manual pick for this spell: it must pass the conditions of at
-# least one of the spell's manual ON_PLAY effects (a spell with no manual effects has no
-# eligibility gate). Keeps the targeting UI honest — only units the resolution would actually
-# affect light up and accept the pick, so a spell can't be wasted on an invalid target
-# (e.g. Castling onto a unit that already has a Barrier).
-func _eligible(spell: CardInstance, target: CardInstance) -> bool:
-	return _manual_effects_eligible(spell.data.effects, target)
-
-
-# The effects-level form of _eligible, shared with the autocast gate (which judges an
-# AbilityData's effects directly — no spell-shaped token exists on that path).
+# Whether `target` is a valid manual pick for this effect set: it must pass the conditions of
+# at least one manual ON_PLAY effect (a set with no manual effects has no eligibility gate).
+# Keeps the targeting UI honest — only units the resolution would actually affect light up and
+# accept the pick, so a cast can't be wasted on an invalid target (e.g. Castling onto a unit
+# that already has a Barrier). Reached through effects_target_ok, never called directly.
 func _manual_effects_eligible(effects: Array, target: CardInstance) -> bool:
 	var has_manual := false
 	for e: Effect in effects:
@@ -170,22 +158,24 @@ func _manual_effects_eligible(effects: Array, target: CardInstance) -> bool:
 
 
 # ── Slot-mode eligibility (MANUAL_SLOT effects, e.g. material delivery) ─────────
+# Effects-level like _manual_effects_eligible, for the same reason: the autocast gate judges an
+# AbilityData's effects directly, where no spell-shaped token exists to reach through.
 
-func _needs_slot(card_ui: CardUI) -> bool:
-	return card_ui.card_instance.data.effects.any(func(e: Effect) -> bool:
+func _effects_need_slot(effects: Array) -> bool:
+	return effects.any(func(e: Effect) -> bool:
 		return e.trigger == Effect.Trigger.ON_PLAY \
 			and e.targeting_policy == Effect.TargetingPolicy.MANUAL_SLOT)
 
 
 # A slot is a valid MANUAL_SLOT pick when it's on the caster's OWN side and is either EMPTY
 # (the effect's spawn case) or holds a unit passing the effect's conditions (the merge case).
-func _slot_eligible(spell: CardInstance, slot: SlotUI) -> bool:
+func _effects_slot_eligible(effects: Array, slot: SlotUI) -> bool:
 	if slot.owner_id != 0:
 		return false
 	var occupant := slot.get_card()
 	if occupant == null:
 		return true
-	for e: Effect in spell.data.effects:
+	for e: Effect in effects:
 		if e.trigger == Effect.Trigger.ON_PLAY \
 				and e.targeting_policy == Effect.TargetingPolicy.MANUAL_SLOT \
 				and EffectSystem.passes_conditions(e.conditions, occupant.card_instance):
@@ -193,11 +183,28 @@ func _slot_eligible(spell: CardInstance, slot: SlotUI) -> bool:
 	return false
 
 
+# THE target judge: is `slot` a legal manual pick for this effect set? Dispatches on the set's
+# own targeting policy — MANUAL_SLOT effects judge the SLOT (so an empty own slot is a valid
+# pick), everything else judges the OCCUPANT. Every gesture that aims an effect set asks this
+# one function: hand spells, tray ability tokens, and the armed-holder autocast drag. Keep it
+# that way — the Barracks bug was two judges answering this question differently, so a
+# slot-targeting ability read valid from the tray and invalid under the holder drag.
+func effects_target_ok(effects: Array, slot: SlotUI) -> bool:
+	if _effects_need_slot(effects):
+		return _effects_slot_eligible(effects, slot)
+	var occupant := slot.get_card()
+	if occupant == null:
+		return false
+	return _manual_effects_eligible(effects, occupant.card_instance)
+
+
 # ── Autocast (an armed ability fired by dragging its holder onto a target) ──────
 
-# Whether dropping dragged unit `holder` onto `slot` fires its armed autocast ability:
-# armed + fielded player unit + payable (untapped if tap-costed, mana affordable) + the
-# occupant passes the ability's manual-effect conditions. Consulted by the AUTOCAST action's
+# Whether dropping dragged unit `holder` onto `slot` fires its armed autocast ability: armed +
+# fielded player unit + payable (untapped if tap-costed, mana affordable) + the slot passes the
+# ability's own targeting judgement. That last part is effects_target_ok — the SAME judge the
+# tray token asks — so a slot-targeting ability (the Barracks' delivery) is castable through
+# both gestures, and only the cost/arming checks live here. Consulted by the AUTOCAST action's
 # role predicate (cue + drop gate, via CombatBoard.can_autocast) and again at execution.
 func autocast_drop_ok(holder: CardInstance, slot: SlotUI) -> bool:
 	if holder == null or holder.row < 0 or holder.owner != 0:
@@ -209,20 +216,22 @@ func autocast_drop_ok(holder: CardInstance, slot: SlotUI) -> bool:
 		return false
 	if ab.mana > get_mana.call():
 		return false
-	var occupant := slot.get_card()
-	if occupant == null:
-		return false
-	return _manual_effects_eligible(ab.effects, occupant.card_instance)
+	return effects_target_ok(ab.effects, slot)
 
 
-# Resolves the armed ability on the slot's occupant, with the HOLDER as effect source (same
-# rule as the tray-token path). Emits ability_autocast first so the orchestrator pays the
-# costs — mirroring _execute_spell's consume-then-resolve order.
+# Resolves the armed ability on the picked slot, with the HOLDER as effect source (same rule as
+# the tray-token path). Slot-mode abilities pass the slot itself, so an EMPTY pick still carries
+# a target — the same manual_target/manual_slot pair _execute_spell hands down. Emits
+# ability_autocast first so the orchestrator pays the costs — mirroring the consume-then-resolve
+# order there.
 func activate_autocast(holder: CardInstance, slot: SlotUI) -> void:
 	if not autocast_drop_ok(holder, slot):
 		return
 	var ab := holder.armed_autocast()
-	var target: CardInstance = slot.get_card().card_instance
+	var occupant := slot.get_card()
+	var slot_mode := _effects_need_slot(ab.effects)
 	ability_autocast.emit(holder, ab)
-	await _resolve_on_play(ab.effects, holder, ab, target, null)
+	await _resolve_on_play(ab.effects, holder, ab,
+			occupant.card_instance if occupant != null else null,
+			slot if slot_mode else null)
 	board.refresh()

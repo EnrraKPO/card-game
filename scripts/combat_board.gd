@@ -19,7 +19,8 @@ var placement_enabled: bool  = false
 var is_hand_card: Callable        # func(CardUI) -> bool
 var get_mana: Callable            # func() -> int
 # Whether dropping this dragged unit onto this slot fires its armed autocast ability —
-# SpellCaster.autocast_drop_ok (armed + payable + eligible occupant), injected like get_mana.
+# SpellCaster.autocast_drop_ok (armed + payable + the ability's own target judge, which may
+# well accept an EMPTY slot — slot-mode abilities do), injected like get_mana.
 var can_autocast: Callable        # func(CardInstance, SlotUI) -> bool
 # The combat-wide interaction session owner (see Interaction / INTERACTION_DESIGN.md). The
 # board renders WHATEVER the current action declares (present, connected to its `changed`) and
@@ -495,10 +496,13 @@ func make_unit_action(card_ui: CardUI, animated: bool, is_drag: bool) -> Interac
 	return act
 
 
-# The armed-autocast drag: PURE COMPOSITION of a move and a cast — empty own droppable slots
-# are move DESTINATIONS, occupied slots judge as cast targets, and everything else reads
-# invalid (a cast IS a targeted effect). Commit dispatches on what the slot is. No bespoke
-# hybrid path — the components unfold it from the roles.
+# The armed-autocast drag: PURE COMPOSITION of a move and a cast — BOTH interpretations are
+# offered on EVERY slot, move first. A legal move spot is a DESTINATION; anything else (empty
+# slots included) goes to the ability's own judge, and only a slot neither can use reads invalid
+# (a cast IS a targeted effect). Asking the cast about empty slots is the point: a rooted
+# building can't move anywhere, so a move-only reading painted red X over the very slots its
+# delivery ability wants. Commit mirrors the same precedence via is_move_spot — one definition,
+# so cue / drop-accept / execution cannot disagree.
 func make_autocast_action(card_ui: CardUI) -> Interaction.Action:
 	var act := Interaction.Action.new()
 	act.kind = Interaction.Action.Kind.AUTOCAST
@@ -506,18 +510,19 @@ func make_autocast_action(card_ui: CardUI) -> Interaction.Action:
 	act.animated = true
 	act.is_drag = true
 	act.preview_instance = card_ui.card_instance
+	var is_move_spot := func(slot: SlotUI) -> bool:
+		return slot.get_card() == null and slot.owner_id == 0 \
+				and _can_drop_on_player_slot(card_ui, slot)
 	act.role_check = func(slot: SlotUI) -> int:
-		if slot.get_card() == null:
-			if slot.owner_id == 0 and _can_drop_on_player_slot(card_ui, slot):
-				return Interaction.Role.DESTINATION
-			return Interaction.Role.TARGET_INVALID
+		if is_move_spot.call(slot):
+			return Interaction.Role.DESTINATION
 		if _can_autocast_on_slot(card_ui, slot):
 			return Interaction.Role.TARGET_VALID
 		return Interaction.Role.TARGET_INVALID
 	act.on_commit = func(slot: SlotUI) -> void:
 		if not placement_enabled:
 			return
-		if slot.get_card() == null:
+		if is_move_spot.call(slot):
 			do_place_unit(slot, card_ui)
 		else:
 			autocast_dropped.emit(slot, card_ui)
