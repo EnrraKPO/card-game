@@ -109,11 +109,23 @@ func end_drag(source: CardUI) -> void:
 		end_action(_action)
 
 
-# The current action's verdict for a slot (NONE when idle) — SlotUI's drop gate asks this.
+# The current action's verdict for a slot (NONE when idle) — cue rendering and hover ask this.
 func role_of(slot: SlotUI) -> int:
 	if _action == null:
 		return Role.NONE
 	return _action.role_of(slot)
+
+
+# Whether `dragged` is the card the live action is actually about. Godot's drag-drop asks the
+# control under the CURSOR, and hands it the payload — it has no idea which gesture is live, so
+# nothing downstream can assume the two agree. They diverge for real: a modal click session
+# (SpellCaster._on_spell_card_pressed) stays live while another card is picked up, and that
+# card's drag deliberately begins no action of its own (_on_spell_drag_started early-returns).
+# Without this check the drop gate would answer for the SESSION's card, so dropping card B
+# spent card A — the wrong ability consumed, resolved wherever B happened to land.
+# EVERY drag-drop path must pass the payload through here; role_of alone is not a gate.
+func owns_drag(dragged: Variant) -> bool:
+	return _action != null and dragged is CardUI and dragged == _action.source
 
 
 # Drop commit: Godot's drag-drop landed on `slot`. Re-validates via the SAME predicate that
@@ -122,8 +134,11 @@ func role_of(slot: SlotUI) -> int:
 # started the drag eats its NOTIFICATION_DRAG_END, so end_drag would never fire and the gesture's
 # preview (menace/crosshair cues) would strand. Ending here doesn't rely on that notification.
 # end_action is idempotent, so a DRAG_END that does still arrive is a harmless no-op.
-func commit_drop(slot: SlotUI) -> bool:
-	if _action == null:
+# `dragged` is Godot's drop payload: the commit is refused unless it IS this action's source
+# (see owns_drag). The gate is repeated here rather than trusted from _can_drop_data because the
+# two are separate queries at separate moments — the same reason the role is re-validated.
+func commit_drop(slot: SlotUI, dragged: Variant) -> bool:
+	if _action == null or not owns_drag(dragged):
 		return false
 	var role := role_of(slot)
 	if role != Role.DESTINATION and role != Role.TARGET_VALID:

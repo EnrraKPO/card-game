@@ -462,6 +462,11 @@ func _can_drop_data(_at: Vector2, data: Variant) -> bool:
 		return false
 	if interaction == null:
 		return false
+	# The live action must be ABOUT the card being dragged. A foreign payload gets no verdict at
+	# all — not even an invalid one: reporting nothing leaves the ghost on its default view, which
+	# is the honest reading of "this slot is not answering you."
+	if not interaction.owns_drag(data):
+		return false
 	match interaction.role_of(self):
 		Interaction.Role.DESTINATION:
 			DragGhost.report(DragGhost.State.UNIT, self)
@@ -476,6 +481,8 @@ func _can_drop_data(_at: Vector2, data: Variant) -> bool:
 			return false
 
 
-func _drop_data(_at: Vector2, _data: Variant) -> void:
+func _drop_data(_at: Vector2, data: Variant) -> void:
 	if interaction != null:
-		interaction.commit_drop(self)   # re-validates via the same role predicate, then commits
+		# Re-validates the payload's identity AND the role via the same predicates that lit the
+		# cue, then commits.
+		interaction.commit_drop(self, data)
