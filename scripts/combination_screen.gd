@@ -69,15 +69,38 @@ var _sel_tip_label: Label = null
 var _merge_btns: Dictionary = {}
 # The engage button's diameter: a FAT fraction of the card it rides — it's the primary action
 # on that card, it should read like one. Clamped for absurd card sizes.
-const MERGE_BTN_RATIO := 0.58
-const MERGE_BTN_MIN := 96.0
-const MERGE_BTN_MAX := 176.0
-# How much of the button hangs BELOW the card's bottom edge — mostly inside the card, so the
-# spread's limited breathing room stays readable.
-const MERGE_BTN_OVERHANG := 0.30
-# THE Forge button — the same circular art the map's Forge fab shows (glossy circle + anvil
-# baked in). One button identity for "engage the forge", everywhere it appears.
+const MERGE_BTN_RATIO := 0.522
+const MERGE_BTN_MIN := 86.0
+const MERGE_BTN_MAX := 158.0
+# How much of the button hangs BELOW the card's bottom edge. Measured on the fab BOX, while the
+# flask art rides lifted inside it (MERGE_FLASK_LIFT) — so the art's real protrusion is smaller
+# than this number, and the two must be tuned together. It has to break the card's bottom border
+# unmistakably (a button flush with the edge reads as card decoration, not as a control) without
+# reaching into the row below in a tight spread.
+const MERGE_BTN_OVERHANG := 0.28
+# THE Forge button — the same flask art the map's Forge fab shows. One button identity for
+# "engage the forge", everywhere it appears.
 const MERGE_FAB_TEX := preload("res://assets/buttons/forge.png")
+# The engage fab's backplate: a fat yellow disc with a thick ink outline, sized SMALLER than the
+# flask so the art overhangs it top and bottom and reads as floating ON the disc, not embedded in
+# it. The disc — not the flask's ragged silhouette — is what makes the button look (and feel) like
+# a target: the hit rect is the whole fab, and the plate is the shape that claims it.
+# The disc is deliberately smaller than the flask's own extremes: the neck clears its top edge and
+# the flared base's two corners cut CLEANLY past its bottom edge, with only the belly resting on
+# open yellow. Both crossings have to be unambiguous breaks — a silhouette that merely grazes the
+# outline reads as an awkward tangent, not as floating. Widening the disc until the base fits
+# inside it is exactly the failure mode; the flask must always win at both ends.
+const MERGE_PLATE_RATIO := 0.78          # disc diameter as a fraction of the fab box
+const MERGE_FLASK_RATIO := 0.90          # flask art box, same fraction
+const MERGE_FLASK_LIFT := 0.05           # how far the flask box rides above centre
+const MERGE_PLATE_BORDER := 0.055        # outline thickness, also a fraction of the fab box
+# The slim dense halo that lifts the flask off its own backplate (see the vfx entry).
+const MERGE_FLASK_GLOW := "forge_engage_flask_glow"
+# Soft purple, NOT the warm yellow this started as: the deck is full of orange/gold fire art and a
+# yellow disc dissolved into those backgrounds. Purple is the one hue no card art leans on, so the
+# button separates from every element's palette — and it echoes the screen's own lavender chrome.
+const MERGE_PLATE_FILL := Color(0.68, 0.56, 0.90)
+const MERGE_PLATE_EDGE := Color(0.16, 0.13, 0.09)
 
 # The open merge procedure ({} = closed): {"src": payload, "tgt": entry idx, "verdict": Dictionary}.
 var _merge: Dictionary = {}
@@ -437,18 +460,30 @@ func _charm_follower_size() -> Vector2:
 	return Vector2(64, 64)
 
 
-# Keeps the floating tip glued above the highlighted source — the source moves under it
-# (scroll, refit, the highlight's own grow animation), so it follows every frame it's shown.
-# It sits in the grid's uniform top gap; the clamp only guards against spilling off-screen.
+# Keeps the floating tip glued to the highlighted source — the source moves under it (scroll,
+# refit, the highlight's own grow animation), so it follows every frame it's shown. It prefers the
+# grid's uniform top gap, and FLIPS below the card when that gap isn't there.
+#
+# The flip is the whole point: a top-row card has no room above it, and clamping the tip down to
+# the overlay's top edge parked it ON the card — where the selection Highlight (which rides the
+# overlay layer, above this one) drew straight over it. Clamping a floating label into the thing
+# it describes is never the right answer; move it to the side that has room.
+const SEL_TIP_GAP := 10.0
+
 func _track_sel_tip() -> void:
 	if _sel_tip == null or not _sel_tip.visible or _hl_item == null or not is_instance_valid(_hl_item):
 		return
 	var r := _hl_item.get_global_rect()   # transform-aware: tracks the grown (scaled) card
 	var ov := _overlay.get_global_rect()
 	var sz := _sel_tip.size
-	var pos := Vector2(r.get_center().x - sz.x * 0.5, r.position.y - sz.y - 10.0)
+	var above := r.position.y - sz.y - SEL_TIP_GAP
+	var pos := Vector2(r.get_center().x - sz.x * 0.5, above)
+	if above < ov.position.y + 6.0:
+		pos.y = r.end.y + SEL_TIP_GAP      # no gap above — hang it under the card instead
 	pos.x = clampf(pos.x, 6.0, ov.end.x - sz.x - 6.0)
-	pos.y = maxf(pos.y, ov.position.y + 6.0)
+	# Horizontal clamping can't push the tip onto the card, so it stays a plain clamp; the vertical
+	# one is only the last-resort guard for a source taller than the whole overlay.
+	pos.y = clampf(pos.y, ov.position.y + 6.0, maxf(ov.position.y + 6.0, ov.end.y - sz.y - 6.0))
 	_sel_tip.global_position = pos
 
 
@@ -893,22 +928,62 @@ func _pop_out_btn(b: Variant) -> void:
 	tw.tween_callback(c.queue_free)
 
 
-# The engage affordance IS the map's Forge button, small: the same baked circular art (see
-# Map._build_forge_fab — the art is the whole face) with a transparent Button overlaid for the
-# click, tooltip and the same hover-brighten / press-sink feedback. The specific "Merge with
-# X"/"Attach to X" line rides the tooltip.
+# The engage affordance IS the map's Forge flask, small — mounted on its own round backplate (the
+# map's fab stands alone on the map art and keeps the bare flask; here it sits in a dense card
+# spread and needs a shape that claims its space). Plate + flask are a single `face` Control so
+# the hover-brighten / press-sink feedback modulates both as one object, with a transparent Button
+# over the whole fab for the click and tooltip. The "Merge with X"/"Attach to X" line rides the
+# tooltip.
 func _make_merge_button(idx: int) -> Control:
 	var fab := Control.new()   # sized per-card by the reconcile
+	# Only the round Button may take a click here — a STOP-filtered wrapper would silently claim
+	# the box corners the button itself declines.
+	fab.mouse_filter = MOUSE_FILTER_IGNORE
+
+	var face := Control.new()  # plate + flask, modulated together by the button feedback
+	face.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	face.mouse_filter = MOUSE_FILTER_IGNORE
+	fab.add_child(face)
+
+	# Anchored (not sized) so it re-centres itself for free whenever the reconcile resizes the fab
+	# to the card it rides. A huge corner radius is clamped to half the box by StyleBoxFlat, so the
+	# square panel draws as a true circle at ANY diameter — no per-size radius bookkeeping.
+	var plate := Panel.new()
+	var m := (1.0 - MERGE_PLATE_RATIO) * 0.5
+	plate.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	plate.anchor_left = m
+	plate.anchor_top = m
+	plate.anchor_right = 1.0 - m
+	plate.anchor_bottom = 1.0 - m
+	plate.mouse_filter = MOUSE_FILTER_IGNORE
+	face.add_child(plate)
 
 	var tex := TextureRect.new()
 	tex.texture = MERGE_FAB_TEX
+	var fm := (1.0 - MERGE_FLASK_RATIO) * 0.5
 	tex.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	tex.anchor_left = fm
+	tex.anchor_top = fm - MERGE_FLASK_LIFT
+	tex.anchor_right = 1.0 - fm
+	tex.anchor_bottom = 1.0 - fm - MERGE_FLASK_LIFT
 	tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	tex.mouse_filter = MOUSE_FILTER_IGNORE
-	fab.add_child(tex)
+	face.add_child(tex)
 
-	var btn := Button.new()
+	# The outline is the one part that can't be anchored — it's a pixel width. Re-derived from the
+	# live box on every resize so a fab on a big card doesn't wear a hairline.
+	var restyle := func() -> void:
+		var ps := StyleBoxFlat.new()
+		ps.bg_color = MERGE_PLATE_FILL
+		ps.border_color = MERGE_PLATE_EDGE
+		ps.set_border_width_all(maxi(2, int(round(fab.size.x * MERGE_PLATE_BORDER))))
+		ps.set_corner_radius_all(4096)
+		plate.add_theme_stylebox_override("panel", ps)
+	restyle.call()
+	fab.resized.connect(restyle)
+
+	var btn := RoundButton.new()
 	btn.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	btn.focus_mode = Control.FOCUS_NONE
 	for s: String in ["normal", "hover", "pressed", "focus", "disabled"]:
@@ -917,22 +992,28 @@ func _make_merge_button(idx: int) -> Control:
 	btn.pressed.connect(_on_merge_btn.bind(idx))
 	btn.mouse_entered.connect(func() -> void:
 		if not btn.button_pressed:
-			tex.modulate = Color(1.12, 1.12, 1.12))
-	btn.mouse_exited.connect(func() -> void: tex.modulate = Color.WHITE)
-	btn.button_down.connect(func() -> void: tex.modulate = Color(0.85, 0.85, 0.85))
-	btn.button_up.connect(func() -> void: tex.modulate = Color.WHITE)
+			face.modulate = Color(1.12, 1.12, 1.12))
+	btn.mouse_exited.connect(func() -> void: face.modulate = Color.WHITE)
+	btn.button_down.connect(func() -> void: face.modulate = Color(0.85, 0.85, 0.85))
+	btn.button_up.connect(func() -> void: face.modulate = Color.WHITE)
 	fab.add_child(btn)
 
 	_overlay.add_child(fab)
+	# Attached to the ART, not the fab: the halo hugs the flask's own alpha (the plate would give
+	# it the disc's outline instead), and it lands after the fab is in the tree so the glow has a
+	# real global transform to bake against.
+	Vfx.attach(MERGE_FLASK_GLOW, tex)
 	return fab
 
 
 # Whether `p` sits on one of the screen's own floating engage fabs — clicks there are commands
-# for those buttons, never dead-space deselects.
+# for those buttons, never dead-space deselects. Tested against the same INSCRIBED CIRCLE the
+# button itself answers to (RoundButton._has_point): if the two disagreed, the box corners would
+# become dead zones that neither engage nor deselect.
 func _click_on_ui(p: Vector2) -> bool:
 	for i: int in _merge_btns:
 		var b: Variant = _merge_btns[i]
-		if is_instance_valid(b) and (b as Control).get_global_rect().has_point(p):
+		if is_instance_valid(b) and RoundButton.in_disc(b as Control, p):
 			return true
 	return false
 

@@ -489,7 +489,7 @@
 				"w": 0.2,
 				"h": 0.07
 			},
-			"rate": 5.0,
+			"rate": 5,
 			"size_min": 0.01,
 			"size_max": 0.03,
 			"rise": 0.24,
@@ -526,6 +526,25 @@
 		"concept": "The quiet half of the Combine button's ready state: paired with its outer glow so the button itself reads as charged, not as a flat control with a halo behind it.",
 		"explanation": "IMPLEMENTED (combination_screen): the `luminescence_rrect` RenderFilter, breathing on the same 0.85s period as the outer glow so the two land as one light. The button is procedurally drawn, so the silhouette comes from its real rounded-rect shape rather than a texture.",
 		"prompt": "Sprite sheet of a warm light glowing from inside a rounded rectangular button, soft inner light fading toward the edges, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "forge_engage_flask_glow",
+		"display_name": "Forge Engage Flask Glow",
+		"category": "lab",
+		"behavior": "glow",
+		"renderer": "filter",
+		"params": {
+			"filter": "glow",
+			"glow_color": "ebdf52",
+			"spread": 7,
+			"falloff": 1.5,
+			"intensity": 2.4
+		},
+		"sustained": true,
+		"placeholder": false,
+		"concept": "The per-card engage flask on the crafting table — the light that lifts the flask off its own backplate, so the button reads as a lit object sitting on the disc rather than a sticker printed on it.",
+		"explanation": "IMPLEMENTED (combination_screen merge fabs): a tight pale halo hugging the flask art's own alpha (texture-sourced `glow` RenderFilter, same path as the map's forge flask), slim spread with a near-linear falloff so it stays dense right up to the edge instead of dissolving. Deliberately STEADY, not breathing: one of these rides every valid partner card at once, and a gridful of pulsing halos reads as noise rather than as an invitation.",
+		"prompt": "Sprite sheet of a tight dense pale halo hugging a potion flask's outline, slim bright rim of light with a smooth short falloff, 8 frames on transparent background, 2d game effect"
 	},
 	{
 		"id": "forge_combine_ready_glow",
