@@ -833,7 +833,7 @@
 	},
 	{
 		"id": "darkness_water_bishop_rook",
-		"display_name": "Blight Arcane Tower",
+		"display_name": "Blight Temple",
 		"cost": 5,
 		"attack": 3,
 		"health": 10,

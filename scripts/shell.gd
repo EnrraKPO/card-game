@@ -14,6 +14,11 @@ extends Control
 #     footer_actions: Array[{label: String, action: Callable, align: "left"|"right"}] (custom
 #       footer buttons, in order; omitted + a valid `exit` = the standard single Back button;
 #       "right"-aligned entries float to the far side via one shared spacer),
+#     header_actions: Array[{label: String, action: Callable, toggle: bool, pressed: bool,
+#       tip: String}] (screen-scoped header buttons/toggles, sat left of the ⚙ — see
+#       _apply_header_actions),
+#     aid: String (the footer's text-aid line — "what do I do here?"; omitted/"" = no line.
+#       Push later changes with Nav.set_aid, not a chrome re-read — see set_aid),
 #     debug_close: bool (combat's orange debug ✕ instead of the normal one) }
 # No get_chrome() (or an empty dict) collapses the header entirely — the body takes the full rect.
 #
@@ -48,6 +53,7 @@ var _header: Dictionary = {}   # ScreenUI.build_header()'s return — built once
 var _footer_bar: PanelContainer
 var _footer_hbox: HBoxContainer
 var _footer_back: Button           # the ONE persistent Back button — see header comment
+var _footer_aid: Label             # the footer's text-aid line — see set_aid
 var _footer_custom: Array = []     # this screen's footer_actions nodes — the one per-mount exception
 
 # Set to false (before adding Shell to the tree) to skip the real app's initial route — used by
@@ -80,8 +86,12 @@ func _ready() -> void:
 	var fb := ScreenUI.footer_bar()
 	_footer_bar = fb.bar
 	_footer_hbox = fb.hbox
+	_footer_aid = fb.aid
 	_footer_back = ScreenUI.back_button(Callable())
 	_footer_hbox.add_child(_footer_back)
+	# Back stays hard left; the aid takes the space after it, and `footer_actions` (appended later)
+	# land to its right — so a screen using both reads Back · guidance · actions.
+	_footer_hbox.move_child(_footer_back, 0)
 	_footer_bar.visible = false
 	_outer.add_child(_footer_bar)
 
@@ -139,7 +149,7 @@ func _sync_dev_toggles() -> void:
 # Mounts the scene at `scene_path` as the current content and applies its declared chrome. Content
 # itself is still swapped fresh each time (a genuinely different screen each navigation) — only the
 # header/footer CHROME around it is persistent; see the header comment.
-func mount(scene_path: String) -> void:
+func mount(scene_path: String, arrival: String = "") -> void:
 	if _current_content != null:
 		_current_content.queue_free()
 		_current_content = null
@@ -154,7 +164,7 @@ func mount(scene_path: String) -> void:
 	var def: Dictionary = content.get_chrome() if content.has_method("get_chrome") else {}
 	var inset: bool = def.get("inset", def.get("show_footer", false))
 
-	_rebuild_lower(content, inset)
+	var stage := _rebuild_lower(content, inset)
 	_apply_header(def)
 	_apply_footer(def)
 	if content.has_method("on_chrome_applied"):
@@ -163,8 +173,16 @@ func mount(scene_path: String) -> void:
 
 	_current_content = content
 	# THE app-wide screen-transition cue: every navigation arrives through this one hook
-	# (the entry carries the open sound) — no screen wires its own arrival.
-	Vfx.play("screen_transition_sweep", content)
+	# (the entry carries the open sound) — no screen wires its own arrival. A caller that wants
+	# a different entrance names it (Nav.goto's `arrival`); everything else gets the sweep.
+	#
+	# Played on the STAGE, not on `content`: an inset screen's content is a child of the margin
+	# wrap, and Godot's Container.fit_child_in_rect resets a child's scale (and rotation) to
+	# identity on EVERY layout pass — so a transform animation on it is silently erased frame by
+	# frame while an alpha one survives. The stage is the outermost node in the content row and
+	# is never a container child, so it can actually be transformed. Same rect either way, so
+	# nothing else about a cue changes.
+	Vfx.play(arrival if not arrival.is_empty() else "screen_transition_sweep", stage)
 
 
 func _active_close(def: Dictionary) -> Button:
@@ -175,10 +193,14 @@ func _active_close(def: Dictionary) -> Button:
 # in here. `inset` just decides whether content gets the shared side/top margin (menu screens) or
 # fills its row edge-to-edge (HUD screens, or a screen with full-bleed background art that still
 # wants the real footer below it).
-func _rebuild_lower(content: Control, inset: bool) -> void:
+#
+# Returns the STAGE: the outermost node this put into the content row (the margin wrap, or the
+# content itself). Whatever transforms the whole screen animates that, never the content inside
+# a container — see the note at the arrival cue in mount().
+func _rebuild_lower(content: Control, inset: bool) -> Control:
 	if not inset:
 		content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		return
+		return content
 
 	_lower_area.remove_child(content)
 	var margin := int(UIScale.safe_inset() + 36.0)
@@ -193,6 +215,20 @@ func _rebuild_lower(content: Control, inset: bool) -> void:
 
 	content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	wrap.add_child(content)
+	return wrap
+
+
+# Re-reads the MOUNTED screen's chrome declaration and re-applies it, without remounting the screen
+# or touching its body. For chrome that mirrors state the screen owns (a header toggle reflecting a
+# persisted setting), this is how a change gets pushed: the screen keeps declaring its chrome from
+# its own state in get_chrome(), and asks for a re-read — it never reaches into the header itself,
+# which is the invariant the whole persistent-chrome design rests on.
+func refresh_chrome() -> void:
+	if _current_content == null or not _current_content.has_method("get_chrome"):
+		return
+	var def: Dictionary = _current_content.get_chrome()
+	_apply_header(def)
+	_apply_footer(def)
 
 
 # Toggles the persistent header's pieces for this screen — nothing here is ever created or freed.
@@ -225,6 +261,8 @@ func _apply_header(def: Dictionary) -> void:
 			ScreenUI.sync_field(key, w)   # pull current data the moment it becomes visible
 		w.visible = show
 
+	_apply_header_actions(def.get("header_actions", []))
+
 	var exit: Callable = def.get("exit", Callable())
 	var debug: bool = def.get("debug_close", false)
 
@@ -238,11 +276,59 @@ func _apply_header(def: Dictionary) -> void:
 		Nav.set_back(exit)
 
 
+# A screen's own header controls, built into the persistent actions box and cleared on the next
+# mount — the header's counterpart to `footer_actions`, and legitimate for the same reason: there
+# is no fixed catalog to pre-build when the labels are arbitrary. Kept deliberately small (a
+# labelled button, optionally a toggle); anything richer belongs in the screen's own body, not in
+# chrome every other screen shares.
+#   { label: String, action: Callable, toggle: bool, pressed: bool, tip: String }
+# A toggle's action receives the NEW state; a plain button's takes no argument. The action is
+# invoked from the button press only — setting `pressed` never fires it, so a screen reflecting
+# its own persisted state here can't loop.
+func _apply_header_actions(actions: Array) -> void:
+	var box: HBoxContainer = _header.actions
+	for child in box.get_children():
+		box.remove_child(child)
+		child.queue_free()
+	box.visible = not actions.is_empty()
+
+	for a: Dictionary in actions:
+		var is_toggle: bool = a.get("toggle", false)
+		var on: bool = a.get("pressed", false)
+		var action: Callable = a.get("action", Callable())
+		var btn := ScreenUI.action_button(str(a.get("label", "")), Callable(),
+			Vector2(0, ScreenUI.side_dev()), 20,
+			ScreenUI.CHROME_CONFIRM if (is_toggle and on) else ScreenUI.CHROME_NEUTRAL)
+		btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		if str(a.get("tip", "")) != "":
+			UIScale.tip(btn, str(a.get("tip", "")))
+		if is_toggle:
+			btn.toggle_mode = true
+			btn.button_pressed = on
+			# The chrome IS the state read — a toggle that only reported through its own pressed
+			# styling would be indistinguishable from a plain button on this bar.
+			btn.toggled.connect(func(pressed: bool) -> void:
+				btn.base_color = ScreenUI.CHROME_CONFIRM if pressed else ScreenUI.CHROME_NEUTRAL
+				if action.is_valid():
+					action.call(pressed))
+		elif action.is_valid():
+			btn.pressed.connect(action)
+		box.add_child(btn)
+
+
 # Toggles the persistent footer for this screen. The standard Back button is a fixed piece like
 # the header's — rebound, shown/hidden, never recreated. `footer_actions` is the one exception:
 # genuinely custom, screen-specific buttons that don't belong to any shared catalog, so they're
 # built fresh here and cleared by mount() next time (see header comment for why that's legitimate).
 func _apply_footer(def: Dictionary) -> void:
+	# Clear here, not only in mount(): refresh_chrome() re-applies without a remount, and custom
+	# actions that only got cleared on navigation would stack up a duplicate set each refresh.
+	for c in _footer_custom:
+		c.queue_free()
+	_footer_custom = []
+
+	set_aid(str(def.get("aid", "")))
+
 	var show_footer: bool = def.get("show_footer", false)
 	_footer_bar.visible = show_footer
 	if not show_footer:
@@ -267,6 +353,18 @@ func _apply_footer(def: Dictionary) -> void:
 		var btn := ScreenUI.footer_button(a.get("label", ""), a.get("action", Callable()))
 		_footer_hbox.add_child(btn)
 		_footer_custom.append(btn)
+
+
+# THE text aid: the footer's guidance line. A screen declares its opening line via the `aid` chrome
+# key and then pushes changes here (Nav.set_aid) as its state moves — this is deliberately NOT
+# routed through refresh_chrome(), because guidance changes with every selection while a chrome
+# re-read rebuilds header action buttons; a per-frame poll must be able to call this for free.
+# Empty text hides the label outright, so it costs nothing on screens that never set one.
+func set_aid(text: String) -> void:
+	if _footer_aid.text == text:
+		return
+	_footer_aid.text = text
+	_footer_aid.visible = text != ""
 
 
 # Rebinds a persistent button's click target without recreating it — disconnects whatever it was

@@ -8,6 +8,13 @@ signal slot_pressed(slot: SlotUI)
 # Emitted when an AUTOCAST action commits on a valid occupied slot; combat routes it to
 # SpellCaster.activate_autocast. The dragged unit never moves.
 signal autocast_dropped(slot: SlotUI, card_ui: CardUI)
+# THE single "a unit just left the board" moment — emitted by retire_unit, which every removal
+# path funnels through (the presented death in Combat._bury AND the silent sweep of effect
+# kills). Anything owed for a death hangs off this rather than off one of the two paths: combat
+# pays kill bounties here, so a unit killed by splash damage pays exactly like one cut down in
+# an attack. The unit's card is STILL in its slot when this fires (drop_card_view has not run),
+# so a listener can read where it stood.
+signal unit_retired(inst: CardInstance)
 
 var player_grid: Array = []   # [row][col] -> CardInstance or null
 var enemy_grid:  Array = []   # [row][col] -> CardInstance or null
@@ -230,7 +237,9 @@ func move_enemy_card(inst: CardInstance, r: int, c: int) -> void:
 func retire_unit(inst: CardInstance) -> CardUI:
 	var board := player_grid if inst.owner == 0 else enemy_grid
 	board[inst.row][inst.col] = null
-	return get_card_ui(inst)
+	var card := get_card_ui(inst)
+	unit_retired.emit(inst)   # the card is still standing — listeners may read its rect
+	return card
 
 
 # Disposes of a retired unit's card, once its send-off has played. Clears the slot only if that card

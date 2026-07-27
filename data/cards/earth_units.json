@@ -68,11 +68,21 @@
 	{
 		"id": "earth_bishop",
 		"display_name": "Earth Bishop",
+		"cost": 2,
+		"attack": 1,
+		"health": 4,
+		"speed": 1,
+		"shield": 1,
 		"elements": [
 			"earth"
 		],
 		"chess_pieces": [
 			"bishop"
+		],
+		"ranged": true,
+		"abilities": [
+			"earth_bless",
+			"heal"
 		],
 		"tool": {
 			"art": {
@@ -91,16 +101,7 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"abilities": [
-			"earth_bless",
-			"heal"
-		],
-		"cost": 2,
-		"attack": 1,
-		"health": 4,
-		"speed": 1,
-		"shield": 1
+		}
 	},
 	{
 		"id": "earth_rook",
@@ -142,6 +143,11 @@
 	{
 		"id": "earth_queen",
 		"display_name": "Earth Queen",
+		"cost": 5,
+		"attack": 5,
+		"health": 5,
+		"speed": 3,
+		"shield": 1,
 		"elements": [
 			"earth"
 		],
@@ -166,12 +172,7 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 5,
-		"attack": 5,
-		"health": 5,
-		"speed": 3,
-		"shield": 1
+		}
 	},
 	{
 		"id": "earth_pawn_pawn",
@@ -353,7 +354,7 @@
 	},
 	{
 		"id": "earth_bishop_rook",
-		"display_name": "Earth Arcane Tower",
+		"display_name": "Earth Temple",
 		"cost": 5,
 		"attack": 2,
 		"health": 9,
@@ -410,19 +411,20 @@
 	},
 	{
 		"id": "earth_rook_rook",
-		"elements": [
-			"earth"
-		],
 		"display_name": "Earth Turret",
-		"chess_pieces": [
-			"rook",
-			"rook"
-		],
 		"cost": 6,
 		"attack": 2,
 		"health": 11,
 		"speed": 1,
-		"shield": 5
+		"shield": 5,
+		"elements": [
+			"earth"
+		],
+		"chess_pieces": [
+			"rook",
+			"rook"
+		],
+		"ranged": true
 	},
 	{
 		"id": "earth_queen_rook",

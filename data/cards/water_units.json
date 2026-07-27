@@ -242,7 +242,7 @@
 	},
 	{
 		"id": "water_bishop_rook",
-		"display_name": "Water Arcane Tower",
+		"display_name": "Water Temple",
 		"elements": [
 			"water"
 		],

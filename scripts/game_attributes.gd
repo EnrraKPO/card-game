@@ -35,6 +35,13 @@ const DEFAULTS := {
 	"reward.magic_mineral.combat": 2, # default Magic Mineral per normal-fight win
 	"reward.magic_mineral.elite":  3,
 	"reward.magic_mineral.boss":   5,
+	# Kill BOUNTIES: what a slain enemy unit pays on the spot, mid-fight (see GameData.kill_bounty).
+	# The default bounty is the dead unit's mana cost times these rates — one coin flies to the
+	# gold bag per gold, and the experience gauge grows by the exp. A card may author its own flat
+	# bounty (CardData.bounty_gold / bounty_exp), which bypasses the rate entirely.
+	"bounty.gold_per_cost":     1.0,  # gold paid per point of the dead unit's mana cost
+	"bounty.exp_per_cost":      1.0,  # profile experience per point of the same
+	"bounty.minimum":           1,    # floor for a rate-derived bounty (a 0-cost unit still pays)
 	# Forge merge costs (Magic Mineral — see ForgeCosts.merge_cost): per-component rates count the
 	# RESULT card's composition; exactly one flat applies per merge (element_only when both inputs
 	# are pure-element cards, piece_op when at least one input holds a chess piece).

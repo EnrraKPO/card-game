@@ -559,7 +559,7 @@
 	},
 	{
 		"id": "darkness_earth_bishop_rook",
-		"display_name": "Rock Arcane Tower",
+		"display_name": "Rock Temple",
 		"cost": 5,
 		"attack": 3,
 		"health": 8,

@@ -571,7 +571,7 @@
 	},
 	{
 		"id": "darkness_light_bishop_rook",
-		"display_name": "Undead Arcane Tower",
+		"display_name": "Undead Temple",
 		"cost": 4,
 		"attack": 3,
 		"health": 9,

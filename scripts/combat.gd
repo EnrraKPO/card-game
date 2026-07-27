@@ -46,6 +46,9 @@ var _enemy_side: CombatSide
 
 var _mana_label: Label              # current-mana number on the vertical gauge
 var _mana_chunks_box: VBoxContainer  # one chunk per max-mana point; lit=available, dim=spent
+var _gold_bag: GoldBag       # the purse coins fly into, atop the relic strip (see _pay_bounty)
+var _exp_gauge: ExpGauge     # the narrow experience column outboard of that strip
+var _reward_chest: TreasureChest   # dropped by a falling enemy King; the gate into the rewards
 var _relic_tray: RelicTray   # read-only vertical relic strip on the screen's left edge (see
 							  # _build_relic_strip); a firing relic glints its chip
 var _done_btn: Button        # the chunky vertical "Ready" button (right of the board)
@@ -174,7 +177,16 @@ func _ready() -> void:
 	_hand.is_ability_usable = func(holder: CardInstance, ab: AbilityData) -> bool:
 		return ab.usable_by(holder, _player_side.mana)
 
+	# Combat's own designed looks, registered as library entries like every other: the call
+	# sites name an id and every number in them stays tunable in data/vfx/vfx.json.
+	Vfx.register_custom("coin_flight", CoinFlightFx.play)
+	Vfx.register_custom("king_fall", KingFallFx.play)
+	Vfx.register_custom("reward_orb", RewardOrbFx.play)
+
 	_board.can_autocast = _spell_caster.autocast_drop_ok
+	# Every death, from any cause, pays its bounty through this one wire (see
+	# CombatBoard.unit_retired).
+	_board.unit_retired.connect(_pay_bounty)
 	_board.unit_placed.connect(_on_board_unit_placed)
 	_board.slot_pressed.connect(_on_board_slot_pressed)
 	_board.autocast_dropped.connect(_on_autocast_dropped)
@@ -186,6 +198,11 @@ func _ready() -> void:
 	_spell_caster.spell_consumed.connect(_on_spell_consumed)
 	_spell_caster.ability_autocast.connect(_on_ability_autocast)
 
+	# A practice bout runs the REAL economy and rolls it back on the way out (see _rewards_live):
+	# the snapshot is taken before a single coin can be paid.
+	if GameData.current_encounter != null and GameData.current_encounter.practice \
+			and GameData.current_run != null:
+		_practice_gold = GameData.current_run.gold
 	_init_player_deck(GameData.current_run.deck)
 	_init_enemy_deck()
 	_build_ui()
@@ -739,10 +756,111 @@ func _bury(inst: CardInstance) -> void:
 	var corpse := _board.retire_unit(inst)
 	if corpse == null:
 		return
+	# An enemy King does not die like a unit — it FALLS, and leaves the fight's reward behind
+	# where it stood (see _king_fall). Its own send-off replaces the plain fade below.
+	if inst.owner == 1 and inst.data != null and inst.data.is_king and _rewards_live():
+		await _king_fall(inst, corpse)
+		return
 	_fade_out(inst, corpse)   # plays on past the beat below; disposes of the card at its end
 	# A death is a BEAT like any other, so it hands off through the overlap dial: at Flowing combat
 	# carries on while the corpse is still fading, at Step by step it waits the fade out in full.
 	await get_tree().create_timer(Vfx.handoff(VFXEffectDeath.FADE_DUR)).timeout
+
+
+# ── Kill bounties: what a fallen enemy pays, the moment it falls ───────────────────
+#
+# A fight no longer pays only at the end. Every enemy that dies hands over gold and experience
+# on the spot (GameData.kill_bounty owns the numbers; nothing here knows the rates), and the two
+# halves are cued differently ON PURPOSE:
+#
+#   GOLD  is loud — one coin per gold flies out of the corpse and into the bag on the left rail,
+#         so the amount is a countable thing crossing the screen.
+#   EXP   is quiet — no number, no coin; the narrow gauge beside the strip just grows.
+#
+# Gold lands in the run's purse immediately (it is spendable the moment the fight ends); the
+# experience is HELD and banked once at combat end, because every grant writes the profile to
+# disk and a save per corpse is a save too many. The gauge shows the running total meanwhile.
+var _pending_exp: int = 0
+var _paid: Dictionary = {}   # instance id -> true; a corpse pays exactly once, whichever
+							  # removal path retires it
+
+
+# Whether this fight pays at all: it needs a run to pay INTO, and that is the whole test.
+#
+# A practice bout in the Combat Gym still leaves no footprint — but that promise is kept where it
+# belongs, at the EXIT (see _handle_combat_end / _practice_gold), not by suppressing the payment
+# everywhere it happens. Practice used to fail this predicate, which switched off the coins, the
+# gauge and the chest as a side effect: the one place in the game built for testing a fight was
+# the one place its payment cues never played. A rehearsal that skips the payment isn't a
+# rehearsal of the fight.
+func _rewards_live() -> bool:
+	return GameData.current_run != null
+
+
+# The purse as it stood when a practice fight began, so the fight can spend and earn for real and
+# still leave the run exactly where it found it. -1 = not a practice bout, nothing to restore.
+var _practice_gold: int = -1
+
+
+# CombatBoard.unit_retired — the one wire every death arrives on. Reads the bounty, banks the
+# gold, holds the experience, and throws the coins from where the body stood.
+func _pay_bounty(inst: CardInstance) -> void:
+	if inst == null or inst.owner != 1 or inst.is_alive() or not _rewards_live():
+		return
+	var key := inst.get_instance_id()
+	if _paid.has(key):
+		return
+	_paid[key] = true
+	var bounty := GameData.kill_bounty(inst)
+	var gold: int = bounty["gold"]
+	var xp: int = bounty["exp"]   # not `exp` — that shadows the GDScript global
+	if xp > 0:
+		_pending_exp += xp   # combat holds the debt; the gauge only draws it
+		if _exp_gauge != null:
+			_exp_gauge.add_exp(xp)
+	if gold <= 0 or _gold_bag == null:
+		return
+	# The bag is told coins are coming BEFORE the purse moves: it mirrors RunData whenever
+	# nothing is in flight, so granting first would snap its number to the total and leave the
+	# coins arriving at a figure that already counted them.
+	_gold_bag.expect_coins(gold)
+	GameData.current_run.gold += gold   # spendable at once; the coins are the RECEIPT, and the
+										 # bag's own tally follows them rather than this (GoldBag)
+	# Thrown from where the unit stood, not from wherever its card ends up: the card is being
+	# disposed of on some paths this very frame, so the flight carries a position, not a node.
+	var card := _board.get_card_ui(inst)
+	var from: Vector2 = card.get_global_rect().get_center() if card != null \
+			else _gold_bag.drop_point()
+	Vfx.play("coin_flight", _gold_bag,
+			{"origin": from, "count": gold, "on_land": _gold_bag.land_coin})
+
+
+# ── The enemy King's fall ──────────────────────────────────────────────────────────
+
+# A King's death is the fight ending, so it gets none of a unit's grim dissolve. The card swells,
+# trembles, and detonates (KingFallFx owns that whole build) — and the fight's reward is thrown
+# clear of the blast: a treasure chest bursting out of the explosion like a piñata and landing in
+# the slot the King left empty. That chest is the fight's rewards made into an object; combat
+# waits on the player opening it before the reward screen exists at all (see _handle_combat_end).
+# No bounty is paid here; the chest IS the payment.
+# Raised for the length of the fall, because the chest does not EXIST until the explosion has
+# finished throwing it: an end-of-combat that arrives mid-fall would otherwise find no chest and
+# skip the gate entirely. Every normal path awaits _bury and can't hit this, but the debug ✕ can,
+# and a future caller shouldn't have to know the ordering to be correct.
+var _king_falling := false
+signal _chest_ready
+
+
+func _king_fall(inst: CardInstance, corpse: CardUI) -> void:
+	var slot_rect := corpse.get_global_rect()
+	var blast := slot_rect.get_center()
+	_king_falling = true
+	await Vfx.play("king_fall", corpse)   # awaited IN FULL — the chest is thrown BY this
+	_board.drop_card_view(inst, corpse)
+	# The slot is empty and the explosion has happened: out comes the chest.
+	_reward_chest = TreasureChest.pop_from(self, blast, slot_rect)
+	_king_falling = false
+	_chest_ready.emit()
 
 
 # The corpse's send-off, deliberately outliving the death beat. Awaits the fade IN FULL — unlike the
@@ -1031,12 +1149,32 @@ func _handle_combat_end() -> void:
 	# The screen-level dressing plays out BEFORE navigation (awaited — Nav.goto would cut it
 	# off mid-swell); target is the whole combat screen.
 	await Vfx.play("screen_victory_rays" if player_won else "screen_defeat_shroud", self)
+	# The enemy King left a chest where it fell, and it is a real gate: the rewards are what is
+	# inside it, so nothing is applied and no screen changes until the player opens it. (No
+	# chest — a loss, or a King that died some way that left none — and this simply passes.)
+	# A practice bout waits on it too: the chest is how a won fight ENDS, and the gym exists to
+	# rehearse the fight, ending included.
+	if player_won and _king_falling:
+		await _chest_ready   # the explosion hasn't thrown it yet — see _king_fall
+	if player_won and _reward_chest != null and is_instance_valid(_reward_chest):
+		await _reward_chest.opened
 	# A practice (Combat Gym) fight leaves no footprint: no rewards, no king-damage carry, no
-	# map advance, no save, and defeat does NOT end the run — straight back to the gym.
+	# map advance, no save, and defeat does NOT end the run — straight back to the gym. The gold
+	# its kills paid was REAL while the fight ran (the coins are a receipt for a purse that
+	# actually moved) and is handed straight back here; the held experience simply goes unbanked.
 	if enc != null and enc.practice:
+		if _practice_gold >= 0 and GameData.current_run != null:
+			GameData.current_run.gold = _practice_gold   # setter re-emits gold_changed (RunData)
+		_pending_exp = 0
 		GameData.current_encounter = null
 		Nav.goto("res://scenes/combat_gym.tscn")
 		return
+	# Everything the fight's kills earned in experience banks HERE, once, in a single profile
+	# save — win or loss, because a unit killed in a fight that was then lost was still killed.
+	# The gauge has been showing this total all along (see _pay_bounty / ExpGauge).
+	if _pending_exp > 0:
+		GameData.grant_experience(_pending_exp)
+		_pending_exp = 0
 	# One-time milestone checks fire for any real (non-practice) match completion — win OR loss.
 	# The reward lands quietly here; any celebration is queued and shown at the next hub visit
 	# (see Achievements / game_world), where its "visit the Lab" nudge is actually actionable.
@@ -1065,10 +1203,14 @@ func _handle_combat_end() -> void:
 		# Stage Cleared / Run Successful); a normal win goes to the card-reward screen.
 		var is_boss := enc != null and enc.type == EncounterData.Type.BOSS
 		GameData.save_run()
+		# When the chest handed over, the reward orb is hanging in the middle of the screen right
+		# now — so the screen it leads to GROWS out of that spot instead of cutting to it. Without
+		# a chest (nothing to hand over from) the standard sweep still applies.
+		var arrival := "screen_grow_in" if _reward_chest != null else ""
 		if is_boss:
-			Nav.goto("res://scenes/map.tscn")
+			Nav.goto("res://scenes/map.tscn", arrival)
 		else:
-			Nav.goto("res://scenes/reward_screen.tscn")
+			Nav.goto("res://scenes/reward_screen.tscn", arrival)
 	else:
 		if enc != null:
 			enc.outcome = EncounterData.Outcome.LOSE
@@ -1273,6 +1415,12 @@ func _build_ui() -> void:
 	arena.add_theme_constant_override("separation", 12)
 	col.add_child(arena)
 
+	# Outboard of everything on the left: the experience column. Narrow on purpose — it is the
+	# quiet half of a kill's payment (see _pay_bounty) and must never compete with the board for
+	# attention, only be there when the player looks.
+	_exp_gauge = ExpGauge.new()
+	arena.add_child(_exp_gauge)
+
 	var relic_strip := _build_relic_strip()
 	arena.add_child(relic_strip)
 
@@ -1301,7 +1449,7 @@ func _build_ui() -> void:
 	# The fixed width flanking the board — _resize_board's width basis (see there for why it must
 	# come from here and not from live container sizes).
 	_arena_chrome_w = side * 2.0 + relic_strip.custom_minimum_size.x \
-		+ actions.custom_minimum_size.x + 2.0 * 12.0
+		+ _exp_gauge.custom_minimum_size.x + actions.custom_minimum_size.x + 3.0 * 12.0
 
 	_hand.build_into(col, _build_mana_gauge())
 
@@ -1349,12 +1497,36 @@ func _build_relic_strip() -> Control:
 	pad.add_theme_constant_override("margin_bottom", 8)
 	strip.add_child(pad)
 
+	# One column inside the padding: the purse, then a hairline, then the relics. The bag heads
+	# the strip because it is the same kind of thing as what follows — a run-long possession
+	# combat only reports on — and because the coins need something to aim at (see _pay_bounty).
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 8)
+	pad.add_child(column)
+
+	_gold_bag = GoldBag.new()
+	column.add_child(_gold_bag)
+	column.add_child(_strip_rule())
+
 	_relic_tray = RelicTray.new()
 	_relic_tray.vertical = true
 	_relic_tray.interactive = false   # info-only: tapping a chip opens its detail overlay
 									   # (the touch reading path), but never offers Discard
-	pad.add_child(_relic_tray)
+	column.add_child(_relic_tray)
 	return strip
+
+
+# The hairline separating the purse from the relics below it — the strip holds two kinds of
+# thing, and one rule is cheaper than a gap wide enough to say so.
+func _strip_rule() -> Control:
+	var rule := Panel.new()
+	rule.custom_minimum_size.y = 2.0
+	rule.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = ScreenUI.MANA_TRACK_BORDER
+	sb.set_corner_radius_all(1)
+	rule.add_theme_stylebox_override("panel", sb)
+	return rule
 
 
 # The vertical mana gauge, anchoring the LEFT end of the hand bar (full bar height — mana is

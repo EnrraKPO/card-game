@@ -94,8 +94,26 @@ const MERGE_PLATE_RATIO := 0.78          # disc diameter as a fraction of the fa
 const MERGE_FLASK_RATIO := 0.90          # flask art box, same fraction
 const MERGE_FLASK_LIFT := 0.05           # how far the flask box rides above centre
 const MERGE_PLATE_BORDER := 0.055        # outline thickness, also a fraction of the fab box
-# The slim dense halo that lifts the flask off its own backplate (see the vfx entry).
+# The slim dense halo that lifts the flask off its own backplate (see the vfx entry). It is the
+# button's LIT state and nothing else: a merge the player can't pay for drops the glow and dims to
+# MERGE_BTN_UNLIT, so "which of these can I actually do right now" is answerable at a glance,
+# without reading a cost or opening anything. The fab stays pressable — the framing is where the
+# shortfall gets explained.
 const MERGE_FLASK_GLOW := "forge_engage_flask_glow"
+const MERGE_BTN_UNLIT := Color(0.62, 0.62, 0.68)
+
+# Quick preview: entry idx -> the stand-in card overlay showing what that pairing would produce.
+var _preview_uis: Dictionary = {}
+# How far the stand-in is inset on each side, as a fraction of the host card's width — enough that
+# the real card reads as a frame around it, not so much that the preview turns into a thumbnail.
+const PREVIEW_INSET := 0.07
+# The real card is pushed back while its stand-in is up. Without this both cards' badges (cost pip,
+# element pips, stat corners — they overhang the card rect) read at equal weight and the pair looks
+# like clutter rather than one card resting on another. Dimmed, the original becomes the frame that
+# says "this is what it would turn into" and the preview owns the eye.
+const PREVIEW_HOST_DIM := Color(0.5, 0.5, 0.56)
+# The violet halo marking a card as a possibility rather than a possession (see the vfx entry).
+const PREVIEW_GLOW := "forge_preview_glow"
 # Soft purple, NOT the warm yellow this started as: the deck is full of orange/gold fire art and a
 # yellow disc dissolved into those backgrounds. Purple is the one hue no card art leans on, so the
 # button separates from every element's palette — and it echoes the screen's own lavender chrome.
@@ -121,6 +139,9 @@ var _commit_btn: Button = null
 # Fusion-animation state, live only between hitting Combine and dismissing the result toast. While
 # _fusing is true the modal dim ignores clicks/Esc so the sequence can't be cut off mid-flight.
 var _fusing := false
+# Whether the fusion in flight is a QUICK merge (no scrim, no framing, no result toast) — it ends
+# by tearing itself down instead of handing off to the toast.
+var _quick_fusing := false
 var _fuse_anim: ForgeFuseAnim = null
 
 # A press not yet resolved: it becomes a TAP (select) on release, or a DRAG once it moves past
@@ -158,7 +179,78 @@ func get_chrome() -> Dictionary:
 	# inset: false — the table is full-bleed art (like the map); the Shell's shared menu margins
 	# would compress it into a floating panel. Header/footer stay as their own rows regardless.
 	return {"title": Loc.t("combine.title"), "fields": [ScreenUI.Field.MINERAL],
-		"exit": _leave, "back": _back_or_cancel, "show_footer": true, "inset": false}
+		"exit": _leave, "back": _back_or_cancel, "show_footer": true, "inset": false,
+		"aid": Loc.t("combine.aid_idle"),
+		"header_actions": [{
+			"label": Loc.t("combine.quick_preview"), "tip": Loc.t("combine.quick_preview_tip"),
+			"toggle": true, "pressed": _quick_preview(), "action": _on_quick_preview_toggled,
+		}, {
+			"label": Loc.t("combine.quick_merge"), "tip": Loc.t("combine.quick_merge_tip"),
+			"toggle": true, "pressed": _quick_merge(), "action": _on_quick_merge_toggled,
+		}]}
+
+
+# Whether merges commit on the spot, with no confirmation framing (profile-scoped, persisted).
+# Read through here rather than off the profile directly: with no profile loaded (the render
+# harness, a headless test) the answer is the safe one — ask first.
+func _quick_merge() -> bool:
+	var p := GameData.current_profile
+	return p != null and p.quick_merge
+
+
+# The header toggle. Turning it ON the first time has to survive a warning first — a merge is
+# destructive and irreversible, and this switch removes the only step that was standing between a
+# mis-tap and a spent card. The warning is a one-time ritual (quick_merge_ack): once the player has
+# read it, re-toggling is just a setting, and re-asking every time would train them to dismiss it.
+# Declining snaps the button back off — the profile, not the button, is the source of truth here,
+# and _present reconciles the chrome from it.
+func _on_quick_merge_toggled(on: bool) -> void:
+	var p := GameData.current_profile
+	if p == null:
+		return
+	if on and not p.quick_merge_ack:
+		ConfirmOverlay.ask(self, Loc.t("combine.quick_merge_title"),
+			Loc.t("combine.quick_merge_warning"),
+			func() -> void:
+				p.quick_merge_ack = true
+				_set_quick_merge(true),
+			Loc.t("combine.quick_merge_enable")
+		).closed.connect(func(confirmed: bool) -> void:
+			if not confirmed:
+				_refresh_chrome())   # declined: put the button back where the profile says
+		return
+	_set_quick_merge(on)
+
+
+# Whether valid partners show what they WOULD become while a source is picked (profile-scoped,
+# persisted). Same safe default as _quick_merge with no profile: off.
+func _quick_preview() -> bool:
+	var p := GameData.current_profile
+	return p != null and p.quick_preview
+
+
+# No confirmation ritual here, unlike quick merge: this only changes how the table LOOKS, and a
+# warning on a reversible view setting would be crying wolf.
+func _on_quick_preview_toggled(on: bool) -> void:
+	var p := GameData.current_profile
+	if p == null or p.quick_preview == on:
+		return
+	p.quick_preview = on
+	GameData.save_profile()
+
+
+func _set_quick_merge(on: bool) -> void:
+	var p := GameData.current_profile
+	if p == null or p.quick_merge == on:
+		return
+	p.quick_merge = on
+	GameData.save_profile()
+
+
+# Re-reads this screen's chrome declaration into the persistent header — the way to push a change
+# that the header shows (the quick-merge toggle's state) without touching the header directly.
+func _refresh_chrome() -> void:
+	Nav.refresh_chrome()
 
 
 # OS back / Esc peels state before it ever leaves the room: an open merge closes first, then a
@@ -295,6 +387,7 @@ func _live_card_size() -> Vector2:
 
 func _rebuild_deck() -> void:
 	_cancel_drag()
+	_clear_previews()   # their hosts are about to be freed
 	_entries.clear()
 	_sel = {}
 	_hl_item = null   # its wearer is being freed; the attach auto-detaches on tree_exiting
@@ -683,9 +776,15 @@ func _resolve_drag() -> void:
 	var payload := _drag
 	var hover := _hover_idx
 	var verdict: Dictionary = _evaluate_target(payload, hover) if hover >= 0 else {}
+	# Where the player actually LET GO, captured before _cancel_drag frees the follower. A quick
+	# merge fuses straight out of this point, so the card carries on from under the thumb instead
+	# of snapping back to its grid slot to start the flight from there.
+	var origin := Vector2.INF
+	if _follower != null and is_instance_valid(_follower):
+		origin = _follower.global_position + _follower_center
 	_cancel_drag()
 	if hover >= 0 and bool(verdict.get("ok", false)):
-		_open_merge(payload, hover, verdict)
+		_open_merge(payload, hover, verdict, origin)
 
 
 # Tears down the in-flight drag visuals and restores the hidden source. Safe to call anytime.
@@ -865,7 +964,24 @@ func _present() -> void:
 			_sel_tip_label.text = Loc.t("combine.pick_target")
 		_track_sel_tip()
 	_reconcile_merge_buttons()
+	_reconcile_previews()
 	_update_card_dimming()
+	Nav.set_aid(_aid_text())
+
+
+# The footer's guidance line, derived from the same declared state as everything else here — it
+# walks the merge one step at a time rather than describing the whole screen at once: what to pick
+# while nothing is picked, then how to land it once something is. Mid-drag it goes quiet: the card
+# under the thumb and the lit flasks ARE the instruction at that point, and a line of text
+# competing with them is noise.
+func _aid_text() -> String:
+	if _modal != null or not _drag.is_empty():
+		return ""
+	if _sel.get("kind", "") == "charm":
+		return Loc.t("combine.aid_charm_picked")
+	if _sel.get("kind", "") == "card":
+		return Loc.t("combine.aid_picked")
+	return Loc.t("combine.aid_idle")
 
 
 # The round engage buttons on valid partner cards — THE tap path into the merge (a tap on a
@@ -903,6 +1019,11 @@ func _reconcile_merge_buttons() -> void:
 		fab.position = Vector2(r.get_center().x - d * 0.5,
 				r.end.y - d * (1.0 - MERGE_BTN_OVERHANG)) - _overlay.global_position
 		fab.pivot_offset = fab.size * 0.5   # scale pops grow from the button's centre
+		# Affordability is a per-TARGET fact (cost scales with what the two cards are), so it's
+		# reconciled here alongside the placement rather than once per selection. Riding `fab`'s
+		# modulate leaves `face`'s free for the hover/press feedback — the two compose instead of
+		# overwriting each other.
+		_set_fab_lit(fab, _affordable_with(_sel, i))
 		# Tooltip tracks the live pairing (kind + target name) without rebuilding the fab.
 		var tip_sig := tip_key + "|" + (_entries[i].data as CardData).display_name
 		if fresh or str(fab.get_meta("tip_sig", "")) != tip_sig:
@@ -914,6 +1035,35 @@ func _reconcile_merge_buttons() -> void:
 			var tw := fab.create_tween()
 			tw.tween_property(fab, "scale", Vector2.ONE, 0.22) \
 					.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+
+# Whether the run can currently PAY for pairing `payload` with the card at `idx`. Structure is
+# _can_pair's job; this is only about the Mineral. A charm attach costs nothing, so it is always
+# affordable — the fab lights for every valid target.
+func _affordable_with(payload: Dictionary, idx: int) -> bool:
+	if payload.get("kind", "") != "card":
+		return true
+	var src := int(payload.get("idx", -1))
+	if src < 0 or src >= _entries.size() or idx < 0 or idx >= _entries.size():
+		return true
+	var cost := ForgeCosts.merge_cost(_entries[src].data as CardData, _entries[idx].data as CardData)
+	var have: int = GameData.current_run.magic_mineral if GameData.current_run != null else 0
+	return have >= cost
+
+
+# The fab's lit/unlit state: the flask's halo and its full colour together. Idempotent and cheap —
+# it's polled every frame with the rest of the presentation, so it only touches Vfx on an actual
+# transition (attach/detach are not free, and re-attaching per frame would rebake the silhouette).
+func _set_fab_lit(fab: Control, lit: bool) -> void:
+	if bool(fab.get_meta("lit", true)) == lit:
+		return
+	fab.set_meta("lit", lit)
+	fab.modulate = Color.WHITE if lit else MERGE_BTN_UNLIT
+	var tex: Control = fab.get_meta("tex")
+	if lit:
+		Vfx.attach(MERGE_FLASK_GLOW, tex)
+	else:
+		Vfx.detach(MERGE_FLASK_GLOW, tex)
 
 
 # Shrinks a retiring engage fab to nothing, then frees it — the counterpart of the pop-in.
@@ -998,12 +1148,118 @@ func _make_merge_button(idx: int) -> Control:
 	btn.button_up.connect(func() -> void: face.modulate = Color.WHITE)
 	fab.add_child(btn)
 
+	fab.set_meta("tex", tex)   # _set_fab_lit toggles the halo on the ART, not the whole fab
+	fab.set_meta("lit", true)
 	_overlay.add_child(fab)
-	# Attached to the ART, not the fab: the halo hugs the flask's own alpha (the plate would give
-	# it the disc's outline instead), and it lands after the fab is in the tree so the glow has a
-	# real global transform to bake against.
+	# Attached to the ART: the halo hugs the flask's own alpha (the plate would give it the disc's
+	# outline instead), and it lands after the fab is in the tree so the glow has a real global
+	# transform to bake against.
 	Vfx.attach(MERGE_FLASK_GLOW, tex)
 	return fab
+
+
+# ── Quick preview ───────────────────────────────────────────────────────────────
+
+# With Quick preview on and a source picked, every valid partner wears a stand-in card showing the
+# RESULT of that pairing. The stand-in is an OVERLAY laid over the real card, deliberately inset so
+# a rim of the actual card still shows around it — that "a card resting on the card it would
+# replace" read is the clearest possible statement that nothing has happened yet, and it survives
+# the player not knowing what the violet treatment means. Reconciled from declared state like the
+# rest of the presentation.
+#
+# Rebuilt ONLY when a pairing actually changes (a signature per entry), never per frame: each
+# preview costs a CardData.combine + a CardUI, and this is polled every frame.
+func _reconcile_previews() -> void:
+	var want: Dictionary = {}   # entry idx -> signature
+	if _quick_preview() and _modal == null and _drag.is_empty() and not _fusing \
+			and _sel.get("kind", "") == "card":
+		var src_idx := int(_sel.get("idx", -1))
+		for i in _entries.size():
+			if i != src_idx and _can_pair(_sel, i):
+				want[i] = "%d|%s" % [src_idx, str((_entries[i].card as DeckCard).id)]
+
+	for i: int in _preview_uis.keys():
+		if not want.has(i) or str(_preview_uis[i].get_meta("sig", "")) != str(want[i]):
+			_drop_preview(i)
+
+	for i: int in want:
+		if _preview_uis.has(i):
+			continue
+		var verdict := _evaluate_target(_sel, i)
+		var inst: CardInstance = verdict.get("preview", null)
+		if inst == null:
+			continue
+		_preview_uis[i] = _make_preview(i, inst, str(want[i]))
+
+
+# Builds one stand-in over the card at `idx`. Inset on every side so the real card frames it, and
+# mouse-transparent so the card underneath still takes every tap and drag — the preview is a way of
+# LOOKING at the table, never a new thing to click.
+func _make_preview(idx: int, inst: CardInstance, sig: String) -> Control:
+	var host: Control = _entries[idx].item
+	var holder := Control.new()
+	holder.mouse_filter = MOUSE_FILTER_IGNORE
+	holder.set_meta("sig", sig)
+
+	var card := CardUI.create(inst)
+	card.draggable = false
+	card.mouse_filter = MOUSE_FILTER_IGNORE
+
+	# Anchors are set AFTER each node is in the tree, never before. The host is already mounted, so
+	# a child arrives with its _ready firing immediately — and a node that enters with full-rect
+	# anchors AND an authored size (CardUI carries one) is exactly the case Godot warns about,
+	# "size overridden after _ready". Adding first, anchoring second, sidesteps it entirely.
+	host.add_child(holder)
+	holder.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	var inset := maxf(6.0, host.size.x * PREVIEW_INSET)
+	holder.offset_left = inset
+	holder.offset_top = inset
+	holder.offset_right = -inset
+	holder.offset_bottom = -inset
+
+	holder.add_child(card)
+	card.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	card.custom_minimum_size = Vector2.ZERO
+
+	# Pops in from slightly small — the stand-in ARRIVES on top of the card rather than the card
+	# silently turning into something else, which would read as the merge having already happened.
+	holder.pivot_offset = holder.size * 0.5
+	holder.scale = Vector2(0.88, 0.88)
+	var tw := holder.create_tween()
+	tw.tween_property(holder, "scale", Vector2.ONE, 0.18) \
+			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	Vfx.attach(PREVIEW_GLOW, holder)
+	_set_host_dim(idx, true)
+	return holder
+
+
+func _drop_preview(idx: int) -> void:
+	var holder: Variant = _preview_uis.get(idx)
+	_preview_uis.erase(idx)
+	_set_host_dim(idx, false)
+	if not is_instance_valid(holder):
+		return
+	Vfx.detach(PREVIEW_GLOW, holder as Control)
+	(holder as Control).queue_free()
+
+
+# Pushes the REAL card back (or restores it) under its stand-in. Rides the CardUI's own modulate,
+# not the wrapping item's — the item hosts the stand-in too, so dimming there would dim the very
+# thing this is meant to make legible. Silently skips an entry the deck rebuild already took.
+func _set_host_dim(idx: int, dim: bool) -> void:
+	if idx < 0 or idx >= _entries.size():
+		return
+	var ui: Variant = _entries[idx].ui
+	if is_instance_valid(ui):
+		(ui as Control).modulate = PREVIEW_HOST_DIM if dim else Color.WHITE
+
+
+# Every stand-in, gone — used when the deck itself is rebuilt under them (their hosts are freed,
+# so the dictionary would otherwise hold freed nodes).
+func _clear_previews() -> void:
+	for i: int in _preview_uis.keys():
+		_drop_preview(i)
+	_preview_uis.clear()
 
 
 # Whether `p` sits on one of the screen's own floating engage fabs — clicks there are commands
@@ -1053,8 +1309,23 @@ func _update_card_dimming() -> void:
 # Opens the in-place merge procedure: the grid dims down, and the TARGET card's spot grows the
 # result — enlarged and radiant — wrapped by the framing (components left, full read right,
 # Cancel + Combine/Attach beneath). Nothing is committed until the button.
-func _open_merge(src: Dictionary, tgt_idx: int, verdict: Dictionary) -> void:
+# `src_origin`: where the source card visually IS at this instant — a drop's release point. INF
+# (the default, and every tap-initiated merge) means "wherever its grid slot is". Only the quick
+# path reads it: on the framed path the player releases, reads the framing, then presses Combine,
+# by which time the release point is stale and flying from it would read as a teleport.
+func _open_merge(src: Dictionary, tgt_idx: int, verdict: Dictionary,
+		src_origin: Vector2 = Vector2.INF) -> void:
 	if _modal != null:
+		return
+	# QUICK MERGE: the framing is the confirmation step, so with it switched off there is nothing
+	# to open — commit here and let the table show the result. Both gestures (the engage fab and
+	# the drop) funnel through this one door, so the fast path lives here rather than in each.
+	# Only a pairing that would have been committable anyway takes it: an UNAFFORDABLE merge still
+	# opens the framing, because the player needs to be told why nothing happened, and "quick" must
+	# never mean "silently does nothing".
+	if _quick_merge() and bool(verdict.get("ok", false)) \
+			and bool(verdict.get("affordable", true)):
+		_quick_commit(src, tgt_idx, verdict, src_origin)
 		return
 	_cancel_drag()
 	# The SOURCE stays selected through the whole procedure — every exit (Cancel, tap-out,
@@ -1383,7 +1654,40 @@ func _commit_merge() -> void:
 		return
 	if not bool(verdict.get("affordable", true)):
 		return
-	_start_fusion(int(src.get("idx", -1)), tgt, verdict.get("result_dc", null))
+	_start_fusion(int(src.get("idx", -1)), tgt, verdict.get("result_dc", null), _modal)
+
+
+# The quick-merge commit: the same act the framing's Combine/Attach button performs, minus the
+# framing and minus the celebration toast. The FUSION still plays — that animation is the merge
+# happening on the table, not a modal step, and without it two cards would silently blink into one.
+# It runs on the screen's own overlay rather than a scrim layer, so the table stays live underneath:
+# nothing is covered, nothing has to be dismissed, and the player can immediately chain into the
+# next merge (the result arrives selected, as on the framed path).
+func _quick_commit(src: Dictionary, tgt_idx: int, verdict: Dictionary,
+		src_origin: Vector2 = Vector2.INF) -> void:
+	if _fusing:
+		return
+	_cancel_drag()
+	_sel = src
+	_merge = {}
+	if str(src.get("kind", "")) == "charm":
+		_do_enchant(str(src.get("id", "")), tgt_idx)
+		return
+	_quick_fusing = true
+	_start_fusion(int(src.get("idx", -1)), tgt_idx, verdict.get("result_dc", null), _overlay,
+			src_origin)
+	if not _fusing:
+		_quick_fusing = false   # the fusion refused to start; don't strand the flag
+
+
+# Tears down after a quick-merge fusion — the counterpart of the framed path's toast + _close_modal,
+# with neither to click through.
+func _end_quick_fusion() -> void:
+	if _fuse_anim != null:
+		_fuse_anim.queue_free()
+		_fuse_anim = null
+	_fusing = false
+	_quick_fusing = false
 
 
 # ── Fusion (combine commit) ─────────────────────────────────────────────────────
@@ -1391,15 +1695,22 @@ func _commit_merge() -> void:
 # Flies the two GRID cards (as clones, at their real grid size + spots) together into their
 # midpoint, commits the merge at the flash, and reveals the result toast. The clones read as the
 # actual table cards lifting off and slamming together, not something conjured by the modal.
-func _start_fusion(src_idx: int, tgt_idx: int, result_dc: DeckCard) -> void:
-	if _fusing or result_dc == null or _modal == null:
+# `host` parents the animation (and the element burst marker): the modal's dim on the framed path,
+# the screen's overlay on the quick one. Everything else about the sequence is identical — the
+# commit still lands at the flash, from the one code path.
+func _start_fusion(src_idx: int, tgt_idx: int, result_dc: DeckCard, host: Control,
+		src_origin: Vector2 = Vector2.INF) -> void:
+	if _fusing or result_dc == null or host == null:
 		return
 	_fusing = true
 
 	# Fly FROM the two grid cards' own spots (their rect CENTRES — unaffected by the source's
 	# highlight scale, which is pivot-centred), to their midpoint, at real grid size. This is
-	# what makes the fusion read as the table cards themselves converging.
-	var a_gc := (_entries[src_idx].item as Control).get_global_rect().get_center()
+	# what makes the fusion read as the table cards themselves converging. A dropped source
+	# overrides its spot with the release point, so the card continues from where the hand left
+	# it — snapping back to the grid first would break the one continuous gesture in two.
+	var a_gc := src_origin if src_origin.is_finite() \
+			else (_entries[src_idx].item as Control).get_global_rect().get_center()
 	var b_gc := (_entries[tgt_idx].item as Control).get_global_rect().get_center()
 	var center := (a_gc + b_gc) * 0.5
 	var fly_size := _live_card_size()
@@ -1423,7 +1734,7 @@ func _start_fusion(src_idx: int, tgt_idx: int, result_dc: DeckCard) -> void:
 	# At the flash: commit the merge (mutate deck + rebuild + combined SFX) — hidden behind the white.
 	anim.flashed.connect(_on_fuse_flash.bind(src_idx, tgt_idx, result_dc))
 	anim.finished.connect(_on_fuse_finished.bind(result_inst))
-	_modal.add_child(anim)
+	host.add_child(anim)
 	_fuse_anim = anim
 
 	# The merge flash announces the newborn card's element: the combine element-variant bursts
@@ -1434,7 +1745,11 @@ func _start_fusion(src_idx: int, tgt_idx: int, result_dc: DeckCard) -> void:
 		var marker := Control.new()
 		marker.mouse_filter = MOUSE_FILTER_IGNORE
 		marker.size = Vector2(120, 120)
-		_modal.add_child(marker)   # dies with the modal
+		host.add_child(marker)
+		# On the framed path the marker died with the modal layer; the quick path's host is the
+		# screen's own long-lived overlay, so it has to clear up after itself or every quick merge
+		# would leave one behind.
+		anim.finished.connect(marker.queue_free)
 		marker.global_position = center - marker.size * 0.5
 		anim.flashed.connect(func() -> void: Vfx.play(combine_vid, marker))
 
@@ -1446,6 +1761,9 @@ func _on_fuse_flash(src_idx: int, tgt_idx: int, result_dc: DeckCard) -> void:
 
 
 func _on_fuse_finished(result_inst: CardInstance) -> void:
+	if _quick_fusing:
+		_end_quick_fusion()   # no toast to click through — that's the whole point of quick merge
+		return
 	_show_result_toast(result_inst, Loc.t("combine.forged"))
 
 

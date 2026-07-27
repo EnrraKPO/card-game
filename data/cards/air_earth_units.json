@@ -553,7 +553,7 @@
 	},
 	{
 		"id": "air_earth_bishop_rook",
-		"display_name": "Sand Arcane Tower",
+		"display_name": "Sand Temple",
 		"cost": 5,
 		"attack": 2,
 		"health": 9,

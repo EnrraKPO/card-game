@@ -51,6 +51,16 @@ var pending_celebrations: Array = []    # Array[String]
 # FTUE flag: has the player ever opened the Lab? Drives the hub's "New" badge on the Lab button
 # (shown once they've earned their first King Piece), which clears the first time they visit.
 var lab_visited: bool = false
+# Quick merge: the crafting table commits a valid merge on the spot, with no confirmation framing.
+# A convenience the player opts into, so it defaults OFF and persists once chosen. `quick_merge_ack`
+# records that they've read the one-time warning (merges are destructive and can't be undone) — the
+# warning is a first-enable ritual, not a nag on every toggle.
+var quick_merge: bool = false
+var quick_merge_ack: bool = false
+# Quick preview: with a source picked, every valid partner on the crafting table shows what it
+# WOULD become instead of what it is. Purely a way of looking at the table — nothing it does can
+# lose a card — so unlike quick_merge it needs no acknowledgement, just a switch.
+var quick_preview: bool = false
 
 
 static func create_default() -> ProfileData:
@@ -86,6 +96,9 @@ static func from_dict(data: Dictionary) -> ProfileData:
 	p.unlocked_achievements = data.get("unlocked_achievements", [])
 	p.pending_celebrations = data.get("pending_celebrations", [])
 	p.lab_visited = bool(data.get("lab_visited", false))
+	p.quick_merge = bool(data.get("quick_merge", false))
+	p.quick_merge_ack = bool(data.get("quick_merge_ack", false))
+	p.quick_preview = bool(data.get("quick_preview", false))
 	if data.has("decks"):
 		for d in data.get("decks", []):
 			p.decks.append(OwnedDeck.from_dict(d))
@@ -132,6 +145,9 @@ func to_dict() -> Dictionary:
 		"unlocked_achievements": unlocked_achievements,
 		"pending_celebrations":  pending_celebrations,
 		"lab_visited":           lab_visited,
+		"quick_merge":           quick_merge,
+		"quick_merge_ack":       quick_merge_ack,
+		"quick_preview":         quick_preview,
 	}
 
 

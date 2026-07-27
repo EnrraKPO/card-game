@@ -1052,6 +1052,7 @@ const MODIFIER_KEYS = ['unit.attack','unit.health','unit.speed','card.cost',
   'reward.essence','reward.king_piece_chance',
   'reward.gold.combat','reward.gold.elite','reward.gold.boss',
   'reward.magic_mineral.combat','reward.magic_mineral.elite','reward.magic_mineral.boss',
+  'bounty.gold_per_cost','bounty.exp_per_cost','bounty.minimum',
   'forge.cost.per_piece','forge.cost.per_element','forge.cost.element_only','forge.cost.piece_op',
   'shop.magic_mineral.price'];
 const CUSTOM_HOOKS = ['rallying_cry','deliver_material'];
@@ -1298,6 +1299,10 @@ function validateItem(type, d) {
       for (const el of d.elements || []) if (!ELEMENTS.includes(el)) return `unknown element "${el}"`;
       for (const p of d.chess_pieces || []) if (!PIECES.includes(p)) return `unknown chess piece "${p}"`;
       if (d.target_policy && !TARGET_POLICIES.includes(d.target_policy)) return `bad target_policy "${d.target_policy}"`;
+      // Kill bounties (see GameData.kill_bounty): absent = derived from the mana cost, a
+      // number = a flat override. 0 is legal and means "pays nothing".
+      for (const f of ['bounty_gold', 'bounty_exp'])
+        if (d[f] != null && (typeof d[f] !== 'number' || d[f] < 0)) return `${f} must be a number >= 0`;
       return validateEffects(d.effects, 'card');
     }
     case 'relic': {

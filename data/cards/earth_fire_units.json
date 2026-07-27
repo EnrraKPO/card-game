@@ -561,7 +561,7 @@
 	},
 	{
 		"id": "earth_fire_bishop_rook",
-		"display_name": "Magma Arcane Tower",
+		"display_name": "Magma Temple",
 		"cost": 5,
 		"attack": 4,
 		"health": 9,

@@ -572,7 +572,7 @@
 	},
 	{
 		"id": "fire_water_bishop_rook",
-		"display_name": "Steam Arcane Tower",
+		"display_name": "Steam Temple",
 		"cost": 5,
 		"attack": 4,
 		"health": 11,

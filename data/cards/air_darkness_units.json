@@ -541,7 +541,7 @@
 	},
 	{
 		"id": "air_darkness_bishop_rook",
-		"display_name": "Miasma Arcane Tower",
+		"display_name": "Miasma Temple",
 		"cost": 5,
 		"attack": 3,
 		"health": 8,
@@ -570,7 +570,7 @@
 				"rembg": false,
 				"prompt": "Cartoon bold-outline crooked stone spire wrapped in churning yellow-green smog, tarnished-brass vent-stacks and pipes exhaling grey haze from its battlements, murky glowing gem crowning the roof, hazy stained panes flickering chartreuse, beak-masked robed cleric with round glass goggles chanting before the arched door, swirling fetid mist and droning mosquitoes coiling up the walls, low dramatic angle",
 				"ref": {
-					"source": "current",
+					"source": "installed",
 					"mode": "img2img",
 					"denoise": 0.6
 				}

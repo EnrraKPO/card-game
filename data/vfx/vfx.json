@@ -528,6 +528,30 @@
 		"prompt": "Sprite sheet of a warm light glowing from inside a rounded rectangular button, soft inner light fading toward the edges, 8 frames on transparent background, 2d game effect"
 	},
 	{
+		"id": "forge_preview_glow",
+		"display_name": "Forge Preview Glow",
+		"category": "lab",
+		"renderer": "filter",
+		"behavior": "glow",
+		"params": {
+			"filter": "glow_rrect",
+			"glow_color": "b18cf0",
+			"spread": 26,
+			"corner_radius": 16,
+			"animate": {
+				"param": "intensity",
+				"from": 0.5,
+				"to": 1,
+				"period": 1.5
+			}
+		},
+		"sustained": true,
+		"placeholder": false,
+		"concept": "A crafting-table card standing in for what it WOULD become (Quick preview) — it has to read as a possibility the table is showing you, never as a card you own, or the player will think the merge already happened.",
+		"explanation": "IMPLEMENTED (combination_screen quick preview): a violet light breathing slowly around the stand-in card — the same purple the engage flask's backplate wears, so 'the forge is speaking' is one colour across the screen. Slow and dim on purpose: a whole grid of these pulses at once, and anything brighter would read as an alert. Shape-sourced (`glow_rrect`) rather than composited: a card IS a rounded rect, so its real shape gives the same silhouette a bake would, without paying for one clone-render per previewed card on a full grid.",
+		"prompt": "Sprite sheet of a soft violet light breathing slowly around a framed card, gentle dreamlike halo with smooth falloff, 8 frames on transparent background, 2d game effect"
+	},
+	{
 		"id": "forge_engage_flask_glow",
 		"display_name": "Forge Engage Flask Glow",
 		"category": "lab",
@@ -2799,5 +2823,139 @@
 		"concept": "The between-stages breath — Stage Cleared resolving into a fresh map; one chapter's light carrying into the next.",
 		"explanation": "A warm full-screen bloom crests and settles as the new stage's map fades in beneath it.",
 		"prompt": "Sprite sheet of a warm full-screen light bloom cresting and settling, chapter transition glow, 10 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "coin_flight",
+		"display_name": "Kill Bounty Coins",
+		"category": "economy",
+		"behavior": "travel",
+		"renderer": "custom",
+		"params": {
+			"size": 34,
+			"duration": 0.3,
+			"stagger": 0.09,
+			"curve": 0.3,
+			"spread": 0
+		},
+		"sfx": "gold_gain",
+		"placeholder": false,
+		"concept": "The gold a slain enemy pays, made countable: one coin per gold arcing off the corpse and into the run's purse on the left rail.",
+		"explanation": "IMPLEMENTED (CoinFlightFx): one coin per gold, all riding the same path from the corpse to the gold bag — a CIRCLE ARC, so both halves of the flight are the same shape mirrored and the coin holds one speed from corpse to bag (constant curvature = constant speed, at no cost). THE RULE: a coin never moves away from the bag, on either axis, by a single pixel. `curve` is the one dial: 0 = the straight diagonal, 1 = the roundest arc the two points allow — a true quarter-circle when the horizontal and vertical distances are equal, flattening toward straight as they stop being, and dead straight when the corpse and the bag share a Y (bending there would carry the coin back past the bag). The ceiling is one angle, not a clamp, so there is nothing to correct at any distance. Coins are staggered by `stagger` and separated by varying the dial itself (`spread`), never by offsetting the path in pixels — an offset would push a coin outside the box.",
+		"prompt": "Sprite sheet of a spinning gold coin with a bright specular sweep, transparent background, 8 frames, 2d game effect"
+	},
+	{
+		"id": "king_fall",
+		"display_name": "Enemy King Falls",
+		"category": "combat",
+		"behavior": "burst",
+		"params": {
+			"color": "ffd94d",
+			"swell": 1.15,
+			"spike": 0.32,
+			"burst": 0.14,
+			"grow": 1.2,
+			"shake": 7,
+			"spike_shake": 22,
+			"rate_min": 6,
+			"rate_max": 130,
+			"shards": 34
+		},
+		"placeholder": false,
+		"sfx": "combat_boss_intro",
+		"concept": "The enemy King's defeat — the fight ending in the player's favour, and the biggest single beat in a match. It has to BUILD tension and then release it, not simply stop.",
+		"explanation": "IMPLEMENTED (KingFallFx): four phases — the card swells slowly to `grow` while a tremble starts under it and motes stream outward at an accelerating `rate`; a short hard SPIKE triples the shake, pushes the scale and whites the art out; then the BURST annihilates the card in a couple of frames inside a shockwave ring, a white core flash and a spray of `shards`. Awaited in full by Combat, which then throws the reward chest out of the blast point.",
+		"prompt": "Sprite sheet of a golden royal figure swelling and vibrating with light cracking out of it, then exploding into a radial shockwave of gold shards, 16 frames on transparent background, 2d game effect",
+		"renderer": "custom"
+	},
+	{
+		"id": "chest_landing",
+		"display_name": "Chest Landing",
+		"category": "economy",
+		"behavior": "burst",
+		"params": {
+			"color": "ffcf6b",
+			"scale": 1.6,
+			"duration": 0.45
+		},
+		"placeholder": false,
+		"concept": "The reward chest hitting the board where the enemy King stood — the impact that sells its weight.",
+		"explanation": "IMPLEMENTED (TreasureChest): a warm dust-and-spark burst under the chest as it squashes on landing.",
+		"prompt": "Sprite sheet of a dust and golden spark impact ring on the ground, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "chest_waiting",
+		"display_name": "Chest Waiting",
+		"category": "economy",
+		"renderer": "filter",
+		"behavior": "glow",
+		"params": {
+			"filter": "glow_rrect",
+			"glow_color": "ffcf4d",
+			"corner_radius": 18,
+			"spread": 54,
+			"falloff": 2,
+			"animate": {
+				"param": "intensity",
+				"from": 0.5,
+				"to": 1.3,
+				"period": 1.4
+			}
+		},
+		"sustained": true,
+		"placeholder": false,
+		"concept": "The landed chest asking to be opened — the only thing left to do on a won board, so it has to read as the next action.",
+		"explanation": "IMPLEMENTED (TreasureChest._invite): the composited outer glow breathing gold around the chest, attached on landing and detached the moment it is opened.",
+		"prompt": "Sprite sheet of a warm golden halo breathing around a treasure chest, soft radial falloff, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "chest_open",
+		"display_name": "Chest Opened",
+		"category": "economy",
+		"behavior": "radiance",
+		"params": {
+			"color": "fff0a8",
+			"scale": 3,
+			"duration": 1
+		},
+		"placeholder": false,
+		"sfx": "reward_open",
+		"concept": "The chest's lid coming up — the reward screen's opening note, played on the board before the screen changes.",
+		"explanation": "IMPLEMENTED (TreasureChest._open_it): a broad warm radiance blooming out of the open chest while combat holds a beat before navigating.",
+		"prompt": "Sprite sheet of brilliant golden light bursting upward out of an opening treasure chest with coins and sparks, 12 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "reward_orb",
+		"display_name": "Reward Orb",
+		"category": "economy",
+		"renderer": "custom",
+		"behavior": "travel",
+		"params": {
+			"color": "fff0a8",
+			"radius": 34,
+			"gather": 0.34,
+			"rise": 0.2,
+			"flight": 0.62,
+			"linger": 0.34
+		},
+		"placeholder": false,
+		"concept": "The reward leaving the opened chest and carrying itself to the middle of the screen — the physical link between winning the fight and the rewards screen, so the two are one motion and not a cut.",
+		"explanation": "IMPLEMENTED (RewardOrbFx): a bright orb gathers over the open lid, hangs, then sweeps along a lifted curve to the viewport centre trailing sparks; on arrival it throws a ring and fires the caller's on_arrive (which is what lets Combat navigate). Drawn on the VFX overlay so it outlives combat and lingers over the screen growing out from under it.",
+		"prompt": "Sprite sheet of a brilliant golden orb of light with a soft halo and drifting sparks, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "screen_grow_in",
+		"display_name": "Screen Grows In",
+		"category": "screen",
+		"renderer": "custom",
+		"behavior": "pop",
+		"params": {
+			"duration": 0.42,
+			"overlap": 0
+		},
+		"placeholder": false,
+		"sfx": "ui_screen_open",
+		"concept": "A screen arriving as the TAIL of a gesture rather than a jump — it swells from nothing at the centre of the viewport, so whatever the player just did appears to have opened it.",
+		"explanation": "IMPLEMENTED (ScreenGrowFx, registered app-wide in VfxService): the mounted content scales 0 → 1 about the viewport centre with a slight overshoot and fades in. Requested per navigation via Nav.goto(path, \"screen_grow_in\"); every other navigation keeps the standard sweep. The persistent chrome is not scaled — it belongs to the Shell, not the arriving screen.",
+		"prompt": "Sprite sheet of a rectangular panel expanding from a point of light to full size with a soft overshoot, 8 frames on transparent background, 2d game effect"
 	}
 ]

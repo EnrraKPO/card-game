@@ -1,7 +1,11 @@
 [
 	{
 		"id": "light_light_pawn",
-		"display_name": "Pure Light Pawn",
+		"display_name": "Luminous Pawn",
+		"cost": 0,
+		"attack": 1,
+		"health": 5,
+		"speed": 3,
 		"elements": [
 			"light",
 			"light"
@@ -26,15 +30,15 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 0,
-		"attack": 1,
-		"health": 5,
-		"speed": 3
+		}
 	},
 	{
 		"id": "light_light_knight",
-		"display_name": "Pure Light Knight",
+		"display_name": "Luminous Knight",
+		"cost": 0,
+		"attack": 2,
+		"health": 5,
+		"speed": 4,
 		"elements": [
 			"light",
 			"light"
@@ -52,101 +56,92 @@
 				"rembg": false,
 				"prompt": "Radiant knight steed rearing on shining hooves, translucent charger woven wholly of glowing white-gold luminance, plated barding and chamfron of hardened brilliance traced with fine shining filigree, streaming mane and tail rippling as ribbons of liquid light, blazing pale eyes, hooves scattering drifting luminous motes, poised leaping stance, deep violet twilight void behind, sunlit sparks trailing, digital painting.",
 				"ref": {
-					"source": "current",
+					"source": "installed",
 					"mode": "img2img",
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 0,
-		"attack": 2,
-		"health": 5,
-		"speed": 4
+		}
 	},
 	{
 		"id": "light_light_bishop",
-		"elements": [
-			"light",
-			"light"
-		],
-		"display_name": "Pure Light Bishop",
-		"chess_pieces": [
-			"bishop"
-		],
-		"tool": {
-			"art": {
-				"prompt": "Chibi luminous priest-sage sculpted entirely from radiant golden light, translucent glowing body, tall tapering pointed headdress crowned with a brilliant sunburst gem, clean-shaven serene face with softly glowing eyes, layered ivory-and-gold robes woven of shimmering light with a diamond-studded sash, gripping a tall slender staff topped by a blazing radiant orb spilling soft beams, palm raised releasing gentle luminous motes, standing on cracked stone tiles, low three-quarter angle, deep blue twilight sky pierced by golden light-rays",
-				"ref": {
-					"source": "game",
-					"path": "assets/cards/bishop.png",
-					"name": "Bishop"
-				},
-				"inferredFrom": {
-					"concept": [
-						"bishop",
-						"air_darkness_bishop",
-						"air_darkness_bishop_bishop"
-					],
-					"theme": [
-						"light_light_knight",
-						"light_light_pawn",
-						"light_light_queen",
-						"light_light_rook"
-					]
-				}
-			}
-		},
-		"ranged": true,
+		"display_name": "Luminous Bishop",
 		"cost": 0,
 		"attack": 1,
 		"health": 6,
 		"speed": 3,
-		"abilities": [
-			"heal"
-		]
-	},
-	{
-		"id": "light_light_rook",
 		"elements": [
 			"light",
 			"light"
 		],
-		"display_name": "Pure Light Rook",
 		"chess_pieces": [
-			"rook"
+			"bishop"
+		],
+		"ranged": true,
+		"abilities": [
+			"heal"
 		],
 		"tool": {
 			"art": {
-				"prompt": "Radiant sentinel tower built entirely of glowing luminescence, translucent pale-gold stonework with crenellated top and a shining beacon crest, tall arched openings streaming brilliant beams, a small chibi guardian of living light standing at its gate with a luminous staff, hooves of light-motes drifting upward, deep violet twilight sky, pale stone ground, chibi digital painting",
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chibi luminous priest-sage sculpted entirely from radiant golden light, translucent glowing body, tall tapering pointed headdress crowned with a brilliant sunburst gem, clean-shaven serene face with softly glowing eyes, layered ivory-and-gold robes woven of shimmering light with a diamond-studded sash, gripping a tall slender staff topped by a blazing radiant orb spilling soft beams, palm raised releasing gentle luminous motes, standing on cracked stone tiles, low three-quarter angle, deep blue twilight sky pierced by golden light-rays",
 				"ref": {
 					"source": "game",
-					"path": "assets/cards/rook.png",
-					"name": "Rook"
-				},
-				"inferredFrom": {
-					"concept": [
-						"rook",
-						"air_darkness_bishop_rook",
-						"air_darkness_knight_rook"
-					],
-					"theme": [
-						"light_light_knight",
-						"light_light_pawn",
-						"light_light_queen"
-					]
+					"path": "assets/cards/bishop.png",
+					"name": "Bishop",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"ranged": true,
+		}
+	},
+	{
+		"id": "light_light_rook",
+		"display_name": "Luminous Rook",
 		"cost": 1,
 		"attack": 1,
 		"health": 9,
 		"speed": 3,
-		"shield": 2
+		"shield": 2,
+		"elements": [
+			"light",
+			"light"
+		],
+		"chess_pieces": [
+			"rook"
+		],
+		"ranged": true,
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Radiant sentinel tower built entirely of glowing luminescence, translucent pale-gold stonework with crenellated top and a shining beacon crest, tall arched openings streaming brilliant beams, a small chibi guardian of living light standing at its gate with a luminous staff, hooves of light-motes drifting upward, deep violet twilight sky, pale stone ground, chibi digital painting",
+				"ref": {
+					"source": "game",
+					"path": "assets/cards/rook.png",
+					"name": "Rook",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
 	},
 	{
 		"id": "light_light_queen",
-		"display_name": "Pure Light Queen",
+		"display_name": "Luminous Queen",
+		"cost": 3,
+		"attack": 5,
+		"health": 7,
+		"speed": 5,
 		"elements": [
 			"light",
 			"light"
@@ -172,15 +167,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 3,
-		"attack": 5,
-		"health": 7,
-		"speed": 5
+		}
 	},
 	{
 		"id": "light_light_pawn_pawn",
-		"display_name": "Pure Light Warrior",
+		"display_name": "Luminous Warrior",
+		"cost": 0,
+		"attack": 2,
+		"health": 6,
+		"speed": 3,
+		"shield": 1,
 		"elements": [
 			"light",
 			"light"
@@ -206,16 +202,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 0,
-		"attack": 2,
-		"health": 6,
-		"speed": 3,
-		"shield": 1
+		}
 	},
 	{
 		"id": "light_light_knight_pawn",
-		"display_name": "Pure Light Cavalry",
+		"display_name": "Luminous Cavalry",
+		"cost": 1,
+		"attack": 3,
+		"health": 7,
+		"speed": 4,
+		"shield": 1,
 		"elements": [
 			"light",
 			"light"
@@ -241,16 +237,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 1,
-		"attack": 3,
-		"health": 7,
-		"speed": 4,
-		"shield": 1
+		}
 	},
 	{
 		"id": "light_light_bishop_pawn",
-		"display_name": "Pure Light Paladin",
+		"display_name": "Luminous Paladin",
+		"cost": 1,
+		"attack": 2,
+		"health": 7,
+		"speed": 3,
+		"shield": 2,
 		"elements": [
 			"light",
 			"light"
@@ -258,6 +254,9 @@
 		"chess_pieces": [
 			"bishop",
 			"pawn"
+		],
+		"abilities": [
+			"heal"
 		],
 		"tool": {
 			"art": {
@@ -276,19 +275,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 1,
-		"attack": 2,
-		"health": 7,
-		"speed": 3,
-		"shield": 2,
-		"abilities": [
-			"heal"
-		]
+		}
 	},
 	{
 		"id": "light_light_pawn_rook",
-		"display_name": "Pure Light Barracks",
+		"display_name": "Luminous Barracks",
+		"cost": 2,
+		"attack": 2,
+		"health": 10,
+		"speed": 3,
+		"shield": 1,
 		"elements": [
 			"light",
 			"light"
@@ -296,6 +292,11 @@
 		"chess_pieces": [
 			"pawn",
 			"rook"
+		],
+		"ranged": true,
+		"abilities": [
+			"light_pawn_training_pure",
+			"pawn_material"
 		],
 		"tool": {
 			"art": {
@@ -314,21 +315,15 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"ranged": true,
-		"abilities": [
-			"light_pawn_training_pure",
-			"pawn_material"
-		],
-		"cost": 2,
-		"attack": 2,
-		"health": 10,
-		"speed": 3,
-		"shield": 1
+		}
 	},
 	{
 		"id": "light_light_pawn_queen",
-		"display_name": "Pure Light Commander",
+		"display_name": "Luminous Commander",
+		"cost": 4,
+		"attack": 5,
+		"health": 7,
+		"speed": 5,
 		"elements": [
 			"light",
 			"light"
@@ -354,15 +349,15 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 4,
-		"attack": 5,
-		"health": 7,
-		"speed": 5
+		}
 	},
 	{
 		"id": "light_light_knight_knight",
-		"display_name": "Pure Light Beast",
+		"display_name": "Luminous Beast",
+		"cost": 2,
+		"attack": 3,
+		"health": 7,
+		"speed": 5,
 		"elements": [
 			"light",
 			"light"
@@ -388,15 +383,15 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 2,
-		"attack": 3,
-		"health": 7,
-		"speed": 5
+		}
 	},
 	{
 		"id": "light_light_bishop_knight",
-		"display_name": "Pure Light Cryptid",
+		"display_name": "Luminous Cryptid",
+		"cost": 2,
+		"attack": 3,
+		"health": 8,
+		"speed": 5,
 		"elements": [
 			"light",
 			"light"
@@ -404,6 +399,9 @@
 		"chess_pieces": [
 			"bishop",
 			"knight"
+		],
+		"abilities": [
+			"heal"
 		],
 		"tool": {
 			"art": {
@@ -422,18 +420,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 2,
-		"attack": 3,
-		"health": 8,
-		"speed": 5,
-		"abilities": [
-			"heal"
-		]
+		}
 	},
 	{
 		"id": "light_light_knight_rook",
-		"display_name": "Pure Light Stable",
+		"display_name": "Luminous Stable",
+		"cost": 3,
+		"attack": 3,
+		"health": 10,
+		"speed": 4,
+		"shield": 2,
 		"elements": [
 			"light",
 			"light"
@@ -441,6 +437,11 @@
 		"chess_pieces": [
 			"knight",
 			"rook"
+		],
+		"ranged": true,
+		"abilities": [
+			"light_knight_training_pure",
+			"knight_material"
 		],
 		"tool": {
 			"art": {
@@ -459,21 +460,15 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"ranged": true,
-		"abilities": [
-			"light_knight_training_pure",
-			"knight_material"
-		],
-		"cost": 3,
-		"attack": 3,
-		"health": 10,
-		"speed": 4,
-		"shield": 2
+		}
 	},
 	{
 		"id": "light_light_knight_queen",
-		"display_name": "Pure Light Monster",
+		"display_name": "Luminous Monster",
+		"cost": 4,
+		"attack": 6,
+		"health": 9,
+		"speed": 6,
 		"elements": [
 			"light",
 			"light"
@@ -499,15 +494,11 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 4,
-		"attack": 6,
-		"health": 9,
-		"speed": 6
+		}
 	},
 	{
 		"id": "light_light_bishop_bishop",
-		"display_name": "Pure Light Hierophant",
+		"display_name": "Luminous Hierophant",
 		"cost": 2,
 		"attack": 2,
 		"health": 8,
@@ -545,7 +536,7 @@
 	},
 	{
 		"id": "light_light_bishop_rook",
-		"display_name": "Pure Light Arcane Tower",
+		"display_name": "Luminous Temple",
 		"cost": 3,
 		"attack": 2,
 		"health": 11,
@@ -585,7 +576,11 @@
 	},
 	{
 		"id": "light_light_bishop_queen",
-		"display_name": "Pure Light Deity",
+		"display_name": "Luminous Deity",
+		"cost": 4,
+		"attack": 5,
+		"health": 9,
+		"speed": 5,
 		"elements": [
 			"light",
 			"light"
@@ -593,6 +588,9 @@
 		"chess_pieces": [
 			"bishop",
 			"queen"
+		],
+		"abilities": [
+			"heal"
 		],
 		"tool": {
 			"art": {
@@ -611,18 +609,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 4,
-		"attack": 5,
-		"health": 9,
-		"speed": 5,
-		"abilities": [
-			"heal"
-		]
+		}
 	},
 	{
 		"id": "light_light_rook_rook",
-		"display_name": "Pure Light Turret",
+		"display_name": "Luminous Turret",
+		"cost": 4,
+		"attack": 2,
+		"health": 13,
+		"speed": 3,
+		"shield": 4,
 		"elements": [
 			"light",
 			"light"
@@ -649,16 +645,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 4,
-		"attack": 2,
-		"health": 13,
-		"speed": 3,
-		"shield": 4
+		}
 	},
 	{
 		"id": "light_light_queen_rook",
-		"display_name": "Pure Light Castle",
+		"display_name": "Luminous Castle",
+		"cost": 5,
+		"attack": 5,
+		"health": 12,
+		"speed": 4,
+		"shield": 2,
 		"elements": [
 			"light",
 			"light"
@@ -666,6 +662,11 @@
 		"chess_pieces": [
 			"queen",
 			"rook"
+		],
+		"ranged": true,
+		"abilities": [
+			"light_queen_training_pure",
+			"queen_material"
 		],
 		"tool": {
 			"art": {
@@ -684,21 +685,15 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"ranged": true,
-		"abilities": [
-			"light_queen_training_pure",
-			"queen_material"
-		],
-		"cost": 5,
-		"attack": 5,
-		"health": 12,
-		"speed": 4,
-		"shield": 2
+		}
 	},
 	{
 		"id": "light_light_queen_queen",
-		"display_name": "Pure Light Hero",
+		"display_name": "Luminous Hero",
+		"cost": 6,
+		"attack": 8,
+		"health": 10,
+		"speed": 5,
 		"elements": [
 			"light",
 			"light"
@@ -724,10 +719,6 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 6,
-		"attack": 8,
-		"health": 10,
-		"speed": 5
+		}
 	}
 ]

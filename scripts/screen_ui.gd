@@ -246,6 +246,15 @@ static func build_header() -> Dictionary:
 		refs[key] = built.ref
 		row.add_child(built.widget)
 
+	# Screen-scoped header actions land here, just left of the gear — the header's counterpart to
+	# the footer's `footer_actions`, and the same documented exception to "nothing is ever created
+	# per mount": there's nothing to pre-build for an unbounded set of custom labels. The BOX is
+	# persistent like everything else; only its children come and go (Shell._apply_header).
+	var actions := HBoxContainer.new()
+	actions.add_theme_constant_override("separation", 12)
+	actions.alignment = BoxContainer.ALIGNMENT_END
+	row.add_child(actions)
+
 	# The settings gear — the header's one always-available action (audio settings today).
 	# A persistent piece like everything else; the Shell wires what pressing it opens.
 	var gear := action_button("", Callable(), Vector2(side_dev(), side_dev()), 26)
@@ -279,6 +288,7 @@ static func build_header() -> Dictionary:
 	row.add_child(debug_close)
 
 	return {"bar": bar, "title": title_lbl, "fields": fields, "refs": refs, "gear": gear,
+		"actions": actions,
 		"close": close, "debug_close": debug_close, "dev_sfx": dev_sfx, "dev_vfx": dev_vfx}
 
 
@@ -537,4 +547,21 @@ static func footer_bar() -> Dictionary:
 	bar.add_child(pad)
 	var hbox := HBoxContainer.new()
 	pad.add_child(hbox)
-	return {"bar": bar, "hbox": hbox}
+
+	# THE TEXT AID — the footer's guidance line, available to every screen (chrome key `aid`, live
+	# via Nav.set_aid). It answers "what do I do here?" in the one strip of chrome the player's eye
+	# already returns to, instead of each screen inventing its own instruction panel somewhere in
+	# its body. Persistent like every other chrome piece, and EXPAND_FILL only while it has
+	# something to say — an empty aid is hidden, so a footer that doesn't use one lays out exactly
+	# as it did before this existed.
+	var aid := Label.new()
+	aid.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	aid.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	aid.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	aid.add_theme_font_size_override("font_size", 30 if compact else 20)
+	aid.add_theme_color_override("font_color", Color(TEXT_COLOR, 0.82))
+	aid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	aid.visible = false
+	hbox.add_child(aid)
+
+	return {"bar": bar, "hbox": hbox, "aid": aid}

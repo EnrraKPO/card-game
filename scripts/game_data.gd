@@ -173,6 +173,39 @@ func _bonus_reward_materials(enc: EncounterData) -> Dictionary:
 	return bag
 
 
+# ── Kill bounties ─────────────────────────────────────────────────────────────────
+#
+# What killing one enemy unit pays, mid-fight, the instant it dies — the twin of the
+# encounter's end-of-fight rewards above, and the ONE place the numbers come from. Combat
+# calls this and nothing else: the coin flight and the experience gauge both animate whatever
+# it returns, so retuning the economy never touches a line of presentation code.
+#
+# Two tiers, in the shape every authorable number in this game takes:
+#   AUTHORED — the card names a flat `bounty_gold` / `bounty_exp` (0 included: pays nothing).
+#   DERIVED  — anything unauthored (-1) is the unit's mana cost through the `bounty.*` rates,
+#              floored at `bounty.minimum` so a 0-cost body is still worth killing.
+# Today both rates are 1.0, so a 3-cost unit pays 3 gold and 3 experience. That is a tuning
+# default, not an assumption anything downstream makes.
+#
+# Kings pay NOTHING: a king's death is the fight itself ending, and it hands over a treasure
+# chest instead (see Combat._king_fall) — a bounty on top would double-pay the same moment.
+func kill_bounty(inst: CardInstance) -> Dictionary:
+	var none := {"gold": 0, "exp": 0}
+	if inst == null or inst.data == null or inst.data.is_king:
+		return none
+	var cost: int = maxi(0, inst.data.cost)
+	var floor_v: int = maxi(0, value("bounty.minimum"))
+	var gold: int = inst.data.bounty_gold
+	if gold < 0:
+		gold = maxi(floor_v, int(round(cost * value_f("bounty.gold_per_cost"))))
+	# `xp`, not `exp` — `exp()` is a GDScript global and shadowing it is a warning (this
+	# project treats warnings as errors).
+	var xp: int = inst.data.bounty_exp
+	if xp < 0:
+		xp = maxi(floor_v, int(round(cost * value_f("bounty.exp_per_cost"))))
+	return {"gold": maxi(0, gold), "exp": maxi(0, xp)}
+
+
 # ── Run lifecycle (one run per slot) ──────────────────────────────────────────────
 
 func start_new_run() -> void:

@@ -64,6 +64,12 @@ func _render_clone(widget: Control, host: Node, dup_flags: int) -> Image:
 	vp.add_child(holder)
 	var clone := widget.duplicate(dup_flags) as Control
 	clone.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# Strip the clone's ANCHORS first. We position and size it by hand below, inside a bare holder
+	# with no layout of its own — anchors are meaningless here, and a clone that keeps full-rect
+	# ones has its size recomputed from a parent it no longer has (Godot warns "size overridden
+	# after _ready" and the bake comes out at the wrong extent). The widget being glowed is very
+	# often full-rect inside its own host, so this is the common case, not an exotic one.
+	clone.set_anchors_preset(Control.PRESET_TOP_LEFT, true)
 	# Place the clone so the widget's own origin lands at -offset, putting the bbox top-left
 	# (offset may be negative where the subtree overhangs) exactly at the viewport's (0, 0).
 	clone.position = -offset

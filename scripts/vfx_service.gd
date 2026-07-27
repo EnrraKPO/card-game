@@ -55,6 +55,9 @@ func _ready() -> void:
 	# The canonical selection Highlight (grow + outline + glow, see HighlightFx) is a core UI
 	# treatment owned by no single screen — registered here so it's live everywhere from boot.
 	register_custom("highlight", HighlightFx.state)
+	# The screen-arrival cue any navigation can ask for by name (Nav.goto's second argument) —
+	# app-wide like the Highlight, owned by no single screen.
+	register_custom("screen_grow_in", ScreenGrowFx.play)
 	_load_prefs()
 
 

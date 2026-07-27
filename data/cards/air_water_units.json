@@ -604,7 +604,7 @@
 	},
 	{
 		"id": "air_water_bishop_rook",
-		"display_name": "Storm Arcane Tower",
+		"display_name": "Storm Temple",
 		"cost": 5,
 		"attack": 2,
 		"health": 11,

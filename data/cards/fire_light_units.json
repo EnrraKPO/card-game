@@ -544,7 +544,7 @@
 	},
 	{
 		"id": "fire_light_bishop_rook",
-		"display_name": "Spirit Arcane Tower",
+		"display_name": "Spirit Temple",
 		"cost": 4,
 		"attack": 4,
 		"health": 10,

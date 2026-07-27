@@ -61,6 +61,12 @@ var ranged: bool = false
 # Base 1 for everyone; authored higher for flurry units (harpies and friends). Foldable, so
 # standing effects/statuses can grant extra strikes at read time (CardInstance.get_attribute).
 var strikes: int = 1
+# What killing this unit pays the player on the spot (see GameData.kill_bounty): gold into the
+# run's purse — one coin flies to the gold bag per point — and profile experience. -1 means
+# UNAUTHORED: the bounty derives from the card's mana cost through the `bounty.*` rates, which
+# is how every card behaves until someone authors otherwise. 0 is a real value (pays nothing).
+var bounty_gold: int = -1
+var bounty_exp: int = -1
 
 # Procedural enemy power scaling: each point of encounter `power` grows a scaled card's
 # offensive/defensive stats by this fraction (see CardData.scaled / EncounterTemplateData).
@@ -194,6 +200,8 @@ static func build_from_dict(d: Dictionary) -> CardData:
 	card.abilities    = Array(d.get("abilities", []), TYPE_STRING, "", null)
 	card.ranged       = bool(d.get("ranged", false))
 	card.strikes      = maxi(1, int(d.get("strikes", 1)))
+	card.bounty_gold  = int(d.get("bounty_gold", -1))
+	card.bounty_exp   = int(d.get("bounty_exp", -1))
 	card.target_policy = str(d.get("target_policy", ""))
 	for e_data: Dictionary in d.get("effects", []):
 		card.effects.append(Effect.from_dict(e_data))
@@ -277,6 +285,12 @@ func to_dict() -> Dictionary:
 	# serialized shape byte-identical to before the stat existed.
 	if strikes != 1:
 		d["strikes"] = strikes
+	# Same conditional shape: an unauthored bounty (-1, i.e. "derive it from my cost") leaves
+	# the serialized card byte-identical to before the stat existed.
+	if bounty_gold >= 0:
+		d["bounty_gold"] = bounty_gold
+	if bounty_exp >= 0:
+		d["bounty_exp"] = bounty_exp
 	# Only the authored override is serialised — an AUTO ("") card keeps its byte-identical
 	# pre-policy shape, and the strategy re-derives from the composition on load.
 	if not target_policy.is_empty():
@@ -312,6 +326,8 @@ static func scaled(base: CardData, power: float) -> CardData:
 	c.abilities     = base.abilities.duplicate()
 	c.ranged        = base.ranged
 	c.strikes       = base.strikes
+	c.bounty_gold   = base.bounty_gold
+	c.bounty_exp    = base.bounty_exp
 	c.target_policy = base.target_policy
 	c.effects       = base.effects
 	c.targeting_strategy = base.targeting_strategy

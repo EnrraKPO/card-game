@@ -67,6 +67,9 @@ const CardEditor = {
     cost: 1, attack: 2, health: 3, speed: 3, shield: 0,
     elements: [], chess_pieces: [], effects: [], abilities: [],
     ranged: false, is_king: false, enemy_only: false, target_policy: '',
+    // bounty_gold / bounty_exp are deliberately ABSENT by default: an unset bounty derives
+    // from the card's mana cost through the bounty.* rates (see GameData.kill_bounty), and a
+    // key that is only written when authored keeps every existing card file untouched.
     _derive_stats: false,
   }),
   form(draft, ctx, onChange) {
@@ -138,6 +141,13 @@ const CardEditor = {
             'Derive stats from the composition (composition cards only — the game computes cost/attack/health/speed, you just attach effects)')),
         ),
         statRow,
+        el('div', { class: 'frow' },
+          fld('Bounty gold', numInput(draft, 'bounty_gold', onChange, { min: 0, optional: true }),
+            'gold paid when this unit is killed — blank = its mana cost', 'narrow'),
+          fld('Bounty exp', numInput(draft, 'bounty_exp', onChange, { min: 0, optional: true }),
+            'experience paid when it is killed — blank = its mana cost', 'narrow'),
+        ),
+        el('div', { class: 'hint', text: 'Bounties pay the player mid-fight, the instant the unit dies — one coin flies to the gold bag per gold. Leave both blank unless this unit should be worth more (or less) than it costs. Kings pay no bounty; they drop the reward chest instead.' }),
       ),
       groupBox('Activated abilities',
         el('div', { class: 'fld' },
@@ -169,6 +179,9 @@ const CardEditor = {
     if (d.tribe) out.tribe = d.tribe;   // fodder-tribe tag (cue variants); no form input yet
     if (d.ranged) out.ranged = true;
     if (d.target_policy) out.target_policy = d.target_policy;   // "" = auto (derive from composition)
+    // 0 is a real bounty ("pays nothing"), so these test for PRESENCE, not truthiness.
+    if (d.bounty_gold != null && d.bounty_gold !== '') out.bounty_gold = d.bounty_gold;
+    if (d.bounty_exp != null && d.bounty_exp !== '') out.bounty_exp = d.bounty_exp;
     if (d.card_type) out.card_type = d.card_type;
     if (d.shield && d._derive_stats) out.shield = d.shield;
     if (d.effects.length) out.effects = cleanEffects(d.effects);
@@ -195,6 +208,8 @@ const CardEditor = {
     else lines.push(`Cost ${d.cost} · ATK ${d.attack} · HP ${d.health} · SPD ${d.speed}${d.shield ? ' · Shield ' + d.shield : ''}.`);
     if (d.ranged) lines.push('Attacks at range (projectile).');
     if (d.target_policy) lines.push(`Auto-attack targets: ${d.target_policy}.`);
+    if (d.bounty_gold != null && d.bounty_gold !== '') lines.push(`Pays ${d.bounty_gold} gold when killed.`);
+    if (d.bounty_exp != null && d.bounty_exp !== '') lines.push(`Pays ${d.bounty_exp} experience when killed.`);
     if (d.is_king) lines.push('KING — losing it loses the fight.');
     if (d.enemy_only) lines.push('Enemy-only: never appears in player pools.');
     for (const a of d.abilities || []) lines.push(`Offers activated ability: ${a}.`);
@@ -1220,6 +1235,35 @@ function vfxProceduralLook(draft, ctx, onChange) {
   return box;
 }
 
+// The "look" half of a custom-renderer VFX entry. The look is a hand-written renderer in the
+// game (CoinFlightFx, KingFallFx, …), registered under this entry's id via Vfx.register_custom —
+// so the ONLY thing authorable here is that renderer's own params, and what those are is defined
+// by the renderer, not by this editor. Same shape as the filter case for the same reason: an
+// open set of keys that no fixed list of fields could keep up with.
+//
+// This box is also the reason the params survive a save at all. Procedural entries serialize
+// through a whitelist (color/scale/duration/intensity), and a custom renderer's numbers are not
+// on it — so before this existed, opening a custom entry in the Tool and saving it silently
+// stripped every knob its renderer reads, and the effect fell back to its GDScript defaults.
+function vfxCustomLook(draft, ctx, onChange) {
+  return groupBox('Look (custom renderer)',
+    el('div', { class: 'frow' },
+      el('div', { class: 'fld wide' }, el('span', { class: 'hint',
+        text: `Drawn by the game's registered renderer for "${draft.id || 'this id'}" `
+            + '(Vfx.register_custom). The params below are that renderer\'s own dials — their '
+            + 'names must match what it reads, and anything it does not read is ignored.' })),
+    ),
+    el('div', { class: 'frow' },
+      fld('Companion sound', selectInput(draft, 'sfx',
+        [{ value: '', label: '(none)' }].concat(
+          ((ctx.vocab && ctx.vocab.sounds) || []).map(s => ({ value: s.id, label: `${s.name} (${s.id})` }))),
+        onChange), 'a sound id Vfx.play fires atomically with this visual'),
+    ),
+    el('h3', { text: 'Renderer params — every number the look reads' }),
+    uniformParamsBox(draft.params, onChange, []),
+  );
+}
+
 // The "look" half of a filter-backed VFX entry: the look itself lives in the Render Filter, so
 // all this owns is WHICH filter, which of its uniforms to override, and how one of them moves.
 function vfxFilterLook(draft, ctx, onChange) {
@@ -1265,8 +1309,8 @@ const VfxEditor = {
     const lookHost = el('div');
     const renderLook = () => {
       lookHost.textContent = '';
-      lookHost.append(draft.renderer === 'filter'
-        ? vfxFilterLook(draft, ctx, onChange)
+      lookHost.append(draft.renderer === 'filter' ? vfxFilterLook(draft, ctx, onChange)
+        : draft.renderer === 'custom' ? vfxCustomLook(draft, ctx, onChange)
         : vfxProceduralLook(draft, ctx, onChange));
     };
     wrap.append(
@@ -1308,7 +1352,16 @@ const VfxEditor = {
       category: d.category || 'ui', behavior: d.behavior || 'flash' };
     if (d.renderer && d.renderer !== 'procedural') out.renderer = d.renderer;
     const params = {};
-    if (d.renderer === 'filter') {
+    if (d.renderer === 'custom') {
+      // A custom entry's params belong to the GAME's registered renderer for this id, which
+      // defines its own dials (CoinFlightFx reads size/duration/stagger/curve/spread). That is an
+      // open set, so it passes through verbatim — running it through the procedural whitelist
+      // below would delete every one of them on save and silently revert the effect to its
+      // GDScript fallbacks.
+      for (const [k, v] of Object.entries(d.params || {})) {
+        if (v !== '' && v != null) params[k] = v;
+      }
+    } else if (d.renderer === 'filter') {
       // A filter entry's params are shader uniform names plus the reserved filter/animate keys
       // — an arbitrary set the procedural whitelist below would silently strip. Pass them
       // through verbatim; the filter, not this editor, defines what is meaningful.
@@ -1337,6 +1390,14 @@ const VfxEditor = {
   },
   summarize(d) {
     const lines = [`${d.display_name || d.id || 'Unnamed VFX'} — ${d.category || 'ui'} ${d.sustained ? 'sustained state' : 'one-shot'} riding "${d.behavior}".`];
+    // A custom entry's behavior says nothing (the renderer is the look), so its DIALS are what a
+    // reader wants at a glance — that is the whole authorable surface of the effect.
+    if (d.renderer === 'custom') {
+      const dials = Object.entries(d.params || {}).map(([k, v]) => `${k}=${v}`);
+      lines.push(dials.length
+        ? `Custom renderer, tuned by: ${dials.join(', ')}.`
+        : 'Custom renderer with no params — every number is a GDScript default.');
+    }
     if (d.enabled === false) lines.push('PARKED (enabled: false) — no live cue site yet; the game skips it at load.');
     lines.push(d.placeholder === false ? 'Designed look — always plays.'
       : 'PLACEHOLDER — plays the procedural sketch; mutable in game with F8 until a look is designed.');

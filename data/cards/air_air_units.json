@@ -1,7 +1,11 @@
 [
 	{
 		"id": "air_air_pawn",
-		"display_name": "Pure Air Pawn",
+		"display_name": "Wind Pawn",
+		"cost": 1,
+		"attack": 1,
+		"health": 3,
+		"speed": 9,
 		"elements": [
 			"air",
 			"air"
@@ -32,15 +36,11 @@
 					"at": "2026-07-12"
 				}
 			}
-		},
-		"cost": 1,
-		"attack": 1,
-		"health": 3,
-		"speed": 9
+		}
 	},
 	{
 		"id": "air_air_knight",
-		"display_name": "Pure Air Knight",
+		"display_name": "Wind Knight",
 		"cost": 2,
 		"attack": 2,
 		"health": 3,
@@ -116,7 +116,12 @@
 	},
 	{
 		"id": "air_air_rook",
-		"display_name": "Pure Air Rook",
+		"display_name": "Wind Rook",
+		"cost": 3,
+		"attack": 1,
+		"health": 7,
+		"speed": 9,
+		"shield": 2,
 		"elements": [
 			"air",
 			"air"
@@ -142,16 +147,15 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 3,
-		"attack": 1,
-		"health": 7,
-		"speed": 9,
-		"shield": 2
+		}
 	},
 	{
 		"id": "air_air_queen",
-		"display_name": "Pure Air Queen",
+		"display_name": "Wind Queen",
+		"cost": 5,
+		"attack": 5,
+		"health": 5,
+		"speed": 11,
 		"elements": [
 			"air",
 			"air"
@@ -177,15 +181,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 5,
-		"attack": 5,
-		"health": 5,
-		"speed": 11
+		}
 	},
 	{
 		"id": "air_air_pawn_pawn",
-		"display_name": "Pure Air Warrior",
+		"display_name": "Wind Warrior",
+		"cost": 2,
+		"attack": 2,
+		"health": 4,
+		"speed": 9,
+		"shield": 1,
 		"elements": [
 			"air",
 			"air"
@@ -211,16 +216,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 2,
-		"attack": 2,
-		"health": 4,
-		"speed": 9,
-		"shield": 1
+		}
 	},
 	{
 		"id": "air_air_knight_pawn",
-		"display_name": "Pure Air Cavalry",
+		"display_name": "Wind Cavalry",
+		"cost": 3,
+		"attack": 3,
+		"health": 5,
+		"speed": 10,
+		"shield": 1,
 		"elements": [
 			"air",
 			"air"
@@ -241,30 +246,18 @@
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/knight_pawn.png",
-					"name": "Cavalry"
+					"name": "Cavalry",
+					"mode": "img2img",
+					"denoise": 0.6
 				},
 				"last": {
 					"seed": 4055275065,
 					"prompt": "Charging armored rider on a galloping warhorse spun from swirling pale cloud-vapor, sleek pearl-and-silver plating laced with glowing cyan wind-veins, streaming misty mane and tail dissolving into curling gusts and floating feathers, hooves trailing spiraling air rings, a leveled lance leaking racing wind, luminous white-blue eyes, thick bold outlines, saturated stylized colors, radiant bright sky., cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear",
 					"style": "",
 					"at": "2026-07-12"
-				},
-				"inferredFrom": {
-					"anchor": "knight_pawn",
-					"theme": [
-						"air_air_pawn",
-						"air_air_knight",
-						"air_air_queen"
-					],
-					"mode": "concept"
 				}
 			}
-		},
-		"cost": 3,
-		"attack": 3,
-		"health": 5,
-		"speed": 10,
-		"shield": 1
+		}
 	},
 	{
 		"id": "air_air_bishop_pawn",
@@ -306,7 +299,12 @@
 	},
 	{
 		"id": "air_air_pawn_rook",
-		"display_name": "Pure Air Barracks",
+		"display_name": "Wind Barracks",
+		"cost": 4,
+		"attack": 2,
+		"health": 8,
+		"speed": 9,
+		"shield": 1,
 		"elements": [
 			"air",
 			"air"
@@ -316,6 +314,10 @@
 			"rook"
 		],
 		"ranged": true,
+		"abilities": [
+			"air_pawn_training_pure",
+			"pawn_material"
+		],
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -333,20 +335,15 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"abilities": [
-			"air_pawn_training_pure",
-			"pawn_material"
-		],
-		"cost": 4,
-		"attack": 2,
-		"health": 8,
-		"speed": 9,
-		"shield": 1
+		}
 	},
 	{
 		"id": "air_air_pawn_queen",
-		"display_name": "Pure Air Commander",
+		"display_name": "Wind Commander",
+		"cost": 6,
+		"attack": 5,
+		"health": 5,
+		"speed": 11,
 		"elements": [
 			"air",
 			"air"
@@ -372,15 +369,11 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 6,
-		"attack": 5,
-		"health": 5,
-		"speed": 11
+		}
 	},
 	{
 		"id": "air_air_knight_knight",
-		"display_name": "Pure Air Beast",
+		"display_name": "Wind Beast",
 		"cost": 4,
 		"attack": 3,
 		"health": 5,
@@ -451,7 +444,12 @@
 	},
 	{
 		"id": "air_air_knight_rook",
-		"display_name": "Pure Air Stable",
+		"display_name": "Wind Stable",
+		"cost": 5,
+		"attack": 3,
+		"health": 8,
+		"speed": 10,
+		"shield": 2,
 		"elements": [
 			"air",
 			"air"
@@ -461,6 +459,10 @@
 			"rook"
 		],
 		"ranged": true,
+		"abilities": [
+			"air_knight_training_pure",
+			"knight_material"
+		],
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -478,20 +480,15 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"abilities": [
-			"air_knight_training_pure",
-			"knight_material"
-		],
-		"cost": 5,
-		"attack": 3,
-		"health": 8,
-		"speed": 10,
-		"shield": 2
+		}
 	},
 	{
 		"id": "air_air_knight_queen",
-		"display_name": "Pure Air Monster",
+		"display_name": "Wind Monster",
+		"cost": 6,
+		"attack": 6,
+		"health": 7,
+		"speed": 12,
 		"elements": [
 			"air",
 			"air"
@@ -512,29 +509,18 @@
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/knight_queen.png",
-					"name": "Monster"
+					"name": "Monster",
+					"mode": "img2img",
+					"denoise": 0.6
 				},
 				"last": {
 					"seed": 2739500742,
 					"prompt": "Rearing colossal beast conjured entirely from living wind, hulking body coiling out of swirling white cloudbanks and rushing gusts, translucent pearl-and-silver form streaming into curling breezes, hollow luminous pale-blue eyes glowing in a faceless maw, clawed limbs dissolving into spiraling vapor rings, glowing cyan air-veins pulsing across its bulk, drifting mist and darting feathers, bold clean cel-shading, thick outlines, radiant open sky, centered heroic subject., cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear",
 					"style": "",
 					"at": "2026-07-12"
-				},
-				"inferredFrom": {
-					"anchor": "knight_queen",
-					"theme": [
-						"air_air_pawn",
-						"air_air_knight",
-						"air_air_queen"
-					],
-					"mode": "concept"
 				}
 			}
-		},
-		"cost": 6,
-		"attack": 6,
-		"health": 7,
-		"speed": 12
+		}
 	},
 	{
 		"id": "air_air_bishop_bishop",
@@ -653,7 +639,12 @@
 	},
 	{
 		"id": "air_air_rook_rook",
-		"display_name": "Pure Air Turret",
+		"display_name": "Wind Turret",
+		"cost": 6,
+		"attack": 2,
+		"health": 11,
+		"speed": 9,
+		"shield": 4,
 		"elements": [
 			"air",
 			"air"
@@ -679,16 +670,16 @@
 					"at": "2026-07-12"
 				}
 			}
-		},
-		"cost": 6,
-		"attack": 2,
-		"health": 11,
-		"speed": 9,
-		"shield": 4
+		}
 	},
 	{
 		"id": "air_air_queen_rook",
-		"display_name": "Pure Air Castle",
+		"display_name": "Wind Castle",
+		"cost": 7,
+		"attack": 5,
+		"health": 10,
+		"speed": 10,
+		"shield": 2,
 		"elements": [
 			"air",
 			"air"
@@ -698,6 +689,10 @@
 			"rook"
 		],
 		"ranged": true,
+		"abilities": [
+			"air_queen_training_pure",
+			"queen_material"
+		],
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -715,20 +710,15 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"abilities": [
-			"air_queen_training_pure",
-			"queen_material"
-		],
-		"cost": 7,
-		"attack": 5,
-		"health": 10,
-		"speed": 10,
-		"shield": 2
+		}
 	},
 	{
 		"id": "air_air_queen_queen",
-		"display_name": "Pure Air Hero",
+		"display_name": "Wind Hero",
+		"cost": 8,
+		"attack": 8,
+		"health": 8,
+		"speed": 11,
 		"elements": [
 			"air",
 			"air"
@@ -754,10 +744,6 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 8,
-		"attack": 8,
-		"health": 8,
-		"speed": 11
+		}
 	}
 ]

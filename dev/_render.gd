@@ -42,6 +42,16 @@ func _ready() -> void:
 	if scene_path.contains("combination") and "merged" in args:
 		var mc := CardData.combine(CardData.get_card("pawn"), CardData.get_card("pawn"))
 		GameData.current_run.deck.append(DeckCard.make(mc.id))
+	# "mineral=N" / "quickmerge": the two states the crafting table's engage fabs read from —
+	# an empty purse (unaffordable pairs go unlit) and the quick-merge toggle switched on.
+	for a: String in args:
+		if a.begins_with("mineral=") and GameData.current_run != null:
+			GameData.current_run.magic_mineral = int(a.trim_prefix("mineral="))
+	if "quickmerge" in args and GameData.current_profile != null:
+		GameData.current_profile.quick_merge = true
+		GameData.current_profile.quick_merge_ack = true
+	if "quickpreview" in args and GameData.current_profile != null:
+		GameData.current_profile.quick_preview = true
 	# Deck builder / viewer need a target deck handed off (normally from the Decks screen).
 	if GameData.current_profile != null:
 		var did: String = GameData.current_profile.selected_deck_id
@@ -134,6 +144,29 @@ func _ready() -> void:
 					if j != i:
 						n.call("_on_merge_btn", j)
 					break
+	# Crafting screen "dropI-J": drives a real DRAG of entry I released over entry J — the path a
+	# quick merge takes when it fuses out of the drop point rather than the grid slot.
+	for a: String in args:
+		if scene_path.contains("combination") and a.begins_with("drop"):
+			var ij := a.trim_prefix("drop").split("-")
+			var i := int(ij[0]) if ij.size() == 2 else 0
+			var j := int(ij[1]) if ij.size() == 2 else 1
+			for n: Node in sv.find_children("*", "Control", true, false):
+				if n.has_method("_begin_drag"):
+					var entries: Array = n.get("_entries")
+					var tgt: Control = entries[j].item
+					n.call("_begin_drag", {"kind": "card", "idx": i})
+					n.call("_update_drag", tgt.get_global_rect().get_center())
+					n.call("_resolve_drag")
+					break
+	# Crafting screen "quickask": flips the header's Quick merge toggle on with the profile
+	# un-acknowledged, i.e. the first-enable path — renders the confirmation overlay.
+	if scene_path.contains("combination") and "quickask" in args:
+		for n: Node in sv.find_children("*", "Control", true, false):
+			if n.has_method("_on_quick_merge_toggled"):
+				n.call("_on_quick_merge_toggled", true)
+				break
+		await get_tree().process_frame
 	# Crafting screen "toast": run AFTER a pair opens a merge (e.g. "pair10-12 toast") — drops the
 	# framing and jumps straight to the celebration result toast for that pairing.
 	if scene_path.contains("combination") and "toast" in args:

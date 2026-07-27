@@ -571,7 +571,7 @@
 	},
 	{
 		"id": "darkness_fire_bishop_rook",
-		"display_name": "Demonic Arcane Tower",
+		"display_name": "Demonic Temple",
 		"cost": 5,
 		"attack": 5,
 		"health": 8,

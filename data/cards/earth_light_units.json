@@ -553,7 +553,7 @@
 	},
 	{
 		"id": "earth_light_bishop_rook",
-		"display_name": "Nature Arcane Tower",
+		"display_name": "Nature Temple",
 		"cost": 4,
 		"attack": 2,
 		"health": 10,

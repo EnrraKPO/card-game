@@ -1,13 +1,13 @@
 [
 	{
 		"id": "air_air_king",
-		"display_name": "Pure Air King",
+		"display_name": "Wind King",
 		"cost": 0,
 		"attack": 1,
 		"health": 20,
 		"speed": 3,
 		"shield": 5,
-		"description": "Ruler of pure <air>. If the <king> falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 <shield>.",
+		"description": "Ruler of pure <air>. If the <king> falls, the battle is lost. Starts each round with 5 <shield>.",
 		"elements": [
 			"air",
 			"air"
@@ -27,22 +27,16 @@
 				"prompt": "Chibi king facing right, crown of translucent white crystal, scepter of swirling silver vapor, armor made of polished pearl and iridescent glass, billowing cape of flowing clouds, bold clean outlines, painterly cartoon fantasy style, airy pastel palette of teal and white, bright daylight, soft luminous rim lighting.",
 				"ref": {
 					"source": "upload",
-					"path": "snap_king.png"
+					"path": "snap_king.png",
+					"name": "snap_king.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				},
 				"last": {
 					"seed": 984415987,
 					"prompt": "Chibi bearded monarch standing proud, crown of coiled cloud and spun silver mist, ornate scepter topped with a spinning sphere of compressed breeze, translucent windswept-crystal armor traced with glowing pale-cyan currents, long cape of streaming vapor whipping in gusts, spiraling wisps of luminous wind circling his boots, soft turquoise sky, bold clean outlines, painterly detailed illustration, cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear",
 					"style": "",
 					"at": "2026-07-12"
-				},
-				"inferredFrom": {
-					"anchor": "snap_king.png",
-					"theme": [
-						"snap_air_air_pawn.png",
-						"snap_air_air_knight.png",
-						"snap_air_air_queen.png"
-					],
-					"mode": "replicate"
 				}
 			}
 		}
@@ -271,13 +265,13 @@
 	},
 	{
 		"id": "darkness_darkness_king",
-		"display_name": "Pure Darkness King",
+		"display_name": "Void King",
 		"cost": 0,
 		"attack": 1,
 		"health": 20,
 		"speed": 3,
 		"shield": 5,
-		"description": "Ruler of pure <darkness>. If the <king> falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 <shield>.",
+		"description": "Ruler of pure <darkness>. If the <king> falls, the battle is lost. Starts each round with 5 <shield>.",
 		"elements": [
 			"darkness",
 			"darkness"
@@ -297,16 +291,10 @@
 				"prompt": "Chibi royal figure looking right, crown of obsidian with a black moon jewel, scepter of void-glass, shield etched with a crescent eclipse, armor made of solidified shadow and pitch-black smoke, flowing tattered cape of midnight velvet, glowing white eyes, deep violet and charcoal palette, backlit rim lighting, standing on a barren plain.",
 				"ref": {
 					"source": "upload",
-					"path": "snap_king.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_king.png",
-					"theme": [
-						"snap_darkness_darkness_pawn.png",
-						"snap_darkness_darkness_knight.png",
-						"snap_darkness_darkness_queen.png"
-					],
-					"mode": "replicate"
+					"path": "snap_king.png",
+					"name": "snap_king.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
@@ -757,13 +745,13 @@
 	},
 	{
 		"id": "light_light_king",
-		"display_name": "Pure Light King",
+		"display_name": "Luminous King",
 		"cost": 0,
 		"attack": 1,
 		"health": 20,
 		"speed": 3,
 		"shield": 5,
-		"is_king": true,
+		"description": "Ruler of pure <light>. If the <king> falls, the battle is lost. Starts each round with 5 <shield>.",
 		"elements": [
 			"light",
 			"light"
@@ -771,23 +759,22 @@
 		"chess_pieces": [
 			"king"
 		],
-		"description": "Ruler of pure <light>. If the <king> falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 <shield>.",
-		"effects": [],
+		"is_king": true,
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "Chibi king looking right, ornate crown of solidified brilliance, scepter of concentrated radiance, shield with a luminous geometric crest, armor forged from polished white gold and shimmering light, flowing translucent cape, standing on a sun-drenched meadow, warm golden palette, bold cel-shaded style, intense inner glow, radiant backlit atmosphere.",
 				"ref": {
 					"source": "upload",
-					"path": "snap_king.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_king.png",
-					"theme": [
-						"snap_light_light_pawn.png",
-						"snap_light_light_knight.png",
-						"snap_light_light_queen.png"
-					],
-					"mode": "replicate"
+					"path": "snap_king.png",
+					"name": "snap_king.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}

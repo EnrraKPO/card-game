@@ -303,7 +303,7 @@
 	},
 	{
 		"id": "bishop_rook",
-		"display_name": "Arcane Tower",
+		"display_name": "Temple",
 		"cost": 5,
 		"attack": 2,
 		"health": 9,

@@ -414,7 +414,6 @@
 	},
 	{
 		"id": "gold_gain",
-		"enabled": false,
 		"display_name": "Gold Gained",
 		"category": "resource",
 		"concept": "Gold entering the purse (rewards, events) — classic coin joy, scaled small enough to stack.",
@@ -437,7 +436,6 @@
 	},
 	{
 		"id": "experience_gain",
-		"enabled": false,
 		"display_name": "Experience Gained",
 		"category": "resource",
 		"concept": "Run-end experience tallying up toward upgrade points — a counting-up ratchet with warmth.",

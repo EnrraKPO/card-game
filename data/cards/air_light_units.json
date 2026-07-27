@@ -557,7 +557,7 @@
 	},
 	{
 		"id": "air_light_bishop_rook",
-		"display_name": "Angelic Arcane Tower",
+		"display_name": "Angelic Temple",
 		"cost": 4,
 		"attack": 2,
 		"health": 10,

@@ -593,7 +593,7 @@
 	},
 	{
 		"id": "air_fire_bishop_rook",
-		"display_name": "Lightning Arcane Tower",
+		"display_name": "Lightning Temple",
 		"cost": 5,
 		"attack": 4,
 		"health": 9,

@@ -242,7 +242,7 @@
 	},
 	{
 		"id": "fire_bishop_rook",
-		"display_name": "Fire Arcane Tower",
+		"display_name": "Fire Temple",
 		"elements": [
 			"fire"
 		],

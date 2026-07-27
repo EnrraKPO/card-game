@@ -557,7 +557,7 @@
 	},
 	{
 		"id": "light_water_bishop_rook",
-		"display_name": "Rainbow Arcane Tower",
+		"display_name": "Rainbow Temple",
 		"cost": 4,
 		"attack": 2,
 		"health": 12,

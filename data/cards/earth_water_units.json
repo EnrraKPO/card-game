@@ -560,7 +560,7 @@
 	},
 	{
 		"id": "earth_water_bishop_rook",
-		"display_name": "Clay Arcane Tower",
+		"display_name": "Clay Temple",
 		"cost": 5,
 		"attack": 2,
 		"health": 11,
