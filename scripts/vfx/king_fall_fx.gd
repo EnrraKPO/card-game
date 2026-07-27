@@ -56,7 +56,7 @@ static func play(vd: VFXData, target: Control, _opts: Dictionary = {}) -> void:
 	var rate_max: float = vd.num_param("rate_max", DEF_RATE_MAX)
 
 	# ── SWELL + TREMBLE ──
-	var swell := Vfx.paced(maxf(0.1, vd.num_param("swell", DEF_SWELL)))
+	var swell := Vfx.paced(maxf(0.1, vd.num_param("swell", DEF_SWELL)), vd)
 	var t1 := target.create_tween()
 	t1.tween_method(func(p: float) -> void:
 			if not is_instance_valid(target):
@@ -75,7 +75,7 @@ static func play(vd: VFXData, target: Control, _opts: Dictionary = {}) -> void:
 
 	# ── SPIKE ──
 	Sfx.play("spell_cast")   # the charge topping out, right before the release
-	var spike := Vfx.paced(maxf(0.05, vd.num_param("spike", DEF_SPIKE)))
+	var spike := Vfx.paced(maxf(0.05, vd.num_param("spike", DEF_SPIKE)), vd)
 	var t2 := target.create_tween()
 	t2.tween_method(func(p: float) -> void:
 			if not is_instance_valid(target):
@@ -98,7 +98,7 @@ static func play(vd: VFXData, target: Control, _opts: Dictionary = {}) -> void:
 	motes.burst(int(vd.num_param("shards", 34.0)), centre)
 	layer.add_child(_shockwave(centre, color))
 	layer.add_child(_flash(centre, color))
-	var burst := Vfx.paced(maxf(0.05, vd.num_param("burst", DEF_BURST)))
+	var burst := Vfx.paced(maxf(0.05, vd.num_param("burst", DEF_BURST)), vd)
 	var t3 := target.create_tween()
 	t3.set_parallel(true)
 	t3.tween_property(target, "scale", Vector2(0.05, 0.05), burst).set_ease(Tween.EASE_IN)

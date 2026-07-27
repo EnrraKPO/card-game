@@ -2835,7 +2835,8 @@
 			"duration": 0.3,
 			"stagger": 0.09,
 			"curve": 0.3,
-			"spread": 0
+			"spread": 0,
+			"paced": 1
 		},
 		"sfx": "gold_gain",
 		"placeholder": false,
@@ -2874,8 +2875,8 @@
 		"behavior": "burst",
 		"params": {
 			"color": "ffcf6b",
-			"scale": 1.6,
-			"duration": 0.45
+			"scale": 3.5,
+			"duration": 0.34
 		},
 		"placeholder": false,
 		"concept": "The reward chest hitting the board where the enemy King stood — the impact that sells its weight.",
@@ -2915,47 +2916,57 @@
 		"params": {
 			"color": "fff0a8",
 			"scale": 3,
-			"duration": 1
+			"duration": 0.5,
+			"shape": "radial"
 		},
 		"placeholder": false,
 		"sfx": "reward_open",
 		"concept": "The chest's lid coming up — the reward screen's opening note, played on the board before the screen changes.",
-		"explanation": "IMPLEMENTED (TreasureChest._open_it): a broad warm radiance blooming out of the open chest while combat holds a beat before navigating.",
+		"explanation": "IMPLEMENTED (TreasureChest._open_it): a broad warm radiance blooming out of the open chest while combat holds a beat before navigating. Shape is RADIAL, not the default rect: the light comes out of the chest, and a rect halo the size of the chest's box read as a pale panel parked behind the art.",
 		"prompt": "Sprite sheet of brilliant golden light bursting upward out of an opening treasure chest with coins and sparks, 12 frames on transparent background, 2d game effect"
 	},
 	{
 		"id": "reward_orb",
 		"display_name": "Reward Orb",
 		"category": "economy",
-		"renderer": "custom",
 		"behavior": "travel",
+		"renderer": "custom",
 		"params": {
 			"color": "fff0a8",
 			"radius": 34,
-			"gather": 0.34,
-			"rise": 0.2,
-			"flight": 0.62,
-			"linger": 0.34
+			"gather": 0.2,
+			"rise": 0.12,
+			"lift": 0,
+			"flight": 0.5,
+			"arc": 0,
+			"swell": 1.45,
+			"burst": 0.34,
+			"linger": 0.4
 		},
 		"placeholder": false,
 		"concept": "The reward leaving the opened chest and carrying itself to the middle of the screen — the physical link between winning the fight and the rewards screen, so the two are one motion and not a cut.",
-		"explanation": "IMPLEMENTED (RewardOrbFx): a bright orb gathers over the open lid, hangs, then sweeps along a lifted curve to the viewport centre trailing sparks; on arrival it throws a ring and fires the caller's on_arrive (which is what lets Combat navigate). Drawn on the VFX overlay so it outlives combat and lingers over the screen growing out from under it.",
+		"explanation": "IMPLEMENTED (RewardOrbFx): a bright orb gathers over the open lid, eases out of it ALONG the flight line (never upward — the chest sits in the enemy king's slot at the TOP of the board, so an upward lift plus a downward flight read as a bounce off the ceiling), then travels unhurried in a STRAIGHT line to the viewport centre trailing sparks (arc>0 bows that path); on arrival it throws a ring and fires the caller's on_arrive (which is what lets Combat navigate). Drawn on the VFX overlay so it outlives combat and lingers over the screen growing out from under it.",
 		"prompt": "Sprite sheet of a brilliant golden orb of light with a soft halo and drifting sparks, 8 frames on transparent background, 2d game effect"
 	},
 	{
 		"id": "screen_grow_in",
 		"display_name": "Screen Grows In",
 		"category": "screen",
-		"renderer": "custom",
 		"behavior": "pop",
+		"renderer": "custom",
 		"params": {
-			"duration": 0.42,
-			"overlap": 0
+			"delay": 0.35,
+			"duration": 0.34,
+			"overshoot": 1.05,
+			"bg_lag": 0.08,
+			"modal": 1,
+			"dim": 0.55,
+			"sfx_delay": 0.2
 		},
-		"placeholder": false,
 		"sfx": "ui_screen_open",
+		"placeholder": false,
 		"concept": "A screen arriving as the TAIL of a gesture rather than a jump — it swells from nothing at the centre of the viewport, so whatever the player just did appears to have opened it.",
-		"explanation": "IMPLEMENTED (ScreenGrowFx, registered app-wide in VfxService): the mounted content scales 0 → 1 about the viewport centre with a slight overshoot and fades in. Requested per navigation via Nav.goto(path, \"screen_grow_in\"); every other navigation keeps the standard sweep. The persistent chrome is not scaled — it belongs to the Shell, not the arriving screen.",
+		"explanation": "IMPLEMENTED (ScreenGrowFx, registered app-wide in VfxService): the mounted content holds hidden for `delay`, then scales 0 → 1 about the viewport centre with a slight overshoot and fades in. The hold is what makes it read as coming OUT of the cue that summoned it (the reward orb's burst) rather than detonating alongside it — tune it against reward_orb's `burst`. Requested per navigation via Nav.goto(path, \"screen_grow_in\"); every other navigation keeps the standard sweep. The persistent chrome is not scaled — it belongs to the Shell, not the arriving screen.",
 		"prompt": "Sprite sheet of a rectangular panel expanding from a point of light to full size with a soft overshoot, 8 frames on transparent background, 2d game effect"
 	}
 ]

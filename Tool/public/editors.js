@@ -1076,6 +1076,10 @@ const VFX_SUSTAINED = ['glow', 'pulse', 'sparkle', 'radiance', 'emit'];
 // 'custom' = an effect class registered in-game via Vfx.register_custom. 'filter' = the look is
 // a RenderFilter (its own tab); the VFX entry then owns only WHEN it runs and how it animates.
 const VFX_RENDERERS = ['procedural', 'custom', 'filter'];
+// What a "radiance" is shaped LIKE. Blank keeps the primitive's own default (rect).
+const VFX_SHAPES = [{ value: '', label: '(default — rect)' },
+  { value: 'rect', label: 'rect — traces the target’s box' },
+  { value: 'radial', label: 'radial — blooms from its centre' }];
 const FILTER_LAYERS = ['behind', 'above', 'overlay'];
 const FILTER_SOURCES = ['texture', 'rounded_rect'];
 
@@ -1200,6 +1204,20 @@ function playVfxPreview(stage, d) {
       anim(overlay({ inset: '14%', border: `3px solid ${color}`, opacity: 1 }),
         [{ transform: 'scale(1.4)', opacity: 0.4 }, { transform: 'scale(1)', opacity: 1 }, { opacity: 0 }], dur || 400);
       break;
+    case 'radiance': {
+      // The one primitive whose SHAPE is authorable, so the sketch has to show which one is on —
+      // a rect halo and a radial bloom read as completely different cues on the same target.
+      const radial = (d.params || {}).shape === 'radial';
+      const o = overlay(radial
+        ? { left: '50%', top: '50%', width: `${90 * scale}px`, height: `${90 * scale}px`,
+          marginLeft: `${-45 * scale}px`, marginTop: `${-45 * scale}px`, borderRadius: '50%',
+          background: `radial-gradient(circle, ${color} 0%, transparent 70%)`, opacity: 0 }
+        : { inset: '12%', background: color, borderRadius: `${14 * scale}px`,
+          filter: `blur(${9 * scale}px)`, opacity: 0 });
+      o.animate([{ opacity: 0 }, { opacity: radial ? 0.95 : 0.5 }, { opacity: 0 }],
+        { duration: dur || 500, iterations: d.sustained ? 3 : 1 }).onfinish = () => o.remove();
+      break;
+    }
     case 'dissolve':
       anim(overlay({ inset: '18%', background: color, opacity: 0 }),
         [{ opacity: 0 }, { opacity: 0.75 }, { opacity: 0 }], dur || 500);
@@ -1219,6 +1237,13 @@ function vfxProceduralLook(draft, ctx, onChange) {
       fld('Colour', colorInput(draft.params, 'color', onChange), null, 'narrow'),
       fld('Scale', numInput(draft.params, 'scale', onChange, { step: 0.1, float: true, min: 0.2, max: 4, optional: true }), 'size/intensity multiplier', 'narrow'),
       fld('Duration (s)', numInput(draft.params, 'duration', onChange, { step: 0.05, float: true, min: 0.05, max: 5, optional: true }), 'blank = behavior default', 'narrow'),
+      fld('Shape', selectInput(draft.params, 'shape', VFX_SHAPES.map(v => ({ value: v.value, label: v.label })), onChange),
+        'radiance only — rect traces the target’s box (the target IS the light), radial blooms from its centre (light comes OUT of it)', 'narrow'),
+    ),
+    el('div', { class: 'frow' },
+      fld('Paced by combat dial', numInput(draft.params, 'paced', onChange, { step: 1, min: 0, max: 1, optional: true }),
+        'blank = decided by category (combat/status/card/resource are paced, everything else plays at its authored length); 1 = force on, 0 = force off',
+        'narrow'),
     ),
     el('div', { class: 'frow' },
       fld('Companion sound', selectInput(draft, 'sfx',
@@ -1375,8 +1400,8 @@ const VfxEditor = {
           to: an.to == null ? 1 : Number(an.to), period: Number(an.period) || 1 };
       }
     } else {
-      for (const k of ['color', 'color2']) if ((d.params || {})[k]) params[k] = d.params[k];
-      for (const k of ['scale', 'duration', 'intensity']) if ((d.params || {})[k] != null) params[k] = d.params[k];
+      for (const k of ['color', 'color2', 'shape']) if ((d.params || {})[k]) params[k] = d.params[k];
+      for (const k of ['scale', 'duration', 'intensity', 'paced']) if ((d.params || {})[k] != null) params[k] = d.params[k];
     }
     if (Object.keys(params).length) out.params = params;
     if (d.sustained) out.sustained = true;

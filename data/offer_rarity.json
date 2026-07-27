@@ -1,17 +1,17 @@
 {
   "piece_rarity": {
-    "pawn": 6,
+    "pawn": 4,
     "knight": 5,
     "bishop": 5,
     "rook": 5,
     "queen": 20,
     "king": 5
   },
-  "element_rarity": 14,
+  "element_rarity": 7,
   "count_multiplier": {
     "1": 1,
-    "2": 1.5,
-    "3": 2,
-    "4": 4
+    "2": 11,
+    "3": 9,
+    "4": 4.25
   }
 }

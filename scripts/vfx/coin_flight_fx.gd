@@ -64,7 +64,9 @@ static func play(vd: VFXData, target: Control, opts: Dictionary) -> void:
 	var layer := Vfx.overlay_layer_for(target)
 
 	var size: float = vd.num_param("size", DEF_SIZE)
-	var dur: float = maxf(0.1, vd.num_param("duration", DEF_DUR))
+	# Paced ONCE, here: this cue rides the combat clock (the entry declares "paced": 1 —
+	# see Vfx.paces), and every span below is a share of this one number.
+	var dur: float = Vfx.paced(maxf(0.1, vd.num_param("duration", DEF_DUR)), vd)
 	var stagger: float = maxf(0.0, vd.num_param("stagger", DEF_STAGGER))
 	var curve: float = clampf(vd.num_param("curve", DEF_CURVE), 0.0, 1.0)
 	var spread: float = vd.num_param("spread", DEF_SPREAD)
@@ -87,7 +89,7 @@ static func play(vd: VFXData, target: Control, opts: Dictionary) -> void:
 				clampf(curve + rank * spread, 0.0, 1.0), on_land)
 	# The cue's own beat is the FIRST coin's arrival: the rest of the stream is still in the air
 	# when combat moves on, which is the point — payment shouldn't stall the fight.
-	await tree.create_timer(minf(dur, Vfx.paced(dur))).timeout
+	await tree.create_timer(dur).timeout
 
 
 # One coin, launched now and cleaning up after itself. Not awaited by the loop above, so the
@@ -129,7 +131,7 @@ static func _throw(layer: CanvasLayer, tex: Texture2D, origin: Vector2, target: 
 			coin.position = _point(origin, _bag_point(target, origin), curve, t) \
 					- coin.size * 0.5
 			coin.rotation = t * TAU * SPIN,
-		0.0, 1.0, Vfx.paced(dur))
+		0.0, 1.0, dur)
 	tw.tween_callback(func() -> void:
 		if on_land.is_valid():
 			on_land.call()

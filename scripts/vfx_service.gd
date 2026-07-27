@@ -109,8 +109,17 @@ func play(id: String, target: Control, opts: Dictionary = {}) -> void:
 	# Companion SFX: the entry's paired sound fires atomically with the visual — the audio half
 	# of the cue lives in the library entry, never duplicated at call sites. (Direct attach()
 	# calls skip it; a sustained state's start only sounds when entered through play.)
+	#
+	# `params.sfx_delay` moves the sound off that instant for the effects whose LOOK does not begin
+	# at frame zero — an arrival that deliberately holds before it moves (screen_grow_in) would
+	# otherwise announce itself a beat before anything happened. The pairing still lives in the
+	# entry; only its offset is authorable.
 	if not vd.sfx.is_empty():
-		Sfx.play(vd.sfx)
+		var sfx_delay := paced(maxf(0.0, vd.num_param("sfx_delay", 0.0)), vd)
+		if sfx_delay > 0.0:
+			_play_sfx_after(vd.sfx, sfx_delay)   # deliberately not awaited — the visual runs now
+		else:
+			Sfx.play(vd.sfx)
 	if vd.sustained:
 		attach(id, target)
 		return
@@ -163,6 +172,32 @@ func detach(id: String, target: Control) -> void:
 
 func _attach_key(id: String, target: Control) -> String:
 	return "%s@%d" % [id, target.get_instance_id()]
+
+
+# Every sustained state attached to anything inside `root`, dropped at once.
+#
+# A screen parked as a modal's backdrop (Shell._park_departing) has to take its overlay effects
+# with it. Those draw on the overlay LAYERS, which sit above every screen by construction — the
+# whole point of them — so a glow, a slot cue or an attention badge belonging to the screen
+# UNDERNEATH would otherwise be the one thing still floating on top of the modal. Raising the
+# modal's z cannot reach them: a CanvasLayer outranks any z_index.
+func detach_under(root: Node) -> void:
+	if root == null or not is_instance_valid(root):
+		return
+	var doomed: Array[String] = []
+	for key: String in _attached.keys():
+		var parts := key.rsplit("@", true, 1)
+		if parts.size() < 2 or not parts[1].is_valid_int():
+			continue
+		var target: Object = instance_from_id(int(parts[1]))
+		var node := target as Node
+		if node != null and is_instance_valid(node) and (node == root or root.is_ancestor_of(node)):
+			doomed.append(key)
+	for key: String in doomed:
+		var raw: Variant = _attached[key]
+		_attached.erase(key)
+		if is_instance_valid(raw):
+			(raw as Node).queue_free()
 
 
 # Registers the playback callable for a renderer-"custom" entry: fn(vd: VFXData,
@@ -226,6 +261,39 @@ const PACING := [
 
 var _overlap_pref: float = -1.0
 
+# WHICH CUES THE DIAL GOVERNS. Pacing is a COMBAT setting — how much the beats of a fight overlap
+# and compress — because a fight is the one place the player reads a long sequence of cues against
+# a clock they want to hurry or slow. Everything outside that clock is an AUTHORED MOMENT: a chest
+# opening, a screen arriving, a forge merging, a coin flying to the purse. Those play at the length
+# they were written whatever the fight is set to; a player who set combat to Snappy asked for a
+# faster fight, not for the game's every flourish to be clipped.
+#
+# The entry's CATEGORY is the default declaration. It is a proxy, not a law: `coin_flight` is
+# economy by subject but fires mid-fight as a kill is paid out, and the fight must not wait on it
+# at any pacing — so `params.paced` (1/0) overrides the category either way, for a cue whose
+# SUBJECT and whose CLOCK disagree. A caller with no library entry at all (a relic chip glinting
+# in its tray) is paced: those are combat's own, or they would have an entry.
+const PACED_CATEGORIES := ["combat", "status", "card", "resource"]
+
+
+# One numeric param off an entry, without playing it. For the callers who must know what a cue is
+# GOING to do before it runs — the Shell reading `modal` to decide whether to hold the departing
+# screen's frame — so the declaration stays in the library entry rather than being duplicated as a
+# flag at the call site.
+func param_of(id: String, key: String, fallback: float) -> float:
+	var vd := VFXData.get_vfx(id)
+	return fallback if vd == null else vd.num_param(key, fallback)
+
+
+# Whether the pacing dial applies to this entry at all — see PACED_CATEGORIES.
+func paces(vd: VFXData) -> bool:
+	if vd == null:
+		return true
+	var declared := vd.num_param("paced", -1.0)
+	if declared >= 0.0:
+		return declared > 0.0
+	return vd.category in PACED_CATEGORIES
+
 
 # The global overlap dial, live (re-read per cue, so changing it mid-fight takes effect at once).
 func overlap() -> float:
@@ -279,7 +347,9 @@ func _save_prefs() -> void:
 func handoff(span: float, vd: VFXData = null) -> float:
 	if span <= 0.0:
 		return 0.0
-	var frac := overlap()
+	# A cue outside the combat clock hands off at its own end unless it says otherwise: nothing is
+	# waiting on it in a sequence the player is pacing, so there is no tail to give up.
+	var frac := overlap() if paces(vd) else 0.0
 	if vd != null:
 		frac = clampf(vd.num_param("overlap", frac), 0.0, 0.95)
 	return span * (1.0 - frac)
@@ -305,9 +375,21 @@ func _span_of(vd: VFXData) -> float:
 # an atomic cue that plays too fast to read defeats the point of gating on it.
 const PACED_FLOOR := 0.45   # the most a fully-snappy dial may compress an atomic duration
 
-func paced(seconds: float) -> float:
+# The companion sound of an effect that starts late (see play's sfx_delay). Fire-and-forget: it
+# outlives the caller's frame and is never awaited, so a delayed sound never holds up a visual.
+func _play_sfx_after(id: String, delay: float) -> void:
+	await get_tree().create_timer(delay).timeout
+	Sfx.play(id)
+
+
+# `vd` is the entry the duration belongs to: outside the combat clock (see PACED_CATEGORIES) the
+# authored number IS the answer and comes back untouched. Omitting it means "combat's own" — the
+# callers with no library entry behind them.
+func paced(seconds: float, vd: VFXData = null) -> float:
 	if seconds <= 0.0:
 		return 0.0
+	if not paces(vd):
+		return seconds
 	return seconds * lerpf(1.0, PACED_FLOOR, overlap() / 0.95)
 
 
@@ -527,9 +609,16 @@ func _make_rect(color: Color, size: Vector2) -> ColorRect:
 
 # The "radiance" behavior's draw node: additive-blended, sized to the target's rect (glued or set
 # once by the caller) — see _HaloFx for the actual layered falloff.
+#
+# `params.shape` picks what the light is shaped LIKE. "rect" (the default) traces the target's
+# own box, which is right when the target IS the lit thing (a card, a button, a slot). "radial"
+# blooms as concentric discs from its centre, which is right when the light comes OUT of the
+# target rather than being it — a chest's lid opening, a mouth of a flask, a wound. On those, a
+# rect halo reads as a bright PANEL parked behind the art instead of as light.
 func _make_halo(vd: VFXData, opts: Dictionary) -> _HaloFx:
 	var fx := _HaloFx.new()
 	fx.color = _p_color(vd, opts, Color(1.0, 0.9, 0.6))
+	fx.radial = vd.text_param("shape", "rect") == "radial"
 	fx.reach = 18.0 * _p_scale(vd)
 	fx.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var mat := CanvasItemMaterial.new()
@@ -1130,12 +1219,17 @@ class _EmitFx extends Control:
 class _HaloFx extends Control:
 	const LAYERS := 6
 	const BASE_CORNER := 14.0
+	const RADIAL_LAYERS := 10   # discs read smooth only with more steps than rects need
 	var color := Color.WHITE
 	var reach := 18.0
+	var radial := false   # see _make_halo: light OUT OF the target, rather than light SHAPED like it
 	var energy := 0.0:
 		set(v): energy = v; queue_redraw()
 	func _draw() -> void:
 		if energy <= 0.001:
+			return
+		if radial:
+			_draw_radial()
 			return
 		var sb := StyleBoxFlat.new()
 		var span := float(LAYERS - 1)
@@ -1150,3 +1244,16 @@ class _HaloFx extends Control:
 			col.a = energy * 0.22 * pow(1.0 - f, 2.0)
 			sb.bg_color = col
 			draw_style_box(sb, Rect2(Vector2.ZERO, size).grow(grow))
+
+	# Concentric discs from the target's centre, brightest in the middle and fading to nothing
+	# at the rim — a source of light rather than a lit box. The additive stack accumulates
+	# toward the core (every layer covers the middle), the same falloff the reward orb uses.
+	func _draw_radial() -> void:
+		var c := size * 0.5
+		var inner: float = minf(size.x, size.y) * 0.28   # the "mouth" the light comes out of
+		var span := float(RADIAL_LAYERS - 1)
+		for i in RADIAL_LAYERS:
+			var f := float(i) / span   # 0 = innermost → 1 = outermost
+			var col := color
+			col.a = energy * 0.16 * pow(1.0 - f, 2.0)
+			draw_circle(c, inner + reach * f * 1.6, col)

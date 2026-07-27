@@ -304,6 +304,15 @@ func get_player_king() -> CardInstance:
 	return null
 
 
+func get_enemy_king() -> CardInstance:
+	for r in BoardData.ROWS:
+		for c in BoardData.COLS:
+			var e: CardInstance = enemy_grid[r][c]
+			if e != null and e.data.is_king:
+				return e
+	return null
+
+
 func player_king_alive() -> bool:
 	for r in BoardData.ROWS:
 		for c in BoardData.COLS:

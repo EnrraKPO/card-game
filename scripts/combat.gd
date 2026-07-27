@@ -863,6 +863,37 @@ func _king_fall(inst: CardInstance, corpse: CardUI) -> void:
 	_chest_ready.emit()
 
 
+# Debug only: fell the enemy captain on the spot, so the whole "captain defeated" sequence — the
+# kill/death broadcasts, the fall, the chest and the end-of-combat gate — can be replayed without
+# fighting the fight for it. Deliberately NOT a shortcut past that sequence (the debug ✕ beside it
+# already is one): the lethal blow goes through the Resolver like any other, and everything after it
+# is the same path a killing strike takes, so what gets polished here is the real thing.
+#
+# The blow is a signed SYSTEM-channel HEALTH mutation: shield-bypassing (a shielded King would
+# otherwise survive a damage-form hit) and killer-less, so the death reads as "died to the engine"
+# rather than crediting some unit that never swung.
+var _debug_killing := false
+
+
+func _debug_kill_captain() -> void:
+	var king := _board.get_enemy_king()
+	if _debug_killing or king == null or not king.is_alive():
+		return
+	_debug_killing = true
+	Resolver.submit(StatMutation.make(king, StatMutation.HEALTH, -king.current_health,
+			null, StatMutation.CH_SYSTEM))
+	await _emit_kill(king)
+	await _broadcast(GameEvent.make(&"death", king))
+	await _bury(king)
+	_board.cleanup_effect_deaths()
+	_debug_killing = false
+	# Mid-combat the resolution loop is already watching for a fallen king and will end the fight at
+	# its next checkpoint — ending it here too would run the whole end sequence twice. Outside combat
+	# (the placement phases, where this button is most useful) nothing else is watching, so end it.
+	if _phase != Phase.COMBAT and _board.any_king_dead():
+		_handle_combat_end()
+
+
 # The corpse's send-off, deliberately outliving the death beat. Awaits the fade IN FULL — unlike the
 # beat above — because the card is freed at the end of it.
 func _fade_out(inst: CardInstance, corpse: CardUI) -> void:
@@ -1669,13 +1700,27 @@ func _build_action_column() -> Control:
 
 	# Debug tools get their OWN row, present only in debug builds — so a debug affordance never
 	# takes width from a control the player actually uses. Full-width: the row exists or it doesn't.
+	# Two ends of the same shortcut share it: ✕ skips straight to the combat-end bookkeeping, while
+	# "Kill" fells the enemy captain and lets the real death sequence play (see _debug_kill_captain).
 	if DebugConfig.enabled():
+		var debug_row := HBoxContainer.new()
+		debug_row.add_theme_constant_override("separation", 8)
+		debug_row.custom_minimum_size.y = side
+		col.add_child(debug_row)
+
 		var debug_close := ScreenUI.close_button(_handle_combat_end, true)
 		debug_close.size_flags_horizontal = SIZE_EXPAND_FILL
 		debug_close.size_flags_vertical = Control.SIZE_FILL
 		debug_close.custom_minimum_size = Vector2(0, side)
 		UIScale.tip(debug_close, "Debug: end combat")
-		col.add_child(debug_close)
+		debug_row.add_child(debug_close)
+
+		var debug_kill := ScreenUI.action_button("Kill", _debug_kill_captain,
+			Vector2(0, side), 20, ScreenUI.CHROME_DEBUG)
+		debug_kill.size_flags_horizontal = SIZE_EXPAND_FILL
+		debug_kill.size_flags_vertical = Control.SIZE_FILL
+		UIScale.tip(debug_kill, "Debug: kill the enemy captain")
+		debug_row.add_child(debug_kill)
 
 	# The key touch target — "Ready" — a chunky vertical button filling the rest of the column,
 	# all the way down through the hand bar's band. Green, from the glossy handoff's own "Ready"

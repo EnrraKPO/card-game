@@ -47,6 +47,9 @@ extends Control
 
 var _outer: VBoxContainer
 var _lower_area: Control
+var _bg: ColorRect                 # the app's backdrop plate — furniture, see arrival_furniture
+var _departing: Control            # the screen a modal arrival is opening OVER (still mounted)
+var _modal_plate: ColorRect        # that modal's own backdrop, grown with it
 var _current_content: Control = null
 
 var _header: Dictionary = {}   # ScreenUI.build_header()'s return — built once, see _ready()
@@ -65,10 +68,10 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	Nav.register_shell(self)
 
-	var bg := ColorRect.new()
-	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	bg.color = ScreenUI.BG_COLOR
-	add_child(bg)
+	_bg = ColorRect.new()
+	_bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_bg.color = ScreenUI.BG_COLOR
+	add_child(_bg)
 
 	_outer = VBoxContainer.new()
 	_outer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -150,11 +153,17 @@ func _sync_dev_toggles() -> void:
 # itself is still swapped fresh each time (a genuinely different screen each navigation) — only the
 # header/footer CHROME around it is persistent; see the header comment.
 func mount(scene_path: String, arrival: String = "") -> void:
-	if _current_content != null:
+	# A MODAL arrival opens OVER the screen it replaces, so that screen is not torn down here —
+	# it stays mounted, inert, underneath, and the new one is added above it. See _park_departing.
+	drop_departing()   # anything a previous arrival left behind
+	var modal := not arrival.is_empty() and Vfx.param_of(arrival, "modal", 0.0) > 0.0
+	var kept: Control = _park_departing() if modal else null
+	if _current_content != null and kept == null:
 		_current_content.queue_free()
-		_current_content = null
+	_current_content = null
 	for c in _lower_area.get_children():
-		c.queue_free()
+		if c != kept:
+			c.queue_free()
 	for c in _footer_custom:
 		c.queue_free()
 	_footer_custom = []
@@ -165,6 +174,8 @@ func mount(scene_path: String, arrival: String = "") -> void:
 	var inset: bool = def.get("inset", def.get("show_footer", false))
 
 	var stage := _rebuild_lower(content, inset)
+	if modal:
+		_make_modal_plate(stage)
 	_apply_header(def)
 	_apply_footer(def)
 	if content.has_method("on_chrome_applied"):
@@ -182,7 +193,118 @@ func mount(scene_path: String, arrival: String = "") -> void:
 	# frame while an alpha one survives. The stage is the outermost node in the content row and
 	# is never a container child, so it can actually be transformed. Same rect either way, so
 	# nothing else about a cue changes.
+	reset_furniture()
 	Vfx.play(arrival if not arrival.is_empty() else "screen_transition_sweep", stage)
+
+
+# THE SHELL'S FURNITURE, declared for arrival cues.
+#
+# A screen is not only the content in the middle row: it is the backdrop behind it and the bars
+# above and below, and all three are PERSISTENT — they survive navigation, which is the whole
+# point of the Shell. That persistence is invisible for a sweep, but an arrival that grows from a
+# point (see ScreenGrowFx) is a lie without them: the backdrop is already covering the viewport
+# before the screen exists, so what "arrives" is a bare middle row inside a screen that was never
+# away. The cue therefore animates the furniture too — and asks for it here rather than reaching
+# into the Shell's private nodes, because WHICH nodes are furniture is the Shell's business and
+# WHEN they move is the cue's.
+func arrival_furniture() -> Dictionary:
+	return {"background": _bg, "bars": [_header.bar as Control, _footer_bar as Control],
+			"departing": _departing, "plate": _modal_plate}
+
+
+# THE DEPARTING SCREEN, kept under a modal arrival.
+#
+# A screen that opens like a modal needs something to be modal OVER, and navigation destroyed the
+# outgoing screen before the new one existed — so the reward screen bloomed out of an empty
+# backdrop with the fight the player had just won already gone. Under a modal arrival the old
+# screen is NOT freed: it stays mounted exactly where it was, in its own row, and the new screen
+# is added above it. It really is the combat screen down there, not a picture of one.
+#
+# It is parked INERT (process_mode disabled): it keeps drawing, and stops running clocks, tweens
+# and input handlers. That is what a modal backdrop is — the screen behind is still there and no
+# longer live — and it is also what keeps a finished fight from ticking on under its own rewards.
+#
+# Freed by drop_departing() when the modal has covered it, and unconditionally at the head of the
+# next mount, so a cue that dies mid-flight can at worst leave one screen alive for one navigation.
+func _park_departing() -> Control:
+	if _lower_area.get_child_count() == 0:
+		return null
+	var stage := _lower_area.get_child(0) as Control
+	if stage == null:
+		return null
+	stage.process_mode = Node.PROCESS_MODE_DISABLED
+	Vfx.detach_under(stage)   # its overlay states go with it — see Vfx.detach_under
+	# LIFTED OUT OF THE CONTENT ROW, and pinned to the viewport rect it was occupying.
+	#
+	# The arriving screen declares its own chrome, and that resizes and MOVES the content row — a
+	# screen dropping the header lifts the row to the top of the viewport. Left in the row, the
+	# departing screen went with it: the board jumped upward at the exact moment the modal opened,
+	# which is the re-alignment this was supposed to end. Reparented to the Shell it answers to
+	# nothing but the viewport, so whatever the new screen asks for, what is on display holds
+	# perfectly still. Sits directly over the backdrop and under the content row.
+	var r := stage.get_global_rect()
+	_lower_area.remove_child(stage)
+	add_child(stage)
+	move_child(stage, 1)
+	stage.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	stage.global_position = r.position
+	stage.size = r.size
+	_departing = stage
+	return stage
+
+
+# The arriving screen's own opaque backdrop, grown with it by the cue.
+#
+# The Shell's backdrop can't do this job here: it is BEHIND the departing screen, so scaling it
+# would reveal the void around a screen that is still on display. A modal brings its own plate —
+# which is also what makes the arriving screen opaque over the old one, since screens themselves
+# paint no background. Sits directly under the arriving stage, in the same row.
+#
+# Both are lifted to MODAL_Z. Tree order alone is not enough: a screen's own pieces routinely draw
+# at a positive z INSIDE it — a slot's cue glyphs, an attack reticle, a dragged phantom, the chest
+# at 60 — and z beats tree order, so every one of them punched through a modal that sat at 0. The
+# lift is on the two roots only; children keep their z RELATIVE to it, so nothing inside either
+# screen reorders. Cleared again in drop_departing, so the lift lasts exactly as long as the
+# modal's own arrival does.
+const MODAL_Z := 300   # above anything a screen draws inside itself; below the VFX overlay layers
+
+func _make_modal_plate(stage: Control) -> void:
+	_modal_plate = ColorRect.new()
+	_modal_plate.color = ScreenUI.BG_COLOR
+	_modal_plate.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_modal_plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_modal_plate.z_index = MODAL_Z
+	_lower_area.add_child(_modal_plate)
+	_lower_area.move_child(_modal_plate, stage.get_index())
+	stage.z_index = MODAL_Z   # same z as its plate; tree order puts the content above it
+
+
+# Drops the parked screen and the modal's plate — called by the arrival cue once its screen covers
+# the viewport, and at the head of every mount.
+func drop_departing() -> void:
+	if _departing != null and is_instance_valid(_departing):
+		_departing.queue_free()
+	_departing = null
+	if _modal_plate != null and is_instance_valid(_modal_plate):
+		_modal_plate.queue_free()
+	_modal_plate = null
+	# The arrived screen goes back to ordinary depth — nothing is behind it to out-rank any more,
+	# and a screen left at MODAL_Z would draw over the next modal that opens on top of IT.
+	if _lower_area.get_child_count() > 0:
+		var stage := _lower_area.get_child(_lower_area.get_child_count() - 1) as Control
+		if stage != null:
+			stage.z_index = 0
+
+
+# Furniture back to plain visible, before any cue touches it. Called on every mount, so a screen
+# that arrives with no cue of its own — or one whose cue died mid-flight with the backdrop still
+# scaled to nothing — is never left inside someone else's half-finished animation.
+func reset_furniture() -> void:
+	_bg.scale = Vector2.ONE
+	_bg.modulate.a = 1.0
+	for b: Control in [_header.bar as Control, _footer_bar as Control]:
+		b.scale = Vector2.ONE
+		b.modulate.a = 1.0
 
 
 func _active_close(def: Dictionary) -> Button:

@@ -15,11 +15,17 @@ extends RefCounted
 # frame after `on_arrive` fires, and the orb has to still be hanging in the air, holding the
 # spot, while the new screen swells out from under it.
 
-const DEF_GATHER := 0.34    # the orb pulling itself together over the open lid
-const DEF_RISE := 0.20      # a beat of hang before it goes
-const DEF_FLIGHT := 0.62    # the trip to the middle of the screen
-const DEF_LINGER := 0.34    # how long it holds the centre before dissolving into the new screen
+const DEF_GATHER := 0.20    # the orb pulling itself together over the open lid
+const DEF_RISE := 0.12      # a beat of hang before it goes
+const DEF_LIFT := 0.45      # how far that beat carries it, as a fraction of the chest's height —
+							 # toward the destination, NOT upward (see the flight below)
+const DEF_FLIGHT := 0.50    # the trip to the middle of the screen
+const DEF_LINGER := 0.22    # how long it holds the centre before dissolving into the new screen
 const DEF_RADIUS := 34.0    # the orb at full size
+const DEF_ARC := 0.0        # sideways bow of the flight path, as a fraction of its own length:
+							 # 0 = a straight line, which is what this moment wants (see below)
+const DEF_SWELL := 1.45     # how much bigger the orb is when it arrives than when it left
+const DEF_BURST := 0.34     # the ring thrown on arrival; the screen grows out of THIS (see flash)
 
 
 static func play(vd: VFXData, target: Control, opts: Dictionary = {}) -> void:
@@ -36,7 +42,6 @@ static func play(vd: VFXData, target: Control, opts: Dictionary = {}) -> void:
 
 	var rect := target.get_global_rect()
 	var from := Vector2(rect.get_center().x, rect.position.y + rect.size.y * 0.30)
-	var to := target.get_viewport_rect().size * 0.5
 
 	var orb := _Orb.new()
 	orb.color = color
@@ -44,32 +49,47 @@ static func play(vd: VFXData, target: Control, opts: Dictionary = {}) -> void:
 	orb.at = from
 	layer.add_child(orb)
 
+	var to := target.get_viewport_rect().size * 0.5
+
 	# GATHER — the light collects out of the chest before anything moves.
 	var tw := orb.create_tween()
 	tw.tween_method(func(p: float) -> void: orb.energy = p, 0.0, 1.0,
-			Vfx.paced(vd.num_param("gather", DEF_GATHER))).set_trans(Tween.TRANS_SINE)
-	tw.tween_property(orb, "at", from - Vector2(0, rect.size.y * 0.45),
-			Vfx.paced(vd.num_param("rise", DEF_RISE))).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+			Vfx.paced(vd.num_param("gather", DEF_GATHER), vd)).set_trans(Tween.TRANS_SINE)
+	# The beat before it goes: the orb eases out of the chest ALONG THE FLIGHT, never upward. It
+	# used to lift straight up, and the chest sits in the ENEMY king's slot — the top of the board
+	# — so that lift shoved the orb at the top edge of the screen and the flight then brought it
+	# back down to the centre. Two reversals in a row is exactly what "bouncing off the ceiling"
+	# looks like; leaving along the line it is about to travel makes the whole handoff monotone.
+	var lift: float = rect.size.y * vd.num_param("lift", DEF_LIFT)
+	var head := (to - from).normalized() * minf(lift, from.distance_to(to) * 0.4)
+	tw.tween_property(orb, "at", from + head,
+			Vfx.paced(vd.num_param("rise", DEF_RISE), vd)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	await tw.finished
 
-	# FLIGHT — a gentle curve into the middle, not a straight slide: the orb sweeps up and over
-	# so the eye follows it away from the board rather than across it.
-	var lift := from.distance_to(to) * 0.16
-	var mid := from.lerp(to, 0.5) - Vector2(0, lift)
+	# FLIGHT — straight to the middle, slowly. It used to bow upward on the way over as well, which
+	# on top of the old upward lift is what put the orb at the ceiling. The path is a plain line
+	# now, and `arc` is the dial that bows it again (a fraction of the trip's own length,
+	# perpendicular to it) if a future caller ever wants the sweep back.
+	var flight := Vfx.paced(vd.num_param("flight", DEF_FLIGHT), vd)
+	var arc: float = vd.num_param("arc", DEF_ARC)
 	var start := orb.at
+	var span := to - start
+	# Perpendicular to the flight, leaning UP — a bow, not a detour, whichever way it travels.
+	var bow := Vector2(span.y, -span.x).normalized() * (span.length() * arc)
+	if bow.y > 0.0:
+		bow = -bow
 	var fly := orb.create_tween()
 	fly.tween_method(func(t: float) -> void:
-			orb.at = start.lerp(mid, t).lerp(mid.lerp(to, t), t)
+			orb.at = start + span * t + bow * sin(t * PI)
 			orb.trail = true,
-		0.0, 1.0, Vfx.paced(vd.num_param("flight", DEF_FLIGHT))) \
-			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	fly.parallel().tween_method(func(s: float) -> void: orb.swell = s, 1.0, 1.45,
-			Vfx.paced(vd.num_param("flight", DEF_FLIGHT)))
+		0.0, 1.0, flight).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	fly.parallel().tween_method(func(s: float) -> void: orb.swell = s,
+			1.0, vd.num_param("swell", DEF_SWELL), flight)
 	await fly.finished
 
 	Sfx.play("reward_open")
 	orb.trail = false
-	orb.flash()
+	orb.flash(vd.num_param("burst", DEF_BURST))
 	if on_arrive.is_valid():
 		on_arrive.call()   # the screen starts growing from here, under the orb
 
@@ -77,7 +97,7 @@ static func play(vd: VFXData, target: Control, opts: Dictionary = {}) -> void:
 	# and the handoff has no seam.
 	var out := orb.create_tween()
 	out.tween_method(func(p: float) -> void: orb.energy = p, 1.0, 0.0,
-			Vfx.paced(vd.num_param("linger", DEF_LINGER))).set_trans(Tween.TRANS_SINE)
+			Vfx.paced(vd.num_param("linger", DEF_LINGER), vd)).set_trans(Tween.TRANS_SINE)
 	out.tween_callback(orb.queue_free)
 
 
@@ -114,15 +134,17 @@ class _Orb extends Control:
 		material = mat
 
 
-	# The arrival punch: one ring thrown outward from where it stopped.
-	func flash() -> void:
+	# The arrival punch: one ring thrown outward from where it stopped. Its span is the beat the
+	# screen this hands off to waits out before it grows (screen_grow_in's `delay`) — the two are
+	# tuned against each other, so the burst is authored here rather than fixed.
+	func flash(dur := 0.34) -> void:
 		_ring = core
 		_ring_a = 0.9
 		var tw := create_tween()
 		tw.set_parallel(true)
-		tw.tween_method(func(v: float) -> void: _ring = v; queue_redraw(), core, core * 6.0, 0.45) \
+		tw.tween_method(func(v: float) -> void: _ring = v; queue_redraw(), core, core * 6.0, dur) \
 				.set_trans(Tween.TRANS_QUINT).set_ease(Tween.EASE_OUT)
-		tw.tween_method(func(v: float) -> void: _ring_a = v; queue_redraw(), 0.9, 0.0, 0.45)
+		tw.tween_method(func(v: float) -> void: _ring_a = v; queue_redraw(), 0.9, 0.0, dur)
 
 
 	func _process(delta: float) -> void:

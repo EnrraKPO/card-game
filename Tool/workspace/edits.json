@@ -5411,7 +5411,7 @@
       "prompt": "Sprite sheet of sickly green poison bubbles rising and popping, looping toxic aura, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-14T12:50:33.586Z",
-    "fileHash": "9b17c6ece07738e2456c67ef61f5bf41046eb285"
+    "fileHash": "33e0bde34533312808013d2fc4685d04d0175dd6"
   },
   "vfx/aura_blind": {
     "file": "vfx.json",
@@ -5431,7 +5431,7 @@
       "prompt": "Sprite sheet of grey smoky haze drifting across a face area, looping blindness veil, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-14T12:50:35.887Z",
-    "fileHash": "9b17c6ece07738e2456c67ef61f5bf41046eb285"
+    "fileHash": "33e0bde34533312808013d2fc4685d04d0175dd6"
   },
   "card/pawn_rook": {
     "file": "chess_combined.json",
@@ -6101,7 +6101,7 @@
       "prompt": "Sprite sheet of a golden light halo breathing outward around a circular button, smooth soft radial falloff extending past the rim, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-20T18:34:03.607Z",
-    "fileHash": "9b17c6ece07738e2456c67ef61f5bf41046eb285"
+    "fileHash": "33e0bde34533312808013d2fc4685d04d0175dd6"
   },
   "card/bishop": {
     "file": "materials.json",
@@ -10129,7 +10129,7 @@
       "prompt": "Sprite sheet of a tight dense pale halo hugging a potion flask's outline, slim bright rim of light with a smooth short falloff, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-27T00:36:32.147Z",
-    "fileHash": "9b17c6ece07738e2456c67ef61f5bf41046eb285"
+    "fileHash": "33e0bde34533312808013d2fc4685d04d0175dd6"
   },
   "vfx/coin_flight": {
     "file": "vfx.json",
@@ -10153,6 +10153,75 @@
       "prompt": "Sprite sheet of a spinning gold coin with a bright specular sweep, transparent background, 8 frames, 2d game effect"
     },
     "at": "2026-07-27T16:54:37.194Z",
-    "fileHash": "9b17c6ece07738e2456c67ef61f5bf41046eb285"
+    "fileHash": "33e0bde34533312808013d2fc4685d04d0175dd6"
+  },
+  "vfx/chest_landing": {
+    "file": "vfx.json",
+    "original": {
+      "id": "chest_landing",
+      "display_name": "Chest Landing",
+      "category": "economy",
+      "behavior": "burst",
+      "params": {
+        "color": "ffcf6b",
+        "scale": 1.6,
+        "duration": 0.45
+      },
+      "placeholder": false,
+      "concept": "The reward chest hitting the board where the enemy King stood — the impact that sells its weight.",
+      "explanation": "IMPLEMENTED (TreasureChest): a warm dust-and-spark burst under the chest as it squashes on landing.",
+      "prompt": "Sprite sheet of a dust and golden spark impact ring on the ground, 8 frames on transparent background, 2d game effect"
+    },
+    "at": "2026-07-27T19:30:26.199Z",
+    "fileHash": "33e0bde34533312808013d2fc4685d04d0175dd6"
+  },
+  "vfx/reward_orb": {
+    "file": "vfx.json",
+    "original": {
+      "id": "reward_orb",
+      "display_name": "Reward Orb",
+      "category": "economy",
+      "renderer": "custom",
+      "behavior": "travel",
+      "params": {
+        "color": "fff0a8",
+        "radius": 34,
+        "gather": 0.34,
+        "rise": 0.2,
+        "lift": 0.45,
+        "flight": 0.95,
+        "arc": 0,
+        "swell": 1.45,
+        "linger": 0.34
+      },
+      "placeholder": false,
+      "concept": "The reward leaving the opened chest and carrying itself to the middle of the screen — the physical link between winning the fight and the rewards screen, so the two are one motion and not a cut.",
+      "explanation": "IMPLEMENTED (RewardOrbFx): a bright orb gathers over the open lid, eases out of it ALONG the flight line (never upward — the chest sits in the enemy king's slot at the TOP of the board, so an upward lift plus a downward flight read as a bounce off the ceiling), then travels unhurried in a STRAIGHT line to the viewport centre trailing sparks (arc>0 bows that path); on arrival it throws a ring and fires the caller's on_arrive (which is what lets Combat navigate). Drawn on the VFX overlay so it outlives combat and lingers over the screen growing out from under it.",
+      "prompt": "Sprite sheet of a brilliant golden orb of light with a soft halo and drifting sparks, 8 frames on transparent background, 2d game effect"
+    },
+    "at": "2026-07-27T19:43:21.699Z",
+    "fileHash": "33e0bde34533312808013d2fc4685d04d0175dd6"
+  },
+  "vfx/screen_grow_in": {
+    "file": "vfx.json",
+    "original": {
+      "id": "screen_grow_in",
+      "display_name": "Screen Grows In",
+      "category": "screen",
+      "renderer": "custom",
+      "behavior": "pop",
+      "params": {
+        "delay": 0.24,
+        "duration": 0.62,
+        "sfx_delay": 0.24
+      },
+      "placeholder": false,
+      "sfx": "ui_screen_open",
+      "concept": "A screen arriving as the TAIL of a gesture rather than a jump — it swells from nothing at the centre of the viewport, so whatever the player just did appears to have opened it.",
+      "explanation": "IMPLEMENTED (ScreenGrowFx, registered app-wide in VfxService): the mounted content holds hidden for `delay`, then scales 0 → 1 about the viewport centre with a slight overshoot and fades in. The hold is what makes it read as coming OUT of the cue that summoned it (the reward orb's burst) rather than detonating alongside it — tune it against reward_orb's `burst`. Requested per navigation via Nav.goto(path, \"screen_grow_in\"); every other navigation keeps the standard sweep. The persistent chrome is not scaled — it belongs to the Shell, not the arriving screen.",
+      "prompt": "Sprite sheet of a rectangular panel expanding from a point of light to full size with a soft overshoot, 8 frames on transparent background, 2d game effect"
+    },
+    "at": "2026-07-27T19:54:49.831Z",
+    "fileHash": "33e0bde34533312808013d2fc4685d04d0175dd6"
   }
 }

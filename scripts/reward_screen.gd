@@ -11,8 +11,19 @@ var _element_toggles: Array = []
 const MODULE_PAD := 20.0
 
 
+# NO CHROME. This screen arrives as a MODAL over the combat it was won in (Nav.goto's
+# "screen_grow_in" — see ScreenGrowFx), and the header/footer are the Shell's persistent frame
+# around BOTH screens: with the fight still showing underneath, bars carrying this screen's title
+# and Back button appeared over it and shifted the content row, so the board visibly re-aligned
+# under the thing opening on top of it. A modal wants no frame but its own.
+#
+# Nothing is lost with them gone: the pick IS the exit, and its "Skip Reward" button (see the
+# reward column) is a full-size affordance in the body, not a chrome ✕ to hunt for. Both keys are
+# declared outright rather than left to default: an EMPTY dict would collapse the header but also
+# drop `inset` to false and send the content edge-to-edge, and omitting show_header would hand
+# this screen the menu-screen default (an EXP bar) — the margins are layout and stay, the bar goes.
 func get_chrome() -> Dictionary:
-	return {"title": Loc.t("reward.title"), "exit": _skip, "show_footer": true}
+	return {"show_header": false, "inset": true}
 
 
 func _ready() -> void:

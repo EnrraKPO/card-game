@@ -99,6 +99,13 @@ func color_param(key: String, fallback: Color) -> Color:
 	return Color.html(raw)
 
 
+# A param whose value is a WORD rather than a number — an option a behavior branches on
+# (radiance's "shape", say). Same contract as the others: absent or blank falls back.
+func text_param(key: String, fallback: String) -> String:
+	var raw := str(params.get(key, "")).strip_edges()
+	return fallback if raw.is_empty() else raw
+
+
 func num_param(key: String, fallback: float) -> float:
 	var raw: Variant = params.get(key)
 	if raw is float or raw is int:
