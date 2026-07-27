@@ -491,13 +491,13 @@
 	},
 	{
 		"id": "earth_earth_king",
-		"display_name": "Pure Earth King",
+		"display_name": "Soil King",
 		"cost": 0,
 		"attack": 1,
 		"health": 20,
 		"speed": 3,
 		"shield": 5,
-		"description": "Ruler of pure <earth>. If the <king> falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 <shield>.",
+		"description": "Ruler of pure <earth>. If the <king> falls, the battle is lost. Starts each round with 5 <shield>.",
 		"elements": [
 			"earth",
 			"earth"
@@ -517,16 +517,10 @@
 				"prompt": "Chibi sovereign looking right, body formed of packed soil and clustered pebbles, crown and scepter made of polished bronze and amber, royal mantle of tattered olive-green fabric with fur trim, holding a heavy shield of pressed earth and gold filigree, standing on barren plains under a pale blue sky, warm brown palette, painterly fantasy illustration.",
 				"ref": {
 					"source": "upload",
-					"path": "snap_king.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_king.png",
-					"theme": [
-						"snap_earth_earth_pawn.png",
-						"snap_earth_earth_knight.png",
-						"snap_earth_earth_queen.png"
-					],
-					"mode": "replicate"
+					"path": "snap_king.png",
+					"name": "snap_king.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
@@ -653,13 +647,13 @@
 	},
 	{
 		"id": "fire_fire_king",
-		"display_name": "Pure Fire King",
+		"display_name": "Burning King",
 		"cost": 0,
 		"attack": 1,
 		"health": 20,
 		"speed": 3,
 		"shield": 5,
-		"description": "Ruler of pure <fire>. If the <king> falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 <shield>.",
+		"description": "Ruler of pure <fire>. If the <king> falls, the battle is lost. Starts each round with 5 <shield>.",
 		"elements": [
 			"fire",
 			"fire"
@@ -679,16 +673,10 @@
 				"prompt": "Chibi monarch looking right, crown of solidified orange light, scepter of white-hot flame, armor forged from glowing ember-gold metal, flowing cape of living fire, holding a shield with a burning sun emblem, standing on scorched earth, deep indigo sky backdrop, warm radiant glow, bold stylized cartoon illustration",
 				"ref": {
 					"source": "upload",
-					"path": "snap_king.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_king.png",
-					"theme": [
-						"snap_fire_fire_pawn.png",
-						"snap_fire_fire_knight.png",
-						"snap_fire_fire_queen.png"
-					],
-					"mode": "replicate"
+					"path": "snap_king.png",
+					"name": "snap_king.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}
@@ -843,13 +831,13 @@
 	},
 	{
 		"id": "water_water_king",
-		"display_name": "Pure Water King",
+		"display_name": "Ocean King",
 		"cost": 0,
 		"attack": 1,
 		"health": 20,
 		"speed": 3,
 		"shield": 5,
-		"is_king": true,
+		"description": "Ruler of pure <water>. If the <king> falls, the battle is lost. Starts each round with 5 <shield>.",
 		"elements": [
 			"water",
 			"water"
@@ -857,23 +845,22 @@
 		"chess_pieces": [
 			"king"
 		],
-		"description": "Ruler of pure <water>. If the <king> falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 <shield>.",
-		"effects": [],
+		"is_king": true,
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "Chibi king looking right, translucent aquamarine liquid armor, flowing water cloak, crown of iridescent pearls and white coral, gripping a crystalline scepter of swirling currents, holding a wave-patterned shield, standing on a sandy seabed, rising bubbles, luminous cyan glow, bold-outlined storybook illustration, full-body centered pose.",
 				"ref": {
 					"source": "upload",
-					"path": "snap_king.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_king.png",
-					"theme": [
-						"snap_water_water_pawn.png",
-						"snap_water_water_knight.png",
-						"snap_water_water_queen.png"
-					],
-					"mode": "replicate"
+					"path": "snap_king.png",
+					"name": "snap_king.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
 		}

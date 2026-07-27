@@ -1,7 +1,11 @@
 [
 	{
 		"id": "fire_fire_pawn",
-		"display_name": "Pure Fire Pawn",
+		"display_name": "Burning Pawn",
+		"cost": 1,
+		"attack": 5,
+		"health": 3,
+		"speed": 1,
 		"elements": [
 			"fire",
 			"fire"
@@ -21,7 +25,9 @@
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/pawn.png",
-					"name": "Pawn"
+					"name": "Pawn",
+					"mode": "img2img",
+					"denoise": 0.6
 				},
 				"llmHidden": [
 					"Stats derived from the composition by the game.",
@@ -32,29 +38,17 @@
 					"prompt": "Chibi fire elemental soldier, full body standing pose, round red-orange helmet crowned with flame, glowing yellow eyes on faceless molten face, red scarf, flaming armor, holding tall spear with blazing translucent spearhead, round shield with flame emblem, fire licking the cracked ground, dark blue twilight sky with jagged peaks, vibrant orange-red against deep blue palette, glossy stylized game illustration, strong rim glow",
 					"style": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric light, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear,",
 					"at": "2026-07-07"
-				},
-				"inferredFrom": {
-					"concept": [
-						"pawn",
-						"air_darkness_bishop_pawn",
-						"air_darkness_knight_pawn"
-					],
-					"theme": [
-						"fire_fire_bishop_pawn",
-						"fire_fire_knight_pawn",
-						"fire_fire_pawn_pawn"
-					]
 				}
 			}
-		},
-		"cost": 1,
-		"attack": 5,
-		"health": 3,
-		"speed": 1
+		}
 	},
 	{
 		"id": "fire_fire_knight",
-		"display_name": "Pure Fire Knight",
+		"display_name": "Burning Knight",
+		"cost": 2,
+		"attack": 6,
+		"health": 3,
+		"speed": 2,
 		"elements": [
 			"fire",
 			"fire"
@@ -74,7 +68,9 @@
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/knight.png",
-					"name": "Knight"
+					"name": "Knight",
+					"mode": "img2img",
+					"denoise": 0.6
 				},
 				"concept": "This is a chess knight, meaning a horse. ",
 				"llmHidden": [
@@ -87,35 +83,27 @@
 					"prompt": "Rearing fiery war horse made of living flame, blazing mane and tail, dark obsidian armored barding with ember gem accents, red leather harness and bridle, front hooves raised, glowing orange-yellow body against dusky purple volcanic badlands at twilight, radiant fire lighting, stylized fantasy game illustration, vibrant painterly rendering, centered dynamic composition, chibi cartoon visuals",
 					"style": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric light, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear,",
 					"at": "2026-07-07"
-				},
-				"inferredFrom": {
-					"concept": [
-						"knight",
-						"air_darkness_bishop_knight",
-						"air_darkness_knight"
-					],
-					"theme": [
-						"fire_fire_bishop_knight",
-						"fire_fire_knight_knight",
-						"fire_fire_knight_pawn"
-					]
 				}
 			}
-		},
-		"cost": 2,
-		"attack": 6,
-		"health": 3,
-		"speed": 2
+		}
 	},
 	{
 		"id": "fire_fire_bishop",
-		"display_name": "Pure Fire Bishop",
+		"display_name": "Burning Bishop",
+		"cost": 2,
+		"attack": 5,
+		"health": 4,
+		"speed": 1,
 		"elements": [
 			"fire",
 			"fire"
 		],
 		"chess_pieces": [
 			"bishop"
+		],
+		"ranged": true,
+		"abilities": [
+			"heal"
 		],
 		"tool": {
 			"art": {
@@ -134,18 +122,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"ranged": true,
-		"cost": 2,
-		"attack": 5,
-		"health": 4,
-		"speed": 1,
-		"abilities": [
-			"heal"
-		]
+		}
 	},
 	{
 		"id": "fire_fire_rook",
+		"display_name": "Burning Rook",
+		"cost": 3,
+		"attack": 5,
+		"health": 7,
+		"speed": 1,
+		"shield": 2,
 		"elements": [
 			"fire",
 			"fire"
@@ -153,39 +139,33 @@
 		"chess_pieces": [
 			"rook"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "Molten fortress tower of living flame rising from a glowing ember lake, walls of blazing crystal veined with roaring firelight, twin waterfalls of fire pouring from crenellated battlements, a spire crowned with a burning gem, a small hooded chibi mage of pure flame with a fiery gem-tipped staff and glowing spellbook beside its arched blazing doorway, drifting cinders, smoky crimson dusk, bold outlines.",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/rook.png",
-					"name": "Rook"
-				},
-				"inferredFrom": {
-					"concept": [
-						"rook",
-						"air_darkness_bishop_rook",
-						"air_darkness_knight_rook"
-					],
-					"theme": [
-						"fire_fire_bishop_rook",
-						"fire_fire_knight_rook",
-						"fire_fire_pawn_rook"
-					]
+					"name": "Rook",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"display_name": "Pure Fire Rook",
-		"ranged": true,
-		"cost": 3,
-		"attack": 5,
-		"health": 7,
-		"speed": 1,
-		"shield": 2
+		}
 	},
 	{
 		"id": "fire_fire_queen",
-		"display_name": "Pure Fire Queen",
+		"display_name": "Burning Queen",
+		"cost": 5,
+		"attack": 9,
+		"health": 5,
+		"speed": 3,
 		"elements": [
 			"fire",
 			"fire"
@@ -204,7 +184,7 @@
 				"rembg": false,
 				"prompt": "chibi fire elemental queen, flowing flame-hair and blazing crown, stern gaze, glowing gown of living fire, holding swirling fireball orb in outstretched hand, standing on ornate circular floor, dark gothic hall of ember-lit arches, orange-red-gold palette, dramatic inner glow, painterly fantasy illustration",
 				"ref": {
-					"source": "current",
+					"source": "installed",
 					"mode": "img2img",
 					"denoise": 0.7
 				},
@@ -215,15 +195,16 @@
 					"at": "2026-07-09"
 				}
 			}
-		},
-		"cost": 5,
-		"attack": 9,
-		"health": 5,
-		"speed": 3
+		}
 	},
 	{
 		"id": "fire_fire_pawn_pawn",
-		"display_name": "Pure Fire Warrior",
+		"display_name": "Burning Warrior",
+		"cost": 2,
+		"attack": 6,
+		"health": 4,
+		"speed": 1,
+		"shield": 1,
 		"elements": [
 			"fire",
 			"fire"
@@ -249,16 +230,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 2,
-		"attack": 6,
-		"health": 4,
-		"speed": 1,
-		"shield": 1
+		}
 	},
 	{
 		"id": "fire_fire_knight_pawn",
-		"display_name": "Pure Fire Cavalry",
+		"display_name": "Burning Cavalry",
+		"cost": 3,
+		"attack": 7,
+		"health": 5,
+		"speed": 2,
+		"shield": 1,
 		"elements": [
 			"fire",
 			"fire"
@@ -284,16 +265,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 3,
-		"attack": 7,
-		"health": 5,
-		"speed": 2,
-		"shield": 1
+		}
 	},
 	{
 		"id": "fire_fire_bishop_pawn",
-		"display_name": "Pure Fire Paladin",
+		"display_name": "Burning Paladin",
+		"cost": 3,
+		"attack": 6,
+		"health": 5,
+		"speed": 1,
+		"shield": 2,
 		"elements": [
 			"fire",
 			"fire"
@@ -301,6 +282,9 @@
 		"chess_pieces": [
 			"bishop",
 			"pawn"
+		],
+		"abilities": [
+			"heal"
 		],
 		"tool": {
 			"art": {
@@ -319,19 +303,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 3,
-		"attack": 6,
-		"health": 5,
-		"speed": 1,
-		"shield": 2,
-		"abilities": [
-			"heal"
-		]
+		}
 	},
 	{
 		"id": "fire_fire_pawn_rook",
-		"display_name": "Pure Fire Barracks",
+		"display_name": "Burning Barracks",
+		"cost": 4,
+		"attack": 6,
+		"health": 8,
+		"speed": 1,
+		"shield": 1,
 		"elements": [
 			"fire",
 			"fire"
@@ -339,6 +320,11 @@
 		"chess_pieces": [
 			"pawn",
 			"rook"
+		],
+		"ranged": true,
+		"abilities": [
+			"fire_pawn_training_pure",
+			"pawn_material"
 		],
 		"tool": {
 			"art": {
@@ -357,21 +343,15 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"ranged": true,
-		"abilities": [
-			"fire_pawn_training_pure",
-			"pawn_material"
-		],
-		"cost": 4,
-		"attack": 6,
-		"health": 8,
-		"speed": 1,
-		"shield": 1
+		}
 	},
 	{
 		"id": "fire_fire_pawn_queen",
-		"display_name": "Pure Fire Commander",
+		"display_name": "Burning Commander",
+		"cost": 6,
+		"attack": 9,
+		"health": 5,
+		"speed": 3,
 		"elements": [
 			"fire",
 			"fire"
@@ -397,15 +377,15 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 6,
-		"attack": 9,
-		"health": 5,
-		"speed": 3
+		}
 	},
 	{
 		"id": "fire_fire_knight_knight",
-		"display_name": "Pure Fire Beast",
+		"display_name": "Burning Beast",
+		"cost": 4,
+		"attack": 7,
+		"health": 5,
+		"speed": 3,
 		"elements": [
 			"fire",
 			"fire"
@@ -431,15 +411,15 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 4,
-		"attack": 7,
-		"health": 5,
-		"speed": 3
+		}
 	},
 	{
 		"id": "fire_fire_bishop_knight",
-		"display_name": "Pure Fire Cryptid",
+		"display_name": "Burning Cryptid",
+		"cost": 4,
+		"attack": 7,
+		"health": 6,
+		"speed": 3,
 		"elements": [
 			"fire",
 			"fire"
@@ -447,6 +427,9 @@
 		"chess_pieces": [
 			"bishop",
 			"knight"
+		],
+		"abilities": [
+			"heal"
 		],
 		"tool": {
 			"art": {
@@ -471,18 +454,16 @@
 					"at": "2026-07-09"
 				}
 			}
-		},
-		"cost": 4,
-		"attack": 7,
-		"health": 6,
-		"speed": 3,
-		"abilities": [
-			"heal"
-		]
+		}
 	},
 	{
 		"id": "fire_fire_knight_rook",
-		"display_name": "Pure Fire Stable",
+		"display_name": "Burning Stable",
+		"cost": 5,
+		"attack": 7,
+		"health": 8,
+		"speed": 2,
+		"shield": 2,
 		"elements": [
 			"fire",
 			"fire"
@@ -490,6 +471,11 @@
 		"chess_pieces": [
 			"knight",
 			"rook"
+		],
+		"ranged": true,
+		"abilities": [
+			"fire_knight_training_pure",
+			"knight_material"
 		],
 		"tool": {
 			"art": {
@@ -508,21 +494,11 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"ranged": true,
-		"abilities": [
-			"fire_knight_training_pure",
-			"knight_material"
-		],
-		"cost": 5,
-		"attack": 7,
-		"health": 8,
-		"speed": 2,
-		"shield": 2
+		}
 	},
 	{
 		"id": "fire_fire_knight_queen",
-		"display_name": "Pure Fire Monster",
+		"display_name": "Burning Monster",
 		"cost": 6,
 		"attack": 10,
 		"health": 7,
@@ -556,7 +532,7 @@
 	},
 	{
 		"id": "fire_fire_bishop_bishop",
-		"display_name": "Pure Fire Hierophant",
+		"display_name": "Burning Hierophant",
 		"cost": 4,
 		"attack": 6,
 		"health": 6,
@@ -600,7 +576,7 @@
 	},
 	{
 		"id": "fire_fire_bishop_rook",
-		"display_name": "Pure Fire Arcane Tower",
+		"display_name": "Burning Temple",
 		"cost": 5,
 		"attack": 6,
 		"health": 9,
@@ -640,7 +616,7 @@
 	},
 	{
 		"id": "fire_fire_bishop_queen",
-		"display_name": "Pure Fire Deity",
+		"display_name": "Burning Deity",
 		"cost": 6,
 		"attack": 9,
 		"health": 7,
@@ -652,6 +628,9 @@
 		"chess_pieces": [
 			"bishop",
 			"queen"
+		],
+		"abilities": [
+			"heal"
 		],
 		"tool": {
 			"art": {
@@ -670,14 +649,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"abilities": [
-			"heal"
-		]
+		}
 	},
 	{
 		"id": "fire_fire_rook_rook",
-		"display_name": "Pure Fire Turret",
+		"display_name": "Burning Turret",
+		"cost": 6,
+		"attack": 6,
+		"health": 11,
+		"speed": 1,
+		"shield": 4,
 		"elements": [
 			"fire",
 			"fire"
@@ -704,16 +685,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 6,
-		"attack": 6,
-		"health": 11,
-		"speed": 1,
-		"shield": 4
+		}
 	},
 	{
 		"id": "fire_fire_queen_rook",
-		"display_name": "Pure Fire Castle",
+		"display_name": "Burning Castle",
+		"cost": 7,
+		"attack": 9,
+		"health": 10,
+		"speed": 2,
+		"shield": 2,
 		"elements": [
 			"fire",
 			"fire"
@@ -721,6 +702,11 @@
 		"chess_pieces": [
 			"queen",
 			"rook"
+		],
+		"ranged": true,
+		"abilities": [
+			"fire_queen_training_pure",
+			"queen_material"
 		],
 		"tool": {
 			"art": {
@@ -739,21 +725,15 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"ranged": true,
-		"abilities": [
-			"fire_queen_training_pure",
-			"queen_material"
-		],
-		"cost": 7,
-		"attack": 9,
-		"health": 10,
-		"speed": 2,
-		"shield": 2
+		}
 	},
 	{
 		"id": "fire_fire_queen_queen",
-		"display_name": "Pure Fire Hero",
+		"display_name": "Burning Hero",
+		"cost": 8,
+		"attack": 12,
+		"health": 8,
+		"speed": 3,
 		"elements": [
 			"fire",
 			"fire"
@@ -779,10 +759,6 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 8,
-		"attack": 12,
-		"health": 8,
-		"speed": 3
+		}
 	}
 ]

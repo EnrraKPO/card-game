@@ -1,6 +1,11 @@
 [
 	{
 		"id": "water_water_bishop",
+		"display_name": "Ocean Bishop",
+		"cost": 2,
+		"attack": 1,
+		"health": 8,
+		"speed": 1,
 		"description": "All friendly <water> units heal 2 <hp> at the start of every turn.",
 		"elements": [
 			"water",
@@ -39,32 +44,26 @@
 		],
 		"tool": {
 			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
 				"prompt": "Translucent living-water cleric sculpted from clear rippling currents, compact rounded priestly figure, tall cleft ceremonial headdress spilling twin foaming cascades, calm glowing turquoise eyes, glassy sapphire vestments trimmed with pale nacre beads and reef-branch filigree, one hand raising a spiral-headed crozier of liquid glass trailing droplets, the other cradling a closed tome of pressed kelp, drifting bubbles, mirrored watery double behind, bold outlines, luminous aqua palette, plain pale background",
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/bishop.png",
-					"name": "Bishop"
-				},
-				"inferredFrom": {
-					"anchor": "bishop",
-					"theme": [
-						"water_water_pawn",
-						"water_water_knight",
-						"water_water_queen"
-					],
-					"mode": "concept"
+					"name": "Bishop",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"display_name": "Pure Water Bishop",
-		"cost": 2,
-		"attack": 1,
-		"health": 8,
-		"speed": 1
+		}
 	},
 	{
 		"id": "water_water_bishop_bishop",
-		"display_name": "Pure Water Hierophant",
+		"display_name": "Ocean Hierophant",
 		"cost": 4,
 		"attack": 2,
 		"health": 10,
@@ -108,7 +107,11 @@
 	},
 	{
 		"id": "water_water_bishop_knight",
-		"display_name": "Pure Water Cryptid",
+		"display_name": "Ocean Cryptid",
+		"cost": 4,
+		"attack": 3,
+		"health": 10,
+		"speed": 3,
 		"elements": [
 			"water",
 			"water"
@@ -116,6 +119,9 @@
 		"chess_pieces": [
 			"bishop",
 			"knight"
+		],
+		"abilities": [
+			"heal"
 		],
 		"tool": {
 			"art": {
@@ -129,30 +135,16 @@
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/bishop_knight.png",
-					"name": "Cryptid"
-				},
-				"inferredFrom": {
-					"anchor": "bishop_knight",
-					"theme": [
-						"water_water_pawn",
-						"water_water_knight",
-						"water_water_queen"
-					],
-					"mode": "concept"
+					"name": "Cryptid",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 4,
-		"attack": 3,
-		"health": 10,
-		"speed": 3,
-		"abilities": [
-			"heal"
-		]
+		}
 	},
 	{
 		"id": "water_water_bishop_pawn",
-		"display_name": "Pure Water Paladin",
+		"display_name": "Ocean Paladin",
 		"cost": 3,
 		"attack": 2,
 		"health": 9,
@@ -190,7 +182,11 @@
 	},
 	{
 		"id": "water_water_bishop_queen",
-		"display_name": "Pure Water Deity",
+		"display_name": "Ocean Deity",
+		"cost": 6,
+		"attack": 5,
+		"health": 11,
+		"speed": 3,
 		"description": "Twin-<water> unit.",
 		"elements": [
 			"water",
@@ -199,6 +195,9 @@
 		"chess_pieces": [
 			"bishop",
 			"queen"
+		],
+		"abilities": [
+			"heal"
 		],
 		"tool": {
 			"art": {
@@ -212,30 +211,16 @@
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/bishop_queen.png",
-					"name": "Deity"
-				},
-				"inferredFrom": {
-					"anchor": "bishop_queen",
-					"theme": [
-						"water_water_pawn",
-						"water_water_knight",
-						"water_water_queen"
-					],
-					"mode": "concept"
+					"name": "Deity",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 6,
-		"attack": 5,
-		"health": 11,
-		"speed": 3,
-		"abilities": [
-			"heal"
-		]
+		}
 	},
 	{
 		"id": "water_water_bishop_rook",
-		"display_name": "Pure Water Arcane Tower",
+		"display_name": "Ocean Temple",
 		"cost": 5,
 		"attack": 2,
 		"health": 13,
@@ -281,7 +266,7 @@
 	},
 	{
 		"id": "water_water_knight",
-		"display_name": "Pure Water Knight",
+		"display_name": "Ocean Knight",
 		"cost": 2,
 		"attack": 2,
 		"health": 7,
@@ -314,7 +299,7 @@
 	},
 	{
 		"id": "water_water_knight_knight",
-		"display_name": "Pure Water Beast",
+		"display_name": "Ocean Beast",
 		"cost": 4,
 		"attack": 3,
 		"health": 9,
@@ -348,7 +333,7 @@
 	},
 	{
 		"id": "water_water_knight_pawn",
-		"display_name": "Pure Water Cavalry",
+		"display_name": "Ocean Cavalry",
 		"cost": 3,
 		"attack": 3,
 		"health": 9,
@@ -389,7 +374,11 @@
 	},
 	{
 		"id": "water_water_knight_queen",
-		"display_name": "Pure Water Monster",
+		"display_name": "Ocean Monster",
+		"cost": 6,
+		"attack": 6,
+		"health": 11,
+		"speed": 4,
 		"elements": [
 			"water",
 			"water"
@@ -410,7 +399,9 @@
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/knight_queen.png",
-					"name": "Monster"
+					"name": "Monster",
+					"mode": "img2img",
+					"denoise": 0.6
 				},
 				"llmShown": [
 					"Stats derived from the composition by the game."
@@ -420,26 +411,13 @@
 					"prompt": "Chibi dragon sculpted from living seawater, translucent rippling aquamarine body over deep-blue depths, rearing on hind legs like a charging warhorse, curling foam crest crown, horns of spiraling coral and pearl, twin whirlpool helixes spinning along its tail, wings of arcing spray and mist, claws bursting paired turquoise fountains, sunlit open-ocean horizon, bold outlines, bright sapphire-and-seafoam palette, cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear",
 					"style": "",
 					"at": "2026-07-08"
-				},
-				"inferredFrom": {
-					"anchor": "knight_queen",
-					"theme": [
-						"water_water_pawn",
-						"water_water_knight",
-						"water_water_queen"
-					],
-					"mode": "concept"
 				}
 			}
-		},
-		"cost": 6,
-		"attack": 6,
-		"health": 11,
-		"speed": 4
+		}
 	},
 	{
 		"id": "water_water_knight_rook",
-		"display_name": "Pure Water Stable",
+		"display_name": "Ocean Stable",
 		"cost": 5,
 		"attack": 3,
 		"health": 12,
@@ -479,7 +457,7 @@
 	},
 	{
 		"id": "water_water_pawn",
-		"display_name": "Pure Water Pawn",
+		"display_name": "Ocean Pawn",
 		"cost": 1,
 		"attack": 1,
 		"health": 7,
@@ -512,7 +490,7 @@
 	},
 	{
 		"id": "water_water_pawn_pawn",
-		"display_name": "Pure Water Warrior",
+		"display_name": "Ocean Warrior",
 		"cost": 2,
 		"attack": 2,
 		"health": 8,
@@ -553,7 +531,7 @@
 	},
 	{
 		"id": "water_water_pawn_queen",
-		"display_name": "Pure Water Commander",
+		"display_name": "Ocean Commander",
 		"cost": 6,
 		"attack": 5,
 		"health": 9,
@@ -587,7 +565,7 @@
 	},
 	{
 		"id": "water_water_pawn_rook",
-		"display_name": "Pure Water Barracks",
+		"display_name": "Ocean Barracks",
 		"cost": 4,
 		"attack": 2,
 		"health": 12,
@@ -627,7 +605,7 @@
 	},
 	{
 		"id": "water_water_queen",
-		"display_name": "Pure Water Queen",
+		"display_name": "Ocean Queen",
 		"cost": 5,
 		"attack": 5,
 		"health": 9,
@@ -672,7 +650,11 @@
 	},
 	{
 		"id": "water_water_queen_queen",
-		"display_name": "Pure Water Hero",
+		"display_name": "Ocean Hero",
+		"cost": 8,
+		"attack": 8,
+		"health": 12,
+		"speed": 3,
 		"elements": [
 			"water",
 			"water"
@@ -693,7 +675,9 @@
 				"ref": {
 					"source": "game",
 					"path": "assets/cards/queen_queen.png",
-					"name": "Hero"
+					"name": "Hero",
+					"mode": "img2img",
+					"denoise": 0.6
 				},
 				"llmHidden": [
 					"Composition: water + water + queen + queen.",
@@ -704,26 +688,13 @@
 					"prompt": "Cartoon chibi warrior queen sculpted from translucent living seawater, curling foam hair streaming like breaking surf, coral crown studded with pearls, sapphire armor of hardened ice-glass, swinging an oversized greatsword of coiled whirlpool water, leaping from a wave-crest as twin tide spirals arc beneath her, sunlit ocean cliffs behind, bold outlines, bright sapphire-and-seafoam palette, cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric lighting, optimized to read at small size, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear, clean background",
 					"style": "",
 					"at": "2026-07-08"
-				},
-				"inferredFrom": {
-					"anchor": "queen_queen",
-					"theme": [
-						"water_water_pawn",
-						"water_water_knight",
-						"water_water_queen"
-					],
-					"mode": "concept"
 				}
 			}
-		},
-		"cost": 8,
-		"attack": 8,
-		"health": 12,
-		"speed": 3
+		}
 	},
 	{
 		"id": "water_water_queen_rook",
-		"display_name": "Pure Water Castle",
+		"display_name": "Ocean Castle",
 		"cost": 7,
 		"attack": 5,
 		"health": 14,
@@ -773,7 +744,7 @@
 	},
 	{
 		"id": "water_water_rook",
-		"display_name": "Pure Water Rook",
+		"display_name": "Ocean Rook",
 		"cost": 3,
 		"attack": 1,
 		"health": 11,
@@ -808,7 +779,7 @@
 	},
 	{
 		"id": "water_water_rook_rook",
-		"display_name": "Pure Water Turret",
+		"display_name": "Ocean Turret",
 		"cost": 6,
 		"attack": 2,
 		"health": 15,

@@ -1,7 +1,12 @@
 [
 	{
 		"id": "earth_earth_pawn",
-		"display_name": "Pure Earth Pawn",
+		"display_name": "Soil Pawn",
+		"cost": 1,
+		"attack": 1,
+		"health": 3,
+		"speed": 1,
+		"shield": 2,
 		"elements": [
 			"earth",
 			"earth"
@@ -26,16 +31,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 1,
-		"attack": 1,
-		"health": 3,
-		"speed": 1,
-		"shield": 2
+		}
 	},
 	{
 		"id": "earth_earth_knight",
-		"display_name": "Pure Earth Knight",
+		"display_name": "Soil Knight",
+		"cost": 2,
+		"attack": 2,
+		"health": 3,
+		"speed": 2,
+		"shield": 2,
 		"elements": [
 			"earth",
 			"earth"
@@ -60,16 +65,11 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 2,
-		"attack": 2,
-		"health": 3,
-		"speed": 2,
-		"shield": 2
+		}
 	},
 	{
 		"id": "earth_earth_bishop",
-		"display_name": "Pure Earth Bishop",
+		"display_name": "Soil Bishop",
 		"cost": 2,
 		"attack": 1,
 		"health": 4,
@@ -83,6 +83,9 @@
 			"bishop"
 		],
 		"ranged": true,
+		"abilities": [
+			"heal"
+		],
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -100,14 +103,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"abilities": [
-			"heal"
-		]
+		}
 	},
 	{
 		"id": "earth_earth_rook",
-		"display_name": "Pure Earth Rook",
+		"display_name": "Soil Rook",
+		"cost": 3,
+		"attack": 1,
+		"health": 7,
+		"speed": 1,
+		"shield": 4,
 		"elements": [
 			"earth",
 			"earth"
@@ -115,6 +120,7 @@
 		"chess_pieces": [
 			"rook"
 		],
+		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -132,17 +138,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"ranged": true,
-		"cost": 3,
-		"attack": 1,
-		"health": 7,
-		"speed": 1,
-		"shield": 4
+		}
 	},
 	{
 		"id": "earth_earth_queen",
-		"display_name": "Pure Earth Queen",
+		"display_name": "Soil Queen",
+		"cost": 5,
+		"attack": 5,
+		"health": 5,
+		"speed": 3,
+		"shield": 2,
 		"elements": [
 			"earth",
 			"earth"
@@ -162,28 +167,22 @@
 				"prompt": "Chibi earth queen with commanding scowl, thick coiled dark hair, tiered soil-formed diadem topped with a warm amber gem, flowing gown of packed ochre and rust clay draped in a heavy sepia-toned mantle, one hand cradling a hovering sphere of clumped brown earth crackling with golden power, wide dry plain, distant weathered ridgelines, muted overcast sky, warm earthen palette, soft diffuse light, painterly fantasy illustration",
 				"ref": {
 					"source": "upload",
-					"path": "snap_queen.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_queen.png",
-					"theme": [
-						"snap_earth_earth_pawn.png",
-						"snap_earth_earth_knight.png",
-						"snap_earth_earth_queen.png"
-					],
-					"mode": "concept"
+					"path": "snap_queen.png",
+					"name": "snap_queen.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 5,
-		"attack": 5,
-		"health": 5,
-		"speed": 3,
-		"shield": 2
+		}
 	},
 	{
 		"id": "earth_earth_pawn_pawn",
-		"display_name": "Pure Earth Warrior",
+		"display_name": "Soil Warrior",
+		"cost": 2,
+		"attack": 2,
+		"health": 4,
+		"speed": 1,
+		"shield": 3,
 		"elements": [
 			"earth",
 			"earth"
@@ -209,16 +208,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 2,
-		"attack": 2,
-		"health": 4,
-		"speed": 1,
-		"shield": 3
+		}
 	},
 	{
 		"id": "earth_earth_knight_pawn",
-		"display_name": "Pure Earth Cavalry",
+		"display_name": "Soil Cavalry",
+		"cost": 3,
+		"attack": 3,
+		"health": 5,
+		"speed": 2,
+		"shield": 3,
 		"elements": [
 			"earth",
 			"earth"
@@ -244,16 +243,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 3,
-		"attack": 3,
-		"health": 5,
-		"speed": 2,
-		"shield": 3
+		}
 	},
 	{
 		"id": "earth_earth_bishop_pawn",
-		"display_name": "Pure Earth Paladin",
+		"display_name": "Soil Paladin",
+		"cost": 3,
+		"attack": 2,
+		"health": 5,
+		"speed": 1,
+		"shield": 4,
 		"elements": [
 			"earth",
 			"earth"
@@ -261,6 +260,9 @@
 		"chess_pieces": [
 			"bishop",
 			"pawn"
+		],
+		"abilities": [
+			"heal"
 		],
 		"tool": {
 			"art": {
@@ -279,19 +281,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 3,
-		"attack": 2,
-		"health": 5,
-		"speed": 1,
-		"shield": 4,
-		"abilities": [
-			"heal"
-		]
+		}
 	},
 	{
 		"id": "earth_earth_pawn_rook",
-		"display_name": "Pure Earth Barracks",
+		"display_name": "Soil Barracks",
+		"cost": 4,
+		"attack": 2,
+		"health": 8,
+		"speed": 1,
+		"shield": 3,
 		"elements": [
 			"earth",
 			"earth"
@@ -299,6 +298,11 @@
 		"chess_pieces": [
 			"pawn",
 			"rook"
+		],
+		"ranged": true,
+		"abilities": [
+			"earth_pawn_training_pure",
+			"pawn_material"
 		],
 		"tool": {
 			"art": {
@@ -317,21 +321,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"ranged": true,
-		"abilities": [
-			"earth_pawn_training_pure",
-			"pawn_material"
-		],
-		"cost": 4,
-		"attack": 2,
-		"health": 8,
-		"speed": 1,
-		"shield": 3
+		}
 	},
 	{
 		"id": "earth_earth_pawn_queen",
-		"display_name": "Pure Earth Commander",
+		"display_name": "Soil Commander",
+		"cost": 6,
+		"attack": 5,
+		"health": 5,
+		"speed": 3,
+		"shield": 2,
 		"elements": [
 			"earth",
 			"earth"
@@ -357,16 +356,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 6,
-		"attack": 5,
-		"health": 5,
-		"speed": 3,
-		"shield": 2
+		}
 	},
 	{
 		"id": "earth_earth_knight_knight",
-		"display_name": "Pure Earth Beast",
+		"display_name": "Soil Beast",
+		"cost": 4,
+		"attack": 3,
+		"health": 5,
+		"speed": 3,
+		"shield": 2,
 		"elements": [
 			"earth",
 			"earth"
@@ -392,16 +391,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 4,
-		"attack": 3,
-		"health": 5,
-		"speed": 3,
-		"shield": 2
+		}
 	},
 	{
 		"id": "earth_earth_bishop_knight",
-		"display_name": "Pure Earth Cryptid",
+		"display_name": "Soil Cryptid",
+		"cost": 4,
+		"attack": 3,
+		"health": 6,
+		"speed": 3,
+		"shield": 2,
 		"elements": [
 			"earth",
 			"earth"
@@ -409,6 +408,9 @@
 		"chess_pieces": [
 			"bishop",
 			"knight"
+		],
+		"abilities": [
+			"heal"
 		],
 		"tool": {
 			"art": {
@@ -421,31 +423,22 @@
 				"prompt": "Majestic single-horned mythic steed formed of packed dirt and clumped soil, glowing amber eyes, spiraling bronze horn, flowing mane and tail of swirling dust motes, olive-green and bronze filigree armor plates, warm ochre glow of ancient earthen magic swirling around its hooves, rearing on a cracked barren plain, distant mounded hills under pale sepia sky, painterly fantasy illustration, warm earthen palette, soft diffused light",
 				"ref": {
 					"source": "upload",
-					"path": "snap_bishop_knight.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_bishop_knight.png",
-					"theme": [
-						"snap_earth_earth_pawn.png",
-						"snap_earth_earth_knight.png",
-						"snap_earth_earth_queen.png"
-					],
-					"mode": "concept"
+					"path": "snap_bishop_knight.png",
+					"name": "snap_bishop_knight.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 4,
-		"attack": 3,
-		"health": 6,
-		"speed": 3,
-		"shield": 2,
-		"abilities": [
-			"heal"
-		]
+		}
 	},
 	{
 		"id": "earth_earth_knight_rook",
-		"display_name": "Pure Earth Stable",
+		"display_name": "Soil Stable",
+		"cost": 5,
+		"attack": 3,
+		"health": 8,
+		"speed": 2,
+		"shield": 4,
 		"elements": [
 			"earth",
 			"earth"
@@ -453,6 +446,11 @@
 		"chess_pieces": [
 			"knight",
 			"rook"
+		],
+		"ranged": true,
+		"abilities": [
+			"earth_knight_training_pure",
+			"knight_material"
 		],
 		"tool": {
 			"art": {
@@ -471,21 +469,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"ranged": true,
-		"abilities": [
-			"earth_knight_training_pure",
-			"knight_material"
-		],
-		"cost": 5,
-		"attack": 3,
-		"health": 8,
-		"speed": 2,
-		"shield": 4
+		}
 	},
 	{
 		"id": "earth_earth_knight_queen",
-		"display_name": "Pure Earth Monster",
+		"display_name": "Soil Monster",
+		"cost": 6,
+		"attack": 6,
+		"health": 7,
+		"speed": 4,
+		"shield": 2,
 		"elements": [
 			"earth",
 			"earth"
@@ -511,16 +504,11 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 6,
-		"attack": 6,
-		"health": 7,
-		"speed": 4,
-		"shield": 2
+		}
 	},
 	{
 		"id": "earth_earth_bishop_bishop",
-		"display_name": "Pure Earth Hierophant",
+		"display_name": "Soil Hierophant",
 		"cost": 4,
 		"attack": 2,
 		"health": 6,
@@ -559,7 +547,7 @@
 	},
 	{
 		"id": "earth_earth_bishop_rook",
-		"display_name": "Pure Earth Arcane Tower",
+		"display_name": "Soil Temple",
 		"cost": 5,
 		"attack": 2,
 		"health": 9,
@@ -599,7 +587,12 @@
 	},
 	{
 		"id": "earth_earth_bishop_queen",
-		"display_name": "Pure Earth Deity",
+		"display_name": "Soil Deity",
+		"cost": 6,
+		"attack": 5,
+		"health": 7,
+		"speed": 3,
+		"shield": 2,
 		"elements": [
 			"earth",
 			"earth"
@@ -607,6 +600,9 @@
 		"chess_pieces": [
 			"bishop",
 			"queen"
+		],
+		"abilities": [
+			"heal"
 		],
 		"tool": {
 			"art": {
@@ -625,19 +621,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 6,
-		"attack": 5,
-		"health": 7,
-		"speed": 3,
-		"shield": 2,
-		"abilities": [
-			"heal"
-		]
+		}
 	},
 	{
 		"id": "earth_earth_rook_rook",
-		"display_name": "Pure Earth Turret",
+		"display_name": "Soil Turret",
+		"cost": 6,
+		"attack": 2,
+		"health": 11,
+		"speed": 1,
+		"shield": 6,
 		"elements": [
 			"earth",
 			"earth"
@@ -664,16 +657,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 6,
-		"attack": 2,
-		"health": 11,
-		"speed": 1,
-		"shield": 6
+		}
 	},
 	{
 		"id": "earth_earth_queen_rook",
-		"display_name": "Pure Earth Castle",
+		"display_name": "Soil Castle",
+		"cost": 7,
+		"attack": 5,
+		"health": 10,
+		"speed": 2,
+		"shield": 4,
 		"elements": [
 			"earth",
 			"earth"
@@ -681,6 +674,11 @@
 		"chess_pieces": [
 			"queen",
 			"rook"
+		],
+		"ranged": true,
+		"abilities": [
+			"earth_queen_training_pure",
+			"queen_material"
 		],
 		"tool": {
 			"art": {
@@ -699,21 +697,16 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"ranged": true,
-		"abilities": [
-			"earth_queen_training_pure",
-			"queen_material"
-		],
-		"cost": 7,
-		"attack": 5,
-		"health": 10,
-		"speed": 2,
-		"shield": 4
+		}
 	},
 	{
 		"id": "earth_earth_queen_queen",
-		"display_name": "Pure Earth Hero",
+		"display_name": "Soil Hero",
+		"cost": 8,
+		"attack": 8,
+		"health": 8,
+		"speed": 3,
+		"shield": 2,
 		"elements": [
 			"earth",
 			"earth"
@@ -739,11 +732,6 @@
 					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 8,
-		"attack": 8,
-		"health": 8,
-		"speed": 3,
-		"shield": 2
+		}
 	}
 ]

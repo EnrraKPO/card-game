@@ -73,7 +73,7 @@
 	},
 	{
 		"id": "air_air_bishop",
-		"display_name": "Pure Air Bishop",
+		"display_name": "Wind Bishop",
 		"cost": 2,
 		"attack": 1,
 		"health": 4,
@@ -268,7 +268,7 @@
 	},
 	{
 		"id": "air_air_bishop_pawn",
-		"display_name": "Pure Air Paladin",
+		"display_name": "Wind Paladin",
 		"cost": 3,
 		"attack": 2,
 		"health": 5,
@@ -414,7 +414,7 @@
 	},
 	{
 		"id": "air_air_bishop_knight",
-		"display_name": "Pure Air Cryptid",
+		"display_name": "Wind Cryptid",
 		"cost": 4,
 		"attack": 3,
 		"health": 6,
@@ -538,7 +538,7 @@
 	},
 	{
 		"id": "air_air_bishop_bishop",
-		"display_name": "Pure Air Hierophant",
+		"display_name": "Wind Hierophant",
 		"cost": 4,
 		"attack": 2,
 		"health": 6,
@@ -576,7 +576,7 @@
 	},
 	{
 		"id": "air_air_bishop_rook",
-		"display_name": "Pure Air Arcane Tower",
+		"display_name": "Wind Temple",
 		"cost": 5,
 		"attack": 2,
 		"health": 9,
@@ -616,7 +616,7 @@
 	},
 	{
 		"id": "air_air_bishop_queen",
-		"display_name": "Pure Air Deity",
+		"display_name": "Wind Deity",
 		"cost": 6,
 		"attack": 5,
 		"health": 7,
