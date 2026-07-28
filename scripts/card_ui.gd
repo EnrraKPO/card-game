@@ -350,6 +350,12 @@ func _apply_label_style() -> void:
 	_shield_lbl.add_theme_color_override("font_color", Color(0.58, 0.86, 1.0))
 
 
+# The card's rounded corner, in NATIVE canvas units (the 260×340 Canvas is only ever scaled, so one
+# number holds at every card size). Owned here because the border stroke draws the card's outline —
+# anything that has to follow that outline reads it from here rather than guessing a radius.
+const CORNER_RADIUS := 6
+
+
 func _apply_border_style() -> void:
 	var is_king := card_instance != null and card_instance.data.is_king
 	var is_building := card_instance != null and card_instance.data.is_building()
@@ -370,7 +376,7 @@ func _apply_border_style() -> void:
 	else:
 		style.set_border_width_all(1)
 		style.border_color = Color(0.45, 0.45, 0.55, 0.35)
-	style.set_corner_radius_all(6)
+	style.set_corner_radius_all(CORNER_RADIUS)
 	_border.add_theme_stylebox_override("panel", style)
 
 
@@ -400,6 +406,49 @@ func clear_generated() -> void:
 # reads as "tapped". Reset to normal at the start of the next round.
 func set_exhausted(exhausted: bool) -> void:
 	modulate = Color(0.6, 0.6, 0.68) if exhausted else Color.WHITE
+
+
+# ── Phantom: a card that isn't real ─────────────────────────────────────────────
+# THE treatment for a card the player is being SHOWN rather than given — a projection of what would
+# land, what a pairing would produce, what a drag would drop. Desaturated, brightened and biased
+# cool, all in one move, by laying a bright cool near-white WASH over the finished card as its last
+# child: it lands above the art AND the badges and recolours them together, and it costs no shader
+# (a per-node shader blanks the card's clipped, COVER-fit art node).
+#
+# The wash's alpha is how far the card is MIXED toward that colour, NOT transparency: a phantom card
+# stays fully opaque, so whatever sits behind it never bleeds through and the two read as separate
+# things instead of one muddled overlap. Callers wanting a different distance pass their own colour.
+#
+# The card REMEMBERS it is a phantom (is_phantom), so the treatment follows it wherever the card
+# goes next — inspect a phantom and the inspector's enlarged copy is a phantom too, with no caller
+# threading the fact through by hand.
+# The treatment is a COLOUR TRANSFORM of the card's own pixels — lower saturation, raise brightness,
+# tilt the hue cool (see phantom.gdshader) — not a tinted sheet laid over the card. That distinction
+# is the whole design: a transform runs per drawn pixel and passes alpha through, so it lands on
+# exactly what the card draws and nothing else. A sheet needs a SHAPE, and a card has no rectangular
+# one — its frame art is inset from its rect with generous rounded corners, while its speed and
+# attack badges hang OUTSIDE that rect. Every rectangle is wrong in both directions at once.
+#
+# Hung on the Canvas with the whole subtree set to use_parent_material, so frame, art, badges,
+# glyphs and pips all transform together through one material.
+const PHANTOM_SHADER := preload("res://assets/ui/shaders/phantom.gdshader")
+var _phantom_mat: ShaderMaterial = null
+var is_phantom := false
+
+
+func set_phantom(on: bool) -> void:
+	is_phantom = on
+	# Resolved by name, not through the @onready ref: set_phantom is legitimately called on a card
+	# that is built but not yet in the tree (the inspector dresses its copy before mounting it).
+	var canvas: CanvasItem = _canvas if _canvas != null else get_node_or_null("Canvas") as CanvasItem
+	if canvas == null:
+		return
+	if on and _phantom_mat == null:
+		_phantom_mat = ShaderMaterial.new()
+		_phantom_mat.shader = PHANTOM_SHADER
+	canvas.material = _phantom_mat if on else null
+	for n: CanvasItem in canvas.find_children("*", "CanvasItem", true, false):
+		n.use_parent_material = on
 
 
 # Hand-affordance: a card the player can play RIGHT NOW wears a soft outer glow; one that can't
@@ -603,6 +652,12 @@ func refresh() -> void:
 		desc = (desc + "\n" + building) if not desc.is_empty() else building
 	# The card's native fallback tooltip can't render icons/BBCode — resolve markup to words.
 	UIScale.tip(self, TextIcons.plain(desc) if not desc.is_empty() else card_instance.data.display_name)
+	# A phantom card re-hangs its treatment over whatever this rebuild just produced. The transform
+	# reaches the subtree by flagging each node, so any node born after it was applied — the
+	# composition chips and status pips built here, and in fact EVERY node when a caller dresses the
+	# card before mounting it (CardInspector does) — would otherwise draw at full colour.
+	if is_phantom:
+		set_phantom(true)
 
 
 # Attaches per-badge hover tooltips to THIS card's own stat badges — a stat→text map keyed
@@ -1286,7 +1341,7 @@ func _make_status_pip(si: StatusInstance) -> Control:
 func _make_custom_tooltip(_for_text: String) -> Object:
 	if UIScale.is_touch():
 		return null   # belt-and-braces: UIScale.tip already blanks the text on touch
-	return CardTooltip.build(card_instance, _show_cost)
+	return CardTooltip.build(card_instance, _show_cost, 1.0, false, true, is_phantom)
 
 
 # HOW A CARD BEHAVES WHEN IT IS THE PICK — its own behaviour, never handed to it.
@@ -1370,7 +1425,7 @@ func _gui_input(event: InputEvent) -> void:
 		elif mb.button_index == MOUSE_BUTTON_RIGHT and mb.pressed:
 			# The desktop path to the in-depth view (touch reaches it via long-press). Note the
 			# AbilityWidget override consumes right-click first for autocast-capable abilities.
-			CardInspector.open(self, card_instance, _show_cost)
+			CardInspector.open(self, card_instance, _show_cost, is_phantom)
 			accept_event()
 	elif event is InputEventMouseMotion:
 		_check_hold_drift((event as InputEventMouseMotion).global_position)
@@ -1407,7 +1462,7 @@ func _on_long_press() -> void:
 	if was_dragging:
 		get_viewport().gui_cancel_drag()
 	Sfx.play("card_inspect_open")
-	CardInspector.open(self, card_instance, _show_cost)
+	CardInspector.open(self, card_instance, _show_cost, is_phantom)
 
 
 # The ghost copy of this card a DragGhost preview shows — overridden by AbilityWidget so a

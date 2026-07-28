@@ -21,6 +21,10 @@ const DESKTOP_MAX_SCALE := 2.0
 
 var _inst: CardInstance
 var _show_cost: bool
+# Inspecting a card that isn't real (a forge quick-preview stand-in, any other projection) keeps it
+# unreal here: the enlarged copy wears the same phantom treatment, so the overlay can never be read
+# as "you have this card". Set from the originating CardUI's own is_phantom — see CardUI.set_phantom.
+var _phantom := false
 var _layer: CanvasLayer
 var _dismissing := false
 # The stat-guide "Show Stat Descriptions" preference — remembered across opens within a session
@@ -36,12 +40,13 @@ var _content: Control = null  # the laid-out card + flanking columns; rebuilt in
 # Opens the inspector for `inst` above everything else (combat HUD, menus). `host` only supplies
 # the viewport; the overlay parents to that viewport (not the originating card) so it survives
 # the card and stays inside whatever viewport the game runs in (window, embedded, render harness).
-static func open(host: Node, inst: CardInstance, show_cost := true) -> void:
+static func open(host: Node, inst: CardInstance, show_cost := true, phantom := false) -> void:
 	if inst == null or host == null or not host.is_inside_tree():
 		return
 	var insp := CardInspector.new()
 	insp._inst = inst
 	insp._show_cost = show_cost
+	insp._phantom = phantom
 	var layer := CanvasLayer.new()
 	layer.layer = 200
 	insp._layer = layer
@@ -157,6 +162,8 @@ func _layout() -> void:
 	card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	card.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if _phantom:
+		card.set_phantom(true)
 	if CardTooltip.has_stat_guide(_inst) and card.has_method("set_stat_tooltips"):
 		card.set_stat_tooltips(CardTooltip.stat_tips(_inst))
 	row.add_child(card)

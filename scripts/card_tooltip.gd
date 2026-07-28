@@ -62,8 +62,10 @@ const TEXT_HINT := Color(0.95, 0.82, 0.35)    # yellow "expand" footnote on the 
 # Shown only for units — spells carry none of these stats (see has_stat_guide). The column is
 # headed by a "Show Stat Descriptions" toggle; `descriptions_shown` false collapses it to just
 # that toggle (CardInspector owns the toggle state and rebuilds on change).
+# `phantom` carries the hovered card's own unreality into the preview (CardUI.set_phantom): pointing
+# at a card that isn't real must not pop an enlarged copy that looks like one you have.
 static func build(inst: CardInstance, show_cost := true, scale := 1.0,
-		with_stat_guide := false, descriptions_shown := true) -> Control:
+		with_stat_guide := false, descriptions_shown := true, phantom := false) -> Control:
 	if inst == null:
 		return null
 	var s := scale
@@ -93,6 +95,8 @@ static func build(inst: CardInstance, show_cost := true, scale := 1.0,
 	preview.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hbox.add_child(preview)
+	if phantom:
+		preview.set_phantom(true)
 
 	# Height budget = the preview card's own height: a content-heavy card (multiple abilities,
 	# charms, statuses) flows into EXTRA COLUMNS beside the card instead of growing a tall

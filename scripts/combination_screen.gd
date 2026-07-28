@@ -104,16 +104,24 @@ const MERGE_BTN_UNLIT := Color(0.62, 0.62, 0.68)
 
 # Quick preview: entry idx -> the stand-in card overlay showing what that pairing would produce.
 var _preview_uis: Dictionary = {}
-# How far the stand-in is inset on each side, as a fraction of the host card's width — enough that
-# the real card reads as a frame around it, not so much that the preview turns into a thumbnail.
-const PREVIEW_INSET := 0.07
-# The real card is pushed back while its stand-in is up. Without this both cards' badges (cost pip,
-# element pips, stat corners — they overhang the card rect) read at equal weight and the pair looks
-# like clutter rather than one card resting on another. Dimmed, the original becomes the frame that
-# says "this is what it would turn into" and the preview owns the eye.
-const PREVIEW_HOST_DIM := Color(0.5, 0.5, 0.56)
-# The violet halo marking a card as a possibility rather than a possession (see the vfx entry).
-const PREVIEW_GLOW := "forge_preview_glow"
+# How far the stand-in is pushed DOWN over its host, as a fraction of the host card's height. The
+# stand-in is otherwise the host's exact size — the offset is the whole composition. Sized to clear
+# the TOP OF the card's name band — deliberately not the whole of it. The band's plaque runs from
+# the card's top edge down to 12.5% of its height (NameBg's authored anchors shifted by its -12.5px
+# offset at the 340px native height — card_ui.tscn), and this shows about two thirds of that: enough
+# of the name to know which card is underneath, which is the entire job. Reading it letter by letter
+# is not — a drop sized for the full band pushes the stand-in, and the merge fab riding its bottom
+# edge, that much further down the table for nothing.
+#
+# Everything the stand-in hangs below its host is spent out of the table's row gap, and the fab's own
+# overhang already spends nearly all of it, so the fab clips the top of the next row's name band by
+# roughly this drop. Accepted deliberately: keeping it clear costs ~14% off every card on the screen
+# (the gap would have to grow to a quarter of a card's height), and the fab is a round, floating
+# thing that reads as chrome over the table rather than as part of the card it crosses.
+const PREVIEW_DROP := 0.09
+# The stand-in wears CardUI's shared phantom treatment (CardUI.set_phantom) — the one "this card
+# isn't real" look, so a stand-in on the table and the same card enlarged in the inspector can
+# never drift apart.
 # Soft purple, NOT the warm yellow this started as: the deck is full of orange/gold fire art and a
 # yellow disc dissolved into those backgrounds. Purple is the one hue no card art leans on, so the
 # button separates from every element's palette — and it echoes the screen's own lavender chrome.
@@ -696,6 +704,22 @@ func _input(event: InputEvent) -> void:
 		if not mb.pressed and _swallow_release:
 			_swallow_release = false
 			return
+		var on_preview := _preview_under(get_global_mouse_position()) \
+				if mb.button_index == MOUSE_BUTTON_LEFT and mb.pressed else -1
+		# NEVER on our own floating buttons, for the same reason the dead-space branch below spells
+		# out: _input runs BEFORE the GUI, and the fab rides the stand-in it belongs to (72% of it
+		# sits inside that rect). Forwarding a press aimed at the flask made the release resolve as a
+		# TAP on the target first, moving the selection onto it — so by the time the fab's `pressed`
+		# fired, the source and the target were the same card and the merge was of a card with itself.
+		if on_preview >= 0 and not _click_on_ui(get_global_mouse_position()):
+			# A press that lands on a stand-in belongs to the card underneath — it selects and drags
+			# exactly as pressing the card itself does. It has to be started HERE because the grid's
+			# press comes from ForgeDragItem._gui_input, and the stand-in does not live inside that
+			# wrapper (it rides the screen overlay, to escape the scroll clip) — so the GUI walks the
+			# stand-in's own ancestors and never reaches the item. _on_press is self-guarded against
+			# a double start, so the strip of host card still showing above the stand-in, which DOES
+			# reach the wrapper, stays exactly as it was.
+			_on_press({"kind": "card", "idx": on_preview})
 		if mb.button_index == MOUSE_BUTTON_LEFT and not mb.pressed:
 			# NOTE: do NOT set_input_as_handled() here. _input runs before Godot's GUI layer; eating
 			# the button-up means the GUI never sees it, so Godot keeps thinking the button is held
@@ -768,12 +792,34 @@ func _auto_scroll(delta: float) -> void:
 
 
 # The index of the deck card under `global_pos`, excluding the dragged source itself; -1 if none.
+#
+# A card's reach includes any quick-preview stand-in it is wearing. The stand-in is dropped below
+# its host, so its bottom strip hangs past the host's own rect, over the row gap — and that strip is
+# unmistakably part of the card you are pointing at. Without this it read as dead space: a press
+# there dropped the selection instead of pairing, and a right-click was eaten before the GUI could
+# turn it into an inspect.
 func _target_under(global_pos: Vector2) -> int:
+	# Stand-ins are tested FIRST because they are drawn on top: where one overhangs into the row
+	# below, the card you are pointing at is the one you can see, not the one buried under it.
+	var pi := _preview_under(global_pos)
+	if pi >= 0 and not (_drag.get("kind") == "card" and int(_drag.get("idx", -1)) == pi):
+		return pi
 	for i in _entries.size():
 		if _drag.get("kind") == "card" and int(_drag.get("idx", -1)) == i:
 			continue
 		var item: Control = _entries[i].item
 		if item != null and item.get_global_rect().has_point(global_pos):
+			return i
+	return -1
+
+
+# The entry whose quick-preview stand-in covers `global_pos`; -1 if none. The stand-in's whole rect
+# belongs to its host card — including the strip that hangs past the host, over the row gap.
+func _preview_under(global_pos: Vector2) -> int:
+	for i: int in _preview_uis:
+		var pv: Variant = _preview_uis[i]
+		if is_instance_valid(pv) and (pv as Control).visible \
+				and (pv as Control).get_global_rect().has_point(global_pos):
 			return i
 	return -1
 
@@ -1025,8 +1071,10 @@ func _present() -> void:
 		else:
 			_sel_tip_label.text = Loc.t("combine.pick_target")
 		_track_sel_tip()
-	_reconcile_merge_buttons()
+	# Previews FIRST: a card wearing a stand-in hands its merge fab a different rect to ride (the
+	# stand-in's, not its own), so the fabs must reconcile against stand-ins that already exist.
 	_reconcile_previews()
+	_reconcile_merge_buttons()
 	_update_card_dimming()
 	Nav.set_aid(_aid_text())
 
@@ -1071,7 +1119,15 @@ func _reconcile_merge_buttons() -> void:
 		var fab: Control = _merge_btns[i]
 		# Riding the card's bottom edge, centred — mostly INSIDE the card, only
 		# MERGE_BTN_OVERHANG of it hanging below: unmissable without eating the table's gaps.
+		# When the card wears a quick-preview stand-in, the fab rides the STAND-IN's bottom edge
+		# instead: that is the card the player is being asked to commit to, and measuring against
+		# the host would leave the fab stranded across the middle of the stand-in's art. Same size
+		# either way (the stand-in is the host's size), so ONLY which rect is measured changes — the
+		# fab keeps its authored relationship to a card exactly, overhang included.
 		var r := (_entries[i].item as Control).get_global_rect()
+		var pv: Variant = _preview_uis.get(i)
+		if is_instance_valid(pv) and (pv as Control).visible:
+			r = (pv as Control).get_global_rect()
 		var d := clampf(r.size.x * MERGE_BTN_RATIO, MERGE_BTN_MIN, MERGE_BTN_MAX)
 		fab.size = Vector2(d, d)
 		# Raw `position`, NOT global_position: the global setter compensates for the pivot-scale
@@ -1223,11 +1279,12 @@ func _make_merge_button(idx: int) -> Control:
 # ── Quick preview ───────────────────────────────────────────────────────────────
 
 # With Quick preview on and a source picked, every valid partner wears a stand-in card showing the
-# RESULT of that pairing. The stand-in is an OVERLAY laid over the real card, deliberately inset so
-# a rim of the actual card still shows around it — that "a card resting on the card it would
-# replace" read is the clearest possible statement that nothing has happened yet, and it survives
-# the player not knowing what the violet treatment means. Reconciled from declared state like the
-# rest of the presentation.
+# RESULT of that pairing. The stand-in is a full-size OVERLAY dropped a little way down its host, so
+# the only part of the real card left showing is the strip along its top — its NAME. That is the
+# whole statement: "this named card would become this one", nothing has happened yet. It is not
+# inset, translucent, or ringed: a second card sitting nearly concentric with the first doubles up
+# every badge that overhangs the card rect, and the table turns to noise the moment more than one
+# partner is valid. Reconciled from declared state like the rest of the presentation.
 #
 # Rebuilt ONLY when a pairing actually changes (a signature per entry), never per frame: each
 # preview costs a CardData.combine + a CardUI, and this is polled every frame.
@@ -1253,67 +1310,112 @@ func _reconcile_previews() -> void:
 			continue
 		_preview_uis[i] = _make_preview(i, inst, str(want[i]))
 
+	for i in _entries.size():
+		_set_host_receded(i, _preview_uis.has(i))
+	_fit_previews()
 
-# Builds one stand-in over the card at `idx`. Inset on every side so the real card frames it, and
-# mouse-transparent so the card underneath still takes every tap and drag — the preview is a way of
-# LOOKING at the table, never a new thing to click.
+
+# The card UNDER a stand-in steps back: a touch smaller and dimmer. Without it the two cards read as
+# equal claims on the same spot and the eye has to work out which is the real one; receded, the host
+# becomes the label its visible strip actually is, and the stand-in owns the read.
+#
+# Both ride the inner CardUI, never the wrapping item — the item is not the host's alone (the merge
+# fab measures against it, the dim-others pass rides its modulate), so writing there would move
+# things that must not move. Scale pivots at the TOP CENTRE, not the middle: the only part of the
+# host still showing is its top strip, and a centre pivot would slide that strip down under the
+# stand-in's top edge, eating the very name this composition exists to show.
+const HOST_RECEDE := 0.95
+const HOST_RECEDE_DIM := Color(0.72, 0.72, 0.78)
+
+func _set_host_receded(idx: int, on: bool) -> void:
+	if idx < 0 or idx >= _entries.size():
+		return
+	var ui: Variant = _entries[idx].ui
+	if not is_instance_valid(ui):
+		return   # its wearer was freed by a deck rebuild — the stand-ins go with it
+	var card := ui as Control
+	var s := Vector2(HOST_RECEDE, HOST_RECEDE) if on else Vector2.ONE
+	var m := HOST_RECEDE_DIM if on else Color.WHITE
+	if card.scale == s and card.modulate == m:
+		return   # polled every frame — write only on a real transition
+	card.pivot_offset = Vector2(card.size.x * 0.5, 0.0)
+	card.scale = s
+	card.modulate = m
+
+
+# Parks every stand-in over its host: same size, dropped by PREVIEW_DROP. Re-run every reconcile
+# because the stand-ins do NOT live on their hosts — they ride the screen overlay (see _make_preview)
+# and so have to be told where their card went, which also keeps them true through a reflow glide.
+#
+# A stand-in hangs BELOW its host, so a card in the bottom row would have its overhang sliced off at
+# the scroll viewport's edge — the one place this composition can break. Riding the overlay puts the
+# stand-in outside that clip; the price is that a host only PARTLY scrolled into view would wear a
+# stand-in floating past the viewport, so those hosts get no stand-in at all. With the table's
+# fit-all grid that state only exists for decks big enough to hit the touch floor and scroll.
+func _fit_previews() -> void:
+	var view := _scroll.get_global_rect()
+	for i: int in _preview_uis:
+		var holder: Control = _preview_uis[i]
+		var host: Variant = _entries[i].item if i < _entries.size() else null
+		if not is_instance_valid(host) or not is_instance_valid(holder):
+			continue
+		var r := (host as Control).get_global_rect()
+		holder.visible = view.encloses(r)
+		holder.size = r.size
+		holder.global_position = r.position + Vector2(0.0, r.size.y * PREVIEW_DROP)
+
+
+# Builds one stand-in over the card at `idx`: the host's exact size, dropped by PREVIEW_DROP so the
+# host's name band stays uncovered, and mouse-transparent so the card underneath still takes every
+# tap and drag — the preview is a way of LOOKING at the table, never a new thing to click.
 func _make_preview(idx: int, inst: CardInstance, sig: String) -> Control:
 	var host: Control = _entries[idx].item
 	var holder := Control.new()
 	holder.mouse_filter = MOUSE_FILTER_IGNORE
 	holder.set_meta("sig", sig)
+	holder.size = host.size
 
 	var card := CardUI.create(inst)
 	card.draggable = false
-	card.mouse_filter = MOUSE_FILTER_IGNORE
+	# PASS, not IGNORE: the stand-in is still "a way of LOOKING at the table, never a new thing to
+	# click" for the gestures that DO something — left press and drag are seen first by the screen's
+	# own _input (which runs before the GUI) and still select and drag the card underneath. What the
+	# stand-in claims is the two gestures that only ever ASK A QUESTION: right-click and touch
+	# long-press, which CardUI already implements, and which must resolve to the card the player is
+	# actually pointing at. Left IGNORE, they fell through to the host and inspected the ORIGINAL —
+	# silently the wrong card. The stand-in is flagged phantom, so the inspector it opens is too.
+	card.mouse_filter = MOUSE_FILTER_PASS
 
-	# Anchors are set AFTER each node is in the tree, never before. The host is already mounted, so
-	# a child arrives with its _ready firing immediately — and a node that enters with full-rect
-	# anchors AND an authored size (CardUI carries one) is exactly the case Godot warns about,
-	# "size overridden after _ready". Adding first, anchoring second, sidesteps it entirely.
-	host.add_child(holder)
-	holder.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	var inset := maxf(6.0, host.size.x * PREVIEW_INSET)
-	holder.offset_left = inset
-	holder.offset_top = inset
-	holder.offset_right = -inset
-	holder.offset_bottom = -inset
+	# Mounted on the screen overlay, NOT on the host card: the drop hangs the stand-in past its
+	# host's bottom edge, which on the last row means past the scroll viewport that would clip it
+	# (and everywhere means over the row below, whose cards are later siblings that would paint over
+	# it). One move settles both. _fit_previews then parks it on its host every reconcile.
+	# First child, so the overlay's own furniture — the per-target merge fabs, the selection pill —
+	# keeps drawing above the stand-ins it may overlap.
+	_overlay.add_child(holder)
+	_overlay.move_child(holder, 0)
 
 	holder.add_child(card)
 	card.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	card.custom_minimum_size = Vector2.ZERO
 
-	# Pops in from slightly small — the stand-in ARRIVES on top of the card rather than the card
-	# silently turning into something else, which would read as the merge having already happened.
-	holder.pivot_offset = holder.size * 0.5
-	holder.scale = Vector2(0.88, 0.88)
-	var tw := holder.create_tween()
-	tw.tween_property(holder, "scale", Vector2.ONE, 0.18) \
-			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	Vfx.attach(PREVIEW_GLOW, holder)
-	_set_host_dim(idx, true)
+	card.set_phantom(true)   # THE shared "this card isn't real" treatment — see CardUI.set_phantom
+
+	# NO entrance animation, deliberately: the stand-in is simply THERE the moment a pairing becomes
+	# valid. A pop-in also can't work here, because _fit_previews parks this node by writing
+	# `global_position` every frame — and on a SCALED Control that setter pins the visual top-left
+	# corner (the same trap the merge fab's placement documents), so a scale tween would grow the
+	# card sideways out of its own left edge instead of in place. The fab reads this node's
+	# transform-aware rect, so it would slide and resize right along with it.
 	return holder
 
 
 func _drop_preview(idx: int) -> void:
 	var holder: Variant = _preview_uis.get(idx)
 	_preview_uis.erase(idx)
-	_set_host_dim(idx, false)
 	if not is_instance_valid(holder):
 		return
-	Vfx.detach(PREVIEW_GLOW, holder as Control)
 	(holder as Control).queue_free()
-
-
-# Pushes the REAL card back (or restores it) under its stand-in. Rides the CardUI's own modulate,
-# not the wrapping item's — the item hosts the stand-in too, so dimming there would dim the very
-# thing this is meant to make legible. Silently skips an entry the deck rebuild already took.
-func _set_host_dim(idx: int, dim: bool) -> void:
-	if idx < 0 or idx >= _entries.size():
-		return
-	var ui: Variant = _entries[idx].ui
-	if is_instance_valid(ui):
-		(ui as Control).modulate = PREVIEW_HOST_DIM if dim else Color.WHITE
 
 
 # Every stand-in, gone — used when the deck itself is rebuilt under them (their hosts are freed,
@@ -1688,7 +1790,6 @@ func _close_modal() -> void:
 		_pending_land = null
 		if idx >= 0:
 			(_entries[idx].item as Control).visible = true
-			_select_when_settled(idx)
 
 
 # Frees the framing cluster (detaching its sustained cues first) but keeps the dim backdrop —
@@ -1732,7 +1833,7 @@ func _commit_merge() -> void:
 # happening on the table, not a modal step, and without it two cards would silently blink into one.
 # It runs on the screen's own overlay rather than a scrim layer, so the table stays live underneath:
 # nothing is covered, nothing has to be dismissed, and the player can immediately chain into the
-# next merge (the result arrives selected, as on the framed path).
+# next merge.
 func _quick_commit(src: Dictionary, tgt_idx: int, verdict: Dictionary,
 		src_origin: Vector2 = Vector2.INF) -> void:
 	if _fusing:
@@ -1892,14 +1993,13 @@ func _commit_fusion(src_idx: int, tgt_idx: int, result_dc: DeckCard) -> bool:
 # Touchdown: the table settled with the flight (same clock), and the clone now sits exactly on
 # the shell's final rect — unhide it and the swap is invisible (the quick path frees the anim
 # right here; the framed path's clone lives until the modal closes, under the already-showing
-# toast). The forged card arrives SELECTED — the natural next act is merging it again (chain-
-# forging), and the highlight marks where the result landed once the toast clears.
+# toast). The selection stays clear — landing on a reorganized table already reads as enough of
+# a change; forcing a selection on top of it grays out every non-partner card unprompted.
 func _on_fuse_landed(tgt_dc: DeckCard) -> void:
 	_pending_land = null
 	var idx := _entry_index_of(tgt_dc)
 	if idx >= 0:
 		(_entries[idx].item as Control).visible = true
-		_select_when_settled(idx)
 	if _quick_fusing:
 		_end_quick_fusion()   # no toast to click through — that's the whole point of quick merge
 
@@ -2029,7 +2129,6 @@ func _show_result_toast(result_inst: CardInstance, title_text: String) -> void:
 
 func _do_enchant(charm_id: String, tgt_idx: int) -> void:
 	var dc: DeckCard = _entries[tgt_idx].card
-	var tgt_deck: int = int(_entries[tgt_idx].deck_idx)
 	# Spend the charm only if it actually went on. The verdict already refused a full card, so this
 	# can't normally fail — but consuming an inventory charm that never attached is the one way this
 	# flow could destroy a player's item, and the check costs nothing.
@@ -2042,24 +2141,6 @@ func _do_enchant(charm_id: String, tgt_idx: int) -> void:
 	# everything else survives untouched.
 	_rebuild_deck([dc])
 	_rebuild_charms()
-	# The enchanted card arrives SELECTED (deck order is unchanged, so its entry index holds) —
-	# same chain-forging convention as a combine commit.
-	_select_when_settled(tgt_deck)
-
-
-# Chain-forging arrival: select entry `idx` — but if the grid is mid-reflow, wait for it to
-# settle first. The highlight's glow bakes from the wearer's silhouette, and attaching it to a
-# card still fading in (or popping it while the table is in motion) reads as noise.
-func _select_when_settled(idx: int) -> void:
-	if _fit_grid.is_settling():
-		_fit_grid.settled.connect(_select_entry.bind(idx), CONNECT_ONE_SHOT)
-	else:
-		_select_entry(idx)
-
-
-func _select_entry(idx: int) -> void:
-	if idx >= 0 and idx < _entries.size() and bool(_entries[idx].combinable):
-		_sel = {"kind": "card", "idx": idx}
 
 
 # ── Particles ──────────────────────────────────────────────────────────────────

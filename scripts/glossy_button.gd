@@ -76,6 +76,14 @@ const _LANDSCAPE_BUCKETS := [
 @export var base_color: Color = Color("f6871d"):
 	set(v): base_color = v; _apply()
 @export var ink: Color = Color("1c2136")   # unused — see class comment; kept for call-site compat
+# Breathing room between the label and the baked shoulders at either end. The skin's caps are real
+# geometry (~21-40 source px per bucket), so a button sized to its bare text runs the label straight
+# over the curve and reads as bleeding out. Godot folds a stylebox's content margins into the
+# minimum size, so this both insets the label and widens the button by the same amount. A property
+# rather than a call-site stylebox override because _build() (re)installs the empty styleboxes in
+# _ready, after any override a builder set at construction time.
+@export var h_pad: float = 0.0:
+	set(v): h_pad = v; _build()
 
 var _skin: NinePatchRect
 var _bucket: Dictionary = {}
@@ -134,7 +142,10 @@ func _set_pressed_look(is_pressed: bool) -> void:
 
 func _build() -> void:
 	for s in ["normal", "hover", "pressed", "focus", "disabled"]:
-		add_theme_stylebox_override(s, StyleBoxEmpty.new())
+		var sb := StyleBoxEmpty.new()
+		sb.content_margin_left = h_pad
+		sb.content_margin_right = h_pad
+		add_theme_stylebox_override(s, sb)
 	add_theme_font_override("font", CHUNKY_FONT)
 	# Nine-patch corner margins are fixed SOURCE pixels — Godot draws them at that same pixel
 	# footprint in the destination regardless of how small the button is, so a button smaller than

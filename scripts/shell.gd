@@ -52,6 +52,10 @@ var _departing: Control            # the screen a modal arrival is opening OVER 
 var _modal_plate: ColorRect        # that modal's own backdrop, grown with it
 var _current_content: Control = null
 
+# Breathing room between a header action's label and the button's baked shoulders — see
+# _apply_header_actions.
+const HEADER_ACTION_PAD := 40.0
+
 var _header: Dictionary = {}   # ScreenUI.build_header()'s return — built once, see _ready()
 var _footer_bar: PanelContainer
 var _footer_hbox: HBoxContainer
@@ -436,6 +440,9 @@ func _apply_header_actions(actions: Array) -> void:
 			Vector2(0, ScreenUI.side_dev()), 20,
 			ScreenUI.CHROME_CONFIRM if (is_toggle and on) else ScreenUI.CHROME_NEUTRAL)
 		btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		# Header actions size to their own arbitrary labels (no fixed min width), so without
+		# padding the text sits right on the button's baked shoulders — see GlossyButton.h_pad.
+		btn.h_pad = HEADER_ACTION_PAD
 		if str(a.get("tip", "")) != "":
 			UIScale.tip(btn, str(a.get("tip", "")))
 		if is_toggle:

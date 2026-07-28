@@ -144,6 +144,95 @@ func _ready() -> void:
 					if j != i:
 						n.call("_on_merge_btn", j)
 					break
+	# Crafting screen "previewinspect": run AFTER a pair selection with quickpreview on. Fires a real
+	# right-click at the centre of the first quick-preview stand-in — the gesture the player makes —
+	# so the shot proves WHICH card the inspector opened for, and that it came up phantom.
+	if scene_path.contains("combination") and "previewinspect" in args:
+		await get_tree().process_frame
+		for n: Node in sv.find_children("*", "Control", true, false):
+			if n.has_method("_reconcile_previews"):
+				var pvs: Dictionary = n.get("_preview_uis")
+				for k: int in pvs:
+					var pv: Control = pvs[k]
+					var click := InputEventMouseButton.new()
+					click.button_index = MOUSE_BUTTON_RIGHT
+					click.pressed = true
+					click.position = pv.get_global_rect().get_center()
+					click.global_position = click.position
+					sv.push_input(click)
+					print("PREVIEWINSPECT: right-clicked the stand-in on entry ", k)
+					break
+				break
+		await get_tree().process_frame
+	# Crafting screen "previewtip": pops the hover tooltip of the first quick-preview stand-in
+	# through the real path (CardUI._make_custom_tooltip), so the shot shows whether the enlarged
+	# card inside the tooltip agrees with the phantom the cursor is pointing at.
+	if scene_path.contains("combination") and "previewtip" in args:
+		await get_tree().process_frame
+		for n: Node in sv.find_children("*", "Control", true, false):
+			if n.has_method("_reconcile_previews"):
+				var pvs: Dictionary = n.get("_preview_uis")
+				for k: int in pvs:
+					var pv: Control = pvs[k]
+					var pcard: CardUI = pv.find_children("*", "CardUI", true, false)[0]
+					var tip: Control = pcard._make_custom_tooltip("") as Control
+					var cc := CenterContainer.new()
+					cc.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+					cc.add_child(tip)
+					var cl := CanvasLayer.new()
+					cl.layer = 200
+					cl.add_child(cc)
+					sv.add_child(cl)
+					print("PREVIEWTIP: tooltip for entry ", k, " phantom=", pcard.is_phantom)
+					break
+				break
+		await get_tree().process_frame
+	# Crafting screen "fabpress": presses at the CENTRE OF THE MERGE FLASK, which overlaps the
+	# stand-in it rides. The selection must still be the SOURCE card afterwards — if the press leaks
+	# through to the card under the flask, the source becomes the target and the merge is a card
+	# with itself. Prints the selection before and after.
+	if scene_path.contains("combination") and "fabpress" in args:
+		await get_tree().process_frame
+		for n: Node in sv.find_children("*", "Control", true, false):
+			if n.has_method("_reconcile_previews"):
+				var before: Dictionary = n.get("_sel")
+				var fabs: Dictionary = n.get("_merge_btns")
+				for k: int in fabs:
+					var fab: Control = fabs[k]
+					for down: bool in [true, false]:
+						var click := InputEventMouseButton.new()
+						click.button_index = MOUSE_BUTTON_LEFT
+						click.pressed = down
+						click.position = fab.get_global_rect().get_center()
+						click.global_position = click.position
+						sv.push_input(click)
+					await get_tree().process_frame
+					print("FABPRESS: flask of entry ", k, "  _sel before=", before,
+							"  after=", n.get("_sel"), "  merge=", n.get("_merge").get("tgt", "none"))
+					break
+				break
+		await get_tree().process_frame
+	# Crafting screen "previewpress": the OTHER half of the stand-in's input contract — a real LEFT
+	# press+release on a stand-in must still select the card underneath (the stand-in claims only the
+	# gestures that ask a question). Prints the resulting selection so the regression is checkable.
+	if scene_path.contains("combination") and "previewpress" in args:
+		await get_tree().process_frame
+		for n: Node in sv.find_children("*", "Control", true, false):
+			if n.has_method("_reconcile_previews"):
+				var pvs: Dictionary = n.get("_preview_uis")
+				for k: int in pvs:
+					var pv: Control = pvs[k]
+					for down: bool in [true, false]:
+						var click := InputEventMouseButton.new()
+						click.button_index = MOUSE_BUTTON_LEFT
+						click.pressed = down
+						click.position = pv.get_global_rect().get_center()
+						click.global_position = click.position
+						sv.push_input(click)
+					print("PREVIEWPRESS: pressed stand-in of entry ", k, " -> _sel=", n.get("_sel"))
+					break
+				break
+		await get_tree().process_frame
 	# Crafting screen "dropI-J": drives a real DRAG of entry I released over entry J — the path a
 	# quick merge takes when it fuses out of the drop point rather than the grid slot.
 	for a: String in args:

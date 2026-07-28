@@ -56,15 +56,15 @@ var _attack_icon: TextureRect
 # A preview of the unit that would land in THIS slot if the drag were released now (see
 # CombatBoard's drag phantom). Rendered as a holographic PROJECTION — cooler, brighter and less
 # saturated than the card really is — so it reads clearly apart from the warm, dim, translucent
-# ghost the cursor drags (DragGhost.GHOST_TINT). The look comes from a cool near-white WASH laid over
-# the card: mixing toward a bright cool colour lowers saturation, raises brightness and biases the
-# hue all at once, without a per-node shader (which blanks the card's clipped, COVER-fit art node).
-# Mounted/unmounted by the board.
+# ghost the cursor drags (DragGhost.GHOST_TINT). The look is CardUI.set_phantom, the one shared
+# "this card isn't real" treatment (a colour transform of the card's own pixels — see
+# phantom.gdshader). This used to hand-roll a wash rect here, on the belief that a per-node shader
+# blanks the card's clipped, COVER-fit art node; measured, it doesn't. Mounted/unmounted by the board.
 var _phantom: CardUI = null
 
-# The projection wash: colour is the cool near-white the card is mixed toward; its alpha is how far.
-const PHANTOM_WASH := Color(0.70, 0.84, 1.05, 0.5)
-const PHANTOM_ALPHA := 0.9   # the card itself — more present than the see-through drag ghost
+# Translucency is a SEPARATE axis from the phantom colour and stays local: it says how PRESENT the
+# projection is, and the answer here is "more present than the see-through drag ghost".
+const PHANTOM_ALPHA := 0.9
 
 # The valid-target cue on an OCCUPIED slot: instead of stamping the green reticle glyph over the
 # unit, the card itself lights up from within with a warm golden glow (see "target_valid_glow").
@@ -398,9 +398,7 @@ func set_attack_marker(enabled: bool) -> void:
 
 
 # Mounts the landing PROJECTION of the unit that would drop here on release (drag phantom), or
-# clears it when `ghost` is null. Display-only — it never intercepts input. The projected look is a
-# cool near-white wash (PHANTOM_WASH) laid over the whole card as its last child, so it sits above
-# the art AND the badges and recolours them together — cooler, brighter, less saturated.
+# clears it when `ghost` is null. Display-only — it never intercepts input.
 func mount_phantom(ghost: CardUI) -> void:
 	unmount_phantom()
 	_phantom = ghost
@@ -412,12 +410,7 @@ func mount_phantom(ghost: CardUI) -> void:
 	add_child(ghost)   # facing derives from the slot on reparent (CardUI NOTIFICATION_PARENTED)
 	ghost.custom_minimum_size = Vector2.ZERO
 	ghost.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	var wash := ColorRect.new()
-	wash.name = "_PhantomWash"
-	wash.color = PHANTOM_WASH
-	wash.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	ghost.add_child(wash)   # last child → drawn over every card layer
-	wash.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	ghost.set_phantom(true)
 
 
 func _fit_phantom() -> void:

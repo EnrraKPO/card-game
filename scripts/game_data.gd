@@ -41,8 +41,37 @@ var current_modifiers: ModifierSet = ModifierSet.new():
 		LiveEffects.invalidate_compositions()
 
 
+# Harness safety: while this is on, every write to the save file is a no-op (reads still work,
+# so a harness still sees the player's real profile/decks).
+#
+# The dev/ render and probe scenes deliberately drive the REAL autoloads — that is the whole point,
+# they have to look and behave like the game — and nearly all of them call start_new_run() to get a
+# populated run. start_new_run() PERSISTS. Run against the player's own save that silently replaces
+# their in-progress run with a brand-new one: the run deck reverts to the owned deck's template, so
+# everything the run had EARNED is gone the next time they Continue — the base King deck's three
+# elemental picks (king_reward_picks appends those to the RUN deck only), reward cards, forged
+# merges, charms, map progress. The profile survives, which is exactly why the loss reads as "some
+# element cards went missing when I restarted".
+#
+# Detected from the launched scene rather than opted into per file, so a new probe is safe without
+# anyone remembering the rule; settable by hand for a harness launched some other way.
+var sandboxed := false
+
+
 func _ready() -> void:
+	sandboxed = _is_harness_launch()
+	if sandboxed:
+		print("GameData: harness launch — save writes disabled (see GameData.sandboxed)")
 	_load_player()
+
+
+# A harness launch = the main scene named on the command line lives in dev/ or tests/.
+static func _is_harness_launch() -> bool:
+	for arg: String in OS.get_cmdline_args():
+		var a := arg.replace("\\", "/").to_lower()
+		if a.ends_with(".tscn") and (a.contains("dev/") or a.contains("tests/")):
+			return true
+	return false
 
 
 # ── Slot selection ──────────────────────────────────────────────────────────────
@@ -283,6 +312,8 @@ func _read_section(section: String) -> Dictionary:
 
 
 func _write_section(section: String, data: Dictionary) -> void:
+	if sandboxed:
+		return
 	var config := ConfigFile.new()
 	config.load(SAVE_PATH)
 	for key in data:
@@ -291,6 +322,8 @@ func _write_section(section: String, data: Dictionary) -> void:
 
 
 func _erase_sections(sections: Array) -> void:
+	if sandboxed:
+		return
 	var config := ConfigFile.new()
 	config.load(SAVE_PATH)
 	for s: String in sections:
@@ -299,6 +332,8 @@ func _erase_sections(sections: Array) -> void:
 
 
 func _save_player() -> void:
+	if sandboxed:
+		return
 	var config := ConfigFile.new()
 	config.load(SAVE_PATH)
 	config.set_value("player", "username", username)
