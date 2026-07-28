@@ -645,5 +645,37 @@
 				]
 			}
 		]
+	},
+	{
+		"id": "bomb",
+		"display_name": "Bomb",
+		"description": "Click & Hold to deal 5 damage to all enemies (Consumable: Spent on use.)",
+		"color": "000000",
+		"letter": "✦",
+		"price": 90,
+		"effects": [
+			{
+				"trigger": {
+					"kind": "transient"
+				},
+				"targets": {
+					"kind": "all"
+				},
+				"attribute": "damage_taken",
+				"amount": 5
+			}
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1024,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": true,
+				"prompt": "Bomb",
+				"turbo": true
+			}
+		}
 	}
 ]

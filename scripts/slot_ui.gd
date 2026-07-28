@@ -2,6 +2,13 @@ class_name SlotUI
 extends Panel
 
 signal pressed
+# The move button (see MoveButton) committed — the explicit click/hold entry for repositioning
+# a selected fielded unit. The board routes it through the Interaction session (commit_press).
+signal move_pressed
+# The move button's hover began/ended — the board mounts the landing phantom and declares the
+# targeting preview from this slot while it lasts. Hover belongs to the BUTTON alone; the rest
+# of the slot is non-interactive dead space during a static fielded selection.
+signal move_hover(on: bool)
 
 var row: int = -1
 var col: int = -1
@@ -37,6 +44,11 @@ var _arrow_tween: Tween
 # top edge and the arrow box side, so the chunky arrow can be parked just above the pool.
 var _spot_top: float = 0.0
 var _arrow_side: float = 0.0
+# The move BUTTON (see MoveButton): a fully self-contained control (its own frame, spot,
+# arrow and hold fill) shown INSTEAD of the bare MOVE glyphs on a static, non-click-commit
+# destination (set_move_button). It sits at the OPEN marker's exact half-slot box and owns its
+# z (above card badges) for life. Any cue change hides it again.
+var _move_btn: MoveButton = null
 # The attack-target crosshair — an INDEPENDENT overlay (not part of the Cue state machine): it
 # marks the enemy a selected/dragged friendly unit will strike, and coexists with that unit's
 # own move cues. The red glow that pairs with it rides the target CARD via Vfx (see CombatBoard).
@@ -125,6 +137,12 @@ func _build_cue_layer() -> void:
 	_attack_icon.visible = false
 	add_child(_attack_icon)
 
+	_move_btn = MoveButton.new()
+	_move_btn.visible = false
+	_move_btn.commit_requested.connect(func() -> void: move_pressed.emit())
+	_move_btn.hover_changed.connect(func(on: bool) -> void: move_hover.emit(on))
+	add_child(_move_btn)
+
 	_layout_cue()
 
 
@@ -154,6 +172,10 @@ const MOVE_CUE_ALPHA := 0.85  # the whole move cue rides a touch of transparency
 func _layout_cue() -> void:
 	_apply_icon_geometry()   # sets the pool box AND, for MOVE, _spot_top / _arrow_side
 	_layout_arrow()          # size/position the arrow relative to the pool just laid out
+	if _move_btn != null:
+		var box := _open_box()
+		_move_btn.position = box.position
+		_move_btn.size = box.size
 	if _arrow_tween == null or not _arrow_tween.is_valid():
 		_arrow.position.y = _arrow_top_y
 	elif _cue == Cue.MOVE:
@@ -195,14 +217,20 @@ func _position_attack_icon() -> void:
 
 # The centred glyph's box depends on the cue: OPEN fills half the slot (stretched to the slot's
 # own portrait shape), the round glyphs stay a centred aspect-locked square.
+# The OPEN marker's box — half the slot's size, echoing its shape, centred. Shared by the OPEN
+# cue glyph and the move button (the button IS the open rect, promoted to a control).
+func _open_box() -> Rect2:
+	var s := size
+	return Rect2(s.x * 0.25, s.y * 0.25, s.x * 0.5, s.y * 0.5)
+
+
 func _apply_icon_geometry() -> void:
 	var s := size
 	if _cue == Cue.OPEN:
 		_icon.stretch_mode = TextureRect.STRETCH_SCALE
-		var w := s.x * 0.5
-		var h := s.y * 0.5
-		_icon.size = Vector2(w, h)
-		_icon.position = Vector2((s.x - w) * 0.5, (s.y - h) * 0.5)
+		var box := _open_box()
+		_icon.size = box.size
+		_icon.position = box.position
 	elif _cue == Cue.MOVE:
 		# Spotlight pool (foreshortened ellipse) + the chunky arrow above it, laid out as one
 		# vertically-centred composition — with the arrow up top, the pool naturally lands in the
@@ -228,6 +256,9 @@ func _apply_icon_geometry() -> void:
 func set_cue(cue: int, animated: bool = false) -> void:
 	_cue = cue
 	_stop_arrow_bob()
+	# Structural: ANY cue change retires the move button (cancelling an in-flight hold); the
+	# board re-raises it after the MOVE cue when the action wants it (see set_move_button).
+	set_move_button(false)
 	# Any cue change ends the previous valid-target glow; the TARGET_OK branch re-lights it if it
 	# still applies. Idempotent (Vfx de-dupes), so a TARGET_OK→TARGET_OK refresh doesn't churn.
 	_clear_valid_glow()
@@ -281,6 +312,26 @@ func reset_cue() -> void:
 		set_cue(Cue.OPEN)
 	else:
 		set_cue(Cue.NONE)
+
+
+# Raises/retires the move button on a MOVE-cue slot — called by the board's _present_slot for
+# static, non-click-commit DESTINATIONS (a selected fielded unit's landing spots). The button
+# REPLACES the bare MOVE glyphs (it renders its own spot+arrow inside its frame); hiding it
+# cancels any in-flight hold and releases its hover (MoveButton's visibility notification).
+func set_move_button(on: bool) -> void:
+	if _move_btn == null:
+		return
+	var show := on and _cue == Cue.MOVE
+	if show:
+		_icon.visible = false
+		_arrow.visible = false
+	if _move_btn.visible == show:
+		return
+	_move_btn.visible = show
+	if show:
+		var box := _open_box()
+		_move_btn.position = box.position
+		_move_btn.size = box.size
 
 
 func set_open_hints(enabled: bool) -> void:

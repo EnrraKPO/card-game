@@ -194,7 +194,14 @@ func _ready() -> void:
 	# input resets cues via set_open_hints), THEN the board paints the action's cues over the
 	# freshly-reset board.
 	_interaction.changed.connect(_on_interaction_changed)
-	_interaction.changed.connect(_board.present)
+	# The board renders the LIVE session, not the event's payload. The handler above may BEGIN
+	# a follow-up action inside this very emission (the end-of-action re-derive: a no-op drag
+	# ends, the still-picked unit's static action begins right back) — the nested emission has
+	# already painted that action, and this outer, now-stale event must render the same living
+	# action again rather than stomp it with its own null. Pulling current() makes every
+	# emission converge on the truth, whatever order the emissions unwind in.
+	_interaction.changed.connect(func(_action: Interaction.Action) -> void:
+		_board.present(_interaction.current()))
 	_spell_caster.spell_consumed.connect(_on_spell_consumed)
 	_spell_caster.ability_autocast.connect(_on_ability_autocast)
 
@@ -1260,6 +1267,14 @@ func _handle_combat_end() -> void:
 # ── Board event handlers ───────────────────────────────────────────────────────
 
 func _on_board_unit_placed(inst: CardInstance, card_ui: CardUI, from_hand: bool, cost: int, results: Array) -> void:
+	# A REPOSITION of the picked unit: the selection outlives the move, so the unit's static
+	# action must derive from the NEW spot. The generic end-of-action re-derive
+	# (_on_interaction_changed) has already run by now — but it ran when the commit ENDED the
+	# action, i.e. BEFORE the move executed, so everything it presented (destinations, the
+	# attack projection) still described the old square. Beginning the action afresh here
+	# re-presents from where the unit now stands.
+	if not from_hand and _phase == Phase.PLAYER_PLACE and Selection.holds(inst):
+		_interaction.begin(_board.make_unit_action(card_ui, false, false))
 	if from_hand:
 		# The placed card may still be the hand's live selection (the click-place path commits
 		# through the Interaction session, which doesn't know the hand) — clear it before the

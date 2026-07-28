@@ -176,17 +176,29 @@ func commit_drop(slot: SlotUI, dragged: Variant) -> bool:
 	return true
 
 
+# Press commit for a click session, bypassing the click_commit gate — the entry the slot's
+# MOVE BUTTON uses: click_commit stays false for a fielded unit (a stray tap on the slot still
+# never moves it), while the button — an explicit control that exists only to commit — goes
+# through here. Same end-then-commit order as drops and clicks, same role re-validation.
+func commit_press(slot: SlotUI) -> bool:
+	if _action == null or _action.is_drag:
+		return false
+	var role := role_of(slot)
+	if role != Role.DESTINATION and role != Role.TARGET_VALID:
+		return false
+	var act := _action
+	end_action(act)        # cues clear BEFORE resolution/animation, like the old sessions
+	act.commit(slot)
+	return true
+
+
 # Click commit: a slot was pressed while a click session is live. Returns true when the press
 # was CONSUMED (committed, or swallowed by a modal session holding out for a valid pick);
 # false lets the press fall through to normal handling (inspection, selection switching).
 func handle_slot_press(slot: SlotUI) -> bool:
 	if _action == null or _action.is_drag:
 		return false
-	var role := role_of(slot)
-	if (role == Role.DESTINATION or role == Role.TARGET_VALID) and _action.click_commit:
-		var act := _action
-		end_action(act)        # cues clear BEFORE resolution/animation, like the old sessions
-		act.commit(slot)
+	if _action.click_commit and commit_press(slot):
 		return true
 	# An invalid pick during a modal session stays in the session (the old "ineligible pick —
 	# stay in targeting, let the player choose again").

@@ -64,6 +64,11 @@ var _phantom_slot: SlotUI = null
 # a moving/placing state).
 var _hover_slot: SlotUI = null
 var _hover_live: bool = false
+# The slot showing the STATIC landing phantom — raised while the cursor is over that slot's
+# MOVE BUTTON (and through its safety hold), the click-flow twin of the drag's _phantom_slot.
+# Driven by the button's own hover (move_hover), never by slot-rect polling; present() clears
+# it structurally like everything else it owns.
+var _button_phantom_slot: SlotUI = null
 
 
 # The one context builder for live-combat effect dispatch: grids + the sides. Every
@@ -153,6 +158,8 @@ func build_section(parent: BoxContainer, is_player: bool) -> void:
 				enemy_slots[r][c] = slot
 			var s := slot
 			s.pressed.connect(func(): slot_pressed.emit(s))
+			s.move_pressed.connect(func(): _on_move_button_pressed(s))
+			s.move_hover.connect(func(on: bool): _on_move_button_hover(s, on))
 
 			grid.add_child(slot)
 
@@ -427,9 +434,11 @@ func refresh() -> void:
 
 func present(action: Interaction.Action) -> void:
 	# Hover teardown FIRST — set_hovered(false) tweaks a MOVE cue's arrow, so it must not run
-	# after the walk below has already drawn the new action's cues.
+	# after the walk below has already drawn the new action's cues. The button phantom clears
+	# here too (its button may be about to hide without ever seeing a mouse_exited).
 	_set_hover_slot(null)
 	_hover_live = false
+	_set_button_phantom(null)
 	# Occupant cards swallow drops; during any drag they must let the slot receive them (the
 	# reason both the old spell and unit drags dropped the filters).
 	set_board_card_filters(action == null or not action.is_drag)
@@ -452,10 +461,13 @@ func present(action: Interaction.Action) -> void:
 		_begin_drag_phantom(action.source)
 	else:
 		_end_drag_phantom()
-	# Hover tracking: live for a STATIC action that offers somewhere to actually move/place
-	# (see _hover_slot). The drag phantom owns the cursor during drags; a destination-less
-	# selection (enemy unit, rooted building) is a preview, not a moving/placing state.
-	_hover_live = action != null and not action.is_drag and destinations > 0
+	# Hover tracking: live only for the STATIC HAND-PLACEMENT flow (click_commit — pick a card,
+	# tap a spot), whose destination slots are themselves the tap targets. A fielded unit's
+	# static selection gets NO slot-level hover at all: its destinations react solely through
+	# their move buttons (arrow, phantom, preview all ride move_hover), and the rest of each
+	# slot is non-interactive dead space. Drags own the cursor via the drag phantom.
+	_hover_live = action != null and not action.is_drag and action.click_commit \
+			and destinations > 0
 	if _hover_live:
 		set_process(true)
 
@@ -475,6 +487,10 @@ func _present_slot(slot: SlotUI, action: Interaction.Action) -> int:
 		Interaction.Role.DESTINATION:
 			slot.set_targetable(false)
 			slot.set_cue(SlotUI.Cue.MOVE, action.animated)
+			# The move BUTTON: the explicit commit entry for a static selection whose plain
+			# click is closed (a fielded unit — click_commit false). Hand placement commits
+			# on any slot click already; drags own the cursor. See MoveButton.
+			slot.set_move_button(not action.is_drag and not action.click_commit)
 		Interaction.Role.TARGET_VALID:
 			slot.set_targetable(true)
 			slot.set_cue(SlotUI.Cue.TARGET_OK)
@@ -729,6 +745,51 @@ func _set_hover_slot(slot: SlotUI) -> void:
 	if slot != null:
 		slot.set_hovered(true)
 	_declare_hover_preview()
+
+
+# The move button's hover: mount the landing phantom in its slot and declare the targeting
+# preview from that spot — the same information the drag phantom carries, granted for exactly
+# as long as the cursor sits on the button (the safety hold keeps the cursor there, so the
+# whole read persists through the hold). The button draws above the phantom by its fixed z.
+func _on_move_button_hover(slot: SlotUI, on: bool) -> void:
+	if interaction == null or not interaction.active():
+		return
+	var act := interaction.current()
+	if act == null or act.is_drag or act.source == null or not is_instance_valid(act.source):
+		return
+	if on and interaction.role_of(slot) == Interaction.Role.DESTINATION:
+		_set_button_phantom(slot)
+	elif not on and slot == _button_phantom_slot:
+		_set_button_phantom(null)
+
+
+func _set_button_phantom(slot: SlotUI) -> void:
+	if slot == _button_phantom_slot:
+		return
+	if _button_phantom_slot != null and is_instance_valid(_button_phantom_slot):
+		_button_phantom_slot.unmount_phantom()
+	_button_phantom_slot = slot
+	if slot != null:
+		var act := interaction.current()
+		slot.mount_phantom(act.source.make_ghost_view())
+		declare_preview(act.source.card_instance, slot.row, slot.col)
+	elif interaction != null and interaction.active():
+		# Hover ended mid-action — the declaration falls back to the action's baseline (the
+		# unit's standing spot). On action teardown present() re-declares/clears on its own.
+		var act := interaction.current()
+		if act.preview_instance != null:
+			declare_preview(act.preview_instance, act.preview_instance.row, act.preview_instance.col)
+		else:
+			clear_preview()
+
+
+# The move button's commit — routed through the session's commit_press: the same role
+# re-validation and end-then-commit order as clicks and drops, minus the click_commit gate
+# (the button is an explicit control; the gate exists to stop STRAY taps, and a press on a
+# control that exists only to commit is not stray).
+func _on_move_button_pressed(slot: SlotUI) -> void:
+	if interaction != null:
+		interaction.commit_press(slot)
 
 
 # Hovering a DESTINATION during a static selection declares the landing preview from that

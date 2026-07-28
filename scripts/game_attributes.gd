@@ -57,6 +57,8 @@ const DEFAULTS := {
 	"ux.hold.duration":         0.4,  # seconds a touch must be held to open the card inspector
 	"ux.hold.tolerance":        44.0, # viewport px the finger may drift and still count as a hold
 									   # (a drag starting inside this is provisional — see CardUI)
+	"ux.move_hold.duration":    1.0,  # seconds the move button's safety hold takes to fill —
+									   # the back-out window before a held press commits the move
 	# Animation feel. THE fluidity dial for every sequenced cue in the game (see Vfx.handoff): the
 	# fraction of a cue's tail the NEXT beat is allowed to overlap. 0 = strictly one-at-a-time (each
 	# cue plays to its last frame before the next starts — the old, choppy behaviour); 0.5 = the

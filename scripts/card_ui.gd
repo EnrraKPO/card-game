@@ -1465,4 +1465,15 @@ func _notification(what: int) -> void:
 		var slot := get_parent() as SlotUI
 		if slot != null:
 			set_flipped(slot.owner_id == 1)
+		# Reparenting DESTROYED any sustained Vfx attachment (Vfx.attach auto-detaches on
+		# tree_exiting, which remove_child fires) — but the widget-side state the appliers
+		# guard with (_selected_now / _threat_on, the grow transform, the badge pulse)
+		# SURVIVES the reparent, so the guarded appliers would truthfully answer "already
+		# applied" and never restore the glow. Re-attach what the flags say is worn; the
+		# deferred derivation below then keeps or sheds it against the current state as
+		# usual (a moved unit that is still the pick keeps its highlight lit).
+		if _selected_now:
+			Vfx.attach.call_deferred("highlight", self)
+		if _threat_on:
+			Vfx.attach.call_deferred("attack_target_glow", self)
 		derive_presentation.call_deferred()

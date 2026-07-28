@@ -96,6 +96,7 @@ func _fill_panel() -> void:
 	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	left.add_child(_language_row())
 	left.add_child(_pacing_row())
+	left.add_child(_move_hold_row())
 	columns.add_child(left)
 
 	var right := VBoxContainer.new()
@@ -186,6 +187,30 @@ func _pacing_row() -> Control:
 				Vfx.set_overlap(pick)
 				_rebuild())   # re-emit the row so the chrome follows the new choice
 		picks.add_child(btn)
+	return row
+
+
+# The move button's safety hold (combat's per-slot MoveButton, see UxPrefs): ON means a move
+# commits only after the button is held through its progress fill — the shipped default — OFF
+# commits on the press. A GlossyButton toggle like the mixer's Mute (no native-checkbox look
+# anywhere in the game); its face states the choice outright.
+func _move_hold_row() -> Control:
+	var row := VBoxContainer.new()
+	row.add_theme_constant_override("separation", 14)
+	row.add_child(_row_label(Loc.t("settings.move_hold")))
+
+	var on := UxPrefs.move_hold_enabled
+	var btn := ScreenUI.action_button(Loc.t("settings.on") if on else Loc.t("settings.off"),
+		Callable(), Vector2(0, 84), 28,
+		ScreenUI.CHROME_CONFIRM if on else ScreenUI.CHROME_NEUTRAL)
+	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn.toggle_mode = true
+	btn.button_pressed = on
+	btn.toggled.connect(func(v: bool) -> void:
+		UxPrefs.set_move_hold(v)
+		btn.text = Loc.t("settings.on") if v else Loc.t("settings.off")
+		btn.base_color = ScreenUI.CHROME_CONFIRM if v else ScreenUI.CHROME_NEUTRAL)
+	row.add_child(btn)
 	return row
 
 
