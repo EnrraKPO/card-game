@@ -20,7 +20,7 @@ const DEF_RISE := 0.12      # a beat of hang before it goes
 const DEF_LIFT := 0.45      # how far that beat carries it, as a fraction of the chest's height —
 							 # toward the destination, NOT upward (see the flight below)
 const DEF_FLIGHT := 0.50    # the trip to the middle of the screen
-const DEF_LINGER := 0.22    # how long it holds the centre before dissolving into the new screen
+const DEF_LINGER := 0.45    # the burst: how long the detonation takes to expand and burn out
 const DEF_RADIUS := 34.0    # the orb at full size
 const DEF_ARC := 0.0        # sideways bow of the flight path, as a fraction of its own length:
 							 # 0 = a straight line, which is what this moment wants (see below)
@@ -89,16 +89,32 @@ static func play(vd: VFXData, target: Control, opts: Dictionary = {}) -> void:
 
 	Sfx.play("reward_open")
 	orb.trail = false
-	orb.flash(vd.num_param("burst", DEF_BURST))
 	if on_arrive.is_valid():
-		on_arrive.call()   # the screen starts growing from here, under the orb
+		on_arrive.call()   # mounts the arriving screen (and parks the fight under it — see Shell)
 
-	# LINGER — the orb dies INTO the arriving screen rather than before it, so the two overlap
-	# and the handoff has no seam.
+	# BURST — the orb detonates UNDER the arriving screen. The flight rode the overlay, above
+	# everything; the detonation hands itself to the Shell's base canvas (above the parked fight,
+	# below the content row) so the modal grows OVER the light and reads as born from inside it —
+	# a read no timing could produce while the blast sat on top of the screen it was opening.
+	# The blast stays ORB-scale: the modal grows from nothing, so the light shows all around it
+	# exactly during the frames the "popped from inside" read happens, then fades as the screen
+	# outgrows it — it never needs to outsize the finished modal.
+	# The two curves are OPPOSITE profiles on purpose: expansion is front-loaded (ease-out) and
+	# alpha back-loaded (ease-in, holding near full brightness through the violent frames), and
+	# the body only ever EXPANDS while it fades — a contracting silhouette reads as an implosion,
+	# not a blast.
+	if Nav.shell != null and Nav.shell.has_method("adopt_underlay"):
+		Nav.shell.call("adopt_underlay", orb)
+	orb.flash(vd.num_param("burst", DEF_BURST))
+	var linger := Vfx.paced(vd.num_param("linger", DEF_LINGER), vd)
+	orb.detonate()
 	var out := orb.create_tween()
-	out.tween_method(func(p: float) -> void: orb.energy = p, 1.0, 0.0,
-			Vfx.paced(vd.num_param("linger", DEF_LINGER), vd)).set_trans(Tween.TRANS_SINE)
-	out.tween_callback(orb.queue_free)
+	out.set_parallel(true)
+	out.tween_property(orb, "boom", 2.2, linger) \
+			.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	out.tween_property(orb, "fade", 0.0, linger) \
+			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+	out.chain().tween_callback(orb.queue_free)
 
 
 # The orb itself: a hot core in a soft halo, with a spark trail it drops while travelling and a
@@ -112,6 +128,10 @@ class _Orb extends Control:
 		set(v): energy = v; queue_redraw()
 	var swell := 1.0:
 		set(v): swell = v; queue_redraw()
+	var boom := 1.0:            # arrival expansion — only ever grows (see the burst in play)
+		set(v): boom = v; queue_redraw()
+	var fade := 1.0:            # arrival alpha, separate from `energy` so dying never shrinks
+		set(v): fade = v; queue_redraw()
 	var at := Vector2.ZERO:
 		set(v):
 			if trail and v.distance_to(at) > 9.0:
@@ -147,13 +167,32 @@ class _Orb extends Control:
 		tw.tween_method(func(v: float) -> void: _ring_a = v; queue_redraw(), 0.9, 0.0, dur)
 
 
+	# The debris of the burst: sparks thrown radially out of the orb, front-loaded like the body —
+	# they inherit all their speed at frame one and only slow down and die from there.
+	func detonate() -> void:
+		for i in 14:
+			var a := TAU * float(i) / 14.0 + randf_range(-0.18, 0.18)
+			_sparks.append({
+				"p": at + Vector2.from_angle(a) * core * 0.4,
+				"v": Vector2.from_angle(a) * randf_range(420.0, 780.0),
+				"age": 0.0,
+				"life": randf_range(0.30, 0.50),
+				"r": randf_range(4.0, 9.0),
+			})
+		queue_redraw()
+
+
 	func _process(delta: float) -> void:
 		if _sparks.is_empty():
 			return
 		var alive: Array[Dictionary] = []
 		for s: Dictionary in _sparks:
 			s["age"] = float(s["age"]) + delta
-			if float(s["age"]) < 0.42:
+			if s.has("v"):
+				var v: Vector2 = s["v"]
+				s["p"] = Vector2(s["p"]) + v * delta
+				s["v"] = v * pow(0.02, delta)   # hard drag: launched hot, dead in a blink
+			if float(s["age"]) < float(s.get("life", 0.42)):
 				alive.append(s)
 		_sparks = alive
 		queue_redraw()
@@ -161,22 +200,22 @@ class _Orb extends Control:
 
 	func _draw() -> void:
 		for s: Dictionary in _sparks:
-			var st: float = clampf(float(s["age"]) / 0.42, 0.0, 1.0)
+			var st: float = clampf(float(s["age"]) / float(s.get("life", 0.42)), 0.0, 1.0)
 			draw_circle(Vector2(s["p"]) - global_position, float(s["r"]) * (1.0 - st),
-					Color(color.r, color.g, color.b, (1.0 - st) * 0.7 * energy))
+					Color(color.r, color.g, color.b, (1.0 - st) * 0.7 * energy * fade))
 		if _ring_a > 0.001:
 			draw_arc(at - global_position, _ring, 0.0, TAU, 48,
 					Color(color.r, color.g, color.b, _ring_a),
 					maxf(2.0, 7.0 * _ring_a), true)
-		if energy <= 0.001:
+		if energy <= 0.001 or fade <= 0.001:
 			return
 		var c := at - global_position
-		var r := core * swell * (0.35 + 0.65 * energy)
+		var r := core * swell * (0.35 + 0.65 * energy) * boom
 		# A stack of discs with a SQUARED alpha falloff, drawn outside-in. Three flat discs read
 		# as a grey plate once the additive blend sits on a light background — the gradient is
 		# what makes it read as light instead (the same falloff Vfx's radiance primitive uses).
 		for i in HALO_LAYERS:
 			var f: float = 1.0 - float(i) / float(HALO_LAYERS - 1)   # 1 = outermost
 			draw_circle(c, r * lerpf(0.7, 2.4, f),
-					Color(color.r, color.g, color.b, pow(1.0 - f, 2.0) * 0.55 * energy))
-		draw_circle(c, r * 0.5, Color(1, 1, 1, 0.95 * energy))   # the hot core
+					Color(color.r, color.g, color.b, pow(1.0 - f, 2.0) * 0.55 * energy * fade))
+		draw_circle(c, r * 0.5, Color(1, 1, 1, 0.95 * energy * fade))   # the hot core

@@ -213,6 +213,19 @@ func arrival_furniture() -> Dictionary:
 			"departing": _departing, "plate": _modal_plate}
 
 
+# A cue that must die UNDER the arriving screen (the reward orb's burst) hands itself here: it is
+# reparented into the Shell's base canvas above the parked departing screen and below the content
+# row, so a modal arrival grows OVER the light and reads as born from inside it. Which nodes sit
+# at that seam is the Shell's business (same reasoning as arrival_furniture) — the cue only asks.
+func adopt_underlay(fx: Control) -> void:
+	fx.z_index = 0   # overlay-grade z would out-rank every sibling in this canvas
+	fx.reparent(self)
+	var idx := 1
+	if _departing != null and is_instance_valid(_departing):
+		idx = _departing.get_index() + 1
+	move_child(fx, mini(idx, get_child_count() - 1))
+
+
 # THE DEPARTING SCREEN, kept under a modal arrival.
 #
 # A screen that opens like a modal needs something to be modal OVER, and navigation destroyed the

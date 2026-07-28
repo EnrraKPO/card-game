@@ -2941,12 +2941,12 @@
 			"flight": 0.5,
 			"arc": 0,
 			"swell": 1.45,
-			"burst": 0.34,
-			"linger": 0.4
+			"burst": 0.5,
+			"linger": 0.6
 		},
 		"placeholder": false,
 		"concept": "The reward leaving the opened chest and carrying itself to the middle of the screen — the physical link between winning the fight and the rewards screen, so the two are one motion and not a cut.",
-		"explanation": "IMPLEMENTED (RewardOrbFx): a bright orb gathers over the open lid, eases out of it ALONG the flight line (never upward — the chest sits in the enemy king's slot at the TOP of the board, so an upward lift plus a downward flight read as a bounce off the ceiling), then travels unhurried in a STRAIGHT line to the viewport centre trailing sparks (arc>0 bows that path); on arrival it throws a ring and fires the caller's on_arrive (which is what lets Combat navigate). Drawn on the VFX overlay so it outlives combat and lingers over the screen growing out from under it.",
+		"explanation": "IMPLEMENTED (RewardOrbFx): a bright orb gathers over the open lid, eases out of it ALONG the flight line (never upward — the chest sits in the enemy king's slot at the TOP of the board, so an upward lift plus a downward flight read as a bounce off the ceiling), then travels unhurried in a STRAIGHT line to the viewport centre trailing sparks (arc>0 bows that path); on arrival it BURSTS — the ring, radial sparks, and the body itself expanding (ease-out) while it fades (ease-in, staying bright through the violent frames), never contracting (a shrinking silhouette reads as an implosion) — and fires the caller's on_arrive (which is what lets Combat navigate). The detonation is handed UNDER the arriving screen (Shell.adopt_underlay: above the parked fight, below the content row), so the modal grows OVER the light and reads as born from inside the blast. `linger` is the burst's duration. Flight drawn on the VFX overlay so it outlives combat.",
 		"prompt": "Sprite sheet of a brilliant golden orb of light with a soft halo and drifting sparks, 8 frames on transparent background, 2d game effect"
 	},
 	{
@@ -2956,10 +2956,10 @@
 		"behavior": "pop",
 		"renderer": "custom",
 		"params": {
-			"delay": 0.35,
-			"duration": 0.34,
-			"overshoot": 1.05,
-			"bg_lag": 0.08,
+			"delay": 0.3,
+			"duration": 0.5,
+			"overshoot": 1,
+			"bg_lag": 0.14,
 			"modal": 1,
 			"dim": 0.55,
 			"sfx_delay": 0.2
