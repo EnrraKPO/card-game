@@ -1070,12 +1070,18 @@ func _fire_run_level(event: GameEvent) -> void:
 		await _animator.show_effect_results(rres, persp, "", false)
 
 
-# A consumable relic's use (the tray chip's completed safety hold — see ConsumableChip): cue
-# the chip, apply the relic's transient effects anchored to the PLAYER (the same two-anchor
-# read as run-level dispatch: the King is the spatial anchor, owner_anchor 0 makes
-# "ally"/"enemy" read from the player's side), then SPEND the relic — discard, no refund. The
-# effects ride the same use-path as a spell cast (EffectSystem.apply_single + death sweep),
-# so a consumable is authored exactly like transient spell effects.
+# A consumable relic's use (the tray chip's completed safety hold — see ConsumableChip): SPEND
+# the relic, then cue the chip and apply the relic's transient effects anchored to the PLAYER
+# (the same two-anchor read as run-level dispatch: the King is the spatial anchor, owner_anchor 0
+# makes "ally"/"enemy" read from the player's side). The effects ride the same use-path as a
+# spell cast (EffectSystem.apply_single + death sweep), so a consumable is authored exactly like
+# transient spell effects.
+#
+# The discard happens FIRST, before a single await: a consumable is gone at the moment its hold
+# commits, and everything after is just the telling of it. Spending at the END made the relic's
+# destruction hostage to this coroutine reaching its last line — any interruption of the
+# presentation (a use that ends the fight and tears the screen down mid-await, a VFX sequence
+# that never drains) left a spent relic sitting in the run as a chip that can never fire again.
 func _use_consumable(relic_id: String) -> void:
 	if _phase != Phase.PLAYER_PLACE or _consumable_busy:
 		return
@@ -1087,8 +1093,12 @@ func _use_consumable(relic_id: String) -> void:
 	if src == null:
 		return
 	_consumable_busy = true
+	GameData.current_run.discard_relic(relic_id)
+	# The chip is still on screen for its own cue — it glints, and only then does the refresh
+	# take it away, so the spend reads as "that relic fired and was used up".
 	_relic_tray.glint(relic_id)
 	await get_tree().create_timer(Vfx.handoff(RELIC_CHIP_SPAN)).timeout
+	_relic_tray.refresh()
 	for effect: Effect in relic.effects:
 		if not effect.trigger_resolver().applies_on_use():
 			continue
@@ -1098,8 +1108,6 @@ func _use_consumable(relic_id: String) -> void:
 		var results := EffectSystem.apply_single(effect, src, ctx)
 		await _animator.show_effect_results(results, src, "", false)
 		_board.cleanup_effect_deaths()
-	GameData.current_run.discard_relic(relic_id)
-	_relic_tray.refresh()
 	_consumable_busy = false
 	# Outside COMBAT nothing else is watching for a fallen king (same reasoning as the debug
 	# kill button) — if the use finished the fight, end it here.

@@ -30,7 +30,22 @@ var description: String:
 	set(value):
 		_desc_override = value
 var effects: Array = []  # Array[Effect]
-var image: Texture2D = null
+# Where this card's art lives (resolved at build time — see build_from_dict). Kept as a path
+# rather than a texture so the library can be built without touching the disk: eagerly load()ing
+# every card's art cost ~800 texture decodes at boot for a fight that shows a couple of dozen.
+var art_path: String = ""
+var _image: Texture2D = null
+# The card's art, resolved from art_path on FIRST READ and cached here. ResourceLoader caches
+# too, so a card shown on ten screens still costs one load. Assignable — the ability tray builds
+# a synthetic display card and hands it a texture directly (AbilityData.display_card).
+var image: Texture2D:
+	get:
+		if _image == null:
+			_image = load(art_path) if ResourceLoader.exists(art_path) \
+				else load("res://assets/cards/placeholder.png")
+		return _image
+	set(value):
+		_image = value
 var elements: Array[String] = []
 var chess_pieces: Array[String] = []
 # The AUTO-ATTACK targeting policy — how this unit picks which enemy its auto-attack hits
@@ -215,9 +230,7 @@ static func build_from_dict(d: Dictionary) -> CardData:
 	# Enemy fodder/captain art is organised under cards/enemies/ to keep it out of the
 	# main (player-facing) card art folder.
 	var art_dir := "res://assets/cards/enemies/" if card.enemy_only else "res://assets/cards/"
-	var art_path := "%s%s.png" % [art_dir, card.id]
-	card.image = load(art_path) if ResourceLoader.exists(art_path) \
-		else load("res://assets/cards/placeholder.png")
+	card.art_path = "%s%s.png" % [art_dir, card.id]
 	return card
 
 
@@ -331,7 +344,7 @@ static func scaled(base: CardData, power: float) -> CardData:
 	c.target_policy = base.target_policy
 	c.effects       = base.effects
 	c.targeting_strategy = base.targeting_strategy
-	c.image         = base.image
+	c.art_path      = base.art_path
 	var mult := 1.0 + power * POWER_STAT_GROWTH
 	c.attack = int(round(base.attack * mult))
 	c.health = int(round(base.health * mult))
@@ -509,9 +522,7 @@ static func _derive(elems: Array, chess: Array, key: String) -> CardData:
 	c.speed        = int(s["speed"])
 	c.card_type          = CardType.SPELL if (chess.is_empty() and not elems.is_empty()) else CardType.UNIT
 	c.targeting_strategy = _strategy_for_policy(_derived_policy(chess))
-	var art := "res://assets/cards/%s.png" % key
-	c.image = load(art) if ResourceLoader.exists(art) \
-		else load("res://assets/cards/placeholder.png")
+	c.art_path = "res://assets/cards/%s.png" % key
 	return c
 
 

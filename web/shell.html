@@ -20,6 +20,14 @@ body {
 
 #canvas {
 	display: block;
+	/* Mobile browsers treat a long press on the canvas as a selection/callout gesture and fire
+	   touchcancel, which reaches the engine as a touch RELEASE — that silently killed every
+	   hold-to-confirm control (consumable chips, the move button) on touch. The canvas needs its
+	   own rules; inheriting body's touch-action is not enough. */
+	touch-action: none;
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	user-select: none;
 }
 
 #canvas:focus {
@@ -141,7 +149,7 @@ body {
 		$GODOT_HEAD_INCLUDE
 	</head>
 	<body>
-		<canvas id="canvas">
+		<canvas id="canvas" oncontextmenu="event.preventDefault(); return false;">
 			Your browser does not support the canvas tag.
 		</canvas>
 

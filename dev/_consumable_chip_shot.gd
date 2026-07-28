@@ -8,7 +8,7 @@ const CHIP := 76.0
 
 func _ready() -> void:
 	var sv := SubViewport.new()
-	sv.size = Vector2i(900, 220)
+	sv.size = Vector2i(900, 330)
 	sv.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	sv.transparent_bg = false
 	add_child(sv)
@@ -81,9 +81,9 @@ func _ready() -> void:
 			chip._holding = true   # freeze a mid-hold frame (no synthetic press needed)
 			chip.set_process(false)
 			chip._progress = float(st[3])
+			chip._set_popped(true)   # the hold pop that gets the gauge out from under a fingertip
 			chip.queue_redraw()
-	await get_tree().process_frame
-	await get_tree().process_frame
+	await get_tree().create_timer(0.4).timeout
 	sv.get_texture().get_image().save_png(OUT)
 	print("RENDERED consumable chip states")
 	get_tree().quit()

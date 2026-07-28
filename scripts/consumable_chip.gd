@@ -28,6 +28,10 @@ const LOCKED_ALPHA := 0.45
 const FRAME_BG := Color(0.13, 0.15, 0.22)
 const FRAME_BORDER := Color(0.85, 0.72, 0.40)      # warm gold — the "operable" accent
 const FRAME_BORDER_LOCKED := Color(0.38, 0.38, 0.46)
+# A tray chip is small and a fingertip covers it whole, so a hold under a finger shows nothing.
+# Holding doubles the chip (HoldButton.hold_pop_scale): the gauge climbs OUTSIDE the fingertip,
+# and the bigger hit box makes the rest of the hold forgiving.
+const HOLD_POP := 2.0
 
 var relic: RelicData            # set before entering the tree, like the tray's own flags
 var check: Callable = Callable()   # "may the player use a consumable right now" — combat
@@ -41,6 +45,7 @@ var _just_committed := false
 func _ready() -> void:
 	super._ready()
 	focus_mode = Control.FOCUS_NONE
+	hold_pop_scale = HOLD_POP
 
 	_frame_style = StyleBoxFlat.new()
 	_frame_style.bg_color = FRAME_BG
@@ -115,8 +120,10 @@ func _on_pressed() -> void:
 
 
 func _draw() -> void:
-	var hovered := is_hovered() and _ready_now
-	_frame_style.bg_color = FRAME_BG.lightened(0.08) if hovered else FRAME_BG
+	# A hold IS the touch device's "hovered" — fingers never hover, so the lit plate has to come
+	# from the press or a held chip stays dressed as an untouched one.
+	var lit := (is_hovered() or is_holding()) and _ready_now
+	_frame_style.bg_color = FRAME_BG.lightened(0.08) if lit else FRAME_BG
 	_frame_style.border_color = FRAME_BORDER if _ready_now else FRAME_BORDER_LOCKED
 	draw_style_box(_frame_style, Rect2(Vector2.ZERO, size))
 	_draw_hold_fill(FILL_COLOR, FILL_INSET, FILL_INSET, FILL_RADIUS_FRAC)

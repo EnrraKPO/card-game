@@ -14,7 +14,7 @@ func _ready() -> void:
 		failed += _check("card applies chilled on attack",
 			card.effects.size() == 1 and card.effects[0].status_id == "chilled")
 		failed += _check("card art wired (may be placeholder until the editor imports the png)",
-			card.image != null)
+			card.art_path != "")
 
 	var status := StatusData.get_status("chilled")
 	failed += _check("status chilled loads", status != null)

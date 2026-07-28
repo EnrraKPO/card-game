@@ -22,19 +22,68 @@ extends BaseButton
 # The base owns _process while idle (off) and holding (on); a subclass that needs to poll every
 # frame anyway (the consumable chip's usability read) overrides _process, keeps processing on,
 # and forwards to _hold_tick.
+#
+# TOUCH: the "still on the button?" test is NOT is_hovered() — hover is a mouse-motion notion and
+# a finger that taps without ever moving leaves a Control un-hovered, which cancelled every hold
+# on the first frame. Instead the button TRACKS THE POINTER itself (see _track_pointer): touch,
+# drag and mouse events all report a local position, and inside-the-rect is measured from that.
+# Set hold_pop_scale above 1.0 and the button swells while a hold is in flight — under a fingertip
+# the fill is otherwise invisible, so the control gets out from under the finger and reads.
 
 signal commit_requested
+
+const POP_SEC := 0.12       # swell/settle time for the hold pop
+const POP_Z_LIFT := 50      # while popped the button draws over its neighbours
+
+# How big the button grows while a hold runs (1.0 = no pop). Set by the subclass before/at _ready.
+var hold_pop_scale := 1.0
 
 var _holding := false
 var _progress := 0.0
 var _hold_seconds := 1.0
 var _hold_fill_style: StyleBoxFlat = null
+var _pointer_local := Vector2.ZERO
+var _has_pointer := false
+var _popped := false
+var _pop_tween: Tween
+var _base_z := 0
 
 
 func _ready() -> void:
 	button_down.connect(_on_hold_down)
 	button_up.connect(_on_hold_up)
+	# The SIGNAL, not the _gui_input override — overriding the virtual would replace BaseButton's
+	# own press handling. The signal fires first, so the pointer is current by button_down.
+	gui_input.connect(_track_pointer)
+	_base_z = z_index
 	set_process(false)
+
+
+# Every pointer device, one position: emulated-mouse events (what touch becomes by default),
+# real mouse motion, and the raw screen touch/drag events that also reach a Control.
+func _track_pointer(event: InputEvent) -> void:
+	var touch := event as InputEventScreenTouch
+	if touch != null:
+		_pointer_local = touch.position
+		_has_pointer = true
+		return
+	var drag := event as InputEventScreenDrag
+	if drag != null:
+		_pointer_local = drag.position
+		_has_pointer = true
+		return
+	var mouse := event as InputEventMouse
+	if mouse != null:
+		_pointer_local = mouse.position
+		_has_pointer = true
+
+
+# Is the pointer still over the button? Falls back to hover only before any pointer event has
+# ever landed (keyboard/programmatic presses).
+func _pointer_inside() -> bool:
+	if _has_pointer:
+		return Rect2(Vector2.ZERO, size).has_point(_pointer_local)
+	return is_hovered()
 
 
 # Seconds the hold takes to fill. Read at arm time (begin_hold), so a mid-hold registry change
@@ -54,6 +103,7 @@ func begin_hold() -> void:
 	_progress = 0.0
 	_hold_seconds = maxf(0.05, _hold_duration())
 	set_process(true)
+	_set_popped(true)
 	queue_redraw()
 
 
@@ -79,7 +129,7 @@ func _hold_tick(delta: float) -> void:
 	if not _holding:
 		return
 	# Sliding off the button mid-hold is a back-out, same as releasing early.
-	if not is_hovered():
+	if not _pointer_inside():
 		reset()
 		return
 	_progress = minf(1.0, _progress + delta / _hold_seconds)
@@ -95,7 +145,31 @@ func reset() -> void:
 	_holding = false
 	_progress = 0.0
 	set_process(false)
+	_set_popped(false)
 	queue_redraw()
+
+
+func is_holding() -> bool:
+	return _holding
+
+
+# The hold pop: grow in place around the button's centre while the hold runs, lifted over its
+# neighbours, and settle back on commit or cancel. No-op unless the subclass opted in.
+func _set_popped(on: bool) -> void:
+	if hold_pop_scale <= 1.0 or on == _popped:
+		return
+	_popped = on
+	if _pop_tween != null and _pop_tween.is_valid():
+		_pop_tween.kill()
+	pivot_offset = size * 0.5
+	if on:
+		z_index = _base_z + POP_Z_LIFT
+	_pop_tween = create_tween()
+	_pop_tween.tween_property(self, "scale",
+		Vector2.ONE * hold_pop_scale if on else Vector2.ONE, POP_SEC) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	if not on:
+		_pop_tween.tween_callback(func() -> void: z_index = _base_z)
 
 
 func _notification(what: int) -> void:
