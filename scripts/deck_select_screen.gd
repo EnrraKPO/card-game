@@ -50,8 +50,9 @@ func _make_deck_card(od: OwnedDeck, ordinal: int) -> Control:
 		card.custom_minimum_size = Vector2.ZERO
 		card.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 		card.pressed.connect(func(): _play(id))
+		card.view_subject = id   # a view of the DECK — see the Decks screen
 		if od.id == GameData.current_profile.selected_deck_id:
-			card.set_selected(true)
+			Selection.select(id)
 		tile.add_child(card)
 
 	# Name + count banner pinned across the bottom of the card.

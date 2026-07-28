@@ -156,6 +156,7 @@ func mount(scene_path: String, arrival: String = "") -> void:
 	# A MODAL arrival opens OVER the screen it replaces, so that screen is not torn down here —
 	# it stays mounted, inert, underneath, and the new one is added above it. See _park_departing.
 	drop_departing()   # anything a previous arrival left behind
+	Selection.clear()  # a new screen starts with nothing picked — a pick never outlives its screen
 	var modal := not arrival.is_empty() and Vfx.param_of(arrival, "modal", 0.0) > 0.0
 	var kept: Control = _park_departing() if modal else null
 	if _current_content != null and kept == null:

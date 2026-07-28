@@ -946,11 +946,16 @@ func _present() -> void:
 					want = child
 					break
 	if want != _hl_item:
+		# Both halves of the treatment, together: the overlay outline+glow, and the grow, which is
+		# the WIDGET's own state (HighlightFx.set_grown) rather than the effect's — see the note
+		# there. Only ever called when which item is picked actually changes.
 		if _hl_item != null:
 			Vfx.detach("highlight", _hl_item)
+			HighlightFx.set_grown(_hl_item, false)
 		_hl_item = want
 		if want != null:
 			Vfx.attach("highlight", want)
+			HighlightFx.set_grown(want, true)
 	# The floating tip rides with the highlight — hidden mid-drag (the drag IS the affordance)
 	# and under an open merge (the framing carries the read there).
 	var show_tip := want != null and _drag.is_empty() and _modal == null

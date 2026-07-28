@@ -170,6 +170,22 @@ func detach(id: String, target: Control) -> void:
 		(raw as Node).queue_free()
 
 
+# "My shape changed" — told to every sustained state riding `target`, for the ones that care (the
+# silhouette-baked glows; see GlowFx.shape_changed). A widget whose CHILDREN come and go has no
+# other way to say so: `resized` speaks only for its own rect. Cheap by design — the glows measure
+# before they re-bake, so a notification that changes nothing costs a little rect math.
+func shape_changed(target: Control) -> void:
+	if target == null or not is_instance_valid(target):
+		return
+	var suffix := "@%d" % target.get_instance_id()
+	for key: String in _attached.keys():
+		if not key.ends_with(suffix):
+			continue
+		var raw: Variant = _attached[key]
+		if is_instance_valid(raw) and (raw as Object).has_method("shape_changed"):
+			(raw as Object).call("shape_changed")
+
+
 func _attach_key(id: String, target: Control) -> String:
 	return "%s@%d" % [id, target.get_instance_id()]
 

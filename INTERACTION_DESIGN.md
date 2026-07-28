@@ -67,6 +67,38 @@ one action — no bespoke hybrid path.
 mid-gesture" is `Interaction.active()`, checked where the phase was. The
 `targeting_started/ended` signal pair is replaced by `Interaction.changed`.
 
+### Selection: one pick, one nested level (added 2026-07-27)
+
+`Selection` (autoload) holds THE pick — one value, game-wide. Views are never told they are
+(de)selected; each derives its own answer (`CardUI.derive_presentation`, the hand's inspect panel
+via `Hand._on_selection_changed`). Combat's three former selection stores (`Hand._selected`,
+`Hand._inspected`, the aiming session's source) are all readings of this one value:
+
+- **A hand card picked** = the pick is a card in the hand row (`Hand.selected()`).
+- **A fielded unit picked** = the pick is on the board (`Hand.inspected_instance()`); the inspect
+  panel is a *derivation* of this — it opens, rebuilds and closes purely by watching the pick.
+- **Aiming a spell** = the spell (a card) is the pick; `Interaction.begin/end` declare it.
+
+**Abilities are not cards.** Aiming a tray ability picks *the ability of its holder* — a nested
+sub-pick (`Selection.select_ability`), not a new card pick. The holder stays the pick, so its
+panel stays open through the aim. The nesting is structural: the sub-pick is stored as "the
+PICK's picked ability", so clearing or moving the card pick takes the ability with it — not as a
+second cleanup step, but because "the pick's ability" stops referring to anything. It never runs
+the other way: `clear_ability` backs out of the aim alone.
+
+**The non-interactive-click rule** (`Combat._maybe_dismiss_hand_view`): a click that engages
+nothing clears the CARD pick — at any nav level, aiming or not. Engaging = committing the live
+click action, a slot *with a unit on it* (its own press names the new pick; re-pressing the pick
+is a state no-op), the aimed source's own rect (= "never mind the aim", one level), or any
+interactive control. An EMPTY slot engages nothing — board-shaped dead space.
+
+While a fielded unit is the pick, its static UNIT action (move cues + attack projection) is kept
+derived too: whenever an action ends and the pick is still fielded, `Combat._on_interaction_changed`
+re-begins it.
+
+Regression probe: `dev/_selprobe.gd` drives real clicks through the live screen and prints
+pick/panel/aim per step.
+
 ## Behavior preserved deliberately
 
 - Both gesture styles everywhere: click-then-click AND drag, for every action.

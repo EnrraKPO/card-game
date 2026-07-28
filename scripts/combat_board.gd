@@ -500,8 +500,14 @@ func make_unit_action(card_ui: CardUI, animated: bool, is_drag: bool) -> Interac
 	act.is_drag = is_drag
 	# A fielded unit previews its attack consequences from where it stands; a hand card has no
 	# origin to preview from until it hovers a landing slot.
-	if not (is_hand_card.is_valid() and bool(is_hand_card.call(card_ui))):
+	var from_hand: bool = is_hand_card.is_valid() and bool(is_hand_card.call(card_ui))
+	if not from_hand:
 		act.preview_instance = card_ui.card_instance
+	# Where the gesture may be FINISHED with a tap: playing a card out of hand, yes; moving a unit
+	# that is already fielded, no — that one is drag-only (see Action.click_commit). The
+	# destination cues still light on selection, because they are what teaches that the unit can
+	# be repositioned at all; only the tap is refused.
+	act.click_commit = from_hand
 	act.role_check = func(slot: SlotUI) -> int:
 		if slot.owner_id != 0 or slot.get_card() != null:
 			return Interaction.Role.NONE

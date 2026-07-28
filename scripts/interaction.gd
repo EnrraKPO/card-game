@@ -47,6 +47,12 @@ class Action:
 	# non-modal session (a selected unit's static cues) lets presses on other slots switch the
 	# selection as normal.
 	var modal: bool = false
+	# Click sessions only: whether a press on a valid slot COMMITS. Placement from hand does
+	# (pick a card, tap a spot); repositioning a fielded unit deliberately does NOT — a unit
+	# already on the board moves by DRAG alone, so a stray tap can never rearrange the line the
+	# player just built. The commit path itself is untouched (the drag uses the same action and
+	# the same predicate); only the click entry is closed.
+	var click_commit: bool = true
 	# The fielded unit whose attack projection (crosshair + incoming-threat glow) shows while
 	# this action is live; null = no preview (hand cards aren't on the board yet).
 	var preview_instance: CardInstance = null
@@ -85,6 +91,17 @@ func begin(action: Action) -> void:
 	_action = action
 	if prev != null and prev.on_end.is_valid():
 		prev.on_end.call()
+	# Aiming IS picking — declared here, where every gesture begins, rather than by each caster.
+	# But what gets picked depends on what is being aimed: a SPELL is a card, so it becomes the
+	# pick; a tray ABILITY is not a card — aiming it picks the ability OF its holder, which keeps
+	# the holder the pick (and its inspect panel open) for the whole aim. Idempotent either way: a
+	# gesture begun on what the player had already picked changes nothing at all.
+	if action != null and action.modal and action.source != null:
+		var inst := action.source.card_instance
+		if inst != null and inst.ability != null and inst.source_building != null:
+			Selection.select_ability(inst.source_building, inst.ability)
+		else:
+			Selection.select(inst)
 	changed.emit(_action)
 
 
@@ -99,6 +116,16 @@ func end_action(only: Action = null) -> void:
 	_action = null
 	if prev.on_end.is_valid():
 		prev.on_end.call()
+	# The aim's pick ends with the aim — at the level the aim picked. An ability aim backs out of
+	# the ABILITY alone (its holder stays the pick, panel open); a spell aim clears the card pick.
+	# Guarded so a pick that already moved on (the aim resolved into a new selection) is left be.
+	if prev.modal and prev.source != null and prev.source.card_instance != null:
+		var inst := prev.source.card_instance
+		if inst.ability != null and inst.source_building != null:
+			if Selection.ability_held(inst.source_building, inst.ability):
+				Selection.clear_ability()
+		elif Selection.holds(inst):
+			Selection.clear()
 	changed.emit(null)
 
 
@@ -156,7 +183,7 @@ func handle_slot_press(slot: SlotUI) -> bool:
 	if _action == null or _action.is_drag:
 		return false
 	var role := role_of(slot)
-	if role == Role.DESTINATION or role == Role.TARGET_VALID:
+	if (role == Role.DESTINATION or role == Role.TARGET_VALID) and _action.click_commit:
 		var act := _action
 		end_action(act)        # cues clear BEFORE resolution/animation, like the old sessions
 		act.commit(slot)

@@ -234,6 +234,43 @@ func _ready() -> void:
 				# ability is castable now).
 				hand.refresh_nav()
 			await get_tree().process_frame
+	# "handselect": select a unit card in hand — the shot of the SELECTION treatment itself
+	# (CardUI derives it from Selection → the canonical `highlight`: grown in place, outlined
+	# silhouette, dense glow), which must read the same here as on the crafting table.
+	if scene_path.contains("combat") and "handselect" in args:
+		var cbs: Node = null
+		for n: Node in sv.find_children("*", "Node", true, false):
+			if n.has_method("get_chrome") and n.get("_board") != null:
+				cbs = n
+				break
+		if cbs != null:
+			var shand = cbs.get("_hand")
+			# The opening draw is animated: wait for a hand card to exist. A hand card is any
+			# CardUI NOT parented to a board slot (the Hand's row isn't under the Hand node).
+			var pick: CardUI = null
+			for _w in 120:
+				for n2: Node in sv.find_children("*", "", true, false):
+					var c2 := n2 as CardUI
+					if c2 != null and c2.card_instance != null and not c2.card_instance.is_spell \
+							and (c2.get_parent() as SlotUI) == null:
+						pick = c2
+						break
+				if pick != null:
+					break
+				await get_tree().process_frame
+			# "fullhand": pad the hand until the strip overflows — the case where the lift is
+			# traded back for a correct scroll (Hand._sync_strip_clip).
+			if "fullhand" in args:
+				for _e in 10:
+					shand._spawn_hand_card(CardInstance.from_data(CardData.get_card("pawn")))
+				for _f in 4:
+					await get_tree().process_frame
+			if pick != null:
+				shand._toggle_select(pick)
+			await get_tree().process_frame
+			print("HANDSELECT: selected=%s strip clip=%s (content %.0f / scroll %.0f)" % [
+					shand.selected().card_instance.data.id if shand.selected() != null else "none",
+					shand._scroll.clip_contents, shand._content.size.x, shand._scroll.size.x])
 	# "attackpreview": stage the attack-target preview — a selected friendly unit lighting the
 	# enemy it will strike (red crosshair + glow), plus a landing phantom in an empty slot.
 	if scene_path.contains("combat") and "attackpreview" in args:
@@ -332,7 +369,7 @@ func _ready() -> void:
 			if "clobber" in args:
 				striker.attack_exhausted = true
 				s_card.set_exhausted(true)
-				s_card.set_selected(true)
+				Selection.select(striker)
 				s_card.derive_presentation()
 			await get_tree().process_frame
 	# "armeddrag": the armed-autocast drag hybrid — empty own slots show MOVE (priority), occupied

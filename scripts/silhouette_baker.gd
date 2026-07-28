@@ -24,6 +24,20 @@ var texture: ImageTexture = null
 var offset: Vector2 = Vector2.ZERO
 var bbox: Vector2 = Vector2.ONE
 
+# NOT PART OF THE SHAPE. A child marked with this meta is drawn OVER the widget but is not part of
+# what the widget IS — the targeting tags are the case that named it: chips that hang off the card's
+# left edge to annotate it, appearing and vanishing with the preview world. Baked in, they made the
+# glow wrap the annotations instead of the card, and left it that shape after they were gone.
+#
+# The rule is about meaning, not geometry: a status pip overhangs the card too and IS part of it.
+const EXCLUDE_META := "silhouette_exclude"
+
+
+# Marks `node` (and its subtree) as annotation rather than shape — see EXCLUDE_META.
+static func exclude(node: CanvasItem) -> void:
+	if node != null and is_instance_valid(node):
+		node.set_meta(EXCLUDE_META, true)
+
 
 # Renders `widget`'s subtree silhouette and fills texture/offset/bbox. `host` supplies the tree
 # (a RefCounted can't reach it) — the viewport is parented there for the one frame it renders.
@@ -84,6 +98,14 @@ func _render_clone(widget: Control, host: Node, dup_flags: int) -> Image:
 	# silhouette that renders as broken, stacked-alpha outlines.
 	clone.modulate = Color.WHITE
 	clone.self_modulate = Color.WHITE
+	# Annotations are dropped from the clone as well as from the measure — otherwise they would
+	# still be PAINTED inside the (now smaller) bbox, and the glow would read their edges as part
+	# of the outline. Hidden rather than freed: cheaper, and a container that loses a child mid-bake
+	# re-lays-out the very thing we are trying to photograph.
+	for path: NodePath in _excluded:
+		var ex := clone.get_node_or_null(path) as CanvasItem
+		if ex != null:
+			ex.visible = false
 	holder.add_child(clone)
 	host.add_child(vp)
 	# Let it lay out and render, then read it back. Two frames is belt-and-braces for the clone's
@@ -105,8 +127,11 @@ func _measure(widget: Control) -> void:
 	var inv := widget.get_global_transform().affine_inverse()
 	var min_p := Vector2.ZERO                 # the widget's own origin is (0,0) in its own space
 	var max_p := widget.size
+	_excluded.clear()
 	for n: Node in widget.find_children("*", "Control", true, false):
 		var c := n as Control
+		if _is_excluded(c, widget):
+			continue
 		if not c.is_visible_in_tree() or c.size == Vector2.ZERO:
 			continue
 		var gr := c.get_global_rect()
@@ -116,3 +141,34 @@ func _measure(widget: Control) -> void:
 		max_p = Vector2(maxf(max_p.x, p2.x), maxf(max_p.y, p2.y))
 	offset = min_p
 	bbox = max_p - min_p
+
+
+# The excluded nodes found by the last _measure, as paths RELATIVE TO THE WIDGET — which is how the
+# clone is told what to drop. Paths rather than the nodes themselves (or the meta, which the clone
+# may or may not inherit depending on the duplicate flags in play): the clone is a different tree
+# with the same shape, so the same path names the same node in it.
+var _excluded: Array[NodePath] = []
+
+
+func _is_excluded(c: Control, widget: Control) -> bool:
+	var n: Node = c
+	while n != null and n != widget:
+		if n.has_meta(EXCLUDE_META) and bool(n.get_meta(EXCLUDE_META)):
+			_excluded.append(widget.get_path_to(c))
+			return true
+		n = n.get_parent()
+	return false
+
+
+# The silhouette's extent WITHOUT rendering anything — the cheap half of a bake. Callers use it to
+# ask "has my shape actually changed?" before paying for a re-bake (see GlowFx.shape_changed).
+func measure_only(widget: Control) -> Rect2:
+	if widget == null or not is_instance_valid(widget):
+		return Rect2()
+	var keep_offset := offset
+	var keep_bbox := bbox
+	_measure(widget)
+	var out := Rect2(offset, bbox)
+	offset = keep_offset
+	bbox = keep_bbox
+	return out

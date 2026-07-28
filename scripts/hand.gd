@@ -49,8 +49,10 @@ enum NavLevel { HAND, ABILITIES, INSPECT }
 var _hand_cards: Array = []  # Array[CardUI]
 var _gen_cards: Array  = []  # Array[CardUI] — rook-generated tokens, this turn only
 var _ability_entries: Array = []  # Array[CardUI] — the level-2 Abilities view's entries
-var _selected: CardUI  = null
-var _inspected: CardInstance = null
+# NO SELECTION STATE OF ITS OWN. What the player has picked is one game-wide value (Selection);
+# the hand asks it the two questions it cares about — "is the pick a card in my row?" (that's the
+# card waiting to be placed) and "is the pick a fielded unit?" (that's what the panel is showing).
+# One value means picking a board unit un-picks a hand card for free, with nothing to keep in step.
 var _nav_level: NavLevel = NavLevel.HAND
 var _side: CombatSide = null   # the player resources this hand spends (see bind_side); mana gates playability
 
@@ -66,6 +68,7 @@ var _no_abilities_lbl: Label
 # build site: the bar's width is the screen's to give, never the strip's content's to demand.
 var _pad: MarginContainer
 var _scroll: ScrollContainer
+var _content: HBoxContainer   # the strip's one content row (see _sync_strip_clip)
 var _desc_panel: PanelContainer
 var _back_btn: Button
 var _inspect_abilities_btn: GlossyButton
@@ -170,6 +173,7 @@ func build_into(parent: Control, left_widget: Control = null) -> void:
 	_scroll.size_flags_vertical   = Control.SIZE_EXPAND_FILL
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	_scroll.vertical_scroll_mode   = ScrollContainer.SCROLL_MODE_DISABLED
+	_scroll.resized.connect(_sync_strip_clip)
 	_pad.add_child(_scroll)
 
 	# The inspect sidebar: one panel, hidden entirely outside inspection (see
@@ -303,7 +307,10 @@ func build_into(parent: Control, left_widget: Control = null) -> void:
 	var content := HBoxContainer.new()
 	content.add_theme_constant_override("separation", 12)
 	content.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	content.resized.connect(_sync_strip_clip)
 	_scroll.add_child(content)
+	_content = content
+	_sync_strip_clip()
 
 	_hand_box = HBoxContainer.new()
 	_hand_box.add_theme_constant_override("separation", 12)
@@ -337,6 +344,13 @@ func build_into(parent: Control, left_widget: Control = null) -> void:
 	_abilities_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_abilities_box.visible = false
 	content.add_child(_abilities_box)
+
+	# The inspect panel DERIVES from the pick, exactly like a card's own highlight does: whenever
+	# the pick changes, the panel re-answers "is the pick a fielded unit, and is it the one I'm
+	# showing?" — through whichever door the pick moved (a slot press, a hand card, an aiming
+	# session, a screen-level clear). No caller opens or closes the panel directly any more, so no
+	# door can be forgotten and the panel can never be left showing a card that isn't the pick.
+	Selection.changed.connect(_on_selection_changed)
 
 
 # ── State mirroring (the player's CombatSide drives; this bar presents) ──────────
@@ -450,38 +464,57 @@ func set_card_size(s: Vector2) -> void:
 # Enemy units are inspectable too, for information — see _rebuild_inspect_view for the
 # interactive-vs-view-only split.
 func set_inspected(inst: CardInstance) -> void:
-	Sfx.play("card_inspect_open")
-	_inspected = inst
-	_rebuild_inspect_view()
-	_set_level(NavLevel.INSPECT)
-	inspect_changed.emit(inst)
+	# The whole operation is one declaration: inspecting a unit IS picking it, and the panel is a
+	# DERIVATION of the pick (_on_selection_changed), not something this opens. Re-picking the unit
+	# already picked therefore costs nothing anywhere — the state doesn't change, so the deriver
+	# never runs; no sound, no rebuild, no re-entry into a view we are already in.
+	Selection.select(inst)
 
 
-# Leaves the inspect view and restores the normal hand row (level 1) — the "Back to hand"
-# action, unchanged; "Back to Abilities" tears down the same state but lands on level 2.
-func clear_inspected() -> void:
-	if _inspected == null:
+# The instance the panel is currently BUILT FOR — a fact about this view (like a label's text),
+# not selection state: the deriver compares it against the pick to decide whether anything needs
+# rebuilding, which also lets ability sub-pick changes (same pick, `changed` still fires) pass
+# through without tearing the panel down around the ability being aimed.
+var _shown: CardInstance = null
+
+
+# THE deriver: re-answers "what should the panel be showing?" from the pick, on every pick change.
+func _on_selection_changed(_subject: Variant) -> void:
+	if _desc_panel == null or not is_instance_valid(_desc_panel):
+		return   # a pick outliving this bar's screen is Shell business, not ours
+	var inst := inspected_instance()   # the pick, when it is a fielded unit; null otherwise
+	if inst == _shown:
 		return
-	_leave_inspect()
-	_set_level(NavLevel.HAND)
-
-
-# Tears down the inspection state (tokens, preview, sidebar) without deciding where the
-# navigation lands — the two Back actions differ only in the level they return to.
-func _leave_inspect() -> void:
-	if _inspected == null:
+	_shown = inst
+	if inst != null:
+		Sfx.play("card_inspect_open")
+		_rebuild_inspect_view()
+		_set_level(NavLevel.INSPECT)
+		inspect_changed.emit(inst)
 		return
-	_inspected = null
+	# The pick stopped being a fielded unit (cleared, or moved to a hand card/another screen's
+	# subject): the inspection's presentation follows it out. Navigation only falls back to the
+	# plain hand if the panel was the level being shown — an explicit landing (show_abilities'
+	# "Back to Abilities") is applied by its caller AFTER the pick write, so it wins.
 	clear_tokens()
 	if _desc_preview != null:
 		_desc_preview.queue_free()
 		_desc_preview = null
 	_desc_panel.visible = false
+	if _nav_level == NavLevel.INSPECT:
+		_set_level(NavLevel.HAND)
 	inspect_changed.emit(null)
 
 
+# Leaves the inspect view: clears the pick, and the panel + level derive their way back to the
+# plain hand row. ("Back to Abilities" = show_abilities, which lands on level 2 after the clear.)
+func clear_inspected() -> void:
+	if inspected_instance() != null:
+		Selection.clear()
+
+
 func inspected() -> CardInstance:
-	return _inspected
+	return inspected_instance()
 
 
 # Re-derives the inspect view's ability tray against the holder's CURRENT offerability —
@@ -489,7 +522,7 @@ func inspected() -> CardInstance:
 # "no activated abilities" state IN PLACE, without popping out of the inspect view (a
 # non-tap ability's token simply reappears, still castable). A no-op outside inspection.
 func refresh_inspect() -> void:
-	if _inspected == null:
+	if inspected_instance() == null:
 		return
 	_rebuild_inspect_view()
 
@@ -511,8 +544,10 @@ func panel_contains(point: Vector2) -> bool:
 # count), as clickable entries that drill into the unit's inspection.
 func show_abilities() -> void:
 	Sfx.play("ability_tray_open")
+	# Reachable from level 3 ("Back to Abilities"): clear the pick FIRST — the deriver tears the
+	# inspect state down and falls back to HAND — then the explicit ABILITIES landing below wins.
 	deselect()
-	_leave_inspect()   # reachable from level 3 ("Back to Abilities") — drop that state first
+	Selection.clear()
 	_rebuild_abilities_view()
 	# The sidebar doubles as the level's hint (no preview here — that's inspect-only).
 	_desc_name_lbl.text = ""
@@ -521,13 +556,15 @@ func show_abilities() -> void:
 	_set_level(NavLevel.ABILITIES)
 
 
-# The outside-click dismissal (see Combat._unhandled_input): any level, straight back to the
-# plain hand row, clearing the inspected card on the way.
+# The universal back-out (outside clicks, right-click, end of turn): NOTHING is picked — one
+# write, whatever kind of pick was live (a hand card, an inspected unit, an aimed ability riding
+# either). The panel derives itself shut; the explicit level set covers the one state with no pick
+# to clear (the ABILITIES list, which is navigation, not selection). deselect() first only for its
+# sound — a hand-card pick clearing silently reads as a swallowed click.
 func dismiss_to_hand() -> void:
-	if _inspected != null:
-		clear_inspected()
-	else:
-		_set_level(NavLevel.HAND)
+	deselect()
+	Selection.clear()
+	_set_level(NavLevel.HAND)
 
 
 func _on_back_to_hand() -> void:
@@ -587,6 +624,28 @@ func refresh_nav() -> void:
 	_back_btn.visible              = _nav_level != NavLevel.HAND
 
 
+# THE HEADROOM RULE: the strip clips only when it has something to hide.
+#
+# The bar is exactly one card tall (card height + PAD_TOP) — deliberately, it's the board's space
+# that the hand is not allowed to eat. So a selected card, which GROWS in place (the canonical
+# `highlight`, see CardUI._apply_selected), has nowhere to grow into and used to be sliced flat along
+# the bar's top edge. It is allowed OUT of the bar instead: the grown card rises over the board,
+# which is the "lifted card" read a hand deserves, and costs the board nothing — a transform never
+# takes layout space, and the highlight's z lift puts the card above what it overlaps.
+#
+# The clip goes back on the moment the row actually overflows, because THEN the ScrollContainer is
+# hiding something: cards scrolled past its edges, which unclipped would draw over the mana gauge
+# and the inspect sidebar. A full hand therefore trades the lift back for a correct scroll — the
+# one case where the crop returns.
+#
+# Driven by the two `resized` signals rather than by call sites (cards added or removed, a level
+# switch, the board's resize solve): whatever changes the geometry re-runs this by construction.
+func _sync_strip_clip() -> void:
+	if _scroll == null or _content == null:
+		return
+	_scroll.clip_contents = _content.size.x > _scroll.size.x + 1.0
+
+
 # A card sized to sit FULLY on-screen in the hand strip — shrunk in from _card_size (kept to the
 # card aspect) so its bottom (frame, stat gems, autocast brackets) clears the off-screen crop
 # (BOTTOM_BLEED) instead of riding it like a hand card's dead frame. Used for the ability tokens
@@ -630,7 +689,7 @@ func _clear_ability_entries() -> void:
 # shown the same way for information but rendered non-interactive — look, don't touch.
 func _rebuild_inspect_view() -> void:
 	clear_tokens()
-	var inst := _inspected
+	var inst := inspected_instance()
 
 	# Fresh preview each time (mirrors CardTooltip.build, which never reuses a CardUI across
 	# different CardInstances either) — small, frame-and-art only, mouse-ignored like a portrait.
@@ -819,46 +878,64 @@ func clear_tokens() -> void:
 
 func remove_card(ui: CardUI) -> void:
 	_hand_cards.erase(ui)
-	if _selected == ui:
-		_selected = null
+	_drop_pick_of(ui)
 
 
 # Removes a played token from the hand's bookkeeping and hides the token zone once
 # empty. The orchestrator handles the source-rook side effects (exhaust + dim).
 func remove_token(ui: CardUI) -> void:
 	_gen_cards.erase(ui)
-	if _selected == ui:
-		_selected = null
+	_drop_pick_of(ui)
 	if _gen_cards.is_empty():
 		_gen_box.visible = false
 
 
+# A card that has LEFT the hand was played, and playing it is what the pick was for — so the
+# gesture is over and nothing is picked. (Only if it was the pick: removing some other card is
+# none of the pick's business.)
+func _drop_pick_of(ui: CardUI) -> void:
+	if ui != null and Selection.holds(ui.card_instance):
+		Selection.clear()
+
+
 # ── Selection ────────────────────────────────────────────────────────────────────
 
+# The picked card IN THIS HAND, if the pick is one — derived, never stored, so it cannot go stale
+# when a card is played, discarded or picked somewhere else.
 func selected() -> CardUI:
-	return _selected
+	for ui: CardUI in _hand_cards:
+		if Selection.holds(ui.card_instance):
+			return ui
+	for ui: CardUI in _gen_cards:
+		if Selection.holds(ui.card_instance):
+			return ui
+	return null
 
 
-# Selection is a DECLARATION: this sets/clears WHICH card is selected and emits the cue;
-# every card derives its own tint from the declaration (CombatContext.is_selected) — no card
-# is ever told "you are (de)selected", so a cleared selection cannot leave residue anywhere.
+# Nothing is picked any more. Only clears a pick that is actually a hand card's — a fielded unit's
+# pick belongs to the board and is cleared by leaving the inspect view, not by the hand row.
 func deselect() -> void:
-	if _selected != null:
-		Sfx.play("card_deselect")
-		_selected = null
-		selection_changed.emit(null)
+	var ui := selected()
+	if ui == null:
+		return
+	Sfx.play("card_deselect")
+	Selection.clear()
+	selection_changed.emit(null)
 
 
+# The gesture on a hand card. Pressing the pick again means "never mind" — the one place a second
+# press is not a no-op, because clearing is the only other thing this gesture can mean. Anything
+# else is a single assignment; whatever was picked before stops being picked because it is no
+# longer named, and its card works that out for itself.
 func _toggle_select(ui: CardUI) -> void:
 	if not selection_enabled:
 		return
-	if _selected == ui:
+	if Selection.holds(ui.card_instance):
 		deselect()
-	else:
-		deselect()
-		_selected = ui
-		Vfx.play("card_select_lift", ui)   # entry carries the select sound
-		selection_changed.emit(ui)   # the declaration; the card derives its own tint from it
+		return
+	Selection.select(ui.card_instance)
+	Vfx.play("card_select_lift", ui)   # entry carries the select sound
+	selection_changed.emit(ui)
 
 
 # ── Queries + input gating ───────────────────────────────────────────────────────
@@ -869,9 +946,13 @@ func contains(ui: CardUI) -> bool:
 	return _hand_cards.has(ui) or _gen_cards.has(ui)
 
 
-# The declared inspection — consulted by card derivation (CombatContext.inspected_instance).
+# The pick, when it is a FIELDED unit — i.e. what the inspect panel is showing. A hand card's pick
+# is not an inspection (see selected()), so the two readings of the one value never overlap.
 func inspected_instance() -> CardInstance:
-	return _inspected
+	var inst := Selection.current() as CardInstance
+	if inst == null or inst.row < 0 or inst.col < 0:
+		return null
+	return inst
 
 
 # The "re-check now" cue for every card view the hand owns (hand row + tray tokens) — routed

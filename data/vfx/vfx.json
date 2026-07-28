@@ -292,11 +292,12 @@
 		"params": {
 			"composited": true,
 			"glow_color": "ff2a20",
-			"spread": 28,
+			"spread": 20,
+			"filter": "inner_glow",
 			"animate": {
 				"param": "intensity",
-				"from": 0.55,
-				"to": 1.15,
+				"from": 2.5,
+				"to": 5,
 				"period": 0.9
 			}
 		},

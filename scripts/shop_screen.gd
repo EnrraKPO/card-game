@@ -239,14 +239,15 @@ func _rebuild_deck() -> void:
 
 
 func _on_deck_card_pressed(entry_idx: int) -> void:
+	# Picking the pick again means "no longer interested" here, which is a CLEAR — the one case
+	# where a second press is not a no-op. Everything else is a single assignment: the previously
+	# picked entry is no longer named, and its card works that out for itself.
 	if _selected_idx == entry_idx:
-		_deck_entries[entry_idx].ui.set_selected(false)
 		_selected_idx = -1
+		Selection.clear()
 	else:
-		if _selected_idx >= 0:
-			_deck_entries[_selected_idx].ui.set_selected(false)
 		_selected_idx = entry_idx
-		_deck_entries[entry_idx].ui.set_selected(true)
+		Selection.select(_deck_entries[entry_idx].ui)
 	_update_remove_panel()
 
 

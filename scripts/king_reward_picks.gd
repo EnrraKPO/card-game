@@ -135,7 +135,7 @@ func _pick(elem_id: String, card: CardUI) -> void:
 	_busy = true
 	GameData.current_run.deck.append(DeckCard.make(elem_id))
 	_chosen.append(elem_id)
-	card.set_selected(true)
+	Selection.select(card)
 	await Vfx.play("reward_card_burst", card)
 
 	_round += 1

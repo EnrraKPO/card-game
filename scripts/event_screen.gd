@@ -113,15 +113,14 @@ func _rebuild_deck() -> void:
 
 
 func _on_card_pressed(entry_idx: int) -> void:
+	# See the shop's twin: pressing the pick again clears, anything else is one assignment.
 	if _selected_idx == entry_idx:
-		_entries[entry_idx].ui.set_selected(false)
 		_selected_idx = -1
+		Selection.clear()
 	else:
-		if _selected_idx >= 0:
-			_entries[_selected_idx].ui.set_selected(false)
 		_selected_idx = entry_idx
 		Vfx.play("card_select_lift", _entries[entry_idx].ui)   # entry carries the select sound
-		_entries[entry_idx].ui.set_selected(true)
+		Selection.select(_entries[entry_idx].ui)
 	_refresh()
 
 

@@ -200,8 +200,11 @@ func _make_deck_tile(od: OwnedDeck, ordinal: int) -> Control:
 		card.custom_minimum_size = Vector2.ZERO
 		card.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 		card.pressed.connect(func(): _on_deck_clicked(id))
+		# These cards stand for a DECK, not for the king they show — so the pick is the deck's id,
+		# which outlives the rebuild that frees this widget.
+		card.view_subject = id
 		if od.id == _previewed_id:
-			card.set_selected(true)
+			Selection.select(id)
 		tile.add_child(card)
 
 	var badge_text := ""

@@ -5411,7 +5411,7 @@
       "prompt": "Sprite sheet of sickly green poison bubbles rising and popping, looping toxic aura, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-14T12:50:33.586Z",
-    "fileHash": "33e0bde34533312808013d2fc4685d04d0175dd6"
+    "fileHash": "67a774de605b8c552e33b1384677b1eef710e2e3"
   },
   "vfx/aura_blind": {
     "file": "vfx.json",
@@ -5431,7 +5431,7 @@
       "prompt": "Sprite sheet of grey smoky haze drifting across a face area, looping blindness veil, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-14T12:50:35.887Z",
-    "fileHash": "33e0bde34533312808013d2fc4685d04d0175dd6"
+    "fileHash": "67a774de605b8c552e33b1384677b1eef710e2e3"
   },
   "card/pawn_rook": {
     "file": "chess_combined.json",
@@ -6101,7 +6101,7 @@
       "prompt": "Sprite sheet of a golden light halo breathing outward around a circular button, smooth soft radial falloff extending past the rim, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-20T18:34:03.607Z",
-    "fileHash": "33e0bde34533312808013d2fc4685d04d0175dd6"
+    "fileHash": "67a774de605b8c552e33b1384677b1eef710e2e3"
   },
   "card/bishop": {
     "file": "materials.json",
@@ -10129,7 +10129,7 @@
       "prompt": "Sprite sheet of a tight dense pale halo hugging a potion flask's outline, slim bright rim of light with a smooth short falloff, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-27T00:36:32.147Z",
-    "fileHash": "33e0bde34533312808013d2fc4685d04d0175dd6"
+    "fileHash": "67a774de605b8c552e33b1384677b1eef710e2e3"
   },
   "vfx/coin_flight": {
     "file": "vfx.json",
@@ -10153,7 +10153,7 @@
       "prompt": "Sprite sheet of a spinning gold coin with a bright specular sweep, transparent background, 8 frames, 2d game effect"
     },
     "at": "2026-07-27T16:54:37.194Z",
-    "fileHash": "33e0bde34533312808013d2fc4685d04d0175dd6"
+    "fileHash": "67a774de605b8c552e33b1384677b1eef710e2e3"
   },
   "vfx/chest_landing": {
     "file": "vfx.json",
@@ -10173,7 +10173,7 @@
       "prompt": "Sprite sheet of a dust and golden spark impact ring on the ground, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-27T19:30:26.199Z",
-    "fileHash": "33e0bde34533312808013d2fc4685d04d0175dd6"
+    "fileHash": "67a774de605b8c552e33b1384677b1eef710e2e3"
   },
   "vfx/reward_orb": {
     "file": "vfx.json",
@@ -10200,7 +10200,7 @@
       "prompt": "Sprite sheet of a brilliant golden orb of light with a soft halo and drifting sparks, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-27T19:43:21.699Z",
-    "fileHash": "33e0bde34533312808013d2fc4685d04d0175dd6"
+    "fileHash": "67a774de605b8c552e33b1384677b1eef710e2e3"
   },
   "vfx/screen_grow_in": {
     "file": "vfx.json",
@@ -10222,6 +10222,34 @@
       "prompt": "Sprite sheet of a rectangular panel expanding from a point of light to full size with a soft overshoot, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-27T19:54:49.831Z",
-    "fileHash": "33e0bde34533312808013d2fc4685d04d0175dd6"
+    "fileHash": "67a774de605b8c552e33b1384677b1eef710e2e3"
+  },
+  "vfx/attack_target_glow": {
+    "file": "vfx.json",
+    "original": {
+      "id": "attack_target_glow",
+      "display_name": "Attack Target Glow",
+      "category": "combat",
+      "behavior": "glow",
+      "renderer": "filter",
+      "params": {
+        "composited": true,
+        "glow_color": "ff2a20",
+        "spread": 28,
+        "animate": {
+          "param": "intensity",
+          "from": 0.55,
+          "to": 1.15,
+          "period": 0.9
+        }
+      },
+      "sustained": true,
+      "placeholder": false,
+      "concept": "The enemy a selected/dragged unit will strike — its target reads as menaced, a red light pulsing outward from the card so the player sees who this unit hits before committing to a spot.",
+      "explanation": "IMPLEMENTED (combat_board attack preview): a composited GlowFx — reads the target CardUI's TRUE silhouette (card + all badges/pips) and radiates on the overlay layer, so it never clips and never covers a badge; attached while a friendly unit is selected or dragged, paired with the red crosshair slot marker.",
+      "prompt": "Sprite sheet of an aggressive red light halo breathing outward around a framed card, smooth soft radial falloff extending past the frame, 8 frames on transparent background, 2d game effect"
+    },
+    "at": "2026-07-27T21:31:56.892Z",
+    "fileHash": "67a774de605b8c552e33b1384677b1eef710e2e3"
   }
 }

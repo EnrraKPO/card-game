@@ -249,7 +249,6 @@ func _input(event: InputEvent) -> void:
 				# The universal back-out: a right-click that does NOT itself engage anything
 				# (a card's details view, an ability token's autocast toggle) clears the
 				# selection, the inspection, and whatever selection action was live.
-				_hand.deselect()
 				_hand.dismiss_to_hand()
 				_interaction.end_action()
 				get_viewport().set_input_as_handled()
@@ -272,45 +271,54 @@ func _click_engages(right_click: bool = false) -> bool:
 	return false
 
 
-# Clicking anywhere OUTSIDE the hand panel while it's past its base level dismisses back to
-# the plain hand view (clearing any inspected card). A geometric test in _input, NOT
-# _unhandled_input: background panels/gauges consume clicks they do nothing with (STOP mouse
-# filters), so unhandled-input never fires over most of the screen. _input runs BEFORE GUI
-# delivery, so a click on a board unit dismisses and then the slot's own handler re-inspects
-# that unit in the same frame — the "switch inspection" behavior falls out for free. Fires on
-# RELEASE (where slots/cards act); skipped during spell targeting (which owns stray clicks)
-# and mid-drag (a failed drop must not also close the view).
+# THE non-interactive-click rule: a click that engages nothing clears the CARD pick (the ability
+# sub-pick and the panel go with it, by derivation) — at any nav level, aiming or not. What
+# "engages" means, walked in order below: a click that will commit the live action; a slot with a
+# unit on it (its own press names the new pick — naming it is all that switching takes, so the
+# same unit re-picked is a no-op rather than a clear/re-pick round-trip); anything interactive
+# under the cursor (card, button, scrollbar). An EMPTY slot engages nothing — it is board-shaped
+# dead space, exactly the "click on nothing" this exists to catch.
+#
+# A geometric test in _input, NOT _unhandled_input: background panels/gauges consume clicks they
+# do nothing with (STOP mouse filters), so unhandled-input never fires over most of the screen.
+# Fires on RELEASE (where slots/cards act); skipped mid-drag (a failed drop must not also close
+# the view).
 func _maybe_dismiss_hand_view(point: Vector2) -> void:
-	if _interaction.modal_active():
-		return
 	if get_viewport().gui_is_dragging():
 		return
-	# A click that will COMMIT the live action is not an "outside click": clicking a move
-	# destination while a fielded unit is selected must engage the move, not dismiss the
-	# inspection first (this _input runs BEFORE GUI delivery — dismissing here ends the
-	# selection action via inspect_changed, and the slot press would then land on nothing).
-	if _interaction.active():
-		var slot := _board.slot_at_mouse()
+	var slot := _board.slot_at_mouse()
+	# A click that will COMMIT the live action is not a click on nothing: clicking a landing spot
+	# while a hand card is selected must engage the placement, not dismiss it (this _input runs
+	# BEFORE GUI delivery — clearing here would leave the slot press nothing to commit). Only for
+	# actions that accept click commits: a drag-only destination cue (repositioning) eats no taps.
+	if _interaction.active() and slot != null and _interaction.current().click_commit:
+		var role := _interaction.role_of(slot)
+		if role == Interaction.Role.DESTINATION or role == Interaction.Role.TARGET_VALID:
+			return
+	if slot != null and slot.get_card() != null:
+		return   # an occupied slot's press names the new pick itself
+	if _interaction.modal_active():
+		# An aiming session owns presses ON slots: an invalid pick stays in the session
+		# (handle_slot_press) rather than reading as a dismissal.
 		if slot != null:
-			var role := _interaction.role_of(slot)
-			if role == Interaction.Role.DESTINATION or role == Interaction.Role.TARGET_VALID:
-				return
-	if _hand.panel_contains(point):
-		# Inside the hand panel: a click on anything interactive (card, token, button,
-		# scrollbar) belongs to that control; DEAD panel space backs out — selection cleared,
-		# inspect view dismissed to the plain hand.
+			return
+		# Clicking the thing being AIMED again means "never mind the aim" — the same one-level
+		# back-out as pressing a picked hand card again (Hand._toggle_select). Tested by RECT, not
+		# by _click_engages: the modal lock mouse-IGNOREs the hand's cards and tokens
+		# (set_input_enabled), so the aimed token can't answer for itself while aiming.
+		var src := _interaction.current().source
+		if src != null and is_instance_valid(src) and src.get_global_rect().has_point(point):
+			_interaction.end_action()
+			return
 		if _click_engages():
 			return
-		_hand.deselect()
+		# A click on NOTHING while aiming clears the CARD pick like any other click on nothing;
+		# the aim — riding a pick that no longer exists — ends with it, not before it.
 		_hand.dismiss_to_hand()
+		_interaction.end_action()
 		return
-	if _hand.nav_level() == Hand.NavLevel.HAND:
-		# Already at the plain hand: a dead-space click still clears any lingering selection.
-		# Board slots are NOT dead space — their own press manages selection (commit, switch,
-		# or the mana-flicker feedback), so leave clicks on them alone.
-		if _board.slot_at_mouse() == null and not _click_engages():
-			_hand.deselect()
-		return
+	if _click_engages():
+		return   # the control under the cursor acts on its own behalf, whatever the level
 	_hand.dismiss_to_hand()
 
 
@@ -554,8 +562,7 @@ func _on_inspect_changed(inst: CardInstance) -> void:
 
 
 func _on_done_pressed() -> void:
-	_hand.deselect()
-	_hand.clear_inspected()
+	_hand.dismiss_to_hand()
 	_phase = Phase.COMBAT
 	_board.placement_enabled = false
 	_set_placement_input(false)
@@ -1341,10 +1348,10 @@ func _on_board_slot_pressed(slot: SlotUI) -> void:
 		return
 	var occupant := slot.get_card()
 	if occupant != null:
-		# Clicking any fielded unit — either side — makes it the inspected card: the hand row
-		# shows its description and abilities (see Hand.set_inspected) instead of anything
-		# placement-related.
-		_hand.deselect()
+		# Clicking any fielded unit — either side — makes it the pick: the hand row shows its
+		# description and abilities (the panel derives from the pick — Hand._on_selection_changed)
+		# instead of anything placement-related. ONE write: a hand card that was selected stops
+		# being the pick because the state no longer names it, not because anyone deselected it.
 		_hand.set_inspected(occupant.card_instance)
 		# Selecting ANY fielded unit begins a static UNIT action. What shows falls out of the
 		# roles: a movable player unit gets ring+arrow destinations + its attack projection; an
@@ -1376,6 +1383,17 @@ func _on_interaction_changed(action: Interaction.Action) -> void:
 			Sfx.play("spell_targeting")
 		if _phase == Phase.PLAYER_PLACE:
 			_set_placement_input(not lock)
+	# A selected fielded unit WEARS its static cues (move spots + attack projection) for as long
+	# as it is the pick — so when an action ends while a fielded unit is still picked (an ability
+	# aim backed out, a move committed), the unit's own action derives right back instead of the
+	# cues vanishing under a selection that never went away. No-op when the pick isn't fielded,
+	# and self-limiting: the begin below re-enters this handler with a non-null action.
+	if action == null and _phase == Phase.PLAYER_PLACE:
+		var inst := Selection.current() as CardInstance
+		if inst != null and inst.row >= 0 and inst.col >= 0:
+			var ui := _board.get_card_ui(inst)
+			if ui != null:
+				_interaction.begin(_board.make_unit_action(ui, false, false))
 	_refresh_done_btn()
 	_refresh_card_presentation()   # aiming-source selection etc. derive from the session
 

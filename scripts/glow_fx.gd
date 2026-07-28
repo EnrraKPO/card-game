@@ -132,6 +132,31 @@ func _on_widget_resized() -> void:
 		_start_breathing(_params)
 
 
+# THE WIDGET'S SHAPE CHANGED — a child appeared, vanished or resized under it.
+#
+# `resized` above only fires for the widget's OWN rect, and the silhouette is the whole subtree, so
+# children coming and going were invisible to the bake: a glow kept the shape it was born with for
+# as long as it lived. Cards say so through Vfx.shape_changed when their tags, pips or badge
+# flares change.
+#
+# MEASURED BEFORE BAKED. A re-bake is a two-frame subviewport render, and these notifications
+# arrive in bursts (one pick re-derives every card on the board). Measuring is pure rect math, so
+# the cheap half answers "did the shape actually move?" and the expensive half runs only when it
+# did — a badge tint or a text change costs nothing here.
+func shape_changed() -> void:
+	if not _ready_to_sync or _widget == null or not is_instance_valid(_widget) or _baker == null:
+		return
+	var now := _baker.measure_only(_widget)
+	if now.position.distance_to(_baker.offset) < 0.5 \
+			and now.size.distance_to(_baker.bbox) < 0.5:
+		return
+	await _baker.bake(_widget, self)
+	if not is_instance_valid(self) or _baker.texture == null:
+		return
+	_mat.set_shader_parameter("src_tex", _baker.texture)
+	_sync()
+
+
 func _on_widget_gone() -> void:
 	queue_free()
 

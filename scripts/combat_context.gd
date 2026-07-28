@@ -46,18 +46,10 @@ static func clear() -> void:
 	current = null
 
 
-# Selected = the hand's declared selection, OR the source card of a modal aiming session
-# (a spell/token being click-aimed reads as selected for the session's duration — previously
-# a push+cleanup pair in SpellCaster, now just this read).
-func is_selected(card: CardUI) -> bool:
-	if hand != null and hand.selected() == card:
-		return true
-	return interaction != null and interaction.modal_active() \
-			and interaction.current().source == card
-
-
-func inspected_instance() -> CardInstance:
-	return hand.inspected_instance() if hand != null else null
+# NOTHING HERE ANSWERS "is this selected". There is one selection in the game and it answers for
+# itself (Selection.holds), asked directly by the view that wants to know — a second door onto the
+# same question is how two views come to disagree. The hand's selected() / inspected_instance()
+# are readings of that same value for the hand's own purposes, not stores of their own.
 
 
 # ── Stand-ins: where a unit is REALLY being drawn right now ───────────────────────
@@ -71,7 +63,7 @@ func inspected_instance() -> CardInstance:
 #
 # Declaring the stand-in is therefore THE WHOLE of hiding the source — there is no second step, and
 # no window in which the two can disagree. Hiding used to be an alpha poke at the original card, and
-# the pull-presentation appliers (set_exhausted / set_selected, both writing `modulate` wholesale)
+# the pull-presentation appliers (set_exhausted / set_noninteractive, both writing `modulate`)
 # silently republished it at full opacity on the next re-derive — so the unit appeared to clone
 # itself beside its own ghost instead of flying out of its slot.
 var _stand_in: Dictionary = {}   # CardInstance -> CardUI
