@@ -236,6 +236,27 @@
 		"prompt": "Sprite sheet of arcane particles swirling in a vortex between two points, violet alchemical energy stream, 10 frames on transparent background, 2d game effect"
 	},
 	{
+		"id": "forge_contact_splash",
+		"display_name": "Forge Contact Splash",
+		"category": "lab",
+		"renderer": "custom",
+		"behavior": "burst",
+		"params": {
+			"color": "b18cff",
+			"count": 18,
+			"speed_min": 45,
+			"speed_max": 165,
+			"size_min": 2,
+			"size_max": 4.5,
+			"life": 1,
+			"origin": 0.4
+		},
+		"placeholder": false,
+		"concept": "The instant two cards collapse into one at the Forge: a gentle magical splash — a few soft debris motes born just inside the card's boundary, flowing outward past its edge and coasting to a halt. A splash on contact, never an explosion.",
+		"explanation": "IMPLEMENTED (ForgeSplash.play_entry, registered by combination_screen): additive motes spawned on an ellipse of `origin` × the target's size, flying outward along their spawn angle with damped velocity, fading over `life`. The element colour rides in from the call site (opts.color); the entry colour is the fallback. Keep `origin` <= ~0.45: the card's edge sits at 0.5 and spawns jitter ±10%, so 0.4 is the largest value where every mote is still born inside the boundary.",
+		"prompt": "Sprite sheet of a gentle burst of tiny magical dust motes drifting outward from a card's edge, soft violet and white specks slowing to a float, 8 frames on transparent background, 2d game effect"
+	},
+	{
 		"id": "forge_result_inner",
 		"display_name": "Forge Result Inner Light",
 		"category": "lab",

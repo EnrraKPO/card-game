@@ -143,6 +143,11 @@ var _fusing := false
 # by tearing itself down instead of handing off to the toast.
 var _quick_fusing := false
 var _fuse_anim: ForgeFuseAnim = null
+# The forged DeckCard whose grid shell is still hidden under its flying clone. Cleared at
+# touchdown; _close_modal uses it to rescue the shell if the player dismisses the toast while
+# the return flight is still in the air (the anim dies with the modal, so touchdown never comes
+# — without this the forged card would stay invisible forever).
+var _pending_land: DeckCard = null
 
 # A press not yet resolved: it becomes a TAP (select) on release, or a DRAG once it moves past
 # DRAG_THRESHOLD — so a click selects while dragging still works.
@@ -168,6 +173,10 @@ var _hover_idx: int = -1
 
 func _ready() -> void:
 	Sfx.music("music_forge")
+	# The Forge owns the contact-splash look: the renderer behind the `forge_contact_splash`
+	# library entry (re-registering on every screen entry overwrites — the convention, see
+	# Vfx.register_custom).
+	Vfx.register_custom("forge_contact_splash", ForgeSplash.play_entry)
 	_build_ui()
 	_rebuild_deck()
 	_rebuild_charms()
@@ -335,6 +344,7 @@ func _build_ui() -> void:
 	_fit_grid.uniform_gap = true        # card gaps == border gaps, per axis (see FitGrid)
 	_fit_grid.separation = 28.0         # the minimum gap everywhere — a touch of breathing room
 	_fit_grid.min_card_width = 150.0    # the touch floor — absurd decks degrade to scrolling
+	_fit_grid.animate = true            # reflows glide (survivors persist — see _rebuild_deck)
 	_fit_grid.size_flags_horizontal = SIZE_EXPAND_FILL
 	_fit_grid.size_flags_vertical = SIZE_EXPAND_FILL
 	scroll.add_child(_fit_grid)
@@ -385,17 +395,40 @@ func _live_card_size() -> Vector2:
 	return CARD_SIZE
 
 
-func _rebuild_deck() -> void:
+# A RECONCILE, not a teardown: entries whose DeckCard survives keep their live nodes (only their
+# indices refresh), so the FitGrid's animated reflow has persistent widgets to glide — a full
+# rebuild would hand it a table of strangers and every combine would snap. Only genuinely
+# removed cards free, only genuinely new ones are built. `changed` lists surviving DeckCards
+# whose FACE went stale (a combine rewrote the target's definition, an enchant added a charm
+# pip) — those keep their SHELL (the ForgeDragItem node, so the grid still sees a survivor) and
+# swap only the inner CardUI. The highlight needs no manual reset: _present reconciles the
+# wearer from _sel, whether the old wearer survived or is being freed.
+func _rebuild_deck(changed: Array = []) -> void:
 	_cancel_drag()
-	_clear_previews()   # their hosts are about to be freed
-	_entries.clear()
+	_clear_previews()
 	_sel = {}
-	_hl_item = null   # its wearer is being freed; the attach auto-detaches on tree_exiting
+
+	var reuse: Dictionary = {}   # DeckCard -> its live entry (survivors keep identity across deck edits)
+	for e: Dictionary in _entries:
+		reuse[e.card] = e
+	_entries.clear()
 
 	var items: Array = []
 	var deck: Array = GameData.current_run.deck.duplicate()
 	for i in deck.size():
 		var dc: DeckCard = deck[i]
+		var prev: Dictionary = reuse.get(dc, {})
+		if not prev.is_empty():
+			var shell := prev.item as ForgeDragItem
+			if changed.has(dc) and not _refresh_face(prev):
+				shell.queue_free()   # the card's new definition doesn't resolve — drop the entry
+				continue
+			shell.payload = {"kind": "card", "idx": _entries.size()}
+			prev.deck_idx = i
+			_entries.append(prev)
+			items.append(shell)
+			continue
+
 		var data := CardData.get_card(dc.id)
 		if data == null:
 			continue
@@ -416,8 +449,29 @@ func _rebuild_deck() -> void:
 			"combinable": combinable })
 		items.append(item)
 
-	_fit_grid.set_cards(items)   # the shared grid sizes and lays out the whole spread
+	_fit_grid.set_cards(items)   # diff-aware: keeps survivors, frees the gone, glides the reflow
 	_present()
+
+
+# Rebuilds an entry's FACE (the inner CardUI) in place, keeping its SHELL — the ForgeDragItem
+# the grid lays out — untouched. For any surviving DeckCard whose definition went stale (a
+# combine rewrote it, an enchant added a charm). Building a CardUI is heavyweight (art, badges,
+# chips), so callers time this for a quiet frame — never one where an animation is launching.
+# Returns false if the new definition doesn't resolve.
+func _refresh_face(e: Dictionary) -> bool:
+	var dc: DeckCard = e.card
+	var data := CardData.get_card(dc.id)
+	if data == null:
+		return false
+	(e.ui as Control).queue_free()
+	var ui := CardUI.create(dc.make_instance())
+	ui.draggable = false
+	var shell := e.item as ForgeDragItem
+	shell.setup(ui, shell.payload)
+	e.data = data
+	e.ui = ui
+	e.combinable = data.elements.size() > 0 or data.chess_pieces.size() > 0
+	return true
 
 
 # ── Charm inventory ──────────────────────────────────────────────────────────────
@@ -894,7 +948,10 @@ func _can_pair(payload: Dictionary, idx: int) -> bool:
 
 # A press on a deck card / charm: held as pending until release (tap) or movement (drag).
 func _on_press(payload: Dictionary) -> void:
-	if _modal != null or not _drag.is_empty() or not _pending.is_empty():
+	# The grid mid-reflow is briefly non-interactive: a press would aim at cards whose rects are
+	# in flight. The settle is fast (FitGrid.ANIM_T) — the press simply doesn't land.
+	if _modal != null or not _drag.is_empty() or not _pending.is_empty() \
+			or _fit_grid.is_settling():
 		return
 	_pending = payload
 	_press_pos = get_global_mouse_position()
@@ -1624,6 +1681,14 @@ func _close_modal() -> void:
 	_modal = null
 	_merge = {}
 	_fuse_anim = null
+	# Toast dismissed mid-flight: the anim just died with the modal, so touchdown will never
+	# fire — land the forged card by hand (unhide its shell wherever the glide has it).
+	if _pending_land != null:
+		var idx := _entry_index_of(_pending_land)
+		_pending_land = null
+		if idx >= 0:
+			(_entries[idx].item as Control).visible = true
+			_select_when_settled(idx)
 
 
 # Frees the framing cluster (detaching its sustained cues first) but keeps the dim backdrop —
@@ -1644,7 +1709,7 @@ func _drop_cluster() -> void:
 
 
 # The commit button: Attach spends the charm right away (then toasts the enchanted card);
-# Combine plays the fusion sequence (the destructive deck mutation commits at its flash).
+# Combine plays the fusion sequence (the destructive deck mutation commits at its fly start).
 func _commit_merge() -> void:
 	if _merge.is_empty() or _fusing:
 		return
@@ -1698,11 +1763,18 @@ func _end_quick_fusion() -> void:
 # ── Fusion (combine commit) ─────────────────────────────────────────────────────
 
 # Flies the two GRID cards (as clones, at their real grid size + spots) together into their
-# midpoint, commits the merge at the flash, and reveals the result toast. The clones read as the
-# actual table cards lifting off and slamming together, not something conjured by the modal.
+# midpoint, then flies the forged result back onto its grid slot. The clones read as the actual
+# table cards lifting off and slamming together, not something conjured by the modal.
+# The deck COMMITS AT FLY START (see _commit_fusion): the fusion is already irreversible here —
+# cost paid — so the data moves first. The TABLE holds perfectly still through the merge itself:
+# both originals just hide (their clones are the cards now) and their two holes stay open. Then
+# the finale is ONE simultaneous movement — at the anim's `returning` beat the table reorganizes
+# (one glide) while the forged card flies from the midpoint straight onto its FINAL slot in that
+# new layout (FitGrid.target_global_rect — the flight outlasts the glide, so it lands on a card
+# at rest). The impact beat is sensory only (SFX + element burst).
 # `host` parents the animation (and the element burst marker): the modal's dim on the framed path,
-# the screen's overlay on the quick one. Everything else about the sequence is identical — the
-# commit still lands at the flash, from the one code path.
+# the screen's overlay on the quick one. Everything else about the sequence is identical, from
+# the one code path.
 func _start_fusion(src_idx: int, tgt_idx: int, result_dc: DeckCard, host: Control,
 		src_origin: Vector2 = Vector2.INF) -> void:
 	if _fusing or result_dc == null or host == null:
@@ -1714,6 +1786,7 @@ func _start_fusion(src_idx: int, tgt_idx: int, result_dc: DeckCard, host: Contro
 	# what makes the fusion read as the table cards themselves converging. A dropped source
 	# overrides its spot with the release point, so the card continues from where the hand left
 	# it — snapping back to the grid first would break the one continuous gesture in two.
+	# Everything below is captured BEFORE the commit reshuffles the table.
 	var a_gc := src_origin if src_origin.is_finite() \
 			else (_entries[src_idx].item as Control).get_global_rect().get_center()
 	var b_gc := (_entries[tgt_idx].item as Control).get_global_rect().get_center()
@@ -1725,26 +1798,44 @@ func _start_fusion(src_idx: int, tgt_idx: int, result_dc: DeckCard, host: Contro
 	var result_inst := result_dc.make_instance()
 	var color_a := _color_for_card(_entries[src_idx].data)
 	var color_b := _color_for_card(_entries[tgt_idx].data)
-
-	# Hide the two grid originals for the fly: the bright clones ARE those cards now, and a dim
-	# original left under the scrim would read as a ghost. _do_combine rebuilds the deck at the
-	# flash, so these are freed then anyway.
-	(_entries[src_idx].item as Control).visible = false
-	(_entries[tgt_idx].item as Control).visible = false
+	var tgt_dc: DeckCard = _entries[tgt_idx].card
 
 	_drop_cluster()
 
+	# Both originals hide (their clones ARE those cards now) but keep their grid slots — the
+	# table stays frozen mid-spectacle. The selection clears: mid-fusion nothing should wear the
+	# highlight or grow engage fabs off stale, part-hidden entries.
+	(_entries[src_idx].item as Control).visible = false
+	(_entries[tgt_idx].item as Control).visible = false
+	_sel = {}
+	if not _commit_fusion(src_idx, tgt_idx, result_dc):
+		(_entries[src_idx].item as Control).visible = true
+		(_entries[tgt_idx].item as Control).visible = true
+		_fusing = false
+		return
+	_pending_land = tgt_dc
+
 	var anim := ForgeFuseAnim.new()
 	anim.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	# At the flash: commit the merge (mutate deck + rebuild + combined SFX) — hidden behind the white.
-	anim.flashed.connect(_on_fuse_flash.bind(src_idx, tgt_idx, result_dc))
-	anim.finished.connect(_on_fuse_finished.bind(result_inst))
+	# The impact beat: the combine SFX (the merge itself already happened at fly start).
+	anim.flashed.connect(func() -> void: Sfx.combined())
+	# Return-flight start: reorganize the table NOW — the reconcile runs synchronously, so by the
+	# time the anim queries `dest` the new layout's targets are in place. A pure reorder: the
+	# target's face was already swapped at commit, so this frame builds nothing heavyweight.
+	# The framed path's toast pops on this same beat — the merge reveal is complete, so the
+	# celebration announces itself IMMEDIATELY while the table tidies up behind/beneath it,
+	# instead of ambushing the player after a finale they were still watching.
+	anim.returning.connect(func() -> void:
+		_rebuild_deck()
+		if not _quick_fusing:
+			_show_result_toast(result_inst, Loc.t("combine.forged")))
+	anim.finished.connect(_on_fuse_landed.bind(tgt_dc))
 	host.add_child(anim)
 	_fuse_anim = anim
 
-	# The merge flash announces the newborn card's element: the combine element-variant bursts
-	# at the collision point exactly when the white flash commits the merge. No variant live
-	# (or placeholders muted) = the anim's own flash carries the moment, as before.
+	# The merge impact announces the newborn card's element: the combine element-variant bursts
+	# at the collision point exactly on the impact beat. No variant live (or placeholders
+	# muted) = the anim's own spark splash carries the moment, as before.
 	var combine_vid := Vfx.resolve("combine", result_inst.data.elements)
 	if not combine_vid.is_empty():
 		var marker := Control.new()
@@ -1758,18 +1849,66 @@ func _start_fusion(src_idx: int, tgt_idx: int, result_dc: DeckCard, host: Contro
 		marker.global_position = center - marker.size * 0.5
 		anim.flashed.connect(func() -> void: Vfx.play(combine_vid, marker))
 
-	anim.play(a_inst, b_inst, result_inst, a_gc, b_gc, center, fly_size, color_a, color_b, OK_COLOR)
+	# The landing slot, queried at return-flight start — right after the reflow above launches.
+	# The shell is mid-glide then, so the answer is its TARGET rect in the new layout, not its
+	# live one; the flight and the glide converge on the same point.
+	var dest := func() -> Rect2:
+		var i := _entry_index_of(tgt_dc)
+		if i >= 0:
+			return _fit_grid.target_global_rect(_entries[i].item as Control)
+		return Rect2(center - fly_size * 0.5, fly_size)
+
+	anim.play(a_inst, b_inst, result_inst, a_gc, b_gc, center, fly_size, color_a, color_b,
+			OK_COLOR, dest)
 
 
-func _on_fuse_flash(src_idx: int, tgt_idx: int, result_dc: DeckCard) -> void:
-	_do_combine(src_idx, tgt_idx, result_dc)
+# The data half of the fusion, run at FLY START (the act is already irreversible — cost checked,
+# input locked). THE TARGET BECOMES THE RESULT: the same DeckCard object takes on the forged
+# definition (id/override/charms — so its grid node survives the later reconcile and its deck
+# position holds), and the deck op reduces to removing the source. NO reflow here — the table's
+# _entries stay deliberately stale (frozen layout) until the anim's `returning` beat. The cost
+# is recomputed
+# here (the single commit point) so it can never drift from what the preview quoted; the guard
+# is belt-and-braces against a stale UI.
+func _commit_fusion(src_idx: int, tgt_idx: int, result_dc: DeckCard) -> bool:
+	var cost := ForgeCosts.merge_cost(_entries[src_idx].data as CardData,
+			_entries[tgt_idx].data as CardData)
+	if GameData.current_run.magic_mineral < cost:
+		return false
+	GameData.current_run.magic_mineral -= cost
+	var tgt_dc: DeckCard = _entries[tgt_idx].card
+	tgt_dc.id = result_dc.id
+	tgt_dc.override = result_dc.override
+	tgt_dc.charms = result_dc.charms
+	GameData.current_run.deck.remove_at(int(_entries[src_idx].deck_idx))
+	GameData.save_run()
+	# The face swap happens NOW, while the table is frozen and the shell is hidden — building a
+	# CardUI on the finale's launch frame (where the reflow + return flight start together) would
+	# hitch the exact moment that must run clean.
+	_refresh_face(_entries[tgt_idx])
+	return true
 
 
-func _on_fuse_finished(result_inst: CardInstance) -> void:
+# Touchdown: the table settled with the flight (same clock), and the clone now sits exactly on
+# the shell's final rect — unhide it and the swap is invisible (the quick path frees the anim
+# right here; the framed path's clone lives until the modal closes, under the already-showing
+# toast). The forged card arrives SELECTED — the natural next act is merging it again (chain-
+# forging), and the highlight marks where the result landed once the toast clears.
+func _on_fuse_landed(tgt_dc: DeckCard) -> void:
+	_pending_land = null
+	var idx := _entry_index_of(tgt_dc)
+	if idx >= 0:
+		(_entries[idx].item as Control).visible = true
+		_select_when_settled(idx)
 	if _quick_fusing:
 		_end_quick_fusion()   # no toast to click through — that's the whole point of quick merge
-		return
-	_show_result_toast(result_inst, Loc.t("combine.forged"))
+
+
+func _entry_index_of(dc: DeckCard) -> int:
+	for i in _entries.size():
+		if _entries[i].card == dc:
+			return i
+	return -1
 
 
 # The celebration toast: a BIG, readable reveal of the forged card centred over the dim — the
@@ -1850,11 +1989,10 @@ func _show_result_toast(result_inst: CardInstance, title_text: String) -> void:
 	hint.add_theme_color_override("font_color", Color(0.74, 0.74, 0.82))
 	col.add_child(hint)
 
-	# The toast now covers the reveal — drop the animation and re-arm click-to-dismiss. It pops in
+	# The fusion's finale (return flight + table glide) keeps playing BENEATH the toast — the anim
+	# lives until the modal closes. Re-arm click-to-dismiss now; if the player dismisses before
+	# touchdown, _close_modal's _pending_land rescue unhides the forged card. The toast pops in
 	# (fade + slight scale) as its own little celebration beat.
-	if _fuse_anim != null:
-		_fuse_anim.queue_free()
-		_fuse_anim = null
 	_fusing = false
 	center.modulate.a = 0.0
 	await get_tree().process_frame
@@ -1887,37 +2025,7 @@ func _show_result_toast(result_inst: CardInstance, title_text: String) -> void:
 
 
 # ── Apply ──────────────────────────────────────────────────────────────────────
-
-func _do_combine(src_idx: int, tgt_idx: int, result_dc: DeckCard) -> void:
-	if result_dc == null or src_idx < 0:
-		return
-	# The mineral spend — recomputed here (the single commit point) so it can never drift from
-	# what the preview quoted. Every route in already gated on affordability; the guard is
-	# belt-and-braces against a stale UI.
-	var cost := ForgeCosts.merge_cost(_entries[src_idx].data as CardData,
-			_entries[tgt_idx].data as CardData)
-	if GameData.current_run.magic_mineral < cost:
-		return
-	GameData.current_run.magic_mineral -= cost
-	var src_deck: int = int(_entries[src_idx].deck_idx)
-	var tgt_deck: int = int(_entries[tgt_idx].deck_idx)
-	# Remove both source cards highest-deck-index-first to avoid index shifting.
-	var deck_indices := [src_deck, tgt_deck]
-	deck_indices.sort()
-	for i in range(deck_indices.size() - 1, -1, -1):
-		GameData.current_run.deck.remove_at(deck_indices[i])
-	# Drop the result into the TARGET card's slot (shift left one if the source sat before it).
-	var insert_at := tgt_deck - (1 if src_deck < tgt_deck else 0)
-	insert_at = clampi(insert_at, 0, GameData.current_run.deck.size())
-	GameData.current_run.deck.insert(insert_at, result_dc)
-	GameData.save_run()
-	Sfx.combined()
-	_rebuild_deck()
-	# The forged card arrives SELECTED — the natural next act is merging it again (chain-
-	# forging), and the highlight marks where the result landed once the toast clears.
-	if insert_at < _entries.size() and bool(_entries[insert_at].combinable):
-		_sel = {"kind": "card", "idx": insert_at}
-
+# (The combine's data commit lives with its choreography — see _commit_fusion.)
 
 func _do_enchant(charm_id: String, tgt_idx: int) -> void:
 	var dc: DeckCard = _entries[tgt_idx].card
@@ -1930,12 +2038,28 @@ func _do_enchant(charm_id: String, tgt_idx: int) -> void:
 	GameData.current_run.charms.erase(charm_id)
 	GameData.save_run()
 	Sfx.combined()
-	_rebuild_deck()
+	# The enchanted card's face went stale (new charm pip) — rebuild that one node in place;
+	# everything else survives untouched.
+	_rebuild_deck([dc])
 	_rebuild_charms()
 	# The enchanted card arrives SELECTED (deck order is unchanged, so its entry index holds) —
 	# same chain-forging convention as a combine commit.
-	if tgt_deck < _entries.size() and bool(_entries[tgt_deck].combinable):
-		_sel = {"kind": "card", "idx": tgt_deck}
+	_select_when_settled(tgt_deck)
+
+
+# Chain-forging arrival: select entry `idx` — but if the grid is mid-reflow, wait for it to
+# settle first. The highlight's glow bakes from the wearer's silhouette, and attaching it to a
+# card still fading in (or popping it while the table is in motion) reads as noise.
+func _select_when_settled(idx: int) -> void:
+	if _fit_grid.is_settling():
+		_fit_grid.settled.connect(_select_entry.bind(idx), CONNECT_ONE_SHOT)
+	else:
+		_select_entry(idx)
+
+
+func _select_entry(idx: int) -> void:
+	if idx >= 0 and idx < _entries.size() and bool(_entries[idx].combinable):
+		_sel = {"kind": "card", "idx": idx}
 
 
 # ── Particles ──────────────────────────────────────────────────────────────────
