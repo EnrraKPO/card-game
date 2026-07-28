@@ -5159,7 +5159,7 @@
       ]
     },
     "at": "2026-07-13T23:18:24.057Z",
-    "fileHash": "59bec727e9688352c4ac6a6574e5eb248a043feb"
+    "fileHash": "c16572df32e806b09fcf058914dd083d4372c1d6"
   },
   "relic/reapers_ledger": {
     "file": "relics.json",
@@ -5187,7 +5187,7 @@
       ]
     },
     "at": "2026-07-13T23:19:22.979Z",
-    "fileHash": "59bec727e9688352c4ac6a6574e5eb248a043feb"
+    "fileHash": "c16572df32e806b09fcf058914dd083d4372c1d6"
   },
   "relic/menders_charm": {
     "file": "relics.json",
@@ -5218,7 +5218,7 @@
       ]
     },
     "at": "2026-07-13T23:20:46.452Z",
-    "fileHash": "59bec727e9688352c4ac6a6574e5eb248a043feb"
+    "fileHash": "c16572df32e806b09fcf058914dd083d4372c1d6"
   },
   "relic/battle_standard": {
     "file": "relics.json",
@@ -5238,7 +5238,7 @@
       ]
     },
     "at": "2026-07-13T23:23:17.444Z",
-    "fileHash": "59bec727e9688352c4ac6a6574e5eb248a043feb"
+    "fileHash": "c16572df32e806b09fcf058914dd083d4372c1d6"
   },
   "relic/crown_of_vigor": {
     "file": "relics.json",
@@ -5258,7 +5258,7 @@
       ]
     },
     "at": "2026-07-13T23:24:41.032Z",
-    "fileHash": "59bec727e9688352c4ac6a6574e5eb248a043feb"
+    "fileHash": "c16572df32e806b09fcf058914dd083d4372c1d6"
   },
   "relic/iron_aegis": {
     "file": "relics.json",
@@ -5278,7 +5278,7 @@
       ]
     },
     "at": "2026-07-13T23:29:29.348Z",
-    "fileHash": "59bec727e9688352c4ac6a6574e5eb248a043feb"
+    "fileHash": "c16572df32e806b09fcf058914dd083d4372c1d6"
   },
   "relic/mana_font": {
     "file": "relics.json",
@@ -5298,7 +5298,7 @@
       ]
     },
     "at": "2026-07-13T23:29:57.758Z",
-    "fileHash": "59bec727e9688352c4ac6a6574e5eb248a043feb"
+    "fileHash": "c16572df32e806b09fcf058914dd083d4372c1d6"
   },
   "ability/blight_material": {
     "file": "abilities.json",
@@ -5411,7 +5411,7 @@
       "prompt": "Sprite sheet of sickly green poison bubbles rising and popping, looping toxic aura, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-14T12:50:33.586Z",
-    "fileHash": "67a774de605b8c552e33b1384677b1eef710e2e3"
+    "fileHash": "1223f598fdc87e6c636bfc312281febb48b6635a"
   },
   "vfx/aura_blind": {
     "file": "vfx.json",
@@ -5431,7 +5431,7 @@
       "prompt": "Sprite sheet of grey smoky haze drifting across a face area, looping blindness veil, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-14T12:50:35.887Z",
-    "fileHash": "67a774de605b8c552e33b1384677b1eef710e2e3"
+    "fileHash": "1223f598fdc87e6c636bfc312281febb48b6635a"
   },
   "card/pawn_rook": {
     "file": "chess_combined.json",
@@ -6101,7 +6101,7 @@
       "prompt": "Sprite sheet of a golden light halo breathing outward around a circular button, smooth soft radial falloff extending past the rim, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-20T18:34:03.607Z",
-    "fileHash": "67a774de605b8c552e33b1384677b1eef710e2e3"
+    "fileHash": "1223f598fdc87e6c636bfc312281febb48b6635a"
   },
   "card/bishop": {
     "file": "materials.json",
@@ -10129,7 +10129,7 @@
       "prompt": "Sprite sheet of a tight dense pale halo hugging a potion flask's outline, slim bright rim of light with a smooth short falloff, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-27T00:36:32.147Z",
-    "fileHash": "67a774de605b8c552e33b1384677b1eef710e2e3"
+    "fileHash": "1223f598fdc87e6c636bfc312281febb48b6635a"
   },
   "vfx/coin_flight": {
     "file": "vfx.json",
@@ -10153,7 +10153,7 @@
       "prompt": "Sprite sheet of a spinning gold coin with a bright specular sweep, transparent background, 8 frames, 2d game effect"
     },
     "at": "2026-07-27T16:54:37.194Z",
-    "fileHash": "67a774de605b8c552e33b1384677b1eef710e2e3"
+    "fileHash": "1223f598fdc87e6c636bfc312281febb48b6635a"
   },
   "vfx/chest_landing": {
     "file": "vfx.json",
@@ -10173,7 +10173,7 @@
       "prompt": "Sprite sheet of a dust and golden spark impact ring on the ground, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-27T19:30:26.199Z",
-    "fileHash": "67a774de605b8c552e33b1384677b1eef710e2e3"
+    "fileHash": "1223f598fdc87e6c636bfc312281febb48b6635a"
   },
   "vfx/reward_orb": {
     "file": "vfx.json",
@@ -10200,7 +10200,7 @@
       "prompt": "Sprite sheet of a brilliant golden orb of light with a soft halo and drifting sparks, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-27T19:43:21.699Z",
-    "fileHash": "67a774de605b8c552e33b1384677b1eef710e2e3"
+    "fileHash": "1223f598fdc87e6c636bfc312281febb48b6635a"
   },
   "vfx/screen_grow_in": {
     "file": "vfx.json",
@@ -10222,7 +10222,7 @@
       "prompt": "Sprite sheet of a rectangular panel expanding from a point of light to full size with a soft overshoot, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-27T19:54:49.831Z",
-    "fileHash": "67a774de605b8c552e33b1384677b1eef710e2e3"
+    "fileHash": "1223f598fdc87e6c636bfc312281febb48b6635a"
   },
   "vfx/attack_target_glow": {
     "file": "vfx.json",
@@ -10250,13 +10250,13 @@
       "prompt": "Sprite sheet of an aggressive red light halo breathing outward around a framed card, smooth soft radial falloff extending past the frame, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-27T21:31:56.892Z",
-    "fileHash": "67a774de605b8c552e33b1384677b1eef710e2e3"
+    "fileHash": "1223f598fdc87e6c636bfc312281febb48b6635a"
   },
   "relic/bomb": {
     "file": "relics.json",
     "original": null,
     "added": true,
     "at": "2026-07-28T04:58:24.975Z",
-    "fileHash": "59bec727e9688352c4ac6a6574e5eb248a043feb"
+    "fileHash": "c16572df32e806b09fcf058914dd083d4372c1d6"
   }
 }

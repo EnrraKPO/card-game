@@ -17,13 +17,22 @@ const CHIP_COMPACT := 44
 const CHIP_VERTICAL := 64
 const CHIP_VERTICAL_COMPACT := 76
 
+# A CONSUMABLE relic's chip (see ConsumableChip) completed its safety hold — the owner should
+# spend the relic. Only ever fires where a consumable_check is installed (combat).
+signal consume_requested(relic_id: String)
+
 # Whether the detail overlay a chip opens offers DISCARD (see RelicInspector): map HUD = true,
 # combat = false (mid-fight relics are info-only). Tapping a chip opens the overlay in both
 # modes — it's the only relic-reading path on touch, where hover tooltips don't exist. Set
 # before the node enters the tree (refresh runs in _ready).
 var interactive: bool = true
 
-var _chips: Dictionary = {}   # relic_id -> Button, so a firing relic can glint its chip
+# "May the player use a consumable RIGHT NOW" — combat installs one (placement turn only) and
+# the consumable chips poll it. Left unset everywhere else, where those chips are display-only.
+# Set before the node enters the tree, like `interactive`.
+var consumable_check: Callable = Callable()
+
+var _chips: Dictionary = {}   # relic_id -> BaseButton, so a firing relic can glint its chip
 
 
 func _ready() -> void:
@@ -49,7 +58,7 @@ func refresh() -> void:
 	for relic_id: String in relics:
 		var relic := RelicData.get_relic(relic_id)
 		if relic != null:
-			var chip := _make_chip(relic)
+			var chip := _make_consumable_chip(relic) if relic.consumable else _make_chip(relic)
 			_chips[relic_id] = chip
 			add_child(chip)
 
@@ -57,7 +66,7 @@ func refresh() -> void:
 # A quick scale pop + brightness flash on a relic's chip — the "this relic fired" cue, played by
 # combat just before the relic's effects' VFX land. No-op if the relic isn't shown or isn't laid out.
 func glint(relic_id: String) -> void:
-	var chip: Button = _chips.get(relic_id)
+	var chip: BaseButton = _chips.get(relic_id)
 	if chip == null or chip.size == Vector2.ZERO:
 		return
 	chip.pivot_offset = chip.size * 0.5
@@ -88,19 +97,26 @@ func _make_count_label(used: int, capacity: int) -> Label:
 	return lbl
 
 
-func _make_chip(relic: RelicData) -> Button:
-	var s: int
+func _chip_size() -> int:
 	if vertical:
-		s = CHIP_VERTICAL_COMPACT if UIScale.is_compact() else CHIP_VERTICAL
-	else:
-		s = CHIP_COMPACT if UIScale.is_compact() else CHIP
-	var btn: Button = TextIcons.TipButton.new()   # tooltip renders keyword icons
+		return CHIP_VERTICAL_COMPACT if UIScale.is_compact() else CHIP_VERTICAL
+	return CHIP_COMPACT if UIScale.is_compact() else CHIP
+
+
+# The shared per-chip dressing: size, cross-axis centring, hover tooltip.
+func _fit_chip(btn: BaseButton, relic: RelicData) -> void:
+	var s := _chip_size()
 	btn.custom_minimum_size = Vector2(s, s)
 	if vertical:
 		btn.size_flags_horizontal = SIZE_SHRINK_CENTER
 	else:
 		btn.size_flags_vertical = SIZE_SHRINK_CENTER
 	UIScale.tip(btn, "%s — %s" % [relic.display_name, relic.description])
+
+
+func _make_chip(relic: RelicData) -> Button:
+	var btn: Button = TextIcons.TipButton.new()   # tooltip renders keyword icons
+	_fit_chip(btn, relic)
 	if relic.icon != null:
 		_style_icon_chip(btn, relic.icon)
 	else:
@@ -110,6 +126,20 @@ func _make_chip(relic: RelicData) -> Button:
 	btn.pressed.connect(func() -> void:
 		RelicInspector.open(self, relic, interactive, func() -> void: _discard(relic)))
 	return btn
+
+
+# The consumable variant: a button-dressed chip the player can HOLD to spend (ConsumableChip
+# owns the look and the safety hold; the tray just routes its signals). Reads like every other
+# chip on tap, and only arms where a consumable_check is installed.
+func _make_consumable_chip(relic: RelicData) -> BaseButton:
+	var chip := ConsumableChip.new()
+	chip.relic = relic
+	chip.check = consumable_check
+	_fit_chip(chip, relic)
+	chip.inspect_requested.connect(func() -> void:
+		RelicInspector.open(self, relic, interactive, func() -> void: _discard(relic)))
+	chip.commit_requested.connect(func() -> void: consume_requested.emit(relic.id))
+	return chip
 
 
 # The illustrated variant: the art fills the chip, frameless (it carries its own frame), with just

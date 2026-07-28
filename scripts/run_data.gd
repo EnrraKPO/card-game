@@ -16,8 +16,9 @@ var magic_mineral: int : set = _set_magic_mineral
 var deck: Array   # Array[DeckCard] — each entry carries its own permanent mods
 var act: int : set = _set_act
 var charms: Array = []   # owned, unapplied charm ids (inventory); applied in the forge
-# The freebie every run opens with — see create_new for why it exists and why it's this one.
+# The freebies every run opens with — see create_new for why they exist and why these.
 const STARTING_CHARM := "sturdy"
+const STARTING_RELIC := "bomb"
 # Where the player last acknowledged the map Forge button's "!" badge, as "<act>:<node id>".
 # The badge is an ATTENTION cue, not a status light: once seen (hovered or clicked) it should
 # stay quiet until something changes. Storing the map POSITION rather than a bool makes
@@ -82,6 +83,13 @@ static func create_new(profile: ProfileData = null) -> RunData:
 	# any unit, on any deck, with no rule to read.
 	if CharmData.get_charm(STARTING_CHARM) != null:
 		run.charms.append(STARTING_CHARM)
+	# And one consumable relic, for the same tutorial reason: the bomb is the hold-to-use
+	# chip's introduction (a consumable in the combat tray is otherwise invisible until one is
+	# bought), and a one-shot 5-to-all is a safety net, never a build-around. Plain append —
+	# start_new_run saves after create_new, and a transient relic has nothing to fold into the
+	# modifier set anyway (see RelicData.consumable).
+	if RelicData.get_relic(STARTING_RELIC) != null:
+		run.relics.append(STARTING_RELIC)
 	return run
 
 

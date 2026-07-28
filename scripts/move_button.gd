@@ -1,5 +1,5 @@
 class_name MoveButton
-extends BaseButton
+extends HoldButton
 
 # The explicit "move here" control a static unit selection shows on each eligible empty slot —
 # the deliberate replacement for the old click-anywhere-to-move (retired for causing accidental
@@ -18,17 +18,11 @@ extends BaseButton
 # the targeting preview from this spot. The rest of the slot is non-interactive dead space.
 #
 # Safety hold (UxPrefs.move_hold_enabled, the settings toggle): while ON, the press must be
-# HELD for ux.move_hold.duration seconds — the frame fills bottom-up like a gauge, and
-# releasing (or sliding off) before it completes cancels cleanly. The landing preview is on
-# screen for the whole hold: the fill IS the window to read it and back out. While OFF, the
-# press commits immediately. One behaviour on every input device — touch presses arrive as
-# emulated mouse and ride the same path.
-#
-# Extends BaseButton (not a styled Button) deliberately: it draws no theme chrome of its own,
-# and Combat._click_engages recognises BaseButton — so backing out of a hold never reads as a
-# "click on nothing" that would dismiss the selection.
+# HELD for ux.move_hold.duration seconds — the shared HoldButton machinery (see there for the
+# cancel rules and why it extends BaseButton). The landing preview is on screen for the whole
+# hold: the fill IS the window to read it and back out. While OFF, the press commits
+# immediately.
 
-signal commit_requested
 signal hover_changed(on: bool)
 
 # Above CardUI.TAG_Z (60, the stat-badge layer): the one static home for a slot control that
@@ -64,18 +58,14 @@ var _arrow: TextureRect
 var _arrow_tween: Tween
 var _arrow_top_y := 0.0
 var _arrow_bottom_y := 0.0
-var _fill_style: StyleBoxFlat
 var _hover := false
-var _holding := false
-var _progress := 0.0
-var _duration := 1.0
 
 
 func _ready() -> void:
+	super._ready()
 	focus_mode = Control.FOCUS_NONE
 	z_index = BUTTON_Z
 	modulate = Color(1.0, 1.0, 1.0, IDLE_ALPHA)
-	_duration = maxf(0.05, GameData.value_f("ux.move_hold.duration"))
 
 	_frame = _make_icon("open")
 	_frame.stretch_mode = TextureRect.STRETCH_SCALE
@@ -85,14 +75,8 @@ func _ready() -> void:
 	_arrow = _make_icon("move_arrow")
 	_arrow.visible = false   # the arrow belongs to MOTION — it wakes on hover
 
-	_fill_style = StyleBoxFlat.new()
-	_fill_style.bg_color = FILL_COLOR
-
-	button_down.connect(_on_down)
-	button_up.connect(_on_up)
 	mouse_entered.connect(func() -> void: _set_hover(true))
 	mouse_exited.connect(func() -> void: _set_hover(false))
-	set_process(false)
 	_layout()
 
 
@@ -163,63 +147,28 @@ func _stop_arrow_bob() -> void:
 	_arrow_tween = null
 
 
-func _on_down() -> void:
+func _hold_pressed() -> void:
 	if not UxPrefs.move_hold_enabled:
 		commit_requested.emit()
 		return
-	_holding = true
-	_progress = 0.0
-	set_process(true)
-	queue_redraw()
+	begin_hold()
 
 
-func _on_up() -> void:
-	if _holding:
-		reset()
-
-
-func _process(delta: float) -> void:
-	if not _holding:
-		set_process(false)
-		return
-	# Sliding off the button mid-hold is a back-out, same as releasing early.
-	if not is_hovered():
-		reset()
-		return
-	_progress = minf(1.0, _progress + delta / _duration)
-	queue_redraw()
-	if _progress >= 1.0:
-		reset()
-		commit_requested.emit()
-
-
-# Cancels any in-flight hold and clears the fill — also the teardown path when the board hides
-# the button mid-gesture (action ended under it: right-click cancel, phase change).
-func reset() -> void:
-	_holding = false
-	_progress = 0.0
-	set_process(false)
-	queue_redraw()
+func _hold_duration() -> float:
+	return GameData.value_f("ux.move_hold.duration")
 
 
 func _notification(what: int) -> void:
+	super._notification(what)   # the base cancels an in-flight hold when hidden mid-gesture
 	match what:
 		NOTIFICATION_RESIZED:
 			_layout()
 		NOTIFICATION_VISIBILITY_CHANGED:
 			if not visible:
-				reset()
 				# A button hidden mid-hover never gets its mouse_exited — report the hover
 				# ending so whatever the hover raised (phantom, preview) is released.
 				_set_hover(false)
 
 
 func _draw() -> void:
-	if _progress <= 0.0:
-		return
-	var ix := size.x * FILL_INSET_X
-	var iy := size.y * FILL_INSET_Y
-	var inner := Rect2(ix, iy, size.x - ix * 2.0, size.y - iy * 2.0)
-	var h := inner.size.y * clampf(_progress, 0.0, 1.0)
-	_fill_style.set_corner_radius_all(int(size.x * FILL_RADIUS_FRAC))
-	draw_style_box(_fill_style, Rect2(inner.position.x, inner.end.y - h, inner.size.x, h))
+	_draw_hold_fill(FILL_COLOR, FILL_INSET_X, FILL_INSET_Y, FILL_RADIUS_FRAC)

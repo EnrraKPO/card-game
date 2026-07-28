@@ -51,6 +51,8 @@ var _exp_gauge: ExpGauge     # the narrow experience column outboard of that str
 var _reward_chest: TreasureChest   # dropped by a falling enemy King; the gate into the rewards
 var _relic_tray: RelicTray   # read-only vertical relic strip on the screen's left edge (see
 							  # _build_relic_strip); a firing relic glints its chip
+var _consumable_busy := false   # a consumable's use is resolving — no second use may start
+								 # under its awaits (the chips' usability check reads this)
 var _done_btn: Button        # the chunky vertical "Ready" button (right of the board)
 var _done_label: Label       # the Ready button's caption — bottom-anchored inside the button so
 							  # the word sits on the hand band, aligned with Inspect Abilities
@@ -1068,6 +1070,43 @@ func _fire_run_level(event: GameEvent) -> void:
 		await _animator.show_effect_results(rres, persp, "", false)
 
 
+# A consumable relic's use (the tray chip's completed safety hold — see ConsumableChip): cue
+# the chip, apply the relic's transient effects anchored to the PLAYER (the same two-anchor
+# read as run-level dispatch: the King is the spatial anchor, owner_anchor 0 makes
+# "ally"/"enemy" read from the player's side), then SPEND the relic — discard, no refund. The
+# effects ride the same use-path as a spell cast (EffectSystem.apply_single + death sweep),
+# so a consumable is authored exactly like transient spell effects.
+func _use_consumable(relic_id: String) -> void:
+	if _phase != Phase.PLAYER_PLACE or _consumable_busy:
+		return
+	var relic := RelicData.get_relic(relic_id)
+	if relic == null or GameData.current_run == null \
+			or not GameData.current_run.relics.has(relic_id):
+		return
+	var src := _board.get_player_king()
+	if src == null:
+		return
+	_consumable_busy = true
+	_relic_tray.glint(relic_id)
+	await get_tree().create_timer(Vfx.handoff(RELIC_CHIP_SPAN)).timeout
+	for effect: Effect in relic.effects:
+		if not effect.trigger_resolver().applies_on_use():
+			continue
+		var ctx := _board.make_context(src)
+		ctx.owner_anchor = 0   # run-scope item: "enemy" means the player's enemy, whoever acts
+		ctx.board_node = _board
+		var results := EffectSystem.apply_single(effect, src, ctx)
+		await _animator.show_effect_results(results, src, "", false)
+		_board.cleanup_effect_deaths()
+	GameData.current_run.discard_relic(relic_id)
+	_relic_tray.refresh()
+	_consumable_busy = false
+	# Outside COMBAT nothing else is watching for a fallen king (same reasoning as the debug
+	# kill button) — if the use finished the fight, end it here.
+	if _phase != Phase.COMBAT and _board.any_king_dead():
+		_handle_combat_end()
+
+
 # BROADCASTS one event to the whole board: the participants first (the origin fires even when
 # it is dead-but-on-board — a dying unit's own death effects), then every other alive unit as
 # a watcher, then the run-level tier once. Any watcher a proc kills goes through the normal
@@ -1576,6 +1615,12 @@ func _build_relic_strip() -> Control:
 	_relic_tray.vertical = true
 	_relic_tray.interactive = false   # info-only: tapping a chip opens its detail overlay
 									   # (the touch reading path), but never offers Discard
+	# Consumable relics ARE usable here — combat is the one surface that arms their hold.
+	# Usable only while the player is placing (never mid-resolution, mid-aim, or while another
+	# consumable's own use is still animating); the chips poll this, nothing pushes at them.
+	_relic_tray.consumable_check = func() -> bool:
+		return _phase == Phase.PLAYER_PLACE and not _modal_lock and not _consumable_busy
+	_relic_tray.consume_requested.connect(_use_consumable)
 	column.add_child(_relic_tray)
 	return strip
 

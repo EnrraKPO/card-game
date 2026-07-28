@@ -17,6 +17,7 @@ func run() -> void:
 	_composition_conditions()
 	_conditioned_modifiers()
 	_run_scope_allegiance()
+	_consumable_relic_use()
 
 
 # Modifier targeting is gated by `conditions` exactly like triggered targeting: every card the
@@ -96,6 +97,34 @@ func _run_scope_allegiance() -> void:
 	check_eq(neutral.get_attribute("attack"), neutral.data.attack,
 			"…and never a sideless (preview) instance")
 	GameData.current_modifiers = ModifierSet.new()   # restore the clean env
+
+
+# The consumable-relic use path (Combat._use_consumable): the authored bomb's transient effect,
+# applied holderlessly with the run-scope player anchor, must reach every ENEMY unit (shield
+# first, like any damage_taken) and no player unit. Reads the REAL authored relic on purpose —
+# this is the data contract a consumable rides, not stat arithmetic.
+func _consumable_relic_use() -> void:
+	var relic := RelicData.get_relic("bomb")
+	check(relic != null and relic.consumable, "bomb relic exists and is flagged consumable")
+	if relic == null:
+		return
+	var king := unit("king")               # the spatial anchor a consumable applies from
+	var mine := unit("pawn")
+	var foe_rook := unit("rook")           # 6 HP / 3 shield
+	foe_rook.owner = 1
+	var foe_pawn := unit("pawn")           # 3 HP — the bomb kills it
+	foe_pawn.owner = 1
+	var ctx := EffectContext.make(king, [[king, mine]], [[foe_rook, foe_pawn]])
+	ctx.owner_anchor = 0                   # run-scope item: "enemy" reads from the player
+	for e: Effect in relic.effects:
+		check(e.trigger_resolver().applies_on_use(),
+				"bomb effect is transient — the use path applies it")
+		EffectSystem.apply_single(e, king, ctx)
+	check_eq(foe_rook.current_shield, 0, "bomb damage resolves shield-first on an enemy")
+	check_eq(foe_rook.current_health, 4, "…and bleeds the remainder (6 - 2)")
+	check(not foe_pawn.is_alive(), "bomb kills a 3 HP enemy outright")
+	check_eq(mine.current_health, mine.data.health, "bomb spares player units")
+	check_eq(king.current_health, king.data.health, "…and the player King")
 
 
 func _composition_conditions() -> void:

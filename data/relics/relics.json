@@ -650,16 +650,22 @@
 		"id": "bomb",
 		"display_name": "Bomb",
 		"description": "Click & Hold to deal 5 damage to all enemies (Consumable: Spent on use.)",
-		"color": "000000",
+		"color": "3a3f52",
 		"letter": "✦",
 		"price": 90,
+		"consumable": true,
 		"effects": [
 			{
 				"trigger": {
 					"kind": "transient"
 				},
 				"targets": {
-					"kind": "all"
+					"kind": "all",
+					"conditions": [
+						{
+							"allegiance": "enemy"
+						}
+					]
 				},
 				"attribute": "damage_taken",
 				"amount": 5
@@ -673,8 +679,14 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": true,
-				"prompt": "Bomb",
-				"turbo": true
+				"prompt": "Big cartoon bomb with a thick chunky fuse",
+				"turbo": true,
+				"last": {
+					"seed": 1051404660,
+					"prompt": "Big cartoon bomb with a thick chunky fuse",
+					"style": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric light, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear,",
+					"at": "2026-07-28"
+				}
 			}
 		}
 	}

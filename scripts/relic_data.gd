@@ -30,6 +30,11 @@ var icon: Texture2D = null                     # optional illustration; when pre
 											   # coloured letter chip everywhere the relic is shown
 var price: int = 80                            # gold cost when offered in a shop
 var effects: Array = []                        # Array[Effect] — the run-wide effects this relic grants
+# A CONSUMABLE relic is an item the player SPENDS, not a passive: its effects are transient
+# (applied once, on use — never folded passively, which the trigger kind already guarantees:
+# a transient resolver listens to no event), used from combat by holding its chip (see
+# ConsumableChip), and discarded by the use. It still holds a normal relic slot until spent.
+var consumable: bool = false
 
 static var _all: Dictionary = {}
 
@@ -70,6 +75,7 @@ static func _load_json(path: String) -> void:
 		if ResourceLoader.exists(art_path):
 			r.icon = load(art_path)
 		r.price        = int(d.get("price", 80))
+		r.consumable   = bool(d.get("consumable", false))
 		for e: Dictionary in d.get("effects", []):
 			# No owner stamping: the effect stays container-blind. The relic-chip glint is
 			# driven by dispatch context (ModifierSet.owner_of → trigger_global_grouped).

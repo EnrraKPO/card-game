@@ -59,6 +59,9 @@ const DEFAULTS := {
 									   # (a drag starting inside this is provisional — see CardUI)
 	"ux.move_hold.duration":    1.0,  # seconds the move button's safety hold takes to fill —
 									   # the back-out window before a held press commits the move
+	"ux.consume_hold.duration": 0.9,  # seconds a consumable relic chip's hold takes to fill —
+									   # shorter than the move hold (a spend has no preview to
+									   # read), but still a deliberate press, never a tap
 	# Animation feel. THE fluidity dial for every sequenced cue in the game (see Vfx.handoff): the
 	# fraction of a cue's tail the NEXT beat is allowed to overlap. 0 = strictly one-at-a-time (each
 	# cue plays to its last frame before the next starts — the old, choppy behaviour); 0.5 = the
