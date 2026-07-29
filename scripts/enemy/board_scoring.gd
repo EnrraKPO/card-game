@@ -27,7 +27,7 @@ var criteria: Array = []
 # overrides also allowed). The values encode the default protect ordering: the Captain far
 # above everything, support/burst worth shielding, fodder cheap, untagged mid-low.
 const STOCK_SURVIVAL_WEIGHTS := {
-	"captain": 1.0,
+	"captain": 2.5,
 	"support": 0.5,
 	"burst": 0.4,
 	"dps": 0.3,
@@ -38,6 +38,13 @@ const STOCK_SURVIVAL_WEIGHTS := {
 # Fodder/default sit LOW deliberately: a screen is only worth standing in the open if the
 # body is cheaper than the exposure it absorbs — priced any higher, screening scores as a
 # net loss and the engine hides everyone in the back (observed; the test suite pins it).
+#
+# Captain sits HIGH deliberately: at 1.0 its fat health pool reads as the cheapest damage
+# sponge and the scorer happily walks the king forward to soak share — observed as "the
+# king takes too much damage and won't commit to retreating". 2.5 makes it claim the back
+# column and only tank when everything else is worse. A BOLD captain that trades its pool
+# for its troops is an authorable event character: override {"captain": 1.0} in the
+# encounter's survival_weights.
 
 # How loud bare exposure is next to death risk. Small on purpose: it exists to keep the
 # formation instinct alive on quiet boards, not to compete with actual mortal danger.

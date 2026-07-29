@@ -25,6 +25,7 @@ func run() -> void:
 	_apply_move_purity()
 	_scoring_triages_dying_unit()
 	_engine_king_tanks()
+	_engine_king_retreats_fully()
 
 
 func _enemy(card_id: String, r: int, c: int) -> CardInstance:
@@ -233,7 +234,7 @@ func _weight_resolution() -> void:
 	var fodder := BoardState.UnitState.from_instance(_enemy("fodder_dummy", 0, 0))
 	check_eq(BoardScoring.weight_for(fodder, weights), 0.05, "a role tag resolves its table entry")
 	var king := BoardState.UnitState.from_instance(_enemy("king", 2, 3))
-	check_eq(BoardScoring.weight_for(king, weights), 1.0, "is_king resolves as the captain entry")
+	check_eq(BoardScoring.weight_for(king, weights), 2.5, "is_king resolves as the captain entry")
 	var untagged := BoardState.UnitState.from_instance(_enemy("pawn", 0, 1))
 	check_eq(BoardScoring.weight_for(untagged, weights), 0.1, "no role falls to the default entry")
 	check_eq(BoardScoring.weight_for(untagged, {"pawn": 7.0}), 7.0, "a card-id entry wins over everything")
@@ -242,7 +243,7 @@ func _weight_resolution() -> void:
 	var dr: BoardScoring.DeathRisk = overridden.criteria[0]
 	check_eq(BoardScoring.weight_for(fodder, dr.survival_weights), 0.8,
 			"an encounter override rewrites one role's worth, stock fills the rest")
-	check_eq(BoardScoring.weight_for(king, dr.survival_weights), 1.0,
+	check_eq(BoardScoring.weight_for(king, dr.survival_weights), 2.5,
 			"…without touching un-overridden entries")
 
 
@@ -355,9 +356,10 @@ func _scoring_triages_dying_unit() -> void:
 func _engine_king_tanks() -> void:
 	var back := BoardData.ROWS - 1
 	var deep := BoardData.COLS - 1
-	# Precious fodders (event override 0.6) crowd every column except the front; serious
-	# threat is on the player's board; only front-line slots are open, and nobody's 2 HP
-	# body soaks damage as well as the Captain's fat pool. Decision 15 in reverse.
+	# The BOLD-captain event character, pinned via override (captain 1.0 — stock is the
+	# protective 2.5): precious fodders crowd every column except the front, serious threat
+	# bears down, only front-line slots are open, and nobody's 2 HP body soaks damage as
+	# well as the Captain's fat pool. Decision 15 in reverse.
 	var captain := _enemy("captain_dummy", back, deep)
 	var enemies: Array = [captain]
 	for r in BoardData.ROWS:
@@ -369,11 +371,41 @@ func _engine_king_tanks() -> void:
 	var grids := _grids(enemies, players)
 
 	var engine := _seeded_engine()
-	engine.weight_overrides = {"fodder": 0.6}
+	engine.weight_overrides = {"fodder": 0.6, "captain": 1.0}
 	var actions := engine.decide_actions([], grids[0], grids[1], 0)
 
 	var king_moves: Array = actions.filter(func(a: Dictionary) -> bool:
 		return int(a["type"]) == EnemyEngine.Action.MOVE and a["inst"] == captain)
-	check_eq(king_moves.size(), 1, "the Captain steps out exactly once")
+	check_eq(king_moves.size(), 1, "the bold Captain steps out exactly once")
 	if not king_moves.is_empty():
 		check_eq(int(king_moves[0]["col"]), 0, "…to the front line, tanking for its fodders")
+
+
+# ── Protective commitment (stock): the threatened king claims the back column ────────
+
+func _engine_king_retreats_fully() -> void:
+	var deep := BoardData.COLS - 1
+	# The observed defect this pins: a mid-column king under real threat used to send a
+	# FODDER to the free back seat (or wander forward to soak share) because at captain
+	# weight 1.0 its health pool read as the cheapest sponge. Stock 2.5 commits: the king
+	# itself takes the deep slot. Mid-column is also exactly the leaper's landing zone.
+	var captain := _enemy("captain_dummy", 1, 2)
+	var enemies: Array = [
+		captain,
+		_enemy("fodder_dummy", 1, 0),
+		_enemy("fodder_dummy", 0, deep),
+		_enemy("fodder_dummy", 2, deep),
+	]
+	var players: Array = [_player("queen", 0, deep), _player("queen", 1, deep)]
+	var grids := _grids(enemies, players)
+
+	var engine := _seeded_engine()
+	engine.weight_overrides = {"fodder": 0.5}
+	var actions := engine.decide_actions([], grids[0], grids[1], 0)
+
+	var king_moves: Array = actions.filter(func(a: Dictionary) -> bool:
+		return int(a["type"]) == EnemyEngine.Action.MOVE and a["inst"] == captain)
+	check_eq(king_moves.size(), 1, "the threatened king repositions itself")
+	if not king_moves.is_empty():
+		check_eq(int(king_moves[0]["col"]), deep,
+				"…all the way to the back column — no half-hearted mid-column stop")

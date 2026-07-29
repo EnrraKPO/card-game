@@ -36,7 +36,7 @@ A template describes an enemy *card pool* to sample from, not a fixed list — e
 | `gold_reward` | `[min, max]` | No | Inclusive random range of gold granted on win. Defaults to `[0, 0]` |
 | `exp_reward` | int | No | Profile experience granted on win, toward upgrade points. Defaults to `1`; author higher for special fights (e.g. elites/bosses) |
 | `ai` | string | No | Key into `EnemyAI.from_key()`. Defaults to `"default"` |
-| `survival_weights` | object | No | Role→weight entries layered over the enemy engine's stock survival-weight table (`BoardScoring.STOCK_SURVIVAL_WEIGHTS`) — e.g. `{ "fodder": 0.5 }` means "in this fight, fodders are precious". Keys are role tags (`captain`/`tank`/`dps`/`support`/`burst`/`fodder`), `default` (untagged units), or a specific card id. Values are the unit's survival priority: the engine protects units in proportion to `weight × likelihood of dying`. Empty/omitted = stock behaviour |
+| `survival_weights` | object | No | Role→weight entries layered over the enemy engine's stock survival-weight table (`BoardScoring.STOCK_SURVIVAL_WEIGHTS`) — e.g. `{ "fodder": 0.5 }` means "in this fight, fodders are precious". Keys are role tags (`captain`/`tank`/`dps`/`support`/`burst`/`fodder`), `default` (untagged units), or a specific card id. Values are the unit's survival priority: the engine protects units in proportion to `weight × likelihood of dying`. The stock captain weight (2.5) makes the king claim the back column when threatened; `{ "captain": 1.0 }` authors a BOLD captain that walks to the front line and tanks for its troops. Empty/omitted = stock behaviour |
 | `reward_pool` | string | No | Key into `EncounterTemplateData.resolve_reward_pool()`. Defaults to `"default"` (any non-king card) |
 
 ## Adding variety

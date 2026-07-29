@@ -71,6 +71,9 @@ func decide_actions(hand: Array, player_grid: Array, enemy_grid: Array, mana: in
 			"place":
 				pool.erase(cand["inst"])
 				remaining -= int(cand["cost"])
+				# A just-placed unit landed at its best slot — re-moving it the same turn
+				# is churn the player reads as jitter, so it counts as this turn's move.
+				moved[cand["inst"]] = true
 				actions.append({"type": Action.PLACE, "inst": cand["inst"],
 						"row": int(cand["row"]), "col": int(cand["col"])})
 			"move":
