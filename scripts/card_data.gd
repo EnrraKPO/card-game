@@ -64,6 +64,13 @@ var enemy_only: bool = false
 # The fodder tribe this card belongs to ("goblin"/"undead"/"golem", "" for everyone else) —
 # set on the enemy tribe files; cues resolve tribe-flavoured variants through it (death_<tribe>).
 var tribe: String = ""
+# The unit's battlefield ROLE tag ("fodder"/"tank"/"dps"/"support"/"burst", "" = untagged) —
+# the enemy engine's authoring convenience (design decision 18): an identity statement the
+# encounter's survival-weight table resolves into a protection weight (BoardScoring). ONE role
+# per unit, deliberately — the tag vocabulary must stay small. Never load-bearing: an untagged
+# unit falls to the table's "default" entry and is still handled correctly. Kings need no role;
+# is_king already reads as "captain".
+var role: String = ""
 # The ACTIVATED ABILITIES this card holds, by ability id (see AbilityData — definitions in
 # data/abilities/). Rook buildings author these ("abilities": ["castling"]); any card may.
 # Read through ability_ids(), which adds the derived fallback for un-authored rook combos.
@@ -212,6 +219,7 @@ static func build_from_dict(d: Dictionary) -> CardData:
 	card.chess_pieces = Array(d.get("chess_pieces", []), TYPE_STRING, "", null)
 	card.enemy_only   = bool(d.get("enemy_only", false))
 	card.tribe        = str(d.get("tribe", ""))
+	card.role         = str(d.get("role", ""))
 	card.abilities    = Array(d.get("abilities", []), TYPE_STRING, "", null)
 	card.ranged       = bool(d.get("ranged", false))
 	card.strikes      = maxi(1, int(d.get("strikes", 1)))
@@ -294,6 +302,8 @@ func to_dict() -> Dictionary:
 		d["abilities"] = Array(abilities, TYPE_STRING, "", null)
 	if not tribe.is_empty():
 		d["tribe"] = tribe
+	if not role.is_empty():
+		d["role"] = role
 	# Conditional like tribe/abilities: the overwhelming single-strike majority keeps its
 	# serialized shape byte-identical to before the stat existed.
 	if strikes != 1:
@@ -336,6 +346,7 @@ static func scaled(base: CardData, power: float) -> CardData:
 	c.chess_pieces  = base.chess_pieces.duplicate()
 	c.enemy_only    = base.enemy_only
 	c.tribe         = base.tribe
+	c.role          = base.role
 	c.abilities     = base.abilities.duplicate()
 	c.ranged        = base.ranged
 	c.strikes       = base.strikes

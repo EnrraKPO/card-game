@@ -26,12 +26,14 @@ class UnitState:
 	var col: int = -1
 	var is_king: bool = false
 	var is_building: bool = false
+	var role: String = ""   # battlefield-role tag (CardData.role); "" = untagged
 	var cost: int = 0
 	var attack: int = 0
 	var health: int = 0
 	var max_health: int = 0
 	var shield: int = 0
 	var speed: int = 0
+	var strikes: int = 1
 
 	static func from_instance(inst: CardInstance) -> UnitState:
 		var u := UnitState.new()
@@ -42,12 +44,14 @@ class UnitState:
 		u.col = inst.col
 		u.is_king = inst.data.is_king
 		u.is_building = inst.data.is_building()
+		u.role = inst.data.role
 		u.cost = inst.get_attribute("cost")
 		u.attack = inst.get_attribute("attack")
 		u.health = inst.current_health
 		u.max_health = inst.get_attribute("max_health")
 		u.shield = inst.current_shield
 		u.speed = inst.get_attribute("speed")
+		u.strikes = inst.get_attribute("strikes")
 		return u
 
 	func copy() -> UnitState:
@@ -59,12 +63,14 @@ class UnitState:
 		u.col = col
 		u.is_king = is_king
 		u.is_building = is_building
+		u.role = role
 		u.cost = cost
 		u.attack = attack
 		u.health = health
 		u.max_health = max_health
 		u.shield = shield
 		u.speed = speed
+		u.strikes = strikes
 		return u
 
 

@@ -8,7 +8,8 @@
 		"speed": 2,
 		"description": "A test dummy with nothing going on — cheap, weak, disposable.",
 		"enemy_only": true,
-		"tribe": "dummy"
+		"tribe": "dummy",
+		"role": "fodder"
 	},
 	{
 		"id": "tank_dummy",
@@ -18,7 +19,8 @@
 		"health": 5,
 		"speed": 1,
 		"shield": 2,
-		"enemy_only": true
+		"enemy_only": true,
+		"role": "tank"
 	},
 	{
 		"id": "dps_dummy",
@@ -29,7 +31,8 @@
 		"speed": 3,
 		"description": "A test dummy built for damage output — fast and hard-hitting, but fragile.",
 		"enemy_only": true,
-		"tribe": "dummy"
+		"tribe": "dummy",
+		"role": "dps"
 	},
 	{
 		"id": "support_dummy",
@@ -44,7 +47,8 @@
 		"abilities": [
 			"heal",
 			"fire_bless"
-		]
+		],
+		"role": "support"
 	},
 	{
 		"id": "burst_damage_dummy",
@@ -58,18 +62,21 @@
 		"tribe": "dummy",
 		"abilities": [
 			"magic_missile"
-		]
+		],
+		"role": "burst"
 	},
 	{
 		"id": "captain_dummy",
-		"tribe": "dummy",
+		"display_name": "Captain Dummy",
 		"cost": 0,
 		"attack": 1,
-		"health": 10,
+		"health": 15,
 		"speed": 2,
 		"shield": 1,
+		"description": "The test roster's Captain. Bring it down to win.",
 		"is_king": true,
-		"enemy_only": true
+		"enemy_only": true,
+		"tribe": "dummy"
 	},
 	{
 		"id": "dummy_group_heal",
