@@ -59,6 +59,23 @@ function idField(draft, onChange, isNew) {
 
 function cleanEffects(list) { return (list || []).map(cleanEffectForDeploy); }
 
+// ── enemy-engine vocabulary (mirrors scripts/card_data.gd :: role and
+//    scripts/enemy/board_scoring.gd :: STOCK_SURVIVAL_WEIGHTS) ────────────────
+// A unit's ROLE is one tag, never load-bearing: an untagged unit resolves through the
+// weight table's "default" entry and still fights correctly. The encounter's
+// survival_weights layer over the stock table below — keep these values in sync with
+// the GDScript constant, they are shown as the blank-field placeholders.
+const UNIT_ROLES = [
+  { value: 'fodder',  label: 'Fodder — cheap, expendable body' },
+  { value: 'tank',    label: 'Tank — meant to stand in front and absorb' },
+  { value: 'dps',     label: 'DPS — the damage the fight is built around' },
+  { value: 'support', label: 'Support — heals/buffs, worth shielding' },
+  { value: 'burst',   label: 'Burst — high-value nuker, worth shielding' },
+];
+const STOCK_SURVIVAL_WEIGHTS = {
+  captain: 1.75, support: 0.5, burst: 0.4, dps: 0.3, tank: 0.15, fodder: 0.05, default: 0.1,
+};
+
 // ═════════════════════════════════ CARD ═════════════════════════════════════
 const CardEditor = {
   label: 'Card',
@@ -66,7 +83,7 @@ const CardEditor = {
     id: '', display_name: '', description: '', art_instructions: '',
     cost: 1, attack: 2, health: 3, speed: 3, shield: 0,
     elements: [], chess_pieces: [], effects: [], abilities: [],
-    ranged: false, is_king: false, enemy_only: false, target_policy: '',
+    ranged: false, is_king: false, enemy_only: false, target_policy: '', role: '',
     // bounty_gold / bounty_exp are deliberately ABSENT by default: an unset bounty derives
     // from the card's mana cost through the bounty.* rates (see GameData.kill_bounty), and a
     // key that is only written when authored keeps every existing card file untouched.
@@ -120,6 +137,9 @@ const CardEditor = {
             { value: 'threat', label: 'Threat — the enemy with the highest attack' },
           ], onChange, { optional: true, emptyLabel: 'auto — from chess composition' }),
             'how this unit picks whom to auto-attack; a matching line is appended to the card text (spells never auto-attack)'),
+          fld('Battlefield role', selectInput(draft, 'role', UNIT_ROLES, onChange,
+            { optional: true, emptyLabel: 'untagged — uses the "default" weight' }),
+            'what the ENEMY ENGINE thinks this unit is worth protecting; an encounter can re-price any role. Kings need no role — they are always the Captain'),
         ),
       ),
       groupBox('Text (shown on the card)', locFields(draft, { type: 'card', typeLabel: 'card', onChange,
@@ -179,6 +199,7 @@ const CardEditor = {
     if (d.tribe) out.tribe = d.tribe;   // fodder-tribe tag (cue variants); no form input yet
     if (d.ranged) out.ranged = true;
     if (d.target_policy) out.target_policy = d.target_policy;   // "" = auto (derive from composition)
+    if (d.role) out.role = d.role;   // "" = untagged (falls to the survival table's "default")
     // 0 is a real bounty ("pays nothing"), so these test for PRESENCE, not truthiness.
     if (d.bounty_gold != null && d.bounty_gold !== '') out.bounty_gold = d.bounty_gold;
     if (d.bounty_exp != null && d.bounty_exp !== '') out.bounty_exp = d.bounty_exp;
@@ -657,8 +678,8 @@ const TribeEditor = {
 // ═══════════════════════════════ ENCOUNTER ══════════════════════════════════
 const EncounterEditor = {
   label: 'Encounter',
-  newItem: () => ({ id: '', node_type: 'combat', min_floor: 0, max_floor: 999, weight: 1,
-    enemy_king: '', power_bonus: 0, enemy_pool: [], pick_count: [14, 20],
+  newItem: () => ({ id: '', node_type: 'combat', min_floor: 0, max_floor: 999, weight: 1, enabled: true,
+    enemy_king: '', power_bonus: 0, enemy_pool: [], pick_count: [14, 20], survival_weights: {}, _sw_cards: [],
     gold_reward: [20, 40], mineral_reward: [0, 0], exp_reward: 1, relic_reward: 0, ai: 'default', reward_pool: 'default' }),
   form(draft, ctx, onChange) {
     if (!draft.enemy_pool) draft.enemy_pool = [];
@@ -680,6 +701,7 @@ const EncounterEditor = {
           idField(draft, onChange, ctx.isNew),
           fld('Serves node type', selectInput(draft, 'node_type', [
             { value: 'combat', label: 'Combat' }, { value: 'elite', label: 'Elite' }, { value: 'boss', label: 'Boss' },
+            { value: 'test', label: 'Test — Combat Gym only, never map-generated' },
           ], onChange)),
           fld('Pick weight', numInput(draft, 'weight', onChange, { float: true, step: 0.1, min: 0 }),
             'vs other eligible templates', 'narrow'),
@@ -691,6 +713,10 @@ const EncounterEditor = {
           fld('Max stage', numInput(draft, 'max_stage', onChange, { min: 1, optional: true, placeholder: '999' }), null, 'narrow'),
           fld('Power bonus', numInput(draft, 'power_bonus', onChange, { float: true, step: 0.5, min: 0 }),
             'each point grows enemy stats ~5%', 'narrow'),
+        ),
+        el('div', { class: 'frow' },
+          el('div', { class: 'fld wide' }, checkInput(draft, 'enabled', onChange,
+            'Enabled — untick to retire this template without deleting it (the game skips disabled entries entirely)')),
         ),
       ),
       // organizational label only — groups this encounter under its tribes in the ⚔ hub
@@ -764,6 +790,48 @@ const EncounterEditor = {
       } }));
     };
     renderPool();
+
+    // ── survival weights: how much the enemy engine protects each kind of unit ──
+    // Blank = the stock value (shown as the placeholder). The engine resolves a unit
+    // through card id → captain → role → default, so both tables live here.
+    if (!draft.survival_weights) draft.survival_weights = {};
+    if (!Array.isArray(draft._sw_cards)) draft._sw_cards = [];
+    const swBox = groupBox('Enemy engine — survival weights (this fight only)');
+    const swField = (key, label, hint) => fld(label,
+      numInput(draft.survival_weights, key, onChange,
+        { float: true, step: 0.05, min: 0, optional: true, placeholder: STOCK_SURVIVAL_WEIGHTS[key] + '' }),
+      hint, 'narrow');
+    swBox.append(
+      el('div', { class: 'hint', text: 'What the CPU will spend position — and its Captain\'s body — to keep alive. Higher = protect harder. Blank keeps the stock value shown in the box. Weights are RELATIVE: raising everything changes nothing, the ratios are the behaviour.' }),
+      el('div', { class: 'frow' },
+        swField('captain', 'Captain', 'the King. 1.0 = reckless sponge, 1.75 = shares damage yet commits to retreating, 2.5 = total coward'),
+        swField('default', 'Untagged', 'any unit with no role tag'),
+      ),
+      el('div', { class: 'frow' },
+        ...UNIT_ROLES.map(r => swField(r.value, r.label.split(' — ')[0])),
+      ),
+    );
+    const swCardOpts = cardIdOptions(ctx);
+    const renderSwCards = () => {
+      while (swBox.children.length > 4) swBox.lastChild.remove();
+      const table = el('table', { class: 'mini' },
+        el('tr', null, el('th', { text: 'Specific card' }), el('th', { text: 'Weight' }), el('th')));
+      draft._sw_cards.forEach((p, i) => {
+        table.append(el('tr', null,
+          el('td', null, selectInput(p, 'id', swCardOpts, onChange)),
+          el('td', { style: 'width:90px' }, numInput(p, 'weight', onChange, { float: true, step: 0.05, min: 0 })),
+          el('td', { style: 'width:40px' }, el('button', { class: 'ghost tiny', text: '✕', onclick: () => {
+            draft._sw_cards.splice(i, 1); onChange(); renderSwCards();
+          } })),
+        ));
+      });
+      swBox.append(table, el('button', { class: 'ghost small list-add', text: '+ override one card', onclick: () => {
+        draft._sw_cards.push({ id: (swCardOpts[0] && swCardOpts[0].value) || '', weight: 0.5 });
+        onChange(); renderSwCards();
+      } }));
+    };
+    renderSwCards();
+    wrap.append(swBox);
     return wrap;
   },
   serialize(d) {
@@ -782,6 +850,18 @@ const EncounterEditor = {
     if (d.ai && d.ai !== 'default') out.ai = d.ai; else out.ai = 'default';
     out.reward_pool = d.reward_pool || 'default';
     if (d.relic_reward) out.relic_reward = d.relic_reward;
+    // `enabled` is written only when retiring the template — an absent key means enabled,
+    // and that keeps every existing encounter file untouched.
+    if (d.enabled === false) out.enabled = false;
+    // Role weights first, then per-card overrides (the engine looks up card id ahead of role).
+    // 0 is a real weight ("do not protect this at all"), so this tests PRESENCE, not truthiness.
+    const sw = {};
+    for (const k of Object.keys(d.survival_weights || {})) {
+      const v = d.survival_weights[k];
+      if (v != null && v !== '') sw[k] = v;
+    }
+    for (const p of d._sw_cards || []) if (p.id && p.weight != null && p.weight !== '') sw[p.id] = p.weight;
+    if (Object.keys(sw).length) out.survival_weights = sw;
     return out;
   },
   summarize(d) {
@@ -793,6 +873,10 @@ const EncounterEditor = {
     const m = d.mineral_reward || [0, 0];
     const mineral = (m[0] || m[1]) ? `, ${m[0]}–${m[1]} extra mineral` : '';
     lines.push(`Win: ${g[0]}–${g[1]} gold${mineral}, ${d.exp_reward || 0} XP${d.relic_reward ? `, ${Math.round(d.relic_reward * 100)}% relic drop` : ''}.`);
+    const sw = Object.entries(d.survival_weights || {}).concat((d._sw_cards || []).map(p => [p.id, p.weight]));
+    if (sw.length) lines.push(`Enemy engine protects: ${sw.map(([k, v]) => `${k} ${v}`).join(', ')} (other kinds keep stock weights).`);
+    if (d.node_type === 'test') lines.push('Test template — reachable only from the Combat Gym, never generated on a map.');
+    if (d.enabled === false) lines.push('DISABLED — the game skips this template.');
     return lines;
   },
   toDraft(g) {
@@ -803,6 +887,17 @@ const EncounterEditor = {
     if (!Array.isArray(d.mineral_reward)) d.mineral_reward = [0, 0];
     if (d.weight == null) d.weight = 1;
     if (d.exp_reward == null) d.exp_reward = 1;
+    d.enabled = d.enabled !== false;   // absent = enabled
+    // Split the flat survival_weights map back into its two editors: known role keys
+    // (plus captain/default) drive the fixed row, anything else is a per-card override.
+    const known = new Set(['captain', 'default', ...UNIT_ROLES.map(r => r.value)]);
+    const sw = d.survival_weights || {};
+    d.survival_weights = {};
+    d._sw_cards = [];
+    for (const k of Object.keys(sw)) {
+      if (known.has(k)) d.survival_weights[k] = sw[k];
+      else d._sw_cards.push({ id: k, weight: sw[k] });
+    }
     return d;
   },
   promptFor(d) {

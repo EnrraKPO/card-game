@@ -1380,7 +1380,6 @@ function renderEnemyHubList() {
   state.enemyHub = true;
   $('item-list-title').textContent = 'Enemy Hub';
   $('gen-set-btn').hidden = true;
-  $('bulk-edit-btn').hidden = true;
   const list = $('item-list');
   list.replaceChildren();
   const search = el('input', {
@@ -1423,12 +1422,21 @@ function renderEnemyHubList() {
 
   // ── Enemy units, grouped by tribe ──
   const enemies = (state.game.card || []).filter(g => g.enemy_only);
+  const shownEnemies = enemies.filter(match);
   const byTribe = new Map();
-  for (const g of enemies.filter(match)) {
+  for (const g of shownEnemies) {
     const k = g.tribe || '(no tribe)';
     if (!byTribe.has(k)) byTribe.set(k, []);
     byTribe.get(k).push(g);
   }
+  // ≡ Bulk acts on the enemy units currently listed here — the hub is where enemies are
+  // authored, so tagging a whole tribe's worth of roles has to be reachable from it.
+  state.bulkIds = shownEnemies.map(g => g.id);
+  const bulkBtn = $('bulk-edit-btn');
+  bulkBtn.hidden = false;
+  bulkBtn.textContent = `≡ Bulk (${shownEnemies.length})`;
+  bulkBtn.disabled = !shownEnemies.length;
+  bulkBtn.title = 'Set a battlefield role, stat, ability or effect on EVERY enemy unit listed below';
   list.append(section('enemies', '👹 Enemy Units', enemies.length, 'card'));
   if (expand.enemies !== false || q) {
     for (const k of [...byTribe.keys()].sort()) {
@@ -1442,7 +1450,16 @@ function renderEnemyHubList() {
         el('span', { class: 'tree-file-name', text: k === '(no tribe)' ? k : tribeName(k) }),
         el('span', { class: 'subtle', text: units.length + '' })));
       if (expand[ek] || q) for (const g of units)
-        list.append(row('card', g, [g.recipe ? el('span', { class: 'subtle', text: '✨', title: 'has an art recipe' }) : null]));
+        list.append(row('card', g, [
+          // The role tag, visible in the list: tagging is invisible otherwise, and an
+          // untagged unit silently falls to the survival table's "default" weight.
+          g.is_king
+            ? el('span', { class: 'pill', title: 'Kings are the Captain — no role needed', text: 'captain' })
+            : (g.role
+                ? el('span', { class: 'pill', title: 'Battlefield role (enemy engine)', text: g.role })
+                : el('span', { class: 'subtle', title: 'No battlefield role — uses the "default" survival weight', text: '—' })),
+          g.recipe ? el('span', { class: 'subtle', text: '✨', title: 'has an art recipe' }) : null,
+        ]));
     }
   }
 
@@ -2724,7 +2741,9 @@ function defaultSetCardName(els, pieces) {
 function openBulkEditor() {
   const ids = (state.bulkIds || []).slice();
   const n = ids.length;
-  if (!n) { toast('No cards match the current filter.', 'err'); return; }
+  // The hub lists enemy units, the card tab lists cards — same op set, honest wording.
+  const noun = state.enemyHub ? 'enemy unit' : 'card';
+  if (!n) { toast(`No ${noun}s match the current filter.`, 'err'); return; }
   const STATS = [
     { value: 'cost', label: 'Mana cost' }, { value: 'attack', label: 'Attack' },
     { value: 'health', label: 'Health' }, { value: 'speed', label: 'Speed' },
@@ -2764,6 +2783,19 @@ function openBulkEditor() {
       el('button', { class: 'primary', text: 'Apply delta', onclick: () => pump(pumpCfg.delta) })),
     el('div', { class: 'hint', text: 'Adds the delta to each card’s current value — uneven starting values stay relative. Cards that derive their stats (no explicit value) are skipped. Clamped to the stat’s floor.' }));
 
+  // Battlefield role — the enemy engine's tag. First box on purpose: tagging a tribe's
+  // units is the most common bulk pass, and an untagged unit falls to the survival
+  // table's "default" weight rather than the one the author meant.
+  const roleCfg = { role: 'fodder' };
+  const roleBox = groupBox('Set the battlefield role (enemy engine)',
+    el('div', { class: 'frow' },
+      fld('Role', selectInput(roleCfg, 'role', UNIT_ROLES.concat(
+        [{ value: '', label: 'untagged — clear the tag' }]), () => {})),
+      el('button', { class: 'primary', text: 'Tag all', onclick: () =>
+        run([{ kind: 'set_role', role: roleCfg.role }],
+          roleCfg.role ? `Role = ${roleCfg.role}` : 'Role cleared') })),
+    el('div', { class: 'hint', text: 'Writes the tag to every matched unit. Kings are skipped — is_king already reads as the Captain. The role decides how hard the CPU protects the unit, via the encounter’s survival weights.' }));
+
   const abils = abilityIds(editorCtx());
   const abCfg = { ability: abils[0] || '' };
   const abBox = groupBox('Grant an ability',
@@ -2788,9 +2820,9 @@ function openBulkEditor() {
     el('div', { class: 'hint', text: 'Appends the authored effect(s) to every matched card’s effect list.' }));
 
   const modal = el('div', { class: 'modal', style: 'width:680px; max-height:88vh; overflow:auto' },
-    el('h2', { text: `Bulk edit — ${n} card${n === 1 ? '' : 's'} match the filter` }),
-    el('div', { class: 'hint', text: `Every action applies to ALL ${n} filtered cards at once. Each writes through the normal per-card save, so Revert still works per card.` }),
-    setBox, pumpBox, abBox, fxBox,
+    el('h2', { text: `Bulk edit — ${n} ${noun}${n === 1 ? '' : 's'} match the filter` }),
+    el('div', { class: 'hint', text: `Every action applies to ALL ${n} filtered ${noun}s at once. Each writes through the normal per-card save, so Revert still works per entry.` }),
+    roleBox, setBox, pumpBox, abBox, fxBox,
     el('div', { class: 'modal-actions' }, el('button', { class: 'ghost', text: 'Close', onclick: close })));
   $('modal-root').replaceChildren(modal);
 }

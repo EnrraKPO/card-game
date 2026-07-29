@@ -726,6 +726,17 @@ function applyBulkOp(data, op) {
     if (data[op.attr] === v) return false;
     data[op.attr] = v; return true;
   }
+  // Tag the whole matched set with one battlefield role (or clear it with ""). Kings are
+  // SKIPPED rather than failed: is_king already reads as "captain" to the engine, so a role
+  // on a king is inert — silently writing one would just be noise in the data files.
+  if (op.kind === 'set_role') {
+    const role = String(op.role || '');
+    if (role && !UNIT_ROLES.includes(role)) return false;
+    if (data.is_king) return false;
+    if ((data.role || '') === role) return false;
+    if (role) data.role = role; else delete data.role;
+    return true;
+  }
   if (op.kind === 'grant_ability') {
     if (!validId(op.ability)) return false;
     if (!Array.isArray(data.abilities)) data.abilities = [];
@@ -1078,6 +1089,10 @@ const PIECES = ['pawn','knight','bishop','rook','queen','king'];
 // Auto-attack targeting policies (mirrors CardData.TARGET_POLICIES and the editor's select /
 // the targeting.<policy>.desc locale keys). "" / absent = auto (derived from the composition).
 const TARGET_POLICIES = ['nearest','leaper','wounded','tank','threat'];
+// Battlefield ROLE tags (mirrors CardData.role and the enemy engine's survival-weight
+// table keys — see scripts/enemy/board_scoring.gd). "" / absent = untagged, which resolves
+// through the table's "default" entry. Kings need no role: is_king already reads as captain.
+const UNIT_ROLES = ['fodder','tank','dps','support','burst'];
 
 function validateConditionList(list, where, allowMutation) {
   for (let i = 0; i < (list || []).length; i++) {
@@ -1299,6 +1314,7 @@ function validateItem(type, d) {
       for (const el of d.elements || []) if (!ELEMENTS.includes(el)) return `unknown element "${el}"`;
       for (const p of d.chess_pieces || []) if (!PIECES.includes(p)) return `unknown chess piece "${p}"`;
       if (d.target_policy && !TARGET_POLICIES.includes(d.target_policy)) return `bad target_policy "${d.target_policy}"`;
+      if (d.role && !UNIT_ROLES.includes(d.role)) return `bad role "${d.role}" (${UNIT_ROLES.join(', ')})`;
       // Kill bounties (see GameData.kill_bounty): absent = derived from the mana cost, a
       // number = a flat override. 0 is legal and means "pays nothing".
       for (const f of ['bounty_gold', 'bounty_exp'])
@@ -1346,7 +1362,9 @@ function validateItem(type, d) {
       return null;
     }
     case 'encounter': {
-      if (!['combat','elite','boss'].includes(d.node_type)) return 'node_type must be combat, elite or boss';
+      // "test" templates are real and authorable — they are simply never map-generated;
+      // the Combat Gym reaches them directly (MapNodeData.Type.TEST).
+      if (!['combat','elite','boss','test'].includes(d.node_type)) return 'node_type must be combat, elite, boss or test';
       if (!(d.enemy_pool || []).length) return 'enemy_pool needs at least one card';
       for (const p of d.enemy_pool) if (!p.id) return 'every enemy_pool entry needs a card id';
       if (!Array.isArray(d.pick_count) || d.pick_count.length !== 2) return 'pick_count must be [min, max]';
@@ -1356,6 +1374,18 @@ function validateItem(type, d) {
         if (!Array.isArray(d.tribes)) return 'tribes must be an array of tribe ids';
         for (const t of d.tribes) if (!validId(t)) return `tribe id "${t}" must be lowercase letters, digits and underscores`;
       }
+      // Enemy-engine protection weights: role tag / "captain" / "default" / a card id → number.
+      // Keys are not checked against the role vocabulary on purpose — a card id is equally
+      // valid, and an unknown key is inert rather than wrong (see BoardScoring.stock).
+      if (d.survival_weights != null) {
+        if (typeof d.survival_weights !== 'object' || Array.isArray(d.survival_weights))
+          return 'survival_weights must be an object of weight entries';
+        for (const [k, v] of Object.entries(d.survival_weights)) {
+          if (!validId(k)) return `survival_weights key "${k}" must be lowercase letters, digits and underscores`;
+          if (typeof v !== 'number' || !isFinite(v) || v < 0) return `survival_weights "${k}" must be a number >= 0`;
+        }
+      }
+      if (d.enabled != null && typeof d.enabled !== 'boolean') return 'enabled must be true or false';
       return null;
     }
     case 'tribe': {
@@ -3619,6 +3649,10 @@ async function handle(req, res) {
           // leave the main card list and group by tribe there instead
           enemy_only: (e.data && e.data.enemy_only) ? true : undefined,
           tribe: (e.data && e.data.tribe) || undefined,
+          // battlefield role + kingship, so the enemy hub can SHOW which units are tagged
+          // (an untagged unit silently takes the survival table's "default" weight)
+          role: (e.data && e.data.role) || undefined,
+          is_king: (e.data && e.data.is_king) ? true : undefined,
           // a tribe entry's canonical style fragment — joined into member units' art generation
           style: (t === 'tribe' && e.data && e.data.style) || undefined,
         }));

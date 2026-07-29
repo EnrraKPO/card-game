@@ -130,6 +130,71 @@ async function main() {
     check('grants exclusive with the attribute payload',
       r.status === 400 && /exclusive with/.test(r.data.error), r.data.error);
 
+    // ── enemy-engine authoring handles: card role + encounter survival_weights ──
+    // These are the dials the CPU actually reads (BoardScoring). The Tool used to drop
+    // them on save, silently un-tuning an encounter — every check here guards that.
+    r = await api('/api/game/save', { type: 'card', file: 'apitest_units.json', data: {
+      id: 'apitest_dummy', display_name: 'Dummy', cost: 1, attack: 1, health: 2, speed: 2,
+      enemy_only: true, role: 'fodder' } });
+    check('card role saves', r.status === 200, JSON.stringify(r.data));
+    check('role persisted', readSbox('data/cards/apitest_units.json').find(e => e.id === 'apitest_dummy').role === 'fodder');
+
+    const enc = { id: 'apitest_gym', node_type: 'test', enemy_king: 'pawn',
+      enemy_pool: [{ id: 'apitest_dummy', weight: 1 }], pick_count: [4, 4],
+      survival_weights: { fodder: 0.5, captain: 1.0, apitest_dummy: 0 } };
+    r = await api('/api/game/save', { type: 'encounter', file: 'apitest_encounters.json', data: enc });
+    check('test node_type accepted', r.status === 200, JSON.stringify(r.data));
+    const savedEnc = () => readSbox('data/encounters/apitest_encounters.json').find(e => e.id === 'apitest_gym');
+    check('survival_weights persisted whole', JSON.stringify(savedEnc().survival_weights) === JSON.stringify({ fodder: 0.5, captain: 1.0, apitest_dummy: 0 }));
+    check('a zero weight survives (0 = "protect this not at all")', savedEnc().survival_weights.apitest_dummy === 0);
+
+    r = await api('/api/game/save', { type: 'encounter', file: 'apitest_encounters.json', data: { ...enc, node_type: 'skirmish' } });
+    check('unknown node_type still rejected', r.status === 400 && /node_type must be/.test(r.data.error), r.data.error);
+    r = await api('/api/game/save', { type: 'encounter', file: 'apitest_encounters.json', data: { ...enc, survival_weights: { fodder: 'lots' } } });
+    check('non-numeric survival weight rejected', r.status === 400 && /must be a number/.test(r.data.error), r.data.error);
+    r = await api('/api/game/save', { type: 'encounter', file: 'apitest_encounters.json', data: { ...enc, survival_weights: { fodder: -1 } } });
+    check('negative survival weight rejected', r.status === 400 && /must be a number/.test(r.data.error), r.data.error);
+    r = await api('/api/game/save', { type: 'encounter', file: 'apitest_encounters.json', data: { ...enc, survival_weights: [0.5] } });
+    check('array survival_weights rejected', r.status === 400 && /object of weight entries/.test(r.data.error), r.data.error);
+    r = await api('/api/game/save', { type: 'encounter', file: 'apitest_encounters.json', data: { ...enc, enabled: false } });
+    check('encounter enabled:false persisted', r.status === 200 && savedEnc().enabled === false, JSON.stringify(r.data));
+
+    r = await api('/api/game/save', { type: 'card', file: 'apitest_units.json', data: {
+      id: 'apitest_dummy', display_name: 'Dummy', cost: 1, attack: 1, health: 2, speed: 2,
+      enemy_only: true, role: 'wizard' } });
+    check('unknown role rejected', r.status === 400 && /bad role "wizard"/.test(r.data.error), r.data.error);
+
+    // ── tagging a whole set at once (the enemy hub's ≡ Bulk) ──
+    for (const c of [
+      { id: 'roletest_a', display_name: 'RA', cost: 1, attack: 1, health: 2, speed: 2, enemy_only: true },
+      { id: 'roletest_b', display_name: 'RB', cost: 1, attack: 1, health: 2, speed: 2, enemy_only: true, role: 'dps' },
+      { id: 'roletest_king', display_name: 'RK', cost: 0, attack: 1, health: 9, speed: 2, enemy_only: true, is_king: true },
+    ]) await api('/api/game/save', { type: 'card', file: 'roletest_units.json', data: c });
+    const roleIds = ['roletest_a', 'roletest_b', 'roletest_king'];
+    const roleById = id => readSbox('data/cards/roletest_units.json').find(e => e.id === id);
+
+    r = await api('/api/game/bulk', { type: 'card', ids: roleIds, ops: [{ kind: 'set_role', role: 'fodder' }] });
+    check('bulk set_role tags the untagged and retags the tagged, skipping the king',
+      r.status === 200 && r.data.updated === 2 && r.data.skipped === 1, JSON.stringify(r.data));
+    check('role written to both non-kings', roleById('roletest_a').role === 'fodder' && roleById('roletest_b').role === 'fodder');
+    check('a king never receives a role (is_king already reads as captain)', roleById('roletest_king').role === undefined);
+
+    r = await api('/api/game/bulk', { type: 'card', ids: roleIds, ops: [{ kind: 'set_role', role: 'fodder' }] });
+    check('bulk set_role is idempotent', r.data.updated === 0 && r.data.skipped === 3, JSON.stringify(r.data));
+
+    r = await api('/api/game/bulk', { type: 'card', ids: ['roletest_a'], ops: [{ kind: 'set_role', role: '' }] });
+    check('an empty role CLEARS the tag', r.data.updated === 1 && roleById('roletest_a').role === undefined);
+
+    r = await api('/api/game/bulk', { type: 'card', ids: ['roletest_b'], ops: [{ kind: 'set_role', role: 'wizard' }] });
+    check('bulk set_role refuses an unknown tag', r.data.updated === 0 && roleById('roletest_b').role === 'fodder');
+
+    // the game tree must EXPOSE role/is_king — the enemy hub's tags are invisible otherwise
+    r = await api('/api/state');
+    const treeCard = id => r.data.game.card.find(c => c.id === id);
+    check('game tree exposes the role tag', treeCard('roletest_b').role === 'fodder', JSON.stringify(treeCard('roletest_b')));
+    check('game tree exposes is_king', treeCard('roletest_king').is_king === true);
+    check('an untagged unit reports no role', treeCard('roletest_a').role === undefined);
+
     // ── bulk edits across a filtered set (set / pump / grant ability / grant effect) ──
     for (const c of [
       { id: 'bulk_a', display_name: 'A', cost: 3, attack: 2, health: 2, speed: 3 },
