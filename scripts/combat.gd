@@ -424,7 +424,7 @@ func _do_cpu_placement() -> void:
 	if GameData.current_encounter != null:
 		engine.weight_overrides = GameData.current_encounter.survival_weights
 	for action: Dictionary in engine.decide_actions(_enemy_side.hand,
-			_board.player_grid, _board.enemy_grid, _enemy_side.mana):
+			_board.player_grid, _board.enemy_grid, _enemy_side.mana, _player_side.mana):
 		await _execute_enemy_action(action)
 
 

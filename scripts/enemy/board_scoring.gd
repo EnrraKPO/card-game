@@ -5,13 +5,16 @@ extends RefCounted
 # priorities are ways of scoring a board). Static POSITION measurement only — no combat
 # resolution, no concrete "X will attack Y" projection (17a/17b).
 #
-# Two criteria, softly combined (weight × urgency — the deliverable-2 model):
-#   1. DEATH RISK (dominant): Σ survival_weight × P(death). Dead quiet when nothing on the
-#      player's board can hurt anyone; dominates the moment real threat exists, so a dying
-#      low-value unit outweighs marginal protection of a comfortable high-value one.
-#   2. BARE EXPOSURE (small): the deliverable-1 criterion, kept as the quiet second entry so
-#      formation-building never dies — with an empty player board (the CPU places FIRST each
-#      round) every urgency is 0 and this is what still screens the Captain.
+# The criteria, softly combined (weight × urgency — the deliverable-2 model):
+#   1. DEATH RISK (dominant): Σ survival_weight × P(death) — a dying low-value unit
+#      outweighs marginal protection of a comfortable high-value one.
+#   2. EXPECTED HARM (half): Σ survival_weight × harm — being worn down matters even when
+#      the unit survives; only damage past the shield counts, proportional to max health.
+#   3. BARE EXPOSURE (small): the deliverable-1 criterion, kept as the quiet entry so
+#      formation-building never dies even when the threat measurements go silent.
+#   4. BOARD PRESENCE (small, positive): fielded army is worth something.
+# Threat includes the player's OPEN MANA at 1:1 (MANA_THREAT_RATE), so risk and harm are
+# live from turn one — unspent mana is damage the player can still convert.
 #
 # Survival weights are resolved from unit ROLE tags (design decision 18): the unit says what
 # it is (CardData.role), the weight table says what that's worth — stock defaults below,
@@ -36,23 +39,42 @@ const STOCK_SURVIVAL_WEIGHTS := {
 	"default": 0.1,
 }
 # Fodder/default sit LOW deliberately: a screen is only worth standing in the open if the
-# body is cheaper than the exposure it absorbs — priced any higher, screening scores as a
-# net loss and the engine hides everyone in the back (observed; the test suite pins it).
+# body is cheaper than the exposure it absorbs — priced any higher, screening scored as a
+# net loss and the engine hid everyone in the back, on the suite's staged boards.
 #
-# Captain 1.75 is a MEASURED sweet spot (probed 1.0→2.5 on staged boards, 2026-07-29),
-# and the behaviour is threat-dependent and decisive in both directions:
-#   · moderate threat → the king walks fully to the FRONT LINE and absorbs hits for
-#     units it values (the damage-sharing its 11-point pool makes cheap);
-#   · heavy threat → it commits fully to the BACK COLUMN, no mid-column stop.
-# Below ~1.5 the pool reads as the cheapest damage sponge — the scorer parks the king
-# mid-column to soak share, hands the safe back seat to a fodder, and wanders it forward
-# during placements ("takes too much damage, won't commit to retreating"). At 2.0+ the
-# sharing dies entirely and the king never takes a hit. Author outside the stock only
-# with intent: {"captain": 1.0} = a reckless sponge, {"captain": 2.5} = a total coward.
+# ⚠ ALL VALUES HERE ARE PROVISIONAL — NONE HAVE BEEN PLAYTESTED. They were arrived at by
+# walking weights across scenarios staged inside tests/test_enemy_engine.gd (boards this
+# engine's own development invented), not by playing fights. The regression tests pin them,
+# but that is self-consistency, not validation: the suite agrees with the numbers because
+# both were written together. Treat every constant in this file as a first guess awaiting
+# a real playtest, and do not cite the tests as evidence that a value is right.
+#
+# Captain 1.75, the one value with ANY play behind it: at 2.5 the user reported a fight
+# where the king never took a single hit, and said the damage-sharing behaviour (the king
+# absorbing blows so cheaper units survive) is wanted. 1.75 is where the staged sweep put
+# that behaviour back — reading as threat-dependent on those boards: moderate threat and
+# the king moves up to absorb, heavy threat and it commits to the back column. Below ~1.5
+# the sweep showed the king loitering mid-column and a fodder taking the safe back seat.
+# The direction (2.5 is too cowardly) is the user's; the specific number is not.
+# Rough character range, same caveat: {"captain": 1.0} ≈ reckless sponge, 2.5 ≈ coward.
 
 # How loud bare exposure is next to death risk. Small on purpose: it exists to keep the
 # formation instinct alive on quiet boards, not to compete with actual mortal danger.
 const EXPOSURE_CRITERION_WEIGHT := 0.15
+
+# How loud expected HARM is next to death risk (user-mandated 2026-07-29): a unit being
+# worn down matters even when it will not die — the king dropping 15→6 is an important
+# reading, weighted by the same survival table (the king's 15→6 outranks the tank's 15→6).
+# Half the death criterion because harm is the sub-lethal half of the same concern: losing
+# the unit outright must always read worse than any amount of surviving damage. PROVISIONAL
+# like every constant here — no playtest behind the specific value.
+const HARM_CRITERION_WEIGHT := 0.5
+
+# Open player mana counts as threat, 1:1 (user-mandated 2026-07-29): mana the player has
+# not yet spent is damage they can still convert this round — a fresh unit, a spell. Folded
+# into threat_mass, so it reaches BOTH death likelihood and expected harm through the one
+# incoming() measurement. The rate is the initial guess; tune here.
+const MANA_THREAT_RATE := 1.0
 
 # How loud board presence is next to death risk — THE arbitration dial between fielding a
 # new unit and preserving an existing one (a placement gains presence_value × this; a heal
@@ -74,6 +96,9 @@ static func stock(weight_overrides: Dictionary = {}) -> BoardScoring:
 		weights[key] = float(weight_overrides[key])
 	var s := BoardScoring.new()
 	s.criteria.append(DeathRisk.new(weights))
+	var harm_criterion := ExpectedHarm.new(weights)
+	harm_criterion.weight = HARM_CRITERION_WEIGHT
+	s.criteria.append(harm_criterion)
 	var exposure_criterion := ProtectionExposure.new(weights)
 	exposure_criterion.weight = EXPOSURE_CRITERION_WEIGHT
 	s.criteria.append(exposure_criterion)
@@ -142,6 +167,30 @@ class DeathRisk:
 			if dead.owner == 1:
 				risk += BoardScoring.weight_for(dead, survival_weights)
 		return -risk
+
+
+# Σ survival_weight × harm, negated — the sub-lethal companion to DeathRisk: how worn down
+# each unit is expected to end up, regardless of whether it dies. Same walk, same weights;
+# harm() instead of urgency() — the fraction of the unit's HEALTH the incoming share eats
+# after the shield soaks its part (shield damage regenerates, health damage lasts). No
+# graveyard term: a corpse is DeathRisk's charge, and charging it here too would bill the
+# same loss twice.
+class ExpectedHarm:
+	extends Criterion
+
+	var survival_weights: Dictionary = {}
+
+	func _init(weights: Dictionary) -> void:
+		id = "harm"
+		survival_weights = weights
+
+	func score(state: BoardState) -> float:
+		var hurt := 0.0
+		for u: BoardState.UnitState in state.units(1):
+			var w := BoardScoring.weight_for(u, survival_weights)
+			if w != 0.0:
+				hurt += w * BoardScoring.harm(state, u)
+		return -hurt
 
 
 # Σ survival_weight × exposure, negated — the deliverable-1 criterion, now sharing the same
@@ -222,10 +271,14 @@ static func exposure(state: BoardState, r: int, c: int) -> float:
 	return base / (1.0 + cover)
 
 
-# Total damage the player's board can put out per round: Σ attack × strikes over fielded
-# units. Visible stats only — reading the enemy's fielded army is not predicting targeting.
+# Total damage the player can put out per round: Σ attack × strikes over fielded units,
+# PLUS their open mana at MANA_THREAT_RATE — unspent mana is damage not yet given a body.
+# Visible quantities only — reading the enemy's fielded army and mana pool is not
+# predicting targeting. Consequence: with mana in the pot, threat is nonzero even against
+# an empty player board, so death risk and harm speak from turn one instead of leaving
+# formation entirely to the exposure criterion.
 static func threat_mass(state: BoardState) -> float:
-	var total := 0.0
+	var total := float(state.player_mana) * MANA_THREAT_RATE
 	for u: BoardState.UnitState in state.units(0):
 		total += float(u.attack * u.strikes)
 	return total
@@ -252,6 +305,21 @@ static func urgency(state: BoardState, unit: BoardState.UnitState) -> float:
 	if life <= 0:
 		return 1.0
 	return clampf(incoming(state, unit) / float(life), 0.0, 1.0)
+
+
+# The fraction of this unit's HEALTH its incoming share is expected to eat, 0..1. The
+# shield soaks first (shield loss regenerates each round; health loss lasts — and for the
+# king it persists across fights), so only what gets THROUGH counts as harm. Proportional
+# rather than absolute damage points on purpose: it lands on the same 0..1 scale as
+# urgency, so the death and harm criteria stay commensurable, and 9 damage wounds a 15 HP
+# unit far more than a 40 HP one. Distinct from urgency, which reads incoming against
+# REMAINING life to ask "does it die" — this reads against MAX health to ask "how much of
+# the unit is being consumed".
+static func harm(state: BoardState, unit: BoardState.UnitState) -> float:
+	if unit.max_health <= 0:
+		return 0.0
+	var through := maxf(0.0, incoming(state, unit) - float(unit.shield))
+	return clampf(through / float(unit.max_health), 0.0, 1.0)
 
 
 # How much having this unit ON THE BOARD is worth, in "presence" units. v1: its mana cost,

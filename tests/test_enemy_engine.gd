@@ -21,6 +21,8 @@ func run() -> void:
 	_weight_resolution()
 	_threat_and_incoming()
 	_urgency_shape()
+	_harm_shape()
+	_mana_as_threat()
 	_move_enumeration()
 	_apply_move_purity()
 	_scoring_triages_dying_unit()
@@ -308,6 +310,67 @@ func _urgency_shape() -> void:
 			"chip damage against a fat health pool barely registers")
 
 
+# ── Expected harm: sub-lethal damage, weighted by importance ─────────────────────────
+
+func _harm_shape() -> void:
+	var back := BoardData.ROWS - 1
+	var deep := BoardData.COLS - 1
+	# queen ×2 = 10 threat mass, all of it on a lone king (20 max health).
+	var players: Array = [_player("queen", 0, deep), _player("queen", 1, deep)]
+	var state := _state_with([_enemy("king", back, deep)], players)
+	var cap: BoardState.UnitState = state.captain(1)
+	cap.shield = 4
+	check_eq(BoardScoring.harm(state, cap), 0.3,
+			"shield soaks first: (10 incoming − 4 shield) / 20 max health")
+	cap.shield = 15
+	check_eq(BoardScoring.harm(state, cap), 0.0,
+			"a shield bigger than the incoming share means no harm at all")
+
+	# Harm reads MAX health; urgency reads REMAINING life — a wounded unit can be certain
+	# to die (urgency 1) while harm still reports the fraction of the whole unit consumed.
+	cap.shield = 0
+	cap.health = 6
+	check_eq(BoardScoring.urgency(state, cap), 1.0, "10 incoming vs 6 remaining: dead")
+	check_eq(BoardScoring.harm(state, cap), 0.5, "…but harm is 10/20 of the unit, capped by max")
+
+	# The clamp: incoming far past max health reads as the whole unit, not more.
+	var doomed := _state_with([_enemy("fodder_dummy", 0, 0)], players)
+	var fodder: BoardState.UnitState = doomed.units(1)[0]
+	check_eq(BoardScoring.harm(doomed, fodder), 1.0, "harm clamps at the whole unit")
+
+	# The criterion weights harm by the survival table: the same wound on the same body
+	# costs more when the body is the king (1.75) than when it is a tank (0.15).
+	var king_state := _state_with([_enemy("captain_dummy", back, deep)], players)
+	var tank_state := _state_with([_enemy("tank_dummy", back, deep)], players)
+	var king_unit: BoardState.UnitState = king_state.units(1)[0]
+	var tank_unit: BoardState.UnitState = tank_state.units(1)[0]
+	tank_unit.max_health = king_unit.max_health   # normalize the bodies; only the role differs
+	tank_unit.shield = king_unit.shield
+	var harm_criterion := BoardScoring.ExpectedHarm.new(BoardScoring.STOCK_SURVIVAL_WEIGHTS)
+	check(harm_criterion.score(king_state) < harm_criterion.score(tank_state),
+			"the king's 15→6 outranks the tank's 15→6: same harm, weighted by importance")
+
+
+# ── Open mana counts as threat (1:1) ─────────────────────────────────────────────────
+
+func _mana_as_threat() -> void:
+	var back := BoardData.ROWS - 1
+	var deep := BoardData.COLS - 1
+	var grids := _grids([_enemy("king", back, deep)])
+	var state := BoardState.capture(grids[0], grids[1], 5)
+	check_eq(BoardScoring.threat_mass(state), 5.0,
+			"open player mana is threat at 1:1, even against an empty player board")
+	var cap: BoardState.UnitState = state.captain(1)
+	check(BoardScoring.urgency(state, cap) > 0.0,
+			"…so death risk speaks on a boardless turn one")
+	check_eq(state.copy().player_mana, 5, "copies carry the mana snapshot")
+
+	# knight ×1 (attack 2) + 3 open mana: fielded threat and mana threat stack.
+	var mixed_grids := _grids([_enemy("king", back, deep)], [_player("knight", 0, deep)])
+	var mixed := BoardState.capture(mixed_grids[0], mixed_grids[1], 3)
+	check_eq(BoardScoring.threat_mass(mixed), 5.0, "attack × strikes + mana, one pot")
+
+
 # ── Moves: enumeration + apply ───────────────────────────────────────────────────────
 
 func _move_enumeration() -> void:
@@ -435,8 +498,8 @@ func _engine_king_retreats_fully() -> void:
 func _engine_king_shares_moderate_threat() -> void:
 	var back := BoardData.ROWS - 1
 	var deep := BoardData.COLS - 1
-	# The other half of the stock captain's character (weight 1.75 is a measured window —
-	# see STOCK_SURVIVAL_WEIGHTS): against MODERATE threat the king leaves its safe corner
+	# The other half of the stock captain's character (weight 1.75 is PROVISIONAL and
+	# untested in play — see STOCK_SURVIVAL_WEIGHTS): against MODERATE threat the king leaves its safe corner
 	# and walks to the front line, spending its fat pool so valued fodders stop dying.
 	# Against queens the same board makes it stay home (the retreat test covers commitment).
 	var captain := _enemy("captain_dummy", back, deep)

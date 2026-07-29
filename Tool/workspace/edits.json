@@ -10274,7 +10274,7 @@
       "enemy_only": true
     },
     "at": "2026-07-29T06:01:07.306Z",
-    "fileHash": "61146693baee357632fff318757659863b5171d8"
+    "fileHash": "650591230389f45a90dfbdd5eafb783febc64c87"
   },
   "card/dps_dummy": {
     "file": "test_dummies_units.json",
@@ -10288,7 +10288,7 @@
       "enemy_only": true
     },
     "at": "2026-07-29T06:01:16.395Z",
-    "fileHash": "61146693baee357632fff318757659863b5171d8"
+    "fileHash": "650591230389f45a90dfbdd5eafb783febc64c87"
   },
   "card/fodder_dummy": {
     "file": "test_dummies_units.json",
@@ -10302,7 +10302,7 @@
       "enemy_only": true
     },
     "at": "2026-07-29T06:01:21.841Z",
-    "fileHash": "61146693baee357632fff318757659863b5171d8"
+    "fileHash": "650591230389f45a90dfbdd5eafb783febc64c87"
   },
   "card/support_dummy": {
     "file": "test_dummies_units.json",
@@ -10320,6 +10320,69 @@
       "enemy_only": true
     },
     "at": "2026-07-29T06:01:25.565Z",
-    "fileHash": "61146693baee357632fff318757659863b5171d8"
+    "fileHash": "650591230389f45a90dfbdd5eafb783febc64c87"
+  },
+  "card/captain_dummy": {
+    "file": "test_dummies_units.json",
+    "original": {
+      "id": "captain_dummy",
+      "tribe": "dummy",
+      "cost": 0,
+      "attack": 1,
+      "health": 10,
+      "speed": 2,
+      "shield": 1,
+      "is_king": true,
+      "enemy_only": true
+    },
+    "at": "2026-07-29T06:32:07.868Z",
+    "fileHash": "650591230389f45a90dfbdd5eafb783febc64c87"
+  },
+  "encounter/test_dummies": {
+    "file": "test_dummies.json",
+    "original": {
+      "id": "test_dummies",
+      "node_type": "test",
+      "weight": 1,
+      "enemy_king": "captain_dummy",
+      "enemy_pool": [
+        {
+          "id": "fodder_dummy",
+          "weight": 3
+        },
+        {
+          "id": "tank_dummy",
+          "weight": 2
+        },
+        {
+          "id": "dps_dummy",
+          "weight": 2
+        },
+        {
+          "id": "support_dummy",
+          "weight": 2
+        },
+        {
+          "id": "burst_damage_dummy",
+          "weight": 2
+        },
+        {
+          "id": "dummy_group_heal",
+          "weight": 1
+        }
+      ],
+      "pick_count": [
+        8,
+        10
+      ],
+      "gold_reward": [
+        0,
+        0
+      ],
+      "ai": "default",
+      "reward_pool": "default"
+    },
+    "at": "2026-07-29T15:11:42.922Z",
+    "fileHash": "1ba9b6b1690de084c1c60f8e3b0eb54f4ad7ea66"
   }
 }

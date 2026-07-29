@@ -48,9 +48,10 @@ func _init(rng: RandomNumberGenerator = null) -> void:
 # which is decision 16's restraint arriving for free). Termination is inductive per kind:
 # placements and casts consume the pool/mana, abilities spend mana or the holder's
 # simulated tap, and moves are once-per-unit — every accepted candidate shrinks something.
-func decide_actions(hand: Array, player_grid: Array, enemy_grid: Array, mana: int) -> Array:
+func decide_actions(hand: Array, player_grid: Array, enemy_grid: Array, mana: int,
+		player_mana: int = 0) -> Array:
 	var scoring := BoardScoring.stock(weight_overrides)
-	var state := BoardState.capture(player_grid, enemy_grid)
+	var state := BoardState.capture(player_grid, enemy_grid, player_mana)
 	var pool: Array = hand.duplicate()
 	var remaining := mana
 	var moved: Dictionary = {}   # CardInstance -> true once repositioned this turn

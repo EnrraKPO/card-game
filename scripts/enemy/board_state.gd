@@ -15,6 +15,12 @@ extends RefCounted
 var player_units: Array = []
 var enemy_units: Array = []
 
+# The player's unspent mana at planning time. Open mana is potential damage the player can
+# still convert this round (a fresh unit, a spell), so scoring folds it into the threat
+# mass at BoardScoring.MANA_THREAT_RATE. Snapshot data like everything else here — the
+# engine never spends or mutates it.
+var player_mana: int = 0
+
 # Units that DIED during this simulation (SimEffects sweeps them off the grid into here).
 # They exist because a board is not a complete account of what a candidate did: every
 # negative criterion sums over living units, so a unit that simply vanished would take its
@@ -92,10 +98,12 @@ class UnitState:
 
 # Snapshots the live grids ([row][col] -> CardInstance or null). Takes plain grids, not
 # the CombatBoard control — the engine never sees a scene node.
-static func capture(live_player_grid: Array, live_enemy_grid: Array) -> BoardState:
+static func capture(live_player_grid: Array, live_enemy_grid: Array,
+		p_player_mana: int = 0) -> BoardState:
 	var s := BoardState.new()
 	s.player_units = _capture_grid(live_player_grid)
 	s.enemy_units = _capture_grid(live_enemy_grid)
+	s.player_mana = p_player_mana
 	return s
 
 
@@ -132,6 +140,7 @@ func copy() -> BoardState:
 	var s := BoardState.new()
 	s.player_units = _copy_grid(player_units)
 	s.enemy_units = _copy_grid(enemy_units)
+	s.player_mana = player_mana
 	# A fresh list of the same corpses: nothing ever mutates a dead unit, so the entries
 	# are shared while the LIST stays per-copy (appending to one never reaches another).
 	s.graveyard = graveyard.duplicate()

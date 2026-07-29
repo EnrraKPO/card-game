@@ -1,18 +1,49 @@
 {
-  "id": "test_dummies",
-  "node_type": "test",
-  "weight": 1,
-  "enemy_king": "captain_dummy",
-  "enemy_pool": [
-    { "id": "fodder_dummy", "weight": 3 },
-    { "id": "tank_dummy", "weight": 2 },
-    { "id": "dps_dummy", "weight": 2 },
-    { "id": "support_dummy", "weight": 2 },
-    { "id": "burst_damage_dummy", "weight": 2 },
-    { "id": "dummy_group_heal", "weight": 1 }
-  ],
-  "pick_count": [8, 10],
-  "gold_reward": [0, 0],
-  "ai": "default",
-  "reward_pool": "default"
+	"id": "test_dummies",
+	"node_type": "test",
+	"min_floor": 0,
+	"max_floor": 999,
+	"weight": 1,
+	"enemy_king": "captain_dummy",
+	"enemy_pool": [
+		{
+			"id": "fodder_dummy",
+			"weight": 3
+		},
+		{
+			"id": "tank_dummy",
+			"weight": 2
+		},
+		{
+			"id": "dps_dummy",
+			"weight": 2
+		},
+		{
+			"id": "support_dummy",
+			"weight": 2
+		},
+		{
+			"id": "burst_damage_dummy",
+			"weight": 2
+		},
+		{
+			"id": "dummy_group_heal",
+			"weight": 1
+		}
+	],
+	"pick_count": [
+		8,
+		10
+	],
+	"exp_reward": 1,
+	"ai": "default",
+	"reward_pool": "default",
+	"survival_weights": {
+		"captain": 1,
+		"fodder": 0.2,
+		"tank": 0.2,
+		"dps": 0.4,
+		"support": 0.4,
+		"burst": 0.5
+	}
 }
