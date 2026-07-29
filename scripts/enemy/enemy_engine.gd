@@ -18,6 +18,10 @@ enum Action { PLACE, MOVE, CAST, GENERATE }
 # Ranking treats scores within this delta as tied (random tie-break among them).
 const TIE_EPSILON := 0.0001
 
+# The encounter's role→weight overrides for the survival-weight table (see
+# EncounterData.survival_weights / BoardScoring.stock). Empty = stock behaviour.
+var weight_overrides: Dictionary = {}
+
 var _rng: RandomNumberGenerator
 
 
@@ -33,7 +37,7 @@ func _init(rng: RandomNumberGenerator = null) -> void:
 # working state, repeat until nothing is affordable or placeable. Greedy one-at-a-time is
 # the design's open question (misses two-move combos) — deliberate for now.
 func decide_actions(hand: Array, player_grid: Array, enemy_grid: Array, mana: int) -> Array:
-	var scoring := BoardScoring.stock()
+	var scoring := BoardScoring.stock(weight_overrides)
 	var state := BoardState.capture(player_grid, enemy_grid)
 	var pool: Array = hand.duplicate()
 	var remaining := mana

@@ -18,6 +18,10 @@ func run() -> void:
 	_apply_purity()
 	_engine_screens_captain()
 	_engine_determinism()
+	_weight_resolution()
+	_threat_and_incoming()
+	_urgency_shape()
+	_engine_triages_dying_unit()
 
 
 func _enemy(card_id: String, r: int, c: int) -> CardInstance:
@@ -28,8 +32,15 @@ func _enemy(card_id: String, r: int, c: int) -> CardInstance:
 	return inst
 
 
-# A live-shaped grid pair with the given enemy units standing on it.
-func _grids(enemy_insts: Array) -> Array:
+func _player(card_id: String, r: int, c: int) -> CardInstance:
+	var inst := unit(card_id)
+	inst.row = r
+	inst.col = c
+	return inst
+
+
+# A live-shaped grid pair with the given units standing on it.
+func _grids(enemy_insts: Array, player_insts: Array = []) -> Array:
 	var player_grid: Array = []
 	var enemy_grid: Array = []
 	for _r in BoardData.ROWS:
@@ -42,6 +53,8 @@ func _grids(enemy_insts: Array) -> Array:
 		enemy_grid.append(er)
 	for inst: CardInstance in enemy_insts:
 		enemy_grid[inst.row][inst.col] = inst
+	for inst: CardInstance in player_insts:
+		player_grid[inst.row][inst.col] = inst
 	return [player_grid, enemy_grid]
 
 
@@ -81,8 +94,8 @@ func _state_copy_independence() -> void:
 
 # ── Exposure (v1: geometry + own-side occupancy) ─────────────────────────────────────
 
-func _state_with(enemy_insts: Array) -> BoardState:
-	var grids := _grids(enemy_insts)
+func _state_with(enemy_insts: Array, player_insts: Array = []) -> BoardState:
+	var grids := _grids(enemy_insts, player_insts)
 	return BoardState.capture(grids[0], grids[1])
 
 
@@ -115,9 +128,12 @@ func _scoring_prefers_screens() -> void:
 	var screened := _state_with([_enemy("king", back, deep), _enemy("pawn", back, 0)])
 	check(scoring.score(screened) > scoring.score(lone),
 			"stock scoring rates a screened Captain above a naked one")
+	# The deliverable-1 configuration, pinned explicitly via an override: with untagged
+	# units weighted 0, a captain-less board scores flat.
+	var captain_only_scoring := BoardScoring.stock({"default": 0.0})
 	var pawn_only := _state_with([_enemy("pawn", back, 0)])
-	check_eq(scoring.score(pawn_only), 0.0,
-			"day-one weights ignore non-captain units (default weight 0)")
+	check_eq(captain_only_scoring.score(pawn_only), 0.0,
+			"a default-weight override of 0 makes untagged units invisible to scoring")
 
 
 # ── Enumeration ──────────────────────────────────────────────────────────────────────
@@ -181,7 +197,12 @@ func _engine_screens_captain() -> void:
 	var grids := _grids([_enemy("king", back, deep)])
 	var hand: Array = [unit("pawn"), unit("pawn")]
 
-	var actions := _seeded_engine().decide_actions(hand, grids[0], grids[1], 10)
+	# The deliverable-1 observable under its original weight table (captain-only), pinned via
+	# override — under stock weights untagged pawns are worth something themselves, so their
+	# own safety legitimately competes with pure captain-screening.
+	var engine := _seeded_engine()
+	engine.weight_overrides = {"default": 0.0}
+	var actions := engine.decide_actions(hand, grids[0], grids[1], 10)
 	check_eq(actions.size(), 2, "both affordable units get placed")
 	for action: Dictionary in actions:
 		check_eq(int(action["type"]), EnemyEngine.Action.PLACE, "day one emits placements")
@@ -200,3 +221,91 @@ func _engine_determinism() -> void:
 		var same: bool = a[i]["inst"] == b[i]["inst"] \
 				and int(a[i]["row"]) == int(b[i]["row"]) and int(a[i]["col"]) == int(b[i]["col"])
 		check(same, "seeded runs pick identical action %d" % i)
+
+
+# ── Survival weights (role tags → weight table) ──────────────────────────────────────
+
+func _weight_resolution() -> void:
+	var weights: Dictionary = BoardScoring.STOCK_SURVIVAL_WEIGHTS
+	var fodder := BoardState.UnitState.from_instance(_enemy("fodder_dummy", 0, 0))
+	check_eq(BoardScoring.weight_for(fodder, weights), 0.05, "a role tag resolves its table entry")
+	var king := BoardState.UnitState.from_instance(_enemy("king", 2, 3))
+	check_eq(BoardScoring.weight_for(king, weights), 1.0, "is_king resolves as the captain entry")
+	var untagged := BoardState.UnitState.from_instance(_enemy("pawn", 0, 1))
+	check_eq(BoardScoring.weight_for(untagged, weights), 0.1, "no role falls to the default entry")
+	check_eq(BoardScoring.weight_for(untagged, {"pawn": 7.0}), 7.0, "a card-id entry wins over everything")
+	# The per-event override layer: stock() merges encounter entries over the stock table.
+	var overridden := BoardScoring.stock({"fodder": 0.8})
+	var dr: BoardScoring.DeathRisk = overridden.criteria[0]
+	check_eq(BoardScoring.weight_for(fodder, dr.survival_weights), 0.8,
+			"an encounter override rewrites one role's worth, stock fills the rest")
+	check_eq(BoardScoring.weight_for(king, dr.survival_weights), 1.0,
+			"…without touching un-overridden entries")
+
+
+# ── The measurement vocabulary: threat mass, incoming, urgency ──────────────────────
+
+func _threat_and_incoming() -> void:
+	var back := BoardData.ROWS - 1
+	var deep := BoardData.COLS - 1
+	# knight fixture: attack 2, strikes 1 ×2 units → threat mass 4.
+	var players: Array = [_player("knight", 0, deep), _player("knight", 1, deep)]
+	var lone := _state_with([_enemy("king", back, deep)], players)
+	check_eq(BoardScoring.threat_mass(lone), 4.0, "threat mass sums player attack × strikes")
+
+	var cap: BoardState.UnitState = lone.captain(1)
+	check_eq(BoardScoring.incoming(lone, cap), 4.0,
+			"a lone unit absorbs the entire threat mass (the pile-on case)")
+
+	var screened := _state_with(
+			[_enemy("king", back, deep), _enemy("pawn", back, 0)], players)
+	var s_cap: BoardState.UnitState = screened.captain(1)
+	check(BoardScoring.incoming(screened, s_cap) < 4.0,
+			"a screen claims its exposure share, so the screened unit's incoming drops")
+
+	var quiet := _state_with([_enemy("king", back, deep)])
+	var q_cap: BoardState.UnitState = quiet.captain(1)
+	check_eq(BoardScoring.incoming(quiet, q_cap), 0.0, "an empty player board projects no damage")
+	check_eq(BoardScoring.urgency(quiet, q_cap), 0.0, "…so nothing is urgent")
+
+
+func _urgency_shape() -> void:
+	var back := BoardData.ROWS - 1
+	var deep := BoardData.COLS - 1
+	# queen ×2 = 10 threat mass against a lone 2 HP fodder: certain death, clamped at 1.
+	var players: Array = [_player("queen", 0, deep), _player("queen", 1, deep)]
+	var doomed := _state_with([_enemy("fodder_dummy", 0, 0)], players)
+	var fodder: BoardState.UnitState = doomed.units(1)[0]
+	check_eq(BoardScoring.urgency(doomed, fodder), 1.0,
+			"incoming far past remaining life clamps at certain death")
+
+	var sturdy := _state_with([_enemy("king", back, deep)], [_player("pawn", 0, deep)])
+	var cap: BoardState.UnitState = sturdy.captain(1)
+	check(BoardScoring.urgency(sturdy, cap) < 0.1,
+			"chip damage against a fat health pool barely registers")
+
+
+# ── The deliverable-2 observable: triage beats marginal captain cover ────────────────
+
+func _engine_triages_dying_unit() -> void:
+	var back := BoardData.ROWS - 1
+	var deep := BoardData.COLS - 1
+	# The Captain sits screened and comfortable; a wounded support (weight 0.5) stands
+	# exposed in the far lane; modest real threat is on the player's board. The engine
+	# holds one cheap fodder (weight 0.1).
+	var support := _enemy("support_dummy", 0, 1)
+	support.current_health = 2
+	var enemies: Array = [
+		_enemy("captain_dummy", back, deep),
+		_enemy("pawn", back, 0),   # the Captain's same-lane screen, already standing
+		support,
+	]
+	var players: Array = [_player("knight", 0, deep)]
+	var grids := _grids(enemies, players)
+
+	var actions := _seeded_engine().decide_actions(
+			[unit("fodder_dummy")], grids[0], grids[1], 5)
+	check_eq(actions.size(), 1, "the one affordable unit gets placed")
+	var action: Dictionary = actions[0]
+	check_eq(int(action["row"]), 0, "the fodder screens the dying support's lane")
+	check_eq(int(action["col"]), 0, "…standing in front of it, not beside the cosy Captain")

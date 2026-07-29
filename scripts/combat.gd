@@ -416,6 +416,8 @@ func _do_cpu_placement() -> void:
 	# EnemyAI placeholder is no longer consulted. Day one it emits placements only — spell,
 	# ability and move planning return as its candidate generators widen.
 	var engine := EnemyEngine.new()
+	if GameData.current_encounter != null:
+		engine.weight_overrides = GameData.current_encounter.survival_weights
 	for action: Dictionary in engine.decide_actions(_enemy_side.hand,
 			_board.player_grid, _board.enemy_grid, _enemy_side.mana):
 		await _execute_enemy_action(action)

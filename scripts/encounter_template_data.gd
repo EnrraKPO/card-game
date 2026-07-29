@@ -20,6 +20,9 @@ var mineral_reward: Array = [0, 0]   # [min, max] authored Magic Mineral (defaul
 var exp_reward: int = 1           # profile experience for winning this fight (special fights author more)
 var ai: String = "default"
 var reward_pool: String = "default"
+# Optional role→weight entries layered over the enemy engine's stock survival-weight table
+# (see BoardScoring / EncounterData.survival_weights).
+var survival_weights: Dictionary = {}
 # Chance (0..1) this fight also offers a relic on the reward screen, alongside the card pick.
 var relic_reward_chance: float = 0.0
 
@@ -110,6 +113,7 @@ static func _from_dict(d: Dictionary) -> EncounterTemplateData:
 	t.power_bonus = float(d.get("power_bonus", 0.0))
 	t.reward_pool = d.get("reward_pool", "default")
 	t.relic_reward_chance = float(d.get("relic_reward", 0.0))
+	t.survival_weights = d.get("survival_weights", {})
 	t.exp_reward  = int(d.get("exp_reward", 1))
 	var pc: Array = d.get("pick_count", [1, 1])
 	t.pick_count  = [pc[0], pc[0] if pc.size() < 2 else pc[1]]
@@ -160,6 +164,7 @@ func instantiate(rng: RandomNumberGenerator, power: float = 0.0) -> EncounterDat
 	enc.type = _encounter_data_type(node_type)
 	enc.ai   = EnemyAI.from_key(ai)
 	enc.enemy_king = enemy_king
+	enc.survival_weights = survival_weights.duplicate()
 	enc.power = maxf(0.0, power + power_bonus)
 
 	# Deck size and pool composition both ramp with power: a bigger deck (more sustain) drawn
