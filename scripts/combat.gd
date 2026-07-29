@@ -53,6 +53,10 @@ var _relic_tray: RelicTray   # read-only vertical relic strip on the screen's le
 							  # _build_relic_strip); a firing relic glints its chip
 var _presenter: CombatPresenter   # the cascade's presentation surface — LivePresenter here;
 								   # the null base class in a simulation (see CombatPresenter)
+var _world: CombatWorld           # THE cohesive rules-state context: the board's grids
+								   # (aliased), the sides, run modifiers, world policy
+var _cascade: CombatCascade       # the event cascade, hosted on (world, presenter); the
+								   # _broadcast/_fire/… methods below are delegating wrappers
 var _consumable_busy := false   # a consumable's use is resolving — no second use may start
 								 # under its awaits (the chips' usability check reads this)
 var _done_btn: Button        # the chunky vertical "Ready" button (right of the board)
@@ -150,6 +154,19 @@ func _ready() -> void:
 	# tray is fetched through a Callable because it is built after this wiring block.
 	_presenter = LivePresenter.make(_animator, get_tree(), _board,
 			func() -> RelicTray: return _relic_tray, _king_fall, _fade_out)
+	# The live WORLD: the one cohesive context the rules read (COMBAT_DECOUPLING_REFACTOR.md).
+	# Its grids ARE the board's grid arrays — one state, two vantage points — and the board
+	# gets the world back for the state halves it forwards (retire, contexts, enumeration).
+	_world = CombatWorld.new()
+	_world.player_grid = _board.player_grid
+	_world.enemy_grid = _board.enemy_grid
+	_world.player_side = _player_side
+	_world.enemy_side = _enemy_side
+	_world.modifiers = GameData.current_modifiers
+	_world.rewards_live = GameData.current_run != null   # the old _rewards_live() predicate
+	_world.view_board = _board
+	_board.world = _world
+	_cascade = CombatCascade.make(_world, _presenter)
 
 	_spell_caster.setup(_board, _animator, func() -> int: return _player_side.mana, _interaction)
 	_hand.bind_side(_player_side)
@@ -194,8 +211,9 @@ func _ready() -> void:
 
 	_board.can_autocast = _spell_caster.autocast_drop_ok
 	# Every death, from any cause, pays its bounty through this one wire (see
-	# CombatBoard.unit_retired).
-	_board.unit_retired.connect(_pay_bounty)
+	# CombatWorld.unit_retired — a world copy has no subscribers, so simulated deaths
+	# structurally cannot pay).
+	_world.unit_retired.connect(_pay_bounty)
 	_board.unit_placed.connect(_on_board_unit_placed)
 	_board.slot_pressed.connect(_on_board_slot_pressed)
 	_board.autocast_dropped.connect(_on_autocast_dropped)
@@ -781,20 +799,7 @@ func _perform_strike(attacker: CardInstance, target: CardInstance) -> void:
 # the fade ends). The single death-presentation path — every site that used to hand-roll
 # "await the death VFX, then remove_card" now calls this.
 func _bury(inst: CardInstance) -> void:
-	# State first, and only state: the unit is out of play this instant. The card is left standing
-	# in its own slot — same parent, same anchors, same scale — and simply fades where it stood.
-	# Nothing is reparented and nothing about the board is waiting on the fade.
-	var corpse := _board.retire_unit(inst)
-	if corpse == null:
-		return
-	# An enemy King does not die like a unit — it FALLS, and leaves the fight's reward behind
-	# where it stood (see _king_fall). Its own send-off replaces the plain fade below.
-	if inst.owner == 1 and inst.data != null and inst.data.is_king and _rewards_live():
-		await _presenter.king_fall(inst, corpse)
-		return
-	# A death is a BEAT like any other, handed off through the overlap dial: at Flowing combat
-	# carries on while the corpse is still fading, at Step by step it waits the fade out in full.
-	await _presenter.unit_fade(inst, corpse)
+	await _cascade.bury(inst)
 
 
 # ── Kill bounties: what a fallen enemy pays, the moment it falls ───────────────────
@@ -1040,47 +1045,15 @@ func _apply_attack_damage(attacker: CardInstance, target: CardInstance, t_card: 
 # ride the result dicts into play_results.)
 
 
-# Builds a dispatch context for one holder reacting to an event. The context carries the
-# legacy single-subject view (SUBJECT/ATTACKER/ATTACK_TARGET targeting still read it); the
-# activation decision itself lives entirely in each effect's TriggerResolver.
-func _event_ctx(event: GameEvent, holder: CardInstance) -> EffectContext:
-	var ctx := _board.make_context(holder)
-	ctx.subject = event.subject()
-	if event.id == &"attack" or event.id == &"crit":
-		ctx.attack_target = event.destination   # attack/crit: subject is the striker, expose who got hit
-	elif event.id == &"struck" or event.id == &"dodge":
-		ctx.attacker = event.origin             # struck/dodge: the unit that struck (the dodger is the subject)
-	return ctx
-
-
-# The per-holder dispatch-and-present point: resolves `event` for `holder` in board context AND
-# forwards the results to the animator, inseparably — a dispatch path shows its results BY
-# CONSTRUCTION, not by each call site remembering to forward them.
+# The cascade proper — _broadcast/_resolve_event/_fire/_fire_run_level/_emit_kill/_bury —
+# lives on CombatCascade now, hosted on (_world, _presenter); these wrappers keep every
+# combat call site (the attack loop, casts, the debug captain-kill) reading as before.
 func _fire(event: GameEvent, holder: CardInstance) -> void:
-	var ctx := _event_ctx(event, holder)
-	# Walk the holder's containers one at a time — its card, then each status — cueing each before its
-	# (container-blind) effects land: card glint / pip glint → that container's effect VFX.
-	for group: Dictionary in EffectSystem.trigger_grouped(event, holder, ctx):
-		var gres: Array = group["results"]
-		var sid: String = group["status_id"]
-		await _presenter.show_effect_results(gres, holder, sid)
+	await _cascade.fire(event, holder)
 
 
-# Run-level (relic/upgrade) effects for an event, fired ONCE from the perspective of the
-# event's subject, grouped by their owning item: glint the owner's chip (relics only for now)
-# before its effects' VFX, so a relic proc reads as cause -> effect.
 func _fire_run_level(event: GameEvent) -> void:
-	var persp := event.subject()
-	if persp == null:
-		return
-	var ctx := _event_ctx(event, persp)
-	for grp: Dictionary in EffectSystem.trigger_global_grouped(event, ctx):
-		var rres: Array = grp["results"]
-		if rres.is_empty():
-			continue
-		if str(grp["owner_kind"]) == "relic":
-			await _presenter.relic_glint(str(grp["owner_id"]))
-		await _presenter.show_effect_results(rres, persp, "", false)
+	await _cascade.fire_run_level(event)
 
 
 # A consumable relic's use (the tray chip's completed safety hold — see ConsumableChip): SPEND
@@ -1128,73 +1101,16 @@ func _use_consumable(relic_id: String) -> void:
 		_handle_combat_end()
 
 
-# BROADCASTS one event to the whole board: the participants first (the origin fires even when
-# it is dead-but-on-board — a dying unit's own death effects), then every other alive unit as
-# a watcher, then the run-level tier once. Any watcher a proc kills goes through the normal
-# death path (itself a broadcast). Legacy content is self-gated by its parsed resolver
-# conditions, so only participants ever produce results from it — bystander watching is the
-# new capability this opens (e.g. "whenever a darkness pawn dies…" on a fielded card).
-# Fires the `kill` event for a just-dead unit, immediately before its `death` — reading the
-# provenance the Resolver stamped at the fatal blow (CardInstance.killed_by_*). `kill` names
-# the killer (a unit for attacks; the cause id, e.g. "poison", otherwise) so "when I kill" and
-# "when a unit dies from poison" are authorable; `death` stays the corpse's own perspective.
-# A death with no recorded cause (killed_by_channel == "") fires `death` only.
 func _emit_kill(corpse: CardInstance) -> void:
-	if corpse.killed_by_channel == &"":
-		return
-	await _broadcast(GameEvent.kill(corpse.killed_by_unit, corpse,
-			corpse.killed_by_channel, corpse.killed_by_cause))
+	await _cascade.emit_kill(corpse)
 
 
 func _broadcast(event: GameEvent, run_level: bool = true) -> void:
-	var holders: Array = []
-	if event.origin != null:
-		holders.append(event.origin)
-	if event.destination != null and not holders.has(event.destination):
-		holders.append(event.destination)
-	for u: CardInstance in _board.get_all_units():
-		if u.is_alive() and not holders.has(u):
-			holders.append(u)
-	for holder: CardInstance in holders:
-		var was_alive := holder.is_alive()
-		await _fire(event, holder)
-		# Swept only if this broadcast's procs killed it; a participant that ENTERED dead (the
-		# struck unit after a lethal hit) is the call site's death to handle, not ours.
-		if was_alive and not holder.is_alive() and event.id != &"death":
-			await _emit_kill(holder)
-			await _broadcast(GameEvent.make(&"death", holder))
-			await _bury(holder)
-	if run_level:
-		await _fire_run_level(event)
+	await _cascade.broadcast(event, run_level)
 
 
-# The entry point for a combat PHASE moment (turn boundaries, a unit's activation): fans the
-# moment to every alive holder, then runs the decay tier. A phase moment with no subject is
-# each holder's OWN moment (the event fans per-holder, origin = the holder), so "everyone's
-# turn-end effects fire" stays true; a subject moment (activation) is one event about that
-# unit which every holder may watch. Two ordered tiers:
-#   1. Effects PROC — each holder's resolver decides if it reacts; a holder a proc kills is
-#      swept through the normal death path.
-#   2. Statuses DECAY — self-scoped: a subject event decays only the subject's statuses; a
-#      phase event decays everyone's. A second tier so all effects land first.
 func _resolve_event(event_id: StringName, subject: CardInstance = null) -> void:
-	var units := _board.get_all_units()
-	for holder: CardInstance in units:
-		if not holder.is_alive():
-			continue
-		var ev := GameEvent.make(event_id, subject if subject != null else holder)
-		# Per-holder fan-out: no run-level tier here (phase moments never fed it, and firing it
-		# per holder would multiply it).
-		await _fire(ev, holder)
-		if not holder.is_alive():
-			await _emit_kill(holder)
-			await _broadcast(GameEvent.make(&"death", holder))
-			await _bury(holder)
-	for holder: CardInstance in units:
-		if subject == null or subject == holder:
-			StatusEngine.advance(holder, event_id)
-	_board.cleanup_effect_deaths()
-	_presenter.board_refresh()
+	await _cascade.resolve_event(event_id, subject)
 
 
 # The player's King carries its health across the whole run, so it enters each

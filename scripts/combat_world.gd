@@ -18,10 +18,22 @@ extends RefCounted
 # outcomes). A future "blind CPU" policy is just a copy constructed with an empty modifiers
 # ref; the mechanism allows it, nothing implements it today (aligned 2026-07-29).
 
+# THE "a unit just left play" moment — emitted by retire(), which every removal path funnels
+# through (the presented death in the cascade's bury AND the board's silent effect-kill sweep).
+# Anything owed for a death hangs off this one wire: combat pays kill bounties here. A COPY
+# starts with no subscribers (signals don't copy), so a simulated death structurally cannot
+# pay — the rewards_live flag below is the explicit policy on top of that structure.
+signal unit_retired(inst: CardInstance)
+
 var player_grid: Array = []   # [row][col] -> CardInstance or null
 var enemy_grid:  Array = []   # [row][col] -> CardInstance or null
 var player_side: CombatSide = null
 var enemy_side:  CombatSide = null
+
+# TRANSITIONAL (deleted by Step 4): the live board view, so make_context can still hand
+# CUSTOM hooks / spawn payloads their board_node while EffectContext carries scene types.
+# Null in copies and headless worlds — those contexts simply carry no board access yet.
+var view_board: CombatBoard = null
 
 # The run-level (relic/upgrade) effect collection — immutable environment, shared into
 # copies. Today read globally as GameData.current_modifiers by run-level dispatch; Step 3
@@ -56,6 +68,51 @@ func side(side_owner: int) -> CombatSide:
 
 func grid_of(side_owner: int) -> Array:
 	return player_grid if side_owner == 0 else enemy_grid
+
+
+# Every unit on either grid, reading order (row-major, player cell before enemy cell) —
+# moved verbatim from CombatBoard, which now forwards here: enumeration of the world is
+# the world's own business.
+func get_all_units() -> Array:
+	var all: Array = []
+	for r in BoardData.ROWS:
+		for c in BoardData.COLS:
+			if player_grid[r][c] != null:
+				all.append(player_grid[r][c])
+			if enemy_grid[r][c] != null:
+				all.append(enemy_grid[r][c])
+	return all
+
+
+# A unit leaves PLAY — state only, and instantly. Targeting, king checks and the next
+# attacker stop seeing it the moment this returns; whoever is presenting the death disposes
+# of its card afterwards (the view half stayed on CombatBoard). Emits unit_retired while
+# any card view is still standing, so listeners may read where it stood.
+func retire(inst: CardInstance) -> void:
+	var grid: Array = player_grid if inst.owner == 0 else enemy_grid
+	var grid_row: Array = grid[inst.row]
+	grid_row[inst.col] = null
+	unit_retired.emit(inst)
+
+
+# Sweeps effect-kills and drains the spawn queue. TRANSITIONAL forward (Step 4 moves the
+# logic here with the spawn queue): the live board owns the intertwined state+view sweep;
+# a world without a view has nothing to sweep yet.
+func cleanup_deaths() -> void:
+	if view_board != null:
+		view_board.cleanup_effect_deaths()
+
+
+# The one context builder (moved from CombatBoard, which now forwards here): grids + sides
+# so side targets always resolve, the world's OWN modifier set for run-scope dispatch, and
+# — transitionally — the view board for CUSTOM hooks/spawns (see view_board above).
+func make_context(src: CardInstance) -> EffectContext:
+	var ctx := EffectContext.make(src, player_grid, enemy_grid)
+	ctx.player_side = player_side
+	ctx.enemy_side = enemy_side
+	ctx.run_modifiers = modifiers
+	ctx.board_node = view_board
+	return ctx
 
 
 # The complete snapshot: one identity remap spans grids and sides, so a unit referenced

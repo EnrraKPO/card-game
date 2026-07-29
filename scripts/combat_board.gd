@@ -8,16 +8,12 @@ signal slot_pressed(slot: SlotUI)
 # Emitted when an AUTOCAST action commits on a valid occupied slot; combat routes it to
 # SpellCaster.activate_autocast. The dragged unit never moves.
 signal autocast_dropped(slot: SlotUI, card_ui: CardUI)
-# THE single "a unit just left the board" moment — emitted by retire_unit, which every removal
-# path funnels through (the presented death in Combat._bury AND the silent sweep of effect
-# kills). Anything owed for a death hangs off this rather than off one of the two paths: combat
-# pays kill bounties here, so a unit killed by splash damage pays exactly like one cut down in
-# an attack. The unit's card is STILL in its slot when this fires (drop_card_view has not run),
-# so a listener can read where it stood.
-signal unit_retired(inst: CardInstance)
-
 var player_grid: Array = []   # [row][col] -> CardInstance or null
 var enemy_grid:  Array = []   # [row][col] -> CardInstance or null
+# The cohesive rules-state context these grids belong to (CombatWorld — its grid arrays ARE
+# the two above, aliased at setup). Retirement state and the unit_retired bounty wire live
+# on IT now; the board keeps the view halves and forwards (see retire_unit / make_context).
+var world: CombatWorld = null
 var player_slots: Array = []  # [row][col] -> SlotUI
 var enemy_slots:  Array = []  # [row][col] -> SlotUI
 
@@ -71,17 +67,10 @@ var _hover_live: bool = false
 var _button_phantom_slot: SlotUI = null
 
 
-# The one context builder for live-combat effect dispatch: grids + the sides. Every
-# in-combat EffectContext comes through here so a side target is never silently missing.
+# Context building moved to the world (the one builder — grids, sides, run modifiers,
+# transitional board access); the board forwards so its many call sites read unchanged.
 func make_context(src: CardInstance) -> EffectContext:
-	var ctx := EffectContext.make(src, player_grid, enemy_grid)
-	ctx.player_side = player_side
-	ctx.enemy_side = enemy_side
-	# Board access rides every in-combat context (spawn payloads queue through it; CUSTOM
-	# hooks board-procedure through it). SpellCaster's own injection becomes redundant but
-	# harmless — this is the one context builder, so nothing in combat can miss it.
-	ctx.board_node = self
-	return ctx
+	return world.make_context(src)
 
 # Zone dressing: each half sits on its own faintly tinted field so "my side / their side" reads
 # at a glance — cool blue for the player, warm red for the enemy. Low alpha keeps the shared
@@ -242,10 +231,10 @@ func move_enemy_card(inst: CardInstance, r: int, c: int) -> void:
 # in one call — is what used to force a death animation to block: the only way to keep the card on
 # screen was to delay the state change. Nothing about the board waits on an animation now.
 func retire_unit(inst: CardInstance) -> CardUI:
-	var board := player_grid if inst.owner == 0 else enemy_grid
-	board[inst.row][inst.col] = null
 	var card := get_card_ui(inst)
-	unit_retired.emit(inst)   # the card is still standing — listeners may read its rect
+	# State (grid clear) + the unit_retired bounty wire live on the world now; the card is
+	# still standing when its signal fires, so listeners may read its rect.
+	world.retire(inst)
 	return card
 
 
@@ -273,14 +262,7 @@ func get_card_ui(inst: CardInstance) -> CardUI:
 
 
 func get_all_units() -> Array:
-	var all: Array = []
-	for r in BoardData.ROWS:
-		for c in BoardData.COLS:
-			if player_grid[r][c] != null:
-				all.append(player_grid[r][c])
-			if enemy_grid[r][c] != null:
-				all.append(enemy_grid[r][c])
-	return all
+	return world.get_all_units()
 
 
 func find_target(attacker: CardInstance) -> CardInstance:

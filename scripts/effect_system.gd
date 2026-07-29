@@ -67,10 +67,10 @@ static func trigger(event: GameEvent, source: CardInstance, context: EffectConte
 # context.source stays the triggering (subject) card, the SPATIAL anchor for nearest/distance.
 static func trigger_global(event: GameEvent, context: EffectContext) -> Array:
 	var results: Array = []
-	if context.source == null:
+	if context.source == null or context.run_modifiers == null:
 		return results
 	context.owner_anchor = 0
-	for effect: Effect in GameData.current_modifiers.triggered(event.id):
+	for effect: Effect in context.run_modifiers.triggered(event.id):
 		if not effect.trigger_resolver().fires(event, null, 0):
 			continue
 		results.append_array(_run_effect(effect, context.source, context, event))
@@ -83,10 +83,10 @@ static func trigger_global(event: GameEvent, context: EffectContext) -> Array:
 static func trigger_global_grouped(event: GameEvent, context: EffectContext) -> Array:
 	var order: Array = []          # owner_ids in first-seen order
 	var by_owner: Dictionary = {}  # owner_id -> group dict
-	if context.source == null:
+	if context.source == null or context.run_modifiers == null:
 		return order
 	context.owner_anchor = 0
-	for effect: Effect in GameData.current_modifiers.triggered(event.id):
+	for effect: Effect in context.run_modifiers.triggered(event.id):
 		if not effect.trigger_resolver().fires(event, null, 0):
 			continue
 		var res := _run_effect(effect, context.source, context, event)
@@ -94,7 +94,7 @@ static func trigger_global_grouped(event: GameEvent, context: EffectContext) -> 
 			continue
 		# Container identity is DISPATCH CONTEXT (the set knows who contributed what);
 		# the effect itself is container-blind.
-		var owner: Dictionary = GameData.current_modifiers.owner_of(effect)
+		var owner: Dictionary = context.run_modifiers.owner_of(effect)
 		var oid := str(owner["id"])
 		if not by_owner.has(oid):
 			by_owner[oid] = {"owner_kind": str(owner["kind"]), "owner_id": oid, "results": []}

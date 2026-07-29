@@ -40,14 +40,16 @@ func beat(_seconds: float) -> void:
 
 
 # The enemy King's send-off: the fall, the blast, the treasure chest thrown clear. Awaited
-# in full by the live fight because the chest gates the end of combat.
-func king_fall(_inst: CardInstance, _corpse: CardUI) -> void:
+# in full by the live fight because the chest gates the end of combat. The presenter finds
+# the corpse's card itself — the unit has already left play (world.retire) but its card is
+# still standing in its slot.
+func king_fall(_inst: CardInstance) -> void:
 	pass
 
 
 # A unit's corpse fading where it stood, plus the death beat the fight pauses for. The fade
 # itself deliberately outlives the beat (the live presenter starts it un-awaited).
-func unit_fade(_inst: CardInstance, _corpse: CardUI) -> void:
+func unit_fade(_inst: CardInstance) -> void:
 	pass
 
 

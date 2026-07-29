@@ -52,11 +52,17 @@ func beat(seconds: float) -> void:
 	await _tree.create_timer(Vfx.handoff(seconds)).timeout
 
 
-func king_fall(inst: CardInstance, corpse: CardUI) -> void:
+func king_fall(inst: CardInstance) -> void:
+	var corpse := _board.get_card_ui(inst)
+	if corpse == null:
+		return   # no card standing (already dropped) — nothing to dress
 	await _king_fall_cb.call(inst, corpse)
 
 
-func unit_fade(inst: CardInstance, corpse: CardUI) -> void:
+func unit_fade(inst: CardInstance) -> void:
+	var corpse := _board.get_card_ui(inst)
+	if corpse == null:
+		return   # no card standing (already dropped) — nothing to dress, no beat either
 	# The fade plays on past the beat below — deliberately un-awaited; it disposes of the
 	# card at its own end. The death BEAT is what the fight pauses for.
 	_fade_out_cb.call(inst, corpse)

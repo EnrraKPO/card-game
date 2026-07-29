@@ -37,6 +37,13 @@ var effect: Effect = null
 var player_side: CombatSide = null
 var enemy_side: CombatSide = null
 
+# The run-level (relic/upgrade) effect collection run-scope dispatch fires from — THE context
+# read replacing EffectSystem's old ambient GameData.current_modifiers reads (world amendment,
+# COMBAT_DECOUPLING_REFACTOR.md Step 1/3): a simulated world hands its own set through here.
+# make() defaults it to the live run set, so the ambient read is confined to context
+# CONSTRUCTION; CombatWorld.make_context overrides it with the world's own reference.
+var run_modifiers: ModifierSet = null
+
 
 func side_for(side_owner: int) -> CombatSide:
 	if side_owner == 0:
@@ -51,4 +58,5 @@ static func make(src: CardInstance, p_board: Array, e_board: Array) -> EffectCon
 	ctx.source = src
 	ctx.player_board = p_board
 	ctx.enemy_board = e_board
+	ctx.run_modifiers = GameData.current_modifiers
 	return ctx

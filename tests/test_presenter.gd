@@ -25,8 +25,8 @@ func _null_presenter_is_synchronous() -> void:
 		await p.show_effect_results([], null)
 		await p.relic_glint("some_relic")
 		await p.beat(1.0)
-		await p.king_fall(null, null)
-		await p.unit_fade(null, null)
+		await p.king_fall(null)
+		await p.unit_fade(null)
 		p.board_refresh()
 		reached[0] = true
 	chain.call()
