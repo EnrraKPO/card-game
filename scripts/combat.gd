@@ -412,11 +412,12 @@ func _do_cpu_placement() -> void:
 	_set_placement_input(false)
 	_refresh_done_btn()
 
-	var ai: EnemyAI = EnemyAI.new()
-	if GameData.current_encounter != null and GameData.current_encounter.ai != null:
-		ai = GameData.current_encounter.ai
-
-	for action: Dictionary in ai.decide_actions(_enemy_side.hand, _board, _enemy_side.mana):
+	# The enemy engine plans the whole CPU turn (see ENCOUNTER_ENGINE_DESIGN.md); the old
+	# EnemyAI placeholder is no longer consulted. Day one it emits placements only — spell,
+	# ability and move planning return as its candidate generators widen.
+	var engine := EnemyEngine.new()
+	for action: Dictionary in engine.decide_actions(_enemy_side.hand,
+			_board.player_grid, _board.enemy_grid, _enemy_side.mana):
 		await _execute_enemy_action(action)
 
 
@@ -424,7 +425,7 @@ func _do_cpu_placement() -> void:
 # (mana + slot occupancy), so this just applies the effect and animates it.
 func _execute_enemy_action(action: Dictionary) -> void:
 	match action["type"]:
-		EnemyAI.Action.PLACE:
+		EnemyEngine.Action.PLACE:
 			var inst: CardInstance = action["inst"]
 			_pay_mana(_enemy_side, inst.data.cost)
 			_enemy_side.remove_from_hand(inst)
@@ -432,12 +433,12 @@ func _execute_enemy_action(action: Dictionary) -> void:
 			Sfx.play("combat_enemy_place")
 			_vfx.play(VFXEvent.card_placed(_board.get_card_ui(inst)))
 			await _animator.show_effect_results(results, inst)
-		EnemyAI.Action.CAST:
+		EnemyEngine.Action.CAST:
 			var inst: CardInstance = action["inst"]
 			_pay_mana(_enemy_side, inst.data.cost)
 			_enemy_side.remove_from_hand(inst)
 			await _show_enemy_spell(inst, action["target"])
-		EnemyAI.Action.GENERATE:
+		EnemyEngine.Action.GENERATE:
 			# An enemy unit activates an ability. Pay the cost (mana + tap if the ability
 			# carries it), then resolve per v1 policy: a material ability always takes its
 			# SPAWN half onto the planned slot (functionally the old unit generation; merge
@@ -467,7 +468,7 @@ func _execute_enemy_action(action: Dictionary) -> void:
 				display.ability = ab
 				var spell_target: CardInstance = action.get("target", null)
 				await _show_enemy_spell(display, spell_target)
-		EnemyAI.Action.MOVE:
+		EnemyEngine.Action.MOVE:
 			_board.move_enemy_card(action["inst"], action["row"], action["col"])
 			Vfx.play("unit_move_dash", _board.get_card_ui(action["inst"]))
 	await get_tree().create_timer(0.35).timeout

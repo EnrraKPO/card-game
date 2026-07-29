@@ -18,7 +18,7 @@ var mineral_reward: int = 0          # authored Magic Mineral on win (the tool-d
                                      # default stacks on top — see GameData.reward_mineral)
 var exp_reward: int = 1              # profile experience granted on win (1 by default; special fights more)
 var material_rewards: Dictionary = {}  # profile crafting resources (id→count) granted on win
-var ai: EnemyAI = null               # null falls back to default EnemyAI in combat
+var ai: EnemyAI = null               # placeholder, no longer consulted — EnemyEngine plans the CPU turn
 
 var outcome: Outcome = Outcome.PENDING
 
