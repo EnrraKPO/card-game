@@ -33,6 +33,21 @@ static func make(p_owner: int) -> CombatSide:
 	return s
 
 
+# Deep-copy for world snapshots (see CombatWorld.copy): resource numbers duplicated, every
+# card in hand/pile copied through the snapshot's shared identity remap (hand spells are
+# cast in simulations, so zones copy at full fidelity). A copy starts with no signal
+# subscribers — same object shape as the enemy side live: state with nobody watching.
+func copy(remap: Dictionary) -> CombatSide:
+	var s := CombatSide.make(owner)
+	s.mana = mana
+	s.max_mana = max_mana
+	for inst: CardInstance in hand:
+		s.hand.append(CardInstance.copied(inst, remap))
+	for inst: CardInstance in draw_pile:
+		s.draw_pile.append(CardInstance.copied(inst, remap))
+	return s
+
+
 # ── Commit primitives (called by Resolver._apply_to_side — see the class comment) ──
 
 # Moves up to `n` cards off the top of the draw pile into the hand. The Resolver has already

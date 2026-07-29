@@ -28,6 +28,24 @@ static func make(p_data: StatusData, p_remaining: int, p_stacks: int, p_source: 
 	return si
 
 
+# Deep-copy for world snapshots (see CombatWorld.copy): per-instance state duplicated, the
+# immutable definition shared, unit references resolved through the snapshot's identity remap.
+# Trackers are RE-BOUND to the copy rather than duplicated — a duplicated tracker's weak host
+# ref would keep watching the ORIGINAL status — and since every tracker kind derives
+# valid()/intensity() from its host at read time, a fresh binding reproduces the original's
+# state exactly, including its "already went live" identity (the effect keys carry over).
+static func copied(si: StatusInstance, carrier: CardInstance, remap: Dictionary) -> StatusInstance:
+	var copy := StatusInstance.new()
+	copy.data = si.data
+	copy.remaining = si.remaining
+	copy.stacks = si.stacks
+	copy.source = CardInstance.copied(si.source, remap)
+	copy.bind_carrier(carrier)
+	for e: Effect in si._trackers:
+		copy._trackers[e] = EffectTracker.bind(e.tracker_spec, copy)
+	return copy
+
+
 # The EffectTracker existence probe (duck-typed — see EffectTracker.Container): this
 # status still exists while its decay state says so. Pull-checked on every read, so a
 # not-yet-removed expired instance is already inert.

@@ -76,6 +76,43 @@ static func from_data(card_data: CardData) -> CardInstance:
 	return inst
 
 
+# Deep-copy for world snapshots (see CombatWorld.copy). `remap` is the snapshot's identity
+# table (original -> copy), shared across the whole copy pass: every unit reference inside
+# the copy (killed_by_unit, source_building, a status's source/carrier) resolves through it,
+# so relationships between copies mirror the originals' exactly — including references to
+# units no longer ON the world (a buried killer), which get copied on first encounter.
+# Memoized null-safe entry point; the copy registers in the table BEFORE its references are
+# filled, so reference cycles (mutual killers) terminate.
+#
+# Tier rule (COMBAT_DECOUPLING_REFACTOR.md Step 1): mutable per-instance state is duplicated;
+# immutable definitions (CardData, AbilityData, StatusData) are shared by reference.
+static func copied(inst: CardInstance, remap: Dictionary) -> CardInstance:
+	if inst == null:
+		return null
+	if remap.has(inst):
+		return remap[inst]
+	var copy := CardInstance.new()
+	remap[inst] = copy
+	copy.data = inst.data
+	copy.current_health = inst.current_health   # emits health_changed — a fresh copy has no subscribers
+	copy.shield_spent = inst.shield_spent
+	copy.row = inst.row
+	copy.col = inst.col
+	copy.owner = inst.owner
+	copy.modifiers = inst.modifiers.duplicate()
+	copy.charms = inst.charms.duplicate()
+	copy.killed_by_unit = copied(inst.killed_by_unit, remap)
+	copy.killed_by_channel = inst.killed_by_channel
+	copy.killed_by_cause = inst.killed_by_cause
+	copy.attack_exhausted = inst.attack_exhausted
+	copy.source_building = copied(inst.source_building, remap)
+	copy.ability = inst.ability
+	copy.autocast_ability = inst.autocast_ability
+	for si: StatusInstance in inst.statuses:
+		copy.statuses.append(StatusInstance.copied(si, copy, remap))
+	return copy
+
+
 # Returns the effective value of an attribute: base + this instance's accumulated WRITTEN
 # modifiers (baked history from triggered effects / charms) + every live STANDING effect
 # currently reaching this card — statuses, its own innate effects, and the run set, all

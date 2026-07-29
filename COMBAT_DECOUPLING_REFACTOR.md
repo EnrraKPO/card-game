@@ -128,6 +128,22 @@ A `CombatWorld` (name TBD) `RefCounted`: two grids of `CardInstance`, two `Comba
 `copy()` using the remap. This is the parameter everything below starts taking.
 `CombatSide.copy()`: hand/draw_pile through the same remap (hand spells are cast in sims).
 
+**Cohesive-context amendment (aligned 2026-07-29):** the world is ONE object — if the
+rules read it, it lives there; `world.copy()` is a complete snapshot. The cascade never
+scrapes an autoload/global/scene node for game state. Two tiers inside the one context:
+- **Mutable state** (grids, cards, statuses, sides, spawn queue, policy flags) — deep-copied
+  through the remap.
+- **Immutable environment** (`CardData`/`RelicData`/`StatusData` defs, tunables, the
+  run-level **modifiers** collection — fixed for a fight's duration; consumable spending is
+  a live-only gesture) — **shared by reference**, never copied.
+Concretely this ADDS to `CombatWorld`: `modifiers` (today read globally as
+`GameData.current_modifiers` by `EffectSystem.trigger_global_grouped`, effect_system.gd:73-97
+— Step 3 re-points that read to the context) + the `rewards_live` policy flag. Decision:
+copies are FULL-FIDELITY (relics/upgrades proc in sims — they change board outcomes).
+Future option, explicitly deferred: "blind" copies where the CPU plans without
+relic/upgrade knowledge = constructing a copy with an empty modifiers ref; the mechanism
+allows it, no code for it now.
+
 Tests: copy independence (mutate copy's stats/statuses/grids — original untouched),
 remap completeness (no reference in a copy resolves to an original).
 
