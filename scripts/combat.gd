@@ -164,7 +164,6 @@ func _ready() -> void:
 	_world.enemy_side = _enemy_side
 	_world.modifiers = GameData.current_modifiers
 	_world.rewards_live = GameData.current_run != null   # the old _rewards_live() predicate
-	_world.view_board = _board
 	_board.world = _world
 	_cascade = CombatCascade.make(_world, _presenter)
 
@@ -1090,7 +1089,6 @@ func _use_consumable(relic_id: String) -> void:
 			continue
 		var ctx := _board.make_context(src)
 		ctx.owner_anchor = 0   # run-scope item: "enemy" means the player's enemy, whoever acts
-		ctx.board_node = _board
 		var results := EffectSystem.apply_single(effect, src, ctx)
 		await _animator.show_effect_results(results, src, "", false)
 		_board.cleanup_effect_deaths()

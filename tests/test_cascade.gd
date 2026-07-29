@@ -16,6 +16,7 @@ func run() -> void:
 	_resolve_event_decays()
 	_bury_retires_and_signals()
 	_context_repoint()
+	_headless_spawn_drain()
 
 
 func _headless_world() -> CombatWorld:
@@ -87,3 +88,23 @@ func _context_repoint() -> void:
 	var bare := EffectContext.make(unit("pawn"), [[]], [[]])
 	check(bare.run_modifiers == GameData.current_modifiers,
 			"a bare context defaults to the live run set at build time")
+
+
+func _headless_spawn_drain() -> void:
+	# The spawn queue lives on the world now (Step 4): queueing + draining works with NO view
+	# attached — the exact shape a simulated on-death split needs. unit_spawned still cries
+	# out for a card; here nobody is listening, and that must be fine.
+	var w := _headless_world()
+	var anchor := _place(w, "pawn", 1, 0, 3)
+	var arrivals: Array = []
+	w.unit_spawned.connect(func(inst: CardInstance) -> void: arrivals.append(inst))
+	w.queue_spawn("pawn", 2, anchor)
+	w.cleanup_deaths()
+	check_eq(arrivals.size(), 2, "the drain places both queued spawns")
+	var on_board := 0
+	for inst: CardInstance in w.get_all_units():
+		if inst != anchor and inst.owner == 1:
+			on_board += 1
+	check_eq(on_board, 2, "both arrivals stand on the spawning side's grid")
+	check(arrivals.is_empty() or (arrivals[0] as CardInstance).row >= 0,
+			"an arrival carries its landed position")

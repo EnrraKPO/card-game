@@ -17,12 +17,15 @@ var subject: CardInstance = null
 var owner_anchor: int = -9999   # == TriggerResolver.OWNER_FROM_HOLDER
 
 
-# UI-flow extras for MANUAL_SLOT effects (material delivery): the picked slot (may be EMPTY —
-# that's the spawn case) and the live board node, injected by SpellCaster so a CUSTOM hook can
-# perform board procedures (spawning a unit). An interim bridge until placement rides the
-# Resolver; both stay null in headless/AI flows, and hooks must null-check them.
-var manual_slot: SlotUI = null
-var board_node: CombatBoard = null
+# The picked SLOT for MANUAL_SLOT effects (material delivery) as plain coordinates — the
+# gesture edge (SpellCaster) translates its SlotUI into these; the slot may be EMPTY (that's
+# the spawn case). -1 = no slot picked; hooks must check.
+var manual_row: int = -1
+var manual_col: int = -1
+# The cohesive combat world this dispatch runs in (grids, sides, spawn queue — see
+# CombatWorld), set by CombatWorld.make_context. Null in contexts built outside a combat,
+# where board procedures (spawn payloads, hooks) are inert.
+var world: CombatWorld = null
 # The activated ability being resolved, when this dispatch is an ability activation — how
 # hooks read the ability's parameters (e.g. deliver_material's material key). Null otherwise.
 var ability: AbilityData = null

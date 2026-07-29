@@ -24,16 +24,17 @@ extends RefCounted
 # starts with no subscribers (signals don't copy), so a simulated death structurally cannot
 # pay — the rewards_live flag below is the explicit policy on top of that structure.
 signal unit_retired(inst: CardInstance)
+# A dead unit swept by cleanup — the VIEW's cue to drop its card on the spot (the presented
+# death path keeps the card standing for its dressing instead; see CombatCascade.bury).
+signal unit_swept(inst: CardInstance)
+# A unit the RULES put into play (a queued spawn payload, a hook's material spawn) — the
+# view's cue to build its card. Board-driven placements don't emit this; their views exist.
+signal unit_spawned(inst: CardInstance)
 
 var player_grid: Array = []   # [row][col] -> CardInstance or null
 var enemy_grid:  Array = []   # [row][col] -> CardInstance or null
 var player_side: CombatSide = null
 var enemy_side:  CombatSide = null
-
-# TRANSITIONAL (deleted by Step 4): the live board view, so make_context can still hand
-# CUSTOM hooks / spawn payloads their board_node while EffectContext carries scene types.
-# Null in copies and headless worlds — those contexts simply carry no board access yet.
-var view_board: CombatBoard = null
 
 # The run-level (relic/upgrade) effect collection — immutable environment, shared into
 # copies. Today read globally as GameData.current_modifiers by run-level dispatch; Step 3
@@ -95,24 +96,125 @@ func retire(inst: CardInstance) -> void:
 	unit_retired.emit(inst)
 
 
-# Sweeps effect-kills and drains the spawn queue. TRANSITIONAL forward (Step 4 moves the
-# logic here with the spawn queue): the live board owns the intertwined state+view sweep;
-# a world without a view has nothing to sweep yet.
-func cleanup_deaths() -> void:
-	if view_board != null:
-		view_board.cleanup_effect_deaths()
-
-
-# The one context builder (moved from CombatBoard, which now forwards here): grids + sides
-# so side targets always resolve, the world's OWN modifier set for run-scope dispatch, and
-# — transitionally — the view board for CUSTOM hooks/spawns (see view_board above).
+# The one context builder (moved from CombatBoard, which forwards here): grids + sides so
+# side targets always resolve, the world's OWN modifier set for run-scope dispatch, and the
+# world itself for board procedures (spawn payloads, CUSTOM hooks).
 func make_context(src: CardInstance) -> EffectContext:
 	var ctx := EffectContext.make(src, player_grid, enemy_grid)
 	ctx.player_side = player_side
 	ctx.enemy_side = enemy_side
 	ctx.run_modifiers = modifiers
-	ctx.board_node = view_board
+	ctx.world = self
 	return ctx
+
+
+# ── Placement & the play moment ────────────────────────────────────────────────────────
+
+# The STATE of putting a unit at (r, c): position, allegiance, the grid write, and the
+# composition-cache invalidation every owner change requires. View-silent — callers with a
+# card view (board placements) manage it themselves; rules-driven arrivals use spawn_unit.
+func place_unit(inst: CardInstance, r: int, c: int, p_owner: int) -> void:
+	inst.row = r
+	inst.col = c
+	inst.owner = p_owner
+	var grid: Array = grid_of(p_owner)
+	var grid_row: Array = grid[r]
+	grid_row[c] = inst
+	LiveEffects.invalidate_compositions()   # owner set — allegiance-gated grants may now reach
+
+
+# A rules-driven arrival: place + tell the view a card is owed (see unit_spawned).
+func spawn_unit(inst: CardInstance, r: int, c: int, p_owner: int) -> void:
+	place_unit(inst, r, c, p_owner)
+	unit_spawned.emit(inst)
+
+
+# THE play moment — a unit's ON_PLAY triggers, fired in this world's context (moved out of
+# CombatBoard.place_*, so placement triggers run under a chosen world wherever it came
+# from). Returns the results; presenting them is the caller's business (the live board
+# hands them to combat, the spawn drain below discards them — both as before).
+func play_dispatch(inst: CardInstance) -> Array:
+	return EffectSystem.trigger(GameEvent.make(&"play", inst), inst, make_context(inst))
+
+
+# ── Death sweep & effect-driven spawning (moved verbatim-in-shape from CombatBoard) ─────
+
+# Units conjured by effects, pending placement. Queued rather than placed immediately so an
+# on-death spawn resolves AFTER the corpse leaves the board; cleanup_deaths flushes.
+var _pending_spawns: Array = []   # [{ "id": String, "count": int, "owner": int, "row": int, "col": int }]
+var _flushing_spawns := false
+
+
+func queue_spawn(card_id: String, count: int, anchor: CardInstance) -> void:
+	_pending_spawns.append({"id": card_id, "count": maxi(1, count),
+			"owner": anchor.owner, "row": anchor.row, "col": anchor.col})
+
+
+# Sweeps effect-kills, then flushes queued effect spawns now that corpses have left their
+# slots (an on-death split reclaims where its parent stood). A spawn fires ON_PLAY effects,
+# which may kill units and queue further spawns — the loop drains it all; the guard keeps
+# reentrant cleanup calls (from a spawn's own play trigger) from recursing into a second flush.
+func cleanup_deaths() -> void:
+	_sweep_dead()
+	if _flushing_spawns:
+		return
+	_flushing_spawns = true
+	while not _pending_spawns.is_empty():
+		var s: Dictionary = _pending_spawns.pop_front()
+		for _i in int(s["count"]):
+			if not _spawn_from_queue(s):
+				break   # that side's board is full — the surplus fizzles
+		_sweep_dead()
+	_flushing_spawns = false
+
+
+func _sweep_dead() -> void:
+	for r in BoardData.ROWS:
+		for c in BoardData.COLS:
+			var p: CardInstance = player_grid[r][c]
+			if p != null and not p.is_alive():
+				retire(p)
+				unit_swept.emit(p)
+			var e: CardInstance = enemy_grid[r][c]
+			if e != null and not e.is_alive():
+				retire(e)
+				unit_swept.emit(e)
+
+
+# Places one queued spawn into its anchor slot if free, else the nearest empty slot on that
+# side. Fires the arrival's ON_PLAY effects like any other placement. False = side full.
+func _spawn_from_queue(s: Dictionary) -> bool:
+	var data := CardData.get_card(str(s["id"]))
+	if data == null:
+		push_error("CombatWorld: spawn payload names unknown card '%s'" % s["id"])
+		return true   # a bad id is handled (loudly), not a full board
+	var spawn_owner := int(s["owner"])
+	var slot := _nearest_empty(spawn_owner, int(s["row"]), int(s["col"]))
+	if slot.is_empty():
+		return false
+	var inst := CardInstance.from_data(data)
+	inst.owner = spawn_owner
+	Resolver.fill_health(inst)   # after owner is set, so run-wide unit bonuses fold in
+	spawn_unit(inst, slot[0], slot[1], spawn_owner)
+	play_dispatch(inst)   # results discarded, as the board always did for queued spawns
+	return true
+
+
+# The nearest empty slot to (row, col) on `spawn_owner`'s side by Manhattan distance (the
+# anchor itself when free). [] = that side is full.
+func _nearest_empty(spawn_owner: int, row: int, col: int) -> Array:
+	var grid: Array = grid_of(spawn_owner)
+	var best: Array = []
+	var best_d := 999
+	for r in BoardData.ROWS:
+		for c in BoardData.COLS:
+			if grid[r][c] != null:
+				continue
+			var d := absi(r - row) + absi(c - col)
+			if d < best_d:
+				best_d = d
+				best = [r, c]
+	return best
 
 
 # The complete snapshot: one identity remap spans grids and sides, so a unit referenced
@@ -128,6 +230,7 @@ func copy() -> CombatWorld:
 	w.enemy_side = enemy_side.copy(remap)
 	w.modifiers = modifiers        # immutable environment — shared, never copied
 	w.rewards_live = false         # a copy is a hypothetical: it never pays
+	w._pending_spawns = _pending_spawns.duplicate(true)   # queued arrivals are combat state
 	return w
 
 

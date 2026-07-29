@@ -20,6 +20,14 @@ func _ready() -> void:
 	board.build_section(row, false)
 	board.player_side = CombatSide.new()
 	board.enemy_side = CombatSide.new()
+	# The board is a view over a CombatWorld now (grids aliased) — same wiring combat does.
+	var world := CombatWorld.new()
+	world.player_grid = board.player_grid
+	world.enemy_grid = board.enemy_grid
+	world.player_side = board.player_side
+	world.enemy_side = board.enemy_side
+	world.modifiers = GameData.current_modifiers
+	board.world = world
 
 	# ── Split on death: Green Slime dies → 2 Droplets, first reclaiming its slot ──
 	var slime := CardInstance.from_data(CardData.get_card("slime_green"))

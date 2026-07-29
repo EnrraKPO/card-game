@@ -117,8 +117,9 @@ func _resolve_on_play(effects: Array, src: CardInstance, ab: AbilityData,
 			continue
 		var ctx := board.make_context(src)
 		ctx.manual_target = manual_target
-		ctx.manual_slot = manual_slot   # slot-mode extras: the picked slot (may be empty)
-		ctx.board_node = board          # + board access for hooks that spawn (see EffectContext)
+		if manual_slot != null:   # the gesture edge translates the picked slot to coordinates
+			ctx.manual_row = manual_slot.row
+			ctx.manual_col = manual_slot.col
 		ctx.ability = ab
 		var results := EffectSystem.apply_single(effect, src, ctx)
 		# Passing `src` glints the ability's holder (see VFXPlayer.play_results) — safe for a

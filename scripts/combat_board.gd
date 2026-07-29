@@ -11,9 +11,31 @@ signal autocast_dropped(slot: SlotUI, card_ui: CardUI)
 var player_grid: Array = []   # [row][col] -> CardInstance or null
 var enemy_grid:  Array = []   # [row][col] -> CardInstance or null
 # The cohesive rules-state context these grids belong to (CombatWorld — its grid arrays ARE
-# the two above, aliased at setup). Retirement state and the unit_retired bounty wire live
-# on IT now; the board keeps the view halves and forwards (see retire_unit / make_context).
-var world: CombatWorld = null
+# the two above, aliased at setup). Retirement, the spawn queue, contexts and the play
+# moment live on IT now; the board keeps the view halves — reacting to the world's
+# unit_swept/unit_spawned cues for deaths and arrivals the rules decide on their own.
+var world: CombatWorld = null:
+	set(v):
+		world = v
+		if world != null:
+			world.unit_swept.connect(_on_world_unit_swept)
+			world.unit_spawned.connect(_on_world_unit_spawned)
+
+
+# A swept effect-kill: the state is already gone; drop the card where it stands.
+func _on_world_unit_swept(inst: CardInstance) -> void:
+	drop_card_view(inst, get_card_ui(inst))
+
+
+# A rules-driven arrival (queued spawn / hook spawn): build the card the state is owed.
+func _on_world_unit_spawned(inst: CardInstance) -> void:
+	var slots: Array = player_slots if inst.owner == 0 else enemy_slots
+	var slot_row: Array = slots[inst.row]
+	var ui := CardUI.create(inst)
+	(slot_row[inst.col] as SlotUI).set_card(ui)
+	if inst.owner == 0:
+		_wire_unit_drag(ui)
+	Vfx.play("summon_materialize", ui)
 var player_slots: Array = []  # [row][col] -> SlotUI
 var enemy_slots:  Array = []  # [row][col] -> SlotUI
 
@@ -181,13 +203,10 @@ func can_place_from_hand(card_ui: CardUI) -> bool:
 
 
 func place_enemy_card(inst: CardInstance, r: int, c: int) -> Array:
-	inst.row = r; inst.col = c; inst.owner = 1
-	LiveEffects.invalidate_compositions()   # owner set — allegiance-gated grants may now reach
-	enemy_grid[r][c] = inst
+	world.place_unit(inst, r, c, 1)
 	var ui := CardUI.create(inst)
 	enemy_slots[r][c].set_card(ui)
-	var results := EffectSystem.trigger(
-		GameEvent.make(&"play", inst), inst, make_context(inst))
+	var results := world.play_dispatch(inst)
 	cleanup_effect_deaths()
 	refresh()
 	return results
@@ -199,14 +218,11 @@ func place_enemy_card(inst: CardInstance, r: int, c: int) -> Array:
 func spawn_player_card(inst: CardInstance, r: int, c: int) -> Array:
 	if player_grid[r][c] != null:
 		return []
-	inst.row = r; inst.col = c; inst.owner = 0
-	LiveEffects.invalidate_compositions()   # owner set — allegiance-gated grants may now reach
-	player_grid[r][c] = inst
+	world.place_unit(inst, r, c, 0)
 	var ui := CardUI.create(inst)
 	(player_slots[r][c] as SlotUI).set_card(ui)
 	_wire_unit_drag(ui)
-	var results := EffectSystem.trigger(
-		GameEvent.make(&"play", inst), inst, make_context(inst))
+	var results := world.play_dispatch(inst)
 	cleanup_effect_deaths()
 	refresh()
 	return results
@@ -310,92 +326,12 @@ func player_king_alive() -> bool:
 	return false
 
 
+# The sweep + spawn-queue drain lives on the world now (state); the board hears about each
+# swept corpse / arrival through unit_swept / unit_spawned and answers with the view halves.
+# One refresh after the drain re-derives whatever the drained spawns' own triggers changed.
 func cleanup_effect_deaths() -> void:
-	_sweep_dead()
-	# Flush queued effect spawns now that corpses have left their slots (an on-death split
-	# reclaims where its parent stood). A spawn fires ON_PLAY effects, which may kill units
-	# and queue further spawns — the loop drains it all; the guard keeps reentrant cleanup
-	# calls (from a spawn's own play trigger) from recursing into a second flush.
-	if _flushing_spawns:
-		return
-	_flushing_spawns = true
-	while not _pending_spawns.is_empty():
-		var s: Dictionary = _pending_spawns.pop_front()
-		for _i in int(s["count"]):
-			if not _spawn_from_queue(s):
-				break   # that side's board is full — the surplus fizzles
-		_sweep_dead()
-	_flushing_spawns = false
-
-
-func _sweep_dead() -> void:
-	for r in BoardData.ROWS:
-		for c in BoardData.COLS:
-			var p: CardInstance = player_grid[r][c]
-			if p != null and not p.is_alive():
-				remove_card(p)
-			var e: CardInstance = enemy_grid[r][c]
-			if e != null and not e.is_alive():
-				remove_card(e)
-
-
-# ── Effect-driven spawning (the `spawn` payload — see EffectSystem._apply) ─────
-
-# Units conjured by effects, pending placement. Queued rather than placed immediately so an
-# on-death spawn resolves AFTER the corpse leaves the board; cleanup_effect_deaths flushes.
-var _pending_spawns: Array = []   # [{ "id": String, "count": int, "owner": int, "row": int, "col": int }]
-var _flushing_spawns := false
-
-
-func queue_spawn(card_id: String, count: int, anchor: CardInstance) -> void:
-	_pending_spawns.append({"id": card_id, "count": maxi(1, count),
-			"owner": anchor.owner, "row": anchor.row, "col": anchor.col})
-
-
-# Places one queued spawn into its anchor slot if free, else the nearest empty slot on that
-# side. Fires the arrival's ON_PLAY effects like any other placement. False = side full.
-func _spawn_from_queue(s: Dictionary) -> bool:
-	var data := CardData.get_card(str(s["id"]))
-	if data == null:
-		push_error("CombatBoard: spawn payload names unknown card '%s'" % s["id"])
-		return true   # a bad id is handled (loudly), not a full board
-	var owner := int(s["owner"])
-	var slot := _nearest_empty(owner, int(s["row"]), int(s["col"]))
-	if slot.is_empty():
-		return false
-	var inst := CardInstance.from_data(data)
-	inst.owner = owner
-	Resolver.fill_health(inst)   # after owner is set, so run-wide unit bonuses fold in
-	inst.row = slot[0]; inst.col = slot[1]
-	var grid: Array = player_grid if owner == 0 else enemy_grid
-	var slots: Array = player_slots if owner == 0 else enemy_slots
-	grid[slot[0]][slot[1]] = inst
-	LiveEffects.invalidate_compositions()   # owner set — allegiance-gated grants may now reach
-	var ui := CardUI.create(inst)
-	(slots[slot[0]][slot[1]] as SlotUI).set_card(ui)
-	if owner == 0:
-		_wire_unit_drag(ui)
-	Vfx.play("summon_materialize", ui)
-	EffectSystem.trigger(GameEvent.make(&"play", inst), inst, make_context(inst))
+	world.cleanup_deaths()
 	refresh()
-	return true
-
-
-# The nearest empty slot to (row, col) on `owner`'s side by Manhattan distance (the anchor
-# itself when free). [] = that side is full.
-func _nearest_empty(owner: int, row: int, col: int) -> Array:
-	var grid: Array = player_grid if owner == 0 else enemy_grid
-	var best: Array = []
-	var best_d := 999
-	for r in BoardData.ROWS:
-		for c in BoardData.COLS:
-			if grid[r][c] != null:
-				continue
-			var d := absi(r - row) + absi(c - col)
-			if d < best_d:
-				best_d = d
-				best = [r, c]
-	return best
 
 
 func refresh() -> void:
@@ -921,18 +857,15 @@ func do_place_unit(slot: SlotUI, card_ui: CardUI) -> void:
 	if not from_hand and inst.row >= 0 and inst.col >= 0:
 		player_grid[inst.row][inst.col] = null
 
-	inst.row = slot.row; inst.col = slot.col; inst.owner = 0
-	player_grid[slot.row][slot.col] = inst
+	world.place_unit(inst, slot.row, slot.col, 0)
 	slot.set_card(card_ui)
-	LiveEffects.invalidate_compositions()   # owner set — allegiance-gated grants may now reach
 
 	_wire_unit_drag(card_ui)
 
 	var results: Array = []
 	if from_hand:
 		card_ui._show_cost = false
-		results = EffectSystem.trigger(
-			GameEvent.make(&"play", inst), inst, make_context(inst))
+		results = world.play_dispatch(inst)
 		cleanup_effect_deaths()
 
 	refresh()

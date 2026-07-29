@@ -167,14 +167,14 @@ static func _apply(effect: Effect, target: CardInstance, source: CardInstance, c
 			return {}
 		return _with_interceptions({"target": target, "status_applied": effect.status_id}, sout)
 	# Generic "spawn units" payload: queue `spawn_count` copies of the card on the target's side,
-	# anchored at the target's slot. The board flushes the queue after its next death sweep, so an
-	# on-death split lands where the corpse stood (see CombatBoard.queue_spawn). Spawn count is
+	# anchored at the target's slot. The world flushes the queue after its next death sweep, so an
+	# on-death split lands where the corpse stood (see CombatWorld.queue_spawn). Spawn count is
 	# authored, never stack-scaled — a status stack multiplies magnitudes, not populations.
-	# Outside combat (no board in context) the payload is inert.
+	# Outside combat (no world in context) the payload is inert.
 	if not effect.spawn_id.is_empty():
-		if context == null or context.board_node == null or target.row < 0:
+		if context == null or context.world == null or target.row < 0:
 			return {}
-		context.board_node.queue_spawn(effect.spawn_id, effect.spawn_count, target)
+		context.world.queue_spawn(effect.spawn_id, effect.spawn_count, target)
 		return {"target": target, "spawned": effect.spawn_id, "count": effect.spawn_count}
 	# Every branch returns {} for a no-op (nothing changed) and a non-empty result when something
 	# happened — so "produced a result" == "the container did something", which drives the cue.
