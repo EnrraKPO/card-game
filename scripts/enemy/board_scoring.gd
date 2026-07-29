@@ -27,7 +27,7 @@ var criteria: Array = []
 # overrides also allowed). The values encode the default protect ordering: the Captain far
 # above everything, support/burst worth shielding, fodder cheap, untagged mid-low.
 const STOCK_SURVIVAL_WEIGHTS := {
-	"captain": 2.5,
+	"captain": 1.75,
 	"support": 0.5,
 	"burst": 0.4,
 	"dps": 0.3,
@@ -39,12 +39,16 @@ const STOCK_SURVIVAL_WEIGHTS := {
 # body is cheaper than the exposure it absorbs — priced any higher, screening scores as a
 # net loss and the engine hides everyone in the back (observed; the test suite pins it).
 #
-# Captain sits HIGH deliberately: at 1.0 its fat health pool reads as the cheapest damage
-# sponge and the scorer happily walks the king forward to soak share — observed as "the
-# king takes too much damage and won't commit to retreating". 2.5 makes it claim the back
-# column and only tank when everything else is worse. A BOLD captain that trades its pool
-# for its troops is an authorable event character: override {"captain": 1.0} in the
-# encounter's survival_weights.
+# Captain 1.75 is a MEASURED sweet spot (probed 1.0→2.5 on staged boards, 2026-07-29),
+# and the behaviour is threat-dependent and decisive in both directions:
+#   · moderate threat → the king walks fully to the FRONT LINE and absorbs hits for
+#     units it values (the damage-sharing its 11-point pool makes cheap);
+#   · heavy threat → it commits fully to the BACK COLUMN, no mid-column stop.
+# Below ~1.5 the pool reads as the cheapest damage sponge — the scorer parks the king
+# mid-column to soak share, hands the safe back seat to a fodder, and wanders it forward
+# during placements ("takes too much damage, won't commit to retreating"). At 2.0+ the
+# sharing dies entirely and the king never takes a hit. Author outside the stock only
+# with intent: {"captain": 1.0} = a reckless sponge, {"captain": 2.5} = a total coward.
 
 # How loud bare exposure is next to death risk. Small on purpose: it exists to keep the
 # formation instinct alive on quiet boards, not to compete with actual mortal danger.

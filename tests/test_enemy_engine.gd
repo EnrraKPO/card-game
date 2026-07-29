@@ -26,6 +26,7 @@ func run() -> void:
 	_scoring_triages_dying_unit()
 	_engine_king_tanks()
 	_engine_king_retreats_fully()
+	_engine_king_shares_moderate_threat()
 
 
 func _enemy(card_id: String, r: int, c: int) -> CardInstance:
@@ -234,7 +235,7 @@ func _weight_resolution() -> void:
 	var fodder := BoardState.UnitState.from_instance(_enemy("fodder_dummy", 0, 0))
 	check_eq(BoardScoring.weight_for(fodder, weights), 0.05, "a role tag resolves its table entry")
 	var king := BoardState.UnitState.from_instance(_enemy("king", 2, 3))
-	check_eq(BoardScoring.weight_for(king, weights), 2.5, "is_king resolves as the captain entry")
+	check_eq(BoardScoring.weight_for(king, weights), 1.75, "is_king resolves as the captain entry")
 	var untagged := BoardState.UnitState.from_instance(_enemy("pawn", 0, 1))
 	check_eq(BoardScoring.weight_for(untagged, weights), 0.1, "no role falls to the default entry")
 	check_eq(BoardScoring.weight_for(untagged, {"pawn": 7.0}), 7.0, "a card-id entry wins over everything")
@@ -243,7 +244,7 @@ func _weight_resolution() -> void:
 	var dr: BoardScoring.DeathRisk = overridden.criteria[0]
 	check_eq(BoardScoring.weight_for(fodder, dr.survival_weights), 0.8,
 			"an encounter override rewrites one role's worth, stock fills the rest")
-	check_eq(BoardScoring.weight_for(king, dr.survival_weights), 2.5,
+	check_eq(BoardScoring.weight_for(king, dr.survival_weights), 1.75,
 			"…without touching un-overridden entries")
 
 
@@ -409,3 +410,31 @@ func _engine_king_retreats_fully() -> void:
 	if not king_moves.is_empty():
 		check_eq(int(king_moves[0]["col"]), deep,
 				"…all the way to the back column — no half-hearted mid-column stop")
+
+
+# ── Damage sharing (stock): moderate threat, and the king fronts for its troops ──────
+
+func _engine_king_shares_moderate_threat() -> void:
+	var back := BoardData.ROWS - 1
+	var deep := BoardData.COLS - 1
+	# The other half of the stock captain's character (weight 1.75 is a measured window —
+	# see STOCK_SURVIVAL_WEIGHTS): against MODERATE threat the king leaves its safe corner
+	# and walks to the front line, spending its fat pool so valued fodders stop dying.
+	# Against queens the same board makes it stay home (the retreat test covers commitment).
+	var captain := _enemy("captain_dummy", back, deep)
+	var enemies: Array = [captain]
+	for r in BoardData.ROWS:
+		enemies.append(_enemy("fodder_dummy", r, 1))
+	var players: Array = [_player("knight", 0, deep), _player("knight", 1, deep)]
+	var grids := _grids(enemies, players)
+
+	var engine := _seeded_engine()
+	engine.weight_overrides = {"fodder": 0.5}
+	var actions := engine.decide_actions([], grids[0], grids[1], 0)
+
+	var king_moves: Array = actions.filter(func(a: Dictionary) -> bool:
+		return int(a["type"]) == EnemyEngine.Action.MOVE and a["inst"] == captain)
+	check_eq(king_moves.size(), 1, "the stock king steps out against moderate threat")
+	if not king_moves.is_empty():
+		check_eq(int(king_moves[0]["col"]), 0,
+				"…all the way to the front line, absorbing hits for its fodders")
