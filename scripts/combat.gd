@@ -22,7 +22,7 @@ const PACE_ICONS := [
 # section in Vfx). The fixed sleeps that used to live here — SHIELD_LEAD, RELIC_CUE_LEAD, the flat
 # post-strike beat — were dead air between finished animations; awaiting the cue itself now returns
 # at its handoff, so the next beat starts under the previous one's tail instead of after it.
-const RELIC_CHIP_SPAN := 0.34   # a relic chip glinting in its tray — a cue with no library entry
+# (RELIC_CHIP_SPAN moved to LivePresenter with the relic-glint body.)
 const BOARD_HALVES_GAP := 24.0   # the TOTAL gulf between the halves: divider + flanking gaps
 const HALVES_DIVIDER_W := 4.0   # the visible rule standing in the middle of that gulf
 const COL_SEP := 14.0   # board↔hand breathing room; also a term in _resize_board's height budget
@@ -51,6 +51,8 @@ var _exp_gauge: ExpGauge     # the narrow experience column outboard of that str
 var _reward_chest: TreasureChest   # dropped by a falling enemy King; the gate into the rewards
 var _relic_tray: RelicTray   # read-only vertical relic strip on the screen's left edge (see
 							  # _build_relic_strip); a firing relic glints its chip
+var _presenter: CombatPresenter   # the cascade's presentation surface — LivePresenter here;
+								   # the null base class in a simulation (see CombatPresenter)
 var _consumable_busy := false   # a consumable's use is resolving — no second use may start
 								 # under its awaits (the chips' usability check reads this)
 var _done_btn: Button        # the chunky vertical "Ready" button (right of the board)
@@ -143,6 +145,11 @@ func _ready() -> void:
 		if _relic_tray != null:
 			_relic_tray.glint(relic_id)
 	_animator.setup(self, _get_card_ui, _vfx)
+	# The cascade's injected presentation surface (see CombatPresenter): the live fight
+	# animates; a simulation would hand the same cascade the null base class instead. The
+	# tray is fetched through a Callable because it is built after this wiring block.
+	_presenter = LivePresenter.make(_animator, get_tree(), _board,
+			func() -> RelicTray: return _relic_tray, _king_fall, _fade_out)
 
 	_spell_caster.setup(_board, _animator, func() -> int: return _player_side.mana, _interaction)
 	_hand.bind_side(_player_side)
@@ -783,12 +790,11 @@ func _bury(inst: CardInstance) -> void:
 	# An enemy King does not die like a unit — it FALLS, and leaves the fight's reward behind
 	# where it stood (see _king_fall). Its own send-off replaces the plain fade below.
 	if inst.owner == 1 and inst.data != null and inst.data.is_king and _rewards_live():
-		await _king_fall(inst, corpse)
+		await _presenter.king_fall(inst, corpse)
 		return
-	_fade_out(inst, corpse)   # plays on past the beat below; disposes of the card at its end
-	# A death is a BEAT like any other, so it hands off through the overlap dial: at Flowing combat
+	# A death is a BEAT like any other, handed off through the overlap dial: at Flowing combat
 	# carries on while the corpse is still fading, at Step by step it waits the fade out in full.
-	await get_tree().create_timer(Vfx.handoff(VFXEffectDeath.FADE_DUR)).timeout
+	await _presenter.unit_fade(inst, corpse)
 
 
 # ── Kill bounties: what a fallen enemy pays, the moment it falls ───────────────────
@@ -1057,7 +1063,7 @@ func _fire(event: GameEvent, holder: CardInstance) -> void:
 	for group: Dictionary in EffectSystem.trigger_grouped(event, holder, ctx):
 		var gres: Array = group["results"]
 		var sid: String = group["status_id"]
-		await _animator.show_effect_results(gres, holder, sid)
+		await _presenter.show_effect_results(gres, holder, sid)
 
 
 # Run-level (relic/upgrade) effects for an event, fired ONCE from the perspective of the
@@ -1072,10 +1078,9 @@ func _fire_run_level(event: GameEvent) -> void:
 		var rres: Array = grp["results"]
 		if rres.is_empty():
 			continue
-		if str(grp["owner_kind"]) == "relic" and _relic_tray != null:
-			_relic_tray.glint(str(grp["owner_id"]))
-			await get_tree().create_timer(Vfx.handoff(RELIC_CHIP_SPAN)).timeout
-		await _animator.show_effect_results(rres, persp, "", false)
+		if str(grp["owner_kind"]) == "relic":
+			await _presenter.relic_glint(str(grp["owner_id"]))
+		await _presenter.show_effect_results(rres, persp, "", false)
 
 
 # A consumable relic's use (the tray chip's completed safety hold — see ConsumableChip): SPEND
@@ -1105,7 +1110,7 @@ func _use_consumable(relic_id: String) -> void:
 	# The chip is still on screen for its own cue — it glints, and only then does the refresh
 	# take it away, so the spend reads as "that relic fired and was used up".
 	_relic_tray.glint(relic_id)
-	await get_tree().create_timer(Vfx.handoff(RELIC_CHIP_SPAN)).timeout
+	await get_tree().create_timer(Vfx.handoff(LivePresenter.RELIC_CHIP_SPAN)).timeout
 	_relic_tray.refresh()
 	for effect: Effect in relic.effects:
 		if not effect.trigger_resolver().applies_on_use():
@@ -1189,7 +1194,7 @@ func _resolve_event(event_id: StringName, subject: CardInstance = null) -> void:
 		if subject == null or subject == holder:
 			StatusEngine.advance(holder, event_id)
 	_board.cleanup_effect_deaths()
-	_board.refresh()
+	_presenter.board_refresh()
 
 
 # The player's King carries its health across the whole run, so it enters each
