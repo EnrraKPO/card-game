@@ -1,0 +1,26 @@
+[
+	{
+		"id": "magic_missile",
+		"display_name": "Magic Missile",
+		"description": "Deals 3 damage to a target of your choice.",
+		"cost": {
+			"mana": 3,
+			"tap": true
+		},
+		"autocast": true,
+		"effects": [
+			{
+				"trigger": {
+					"kind": "event",
+					"event": "play",
+					"of": "self"
+				},
+				"targets": {
+					"kind": "manual"
+				},
+				"attribute": "health",
+				"amount": -3
+			}
+		]
+	}
+]

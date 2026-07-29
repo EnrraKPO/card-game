@@ -1,0 +1,75 @@
+[
+	{
+		"id": "fodder_dummy",
+		"tribe": "dummy",
+		"cost": 1,
+		"attack": 1,
+		"health": 2,
+		"speed": 2,
+		"enemy_only": true
+	},
+	{
+		"id": "tank_dummy",
+		"tribe": "dummy",
+		"cost": 2,
+		"attack": 1,
+		"health": 5,
+		"speed": 1,
+		"shield": 2,
+		"enemy_only": true
+	},
+	{
+		"id": "dps_dummy",
+		"tribe": "dummy",
+		"cost": 2,
+		"attack": 2,
+		"health": 2,
+		"speed": 3,
+		"enemy_only": true
+	},
+	{
+		"id": "support_dummy",
+		"tribe": "dummy",
+		"cost": 2,
+		"attack": 1,
+		"health": 3,
+		"speed": 2,
+		"abilities": ["heal", "fire_bless"],
+		"enemy_only": true
+	},
+	{
+		"id": "burst_damage_dummy",
+		"tribe": "dummy",
+		"cost": 2,
+		"attack": 1,
+		"health": 2,
+		"speed": 2,
+		"abilities": ["magic_missile"],
+		"enemy_only": true
+	},
+	{
+		"id": "captain_dummy",
+		"tribe": "dummy",
+		"cost": 0,
+		"attack": 1,
+		"health": 10,
+		"speed": 2,
+		"shield": 1,
+		"is_king": true,
+		"enemy_only": true
+	},
+	{
+		"id": "dummy_group_heal",
+		"card_type": "spell",
+		"cost": 4,
+		"enemy_only": true,
+		"effects": [
+			{
+				"trigger": "on_play",
+				"targeting_policy": "all_allies",
+				"attribute": "health",
+				"amount": 1
+			}
+		]
+	}
+]

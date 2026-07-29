@@ -1,0 +1,20 @@
+{
+  "id": "test_dummies",
+  "node_type": "combat",
+  "min_stage": 99,
+  "max_stage": 99,
+  "weight": 1,
+  "enemy_king": "captain_dummy",
+  "enemy_pool": [
+    { "id": "fodder_dummy", "weight": 3 },
+    { "id": "tank_dummy", "weight": 2 },
+    { "id": "dps_dummy", "weight": 2 },
+    { "id": "support_dummy", "weight": 2 },
+    { "id": "burst_damage_dummy", "weight": 2 },
+    { "id": "dummy_group_heal", "weight": 1 }
+  ],
+  "pick_count": [8, 10],
+  "gold_reward": [0, 0],
+  "ai": "default",
+  "reward_pool": "default"
+}
