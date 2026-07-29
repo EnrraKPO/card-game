@@ -8,7 +8,7 @@
     { "id": "dps_dummy", "weight": 1 }
   ],
   "pick_count": [15, 15],
-  "survival_weights": { "dps": 0.6 },
+  "survival_weights": { "dps": 0.6, "fodder": 0.4 },
   "gold_reward": [0, 0],
   "ai": "default",
   "reward_pool": "default"

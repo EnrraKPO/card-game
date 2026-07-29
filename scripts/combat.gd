@@ -413,8 +413,8 @@ func _do_cpu_placement() -> void:
 	_refresh_done_btn()
 
 	# The enemy engine plans the whole CPU turn (see ENCOUNTER_ENGINE_DESIGN.md); the old
-	# EnemyAI placeholder is no longer consulted. Day one it emits placements only — spell,
-	# ability and move planning return as its candidate generators widen.
+	# EnemyAI placeholder is no longer consulted. It emits placements and moves so far —
+	# spell and ability planning return as its candidate generators widen.
 	var engine := EnemyEngine.new()
 	if GameData.current_encounter != null:
 		engine.weight_overrides = GameData.current_encounter.survival_weights

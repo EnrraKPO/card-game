@@ -7,6 +7,7 @@
     { "id": "fodder_dummy", "weight": 1 }
   ],
   "pick_count": [20, 20],
+  "survival_weights": { "fodder": 0.5 },
   "gold_reward": [0, 0],
   "ai": "default",
   "reward_pool": "default"

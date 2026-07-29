@@ -21,7 +21,10 @@ func run() -> void:
 	_weight_resolution()
 	_threat_and_incoming()
 	_urgency_shape()
-	_engine_triages_dying_unit()
+	_move_enumeration()
+	_apply_move_purity()
+	_scoring_triages_dying_unit()
+	_engine_king_tanks()
 
 
 func _enemy(card_id: String, r: int, c: int) -> CardInstance:
@@ -285,27 +288,92 @@ func _urgency_shape() -> void:
 			"chip damage against a fat health pool barely registers")
 
 
+# ── Moves: enumeration + apply ───────────────────────────────────────────────────────
+
+func _move_enumeration() -> void:
+	var back := BoardData.ROWS - 1
+	var deep := BoardData.COLS - 1
+	var king := _enemy("king", back, deep)
+	var state := _state_with([king, _enemy("rook", back, 0), _enemy("pawn", 0, 0)])
+	var empties := state.empty_slots(1).size()
+
+	var cands := CandidateMoves.moves(state, {})
+	check_eq(cands.size(), empties * 2,
+			"king and pawn each offer every empty slot; the rooted building offers none")
+	var king_moves := cands.filter(func(c: Dictionary) -> bool: return c["inst"] == king)
+	check_eq(king_moves.size(), empties, "the king is DELIBERATELY movable (captain-as-tank)")
+
+	var after: Array = CandidateMoves.moves(state, {king: true})
+	check_eq(after.size(), empties, "a unit already moved this turn stops offering moves")
+
+
+func _apply_move_purity() -> void:
+	var back := BoardData.ROWS - 1
+	var deep := BoardData.COLS - 1
+	var king := _enemy("king", back, deep)
+	var state := _state_with([king])
+	var next := CandidateApply.apply(state, {"kind": "move", "inst": king,
+			"from_row": back, "from_col": deep, "row": 0, "col": 0, "cost": 0})
+
+	check(state.unit_at(1, back, deep) != null, "apply leaves the input state untouched")
+	check(next.unit_at(1, back, deep) == null, "the result vacates the origin slot")
+	var moved: BoardState.UnitState = next.unit_at(1, 0, 0)
+	check(moved != null and moved.source == king, "…and the unit stands at the destination")
+
+
 # ── The deliverable-2 observable: triage beats marginal captain cover ────────────────
 
-func _engine_triages_dying_unit() -> void:
+func _scoring_triages_dying_unit() -> void:
 	var back := BoardData.ROWS - 1
 	var deep := BoardData.COLS - 1
 	# The Captain sits screened and comfortable; a wounded support (weight 0.5) stands
-	# exposed in the far lane; modest real threat is on the player's board. The engine
-	# holds one cheap fodder (weight 0.1).
-	var support := _enemy("support_dummy", 0, 1)
-	support.current_health = 2
-	var enemies: Array = [
-		_enemy("captain_dummy", back, deep),
-		_enemy("pawn", back, 0),   # the Captain's same-lane screen, already standing
-		support,
-	]
+	# exposed in the far lane; modest real threat is on the player's board. One cheap
+	# fodder body is worth more screening the dying support than doubling captain cover.
+	var scoring := BoardScoring.stock()
 	var players: Array = [_player("knight", 0, deep)]
+
+	var support_a := _enemy("support_dummy", 0, 1)
+	support_a.current_health = 2
+	var screens_support := _state_with([
+		_enemy("captain_dummy", back, deep), _enemy("pawn", back, 0), support_a,
+		_enemy("fodder_dummy", 0, 0),
+	], players)
+
+	var support_b := _enemy("support_dummy", 0, 1)
+	support_b.current_health = 2
+	var pads_captain := _state_with([
+		_enemy("captain_dummy", back, deep), _enemy("pawn", back, 0), support_b,
+		_enemy("fodder_dummy", back, 1),
+	], players)
+
+	check(scoring.score(screens_support) > scoring.score(pads_captain),
+			"a dying support outweighs marginal cover for a comfortable Captain")
+
+
+# ── Captain-as-tank: the king steps forward when its body is the best screen ─────────
+
+func _engine_king_tanks() -> void:
+	var back := BoardData.ROWS - 1
+	var deep := BoardData.COLS - 1
+	# Precious fodders (event override 0.6) crowd every column except the front; serious
+	# threat is on the player's board; only front-line slots are open, and nobody's 2 HP
+	# body soaks damage as well as the Captain's fat pool. Decision 15 in reverse.
+	var captain := _enemy("captain_dummy", back, deep)
+	var enemies: Array = [captain]
+	for r in BoardData.ROWS:
+		enemies.append(_enemy("fodder_dummy", r, 1))
+		enemies.append(_enemy("fodder_dummy", r, 2))
+	enemies.append(_enemy("fodder_dummy", 0, deep))
+	enemies.append(_enemy("fodder_dummy", 1, deep))
+	var players: Array = [_player("queen", 0, deep), _player("queen", 1, deep)]
 	var grids := _grids(enemies, players)
 
-	var actions := _seeded_engine().decide_actions(
-			[unit("fodder_dummy")], grids[0], grids[1], 5)
-	check_eq(actions.size(), 1, "the one affordable unit gets placed")
-	var action: Dictionary = actions[0]
-	check_eq(int(action["row"]), 0, "the fodder screens the dying support's lane")
-	check_eq(int(action["col"]), 0, "…standing in front of it, not beside the cosy Captain")
+	var engine := _seeded_engine()
+	engine.weight_overrides = {"fodder": 0.6}
+	var actions := engine.decide_actions([], grids[0], grids[1], 0)
+
+	var king_moves: Array = actions.filter(func(a: Dictionary) -> bool:
+		return int(a["type"]) == EnemyEngine.Action.MOVE and a["inst"] == captain)
+	check_eq(king_moves.size(), 1, "the Captain steps out exactly once")
+	if not king_moves.is_empty():
+		check_eq(int(king_moves[0]["col"]), 0, "…to the front line, tanking for its fodders")
