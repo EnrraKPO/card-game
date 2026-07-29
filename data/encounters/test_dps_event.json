@@ -1,0 +1,14 @@
+{
+  "id": "test_dps_event",
+  "node_type": "test",
+  "weight": 1,
+  "enemy_king": "captain_dummy",
+  "enemy_pool": [
+    { "id": "fodder_dummy", "weight": 2 },
+    { "id": "dps_dummy", "weight": 1 }
+  ],
+  "pick_count": [15, 15],
+  "gold_reward": [0, 0],
+  "ai": "default",
+  "reward_pool": "default"
+}

@@ -10258,5 +10258,68 @@
     "added": true,
     "at": "2026-07-28T04:58:24.975Z",
     "fileHash": "c16572df32e806b09fcf058914dd083d4372c1d6"
+  },
+  "card/burst_damage_dummy": {
+    "file": "test_dummies_units.json",
+    "original": {
+      "id": "burst_damage_dummy",
+      "tribe": "dummy",
+      "cost": 2,
+      "attack": 1,
+      "health": 2,
+      "speed": 2,
+      "abilities": [
+        "magic_missile"
+      ],
+      "enemy_only": true
+    },
+    "at": "2026-07-29T06:01:07.306Z",
+    "fileHash": "61146693baee357632fff318757659863b5171d8"
+  },
+  "card/dps_dummy": {
+    "file": "test_dummies_units.json",
+    "original": {
+      "id": "dps_dummy",
+      "tribe": "dummy",
+      "cost": 2,
+      "attack": 2,
+      "health": 2,
+      "speed": 3,
+      "enemy_only": true
+    },
+    "at": "2026-07-29T06:01:16.395Z",
+    "fileHash": "61146693baee357632fff318757659863b5171d8"
+  },
+  "card/fodder_dummy": {
+    "file": "test_dummies_units.json",
+    "original": {
+      "id": "fodder_dummy",
+      "tribe": "dummy",
+      "cost": 1,
+      "attack": 1,
+      "health": 2,
+      "speed": 2,
+      "enemy_only": true
+    },
+    "at": "2026-07-29T06:01:21.841Z",
+    "fileHash": "61146693baee357632fff318757659863b5171d8"
+  },
+  "card/support_dummy": {
+    "file": "test_dummies_units.json",
+    "original": {
+      "id": "support_dummy",
+      "tribe": "dummy",
+      "cost": 2,
+      "attack": 1,
+      "health": 3,
+      "speed": 2,
+      "abilities": [
+        "heal",
+        "fire_bless"
+      ],
+      "enemy_only": true
+    },
+    "at": "2026-07-29T06:01:25.565Z",
+    "fileHash": "61146693baee357632fff318757659863b5171d8"
   }
 }

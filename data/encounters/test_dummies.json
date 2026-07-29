@@ -1,8 +1,6 @@
 {
   "id": "test_dummies",
-  "node_type": "combat",
-  "min_stage": 99,
-  "max_stage": 99,
+  "node_type": "test",
   "weight": 1,
   "enemy_king": "captain_dummy",
   "enemy_pool": [

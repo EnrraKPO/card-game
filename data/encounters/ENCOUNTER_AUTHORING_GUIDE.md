@@ -27,7 +27,7 @@ A template describes an enemy *card pool* to sample from, not a fixed list — e
 | Field | Type | Required | Description |
 |---|---|---|---|
 | `id` | string | Yes | Unique identifier (not currently looked up by id, but useful for debugging/authoring clarity) |
-| `node_type` | string | Yes | `combat`, `elite`, or `boss` — which map node type this template can serve |
+| `node_type` | string | Yes | `combat`, `elite`, or `boss` — which map node type this template can serve. `test` is a fourth value for debug-only content: it is never generated onto a real map, and lists in its own "Test Dummies" section in the Combat Gym instead of Combat/Elite/Boss |
 | `min_floor` / `max_floor` | int | No | Inclusive floor-eligibility band. Defaults to `0`/`999` (always eligible) |
 | `weight` | float | No | Relative chance of being picked when multiple templates are eligible for the same node_type + floor. Defaults to `1` |
 | `enemy_king` | string | No | Card id placed in the enemy's king slot — the win-condition unit. Defaults to `"king"` (the generic crown King). Tribe fights name a themed **Captain** (an `is_king` + `enemy_only` card, e.g. `goblin_warlord`, or a tougher `hobgoblin_tyrant`/`gorthok` for elites/bosses). Do **not** also list it in `enemy_pool` |

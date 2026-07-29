@@ -1,7 +1,11 @@
 class_name MapNodeData
 extends RefCounted
 
-enum Type { COMBAT, ELITE, EVENT, SHOP, REST, BOSS, FORGE }
+enum Type { COMBAT, ELITE, EVENT, SHOP, REST, BOSS, FORGE, TEST }
+# TEST is never generated onto a real map (map_data.gd's _pick_type only returns
+# COMBAT/ELITE/BOSS) — it exists purely so debug-only encounter templates (the Combat
+# Gym's "Test Dummies" section) can be filtered out of the ordinary node-type sections
+# without an id-prefix hack.
 
 var id: int
 var floor: int

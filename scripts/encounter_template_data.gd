@@ -127,6 +127,7 @@ static func _str_node_type(s: String) -> MapNodeData.Type:
 		"combat": return MapNodeData.Type.COMBAT
 		"elite":  return MapNodeData.Type.ELITE
 		"boss":   return MapNodeData.Type.BOSS
+		"test":   return MapNodeData.Type.TEST
 	push_error("EncounterTemplateData: unknown node_type '%s', defaulting to combat" % s)
 	return MapNodeData.Type.COMBAT
 

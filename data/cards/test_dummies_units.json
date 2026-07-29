@@ -1,12 +1,14 @@
 [
 	{
 		"id": "fodder_dummy",
-		"tribe": "dummy",
+		"display_name": "Fodder Dummy",
 		"cost": 1,
 		"attack": 1,
 		"health": 2,
 		"speed": 2,
-		"enemy_only": true
+		"description": "A test dummy with nothing going on — cheap, weak, disposable.",
+		"enemy_only": true,
+		"tribe": "dummy"
 	},
 	{
 		"id": "tank_dummy",
@@ -20,32 +22,43 @@
 	},
 	{
 		"id": "dps_dummy",
-		"tribe": "dummy",
+		"display_name": "DPS Dummy",
 		"cost": 2,
 		"attack": 2,
 		"health": 2,
 		"speed": 3,
-		"enemy_only": true
+		"description": "A test dummy built for damage output — fast and hard-hitting, but fragile.",
+		"enemy_only": true,
+		"tribe": "dummy"
 	},
 	{
 		"id": "support_dummy",
-		"tribe": "dummy",
+		"display_name": "Support Dummy",
 		"cost": 2,
 		"attack": 1,
 		"health": 3,
 		"speed": 2,
-		"abilities": ["heal", "fire_bless"],
-		"enemy_only": true
+		"description": "A test dummy that props up its allies — carries Heal and Bless by Fire.",
+		"enemy_only": true,
+		"tribe": "dummy",
+		"abilities": [
+			"heal",
+			"fire_bless"
+		]
 	},
 	{
 		"id": "burst_damage_dummy",
-		"tribe": "dummy",
+		"display_name": "Burst Damage Dummy",
 		"cost": 2,
 		"attack": 1,
 		"health": 2,
 		"speed": 2,
-		"abilities": ["magic_missile"],
-		"enemy_only": true
+		"description": "A test dummy. Carries Magic Missile — a focused 3-damage bolt.",
+		"enemy_only": true,
+		"tribe": "dummy",
+		"abilities": [
+			"magic_missile"
+		]
 	},
 	{
 		"id": "captain_dummy",

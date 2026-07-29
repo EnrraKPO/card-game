@@ -79,6 +79,7 @@ func _build() -> void:
 	col.add_theme_constant_override("separation", 24)
 	scroll.add_child(col)
 
+	col.add_child(_section("Test Dummies", MapNodeData.Type.TEST))
 	col.add_child(_section("Combat", MapNodeData.Type.COMBAT))
 	col.add_child(_section("Elite", MapNodeData.Type.ELITE))
 	col.add_child(_section("Boss", MapNodeData.Type.BOSS))
