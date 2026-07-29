@@ -132,6 +132,15 @@ class DeathRisk:
 			var w := BoardScoring.weight_for(u, survival_weights)
 			if w != 0.0:
 				risk += w * BoardScoring.urgency(state, u)
+		# A unit this candidate KILLED carries its full weight — urgency 1.0 is "certainly
+		# dies", and a corpse is that outcome already realised. Without this the risk term
+		# of anything the simulation destroys simply disappears from the sum, and wiping out
+		# your own most valuable unit becomes the highest-scoring play on the board (it was:
+		# the CPU bolted its own Captain). Own side only — a dead PLAYER unit is already
+		# rewarded, through the threat mass it stops contributing.
+		for dead: BoardState.UnitState in state.graveyard:
+			if dead.owner == 1:
+				risk += BoardScoring.weight_for(dead, survival_weights)
 		return -risk
 
 

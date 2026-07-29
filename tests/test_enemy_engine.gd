@@ -37,6 +37,8 @@ func run() -> void:
 	_engine_heals_wounded_ally()
 	_engine_casts_group_heal()
 	_engine_place_vs_heal_arbitration()
+	_death_of_own_unit_scores_worse()
+	_engine_never_kills_its_own_captain()
 
 
 func _enemy(card_id: String, r: int, c: int) -> CardInstance:
@@ -715,3 +717,83 @@ func _engine_place_vs_heal_arbitration() -> void:
 		return int(a["type"]) == EnemyEngine.Action.PLACE)
 	check_eq(places2.size(), 1, "with nothing to preserve, the same mana fields the fodder")
 	check_eq(heals2.size(), 0, "…and the futile heal is declined")
+
+
+# ── Losing a unit must never READ as relief ─────────────────────────────────────────
+#
+# The hole this pins: every negative criterion sums over LIVING units, so a unit that
+# dies during a simulation silently leaves the sum and its risk term evaporates — making
+# "destroy your own valuable unit" score as an improvement. Death must be the worst
+# outcome for a unit, not the absence of one.
+
+func _death_of_own_unit_scores_worse() -> void:
+	var back := BoardData.ROWS - 1
+	var deep := BoardData.COLS - 1
+	var scoring := BoardScoring.stock()
+	var players: Array = [_player("knight", 0, deep)]
+
+	# Isolating the death accounting: the SAME board either way — one reached by killing
+	# the dps, one where it was never there. Identical geometry, identical survivors; the
+	# only difference is that one of them cost a unit to get to. That must score worse,
+	# and nothing but the graveyard term can say so.
+	var doomed := _enemy("dps_dummy", 0, 0)
+	doomed.current_health = 1
+	var before := _state_with([_enemy("captain_dummy", back, deep), doomed], players)
+	var burst := BoardState.UnitState.from_instance(_enemy("burst_damage_dummy", 0, 1))
+	var killed := before.copy()
+	SimEffects.apply_cast(killed, AbilityData.get_ability("magic_missile").effects, 1,
+			burst, killed.find(doomed))
+	var never_there := _state_with([_enemy("captain_dummy", back, deep)], players)
+
+	check(killed.find(doomed) == null, "the bolt did kill the dps (fixture sanity)")
+	check_eq(killed.graveyard.size(), 1, "…and the corpse is recorded")
+	check(scoring.score(killed) < scoring.score(never_there),
+			"reaching a board by KILLING an own unit scores worse than the same board without it")
+	check(scoring.score(killed) < scoring.score(before),
+			"…and worse than leaving the dying unit alive")
+	check_eq(BoardState.capture(_grids([])[0], _grids([])[1]).graveyard.size(), 0,
+			"a freshly captured board starts with an empty graveyard")
+
+	# A dead PLAYER unit is not a loss to mourn — it stops contributing threat, which the
+	# threat mass already rewards. It must never be charged to the enemy's own risk.
+	var victim := _player("knight", 0, deep)
+	victim.current_health = 1
+	var with_foe := _state_with([_enemy("captain_dummy", back, deep)], [victim])
+	var foe_killed := with_foe.copy()
+	SimEffects.apply_cast(foe_killed, AbilityData.get_ability("magic_missile").effects, 1,
+			burst, foe_killed.find(victim))
+	check(scoring.score(foe_killed) > scoring.score(with_foe),
+			"killing a PLAYER unit is still an improvement — the graveyard is own-side only")
+
+
+func _engine_never_kills_its_own_captain() -> void:
+	var back := BoardData.ROWS - 1
+	var deep := BoardData.COLS - 1
+	# A wounded Captain and a burst unit holding a 3-damage bolt: the bolt can finish it.
+	# Killing its own king removes the board's biggest risk term (weight 1.75) and costs no
+	# presence (the captain's mana cost is 0) — so an unguarded scorer rates suicide as the
+	# best play available. Losing the Captain IS losing the fight; no score may buy it.
+	var captain := _enemy("captain_dummy", back, deep)
+	captain.current_health = 2
+	captain.current_shield = 0
+	var burst := _enemy("burst_damage_dummy", back, 0)
+	var enemies: Array = [captain, burst, _enemy("fodder_dummy", 0, 0)]
+	var players: Array = [_player("queen", 0, deep), _player("queen", 1, deep)]
+	var grids := _grids(enemies, players)
+
+	var engine := _seeded_engine()
+	var actions := engine.decide_actions([], grids[0], grids[1], 3)
+	var bolts_own: Array = actions.filter(func(a: Dictionary) -> bool:
+		if int(a["type"]) != EnemyEngine.Action.GENERATE:
+			return false
+		var t: CardInstance = a.get("target", null)
+		return t != null and t.owner == 1)
+	check_eq(bolts_own.size(), 0, "the CPU never aims a damage ability at its own units")
+
+	# …and the criterion itself must say so, not just this board's arithmetic.
+	var scoring := BoardScoring.stock()
+	var state := BoardState.capture(grids[0], grids[1])
+	var suicide := CandidateApply.apply(state, {"kind": "ability", "inst": burst,
+			"ability": AbilityData.get_ability("magic_missile"), "target": captain, "cost": 3})
+	check(scoring.score(suicide) < scoring.score(state),
+			"killing its own Captain scores worse than doing nothing at all")

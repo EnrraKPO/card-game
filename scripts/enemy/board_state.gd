@@ -15,6 +15,14 @@ extends RefCounted
 var player_units: Array = []
 var enemy_units: Array = []
 
+# Units that DIED during this simulation (SimEffects sweeps them off the grid into here).
+# They exist because a board is not a complete account of what a candidate did: every
+# negative criterion sums over living units, so a unit that simply vanished would take its
+# own risk term with it and make "destroy your own valuable unit" read as relief. The
+# corpses stay visible to scoring and invisible to geometry — which is exactly the split
+# reality has. Always empty on capture: it records what THIS decision's simulation cost.
+var graveyard: Array = []
+
 
 class UnitState:
 	extends RefCounted
@@ -124,6 +132,9 @@ func copy() -> BoardState:
 	var s := BoardState.new()
 	s.player_units = _copy_grid(player_units)
 	s.enemy_units = _copy_grid(enemy_units)
+	# A fresh list of the same corpses: nothing ever mutates a dead unit, so the entries
+	# are shared while the LIST stays per-copy (appending to one never reaches another).
+	s.graveyard = graveyard.duplicate()
 	return s
 
 

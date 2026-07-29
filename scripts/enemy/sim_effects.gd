@@ -125,3 +125,6 @@ static func _sweep_dead(state: BoardState) -> void:
 				var u: BoardState.UnitState = grid[r][c]
 				if u != null and u.health <= 0:
 					grid[r][c] = null   # death triggers NOT fired — see the header divergence
+					# Off the board, but NOT out of the reckoning: scoring reads the
+					# graveyard so a death can never score as the absence of a problem.
+					state.graveyard.append(u)

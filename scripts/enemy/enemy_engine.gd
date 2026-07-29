@@ -55,6 +55,7 @@ func decide_actions(hand: Array, player_grid: Array, enemy_grid: Array, mana: in
 	var remaining := mana
 	var moved: Dictionary = {}   # CardInstance -> true once repositioned this turn
 	var actions: Array = []
+	var had_captain := state.captain(1) != null
 	while true:
 		var current := scoring.score(state)
 		var cands := CandidateMoves.placements(state, pool, remaining)
@@ -63,7 +64,7 @@ func decide_actions(hand: Array, player_grid: Array, enemy_grid: Array, mana: in
 		cands.append_array(CandidateMoves.abilities(state, remaining))
 		if cands.is_empty():
 			break
-		var best := _pick_best(cands, state, scoring)
+		var best := _pick_best(cands, state, scoring, had_captain)
 		if float(best["score"]) <= current + TIE_EPSILON:
 			break   # the best candidate improves nothing — then none do; the turn is done
 		var cand: Dictionary = best["cand"]
@@ -92,15 +93,31 @@ func decide_actions(hand: Array, player_grid: Array, enemy_grid: Array, mana: in
 
 
 # Rank all candidates by the score of the state they produce; pick uniformly among the
-# ones tied for best. Returns { "cand": Dictionary, "score": float }.
-func _pick_best(cands: Array, state: BoardState, scoring: BoardScoring) -> Dictionary:
+# ones tied for best. Returns { "cand": Dictionary, "score": float } — an empty cand at
+# -INF when every candidate was vetoed, which the caller reads as "nothing worth doing".
+#
+# THE ONE CATEGORICAL VETO: a candidate that leaves the Captain dead is never selectable,
+# whatever it scores. Losing the Captain is losing the fight (combat_board.any_king_dead),
+# and no arrangement of the survivors is worth it — that is a different KIND of statement
+# from the weighted trade-offs in the criteria, so it is enforced here rather than priced
+# there. (Deliberately not a general "never let an own unit die": sacrificing a cheap body
+# is a legitimate play, and the graveyard term prices those honestly.) A phase-change boss
+# that replaces its own Captain is unaffected — decision 13b fires those from a concealed
+# container, never as an action the CPU chooses.
+func _pick_best(cands: Array, state: BoardState, scoring: BoardScoring,
+		had_captain: bool = true) -> Dictionary:
 	var best_score := -INF
 	var best: Array = []
 	for cand: Dictionary in cands:
-		var s := scoring.score(CandidateApply.apply(state, cand))
+		var next := CandidateApply.apply(state, cand)
+		if had_captain and next.captain(1) == null:
+			continue
+		var s := scoring.score(next)
 		if s > best_score + TIE_EPSILON:
 			best_score = s
 			best = [cand]
 		elif absf(s - best_score) <= TIE_EPSILON:
 			best.append(cand)
+	if best.is_empty():
+		return {"cand": {}, "score": -INF}
 	return {"cand": best[_rng.randi_range(0, best.size() - 1)], "score": best_score}
