@@ -1,6 +1,16 @@
 # Combat Logic / Presentation Decoupling — Refactor Plan
 
-**Status:** SCOPED, NOT STARTED. Written 2026-07-29 after an alignment session with the user.
+**Status: COMPLETE (all 5 steps, 2026-07-29).** SimEffects is deleted; simulations run the
+real rules on CombatWorld copies with the null presenter. Notable deviations from the plan
+as written: the null presenter is the CombatPresenter BASE CLASS (no separate NullPresenter
+name); ON_PLAY dispatch landed on the WORLD (play_dispatch), not the cascade host — the
+play trigger is presentation-free, so there was nothing to inject; the deny-list also keeps
+CUSTOM hooks refused (several embed player-side board procedures) alongside chance-rolls
+and random discards. Placement ON_PLAY effects are still not simulated (a scoring-scope
+widening, deliberately untaken). Kept: BoardState as the scorer's read-model, captured back
+from world copies.
+
+Written 2026-07-29 after an alignment session with the user.
 **Purpose:** groundwork for the future **board simulation feature** — the enemy engine (and
 anything else) simulating full-fidelity hypotheticals by running the REAL rules on a copied
 board. Read ENCOUNTER_ENGINE_DESIGN.md decisions 17/17a first for why simulation matters.

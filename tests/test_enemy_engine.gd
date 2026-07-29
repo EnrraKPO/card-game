@@ -35,12 +35,14 @@ func run() -> void:
 	_apply_ability_heal()
 	_apply_cast_group_heal()
 	_apply_cast_sweeps_dead()
+	_apply_ability_fire_bless()
 	_presence_measurement()
 	_engine_heals_wounded_ally()
 	_engine_casts_group_heal()
 	_engine_place_vs_heal_arbitration()
 	_death_of_own_unit_scores_worse()
 	_engine_never_kills_its_own_captain()
+	_planning_leaves_the_world_untouched()
 
 
 func _enemy(card_id: String, r: int, c: int) -> CardInstance:
@@ -116,6 +118,21 @@ func _state_copy_independence() -> void:
 func _state_with(enemy_insts: Array, player_insts: Array = []) -> BoardState:
 	var grids := _grids(enemy_insts, player_insts)
 	return BoardState.capture(grids[0], grids[1])
+
+
+# The live-world half of a sim context for direct CandidateApply cast tests: the same
+# instances the state was captured from, standing on a CombatWorld (see CandidateApply's
+# `sim` parameter — cast/ability candidates copy this world and run the real rules on it).
+func _sim_for(enemy_insts: Array, player_insts: Array = [], hand: Array = []) -> Dictionary:
+	var grids := _grids(enemy_insts, player_insts)
+	var w := CombatWorld.new()
+	w.player_grid = grids[0]
+	w.enemy_grid = grids[1]
+	w.player_side = CombatSide.make(0)
+	w.enemy_side = CombatSide.make(1)
+	w.enemy_side.hand = hand
+	w.modifiers = GameData.current_modifiers
+	return {"world": w, "accepted": []}
 
 
 func _exposure_geometry() -> void:
@@ -524,26 +541,26 @@ func _engine_king_shares_moderate_threat() -> void:
 # ── The sim-support gate: the engine never plays what it cannot evaluate ─────────────
 
 func _sim_gate() -> void:
-	check(SimEffects.can_simulate_cast(AbilityData.get_ability("heal").effects),
+	check(CandidateApply.can_simulate_cast(AbilityData.get_ability("heal").effects),
 			"a manual heal is simulatable")
-	check(SimEffects.can_simulate_cast(AbilityData.get_ability("magic_missile").effects),
+	check(CandidateApply.can_simulate_cast(AbilityData.get_ability("magic_missile").effects),
 			"a manual damage bolt is simulatable")
-	check(SimEffects.can_simulate_cast(CardData.get_card("dummy_group_heal").effects),
+	check(CandidateApply.can_simulate_cast(CardData.get_card("dummy_group_heal").effects),
 			"an all-allies heal is simulatable")
-	check(not SimEffects.can_simulate_cast(AbilityData.get_ability("fire_bless").effects),
-			"a status-applying cast is REFUSED — the sim has no status story yet")
-	check(not SimEffects.can_simulate_cast([Effect.from_dict({
-		"trigger": "on_play", "targeting_policy": "manual",
-		"attribute": "health", "amount": -2, "chance": 0.5,
-	})]), "a probabilistic cast is refused — the sim would have to guess the roll")
-	check(not SimEffects.can_simulate_cast([Effect.from_dict({
+	check(CandidateApply.can_simulate_cast(AbilityData.get_ability("fire_bless").effects),
+			"a status-applying cast SIMULATES — the real rules run in sims now (Step 5)")
+	check(CandidateApply.can_simulate_cast([Effect.from_dict({
 		"trigger": "on_play", "targeting_policy": "manual",
 		"attribute": "health", "amount": 2,
 		"conditions": [{"attribute": "health", "comparator": "lte", "value": 3}],
-	})]), "a condition-gated cast is refused — target eligibility isn't evaluated sim-side")
-	check(SimEffects.needs_manual(AbilityData.get_ability("heal").effects),
+	})]), "a condition-gated cast simulates — the real resolver evaluates eligibility")
+	check(not CandidateApply.can_simulate_cast([Effect.from_dict({
+		"trigger": "on_play", "targeting_policy": "manual",
+		"attribute": "health", "amount": -2, "chance": 0.5,
+	})]), "a probabilistic cast is STILL refused — the sim would have to guess the roll")
+	check(CandidateApply.needs_manual(AbilityData.get_ability("heal").effects),
 			"the heal wants a picked target")
-	check(not SimEffects.needs_manual(CardData.get_card("dummy_group_heal").effects),
+	check(not CandidateApply.needs_manual(CardData.get_card("dummy_group_heal").effects),
 			"the group heal targets by itself")
 
 
@@ -577,10 +594,11 @@ func _ability_enumeration() -> void:
 	var fielded := 3   # two enemies + one player unit — a manual cast tests every one
 
 	var cands := CandidateMoves.abilities(state, 1)
-	check_eq(cands.size(), fielded,
-			"the support offers heal at every fielded unit; status-applying fire_bless is refused")
+	check_eq(cands.size(), fielded * 2,
+			"the support offers heal AND fire_bless at every fielded unit — the status gate fell (Step 5)")
 	for cand: Dictionary in cands:
-		check_eq((cand["ability"] as AbilityData).id, "heal", "…and only heal")
+		check((cand["ability"] as AbilityData).id in ["heal", "fire_bless"],
+				"…each of its own two abilities")
 		check(cand["inst"] == support, "…held by the support")
 	check_eq(CandidateMoves.abilities(state, 0).size(), 0, "no mana, no ability candidates")
 
@@ -598,10 +616,12 @@ func _apply_ability_heal() -> void:
 	var support := _enemy("support_dummy", back, 1)
 	var wounded := _enemy("fodder_dummy", back, 0)
 	wounded.current_health = 1
-	var state := _state_with([_enemy("captain_dummy", back, deep), support, wounded])
+	var roster: Array = [_enemy("captain_dummy", back, deep), support, wounded]
+	var state := _state_with(roster)
 
 	var next := CandidateApply.apply(state, {"kind": "ability", "inst": support,
-			"ability": AbilityData.get_ability("heal"), "target": wounded, "cost": 1})
+			"ability": AbilityData.get_ability("heal"), "target": wounded, "cost": 1},
+			_sim_for(roster))
 	check_eq(next.find(wounded).health, 2,
 			"the heal restores 2, clamped to the fodder's max of 2")
 	check(next.find(support).exhausted, "the sim spends the holder's tap")
@@ -620,12 +640,14 @@ func _apply_cast_group_heal() -> void:
 	var full := _enemy("fodder_dummy", 1, 0)
 	var foe := _player("pawn", 0, deep)
 	foe.current_health = 1
-	var state := _state_with([_enemy("captain_dummy", back, deep), hurt_a, hurt_b, full], [foe])
+	var roster: Array = [_enemy("captain_dummy", back, deep), hurt_a, hurt_b, full]
+	var state := _state_with(roster, [foe])
 
 	var group_heal := unit("dummy_group_heal")
 	group_heal.owner = 1
 	var next := CandidateApply.apply(state,
-			{"kind": "cast", "inst": group_heal, "target": null, "cost": 4})
+			{"kind": "cast", "inst": group_heal, "target": null, "cost": 4},
+			_sim_for(roster, [foe], [group_heal]))
 	check_eq(next.find(hurt_a).health, 3, "the area heal reaches every ally")
 	check_eq(next.find(hurt_b).health, 2, "…all of them")
 	check_eq(next.find(full).health, 2, "a full ally clamps at max")
@@ -638,13 +660,38 @@ func _apply_cast_sweeps_dead() -> void:
 	var burst := _enemy("burst_damage_dummy", back, 0)
 	var victim := _player("pawn", 0, deep)
 	victim.current_health = 2
-	var state := _state_with([_enemy("captain_dummy", back, deep), burst], [victim])
+	var roster: Array = [_enemy("captain_dummy", back, deep), burst]
+	var state := _state_with(roster, [victim])
 
 	var next := CandidateApply.apply(state, {"kind": "ability", "inst": burst,
-			"ability": AbilityData.get_ability("magic_missile"), "target": victim, "cost": 3})
+			"ability": AbilityData.get_ability("magic_missile"), "target": victim, "cost": 3},
+			_sim_for(roster, [victim]))
 	check(next.find(victim) == null, "a simulated kill removes the unit from the board copy")
 	check(state.find(victim) != null, "…only the copy")
 	check_eq(victim.current_health, 2, "…and never the live instance")
+
+
+func _apply_ability_fire_bless() -> void:
+	# The refactor's agreed acceptance shape ("Bless by Fire", COMBAT_DECOUPLING_REFACTOR.md
+	# criterion 3): a STATUS-APPLYING cast simulates through the real rules — impossible for
+	# the deleted SimEffects interpreter. The captured state folds the status's standing
+	# +2 attack at read time; the live unit never feels any of it.
+	var back := BoardData.ROWS - 1
+	var deep := BoardData.COLS - 1
+	var support := _enemy("support_dummy", back, 1)
+	var ally := _enemy("dps_dummy", 0, 2)
+	var atk0 := ally.get_attribute("attack")
+	var roster: Array = [_enemy("captain_dummy", back, deep), support, ally]
+	var state := _state_with(roster)
+
+	var next := CandidateApply.apply(state, {"kind": "ability", "inst": support,
+			"ability": AbilityData.get_ability("fire_bless"), "target": ally, "cost": 1},
+			_sim_for(roster))
+	check_eq(next.find(ally).attack, atk0 + 2,
+			"the blessed unit's captured attack folds the status — real statuses run in the sim")
+	check(next.find(support).exhausted, "the bless spends the tap")
+	check(ally.statuses.is_empty(), "the live unit never gained the status")
+	check_eq(ally.get_attribute("attack"), atk0, "…and its live attack never moved")
 
 
 # ── Presence: the fielding pole of the place-vs-preserve arbitration ─────────────────
@@ -796,17 +843,20 @@ func _death_of_own_unit_scores_worse() -> void:
 	var players: Array = [_player("knight", 0, deep)]
 
 	# Isolating the death accounting: the SAME board either way — one reached by killing
-	# the dps, one where it was never there. Identical geometry, identical survivors; the
-	# only difference is that one of them cost a unit to get to. That must score worse,
-	# and nothing but the graveyard term can say so.
+	# the dps, one where it was never there. Identical geometry, identical survivors (the
+	# caster genuinely stands on the board in the real-rules path, so it stands in BOTH
+	# states); the only difference is that one of them cost a unit to get to. That must
+	# score worse, and nothing but the graveyard term can say so.
 	var doomed := _enemy("dps_dummy", 0, 0)
 	doomed.current_health = 1
-	var before := _state_with([_enemy("captain_dummy", back, deep), doomed], players)
-	var burst := BoardState.UnitState.from_instance(_enemy("burst_damage_dummy", 0, 1))
-	var killed := before.copy()
-	SimEffects.apply_cast(killed, AbilityData.get_ability("magic_missile").effects, 1,
-			burst, killed.find(doomed))
-	var never_there := _state_with([_enemy("captain_dummy", back, deep)], players)
+	var burst := _enemy("burst_damage_dummy", 0, 1)
+	var roster: Array = [_enemy("captain_dummy", back, deep), doomed, burst]
+	var before := _state_with(roster, players)
+	var missile := {"kind": "ability", "inst": burst,
+			"ability": AbilityData.get_ability("magic_missile"), "target": doomed, "cost": 3}
+	var killed := CandidateApply.apply(before, missile, _sim_for(roster, players))
+	var never_there := _state_with(
+			[_enemy("captain_dummy", back, deep), _enemy("burst_damage_dummy", 0, 1)], players)
 
 	check(killed.find(doomed) == null, "the bolt did kill the dps (fixture sanity)")
 	check_eq(killed.graveyard.size(), 1, "…and the corpse is recorded")
@@ -821,10 +871,13 @@ func _death_of_own_unit_scores_worse() -> void:
 	# threat mass already rewards. It must never be charged to the enemy's own risk.
 	var victim := _player("knight", 0, deep)
 	victim.current_health = 1
-	var with_foe := _state_with([_enemy("captain_dummy", back, deep)], [victim])
-	var foe_killed := with_foe.copy()
-	SimEffects.apply_cast(foe_killed, AbilityData.get_ability("magic_missile").effects, 1,
-			burst, foe_killed.find(victim))
+	var burst2 := _enemy("burst_damage_dummy", 0, 1)
+	var foe_roster: Array = [_enemy("captain_dummy", back, deep), burst2]
+	var with_foe := _state_with(foe_roster, [victim])
+	var foe_killed := CandidateApply.apply(with_foe,
+			{"kind": "ability", "inst": burst2,
+			 "ability": AbilityData.get_ability("magic_missile"), "target": victim, "cost": 3},
+			_sim_for(foe_roster, [victim]))
 	check(scoring.score(foe_killed) > scoring.score(with_foe),
 			"killing a PLAYER unit is still an improvement — the graveyard is own-side only")
 
@@ -857,6 +910,47 @@ func _engine_never_kills_its_own_captain() -> void:
 	var scoring := BoardScoring.stock()
 	var state := BoardState.capture(grids[0], grids[1])
 	var suicide := CandidateApply.apply(state, {"kind": "ability", "inst": burst,
-			"ability": AbilityData.get_ability("magic_missile"), "target": captain, "cost": 3})
+			"ability": AbilityData.get_ability("magic_missile"), "target": captain, "cost": 3},
+			_sim_for(enemies, players))
 	check(scoring.score(suicide) < scoring.score(state),
 			"killing its own Captain scores worse than doing nothing at all")
+
+
+# ── The refactor's closing promise: planning is a pure read ──────────────────────────
+
+func _planning_leaves_the_world_untouched() -> void:
+	# Acceptance criterion 5 (COMBAT_DECOUPLING_REFACTOR.md): a whole planned CPU turn —
+	# real-rules casts included — writes NOTHING to the live world. Every simulation runs
+	# on copies; the plan is the only output.
+	var back := BoardData.ROWS - 1
+	var deep := BoardData.COLS - 1
+	var support := _enemy("support_dummy", back, 1)
+	var wounded := _enemy("dps_dummy", 0, 2)
+	wounded.current_health = 1
+	var enemies: Array = [_enemy("captain_dummy", back, deep), support, wounded]
+	var players: Array = [_player("knight", 0, deep), _player("knight", 1, deep)]
+	var grids := _grids(enemies, players)
+	var group_heal := unit("dummy_group_heal")
+	group_heal.owner = 1
+
+	var w := CombatWorld.new()
+	w.player_grid = grids[0]
+	w.enemy_grid = grids[1]
+	w.player_side = CombatSide.make(0)
+	w.enemy_side = CombatSide.make(1)
+	w.enemy_side.hand = [group_heal]
+	w.modifiers = GameData.current_modifiers
+
+	var engine := _seeded_engine()
+	engine.weight_overrides = {"dps": 0.6}
+	engine.world = w
+	var actions := engine.decide_actions([group_heal], grids[0], grids[1], 4)
+
+	check(not actions.is_empty(), "the plan found work to do (fixture sanity)")
+	check_eq(wounded.current_health, 1, "planning never healed the live unit")
+	check(not support.attack_exhausted, "planning never spent a live tap")
+	check(support.statuses.is_empty() and wounded.statuses.is_empty(),
+			"no live unit gained a status")
+	check_eq(w.enemy_side.hand.size(), 1, "the live hand kept its spell")
+	var live_row: Array = w.enemy_grid[0]
+	check(live_row[2] == wounded, "the live grid never moved")

@@ -25,6 +25,11 @@ const TIE_EPSILON := 0.0001
 # EncounterData.survival_weights / BoardScoring.stock). Empty = stock behaviour.
 var weight_overrides: Dictionary = {}
 
+# The live CombatWorld cast/ability candidates simulate against (combat sets it before
+# planning; see CandidateApply). Left unset — tests, harnesses — decide_actions
+# synthesizes a planning world from the call's own grids and hand.
+var world: CombatWorld = null
+
 var _rng: RandomNumberGenerator
 
 
@@ -57,6 +62,20 @@ func decide_actions(hand: Array, player_grid: Array, enemy_grid: Array, mana: in
 	var moved: Dictionary = {}   # CardInstance -> true once repositioned this turn
 	var actions: Array = []
 	var had_captain := state.captain(1) != null
+	# The per-turn simulation context (see CandidateApply): the live world casts copy, and
+	# the accepted candidates a copy must replay to become the working world. `accepted`
+	# grows AFTER each acceptance — a candidate never replays itself.
+	var live := world
+	if live == null:
+		live = CombatWorld.new()
+		live.player_grid = player_grid
+		live.enemy_grid = enemy_grid
+		live.player_side = CombatSide.make(0)
+		live.enemy_side = CombatSide.make(1)
+		live.enemy_side.hand = hand
+		live.modifiers = GameData.current_modifiers
+	var accepted: Array = []
+	var sim := {"world": live, "accepted": accepted}
 	while true:
 		var current := scoring.score(state)
 		var cands := CandidateMoves.placements(state, pool, remaining)
@@ -65,11 +84,12 @@ func decide_actions(hand: Array, player_grid: Array, enemy_grid: Array, mana: in
 		cands.append_array(CandidateMoves.abilities(state, remaining))
 		if cands.is_empty():
 			break
-		var best := _pick_best(cands, state, scoring, had_captain)
+		var best := _pick_best(cands, state, scoring, had_captain, sim)
 		if float(best["score"]) <= current + TIE_EPSILON:
 			break   # the best candidate improves nothing — then none do; the turn is done
 		var cand: Dictionary = best["cand"]
-		state = CandidateApply.apply(state, cand)
+		state = CandidateApply.apply(state, cand, sim)
+		accepted.append(cand)
 		remaining -= int(cand["cost"])
 		match String(cand["kind"]):
 			"place":
@@ -106,11 +126,11 @@ func decide_actions(hand: Array, player_grid: Array, enemy_grid: Array, mana: in
 # that replaces its own Captain is unaffected — decision 13b fires those from a concealed
 # container, never as an action the CPU chooses.
 func _pick_best(cands: Array, state: BoardState, scoring: BoardScoring,
-		had_captain: bool = true) -> Dictionary:
+		had_captain: bool = true, sim: Dictionary = {}) -> Dictionary:
 	var best_score := -INF
 	var best: Array = []
 	for cand: Dictionary in cands:
-		var next := CandidateApply.apply(state, cand)
+		var next := CandidateApply.apply(state, cand, sim)
 		if had_captain and next.captain(1) == null:
 			continue
 		var s := scoring.score(next)

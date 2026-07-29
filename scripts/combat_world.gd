@@ -219,10 +219,11 @@ func _nearest_empty(spawn_owner: int, row: int, col: int) -> Array:
 
 # The complete snapshot: one identity remap spans grids and sides, so a unit referenced
 # from several places (a hand spell's status source on a board unit, mutual killers) copies
-# once and every reference converges on that one copy. LiveEffects' composition cache is
-# keyed per instance — fresh copies simply miss it and compute lazily; no invalidation.
-func copy() -> CombatWorld:
-	var remap: Dictionary = {}
+# once and every reference converges on that one copy. Callers that need the identity
+# table (the enemy engine maps candidates' live tokens into the copy) pass their own
+# `remap` dictionary; the default is a fresh private one. LiveEffects' composition cache
+# is keyed per instance — fresh copies simply miss it and compute lazily; no invalidation.
+func copy(remap: Dictionary = {}) -> CombatWorld:
 	var w := CombatWorld.new()
 	w.player_grid = _copy_grid(player_grid, remap)
 	w.enemy_grid = _copy_grid(enemy_grid, remap)

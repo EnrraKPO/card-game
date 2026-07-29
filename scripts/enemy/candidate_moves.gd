@@ -18,8 +18,8 @@ extends RefCounted
 # the unit inside the simulated copy.
 #
 # LEGALITY lives here and only here: a candidate exists iff the play is legal right now
-# (affordable, slot empty, tap available) AND the sim can evaluate it (SimEffects.
-# can_simulate_cast — the engine never plays what it cannot score; see sim_effects.gd).
+# (affordable, slot empty, tap available) AND the sim can evaluate it (CandidateApply.
+# can_simulate_cast — a short deny-list now that simulations run the real rules).
 
 
 # Every legal placement: each affordable non-king unit in the pool × each empty own slot.
@@ -64,7 +64,7 @@ static func spells(state: BoardState, pool: Array, mana: int) -> Array:
 		if not inst.is_spell:
 			continue
 		var cost: int = inst.get_attribute("cost")
-		if cost > mana or not SimEffects.can_simulate_cast(inst.data.effects):
+		if cost > mana or not CandidateApply.can_simulate_cast(inst.data.effects):
 			continue
 		for target: CardInstance in _targets_for(state, inst.data.effects):
 			out.append({"kind": "cast", "inst": inst, "target": target, "cost": cost})
@@ -88,7 +88,7 @@ static func abilities(state: BoardState, mana: int) -> Array:
 				continue   # material delivery = the spawn-half path; no sim story yet
 			if ab.mana == 0 and not ab.tap:
 				continue   # free + untapped = unbounded repeats; refuse until a cadence rule exists
-			if not SimEffects.can_simulate_cast(ab.effects):
+			if not CandidateApply.can_simulate_cast(ab.effects):
 				continue
 			for target: CardInstance in _targets_for(state, ab.effects):
 				out.append({"kind": "ability", "inst": u.source, "ability": ab,
@@ -99,7 +99,7 @@ static func abilities(state: BoardState, mana: int) -> Array:
 # The target axis of a cast's candidates: every fielded unit for a manual cast, the single
 # no-target candidate otherwise (area/self casts carry their own targeting).
 static func _targets_for(state: BoardState, effects: Array) -> Array:
-	if not SimEffects.needs_manual(effects):
+	if not CandidateApply.needs_manual(effects):
 		return [null]
 	var out: Array = []
 	for side in 2:

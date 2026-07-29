@@ -21,7 +21,7 @@ var enemy_units: Array = []
 # engine never spends or mutates it.
 var player_mana: int = 0
 
-# Units that DIED during this simulation (SimEffects sweeps them off the grid into here).
+# Units that DIED during this simulation (the apply seam records them off the swept grid).
 # They exist because a board is not a complete account of what a candidate did: every
 # negative criterion sums over living units, so a unit that simply vanished would take its
 # own risk term with it and make "destroy your own valuable unit" read as relief. The

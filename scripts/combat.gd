@@ -442,9 +442,11 @@ func _do_cpu_placement() -> void:
 
 	# The enemy engine plans the whole CPU turn (see ENCOUNTER_ENGINE_DESIGN.md); the old
 	# EnemyAI placeholder is no longer consulted. All four action kinds are planned:
-	# placements, moves, spell casts and ability activations (the latter two only when
-	# SimEffects can evaluate them — see the legality gate in CandidateMoves).
+	# placements, moves, spell casts and ability activations (the latter two simulate on
+	# copies of the live world through the REAL rules — see CandidateApply; a short
+	# deny-list in can_simulate_cast is the only legality gate left).
 	var engine := EnemyEngine.new()
+	engine.world = _world
 	if GameData.current_encounter != null:
 		engine.weight_overrides = GameData.current_encounter.survival_weights
 	for action: Dictionary in engine.decide_actions(_enemy_side.hand,
