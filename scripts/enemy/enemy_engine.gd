@@ -1,0 +1,66 @@
+class_name EnemyEngine
+extends RefCounted
+
+# The enemy's decision-maker (ENCOUNTER_ENGINE_DESIGN.md): for each decision, enumerate
+# candidate moves, SIMULATE each on a copy of the board state, score the resulting state
+# against the criteria, rank, pick the best. Replaces EnemyAI (placeholder) as the CPU's
+# planner; combat._execute_enemy_action stays the presentational executor.
+#
+# The pipeline parts live in their own seams — board_state / candidate_moves /
+# candidate_apply / board_scoring — this class only runs the loop.
+
+# The CPU's action vocabulary, executed by combat._execute_enemy_action:
+#   { "type": Action.PLACE, "inst": CardInstance, "row": int, "col": int }
+# MOVE / CAST / GENERATE keep the placeholder's shapes; the engine emits them once their
+# candidate generators exist.
+enum Action { PLACE, MOVE, CAST, GENERATE }
+
+# Ranking treats scores within this delta as tied (random tie-break among them).
+const TIE_EPSILON := 0.0001
+
+var _rng: RandomNumberGenerator
+
+
+func _init(rng: RandomNumberGenerator = null) -> void:
+	if rng == null:
+		_rng = RandomNumberGenerator.new()
+		_rng.randomize()
+	else:
+		_rng = rng   # injected for deterministic tests
+
+
+# Plans a whole CPU turn: greedily pick the best-scoring candidate, commit it to the
+# working state, repeat until nothing is affordable or placeable. Greedy one-at-a-time is
+# the design's open question (misses two-move combos) — deliberate for now.
+func decide_actions(hand: Array, player_grid: Array, enemy_grid: Array, mana: int) -> Array:
+	var scoring := BoardScoring.stock()
+	var state := BoardState.capture(player_grid, enemy_grid)
+	var pool: Array = hand.duplicate()
+	var remaining := mana
+	var actions: Array = []
+	while true:
+		var cands := CandidateMoves.placements(state, pool, remaining)
+		if cands.is_empty():
+			break
+		var best := _pick_best(cands, state, scoring)
+		state = CandidateApply.apply(state, best)
+		pool.erase(best["inst"])
+		remaining -= int(best["cost"])
+		actions.append({"type": Action.PLACE, "inst": best["inst"],
+				"row": int(best["row"]), "col": int(best["col"])})
+	return actions
+
+
+# Rank all candidates by the score of the state they produce; pick uniformly among the
+# ones tied for best.
+func _pick_best(cands: Array, state: BoardState, scoring: BoardScoring) -> Dictionary:
+	var best_score := -INF
+	var best: Array = []
+	for cand: Dictionary in cands:
+		var s := scoring.score(CandidateApply.apply(state, cand))
+		if s > best_score + TIE_EPSILON:
+			best_score = s
+			best = [cand]
+		elif absf(s - best_score) <= TIE_EPSILON:
+			best.append(cand)
+	return best[_rng.randi_range(0, best.size() - 1)]
