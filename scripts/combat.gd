@@ -396,13 +396,17 @@ func _begin_round() -> void:
 			GameData.value("draw.per_turn"), null, StatMutation.CH_SYSTEM))
 	Resolver.submit(StatMutation.make(_enemy_side, StatMutation.DRAW, 1,
 			null, StatMutation.CH_SYSTEM))
+	# Fresh taps BEFORE the CPU turn: the enemy engine plans ability activations against
+	# attack_exhausted, so last round's spent attacks must be cleared by the time it
+	# captures the board — and a tap the CPU pays must survive into this round's combat
+	# (resetting after its turn silently refunded it).
+	_reset_exhaustion()
 	await _do_cpu_placement()
 	Sfx.play("combat_turn_start")
 	Vfx.play("mana_refill_surge", _mana_chunks_box)   # the gauge blooms as it refills
 	_phase = Phase.PLAYER_PLACE
 	_board.placement_enabled = true
 	_set_placement_input(true)
-	_reset_exhaustion()
 	_refresh()
 
 
@@ -413,8 +417,9 @@ func _do_cpu_placement() -> void:
 	_refresh_done_btn()
 
 	# The enemy engine plans the whole CPU turn (see ENCOUNTER_ENGINE_DESIGN.md); the old
-	# EnemyAI placeholder is no longer consulted. It emits placements and moves so far —
-	# spell and ability planning return as its candidate generators widen.
+	# EnemyAI placeholder is no longer consulted. All four action kinds are planned:
+	# placements, moves, spell casts and ability activations (the latter two only when
+	# SimEffects can evaluate them — see the legality gate in CandidateMoves).
 	var engine := EnemyEngine.new()
 	if GameData.current_encounter != null:
 		engine.weight_overrides = GameData.current_encounter.survival_weights

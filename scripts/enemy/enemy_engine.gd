@@ -10,10 +10,12 @@ extends RefCounted
 # candidate_apply / board_scoring — this class only runs the loop.
 
 # The CPU's action vocabulary, executed by combat._execute_enemy_action:
-#   { "type": Action.PLACE, "inst": CardInstance, "row": int, "col": int }
-#   { "type": Action.MOVE,  "inst": CardInstance, "row": int, "col": int }
-# CAST / GENERATE keep the placeholder's shapes; the engine emits them once their
-# candidate generators exist.
+#   { "type": Action.PLACE,    "inst": CardInstance, "row": int, "col": int }
+#   { "type": Action.MOVE,     "inst": CardInstance, "row": int, "col": int }
+#   { "type": Action.CAST,     "inst": CardInstance(spell), "target": CardInstance|null }
+#   { "type": Action.GENERATE, "unit": CardInstance(holder), "ability": AbilityData,
+#     "target": CardInstance|null }   (the material row/col form stays placeholder-only —
+#     material abilities are not enumerated yet, see CandidateMoves.abilities)
 enum Action { PLACE, MOVE, CAST, GENERATE }
 
 # Ranking treats scores within this delta as tied (random tie-break among them).
@@ -38,11 +40,14 @@ func _init(rng: RandomNumberGenerator = null) -> void:
 # working state, repeat until nothing is worth doing. Greedy one-at-a-time is the design's
 # open question (misses two-move combos) — deliberate for now.
 #
-# Placements and moves obey different acceptance rules. Placements are always worth
-# taking (field the army; an unspent unit does nothing). A MOVE must PAY FOR ITSELF —
-# strictly improve the position — or the unit stays put: free actions accepted on ties
-# would jitter forever, and the must-improve gate plus one-move-per-unit-per-turn is
-# what guarantees the loop terminates.
+# ONE acceptance rule for all four action kinds: the candidate must STRICTLY IMPROVE the
+# scored position, or the turn is over. The old "placements are always accepted" special
+# case is retired — the BoardPresence criterion is what says fielding a unit is worth
+# something, so a placement now pays for itself through the score like everything else
+# (and CAN be declined: a body the criteria say is walking into pure loss stays in hand,
+# which is decision 16's restraint arriving for free). Termination is inductive per kind:
+# placements and casts consume the pool/mana, abilities spend mana or the holder's
+# simulated tap, and moves are once-per-unit — every accepted candidate shrinks something.
 func decide_actions(hand: Array, player_grid: Array, enemy_grid: Array, mana: int) -> Array:
 	var scoring := BoardScoring.stock(weight_overrides)
 	var state := BoardState.capture(player_grid, enemy_grid)
@@ -54,23 +59,19 @@ func decide_actions(hand: Array, player_grid: Array, enemy_grid: Array, mana: in
 		var current := scoring.score(state)
 		var cands := CandidateMoves.placements(state, pool, remaining)
 		cands.append_array(CandidateMoves.moves(state, moved))
+		cands.append_array(CandidateMoves.spells(state, pool, remaining))
+		cands.append_array(CandidateMoves.abilities(state, remaining))
 		if cands.is_empty():
 			break
 		var best := _pick_best(cands, state, scoring)
+		if float(best["score"]) <= current + TIE_EPSILON:
+			break   # the best candidate improves nothing — then none do; the turn is done
 		var cand: Dictionary = best["cand"]
-		if String(cand["kind"]) == "move" and float(best["score"]) <= current + TIE_EPSILON:
-			# The best candidate is a move that doesn't improve anything — then no move
-			# does (it outscored them all). Fall back to fielding the army.
-			cands = CandidateMoves.placements(state, pool, remaining)
-			if cands.is_empty():
-				break
-			best = _pick_best(cands, state, scoring)
-			cand = best["cand"]
 		state = CandidateApply.apply(state, cand)
+		remaining -= int(cand["cost"])
 		match String(cand["kind"]):
 			"place":
 				pool.erase(cand["inst"])
-				remaining -= int(cand["cost"])
 				# A just-placed unit landed at its best slot — re-moving it the same turn
 				# is churn the player reads as jitter, so it counts as this turn's move.
 				moved[cand["inst"]] = true
@@ -80,6 +81,13 @@ func decide_actions(hand: Array, player_grid: Array, enemy_grid: Array, mana: in
 				moved[cand["inst"]] = true
 				actions.append({"type": Action.MOVE, "inst": cand["inst"],
 						"row": int(cand["row"]), "col": int(cand["col"])})
+			"cast":
+				pool.erase(cand["inst"])
+				actions.append({"type": Action.CAST, "inst": cand["inst"],
+						"target": cand.get("target", null)})
+			"ability":
+				actions.append({"type": Action.GENERATE, "unit": cand["inst"],
+						"ability": cand["ability"], "target": cand.get("target", null)})
 	return actions
 
 

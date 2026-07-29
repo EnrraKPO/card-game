@@ -27,6 +27,16 @@ func run() -> void:
 	_engine_king_tanks()
 	_engine_king_retreats_fully()
 	_engine_king_shares_moderate_threat()
+	_sim_gate()
+	_spell_enumeration()
+	_ability_enumeration()
+	_apply_ability_heal()
+	_apply_cast_group_heal()
+	_apply_cast_sweeps_dead()
+	_presence_measurement()
+	_engine_heals_wounded_ally()
+	_engine_casts_group_heal()
+	_engine_place_vs_heal_arbitration()
 
 
 func _enemy(card_id: String, r: int, c: int) -> CardInstance:
@@ -134,11 +144,17 @@ func _scoring_prefers_screens() -> void:
 	check(scoring.score(screened) > scoring.score(lone),
 			"stock scoring rates a screened Captain above a naked one")
 	# The deliverable-1 configuration, pinned explicitly via an override: with untagged
-	# units weighted 0, a captain-less board scores flat.
+	# units weighted 0, the RISK criteria go silent for a captain-less board — what
+	# remains is exactly the unit's board-presence term (presence deliberately does NOT
+	# ride the survival-weight table: how much we fear losing a unit and how much we
+	# want it fielded are different dials).
 	var captain_only_scoring := BoardScoring.stock({"default": 0.0})
-	var pawn_only := _state_with([_enemy("pawn", back, 0)])
-	check_eq(captain_only_scoring.score(pawn_only), 0.0,
-			"a default-weight override of 0 makes untagged units invisible to scoring")
+	var pawn_unit := _enemy("pawn", back, 0)
+	var pawn_only := _state_with([pawn_unit])
+	var pawn_presence: float = BoardScoring.PRESENCE_CRITERION_WEIGHT \
+			* BoardScoring.presence_value(BoardState.UnitState.from_instance(pawn_unit))
+	check_eq(captain_only_scoring.score(pawn_only), pawn_presence,
+			"with a 0 default weight only the presence term remains for untagged units")
 
 
 # ── Enumeration ──────────────────────────────────────────────────────────────────────
@@ -438,3 +454,264 @@ func _engine_king_shares_moderate_threat() -> void:
 	if not king_moves.is_empty():
 		check_eq(int(king_moves[0]["col"]), 0,
 				"…all the way to the front line, absorbing hits for its fodders")
+
+
+# ── The sim-support gate: the engine never plays what it cannot evaluate ─────────────
+
+func _sim_gate() -> void:
+	check(SimEffects.can_simulate_cast(AbilityData.get_ability("heal").effects),
+			"a manual heal is simulatable")
+	check(SimEffects.can_simulate_cast(AbilityData.get_ability("magic_missile").effects),
+			"a manual damage bolt is simulatable")
+	check(SimEffects.can_simulate_cast(CardData.get_card("dummy_group_heal").effects),
+			"an all-allies heal is simulatable")
+	check(not SimEffects.can_simulate_cast(AbilityData.get_ability("fire_bless").effects),
+			"a status-applying cast is REFUSED — the sim has no status story yet")
+	check(not SimEffects.can_simulate_cast([Effect.from_dict({
+		"trigger": "on_play", "targeting_policy": "manual",
+		"attribute": "health", "amount": -2, "chance": 0.5,
+	})]), "a probabilistic cast is refused — the sim would have to guess the roll")
+	check(not SimEffects.can_simulate_cast([Effect.from_dict({
+		"trigger": "on_play", "targeting_policy": "manual",
+		"attribute": "health", "amount": 2,
+		"conditions": [{"attribute": "health", "comparator": "lte", "value": 3}],
+	})]), "a condition-gated cast is refused — target eligibility isn't evaluated sim-side")
+	check(SimEffects.needs_manual(AbilityData.get_ability("heal").effects),
+			"the heal wants a picked target")
+	check(not SimEffects.needs_manual(CardData.get_card("dummy_group_heal").effects),
+			"the group heal targets by itself")
+
+
+# ── Spell / ability enumeration: candidates exist iff the play is legal ──────────────
+
+func _spell_enumeration() -> void:
+	var back := BoardData.ROWS - 1
+	var deep := BoardData.COLS - 1
+	var state := _state_with([_enemy("captain_dummy", back, deep), _enemy("fodder_dummy", back, 0)])
+	var group_heal := unit("dummy_group_heal")
+	group_heal.owner = 1
+	var pool: Array = [group_heal, unit("pawn")]
+
+	check_eq(CandidateMoves.spells(state, pool, 3).size(), 0,
+			"mana below the spell's cost enumerates nothing")
+	var cands := CandidateMoves.spells(state, pool, 4)
+	check_eq(cands.size(), 1, "an area spell is ONE candidate — its targeting is its own")
+	if not cands.is_empty():
+		check(cands[0]["target"] == null, "…carrying no manual target")
+		check_eq(int(cands[0]["cost"]), 4, "…at the card's mana cost")
+	check_eq(CandidateMoves.placements(state, [group_heal], 10).size(), 0,
+			"a spell card never enumerates as a placement")
+
+
+func _ability_enumeration() -> void:
+	var back := BoardData.ROWS - 1
+	var deep := BoardData.COLS - 1
+	var support := _enemy("support_dummy", back, 1)
+	var state := _state_with([_enemy("captain_dummy", back, deep), support],
+			[_player("pawn", 0, deep)])
+	var fielded := 3   # two enemies + one player unit — a manual cast tests every one
+
+	var cands := CandidateMoves.abilities(state, 1)
+	check_eq(cands.size(), fielded,
+			"the support offers heal at every fielded unit; status-applying fire_bless is refused")
+	for cand: Dictionary in cands:
+		check_eq((cand["ability"] as AbilityData).id, "heal", "…and only heal")
+		check(cand["inst"] == support, "…held by the support")
+	check_eq(CandidateMoves.abilities(state, 0).size(), 0, "no mana, no ability candidates")
+
+	var tapped_state := state.copy()
+	tapped_state.find(support).exhausted = true
+	check_eq(CandidateMoves.abilities(tapped_state, 5).size(), 0,
+			"a spent tap closes the ability window")
+
+
+# ── Apply: casts land on the copy, never the input ───────────────────────────────────
+
+func _apply_ability_heal() -> void:
+	var back := BoardData.ROWS - 1
+	var deep := BoardData.COLS - 1
+	var support := _enemy("support_dummy", back, 1)
+	var wounded := _enemy("fodder_dummy", back, 0)
+	wounded.current_health = 1
+	var state := _state_with([_enemy("captain_dummy", back, deep), support, wounded])
+
+	var next := CandidateApply.apply(state, {"kind": "ability", "inst": support,
+			"ability": AbilityData.get_ability("heal"), "target": wounded, "cost": 1})
+	check_eq(next.find(wounded).health, 2,
+			"the heal restores 2, clamped to the fodder's max of 2")
+	check(next.find(support).exhausted, "the sim spends the holder's tap")
+	check_eq(state.find(wounded).health, 1, "apply leaves the input state untouched")
+	check(not state.find(support).exhausted, "…tap included")
+	check_eq(wounded.current_health, 1, "…and never the live CardInstance")
+
+
+func _apply_cast_group_heal() -> void:
+	var back := BoardData.ROWS - 1
+	var deep := BoardData.COLS - 1
+	var hurt_a := _enemy("tank_dummy", back, 0)
+	hurt_a.current_health = 2
+	var hurt_b := _enemy("dps_dummy", 0, 1)
+	hurt_b.current_health = 1
+	var full := _enemy("fodder_dummy", 1, 0)
+	var foe := _player("pawn", 0, deep)
+	foe.current_health = 1
+	var state := _state_with([_enemy("captain_dummy", back, deep), hurt_a, hurt_b, full], [foe])
+
+	var group_heal := unit("dummy_group_heal")
+	group_heal.owner = 1
+	var next := CandidateApply.apply(state,
+			{"kind": "cast", "inst": group_heal, "target": null, "cost": 4})
+	check_eq(next.find(hurt_a).health, 3, "the area heal reaches every ally")
+	check_eq(next.find(hurt_b).health, 2, "…all of them")
+	check_eq(next.find(full).health, 2, "a full ally clamps at max")
+	check_eq(next.find(foe).health, 1, "an ALL_ALLIES cast never touches the player's side")
+
+
+func _apply_cast_sweeps_dead() -> void:
+	var back := BoardData.ROWS - 1
+	var deep := BoardData.COLS - 1
+	var burst := _enemy("burst_damage_dummy", back, 0)
+	var victim := _player("pawn", 0, deep)
+	victim.current_health = 2
+	var state := _state_with([_enemy("captain_dummy", back, deep), burst], [victim])
+
+	var next := CandidateApply.apply(state, {"kind": "ability", "inst": burst,
+			"ability": AbilityData.get_ability("magic_missile"), "target": victim, "cost": 3})
+	check(next.find(victim) == null, "a simulated kill removes the unit from the board copy")
+	check(state.find(victim) != null, "…only the copy")
+	check_eq(victim.current_health, 2, "…and never the live instance")
+
+
+# ── Presence: the fielding pole of the place-vs-preserve arbitration ─────────────────
+
+func _presence_measurement() -> void:
+	var fodder := BoardState.UnitState.from_instance(_enemy("fodder_dummy", 0, 0))
+	var dps := BoardState.UnitState.from_instance(_enemy("dps_dummy", 0, 1))
+	check_eq(BoardScoring.presence_value(fodder), 1.0, "presence v1 is the unit's mana cost")
+	check(BoardScoring.presence_value(dps) > BoardScoring.presence_value(fodder),
+			"a costlier unit is worth more on the board")
+	# The linearity property the greedy loop leans on: a budget converts to the same total
+	# presence however it is split, so greedy ordering never changes a spent turn's worth.
+	check_eq(BoardScoring.presence_value(dps),
+			BoardScoring.presence_value(fodder) * 2.0, "cost 2 is exactly two cost 1s")
+
+
+# ── The engine end to end: the support tends its wounded ─────────────────────────────
+
+func _engine_heals_wounded_ally() -> void:
+	var back := BoardData.ROWS - 1
+	var deep := BoardData.COLS - 1
+	# A precious wounded dps under real threat, a healthy board otherwise, and one mana:
+	# the only improving play is the support's heal, aimed at the dying unit.
+	var support := _enemy("support_dummy", back, 1)
+	var wounded := _enemy("dps_dummy", 0, 2)
+	wounded.current_health = 1
+	var enemies: Array = [_enemy("captain_dummy", back, deep), support, wounded,
+			_enemy("fodder_dummy", back, 0), _enemy("fodder_dummy", 0, 0)]
+	var players: Array = [_player("knight", 0, deep), _player("knight", 1, deep)]
+	var grids := _grids(enemies, players)
+
+	var engine := _seeded_engine()
+	engine.weight_overrides = {"dps": 0.6}
+	var actions := engine.decide_actions([], grids[0], grids[1], 1)
+
+	var heals: Array = actions.filter(func(a: Dictionary) -> bool:
+		return int(a["type"]) == EnemyEngine.Action.GENERATE)
+	check_eq(heals.size(), 1, "the support heals exactly once (the tap is spent)")
+	if not heals.is_empty():
+		check_eq((heals[0]["ability"] as AbilityData).id, "heal", "…casting heal")
+		check(heals[0]["unit"] == support, "…from the support")
+		check(heals[0]["target"] == wounded, "…at the dying dps, not anyone comfortable")
+
+	# The futility gate: a fully healthy board offers the same legal heal, but no target
+	# improves anything — the engine declines rather than waste the play.
+	var healthy_enemies: Array = [_enemy("captain_dummy", back, deep),
+			_enemy("support_dummy", back, 1), _enemy("dps_dummy", 0, 2)]
+	var healthy_grids := _grids(healthy_enemies, players)
+	var idle := _seeded_engine()
+	idle.weight_overrides = {"dps": 0.6}
+	var idle_actions: Array = idle.decide_actions([], healthy_grids[0], healthy_grids[1], 1) \
+			.filter(func(a: Dictionary) -> bool:
+				return int(a["type"]) == EnemyEngine.Action.GENERATE)
+	check_eq(idle_actions.size(), 0, "nothing wounded → the heal is declined, not wasted")
+
+
+func _engine_casts_group_heal() -> void:
+	var back := BoardData.ROWS - 1
+	var deep := BoardData.COLS - 1
+	# Three wounded precious fodders and the group heal in hand: the area cast is the
+	# improving play. (No support on board — the single heal isn't available to shadow it.)
+	var hurt: Array = []
+	for r in 3:
+		var f := _enemy("fodder_dummy", r, 1)
+		f.current_health = 1
+		hurt.append(f)
+	var enemies: Array = [_enemy("captain_dummy", back, deep)] + hurt
+	var players: Array = [_player("knight", 0, deep), _player("knight", 1, deep)]
+	var grids := _grids(enemies, players)
+	var group_heal := unit("dummy_group_heal")
+	group_heal.owner = 1
+
+	var engine := _seeded_engine()
+	engine.weight_overrides = {"fodder": 0.5}
+	var actions := engine.decide_actions([group_heal], grids[0], grids[1], 4)
+
+	var casts: Array = actions.filter(func(a: Dictionary) -> bool:
+		return int(a["type"]) == EnemyEngine.Action.CAST)
+	check_eq(casts.size(), 1, "the group heal is cast")
+	if not casts.is_empty():
+		check(casts[0]["inst"] == group_heal, "…the spell from hand")
+		check(casts[0]["target"] == null, "…with no manual target (area)")
+
+
+# ── Place vs heal: one score, both directions ────────────────────────────────────────
+
+# ONE mana, both plays legal — place a fresh fodder (presence + cover) or heal a precious
+# unit. The precious unit is a BUILDING on the front line so the choice is pure: it cannot
+# retreat, and no placement can stand in front of the front column — healing is the only
+# way to preserve it, fielding the only way to grow. (Free MOVE actions may interleave;
+# the assertion is about where the one mana goes.)
+func _engine_place_vs_heal_arbitration() -> void:
+	var back := BoardData.ROWS - 1
+	var deep := BoardData.COLS - 1
+	# MODERATE threat is the point: under overwhelming threat the urgency measure calls
+	# the tower doomed with or without the heal (triage — correctly declined), and with
+	# none there is nothing to preserve. One knight's worth of pressure is the window
+	# where +2 health genuinely changes whether the tower lives.
+	var players: Array = [_player("knight", 0, deep)]
+
+	# Direction 1 — the tower is dying: preservation wins the mana.
+	var dying_tower := _enemy("rook", 1, 0)
+	dying_tower.current_health = 1
+	dying_tower.current_shield = 0
+	var support := _enemy("support_dummy", back, 1)
+	var enemies: Array = [_enemy("captain_dummy", back, deep), support, dying_tower]
+	var grids := _grids(enemies, players)
+	var engine := _seeded_engine()
+	engine.weight_overrides = {"rook": 1.2}
+	var actions := engine.decide_actions([unit("fodder_dummy")], grids[0], grids[1], 1)
+	var heals: Array = actions.filter(func(a: Dictionary) -> bool:
+		return int(a["type"]) == EnemyEngine.Action.GENERATE)
+	var places: Array = actions.filter(func(a: Dictionary) -> bool:
+		return int(a["type"]) == EnemyEngine.Action.PLACE)
+	check_eq(heals.size(), 1, "the dying tower pulls the mana into the heal")
+	if not heals.is_empty():
+		check(heals[0]["target"] == dying_tower, "…aimed at the tower")
+	check_eq(places.size(), 0, "…so the fodder stays in hand")
+
+	# Direction 2 — the same board, tower untouched: the heal is futile and the same
+	# mana fields the fodder instead.
+	var whole_tower := _enemy("rook", 1, 0)
+	whole_tower.current_shield = 0
+	var enemies2: Array = [_enemy("captain_dummy", back, deep),
+			_enemy("support_dummy", back, 1), whole_tower]
+	var grids2 := _grids(enemies2, players)
+	var engine2 := _seeded_engine()
+	engine2.weight_overrides = {"rook": 1.2}
+	var actions2 := engine2.decide_actions([unit("fodder_dummy")], grids2[0], grids2[1], 1)
+	var heals2: Array = actions2.filter(func(a: Dictionary) -> bool:
+		return int(a["type"]) == EnemyEngine.Action.GENERATE)
+	var places2: Array = actions2.filter(func(a: Dictionary) -> bool:
+		return int(a["type"]) == EnemyEngine.Action.PLACE)
+	check_eq(places2.size(), 1, "with nothing to preserve, the same mana fields the fodder")
+	check_eq(heals2.size(), 0, "…and the futile heal is declined")

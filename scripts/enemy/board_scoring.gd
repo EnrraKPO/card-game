@@ -54,6 +54,17 @@ const STOCK_SURVIVAL_WEIGHTS := {
 # formation instinct alive on quiet boards, not to compete with actual mortal danger.
 const EXPOSURE_CRITERION_WEIGHT := 0.15
 
+# How loud board presence is next to death risk — THE arbitration dial between fielding a
+# new unit and preserving an existing one (a placement gains presence_value × this; a heal
+# gains survival_weight × Δurgency). At 0.1, one mana of fielded unit ≈ one tenth of a
+# certainly-dying default-weight unit — so a cheap body still screens into moderate danger,
+# while a precious wounded unit (captain 1.75, event-priced roles) pulls the turn toward
+# preservation. Raise it for a swarm that fields relentlessly, lower it for a caretaker
+# that would rather keep what it has. This weight also REPLACES the engine's old
+# "placements are always accepted" special case: fielding now pays for itself through the
+# score, under the same must-improve rule as everything else.
+const PRESENCE_CRITERION_WEIGHT := 0.1
+
 
 # The stock setup. `weight_overrides` layers an encounter's own role→weight entries over the
 # stock table ("in THIS fight, fodders are precious") — see EncounterData.survival_weights.
@@ -66,6 +77,9 @@ static func stock(weight_overrides: Dictionary = {}) -> BoardScoring:
 	var exposure_criterion := ProtectionExposure.new(weights)
 	exposure_criterion.weight = EXPOSURE_CRITERION_WEIGHT
 	s.criteria.append(exposure_criterion)
+	var presence_criterion := BoardPresence.new()
+	presence_criterion.weight = PRESENCE_CRITERION_WEIGHT
+	s.criteria.append(presence_criterion)
 	return s
 
 
@@ -141,6 +155,23 @@ class ProtectionExposure:
 		return -exposed
 
 
+# Σ presence_value over own fielded units — the positive pole the negative criteria pull
+# against: it says having an army IS worth something, so fielding competes with preserving
+# on one scale instead of through the old always-accept-placements special case. Weighted
+# small (see PRESENCE_CRITERION_WEIGHT).
+class BoardPresence:
+	extends Criterion
+
+	func _init() -> void:
+		id = "presence"
+
+	func score(state: BoardState) -> float:
+		var total := 0.0
+		for u: BoardState.UnitState in state.units(1):
+			total += BoardScoring.presence_value(u)
+		return total
+
+
 # ── The measurement vocabulary ─────────────────────────────────────────────────────────
 #
 # Named, pure functions over a BoardState. Criteria CONSUME these; they never compute
@@ -212,3 +243,17 @@ static func urgency(state: BoardState, unit: BoardState.UnitState) -> float:
 	if life <= 0:
 		return 1.0
 	return clampf(incoming(state, unit) / float(life), 0.0, 1.0)
+
+
+# How much having this unit ON THE BOARD is worth, in "presence" units. v1: its mana cost,
+# straight — mana is the game's value denominator, and LINEARITY is a chosen property (the
+# total presence a budget converts into is the same however it is split, so greedy ordering
+# never changes what a fully spent turn is worth — only which body lands first). This is
+# the delicate dial the place-vs-preserve arbitration hangs on, so ALL future shaping
+# happens inside this one function, invisible to every criterion:
+#   · diminishing returns on a crowded board → curve on state occupancy (add a state param);
+#   · "this fight wants its support fielded early" → per-role/per-card multiplier table,
+#     resolved like weight_for, fed per-encounter the way survival_weights already flows;
+#   · cost mispricing a unit's real board value → replace cost with an authored value stat.
+static func presence_value(u: BoardState.UnitState) -> float:
+	return float(u.cost)

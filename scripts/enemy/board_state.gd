@@ -34,6 +34,10 @@ class UnitState:
 	var shield: int = 0
 	var speed: int = 0
 	var strikes: int = 1
+	# The unit's activated-ability ids (CardData.ability_ids) and whether its tap is spent
+	# (attack_exhausted) — what the ability candidate generator needs to gate legality.
+	var ability_ids: Array = []
+	var exhausted: bool = false
 
 	static func from_instance(inst: CardInstance) -> UnitState:
 		var u := UnitState.new()
@@ -52,6 +56,8 @@ class UnitState:
 		u.shield = inst.current_shield
 		u.speed = inst.get_attribute("speed")
 		u.strikes = inst.get_attribute("strikes")
+		u.ability_ids = inst.data.ability_ids().duplicate()
+		u.exhausted = inst.attack_exhausted
 		return u
 
 	func copy() -> UnitState:
@@ -71,6 +77,8 @@ class UnitState:
 		u.shield = shield
 		u.speed = speed
 		u.strikes = strikes
+		u.ability_ids = ability_ids.duplicate()
+		u.exhausted = exhausted
 		return u
 
 
@@ -147,6 +155,16 @@ func units(side: int) -> Array:
 			if cell != null:
 				out.append(cell)
 	return out
+
+
+# The unit standing for this identity token, on either side — how a candidate's
+# CardInstance reference is resolved inside a simulated copy. Null when not fielded.
+func find(p_source: CardInstance) -> UnitState:
+	for side in 2:
+		for u: UnitState in units(side):
+			if u.source == p_source:
+				return u
+	return null
 
 
 # The side's king unit, or null when it isn't on the board.
