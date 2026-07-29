@@ -5,19 +5,56 @@ extends RefCounted
 # priorities are ways of scoring a board). Static POSITION measurement only — no combat
 # resolution, no concrete "X will attack Y" projection (17a/17b).
 #
-# A criteria LIST from day one (the extension test demands new criteria touch nothing but
-# this list). Day one it holds one entry: protection-weighted exposure.
+# Two criteria, softly combined (weight × urgency — the deliverable-2 model):
+#   1. DEATH RISK (dominant): Σ survival_weight × P(death). Dead quiet when nothing on the
+#      player's board can hurt anyone; dominates the moment real threat exists, so a dying
+#      low-value unit outweighs marginal protection of a comfortable high-value one.
+#   2. BARE EXPOSURE (small): the deliverable-1 criterion, kept as the quiet second entry so
+#      formation-building never dies — with an empty player board (the CPU places FIRST each
+#      round) every urgency is 0 and this is what still screens the Captain.
+#
+# Survival weights are resolved from unit ROLE tags (design decision 18): the unit says what
+# it is (CardData.role), the weight table says what that's worth — stock defaults below,
+# overridable per encounter. The scorer itself stays tag-agnostic: criteria receive resolved
+# weights and know nothing about the word "fodder". Tags are never load-bearing — an untagged
+# unit falls to the "default" entry and is handled correctly.
 
-# The criteria this scorer runs, in order. Each entry: a Criterion. Total score is the
-# weighted sum; HIGHER IS BETTER (a "goal alignment" value).
+# The criteria this scorer runs. Total score is the weighted sum; HIGHER IS BETTER (a "goal
+# alignment" value). New criteria are entries here — nothing outside this list changes.
 var criteria: Array = []
 
+# Stock survival-weight table, keyed by role tag ("captain" = any is_king unit; per-card-id
+# overrides also allowed). The values encode the default protect ordering: the Captain far
+# above everything, support/burst worth shielding, fodder cheap, untagged mid-low.
+const STOCK_SURVIVAL_WEIGHTS := {
+	"captain": 1.0,
+	"support": 0.5,
+	"burst": 0.4,
+	"dps": 0.3,
+	"tank": 0.15,
+	"fodder": 0.05,
+	"default": 0.1,
+}
+# Fodder/default sit LOW deliberately: a screen is only worth standing in the open if the
+# body is cheaper than the exposure it absorbs — priced any higher, screening scores as a
+# net loss and the engine hides everyone in the back (observed; the test suite pins it).
 
-# The stock day-one setup: protect the Captain (weight table Captain = 1, default = 0 —
-# the mandated general form, so rebalancing protection across units is a DATA change).
-static func stock() -> BoardScoring:
+# How loud bare exposure is next to death risk. Small on purpose: it exists to keep the
+# formation instinct alive on quiet boards, not to compete with actual mortal danger.
+const EXPOSURE_CRITERION_WEIGHT := 0.15
+
+
+# The stock setup. `weight_overrides` layers an encounter's own role→weight entries over the
+# stock table ("in THIS fight, fodders are precious") — see EncounterData.survival_weights.
+static func stock(weight_overrides: Dictionary = {}) -> BoardScoring:
+	var weights := STOCK_SURVIVAL_WEIGHTS.duplicate()
+	for key: String in weight_overrides:
+		weights[key] = float(weight_overrides[key])
 	var s := BoardScoring.new()
-	s.criteria.append(ProtectionExposure.new({"captain": 1.0, "default": 0.0}))
+	s.criteria.append(DeathRisk.new(weights))
+	var exposure_criterion := ProtectionExposure.new(weights)
+	exposure_criterion.weight = EXPOSURE_CRITERION_WEIGHT
+	s.criteria.append(exposure_criterion)
 	return s
 
 
@@ -26,6 +63,19 @@ func score(state: BoardState) -> float:
 	for c: Criterion in criteria:
 		total += c.weight * c.score(state)
 	return total
+
+
+# The one place a unit's protection weight is resolved: per-card-id entry first, then the
+# implicit "captain" tag for kings, then the unit's role tag, then "default". Keys all live
+# in the same table, so rebalancing ANY of this is a data change.
+static func weight_for(u: BoardState.UnitState, weights: Dictionary) -> float:
+	if weights.has(u.card_id):
+		return float(weights[u.card_id])
+	if u.is_king and weights.has("captain"):
+		return float(weights["captain"])
+	if not u.role.is_empty() and weights.has(u.role):
+		return float(weights[u.role])
+	return float(weights.get("default", 0.0))
 
 
 class Criterion:
@@ -37,38 +87,58 @@ class Criterion:
 		return 0.0
 
 
-# Protection-weighted exposure over ALL own units: Σ protect_weight(unit) × exposure(slot),
-# minimized — so the criterion's score is the NEGATED sum. Day-one weights make this
-# "screen the Captain"; giving other units nonzero weights (later, via tags) rebalances
-# protection — including the Captain itself tanking for a more valuable unit — with zero
-# structural change (design Part 5, user-mandated form).
+# Σ survival_weight × urgency, negated — the soft-combination criterion. Urgency is the
+# unit's likelihood of dying where it stands (see urgency() below), so a much-lower-health
+# cheap unit can outweigh marginal protection of a healthy expensive one, with no ordering
+# gate and no special cases. A unit that dies under EVERY candidate contributes a constant
+# term and cancels out of the ranking — triage for free.
+class DeathRisk:
+	extends Criterion
+
+	var survival_weights: Dictionary = {}
+
+	func _init(weights: Dictionary) -> void:
+		id = "death_risk"
+		survival_weights = weights
+
+	func score(state: BoardState) -> float:
+		var risk := 0.0
+		for u: BoardState.UnitState in state.units(1):
+			var w := BoardScoring.weight_for(u, survival_weights)
+			if w != 0.0:
+				risk += w * BoardScoring.urgency(state, u)
+		return -risk
+
+
+# Σ survival_weight × exposure, negated — the deliverable-1 criterion, now sharing the same
+# weight table. Runs at a small criterion weight underneath death risk (see stock()).
 class ProtectionExposure:
 	extends Criterion
 
-	# "captain" and "default" keys, plus optional per-card-id overrides.
-	var protect_weights: Dictionary = {}
+	var survival_weights: Dictionary = {}
 
 	func _init(weights: Dictionary) -> void:
 		id = "protection"
-		protect_weights = weights
+		survival_weights = weights
 
 	func score(state: BoardState) -> float:
 		var exposed := 0.0
 		for u: BoardState.UnitState in state.units(1):
-			var w := protect_weight(u)
+			var w := BoardScoring.weight_for(u, survival_weights)
 			if w != 0.0:
 				exposed += w * BoardScoring.exposure(state, u.row, u.col)
 		return -exposed
 
-	func protect_weight(u: BoardState.UnitState) -> float:
-		if protect_weights.has(u.card_id):
-			return float(protect_weights[u.card_id])
-		if u.is_king and protect_weights.has("captain"):
-			return float(protect_weights["captain"])
-		return float(protect_weights.get("default", 0.0))
 
+# ── The measurement vocabulary ─────────────────────────────────────────────────────────
+#
+# Named, pure functions over a BoardState. Criteria CONSUME these; they never compute
+# damage themselves — so any future sophistication in potential-damage estimation (top-4
+# lane cap, per-lane threat pairing, status-based known damage, ranged reach) is an edit
+# inside one function here, invisible to criteria, enumeration and selection. Do not
+# inline these formulas into a criterion.
 
-# ── The exposure function (v1 — invented here, expected to be revised) ─────────────────
+# ── exposure (v1 — invented for deliverable 1, expected to be revised) ──
 #
 # "How likely is something standing at this ENEMY slot to be attacked" (design 17b), from
 # geometry + own-side occupancy only — deliberately blind to the player's units and their
@@ -99,3 +169,35 @@ static func exposure(state: BoardState, r: int, c: int) -> float:
 		elif u.col == c:
 			cover += COVER_COLUMN_MATE
 	return base / (1.0 + cover)
+
+
+# Total damage the player's board can put out per round: Σ attack × strikes over fielded
+# units. Visible stats only — reading the enemy's fielded army is not predicting targeting.
+static func threat_mass(state: BoardState) -> float:
+	var total := 0.0
+	for u: BoardState.UnitState in state.units(0):
+		total += float(u.attack * u.strikes)
+	return total
+
+
+# Expected damage aimed at this enemy unit per round: the player's threat mass, apportioned
+# by the unit's share of its side's total exposure. Never "X will attack Y" (17b forbids it,
+# and the player can reshuffle at will) — a position measurement: "this much damage exists,
+# and this unit stands in the spot that geometrically absorbs this share of it".
+static func incoming(state: BoardState, unit: BoardState.UnitState) -> float:
+	var total_exposure := 0.0
+	for u: BoardState.UnitState in state.units(1):
+		total_exposure += exposure(state, u.row, u.col)
+	if total_exposure <= 0.0:
+		return 0.0
+	return threat_mass(state) * exposure(state, unit.row, unit.col) / total_exposure
+
+
+# The unit's likelihood of dying where it stands, 0..1: expected incoming damage against
+# effective remaining life (health + shield). Linear, clamped — past "certainly dead" more
+# overkill adds nothing.
+static func urgency(state: BoardState, unit: BoardState.UnitState) -> float:
+	var life := unit.health + unit.shield
+	if life <= 0:
+		return 1.0
+	return clampf(incoming(state, unit) / float(life), 0.0, 1.0)
