@@ -961,6 +961,240 @@ async function renderTuningView() {
   }
 }
 
+// ── 🧠 Enemy AI tab: the enemy engine's control suite ─────────────────────────────────
+//
+// A PERSONALITY is a set of criterion weights and nothing else — WHO an opponent is, in the
+// only vocabulary the engine has (scripts/enemy/enemy_personality.gd, EVAL_CRITERIA_BRIEF.md).
+// The tab authors them and assigns them to fights.
+//
+// The core/quirk split is an AUTHORING distinction, not an engine one (user call 2026-07-30):
+//   · core traits — every personality has all of them; a blank weight keeps the stock number,
+//     so a new personality starts as the default enemy and is edited away from it;
+//   · quirks — opt-in leans, added and removed freely. One that is not carried is not in the
+//     scorer at all. Today: "maximize damage output".
+// Everything lives in the closure and saves together to data/enemy_personalities.json;
+// assignments write straight into their encounter template, one key each.
+async function renderEnemyAIView() {
+  const box = $('enemyai-body');
+  box.replaceChildren(el('div', { class: 'subtle', style: 'padding:20px', text: 'Loading enemy AI…' }));
+  try {
+    const r = await api('/api/personalities');
+    box.replaceChildren(enemyAIBody(r.personalities || [], r.traits || [],
+      r.survival_defaults || {}, r.encounters || []));
+  } catch (err) {
+    box.replaceChildren(el('div', { class: 'subtle', style: 'padding:20px', text: 'Failed to load enemy AI: ' + err.message }));
+  }
+}
+
+function enemyAIBody(list, traits, survivalDefaults, encounters) {
+  const CORE = traits.filter(t => t.core);
+  const QUIRKS = traits.filter(t => !t.core);
+  let dirty = false;
+  let selected = (list.find(p => p.id === state.enemyAIId) || list[0] || {}).id;
+
+  const root = el('div');
+  const pickerBox = el('div', { class: 'panel' });
+  const editorBox = el('div', { class: 'panel' });
+  const assignBox = el('div', { class: 'panel' });
+  const dirtyFlag = el('span', { class: 'subtle', text: '' });
+
+  const current = () => list.find(p => p.id === selected) || null;
+  const touch = () => { dirty = true; dirtyFlag.textContent = 'unsaved changes'; };
+
+  // ── one weight dial: slider + number + a reset that returns it to the stock value ──
+  // Blank is a real state for a core trait ("whatever the engine's default is"), so the
+  // number box shows the stock value as its placeholder rather than pretending to 0.
+  const weightRow = (t, holder, onRemove) => {
+    let num, rng;
+    const val = () => (holder[t.id] == null ? t.def : holder[t.id]);
+    const set = v => { holder[t.id] = v; num.value = v; rng.value = v; touch(); };
+    rng = el('input', { type: 'range', min: 0, max: t.max, step: 0.05, value: val(), style: 'flex:1',
+      oninput: e => { holder[t.id] = parseFloat(e.target.value); num.value = e.target.value; touch(); } });
+    num = el('input', { type: 'number', min: 0, step: 0.05, value: holder[t.id] == null ? '' : holder[t.id],
+      placeholder: t.def, style: 'width:70px',
+      oninput: e => {
+        const raw = e.target.value.trim();
+        if (raw === '') { delete holder[t.id]; rng.value = t.def; touch(); return; }
+        const v = parseFloat(raw);
+        if (!isNaN(v)) { holder[t.id] = v; rng.value = v; touch(); }
+      } });
+    const stock = el('span', { class: 'subtle', style: 'font-size:11px',
+      text: 'stock ' + t.def });
+    return el('div', { style: 'margin:10px 0 14px' },
+      el('div', { style: 'display:flex;justify-content:space-between;align-items:baseline;gap:8px' },
+        el('span', { style: 'font-size:14px;font-weight:600', text: t.label }),
+        el('span', { class: 'subtle', style: 'flex:1;font-size:12px', text: t.sub || '' }),
+        stock,
+        onRemove ? el('button', { class: 'ghost tiny', text: '✕', title: 'Drop this quirk — the criterion leaves the scorer entirely',
+          onclick: onRemove }) : null),
+      el('div', { style: 'display:flex;align-items:center;gap:10px' }, rng, num,
+        el('button', { class: 'ghost tiny', text: '↺', title: 'Back to the stock weight',
+          onclick: () => set(t.def) })),
+      el('div', { class: 'hint', text: t.hint }));
+  };
+
+  // ── the protect table: WHICH units the fear-of-dying trait is afraid of losing ──
+  // Blank = the stock weight (shown as the placeholder). Role keys get fixed rows; anything
+  // else is a per-card override, the same key space the engine resolves through.
+  const survivalBox = () => {
+    const p = current();
+    const wrap = groupBox('Who it protects (survival weights)');
+    wrap.append(el('div', { class: 'hint', text: 'What "fear of dying" is afraid of losing, per unit kind. '
+      + 'Blank keeps the stock value. These are RELATIVE — raising everything changes nothing, the ratios are the '
+      + 'behaviour. An encounter\'s own survival weights still override these for that one fight.' }));
+    const grid = el('div', { style: 'display:flex;flex-wrap:wrap;gap:10px;margin-top:8px' });
+    for (const key of Object.keys(survivalDefaults)) {
+      grid.append(el('label', { style: 'display:flex;align-items:center;gap:6px;font-size:13px' },
+        el('span', { text: key === 'default' ? 'untagged' : key, style: 'min-width:62px' }),
+        el('input', { type: 'number', step: 0.05, min: 0, style: 'width:70px',
+          value: p.survival_weights[key] == null ? '' : p.survival_weights[key],
+          placeholder: survivalDefaults[key],
+          oninput: e => {
+            const raw = e.target.value.trim();
+            if (raw === '') delete p.survival_weights[key];
+            else { const v = parseFloat(raw); if (!isNaN(v)) p.survival_weights[key] = v; }
+            touch();
+          } })));
+    }
+    wrap.append(grid);
+    // per-card overrides (any key that isn't a role tag)
+    const cardsBox = el('div', { style: 'margin-top:10px' });
+    const renderCards = () => {
+      const extra = Object.keys(p.survival_weights).filter(k => !(k in survivalDefaults)).sort();
+      const rows = extra.map(id => el('div', { class: 'eco-row' },
+        el('span', { text: id }),
+        el('input', { type: 'number', step: 0.05, value: p.survival_weights[id], style: 'width:70px',
+          oninput: e => { const v = parseFloat(e.target.value); if (!isNaN(v)) { p.survival_weights[id] = v; touch(); } } }),
+        el('button', { class: 'ghost', text: '✕', onclick: () => { delete p.survival_weights[id]; touch(); renderCards(); } })));
+      const idInput = el('input', { type: 'text', placeholder: 'card id', style: 'width:140px' });
+      const valInput = el('input', { type: 'number', step: 0.05, value: 0.5, style: 'width:70px' });
+      rows.push(el('div', { class: 'eco-row' }, idInput, valInput,
+        el('button', { class: 'ghost', text: '+ Add card', onclick: () => {
+          const id = idInput.value.trim();
+          const v = parseFloat(valInput.value);
+          if (!/^[a-z0-9_]+$/.test(id) || isNaN(v)) { toast('Need a card id (lowercase) and a number', 'err'); return; }
+          p.survival_weights[id] = v; touch(); renderCards();
+        } })));
+      cardsBox.replaceChildren(...rows);
+    };
+    renderCards();
+    wrap.append(cardsBox);
+    return wrap;
+  };
+
+  const renderPicker = () => {
+    const chips = list.map(p => el('button', {
+      class: 'ghost small' + (p.id === selected ? ' active' : ''),
+      text: (p.name || p.id) + (p.id === 'default' ? ' ★' : ''),
+      title: p.description || '',
+      onclick: () => { selected = p.id; state.enemyAIId = p.id; renderPicker(); renderEditorPanel(); },
+    }));
+    pickerBox.replaceChildren(
+      el('h2', {}, '🧠 Enemy AI — personalities'),
+      el('div', { class: 'hint', text: 'A personality is the set of weights the enemy engine scores its options with — '
+        + 'how afraid, how greedy, how aggressive this opponent is. ★ default is what every fight uses unless it names '
+        + 'another one; editing it moves ALL enemies. Saves to data/enemy_personalities.json — restart the game to apply.' }),
+      el('div', { style: 'display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px' },
+        ...chips,
+        el('button', { class: 'ghost small', text: '+ New personality', onclick: () => {
+          const id = (prompt('New personality id (lowercase letters, digits, underscores):') || '').trim();
+          if (!id) return;
+          if (!/^[a-z0-9_]+$/.test(id)) { toast('id must be lowercase letters, digits and underscores', 'err'); return; }
+          if (list.some(p => p.id === id)) { toast('"' + id + '" already exists', 'err'); return; }
+          // a new personality starts as the default character: no trait opinions, stock quirks
+          list.push({ id, name: slugToName(id), description: '', traits: {},
+            quirks: Object.fromEntries(QUIRKS.map(q => [q.id, q.def])), survival_weights: {} });
+          selected = id; state.enemyAIId = id; touch(); renderPicker(); renderEditorPanel(); renderAssign();
+        } }),
+        el('div', { style: 'flex:1' }), dirtyFlag,
+        el('button', { class: 'primary', text: 'Save personalities', onclick: async () => {
+          try {
+            const out = await api('/api/personalities', { personalities: list });
+            list = out.personalities || list;
+            dirty = false; dirtyFlag.textContent = '';
+            toast('Personalities saved — restart the game to apply', 'ok');
+            renderPicker(); renderEditorPanel(); renderAssign();
+          } catch (err) { toast('Save failed: ' + err.message, 'err'); }
+        } })));
+  };
+
+  const renderEditorPanel = () => {
+    const p = current();
+    if (!p) { editorBox.replaceChildren(el('div', { class: 'subtle', text: 'No personality selected.' })); return; }
+    const carried = QUIRKS.filter(q => p.quirks[q.id] != null);
+    const available = QUIRKS.filter(q => p.quirks[q.id] == null);
+    const quirkBox = groupBox('Quirks — what this one leans into');
+    quirkBox.append(el('div', { class: 'hint', text: 'Optional leans. A quirk that is not carried is not in the scorer at all, '
+      + 'so removing one is not the same as setting it to 0 — it stops being part of who this enemy is.' }));
+    if (!carried.length) quirkBox.append(el('div', { class: 'subtle', style: 'margin:8px 0', text: 'No quirks — this personality acts on its core traits alone.' }));
+    for (const q of carried)
+      quirkBox.append(weightRow(q, p.quirks, () => { delete p.quirks[q.id]; touch(); renderEditorPanel(); }));
+    if (available.length)
+      quirkBox.append(el('div', { style: 'display:flex;flex-wrap:wrap;gap:6px;margin-top:8px' },
+        ...available.map(q => el('button', { class: 'ghost small', text: '+ ' + q.label, title: q.hint,
+          onclick: () => { p.quirks[q.id] = q.def; touch(); renderEditorPanel(); } }))));
+
+    const coreBox = groupBox('Core personality traits — every enemy has these');
+    coreBox.append(el('div', { class: 'hint', text: 'The engine\'s working parts: a personality re-prices them, it never drops them. '
+      + 'Leave one blank to keep the stock number. Weights are read against "fear of dying" — a trait at 1.0 is worth exactly one '
+      + 'certainly-dying unit of weight 1.' }));
+    for (const t of CORE) coreBox.append(weightRow(t, p.traits, null));
+
+    const isDefault = p.id === 'default';
+    editorBox.replaceChildren(
+      el('h3', { text: (p.name || p.id) + (isDefault ? ' — the character every fight falls back to' : '') }),
+      el('div', { class: 'frow' },
+        fld('Name', el('input', { type: 'text', value: p.name || '', placeholder: p.id,
+          oninput: e => { p.name = e.target.value; touch(); } })),
+      ),
+      fld('Description', el('textarea', { rows: 2, style: 'width:100%',
+        placeholder: 'what this opponent feels like to fight',
+        oninput: e => { p.description = e.target.value; touch(); } }, p.description || '')),
+      coreBox, quirkBox, survivalBox(),
+      el('div', { class: 'modal-actions' },
+        isDefault ? el('span', { class: 'subtle', text: 'The default cannot be deleted — every fight falls back to it.' })
+          : el('button', { class: 'danger', text: 'Delete personality', onclick: () => {
+            if (!confirm(`Delete "${p.name || p.id}"? Fights still assigned to it fall back to the default.`)) return;
+            list = list.filter(x => x.id !== p.id);
+            selected = (list[0] || {}).id; state.enemyAIId = selected;
+            touch(); renderPicker(); renderEditorPanel(); renderAssign();
+          } })));
+  };
+
+  // ── assignment: which fight is fought by which character ──
+  // Saves immediately, one key on the encounter template (through the normal entry-save path,
+  // so it is backed up and revertable like any other edit).
+  const renderAssign = () => {
+    const opts = list.map(p => ({ value: p.id, label: p.name || p.id }));
+    const table = el('table', { class: 'mini' },
+      el('tr', null, el('th', { text: 'Encounter' }), el('th', { text: 'Type' }), el('th', { text: 'Personality' })));
+    for (const e of encounters) {
+      const holder = { personality: list.some(p => p.id === e.personality) ? e.personality : 'default' };
+      table.append(el('tr', null,
+        el('td', null, el('span', { text: e.id }),
+          e.enabled ? null : el('span', { class: 'subtle', text: ' (disabled)' })),
+        el('td', { style: 'width:80px' }, el('span', { class: 'subtle', text: e.node_type })),
+        el('td', { style: 'width:220px' }, selectInput(holder, 'personality', opts, async () => {
+          try {
+            await api('/api/encounter-personality', { id: e.id, personality: holder.personality });
+            e.personality = holder.personality;
+            toast(e.id + ' → ' + holder.personality, 'ok');
+          } catch (err) { toast('Assign failed: ' + err.message, 'err'); }
+        }))));
+    }
+    assignBox.replaceChildren(
+      el('h3', { text: '⚔ Who fights how' }),
+      el('div', { class: 'hint', text: 'Assigns a personality to each encounter template — saved into the encounter file the '
+        + 'moment you pick one. A fight left on the default uses the stock character (no key is written). Save new '
+        + 'personalities before assigning them, or the game will not find them and will fall back to the default.' }),
+      encounters.length ? table : el('div', { class: 'subtle', text: 'No encounter templates yet.' }));
+  };
+
+  renderPicker(); renderEditorPanel(); renderAssign();
+  root.append(pickerBox, editorBox, assignBox);
+  return root;
+}
+
 // ── 🌐 Localization tab: every UI string, one row per key, a column per language ──────
 // English is canonical (its key set governs the files); a blank cell in another language
 // falls back to English in-game, so the English text shows greyed as that cell's placeholder.
@@ -1358,9 +1592,10 @@ function attachInferPoll(file, jobId) {
 }
 
 // ── sidebar ──────────────────────────────────────────────────────────────────
-const TAB_ORDER = ['card', 'relic', 'status', 'ability', 'charm', 'upgrade', 'encounter', 'nodeweights', 'sound', 'vfx', 'render_filter', 'tuning', 'localization'];
+const TAB_ORDER = ['card', 'relic', 'status', 'ability', 'charm', 'upgrade', 'encounter', 'enemyai', 'nodeweights', 'sound', 'vfx', 'render_filter', 'tuning', 'localization'];
 const TAB_LABELS = { card: '🃏 Cards', relic: '🏺 Relics', status: '☠ Statuses', ability: '✨ Abilities',
-  charm: '🔮 Charms', upgrade: '🌳 Upgrades', encounter: '⚔ Encounters', nodeweights: '🗺 Map Nodes',
+  charm: '🔮 Charms', upgrade: '🌳 Upgrades', encounter: '⚔ Encounters', enemyai: '🧠 Enemy AI',
+  nodeweights: '🗺 Map Nodes',
   sound: '🔊 Sounds', vfx: '🎇 VFX', render_filter: '🔆 Filters', tuning: '🎛 Tuning', localization: '🌐 Localization' };
 
 // The ⚔ Encounters tab is the ENEMY HUB: tribes + enemy units (by tribe) + encounter
@@ -1579,8 +1814,8 @@ function renderEnemyHubList() {
 }
 
 function renderItemList() {
-  // The Tuning and Localization tabs are single full-width views — no item list at all.
-  const fullWidth = state.currentType === 'tuning' || state.currentType === 'localization';
+  // Tuning, Localization and Enemy AI are single full-width views — no item list at all.
+  const fullWidth = ['tuning', 'localization', 'enemyai'].includes(state.currentType);
   $('sidebar').hidden = fullWidth;
   if (fullWidth) return;
   // The ⚔ Encounters tab renders the enemy hub instead of a single-type list.
@@ -1803,19 +2038,25 @@ function clientDeployPreview(type, serialized) {
 }
 
 function renderEditor() {
-  const empty = $('editor-empty'), body = $('editor-body'), tuning = $('tuning-body'), locale = $('localization-body');
+  const empty = $('editor-empty'), body = $('editor-body'), tuning = $('tuning-body'),
+    locale = $('localization-body'), enemyai = $('enemyai-body');
   if (state.currentType === 'tuning') {
-    empty.hidden = true; body.hidden = true; locale.hidden = true;
+    empty.hidden = true; body.hidden = true; locale.hidden = true; enemyai.hidden = true;
     // only (re)load on entry — background re-renders must not clobber in-progress edits
     if (tuning.hidden) { tuning.hidden = false; renderTuningView(); }
     return;
   }
   if (state.currentType === 'localization') {
-    empty.hidden = true; body.hidden = true; tuning.hidden = true;
+    empty.hidden = true; body.hidden = true; tuning.hidden = true; enemyai.hidden = true;
     if (locale.hidden) { locale.hidden = false; renderLocaleView(); }
     return;
   }
-  tuning.hidden = true; locale.hidden = true;
+  if (state.currentType === 'enemyai') {
+    empty.hidden = true; body.hidden = true; tuning.hidden = true; locale.hidden = true;
+    if (enemyai.hidden) { enemyai.hidden = false; renderEnemyAIView(); }
+    return;
+  }
+  tuning.hidden = true; locale.hidden = true; enemyai.hidden = true;
   if (!state.draft) { empty.hidden = false; body.hidden = true; renderEmptyKinPanel(); return; }
   empty.hidden = true; body.hidden = false;
   const ed = EDITORS[state.currentType];

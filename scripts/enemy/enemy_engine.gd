@@ -25,6 +25,11 @@ const TIE_EPSILON := 0.0001
 # EncounterData.survival_weights / BoardScoring.stock). Empty = stock behaviour.
 var weight_overrides: Dictionary = {}
 
+# WHO this enemy is: the criterion weights the scorer runs with (EnemyPersonality). Set by
+# combat from the encounter's authored personality; null = the stock character, which is
+# what every fight got before personalities existed.
+var personality: EnemyPersonality = null
+
 # The live CombatWorld cast/ability candidates simulate against (combat sets it before
 # planning; see CandidateApply). Left unset — tests, harnesses — decide_actions
 # synthesizes a planning world from the call's own grids and hand.
@@ -55,7 +60,7 @@ func _init(rng: RandomNumberGenerator = null) -> void:
 # simulated tap, and moves are once-per-unit — every accepted candidate shrinks something.
 func decide_actions(hand: Array, player_grid: Array, enemy_grid: Array, mana: int,
 		player_mana: int = 0) -> Array:
-	var scoring := BoardScoring.stock(weight_overrides)
+	var scoring := BoardScoring.stock(weight_overrides, personality)
 	var state := BoardState.capture(player_grid, enemy_grid, player_mana)
 	var pool: Array = hand.duplicate()
 	var remaining := mana

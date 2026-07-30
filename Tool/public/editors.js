@@ -746,6 +746,11 @@ const EncounterEditor = {
             ? selectInput(draft, 'enemy_king', kings, onChange, { optional: true, emptyLabel: 'generic crown King (default)' })
             : textInput(draft, 'enemy_king', onChange, 'card id'),
             'do NOT also list it in the pool'),
+          // WHO the CPU is in this fight — the eval weights the enemy engine scores with.
+          // Authored (and assignable in bulk) in the 🧠 Enemy AI tab; this box is the same
+          // key, so an encounter can be pointed at a character without leaving its editor.
+          fld('Personality', textInput(draft, 'personality', onChange, 'default'),
+            'an id from the 🧠 Enemy AI tab — blank/default = the stock character'),
         ),
       ),
       groupBox('Battle size & rewards',
@@ -768,26 +773,39 @@ const EncounterEditor = {
       ),
     );
 
-    const poolBox = groupBox('Enemy card pool (weighted, sampled with replacement)');
+    // Weight = this unit's SHARE of the deck; From power = the difficulty it is ANCHORED to,
+    // i.e. when it joins the roster at all. The deck is apportioned to the weights rather than
+    // rolled against them (2026-07-30), and nothing reweights the pool by cost or depth, so a
+    // weight means exactly what it says at every difficulty.
+    const poolBox = groupBox('Enemy card pool (shares of the deck)');
     wrap.append(poolBox);
     const cardOpts = cardIdOptions(ctx, c => !c.is_king);
     const renderPool = () => {
       while (poolBox.children.length > 1) poolBox.lastChild.remove();
       const table = el('table', { class: 'mini' },
-        el('tr', null, el('th', { text: 'Card' }), el('th', { text: 'Weight' }), el('th')));
+        el('tr', null, el('th', { text: 'Card' }), el('th', { text: 'Weight' }),
+          el('th', { text: 'From power' }), el('th')));
       draft.enemy_pool.forEach((p, i) => {
         table.append(el('tr', null,
           el('td', null, selectInput(p, 'id', cardOpts, onChange)),
           el('td', { style: 'width:90px' }, numInput(p, 'weight', onChange, { float: true, step: 0.5, min: 0 })),
+          el('td', { style: 'width:100px' }, numInput(p, 'min_power', onChange, { float: true, step: 1, min: 0, placeholder: '0', optional: true })),
           el('td', { style: 'width:40px' }, el('button', { class: 'ghost tiny', text: '✕', onclick: () => {
             draft.enemy_pool.splice(i, 1); onChange(); renderPool();
           } })),
         ));
       });
-      poolBox.append(table, el('button', { class: 'ghost small list-add', text: '+ add card', onclick: () => {
-        draft.enemy_pool.push({ id: (cardOpts[0] && cardOpts[0].value) || '', weight: 1 });
-        onChange(); renderPool();
-      } }));
+      poolBox.append(table,
+        el('div', { class: 'hint', text: 'Weight is a SHARE, not a chance: the deck is divided up '
+          + 'in proportion (weight ÷ total of the unlocked entries), so every fight lands within '
+          + 'a card of the same mix. 0 = not in this fight.' }),
+        el('div', { class: 'hint', text: 'From power: this unit stays out of the fight until the '
+          + 'encounter reaches that power (blank/0 = from the very first fight). Power runs 0 at '
+          + 'the first fight up to roughly the deepest floor at the final boss.' }),
+        el('button', { class: 'ghost small list-add', text: '+ add card', onclick: () => {
+          draft.enemy_pool.push({ id: (cardOpts[0] && cardOpts[0].value) || '', weight: 1 });
+          onChange(); renderPool();
+        } }));
     };
     renderPool();
 
@@ -840,9 +858,18 @@ const EncounterEditor = {
     if (d.min_stage != null && d.min_stage !== 1) out.min_stage = d.min_stage;
     if (d.max_stage != null && d.max_stage !== 999) out.max_stage = d.max_stage;
     if (d.enemy_king) out.enemy_king = d.enemy_king;
+    // absent = the stock character, so "default" is never written — that keeps every
+    // encounter file byte-identical until a fight is genuinely given its own personality
+    if (d.personality && d.personality !== 'default') out.personality = d.personality;
     if (d.power_bonus) out.power_bonus = d.power_bonus;
     if (d.tribes && d.tribes.length) out.tribes = d.tribes.slice();
-    out.enemy_pool = (d.enemy_pool || []).map(p => ({ id: p.id, weight: p.weight == null ? 1 : p.weight }));
+    // min_power is written only when a unit is actually anchored — an absent key means
+    // "from the first fight", which keeps every existing encounter file byte-identical.
+    out.enemy_pool = (d.enemy_pool || []).map(p => {
+      const e = { id: p.id, weight: p.weight == null ? 1 : p.weight };
+      if (p.min_power) e.min_power = p.min_power;
+      return e;
+    });
     out.pick_count = d.pick_count.slice(0, 2);
     if (d.gold_reward && (d.gold_reward[0] || d.gold_reward[1])) out.gold_reward = d.gold_reward.slice(0, 2);
     if (d.mineral_reward && (d.mineral_reward[0] || d.mineral_reward[1])) out.mineral_reward = d.mineral_reward.slice(0, 2);
@@ -868,7 +895,13 @@ const EncounterEditor = {
     const lines = [`${d.id || 'Unnamed'} — a ${d.node_type} fight on floors ${d.min_floor || 0}–${d.max_floor == null ? 999 : d.max_floor}.`];
     if (d.tribes && d.tribes.length) lines.push(`Tribes: ${d.tribes.join(', ')}.`);
     lines.push(`Enemy King: ${d.enemy_king || 'generic crown King'}${d.power_bonus ? `, power +${d.power_bonus}` : ''}.`);
-    lines.push(`Deck: ${d.pick_count[0]}–${d.pick_count[1]} cards from ${(d.enemy_pool || []).length} pool entries.`);
+    if (d.personality && d.personality !== 'default')
+      lines.push(`Fought by the "${d.personality}" personality (🧠 Enemy AI) — its eval weights, not the stock ones.`);
+    const anchored = (d.enemy_pool || []).filter(p => p.min_power);
+    const anchorNote = anchored.length
+      ? ` ${anchored.map(p => `${p.id} joins at power ${p.min_power}`).join('; ')}.`
+      : '';
+    lines.push(`Deck: ${d.pick_count[0]}–${d.pick_count[1]} cards from ${(d.enemy_pool || []).length} pool entries.${anchorNote}`);
     const g = d.gold_reward || [0, 0];
     const m = d.mineral_reward || [0, 0];
     const mineral = (m[0] || m[1]) ? `, ${m[0]}–${m[1]} extra mineral` : '';

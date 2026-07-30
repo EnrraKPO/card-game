@@ -37,6 +37,29 @@ func _ready() -> void:
 						deck.append(DeckCard.make((deck[i % base] as DeckCard).id))
 						i += 1
 			break
+	# Combat "enc=<template id>": launch the screen with a REAL encounter, the way the Combat Gym
+	# does, so the CPU has an actual deck/hand instead of the no-encounter fallback (whose legacy
+	# card ids resolve to nothing — the enemy stands there with an empty hand, which makes the
+	# enemy readout impossible to judge). Optional "depth=N" picks the power ramp.
+	if scene_path.contains("combat"):
+		var depth := 0
+		for a: String in args:
+			if a.begins_with("depth="):
+				depth = int(a.trim_prefix("depth="))
+		for a: String in args:
+			if a.begins_with("enc="):
+				var want_id := a.trim_prefix("enc=")
+				var tpl: EncounterTemplateData = null
+				for t: EncounterTemplateData in EncounterTemplateData.all():
+					if t.id == want_id:
+						tpl = t
+						break
+				if tpl != null:
+					var erng := RandomNumberGenerator.new()
+					erng.seed = 4242
+					var enc2 := tpl.instantiate(erng, EncounterTemplateData.power_for_depth(depth))
+					enc2.practice = true
+					GameData.current_encounter = enc2
 	# Crafting screen "merged": append a combined (2-piece) card to the deck — with it, incompatible
 	# pairings (3+ pieces) become reachable for testing the invalid status / gray-out states.
 	if scene_path.contains("combination") and "merged" in args:
@@ -562,6 +585,14 @@ func _ready() -> void:
 					(ch as Button).mouse_entered.emit()
 			print("VFX ack: shown=%s attached=%s persisted=\"%s\""
 					% [ab.shown, Vfx._attached.keys(), GameData.current_run.forge_alert_ack])
+		await get_tree().process_frame
+	# Combat "enemyhand": opens the DEBUG enemy-hand overlay the way clicking the EnemyIntel
+	# readout does, so the modal can be shot without a mouse.
+	if scene_path.contains("combat") and "enemyhand" in args:
+		for n: Node in sv.find_children("*", "EnemyIntel", true, false):
+			EnemyHandOverlay.open(n, (n as EnemyIntel)._side)
+			break
+		await get_tree().process_frame
 		await get_tree().process_frame
 	# "vfxdump": list what the VFX overlay bands are actually drawing at capture time — the answer
 	# to "is this glow missing, or is it there and the capture can't see it?", which a screenshot

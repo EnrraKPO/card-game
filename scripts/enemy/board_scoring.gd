@@ -42,6 +42,14 @@ extends RefCounted
 # alignment" value). New criteria are entries here — nothing outside this list changes.
 var criteria: Array = []
 
+# ⚠ EVERY *_CRITERION_WEIGHT CONSTANT BELOW IS NOW A DEFAULT, NOT THE VALUE IN USE. A fight
+# is scored through an EnemyPersonality (an authored character in data/enemy_personalities.
+# json, Tool ▸ 🧠 Enemy AI), which may state its own weight for any criterion; these consts
+# are what it inherits when it doesn't, and they remain the single source of truth for the
+# stock character — the reasoning recorded on each one is still the reasoning behind the
+# default enemy. Change a const to move every personality that hasn't opinionated away from
+# it; author a personality to make ONE enemy different.
+
 # Stock survival-weight table, keyed by role tag ("captain" = any is_king unit; per-card-id
 # overrides also allowed). The values encode the default protect ordering: the Captain far
 # above everything, support/burst worth shielding, fodder cheap, untagged mid-low.
@@ -175,36 +183,50 @@ const IDLE_HAND_CRITERION_WEIGHT := 1.0
 
 
 
-# The stock setup. `weight_overrides` layers an encounter's own role→weight entries over the
-# stock table ("in THIS fight, fodders are precious") — see EncounterData.survival_weights.
-static func stock(weight_overrides: Dictionary = {}) -> BoardScoring:
+# The scorer for one fight. The PERSONALITY says how loud each criterion is (EnemyPersonality
+# — an authored character, or the stock one when none is named); `weight_overrides` layers an
+# encounter's own role→weight entries on top of the personality's survival table ("in THIS
+# fight, fodders are precious") — see EncounterData.survival_weights.
+#
+# Every criterion is built the same way whether the personality calls it a core trait or a
+# quirk: the split is an authoring distinction (EnemyPersonality), not a mechanical one. The
+# ONE mechanical consequence is presence — a quirk the personality does not carry is never
+# constructed, so it contributes nothing rather than contributing zero (identical arithmetic,
+# but the criterion dumps stay honest about who is in the room).
+static func stock(weight_overrides: Dictionary = {}, personality: EnemyPersonality = null) -> BoardScoring:
+	var who := personality if personality != null else EnemyPersonality.stock()
 	var weights := STOCK_SURVIVAL_WEIGHTS.duplicate()
+	for key: String in who.survival_weights:
+		weights[key] = float(who.survival_weights[key])
 	for key: String in weight_overrides:
 		weights[key] = float(weight_overrides[key])
 	var s := BoardScoring.new()
-	s.criteria.append(DeathRisk.new(weights))
-	var harm_criterion := ExpectedHarm.new(weights)
-	harm_criterion.weight = HARM_CRITERION_WEIGHT
-	s.criteria.append(harm_criterion)
-	var exposure_criterion := ProtectionExposure.new(weights)
-	exposure_criterion.weight = EXPOSURE_CRITERION_WEIGHT
-	s.criteria.append(exposure_criterion)
-	var value_criterion := BoardValue.new()
-	value_criterion.weight = BOARD_VALUE_CRITERION_WEIGHT
-	s.criteria.append(value_criterion)
-	var damage_criterion := DamageOutput.new()
-	damage_criterion.weight = DAMAGE_CRITERION_WEIGHT
-	s.criteria.append(damage_criterion)
-	var mana_criterion := ManaOptimization.new()
-	mana_criterion.weight = MANA_CRITERION_WEIGHT
-	s.criteria.append(mana_criterion)
-	var readiness_criterion := Readiness.new()
-	readiness_criterion.weight = READINESS_CRITERION_WEIGHT
-	s.criteria.append(readiness_criterion)
-	var idle_criterion := IdleHand.new()
-	idle_criterion.weight = IDLE_HAND_CRITERION_WEIGHT
-	s.criteria.append(idle_criterion)
+	for entry: Dictionary in EnemyPersonality.TRAITS:
+		var trait_id := String(entry["id"])
+		if not bool(entry["core"]) and not who.has_quirk(trait_id):
+			continue
+		var c := _criterion_for(trait_id, weights)
+		if c == null:
+			continue
+		c.weight = who.weight_for(trait_id)
+		s.criteria.append(c)
 	return s
+
+
+# Criterion id → a fresh instance. The one place the scorer's vocabulary is enumerated: a new
+# criterion is a case here plus an entry in EnemyPersonality.TRAITS.
+static func _criterion_for(trait_id: String, weights: Dictionary) -> Criterion:
+	match trait_id:
+		"death_risk":    return DeathRisk.new(weights)
+		"harm":          return ExpectedHarm.new(weights)
+		"protection":    return ProtectionExposure.new(weights)
+		"board_value":   return BoardValue.new()
+		"mana":          return ManaOptimization.new()
+		"readiness":     return Readiness.new()
+		"idle_hand":     return IdleHand.new()
+		"damage_output": return DamageOutput.new()
+	push_error("BoardScoring: no criterion for trait '%s'" % trait_id)
+	return null
 
 
 # Scores one state alone. BEHAVIOR criteria are silent here (their base score() is 0):

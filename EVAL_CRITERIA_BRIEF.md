@@ -289,13 +289,34 @@ too), which also keeps the spendability count honest and stops wasting simulatio
   no captured stat would be wrongly vetoed. The PLAYER-facing targeting rule is still
   pending.
 
-## Authoring model
+## Authoring model — **BUILT 2026-07-30 as PERSONALITIES (user-designed)**
 
-Encounters author personality through weights only, in the template JSON, following the
-existing `survival_weights` precedent:
-- criterion weights for the two new evals (how aggressive / how value-hungry this Captain is);
-- a `target_values` (name TBD) table overriding the mana-cost default per card-id/role.
-Tags and stock tables give working defaults; no encounter should NEED custom entries.
+The sketch below (per-encounter criterion weights in the template JSON) is superseded. Weights
+are authored as **named characters** instead, because a set of weights IS a character and
+several fights want the same one: `EnemyPersonality` (`scripts/enemy/enemy_personality.gd`),
+authored in `data/enemy_personalities.json` through Tool ▸ 🧠 Enemy AI, named by an encounter
+template's `personality` key.
+
+- **Core traits vs quirks is a TOOL distinction, not an engine one (user call).** Conceptually
+  they are the same thing — a criterion and a weight. Core traits (everything except damage
+  output today) are always present and can only be re-priced; a blank one keeps the const.
+  Quirks are added and removed freely, and an uncarried quirk is *not constructed at all* —
+  identical arithmetic to weight 0, but the criterion dump stays honest about who is in the
+  room. That presence rule is the split's one mechanical consequence.
+- **The consts in `board_scoring.gd` are now DEFAULTS, not the values in use.** They remain the
+  single source of truth for the stock character (all the reasoning recorded on them still
+  applies) — a personality inherits any weight it does not state.
+- **Survival weights are part of the personality**, with the encounter's own table layering on
+  top for one-off fights. Both were kept: the personality states the character's standing
+  protect ordering, the encounter amends it for that fight.
+- **No personality = the old engine, exactly** — absent file, unknown id, null personality all
+  build the pre-2026-07-30 scorer. Pinned by `tests/test_enemy_personality.gd`, which also pins
+  the anti-decoration property (weights must be able to change a decision) and the
+  absent-vs-empty `quirks` distinction. Suite 1086/1086.
+- **Shipped starters (`aggressive`, `defensive`, `board_oriented`) are directions, not balance**
+  — authored by reading the criteria, never playtested. Same standing caution as every weight.
+- Still open from the sketch: the `target_values` table (per-card-id/role value overrides) was
+  never needed, since board value replaced the mana-cost pricing.
 
 ## Order of work (recommendation, not mandate)
 

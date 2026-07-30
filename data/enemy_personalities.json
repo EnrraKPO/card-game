@@ -1,0 +1,58 @@
+[
+  {
+    "id": "default",
+    "name": "Default",
+    "description": "The stock character. Every core trait at the engine's own default weight, carrying the one stock quirk: it already reaches for damage. This is what every fight was fought with before personalities existed — edit it to move ALL enemies, or author a sibling to move one.",
+    "traits": {},
+    "quirks": {},
+    "survival_weights": {}
+  },
+  {
+    "id": "aggressive",
+    "name": "Aggressive",
+    "description": "Fights forward. Cares far more about the damage it can project than about what it loses doing so, and taps units freely. Its Captain is a body like any other. STARTING POINT — never playtested.",
+    "traits": {
+      "death_risk": 0.7,
+      "harm": 0.3,
+      "protection": 0.08,
+      "board_value": 0.15,
+      "readiness": 0.2
+    },
+    "quirks": {
+      "damage_output": 0.35
+    },
+    "survival_weights": {
+      "captain": 1.25
+    }
+  },
+  {
+    "id": "defensive",
+    "name": "Defensive",
+    "description": "Plays to keep what it has. Fears losing units and being worn down, holds formation, and hoards its taps — it drops the damage quirk entirely, so it only ever attacks because attacking happened to be the safest thing to do. STARTING POINT — never playtested.",
+    "traits": {
+      "death_risk": 1.3,
+      "harm": 0.7,
+      "protection": 0.3,
+      "board_value": 0.07,
+      "readiness": 0.6
+    },
+    "quirks": {},
+    "survival_weights": {
+      "captain": 2.25,
+      "fodder": 0.1
+    }
+  },
+  {
+    "id": "board_oriented",
+    "name": "Board-oriented",
+    "description": "Wants the richest battlefield: fields everything, buffs what stands, and treats an unspent hand as the real defeat. Reads as relentless rather than reckless — it still fears dying at the stock rate. STARTING POINT — never playtested.",
+    "traits": {
+      "board_value": 0.3,
+      "mana": 0.8,
+      "idle_hand": 1.3,
+      "readiness": 0.3
+    },
+    "quirks": {},
+    "survival_weights": {}
+  }
+]

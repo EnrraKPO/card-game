@@ -484,6 +484,123 @@ function sanitizeBoardValue(src) {
 }
 function getBoardValue() { return sanitizeBoardValue(readJson(BOARD_VALUE_PATH, {})); }
 
+// ── enemy personalities (the enemy engine's authored characters) ─────────────
+// A personality is a set of criterion weights and nothing else — WHO an opponent is, in the
+// only vocabulary the engine has (see scripts/enemy/enemy_personality.gd and
+// EVAL_CRITERIA_BRIEF.md). Lives in the game's data/enemy_personalities.json; an absent file
+// means every fight uses the stock character (the code defaults in board_scoring.gd).
+//
+// CORE TRAITS are always present — a personality can only re-price them, and a blank weight
+// keeps the stock number. QUIRKS are opt-in: one that isn't listed is not in the scorer at
+// all. The catalog below is the tool-side mirror of EnemyPersonality.TRAITS + the weight
+// constants in board_scoring.gd; the hints are the authoring surface's whole documentation,
+// so keep them in the language a designer thinks in.
+const PERSONALITIES_PATH = path.join(GAME_ROOT, 'data/enemy_personalities.json');
+const PERSONALITY_TRAITS = [
+  { id: 'death_risk', core: true, def: 1.0, max: 4, label: 'Fear of dying',
+    sub: 'the reference scale',
+    hint: 'How much it minds losing a unit — every other weight is read against this one. Which units it minds losing is the protect table below. Raise for a careful opponent, lower for one that spends bodies.' },
+  { id: 'harm', core: true, def: 0.5, max: 3, label: 'Fear of being worn down',
+    sub: 'sub-lethal damage',
+    hint: 'Damage that does not kill still counts: the King dropping 15→6 is a real reading. Half of fear-of-dying by default, so losing a unit always reads worse than any amount of surviving damage.' },
+  { id: 'protection', core: true, def: 0.15, max: 2, label: 'Formation instinct',
+    sub: 'bare exposure',
+    hint: 'The quiet pull toward standing in covered positions, felt even when nothing is threatening. Small on purpose — it keeps formation alive on empty boards without competing with real danger.' },
+  { id: 'board_value', core: true, def: 0.1, max: 2, label: 'Hunger for the board',
+    sub: 'total board value',
+    hint: 'The worth of the whole battlefield in one currency (Tuning ▸ ♟ Board value sets the prices): its units positive, yours negative. Fielding, buffing, healing and hurting you all raise it. Past ~0.2 growth starts beating rescue — it will buff an attacker while an ally dies.' },
+  { id: 'mana', core: true, def: 0.6, max: 3, label: 'Use your mana',
+    sub: 'spending pressure',
+    hint: 'Any spend that leaves the rest of the pool usable scores full marks; only WASTE is punished. This is what makes it act at all — at 0 it will happily pass the turn.' },
+  { id: 'readiness', core: true, def: 0.4, max: 3, label: 'Reluctance to tap',
+    sub: 'the tap counterweight',
+    hint: 'An ability costs more than its mana: a tapped unit loses its swing and every other ability it holds. Raise it and abilities are saved for when they matter; at 0 it taps anything it can pay for.' },
+  { id: 'idle_hand', core: true, def: 1.0, max: 3, label: 'Never sit on a hand',
+    sub: 'withheld bodies',
+    hint: 'Every unit it could field and doesn\'t is charged this, on any turn that spends no mana. The blunt anti-hoarding rule: at 1.0 an idle body costs more than a certain death. 0 turns it off.' },
+  { id: 'damage_output', core: false, def: 0.1, max: 2, label: 'Maximize damage',
+    sub: 'aggression as expression',
+    hint: 'How hard it reaches for the most damaging option available right now — measured against its own alternatives, so 1.0 always means "the most aggressive thing I could do this pick", never a fixed amount. This is what gets damage buffs used. Drop the quirk and it only ever attacks because attacking happened to be safe.' },
+];
+// The protect table (BoardScoring.STOCK_SURVIVAL_WEIGHTS) — which units the fear-of-dying
+// trait is afraid of losing. Mirrored for the tool's placeholders; blank = the stock value.
+const STOCK_SURVIVAL_WEIGHTS = {
+  captain: 1.75, support: 0.5, burst: 0.4, dps: 0.3, tank: 0.15, fodder: 0.05, default: 0.1,
+};
+const CORE_TRAIT_IDS = PERSONALITY_TRAITS.filter(t => t.core).map(t => t.id);
+const QUIRK_IDS = PERSONALITY_TRAITS.filter(t => !t.core).map(t => t.id);
+// The quirks the stock character carries (EnemyPersonality.stock_quirks): damage output is
+// nonzero in stock on purpose — the default enemy must already reach for damage buffs.
+function stockQuirks() {
+  return Object.fromEntries(PERSONALITY_TRAITS.filter(t => !t.core).map(t => [t.id, t.def]));
+}
+
+// One personality, defensively read. `quirks` is written ALWAYS (even empty) — the game
+// distinguishes "no quirks key" (inherit the stock quirks) from "empty quirks" (carries
+// none), and everything the tool saves has stated its quirks explicitly.
+function sanitizePersonality(src) {
+  const s = (src && typeof src === 'object') ? src : {};
+  const num = (obj, allow) => {
+    const out = {};
+    if (obj && typeof obj === 'object')
+      for (const [k, v] of Object.entries(obj)) {
+        const n = Number(v);
+        if (Number.isFinite(n) && (!allow || allow.includes(k))) out[k] = n;
+      }
+    return out;
+  };
+  return {
+    id: String(s.id || ''),
+    name: String(s.name || ''),
+    description: String(s.description || ''),
+    traits: num(s.traits, CORE_TRAIT_IDS),
+    // THE ABSENT-VS-EMPTY DISTINCTION, mirrored from the game (EnemyPersonality.from_dict):
+    // a personality that never mentions quirks inherits the stock ones, while an explicitly
+    // empty object means it carries none. Flattening the two here would have been quiet and
+    // expensive — the shipped "default" omits the key, so the tool would have shown it as
+    // quirkless and stripped the stock character's aggression on the first save.
+    quirks: (s.quirks && typeof s.quirks === 'object') ? num(s.quirks, QUIRK_IDS) : stockQuirks(),
+    // role tags, "default", or any card id — the same key space the engine resolves
+    survival_weights: num(s.survival_weights, null),
+  };
+}
+
+function sanitizePersonalities(list) {
+  const out = [];
+  const seen = new Set();
+  for (const p of Array.isArray(list) ? list : []) {
+    const clean = sanitizePersonality(p);
+    if (!validId(clean.id) || seen.has(clean.id)) continue;
+    seen.add(clean.id);
+    out.push(clean);
+  }
+  return out;
+}
+
+// The stock character always exists, whether or not the file names it: it is what an
+// encounter gets when it names nothing, so the tool must always have it to show.
+function getPersonalities() {
+  const list = sanitizePersonalities(readJson(PERSONALITIES_PATH, []));
+  if (!list.some(p => p.id === 'default'))
+    list.unshift({
+      id: 'default', name: 'Default', description: 'The stock character — every trait at the engine\'s own default weight.',
+      traits: {}, quirks: stockQuirks(), survival_weights: {},
+    });
+  return list;
+}
+
+// Which fight uses which character — the assignment view's source. Reads the encounter
+// templates straight out of the game's data files.
+function personalityAssignments() {
+  return listGameEntries('encounter').map(e => ({
+    id: e.id, file: e.file,
+    node_type: (e.data && e.data.node_type) || 'combat',
+    tribes: (e.data && e.data.tribes) || [],
+    personality: (e.data && e.data.personality) || 'default',
+    enabled: !(e.data && e.data.enabled === false),
+  })).sort((a, b) => a.id.localeCompare(b.id));
+}
+
 // ── game attributes ──────────────────────────────────────────────────────────
 // The global run/match numbers (GameAttributes.DEFAULTS in scripts/game_attributes.gd).
 // Lives in the game's own data/game_attributes.json, read by GameAttributes.default_value
@@ -1400,6 +1517,17 @@ function validateItem(type, d) {
       if (!['combat','elite','boss','test'].includes(d.node_type)) return 'node_type must be combat, elite, boss or test';
       if (!(d.enemy_pool || []).length) return 'enemy_pool needs at least one card';
       for (const p of d.enemy_pool) if (!p.id) return 'every enemy_pool entry needs a card id';
+      // min_power = the difficulty a unit is anchored to; absent/0 means "from the first
+      // fight". Rejecting a pool where EVERY entry is anchored: the generator would have
+      // nothing to draw and falls open with a warning, which is not a state to author into.
+      for (const p of d.enemy_pool) {
+        if (p.min_power == null) continue;
+        if (typeof p.min_power !== 'number' || !isFinite(p.min_power) || p.min_power < 0)
+          return `enemy_pool entry "${p.id}": min_power must be a number >= 0`;
+      }
+      if (d.enemy_pool.length && d.enemy_pool.every(p => p.min_power > 0))
+        return 'every enemy_pool entry is anchored above power 0 — at least one unit must be '
+          + 'available from the first fight';
       if (!Array.isArray(d.pick_count) || d.pick_count.length !== 2) return 'pick_count must be [min, max]';
       if (d.pick_count[0] > d.pick_count[1]) return 'pick_count min > max';
       // organizational label only (Encounters-tab grouping) — no pool-membership validation
@@ -1407,6 +1535,11 @@ function validateItem(type, d) {
         if (!Array.isArray(d.tribes)) return 'tribes must be an array of tribe ids';
         for (const t of d.tribes) if (!validId(t)) return `tribe id "${t}" must be lowercase letters, digits and underscores`;
       }
+      // The opponent's authored character (Tool ▸ 🧠 Enemy AI). Existence is NOT checked: the
+      // game degrades an unknown personality to the stock one, and refusing to save an
+      // encounter because a personality was renamed would be the tool holding content hostage.
+      if (d.personality != null && !validId(d.personality))
+        return `personality "${d.personality}" must be lowercase letters, digits and underscores`;
       // Enemy-engine protection weights: role tag / "captain" / "default" / a card id → number.
       // Keys are not checked against the role vocabulary on purpose — a card id is equally
       // valid, and an unknown key is inert rather than wrong (see BoardScoring.stock).
@@ -4008,6 +4141,31 @@ async function handle(req, res) {
       const out = sanitizeBoardValue(body.config || body);
       writeJson(BOARD_VALUE_PATH, out);
       return send(res, 200, { ok: true, config: out });
+    }
+    if (p === '/api/personalities' && req.method === 'GET')
+      return send(res, 200, { ok: true, personalities: getPersonalities(), traits: PERSONALITY_TRAITS,
+        survival_defaults: STOCK_SURVIVAL_WEIGHTS, encounters: personalityAssignments() });
+    if (p === '/api/personalities' && req.method === 'POST') {
+      const body = await readBody(req);
+      const out = sanitizePersonalities(body.personalities);
+      if (!out.some(x => x.id === 'default'))
+        return send(res, 400, { error: 'the "default" personality cannot be deleted — every fight falls back to it' });
+      writeJson(PERSONALITIES_PATH, out);
+      return send(res, 200, { ok: true, personalities: out });
+    }
+    // Assigning a fight its opponent's character: a one-key patch on the encounter template,
+    // written through saveGameEntry so it is backed up and revertable like any other edit.
+    if (p === '/api/encounter-personality' && req.method === 'POST') {
+      const { id, personality } = await readBody(req);
+      const found = findGameEntry('encounter', id);
+      if (!found) return send(res, 404, { error: `no encounter "${id}"` });
+      const data = Object.assign({}, found.data);
+      if (!personality || personality === 'default') delete data.personality;
+      else data.personality = String(personality);
+      try {
+        saveGameEntry('encounter', found.file, data);
+        return send(res, 200, { ok: true, id, personality: data.personality || 'default' });
+      } catch (e) { return send(res, 400, { error: e.message }); }
     }
     if (p === '/api/locale' && req.method === 'GET')
       return send(res, 200, { ok: true, langs: LOCALE_LANGS, names: LOCALE_NAMES, tables: getLocale() });

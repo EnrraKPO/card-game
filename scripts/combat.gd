@@ -63,6 +63,8 @@ var _done_btn: Button        # the chunky vertical "Ready" button (right of the 
 var _done_label: Label       # the Ready button's caption — bottom-anchored inside the button so
 							  # the word sits on the hand band, aligned with Inspect Abilities
 							  # (Button has no vertical text alignment; see _build_action_column)
+var _enemy_intel: EnemyIntel   # the CPU's mana + held plays, at the top of the action column;
+								# self-polling, so nothing here has to remember to refresh it
 var _speed_btn: Button
 var _pacing_btn: Button
 var _battle_speed: float = 1.0   # 100%; reset each combat, cycled by the HUD dial
@@ -372,9 +374,20 @@ func _init_player_deck(deck_cards: Array) -> void:
 			_player_side.draw_pile.append(inst)
 
 
-# Builds the enemy draw pile (spells included now — the AI casts them) and deals an
-# opening hand. The CPU then draws one card per round like the player, so it keeps
-# applying pressure all match instead of emptying its hand early.
+# Builds the enemy draw pile (spells included now — the AI casts them) and deals its
+# opening hand.
+#
+# ⚠ EXPERIMENT 2026-07-30 (user's call): the CPU draws its WHOLE roster at once, instead of
+# 4 cards plus one per round. The enemy's deck is an encounter's authored roster, not a
+# shuffled library it has to dig through — so hiding most of it behind a draw schedule only
+# hid the encounter's own design from the planner, which could then never choose between two
+# bodies it was "meant" to have. With everything in hand the engine sees the encounter's real
+# menu every turn and mana alone paces what it can field. The per-round DRAW 1 in
+# _begin_round stays and simply no-ops on an empty pile (a pile only refills if some effect
+# ever puts cards back).
+#
+# To go back to a drawn hand, put a number where the pile size is read below — nothing else
+# in the engine or the UI depends on this choice.
 func _init_enemy_deck() -> void:
 	var ids: Array = []
 	if GameData.current_encounter != null:
@@ -389,7 +402,7 @@ func _init_enemy_deck() -> void:
 			var inst := CardInstance.from_data(data)
 			inst.owner = 1
 			_enemy_side.draw_pile.append(inst)
-	Resolver.submit(StatMutation.make(_enemy_side, StatMutation.DRAW, 4,
+	Resolver.submit(StatMutation.make(_enemy_side, StatMutation.DRAW, _enemy_side.draw_pile.size(),
 			null, StatMutation.CH_SYSTEM))
 
 
@@ -449,6 +462,9 @@ func _do_cpu_placement() -> void:
 	engine.world = _world
 	if GameData.current_encounter != null:
 		engine.weight_overrides = GameData.current_encounter.survival_weights
+		# WHO this opponent is (Tool ▸ 🧠 Enemy AI): the authored criterion weights the
+		# scorer runs with. An unknown id degrades to the stock character.
+		engine.personality = EnemyPersonality.get_personality(GameData.current_encounter.personality)
 	for action: Dictionary in engine.decide_actions(_enemy_side.hand,
 			_board.player_grid, _board.enemy_grid, _enemy_side.mana, _player_side.mana):
 		await _execute_enemy_action(action)
@@ -1662,10 +1678,15 @@ func _make_mana_chunk() -> Panel:
 	return chunk
 
 
-# The action column, hugging the RIGHT of the board: a thin top row pairing the battle-speed
-# toggle with the debug end-combat ✕ (homeless since the header left the screen), then the big
-# "Ready" button filling everything below. Squashed as narrow as its labels allow — its width
-# comes straight out of the board's card size.
+# The action column, hugging the RIGHT of the board: the enemy readout at the TOP (level with
+# the board it reports on), then a thin row pairing the battle-speed toggle with the debug
+# end-combat ✕ (homeless since the header left the screen), then the big "Ready" button filling
+# everything below. Squashed as narrow as its labels allow — its width comes straight out of
+# the board's card size.
+#
+# The enemy panel's height comes out of READY, and only out of Ready: everything else in the
+# column is fixed-height, and Ready is the one child that expands. Ready stays far taller than
+# the hand bar's band, which its bottom-anchored caption is pinned to (see _resize_board).
 func _build_action_column() -> Control:
 	var compact := UIScale.is_compact()
 	var col := VBoxContainer.new()
@@ -1674,6 +1695,11 @@ func _build_action_column() -> Control:
 	# centre band squashes the baked rim/sheen into doubled-line artifacts.
 	col.custom_minimum_size.x = 200.0 if compact else 192.0
 	col.add_theme_constant_override("separation", 10)
+
+	# What the CPU still has to spend — its mana and the plays it is holding (see EnemyIntel).
+	# It heads the column because it reports on the board above it, not on the buttons below.
+	_enemy_intel = EnemyIntel.make(_enemy_side)
+	col.add_child(_enemy_intel)
 
 	# The presentation row — the three dials the player may want mid-fight, side by side: how much
 	# the animations overlap (pacing), how fast the clock runs (speed), and the full settings panel.
@@ -1806,8 +1832,14 @@ func _resize_board() -> void:
 	_hand.set_card_size(slot_size)
 	# Keep the Ready caption's band equal to the hand bar's visible height (the button's bottom
 	# already sits at the true screen edge), so the word stays level with Inspect Abilities.
+	# Capped by the button itself: the enemy readout at the top of the column takes its height
+	# out of Ready, so on a short window the band could otherwise exceed the button and draw
+	# the caption up over the panel above it.
 	if _done_label != null:
-		_done_label.offset_top = -(slot_size.y + Hand.PAD_TOP - Hand.BOTTOM_BLEED)
+		var band := slot_size.y + Hand.PAD_TOP - Hand.BOTTOM_BLEED
+		if _done_btn != null and _done_btn.size.y > 1.0:
+			band = minf(band, _done_btn.size.y)
+		_done_label.offset_top = -band
 	if (_board.player_slots[0][0] as SlotUI).custom_minimum_size == slot_size:
 		return   # already correct → stop before we trigger another resize
 	for r in rows:

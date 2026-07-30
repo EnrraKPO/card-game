@@ -8,7 +8,7 @@
 	"enemy_pool": [
 		{
 			"id": "fodder_dummy",
-			"weight": 3
+			"weight": 4
 		},
 		{
 			"id": "tank_dummy",

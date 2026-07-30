@@ -10,7 +10,11 @@ var max_floor: int = 999
 var min_stage: int = 1
 var max_stage: int = 999
 var weight: float = 1.0
-var enemy_pool: Array = []   # Array[{ "id": String, "weight": float }]
+# Array[{ "id": String, "weight": float, "min_power": float }] — the units this encounter can
+# field, what SHARE of the deck each takes, and the difficulty each is ANCHORED to. An entry is
+# simply absent until the fight's power reaches its min_power (0 = always eligible); among the
+# unlocked entries the weights are apportioned, not rolled (see compose_deck / _eligible_pool).
+var enemy_pool: Array = []
 # The card id placed in the enemy's king slot — its win-condition unit. Defaults to the
 # generic "king"; tribe encounters name a themed Captain (an is_king enemy_only card).
 var enemy_king: String = "king"
@@ -23,6 +27,10 @@ var reward_pool: String = "default"
 # Optional role→weight entries layered over the enemy engine's stock survival-weight table
 # (see BoardScoring / EncounterData.survival_weights).
 var survival_weights: Dictionary = {}
+# The authored enemy PERSONALITY this fight is fought with (EnemyPersonality id) — the
+# criterion weights the enemy engine scores with, i.e. how aggressive / careful / greedy this
+# opponent is. "default" or an unknown id = the stock character.
+var personality: String = EnemyPersonality.DEFAULT_ID
 # Chance (0..1) this fight also offers a relic on the reward screen, alongside the card pick.
 var relic_reward_chance: float = 0.0
 
@@ -31,17 +39,25 @@ var relic_reward_chance: float = 0.0
 var power_bonus: float = 0.0
 
 # ── Procedural difficulty (power) tuning ──────────────────────────────────────
-# `power` = how deep the player is. It drives three procedural levers below (deck size, cost skew,
-# and — via CardData.scaled — per-card stats), so ONE curve shapes the whole difficulty ramp. See
-# power_for_depth() for how run depth maps to power.
+# `power` = how deep the player is. It drives the procedural levers below (deck size, which pool
+# entries are unlocked, and — via CardData.scaled — per-card stats), so ONE curve shapes the whole
+# difficulty ramp. See power_for_depth() for how run depth maps to power.
 const POWER_PER_FLOOR  := 1.0    # peak power at the final boss ≈ POWER_PER_FLOOR * deepest floor
 # Shape of the depth→power ramp. 1.0 = linear (constant slope, the old behaviour). >1 = gentle at
 # the start and steep later: the first fights sit near power 0 (very easy) while deep fights ramp
 # up hard. This is the knob to turn if the early/late balance still feels off.
 const POWER_CURVE_EXP  := 1.7
-const POWER_CURVE_BIAS := 0.05   # how hard the pool skews toward costlier cards as power climbs
 const POWER_SIZE_GROWTH := 0.5   # extra enemy-deck cards per point of power
 # (per-card stat growth lives on CardData.POWER_STAT_GROWTH, used by CardData.scaled)
+#
+# ⚠ THE COST SKEW IS GONE (user call 2026-07-30). A deep fight used to reweight the pool by card
+# cost — exp(BIAS × power × (cost − pool midpoint)) — which quietly OVERRODE the authored weights
+# and hit the cheapest entry hardest: measured on test_dummies, the weight-3 fodder fell from 2.08
+# cards per deck at power 0 to 1.75 at power 11.7 while the weight-1, cost-4 group heal climbed
+# from 0.82 to 3.83. The rarest authored entry became the most common card in the deck, and an
+# author reading the weights had no way to see it coming. Difficulty now shapes the mix through
+# ANCHORS instead (per-entry min_power): an author says when a unit joins the fight, and from then
+# on the weights mean exactly what they say. Do not reintroduce an implicit cost skew.
 
 
 # Maps how deep the player is (global floor, 0 at the first fight) to encounter power. A convex
@@ -114,6 +130,7 @@ static func _from_dict(d: Dictionary) -> EncounterTemplateData:
 	t.reward_pool = d.get("reward_pool", "default")
 	t.relic_reward_chance = float(d.get("relic_reward", 0.0))
 	t.survival_weights = d.get("survival_weights", {})
+	t.personality = String(d.get("personality", EnemyPersonality.DEFAULT_ID))
 	t.exp_reward  = int(d.get("exp_reward", 1))
 	var pc: Array = d.get("pick_count", [1, 1])
 	t.pick_count  = [pc[0], pc[0] if pc.size() < 2 else pc[1]]
@@ -122,7 +139,8 @@ static func _from_dict(d: Dictionary) -> EncounterTemplateData:
 	var mr: Array = d.get("mineral_reward", [0, 0])
 	t.mineral_reward = [mr[0], mr[0] if mr.size() < 2 else mr[1]]
 	for e: Dictionary in d.get("enemy_pool", []):
-		t.enemy_pool.append({"id": e.get("id", ""), "weight": e.get("weight", 1.0)})
+		t.enemy_pool.append({"id": e.get("id", ""), "weight": e.get("weight", 1.0),
+				"min_power": float(e.get("min_power", 0.0))})
 	return t
 
 
@@ -165,21 +183,16 @@ func instantiate(rng: RandomNumberGenerator, power: float = 0.0) -> EncounterDat
 	enc.ai   = EnemyAI.from_key(ai)
 	enc.enemy_king = enemy_king
 	enc.survival_weights = survival_weights.duplicate()
+	enc.personality = personality
 	enc.power = maxf(0.0, power + power_bonus)
 
-	# Deck size and pool composition both ramp with power: a bigger deck (more sustain) drawn
-	# from a mix that smoothly skews toward costlier cards. The per-card STAT scaling is applied
-	# later, at deck build (combat._init_enemy_deck), from enc.power.
+	# Deck SIZE ramps with power (a bigger deck = more sustain). The mix does not: power decides
+	# WHICH entries are unlocked (their anchors), and the authored weights decide the PROPORTIONS
+	# among them — see compose_deck, which apportions rather than samples. The per-card STAT
+	# scaling is applied later, at deck build (combat._init_enemy_deck), from enc.power.
 	var count: int = rng.randi_range(pick_count[0], pick_count[1]) \
 		+ int(round(enc.power * POWER_SIZE_GROWTH))
-	var deck: Array[String] = []
-	if not enemy_pool.is_empty():
-		var mid := _pool_mid_cost()
-		for i in count:
-			var entry: Dictionary = WeightedRandom.pick(rng, enemy_pool,
-				func(e: Dictionary) -> float: return float(e.weight) * _cost_bias(e.id, mid, enc.power))
-			deck.append(entry.id)
-	enc.enemy_deck = deck
+	enc.enemy_deck = compose_deck(_eligible_pool(enc.power), count, rng)
 
 	enc.gold_reward = rng.randi_range(gold_reward[0], gold_reward[1])
 	enc.mineral_reward = rng.randi_range(mineral_reward[0], mineral_reward[1])
@@ -219,23 +232,93 @@ func _roll_elite_offers(rng: RandomNumberGenerator) -> Array:
 
 
 # Average mana cost across the pool — the midpoint the cost bias pivots around.
-func _pool_mid_cost() -> float:
-	if enemy_pool.is_empty():
-		return 0.0
-	var total := 0.0
+# ── Deck composition (PROCEDURAL, not sampled — user call 2026-07-30) ─────────────────────
+#
+# A deck is APPORTIONED to the authored weights, not rolled against them: an entry weighted 3 of a
+# total 12 gets a quarter of the cards, this fight and every fight. Independent weighted sampling
+# was the previous shape and it read as noise — over a 9-card deck drawn from six entries you get
+# fights that are all fodder and fights with no fodder at all, and no amount of weight authoring
+# fixes it, because the variance IS the sampler.
+#
+# Largest-remainder apportionment (Hamilton's method): each entry takes its whole share, then the
+# leftover cards — never more than one per entry — go to the largest fractional remainders. RNG
+# enters in exactly one place: which of two EQUAL remainders wins a leftover card. That is the
+# "small to minimal" influence asked for — two fights from the same template differ by at most a
+# card or two, and only where the arithmetic genuinely ties.
+#
+# `rng` is also what shuffles the result, so the deck isn't served in pool order.
+static func compose_deck(pool: Array, count: int, rng: RandomNumberGenerator) -> Array[String]:
+	var deck: Array[String] = []
+	if count <= 0 or pool.is_empty():
+		return deck
+
+	var total_w := 0.0
+	for e: Dictionary in pool:
+		total_w += maxf(0.0, float(e.get("weight", 1.0)))
+	# Every weight zero reads as "no preference stated", not "no units": fall back to equal
+	# shares rather than handing back an empty army.
+	var flat := total_w <= 0.0
+	if flat:
+		total_w = float(pool.size())
+
+	# Whole shares first; remainders parked with a random tiebreak key (see the header).
+	var claims: Array = []
+	var assigned := 0
+	for e: Dictionary in pool:
+		var w := 1.0 if flat else maxf(0.0, float(e.get("weight", 1.0)))
+		var exact := float(count) * w / total_w
+		var whole := int(floor(exact))
+		for _i in whole:
+			deck.append(String(e.id))
+		assigned += whole
+		# A zero-weight entry is excluded on purpose — it never earns a leftover card either,
+		# so "weight 0" means what it says: this unit is not in this fight.
+		if w > 0.0:
+			claims.append({"id": String(e.id), "rem": exact - float(whole), "tie": rng.randf()})
+
+	# Leftovers to the biggest remainders, ties settled by the pre-rolled key so the order is
+	# reproducible from the rng and never favours whoever was authored first.
+	claims.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if absf(float(a.rem) - float(b.rem)) > 0.000001:
+			return float(a.rem) > float(b.rem)
+		return float(a.tie) > float(b.tie))
+	var leftover := count - assigned
+	for i in mini(leftover, claims.size()):
+		deck.append(String(claims[i].id))
+
+	_shuffle(deck, rng)
+	return deck
+
+
+# Fisher-Yates on the INJECTED rng — Array.shuffle() would reach for the global generator, which
+# would put an unseeded source back into a composition this whole function exists to make
+# reproducible.
+static func _shuffle(arr: Array, rng: RandomNumberGenerator) -> void:
+	for i in range(arr.size() - 1, 0, -1):
+		var j := rng.randi_range(0, i)
+		var tmp: Variant = arr[i]
+		arr[i] = arr[j]
+		arr[j] = tmp
+
+
+# The entries this fight may draw from: everything whose ANCHOR (min_power) the fight's power has
+# reached. This is the ONE way difficulty shapes the mix — an author states when a unit joins the
+# roster, and above that line its authored weight stands unmodified at every depth.
+#
+# Anchoring EVERY entry above the current power would leave the encounter with no units at all
+# (a captain alone on an empty board), which is never what an author meant — so that case
+# fails OPEN, on the whole pool, and says so. An encounter that should genuinely field nothing is
+# expressed with an empty pool, not with unreachable anchors.
+func _eligible_pool(power: float) -> Array:
+	var out: Array = []
 	for e: Dictionary in enemy_pool:
-		var c := CardData.get_card(e.id)
-		total += float(c.cost) if c != null else 0.0
-	return total / float(enemy_pool.size())
-
-
-# Smoothly skews selection toward cards costlier than the pool midpoint as power climbs (gentle
-# early, strong deep). Returns 1.0 at power 0 (so the authored weights stand) — a continuous
-# exponential, so the "heavier mix" slides in gradually instead of in tier jumps.
-static func _cost_bias(id: String, mid_cost: float, power: float) -> float:
-	var c := CardData.get_card(id)
-	var cost := float(c.cost) if c != null else mid_cost
-	return exp(POWER_CURVE_BIAS * power * (cost - mid_cost))
+		if power + 0.0001 >= float(e.get("min_power", 0.0)):
+			out.append(e)
+	if out.is_empty() and not enemy_pool.is_empty():
+		push_warning("EncounterTemplateData '%s': every pool entry is anchored above power %.2f — "
+				% [id, power] + "ignoring anchors for this roll (check min_power values)")
+		return enemy_pool
+	return out
 
 
 # Picks an un-owned relic id to offer (empty if the player already owns every relic). Reuses the
