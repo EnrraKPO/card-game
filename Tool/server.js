@@ -451,6 +451,39 @@ function getEconomy() {
   };
 }
 
+// ── board value (enemy-engine exchange rates) ────────────────────────────────
+// The enemy engine's "total board value" criterion prices every unit by its stats,
+// abilities and effects at these authored exchange rates (scripts/enemy/
+// board_value_config.gd). Lives in the game's data/board_value.json; an absent file (or
+// key) means the code defaults. Mirror of the game's defaults so the tool round-trips
+// the same shape / fallbacks.
+const BOARD_VALUE_PATH = path.join(GAME_ROOT, 'data/board_value.json');
+const BOARD_VALUE_DEFAULT = {
+  stat_rates: { attack: 1.0, health: 1.0, missing_health: 0.5, shield: 2.0, speed: 0.5 },
+  ability_default: 2.0, ability_values: {},
+  triggered_default: 1.5, live_default: 1.5,
+};
+function sanitizeBoardValue(src) {
+  const s = (src && typeof src === 'object') ? src : {};
+  const out = JSON.parse(JSON.stringify(BOARD_VALUE_DEFAULT));
+  if (s.stat_rates && typeof s.stat_rates === 'object')
+    for (const k of Object.keys(out.stat_rates)) {
+      const v = Number(s.stat_rates[k]);
+      if (Number.isFinite(v)) out.stat_rates[k] = v;
+    }
+  for (const k of ['ability_default', 'triggered_default', 'live_default']) {
+    const v = Number(s[k]);
+    if (Number.isFinite(v)) out[k] = v;
+  }
+  if (s.ability_values && typeof s.ability_values === 'object')
+    for (const [id, v] of Object.entries(s.ability_values)) {
+      const n = Number(v);
+      if (validId(id) && Number.isFinite(n)) out.ability_values[id] = n;
+    }
+  return out;
+}
+function getBoardValue() { return sanitizeBoardValue(readJson(BOARD_VALUE_PATH, {})); }
+
 // ── game attributes ──────────────────────────────────────────────────────────
 // The global run/match numbers (GameAttributes.DEFAULTS in scripts/game_attributes.gd).
 // Lives in the game's own data/game_attributes.json, read by GameAttributes.default_value
@@ -3966,6 +3999,14 @@ async function handle(req, res) {
         debug: economyBag(body.debug, ECONOMY_DEFAULT.debug, true),
       };
       writeJson(ECONOMY_PATH, out);
+      return send(res, 200, { ok: true, config: out });
+    }
+    if (p === '/api/board-value' && req.method === 'GET')
+      return send(res, 200, { ok: true, config: getBoardValue() });
+    if (p === '/api/board-value' && req.method === 'POST') {
+      const body = await readBody(req);
+      const out = sanitizeBoardValue(body.config || body);
+      writeJson(BOARD_VALUE_PATH, out);
       return send(res, 200, { ok: true, config: out });
     }
     if (p === '/api/locale' && req.method === 'GET')

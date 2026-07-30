@@ -12,7 +12,23 @@ extends RefCounted
 #      the unit survives; only damage past the shield counts, proportional to max health.
 #   3. BARE EXPOSURE (small): the deliverable-1 criterion, kept as the quiet entry so
 #      formation-building never dies even when the threat measurements go silent.
-#   4. BOARD PRESENCE (small, positive): fielded army is worth something.
+#   4. BOARD VALUE (small): the net worth of the battlefield — every unit priced by its
+#      stats + abilities + effects (BoardValueConfig exchange rates), own side positive,
+#      player side negative; min-max normalized within the pick (worst 0, best 1).
+#      REPLACED BoardPresence (user call 2026-07-29): same fielding-pole job, real
+#      currency instead of mana cost — and it prices hurting the player too.
+#   5. DAMAGE OUTPUT (small, positive): aggression as expression — the first BEHAVIOR
+#      criterion (EVAL_CRITERIA_BRIEF.md): cohort-relative, scored through score_pick.
+#   6. MANA OPTIMIZATION (loud): use your mana — spending counts, waste doesn't. THE
+#      fielding pressure (user-designed 2026-07-29): withholding playable units is
+#      leaving spendable mana unspent.
+#   7. READINESS (moderate): the OTHER resource a play spends — a tap. Keeps "don't tap"
+#      a live option against 6's pressure to spend mana on abilities.
+#   8. IDLE HAND (harsh): a choice that spends NO mana while the CPU is holding a unit it
+#      could field is charged the full weight per withheld body. The blunt instrument (user
+#      mandate 2026-07-30) — a direct reading of the withheld cards themselves, not an
+#      inference from the mana pool. Spending mana waives it: the target is idleness, not
+#      the choice between two paid plays.
 # Threat includes the player's OPEN MANA at 1:1 (MANA_THREAT_RATE), so risk and harm are
 # live from turn one — unspent mana is damage the player can still convert.
 #
@@ -76,16 +92,87 @@ const HARM_CRITERION_WEIGHT := 0.5
 # incoming() measurement. The rate is the initial guess; tune here.
 const MANA_THREAT_RATE := 1.0
 
-# How loud board presence is next to death risk — THE arbitration dial between fielding a
-# new unit and preserving an existing one (a placement gains presence_value × this; a heal
-# gains survival_weight × Δurgency). At 0.1, one mana of fielded unit ≈ one tenth of a
-# certainly-dying default-weight unit — so a cheap body still screens into moderate danger,
-# while a precious wounded unit (captain 1.75, event-priced roles) pulls the turn toward
-# preservation. Raise it for a swarm that fields relentlessly, lower it for a caretaker
-# that would rather keep what it has. This weight also REPLACES the engine's old
-# "placements are always accepted" special case: fielding now pays for itself through the
-# score, under the same must-improve rule as everything else.
-const PRESENCE_CRITERION_WEIGHT := 0.1
+# How loud board value is next to death risk — THE arbitration dial between growing the
+# battlefield (fielding, buffing, hurting the player) and preserving what stands. It
+# inherits BoardPresence's old job of paying for placements under the must-improve rule
+# (the "placements are always accepted" special case stays retired), but in the real
+# currency: a unit is worth its stats + abilities + effects (BoardValueConfig), not its
+# mana cost. Min-max normalized within the pick (worst 0, best 1), so the weight reads
+# like every behavior weight: how much this character cares about the richest board.
+# NOTE the deliberate trade: presence's linearity ("a budget converts to the same total
+# however it is split") is gone — stat value is not linear in mana, so greedy ordering
+# can now matter to what a spent turn is worth.
+#
+# ⚠ THIS WEIGHT IS AWAITING A USER DECISION (2026-07-30). They asked for board value to
+# OUTWEIGH the safety criteria — the danger criteria only PROJECT future value loss, while
+# this measures value directly. But raising it past ~0.1 flips a behaviour they approved
+# earlier: the support stops healing its dying ally and buffs an attacker instead. That is
+# not a tuning artefact, it is arithmetic — under the authored rates a +2 attack buff is
+# worth 2.0 while healing a wounded unit earns ~0.9 per point, so in pure value terms
+# growing always beats rescuing. Only DeathRisk sees the ally about to die.
+#   0.1  → rescues the dying ally (current; every approved behaviour intact)
+#   0.2+ → buffs and lets it die (board value genuinely outweighs safety)
+# Held at 0.1 until the user picks which enemy they want. Note also that the criterion is
+# min-max normalized, so its FULL swing is its weight: raising it amplifies even trivial
+# value gaps into full-weight differences. PROVISIONAL.
+const BOARD_VALUE_CRITERION_WEIGHT := 0.1
+
+# How loud aggression is next to death risk — the "maximize damage output" BEHAVIOR
+# (EVAL_CRITERIA_BRIEF.md eval 2). Behaviors land on 0..1 by construction (expression
+# relative to this pick's best option), so the weight is directly "how much of a
+# certainly-dying weight-1.0 unit full aggression is worth". Nonzero in stock ON PURPOSE:
+# the default character must already reach for damage buffs without per-encounter
+# authoring — that is the initiative's stated goal. 0.1 because at 0.25 the staged
+# wounded-ally board showed the support casting fire_bless while its 1 HP dps died —
+# aggression must lose to live triage in the stock character. PROVISIONAL like every
+# constant here; raise per-encounter for genuinely bloodthirsty Captains.
+const DAMAGE_CRITERION_WEIGHT := 0.1
+
+# How loud "use your mana" is — deliberately the loudest dial after death risk (user
+# mandate 2026-07-29: "there's no reason it should ever stop playing units"). The eval is
+# a GOAL already on 0..1 (fraction of the turn's mana budget), so the weight is honest.
+# Since the 2026-07-30 reshape the pressure per pick is the FULL swing — any waste-free
+# spend scores 1 against declining's 0 — so the weight is exactly "what one clean use of
+# mana is worth". That makes it far blunter than the old fractional version (which needed
+# 3.5 to be felt at all): 0.6 already outbids a placed body's own risk share on the
+# staged 2-queens repro, while staying under the weight of genuinely precious lives, so
+# a play that throws away something valuable can still be declined — must-improve
+# restraint survives. PROVISIONAL.
+const MANA_CRITERION_WEIGHT := 0.6
+
+# How loud keeping units READY is — the counterweight to the mana criterion (user
+# 2026-07-30). Mana pressure alone would tap every unit that holds an affordable ability,
+# because a tap is invisible to it: only the mana leaves the pool. But a tap spends the
+# unit's whole turn — its attack AND its every other ability — so an ability is never
+# just its mana cost. This prices that second resource in the same currency, which makes
+# NOT tapping a genuine option: a tap on a unit with little else to give stays cheap,
+# while tapping the army's best attacker has to be worth it. Deliberately below the mana
+# weight — reluctance, not refusal (the user wants tapping discouraged, not prevented).
+# PROVISIONAL.
+const READINESS_CRITERION_WEIGHT := 0.4
+
+# What ONE withheld playable unit costs — the harsh dial (user mandate 2026-07-30: "author
+# an eval that forbids keeping units in hand"). Deliberately blunt, and deliberately NOT
+# another attempt to infer withholding from the mana pool: the mana criterion has been
+# rewritten three times chasing this bug through as many disguises, always reasoning about
+# leftover mana. This one reads the withheld cards directly — if a body could stand on the
+# board and doesn't, that is the charge, whatever the pool looks like.
+#
+# Read it against the survival table: at 1.0 one idle body costs as much as a certainly
+# dying weight-1.0 unit, which is more than any non-captain entry (dps 0.3, support 0.5)
+# and more than mana's whole swing (0.6) — so with a body in hand, a turn that spends
+# nothing has to be worth more than a certain death to be chosen, which is what the user
+# asked "harshly" to mean. It never argues against another PAID play, though: see the
+# waiver in idle_hand(). Together the two make the statement precise — spend your mana
+# while you are holding a body, and how you spend it is the other criteria's business.
+#   0.0  → the criterion is off; mana pressure alone decides (the pre-2026-07-30 engine)
+#   0.5  → strong preference; a valuable free move can still win a pick
+#   1.0  → current: while a body is in hand, do something with the mana
+# PROVISIONAL like every constant here — this one is a policy the user asked for, though,
+# not a probe result.
+const IDLE_HAND_CRITERION_WEIGHT := 1.0
+
+
 
 
 # The stock setup. `weight_overrides` layers an encounter's own role→weight entries over the
@@ -102,17 +189,58 @@ static func stock(weight_overrides: Dictionary = {}) -> BoardScoring:
 	var exposure_criterion := ProtectionExposure.new(weights)
 	exposure_criterion.weight = EXPOSURE_CRITERION_WEIGHT
 	s.criteria.append(exposure_criterion)
-	var presence_criterion := BoardPresence.new()
-	presence_criterion.weight = PRESENCE_CRITERION_WEIGHT
-	s.criteria.append(presence_criterion)
+	var value_criterion := BoardValue.new()
+	value_criterion.weight = BOARD_VALUE_CRITERION_WEIGHT
+	s.criteria.append(value_criterion)
+	var damage_criterion := DamageOutput.new()
+	damage_criterion.weight = DAMAGE_CRITERION_WEIGHT
+	s.criteria.append(damage_criterion)
+	var mana_criterion := ManaOptimization.new()
+	mana_criterion.weight = MANA_CRITERION_WEIGHT
+	s.criteria.append(mana_criterion)
+	var readiness_criterion := Readiness.new()
+	readiness_criterion.weight = READINESS_CRITERION_WEIGHT
+	s.criteria.append(readiness_criterion)
+	var idle_criterion := IdleHand.new()
+	idle_criterion.weight = IDLE_HAND_CRITERION_WEIGHT
+	s.criteria.append(idle_criterion)
 	return s
 
 
+# Scores one state alone. BEHAVIOR criteria are silent here (their base score() is 0):
+# expression is relative to a pick's alternatives, which a lone state does not have — a
+# decision's cohort goes through score_pick instead.
 func score(state: BoardState) -> float:
 	var total := 0.0
 	for c: Criterion in criteria:
 		total += c.weight * c.score(state)
 	return total
+
+
+# The behavior-criteria contract (EVAL_CRITERIA_BRIEF.md taxonomy): scores a whole pick's
+# cohort at once. GOALS score each state independently, exactly like score(). BEHAVIORS
+# measure every state raw, then normalize by the cohort's best measure — the strongest
+# expression available this pick scores 1.0 whatever its absolute size (ratified: when a
+# 1-damage flick is the best option, taking it IS maximizing damage). The caller passes
+# the do-nothing baseline as the FIRST entry, so "act" and "decline" are compared in the
+# same currency. Returns one total per entry, same order.
+func score_pick(states: Array) -> Array:
+	var totals: Array = []
+	for _s in states:
+		totals.append(0.0)
+	for c: Criterion in criteria:
+		var b := c as Behavior
+		if b == null:
+			for i in states.size():
+				totals[i] = float(totals[i]) + c.weight * c.score(states[i])
+			continue
+		var raws: Array = []
+		for s: BoardState in states:
+			raws.append(b.measure(s))
+		var norm := b.normalized(raws)
+		for i in states.size():
+			totals[i] = float(totals[i]) + b.weight * float(norm[i])
+	return totals
 
 
 # The one place a unit's protection weight is resolved: per-card-id entry first, then the
@@ -213,21 +341,134 @@ class ProtectionExposure:
 		return -exposed
 
 
-# Σ presence_value over own fielded units — the positive pole the negative criteria pull
-# against: it says having an army IS worth something, so fielding competes with preserving
-# on one scale instead of through the old always-accept-placements special case. Weighted
-# small (see PRESENCE_CRITERION_WEIGHT).
-class BoardPresence:
+# The net worth of the battlefield (user-designed 2026-07-29, REPLACING BoardPresence):
+# every unit priced by its full kit — stats at authored exchange rates, abilities and
+# effect categories at authored equivalences (BoardValueConfig) — own side positive,
+# player side negative. The positive pole the negative criteria pull against: fielding,
+# buffing, healing AND hurting the player all grow it, so it prices the whole "make the
+# battlefield mine" instinct in one currency. Min-max normalized over the pick's cohort:
+# worst option 0, best 1, everything else its fraction of that span.
+class BoardValue:
+	extends Behavior
+
+	func _init() -> void:
+		id = "board_value"
+
+	func measure(state: BoardState) -> float:
+		return BoardScoring.board_value(state)
+
+	# Signed measures need the min-max anchoring: ratio-to-max is meaningless when the
+	# whole cohort can sit below zero (a rich player board). A flat cohort maps to
+	# all-zero — nothing to prefer, the criterion goes silent.
+	func normalized(raws: Array) -> Array:
+		var lo := INF
+		var hi := -INF
+		for r in raws:
+			lo = minf(lo, float(r))
+			hi = maxf(hi, float(r))
+		var span := hi - lo
+		var out: Array = []
+		for r in raws:
+			out.append(0.0 if span <= 0.0 else (float(r) - lo) / span)
+		return out
+
+
+# Use your mana (user-designed 2026-07-29, refined 2026-07-30; absorbs the brief's "spend
+# all mana" eval). Scores THE CHOICE, not the turn's running total: spending nothing
+# scores 0, and any spend that leaves the remainder fully usable scores 1 — spending all
+# your mana and keeping a usable reserve are EQUALLY fine, only WASTE is punished. A GOAL
+# on 0..1 with no cohort machinery (see mana_optimization).
+#
+# Two properties this shape buys. (1) The fielding pressure the withholding bug needed:
+# every successive placement decision beats declining on its own, because declining
+# spends nothing — the brief's stranded-only version maxed on doing nothing and could
+# never push the engine to act. (2) Greedy combo blindness cured: with 5 mana and options
+# 2/3/4, playing the 4 strands 1 (score 0) while playing the 3 keeps the 2 usable (1).
+# Waste is judged ONLY when mana is the binding constraint — see mana_optimization.
+class ManaOptimization:
 	extends Criterion
 
 	func _init() -> void:
-		id = "presence"
+		id = "mana"
 
 	func score(state: BoardState) -> float:
-		var total := 0.0
-		for u: BoardState.UnitState in state.units(1):
-			total += BoardScoring.presence_value(u)
-		return total
+		return BoardScoring.mana_optimization(state)
+
+
+# How much of the army's ACTIVITY is still available, 0..1 — the tap counterweight
+# (user 2026-07-30). A tap is a second currency the mana criterion cannot see: it spends
+# the unit's attack for the round and closes every other ability it holds. Scoring the
+# STATE (fraction of activity potential still unspent) is enough to price the CHOICE,
+# because the must-improve gate compares each candidate against the do-nothing baseline —
+# the drop between them IS what this tap costs. No cohort machinery, no prev/next
+# plumbing.
+class Readiness:
+	extends Criterion
+
+	func _init() -> void:
+		id = "readiness"
+
+	func score(state: BoardState) -> float:
+		return BoardScoring.readiness(state)
+
+
+# Every unit the CPU could field right now and isn't, charged one full weight each, negated
+# (user mandate 2026-07-30). A GOAL measured on the resulting state, and the bluntest
+# criterion in the scorer on purpose: the withholding bug has been chased through the mana
+# pool three times, so this one stops reasoning about mana at all and reads the withheld
+# cards. Placing a unit erases its entry, so the charge falls by exactly one weight per
+# body fielded — every successive placement improves the score by the same full amount, no
+# normalization to dilute it and nothing about the pool for it to be confused by.
+class IdleHand:
+	extends Criterion
+
+	func _init() -> void:
+		id = "idle_hand"
+
+	func score(state: BoardState) -> float:
+		return -BoardScoring.idle_hand(state)
+
+
+# A BEHAVIOR criterion (EVAL_CRITERIA_BRIEF.md taxonomy): measures how fully an action
+# expresses a disposition, not how good a state is — actor, not optimizer. Raw measures
+# are normalized by the pick's cohort max inside score_pick; a behavior never scores a
+# lone state (base score() stays 0), because expression only exists relative to what was
+# available.
+class Behavior:
+	extends Criterion
+
+	# The raw, un-normalized reading of one resulting state. Override.
+	func measure(_state: BoardState) -> float:
+		return 0.0
+
+	# Maps the cohort's raw measures onto 0..1. Default: ratio-to-max — each option as a
+	# fraction of the pick's fullest expression (assumes non-negative measures). Override
+	# for other anchorings (BoardValue's signed min-max). A cohort with no expression
+	# anywhere maps to all-zero: the criterion goes silent instead of dividing by zero.
+	func normalized(raws: Array) -> Array:
+		var peak := 0.0
+		for r in raws:
+			peak = maxf(peak, float(r))
+		var out: Array = []
+		for r in raws:
+			out.append(0.0 if peak <= 0.0 else float(r) / peak)
+		return out
+
+
+# Aggression as expression (EVAL_CRITERIA_BRIEF.md eval 2): the candidate's resulting
+# durability-weighted outgoing damage mass, normalized by the pick's best. 1.0 always means
+# "the most aggressive expression available right now" — never a global ideal. Buffs,
+# placements and attack-raising abilities all move it; damage SPELLS are eval 1's business
+# (they hurt what is there; this grows the threat the CPU projects) — division of labor,
+# no double counting.
+class DamageOutput:
+	extends Behavior
+
+	func _init() -> void:
+		id = "damage_output"
+
+	func measure(state: BoardState) -> float:
+		return BoardScoring.outgoing_mass(state)
 
 
 # ── The measurement vocabulary ─────────────────────────────────────────────────────────
@@ -322,15 +563,282 @@ static func harm(state: BoardState, unit: BoardState.UnitState) -> float:
 	return clampf(through / float(unit.max_health), 0.0, 1.0)
 
 
-# How much having this unit ON THE BOARD is worth, in "presence" units. v1: its mana cost,
-# straight — mana is the game's value denominator, and LINEARITY is a chosen property (the
-# total presence a budget converts into is the same however it is split, so greedy ordering
-# never changes what a fully spent turn is worth — only which body lands first). This is
-# the delicate dial the place-vs-preserve arbitration hangs on, so ALL future shaping
-# happens inside this one function, invisible to every criterion:
-#   · diminishing returns on a crowded board → curve on state occupancy (add a state param);
-#   · "this fight wants its support fielded early" → per-role/per-card multiplier table,
-#     resolved like weight_for, fed per-encounter the way survival_weights already flows;
-#   · cost mispricing a unit's real board value → replace cost with an authored value stat.
-static func presence_value(u: BoardState.UnitState) -> float:
-	return float(u.cost)
+# ── outgoing damage mass (the aggression measurement, EVAL_CRITERIA_BRIEF.md eval 2) ──
+#
+# The CPU-side mirror of threat_mass, durability-weighted: attack stats are the ONLY way
+# attack damage is visible to a static scorer (sims resolve the candidate, never the strike
+# phase), and a stat is only worth what its body will live to convert — +10 attack on a
+# unit that dies before swinging is nearly worthless (user-mandated 2026-07-29). All the
+# aggression math lives in these three functions; refine here, invisibly to the criterion.
+
+# Σ attack × strikes × delivery over the CPU's fielded units.
+static func outgoing_mass(state: BoardState) -> float:
+	var total := 0.0
+	for u: BoardState.UnitState in state.units(1):
+		total += float(u.attack * u.strikes) * delivery(state, u)
+	return total
+
+
+# A spent tap ≡ a spent attack (tap-abilities contract): a tapped unit swings nothing this
+# round, so its stat is nearly worthless to THIS turn's output — capped hard rather than
+# zeroed, because the stat itself survives into future turns (a buff on a tapped body is
+# wasted this round, not forever). This is what prices the act of tapping: an ability whose
+# cast taps its holder pays the holder's own capped output inside the candidate's score,
+# so "is this worth my tap" is part of every ability's evaluation.
+const TAP_DELIVERY_FACTOR := 0.1
+
+
+# How much of this unit's attack stat it will live to convert, 0..1. Combat is
+# speed-ordered, so the share of player threat SLOWER than the unit cannot pre-empt its
+# first strike — that share of the round is insured; the rest hangs on survival
+# (persistence = 1 − urgency, which already folds health, shield, cover and the actual
+# threat facing the unit). A tapped unit is hard-capped: its swing this round is already
+# spent (see TAP_DELIVERY_FACTOR).
+static func delivery(state: BoardState, unit: BoardState.UnitState) -> float:
+	var first := first_strike_share(state, unit)
+	var persistence := 1.0 - urgency(state, unit)
+	var base := first + (1.0 - first) * persistence
+	if unit.exhausted:
+		return base * TAP_DELIVERY_FACTOR
+	return base
+
+
+# The fraction of the player's FIELDED attack mass strictly slower than this unit — a
+# static stat comparison, never "X will attack Y". Open mana is excluded on purpose: it
+# has no speed stat, and its pressure already reaches persistence through urgency. No
+# fielded attack at all means nothing can pre-empt anything — fully insured.
+static func first_strike_share(state: BoardState, unit: BoardState.UnitState) -> float:
+	var total := 0.0
+	var slower := 0.0
+	for u: BoardState.UnitState in state.units(0):
+		var mass := float(u.attack * u.strikes)
+		total += mass
+		if u.speed < unit.speed:
+			slower += mass
+	if total <= 0.0:
+		return 1.0
+	return slower / total
+
+
+# ── board value (the "total board value" criterion, user-designed 2026-07-29) ──────────
+#
+# What one unit is worth in the eval's common currency: stats at the authored exchange
+# rates plus fixed equivalences for its abilities and effect categories — ALL numbers
+# tool-authorable through BoardValueConfig (data/board_value.json). Replaces the old
+# presence_value (mana cost): cost said what a unit COSTS, this says what it IS. All
+# future shaping (diminishing returns, per-role multipliers) happens inside these two
+# functions, invisible to the criterion.
+static func unit_value(u: BoardState.UnitState) -> float:
+	var v := float(u.attack * u.strikes) * BoardValueConfig.stat_rate("attack")
+	v += float(u.health) * BoardValueConfig.stat_rate("health")
+	v += float(u.max_health - u.health) * BoardValueConfig.stat_rate("missing_health")
+	v += float(u.shield) * BoardValueConfig.stat_rate("shield")
+	v += float(u.speed) * BoardValueConfig.stat_rate("speed")
+	for id: String in u.ability_ids:
+		v += BoardValueConfig.ability_value(id)
+	v += float(u.triggered_effects) * BoardValueConfig.triggered_value()
+	v += float(u.live_effects) * BoardValueConfig.live_value()
+	return v
+
+
+# The net battlefield: own units add, player units subtract. Signed on purpose — a rich
+# player board IS a poor position, and killing or wounding player units raises the total
+# exactly like fielding raises it.
+static func board_value(state: BoardState) -> float:
+	var total := 0.0
+	for u: BoardState.UnitState in state.units(1):
+		total += unit_value(u)
+	for u: BoardState.UnitState in state.units(0):
+		total -= unit_value(u)
+	return total
+
+
+# ── readiness (the tap counterweight, user-designed 2026-07-30) ───────────────────────
+
+# Everything a unit could do this round if left alone, in board-value currency: its swing
+# plus every ability a tap would close. Non-tap abilities are excluded (they keep working
+# once the unit is exhausted, so a tap does not spend them); passives too — they run
+# regardless. Rates come from BoardValueConfig, so this stays tool-authored like every
+# other number in the value currency.
+static func activity_potential(u: BoardState.UnitState) -> float:
+	var p := float(u.attack * u.strikes) * BoardValueConfig.stat_rate("attack")
+	for id: String in u.ability_ids:
+		var ab := AbilityData.get_ability(id)
+		if ab != null and ab.tap:
+			p += BoardValueConfig.ability_value(id)
+	return p
+
+
+# The best single tap-ability the unit holds — what one tap can actually buy.
+static func best_tap_ability(u: BoardState.UnitState) -> float:
+	var best := 0.0
+	for id: String in u.ability_ids:
+		var ab := AbilityData.get_ability(id)
+		if ab != null and ab.tap:
+			best = maxf(best, BoardValueConfig.ability_value(id))
+	return best
+
+
+# What a spent tap COST this unit: its attack for the round plus every OTHER ability it
+# holds — never the ability the tap bought, which was used, not lost (the user's exact
+# model). A tap can only ever buy one ability, so crediting the unit's best one is the
+# faithful reading: a one-ability unit that taps forfeits only its swing, while silencing
+# a deep toolkit costs the whole rest of it. Untapped units forfeit nothing.
+static func tap_forfeit(u: BoardState.UnitState) -> float:
+	if not u.exhausted:
+		return 0.0
+	return maxf(0.0, activity_potential(u) - best_tap_ability(u))
+
+
+# How much of the CPU side's activity survives, 0..1 (1 = nothing forfeited). Proportional
+# on purpose: tapping your only unit spends all of your turn's agency, tapping one of
+# eight spends an eighth — a tap should cost in proportion to how much of the army it
+# silences. A side with nothing to activate reads 1 (nothing to lose).
+static func readiness(state: BoardState) -> float:
+	var total := 0.0
+	var forfeited := 0.0
+	for u: BoardState.UnitState in state.units(1):
+		total += activity_potential(u)
+		forfeited += tap_forfeit(u)
+	if total <= 0.0:
+		return 1.0
+	return 1.0 - forfeited / total
+
+
+# ── idle hand (the "never withhold a unit" criterion, user-mandated 2026-07-30) ────────
+
+# How many placeable units the CPU is holding that it COULD put on the board right now —
+# the count, not a fraction: withholding two bodies is twice the offence, and the whole
+# point of this criterion is that the charge never gets diluted (it is a plain sum over
+# withheld cards, exactly as DeathRisk is a plain sum over endangered units).
+#
+# "Could play" is read narrowly and only from what the state actually knows:
+#   · the card is a placeable unit — spells and kings never enter hand_unit_costs;
+#   · the CPU could afford it out of the pool THIS PICK STARTED WITH (hand_budget_before,
+#     not the mana left) — an unaffordable card is not withheld, it is unplayable, which is
+#     the trap the mana criterion kept falling into; and reading the mana LEFT instead
+#     would let any spend excuse the withholding, since draining the pool makes the held
+#     body unaffordable and the charge disappear;
+#   · there is somewhere to put it — a full board is not withholding.
+# THE WAIVER (user 2026-07-30): a choice that SPENDS MANA is never charged. Without it the
+# criterion punished using an ability — a heal costs a tap and a mana but leaves the hand
+# untouched, so it carried the full charge and lost every argument to fielding a body, and
+# the engine stopped rescuing dying units. That was the criterion overreaching: what the
+# user is forbidding is IDLENESS while holding a playable unit, not preferring one paid
+# play over another. So the charge falls on the choices that spend nothing — declining, and
+# free repositioning — and any real use of the mana settles it.
+#
+# The fielding pressure survives the waiver because the greedy loop asks once per action:
+# a turn that spends its mana on a heal comes straight back to a pick where the body is
+# still in hand, and there the placement is competing against declining, which IS charged.
+# So the unit still goes down — just not necessarily before the heal.
+#
+# Nothing here judges whether the play is GOOD; that is what the other criteria are for.
+static func idle_hand(state: BoardState) -> float:
+	if state.mana_spent_step > 0:
+		return 0.0
+	if state.hand_unit_costs.is_empty() or state.empty_slots(1).is_empty():
+		return 0.0
+	var idle := 0.0
+	for c: Variant in state.hand_unit_costs:
+		if int(c) <= state.hand_budget_before:
+			idle += 1.0
+	return idle
+
+
+# ── mana optimization (the "use your mana" criterion, user-designed 2026-07-29) ────────
+
+# How well THIS CHOICE uses the mana pool, 0..1 (user-specified 2026-07-30):
+# THE INVARIANT, broken three times and now pinned by tests (see the enemy-engine suite,
+# "THE INVARIANT"): SPENDING MANA ALWAYS SCORES STRICTLY ABOVE SPENDING NONE. A tie is a
+# failure, because the engine requires strict improvement — equal-to-declining means the
+# unit is never played, which is the withholding bug in every one of its disguises. The
+# ratio below guarantees it structurally: a spending choice's numerator is at least its
+# own cost, so its score can never reach zero, while declining is exactly zero.
+#
+#   · a choice that spends nothing → 0 (declining expresses nothing — this is what every
+#     successive placement decision beats, which is the whole fielding pressure);
+#   · otherwise → what this choice's LINE will consume (its own cost plus the most any
+#     continuation can still spend) ÷ the most ANY line could have consumed from the
+#     position this pick started in.
+#
+# That denominator is the load-bearing part: waste is only waste when a better line
+# EXISTED. Judging leftover mana in absolute terms was the 2026-07-30 withholding bug —
+# a real hand holds cards the CPU cannot yet afford, and with one of those lingering the
+# leftover always looked stranded, so the last affordable play scored no better than
+# declining and the unit stayed in hand (reported live: "plays a single fodder, never a
+# dps"). Measured counterfactually, that leftover was never spendable by anyone, so
+# playing the dps is an optimal line and scores 1.
+#
+# Everything the user asked for falls out of the one ratio, with no special cases:
+#   · spend the whole pool                        → 1
+#   · spend some, remainder still fully usable    → 1 (equal — only waste is punished)
+#   · mana beyond what all options could cost     → 1 (abundance, not waste)
+#   · squander a big spend on a small one         → low (5 mana, options 1 and 5: taking
+#     the 1 consumes 1 of a possible 5 → 0.2)
+#   · greedy combo blindness                      → cured (5 mana, options 2/3/4: the 4
+#     strands 1 → 0.8, while the 3 or the 2 keep a perfect line → 1)
+# Reads the engine-stamped mana story; a state scored outside a planning turn (total 0)
+# is a constant, invisible to any ranking.
+static func mana_optimization(state: BoardState) -> float:
+	if state.enemy_mana_total <= 0 or state.mana_spent_step <= 0:
+		return 0.0
+	var capacity := state.mana_capacity_before
+	if capacity <= 0:
+		return 1.0   # nothing was ever spendable — any spend is an optimal line
+	var achieved := state.mana_spent_step + spend_capacity(state)
+	return clampf(float(achieved) / float(capacity), 0.0, 1.0)
+
+
+# The most mana some subset of the still-playable options can consume from this state —
+# the "best remaining line" figure both sides of the ratio above are built from.
+static func spend_capacity(state: BoardState) -> int:
+	if state.enemy_mana_left <= 0:
+		return 0
+	return largest_fit(option_costs(state), state.enemy_mana_left)
+
+
+# The largest amount of the remaining mana that SOME subset of the remaining playable
+# option costs can consume (the brief's stranded logic: left − this = stranded). Options
+# are counted LOOSELY by design — hand-card costs plus untapped units' ability mana costs,
+# no usefulness judgment, no target legality; escalate only if it misbehaves. Subset-sum
+# over tiny integers: a bitset walk, capacity = mana left.
+# The mana costs of everything the CPU still HAS to play from this state — hand cards
+# plus untapped units' ability costs. LOOSE by design (decision recorded in the brief):
+# any legal play counts, with no judgment of whether it is worth making. Not filtered by
+# affordability — largest_fit skips whatever does not fit, and mana_optimization's
+# counterfactual ratio already handles a card the CPU cannot yet pay for.
+static func option_costs(state: BoardState) -> Array:
+	var costs: Array = []
+	for c: Variant in state.hand_costs:
+		if int(c) > 0:
+			costs.append(int(c))
+	for u: BoardState.UnitState in state.units(1):
+		for ab_id: String in u.ability_ids:
+			var ab := AbilityData.get_ability(ab_id)
+			if ab == null or ab.mana <= 0:
+				continue
+			if ab.tap and u.exhausted:
+				continue
+			costs.append(ab.mana)
+	return costs
+
+
+# The largest total ≤ capacity that some subset of these costs adds up to — subset-sum
+# over tiny integers as a bitset walk.
+static func largest_fit(costs: Array, capacity: int) -> int:
+	if capacity <= 0:
+		return 0
+	var reachable: Array = []
+	reachable.resize(capacity + 1)
+	reachable.fill(false)
+	reachable[0] = true
+	var best := 0
+	for cost: Variant in costs:
+		var ci := int(cost)
+		for m in range(capacity, ci - 1, -1):
+			if bool(reachable[m - ci]) and not bool(reachable[m]):
+				reachable[m] = true
+				if m > best:
+					best = m
+	return best

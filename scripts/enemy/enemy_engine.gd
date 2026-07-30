@@ -47,7 +47,7 @@ func _init(rng: RandomNumberGenerator = null) -> void:
 #
 # ONE acceptance rule for all four action kinds: the candidate must STRICTLY IMPROVE the
 # scored position, or the turn is over. The old "placements are always accepted" special
-# case is retired — the BoardPresence criterion is what says fielding a unit is worth
+# case is retired — the BoardValue criterion is what says fielding a unit is worth
 # something, so a placement now pays for itself through the score like everything else
 # (and CAN be declined: a body the criteria say is walking into pure loss stays in hand,
 # which is decision 16's restraint arriving for free). Termination is inductive per kind:
@@ -59,6 +59,17 @@ func decide_actions(hand: Array, player_grid: Array, enemy_grid: Array, mana: in
 	var state := BoardState.capture(player_grid, enemy_grid, player_mana)
 	var pool: Array = hand.duplicate()
 	var remaining := mana
+	# The mana story the mana-optimization criterion reads: the engine stamps it onto the
+	# working state (capture can't know it) and _note_spend keeps it true per candidate.
+	state.enemy_mana_total = mana
+	state.enemy_mana_left = mana
+	for inst: CardInstance in pool:
+		state.hand_costs.append(int(inst.get_attribute("cost")))
+		# The idle-hand criterion counts BODIES it could field: same legality filter as
+		# CandidateMoves.placements, so a card it charges for is always one the engine
+		# actually has a candidate for.
+		if not inst.is_spell and not inst.data.is_king:
+			state.hand_unit_costs.append(int(inst.get_attribute("cost")))
 	var moved: Dictionary = {}   # CardInstance -> true once repositioned this turn
 	var actions: Array = []
 	var had_captain := state.captain(1) != null
@@ -77,7 +88,6 @@ func decide_actions(hand: Array, player_grid: Array, enemy_grid: Array, mana: in
 	var accepted: Array = []
 	var sim := {"world": live, "accepted": accepted}
 	while true:
-		var current := scoring.score(state)
 		var cands := CandidateMoves.placements(state, pool, remaining)
 		cands.append_array(CandidateMoves.moves(state, moved))
 		cands.append_array(CandidateMoves.spells(state, pool, remaining))
@@ -85,10 +95,15 @@ func decide_actions(hand: Array, player_grid: Array, enemy_grid: Array, mana: in
 		if cands.is_empty():
 			break
 		var best := _pick_best(cands, state, scoring, had_captain, sim)
-		if float(best["score"]) <= current + TIE_EPSILON:
+		# The do-nothing baseline is scored INSIDE the same cohort (_pick_best puts the
+		# current state first), so behavior criteria compare "act" and "decline" in the
+		# same currency instead of inflating every candidate against a behavior-blind
+		# baseline.
+		if float(best["score"]) <= float(best["current"]) + TIE_EPSILON:
 			break   # the best candidate improves nothing — then none do; the turn is done
 		var cand: Dictionary = best["cand"]
 		state = CandidateApply.apply(state, cand, sim)
+		_note_spend(state, cand)
 		accepted.append(cand)
 		remaining -= int(cand["cost"])
 		match String(cand["kind"]):
@@ -114,7 +129,11 @@ func decide_actions(hand: Array, player_grid: Array, enemy_grid: Array, mana: in
 
 
 # Rank all candidates by the score of the state they produce; pick uniformly among the
-# ones tied for best. Returns { "cand": Dictionary, "score": float } — an empty cand at
+# ones tied for best. TWO-PASS since the behavior criteria landed (EVAL_CRITERIA_BRIEF.md):
+# every candidate is applied first, then the whole cohort — the current state (the
+# do-nothing baseline, entry 0) plus every surviving candidate's result — is scored
+# together through score_pick, so behaviors can normalize against this pick's best option.
+# Returns { "cand": Dictionary, "score": float, "current": float } — an empty cand at
 # -INF when every candidate was vetoed, which the caller reads as "nothing worth doing".
 #
 # THE ONE CATEGORICAL VETO: a candidate that leaves the Captain dead is never selectable,
@@ -127,18 +146,99 @@ func decide_actions(hand: Array, player_grid: Array, enemy_grid: Array, mana: in
 # container, never as an action the CPU chooses.
 func _pick_best(cands: Array, state: BoardState, scoring: BoardScoring,
 		had_captain: bool = true, sim: Dictionary = {}) -> Dictionary:
-	var best_score := -INF
-	var best: Array = []
+	var kept: Array = []          # candidates that survive the vetoes, in order
+	var cohort: Array = [state]   # entry 0 is the do-nothing baseline
+	# The baseline is "spend nothing further this pick" — whatever the last accepted
+	# candidate cost, declining now costs zero (the mana criterion scores the CHOICE).
+	state.mana_spent_step = 0
+	var achieved: Array = []   # per kept candidate: the mana its LINE of play consumes
 	for cand: Dictionary in cands:
 		var next := CandidateApply.apply(state, cand, sim)
 		if had_captain and next.captain(1) == null:
 			continue
-		var s := scoring.score(next)
+		# The no-op legality rule (EVAL_CRITERIA_BRIEF.md): a cast whose EFFECT changes
+		# nothing is not a candidate — first case caught: heals at full health. Without
+		# this, the mana-optimization criterion happily burns mana on functionally
+		# irrelevant plays just to avoid stranding it.
+		var kind := String(cand["kind"])
+		if (kind == "cast" or kind == "ability") and _effect_changed_nothing(state, next):
+			continue
+		_note_spend(next, cand)
+		kept.append(cand)
+		cohort.append(next)
+		achieved.append(int(cand["cost"]) + BoardScoring.spend_capacity(next))
+	if kept.is_empty():
+		return {"cand": {}, "score": -INF, "current": 0.0}
+	# The mana yardstick is the best line ANY REAL CANDIDATE offers — not an abstract
+	# subset-sum over the hand. Derived from the cohort on purpose: it makes "spending
+	# beats declining" structural rather than emergent. The best available play scores
+	# exactly 1.0 and declining scores exactly 0.0, so the fielding pressure is always the
+	# criterion's FULL weight. Deriving it from the hand instead (as the first version
+	# did) let unplayable cards — an unsimulatable spell, one with no legal target —
+	# inflate the denominator until no candidate could reach 1.0 and the margin over
+	# declining collapsed. That is the withholding bug's fourth disguise, closed by
+	# construction.
+	var capacity := 0
+	for a: Variant in achieved:
+		capacity = maxi(capacity, int(a))
+	# The idle-hand yardstick is the pool as it stood BEFORE this pick, so that spending the
+	# mana on something else never excuses leaving a fieldable body in hand (see
+	# BoardState.hand_budget_before). Stamped on the baseline too — declining carries the
+	# charge, which is the whole pressure.
+	var budget := state.enemy_mana_left
+	for next: BoardState in cohort:
+		next.mana_capacity_before = capacity
+		next.hand_budget_before = budget
+	var totals := scoring.score_pick(cohort)
+	var best_score := -INF
+	var best: Array = []
+	for i in kept.size():
+		var s := float(totals[i + 1])
 		if s > best_score + TIE_EPSILON:
 			best_score = s
-			best = [cand]
+			best = [kept[i]]
 		elif absf(s - best_score) <= TIE_EPSILON:
-			best.append(cand)
-	if best.is_empty():
-		return {"cand": {}, "score": -INF}
-	return {"cand": best[_rng.randi_range(0, best.size() - 1)], "score": best_score}
+			best.append(kept[i])
+	return {"cand": best[_rng.randi_range(0, best.size() - 1)], "score": best_score,
+			"current": float(totals[0])}
+
+
+# Keeps a candidate state's mana story true: the candidate's cost leaves the pool, and a
+# played hand card takes its cost out of the spendability options. Move candidates cost 0
+# and touch neither.
+static func _note_spend(next: BoardState, cand: Dictionary) -> void:
+	next.enemy_mana_left -= int(cand["cost"])
+	next.mana_spent_step = int(cand["cost"])
+	var kind := String(cand["kind"])
+	if kind == "place" or kind == "cast":
+		next.hand_costs.erase(int((cand["inst"] as CardInstance).get_attribute("cost")))
+	if kind == "place":
+		# The body left the hand — that is the idle-hand charge this placement pays off.
+		next.hand_unit_costs.erase(int((cand["inst"] as CardInstance).get_attribute("cost")))
+
+
+# "The effect would change nothing": the resulting state matches the current one on every
+# OUTCOME — unit identities, positions, stats, corpses — deliberately IGNORING the play's
+# own costs (mana, the tap, the spent card): paying for nothing is exactly what makes it
+# a no-op. Keyed off outcomes rather than health, per the brief: a full-health heal with
+# a shield rider produces a different state and stays legal. KNOWN LIMIT: a status whose
+# effects fold into no captured stat (a pure marker) is invisible here and would be
+# wrongly vetoed — revisit if such a status ever exists. (This is the engine-side form;
+# the PLAYER-facing targeting rule from the brief is separate and still pending.)
+static func _effect_changed_nothing(prev: BoardState, next: BoardState) -> bool:
+	if next.graveyard.size() != prev.graveyard.size():
+		return false
+	for side in 2:
+		for r in BoardData.ROWS:
+			for c in BoardData.COLS:
+				var a: BoardState.UnitState = prev.grid_of(side)[r][c]
+				var b: BoardState.UnitState = next.grid_of(side)[r][c]
+				if (a == null) != (b == null):
+					return false
+				if a == null:
+					continue
+				if a.source != b.source or a.attack != b.attack or a.health != b.health \
+						or a.max_health != b.max_health or a.shield != b.shield \
+						or a.speed != b.speed or a.strikes != b.strikes:
+					return false
+	return true

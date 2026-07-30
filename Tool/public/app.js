@@ -804,6 +804,90 @@ function economySection(cfg, ga) {
   return root;
 }
 
+// ♟ Board value — the enemy engine's "total board value" eval prices every unit by its
+// stats + abilities + effects at these exchange rates (scripts/enemy/board_value_config.gd),
+// own side positive, player side negative. Saves data/board_value.json as overrides on the
+// code defaults (an absent file = pure defaults).
+function boardValueDefaults() {
+  return {
+    stat_rates: { attack: 1.0, health: 1.0, missing_health: 0.5, shield: 2.0, speed: 0.5 },
+    ability_default: 2.0, ability_values: {},
+    triggered_default: 1.5, live_default: 1.5,
+  };
+}
+
+function boardValueSection(cfg) {
+  let root;
+  const numRow = (label, sub, get, set, min, max, step) => {
+    let num;
+    const rng = el('input', { type: 'range', min, max, step, value: get(), style: 'flex:1',
+      oninput: e => { set(parseFloat(e.target.value)); num.value = e.target.value; } });
+    num = el('input', { type: 'number', min, step, value: get(), style: 'width:66px',
+      oninput: e => { const v = parseFloat(e.target.value); if (!isNaN(v)) { set(v); rng.value = v; } } });
+    return el('div', { style: 'margin:7px 0' },
+      el('div', { style: 'display:flex;justify-content:space-between;font-size:13px;margin-bottom:2px' },
+        el('span', { text: label }), sub ? el('span', { class: 'subtle', text: sub }) : null),
+      el('div', { style: 'display:flex;align-items:center;gap:10px' }, rng, num));
+  };
+  const rate = (key, label, sub) =>
+    numRow(label, sub, () => cfg.stat_rates[key], v => { cfg.stat_rates[key] = v; }, 0, 4, 0.05);
+  const scalar = (key, label, sub) =>
+    numRow(label, sub, () => cfg[key], v => { cfg[key] = v; }, 0, 10, 0.1);
+
+  const overridesBox = el('div');
+  const renderOverrides = () => {
+    const rows = Object.keys(cfg.ability_values).sort().map(id =>
+      el('div', { class: 'eco-row' },
+        el('span', { text: id }),
+        el('input', { type: 'number', step: 0.1, value: cfg.ability_values[id], style: 'width:70px',
+          oninput: e => { const v = parseFloat(e.target.value); if (!isNaN(v)) cfg.ability_values[id] = v; } }),
+        el('button', { class: 'ghost', text: '✕', title: 'Remove — falls back to the ability default',
+          onclick: () => { delete cfg.ability_values[id]; renderOverrides(); } })));
+    const idInput = el('input', { type: 'text', placeholder: 'ability id', style: 'width:130px' });
+    const valInput = el('input', { type: 'number', step: 0.1, value: 2, style: 'width:70px' });
+    const addRow = el('div', { class: 'eco-row' }, idInput, valInput,
+      el('button', { class: 'ghost', text: '+ Add', onclick: () => {
+        const id = idInput.value.trim();
+        const v = parseFloat(valInput.value);
+        if (/^[a-z0-9_]+$/.test(id) && !isNaN(v)) { cfg.ability_values[id] = v; renderOverrides(); }
+        else toast('Ability id must be lowercase letters, digits, underscores', 'err');
+      } }));
+    overridesBox.replaceChildren(...rows, addRow);
+  };
+  renderOverrides();
+
+  root = el('div', { class: 'panel tuning-section' },
+    el('h2', {}, '♟ Board value'),
+    el('div', { class: 'hint', text: 'How the enemy engine\'s "total board value" eval prices a unit: its stats at these '
+      + 'exchange rates, plus fixed stat-equivalences for its abilities and effects. Own units count positive, the '
+      + 'player\'s negative — fielding, buffing and hurting the player all grow the total. '
+      + 'Saves to data/board_value.json — restart the game to apply.' }),
+    el('div', { style: 'display:flex;gap:26px;flex-wrap:wrap;margin-top:12px' },
+      el('div', { style: 'flex:1;min-width:250px' },
+        el('h3', { text: 'Stat exchange rates', style: 'margin-top:0' }),
+        rate('attack', 'Attack', 'per point of attack × strikes'),
+        rate('health', 'Current health', 'per point the unit still has'),
+        rate('missing_health', 'Missing health', 'per point of max − current (heal potential)'),
+        rate('shield', 'Shield', 'regenerates every round — defaults to double'),
+        rate('speed', 'Speed', 'defaults to half')),
+      el('div', { style: 'flex:1;min-width:250px' },
+        el('h3', { text: 'Kit equivalences', style: 'margin-top:0' }),
+        scalar('ability_default', 'Ability (default)', 'stat-points per activated ability, unless overridden by id'),
+        scalar('triggered_default', 'Triggered effect', 'per event-driven effect (on-death, on-attack…)'),
+        scalar('live_default', 'Live effect', 'per standing effect (auras, interceptors)'),
+        el('h3', { text: 'Per-ability overrides' }),
+        overridesBox)),
+    el('div', { class: 'modal-actions' },
+      el('button', { class: 'ghost', text: 'Reset to defaults', onclick: () => root.replaceWith(boardValueSection(Object.assign(cfg, boardValueDefaults()))) }),
+      el('button', { class: 'primary', text: 'Save to game', onclick: async () => {
+        try {
+          await api('/api/board-value', { config: cfg });
+          toast('Board value saved — restart the game to apply', 'ok');
+        } catch (err) { toast('Save failed: ' + err.message, 'err'); }
+      } })));
+  return root;
+}
+
 // The tab body: load every global config in parallel, fold each onto its client defaults
 // (missing keys keep their defaults — same round-trip the old modals did), then one sub-tab
 // per section. The configs live in this closure, so unsaved edits survive sub-tab switches.
@@ -811,9 +895,10 @@ async function renderTuningView() {
   const box = $('tuning-body');
   box.replaceChildren(el('div', { class: 'subtle', style: 'padding:20px', text: 'Loading tuning…' }));
   try {
-    const [offer, combat, audio, attrs, econ, dbg] = await Promise.all([
+    const [offer, combat, audio, attrs, econ, dbg, bvr] = await Promise.all([
       api('/api/offer-rarity'), api('/api/combat-tuning'), api('/api/audio-tuning'),
-      api('/api/game-attributes'), api('/api/economy'), api('/api/debug-mode')]);
+      api('/api/game-attributes'), api('/api/economy'), api('/api/debug-mode'),
+      api('/api/board-value')]);
     const oc = offerRarityDefaults();
     const c = offer.config || {};
     Object.assign(oc.piece, c.piece_rarity || {});
@@ -828,12 +913,15 @@ async function renderTuningView() {
       Object.assign(eco.initial, econ.config.initial || {});
       Object.assign(eco.debug, econ.config.debug || {});
     }
+    // The server GET returns the complete sanitized shape, so a wholesale fold is safe.
+    const bv = Object.assign(boardValueDefaults(), bvr.config || {});
     const SECTIONS = [
       { key: 'offer', label: '⚖ Offer rarity', build: () => offerRaritySection(oc, offer.pool || []) },
       { key: 'economy', label: '💰 Economy', build: () => economySection(eco, ga) },
       { key: 'dodge', label: '⚡ Dodge', build: () => dodgeSection(dodge) },
       { key: 'crit', label: '💥 Crit', build: () => critSection(crit) },
       { key: 'audio', label: '🔊 Audio', build: () => audioSection(aud) },
+      { key: 'boardvalue', label: '♟ Board value', build: () => boardValueSection(bv) },
       { key: 'attrs', label: '👑 Game attributes', build: () => gameAttributesSection(ga) },
     ];
     const bar = el('div', { id: 'tuning-tabs' });

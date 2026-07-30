@@ -141,6 +141,13 @@ static func _run_cast(w: CombatWorld, remap: Dictionary, cd: Dictionary) -> void
 # identity tokens (candidates and executable actions must keep naming live objects); a
 # unit born inside the simulation (a spawn) keeps its copy as token — it has no live
 # original and is never executed.
+#
+# ⚠ EVERY engine-stamped BoardState field must be forwarded here BY HAND. This function
+# builds a fresh state instead of copying, so a new field silently reads as zero on the
+# cast/ability path only — the criterion looks correct on placements and mysteriously goes
+# quiet on casts (exactly how the idle-hand criterion first landed: a heal escaped the
+# withholding charge). If you add a field to BoardState, it goes in three places:
+# BoardState.copy(), here, and wherever the engine stamps it.
 static func _capture_back(w: CombatWorld, prev: BoardState, remap: Dictionary,
 		swept: Array) -> BoardState:
 	var reverse: Dictionary = {}
@@ -150,6 +157,13 @@ static func _capture_back(w: CombatWorld, prev: BoardState, remap: Dictionary,
 	s.player_units = _capture_grid_back(w.player_grid, reverse)
 	s.enemy_units = _capture_grid_back(w.enemy_grid, reverse)
 	s.player_mana = prev.player_mana
+	s.enemy_mana_total = prev.enemy_mana_total
+	s.enemy_mana_left = prev.enemy_mana_left
+	s.hand_costs = prev.hand_costs.duplicate()
+	s.hand_unit_costs = prev.hand_unit_costs.duplicate()
+	s.mana_spent_step = prev.mana_spent_step
+	s.mana_capacity_before = prev.mana_capacity_before
+	s.hand_budget_before = prev.hand_budget_before
 	s.graveyard = prev.graveyard.duplicate()
 	for corpse: CardInstance in swept:
 		var dead := BoardState.UnitState.from_instance(corpse)

@@ -21,6 +21,44 @@ var enemy_units: Array = []
 # engine never spends or mutates it.
 var player_mana: int = 0
 
+# The CPU's own mana story this turn, for the mana-optimization criterion: the turn's
+# whole budget, what is left after the plays this state already includes, and the mana
+# costs of the cards still in the CPU's hand/pool (for the spendability subset-sum).
+# Stamped by the ENGINE (capture can't know them); states scored outside a planning turn
+# leave total at 0 and the criterion reads as a constant.
+var enemy_mana_total: int = 0
+var enemy_mana_left: int = 0
+var hand_costs: Array = []
+
+# The mana costs of the PLACEABLE units still in hand — the idle-hand criterion's whole
+# input (user mandate 2026-07-30: a unit the CPU can field must never sit in hand). A
+# subset of hand_costs: spells and kings are excluded, because neither can be placed and
+# holding one is not withholding a body. Stamped and maintained by the ENGINE alongside
+# hand_costs.
+var hand_unit_costs: Array = []
+
+# The mana the CPU had when THIS PICK began — the yardstick the idle-hand charge judges
+# affordability against, and the reason it cannot be dodged. Measured against the mana a
+# candidate has LEFT, any play that drains the pool would make the withheld body read as
+# unaffordable and the charge would evaporate: casting a spell would "excuse" keeping a
+# unit in hand. Judged against the pre-choice budget, spending the mana elsewhere keeps
+# the charge, and only actually FIELDING the body pays it off. Stamped by the engine onto
+# every entry of a pick's cohort, exactly like mana_capacity_before; a state scored outside
+# a planning turn leaves it 0 and the criterion goes silent.
+var hand_budget_before: int = 0
+
+# Mana spent by the ACTION that produced this state, within the pick being scored — the
+# mana criterion is a property of the CHOICE, not of the turn so far (user 2026-07-30):
+# a choice that spends nothing expresses nothing, however healthy the budget looks. The
+# engine zeroes this on the do-nothing baseline each pick and stamps each candidate's
+# cost onto its own result.
+var mana_spent_step: int = 0
+
+# The most mana ANY line of play could still have consumed from the position this pick
+# started in — the yardstick the mana criterion measures a choice against (waste is only
+# waste if a better line existed). Stamped by the engine onto every candidate of a pick.
+var mana_capacity_before: int = 0
+
 # Units that DIED during this simulation (the apply seam records them off the swept grid).
 # They exist because a board is not a complete account of what a candidate did: every
 # negative criterion sums over living units, so a unit that simply vanished would take its
@@ -52,6 +90,13 @@ class UnitState:
 	# (attack_exhausted) — what the ability candidate generator needs to gate legality.
 	var ability_ids: Array = []
 	var exhausted: bool = false
+	# How many of the card's own effects are event-driven vs standing — captured as COUNTS
+	# because the board-value criterion prices them by category (BoardValueConfig), never
+	# interprets them. ON_PLAY effects are excluded: a fielded unit's battlecry already
+	# fired. Status-borne effects are deliberately not counted (temporary by nature; their
+	# stat side already folds into the captured stats at read time).
+	var triggered_effects: int = 0
+	var live_effects: int = 0
 
 	static func from_instance(inst: CardInstance) -> UnitState:
 		var u := UnitState.new()
@@ -72,6 +117,13 @@ class UnitState:
 		u.strikes = inst.get_attribute("strikes")
 		u.ability_ids = inst.data.ability_ids().duplicate()
 		u.exhausted = inst.attack_exhausted
+		for e: Effect in inst.data.effects:
+			if e.trigger == Effect.Trigger.ON_PLAY:
+				continue
+			if e.kind == Effect.Kind.MODIFIER or e.kind == Effect.Kind.INTERCEPTOR:
+				u.live_effects += 1
+			else:
+				u.triggered_effects += 1
 		return u
 
 	func copy() -> UnitState:
@@ -93,6 +145,8 @@ class UnitState:
 		u.strikes = strikes
 		u.ability_ids = ability_ids.duplicate()
 		u.exhausted = exhausted
+		u.triggered_effects = triggered_effects
+		u.live_effects = live_effects
 		return u
 
 
@@ -141,6 +195,13 @@ func copy() -> BoardState:
 	s.player_units = _copy_grid(player_units)
 	s.enemy_units = _copy_grid(enemy_units)
 	s.player_mana = player_mana
+	s.enemy_mana_total = enemy_mana_total
+	s.enemy_mana_left = enemy_mana_left
+	s.hand_costs = hand_costs.duplicate()
+	s.hand_unit_costs = hand_unit_costs.duplicate()
+	s.hand_budget_before = hand_budget_before
+	s.mana_spent_step = mana_spent_step
+	s.mana_capacity_before = mana_capacity_before
 	# A fresh list of the same corpses: nothing ever mutates a dead unit, so the entries
 	# are shared while the LIST stays per-copy (appending to one never reaches another).
 	s.graveyard = graveyard.duplicate()

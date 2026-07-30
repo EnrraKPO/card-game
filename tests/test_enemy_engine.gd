@@ -36,13 +36,25 @@ func run() -> void:
 	_apply_cast_group_heal()
 	_apply_cast_sweeps_dead()
 	_apply_ability_fire_bless()
-	_presence_measurement()
+	_board_value_measurement()
 	_engine_heals_wounded_ally()
 	_engine_casts_group_heal()
 	_engine_place_vs_heal_arbitration()
 	_death_of_own_unit_scores_worse()
 	_engine_never_kills_its_own_captain()
 	_planning_leaves_the_world_untouched()
+	_first_strike_and_delivery()
+	_outgoing_mass_shape()
+	_behavior_cohort_normalization()
+	_engine_casts_damage_buff()
+	_mana_optimization_shape()
+	_mana_pressure_is_structural()
+	_readiness_shape()
+	_noop_veto_shape()
+	_engine_spends_its_mana()
+	_idle_hand_shape()
+	_engine_never_withholds_a_playable_unit()
+	_idle_hand_changes_a_decision()
 
 
 func _enemy(card_id: String, r: int, c: int) -> CardInstance:
@@ -165,17 +177,16 @@ func _scoring_prefers_screens() -> void:
 	check(scoring.score(screened) > scoring.score(lone),
 			"stock scoring rates a screened Captain above a naked one")
 	# The deliverable-1 configuration, pinned explicitly via an override: with untagged
-	# units weighted 0, the RISK criteria go silent for a captain-less board — what
-	# remains is exactly the unit's board-presence term (presence deliberately does NOT
-	# ride the survival-weight table: how much we fear losing a unit and how much we
-	# want it fielded are different dials).
+	# units weighted 0, the RISK criteria go silent for a captain-less board; board value
+	# is a BEHAVIOR (silent on a lone state) and mana reads a turn that spent nothing —
+	# so all that remains is READINESS, which is 1.0 because nothing is tapped. A
+	# constant like this cancels out of every ranking; it only shows up here, where a
+	# single state is scored on its own.
 	var captain_only_scoring := BoardScoring.stock({"default": 0.0})
 	var pawn_unit := _enemy("pawn", back, 0)
 	var pawn_only := _state_with([pawn_unit])
-	var pawn_presence: float = BoardScoring.PRESENCE_CRITERION_WEIGHT \
-			* BoardScoring.presence_value(BoardState.UnitState.from_instance(pawn_unit))
-	check_eq(captain_only_scoring.score(pawn_only), pawn_presence,
-			"with a 0 default weight only the presence term remains for untagged units")
+	check_eq(captain_only_scoring.score(pawn_only), BoardScoring.READINESS_CRITERION_WEIGHT,
+			"with a 0 default weight only the full-readiness term remains")
 
 
 # ── Enumeration ──────────────────────────────────────────────────────────────────────
@@ -694,18 +705,74 @@ func _apply_ability_fire_bless() -> void:
 	check_eq(ally.get_attribute("attack"), atk0, "…and its live attack never moved")
 
 
-# ── Presence: the fielding pole of the place-vs-preserve arbitration ─────────────────
+# ── Board value: the net worth of the battlefield (replaced presence) ────────────────
 
-func _presence_measurement() -> void:
+func _board_value_measurement() -> void:
+	# Pin the exchange rates so the arithmetic below is deterministic whatever the
+	# authored data/board_value.json says.
+	BoardValueConfig.set_config({
+		"stat_rates": {"attack": 1.0, "health": 1.0, "missing_health": 0.1,
+				"shield": 2.0, "speed": 0.5},
+		"ability_default": 2.0, "ability_values": {"heal": 3.0},
+		"triggered_default": 1.5, "live_default": 1.5,
+	})
+
 	var fodder := BoardState.UnitState.from_instance(_enemy("fodder_dummy", 0, 0))
-	var dps := BoardState.UnitState.from_instance(_enemy("dps_dummy", 0, 1))
-	check_eq(BoardScoring.presence_value(fodder), 1.0, "presence v1 is the unit's mana cost")
-	check(BoardScoring.presence_value(dps) > BoardScoring.presence_value(fodder),
-			"a costlier unit is worth more on the board")
-	# The linearity property the greedy loop leans on: a budget converts to the same total
-	# presence however it is split, so greedy ordering never changes a spent turn's worth.
-	check_eq(BoardScoring.presence_value(dps),
-			BoardScoring.presence_value(fodder) * 2.0, "cost 2 is exactly two cost 1s")
+	var expected := float(fodder.attack * fodder.strikes) + float(fodder.health) \
+			+ float(fodder.max_health - fodder.health) * 0.1 \
+			+ float(fodder.shield) * 2.0 + float(fodder.speed) * 0.5 \
+			+ float(fodder.ability_ids.size()) * 2.0 \
+			+ float(fodder.triggered_effects + fodder.live_effects) * 1.5
+	check(absf(BoardScoring.unit_value(fodder) - expected) < 0.0001,
+			"a unit's value is its stats at the authored exchange rates + its kit")
+
+	# The authored biases, isolated one axis at a time.
+	var base := BoardScoring.unit_value(fodder)
+	var shielded := fodder.copy()
+	shielded.shield += 1
+	check(absf(BoardScoring.unit_value(shielded) - base - 2.0) < 0.0001,
+			"a shield point is worth double (it regenerates)")
+	var quick := fodder.copy()
+	quick.speed += 2
+	check(absf(BoardScoring.unit_value(quick) - base - 1.0) < 0.0001,
+			"a speed point is worth half")
+	# Health a unit still holds counts full; health it has SPENT still counts, but only
+	# 0.1 — so damage costs 0.9 per point and healing earns that back.
+	var wounded := fodder.copy()
+	wounded.health -= 1
+	check(absf(base - BoardScoring.unit_value(wounded) - 0.9) < 0.0001,
+			"spending a point of health costs 0.9 — the point, less what the scar still counts")
+	# The user's own case: a bigger frame is worth something even carrying a wound, so a
+	# damaged 4/5 outvalues an untouched 4/4. Both terms positive is what guarantees it.
+	var big_frame := fodder.copy()
+	big_frame.max_health += 1
+	check(BoardScoring.unit_value(big_frame) > BoardScoring.unit_value(fodder),
+			"a 4/5 with one wound outvalues a whole 4/4 — max health is part of the worth")
+	var supp := BoardState.UnitState.from_instance(_enemy("support_dummy", 0, 1))
+	check_eq(supp.ability_ids.size(), 2, "the support carries two abilities (fixture sanity)")
+	var kitless := supp.copy()
+	kitless.ability_ids = []
+	check(absf(BoardScoring.unit_value(supp) - BoardScoring.unit_value(kitless) - 5.0) < 0.0001,
+			"abilities price by id when authored (heal 3.0) and by default otherwise (2.0)")
+
+	# The net: own units add, player units subtract — hurting the player IS gaining.
+	var even := _state_with([_enemy("fodder_dummy", 0, 0)], [_player("fodder_dummy", 0, 3)])
+	check(absf(BoardScoring.board_value(even)) < 0.0001,
+			"mirrored boards cancel to zero")
+	var behind := _state_with([_enemy("fodder_dummy", 0, 0)],
+			[_player("fodder_dummy", 0, 3), _player("knight", 1, 3)])
+	check(BoardScoring.board_value(behind) < 0.0, "a richer player board reads negative")
+
+	# The min-max anchoring: worst option 0, best 1, signed measures welcome.
+	var criterion := BoardScoring.BoardValue.new()
+	var norm := criterion.normalized([-4.0, 6.0, 1.0])
+	check_eq(float(norm[0]), 0.0, "the pick's worst option anchors at 0")
+	check_eq(float(norm[1]), 1.0, "…its best at 1")
+	check_eq(float(norm[2]), 0.5, "…and the rest sit at their fraction of the span")
+	var flat := criterion.normalized([3.0, 3.0])
+	check_eq(float(flat[0]), 0.0, "a flat cohort goes silent — nothing to prefer")
+
+	BoardValueConfig.set_config({})   # release the pin — next read reloads from disk
 
 
 # ── The engine end to end: the support tends its wounded ─────────────────────────────
@@ -713,8 +780,13 @@ func _presence_measurement() -> void:
 func _engine_heals_wounded_ally() -> void:
 	var back := BoardData.ROWS - 1
 	var deep := BoardData.COLS - 1
-	# A precious wounded dps under real threat, a healthy board otherwise, and one mana:
-	# the only improving play is the support's heal, aimed at the dying unit.
+	# A precious wounded dps under real threat and one mana; the support holds heal AND
+	# fire_bless. The original user-approved character, restored by the mana criterion:
+	# paid plays outrank free moves within a pick (spending scores, repositioning
+	# doesn't), so the heal reclaims the tap and lands on the dying unit. (Between board
+	# value and mana optimization this board briefly planned retreat-then-bless — the
+	# free move answered the danger and the tap turned aggressive. Margins here are
+	# knife-edge; if this pin breaks again, look at the mana/value weights first.)
 	var support := _enemy("support_dummy", back, 1)
 	var wounded := _enemy("dps_dummy", 0, 2)
 	wounded.current_health = 1
@@ -727,16 +799,18 @@ func _engine_heals_wounded_ally() -> void:
 	engine.weight_overrides = {"dps": 0.6}
 	var actions := engine.decide_actions([], grids[0], grids[1], 1)
 
-	var heals: Array = actions.filter(func(a: Dictionary) -> bool:
+	var gens: Array = actions.filter(func(a: Dictionary) -> bool:
 		return int(a["type"]) == EnemyEngine.Action.GENERATE)
-	check_eq(heals.size(), 1, "the support heals exactly once (the tap is spent)")
-	if not heals.is_empty():
-		check_eq((heals[0]["ability"] as AbilityData).id, "heal", "…casting heal")
-		check(heals[0]["unit"] == support, "…from the support")
-		check(heals[0]["target"] == wounded, "…at the dying dps, not anyone comfortable")
+	check_eq(gens.size(), 1, "the tap is spent exactly once")
+	if not gens.is_empty():
+		check_eq((gens[0]["ability"] as AbilityData).id, "heal", "…casting heal")
+		check(gens[0]["unit"] == support, "…from the support")
+		check(gens[0]["target"] == wounded, "…at the dying dps, not anyone comfortable")
 
 	# The futility gate: a fully healthy board offers the same legal heal, but no target
-	# improves anything — the engine declines rather than waste the play.
+	# improves anything — the engine declines rather than waste the play. (The support's
+	# OTHER ability, fire_bless, is legitimately cast now that aggression scores — see
+	# _engine_casts_damage_buff — so the gate is pinned on the heal specifically.)
 	var healthy_enemies: Array = [_enemy("captain_dummy", back, deep),
 			_enemy("support_dummy", back, 1), _enemy("dps_dummy", 0, 2)]
 	var healthy_grids := _grids(healthy_enemies, players)
@@ -744,7 +818,8 @@ func _engine_heals_wounded_ally() -> void:
 	idle.weight_overrides = {"dps": 0.6}
 	var idle_actions: Array = idle.decide_actions([], healthy_grids[0], healthy_grids[1], 1) \
 			.filter(func(a: Dictionary) -> bool:
-				return int(a["type"]) == EnemyEngine.Action.GENERATE)
+				return int(a["type"]) == EnemyEngine.Action.GENERATE \
+						and (a["ability"] as AbilityData).id == "heal")
 	check_eq(idle_actions.size(), 0, "nothing wounded → the heal is declined, not wasted")
 
 
@@ -783,6 +858,13 @@ func _engine_casts_group_heal() -> void:
 # retreat, and no placement can stand in front of the front column — healing is the only
 # way to preserve it, fielding the only way to grow. (Free MOVE actions may interleave;
 # the assertion is about where the one mana goes.)
+#
+# BRIEFLY BROKEN AND RESTORED 2026-07-30: the idle-hand criterion's first cut charged the
+# heal for leaving a body in hand, which reordered this board (the fodder took the mana and
+# the tower died). The user's correction — a choice that SPENDS MANA is never charged, since
+# what is forbidden is idleness, not preferring one paid play to another — puts this
+# arbitration back exactly as it was. Keep both directions passing whenever the idle-hand
+# rule is touched: they are the proof it did not swallow the preservation instinct.
 func _engine_place_vs_heal_arbitration() -> void:
 	var back := BoardData.ROWS - 1
 	var deep := BoardData.COLS - 1
@@ -792,7 +874,9 @@ func _engine_place_vs_heal_arbitration() -> void:
 	# where +2 health genuinely changes whether the tower lives.
 	var players: Array = [_player("knight", 0, deep)]
 
-	# Direction 1 — the tower is dying: preservation wins the mana.
+	# Direction 1 — the tower is dying: preservation wins the mana, even with a body in hand
+	# (the heal spends the mana, so the idle-hand charge is waived and never enters this
+	# argument).
 	var dying_tower := _enemy("rook", 1, 0)
 	dying_tower.current_health = 1
 	dying_tower.current_shield = 0
@@ -914,6 +998,667 @@ func _engine_never_kills_its_own_captain() -> void:
 			_sim_for(enemies, players))
 	check(scoring.score(suicide) < scoring.score(state),
 			"killing its own Captain scores worse than doing nothing at all")
+
+
+# ── Damage output: the aggression measurement (EVAL_CRITERIA_BRIEF.md eval 2) ─────────
+
+func _unit_by_id(state: BoardState, side: int, card_id: String) -> BoardState.UnitState:
+	for u: BoardState.UnitState in state.units(side):
+		if u.card_id == card_id:
+			return u
+	return null
+
+
+func _first_strike_and_delivery() -> void:
+	var deep := BoardData.COLS - 1
+	# No player attackers: nothing can pre-empt a strike — delivery is certain.
+	var quiet := _state_with([_enemy("dps_dummy", 0, 0)])
+	var lone: BoardState.UnitState = quiet.units(1)[0]
+	check_eq(BoardScoring.first_strike_share(quiet, lone), 1.0,
+			"an empty player board pre-empts nothing")
+	check_eq(BoardScoring.delivery(quiet, lone), 1.0, "…so delivery is certain")
+
+	# Speed decides how much of the round is insured: slower player threat cannot land
+	# before the unit's first strike; faster threat leaves delivery hanging on survival.
+	var players: Array = [_player("queen", 0, deep), _player("queen", 1, deep)]
+	var pressed := _state_with([_enemy("dps_dummy", 0, 0)], players)
+	var fragile: BoardState.UnitState = pressed.units(1)[0]
+	for foe: BoardState.UnitState in pressed.units(0):
+		foe.speed = fragile.speed - 1
+	check_eq(BoardScoring.first_strike_share(pressed, fragile), 1.0,
+			"all player threat slower → the whole first strike is insured")
+	check_eq(BoardScoring.delivery(pressed, fragile), 1.0,
+			"…so even a doomed body still delivers its round")
+	for foe: BoardState.UnitState in pressed.units(0):
+		foe.speed = fragile.speed + 1
+	check_eq(BoardScoring.first_strike_share(pressed, fragile), 0.0,
+			"all player threat faster → nothing is insured")
+	check_eq(BoardScoring.delivery(pressed, fragile),
+			1.0 - BoardScoring.urgency(pressed, fragile),
+			"…and delivery falls back to pure survival")
+
+
+func _outgoing_mass_shape() -> void:
+	var back := BoardData.ROWS - 1
+	var deep := BoardData.COLS - 1
+	# Under no pressure the mass is the pure stat projection — threat_mass, mirrored.
+	var calm := _state_with([_enemy("dps_dummy", 0, 0), _enemy("knight", 1, 0)])
+	var expected := 0.0
+	for u: BoardState.UnitState in calm.units(1):
+		expected += float(u.attack * u.strikes)
+	check_eq(BoardScoring.outgoing_mass(calm), expected,
+			"under no pressure the mass is exactly Σ attack × strikes")
+
+	# A buff moves the measure — the initiative's whole point.
+	var buffed := calm.copy()
+	buffed.units(1)[0].attack += 2
+	check(BoardScoring.outgoing_mass(buffed) > BoardScoring.outgoing_mass(calm),
+			"+2 attack raises the outgoing mass")
+
+	# A spent tap is a spent swing: the tapped unit's contribution collapses to the hard
+	# cap, so tapping reads as a damage detractor and "is this worth my tap" is priced
+	# into every ability candidate.
+	var fresh: BoardState.UnitState = calm.units(1)[0]
+	var tapped := calm.copy()
+	tapped.units(1)[0].exhausted = true
+	var tap_loss := BoardScoring.outgoing_mass(calm) - BoardScoring.outgoing_mass(tapped)
+	var expected_loss := float(fresh.attack * fresh.strikes) \
+			* (1.0 - BoardScoring.TAP_DELIVERY_FACTOR)
+	check(absf(tap_loss - expected_loss) < 0.0001,
+			"a tapped unit keeps only the hard-capped sliver of its output")
+	var tapped_buffed := tapped.copy()
+	tapped_buffed.units(1)[0].attack += 2
+	check(BoardScoring.outgoing_mass(buffed) - BoardScoring.outgoing_mass(calm) >
+			BoardScoring.outgoing_mass(tapped_buffed) - BoardScoring.outgoing_mass(tapped),
+			"…so the same buff is worth more on a fresh body than on a tapped one")
+
+	# The user's founding example: the same stat is worth more on a body that will live
+	# to use it. A screened striker out-delivers the identical striker standing naked.
+	var players: Array = [_player("queen", 0, deep)]
+	var screened := _state_with(
+			[_enemy("dps_dummy", back, deep), _enemy("tank_dummy", back, 0)], players)
+	var naked := _state_with([_enemy("dps_dummy", back, deep)], players)
+	var s_dps := _unit_by_id(screened, 1, "dps_dummy")
+	var n_dps := _unit_by_id(naked, 1, "dps_dummy")
+	for state: BoardState in [screened, naked]:
+		for foe: BoardState.UnitState in state.units(0):
+			foe.speed = 99   # player strikes first everywhere — delivery is pure survival
+	check(BoardScoring.delivery(screened, s_dps) > BoardScoring.delivery(naked, n_dps),
+			"a screened striker converts more of its attack stat than a naked one")
+
+
+func _behavior_cohort_normalization() -> void:
+	# The score_pick contract: goals score per-state as always; a behavior normalizes by
+	# the cohort max — the pick's fullest expression scores exactly 1, the rest their
+	# fraction, and a lone state reads nothing at all.
+	var a := _state_with([_enemy("dps_dummy", 0, 0)])
+	var b := _state_with([_enemy("dps_dummy", 0, 0), _enemy("knight", 1, 0)])
+	var scoring := BoardScoring.new()
+	var behavior := BoardScoring.DamageOutput.new()
+	behavior.weight = 1.0
+	scoring.criteria.append(behavior)
+	var totals := scoring.score_pick([a, b])
+	check_eq(float(totals[1]), 1.0, "the cohort's best expression scores exactly 1")
+	check_eq(float(totals[0]),
+			BoardScoring.outgoing_mass(a) / BoardScoring.outgoing_mass(b),
+			"…and the rest their fraction of it")
+	check_eq(scoring.score(a), 0.0,
+			"a behavior is silent on a lone state — expression is relative")
+	var zeros := scoring.score_pick([_state_with([]), _state_with([])])
+	check_eq(float(zeros[0]), 0.0,
+			"a cohort with no expression anywhere goes silent instead of dividing by zero")
+
+
+# ── The initiative's point: the engine reaches for the damage buff ───────────────────
+
+func _engine_casts_damage_buff() -> void:
+	var back := BoardData.ROWS - 1
+	var deep := BoardData.COLS - 1
+	# A healthy board and one mana: before the aggression criterion the engine declined
+	# everything here — buffing own attack changed no defensive reading, which is the
+	# exact defect EVAL_CRITERIA_BRIEF.md opens with. Now the support's fire_bless
+	# (+2 attack) is this pick's fullest expression of aggression.
+	var support := _enemy("support_dummy", back, 1)
+	var striker := _enemy("dps_dummy", 0, 2)
+	var enemies: Array = [_enemy("captain_dummy", back, deep), support, striker]
+	var players: Array = [_player("knight", 0, deep)]
+	var grids := _grids(enemies, players)
+
+	var engine := _seeded_engine()
+	var actions := engine.decide_actions([], grids[0], grids[1], 1)
+	var blessings: Array = actions.filter(func(a: Dictionary) -> bool:
+		return int(a["type"]) == EnemyEngine.Action.GENERATE \
+				and (a["ability"] as AbilityData).id == "fire_bless")
+	check_eq(blessings.size(), 1, "the aggression criterion gets the damage buff cast")
+	if not blessings.is_empty():
+		var target: CardInstance = blessings[0]["target"]
+		check(target != null and target.owner == 1,
+				"…aimed at an own unit, never gifted to the player")
+		check(target != support,
+				"…and never at the caster itself — its own tap just spent the swing "
+				+ "the buff would ride (a tapped unit is a dead damage target this turn)")
+
+
+# ── Mana optimization: spent > spendable > stranded (the fielding pressure) ──────────
+
+func _mana_optimization_shape() -> void:
+	var back := BoardData.ROWS - 1
+	var deep := BoardData.COLS - 1
+	var state := _state_with([_enemy("captain_dummy", back, deep)])
+	check_eq(BoardScoring.mana_optimization(state), 0.0,
+			"no budget stamped → a constant, invisible to ranking")
+
+	state.enemy_mana_total = 5
+	state.enemy_mana_left = 5
+	state.hand_costs = [2, 3, 4]
+	check_eq(BoardScoring.mana_optimization(state), 0.0,
+			"a choice that spends nothing scores 0, however healthy the budget — "
+			+ "declining is what every placement must beat")
+
+	# Every case below shares one formula: what this choice's line consumes ÷ the most
+	# any line could have consumed from the pre-choice position (mana_capacity_before).
+	#
+	# The user's equivalence (2026-07-30): spending everything and leaving a fully usable
+	# reserve are EQUALLY good. Only waste is punished.
+	var spent_all := state.copy()
+	spent_all.mana_spent_step = 5
+	spent_all.enemy_mana_left = 0
+	spent_all.hand_costs = [4]
+	spent_all.mana_capacity_before = 5
+	check_eq(BoardScoring.mana_optimization(spent_all), 1.0, "spending the whole pool scores 1")
+	var kept_usable := state.copy()
+	kept_usable.mana_spent_step = 2
+	kept_usable.enemy_mana_left = 3
+	kept_usable.hand_costs = [1, 2]
+	kept_usable.mana_capacity_before = 5
+	check_eq(BoardScoring.mana_optimization(kept_usable), 1.0,
+			"…and so does a spend leaving a remainder the hand can still fully consume")
+
+	# Abundance is not waste: mana no remaining option could ever absorb was never
+	# spendable by ANY line, so the counterfactual yardstick ignores it. This is what
+	# lets the LAST card in hand score 1 instead of tying with declining.
+	var abundant := state.copy()
+	abundant.mana_spent_step = 2
+	abundant.enemy_mana_left = 7
+	abundant.hand_costs = [2]
+	abundant.mana_capacity_before = 4   # the 2 just played + the 2 still held
+	check_eq(BoardScoring.mana_optimization(abundant), 1.0,
+			"leftover mana no remaining option could ever use is abundance, not waste")
+	var emptied := state.copy()
+	emptied.mana_spent_step = 2
+	emptied.enemy_mana_left = 5
+	emptied.hand_costs = []
+	emptied.mana_capacity_before = 2   # that last card was all there was to spend on
+	check_eq(BoardScoring.mana_optimization(emptied), 1.0,
+			"…so playing the last card scores full marks, not zero")
+
+	# Squandering: 5 mana with a 1-cost and a 5-cost in hand — taking the 1 consumes one
+	# fifth of what the pool could have absorbed (the user's "spend 1 and leave the rest
+	# unusable" case, now measured against what was actually achievable).
+	var squandered := state.copy()
+	squandered.mana_spent_step = 1
+	squandered.enemy_mana_left = 4
+	squandered.hand_costs = [5]
+	squandered.mana_capacity_before = 5
+	check(absf(BoardScoring.mana_optimization(squandered) - 0.2) < 0.0001,
+			"spending 1 where 5 was available scores near the floor")
+	check(BoardScoring.mana_optimization(squandered)
+			< BoardScoring.mana_optimization(abundant),
+			"…and real waste is strictly worse than untouchable leftover")
+
+	# The combo-blindness cure (the brief's own example): with 5 mana and options 2/3/4,
+	# playing the 4 strands 1; playing the 3 keeps the 2 consumable.
+	var played4 := state.copy()
+	played4.mana_spent_step = 4
+	played4.enemy_mana_left = 1
+	played4.hand_costs = [2, 3]
+	played4.mana_capacity_before = 5
+	var played3 := state.copy()
+	played3.mana_spent_step = 3
+	played3.enemy_mana_left = 2
+	played3.hand_costs = [2, 4]
+	played3.mana_capacity_before = 5
+	check_eq(BoardScoring.spend_capacity(played4), 0, "1 left vs cheapest option 2 → stranded")
+	check_eq(BoardScoring.spend_capacity(played3), 2, "2 left → the 2-cost still fits")
+	check_eq(BoardScoring.mana_optimization(played3), 1.0, "playing the 3 keeps a perfect line")
+	check(BoardScoring.mana_optimization(played4) < 1.0,
+			"…while playing the 4 strands a point and scores below it")
+
+	# ── THE INVARIANT ────────────────────────────────────────────────────────────────
+	# SPENDING MANA ALWAYS BEATS SPENDING NONE. Never let this break again: it has been
+	# broken three separate times by three different formulas (a cumulative measure that
+	# maxed out on doing nothing; a literal 0 floor that tied with declining; an absolute
+	# stranded-mana reading that scored 0 whenever an unaffordable card sat in hand). Each
+	# time the visible symptom was the CPU withholding units it could clearly play, and
+	# each time the user had to report it again. A tie is a failure here — the engine
+	# requires STRICT improvement, so equal-to-declining means never played.
+	var decline_at := func(left: int, costs: Array, capacity: int) -> float:
+		var s := state.copy()
+		s.mana_spent_step = 0
+		s.enemy_mana_left = left
+		s.hand_costs = costs
+		s.mana_capacity_before = capacity
+		return BoardScoring.mana_optimization(s)
+	var spend_at := func(cost: int, left: int, costs: Array, capacity: int) -> float:
+		var s := state.copy()
+		s.mana_spent_step = cost
+		s.enemy_mana_left = left
+		s.hand_costs = costs
+		s.mana_capacity_before = capacity
+		return BoardScoring.mana_optimization(s)
+	# left, remaining hand, capacity, and the cost just paid — including every shape that
+	# has broken before: a lingering unaffordable card, an emptied hand, a stranding pick,
+	# and a 1-of-many-mana spend.
+	var shapes: Array = [
+		[1, 9, [], 1], [1, 9, [20], 1], [1, 4, [5], 5], [1, 0, [], 1],
+		[2, 5, [], 2], [2, 3, [1, 2], 5], [4, 1, [2, 3], 5], [5, 0, [4], 5],
+		[1, 7, [2, 8], 3], [3, 2, [2, 4], 5],
+	]
+	for shape: Array in shapes:
+		var cost := int(shape[0])
+		var left := int(shape[1])
+		var costs: Array = shape[2]
+		var capacity := int(shape[3])
+		var spent_score: float = spend_at.call(cost, left, costs, capacity)
+		var idle_score: float = decline_at.call(left, costs, capacity)
+		check(spent_score > idle_score,
+				"spending %d (left %d, hand %s, capacity %d) must beat declining — got %.3f vs %.3f"
+				% [cost, left, str(costs), capacity, spent_score, idle_score])
+
+	# Ability mana counts as a spendable option only while the holder's tap is available.
+	var supported := _state_with([_enemy("support_dummy", 0, 0)])
+	supported.enemy_mana_total = 1
+	supported.enemy_mana_left = 1
+	supported.mana_spent_step = 1
+	check_eq(BoardScoring.spend_capacity(supported), 1,
+			"an untapped unit's ability mana is spendable")
+	supported.units(1)[0].exhausted = true
+	check_eq(BoardScoring.spend_capacity(supported), 0,
+			"…and stops counting once the tap is spent")
+
+
+# ── The structural guarantee behind the fielding pressure ────────────────────────────
+#
+# "Spending mana beats spending none" must not be something that merely happens to fall
+# out of the arithmetic — it broke three times that way. The engine derives the mana
+# yardstick from the candidate cohort, which makes the guarantee structural: in ANY pick
+# that offers an affordable play, the best candidate scores EXACTLY 1.0 on mana while
+# declining scores exactly 0.0. So the pressure to play is always the criterion's full
+# weight, never an epsilon that a risk term can swallow.
+#
+# The shapes below include the ones that produced the live bug: a hand holding a card the
+# CPU cannot afford, and a hand holding a spell no candidate can play at all (no legal
+# target / unsimulatable) — both of which used to inflate the yardstick out of reach.
+
+func _mana_pressure_is_structural() -> void:
+	var back := BoardData.ROWS - 1
+	var deep := BoardData.COLS - 1
+	var unplayable := CardInstance.from_data(CardData.build_from_dict({
+		"id": "_ee_unplayable", "display_name": "U", "cost": 3, "card_type": "spell",
+		"effects": [{"trigger": "on_play", "targeting_policy": "manual",
+			"attribute": "health", "amount": -2, "chance": 0.5}],
+	}))   # probabilistic → refused by the sim gate, so it never becomes a candidate
+	unplayable.owner = 1
+
+	var cases: Array = [
+		{"mana": 4, "hand": ["fodder_dummy", "dps_dummy"], "extra": null},
+		{"mana": 4, "hand": ["fodder_dummy", "dps_dummy"], "extra": "queen"},
+		{"mana": 3, "hand": ["fodder_dummy"], "extra": "unplayable"},
+		{"mana": 7, "hand": ["dps_dummy", "tank_dummy"], "extra": "unplayable"},
+		{"mana": 1, "hand": ["fodder_dummy"], "extra": "queen"},
+	]
+	for case: Dictionary in cases:
+		var enemies: Array = [_enemy("captain_dummy", back, deep)]
+		var players: Array = [_player("knight", 0, deep)]
+		var grids := _grids(enemies, players)
+		var hand: Array = []
+		for id: Variant in case["hand"]:
+			var h := unit(String(id))
+			h.owner = 1
+			hand.append(h)
+		if case["extra"] == "queen":
+			var q := unit("queen")
+			q.owner = 1
+			hand.append(q)
+		elif case["extra"] == "unplayable":
+			hand.append(unplayable)
+
+		var state := BoardState.capture(grids[0], grids[1], 0)
+		state.enemy_mana_total = int(case["mana"])
+		state.enemy_mana_left = int(case["mana"])
+		for h2: CardInstance in hand:
+			state.hand_costs.append(int(h2.get_attribute("cost")))
+		var sim := _sim_for(enemies, players, hand)
+		var cands := CandidateMoves.placements(state, hand, int(case["mana"]))
+		cands.append_array(CandidateMoves.spells(state, hand, int(case["mana"])))
+		cands.append_array(CandidateMoves.abilities(state, int(case["mana"])))
+		var label := "mana %d, hand %s + %s" % [int(case["mana"]), str(case["hand"]),
+				str(case["extra"])]
+		check(not cands.is_empty(), "%s — some play is affordable (fixture sanity)" % label)
+
+		# Mirror the engine's own bookkeeping, then read the mana criterion directly.
+		state.mana_spent_step = 0
+		var cohort: Array = [state]
+		var achieved: Array = []
+		for cand: Dictionary in cands:
+			var next := CandidateApply.apply(state, cand, sim)
+			EnemyEngine._note_spend(next, cand)
+			cohort.append(next)
+			achieved.append(int(cand["cost"]) + BoardScoring.spend_capacity(next))
+		var capacity := 0
+		for a: Variant in achieved:
+			capacity = maxi(capacity, int(a))
+		for s: BoardState in cohort:
+			s.mana_capacity_before = capacity
+
+		var best := 0.0
+		for i in cands.size():
+			best = maxf(best, BoardScoring.mana_optimization(cohort[i + 1]))
+		check(absf(best - 1.0) < 0.0001,
+				"%s — the best available play earns the FULL mana score, got %.4f"
+				% [label, best])
+		check_eq(BoardScoring.mana_optimization(cohort[0]), 0.0,
+				"%s — and declining earns none of it" % label)
+
+
+# ── Readiness: a tap is a second currency, and it has to cost something ──────────────
+
+func _readiness_shape() -> void:
+	var back := BoardData.ROWS - 1
+	var deep := BoardData.COLS - 1
+	var support := _enemy("support_dummy", back, 1)
+	var state := _state_with([_enemy("captain_dummy", back, deep), support,
+			_enemy("dps_dummy", 0, 2)])
+	check_eq(BoardScoring.readiness(state), 1.0, "an untouched army is fully ready")
+
+	var tapped := state.copy()
+	tapped.find(support).exhausted = true
+	check(BoardScoring.readiness(tapped) < 1.0, "a spent tap costs readiness")
+
+	# The tap's price is what it FORFEITS — the unit's swing plus every ability the tap
+	# closes — so silencing the two-ability support costs more than silencing a plain
+	# body with the same attack.
+	var plain := _state_with([_enemy("captain_dummy", back, deep),
+			_enemy("fodder_dummy", back, 1), _enemy("dps_dummy", 0, 2)])
+	var plain_tapped := plain.copy()
+	plain_tapped.units(1).filter(func(u: BoardState.UnitState) -> bool:
+		return u.card_id == "fodder_dummy")[0].exhausted = true
+	check(BoardScoring.readiness(tapped) < BoardScoring.readiness(plain_tapped),
+			"tapping a unit that holds abilities costs more than tapping a bare body")
+
+	# Proportional: the same tap silences more of a small army than a large one.
+	var lone := _state_with([_enemy("support_dummy", back, 1)])
+	var lone_tapped := lone.copy()
+	lone_tapped.units(1)[0].exhausted = true
+	check(BoardScoring.readiness(lone_tapped) < BoardScoring.readiness(tapped),
+			"tapping your only unit spends far more of the army's agency")
+
+	var idle := _state_with([_enemy("captain_dummy", back, deep)])
+	check_eq(BoardScoring.readiness(idle), 1.0,
+			"a captain with no abilities still reads ready (its swing is all it has)")
+
+	# The tap is never billed for the ability it BOUGHT — only for the swing and the
+	# other abilities it closed (the user's exact model). A one-ability unit that taps
+	# therefore forfeits its attack and nothing more.
+	var burst := BoardState.UnitState.from_instance(_enemy("burst_damage_dummy", 0, 0))
+	burst.exhausted = true
+	check(absf(BoardScoring.tap_forfeit(burst)
+			- float(burst.attack * burst.strikes) * BoardValueConfig.stat_rate("attack")) < 0.0001,
+			"tapping a one-ability unit costs its swing, not the ability it just used")
+	var supp_unit := BoardState.UnitState.from_instance(_enemy("support_dummy", 0, 1))
+	supp_unit.exhausted = true
+	check(BoardScoring.tap_forfeit(supp_unit) > BoardScoring.tap_forfeit(burst),
+			"…while a two-ability unit also forfeits the one it did NOT use")
+
+
+# ── The no-op legality rule: an effect that changes nothing is not a candidate ────────
+
+func _noop_veto_shape() -> void:
+	var back := BoardData.ROWS - 1
+	var deep := BoardData.COLS - 1
+	var support := _enemy("support_dummy", back, 1)
+	var full := _enemy("fodder_dummy", back, 0)
+	var roster: Array = [_enemy("captain_dummy", back, deep), support, full]
+	var state := _state_with(roster)
+	var futile := CandidateApply.apply(state, {"kind": "ability", "inst": support,
+			"ability": AbilityData.get_ability("heal"), "target": full, "cost": 1},
+			_sim_for(roster))
+	check(EnemyEngine._effect_changed_nothing(state, futile),
+			"a heal at full health changes nothing — the tap and mana are costs, not outcomes")
+
+	var hurt := _enemy("fodder_dummy", back, 0)
+	hurt.current_health = 1
+	var support2 := _enemy("support_dummy", back, 1)
+	var roster2: Array = [_enemy("captain_dummy", back, deep), support2, hurt]
+	var state2 := _state_with(roster2)
+	var real := CandidateApply.apply(state2, {"kind": "ability", "inst": support2,
+			"ability": AbilityData.get_ability("heal"), "target": hurt, "cost": 1},
+			_sim_for(roster2))
+	check(not EnemyEngine._effect_changed_nothing(state2, real),
+			"a heal that actually restores health is a real play")
+
+
+# ── The user's mandate: playable units are PLAYED, not withheld ───────────────────────
+
+func _engine_spends_its_mana() -> void:
+	var back := BoardData.ROWS - 1
+	var deep := BoardData.COLS - 1
+	# The live withholding repro (2026-07-29): under 2 queens + 5 open player mana the
+	# engine fielded two bodies and pocketed the dps — the normalized board-value edge
+	# (capped at its weight) couldn't outbid the placed unit's own risk share. The mana
+	# criterion is the fix: withholding a playable unit IS leaving spendable mana
+	# unspent, and spent outranks spendable.
+	var enemies: Array = [_enemy("captain_dummy", back, deep)]
+	var players: Array = [_player("queen", 0, deep), _player("queen", 1, deep)]
+	var grids := _grids(enemies, players)
+	var hand: Array = [unit("fodder_dummy"), unit("dps_dummy"), unit("tank_dummy")]
+	for h: CardInstance in hand:
+		h.owner = 1
+	var engine := _seeded_engine()
+	var actions := engine.decide_actions(hand, grids[0], grids[1], 10, 5)
+	var places: Array = actions.filter(func(a: Dictionary) -> bool:
+		return int(a["type"]) == EnemyEngine.Action.PLACE)
+	check_eq(places.size(), 3, "every affordable unit is fielded — no withholding")
+
+	# The LIVE shape the first version missed (user report 2026-07-30: "it plays a single
+	# fodder and never a dps"): a real enemy hand holds cards it cannot yet afford. An
+	# unaffordable card lingering in hand must not make the leftover mana read as wasted —
+	# otherwise the last affordable play scores no better than declining and gets
+	# withheld. Mana 4, hand 1 + 2 + an unaffordable 8.
+	var big := unit("queen")   # cost 5 fixture, priced out of a 4-mana turn
+	var lean_hand: Array = [unit("fodder_dummy"), unit("dps_dummy"), big]
+	for h2: CardInstance in lean_hand:
+		h2.owner = 1
+	var engine2 := _seeded_engine()
+	var actions2 := engine2.decide_actions(lean_hand, grids[0], grids[1], 4, 5)
+	var placed_ids: Array = actions2.filter(func(a: Dictionary) -> bool:
+		return int(a["type"]) == EnemyEngine.Action.PLACE) \
+		.map(func(a: Dictionary) -> String: return (a["inst"] as CardInstance).data.id)
+	check("fodder_dummy" in placed_ids, "the cheap body is fielded")
+	check("dps_dummy" in placed_ids,
+			"…and so is the dps — an unaffordable card left in hand is not 'wasted mana'")
+
+
+# ── Idle hand: a body it could field is never left in hand ───────────────────────────
+#
+# The blunt criterion (user mandate 2026-07-30, after the withholding bug kept coming back
+# through the mana pool): count the placeable units in hand the CPU could put down right
+# now, charge one full weight each. These are the properties that make it uncheatable.
+
+func _idle_hand_shape() -> void:
+	var back := BoardData.ROWS - 1
+	var deep := BoardData.COLS - 1
+	var state := _state_with([_enemy("captain_dummy", back, deep)])
+	check_eq(BoardScoring.idle_hand(state), 0.0,
+			"nothing stamped → the criterion is a constant, invisible to ranking")
+
+	state.hand_unit_costs = [1, 2]
+	state.hand_budget_before = 2
+	state.enemy_mana_left = 2
+	check_eq(BoardScoring.idle_hand(state), 2.0,
+			"two fieldable bodies in hand are charged twice — the count is never diluted")
+
+	var lean := state.copy()
+	lean.hand_budget_before = 1
+	check_eq(BoardScoring.idle_hand(lean), 1.0,
+			"a card it cannot afford is unplayable, not withheld")
+
+	# THE WAIVER (user 2026-07-30): spending mana settles the charge, whatever the mana was
+	# spent on. The criterion forbids IDLENESS while holding a body — it must never argue
+	# against another paid play, which is what made its first cut stop the support from
+	# healing a dying ally (a heal spends mana but empties no hand).
+	var paid := state.copy()
+	paid.mana_spent_step = 1
+	check_eq(BoardScoring.idle_hand(paid), 0.0,
+			"a choice that spends mana is never charged, even with bodies still in hand")
+
+	# THE DODGE THIS CLOSES: affordability is judged against the pool the PICK started with,
+	# never the mana left. Read against the mana left, any play that drains the pool would
+	# make the held body look unaffordable and the charge would vanish — casting a spell
+	# would excuse keeping a unit in hand, which is the withholding bug wearing yet another
+	# costume. Spending the mana elsewhere must keep the charge; only fielding pays it off.
+	var spent_elsewhere := state.copy()
+	spent_elsewhere.enemy_mana_left = 0
+	check_eq(BoardScoring.idle_hand(spent_elsewhere), 2.0,
+			"spending the mana on something else does NOT excuse the withheld bodies")
+	var fielded := state.copy()
+	fielded.hand_unit_costs = [2]
+	check_eq(BoardScoring.idle_hand(fielded), 1.0,
+			"…and playing one of them is what actually clears its charge")
+
+	# Nowhere to stand is not withholding.
+	var packed_insts: Array = []
+	for r in BoardData.ROWS:
+		for c in BoardData.COLS:
+			packed_insts.append(_enemy("fodder_dummy", r, c))
+	var packed := _state_with(packed_insts)
+	packed.hand_unit_costs = [1]
+	packed.hand_budget_before = 5
+	check_eq(BoardScoring.idle_hand(packed), 0.0, "a full board cannot field anything")
+
+	# Spells and kings never enter the charge — neither is a placeable body. Read through
+	# the engine's own stamping, so the filter is pinned where it lives.
+	var grids := _grids([_enemy("captain_dummy", back, deep)])
+	var spell := unit("dummy_group_heal")
+	spell.owner = 1
+	var engine := _seeded_engine()
+	engine.decide_actions([spell], grids[0], grids[1], 4)
+	var stamped := BoardState.capture(grids[0], grids[1])
+	stamped.hand_unit_costs = []
+	check_eq(BoardScoring.idle_hand(stamped), 0.0,
+			"a hand of spells charges nothing — there is no body being withheld")
+
+	var idle_criteria: Array = BoardScoring.stock().criteria.filter(
+			func(c: BoardScoring.Criterion) -> bool: return c.id == "idle_hand")
+	check_eq(idle_criteria.size(), 1, "the criterion is in the stock character")
+	if not idle_criteria.is_empty():
+		check_eq((idle_criteria[0] as BoardScoring.Criterion).weight,
+				BoardScoring.IDLE_HAND_CRITERION_WEIGHT, "…at the harsh weight")
+		var charged := state.copy()
+		check(idle_criteria[0].score(charged) < 0.0, "…and it scores withholding as a loss")
+
+
+# The user's report in one board (2026-07-30: "the CPU keeps units in hand"): one mana, a
+# fieldable body in hand, and a legitimate rival use for that mana (a wounded ally the
+# support can heal). The body goes down. This is the policy the harsh weight buys — and it
+# is a POLICY, not a deletion: _engine_place_vs_heal_arbitration still shows preservation
+# taking the mana when the unit it saves is genuinely about to die.
+func _engine_never_withholds_a_playable_unit() -> void:
+	var back := BoardData.ROWS - 1
+	var deep := BoardData.COLS - 1
+	var wounded := _enemy("dps_dummy", 0, 2)
+	wounded.current_health = maxi(1, wounded.current_health - 1)
+	var enemies: Array = [_enemy("captain_dummy", back, deep),
+			_enemy("support_dummy", back, 1), wounded]
+	var players: Array = [_player("knight", 0, deep)]
+	var grids := _grids(enemies, players)
+	var fodder := unit("fodder_dummy")
+	fodder.owner = 1
+
+	var engine := _seeded_engine()
+	var actions := engine.decide_actions([fodder], grids[0], grids[1], 1)
+	var places: Array = actions.filter(func(a: Dictionary) -> bool:
+		return int(a["type"]) == EnemyEngine.Action.PLACE)
+	check_eq(places.size(), 1, "the body in hand is fielded, not pocketed")
+	if not places.is_empty():
+		check(places[0]["inst"] == fodder, "…and it is the card that was being withheld")
+
+
+# The criterion has to CHANGE a decision, or it is decoration — and this one was decoration
+# for its first iteration without a single test noticing (cast/ability simulations rebuild
+# the board state from the simulated world, and the new fields weren't forwarded; see
+# CandidateApply._capture_back). So the criterion is A/B'd directly: the same pick scored
+# twice, once with the stock character and once with idle-hand's weight zeroed. If a change
+# to the scorer ever makes these two agree, the criterion has stopped doing anything.
+func _idle_hand_changes_a_decision() -> void:
+	var back := BoardData.ROWS - 1
+	var deep := BoardData.COLS - 1
+	# Two knife-edge boards, chosen by sweeping the held body's survival weight: at 2.0 the
+	# criterion is exactly what tips a reluctant placement into happening; at 4.0 the body
+	# is such a pure loss that even the full charge cannot buy it, which is the restraint
+	# the must-improve rule is supposed to keep. Heavy threat (two queens + 5 open mana)
+	# is what makes fielding hurt at all.
+	var expected: Array = [
+		{"weight": 2.0, "with": "place", "without": "decline"},
+		{"weight": 4.0, "with": "decline", "without": "decline"},
+	]
+	for case: Dictionary in expected:
+		var w := float(case["weight"])
+		var enemies: Array = [_enemy("captain_dummy", back, deep)]
+		var players: Array = [_player("queen", 0, deep), _player("queen", 1, deep)]
+		var grids := _grids(enemies, players)
+		var fodder := unit("fodder_dummy")
+		fodder.owner = 1
+		var hand: Array = [fodder]
+		var state := BoardState.capture(grids[0], grids[1], 5)
+		state.enemy_mana_total = 1
+		state.enemy_mana_left = 1
+		state.hand_costs = [1]
+		state.hand_unit_costs = [1]
+		state.mana_spent_step = 0
+		var sim := _sim_for(enemies, players, hand)
+		var cands := CandidateMoves.placements(state, hand, 1)
+		cands.append_array(CandidateMoves.moves(state, {}))
+		var kept: Array = []
+		var cohort: Array = [state]
+		var achieved: Array = []
+		for cand: Dictionary in cands:
+			var next := CandidateApply.apply(state, cand, sim)
+			EnemyEngine._note_spend(next, cand)
+			kept.append(cand)
+			cohort.append(next)
+			achieved.append(int(cand["cost"]) + BoardScoring.spend_capacity(next))
+		var capacity := 0
+		for a: Variant in achieved:
+			capacity = maxi(capacity, int(a))
+		for s: BoardState in cohort:
+			s.mana_capacity_before = capacity
+			s.hand_budget_before = 1
+		var overrides := {"fodder": w}
+		var with_it := BoardScoring.stock(overrides)
+		var without := BoardScoring.stock(overrides)
+		for c: BoardScoring.Criterion in without.criteria:
+			if c.id == "idle_hand":
+				c.weight = 0.0
+		# What the engine would DO with this scoring: the best candidate's kind, or
+		# "decline" when nothing beats the do-nothing baseline (the engine's own rule).
+		var verdict := func(scoring: BoardScoring) -> String:
+			var totals := scoring.score_pick(cohort)
+			var hi := -INF
+			var kind := ""
+			for i in kept.size():
+				if float(totals[i + 1]) > hi:
+					hi = float(totals[i + 1])
+					kind = String(kept[i]["kind"])
+			if hi <= float(totals[0]) + EnemyEngine.TIE_EPSILON:
+				return "decline"
+			return kind
+		check_eq(verdict.call(without), String(case["without"]),
+				"body at weight %.1f, criterion OFF — the scorer's own verdict" % w)
+		check_eq(verdict.call(with_it), String(case["with"]),
+				"body at weight %.1f, criterion ON — %s" % [w,
+				"the charge is what gets the body fielded" if String(case["with"]) == "place"
+				else "and a body that is pure loss can still be withheld"])
 
 
 # ── The refactor's closing promise: planning is a pure read ──────────────────────────
