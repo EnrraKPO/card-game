@@ -23,9 +23,10 @@ var ai: EnemyAI = null               # placeholder, no longer consulted — Enem
 # e.g. {"fodder": 0.5} = "in this fight, fodders are precious"). The enemy engine's one
 # authored steering knob so far; empty = pure stock behaviour.
 var survival_weights: Dictionary = {}
-# WHO the CPU is in this fight: the id of an authored EnemyPersonality (the eval weights the
-# enemy engine scores with). "default"/unknown = the stock character.
-var personality: String = EnemyPersonality.DEFAULT_ID
+# WHO the CPU is in this fight: this encounter's own EnemyPersonality instance — the eval
+# weights AND eval parameters the enemy engine scores with. Copied from a template at
+# authoring time, so it is this fight's alone. Null = the stock character.
+var personality: EnemyPersonality = null
 
 var outcome: Outcome = Outcome.PENDING
 

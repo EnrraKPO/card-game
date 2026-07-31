@@ -462,9 +462,9 @@ func _do_cpu_placement() -> void:
 	engine.world = _world
 	if GameData.current_encounter != null:
 		engine.weight_overrides = GameData.current_encounter.survival_weights
-		# WHO this opponent is (Tool ▸ 🧠 Enemy AI): the authored criterion weights the
-		# scorer runs with. An unknown id degrades to the stock character.
-		engine.personality = EnemyPersonality.get_personality(GameData.current_encounter.personality)
+		# WHO this opponent is: the fight's own personality instance (Tool ▸ 🗂 Fights ▸ the
+		# encounter's Personality section). Null = the stock character.
+		engine.personality = GameData.current_encounter.personality
 	for action: Dictionary in engine.decide_actions(_enemy_side.hand,
 			_board.player_grid, _board.enemy_grid, _enemy_side.mana, _player_side.mana):
 		await _execute_enemy_action(action)

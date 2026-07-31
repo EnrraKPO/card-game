@@ -32,6 +32,9 @@ func run() -> void:
 	_survival_weights_layer_encounter_over_personality()
 	_absent_quirks_key_inherits_stock()
 	_personality_changes_a_decision()
+	_value_rates_layer_over_the_global_price_list()
+	_ability_price_specificity()
+	_encounter_carries_its_own_instance()
 	EnemyPersonality.set_all([])   # release the injected set for the rest of the run
 
 
@@ -153,6 +156,94 @@ func _personality_changes_a_decision() -> void:
 	no_hand.hand_unit_costs = []
 	check(greedy.score(no_hand) - greed_score > fearful.score(no_hand) - fear_score,
 			"emptying the hand is worth more to the greedy character than to the fearful one")
+
+
+# Eval PARAMETERS are per-fight too, not just eval weights (user call 2026-07-30): a
+# personality carries its own unit-value price list, laid over the global one KEY BY KEY — so
+# a fight that re-prices shields says only that, and every other price still comes from the
+# global config. A whole-table replacement would make the partial form a silent trap.
+func _value_rates_layer_over_the_global_price_list() -> void:
+	BoardValueConfig.set_config({"stat_rates": {"attack": 1.0, "health": 1.0, "shield": 2.0,
+			"missing_health": 0.1, "speed": 0.5}, "ability_default": 2.0})
+	var u := BoardState.UnitState.new()
+	u.owner = 1
+	u.attack = 3
+	u.strikes = 1
+	u.health = 4
+	u.max_health = 4
+	u.shield = 2
+	u.speed = 2
+
+	var globally := BoardScoring.unit_value(u)
+	check(absf(globally - (3.0 + 4.0 + 4.0 + 1.0)) < 0.0001,
+			"with no personality a unit is priced by the global list (got %.2f)" % globally)
+
+	var shield_lover := _personality({"id": "shield_lover", "value_rates": {"stat_rates": {"shield": 5.0}}})
+	var priced := BoardScoring.unit_value(u, shield_lover)
+	check(absf(priced - (3.0 + 4.0 + 10.0 + 1.0)) < 0.0001,
+			"the personality's own shield price is used (got %.2f, want 18.00)" % priced)
+	check(absf(shield_lover.stat_rate("attack") - 1.0) < 0.0001,
+			"…and a price it did NOT mention still falls through to the global list")
+
+	# The criterion must actually read it — a price list nothing consults is decoration.
+	var state := BoardState.empty()
+	state.place(u, 0, 0)
+	check(absf(BoardScoring.board_value(state, shield_lover) - priced) < 0.0001,
+			"board value measures through the fight's price list")
+	BoardValueConfig.set_config({})
+
+
+# Specificity beats locality: a price authored for ONE ability outranks a character's blanket
+# rate, but the character's price for that same ability outranks both.
+func _ability_price_specificity() -> void:
+	BoardValueConfig.set_config({"ability_default": 2.0, "ability_values": {"heal": 6.0}})
+	var blanket := _personality({"id": "blanket", "value_rates": {"ability_default": 9.0}})
+	check_eq(blanket.ability_value("heal"), 6.0,
+			"a globally priced ability keeps its price against a character's blanket rate")
+	check_eq(blanket.ability_value("castling"), 9.0,
+			"…while an unpriced ability takes the character's blanket rate")
+	var specific := _personality({"id": "specific",
+			"value_rates": {"ability_default": 9.0, "ability_values": {"heal": 1.0}}})
+	check_eq(specific.ability_value("heal"), 1.0,
+			"…and the character's own price for that ability beats the global one")
+	BoardValueConfig.set_config({})
+
+
+# The encounter owns a COPY, not a reference (user call 2026-07-30). Both authored forms
+# resolve to an instance, and tuning one fight can never reach another.
+func _encounter_carries_its_own_instance() -> void:
+	EnemyPersonality.set_all([{"id": "brave", "traits": {"death_risk": 0.4}, "quirks": {}}])
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 5
+
+	var named := EncounterTemplateData.new()
+	named.id = "_t_named"
+	named.enemy_pool = [{"id": "fodder_dummy", "weight": 1.0, "min_power": 0.0}]
+	named.pick_count = [2, 2]
+	named.personality = EncounterTemplateData._read_personality("brave")
+	check_eq(named.instantiate(rng, 0.0).personality.weight_for("death_risk"), 0.4,
+			"naming a template instantiates it for the fight")
+
+	var own := EncounterTemplateData.new()
+	own.id = "_t_own"
+	own.enemy_pool = named.enemy_pool
+	own.pick_count = [2, 2]
+	own.personality = EncounterTemplateData._read_personality({
+		"from": "brave", "traits": {"death_risk": 2.2}, "quirks": {"damage_output": 0.5}})
+	var mine := own.instantiate(rng, 0.0).personality
+	check_eq(mine.weight_for("death_risk"), 2.2, "an inline object is the fight's own tuned instance")
+	check_eq(mine.from_template, "brave", "…which remembers the template it was copied from")
+	check_eq(EnemyPersonality.get_personality("brave").weight_for("death_risk"), 0.4,
+			"…and tuning the copy never reaches the template it came from")
+
+	var bare := EncounterTemplateData.new()
+	bare.id = "_t_bare"
+	bare.enemy_pool = named.enemy_pool
+	bare.pick_count = [2, 2]
+	check(bare.personality == null, "a template that never mentions a personality holds none…")
+	check(bare.instantiate(rng, 0.0).personality != null,
+			"…and instantiating one still hands combat a personality (the stock character)")
+	EnemyPersonality.set_all([])
 
 
 # A CPU unit in mortal danger, an idle affordable body in hand, and a choice that spent

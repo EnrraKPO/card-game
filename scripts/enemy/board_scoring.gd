@@ -205,7 +205,7 @@ static func stock(weight_overrides: Dictionary = {}, personality: EnemyPersonali
 		var trait_id := String(entry["id"])
 		if not bool(entry["core"]) and not who.has_quirk(trait_id):
 			continue
-		var c := _criterion_for(trait_id, weights)
+		var c := _criterion_for(trait_id, weights, who)
 		if c == null:
 			continue
 		c.weight = who.weight_for(trait_id)
@@ -215,14 +215,14 @@ static func stock(weight_overrides: Dictionary = {}, personality: EnemyPersonali
 
 # Criterion id → a fresh instance. The one place the scorer's vocabulary is enumerated: a new
 # criterion is a case here plus an entry in EnemyPersonality.TRAITS.
-static func _criterion_for(trait_id: String, weights: Dictionary) -> Criterion:
+static func _criterion_for(trait_id: String, weights: Dictionary, who: EnemyPersonality) -> Criterion:
 	match trait_id:
 		"death_risk":    return DeathRisk.new(weights)
 		"harm":          return ExpectedHarm.new(weights)
 		"protection":    return ProtectionExposure.new(weights)
-		"board_value":   return BoardValue.new()
+		"board_value":   return BoardValue.new(who)
 		"mana":          return ManaOptimization.new()
-		"readiness":     return Readiness.new()
+		"readiness":     return Readiness.new(who)
 		"idle_hand":     return IdleHand.new()
 		"damage_output": return DamageOutput.new()
 	push_error("BoardScoring: no criterion for trait '%s'" % trait_id)
@@ -373,11 +373,16 @@ class ProtectionExposure:
 class BoardValue:
 	extends Behavior
 
-	func _init() -> void:
+	# The fight's personality, which carries this eval's parameters (its price list). Set by
+	# stock(); null = the global price list alone.
+	var pricer: EnemyPersonality = null
+
+	func _init(p_pricer: EnemyPersonality = null) -> void:
 		id = "board_value"
+		pricer = p_pricer
 
 	func measure(state: BoardState) -> float:
-		return BoardScoring.board_value(state)
+		return BoardScoring.board_value(state, pricer)
 
 	# Signed measures need the min-max anchoring: ratio-to-max is meaningless when the
 	# whole cohort can sit below zero (a rich player board). A flat cohort maps to
@@ -427,11 +432,16 @@ class ManaOptimization:
 class Readiness:
 	extends Criterion
 
-	func _init() -> void:
+	# Taps are priced in the same currency board value uses, so this criterion reads the same
+	# per-fight price list (see BoardValue.pricer).
+	var pricer: EnemyPersonality = null
+
+	func _init(p_pricer: EnemyPersonality = null) -> void:
 		id = "readiness"
+		pricer = p_pricer
 
 	func score(state: BoardState) -> float:
-		return BoardScoring.readiness(state)
+		return BoardScoring.readiness(state, pricer)
 
 
 # Every unit the CPU could field right now and isn't, charged one full weight each, negated
@@ -650,28 +660,43 @@ static func first_strike_share(state: BoardState, unit: BoardState.UnitState) ->
 # presence_value (mana cost): cost said what a unit COSTS, this says what it IS. All
 # future shaping (diminishing returns, per-role multipliers) happens inside these two
 # functions, invisible to the criterion.
-static func unit_value(u: BoardState.UnitState) -> float:
-	var v := float(u.attack * u.strikes) * BoardValueConfig.stat_rate("attack")
-	v += float(u.health) * BoardValueConfig.stat_rate("health")
-	v += float(u.max_health - u.health) * BoardValueConfig.stat_rate("missing_health")
-	v += float(u.shield) * BoardValueConfig.stat_rate("shield")
-	v += float(u.speed) * BoardValueConfig.stat_rate("speed")
+# `pricer` is the fight's PERSONALITY, which carries its own partial price list layered over
+# the global one (user call 2026-07-30: every eval constant is per-encounter). Null means the
+# global config alone — the pre-personality behaviour, and what a lone measurement outside a
+# fight reads.
+static func unit_value(u: BoardState.UnitState, pricer: EnemyPersonality = null) -> float:
+	var v := float(u.attack * u.strikes) * _stat_rate(pricer, "attack")
+	v += float(u.health) * _stat_rate(pricer, "health")
+	v += float(u.max_health - u.health) * _stat_rate(pricer, "missing_health")
+	v += float(u.shield) * _stat_rate(pricer, "shield")
+	v += float(u.speed) * _stat_rate(pricer, "speed")
 	for id: String in u.ability_ids:
-		v += BoardValueConfig.ability_value(id)
-	v += float(u.triggered_effects) * BoardValueConfig.triggered_value()
-	v += float(u.live_effects) * BoardValueConfig.live_value()
+		v += _ability_value(pricer, id)
+	v += float(u.triggered_effects) * (pricer.triggered_value() if pricer != null else BoardValueConfig.triggered_value())
+	v += float(u.live_effects) * (pricer.live_value() if pricer != null else BoardValueConfig.live_value())
 	return v
+
+
+# The two price lookups, in one place: a personality prices it if there is one, otherwise the
+# global config does. Every value measurement goes through these — never BoardValueConfig
+# directly, or a per-encounter price list would be silently ignored on that line.
+static func _stat_rate(pricer: EnemyPersonality, key: String) -> float:
+	return pricer.stat_rate(key) if pricer != null else BoardValueConfig.stat_rate(key)
+
+
+static func _ability_value(pricer: EnemyPersonality, id: String) -> float:
+	return pricer.ability_value(id) if pricer != null else BoardValueConfig.ability_value(id)
 
 
 # The net battlefield: own units add, player units subtract. Signed on purpose — a rich
 # player board IS a poor position, and killing or wounding player units raises the total
 # exactly like fielding raises it.
-static func board_value(state: BoardState) -> float:
+static func board_value(state: BoardState, pricer: EnemyPersonality = null) -> float:
 	var total := 0.0
 	for u: BoardState.UnitState in state.units(1):
-		total += unit_value(u)
+		total += unit_value(u, pricer)
 	for u: BoardState.UnitState in state.units(0):
-		total -= unit_value(u)
+		total -= unit_value(u, pricer)
 	return total
 
 
@@ -682,22 +707,22 @@ static func board_value(state: BoardState) -> float:
 # once the unit is exhausted, so a tap does not spend them); passives too — they run
 # regardless. Rates come from BoardValueConfig, so this stays tool-authored like every
 # other number in the value currency.
-static func activity_potential(u: BoardState.UnitState) -> float:
-	var p := float(u.attack * u.strikes) * BoardValueConfig.stat_rate("attack")
+static func activity_potential(u: BoardState.UnitState, pricer: EnemyPersonality = null) -> float:
+	var p := float(u.attack * u.strikes) * _stat_rate(pricer, "attack")
 	for id: String in u.ability_ids:
 		var ab := AbilityData.get_ability(id)
 		if ab != null and ab.tap:
-			p += BoardValueConfig.ability_value(id)
+			p += _ability_value(pricer, id)
 	return p
 
 
 # The best single tap-ability the unit holds — what one tap can actually buy.
-static func best_tap_ability(u: BoardState.UnitState) -> float:
+static func best_tap_ability(u: BoardState.UnitState, pricer: EnemyPersonality = null) -> float:
 	var best := 0.0
 	for id: String in u.ability_ids:
 		var ab := AbilityData.get_ability(id)
 		if ab != null and ab.tap:
-			best = maxf(best, BoardValueConfig.ability_value(id))
+			best = maxf(best, _ability_value(pricer, id))
 	return best
 
 
@@ -706,22 +731,22 @@ static func best_tap_ability(u: BoardState.UnitState) -> float:
 # model). A tap can only ever buy one ability, so crediting the unit's best one is the
 # faithful reading: a one-ability unit that taps forfeits only its swing, while silencing
 # a deep toolkit costs the whole rest of it. Untapped units forfeit nothing.
-static func tap_forfeit(u: BoardState.UnitState) -> float:
+static func tap_forfeit(u: BoardState.UnitState, pricer: EnemyPersonality = null) -> float:
 	if not u.exhausted:
 		return 0.0
-	return maxf(0.0, activity_potential(u) - best_tap_ability(u))
+	return maxf(0.0, activity_potential(u, pricer) - best_tap_ability(u, pricer))
 
 
 # How much of the CPU side's activity survives, 0..1 (1 = nothing forfeited). Proportional
 # on purpose: tapping your only unit spends all of your turn's agency, tapping one of
 # eight spends an eighth — a tap should cost in proportion to how much of the army it
 # silences. A side with nothing to activate reads 1 (nothing to lose).
-static func readiness(state: BoardState) -> float:
+static func readiness(state: BoardState, pricer: EnemyPersonality = null) -> float:
 	var total := 0.0
 	var forfeited := 0.0
 	for u: BoardState.UnitState in state.units(1):
-		total += activity_potential(u)
-		forfeited += tap_forfeit(u)
+		total += activity_potential(u, pricer)
+		forfeited += tap_forfeit(u, pricer)
 	if total <= 0.0:
 		return 1.0
 	return 1.0 - forfeited / total

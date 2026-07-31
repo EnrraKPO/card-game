@@ -100,6 +100,13 @@ static func stat_rate(key: String) -> float:
 	return float((_config()["stat_rates"] as Dictionary).get(key, 0.0))
 
 
+# Whether this ability has an authored price of its own (as opposed to falling to the blanket
+# default). A personality's blanket rate must not silently override a statement someone made
+# about ONE ability — see EnemyPersonality.ability_value, which asks this.
+static func has_ability_price(id: String) -> bool:
+	return (_config()["ability_values"] as Dictionary).has(id)
+
+
 static func ability_value(id: String) -> float:
 	var vals: Dictionary = _config()["ability_values"]
 	if vals.has(id):

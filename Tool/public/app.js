@@ -810,7 +810,7 @@ function economySection(cfg, ga) {
 // code defaults (an absent file = pure defaults).
 function boardValueDefaults() {
   return {
-    stat_rates: { attack: 1.0, health: 1.0, missing_health: 0.5, shield: 2.0, speed: 0.5 },
+    stat_rates: { attack: 1.0, health: 1.0, missing_health: 0.1, shield: 2.0, speed: 0.5 },
     ability_default: 2.0, ability_values: {},
     triggered_default: 1.5, live_default: 1.5,
   };
@@ -867,7 +867,10 @@ function boardValueSection(cfg) {
         el('h3', { text: 'Stat exchange rates', style: 'margin-top:0' }),
         rate('attack', 'Attack', 'per point of attack × strikes'),
         rate('health', 'Current health', 'per point the unit still has'),
-        rate('missing_health', 'Missing health', 'per point of max − current (heal potential)'),
+        // 0.1, matching the game's own default: spent health still counts for something (a
+        // 4/5 with one wound is worth a shade more than an untouched 4/4) but far less than
+        // health still held. The mirror said 0.5 for a while — keep the two in step.
+        rate('missing_health', 'Missing health', 'per point of max − current (spent health)'),
         rate('shield', 'Shield', 'regenerates every round — defaults to double'),
         rate('speed', 'Speed', 'defaults to half')),
       el('div', { style: 'flex:1;min-width:250px' },
@@ -959,6 +962,727 @@ async function renderTuningView() {
   } catch (err) {
     box.replaceChildren(el('div', { class: 'subtle', style: 'padding:20px', text: 'Failed to load tuning: ' + err.message }));
   }
+}
+
+// ── 🗂 Fights tab: the encounter workspace ────────────────────────────────────────────
+//
+// The tab that will supersede ⚔ Encounters. It is EVENT-DRIVEN: you find the fight you are
+// working on, and everything that shapes it lives on it. Organization is by COMPLEXITY
+// (user call 2026-07-30) — tribes are flavor with no mechanical weight, and map placement is
+// a later question, so neither organizes anything here.
+//
+// Shelves behave like FOLDERS, not like a tree widget: big targets, one click in, a
+// breadcrumb out. An event does not carry a tier as a property — it LIVES on a shelf, and
+// moving or copying it up a tier is how a fight gets escalated (that gesture comes later).
+//
+// Every one of the 73 fights that predate this model is quarantined on the Placeholder
+// shelf. They are officially junk that keeps the game runnable; the real content gets
+// authored into the tiers.
+async function renderFightsView() {
+  const box = $('fights-body');
+  box.replaceChildren(el('div', { class: 'subtle', style: 'padding:20px', text: 'Loading fights…' }));
+  try {
+    const r = await api('/api/fights');
+    state.fights = { kinds: r.kinds || [], tiers: r.tiers || [], list: r.fights || [] };
+    await ensureEvalCatalog();   // the personality section's vocabulary, fetched once
+    drawFights();
+  } catch (err) {
+    box.replaceChildren(el('div', { class: 'subtle', style: 'padding:20px', text: 'Failed to load fights: ' + err.message }));
+  }
+}
+
+// WHERE YOU ARE, in the two axes: {kind, tier, unfiled}. Nothing set = the folder landing.
+// One axis set = the grouped-columns view, grouped by the OTHER axis. Both set = one column.
+function fightNav() {
+  if (!state.fightsNav) state.fightsNav = { kind: null, tier: null, unfiled: false };
+  return state.fightsNav;
+}
+function goFights(nav) {
+  state.fightsNav = Object.assign({ kind: null, tier: null, unfiled: false }, nav);
+  state.fightsQuery = '';
+  drawFights();
+}
+
+function fightKind(id) { return (state.fights.kinds || []).find(k => k.id === id) || null; }
+function fightTier(n) { return (state.fights.tiers || []).find(t => t.id === n) || null; }
+function tieredKinds() { return (state.fights.kinds || []).filter(k => k.tiered); }
+
+// The one selector everything reads: fights matching whichever axes are pinned. `unfiled`
+// is its own pin — a fight of a tiered kind that nobody has filed yet.
+function fightsWhere(nav) {
+  return (state.fights.list || []).filter(f => {
+    if (nav.unfiled) return !f.filed;
+    if (!f.filed) return false;
+    if (nav.kind && f.kind !== nav.kind) return false;
+    if (nav.tier && f.tier !== nav.tier) return false;
+    return true;
+  });
+}
+
+function drawFights() {
+  const box = $('fights-body');
+  const nav = fightNav();
+  const query = (state.fightsQuery || '').trim().toLowerCase();
+
+  // An open fight takes the whole workspace — the tree stays, so you can leave for another
+  // fight the same way you arrived.
+  if (state.fightPage) {
+    box.replaceChildren(
+      el('div', { class: 'fight-layout' },
+        fightTree(nav),
+        el('div', { class: 'fight-main' },
+          el('div', { class: 'fight-head' }, fightPageCrumb(), el('div', { style: 'flex:1' })),
+          fightPageView())));
+    return;
+  }
+
+  const search = el('input', { type: 'text', class: 'fight-search', value: state.fightsQuery || '',
+    placeholder: 'Search every fight by name, tribe, king…',
+    oninput: e => { state.fightsQuery = e.target.value; drawFights(); search.focus(); } });
+
+  const body = query ? fightSearchResults(query)
+    : (nav.unfiled || nav.kind || nav.tier) ? fightGroupedView(nav) : fightFolders();
+  box.replaceChildren(
+    el('div', { class: 'fight-layout' },
+      fightTree(nav),
+      el('div', { class: 'fight-main' },
+        el('div', { class: 'fight-head' }, fightCrumb(nav, query), el('div', { style: 'flex:1' }), search),
+        body)));
+  if (query) search.focus();
+}
+
+// The open fight's trail: home, the box it lives in, then the fight itself. Both links leave
+// the page, so both ask about unsaved changes on the way out.
+function fightPageCrumb() {
+  const d = state.fightPage.data;
+  const kind = fightKind(d.node_type);
+  const tier = fightTier(parseInt(d.tier, 10) || 0);
+  const crumb = el('div', { class: 'fight-crumb' },
+    el('button', { class: 'crumb-link', text: '🗂 Fights', onclick: () => leaveFightPage({}) }));
+  if (kind) {
+    crumb.append(el('span', { class: 'crumb-sep', text: '›' }),
+      el('button', { class: 'crumb-link', text: kind.label, onclick: () => leaveFightPage({ kind: kind.id }) }));
+    if (tier) crumb.append(el('span', { class: 'crumb-sep', text: '›' }),
+      el('button', { class: 'crumb-link', text: tier.label.split(' — ')[0],
+        onclick: () => leaveFightPage({ kind: kind.id, tier: tier.id }) }));
+  }
+  crumb.append(el('span', { class: 'crumb-sep', text: '›' }),
+    el('span', { class: 'crumb-here', text: state.fightPage.isNew ? 'New fight' : slugToName(d.id) }));
+  return crumb;
+}
+
+function fightCrumb(nav, query) {
+  const crumb = el('div', { class: 'fight-crumb' },
+    el('button', { class: 'crumb-link', text: '🗂 Fights',
+      // "take me home": drops both pins AND the search, so home is always the folders
+      onclick: () => goFights({}) }));
+  const step = (label, to) => {
+    crumb.append(el('span', { class: 'crumb-sep', text: '›' }));
+    crumb.append(to ? el('button', { class: 'crumb-link', text: label, onclick: () => goFights(to) })
+      : el('span', { class: 'crumb-here', text: label }));
+  };
+  if (query) { step('“' + query + '”', null); return crumb; }
+  if (nav.unfiled) { step('Unfiled', null); return crumb; }
+  // the pinned axis leads, the second pin (if any) hangs off it and stays clickable back
+  if (nav.kind) {
+    step(fightKind(nav.kind).label, nav.tier ? { kind: nav.kind } : null);
+    if (nav.tier) step(fightTier(nav.tier).label, null);
+  } else if (nav.tier) {
+    step(fightTier(nav.tier).label, null);
+  }
+  return crumb;
+}
+
+// ── the tree frame: the fast jump, always present ──
+// Both axes are legal entry points, and a tree can only nest one way — so it lists both
+// groupings. Rows are big and full-width targets, not disclosure triangles.
+function fightTree(nav) {
+  const tree = el('div', { class: 'fight-tree' });
+  // with a fight open, a tree row is also a way OUT of it — same door, same question
+  const jump = to => state.fightPage ? leaveFightPage(to) : goFights(to);
+  const row = (label, count, depth, active, to, extraClass) =>
+    el('button', { class: 'tree-row d' + depth + (active ? ' active' : '') + (extraClass ? ' ' + extraClass : ''),
+      onclick: () => jump(to) },
+      el('span', { class: 'tree-label', text: label }),
+      el('span', { class: 'tree-count' + (count ? '' : ' zero'), text: String(count) }));
+
+  tree.append(el('div', { class: 'tree-head', text: 'By kind' }));
+  for (const k of state.fights.kinds) {
+    tree.append(row(k.label, fightsWhere({ kind: k.id }).length, 0,
+      nav.kind === k.id && !nav.tier, { kind: k.id }));
+    if (!k.tiered) continue;
+    for (const t of state.fights.tiers)
+      tree.append(row(t.label.split(' — ')[0] + ' · ' + t.label.split(' — ')[1],
+        fightsWhere({ kind: k.id, tier: t.id }).length, 1,
+        nav.kind === k.id && nav.tier === t.id, { kind: k.id, tier: t.id }));
+  }
+
+  tree.append(el('div', { class: 'tree-head', text: 'By tier' }));
+  for (const t of state.fights.tiers) {
+    tree.append(row(t.label, fightsWhere({ tier: t.id }).length, 0,
+      nav.tier === t.id && !nav.kind, { tier: t.id }));
+    for (const k of tieredKinds())
+      tree.append(row(k.label, fightsWhere({ kind: k.id, tier: t.id }).length, 1,
+        nav.kind === k.id && nav.tier === t.id, { kind: k.id, tier: t.id }));
+  }
+
+  tree.append(el('div', { class: 'tree-head', text: 'Not content' }));
+  tree.append(row('Unfiled', fightsWhere({ unfiled: true }).length, 0, nav.unfiled,
+    { unfiled: true }, 'quarantine'));
+  return tree;
+}
+
+// ── the landing: folders, sized to be hit rather than aimed at ──
+function fightFolders() {
+  const wrap = el('div');
+  const groupHead = (label, blurb) => el('div', { class: 'fight-group-head' },
+    el('span', { class: 'fight-group-label', text: label }),
+    blurb ? el('span', { class: 'subtle', text: blurb }) : null);
+  const tile = (label, blurb, count, to, cls) =>
+    el('button', { class: 'folder-tile' + (cls ? ' ' + cls : ''), onclick: () => goFights(to) },
+      el('div', { class: 'folder-top' },
+        el('span', { class: 'folder-icon', text: cls === 'quarantine' ? '🗑' : '📁' }),
+        el('span', { class: 'folder-count' + (count ? '' : ' empty'),
+          text: count ? count + ' fight' + (count === 1 ? '' : 's') : 'empty' })),
+      el('div', { class: 'folder-label', text: label }),
+      el('div', { class: 'folder-blurb', text: blurb }));
+
+  wrap.append(groupHead('Kinds of fight', 'Open one to see its complexity tiers side by side.'));
+  const kindGrid = el('div', { class: 'folder-grid' });
+  for (const k of state.fights.kinds)
+    kindGrid.append(tile(k.label, k.blurb, fightsWhere({ kind: k.id }).length, { kind: k.id }));
+  wrap.append(kindGrid);
+
+  wrap.append(groupHead('Complexity tiers', 'Open one to see every kind of fight at that complexity.'));
+  const tierGrid = el('div', { class: 'folder-grid' });
+  for (const t of state.fights.tiers)
+    tierGrid.append(tile(t.label, t.blurb, fightsWhere({ tier: t.id }).length, { tier: t.id }));
+  wrap.append(tierGrid);
+
+  const unfiled = fightsWhere({ unfiled: true }).length;
+  wrap.append(groupHead('Not content'));
+  const junkGrid = el('div', { class: 'folder-grid' });
+  junkGrid.append(tile('Unfiled', 'Fights authored before the tiers existed. Officially placeholder: '
+    + 'they keep the game runnable and nothing else. Filing one means giving it a tier.',
+    unfiled, { unfiled: true }, 'quarantine'));
+  wrap.append(junkGrid);
+  return wrap;
+}
+
+// ── the workhorse: filter on one axis, column-group by the other ──
+// Both pinned (or a tierless kind, or the unfiled pile) collapses to a single column, which
+// is the same view with one group in it — no second screen.
+function fightGroupedView(nav) {
+  const wrap = el('div');
+  let title = '';
+  let blurb = '';
+  let groups = [];
+  if (nav.unfiled) {
+    title = 'Unfiled';
+    blurb = 'No tier, so not content yet. Filing one means giving it a tier.';
+    groups = [{ label: 'Unfiled', list: fightsWhere({ unfiled: true }) }];
+  } else if (nav.kind && nav.tier) {
+    const k = fightKind(nav.kind), t = fightTier(nav.tier);
+    title = k.label + ' · ' + t.label;
+    blurb = t.blurb;
+    groups = [{ label: t.label, list: fightsWhere(nav), make: { kind: k.id, tier: t.id } }];
+  } else if (nav.kind) {
+    const k = fightKind(nav.kind);
+    title = k.label;
+    blurb = k.blurb;
+    groups = k.tiered
+      ? state.fights.tiers.map(t => ({ label: t.label, sub: t.blurb,
+          list: fightsWhere({ kind: k.id, tier: t.id }), to: { kind: k.id, tier: t.id },
+          make: { kind: k.id, tier: t.id } }))
+      : [{ label: k.label, list: fightsWhere({ kind: k.id }), make: { kind: k.id, tier: 0 } }];
+  } else {
+    const t = fightTier(nav.tier);
+    title = t.label;
+    blurb = t.blurb;
+    groups = tieredKinds().map(k => ({ label: k.label, sub: k.blurb,
+      list: fightsWhere({ kind: k.id, tier: t.id }), to: { kind: k.id, tier: t.id },
+      make: { kind: k.id, tier: t.id } }));
+  }
+
+  wrap.append(el('div', { class: 'fight-shelf-head' },
+    el('h2', { text: title }), el('div', { class: 'subtle', text: blurb })));
+  const cols = el('div', { class: 'fight-columns' + (groups.length === 1 ? ' single' : '') });
+  for (const g of groups) {
+    const col = el('div', { class: 'fight-col' });
+    col.append(el('div', { class: 'fight-col-head' },
+      g.to ? el('button', { class: 'col-title-link', text: g.label, onclick: () => goFights(g.to) })
+        : el('span', { class: 'col-title', text: g.label }),
+      el('span', { class: 'col-count', text: String(g.list.length) }),
+      // writing a new fight is a property of the box you are looking at: the + files it
+      // into this exact kind and tier, so the workspace's structure IS the authoring path
+      g.make ? el('button', { class: 'col-add', text: '+',
+        title: 'New ' + (fightKind(g.make.kind) || {}).label + ' fight'
+          + (g.make.tier ? ' at ' + fightTier(g.make.tier).label : ''),
+        onclick: () => newFightIn(g.make.kind, g.make.tier) }) : null));
+    if (g.sub) col.append(el('div', { class: 'col-sub', text: g.sub }));
+    for (const f of g.list) col.append(fightCard(f, false));
+    if (!g.list.length) col.append(el('div', { class: 'fight-empty small', text: 'nothing here yet' }));
+    cols.append(col);
+  }
+  wrap.append(cols);
+  return wrap;
+}
+
+function fightSearchResults(query) {
+  const hits = (state.fights.list || []).filter(f =>
+    f.id.toLowerCase().includes(query)
+    || (f.tribes || []).some(t => t.toLowerCase().includes(query))
+    || (f.enemy_king || '').toLowerCase().includes(query));
+  const wrap = el('div');
+  wrap.append(el('div', { class: 'fight-shelf-head' },
+    el('h2', { text: hits.length + ' match' + (hits.length === 1 ? '' : 'es') }),
+    el('div', { class: 'subtle', text: 'Searching every kind and tier at once, filed or not.' })));
+  const grid = el('div', { class: 'fight-grid' });
+  for (const f of hits) grid.append(fightCard(f, true));
+  if (!hits.length) grid.append(el('div', { class: 'fight-empty', text: 'Nothing matches that.' }));
+  wrap.append(grid);
+  return wrap;
+}
+
+// One fight, said in the terms you'd recognize it by.
+function fightCard(f, showWhere) {
+  const k = fightKind(f.kind);
+  const where = f.filed
+    ? (k ? k.label : f.kind) + (f.tier ? ' · T' + f.tier : '')
+    : 'unfiled';
+  const facts = [];
+  if (f.pool) facts.push(f.pool + ' pool ' + (f.pool === 1 ? 'entry' : 'entries'));
+  if (f.deck) facts.push('deck ' + f.deck[0] + '–' + f.deck[1]);
+  if (f.power_bonus) facts.push('power +' + f.power_bonus);
+  if (f.personality && f.personality !== 'default') facts.push('personality: ' + f.personality);
+  return el('button', { class: 'fight-card' + (f.enabled ? '' : ' disabled'),
+    onclick: () => openFightInEditor(f) },
+    el('div', { class: 'fight-card-top' },
+      el('span', { class: 'fight-name', text: slugToName(f.id) }),
+      showWhere ? el('span', { class: 'fight-shelf-badge', text: where }) : null),
+    el('div', { class: 'fight-id', text: f.id }),
+    el('div', { class: 'fight-facts', text: facts.join('  ·  ') }),
+    el('div', { class: 'fight-sub' },
+      el('span', { text: '👑 ' + f.enemy_king }),
+      (f.tribes || []).length ? el('span', { class: 'subtle', text: (f.tribes || []).join(', ') }) : null,
+      f.enabled ? null : el('span', { class: 'subtle', text: 'disabled' })));
+}
+
+// ── the encounter page ────────────────────────────────────────────────────────────────
+//
+// A fight opens INTO the workspace, not out to the old ⚔ tab: one page per event, made of
+// collapsible sections you open for the part you are working on. Cards comes next; Personality
+// is here now.
+//
+// PERSONALITIES ARE TEMPLATES YOU COPY (user call 2026-07-30). Picking one copies it into this
+// fight as a local instance; every dial you turn afterwards belongs to this fight alone and can
+// never reach another. The library in 🧠 Enemy AI is a shelf of starting points, not a set of
+// links. `from` records where a copy came from, for reading, not for following.
+function newFightIn(kind, tier) {
+  if (!confirmDiscard()) return;
+  state.fightPage = {
+    isNew: true, file: null,
+    data: { id: '', node_type: kind, tier: tier || 0, min_floor: 0, max_floor: 999, weight: 1,
+      enemy_king: '', enemy_pool: [], pick_count: [14, 20], gold_reward: [20, 40],
+      exp_reward: 1, ai: 'default', reward_pool: 'default' },
+  };
+  state.fightDirty = false;
+  drawFights();
+}
+
+async function openFightInEditor(f) {
+  if (!confirmDiscard()) return;
+  try {
+    const g = await api(`/api/game/item?type=encounter&id=${encodeURIComponent(f.id)}`);
+    state.fightPage = { isNew: false, file: g.file, data: g.data };
+    state.fightDirty = false;
+    drawFights();
+  } catch (e) { toast(e.message, 'err'); }
+}
+
+// Leaving the page for somewhere in the workspace. One door, so the unsaved-changes question
+// is asked exactly once and a cancelled answer leaves you where you were.
+function leaveFightPage(nav) {
+  if (state.fightDirty && !confirm('This fight has unsaved changes — discard them?')) return;
+  state.fightPage = null;
+  state.fightDirty = false;
+  state.fightsNav = Object.assign({ kind: null, tier: null, unfiled: false }, nav || {});
+  state.fightsQuery = '';
+  renderFightsView();   // re-reads the list: a saved fight may have moved boxes
+}
+
+function touchFight() {
+  state.fightDirty = true;
+  const flag = document.getElementById('fight-dirty');
+  if (flag) flag.textContent = 'unsaved changes';
+}
+
+// The catalogs the personality UI is built from (trait list + hints, protect-table defaults,
+// the global price list, the template shelf). Fetched once, then cached for the session.
+async function ensureEvalCatalog() {
+  if (state.evalCatalog) return state.evalCatalog;
+  const [p, bv] = await Promise.all([api('/api/personalities'), api('/api/board-value')]);
+  state.evalCatalog = { traits: p.traits || [], templates: p.personalities || [],
+    survivalDefaults: p.survival_defaults || {}, rates: bv.config || {} };
+  return state.evalCatalog;
+}
+
+function fightPageView() {
+  const page = state.fightPage;
+  const d = page.data;
+  const wrap = el('div', { class: 'fight-page' });
+
+  // ── header: what this is, and the one button that commits it ──
+  wrap.append(el('div', { class: 'fight-page-head' },
+    el('div', { style: 'flex:1;min-width:0' },
+      el('h2', { text: page.isNew ? 'New fight' : slugToName(d.id) }),
+      el('div', { class: 'subtle', text: page.isNew ? 'Not saved yet' : d.id + '  ·  ' + (page.file || '') })),
+    el('span', { class: 'subtle', id: 'fight-dirty', text: state.fightDirty ? 'unsaved changes' : '' }),
+    page.isNew ? null : el('button', { class: 'ghost', text: 'Open in ⚔ Encounters',
+      title: 'The full template editor — pool, rewards, floors, art. Those move here later.',
+      onclick: () => {
+        if (state.fightDirty && !confirm('This fight has unsaved changes — discard them?')) return;
+        state.fightPage = null; state.currentType = 'encounter'; state.enemyHub = true;
+        renderTabs(); openGameItem(d.id);
+      } }),
+    el('button', { class: 'primary', text: 'Save fight', onclick: saveFightPage })));
+
+  // ── identity: the fight's address, editable from here ──
+  const idBox = el('div', { class: 'panel fight-identity' },
+    page.isNew
+      ? fld('Id', el('input', { type: 'text', value: d.id || '', placeholder: 'lowercase_with_underscores',
+          oninput: e => { d.id = e.target.value.trim(); touchFight(); } }), 'fixed after creation')
+      : fld('Id', el('input', { type: 'text', value: d.id, disabled: true })),
+    fld('Kind', selectInput(d, 'node_type', (state.fights.kinds || []).map(k => ({ value: k.id, label: k.label })),
+      touchFight), 'where it lives in 🗂 Fights'),
+    fld('Complexity tier', selectInput({ get tier() { return String(d.tier || 0); },
+        set tier(v) { d.tier = parseInt(v, 10) || 0; } }, 'tier',
+      [{ value: '0', label: 'Unfiled' }, { value: '1', label: 'T1 — Simple' },
+        { value: '2', label: 'T2 — Meat' }, { value: '3', label: 'T3 — Hard' }], touchFight)),
+    fld('Enemy King', el('input', { type: 'text', value: d.enemy_king || '', placeholder: 'king',
+      oninput: e => { d.enemy_king = e.target.value.trim(); touchFight(); } })));
+  wrap.append(idBox);
+
+  wrap.append(fightSection('cards', '🃏 Cards', (d.enemy_pool || []).length
+      ? (d.enemy_pool || []).length + ' pool entries' : 'no pool yet',
+    () => el('div', { class: 'subtle', style: 'padding:8px 2px',
+      text: 'The enemy pool, its shares and anchors move here next. For now they live in the ⚔ Encounters editor.' })));
+
+  wrap.append(fightSection('personality', '🧠 Personality', personalitySummaryLine(d),
+    () => personalitySection(d)));
+  return wrap;
+}
+
+// A collapsible part of the page. Open/closed is remembered per section, so the page comes
+// back the way you left it instead of re-collapsing everything on every redraw.
+function fightSection(key, title, sub, build) {
+  if (!state.fightSections) state.fightSections = { personality: true };
+  const open = !!state.fightSections[key];
+  const body = el('div', { class: 'fight-section-body' });
+  if (open) body.append(build());
+  const head = el('button', { class: 'fight-section-head', onclick: () => {
+    state.fightSections[key] = !state.fightSections[key];
+    drawFights();
+  } },
+    el('span', { class: 'sec-caret', text: open ? '▾' : '▸' }),
+    el('span', { class: 'sec-title', text: title }),
+    el('span', { class: 'sec-sub subtle', text: sub || '' }));
+  return el('div', { class: 'panel fight-section' + (open ? ' open' : '') }, head, body);
+}
+
+function personalitySummaryLine(d) {
+  const p = d.personality;
+  if (!p) return 'the stock character';
+  if (typeof p === 'string') return 'template: ' + p;
+  const changed = Object.keys(p.traits || {}).length + Object.keys(p.quirks || {}).length
+    + Object.keys(p.survival_weights || {}).length + countRateOverrides(p.value_rates);
+  return (p.from ? 'copied from ' + p.from : 'custom') + ' · ' + changed + ' dials set';
+}
+
+function countRateOverrides(r) {
+  if (!r) return 0;
+  return Object.keys(r.stat_rates || {}).length + Object.keys(r.ability_values || {}).length
+    + ['ability_default', 'triggered_default', 'live_default'].filter(k => r[k] != null).length;
+}
+
+// The fight's own personality instance, created on first touch. A fight with no personality
+// carries no key at all (the stock character) — this is what turns that into an editable copy.
+function localPersonality(d) {
+  if (!d.personality || typeof d.personality === 'string') {
+    const from = typeof d.personality === 'string' ? d.personality : '';
+    d.personality = { from, traits: {}, quirks: {}, survival_weights: {}, value_rates: {} };
+    if (from) {
+      const t = (state.evalCatalog.templates || []).find(x => x.id === from);
+      if (t) Object.assign(d.personality, { traits: Object.assign({}, t.traits),
+        quirks: Object.assign({}, t.quirks), survival_weights: Object.assign({}, t.survival_weights) });
+    } else {
+      // no template named: the stock character, whose quirks are the stock ones
+      d.personality.quirks = stockQuirksFromCatalog();
+    }
+  }
+  const p = d.personality;
+  p.traits = p.traits || {};
+  p.quirks = p.quirks || {};
+  p.survival_weights = p.survival_weights || {};
+  p.value_rates = p.value_rates || {};
+  return p;
+}
+
+function stockQuirksFromCatalog() {
+  const out = {};
+  for (const t of (state.evalCatalog.traits || [])) if (!t.core) out[t.id] = t.def;
+  return out;
+}
+
+// ── the Personality section ───────────────────────────────────────────────────────────
+//
+// One block per EVAL: its weight, then its own parameters underneath it. That shape is the
+// point — an eval's constants belong with the eval, not scattered between a weights page and
+// a global tuning tab, and a future eval with new parameters slots in as one more block.
+//
+// Which eval owns which parameters:
+//   · fear of dying   → the protect table (what it is afraid of losing). Wearing down and
+//     formation measure against the SAME table, so it is stated once and cross-referenced.
+//   · board value     → the unit-value price list. Readiness prices taps in that same
+//     currency, so it points at it rather than restating it.
+// Everything else is weight-only today.
+function personalitySection(d) {
+  const cat = state.evalCatalog;
+  const p = localPersonality(d);
+  const wrap = el('div');
+  const core = cat.traits.filter(t => t.core);
+  const quirks = cat.traits.filter(t => !t.core);
+
+  // provenance + template shelf: copying a template IN is the only relationship there is
+  const pick = { from: p.from || '' };
+  wrap.append(el('div', { class: 'pers-provenance' },
+    el('span', { class: 'subtle', text: p.from ? 'Copied from “' + p.from + '”. It is this fight\'s own copy — editing it changes nothing else.'
+      : 'This fight\'s own personality. Not linked to any template.' }),
+    el('div', { style: 'flex:1' }),
+    selectInput(pick, 'from', (cat.templates || []).map(t => ({ value: t.id, label: t.name || t.id })), () => {}),
+    el('button', { class: 'ghost small', text: 'Copy in', title: 'Replace these dials with a copy of that template',
+      onclick: () => {
+        const t = (cat.templates || []).find(x => x.id === (pick.from || (cat.templates[0] || {}).id));
+        if (!t) return;
+        if (!confirm('Replace this fight\'s dials with a copy of “' + (t.name || t.id) + '”?')) return;
+        d.personality = { from: t.id, traits: Object.assign({}, t.traits), quirks: Object.assign({}, t.quirks),
+          survival_weights: Object.assign({}, t.survival_weights), value_rates: {} };
+        touchFight(); drawFights();
+      } })));
+
+  // A dial is one line. Two columns of them, so the whole character fits on a screen instead
+  // of eight full-width blocks you scroll through to compare two numbers. Explanations and an
+  // eval's own parameters are one click away, per row, and stay open once opened.
+  const grid = el('div', { class: 'eval-grid' });
+  for (const t of core) grid.append(evalRow(t, p, p.traits, null));
+  for (const q of quirks) {
+    if (p.quirks[q.id] == null) continue;
+    grid.append(evalRow(q, p, p.quirks, () => { delete p.quirks[q.id]; touchFight(); drawFights(); }));
+  }
+  wrap.append(grid);
+  const missing = quirks.filter(q => p.quirks[q.id] == null);
+  if (missing.length)
+    wrap.append(el('div', { class: 'pers-addquirk' },
+      el('span', { class: 'subtle', text: 'Quirks this fight does not carry:' }),
+      ...missing.map(q => el('button', { class: 'ghost small', text: '+ ' + q.label, title: q.hint,
+        onclick: () => { p.quirks[q.id] = q.def; touchFight(); drawFights(); } }))));
+  return wrap;
+}
+
+// THE NUMBER BOX ALWAYS HOLDS THE VALUE IT IS SHOWING — never a blank with the real number
+// hiding in the placeholder. A blank box arrows from 0, which is a lie about what the dial is
+// currently worth, and the first ↑ silently rewrites the value instead of nudging it.
+// "Unset" is still a real state in the DATA (an untouched dial writes nothing to the file); it
+// is expressed by dropping any value equal to stock, which is behaviourally identical, rather
+// than by an empty control. A dot marks the dials this fight has actually moved.
+function numberDial(opts) {
+  // opts: {value, stock, min, max, step, onSet} — onSet(null) means "back to stock/unset"
+  const eff = () => (opts.value() == null ? opts.stock : opts.value());
+  let num, rng;
+  const push = v => {
+    const at_stock = Math.abs(v - opts.stock) < 1e-9;
+    opts.onSet(at_stock ? null : v);
+    if (num) num.value = v;
+    if (rng) rng.value = v;
+  };
+  rng = opts.max != null ? el('input', { type: 'range', min: opts.min || 0, max: opts.max,
+    step: opts.step, value: eff(), class: 'dial-range',
+    oninput: e => push(parseFloat(e.target.value)) }) : null;
+  num = el('input', { type: 'number', min: opts.min || 0, step: opts.step, value: eff(), class: 'dial-num',
+    oninput: e => {
+      const v = parseFloat(e.target.value);
+      if (!isNaN(v)) { opts.onSet(Math.abs(v - opts.stock) < 1e-9 ? null : v); if (rng) rng.value = v; }
+    } });
+  return { range: rng, num, reset: () => push(opts.stock) };
+}
+
+// One eval, one line: name, dial, number, and two toggles — ⓘ for what it does, ⚙ for its own
+// parameters when it has any. Both remember their state, so opening the protect table once
+// keeps it open while you work.
+function evalRow(t, p, holder, onDrop) {
+  if (!state.evalOpen) state.evalOpen = {};
+  const openKey = t.id;
+  const isSet = holder[t.id] != null && Math.abs(holder[t.id] - t.def) > 1e-9;
+  const row = el('div', { class: 'eval-row' + (t.core ? '' : ' quirk') + (isSet ? ' set' : '') });
+  const dial = numberDial({
+    value: () => holder[t.id], stock: t.def, max: t.max, step: 0.05,
+    onSet: v => {
+      if (v == null) delete holder[t.id]; else holder[t.id] = v;
+      row.classList.toggle('set', v != null);
+      touchFight();
+    } });
+  const params = evalParams(t.id, p);
+  const detail = el('div', { class: 'eval-detail' });
+  const paint = () => {
+    detail.replaceChildren();
+    if (state.evalOpen[openKey + ':hint']) detail.append(el('div', { class: 'hint', text: t.hint }));
+    if (state.evalOpen[openKey + ':params'] && params) detail.append(params);
+  };
+  const toggle = (suffix, label, title) => el('button', {
+    class: 'eval-toggle' + (state.evalOpen[openKey + ':' + suffix] ? ' on' : ''), text: label, title,
+    onclick: e => {
+      state.evalOpen[openKey + ':' + suffix] = !state.evalOpen[openKey + ':' + suffix];
+      e.currentTarget.classList.toggle('on');
+      paint();
+    } });
+  row.append(el('div', { class: 'eval-line' },
+    el('span', { class: 'eval-name', text: t.label, title: t.sub || '' }),
+    dial.range, dial.num,
+    el('button', { class: 'eval-toggle', text: '↺', title: 'Back to the stock weight (' + t.def + ')',
+      onclick: () => { dial.reset(); row.classList.remove('set'); } }),
+    toggle('hint', 'ⓘ', t.hint),
+    params ? toggle('params', '⚙', 'This eval\'s own settings') : null,
+    onDrop ? el('button', { class: 'eval-toggle drop', text: '✕',
+      title: 'Drop this quirk — the eval leaves the scorer entirely', onclick: onDrop }) : null),
+    detail);
+  paint();
+  return row;
+}
+
+// One parameter: a labelled number that behaves like the weight dials — it always holds its
+// effective value, and equalling the game-wide default is how "unset" is expressed.
+function paramCell(label, holder, key, stock, step) {
+  const cell = el('label', { class: 'param-cell' });
+  const dial = numberDial({
+    value: () => holder[key], stock: stock == null ? 0 : stock, step: step || 0.05,
+    onSet: v => {
+      if (v == null) delete holder[key]; else holder[key] = v;
+      cell.classList.toggle('set', v != null);
+      touchFight();
+    } });
+  if (holder[key] != null) cell.classList.add('set');
+  cell.append(el('span', { text: label }), dial.num);
+  return cell;
+}
+
+// An eval's own constants, rendered under it. Returns null for the evals that have none.
+function evalParams(id, p) {
+  const cat = state.evalCatalog;
+  if (id === 'death_risk') {
+    const box = el('div', { class: 'eval-params' },
+      el('div', { class: 'param-head', text: 'What it is afraid of losing — per unit role' }),
+      el('div', { class: 'hint', text: 'Relative, not absolute: raising everything changes nothing, the ratios are the '
+        + 'behaviour. “Wearing down” and “formation” measure against this same table.' }));
+    const grid = el('div', { class: 'param-grid' });
+    for (const key of Object.keys(cat.survivalDefaults))
+      grid.append(paramCell(key === 'default' ? 'untagged' : key, p.survival_weights, key,
+        cat.survivalDefaults[key]));
+    box.append(grid);
+    box.append(mapEditor('Per-card override', p.survival_weights,
+      k => !(k in cat.survivalDefaults), 'card id', 0.5));
+    return box;
+  }
+  if (id === 'harm' || id === 'protection')
+    return el('div', { class: 'eval-xref subtle', text: 'Measured against the protect table on “Fear of dying”.' });
+  if (id === 'readiness')
+    return el('div', { class: 'eval-xref subtle', text: 'A tap\'s cost is priced with the unit-value list on “Hunger for the board”.' });
+  if (id === 'board_value') {
+    const rates = p.value_rates;
+    rates.stat_rates = rates.stat_rates || {};
+    rates.ability_values = rates.ability_values || {};
+    const g = cat.rates || {};
+    const box = el('div', { class: 'eval-params' },
+      el('div', { class: 'param-head', text: 'What a unit is worth — this fight\'s price list' }),
+      el('div', { class: 'hint', text: 'Leave a price at the game-wide value (🎛 Tuning ▸ ♟ Board value) and nothing is '
+        + 'written; change one and it applies to THIS fight only. Readiness prices taps with the same list.' }));
+    const grid = el('div', { class: 'param-grid' });
+    for (const [key, label] of [['attack', 'attack'], ['health', 'health'], ['missing_health', 'missing hp'],
+        ['shield', 'shield'], ['speed', 'speed']])
+      grid.append(paramCell(label, rates.stat_rates, key, (g.stat_rates || {})[key]));
+    for (const [key, label] of [['ability_default', 'any ability'], ['triggered_default', 'triggered fx'],
+        ['live_default', 'live fx']])
+      grid.append(paramCell(label, rates, key, g[key], 0.1));
+    box.append(grid);
+    box.append(mapEditor('Per-ability price', rates.ability_values, () => true, 'ability id', 2));
+    return box;
+  }
+  return null;
+}
+
+// The id→number rows both parameter tables need (per-card protect weights, per-ability
+// prices). `belongs` filters which keys of the holder this editor owns, so one dictionary can
+// back both a fixed grid and a free-form list without them fighting over each other's keys.
+function mapEditor(label, holder, belongs, placeholder, defVal) {
+  const box = el('div', { class: 'param-map' });
+  const render = () => {
+    const rows = Object.keys(holder).filter(belongs).sort().map(k =>
+      el('div', { class: 'eco-row' },
+        el('span', { text: k }),
+        el('input', { type: 'number', step: 0.05, value: holder[k], style: 'width:74px',
+          oninput: e => { const v = parseFloat(e.target.value); if (!isNaN(v)) { holder[k] = v; touchFight(); } } }),
+        el('button', { class: 'ghost tiny', text: '✕', onclick: () => { delete holder[k]; touchFight(); render(); } })));
+    const idIn = el('input', { type: 'text', placeholder, style: 'width:150px' });
+    const valIn = el('input', { type: 'number', step: 0.05, value: defVal, style: 'width:74px' });
+    rows.push(el('div', { class: 'eco-row' }, idIn, valIn,
+      el('button', { class: 'ghost tiny', text: '+', onclick: () => {
+        const id = idIn.value.trim();
+        const v = parseFloat(valIn.value);
+        if (!/^[a-z0-9_]+$/.test(id) || isNaN(v)) { toast('Need a lowercase id and a number', 'err'); return; }
+        holder[id] = v; touchFight(); render();
+      } })));
+    box.replaceChildren(el('div', { class: 'param-head', text: label }), ...rows);
+  };
+  render();
+  return box;
+}
+
+// Writes the fight back into its game file. The personality is dropped entirely when it says
+// nothing — an untouched fight keeps no personality key at all, which is the stock character
+// and keeps the file byte-identical to how it was authored.
+async function saveFightPage() {
+  const page = state.fightPage;
+  const d = JSON.parse(JSON.stringify(page.data));
+  if (!/^[a-z0-9_]+$/.test(d.id || '')) { toast('Id must be lowercase letters, digits and underscores', 'err'); return; }
+  if (!(d.enemy_pool || []).length) { toast('A fight needs at least one pool entry — add it in ⚔ Encounters for now', 'err'); return; }
+  const p = d.personality;
+  if (p && typeof p === 'object') {
+    for (const k of ['traits', 'quirks', 'survival_weights']) if (p[k] && !Object.keys(p[k]).length && k !== 'quirks') delete p[k];
+    if (p.value_rates) {
+      for (const k of ['stat_rates', 'ability_values'])
+        if (p.value_rates[k] && !Object.keys(p.value_rates[k]).length) delete p.value_rates[k];
+      if (!Object.keys(p.value_rates).length) delete p.value_rates;
+    }
+    if (!p.from) delete p.from;
+    const empty = !p.from && !p.traits && !p.value_rates && !p.survival_weights
+      && JSON.stringify(p.quirks || {}) === JSON.stringify(stockQuirksFromCatalog());
+    if (empty) delete d.personality;
+  }
+  if (!d.tier) delete d.tier;
+  let file = page.file;
+  if (page.isNew) {
+    file = await pickTargetFile(d.id, 'encounter');
+    if (!file) return;
+  }
+  try {
+    const out = await api('/api/game/save', { type: 'encounter', file, data: d });
+    state.fightPage.isNew = false;
+    state.fightPage.file = out.file.split('/').pop();
+    state.fightPage.data = d;
+    state.fightDirty = false;
+    toast('Saved to ' + out.file, 'ok');
+    await refreshState(true);
+    renderFightsView();
+  } catch (e) { toast('Save failed: ' + e.message, 'err'); }
 }
 
 // ── 🧠 Enemy AI tab: the enemy engine's control suite ─────────────────────────────────
@@ -1592,9 +2316,9 @@ function attachInferPoll(file, jobId) {
 }
 
 // ── sidebar ──────────────────────────────────────────────────────────────────
-const TAB_ORDER = ['card', 'relic', 'status', 'ability', 'charm', 'upgrade', 'encounter', 'enemyai', 'nodeweights', 'sound', 'vfx', 'render_filter', 'tuning', 'localization'];
+const TAB_ORDER = ['card', 'relic', 'status', 'ability', 'charm', 'upgrade', 'fights', 'encounter', 'enemyai', 'nodeweights', 'sound', 'vfx', 'render_filter', 'tuning', 'localization'];
 const TAB_LABELS = { card: '🃏 Cards', relic: '🏺 Relics', status: '☠ Statuses', ability: '✨ Abilities',
-  charm: '🔮 Charms', upgrade: '🌳 Upgrades', encounter: '⚔ Encounters', enemyai: '🧠 Enemy AI',
+  charm: '🔮 Charms', upgrade: '🌳 Upgrades', fights: '🗂 Fights', encounter: '⚔ Encounters', enemyai: '🧠 Enemy AI',
   nodeweights: '🗺 Map Nodes',
   sound: '🔊 Sounds', vfx: '🎇 VFX', render_filter: '🔆 Filters', tuning: '🎛 Tuning', localization: '🌐 Localization' };
 
@@ -1814,8 +2538,8 @@ function renderEnemyHubList() {
 }
 
 function renderItemList() {
-  // Tuning, Localization and Enemy AI are single full-width views — no item list at all.
-  const fullWidth = ['tuning', 'localization', 'enemyai'].includes(state.currentType);
+  // Tuning, Localization, Enemy AI and the Fights workspace are single full-width views.
+  const fullWidth = ['tuning', 'localization', 'enemyai', 'fights'].includes(state.currentType);
   $('sidebar').hidden = fullWidth;
   if (fullWidth) return;
   // The ⚔ Encounters tab renders the enemy hub instead of a single-type list.
@@ -2039,24 +2763,19 @@ function clientDeployPreview(type, serialized) {
 
 function renderEditor() {
   const empty = $('editor-empty'), body = $('editor-body'), tuning = $('tuning-body'),
-    locale = $('localization-body'), enemyai = $('enemyai-body');
-  if (state.currentType === 'tuning') {
-    empty.hidden = true; body.hidden = true; locale.hidden = true; enemyai.hidden = true;
+    locale = $('localization-body'), enemyai = $('enemyai-body'), fights = $('fights-body');
+  const fullViews = { tuning, localization: locale, enemyai, fights };
+  const FULL_RENDER = { tuning: renderTuningView, localization: renderLocaleView,
+    enemyai: renderEnemyAIView, fights: renderFightsView };
+  if (FULL_RENDER[state.currentType]) {
+    empty.hidden = true; body.hidden = true;
+    for (const [key, node] of Object.entries(fullViews)) if (key !== state.currentType) node.hidden = true;
     // only (re)load on entry — background re-renders must not clobber in-progress edits
-    if (tuning.hidden) { tuning.hidden = false; renderTuningView(); }
+    const mine = fullViews[state.currentType];
+    if (mine.hidden) { mine.hidden = false; FULL_RENDER[state.currentType](); }
     return;
   }
-  if (state.currentType === 'localization') {
-    empty.hidden = true; body.hidden = true; tuning.hidden = true; enemyai.hidden = true;
-    if (locale.hidden) { locale.hidden = false; renderLocaleView(); }
-    return;
-  }
-  if (state.currentType === 'enemyai') {
-    empty.hidden = true; body.hidden = true; tuning.hidden = true; locale.hidden = true;
-    if (enemyai.hidden) { enemyai.hidden = false; renderEnemyAIView(); }
-    return;
-  }
-  tuning.hidden = true; locale.hidden = true; enemyai.hidden = true;
+  for (const node of Object.values(fullViews)) node.hidden = true;
   if (!state.draft) { empty.hidden = false; body.hidden = true; renderEmptyKinPanel(); return; }
   empty.hidden = true; body.hidden = false;
   const ed = EDITORS[state.currentType];
@@ -2173,9 +2892,9 @@ async function gameSave(quiet) {
 }
 
 // Where should a NEW entry live? An existing file of this type, or a fresh normally-named one.
-function pickTargetFile(id) {
+function pickTargetFile(id, type) {
   return new Promise(resolve => {
-    const files = [...new Set((state.game[state.currentType] || []).map(g => g.file))].sort();
+    const files = [...new Set((state.game[type || state.currentType] || []).map(g => g.file))].sort();
     const cfg = { file: files[0] || '', fresh: files.length ? '' : (id + '.json') };
     const modal = el('div', { class: 'modal' },
       el('h2', { text: 'Which file should this live in?' }),

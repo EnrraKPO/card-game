@@ -18,10 +18,22 @@ extends RefCounted
 # identically (see BoardScoring.stock); only the tool and this file's bookkeeping separate
 # them.
 #
-# Authored in data/enemy_personalities.json (Tool ▸ 🧠 Enemy AI), loaded once at startup like
-# every other data file. An encounter names one through EncounterTemplateData.personality;
-# an unknown or absent name falls back to the stock character, which is exactly the code
-# defaults in board_scoring.gd — so the file is always optional and never load-bearing.
+# PERSONALITIES ARE TEMPLATES, NOT LINKS (user call 2026-07-30). The library in
+# data/enemy_personalities.json is a shelf of starting points; assigning one to a fight COPIES
+# it into that encounter as a local instance, which is then tuned freely. Nothing tuned on one
+# fight can reach another, and a template can be edited without disturbing the fights that
+# were made from it. (Linking — "these fights follow that template" — is a later feature, and
+# `from` records the provenance so it stays possible.)
+#
+# An encounter therefore carries either nothing (the stock character), a NAME (instantiate
+# that template as-is, the convenient hand-authored form), or a whole personality OBJECT (its
+# own local instance). All three go through from_dict / EncounterTemplateData.
+#
+# EVERY EVAL CONSTANT IS PART OF A PERSONALITY (user call 2026-07-30) — not just the criterion
+# weights but each eval's own parameters: the protect table the danger criteria measure
+# against, and the unit-value price list that board value and readiness are denominated in
+# (`value_rates`, the same shape as data/board_value.json, which stays the global default a
+# personality layers over, per key).
 #
 # ⚠ EVERY WEIGHT IS PROVISIONAL UNTIL PLAYTESTED. The starter personalities shipped in the
 # JSON are directions, not balance: they were authored by reading the criteria, not by
@@ -95,6 +107,16 @@ var quirks: Dictionary = {}
 # risk trait's parameters: its weight says how loudly the CPU fears losing units, this says
 # which units it fears losing. An encounter's own survival_weights layer on top of these.
 var survival_weights: Dictionary = {}
+# This character's own unit-value price list — the parameters of the board-value and readiness
+# evals, same shape as data/board_value.json ({stat_rates:{}, ability_default, ability_values,
+# triggered_default, live_default}). PARTIAL BY DESIGN: only the entries this personality
+# re-prices are here, and every other key falls through to the global config, so a fight that
+# cares about shields says so in one line instead of restating the whole price list.
+var value_rates: Dictionary = {}
+# Which template this instance was copied from, for provenance only — the tool shows it
+# ("copied from Aggressive") and nothing in the engine reads it. A future "follow the
+# template" feature has the link it needs without changing the data.
+var from_template: String = ""
 
 
 # What this personality says criterion `trait_id` is worth: its own entry, else the stock
@@ -181,6 +203,8 @@ static func from_dict(d: Dictionary) -> EnemyPersonality:
 	p.id = String(d.get("id", ""))
 	p.display_name = String(d.get("name", ""))
 	p.description = String(d.get("description", ""))
+	p.from_template = String(d.get("from", ""))
+	p.value_rates = _value_rates(d.get("value_rates", {}))
 	p.traits = _numeric(d.get("traits", {}))
 	# THE ONE PLACE the absent-vs-empty distinction is made: a personality that never
 	# mentions quirks inherits the stock ones (so a hand-written entry does not silently
@@ -189,6 +213,62 @@ static func from_dict(d: Dictionary) -> EnemyPersonality:
 	p.quirks = _numeric(d["quirks"]) if d.has("quirks") else stock_quirks()
 	p.survival_weights = _numeric(d.get("survival_weights", {}))
 	return p
+
+
+# The price-list overrides, kept in the same shape board_value.json uses so the two are one
+# vocabulary: numeric scalars, a numeric stat_rates map, a numeric ability_values map. Absent
+# keys stay absent — this table is read as a LAYER over the global config, never as a whole
+# price list, so an empty entry must not be mistaken for "this costs nothing".
+static func _value_rates(src: Variant) -> Dictionary:
+	var out: Dictionary = {}
+	if not (src is Dictionary):
+		return out
+	var d := src as Dictionary
+	for key: String in ["ability_default", "triggered_default", "live_default"]:
+		var v: Variant = d.get(key)
+		if v is float or v is int:
+			out[key] = float(v)
+	var rates := _numeric(d.get("stat_rates", {}))
+	if not rates.is_empty():
+		out["stat_rates"] = rates
+	var abilities := _numeric(d.get("ability_values", {}))
+	if not abilities.is_empty():
+		out["ability_values"] = abilities
+	return out
+
+
+# What one point of a stat is worth to THIS character: its own entry, else the global config.
+func stat_rate(key: String) -> float:
+	var rates: Variant = value_rates.get("stat_rates")
+	if rates is Dictionary and (rates as Dictionary).has(key):
+		return float((rates as Dictionary)[key])
+	return BoardValueConfig.stat_rate(key)
+
+
+# Specificity wins over locality: this character's price for THIS ability, then the global
+# per-ability price (an authored statement about that one ability, more specific than any
+# character's blanket rate), then this character's blanket rate, then the global default.
+func ability_value(ability_id: String) -> float:
+	var vals: Variant = value_rates.get("ability_values")
+	if vals is Dictionary and (vals as Dictionary).has(ability_id):
+		return float((vals as Dictionary)[ability_id])
+	if BoardValueConfig.has_ability_price(ability_id):
+		return BoardValueConfig.ability_value(ability_id)
+	if value_rates.has("ability_default"):
+		return float(value_rates["ability_default"])
+	return BoardValueConfig.ability_value(ability_id)
+
+
+func triggered_value() -> float:
+	if value_rates.has("triggered_default"):
+		return float(value_rates["triggered_default"])
+	return BoardValueConfig.triggered_value()
+
+
+func live_value() -> float:
+	if value_rates.has("live_default"):
+		return float(value_rates["live_default"])
+	return BoardValueConfig.live_value()
 
 
 # Numeric entries only — a typo'd string weight would otherwise read as 0.0 and quietly

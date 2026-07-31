@@ -83,6 +83,9 @@ func _build() -> void:
 	col.add_child(_section("Combat", MapNodeData.Type.COMBAT))
 	col.add_child(_section("Elite", MapNodeData.Type.ELITE))
 	col.add_child(_section("Boss", MapNodeData.Type.BOSS))
+	# Gimmicks have no map placement yet, so the gym is the ONLY way to play one — without
+	# this section an authored gimmick would be unreachable content.
+	col.add_child(_section("Gimmick", MapNodeData.Type.GIMMICK))
 
 
 # Default the dial to the run's current stage (its opening floor), so "test what I'd meet

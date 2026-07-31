@@ -1,11 +1,16 @@
 class_name MapNodeData
 extends RefCounted
 
-enum Type { COMBAT, ELITE, EVENT, SHOP, REST, BOSS, FORGE, TEST }
+enum Type { COMBAT, ELITE, EVENT, SHOP, REST, BOSS, FORGE, TEST, GIMMICK }
 # TEST is never generated onto a real map (map_data.gd's _pick_type only returns
 # COMBAT/ELITE/BOSS) — it exists purely so debug-only encounter templates (the Combat
 # Gym's "Test Dummies" section) can be filtered out of the ordinary node-type sections
 # without an id-prefix hack.
+#
+# GIMMICK is the fourth KIND of fight an encounter can be authored as (Tool ▸ 🗂 Fights):
+# a fight built around one unusual idea rather than a difficulty target. Like TEST it is
+# never generated onto a map yet — how gimmicks reach the player is an open question — but
+# it is a real authoring category, reachable from the Combat Gym, not a debug hatch.
 
 var id: int
 var floor: int

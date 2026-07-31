@@ -419,3 +419,151 @@ table.mini input, table.mini select { padding: 4px 6px; }
 .loc-val input { width: 100%; box-sizing: border-box; }
 .loc-actions { flex: 0 0 60px; display: flex; gap: 4px; justify-content: flex-end; align-items: center; }
 .loc-actions .tiny { padding: 2px 6px; }
+
+/* ── 🗂 fights tab: the encounter workspace ──
+   Folders, not a tree widget (user call 2026-07-30): every navigation target is a big
+   surface you hit rather than a disclosure triangle you aim at. Same bar as the game UI —
+   big by default, no cramped rows, no wasted space. */
+#fights-body { flex: 1; min-height: 0; overflow-y: auto; }
+#fights-body[hidden] { display: none; }
+/* tree frame + main, side by side; the tree is a navigation FRAME, not a widget — full-width
+   rows you hit, never a disclosure triangle you aim at */
+.fight-layout { display: flex; align-items: flex-start; gap: 24px; padding: 4px 8px 40px; }
+.fight-tree { flex: 0 0 244px; position: sticky; top: 0; display: flex; flex-direction: column; gap: 2px;
+  max-height: calc(100vh - 92px); overflow-y: auto; padding: 12px 12px 20px 4px;
+  border-right: 1px solid var(--line); }
+.tree-head { font-size: 11px; text-transform: uppercase; letter-spacing: 1.3px; color: var(--fg-dim);
+  font-weight: 700; margin: 14px 0 4px 8px; }
+.tree-head:first-child { margin-top: 0; }
+.tree-row { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left;
+  padding: 9px 12px; background: transparent; border: 1px solid transparent; border-radius: 7px;
+  color: var(--fg); font-size: 14px; cursor: pointer; }
+.tree-row:hover { background: var(--bg2); border-color: var(--line); filter: none; }
+.tree-row.active { background: var(--bg3); border-color: var(--accent); color: var(--fg); font-weight: 600; }
+.tree-row.d1 { padding-left: 26px; font-size: 13px; color: var(--fg-dim); }
+.tree-row.d1.active { color: var(--fg); }
+.tree-row.quarantine { color: var(--fg-dim); font-style: italic; }
+.tree-label { flex: 1; }
+.tree-count { font-size: 12px; color: var(--accent); font-weight: 700; }
+.tree-count.zero { color: #4d5468; font-weight: 400; }
+.fight-main { flex: 1; min-width: 0; max-width: 1240px; }
+
+/* filter on one axis, column-group by the other — one component, every entry point */
+.fight-columns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.fight-columns.single { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+.fight-col { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.fight-columns.single .fight-col { display: contents; }
+.fight-col-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+  padding-bottom: 8px; border-bottom: 2px solid var(--line); }
+.fight-columns.single .fight-col-head { grid-column: 1 / -1; }
+.col-title { font-size: 15px; font-weight: 700; }
+.col-title-link { background: transparent; border: none; padding: 0; font-size: 15px; font-weight: 700;
+  color: var(--fg); cursor: pointer; }
+.col-title-link:hover { color: var(--accent); filter: none; }
+.col-count { font-size: 12px; color: var(--accent); font-weight: 700; }
+.col-sub { font-size: 12px; line-height: 1.45; color: var(--fg-dim); }
+.fight-columns.single .col-sub { grid-column: 1 / -1; }
+.fight-empty.small { padding: 18px; font-size: 13px; }
+
+.fight-head { display: flex; align-items: center; gap: 16px; margin: 4px 0 22px; }
+.fight-crumb { display: flex; align-items: center; gap: 10px; font-size: 20px; white-space: nowrap; }
+.crumb-link { background: transparent; border: none; color: var(--fg-dim); font-size: 20px;
+  padding: 4px 2px; cursor: pointer; white-space: nowrap; }
+.crumb-link:hover { color: var(--accent); filter: none; }
+.crumb-sep { color: var(--fg-dim); }
+.crumb-here { color: var(--fg); font-weight: 600; white-space: nowrap; }
+/* the global input rule is width:100% — pin the search so it can't eat the header */
+input.fight-search { flex: 0 0 360px; width: 360px; padding: 10px 14px; font-size: 15px;
+  border-radius: var(--radius); background: var(--bg2); border: 1px solid var(--line); color: var(--fg); }
+input.fight-search:focus { outline: none; border-color: var(--accent); }
+
+.fight-group-head { display: flex; align-items: baseline; gap: 12px; margin: 26px 0 12px; }
+.fight-group-head:first-child { margin-top: 0; }
+.fight-group-label { font-size: 13px; text-transform: uppercase; letter-spacing: 1.4px;
+  color: var(--fg-dim); font-weight: 700; }
+
+.folder-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+.folder-tile { display: flex; flex-direction: column; gap: 8px; text-align: left;
+  min-height: 168px; padding: 18px 20px; background: var(--bg2); border: 1px solid var(--line);
+  border-radius: 12px; color: var(--fg); cursor: pointer; transition: border-color .1s, transform .06s; }
+.folder-tile:hover { border-color: var(--accent); filter: none; transform: translateY(-2px); }
+.folder-tile.quarantine { background: #1a1618; border-style: dashed; }
+.folder-tile.quarantine:hover { border-color: var(--bad); }
+.folder-top { display: flex; align-items: center; justify-content: space-between; }
+.folder-icon { font-size: 30px; line-height: 1; }
+.folder-count { font-size: 13px; color: var(--accent); font-weight: 700; }
+.folder-count.empty { color: var(--fg-dim); font-weight: 400; }
+.folder-label { font-size: 19px; font-weight: 700; }
+.folder-blurb { font-size: 13px; line-height: 1.5; color: var(--fg-dim); }
+
+.fight-shelf-head { margin-bottom: 18px; }
+.fight-shelf-head h2 { margin: 0 0 4px; font-size: 24px; }
+.fight-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+.fight-card { display: flex; flex-direction: column; gap: 6px; text-align: left;
+  padding: 14px 16px; background: var(--bg2); border: 1px solid var(--line); border-radius: 10px;
+  color: var(--fg); cursor: pointer; transition: border-color .1s, transform .06s; }
+.fight-card:hover { border-color: var(--accent2); filter: none; transform: translateY(-2px); }
+.fight-card.disabled { opacity: .55; }
+.fight-card-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.fight-name { font-size: 16px; font-weight: 600; }
+.fight-shelf-badge { font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--fg-dim); border: 1px solid var(--line); border-radius: 20px; padding: 2px 8px; white-space: nowrap; }
+.fight-id { font-size: 12px; color: var(--fg-dim); font-family: Consolas, monospace; }
+.fight-facts { font-size: 13px; color: var(--fg-dim); }
+.fight-sub { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--fg); }
+.fight-empty { grid-column: 1 / -1; padding: 40px; text-align: center; color: var(--fg-dim);
+  border: 1px dashed var(--line); border-radius: 12px; font-size: 15px; }
+.col-add { background: transparent; border: 1px solid var(--line); color: var(--fg-dim);
+  border-radius: 6px; padding: 1px 9px 3px; font-size: 17px; line-height: 1.2; cursor: pointer; }
+.col-add:hover { border-color: var(--accent); color: var(--accent); filter: none; }
+
+/* ── the encounter page (inside 🗂 Fights) ── */
+.fight-page { display: flex; flex-direction: column; gap: 14px; }
+.fight-page-head { display: flex; align-items: center; gap: 14px; }
+.fight-page-head h2 { margin: 0; font-size: 23px; }
+.fight-identity { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; }
+.fight-identity .fld { display: flex; flex-direction: column; gap: 4px; }
+
+.fight-section { padding: 0; overflow: hidden; }
+.fight-section-head { display: flex; align-items: baseline; gap: 12px; width: 100%; text-align: left;
+  padding: 14px 16px; background: transparent; border: none; color: var(--fg); cursor: pointer; }
+.fight-section-head:hover { background: var(--bg3); filter: none; }
+.sec-caret { color: var(--fg-dim); width: 14px; }
+.sec-title { font-size: 16px; font-weight: 700; }
+.sec-sub { font-size: 12px; }
+.fight-section-body:not(:empty) { padding: 4px 18px 18px 18px; border-top: 1px solid var(--line); }
+
+.pers-provenance { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 0 14px; }
+.pers-provenance select { width: 200px; }
+.pers-addquirk { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 12px 2px; }
+
+/* one dial = one line, two columns; explanation and an eval's own settings are one
+   click away per row, so the whole character reads at a glance */
+.eval-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(430px, 1fr)); gap: 6px; }
+.eval-row { border: 1px solid transparent; border-radius: 8px; padding: 4px 8px; background: var(--bg); }
+.eval-row:hover { border-color: var(--line); }
+.eval-row.quirk { background: #191d2a; }
+/* a moved dial is marked, so "what has this fight actually changed" is readable without diffing */
+.eval-row.set { border-color: #4a5a3a; }
+.eval-row.set .eval-name::after { content: ' •'; color: var(--accent); }
+.eval-line { display: flex; align-items: center; gap: 8px; }
+.eval-name { font-size: 13px; font-weight: 600; flex: 0 0 152px; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; }
+input.dial-range { flex: 1; min-width: 60px; accent-color: var(--accent); }
+input.dial-num { width: 62px; padding: 4px 6px; text-align: right; }
+.eval-toggle { background: transparent; border: 1px solid transparent; color: var(--fg-dim);
+  padding: 2px 6px; font-size: 12px; border-radius: 5px; cursor: pointer; }
+.eval-toggle:hover { color: var(--fg); border-color: var(--line); filter: none; }
+.eval-toggle.on { color: var(--accent); border-color: var(--line); }
+.eval-toggle.drop:hover { color: var(--bad); }
+.eval-detail:not(:empty) { padding: 2px 4px 8px 12px; }
+.eval-params { margin-top: 6px; }
+.eval-xref { font-size: 12px; font-style: italic; }
+.param-head { font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--fg-dim);
+  font-weight: 700; margin: 10px 0 6px; }
+.param-grid { display: flex; flex-wrap: wrap; gap: 8px 14px; }
+.param-cell { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+.param-cell span { min-width: 66px; color: var(--fg-dim); }
+.param-cell.set span { color: var(--fg); }
+.param-cell.set input { border-color: #4a5a3a; }
+.param-map { margin-top: 6px; }

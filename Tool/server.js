@@ -459,7 +459,7 @@ function getEconomy() {
 // the same shape / fallbacks.
 const BOARD_VALUE_PATH = path.join(GAME_ROOT, 'data/board_value.json');
 const BOARD_VALUE_DEFAULT = {
-  stat_rates: { attack: 1.0, health: 1.0, missing_health: 0.5, shield: 2.0, speed: 0.5 },
+  stat_rates: { attack: 1.0, health: 1.0, missing_health: 0.1, shield: 2.0, speed: 0.5 },
   ability_default: 2.0, ability_values: {},
   triggered_default: 1.5, live_default: 1.5,
 };
@@ -587,6 +587,72 @@ function getPersonalities() {
       traits: {}, quirks: stockQuirks(), survival_weights: {},
     });
   return list;
+}
+
+// ── the encounter workspace's shelves ────────────────────────────────────────
+// The new Encounters tab organizes fights the way a designer reaches for them: by COMPLEXITY
+// (user call 2026-07-30), not by tribe (flavor, mechanically inert) and not by map placement
+// (a later concern). An event does not "have" a tier — it LIVES IN one, the way a file lives
+// in a folder, and moving or copying it into the next tier up is how a fight gets escalated.
+//
+//   T1 — simple, legible fights that open the board of options (tank + fodder, swarm)
+//   T2 — the meat: nuanced fights with interesting mechanics
+//   T3 — deliberately hard endgame fights
+//   Elite / Boss / Gimmick — their own kinds, not tiers of combat
+//   Placeholder — every fight authored before this model existed
+//
+// ⚠ ALL 73 EXISTING ENCOUNTERS ARE OFFICIALLY PLACEHOLDER (user, 2026-07-30) — they exist to
+// keep the game runnable and nothing more. They are quarantined on their own shelf so they
+// never shape the structure or get mistaken for content; the real fights get authored into
+// the shelves above. An encounter joins a real shelf by declaring `shelf` in its JSON.
+// TWO AXES, not one shelf (user call 2026-07-30). A fight has a KIND and a TIER, and every
+// view in the workspace is "filter on one axis, group by the other" — enter Normal and you
+// get T1/T2/T3 columns, enter T1 and you get Normal/Elite/Boss columns. One component, two
+// entry points, no bespoke screen per combination.
+//
+// KIND IS THE GAME'S OWN `node_type` under a designer-facing name — one source of truth, so
+// filing a fight is not bookkeeping that can drift from what the run actually does. Gimmick
+// is a real node type (MapNodeData.Type.GIMMICK); like `test` it is never generated onto a
+// map yet, and is tierless for now.
+const FIGHT_KINDS = [
+  { id: 'combat', label: 'Normal', tiered: true, blurb: 'The ordinary fights a run is mostly made of.' },
+  { id: 'elite', label: 'Elite', tiered: true, blurb: 'Set-piece fights that pay a relic or charm choice instead of a card.' },
+  { id: 'boss', label: 'Boss', tiered: true, blurb: 'Stage-ending fights.' },
+  { id: 'gimmick', label: 'Gimmick', tiered: false, blurb: 'Built around one unusual idea rather than a difficulty target. Tierless for now.' },
+  { id: 'test', label: 'Test', tiered: false, blurb: 'Debug fixtures. Reachable only from the Combat Gym, never generated.' },
+];
+const FIGHT_TIERS = [
+  { id: 1, label: 'T1 — Simple', blurb: 'Legible fights that open the board of options: tank + fodder, swarm strategies. The most basic unit of identity.' },
+  { id: 2, label: 'T2 — Meat', blurb: 'The nuanced middle of the game: fights built around interesting, specific mechanics.' },
+  { id: 3, label: 'T3 — Hard', blurb: 'Endgame fights, authored to be genuinely challenging.' },
+];
+const FIGHT_KIND_IDS = FIGHT_KINDS.map(k => k.id);
+
+// Every fight, with just enough on it to be findable and legible in a listing. `filed` is the
+// whole placeholder story: a tiered kind with no tier has not been filed, and everything
+// authored before the tiers existed lands there — which is all 73 of them, correctly.
+function fightEntries() {
+  return listGameEntries('encounter').map(e => {
+    const d = e.data || {};
+    const kind = FIGHT_KIND_IDS.includes(d.node_type) ? d.node_type : 'combat';
+    const tier = Number.isInteger(d.tier) && d.tier >= 1 && d.tier <= 3 ? d.tier : 0;
+    const tiered = (FIGHT_KINDS.find(k => k.id === kind) || {}).tiered;
+    return {
+      id: e.id, file: e.file, kind, tier,
+      filed: tiered ? tier > 0 : true,
+      tribes: d.tribes || [],
+      enemy_king: d.enemy_king || 'king',
+      pool: (d.enemy_pool || []).length,
+      deck: Array.isArray(d.pick_count) ? d.pick_count : null,
+      power_bonus: d.power_bonus || 0,
+      // a name, or the tuned instance's provenance ("copied from Aggressive") — either way,
+      // what a listing wants to say is WHO fights it
+      personality: typeof d.personality === 'string' ? d.personality
+        : (d.personality && (d.personality.name || d.personality.from)) || 'default',
+      tuned: !!(d.personality && typeof d.personality === 'object'),
+      enabled: !(d.enabled === false),
+    };
+  }).sort((a, b) => a.id.localeCompare(b.id));
 }
 
 // Which fight uses which character — the assignment view's source. Reads the encounter
@@ -1514,7 +1580,8 @@ function validateItem(type, d) {
     case 'encounter': {
       // "test" templates are real and authorable — they are simply never map-generated;
       // the Combat Gym reaches them directly (MapNodeData.Type.TEST).
-      if (!['combat','elite','boss','test'].includes(d.node_type)) return 'node_type must be combat, elite, boss or test';
+      if (!FIGHT_KIND_IDS.includes(d.node_type))
+        return 'node_type must be one of: ' + FIGHT_KIND_IDS.join(', ');
       if (!(d.enemy_pool || []).length) return 'enemy_pool needs at least one card';
       for (const p of d.enemy_pool) if (!p.id) return 'every enemy_pool entry needs a card id';
       // min_power = the difficulty a unit is anchored to; absent/0 means "from the first
@@ -1535,11 +1602,18 @@ function validateItem(type, d) {
         if (!Array.isArray(d.tribes)) return 'tribes must be an array of tribe ids';
         for (const t of d.tribes) if (!validId(t)) return `tribe id "${t}" must be lowercase letters, digits and underscores`;
       }
-      // The opponent's authored character (Tool ▸ 🧠 Enemy AI). Existence is NOT checked: the
-      // game degrades an unknown personality to the stock one, and refusing to save an
+      // The complexity tier this fight was authored into (🗂 Fights). Absent/0 = unfiled,
+      // which is how the workspace tells real content from the placeholder pile.
+      if (d.tier != null && ![0, 1, 2, 3].includes(d.tier))
+        return 'tier must be 1, 2 or 3 (or absent for an unfiled fight)';
+      // WHO fights this: either a template NAME (instantiate as-is) or this fight's own tuned
+      // instance as an object (the copy-not-link model). A name's existence is NOT checked —
+      // the game degrades an unknown one to the stock character, and refusing to save an
       // encounter because a personality was renamed would be the tool holding content hostage.
-      if (d.personality != null && !validId(d.personality))
+      if (typeof d.personality === 'string' && !validId(d.personality))
         return `personality "${d.personality}" must be lowercase letters, digits and underscores`;
+      if (d.personality != null && typeof d.personality !== 'string' && typeof d.personality !== 'object')
+        return 'personality must be a template name or a personality object';
       // Enemy-engine protection weights: role tag / "captain" / "default" / a card id → number.
       // Keys are not checked against the role vocabulary on purpose — a card id is equally
       // valid, and an unknown key is inert rather than wrong (see BoardScoring.stock).
@@ -4142,6 +4216,8 @@ async function handle(req, res) {
       writeJson(BOARD_VALUE_PATH, out);
       return send(res, 200, { ok: true, config: out });
     }
+    if (p === '/api/fights' && req.method === 'GET')
+      return send(res, 200, { ok: true, kinds: FIGHT_KINDS, tiers: FIGHT_TIERS, fights: fightEntries() });
     if (p === '/api/personalities' && req.method === 'GET')
       return send(res, 200, { ok: true, personalities: getPersonalities(), traits: PERSONALITY_TRAITS,
         survival_defaults: STOCK_SURVIVAL_WEIGHTS, encounters: personalityAssignments() });

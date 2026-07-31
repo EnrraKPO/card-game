@@ -27,10 +27,20 @@ var reward_pool: String = "default"
 # Optional role→weight entries layered over the enemy engine's stock survival-weight table
 # (see BoardScoring / EncounterData.survival_weights).
 var survival_weights: Dictionary = {}
-# The authored enemy PERSONALITY this fight is fought with (EnemyPersonality id) — the
-# criterion weights the enemy engine scores with, i.e. how aggressive / careful / greedy this
-# opponent is. "default" or an unknown id = the stock character.
-var personality: String = EnemyPersonality.DEFAULT_ID
+# WHO the CPU is in this fight: this encounter's OWN personality instance — every eval weight
+# and every eval parameter, as a local copy (user call 2026-07-30: personalities are templates
+# you copy, not links you follow). The JSON accepts three forms, all resolved at load:
+#   · absent          → the stock character
+#   · a name string   → that template, instantiated as-is (the convenient hand-authored form)
+#   · an object       → this fight's own tuned instance
+# Never null after load, so nothing downstream has to ask.
+var personality: EnemyPersonality = null
+# The COMPLEXITY TIER this fight was authored into (Tool ▸ 🗂 Fights): 1 = simple and legible,
+# 2 = the nuanced middle, 3 = deliberately hard. Zero means UNFILED — every template that
+# predates the tiers reads as 0, which is how the tool tells real content from the placeholder
+# pile. Authoring metadata for now: nothing in the run reads it yet (difficulty still comes
+# from power), but it is the axis the content is being built along, so it lives on the data.
+var tier: int = 0
 # Chance (0..1) this fight also offers a relic on the reward screen, alongside the card pick.
 var relic_reward_chance: float = 0.0
 
@@ -130,7 +140,8 @@ static func _from_dict(d: Dictionary) -> EncounterTemplateData:
 	t.reward_pool = d.get("reward_pool", "default")
 	t.relic_reward_chance = float(d.get("relic_reward", 0.0))
 	t.survival_weights = d.get("survival_weights", {})
-	t.personality = String(d.get("personality", EnemyPersonality.DEFAULT_ID))
+	t.personality = _read_personality(d.get("personality"))
+	t.tier        = int(d.get("tier", 0))
 	t.exp_reward  = int(d.get("exp_reward", 1))
 	var pc: Array = d.get("pick_count", [1, 1])
 	t.pick_count  = [pc[0], pc[0] if pc.size() < 2 else pc[1]]
@@ -144,12 +155,25 @@ static func _from_dict(d: Dictionary) -> EncounterTemplateData:
 	return t
 
 
+# The three authored forms of `personality`, resolved to one instance (see the field's note).
+# A name is looked up in the template library; an object is this fight's own copy. Anything
+# else — absent, wrong type, unknown name — degrades to the stock character rather than
+# failing a fight over authoring metadata.
+static func _read_personality(raw: Variant) -> EnemyPersonality:
+	if raw is Dictionary:
+		return EnemyPersonality.from_dict(raw as Dictionary)
+	if raw is String and not (raw as String).is_empty():
+		return EnemyPersonality.get_personality(raw as String)
+	return EnemyPersonality.stock()
+
+
 static func _str_node_type(s: String) -> MapNodeData.Type:
 	match s:
 		"combat": return MapNodeData.Type.COMBAT
 		"elite":  return MapNodeData.Type.ELITE
 		"boss":   return MapNodeData.Type.BOSS
-		"test":   return MapNodeData.Type.TEST
+		"test":    return MapNodeData.Type.TEST
+		"gimmick": return MapNodeData.Type.GIMMICK
 	push_error("EncounterTemplateData: unknown node_type '%s', defaulting to combat" % s)
 	return MapNodeData.Type.COMBAT
 
@@ -183,7 +207,9 @@ func instantiate(rng: RandomNumberGenerator, power: float = 0.0) -> EncounterDat
 	enc.ai   = EnemyAI.from_key(ai)
 	enc.enemy_king = enemy_king
 	enc.survival_weights = survival_weights.duplicate()
-	enc.personality = personality
+	# Combat always receives a personality — a template built in code (tests, harnesses) may
+	# hold none, and "nobody in particular" is the stock character.
+	enc.personality = personality if personality != null else EnemyPersonality.stock()
 	enc.power = maxf(0.0, power + power_bonus)
 
 	# Deck SIZE ramps with power (a bigger deck = more sustain). The mix does not: power decides

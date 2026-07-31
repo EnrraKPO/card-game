@@ -678,7 +678,7 @@ const TribeEditor = {
 // ═══════════════════════════════ ENCOUNTER ══════════════════════════════════
 const EncounterEditor = {
   label: 'Encounter',
-  newItem: () => ({ id: '', node_type: 'combat', min_floor: 0, max_floor: 999, weight: 1, enabled: true,
+  newItem: () => ({ id: '', node_type: 'combat', tier: '0', min_floor: 0, max_floor: 999, weight: 1, enabled: true,
     enemy_king: '', power_bonus: 0, enemy_pool: [], pick_count: [14, 20], survival_weights: {}, _sw_cards: [],
     gold_reward: [20, 40], mineral_reward: [0, 0], exp_reward: 1, relic_reward: 0, ai: 'default', reward_pool: 'default' }),
   form(draft, ctx, onChange) {
@@ -699,10 +699,20 @@ const EncounterEditor = {
       groupBox('Template',
         el('div', { class: 'frow' },
           idField(draft, onChange, ctx.isNew),
-          fld('Serves node type', selectInput(draft, 'node_type', [
-            { value: 'combat', label: 'Combat' }, { value: 'elite', label: 'Elite' }, { value: 'boss', label: 'Boss' },
+          // Kind and tier are the 🗂 Fights workspace's two axes — the fight's address. They
+          // live here too so opening a fight from anywhere shows where it is filed.
+          fld('Kind', selectInput(draft, 'node_type', [
+            { value: 'combat', label: 'Normal — the ordinary fights of a run' },
+            { value: 'elite', label: 'Elite' }, { value: 'boss', label: 'Boss' },
+            { value: 'gimmick', label: 'Gimmick — one unusual idea, Combat Gym only for now' },
             { value: 'test', label: 'Test — Combat Gym only, never map-generated' },
           ], onChange)),
+          fld('Complexity tier', selectInput(draft, 'tier', [
+            { value: '0', label: 'Unfiled' },
+            { value: '1', label: 'T1 — Simple' },
+            { value: '2', label: 'T2 — Meat' },
+            { value: '3', label: 'T3 — Hard' },
+          ], onChange), 'where it lives in 🗂 Fights', 'narrow'),
           fld('Pick weight', numInput(draft, 'weight', onChange, { float: true, step: 0.1, min: 0 }),
             'vs other eligible templates', 'narrow'),
         ),
@@ -858,6 +868,11 @@ const EncounterEditor = {
     if (d.min_stage != null && d.min_stage !== 1) out.min_stage = d.min_stage;
     if (d.max_stage != null && d.max_stage !== 999) out.max_stage = d.max_stage;
     if (d.enemy_king) out.enemy_king = d.enemy_king;
+    // The complexity tier it is filed into (🗂 Fights). The select hands back a string, so
+    // it is coerced here — the game reads an int, and 0/absent means unfiled, which keeps
+    // every un-filed encounter file byte-identical.
+    const tier = parseInt(d.tier, 10) || 0;
+    if (tier) out.tier = tier;
     // absent = the stock character, so "default" is never written — that keeps every
     // encounter file byte-identical until a fight is genuinely given its own personality
     if (d.personality && d.personality !== 'default') out.personality = d.personality;
@@ -892,7 +907,12 @@ const EncounterEditor = {
     return out;
   },
   summarize(d) {
-    const lines = [`${d.id || 'Unnamed'} — a ${d.node_type} fight on floors ${d.min_floor || 0}–${d.max_floor == null ? 999 : d.max_floor}.`];
+    const KIND_WORD = { combat: 'normal', elite: 'elite', boss: 'boss', gimmick: 'gimmick', test: 'test' };
+    const TIER_WORD = { 1: 'T1 (simple)', 2: 'T2 (meat)', 3: 'T3 (hard)' };
+    const tier = parseInt(d.tier, 10) || 0;
+    const filed = tier ? ` — filed at ${TIER_WORD[tier]}`
+      : (d.node_type === 'combat' || d.node_type === 'elite' || d.node_type === 'boss') ? ' — UNFILED (no complexity tier)' : '';
+    const lines = [`${d.id || 'Unnamed'} — a ${KIND_WORD[d.node_type] || d.node_type} fight on floors ${d.min_floor || 0}–${d.max_floor == null ? 999 : d.max_floor}${filed}.`];
     if (d.tribes && d.tribes.length) lines.push(`Tribes: ${d.tribes.join(', ')}.`);
     lines.push(`Enemy King: ${d.enemy_king || 'generic crown King'}${d.power_bonus ? `, power +${d.power_bonus}` : ''}.`);
     if (d.personality && d.personality !== 'default')
@@ -921,6 +941,7 @@ const EncounterEditor = {
     if (d.weight == null) d.weight = 1;
     if (d.exp_reward == null) d.exp_reward = 1;
     d.enabled = d.enabled !== false;   // absent = enabled
+    d.tier = String(d.tier || 0);      // the tier select works in strings; 0 = unfiled
     // Split the flat survival_weights map back into its two editors: known role keys
     // (plus captain/default) drive the fixed row, anything else is a per-card override.
     const known = new Set(['captain', 'default', ...UNIT_ROLES.map(r => r.value)]);
