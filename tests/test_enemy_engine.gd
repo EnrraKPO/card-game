@@ -223,21 +223,34 @@ func _scoring_prefers_screens() -> void:
 	var back := BoardData.ROWS - 1
 	var deep := BoardData.COLS - 1
 	var scoring := BoardScoring.stock()
-	var lone := _state_with([_enemy("king", back, deep)])
-	var screened := _state_with([_enemy("king", back, deep), _enemy("pawn", back, 0)])
-	check(scoring.score(screened) > scoring.score(lone),
+	# Formation preference lives in the valuation (cover raises persistence raises worth),
+	# and TotalValue is a BEHAVIOR — visible in a pick's cohort, not on a lone state. Same
+	# units at the same depth, two lanes: the same-lane screen covers the Captain harder
+	# than the off-lane one, so the screened arrangement outranks it.
+	var players: Array = [_player("queen", back, 0)]
+	var screened := _state_with([_enemy("king", back, deep), _enemy("pawn", back, 0)], players)
+	var unscreened := _state_with([_enemy("king", back, deep), _enemy("pawn", 0, 0)], players)
+	var ranked := scoring.score_pick([unscreened, screened])
+	check(float(ranked[1]) > float(ranked[0]),
 			"stock scoring rates a screened Captain above a naked one")
-	# The deliverable-1 configuration, pinned explicitly via an override: with untagged
-	# units weighted 0, the RISK criteria go silent for a captain-less board; board value
-	# is a BEHAVIOR (silent on a lone state) and mana reads a turn that spent nothing —
-	# so all that remains is READINESS, which is 1.0 because nothing is tapped. A
-	# constant like this cancels out of every ranking; it only shows up here, where a
-	# single state is scored on its own.
+	# A lone state under stock: TotalValue/damage are behaviors (silent alone), mana reads
+	# a turn that spent nothing, the judge has no staged king to guard — all that remains
+	# is READINESS at its TABLE SHARE (the decision table dilutes every peer by its
+	# company; see peer_shares). A constant like this cancels out of every ranking; it
+	# only shows up here, where a single state is scored on its own.
 	var captain_only_scoring := BoardScoring.stock({"default": 0.0})
 	var pawn_unit := _enemy("pawn", back, 0)
 	var pawn_only := _state_with([pawn_unit])
-	check_eq(captain_only_scoring.score(pawn_only), BoardScoring.READINESS_CRITERION_WEIGHT,
-			"with a 0 default weight only the full-readiness term remains")
+	var ws: Array = []
+	for c: BoardScoring.Criterion in captain_only_scoring.criteria:
+		ws.append(c.weight)
+	var shares := BoardScoring.peer_shares(ws)
+	var readiness_share := 0.0
+	for i in captain_only_scoring.criteria.size():
+		if (captain_only_scoring.criteria[i] as BoardScoring.Criterion).id == "readiness":
+			readiness_share = float(shares[i])
+	check(absf(captain_only_scoring.score(pawn_only) - readiness_share) < 0.0001,
+			"with a 0 default weight only readiness' table share remains")
 
 
 # ── Enumeration ──────────────────────────────────────────────────────────────────────
@@ -301,17 +314,18 @@ func _engine_screens_captain() -> void:
 	var grids := _grids([_enemy("king", back, deep)])
 	var hand: Array = [unit("pawn"), unit("pawn")]
 
-	# The deliverable-1 observable under its original weight table (captain-only), pinned via
-	# override — under stock weights untagged pawns are worth something themselves, so their
-	# own safety legitimately competes with pure captain-screening.
+	# The deliverable-1 observable, NARROWED with the protection criterion parked (0..1
+	# contract): on a board with zero threat every slot is value-identical, so placement
+	# POSITION falls to the tie-break — what stock still guarantees is that every
+	# affordable body gets fielded (mana pressure + total value). Position under real
+	# threat is pinned by the valuation/persistence tests; deep = kept for fixture shape.
+	var _deep_unused := deep
 	var engine := _seeded_engine()
 	engine.weight_overrides = {"default": 0.0}
 	var actions := engine.decide_actions(hand, grids[0], grids[1], 10)
 	check_eq(actions.size(), 2, "both affordable units get placed")
 	for action: Dictionary in actions:
 		check_eq(int(action["type"]), EnemyEngine.Action.PLACE, "day one emits placements")
-		check_eq(int(action["row"]), back, "each placement screens in the Captain's lane")
-		check(int(action["col"]) < deep, "…in front of the Captain, not beside it")
 
 
 func _engine_determinism() -> void:
@@ -338,18 +352,15 @@ func _weight_resolution() -> void:
 	var untagged := BoardState.UnitState.from_instance(_enemy("pawn", 0, 1))
 	check_eq(BoardScoring.weight_for(untagged, weights), 0.1, "no role falls to the default entry")
 	check_eq(BoardScoring.weight_for(untagged, {"pawn": 7.0}), 7.0, "a card-id entry wins over everything")
-	# The per-event override layer: stock() merges encounter entries over the stock table.
-	# Read through ProtectionExposure — the criterion in the stock character that carries
-	# the survival table (DeathRisk is parked; its own copy is pinned in the personality
-	# suite's opt-in test).
-	var overridden := BoardScoring.stock({"fodder": 0.8})
-	var pe: BoardScoring.ProtectionExposure = null
-	for c: BoardScoring.Criterion in overridden.criteria:
-		if c is BoardScoring.ProtectionExposure:
-			pe = c
-	check(pe != null, "the protection criterion is in the stock scorer")
+	# The per-event override layer (stock() merges encounter entries over the personality's
+	# table) currently has NO seated consumer — every survival-weight criterion is parked
+	# as a 0..1 contract offender. The resolution is pinned through a hand-seated
+	# ProtectionExposure so the mechanism stays whole for their return.
+	var merged := BoardScoring.STOCK_SURVIVAL_WEIGHTS.duplicate()
+	merged["fodder"] = 0.8
+	var pe := BoardScoring.ProtectionExposure.new(merged)
 	check_eq(BoardScoring.weight_for(fodder, pe.survival_weights), 0.8,
-			"an encounter override rewrites one role's worth, stock fills the rest")
+			"an override rewrites one role's worth, stock fills the rest")
 	check_eq(BoardScoring.weight_for(king, pe.survival_weights), 1.75,
 			"…without touching un-overridden entries")
 
@@ -515,7 +526,9 @@ func _scoring_triages_dying_unit() -> void:
 		_enemy("fodder_dummy", back, 1),
 	], players)
 
-	check(scoring.score(screens_support) > scoring.score(pads_captain),
+	# TotalValue is a behavior — the comparison runs through a pick's cohort.
+	var ranked := scoring.score_pick([pads_captain, screens_support])
+	check(float(ranked[1]) > float(ranked[0]),
 			"a dying support outweighs marginal cover for a comfortable Captain")
 
 
@@ -565,10 +578,14 @@ func _engine_king_retreats_fully() -> void:
 	var deep := BoardData.COLS - 1
 	# The observed defect this pins: a mid-column king under real threat used to send a
 	# FODDER to the free back seat (or wander forward to soak share) because its health
-	# pool read as the cheapest sponge. KING SAFETY commits it (2026-07-31): under
-	# kit-pricing the king is barely dearer than a fodder, so this stayed deliberately RED
-	# from the repricing until the win-condition criterion landed — the king itself must
-	# take the deep slot. Mid-column is also exactly the leaper's landing zone.
+	# pool read as the cheapest sponge. The KING SAFETY judge commits it — its objection
+	# scales with the actual danger on the king, so lethal pressure drives the full
+	# retreat. RESTAGED under the judge (4 queens, was 2): the judge measures danger
+	# honestly, and at the old staging the king was only risking ~11% of its pool per
+	# turn — mild danger, where sheltering a fodder is legitimate play. The retreat
+	# mandate is a statement about REAL threat, so the board now carries it. (Observed
+	# turn shape: a fodder screens the front first, then the king walks all the way back.)
+	# Mid-column is also exactly the leaper's landing zone.
 	var captain := _enemy("captain_dummy", 1, 2)
 	var enemies: Array = [
 		captain,
@@ -576,7 +593,10 @@ func _engine_king_retreats_fully() -> void:
 		_enemy("fodder_dummy", 0, deep),
 		_enemy("fodder_dummy", 2, deep),
 	]
-	var players: Array = [_player("queen", 0, deep), _player("queen", 1, deep)]
+	var players: Array = [
+		_player("queen", 0, deep), _player("queen", 1, deep),
+		_player("queen", 2, deep), _player("queen", 1, 2),
+	]
 	var grids := _grids(enemies, players)
 
 	var engine := _seeded_engine()
@@ -1645,14 +1665,16 @@ func _idle_hand_shape() -> void:
 	check_eq(BoardScoring.idle_hand(stamped), 0.0,
 			"a hand of spells charges nothing — there is no body being withheld")
 
+	# PARKED (0..1 contract): idle_hand scores in plain counts, which the decision table
+	# cannot seat — so it holds NO seat in the stock scorer. The measure above stays whole
+	# for its later inspection; the fielding pressure it backed up is carried by the mana
+	# criterion (pinned by _engine_never_withholds_a_playable_unit and THE INVARIANT).
 	var idle_criteria: Array = BoardScoring.stock().criteria.filter(
 			func(c: BoardScoring.Criterion) -> bool: return c.id == "idle_hand")
-	check_eq(idle_criteria.size(), 1, "the criterion is in the stock character")
-	if not idle_criteria.is_empty():
-		check_eq((idle_criteria[0] as BoardScoring.Criterion).weight,
-				BoardScoring.IDLE_HAND_CRITERION_WEIGHT, "…at the harsh weight")
-		var charged := state.copy()
-		check(idle_criteria[0].score(charged) < 0.0, "…and it scores withholding as a loss")
+	check_eq(idle_criteria.size(), 0, "the parked criterion holds no seat in the stock character")
+	var charged := state.copy()
+	check(BoardScoring.IdleHand.new().score(charged) < 0.0,
+			"…but the mechanism still scores withholding as a loss when hand-seated")
 
 
 # The user's report in one board (2026-07-30: "the CPU keeps units in hand"): one mana, a
@@ -1681,90 +1703,30 @@ func _engine_never_withholds_a_playable_unit() -> void:
 		check(places[0]["inst"] == fodder, "…and it is the card that was being withheld")
 
 
-# The criterion has to CHANGE a decision, or it is decoration — and this one was decoration
-# for its first iteration without a single test noticing (cast/ability simulations rebuild
-# the board state from the simulated world, and the new fields weren't forwarded; see
-# CandidateApply._capture_back). So the criterion is A/B'd directly: the same pick scored
-# twice, once with the stock character and once with idle-hand's weight zeroed. If a change
-# to the scorer ever makes these two agree, the criterion has stopped doing anything.
+# PARKED (0..1 contract): idle_hand and protection — the two sides of the old A/B — are
+# both contract offenders and hold no seat, so the anti-decoration A/B that lived here is
+# retired with them. What this pins instead: the parking itself, in both directions — the
+# stock scorer seats NEITHER offender, and neither can sneak back in through a personality
+# that lists one. ⚠ When either is unparked (re-expressed on 0..1), an anti-decoration A/B
+# in the old shape (same pick scored with and without the criterion, on a knife-edge board)
+# must return with it — a green suite is not evidence a criterion bites.
 func _idle_hand_changes_a_decision() -> void:
-	var back := BoardData.ROWS - 1
-	var deep := BoardData.COLS - 1
-	# SINCE THE VALUATION SYSTEM a placement always ADDS total value (a fielded body is
-	# worth ≥ 0 however doomed), and the mana criterion argues for any spend — so on a
-	# stock scorer there is no board where the placement declines and the A/B would prove
-	# nothing. The two loud advocates are muted through a personality (their weights are
-	# dials, that is what dials are for), leaving the placement argued AGAINST by the
-	# protection charge on the fielded body and FOR by nothing but the idle-hand charge:
-	#   · body at protection weight 2 — the charge is exactly what tips the placement;
-	#   · at 60, standing there is so exposed that even the full charge cannot buy it,
-	#     which is the must-improve restraint still working.
-	var expected: Array = [
-		{"weight": 2.0, "with": "place", "without": "decline"},
-		{"weight": 60.0, "with": "decline", "without": "decline"},
-	]
-	for case: Dictionary in expected:
-		var w := float(case["weight"])
-		var enemies: Array = [_enemy("captain_dummy", back, deep)]
-		var players: Array = [_player("queen", 0, deep), _player("queen", 1, deep)]
-		var grids := _grids(enemies, players)
-		var fodder := unit("fodder_dummy")
-		fodder.owner = 1
-		var hand: Array = [fodder]
-		var state := BoardState.capture(grids[0], grids[1], 5)
-		state.enemy_mana_total = 1
-		state.enemy_mana_left = 1
-		state.hand_costs = [1]
-		state.hand_unit_costs = [1]
-		state.mana_spent_step = 0
-		var sim := _sim_for(enemies, players, hand)
-		var cands := CandidateMoves.placements(state, hand, 1)
-		cands.append_array(CandidateMoves.moves(state, {}))
-		var kept: Array = []
-		var cohort: Array = [state]
-		var achieved: Array = []
-		for cand: Dictionary in cands:
-			var next := CandidateApply.apply(state, cand, sim)
-			EnemyEngine._note_spend(next, cand)
-			kept.append(cand)
-			cohort.append(next)
-			achieved.append(int(cand["cost"]) + BoardScoring.spend_capacity(next))
-		var capacity := 0
-		for a: Variant in achieved:
-			capacity = maxi(capacity, int(a))
-		for s: BoardState in cohort:
-			s.mana_capacity_before = capacity
-			s.hand_budget_before = 1
-		var overrides := {"fodder": w}
-		# king_safety muted with the other advocates: a fielded body is cover for the
-		# staged captain, so unmuted it would argue FOR the placement and the A/B would
-		# no longer isolate idle-hand against protection.
-		var muted := {"id": "_mute", "traits": {"total_value": 0.0, "mana": 0.0,
-				"king_safety": 0.0}, "quirks": {}}
-		var with_it := BoardScoring.stock(overrides, EnemyPersonality.from_dict(muted))
-		var without := BoardScoring.stock(overrides, EnemyPersonality.from_dict(muted))
-		for c: BoardScoring.Criterion in without.criteria:
-			if c.id == "idle_hand":
-				c.weight = 0.0
-		# What the engine would DO with this scoring: the best candidate's kind, or
-		# "decline" when nothing beats the do-nothing baseline (the engine's own rule).
-		var verdict := func(scoring: BoardScoring) -> String:
-			var totals := scoring.score_pick(cohort)
-			var hi := -INF
-			var kind := ""
-			for i in kept.size():
-				if float(totals[i + 1]) > hi:
-					hi = float(totals[i + 1])
-					kind = String(kept[i]["kind"])
-			if hi <= float(totals[0]) + EnemyEngine.TIE_EPSILON:
-				return "decline"
-			return kind
-		check_eq(verdict.call(without), String(case["without"]),
-				"body at weight %.1f, criterion OFF — the scorer's own verdict" % w)
-		check_eq(verdict.call(with_it), String(case["with"]),
-				"body at weight %.1f, criterion ON — %s" % [w,
-				"the charge is what gets the body fielded" if String(case["with"]) == "place"
-				else "and a body that is pure loss can still be withheld"])
+	var stock_ids: Array = []
+	for c: BoardScoring.Criterion in BoardScoring.stock().criteria:
+		stock_ids.append(c.id)
+	check(not stock_ids.has("idle_hand"), "parked idle_hand holds no stock seat")
+	check(not stock_ids.has("protection"), "parked protection holds no stock seat")
+	check(not stock_ids.has("death_risk") and not stock_ids.has("harm"),
+			"the parked pre-valuation trio holds no stock seat")
+	# A personality that asks for a parked quirk does not get it seated either — parked
+	# means unseated for everyone, pending inspection, not opt-in.
+	var wants_parked := EnemyPersonality.from_dict({"id": "_p",
+			"quirks": {"death_risk": 1.0, "harm": 0.5}})
+	var seated: Array = []
+	for c: BoardScoring.Criterion in BoardScoring.stock({}, wants_parked).criteria:
+		seated.append(c.id)
+	check(not seated.has("death_risk") and not seated.has("harm"),
+			"a personality cannot seat a parked offender")
 
 
 # ── The refactor's closing promise: planning is a pure read ──────────────────────────
@@ -2140,41 +2102,53 @@ func _expectation_honors_determinism_switches() -> void:
 	check_eq(BoardScoring.crit_expect(u, 0.0), 1.0, "disabled crit is a neutral factor")
 
 
-# ── King safety: the win-condition criterion (user-designed 2026-07-31) ──────────────
+# ── King safety: the win-condition JUDGE ──────────────────────────────────────────────
 
-# Weight × the king's endangerment (1 − stamped persistence), negated — no tags, no
-# tables. The graded half of "the king must not die"; the absolute half is the engine's
-# categorical veto (a candidate that leaves the Captain dead is never selectable), which
-# _engine_never_kills_its_own_captain already pins.
+# The judge seat: full authority, no weight, contributes by OBJECTION (0..1) read off the
+# king's stamped endangerment — no tags, no tables. Its categorical objection to the
+# king's death IS the engine veto (which _engine_never_kills_its_own_captain pins).
 func _king_safety_shape() -> void:
 	var deep := BoardData.COLS - 1
-	var crit := BoardScoring.KingSafety.new()
+	var judge := BoardScoring.KingSafety.new()
 
-	# Same threat, two postures: the criterion reads the actual danger on the king, so a
-	# covered back-corner king scores safer than one standing alone on the front line.
+	# Same threat, two postures: the judge reads the actual danger on the king, so a
+	# covered back-corner king draws less objection than one standing alone up front.
 	var exposed := _state_with(
 			[_enemy("captain_dummy", 1, 0), _enemy("fodder_dummy", 0, deep)],
 			[_player("queen", 0, deep), _player("queen", 1, deep)])
 	var covered := _state_with(
 			[_enemy("captain_dummy", 1, deep), _enemy("fodder_dummy", 1, 0)],
 			[_player("queen", 0, deep), _player("queen", 1, deep)])
-	check(crit.score(covered) > crit.score(exposed),
-			"a covered king under threat reads safer than an exposed one")
+	check(judge.objection(covered) < judge.objection(exposed),
+			"a covered king under threat draws less objection than an exposed one")
+	check(not judge.categorical(exposed),
+			"danger short of death is never categorical — a living king still negotiates")
 
 	# Threat-scaled by construction: with nothing bearing down, posture is free — this is
-	# what leaves the approved moderate-threat advance alive while heavy threat drives the
-	# full retreat.
+	# what leaves the approved moderate-threat advance alive while lethal threat drives
+	# the full retreat.
 	var calm := _state_with([_enemy("captain_dummy", 1, 0)], [])
-	check_eq(crit.score(calm), 0.0, "an unthreatened king is fully safe — the criterion is silent")
+	check_eq(judge.objection(calm), 0.0, "an unthreatened king draws no objection")
 
-	# A king that DIED reads fully endangered (the engine's veto makes such a candidate
-	# unselectable anyway; the criterion still orders it honestly for dumps and hand-built
-	# scorers) — while a board that never staged a king has nothing to protect and stays
-	# silent, so kingless test fixtures carry no constant charge.
+	# A king that DIED draws the categorical objection (the veto, by arithmetic) — while
+	# a board that never staged a king has nothing to protect and stays silent, so
+	# kingless test fixtures carry no constant discount.
 	var dead := _state_with([_enemy("captain_dummy", 0, 0)], [])
 	var fallen: BoardState.UnitState = dead.units(1)[0]
 	dead.grid_of(1)[0][0] = null
 	dead.graveyard.append(fallen)
-	check_eq(crit.score(dead), -1.0, "a dead king reads fully endangered")
+	check_eq(judge.objection(dead), 1.0, "a dead king draws total objection")
+	check(judge.categorical(dead), "…and it is categorical — the veto is this judge")
 	var kingless := _state_with([_enemy("fodder_dummy", 0, 0)], [])
-	check_eq(crit.score(kingless), 0.0, "a board that never staged a king is silent")
+	check_eq(judge.objection(kingless), 0.0, "a board that never staged a king is silent")
+	check(not judge.categorical(kingless), "…and never vetoed")
+
+	# The living-king objection is CAPPED below 1 (GRADED_MAX): a cornered king chooses
+	# among bad options instead of vetoing them all — only death itself is absolute.
+	var mob: Array = []
+	for r in BoardData.ROWS:
+		mob.append(_player("queen", r, deep))
+	var doomed := _state_with([_enemy("fodder_dummy", 0, 0), _enemy("captain_dummy", 0, 1)], mob)
+	BoardScoring.run_valuation(doomed)
+	check(judge.objection(doomed) <= BoardScoring.KingSafety.GRADED_MAX + 0.0001,
+			"a living king's objection never reaches the categorical ceiling")

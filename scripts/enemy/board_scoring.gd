@@ -23,30 +23,23 @@ extends RefCounted
 # NEGATIVE) and is CANON: any eval that needs to know what something is worth reads the
 # stamped values, never its own arithmetic.
 #
-# The stock criteria, softly combined:
-#   0. KING SAFETY (loud): the win condition's own criterion — how endangered the own king
-#      is, read straight off the valuation stamp (1 − persistence). The graded half of a
-#      two-part statement whose absolute half is the engine's categorical veto (a candidate
-#      that leaves the Captain dead is never selectable, enemy_engine._pick_best).
-#   1. TOTAL VALUE (dominant): the stamped value_total, min-max normalized over the pick's
-#      cohort (worst 0, best 1). One number for fielding, buffing, healing, hurting the
-#      player, and self-preservation — "my unit is about to die" is my own value dropping,
-#      "I hurt their unit" is their negative contribution shrinking.
-#   2. BARE EXPOSURE (small): the deliverable-1 criterion, kept as the quiet entry so
-#      formation-building never dies even when the threat measurements go silent.
-#   3. DAMAGE OUTPUT (small, positive): aggression as expression — the first BEHAVIOR
-#      criterion (EVAL_CRITERIA_BRIEF.md): cohort-relative, scored through score_pick.
-#   4. MANA OPTIMIZATION (loud): use your mana — spending counts, waste doesn't. THE
+# The stock table (combined through the decision table — see peer_shares/judge_factor):
+#   THE JUDGE — KING SAFETY: the win condition's seat. Full authority, no weight dial;
+#      objects in proportion to the own king's endangerment and categorically to his
+#      death (the veto is this judge's arithmetic, not an engine special case).
+#   PEERS, each with a claim on [0,1] that means what it says:
+#   1. TOTAL VALUE (1.0, dominant): the stamped value_total, min-max normalized over the
+#      pick's cohort (worst 0, best 1). One number for fielding, buffing, healing,
+#      hurting the player, and self-preservation.
+#   2. MANA OPTIMIZATION (0.6): use your mana — spending counts, waste doesn't. THE
 #      fielding pressure: withholding playable units is leaving spendable mana unspent.
-#   5. READINESS (moderate): the OTHER resource a play spends — a tap. Keeps "don't tap"
-#      a live option against 4's pressure to spend mana on abilities.
-#   6. IDLE HAND (harsh): a choice that spends NO mana while the CPU is holding a unit it
-#      could field is charged the full weight per withheld body — a direct reading of the
-#      withheld cards themselves, never an inference from the mana pool. Spending mana
-#      waives it: the target is idleness, not the choice between two paid plays.
-# PARKED (opt-in quirks, never in the stock scorer): DEATH RISK, EXPECTED HARM, BOARD
-# VALUE — superseded by the valuation system but kept whole; a personality that lists one
-# as a quirk still gets it.
+#   3. READINESS (0.1): the OTHER resource a play spends — a tap. Keeps "don't tap"
+#      a live option against 2's pressure to spend mana on abilities.
+#   4. DAMAGE OUTPUT (0.1, the stock quirk): aggression as expression — cohort-relative
+#      BEHAVIOR, scored through score_pick.
+# PARKED — 0..1 contract offenders, unseated pending inspection (they score in unbounded
+# sums or plain counts): PROTECTION EXPOSURE, IDLE HAND, DEATH RISK, EXPECTED HARM.
+# BOARD VALUE stays an opt-in quirk (compliant, superseded by TotalValue).
 # Threat includes the player's OPEN MANA at 1:1 (MANA_THREAT_RATE), so risk and harm are
 # live from turn one — unspent mana is damage the player can still convert.
 #
@@ -56,9 +49,16 @@ extends RefCounted
 # weights and know nothing about the word "fodder". Tags are never load-bearing — an untagged
 # unit falls to the "default" entry and is handled correctly.
 
-# The criteria this scorer runs. Total score is the weighted sum; HIGHER IS BETTER (a "goal
-# alignment" value). New criteria are entries here — nothing outside this list changes.
+# The PEER criteria this scorer runs, blended through the decision table (peer_shares
+# below); HIGHER IS BETTER. Every peer must score on 0..1 — an eval that cannot is a
+# contract offender and gets parked, never seated. New criteria are entries here.
 var criteria: Array = []
+
+# The JUDGES: full-authority evals that contribute by objection — a candidate's total is
+# the peer verdict × every judge's (1 − objection). Win-condition seats only.
+var judges: Array = []
+
+var _shares_cache: Array = []   # lazily computed from the peers' weights, fixed per fight
 
 # The fight's personality as the valuation pass's price list (see run_valuation). Set by
 # stock(); null = the global config alone (hand-built scorers in tests).
@@ -121,24 +121,8 @@ const MANA_THREAT_RATE := 1.0
 # character cares about the state of the world", which is most of what a character is.
 const TOTAL_VALUE_CRITERION_WEIGHT := 1.0
 
-# How loud the KING'S OWN SAFETY is — the win-condition criterion. "The king must not die"
-# has no other carrier under kit pricing (the king prices barely dearer than a fodder, so
-# a heavy-threat retreat reads as a net loss without it): weight × the king's endangerment
-# (1 − persistence off the valuation stamp), negated. THREAT-SCALED by construction — the
-# same charge that forces the heavy-threat retreat stays near zero on a calm board, which
-# the threat-blind ProtectionExposure could never express. The ABSOLUTE half of the
-# statement is not here: a candidate that leaves the Captain dead is categorically vetoed
-# in enemy_engine._pick_best, whatever it scores — this weight only prices the GRADED
-# danger short of death.
-#
-# 2.275 is the midpoint of a NARROW swept window, [2.25, 2.30]:
-#   · below 2.25 the heavy-threat king loses its own retreat pick to a fodder shuffling
-#     into the free back seat (TotalValue pays more for sheltering the fodder);
-#   · at 2.35+ the tanks fixture's king stops one column short of the front — safety
-#     starts outbidding the approved damage-sharing walk.
-# Knife-edge because both pinned behaviours are heavy-threat boards pulling opposite ways;
-# a personality that wants a cowardly or reckless king should dial this, not the const.
-const KING_SAFETY_CRITERION_WEIGHT := 2.275
+# (King safety carries no weight constant: it is the JUDGE — full authority, fixed. Its
+# contribution is controlled by its scoring rule; see the KingSafety class.)
 
 # PARKED (opt-in quirk default, superseded by TotalValue). Board value: the arbitration
 # dial between growing the battlefield (fielding, buffing, hurting the player) and
@@ -256,31 +240,34 @@ static func judge_factor(objections: Array) -> float:
 # but the criterion dumps stay honest about who is in the room).
 static func stock(weight_overrides: Dictionary = {}, personality: EnemyPersonality = null) -> BoardScoring:
 	var who := personality if personality != null else EnemyPersonality.stock()
-	var weights := STOCK_SURVIVAL_WEIGHTS.duplicate()
-	for key: String in who.survival_weights:
-		weights[key] = float(who.survival_weights[key])
-	for key: String in weight_overrides:
-		weights[key] = float(weight_overrides[key])
+	var weights := merged_survival_weights(who, weight_overrides)
 	var s := BoardScoring.new()
 	s.pricer = who
 	for entry: Dictionary in EnemyPersonality.TRAITS:
 		var trait_id := String(entry["id"])
+		if bool(entry.get("parked", false)):
+			continue   # contract offenders never get a seat (see EnemyPersonality.TRAITS)
 		if not bool(entry["core"]) and not who.has_quirk(trait_id):
+			continue
+		if bool(entry.get("judge", false)):
+			var j := _judge_for(trait_id, who)
+			if j != null:
+				s.judges.append(j)
 			continue
 		var c := _criterion_for(trait_id, weights, who)
 		if c == null:
 			continue
-		c.weight = who.weight_for(trait_id)
+		c.weight = clampf(who.weight_for(trait_id), 0.0, 1.0)
 		s.criteria.append(c)
 	return s
 
 
 # Criterion id → a fresh instance. The one place the scorer's vocabulary is enumerated: a new
-# criterion is a case here plus an entry in EnemyPersonality.TRAITS.
+# criterion is a case here plus an entry in EnemyPersonality.TRAITS. The parked offenders keep
+# their arms so hand-built scorers (tests, probes) can still seat them knowingly.
 static func _criterion_for(trait_id: String, weights: Dictionary, who: EnemyPersonality) -> Criterion:
 	match trait_id:
 		"total_value":   return TotalValue.new(who)
-		"king_safety":   return KingSafety.new(who)
 		"death_risk":    return DeathRisk.new(weights)
 		"harm":          return ExpectedHarm.new(weights)
 		"protection":    return ProtectionExposure.new(weights)
@@ -293,15 +280,67 @@ static func _criterion_for(trait_id: String, weights: Dictionary, who: EnemyPers
 	return null
 
 
-# Scores one state alone. BEHAVIOR criteria are silent here (their base score() is 0):
+static func _judge_for(trait_id: String, who: EnemyPersonality) -> Judge:
+	match trait_id:
+		"king_safety": return KingSafety.new(who)
+	push_error("BoardScoring: no judge for trait '%s'" % trait_id)
+	return null
+
+
+# The two-layer survival table: the personality's standing protect ordering over the stock
+# table, with the encounter's own entries amending it per fight. No SEATED criterion
+# consumes it while the survival-weight evals are parked (0..1 offenders); the merge is
+# kept — and pinned — whole for their return.
+static func merged_survival_weights(who: EnemyPersonality, overrides: Dictionary) -> Dictionary:
+	var weights := STOCK_SURVIVAL_WEIGHTS.duplicate()
+	for key: String in who.survival_weights:
+		weights[key] = float(who.survival_weights[key])
+	for key: String in overrides:
+		weights[key] = float(overrides[key])
+	return weights
+
+
+# Scores one state alone: the peers' verdicts blended by their table shares, shrunk by
+# every judge's objection. BEHAVIOR criteria are silent here (their base score() is 0):
 # expression is relative to a pick's alternatives, which a lone state does not have — a
 # decision's cohort goes through score_pick instead.
 func score(state: BoardState) -> float:
 	_value(state)
+	var shares := _shares()
 	var total := 0.0
-	for c: Criterion in criteria:
-		total += c.weight * c.score(state)
-	return total
+	for i in criteria.size():
+		total += float(shares[i]) * (criteria[i] as Criterion).score(state)
+	return _survives(state) * total
+
+
+# The peers' table shares, computed once — the weights are fixed for the fight.
+func _shares() -> Array:
+	if _shares_cache.size() != criteria.size():
+		var ws: Array = []
+		for c: Criterion in criteria:
+			ws.append(c.weight)
+		_shares_cache = BoardScoring.peer_shares(ws)
+	return _shares_cache
+
+
+# What the judges leave of this state's total, 0..1 (see judge_factor).
+func _survives(state: BoardState) -> float:
+	if judges.is_empty():
+		return 1.0
+	var objections: Array = []
+	for j: Judge in judges:
+		objections.append(j.objection(state))
+	return BoardScoring.judge_factor(objections)
+
+
+# TRUE when a judge objects categorically — this state is not an option at all, whatever
+# its virtues. The engine drops such candidates before the cohort forms, so a forbidden
+# outcome never anchors a behavior's normalization either.
+func vetoes(state: BoardState) -> bool:
+	for j: Judge in judges:
+		if j.categorical(state):
+			return true
+	return false
 
 
 # THE VALUATION PASS RUNS BEFORE THE EVALS: every state entering
@@ -326,18 +365,24 @@ func score_pick(states: Array) -> Array:
 	for s: BoardState in states:
 		_value(s)   # the whole pass per option, before any eval runs — see _value
 		totals.append(0.0)
-	for c: Criterion in criteria:
+	var shares := _shares()
+	for i_c in criteria.size():
+		var c := criteria[i_c] as Criterion
+		var share := float(shares[i_c])
 		var b := c as Behavior
 		if b == null:
 			for i in states.size():
-				totals[i] = float(totals[i]) + c.weight * c.score(states[i])
+				totals[i] = float(totals[i]) + share * c.score(states[i])
 			continue
 		var raws: Array = []
 		for s: BoardState in states:
 			raws.append(b.measure(s))
 		var norm := b.normalized(raws)
 		for i in states.size():
-			totals[i] = float(totals[i]) + b.weight * float(norm[i])
+			totals[i] = float(totals[i]) + share * float(norm[i])
+	# The judges speak last, per candidate: what they seize, they strike out.
+	for i in states.size():
+		totals[i] = float(totals[i]) * _survives(states[i])
 	return totals
 
 
@@ -466,40 +511,68 @@ class BoardValue:
 		return Behavior.minmax(raws)
 
 
-# The win condition's own criterion: scores worse the more endangered the own king is —
-# weight × (1 − persistence), negated, nothing else. A GOAL on 0..1, deliberately the
-# simplest criterion in the scorer: no tags, no tables, no cohort machinery. Endangerment
-# is the valuation stamp's refined persistence, so this never runs its own arithmetic —
-# the stamp is canon. A state with no living own king reads as fully endangered (−1): the
-# engine's categorical veto (enemy_engine._pick_best) makes such a candidate unselectable
-# anyway, but the criterion must still order it honestly for hand-built scorers and
-# criterion dumps.
+# A JUDGE seat at the decision table: full authority, no weight, contributes by
+# OBJECTION — 0 = content, 1 = categorical NO. A judge's objection multiplies a
+# candidate's whole total away (score/score_pick), and a categorical objection removes
+# the candidate from the pick entirely (vetoes / enemy_engine._pick_best). Reserved for
+# win conditions; a judge's contribution is controlled by its scoring rule, never a dial.
+class Judge:
+	extends RefCounted
+
+	var id: String = ""
+
+	# How strongly this judge objects to the state, 0..1. Override.
+	func objection(_state: BoardState) -> float:
+		return 0.0
+
+	# TRUE when the objection is categorical — the state is not an option at all. Kept
+	# separate from objection() so the engine can veto without pricing the state first.
+	func categorical(_state: BoardState) -> bool:
+		return false
+
+
+# The win condition's judge: objects in proportion to the own king's endangerment
+# (1 − persistence, read off the valuation stamp — never its own arithmetic), and
+# categorically to the king's death. Deliberately the simplest seat in the scorer: no
+# tags, no tables, no cohort machinery.
+#
+# The scoring rule (where this judge's character lives, per the decision-table design):
+#   · dead king → objection 1, categorical — the veto, by arithmetic;
+#   · never-staged king (hand-built boards) → 0: no win condition to protect, silent —
+#     without the distinction every kingless fixture carries a constant discount;
+#   · living king → its endangerment, CAPPED below 1 (GRADED_MAX): danger short of death
+#     is never categorical, so a doomed king still prefers the least-bad line instead of
+#     freezing when every candidate looks fatal. Only death itself is absolute.
 class KingSafety:
-	extends Criterion
+	extends Judge
+
+	# The ceiling on objection to a LIVING king's danger. The gap to 1 is what keeps a
+	# cornered king choosing among bad options rather than vetoing them all.
+	const GRADED_MAX := 0.95
 
 	# The fight's personality — needed only for the lazy valuation fallback below, so a
-	# criterion constructed alone (tests, dumps) reads the same canon stamp.
+	# judge constructed alone (tests, dumps) reads the same canon stamp.
 	var pricer: EnemyPersonality = null
 
 	func _init(p_pricer: EnemyPersonality = null) -> void:
 		id = "king_safety"
 		pricer = p_pricer
 
-	func score(state: BoardState) -> float:
+	func objection(state: BoardState) -> float:
 		var king := state.captain(1)
 		if king == null:
-			# A king that DIED reads fully endangered; a board that never staged one
-			# (hand-built test boards) has no win condition to protect and stays silent —
-			# without the distinction every kingless staged board carried a constant
-			# charge that broke absolute-score assertions while cancelling out of every
-			# real ranking.
-			for dead: BoardState.UnitState in state.graveyard:
-				if dead.owner == 1 and dead.is_king:
-					return -1.0
-			return 0.0
+			return 1.0 if categorical(state) else 0.0
 		if not state.valued or state.valued_by != pricer:
 			BoardScoring.run_valuation(state, pricer)
-		return -(1.0 - king.persistence)
+		return minf(1.0 - king.persistence, GRADED_MAX)
+
+	func categorical(state: BoardState) -> bool:
+		if state.captain(1) != null:
+			return false
+		for dead: BoardState.UnitState in state.graveyard:
+			if dead.owner == 1 and dead.is_king:
+				return true
+		return false
 
 
 # THE VALUATION SYSTEM'S ONE CRITERION: the stamped value_total — every unit on both

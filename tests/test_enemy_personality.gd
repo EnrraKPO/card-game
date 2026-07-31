@@ -52,21 +52,31 @@ func _personality(d: Dictionary) -> EnemyPersonality:
 
 
 # The whole safety property in one test: the no-personality scorer is the const-defined
-# stock character — every core trait plus the stock quirks, and NONE of the parked trio
-# (death risk / harm / board value are opt-in quirks since the valuation system,
-# 2026-07-30; a null personality must not resurrect them).
+# stock character — every seatable core trait as a peer, the stock quirk, the win
+# condition's judge, and NONE of the parked offenders.
 func _stock_is_the_old_engine() -> void:
 	var built := _built(null)
-	var want: Array = EnemyPersonality.core_ids() + EnemyPersonality.stock_quirks().keys()
+	var want: Array = []
+	for entry: Dictionary in EnemyPersonality.TRAITS:
+		if bool(entry.get("parked", false)) or bool(entry.get("judge", false)):
+			continue
+		var id := String(entry["id"])
+		if bool(entry["core"]) or EnemyPersonality.stock_quirks().has(id):
+			want.append(id)
 	check_eq(built.size(), want.size(),
-			"with no personality the scorer runs every core trait and the stock quirk")
+			"with no personality the scorer seats every unparked core trait and the stock quirk")
 	var defaults := EnemyPersonality.stock_weights()
 	for id: String in want:
 		check(built.has(id), "criterion '%s' is in the stock scorer" % id)
 		check(absf(float(built.get(id, -1.0)) - float(defaults[id])) < 0.00001,
 				"…at its code-default weight (%s = %.3f)" % [id, float(defaults[id])])
-	for parked: String in ["death_risk", "harm", "board_value"]:
+	for parked: String in ["death_risk", "harm", "protection", "idle_hand"]:
 		check(not built.has(parked), "parked criterion '%s' stays out of the stock scorer" % parked)
+	check(not built.has("board_value"), "the board-value quirk is not in the stock character")
+	var scoring := BoardScoring.stock()
+	check_eq(scoring.judges.size(), 1, "the stock scorer seats exactly one judge")
+	check_eq((scoring.judges[0] as BoardScoring.Judge).id, "king_safety",
+			"…the win condition's — king safety sits above the peer table, not at it")
 
 
 # An encounter naming a personality that no longer exists must still fight.
@@ -84,19 +94,37 @@ func _unknown_id_degrades_to_stock() -> void:
 	EnemyPersonality.set_all([])
 
 
-# Core traits are the engine's working parts: a personality re-prices them, never drops them.
+# Core traits are the engine's working parts: a personality re-prices them, never drops
+# them. Parked cores hold no seat for anyone, and the judge sits above the peer table.
 func _core_traits_are_always_present() -> void:
-	var bare := _built(_personality({"id": "bare", "traits": {}, "quirks": {}}))
-	for id: String in EnemyPersonality.core_ids():
+	var bare_scoring := BoardScoring.stock({}, _personality({"id": "bare", "traits": {}, "quirks": {}}))
+	var bare: Dictionary = {}
+	for c: BoardScoring.Criterion in bare_scoring.criteria:
+		bare[c.id] = c.weight
+	for entry: Dictionary in EnemyPersonality.TRAITS:
+		if not bool(entry["core"]) or bool(entry.get("parked", false)):
+			continue
+		var id := String(entry["id"])
+		if bool(entry.get("judge", false)):
+			var found := false
+			for j: BoardScoring.Judge in bare_scoring.judges:
+				found = found or j.id == id
+			check(found, "the '%s' judge presides even for a personality that states nothing" % id)
+			continue
 		check(bare.has(id), "core trait '%s' is present even in a personality that states nothing" % id)
 
 
 func _blank_core_trait_keeps_the_stock_weight() -> void:
-	var p := _personality({"id": "loud_mana", "traits": {"mana": 2.0}, "quirks": {}})
+	var p := _personality({"id": "loud_mana", "traits": {"mana": 0.9}, "quirks": {}})
 	var built := _built(p)
-	check_eq(float(built.get("mana", -1.0)), 2.0, "an authored core weight is what the criterion runs at")
-	check(absf(float(built.get("idle_hand", -1.0)) - BoardScoring.IDLE_HAND_CRITERION_WEIGHT) < 0.00001,
+	check_eq(float(built.get("mana", -1.0)), 0.9, "an authored core weight is what the criterion runs at")
+	check(absf(float(built.get("readiness", -1.0)) - BoardScoring.READINESS_CRITERION_WEIGHT) < 0.00001,
 			"…and every trait it did NOT mention keeps the stock weight")
+	# The weight contract is [0,1] — there is no "overyes". An out-of-range authored value
+	# clamps at the seat rather than amplifying (old-paradigm personalities keep working,
+	# at the ceiling).
+	var loud := _built(_personality({"id": "shouty", "traits": {"mana": 2.0}, "quirks": {}}))
+	check_eq(float(loud.get("mana", -1.0)), 1.0, "an over-1 authored weight clamps to 1")
 
 
 # The one mechanical consequence of the core/quirk split.
@@ -112,24 +140,23 @@ func _quirks_are_opt_in() -> void:
 
 # Two layers of survival weights, and which one wins. The personality states the character's
 # standing protect ordering; the encounter's own table is the per-fight amendment on top.
-# Read through DeathRisk, which the coward opts back in as a quirk — this doubles as the pin
-# that a PARKED criterion is still whole for any personality that wants it.
+# The table's consumers are all PARKED (0..1 offenders), so the merge is pinned through
+# merged_survival_weights directly — the mechanism stays whole for their return.
 func _survival_weights_layer_encounter_over_personality() -> void:
 	var p := _personality({"id": "coward", "survival_weights": {"captain": 2.5, "fodder": 0.4},
-			"quirks": {"death_risk": 1.0}})
-	var scoring := BoardScoring.stock({"captain": 1.0}, p)
-	var risk: BoardScoring.DeathRisk = null
-	for c: BoardScoring.Criterion in scoring.criteria:
-		if c is BoardScoring.DeathRisk:
-			risk = c
-	check(risk != null, "the parked death-risk criterion is built when a quirk asks for it")
-	check_eq(float(risk.survival_weights.get("captain", -1.0)), 1.0,
+			"quirks": {}})
+	var merged := BoardScoring.merged_survival_weights(p, {"captain": 1.0})
+	check_eq(float(merged.get("captain", -1.0)), 1.0,
 			"the ENCOUNTER's survival weight overrides the personality's for the same key")
-	check_eq(float(risk.survival_weights.get("fodder", -1.0)), 0.4,
+	check_eq(float(merged.get("fodder", -1.0)), 0.4,
 			"…while the personality's other entries stand")
-	check_eq(float(risk.survival_weights.get("support", -1.0)),
+	check_eq(float(merged.get("support", -1.0)),
 			float(BoardScoring.STOCK_SURVIVAL_WEIGHTS["support"]),
 			"…and anything neither of them mentions keeps the stock table's value")
+	# The parked mechanism still consumes it when hand-seated (tests, probes, its return).
+	var risk := BoardScoring.DeathRisk.new(merged)
+	check_eq(float(risk.survival_weights.get("captain", -1.0)), 1.0,
+			"a hand-seated DeathRisk reads the merged table")
 
 
 # The absent-vs-empty distinction, made once in from_dict: a hand-written personality that
@@ -143,30 +170,37 @@ func _absent_quirks_key_inherits_stock() -> void:
 			"…while an explicitly EMPTY quirks object means exactly what it says")
 
 
-# The anti-decoration pin: a personality has to be able to change what the CPU does. Scored
-# through the real scorer on one staged position — a wounded ally in danger next to an idle
-# hand — a fearful character and a greedy one must not agree.
+# The anti-decoration pin: a personality has to be able to change what the CPU does. One
+# pick, two candidates — one SPENDS mana on a modest outcome, one holds a richer board and
+# spends nothing. A spender character (mana loud, worth quiet) and a hoarder character
+# (worth loud, mana quiet) must order them OPPOSITE ways, through the real score_pick.
 func _personality_changes_a_decision() -> void:
-	var state := _staged_state()
-	# The fearful character opts the parked death-risk quirk back in at full voice; the
-	# greedy one runs the stock core and shouts about the idle hand instead.
-	var fearful := BoardScoring.stock({}, _personality({"id": "fearful",
-			"traits": {"idle_hand": 0.1}, "quirks": {"death_risk": 3.0}}))
-	var greedy := BoardScoring.stock({}, _personality({"id": "greedy",
-			"traits": {"idle_hand": 3.0}, "quirks": {}}))
-	var fear_score := fearful.score(state)
-	var greed_score := greedy.score(state)
-	check(absf(fear_score - greed_score) > 0.5,
-			"the same position reads very differently to a fearful character than to a greedy one "
-			+ "(%.3f vs %.3f) — the weights reach the score, they are not decoration"
-			% [fear_score, greed_score])
+	var spend := _staged_state()
+	spend.mana_spent_step = 1
+	var hold := _staged_state()
+	hold.mana_spent_step = 0
+	# The held line keeps a genuinely richer board (a second healthy body).
+	var extra := BoardState.UnitState.new()
+	extra.card_id = "dps_dummy"
+	extra.owner = 1
+	extra.health = 6
+	extra.max_health = 6
+	extra.attack = 2
+	extra.strikes = 1
+	extra.speed = 1
+	hold.place(extra, 1, 0)
 
-	# And the ordering of the two charges is inverted between them, which is the behaviour the
-	# weights are supposed to buy: fear dominated by the dying unit, greed by the idle hand.
-	var no_hand := _staged_state()
-	no_hand.hand_unit_costs = []
-	check(greedy.score(no_hand) - greed_score > fearful.score(no_hand) - fear_score,
-			"emptying the hand is worth more to the greedy character than to the fearful one")
+	var spender := BoardScoring.stock({}, _personality({"id": "spender",
+			"traits": {"mana": 1.0, "total_value": 0.05}, "quirks": {}}))
+	var hoarder := BoardScoring.stock({}, _personality({"id": "hoarder",
+			"traits": {"mana": 0.02, "total_value": 1.0}, "quirks": {}}))
+	var s_totals := spender.score_pick([spend, hold])
+	var h_totals := hoarder.score_pick([spend, hold])
+	check(float(s_totals[0]) > float(s_totals[1]),
+			"the spender character rates the paid line above the richer held one")
+	check(float(h_totals[1]) > float(h_totals[0]),
+			"…and the hoarder rates them the other way around — the weights reach the "
+			+ "decision, they are not decoration")
 
 
 # Eval PARAMETERS are per-fight too, not just eval weights (user call 2026-07-30): a

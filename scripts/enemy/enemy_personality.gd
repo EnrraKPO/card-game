@@ -50,18 +50,20 @@ const DEFAULT_ID := "default"
 # in BoardScoring._criterion_for).
 const TRAITS: Array = [
 	{"id": "total_value", "core": true},
-	{"id": "king_safety", "core": true},
-	{"id": "protection", "core": true},
+	# The JUDGE seat (decision-table contract, board_scoring.gd): full authority, fixed —
+	# a judge has no weight dial; its contribution is controlled by its scoring rule.
+	{"id": "king_safety", "core": true, "judge": true},
 	{"id": "mana", "core": true},
 	{"id": "readiness", "core": true},
-	{"id": "idle_hand", "core": true},
 	{"id": "damage_output", "core": false},
-	# PARKED: the pre-valuation-system trio, out of the stock character but mechanically
-	# whole — a personality that lists one as a quirk still gets the criterion, weights
-	# and all.
-	{"id": "death_risk", "core": false},
-	{"id": "harm", "core": false},
 	{"id": "board_value", "core": false},
+	# PARKED as 0..1 CONTRACT OFFENDERS (user ruling 2026-07-31): these score outside the
+	# 0..1 range (unbounded sums / plain counts), which the decision table cannot seat.
+	# Mechanism kept whole for later inspection; stock() never constructs them.
+	{"id": "protection", "core": true, "parked": true},
+	{"id": "idle_hand", "core": true, "parked": true},
+	{"id": "death_risk", "core": false, "parked": true},
+	{"id": "harm", "core": false, "parked": true},
 ]
 
 
@@ -72,7 +74,7 @@ const TRAITS: Array = [
 static func stock_weights() -> Dictionary:
 	return {
 		"total_value": BoardScoring.TOTAL_VALUE_CRITERION_WEIGHT,   # the reference scale
-		"king_safety": BoardScoring.KING_SAFETY_CRITERION_WEIGHT,
+		# king_safety has no entry: it is a JUDGE — full authority, no weight dial.
 		"death_risk": 1.0,   # parked; the old reference scale, kept for opting back in
 		"harm": BoardScoring.HARM_CRITERION_WEIGHT,
 		"protection": BoardScoring.EXPOSURE_CRITERION_WEIGHT,

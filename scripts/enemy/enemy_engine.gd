@@ -77,7 +77,6 @@ func decide_actions(hand: Array, player_grid: Array, enemy_grid: Array, mana: in
 			state.hand_unit_costs.append(int(inst.get_attribute("cost")))
 	var moved: Dictionary = {}   # CardInstance -> true once repositioned this turn
 	var actions: Array = []
-	var had_captain := state.captain(1) != null
 	# The per-turn simulation context (see CandidateApply): the live world casts copy, and
 	# the accepted candidates a copy must replay to become the working world. `accepted`
 	# grows AFTER each acceptance — a candidate never replays itself.
@@ -99,7 +98,7 @@ func decide_actions(hand: Array, player_grid: Array, enemy_grid: Array, mana: in
 		cands.append_array(CandidateMoves.abilities(state, remaining))
 		if cands.is_empty():
 			break
-		var best := _pick_best(cands, state, scoring, had_captain, sim)
+		var best := _pick_best(cands, state, scoring, sim)
 		# The do-nothing baseline is scored INSIDE the same cohort (_pick_best puts the
 		# current state first), so behavior criteria compare "act" and "decline" in the
 		# same currency instead of inflating every candidate against a behavior-blind
@@ -141,16 +140,15 @@ func decide_actions(hand: Array, player_grid: Array, enemy_grid: Array, mana: in
 # Returns { "cand": Dictionary, "score": float, "current": float } — an empty cand at
 # -INF when every candidate was vetoed, which the caller reads as "nothing worth doing".
 #
-# THE ONE CATEGORICAL VETO: a candidate that leaves the Captain dead is never selectable,
-# whatever it scores. Losing the Captain is losing the fight (combat_board.any_king_dead),
-# and no arrangement of the survivors is worth it — that is a different KIND of statement
-# from the weighted trade-offs in the criteria, so it is enforced here rather than priced
-# there. (Deliberately not a general "never let an own unit die": sacrificing a cheap body
-# is a legitimate play, and the graveyard term prices those honestly.) A phase-change boss
+# CATEGORICAL VETOES BELONG TO THE JUDGES (BoardScoring.vetoes): a candidate a judge
+# categorically objects to — today, one that leaves the Captain dead — is not an option
+# at all. Dropped here, before the cohort forms, so a forbidden outcome never anchors a
+# behavior's normalization. (Deliberately not a general "never let an own unit die":
+# sacrificing a cheap body is a legitimate play, priced honestly. A phase-change boss
 # that replaces its own Captain is unaffected — decision 13b fires those from a concealed
-# container, never as an action the CPU chooses.
+# container, never as an action the CPU chooses.)
 func _pick_best(cands: Array, state: BoardState, scoring: BoardScoring,
-		had_captain: bool = true, sim: Dictionary = {}) -> Dictionary:
+		sim: Dictionary = {}) -> Dictionary:
 	var kept: Array = []          # candidates that survive the vetoes, in order
 	var cohort: Array = [state]   # entry 0 is the do-nothing baseline
 	# The baseline is "spend nothing further this pick" — whatever the last accepted
@@ -159,7 +157,7 @@ func _pick_best(cands: Array, state: BoardState, scoring: BoardScoring,
 	var achieved: Array = []   # per kept candidate: the mana its LINE of play consumes
 	for cand: Dictionary in cands:
 		var next := CandidateApply.apply(state, cand, sim)
-		if had_captain and next.captain(1) == null:
+		if scoring.vetoes(next):
 			continue
 		# The no-op legality rule (EVAL_CRITERIA_BRIEF.md): a cast whose EFFECT changes
 		# nothing is not a candidate — first case caught: heals at full health. Without
