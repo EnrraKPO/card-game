@@ -47,3 +47,6 @@ __pycache__/
 
 # Local launch config (debug mode switch, seeded by DebugConfig) - per-machine, never committed
 /debug.json
+
+# Combat log dumps (see scripts/combat_log.gd) - per-session scratch, never committed
+/debugLogs/

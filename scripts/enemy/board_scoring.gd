@@ -101,6 +101,20 @@ const STOCK_SURVIVAL_WEIGHTS := {
 # formation instinct alive on quiet boards, not to compete with actual mortal danger.
 const EXPOSURE_CRITERION_WEIGHT := 0.15
 
+# How loud the SEATING ORDER is (the Formation criterion — the 0..1-legal re-expression of
+# the instinct parked ProtectionExposure carried). Low by design: it is a geometric PRIOR,
+# not a reading of the fight, and the damage model outranks it wherever the damage model
+# can see anything at all. At 0.1 it claims ~5% of the decision — decisive only where the
+# real criteria are indifferent (the case it was built for was a 0.0001 gap), never enough
+# to outvote one that is not. Toward 0.3 for a character that fusses over its formation; at
+# 1.0 it would trade real value for tidiness.
+const FORMATION_CRITERION_WEIGHT := 0.1
+
+# Two prices closer than this are the SAME price: the chain grades that link as equals
+# protecting each other instead of letting float noise pick a pecking order between six
+# identical fodders (an enemy deck is mostly duplicates).
+const FORMATION_EPSILON := 0.0001
+
 # PARKED (opt-in quirk default; death risk's reference weight 1.0 lives in
 # EnemyPersonality.stock_weights). Expected HARM: a unit being worn down matters even when
 # it will not die, weighted by the same survival table. Half the death criterion because
@@ -268,6 +282,7 @@ static func stock(weight_overrides: Dictionary = {}, personality: EnemyPersonali
 static func _criterion_for(trait_id: String, weights: Dictionary, who: EnemyPersonality) -> Criterion:
 	match trait_id:
 		"total_value":   return TotalValue.new(who)
+		"formation":     return Formation.new(who)
 		"death_risk":    return DeathRisk.new(weights)
 		"harm":          return ExpectedHarm.new(weights)
 		"protection":    return ProtectionExposure.new(weights)
@@ -362,28 +377,57 @@ func _value(state: BoardState) -> void:
 # same currency. Returns one total per entry, same order.
 func score_pick(states: Array) -> Array:
 	var totals: Array = []
+	for t: Dictionary in pick_terms(states):
+		totals.append(float(t["total"]))
+	return totals
+
+
+# The same decision, with every term KEPT instead of summed — what the combat log's
+# reasoning dump prints (CombatLog). One implementation feeds both, so an explanation can
+# never drift from the score it claims to explain: score_pick is this, folded.
+#
+# Per state: { "total": float, "survives": float,
+#              "peers": [{ id, weight, share, score, contribution }],
+#              "judges": [{ id, objection }] }
+func pick_terms(states: Array) -> Array:
+	var out: Array = []
 	for s: BoardState in states:
 		_value(s)   # the whole pass per option, before any eval runs — see _value
-		totals.append(0.0)
+		out.append({"total": 0.0, "survives": 1.0, "peers": [], "judges": []})
 	var shares := _shares()
 	for i_c in criteria.size():
 		var c := criteria[i_c] as Criterion
 		var share := float(shares[i_c])
+		# GOALS score each state alone; BEHAVIORS measure raw, then normalize over the
+		# cohort's best (see the contract above) — the one difference between the branches.
+		var scores: Array = []
 		var b := c as Behavior
 		if b == null:
-			for i in states.size():
-				totals[i] = float(totals[i]) + share * c.score(states[i])
-			continue
-		var raws: Array = []
-		for s: BoardState in states:
-			raws.append(b.measure(s))
-		var norm := b.normalized(raws)
+			for s: BoardState in states:
+				scores.append(c.score(s))
+		else:
+			var raws: Array = []
+			for s: BoardState in states:
+				raws.append(b.measure(s))
+			scores = b.normalized(raws)
 		for i in states.size():
-			totals[i] = float(totals[i]) + share * float(norm[i])
+			var term := share * float(scores[i])
+			var rec: Dictionary = out[i]
+			rec["total"] = float(rec["total"]) + term
+			(rec["peers"] as Array).append({"id": c.id, "weight": c.weight, "share": share,
+					"score": float(scores[i]), "contribution": term})
 	# The judges speak last, per candidate: what they seize, they strike out.
 	for i in states.size():
-		totals[i] = float(totals[i]) * _survives(states[i])
-	return totals
+		var rec: Dictionary = out[i]
+		var objections: Array = []
+		for j: Judge in judges:
+			var o := j.objection(states[i])
+			objections.append(o)
+			(rec["judges"] as Array).append({"id": j.id, "objection": o})
+		var survives := BoardScoring.judge_factor(objections) if not judges.is_empty() else 1.0
+		rec["survives"] = survives
+		rec["total"] = float(rec["total"]) * survives
+	return out
 
 
 # The one place a unit's protection weight is resolved: per-card-id entry first, then the
@@ -482,6 +526,30 @@ class ProtectionExposure:
 			if w != 0.0:
 				exposed += w * BoardScoring.exposure(state, u.row, u.col)
 		return -exposed
+
+
+# THE PROTECTION CHAIN: each unit protected by the next one down the value order, graded
+# link by link (formation_order carries the whole argument). This is the 0..1-legal
+# expression of the instinct ProtectionExposure holds in an unbounded sum — which is why
+# it is a new criterion rather than that one unparked.
+#
+# A Criterion, not a Behavior, deliberately: the measure is already absolute on 0..1, and
+# min-max normalizing it over the cohort would inflate a flat board's rounding noise into a
+# full-weight preference — the exact pathology it exists to cure.
+class Formation:
+	extends Criterion
+
+	# The fight's personality — the price list the seating is judged against. A character
+	# that VALUES units differently therefore SEATS them differently, off the one table;
+	# there is no second ordering to author.
+	var pricer: EnemyPersonality = null
+
+	func _init(p_pricer: EnemyPersonality = null) -> void:
+		id = "formation"
+		pricer = p_pricer
+
+	func score(state: BoardState) -> float:
+		return BoardScoring.formation_order(state, 1, pricer)
 
 
 # The net worth of the battlefield (PARKED quirk): every unit priced by its full kit —
@@ -738,23 +806,35 @@ class DamageOutput:
 # inside one function here, invisible to criteria, enumeration and selection. Do not
 # inline these formulas into a criterion.
 
-# ── exposure (v1 — invented for deliverable 1, expected to be revised) ──
+# ── exposure (v2 — RELATIVE depth, user-designed 2026-07-31; replaces the absolute base) ──
 #
-# "How likely is something standing at this ENEMY slot to be attacked" (design 17b), from
+# "How likely is something standing at this slot to be attacked" (design 17b), from
 # geometry + own-side occupancy only — deliberately blind to the player's units and their
 # targeting policies (the geometry-only setting is a design decision, not an omission:
 # leapers are SUPPOSED to get through).
 #
-# Model, derived from how nearest-targeting actually works (targeting_strategy.gd — column
-# depth dominates, lane offset orders within a column; the enemy's front line is col 0):
-#   · base danger falls with depth: front column 1.0 → back column 0.25;
-#   · a body strictly in FRONT (lower col) screens — hardest in the same lane, since a
-#     same-lane attacker reaches it first by both depth and lane;
-#   · a body in the SAME column splits the column's attention a little.
+# THE v2 RULING: depth without a screen is not safety. The v1 base read the COLUMN INDEX
+# ((COLS−c)/COLS), so a lone unit in the back column stamped 0.25 "safe" while the
+# waterfall — correctly — poured the entire incoming mass onto it (observed: the naked
+# captain at r2c3, exp 0.250, LANDED 98%). The frontmost occupied position IS the front
+# line wherever it stands; safety is MANUFACTURED by bodies in front, never found in
+# coordinates. So:
+#   · base falls with RELATIVE depth: the count of distinct own-occupied columns strictly
+#     nearer the front than this slot. Zero bodies in front = front line = 1.0, wherever
+#     the slot is; each occupied column between you and the enemy steps it down a tier.
+#   · a body strictly in FRONT (lower col) screens, LANE-BLIND — nearest-targeting is
+#     resolved by column depth FIRST (targeting_strategy.gd dist(): depth strictly
+#     dominates; lane offset only orders within a column), so an off-lane screen in a
+#     nearer column intercepts exactly as absolutely as a same-lane one. The v1 same/off
+#     lane split (1.0/0.5) modelled nothing in the rules and is retired (ruled
+#     2026-07-31); the two kinds remain distinguished in the breakdown for the debug
+#     surfaces only.
+#   · a body in the SAME column splits the column's attention a little — this one IS in
+#     the rules: within a same-depth tie the facing lane is eaten first.
 # All constants are tuning surface; the Combat Gym is the judge.
 
 const COVER_SAME_LANE := 1.0     # screener in front, same row
-const COVER_OFF_LANE := 0.5      # screener in front, other row
+const COVER_OFF_LANE := 1.0      # screener in front, other row — same credit: depth dominates lane
 const COVER_COLUMN_MATE := 0.25  # company in the same column
 
 
@@ -766,16 +846,121 @@ static func exposure(state: BoardState, r: int, c: int) -> float:
 # cover comes from the side's OWN units only, exactly as the enemy-side original did. The
 # valuation pass needs it because persistence is measured for player units too.
 static func exposure_of(state: BoardState, side: int, r: int, c: int) -> float:
-	var base := float(BoardData.COLS - c) / float(BoardData.COLS)
+	return float(exposure_breakdown(state, side, r, c)["exposure"])
+
+
+# THE exposure model, spelled out — the single definition both the number and every debug
+# read of it come from. Returns the arithmetic, not just its answer:
+#   { "base": the depth term, "cover": the summed denominator credit, "exposure": the result,
+#     "who": [{ "id", "w", "kind" }] — every unit that contributed, and under which rule }
+# The debug surfaces (DamageShareOverlay, the combat log's slot table) render THIS; they do
+# not re-derive it. Revising the model above therefore means editing one function.
+static func exposure_breakdown(state: BoardState, side: int, r: int, c: int) -> Dictionary:
+	# Relative depth (v2): how many distinct own-occupied columns stand strictly between
+	# this slot and the enemy. The occupant itself can never be among them (its col is not
+	# < c), so the same formula serves occupied and empty slots alike.
+	var nearer_cols: Dictionary = {}
+	for u: BoardState.UnitState in state.units(side):
+		if u.col < c:
+			nearer_cols[u.col] = true
+	var base := float(BoardData.COLS - nearer_cols.size()) / float(BoardData.COLS)
 	var cover := 0.0
+	var who: Array = []
 	for u: BoardState.UnitState in state.units(side):
 		if u.row == r and u.col == c:
 			continue   # the occupant itself is not its own cover
+		var w := 0.0
+		var kind := ""
 		if u.col < c:
-			cover += COVER_SAME_LANE if u.row == r else COVER_OFF_LANE
+			w = COVER_SAME_LANE if u.row == r else COVER_OFF_LANE
+			kind = "screen" if u.row == r else "screen-offlane"
 		elif u.col == c:
-			cover += COVER_COLUMN_MATE
-	return base / (1.0 + cover)
+			w = COVER_COLUMN_MATE
+			kind = "column-mate"
+		else:
+			continue
+		cover += w
+		who.append({"id": u.card_id, "w": w, "kind": kind, "row": u.row, "col": u.col})
+	return {"base": base, "cover": cover, "exposure": base / (1.0 + cover), "who": who}
+
+
+# ── formation (THE PROTECTION CHAIN — user-designed 2026-07-31, second form) ──
+#
+# "Is each of my valuable bodies protected by the next one down?" The measure is a CHAIN,
+# not a map: sort own units by raw worth, descending, and grade each consecutive link —
+# the ideal board seats the cheapest unit at the true front and builds protection link by
+# link up to the prize, which sits behind the whole procession. Protection is CONSTRUCTED
+# by bodies, never found in coordinates (the same ruling as exposure v2).
+#
+# WHY IT EXISTS. The waterfall is honest to a fault: behind a body whose pool swallows the
+# entire pour, every slot behind receives exactly zero, so persistence (and through it
+# total_value) and delivery (and through it damage_output) go identically flat, and the
+# seating falls to the tie-break. Observed twice on 2026-07-31: a 5-attack dps seated in
+# FRONT of a 3.40 fodder on a coin flip (round 2, 0.9943 vs 0.9942 — exactly
+# EnemyEngine.TIE_EPSILON), and the whole army stacked into one back column, invisible to
+# the first (all-pairs concordance) form of this eval because same-column pairs tied on
+# exposure and dropped out. Leapers are the standing reason to care: some damage does
+# reach past every screen, and this eval is the hedge, priced as a PRIOR — it never
+# models who leaps or where.
+#
+# THE MEASURE. Sort by raw_value descending; for each consecutive link (higher, lower):
+#   · PROTECTED (1)  — the lower-value unit stands in a strictly nearer COLUMN: it screens.
+#     Column relation only, lane-blind — nearest-targeting resolves by column depth first
+#     (targeting_strategy.gd), so lane never decides whether a screen screens.
+#   · EQUAL (1/2)    — same column: protection wasn't built, but the cheaper body at least
+#     shares the seat instead of hiding behind the dearer one. The next-best outcome.
+#   · INVERTED (0)   — the more valuable unit stands nearer the front: the offence.
+# Score = mean over the n−1 links; one unit = silent 1.0 (no offence exists). A link
+# between EQUAL-value units (within FORMATION_EPSILON) counts either order as PROTECTED —
+# equals should protect each other; sharing a column is still the 1/2 grade.
+#
+# Properties, all by construction: intrinsically 0..1 (a Criterion — no cohort machinery;
+# the contract parked ProtectionExposure cannot meet); no exposure number consumed — pure
+# column relations against pure price, so it is immune to the exposure model's own tuning;
+# and an unfixable inversion (a rooted building, a tanking king the judge is content with)
+# costs exactly its own links and never compresses the rest.
+#
+# CHAIN, NOT ALL PAIRS (user-designed 2026-07-31): each unit owes protection only to the
+# next unit up the value order — "place the highest value where it CAN be protected, then
+# protect it with the next unit, and so on." All-pairs double-charges one bad seat n−1
+# times; the chain charges it where it belongs, on its own links.
+#
+# Consequences accepted, playtest is the judge (EVAL_CRITERIA_BRIEF.md testing doctrine):
+#   · LOUDEST ON A SPARSE BOARD — few units, few links, each worth a big fraction.
+#     Ratified: a busy board scatters damage anyway; a sparse board makes a prize parked
+#     in front of a fodder blatant.
+#   · a TAPPED unit prices as expendable for one round (raw_unit_value applies
+#     TAP_DELIVERY_FACTOR), so it can be walked forward as a screen just before it is
+#     worth something again.
+# Own side only — the player's seating is not ours to fix.
+static func formation_order(state: BoardState, side: int, pricer: EnemyPersonality = null) -> float:
+	# The pass normally ran before any eval (_value); this lazy fallback covers a criterion
+	# constructed alone in a hand-built scorer, exactly as TotalValue's does.
+	if not state.valued or state.valued_by != pricer:
+		run_valuation(state, pricer)
+	var us: Array = state.units(side).duplicate()
+	if us.size() < 2:
+		return 1.0   # nothing to protect — silent, not zero: there is no offence here
+	# Deterministic order: worth descending, ties broken by seat (col, then row) so equal
+	# scores never depend on capture order. Tie-break choice is harmless to the grading —
+	# equal-value links grade either direction as protected.
+	us.sort_custom(func(a: BoardState.UnitState, b: BoardState.UnitState) -> bool:
+		if absf(a.raw_value - b.raw_value) >= FORMATION_EPSILON:
+			return a.raw_value > b.raw_value
+		if a.col != b.col:
+			return a.col < b.col
+		return a.row < b.row)
+	var earned := 0.0
+	for i in us.size() - 1:
+		var high: BoardState.UnitState = us[i]
+		var low: BoardState.UnitState = us[i + 1]
+		if low.col == high.col:
+			earned += 0.5   # sharing the seat — protection unbuilt, order at least not inverted
+		elif low.col < high.col:
+			earned += 1.0   # the cheaper body stands between its better and the enemy
+		elif absf(high.raw_value - low.raw_value) < FORMATION_EPSILON:
+			earned += 1.0   # equals protect each other — either one standing front satisfies
+	return earned / float(us.size() - 1)
 
 
 # Total damage the player can put out per round: Σ attack × strikes over fielded units,
@@ -824,7 +1009,15 @@ static func threat_against(state: BoardState, side: int) -> float:
 # whole group cannot absorb flows to the group behind.
 #   naive=true — the seeding pass: raw stat mass, no delivery/crit/dodge. Cuts the
 #   delivery recursion exactly as before (delivery reads naive urgencies).
-static func incoming_allocation(state: BoardState, side: int, naive: bool) -> Dictionary:
+#   trace — an optional out-parameter for the debug inspector (DamageShareOverlay): the
+#   pour written down step by step, so the UI SHOWS this function's own arithmetic instead
+#   of re-deriving a second opinion of it. Ask for it by passing {"tiers": []}; omitted, it
+#   costs one has() check.
+#     { "mass": the side's total incoming, "thrown_at": the attackers' speed reference,
+#       "tiers": [{ "exposure", "arriving", "leaving",
+#                   "units": [{ "unit", "pool", "dodge", "cap", "aimed", "landed" }] }] }
+static func incoming_allocation(state: BoardState, side: int, naive: bool,
+		trace: Dictionary = {}) -> Dictionary:
 	var entries: Array = []
 	for u: BoardState.UnitState in state.units(side):
 		entries.append({"u": u, "e": exposure_of(state, side, u.row, u.col)})
@@ -833,6 +1026,13 @@ static func incoming_allocation(state: BoardState, side: int, naive: bool) -> Di
 	var remaining := threat_against(state, side) if naive \
 			else expected_threat_against(state, side)
 	var thrown_at := attack_speed_ref(state, 1 - side)
+	# Opt-in by key, not by emptiness: the default argument is itself an empty dictionary,
+	# so a caller asks for the trace by handing one that already carries "tiers".
+	var tracing := trace.has("tiers")
+	if tracing:
+		trace["mass"] = remaining
+		trace["thrown_at"] = thrown_at
+		trace["tiers"] = []
 	var landed: Dictionary = {}
 	var i := 0
 	while i < entries.size():
@@ -843,6 +1043,7 @@ static func incoming_allocation(state: BoardState, side: int, naive: bool) -> Di
 		# The tie group [i, j): water-fill evenly. A dodger soaks attention beyond its
 		# pool — to consume its life the enemy must throw pool/(1−dodge) at it, and the
 		# dodged part is wasted, not passed on.
+		var arriving := remaining   # what this tier is handed, before it absorbs anything
 		var aimed: Dictionary = {}
 		var caps: Dictionary = {}
 		var active: Array = []
@@ -866,10 +1067,18 @@ static func incoming_allocation(state: BoardState, side: int, naive: bool) -> Di
 				if float(caps[u]) - float(aimed[u]) > 0.0001:
 					still.append(u)
 			active = still
+		var rows: Array = []
 		for k in range(i, j):
 			var u: BoardState.UnitState = entries[k]["u"]
 			var dodge := 0.0 if naive else minf(dodge_expect(u, thrown_at), 0.95)
 			landed[u] = float(aimed[u]) * (1.0 - dodge)
+			if tracing:
+				rows.append({"unit": u, "pool": float(u.health + u.shield), "dodge": dodge,
+						"cap": float(caps[u]), "aimed": float(aimed[u]),
+						"landed": float(landed[u])})
+		if tracing:
+			(trace["tiers"] as Array).append({"exposure": float(entries[i]["e"]),
+					"arriving": arriving, "leaving": remaining, "units": rows})
 		i = j
 	return landed
 

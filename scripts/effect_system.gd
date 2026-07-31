@@ -114,7 +114,7 @@ static func trigger_global_grouped(event: GameEvent, context: EffectContext) -> 
 static func _run_effect(effect: Effect, source: CardInstance, context: EffectContext,
 		event: GameEvent = null, amount_scale: int = 1, cause: StringName = &"") -> Array:
 	# Probabilistic gate (the effect's `chance`): roll once; on a miss the effect doesn't fire at all.
-	if effect.chance < 1.0 and randf() >= effect.chance:
+	if effect.chance < 1.0 and CombatRng.roll(&"rules") >= effect.chance:
 		return []
 	if effect.kind == Effect.Kind.CUSTOM:
 		var hook := EffectHooks.get_hook(effect.custom_id)

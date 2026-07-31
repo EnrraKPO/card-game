@@ -16,6 +16,7 @@ const PATH := "res://debug.json"
 static var _enabled := true
 static var _loaded := false
 static var _override := -1   # test hook: -1 = none, 0 = forced off, 1 = forced on
+static var _data: Dictionary = {}   # the parsed file, for the optional keys below
 
 
 static func enabled() -> bool:
@@ -26,15 +27,27 @@ static func enabled() -> bool:
 	return _enabled
 
 
+# The fight seed this checkout forces ({"combat_seed": 12345}) — how a logged fight is
+# REPLAYED: paste the seed from the log's header, relaunch, get the same fight (see
+# CombatRng). -1 = unset, the normal case: every fight rolls its own.
+static func forced_seed() -> int:
+	if not _loaded:
+		_load()
+	var v: Variant = _data.get("combat_seed", null)
+	return int(v) if v is float or v is int else -1
+
+
 static func _load() -> void:
 	_loaded = true
 	_enabled = true
+	_data = {}
 	if FileAccess.file_exists(PATH):
 		var file := FileAccess.open(PATH, FileAccess.READ)
 		var json := JSON.new()
 		if file != null and json.parse(file.get_as_text()) == OK and json.data is Dictionary \
 				and (json.data as Dictionary).get("enabled") is bool:
-			_enabled = (json.data as Dictionary)["enabled"]
+			_data = json.data as Dictionary
+			_enabled = _data["enabled"]
 		else:
 			push_error("DebugConfig: bad debug.json — debug mode stays ON")
 	elif OS.has_feature("editor"):

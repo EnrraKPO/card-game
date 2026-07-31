@@ -53,6 +53,7 @@ const TRAITS: Array = [
 	# The JUDGE seat (decision-table contract, board_scoring.gd): full authority, fixed —
 	# a judge has no weight dial; its contribution is controlled by its scoring rule.
 	{"id": "king_safety", "core": true, "judge": true},
+	{"id": "formation", "core": true},
 	{"id": "mana", "core": true},
 	{"id": "readiness", "core": true},
 	{"id": "damage_output", "core": false},
@@ -75,6 +76,7 @@ static func stock_weights() -> Dictionary:
 	return {
 		"total_value": BoardScoring.TOTAL_VALUE_CRITERION_WEIGHT,   # the reference scale
 		# king_safety has no entry: it is a JUDGE — full authority, no weight dial.
+		"formation": BoardScoring.FORMATION_CRITERION_WEIGHT,
 		"death_risk": 1.0,   # parked; the old reference scale, kept for opting back in
 		"harm": BoardScoring.HARM_CRITERION_WEIGHT,
 		"protection": BoardScoring.EXPOSURE_CRITERION_WEIGHT,

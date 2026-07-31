@@ -71,7 +71,7 @@ func discard_random(n: int) -> Array:
 		return []
 	var gone: Array = []
 	for _i in count:
-		gone.append(hand.pop_at(randi() % hand.size()))
+		gone.append(hand.pop_at(CombatRng.roll_int(0, hand.size() - 1, &"deck")))
 	cards_discarded.emit(gone)
 	return gone
 

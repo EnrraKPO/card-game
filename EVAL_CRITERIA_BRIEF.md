@@ -65,6 +65,17 @@ with it: a body's harm is what it can still absorb, not the mass thrown at it. O
 currently flows through undiminished (a queen's overkill of a 2-HP fodder is not wasted)
 — known coarseness, deliberate v1.
 
+**Exposure v2 — RELATIVE depth** (user-designed 2026-07-31, replacing the absolute base):
+depth without a screen is not safety. The base term counts distinct own-occupied columns
+strictly nearer the front than the slot — zero bodies in front = front line = 1.0
+wherever the slot is (the v1 column-index base stamped a lone deep unit 0.25 "safe" while
+the waterfall correctly poured everything onto it). Screens are LANE-BLIND
+(`COVER_OFF_LANE` = `COVER_SAME_LANE` = 1.0): nearest-targeting resolves by column depth
+first, so the v1 same/off-lane 1.0/0.5 split modelled nothing in the rules; the
+column-mate 0.25 attention split stays (within a same-depth tie the facing lane is eaten
+first — that one IS in the rules). Consequence: the exposure map now agrees with the pour
+it orders — an unscreened back column reads as the front line it really is.
+
 ### The expected-damage model
 
 Persistence's incoming is the damage the fight will actually deal, not raw stat mass —
@@ -162,6 +173,29 @@ playtest.
   1; only WASTE is punished, and waste is only waste when a better line EXISTED. THE
   INVARIANT (pinned): spending mana always scores STRICTLY above spending none — this is
   now also the whole fielding pressure (idle-hand is parked).
+- **Formation** (0.1, user-designed 2026-07-31; CHAIN form later the same day, replacing
+  the all-pairs concordance draft) — THE PROTECTION CHAIN: sort own units by raw
+  (pre-persistence) worth descending and grade each consecutive link — protector in a
+  strictly nearer COLUMN = 1 ("place the highest value where it CAN be protected, then
+  protect it with the next unit, and so on"), same column = 1/2 (seat shared, protection
+  unbuilt), inverted = 0. Score = mean of links; lone unit silent at 1.0; equal-value
+  links (within `FORMATION_EPSILON`) grade EITHER order as protected — equals protect
+  each other, and no pecking order among duplicates is defensible. Column relations only,
+  LANE-BLIND (nearest-targeting resolves by depth first — lane never decides whether a
+  screen screens), and NO exposure number consumed, so the eval is immune to the exposure
+  model's tuning. Intrinsically 0..1 (a Criterion, no cohort machinery); an unfixable
+  inversion (rooted building, tanking king) costs only its own links. **CHAIN, NOT ALL
+  PAIRS**: the all-pairs draft dropped equal-exposure comparisons, which made the
+  one-column stack (everything at c3 — observed, ruled an offence) literally invisible;
+  the chain grades that board 1/2 everywhere. **ORDER, NEVER DEPTH** (ruled 2026-07-31):
+  protection is CONSTRUCTED by bodies, never found in coordinates — a depth-seeking term
+  maximizes itself by dismantling the screens that make depth safe. WHY IT EXISTS: behind
+  a body that soaks the whole pour, every slot behind reads zero damage, so total_value
+  and damage_output go flat and seating falls to the tie-break — observed 2026-07-31, a
+  5-attack dps seated in front of a 3.40 fodder on a coin flip (0.9943 vs 0.9942, exactly
+  `TIE_EPSILON`). Accepted: loudest on a SPARSE board (ratified — a busy board scatters
+  damage anyway, a sparse one makes the offence blatant), and a tapped unit prices as
+  expendable for one round.
 - **Readiness** (0.1) — `1 − forfeited ÷ total activity potential`: a tap's real price is
   the unit's attack AND every OTHER tap-ability it holds (never the ability it bought),
   proportional to the army. Priced with the BoardValueConfig rates.
@@ -173,9 +207,11 @@ mana IS maximizing damage". **BoardValue** — compliant but superseded by Total
 **PARKED — 0..1 contract offenders** (user ruling 2026-07-31): **ProtectionExposure**,
 **IdleHand**, **DeathRisk**, **ExpectedHarm**. Unseated for everyone pending inspection;
 measures, classes and the survival-weight merge (`merged_survival_weights`) stay whole
-and pinned. Consequences accepted: quiet-board placement POSITION falls to the tie-break
-(under any real threat formation pays through the valuation), and anti-withholding rides
-the mana invariant alone. When one is unparked (re-expressed on 0..1), bring back an
+and pinned. Consequences accepted: anti-withholding rides the mana invariant alone.
+ProtectionExposure's own consequence — quiet-board placement POSITION falling to the
+tie-break — is CLOSED as of 2026-07-31 by **Formation**, which is that instinct
+re-expressed on 0..1 rather than that criterion unparked; the survival-weight table is
+NOT its input (Formation reads raw unit worth), so the merge still awaits a consumer. When one is unparked (re-expressed on 0..1), bring back an
 anti-decoration A/B with it (see `_idle_hand_changes_a_decision`).
 
 ## Supporting rules

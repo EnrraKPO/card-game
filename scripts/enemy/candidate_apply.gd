@@ -88,6 +88,11 @@ static func _apply_real(state: BoardState, cand: Dictionary, sim: Dictionary) ->
 		return state.copy()
 	var remap: Dictionary = {}
 	var w := live.copy(remap)
+	# THE HYPOTHETICAL SCOPE (CombatRng): everything below runs the REAL rules, so it rolls
+	# dodge/crit/chance like the live fight. Those rolls draw from a throwaway generator —
+	# planning must never advance the fight's own streams, or the seed in a combat log
+	# stops reproducing the fight the moment the CPU thinks differently.
+	CombatRng.enter_hypothetical()
 	for a: Dictionary in (sim.get("accepted", []) as Array):
 		_replay(w, remap, a)
 	# Collect only THIS candidate's deaths — replayed casts' corpses already sit in the
@@ -95,7 +100,9 @@ static func _apply_real(state: BoardState, cand: Dictionary, sim: Dictionary) ->
 	var swept: Array = []
 	w.unit_swept.connect(func(inst: CardInstance) -> void: swept.append(inst))
 	_run_cast(w, remap, cand)
-	return _capture_back(w, state, remap, swept)
+	var out := _capture_back(w, state, remap, swept)
+	CombatRng.exit_hypothetical()
+	return out
 
 
 static func _replay(w: CombatWorld, remap: Dictionary, a: Dictionary) -> void:

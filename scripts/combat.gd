@@ -114,6 +114,12 @@ func _ready() -> void:
 	_battle_speed = 1.0                  # every fight starts at 100%
 	Engine.time_scale = _battle_speed
 
+	# THE fight's randomness opens here, before a single card is shuffled: one seed feeding
+	# named streams (CombatRng). It is the first line of the combat log and the one thing a
+	# replay needs — put it in debug.json as "combat_seed" and this fight deals itself the
+	# same cards and rolls the same dodges.
+	CombatLog.open(CombatRng.begin())
+
 	_player_side  = CombatSide.make(0)
 	_enemy_side   = CombatSide.make(1)
 	_hand         = Hand.new()
@@ -261,6 +267,7 @@ func _ready() -> void:
 	Sfx.play("combat_boss_intro" if is_boss_fight else "combat_start")
 	Sfx.music("music_boss" if is_boss_fight else ("music_elite" if is_elite_fight else "music_combat"))
 	Sfx.ambience("amb_combat_battlefield")
+	_log_header()   # the reproduction recipe, once both sides' cards exist (see CombatLog)
 	_refresh()
 	_begin_round()
 
@@ -270,6 +277,8 @@ func _ready() -> void:
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
 	CombatContext.clear()   # card derivations no-op outside combat
+	CombatRng.end()         # out of combat every roll falls back to the global generator
+	CombatLog.close()
 
 
 func _input(event: InputEvent) -> void:
@@ -363,7 +372,7 @@ func _maybe_dismiss_hand_view(point: Vector2) -> void:
 # never ride the pile; fresh units fill to their run-resolved max health.
 func _init_player_deck(deck_cards: Array) -> void:
 	var cards := deck_cards.duplicate()
-	cards.shuffle()
+	CombatRng.shuffle(cards)   # the fight's `deck` stream, so a logged seed re-deals this pile
 	for dc: DeckCard in cards:
 		var inst := dc.make_instance()
 		if inst != null and not inst.data.is_king:
@@ -395,7 +404,7 @@ func _init_enemy_deck() -> void:
 	else:
 		ids = ["strike", "strike", "strike", "defender", "defender", "swift", "warrior", "archer"]
 	var power: float = GameData.current_encounter.power if GameData.current_encounter != null else 0.0
-	ids.shuffle()
+	CombatRng.shuffle(ids)
 	for id in ids:
 		var data := CardData.scaled(CardData.get_card(id), power)
 		if data and not data.is_king:
@@ -438,6 +447,9 @@ func _begin_round() -> void:
 	# captures the board — and a tap the CPU pays must survive into this round's combat
 	# (resetting after its turn silently refunded it).
 	_reset_exhaustion()
+	CombatLog.round_begin(_turn, "%d/%d" % [_player_side.mana, _player_side.max_mana],
+			"%d/%d" % [_enemy_side.mana, _enemy_side.max_mana])
+	CombatLog.note("hand", ", ".join(_card_ids(_player_side.hand)))
 	await _do_cpu_placement()
 	Sfx.play("combat_turn_start")
 	Vfx.play("mana_refill_surge", _mana_chunks_box)   # the gauge blooms as it refills
@@ -465,14 +477,26 @@ func _do_cpu_placement() -> void:
 		# WHO this opponent is: the fight's own personality instance (Tool ▸ 🗂 Fights ▸ the
 		# encounter's Personality section). Null = the stock character.
 		engine.personality = GameData.current_encounter.personality
-	for action: Dictionary in engine.decide_actions(_enemy_side.hand,
-			_board.player_grid, _board.enemy_grid, _enemy_side.mana, _player_side.mana):
+	# The whole turn is PLANNED first and executed after, so the log's reasoning blocks all
+	# precede the plays they produced — these two markers say so, rather than leaving a
+	# reader to infer it from a wall of picks.
+	CombatLog.note("cpu", "── planning (mana %d, hand: %s) ──"
+			% [_enemy_side.mana, ", ".join(_card_ids(_enemy_side.hand))])
+	# The board the engine is about to score, slot by slot. Written BEFORE the picks so a
+	# reader meets the terms first and the reasoning blocks second — the pick lines quote
+	# criterion totals, and this is the only place the geometry underneath them is spelled out.
+	_log_slot_table("── board read (pre-plan) ──")
+	var plan := engine.decide_actions(_enemy_side.hand,
+			_board.player_grid, _board.enemy_grid, _enemy_side.mana, _player_side.mana)
+	CombatLog.note("cpu", "── executing %d action(s) ──" % plan.size())
+	for action: Dictionary in plan:
 		await _execute_enemy_action(action)
 
 
 # Carries out one planned CPU action. The AI guarantees each is legal in sequence
 # (mana + slot occupancy), so this just applies the effect and animates it.
 func _execute_enemy_action(action: Dictionary) -> void:
+	_log_enemy_action(action)
 	match action["type"]:
 		EnemyEngine.Action.PLACE:
 			var inst: CardInstance = action["inst"]
@@ -927,6 +951,151 @@ func _king_fall(inst: CardInstance, corpse: CardUI) -> void:
 var _debug_killing := false
 
 
+# ── The combat log's own hooks (debug only — see CombatLog) ────────────────────────────
+
+# The reproduction recipe: the seed is already in (CombatLog.open took it from CombatRng);
+# this adds everything else a re-run needs — who is fighting, with which cards, in which
+# order, under which run-level effects.
+func _log_header() -> void:
+	if not CombatLog.recording():
+		return
+	var enc := GameData.current_encounter
+	if enc != null:
+		var kind: String = ["combat", "elite", "boss"][int(enc.type)]
+		CombatLog.head("encounter", "%s   power %.2f   captain %s%s"
+				% [kind, enc.power, enc.enemy_king, "   (practice)" if enc.practice else ""])
+		CombatLog.head("cpu", enc.personality.id if enc.personality != null \
+				else "(stock character — no personality)")
+		if not enc.survival_weights.is_empty():
+			CombatLog.head("weights", str(enc.survival_weights))
+	var run := GameData.current_run
+	if run != null:
+		var king := _board.get_player_king()
+		CombatLog.head("player", "%s   king %d/%d hp   (run damage %d)" % [run.king_id,
+				king.current_health if king != null else 0,
+				king.get_attribute("health") if king != null else 0, run.king_damage])
+		CombatLog.head_list("relics", run.relics)
+	if GameData.current_profile != null:
+		CombatLog.head_list("upgrades", GameData.current_profile.owned_upgrades)
+	CombatLog.head_list("hand", _card_ids(_player_side.hand))
+	CombatLog.head_list("draw", _card_ids(_player_side.draw_pile))
+	CombatLog.head_list("cpu deck", _card_ids(_enemy_side.hand))
+
+
+# The CPU's action as EXECUTED — the counterpart to the engine's reasoning block, so a
+# reader can check that what was planned is what actually happened.
+func _log_enemy_action(action: Dictionary) -> void:
+	if not CombatLog.recording():
+		return
+	var line := ""
+	match action["type"]:
+		EnemyEngine.Action.PLACE:
+			var inst: CardInstance = action["inst"]
+			line = "place %s → r%dc%d (cost %d, mana %d left)" % [inst.data.id,
+					int(action["row"]), int(action["col"]), inst.data.cost,
+					_enemy_side.mana - inst.data.cost]
+		EnemyEngine.Action.MOVE:
+			var inst: CardInstance = action["inst"]
+			line = "move %s r%dc%d → r%dc%d" % [inst.data.id, inst.row, inst.col,
+					int(action["row"]), int(action["col"])]
+		EnemyEngine.Action.CAST:
+			line = "cast %s on %s" % [(action["inst"] as CardInstance).data.id,
+					_where(action.get("target", null))]
+		EnemyEngine.Action.GENERATE:
+			var ab: AbilityData = action["ability"]
+			line = "ability %s.%s on %s" % [(action["unit"] as CardInstance).data.id, ab.id,
+					_where(action.get("target", null))]
+	CombatLog.note("cpu", line)
+
+
+static func _card_ids(cards: Array) -> Array:
+	var out: Array = []
+	for c: CardInstance in cards:
+		out.append(c.data.id)
+	return out
+
+
+# Where a unit stands, in the log's coordinates. Sides are named rather than numbered so a
+# line reads without a legend.
+static func _where(inst: CardInstance) -> String:
+	if inst == null:
+		return "(none)"
+	return "%s r%dc%d[%s]" % [inst.data.id, inst.row, inst.col,
+			"player" if inst.owner == 0 else "cpu"]
+
+
+# One strike's resolved outcome — what the Resolver decided, not what was thrown.
+func _log_strike(attacker: CardInstance, target: CardInstance, outcome: Resolver.Outcome) -> void:
+	if not CombatLog.recording():
+		return
+	var line := "%s → %s" % [_where(attacker), _where(target)]
+	if outcome.dodged:
+		line += " : DODGED"
+	else:
+		line += " : %d dmg (shield %d, hp %d)" % [-outcome.delta,
+				outcome.shield_absorbed, outcome.health_damage]
+		if outcome.crit:
+			line += " CRIT +%d" % outcome.crit_bonus_damage
+	if not outcome.interceptions.is_empty():
+		line += "  intercepted×%d" % outcome.interceptions.size()
+	if not target.is_alive():
+		line += "  ☠ dies"
+	CombatLog.note("combat", line)
+
+
+# The damage-share inspector, toggled from the debug row: a live read of the waterfall for
+# every slot on both boards (see DamageShareOverlay). Reopened rather than refreshed — the
+# board changes constantly and a stale panel would be worse than no panel.
+var _damage_overlay: DamageShareOverlay
+
+
+func _toggle_damage_inspector() -> void:
+	if _damage_overlay != null and is_instance_valid(_damage_overlay):
+		_damage_overlay.dismiss()
+		_damage_overlay = null
+		return
+	_damage_overlay = DamageShareOverlay.open(self, _board.player_grid, _board.enemy_grid,
+			_player_side.mana,
+			GameData.current_encounter.personality if GameData.current_encounter != null else null)
+	# Opening the panel also files the snapshot: what you are looking at now is what the log
+	# will still hold when the board has moved on and the question is still open.
+	_log_slot_table("── board read (inspector opened, turn %d) ──" % _turn)
+
+
+# The per-slot valuation table into the log — the text twin of the Dmg panel
+# (DamageShareOverlay.report_lines). Verbose-gated, so with reasoning off it costs nothing;
+# it captures its OWN BoardState because the engine's is private to a planning pass.
+func _log_slot_table(caption: String) -> void:
+	if not CombatLog.verbose():
+		return
+	var state := BoardState.capture(_board.player_grid, _board.enemy_grid, _player_side.mana)
+	BoardScoring.run_valuation(state,
+			GameData.current_encounter.personality if GameData.current_encounter != null else null)
+	CombatLog.block(DamageShareOverlay.report_lines(state, caption))
+
+
+# Writes the capture out and says where it landed — printed, and put on the CLIPBOARD so
+# the path can be pasted straight into an explorer or an editor. The button acknowledges
+# in place (no toast system in this project, and a modal over a live fight would be worse
+# than the problem it reports).
+var _log_btn: Button
+
+
+func _debug_dump_log() -> void:
+	var path := CombatLog.dump()
+	if path.is_empty():
+		push_error("CombatLog: dump failed — see the console")
+		return
+	print("[CombatLog] %s" % path)
+	DisplayServer.clipboard_set(path)
+	if _log_btn != null:
+		_log_btn.text = "✓"
+		UIScale.tip(_log_btn, "Written (path copied):\n%s" % path)
+		await get_tree().create_timer(1.5).timeout
+		if is_instance_valid(_log_btn):
+			_log_btn.text = "Log"
+
+
 func _debug_kill_captain() -> void:
 	var king := _board.get_enemy_king()
 	if _debug_killing or king == null or not king.is_alive():
@@ -987,6 +1156,7 @@ func _apply_attack_damage(attacker: CardInstance, target: CardInstance, t_card: 
 	# Cue whatever intercepted (the Blind pip glint, a relic chip) BEFORE the damage readout —
 	# resolution is already complete; this is pure playback in resolution order.
 	await _vfx.play_interceptions(outcome.interceptions)
+	_log_strike(attacker, target, outcome)
 	var dmg := -outcome.delta
 	# THE CRIT CUE IS PART OF THE BLOW, so it fires the moment the blow is known — here, not down in
 	# the readout below. It used to sit with the damage numbers, on the far side of `struck`, so on
@@ -1096,6 +1266,7 @@ func _use_consumable(relic_id: String) -> void:
 	if src == null:
 		return
 	_consumable_busy = true
+	CombatLog.note("player", "consumable %s" % relic_id)
 	GameData.current_run.discard_relic(relic_id)
 	# The chip is still on screen for its own cue — it glints, and only then does the refresh
 	# take it away, so the spend reads as "that relic fired and was used up".
@@ -1182,6 +1353,12 @@ func _on_king_health_changed(current: int) -> void:
 func _handle_combat_end() -> void:
 	var player_won := _board.player_king_alive()
 	var enc := GameData.current_encounter
+	if CombatLog.recording():
+		var pk := _board.get_player_king()
+		var ek := _board.get_enemy_king()
+		CombatLog.note("end", "%s on turn %d — player king %d hp, cpu captain %d hp"
+				% ["WIN" if player_won else "LOSS", _turn,
+				pk.current_health if pk != null else 0, ek.current_health if ek != null else 0])
 	Sfx.play("combat_victory" if player_won else "combat_defeat")
 	# The screen-level dressing plays out BEFORE navigation (awaited — Nav.goto would cut it
 	# off mid-swell); target is the whole combat screen.
@@ -1267,6 +1444,9 @@ func _on_board_unit_placed(inst: CardInstance, card_ui: CardUI, from_hand: bool,
 	# re-presents from where the unit now stands.
 	if not from_hand and _phase == Phase.PLAYER_PLACE and Selection.holds(inst):
 		_interaction.begin(_board.make_unit_action(card_ui, false, false))
+	if CombatLog.recording():
+		CombatLog.note("player", "%s %s → r%dc%d%s" % ["place" if from_hand else "move",
+				inst.data.id, inst.row, inst.col, "  (cost %d)" % cost if cost > 0 else ""])
 	if from_hand:
 		# The placed card may still be the hand's live selection (the click-place path commits
 		# through the Interaction session, which doesn't know the hand) — clear it before the
@@ -1327,6 +1507,8 @@ func _on_autocast_dropped(slot: SlotUI, card_ui: CardUI) -> void:
 
 # The autocast twin of _on_spell_consumed + _consume_generated_token: mana, then the tap.
 func _on_ability_autocast(holder: CardInstance, ab: AbilityData) -> void:
+	CombatLog.note("player", "ability %s.%s (mana %d%s)" % [holder.data.id, ab.id, ab.mana,
+			", tap" if ab.tap else ""])
 	Vfx.play("ability_activate_flare", _board.get_card_ui(holder))
 	_pay_mana(_player_side, ab.mana)
 	if ab.tap:
@@ -1413,6 +1595,7 @@ func _refresh_card_presentation() -> void:
 
 
 func _on_spell_consumed(card_ui: CardUI, cost: int) -> void:
+	CombatLog.note("player", "cast %s (cost %d)" % [card_ui.card_instance.data.id, cost])
 	Sfx.play("spell_cast")
 	_pay_mana(_player_side, cost)
 	if cost > 0:
@@ -1762,6 +1945,23 @@ func _build_action_column() -> Control:
 		debug_kill.size_flags_vertical = Control.SIZE_FILL
 		UIScale.tip(debug_kill, "Debug: kill the enemy captain")
 		debug_row.add_child(debug_kill)
+
+		# The fight's black box — writes everything captured so far (see CombatLog). Always
+		# recording, so this button never has to be pressed BEFORE the interesting moment.
+		_log_btn = ScreenUI.action_button("Log", _debug_dump_log,
+			Vector2(0, side), 20, ScreenUI.CHROME_DEBUG)
+		_log_btn.size_flags_horizontal = SIZE_EXPAND_FILL
+		_log_btn.size_flags_vertical = Control.SIZE_FILL
+		UIScale.tip(_log_btn, "Debug: write the combat event log (seed, decks, plays, CPU reasoning)")
+		debug_row.add_child(_log_btn)
+
+		# The damage-share inspector: every slot's read of the waterfall, live.
+		var debug_share := ScreenUI.action_button("Dmg", _toggle_damage_inspector,
+			Vector2(0, side), 20, ScreenUI.CHROME_DEBUG)
+		debug_share.size_flags_horizontal = SIZE_EXPAND_FILL
+		debug_share.size_flags_vertical = Control.SIZE_FILL
+		UIScale.tip(debug_share, "Debug: show each slot's share of incoming damage")
+		debug_row.add_child(debug_share)
 
 	# The key touch target — "Ready" — a chunky vertical button filling the rest of the column,
 	# all the way down through the hand bar's band. Green, from the glossy handoff's own "Ready"

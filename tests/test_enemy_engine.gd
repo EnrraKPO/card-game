@@ -63,6 +63,51 @@ func run() -> void:
 	_expectation_honors_determinism_switches()
 	_buff_prefers_fresh_over_tapped()
 	_king_safety_shape()
+	_formation_order_shape()
+	_formation_order_silences()
+
+
+# ── Formation: the protection chain (user-designed 2026-07-31, second form) ──────────
+#
+# Pure computation pins for the chain measure — its link grades and its silences. WHICH
+# seat the engine then chooses is a behaviour, judged by playtest alone (doctrine at the
+# top of this file).
+#
+# Prices are the stock rates' own — queen 7.0 > knight 3.3 > pawn 1.8, so the value chain
+# is queen ← knight ← pawn. Links grade on COLUMN relations only (lane-blind, no exposure
+# number consumed): protector strictly nearer = 1, same column = 1/2, inverted = 0.
+func _formation_order_shape() -> void:
+	var chained := _state_with([_enemy("queen", 0, 2), _enemy("knight", 0, 1), _enemy("pawn", 0, 0)])
+	check(absf(BoardScoring.formation_order(chained, 1) - 1.0) < 0.0001,
+			"a full chain — each unit screened by the next cheaper one — scores 1")
+	var inverted := _state_with([_enemy("pawn", 0, 2), _enemy("knight", 0, 1), _enemy("queen", 0, 0)])
+	check(absf(BoardScoring.formation_order(inverted, 1)) < 0.0001,
+			"the exactly inverted chain scores 0")
+	# Queen and knight share a column (the queen-knight link earns 1/2), pawn screens the
+	# knight from a strictly nearer column (1): the score is the mean of the links.
+	var half := _state_with([_enemy("queen", 0, 2), _enemy("knight", 1, 2), _enemy("pawn", 0, 0)])
+	check(absf(BoardScoring.formation_order(half, 1) - 0.75) < 0.0001,
+			"a shared column grades 1/2 on its link — mean of {1/2, 1} is 3/4")
+	# The whole army stacked in one column: every link is the 1/2 grade — mediocre, not
+	# invisible (the all-pairs form's blind spot this chain form was built to close).
+	var stacked := _state_with([_enemy("queen", 0, 3), _enemy("knight", 1, 3), _enemy("pawn", 2, 3)])
+	check(absf(BoardScoring.formation_order(stacked, 1) - 0.5) < 0.0001,
+			"a one-column stack scores 1/2 across the board")
+
+
+# The measure's silences and its equal-value rule. Equals should protect each other —
+# EITHER order satisfies the link (an enemy deck is mostly duplicates, and no pecking
+# order among six identical fodders is defensible); a lone unit has no links at all.
+func _formation_order_silences() -> void:
+	var lone := _state_with([_enemy("queen", 0, 0)])
+	check(absf(BoardScoring.formation_order(lone, 1) - 1.0) < 0.0001,
+			"a lone unit has no links — silent at 1, not zero")
+	var twins := _state_with([_enemy("pawn", 0, 2), _enemy("pawn", 0, 0)])
+	check(absf(BoardScoring.formation_order(twins, 1) - 1.0) < 0.0001,
+			"equal-value units in different columns protect each other — either order is 1")
+	var twin_stack := _state_with([_enemy("pawn", 0, 1), _enemy("pawn", 2, 1)])
+	check(absf(BoardScoring.formation_order(twin_stack, 1) - 0.5) < 0.0001,
+			"equal-value units sharing a column grade 1/2 — protection unbuilt")
 
 
 # The valuation's attack stock is TAP-AWARE (a this-turn instrument): an exhausted unit's
@@ -184,16 +229,22 @@ func _exposure_geometry() -> void:
 	var deep := BoardData.COLS - 1
 	var lone := _state_with([_enemy("king", back, deep)])
 
-	check(BoardScoring.exposure(lone, back, 0) > BoardScoring.exposure(lone, back, deep),
-			"the front column is more exposed than the back column")
+	# Exposure v2 (user-designed 2026-07-31): depth is RELATIVE to occupancy. A lone unit
+	# is the front line wherever it stands — the empty front column and its own deep seat
+	# read identically, because nothing stands between either and the enemy.
+	check(absf(BoardScoring.exposure(lone, back, 0) - BoardScoring.exposure(lone, back, deep)) < 0.0001,
+			"with nothing in front, the back column is exactly as exposed as the front one")
 
 	var screened := _state_with([_enemy("king", back, deep), _enemy("pawn", back, 1)])
 	check(BoardScoring.exposure(screened, back, deep) < BoardScoring.exposure(lone, back, deep),
 			"a body in front reduces exposure behind it")
 
+	# Lane-blind screens (v2): nearest-targeting resolves by column depth first, so an
+	# off-lane screen in a nearer column intercepts exactly as absolutely as a same-lane
+	# one. The v1 1.0/0.5 split modelled nothing in the rules.
 	var off_lane := _state_with([_enemy("king", back, deep), _enemy("pawn", 0, 1)])
-	check(BoardScoring.exposure(screened, back, deep) < BoardScoring.exposure(off_lane, back, deep),
-			"a same-lane screen covers harder than an off-lane one")
+	check(absf(BoardScoring.exposure(screened, back, deep) - BoardScoring.exposure(off_lane, back, deep)) < 0.0001,
+			"a same-lane screen and an off-lane screen cover equally — depth dominates lane")
 
 	var company := _state_with([_enemy("king", back, deep), _enemy("pawn", 0, deep)])
 	check(BoardScoring.exposure(company, back, deep) < BoardScoring.exposure(lone, back, deep),
@@ -217,10 +268,12 @@ func _scoring_prefers_screens() -> void:
 	check(BoardScoring.incoming(screened, pawn_unit_s) > BoardScoring.incoming(screened, screened_king),
 			"…and the front slot carries strictly more expected damage than the back one")
 	# A lone state under stock: TotalValue/damage are behaviors (silent alone), mana reads
-	# a turn that spent nothing, the judge has no staged king to guard — all that remains
-	# is READINESS at its TABLE SHARE (the decision table dilutes every peer by its
-	# company; see peer_shares). A constant like this cancels out of every ranking; it
-	# only shows up here, where a single state is scored on its own.
+	# a turn that spent nothing, the judge has no staged king to guard. What remains are the
+	# two criteria that score a lone unit at full marks — READINESS (nothing tapped) and
+	# FORMATION (one unit makes no pair, so there is no seating offence to report) — each at
+	# its TABLE SHARE, the decision table diluting every peer by its company (see
+	# peer_shares). A constant like this cancels out of every ranking; it only shows up
+	# here, where a single state is scored on its own.
 	var captain_only_scoring := BoardScoring.stock({"default": 0.0})
 	var pawn_unit := _enemy("pawn", back, 0)
 	var pawn_only := _state_with([pawn_unit])
@@ -228,12 +281,13 @@ func _scoring_prefers_screens() -> void:
 	for c: BoardScoring.Criterion in captain_only_scoring.criteria:
 		ws.append(c.weight)
 	var shares := BoardScoring.peer_shares(ws)
-	var readiness_share := 0.0
+	var full_marks := 0.0
 	for i in captain_only_scoring.criteria.size():
-		if (captain_only_scoring.criteria[i] as BoardScoring.Criterion).id == "readiness":
-			readiness_share = float(shares[i])
-	check(absf(captain_only_scoring.score(pawn_only) - readiness_share) < 0.0001,
-			"with a 0 default weight only readiness' table share remains")
+		var cid := (captain_only_scoring.criteria[i] as BoardScoring.Criterion).id
+		if cid == "readiness" or cid == "formation":
+			full_marks += float(shares[i])
+	check(absf(captain_only_scoring.score(pawn_only) - full_marks) < 0.0001,
+			"with a 0 default weight only readiness' and formation's table shares remain")
 
 
 # ── Enumeration ──────────────────────────────────────────────────────────────────────

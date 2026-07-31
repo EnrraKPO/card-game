@@ -35,15 +35,22 @@ var personality: EnemyPersonality = null
 # synthesizes a planning world from the call's own grids and hand.
 var world: CombatWorld = null
 
+# The tie-break generator. Null = draw from the fight's `ai` stream (CombatRng), which is
+# what makes a logged fight's tie-breaks replayable; an injected one overrides it, as the
+# deterministic tests rely on.
 var _rng: RandomNumberGenerator
 
 
 func _init(rng: RandomNumberGenerator = null) -> void:
-	if rng == null:
-		_rng = RandomNumberGenerator.new()
-		_rng.randomize()
-	else:
-		_rng = rng   # injected for deterministic tests
+	_rng = rng   # injected for deterministic tests; null → the fight's `ai` stream
+
+
+# One uniform pick in [0, n). The tie-break is its own stream on purpose: re-tuning how the
+# CPU breaks ties must not re-roll the fight's dodges and crits (see CombatRng).
+func _tie_break(n: int) -> int:
+	if _rng != null:
+		return _rng.randi_range(0, n - 1)
+	return CombatRng.roll_int(0, n - 1, &"ai")
 
 
 # Plans a whole CPU turn: greedily pick the best-scoring candidate, commit it to the
@@ -191,7 +198,13 @@ func _pick_best(cands: Array, state: BoardState, scoring: BoardScoring,
 	for next: BoardState in cohort:
 		next.mana_capacity_before = capacity
 		next.hand_budget_before = budget
-	var totals := scoring.score_pick(cohort)
+	# pick_terms rather than score_pick: the same arithmetic, with every criterion's term
+	# kept, so the combat log's reasoning dump explains exactly the numbers that decided
+	# this pick instead of a second, separately-computed opinion of them.
+	var terms := scoring.pick_terms(cohort)
+	var totals: Array = []
+	for t: Dictionary in terms:
+		totals.append(float(t["total"]))
 	var best_score := -INF
 	var best: Array = []
 	for i in kept.size():
@@ -201,8 +214,81 @@ func _pick_best(cands: Array, state: BoardState, scoring: BoardScoring,
 			best = [kept[i]]
 		elif absf(s - best_score) <= TIE_EPSILON:
 			best.append(kept[i])
-	return {"cand": best[_rng.randi_range(0, best.size() - 1)], "score": best_score,
-			"current": float(totals[0])}
+	var chosen: Dictionary = best[_tie_break(best.size())]
+	_log_pick(kept, terms, chosen, cands.size() - kept.size())
+	return {"cand": chosen, "score": best_score, "current": float(totals[0])}
+
+
+# ── The reasoning dump (debug only — see CombatLog) ────────────────────────────────────
+
+# One pick, written out: the decision table's shares, every surviving candidate with its
+# per-criterion scores and the judges' objections, the do-nothing baseline it had to beat,
+# and the winner. Gated on CombatLog.verbose(), so with logging off nothing here runs.
+func _log_pick(kept: Array, terms: Array, chosen: Dictionary, vetoed: int) -> void:
+	if not CombatLog.verbose():
+		return
+	var baseline: Dictionary = terms[0]
+	var head := "CPU pick #%d — %d candidates" % [CombatLog.next_pick(), kept.size()]
+	if vetoed > 0:
+		head += ", %d rejected (vetoed / no-op)" % vetoed
+	var lines: Array = [head, "  " + _table_line(baseline),
+			"  %-9.4f %s" % [float(baseline["total"]), "(decline — the do-nothing baseline)"]]
+	for i in kept.size():
+		var t: Dictionary = terms[i + 1]
+		lines.append("  %-9.4f %-34s %s" % [float(t["total"]),
+				EnemyEngine.describe(kept[i]), _terms_line(t)])
+	lines.append("  ✓ %s" % EnemyEngine.describe(chosen))
+	CombatLog.block(lines)
+
+
+# The table itself: who holds what authority this fight (fixed for the whole fight, but
+# printed per pick so a dump is readable from any point in the file).
+func _table_line(sample: Dictionary) -> String:
+	var parts: Array = []
+	for p: Dictionary in (sample["peers"] as Array):
+		parts.append("%s w%.2f→%.3f" % [p["id"], float(p["weight"]), float(p["share"])])
+	return "table: " + " | ".join(parts)
+
+
+# One candidate's terms: each peer's 0..1 score, then any judge that actually objected.
+func _terms_line(t: Dictionary) -> String:
+	var parts: Array = []
+	for p: Dictionary in (t["peers"] as Array):
+		parts.append("%s %.2f" % [p["id"], float(p["score"])])
+	var s := " ".join(parts)
+	for j: Dictionary in (t["judges"] as Array):
+		if float(j["objection"]) > 0.0:
+			s += "  ⚖ %s objects %.2f (×%.2f)" % [j["id"], float(j["objection"]),
+					float(t["survives"])]
+	return s
+
+
+# A candidate in one readable phrase — card ids, not display names: a log is grepped.
+static func describe(cand: Dictionary) -> String:
+	if cand.is_empty():
+		return "(nothing)"
+	var kind := String(cand["kind"])
+	var inst := cand.get("inst", null) as CardInstance
+	var who := inst.data.id if inst != null else "?"
+	match kind:
+		"place":
+			return "place %s → r%dc%d" % [who, int(cand["row"]), int(cand["col"])]
+		"move":
+			return "move %s → r%dc%d" % [who, int(cand["row"]), int(cand["col"])]
+		"cast":
+			return "cast %s%s" % [who, _at(cand)]
+		"ability":
+			var ab := cand.get("ability", null) as AbilityData
+			return "ability %s.%s%s" % [who, ab.id if ab != null else "?", _at(cand)]
+	return kind
+
+
+static func _at(cand: Dictionary) -> String:
+	var target := cand.get("target", null) as CardInstance
+	if target == null:
+		return ""
+	return " on %s (r%dc%d, %s)" % [target.data.id, target.row, target.col,
+			"theirs" if target.owner == 0 else "ours"]
 
 
 # Keeps a candidate state's mana story true: the candidate's cost leaves the pool, and a

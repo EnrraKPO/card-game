@@ -127,7 +127,8 @@ static func _submit(m: StatMutation) -> Outcome:
 	# either. Attack-channel damage only; a real incoming hit (raw amount > 0, pre-interception)
 	# is the gate. See dodge_chance for the (itself interceptable) rate.
 	if m.stat == StatMutation.DAMAGE and m.channel == StatMutation.CH_ATTACK \
-			and dodge_enabled and m.amount > 0 and randf() < dodge_chance(inst, m.source):
+			and dodge_enabled and m.amount > 0 \
+			and CombatRng.roll(&"rules") < dodge_chance(inst, m.source):
 		var od := Outcome.make(inst, StatMutation.DAMAGE, 0)
 		od.dodged = true
 		return od
@@ -140,7 +141,8 @@ static func _submit(m: StatMutation) -> Outcome:
 	# interceptable crit_chance / crit_multiplier queries themselves (see crit_chance).
 	var crit_bonus := 0
 	if m.stat == StatMutation.DAMAGE and m.channel == StatMutation.CH_ATTACK \
-			and crit_enabled and m.amount > 0 and randf() < crit_chance(m.source, inst):
+			and crit_enabled and m.amount > 0 \
+			and CombatRng.roll(&"rules") < crit_chance(m.source, inst):
 		var boosted := int(round(m.amount * crit_multiplier(m.source)))
 		crit_bonus = maxi(0, boosted - m.amount)
 		m.amount += crit_bonus
@@ -560,7 +562,7 @@ static func _try_intercept(e: Effect, stacks: int, holder: CardInstance, owner_s
 				return
 		elif not c.evaluate(participant, owner_side):
 			return
-	if e.chance < 1.0 and randf() >= e.chance:
+	if e.chance < 1.0 and CombatRng.roll(&"rules") >= e.chance:
 		return
 	var before := m.amount
 	if e.op == Effect.Op.MUL:
