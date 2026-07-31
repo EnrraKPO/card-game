@@ -540,12 +540,24 @@ class Judge:
 #   · dead king → objection 1, categorical — the veto, by arithmetic;
 #   · never-staged king (hand-built boards) → 0: no win condition to protect, silent —
 #     without the distinction every kingless fixture carries a constant discount;
-#   · living king → its endangerment, CAPPED below 1 (GRADED_MAX): danger short of death
-#     is never categorical, so a doomed king still prefers the least-bad line instead of
-#     freezing when every candidate looks fatal. Only death itself is absolute.
+#   · living king → THE PANIC WINDOW over its endangerment (expected fraction of its
+#     pool lost this turn, off the valuation stamp): below PANIC_FLOOR the judge is
+#     silent — the king's fat pool is a fine screen and damage-sharing negotiates
+#     freely (the tank era); past PANIC_CEIL objection is near-total (GRADED_MAX) —
+#     protection overrides everything short of the veto (the critical era); between
+#     them it ramps. This is the tank-early → protect-late transition as a stated
+#     rule: "the king tolerates risking a third of its life; by half, nothing else
+#     matters." Danger short of death is never categorical (GRADED_MAX < 1), so a
+#     cornered king still prefers the least-bad line instead of freezing.
+# ⚠ PROVISIONAL like every constant: floor/ceiling are speakable numbers awaiting the
+# playtest; a cowardly or reckless personality would author these, not a weight.
 class KingSafety:
 	extends Judge
 
+	# The panic window: expected pool-loss fraction where objection starts, and where
+	# it saturates.
+	const PANIC_FLOOR := 0.3
+	const PANIC_CEIL := 0.5
 	# The ceiling on objection to a LIVING king's danger. The gap to 1 is what keeps a
 	# cornered king choosing among bad options rather than vetoing them all.
 	const GRADED_MAX := 0.95
@@ -564,7 +576,9 @@ class KingSafety:
 			return 1.0 if categorical(state) else 0.0
 		if not state.valued or state.valued_by != pricer:
 			BoardScoring.run_valuation(state, pricer)
-		return minf(1.0 - king.persistence, GRADED_MAX)
+		var endanger := 1.0 - king.persistence
+		return GRADED_MAX * clampf((endanger - PANIC_FLOOR) / (PANIC_CEIL - PANIC_FLOOR),
+				0.0, 1.0)
 
 	func categorical(state: BoardState) -> bool:
 		if state.captain(1) != null:
@@ -786,20 +800,86 @@ static func threat_against(state: BoardState, side: int) -> float:
 	return total
 
 
-# Expected damage aimed at this unit per round: the opposing threat mass, apportioned by
-# the unit's share of ITS OWN side's total exposure. Never "X will attack Y" (17b forbids
-# it, and the player can reshuffle at will) — a position measurement: "this much damage
-# exists, and this unit stands in the spot that geometrically absorbs this share of it".
-# Side-aware: a player unit's incoming is the CPU's fielded mass, shared by the player's
-# own formation geometry.
-static func incoming(state: BoardState, unit: BoardState.UnitState) -> float:
-	var side := unit.owner
-	var total_exposure := 0.0
+# ── the damage waterfall (user-designed 2026-07-31; replaces the proportional spray) ──
+#
+# ALL threat is MELEE-TARGETING pressure — open mana included: mana prices the unit about
+# to be played, not a spell, and spells reaching the back line are out of planning's
+# control, so the geometry does not price them (the melee doctrine). One distribution
+# rule end to end: the side's expected incoming mass is poured into its units FRONT-FIRST
+# (targeting order — exposure, descending), each body absorbs up to its pool, and only
+# the OVERFLOW reaches the ranks behind. Dodged strikes are thrown at their target but
+# land on no one — they neither hurt the dodger nor pass through it.
+#
+# What this buys, all by construction: front slots carry strictly more expected damage
+# than back slots in every scenario (targeting reaches them first — the old spray gave
+# everyone a simultaneous slice and let a clamp flatten the difference); screening is
+# literal subtraction (a body in a more exposed slot removes what reaches the slots
+# behind); and a unit's allocation is bounded by its pool, so "overwhelmed" never erases
+# the position gradient — the excess goes where it really goes, onward.
+#
+# Still never "X will attack Y" (17b): one aggregate mass, one pour, no pairing. EQUAL
+# exposure SHARES the pour — melee targeting picks freely among equal-depth bodies, so a
+# tie is not a screen (a screen requires a body in a strictly MORE exposed slot); within
+# a tie group the mass water-fills evenly, capped by each body's pool, and only what the
+# whole group cannot absorb flows to the group behind.
+#   naive=true — the seeding pass: raw stat mass, no delivery/crit/dodge. Cuts the
+#   delivery recursion exactly as before (delivery reads naive urgencies).
+static func incoming_allocation(state: BoardState, side: int, naive: bool) -> Dictionary:
+	var entries: Array = []
 	for u: BoardState.UnitState in state.units(side):
-		total_exposure += exposure_of(state, side, u.row, u.col)
-	if total_exposure <= 0.0:
-		return 0.0
-	return threat_against(state, side) * exposure_of(state, side, unit.row, unit.col) / total_exposure
+		entries.append({"u": u, "e": exposure_of(state, side, u.row, u.col)})
+	entries.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return float(a["e"]) > float(b["e"]))
+	var remaining := threat_against(state, side) if naive \
+			else expected_threat_against(state, side)
+	var thrown_at := attack_speed_ref(state, 1 - side)
+	var landed: Dictionary = {}
+	var i := 0
+	while i < entries.size():
+		var j := i
+		while j < entries.size() \
+				and absf(float(entries[j]["e"]) - float(entries[i]["e"])) < 0.0001:
+			j += 1
+		# The tie group [i, j): water-fill evenly. A dodger soaks attention beyond its
+		# pool — to consume its life the enemy must throw pool/(1−dodge) at it, and the
+		# dodged part is wasted, not passed on.
+		var aimed: Dictionary = {}
+		var caps: Dictionary = {}
+		var active: Array = []
+		for k in range(i, j):
+			var u: BoardState.UnitState = entries[k]["u"]
+			var life := float(u.health + u.shield)
+			var dodge := 0.0 if naive else minf(dodge_expect(u, thrown_at), 0.95)
+			aimed[u] = 0.0
+			caps[u] = life / (1.0 - dodge) if life > 0.0 else 0.0
+			landed[u] = 0.0
+			if float(caps[u]) > 0.0:
+				active.append(u)
+		while remaining > 0.0001 and not active.is_empty():
+			var share := remaining / float(active.size())
+			var still: Array = []
+			for u: BoardState.UnitState in active:
+				var room := float(caps[u]) - float(aimed[u])
+				var take := minf(share, room)
+				aimed[u] = float(aimed[u]) + take
+				remaining -= take
+				if float(caps[u]) - float(aimed[u]) > 0.0001:
+					still.append(u)
+			active = still
+		for k in range(i, j):
+			var u: BoardState.UnitState = entries[k]["u"]
+			var dodge := 0.0 if naive else minf(dodge_expect(u, thrown_at), 0.95)
+			landed[u] = float(aimed[u]) * (1.0 - dodge)
+		i = j
+	return landed
+
+
+# Expected damage landing on this unit per round, under the NAIVE waterfall (raw stat
+# mass — the public seeding vocabulary; the valuation's stamp uses the refined pour
+# inside run_valuation). Side-aware: a player unit's incoming is the CPU's mass poured
+# through the player's own formation.
+static func incoming(state: BoardState, unit: BoardState.UnitState) -> float:
+	return float(incoming_allocation(state, unit.owner, true).get(unit, 0.0))
 
 
 # The unit's likelihood of dying where it stands, 0..1: expected incoming damage against
@@ -978,10 +1058,11 @@ static func crit_expect(u: BoardState.UnitState, target_speed: float) -> float:
 # The damage `side` should EXPECT to absorb this round — the valuation pass's refined
 # threat (pass 2 only; threat_against stays the naive form): each opposing attacker's
 # mass is discounted by what it will live to throw (delivery — damage a dead unit never
-# lands isn't damage) and raised by its expected crits. Player open mana rides
-# on top for the CPU side exactly as in threat_against, UNDISCOUNTED: abstract damage has
-# no body to kill, no speed to outpace, and dodge gates attack-channel strikes only.
-# Delivery reads pass-1 urgencies (raw threat), so this never recurses — see run_valuation.
+# lands isn't damage) and raised by its expected crits. Player open mana rides on top for
+# the CPU side exactly as in threat_against, undiscounted by delivery (it has no body to
+# kill before it swings) — under the melee doctrine it then pours and dodges through the
+# waterfall like every other part of the mass (incoming_allocation).
+# Delivery reads pass-1 urgencies (naive waterfall), so this never recurses.
 static func expected_threat_against(state: BoardState, side: int) -> float:
 	var t_ref := target_speed_ref(state, side)
 	var total := float(state.player_mana) * MANA_THREAT_RATE if side == 1 else 0.0
@@ -1104,35 +1185,22 @@ static func persistence(state: BoardState, u: BoardState.UnitState) -> float:
 # TWO PASSES (the expected-damage model). Raw threat pretends every attacker lands
 # everything: a unit that dies before it swings still projects its full mass, so the CPU
 # would be paid for damage that can never happen and cower from corpses. Instead:
-#   PASS 1 (implicit): delivery() reads raw urgencies — how likely each ATTACKER is to
-#     live to throw its damage, judged under the naive model. Seeding the refinement with
-#     the raw reading is what cuts the recursion (my delivery depends on your threat,
-#     which would depend on my delivery, …) — one refinement step, no fixpoint.
-#   PASS 2: each side's incoming is rebuilt from expected_threat_against (mass ×
-#     delivery × crit expectation) and each unit's own share is discounted by its dodge
-#     expectation — then urgency, persistence and value follow as before. The mana part
-#     of the CPU-side threat is never dodgeable (see expected_threat_against).
-# The per-side aggregates are hoisted here rather than recomputed per unit — they are
-# properties of whole sides, and the pass runs per candidate state.
+#   PASS 1 (implicit): delivery() reads naive-waterfall urgencies — how likely each
+#     ATTACKER is to live to throw its damage. Seeding the refinement with the naive
+#     reading is what cuts the recursion (my delivery depends on your threat, which
+#     would depend on my delivery, …) — one refinement step, no fixpoint.
+#   PASS 2: each side's incoming is the REFINED waterfall (incoming_allocation with the
+#     delivery-discounted, crit-raised mass, dodge folded per body) — then urgency,
+#     persistence and value follow as before. Since the melee doctrine every part of the
+#     mass, mana included, pours and dodges the same way.
 static func run_valuation(state: BoardState, pricer: EnemyPersonality = null) -> void:
 	var dial := _persistence_factor(pricer)
 	var total := 0.0
 	for side in 2:
-		# The side's pass-2 aggregates: expected threat in, the reference speed that
-		# threat is thrown at (the OTHER side's attackers — the dodge edge's yardstick),
-		# and the side's total exposure (the apportioning denominator).
-		var mana_part := float(state.player_mana) * MANA_THREAT_RATE if side == 1 else 0.0
-		var unit_threat := expected_threat_against(state, side) - mana_part
-		var thrown_at := attack_speed_ref(state, 1 - side)
-		var exposure_total := 0.0
-		for u: BoardState.UnitState in state.units(side):
-			exposure_total += exposure_of(state, side, u.row, u.col)
+		var landed := incoming_allocation(state, side, false)
 		for u: BoardState.UnitState in state.units(side):
 			u.raw_value = raw_unit_value(u, pricer)
-			var share := 0.0 if exposure_total <= 0.0 \
-					else exposure_of(state, side, u.row, u.col) / exposure_total
-			var dodged := unit_threat * (1.0 - dodge_expect(u, thrown_at))
-			var inc := (dodged + mana_part) * share
+			var inc := float(landed.get(u, 0.0))
 			var life := u.health + u.shield
 			var urg := 1.0 if life <= 0 else clampf(inc / float(life), 0.0, 1.0)
 			u.persistence = 1.0 - urg

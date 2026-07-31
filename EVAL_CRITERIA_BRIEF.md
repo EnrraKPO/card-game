@@ -42,20 +42,41 @@ Known consequences, deliberate: damage-sharing EMERGES (the king fronts when its
 redistributes incoming off units the fight prices as precious — a price, not a role); a
 placement always ADDS value, so anti-withholding holds by construction.
 
+### The damage waterfall (user-designed 2026-07-31 — replaces the proportional spray)
+
+**All threat is melee-targeting pressure — the melee doctrine.** Open mana prices the
+unit about to be played, not a spell; spells reaching the back line are out of planning's
+control, so the geometry does not price them. One distribution rule end to end
+(`incoming_allocation`): the side's expected incoming mass is poured into its units
+**front-first** (targeting order — exposure, descending); each body absorbs up to its
+pool; only the **overflow** reaches the ranks behind. **Equal exposure shares the pour**
+(water-filling) — melee targeting picks freely among equal-depth bodies, so a tie is not
+a screen; a screen requires a body in a strictly MORE exposed slot. Dodged strikes are
+thrown at their target but land on no one — a dodger soaks attention beyond its pool
+(`pool ÷ (1 − dodge)`) and the dodged part is wasted, never passed on. Mana pours and
+dodges like everything else (the old "mana is undodgeable" special case died with the
+spray it served).
+
+By construction: front slots carry strictly more expected damage than back slots in every
+scenario; screening is literal subtraction; a unit's allocation is bounded by its pool,
+so overwhelming threat never flattens the position gradient (the spray + clamp did — the
+live bug where a 3/2 was fronted over a 1/2 under heavy threat). Harm semantics moved
+with it: a body's harm is what it can still absorb, not the mass thrown at it. Overkill
+currently flows through undiminished (a queen's overkill of a 2-HP fodder is not wasted)
+— known coarseness, deliberate v1.
+
 ### The expected-damage model
 
 Persistence's incoming is the damage the fight will actually deal, not raw stat mass —
 **stock vs flow**: raw value's attack term prices the asset (a weapon that swings every
 remaining round), the persistence channel prices this turn's expected damage; both stay.
-Three corrections, all inside the measurement vocabulary, invisible to every criterion:
+The refinements, all inside the measurement vocabulary, invisible to every criterion:
 
 1. **Delivery-discounted threat** (`expected_threat_against`) — each attacker's mass ×
    `delivery` (its own likelihood of living to throw it, from the NAIVE pass — one
    refinement step, seeded raw, cuts the recursion; no fixpoint) × crit expectation. A
    unit that dies before it swings projects almost nothing.
-2. **Dodge expectation** — each defender's share of incoming scaled by `1 − dodge_expect`
-   (the Resolver's formula on snapshot data; buildings hard 0). The mana part of CPU-side
-   threat is never dodgeable.
+2. **Dodge expectation** — folded into the waterfall per body, as above.
 3. **Crit expectation** — each attacker's mass × `1 + chance × (multiplier − 1)`; also
    folded into `outgoing_mass`.
 
@@ -116,16 +137,19 @@ BEHAVIORS score expression relative to the pick's cohort (`score_pick`, two-pass
 
 ## The stock table
 
-**THE JUDGE — KingSafety** ("Protect the king", 🧠 Enemy AI): objection = the own king's
-stamped endangerment (1 − persistence; the expected-damage reading, never its own
-arithmetic). Scoring rule: dead king → objection 1, categorical (this IS the old
-Captain-dead veto, now deleted from the engine); never-staged king → 0 (kingless fixtures
-carry no constant discount); living king → endangerment capped at `GRADED_MAX` 0.95, so a
-cornered king still picks the least-bad line — only death is absolute. THREAT-SCALED by
-construction: calm board, posture free (the king tanks — a big cheap pool is a fine
-screen); lethal board, nothing survives its objection but the sheltering lines. The
-tank-early → protect-late arc is this judge's slice expanding with the danger; no weight
-exists to re-tune, so the old 2.275 knife-edge is GONE, dissolved rather than solved.
+**THE JUDGE — KingSafety** ("Protect the king", 🧠 Enemy AI): objection reads the own
+king's stamped endangerment (1 − persistence; the waterfall reading, never its own
+arithmetic) through **THE PANIC WINDOW** — the tank-early → protect-late arc as a stated
+rule: below `PANIC_FLOOR` (0.3 expected pool loss this turn) the judge is silent and the
+king's fat pool is a fine screen; past `PANIC_CEIL` (0.5) objection saturates at
+`GRADED_MAX` (0.95) and protection overrides everything short of the veto; between them
+it ramps. "The king tolerates risking a third of its life; by half, nothing else
+matters." Dead king → objection 1, categorical (this IS the old Captain-dead veto,
+deleted from the engine); never-staged king → 0; living danger is never categorical
+(GRADED_MAX < 1: a cornered king picks the least-bad line). No weight exists to re-tune —
+the old 2.275 knife-edge is GONE, dissolved rather than solved; a cowardly or reckless
+personality would author the window, not a weight. Floor/ceiling PROVISIONAL, no
+playtest.
 
 **PEERS:**
 - **TotalValue** (1.0, the reference scale) — the stamped `value_total`, min-max
@@ -196,6 +220,17 @@ its authored weight entirely. Shipped starters (`aggressive`, `defensive`,
 - **Nothing is playtested.** Every weight, rate and the judge's scoring rule are
   provisional until the user playtests; the suite pins them, but that is
   self-consistency, not validation. Never cite the suite as evidence a value is right.
+
+## Testing doctrine (user ruling 2026-07-31)
+
+**Tests validate that the COMPUTATION happens as specified — never that a BEHAVIOR is
+the right one.** Measurements, algebra, plumbing, purity, and dials-reach-the-decision
+(direction-free A/Bs) are testable; which move the engine picks on a staged board is
+not — behaviors are judged by playtest observation only. Rationale, from experience:
+every failed iteration of the system passed the behavior pins, and keeping them green
+repeatedly forced staged repricing — they measured the fixtures, not the engine. The
+eleven engine-behavior tests were deleted 2026-07-31 (git history holds them); do not
+write new ones.
 
 ## Standing cautions
 

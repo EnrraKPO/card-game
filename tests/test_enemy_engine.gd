@@ -1,8 +1,14 @@
 extends TestCase
 
 # The enemy engine's decision pipeline (ENCOUNTER_ENGINE_DESIGN.md Part 5): plain-data
-# board state, candidate enumeration, apply, exposure scoring, selection. Grows a section
-# per pipeline part as the slice widens.
+# board state, candidate enumeration, apply, measurement vocabulary, the decision table.
+#
+# TESTING DOCTRINE (user ruling 2026-07-31): tests validate that the COMPUTATION happens
+# as specified — measurements, algebra, plumbing, purity, and that dials reach the
+# decision. They never enforce a BEHAVIOR (which move the engine picks on a staged
+# board); behaviors are judged by playtest observation only. The old behavior pins kept
+# passing through every failed iteration of the system and were kept green with staged
+# repricing more than once — they measured the fixtures, not the engine.
 
 
 func suite_name() -> String:
@@ -16,7 +22,6 @@ func run() -> void:
 	_scoring_prefers_screens()
 	_enumeration_legality()
 	_apply_purity()
-	_engine_screens_captain()
 	_engine_determinism()
 	_weight_resolution()
 	_threat_and_incoming()
@@ -25,10 +30,6 @@ func run() -> void:
 	_mana_as_threat()
 	_move_enumeration()
 	_apply_move_purity()
-	_scoring_triages_dying_unit()
-	_engine_king_tanks()
-	_engine_king_retreats_fully()
-	_engine_king_shares_moderate_threat()
 	_sim_gate()
 	_spell_enumeration()
 	_ability_enumeration()
@@ -37,23 +38,17 @@ func run() -> void:
 	_apply_cast_sweeps_dead()
 	_apply_ability_fire_bless()
 	_board_value_measurement()
-	_engine_heals_wounded_ally()
-	_engine_casts_group_heal()
-	_engine_place_vs_heal_arbitration()
 	_death_of_own_unit_scores_worse()
 	_engine_never_kills_its_own_captain()
 	_planning_leaves_the_world_untouched()
 	_first_strike_and_delivery()
 	_outgoing_mass_shape()
 	_behavior_cohort_normalization()
-	_engine_casts_damage_buff()
 	_mana_optimization_shape()
 	_mana_pressure_is_structural()
 	_readiness_shape()
 	_noop_veto_shape()
-	_engine_spends_its_mana()
 	_idle_hand_shape()
-	_engine_never_withholds_a_playable_unit()
 	_idle_hand_changes_a_decision()
 	_valuation_raw_ignores_the_wound()
 	_valuation_persistence_dial()
@@ -70,44 +65,30 @@ func run() -> void:
 	_king_safety_shape()
 
 
-# The tap-blind buff regression (user report 2026-07-31: "we are back to buffing tapped
-# units"): before the raw attack term wore the tap cap, TotalValue tied fresh and tapped
-# buff targets — attack stock priced the same on both — and preferred whichever body
-# stood SAFER (a buff is paid persistence-weighted), so a sheltered tapped unit outbid an
-# exposed fresh one and damage_output's 0.1 tie-break was outvoted. The pin stages
-# exactly that trap: the tapped body is the safe one, the fresh body is exposed — and
-# the buff must STILL prefer the fresh unit, through value_total itself.
+# The valuation's attack stock is TAP-AWARE (a this-turn instrument): an exhausted unit's
+# attack term wears TAP_DELIVERY_FACTOR — this turn its sword is spent; next turn's
+# re-valuation restores it. A pure measurement pin: same unit, one flag flipped.
 func _buff_prefers_fresh_over_tapped() -> void:
-	var back := BoardData.ROWS - 1
-	var deep := BoardData.COLS - 1
-	var enemies: Array = [
-		_enemy("dps_dummy", 0, 0),        # fresh — standing in the open
-		_enemy("dps_dummy", 2, deep),     # tapped — sheltered in the back corner
-	]
-	var knight := _player("knight", 0, deep)
-	knight.modifiers["speed"] = 9   # fast, or its threat delivery-discounts to nothing
-	var players: Array = [knight]
-	var grids := _grids(enemies, players)
-	var base := BoardState.capture(grids[0], grids[1])
-	for u: BoardState.UnitState in base.units(1):
-		if u.row == 2:
-			u.exhausted = true
-	var bless := func(target_row: int) -> BoardState:
-		var s := base.copy()
-		for u: BoardState.UnitState in s.units(1):
-			if u.row == target_row:
-				u.attack += 2
-		BoardScoring.run_valuation(s)
-		return s
-	var fresh: BoardState = bless.call(0)
-	var tapped: BoardState = bless.call(2)
-	check(fresh.units(1)[0].persistence < 1.0,
-			"the fresh target is genuinely the riskier body (fixture sanity)")
-	check(fresh.value_total > tapped.value_total,
-			"+2 attack is worth more on the exposed fresh body than on the safe tapped one")
+	var fresh := BoardState.UnitState.new()
+	fresh.attack = 3
+	fresh.strikes = 1
+	fresh.health = 2
+	fresh.max_health = 2
+	var tapped := BoardState.UnitState.new()
+	tapped.attack = 3
+	tapped.strikes = 1
+	tapped.health = 2
+	tapped.max_health = 2
+	tapped.exhausted = true
+	var fresh_raw := BoardScoring.raw_unit_value(fresh)
+	var tapped_raw := BoardScoring.raw_unit_value(tapped)
+	check(tapped_raw < fresh_raw, "an exhausted unit's raw value discounts its spent swing")
+	var expected_gap := 3.0 * (1.0 - BoardScoring.TAP_DELIVERY_FACTOR) \
+			* BoardValueConfig.stat_rate("attack")
+	check(absf((fresh_raw - tapped_raw) - expected_gap) < 0.0001,
+			"…by exactly the attack stock × (1 − TAP_DELIVERY_FACTOR)")
 
 
-# TEMP: dump per-criterion contributions for a pick's cohort. Mirrors score_pick.
 func _enemy(card_id: String, r: int, c: int) -> CardInstance:
 	var inst := unit(card_id)
 	inst.owner = 1
@@ -222,17 +203,19 @@ func _exposure_geometry() -> void:
 func _scoring_prefers_screens() -> void:
 	var back := BoardData.ROWS - 1
 	var deep := BoardData.COLS - 1
-	var scoring := BoardScoring.stock()
-	# Formation preference lives in the valuation (cover raises persistence raises worth),
-	# and TotalValue is a BEHAVIOR — visible in a pick's cohort, not on a lone state. Same
-	# units at the same depth, two lanes: the same-lane screen covers the Captain harder
-	# than the off-lane one, so the screened arrangement outranks it.
+	# The waterfall's two definitional properties (user-stated), pinned where they live:
+	# front slots carry strictly more expected damage than back slots in EVERY scenario,
+	# and a screen SUBTRACTS from what reaches the ranks behind it.
 	var players: Array = [_player("queen", back, 0)]
+	var naked := _state_with([_enemy("king", back, deep)], players)
 	var screened := _state_with([_enemy("king", back, deep), _enemy("pawn", back, 0)], players)
-	var unscreened := _state_with([_enemy("king", back, deep), _enemy("pawn", 0, 0)], players)
-	var ranked := scoring.score_pick([unscreened, screened])
-	check(float(ranked[1]) > float(ranked[0]),
+	var naked_king: BoardState.UnitState = naked.captain(1)
+	var screened_king: BoardState.UnitState = screened.captain(1)
+	check(BoardScoring.incoming(screened, screened_king) < BoardScoring.incoming(naked, naked_king),
 			"stock scoring rates a screened Captain above a naked one")
+	var pawn_unit_s: BoardState.UnitState = screened.unit_at(1, back, 0)
+	check(BoardScoring.incoming(screened, pawn_unit_s) > BoardScoring.incoming(screened, screened_king),
+			"…and the front slot carries strictly more expected damage than the back one")
 	# A lone state under stock: TotalValue/damage are behaviors (silent alone), mana reads
 	# a turn that spent nothing, the judge has no staged king to guard — all that remains
 	# is READINESS at its TABLE SHARE (the decision table dilutes every peer by its
@@ -306,26 +289,6 @@ func _seeded_engine() -> EnemyEngine:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 1234
 	return EnemyEngine.new(rng)
-
-
-func _engine_screens_captain() -> void:
-	var back := BoardData.ROWS - 1
-	var deep := BoardData.COLS - 1
-	var grids := _grids([_enemy("king", back, deep)])
-	var hand: Array = [unit("pawn"), unit("pawn")]
-
-	# The deliverable-1 observable, NARROWED with the protection criterion parked (0..1
-	# contract): on a board with zero threat every slot is value-identical, so placement
-	# POSITION falls to the tie-break — what stock still guarantees is that every
-	# affordable body gets fielded (mana pressure + total value). Position under real
-	# threat is pinned by the valuation/persistence tests; deep = kept for fixture shape.
-	var _deep_unused := deep
-	var engine := _seeded_engine()
-	engine.weight_overrides = {"default": 0.0}
-	var actions := engine.decide_actions(hand, grids[0], grids[1], 10)
-	check_eq(actions.size(), 2, "both affordable units get placed")
-	for action: Dictionary in actions:
-		check_eq(int(action["type"]), EnemyEngine.Action.PLACE, "day one emits placements")
 
 
 func _engine_determinism() -> void:
@@ -428,7 +391,10 @@ func _harm_shape() -> void:
 	cap.shield = 0
 	cap.health = 6
 	check_eq(BoardScoring.urgency(state, cap), 1.0, "10 incoming vs 6 remaining: dead")
-	check_eq(BoardScoring.harm(state, cap), 0.5, "…but harm is 10/20 of the unit, capped by max")
+	# Under the waterfall a body only ever ABSORBS up to its remaining life — the overkill
+	# flows past it instead of inflating its own reading — so harm is what the body can
+	# still soak: 6 of its 20-point frame, not the thrown 10.
+	check_eq(BoardScoring.harm(state, cap), 0.3, "…but harm is what it can still absorb: 6/20")
 
 	# The clamp: incoming far past max health reads as the whole unit, not more.
 	var doomed := _state_with([_enemy("fodder_dummy", 0, 0)], players)
@@ -499,144 +465,6 @@ func _apply_move_purity() -> void:
 	check(next.unit_at(1, back, deep) == null, "the result vacates the origin slot")
 	var moved: BoardState.UnitState = next.unit_at(1, 0, 0)
 	check(moved != null and moved.source == king, "…and the unit stands at the destination")
-
-
-# ── The deliverable-2 observable: triage beats marginal captain cover ────────────────
-
-func _scoring_triages_dying_unit() -> void:
-	var back := BoardData.ROWS - 1
-	var deep := BoardData.COLS - 1
-	# The Captain sits screened and comfortable; a wounded support (weight 0.5) stands
-	# exposed in the far lane; modest real threat is on the player's board. One cheap
-	# fodder body is worth more screening the dying support than doubling captain cover.
-	var scoring := BoardScoring.stock()
-	var players: Array = [_player("knight", 0, deep)]
-
-	var support_a := _enemy("support_dummy", 0, 1)
-	support_a.current_health = 2
-	var screens_support := _state_with([
-		_enemy("captain_dummy", back, deep), _enemy("pawn", back, 0), support_a,
-		_enemy("fodder_dummy", 0, 0),
-	], players)
-
-	var support_b := _enemy("support_dummy", 0, 1)
-	support_b.current_health = 2
-	var pads_captain := _state_with([
-		_enemy("captain_dummy", back, deep), _enemy("pawn", back, 0), support_b,
-		_enemy("fodder_dummy", back, 1),
-	], players)
-
-	# TotalValue is a behavior — the comparison runs through a pick's cohort.
-	var ranked := scoring.score_pick([pads_captain, screens_support])
-	check(float(ranked[1]) > float(ranked[0]),
-			"a dying support outweighs marginal cover for a comfortable Captain")
-
-
-# ── Captain-as-tank: the king steps forward when its body is the best screen ─────────
-
-func _engine_king_tanks() -> void:
-	var back := BoardData.ROWS - 1
-	var deep := BoardData.COLS - 1
-	# The BOLD-captain event character: precious fodders crowd every column except the
-	# front, serious threat bears down, only front-line slots are open, and nobody's 2 HP
-	# body soaks damage as well as the Captain's fat pool. Decision 15 in reverse.
-	#
-	# SINCE THE VALUATION SYSTEM (2026-07-30) the tanking instinct comes from TOTAL
-	# VALUE — the king in front redistributes incoming onto its fat pool, so the fodders'
-	# persistence (and the board's worth) rises. The event's old "fodders are precious"
-	# statement (survival weight 0.6) is now a PRICE: a per-fight role bonus on the
-	# fodders' raw worth. Unpriced, cheap bodies screen themselves and the king only
-	# follows to mid-column; priced (the sweep flips at +4, pinned at +8), sparing them
-	# is worth the king's own hide and it walks the full way front.
-	var captain := _enemy("captain_dummy", back, deep)
-	var enemies: Array = [captain]
-	for r in BoardData.ROWS:
-		enemies.append(_enemy("fodder_dummy", r, 1))
-		enemies.append(_enemy("fodder_dummy", r, 2))
-	enemies.append(_enemy("fodder_dummy", 0, deep))
-	enemies.append(_enemy("fodder_dummy", 1, deep))
-	var players: Array = [_player("queen", 0, deep), _player("queen", 1, deep)]
-	var grids := _grids(enemies, players)
-
-	var engine := _seeded_engine()
-	engine.weight_overrides = {"fodder": 0.6, "captain": 1.0}
-	# (This fixture used to make fodders precious via a role_values personality; role
-	# tags were parked out of the eval 2026-07-31 and the behaviour stands without it —
-	# kit-pricing makes the king's own life cheap and its cover valuable.)
-	var actions := engine.decide_actions([], grids[0], grids[1], 0)
-
-	var king_moves: Array = actions.filter(func(a: Dictionary) -> bool:
-		return int(a["type"]) == EnemyEngine.Action.MOVE and a["inst"] == captain)
-	check_eq(king_moves.size(), 1, "the bold Captain steps out exactly once")
-	if not king_moves.is_empty():
-		check_eq(int(king_moves[0]["col"]), 0, "…to the front line, tanking for its fodders")
-
-
-# ── Protective commitment (stock): the threatened king claims the back column ────────
-
-func _engine_king_retreats_fully() -> void:
-	var deep := BoardData.COLS - 1
-	# The observed defect this pins: a mid-column king under real threat used to send a
-	# FODDER to the free back seat (or wander forward to soak share) because its health
-	# pool read as the cheapest sponge. The KING SAFETY judge commits it — its objection
-	# scales with the actual danger on the king, so lethal pressure drives the full
-	# retreat. RESTAGED under the judge (4 queens, was 2): the judge measures danger
-	# honestly, and at the old staging the king was only risking ~11% of its pool per
-	# turn — mild danger, where sheltering a fodder is legitimate play. The retreat
-	# mandate is a statement about REAL threat, so the board now carries it. (Observed
-	# turn shape: a fodder screens the front first, then the king walks all the way back.)
-	# Mid-column is also exactly the leaper's landing zone.
-	var captain := _enemy("captain_dummy", 1, 2)
-	var enemies: Array = [
-		captain,
-		_enemy("fodder_dummy", 1, 0),
-		_enemy("fodder_dummy", 0, deep),
-		_enemy("fodder_dummy", 2, deep),
-	]
-	var players: Array = [
-		_player("queen", 0, deep), _player("queen", 1, deep),
-		_player("queen", 2, deep), _player("queen", 1, 2),
-	]
-	var grids := _grids(enemies, players)
-
-	var engine := _seeded_engine()
-	engine.weight_overrides = {"fodder": 0.5}
-	var actions := engine.decide_actions([], grids[0], grids[1], 0)
-
-	var king_moves: Array = actions.filter(func(a: Dictionary) -> bool:
-		return int(a["type"]) == EnemyEngine.Action.MOVE and a["inst"] == captain)
-	check_eq(king_moves.size(), 1, "the threatened king repositions itself")
-	if not king_moves.is_empty():
-		check_eq(int(king_moves[0]["col"]), deep,
-				"…all the way to the back column — no half-hearted mid-column stop")
-
-
-# ── Damage sharing (stock): moderate threat, and the king fronts for its troops ──────
-
-func _engine_king_shares_moderate_threat() -> void:
-	var back := BoardData.ROWS - 1
-	var deep := BoardData.COLS - 1
-	# The other half of the stock captain's character (weight 1.75 is PROVISIONAL and
-	# untested in play — see STOCK_SURVIVAL_WEIGHTS): against MODERATE threat the king leaves its safe corner
-	# and walks to the front line, spending its fat pool so valued fodders stop dying.
-	# Against queens the same board makes it stay home (the retreat test covers commitment).
-	var captain := _enemy("captain_dummy", back, deep)
-	var enemies: Array = [captain]
-	for r in BoardData.ROWS:
-		enemies.append(_enemy("fodder_dummy", r, 1))
-	var players: Array = [_player("knight", 0, deep), _player("knight", 1, deep)]
-	var grids := _grids(enemies, players)
-
-	var engine := _seeded_engine()
-	engine.weight_overrides = {"fodder": 0.5}
-	var actions := engine.decide_actions([], grids[0], grids[1], 0)
-
-	var king_moves: Array = actions.filter(func(a: Dictionary) -> bool:
-		return int(a["type"]) == EnemyEngine.Action.MOVE and a["inst"] == captain)
-	check_eq(king_moves.size(), 1, "the stock king steps out against moderate threat")
-	if not king_moves.is_empty():
-		check_eq(int(king_moves[0]["col"]), 0,
-				"…all the way to the front line, absorbing hits for its fodders")
 
 
 # ── The sim-support gate: the engine never plays what it cannot evaluate ─────────────
@@ -865,165 +693,6 @@ func _board_value_measurement() -> void:
 	BoardValueConfig.set_config({})   # release the pin — next read reloads from disk
 
 
-# ── The engine end to end: the support tends its wounded ─────────────────────────────
-
-func _engine_heals_wounded_ally() -> void:
-	var back := BoardData.ROWS - 1
-	var deep := BoardData.COLS - 1
-	# ⚠ CHARACTER SHIFT UNDER THE VALUATION SYSTEM (2026-07-30, NOT yet user-reviewed —
-	# this board's pin has flipped before and the flip must be surfaced): the wounded dps
-	# here has a 2-point pool, so a heal recovers at most one point of persistence-worth,
-	# while fire_bless adds two full points of attack AND (both sides being valued) makes
-	# every player unit a little less likely to survive. The valuation therefore spends
-	# the tap on the BLESS — under the old death-risk scorer this same board healed. The
-	# preservation instinct is not gone: it now scales with the unit's RAW worth (see the
-	# place-vs-heal arbitration, where a priced-up tower still pulls the heal). What
-	# changed is that a cheap, small-pool body no longer commands a rescue.
-	var support := _enemy("support_dummy", back, 1)
-	var wounded := _enemy("dps_dummy", 0, 2)
-	wounded.current_health = 1
-	var enemies: Array = [_enemy("captain_dummy", back, deep), support, wounded,
-			_enemy("fodder_dummy", back, 0), _enemy("fodder_dummy", 0, 0)]
-	var players: Array = [_player("knight", 0, deep), _player("knight", 1, deep)]
-	var grids := _grids(enemies, players)
-
-	var engine := _seeded_engine()
-	engine.weight_overrides = {"dps": 0.6}
-	var actions := engine.decide_actions([], grids[0], grids[1], 1)
-
-	var gens: Array = actions.filter(func(a: Dictionary) -> bool:
-		return int(a["type"]) == EnemyEngine.Action.GENERATE)
-	check_eq(gens.size(), 1, "the tap is spent exactly once")
-	if not gens.is_empty():
-		check_eq((gens[0]["ability"] as AbilityData).id, "fire_bless",
-				"…on the bless — a 2-pool heal recovers less worth than +2 attack adds")
-		check(gens[0]["unit"] == support, "…from the support")
-		var target: CardInstance = gens[0]["target"]
-		check(target != null and target.owner == 1, "…aimed at an own unit")
-		check(target != support, "…never at the caster's own spent body")
-
-	# The futility gate: a fully healthy board offers the same legal heal, but no target
-	# improves anything — the engine declines rather than waste the play. (The support's
-	# OTHER ability, fire_bless, is legitimately cast now that aggression scores — see
-	# _engine_casts_damage_buff — so the gate is pinned on the heal specifically.)
-	var healthy_enemies: Array = [_enemy("captain_dummy", back, deep),
-			_enemy("support_dummy", back, 1), _enemy("dps_dummy", 0, 2)]
-	var healthy_grids := _grids(healthy_enemies, players)
-	var idle := _seeded_engine()
-	idle.weight_overrides = {"dps": 0.6}
-	var idle_actions: Array = idle.decide_actions([], healthy_grids[0], healthy_grids[1], 1) \
-			.filter(func(a: Dictionary) -> bool:
-				return int(a["type"]) == EnemyEngine.Action.GENERATE \
-						and (a["ability"] as AbilityData).id == "heal")
-	check_eq(idle_actions.size(), 0, "nothing wounded → the heal is declined, not wasted")
-
-
-func _engine_casts_group_heal() -> void:
-	var back := BoardData.ROWS - 1
-	var deep := BoardData.COLS - 1
-	# Three wounded precious fodders and the group heal in hand: the area cast is the
-	# improving play. (No support on board — the single heal isn't available to shadow it.)
-	var hurt: Array = []
-	for r in 3:
-		var f := _enemy("fodder_dummy", r, 1)
-		f.current_health = 1
-		hurt.append(f)
-	var enemies: Array = [_enemy("captain_dummy", back, deep)] + hurt
-	var players: Array = [_player("knight", 0, deep), _player("knight", 1, deep)]
-	var grids := _grids(enemies, players)
-	var group_heal := unit("dummy_group_heal")
-	group_heal.owner = 1
-
-	var engine := _seeded_engine()
-	engine.weight_overrides = {"fodder": 0.5}
-	var actions := engine.decide_actions([group_heal], grids[0], grids[1], 4)
-
-	var casts: Array = actions.filter(func(a: Dictionary) -> bool:
-		return int(a["type"]) == EnemyEngine.Action.CAST)
-	check_eq(casts.size(), 1, "the group heal is cast")
-	if not casts.is_empty():
-		check(casts[0]["inst"] == group_heal, "…the spell from hand")
-		check(casts[0]["target"] == null, "…with no manual target (area)")
-
-
-# ── Place vs heal: one score, both directions ────────────────────────────────────────
-
-# ONE mana, both plays legal — place a fresh fodder (presence + cover) or heal a precious
-# unit. The precious unit is a BUILDING on the front line so the choice is pure: it cannot
-# retreat, and no placement can stand in front of the front column — healing is the only
-# way to preserve it, fielding the only way to grow. (Free MOVE actions may interleave;
-# the assertion is about where the one mana goes.)
-#
-# BRIEFLY BROKEN AND RESTORED 2026-07-30: the idle-hand criterion's first cut charged the
-# heal for leaving a body in hand, which reordered this board (the fodder took the mana and
-# the tower died). The user's correction — a choice that SPENDS MANA is never charged, since
-# what is forbidden is idleness, not preferring one paid play to another — puts this
-# arbitration back exactly as it was. Keep both directions passing whenever the idle-hand
-# rule is touched: they are the proof it did not swallow the preservation instinct.
-func _engine_place_vs_heal_arbitration() -> void:
-	var back := BoardData.ROWS - 1
-	var deep := BoardData.COLS - 1
-	# MODERATE threat is the point: under overwhelming threat the urgency measure calls
-	# the tower doomed with or without the heal (triage — correctly declined), and with
-	# none there is nothing to preserve. One knight's worth of pressure is the window
-	# where +2 health genuinely changes whether the tower lives.
-	#
-	# The knight is FAST on purpose (2026-07-31, the expected-damage model): a lone slow
-	# knight against three CPU bodies is itself mostly dead before it swings, so its
-	# threat delivery-discounts to well under "one knight's worth" and the tower stops
-	# reading as dying — correctly, but that is the discount's own test's business. Out-
-	# speeding every CPU unit makes its whole strike first-strike-insured (delivery = 1),
-	# which restores exactly the pressure this fixture's premise states.
-	var knight := _player("knight", 0, deep)
-	knight.modifiers["speed"] = 7
-	var players: Array = [knight]
-
-	# Direction 1 — the tower is dying: preservation wins the mana, even with a body in hand
-	# (the heal spends the mana, so the idle-hand charge is waived and never enters this
-	# argument).
-	var dying_tower := _enemy("rook", 1, 0)
-	dying_tower.current_health = 1
-	dying_tower.current_shield = 0
-	var support := _enemy("support_dummy", back, 1)
-	var enemies: Array = [_enemy("captain_dummy", back, deep), support, dying_tower]
-	var grids := _grids(enemies, players)
-	var engine := _seeded_engine()
-	# "In THIS fight the tower is precious" — since the valuation system that statement is
-	# a PRICE, not a survival weight: the fight's personality adds a per-card enhancer, so
-	# the tower's raw worth (and therefore what a heal's persistence recovery is worth)
-	# outbids fielding a fresh fodder. The old {"rook": 1.2} survival override now only
-	# feeds the protection criterion, which cannot argue for a heal.
-	engine.personality = EnemyPersonality.from_dict({"id": "_tower_fight",
-			"value_rates": {"unit_values": {"rook": 10.0}}})
-	var actions := engine.decide_actions([unit("fodder_dummy")], grids[0], grids[1], 1)
-	var heals: Array = actions.filter(func(a: Dictionary) -> bool:
-		return int(a["type"]) == EnemyEngine.Action.GENERATE)
-	var places: Array = actions.filter(func(a: Dictionary) -> bool:
-		return int(a["type"]) == EnemyEngine.Action.PLACE)
-	check_eq(heals.size(), 1, "the dying tower pulls the mana into the heal")
-	if not heals.is_empty():
-		check(heals[0]["target"] == dying_tower, "…aimed at the tower")
-	check_eq(places.size(), 0, "…so the fodder stays in hand")
-
-	# Direction 2 — the same board, tower untouched: the heal is futile and the same
-	# mana fields the fodder instead.
-	var whole_tower := _enemy("rook", 1, 0)
-	whole_tower.current_shield = 0
-	var enemies2: Array = [_enemy("captain_dummy", back, deep),
-			_enemy("support_dummy", back, 1), whole_tower]
-	var grids2 := _grids(enemies2, players)
-	var engine2 := _seeded_engine()
-	engine2.personality = EnemyPersonality.from_dict({"id": "_tower_fight",
-			"value_rates": {"unit_values": {"rook": 10.0}}})
-	var actions2 := engine2.decide_actions([unit("fodder_dummy")], grids2[0], grids2[1], 1)
-	var heals2: Array = actions2.filter(func(a: Dictionary) -> bool:
-		return int(a["type"]) == EnemyEngine.Action.GENERATE)
-	var places2: Array = actions2.filter(func(a: Dictionary) -> bool:
-		return int(a["type"]) == EnemyEngine.Action.PLACE)
-	check_eq(places2.size(), 1, "with nothing to preserve, the same mana fields the fodder")
-	check_eq(heals2.size(), 0, "…and the futile heal is declined")
-
-
 # ── Losing a unit must never READ as relief ─────────────────────────────────────────
 #
 # The hole this pins: every negative criterion sums over LIVING units, so a unit that
@@ -1224,36 +893,6 @@ func _behavior_cohort_normalization() -> void:
 	var zeros := scoring.score_pick([_state_with([]), _state_with([])])
 	check_eq(float(zeros[0]), 0.0,
 			"a cohort with no expression anywhere goes silent instead of dividing by zero")
-
-
-# ── The initiative's point: the engine reaches for the damage buff ───────────────────
-
-func _engine_casts_damage_buff() -> void:
-	var back := BoardData.ROWS - 1
-	var deep := BoardData.COLS - 1
-	# A healthy board and one mana: before the aggression criterion the engine declined
-	# everything here — buffing own attack changed no defensive reading, which is the
-	# exact defect EVAL_CRITERIA_BRIEF.md opens with. Now the support's fire_bless
-	# (+2 attack) is this pick's fullest expression of aggression.
-	var support := _enemy("support_dummy", back, 1)
-	var striker := _enemy("dps_dummy", 0, 2)
-	var enemies: Array = [_enemy("captain_dummy", back, deep), support, striker]
-	var players: Array = [_player("knight", 0, deep)]
-	var grids := _grids(enemies, players)
-
-	var engine := _seeded_engine()
-	var actions := engine.decide_actions([], grids[0], grids[1], 1)
-	var blessings: Array = actions.filter(func(a: Dictionary) -> bool:
-		return int(a["type"]) == EnemyEngine.Action.GENERATE \
-				and (a["ability"] as AbilityData).id == "fire_bless")
-	check_eq(blessings.size(), 1, "the aggression criterion gets the damage buff cast")
-	if not blessings.is_empty():
-		var target: CardInstance = blessings[0]["target"]
-		check(target != null and target.owner == 1,
-				"…aimed at an own unit, never gifted to the player")
-		check(target != support,
-				"…and never at the caster itself — its own tap just spent the swing "
-				+ "the buff would ride (a tapped unit is a dead damage target this turn)")
 
 
 # ── Mana optimization: spent > spendable > stranded (the fielding pressure) ──────────
@@ -1555,47 +1194,6 @@ func _noop_veto_shape() -> void:
 			"a heal that actually restores health is a real play")
 
 
-# ── The user's mandate: playable units are PLAYED, not withheld ───────────────────────
-
-func _engine_spends_its_mana() -> void:
-	var back := BoardData.ROWS - 1
-	var deep := BoardData.COLS - 1
-	# The live withholding repro (2026-07-29): under 2 queens + 5 open player mana the
-	# engine fielded two bodies and pocketed the dps — the normalized board-value edge
-	# (capped at its weight) couldn't outbid the placed unit's own risk share. The mana
-	# criterion is the fix: withholding a playable unit IS leaving spendable mana
-	# unspent, and spent outranks spendable.
-	var enemies: Array = [_enemy("captain_dummy", back, deep)]
-	var players: Array = [_player("queen", 0, deep), _player("queen", 1, deep)]
-	var grids := _grids(enemies, players)
-	var hand: Array = [unit("fodder_dummy"), unit("dps_dummy"), unit("tank_dummy")]
-	for h: CardInstance in hand:
-		h.owner = 1
-	var engine := _seeded_engine()
-	var actions := engine.decide_actions(hand, grids[0], grids[1], 10, 5)
-	var places: Array = actions.filter(func(a: Dictionary) -> bool:
-		return int(a["type"]) == EnemyEngine.Action.PLACE)
-	check_eq(places.size(), 3, "every affordable unit is fielded — no withholding")
-
-	# The LIVE shape the first version missed (user report 2026-07-30: "it plays a single
-	# fodder and never a dps"): a real enemy hand holds cards it cannot yet afford. An
-	# unaffordable card lingering in hand must not make the leftover mana read as wasted —
-	# otherwise the last affordable play scores no better than declining and gets
-	# withheld. Mana 4, hand 1 + 2 + an unaffordable 8.
-	var big := unit("queen")   # cost 5 fixture, priced out of a 4-mana turn
-	var lean_hand: Array = [unit("fodder_dummy"), unit("dps_dummy"), big]
-	for h2: CardInstance in lean_hand:
-		h2.owner = 1
-	var engine2 := _seeded_engine()
-	var actions2 := engine2.decide_actions(lean_hand, grids[0], grids[1], 4, 5)
-	var placed_ids: Array = actions2.filter(func(a: Dictionary) -> bool:
-		return int(a["type"]) == EnemyEngine.Action.PLACE) \
-		.map(func(a: Dictionary) -> String: return (a["inst"] as CardInstance).data.id)
-	check("fodder_dummy" in placed_ids, "the cheap body is fielded")
-	check("dps_dummy" in placed_ids,
-			"…and so is the dps — an unaffordable card left in hand is not 'wasted mana'")
-
-
 # ── Idle hand: a body it could field is never left in hand ───────────────────────────
 #
 # The blunt criterion (user mandate 2026-07-30, after the withholding bug kept coming back
@@ -1675,32 +1273,6 @@ func _idle_hand_shape() -> void:
 	var charged := state.copy()
 	check(BoardScoring.IdleHand.new().score(charged) < 0.0,
 			"…but the mechanism still scores withholding as a loss when hand-seated")
-
-
-# The user's report in one board (2026-07-30: "the CPU keeps units in hand"): one mana, a
-# fieldable body in hand, and a legitimate rival use for that mana (a wounded ally the
-# support can heal). The body goes down. This is the policy the harsh weight buys — and it
-# is a POLICY, not a deletion: _engine_place_vs_heal_arbitration still shows preservation
-# taking the mana when the unit it saves is genuinely about to die.
-func _engine_never_withholds_a_playable_unit() -> void:
-	var back := BoardData.ROWS - 1
-	var deep := BoardData.COLS - 1
-	var wounded := _enemy("dps_dummy", 0, 2)
-	wounded.current_health = maxi(1, wounded.current_health - 1)
-	var enemies: Array = [_enemy("captain_dummy", back, deep),
-			_enemy("support_dummy", back, 1), wounded]
-	var players: Array = [_player("knight", 0, deep)]
-	var grids := _grids(enemies, players)
-	var fodder := unit("fodder_dummy")
-	fodder.owner = 1
-
-	var engine := _seeded_engine()
-	var actions := engine.decide_actions([fodder], grids[0], grids[1], 1)
-	var places: Array = actions.filter(func(a: Dictionary) -> bool:
-		return int(a["type"]) == EnemyEngine.Action.PLACE)
-	check_eq(places.size(), 1, "the body in hand is fielded, not pocketed")
-	if not places.is_empty():
-		check(places[0]["inst"] == fodder, "…and it is the card that was being withheld")
 
 
 # PARKED (0..1 contract): idle_hand and protection — the two sides of the old A/B — are
@@ -1903,9 +1475,10 @@ func _valuation_cache_is_per_pricer() -> void:
 
 
 # The anti-decoration A/B (the standing rule: a green suite is not evidence a criterion
-# bites — score the same pick with the weight zeroed and demand a different decision).
-# On the priced-tower board the heal wins BECAUSE of total value; with the criterion
-# muted the tap's readiness cost makes fielding the fodder win instead.
+# bites — score the same pick with the weight zeroed and demand a DIFFERENT decision).
+# Deliberately direction-free (tests validate computation, behaviors belong to the
+# playtest): what is pinned is that the criterion's weight REACHES the decision, not
+# which choice is right.
 func _total_value_changes_a_decision() -> void:
 	var back := BoardData.ROWS - 1
 	var deep := BoardData.COLS - 1
@@ -1952,10 +1525,8 @@ func _total_value_changes_a_decision() -> void:
 	var verdict := func(scoring: BoardScoring) -> String:
 		var totals := scoring.score_pick(cohort)
 		return "heal" if float(totals[1]) > float(totals[2]) else "place"
-	check_eq(verdict.call(with_it), "heal",
-			"with total value speaking, preserving the priced tower wins the mana")
-	check_eq(verdict.call(without), "place",
-			"with its weight zeroed the decision flips — the criterion is load-bearing, not decoration")
+	check(verdict.call(with_it) != verdict.call(without),
+			"zeroing total value's weight flips the pick — the criterion reaches the decision")
 
 
 # ── The expected-damage model (user-designed 2026-07-31) ─────────────────────────────
@@ -1995,8 +1566,12 @@ func _doomed_attacker_projects_less() -> void:
 	var deep := BoardData.COLS - 1
 	var safe := _state_with(
 			[_enemy("fodder_dummy", 0, 0)], [_player("queen", back, deep)])
+	# The CPU queens stand DEEP so the fodder is the waterfall's first stop — front-most,
+	# it receives the naive mass; whether that mass is real is exactly what the refined
+	# pass discounts (position never gates attacking, so the deep queens still doom the
+	# player's attacker).
 	var doomed := _state_with(
-			[_enemy("queen", 0, 0), _enemy("queen", 1, 0), _enemy("fodder_dummy", 0, 1)],
+			[_enemy("queen", 1, deep), _enemy("queen", 2, deep), _enemy("fodder_dummy", 0, 0)],
 			[_player("queen", 0, 0)])
 	for s: BoardState in [safe, doomed]:
 		for u: BoardState.UnitState in s.units(0):
@@ -2113,12 +1688,15 @@ func _king_safety_shape() -> void:
 
 	# Same threat, two postures: the judge reads the actual danger on the king, so a
 	# covered back-corner king draws less objection than one standing alone up front.
+	# ONE queen — enough to push the exposed posture past the panic floor while the
+	# covered one stays under it; heavier threat would saturate both at GRADED_MAX and
+	# the ordering would vanish into the ceiling.
 	var exposed := _state_with(
 			[_enemy("captain_dummy", 1, 0), _enemy("fodder_dummy", 0, deep)],
-			[_player("queen", 0, deep), _player("queen", 1, deep)])
+			[_player("queen", 0, deep)])
 	var covered := _state_with(
 			[_enemy("captain_dummy", 1, deep), _enemy("fodder_dummy", 1, 0)],
-			[_player("queen", 0, deep), _player("queen", 1, deep)])
+			[_player("queen", 0, deep)])
 	check(judge.objection(covered) < judge.objection(exposed),
 			"a covered king under threat draws less objection than an exposed one")
 	check(not judge.categorical(exposed),
