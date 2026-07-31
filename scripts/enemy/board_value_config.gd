@@ -4,21 +4,25 @@ extends RefCounted
 # The authored exchange rates behind the "total board value" criterion (BoardScoring.
 # BoardValue): what one point of each stat — and one ability / triggered effect / live
 # effect — is worth in the eval's common currency. EVERY number here is tool-authorable
-# by design (user mandate 2026-07-29): authored into data/board_value.json, absent file
-# (or key) falls back to the defaults below. Mirrors EconomyConfig's load pattern.
+# by design: authored into data/board_value.json, absent file (or key) falls back to the
+# defaults below. Mirrors EconomyConfig's load pattern.
 #
-# The default biases are the user's: shield counts DOUBLE (it regenerates every round),
-# speed counts HALF, and health is split — the health a unit still HAS counts full, the
-# health it has SPENT counts 0.1. Both count, because a unit's max health is part of what
-# it is worth: a 4/5 carrying one wound is worth slightly more than an untouched 4/4
-# (4.1 vs 4.0 — the user's own test case). A spent point is not a penalty; it just earns
-# far less than a point still held, which also makes healing worth ~0.9 per point,
-# a shade under a point of attack.
+# THE PAYLOAD/CARRIER PRICING: health and shield are INSTRUMENTAL, not terminal — their
+# value exists to absorb damage, and that absorption is already priced by the valuation
+# pass's persistence stage (a bigger pool raises persistence, which preserves the value of
+# every OTHER stat). Pricing the pool in raw value too would double-count it: health would
+# inflate its own term AND everyone else's. So raw value prices what a unit DOES (attack,
+# abilities, effects); the pool prices how long it keeps doing it, through persistence
+# alone. Health/shield rates are MINIMAL rather than zero — a bigger frame still breaks
+# ties, and no unit degenerates to worth-nothing inside the min-max normalization. A tank
+# (big pool, tiny kit) thereby prices as a cheap body wrapped around a big absorber —
+# "meant to be spent" falls out of the arithmetic, with no role-tag machinery. The parked
+# board-value quirk's unit_value reads the shared "health"/"missing_health" rates, so its
+# arithmetic moves with this table.
 #
-# ⚠ Do NOT make spent health negative. It was briefly built that way (−0.5) on a misread
-# of "negative bias", which inverted the 4/5-vs-4/4 case AND let badly wounded units score
-# NEGATIVE total value — a unit worth less than nothing is one the engine would rather see
-# dead. Both terms stay positive.
+# ⚠ Do NOT make spent health negative: badly wounded units then score NEGATIVE total
+# value, and a unit worth less than nothing is one the engine would rather see dead.
+# Both terms stay positive.
 #
 # Attack is valued on the unit's real output, attack × strikes. All defaults PROVISIONAL
 # until playtested — and all of them are tool-authorable (Tool ▸ 🎛 Tuning ▸ ♟ Board value).
@@ -32,28 +36,30 @@ static var _loaded := false
 static func _defaults() -> Dictionary:
 	return {
 		"stat_rates": {
-			"attack": 1.0,          # per point of attack × strikes
-			"health": 1.0,          # per point of CURRENT health
-			"missing_health": 0.1,  # per point of max − current: spent health, worth little
-			"shield": 2.0,          # regenerates each round — worth double
-			"speed": 0.5,           # half value
+			"attack": 1.0,          # per point of attack × strikes — the payload's yardstick
+			"health": 0.1,          # MINIMAL: the pool is priced by persistence
+			"missing_health": 0.1,  # per point of max − current (parked quirk's split only)
+			"shield": 0.2,          # minimal like health; regeneration shows up as persistence
+			"speed": 0.5,           # half value (also instrumental via dodge/crit/first-strike
+			                        # flows — left as-is deliberately, one dial at a time)
 		},
 		"ability_default": 2.0,     # any activated ability, unless priced by id below
 		"ability_values": {},       # per-ability-id overrides, e.g. {"heal": 3.0}
 		"triggered_default": 1.5,   # per event-driven effect (Kind TRIGGERED/CUSTOM)
 		"live_default": 1.5,        # per standing effect (Kind MODIFIER/INTERCEPTOR)
-		# ── the valuation pass (BoardScoring.run_valuation, user-designed 2026-07-30) ──
+		# ── the valuation pass (BoardScoring.run_valuation) ──
 		# THE persistence dial, 0..1: how much a unit's likelihood of dying this turn
 		# discounts its raw worth (value = raw × lerp(1, persistence, this)). 0 = a dying
-		# queen is still a queen; 1 = a doomed unit is worth nearly nothing. 0.65 came
-		# from the 2026-07-30 staged sweep: below ~0.6 preservation never outbids growth
-		# (heals lose to placements even on a precious dying unit), around 0.8+ the stock
-		# king starts walking to the front line unprompted. PROVISIONAL — swept, never
-		# playtested; THE dial the user asked to hold.
+		# queen is still a queen; 1 = a doomed unit is worth nearly nothing. Swept window:
+		# below ~0.6 preservation never outbids growth (heals lose to placements even on
+		# a precious dying unit), around 0.8+ the stock king starts walking to the front
+		# line unprompted.
 		"persistence_weight": 0.65,
-		# Flat raw-value bonus per role tag ("captain" = any is_king unit; "default" =
-		# untagged). What a role SAYS about worth beyond the visible stats — e.g. a
-		# support's healing hands. Empty by default: stats + kit already speak.
+		# ⚠ PARKED: the valuation pass does not consult role tags — roles unfold
+		# naturally from stats (a tank IS a big pool around a small kit; nothing needs
+		# the word "tank"), and protecting high-value targets is a FUTURE eval's job, not
+		# a price. The key still parses (authored JSONs stay valid, role_value() still
+		# answers) but raw_unit_value never reads it.
 		"role_values": {},
 		# Arbitrary per-card enhancers, keyed by card id — the valuation pass's open
 		# hook: "this specific unit is worth 3 more than its sheet says".

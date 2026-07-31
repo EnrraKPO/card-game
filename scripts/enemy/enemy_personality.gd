@@ -5,11 +5,11 @@ extends RefCounted
 # (EVAL_CRITERIA_BRIEF.md). The engine's criteria and their maths are fixed; a personality
 # says how loudly each one speaks, and that is the whole authoring surface for character.
 #
-# Two kinds of entry, a TOOL distinction rather than an engine one (user call 2026-07-30):
+# Two kinds of entry, a TOOL distinction rather than an engine one:
 #   · CORE TRAITS — every personality has all of them. They are what makes the CPU function
 #     as an opponent at all: the worth of the battlefield (the valuation system's total
-#     value, since 2026-07-30 the dominant reading), formation, using its mana, keeping its
-#     units ready, not sitting on a full hand. A personality states a weight for each;
+#     value, the dominant reading), the king's safety, formation, using its mana, keeping
+#     its units ready, not sitting on a full hand. A personality states a weight for each;
 #     leaving one blank keeps the stock number, so a new personality starts as the default
 #     character and is edited away from it.
 #   · QUIRKS — opt-in leans a personality either has or doesn't. A quirk that is not listed
@@ -20,7 +20,7 @@ extends RefCounted
 # identically (see BoardScoring.stock); only the tool and this file's bookkeeping separate
 # them.
 #
-# PERSONALITIES ARE TEMPLATES, NOT LINKS (user call 2026-07-30). The library in
+# PERSONALITIES ARE TEMPLATES, NOT LINKS. The library in
 # data/enemy_personalities.json is a shelf of starting points; assigning one to a fight COPIES
 # it into that encounter as a local instance, which is then tuned freely. Nothing tuned on one
 # fight can reach another, and a template can be edited without disturbing the fights that
@@ -31,7 +31,7 @@ extends RefCounted
 # that template as-is, the convenient hand-authored form), or a whole personality OBJECT (its
 # own local instance). All three go through from_dict / EncounterTemplateData.
 #
-# EVERY EVAL CONSTANT IS PART OF A PERSONALITY (user call 2026-07-30) — not just the criterion
+# EVERY EVAL CONSTANT IS PART OF A PERSONALITY — not just the criterion
 # weights but each eval's own parameters: the protect table the danger criteria measure
 # against, and the unit-value price list that board value and readiness are denominated in
 # (`value_rates`, the same shape as data/board_value.json, which stays the global default a
@@ -50,14 +50,15 @@ const DEFAULT_ID := "default"
 # in BoardScoring._criterion_for).
 const TRAITS: Array = [
 	{"id": "total_value", "core": true},
+	{"id": "king_safety", "core": true},
 	{"id": "protection", "core": true},
 	{"id": "mana", "core": true},
 	{"id": "readiness", "core": true},
 	{"id": "idle_hand", "core": true},
 	{"id": "damage_output", "core": false},
-	# PARKED 2026-07-30 (user call): the pre-valuation-system trio, out of the stock
-	# character but mechanically whole — a personality that lists one as a quirk still
-	# gets the criterion, weights and all. Policy change, not a mechanism deletion.
+	# PARKED: the pre-valuation-system trio, out of the stock character but mechanically
+	# whole — a personality that lists one as a quirk still gets the criterion, weights
+	# and all.
 	{"id": "death_risk", "core": false},
 	{"id": "harm", "core": false},
 	{"id": "board_value", "core": false},
@@ -71,6 +72,7 @@ const TRAITS: Array = [
 static func stock_weights() -> Dictionary:
 	return {
 		"total_value": BoardScoring.TOTAL_VALUE_CRITERION_WEIGHT,   # the reference scale
+		"king_safety": BoardScoring.KING_SAFETY_CRITERION_WEIGHT,
 		"death_risk": 1.0,   # parked; the old reference scale, kept for opting back in
 		"harm": BoardScoring.HARM_CRITERION_WEIGHT,
 		"protection": BoardScoring.EXPOSURE_CRITERION_WEIGHT,

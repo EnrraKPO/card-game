@@ -10274,7 +10274,7 @@
       "enemy_only": true
     },
     "at": "2026-07-29T06:01:07.306Z",
-    "fileHash": "650591230389f45a90dfbdd5eafb783febc64c87"
+    "fileHash": "a749fbe642b7f8a08f08d5bbd6a725e7f06e70d4"
   },
   "card/dps_dummy": {
     "file": "test_dummies_units.json",
@@ -10288,7 +10288,7 @@
       "enemy_only": true
     },
     "at": "2026-07-29T06:01:16.395Z",
-    "fileHash": "650591230389f45a90dfbdd5eafb783febc64c87"
+    "fileHash": "a749fbe642b7f8a08f08d5bbd6a725e7f06e70d4"
   },
   "card/fodder_dummy": {
     "file": "test_dummies_units.json",
@@ -10302,7 +10302,7 @@
       "enemy_only": true
     },
     "at": "2026-07-29T06:01:21.841Z",
-    "fileHash": "650591230389f45a90dfbdd5eafb783febc64c87"
+    "fileHash": "a749fbe642b7f8a08f08d5bbd6a725e7f06e70d4"
   },
   "card/support_dummy": {
     "file": "test_dummies_units.json",
@@ -10320,7 +10320,7 @@
       "enemy_only": true
     },
     "at": "2026-07-29T06:01:25.565Z",
-    "fileHash": "650591230389f45a90dfbdd5eafb783febc64c87"
+    "fileHash": "a749fbe642b7f8a08f08d5bbd6a725e7f06e70d4"
   },
   "card/captain_dummy": {
     "file": "test_dummies_units.json",
@@ -10336,7 +10336,7 @@
       "enemy_only": true
     },
     "at": "2026-07-29T06:32:07.868Z",
-    "fileHash": "650591230389f45a90dfbdd5eafb783febc64c87"
+    "fileHash": "a749fbe642b7f8a08f08d5bbd6a725e7f06e70d4"
   },
   "encounter/test_dummies": {
     "file": "test_dummies.json",

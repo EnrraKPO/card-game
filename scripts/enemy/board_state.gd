@@ -31,7 +31,7 @@ var enemy_mana_left: int = 0
 var hand_costs: Array = []
 
 # The mana costs of the PLACEABLE units still in hand — the idle-hand criterion's whole
-# input (user mandate 2026-07-30: a unit the CPU can field must never sit in hand). A
+# input (a unit the CPU can field must never sit in hand). A
 # subset of hand_costs: spells and kings are excluded, because neither can be placed and
 # holding one is not withholding a body. Stamped and maintained by the ENGINE alongside
 # hand_costs.
@@ -48,7 +48,7 @@ var hand_unit_costs: Array = []
 var hand_budget_before: int = 0
 
 # Mana spent by the ACTION that produced this state, within the pick being scored — the
-# mana criterion is a property of the CHOICE, not of the turn so far (user 2026-07-30):
+# mana criterion is a property of the CHOICE, not of the turn so far:
 # a choice that spends nothing expresses nothing, however healthy the budget looks. The
 # engine zeroes this on the do-nothing baseline each pick and stamps each candidate's
 # cost onto its own result.
@@ -59,7 +59,7 @@ var mana_spent_step: int = 0
 # waste if a better line existed). Stamped by the engine onto every candidate of a pick.
 var mana_capacity_before: int = 0
 
-# ── The valuation pass's stamp (BoardScoring.run_valuation, user-designed 2026-07-30) ──
+# ── The valuation pass's stamp (BoardScoring.run_valuation) ────────────────────────────
 # The signed total worth of the battlefield (own units positive, player units negative)
 # and whether the pass has run on THIS state. DERIVED data, deliberately NOT carried by
 # copy() or the capture seams (unlike the engine-stamped mana story above): a copy exists
@@ -102,6 +102,13 @@ class UnitState:
 	var shield: int = 0
 	var speed: int = 0
 	var strikes: int = 1
+	# The dodge/crit expectation inputs (BoardScoring's expected-damage model):
+	# the effect-granted bonuses that move the Resolver's dodge/crit formulas beyond speed.
+	# Captured so a unit BUILT around these stats (a relic's "+25% dodge to air units")
+	# isn't invisible to the scorer's expectations — speed alone would mis-price it.
+	var dodge_bonus: int = 0
+	var crit_chance_bonus: int = 0
+	var crit_multiplier_bonus: int = 0
 	# The unit's activated-ability ids (CardData.ability_ids) and whether its tap is spent
 	# (attack_exhausted) — what the ability candidate generator needs to gate legality.
 	var ability_ids: Array = []
@@ -139,6 +146,9 @@ class UnitState:
 		u.shield = inst.current_shield
 		u.speed = inst.get_attribute("speed")
 		u.strikes = inst.get_attribute("strikes")
+		u.dodge_bonus = inst.get_attribute("dodge_bonus")
+		u.crit_chance_bonus = inst.get_attribute("crit_chance_bonus")
+		u.crit_multiplier_bonus = inst.get_attribute("crit_multiplier_bonus")
 		u.ability_ids = inst.data.ability_ids().duplicate()
 		u.exhausted = inst.attack_exhausted
 		for e: Effect in inst.data.effects:
@@ -167,6 +177,9 @@ class UnitState:
 		u.shield = shield
 		u.speed = speed
 		u.strikes = strikes
+		u.dodge_bonus = dodge_bonus
+		u.crit_chance_bonus = crit_chance_bonus
+		u.crit_multiplier_bonus = crit_multiplier_bonus
 		u.ability_ids = ability_ids.duplicate()
 		u.exhausted = exhausted
 		u.triggered_effects = triggered_effects

@@ -61,6 +61,50 @@ func run() -> void:
 	_valuation_enhancers_reach_raw()
 	_valuation_cache_is_per_pricer()
 	_total_value_changes_a_decision()
+	_first_strike_is_side_aware()
+	_doomed_attacker_projects_less()
+	_dodge_expectation_reaches_persistence()
+	_crit_expectation_reaches_threat()
+	_expectation_honors_determinism_switches()
+	_buff_prefers_fresh_over_tapped()
+	_king_safety_shape()
+
+
+# The tap-blind buff regression (user report 2026-07-31: "we are back to buffing tapped
+# units"): before the raw attack term wore the tap cap, TotalValue tied fresh and tapped
+# buff targets — attack stock priced the same on both — and preferred whichever body
+# stood SAFER (a buff is paid persistence-weighted), so a sheltered tapped unit outbid an
+# exposed fresh one and damage_output's 0.1 tie-break was outvoted. The pin stages
+# exactly that trap: the tapped body is the safe one, the fresh body is exposed — and
+# the buff must STILL prefer the fresh unit, through value_total itself.
+func _buff_prefers_fresh_over_tapped() -> void:
+	var back := BoardData.ROWS - 1
+	var deep := BoardData.COLS - 1
+	var enemies: Array = [
+		_enemy("dps_dummy", 0, 0),        # fresh — standing in the open
+		_enemy("dps_dummy", 2, deep),     # tapped — sheltered in the back corner
+	]
+	var knight := _player("knight", 0, deep)
+	knight.modifiers["speed"] = 9   # fast, or its threat delivery-discounts to nothing
+	var players: Array = [knight]
+	var grids := _grids(enemies, players)
+	var base := BoardState.capture(grids[0], grids[1])
+	for u: BoardState.UnitState in base.units(1):
+		if u.row == 2:
+			u.exhausted = true
+	var bless := func(target_row: int) -> BoardState:
+		var s := base.copy()
+		for u: BoardState.UnitState in s.units(1):
+			if u.row == target_row:
+				u.attack += 2
+		BoardScoring.run_valuation(s)
+		return s
+	var fresh: BoardState = bless.call(0)
+	var tapped: BoardState = bless.call(2)
+	check(fresh.units(1)[0].persistence < 1.0,
+			"the fresh target is genuinely the riskier body (fixture sanity)")
+	check(fresh.value_total > tapped.value_total,
+			"+2 attack is worth more on the exposed fresh body than on the safe tapped one")
 
 
 # TEMP: dump per-criterion contributions for a pick's cohort. Mirrors score_pick.
@@ -503,8 +547,9 @@ func _engine_king_tanks() -> void:
 
 	var engine := _seeded_engine()
 	engine.weight_overrides = {"fodder": 0.6, "captain": 1.0}
-	engine.personality = EnemyPersonality.from_dict({"id": "_bold",
-			"value_rates": {"role_values": {"fodder": 8.0}}})
+	# (This fixture used to make fodders precious via a role_values personality; role
+	# tags were parked out of the eval 2026-07-31 and the behaviour stands without it —
+	# kit-pricing makes the king's own life cheap and its cover valuable.)
 	var actions := engine.decide_actions([], grids[0], grids[1], 0)
 
 	var king_moves: Array = actions.filter(func(a: Dictionary) -> bool:
@@ -519,9 +564,11 @@ func _engine_king_tanks() -> void:
 func _engine_king_retreats_fully() -> void:
 	var deep := BoardData.COLS - 1
 	# The observed defect this pins: a mid-column king under real threat used to send a
-	# FODDER to the free back seat (or wander forward to soak share) because at captain
-	# weight 1.0 its health pool read as the cheapest sponge. Stock 2.5 commits: the king
-	# itself takes the deep slot. Mid-column is also exactly the leaper's landing zone.
+	# FODDER to the free back seat (or wander forward to soak share) because its health
+	# pool read as the cheapest sponge. KING SAFETY commits it (2026-07-31): under
+	# kit-pricing the king is barely dearer than a fodder, so this stayed deliberately RED
+	# from the repricing until the win-condition criterion landed — the king itself must
+	# take the deep slot. Mid-column is also exactly the leaper's landing zone.
 	var captain := _enemy("captain_dummy", 1, 2)
 	var enemies: Array = [
 		captain,
@@ -900,7 +947,16 @@ func _engine_place_vs_heal_arbitration() -> void:
 	# the tower doomed with or without the heal (triage — correctly declined), and with
 	# none there is nothing to preserve. One knight's worth of pressure is the window
 	# where +2 health genuinely changes whether the tower lives.
-	var players: Array = [_player("knight", 0, deep)]
+	#
+	# The knight is FAST on purpose (2026-07-31, the expected-damage model): a lone slow
+	# knight against three CPU bodies is itself mostly dead before it swings, so its
+	# threat delivery-discounts to well under "one knight's worth" and the tower stops
+	# reading as dying — correctly, but that is the discount's own test's business. Out-
+	# speeding every CPU unit makes its whole strike first-strike-insured (delivery = 1),
+	# which restores exactly the pressure this fixture's premise states.
+	var knight := _player("knight", 0, deep)
+	knight.modifiers["speed"] = 7
+	var players: Array = [knight]
 
 	# Direction 1 — the tower is dying: preservation wins the mana, even with a body in hand
 	# (the heal spends the mana, so the idle-hand charge is waived and never enters this
@@ -1680,8 +1736,11 @@ func _idle_hand_changes_a_decision() -> void:
 			s.mana_capacity_before = capacity
 			s.hand_budget_before = 1
 		var overrides := {"fodder": w}
-		var muted := {"id": "_mute", "traits": {"total_value": 0.0, "mana": 0.0},
-				"quirks": {}}
+		# king_safety muted with the other advocates: a fielded body is cover for the
+		# staged captain, so unmuted it would argue FOR the placement and the A/B would
+		# no longer isolate idle-hand against protection.
+		var muted := {"id": "_mute", "traits": {"total_value": 0.0, "mana": 0.0,
+				"king_safety": 0.0}, "quirks": {}}
 		var with_it := BoardScoring.stock(overrides, EnemyPersonality.from_dict(muted))
 		var without := BoardScoring.stock(overrides, EnemyPersonality.from_dict(muted))
 		for c: BoardScoring.Criterion in without.criteria:
@@ -1838,22 +1897,25 @@ func _valuation_enhancers_reach_raw() -> void:
 	var king_plain := BoardScoring.raw_unit_value(king)
 	var dps_plain := BoardScoring.raw_unit_value(dps)
 
+	# ROLE TAGS ARE PARKED OUT OF THE EVAL (user call 2026-07-31: "roles unfold naturally
+	# from stats in this system" — protecting high-value targets is a future eval's job).
+	# An authored role_values table still parses but must move NOTHING: this pins the
+	# parking, so a stray config can't quietly reintroduce role pricing.
 	BoardValueConfig.set_config({"role_values": {"fodder": 3.0, "captain": 5.0},
 			"unit_values": {"dps_dummy": 7.0}})
-	check(absf(BoardScoring.raw_unit_value(fodder) - fodder_plain - 3.0) < 0.0001,
-			"a role bonus adds flat raw worth to every unit wearing the tag")
-	check(absf(BoardScoring.raw_unit_value(king) - king_plain - 5.0) < 0.0001,
-			"a king files under the captain role entry")
+	check(absf(BoardScoring.raw_unit_value(fodder) - fodder_plain) < 0.0001,
+			"a role bonus no longer reaches raw value — role tags are out of the eval")
+	check(absf(BoardScoring.raw_unit_value(king) - king_plain) < 0.0001,
+			"…and the king's captain entry is equally inert")
 	check(absf(BoardScoring.raw_unit_value(dps) - dps_plain - 7.0) < 0.0001,
-			"a per-card enhancer prices one specific unit")
+			"a per-card enhancer prices one specific unit — NOT a role tag, still live")
 
-	# A personality layers its own entries per key over the global table.
+	# A personality layers its own entries per key over the global table (unit prices
+	# only — its role_values are parked with the rest).
 	var p := EnemyPersonality.from_dict({"id": "_pricey",
 			"value_rates": {"role_values": {"fodder": 9.0}, "unit_values": {"dps_dummy": 1.0}}})
-	check(absf(BoardScoring.raw_unit_value(fodder, p) - fodder_plain - 9.0) < 0.0001,
-			"the personality's role bonus wins for the key it states")
-	check(absf(BoardScoring.raw_unit_value(king, p) - king_plain - 5.0) < 0.0001,
-			"…while a key it does not state falls through to the global table")
+	check(absf(BoardScoring.raw_unit_value(fodder, p) - fodder_plain) < 0.0001,
+			"a personality's role bonus is parked like the global one")
 	check(absf(BoardScoring.raw_unit_value(dps, p) - dps_plain - 1.0) < 0.0001,
 			"…and its per-card price replaces the global one")
 	BoardValueConfig.set_config({})
@@ -1890,7 +1952,11 @@ func _total_value_changes_a_decision() -> void:
 	dying_tower.current_shield = 0
 	var support := _enemy("support_dummy", back, 1)
 	var enemies: Array = [_enemy("captain_dummy", back, deep), support, dying_tower]
-	var players: Array = [_player("knight", 0, deep)]
+	# Fast for the same reason as the arbitration fixture: the knight's pressure must
+	# fully deliver, or the expected-damage model rightly stops calling the tower dying.
+	var knight := _player("knight", 0, deep)
+	knight.modifiers["speed"] = 7
+	var players: Array = [knight]
 	var fodder := unit("fodder_dummy")
 	fodder.owner = 1
 	var grids := _grids(enemies, players)
@@ -1928,3 +1994,187 @@ func _total_value_changes_a_decision() -> void:
 			"with total value speaking, preserving the priced tower wins the mana")
 	check_eq(verdict.call(without), "place",
 			"with its weight zeroed the decision flips — the criterion is load-bearing, not decoration")
+
+
+# ── The expected-damage model (user-designed 2026-07-31) ─────────────────────────────
+#
+# The valuation pass's second-pass threat: raw stat mass corrected toward what will
+# actually land — attackers discounted by delivery (a unit that dies before it swings
+# throws less), raised by crit expectation, defenders crediting their own dodge. Not a
+# new value channel: a correction to incoming(), flowing into persistence and everything
+# downstream. The pairwise speed-edge terms are measured against one aggregate reference
+# speed per side (no-pairing doctrine, design 17b).
+
+func _first_strike_is_side_aware() -> void:
+	# The player unit's insurance is judged against the CPU army — the mirror of the CPU
+	# reading that always worked. One fast CPU unit, one slow: a mid-speed player unit is
+	# insured against exactly the slow one's mass.
+	var state := _state_with(
+			[_enemy("dps_dummy", 0, 0), _enemy("tank_dummy", 1, 0)],
+			[_player("knight", 0, 0)])
+	var foe: BoardState.UnitState = state.units(0)[0]
+	foe.speed = 2   # dps_dummy 3 is faster, tank_dummy 1 is slower
+	var tank_mass := 0.0
+	var total_mass := 0.0
+	for u: BoardState.UnitState in state.units(1):
+		total_mass += float(u.attack * u.strikes)
+		if u.card_id == "tank_dummy":
+			tank_mass += float(u.attack * u.strikes)
+	check_eq(BoardScoring.first_strike_share(state, foe), tank_mass / total_mass,
+			"a player unit's first-strike share reads the CPU army, not its own side")
+
+
+func _doomed_attacker_projects_less() -> void:
+	# Two boards, identical except the lone player attacker's plight: safe in the back
+	# vs standing doomed under the CPU's whole mass with everything outspeeding it. The
+	# defender the attacker threatens must read SAFER on the doomed board — damage a
+	# dead unit never lands isn't damage.
+	var back := BoardData.ROWS - 1
+	var deep := BoardData.COLS - 1
+	var safe := _state_with(
+			[_enemy("fodder_dummy", 0, 0)], [_player("queen", back, deep)])
+	var doomed := _state_with(
+			[_enemy("queen", 0, 0), _enemy("queen", 1, 0), _enemy("fodder_dummy", 0, 1)],
+			[_player("queen", 0, 0)])
+	for s: BoardState in [safe, doomed]:
+		for u: BoardState.UnitState in s.units(0):
+			u.speed = 1   # slower than everything — no first-strike insurance
+		for u: BoardState.UnitState in s.units(1):
+			u.speed = 3
+	BoardScoring.run_valuation(safe)
+	BoardScoring.run_valuation(doomed)
+	var safe_atk: BoardState.UnitState = safe.units(0)[0]
+	var doomed_atk: BoardState.UnitState = doomed.units(0)[0]
+	check(BoardScoring.delivery(safe, safe_atk) > BoardScoring.delivery(doomed, doomed_atk),
+			"the doomed attacker converts less of its stat (fixture sanity)")
+	var naive_fodder := _unit_by_id(doomed, 1, "fodder_dummy")
+	check(naive_fodder.persistence > BoardScoring.persistence(doomed, naive_fodder),
+			"the stamped persistence outreads the naive one: the doomed attacker's mass is discounted")
+
+
+func _dodge_expectation_reaches_persistence() -> void:
+	var prev := Resolver.dodge_enabled
+	Resolver.dodge_enabled = true
+	Resolver.set_dodge_tuning({
+		"fixed_pct": 0.0, "per_speed_pct": 5.0, "per_speed_diff_pct": 0.0, "max_pct": 75.0,
+	})
+	# Same slot, same body, different speed: the faster unit dodges more of its incoming
+	# share, so it stamps higher persistence — speed is damage-reduction information now.
+	# The attacker outspeeds BOTH variants, so its own first-strike share (which reads
+	# defender speeds too) is identical across the boards — dodge is the only variable.
+	var slow := _state_with([_enemy("tank_dummy", 0, 0)], [_player("queen", 0, 0)])
+	var fast := _state_with([_enemy("tank_dummy", 0, 0)], [_player("queen", 0, 0)])
+	slow.units(0)[0].speed = 9
+	fast.units(0)[0].speed = 9
+	slow.units(1)[0].speed = 1
+	fast.units(1)[0].speed = 8
+	BoardScoring.run_valuation(slow)
+	BoardScoring.run_valuation(fast)
+	check(fast.units(1)[0].persistence > slow.units(1)[0].persistence,
+			"a faster unit expects to dodge more of its incoming share")
+
+	# The flat effect-granted bonus reaches the model too (a relic-built dodger is not
+	# invisible), and a building never dodges, whatever its numbers say.
+	var plain := _state_with([_enemy("tank_dummy", 0, 0)], [_player("queen", 0, 0)])
+	var blessed := _state_with([_enemy("tank_dummy", 0, 0)], [_player("queen", 0, 0)])
+	blessed.units(1)[0].dodge_bonus = 30
+	BoardScoring.run_valuation(plain)
+	BoardScoring.run_valuation(blessed)
+	check(blessed.units(1)[0].persistence > plain.units(1)[0].persistence,
+			"dodge_bonus raises the expectation like the Resolver folds it into the roll")
+	var rooted := BoardState.UnitState.new()
+	rooted.is_building = true
+	rooted.speed = 8
+	check_eq(BoardScoring.dodge_expect(rooted, 0.0), 0.0,
+			"a building never dodges — hard 0 before any tuning term")
+	Resolver.set_dodge_tuning({})
+	Resolver.dodge_enabled = prev
+
+
+func _crit_expectation_reaches_threat() -> void:
+	var prev := Resolver.crit_enabled
+	Resolver.crit_enabled = true
+	Resolver.set_crit_tuning({
+		"fixed_pct": 0.0, "per_speed_pct": 5.0, "per_speed_diff_pct": 0.0,
+		"max_pct": 90.0, "multiplier": 2.0, "multiplier_max": 5.0,
+	})
+	# Same attack stat, different attacker speed: the faster player unit's expected
+	# crits raise the mass bearing down, so the CPU unit under it stamps LOWER
+	# persistence — the fight really does run hotter under a fast army. The defender is
+	# slower than BOTH variants, so the attacker's first-strike share (which reads
+	# defender speeds) is identical across the boards — crit is the only variable.
+	var calm := _state_with([_enemy("tank_dummy", 0, 0)], [_player("queen", 0, 0)])
+	var hot := _state_with([_enemy("tank_dummy", 0, 0)], [_player("queen", 0, 0)])
+	calm.units(1)[0].speed = 0
+	hot.units(1)[0].speed = 0
+	calm.units(0)[0].speed = 1
+	hot.units(0)[0].speed = 8
+	BoardScoring.run_valuation(calm)
+	BoardScoring.run_valuation(hot)
+	check(hot.units(1)[0].persistence < calm.units(1)[0].persistence,
+			"a faster attacker's expected crits raise the expected incoming")
+
+	# The CPU's own aggression measure rides the same expectation: outgoing mass grows
+	# with the crit factor the fight will actually roll.
+	var army := _state_with([_enemy("dps_dummy", 0, 0)], [_player("queen", 0, 0)])
+	army.units(0)[0].speed = 1   # slower than the dps — its strike is insured, delivery 1
+	var with_crit := BoardScoring.outgoing_mass(army)
+	Resolver.crit_enabled = false
+	var without_crit := BoardScoring.outgoing_mass(army)
+	check(with_crit > without_crit, "crit expectation raises the outgoing damage mass")
+	Resolver.set_crit_tuning({})
+	Resolver.crit_enabled = prev
+
+
+func _expectation_honors_determinism_switches() -> void:
+	# The runner keeps dodge/crit OFF (the deterministic harness): the model's factors
+	# must read exactly neutral — the scorer never believes in a rule the fight will not
+	# roll, and every pre-model assertion in this suite stays byte-identical.
+	check(not Resolver.dodge_enabled and not Resolver.crit_enabled,
+			"harness precondition: the switches are off outside the flipped blocks")
+	var u := BoardState.UnitState.new()
+	u.speed = 9
+	u.dodge_bonus = 50
+	u.crit_chance_bonus = 50
+	check_eq(BoardScoring.dodge_expect(u, 0.0), 0.0, "disabled dodge expects nothing")
+	check_eq(BoardScoring.crit_expect(u, 0.0), 1.0, "disabled crit is a neutral factor")
+
+
+# ── King safety: the win-condition criterion (user-designed 2026-07-31) ──────────────
+
+# Weight × the king's endangerment (1 − stamped persistence), negated — no tags, no
+# tables. The graded half of "the king must not die"; the absolute half is the engine's
+# categorical veto (a candidate that leaves the Captain dead is never selectable), which
+# _engine_never_kills_its_own_captain already pins.
+func _king_safety_shape() -> void:
+	var deep := BoardData.COLS - 1
+	var crit := BoardScoring.KingSafety.new()
+
+	# Same threat, two postures: the criterion reads the actual danger on the king, so a
+	# covered back-corner king scores safer than one standing alone on the front line.
+	var exposed := _state_with(
+			[_enemy("captain_dummy", 1, 0), _enemy("fodder_dummy", 0, deep)],
+			[_player("queen", 0, deep), _player("queen", 1, deep)])
+	var covered := _state_with(
+			[_enemy("captain_dummy", 1, deep), _enemy("fodder_dummy", 1, 0)],
+			[_player("queen", 0, deep), _player("queen", 1, deep)])
+	check(crit.score(covered) > crit.score(exposed),
+			"a covered king under threat reads safer than an exposed one")
+
+	# Threat-scaled by construction: with nothing bearing down, posture is free — this is
+	# what leaves the approved moderate-threat advance alive while heavy threat drives the
+	# full retreat.
+	var calm := _state_with([_enemy("captain_dummy", 1, 0)], [])
+	check_eq(crit.score(calm), 0.0, "an unthreatened king is fully safe — the criterion is silent")
+
+	# A king that DIED reads fully endangered (the engine's veto makes such a candidate
+	# unselectable anyway; the criterion still orders it honestly for dumps and hand-built
+	# scorers) — while a board that never staged a king has nothing to protect and stays
+	# silent, so kingless test fixtures carry no constant charge.
+	var dead := _state_with([_enemy("captain_dummy", 0, 0)], [])
+	var fallen: BoardState.UnitState = dead.units(1)[0]
+	dead.grid_of(1)[0][0] = null
+	dead.graveyard.append(fallen)
+	check_eq(crit.score(dead), -1.0, "a dead king reads fully endangered")
+	var kingless := _state_with([_enemy("fodder_dummy", 0, 0)], [])
+	check_eq(crit.score(kingless), 0.0, "a board that never staged a king is silent")

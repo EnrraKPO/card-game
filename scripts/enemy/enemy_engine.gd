@@ -178,11 +178,10 @@ func _pick_best(cands: Array, state: BoardState, scoring: BoardScoring,
 	# subset-sum over the hand. Derived from the cohort on purpose: it makes "spending
 	# beats declining" structural rather than emergent. The best available play scores
 	# exactly 1.0 and declining scores exactly 0.0, so the fielding pressure is always the
-	# criterion's FULL weight. Deriving it from the hand instead (as the first version
-	# did) let unplayable cards — an unsimulatable spell, one with no legal target —
-	# inflate the denominator until no candidate could reach 1.0 and the margin over
-	# declining collapsed. That is the withholding bug's fourth disguise, closed by
-	# construction.
+	# criterion's FULL weight. Deriving it from the hand instead lets unplayable cards —
+	# an unsimulatable spell, one with no legal target — inflate the denominator until no
+	# candidate can reach 1.0 and the margin over declining collapses (the withholding
+	# bug), so never do that.
 	var capacity := 0
 	for a: Variant in achieved:
 		capacity = maxi(capacity, int(a))
