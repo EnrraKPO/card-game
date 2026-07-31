@@ -813,6 +813,8 @@ function boardValueDefaults() {
     stat_rates: { attack: 1.0, health: 1.0, missing_health: 0.1, shield: 2.0, speed: 0.5 },
     ability_default: 2.0, ability_values: {},
     triggered_default: 1.5, live_default: 1.5,
+    // the valuation pass (2026-07-30): survival discount dial + raw-worth enhancers
+    persistence_weight: 0.65, role_values: {}, unit_values: {},
   };
 }
 
@@ -834,50 +836,65 @@ function boardValueSection(cfg) {
   const scalar = (key, label, sub) =>
     numRow(label, sub, () => cfg[key], v => { cfg[key] = v; }, 0, 10, 0.1);
 
-  const overridesBox = el('div');
-  const renderOverrides = () => {
-    const rows = Object.keys(cfg.ability_values).sort().map(id =>
-      el('div', { class: 'eco-row' },
-        el('span', { text: id }),
-        el('input', { type: 'number', step: 0.1, value: cfg.ability_values[id], style: 'width:70px',
-          oninput: e => { const v = parseFloat(e.target.value); if (!isNaN(v)) cfg.ability_values[id] = v; } }),
-        el('button', { class: 'ghost', text: '✕', title: 'Remove — falls back to the ability default',
-          onclick: () => { delete cfg.ability_values[id]; renderOverrides(); } })));
-    const idInput = el('input', { type: 'text', placeholder: 'ability id', style: 'width:130px' });
-    const valInput = el('input', { type: 'number', step: 0.1, value: 2, style: 'width:70px' });
-    const addRow = el('div', { class: 'eco-row' }, idInput, valInput,
-      el('button', { class: 'ghost', text: '+ Add', onclick: () => {
-        const id = idInput.value.trim();
-        const v = parseFloat(valInput.value);
-        if (/^[a-z0-9_]+$/.test(id) && !isNaN(v)) { cfg.ability_values[id] = v; renderOverrides(); }
-        else toast('Ability id must be lowercase letters, digits, underscores', 'err');
-      } }));
-    overridesBox.replaceChildren(...rows, addRow);
+  // one id→number override list; three of them (abilities, roles, cards) share the shape
+  const mapBox = (map, placeholder, defVal, removeTitle) => {
+    const box = el('div');
+    const render = () => {
+      const rows = Object.keys(cfg[map]).sort().map(id =>
+        el('div', { class: 'eco-row' },
+          el('span', { text: id }),
+          el('input', { type: 'number', step: 0.1, value: cfg[map][id], style: 'width:70px',
+            oninput: e => { const v = parseFloat(e.target.value); if (!isNaN(v)) cfg[map][id] = v; } }),
+          el('button', { class: 'ghost', text: '✕', title: removeTitle,
+            onclick: () => { delete cfg[map][id]; render(); } })));
+      const idInput = el('input', { type: 'text', placeholder, style: 'width:130px' });
+      const valInput = el('input', { type: 'number', step: 0.1, value: defVal, style: 'width:70px' });
+      rows.push(el('div', { class: 'eco-row' }, idInput, valInput,
+        el('button', { class: 'ghost', text: '+ Add', onclick: () => {
+          const id = idInput.value.trim();
+          const v = parseFloat(valInput.value);
+          if (/^[a-z0-9_]+$/.test(id) && !isNaN(v)) { cfg[map][id] = v; render(); }
+          else toast('Id must be lowercase letters, digits, underscores', 'err');
+        } })));
+      box.replaceChildren(...rows);
+    };
+    render();
+    return box;
   };
-  renderOverrides();
+  const overridesBox = mapBox('ability_values', 'ability id', 2, 'Remove — falls back to the ability default');
 
   root = el('div', { class: 'panel tuning-section' },
     el('h2', {}, '♟ Board value'),
-    el('div', { class: 'hint', text: 'How the enemy engine\'s "total board value" eval prices a unit: its stats at these '
-      + 'exchange rates, plus fixed stat-equivalences for its abilities and effects. Own units count positive, the '
-      + 'player\'s negative — fielding, buffing and hurting the player all grow the total. '
+    el('div', { class: 'hint', text: 'How the enemy engine\'s valuation pass prices a unit: RAW worth (its stats at these '
+      + 'exchange rates — max health carries the frame, current health is persistence\'s business — plus its kit, role and '
+      + 'per-card enhancers), discounted by how likely the unit is to survive the turn (the persistence dial). Own units '
+      + 'count positive, the player\'s negative — fielding, buffing, healing and hurting the player all grow the total. '
       + 'Saves to data/board_value.json — restart the game to apply.' }),
     el('div', { style: 'display:flex;gap:26px;flex-wrap:wrap;margin-top:12px' },
       el('div', { style: 'flex:1;min-width:250px' },
-        el('h3', { text: 'Stat exchange rates', style: 'margin-top:0' }),
+        el('h3', { text: 'The persistence dial', style: 'margin-top:0' }),
+        numRow('Persistence weight', '0 = a dying queen is still a queen · 1 = a doomed unit is worth nothing',
+          () => cfg.persistence_weight, v => { cfg.persistence_weight = Math.min(1, Math.max(0, v)); }, 0, 1, 0.05),
+        el('h3', { text: 'Stat exchange rates' }),
         rate('attack', 'Attack', 'per point of attack × strikes'),
-        rate('health', 'Current health', 'per point the unit still has'),
-        // 0.1, matching the game's own default: spent health still counts for something (a
-        // 4/5 with one wound is worth a shade more than an untouched 4/4) but far less than
-        // health still held. The mirror said 0.5 for a while — keep the two in step.
-        rate('missing_health', 'Missing health', 'per point of max − current (spent health)'),
+        rate('health', 'Health (the frame)', 'per point of MAX health — what the unit is, not its damage state'),
+        // still read by the PARKED board-value quirk's current-health pricing
+        rate('missing_health', 'Missing health', 'parked board-value quirk only (spent health)'),
         rate('shield', 'Shield', 'regenerates every round — defaults to double'),
-        rate('speed', 'Speed', 'defaults to half')),
-      el('div', { style: 'flex:1;min-width:250px' },
-        el('h3', { text: 'Kit equivalences', style: 'margin-top:0' }),
+        rate('speed', 'Speed', 'defaults to half'),
+        el('h3', { text: 'Kit equivalences' }),
         scalar('ability_default', 'Ability (default)', 'stat-points per activated ability, unless overridden by id'),
         scalar('triggered_default', 'Triggered effect', 'per event-driven effect (on-death, on-attack…)'),
-        scalar('live_default', 'Live effect', 'per standing effect (auras, interceptors)'),
+        scalar('live_default', 'Live effect', 'per standing effect (auras, interceptors)')),
+      el('div', { style: 'flex:1;min-width:250px' },
+        el('h3', { text: 'Role bonuses', style: 'margin-top:0' }),
+        el('div', { class: 'hint', text: 'Flat raw worth per role tag ("captain" = any king, "default" = untagged) — '
+          + 'what a tag says about worth beyond the visible stats.' }),
+        mapBox('role_values', 'role, captain or default', 4, 'Remove — the role adds nothing'),
+        el('h3', { text: 'Per-unit enhancers' }),
+        el('div', { class: 'hint', text: 'Arbitrary per-card bonuses, by card id — "this specific unit is worth more '
+          + 'than its sheet says".' }),
+        mapBox('unit_values', 'card id', 4, 'Remove — back to the sheet price'),
         el('h3', { text: 'Per-ability overrides' }),
         overridesBox)),
     el('div', { class: 'modal-actions' },
@@ -1430,7 +1447,9 @@ function localPersonality(d) {
 
 function stockQuirksFromCatalog() {
   const out = {};
-  for (const t of (state.evalCatalog.traits || [])) if (!t.core) out[t.id] = t.def;
+  // stock-flagged only: the parked trio (death risk / harm / board value) sits on the quirk
+  // shelf but is NOT part of the default character.
+  for (const t of (state.evalCatalog.traits || [])) if (!t.core && t.stock) out[t.id] = t.def;
   return out;
 }
 
@@ -1578,11 +1597,13 @@ function paramCell(label, holder, key, stock, step) {
 // An eval's own constants, rendered under it. Returns null for the evals that have none.
 function evalParams(id, p) {
   const cat = state.evalCatalog;
-  if (id === 'death_risk') {
+  if (id === 'protection') {
+    // The protect table rides the formation criterion since the valuation system parked
+    // death risk — protection is the core trait that still measures against it.
     const box = el('div', { class: 'eval-params' },
-      el('div', { class: 'param-head', text: 'What it is afraid of losing — per unit role' }),
+      el('div', { class: 'param-head', text: 'Whose exposure it minds — per unit role' }),
       el('div', { class: 'hint', text: 'Relative, not absolute: raising everything changes nothing, the ratios are the '
-        + 'behaviour. “Wearing down” and “formation” measure against this same table.' }));
+        + 'behaviour. The parked “fear of dying” and “fear of wear” quirks measure against this same table.' }));
     const grid = el('div', { class: 'param-grid' });
     for (const key of Object.keys(cat.survivalDefaults))
       grid.append(paramCell(key === 'default' ? 'untagged' : key, p.survival_weights, key,
@@ -1592,27 +1613,41 @@ function evalParams(id, p) {
       k => !(k in cat.survivalDefaults), 'card id', 0.5));
     return box;
   }
-  if (id === 'harm' || id === 'protection')
-    return el('div', { class: 'eval-xref subtle', text: 'Measured against the protect table on “Fear of dying”.' });
+  if (id === 'death_risk' || id === 'harm')
+    return el('div', { class: 'eval-xref subtle', text: 'Measured against the protect table on “Formation instinct”.' });
   if (id === 'readiness')
-    return el('div', { class: 'eval-xref subtle', text: 'A tap\'s cost is priced with the unit-value list on “Hunger for the board”.' });
-  if (id === 'board_value') {
+    return el('div', { class: 'eval-xref subtle', text: 'A tap\'s cost is priced with the unit-value list on “Worth of the world”.' });
+  if (id === 'board_value')
+    return el('div', { class: 'eval-xref subtle', text: 'Prices with the same list as “Worth of the world” (parked: no persistence discount).' });
+  if (id === 'total_value') {
     const rates = p.value_rates;
     rates.stat_rates = rates.stat_rates || {};
     rates.ability_values = rates.ability_values || {};
+    rates.role_values = rates.role_values || {};
+    rates.unit_values = rates.unit_values || {};
     const g = cat.rates || {};
     const box = el('div', { class: 'eval-params' },
       el('div', { class: 'param-head', text: 'What a unit is worth — this fight\'s price list' }),
-      el('div', { class: 'hint', text: 'Leave a price at the game-wide value (🎛 Tuning ▸ ♟ Board value) and nothing is '
-        + 'written; change one and it applies to THIS fight only. Readiness prices taps with the same list.' }));
+      el('div', { class: 'hint', text: 'RAW worth (current health irrelevant — max health carries the frame) × the '
+        + 'persistence dial\'s survival discount. Leave a price at the game-wide value (🎛 Tuning ▸ ♟ Board value) and '
+        + 'nothing is written; change one and it applies to THIS fight only. Readiness prices taps with the same list.' }));
     const grid = el('div', { class: 'param-grid' });
-    for (const [key, label] of [['attack', 'attack'], ['health', 'health'], ['missing_health', 'missing hp'],
+    grid.append(paramCell('persistence', rates, 'persistence_weight',
+      g.persistence_weight == null ? 0.65 : g.persistence_weight));
+    for (const [key, label] of [['attack', 'attack'], ['health', 'health (frame)'], ['missing_health', 'missing hp'],
         ['shield', 'shield'], ['speed', 'speed']])
       grid.append(paramCell(label, rates.stat_rates, key, (g.stat_rates || {})[key]));
     for (const [key, label] of [['ability_default', 'any ability'], ['triggered_default', 'triggered fx'],
         ['live_default', 'live fx']])
       grid.append(paramCell(label, rates, key, g[key], 0.1));
     box.append(grid);
+    box.append(el('div', { class: 'hint', text: 'The persistence dial (0–1): how much a unit\'s chance of dying this turn '
+      + 'discounts its worth. 0 = a dying queen is still a queen; 1 = a doomed unit is worth nothing. THE handle on how '
+      + 'hard this enemy triages, retreats and heals.' }));
+    box.append(mapEditor('Role bonus (raw worth per tag — “these fodders are precious”)', rates.role_values,
+      () => true, 'role, captain or default', 4));
+    box.append(mapEditor('Per-unit bonus (arbitrary enhancer, by card id)', rates.unit_values,
+      () => true, 'card id', 4));
     box.append(mapEditor('Per-ability price', rates.ability_values, () => true, 'ability id', 2));
     return box;
   }
@@ -1658,7 +1693,7 @@ async function saveFightPage() {
   if (p && typeof p === 'object') {
     for (const k of ['traits', 'quirks', 'survival_weights']) if (p[k] && !Object.keys(p[k]).length && k !== 'quirks') delete p[k];
     if (p.value_rates) {
-      for (const k of ['stat_rates', 'ability_values'])
+      for (const k of ['stat_rates', 'ability_values', 'role_values', 'unit_values'])
         if (p.value_rates[k] && !Object.keys(p.value_rates[k]).length) delete p.value_rates[k];
       if (!Object.keys(p.value_rates).length) delete p.value_rates;
     }
@@ -1763,9 +1798,11 @@ function enemyAIBody(list, traits, survivalDefaults, encounters) {
   const survivalBox = () => {
     const p = current();
     const wrap = groupBox('Who it protects (survival weights)');
-    wrap.append(el('div', { class: 'hint', text: 'What "fear of dying" is afraid of losing, per unit kind. '
-      + 'Blank keeps the stock value. These are RELATIVE — raising everything changes nothing, the ratios are the '
-      + 'behaviour. An encounter\'s own survival weights still override these for that one fight.' }));
+    wrap.append(el('div', { class: 'hint', text: 'Whose exposure the formation instinct minds (and what the parked '
+      + 'fear-of-dying/wear quirks measure against), per unit kind. Blank keeps the stock value. These are RELATIVE — '
+      + 'raising everything changes nothing, the ratios are the behaviour. An encounter\'s own survival weights still '
+      + 'override these for that one fight. For "this unit is PRECIOUS", prefer a value bonus on the fight\'s '
+      + 'personality (Worth of the world ▸ role/per-unit bonus) — that is what drives heals and tanking now.' }));
     const grid = el('div', { style: 'display:flex;flex-wrap:wrap;gap:10px;margin-top:8px' });
     for (const key of Object.keys(survivalDefaults)) {
       grid.append(el('label', { style: 'display:flex;align-items:center;gap:6px;font-size:13px' },
@@ -1825,9 +1862,10 @@ function enemyAIBody(list, traits, survivalDefaults, encounters) {
           if (!id) return;
           if (!/^[a-z0-9_]+$/.test(id)) { toast('id must be lowercase letters, digits and underscores', 'err'); return; }
           if (list.some(p => p.id === id)) { toast('"' + id + '" already exists', 'err'); return; }
-          // a new personality starts as the default character: no trait opinions, stock quirks
+          // a new personality starts as the default character: no trait opinions, STOCK
+          // quirks only (the parked trio stays on the shelf)
           list.push({ id, name: slugToName(id), description: '', traits: {},
-            quirks: Object.fromEntries(QUIRKS.map(q => [q.id, q.def])), survival_weights: {} });
+            quirks: Object.fromEntries(QUIRKS.filter(q => q.stock).map(q => [q.id, q.def])), survival_weights: {} });
           selected = id; state.enemyAIId = id; touch(); renderPicker(); renderEditorPanel(); renderAssign();
         } }),
         el('div', { style: 'flex:1' }), dirtyFlag,
@@ -1860,8 +1898,8 @@ function enemyAIBody(list, traits, survivalDefaults, encounters) {
 
     const coreBox = groupBox('Core personality traits — every enemy has these');
     coreBox.append(el('div', { class: 'hint', text: 'The engine\'s working parts: a personality re-prices them, it never drops them. '
-      + 'Leave one blank to keep the stock number. Weights are read against "fear of dying" — a trait at 1.0 is worth exactly one '
-      + 'certainly-dying unit of weight 1.' }));
+      + 'Leave one blank to keep the stock number. Weights are read against "worth of the world" — a trait at 1.0 swings exactly as '
+      + 'much as the gap between a pick\'s best and worst board.' }));
     for (const t of CORE) coreBox.append(weightRow(t, p.traits, null));
 
     const isDefault = p.id === 'default';

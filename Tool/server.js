@@ -462,6 +462,11 @@ const BOARD_VALUE_DEFAULT = {
   stat_rates: { attack: 1.0, health: 1.0, missing_health: 0.1, shield: 2.0, speed: 0.5 },
   ability_default: 2.0, ability_values: {},
   triggered_default: 1.5, live_default: 1.5,
+  // the valuation pass (2026-07-30): the persistence dial + the raw-worth enhancers.
+  // persistence_weight 0..1 = how much a unit's chance of dying this turn discounts its
+  // raw worth; role_values = flat bonus per role tag ("captain"/"default" included);
+  // unit_values = arbitrary per-card enhancers.
+  persistence_weight: 0.65, role_values: {}, unit_values: {},
 };
 function sanitizeBoardValue(src) {
   const s = (src && typeof src === 'object') ? src : {};
@@ -475,11 +480,14 @@ function sanitizeBoardValue(src) {
     const v = Number(s[k]);
     if (Number.isFinite(v)) out[k] = v;
   }
-  if (s.ability_values && typeof s.ability_values === 'object')
-    for (const [id, v] of Object.entries(s.ability_values)) {
-      const n = Number(v);
-      if (validId(id) && Number.isFinite(n)) out.ability_values[id] = n;
-    }
+  const pw = Number(s.persistence_weight);
+  if (Number.isFinite(pw)) out.persistence_weight = Math.min(1, Math.max(0, pw));
+  for (const map of ['ability_values', 'role_values', 'unit_values'])
+    if (s[map] && typeof s[map] === 'object')
+      for (const [id, v] of Object.entries(s[map])) {
+        const n = Number(v);
+        if (validId(id) && Number.isFinite(n)) out[map][id] = n;
+      }
   return out;
 }
 function getBoardValue() { return sanitizeBoardValue(readJson(BOARD_VALUE_PATH, {})); }
@@ -497,18 +505,12 @@ function getBoardValue() { return sanitizeBoardValue(readJson(BOARD_VALUE_PATH, 
 // so keep them in the language a designer thinks in.
 const PERSONALITIES_PATH = path.join(GAME_ROOT, 'data/enemy_personalities.json');
 const PERSONALITY_TRAITS = [
-  { id: 'death_risk', core: true, def: 1.0, max: 4, label: 'Fear of dying',
+  { id: 'total_value', core: true, def: 1.0, max: 4, label: 'Worth of the world',
     sub: 'the reference scale',
-    hint: 'How much it minds losing a unit — every other weight is read against this one. Which units it minds losing is the protect table below. Raise for a careful opponent, lower for one that spends bodies.' },
-  { id: 'harm', core: true, def: 0.5, max: 3, label: 'Fear of being worn down',
-    sub: 'sub-lethal damage',
-    hint: 'Damage that does not kill still counts: the King dropping 15→6 is a real reading. Half of fear-of-dying by default, so losing a unit always reads worse than any amount of surviving damage.' },
+    hint: 'THE dominant reading since the valuation system (2026-07-30): every unit on both sides priced — what it IS (stats, kit, role, enhancers) discounted by how likely it is to survive the turn (the persistence dial, Tuning ▸ ♟ Board value). Its units count positive, yours negative, so growing, preserving, healing and hurting you are all this one number. Every other weight is read against it.' },
   { id: 'protection', core: true, def: 0.15, max: 2, label: 'Formation instinct',
     sub: 'bare exposure',
     hint: 'The quiet pull toward standing in covered positions, felt even when nothing is threatening. Small on purpose — it keeps formation alive on empty boards without competing with real danger.' },
-  { id: 'board_value', core: true, def: 0.1, max: 2, label: 'Hunger for the board',
-    sub: 'total board value',
-    hint: 'The worth of the whole battlefield in one currency (Tuning ▸ ♟ Board value sets the prices): its units positive, yours negative. Fielding, buffing, healing and hurting you all raise it. Past ~0.2 growth starts beating rescue — it will buff an attacker while an ally dies.' },
   { id: 'mana', core: true, def: 0.6, max: 3, label: 'Use your mana',
     sub: 'spending pressure',
     hint: 'Any spend that leaves the rest of the pool usable scores full marks; only WASTE is punished. This is what makes it act at all — at 0 it will happily pass the turn.' },
@@ -518,9 +520,20 @@ const PERSONALITY_TRAITS = [
   { id: 'idle_hand', core: true, def: 1.0, max: 3, label: 'Never sit on a hand',
     sub: 'withheld bodies',
     hint: 'Every unit it could field and doesn\'t is charged this, on any turn that spends no mana. The blunt anti-hoarding rule: at 1.0 an idle body costs more than a certain death. 0 turns it off.' },
-  { id: 'damage_output', core: false, def: 0.1, max: 2, label: 'Maximize damage',
+  { id: 'damage_output', core: false, stock: true, def: 0.1, max: 2, label: 'Maximize damage',
     sub: 'aggression as expression',
     hint: 'How hard it reaches for the most damaging option available right now — measured against its own alternatives, so 1.0 always means "the most aggressive thing I could do this pick", never a fixed amount. This is what gets damage buffs used. Drop the quirk and it only ever attacks because attacking happened to be safe.' },
+  // The PARKED trio (2026-07-30): superseded by the valuation system, out of the stock
+  // character, kept whole as opt-in quirks for a personality that wants the old readings.
+  { id: 'death_risk', core: false, def: 1.0, max: 4, label: 'Fear of dying (parked)',
+    sub: 'the old reference scale',
+    hint: 'PARKED — the pre-valuation triage criterion: how much it minds losing a unit, weighted by the protect table below. The valuation system reads the same danger as value loss; opt this back in only for a character built on the old arithmetic.' },
+  { id: 'harm', core: false, def: 0.5, max: 3, label: 'Fear of wear (parked)',
+    sub: 'sub-lethal damage',
+    hint: 'PARKED — the pre-valuation wear criterion: damage that does not kill, weighted by the protect table. Superseded by persistence-discounted value.' },
+  { id: 'board_value', core: false, def: 0.1, max: 2, label: 'Raw board hunger (parked)',
+    sub: 'undiscounted worth',
+    hint: 'PARKED — the pre-valuation battlefield worth (current-health pricing, no persistence). Superseded by "Worth of the world"; opting both in double-counts.' },
 ];
 // The protect table (BoardScoring.STOCK_SURVIVAL_WEIGHTS) — which units the fear-of-dying
 // trait is afraid of losing. Mirrored for the tool's placeholders; blank = the stock value.
@@ -531,8 +544,10 @@ const CORE_TRAIT_IDS = PERSONALITY_TRAITS.filter(t => t.core).map(t => t.id);
 const QUIRK_IDS = PERSONALITY_TRAITS.filter(t => !t.core).map(t => t.id);
 // The quirks the stock character carries (EnemyPersonality.stock_quirks): damage output is
 // nonzero in stock on purpose — the default enemy must already reach for damage buffs.
+// `stock: true` marks them; the parked trio is a quirk WITHOUT the flag, so it exists on the
+// shelf but never in the default character.
 function stockQuirks() {
-  return Object.fromEntries(PERSONALITY_TRAITS.filter(t => !t.core).map(t => [t.id, t.def]));
+  return Object.fromEntries(PERSONALITY_TRAITS.filter(t => !t.core && t.stock).map(t => [t.id, t.def]));
 }
 
 // One personality, defensively read. `quirks` is written ALWAYS (even empty) — the game
@@ -562,7 +577,34 @@ function sanitizePersonality(src) {
     quirks: (s.quirks && typeof s.quirks === 'object') ? num(s.quirks, QUIRK_IDS) : stockQuirks(),
     // role tags, "default", or any card id — the same key space the engine resolves
     survival_weights: num(s.survival_weights, null),
+    // the character's own eval parameters (a partial layer over ♟ Board value) — must
+    // round-trip or a library save silently strips a fight's price list
+    value_rates: sanitizeValueRates(s.value_rates),
   };
+}
+
+// A personality's partial price list, same vocabulary as data/board_value.json: scalar
+// defaults, the persistence dial, and the four numeric maps. Only stated keys survive —
+// the whole point is layering over the global config, never replacing it.
+function sanitizeValueRates(src) {
+  const s = (src && typeof src === 'object') ? src : {};
+  const out = {};
+  for (const k of ['ability_default', 'triggered_default', 'live_default']) {
+    const v = Number(s[k]);
+    if (Number.isFinite(v)) out[k] = v;
+  }
+  const pw = Number(s.persistence_weight);
+  if (Number.isFinite(pw)) out.persistence_weight = Math.min(1, Math.max(0, pw));
+  for (const map of ['stat_rates', 'ability_values', 'role_values', 'unit_values']) {
+    if (!s[map] || typeof s[map] !== 'object') continue;
+    const m = {};
+    for (const [k, v] of Object.entries(s[map])) {
+      const n = Number(v);
+      if (Number.isFinite(n)) m[k] = n;
+    }
+    if (Object.keys(m).length) out[map] = m;
+  }
+  return out;
 }
 
 function sanitizePersonalities(list) {

@@ -8,6 +8,57 @@ system context is `ENCOUNTER_ENGINE_DESIGN.md` — but note the user considers t
 cluttered; treat THIS file as the authority for the criteria below, and keep this file in
 its style: decisions only, assumptions labeled.
 
+## THE VALUATION SYSTEM (user-designed 2026-07-30 — BUILT; supersedes evals 1 & 2b and death risk)
+
+The user's pitch, implemented the same day (built solo while they stepped out; the three
+clarifications below were confirmed before they left):
+
+**Before ANY value-related eval runs, a whole valuation pass prices every unit on BOTH
+sides** (`BoardScoring.run_valuation`, stamped as `unit.value` / `state.value_total`, own
+side positive, player side negative). Two stages per unit:
+
+1. **RAW value** — what the unit IS: total stats (attack × strikes, **MAX** health, shield,
+   speed at the authored exchange rates), abilities, effect categories, its ROLE
+   (`role_values`, flat bonus per tag) and arbitrary per-card enhancers (`unit_values`).
+   **Current health plays no part** — a wounded queen is worth the same raw as a fresh one.
+2. **PERSISTENCE** — how likely it is to still be there after the turn: `1 − urgency`
+   (current health + shield vs expected incoming; the existing measurement, reused verbatim
+   per the user's sign-off, now side-aware — a player unit's incoming is the CPU's fielded
+   mass through the player's own formation geometry; the CPU's OPEN MANA is deliberately
+   NOT threat against player units, or spending mana would "refund" the player's worth).
+   The discount runs through **ONE tunable dial** (confirmed shape):
+   `value = raw × lerp(1, persistence, persistence_weight)` — 0 ignores fragility, 1 makes
+   a doomed unit worth ~nothing. THE handle the user asked to hold; stock 0.65 from a
+   staged sweep (below ~0.6 preservation never outbids growth; ~0.8+ the stock king walks
+   front unprompted). Tool: 🎛 Tuning ▸ ♟ Board value; per-personality via `value_rates`.
+
+**One eval on top:** `TotalValue` — the stamped total, min-max normalized over the pick's
+cohort (best 1, worst 0), stock weight 1.0 = the new reference scale. One number carries
+fielding, buffing, healing, hurting the player, kills and self-preservation. **The stamp is
+canon**: any later valuation eval reads it, never its own arithmetic. (The stamp records
+WHO priced it — `valued_by` — and re-runs under a different pricer; pinned, it leaked once.)
+
+**PARKED (user call): death risk, expected harm, board value** — out of the stock
+character, whole as opt-in personality quirks (policy change, mechanism kept).
+
+Consequences worth knowing (all pinned in tests, NONE playtested):
+- Damage-sharing EMERGES: the king fronts when its fat pool redistributes incoming off
+  units the fight prices as precious. "Precious" is now a PRICE (role/unit value bonus on
+  the fight's personality), not a survival weight — survival weights only feed protection
+  and the parked quirks now.
+- A placement always ADDS value (a fielded body is worth ≥ 0 however doomed) — the old
+  "pure-loss body stays in hand" restraint is gone from stock; anti-withholding by
+  construction.
+- ⚠ CHARACTER SHIFT, NOT USER-REVIEWED: on the staged wounded-ally board the support now
+  casts fire_bless instead of healing its 1 HP dps at EVERY dial setting — the dps's
+  2-point pool makes a heal recover less worth than +2 attack adds, and a buff also
+  devalues the player side (both sides being priced, raising own attack lowers their
+  persistence — note this overlaps damage_output's job; weight question, flagged). A
+  priced-up unit still pulls the heal (place-vs-heal pin). Surface this to the user.
+- Player persistence saturates on typical boards (CPU mass >> a unit's pool → p ≈ 0), so
+  at high dial settings player units are cheap to ignore and kills earn only the residual.
+  Coarseness of the shared urgency model; known, not addressed.
+
 ## Where the engine is today
 
 The enemy engine picks actions by simulating every legal candidate on a board copy and
@@ -38,7 +89,7 @@ rejected. Two kinds of criteria exist:
 
 ## The three new evals
 
-### 1. "Reduce enemy value" — a GOAL (build first; nearly free)
+### 1. "Reduce enemy value" — a GOAL (build first; nearly free) — **SUPERSEDED by the valuation system (2026-07-30)**
 Value-weighted **linear harm** to player units: damage as a fraction of the target's health
 pool (full → 0; overkill wasted; kills NOT special — this is deliberately NOT
 death-probability, which the user rejected as kill-oriented) × target value × criterion
@@ -94,7 +145,7 @@ among this pick's candidates. Independent of target value; a character trait, no
   this pick's candidates; 1.0 = "the most aggressive expression available right now",
   never a global ideal. Weight then purely means "how much this Captain cares".
 
-### 2b. "Total board value" — **DESIGNED + BUILT 2026-07-29 (user-designed in session)**
+### 2b. "Total board value" — **DESIGNED + BUILT 2026-07-29 — PARKED 2026-07-30 (valuation system replaces it; opt-in quirk)**
 The net worth of the battlefield in one currency: every unit priced by its full kit —
 stats at authored exchange rates + fixed stat-equivalences for abilities / triggered
 effects / live effects — own units positive, PLAYER units negative. Normalization
