@@ -195,6 +195,55 @@ const IDLE_HAND_CRITERION_WEIGHT := 1.0
 
 
 
+# ── the decision table (the judge/peer blend) ──────────────────────────────────────────
+#
+# How eval voices combine into one decision (user-designed 2026-07-31, replacing the raw
+# weighted sum). Two kinds of seat:
+#
+#   · PEERS hold a fixed claim on the decision: their weight, on [0,1], meaning exactly
+#     what it says — 0.4 is "claim 40% of what's available". Together a table of peers
+#     claims 1 − ∏(1−w) of the decision (hungers dilute each other; company at the table
+#     shrinks every plate), split among them in proportion to their weights. A peer's
+#     share can never exceed its stated weight, equal weights always eat equally, and
+#     order never matters. The unclaimed remainder is indifference — it belongs to no
+#     one and falls through to the tie-break.
+#   · JUDGES hold full authority and contribute by OBJECTION, not preference: a judge's
+#     score is how strongly it objects to a candidate (0 = content, 1 = categorical NO),
+#     and what it seizes it strikes out — a candidate's total is the peer verdict shrunk
+#     by every judge's objection. Full objection zeroes the candidate outright: the veto
+#     is this arithmetic, not a special case. Judgeship is reserved for win conditions.
+#
+# Weights above 1 or below 0 are contract violations (there is no "overyes"); they are
+# clamped defensively but a personality should never author them.
+
+# One share per peer weight, same order: the group's combined claim, split proportionally.
+static func peer_shares(weights: Array) -> Array:
+	var sum := 0.0
+	var open := 1.0   # the fraction of the decision no one has claimed yet
+	for w: Variant in weights:
+		var wf := clampf(float(w), 0.0, 1.0)
+		sum += wf
+		open *= 1.0 - wf
+	var out: Array = []
+	if sum <= 0.0:
+		for _w: Variant in weights:
+			out.append(0.0)
+		return out
+	var claimed := 1.0 - open
+	for w: Variant in weights:
+		out.append(claimed * clampf(float(w), 0.0, 1.0) / sum)
+	return out
+
+
+# What survives the judges: the product of (1 − objection) over every judge. 1 = no
+# objections, 0 = at least one categorical NO.
+static func judge_factor(objections: Array) -> float:
+	var f := 1.0
+	for o: Variant in objections:
+		f *= 1.0 - clampf(float(o), 0.0, 1.0)
+	return f
+
+
 # The scorer for one fight. The PERSONALITY says how loud each criterion is (EnemyPersonality
 # — an authored character, or the stock one when none is named); `weight_overrides` layers an
 # encounter's own role→weight entries on top of the personality's survival table ("in THIS
