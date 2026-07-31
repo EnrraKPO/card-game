@@ -503,40 +503,47 @@ function getBoardValue() { return sanitizeBoardValue(readJson(BOARD_VALUE_PATH, 
 // all. The catalog below is the tool-side mirror of EnemyPersonality.TRAITS + the weight
 // constants in board_scoring.gd; the hints are the authoring surface's whole documentation,
 // so keep them in the language a designer thinks in.
+//
+// THE DECISION TABLE (2026-07-31): every weight lives on [0,1] and means exactly what it
+// says — a claim on the decision, diluted fairly by company (values above 1 are clamped by
+// the engine). `judge: true` marks a seat with FULL authority and no weight dial (its
+// contribution comes from its scoring rule); `parked: true` marks an eval the engine will
+// not seat for anyone (scores outside 0..1, held for later inspection).
 const PERSONALITIES_PATH = path.join(GAME_ROOT, 'data/enemy_personalities.json');
 const PERSONALITY_TRAITS = [
-  { id: 'total_value', core: true, def: 1.0, max: 4, label: 'Worth of the world',
+  { id: 'total_value', core: true, def: 1.0, max: 1, label: 'Worth of the world',
     sub: 'the reference scale',
-    hint: 'THE dominant reading since the valuation system (2026-07-30): every unit on both sides priced — what it IS (stats, kit, role, enhancers) discounted by how likely it is to survive the turn (the persistence dial, Tuning ▸ ♟ Board value). Its units count positive, yours negative, so growing, preserving, healing and hurting you are all this one number. Every other weight is read against it.' },
-  { id: 'king_safety', core: true, def: 2.275, max: 4, label: 'Protect the king',
-    sub: 'the win condition',
-    hint: 'Scores worse the more endangered its king is — the actual danger bearing down on it, not just where it stands, so heavy threat drives a full retreat while a calm board lets the king step out. A candidate that outright kills the king is always rejected regardless of this dial; this prices the danger short of death. At 0 the king is just another body.' },
-  { id: 'protection', core: true, def: 0.15, max: 2, label: 'Formation instinct',
-    sub: 'bare exposure',
-    hint: 'The quiet pull toward standing in covered positions, felt even when nothing is threatening. Small on purpose — it keeps formation alive on empty boards without competing with real danger.' },
-  { id: 'mana', core: true, def: 0.6, max: 3, label: 'Use your mana',
+    hint: 'THE dominant reading: every unit on both sides priced — what it IS (stats, kit, enhancers) discounted by how likely it is to survive the turn (the persistence dial, Tuning ▸ ♟ Board value). Its units count positive, yours negative, so growing, preserving, healing and hurting you are all this one number. The weight is its claim on the decision: 1.0 = the biggest seat at the table.' },
+  { id: 'king_safety', core: true, judge: true, def: 1.0, max: 1, label: 'Protect the king',
+    sub: 'the win condition — THE JUDGE',
+    hint: 'The judge, not a peer: full authority, no weight dial. It objects to each option in proportion to the actual danger left on its king, and what it objects to it strikes out — an option that kills the king outright is rejected absolutely. Calm board: silent, the king tanks freely. Lethal board: nothing survives its objection except the lines that shelter the king. Its contribution is controlled by its scoring rule, never by a number here.' },
+  { id: 'mana', core: true, def: 0.6, max: 1, label: 'Use your mana',
     sub: 'spending pressure',
     hint: 'Any spend that leaves the rest of the pool usable scores full marks; only WASTE is punished. This is what makes it act at all — at 0 it will happily pass the turn.' },
-  { id: 'readiness', core: true, def: 0.1, max: 3, label: 'Reluctance to tap',
+  { id: 'readiness', core: true, def: 0.1, max: 1, label: 'Reluctance to tap',
     sub: 'the tap counterweight',
     hint: 'An ability costs more than its mana: a tapped unit loses its swing and every other ability it holds. Raise it and abilities are saved for when they matter; at 0 it taps anything it can pay for.' },
-  { id: 'idle_hand', core: true, def: 1.0, max: 3, label: 'Never sit on a hand',
-    sub: 'withheld bodies',
-    hint: 'Every unit it could field and doesn\'t is charged this, on any turn that spends no mana. The blunt anti-hoarding rule: at 1.0 an idle body costs more than a certain death. 0 turns it off.' },
-  { id: 'damage_output', core: false, stock: true, def: 0.1, max: 2, label: 'Maximize damage',
+  { id: 'damage_output', core: false, stock: true, def: 0.1, max: 1, label: 'Maximize damage',
     sub: 'aggression as expression',
-    hint: 'How hard it reaches for the most damaging option available right now — measured against its own alternatives, so 1.0 always means "the most aggressive thing I could do this pick", never a fixed amount. This is what gets damage buffs used. Drop the quirk and it only ever attacks because attacking happened to be safe.' },
-  // The PARKED trio (2026-07-30): superseded by the valuation system, out of the stock
-  // character, kept whole as opt-in quirks for a personality that wants the old readings.
-  { id: 'death_risk', core: false, def: 1.0, max: 4, label: 'Fear of dying (parked)',
-    sub: 'the old reference scale',
-    hint: 'PARKED — the pre-valuation triage criterion: how much it minds losing a unit, weighted by the protect table below. The valuation system reads the same danger as value loss; opt this back in only for a character built on the old arithmetic.' },
-  { id: 'harm', core: false, def: 0.5, max: 3, label: 'Fear of wear (parked)',
-    sub: 'sub-lethal damage',
-    hint: 'PARKED — the pre-valuation wear criterion: damage that does not kill, weighted by the protect table. Superseded by persistence-discounted value.' },
-  { id: 'board_value', core: false, def: 0.1, max: 2, label: 'Raw board hunger (parked)',
+    hint: 'How hard it reaches for the most damaging option available right now — measured against its own alternatives, so full expression always means "the most aggressive thing I could do this pick", never a fixed amount. This is what gets damage buffs used. Drop the quirk and it only ever attacks because attacking happened to be safe.' },
+  { id: 'board_value', core: false, def: 0.1, max: 1, label: 'Raw board hunger',
     sub: 'undiscounted worth',
-    hint: 'PARKED — the pre-valuation battlefield worth (current-health pricing, no persistence). Superseded by "Worth of the world"; opting both in double-counts.' },
+    hint: 'The pre-valuation battlefield worth (current-health pricing, no persistence). Superseded by "Worth of the world"; opting both in double-counts.' },
+  // PARKED (0..1 contract offenders, 2026-07-31): these score in unbounded sums or plain
+  // counts, which the decision table cannot seat. The engine ignores them for EVERYONE —
+  // they stay on the shelf, whole, awaiting re-expression.
+  { id: 'protection', core: true, parked: true, def: 0.15, max: 1, label: 'Formation instinct (parked)',
+    sub: 'bare exposure',
+    hint: 'PARKED — scores outside 0..1, so the engine will not seat it. Was: the quiet pull toward covered positions on threatless boards. Under threat, formation already pays through unit worth (cover raises survival raises value).' },
+  { id: 'idle_hand', core: true, parked: true, def: 1.0, max: 1, label: 'Never sit on a hand (parked)',
+    sub: 'withheld bodies',
+    hint: 'PARKED — scores in plain counts, so the engine will not seat it. Was: the blunt anti-hoarding charge. The fielding pressure is carried by "Use your mana" (a spend always beats declining, structurally).' },
+  { id: 'death_risk', core: false, parked: true, def: 1.0, max: 1, label: 'Fear of dying (parked)',
+    sub: 'the old reference scale',
+    hint: 'PARKED — scores outside 0..1, so the engine will not seat it. Was: the pre-valuation triage criterion, weighted by the protect table below.' },
+  { id: 'harm', core: false, parked: true, def: 0.5, max: 1, label: 'Fear of wear (parked)',
+    sub: 'sub-lethal damage',
+    hint: 'PARKED — scores outside 0..1, so the engine will not seat it. Was: the pre-valuation wear criterion, weighted by the protect table.' },
 ];
 // The protect table (BoardScoring.STOCK_SURVIVAL_WEIGHTS) — which units the fear-of-dying
 // trait is afraid of losing. Mirrored for the tool's placeholders; blank = the stock value.

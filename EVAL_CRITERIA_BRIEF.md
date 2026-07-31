@@ -9,9 +9,10 @@ designs and bug archaeology were pruned 2026-07-31 — git history holds them.
 
 The enemy engine picks actions greedily, one at a time: it simulates every legal candidate
 on a board copy with the REAL rules (`CombatWorld.copy()` + null presenter) and scores the
-result with weighted criteria (`BoardScoring.stock()`). A candidate must strictly improve
-on the do-nothing baseline to be chosen, and a candidate that leaves the Captain dead is
-categorically vetoed (`enemy_engine._pick_best`).
+result through the DECISION TABLE (`BoardScoring.stock()` — judges and peers, below). A
+candidate must strictly improve on the do-nothing baseline to be chosen; a candidate a
+judge categorically objects to (today: one that leaves the Captain dead) is not an option
+at all (`BoardScoring.vetoes`, read in `_pick_best` before the cohort forms).
 
 ## The valuation system
 
@@ -86,60 +87,72 @@ one; readiness is dialed to 0.1 and speaks only for what the valuation cannot se
 OTHER tap-abilities a tap closes). Fights heavy with non-traceable tap abilities dial it
 up per-personality.
 
-## The taxonomy (SETTLED — the load-bearing decision)
+## The decision table (user-designed 2026-07-31 — BUILT; replaces the weighted sum)
 
-Every criterion must be **commensurable**: normalized so its weight purely means "how much
-this character cares", never absorbing hidden units of scale. Two kinds:
+**Every number means something you can say out loud; nothing is ever produced by shouting
+over a sum.** The scale of a weight is DECISION AUTHORITY on [0,1]: 0 = the concern does
+not exist, 1 = the whole decision. There is no "overyes" — the engine clamps. Two kinds
+of seat:
 
-- **GOALS** — pure measurements of a resulting world-state, normalized against the world.
-- **BEHAVIORS** — how fully an action expresses a disposition, normalized as fraction of
-  the actor's available expression this pick: raw measure ÷ best raw measure among this
-  pick's candidates (actor-not-optimizer). Behavior criteria see the candidate cohort
-  (`score_pick`, two-pass), not just one board.
+- **PEERS** hold a fixed claim: their weight, meaning exactly what it says. A table of
+  peers together claims `1 − ∏(1−w)` of the decision (hungers dilute each other —
+  attention divides), split proportionally; a lone 0.4 holds exactly 0.4, no share ever
+  exceeds its weight, order never matters, equal weights eat equally. The unclaimed
+  remainder is indifference and falls to the tie-break.
+- **JUDGES** hold full authority and contribute by OBJECTION: a judge's score is how
+  strongly it objects to a candidate (0 content, 1 categorical NO), and what it seizes it
+  strikes out — candidate total = peer verdict × ∏(1 − objection). Full objection zeroes
+  the candidate AND removes it from the pick (`vetoes`): the veto is arithmetic, not an
+  engine special case. Judgeship is reserved for win conditions; a judge has NO weight
+  dial — its contribution is controlled entirely by its scoring rule.
 
-## The stock character (core traits, every personality carries them)
+**The 0..1 score contract:** every seated eval must score on 0..1. An eval that cannot
+(unbounded sums, plain counts) is WRONG and is parked — unseated for everyone, personality
+opt-in included — pending later inspection. Math: `peer_shares` / `judge_factor`,
+pinned by `tests/test_decision_table.gd`.
 
+Within the contract the earlier taxonomy stands: GOALS score a state absolutely;
+BEHAVIORS score expression relative to the pick's cohort (`score_pick`, two-pass).
+
+## The stock table
+
+**THE JUDGE — KingSafety** ("Protect the king", 🧠 Enemy AI): objection = the own king's
+stamped endangerment (1 − persistence; the expected-damage reading, never its own
+arithmetic). Scoring rule: dead king → objection 1, categorical (this IS the old
+Captain-dead veto, now deleted from the engine); never-staged king → 0 (kingless fixtures
+carry no constant discount); living king → endangerment capped at `GRADED_MAX` 0.95, so a
+cornered king still picks the least-bad line — only death is absolute. THREAT-SCALED by
+construction: calm board, posture free (the king tanks — a big cheap pool is a fine
+screen); lethal board, nothing survives its objection but the sheltering lines. The
+tank-early → protect-late arc is this judge's slice expanding with the danger; no weight
+exists to re-tune, so the old 2.275 knife-edge is GONE, dissolved rather than solved.
+
+**PEERS:**
 - **TotalValue** (1.0, the reference scale) — the stamped `value_total`, min-max
   normalized over the pick's cohort. One number carries fielding, buffing, healing,
   hurting the player, kills and self-preservation.
-- **KingSafety** (2.275) — the win-condition eval: weight × the own king's endangerment
-  (1 − persistence off the stamp), negated. A GOAL on 0..1, the simplest criterion in the
-  scorer: no tags, no tables, no cohort machinery; THREAT-SCALED by construction (heavy
-  threat forces the full retreat, a calm board makes posture free). The Captain-dead veto
-  is the absolute half of the statement. Dead-vs-never-staged: a king in the graveyard
-  reads −1; a board that never staged one reads 0. Weight is the midpoint of a NARROW
-  swept window [2.25, 2.30] — below it the king loses its retreat pick to a fodder taking
-  the free back seat; at 2.35+ safety outbids the approved damage-sharing walk. Character
-  variation belongs on personalities, not this const. Tool: "Protect the king" in 🧠
-  Enemy AI.
-- **ProtectionExposure** (0.15) — formation instinct, kept quiet.
 - **ManaOptimization** (0.6) — scores THE CHOICE: spends nothing → 0; otherwise this
   choice's line ÷ the best line ANY REAL CANDIDATE in this pick offers
   (`mana_capacity_before`, stamped from the cohort — an unplayable card must never
   inflate the denominator). Spending everything and keeping a usable reserve are equally
   1; only WASTE is punished, and waste is only waste when a better line EXISTED. THE
-  INVARIANT (pinned): spending mana always scores STRICTLY above spending none. Known
-  deviation from the literal spec, flagged not hidden: "spend 1, strand the rest" scores
-  `cost ÷ capacity`, not 0 — ordering unaffected, and a literal 0 ties declining, which
-  the strict-improvement rule cannot tolerate.
+  INVARIANT (pinned): spending mana always scores STRICTLY above spending none — this is
+  now also the whole fielding pressure (idle-hand is parked).
 - **Readiness** (0.1) — `1 − forfeited ÷ total activity potential`: a tap's real price is
   the unit's attack AND every OTHER tap-ability it holds (never the ability it bought),
   proportional to the army. Priced with the BoardValueConfig rates.
-- **IdleHand** (1.0) — every placeable unit in hand the CPU could field right now, one
-  full weight each; a plain COUNT, never diluted. Three gates matching
-  `CandidateMoves.placements`: placeable unit, affordable, empty own slot. Affordability
-  is judged against `hand_budget_before` — the pool as the PICK began, never the mana
-  left (else any spend excuses the withholding). **The waiver**: a choice that spends
-  mana is never charged — the target is idleness, not the preference between two paid
-  plays; the greedy loop re-asks after each action, so the body still goes down.
-  `_idle_hand_changes_a_decision` is the anti-decoration pin (it also mutes
-  `king_safety`: a fielded body is king cover).
 
-**Quirks** (opt-in; stock carries only the first): **DamageOutput** (0.1) — aggression as
-expression, `attack × strikes × delivery` (persistence + first-strike insurance +
-tap cap) over the cohort's best; ratified: "if 1 damage is my maximum, then having 1 mana
-IS maximizing damage". Plus the **PARKED trio** — DeathRisk, ExpectedHarm, BoardValue —
-out of the stock character whole, for any personality that wants the old readings back.
+**Quirks** (opt-in; stock carries the first): **DamageOutput** (0.1) — aggression as
+expression over the cohort's best; ratified: "if 1 damage is my maximum, then having 1
+mana IS maximizing damage". **BoardValue** — compliant but superseded by TotalValue.
+
+**PARKED — 0..1 contract offenders** (user ruling 2026-07-31): **ProtectionExposure**,
+**IdleHand**, **DeathRisk**, **ExpectedHarm**. Unseated for everyone pending inspection;
+measures, classes and the survival-weight merge (`merged_survival_weights`) stay whole
+and pinned. Consequences accepted: quiet-board placement POSITION falls to the tie-break
+(under any real threat formation pays through the valuation), and anti-withholding rides
+the mana invariant alone. When one is unparked (re-expressed on 0..1), bring back an
+anti-decoration A/B with it (see `_idle_hand_changes_a_decision`).
 
 ## Supporting rules
 
@@ -162,8 +175,10 @@ quirk is not constructed at all (identical arithmetic to weight 0, honest criter
 dumps). The consts in `board_scoring.gd` are DEFAULTS a personality inherits; survival
 weights are part of the personality, with the encounter's table layering on top. No
 personality = the old engine exactly (pinned, including the absent-vs-empty `quirks`
-distinction). Shipped starters (`aggressive`, `defensive`, `board_oriented`) are
-directions, not balance.
+distinction). Under the decision table, authored weights live on [0,1] (over-range
+clamps — old-paradigm personalities keep working, at the ceiling) and a JUDGE ignores
+its authored weight entirely. Shipped starters (`aggressive`, `defensive`,
+`board_oriented`) are directions, not balance.
 
 ## Open
 
@@ -173,9 +188,14 @@ directions, not balance.
   linear in mana. A proper fix needs lookahead or a per-mana notion of value — a design
   decision, not a tune.
 - The player-facing no-op targeting rule (above).
-- **Nothing is playtested.** Every weight and rate is provisional until the user
-  playtests; the suite pins them, but that is self-consistency, not validation. Never
-  cite the suite as evidence a weight is right.
+- **Re-expressing the parked offenders on 0..1** (protection, idle_hand, death_risk,
+  harm) — each is a design question ("what is this, as a conviction?"), not a rescale;
+  none is scheduled, and idle_hand may never return (the mana invariant carries fielding).
+- **The Tool UI does not yet render judge/parked seats specially** — the catalog flags
+  them (`judge` / `parked`) and the hints say what they mean, but sliders still show.
+- **Nothing is playtested.** Every weight, rate and the judge's scoring rule are
+  provisional until the user playtests; the suite pins them, but that is
+  self-consistency, not validation. Never cite the suite as evidence a value is right.
 
 ## Standing cautions
 
