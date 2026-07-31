@@ -59,6 +59,22 @@ var mana_spent_step: int = 0
 # waste if a better line existed). Stamped by the engine onto every candidate of a pick.
 var mana_capacity_before: int = 0
 
+# ── The valuation pass's stamp (BoardScoring.run_valuation, user-designed 2026-07-30) ──
+# The signed total worth of the battlefield (own units positive, player units negative)
+# and whether the pass has run on THIS state. DERIVED data, deliberately NOT carried by
+# copy() or the capture seams (unlike the engine-stamped mana story above): a copy exists
+# to be mutated, so a carried stamp would be a stale lie — every mutation path hands the
+# scorer an unvalued state and the pass re-runs. Per-unit results live on UnitState
+# (raw_value / persistence / value), same rule.
+var value_total: float = 0.0
+var valued: bool = false
+# WHO priced it — the personality the pass ran with (null = the global config). The stamp
+# is only canon for the scorer whose pricer produced it: the same state read by a scorer
+# with a DIFFERENT price list must be re-valued, or one fight's prices leak into another's
+# reading (caught live: a probe compared a state priced without a per-fight unit bonus
+# against candidates priced with it, and the baseline read six points poor).
+var valued_by: EnemyPersonality = null
+
 # Units that DIED during this simulation (the apply seam records them off the swept grid).
 # They exist because a board is not a complete account of what a candidate did: every
 # negative criterion sums over living units, so a unit that simply vanished would take its
@@ -97,6 +113,14 @@ class UnitState:
 	# stat side already folds into the captured stats at read time).
 	var triggered_effects: int = 0
 	var live_effects: int = 0
+	# The valuation pass's per-unit stamp (BoardScoring.run_valuation): what the unit IS
+	# (raw_value, current health irrelevant), how likely it survives the turn
+	# (persistence, 0..1), and the canon worth every value eval reads (value = raw ×
+	# persistence-dialed discount). Derived — meaningful only on a state whose `valued`
+	# flag is set; deliberately not copied (see BoardState.value_total).
+	var raw_value: float = 0.0
+	var persistence: float = 1.0
+	var value: float = 0.0
 
 	static func from_instance(inst: CardInstance) -> UnitState:
 		var u := UnitState.new()
@@ -205,6 +229,10 @@ func copy() -> BoardState:
 	# A fresh list of the same corpses: nothing ever mutates a dead unit, so the entries
 	# are shared while the LIST stays per-copy (appending to one never reaches another).
 	s.graveyard = graveyard.duplicate()
+	# value_total / valued are DELIBERATELY not carried (nor UnitState's value stamp): a
+	# copy exists to be mutated, and the valuation pass re-runs on unvalued states. This
+	# is the one exception to the "every stamped field goes in three places" rule —
+	# because it is derived, not engine-stamped.
 	return s
 
 

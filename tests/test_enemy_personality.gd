@@ -51,16 +51,22 @@ func _personality(d: Dictionary) -> EnemyPersonality:
 	return EnemyPersonality.from_dict(d)
 
 
-# The whole safety property in one test: the no-personality scorer is the const-defined one.
+# The whole safety property in one test: the no-personality scorer is the const-defined
+# stock character — every core trait plus the stock quirks, and NONE of the parked trio
+# (death risk / harm / board value are opt-in quirks since the valuation system,
+# 2026-07-30; a null personality must not resurrect them).
 func _stock_is_the_old_engine() -> void:
 	var built := _built(null)
-	var want := EnemyPersonality.stock_weights()
+	var want: Array = EnemyPersonality.core_ids() + EnemyPersonality.stock_quirks().keys()
 	check_eq(built.size(), want.size(),
-			"with no personality the scorer runs every criterion — core traits and the stock quirk")
+			"with no personality the scorer runs every core trait and the stock quirk")
+	var defaults := EnemyPersonality.stock_weights()
 	for id: String in want:
 		check(built.has(id), "criterion '%s' is in the stock scorer" % id)
-		check(absf(float(built.get(id, -1.0)) - float(want[id])) < 0.00001,
-				"…at its code-default weight (%s = %.3f)" % [id, float(want[id])])
+		check(absf(float(built.get(id, -1.0)) - float(defaults[id])) < 0.00001,
+				"…at its code-default weight (%s = %.3f)" % [id, float(defaults[id])])
+	for parked: String in ["death_risk", "harm", "board_value"]:
+		check(not built.has(parked), "parked criterion '%s' stays out of the stock scorer" % parked)
 
 
 # An encounter naming a personality that no longer exists must still fight.
@@ -106,14 +112,17 @@ func _quirks_are_opt_in() -> void:
 
 # Two layers of survival weights, and which one wins. The personality states the character's
 # standing protect ordering; the encounter's own table is the per-fight amendment on top.
+# Read through DeathRisk, which the coward opts back in as a quirk — this doubles as the pin
+# that a PARKED criterion is still whole for any personality that wants it.
 func _survival_weights_layer_encounter_over_personality() -> void:
-	var p := _personality({"id": "coward", "survival_weights": {"captain": 2.5, "fodder": 0.4}})
+	var p := _personality({"id": "coward", "survival_weights": {"captain": 2.5, "fodder": 0.4},
+			"quirks": {"death_risk": 1.0}})
 	var scoring := BoardScoring.stock({"captain": 1.0}, p)
 	var risk: BoardScoring.DeathRisk = null
 	for c: BoardScoring.Criterion in scoring.criteria:
 		if c is BoardScoring.DeathRisk:
 			risk = c
-	check(risk != null, "the death-risk criterion is built")
+	check(risk != null, "the parked death-risk criterion is built when a quirk asks for it")
 	check_eq(float(risk.survival_weights.get("captain", -1.0)), 1.0,
 			"the ENCOUNTER's survival weight overrides the personality's for the same key")
 	check_eq(float(risk.survival_weights.get("fodder", -1.0)), 0.4,
@@ -139,10 +148,12 @@ func _absent_quirks_key_inherits_stock() -> void:
 # hand — a fearful character and a greedy one must not agree.
 func _personality_changes_a_decision() -> void:
 	var state := _staged_state()
+	# The fearful character opts the parked death-risk quirk back in at full voice; the
+	# greedy one runs the stock core and shouts about the idle hand instead.
 	var fearful := BoardScoring.stock({}, _personality({"id": "fearful",
-			"traits": {"death_risk": 3.0, "idle_hand": 0.1}, "quirks": {}}))
+			"traits": {"idle_hand": 0.1}, "quirks": {"death_risk": 3.0}}))
 	var greedy := BoardScoring.stock({}, _personality({"id": "greedy",
-			"traits": {"death_risk": 0.1, "idle_hand": 3.0}, "quirks": {}}))
+			"traits": {"idle_hand": 3.0}, "quirks": {}}))
 	var fear_score := fearful.score(state)
 	var greed_score := greedy.score(state)
 	check(absf(fear_score - greed_score) > 0.5,

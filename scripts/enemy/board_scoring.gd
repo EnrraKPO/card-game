@@ -5,30 +5,45 @@ extends RefCounted
 # priorities are ways of scoring a board). Static POSITION measurement only — no combat
 # resolution, no concrete "X will attack Y" projection (17a/17b).
 #
-# The criteria, softly combined (weight × urgency — the deliverable-2 model):
-#   1. DEATH RISK (dominant): Σ survival_weight × P(death) — a dying low-value unit
-#      outweighs marginal protection of a comfortable high-value one.
-#   2. EXPECTED HARM (half): Σ survival_weight × harm — being worn down matters even when
-#      the unit survives; only damage past the shield counts, proportional to max health.
-#   3. BARE EXPOSURE (small): the deliverable-1 criterion, kept as the quiet entry so
+# THE VALUATION SYSTEM (user-designed 2026-07-30, REPLACING the death-risk/harm/board-value
+# trio in the stock character — those three are PARKED as opt-in quirks, mechanism intact):
+# before ANY value-related eval runs, a whole valuation pass prices every unit on BOTH sides
+# (run_valuation). Per unit, two stages:
+#   · RAW VALUE — what the unit IS: total stats (attack × strikes, MAX health, shield,
+#     speed), role tag, abilities, effects, plus arbitrary per-card enhancers. Current
+#     health plays NO part here — a wounded queen is worth the same raw as a fresh one.
+#   · PERSISTENCE — how likely it is to still be there after the turn: current health +
+#     shield against its expected incoming share (1 − urgency, the existing measurement).
+#     Discounts the raw value through ONE tunable dial (persistence_weight, 0..1):
+#     value = raw × lerp(1, persistence, dial). At 0 fragility is ignored; at 1 a doomed
+#     unit is worth nearly nothing.
+# The pass stamps unit.value and state.value_total (own side positive, player side
+# NEGATIVE) and is CANON: any eval that needs to know what something is worth reads the
+# stamped values, never its own arithmetic.
+#
+# The stock criteria, softly combined:
+#   1. TOTAL VALUE (dominant): the stamped value_total, min-max normalized over the pick's
+#      cohort (worst 0, best 1). One number for fielding, buffing, healing, hurting the
+#      player, and self-preservation — "my unit is about to die" is my own value dropping,
+#      "I hurt their unit" is their negative contribution shrinking.
+#   2. BARE EXPOSURE (small): the deliverable-1 criterion, kept as the quiet entry so
 #      formation-building never dies even when the threat measurements go silent.
-#   4. BOARD VALUE (small): the net worth of the battlefield — every unit priced by its
-#      stats + abilities + effects (BoardValueConfig exchange rates), own side positive,
-#      player side negative; min-max normalized within the pick (worst 0, best 1).
-#      REPLACED BoardPresence (user call 2026-07-29): same fielding-pole job, real
-#      currency instead of mana cost — and it prices hurting the player too.
-#   5. DAMAGE OUTPUT (small, positive): aggression as expression — the first BEHAVIOR
+#   3. DAMAGE OUTPUT (small, positive): aggression as expression — the first BEHAVIOR
 #      criterion (EVAL_CRITERIA_BRIEF.md): cohort-relative, scored through score_pick.
-#   6. MANA OPTIMIZATION (loud): use your mana — spending counts, waste doesn't. THE
+#   4. MANA OPTIMIZATION (loud): use your mana — spending counts, waste doesn't. THE
 #      fielding pressure (user-designed 2026-07-29): withholding playable units is
 #      leaving spendable mana unspent.
-#   7. READINESS (moderate): the OTHER resource a play spends — a tap. Keeps "don't tap"
-#      a live option against 6's pressure to spend mana on abilities.
-#   8. IDLE HAND (harsh): a choice that spends NO mana while the CPU is holding a unit it
+#   5. READINESS (moderate): the OTHER resource a play spends — a tap. Keeps "don't tap"
+#      a live option against 4's pressure to spend mana on abilities.
+#   6. IDLE HAND (harsh): a choice that spends NO mana while the CPU is holding a unit it
 #      could field is charged the full weight per withheld body. The blunt instrument (user
 #      mandate 2026-07-30) — a direct reading of the withheld cards themselves, not an
 #      inference from the mana pool. Spending mana waives it: the target is idleness, not
 #      the choice between two paid plays.
+# PARKED (opt-in quirks, never in the stock scorer): DEATH RISK, EXPECTED HARM, BOARD
+# VALUE — superseded by the valuation system but kept whole; a personality that lists one
+# as a quirk still gets it (reversing a design decision changes the POLICY, never deletes
+# the MECHANISM).
 # Threat includes the player's OPEN MANA at 1:1 (MANA_THREAT_RATE), so risk and harm are
 # live from turn one — unspent mana is damage the player can still convert.
 #
@@ -41,6 +56,10 @@ extends RefCounted
 # The criteria this scorer runs. Total score is the weighted sum; HIGHER IS BETTER (a "goal
 # alignment" value). New criteria are entries here — nothing outside this list changes.
 var criteria: Array = []
+
+# The fight's personality as the valuation pass's price list (see run_valuation). Set by
+# stock(); null = the global config alone (hand-built scorers in tests).
+var pricer: EnemyPersonality = null
 
 # ⚠ EVERY *_CRITERION_WEIGHT CONSTANT BELOW IS NOW A DEFAULT, NOT THE VALUE IN USE. A fight
 # is scored through an EnemyPersonality (an authored character in data/enemy_personalities.
@@ -86,6 +105,9 @@ const STOCK_SURVIVAL_WEIGHTS := {
 # formation instinct alive on quiet boards, not to compete with actual mortal danger.
 const EXPOSURE_CRITERION_WEIGHT := 0.15
 
+# PARKED 2026-07-30: harm (like death risk, whose reference weight 1.0 lives in
+# EnemyPersonality.stock_weights) is out of the stock character, superseded by the
+# valuation system. The const stays as the opt-in quirk's default.
 # How loud expected HARM is next to death risk (user-mandated 2026-07-29): a unit being
 # worn down matters even when it will not die — the king dropping 15→6 is an important
 # reading, weighted by the same survival table (the king's 15→6 outranks the tank's 15→6).
@@ -100,6 +122,19 @@ const HARM_CRITERION_WEIGHT := 0.5
 # incoming() measurement. The rate is the initial guess; tune here.
 const MANA_THREAT_RATE := 1.0
 
+# How loud TOTAL VALUE is — the valuation system's one criterion (user-designed
+# 2026-07-30), and the new reference scale every other weight is read against (the job
+# death risk's 1.0 held before the parking). Min-max normalized over the pick's cohort, so
+# its FULL swing is its weight: the best-valued option earns exactly this much over the
+# worst. Dominant on purpose — the valuation pass already folds every concern the parked
+# trio priced separately (a dying unit is a value drop, a hurt player unit is a value
+# gain), so this dial is "how much the character cares about the state of the world",
+# which is most of what a character is. PROVISIONAL like every constant here.
+const TOTAL_VALUE_CRITERION_WEIGHT := 1.0
+
+# PARKED 2026-07-30 (like HARM_CRITERION_WEIGHT above): board value is superseded by the
+# valuation system's TotalValue and out of the stock character — this const is the default
+# a personality gets when it opts the quirk back in. Reasoning below kept for that case.
 # How loud board value is next to death risk — THE arbitration dial between growing the
 # battlefield (fielding, buffing, hurting the player) and preserving what stands. It
 # inherits BoardPresence's old job of paying for placements under the must-improve rule
@@ -201,6 +236,7 @@ static func stock(weight_overrides: Dictionary = {}, personality: EnemyPersonali
 	for key: String in weight_overrides:
 		weights[key] = float(weight_overrides[key])
 	var s := BoardScoring.new()
+	s.pricer = who
 	for entry: Dictionary in EnemyPersonality.TRAITS:
 		var trait_id := String(entry["id"])
 		if not bool(entry["core"]) and not who.has_quirk(trait_id):
@@ -217,6 +253,7 @@ static func stock(weight_overrides: Dictionary = {}, personality: EnemyPersonali
 # criterion is a case here plus an entry in EnemyPersonality.TRAITS.
 static func _criterion_for(trait_id: String, weights: Dictionary, who: EnemyPersonality) -> Criterion:
 	match trait_id:
+		"total_value":   return TotalValue.new(who)
 		"death_risk":    return DeathRisk.new(weights)
 		"harm":          return ExpectedHarm.new(weights)
 		"protection":    return ProtectionExposure.new(weights)
@@ -233,10 +270,21 @@ static func _criterion_for(trait_id: String, weights: Dictionary, who: EnemyPers
 # expression is relative to a pick's alternatives, which a lone state does not have — a
 # decision's cohort goes through score_pick instead.
 func score(state: BoardState) -> float:
+	_value(state)
 	var total := 0.0
 	for c: Criterion in criteria:
 		total += c.weight * c.score(state)
 	return total
+
+
+# THE VALUATION PASS RUNS BEFORE THE EVALS (user spec 2026-07-30): every state entering
+# the scorer gets its units priced first, so every criterion reads the same canon values.
+# Idempotent per state — a state carried between picks keeps its stamp (nothing mutates a
+# scored state), and every mutation path produces a fresh unvalued state (BoardState.copy /
+# CandidateApply build them valued = false).
+func _value(state: BoardState) -> void:
+	if not state.valued or state.valued_by != pricer:
+		BoardScoring.run_valuation(state, pricer)
 
 
 # The behavior-criteria contract (EVAL_CRITERIA_BRIEF.md taxonomy): scores a whole pick's
@@ -248,7 +296,8 @@ func score(state: BoardState) -> float:
 # same currency. Returns one total per entry, same order.
 func score_pick(states: Array) -> Array:
 	var totals: Array = []
-	for _s in states:
+	for s: BoardState in states:
+		_value(s)   # the whole pass per option, before any eval runs — see _value
 		totals.append(0.0)
 	for c: Criterion in criteria:
 		var b := c as Behavior
@@ -388,16 +437,37 @@ class BoardValue:
 	# whole cohort can sit below zero (a rich player board). A flat cohort maps to
 	# all-zero — nothing to prefer, the criterion goes silent.
 	func normalized(raws: Array) -> Array:
-		var lo := INF
-		var hi := -INF
-		for r in raws:
-			lo = minf(lo, float(r))
-			hi = maxf(hi, float(r))
-		var span := hi - lo
-		var out: Array = []
-		for r in raws:
-			out.append(0.0 if span <= 0.0 else (float(r) - lo) / span)
-		return out
+		return Behavior.minmax(raws)
+
+
+# THE VALUATION SYSTEM'S ONE CRITERION (user-designed 2026-07-30): the stamped
+# value_total — every unit on both sides priced by the valuation pass (raw worth ×
+# persistence discount, see run_valuation), own side positive, player side negative.
+# Min-max normalized over the pick's cohort: the best possible total value this pick
+# offers scores 1, the worst 0. This one number carries what the parked trio priced
+# separately: a dying own unit is my own total dropping, damage to the player is their
+# negative contribution shrinking, a kill is it vanishing, fielding is growth.
+class TotalValue:
+	extends Behavior
+
+	# The fight's personality — the valuation pass's price list (raw rates, enhancers,
+	# and the persistence dial). Null = the global config alone.
+	var pricer: EnemyPersonality = null
+
+	func _init(p_pricer: EnemyPersonality = null) -> void:
+		id = "total_value"
+		pricer = p_pricer
+
+	func measure(state: BoardState) -> float:
+		# The pass normally ran before any eval (BoardScoring._value); this lazy fallback
+		# covers a criterion constructed alone in a hand-built scorer.
+		if not state.valued or state.valued_by != pricer:
+			BoardScoring.run_valuation(state, pricer)
+		return state.value_total
+
+	# Signed measure — same min-max anchoring as BoardValue, same reasoning.
+	func normalized(raws: Array) -> Array:
+		return Behavior.minmax(raws)
 
 
 # Use your mana (user-designed 2026-07-29, refined 2026-07-30; absorbs the brief's "spend
@@ -475,7 +545,7 @@ class Behavior:
 
 	# Maps the cohort's raw measures onto 0..1. Default: ratio-to-max — each option as a
 	# fraction of the pick's fullest expression (assumes non-negative measures). Override
-	# for other anchorings (BoardValue's signed min-max). A cohort with no expression
+	# for other anchorings (the signed min-max below). A cohort with no expression
 	# anywhere maps to all-zero: the criterion goes silent instead of dividing by zero.
 	func normalized(raws: Array) -> Array:
 		var peak := 0.0
@@ -484,6 +554,20 @@ class Behavior:
 		var out: Array = []
 		for r in raws:
 			out.append(0.0 if peak <= 0.0 else float(r) / peak)
+		return out
+
+	# The signed anchoring (TotalValue, BoardValue): worst option 0, best 1, the rest
+	# their fraction of the span. A flat cohort goes silent — nothing to prefer.
+	static func minmax(raws: Array) -> Array:
+		var lo := INF
+		var hi := -INF
+		for r in raws:
+			lo = minf(lo, float(r))
+			hi = maxf(hi, float(r))
+		var span := hi - lo
+		var out: Array = []
+		for r in raws:
+			out.append(0.0 if span <= 0.0 else (float(r) - lo) / span)
 		return out
 
 
@@ -532,9 +616,16 @@ const COVER_COLUMN_MATE := 0.25  # company in the same column
 
 
 static func exposure(state: BoardState, r: int, c: int) -> float:
+	return exposure_of(state, 1, r, c)
+
+
+# The same geometry for EITHER side (each grid's col 0 is its own front line, mirrored):
+# cover comes from the side's OWN units only, exactly as the enemy-side original did. The
+# valuation pass needs it because persistence is measured for player units too.
+static func exposure_of(state: BoardState, side: int, r: int, c: int) -> float:
 	var base := float(BoardData.COLS - c) / float(BoardData.COLS)
 	var cover := 0.0
-	for u: BoardState.UnitState in state.units(1):
+	for u: BoardState.UnitState in state.units(side):
 		if u.row == r and u.col == c:
 			continue   # the occupant itself is not its own cover
 		if u.col < c:
@@ -551,23 +642,35 @@ static func exposure(state: BoardState, r: int, c: int) -> float:
 # an empty player board, so death risk and harm speak from turn one instead of leaving
 # formation entirely to the exposure criterion.
 static func threat_mass(state: BoardState) -> float:
-	var total := float(state.player_mana) * MANA_THREAT_RATE
-	for u: BoardState.UnitState in state.units(0):
+	return threat_against(state, 1)
+
+
+# The damage bearing down on `side` per round — the other side's fielded attack mass, plus
+# open mana ONLY when the player is the aggressor. The asymmetry is deliberate: the CPU's
+# own unspent mana must not read as threat against player units during planning, or every
+# candidate that SPENDS mana would raise the player's persistence (their worth rebounds)
+# and the scorer would learn to hoard — the exact perversity the mana criterion fights.
+static func threat_against(state: BoardState, side: int) -> float:
+	var total := float(state.player_mana) * MANA_THREAT_RATE if side == 1 else 0.0
+	for u: BoardState.UnitState in state.units(1 - side):
 		total += float(u.attack * u.strikes)
 	return total
 
 
-# Expected damage aimed at this enemy unit per round: the player's threat mass, apportioned
-# by the unit's share of its side's total exposure. Never "X will attack Y" (17b forbids it,
-# and the player can reshuffle at will) — a position measurement: "this much damage exists,
-# and this unit stands in the spot that geometrically absorbs this share of it".
+# Expected damage aimed at this unit per round: the opposing threat mass, apportioned by
+# the unit's share of ITS OWN side's total exposure. Never "X will attack Y" (17b forbids
+# it, and the player can reshuffle at will) — a position measurement: "this much damage
+# exists, and this unit stands in the spot that geometrically absorbs this share of it".
+# Side-aware since the valuation pass (2026-07-30): a player unit's incoming is the CPU's
+# fielded mass, shared by the player's own formation geometry.
 static func incoming(state: BoardState, unit: BoardState.UnitState) -> float:
+	var side := unit.owner
 	var total_exposure := 0.0
-	for u: BoardState.UnitState in state.units(1):
-		total_exposure += exposure(state, u.row, u.col)
+	for u: BoardState.UnitState in state.units(side):
+		total_exposure += exposure_of(state, side, u.row, u.col)
 	if total_exposure <= 0.0:
 		return 0.0
-	return threat_mass(state) * exposure(state, unit.row, unit.col) / total_exposure
+	return threat_against(state, side) * exposure_of(state, side, unit.row, unit.col) / total_exposure
 
 
 # The unit's likelihood of dying where it stands, 0..1: expected incoming damage against
@@ -698,6 +801,80 @@ static func board_value(state: BoardState, pricer: EnemyPersonality = null) -> f
 	for u: BoardState.UnitState in state.units(0):
 		total -= unit_value(u, pricer)
 	return total
+
+
+# ── the valuation pass (user-designed 2026-07-30 — canon for every value eval) ─────────
+#
+# Runs ONCE per state, before any eval (BoardScoring._value): prices every unit on BOTH
+# sides in two stages and stamps the results onto the state. Any eval that needs to know
+# what something is worth reads the stamped values — never its own arithmetic.
+#
+#   1. RAW VALUE — what the unit IS, current health irrelevant: total stats at the
+#      authored exchange rates (attack × strikes; MAX health at the health rate — the
+#      frame, not the damage state; shield; speed), its abilities and effect categories,
+#      its ROLE (role_values — a flat authored bonus per tag), and arbitrary per-card
+#      enhancers (unit_values, keyed by card id). All rates live in BoardValueConfig /
+#      data/board_value.json and a personality may re-price any of them per fight.
+#   2. PERSISTENCE — how likely the unit is to survive the turn: 1 − urgency, i.e.
+#      current health + shield against its expected incoming share. The discount is
+#      dialed by ONE tunable, persistence_weight (0..1):
+#          value = raw × lerp(1, persistence, dial)
+#      0 = fragility is ignored (a dying queen is still a queen); 1 = full discount (a
+#      doomed unit is worth nearly nothing). THE dial for how much low health / expected
+#      damage lowers unit valuation — tool-authorable, per-personality overridable.
+
+# What the unit IS, before asking whether it survives. Deliberately blind to current
+# health — the wound is persistence's business, not worth's.
+static func raw_unit_value(u: BoardState.UnitState, pricer: EnemyPersonality = null) -> float:
+	var v := float(u.attack * u.strikes) * _stat_rate(pricer, "attack")
+	v += float(u.max_health) * _stat_rate(pricer, "health")
+	v += float(u.shield) * _stat_rate(pricer, "shield")
+	v += float(u.speed) * _stat_rate(pricer, "speed")
+	for id: String in u.ability_ids:
+		v += _ability_value(pricer, id)
+	v += float(u.triggered_effects) * (pricer.triggered_value() if pricer != null else BoardValueConfig.triggered_value())
+	v += float(u.live_effects) * (pricer.live_value() if pricer != null else BoardValueConfig.live_value())
+	v += _role_value(pricer, u)
+	v += _unit_bonus(pricer, u.card_id)
+	return v
+
+
+# How likely the unit is to still be standing after the turn, 0..1 — urgency mirrored
+# (current health + shield vs expected incoming), reused verbatim per the design.
+static func persistence(state: BoardState, u: BoardState.UnitState) -> float:
+	return 1.0 - urgency(state, u)
+
+
+# The whole pass: every unit on both sides gets raw → persistence → value, and the state
+# gets the signed total (own side positive, player side negative — a rich player board IS
+# a poor position). Stamps `valued` so the pass runs once per state; every mutation path
+# hands back an unvalued state (BoardState.copy / CandidateApply._capture_back).
+static func run_valuation(state: BoardState, pricer: EnemyPersonality = null) -> void:
+	var dial := _persistence_factor(pricer)
+	var total := 0.0
+	for side in 2:
+		for u: BoardState.UnitState in state.units(side):
+			u.raw_value = raw_unit_value(u, pricer)
+			u.persistence = persistence(state, u)
+			u.value = u.raw_value * lerpf(1.0, u.persistence, dial)
+			total += u.value if side == 1 else -u.value
+	state.value_total = total
+	state.valued = true
+	state.valued_by = pricer
+
+
+# The valuation pass's three price lookups that BoardValueConfig grew for it — same
+# personality-over-global layering as _stat_rate / _ability_value.
+static func _persistence_factor(pricer: EnemyPersonality) -> float:
+	return pricer.persistence_factor() if pricer != null else BoardValueConfig.persistence_weight()
+
+
+static func _role_value(pricer: EnemyPersonality, u: BoardState.UnitState) -> float:
+	return pricer.role_value(u) if pricer != null else BoardValueConfig.role_value(u)
+
+
+static func _unit_bonus(pricer: EnemyPersonality, card_id: String) -> float:
+	return pricer.unit_bonus(card_id) if pricer != null else BoardValueConfig.unit_bonus(card_id)
 
 
 # ── readiness (the tap counterweight, user-designed 2026-07-30) ───────────────────────

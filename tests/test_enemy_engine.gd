@@ -55,8 +55,15 @@ func run() -> void:
 	_idle_hand_shape()
 	_engine_never_withholds_a_playable_unit()
 	_idle_hand_changes_a_decision()
+	_valuation_raw_ignores_the_wound()
+	_valuation_persistence_dial()
+	_valuation_prices_both_sides()
+	_valuation_enhancers_reach_raw()
+	_valuation_cache_is_per_pricer()
+	_total_value_changes_a_decision()
 
 
+# TEMP: dump per-criterion contributions for a pick's cohort. Mirrors score_pick.
 func _enemy(card_id: String, r: int, c: int) -> CardInstance:
 	var inst := unit(card_id)
 	inst.owner = 1
@@ -288,11 +295,18 @@ func _weight_resolution() -> void:
 	check_eq(BoardScoring.weight_for(untagged, weights), 0.1, "no role falls to the default entry")
 	check_eq(BoardScoring.weight_for(untagged, {"pawn": 7.0}), 7.0, "a card-id entry wins over everything")
 	# The per-event override layer: stock() merges encounter entries over the stock table.
+	# Read through ProtectionExposure — the criterion in the stock character that carries
+	# the survival table (DeathRisk is parked; its own copy is pinned in the personality
+	# suite's opt-in test).
 	var overridden := BoardScoring.stock({"fodder": 0.8})
-	var dr: BoardScoring.DeathRisk = overridden.criteria[0]
-	check_eq(BoardScoring.weight_for(fodder, dr.survival_weights), 0.8,
+	var pe: BoardScoring.ProtectionExposure = null
+	for c: BoardScoring.Criterion in overridden.criteria:
+		if c is BoardScoring.ProtectionExposure:
+			pe = c
+	check(pe != null, "the protection criterion is in the stock scorer")
+	check_eq(BoardScoring.weight_for(fodder, pe.survival_weights), 0.8,
 			"an encounter override rewrites one role's worth, stock fills the rest")
-	check_eq(BoardScoring.weight_for(king, dr.survival_weights), 1.75,
+	check_eq(BoardScoring.weight_for(king, pe.survival_weights), 1.75,
 			"…without touching un-overridden entries")
 
 
@@ -466,10 +480,17 @@ func _scoring_triages_dying_unit() -> void:
 func _engine_king_tanks() -> void:
 	var back := BoardData.ROWS - 1
 	var deep := BoardData.COLS - 1
-	# The BOLD-captain event character, pinned via override (captain 1.0 — stock is the
-	# protective 2.5): precious fodders crowd every column except the front, serious threat
-	# bears down, only front-line slots are open, and nobody's 2 HP body soaks damage as
-	# well as the Captain's fat pool. Decision 15 in reverse.
+	# The BOLD-captain event character: precious fodders crowd every column except the
+	# front, serious threat bears down, only front-line slots are open, and nobody's 2 HP
+	# body soaks damage as well as the Captain's fat pool. Decision 15 in reverse.
+	#
+	# SINCE THE VALUATION SYSTEM (2026-07-30) the tanking instinct comes from TOTAL
+	# VALUE — the king in front redistributes incoming onto its fat pool, so the fodders'
+	# persistence (and the board's worth) rises. The event's old "fodders are precious"
+	# statement (survival weight 0.6) is now a PRICE: a per-fight role bonus on the
+	# fodders' raw worth. Unpriced, cheap bodies screen themselves and the king only
+	# follows to mid-column; priced (the sweep flips at +4, pinned at +8), sparing them
+	# is worth the king's own hide and it walks the full way front.
 	var captain := _enemy("captain_dummy", back, deep)
 	var enemies: Array = [captain]
 	for r in BoardData.ROWS:
@@ -482,6 +503,8 @@ func _engine_king_tanks() -> void:
 
 	var engine := _seeded_engine()
 	engine.weight_overrides = {"fodder": 0.6, "captain": 1.0}
+	engine.personality = EnemyPersonality.from_dict({"id": "_bold",
+			"value_rates": {"role_values": {"fodder": 8.0}}})
 	var actions := engine.decide_actions([], grids[0], grids[1], 0)
 
 	var king_moves: Array = actions.filter(func(a: Dictionary) -> bool:
@@ -780,13 +803,15 @@ func _board_value_measurement() -> void:
 func _engine_heals_wounded_ally() -> void:
 	var back := BoardData.ROWS - 1
 	var deep := BoardData.COLS - 1
-	# A precious wounded dps under real threat and one mana; the support holds heal AND
-	# fire_bless. The original user-approved character, restored by the mana criterion:
-	# paid plays outrank free moves within a pick (spending scores, repositioning
-	# doesn't), so the heal reclaims the tap and lands on the dying unit. (Between board
-	# value and mana optimization this board briefly planned retreat-then-bless — the
-	# free move answered the danger and the tap turned aggressive. Margins here are
-	# knife-edge; if this pin breaks again, look at the mana/value weights first.)
+	# ⚠ CHARACTER SHIFT UNDER THE VALUATION SYSTEM (2026-07-30, NOT yet user-reviewed —
+	# this board's pin has flipped before and the flip must be surfaced): the wounded dps
+	# here has a 2-point pool, so a heal recovers at most one point of persistence-worth,
+	# while fire_bless adds two full points of attack AND (both sides being valued) makes
+	# every player unit a little less likely to survive. The valuation therefore spends
+	# the tap on the BLESS — under the old death-risk scorer this same board healed. The
+	# preservation instinct is not gone: it now scales with the unit's RAW worth (see the
+	# place-vs-heal arbitration, where a priced-up tower still pulls the heal). What
+	# changed is that a cheap, small-pool body no longer commands a rescue.
 	var support := _enemy("support_dummy", back, 1)
 	var wounded := _enemy("dps_dummy", 0, 2)
 	wounded.current_health = 1
@@ -803,9 +828,12 @@ func _engine_heals_wounded_ally() -> void:
 		return int(a["type"]) == EnemyEngine.Action.GENERATE)
 	check_eq(gens.size(), 1, "the tap is spent exactly once")
 	if not gens.is_empty():
-		check_eq((gens[0]["ability"] as AbilityData).id, "heal", "…casting heal")
+		check_eq((gens[0]["ability"] as AbilityData).id, "fire_bless",
+				"…on the bless — a 2-pool heal recovers less worth than +2 attack adds")
 		check(gens[0]["unit"] == support, "…from the support")
-		check(gens[0]["target"] == wounded, "…at the dying dps, not anyone comfortable")
+		var target: CardInstance = gens[0]["target"]
+		check(target != null and target.owner == 1, "…aimed at an own unit")
+		check(target != support, "…never at the caster's own spent body")
 
 	# The futility gate: a fully healthy board offers the same legal heal, but no target
 	# improves anything — the engine declines rather than waste the play. (The support's
@@ -884,7 +912,13 @@ func _engine_place_vs_heal_arbitration() -> void:
 	var enemies: Array = [_enemy("captain_dummy", back, deep), support, dying_tower]
 	var grids := _grids(enemies, players)
 	var engine := _seeded_engine()
-	engine.weight_overrides = {"rook": 1.2}
+	# "In THIS fight the tower is precious" — since the valuation system that statement is
+	# a PRICE, not a survival weight: the fight's personality adds a per-card enhancer, so
+	# the tower's raw worth (and therefore what a heal's persistence recovery is worth)
+	# outbids fielding a fresh fodder. The old {"rook": 1.2} survival override now only
+	# feeds the protection criterion, which cannot argue for a heal.
+	engine.personality = EnemyPersonality.from_dict({"id": "_tower_fight",
+			"value_rates": {"unit_values": {"rook": 10.0}}})
 	var actions := engine.decide_actions([unit("fodder_dummy")], grids[0], grids[1], 1)
 	var heals: Array = actions.filter(func(a: Dictionary) -> bool:
 		return int(a["type"]) == EnemyEngine.Action.GENERATE)
@@ -903,7 +937,8 @@ func _engine_place_vs_heal_arbitration() -> void:
 			_enemy("support_dummy", back, 1), whole_tower]
 	var grids2 := _grids(enemies2, players)
 	var engine2 := _seeded_engine()
-	engine2.weight_overrides = {"rook": 1.2}
+	engine2.personality = EnemyPersonality.from_dict({"id": "_tower_fight",
+			"value_rates": {"unit_values": {"rook": 10.0}}})
 	var actions2 := engine2.decide_actions([unit("fodder_dummy")], grids2[0], grids2[1], 1)
 	var heals2: Array = actions2.filter(func(a: Dictionary) -> bool:
 		return int(a["type"]) == EnemyEngine.Action.GENERATE)
@@ -944,9 +979,13 @@ func _death_of_own_unit_scores_worse() -> void:
 
 	check(killed.find(doomed) == null, "the bolt did kill the dps (fixture sanity)")
 	check_eq(killed.graveyard.size(), 1, "…and the corpse is recorded")
-	check(scoring.score(killed) < scoring.score(never_there),
+	# Since the valuation system, the loss speaks through TOTAL VALUE — a behavior, so the
+	# three states are compared as one cohort (which is exactly how the engine sees every
+	# pick): the killed unit's worth simply leaves the sum.
+	var totals := scoring.score_pick([before, killed, never_there])
+	check(float(totals[1]) < float(totals[2]),
 			"reaching a board by KILLING an own unit scores worse than the same board without it")
-	check(scoring.score(killed) < scoring.score(before),
+	check(float(totals[1]) < float(totals[0]),
 			"…and worse than leaving the dying unit alive")
 	check_eq(BoardState.capture(_grids([])[0], _grids([])[1]).graveyard.size(), 0,
 			"a freshly captured board starts with an empty graveyard")
@@ -962,8 +1001,9 @@ func _death_of_own_unit_scores_worse() -> void:
 			{"kind": "ability", "inst": burst2,
 			 "ability": AbilityData.get_ability("magic_missile"), "target": victim, "cost": 3},
 			_sim_for(foe_roster, [victim]))
-	check(scoring.score(foe_killed) > scoring.score(with_foe),
-			"killing a PLAYER unit is still an improvement — the graveyard is own-side only")
+	var foe_totals := scoring.score_pick([with_foe, foe_killed])
+	check(float(foe_totals[1]) > float(foe_totals[0]),
+			"killing a PLAYER unit is still an improvement — their negative worth leaves the total")
 
 
 func _engine_never_kills_its_own_captain() -> void:
@@ -996,7 +1036,8 @@ func _engine_never_kills_its_own_captain() -> void:
 	var suicide := CandidateApply.apply(state, {"kind": "ability", "inst": burst,
 			"ability": AbilityData.get_ability("magic_missile"), "target": captain, "cost": 3},
 			_sim_for(enemies, players))
-	check(scoring.score(suicide) < scoring.score(state),
+	var pair := scoring.score_pick([state, suicide])
+	check(float(pair[1]) < float(pair[0]),
 			"killing its own Captain scores worse than doing nothing at all")
 
 
@@ -1593,14 +1634,18 @@ func _engine_never_withholds_a_playable_unit() -> void:
 func _idle_hand_changes_a_decision() -> void:
 	var back := BoardData.ROWS - 1
 	var deep := BoardData.COLS - 1
-	# Two knife-edge boards, chosen by sweeping the held body's survival weight: at 2.0 the
-	# criterion is exactly what tips a reluctant placement into happening; at 4.0 the body
-	# is such a pure loss that even the full charge cannot buy it, which is the restraint
-	# the must-improve rule is supposed to keep. Heavy threat (two queens + 5 open mana)
-	# is what makes fielding hurt at all.
+	# SINCE THE VALUATION SYSTEM a placement always ADDS total value (a fielded body is
+	# worth ≥ 0 however doomed), and the mana criterion argues for any spend — so on a
+	# stock scorer there is no board where the placement declines and the A/B would prove
+	# nothing. The two loud advocates are muted through a personality (their weights are
+	# dials, that is what dials are for), leaving the placement argued AGAINST by the
+	# protection charge on the fielded body and FOR by nothing but the idle-hand charge:
+	#   · body at protection weight 2 — the charge is exactly what tips the placement;
+	#   · at 60, standing there is so exposed that even the full charge cannot buy it,
+	#     which is the must-improve restraint still working.
 	var expected: Array = [
 		{"weight": 2.0, "with": "place", "without": "decline"},
-		{"weight": 4.0, "with": "decline", "without": "decline"},
+		{"weight": 60.0, "with": "decline", "without": "decline"},
 	]
 	for case: Dictionary in expected:
 		var w := float(case["weight"])
@@ -1635,8 +1680,10 @@ func _idle_hand_changes_a_decision() -> void:
 			s.mana_capacity_before = capacity
 			s.hand_budget_before = 1
 		var overrides := {"fodder": w}
-		var with_it := BoardScoring.stock(overrides)
-		var without := BoardScoring.stock(overrides)
+		var muted := {"id": "_mute", "traits": {"total_value": 0.0, "mana": 0.0},
+				"quirks": {}}
+		var with_it := BoardScoring.stock(overrides, EnemyPersonality.from_dict(muted))
+		var without := BoardScoring.stock(overrides, EnemyPersonality.from_dict(muted))
 		for c: BoardScoring.Criterion in without.criteria:
 			if c.id == "idle_hand":
 				c.weight = 0.0
@@ -1699,3 +1746,185 @@ func _planning_leaves_the_world_untouched() -> void:
 	check_eq(w.enemy_side.hand.size(), 1, "the live hand kept its spell")
 	var live_row: Array = w.enemy_grid[0]
 	check(live_row[2] == wounded, "the live grid never moved")
+
+
+# ── The valuation pass (user-designed 2026-07-30) ────────────────────────────────────
+#
+# Before ANY eval runs, every unit on BOTH sides is priced: RAW worth (what it IS —
+# stats, kit, role, enhancers; current health irrelevant) discounted by PERSISTENCE
+# (how likely it survives the turn) through the ONE dial, persistence_weight. The stamp
+# is canon — the TotalValue criterion reads it, and so must any future value eval.
+
+func _valuation_raw_ignores_the_wound() -> void:
+	var fresh := BoardState.UnitState.from_instance(_enemy("dps_dummy", 0, 0))
+	var hurt_inst := _enemy("dps_dummy", 0, 1)
+	hurt_inst.current_health = 1
+	var hurt := BoardState.UnitState.from_instance(hurt_inst)
+	check_eq(BoardScoring.raw_unit_value(fresh), BoardScoring.raw_unit_value(hurt),
+			"a wounded unit is worth the same RAW as a fresh one — the wound is persistence's business")
+	# …and raw prices the frame: a bigger max pool is worth more, wound or no wound.
+	var big := fresh.copy()
+	big.max_health += 2
+	check(BoardScoring.raw_unit_value(big) > BoardScoring.raw_unit_value(fresh),
+			"max health is part of what the unit IS")
+
+
+func _valuation_persistence_dial() -> void:
+	var back := BoardData.ROWS - 1
+	var deep := BoardData.COLS - 1
+	# A doomed fodder under two queens: urgency clamps to certain death, persistence 0.
+	var players: Array = [_player("queen", 0, deep), _player("queen", 1, deep)]
+	var state := _state_with([_enemy("fodder_dummy", 0, 0)], players)
+	var fodder: BoardState.UnitState = state.units(1)[0]
+
+	BoardValueConfig.set_config({"persistence_weight": 0.0})
+	BoardScoring.run_valuation(state)
+	check_eq(fodder.persistence, 0.0, "the fodder is certainly dead (fixture sanity)")
+	check_eq(fodder.value, fodder.raw_value,
+			"dial at 0: fragility is ignored — a dying unit is still its whole raw worth")
+
+	BoardValueConfig.set_config({"persistence_weight": 1.0})
+	state.valued = false
+	BoardScoring.run_valuation(state)
+	check_eq(fodder.value, 0.0,
+			"dial at 1: a certainly-dead unit is worth nothing at all")
+
+	BoardValueConfig.set_config({"persistence_weight": 0.5})
+	state.valued = false
+	BoardScoring.run_valuation(state)
+	check(absf(fodder.value - fodder.raw_value * 0.5) < 0.0001,
+			"between the poles the discount interpolates: value = raw × lerp(1, persistence, dial)")
+
+	# The safe captain keeps ~everything at any dial: persistence ≈ 1 means no discount.
+	var quiet := _state_with([_enemy("captain_dummy", back, deep)])
+	BoardValueConfig.set_config({"persistence_weight": 1.0})
+	BoardScoring.run_valuation(quiet)
+	var cap: BoardState.UnitState = quiet.captain(1)
+	check_eq(cap.persistence, 1.0, "no threat, full persistence")
+	check_eq(cap.value, cap.raw_value, "…and no discount even at full dial")
+	BoardValueConfig.set_config({})
+
+
+func _valuation_prices_both_sides() -> void:
+	var deep := BoardData.COLS - 1
+	# Mirrored boards cancel; a richer player board reads negative — sides oppose.
+	var even := _state_with([_enemy("fodder_dummy", 0, 0)], [_player("fodder_dummy", 0, 0)])
+	BoardScoring.run_valuation(even)
+	check(absf(even.value_total) < 0.0001, "mirrored boards cancel to zero")
+	for side in 2:
+		for u: BoardState.UnitState in even.units(side):
+			check(u.value > 0.0, "every unit on side %d carries a stamped value" % side)
+
+	var behind := _state_with([_enemy("fodder_dummy", 0, 0)],
+			[_player("fodder_dummy", 0, 0), _player("knight", 1, deep)])
+	BoardScoring.run_valuation(behind)
+	check(behind.value_total < 0.0, "a richer player board reads negative")
+
+	# Player persistence is measured against the CPU's fielded mass — hurting their
+	# survivors' odds (or removing them) raises the total, which is the "reduce enemy
+	# value" half of the initiative folded into the same number.
+	var pressed := _state_with(
+			[_enemy("queen", 0, 0), _enemy("queen", 1, 0)], [_player("knight", 0, deep)])
+	BoardScoring.run_valuation(pressed)
+	var foe: BoardState.UnitState = pressed.units(0)[0]
+	check(foe.persistence < 1.0, "a player unit under CPU mass reads endangered")
+
+
+func _valuation_enhancers_reach_raw() -> void:
+	var fodder := BoardState.UnitState.from_instance(_enemy("fodder_dummy", 0, 0))
+	var king := BoardState.UnitState.from_instance(_enemy("king", 0, 1))
+	var dps := BoardState.UnitState.from_instance(_enemy("dps_dummy", 0, 2))
+	var fodder_plain := BoardScoring.raw_unit_value(fodder)
+	var king_plain := BoardScoring.raw_unit_value(king)
+	var dps_plain := BoardScoring.raw_unit_value(dps)
+
+	BoardValueConfig.set_config({"role_values": {"fodder": 3.0, "captain": 5.0},
+			"unit_values": {"dps_dummy": 7.0}})
+	check(absf(BoardScoring.raw_unit_value(fodder) - fodder_plain - 3.0) < 0.0001,
+			"a role bonus adds flat raw worth to every unit wearing the tag")
+	check(absf(BoardScoring.raw_unit_value(king) - king_plain - 5.0) < 0.0001,
+			"a king files under the captain role entry")
+	check(absf(BoardScoring.raw_unit_value(dps) - dps_plain - 7.0) < 0.0001,
+			"a per-card enhancer prices one specific unit")
+
+	# A personality layers its own entries per key over the global table.
+	var p := EnemyPersonality.from_dict({"id": "_pricey",
+			"value_rates": {"role_values": {"fodder": 9.0}, "unit_values": {"dps_dummy": 1.0}}})
+	check(absf(BoardScoring.raw_unit_value(fodder, p) - fodder_plain - 9.0) < 0.0001,
+			"the personality's role bonus wins for the key it states")
+	check(absf(BoardScoring.raw_unit_value(king, p) - king_plain - 5.0) < 0.0001,
+			"…while a key it does not state falls through to the global table")
+	check(absf(BoardScoring.raw_unit_value(dps, p) - dps_plain - 1.0) < 0.0001,
+			"…and its per-card price replaces the global one")
+	BoardValueConfig.set_config({})
+
+
+# THE LANDMINE THIS PINS (caught live during the build): the valuation stamp is cached on
+# the state, but it is only canon for the PRICER that produced it. A state first scored by
+# one fight's scorer and then read by another's — different per-fight price list — must be
+# re-valued, or one fight's prices leak into the other's reading.
+func _valuation_cache_is_per_pricer() -> void:
+	var state := _state_with([_enemy("rook", 1, 0)])
+	var plain := BoardScoring.stock()
+	plain.score(state)
+	var unpriced := state.value_total
+	var priced_scorer := BoardScoring.stock({}, EnemyPersonality.from_dict({"id": "_rich",
+			"value_rates": {"unit_values": {"rook": 10.0}}}))
+	priced_scorer.score(state)
+	check(absf(state.value_total - unpriced - 10.0) < 0.0001,
+			"a scorer with its own price list re-values a state another scorer already stamped")
+	plain.score(state)
+	check(absf(state.value_total - unpriced) < 0.0001,
+			"…and the way back re-values again — the stamp remembers WHO priced it")
+
+
+# The anti-decoration A/B (the standing rule: a green suite is not evidence a criterion
+# bites — score the same pick with the weight zeroed and demand a different decision).
+# On the priced-tower board the heal wins BECAUSE of total value; with the criterion
+# muted the tap's readiness cost makes fielding the fodder win instead.
+func _total_value_changes_a_decision() -> void:
+	var back := BoardData.ROWS - 1
+	var deep := BoardData.COLS - 1
+	var dying_tower := _enemy("rook", 1, 0)
+	dying_tower.current_health = 1
+	dying_tower.current_shield = 0
+	var support := _enemy("support_dummy", back, 1)
+	var enemies: Array = [_enemy("captain_dummy", back, deep), support, dying_tower]
+	var players: Array = [_player("knight", 0, deep)]
+	var fodder := unit("fodder_dummy")
+	fodder.owner = 1
+	var grids := _grids(enemies, players)
+	var state := BoardState.capture(grids[0], grids[1])
+	state.enemy_mana_total = 1
+	state.enemy_mana_left = 1
+	state.hand_costs = [1]
+	state.hand_unit_costs = [1]
+	state.mana_spent_step = 0
+	var sim := _sim_for(enemies, players, [fodder])
+	var heal := {"kind": "ability", "inst": support,
+			"ability": AbilityData.get_ability("heal"), "target": dying_tower, "cost": 1}
+	var place := {"kind": "place", "inst": fodder, "row": back, "col": 0, "cost": 1}
+	var cohort: Array = [state]
+	for cand: Dictionary in [heal, place]:
+		var next := CandidateApply.apply(state, cand, sim)
+		EnemyEngine._note_spend(next, cand)
+		next.mana_capacity_before = 1
+		next.hand_budget_before = 1
+		cohort.append(next)
+	state.mana_capacity_before = 1
+	state.hand_budget_before = 1
+
+	var pricer := EnemyPersonality.from_dict({"id": "_tower_fight",
+			"value_rates": {"unit_values": {"rook": 10.0}}})
+	var with_it := BoardScoring.stock({}, pricer)
+	var without := BoardScoring.stock({}, pricer)
+	for c: BoardScoring.Criterion in without.criteria:
+		if c.id == "total_value":
+			c.weight = 0.0
+	var verdict := func(scoring: BoardScoring) -> String:
+		var totals := scoring.score_pick(cohort)
+		return "heal" if float(totals[1]) > float(totals[2]) else "place"
+	check_eq(verdict.call(with_it), "heal",
+			"with total value speaking, preserving the priced tower wins the mana")
+	check_eq(verdict.call(without), "place",
+			"with its weight zeroed the decision flips — the criterion is load-bearing, not decoration")

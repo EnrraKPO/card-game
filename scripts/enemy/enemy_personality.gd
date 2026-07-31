@@ -7,13 +7,15 @@ extends RefCounted
 #
 # Two kinds of entry, a TOOL distinction rather than an engine one (user call 2026-07-30):
 #   · CORE TRAITS — every personality has all of them. They are what makes the CPU function
-#     as an opponent at all: fear of dying, of being worn down, formation, the worth of the
-#     battlefield, using its mana, keeping its units ready, not sitting on a full hand. A
-#     personality states a weight for each; leaving one blank keeps the stock number, so a
-#     new personality starts as the default character and is edited away from it.
+#     as an opponent at all: the worth of the battlefield (the valuation system's total
+#     value, since 2026-07-30 the dominant reading), formation, using its mana, keeping its
+#     units ready, not sitting on a full hand. A personality states a weight for each;
+#     leaving one blank keeps the stock number, so a new personality starts as the default
+#     character and is edited away from it.
 #   · QUIRKS — opt-in leans a personality either has or doesn't. A quirk that is not listed
-#     is not in the scorer at all. Today there is exactly one, "maximize damage output"; the
-#     split exists so the next lean is a data entry rather than a redesign.
+#     is not in the scorer at all: "maximize damage output" (carried by the stock character),
+#     plus the PARKED pre-valuation trio — death risk, harm, board value — kept whole for
+#     any personality that wants the old readings back.
 # Conceptually they are the same thing — a criterion and a weight. The engine treats them
 # identically (see BoardScoring.stock); only the tool and this file's bookkeeping separate
 # them.
@@ -47,14 +49,18 @@ const DEFAULT_ID := "default"
 # list either way. Adding a criterion to the scorer means adding one entry here (and one arm
 # in BoardScoring._criterion_for).
 const TRAITS: Array = [
-	{"id": "death_risk", "core": true},
-	{"id": "harm", "core": true},
+	{"id": "total_value", "core": true},
 	{"id": "protection", "core": true},
-	{"id": "board_value", "core": true},
 	{"id": "mana", "core": true},
 	{"id": "readiness", "core": true},
 	{"id": "idle_hand", "core": true},
 	{"id": "damage_output", "core": false},
+	# PARKED 2026-07-30 (user call): the pre-valuation-system trio, out of the stock
+	# character but mechanically whole — a personality that lists one as a quirk still
+	# gets the criterion, weights and all. Policy change, not a mechanism deletion.
+	{"id": "death_risk", "core": false},
+	{"id": "harm", "core": false},
+	{"id": "board_value", "core": false},
 ]
 
 
@@ -64,7 +70,8 @@ const TRAITS: Array = [
 # classes depend on each other at parse time.
 static func stock_weights() -> Dictionary:
 	return {
-		"death_risk": 1.0,   # the reference scale every other weight is read against
+		"total_value": BoardScoring.TOTAL_VALUE_CRITERION_WEIGHT,   # the reference scale
+		"death_risk": 1.0,   # parked; the old reference scale, kept for opting back in
 		"harm": BoardScoring.HARM_CRITERION_WEIGHT,
 		"protection": BoardScoring.EXPOSURE_CRITERION_WEIGHT,
 		"board_value": BoardScoring.BOARD_VALUE_CRITERION_WEIGHT,
@@ -224,16 +231,15 @@ static func _value_rates(src: Variant) -> Dictionary:
 	if not (src is Dictionary):
 		return out
 	var d := src as Dictionary
-	for key: String in ["ability_default", "triggered_default", "live_default"]:
+	for key: String in ["ability_default", "triggered_default", "live_default",
+			"persistence_weight"]:
 		var v: Variant = d.get(key)
 		if v is float or v is int:
 			out[key] = float(v)
-	var rates := _numeric(d.get("stat_rates", {}))
-	if not rates.is_empty():
-		out["stat_rates"] = rates
-	var abilities := _numeric(d.get("ability_values", {}))
-	if not abilities.is_empty():
-		out["ability_values"] = abilities
+	for map_key: String in ["stat_rates", "ability_values", "role_values", "unit_values"]:
+		var entries := _numeric(d.get(map_key, {}))
+		if not entries.is_empty():
+			out[map_key] = entries
 	return out
 
 
@@ -269,6 +275,35 @@ func live_value() -> float:
 	if value_rates.has("live_default"):
 		return float(value_rates["live_default"])
 	return BoardValueConfig.live_value()
+
+
+# ── The valuation pass's per-fight knobs (BoardScoring.run_valuation) ──────────────────
+
+# This character's persistence dial — how much a unit's fragility discounts its worth —
+# else the global one. Clamped the same way.
+func persistence_factor() -> float:
+	if value_rates.has("persistence_weight"):
+		return clampf(float(value_rates["persistence_weight"]), 0.0, 1.0)
+	return BoardValueConfig.persistence_weight()
+
+
+# The flat role bonus, resolved on ONE key (BoardValueConfig.role_key) then layered:
+# this character's entry for that key, else the global table's. One-key-then-layer keeps
+# the two tables one vocabulary — no cross-table specificity puzzles.
+func role_value(u: BoardState.UnitState) -> float:
+	var roles: Variant = value_rates.get("role_values")
+	var key := BoardValueConfig.role_key(u)
+	if roles is Dictionary and (roles as Dictionary).has(key):
+		return float((roles as Dictionary)[key])
+	return BoardValueConfig.role_value(u)
+
+
+# The per-card enhancer: this character's price for the card, else the global one.
+func unit_bonus(card_id: String) -> float:
+	var vals: Variant = value_rates.get("unit_values")
+	if vals is Dictionary and (vals as Dictionary).has(card_id):
+		return float((vals as Dictionary)[card_id])
+	return BoardValueConfig.unit_bonus(card_id)
 
 
 # Numeric entries only — a typo'd string weight would otherwise read as 0.0 and quietly

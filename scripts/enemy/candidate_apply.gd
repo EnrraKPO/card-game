@@ -147,7 +147,9 @@ static func _run_cast(w: CombatWorld, remap: Dictionary, cd: Dictionary) -> void
 # cast/ability path only — the criterion looks correct on placements and mysteriously goes
 # quiet on casts (exactly how the idle-hand criterion first landed: a heal escaped the
 # withholding charge). If you add a field to BoardState, it goes in three places:
-# BoardState.copy(), here, and wherever the engine stamps it.
+# BoardState.copy(), here, and wherever the engine stamps it. (One exception: the
+# valuation stamp — value_total/valued and UnitState's value fields — is DERIVED data and
+# deliberately NOT forwarded; the pass re-runs on every unvalued state. See BoardState.)
 static func _capture_back(w: CombatWorld, prev: BoardState, remap: Dictionary,
 		swept: Array) -> BoardState:
 	var reverse: Dictionary = {}
