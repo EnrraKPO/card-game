@@ -129,14 +129,74 @@ func _resolve_on_play(effects: Array, src: CardInstance, ab: AbilityData,
 		board.cleanup_effect_deaths()
 
 
-# Whether this view may cast RIGHT NOW: mana covers the cost AND the view itself says it's
-# activatable (an ability widget consults its holder's tap state — see CardUI.castable_now).
+# Whether this view may cast RIGHT NOW: mana covers the cost, the view itself says it's
+# activatable (an ability widget consults its holder's tap state — see CardUI.castable_now),
+# AND the thing it would cast still has something to do (see effects_have_a_play).
 # The token's non-mana costs used to be gated by simply not wiring an unusable widget, which
 # only held for as long as the tray's build-time verdict stayed true; asking the view keeps
 # the gate honest for the whole life of the widget.
 func _can_afford(card_ui: CardUI) -> bool:
 	return card_ui.castable_now() \
-			and card_ui.card_instance.get_attribute("cost") <= get_mana.call()
+			and card_ui.card_instance.get_attribute("cost") <= get_mana.call() \
+			and card_has_a_play(card_ui.card_instance)
+
+
+# ── Legality: does this still DO anything? ─────────────────────────────────────
+# The companion of the implicit viability condition (see EffectCondition): that rule decides
+# which UNITS an effect may reach, and this one asks what falls out of it — if no effect on the
+# card can reach anybody right now, there is no play here to make, and the card is illegal
+# rather than merely wasteful. A spell that fizzles is a spell the player paid mana for and got
+# nothing from; the refusal has to happen before the cost, not after.
+#
+# Conservative by construction: an effect counts as a play unless it can be PROVEN inert. A
+# CUSTOM hook's payload is opaque code, so it always counts — guessing at it would forbid real
+# plays, and a wrongly-forbidden card is a far worse failure than a wasted one.
+
+# A card-shaped view's legality (a hand spell, an ability's tray token). Units are exempt: a
+# unit is a BODY, and putting one on the board is a play whatever its ON_PLAY effects would do.
+func card_has_a_play(inst: CardInstance) -> bool:
+	if inst == null or not inst.is_spell:
+		return true
+	# An ability token acts AS its holder — the same substitution _execute_spell makes, so the
+	# legality question is asked from where the effects would actually resolve.
+	var src := inst
+	if inst.ability != null and inst.source_building != null:
+		src = inst.source_building
+	return effects_have_a_play(inst.data.effects, src)
+
+
+# Whether ANY of this effect set's ON_PLAY effects has a legal application right now. An empty
+# set (or one with no ON_PLAY effects at all) is legal: there is nothing to judge, so there is
+# nothing to forbid.
+func effects_have_a_play(effects: Array, holder: CardInstance) -> bool:
+	var judged := false
+	for e: Effect in effects:
+		if e.trigger != Effect.Trigger.ON_PLAY:
+			continue
+		judged = true
+		if _effect_has_a_play(e, holder):
+			return true
+	return not judged
+
+
+func _effect_has_a_play(e: Effect, holder: CardInstance) -> bool:
+	if e.kind == Effect.Kind.CUSTOM:
+		return true   # opaque payload — never proven inert
+	if e.targeting_policy == Effect.TargetingPolicy.MANUAL \
+			or e.targeting_policy == Effect.TargetingPolicy.MANUAL_SLOT:
+		# A manual effect's legality IS "is there a pick the targeting UI would light up", so it
+		# asks the very judge that lights them — one definition for the cue and the legality.
+		var one: Array = [e]
+		for slots: Array in [board.player_slots, board.enemy_slots]:
+			for row: Array in slots:
+				for slot: SlotUI in row:
+					if effects_target_ok(one, slot):
+						return true
+		return false
+	# Everything else resolves its own targets, through the same socket resolution uses — so a
+	# set that would resolve to nobody (every candidate filtered out, viability included) is
+	# exactly the set that would have fizzled.
+	return not e.targets_resolver().resolve(null, holder, board.make_context(holder)).is_empty()
 
 
 # ── Target eligibility ─────────────────────────────────────────────────────────

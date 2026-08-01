@@ -109,8 +109,12 @@ func _auto_nearest_and_random() -> void:
 	var rt := er.targets_resolver().resolve(null, holder, ctx)
 	check(rt.size() == 1 and rt[0].owner == 1, "single_random picks one enemy")
 
-	# native Auto: nearest ALLY — inexpressible before this refactor
+	# native Auto: nearest ALLY — inexpressible before this refactor. The candidates are WOUNDED
+	# because the payload is a heal, and a heal cannot reach anyone at full health (the implicit
+	# viability condition — see EffectCondition); this case is about the auto search, not that rule.
 	var ally_near := _unit(2, 0, 0, 1)
+	ally_near.current_health -= 2
+	holder.current_health -= 2
 	var ctx2 := _ctx(holder, [holder, ally_near], [near_enemy])
 	var ea := Effect.from_dict({"trigger": "on_play",
 			"targets": {"kind": "auto", "criterion": "nearest",
@@ -203,6 +207,7 @@ func _participant() -> void:
 func _manual() -> void:
 	var holder := _unit(2, 0)
 	var picked := _unit(2, 0, 0, 1)
+	picked.current_health -= 2   # the payload below is a heal; a whole unit is no target for one
 	var ctx := _ctx(holder, [holder, picked], [])
 	var e := Effect.from_dict({"trigger": "on_play", "targeting_policy": "manual",
 			"attribute": "health", "amount": 2,

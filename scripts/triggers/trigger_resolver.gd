@@ -282,9 +282,14 @@ static func _parse_conditions(raw: Variant) -> Array:
 	return out
 
 
+# Implicit conditions are skipped: they are DERIVED at load from the effect's own payload (the
+# viability form — see EffectCondition), never authored, so emitting one would invent a key the
+# data file never had and break the schema's byte-faithful round trip.
 static func conditions_to_dicts(conds: Array) -> Array:
 	var out: Array = []
 	for c: EffectCondition in conds:
+		if c.implicit:
+			continue
 		out.append(c.to_dict())
 	return out
 

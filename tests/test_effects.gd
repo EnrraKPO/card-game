@@ -18,6 +18,8 @@ func run() -> void:
 	_conditioned_modifiers()
 	_run_scope_allegiance()
 	_consumable_relic_use()
+	_non_op_prohibition()
+	_non_op_exclusions()
 
 
 # Modifier targeting is gated by `conditions` exactly like triggered targeting: every card the
@@ -271,3 +273,95 @@ func _interceptor_round_trip() -> void:
 			and rt.channel == StatMutation.CH_ATTACK and rt.role == Effect.Role.SOURCE
 			and rt.op == Effect.Op.MUL and rt.chance == 0.5,
 			"interceptor round-trips intact (stat/channel/role/op/chance)")
+
+
+# PROHIBIT NON-OPS: every stat-targeting effect carries an implicit condition asking whether its
+# payload would actually change the unit in front of it (EffectCondition's viability form,
+# installed by Effect._install_viability). Computation only — each case asserts what the rule
+# COMPUTES about a payload/target pair, which is the Resolver's own clamp read backwards.
+func _non_op_prohibition() -> void:
+	var heal := Effect.from_dict({"trigger": "on_play", "targeting_policy": "manual",
+			"attribute": "health", "amount": 2})
+	var whole := unit("pawn")
+	var hurt := unit("pawn")
+	hurt.current_health -= 1
+	check(not EffectSystem.passes_conditions(heal.conditions, whole),
+			"a heal cannot reach a unit at full health")
+	check(EffectSystem.passes_conditions(heal.conditions, hurt),
+			"…and reaches a wounded one")
+
+	# A direct wound has no floor: it bypasses shield and can take a unit below zero, so it is
+	# never a no-op — not even on something already at 1 hp.
+	var poison := Effect.from_dict({"trigger": "on_play", "targeting_policy": "manual",
+			"attribute": "health", "amount": -1})
+	check(EffectSystem.passes_conditions(poison.conditions, whole),
+			"a direct wound always lands — health has no floor")
+
+	# Attack floors at 0 the moment a strike is built (StatMutation.damage), so shaving a
+	# 0-attack unit writes a number nothing will read.
+	var weaken := Effect.from_dict({"trigger": "on_play", "targeting_policy": "manual",
+			"attribute": "attack", "amount": -1})
+	var armed := unit("pawn")
+	var toothless := unit("pawn")
+	toothless.apply_modifier("attack", -toothless.get_attribute("attack"))
+	check_eq(toothless.get_attribute("attack"), 0, "fixture: the toothless unit swings for nothing")
+	check(EffectSystem.passes_conditions(weaken.conditions, armed),
+			"a debuff reaches a unit with attack to lose")
+	check(not EffectSystem.passes_conditions(weaken.conditions, toothless),
+			"…and cannot reach one already on the floor")
+
+	# The mirror: raising a stat always lands, floor or no floor.
+	var pump := Effect.from_dict({"trigger": "on_play", "targeting_policy": "manual",
+			"attribute": "attack", "amount": 1})
+	check(EffectSystem.passes_conditions(pump.conditions, toothless),
+			"a buff reaches even a unit on the floor — raising always lands")
+
+	# A zero payload is a no-op on anybody.
+	var nothing := Effect.from_dict({"trigger": "on_play", "targeting_policy": "manual",
+			"attribute": "attack", "amount": 0})
+	check(not EffectSystem.passes_conditions(nothing.conditions, armed),
+			"a zero payload changes nothing, so it reaches nobody")
+
+	# Shield: the authored name for the per-round BASE, whose pool floors at 0.
+	var strip := Effect.from_dict({"trigger": "on_play", "targeting_policy": "manual",
+			"attribute": "shield", "amount": -1})
+	var bare := unit("pawn")
+	check_eq(bare.get_attribute("max_shield"), 0, "fixture: the pawn carries no shield")
+	check(not EffectSystem.passes_conditions(strip.conditions, bare),
+			"stripping shield from a unit with none is a no-op")
+	bare.apply_modifier("shield", 2)
+	check(EffectSystem.passes_conditions(strip.conditions, bare),
+			"…and lands once it has some")
+
+	# The implicit condition is DERIVED, never authored — it must not appear in the data the
+	# effect serializes back to (the schema round-trips byte-faithfully).
+	var authored := {"trigger": "on_play", "targeting_policy": "manual",
+			"attribute": "health", "amount": 2, "conditions": []}
+	check_eq((Effect.from_dict(authored).to_dict() as Dictionary)["conditions"], [],
+			"the implicit condition is never serialized")
+
+
+# The cases the rule deliberately stays out of.
+func _non_op_exclusions() -> void:
+	var whole := unit("pawn")
+
+	# STANDING (while) effects: membership is folded inside get_attribute, so a condition that
+	# read get_attribute would recurse into the fold. A continuous fold is also not an act —
+	# there is no moment at which it is a no-op.
+	var standing := Effect.from_dict({"trigger": {"kind": "while"},
+			"targets": {"kind": "all"}, "attribute": "attack", "amount": -1})
+	check(standing.is_standing(), "fixture: the effect is standing")
+	check(EffectSystem.passes_conditions(standing.conditions, whole),
+			"a standing effect carries no viability condition")
+
+	# A CUSTOM hook's payload is opaque code — guessing at it would forbid real plays.
+	var hook := Effect.from_dict({"kind": "custom", "custom": "deliver_material",
+			"trigger": "on_play", "targeting_policy": "manual_slot"})
+	check(EffectSystem.passes_conditions(hook.conditions, whole),
+			"a custom hook carries no viability condition")
+
+	# A status payload is what the effect DOES; the attribute is not consulted.
+	var stun := Effect.from_dict({"trigger": "on_play", "targeting_policy": "manual",
+			"attribute": "attack", "amount": 0, "status": {"id": "empowered"}})
+	check(EffectSystem.passes_conditions(stun.conditions, whole),
+			"a status payload is judged by its own rules, not the attribute's")

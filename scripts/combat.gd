@@ -144,6 +144,7 @@ func _ready() -> void:
 	# The declared-state surface cards consult (selection / inspection / preview world) —
 	# see CombatContext + CardUI.derive_presentation. Cleared in _exit_tree.
 	_ctx = CombatContext.install(_hand, _board, _interaction, _player_side)
+	_ctx.caster = _spell_caster   # the rules consultant views ask about castability
 
 	_board.setup_grids()
 	_board.interaction  = _interaction   # before _build_ui — build_section hands it to every slot
@@ -210,11 +211,11 @@ func _ready() -> void:
 					out.append(inst)
 		return out
 
-	# Whether an ability is castable RIGHT NOW — THE rule lives on AbilityData (usable_by), so the
-	# Inspect Abilities glow here, the tray widget's own derivation and the cast gate all read one
-	# definition and can never drift apart.
-	_hand.is_ability_usable = func(holder: CardInstance, ab: AbilityData) -> bool:
-		return ab.usable_by(holder, _player_side.mana)
+	# Whether an ability is castable RIGHT NOW — THE rule is CombatContext.ability_usable (cost
+	# by AbilityData.usable_by, plus "has it anything left to do"), so the Inspect Abilities glow
+	# here, the tray widget's own derivation and the cast gate all read one definition and can
+	# never drift apart.
+	_hand.is_ability_usable = _ctx.ability_usable
 
 	# Combat's own designed looks, registered as library entries like every other: the call
 	# sites name an id and every number in them stays tunable in data/vfx/vfx.json.

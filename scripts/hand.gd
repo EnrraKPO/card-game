@@ -411,9 +411,15 @@ func _spawn_hand_card(inst: CardInstance) -> void:
 	# The playability RULE, installed once — the card derives its own glow from live facts
 	# from here on (see CardUI.set_playable_check). Parent test, not our _hand_cards list:
 	# the node tree is the structural truth a stale bookkeeping list can't contradict.
+	# Mana is not the only gate: a spell whose every effect is currently a no-op is ILLEGAL, not
+	# merely wasteful (see SpellCaster.card_has_a_play), and it must stop glowing before the
+	# player reaches for it. Asked of the same authority the cast gate asks, so the glow and the
+	# refusal can never disagree.
 	ui.set_playable_check(func(c: CardUI) -> bool:
 		return c.get_parent() == _hand_box and selection_enabled \
-			and _side != null and c.card_instance.get_attribute("cost") <= _side.mana)
+			and _side != null and c.card_instance.get_attribute("cost") <= _side.mana \
+			and (CombatContext.current == null
+				or CombatContext.current.has_a_play(c.card_instance)))
 	Vfx.play("card_draw_flick", ui)   # the dealt-card sheen (Vfx waits out the layout frame)
 	if ui.card_instance.is_spell:
 		if wire_spell_card.is_valid():

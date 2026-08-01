@@ -242,6 +242,7 @@ static func from_dict(d: Dictionary) -> Effect:
 	e._validate_standing(d)
 	e._validate_grants(d)
 	e._validate_side_targets(d)
+	e._install_viability()
 	# Mutation-form conditions predicate over a pending StatMutation — only the interceptor
 	# match ever evaluates them. Anywhere else they'd be a silently-vacuous gate: fail loud.
 	if e.kind != Kind.INTERCEPTOR:
@@ -280,6 +281,37 @@ func _parse_intercept_gate(d: Dictionary) -> void:
 	role = _str_role(str(d.get("role", "source")))
 	intercept_participant = "source" if role == Role.SOURCE else "target"
 	intercept_identity = true
+
+
+# PROHIBIT NON-OPS. Every effect whose payload is a stat change on a UNIT is given an implicit
+# condition asking whether that change would actually do anything to the unit in front of it
+# (see EffectCondition's viability form). Nobody authors it and nobody can forget it — which is
+# the point: the rule is a property of the payload, so it belongs to the effect rather than to
+# each card that happens to carry one.
+#
+# Because it lands in the ordinary conditions list, everything downstream inherits it at once:
+# an AoE heal skips the unwounded, a manual heal refuses to light them up, the enemy AI stops
+# picking them, and a spell whose every effect is a no-op right now has no legal play left at
+# all (see SpellCaster.effects_have_a_play).
+#
+# The exclusions are all cases where "would this change anything" is either unanswerable or the
+# wrong question:
+#   • CUSTOM — a code hook's payload is opaque; guessing at it would gate real effects away.
+#   • standing (while) — membership is folded INSIDE get_attribute (LiveEffects), and a
+#     condition that reads get_attribute would recurse straight back into the fold. A standing
+#     bonus is also a continuous fold, not an act: there is no moment for it to be a no-op at.
+#   • MODIFIER / INTERCEPTOR — neither applies a payload to a resolved unit.
+#   • status / spawn / grant payloads — the attribute is not what the effect does.
+#   • side stats (draw/discard/mana) — the target is a PLAYER, which no unit predicate can read.
+func _install_viability() -> void:
+	if kind != Kind.TRIGGERED or is_standing():
+		return
+	if attribute.is_empty() or not status_id.is_empty() or not spawn_id.is_empty() \
+			or not grants.is_empty():
+		return
+	if StatMutation.is_side_stat(attribute):
+		return
+	conditions.append(EffectCondition.viability(attribute, amount_int()))
 
 
 # Load-time authoring validation for standing effects — FAIL LOUD, never silently closed
@@ -458,10 +490,9 @@ func to_dict() -> Dictionary:
 			if not filter.is_empty():
 				d["filter"] = filter
 			if not conditions.is_empty():
-				var mconds: Array = []
-				for c: EffectCondition in conditions:
-					mconds.append(c.to_dict())
-				d["conditions"] = mconds
+				var mconds := TriggerResolver.conditions_to_dicts(conditions)
+				if not mconds.is_empty():
+					d["conditions"] = mconds
 			return d
 		Kind.CUSTOM:
 			var cd := {
@@ -491,10 +522,9 @@ func to_dict() -> Dictionary:
 					of["relation"] = "self"
 				idd["of"] = of
 				if not conditions.is_empty():
-					var iconds: Array = []
-					for c: EffectCondition in conditions:
-						iconds.append(c.to_dict())
-					idd["conditions"] = iconds
+					var iconds := TriggerResolver.conditions_to_dicts(conditions)
+					if not iconds.is_empty():
+						idd["conditions"] = iconds
 			if channel != &"":
 				idd["channel"] = String(channel)
 			if op == Op.MUL:
@@ -516,10 +546,7 @@ func to_dict() -> Dictionary:
 				d["targets"] = targets_resolver().to_dict()
 			else:
 				d["targeting_policy"] = policy_key(targeting_policy)
-				var conds: Array = []
-				for c: EffectCondition in conditions:
-					conds.append(c.to_dict())
-				d["conditions"] = conds
+				d["conditions"] = TriggerResolver.conditions_to_dicts(conditions)
 			if not authored_native_trigger and subject_filter != SubjectFilter.SELF:
 				d["subject"] = subject_key(subject_filter)
 			if not authored_native_trigger and not subject_elements.is_empty():
