@@ -20,8 +20,10 @@ extends BaseButton
 #   _draw_hold_fill(...) — the bottom-up progress gauge, for the subclass's _draw to place
 #                      inside its own frame.
 # The base owns _process while idle (off) and holding (on); a subclass that needs to poll every
-# frame anyway (the consumable chip's usability read) overrides _process, keeps processing on,
-# and forwards to _hold_tick.
+# frame anyway (the consumable chip's usability read) overrides _process, sets `always_process`,
+# and forwards to _hold_tick. That flag is not a nicety: without it the base's own cancel path
+# (reset) switches processing off under a subclass whose poll LIVES there, and the poll never
+# runs again — see always_process.
 #
 # TOUCH: the "still on the button?" test is NOT is_hovered() — hover is a mouse-motion notion and
 # a finger that taps without ever moving leaves a Control un-hovered, which cancelled every hold
@@ -37,6 +39,15 @@ const POP_Z_LIFT := 50      # while popped the button draws over its neighbours
 
 # How big the button grows while a hold runs (1.0 = no pop). Set by the subclass before/at _ready.
 var hold_pop_scale := 1.0
+
+# Whether this button must keep processing even with no hold in flight — set by a subclass that
+# drives its own per-frame poll from _process (the consumable chip's usability read). The base
+# stops processing whenever a hold ends, and for such a subclass that is a ONE-WAY DOOR: the
+# poll that would notice the button becoming usable again is itself the thing that got switched
+# off. The consumable chip lost its hold the moment the placement turn ended (locking cancels an
+# in-flight hold, and cancelling calls reset), and stayed dimmed and inert for the rest of the
+# fight — usable by every rule, dead to the touch.
+var always_process := false
 
 var _holding := false
 var _progress := 0.0
@@ -56,7 +67,7 @@ func _ready() -> void:
 	# own press handling. The signal fires first, so the pointer is current by button_down.
 	gui_input.connect(_track_pointer)
 	_base_z = z_index
-	set_process(false)
+	set_process(always_process)
 
 
 # Every pointer device, one position: emulated-mouse events (what touch becomes by default),
@@ -118,7 +129,7 @@ func _on_hold_up() -> void:
 
 func _process(delta: float) -> void:
 	if not _holding:
-		set_process(false)
+		set_process(always_process)
 		return
 	_hold_tick(delta)
 
@@ -144,7 +155,7 @@ func _hold_tick(delta: float) -> void:
 func reset() -> void:
 	_holding = false
 	_progress = 0.0
-	set_process(false)
+	set_process(always_process)   # never below what the subclass's own poll needs
 	_set_popped(false)
 	queue_redraw()
 

@@ -43,6 +43,10 @@ var _just_committed := false
 
 
 func _ready() -> void:
+	# Declared BEFORE the base's _ready, which reads it to decide the initial processing state:
+	# this chip's usability read lives in _process, so processing is not the hold's to switch
+	# off (see HoldButton.always_process — the bug that left the chip dead after turn one).
+	always_process = true
 	super._ready()
 	focus_mode = Control.FOCUS_NONE
 	hold_pop_scale = HOLD_POP
@@ -79,7 +83,6 @@ func _ready() -> void:
 	# Always processing: the chip POLLS its usability every frame (nothing pushes phase changes
 	# at the tray) and forwards the tick to the hold machinery.
 	_poll()
-	set_process(true)
 
 
 func _process(delta: float) -> void:
