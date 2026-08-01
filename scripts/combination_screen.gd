@@ -78,6 +78,15 @@ const MERGE_BTN_MAX := 158.0
 # unmistakably (a button flush with the edge reads as card decoration, not as a control) without
 # reaching into the row below in a tight spread.
 const MERGE_BTN_OVERHANG := 0.28
+# The fabs live on _overlay, a later sibling of the table — which is enough to draw above the
+# cards RIGHT UP UNTIL one of them is picked: HighlightFx.set_grown lifts the selected card's
+# z_index (Z_LIFT) inside this same canvas layer, and a z lift outranks tree order. The fab
+# overhangs its host's bottom edge deliberately (see MERGE_BTN_OVERHANG / PREVIEW_DROP), so the
+# grown source swallowed the flask of whatever card sat directly above it — the button vanished
+# from exactly the card the player was reaching for. Overlay furniture therefore declares itself
+# above any highlight lift, and the tip keeps its own rung above the fabs.
+const MERGE_BTN_Z := HighlightFx.Z_LIFT + 5
+const SEL_TIP_Z := MERGE_BTN_Z + 5
 # THE Forge button — the same flask art the map's Forge fab shows. One button identity for
 # "engage the forge", everywhere it appears.
 const MERGE_FAB_TEX := preload("res://assets/buttons/forge.png")
@@ -367,7 +376,7 @@ func _build_ui() -> void:
 	# grid's uniform top gap (clamped on-screen by _track_sel_tip).
 	_sel_tip = _make_tip_pill(22, Color(0.98, 0.97, 0.92), 0.66)
 	_sel_tip_label = _sel_tip.get_child(0) as Label
-	_sel_tip.z_index = 5   # the instruction always reads OVER the engage fabs it may overlap
+	_sel_tip.z_index = SEL_TIP_Z   # the instruction always reads OVER the engage fabs it may overlap
 	_overlay.add_child(_sel_tip)
 
 
@@ -1207,6 +1216,7 @@ func _make_merge_button(idx: int) -> Control:
 	# Only the round Button may take a click here — a STOP-filtered wrapper would silently claim
 	# the box corners the button itself declines.
 	fab.mouse_filter = MOUSE_FILTER_IGNORE
+	fab.z_index = MERGE_BTN_Z   # above any highlighted card's z lift — see MERGE_BTN_Z
 
 	var face := Control.new()  # plate + flask, modulated together by the button feedback
 	face.set_anchors_and_offsets_preset(PRESET_FULL_RECT)

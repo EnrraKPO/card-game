@@ -164,7 +164,7 @@ const ARROW_W := 0.46         # arrowhead box side as a fraction of the pool wid
 const ARROW_GAP := 0.30       # gap between arrowhead base and pool, as a fraction of pool height
 const SPOT_BIAS := 0.06       # nudge the whole composition down so the pool hugs the lower edge
 const MOVE_CUE_ALPHA := 0.85  # the whole move cue rides a touch of transparency so it reads as a
-                              # gentle, non-intrusive hint rather than a bright call to attention
+							  # gentle, non-intrusive hint rather than a bright call to attention
 
 
 # Sizes/positions the glyphs relative to the slot's current size (combat resizes slots to fill
