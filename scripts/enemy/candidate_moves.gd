@@ -54,6 +54,84 @@ static func moves(state: BoardState, moved: Dictionary) -> Array:
 	return out
 
 
+# Every legal TWO-MOVE arrangement: unordered pairs of movable units × target column
+# combinations, emitted as ONE candidate holding both moves (user-designed 2026-07-31 —
+# the reshuffle pass). The point is escaping single-step neutrality: "king forward" alone
+# improves nothing and dies at the must-improve gate, but "king forward AND fodder into
+# the opened column" is a strictly better BOARD — so the pair is scored as one
+# destination, gated as a whole, and the greedy loop chains deeper reshuffles across
+# picks (each accepted pair frees geometry the next pick can see). Single moves stay
+# moves(); this generator emits pairs only.
+#
+# Columns, not slots, on purpose: every eval is lane-blind (exposure v2), so two
+# arrangements differing only in rows score identically — enumerating rows would
+# multiply the cohort by 9 to distinguish nothing. Each pair is emitted only if it is
+# EXECUTABLE in some order under live rules (one move per unit per turn, a free slot at
+# each step — a swap between two full columns has no legal order and is not a
+# candidate); concrete rows are resolved here, at enumeration, so the candidate maps
+# straight to two executable move actions.
+static func arrangements(state: BoardState, moved: Dictionary) -> Array:
+	var movers: Array = []
+	for u: BoardState.UnitState in state.units(1):
+		if not u.is_building and not moved.has(u.source):
+			movers.append(u)
+	var out: Array = []
+	for i in movers.size():
+		for j in range(i + 1, movers.size()):
+			for ca in BoardData.COLS:
+				for cb in BoardData.COLS:
+					var pair := _feasible_pair(state, movers[i], movers[j], ca, cb)
+					if not pair.is_empty():
+						out.append(pair)
+	return out
+
+
+# One pair, made concrete: try a-then-b, then b-then-a; the first order with a free row
+# at every step wins. Returns {} when the pair is a no-op (neither unit changes column)
+# or neither order is executable.
+static func _feasible_pair(state: BoardState, a: BoardState.UnitState,
+		b: BoardState.UnitState, ca: int, cb: int) -> Dictionary:
+	if ca == a.col and cb == b.col:
+		return {}   # nobody changes column — not an arrangement
+	if ca == a.col or cb == b.col:
+		return {}   # one mover is a no-op — that pair IS the single move, already enumerated
+	for order: Array in [[a, ca, b, cb], [b, cb, a, ca]]:
+		var first: BoardState.UnitState = order[0]
+		var second: BoardState.UnitState = order[2]
+		var free := _free_rows(state)
+		var r1 := _take_row(free, int(order[1]))
+		if r1 < 0:
+			continue
+		free[first.col].append(first.row)   # the first mover's seat opens behind it
+		var r2 := _take_row(free, int(order[3]))
+		if r2 < 0:
+			continue
+		return {"kind": "arrange", "cost": 0, "moves": [
+			{"inst": first.source, "from_row": first.row, "from_col": first.col,
+					"row": r1, "col": int(order[1])},
+			{"inst": second.source, "from_row": second.row, "from_col": second.col,
+					"row": r2, "col": int(order[3])}]}
+	return {}
+
+
+# col → the free row indices in that column of the OWN grid, lowest first.
+static func _free_rows(state: BoardState) -> Dictionary:
+	var free: Dictionary = {}
+	for c in BoardData.COLS:
+		free[c] = []
+	for slot: Array in state.empty_slots(1):
+		(free[slot[1]] as Array).append(slot[0])
+	return free
+
+
+# Pops the first free row of the column; -1 when the column is full.
+static func _take_row(free: Dictionary, col: int) -> int:
+	var rows: Array = free[col]
+	if rows.is_empty():
+		return -1
+	return int(rows.pop_front())
+
+
 # Every legal spell cast: each affordable, simulatable spell card in the pool — a manual
 # spell tested against every fielded unit on either side (decision 17: every possible
 # target; nonsense targets score as non-improvements and die in selection, which is

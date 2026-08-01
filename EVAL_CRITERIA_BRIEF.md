@@ -14,6 +14,20 @@ candidate must strictly improve on the do-nothing baseline to be chosen; a candi
 judge categorically objects to (today: one that leaves the Captain dead) is not an option
 at all (`BoardScoring.vetoes`, read in `_pick_best` before the cohort forms).
 
+**The reshuffle candidates** (user-designed 2026-07-31): greedy-one-at-a-time has ONE
+compound exception — two-move ARRANGEMENTS (`CandidateMoves.arrangements`), unordered
+pairs of movable units × target-column combos, scored as a single destination board and
+gated as a whole. They exist because geometry repairs are exactly the plays whose first
+step is neutral ("king forward" improves nothing until the opened column is used) — the
+must-improve gate kills neutral single steps, so cramped geometry could never be fixed
+once built (observed: the whole retinue wedged into the one column behind the captain,
+twice). Columns, not slots (every eval is lane-blind — rows would multiply the cohort to
+distinguish nothing); a pair must be EXECUTABLE in some order (one move per unit per
+turn, a free slot at every step — a swap between two full columns is not a candidate);
+deeper reshuffles chain across picks, each accepted pair freeing geometry the next pick
+sees. Worst case adds ~500 pair candidates to a pick's cohort; typical boards add far
+fewer.
+
 ## The valuation system
 
 **Before ANY value-related eval runs, a whole valuation pass prices every unit on BOTH
@@ -173,29 +187,27 @@ playtest.
   1; only WASTE is punished, and waste is only waste when a better line EXISTED. THE
   INVARIANT (pinned): spending mana always scores STRICTLY above spending none — this is
   now also the whole fielding pressure (idle-hand is parked).
-- **Formation** (0.1, user-designed 2026-07-31; CHAIN form later the same day, replacing
-  the all-pairs concordance draft) — THE PROTECTION CHAIN: sort own units by raw
-  (pre-persistence) worth descending and grade each consecutive link — protector in a
-  strictly nearer COLUMN = 1 ("place the highest value where it CAN be protected, then
-  protect it with the next unit, and so on"), same column = 1/2 (seat shared, protection
-  unbuilt), inverted = 0. Score = mean of links; lone unit silent at 1.0; equal-value
-  links (within `FORMATION_EPSILON`) grade EITHER order as protected — equals protect
-  each other, and no pecking order among duplicates is defensible. Column relations only,
-  LANE-BLIND (nearest-targeting resolves by depth first — lane never decides whether a
-  screen screens), and NO exposure number consumed, so the eval is immune to the exposure
-  model's tuning. Intrinsically 0..1 (a Criterion, no cohort machinery); an unfixable
-  inversion (rooted building, tanking king) costs only its own links. **CHAIN, NOT ALL
-  PAIRS**: the all-pairs draft dropped equal-exposure comparisons, which made the
-  one-column stack (everything at c3 — observed, ruled an offence) literally invisible;
-  the chain grades that board 1/2 everywhere. **ORDER, NEVER DEPTH** (ruled 2026-07-31):
-  protection is CONSTRUCTED by bodies, never found in coordinates — a depth-seeking term
-  maximizes itself by dismantling the screens that make depth safe. WHY IT EXISTS: behind
-  a body that soaks the whole pour, every slot behind reads zero damage, so total_value
-  and damage_output go flat and seating falls to the tie-break — observed 2026-07-31, a
-  5-attack dps seated in front of a 3.40 fodder on a coin flip (0.9943 vs 0.9942, exactly
-  `TIE_EPSILON`). Accepted: loudest on a SPARSE board (ratified — a busy board scatters
-  damage anyway, a sparse one makes the offence blatant), and a tapped unit prices as
-  expendable for one round.
+- **Formation** (0.1, user-designed 2026-07-31 — the user's ORIGINAL spec, restored
+  after three flattened re-expressions each caused a live misplay: "higher value units
+  deserve the best seats, better covered slots", nothing added) — pairwise concordance
+  between raw (pre-persistence) worth and the v2 EXPOSURE of the seat: a pair is
+  concordant when the dearer unit sits at strictly lower exposure; score = concordant ÷
+  comparable pairs; equal worth or equal exposure (`FORMATION_EPSILON`) is no
+  comparison; none comparable → silent 1.0. "How covered is a seat" is NOT this eval's
+  to define — it reads the exposure number the game already computes and every log
+  prints. Misordering costs proportionally, never a cliff: a tank fronting the army
+  loses only its own pairs ("suboptimal setups still count"). THE PROCESS RULING that
+  goes with it: my invented intermediaries (chain links, binary protection tiers, credit
+  constants) were UNREQUESTED — each flattened the graded notion and produced the next
+  live report (dps fronting a fodder on a coin flip; the one-column stack; the support
+  on the fodder's column; the fodder holding the deepest seat over the support at a
+  stamped tie). Unrequested additions are removed, not defended. KNOWN SILENCE (on the
+  record): intra-stack pairs tie on exposure and drop out — a board that is ONE stack
+  and nothing else scores silent; real boards always carry the captain as the outside
+  reference, and stacks are judged through their pairs with it. Works WITH the reshuffle
+  candidates (above): recovering a tied pair (moving a unit out of a shared column) IS
+  the strict improvement the gate accepts. Loudest on a SPARSE board (ratified); a
+  tapped unit prices as expendable for one round.
 - **Readiness** (0.1) — `1 − forfeited ÷ total activity potential`: a tap's real price is
   the unit's attack AND every OTHER tap-ability it holds (never the ability it bought),
   proportional to the army. Priced with the BoardValueConfig rates.

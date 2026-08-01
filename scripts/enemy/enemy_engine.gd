@@ -54,8 +54,10 @@ func _tie_break(n: int) -> int:
 
 
 # Plans a whole CPU turn: greedily pick the best-scoring candidate, commit it to the
-# working state, repeat until nothing is worth doing. Greedy one-at-a-time is the design's
-# open question (misses two-move combos) — deliberate for now.
+# working state, repeat until nothing is worth doing. Greedy one-at-a-time, with ONE
+# compound exception: two-move ARRANGEMENTS (CandidateMoves.arrangements) are scored as
+# single candidates, because geometry repairs are exactly the plays whose first step is
+# neutral. Deeper combos (play-pairs, move-then-place) remain the open question.
 #
 # ONE acceptance rule for all four action kinds: the candidate must STRICTLY IMPROVE the
 # scored position, or the turn is over. The old "placements are always accepted" special
@@ -101,6 +103,10 @@ func decide_actions(hand: Array, player_grid: Array, enemy_grid: Array, mana: in
 	while true:
 		var cands := CandidateMoves.placements(state, pool, remaining)
 		cands.append_array(CandidateMoves.moves(state, moved))
+		# The reshuffle pass: two-move arrangements as single candidates, so a geometry
+		# repair whose first step is score-neutral (king forward → column opens) can pass
+		# the must-improve gate as a whole. Deeper reshuffles chain across picks.
+		cands.append_array(CandidateMoves.arrangements(state, moved))
 		cands.append_array(CandidateMoves.spells(state, pool, remaining))
 		cands.append_array(CandidateMoves.abilities(state, remaining))
 		if cands.is_empty():
@@ -129,6 +135,13 @@ func decide_actions(hand: Array, player_grid: Array, enemy_grid: Array, mana: in
 				moved[cand["inst"]] = true
 				actions.append({"type": Action.MOVE, "inst": cand["inst"],
 						"row": int(cand["row"]), "col": int(cand["col"])})
+			"arrange":
+				# Two ordinary move actions — the pair was one CANDIDATE (scored as one
+				# destination board), but it executes as the moves it is.
+				for m: Dictionary in (cand["moves"] as Array):
+					moved[m["inst"]] = true
+					actions.append({"type": Action.MOVE, "inst": m["inst"],
+							"row": int(m["row"]), "col": int(m["col"])})
 			"cast":
 				pool.erase(cand["inst"])
 				actions.append({"type": Action.CAST, "inst": cand["inst"],
@@ -268,6 +281,13 @@ static func describe(cand: Dictionary) -> String:
 	if cand.is_empty():
 		return "(nothing)"
 	var kind := String(cand["kind"])
+	if kind == "arrange":
+		var parts: Array = []
+		for m: Dictionary in (cand["moves"] as Array):
+			var mi := m["inst"] as CardInstance
+			parts.append("%s → r%dc%d" % [mi.data.id if mi != null else "?",
+					int(m["row"]), int(m["col"])])
+		return "arrange " + " + ".join(parts)
 	var inst := cand.get("inst", null) as CardInstance
 	var who := inst.data.id if inst != null else "?"
 	match kind:

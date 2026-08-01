@@ -65,49 +65,135 @@ func run() -> void:
 	_king_safety_shape()
 	_formation_order_shape()
 	_formation_order_silences()
+	_arrangement_enumeration()
+	_arrangement_feasibility()
+	_arrangement_apply_purity()
 
 
-# ── Formation: the protection chain (user-designed 2026-07-31, second form) ──────────
+# ── Formation: value order vs seat safety (the user's spec, restored 2026-07-31) ─────
 #
-# Pure computation pins for the chain measure — its link grades and its silences. WHICH
-# seat the engine then chooses is a behaviour, judged by playtest alone (doctrine at the
-# top of this file).
-#
-# Prices are the stock rates' own — queen 7.0 > knight 3.3 > pawn 1.8, so the value chain
-# is queen ← knight ← pawn. Links grade on COLUMN relations only (lane-blind, no exposure
-# number consumed): protector strictly nearer = 1, same column = 1/2, inverted = 0.
+# Pure computation pins — pair concordance between raw worth and v2 exposure. WHICH seat
+# the engine then chooses is a behaviour, judged by playtest alone (doctrine at the top
+# of this file). Prices are the stock rates' own: queen 7.0 > knight 3.3 > pawn 1.8.
 func _formation_order_shape() -> void:
-	var chained := _state_with([_enemy("queen", 0, 2), _enemy("knight", 0, 1), _enemy("pawn", 0, 0)])
-	check(absf(BoardScoring.formation_order(chained, 1) - 1.0) < 0.0001,
-			"a full chain — each unit screened by the next cheaper one — scores 1")
+	# The full chain: exposure falls with every screen (pawn 1.0, knight 0.375,
+	# queen 0.167) and worth rises the same way — every pair concordant.
+	var ideal := _state_with([_enemy("queen", 0, 2), _enemy("knight", 0, 1), _enemy("pawn", 0, 0)])
+	check(absf(BoardScoring.formation_order(ideal, 1) - 1.0) < 0.0001,
+			"value order matching the safety order is a perfect 1")
 	var inverted := _state_with([_enemy("pawn", 0, 2), _enemy("knight", 0, 1), _enemy("queen", 0, 0)])
 	check(absf(BoardScoring.formation_order(inverted, 1)) < 0.0001,
-			"the exactly inverted chain scores 0")
-	# Queen and knight share a column (the queen-knight link earns 1/2), pawn screens the
-	# knight from a strictly nearer column (1): the score is the mean of the links.
-	var half := _state_with([_enemy("queen", 0, 2), _enemy("knight", 1, 2), _enemy("pawn", 0, 0)])
-	check(absf(BoardScoring.formation_order(half, 1) - 0.75) < 0.0001,
-			"a shared column grades 1/2 on its link — mean of {1/2, 1} is 3/4")
-	# The whole army stacked in one column: every link is the 1/2 grade — mediocre, not
-	# invisible (the all-pairs form's blind spot this chain form was built to close).
-	var stacked := _state_with([_enemy("queen", 0, 3), _enemy("knight", 1, 3), _enemy("pawn", 2, 3)])
-	check(absf(BoardScoring.formation_order(stacked, 1) - 0.5) < 0.0001,
-			"a one-column stack scores 1/2 across the board")
+			"the exactly inverted seating is 0")
+	# The queen tanking at the true front with the right order behind her: her two pairs
+	# are misordered, the knight-pawn pair is not — 1/3, graded, never a cliff.
+	var queen_front := _state_with([_enemy("queen", 0, 0), _enemy("pawn", 0, 1), _enemy("knight", 0, 2)])
+	check(absf(BoardScoring.formation_order(queen_front, 1) - 1.0 / 3.0) < 0.0001,
+			"a tanking prize loses exactly its own pairs — the rest still count")
+	# THE 20:13 DEFECT, pinned: a cheap unit holding the deepest seat while the prize
+	# sits one screen shallower. The prize-vs-cheap pair is misordered (1/3) and the
+	# repair — swap their columns — reads strictly better (2/3): the exposure numbers
+	# the game already computes are the whole measure.
+	var offense := _state_with([_enemy("knight", 0, 0), _enemy("queen", 0, 1), _enemy("pawn", 0, 3)])
+	var repaired := _state_with([_enemy("knight", 0, 0), _enemy("pawn", 0, 2), _enemy("queen", 0, 3)])
+	check(absf(BoardScoring.formation_order(offense, 1) - 1.0 / 3.0) < 0.0001,
+			"a fodder in the best seat over the prize is a misordered pair")
+	check(absf(BoardScoring.formation_order(repaired, 1) - 2.0 / 3.0) < 0.0001,
+			"…and swapping them is strictly better")
+	# A stack is judged through its pairs with the units OUTSIDE it: the prize stacked
+	# onto a cheap unit's column ties that pair away, but keeps its pair with the
+	# frontman — moving the cheap unit out (prize left sole and deepest) adds the
+	# recovered pair as concordant.
+	var stacked := _state_with([_enemy("knight", 0, 0), _enemy("pawn", 0, 3), _enemy("queen", 1, 3)])
+	var spread := _state_with([_enemy("knight", 0, 0), _enemy("pawn", 0, 2), _enemy("queen", 1, 3)])
+	check(BoardScoring.formation_order(spread, 1) > BoardScoring.formation_order(stacked, 1),
+			"unstacking the prize from a cheap column-mate reads strictly better")
 
 
-# The measure's silences and its equal-value rule. Equals should protect each other —
-# EITHER order satisfies the link (an enemy deck is mostly duplicates, and no pecking
-# order among six identical fodders is defensible); a lone unit has no links at all.
+# The measure's silences: no comparable pairs = no offence = 1.0, never a low score.
 func _formation_order_silences() -> void:
 	var lone := _state_with([_enemy("queen", 0, 0)])
 	check(absf(BoardScoring.formation_order(lone, 1) - 1.0) < 0.0001,
-			"a lone unit has no links — silent at 1, not zero")
+			"a lone unit has no pairs — silent at 1")
 	var twins := _state_with([_enemy("pawn", 0, 2), _enemy("pawn", 0, 0)])
 	check(absf(BoardScoring.formation_order(twins, 1) - 1.0) < 0.0001,
-			"equal-value units in different columns protect each other — either order is 1")
-	var twin_stack := _state_with([_enemy("pawn", 0, 1), _enemy("pawn", 2, 1)])
-	check(absf(BoardScoring.formation_order(twin_stack, 1) - 0.5) < 0.0001,
-			"equal-value units sharing a column grade 1/2 — protection unbuilt")
+			"equal worth is no comparison — duplicates carry no opinion")
+	# KNOWN SILENCE (on the record in formation_order): a board that is one stack and
+	# nothing else has only intra-stack ties — silent. Real boards carry the captain as
+	# an outside reference.
+	var pure_stack := _state_with([_enemy("queen", 0, 3), _enemy("knight", 1, 3), _enemy("pawn", 2, 3)])
+	check(absf(BoardScoring.formation_order(pure_stack, 1) - 1.0) < 0.0001,
+			"a board that is ONE stack has no comparable pairs — the known silence")
+
+
+# ── Arrangements: the two-move reshuffle candidates (user-designed 2026-07-31) ────────
+#
+# Enumeration and apply plumbing only — whether the engine PICKS an arrangement is
+# behaviour, playtest's job. Pins: pair shape, executability filtering, purity.
+func _arrangement_enumeration() -> void:
+	# Two movable units, otherwise empty board: 3×3 target-column combos each pair, all
+	# executable, single-move-equivalent pairs excluded (either unit keeping its column).
+	var a := _enemy("pawn", 0, 0)
+	var b := _enemy("knight", 1, 1)
+	var state := _state_with([a, b])
+	var cands := CandidateMoves.arrangements(state, {})
+	check_eq(cands.size(), 9, "two movers × 3 foreign columns each = 9 pairs")
+	for cand: Dictionary in cands:
+		check_eq(String(cand["kind"]), "arrange", "…every candidate is an arrangement")
+		check_eq((cand["moves"] as Array).size(), 2, "…of exactly two moves")
+		for m: Dictionary in (cand["moves"] as Array):
+			check(int(m["col"]) != int(m["from_col"]), "…and neither move keeps its column")
+	# A moved unit is out of the pool: no pairs remain for a two-unit board.
+	check_eq(CandidateMoves.arrangements(state, {a: true}).size(), 0,
+			"a unit that already moved this turn pairs with no one")
+	# A building is rooted: same result.
+	var rook := _enemy("rook", 2, 2)
+	var with_rook := _state_with([a, rook])
+	for cand: Dictionary in CandidateMoves.arrangements(with_rook, {}):
+		for m: Dictionary in (cand["moves"] as Array):
+			check(m["inst"] != rook, "a building never appears in an arrangement")
+
+
+func _arrangement_feasibility() -> void:
+	# Column 3 full; a pair sending TWO outside units into it has no legal order and must
+	# not be a candidate — but a pair where one mover LEAVES c3 first (opening the seat)
+	# is legal. Executability is decided at enumeration, not discovered at apply.
+	var full := [_enemy("pawn", 0, 3), _enemy("pawn", 1, 3), _enemy("pawn", 2, 3)]
+	var outsiders := [_enemy("knight", 0, 0), _enemy("bishop", 1, 0)]
+	var state := _state_with(full + outsiders)
+	var both_in := 0
+	var rotation := 0
+	for cand: Dictionary in CandidateMoves.arrangements(state, {}):
+		var moves: Array = cand["moves"]
+		var into_full := 0
+		var out_of_full := 0
+		for m: Dictionary in moves:
+			if int(m["col"]) == 3:
+				into_full += 1
+			if int(m["from_col"]) == 3:
+				out_of_full += 1
+		if into_full == 2 and out_of_full == 0:
+			both_in += 1
+		if into_full == 1 and out_of_full == 1:
+			rotation += 1
+	check_eq(both_in, 0, "two outsiders into a full column: no legal order, no candidate")
+	check(rotation > 0, "one out of the full column, one into the opened seat: legal rotation")
+
+
+func _arrangement_apply_purity() -> void:
+	var a := _enemy("pawn", 0, 0)
+	var b := _enemy("knight", 1, 1)
+	var state := _state_with([a, b])
+	var cand: Dictionary = CandidateMoves.arrangements(state, {})[0]
+	var next := CandidateApply.apply(state, cand)
+	check(state.unit_at(1, 0, 0) != null and state.unit_at(1, 1, 1) != null,
+			"applying an arrangement leaves the source state untouched")
+	var m0: Dictionary = (cand["moves"] as Array)[0]
+	var m1: Dictionary = (cand["moves"] as Array)[1]
+	var u0 := next.unit_at(1, int(m0["row"]), int(m0["col"]))
+	var u1 := next.unit_at(1, int(m1["row"]), int(m1["col"]))
+	check(u0 != null and u0.source == m0["inst"], "the first mover stands at its target")
+	check(u1 != null and u1.source == m1["inst"], "the second mover stands at its target")
+	check_eq(next.units(1).size(), 2, "nobody was duplicated or lost in the shuffle")
 
 
 # The valuation's attack stock is TAP-AWARE (a this-turn instrument): an exhausted unit's

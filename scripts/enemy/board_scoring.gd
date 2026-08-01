@@ -110,9 +110,9 @@ const EXPOSURE_CRITERION_WEIGHT := 0.15
 # 1.0 it would trade real value for tidiness.
 const FORMATION_CRITERION_WEIGHT := 0.1
 
-# Two prices closer than this are the SAME price: the chain grades that link as equals
-# protecting each other instead of letting float noise pick a pecking order between six
-# identical fodders (an enemy deck is mostly duplicates).
+# Two prices — or two seats — closer than this are the SAME: the pair drops out of the
+# formation measure instead of being decided by float noise (an enemy deck is mostly
+# duplicates, and mirrored seats read identical exposure).
 const FORMATION_EPSILON := 0.0001
 
 # PARKED (opt-in quirk default; death risk's reference weight 1.0 lives in
@@ -528,10 +528,10 @@ class ProtectionExposure:
 		return -exposed
 
 
-# THE PROTECTION CHAIN: each unit protected by the next one down the value order, graded
-# link by link (formation_order carries the whole argument). This is the 0..1-legal
-# expression of the instinct ProtectionExposure holds in an unbounded sum — which is why
-# it is a new criterion rather than that one unparked.
+# VALUE ORDER vs SEAT SAFETY: does the army's worth order match its seats' exposure
+# order (formation_order carries the whole argument)? This is the 0..1-legal expression
+# of the instinct ProtectionExposure holds in an unbounded sum — which is why it is a
+# new criterion rather than that one unparked.
 #
 # A Criterion, not a Behavior, deliberately: the measure is already absolute on 0..1, and
 # min-max normalizing it over the cohort would inflate a flat board's rounding noise into a
@@ -884,83 +884,61 @@ static func exposure_breakdown(state: BoardState, side: int, r: int, c: int) -> 
 	return {"base": base, "cover": cover, "exposure": base / (1.0 + cover), "who": who}
 
 
-# ── formation (THE PROTECTION CHAIN — user-designed 2026-07-31, second form) ──
+# ── formation (VALUE ORDER vs SEAT SAFETY — the user's spec, nothing added) ──
 #
-# "Is each of my valuable bodies protected by the next one down?" The measure is a CHAIN,
-# not a map: sort own units by raw worth, descending, and grade each consecutive link —
-# the ideal board seats the cheapest unit at the true front and builds protection link by
-# link up to the prize, which sits behind the whole procession. Protection is CONSTRUCTED
-# by bodies, never found in coordinates (the same ruling as exposure v2).
+# "Higher value units deserve the best seats, better covered slots" (the user's original
+# sentence, 2026-07-31, restored verbatim after three of my re-expressions each flattened
+# it — the graded chain, the binary protection tiers — and each flattening produced a
+# live misplay; the ruling that closed it: unrequested additions are removed, not
+# defended). "How covered is a seat" is NOT this eval's to define: the game already
+# computes it — exposure v2, the number every log's board read prints. This eval only
+# checks that the army's VALUE order matches that SAFETY order.
 #
-# WHY IT EXISTS. The waterfall is honest to a fault: behind a body whose pool swallows the
-# entire pour, every slot behind receives exactly zero, so persistence (and through it
-# total_value) and delivery (and through it damage_output) go identically flat, and the
-# seating falls to the tie-break. Observed twice on 2026-07-31: a 5-attack dps seated in
-# FRONT of a 3.40 fodder on a coin flip (round 2, 0.9943 vs 0.9942 — exactly
-# EnemyEngine.TIE_EPSILON), and the whole army stacked into one back column, invisible to
-# the first (all-pairs concordance) form of this eval because same-column pairs tied on
-# exposure and dropped out. Leapers are the standing reason to care: some damage does
-# reach past every screen, and this eval is the hedge, priced as a PRIOR — it never
+# THE MEASURE. Over every pair of own units: the pair is CONCORDANT when the more
+# valuable one (raw, pre-persistence worth) sits at strictly lower exposure. Score = the
+# concordant fraction of the COMPARABLE pairs; equal worth or equal exposure (within
+# FORMATION_EPSILON) is no comparison; no comparable pairs → silent 1.0. A misordered
+# pair counts against proportionally — never a cliff, so a tank fronting the army loses
+# only its own pairs ("suboptimal setups still count", ruled 2026-07-31).
+#
+# WHY IT EXISTS. The waterfall is honest to a fault: behind a body whose pool swallows
+# the entire pour, every slot behind receives exactly zero, so persistence (and through
+# it total_value) and delivery (and through it damage_output) go identically flat, and
+# seating falls to the tie-break. Leapers are the standing reason to care: some damage
+# reaches past every screen, and this eval is the hedge, priced as a PRIOR — it never
 # models who leaps or where.
 #
-# THE MEASURE. Sort by raw_value descending; for each consecutive link (higher, lower):
-#   · PROTECTED (1)  — the lower-value unit stands in a strictly nearer COLUMN: it screens.
-#     Column relation only, lane-blind — nearest-targeting resolves by column depth first
-#     (targeting_strategy.gd), so lane never decides whether a screen screens.
-#   · EQUAL (1/2)    — same column: protection wasn't built, but the cheaper body at least
-#     shares the seat instead of hiding behind the dearer one. The next-best outcome.
-#   · INVERTED (0)   — the more valuable unit stands nearer the front: the offence.
-# Score = mean over the n−1 links; one unit = silent 1.0 (no offence exists). A link
-# between EQUAL-value units (within FORMATION_EPSILON) counts either order as PROTECTED —
-# equals should protect each other; sharing a column is still the 1/2 grade.
-#
-# Properties, all by construction: intrinsically 0..1 (a Criterion — no cohort machinery;
-# the contract parked ProtectionExposure cannot meet); no exposure number consumed — pure
-# column relations against pure price, so it is immune to the exposure model's own tuning;
-# and an unfixable inversion (a rooted building, a tanking king the judge is content with)
-# costs exactly its own links and never compresses the rest.
-#
-# CHAIN, NOT ALL PAIRS (user-designed 2026-07-31): each unit owes protection only to the
-# next unit up the value order — "place the highest value where it CAN be protected, then
-# protect it with the next unit, and so on." All-pairs double-charges one bad seat n−1
-# times; the chain charges it where it belongs, on its own links.
-#
-# Consequences accepted, playtest is the judge (EVAL_CRITERIA_BRIEF.md testing doctrine):
-#   · LOUDEST ON A SPARSE BOARD — few units, few links, each worth a big fraction.
-#     Ratified: a busy board scatters damage anyway; a sparse board makes a prize parked
-#     in front of a fodder blatant.
-#   · a TAPPED unit prices as expendable for one round (raw_unit_value applies
-#     TAP_DELIVERY_FACTOR), so it can be walked forward as a screen just before it is
-#     worth something again.
-# Own side only — the player's seating is not ours to fix.
+# KNOWN SILENCE, on the record: units sharing a column read identical exposure, so
+# intra-stack pairs drop out. A stack is still judged through its pairs with every unit
+# OUTSIDE it (on real boards the captain is always there), but a board that is ONE stack
+# and nothing else carries no comparable pairs at all and scores silent.
 static func formation_order(state: BoardState, side: int, pricer: EnemyPersonality = null) -> float:
 	# The pass normally ran before any eval (_value); this lazy fallback covers a criterion
 	# constructed alone in a hand-built scorer, exactly as TotalValue's does.
 	if not state.valued or state.valued_by != pricer:
 		run_valuation(state, pricer)
-	var us: Array = state.units(side).duplicate()
+	var us: Array = state.units(side)
 	if us.size() < 2:
-		return 1.0   # nothing to protect — silent, not zero: there is no offence here
-	# Deterministic order: worth descending, ties broken by seat (col, then row) so equal
-	# scores never depend on capture order. Tie-break choice is harmless to the grading —
-	# equal-value links grade either direction as protected.
-	us.sort_custom(func(a: BoardState.UnitState, b: BoardState.UnitState) -> bool:
-		if absf(a.raw_value - b.raw_value) >= FORMATION_EPSILON:
-			return a.raw_value > b.raw_value
-		if a.col != b.col:
-			return a.col < b.col
-		return a.row < b.row)
-	var earned := 0.0
-	for i in us.size() - 1:
-		var high: BoardState.UnitState = us[i]
-		var low: BoardState.UnitState = us[i + 1]
-		if low.col == high.col:
-			earned += 0.5   # sharing the seat — protection unbuilt, order at least not inverted
-		elif low.col < high.col:
-			earned += 1.0   # the cheaper body stands between its better and the enemy
-		elif absf(high.raw_value - low.raw_value) < FORMATION_EPSILON:
-			earned += 1.0   # equals protect each other — either one standing front satisfies
-	return earned / float(us.size() - 1)
+		return 1.0   # nothing to order — silent, not zero
+	var expo: Array = []
+	for u: BoardState.UnitState in us:
+		expo.append(exposure_of(state, side, u.row, u.col))
+	var concordant := 0.0
+	var comparable := 0.0
+	for i in us.size():
+		for j in range(i + 1, us.size()):
+			var a: BoardState.UnitState = us[i]
+			var b: BoardState.UnitState = us[j]
+			var dv := a.raw_value - b.raw_value
+			var de := float(expo[i]) - float(expo[j])
+			if absf(dv) < FORMATION_EPSILON or absf(de) < FORMATION_EPSILON:
+				continue   # same worth, or same seat: no opinion
+			comparable += 1.0
+			if (dv > 0.0) == (de < 0.0):
+				concordant += 1.0   # the dearer unit sits safer
+	if comparable <= 0.0:
+		return 1.0
+	return concordant / comparable
 
 
 # Total damage the player can put out per round: Σ attack × strikes over fielded units,

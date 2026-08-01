@@ -38,6 +38,17 @@ static func apply(state: BoardState, cand: Dictionary, sim: Dictionary = {}) -> 
 			moved.grid_of(1)[from_r][from_c] = null
 			moved.place(mover, int(cand["row"]), int(cand["col"]))
 			return moved
+		"arrange":
+			# Two moves, one destination board — sequenced exactly as enumerated
+			# (CandidateMoves._feasible_pair guarantees each step's slot is free).
+			var arranged := state.copy()
+			for m: Dictionary in (cand["moves"] as Array):
+				var fr := int(m["from_row"])
+				var fc := int(m["from_col"])
+				var mv: BoardState.UnitState = arranged.unit_at(1, fr, fc)
+				arranged.grid_of(1)[fr][fc] = null
+				arranged.place(mv, int(m["row"]), int(m["col"]))
+			return arranged
 		"cast", "ability":
 			return _apply_real(state, cand, sim)
 	push_error("CandidateApply: unknown candidate kind '%s'" % String(cand["kind"]))
@@ -115,6 +126,12 @@ static func _replay(w: CombatWorld, remap: Dictionary, a: Dictionary) -> void:
 			var from_row: Array = w.enemy_grid[int(a["from_row"])]
 			from_row[int(a["from_col"])] = null
 			w.place_unit(mover, int(a["row"]), int(a["col"]), 1)
+		"arrange":
+			for m: Dictionary in (a["moves"] as Array):
+				var mv := CardInstance.copied(m["inst"], remap)
+				var row: Array = w.enemy_grid[int(m["from_row"])]
+				row[int(m["from_col"])] = null
+				w.place_unit(mv, int(m["row"]), int(m["col"]), 1)
 		"cast", "ability":
 			_run_cast(w, remap, a)
 
