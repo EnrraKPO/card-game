@@ -93,6 +93,18 @@ func get_all_units() -> Array:
 # This is the ONE definition. The round loop walks it to resolve the fight and the turn-order
 # strip walks it to SHOW the fight's order (see TurnOrderStrip); a second copy of this sort
 # anywhere is a promise the display can quietly break.
+#
+# It lists EVERY unit, including ones that will not swing (a tapped building spent its attack).
+# Their turn still comes up — their activate moment fires, poison ticks, statuses decay — so the
+# display shows them in place, greyed, rather than dropping them: a list that hid them would put
+# a unit's neighbours at numbers the round never calls.
+# WHOSE turn is being resolved right now — set by the round loop as it walks turn_order, null
+# between rounds. A FACT the loop already knows, published rather than pushed at a display: the
+# strip reads it to light the entry whose moment it is (see TurnOrderStrip), and reading it costs
+# nothing, so the cue can track the fight frame by frame instead of on a poll.
+var acting: CardInstance = null
+
+
 func turn_order() -> Array:
 	var order := get_all_units()
 	order.sort_custom(func(a: CardInstance, b: CardInstance) -> bool:

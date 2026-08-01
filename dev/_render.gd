@@ -649,6 +649,23 @@ func _ready() -> void:
 				break
 			for _f in 25:
 				await get_tree().process_frame
+	# Combat "turnacting=N": stands the round loop still on the Nth entry (CombatWorld.acting) and
+	# taps the one after it, so one shot carries all three entry states — acting, spent, ready.
+	for a: String in args:
+		if scene_path.contains("combat") and a.begins_with("turnacting"):
+			var want := int(a.trim_prefix("turnacting=")) if a.contains("=") else 1
+			for n: Node in sv.find_children("*", "TurnOrderStrip", true, false):
+				var strip := n as TurnOrderStrip
+				strip.refresh()
+				var listed: Array = strip.listed()
+				if want >= 1 and want <= listed.size():
+					strip.world.acting = listed[want - 1]
+					print("TURNACTING: entry %d -> %s" % [want, listed[want - 1].data.id])
+				if want < listed.size():
+					(listed[want] as CardInstance).attack_exhausted = true
+				break
+			for _f in 25:
+				await get_tree().process_frame
 	sv.get_texture().get_image().save_png(OUT)
 	print("RENDERED ", scene_path, " @ ", RES)
 	get_tree().quit()

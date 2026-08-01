@@ -594,6 +594,32 @@ func is_spotlit(inst: CardInstance) -> bool:
 	return inst != null and inst == _spotlight
 
 
+# ── The declared TURN NUMBERS ───────────────────────────────────────────────────
+# "Is the player reading the activation order right now, and if so what is it" — declared by the
+# TurnOrderStrip while the cursor rests on it, so every unit can wear its own place in the order
+# where it stands and the list stops being a thing you look BACK AND FORTH at.
+#
+# The board does NOT sort: it is handed the order the strip already got from CombatWorld.turn_order
+# (the one sort — see TurnOrderStrip), and only flattens it to a lookup so a card asking for its
+# own number costs a hash rather than a sort.
+var _turn_numbers: Dictionary = {}
+
+
+func declare_turn_numbers(order: Array) -> void:
+	var next: Dictionary = {}
+	for i in order.size():
+		next[order[i]] = i + 1
+	if next == _turn_numbers:
+		return
+	_turn_numbers = next
+	derive_cards()
+
+
+# This unit's place in the declared order, or 0 for "nothing is being declared" / not listed.
+func turn_number(inst: CardInstance) -> int:
+	return int(_turn_numbers.get(inst, 0))
+
+
 # "Am I the pivot's victim?" — a compare against the memoized answer.
 func is_pivot_target(inst: CardInstance) -> bool:
 	return inst != null and inst == _pivot_target

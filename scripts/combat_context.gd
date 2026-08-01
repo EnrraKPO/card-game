@@ -125,3 +125,9 @@ func pivot() -> CardInstance:
 # strip's hover, declared on the board like the preview world (see CombatBoard.declare_spotlight).
 func is_spotlit(inst: CardInstance) -> bool:
 	return board != null and board.is_spotlit(inst)
+
+
+# "Is the activation order being read right now, and what is my place in it?" — 0 when nobody is
+# reading the strip (see CombatBoard.declare_turn_numbers).
+func turn_number(inst: CardInstance) -> int:
+	return board.turn_number(inst) if board != null else 0

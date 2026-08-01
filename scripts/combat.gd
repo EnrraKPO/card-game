@@ -695,6 +695,9 @@ func _run_combat() -> void:
 	for attacker: CardInstance in _world.turn_order():
 		if not attacker.is_alive():
 			continue
+		# Publish whose moment this is (the strip lights its entry — see CombatWorld.acting). Set
+		# for EVERY unit whose turn comes up, tapped ones included: their activate still fires.
+		_world.acting = attacker
 		# The unit's turn has come up: broadcast its ON_ACTIVATE moment (subject = this unit). Its own
 		# effects proc (e.g. poison) then its statuses decay. This can kill it before it acts, so
 		# re-check life before its attack.
@@ -705,6 +708,8 @@ func _run_combat() -> void:
 		if attacker.attack_exhausted:
 			continue
 		await _resolve_attack(attacker)
+	# The round is over: nobody's moment, so the strip stops pointing at anyone.
+	_world.acting = null
 
 
 # Plays out a single attacker's turn: `strikes` full strike sequences (base 1 — the
@@ -1718,10 +1723,12 @@ func _build_halves_gutter() -> Control:
 
 	var pad := MarginContainer.new()
 	pad.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	pad.add_theme_constant_override("margin_left", 5)
-	pad.add_theme_constant_override("margin_right", 5)
-	pad.add_theme_constant_override("margin_top", 6)
-	pad.add_theme_constant_override("margin_bottom", 6)
+	# Tight on purpose: every pixel the padding gives back is thumbnail, and the gutter's own
+	# width is fixed (widening it would cost the boards their room).
+	pad.add_theme_constant_override("margin_left", 2)
+	pad.add_theme_constant_override("margin_right", 2)
+	pad.add_theme_constant_override("margin_top", 4)
+	pad.add_theme_constant_override("margin_bottom", 4)
 	pad.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	gutter.add_child(pad)
 

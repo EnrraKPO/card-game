@@ -55,10 +55,6 @@ var _hold_dragging := false   # a drag started while the hold was still viable
 @onready var _shield_lbl: Label = %ShieldLabel
 @onready var _hp_bg: TextureRect = %HpBg
 @onready var _hp_lbl: Label     = %HpLabel
-# The missing-life gauge standing beside the health badge — the badge's number says what's left,
-# the gauge says how much of the total that is (see HealthGauge). Authored in the scene like the
-# badges, so it can be repositioned in the editor.
-@onready var _hp_gauge: HealthGauge = %HpGauge
 @onready var _comp_row: BoxContainer = %CompRow
 @onready var _status_row: BoxContainer = %StatusRow   # authored under Canvas; position it in the editor
 var _threat_tw: Tween = null   # looping pulse on the Attack badge while flagged an incoming threat
@@ -278,7 +274,7 @@ var _flip_applied := false
 func _flip_nodes() -> Array:
 	return [_cost_bg, _cost_lbl, _name_bg, _name_label, _comp_row,
 		_atk_bg, _atk_lbl, _spd_bg, _spd_lbl, _shield_bg, _shield_lbl,
-		_hp_bg, _hp_lbl, _hp_gauge, _status_row, _charm_col]
+		_hp_bg, _hp_lbl, _status_row, _charm_col]
 
 
 # The stat-badge background textures — mirrored in place (flip_h) so their asymmetric art faces the
@@ -335,6 +331,59 @@ func _apply_asset_textures() -> void:
 	_atk_bg.texture = BADGE_ATTACK
 	_shield_bg.texture = BADGE_SHIELD
 	_hp_bg.texture = BADGE_HEALTH
+	# Per-card material: the fill level differs card to card, so the shader params can't be shared.
+	var mat := ShaderMaterial.new()
+	mat.shader = HEALTH_BADGE_SHADER
+	_hp_bg.material = mat
+
+
+# The health badge is the health gauge (see health_badge.gdshader): the heart drains top-down and
+# recolours as the unit bleeds out, so "is this thing nearly dead?" is answerable without knowing
+# its total — which is exactly what a board full of strangers won't tell you. The total itself is
+# no longer written on the card at all; it lives in the inspector's stat column (CardTooltip).
+const HEALTH_BADGE_SHADER := preload("res://assets/ui/cards/health_badge.gdshader")
+
+# The two thresholds the whole readout is built on — the heart's colour ramp is anchored to the
+# same stops the number's colour steps at, so the badge and its number never disagree.
+const HEALTH_WARN := 2.0 / 3.0
+const HEALTH_CRIT := 1.0 / 3.0
+
+# Heart tints at full / warn / crit, interpolated between (the number steps, the art slides).
+const HEALTH_RAMP_FULL := Color(0.32, 0.84, 0.34)
+const HEALTH_RAMP_WARN := Color(0.96, 0.78, 0.18)
+const HEALTH_RAMP_CRIT := Color(0.95, 0.16, 0.13)
+
+const HEALTH_NUM_OK := Color(0.97, 0.95, 0.86)     # the shared badge-number colour
+const HEALTH_NUM_WARN := Color(1.0, 0.85, 0.25)
+const HEALTH_NUM_CRIT := Color(1.0, 0.30, 0.24)
+
+
+# Feeds the badge-as-gauge from the live instance. Called from refresh.
+func _refresh_health_badge() -> void:
+	var maximum := int(card_instance.get_attribute("max_health"))
+	var have := clampi(card_instance.current_health, 0, maxi(maximum, 0))
+	# A unit with no max (shouldn't happen, but a card mid-construction can) reads as full rather
+	# than as a corpse.
+	var ratio := 1.0 if maximum <= 0 else float(have) / float(maximum)
+	var tint: Color
+	if ratio >= HEALTH_WARN:
+		tint = HEALTH_RAMP_WARN.lerp(HEALTH_RAMP_FULL,
+			(ratio - HEALTH_WARN) / (1.0 - HEALTH_WARN))
+	elif ratio >= HEALTH_CRIT:
+		tint = HEALTH_RAMP_CRIT.lerp(HEALTH_RAMP_WARN,
+			(ratio - HEALTH_CRIT) / (HEALTH_WARN - HEALTH_CRIT))
+	else:
+		tint = HEALTH_RAMP_CRIT
+	var mat := _hp_bg.material as ShaderMaterial
+	if mat != null:
+		mat.set_shader_parameter("fill", ratio)
+		mat.set_shader_parameter("tint", tint)
+	var num := HEALTH_NUM_OK
+	if ratio < HEALTH_CRIT:
+		num = HEALTH_NUM_CRIT
+	elif ratio < HEALTH_WARN:
+		num = HEALTH_NUM_WARN
+	_hp_lbl.add_theme_color_override("font_color", num)
 
 
 func _apply_label_style() -> void:
@@ -406,10 +455,15 @@ func clear_generated() -> void:
 		_apply_border_style()
 
 
+# THE look of "spent" — shared, because the turn-order strip greys a tapped unit's entry with it
+# too (see TurnOrderStrip._dress) and two definitions of tapped would drift apart.
+const EXHAUST_TINT := Color(0.6, 0.6, 0.68)
+
+
 # Dims a building whose attack was spent generating a card this round, so it
 # reads as "tapped". Reset to normal at the start of the next round.
 func set_exhausted(exhausted: bool) -> void:
-	modulate = Color(0.6, 0.6, 0.68) if exhausted else Color.WHITE
+	modulate = EXHAUST_TINT if exhausted else Color.WHITE
 
 
 # ── Phantom: a card that isn't real ─────────────────────────────────────────────
@@ -515,8 +569,12 @@ func derive_presentation() -> void:
 	# one place that says what that looks like, so they can never fight over it. Guarded to a
 	# slot's real occupant like the other board states — a landing phantom or a lunge ghost is a
 	# projection of the unit, not the unit being pointed at.
-	var spotlit: bool = ctx != null and card_instance != null \
-			and slot != null and slot.get_card() == self and ctx.is_spotlit(card_instance)
+	var occupant: bool = card_instance != null and slot != null and slot.get_card() == self
+	var spotlit: bool = ctx != null and occupant and ctx.is_spotlit(card_instance)
+	# The whole activation order, written on the units themselves while the player reads the strip
+	# (see CombatBoard.declare_turn_numbers). Same guard as the spotlight: a landing phantom or a
+	# lunge ghost stands FOR a unit, it does not hold that unit's place in the round.
+	_refresh_turn_number(ctx.turn_number(card_instance) if ctx != null and occupant else 0)
 	if card_instance != null and card_instance.ability != null \
 			and card_instance.source_building != null:
 		_apply_selected(_pickable() \
@@ -557,6 +615,71 @@ func derive_presentation() -> void:
 			tags.append({"id": "dodge_dealt",
 				"params": {"n": _as_pct(Resolver.dodge_chance(pivot, card_instance))}})
 	_apply_tags(tags)
+
+
+# ── The turn number, worn on the card ───────────────────────────────────────────
+# While the player reads the turn-order strip, every listed unit says its own place in the round
+# right where it stands. Big and central on purpose: it is a TRANSIENT reading aid, alive only for
+# the length of the gesture that asked for it, so it may cover art the rest of the game needs — a
+# discreet corner pip would just be a second thing to hunt for, which is the problem this solves.
+# Styled from the strip's own constants so the tab in the list and the number on the board are
+# visibly the same statement.
+var _turn_plate: Panel = null
+var _turn_lbl: Label = null
+
+const TURN_PLATE_SIZE := Vector2(120.0, 96.0)   # native card units (see NATIVE_SIZE)
+const TURN_FONT := 72
+const TURN_LINE_W := 7          # heavy, like the strip's own panels
+const PLATE_ALPHA := 0.5
+
+
+func _refresh_turn_number(n: int) -> void:
+	if n <= 0:
+		if _turn_plate != null:
+			_turn_plate.visible = false
+			_turn_lbl.visible = false
+		return
+	if _turn_plate == null:
+		var fill := TurnOrderStrip.fill_color(card_instance.owner)
+		var line := TurnOrderStrip.line_color(card_instance.owner)
+		_turn_plate = Panel.new()
+		_turn_plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var ps := StyleBoxFlat.new()
+		# The plate is SEE-THROUGH — the unit it names has to stay recognisable underneath it (the
+		# player is reading the order OF units, not of numbers). The numeral itself stays fully
+		# opaque, which is what its heavy outline is for.
+		ps.bg_color = Color(fill.r, fill.g, fill.b, PLATE_ALPHA)
+		ps.set_corner_radius_all(14)
+		ps.set_border_width_all(TURN_LINE_W)
+		ps.border_color = Color(line.r, line.g, line.b, 0.92)
+		_turn_plate.add_theme_stylebox_override("panel", ps)
+		_canvas.add_child(_turn_plate)
+
+		_turn_lbl = Label.new()
+		_turn_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_turn_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		# TOP — the vertical placement is TurnOrderStrip.baseline_offset's job (see below).
+		_turn_lbl.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+		_turn_lbl.add_theme_color_override("font_color", TurnOrderStrip.NUM_COLOR)
+		_turn_lbl.add_theme_color_override("font_outline_color", line)
+		_turn_lbl.add_theme_font_size_override("font_size", TURN_FONT)
+		_turn_lbl.add_theme_constant_override("outline_size",
+				int(TURN_FONT * TurnOrderStrip.NUM_OUTLINE))
+		_canvas.add_child(_turn_lbl)
+
+		# Centred in the card's native box — the one place no stat badge, nameplate or status pip
+		# can be, and immune to the flip that mirrors the badge layout (see _apply_mirror).
+		var at := (NATIVE_SIZE - TURN_PLATE_SIZE) * 0.5
+		_turn_plate.position = at
+		_turn_plate.size = TURN_PLATE_SIZE
+		# The digits, not the line box, sit centred in the plate — the SAME baseline placement the
+		# strip uses on its own numerals, so the two can't disagree about what centred means.
+		_turn_lbl.position = at + Vector2(0.0,
+				TurnOrderStrip.baseline_offset(_turn_lbl, TURN_PLATE_SIZE.y))
+		_turn_lbl.size = TURN_PLATE_SIZE
+	_turn_lbl.text = str(n)
+	_turn_plate.visible = true
+	_turn_lbl.visible = true
 
 
 # Resolver rates are 0..1; the tags speak in whole percent.
@@ -639,9 +762,8 @@ func refresh() -> void:
 	_shield_lbl.visible = not is_spell and shld > 0
 	_hp_bg.visible      = not is_spell
 	_hp_lbl.visible     = not is_spell
-	# The gauge is the health badge's other half — it lives and dies with it.
-	_hp_gauge.visible   = not is_spell
-	_hp_gauge.set_life(card_instance.current_health, card_instance.get_attribute("max_health"))
+	if not is_spell:
+		_refresh_health_badge()
 	_spd_bg.visible     = not is_spell
 	_spd_lbl.visible    = not is_spell
 	_refresh_composition()

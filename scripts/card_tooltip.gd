@@ -316,8 +316,11 @@ static func build_stat_guide(inst: CardInstance, s := 1.0, descriptions_shown :=
 
 	# The three short notes share one pinned height (GUIDE_NOTE_MIN_H) so the four badges come out
 	# evenly spaced; Speed's note is free to grow (its description runs a line longer).
-	vbox.add_child(_stat_row(CardUI.BADGE_HEALTH, inst.current_health, STAT_NUM_COLOR,
-		HEALTH_COLOR, "health", s, true))
+	# MAX health, not current — the card's own badge is now the live readout (it drains and
+	# recolours, see CardUI._refresh_health_badge), so the total it no longer prints has to be
+	# legible somewhere, and the stat column is where a card's scale belongs.
+	vbox.add_child(_stat_row(CardUI.BADGE_HEALTH, int(inst.get_attribute("max_health")),
+		STAT_NUM_COLOR, HEALTH_COLOR, "health", s, true))
 	vbox.add_child(_stat_row(CardUI.BADGE_SHIELD, inst.current_shield, SHIELD_NUM_COLOR,
 		SHIELD_COLOR, "shield", s, true))
 	vbox.add_child(_stat_row(CardUI.BADGE_ATTACK, int(inst.get_attribute("attack")), STAT_NUM_COLOR,
