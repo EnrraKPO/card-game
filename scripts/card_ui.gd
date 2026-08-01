@@ -55,6 +55,10 @@ var _hold_dragging := false   # a drag started while the hold was still viable
 @onready var _shield_lbl: Label = %ShieldLabel
 @onready var _hp_bg: TextureRect = %HpBg
 @onready var _hp_lbl: Label     = %HpLabel
+# The missing-life gauge standing beside the health badge — the badge's number says what's left,
+# the gauge says how much of the total that is (see HealthGauge). Authored in the scene like the
+# badges, so it can be repositioned in the editor.
+@onready var _hp_gauge: HealthGauge = %HpGauge
 @onready var _comp_row: BoxContainer = %CompRow
 @onready var _status_row: BoxContainer = %StatusRow   # authored under Canvas; position it in the editor
 var _threat_tw: Tween = null   # looping pulse on the Attack badge while flagged an incoming threat
@@ -274,7 +278,7 @@ var _flip_applied := false
 func _flip_nodes() -> Array:
 	return [_cost_bg, _cost_lbl, _name_bg, _name_label, _comp_row,
 		_atk_bg, _atk_lbl, _spd_bg, _spd_lbl, _shield_bg, _shield_lbl,
-		_hp_bg, _hp_lbl, _status_row, _charm_col]
+		_hp_bg, _hp_lbl, _hp_gauge, _status_row, _charm_col]
 
 
 # The stat-badge background textures — mirrored in place (flip_h) so their asymmetric art faces the
@@ -627,6 +631,9 @@ func refresh() -> void:
 	_shield_lbl.visible = not is_spell and shld > 0
 	_hp_bg.visible      = not is_spell
 	_hp_lbl.visible     = not is_spell
+	# The gauge is the health badge's other half — it lives and dies with it.
+	_hp_gauge.visible   = not is_spell
+	_hp_gauge.set_life(card_instance.current_health, card_instance.get_attribute("max_health"))
 	_spd_bg.visible     = not is_spell
 	_spd_lbl.visible    = not is_spell
 	_refresh_composition()
