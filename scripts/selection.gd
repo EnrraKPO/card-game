@@ -83,18 +83,31 @@ func clear_ability() -> void:
 	changed.emit(_subject)
 
 
-# Whether `subject` IS the pick. The question every view asks about itself.
+# A freed subject is nobody's pick: screens that rebuild their cards (a unit retiring, a hand
+# rebuilt) can leave the pick pointing at an object that no longer exists, and a freed instance
+# fails LOUDLY at every use — `==` errors, and `as` throws "Trying to cast a freed object". So the
+# collapse happens ONCE, here, on the way out of the state: every reader below funnels through
+# this, and none of them can observe a freed pick. Silent by design — no `changed` emission from a
+# read. The pick didn't move, it stopped existing, and every view derives (CardUI.derive_presentation
+# self-polls) rather than waiting to be told.
 #
-# A freed subject is nobody's pick: screens that rebuild their cards can leave the pick pointing at
-# an object that no longer exists, and comparing against a freed instance is an error rather than a
-# false. Caught here, once, instead of at every asking site.
-func holds(subject: Variant) -> bool:
-	if subject == null or _subject == null:
-		return false
-	if _subject is Object and not is_instance_valid(_subject):
+# `typeof` and NOT `is Object`: `is` DEREFERENCES its left operand, so on a freed instance the
+# guard itself errors ("Left operand of 'is' is a previously freed instance") — the check meant to
+# absorb the hazard trips over it. typeof reads the Variant's type tag and touches nothing. Nor can
+# is_instance_valid stand alone up front: a non-Object pick is legal (deck screens pick bare String
+# ids) and would read invalid, collapsing a perfectly live pick.
+func _live() -> Variant:
+	if typeof(_subject) == TYPE_OBJECT and not is_instance_valid(_subject):
 		_subject = null
+		_ability = null   # "the pick's ability" no longer refers to anything
+	return _subject
+
+
+# Whether `subject` IS the pick. The question every view asks about itself.
+func holds(subject: Variant) -> bool:
+	if subject == null:
 		return false
-	return _subject == subject
+	return _live() != null and _subject == subject
 
 
 # Whether `ability` of `owner` IS the picked ability — the tray widget's question about itself.
@@ -104,12 +117,12 @@ func ability_held(owner: Variant, ability: Variant) -> bool:
 
 
 func current() -> Variant:
-	return _subject
+	return _live()
 
 
 func current_ability() -> Variant:
-	return _ability
+	return _ability if _live() != null else null
 
 
 func active() -> bool:
-	return _subject != null
+	return _live() != null
