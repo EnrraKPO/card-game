@@ -85,6 +85,32 @@ func get_all_units() -> Array:
 	return all
 
 
+# THE activation order: who acts, and in what order, when the round resolves. Speed first,
+# then the player's army, then depth (the unit furthest forward on its own side goes first),
+# then the back row — every tie broken deterministically, because an arbitrary order between
+# equal units reads as a rule to the player.
+#
+# This is the ONE definition. The round loop walks it to resolve the fight and the turn-order
+# strip walks it to SHOW the fight's order (see TurnOrderStrip); a second copy of this sort
+# anywhere is a promise the display can quietly break.
+func turn_order() -> Array:
+	var order := get_all_units()
+	order.sort_custom(func(a: CardInstance, b: CardInstance) -> bool:
+		var sa := a.get_attribute("speed")
+		var sb := b.get_attribute("speed")
+		if sa != sb:
+			return sa > sb
+		if a.owner != b.owner:
+			return a.owner < b.owner
+		var pa: int = a.col if a.owner == 0 else BoardData.COLS - 1 - a.col
+		var pb: int = b.col if b.owner == 0 else BoardData.COLS - 1 - b.col
+		if pa != pb:
+			return pa > pb
+		return a.row > b.row
+	)
+	return order
+
+
 # A unit leaves PLAY — state only, and instantly. Targeting, king checks and the next
 # attacker stop seeing it the moment this returns; whoever is presenting the death disposes
 # of its card afterwards (the view half stayed on CombatBoard). Emits unit_retired while

@@ -312,6 +312,28 @@ func _ready() -> void:
 			if n.has_method("_begin_drag"):
 				n.call("_begin_drag", {"kind": "card", "idx": GameData.current_run.deck.size() - 1})
 				break
+	# "packed": fill BOTH boards to their back rows — the crowded case the turn-order strip has to
+	# survive (sixteen entries in one narrow gutter), and a fuller stage for any combat shot.
+	if scene_path.contains("combat") and "packed" in args:
+		var pcombat: Node = null
+		for n: Node in sv.find_children("*", "Node", true, false):
+			if n.has_method("get_chrome") and n.get("_board") != null:
+				pcombat = n
+				break
+		if pcombat != null:
+			var pboard = pcombat.get("_board")
+			var fodder := ["pawn", "bishop", "knight", "rook"]
+			for r in BoardData.ROWS:
+				for c in BoardData.COLS:
+					var pid: String = fodder[(r * BoardData.COLS + c) % fodder.size()]
+					if pboard.player_grid[r][c] == null:
+						pboard.spawn_player_card(CardInstance.from_data(CardData.get_card(pid)), r, c)
+					if pboard.enemy_grid[r][c] == null:
+						var foe := CardInstance.from_data(CardData.get_card(fodder[(c + r) % fodder.size()]))
+						foe.owner = 1
+						pboard.place_enemy_card(foe, r, c)
+			for _f in 20:
+				await get_tree().process_frame
 	# "abilities": field an ability-holder (rook/castling) on the player board and open the
 	# hand's level-2 Abilities view — i.e. the "Inspect Abilities" button pressed ON.
 	if scene_path.contains("combat") and "abilities" in args:
@@ -612,6 +634,21 @@ func _ready() -> void:
 				var c := fx as Control
 				if c != null:
 					print("VFX   %s visible=%s rect=%s" % [c.get_class(), c.visible, c.get_global_rect()])
+	# Combat "turnhover=N": points at the Nth entry of the turn-order strip the way a cursor does,
+	# so the shot shows the strip AND the unit it lights on the board (see TurnOrderStrip).
+	for a: String in args:
+		if scene_path.contains("combat") and a.begins_with("turnhover"):
+			var want := int(a.trim_prefix("turnhover=")) if a.contains("=") else 1
+			for n: Node in sv.find_children("*", "TurnOrderStrip", true, false):
+				var strip := n as TurnOrderStrip
+				strip.refresh()
+				var listed: Array = strip.listed()
+				if want >= 1 and want <= listed.size():
+					strip.point_at(listed[want - 1])
+					print("TURNHOVER: entry %d -> %s" % [want, listed[want - 1].data.id])
+				break
+			for _f in 25:
+				await get_tree().process_frame
 	sv.get_texture().get_image().save_png(OUT)
 	print("RENDERED ", scene_path, " @ ", RES)
 	get_tree().quit()

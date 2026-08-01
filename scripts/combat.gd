@@ -23,8 +23,13 @@ const PACE_ICONS := [
 # post-strike beat — were dead air between finished animations; awaiting the cue itself now returns
 # at its handoff, so the next beat starts under the previous one's tail instead of after it.
 # (RELIC_CHIP_SPAN moved to LivePresenter with the relic-glint body.)
-const BOARD_HALVES_GAP := 24.0   # the TOTAL gulf between the halves: divider + flanking gaps
-const HALVES_DIVIDER_W := 4.0   # the visible rule standing in the middle of that gulf
+# The gulf between the halves is now a COLUMN, not a rule: the turn-order strip lives there (see
+# TurnOrderStrip — it belongs to neither army and describes both), dressed as a framed track like
+# the relic strip and the mana gauge. A wide framed column separates the two fields at least as
+# hard as the hairline it replaces, and it earns the pixels it costs the board.
+const HALVES_GUTTER_W := 58.0
+const HALVES_GUTTER_W_COMPACT := 72.0
+const HALVES_FLANK := 10.0   # breathing room either side of the gutter
 const COL_SEP := 14.0   # board↔hand breathing room; also a term in _resize_board's height budget
 const TOP_MARGIN := 12.0   # the body's top inset; another _resize_board height-budget term
 
@@ -70,6 +75,7 @@ var _pacing_btn: Button
 var _battle_speed: float = 1.0   # 100%; reset each combat, cycled by the HUD dial
 
 var _board_row: HBoxContainer   # the two board halves; drives responsive slot sizing on resize
+var _turn_strip: TurnOrderStrip   # who acts next, in the gutter between the halves; self-polling
 var _arena_chrome_w: float = 0.0   # side margins + left rail + action column + separations —
 									# the fixed width around the board, _resize_board's width basis
 
@@ -683,22 +689,9 @@ func _on_done_pressed() -> void:
 # ── Combat resolution ──────────────────────────────────────────────────────────
 
 func _run_combat() -> void:
-	var all_cards := _board.get_all_units()
-	all_cards.sort_custom(func(a: CardInstance, b: CardInstance) -> bool:
-		var sa := a.get_attribute("speed")
-		var sb := b.get_attribute("speed")
-		if sa != sb:
-			return sa > sb
-		if a.owner != b.owner:
-			return a.owner < b.owner
-		var pa: int = a.col if a.owner == 0 else BoardData.COLS - 1 - a.col
-		var pb: int = b.col if b.owner == 0 else BoardData.COLS - 1 - b.col
-		if pa != pb:
-			return pa > pb
-		return a.row > b.row
-	)
-
-	for attacker: CardInstance in all_cards:
+	# The order the strip between the boards has been showing all along — one definition, so
+	# the promise the display makes is the one the round keeps (see CombatWorld.turn_order).
+	for attacker: CardInstance in _world.turn_order():
 		if not attacker.is_alive():
 			continue
 		# The unit's turn has come up: broadcast its ON_ACTIVATE moment (subject = this unit). Its own
@@ -1666,14 +1659,13 @@ func _build_ui() -> void:
 	_board_row = HBoxContainer.new()
 	_board_row.size_flags_horizontal = SIZE_EXPAND_FILL
 	_board_row.size_flags_vertical = SIZE_EXPAND_FILL
-	# The halves' gulf is divider + two flanking separations, totalling BOARD_HALVES_GAP (the
+	# The halves' gulf is the gutter plus two flanking separations, totalling _halves_gap() (the
 	# width _resize_board budgets for).
-	_board_row.add_theme_constant_override("separation",
-		int((BOARD_HALVES_GAP - HALVES_DIVIDER_W) / 2.0))
+	_board_row.add_theme_constant_override("separation", int(HALVES_FLANK))
 	arena.add_child(_board_row)
 
 	_board.build_section(_board_row, true)
-	_board_row.add_child(_make_halves_divider())
+	_board_row.add_child(_build_halves_gutter())
 	_board.build_section(_board_row, false)
 
 	# The action column: the main column's full-height SIBLING (not part of the arena). Its own
@@ -1698,18 +1690,45 @@ func _build_ui() -> void:
 	call_deferred("_resize_board")
 
 
-# The thin vertical rule between the player and enemy halves — with the zones now tinted in
-# their own colours, this is the hard line the two fields meet at.
-func _make_halves_divider() -> Control:
-	var divider := Panel.new()
-	divider.custom_minimum_size.x = HALVES_DIVIDER_W
-	divider.size_flags_vertical = SIZE_EXPAND_FILL
-	divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.16, 0.18, 0.32, 0.85)
-	sb.set_corner_radius_all(2)
-	divider.add_theme_stylebox_override("panel", sb)
-	return divider
+func _halves_gutter_w() -> float:
+	return HALVES_GUTTER_W_COMPACT if UIScale.is_compact() else HALVES_GUTTER_W
+
+
+# The width _resize_board must keep out of the board's own budget: the gutter and its flanks.
+func _halves_gap() -> float:
+	return _halves_gutter_w() + HALVES_FLANK * 2.0
+
+
+# The column standing between the player and enemy halves: the hard line the two fields meet at,
+# and the home of the turn-order strip. Framed like the relic strip and the mana gauge so the
+# three read as one family of side rails, with the strip filling it from the TOP — turn 1 sits in
+# the same place whether the board holds two units or sixteen.
+func _build_halves_gutter() -> Control:
+	var gutter := Panel.new()
+	gutter.custom_minimum_size.x = _halves_gutter_w()
+	gutter.size_flags_vertical = SIZE_EXPAND_FILL
+	UIScale.tip(gutter, Loc.t("combat.turn_order_tip"))
+	var track := StyleBoxFlat.new()
+	track.bg_color = ScreenUI.MANA_TRACK_BG
+	track.set_corner_radius_all(12)
+	track.set_border_width_all(2)
+	track.border_color = ScreenUI.MANA_TRACK_BORDER
+	gutter.add_theme_stylebox_override("panel", track)
+
+	var pad := MarginContainer.new()
+	pad.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	pad.add_theme_constant_override("margin_left", 5)
+	pad.add_theme_constant_override("margin_right", 5)
+	pad.add_theme_constant_override("margin_top", 6)
+	pad.add_theme_constant_override("margin_bottom", 6)
+	pad.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	gutter.add_child(pad)
+
+	_turn_strip = TurnOrderStrip.new()
+	_turn_strip.world = _world
+	_turn_strip.board = _board
+	pad.add_child(_turn_strip)
+	return gutter
 
 
 # The vertical relic strip, owning the whole left rail: with no header during combat this is
@@ -2012,7 +2031,7 @@ func _resize_board() -> void:
 	var gap := float(BoardData.SLOT_GAP)
 	# Width splits across the two halves (minus the gulf between them); each half holds `cols`
 	# inside its zone panel's inner pad.
-	var half_w := (size.x - _arena_chrome_w - BOARD_HALVES_GAP) / 2.0
+	var half_w := (size.x - _arena_chrome_w - _halves_gap()) / 2.0
 	var slot_w_by_width := (half_w - 2.0 * CombatBoard.HALF_PAD - (cols - 1) * gap) / float(cols)
 	# Height: the body's column carries the board's `rows` cards + the hand's one card (same
 	# size), the row gaps, the zone panels' vertical pad, the column separation, and the hand

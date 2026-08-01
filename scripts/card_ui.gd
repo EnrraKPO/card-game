@@ -508,13 +508,21 @@ func derive_presentation() -> void:
 	# view asks the ability question: it stands for "this ability, of this holder", never for a
 	# card of its own — so it lights while its ability is the aimed sub-pick, and its holder's
 	# board card (whose subject is the holder itself) never mistakes that pick for its own.
+	var ctx := CombatContext.current
+	# The SPOTLIGHT: something elsewhere on the screen is pointing at this unit (the turn-order
+	# strip's hover — see CombatBoard.declare_spotlight). It wears the SAME canonical treatment a
+	# pick does, through the same applier: two reasons to be the card the player is looking at,
+	# one place that says what that looks like, so they can never fight over it. Guarded to a
+	# slot's real occupant like the other board states — a landing phantom or a lunge ghost is a
+	# projection of the unit, not the unit being pointed at.
+	var spotlit: bool = ctx != null and card_instance != null \
+			and slot != null and slot.get_card() == self and ctx.is_spotlit(card_instance)
 	if card_instance != null and card_instance.ability != null \
 			and card_instance.source_building != null:
 		_apply_selected(_pickable() \
 				and Selection.ability_held(card_instance.source_building, card_instance.ability))
 	else:
-		_apply_selected(_pickable() and Selection.holds(subject()))
-	var ctx := CombatContext.current
+		_apply_selected(spotlit or (_pickable() and Selection.holds(subject())))
 	if ctx == null:
 		return
 	var tags: Array[Dictionary] = []

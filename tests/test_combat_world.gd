@@ -24,6 +24,7 @@ func run() -> void:
 	_tracker_rebind()
 	_kill_provenance_cycle()
 	_policy_flip()
+	_turn_order()
 
 
 # A unit of the fixture card placed on the world's grid at (r, c) for the given side.
@@ -240,3 +241,40 @@ func _policy_flip() -> void:
 	check(not w2.rewards_live, "a copy never pays — hypotheticals write no run state")
 	var w3 := w2.copy()
 	check(not w3.rewards_live, "…nor does a copy of a copy")
+
+
+# The activation order is the CONTRACT between the round loop and the turn-order strip that
+# advertises it (see CombatWorld.turn_order / TurnOrderStrip): one sort, walked by both. Every
+# tie is broken deterministically on purpose — an arbitrary order between equal units reads to
+# the player as a rule, and a display that guessed differently from the fight would be a lie.
+func _turn_order() -> void:
+	var w := CombatWorld.make()
+	var slow := _place(w, "pawn", 0, 0, 0)
+	slow.apply_modifier("speed", -5)
+	var fast := _place(w, "pawn", 0, 1, 0)
+	fast.apply_modifier("speed", 5)
+	var order := w.turn_order()
+	check(order[0] == fast and order[1] == slow, "speed decides first")
+
+	# Equal speed, opposite armies: the player's unit acts first.
+	var w2 := CombatWorld.make()
+	var mine := _place(w2, "pawn", 0, 0, 0)
+	var theirs := _place(w2, "pawn", 1, 0, 0)
+	check(w2.turn_order()[0] == mine, "on equal speed the player's army goes first")
+
+	# Equal speed, same army: the unit further FORWARD (deeper into the enemy) goes first, and
+	# the back row settles a shared column.
+	var w3 := CombatWorld.make()
+	var back := _place(w3, "pawn", 0, 0, 0)
+	var front := _place(w3, "pawn", 0, 0, BoardData.COLS - 1)
+	var deep_row := _place(w3, "pawn", 0, BoardData.ROWS - 1, BoardData.COLS - 1)
+	var o3 := w3.turn_order()
+	check(o3[0] == deep_row and o3[1] == front and o3[2] == back,
+			"depth first, then the back row — every tie broken")
+
+	# The enemy's depth is mirrored: its forward column is the LOW one.
+	var w4 := CombatWorld.make()
+	var e_back := _place(w4, "pawn", 1, 0, BoardData.COLS - 1)
+	var e_front := _place(w4, "pawn", 1, 0, 0)
+	check(w4.turn_order()[0] == e_front, "the enemy's depth runs the other way")
+	check(w4.turn_order().size() == 2 and e_back != null, "…and every unit on the board is listed")

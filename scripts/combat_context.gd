@@ -104,3 +104,9 @@ func is_pivot_target(inst: CardInstance) -> bool:
 # The other party in every threat exchange — see CombatBoard.pivot.
 func pivot() -> CardInstance:
 	return board.pivot() if board != null else null
+
+
+# "Is something elsewhere on the screen pointing at this unit right now?" — the turn-order
+# strip's hover, declared on the board like the preview world (see CombatBoard.declare_spotlight).
+func is_spotlit(inst: CardInstance) -> bool:
+	return board != null and board.is_spotlit(inst)

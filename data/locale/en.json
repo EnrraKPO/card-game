@@ -1258,6 +1258,8 @@
   "combat.ready": "Ready",
   "combat.relics_tip": "Relics",
   "combat.select_target": "Select\na target…",
+  "combat.turn_order_entry": "Turn {n}: {name}",
+  "combat.turn_order_tip": "Turn order",
   "combat.tag_crit": "My Crit: {n}%",
   "combat.tag_crit_own": "Your Crit: {n}%",
   "combat.tag_current_target": "Current Target",

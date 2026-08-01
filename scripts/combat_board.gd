@@ -574,6 +574,26 @@ func pivot() -> CardInstance:
 	return _pivot
 
 
+# ── The declared SPOTLIGHT ──────────────────────────────────────────────────────
+# "Which unit is being pointed AT from somewhere else on the screen" — the turn-order strip's
+# hover today (see TurnOrderStrip). A declaration, not a push: the board holds the one answer
+# and every card derives its own look from it (CardUI.derive_presentation wears the canonical
+# pick treatment for it), so a lit unit cannot outlive the gesture that lit it and no teardown
+# path has to remember to unlight anything.
+var _spotlight: CardInstance = null
+
+
+func declare_spotlight(inst: CardInstance) -> void:
+	if inst == _spotlight:
+		return
+	_spotlight = inst
+	derive_cards()
+
+
+func is_spotlit(inst: CardInstance) -> bool:
+	return inst != null and inst == _spotlight
+
+
 # "Am I the pivot's victim?" — a compare against the memoized answer.
 func is_pivot_target(inst: CardInstance) -> bool:
 	return inst != null and inst == _pivot_target
