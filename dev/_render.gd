@@ -649,6 +649,199 @@ func _ready() -> void:
 				break
 			for _f in 25:
 				await get_tree().process_frame
+	# Combat "turnmark=N": marks the Nth unit the way resting the cursor on its CARD does, so the
+	# shot shows the list answering the board (the mirror of turnhover — see TurnOrderStrip).
+	for a: String in args:
+		if scene_path.contains("combat") and a.begins_with("turnmark"):
+			var want := int(a.trim_prefix("turnmark=")) if a.contains("=") else 1
+			for n: Node in sv.find_children("*", "TurnOrderStrip", true, false):
+				var strip := n as TurnOrderStrip
+				strip.refresh()
+				var listed: Array = strip.listed()
+				if want >= 1 and want <= listed.size():
+					strip.mark(listed[want - 1])
+					print("TURNMARK: entry %d -> %s" % [want, listed[want - 1].data.id])
+				break
+			for _f in 25:
+				await get_tree().process_frame
+	# "handflutter=N": swipe in and out of card N repeatedly, each time re-entering while the drop is
+	# still in flight. Every peak must be the SAME height — a lift that reads its floor off a card
+	# still on its way down climbs a little further each pass ("move up by this much" instead of
+	# "move onto this position").
+	for a: String in args:
+		if not (scene_path.contains("combat") and a.begins_with("handflutter")):
+			continue
+		var want := int(a.split("=")[1]) if a.contains("=") else 1
+		for n: Node in sv.find_children("*", "Hand", true, false):
+			var cards: Array[Node] = (n as Hand)._hand_box.get_children()
+			if want < 1 or want > cards.size():
+				break
+			var c := cards[want - 1] as CardUI
+			var peaks := PackedStringArray()
+			for _pass in 6:
+				c.force_hover(true)
+				for _f in 14:                    # part-way up, nowhere near settled
+					await get_tree().process_frame
+				peaks.append("%.1f" % c.position.y)
+				c.force_hover(false)
+				for _f in 6:                     # back out again BEFORE the drop finishes
+					await get_tree().process_frame
+			# THE decisive number: hold the hover after all that fluttering and let it settle. It must
+			# land on exactly the same height a single clean hover reaches (see handhover=N), because
+			# the target is an absolute position, not an increment on wherever the card happened to be.
+			c.force_hover(true)
+			for _f in 90:
+				await get_tree().process_frame
+			print("HANDFLUTTER card %d peaks: " % want, " ".join(peaks),
+					" | settled after fluttering: %.1f" % c.position.y)
+			break
+	# "handswipe=A-B": the case that actually broke — moving from one hand card straight to another,
+	# with no gap. The card being LEFT finishes its drop ~340ms later, and anything it does then must
+	# not disturb the card now being hovered. Traces B's position across that whole window: it must
+	# rise and STAY risen.
+	for a: String in args:
+		if not (scene_path.contains("combat") and a.begins_with("handswipe")):
+			continue
+		var pair := a.split("=")[1].split("-")
+		for n: Node in sv.find_children("*", "Hand", true, false):
+			var cards: Array[Node] = (n as Hand)._hand_box.get_children()
+			var ia := int(pair[0]) - 1
+			var ib := int(pair[1]) - 1
+			if ia < 0 or ib < 0 or ia >= cards.size() or ib >= cards.size():
+				break
+			var ca := cards[ia] as CardUI
+			var cb := cards[ib] as CardUI
+			ca.force_hover(true)
+			for _f in 40:
+				await get_tree().process_frame
+			# The swipe: A is left and B is entered in the same instant, as a pointer does.
+			ca.force_hover(false)
+			cb.force_hover(true)
+			var trace := PackedStringArray()
+			for _b in 14:
+				for _f in 8:
+					await get_tree().process_frame
+				trace.append("%.1f" % cb.position.y)
+			print("HANDSWIPE %d->%d, card %d y: " % [ia + 1, ib + 1, ib + 1], " ".join(trace))
+			break
+	# "cardhover=N" / "handhover=N": rests the cursor on the Nth turn-order unit's BOARD card, or on
+	# the Nth card in the hand row, by emitting the signal a real cursor would (see CardUI._set_hovered).
+	# The lift is ~2.5% of the card's height and deliberately subtle, so the print — rest position vs
+	# lifted position — is the real verification; the shot only confirms nothing else moved with it.
+	for a: String in args:
+		var board_side := a.begins_with("cardhover")
+		if not (scene_path.contains("combat") and (board_side or a.begins_with("handhover"))):
+			continue
+		var want := int(a.split("=")[1]) if a.contains("=") else 1
+		var ui: CardUI = null
+		if board_side:
+			for n: Node in sv.find_children("*", "TurnOrderStrip", true, false):
+				var strip := n as TurnOrderStrip
+				strip.refresh()
+				var listed: Array = strip.listed()
+				if want >= 1 and want <= listed.size():
+					ui = strip.board.get_card_ui(listed[want - 1])
+				break
+		else:
+			for n: Node in sv.find_children("*", "Hand", true, false):
+				var cards: Array[Node] = (n as Hand)._hand_box.get_children()
+				if want >= 1 and want <= cards.size():
+					ui = cards[want - 1] as CardUI
+				break
+		if ui == null:
+			continue
+		var was := ui.position
+		# force_hover, not mouse_entered: there is no real pointer here for the cue's own per-frame
+		# hit test to find (warp_mouse does not reach this SubViewport), so the hover has to be
+		# latched. NOTE this means the harness stages the LOOK — the anti-oscillation hit test
+		# itself needs a real cursor and real eyes.
+		ui.force_hover(true)
+		var trace := PackedStringArray()
+		for _b in 12:
+			for _f in 5:
+				await get_tree().process_frame
+			trace.append("%.1f" % ui.position.y)
+		print("HOVERTRACE(%s): " % ["board" if board_side else "hand"], " ".join(trace))
+		print("CARDHOVER(%s): #%d rest=%.1f lifted=%.1f (rise %.1fpx of %.0f tall)"
+				% ["board" if board_side else "hand", want, was.y, ui.position.y,
+				was.y - ui.position.y, ui.size.y])
+	# "slothover=N": rests the cursor on the Nth EMPTY player slot. The slot answers a pointer only
+	# while nobody is standing in it — an occupied one defers to its occupant's own ring (see
+	# SlotUI._apply_hover_outline) — so this is the shot for the half of the board hover that has no
+	# card in it. Entered directly for the same reason cardhover latches: warp_mouse does not reach
+	# this SubViewport, so no real pointer can ever be inside the slot's rect.
+	for a: String in args:
+		if not (scene_path.contains("combat") and a.begins_with("slothover")):
+			continue
+		var want := int(a.split("=")[1]) if a.contains("=") else 1
+		var seen := 0
+		for n: Node in sv.find_children("*", "SlotUI", true, false):
+			var slot := n as SlotUI
+			if slot.owner_id != 0 or slot.get_card() != null:
+				continue
+			seen += 1
+			if seen != want:
+				continue
+			slot._on_pointer_entered()
+			for _f in 30:
+				await get_tree().process_frame
+			print("SLOTHOVER: empty player slot #%d at r%d c%d" % [want, slot.row, slot.col])
+			break
+	# CombatBoard.press_unit, i.e. the same `slot_pressed` a press on the unit's own card takes. The
+	# print says who ended up the pick, which is what the click is FOR.
+	for a: String in args:
+		if scene_path.contains("combat") and a.begins_with("turnclick"):
+			var want := int(a.trim_prefix("turnclick=")) if a.contains("=") else 1
+			for n: Node in sv.find_children("*", "TurnOrderStrip", true, false):
+				var strip := n as TurnOrderStrip
+				strip.refresh()
+				var listed: Array = strip.listed()
+				if want >= 1 and want <= listed.size():
+					var unit: CardInstance = listed[want - 1]
+					# Add "viaslot" to press the unit's own SLOT instead — the A/B that proves the
+					# strip's door and a real card click land the card in the same visual state.
+					# Reporting the card's SCALE is the point: a selection whose grow silently
+					# became a no-op is invisible in a still, and that is exactly the bug this
+					# caught (see HighlightFx._configure on the shared grow slot). Pair it with
+					# turnhover=N to reproduce a click made while the strip is being read.
+					if "viaslot" in args:
+						(strip.board.slot_of(unit) as SlotUI).pressed.emit()
+					else:
+						strip.board.press_unit(unit)
+					# Long enough for the grow tween to SETTLE, not just to be under way — a
+					# mid-tween sample reads differently on every machine and every run, which is
+					# useless for telling a real regression from timing noise.
+					for _f in 90:
+						await get_tree().process_frame
+					var picked: CardInstance = Selection.current() as CardInstance
+					var ui := strip.board.get_card_ui(unit)
+					# The AUTHORED grow is printed beside the measured one: the entry is tool-tunable,
+					# so "the card only grew 1.07" is a bug report about the code only if the data
+					# still says 1.15. Reading the answer without the question wastes an hour.
+					print("TURNCLICK(%s): entry %d (%s) -> pick=%s card scale=%.3f (authored %.3f) highlight=%s"
+							% ["viaslot" if "viaslot" in args else "strip", want, unit.data.id,
+							"nothing" if picked == null else picked.data.id, ui.scale.x,
+							Vfx.param_of("highlight", "scale", 1.15),
+							Vfx._attached.has("highlight@%d" % ui.get_instance_id())])
+				break
+			for _f in 25:
+				await get_tree().process_frame
+	# Combat "turnselect=N": makes the Nth unit the PICK, for the strip's inverted-skin cue. Selects
+	# for REAL (Selection has no cursor in it), so the board card wears its own selection treatment
+	# too and the shot shows both ends of the pick.
+	for a: String in args:
+		if scene_path.contains("combat") and a.begins_with("turnselect"):
+			var want := int(a.trim_prefix("turnselect=")) if a.contains("=") else 1
+			for n: Node in sv.find_children("*", "TurnOrderStrip", true, false):
+				var strip := n as TurnOrderStrip
+				strip.refresh()
+				var listed: Array = strip.listed()
+				if want >= 1 and want <= listed.size():
+					Selection.select(listed[want - 1])
+					print("TURNSELECT: entry %d -> %s" % [want, listed[want - 1].data.id])
+				break
+			for _f in 25:
+				await get_tree().process_frame
 	# Combat "turnacting=N": stands the round loop still on the Nth entry (CombatWorld.acting) and
 	# taps the one after it, so one shot carries all three entry states — acting, spent, ready.
 	for a: String in args:

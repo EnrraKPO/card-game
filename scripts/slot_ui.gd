@@ -80,6 +80,36 @@ func _ready() -> void:
 	custom_minimum_size = Vector2(165, 216)
 	_apply_style()
 	_build_cue_layer()
+	mouse_entered.connect(_on_pointer_entered)
+	mouse_exited.connect(_on_pointer_exited)
+
+
+# ── The pointer ring ────────────────────────────────────────────────────────────
+# THE SLOT ANSWERS ONLY WHILE IT IS EMPTY. The rule for the board is "outline whatever the pointer is
+# actually addressing", and an occupied slot is not that — the thing you mean is the unit standing in
+# it, and its card wears the ring itself (see CardUI._apply_hover_outline). An EMPTY slot is the
+# thing you mean, a place to put something, and it was the one board surface that answered a cursor
+# with nothing at all.
+#
+# `mouse_entered` is trustworthy here in a way it is not for a lifting hand card: a slot is furniture,
+# it never moves out from under the pointer, so there is no oscillation to hit-test around.
+var _pointer_in := false
+
+func _on_pointer_entered() -> void:
+	_pointer_in = true
+	_apply_hover_outline()
+
+
+func _on_pointer_exited() -> void:
+	_pointer_in = false
+	_apply_hover_outline()
+
+
+# Derived from both facts every time, never toggled from one: a unit placed into (or killed out of)
+# the slot the cursor happens to be resting on hands the ring over without either side noticing the
+# other. Called from set_card/clear_card for exactly that.
+func _apply_hover_outline() -> void:
+	HoverFx.apply(self, _pointer_in and _card_ui == null and HoverFx.available())
 
 
 func set_targetable(enabled: bool) -> void:
@@ -434,6 +464,7 @@ func set_card(card: CardUI) -> void:
 	if _card_ui != null and _card_ui.get_parent() == self:
 		remove_child(_card_ui)
 	_card_ui = card
+	_apply_hover_outline()   # occupancy decides who wears the ring (see _apply_hover_outline)
 	if card == null:
 		reset_cue()   # emptied — may show the idle "open" marker again
 		return
@@ -485,6 +516,7 @@ func clear_card() -> CardUI:
 	if card != null and card.pressed.is_connected(_on_card_pressed):
 		card.pressed.disconnect(_on_card_pressed)
 	_card_ui = null
+	_apply_hover_outline()   # now empty: if the cursor is still here, the slot takes the ring
 	reset_cue()   # emptied — may show the idle "open" marker again
 	return card
 

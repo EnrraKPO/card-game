@@ -277,6 +277,24 @@ func get_card_ui(inst: CardInstance) -> CardUI:
 	return (enemy_slots[inst.row][inst.col] as SlotUI).get_card()
 
 
+# The SLOT a unit stands in — the widget that speaks for it to the input layer.
+func slot_of(inst: CardInstance) -> SlotUI:
+	if inst == null or inst.row < 0 or inst.col < 0:
+		return null
+	return (player_slots if inst.owner == 0 else enemy_slots)[inst.row][inst.col] as SlotUI
+
+
+# "The player pressed this unit" — from somewhere that isn't the unit's own slot (the turn-order
+# strip, whose entries stand for units the cursor never has to reach). Routed through the SAME
+# `slot_pressed` every real press takes, so the Interaction session still gets first refusal and
+# the inspect/select behaviour is whatever clicking the card itself does, by construction rather
+# than by a second implementation kept in step with the first.
+func press_unit(inst: CardInstance) -> void:
+	var slot := slot_of(inst)
+	if slot != null and slot.get_card() != null:
+		slot_pressed.emit(slot)
+
+
 func get_all_units() -> Array:
 	return world.get_all_units()
 
@@ -787,6 +805,22 @@ func slot_at_mouse() -> SlotUI:
 			if es.get_global_rect().has_point(es.get_global_mouse_position()):
 				return es
 	return null
+
+
+# The UNIT under the cursor, or null — the board half of "what has the player's attention", asked
+# by the turn-order strip so pointing at a card on the field lights its entry in the list (the
+# mirror of pointing at an entry lighting the card; see TurnOrderStrip). ASKED, not declared: the
+# board has no reason to hold this and nothing else wants it, so a query costs the one caller its
+# own rect tests rather than costing the board a state to keep correct.
+#
+# A slot's OCCUPANT, never its phantom — a landing projection stands for a unit that isn't there
+# yet and holds no place in the round (the same guard CardUI's own board states use).
+func unit_at_mouse() -> CardInstance:
+	var slot := slot_at_mouse()
+	if slot == null:
+		return null
+	var card := slot.get_card()
+	return card.card_instance if card != null and is_instance_valid(card) else null
 
 
 func _set_phantom_slot(slot: SlotUI) -> void:

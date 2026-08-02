@@ -54,7 +54,17 @@ func _ready() -> void:
 	add_child(_layer)
 	# The canonical selection Highlight (grow + outline + glow, see HighlightFx) is a core UI
 	# treatment owned by no single screen — registered here so it's live everywhere from boot.
-	register_custom("highlight", HighlightFx.state)
+	register_custom(HighlightFx.ENTRY, HighlightFx.state)
+	# The canonical HOVER ring — the same treatment at a third volume, and the one every surface in
+	# the game answers a pointer with (see HoverFx). App-wide like the Highlight it borrows from.
+	register_custom(HoverFx.ENTRY, HighlightFx.state)
+	# The turn-order family wears it at two more volumes: the number the marked unit carries, and
+	# the entry pointed at / the entry acting. All HighlightFx — one shader, several tunings — so
+	# they can never drift apart stylistically.
+	var turn_ids := PackedStringArray(["turn_number_spotlight",
+			"turn_entry_hover", "turn_entry_acting"])
+	for id: String in turn_ids:
+		register_custom(id, HighlightFx.state)
 	# The screen-arrival cue any navigation can ask for by name (Nav.goto's second argument) —
 	# app-wide like the Highlight, owned by no single screen.
 	register_custom("screen_grow_in", ScreenGrowFx.play)
@@ -184,6 +194,23 @@ func shape_changed(target: Control) -> void:
 		var raw: Variant = _attached[key]
 		if is_instance_valid(raw) and (raw as Object).has_method("shape_changed"):
 			(raw as Object).call("shape_changed")
+
+
+# The LIVE sustained state riding (id, target), or null if there isn't one — the door for cues that
+# have to arbitrate with each other rather than merely coexist. Two effects that both want the same
+# visual channel need one of them to be able to find the other and say so; HoverFx borrowing the
+# selection Highlight's outline is the case this exists for.
+#
+# Read-only by intent: the state belongs to Vfx's lifecycle, and a caller that frees what it finds
+# here leaves a dangling key. Ask it to change what it draws, never to stop existing.
+func state_of(id: String, target: Control) -> Node:
+	if target == null or not is_instance_valid(target):
+		return null
+	var key := _attach_key(id, target)
+	if not _attached.has(key):
+		return null
+	var raw: Variant = _attached[key]
+	return (raw as Node) if is_instance_valid(raw) else null
 
 
 func _attach_key(id: String, target: Control) -> String:

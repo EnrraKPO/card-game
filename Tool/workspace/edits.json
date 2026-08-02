@@ -251,140 +251,140 @@
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.707Z",
-    "fileHash": "55153c8ca1784a55d2e20ad605c528f848b547b9"
+    "fileHash": "bf3511a2cf459684ab09a7cc2f270974e7b501df"
   },
   "card/fire_water_knight": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.712Z",
-    "fileHash": "55153c8ca1784a55d2e20ad605c528f848b547b9"
+    "fileHash": "bf3511a2cf459684ab09a7cc2f270974e7b501df"
   },
   "card/fire_water_bishop": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.714Z",
-    "fileHash": "55153c8ca1784a55d2e20ad605c528f848b547b9"
+    "fileHash": "bf3511a2cf459684ab09a7cc2f270974e7b501df"
   },
   "card/fire_water_rook": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.717Z",
-    "fileHash": "55153c8ca1784a55d2e20ad605c528f848b547b9"
+    "fileHash": "bf3511a2cf459684ab09a7cc2f270974e7b501df"
   },
   "card/fire_water_queen": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.719Z",
-    "fileHash": "55153c8ca1784a55d2e20ad605c528f848b547b9"
+    "fileHash": "bf3511a2cf459684ab09a7cc2f270974e7b501df"
   },
   "card/fire_water_pawn_pawn": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.721Z",
-    "fileHash": "55153c8ca1784a55d2e20ad605c528f848b547b9"
+    "fileHash": "bf3511a2cf459684ab09a7cc2f270974e7b501df"
   },
   "card/fire_water_knight_pawn": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.724Z",
-    "fileHash": "55153c8ca1784a55d2e20ad605c528f848b547b9"
+    "fileHash": "bf3511a2cf459684ab09a7cc2f270974e7b501df"
   },
   "card/fire_water_bishop_pawn": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.727Z",
-    "fileHash": "55153c8ca1784a55d2e20ad605c528f848b547b9"
+    "fileHash": "bf3511a2cf459684ab09a7cc2f270974e7b501df"
   },
   "card/fire_water_pawn_rook": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.729Z",
-    "fileHash": "55153c8ca1784a55d2e20ad605c528f848b547b9"
+    "fileHash": "bf3511a2cf459684ab09a7cc2f270974e7b501df"
   },
   "card/fire_water_pawn_queen": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.731Z",
-    "fileHash": "55153c8ca1784a55d2e20ad605c528f848b547b9"
+    "fileHash": "bf3511a2cf459684ab09a7cc2f270974e7b501df"
   },
   "card/fire_water_knight_knight": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.733Z",
-    "fileHash": "55153c8ca1784a55d2e20ad605c528f848b547b9"
+    "fileHash": "bf3511a2cf459684ab09a7cc2f270974e7b501df"
   },
   "card/fire_water_bishop_knight": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.735Z",
-    "fileHash": "55153c8ca1784a55d2e20ad605c528f848b547b9"
+    "fileHash": "bf3511a2cf459684ab09a7cc2f270974e7b501df"
   },
   "card/fire_water_knight_rook": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.737Z",
-    "fileHash": "55153c8ca1784a55d2e20ad605c528f848b547b9"
+    "fileHash": "bf3511a2cf459684ab09a7cc2f270974e7b501df"
   },
   "card/fire_water_knight_queen": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.739Z",
-    "fileHash": "55153c8ca1784a55d2e20ad605c528f848b547b9"
+    "fileHash": "bf3511a2cf459684ab09a7cc2f270974e7b501df"
   },
   "card/fire_water_bishop_bishop": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.741Z",
-    "fileHash": "55153c8ca1784a55d2e20ad605c528f848b547b9"
+    "fileHash": "bf3511a2cf459684ab09a7cc2f270974e7b501df"
   },
   "card/fire_water_bishop_rook": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.743Z",
-    "fileHash": "55153c8ca1784a55d2e20ad605c528f848b547b9"
+    "fileHash": "bf3511a2cf459684ab09a7cc2f270974e7b501df"
   },
   "card/fire_water_bishop_queen": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.745Z",
-    "fileHash": "55153c8ca1784a55d2e20ad605c528f848b547b9"
+    "fileHash": "bf3511a2cf459684ab09a7cc2f270974e7b501df"
   },
   "card/fire_water_rook_rook": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.748Z",
-    "fileHash": "55153c8ca1784a55d2e20ad605c528f848b547b9"
+    "fileHash": "bf3511a2cf459684ab09a7cc2f270974e7b501df"
   },
   "card/fire_water_queen_rook": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.750Z",
-    "fileHash": "55153c8ca1784a55d2e20ad605c528f848b547b9"
+    "fileHash": "bf3511a2cf459684ab09a7cc2f270974e7b501df"
   },
   "card/fire_water_queen_queen": {
     "file": "fire_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-07T00:04:03.752Z",
-    "fileHash": "55153c8ca1784a55d2e20ad605c528f848b547b9"
+    "fileHash": "bf3511a2cf459684ab09a7cc2f270974e7b501df"
   },
   "status/charged": {
     "file": "charged.json",
@@ -2144,140 +2144,140 @@
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:51.665Z",
-    "fileHash": "160dcdca9cbd11bc568ba1b763cad0aaf3692ade"
+    "fileHash": "34b89243519d9726a9be341aead2a9ce45a09a2f"
   },
   "card/air_water_knight": {
     "file": "air_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:51.679Z",
-    "fileHash": "160dcdca9cbd11bc568ba1b763cad0aaf3692ade"
+    "fileHash": "34b89243519d9726a9be341aead2a9ce45a09a2f"
   },
   "card/air_water_bishop": {
     "file": "air_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:51.690Z",
-    "fileHash": "160dcdca9cbd11bc568ba1b763cad0aaf3692ade"
+    "fileHash": "34b89243519d9726a9be341aead2a9ce45a09a2f"
   },
   "card/air_water_rook": {
     "file": "air_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:51.702Z",
-    "fileHash": "160dcdca9cbd11bc568ba1b763cad0aaf3692ade"
+    "fileHash": "34b89243519d9726a9be341aead2a9ce45a09a2f"
   },
   "card/air_water_queen": {
     "file": "air_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:51.714Z",
-    "fileHash": "160dcdca9cbd11bc568ba1b763cad0aaf3692ade"
+    "fileHash": "34b89243519d9726a9be341aead2a9ce45a09a2f"
   },
   "card/air_water_pawn_pawn": {
     "file": "air_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:51.727Z",
-    "fileHash": "160dcdca9cbd11bc568ba1b763cad0aaf3692ade"
+    "fileHash": "34b89243519d9726a9be341aead2a9ce45a09a2f"
   },
   "card/air_water_knight_pawn": {
     "file": "air_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:51.739Z",
-    "fileHash": "160dcdca9cbd11bc568ba1b763cad0aaf3692ade"
+    "fileHash": "34b89243519d9726a9be341aead2a9ce45a09a2f"
   },
   "card/air_water_bishop_pawn": {
     "file": "air_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:51.743Z",
-    "fileHash": "160dcdca9cbd11bc568ba1b763cad0aaf3692ade"
+    "fileHash": "34b89243519d9726a9be341aead2a9ce45a09a2f"
   },
   "card/air_water_pawn_rook": {
     "file": "air_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:51.747Z",
-    "fileHash": "160dcdca9cbd11bc568ba1b763cad0aaf3692ade"
+    "fileHash": "34b89243519d9726a9be341aead2a9ce45a09a2f"
   },
   "card/air_water_pawn_queen": {
     "file": "air_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:51.750Z",
-    "fileHash": "160dcdca9cbd11bc568ba1b763cad0aaf3692ade"
+    "fileHash": "34b89243519d9726a9be341aead2a9ce45a09a2f"
   },
   "card/air_water_knight_knight": {
     "file": "air_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:51.754Z",
-    "fileHash": "160dcdca9cbd11bc568ba1b763cad0aaf3692ade"
+    "fileHash": "34b89243519d9726a9be341aead2a9ce45a09a2f"
   },
   "card/air_water_bishop_knight": {
     "file": "air_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:51.771Z",
-    "fileHash": "160dcdca9cbd11bc568ba1b763cad0aaf3692ade"
+    "fileHash": "34b89243519d9726a9be341aead2a9ce45a09a2f"
   },
   "card/air_water_knight_rook": {
     "file": "air_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:51.778Z",
-    "fileHash": "160dcdca9cbd11bc568ba1b763cad0aaf3692ade"
+    "fileHash": "34b89243519d9726a9be341aead2a9ce45a09a2f"
   },
   "card/air_water_knight_queen": {
     "file": "air_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:51.790Z",
-    "fileHash": "160dcdca9cbd11bc568ba1b763cad0aaf3692ade"
+    "fileHash": "34b89243519d9726a9be341aead2a9ce45a09a2f"
   },
   "card/air_water_bishop_bishop": {
     "file": "air_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:51.805Z",
-    "fileHash": "160dcdca9cbd11bc568ba1b763cad0aaf3692ade"
+    "fileHash": "34b89243519d9726a9be341aead2a9ce45a09a2f"
   },
   "card/air_water_bishop_rook": {
     "file": "air_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:51.812Z",
-    "fileHash": "160dcdca9cbd11bc568ba1b763cad0aaf3692ade"
+    "fileHash": "34b89243519d9726a9be341aead2a9ce45a09a2f"
   },
   "card/air_water_bishop_queen": {
     "file": "air_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:51.819Z",
-    "fileHash": "160dcdca9cbd11bc568ba1b763cad0aaf3692ade"
+    "fileHash": "34b89243519d9726a9be341aead2a9ce45a09a2f"
   },
   "card/air_water_rook_rook": {
     "file": "air_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:51.825Z",
-    "fileHash": "160dcdca9cbd11bc568ba1b763cad0aaf3692ade"
+    "fileHash": "34b89243519d9726a9be341aead2a9ce45a09a2f"
   },
   "card/air_water_queen_rook": {
     "file": "air_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:51.831Z",
-    "fileHash": "160dcdca9cbd11bc568ba1b763cad0aaf3692ade"
+    "fileHash": "34b89243519d9726a9be341aead2a9ce45a09a2f"
   },
   "card/air_water_queen_queen": {
     "file": "air_water_units.json",
     "original": null,
     "added": true,
     "at": "2026-07-12T07:16:51.839Z",
-    "fileHash": "160dcdca9cbd11bc568ba1b763cad0aaf3692ade"
+    "fileHash": "34b89243519d9726a9be341aead2a9ce45a09a2f"
   },
   "card/air_light_pawn": {
     "file": "air_light_units.json",
@@ -5411,7 +5411,7 @@
       "prompt": "Sprite sheet of sickly green poison bubbles rising and popping, looping toxic aura, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-14T12:50:33.586Z",
-    "fileHash": "1223f598fdc87e6c636bfc312281febb48b6635a"
+    "fileHash": "2697b03b8b6d1b2c0e561373d9d74becc927892c"
   },
   "vfx/aura_blind": {
     "file": "vfx.json",
@@ -5431,7 +5431,7 @@
       "prompt": "Sprite sheet of grey smoky haze drifting across a face area, looping blindness veil, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-14T12:50:35.887Z",
-    "fileHash": "1223f598fdc87e6c636bfc312281febb48b6635a"
+    "fileHash": "2697b03b8b6d1b2c0e561373d9d74becc927892c"
   },
   "card/pawn_rook": {
     "file": "chess_combined.json",
@@ -6101,7 +6101,7 @@
       "prompt": "Sprite sheet of a golden light halo breathing outward around a circular button, smooth soft radial falloff extending past the rim, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-20T18:34:03.607Z",
-    "fileHash": "1223f598fdc87e6c636bfc312281febb48b6635a"
+    "fileHash": "2697b03b8b6d1b2c0e561373d9d74becc927892c"
   },
   "card/bishop": {
     "file": "materials.json",
@@ -10129,7 +10129,7 @@
       "prompt": "Sprite sheet of a tight dense pale halo hugging a potion flask's outline, slim bright rim of light with a smooth short falloff, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-27T00:36:32.147Z",
-    "fileHash": "1223f598fdc87e6c636bfc312281febb48b6635a"
+    "fileHash": "2697b03b8b6d1b2c0e561373d9d74becc927892c"
   },
   "vfx/coin_flight": {
     "file": "vfx.json",
@@ -10153,7 +10153,7 @@
       "prompt": "Sprite sheet of a spinning gold coin with a bright specular sweep, transparent background, 8 frames, 2d game effect"
     },
     "at": "2026-07-27T16:54:37.194Z",
-    "fileHash": "1223f598fdc87e6c636bfc312281febb48b6635a"
+    "fileHash": "2697b03b8b6d1b2c0e561373d9d74becc927892c"
   },
   "vfx/chest_landing": {
     "file": "vfx.json",
@@ -10173,7 +10173,7 @@
       "prompt": "Sprite sheet of a dust and golden spark impact ring on the ground, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-27T19:30:26.199Z",
-    "fileHash": "1223f598fdc87e6c636bfc312281febb48b6635a"
+    "fileHash": "2697b03b8b6d1b2c0e561373d9d74becc927892c"
   },
   "vfx/reward_orb": {
     "file": "vfx.json",
@@ -10200,7 +10200,7 @@
       "prompt": "Sprite sheet of a brilliant golden orb of light with a soft halo and drifting sparks, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-27T19:43:21.699Z",
-    "fileHash": "1223f598fdc87e6c636bfc312281febb48b6635a"
+    "fileHash": "2697b03b8b6d1b2c0e561373d9d74becc927892c"
   },
   "vfx/screen_grow_in": {
     "file": "vfx.json",
@@ -10222,7 +10222,7 @@
       "prompt": "Sprite sheet of a rectangular panel expanding from a point of light to full size with a soft overshoot, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-27T19:54:49.831Z",
-    "fileHash": "1223f598fdc87e6c636bfc312281febb48b6635a"
+    "fileHash": "2697b03b8b6d1b2c0e561373d9d74becc927892c"
   },
   "vfx/attack_target_glow": {
     "file": "vfx.json",
@@ -10250,7 +10250,7 @@
       "prompt": "Sprite sheet of an aggressive red light halo breathing outward around a framed card, smooth soft radial falloff extending past the frame, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-27T21:31:56.892Z",
-    "fileHash": "1223f598fdc87e6c636bfc312281febb48b6635a"
+    "fileHash": "2697b03b8b6d1b2c0e561373d9d74becc927892c"
   },
   "relic/bomb": {
     "file": "relics.json",
@@ -10384,5 +10384,107 @@
     },
     "at": "2026-07-29T15:11:42.922Z",
     "fileHash": "2a606ff72f71e1a155930e3a8d85f5fb8fa821f8"
+  },
+  "vfx/highlight": {
+    "file": "vfx.json",
+    "original": {
+      "id": "highlight",
+      "display_name": "Selection Highlight",
+      "category": "ui",
+      "renderer": "custom",
+      "behavior": "glow",
+      "params": {
+        "scale": 1.15,
+        "outline_color": "ffffff",
+        "outline_width": 6,
+        "glow_color": "ffffff",
+        "glow_intensity": 1,
+        "glow_span": 30,
+        "glow_spread": 2
+      },
+      "sustained": true,
+      "placeholder": false,
+      "concept": "THE canonical 'this is selected / active' treatment for any widget, anywhere — one visual language for selection (forge source card now, combat selection next), defined once and tuned here, never per-screen.",
+      "explanation": "IMPLEMENTED (HighlightFx): the widget grows in place by `scale` (pure canvas transform — its layout size never changes, nothing around it moves) while a thick `outline_color` outline of `outline_width` px hugs its true composited silhouette, wrapped in a dense outer glow reaching `glow_span` px past the outline; `glow_spread` shapes the glow's density (higher = packed near the outline) and `glow_intensity` its brightness. Rides the composited-silhouette overlay path, so it never clips and never covers a badge or pip.",
+      "prompt": "Sprite sheet of a bright white outline flaring around a playing card with a dense soft white glow radiating outward, selection highlight effect, 8 frames on transparent background, 2d game effect"
+    },
+    "at": "2026-08-01T20:52:36.033Z",
+    "fileHash": "2697b03b8b6d1b2c0e561373d9d74becc927892c"
+  },
+  "vfx/card_hover_lift": {
+    "file": "vfx.json",
+    "original": {
+      "id": "card_hover_lift",
+      "display_name": "Card Hover — Lift",
+      "category": "card",
+      "renderer": "custom",
+      "behavior": "glow",
+      "params": {
+        "rise": 0.06,
+        "rise_secs": 0.28,
+        "fall_secs": 0.34
+      },
+      "sustained": false,
+      "placeholder": false,
+      "concept": "THE 'this is interactive, and it is listening' cue for any card the player can actually press — on the board and in the hand alike. The card eases out of its row the way you ease one card proud of a real hand before deciding to play it.",
+      "explanation": "NUMBERS ONLY — nothing plays this entry, CardUI READS it (see _set_hovered). Playing or attaching it does nothing. `rise` is the travel as a fraction of the card's OWN height, so it reads the same on a big hand card and a small tray one. `rise_secs`/`fall_secs` are the durations — fall a little slower than rise, so leaving settles rather than drops. THE EASING IS NOT A KNOB and lives in code on purpose: it is ease-in-out, which starts and ends at zero velocity. An ease-out here puts peak velocity on the first frame, which promises a much longer journey than the card actually makes and reads as a violent pop — that was the first version, and it is the one thing here that is a correctness call rather than taste.",
+      "prompt": "Sprite sheet of a playing card easing upward out of a fanned hand of cards, gentle lift, 8 frames on transparent background, 2d game effect"
+    },
+    "at": "2026-08-01T22:37:09.726Z",
+    "fileHash": "2697b03b8b6d1b2c0e561373d9d74becc927892c"
+  },
+  "vfx/hover_outline": {
+    "file": "vfx.json",
+    "original": {
+      "id": "hover_outline",
+      "display_name": "Pointer — Hover Outline",
+      "category": "ui",
+      "renderer": "custom",
+      "behavior": "glow",
+      "params": {
+        "scale": 1,
+        "outline_color": "ffd23f",
+        "outline_width": 10,
+        "glow_color": "ffd23f",
+        "glow_intensity": 0,
+        "glow_span": 2,
+        "glow_spread": 2
+      },
+      "sustained": true,
+      "placeholder": false,
+      "concept": "THE one answer to 'the pointer is on this' — for ANY widget, anywhere: a board unit, an empty slot, an ability, a hand card, the unit a turn-order entry is pointing at. One language, so the player learns 'yellow ring = the thing I am addressing' exactly once. Deliberately QUIETER than a selection: hover is a question, not a commitment.",
+      "explanation": "IMPLEMENTED (HoverFx + HighlightFx): a thick yellow outline hugging the widget's true composited silhouette and nothing else — no grow, no glow (glow_intensity 0). It OWNS the outline channel while it lives: a selected widget's white outline is muted for the duration while its glow keeps radiating, so the yellow ring reads on top with the white light around it.",
+      "prompt": "Sprite sheet of a thick bright yellow outline tracing the edge of a playing card, no glow, marker outline effect, 4 frames on transparent background, 2d game effect"
+    },
+    "at": "2026-08-02T01:11:44.295Z",
+    "fileHash": "2697b03b8b6d1b2c0e561373d9d74becc927892c"
+  },
+  "vfx/card_playable_glow": {
+    "file": "vfx.json",
+    "original": {
+      "id": "card_playable_glow",
+      "display_name": "Card Playable Glow",
+      "category": "combat",
+      "behavior": "glow",
+      "renderer": "filter",
+      "params": {
+        "composited": true,
+        "glow_color": "ffcf5c",
+        "spread": 40,
+        "animate": {
+          "param": "intensity",
+          "from": 0.85,
+          "to": 1.4,
+          "period": 1.3
+        }
+      },
+      "sustained": true,
+      "placeholder": false,
+      "concept": "A hand card the player can afford right now — a soft warm-gold light breathes gently outward past the card, inviting a play without shouting; unaffordable cards instead sit a touch dimmer.",
+      "explanation": "IMPLEMENTED (hand playability): a composited GlowFx reading the card's TRUE silhouette (card + all badges) and radiating on the overlay layer — never clipped by the hand ScrollContainer, never covers a badge. Attached to affordable hand cards via CardUI.set_playable; unaffordable cards get a 7% _canvas dim instead. Refreshed on draw / mana change / input toggle.",
+      "prompt": "Sprite sheet of a soft warm golden light gently breathing behind a framed card, subtle smooth radial falloff just past the frame edge, 8 frames on transparent background, 2d game effect"
+    },
+    "at": "2026-08-02T01:13:33.416Z",
+    "fileHash": "2697b03b8b6d1b2c0e561373d9d74becc927892c"
   }
 }

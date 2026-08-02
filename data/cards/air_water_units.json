@@ -432,6 +432,10 @@
 	{
 		"id": "air_water_bishop_knight",
 		"display_name": "Storm Cryptid",
+		"cost": 4,
+		"attack": 3,
+		"health": 8,
+		"speed": 7,
 		"elements": [
 			"air",
 			"water"
@@ -439,6 +443,9 @@
 		"chess_pieces": [
 			"bishop",
 			"knight"
+		],
+		"abilities": [
+			"heal"
 		],
 		"tool": {
 			"art": {
@@ -451,26 +458,13 @@
 				"prompt": "Majestic single-horned equine cryptid bodied in swirling black storm-vapor and rain-slick mist, glowing pale eyes, a tapered spiraling horn of hardened frost-grey cloud, wild wind-torn mane and tail streaming like driven rain, rearing on churning shallow water, splashing droplets, deep crimson-purple tempest sky, sheeting rain, dramatic rim lighting, detailed dark fantasy digital painting",
 				"ref": {
 					"source": "upload",
-					"path": "snap_bishop_knight.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_bishop_knight.png",
-					"theme": [
-						"snap_air_water_pawn.png",
-						"snap_air_water_knight.png",
-						"snap_air_water_queen.png"
-					],
-					"mode": "concept"
+					"path": "snap_bishop_knight.png",
+					"name": "snap_bishop_knight.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 4,
-		"attack": 3,
-		"health": 8,
-		"speed": 7,
-		"abilities": [
-			"heal"
-		]
+		}
 	},
 	{
 		"id": "air_water_knight_rook",
@@ -527,6 +521,10 @@
 	{
 		"id": "air_water_knight_queen",
 		"display_name": "Storm Monster",
+		"cost": 6,
+		"attack": 6,
+		"health": 9,
+		"speed": 8,
 		"elements": [
 			"air",
 			"water"
@@ -546,23 +544,13 @@
 				"prompt": "Colossal winged dragon formed of churning black storm-clouds and driving rain, glowing white eyes, wet stone-grey armored scales and silver-tipped horns, vast mist-woven wings flung wide, rearing over flooded ruins, sheets of rain and wind-torn spray, ominous crimson-purple tempest sky, dramatic rim lighting, detailed dark fantasy digital painting, menacing front-facing pose",
 				"ref": {
 					"source": "upload",
-					"path": "snap_knight_queen.png"
-				},
-				"inferredFrom": {
-					"anchor": "snap_knight_queen.png",
-					"theme": [
-						"snap_air_water_pawn.png",
-						"snap_air_water_knight.png",
-						"snap_air_water_queen.png"
-					],
-					"mode": "concept"
+					"path": "snap_knight_queen.png",
+					"name": "snap_knight_queen.png",
+					"mode": "img2img",
+					"denoise": 0.6
 				}
 			}
-		},
-		"cost": 6,
-		"attack": 6,
-		"health": 9,
-		"speed": 8
+		}
 	},
 	{
 		"id": "air_water_bishop_bishop",

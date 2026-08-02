@@ -406,6 +406,17 @@ func _spawn_hand_card(inst: CardInstance) -> void:
 	inst.col = -1
 	var ui := CardUI.create(inst, true)
 	ui.custom_minimum_size = _card_size
+	# THE HAND IS THE ONE SURFACE THAT LIFTS (see CardUI.lift_check). A hand card stands nowhere, so
+	# its position carries no meaning to spend — easing one proud of the row is the same gesture you
+	# make with real cards, about the same intent. On the board, where position IS the unit's place,
+	# the hover ring says it instead and the card holds still.
+	#
+	# Installed as a RULE the card asks, not a flag it keeps — and asked of the same authority the
+	# playability gate below asks: the node tree. THIS node is the one that gets reparented into a
+	# board slot when the card is played, so "was dealt by the hand" and "is in the hand" are
+	# different facts, and only the second one may lift.
+	ui.lift_check = func(c: CardUI) -> bool:
+		return c.get_parent() == _hand_box
 	_hand_cards.append(ui)
 	_hand_box.add_child(ui)
 	# The playability RULE, installed once — the card derives its own glow from live facts

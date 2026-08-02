@@ -191,9 +191,17 @@ func _ready() -> void:
 	_presentation_poll.autostart = true
 	_presentation_poll.timeout.connect(derive_presentation)
 	add_child(_presentation_poll)
-	# The near-subliminal hover tick, on the shared card class so every card everywhere
-	# whispers the same way (placeholder-gated like all undesigned cues — F7 mutes it).
-	mouse_entered.connect(func() -> void: Sfx.play("card_hover"))
+	mouse_entered.connect(_on_pointer_entered)
+	mouse_exited.connect(_on_pointer_exited)
+	# The intent wait. One-shot and cancellable, hence a Timer node rather than an awaited
+	# SceneTreeTimer: a card can be freed while the pointer is crossing it, and resuming a coroutine
+	# on a dead object is an error, whereas a child Timer dies quietly with its card.
+	_hover_delay = Timer.new()
+	_hover_delay.one_shot = true
+	_hover_delay.timeout.connect(func() -> void: _set_hovered(true))
+	add_child(_hover_delay)
+	# Defining _physics_process turns it ON by default; it must idle until a hover arms it.
+	set_physics_process(false)
 	_apply_scale()
 	_apply_flip()   # honour a facing set before the nodes existed (see set_flipped)
 	# Arm long-press inspection only on touch devices; desktop relies on the hover tooltip.
@@ -564,9 +572,10 @@ func derive_presentation() -> void:
 	# board card (whose subject is the holder itself) never mistakes that pick for its own.
 	var ctx := CombatContext.current
 	# The SPOTLIGHT: something elsewhere on the screen is pointing at this unit (the turn-order
-	# strip's hover — see CombatBoard.declare_spotlight). It wears the SAME canonical treatment a
-	# pick does, through the same applier: two reasons to be the card the player is looking at,
-	# one place that says what that looks like, so they can never fight over it. Guarded to a
+	# strip's hover — see CombatBoard.declare_spotlight). Deliberately NOT the selection treatment:
+	# a pick is something the player did to this card, a spotlight is a question asked ABOUT it
+	# somewhere else, and the answer is the TURN NUMBER — so the card only gets the shared hover ring
+	# while the number badge takes the loud cue (see _apply_spotlight). Guarded to a
 	# slot's real occupant like the other board states — a landing phantom or a lunge ghost is a
 	# projection of the unit, not the unit being pointed at.
 	var occupant: bool = card_instance != null and slot != null and slot.get_card() == self
@@ -575,12 +584,14 @@ func derive_presentation() -> void:
 	# (see CombatBoard.declare_turn_numbers). Same guard as the spotlight: a landing phantom or a
 	# lunge ghost stands FOR a unit, it does not hold that unit's place in the round.
 	_refresh_turn_number(ctx.turn_number(card_instance) if ctx != null and occupant else 0)
+	# Ordered AFTER the number: the spotlight lights the plate, so the plate has to exist first.
+	_apply_spotlight(spotlit)
 	if card_instance != null and card_instance.ability != null \
 			and card_instance.source_building != null:
 		_apply_selected(_pickable() \
 				and Selection.ability_held(card_instance.source_building, card_instance.ability))
 	else:
-		_apply_selected(spotlit or (_pickable() and Selection.holds(subject())))
+		_apply_selected(_pickable() and Selection.holds(subject()))
 	if ctx == null:
 		return
 	var tags: Array[Dictionary] = []
@@ -626,6 +637,7 @@ func derive_presentation() -> void:
 # visibly the same statement.
 var _turn_plate: Panel = null
 var _turn_lbl: Label = null
+var _turn_plate_sb: StyleBoxFlat = null   # the plate's own skin — the spotlight opens its alpha
 
 const TURN_PLATE_SIZE := Vector2(120.0, 96.0)   # native card units (see NATIVE_SIZE)
 const TURN_FONT := 72
@@ -637,7 +649,9 @@ func _refresh_turn_number(n: int) -> void:
 	if n <= 0:
 		if _turn_plate != null:
 			_turn_plate.visible = false
-			_turn_lbl.visible = false
+			# The plate is the loud half of the spotlight — a lit badge on a hidden badge is a
+			# glow radiating around nothing (GlowFx mirrors visibility, but the state would linger).
+			_apply_number_spotlight(false)
 		return
 	if _turn_plate == null:
 		var fill := TurnOrderStrip.fill_color(card_instance.owner)
@@ -653,8 +667,14 @@ func _refresh_turn_number(n: int) -> void:
 		ps.set_border_width_all(TURN_LINE_W)
 		ps.border_color = Color(line.r, line.g, line.b, 0.92)
 		_turn_plate.add_theme_stylebox_override("panel", ps)
+		# Kept: the spotlight makes the plate OPAQUE while it lights it (see _apply_number_spotlight).
+		_turn_plate_sb = ps
 		_canvas.add_child(_turn_plate)
 
+		# The numeral is a CHILD of the plate, not its sibling. The two are one object as far as the
+		# player is concerned, and the spotlight treats them as one: HighlightFx grows the plate and
+		# the number rides that transform, and the baked silhouette the outline/glow hug is the
+		# plate's whole subtree. As siblings the plate would have grown out from under its own digit.
 		_turn_lbl = Label.new()
 		_turn_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_turn_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -665,21 +685,78 @@ func _refresh_turn_number(n: int) -> void:
 		_turn_lbl.add_theme_font_size_override("font_size", TURN_FONT)
 		_turn_lbl.add_theme_constant_override("outline_size",
 				int(TURN_FONT * TurnOrderStrip.NUM_OUTLINE))
-		_canvas.add_child(_turn_lbl)
+		_turn_plate.add_child(_turn_lbl)
 
 		# Centred in the card's native box — the one place no stat badge, nameplate or status pip
 		# can be, and immune to the flip that mirrors the badge layout (see _apply_mirror).
-		var at := (NATIVE_SIZE - TURN_PLATE_SIZE) * 0.5
-		_turn_plate.position = at
+		_turn_plate.position = (NATIVE_SIZE - TURN_PLATE_SIZE) * 0.5
 		_turn_plate.size = TURN_PLATE_SIZE
 		# The digits, not the line box, sit centred in the plate — the SAME baseline placement the
 		# strip uses on its own numerals, so the two can't disagree about what centred means.
-		_turn_lbl.position = at + Vector2(0.0,
+		# Placed in the PLATE's space now that the label hangs off it.
+		_turn_lbl.position = Vector2(0.0,
 				TurnOrderStrip.baseline_offset(_turn_lbl, TURN_PLATE_SIZE.y))
 		_turn_lbl.size = TURN_PLATE_SIZE
 	_turn_lbl.text = str(n)
 	_turn_plate.visible = true
 	_turn_lbl.visible = true
+	# The plate may have been BUILT under a spotlight that was already on. The strip declares its
+	# hover and its numbers in two steps (see TurnOrderStrip.point_at), so the frame the card learns
+	# it is spotlit is the frame BEFORE it has a plate to light — and _apply_spotlight's own guard
+	# would then never come back to it. The plate half owns its own guard and is re-asserted here,
+	# every time the plate exists, which is a fact this function is the only one to know.
+	_apply_number_spotlight(_spotlit_now)
+
+
+# ── The spotlight: "the list is pointing at THIS unit" ──────────────────────────
+# Two cues, on two different things, because they answer two different questions. The CARD wears THE
+# HOVER RING — not a cue of its own: pointing at a unit from the gutter and pointing at it with the
+# cursor are the same statement about the same unit, so they share one look and the spotlight is
+# simply hover arriving from the other end of the screen (see _apply_hover_outline). It does not
+# grow and does not glow, so it can never be misread as a pick the player made. The TURN NUMBER is
+# what the gesture actually asked
+# about, so it takes the loud cue: the plate grows and burns gold (see the turn_number_spotlight
+# entry), which has to survive a board full of cards, damage numbers and threat glows.
+#
+# Idempotent through the same change-guard the other appliers use, since derive_presentation runs
+# this on every re-derivation.
+var _spotlit_now := false
+
+func _apply_spotlight(on: bool) -> void:
+	if on == _spotlit_now:
+		return
+	_spotlit_now = on
+	_apply_hover_outline()
+	_apply_number_spotlight(on)
+
+
+# The loud half, on the number plate — separately guarded because the plate outlives neither the
+# card nor the spotlight in step with it (see the call in _refresh_turn_number).
+var _num_spotlit_now := false
+
+func _apply_number_spotlight(on: bool) -> void:
+	# No plate yet (a card that has never worn a number): nothing to light. Not recorded either —
+	# the plate's arrival re-asks, and recording it would swallow that.
+	if _turn_plate == null or not is_instance_valid(_turn_plate):
+		return
+	if on == _num_spotlit_now:
+		return
+	_num_spotlit_now = on
+	# THE PLATE GOES OPAQUE while it is lit, and not only because a solid plate reads louder: the
+	# glow shader hollows itself wherever the silhouette is opaque, so a half-transparent plate lets
+	# its own halo wash across its face and drown the digit. At rest it goes back to see-through —
+	# an unlit number must not hide the unit it names (see PLATE_ALPHA).
+	if _turn_plate_sb != null:
+		_turn_plate_sb.bg_color.a = 0.97 if on else PLATE_ALPHA
+	# The grow factor comes from the entry EXPLICITLY: set_grown's own lookup reads the meta the
+	# attached effect leaves behind, which on the very first spotlight isn't there yet (this runs
+	# before the attach below) and would silently fall back to the generic `highlight` scale.
+	HighlightFx.set_grown(_turn_plate, on,
+			Vfx.param_of("turn_number_spotlight", "scale", 1.18))
+	if on:
+		Vfx.attach("turn_number_spotlight", _turn_plate)
+	else:
+		Vfx.detach("turn_number_spotlight", _turn_plate)
 
 
 # Resolver rates are 0..1; the tags speak in whole percent.
@@ -1508,15 +1585,305 @@ func subject() -> Variant:
 	return view_subject if view_subject != null else card_instance
 
 
+# ── Hover: "the cursor is addressing me" ────────────────────────────────────────
+# TWO cues, and only one of them is universal.
+#
+# THE RING is the answer everywhere, on every surface in the game — see HoverFx, which owns it and
+# the arbitration with the selection outline. A card gets it on the board, in hand and in the
+# ability tray alike, and so does an empty slot; the player learns one thing and it holds.
+#
+# THE LIFT is an opt-in flourish for ONE surface (see `lift_check`). It used to apply everywhere, and
+# on the board that was a mistake worth writing down: POSITION IS NOT A FREE CHANNEL THERE. Where a
+# card stands means something — it is a unit occupying a slot — and cards already move for real
+# reasons (being played, repositioned, killed). Spending the most semantically loaded channel on the
+# least meaningful event made a card finish a MEANINGFUL motion and immediately start a meaningless
+# one, which is exactly what "it drops, then it lifts" is. In hand nothing is lost by moving a card,
+# because a hand card stands nowhere; easing one proud of the fan is a real gesture about a real
+# intent. So the lift lives where position is free and nowhere else.
+#
+# Not a state anyone declares — unlike the spotlight or the pick, "the cursor is on me" is the
+# WIDGET's own fact, and two views of one card can be hovered independently (a unit's board card and
+# its tray copy) and both be right. So this is the one presentation on CardUI that is NOT derived
+# from CombatContext, and it needs no board declaration and nothing to un-push.
+#
+# WHAT THE CARD IS DOING: pulling out of the row a little, the way you ease one card proud of a
+# real hand before deciding to play it. Not a pop. The first version of this used EASE_OUT, which
+# puts peak velocity on the very first frame — the card left its resting place at ~160px/s and then
+# stopped 6px later, and a launch that fast promises a much longer journey than it delivers. That
+# mismatch is what read as violent. EASE_IN_OUT starts and ends at zero velocity, so the card
+# *begins to drift* instead of being flicked.
+#
+# RESPONSIVENESS IS ONSET, NOT DURATION — the correction that produced these numbers. What makes an
+# object feel alive is that it starts moving on the same frame the cursor arrives; how long it then
+# takes is a separate question, and answering both with one short duration is what made it snap.
+# So: no delay before it starts, and four times as long to get there.
+#
+# Position and nothing else: glow is the selection's, gold the acting unit's, red the threat's, grey
+# the spent unit's, and the OUTLINE is now hover's own everywhere (HoverFx arbitrates it with the
+# selection's white one, so the two compose instead of colliding). Rotation would have been the other
+# candidate and is banned — GlowFx._sync assumes none, so tipping a card would break every composited
+# glow it wears.
+# EVERY NUMBER HERE IS DATA — the `card_hover_lift` entry in data/vfx/vfx.json, tunable in the
+# Tool's ✨ editor like any other look. The constants below are FALLBACKS for a missing entry, not
+# the authority. (The easing deliberately is NOT a knob — see the entry's own explanation.)
+const HOVER_RISE := 0.06     # of the card's own height, so it reads the same on a big hand card
+const HOVER_IN := 0.28       # and a small tray one
+const HOVER_OUT := 0.34      # slower out than in — settling back, not dropping
+const HOVER_DELAY := 0.12    # intent wait before committing (see _on_pointer_entered)
+
+
+# THE LIFT IS OPT-IN, AND THE SURFACE OPTS IN — not the card by guessing where it lives. A widget
+# inspecting its own parent to decide how to behave is how per-surface forks rot: every new place a
+# card can appear has to be remembered here, and the one nobody remembers gets the wrong answer
+# silently. The hand installs the rule for the cards it deals (see Hand._spawn_hand_card) because the
+# hand is the surface that owns the "cards in a hand" metaphor; everywhere else — board slots, the
+# ability tray, the inspector, previews — a card stays exactly where it was put.
+#
+# ⚠ IT IS A RULE, NOT A FLAG, for exactly the reason `playable_check` is (see set_playable_check).
+# A stored bool is a fact the card remembers about ITSELF, and a card outlives the surface that set
+# it: the very node dealt into the hand is the node reparented into a board slot when it is played,
+# so a latched `true` walked onto the board and kept bobbing there — a unit standing in its slot
+# lifting out of it on hover, which is precisely the channel the board may not spend. The card must
+# never carry an answer it can't re-derive; it ASKS, every time it matters, and the rule the hand
+# installed answers from the live tree ("am I still parented in the hand row?"). Reparenting alone
+# then changes the answer, with nobody left to remember to clear anything.
+var lift_check: Callable   # func(CardUI) -> bool
+
+
+# Whether THIS card, right now, stands on a surface where position is free to spend. Unset check
+# (every non-hand card in the game) means no: the lift is opt-in and silence is a "no".
+func _lifts() -> bool:
+	return lift_check.is_valid() and bool(lift_check.call(self))
+
+
+# The verdict LATCHED for the duration of one hover — asked when the hover commits, and obeyed by
+# the paths that undo it. Not a second home for the fact: it is the same question, answered once so
+# the rise and the fall can't be governed by two different answers. A card that lifted must run the
+# hit test and drop again even if the rule flipped underneath it mid-hover; the alternative is a
+# card left floating with nothing watching for the pointer to leave.
+var _lift_now := false
+
+
+func _hover_travel() -> float:
+	return size.y * Vfx.param_of("card_hover_lift", "rise", HOVER_RISE)
+
+var _hover_now := false
+var _hover_rest := Vector2.ZERO
+var _hover_rest_valid := false   # `_hover_rest` names a real floor (see _set_hovered)
+var _hover_tw: Tween = null
+var _hover_delay: Timer = null   # the intent wait (see _on_pointer_entered)
+
+
+# A hover is only ever ANSWERED where a press would do something — `_pickable` already means
+# exactly that ("something is wired to my press, or I stand in a slot"), so portraits, tooltips,
+# the inspector's copy, a drag ghost and a landing phantom stay silent rather than advertising an
+# interactivity they do not have. And touch has no hover at all: what Godot's emulated mouse leaves
+# behind is a ghost cursor parked where you last tapped, which would leave a card floating for no
+# reason (the same reasoning that gates tooltips — see UIScale.is_touch).
+func _hoverable() -> bool:
+	return _pickable() and not UIScale.is_touch()
+
+
+# Rests the cursor on this card as far as the cue is concerned, and LATCHES it: the render harness
+# has no real pointer (warp_mouse does not reach a SubViewport), so the per-frame hit test would
+# answer "not on the card" and undo the hover on the next frame. Exactly the problem, and the same
+# fix, as TurnOrderStrip.point_at.
+var _hover_forced := false
+
+func force_hover(on: bool) -> void:
+	_hover_forced = on
+	_set_hovered(on)
+
+
+# ── Hover intent ────────────────────────────────────────────────────────────────
+# A pointer crossing a row on its way somewhere else is not hovering the cards it passes over, and
+# a cue that answers every crossing produces a wake of half-started movements behind the cursor.
+# So the card waits a beat before committing, and DOES NOT MOVE AT ALL while it waits — a cancelled
+# intent must leave no trace, or the flutter is merely smaller instead of gone.
+#
+# This is the one place a delay belongs. Once the card has decided you meant it, the motion itself
+# still begins on that very frame — the wait is about reading intent, not about being slow to react,
+# and the two must not be confused (the first version of this cue confused them the other way).
+#
+# `mouse_exited` is TRUSTWORTHY HERE and nowhere else: during the wait the card has not moved, so an
+# exit really is the pointer leaving. Once lifted, the card has moved out from under the pointer and
+# leaving becomes the hit test's job (see _physics_process).
+func _on_pointer_entered() -> void:
+	if not _hoverable() or _hover_now:
+		return
+	var wait := Vfx.param_of("card_hover_lift", "delay_secs", HOVER_DELAY)
+	if wait <= 0.0:
+		_set_hovered(true)
+		return
+	_hover_delay.start(wait)
+
+
+func _on_pointer_exited() -> void:
+	if not _hover_now:
+		_hover_delay.stop()   # cancels a PENDING intent
+		return
+	# A card that DOESN'T lift never moves out from under the pointer, so Godot's exit means what it
+	# says and is the whole story: no hit test, no hysteresis, no per-frame work. Only the lifting
+	# card has to ignore this and hit-test instead (see _physics_process for why).
+	if not _lift_now:
+		_set_hovered(false)
+
+
+func _set_hovered(on: bool) -> void:
+	if on and not _hoverable():
+		return
+	if not on and _hover_delay != null:
+		_hover_delay.stop()   # a pending intent must not fire after the hover has ended
+	if on == _hover_now:
+		return
+	_hover_now = on
+	# THE ONE PLACE THE RULE IS ASKED. On the way in it decides whether this hover moves the card at
+	# all; on the way out the latched answer stands, so a hover that lifted always lowers.
+	if on:
+		_lift_now = _lifts()
+	# The near-subliminal hover tick, on the shared card class so every card everywhere whispers
+	# the same way. It rides THIS applier rather than its own signal so the sound and the movement
+	# are one cue with one set of rules — the sound used to fire on every card view in the game,
+	# including the ones no press can reach.
+	if on:
+		Sfx.play("card_hover")
+	# THE RING, on every surface — the half of this cue that is not optional.
+	_apply_hover_outline()
+	# THE LIFT, only where position is free to spend (see `lift_check`). Leaving early here means a
+	# board card never records a floor, never claims `position` and never runs the per-frame hit test
+	# — and `mouse_exited` is trustworthy for it precisely because it does not move (the oscillation
+	# the hit test exists to prevent is caused by the card sliding out from under the pointer).
+	if not _lift_now:
+		return
+	if _hover_tw != null and _hover_tw.is_valid():
+		_hover_tw.kill()
+	if on and not _hover_rest_valid:
+		# THE FLOOR IS RECORDED ONCE AND HELD until the card is actually home again — not on every
+		# entry. Swiping in and out fast re-enters while the drop is still in flight, and sampling
+		# `position` then treats a card that is still 9px up as if that were the floor, so the next
+		# lift targets 9px higher: "move up by this much" instead of "move onto this position", and
+		# it creeps a little further every time. Exactly the accumulation HighlightFx.set_grown's own
+		# comment describes for the selection grow, arrived at by the same mistake.
+		#
+		# `_hover_rest_valid` is cleared only where the card is known to be at rest: when the drop
+		# completes (_hover_settle) or when a reparent hands it to a new layout.
+		_hover_rest = position
+		_hover_rest_valid = true
+	# The cue MOVES THE CARD OUT FROM UNDER THE CURSOR, so it cannot be driven by mouse_exited: the
+	# rising card's own bottom edge passes the stationary pointer, Godot reports a legitimate exit,
+	# the card drops, which puts it back under the pointer, which enters again. That oscillation is
+	# the "snaps back instead of staying up" in the hand. Leaving is therefore HIT-TESTED per frame
+	# against the union of where the card is and where it rests — the same answer CombatBoard and
+	# TurnOrderStrip reached for the same reason (see their own notes on not trusting enter/exit).
+	set_physics_process(on)
+	var to := _hover_rest - Vector2(0.0, _hover_travel()) if on else _hover_rest
+	if not is_inside_tree():
+		position = to
+		return
+	var secs := Vfx.param_of("card_hover_lift", "rise_secs" if on else "fall_secs",
+			HOVER_IN if on else HOVER_OUT)
+	_hover_tw = create_tween()
+	_hover_tw.tween_property(self, "position", to, secs) \
+			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	if not on:
+		_hover_tw.finished.connect(_hover_settle)
+
+
+# Ends the hover when the pointer leaves the card's OWN ground — the union of its lifted rect and
+# its resting one, so the strip of screen the card vacated by rising still counts as "on the card".
+# Physics rather than idle process: _process is owned by the long-press drift check, which calls
+# set_process(false) when it ends and would silently switch this off with it.
+func _physics_process(_delta: float) -> void:
+	if not _hover_now:
+		set_physics_process(false)
+		return
+	if _hover_forced:
+		return
+	if not is_inside_tree() or not is_visible_in_tree():
+		_set_hovered(false)
+		return
+	# Layout moved us while we were up (a card drawn or played into the same row re-sorts it). The
+	# position we have just been handed IS the new resting place, so adopt it and lift again from
+	# there — rather than dropping back to a remembered spot the card no longer belongs in. Checked
+	# only once the tween has finished, since mid-tween the position is legitimately in motion.
+	if _hover_tw == null or not _hover_tw.is_valid():
+		var parked := _hover_rest.y - _hover_travel()
+		if absf(position.y - parked) > 0.5:
+			_hover_rest.y = position.y
+			position.y = _hover_rest.y - _hover_travel()
+
+	var here := get_global_rect()
+	var lift := (_hover_rest.y - position.y) * get_global_transform().get_scale().y
+	var ground := here.merge(Rect2(here.position + Vector2(0.0, lift), here.size))
+	if not ground.has_point(get_global_mouse_position()):
+		_set_hovered(false)
+
+
+# Hands this card's position back to its slot once the drop finishes — cheap insurance against
+# drift, and scoped to THIS card.
+#
+# ⚠ IT MUST NOT TOUCH THE PARENT. This used to call `queue_sort()` when the parent was a Container,
+# to re-place a hand card whose layout had moved mid-hover. A sort re-places EVERY child, so the
+# card you just LEFT reached the end of its 340ms drop and flattened the card you had already moved
+# ON TO. That is why the snap only ever happened when swiping card-to-card, never on a first hover
+# or after leaving the hand entirely — and never on the board, where this branch re-anchors one card
+# and speaks for nobody else. A cue for one widget may not write another widget's layout.
+func _hover_settle() -> void:
+	if _hover_now:
+		return                     # re-entered during the drop; the new lift owns the position
+	# The drop finished, so the card IS home — and only now may the recorded floor be forgotten.
+	# Forgetting it any earlier is what let a fast in-and-out sample a still-rising card as its rest.
+	_hover_rest_valid = false
+	if get_parent() is SlotUI:
+		set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+
+# A reparent moves the card to a layout that will place it itself — drop the claim without
+# touching the position, or the old parent's rest would be restored inside the new one.
+func _drop_hover_claim() -> void:
+	if _hover_tw != null and _hover_tw.is_valid():
+		_hover_tw.kill()
+	_hover_now = false
+	_lift_now = false              # the next hover asks the rule again, under the new parent
+	_apply_hover_outline()         # the ring belongs to a hover that this reparent has just ended
+	_hover_rest_valid = false      # the new layout will place it; the old floor means nothing here
+	set_physics_process(false)
+	if _hover_delay != null:
+		_hover_delay.stop()
+
+
+# ── The ring ────────────────────────────────────────────────────────────────────
+# ONE outline for TWO facts that turn out to be the same fact: the cursor resting on this card, and
+# something elsewhere on the screen pointing at the unit it shows (the turn-order strip's hover —
+# see CombatBoard.declare_spotlight). Both mean "this is the one being addressed", they can never
+# usefully disagree, and giving them one look is what makes the strip and the board read as a single
+# surface rather than two widgets that happen to agree.
+#
+# Derived from both every time, never toggled from one of them, so whichever ends last leaves the
+# ring in the state the OTHER still justifies — a cursor leaving a card the strip is pointing at
+# must not take the strip's ring with it.
+func _apply_hover_outline() -> void:
+	HoverFx.apply(self, _hover_now or _spotlit_now)
+
+
 func _apply_selected(picked: bool) -> void:
 	if picked == _selected_now:
 		return
 	_selected_now = picked
-	HighlightFx.set_grown(self, picked)
+	# The grow factor is NAMED, not inherited from whatever effect happens to be riding this card.
+	# A combat card can wear several HighlightFx entries at once (the turn-order spotlight sits on
+	# it while the strip is read), they all share one grow slot on the widget, and the last one to
+	# attach wins it — so a pick made while another entry was attached grew by that entry's factor
+	# instead of the selection's. The pick's grow belongs to the `highlight` entry; say so.
+	HighlightFx.set_grown(self, picked, Vfx.param_of("highlight", "scale", 1.15))
 	if picked:
-		Vfx.attach("highlight", self)
+		Vfx.attach(HighlightFx.ENTRY, self)
 	else:
-		Vfx.detach("highlight", self)
+		Vfx.detach(HighlightFx.ENTRY, self)
+	# A pick made WHILE the pointer is resting here builds a fresh Highlight with its white outline at
+	# full width, which silently undoes the hover's claim on the outline channel. The mute lives in
+	# the effect, so it has to be re-stated after anything that replaces the effect.
+	_apply_hover_outline()
 
 
 # Whether this VIEW is one the player can pick at all. Structural, not a flag to be maintained: a
@@ -1657,6 +2024,9 @@ func _notification(what: int) -> void:
 		var slot := get_parent() as SlotUI
 		if slot != null:
 			set_flipped(slot.owner_id == 1)
+		# The hover lift is a claim on the position, and the position now belongs to a different
+		# layout — release it rather than tweening the card back to where it stood in the old one.
+		_drop_hover_claim()
 		# Reparenting DESTROYED any sustained Vfx attachment (Vfx.attach auto-detaches on
 		# tree_exiting, which remove_child fires) — but the widget-side state the appliers
 		# guard with (_selected_now / _threat_on, the grow transform, the badge pulse)

@@ -21,6 +21,8 @@ extends GlowFx
 
 const HIGHLIGHT_SHADER := "res://assets/ui/shaders/filter_highlight.gdshader"
 
+const ENTRY := "highlight"   # the vfx.json entry this class is THE treatment for
+
 const GROW_TIME := 0.16      # scale-up pop (slight overshoot); the shrink-back is a touch quicker
 const SHRINK_TIME := 0.12
 const Z_LIFT := 20           # draw-order lift while highlighted — the grown widget covers, never peeks
@@ -39,6 +41,24 @@ const Z_LIFT := 20           # draw-order lift while highlighted — the grown w
 # the widget's owner drives the grow through set_grown() — an idempotent state, not a lifecycle —
 # and this effect does what it is actually good at: the outline and glow on the overlay, which
 # TRACK whatever transform the widget happens to have (GlowFx syncs to it) and never write it.
+# THE OUTLINE IS A CHANNEL, AND IT CAN BE LENT OUT. A widget may legitimately be two things at once
+# — picked AND pointed at — and each wants a ring of a different colour on the same edge. Two rings
+# is not an answer: they land on the same pixels and both lose. So the outline is a channel with one
+# occupant, and a hover borrows it (see HoverFx.apply) while leaving the rest of this effect alone:
+# the glow keeps radiating and the grow keeps holding, so the selection is still plainly a selection
+# with the hover ring inside its light.
+#
+# Muted rather than re-configured, so the authored width survives to be handed straight back — and
+# `_pad` is deliberately NOT recomputed, since a quad that is briefly larger than it needs costs
+# nothing and re-padding would force a re-place mid-hover.
+var _outline_w: float = 0.0
+
+func set_outline_shown(on: bool) -> void:
+	if _mat == null:
+		return
+	_mat.set_shader_parameter("outline_width", _outline_w if on else 0.0)
+
+
 const GROWN_META := "highlight_grown"   # {on, scale, pivot, z} — the widget's own record
 const GROW_META  := "highlight_grow"    # the authored grow factor, left here by the attached entry
 const TWEEN_META := "highlight_tween"   # the widget's one in-flight transform tween
@@ -59,6 +79,7 @@ static func state(vd: VFXData, target: Control) -> Node:
 func _configure(params: Dictionary) -> void:
 	var outline_w := maxf(float(params.get("outline_width", 6.0)), 0.0)
 	var span := maxf(float(params.get("glow_span", 30.0)), 1.0)
+	_outline_w = outline_w
 	_pad = outline_w + span + 12.0
 	_base_intensity = float(params.get("glow_intensity", 1.0))
 
@@ -72,7 +93,21 @@ func _configure(params: Dictionary) -> void:
 	_mat.set_shader_parameter("intensity", _base_intensity)
 
 	# The authored grow travels with the entry, but it is APPLIED by the widget's owner, not here.
-	_widget.set_meta(GROW_META, maxf(float(params.get("scale", 1.15)), 0.01))
+	#
+	# ONLY IF THIS ENTRY ACTUALLY AUTHORS ONE. The meta is a single slot per WIDGET, while entries
+	# are many — so an entry that grows nothing (scale 1) used to stamp "grow by 1.0" over whatever
+	# the widget's real selection grow was, and the next set_grown() with no override read it and
+	# grew by nothing. That is exactly what happened when a combat card wore the turn-order
+	# spotlight (scale 1) and was then picked: the pick's grow silently became a no-op, but only
+	# when the cursor had visited the strip first, which made it look like the card knew how it had
+	# been selected. An effect with no opinion about the grow must not leave an instruction lying
+	# around for one that has.
+	#
+	# This does NOT make the slot safe for two effects that BOTH grow — for that the owner must
+	# name its factor (see the scale_override argument, and CardUI._apply_selected).
+	var grow := maxf(float(params.get("scale", 1.15)), 0.01)
+	if not is_equal_approx(grow, 1.0):
+		_widget.set_meta(GROW_META, grow)
 
 
 # THE GROW, as a state the widget's owner sets on itself. Idempotent both ways: asking for the

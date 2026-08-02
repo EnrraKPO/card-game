@@ -336,7 +336,7 @@
 		"renderer": "filter",
 		"params": {
 			"composited": true,
-			"glow_color": "ffcf5c",
+			"glow_color": "00ff00",
 			"spread": 40,
 			"animate": {
 				"param": "intensity",
@@ -2198,10 +2198,10 @@
 		"id": "highlight",
 		"display_name": "Selection Highlight",
 		"category": "ui",
-		"renderer": "custom",
 		"behavior": "glow",
+		"renderer": "custom",
 		"params": {
-			"scale": 1.15,
+			"scale": 1.07,
 			"outline_color": "ffffff",
 			"outline_width": 6,
 			"glow_color": "ffffff",
@@ -2214,6 +2214,133 @@
 		"concept": "THE canonical 'this is selected / active' treatment for any widget, anywhere — one visual language for selection (forge source card now, combat selection next), defined once and tuned here, never per-screen.",
 		"explanation": "IMPLEMENTED (HighlightFx): the widget grows in place by `scale` (pure canvas transform — its layout size never changes, nothing around it moves) while a thick `outline_color` outline of `outline_width` px hugs its true composited silhouette, wrapped in a dense outer glow reaching `glow_span` px past the outline; `glow_spread` shapes the glow's density (higher = packed near the outline) and `glow_intensity` its brightness. Rides the composited-silhouette overlay path, so it never clips and never covers a badge or pip.",
 		"prompt": "Sprite sheet of a bright white outline flaring around a playing card with a dense soft white glow radiating outward, selection highlight effect, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "hover_outline",
+		"display_name": "Pointer — Hover Outline",
+		"category": "ui",
+		"behavior": "glow",
+		"renderer": "custom",
+		"params": {
+			"scale": 1,
+			"outline_color": "ffd23f",
+			"outline_width": 4,
+			"glow_color": "ffd23f",
+			"glow_intensity": 0,
+			"glow_span": 2,
+			"glow_spread": 2
+		},
+		"sustained": true,
+		"placeholder": false,
+		"concept": "THE one answer to 'the pointer is on this' — for ANY widget, anywhere: a board unit, an empty slot, an ability, a hand card, the unit a turn-order entry is pointing at. One language, so the player learns 'yellow ring = the thing I am addressing' exactly once. Deliberately QUIETER than a selection: hover is a question, not a commitment.",
+		"explanation": "IMPLEMENTED (HoverFx + HighlightFx): a thick yellow outline hugging the widget's true composited silhouette and nothing else — no grow, no glow (glow_intensity 0). It OWNS the outline channel while it lives: a selected widget's white outline is muted for the duration while its glow keeps radiating, so the yellow ring reads on top with the white light around it.",
+		"prompt": "Sprite sheet of a thick bright yellow outline tracing the edge of a playing card, no glow, marker outline effect, 4 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "turn_number_spotlight",
+		"display_name": "Turn Order — Number Lit",
+		"category": "ui",
+		"renderer": "custom",
+		"behavior": "glow",
+		"params": {
+			"scale": 1.18,
+			"outline_color": "ffcf33",
+			"outline_width": 7,
+			"glow_color": "ff9c14",
+			"glow_intensity": 1,
+			"glow_span": 34,
+			"glow_spread": 2.2
+		},
+		"sustained": true,
+		"placeholder": false,
+		"concept": "THE answer to 'where in the round is this unit' — the turn number worn by the unit the list is pointing at. It has to win a busy board outright, so this is the loudest cue on the screen while it lives.",
+		"explanation": "IMPLEMENTED (HighlightFx): the number plate grows 18% and burns — a pale outline wrapped in a wide, dense gold glow reaching far past it. Applied to the plate, not the card, so the light lands ON the digit the player is hunting for.",
+		"prompt": "Sprite sheet of a glowing golden number plaque burning with a wide dense radiant halo, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "turn_entry_hover",
+		"display_name": "Turn Order — Entry Pointed At",
+		"category": "ui",
+		"renderer": "custom",
+		"behavior": "glow",
+		"params": {
+			"scale": 1.07,
+			"lift_time": 0.14,
+			"outline_color": "ffd23f",
+			"outline_width": 4,
+			"glow_color": "ffd23f",
+			"glow_intensity": 0.4,
+			"glow_span": 14,
+			"glow_spread": 2
+		},
+		"sustained": true,
+		"placeholder": false,
+		"concept": "The list entry under the cursor answering back — the same yellow the unit on the board is wearing, so the two ends of the gesture are visibly one statement.",
+		"explanation": "IMPLEMENTED (HighlightFx + TurnOrderStrip lift): the entry grows 7% out of the gutter it sits in and takes a thick yellow outline with a thin glow. Growth is a canvas transform, so the list's layout never moves under the cursor.",
+		"prompt": "Sprite sheet of a small card thumbnail with a thick yellow outline and faint glow, hover marker effect, 4 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "turn_entry_acting",
+		"display_name": "Turn Order — Acting Now",
+		"category": "ui",
+		"renderer": "custom",
+		"behavior": "glow",
+		"params": {
+			"scale": 1.1,
+			"lift_time": 0.14,
+			"outline_color": "ffdf7a",
+			"outline_width": 3,
+			"glow_color": "ffb318",
+			"glow_intensity": 1.2,
+			"glow_span": 30,
+			"glow_spread": 1.5,
+			"animate": {
+				"param": "intensity",
+				"from": 0.85,
+				"to": 1.55,
+				"period": 0.7
+			}
+		},
+		"sustained": true,
+		"placeholder": false,
+		"concept": "Whose moment it is RIGHT NOW, in the list. The gold header already said it; this makes it impossible to miss while the fight is moving underneath.",
+		"explanation": "IMPLEMENTED (HighlightFx + TurnOrderStrip lift): the acting entry stands 10% proud of the gutter and breathes a warm gold glow between 0.85 and 1.55 intensity — a living cue, since the thing it names is happening rather than waiting.",
+		"prompt": "Sprite sheet of a small card thumbnail pulsing with a warm gold radiant glow, active turn marker, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "turn_entry_selected",
+		"display_name": "Turn Order — Entry Chosen",
+		"category": "ui",
+		"renderer": "custom",
+		"behavior": "glow",
+		"params": {
+			"line_mul": 1.25,
+			"dash": 0.1,
+			"saturation": 1.6,
+			"stripe_color": "ffffff"
+		},
+		"sustained": false,
+		"placeholder": false,
+		"concept": "The entry whose unit is the player's pick. A striped border rather than an outline or a glow: hover already owns the unbroken ring, and a BROKEN ring reads as a different kind of thing without competing for the same pixels.",
+		"explanation": "NUMBERS ONLY — nothing plays this entry, TurnOrderStrip READS it (see DashRing). Playing or attaching it does nothing; the preview button will sit there. `line_mul` is the stroke weight as a multiple of the entry's own border, `dash` the segment length along the perimeter as a fraction of the column width (short relative to the stroke, or it reads as a checkerboard), `saturation` how far the coloured stripes are pushed past the header's own pale fill, `stripe_color` the colour they alternate with.",
+		"prompt": "Sprite sheet of a small card thumbnail edged with a dashed white and red striped border, selection marker, 4 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "card_hover_lift",
+		"display_name": "Card Hover — Lift",
+		"category": "card",
+		"behavior": "glow",
+		"renderer": "custom",
+		"params": {
+			"rise": 0.06,
+			"rise_secs": 0.08,
+			"fall_secs": 0.08,
+			"delay_secs": 0
+		},
+		"placeholder": false,
+		"concept": "THE 'this is interactive, and it is listening' cue for any card the player can actually press — on the board and in the hand alike. The card eases out of its row the way you ease one card proud of a real hand before deciding to play it.",
+		"explanation": "NUMBERS ONLY — nothing plays this entry, CardUI READS it (see _set_hovered). Playing or attaching it does nothing. `rise` is the travel as a fraction of the card's OWN height, so it reads the same on a big hand card and a small tray one. `rise_secs`/`fall_secs` are the durations. `delay_secs` is the INTENT WAIT: a pointer crossing a row on its way elsewhere is not hovering the cards it passes, so the card waits this long before committing and does not move at all while it waits — a cancelled intent leaves no trace. Set it to 0 to commit instantly. Note this is not the same thing as being slow to react: once the card decides you meant it, the movement still starts on that very frame. THE EASING IS NOT A KNOB and lives in code on purpose: it is ease-in-out, which starts and ends at zero velocity. An ease-out here puts peak velocity on the first frame, which promises a much longer journey than the card actually makes and reads as a violent pop — that was the first version, and it is the one thing here that is a correctness call rather than taste.",
+		"prompt": "Sprite sheet of a playing card easing upward out of a fanned hand of cards, gentle lift, 8 frames on transparent background, 2d game effect"
 	},
 	{
 		"id": "card_draw_flick",

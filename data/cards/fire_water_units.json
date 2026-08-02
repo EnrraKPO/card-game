@@ -417,6 +417,10 @@
 	{
 		"id": "fire_water_bishop_knight",
 		"display_name": "Catoblepas",
+		"cost": 4,
+		"attack": 5,
+		"health": 8,
+		"speed": 3,
 		"description": "Steam unit. ",
 		"elements": [
 			"fire",
@@ -426,30 +430,25 @@
 			"bishop",
 			"knight"
 		],
-		"tool": {
-			"art": {
-				"prompt": "Chunky catoblepas beast, downturned bulldog-cat face, heavy drooping head, glowing yellow eyes, small tusks, cracked charcoal-stone hide veined with molten orange, overlapping cobalt-blue scales on flanks tail and spiny back ridge, smoldering vent craters puffing steam, black claws, wading chest-deep through a boiling turquoise hot spring, water hissing into steam clouds around it, low side angle, misty geyser basin",
-				"ref": {
-					"source": "current"
-				},
-				"inferredFrom": {
-					"anchor": "fire_water_bishop_knight",
-					"theme": [
-						"fire_water_bishop",
-						"fire_water_bishop_bishop",
-						"fire_water_knight"
-					],
-					"mode": "concept"
-				}
-			}
-		},
-		"cost": 4,
-		"attack": 5,
-		"health": 8,
-		"speed": 3,
 		"abilities": [
 			"heal"
-		]
+		],
+		"tool": {
+			"art": {
+				"model": "krea2",
+				"width": 1024,
+				"height": 1536,
+				"steps": 8,
+				"guidance": 1,
+				"rembg": false,
+				"prompt": "Chunky catoblepas beast, downturned bulldog-cat face, heavy drooping head, glowing yellow eyes, small tusks, cracked charcoal-stone hide veined with molten orange, overlapping cobalt-blue scales on flanks tail and spiny back ridge, smoldering vent craters puffing steam, black claws, wading chest-deep through a boiling turquoise hot spring, water hissing into steam clouds around it, low side angle, misty geyser basin",
+				"ref": {
+					"source": "installed",
+					"mode": "img2img",
+					"denoise": 0.6
+				}
+			}
+		}
 	},
 	{
 		"id": "fire_water_knight_rook",
