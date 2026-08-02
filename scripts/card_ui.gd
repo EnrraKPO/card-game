@@ -1940,14 +1940,32 @@ func _apply_selected(picked: bool) -> void:
 	_apply_hover_outline()
 
 
+# WHEN THE PRESS ISN'T THE CARD'S TO TAKE — a surface that answers for the card it wraps.
+#
+# `_pickable` below reads the wiring to decide whether a view is live, which is right wherever the
+# card itself is the thing pressed. The Forge is not that: every deck card there is wrapped in a
+# ForgeDragItem that takes the press on MOUSE_FILTER_STOP and starts the drag session (the screen
+# owns the follower, the beam and the drop resolve), so the card underneath has nothing wired to it
+# and stands in no slot — and so read as inert, with no hover ring and no details panel, while being
+# fully draggable, tappable and inspectable. The proxy was wrong, not the card.
+#
+# ⚠ A RULE, NOT A FLAG, for exactly the reason `lift_check` is one (see its note). The very node a
+# surface dressed can be reparented onto another — so the card must never carry a latched answer it
+# cannot re-derive. It ASKS the live tree every time it matters, and reparenting alone then changes
+# the answer with nobody left to remember to clear anything.
+var interactive_check: Callable   # func(CardUI) -> bool
+
+
 # Whether this VIEW is one the player can pick at all. Structural, not a flag to be maintained: a
-# view is pickable if a press on it is wired to anything, or if it stands in a board slot (where
-# the slot takes the press on its occupant's behalf). Portraits, tooltips, the inspector's copy,
-# the sidebar preview, a landing phantom and an attacker's lunge ghost are all views of a card that
-# nobody can click — so they show no pick, even while the card they depict IS the pick.
+# view is pickable if a press on it is wired to anything, if it stands in a board slot (where the
+# slot takes the press on its occupant's behalf), or if the surface it stands on says it answers
+# presses for it (see interactive_check). Portraits, tooltips, the inspector's copy, the sidebar
+# preview, a landing phantom and an attacker's lunge ghost are all views of a card that nobody can
+# click — so they show no pick, even while the card they depict IS the pick.
 func _pickable() -> bool:
 	return not _noninteractive \
-			and (not pressed.get_connections().is_empty() or get_parent() is SlotUI)
+			and (not pressed.get_connections().is_empty() or get_parent() is SlotUI \
+				or (interactive_check.is_valid() and bool(interactive_check.call(self))))
 
 
 # Concealment: this unit is out on a stand-in — its lunge ghost is doing the travelling — so the

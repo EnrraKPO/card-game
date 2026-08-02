@@ -1600,8 +1600,10 @@ func _build_cluster(src: Dictionary, tgt_idx: int, verdict: Dictionary) -> void:
 		big.draggable = false
 		big.custom_minimum_size = Vector2.ZERO
 		big.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-		# STOP (not IGNORE): the enlarged result behaves like any card — its standard hover
-		# tooltip works, and right-click opens the full CardInspector.
+		# STOP (not IGNORE): the enlarged result behaves like any card — right-click opens the full
+		# CardInspector. NO hover details here, deliberately: the result's whole read is already
+		# rendered beside it and stays there (see the details column below), so a panel repeating it
+		# on hover would cover the framing to say what the framing is already saying.
 		big.mouse_filter = MOUSE_FILTER_STOP
 		holder.add_child(big)
 		# The composited radiance is attached LATER (after _place_cluster sizes/positions the
@@ -1751,7 +1753,12 @@ func _make_component_card(inst: CardInstance, comp_size: Vector2) -> Control:
 	ui.draggable = false
 	ui.custom_minimum_size = Vector2.ZERO
 	ui.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	ui.mouse_filter = MOUSE_FILTER_PASS   # its standard hover tooltip still works in the framing
+	ui.mouse_filter = MOUSE_FILTER_PASS   # it still answers the pointer inside the framing
+	# The ingredients are the one thing in the framing with no read of its own — the result has its
+	# details column, these have a picture. So they open theirs on hover like a card anywhere else.
+	# Nothing is wired to their press (the framing is a modal; there is nothing to pick here), so
+	# the surface says they are live — asked of the live tree, never latched (see interactive_check).
+	ui.interactive_check = func(c: CardUI) -> bool: return c.get_parent() == holder
 	holder.add_child(ui)
 	_comp_holders.append(holder)
 	return holder
