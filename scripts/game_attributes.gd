@@ -59,6 +59,11 @@ const DEFAULTS := {
 									   # (a drag starting inside this is provisional — see CardUI)
 	"ux.move_hold.duration":    1.0,  # seconds the move button's safety hold takes to fill —
 									   # the back-out window before a held press commits the move
+	"ux.tooltip.delay":         0.5,  # seconds the pointer must rest on a card before its details
+									   # panel opens (see CardHoverPanel). The SHIPPED number: a
+									   # player may override it for themselves in Settings, and
+									   # anyone who hasn't follows whatever is tuned here. 0 opens
+									   # on the frame the hover latches
 	"ux.consume_hold.duration": 0.9,  # seconds a consumable relic chip's hold takes to fill —
 									   # shorter than the move hold (a spend has no preview to
 									   # read), but still a deliberate press, never a tap

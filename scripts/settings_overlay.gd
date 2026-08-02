@@ -97,6 +97,7 @@ func _fill_panel() -> void:
 	left.add_child(_language_row())
 	left.add_child(_pacing_row())
 	left.add_child(_move_hold_row())
+	left.add_child(_tooltip_delay_row())
 	columns.add_child(left)
 
 	var right := VBoxContainer.new()
@@ -212,6 +213,47 @@ func _move_hold_row() -> Control:
 		btn.base_color = ScreenUI.CHROME_CONFIRM if v else ScreenUI.CHROME_NEUTRAL)
 	row.add_child(btn)
 	return row
+
+
+# How long the pointer must rest on a card before its details open (see CardHoverPanel). A SLIDER,
+# not the named presets the pacing row uses: this is one continuous quantity with an obvious meaning
+# and an obvious readout in seconds, and unlike "how much do cues overlap" the player can feel
+# exactly what each step buys. Built like the mixer's rows for the same reason — a number with a
+# live figure beside it.
+#
+# The change is live: the delay is re-read per hover, so the next card the player points at uses it.
+# 0.0 reads as "Instant" rather than "0.00s", which is the thing that number actually means.
+func _tooltip_delay_row() -> Control:
+	var row := VBoxContainer.new()
+	row.add_theme_constant_override("separation", 14)
+	row.add_child(_row_label(Loc.t("settings.tooltip_delay")))
+
+	var bottom := HBoxContainer.new()
+	bottom.add_theme_constant_override("separation", 24)
+	var slider := _big_slider()
+	slider.max_value = UxPrefs.TOOLTIP_DELAY_MAX * 100.0
+	slider.step = 5      # 0.05s notches — finer than anyone can feel, coarser than a fight for 1px
+	slider.value = CardHoverPanel.delay() * 100.0
+
+	var val_lbl := Label.new()
+	val_lbl.custom_minimum_size.x = 190
+	val_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	val_lbl.add_theme_font_size_override("font_size", 40)
+	val_lbl.add_theme_color_override("font_color", CardTooltip.TEXT_TITLE)
+	val_lbl.text = _delay_text(slider.value / 100.0)
+	slider.value_changed.connect(func(v: float) -> void:
+		UxPrefs.set_tooltip_delay(v / 100.0)
+		val_lbl.text = _delay_text(v / 100.0))
+	bottom.add_child(slider)
+	bottom.add_child(val_lbl)
+	row.add_child(bottom)
+	return row
+
+
+func _delay_text(seconds: float) -> String:
+	if seconds <= 0.0:
+		return Loc.t("settings.tooltip_delay.instant")
+	return Loc.t("settings.tooltip_delay.seconds", {"n": String.num(seconds, 2)})
 
 
 func _mixer_row(label_text: String, kind: String) -> Control:

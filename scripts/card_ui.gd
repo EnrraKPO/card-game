@@ -862,20 +862,12 @@ func refresh() -> void:
 	# oversampled font so an enlarged card's WHOLE text stays crisp (see _apply_scale).
 	if _font_factor > 1.0:
 		_apply_font_oversampling()
-	# Fall back to the name so the enlarged hover preview shows even without a description.
-	# UIScale.tip suppresses it entirely on touch (no hover there — long-press inspect instead).
-	var desc := card_instance.data.description
-	# The auto-attack targeting line rides after the authored text here too (units only), so the
-	# native tooltip matches the rich CardTooltip.
-	var targeting := card_instance.data.targeting_line()
-	if not targeting.is_empty():
-		desc = (desc + "\n" + targeting) if not desc.is_empty() else targeting
-	# The rooted-building note rides after the authored/targeting text too (buildings only).
-	var building := card_instance.data.building_line()
-	if not building.is_empty():
-		desc = (desc + "\n" + building) if not desc.is_empty() else building
-	# The card's native fallback tooltip can't render icons/BBCode — resolve markup to words.
-	UIScale.tip(self, TextIcons.plain(desc) if not desc.is_empty() else card_instance.data.display_name)
+	# NO NATIVE TOOLTIP ON A CARD, so nothing is assembled for one here any more. A card's details
+	# are CardHoverPanel's now — it opens the rich CardTooltip on the same latch as the hover ring,
+	# beside the card instead of at the cursor. What used to be built here was the plain-text
+	# fallback (description + targeting line + rooted-building note, markup resolved to words); the
+	# panel renders all three properly, icons included, and leaving tooltip_text set would pop a
+	# second, plainer copy of the same words over it half a second later.
 	# A phantom card re-hangs its treatment over whatever this rebuild just produced. The transform
 	# reaches the subtree by flagging each node, so any node born after it was applied — the
 	# composition chips and status pips built here, and in fact EVERY node when a caller dresses the
@@ -1561,18 +1553,14 @@ func _make_status_pip(si: StatusInstance) -> Control:
 	return pip
 
 
-# The rich hover panel is the shared CardTooltip, so it matches everywhere a card is shown.
-#
-# It ARRIVES rather than appears: TooltipGrowFx grows it out of the corner nearest this card, so the
-# panel and the card it speaks for read as one thing. The card is handed over as the anchor because
-# WHICH card the panel belongs to is a fact only this end knows — the builder is shared by the
-# inspector and the forge, which have no card to grow out of.
-func _make_custom_tooltip(_for_text: String) -> Object:
-	if UIScale.is_touch():
-		return null   # belt-and-braces: UIScale.tip already blanks the text on touch
-	var panel := CardTooltip.build(card_instance, _show_cost, 1.0, false, true, is_phantom)
-	TooltipGrowFx.arrive(panel, self)
-	return panel
+# This card's details, as the shared CardTooltip builds them, so a card reads identically wherever
+# it is shown. WHEN and WHERE the panel appears is CardHoverPanel's business; which options of the
+# shared builder this particular view wants is ours, which is why the presenter asks rather than
+# reaching in.
+func build_details_panel() -> Control:
+	if card_instance == null:
+		return null
+	return CardTooltip.build(card_instance, _show_cost, 1.0, false, true, is_phantom)
 
 
 # HOW A CARD BEHAVES WHEN IT IS THE PICK — its own behaviour, never handed to it.
@@ -1685,6 +1673,12 @@ func _hover_travel() -> float:
 	return size.y * Vfx.param_of("card_hover_lift", "rise", HOVER_RISE)
 
 var _hover_now := false
+
+# Whether the pointer is resting on this card RIGHT NOW — asked by CardHoverPanel when its wait
+# ends, to find out whether the hover that armed it is still the truth.
+func is_hovered() -> bool:
+	return _hover_now
+
 var _hover_rest := Vector2.ZERO
 var _hover_rest_valid := false   # `_hover_rest` names a real floor (see _set_hovered)
 var _hover_tw: Tween = null
@@ -1766,6 +1760,14 @@ func _set_hovered(on: bool) -> void:
 		Sfx.play("card_hover")
 	# THE RING, on every surface — the half of this cue that is not optional.
 	_apply_hover_outline()
+	# THE DETAILS PANEL, on the same latch and behind its own wait (see CardHoverPanel.delay). It
+	# hangs off the ring's rule rather than off Godot's tooltip so that "the pointer is addressing
+	# this card" is decided in ONE place: a view too inert to wear the ring is too inert to explain
+	# itself, and the two can never disagree about which card that is.
+	if on:
+		CardHoverPanel.request(self)
+	else:
+		CardHoverPanel.dismiss(self)
 	# THE LIFT, only where position is free to spend (see `lift_check`). Leaving early here means a
 	# board card never records a floor, never claims `position` and never runs the per-frame hit test
 	# — and `mouse_exited` is trustworthy for it precisely because it does not move (the oscillation
@@ -2027,7 +2029,12 @@ func _get_drag_data(at_position: Vector2) -> Variant:
 
 
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_DRAG_END:
+	if what == NOTIFICATION_PREDELETE:
+		# A card can be destroyed while the pointer is still on it — a unit dying under the cursor,
+		# a hand rebuilt as a card is played — and a freed card emits no exit. Its details panel
+		# would be left describing a card that is no longer on the board.
+		CardHoverPanel.dismiss(self)
+	elif what == NOTIFICATION_DRAG_END:
 		modulate.a = 1.0   # the source is no longer hidden during drags; kept as a safety reset
 		_end_hold()
 		if card_instance != null and card_instance.is_spell:

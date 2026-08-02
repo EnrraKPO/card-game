@@ -739,7 +739,7 @@ const GAME_ATTRS_DEFAULT = {
   'forge.cost.element_only': 0, 'forge.cost.piece_op': 1,
   'shop.magic_mineral.price': 25,
   // Input feel (touch gesture windows) — see GameAttributes' "ux." block.
-  'ux.hold.duration': 0.4, 'ux.hold.tolerance': 44,
+  'ux.hold.duration': 0.4, 'ux.hold.tolerance': 44, 'ux.tooltip.delay': 0.5,
   // Animation feel — the combat sequencer's overlap dial; see GameAttributes' "vfx." block.
   'vfx.overlap': 0.5,
 };
