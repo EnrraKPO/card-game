@@ -2255,17 +2255,17 @@
 		"id": "tooltip_grow_in",
 		"display_name": "Card Details — Grow In",
 		"category": "ui",
-		"renderer": "custom",
 		"behavior": "pop",
+		"renderer": "custom",
 		"params": {
-			"duration": 0.16,
-			"fade": 0.7,
+			"duration": 0.25,
+			"fade": 0,
 			"overlap": 0
 		},
 		"placeholder": false,
 		"concept": "The card-details panel arriving beside the card it describes. At full size on frame one it reads as a second window opening, and the eye has to find it and then work out what it belongs to. Growing it OUT OF the card answers that before it is asked — the motion itself is the line drawn between the panel and its subject.",
-		"explanation": "IMPLEMENTED (TooltipGrowFx): the panel scales 0 → 1 about the corner nearest the card, fading up over the first 70% of the span. THE CORNER IS THE POINT — expanding about the centre would grow in every direction at once and say nothing about where the panel came from. Which corner is MEASURED, not assumed: the panel normally hangs down-right of the cursor, but against a screen edge the engine flips it to the other side and the near corner flips with it. There is no exit half: a tooltip is dismissed by the pointer leaving, which has already happened by the time anything could play, so it simply goes.",
-		"prompt": "Sprite sheet of an information panel unfolding outward from its top-left corner, quick expand, 6 frames on transparent background, 2d game effect"
+		"explanation": "IMPLEMENTED (TooltipGrowFx): the panel scales 0 → 1 about its CORNER nearest the card, LINEARLY and with no fade — one frame out of N does one Nth of the job, and the panel is solid from the first frame. Easing was cubic EASE_OUT and put a quarter of the growth in the first frame with the last five frames sharing 5% of it, a flick followed by a crawl; the fade said the panel materialised where it stands, which is the opposite of what the growth says. `fade` is still a knob (0 = none) but ships off. THE CORNER IS THE WHOLE EFFECT — scaling about a corner leaves a whole QUADRANT of the panel at rest, and the eye locks onto that stationary region and watches the rest unfold away from it in one direction. Two rejected alternatives, both tried: the CENTRE grows every way at once and says nothing about where the panel came from; the truly-nearest POINT on the panel's edge is more literal but leaves only that one point still, so the panel flees it in opposite directions (top and bottom edges ~200px apart in 60ms) — an explosion, not an arrival. A corner only tells the truth when the card is DIAGONAL to the panel, which is why CardHoverPanel sits the panel off one of the card's corners (upper-right, then clockwise); placed beside and centred, the two facing corners are equidistant and a rounding error picks one. There is no exit half: the panel is dismissed by the pointer leaving, which has already happened by the time anything could play, so it simply goes.",
+		"prompt": "Sprite sheet of an information panel unfolding upward and to the right out of its bottom-left corner, quick expand, 6 frames on transparent background, 2d game effect"
 	},
 	{
 		"id": "turn_number_arrive",

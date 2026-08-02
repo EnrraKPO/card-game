@@ -5411,7 +5411,7 @@
       "prompt": "Sprite sheet of sickly green poison bubbles rising and popping, looping toxic aura, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-14T12:50:33.586Z",
-    "fileHash": "2697b03b8b6d1b2c0e561373d9d74becc927892c"
+    "fileHash": "1b3983194364891f96baa5d11a28f9e89b6ade49"
   },
   "vfx/aura_blind": {
     "file": "vfx.json",
@@ -5431,7 +5431,7 @@
       "prompt": "Sprite sheet of grey smoky haze drifting across a face area, looping blindness veil, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-14T12:50:35.887Z",
-    "fileHash": "2697b03b8b6d1b2c0e561373d9d74becc927892c"
+    "fileHash": "1b3983194364891f96baa5d11a28f9e89b6ade49"
   },
   "card/pawn_rook": {
     "file": "chess_combined.json",
@@ -6101,7 +6101,7 @@
       "prompt": "Sprite sheet of a golden light halo breathing outward around a circular button, smooth soft radial falloff extending past the rim, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-20T18:34:03.607Z",
-    "fileHash": "2697b03b8b6d1b2c0e561373d9d74becc927892c"
+    "fileHash": "1b3983194364891f96baa5d11a28f9e89b6ade49"
   },
   "card/bishop": {
     "file": "materials.json",
@@ -10129,7 +10129,7 @@
       "prompt": "Sprite sheet of a tight dense pale halo hugging a potion flask's outline, slim bright rim of light with a smooth short falloff, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-27T00:36:32.147Z",
-    "fileHash": "2697b03b8b6d1b2c0e561373d9d74becc927892c"
+    "fileHash": "1b3983194364891f96baa5d11a28f9e89b6ade49"
   },
   "vfx/coin_flight": {
     "file": "vfx.json",
@@ -10153,7 +10153,7 @@
       "prompt": "Sprite sheet of a spinning gold coin with a bright specular sweep, transparent background, 8 frames, 2d game effect"
     },
     "at": "2026-07-27T16:54:37.194Z",
-    "fileHash": "2697b03b8b6d1b2c0e561373d9d74becc927892c"
+    "fileHash": "1b3983194364891f96baa5d11a28f9e89b6ade49"
   },
   "vfx/chest_landing": {
     "file": "vfx.json",
@@ -10173,7 +10173,7 @@
       "prompt": "Sprite sheet of a dust and golden spark impact ring on the ground, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-27T19:30:26.199Z",
-    "fileHash": "2697b03b8b6d1b2c0e561373d9d74becc927892c"
+    "fileHash": "1b3983194364891f96baa5d11a28f9e89b6ade49"
   },
   "vfx/reward_orb": {
     "file": "vfx.json",
@@ -10200,7 +10200,7 @@
       "prompt": "Sprite sheet of a brilliant golden orb of light with a soft halo and drifting sparks, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-27T19:43:21.699Z",
-    "fileHash": "2697b03b8b6d1b2c0e561373d9d74becc927892c"
+    "fileHash": "1b3983194364891f96baa5d11a28f9e89b6ade49"
   },
   "vfx/screen_grow_in": {
     "file": "vfx.json",
@@ -10222,7 +10222,7 @@
       "prompt": "Sprite sheet of a rectangular panel expanding from a point of light to full size with a soft overshoot, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-27T19:54:49.831Z",
-    "fileHash": "2697b03b8b6d1b2c0e561373d9d74becc927892c"
+    "fileHash": "1b3983194364891f96baa5d11a28f9e89b6ade49"
   },
   "vfx/attack_target_glow": {
     "file": "vfx.json",
@@ -10250,7 +10250,7 @@
       "prompt": "Sprite sheet of an aggressive red light halo breathing outward around a framed card, smooth soft radial falloff extending past the frame, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-27T21:31:56.892Z",
-    "fileHash": "2697b03b8b6d1b2c0e561373d9d74becc927892c"
+    "fileHash": "1b3983194364891f96baa5d11a28f9e89b6ade49"
   },
   "relic/bomb": {
     "file": "relics.json",
@@ -10409,7 +10409,7 @@
       "prompt": "Sprite sheet of a bright white outline flaring around a playing card with a dense soft white glow radiating outward, selection highlight effect, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-08-01T20:52:36.033Z",
-    "fileHash": "2697b03b8b6d1b2c0e561373d9d74becc927892c"
+    "fileHash": "1b3983194364891f96baa5d11a28f9e89b6ade49"
   },
   "vfx/card_hover_lift": {
     "file": "vfx.json",
@@ -10431,7 +10431,7 @@
       "prompt": "Sprite sheet of a playing card easing upward out of a fanned hand of cards, gentle lift, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-08-01T22:37:09.726Z",
-    "fileHash": "2697b03b8b6d1b2c0e561373d9d74becc927892c"
+    "fileHash": "1b3983194364891f96baa5d11a28f9e89b6ade49"
   },
   "vfx/hover_outline": {
     "file": "vfx.json",
@@ -10457,7 +10457,7 @@
       "prompt": "Sprite sheet of a thick bright yellow outline tracing the edge of a playing card, no glow, marker outline effect, 4 frames on transparent background, 2d game effect"
     },
     "at": "2026-08-02T01:11:44.295Z",
-    "fileHash": "2697b03b8b6d1b2c0e561373d9d74becc927892c"
+    "fileHash": "1b3983194364891f96baa5d11a28f9e89b6ade49"
   },
   "vfx/card_playable_glow": {
     "file": "vfx.json",
@@ -10485,6 +10485,27 @@
       "prompt": "Sprite sheet of a soft warm golden light gently breathing behind a framed card, subtle smooth radial falloff just past the frame edge, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-08-02T01:13:33.416Z",
-    "fileHash": "2697b03b8b6d1b2c0e561373d9d74becc927892c"
+    "fileHash": "1b3983194364891f96baa5d11a28f9e89b6ade49"
+  },
+  "vfx/tooltip_grow_in": {
+    "file": "vfx.json",
+    "original": {
+      "id": "tooltip_grow_in",
+      "display_name": "Card Details — Grow In",
+      "category": "ui",
+      "renderer": "custom",
+      "behavior": "pop",
+      "params": {
+        "duration": 0.16,
+        "fade": 0.7,
+        "overlap": 0
+      },
+      "placeholder": false,
+      "concept": "The card-details panel arriving beside the card it describes. At full size on frame one it reads as a second window opening, and the eye has to find it and then work out what it belongs to. Growing it OUT OF the card answers that before it is asked — the motion itself is the line drawn between the panel and its subject.",
+      "explanation": "IMPLEMENTED (TooltipGrowFx): the panel scales 0 → 1 about its CORNER nearest the card, fading up over the first 70% of the span. THE CORNER IS THE WHOLE EFFECT — scaling about a corner leaves a whole QUADRANT of the panel at rest, and the eye locks onto that stationary region and watches the rest unfold away from it in one direction. Two rejected alternatives, both tried: the CENTRE grows every way at once and says nothing about where the panel came from; the truly-nearest POINT on the panel's edge is more literal but leaves only that one point still, so the panel flees it in opposite directions (top and bottom edges ~200px apart in 60ms) — an explosion, not an arrival. A corner only tells the truth when the card is DIAGONAL to the panel, which is why CardHoverPanel sits the panel off one of the card's corners (upper-right, then clockwise); placed beside and centred, the two facing corners are equidistant and a rounding error picks one. There is no exit half: the panel is dismissed by the pointer leaving, which has already happened by the time anything could play, so it simply goes.",
+      "prompt": "Sprite sheet of an information panel unfolding upward and to the right out of its bottom-left corner, quick expand, 6 frames on transparent background, 2d game effect"
+    },
+    "at": "2026-08-02T06:30:38.121Z",
+    "fileHash": "1b3983194364891f96baa5d11a28f9e89b6ade49"
   }
 }

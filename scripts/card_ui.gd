@@ -1674,10 +1674,48 @@ func _hover_travel() -> float:
 
 var _hover_now := false
 
-# Whether the pointer is resting on this card RIGHT NOW — asked by CardHoverPanel when its wait
-# ends, to find out whether the hover that armed it is still the truth.
+# Whether the pointer is resting on this card RIGHT NOW. THIS VIEW'S OWN ANSWER ABOUT ITS OWN RECT,
+# which is the right scope for the ring and the lift — two views of one unit (its board card and its
+# tray copy) can each be pointed at, and each is entitled to answer for itself.
 func is_hovered() -> bool:
 	return _hover_now
+
+
+# ── THE HOVERED VIEW: one card, game-wide ───────────────────────────────────────────────────
+# `_hover_now` above is a fact a view is genuinely the authority on. "WHICH view the pointer is
+# addressing" is not — another card taking the pointer invalidates it, and the card it was taken from
+# has no way to know. So it is not stored per-card at all. It lives here, once, and the details panel
+# is a picture of it (see CardHoverPanel.follow).
+#
+# ⚠ THE ABSENCE OF THIS IS WHAT MADE HOVERING CARD-TO-CARD SHOW NOTHING. With the answer scattered
+# across N private booleans, the panel had to be MESSAGED by cards — and then arbitrate which of them
+# owned it, a question no one could answer while a panel was still pending. One fact, one owner, no
+# arbitration.
+static var _hovered_view: CardUI = null
+
+
+# The card view the pointer is addressing, or null. Validity-checked, because the holder can be freed
+# between the claim and the question (a unit dying under the cursor).
+static func hovered_view() -> CardUI:
+	return _hovered_view if is_instance_valid(_hovered_view) else null
+
+
+# Claims or releases the title, and tells the panel — the ONLY place either happens.
+#
+# The release is conditional and that is not defensive arbitration, it is what makes the fact
+# single-valued: a view that never held the title has nothing to give up. It is also what makes the
+# PREDELETE path harmless. Every CardUI announces its own death here, and the details panel is FULL
+# of CardUIs (its enlarged preview, an AbilityWidget per ability) — none of which were ever the
+# hovered view, so none of them can disturb it. Under the old message-passing design those same
+# children cancelled the next card's pending panel, which was the bug.
+func _own_hover(on: bool) -> void:
+	if on:
+		_hovered_view = self
+	elif _hovered_view == self:
+		_hovered_view = null
+	else:
+		return   # not mine to release
+	CardHoverPanel.follow(_hovered_view)
 
 var _hover_rest := Vector2.ZERO
 var _hover_rest_valid := false   # `_hover_rest` names a real floor (see _set_hovered)
@@ -1760,14 +1798,11 @@ func _set_hovered(on: bool) -> void:
 		Sfx.play("card_hover")
 	# THE RING, on every surface — the half of this cue that is not optional.
 	_apply_hover_outline()
-	# THE DETAILS PANEL, on the same latch and behind its own wait (see CardHoverPanel.delay). It
-	# hangs off the ring's rule rather than off Godot's tooltip so that "the pointer is addressing
-	# this card" is decided in ONE place: a view too inert to wear the ring is too inert to explain
-	# itself, and the two can never disagree about which card that is.
-	if on:
-		CardHoverPanel.request(self)
-	else:
-		CardHoverPanel.dismiss(self)
+	# THE HOVERED VIEW, and through it the details panel. On the same latch as the ring, so a view too
+	# inert to wear the ring is too inert to explain itself and the two can never disagree about which
+	# card the pointer is addressing. The panel is not told to open or close — it is a picture of the
+	# fact this line sets (see _own_hover).
+	_own_hover(on)
 	# THE LIFT, only where position is free to spend (see `lift_check`). Leaving early here means a
 	# board card never records a floor, never claims `position` and never runs the per-frame hit test
 	# — and `mouse_exited` is trustworthy for it precisely because it does not move (the oscillation
@@ -2033,7 +2068,12 @@ func _notification(what: int) -> void:
 		# A card can be destroyed while the pointer is still on it — a unit dying under the cursor,
 		# a hand rebuilt as a card is played — and a freed card emits no exit. Its details panel
 		# would be left describing a card that is no longer on the board.
-		CardHoverPanel.dismiss(self)
+		#
+		# Every CardUI runs this, including the ones nobody can point at, so it must say nothing
+		# unless this view actually held the hover — which is exactly what _own_hover(false) checks.
+		# It used to speak unconditionally, and the panel's OWN CardUI children (its preview, its
+		# ability widgets) then cancelled the next card's pending panel as they were freed.
+		_own_hover(false)
 	elif what == NOTIFICATION_DRAG_END:
 		modulate.a = 1.0   # the source is no longer hidden during drags; kept as a safety reset
 		_end_hold()
