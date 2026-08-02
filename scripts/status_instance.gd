@@ -1,9 +1,10 @@
 class_name StatusInstance
 extends RefCounted
 
-# A live Status on a CardInstance: its definition + remaining duration + stack count + the unit
-# that applied it. Purely combat-runtime (CardInstances are rebuilt every fight), so it is never
-# serialized. See StatusData (definition) and StatusEngine (the operator).
+# A live Status pinned to a carrier (a unit, later a slot — see StatusCarrier): its definition +
+# remaining duration + stack count + the unit that applied it. Purely combat-runtime (carriers are
+# rebuilt every fight), so it is never serialized. See StatusData (definition) and StatusEngine
+# (the operator — the status and its engine own ALL behavior; the carrier just files it).
 
 var data: StatusData
 var remaining: int = -1           # rounds left; -1 = lasts the whole combat (never counts down)
@@ -13,8 +14,8 @@ var source: CardInstance = null   # who applied it (nullable; for future source-
 # Trackers bound to this instance, one per standing effect, created lazily on first read
 # (the go-live moment) and never rebuilt — a tracker's death is one-way. See EffectTracker.
 var _trackers: Dictionary = {}
-# The unit this status sits on — WEAK (the carrier owns its statuses; a strong back-ref
-# would cycle). Bound by CardInstance.apply_status; unbound instances (tests building
+# The carrier this status is pinned to — WEAK (the carrier files the statuses; a strong
+# back-ref would cycle). Bound by StatusEngine.apply; unbound instances (tests building
 # state by hand) just skip prompt removal — pull validity keeps them correct regardless.
 var _carrier_ref: WeakRef = null
 
@@ -34,7 +35,7 @@ static func make(p_data: StatusData, p_remaining: int, p_stacks: int, p_source: 
 # ref would keep watching the ORIGINAL status — and since every tracker kind derives
 # valid()/intensity() from its host at read time, a fresh binding reproduces the original's
 # state exactly, including its "already went live" identity (the effect keys carry over).
-static func copied(si: StatusInstance, carrier: CardInstance, remap: Dictionary) -> StatusInstance:
+static func copied(si: StatusInstance, carrier: StatusCarrier, remap: Dictionary) -> StatusInstance:
 	var copy := StatusInstance.new()
 	copy.data = si.data
 	copy.remaining = si.remaining
@@ -62,7 +63,7 @@ func tracker_for(e: Effect) -> EffectTracker:
 	return _trackers[e]
 
 
-func bind_carrier(carrier: CardInstance) -> void:
+func bind_carrier(carrier: StatusCarrier) -> void:
 	_carrier_ref = weakref(carrier)
 
 
@@ -77,7 +78,7 @@ func fired(_e: Effect) -> void:
 	stacks -= 1
 	if stacks > 0 or _carrier_ref == null:
 		return   # spent-out but unbound instances stay inert via pull validity (exists())
-	var carrier: CardInstance = _carrier_ref.get_ref()
+	var carrier: StatusCarrier = _carrier_ref.get_ref()
 	if carrier != null:
 		carrier.remove_status(data.id)   # prompt removal = hygiene (the pip disappearing)
 

@@ -63,7 +63,7 @@ func _basic_grant() -> void:
 	var u := unit("pawn")
 	var fire := EffectCondition.from_dict({"composition": ["fire"]})
 	check(not fire.evaluate(u), "no grant: a plain pawn is not fire")
-	u.apply_status(FIRE_GRANT, Effect.STATUS_DURATION_DEFAULT, 1, null)
+	StatusEngine.apply(u, FIRE_GRANT, Effect.STATUS_DURATION_DEFAULT, 1, null)
 	check(fire.evaluate(u), "a granted component passes the composition condition")
 	check(not u.data.elements.has("fire"), "the REAL composition is untouched")
 	check_eq(u.get_attribute("element_count"), 0, "identity reads stay raw (element_count)")
@@ -73,7 +73,7 @@ func _basic_grant() -> void:
 	# A granted PIECE id: conditions see it, identity (is_building) does not.
 	_register_status({"id": "_test_grant_rook", "display_name": "T", "effects": [
 		{"trigger": {"kind": "while"}, "targets": {"kind": "self"}, "grants": ["rook"]}]})
-	u.apply_status("_test_grant_rook", Effect.STATUS_DURATION_DEFAULT, 1, null)
+	StatusEngine.apply(u, "_test_grant_rook", Effect.STATUS_DURATION_DEFAULT, 1, null)
 	check(EffectCondition.from_dict({"composition": ["rook"]}).evaluate(u),
 			"a granted piece id passes conditions")
 	check(not u.data.is_building(), "identity is untouched: a granted rook is no building")
@@ -96,13 +96,13 @@ func _chain_settles_both_orders() -> void:
 	var rook := EffectCondition.from_dict({"composition": ["rook"]})
 
 	var a := unit("pawn")
-	a.apply_status(FIRE_GRANT, Effect.STATUS_DURATION_DEFAULT, 1, null)
+	StatusEngine.apply(a, FIRE_GRANT, Effect.STATUS_DURATION_DEFAULT, 1, null)
 	GameData.current_modifiers.add(Effect.from_dict(chain))
 	check(rook.evaluate(a), "chain settles: fire (status) => rook (run set)")
 
 	var b := unit("pawn")
 	check(not rook.evaluate(b), "the chain grants nothing without fire")
-	b.apply_status(FIRE_GRANT, Effect.STATUS_DURATION_DEFAULT, 1, null)
+	StatusEngine.apply(b, FIRE_GRANT, Effect.STATUS_DURATION_DEFAULT, 1, null)
 	check(rook.evaluate(b), "chain settles regardless of source arrival order")
 
 	GameData.current_modifiers = ModifierSet.new()
@@ -122,7 +122,7 @@ func _layer2_reads_layer1() -> void:
 	var u := unit("pawn")
 	var base := u.data.attack
 	check_eq(u.get_attribute("attack"), base, "no fire, no bonus")
-	u.apply_status(FIRE_GRANT, Effect.STATUS_DURATION_DEFAULT, 1, null)
+	StatusEngine.apply(u, FIRE_GRANT, Effect.STATUS_DURATION_DEFAULT, 1, null)
 	check_eq(u.get_attribute("attack"), base + 2,
 			"Layer 2 reads Layer 1: the composition-gated fold sees the granted component")
 	u.remove_status(FIRE_GRANT)
@@ -136,7 +136,7 @@ func _expiry_invalidates() -> void:
 	# the snapshot drops with the tick and the next read sees the post-decay world.
 	_fire_grant_status({"decay": "duration", "default_duration": 1, "decay_phase": "turn_end"})
 	var u := unit("pawn")
-	u.apply_status(FIRE_GRANT, Effect.STATUS_DURATION_DEFAULT, 1, null)
+	StatusEngine.apply(u, FIRE_GRANT, Effect.STATUS_DURATION_DEFAULT, 1, null)
 	var fire := EffectCondition.from_dict({"composition": ["fire"]})
 	check(fire.evaluate(u), "grant live before the tick")
 	StatusEngine.advance(u, &"turn_end")
@@ -156,7 +156,7 @@ func _stacks_tracker_expiry() -> void:
 		}],
 	})
 	var u := unit("pawn")
-	u.apply_status("_test_grant_stacks", Effect.STATUS_DURATION_DEFAULT, 2, null)
+	StatusEngine.apply(u, "_test_grant_stacks", Effect.STATUS_DURATION_DEFAULT, 2, null)
 	var water := EffectCondition.from_dict({"composition": ["water"]})
 	check(water.evaluate(u), "stack-tracked grant live at 2 stacks")
 	StatusEngine.advance(u, &"turn_end")
@@ -192,7 +192,7 @@ func _has_element_lens() -> void:
 	var u := unit("pawn")   # pieces-only, no elements
 	var any_element := EffectCondition.from_dict({"has_element": true})
 	check(not any_element.evaluate(u), "a pieces-only unit has no element")
-	u.apply_status(FIRE_GRANT, Effect.STATUS_DURATION_DEFAULT, 1, null)
+	StatusEngine.apply(u, FIRE_GRANT, Effect.STATUS_DURATION_DEFAULT, 1, null)
 	check(any_element.evaluate(u), "a granted element satisfies has_element")
 	_unregister_status(FIRE_GRANT)
 
@@ -206,7 +206,7 @@ func _negative_gate_respects_grants() -> void:
 	var u := unit("pawn")
 	var lackey_gate := EffectCondition.from_dict({"composition": ["king", "queen"], "present": false})
 	check(lackey_gate.evaluate(u), "a plain pawn passes the lackeys-only gate")
-	u.apply_status("_test_grant_queen", Effect.STATUS_DURATION_DEFAULT, 1, null)
+	StatusEngine.apply(u, "_test_grant_queen", Effect.STATUS_DURATION_DEFAULT, 1, null)
 	check(not lackey_gate.evaluate(u), "a granted queen trips the negative gate")
 	_unregister_status("_test_grant_queen")
 

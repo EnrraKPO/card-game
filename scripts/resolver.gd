@@ -183,10 +183,10 @@ static func _dispatch_apply(inst: CardInstance, m: StatMutation) -> Outcome:
 			# Status application — the Resolver is the single writer of statuses too, which is
 			# what lets interceptors rewrite the stack count. An application intercepted away
 			# (amount <= 0) applies nothing and reports delta 0. Stacking/clamping knowledge
-			# stays in apply_status; delta reports the REQUESTED stacks (the pre-clamp ask).
+			# stays in StatusEngine.apply; delta reports the REQUESTED stacks (the pre-clamp ask).
 			if m.amount <= 0 or m.status_id.is_empty():
 				return Outcome.make(inst, StatMutation.STATUS, 0)
-			inst.apply_status(m.status_id, m.status_duration, m.amount, m.source)
+			StatusEngine.apply(inst, m.status_id, m.status_duration, m.amount, m.source)
 			return Outcome.make(inst, StatMutation.STATUS, m.amount)
 		StatMutation.SHIELD_POOL:
 			# Pool floors at 0; the outcome reports the change that ACTUALLY landed. (Plain

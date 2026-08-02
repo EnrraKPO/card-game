@@ -281,7 +281,7 @@ func _blocked_hit_never_crits() -> void:
 	Resolver.set_crit_tuning({"fixed_pct": 100.0, "per_speed_pct": 0.0, "max_pct": 100.0,
 			"multiplier": 3.0, "multiplier_max": 5.0})
 	var tgt := _unit(0, 9, 0)
-	tgt.apply_status("barrier", Effect.STATUS_DURATION_DEFAULT, 1, null)
+	StatusEngine.apply(tgt, "barrier", Effect.STATUS_DURATION_DEFAULT, 1, null)
 	var out := Resolver.submit(StatMutation.damage(tgt, 4, _unit(1, 5, 0)))
 	check_eq(out.delta, 0, "the barrier blocks the strike (0 damage)")
 	check(not out.crit, "a fully blocked hit never procs crit, however certain the rate")

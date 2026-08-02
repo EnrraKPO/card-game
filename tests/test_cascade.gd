@@ -40,7 +40,7 @@ func _resolve_event_decays() -> void:
 	var w := _headless_world()
 	var pawn := _place(w, "pawn", 0, 0, 0)
 	var atk0 := pawn.get_attribute("attack")
-	pawn.apply_status("empowered", Effect.STATUS_DURATION_DEFAULT, 1, null)
+	StatusEngine.apply(pawn, "empowered", Effect.STATUS_DURATION_DEFAULT, 1, null)
 	check_eq(pawn.get_attribute("attack"), atk0 + 2, "empowered folds before the cascade runs")
 
 	var cascade := CombatCascade.make(w, CombatPresenter.new())

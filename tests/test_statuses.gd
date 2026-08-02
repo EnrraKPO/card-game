@@ -25,7 +25,7 @@ func _foldable_shield_pool() -> void:
 	var u := unit("rook")   # 6 HP, 3 base shield
 	check_eq(u.get_attribute("max_shield"), 3, "max_shield reads the card base")
 	check_eq(u.current_shield, 3, "a fresh unit's pool is the effective base")
-	u.apply_status("stalwart_barrier", Effect.STATUS_DURATION_DEFAULT, 1, null)
+	StatusEngine.apply(u, "stalwart_barrier", Effect.STATUS_DURATION_DEFAULT, 1, null)
 	check_eq(u.current_shield, 4, "a standing shield bonus raises the pool immediately")
 	var atk := unit("pawn")
 	atk.owner = 1
@@ -40,7 +40,7 @@ func _foldable_shield_pool() -> void:
 func _barrier() -> void:
 	# Barrier: target-role block, spent only when it actually stops something.
 	var tgt := unit("rook")   # 6 HP, 3 shield
-	tgt.apply_status("barrier", Effect.STATUS_DURATION_DEFAULT, 1, null)
+	StatusEngine.apply(tgt, "barrier", Effect.STATUS_DURATION_DEFAULT, 1, null)
 	var atk := unit("pawn")
 	var out := Resolver.submit(StatMutation.damage(tgt, 5, atk))
 	check_eq(out.delta, 0, "barrier blocks a damaging strike outright")
@@ -51,7 +51,7 @@ func _barrier() -> void:
 			"the block records barrier for the pip cue")
 
 	# A 0-damage whiff spends nothing and cues nothing.
-	tgt.apply_status("barrier", Effect.STATUS_DURATION_DEFAULT, 1, null)
+	StatusEngine.apply(tgt, "barrier", Effect.STATUS_DURATION_DEFAULT, 1, null)
 	var whiff := Resolver.submit(StatMutation.damage(tgt, 0, atk))
 	check_eq(whiff.delta, 0, "a whiff lands 0 either way")
 	check(whiff.interceptions.is_empty(), "a whiff records no interception (no phantom cue)")
@@ -72,7 +72,7 @@ func _barrier() -> void:
 
 	# Stacked barrier = that many blocks: one charge per stopped strike.
 	var tgt2 := unit("rook")
-	tgt2.apply_status("barrier", Effect.STATUS_DURATION_DEFAULT, 2, null)
+	StatusEngine.apply(tgt2, "barrier", Effect.STATUS_DURATION_DEFAULT, 2, null)
 	Resolver.submit(StatMutation.damage(tgt2, 4, atk))
 	var si := tgt2.find_status("barrier")
 	check(si != null and si.stacks == 1, "a 2-charge barrier survives the first block with 1 left")
@@ -92,7 +92,7 @@ func _blind_end_to_end() -> void:
 	var cue_missing := false
 	for i in trials:
 		var atk := unit("pawn")
-		atk.apply_status("blind", Effect.STATUS_DURATION_DEFAULT, 1, null)
+		StatusEngine.apply(atk, "blind", Effect.STATUS_DURATION_DEFAULT, 1, null)
 		var tgt := unit("pawn")
 		var out := Resolver.submit(StatMutation.damage(tgt, 4, atk))
 		if out.delta == 0:
@@ -115,7 +115,7 @@ func _poison_tick_and_decay() -> void:
 	# Poison is authored on the ACTIVATE phase (the unit's own turn in the combat order) —
 	# not turn_start; see data/statuses/poison.json.
 	var u := unit("rook")
-	u.apply_status("poison", Effect.STATUS_DURATION_DEFAULT, 3, null)
+	StatusEngine.apply(u, "poison", Effect.STATUS_DURATION_DEFAULT, 3, null)
 	var hp0 := u.current_health
 	EffectSystem.trigger(GameEvent.make(&"activate", u), u, ctx_for(u))
 	check_eq(u.current_health, hp0 - 3, "poison ticks its CURRENT stack count (3), bypassing shield")
@@ -128,7 +128,7 @@ func _poison_tick_and_decay() -> void:
 func _modifier_status_and_expiry() -> void:
 	var u := unit("pawn")
 	var atk0 := u.get_attribute("attack")
-	u.apply_status("empowered", Effect.STATUS_DURATION_DEFAULT, 1, null)
+	StatusEngine.apply(u, "empowered", Effect.STATUS_DURATION_DEFAULT, 1, null)
 	check_eq(u.get_attribute("attack"), atk0 + 2, "empowered's modifier folds at read time")
 
 	# default_duration 2, turn_end decay: two round-ends and it falls off — buff gone.
@@ -147,7 +147,7 @@ func _charged_standing_scaling() -> void:
 	var u := unit("pawn")
 	var atk0 := u.get_attribute("attack")
 	var spd0 := u.get_attribute("speed")
-	u.apply_status("charged", Effect.STATUS_DURATION_DEFAULT, 3, null)
+	StatusEngine.apply(u, "charged", Effect.STATUS_DURATION_DEFAULT, 3, null)
 	check_eq(u.get_attribute("attack"), atk0 + 3, "charged folds +1 attack per stack (3)")
 	check_eq(u.get_attribute("speed"), spd0 + 3, "charged folds +1 speed per stack (3)")
 
@@ -156,7 +156,7 @@ func _charged_standing_scaling() -> void:
 	check_eq(u.get_attribute("attack"), atk0 + 2, "one decayed stack shrinks the fold to +2")
 
 	# Re-application accumulates (stacking: "stack"), clamped by max_stacks.
-	u.apply_status("charged", Effect.STATUS_DURATION_DEFAULT, 2, null)
+	StatusEngine.apply(u, "charged", Effect.STATUS_DURATION_DEFAULT, 2, null)
 	check_eq(u.get_attribute("attack"), atk0 + 4, "re-applying charged stacks the intensity (2+2)")
 
 	# PULL validity: zero the stacks WITHOUT running any cleanup — the tracker must already
@@ -168,7 +168,7 @@ func _charged_standing_scaling() -> void:
 
 	# And full expiry through the normal path leaves no residue.
 	var u2 := unit("pawn")
-	u2.apply_status("charged", Effect.STATUS_DURATION_DEFAULT, 1, null)
+	StatusEngine.apply(u2, "charged", Effect.STATUS_DURATION_DEFAULT, 1, null)
 	StatusEngine.advance(u2, &"turn_end")
 	check(u2.find_status("charged") == null, "charged expires when its last stack decays")
 	check_eq(u2.get_attribute("attack"), atk0, "expiry leaves base attack untouched")

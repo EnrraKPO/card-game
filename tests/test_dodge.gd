@@ -183,7 +183,7 @@ func _dodge_is_attack_channel_only() -> void:
 func _dodge_preserves_barrier() -> void:
 	Resolver.set_dodge_tuning({"fixed_pct": 100.0, "max_pct": 100.0})
 	var tgt := _unit(1, 5, 0)
-	tgt.apply_status("barrier", Effect.STATUS_DURATION_DEFAULT, 1, null)
+	StatusEngine.apply(tgt, "barrier", Effect.STATUS_DURATION_DEFAULT, 1, null)
 	var out := Resolver.submit(StatMutation.damage(tgt, 4, _unit(1, 5, 0)))
 	check(out.dodged, "the strike is dodged")
 	check(out.interceptions.is_empty(), "a dodge runs no interception (barrier never fires)")
@@ -192,7 +192,7 @@ func _dodge_preserves_barrier() -> void:
 	# With dodge impossible, the barrier blocks and IS consumed — the regression guard.
 	Resolver.set_dodge_tuning({"fixed_pct": 0.0, "per_speed_pct": 0.0, "per_speed_diff_pct": 0.0})
 	var tgt2 := _unit(1, 5, 0)
-	tgt2.apply_status("barrier", Effect.STATUS_DURATION_DEFAULT, 1, null)
+	StatusEngine.apply(tgt2, "barrier", Effect.STATUS_DURATION_DEFAULT, 1, null)
 	var out2 := Resolver.submit(StatMutation.damage(tgt2, 4, _unit(1, 5, 0)))
 	check(not out2.dodged, "no dodge when the rate is 0")
 	check_eq(out2.delta, 0, "the barrier blocks the strike (0 damage)")

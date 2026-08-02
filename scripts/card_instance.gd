@@ -1,5 +1,5 @@
 class_name CardInstance
-extends RefCounted
+extends StatusCarrier
 
 # Fires on every current_health write (damage, healing, shield bleed-through, initial draw/reset).
 # Combat connects this for the player King specifically to drive the header's live HP display (see
@@ -34,11 +34,8 @@ var modifiers: Dictionary = {}  # attribute id -> cumulative int delta
 # Charm ids attached to this card (display only — their mechanics are already baked into
 # `data` by DeckCard.make_instance). Empty for enemies, kings, and tokens.
 var charms: Array = []
-# Live Statuses on this card (Array[StatusInstance]) — runtime buffs/debuffs/periodic effects
-# applied during combat and removed on a timer. Never serialized (rebuilt each fight). Their
-# STANDING effects fold into get_attribute via LiveEffects; TRIGGERED ones fire via
-# EffectSystem.trigger.
-var statuses: Array = []
+# (Live Statuses — `statuses` and its lookups — are inherited from StatusCarrier: a unit is
+# one kind of status carrier, with zero say in status behavior. See StatusEngine.)
 
 # Provenance of the FATAL blow — stamped by the Resolver at the lethal HP crossing, read by
 # combat to fire the `kill` event before `death` (see GameEvent). `killed_by_unit` is the
@@ -212,76 +209,5 @@ func transform(new_data: CardData) -> void:
 	Resolver.set_health(self, maxi(1, get_attribute("max_health") - damage))
 
 
-# ── Statuses ───────────────────────────────────────────────────────────────────────────
-
-# Applies a status (by id) to this card, combining with an existing one of the same id per the
-# status's stacking rule. `duration` defaults to the status's own (pass to override); a status
-# whose kind is "combat" always lasts the whole fight regardless. See StatusData / StatusEngine.
-func apply_status(status_id: String, duration: int = Effect.STATUS_DURATION_DEFAULT, stacks: int = 1, src: CardInstance = null) -> void:
-	var sdata := StatusData.get_status(status_id)
-	if sdata == null:
-		return
-	# Status storage write — a status may carry composition grants (see LiveEffects). The
-	# Resolver-routed path invalidates in submit too; hooking the storage level as well keeps
-	# direct callers (tests, remove/clear below) airtight at negligible cost.
-	LiveEffects.invalidate_compositions()
-	var existing := find_status(status_id)
-	if existing == null or sdata.stacking == StatusData.STACK_INDEPENDENT:
-		var si := StatusInstance.make(sdata, _initial_remaining(sdata, duration), clampi(stacks, 1, sdata.max_stacks), src)
-		si.bind_carrier(self)
-		statuses.append(si)
-		return
-	match sdata.stacking:
-		StatusData.STACK_EXTEND:
-			if sdata.decay == StatusData.DECAY_DURATION and existing.remaining != -1:
-				existing.remaining += _resolved_duration(sdata, duration)
-		StatusData.STACK_INTENSITY:
-			existing.stacks = mini(existing.stacks + stacks, sdata.max_stacks)
-			existing.remaining = _refreshed_remaining(existing, sdata, duration)
-		_:   # STACK_REFRESH (default)
-			existing.remaining = _refreshed_remaining(existing, sdata, duration)
-
-
-func find_status(status_id: String) -> StatusInstance:
-	for si: StatusInstance in statuses:
-		if si.data.id == status_id:
-			return si
-	return null
-
-
-func remove_status(status_id: String) -> void:
-	statuses = statuses.filter(func(si: StatusInstance) -> bool: return si.data.id != status_id)
-	LiveEffects.invalidate_compositions()
-
-
-func clear_statuses() -> void:
-	statuses.clear()
-	LiveEffects.invalidate_compositions()
-
-
-# The effective duration to apply: the caller's override, else the status's own default.
-static func _resolved_duration(sdata: StatusData, duration: int) -> int:
-	return duration if duration != Effect.STATUS_DURATION_DEFAULT else sdata.default_duration
-
-
-# Initial `remaining` for a new instance: a countdown only for DECAY_DURATION; -1 (unused) for
-# stack-decay / never-decay statuses, which don't use the timer.
-static func _initial_remaining(sdata: StatusData, duration: int) -> int:
-	if sdata.decay != StatusData.DECAY_DURATION:
-		return -1
-	return _resolved_duration(sdata, duration)
-
-
-# Refreshed `remaining` on re-application: the longer of current and incoming for DECAY_DURATION;
-# left as-is otherwise.
-static func _refreshed_remaining(existing: StatusInstance, sdata: StatusData, duration: int) -> int:
-	if sdata.decay != StatusData.DECAY_DURATION:
-		return existing.remaining
-	return _longer_duration(existing.remaining, _resolved_duration(sdata, duration))
-
-
-# The longer of two durations, where -1 (whole-combat) outranks any finite count.
-static func _longer_duration(a: int, b: int) -> int:
-	if a == -1 or b == -1:
-		return -1
-	return maxi(a, b)
+# (Status application/stacking rules live in StatusEngine.apply — the unit holds the list
+# it inherits from StatusCarrier and nothing else.)

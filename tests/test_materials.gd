@@ -50,7 +50,7 @@ func _holders() -> void:
 	check("castling" in names, "an instance resolves its card's held abilities")
 	StatusData._all["_t_ability_grant"] = StatusData.from_dict(
 			{"id": "_t_ability_grant", "abilities": ["pawn_material"], "decay": "none"})
-	inst.apply_status("_t_ability_grant", Effect.STATUS_DURATION_DEFAULT, 1, null)
+	StatusEngine.apply(inst, "_t_ability_grant", Effect.STATUS_DURATION_DEFAULT, 1, null)
 	names = inst.ability_list().map(func(a: AbilityData) -> String: return a.id)
 	check("pawn_material" in names, "a status-held ability is ported to the carrier")
 	inst.remove_status("_t_ability_grant")
@@ -110,7 +110,7 @@ func _merge() -> void:
 	var t := unit("pawn")
 	Resolver.submit(StatMutation.make(t, StatMutation.HEALTH, -2, null))
 	Resolver.submit(StatMutation.make(t, StatMutation.ATTACK, 1, null))
-	t.apply_status("empowered", Effect.STATUS_DURATION_DEFAULT, 1, null)
+	StatusEngine.apply(t, "empowered", Effect.STATUS_DURATION_DEFAULT, 1, null)
 	var ctx := EffectContext.make(holder, [[holder, t]], [[]])
 	ctx.manual_target = t
 	ctx.ability = ab

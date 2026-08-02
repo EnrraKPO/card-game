@@ -90,7 +90,7 @@ func _grid_copy_independence() -> void:
 func _status_copy_independence() -> void:
 	var w := CombatWorld.make()
 	var pawn := _place(w, "pawn", 0, 0, 0)
-	pawn.apply_status("empowered", Effect.STATUS_DURATION_DEFAULT, 1, null)
+	StatusEngine.apply(pawn, "empowered", Effect.STATUS_DURATION_DEFAULT, 1, null)
 	var w2 := w.copy()
 	var pawn2 := _cell(w2, 0, 0, 0)
 
@@ -107,7 +107,7 @@ func _status_copy_independence() -> void:
 	check(pawn.find_status("empowered") != null, "…and the original's is untouched")
 
 	# A status applied to the copy never appears on the original.
-	pawn2.apply_status("empowered", Effect.STATUS_DURATION_DEFAULT, 1, null)
+	StatusEngine.apply(pawn2, "empowered", Effect.STATUS_DURATION_DEFAULT, 1, null)
 	check_eq(pawn.statuses.size(), 1, "a status applied to the copy stays on the copy")
 
 
@@ -141,7 +141,7 @@ func _remap_completeness() -> void:
 	var pawn := _place(w, "pawn", 0, 0, 0)
 	var king := _place(w, "king", 0, 2, 0)
 	var rook := _place(w, "rook", 0, 1, 1)
-	pawn.apply_status("empowered", Effect.STATUS_DURATION_DEFAULT, 1, king)
+	StatusEngine.apply(pawn, "empowered", Effect.STATUS_DURATION_DEFAULT, 1, king)
 	pawn.killed_by_unit = rook
 	pawn.killed_by_channel = &"attack"
 	pawn.source_building = rook
@@ -166,7 +166,7 @@ func _off_world_reference_copies() -> void:
 	var pawn := _place(w, "pawn", 0, 0, 0)
 	var dead := unit("knight")
 	pawn.killed_by_unit = dead
-	pawn.apply_status("empowered", Effect.STATUS_DURATION_DEFAULT, 1, dead)
+	StatusEngine.apply(pawn, "empowered", Effect.STATUS_DURATION_DEFAULT, 1, dead)
 	var w2 := w.copy()
 	var pawn2 := _cell(w2, 0, 0, 0)
 
@@ -182,7 +182,7 @@ func _shared_immutables() -> void:
 	var mods := ModifierSet.new()
 	var w := CombatWorld.make(mods)
 	var pawn := _place(w, "pawn", 0, 0, 0)
-	pawn.apply_status("empowered", Effect.STATUS_DURATION_DEFAULT, 1, null)
+	StatusEngine.apply(pawn, "empowered", Effect.STATUS_DURATION_DEFAULT, 1, null)
 	var w2 := w.copy()
 	var pawn2 := _cell(w2, 0, 0, 0)
 
@@ -197,7 +197,7 @@ func _tracker_rebind() -> void:
 	var w := CombatWorld.make()
 	var pawn := _place(w, "pawn", 0, 0, 0)
 	var atk0 := pawn.get_attribute("attack")
-	pawn.apply_status("charged", Effect.STATUS_DURATION_DEFAULT, 3, null)
+	StatusEngine.apply(pawn, "charged", Effect.STATUS_DURATION_DEFAULT, 3, null)
 	check_eq(pawn.get_attribute("attack"), atk0 + 3, "charged folds live (tracker went live pre-copy)")
 
 	var w2 := w.copy()

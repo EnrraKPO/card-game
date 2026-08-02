@@ -82,7 +82,7 @@ func _strikes_fold() -> void:
 			"decay": "none", "effects": [{"trigger": {"kind": "while"},
 			"targets": {"kind": "self"}, "attribute": "strikes", "amount": 1}]})
 	var fresh := unit("goblin_cutter")
-	fresh.apply_status("_t_flurry_status", Effect.STATUS_DURATION_DEFAULT, 1, null)
+	StatusEngine.apply(fresh, "_t_flurry_status", Effect.STATUS_DURATION_DEFAULT, 1, null)
 	check_eq(fresh.get_attribute("strikes"), 2, "a standing status effect grants an extra strike")
 	fresh.remove_status("_t_flurry_status")
 	check_eq(fresh.get_attribute("strikes"), 1, "and it leaves with the status")

@@ -33,7 +33,7 @@ func _split_portion_gates() -> void:
 	var atk := unit("pawn")
 	atk.owner = 1
 	var tgt := unit("rook")   # 6 HP, 3 base shield
-	tgt.apply_status("stalwart_barrier", Effect.STATUS_DURATION_DEFAULT, 2, null)
+	StatusEngine.apply(tgt, "stalwart_barrier", Effect.STATUS_DURATION_DEFAULT, 2, null)
 	# stacks are block CHARGES; the standing +1 is flat while held (container tracker)
 	check_eq(tgt.current_shield, 4, "stalwart folds a flat +1 onto the pool")
 	# Fully absorbed: the health share is 0 — nothing rewritten, no charge spent.
@@ -163,7 +163,7 @@ func _status_stack_bonus() -> void:
 			mine, "poison", Effect.STATUS_DURATION_DEFAULT, 1, esrc))
 	var mi := mine.find_status("poison")
 	check(mi != null and mi.stacks == 1, "an enemy-applied status gets no bonus")
-	# max_stacks clamping still holds inside apply_status (barrier caps at 9).
+	# max_stacks clamping still holds inside StatusEngine.apply (barrier caps at 9).
 	var tgt2 := unit("rook")
 	Resolver.submit(StatMutation.status_apply(
 			tgt2, "barrier", Effect.STATUS_DURATION_DEFAULT, 9, src))

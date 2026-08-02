@@ -327,7 +327,7 @@ is "any effect could be an interception; sources are never manually enumerated."
   a predicate over the pending mutation itself, interceptor-only (fail-loud elsewhere).
   How "heals only" is spelled on a health intercept — no bespoke direction property.
 - **Status application rides the Resolver** (`StatMutation.STATUS`, `status_apply` factory):
-  `EffectSystem._apply` submits instead of calling `apply_status` directly, making stack
+  `EffectSystem._apply` submits instead of calling `StatusEngine.apply` directly, making stack
   counts interceptable. STATUS floors at 0 after every rewrite like DAMAGE; an
   intercepted-away application applies nothing and cues nothing.
 - Proof content: `war_bulwark` upgrade (ally units take −1 attack damage), `menders_charm`

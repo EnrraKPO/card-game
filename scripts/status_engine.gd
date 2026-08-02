@@ -1,26 +1,84 @@
 class_name StatusEngine
 extends RefCounted
 
-# The operator for Statuses — the cross-cutting logic that keeps StatusData/StatusInstance (the
-# state on a CardInstance) participating in the SAME effect pipeline as native card effects, with
-# no per-status code:
-#   • triggered_groups  — a card's active statuses (grouped) that have TRIGGERED/CUSTOM effects
+# The operator for Statuses — ALL the rules of status behavior, so carriers (units, later
+# slots — see StatusCarrier) hold their list and have zero say:
+#   • apply             — the one application writer: stacking policy, clamping, refresh.
+#   • triggered_groups  — a carrier's active statuses (grouped) that have TRIGGERED/CUSTOM effects
 #                         for an event, so EffectSystem.trigger fires them alongside the card's own.
 #   • advance           — the per-round countdown: decrement ROUNDS statuses, drop expired.
 # (Status-held STANDING effects fold into get_attribute through LiveEffects — the one
 # evaluator shared with every other container; nothing status-specific remains on that path.)
-# See StatusData, StatusInstance, EffectSystem, LiveEffects.
+# See StatusData, StatusInstance, StatusCarrier, EffectSystem, LiveEffects.
 
 
-# A card's active statuses that have TRIGGERED/CUSTOM effects matching an event, grouped per status
-# (so a stacked status's effects scale together, and the dispatcher can cue each status's pip as the
-# container before its effects). Returns Array of { "status_id": String, "effects": Array[Effect],
-# "stacks": int }.
-static func triggered_groups(inst: CardInstance, event_id: StringName) -> Array:
+# Applies a status (by id) to a carrier, combining with an existing one of the same id per the
+# status's stacking rule. `duration` defaults to the status's own (pass to override); a status
+# whose kind is "combat" always lasts the whole fight regardless. See StatusData.
+static func apply(carrier: StatusCarrier, status_id: String, duration: int = Effect.STATUS_DURATION_DEFAULT, stacks: int = 1, src: CardInstance = null) -> void:
+	if carrier == null:
+		return
+	var sdata := StatusData.get_status(status_id)
+	if sdata == null:
+		return
+	# Status storage write — a status may carry composition grants (see LiveEffects). The
+	# Resolver-routed path invalidates in submit too; hooking the storage level as well keeps
+	# direct callers (tests, carrier removals) airtight at negligible cost.
+	LiveEffects.invalidate_compositions()
+	var existing := carrier.find_status(status_id)
+	if existing == null or sdata.stacking == StatusData.STACK_INDEPENDENT:
+		var si := StatusInstance.make(sdata, _initial_remaining(sdata, duration), clampi(stacks, 1, sdata.max_stacks), src)
+		si.bind_carrier(carrier)
+		carrier.statuses.append(si)
+		return
+	match sdata.stacking:
+		StatusData.STACK_EXTEND:
+			if sdata.decay == StatusData.DECAY_DURATION and existing.remaining != -1:
+				existing.remaining += _resolved_duration(sdata, duration)
+		StatusData.STACK_INTENSITY:
+			existing.stacks = mini(existing.stacks + stacks, sdata.max_stacks)
+			existing.remaining = _refreshed_remaining(existing, sdata, duration)
+		_:   # STACK_REFRESH (default)
+			existing.remaining = _refreshed_remaining(existing, sdata, duration)
+
+
+# The effective duration to apply: the caller's override, else the status's own default.
+static func _resolved_duration(sdata: StatusData, duration: int) -> int:
+	return duration if duration != Effect.STATUS_DURATION_DEFAULT else sdata.default_duration
+
+
+# Initial `remaining` for a new instance: a countdown only for DECAY_DURATION; -1 (unused) for
+# stack-decay / never-decay statuses, which don't use the timer.
+static func _initial_remaining(sdata: StatusData, duration: int) -> int:
+	if sdata.decay != StatusData.DECAY_DURATION:
+		return -1
+	return _resolved_duration(sdata, duration)
+
+
+# Refreshed `remaining` on re-application: the longer of current and incoming for DECAY_DURATION;
+# left as-is otherwise.
+static func _refreshed_remaining(existing: StatusInstance, sdata: StatusData, duration: int) -> int:
+	if sdata.decay != StatusData.DECAY_DURATION:
+		return existing.remaining
+	return _longer_duration(existing.remaining, _resolved_duration(sdata, duration))
+
+
+# The longer of two durations, where -1 (whole-combat) outranks any finite count.
+static func _longer_duration(a: int, b: int) -> int:
+	if a == -1 or b == -1:
+		return -1
+	return maxi(a, b)
+
+
+# A carrier's active statuses that have TRIGGERED/CUSTOM effects matching an event, grouped per
+# status (so a stacked status's effects scale together, and the dispatcher can cue each status's pip
+# as the container before its effects). Returns Array of { "status_id": String, "effects":
+# Array[Effect], "stacks": int }.
+static func triggered_groups(carrier: StatusCarrier, event_id: StringName) -> Array:
 	var out: Array = []
-	if inst == null:
+	if carrier == null:
 		return out
-	for si: StatusInstance in inst.statuses:
+	for si: StatusInstance in carrier.statuses:
 		var matched: Array = []
 		for e: Effect in si.data.effects:
 			# Cheap event-id prefilter; the full activation gate (participant conditions)
@@ -33,13 +91,13 @@ static func triggered_groups(inst: CardInstance, event_id: StringName) -> Array:
 	return out
 
 
-# Advances a card's statuses for one round phase (ON_TURN_START / ON_TURN_END): each status whose
-# decay_phase matches `event` counts down (its stack count for DECAY_STACKS, else its `remaining`
-# timer) and is dropped if it hits zero. Run once per unit per phase, AFTER that phase's effects
-# fire — so e.g. poison deals its damage from the current count, then the count drops.
-static func advance(inst: CardInstance, event_id: StringName) -> void:
+# Advances a carrier's statuses for one round phase (ON_TURN_START / ON_TURN_END): each status
+# whose decay_phase matches `event` counts down (its stack count for DECAY_STACKS, else its
+# `remaining` timer) and is dropped if it hits zero. Run once per carrier per phase, AFTER that
+# phase's effects fire — so e.g. poison deals its damage from the current count, then the count drops.
+static func advance(carrier: StatusCarrier, event_id: StringName) -> void:
 	var kept: Array = []
-	for si: StatusInstance in inst.statuses:
+	for si: StatusInstance in carrier.statuses:
 		if _decays_on(si, event_id):
 			if si.data.decay == StatusData.DECAY_STACKS:
 				si.stacks -= 1
@@ -47,7 +105,7 @@ static func advance(inst: CardInstance, event_id: StringName) -> void:
 				si.remaining -= 1
 		if not is_expired(si):
 			kept.append(si)
-	inst.statuses = kept
+	carrier.statuses = kept
 	# The tick is how grant-carrying statuses expire — drop the composition snapshot so the
 	# next condition read sees the post-decay world (see LiveEffects).
 	LiveEffects.invalidate_compositions()
