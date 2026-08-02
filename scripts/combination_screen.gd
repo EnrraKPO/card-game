@@ -1445,6 +1445,16 @@ func _click_on_ui(p: Vector2) -> bool:
 		var b: Variant = _merge_btns[i]
 		if is_instance_valid(b) and RoundButton.in_disc(b as Control, p):
 			return true
+	# The table is only the middle row: the persistent chrome's header (Quick preview / Quick merge)
+	# and footer sit OUTSIDE this screen's rect. They are UI, not dead table space — flipping a view
+	# toggle must never cost the player the card they had picked.
+	if not get_global_rect().has_point(p):
+		return true
+	# Anything drawn OVER the table that isn't ours — a confirm overlay's scrim and panel, say —
+	# is UI too. Checked through the GUI's hover target so it needs no knowledge of who's on top.
+	var hovered := get_viewport().gui_get_hovered_control()
+	if hovered != null and hovered != self and not is_ancestor_of(hovered):
+		return true
 	return false
 
 
