@@ -2020,6 +2020,21 @@
 		"prompt": "Sprite sheet of a quick dash motion streak with dust kicks at start and end, movement trail, 6 frames on transparent background, 2d game effect"
 	},
 	{
+		"id": "unit_move_slide",
+		"display_name": "Unit Move — Slide",
+		"category": "combat",
+		"renderer": "custom",
+		"behavior": "travel",
+		"params": {
+			"duration": 0.26,
+			"overlap": 0
+		},
+		"placeholder": false,
+		"concept": "A unit crossing the board under its own power — the CPU repositioning. Where it came FROM is the whole content of the move: a unit that changes slots between frames is indistinguishable from a unit that was replaced, and the reason it moved (reaching a lane, backing off a threat) goes unread. The path is the information.",
+		"explanation": "IMPLEMENTED (UnitSlideFx): the card itself travels from the slot it left to the one it now stands in, easing out so it sets off decisively and settles rather than creeping away and slamming down. Written as a CORRECTION — the card is reparented first, then displaced back to its origin and released — so the board's state and layout are right from the first frame and nothing downstream waits on the motion. It takes the displacement claim, so a unit shoved mid-slide leaves no two tweens fighting over one position. Player units move instantly by design; this is the CPU's cue.",
+		"prompt": "Sprite sheet of a game piece gliding smoothly from one board square to another, 8 frames on transparent background, 2d game effect"
+	},
+	{
 		"id": "ability_activate_flare",
 		"display_name": "Ability Activated",
 		"category": "combat",
@@ -2235,6 +2250,36 @@
 		"concept": "THE one answer to 'the pointer is on this' — for ANY widget, anywhere: a board unit, an empty slot, an ability, a hand card, the unit a turn-order entry is pointing at. One language, so the player learns 'yellow ring = the thing I am addressing' exactly once. Deliberately QUIETER than a selection: hover is a question, not a commitment.",
 		"explanation": "IMPLEMENTED (HoverFx + HighlightFx): a thick yellow outline hugging the widget's true composited silhouette and nothing else — no grow, no glow (glow_intensity 0). It OWNS the outline channel while it lives: a selected widget's white outline is muted for the duration while its glow keeps radiating, so the yellow ring reads on top with the white light around it.",
 		"prompt": "Sprite sheet of a thick bright yellow outline tracing the edge of a playing card, no glow, marker outline effect, 4 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "tooltip_grow_in",
+		"display_name": "Card Details — Grow In",
+		"category": "ui",
+		"renderer": "custom",
+		"behavior": "pop",
+		"params": {
+			"duration": 0.16,
+			"fade": 0.7,
+			"overlap": 0
+		},
+		"placeholder": false,
+		"concept": "The card-details panel arriving beside the card it describes. At full size on frame one it reads as a second window opening, and the eye has to find it and then work out what it belongs to. Growing it OUT OF the card answers that before it is asked — the motion itself is the line drawn between the panel and its subject.",
+		"explanation": "IMPLEMENTED (TooltipGrowFx): the panel scales 0 → 1 about the corner nearest the card, fading up over the first 70% of the span. THE CORNER IS THE POINT — expanding about the centre would grow in every direction at once and say nothing about where the panel came from. Which corner is MEASURED, not assumed: the panel normally hangs down-right of the cursor, but against a screen edge the engine flips it to the other side and the near corner flips with it. There is no exit half: a tooltip is dismissed by the pointer leaving, which has already happened by the time anything could play, so it simply goes.",
+		"prompt": "Sprite sheet of an information panel unfolding outward from its top-left corner, quick expand, 6 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "turn_number_arrive",
+		"display_name": "Turn Order — Number Arrives",
+		"category": "ui",
+		"behavior": "fade_in",
+		"params": {
+			"duration": 0.18,
+			"overlap": 0
+		},
+		"placeholder": false,
+		"concept": "The turn number appearing on a unit while the player reads the order. It is a TRANSIENT reading aid that lands in the middle of the card, over the art — arriving at full strength on one frame reads as the card being struck, not as a label being offered. Fading up says the same thing without the flinch.",
+		"explanation": "IMPLEMENTED (the `fade_in` primitive, played by CardUI._refresh_turn_number): the plate and its digit fade from nothing to the plate's OWN resting alpha — deliberately see-through, so the unit it names stays recognisable underneath (see CardUI.PLATE_ALPHA). It fades in place because the number is already exactly where it belongs; there is nowhere for it to have come from. It does not fade OUT: the numbers go when the gesture that asked for them ends, and a lingering order is a lie about what the player is still being told.",
+		"prompt": "Sprite sheet of a numbered plaque fading into view over a playing card, gentle appearance, 6 frames on transparent background, 2d game effect"
 	},
 	{
 		"id": "turn_number_spotlight",

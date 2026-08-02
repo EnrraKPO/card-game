@@ -230,12 +230,25 @@ func spawn_player_card(inst: CardInstance, r: int, c: int) -> Array:
 
 # Relocates an already-placed enemy unit to an empty slot (the CPU's reposition
 # action). Carries the existing CardUI across so no ON_PLAY re-triggers.
-func move_enemy_card(inst: CardInstance, r: int, c: int) -> void:
-	var ui: CardUI = (enemy_slots[inst.row][inst.col] as SlotUI).clear_card()
+#
+# Returns WHERE THE CARD STOOD, in global coordinates, for whoever presents the move — the slide
+# that makes the reposition readable has to be told where the unit came from, and this is the only
+# moment anyone can still see it. The board hands the fact over rather than animating: state and
+# view are separate here, exactly as they are for a death (see retire_unit), so the grid, the
+# targeting and the next attacker are all correct the instant this returns whether or not anybody
+# plays the cue.
+func move_enemy_card(inst: CardInstance, r: int, c: int) -> Vector2:
+	# Read BEFORE the card is taken out of its slot: clear_card reparents it out of the tree, and an
+	# orphaned Control's global position is just its local one — the origin, wherever it stood.
+	var old_slot := enemy_slots[inst.row][inst.col] as SlotUI
+	var standing := old_slot.get_card()
+	var from := standing.global_position if standing != null else old_slot.global_position
+	var ui: CardUI = old_slot.clear_card()
 	enemy_grid[inst.row][inst.col] = null
 	inst.row = r; inst.col = c
 	enemy_grid[r][c] = inst
 	(enemy_slots[r][c] as SlotUI).set_card(ui)
+	return from
 
 
 # A unit leaves PLAY — state only, and instantly. Targeting, the king checks and the next attacker

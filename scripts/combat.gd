@@ -549,8 +549,13 @@ func _execute_enemy_action(action: Dictionary) -> void:
 				var spell_target: CardInstance = action.get("target", null)
 				await _show_enemy_spell(display, spell_target)
 		EnemyEngine.Action.MOVE:
-			_board.move_enemy_card(action["inst"], action["row"], action["col"])
-			Vfx.play("unit_move_dash", _board.get_card_ui(action["inst"]))
+			var from := _board.move_enemy_card(action["inst"], action["row"], action["col"])
+			var moved := _board.get_card_ui(action["inst"])
+			Vfx.play("unit_move_dash", moved)
+			# AWAITED, unlike the streak playing over it: the unit has to have LANDED before the
+			# turn's next beat, or a second unit sets off while this one is still crossing and
+			# neither move can be followed.
+			await Vfx.play("unit_move_slide", moved, {"from": from})
 	await get_tree().create_timer(0.35).timeout
 
 

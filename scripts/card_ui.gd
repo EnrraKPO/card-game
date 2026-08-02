@@ -658,6 +658,10 @@ func _refresh_turn_number(n: int) -> void:
 		var line := TurnOrderStrip.line_color(card_instance.owner)
 		_turn_plate = Panel.new()
 		_turn_plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		# Born hidden so its first show is an ARRIVAL like every later one (see the fade below) —
+		# a Panel is visible by default, and the plate would otherwise skip the fade exactly once,
+		# on the one showing the player is most likely to be watching for.
+		_turn_plate.visible = false
 		var ps := StyleBoxFlat.new()
 		# The plate is SEE-THROUGH — the unit it names has to stay recognisable underneath it (the
 		# player is reading the order OF units, not of numbers). The numeral itself stays fully
@@ -697,9 +701,15 @@ func _refresh_turn_number(n: int) -> void:
 		_turn_lbl.position = Vector2(0.0,
 				TurnOrderStrip.baseline_offset(_turn_lbl, TURN_PLATE_SIZE.y))
 		_turn_lbl.size = TURN_PLATE_SIZE
+	# ARRIVAL, not appearance — but only on the frame the number actually arrives. This runs on every
+	# re-derivation, and a plate that is already being read must not restart its fade because the
+	# order behind it was recomputed; the number would flicker for as long as the player looked at it.
+	var arriving := not _turn_plate.visible
 	_turn_lbl.text = str(n)
 	_turn_plate.visible = true
 	_turn_lbl.visible = true
+	if arriving:
+		Vfx.play("turn_number_arrive", _turn_plate)
 	# The plate may have been BUILT under a spotlight that was already on. The strip declares its
 	# hover and its numbers in two steps (see TurnOrderStrip.point_at), so the frame the card learns
 	# it is spotlit is the frame BEFORE it has a plate to light — and _apply_spotlight's own guard
@@ -1552,10 +1562,17 @@ func _make_status_pip(si: StatusInstance) -> Control:
 
 
 # The rich hover panel is the shared CardTooltip, so it matches everywhere a card is shown.
+#
+# It ARRIVES rather than appears: TooltipGrowFx grows it out of the corner nearest this card, so the
+# panel and the card it speaks for read as one thing. The card is handed over as the anchor because
+# WHICH card the panel belongs to is a fact only this end knows — the builder is shared by the
+# inspector and the forge, which have no card to grow out of.
 func _make_custom_tooltip(_for_text: String) -> Object:
 	if UIScale.is_touch():
 		return null   # belt-and-braces: UIScale.tip already blanks the text on touch
-	return CardTooltip.build(card_instance, _show_cost, 1.0, false, true, is_phantom)
+	var panel := CardTooltip.build(card_instance, _show_cost, 1.0, false, true, is_phantom)
+	TooltipGrowFx.arrive(panel, self)
+	return panel
 
 
 # HOW A CARD BEHAVES WHEN IT IS THE PICK — its own behaviour, never handed to it.

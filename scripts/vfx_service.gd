@@ -25,7 +25,7 @@ extends Node
 # The procedural behavior vocabulary. Adding a primitive = a _fx_* method + a list entry here
 # (the Tool validates entries against this same list — keep them in sync).
 const BEHAVIORS := ["flash", "pulse", "pop", "shake", "ring", "sparkle", "glint", "glow",
-		"float_label", "burst", "travel", "reticle", "dissolve", "radiance", "emit"]
+		"float_label", "burst", "travel", "reticle", "dissolve", "radiance", "emit", "fade_in"]
 # Behaviors that can run as a SUSTAINED state (attach/detach) as well as a one-shot.
 const SUSTAINED_BEHAVIORS := ["glow", "pulse", "sparkle", "radiance", "emit"]
 
@@ -68,6 +68,10 @@ func _ready() -> void:
 	# The screen-arrival cue any navigation can ask for by name (Nav.goto's second argument) —
 	# app-wide like the Highlight, owned by no single screen.
 	register_custom("screen_grow_in", ScreenGrowFx.play)
+	# The other two ARRIVALS, both app-wide for the same reason: a panel growing out of the widget
+	# it speaks for, and a unit travelling to the slot it just moved into.
+	register_custom(TooltipGrowFx.ENTRY, TooltipGrowFx.play)
+	register_custom(UnitSlideFx.ENTRY, UnitSlideFx.play)
 	_load_prefs()
 
 
@@ -467,7 +471,10 @@ const _REST  := "vfx_mover_rest"   # the full transform as of the first uncontes
 func begin_displace(target: Control) -> Vector2:
 	var rest := {"pos": target.position, "rot": target.rotation_degrees,
 			"scale": target.scale, "pivot": target.pivot_offset}
-	var prev: Variant = target.get_meta(_MOVER, null)
+	# has_meta, not get_meta's default: a null DEFAULT is indistinguishable from no default at all,
+	# so asking that way printed an error on every widget's first claim (harmless, but it buried
+	# real errors in the log).
+	var prev: Variant = target.get_meta(_MOVER) if target.has_meta(_MOVER) else null
 	if prev != null and is_instance_valid(prev) and (prev as Tween).is_valid():
 		# Something is mid-motion: its recorded rest is the truth, the live transform is not.
 		rest = target.get_meta(_REST, rest)
@@ -483,6 +490,20 @@ func begin_displace(target: Control) -> Vector2:
 # Registers the displacement tween begun after a begin_displace claim.
 func hold_displace(target: Control, tw: Tween) -> void:
 	target.set_meta(_MOVER, tw)
+
+
+# "Am I still the one moving this?" — for a mover with anything to UNDO beyond the transform (a
+# draw-order lift, a swapped material) once it is done.
+#
+# Such a mover cannot simply await its own tween and clean up after: a tween that gets killed by the
+# next claimant never emits `finished`, so the cleanup would never run and the widget would keep the
+# lift forever. It waits on a timer instead — which nothing can cancel — and asks this before
+# touching anything, because by then the widget may belong to someone else who has already restored
+# the transform and would not thank it for a second opinion.
+func holds_displace(target: Control, tw: Tween) -> bool:
+	if target == null or not is_instance_valid(target) or not target.has_meta(_MOVER):
+		return false
+	return target.get_meta(_MOVER) == tw
 
 
 # ── Reaction claims: when a big cue speaks for the card ────────────────────────────
@@ -583,6 +604,7 @@ func _play_procedural(vd: VFXData, target: Control, opts: Dictionary) -> void:
 		"dissolve":    await _fx_dissolve(vd, target, opts)
 		"radiance":    await _fx_radiance_once(vd, target, opts)
 		"emit":        await _fx_emit_once(vd, target, opts)
+		"fade_in":     await _fx_fade_in(vd, target, opts)
 		_:
 			push_warning("Vfx: unknown behavior \"%s\" on \"%s\"" % [vd.behavior, vd.id])
 
@@ -721,6 +743,36 @@ func _fx_pop(vd: VFXData, target: Control, _opts: Dictionary) -> void:
 	if is_instance_valid(target):
 		target.scale = Vector2.ONE
 		target.pivot_offset = old_pivot
+
+
+# THE ARRIVAL of a widget that is already exactly where it belongs: it fades up in place. The
+# third of the "moves the target itself" primitives (with pop and shake), and the quietest one —
+# nothing about the widget changes except that it comes to be there.
+#
+# Use it when a thing appears in a spot it will not leave. Something appearing NEXT TO what it
+# describes should grow out of that thing instead (TooltipGrowFx), and something appearing at a new
+# spot should travel from the old one (UnitSlideFx) — a fade there would throw away the one fact
+# the motion exists to carry.
+#
+# It fades to the widget's OWN resting alpha, not to 1: a deliberately translucent thing (the turn
+# plate, see CardUI._refresh_turn_number) must not be brightened by the act of arriving.
+#
+# `_FADE_REST` is the same guard the displacement claim uses and exists for the same reason. Play
+# this twice in quick succession and the second call would read a mid-fade alpha as the resting
+# one and leave the widget permanently dimmed, a little further each time. The first call records
+# the truth; every later one restores from that record instead of from the live value.
+const _FADE_REST := "vfx_fade_rest"
+
+func _fx_fade_in(vd: VFXData, target: Control, _opts: Dictionary) -> void:
+	var rest: float = target.get_meta(_FADE_REST, target.modulate.a)
+	target.set_meta(_FADE_REST, rest)
+	target.modulate.a = 0.0
+	var tw := target.create_tween()
+	tw.tween_property(target, "modulate:a", rest, _p_dur(vd, 0.18)) \
+			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	await tw.finished
+	if is_instance_valid(target):
+		target.modulate.a = rest   # exact — a rounding error here is a permanently faded widget
 
 
 # A brief positional jitter of the target itself, restored exactly.
