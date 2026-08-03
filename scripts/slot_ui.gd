@@ -276,8 +276,12 @@ func _layout_ground() -> void:
 				pip.set_tab_width(per)
 	var m := _ground_pips.get_combined_minimum_size()
 	_ground_pips.size = m
-	# Where the row sits with an unscaled occupant (or none): centred on the slot's top edge.
-	var rest := Vector2((size.x - m.x) * 0.5, -GROUND_ROW_RISE)
+	# Where the row sits with an unscaled occupant (or none): pinned to the slot's RIGHT edge, a
+	# small inset in from it. Right-aligned rather than centred so the row has a fixed end to build
+	# from — tabs are appended, so the newest lands at the pinned edge and the pile grows leftward,
+	# and nothing already on screen shifts sideways just because the count changed. (A centred row
+	# re-centres on every stack, so the whole pile slides half a tab each time the fire ticks.)
+	var rest := Vector2(size.x - GROUND_ROW_INSET - m.x, -GROUND_ROW_RISE)
 	# ...then the occupant's transform, expressed as a scale about the slot's CENTRE. A Control
 	# scales about its own pivot, so the pivot is emulated by placing the row where scaling about
 	# the centre would have put its corner: every point of the row then lands exactly where the
@@ -395,15 +399,34 @@ func flare_ground(status_id: String) -> void:
 		Vfx.play(id, _ground_frame)
 
 
-# The LAST match: with duplicate-display statuses several tabs share an id, and the newest tab
-# (the freshest stack) is the one a flash should land on.
-func find_ground_pip(status_id: String) -> StatusPip:
-	var found: StatusPip = null
+# All this ground row's tabs for `status_id`, in row order. The damage moment glints the WHOLE
+# fire at once (every flame acts together — see LivePresenter.show_ground_results), so the
+# presenter needs the full set, not one pip.
+func ground_pips_of(status_id: String) -> Array:
+	var out: Array = []
 	for child in _ground_pips.get_children():
 		var pip := child as StatusPip
 		if pip != null and pip.status != null and pip.status.data.id == status_id:
-			found = pip
-	return found
+			out.append(pip)
+	return out
+
+
+# The LAST match: with duplicate-display statuses several tabs share an id, and the newest tab
+# (the freshest stack) is the one a flash should land on.
+func find_ground_pip(status_id: String) -> StatusPip:
+	var matches := ground_pips_of(status_id)
+	if matches.is_empty():
+		return null
+	return matches[matches.size() - 1] as StatusPip
+
+
+# The `index`-th tab (spread rolls glint the pile in order), clamped to the last one standing —
+# a flame that faded mid-pass removed its tab while later rolls in the snapshot were still due.
+func ground_pip_at(status_id: String, index: int) -> StatusPip:
+	var matches := ground_pips_of(status_id)
+	if matches.is_empty():
+		return null
+	return matches[clampi(index, 0, matches.size() - 1)] as StatusPip
 
 
 # ── The pointer ring ────────────────────────────────────────────────────────────

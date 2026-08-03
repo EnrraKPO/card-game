@@ -63,6 +63,13 @@ var max_stacks: int = 99
 # "duplicates" (one pip per stack; burning — the tabs on a slot literally count the flames).
 # Presentation only; honored by the ground tab row today (SlotUI.render_ground).
 var stack_display: String = "count"
+# Ground SPREAD (generic — burning is the first author, any ground status may). Once per stack
+# at `phase` (default "turn_start"), the status rolls: `chance` to propagate one stack to a
+# random adjacent slot on the same half, else `decay_chance` for that stack to die down. This
+# replaces phase decay for statuses that author it — the roll IS the lifetime. Interpreted by
+# the cascade's ground spread tier (CombatCascade._spread_ground); meaningless on unit
+# carriers (units don't sit in the slot lattice — ignored there). Empty = never spreads.
+var spread: Dictionary = {}
 var effects: Array = []   # Array[Effect]
 # Activated abilities this status HOLDS (by id, see AbilityData) — ported to the carrier while
 # the status is active, gone with it. Any effect container may hold abilities.
@@ -115,6 +122,8 @@ static func from_dict(d: Dictionary) -> StatusData:
 	s.stacking         = str(d.get("stacking", STACK_REFRESH))
 	s.max_stacks       = int(d.get("max_stacks", 99))
 	s.stack_display    = str(d.get("stack_display", "count"))
+	var spread_spec: Variant = d.get("spread", {})
+	s.spread           = spread_spec if spread_spec is Dictionary else {}
 	s.abilities        = Array(d.get("abilities", []), TYPE_STRING, "", null)
 	for e_data: Dictionary in d.get("effects", []):
 		var eff := Effect.from_dict(e_data)

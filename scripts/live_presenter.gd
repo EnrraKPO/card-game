@@ -40,20 +40,57 @@ func show_effect_results(results: Array, holder: CardInstance, status_id: String
 	await _animator.show_effect_results(results, holder, status_id, cue)
 
 
-func show_ground_results(slot: BoardSlot, status_id: String, results: Array) -> void:
-	# The cause first: the ground pip discharges like any status pip whose effect fired.
+func show_ground_results(procs: Array) -> void:
+	# The cause first, board-wide and SIMULTANEOUS: every acting slot flares and every one of
+	# its tabs glints in the same instant — the whole fire acts as one (the spread tier is
+	# where flames act alone, one glint per roll). The flare rides each glint (see VFXPlayer's
+	# arrival path): the slot acting and the tabs discharging are one event, and the flare's
+	# sparks are what carry it to a covered slot.
+	var any_cue := false
+	var all_results: Array = []
+	for p: Dictionary in procs:
+		var slot: BoardSlot = p["slot"]
+		var slot_ui := _board.slot_ui_at(slot.side, slot.row, slot.col)
+		if slot_ui != null:
+			slot_ui.flare_ground(str(p["status_id"]))
+			for pip: StatusPip in slot_ui.ground_pips_of(str(p["status_id"])):
+				pip.flash_proc()
+			any_cue = true
+		all_results.append_array(p["results"])
+	if any_cue:
+		await beat(VFXPlayer.PIP_SPAN)
+	# Then the effect: all the results land together, exactly as any effect's do (damage
+	# numbers, reticles) — one moment, not a slot-by-slot stagger. No holder card exists to
+	# glint — the tabs above WERE the cue.
+	await _animator.show_effect_results(all_results, null, "", false)
+
+
+func show_ground_spread_roll(slot: BoardSlot, status_id: String, stack_index: int,
+		outcome: StringName, target: BoardSlot) -> void:
 	var slot_ui := _board.slot_ui_at(slot.side, slot.row, slot.col)
 	if slot_ui != null:
-		# The ground flares WITH its pip (see VFXPlayer's arrival path): the slot acting and the
-		# tab discharging are one event, and the flare's sparks are what carry it to a covered slot.
-		slot_ui.flare_ground(status_id)
-		var pip := slot_ui.find_ground_pip(status_id)
+		# The roll: the rolling tab glints — identically whatever comes of it (user call: the
+		# ignition flare below is the only success signal).
+		var pip := slot_ui.ground_pip_at(status_id, stack_index)
 		if pip != null:
 			pip.flash_proc()
-			await beat(VFXPlayer.PIP_SPAN)
-	# Then the effect: the results land on their targets exactly as any effect's do (damage
-	# numbers, reticles). No holder card exists to glint — the pip above WAS the cue.
-	await _animator.show_effect_results(results, null, "", false)
+	await beat(VFXPlayer.PIP_SPAN)
+	if outcome == &"spread" and target != null:
+		# The catch: the target's tab arrives WITH its flare — the slot catching light and the
+		# tab appearing are one event (the ground arrival convention).
+		_board.refresh()
+		var target_ui := _board.slot_ui_at(target.side, target.row, target.col)
+		if target_ui != null:
+			target_ui.flare_ground(status_id)
+			var fresh := target_ui.find_ground_pip(status_id)   # newest tab (last match)
+			if fresh != null:
+				fresh.flash_applied()
+		await beat(VFXPlayer.PIP_SPAN)
+	elif outcome == &"fade":
+		# The flame dying down: the glint above has played out; the re-render simply shows one
+		# tab fewer. A shorter settle than a spread — nothing new arrived to look at.
+		_board.refresh()
+		await beat(VFXPlayer.PIP_SPAN * 0.5)
 
 
 func relic_glint(owner_id: String) -> void:

@@ -144,6 +144,13 @@ func resolve_event(event_id: StringName, subject: CardInstance = null) -> void:
 	# world state changes and board_refresh shows the aftermath.
 	if subject == null:
 		var ground := world.active_slots()
+		# Tier 1 — PROCS, gathered first and presented as ONE moment. Mutations still land
+		# slot by slot in reading order (deterministic), and narrate into the combat log —
+		# the tint/pip may have no witnesses in a headless run, the log always does. But the
+		# board-wide batch presents together: every acting ground tab glints AT ONCE as the
+		# damage arrives — the whole fire acts as one, where the spread tier below is each
+		# flame acting alone.
+		var ground_procs: Array = []
 		for slot: BoardSlot in ground:
 			var gctx := world.make_context(null)
 			gctx.owner_anchor = slot.side   # the ground inherits the half it sits on
@@ -151,9 +158,6 @@ func resolve_event(event_id: StringName, subject: CardInstance = null) -> void:
 			gctx.anchor_row = slot.row
 			gctx.anchor_col = slot.col
 			var groups := EffectSystem.trigger_carrier_grouped(GameEvent.make(event_id, null), slot, gctx)
-			# Ground procs present through the same dispatch-shows-its-results contract as
-			# units (pip glint, then the targets' cues), and narrate into the combat log —
-			# the tint/pip may have no witnesses in a headless run, the log always does.
 			for grp: Dictionary in groups:
 				for res: Dictionary in grp["results"]:
 					var victim := res.get("target") as CardInstance
@@ -162,11 +166,81 @@ func resolve_event(event_id: StringName, subject: CardInstance = null) -> void:
 							str(grp["status_id"]), str(res.get("attribute", "?")),
 							int(res.get("delta", 0)),
 							"?" if victim == null or victim.data == null else str(victim.data.id)])
-				await presenter.show_ground_results(slot, str(grp["status_id"]), grp["results"])
+				ground_procs.append({"slot": slot, "status_id": str(grp["status_id"]),
+						"results": grp["results"]})
+		if not ground_procs.is_empty():
+			await presenter.show_ground_results(ground_procs)
+		# Tier 2 — SPREAD: statuses that author `spread` roll their stacks (see _spread_ground).
+		await _spread_ground(event_id, ground)
+		# Tier 3 — decay, same order as before. Slots first touched by a spread this pass are
+		# not in `ground` and skip it — a status is never asked to decay the phase it arrived.
 		for slot: BoardSlot in ground:
 			StatusEngine.advance(slot, event_id)
 	world.cleanup_deaths()
 	presenter.board_refresh()
+
+
+# ── The ground SPREAD tier (SLOT_LAYER_DESIGN.md §4.4) ─────────────────────────────────
+# A ground status that authors `spread` (StatusData.spread) rolls ONCE PER STACK at its
+# phase: `chance` to propagate one stack to a random adjacent slot on the same half
+# (orthogonal), else `decay_chance` for that stack to die down — the roll IS the status's
+# lifetime (burning authors decay "none"; the fire only ever goes out by failing here).
+# The jobs are a SNAPSHOT taken before any roll: a stack that arrives mid-pass never rolls
+# in the pass that lit it, so one lucky chain can't sweep the board in a single turn.
+# Rolls draw from the rules stream — seeded, replayable, and scratch-isolated inside a
+# hypothetical (see CombatRng). Each roll presents individually, in reading order: the
+# rolling tab glints the same whatever comes of it (the target's ignition flare is the
+# only success signal — user call).
+func _spread_ground(event_id: StringName, ground: Array) -> void:
+	var jobs: Array = []
+	for slot: BoardSlot in ground:
+		for si: StatusInstance in slot.statuses:
+			if StatusEngine.is_expired(si) or si.data.spread.is_empty():
+				continue
+			if str(si.data.spread.get("phase", "turn_start")) != String(event_id):
+				continue
+			jobs.append({"slot": slot, "si": si, "count": si.stacks})
+	for job: Dictionary in jobs:
+		var slot: BoardSlot = job["slot"]
+		var si: StatusInstance = job["si"]
+		var chance := float(si.data.spread.get("chance", 0.0))
+		var fade_chance := float(si.data.spread.get("decay_chance", 0.0))
+		for i: int in int(job["count"]):
+			var outcome: StringName = &"hold"
+			var target: BoardSlot = null
+			if CombatRng.roll() < chance:
+				target = _random_adjacent(slot)
+				if target != null:
+					outcome = &"spread"
+					# The propagated stack keeps its parent's source — provenance survives the leap.
+					StatusEngine.apply(target, si.data.id, Effect.STATUS_DURATION_DEFAULT, 1, si.source)
+					CombatLog.note("ground", "slot (%s r%d c%d) %s spreads to (r%d c%d)" % [
+							"player" if slot.side == 0 else "enemy", slot.row, slot.col,
+							si.data.id, target.row, target.col])
+			elif CombatRng.roll() < fade_chance:
+				outcome = &"fade"
+				StatusEngine.shed_stack(slot, si)
+				CombatLog.note("ground", "slot (%s r%d c%d) %s dies down (%d left)" % [
+						"player" if slot.side == 0 else "enemy", slot.row, slot.col,
+						si.data.id, si.stacks])
+			await presenter.show_ground_spread_roll(slot, si.data.id, i, outcome, target)
+
+
+# A random orthogonal neighbour of `slot` on the SAME half — the battle line is a wall to
+# ground statuses for now (cross-line adjacency is a parked decision, and this helper is
+# the one predicate to widen when it lands). The pick draws from the rules stream: which
+# slot catches fire is a rules outcome, not an AI whim.
+func _random_adjacent(slot: BoardSlot) -> BoardSlot:
+	var options: Array = []
+	for d: Vector2i in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+		var r := slot.row + d.x
+		var c := slot.col + d.y
+		if r >= 0 and r < BoardData.ROWS and c >= 0 and c < BoardData.COLS:
+			options.append(Vector2i(r, c))
+	if options.is_empty():
+		return null
+	var pick: Vector2i = options[CombatRng.roll_int(0, options.size() - 1, &"rules")]
+	return world.slot_at(slot.side, pick.x, pick.y)
 
 
 # The LOGIC half of a death: the unit leaves play this instant (world.retire — which also

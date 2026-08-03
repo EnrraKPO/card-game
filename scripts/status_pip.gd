@@ -35,6 +35,10 @@ const TAB_H := 14.0           # the tab body's own height
 # tab wears for the frame between as_ground_tab() and the slot's first layout pass.
 const TAB_W := 46.0           # with a count to show; TAB_W_BARE otherwise
 const TAB_W_BARE := 26.0
+# The icon sits against the tab's RIGHT edge, a hair in from it — the row is right-aligned too, so
+# icon and row share one edge and a pile reads as a stack building from the right rather than a
+# centred cluster whose contents drift as the count changes.
+const TAB_ICON_PAD := 3.0
 # While a tab pip flashes it must outrank everything else in its canvas layer — including a
 # picked card, which lifts ITSELF to HighlightFx.Z_LIFT, and a z lift outranks tree order.
 const GLINT_Z := HighlightFx.Z_LIFT + 10
@@ -133,14 +137,17 @@ func set_tab_width(w: float) -> void:
 	icon.grow_horizontal = Control.GROW_DIRECTION_END
 	icon.grow_vertical = Control.GROW_DIRECTION_END
 	icon.size = Vector2(TAB_ICON, TAB_ICON)
+	# Right-aligned, and when the band is squeezed narrower than the icon the overhang goes LEFT —
+	# the right edges of every tab in a compressed pile still line up, so a crowd reads as a stack
+	# rather than as a smear.
+	var icon_x := w - TAB_ICON - TAB_ICON_PAD
+	icon.position = Vector2(icon_x, 0.0)
 	if count_lbl.visible:
-		# Icon left, count beside it — both in the icon's row, breaking out above the band:
-		# both facts a ground status carries clear the slot border together and survive the
-		# card. A count down in the band would be stranded under the occupant.
-		icon.position = Vector2(2.0, 0.0)
-		_centre_label(count_lbl, Rect2(TAB_ICON + 2.0, 0.0, w - TAB_ICON - 4.0, TAB_ICON))
-	else:
-		icon.position = Vector2((w - TAB_ICON) * 0.5, 0.0)
+		# Icon right, count to its LEFT — both in the icon's row, breaking out above the band, so
+		# both facts a ground status carries clear the slot border together and survive the card.
+		# A count down in the band would be stranded under the occupant.
+		_centre_label(count_lbl, Rect2(TAB_ICON_PAD, 0.0,
+				maxf(icon_x - TAB_ICON_PAD * 2.0, 1.0), TAB_ICON))
 
 
 # Centres a label ON a box instead of forcing the box ONTO it. A Label refuses to be smaller than

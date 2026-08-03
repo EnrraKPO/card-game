@@ -1581,6 +1581,8 @@
   "status.barrier.name": "Barrier",
   "status.blind.desc": "When this unit attacks, 50% chance to miss (deal no damage). One charge is spent per attack.",
   "status.blind.name": "Blind",
+  "status.burning.desc": "This ground is on fire: at the start of each round every flame may leap to an adjacent tile or die down, and the unit standing here takes 1 damage at the round's end.",
+  "status.burning.name": "Burning",
   "status.charged.desc": "This unit is charged with energy: +1 <attack> and +1 <speed> per stack.",
   "status.charged.name": "Charged",
   "status.darkness_blessing.desc": "For 2 turns: +1 <attack>, +1 <shield>, and this unit is treated as a <darkness> unit.",

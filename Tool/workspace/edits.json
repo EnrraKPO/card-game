@@ -5411,7 +5411,7 @@
       "prompt": "Sprite sheet of sickly green poison bubbles rising and popping, looping toxic aura, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-14T12:50:33.586Z",
-    "fileHash": "1b3983194364891f96baa5d11a28f9e89b6ade49"
+    "fileHash": "602256b754bd0d60f63576f62ef5375342af084e"
   },
   "vfx/aura_blind": {
     "file": "vfx.json",
@@ -5431,7 +5431,7 @@
       "prompt": "Sprite sheet of grey smoky haze drifting across a face area, looping blindness veil, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-14T12:50:35.887Z",
-    "fileHash": "1b3983194364891f96baa5d11a28f9e89b6ade49"
+    "fileHash": "602256b754bd0d60f63576f62ef5375342af084e"
   },
   "card/pawn_rook": {
     "file": "chess_combined.json",
@@ -6101,7 +6101,7 @@
       "prompt": "Sprite sheet of a golden light halo breathing outward around a circular button, smooth soft radial falloff extending past the rim, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-20T18:34:03.607Z",
-    "fileHash": "1b3983194364891f96baa5d11a28f9e89b6ade49"
+    "fileHash": "602256b754bd0d60f63576f62ef5375342af084e"
   },
   "card/bishop": {
     "file": "materials.json",
@@ -10129,7 +10129,7 @@
       "prompt": "Sprite sheet of a tight dense pale halo hugging a potion flask's outline, slim bright rim of light with a smooth short falloff, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-27T00:36:32.147Z",
-    "fileHash": "1b3983194364891f96baa5d11a28f9e89b6ade49"
+    "fileHash": "602256b754bd0d60f63576f62ef5375342af084e"
   },
   "vfx/coin_flight": {
     "file": "vfx.json",
@@ -10153,7 +10153,7 @@
       "prompt": "Sprite sheet of a spinning gold coin with a bright specular sweep, transparent background, 8 frames, 2d game effect"
     },
     "at": "2026-07-27T16:54:37.194Z",
-    "fileHash": "1b3983194364891f96baa5d11a28f9e89b6ade49"
+    "fileHash": "602256b754bd0d60f63576f62ef5375342af084e"
   },
   "vfx/chest_landing": {
     "file": "vfx.json",
@@ -10173,7 +10173,7 @@
       "prompt": "Sprite sheet of a dust and golden spark impact ring on the ground, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-27T19:30:26.199Z",
-    "fileHash": "1b3983194364891f96baa5d11a28f9e89b6ade49"
+    "fileHash": "602256b754bd0d60f63576f62ef5375342af084e"
   },
   "vfx/reward_orb": {
     "file": "vfx.json",
@@ -10200,7 +10200,7 @@
       "prompt": "Sprite sheet of a brilliant golden orb of light with a soft halo and drifting sparks, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-27T19:43:21.699Z",
-    "fileHash": "1b3983194364891f96baa5d11a28f9e89b6ade49"
+    "fileHash": "602256b754bd0d60f63576f62ef5375342af084e"
   },
   "vfx/screen_grow_in": {
     "file": "vfx.json",
@@ -10222,7 +10222,7 @@
       "prompt": "Sprite sheet of a rectangular panel expanding from a point of light to full size with a soft overshoot, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-27T19:54:49.831Z",
-    "fileHash": "1b3983194364891f96baa5d11a28f9e89b6ade49"
+    "fileHash": "602256b754bd0d60f63576f62ef5375342af084e"
   },
   "vfx/attack_target_glow": {
     "file": "vfx.json",
@@ -10250,7 +10250,7 @@
       "prompt": "Sprite sheet of an aggressive red light halo breathing outward around a framed card, smooth soft radial falloff extending past the frame, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-07-27T21:31:56.892Z",
-    "fileHash": "1b3983194364891f96baa5d11a28f9e89b6ade49"
+    "fileHash": "602256b754bd0d60f63576f62ef5375342af084e"
   },
   "relic/bomb": {
     "file": "relics.json",
@@ -10409,7 +10409,7 @@
       "prompt": "Sprite sheet of a bright white outline flaring around a playing card with a dense soft white glow radiating outward, selection highlight effect, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-08-01T20:52:36.033Z",
-    "fileHash": "1b3983194364891f96baa5d11a28f9e89b6ade49"
+    "fileHash": "602256b754bd0d60f63576f62ef5375342af084e"
   },
   "vfx/card_hover_lift": {
     "file": "vfx.json",
@@ -10431,7 +10431,7 @@
       "prompt": "Sprite sheet of a playing card easing upward out of a fanned hand of cards, gentle lift, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-08-01T22:37:09.726Z",
-    "fileHash": "1b3983194364891f96baa5d11a28f9e89b6ade49"
+    "fileHash": "602256b754bd0d60f63576f62ef5375342af084e"
   },
   "vfx/hover_outline": {
     "file": "vfx.json",
@@ -10457,7 +10457,7 @@
       "prompt": "Sprite sheet of a thick bright yellow outline tracing the edge of a playing card, no glow, marker outline effect, 4 frames on transparent background, 2d game effect"
     },
     "at": "2026-08-02T01:11:44.295Z",
-    "fileHash": "1b3983194364891f96baa5d11a28f9e89b6ade49"
+    "fileHash": "602256b754bd0d60f63576f62ef5375342af084e"
   },
   "vfx/card_playable_glow": {
     "file": "vfx.json",
@@ -10485,7 +10485,7 @@
       "prompt": "Sprite sheet of a soft warm golden light gently breathing behind a framed card, subtle smooth radial falloff just past the frame edge, 8 frames on transparent background, 2d game effect"
     },
     "at": "2026-08-02T01:13:33.416Z",
-    "fileHash": "1b3983194364891f96baa5d11a28f9e89b6ade49"
+    "fileHash": "602256b754bd0d60f63576f62ef5375342af084e"
   },
   "vfx/tooltip_grow_in": {
     "file": "vfx.json",
@@ -10506,6 +10506,6 @@
       "prompt": "Sprite sheet of an information panel unfolding upward and to the right out of its bottom-left corner, quick expand, 6 frames on transparent background, 2d game effect"
     },
     "at": "2026-08-02T06:30:38.121Z",
-    "fileHash": "1b3983194364891f96baa5d11a28f9e89b6ade49"
+    "fileHash": "602256b754bd0d60f63576f62ef5375342af084e"
   }
 }

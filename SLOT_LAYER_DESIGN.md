@@ -139,6 +139,30 @@ Do NOT build a second dispatch pipeline; this is a caller loop feeding the exist
 (Presentation note: `trigger_grouped`'s per-container cue/source-proc machinery expects a
 CardInstance source — slot dispatch SKIPS cues in this build; see §6 UI fence.)
 
+**As built, the ground pass is THREE tiers** (2026-08-03, the spread build):
+
+1. **Procs** — as above, but gathered board-wide and presented as ONE moment
+   (`CombatPresenter.show_ground_results(procs)`): mutations land slot by slot in reading
+   order, then every acting tab on the board glints AT ONCE as the results land together —
+   the whole fire acts as one.
+2. **Spread** (`CombatCascade._spread_ground`) — a status that authors a `spread` block
+   (`StatusData.spread`: `{phase, chance, decay_chance}`, generic) rolls ONCE PER STACK at
+   its phase: `chance` to propagate one stack to a random orthogonal neighbour on the same
+   half (`_random_adjacent` — the battle line is a wall, the one predicate to widen if
+   cross-line adjacency ever lands), else `decay_chance` for that stack to die down
+   (`StatusEngine.shed_stack`). The jobs are a SNAPSHOT taken before any roll: a stack
+   arriving mid-pass never rolls the pass that lit it. Rolls draw from the CombatRng
+   `rules` stream. Each roll presents individually and in order
+   (`show_ground_spread_roll`): the rolling tab glints identically for every outcome — the
+   target's ignition flare is the only success signal (user call). For statuses that
+   author spread, the roll IS the lifetime: burning is `decay: "none"` and only ever goes
+   out by fading here. Universal expiry rule added for this:
+   `StatusEngine.is_expired` treats 0 stacks as expired whatever the decay mode.
+3. **Decay**: `StatusEngine.advance(slot, event_id)` — identical call to the unit tier.
+   Slots first touched by a spread this pass aren't in the captured `ground` list and skip
+   it (a status is never asked to decay the phase it arrived). Subject-scoped events
+   (`subject != null`) skip slots entirely (slots are never a subject in this build).
+
 ### 4.5 EffectContext — the anchor coordinates
 
 `EffectContext` gains `anchor_side/anchor_row/anchor_col` (sentinel -1), set ONLY by the

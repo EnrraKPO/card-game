@@ -1812,9 +1812,9 @@
 		"category": "status",
 		"behavior": "heat",
 		"params": {
-			"strength": 7.0,
+			"strength": 7,
 			"speed": 0.5,
-			"wave_scale": 5.0,
+			"wave_scale": 5,
 			"base": 0.9,
 			"top_fade": 0.12,
 			"edge_fade": 0.12
@@ -2293,11 +2293,11 @@
 		"params": {
 			"scale": 1.07,
 			"outline_color": "ffffff",
-			"outline_width": 6,
+			"outline_width": 0.5,
 			"glow_color": "ffffff",
-			"glow_intensity": 1,
-			"glow_span": 30,
-			"glow_spread": 2
+			"glow_intensity": 5,
+			"glow_span": 2,
+			"glow_spread": 1
 		},
 		"sustained": true,
 		"placeholder": false,

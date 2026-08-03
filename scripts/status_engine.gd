@@ -125,11 +125,24 @@ static func _decays_on(si: StatusInstance, event_id: StringName) -> bool:
 # Whether a status instance's decay state says it is over. Public: StatusInstance.exists()
 # (the tracker existence probe) pull-checks this on every read — removal is hygiene only.
 static func is_expired(si: StatusInstance) -> bool:
-	if si.data.decay == StatusData.DECAY_STACKS or si.data.decay == StatusData.DECAY_INTERCEPT:
-		return si.stacks <= 0
+	# 0 stacks = no status, whatever the decay mode — stacks ARE the quantity. (This is the
+	# universal form of the old STACKS/INTERCEPT arm; the spread tier's shed_stack relies on
+	# it for statuses whose decay mode is NONE, like burning.)
+	if si.stacks <= 0:
+		return true
 	if si.data.decay == StatusData.DECAY_DURATION:
 		return si.remaining == 0
 	return false
+
+
+# Sheds ONE stack off a status instance — the spread tier's "a flame dies down" — and files
+# the hygiene removal if that was the last. The write lives here because carriers have no say
+# and the cascade is a caller, not a writer (the same split advance already draws).
+static func shed_stack(carrier: StatusCarrier, si: StatusInstance) -> void:
+	si.stacks -= 1
+	if carrier != null and is_expired(si):
+		carrier.statuses.erase(si)
+	LiveEffects.invalidate_compositions()
 
 
 # (Intercept-charge spending moved into the container itself: Resolver._try_intercept

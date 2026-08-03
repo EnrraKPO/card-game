@@ -53,10 +53,20 @@ func unit_fade(_inst: CardInstance) -> void:
 	pass
 
 
-# One GROUND container's proc: the slot's status pip glints (the cause), then the results'
-# cues play on whoever they landed on (the effect) — the slot-layer mirror of a unit status
-# firing (show_effect_results with a status cue). See SLOT_LAYER_DESIGN.md.
-func show_ground_results(_slot: BoardSlot, _status_id: String, _results: Array) -> void:
+# One phase moment's GROUND procs, batched board-wide: each entry {slot, status_id, results}.
+# Presented as ONE beat — every acting tab glints at once and the results land together (the
+# whole fire acts as one; contrast show_ground_spread_roll, where each flame acts alone).
+# See SLOT_LAYER_DESIGN.md.
+func show_ground_results(_procs: Array) -> void:
+	pass
+
+
+# One spread-tier ROLL (CombatCascade._spread_ground): `slot`'s `stack_index`-th tab of
+# `status_id` just rolled, with `outcome` &"spread" (a stack leapt to `target`), &"fade"
+# (that flame died down) or &"hold" (nothing). The rolling glint is identical for every
+# outcome — the target's ignition flare is the only success signal.
+func show_ground_spread_roll(_slot: BoardSlot, _status_id: String, _stack_index: int,
+		_outcome: StringName, _target: BoardSlot) -> void:
 	pass
 
 
