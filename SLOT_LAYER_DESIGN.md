@@ -1,10 +1,9 @@
 # Slot Layer — Design & Implementation Guide
 
-Status: **DESIGN LOCKED (user-aligned 2026-08-02), NOT BUILT.** This doc is the authority
-for the build; it is written to kick-start implementation on a clean context. The model
-decisions below were settled in discussion with the user across several rounds — do not
-reopen them; open micro-decisions are explicitly marked. Prerequisite groundwork
-(StatusCarrier, §3) is ALREADY BUILT and tested.
+Status: **BUILT 2026-08-02 (commits 05edac0 + c73571a + 4268b77, suite 1256 green), not
+yet playtested.** The model decisions below were settled in discussion with the user across
+several rounds — do not reopen them. §4 now describes what EXISTS; the scope fences in §6
+still stand (nothing behind them was built). Burning content (Step 3) remains unstarted.
 
 Sibling docs: `EFFECT_SYSTEM_DESIGN.md` (effect pipeline), `EVAL_CRITERIA_BRIEF.md`
 (enemy engine — explicitly OUT of scope here), `data/statuses/STATUS_AUTHORING_GUIDE.md`.
