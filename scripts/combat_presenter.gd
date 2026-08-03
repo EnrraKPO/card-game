@@ -53,6 +53,13 @@ func unit_fade(_inst: CardInstance) -> void:
 	pass
 
 
+# One GROUND container's proc: the slot's status pip glints (the cause), then the results'
+# cues play on whoever they landed on (the effect) — the slot-layer mirror of a unit status
+# firing (show_effect_results with a status cue). See SLOT_LAYER_DESIGN.md.
+func show_ground_results(_slot: BoardSlot, _status_id: String, _results: Array) -> void:
+	pass
+
+
 # The board view re-deriving itself after a phase moment's dust settles.
 func board_refresh() -> void:
 	pass

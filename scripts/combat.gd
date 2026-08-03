@@ -156,7 +156,7 @@ func _ready() -> void:
 	var _get_card_ui: Callable = func(inst: CardInstance) -> CardUI:
 		var stand_in := _ctx.stand_in_for(inst)
 		return stand_in if stand_in != null else _board.get_card_ui(inst)
-	_vfx.setup(self, _get_card_ui)
+	_vfx.setup(self, _get_card_ui, _board.slot_ui_at)
 	_vfx.await_settled = _await_settled
 	# Relic-owned interception cues glint the tray chip; the tray lives in combat's chrome,
 	# so combat lends the presenter this one reach into it.

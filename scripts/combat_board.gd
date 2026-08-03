@@ -163,6 +163,11 @@ func build_section(parent: BoxContainer, is_player: bool) -> void:
 			# the Interaction session (the same predicate that lit its cue), and presses bubble
 			# to combat, which routes them through the session first.
 			slot.interaction = interaction
+			# The ground lookup: the slot ASKS the world for its BoardSlot on every render —
+			# resolved through `world` at call time (the world is injected after build).
+			var gs := slot
+			slot.ground_lookup = func() -> BoardSlot:
+				return null if world == null else world.peek_slot(gs.owner_id, gs.row, gs.col)
 			if is_player:
 				player_slots[r][c] = slot
 			else:
@@ -368,12 +373,23 @@ func cleanup_effect_deaths() -> void:
 func refresh() -> void:
 	for r in BoardData.ROWS:
 		for c in BoardData.COLS:
-			var p: CardUI = (player_slots[r][c] as SlotUI).get_card()
+			var ps := player_slots[r][c] as SlotUI
+			var es := enemy_slots[r][c] as SlotUI
+			var p: CardUI = ps.get_card()
 			if p:
 				p.refresh()
-			var e: CardUI = (enemy_slots[r][c] as SlotUI).get_card()
+			var e: CardUI = es.get_card()
 			if e:
 				e.refresh()
+			# Ground state re-derives with every board refresh — decay/expiry needs no push.
+			ps.render_ground()
+			es.render_ground()
+
+
+func slot_ui_at(side: int, r: int, c: int) -> SlotUI:
+	var slots: Array = player_slots if side == 0 else enemy_slots
+	var slot_row: Array = slots[r]
+	return slot_row[c] as SlotUI
 
 
 # ── Interaction presentation ────────────────────────────────────────────────────

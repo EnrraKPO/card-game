@@ -84,6 +84,13 @@ func slot_at(slot_side: int, r: int, c: int) -> BoardSlot:
 	return s
 
 
+# Read-only ground lookup for PRESENTATION: answers null for ground that was never touched,
+# so a render pass over the whole board doesn't allocate 24 slots that carry nothing.
+# Rules paths use slot_at (which always answers).
+func peek_slot(slot_side: int, r: int, c: int) -> BoardSlot:
+	return slots.get(Vector3i(slot_side, r, c)) as BoardSlot
+
+
 # The unit standing at a ground address right now — the pieces-layer lookup the slot layer
 # never caches (incidental co-location: derived fresh at read time, from the grids, the one
 # occupancy authority). Null = empty cell or out-of-range address.

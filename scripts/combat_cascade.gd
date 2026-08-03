@@ -151,8 +151,9 @@ func resolve_event(event_id: StringName, subject: CardInstance = null) -> void:
 			gctx.anchor_row = slot.row
 			gctx.anchor_col = slot.col
 			var groups := EffectSystem.trigger_carrier_grouped(GameEvent.make(event_id, null), slot, gctx)
-			# Ground procs have no cues yet (§6) — narrate them into the combat log so a
-			# playtest can see the invisible: which slot fired, at whom, for how much.
+			# Ground procs present through the same dispatch-shows-its-results contract as
+			# units (pip glint, then the targets' cues), and narrate into the combat log —
+			# the tint/pip may have no witnesses in a headless run, the log always does.
 			for grp: Dictionary in groups:
 				for res: Dictionary in grp["results"]:
 					var victim := res.get("target") as CardInstance
@@ -161,6 +162,7 @@ func resolve_event(event_id: StringName, subject: CardInstance = null) -> void:
 							str(grp["status_id"]), str(res.get("attribute", "?")),
 							int(res.get("delta", 0)),
 							"?" if victim == null or victim.data == null else str(victim.data.id)])
+				await presenter.show_ground_results(slot, str(grp["status_id"]), grp["results"])
 		for slot: BoardSlot in ground:
 			StatusEngine.advance(slot, event_id)
 	world.cleanup_deaths()

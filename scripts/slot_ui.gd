@@ -76,12 +76,83 @@ const TARGET_VALID_GLOW := "target_valid_glow"
 var _glow_card: CardUI = null
 
 
+# ── Ground state (the world's BoardSlot at this address — SLOT_LAYER_DESIGN.md) ──
+# PULL-rendered: the slot widget stores nothing about the ground — it ASKS the world through
+# this lookup (installed by CombatBoard) every render_ground() and rebuilds. The house rule:
+# a widget keeps only facts it is the authority on, and ground statuses live in the world.
+const STATUS_PIP_SCENE := preload("res://scenes/status_pip.tscn")
+# The tint rides OVER the occupant (a unit standing in fire is standing IN it), so it must
+# stay a wash, never a wall — the RIM carries the loud read (full-strength border in the
+# status's colour), measured against a 0.22 wash that proved too subtle to notice on a card.
+const GROUND_TINT_ALPHA := 0.30
+const GROUND_RIM_ALPHA := 0.9
+const GROUND_RIM_WIDTH := 5
+var ground_lookup: Callable = Callable()   # func() -> BoardSlot (null = ground never touched)
+var _ground_tint: Panel = null
+var _ground_pips: HBoxContainer = null
+
+
 func _ready() -> void:
 	custom_minimum_size = Vector2(165, 216)
 	_apply_style()
+	_build_ground_layer()
 	_build_cue_layer()
 	mouse_entered.connect(_on_pointer_entered)
 	mouse_exited.connect(_on_pointer_exited)
+
+
+func _build_ground_layer() -> void:
+	_ground_tint = Panel.new()
+	_ground_tint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_ground_tint.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_ground_tint.z_index = 2   # over the occupant card (z 0) and the cue glyphs (z 1)
+	_ground_tint.visible = false
+	add_child(_ground_tint)
+	_ground_pips = HBoxContainer.new()
+	_ground_pips.z_index = 2
+	_ground_pips.add_theme_constant_override("separation", 4)
+	# Bottom-left corner, growing rightward/upward from its anchor — clear of the unit's own
+	# status row (top of the card) and the move/open cues (centre/bottom-centre).
+	_ground_pips.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
+	_ground_pips.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	_ground_pips.offset_left = 4.0
+	_ground_pips.offset_bottom = -4.0
+	add_child(_ground_pips)
+
+
+# Re-derives the ground presentation from the world's slot: a translucent wash in the (first)
+# status's own colour plus one StatusPip per ground status — the same pip, tooltip and cue
+# vocabulary units use, so "the ground has a status" reads exactly like "a unit has one".
+func render_ground() -> void:
+	for child in _ground_pips.get_children():
+		_ground_pips.remove_child(child)
+		child.queue_free()
+	var ground: BoardSlot = null
+	if ground_lookup.is_valid():
+		ground = ground_lookup.call()
+	if ground == null or ground.statuses.is_empty():
+		_ground_tint.visible = false
+		return
+	var first := ground.statuses[0] as StatusInstance
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(first.data.color, GROUND_TINT_ALPHA)
+	sb.border_color = Color(first.data.color, GROUND_RIM_ALPHA)
+	sb.set_border_width_all(GROUND_RIM_WIDTH)
+	sb.set_corner_radius_all(5)   # matches the slot panel's own radius (_apply_style)
+	_ground_tint.add_theme_stylebox_override("panel", sb)
+	_ground_tint.visible = true
+	for si: StatusInstance in ground.statuses:
+		var pip := STATUS_PIP_SCENE.instantiate() as StatusPip
+		pip.setup(si)
+		_ground_pips.add_child(pip)
+
+
+func find_ground_pip(status_id: String) -> StatusPip:
+	for child in _ground_pips.get_children():
+		var pip := child as StatusPip
+		if pip != null and pip.status != null and pip.status.data.id == status_id:
+			return pip
+	return null
 
 
 # ── The pointer ring ────────────────────────────────────────────────────────────

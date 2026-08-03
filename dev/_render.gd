@@ -506,6 +506,23 @@ func _ready() -> void:
 				Selection.select(striker)
 				s_card.derive_presentation()
 			await get_tree().process_frame
+	# "burning": set ground alight — an occupied enemy cell and an empty player cell — so the
+	# slot-layer presentation can be shot both ways (wash + pip over a unit, and on bare ground).
+	if scene_path.contains("combat") and "burning" in args:
+		var cbg: Node = null
+		for n: Node in sv.find_children("*", "Node", true, false):
+			if n.has_method("get_chrome") and n.get("_board") != null:
+				cbg = n
+				break
+		if cbg != null:
+			var gboard = cbg.get("_board")
+			var victim := CardInstance.from_data(CardData.get_card("pawn"))
+			gboard.place_enemy_card(victim, 1, 0)
+			var gworld: CombatWorld = gboard.world
+			StatusEngine.apply(gworld.slot_at(1, 1, 0), "burning", Effect.STATUS_DURATION_DEFAULT, 1, null)
+			StatusEngine.apply(gworld.slot_at(0, 2, 1), "burning", Effect.STATUS_DURATION_DEFAULT, 1, null)
+			gboard.refresh()
+			await get_tree().process_frame
 	# "armeddrag": the armed-autocast drag hybrid — empty own slots show MOVE (priority), occupied
 	# invalid slots show the red X (a valid cast target would show the green reticle).
 	if scene_path.contains("combat") and "armeddrag" in args:

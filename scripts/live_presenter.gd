@@ -40,6 +40,19 @@ func show_effect_results(results: Array, holder: CardInstance, status_id: String
 	await _animator.show_effect_results(results, holder, status_id, cue)
 
 
+func show_ground_results(slot: BoardSlot, status_id: String, results: Array) -> void:
+	# The cause first: the ground pip discharges like any status pip whose effect fired.
+	var slot_ui := _board.slot_ui_at(slot.side, slot.row, slot.col)
+	if slot_ui != null:
+		var pip := slot_ui.find_ground_pip(status_id)
+		if pip != null:
+			pip.flash_proc()
+			await beat(VFXPlayer.PIP_SPAN)
+	# Then the effect: the results land on their targets exactly as any effect's do (damage
+	# numbers, reticles). No holder card exists to glint — the pip above WAS the cue.
+	await _animator.show_effect_results(results, null, "", false)
+
+
 func relic_glint(owner_id: String) -> void:
 	var tray: RelicTray = _relic_tray_get.call()
 	if tray == null:

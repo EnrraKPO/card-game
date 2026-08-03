@@ -3,6 +3,7 @@ extends Node
 
 var _root:           Node
 var _get_card_ui:    Callable  # func(CardInstance) -> CardUI
+var _get_slot_ui:    Callable  # func(side, row, col) -> SlotUI (ground cues; unset = skipped)
 # The relic-chip cue for relic-owned interceptions — func(relic_id: String). Injected by
 # combat (the tray lives in its chrome); invalid = no chip on screen, cue skipped.
 var relic_glint:     Callable
@@ -13,9 +14,10 @@ var relic_glint:     Callable
 var await_settled:   Callable
 
 
-func setup(root: Node, get_card_ui: Callable) -> void:
+func setup(root: Node, get_card_ui: Callable, get_slot_ui: Callable = Callable()) -> void:
 	_root        = root
 	_get_card_ui = get_card_ui
+	_get_slot_ui = get_slot_ui   # func(side, row, col) -> SlotUI; unset outside a live board
 	for id: String in EFFECT_SCRIPTS:
 		Vfx.register_custom(id, _run_designed.bind(EFFECT_SCRIPTS[id]))
 
@@ -126,12 +128,15 @@ func play_results(results: Array, source_inst: CardInstance = null,
 		# A status application has no stat delta — it's its own cue: mark the target, then pop the
 		# pip that was added/stacked. Handled up front, sequentially, so it reads before stat hits.
 		if r.has("status_applied"):
-			# A GROUND application's target is a BoardSlot — no card, no pip, and no slot cue
-			# machinery in this build (SLOT_LAYER_DESIGN.md §6): present nothing rather than
-			# hand a slot to the card-shaped path.
+			# A GROUND application's target is a BoardSlot — its arrival plays on the SLOT
+			# (tint + pip appearing, pip blooming), never on the card-shaped path.
 			var st_target := r.get("target") as CardInstance
 			if st_target != null:
 				await _play_status_applied(st_target, str(r.get("status_applied", "")))
+			else:
+				var st_slot := r.get("target") as BoardSlot
+				if st_slot != null:
+					await _play_ground_status_applied(st_slot, str(r.get("status_applied", "")))
 			continue
 		# A side-targeted result (draw/mana — target is a CombatSide, not a card) has no board
 		# surface here: its presentation IS the hand/gauge reacting to the side's signals.
@@ -189,6 +194,27 @@ func play_interceptions(records: Array) -> void:
 
 # A status landing on a card: a benefit-tinted reticle on the card, then refresh so the new/updated
 # pip exists, then pop that pip so the gained stack reads. No stat number — the pip carries the count.
+# A status arriving on the GROUND: re-derive the slot's ground look right now (the tint and
+# pip must exist before they can bloom — the same place-a-frame-late choreography as the card
+# path), then the pip's "gained" bloom in the status's own colour. Same sfx vocabulary as a
+# unit application.
+func _play_ground_status_applied(slot: BoardSlot, status_id: String) -> void:
+	if not _get_slot_ui.is_valid():
+		return
+	var slot_ui := _get_slot_ui.call(slot.side, slot.row, slot.col) as SlotUI
+	if slot_ui == null or not is_instance_valid(slot_ui):
+		return
+	slot_ui.render_ground()
+	await get_tree().process_frame   # let the freshly built pip lay out before it can pivot/pop
+	var sd := StatusData.get_status(status_id)
+	var beneficial := sd == null or sd.beneficial
+	Sfx.play("status_apply_buff" if beneficial else "status_apply_debuff")
+	var pip := slot_ui.find_ground_pip(status_id)
+	if pip != null:
+		pip.flash_applied()
+		await _hold(Vfx.handoff(PIP_SPAN))
+
+
 func _play_status_applied(inst: CardInstance, status_id: String) -> void:
 	var card_ui: CardUI = await _stage(inst)
 	if card_ui == null:
