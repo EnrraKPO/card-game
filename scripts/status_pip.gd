@@ -8,6 +8,34 @@ extends Panel
 
 var status: StatusInstance
 
+# ── Ground-tab mode (a slot's ground status — see SlotUI) ───────────────────────────────────
+# A ground status rides the TOP BORDER of its slot with the occupant card drawn OVER it, so the
+# square card badge is the wrong shape: most of it would be swallowed. In tab mode the badge is
+# reshaped WIDE AND SHORT, and the icon is lifted to OVERFLOW above the tab's own top edge — the
+# overflowing icon lands in the row gutter, where no card can reach it, and is what stays legible
+# when the tab body is covered. The pip's RECT still spans the whole extent (icon + tab) so the
+# hover tooltip answers over the icon too; the tab's fill moves to a child panel (_tab_bg) that
+# occupies only the lower band.
+# The icon is sized to the budget it must survive in, not to the tab: only what clears the slot
+# border stays visible under a card, and an icon read from its top SLIVER alone is unreadable (a
+# flame's tip is any flame's tip). At 16 with an 8 overflow, half of it clears — enough to name
+# the status at a glance — while its top stays a gap short of the card in the row above
+# (SlotUI.GROUND_ROW_RISE budgets that clearance; "almost scraping, never touching").
+const TAB_ICON := 16.0
+const TAB_ICON_OVERFLOW := 6.0   # how far the icon rises above the tab body's top edge
+# The band is JUST tall enough to hold the icon's dip plus a hair of padding below it — total
+# pip = 19px, band 13. It used to run 12px past the icon's bottom, which read as a pointless
+# apron hanging into the slot (user call, 2026-08-03).
+const TAB_H := 13.0           # the tab body's own height
+const TAB_W := 46.0           # with a count to show; TAB_W_BARE otherwise
+const TAB_W_BARE := 26.0
+# While a tab pip flashes it must outrank everything else in its canvas layer — including a
+# picked card, which lifts ITSELF to HighlightFx.Z_LIFT, and a z lift outranks tree order.
+const GLINT_Z := HighlightFx.Z_LIFT + 10
+var _tab := false
+var _tab_bg: Panel = null
+var _tab_w := 0.0
+
 
 # Binds a live status onto the scene's nodes (called right after instantiate, before it enters the
 # tree — so it uses direct child access, not @onready, and the local-to-scene stylebox override).
@@ -46,6 +74,100 @@ func setup(si: StatusInstance) -> void:
 	stacks_lbl.visible = sd.decay != StatusData.DECAY_STACKS and si.stacks > 1
 
 
+# Reshapes this pip into the ground TAB (see the block at the top). Call after setup() AND after
+# the pip is in the tree — it reads the count visibility setup() decided, and lays the count
+# out from its own text metrics, which are unresolvable outside a tree.
+# `solo` = this tab is ONE unit of a duplicate-display status (StatusData.stack_display):
+# the row shows one tab per stack, so a number on each would be nonsense — icon only.
+# NO GLYPH in tab mode: the text fallback doesn't render reliably on web, and a border-riding
+# tab has no room to misrender in. A status without art shows the coloured band alone (visibly
+# missing = an authoring nudge), never a glyph. Card pips keep the glyph path untouched.
+func as_ground_tab(solo: bool = false) -> void:
+	_tab = true
+	var glyph := $Glyph as Label
+	var count_lbl := $Count as Label
+	var stacks_lbl := $Stacks as Label
+
+	glyph.visible = false
+	# The stack tag has nowhere to live on a 20px band — the headline count carries the number.
+	stacks_lbl.visible = false
+	if solo:
+		count_lbl.visible = false
+	count_lbl.add_theme_font_size_override("font_size", 15)
+	count_lbl.add_theme_constant_override("outline_size", 3)
+
+	# The tab's fill moves onto a child band; the pip itself goes transparent so its rect can
+	# span the icon's overflow (for hover) without painting a box around it.
+	_tab_bg = Panel.new()
+	_tab_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_tab_bg.add_theme_stylebox_override("panel", _tab_style())
+	add_child(_tab_bg)
+	move_child(_tab_bg, 0)   # under the icon/labels it backs
+	add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+
+	set_tab_width(TAB_W if count_lbl.visible else TAB_W_BARE)
+
+
+# Sizes the tab to `w` and lays its parts out to it. Split from as_ground_tab so the slot's
+# ground row can SHRINK tabs when a stack of duplicates outgrows the slot (SlotUI._layout_ground).
+# Only the BAND narrows — the icon keeps its 16px and simply overhangs a narrower band, so a
+# heavy pile reads as flames crowding and overlapping each other (intended; no stack cap).
+func set_tab_width(w: float) -> void:
+	if not _tab:
+		return
+	_tab_w = w
+	custom_minimum_size = Vector2(w, TAB_ICON_OVERFLOW + TAB_H)
+	size = custom_minimum_size
+	_tab_bg.position = Vector2(0.0, TAB_ICON_OVERFLOW)
+	_tab_bg.size = Vector2(w, TAB_H)
+
+	var icon := $Icon as TextureRect
+	var count_lbl := $Count as Label
+	icon.set_anchors_preset(Control.PRESET_TOP_LEFT, true)
+	icon.grow_horizontal = Control.GROW_DIRECTION_END
+	icon.grow_vertical = Control.GROW_DIRECTION_END
+	icon.size = Vector2(TAB_ICON, TAB_ICON)
+	if count_lbl.visible:
+		# Icon left, count beside it — both in the icon's row, breaking out above the band:
+		# both facts a ground status carries clear the slot border together and survive the
+		# card. A count down in the band would be stranded under the occupant.
+		icon.position = Vector2(2.0, 0.0)
+		_centre_label(count_lbl, Rect2(TAB_ICON + 2.0, 0.0, w - TAB_ICON - 4.0, TAB_ICON))
+	else:
+		icon.position = Vector2((w - TAB_ICON) * 0.5, 0.0)
+
+
+# Centres a label ON a box instead of forcing the box ONTO it. A Label refuses to be smaller than
+# its own text, so assigning a box smaller than the text silently inflates the rect — and with the
+# scene's grow-both directions that inflation is what pushed the glyph's ink down past the slot
+# border, where the card ate it. Centring keeps the INK where the box says, whatever the metrics.
+func _centre_label(lbl: Label, box: Rect2) -> void:
+	lbl.set_anchors_preset(Control.PRESET_TOP_LEFT, true)
+	lbl.grow_horizontal = Control.GROW_DIRECTION_END
+	lbl.grow_vertical = Control.GROW_DIRECTION_END
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	var m := lbl.get_combined_minimum_size()
+	lbl.size = m
+	lbl.position = box.position + (box.size - m) * 0.5
+
+
+# The tab band's own fill: the BRIGHTEST of the ground layer's three shades (GroundPalette) —
+# a tab is the only ground surface drawn on top of another one, sharing the top gutter with the
+# slot's frame, and two parts of one system in one flat colour read as a single smeared shape.
+# Corners uniformly rounded but DELIBERATELY sharper than the slot's own radius (5) — a small
+# marker wearing a big radius on a 13px band read as a blob; near-sharp reads as a tag pinned to
+# the border (user call).
+func _tab_style() -> StyleBoxFlat:
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = GroundPalette.tab(status.data.color) if status != null else Color.WHITE
+	sb.border_color = Color(0.0, 0.0, 0.0, 0.55)
+	sb.set_border_width_all(2)
+	sb.set_corner_radius_all(2)
+	sb.anti_aliasing = true
+	return sb
+
+
 # Status pips carry TWO distinct, reusable cues — the same vocabulary for every status, so "fired"
 # and "gained" always read the same way no matter which status it is:
 #   • flash_proc    — the status's triggered effect just FIRED (poison ticked, blind forced a miss…):
@@ -57,23 +179,46 @@ func setup(si: StatusInstance) -> void:
 func flash_proc() -> void:
 	if size == Vector2.ZERO:
 		return
-	pivot_offset = size * 0.5
+	pivot_offset = _flash_pivot()
+	_begin_lift()
 	_white_flash()
 	var tw := create_tween()
 	tw.set_parallel(true)
 	tw.tween_property(self, "scale", Vector2(1.55, 1.55), 0.14).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
 	tw.chain().tween_property(self, "scale", Vector2.ONE, 0.22).set_ease(Tween.EASE_OUT)
+	tw.chain().tween_callback(_end_lift)
 
 
 func flash_applied() -> void:
 	if size == Vector2.ZERO:
 		return
-	pivot_offset = size * 0.5
+	pivot_offset = _flash_pivot()
+	_begin_lift()
 	_color_ring(status.data.color if status != null else Color.WHITE)
 	var tw := create_tween()
 	tw.set_parallel(true)
 	tw.tween_property(self, "scale", Vector2(1.28, 1.28), 0.12).set_ease(Tween.EASE_OUT)
 	tw.chain().tween_property(self, "scale", Vector2.ONE, 0.20).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_SINE)
+	tw.chain().tween_callback(_end_lift)
+
+
+# A tab pip is half-tucked behind a card and grows UP into the row gutter — anchoring the punch
+# at its bottom edge keeps the growth out of the card it's riding. A card badge grows from its
+# centre as it always has.
+func _flash_pivot() -> Vector2:
+	return Vector2(size.x * 0.5, size.y) if _tab else size * 0.5
+
+
+# The glint is the moment a ground tab is allowed to OUTRANK the card covering it — a temporary
+# z lift, restored when the flash ends. Card badges have nothing to climb over and stay put.
+func _begin_lift() -> void:
+	if _tab:
+		z_index = GLINT_Z
+
+
+func _end_lift() -> void:
+	if _tab:
+		z_index = 0
 
 
 # A bright white sheen blooming over the pip and fading — the unmistakable "this fired" discharge,
@@ -83,10 +228,11 @@ func _white_flash() -> void:
 	flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	flash.z_index = 50
 	flash.size = size
-	flash.pivot_offset = size * 0.5
-	var fs := StyleBoxFlat.new()
+	flash.pivot_offset = _flash_pivot()
+	var fs: StyleBoxFlat = _tab_style() if _tab else StyleBoxFlat.new()
 	fs.bg_color = Color(1, 1, 1, 0.9)
-	fs.set_corner_radius_all(8)
+	if not _tab:
+		fs.set_corner_radius_all(8)
 	flash.add_theme_stylebox_override("panel", fs)
 	add_child(flash)
 	var ft := create_tween()
@@ -103,12 +249,12 @@ func _color_ring(col: Color) -> void:
 	ring.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ring.z_index = 50
 	ring.size = size
-	ring.pivot_offset = size * 0.5
+	ring.pivot_offset = _flash_pivot()
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = Color(col, 0.0)
 	sb.border_color = Color(col, 0.85)
 	sb.set_border_width_all(3)
-	sb.set_corner_radius_all(10)
+	sb.set_corner_radius_all(4 if _tab else 10)
 	sb.anti_aliasing = true
 	ring.add_theme_stylebox_override("panel", sb)
 	add_child(ring)

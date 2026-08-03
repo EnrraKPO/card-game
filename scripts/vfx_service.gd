@@ -25,9 +25,11 @@ extends Node
 # The procedural behavior vocabulary. Adding a primitive = a _fx_* method + a list entry here
 # (the Tool validates entries against this same list — keep them in sync).
 const BEHAVIORS := ["flash", "pulse", "pop", "shake", "ring", "sparkle", "glint", "glow",
-		"float_label", "burst", "travel", "reticle", "dissolve", "radiance", "emit", "fade_in"]
+		"float_label", "burst", "travel", "reticle", "dissolve", "radiance", "emit", "fade_in",
+		"heat"]
 # Behaviors that can run as a SUSTAINED state (attach/detach) as well as a one-shot.
-const SUSTAINED_BEHAVIORS := ["glow", "pulse", "sparkle", "radiance", "emit"]
+# `heat` is sustained-ONLY: it is a field, not an event — there is no one-shot shimmer.
+const SUSTAINED_BEHAVIORS := ["glow", "pulse", "sparkle", "radiance", "emit", "heat"]
 
 # All effect nodes draw on dedicated overlay layers above the UI, positioned in global canvas
 # coordinates — effects never join a container's layout or clip inside a target's rect.
@@ -618,6 +620,7 @@ func _attach_dispatch(vd: VFXData, target: Control) -> Node:
 				"sparkle":  return _sustain_sparkle(vd, target)
 				"radiance": return _sustain_radiance(vd, target)
 				"emit":     return _sustain_emit(vd, target)
+				"heat":     return _sustain_heat(vd, target)
 		"filter":
 			# STANDARD for outer glows: the `glow_rrect` filter (the outer-glow shader) now ALWAYS
 			# runs composited — it reads the target's TRUE silhouette (it + all children) and draws
@@ -995,6 +998,7 @@ func _make_emitter(vd: VFXData, target: Control) -> _EmitFx:
 	fx.size_max = maxf(fx.size_min, vd.num_param("size_max", 0.05))
 	fx.rise = vd.num_param("rise", 0.30)
 	fx.drift = vd.num_param("drift", 0.04)
+	fx.spread = vd.num_param("spread", 0.75)
 	fx.life_min = maxf(0.1, vd.num_param("life_min", 1.2))
 	fx.life_max = maxf(fx.life_min, vd.num_param("life_max", 2.0))
 	fx.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -1015,6 +1019,39 @@ func _fx_emit_once(vd: VFXData, target: Control, _opts: Dictionary) -> void:
 		fx.spawn_one()
 	fx.free_when_empty = true
 	await get_tree().create_timer(fx.life_max).timeout
+
+
+# ── The "heat" behavior: the AIR over something, distorted ────────────────────────────────────
+#
+# The one behavior in the library that draws no light of its own. Everything else here is additive
+# — a glow, a spark, a ring — and additive is the wrong tool for a heat wave, because a heat wave
+# is not a thing you can see: it is the picture BEHIND it arriving bent. So this samples the back
+# buffer through a rising displacement (heat_haze.gdshader) and outputs the screen, moved.
+#
+# Structurally it is the odd one out too. Reading the screen means a BackBufferCopy must run BEFORE
+# the field draws, so the state's root node IS the copy and the shaded rect is its CHILD — a parent
+# draws before its children, which is exactly the ordering needed, and freeing the root on detach
+# takes the field with it. (A copy parented as a sibling-after or a child-of-the-field would
+# capture the frame one step too late and shimmer its own output.)
+#
+# COST, worth knowing before this spreads: one partial back-buffer copy per attached field, every
+# frame. Fine for the handful of slots a fire covers; a hundred of them would not be.
+func _sustain_heat(vd: VFXData, target: Control) -> Node:
+	var fx := _HeatFx.new()
+	fx.target = target
+	var mat := ShaderMaterial.new()
+	mat.shader = HEAT_SHADER
+	mat.set_shader_parameter("strength", vd.num_param("strength", 0.004))
+	mat.set_shader_parameter("speed", vd.num_param("speed", 0.55))
+	mat.set_shader_parameter("wave_scale", vd.num_param("wave_scale", 5.0))
+	mat.set_shader_parameter("base", vd.num_param("base", 0.9))
+	mat.set_shader_parameter("top_fade", vd.num_param("top_fade", 0.15))
+	fx.field = ColorRect.new()
+	fx.field.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	fx.field.material = mat
+	fx.add_child(fx.field)
+	overlay_layer_for(target).add_child(fx)
+	return fx
 
 
 # Sustained form: the stream runs for as long as the state is attached. detach() frees the node.
@@ -1197,12 +1234,13 @@ class _EmitFx extends Control:
 	var color := Color.WHITE
 	var origin := Rect2(0, 0, 1, 1)   # the emitting feature, in fractions of the target's rect
 	var ellipse := false              # spawn inside the region's inscribed ellipse, not its box
-	var particle := "bubble"          # bubble (hollow, rimmed, specular) | mote (soft dot)
+	var particle := "bubble"          # bubble (hollow, rimmed, specular) | mote (soft dot) | spark (a launched, arcing streak)
 	var rate := 5.0                   # particles per second
 	var size_min := 0.02              # radius, in fractions of the target's SHORTER side
 	var size_max := 0.05
 	var rise := 0.30                  # travel before dying, in fractions of the target's height
 	var drift := 0.04                 # sideways wander amplitude, in fractions of its width
+	var spread := 0.75                # SPARKS only: half-angle of the launch cone, in radians
 	var life_min := 1.2
 	var life_max := 2.0
 	var spawning := true              # false = a fixed puff (see _fx_emit_once)
@@ -1238,6 +1276,22 @@ class _EmitFx extends Control:
 			"wob": randf_range(0.7, 1.6),
 			"lean": randf_range(-1.0, 1.0),
 		})
+		if particle == "spark":
+			# A spark is LAUNCHED, and that is the whole difference. Bubbles and motes drift on a
+			# buoyancy model — a slow climb with a sideways wander — and a wander reads as STEERING:
+			# something choosing where to go. That is a firefly, not an ember. So a spark carries a
+			# velocity and a gravity instead and simply obeys them: fired out of the fire on its own
+			# heading, decelerating, arcing over, dead in well under a second.
+			# Angles are taken in the target's SHORTER-side unit space (see _spark_at) so a wide slot
+			# doesn't fan the spray sideways; the launch is a cone about straight up.
+			var ang: float = -PI * 0.5 + randf_range(-spread, spread)
+			# Fast off the mark relative to how far it will get — the arc's shape comes from the
+			# spread between launch speed and the gravity fighting it, not from the numbers alone.
+			var sp: float = rise * randf_range(1.6, 3.0)
+			var last: Dictionary = _parts[-1]
+			last["vx"] = cos(ang) * sp
+			last["vy"] = sin(ang) * sp
+			last["g"] = sp * randf_range(1.2, 2.2)
 
 	# Fills the stream with particles already partway through their lives — what a simmer that has
 	# been running all along looks like, as opposed to one that starts the moment you look at it.
@@ -1283,6 +1337,9 @@ class _EmitFx extends Control:
 		var unit := minf(size.x, size.y)
 		for p: Dictionary in _parts:
 			var t: float = clampf(float(p["age"]) / float(p["life"]), 0.0, 1.0)
+			if particle == "spark":
+				_draw_spark(p, t, unit)
+				continue
 			# Rising: quick off the surface, easing as it climbs — and swelling slightly on the
 			# way up, the way a real bubble does as the pressure around it drops.
 			var climb: float = pow(t, 0.78)
@@ -1309,6 +1366,88 @@ class _EmitFx extends Control:
 				maxf(1.0, r * 0.22), true)
 		draw_circle(c - Vector2(r * 0.32, r * 0.32), maxf(0.8, r * 0.22),
 				Color(1, 1, 1, a * 0.65))
+
+	# How much of a spark's recent path is smeared into its streak. TIME, not length, so a fast
+	# spark draws a long one and a spark at the top of its arc draws almost none — the streak
+	# reports the speed rather than asserting it.
+	const TRAIL_SECS := 0.05
+	const SPARK_SEGS := 4   # taper resolution; see _draw_spark
+
+	# Where a spark IS at `secs` into its life, in pixels: launched on its own heading, then pulled
+	# back down. Worked in the target's SHORTER-side unit and converted here, so the launch cone
+	# keeps its angles instead of fanning sideways on a target that isn't square.
+	func _spark_at(p: Dictionary, secs: float, unit: float) -> Vector2:
+		var base := Vector2(float(p["x"]) * size.x, float(p["y"]) * size.y)
+		var v := Vector2(float(p["vx"]), float(p["vy"])) * unit
+		return base + v * secs + Vector2(0.0, 0.5 * float(p["g"]) * unit * secs * secs)
+
+	# A spark is a STREAK, not a dot. The eye reads a smear as speed, and speed is most of what
+	# separates an ember from a firefly — a round dot moving gently reads as an insect however it
+	# is coloured. The trail is the path actually travelled over the last few milliseconds, so it
+	# stretches while the spark is quick and collapses as it arcs over.
+	func _draw_spark(p: Dictionary, tn: float, unit: float) -> void:
+		var secs := float(p["age"])
+		var head := _spark_at(p, secs, unit)
+		var tail := _spark_at(p, maxf(0.0, secs - TRAIL_SECS), unit)
+		# Lit at once and simply OUT at the end: an ember does not dim gracefully, it stops.
+		var a: float = smoothstep(0.0, 0.05, tn) * (1.0 - smoothstep(0.62, 1.0, tn))
+		if a <= 0.01:
+			return
+		# ⚠ A SPARK HAS ALMOST NO WIDTH. This is the whole identity of the thing: a spark is a
+		# hairline, and its presence comes from LENGTH, brightness and speed, never from mass. Any
+		# round, chunky body — however hot its colour — reads as a wisp or a firefly instead. So the
+		# width is CLAMPED to a hairline no matter what size the entry asks for; `size_*` only
+		# chooses where inside that hairline range each spark falls.
+		var w: float = clampf(float(p["r"]) * unit * 0.5, 0.9, 2.0)
+		# Hottest the instant it leaves the fire, then cooling — the ramp is a TEMPERATURE cue, and
+		# it is what says combustion rather than merely "this glows". White-hot is a FLASH, not a
+		# state: held even a third of the life it drains the colour out of the whole stream and the
+		# sparks read as pale scratches (measured — an early pass looked like sleet). So the white
+		# is gone by a tenth of the way in, and the last stretch cools past the entry's colour into
+		# a dull ember red on its way out.
+		var hot := Color.WHITE.lerp(color, smoothstep(0.0, 0.1, tn))
+		hot = hot.lerp(Color(color.r * 0.55, color.g * 0.13, color.b * 0.08),
+				smoothstep(0.4, 1.0, tn))
+		# TAPERED, in a few segments: a constant-width line is a scratch on the picture, while a
+		# streak that thins and dims toward its tail reads as one point of light that MOVED. Godot's
+		# line drawing has no taper of its own, hence the segments.
+		for i in SPARK_SEGS:
+			var f0: float = float(i) / float(SPARK_SEGS)
+			var f1: float = float(i + 1) / float(SPARK_SEGS)
+			draw_line(tail.lerp(head, f0), tail.lerp(head, f1),
+					Color(hot.r, hot.g, hot.b, a * lerpf(0.10, 0.85, f1)),
+					w * lerpf(0.3, 1.0, f1), true)
+		# The tip only — a point, not a body. Near-white so the head reads as the burning end.
+		draw_circle(head, w * 0.55, Color(1.0, 1.0, 1.0, a * 0.9))
+
+
+const HEAT_SHADER: Shader = preload("res://assets/ui/shaders/heat_haze.gdshader")
+
+
+# The "heat" behavior's node (see _sustain_heat): a BackBufferCopy that keeps its rect glued to the
+# target, carrying the shaded field as its only child so the copy always runs first.
+class _HeatFx extends BackBufferCopy:
+	var target: Control
+	var field: ColorRect
+
+	func _ready() -> void:
+		copy_mode = BackBufferCopy.COPY_MODE_RECT
+		_sync()
+
+	func _process(_delta: float) -> void:
+		if target == null or not is_instance_valid(target) or not target.is_inside_tree():
+			queue_free()
+			return
+		_sync()
+		visible = target.is_visible_in_tree()
+
+	func _sync() -> void:
+		var r := target.get_global_rect()
+		# The copied region is deliberately the field's own rect: the shader's displacement dies to
+		# zero at the edges, so nothing outside it is ever sampled and a larger copy would be waste.
+		rect = r
+		field.position = r.position
+		field.size = r.size
 
 
 class _HaloFx extends Control:

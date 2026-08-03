@@ -1779,6 +1779,80 @@
 		"prompt": "Sprite sheet of small flames licking upward along an edge with drifting embers, looping fire aura, 8 frames on transparent background, 2d game effect"
 	},
 	{
+		"id": "ground_burning",
+		"display_name": "Burning Ground (ambience)",
+		"category": "status",
+		"behavior": "emit",
+		"params": {
+			"color": "ff7a2a",
+			"particle": "spark",
+			"origin": {
+				"x": 0.04,
+				"y": 0.34,
+				"w": 0.92,
+				"h": 0.62
+			},
+			"rate": 14,
+			"size_min": 0.008,
+			"size_max": 0.016,
+			"rise": 0.42,
+			"spread": 0.55,
+			"life_min": 0.35,
+			"life_max": 0.7
+		},
+		"sustained": true,
+		"placeholder": false,
+		"concept": "The third voice of a burning slot, after its gutter frame and its floor wash: the ground is not merely coloured, it is DOING something. Motion is the only channel on the board with no other claimant, and the only one that still reads when a card covers the slot outright — so the sparks are deliberately exempt from the rule that the ground never paints over a piece, and fly up across whoever is standing there. Gentle by design: this runs for as long as the fire does, on as many slots as are alight, and its loud counterpart (ground_burning_flare) is what marks the moments.",
+		"explanation": "IMPLEMENTED (SlotUI._sync_ground_vfx, by the `ground_<status_id>` convention): the `emit` behavior on the slot's ground FRAME, so the stream measures the slot plus its gutter. The `spark` particle has its own kinematics, NOT the buoyant drift the other particles share: each is launched on its own heading inside a cone (`spread`), decelerates under gravity, arcs over and is gone in well under a second — drawn as a white-hot streak of the path it just travelled, cooling to the entry's colour. The first attempt reused the bubble's slow wandering climb and read as fireflies; wander is steering, and steering reads as alive. Flat intensity regardless of stack count, by design — a heavy fire is told by the tab row, not by drowning the board in particles.",
+		"prompt": "Sprite sheet of glowing orange embers rising and guttering out from burning ground, looping ember stream, 8 frames on transparent background, 2d game effect"
+	},
+	{
+		"id": "ground_burning_haze",
+		"display_name": "Burning Ground (heat haze)",
+		"category": "status",
+		"behavior": "heat",
+		"params": {
+			"strength": 0.009,
+			"speed": 0.5,
+			"wave_scale": 5.0,
+			"base": 0.9,
+			"top_fade": 0.12
+		},
+		"sustained": true,
+		"placeholder": false,
+		"concept": "The burning ground's second ambient voice, and the quieter one: the AIR over the fire. The sparks say something is being thrown off; the haze says the space itself is hot. It draws no light of its own — it bends the board behind it — which is why it can sit over a card without covering anything, and why it reads even when the slot is entirely occupied.",
+		"explanation": "IMPLEMENTED (the `heat` behavior, by the `ground_<status_id>_haze` convention): a BackBufferCopy over the slot's frame rect carrying a screen-sampling shader (heat_haze.gdshader) that displaces along two upward-scrolling noise octaves, mostly sideways, dying to zero toward the top and the edges so it needs no mask. Deliberately weak — the strength is a fraction of a percent of screen UV, because a haze the eye can point at has already stopped reading as air.",
+		"prompt": ""
+	},
+	{
+		"id": "ground_burning_flare",
+		"display_name": "Burning Ground (flare)",
+		"category": "status",
+		"behavior": "emit",
+		"params": {
+			"color": "ffa64d",
+			"particle": "spark",
+			"origin": {
+				"x": 0.02,
+				"y": 0.3,
+				"w": 0.96,
+				"h": 0.66
+			},
+			"count": 26,
+			"size_min": 0.008,
+			"size_max": 0.018,
+			"rise": 0.85,
+			"spread": 1.15,
+			"life_min": 0.3,
+			"life_max": 0.6
+		},
+		"sustained": false,
+		"placeholder": false,
+		"concept": "The punctuation of the burning ground — the same sparks as its ambience, in a burst, fired in concert with the status tab's glint when the fire is lit or ticks. One vocabulary at two volumes, the shape hover and the turn spotlight already share: the quiet version says a state exists, the loud one says it just acted.",
+		"explanation": "IMPLEMENTED (SlotUI.flare_ground, by the `ground_<status_id>_flare` convention): the one-shot form of `emit` — a fixed puff of 26 sparks rather than a stream — thrown harder (`rise`) through a wider cone (`spread`) than the ambience and gone in half a second, so it reads as a beat rather than as a second ambience.",
+		"prompt": "Sprite sheet of a burst of bright orange sparks erupting upward from burning ground, one-shot ember flare, 8 frames on transparent background, 2d game effect"
+	},
+	{
 		"id": "aura_chill",
 		"enabled": false,
 		"display_name": "Chilled Aura",

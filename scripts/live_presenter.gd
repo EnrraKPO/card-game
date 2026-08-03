@@ -44,6 +44,9 @@ func show_ground_results(slot: BoardSlot, status_id: String, results: Array) -> 
 	# The cause first: the ground pip discharges like any status pip whose effect fired.
 	var slot_ui := _board.slot_ui_at(slot.side, slot.row, slot.col)
 	if slot_ui != null:
+		# The ground flares WITH its pip (see VFXPlayer's arrival path): the slot acting and the
+		# tab discharging are one event, and the flare's sparks are what carry it to a covered slot.
+		slot_ui.flare_ground(status_id)
 		var pip := slot_ui.find_ground_pip(status_id)
 		if pip != null:
 			pip.flash_proc()

@@ -209,6 +209,9 @@ func _play_ground_status_applied(slot: BoardSlot, status_id: String) -> void:
 	var sd := StatusData.get_status(status_id)
 	var beneficial := sd == null or sd.beneficial
 	Sfx.play("status_apply_buff" if beneficial else "status_apply_debuff")
+	# The ground's own burst goes with the tab's glint, not after it: the slot catching light and
+	# the tab appearing are ONE event, and staging them in sequence would read as two.
+	slot_ui.flare_ground(status_id)
 	var pip := slot_ui.find_ground_pip(status_id)
 	if pip != null:
 		pip.flash_applied()

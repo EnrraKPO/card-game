@@ -81,15 +81,43 @@ var _glow_card: CardUI = null
 # this lookup (installed by CombatBoard) every render_ground() and rebuilds. The house rule:
 # a widget keeps only facts it is the authority on, and ground statuses live in the world.
 const STATUS_PIP_SCENE := preload("res://scenes/status_pip.tscn")
-# The tint rides OVER the occupant (a unit standing in fire is standing IN it), so it must
-# stay a wash, never a wall — the RIM carries the loud read (full-strength border in the
-# status's colour), measured against a 0.22 wash that proved too subtle to notice on a card.
-const GROUND_TINT_ALPHA := 0.30
-const GROUND_RIM_ALPHA := 0.9
-const GROUND_RIM_WIDTH := 5
+# ⚠ THE GROUND NEVER PAINTS OVER A PIECE. A unit stands ON the ground; being occluded by it is
+# correct, not a bug to route around. Every part of this layer is added BEFORE any occupant, so
+# tree order alone keeps the card on top (set_card appends) — the sole exception is a tab's own
+# glint, which lifts for the length of its flash (StatusPip.GLINT_Z).
+#
+# This replaced a full-strength RIM drawn at z2, over the occupant. That rim failed structurally,
+# not cosmetically, and the reasons are worth keeping: (1) it claimed the card's EDGE, the most
+# contested channel on the board — hover's yellow ring, selection's outline+glow, threat red and
+# the acting gold all live there under a documented one-occupant rule, so the ground could only
+# ever lose that fight; (2) painting over the occupant sliced card art that overflows the slot;
+# and (3) it had to surrender its top edge entirely because it barred across the status tabs.
+# All three are the same fault — ground drawn on top of pieces — and it has one fix, not three.
+#
+# So the ground took the only territory nothing else wants: the GUTTER between slots, plus the
+# floor under the card. The frame claims exactly HALF of each surrounding gap, so two adjacent
+# burning slots meet with no seam and a burning region reads as one field rather than a row of
+# outlined boxes. Half of the gap also fits the board's edge slots with no special case — a zone
+# insets its grid by CombatBoard.HALF_PAD (8), one pixel more than this reach.
+const GROUND_FRAME_REACH := float(BoardData.SLOT_GAP) * 0.5
+# Concentric with the slot's own 5px rounding: an outer curve that is the inner one pushed out by
+# the band's width, so the frame reads as the slot's own footprint rather than a separate plate.
+const GROUND_FRAME_RADIUS := 5 + int(GROUND_FRAME_REACH)
+# The ground pips ride the slot's TOP BORDER as tabs (StatusPip.as_ground_tab), tucked BEHIND any
+# occupant — a card's corners are its busiest real estate, and the ground was competing with them
+# there. What keeps the tab readable under a card is the part that rises ABOVE the border: the
+# row is raised into the gutter between rows, so the icon's overflow lands in empty gap and
+# NEVER reaches the card in the row above. Budgeted against SLOT_GAP because the gutter is a
+# constant (it does not scale with the slot); 3px short of it so the icon's top stops a visible
+# hair from the card above — "almost scraping, never touching".
+const GROUND_ROW_RISE := float(BoardData.SLOT_GAP) - 3.0
 var ground_lookup: Callable = Callable()   # func() -> BoardSlot (null = ground never touched)
-var _ground_tint: Panel = null
+var _ground_frame: Panel = null
+var _ground_floor: Panel = null
 var _ground_pips: HBoxContainer = null
+# The sustained ambient VFX currently riding the frame (empty = none), so a status leaving — or
+# being replaced by a different one — takes its ambience with it. See _sync_ground_vfx.
+var _ground_vfx: PackedStringArray = PackedStringArray()
 
 
 func _ready() -> void:
@@ -102,27 +130,40 @@ func _ready() -> void:
 
 
 func _build_ground_layer() -> void:
-	_ground_tint = Panel.new()
-	_ground_tint.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_ground_tint.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_ground_tint.z_index = 2   # over the occupant card (z 0) and the cue glyphs (z 1)
-	_ground_tint.visible = false
-	add_child(_ground_tint)
+	# The frame: the slot's rect pushed OUT by half a gutter on every side, drawn as a pure BORDER
+	# (transparent fill) so the band occupies exactly that overhang and leaves the slot's interior
+	# to the floor below it. Everything here sits at z 0 and early in the tree — see the block at
+	# the top for why the ground may never climb over its occupant.
+	_ground_frame = Panel.new()
+	_ground_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_ground_frame.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_ground_frame.offset_left = -GROUND_FRAME_REACH
+	_ground_frame.offset_top = -GROUND_FRAME_REACH
+	_ground_frame.offset_right = GROUND_FRAME_REACH
+	_ground_frame.offset_bottom = GROUND_FRAME_REACH
+	_ground_frame.visible = false
+	add_child(_ground_frame)
+	_ground_floor = Panel.new()
+	_ground_floor.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_ground_floor.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_ground_floor.visible = false
+	add_child(_ground_floor)
 	_ground_pips = HBoxContainer.new()
-	_ground_pips.z_index = 2
+	# z 0, and added BEFORE any occupant card (set_card appends): tree order alone puts the card
+	# over the tabs, which is the whole point — the ground is UNDER the unit standing on it. A
+	# glinting tab lifts itself over that for the length of its flash (StatusPip.GLINT_Z).
+	_ground_pips.z_index = 0
+	_ground_pips.mouse_filter = Control.MOUSE_FILTER_IGNORE   # the pips answer hover, not the row
 	_ground_pips.add_theme_constant_override("separation", 4)
-	# Bottom-left corner, growing rightward/upward from its anchor — clear of the unit's own
-	# status row (top of the card) and the move/open cues (centre/bottom-centre).
-	_ground_pips.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
-	_ground_pips.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	_ground_pips.offset_left = 4.0
-	_ground_pips.offset_bottom = -4.0
+	# Positioned by hand (_layout_ground) rather than anchored: the row is centred on the slot's
+	# top edge and must size to its content, which no anchor preset expresses.
 	add_child(_ground_pips)
 
 
-# Re-derives the ground presentation from the world's slot: a translucent wash in the (first)
-# status's own colour plus one StatusPip per ground status — the same pip, tooltip and cue
-# vocabulary units use, so "the ground has a status" reads exactly like "a unit has one".
+# Re-derives the ground presentation from the world's slot: the gutter frame and the floor wash in
+# the (first) status's own colour, its ambient VFX, and one StatusPip per ground status — the same
+# pip, tooltip and cue vocabulary units use, so "the ground has a status" reads exactly like "a
+# unit has one".
 func render_ground() -> void:
 	for child in _ground_pips.get_children():
 		_ground_pips.remove_child(child)
@@ -131,28 +172,137 @@ func render_ground() -> void:
 	if ground_lookup.is_valid():
 		ground = ground_lookup.call()
 	if ground == null or ground.statuses.is_empty():
-		_ground_tint.visible = false
+		_ground_frame.visible = false
+		_ground_floor.visible = false
+		_sync_ground_vfx("")
 		return
 	var first := ground.statuses[0] as StatusInstance
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(first.data.color, GROUND_TINT_ALPHA)
-	sb.border_color = Color(first.data.color, GROUND_RIM_ALPHA)
-	sb.set_border_width_all(GROUND_RIM_WIDTH)
-	sb.set_corner_radius_all(5)   # matches the slot panel's own radius (_apply_style)
-	_ground_tint.add_theme_stylebox_override("panel", sb)
-	_ground_tint.visible = true
+	# The band, drawn as a border on the overhanging rect: a full-width border with a transparent
+	# fill IS the ring, with no second rect to keep in sync.
+	var fs := StyleBoxFlat.new()
+	fs.bg_color = Color(first.data.color, 0.0)
+	fs.border_color = GroundPalette.frame(first.data.color)
+	fs.set_border_width_all(int(GROUND_FRAME_REACH))
+	fs.set_corner_radius_all(GROUND_FRAME_RADIUS)
+	fs.anti_aliasing = true
+	_ground_frame.add_theme_stylebox_override("panel", fs)
+	_ground_frame.visible = true
+	# The floor: the slot's own interior, washed. It carries none of the read on its own (an
+	# occupant hides nearly all of it) — it exists so the state doesn't stop at a border.
+	var gs := StyleBoxFlat.new()
+	gs.bg_color = GroundPalette.floor_wash(first.data.color)
+	gs.set_corner_radius_all(5)   # matches the slot panel's own radius (_apply_style)
+	_ground_floor.add_theme_stylebox_override("panel", gs)
+	_ground_floor.visible = true
+	_sync_ground_vfx(first.data.id)
 	for si: StatusInstance in ground.statuses:
-		var pip := STATUS_PIP_SCENE.instantiate() as StatusPip
-		pip.setup(si)
-		_ground_pips.add_child(pip)
+		# stack_display "duplicates" (burning): the pile is shown as ONE TAB PER STACK — the
+		# row literally counts the flames — each tab icon-only (`solo`). The default shows one
+		# tab wearing the count. Reshaped only once IN the tree: the tab lays its count label
+		# out from text metrics, which read near-zero until the node can resolve a theme.
+		var duplicates := si.data.stack_display == "duplicates"
+		for _i in maxi(si.stacks if duplicates else 1, 1):
+			var pip := STATUS_PIP_SCENE.instantiate() as StatusPip
+			pip.setup(si)
+			_ground_pips.add_child(pip)
+			pip.as_ground_tab(duplicates)
+	_layout_ground()
 
 
+# Centres the ground row on the slot's top edge, raised into the row gutter so the tabs' icon
+# overflow clears the border (see GROUND_ROW_RISE). When the natural row outgrows the slot
+# (a tall pile of duplicate tabs), every tab SHRINKS to an equal share of the slot's width —
+# the row never bleeds into the neighbouring column. Re-run on resize.
+func _layout_ground() -> void:
+	if _ground_pips == null:
+		return
+	var tabs := _ground_pips.get_children()
+	if not tabs.is_empty():
+		var sep := float(_ground_pips.get_theme_constant("separation"))
+		var avail := size.x - 8.0 - sep * float(tabs.size() - 1)
+		var natural := 0.0
+		for t in tabs:
+			natural += (t as Control).custom_minimum_size.x
+		if natural > avail:
+			var per := floorf(avail / float(tabs.size()))
+			for t in tabs:
+				var pip := t as StatusPip
+				if pip != null:
+					pip.set_tab_width(per)
+	var m := _ground_pips.get_combined_minimum_size()
+	_ground_pips.size = m
+	_ground_pips.position = Vector2((size.x - m.x) * 0.5, -GROUND_ROW_RISE)
+
+
+# ── The ground's third voice: motion ────────────────────────────────────────────────────────────
+# The frame and floor say the ground IS something; the stream says it is DOING it. Motion is the
+# one channel on the board with no other claimant, and it is the only one that still reads when a
+# card covers the slot outright — because sparks are DELIBERATELY exempt from the occlusion rule
+# above (user's call, and the right one: fire that stops at a card's edge isn't fire). The emit
+# behavior draws on the overlay layer, above the board, so they fly wherever they like for free.
+#
+# CONVENTION, not a burning special case. A ground status animates through up to three library
+# entries, each optional and independently gated:
+#   ground_<status_id>         — the ambient PARTICLES (burning: sparks thrown off the ground)
+#   ground_<status_id>_haze    — the ambient FIELD (burning: the air over it, distorted)
+#   ground_<status_id>_flare   — the punctuation, fired with a pip's glint
+# Two ambient voices because one was never enough: motion that draws objects and motion that
+# doesn't are different statements, and a fire makes both. Authoring these is the whole cost of
+# giving the next ground status its motion — frost would write `_haze` as a cold blur and skip the
+# particles; a status with none of the three simply sits still.
+const GROUND_AMBIENCE := ["", "_haze"]
+
+
+static func ground_vfx_id(status_id: String, suffix: String = "") -> String:
+	return "ground_%s%s" % [status_id, suffix]
+
+
+static func ground_flare_id(status_id: String) -> String:
+	return ground_vfx_id(status_id, "_flare")
+
+
+# Attaches `status_id`'s ambient voices to the frame, detaching whatever was riding it before.
+# Idempotent: re-rendering an unchanged ground (which happens on every board refresh) must not
+# restart them, or a burning slot would flicker its way through the whole fight.
+func _sync_ground_vfx(status_id: String) -> void:
+	var want := PackedStringArray()
+	if not status_id.is_empty():
+		for suffix: String in GROUND_AMBIENCE:
+			var id := ground_vfx_id(status_id, suffix)
+			if Vfx.live(id):   # unauthored voices are simply absent, never a warning
+				want.append(id)
+	if want == _ground_vfx:
+		return
+	for id: String in _ground_vfx:
+		if not want.has(id):
+			Vfx.detach(id, _ground_frame)
+	if _ground_frame.is_inside_tree():
+		for id: String in want:
+			if not _ground_vfx.has(id):
+				Vfx.attach(id, _ground_frame)
+	_ground_vfx = want
+
+
+# The loud half of the ground's motion, fired in concert with a tab's glint (see VFXPlayer's
+# ground arrival and LivePresenter.show_ground_results): the same sparks the ambience emits, in a
+# burst. One vocabulary, two volumes — the shape hover and the turn spotlight already share.
+func flare_ground(status_id: String) -> void:
+	if _ground_frame == null or not _ground_frame.is_inside_tree():
+		return
+	var id := ground_flare_id(status_id)
+	if Vfx.live(id):
+		Vfx.play(id, _ground_frame)
+
+
+# The LAST match: with duplicate-display statuses several tabs share an id, and the newest tab
+# (the freshest stack) is the one a flash should land on.
 func find_ground_pip(status_id: String) -> StatusPip:
+	var found: StatusPip = null
 	for child in _ground_pips.get_children():
 		var pip := child as StatusPip
 		if pip != null and pip.status != null and pip.status.data.id == status_id:
-			return pip
-	return null
+			found = pip
+	return found
 
 
 # ── The pointer ring ────────────────────────────────────────────────────────────
@@ -284,6 +434,7 @@ func _layout_cue() -> void:
 
 	_position_attack_icon()
 	_fit_phantom()
+	_layout_ground()
 
 
 # Sizes the arrow and sets its bob endpoints from the pool position (_spot_top) computed by
