@@ -40,6 +40,8 @@ extends RefCounted
 #   { "targets": { "kind": "auto", "criterion": "nearest", "count": 1, "conditions": [ ... ] } }
 #   { "targets": { "kind": "manual", "conditions": [ ... ] } }
 #   { "targets": { "kind": "manual_slot", "conditions": [ ... ] } }
+#   { "targets": { "kind": "at_location", "conditions": [ ... ] } }   — the unit at the effect's
+#                                                                      anchor coordinates (see AtLocation)
 #   { "targets": { "kind": "participant", "participant": "origin", "conditions": [ ... ] } }
 #   { "targets": { "kind": "side", "of": "own"|"opponent" } }   — a PLAYER, not a unit (see Side)
 
@@ -143,6 +145,28 @@ class ManualSlot extends TargetResolver:
 		return _base_dict("manual_slot")
 
 
+class AtLocation extends TargetResolver:
+	# POSITION-FIRST targeting (SLOT_LAYER_DESIGN.md §2.4): "the unit(s) at these
+	# coordinates" — a relationship-blind pieces-layer lookup at a coordinate set. WHERE the
+	# coordinates come from is a separate concern (a coordinate PROVIDER); the only provider
+	# built now is the context's ANCHOR coordinates (for a slot status: the slot's own
+	# address — see EffectContext.anchor_*). AoE/adjacency later = richer providers feeding
+	# this same primitive, never a new targeting kind. An empty cell (or no anchor set) is a
+	# legal whiff — no targets, no error. Conditions gate the found unit normally ("only
+	# burn non-flying occupants").
+	func resolve(_event: GameEvent, holder: CardInstance, context: EffectContext) -> Array:
+		if context == null or context.anchor_side < 0:
+			return []
+		var unit := TargetResolver.unit_at_coords(context,
+				context.anchor_side, context.anchor_row, context.anchor_col)
+		if unit == null:
+			return []
+		return _passing([unit], TargetResolver._anchor(holder, context))
+
+	func to_dict() -> Dictionary:
+		return _base_dict("at_location")
+
+
 class Side extends TargetResolver:
 	# A PLAYER side as the target — the resolve() seam widens to a heterogeneous Array here
 	# (CardInstance or CombatSide; EffectSystem dispatches on type, mirroring Resolver.submit).
@@ -211,6 +235,10 @@ static func parse(d: Dictionary) -> TargetResolver:
 			var slot := ManualSlot.new()
 			slot.conditions = conds
 			return slot
+		"at_location":
+			var at := AtLocation.new()
+			at.conditions = conds
+			return at
 		"side":
 			var side := Side.new()
 			side.of = str(d.get("of", "own"))
@@ -257,6 +285,10 @@ static func from_legacy(policy_key: String, conditions: Array, subject_is_destin
 			var slot := ManualSlot.new()
 			slot.conditions = conditions
 			return slot
+		"at_location":
+			var at := AtLocation.new()
+			at.conditions = conditions
+			return at
 		"attack_target":
 			return _participant("destination", conditions)
 		"attacker":
@@ -299,6 +331,8 @@ static func legacy_policy_for(resolver: TargetResolver) -> Effect.TargetingPolic
 		return Effect.TargetingPolicy.MANUAL
 	if resolver is ManualSlot:
 		return Effect.TargetingPolicy.MANUAL_SLOT
+	if resolver is AtLocation:
+		return Effect.TargetingPolicy.AT_LOCATION
 	if resolver is Participant:
 		match (resolver as Participant).participant:
 			"origin":      return Effect.TargetingPolicy.ATTACKER
@@ -311,6 +345,18 @@ static func legacy_policy_for(resolver: TargetResolver) -> Effect.TargetingPolic
 
 
 # ── Shared helpers ───────────────────────────────────────────────────────────────────
+
+# The unit standing at a ground address, read from the context's boards (the pieces layer's
+# spatial index — never cached anywhere else). Null = empty cell or out-of-range address.
+static func unit_at_coords(context: EffectContext, side: int, r: int, c: int) -> CardInstance:
+	var board: Array = context.player_board if side == 0 else context.enemy_board
+	if r < 0 or r >= board.size():
+		return null
+	var board_row: Array = board[r]
+	if c < 0 or c >= board_row.size():
+		return null
+	return board_row[c]
+
 
 static func board_units(context: EffectContext) -> Array:
 	var out: Array = []

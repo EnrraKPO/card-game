@@ -106,6 +106,54 @@ static func trigger_global_grouped(event: GameEvent, context: EffectContext) -> 
 	return out
 
 
+# Fires the triggered effects a bare carrier's (a board slot's) statuses hold for an event —
+# the ground layer's dispatch arm (SLOT_LAYER_DESIGN.md §4.4), a caller loop feeding the SAME
+# pipeline as everything else, holderless on the trigger_global pattern: no holder unit, the
+# allegiance anchor and the anchor COORDINATES arrive pre-set on the context (the cascade sets
+# owner_anchor from the slot's half and anchor_* from its address). Slots have no native
+# effects, so the status tier is the whole dispatch. Same grouped return shape as
+# trigger_grouped; presentation of slot results is deliberately not wired in this build.
+static func trigger_carrier_grouped(event: GameEvent, carrier: StatusCarrier, context: EffectContext) -> Array:
+	var groups: Array = []
+	for grp: Dictionary in StatusEngine.triggered_groups(carrier, event.id):
+		var sres: Array = []
+		for effect: Effect in grp["effects"]:
+			# Fail-loud authoring fence (§4.8): a slot is nobody's holder — an effect whose
+			# gate or targeting interrogates "the holder" can never mean anything here, and
+			# silently never-firing (or firing as if 'of self' were 'any') hides the bug.
+			var offence := _holder_shaped(effect)
+			if not offence.is_empty():
+				push_error("EffectSystem: slot-held status '%s' carries %s — a slot has no holder unit"
+						% [str(grp["status_id"]), offence])
+				continue
+			if not effect.trigger_resolver().fires(event, null, context.owner_anchor):
+				continue
+			sres.append_array(_run_effect(effect, null, context, event,
+					int(grp["stacks"]), StringName(grp["status_id"])))
+		if not sres.is_empty():
+			groups.append({"status_id": grp["status_id"], "results": sres})
+	return groups
+
+
+# The holder-shaped constructs a slot dispatch must refuse (see trigger_carrier_grouped):
+# identity trigger gates ("of: self"), self/holder targeting, and the nearest criterion
+# (spatially anchored on a holder unit). Returns a description of the offence, "" if clean.
+static func _holder_shaped(effect: Effect) -> String:
+	var tr := effect.trigger_resolver()
+	if tr is TriggerResolver.Simple and (tr as TriggerResolver.Simple).of_holder:
+		return "an identity trigger gate ('of: self')"
+	if tr is TriggerResolver.Dual:
+		var dual := tr as TriggerResolver.Dual
+		if dual.origin_of_holder or dual.destination_of_holder:
+			return "an identity trigger gate ('of: self')"
+	var tres := effect.targets_resolver()
+	if tres is TargetResolver.Participant and (tres as TargetResolver.Participant).participant == "holder":
+		return "self targeting"
+	if tres is TargetResolver.Auto and (tres as TargetResolver.Auto).criterion == "nearest":
+		return "nearest targeting (distance is measured from a holder unit)"
+	return ""
+
+
 # Runs one effect (TRIGGERED → resolve targets + apply; CUSTOM → invoke its code hook).
 # `event` is the GameEvent that activated the effect (null for a transient use — a spell
 # cast / ability activation), handed to the target resolver so participant targeting can
@@ -120,6 +168,12 @@ static func _run_effect(effect: Effect, source: CardInstance, context: EffectCon
 		var hook := EffectHooks.get_hook(effect.custom_id)
 		context.effect = effect   # expose per-effect params to the hook (e.g. deliver_material's material)
 		return hook.call(context) if hook.is_valid() else []
+	# GROUND-layer status delivery (SLOT_LAYER_DESIGN.md §4.7): the payload names its
+	# recipient layer, so a "layer": "ground" status skips unit targeting entirely — the
+	# recipient is the SLOT at the effect's coordinates, not any unit a resolver could find.
+	if not effect.status_id.is_empty() and effect.status_layer == "ground":
+		var gres := _apply_ground_status(effect, source, context, cause)
+		return [gres] if not gres.is_empty() else []
 	# THE targeting socket: the effect's injected resolver returns the affected target(s)
 	# from the same shared context the trigger saw (see TargetResolver). The array is
 	# heterogeneous — units (CardInstance) or a player (CombatSide, the "side" kind) —
@@ -151,6 +205,38 @@ static func _apply_side(effect: Effect, side: CombatSide, source: CardInstance, 
 	if out.delta == 0:
 		return {}
 	return _with_interceptions({"target": side, "attribute": effect.attribute, "delta": out.delta}, out)
+
+
+# Applies a "layer": "ground" status payload to the BOARD SLOT at the effect's coordinates —
+# the MANUAL_SLOT picked cell (a cast's gesture, on the caster's own half), else the anchor
+# coords (a slot status re-applying ground state). Routed through the Resolver like the unit
+# form (single-writer rule — stack counts stay interceptable). Outside combat (no world in
+# the context) the payload is inert, mirroring spawn. No coordinates at all = authoring bug:
+# fail loud, apply nothing.
+static func _apply_ground_status(effect: Effect, source: CardInstance, context: EffectContext, cause: StringName) -> Dictionary:
+	if context == null or context.world == null:
+		return {}
+	var slot_side := -1
+	var slot_row := -1
+	var slot_col := -1
+	if context.manual_row >= 0:
+		slot_side = TriggerResolver.anchor_owner(source, context.owner_anchor)
+		slot_row = context.manual_row
+		slot_col = context.manual_col
+	elif context.anchor_side >= 0:
+		slot_side = context.anchor_side
+		slot_row = context.anchor_row
+		slot_col = context.anchor_col
+	if slot_side < 0 or slot_row < 0 or slot_col < 0:
+		push_error("EffectSystem: ground status '%s' has no coordinates (no picked slot, no anchor)"
+				% effect.status_id)
+		return {}
+	var slot := context.world.slot_at(slot_side, slot_row, slot_col)
+	var sout := Resolver.submit(_caused(StatMutation.status_apply(slot, effect.status_id,
+			effect.status_duration, effect.status_stacks, source), cause))
+	if sout.delta <= 0:
+		return {}
+	return _with_interceptions({"target": slot, "status_applied": effect.status_id}, sout)
 
 
 static func _apply(effect: Effect, target: CardInstance, source: CardInstance, context: EffectContext, amount_scale: int = 1, cause: StringName = &"") -> Dictionary:

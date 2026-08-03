@@ -58,6 +58,9 @@ enum TargetingPolicy {
 	MANUAL_SLOT,     # a SLOT the player picks on their own side — may be EMPTY (the effect decides
 	                 # what an empty pick means, e.g. material delivery spawns there); an occupied
 	                 # pick is gated by the effect's conditions. See SpellCaster's slot-mode flow.
+	AT_LOCATION,     # the unit standing at the effect's anchor coordinates (position-first
+	                 # targeting — a slot status hitting its own cell's occupant; whiffs legally
+	                 # when the cell is empty). See TargetResolver.AtLocation.
 }
 
 # For an event-driven (TRIGGERED/CUSTOM) effect, which unit — relative to the effect's HOLDER — must
@@ -120,6 +123,11 @@ var material: String = ""
 var status_id: String = ""
 var status_duration: int = STATUS_DURATION_DEFAULT   # sentinel = use the status's own default
 var status_stacks: int = 1
+# Which LAYER receives the status: "units" (default — today's behavior, each resolved unit)
+# or "ground" (the BOARD SLOT at the effect's coordinates — the MANUAL_SLOT picked cell, or
+# the anchor coords). Layer addressing lives on the PAYLOAD (WHAT is delivered); WHO/WHERE
+# stays the target resolver's job. See EffectSystem._apply_ground_status / SLOT_LAYER_DESIGN.md.
+var status_layer: String = "units"
 
 # Generic "spawn units" payload: any TRIGGERED effect may conjure new units onto the board.
 # For each resolved TARGET, `spawn_count` copies of card `spawn_id` are queued on that target's
@@ -230,6 +238,10 @@ static func from_dict(d: Dictionary) -> Effect:
 		e.status_id       = str(st.get("id", ""))
 		e.status_duration = int(st.get("duration", STATUS_DURATION_DEFAULT))
 		e.status_stacks   = int(st.get("stacks", 1))
+		e.status_layer    = str(st.get("layer", "units"))
+		if not e.status_layer in ["units", "ground"]:
+			push_error("Effect: unknown status layer '%s' (units/ground) — %s" % [e.status_layer, d])
+			e.status_layer = "units"
 	# Optional "spawn units" payload, valid on any event-driven (TRIGGERED) effect.
 	var sp: Dictionary = d.get("spawn", {})
 	if not sp.is_empty():
@@ -461,6 +473,7 @@ static func _policy_from_native(d: Dictionary) -> TargetingPolicy:
 		"self":        return TargetingPolicy.SELF
 		"manual":      return TargetingPolicy.MANUAL
 		"manual_slot": return TargetingPolicy.MANUAL_SLOT
+		"at_location": return TargetingPolicy.AT_LOCATION
 		# A side target needs no pick and no unit scan — ALL is the honest compat mirror
 		# (the classifiers only ask "is this manual / slot-mode?", to which the answer is no).
 		"side":        return TargetingPolicy.ALL
@@ -559,6 +572,8 @@ func to_dict() -> Dictionary:
 				d["tracker"] = tracker_spec.duplicate()
 			if not status_id.is_empty():
 				d["status"] = {"id": status_id, "duration": status_duration, "stacks": status_stacks}
+				if status_layer != "units":   # the default stays unspelled — byte-faithful round trip
+					d["status"]["layer"] = status_layer
 			if not spawn_id.is_empty():
 				d["spawn"] = {"id": spawn_id, "count": spawn_count}
 			return d
@@ -637,6 +652,7 @@ static func _str_policy(s: String) -> TargetingPolicy:
 		"subject":        return TargetingPolicy.SUBJECT
 		"attacker":       return TargetingPolicy.ATTACKER
 		"manual_slot":    return TargetingPolicy.MANUAL_SLOT
+		"at_location":    return TargetingPolicy.AT_LOCATION
 	return TargetingPolicy.SELF
 
 
@@ -692,4 +708,5 @@ static func policy_key(p: TargetingPolicy) -> String:
 		TargetingPolicy.SUBJECT:        return "subject"
 		TargetingPolicy.ATTACKER:       return "attacker"
 		TargetingPolicy.MANUAL_SLOT:    return "manual_slot"
+		TargetingPolicy.AT_LOCATION:    return "at_location"
 	return "self"

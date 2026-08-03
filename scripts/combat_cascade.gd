@@ -135,6 +135,24 @@ func resolve_event(event_id: StringName, subject: CardInstance = null) -> void:
 	for holder: CardInstance in units:
 		if subject == null or subject == holder:
 			StatusEngine.advance(holder, event_id)
+	# ── The GROUND layer (SLOT_LAYER_DESIGN.md §4.4): after the unit tiers, slot statuses
+	# fire HOLDERLESS then decay — the same two-tier order, fed through the same dispatch
+	# pipeline (a caller loop, not a second one). Subject-scoped moments skip slots entirely
+	# (a slot is never a subject in this build). Units a slot proc kills are swept by the
+	# cleanup below, the same silent path as any other bystander an effect kills. Results
+	# are deliberately unpresented — no cue machinery for slot containers yet (§6); the
+	# world state changes and board_refresh shows the aftermath.
+	if subject == null:
+		var ground := world.active_slots()
+		for slot: BoardSlot in ground:
+			var gctx := world.make_context(null)
+			gctx.owner_anchor = slot.side   # the ground inherits the half it sits on
+			gctx.anchor_side = slot.side
+			gctx.anchor_row = slot.row
+			gctx.anchor_col = slot.col
+			EffectSystem.trigger_carrier_grouped(GameEvent.make(event_id, null), slot, gctx)
+		for slot: BoardSlot in ground:
+			StatusEngine.advance(slot, event_id)
 	world.cleanup_deaths()
 	presenter.board_refresh()
 

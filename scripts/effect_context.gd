@@ -22,6 +22,14 @@ var owner_anchor: int = -9999   # == TriggerResolver.OWNER_FROM_HOLDER
 # the spawn case). -1 = no slot picked; hooks must check.
 var manual_row: int = -1
 var manual_col: int = -1
+# WHERE this effect is anchored, AS A LOCATION — the coordinate-provider channel for
+# position-first targeting (the AT_LOCATION kind reads these; see SLOT_LAYER_DESIGN.md).
+# Set ONLY by ground-layer dispatch (a slot status firing: the slot's own address); unit
+# dispatches never set it — their anchor is `source`, a unit. Three plain ints mirroring
+# manual_row/col: no position object, no slot reference in the context. -1 = no anchor.
+var anchor_side: int = -1
+var anchor_row: int = -1
+var anchor_col: int = -1
 # The cohesive combat world this dispatch runs in (grids, sides, spawn queue — see
 # CombatWorld), set by CombatWorld.make_context. Null in contexts built outside a combat,
 # where board procedures (spawn payloads, hooks) are inert.
