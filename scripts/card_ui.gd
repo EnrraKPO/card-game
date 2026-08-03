@@ -180,6 +180,7 @@ func _ready() -> void:
 	_apply_asset_textures()
 	_apply_label_style()
 	_apply_border_style()
+	_apply_ground_tint()   # a card can be dealt a tint before it is in the tree
 	refresh()
 	resized.connect(_apply_scale)
 	# The self-derivation poll (see derive_presentation): every card re-consults its own
@@ -500,6 +501,37 @@ func set_exhausted(exhausted: bool) -> void:
 const PHANTOM_SHADER := preload("res://assets/ui/shaders/phantom.gdshader")
 var _phantom_mat: ShaderMaterial = null
 var is_phantom := false
+
+
+# ── The ground's light on this unit (pushed by the SlotUI it stands on) ─────────────────────────
+# A unit standing on burning ground is lit by it, so the ground MULTIPLIES its colour over the
+# card's picture. `modulate` on a TextureRect IS a multiply, so no blend material is needed.
+#
+# ⚠ THE PICTURE ONLY, NEVER THE WHOLE CARD. This started as a multiply layer over the card's rect
+# and was wrong twice over (user's call): the stat badges are the numbers read fastest in combat and
+# are UI rather than scenery — a fire lighting the scene has no business recolouring them — AND they
+# OVERFLOW the card's rect, so a rect-shaped tint cannot even cover them consistently. Tinting the
+# art node sidesteps both: it is exactly the picture, whatever the badges do around it.
+#
+# `self_modulate`, not `modulate`: it touches this node's own drawing and nothing below it, and it
+# is a channel with exactly ONE writer. The card's other tint appliers all ride `_canvas.modulate`
+# or the root `modulate` (dim, exhaust, selection), so this composes with every one of them instead
+# of fighting for the same property — the documented failure mode of every brightness cue here.
+var _ground_tint := Color.WHITE
+
+
+func set_ground_tint(c: Color) -> void:
+	if _ground_tint == c:
+		return
+	_ground_tint = c
+	_apply_ground_tint()
+
+
+func _apply_ground_tint() -> void:
+	# By name, not the @onready ref: slots dress cards that are built but not yet in the tree.
+	var art: CanvasItem = _art if _art != null else get_node_or_null("%Art") as CanvasItem
+	if art != null:
+		art.self_modulate = _ground_tint
 
 
 func set_phantom(on: bool) -> void:

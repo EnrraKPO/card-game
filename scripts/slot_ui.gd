@@ -95,29 +95,54 @@ const STATUS_PIP_SCENE := preload("res://scenes/status_pip.tscn")
 # All three are the same fault — ground drawn on top of pieces — and it has one fix, not three.
 #
 # So the ground took the only territory nothing else wants: the GUTTER between slots, plus the
-# floor under the card. The frame claims exactly HALF of each surrounding gap, so two adjacent
-# burning slots meet with no seam and a burning region reads as one field rather than a row of
-# outlined boxes. Half of the gap also fits the board's edge slots with no special case — a zone
-# insets its grid by CombatBoard.HALF_PAD (8), one pixel more than this reach.
+# floor under the card.
+#
+# The frame claims exactly HALF of each surrounding gap, so two adjacent burning slots meet with no
+# seam and a spreading fire reads as ONE FIELD rather than a row of outlined boxes. That continuity
+# is the point of the number: a narrower rail was tried and left a channel of bare board between
+# neighbours. Half the gap also fits the board's edge slots with no special case — a zone insets its
+# grid by CombatBoard.HALF_PAD (8), one pixel more than this reach.
+# What stops the wide band fusing with the tabs riding on it is their own outline
+# (GroundPalette.tab_border), not a thinner frame.
 const GROUND_FRAME_REACH := float(BoardData.SLOT_GAP) * 0.5
-# Concentric with the slot's own 5px rounding: an outer curve that is the inner one pushed out by
-# the band's width, so the frame reads as the slot's own footprint rather than a separate plate.
-const GROUND_FRAME_RADIUS := 5 + int(GROUND_FRAME_REACH)
+# SHARP. A rounded frame was concentric with the slot's own 5px rounding and looked right in
+# isolation, but it is the corners that decide whether a fire is one field or four tiles: two
+# rounded frames meeting in a gutter leave a notch at every junction, and a burning region reads as
+# beads on a string. Square corners tile exactly, edge to edge and corner to corner.
+const GROUND_FRAME_RADIUS := 0
 # The ground pips ride the slot's TOP BORDER as tabs (StatusPip.as_ground_tab), tucked BEHIND any
 # occupant — a card's corners are its busiest real estate, and the ground was competing with them
 # there. What keeps the tab readable under a card is the part that rises ABOVE the border: the
 # row is raised into the gutter between rows, so the icon's overflow lands in empty gap and
 # NEVER reaches the card in the row above. Budgeted against SLOT_GAP because the gutter is a
-# constant (it does not scale with the slot); 3px short of it so the icon's top stops a visible
-# hair from the card above — "almost scraping, never touching".
-const GROUND_ROW_RISE := float(BoardData.SLOT_GAP) - 3.0
+# constant (it does not scale with the slot); short of it by GROUND_ROW_CLEARANCE so the icon's top
+# stops a visible hair from the card above — "almost scraping, never touching".
+#
+# ⚠ THIS CONSTANT IS THE WHOLE VISIBILITY BUDGET. The strip of a tab that survives an occupant is
+# exactly this tall — no more, whatever the icon or band measure — so it is the only number that
+# buys visibility on an OCCUPIED slot. Everything else (icon size, band height) only changes what
+# is drawn below the card. Taken from 3px of clearance to 2px on the user's "maximize here".
+const GROUND_ROW_CLEARANCE := 2.0
+const GROUND_ROW_RISE := float(BoardData.SLOT_GAP) - GROUND_ROW_CLEARANCE
+# How much of the slot's width ONE tab takes when it is alone. Half the tile was tried and read as
+# too broad; this is two thirds of that — wide enough to be a plate rather than a chip, without the
+# lone tab looking like a second health bar. Every other count falls out of the equal share below.
+const GROUND_TAB_WIDTH_FRAC := 0.347
+const GROUND_ROW_INSET := 4.0   # breathing room at each end of the row, inside the slot's width
 var ground_lookup: Callable = Callable()   # func() -> BoardSlot (null = ground never touched)
 var _ground_frame: Panel = null
 var _ground_floor: Panel = null
+# The light this ground casts on whoever stands in it — WHITE (a multiply no-op) when there is no
+# ground to cast any. Held because occupancy and ground change independently, and whichever moves
+# has to be able to re-assert the other's fact without re-querying the world.
+var _ground_tint := Color.WHITE
 var _ground_pips: HBoxContainer = null
 # The sustained ambient VFX currently riding the frame (empty = none), so a status leaving — or
 # being replaced by a different one — takes its ambience with it. See _sync_ground_vfx.
 var _ground_vfx: PackedStringArray = PackedStringArray()
+# The occupant scale the tab row was last laid out FOR — the widget's record of what it drew, not a
+# copy of anyone else's state (the card stays the authority; this is only change detection).
+var _ground_follow_scale := 1.0
 
 
 func _ready() -> void:
@@ -148,6 +173,11 @@ func _build_ground_layer() -> void:
 	_ground_floor.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_ground_floor.visible = false
 	add_child(_ground_floor)
+	# NOTE: the ground's LIGHT on its occupant is not a node here at all — it is a tint handed to the
+	# card, which multiplies it over its own picture (CardUI.set_ground_tint). It lived here first,
+	# as a multiply Panel over the slot's rect, and that shape cannot work: the stat badges overflow
+	# the card's rect, so a rect-shaped pass tints them (wrong — they are UI, not scenery) and still
+	# cannot cover them fully. The ground says WHAT light falls; the card decides what it lands on.
 	_ground_pips = HBoxContainer.new()
 	# z 0, and added BEFORE any occupant card (set_card appends): tree order alone puts the card
 	# over the tabs, which is the whole point — the ground is UNDER the unit standing on it. A
@@ -174,7 +204,9 @@ func render_ground() -> void:
 	if ground == null or ground.statuses.is_empty():
 		_ground_frame.visible = false
 		_ground_floor.visible = false
+		_ground_tint = Color.WHITE   # no ground, no light — a multiply no-op
 		_sync_ground_vfx("")
+		_layout_ground()   # clears the row and drops the follow (nothing left to track)
 		return
 	var first := ground.statuses[0] as StatusInstance
 	# The band, drawn as a border on the overhanging rect: a full-width border with a transparent
@@ -194,7 +226,8 @@ func render_ground() -> void:
 	gs.set_corner_radius_all(5)   # matches the slot panel's own radius (_apply_style)
 	_ground_floor.add_theme_stylebox_override("panel", gs)
 	_ground_floor.visible = true
-	_sync_ground_vfx(first.data.id)
+	_ground_tint = GroundPalette.on_occupant(first.data.color)
+	_sync_ground_vfx(first.data.id)   # the tint is pushed by _layout_ground, which every path ends in
 	for si: StatusInstance in ground.statuses:
 		# stack_display "duplicates" (burning): the pile is shown as ONE TAB PER STACK — the
 		# row literally counts the flames — each tab icon-only (`solo`). The default shows one
@@ -213,25 +246,93 @@ func render_ground() -> void:
 # overflow clears the border (see GROUND_ROW_RISE). When the natural row outgrows the slot
 # (a tall pile of duplicate tabs), every tab SHRINKS to an equal share of the slot's width —
 # the row never bleeds into the neighbouring column. Re-run on resize.
+#
+# THE ROW WEARS ITS OCCUPANT'S TRANSFORM. A selected unit grows about its own centre — which, since
+# the card is anchored to fill the slot, is the SLOT's centre — and a tab row that stayed put would
+# be swallowed by the card climbing over it. So the row takes the same scale about the same pivot,
+# and its rise falls out of that for free rather than being a second rule: sitting above the pivot,
+# scaling lifts it. What that preserves is the PROPORTION visible above the card's top edge (11px
+# of 19 at rest, 11.7 at the authored 1.07) — the tabs read exactly as well grown as resting, at any
+# factor. Stated as "match the occupant", not "on selection", so any future grow inherits it.
 func _layout_ground() -> void:
 	if _ground_pips == null:
 		return
 	var tabs := _ground_pips.get_children()
 	if not tabs.is_empty():
+		# Width is a share of the SLOT, never an authored pixel count: a tab is as wide as the space
+		# it has, so the row reads the same on any slot size. One tab takes GROUND_TAB_WIDTH_FRAC of
+		# the usable width; from two upward the equal share is the smaller number and takes over, so
+		# the progression is continuous and the row NEVER bleeds into the neighbouring column.
 		var sep := float(_ground_pips.get_theme_constant("separation"))
-		var avail := size.x - 8.0 - sep * float(tabs.size() - 1)
-		var natural := 0.0
+		var inner := size.x - GROUND_ROW_INSET * 2.0
+		var count := float(tabs.size())
+		var share := (inner - sep * (count - 1.0)) / count
+		# The fraction is of the SLOT's full width, not of `inner` — "half the tile" is the thing the
+		# eye actually judges, and the end insets are breathing room rather than part of the measure.
+		var per := maxf(floorf(minf(share, size.x * GROUND_TAB_WIDTH_FRAC)), 1.0)
 		for t in tabs:
-			natural += (t as Control).custom_minimum_size.x
-		if natural > avail:
-			var per := floorf(avail / float(tabs.size()))
-			for t in tabs:
-				var pip := t as StatusPip
-				if pip != null:
-					pip.set_tab_width(per)
+			var pip := t as StatusPip
+			if pip != null:
+				pip.set_tab_width(per)
 	var m := _ground_pips.get_combined_minimum_size()
 	_ground_pips.size = m
-	_ground_pips.position = Vector2((size.x - m.x) * 0.5, -GROUND_ROW_RISE)
+	# Where the row sits with an unscaled occupant (or none): centred on the slot's top edge.
+	var rest := Vector2((size.x - m.x) * 0.5, -GROUND_ROW_RISE)
+	# ...then the occupant's transform, expressed as a scale about the slot's CENTRE. A Control
+	# scales about its own pivot, so the pivot is emulated by placing the row where scaling about
+	# the centre would have put its corner: every point of the row then lands exactly where the
+	# card's own transform would carry it. Reduces to `rest` at scale 1, so there is no branch.
+	var s := _occupant_scale()
+	var centre := size * 0.5
+	_ground_follow_scale = s
+	_ground_pips.scale = Vector2(s, s)
+	_ground_pips.position = centre + (rest - centre) * s
+	_scale_ground_surfaces(s)
+	# ONE owner for the occupant's tint, and it is here rather than in render_ground because
+	# occupancy changes WITHOUT the ground changing at all — a unit walking onto burning ground
+	# never re-renders it. Every path that alters either fact ends in this function.
+	if _card_ui != null and is_instance_valid(_card_ui):
+		_card_ui.set_ground_tint(_ground_tint)
+	_update_ground_follow()
+
+
+# The frame and floor ride the occupant's transform along with the tabs — the whole ground layer
+# moves as ONE. They used to stay put on the reasoning that terrain does not grow because a unit was
+# picked, which was right while the frame was a broad band; a thin rail left behind by its own tabs
+# just looks broken. The floor comes along for internal consistency: a frame that steps outward
+# while the floor holds still opens a ring of bare slot between them.
+# Both rects are CENTRED on the slot's centre already (the frame is the slot grown evenly on every
+# side), so scaling about each one's own middle is the same transform the card gets — no position
+# arithmetic needed, unlike the tab row, which sits off-centre.
+func _scale_ground_surfaces(s: float) -> void:
+	var frame_size := size + Vector2(GROUND_FRAME_REACH, GROUND_FRAME_REACH) * 2.0
+	_ground_frame.pivot_offset = frame_size * 0.5
+	_ground_frame.scale = Vector2(s, s)
+	_ground_floor.pivot_offset = size * 0.5
+	_ground_floor.scale = Vector2(s, s)
+	# (The occupant's tint needs no transform of its own — it rides the card's art node, so it grows
+	# and moves with the card by construction.)
+
+
+# The scale to wear: the occupant's own, read fresh from the card every time. Uniform by
+# construction (HighlightFx grows both axes together), so one axis is the whole story.
+func _occupant_scale() -> float:
+	if _card_ui == null or not is_instance_valid(_card_ui):
+		return 1.0
+	return maxf(_card_ui.scale.x, 0.01)
+
+
+# The follow has to be CONTINUOUS, not endpoint-synced: the grow tween is TRANS_BACK and overshoots
+# past its target before settling, so a row that only learned the final scale would visibly lag and
+# then snap. Polling is a pure pull — the card stays the authority and this stores nothing but what
+# it last drew — and it costs a float compare on the slots that actually have tabs to move.
+func _update_ground_follow() -> void:
+	set_process(_card_ui != null and _ground_frame != null and _ground_frame.visible)
+
+
+func _process(_delta: float) -> void:
+	if not is_equal_approx(_occupant_scale(), _ground_follow_scale):
+		_layout_ground()
 
 
 # ── The ground's third voice: motion ────────────────────────────────────────────────────────────
@@ -689,6 +790,7 @@ func set_card(card: CardUI) -> void:
 	_apply_hover_outline()   # occupancy decides who wears the ring (see _apply_hover_outline)
 	if card == null:
 		reset_cue()   # emptied — may show the idle "open" marker again
+		_layout_ground()   # no occupant to follow: the row drops back to its resting place
 		return
 	# Clear old parent slot's reference before re-parenting
 	var old_parent := card.get_parent()
@@ -725,6 +827,9 @@ func set_card(card: CardUI) -> void:
 	# hook fired during add_child above): player cards keep the authored orientation, enemy
 	# cards mirror so the two armies read as mirror images across the board.
 	reset_cue()   # now occupied — clear any lingering open/move marker
+	# A card can arrive ALREADY GROWN (a selected unit repositioned onto this slot), so the row
+	# takes its transform now rather than waiting for the next scale change to notice.
+	_layout_ground()
 
 
 func _on_card_pressed() -> void:
@@ -733,6 +838,11 @@ func _on_card_pressed() -> void:
 
 func clear_card() -> CardUI:
 	var card := _card_ui
+	# The light stops when the unit steps out of it. Only this path needs to say so — a card moving
+	# to another SLOT is re-dressed by that slot's own layout, but one leaving the board entirely
+	# (picked up, killed) has nobody left to speak for it and would carry the fire's colour away.
+	if card != null and is_instance_valid(card):
+		card.set_ground_tint(Color.WHITE)
 	if _card_ui != null and _card_ui.get_parent() == self:
 		remove_child(_card_ui)
 	if card != null and card.pressed.is_connected(_on_card_pressed):
@@ -740,6 +850,9 @@ func clear_card() -> CardUI:
 	_card_ui = null
 	_apply_hover_outline()   # now empty: if the cursor is still here, the slot takes the ring
 	reset_cue()   # emptied — may show the idle "open" marker again
+	# A unit can leave MID-GROW (picked up, then moved): the row must return to rest rather than
+	# stay stretched for the occupant that walked away.
+	_layout_ground()
 	return card
 
 

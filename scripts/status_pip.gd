@@ -18,15 +18,21 @@ var status: StatusInstance
 # occupies only the lower band.
 # The icon is sized to the budget it must survive in, not to the tab: only what clears the slot
 # border stays visible under a card, and an icon read from its top SLIVER alone is unreadable (a
-# flame's tip is any flame's tip). At 16 with an 8 overflow, half of it clears — enough to name
-# the status at a glance — while its top stays a gap short of the card in the row above
-# (SlotUI.GROUND_ROW_RISE budgets that clearance; "almost scraping, never touching").
-const TAB_ICON := 16.0
-const TAB_ICON_OVERFLOW := 6.0   # how far the icon rises above the tab body's top edge
+# flame's tip is any flame's tip). ⚠ THE TRADE THAT GOVERNS THIS NUMBER: the strip that survives an
+# occupant is EXACTLY SlotUI.GROUND_ROW_RISE tall, whatever the icon's size — so growing the icon
+# only adds pixels BELOW the card, and shrinks the fraction of the glyph a covered tab can show.
+# At 19 against a rise of 12, about two thirds clears, which still names the status at a glance.
+# Anything much larger is bought entirely from the covered case and paid for on every occupied slot.
+const TAB_ICON := 19.0
+const TAB_ICON_OVERFLOW := 7.0   # how far the icon rises above the tab body's top edge
 # The band is JUST tall enough to hold the icon's dip plus a hair of padding below it — total
-# pip = 19px, band 13. It used to run 12px past the icon's bottom, which read as a pointless
+# pip = 21px, band 14. It used to run 12px past the icon's bottom, which read as a pointless
 # apron hanging into the slot (user call, 2026-08-03).
-const TAB_H := 13.0           # the tab body's own height
+const TAB_H := 14.0           # the tab body's own height
+# ⚠ FALLBACKS ONLY. The real width is computed by the slot and pushed through set_tab_width: it is
+# a share of the SLOT's width (SlotUI.GROUND_TAB_WIDTH_FRAC), because "how wide should this read"
+# is a question about the space the row has, which the pip cannot see. These two values are what a
+# tab wears for the frame between as_ground_tab() and the slot's first layout pass.
 const TAB_W := 46.0           # with a count to show; TAB_W_BARE otherwise
 const TAB_W_BARE := 26.0
 # While a tab pip flashes it must outrank everything else in its canvas layer — including a
@@ -161,7 +167,12 @@ func _centre_label(lbl: Label, box: Rect2) -> void:
 func _tab_style() -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = GroundPalette.tab(status.data.color) if status != null else Color.WHITE
-	sb.border_color = Color(0.0, 0.0, 0.0, 0.55)
+	# The outline is the status's OWN colour in shadow (GroundPalette.tab_border), never the card
+	# badge's near-black: black on a fire reads as grime, while a burnt edge reads as the same flame
+	# with the light behind it. It exists because the tab has to cut cleanly out of the frame it
+	# rides on — shade separation alone left the two fused (user's call, both directions tried).
+	sb.border_color = GroundPalette.tab_border(status.data.color) if status != null \
+			else Color(0.2, 0.2, 0.2)
 	sb.set_border_width_all(2)
 	sb.set_corner_radius_all(2)
 	sb.anti_aliasing = true

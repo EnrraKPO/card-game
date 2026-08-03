@@ -45,11 +45,14 @@ func _ready() -> void:
 		inst.owner = 0
 		var ui := CardUI.create(inst)
 		(slots[i] as SlotUI).set_card(ui)
-		# Top-left card GROWN, as the selection highlight grows one — the case that decides whether a
-		# neighbouring slot's ground frame can cut a piece. Sibling slots paint in row-major order, so
-		# the bottom row's frame is drawn AFTER this card and would slice whatever overflows into the
-		# gutter. (An un-grown card is exactly its slot, so nothing overflows and the question hides.)
-		if i == 0:
+		# BOTTOM-RIGHT card GROWN (slot 5: occupied, burning, and inside this crop), as the selection
+		# highlight grows one
+		# — the case the ground row has to follow. Two things are on trial here: the row scaling and
+		# rising in step with the card (staying proportionally visible above its top edge), and the
+		# draw order where that rise intrudes ~5px into the card in the row ABOVE. Grid children are
+		# added top row first, so the lower slot draws later and its tabs should land OVER that
+		# neighbour. Grown past the authored 1.07 to make both effects unambiguous at a glance.
+		if i == 5:
 			ui.pivot_offset = Vector2(165, 216) * 0.5
 			ui.scale = Vector2(1.12, 1.12)
 
@@ -63,6 +66,9 @@ func _ready() -> void:
 		(slots[i] as SlotUI).ground_lookup = func() -> BoardSlot: return gs
 	# A hit's worth (2 stacks) on the occupied and empty cells; a heavy 6-stack pile on the
 	# glint cell so the shrink-to-fit path is on screen too.
+	# A SINGLE stack on the top row: the lone-tab case, which is the one the width fraction names
+	# directly ("slightly over half the tile"). Every other count falls out of the equal share.
+	StatusEngine.apply(grounds[0], "burning", Effect.STATUS_DURATION_DEFAULT, 1, null)
 	StatusEngine.apply(grounds[3], "burning", Effect.STATUS_DURATION_DEFAULT, 2, null)
 	StatusEngine.apply(grounds[4], "burning", Effect.STATUS_DURATION_DEFAULT, 4, null)
 	StatusEngine.apply(grounds[5], "burning", Effect.STATUS_DURATION_DEFAULT, 12, null)
@@ -88,6 +94,28 @@ func _ready() -> void:
 			pip.flash_proc()
 		for _i in 7:
 			await get_tree().process_frame
+
+	# MEASURED, not eyeballed: the row's rect at rest vs grown, against the card it might intrude on.
+	# (Rects are in the 4x-scaled grid's space — ratios and the overlap verdict are what matter.)
+	var rest_row := (slots[4] as SlotUI)._ground_pips.get_global_rect()
+	var grown_row := (slots[5] as SlotUI)._ground_pips.get_global_rect()
+	var above := (slots[2] as SlotUI).get_card().get_global_rect()
+	print("rest row   top=%.1f h=%.1f" % [rest_row.position.y, rest_row.size.y])
+	print("grown row  top=%.1f h=%.1f  (scale %.3f, rose %.1f)"
+			% [grown_row.position.y, grown_row.size.y,
+			grown_row.size.y / rest_row.size.y, rest_row.position.y - grown_row.position.y])
+	print("card above bottom=%.1f -> clearance rest=%.1f grown=%.1f"
+			% [above.end.y, rest_row.position.y - above.end.y, grown_row.position.y - above.end.y])
+	# Tab width as a share of the slot it sits on, at 1 / 2 / 12 tabs (slots 3, 4 and 5 carry
+	# 2, 4 and 12 stacks; slot 0 is unburnt). Divided by ZOOM to read as authored pixels.
+	for idx in [0, 3, 4, 5]:
+		var s := slots[idx] as SlotUI
+		var row := s._ground_pips
+		if row.get_child_count() > 0:
+			var tab := (row.get_child(0) as Control).size.x
+			print("slot %d: %d tabs, tab w=%.0f of slot %.0f = %.1f%%  (icon strip above slot top=%.1f)"
+					% [idx, row.get_child_count(), tab, s.size.x, 100.0 * tab / s.size.x,
+					SlotUI.GROUND_ROW_RISE])
 
 	sv.get_texture().get_image().save_png(OUT)
 	print("RENDERED ground tab zoom")
