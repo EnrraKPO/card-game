@@ -67,6 +67,54 @@ func side(side_owner: int) -> CombatSide:
 	return player_side if side_owner == 0 else enemy_side
 
 
+# ── The GROUND layer (see SLOT_LAYER_DESIGN.md) ─────────────────────────────────────────
+# One BoardSlot per cell of either half, permanent once touched. Lazy allocation is an
+# invisible detail — slot_at ALWAYS answers, so to every caller the ground simply exists.
+# Keyed Vector3i(side, row, col): the address IS the identity.
+
+var slots: Dictionary = {}   # Vector3i(side, row, col) -> BoardSlot
+
+
+func slot_at(slot_side: int, r: int, c: int) -> BoardSlot:
+	var key := Vector3i(slot_side, r, c)
+	var s: BoardSlot = slots.get(key)
+	if s == null:
+		s = BoardSlot.make(slot_side, r, c)
+		slots[key] = s
+	return s
+
+
+# The unit standing at a ground address right now — the pieces-layer lookup the slot layer
+# never caches (incidental co-location: derived fresh at read time, from the grids, the one
+# occupancy authority). Null = empty cell or out-of-range address.
+func unit_at(slot_side: int, r: int, c: int) -> CardInstance:
+	if r < 0 or r >= BoardData.ROWS or c < 0 or c >= BoardData.COLS:
+		return null
+	var grid: Array = grid_of(slot_side)
+	var grid_row: Array = grid[r]
+	return grid_row[c]
+
+
+# Slots that currently carry statuses, in deterministic reading order (side, then row, then
+# col) — dictionaries don't promise order, and the ticking paths re-run in simulations, so
+# the order is sorted into existence rather than trusted. Expired-but-unfiled statuses don't
+# count as activity (pull validity — see StatusEngine.is_expired).
+func active_slots() -> Array:
+	var keys: Array = slots.keys()
+	keys.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+		if a.x != b.x:
+			return a.x < b.x
+		if a.y != b.y:
+			return a.y < b.y
+		return a.z < b.z)
+	var out: Array = []
+	for key: Vector3i in keys:
+		var s: BoardSlot = slots[key]
+		if not s.statuses.is_empty():
+			out.append(s)
+	return out
+
+
 func grid_of(side_owner: int) -> Array:
 	return player_grid if side_owner == 0 else enemy_grid
 
@@ -270,6 +318,15 @@ func copy(remap: Dictionary = {}) -> CombatWorld:
 	w.modifiers = modifiers        # immutable environment — shared, never copied
 	w.rewards_live = false         # a copy is a hypothetical: it never pays
 	w._pending_spawns = _pending_spawns.duplicate(true)   # queued arrivals are combat state
+	# The ground layer: a new BoardSlot per entry (coordinates are stable identity — no remap
+	# needed for the slots themselves), statuses deep-copied with their `source` unit refs
+	# resolved through the same identity remap as unit statuses.
+	for key: Vector3i in slots:
+		var src_slot: BoardSlot = slots[key]
+		var new_slot := BoardSlot.make(src_slot.side, src_slot.row, src_slot.col)
+		for si: StatusInstance in src_slot.statuses:
+			new_slot.statuses.append(StatusInstance.copied(si, new_slot, remap))
+		w.slots[key] = new_slot
 	return w
 
 

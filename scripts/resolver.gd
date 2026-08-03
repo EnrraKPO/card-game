@@ -118,6 +118,15 @@ static func _submit(m: StatMutation) -> Outcome:
 		var sout := _apply_to_side(m.target as CombatSide, m)
 		sout.interceptions = side_interceptions
 		return sout
+	if m.target is StatusCarrier and not (m.target is CardInstance):
+		# A ground-layer (slot) mutation — the fourth target species. Interception runs the
+		# same gate first: unit-shaped interceptors degrade silently (their target-participant
+		# cast yields null → no match), while source-gated ones ("statuses YOU apply gain a
+		# stack") still fire — see _try_intercept.
+		var carrier_interceptions := _intercept(m)
+		var cout := _apply_to_carrier(m.target as StatusCarrier, m)
+		cout.interceptions = carrier_interceptions
+		return cout
 	var inst := m.target as CardInstance
 	if inst == null:
 		return Outcome.new()
@@ -198,6 +207,22 @@ static func _dispatch_apply(inst: CardInstance, m: StatMutation) -> Outcome:
 			# Additive modifier on any named attribute (attack/speed/cost/max_health/shield/…).
 			inst.apply_modifier(String(m.stat), m.amount)
 			return Outcome.make(inst, m.stat, m.amount)
+
+
+# ── Application form: a bare StatusCarrier (a board slot) ──
+# Slots hold statuses and nothing else in this build — the STATUS form routes to the same
+# StatusEngine.apply call the unit arm uses (one application writer); any other stat aimed
+# at a slot is an authoring error: fail loud, commit nothing (slots have no stats to move).
+
+static func _apply_to_carrier(carrier: StatusCarrier, m: StatMutation) -> Outcome:
+	if m.stat != StatMutation.STATUS:
+		push_error("Resolver: stat '%s' cannot land on a board slot (slots hold statuses only)"
+				% String(m.stat))
+		return Outcome.make(carrier, m.stat, 0)
+	if m.amount <= 0 or m.status_id.is_empty():
+		return Outcome.make(carrier, StatMutation.STATUS, 0)
+	StatusEngine.apply(carrier, m.status_id, m.status_duration, m.amount, m.source)
+	return Outcome.make(carrier, StatMutation.STATUS, m.amount)
 
 
 # ── Application forms: CombatSide (player resources) ──
