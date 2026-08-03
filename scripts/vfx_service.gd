@@ -1028,30 +1028,60 @@ func _fx_emit_once(vd: VFXData, target: Control, _opts: Dictionary) -> void:
 # is not a thing you can see: it is the picture BEHIND it arriving bent. So this samples the back
 # buffer through a rising displacement (heat_haze.gdshader) and outputs the screen, moved.
 #
-# Structurally it is the odd one out too. Reading the screen means a BackBufferCopy must run BEFORE
-# the field draws, so the state's root node IS the copy and the shaded rect is its CHILD — a parent
-# draws before its children, which is exactly the ordering needed, and freeing the root on detach
-# takes the field with it. (A copy parented as a sibling-after or a child-of-the-field would
-# capture the frame one step too late and shimmer its own output.)
+# ⚠⚠ ONE SHARED FULL-VIEWPORT COPY, NEVER ONE PER FIELD. This is the whole architecture of the
+# behavior and it was arrived at by getting it wrong twice, so it is worth the paragraph.
 #
-# COST, worth knowing before this spreads: one partial back-buffer copy per attached field, every
-# frame. Fine for the handful of slots a fire covers; a hundred of them would not be.
+# The back buffer is a SINGLE persistent texture per viewport, and a RECT copy refreshes only its
+# own rect. Give each field its own partial copy and both failure modes are unavoidable:
+#   • ANY texel outside every copy rect is never written by this frame — and never cleared either,
+#     so it holds something arbitrary: a stale card that has since moved, or, when nothing ever
+#     wrote there at all, raw uninitialised memory. That is the reported white/magenta glyph
+#     garbage (a font atlas being sampled as if it were the screen), and the permanent ghosting.
+#   • ANY texel inside TWO copy rects is captured by the second copy AFTER the first field has
+#     already drawn into it — so neighbouring fields sample each other's output and compound. That
+#     is the reported vertical banding, appearing exactly at the seams between adjacent slots.
+# Padding the rects makes the second failure WORSE while only moving the first one outward.
+#
+# So: one `_HeatSource` per overlay band, copy_mode VIEWPORT, held at child index 0. The entire
+# buffer is refreshed every frame (no stale texels anywhere, at any offset), and it is refreshed
+# BEFORE any field draws (no field can see another, or itself). Fields are then plain Controls.
+# Sitting at index 0 also means the copy precedes every other overlay effect, so glows and sparks
+# are deliberately NOT in the buffer and never feed back into the shimmer.
+#
+# COST: one full-screen blit per frame while any field is attached — ONE, not one per burning slot,
+# so this gets cheaper than the old shape the moment a fire spreads. The source reaps itself when
+# the last field goes (see _HeatSource._process).
 func _sustain_heat(vd: VFXData, target: Control) -> Node:
 	var fx := _HeatFx.new()
 	fx.target = target
+	var strength := vd.num_param("strength", 7.0)
 	var mat := ShaderMaterial.new()
 	mat.shader = HEAT_SHADER
-	mat.set_shader_parameter("strength", vd.num_param("strength", 0.004))
+	mat.set_shader_parameter("strength", strength)
 	mat.set_shader_parameter("speed", vd.num_param("speed", 0.55))
 	mat.set_shader_parameter("wave_scale", vd.num_param("wave_scale", 5.0))
 	mat.set_shader_parameter("base", vd.num_param("base", 0.9))
 	mat.set_shader_parameter("top_fade", vd.num_param("top_fade", 0.15))
-	fx.field = ColorRect.new()
-	fx.field.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	fx.field.material = mat
-	fx.add_child(fx.field)
-	overlay_layer_for(target).add_child(fx)
+	mat.set_shader_parameter("edge_fade", vd.num_param("edge_fade", 0.12))
+	fx.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	fx.material = mat
+	var layer := overlay_layer_for(target)
+	_heat_source_for(layer)   # must exist, and must stay first — see the block above
+	layer.add_child(fx)
 	return fx
+
+
+# The shared screen source for one overlay band, created on demand and pinned to child index 0 so
+# it draws before every field in that band. Re-pinned on each attach: anything added to the layer
+# in between (a glow, a spark stream) would otherwise sit ahead of it.
+func _heat_source_for(layer: CanvasLayer) -> void:
+	for child in layer.get_children():
+		if child is _HeatSource:
+			layer.move_child(child, 0)
+			return
+	var src := _HeatSource.new()
+	layer.add_child(src)
+	layer.move_child(src, 0)
 
 
 # Sustained form: the stream runs for as long as the state is attached. detach() frees the node.
@@ -1424,14 +1454,31 @@ class _EmitFx extends Control:
 const HEAT_SHADER: Shader = preload("res://assets/ui/shaders/heat_haze.gdshader")
 
 
-# The "heat" behavior's node (see _sustain_heat): a BackBufferCopy that keeps its rect glued to the
-# target, carrying the shaded field as its only child so the copy always runs first.
-class _HeatFx extends BackBufferCopy:
+# The ONE screen source shared by every heat field in an overlay band (see _sustain_heat). Copies
+# the WHOLE viewport, so no texel of the back buffer is ever stale and no offset can sample garbage.
+# Reaps itself when the last field in its band is gone — a full-screen blit per frame is not
+# something to leave running for a fire that went out.
+class _HeatSource extends BackBufferCopy:
+	func _ready() -> void:
+		copy_mode = BackBufferCopy.COPY_MODE_VIEWPORT
+
+	func _process(_delta: float) -> void:
+		var parent := get_parent()
+		if parent == null:
+			return
+		for sib in parent.get_children():
+			if sib is _HeatFx:
+				return
+		queue_free()
+
+
+# The "heat" behavior's field: a plain Control carrying the displacement shader, glued to its
+# target's rect. It owns NO copy of its own — see the warning block on _sustain_heat for why one
+# copy per field is unfixable rather than merely wasteful.
+class _HeatFx extends ColorRect:
 	var target: Control
-	var field: ColorRect
 
 	func _ready() -> void:
-		copy_mode = BackBufferCopy.COPY_MODE_RECT
 		_sync()
 
 	func _process(_delta: float) -> void:
@@ -1443,11 +1490,8 @@ class _HeatFx extends BackBufferCopy:
 
 	func _sync() -> void:
 		var r := target.get_global_rect()
-		# The copied region is deliberately the field's own rect: the shader's displacement dies to
-		# zero at the edges, so nothing outside it is ever sampled and a larger copy would be waste.
-		rect = r
-		field.position = r.position
-		field.size = r.size
+		global_position = r.position
+		size = r.size
 
 
 class _HaloFx extends Control:

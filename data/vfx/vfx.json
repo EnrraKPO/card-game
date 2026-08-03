@@ -1812,16 +1812,17 @@
 		"category": "status",
 		"behavior": "heat",
 		"params": {
-			"strength": 0.009,
+			"strength": 7.0,
 			"speed": 0.5,
 			"wave_scale": 5.0,
 			"base": 0.9,
-			"top_fade": 0.12
+			"top_fade": 0.12,
+			"edge_fade": 0.12
 		},
 		"sustained": true,
 		"placeholder": false,
 		"concept": "The burning ground's second ambient voice, and the quieter one: the AIR over the fire. The sparks say something is being thrown off; the haze says the space itself is hot. It draws no light of its own — it bends the board behind it — which is why it can sit over a card without covering anything, and why it reads even when the slot is entirely occupied.",
-		"explanation": "IMPLEMENTED (the `heat` behavior, by the `ground_<status_id>_haze` convention): a BackBufferCopy over the slot's frame rect carrying a screen-sampling shader (heat_haze.gdshader) that displaces along two upward-scrolling noise octaves, mostly sideways, dying to zero toward the top and the edges so it needs no mask. Deliberately weak — the strength is a fraction of a percent of screen UV, because a haze the eye can point at has already stopped reading as air.",
+		"explanation": "IMPLEMENTED (the `heat` behavior, by the `ground_<status_id>_haze` convention): a BackBufferCopy carrying a screen-sampling shader (heat_haze.gdshader) that displaces along two upward-scrolling noise octaves, mostly sideways. `strength` is in PIXELS of peak displacement, and the copy rect is grown by it — the back buffer is persistent and only partly refreshed, so a sample landing outside the copied region reads stale content that then ghosts permanently. The displacement is masked to zero at every edge for the same reason, not for softness. Deliberately weak: a haze the eye can point at has stopped reading as air.",
 		"prompt": ""
 	},
 	{
