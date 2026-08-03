@@ -150,7 +150,17 @@ func resolve_event(event_id: StringName, subject: CardInstance = null) -> void:
 			gctx.anchor_side = slot.side
 			gctx.anchor_row = slot.row
 			gctx.anchor_col = slot.col
-			EffectSystem.trigger_carrier_grouped(GameEvent.make(event_id, null), slot, gctx)
+			var groups := EffectSystem.trigger_carrier_grouped(GameEvent.make(event_id, null), slot, gctx)
+			# Ground procs have no cues yet (§6) — narrate them into the combat log so a
+			# playtest can see the invisible: which slot fired, at whom, for how much.
+			for grp: Dictionary in groups:
+				for res: Dictionary in grp["results"]:
+					var victim := res.get("target") as CardInstance
+					CombatLog.note("ground", "slot (%s r%d c%d) %s: %s %d on %s" % [
+							"player" if slot.side == 0 else "enemy", slot.row, slot.col,
+							str(grp["status_id"]), str(res.get("attribute", "?")),
+							int(res.get("delta", 0)),
+							"?" if victim == null or victim.data == null else str(victim.data.id)])
 		for slot: BoardSlot in ground:
 			StatusEngine.advance(slot, event_id)
 	world.cleanup_deaths()

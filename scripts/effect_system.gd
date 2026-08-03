@@ -261,6 +261,11 @@ static func _ground_status_at(effect: Effect, source: CardInstance, context: Eff
 			effect.status_duration, effect.status_stacks, source), cause))
 	if sout.delta <= 0:
 		return {}
+	# Ground state is INVISIBLE for now (no slot pips until the presentation step) — the
+	# always-recording combat log is the one witness a playtest has.
+	CombatLog.note("ground", "%s ignites slot (%s r%d c%d)%s" % [effect.status_id,
+			"player" if slot_side == 0 else "enemy", slot_row, slot_col,
+			"" if source == null else " — by " + str(source.data.id)])
 	return _with_interceptions({"target": slot, "status_applied": effect.status_id}, sout)
 
 
