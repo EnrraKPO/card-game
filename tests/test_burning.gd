@@ -21,7 +21,7 @@ func run() -> void:
 	_non_fire_does_not()
 	_granted_fire_counts()
 	_burn_ticks_and_expires()
-	_reattack_refreshes()
+	_reattack_piles_on()
 	StatusData._all.erase(FIRE_GRANT)
 
 
@@ -73,7 +73,7 @@ func _fire_attack_ignites() -> void:
 	_attack(cascade, atk, def)
 	var si := w.slot_at(1, 1, 0).find_status("burning")
 	check(si != null, "a fire unit's strike sets the struck slot burning")
-	check(si != null and si.remaining == 2, "burning arrives with its authored duration")
+	check(si != null and si.stacks == 2, "burning arrives as its authored two stacks")
 	check(w.slot_at(0, 1, 3).find_status("burning") == null, "the attacker's own ground stays cold")
 
 
@@ -118,7 +118,7 @@ func _burn_ticks_and_expires() -> void:
 		await cascade.resolve_event(&"turn_end")
 		check_eq(def.current_shield, 1, "the second round burns again")
 		check(w.slot_at(1, 0, 0).find_status("burning") == null,
-				"burning expires after its two round ticks")
+				"burning expires after its two stacks tick away")
 		await cascade.resolve_event(&"turn_end")
 		check_eq(def.current_shield, 1, "cold ground burns nobody")
 		done[0] = true
@@ -126,7 +126,9 @@ func _burn_ticks_and_expires() -> void:
 	check(bool(done[0]), "the burn rounds resolve synchronously")
 
 
-func _reattack_refreshes() -> void:
+# Stacks ADD (the pile grows per strike, clamped by max_stacks) — and however tall the pile,
+# the tick stays flat 1 damage (per_stack=false: stacks mean remaining ticks, never heat).
+func _reattack_piles_on() -> void:
 	var w := _world()
 	var cascade := CombatCascade.make(w, CombatPresenter.new())
 	var atk := _fire_unit(0)
@@ -134,7 +136,7 @@ func _reattack_refreshes() -> void:
 	atk.col = 3
 	var arow: Array = w.player_grid[1]
 	arow[3] = atk
-	var def := _place(w, "pawn", 1, 1, 0)
+	var def := _place(w, "rook", 1, 1, 0)   # 6 HP, 3 shield — room to measure several ticks
 	_attack(cascade, atk, def)
 	var done: Array = [false]
 	var chain := func() -> void:
@@ -143,6 +145,13 @@ func _reattack_refreshes() -> void:
 	chain.call()
 	check(bool(done[0]), "the interim round resolves synchronously")
 	var si := w.slot_at(1, 1, 0).find_status("burning")
-	check(si != null and si.remaining == 1, "one round in, one round of fire left")
+	check(si != null and si.stacks == 1, "one round in, one stack of fire left")
 	_attack(cascade, atk, def)
-	check(si != null and si.remaining == 2, "a fresh strike refreshes the fire to full")
+	check(si != null and si.stacks == 3, "a fresh strike piles two more stacks onto the fire")
+	var done2: Array = [false]
+	var chain2 := func() -> void:
+		await cascade.resolve_event(&"turn_end")
+		done2[0] = true
+	chain2.call()
+	check(bool(done2[0]), "the stacked round resolves synchronously")
+	check_eq(def.current_shield, 1, "three stacks still burn for exactly 1 — fire's heat is flat")

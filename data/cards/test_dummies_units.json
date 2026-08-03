@@ -91,5 +91,30 @@
 				"amount": 1
 			}
 		]
+	},
+	{
+		"id": "burning_dummy",
+		"display_name": "Burning Dummy",
+		"cost": 1,
+		"attack": 1,
+		"health": 2,
+		"speed": 2,
+		"description": "A test dummy that caught fire and kept working. Counts as a fire unit — the ground it strikes burns.",
+		"enemy_only": true,
+		"tribe": "dummy",
+		"role": "fodder",
+		"effects": [
+			{
+				"trigger": {
+					"kind": "while"
+				},
+				"targets": {
+					"kind": "self"
+				},
+				"grants": [
+					"fire"
+				]
+			}
+		]
 	}
 ]

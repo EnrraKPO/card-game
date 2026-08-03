@@ -59,6 +59,10 @@ var decay: String = DECAY_DURATION
 var decay_phase: String = PHASE_TURN_END
 var stacking: String = STACK_REFRESH
 var max_stacks: int = 99
+# How a stacked instance PRESENTS its pile: "count" (one pip, a number — default) or
+# "duplicates" (one pip per stack; burning — the tabs on a slot literally count the flames).
+# Presentation only; honored by the ground tab row today (SlotUI.render_ground).
+var stack_display: String = "count"
 var effects: Array = []   # Array[Effect]
 # Activated abilities this status HOLDS (by id, see AbilityData) — ported to the carrier while
 # the status is active, gone with it. Any effect container may hold abilities.
@@ -110,6 +114,7 @@ static func from_dict(d: Dictionary) -> StatusData:
 	s.decay_phase      = str(d.get("decay_phase", PHASE_TURN_END))
 	s.stacking         = str(d.get("stacking", STACK_REFRESH))
 	s.max_stacks       = int(d.get("max_stacks", 99))
+	s.stack_display    = str(d.get("stack_display", "count"))
 	s.abilities        = Array(d.get("abilities", []), TYPE_STRING, "", null)
 	for e_data: Dictionary in d.get("effects", []):
 		var eff := Effect.from_dict(e_data)

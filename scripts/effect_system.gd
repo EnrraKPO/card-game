@@ -45,8 +45,10 @@ static func trigger_grouped(event: GameEvent, source: CardInstance, context: Eff
 				continue
 			# The status id rides down as the mutation CAUSE — so a poison tick that kills
 			# stamps `cause = "poison"`, and the `kill` event can name it (see Resolver).
+			# per_stack=false pins the scale at 1 (burning's flat tick — see Effect.per_stack).
 			sres.append_array(_run_effect(effect, source, context, event,
-					int(grp["stacks"]), StringName(grp["status_id"])))
+					int(grp["stacks"]) if effect.per_stack else 1,
+					StringName(grp["status_id"])))
 		if not sres.is_empty():
 			groups.append({"status_id": grp["status_id"], "results": sres})
 	return groups
@@ -131,8 +133,10 @@ static func trigger_carrier_grouped(event: GameEvent, carrier: StatusCarrier, co
 				continue
 			if not effect.trigger_resolver().fires(event, null, context.owner_anchor):
 				continue
+			# per_stack=false pins the scale at 1 (burning's flat tick — see Effect.per_stack).
 			sres.append_array(_run_effect(effect, null, context, event,
-					int(grp["stacks"]), StringName(grp["status_id"])))
+					int(grp["stacks"]) if effect.per_stack else 1,
+					StringName(grp["status_id"])))
 		if not sres.is_empty():
 			groups.append({"status_id": grp["status_id"], "results": sres})
 	return groups

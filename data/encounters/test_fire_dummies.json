@@ -1,0 +1,25 @@
+{
+	"id": "test_fire_dummies",
+	"node_type": "test",
+	"min_floor": 0,
+	"max_floor": 999,
+	"weight": 1,
+	"enemy_king": "captain_dummy",
+	"enemy_pool": [
+		{
+			"id": "burning_dummy",
+			"weight": 1
+		}
+	],
+	"pick_count": [
+		8,
+		10
+	],
+	"exp_reward": 1,
+	"ai": "default",
+	"reward_pool": "default",
+	"survival_weights": {
+		"captain": 1,
+		"fodder": 0.2
+	}
+}

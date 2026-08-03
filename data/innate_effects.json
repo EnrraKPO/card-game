@@ -11,7 +11,7 @@
 					"origin_conditions": [ { "composition": ["fire"] } ]
 				},
 				"targets": { "kind": "participant", "participant": "destination" },
-				"status": { "id": "burning", "layer": "ground" }
+				"status": { "id": "burning", "layer": "ground", "stacks": 2 }
 			}
 		]
 	}

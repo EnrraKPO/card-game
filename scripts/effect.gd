@@ -123,6 +123,12 @@ var material: String = ""
 var status_id: String = ""
 var status_duration: int = STATUS_DURATION_DEFAULT   # sentinel = use the status's own default
 var status_stacks: int = 1
+# THROWAWAY SEAM (agreed 2026-08-03): whether this effect's amount multiplies by its holding
+# status's stack count (today's blanket behavior, so it defaults true and nothing changes).
+# Burning authors false — fire deals 1 whatever the pile. This is deliberately a dumb bool,
+# NOT a half-general "amount_per" field: the real replacement is amounts-as-expressions
+# ("damage equal to its speed"), which supersedes this wholesale when it arrives.
+var per_stack: bool = true
 # Which LAYER receives the status: "units" (default — today's behavior, each resolved unit)
 # or "ground" (the BOARD SLOT at the effect's coordinates — the MANUAL_SLOT picked cell, or
 # the anchor coords). Layer addressing lives on the PAYLOAD (WHAT is delivered); WHO/WHERE
@@ -228,6 +234,7 @@ static func from_dict(d: Dictionary) -> Effect:
 		e._parse_trigger(d)
 		e._parse_targets(d)
 		e.attribute        = d.get("attribute", "")
+		e.per_stack        = bool(d.get("per_stack", true))
 		e.tracker_spec     = (d.get("tracker", {}) as Dictionary).duplicate()
 		# Parsed for round-trip fidelity; no TRIGGERED evaluator consumes MUL today (the
 		# INTERCEPTOR kind is where mul does its work — see Resolver._intercept).
@@ -550,6 +557,8 @@ func to_dict() -> Dictionary:
 			if grants.is_empty():
 				d["attribute"] = attribute
 				d["amount"]    = amount_int()
+				if not per_stack:
+					d["per_stack"] = false
 			else:
 				# A grant's payload IS the component set — no attribute/amount keys, matching
 				# the authored form byte-faithfully.
