@@ -126,7 +126,12 @@ func play_results(results: Array, source_inst: CardInstance = null,
 		# A status application has no stat delta — it's its own cue: mark the target, then pop the
 		# pip that was added/stacked. Handled up front, sequentially, so it reads before stat hits.
 		if r.has("status_applied"):
-			await _play_status_applied(r.get("target"), str(r.get("status_applied", "")))
+			# A GROUND application's target is a BoardSlot — no card, no pip, and no slot cue
+			# machinery in this build (SLOT_LAYER_DESIGN.md §6): present nothing rather than
+			# hand a slot to the card-shaped path.
+			var st_target := r.get("target") as CardInstance
+			if st_target != null:
+				await _play_status_applied(st_target, str(r.get("status_applied", "")))
 			continue
 		# A side-targeted result (draw/mana — target is a CombatSide, not a card) has no board
 		# surface here: its presentation IS the hand/gauge reacting to the side's signals.

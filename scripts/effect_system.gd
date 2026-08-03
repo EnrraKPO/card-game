@@ -169,11 +169,25 @@ static func _run_effect(effect: Effect, source: CardInstance, context: EffectCon
 		context.effect = effect   # expose per-effect params to the hook (e.g. deliver_material's material)
 		return hook.call(context) if hook.is_valid() else []
 	# GROUND-layer status delivery (SLOT_LAYER_DESIGN.md §4.7): the payload names its
-	# recipient layer, so a "layer": "ground" status skips unit targeting entirely — the
-	# recipient is the SLOT at the effect's coordinates, not any unit a resolver could find.
+	# recipient layer — the SLOT, never a unit. WHERE stays the targeting socket's job:
+	# a slot-pick (MANUAL_SLOT) delivers to the picked cell, anchor coords as the dispatch
+	# fallback; any unit-resolving targeting delivers to the ground UNDER each resolved
+	# unit ("burn the slot you strike" = participant destination + layer ground). An empty
+	# resolution is a legal whiff — no coordinates to complain about.
 	if not effect.status_id.is_empty() and effect.status_layer == "ground":
-		var gres := _apply_ground_status(effect, source, context, cause)
-		return [gres] if not gres.is_empty() else []
+		if effect.targets_resolver() is TargetResolver.ManualSlot:
+			var gres := _ground_status_at_coords(effect, source, context, cause)
+			return [gres] if not gres.is_empty() else []
+		var gresults: Array = []
+		for gtarget: Object in effect.targets_resolver().resolve(event, source, context):
+			var under := gtarget as CardInstance
+			if under == null or under.row < 0:
+				continue   # a side target / off-board unit has no ground beneath it
+			var gr := _ground_status_at(effect, source, context, cause,
+					under.owner, under.row, under.col)
+			if not gr.is_empty():
+				gresults.append(gr)
+		return gresults
 	# THE targeting socket: the effect's injected resolver returns the affected target(s)
 	# from the same shared context the trigger saw (see TargetResolver). The array is
 	# heterogeneous — units (CardInstance) or a player (CombatSide, the "side" kind) —
@@ -207,13 +221,11 @@ static func _apply_side(effect: Effect, side: CombatSide, source: CardInstance, 
 	return _with_interceptions({"target": side, "attribute": effect.attribute, "delta": out.delta}, out)
 
 
-# Applies a "layer": "ground" status payload to the BOARD SLOT at the effect's coordinates —
-# the MANUAL_SLOT picked cell (a cast's gesture, on the caster's own half), else the anchor
-# coords (a slot status re-applying ground state). Routed through the Resolver like the unit
-# form (single-writer rule — stack counts stay interceptable). Outside combat (no world in
-# the context) the payload is inert, mirroring spawn. No coordinates at all = authoring bug:
-# fail loud, apply nothing.
-static func _apply_ground_status(effect: Effect, source: CardInstance, context: EffectContext, cause: StringName) -> Dictionary:
+# The coordinate-channel form of ground delivery (MANUAL_SLOT targeting): the picked cell
+# (a cast's gesture, on the caster's own half), else the anchor coords (a slot status
+# re-applying ground state through its own dispatch). No coordinates at all = authoring
+# bug: fail loud, apply nothing.
+static func _ground_status_at_coords(effect: Effect, source: CardInstance, context: EffectContext, cause: StringName) -> Dictionary:
 	if context == null or context.world == null:
 		return {}
 	var slot_side := -1
@@ -230,6 +242,16 @@ static func _apply_ground_status(effect: Effect, source: CardInstance, context: 
 	if slot_side < 0 or slot_row < 0 or slot_col < 0:
 		push_error("EffectSystem: ground status '%s' has no coordinates (no picked slot, no anchor)"
 				% effect.status_id)
+		return {}
+	return _ground_status_at(effect, source, context, cause, slot_side, slot_row, slot_col)
+
+
+# The one delivery point for a ground status: submit to the slot at the address, through the
+# Resolver like the unit form (single-writer rule — stack counts stay interceptable).
+# Outside combat (no world in the context) the payload is inert, mirroring spawn.
+static func _ground_status_at(effect: Effect, source: CardInstance, context: EffectContext,
+		cause: StringName, slot_side: int, slot_row: int, slot_col: int) -> Dictionary:
+	if context == null or context.world == null:
 		return {}
 	var slot := context.world.slot_at(slot_side, slot_row, slot_col)
 	var sout := Resolver.submit(_caused(StatMutation.status_apply(slot, effect.status_id,
