@@ -23,7 +23,10 @@ static func trigger_grouped(event: GameEvent, source: CardInstance, context: Eff
 	if source == null or source.data == null:
 		return groups
 	var native: Array = []
-	for effect: Effect in source.data.effects:
+	# The card's own effects, then the INNATE tier — rules every unit carries by being what
+	# it is ("fire scorches the ground it strikes"), self-gated by their own trigger
+	# conditions and dispatched exactly like card effects (see InnateEffects).
+	for effect: Effect in source.data.effects + InnateEffects.all():
 		# Only event-driven kinds ride the trigger dispatch — MODIFIERs fold at read time,
 		# INTERCEPTORs fire inside Resolver.submit; neither is an event reaction.
 		if effect.kind != Effect.Kind.TRIGGERED and effect.kind != Effect.Kind.CUSTOM:
