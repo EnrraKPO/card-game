@@ -18,6 +18,28 @@ var present: bool = true
 # on light). E.g. { "composition": ["king", "queen"], "present": false } = "lackeys only" —
 # gate a buff away from royal compositions so the persistent King doesn't hoard every buff.
 var composition: Array = []
+# COMPOSITION-COUNT form - the same `composition` list asking a QUANTITY instead of a
+# presence: { "composition": ["fire"], "count": 2 } = "built from at least two fire"
+# (the fire_fire units). `comparator` is shared with the attribute form and defaults to
+# GTE; the tested number is the TOTAL occurrences of any listed id, so
+# { "composition": ["fire","water"], "count": 2 } admits fire_fire, fire_water and
+# water_water alike. -1 = not the count form (the presence form above).
+#
+# TWO LENSES, TWO QUESTIONS (settled with the user 2026-08-04) - the distinction that
+# makes this coherent:
+#   * PRESENCE ("is it fire?") reads the EFFECTIVE composition (LiveEffects) - the
+#     "treated as" lens, where a blessing's grant lands. A blessed water pawn IS fire.
+#   * COUNT ("is it built from two fire?") reads the card's REAL composition - identity.
+#     A grant says a unit is to be TREATED AS fire; it never claimed how MUCH fire the
+#     unit is, so it has nothing to contribute to a quantity. A blessed fire pawn is
+#     fire, and is not fire_fire.
+# This is why the count form needs no cap and cannot destabilise the Layer-1 grant fixed
+# point: it never reads the grant set at all.
+#
+# The THRESHOLD itself lives in `value` and the test in `comparator` — the same machinery
+# the attribute form uses (one comparator implementation, never a second). This flag only
+# selects the form.
+var composition_counted := false
 # ALLEGIANCE-form condition: passes on the tested unit's SIDE relative to the effect's
 # OWNER (the container's side — every container has one, even holderless run-scope ones):
 # "ally" = same side (the holder itself included — do not "fix" that), "enemy" = opposite.
@@ -143,6 +165,12 @@ static func from_dict(d: Dictionary) -> EffectCondition:
 		var comp: Variant = d.get("composition")
 		c.composition = [str(comp)] if comp is String else (comp as Array).duplicate()
 		c.present = bool(d.get("present", true))
+		if d.has("count"):
+			# The QUANTITY form: identity-lensed, comparator-driven (default "at least N").
+			# The threshold rides `value` — the shared comparator machinery, not a second one.
+			c.composition_counted = true
+			c.value = int(d.get("count", 0))
+			c.comparator = _str_comparator(str(d.get("comparator", "gte")))
 		return c
 	if d.has("allegiance") or d.has("relation"):
 		var c := EffectCondition.new()
@@ -207,6 +235,9 @@ func to_dict() -> Dictionary:
 		return {}
 	if not status_id.is_empty():
 		return {"status": status_id, "present": present}
+	if not composition.is_empty() and composition_counted:
+		return {"composition": composition.duplicate(), "count": value,
+				"comparator": comparator_key(comparator)}
 	if not composition.is_empty():
 		return {"composition": composition.duplicate(), "present": present}
 	if not allegiance.is_empty():
@@ -281,6 +312,11 @@ func evaluate(card: CardInstance, owner: int = -1) -> bool:
 		return false
 	if not status_id.is_empty():
 		return (card.find_status(status_id) != null) == present
+	if not composition.is_empty() and composition_counted:
+		# The QUANTITY question, asked of the card's REAL composition: a grant makes a unit
+		# be TREATED AS a component, which is not a claim about how MANY it is built from
+		# (see the field note). Identity is the only lens that can answer "how much".
+		return _compare(raw_component_count(card))
 	if not composition.is_empty():
 		# EFFECTIVE composition — the real one plus every live standing GRANT (see
 		# LiveEffects.effective_composition). Conditions are the one consumer of virtual
@@ -298,6 +334,23 @@ func evaluate(card: CardInstance, owner: int = -1) -> bool:
 		# Same lens as the composition form — a granted element must satisfy both alike.
 		return LiveEffects.has_any_element(card) == has_element
 	return _compare(card.get_attribute(attribute))
+
+
+# How many of this condition's listed components the card is REALLY built from — the
+# identity multiset (CardData.elements + chess_pieces, duplicates counted), never the
+# grant-aware effective set. Occurrences of every listed id are SUMMED, so a two-id list
+# asks "how many components drawn from this pool" rather than "how many of each".
+func raw_component_count(card: CardInstance) -> int:
+	if card == null or card.data == null:
+		return 0
+	var n := 0
+	for id: String in card.data.elements:
+		if composition.has(id):
+			n += 1
+	for id: String in card.data.chess_pieces:
+		if composition.has(id):
+			n += 1
+	return n
 
 
 # The one comparator application, shared by the attribute (unit) and mutation forms.

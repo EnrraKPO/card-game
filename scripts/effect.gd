@@ -129,11 +129,39 @@ var status_stacks: int = 1
 # NOT a half-general "amount_per" field: the real replacement is amounts-as-expressions
 # ("damage equal to its speed"), which supersedes this wholesale when it arrives.
 var per_stack: bool = true
+# The RESTRIKE chance ("each flame beyond the first may burn again" — user 2026-08-03):
+# when > 0 and this effect fires from a STACKED status container, each stack PAST THE FIRST
+# repeats the whole effect once, gated by its own roll at this chance. Each success is its
+# own damage INSTANCE — so damage riders roll per repeat, and a tall fire threatens ignition
+# repeatedly. 0 = off (one activation, today's behavior). Consumed only at the grouped
+# dispatch sites (stacks live there); a stackless firing (spell, arrival touch) ignores it.
+var per_stack_chance: float = 0.0
 # Which LAYER receives the status: "units" (default — today's behavior, each resolved unit)
 # or "ground" (the BOARD SLOT at the effect's coordinates — the MANUAL_SLOT picked cell, or
 # the anchor coords). Layer addressing lives on the PAYLOAD (WHAT is delivered); WHO/WHERE
 # stays the target resolver's job. See EffectSystem._apply_ground_status / SLOT_LAYER_DESIGN.md.
 var status_layer: String = "units"
+
+# RIDERS — follow-ons carried by this effect's damage, applied to the unit that took it.
+# Each entry: {"chance": float, "status": {"id", "duration", "stacks"}}. Rolled ONCE PER
+# DAMAGE INSTANCE, flat: an effect dealing 3 in one instance rolls exactly as often as one
+# dealing 1 (the amount is not a multiplier — settled with the user 2026-08-03). More rolls
+# means more instances of damage, which is a repetition question, not a rider question.
+# Only fires when damage ACTUALLY LANDED (delta != 0) — an intercepted-away hit carries
+# nothing, because the rider rides the damage, not the attempt.
+# GENERAL in the right axis: not "burning ignites" but "this damage carries a follow-on".
+# Frost damage that chills or poison damage that spreads use the identical seam.
+var riders: Array = []
+
+# NAMED-EFFECT reference (see NamedEffects): non-empty when this effect was authored as
+# {"named": "<id>", ...} — the registry template merged under the authored keys at parse
+# time (authored wins). `_named_authored` holds the authored dict VERBATIM: to_dict returns
+# it unchanged, so the reference round-trips byte-faithfully and the expansion never leaks
+# into saved data. (Consequence: post-parse field mutations don't serialize for a named
+# effect — acceptable; nothing edits parsed effects and re-serializes them.)
+var named_id: String = ""
+var _named_authored: Dictionary = {}
+
 
 # Generic "spawn units" payload: any TRIGGERED effect may conjure new units onto the board.
 # For each resolved TARGET, `spawn_count` copies of card `spawn_id` are queued on that target's
@@ -186,6 +214,22 @@ var filter: Dictionary = {}   # card selection predicate for scope=CARD
 # The one canonical parser. Kind is explicit ("kind") or inferred: a "key" → MODIFIER, a
 # "custom" → CUSTOM, otherwise TRIGGERED — so legacy data needs no migration.
 static func from_dict(d: Dictionary) -> Effect:
+	# NAMED-EFFECT expansion: merge the registry template UNDER the authored keys (authored
+	# wins) and parse the merged dict through this same function — the template carries no
+	# "named" key (NamedEffects refuses chains), so the recursion is one level by construction.
+	var named := str(d.get("named", ""))
+	if not named.is_empty():
+		var template := NamedEffects.get_named(named)
+		if template.is_empty():
+			push_error("Effect: unknown named effect '%s' — parsing the call site alone — %s" % [named, d])
+		var merged := template.duplicate(true)
+		for k: Variant in d:
+			if str(k) != "named":
+				merged[k] = d[k]
+		var ne := from_dict(merged)
+		ne.named_id = named
+		ne._named_authored = d.duplicate(true)
+		return ne
 	var e := Effect.new()
 	e.amount = float(d.get("amount", 0))
 	e.chance = float(d.get("chance", 1.0))
@@ -235,6 +279,7 @@ static func from_dict(d: Dictionary) -> Effect:
 		e._parse_targets(d)
 		e.attribute        = d.get("attribute", "")
 		e.per_stack        = bool(d.get("per_stack", true))
+		e.per_stack_chance = float(d.get("per_stack_chance", 0.0))
 		e.tracker_spec     = (d.get("tracker", {}) as Dictionary).duplicate()
 		# Parsed for round-trip fidelity; no TRIGGERED evaluator consumes MUL today (the
 		# INTERCEPTOR kind is where mul does its work — see Resolver._intercept).
@@ -249,6 +294,20 @@ static func from_dict(d: Dictionary) -> Effect:
 		if not e.status_layer in ["units", "ground"]:
 			push_error("Effect: unknown status layer '%s' (units/ground) — %s" % [e.status_layer, d])
 			e.status_layer = "units"
+	# Optional damage RIDERS, valid on any event-driven (TRIGGERED) effect that deals damage.
+	for r_v: Variant in (d.get("riders", []) as Array):
+		var rd: Dictionary = r_v as Dictionary
+		if rd == null:
+			continue
+		var rst: Dictionary = rd.get("status", {})
+		if str(rst.get("id", "")).is_empty():
+			push_error("Effect: a rider with no status payload does nothing — %s" % d)
+			continue
+		e.riders.append({
+			"chance": float(rd.get("chance", 1.0)),
+			"status_id": str(rst.get("id", "")),
+			"status_duration": int(rst.get("duration", STATUS_DURATION_DEFAULT)),
+			"status_stacks": int(rst.get("stacks", 1))})
 	# Optional "spawn units" payload, valid on any event-driven (TRIGGERED) effect.
 	var sp: Dictionary = d.get("spawn", {})
 	if not sp.is_empty():
@@ -502,6 +561,10 @@ static func _policy_from_native(d: Dictionary) -> TargetingPolicy:
 # Serialises back to the authored shape. Exercised for persisted (overridden) CARD effects,
 # which are TRIGGERED — so that path matches the legacy dict exactly.
 func to_dict() -> Dictionary:
+	# A named effect serialises as it was AUTHORED — the reference, never the expansion
+	# (byte-faithful by construction; see _named_authored).
+	if not named_id.is_empty():
+		return _named_authored.duplicate(true)
 	match kind:
 		Kind.MODIFIER:
 			var d := {"kind": "modifier", "key": key, "amount": amount}
@@ -559,6 +622,8 @@ func to_dict() -> Dictionary:
 				d["amount"]    = amount_int()
 				if not per_stack:
 					d["per_stack"] = false
+				if per_stack_chance > 0.0:
+					d["per_stack_chance"] = per_stack_chance
 			else:
 				# A grant's payload IS the component set — no attribute/amount keys, matching
 				# the authored form byte-faithfully.
@@ -583,6 +648,15 @@ func to_dict() -> Dictionary:
 				d["status"] = {"id": status_id, "duration": status_duration, "stacks": status_stacks}
 				if status_layer != "units":   # the default stays unspelled — byte-faithful round trip
 					d["status"]["layer"] = status_layer
+			if not riders.is_empty():
+				var rl: Array = []
+				for r: Dictionary in riders:
+					var rdd: Dictionary = {"status": {"id": r["status_id"],
+							"duration": r["status_duration"], "stacks": r["status_stacks"]}}
+					if float(r["chance"]) != 1.0:
+						rdd["chance"] = r["chance"]
+					rl.append(rdd)
+				d["riders"] = rl
 			if not spawn_id.is_empty():
 				d["spawn"] = {"id": spawn_id, "count": spawn_count}
 			return d

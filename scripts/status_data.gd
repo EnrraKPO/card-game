@@ -63,12 +63,19 @@ var max_stacks: int = 99
 # "duplicates" (one pip per stack; burning — the tabs on a slot literally count the flames).
 # Presentation only; honored by the ground tab row today (SlotUI.render_ground).
 var stack_display: String = "count"
-# Ground SPREAD (generic — burning is the first author, any ground status may). Once per stack
-# at `phase` (default "turn_start"), the status rolls: `chance` to propagate one stack to a
-# random adjacent slot on the same half, else `decay_chance` for that stack to die down. This
-# replaces phase decay for statuses that author it — the roll IS the lifetime. Interpreted by
-# the cascade's ground spread tier (CombatCascade._spread_ground); meaningless on unit
-# carriers (units don't sit in the slot lattice — ignored there). Empty = never spreads.
+# SPREAD (generic — burning is the first author, any status on any carrier may). Once per
+# stack at `phase` (default "turn_start"), the status rolls: `chance` to propagate one stack
+# to the destination `to` names, else `decay_chance` for that stack to die down. This replaces
+# phase decay for statuses that author it — the roll IS the lifetime. Interpreted by the
+# cascade's spread tier (CombatCascade._spread_statuses). Empty = never spreads.
+#
+# `to` is the DESTINATION PROVIDER, mirroring the targeting-provider pattern:
+#   "adjacent" (default) — a random orthogonal neighbouring SLOT on the same half. Ground
+#                          fire creeping sideways; only meaningful on a slot carrier.
+#   "ground"             — the slot the carrier STANDS ON. A burning unit setting light to
+#                          the floor; only meaningful on a unit carrier.
+# The two are the same rule seen from each layer (see SLOT_LAYER_DESIGN.md §4.4): fire moves
+# either sideways within its layer, or across layers at its own address.
 var spread: Dictionary = {}
 var effects: Array = []   # Array[Effect]
 # Activated abilities this status HOLDS (by id, see AbilityData) — ported to the carrier while

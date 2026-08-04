@@ -8,14 +8,12 @@
 	"decay": "none",
 	"stacking": "stack",
 	"stack_display": "duplicates",
-	"spread": { "phase": "turn_start", "chance": 0.2, "decay_chance": 0.4 },
+	"spread": { "phase": "turn_start", "chance": 0.2, "decay_chance": 0.4, "arrival": "burn" },
 	"effects": [
 		{
 			"trigger": { "kind": "event", "event": "turn_end" },
 			"targets": { "kind": "at_location" },
-			"attribute": "damage_taken",
-			"amount": 1,
-			"per_stack": false
+			"named": "burn"
 		}
 	]
 }

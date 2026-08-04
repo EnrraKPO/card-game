@@ -1,5 +1,5 @@
 {
-  "comfyUrl": "http://127.0.0.1:8000",
+  "comfyUrl": "http://127.0.0.1:8187",
   "artStyle": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric light, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear, ",
   "stylePresets": {
     "painterly": "rich glowing painterly illustration, volumetric god rays",
@@ -10,7 +10,7 @@
     "carton w bg and volumetric light": "cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric light, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear, ",
     "sticker": "cartoon art style, 2d illustration, clean bold outlines, minimal sticker read with thick outline, cell shaded vector graphics, optimized to read at small size, fantasy game illustration, simple background"
   },
-  "audiogenUrl": "http://127.0.0.1:8188",
+  "audiogenUrl": "http://127.0.0.1:8187",
   "conceptPresets": {
     "Cryptid": "Select a magical creature to fit the elemental theme: "
   },
@@ -23,7 +23,7 @@
     "Krea 2 stepped": "[{\"model\":\"krea2\",\"samples\":1,\"turbo\":false,\"denoise\":0.45},{\"model\":\"krea2\",\"samples\":2,\"denoise\":0.6},{\"model\":\"krea2\",\"samples\":2,\"denoise\":0.75}]",
     "Krea 2 stepped strong": "[{\"model\":\"krea2\",\"samples\":1,\"turbo\":false,\"denoise\":0.6},{\"model\":\"krea2\",\"samples\":3,\"denoise\":0.7},{\"model\":\"krea2\",\"samples\":1,\"denoise\":0.8}]"
   },
-  "kinAdherence": "free",
+  "kinAdherence": "concept",
   "kinAnchorMode": "canonical",
   "useArtGuides": true,
   "kinSteer": "looking right, human character with strong elemental identity",

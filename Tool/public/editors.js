@@ -302,6 +302,51 @@ const RelicEditor = {
   artNote: 'Installed to assets/relics/<id>.png — replaces the letter chip in game. Background removal recommended.',
 };
 
+// The SPREAD block (mirrors StatusData.spread / the cascade's spread tier): once per stack
+// at its phase the status rolls — a chance to propagate one stack to a destination, else a
+// chance for that stack to die down. The wildfire vocabulary: burning creeps to adjacent
+// slots; a unit's ablaze lights the ground beneath it (arriving AS burning).
+function renderSpreadBox(draft, ctx, onChange) {
+  const box = groupBox('Spread — each stack may propagate or die down (per-stack roll)');
+  const fx = fxCtx(ctx, 'the carrier');
+  const render = () => {
+    box.replaceChildren(box.firstChild);
+    if (!draft.spread) {
+      box.append(el('button', { class: 'ghost small list-add', text: '+ this status spreads (wildfire-style)', onclick: () => {
+        draft.spread = { phase: 'turn_start', chance: 0.2, decay_chance: 0.4 };
+        onChange(); render();
+      } }));
+      return;
+    }
+    const s = draft.spread;
+    box.append(el('div', { class: 'frow' },
+      fld('Rolls at', selectInput(s, 'phase', [
+        { value: 'turn_start', label: 'start of round' },
+        { value: 'turn_end', label: 'end of round' },
+      ], onChange)),
+      fld('Propagate chance', numInput(s, 'chance', onChange, { float: true, step: 0.05, min: 0, max: 1 }),
+        'per stack, 0–1', 'narrow'),
+      fld('Else die down', numInput(s, 'decay_chance', onChange, { float: true, step: 0.05, min: 0, max: 1 }),
+        'rolled only when the leap failed; with no phase decay, this is the status’s whole lifetime', 'narrow'),
+      el('div', { class: 'fld narrow', style: 'justify-content:flex-end' },
+        el('button', { class: 'ghost tiny', text: '✕ no spread', onclick: () => { delete draft.spread; onChange(); render(); } })),
+    ));
+    box.append(el('div', { class: 'frow' },
+      fld('Destination', selectInput(s, 'to', [
+        { value: 'adjacent', label: 'a random adjacent slot, same half (ground fire creeping)' },
+        { value: 'ground', label: 'the slot the carrier stands on (a unit lighting its floor)' },
+      ], onChange, { optional: true, emptyLabel: 'a random adjacent slot (default)' })),
+      fld('Arrives as', selectInput(s, 'status', fx.statusIds(), onChange, { optional: true, emptyLabel: '(itself)' }),
+        'what the destination catches; a cross-layer leap must speak the destination layer (ablaze arrives as burning)'),
+      fld('Arrival touch', selectInput(s, 'arrival', (ctx.vocab.namedEffects || []).map(n => ({ value: n.id, label: n.name || n.id })),
+        onChange, { optional: true, emptyLabel: '(none)' }),
+        'named effect dealt to whoever STANDS on the caught slot (burning: "burn" — damage and ignition in one)'),
+    ));
+  };
+  render();
+  return box;
+}
+
 // ═════════════════════════════════ STATUS ═══════════════════════════════════
 const StatusEditor = {
   label: 'Status',
@@ -343,6 +388,7 @@ const StatusEditor = {
           el('span', { class: 'lab', text: 'Activated abilities the carrier gains while this status rides it' }),
           chipSet(draft.abilities, abilityIds(ctx), onChange)),
       ),
+      renderSpreadBox(draft, ctx, onChange),
       groupBox('Effects it carries'),
     );
     renderEffectList(wrap.lastChild, draft.effects, fxCtx(ctx, 'the carrier'), onChange);
@@ -358,6 +404,14 @@ const StatusEditor = {
     if (d.decay_phase && d.decay_phase !== 'turn_end') out.decay_phase = d.decay_phase;
     out.stacking = d.stacking || 'refresh';
     if (d.stacking === 'stack' || d.decay === 'stacks' || d.decay === 'intercept') out.max_stacks = d.max_stacks || 9;
+    if (d.spread && typeof d.spread === 'object') {
+      const s = { phase: d.spread.phase || 'turn_start',
+        chance: d.spread.chance || 0, decay_chance: d.spread.decay_chance || 0 };
+      if (d.spread.to && d.spread.to !== 'adjacent') s.to = d.spread.to;
+      if (d.spread.status) s.status = d.spread.status;
+      if (d.spread.arrival) s.arrival = d.spread.arrival;
+      out.spread = s;
+    }
     out.effects = cleanEffects(d.effects);
     if (d.abilities && d.abilities.length) out.abilities = d.abilities.slice();
     return out;
@@ -365,6 +419,11 @@ const StatusEditor = {
   summarize(d) {
     const lines = [`${d.display_name || d.id || 'Unnamed status'} — ${d.beneficial ? 'buff' : 'debuff'}.`];
     lines.push(`Wears off: ${labelOf('decay', d.decay || 'duration')}; re-apply: ${labelOf('stacking', d.stacking || 'refresh')}.`);
+    if (d.spread) lines.push(`Spreads: each stack ${Math.round((d.spread.chance || 0) * 100)}% to `
+      + `${d.spread.to === 'ground' ? 'the ground beneath the carrier' : 'an adjacent slot'}`
+      + `${d.spread.status ? ' (arriving as ' + d.spread.status + ')' : ''}, else `
+      + `${Math.round((d.spread.decay_chance || 0) * 100)}% that flame dies down`
+      + `${d.spread.arrival ? '; an arrival deals "' + d.spread.arrival + '" to the occupant' : ''}.`);
     for (const e of d.effects || []) lines.push(describeEffect(e, 'the carrier'));
     for (const a of d.abilities || []) lines.push(`Grants ability while active: ${a}.`);
     return lines;
@@ -1681,8 +1740,179 @@ const RenderFilterEditor = {
   artNote: 'Render filters have no art: the shader IS the look. This panel is unused for this type.',
 };
 
+// ═══════════════════════════ NAMED EFFECT ═══════════════════════════════════
+// A named effect is a reusable effect PAYLOAD template — the TCG keyword library ("burn" =
+// deal 1 damage, a chance to catch Ablaze, each extra stack may burn again). Any effect
+// anywhere references one via its "Named effect" select: the call site owns WHEN and ON
+// WHOM (trigger/targets), the template supplies WHAT HAPPENS. Retuning a number here
+// updates every user; display_name/description are library metadata the game strips.
+const NamedEffectEditor = {
+  label: 'Named Effect',
+  newItem: () => ({ id: '', display_name: '', description: '',
+    attribute: 'damage_taken', amount: 1, per_stack: false, riders: [] }),
+  form(draft, ctx, onChange) {
+    if (!draft.riders) draft.riders = [];
+    const wrap = el('div');
+    const fx = fxCtx(ctx, 'the target');
+    const payloadBox = groupBox('Payload — what happens where this name is used');
+    const renderPayload = () => {
+      payloadBox.replaceChildren(payloadBox.firstChild);   // keep the group title
+      payloadBox.append(el('div', { class: 'frow' },
+        fld('Change stat', selectInput(draft, 'attribute', ctx.vocab.effectAttrs
+          .map(a => ({ value: a, label: labelOf('attr', a) })), onChange, { optional: true, emptyLabel: '(no stat change)' })),
+        fld('By', numInput(draft, 'amount', onChange, { optional: draft.attribute == null, placeholder: '0' }),
+          'health: + heals, − damages. damage_taken: positive damage, shield first', 'narrow'),
+        el('div', { class: 'fld' }, checkInput(draft, 'per_stack', onChange,
+          'Amount × the holding status’s stacks (off = flat, however tall the pile)')),
+      ));
+      payloadBox.append(el('div', { class: 'frow' },
+        fld('Restrike chance', numInput(draft, 'per_stack_chance', onChange, { float: true, step: 0.05, min: 0, max: 1, optional: true, placeholder: 'off' }),
+          'fired from a STACKED status: each stack past the first repeats the effect at this chance (the wildfire’s "each flame may burn again")', 'narrow'),
+      ));
+      const stWrap = el('div');
+      const renderStatus = () => {
+        stWrap.replaceChildren();
+        if (!draft.status || !draft.status.id) {
+          delete draft.status;
+          stWrap.append(el('button', { class: 'ghost small list-add', text: '+ also apply a status', onclick: () => {
+            draft.status = { id: fx.statusIds()[0] || '', stacks: 1 };
+            onChange(); renderStatus();
+          } }));
+          return;
+        }
+        stWrap.append(el('div', { class: 'frow' },
+          fld('Apply status', statusPicker(draft.status, 'id', fx, onChange)),
+          fld('Stacks', numInput(draft.status, 'stacks', onChange, { min: 1 }), null, 'narrow'),
+          el('div', { class: 'fld narrow', style: 'justify-content:flex-end' },
+            el('button', { class: 'ghost tiny', text: '✕ no status', onclick: () => { delete draft.status; onChange(); renderStatus(); } })),
+        ));
+      };
+      renderStatus();
+      payloadBox.append(stWrap);
+      payloadBox.append(renderRiderList(el('div'), draft, fx, onChange));
+    };
+    renderPayload();
+    wrap.append(
+      groupBox('Identity',
+        el('div', { class: 'frow' },
+          idField(draft, onChange, ctx.isNew),
+          fld('Library name', textInput(draft, 'display_name', onChange, 'Burn'),
+            'shown in pickers — the game never reads it'),
+        ),
+        el('div', { class: 'frow' },
+          fld('Library note', textInput(draft, 'description', onChange, 'what this does, for the picker'),
+            'documentation only', 'wide'),
+        ),
+      ),
+      payloadBox,
+      el('div', { class: 'hint', text: 'No trigger, no targets: those belong to each call site '
+        + '(a status tick, a spell, a spread arrival). This template is only the payload they share. '
+        + 'Overriding a field at a call site is possible but exceptional — retune numbers HERE so every user follows.' }),
+    );
+    return wrap;
+  },
+  serialize(d) {
+    const out = { id: d.id, display_name: d.display_name || slugToName(d.id), description: d.description || '' };
+    if (d.attribute) { out.attribute = d.attribute; out.amount = d.amount || 0; out.per_stack = !!d.per_stack; }
+    if (d.per_stack_chance) out.per_stack_chance = d.per_stack_chance;
+    if (d.status && d.status.id) {
+      out.status = { id: d.status.id };
+      if (d.status.stacks && d.status.stacks !== 1) out.status.stacks = d.status.stacks;
+    }
+    const riders = (d.riders || []).filter(r => r && r.status && r.status.id).map(r => {
+      const rr = { status: { id: r.status.id } };
+      if (r.chance != null && r.chance !== 1) rr.chance = r.chance;
+      if (r.status.stacks && r.status.stacks !== 1) rr.status.stacks = r.status.stacks;
+      return rr;
+    });
+    if (riders.length) out.riders = riders;
+    return out;
+  },
+  summarize(d) {
+    const lines = [`${d.display_name || d.id || 'Unnamed effect'} — a reusable payload referenced as {"named": "${d.id}"}.`];
+    if (d.attribute) lines.push(describeEffect({ trigger: { kind: 'transient' }, targets: { kind: 'self' },
+      attribute: d.attribute, amount: d.amount, riders: d.riders, per_stack_chance: d.per_stack_chance }, 'the user'));
+    if (d.description) lines.push(d.description);
+    return lines;
+  },
+  toDraft(g) {
+    const d = JSON.parse(JSON.stringify(g));
+    if (!d.riders) d.riders = [];
+    if (d.per_stack == null) d.per_stack = true;   // loader default
+    return d;
+  },
+  promptFor(d) {
+    return `Small fantasy spell-effect emblem representing "${d.display_name || slugToName(d.id)}", single centered glowing symbol, painterly style, on a plain solid white background`;
+  },
+  artNote: 'Named effects have no art slot in the game — generation here is reference-only.',
+};
+
+// ═══════════════════════════ INNATE RULE ════════════════════════════════════
+// An innate rule is a bundle of effects EVERY unit on the board implicitly carries — the
+// rules of the WORLD rather than of any card ("fire scorches the ground it strikes" is one
+// rule, not a line copied onto every fire card). There is no holder to speak of and no
+// container to select: the effects fire for every unit, and their own trigger conditions
+// are the entire gate. A composition condition on the trigger is what narrows a rule to
+// "fire units" — and because conditions read the EFFECTIVE composition, a unit merely
+// granted fire obeys the rule too.
+const InnateEditor = {
+  label: 'Innate Rule',
+  newItem: () => ({ id: '', display_name: '', description: '', effects: [] }),
+  form(draft, ctx, onChange) {
+    if (!draft.effects) draft.effects = [];
+    const wrap = el('div');
+    wrap.append(
+      groupBox('Identity',
+        el('div', { class: 'frow' },
+          idField(draft, onChange, ctx.isNew),
+          fld('Rule name', textInput(draft, 'display_name', onChange, 'Fire scorches the ground'),
+            'documentation — the game never shows it'),
+        ),
+        el('div', { class: 'frow' },
+          fld('Note', textInput(draft, 'description', onChange, 'what this rule does, and why it is a world rule'),
+            'documentation only', 'wide'),
+        ),
+      ),
+      el('div', { class: 'hint', text: 'These effects are carried by EVERY unit on BOTH sides — '
+        + 'they are not attached to any card. Their own trigger conditions are the whole gate: '
+        + 'to make a rule apply only to fire units, put a composition condition on the trigger '
+        + '(a unit that merely COUNTS AS fire obeys it too). Only event-driven effects can be '
+        + 'innate — a "while" (standing) effect is refused by the game loader.' }),
+      groupBox('Effects every unit carries'),
+    );
+    renderEffectList(wrap.lastChild, draft.effects, fxCtx(ctx, 'any unit'), onChange);
+    return wrap;
+  },
+  serialize(d) {
+    return {
+      id: d.id,
+      display_name: d.display_name || slugToName(d.id),
+      description: d.description || '',
+      effects: cleanEffects(d.effects),
+    };
+  },
+  summarize(d) {
+    const lines = [`${d.display_name || d.id || 'Unnamed rule'} — carried by every unit on the board.`];
+    for (const e of d.effects || []) lines.push(describeEffect(e, 'any unit'));
+    if (d.description) lines.push(d.description);
+    return lines;
+  },
+  toDraft(g) {
+    const d = JSON.parse(JSON.stringify(g));
+    if (!d.effects) d.effects = [];
+    // the pre-directory authoring form spelled the documentation field "note"
+    if (d.description == null && d.note != null) { d.description = d.note; delete d.note; }
+    return d;
+  },
+  promptFor(d) {
+    return `Small fantasy emblem representing the world rule "${d.display_name || slugToName(d.id)}", single centered glowing symbol, painterly style, on a plain solid white background`;
+  },
+  artNote: 'Innate rules have no art slot in the game — generation here is reference-only.',
+};
+
 const EDITORS = {
   card: CardEditor, relic: RelicEditor, status: StatusEditor, ability: AbilityEditor,
+  namedeffect: NamedEffectEditor, innate: InnateEditor,
   charm: CharmEditor, upgrade: UpgradeEditor, encounter: EncounterEditor, nodeweights: NodeWeightsEditor,
   sound: SoundEditor, vfx: VfxEditor, render_filter: RenderFilterEditor, tribe: TribeEditor,
 };

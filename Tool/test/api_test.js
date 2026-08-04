@@ -130,6 +130,106 @@ async function main() {
     check('grants exclusive with the attribute payload',
       r.status === 400 && /exclusive with/.test(r.data.error), r.data.error);
 
+    // ── named effects: the reusable payload library (data/named_effects) ──
+    r = await api('/api/game/save', { type: 'namedeffect', file: 'apitest_named.json', data: {
+      id: 'apitest_burn', display_name: 'Burn', attribute: 'damage_taken', amount: 1,
+      per_stack: false, per_stack_chance: 0.25,
+      riders: [{ chance: 0.33, status: { id: 'poison', stacks: 1 } }] } });
+    check('named effect saves', r.status === 200, JSON.stringify(r.data).slice(0, 200));
+    r = await api('/api/game/save', { type: 'namedeffect', file: 'apitest_named.json', data: {
+      id: 'apitest_noop' } });
+    check('payload-less template rejected', r.status === 400 && /does nothing/.test(r.data.error), r.data.error);
+    r = await api('/api/game/save', { type: 'namedeffect', file: 'apitest_named.json', data: {
+      id: 'apitest_chain', named: 'apitest_burn', attribute: 'damage_taken', amount: 1 } });
+    check('template chains rejected', r.status === 400 && /no chains/.test(r.data.error), r.data.error);
+    r = await api('/api/game/save', { type: 'namedeffect', file: 'apitest_named.json', data: {
+      id: 'apitest_badrider', riders: [{ chance: 2, status: { id: 'poison' } }] } });
+    check('rider chance out of range rejected', r.status === 400 && /between 0 and 1/.test(r.data.error), r.data.error);
+    // an effect referencing the library passes the payload gate; unknown names are loud
+    r = await api('/api/game/save', { type: 'status', file: 'apitest_statuses.json', data: {
+      id: 'apitest_burner', effects: [{ trigger: { kind: 'event', event: 'turn_end' }, targets: { kind: 'self' }, named: 'apitest_burn' }] } });
+    check('a named reference IS a payload', r.status === 200, JSON.stringify(r.data).slice(0, 200));
+    r = await api('/api/game/save', { type: 'status', file: 'apitest_statuses.json', data: {
+      id: 'apitest_burner2', effects: [{ trigger: { kind: 'event', event: 'turn_end' }, targets: { kind: 'self' }, named: 'no_such_name' }] } });
+    check('unknown named effect rejected', r.status === 400 && /unknown named effect/.test(r.data.error), r.data.error);
+    // the spread block (wildfire authoring): shape + named-effect references validate
+    r = await api('/api/game/save', { type: 'status', file: 'apitest_statuses.json', data: {
+      id: 'apitest_wildfire', decay: 'none', stacking: 'stack',
+      spread: { phase: 'turn_start', chance: 0.2, decay_chance: 0.4, to: 'ground', status: 'poison', arrival: 'apitest_burn' } } });
+    check('spread block accepted', r.status === 200, JSON.stringify(r.data).slice(0, 200));
+    r = await api('/api/game/save', { type: 'status', file: 'apitest_statuses.json', data: {
+      id: 'apitest_badspread', spread: { chance: 3 } } });
+    check('spread chance out of range rejected', r.status === 400 && /between 0 and 1/.test(r.data.error), r.data.error);
+    r = await api('/api/game/save', { type: 'status', file: 'apitest_statuses.json', data: {
+      id: 'apitest_badspread2', spread: { to: 'sideways' } } });
+    check('bad spread destination rejected', r.status === 400 && /adjacent\/ground/.test(r.data.error), r.data.error);
+    r = await api('/api/game/save', { type: 'status', file: 'apitest_statuses.json', data: {
+      id: 'apitest_badspread3', spread: { arrival: 'no_such_name' } } });
+    check('unknown arrival named effect rejected', r.status === 400 && /unknown named effect/.test(r.data.error), r.data.error);
+    // vocab exposes the library for the pickers (effect builder + spread arrival select)
+    r = await api('/api/state');
+    check('vocab lists named effects', (r.data.vocab.namedEffects || []).some(n => n.id === 'apitest_burn'),
+      JSON.stringify(r.data.vocab.namedEffects || []));
+    await api('/api/game/delete-entry', { type: 'status', id: 'apitest_burner' });
+    await api('/api/game/delete-entry', { type: 'status', id: 'apitest_wildfire' });
+
+    // ── innate rules: effects every unit carries (data/innate_effects) ──
+    // The gate is the effect's OWN trigger conditions — this is the fire_scorches_ground shape.
+    r = await api('/api/game/save', { type: 'innate', file: 'apitest_innate.json', data: {
+      id: 'apitest_scorch', display_name: 'Scorch', effects: [{
+        trigger: { kind: 'dual_event', event: 'attack', origin_of: 'self',
+          origin_conditions: [{ composition: ['fire'] }] },
+        targets: { kind: 'participant', participant: 'destination' },
+        status: { id: 'poison', layer: 'ground', stacks: 2 } }] } });
+    check('innate rule saves', r.status === 200, JSON.stringify(r.data).slice(0, 200));
+    check('innate rule persisted', (readSbox('data/innate_effects/apitest_innate.json') || [])
+      .some(e => e.id === 'apitest_scorch'));
+    r = await api('/api/game/save', { type: 'innate', file: 'apitest_innate.json', data: {
+      id: 'apitest_noeffects', display_name: 'Empty' } });
+    check('effect-less innate rejected', r.status === 400 && /at least one effect/.test(r.data.error), r.data.error);
+    // Mirrors InnateEffects._load_json: only event-driven, non-standing effects dispatch.
+    r = await api('/api/game/save', { type: 'innate', file: 'apitest_innate.json', data: {
+      id: 'apitest_standing', effects: [{ trigger: { kind: 'while' }, targets: { kind: 'self' },
+        attribute: 'attack', amount: 1 }] } });
+    check('standing innate rejected', r.status === 400 && /cannot be innate/.test(r.data.error), r.data.error);
+    r = await api('/api/game/save', { type: 'innate', file: 'apitest_innate.json', data: {
+      id: 'apitest_modifier', effects: [{ key: 'unit.attack', amount: 1 }] } });
+    check('modifier innate rejected', r.status === 400 && /only event-driven/.test(r.data.error), r.data.error);
+    // the ordinary effect grammar still applies inside an innate rule
+    r = await api('/api/game/save', { type: 'innate', file: 'apitest_innate.json', data: {
+      id: 'apitest_badfx', effects: [{ trigger: { kind: 'event', event: 'turn_end' },
+        targets: { kind: 'self' }, attribute: 'not_a_stat', amount: 1 }] } });
+    check('bad attribute inside an innate rejected', r.status === 400 && /bad attribute/.test(r.data.error), r.data.error);
+    // composition COUNT conditions ("really built from 2+ fire" — the fire_fire gate).
+    // Presence and count are different questions: presence honours granted/blessed
+    // components, count reads the card's real composition, so they cannot be combined.
+    r = await api('/api/game/save', { type: 'innate', file: 'apitest_innate.json', data: {
+      id: 'apitest_count', effects: [{
+        trigger: { kind: 'dual_event', event: 'attack', origin_of: 'self',
+          origin_conditions: [{ composition: ['fire'], count: 2, comparator: 'gte' }] },
+        targets: { kind: 'participant', participant: 'destination' },
+        status: { id: 'poison', layer: 'ground' } }] } });
+    check('composition count condition accepted', r.status === 200, JSON.stringify(r.data).slice(0, 200));
+    check('count + comparator persisted', JSON.stringify(readSbox('data/innate_effects/apitest_innate.json')
+      .find(e => e.id === 'apitest_count').effects[0].trigger.origin_conditions[0])
+      === JSON.stringify({ composition: ['fire'], count: 2, comparator: 'gte' }));
+    check('ground layer persisted', readSbox('data/innate_effects/apitest_innate.json')
+      .find(e => e.id === 'apitest_count').effects[0].status.layer === 'ground');
+    r = await api('/api/game/save', { type: 'innate', file: 'apitest_innate.json', data: {
+      id: 'apitest_badcount', effects: [{ trigger: { kind: 'event', event: 'turn_end' },
+        targets: { kind: 'self', conditions: [{ composition: ['fire'], count: -1 }] },
+        attribute: 'attack', amount: 1 }] } });
+    check('negative composition count rejected', r.status === 400 && /count must be an integer/.test(r.data.error), r.data.error);
+    r = await api('/api/game/save', { type: 'innate', file: 'apitest_innate.json', data: {
+      id: 'apitest_bothforms', effects: [{ trigger: { kind: 'event', event: 'turn_end' },
+        targets: { kind: 'self', conditions: [{ composition: ['fire'], count: 2, present: true }] },
+        attribute: 'attack', amount: 1 }] } });
+    check('count + present together rejected', r.status === 400 && /takes no present flag/.test(r.data.error), r.data.error);
+    await api('/api/game/delete-entry', { type: 'innate', id: 'apitest_count' });
+    await api('/api/game/delete-entry', { type: 'innate', id: 'apitest_scorch' });
+
+    await api('/api/game/delete-entry', { type: 'namedeffect', id: 'apitest_burn' });
+
     // ── enemy-engine authoring handles: card role + encounter survival_weights ──
     // These are the dials the CPU actually reads (BoardScoring). The Tool used to drop
     // them on save, silently un-tuning an encounter — every check here guards that.

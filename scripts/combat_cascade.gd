@@ -170,8 +170,9 @@ func resolve_event(event_id: StringName, subject: CardInstance = null) -> void:
 						"results": grp["results"]})
 		if not ground_procs.is_empty():
 			await presenter.show_ground_results(ground_procs)
-		# Tier 2 — SPREAD: statuses that author `spread` roll their stacks (see _spread_ground).
-		await _spread_ground(event_id, ground)
+		# Tier 2 — SPREAD: statuses that author `spread` roll their stacks, on EITHER layer
+		# (see _spread_statuses).
+		await _spread_statuses(event_id, ground, units)
 		# Tier 3 — decay, same order as before. Slots first touched by a spread this pass are
 		# not in `ground` and skip it — a status is never asked to decay the phase it arrived.
 		for slot: BoardSlot in ground:
@@ -180,67 +181,144 @@ func resolve_event(event_id: StringName, subject: CardInstance = null) -> void:
 	presenter.board_refresh()
 
 
-# ── The ground SPREAD tier (SLOT_LAYER_DESIGN.md §4.4) ─────────────────────────────────
-# A ground status that authors `spread` (StatusData.spread) rolls ONCE PER STACK at its
-# phase: `chance` to propagate one stack to a random adjacent slot on the same half
-# (orthogonal), else `decay_chance` for that stack to die down — the roll IS the status's
-# lifetime (burning authors decay "none"; the fire only ever goes out by failing here).
+# ── The SPREAD tier (SLOT_LAYER_DESIGN.md §4.4) ────────────────────────────────────────
+# A status that authors `spread` (StatusData.spread) rolls ONCE PER STACK at its phase:
+# `chance` to propagate one stack to whatever its `to` provider names, else `decay_chance`
+# for that stack to die down — the roll IS the status's lifetime (burning and ablaze both
+# author decay "none"; fire only ever goes out by failing here).
+#
+# CARRIER-GENERIC: slots and units roll through the identical path. The two destinations are
+# one rule seen from each layer — ground fire creeps SIDEWAYS to a neighbouring slot
+# ("adjacent"), a burning unit sets light to the floor at its own address ("ground").
+#
 # The jobs are a SNAPSHOT taken before any roll: a stack that arrives mid-pass never rolls
-# in the pass that lit it, so one lucky chain can't sweep the board in a single turn.
+# in the pass that lit it, so one lucky chain can't sweep the board in a single turn. Slots
+# roll before units, each in its own deterministic order (reading order both times).
 # Rolls draw from the rules stream — seeded, replayable, and scratch-isolated inside a
-# hypothetical (see CombatRng). Each roll presents individually, in reading order: the
-# rolling tab glints the same whatever comes of it (the target's ignition flare is the
-# only success signal — user call).
-func _spread_ground(event_id: StringName, ground: Array) -> void:
+# hypothetical (see CombatRng). Each roll presents individually, in order: the rolling pip
+# glints the same whatever comes of it (the target's ignition flare is the only success
+# signal — user call).
+func _spread_statuses(event_id: StringName, ground: Array, units: Array) -> void:
+	var carriers: Array = []
+	carriers.append_array(ground)
+	for u: CardInstance in units:
+		if u.is_alive():
+			carriers.append(u)
 	var jobs: Array = []
-	for slot: BoardSlot in ground:
-		for si: StatusInstance in slot.statuses:
+	for carrier: StatusCarrier in carriers:
+		for si: StatusInstance in carrier.statuses:
 			if StatusEngine.is_expired(si) or si.data.spread.is_empty():
 				continue
 			if str(si.data.spread.get("phase", "turn_start")) != String(event_id):
 				continue
-			jobs.append({"slot": slot, "si": si, "count": si.stacks})
+			jobs.append({"carrier": carrier, "si": si, "count": si.stacks})
 	for job: Dictionary in jobs:
-		var slot: BoardSlot = job["slot"]
+		var carrier: StatusCarrier = job["carrier"]
 		var si: StatusInstance = job["si"]
+		# A unit that died earlier in this pass stops rolling — its fire went with it.
+		var host := carrier as CardInstance
+		if host != null and not host.is_alive():
+			continue
 		var chance := float(si.data.spread.get("chance", 0.0))
 		var fade_chance := float(si.data.spread.get("decay_chance", 0.0))
+		var to := str(si.data.spread.get("to", "adjacent"))
+		# What the destination CATCHES — by default the status itself, but a cross-layer leap
+		# must speak the destination layer's language: a unit's ablaze lights the ground as
+		# BURNING (slot-shaped), never as ablaze (self-targeting, which the slot dispatch
+		# fence rightly refuses).
+		var spread_id := str(si.data.spread.get("status", si.data.id))
+		# The flame's touch on arrival: a named effect dealt to whoever STANDS on the caught
+		# slot (empty slot = nothing). Burning authors "burn", so a fire leaping into an
+		# occupied cell burns its occupant — damage AND ignition chance, one definition.
+		var arrival := str(si.data.spread.get("arrival", ""))
 		for i: int in int(job["count"]):
 			var outcome: StringName = &"hold"
 			var target: BoardSlot = null
+			var arrival_results: Array = []
 			if CombatRng.roll() < chance:
-				target = _random_adjacent(slot)
+				target = _spread_destination(carrier, to)
 				if target != null:
 					outcome = &"spread"
 					# The propagated stack keeps its parent's source — provenance survives the leap.
-					StatusEngine.apply(target, si.data.id, Effect.STATUS_DURATION_DEFAULT, 1, si.source)
-					CombatLog.note("ground", "slot (%s r%d c%d) %s spreads to (r%d c%d)" % [
-							"player" if slot.side == 0 else "enemy", slot.row, slot.col,
-							si.data.id, target.row, target.col])
+					StatusEngine.apply(target, spread_id, Effect.STATUS_DURATION_DEFAULT, 1, si.source)
+					CombatLog.note("ground", "%s %s spreads %s to (%s r%d c%d)" % [
+							_carrier_name(carrier), si.data.id, spread_id,
+							"player" if target.side == 0 else "enemy", target.row, target.col])
+					if not arrival.is_empty():
+						arrival_results = _spread_arrival(arrival, target, si.source)
 			elif CombatRng.roll() < fade_chance:
 				outcome = &"fade"
-				StatusEngine.shed_stack(slot, si)
-				CombatLog.note("ground", "slot (%s r%d c%d) %s dies down (%d left)" % [
-						"player" if slot.side == 0 else "enemy", slot.row, slot.col,
-						si.data.id, si.stacks])
-			await presenter.show_ground_spread_roll(slot, si.data.id, i, outcome, target)
+				StatusEngine.shed_stack(carrier, si)
+				CombatLog.note("ground", "%s %s dies down (%d left)" % [
+						_carrier_name(carrier), si.data.id, si.stacks])
+			await presenter.show_spread_roll(carrier, si.data.id, i, outcome, target,
+					arrival_results, spread_id)
 
 
-# A random orthogonal neighbour of `slot` on the SAME half — the battle line is a wall to
-# ground statuses for now (cross-line adjacency is a parked decision, and this helper is
-# the one predicate to widen when it lands). The pick draws from the rules stream: which
-# slot catches fire is a rules outcome, not an AI whim.
-func _random_adjacent(slot: BoardSlot) -> BoardSlot:
-	var options: Array = []
-	for d: Vector2i in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
-		var r := slot.row + d.x
-		var c := slot.col + d.y
-		if r >= 0 and r < BoardData.ROWS and c >= 0 and c < BoardData.COLS:
-			options.append(Vector2i(r, c))
-	if options.is_empty():
-		return null
-	var pick: Vector2i = options[CombatRng.roll_int(0, options.size() - 1, &"rules")]
-	return world.slot_at(slot.side, pick.x, pick.y)
+# The arriving flame touching the destination's occupant: deal the `arrival` named effect
+# (e.g. "burn" — 1 damage plus the ignition rider, one definition doing both) to the unit
+# standing on the caught slot. Nobody there = nothing, a legal miss. Routed through the
+# ordinary effect pipeline (manual targeting, pre-resolved), so interception, riders and
+# provenance all behave exactly as any other effect's damage would.
+func _spread_arrival(arrival: String, target: BoardSlot, fire_source: CardInstance) -> Array:
+	var occupant := world.unit_at(target.side, target.row, target.col)
+	if occupant == null or not occupant.is_alive():
+		return []
+	var eff := Effect.from_dict({"targets": {"kind": "manual"}, "named": arrival})
+	var ctx := world.make_context(null)
+	ctx.owner_anchor = target.side
+	ctx.manual_target = occupant
+	var results := EffectSystem.apply_single(eff, fire_source, ctx)
+	for res: Dictionary in results:
+		CombatLog.note("ground", "arriving %s %s %d on %s" % [arrival,
+				str(res.get("attribute", "?")), int(res.get("delta", 0)),
+				"?" if occupant.data == null else str(occupant.data.id)])
+	return results
+
+
+# Where one stack goes when it propagates — the destination PROVIDER named by `spread.to`
+# (see StatusData.spread). Null = nowhere to go, which is a legal miss, not an error: the
+# roll simply produces nothing (an off-board unit has no floor under it).
+func _spread_destination(carrier: StatusCarrier, to: String) -> BoardSlot:
+	match to:
+		"ground":
+			# ACROSS the layers at one address: the slot this unit stands on. Meaningless on a
+			# slot carrier (ground is already the ground) — a legal miss, authored in error.
+			var unit := carrier as CardInstance
+			if unit == null or unit.row < 0 or unit.col < 0:
+				return null
+			return world.slot_at(unit.owner, unit.row, unit.col)
+		_:
+			# WITHIN the ground layer: a random orthogonal neighbour on the SAME half. The
+			# battle line is a wall for now (cross-line adjacency is a parked decision, and
+			# this branch is the one predicate to widen when it lands). Meaningless on a unit
+			# carrier — units don't set each other alight by proximity.
+			var slot := carrier as BoardSlot
+			if slot == null:
+				return null
+			var options: Array = []
+			for d: Vector2i in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+				var r := slot.row + d.x
+				var c := slot.col + d.y
+				if r >= 0 and r < BoardData.ROWS and c >= 0 and c < BoardData.COLS:
+					options.append(Vector2i(r, c))
+			if options.is_empty():
+				return null
+			# The pick draws from the rules stream: which slot catches fire is a rules outcome.
+			var pick: Vector2i = options[CombatRng.roll_int(0, options.size() - 1, &"rules")]
+			return world.slot_at(slot.side, pick.x, pick.y)
+
+
+# A carrier's address for the combat log, whichever layer it lives on.
+func _carrier_name(carrier: StatusCarrier) -> String:
+	var slot := carrier as BoardSlot
+	if slot != null:
+		return "slot (%s r%d c%d)" % ["player" if slot.side == 0 else "enemy", slot.row, slot.col]
+	var unit := carrier as CardInstance
+	if unit != null:
+		return "unit %s (r%d c%d)" % [
+				"?" if unit.data == null else str(unit.data.id), unit.row, unit.col]
+	return "carrier"
 
 
 # The LOGIC half of a death: the unit leaves play this instant (world.retire — which also

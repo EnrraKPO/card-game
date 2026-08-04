@@ -476,6 +476,9 @@ function describeCondition(c) {
   if (c.status) return (c.present === false ? 'not carrying ' : 'carrying ') + c.status;
   if (c.composition) {
     const list = Array.isArray(c.composition) ? c.composition : [c.composition];
+    // the COUNT form asks a quantity of the REAL composition (blessings don't count toward it)
+    if (c.count !== undefined)
+      return `really built from ${labelOf('cmp', c.comparator || 'gte')} ${c.count} of: ${list.join(', ')}`;
     return (c.present === false ? 'made of none of: ' : 'made of any of: ') + list.join(', ');
   }
   if (c.mutation) return `the pending amount ${labelOf('cmp', c.comparator)} ${c.value}`;
@@ -578,6 +581,8 @@ function describeEffect(e, ownerNoun) {
   if (kind === 'custom') {
     parts.push(labelOf('hook', e.custom));
   } else {
+    // A named-effect reference: the registry template supplies the payload — say the name.
+    if (e.named) parts.push(`${e.named} (named effect)`);
     if (e.attribute) {
       const amt = e.amount || 0;
       if (e.attribute === 'health') parts.push(amt >= 0 ? `heal ${amt} Health` : `deal ${-amt} direct damage`);
@@ -593,6 +598,13 @@ function describeEffect(e, ownerNoun) {
       if (e.status.duration != null && e.status.duration !== -9999) st += ` for ${e.status.duration} rounds`;
       parts.push(st);
     }
+    for (const r of e.riders || []) {
+      if (!r || !r.status || !r.status.id) continue;
+      const pct = r.chance != null && r.chance !== 1 ? `${Math.round(r.chance * 100)}% to ` : '';
+      parts.push(`the damage carries ${pct}apply ${r.status.stacks || 1}× ${r.status.id}`);
+    }
+    if (e.per_stack_chance)
+      parts.push(`each stack past the first repeats this at ${Math.round(e.per_stack_chance * 100)}%`);
   }
   if (!parts.length) parts.push('(no payload yet)');
   let s = `${when}${subj} → ${who}: ${parts.join(' and ')}`;

@@ -62,6 +62,17 @@ const TYPES = {
   // Control via the Vfx autoload. Procedural renderer only today; the prompt targets future
   // asset-backed renderers (flipbook sprite sheets).
   vfx:        { label: 'VFX',             dataDir: 'data/vfx',        artDir: null,               artW: 1024, artH: 1024, rembg: false },
+  // NAMED EFFECTS: reusable effect PAYLOAD templates (the TCG keyword library — "burn" =
+  // deal 1 damage, a chance to catch Ablaze, each extra stack may burn again). Any effect
+  // references one via {"named": "<id>"}: the call site owns trigger/targets, the template
+  // supplies the payload (Effect.from_dict merges it under the authored keys). No art slot.
+  namedeffect: { label: 'Named Effect',   dataDir: 'data/named_effects', artDir: null,      artW: 1024, artH: 1024, rembg: false },
+  // INNATE RULES: effects EVERY unit implicitly carries by being what it is, gated purely by
+  // their own trigger conditions ("fire scorches the ground it strikes" is ONE rule, not a
+  // line copied onto every fire card). Dispatched alongside a unit's own effects
+  // (EffectSystem.trigger_grouped → InnateEffects.all). A rule's id/name/description are
+  // documentation; its `effects` are the content. No art slot.
+  innate:     { label: 'Innate Rule',      dataDir: 'data/innate_effects', artDir: null,     artW: 1024, artH: 1024, rembg: false },
   // RENDER FILTERS: parametrized GPU effects (data/render_filters/) applied to a texture-bearing
   // Control, whose look is derived from the SOURCE TEXTURE'S OWN ALPHA — as opposed to the VFX
   // library's procedural behaviors, which draw primitives sized to a target's bounding box and
@@ -1397,6 +1408,17 @@ function validateConditionList(list, where, allowMutation) {
       const compList = Array.isArray(c.composition) ? c.composition : [c.composition];
       for (const cid of compList)
         if (!ELEMENTS.includes(cid) && !PIECES.includes(cid)) return `${where} condition ${i + 1}: "${cid}" is not an element or chess piece`;
+      // The COUNT form (mirrors EffectCondition.composition_counted): a quantity read off
+      // the card's REAL composition, comparator-driven. Presence and count are different
+      // questions — presence honours granted ("blessed") components, count never does.
+      if (c.count !== undefined) {
+        if (!Number.isInteger(c.count) || c.count < 0)
+          return `${where} condition ${i + 1}: composition count must be an integer >= 0`;
+        if (c.comparator !== undefined && !COMPARATORS.includes(c.comparator))
+          return `${where} condition ${i + 1}: bad comparator`;
+        if (c.present !== undefined)
+          return `${where} condition ${i + 1}: a composition COUNT asks "how many", so it takes no present flag — drop one or the other`;
+      }
       continue;
     }
     if (!COND_ATTRS.includes(c.attribute)) return `${where} condition ${i + 1}: bad attribute "${c.attribute}"`;
@@ -1464,6 +1486,40 @@ function validateTargets(t, where) {
   return validateConditionList(t.conditions, `${where} targets`);
 }
 
+// Live named-effect vocabulary (data/named_effects/*.json entry ids) — scanned per
+// validation call: the registry is small and a stale cache would reject a name the user
+// just saved in the other tab.
+function namedEffectIds() {
+  return scanGameJson('data/named_effects').map(({ entry: e }) => e.id).filter(Boolean);
+}
+
+// Damage RIDERS (mirrors Effect.riders): follow-ons a damage instance carries onto whoever
+// took it — one roll per instance, flat, amount never multiplies. Each entry names a status.
+function validateRiders(e, where) {
+  if (e.riders == null) return null;
+  if (!Array.isArray(e.riders)) return `${where}: riders must be an array`;
+  for (let i = 0; i < e.riders.length; i++) {
+    const r = e.riders[i];
+    if (!r || typeof r !== 'object') return `${where} rider ${i + 1}: must be an object`;
+    if (!r.status || typeof r.status !== 'object' || !r.status.id)
+      return `${where} rider ${i + 1}: needs a status payload ({"status": {"id": ...}}) — a rider with nothing to apply does nothing`;
+    if (r.chance != null && (typeof r.chance !== 'number' || r.chance < 0 || r.chance > 1))
+      return `${where} rider ${i + 1}: chance must be a number between 0 and 1`;
+    if (r.status.stacks != null && (!Number.isInteger(r.status.stacks) || r.status.stacks < 1))
+      return `${where} rider ${i + 1}: stacks must be a positive integer`;
+  }
+  return null;
+}
+
+// The restrike chance (mirrors Effect.per_stack_chance): each stack past the first repeats
+// the effect at this chance. Meaningful only where a stacked container fires it.
+function validatePerStackChance(e, where) {
+  if (e.per_stack_chance == null) return null;
+  if (typeof e.per_stack_chance !== 'number' || e.per_stack_chance < 0 || e.per_stack_chance > 1)
+    return `${where}: per_stack_chance must be a number between 0 and 1`;
+  return null;
+}
+
 function validateEffect(e, where) {
   if (!e || typeof e !== 'object') return `${where}: effect must be an object`;
   const kind = e.kind || (e.key ? 'modifier' : e.intercept ? 'interceptor' : e.custom ? 'custom' : 'triggered');
@@ -1514,8 +1570,19 @@ function validateEffect(e, where) {
         return `${where}: spawn count must be a positive integer`;
       if (sideTargeted) return `${where}: a side-targeted effect cannot spawn units`;
     }
+    // NAMED-EFFECT reference: the registry template supplies the payload at parse time —
+    // the call site owns trigger/targets and needs no payload of its own. Chains are the
+    // game loader's refusal; here the name just has to exist.
+    if (e.named != null) {
+      if (typeof e.named !== 'string' || !e.named) return `${where}: "named" must be a named-effect id`;
+      if (!namedEffectIds().includes(e.named)) return `${where}: unknown named effect "${e.named}"`;
+    }
+    const riderErr = validateRiders(e, where) || validatePerStackChance(e, where);
+    if (riderErr) return riderErr;
     const standing = e.trigger && typeof e.trigger === 'object' && e.trigger.kind === 'while';
     const hasGrants = Array.isArray(e.grants) && e.grants.length > 0;
+    if (standing && e.named) return `${where}: a standing (while) effect cannot reference a named effect`;
+    if (standing && e.riders != null) return `${where}: a standing (while) effect cannot carry damage riders`;
     if (standing) {
       // Mirrors the game's fail-loud rules (Effect._validate_standing): a standing effect
       // is a continuous stat fold — nothing else is meaningful on it, and only attributes
@@ -1553,8 +1620,9 @@ function validateEffect(e, where) {
           return `${where}: a composition grant cannot carry has_element:false (grants only ever ADD)`;
       }
     }
-    const hasPayload = e.attribute || (e.status && e.status.id) || hasGrants || (e.spawn && e.spawn.id);
-    if (!hasPayload) return `${where}: effect does nothing — set an attribute change, a status to apply, or units to spawn`;
+    const hasPayload = e.attribute || (e.status && e.status.id) || hasGrants || (e.spawn && e.spawn.id)
+      || e.named;   // a named reference IS a payload — the template supplies it
+    if (!hasPayload) return `${where}: effect does nothing — set an attribute change, a status to apply, units to spawn, or a named effect`;
   }
   return validateConditionList(e.conditions, where);
 }
@@ -1601,7 +1669,61 @@ function validateItem(type, d) {
       if (d.decay && !['duration','stacks','none','intercept'].includes(d.decay)) return 'bad decay';
       if (d.decay_phase && !['turn_end','turn_start','attack'].includes(d.decay_phase)) return 'bad decay_phase';
       if (d.stacking && !['refresh','extend','stack','independent'].includes(d.stacking)) return 'bad stacking';
+      // The SPREAD block (mirrors StatusData.spread / CombatCascade._spread_statuses):
+      // once per stack at `phase`, `chance` to propagate one stack to `to`, else
+      // `decay_chance` for that stack to die down. `status` = what the destination
+      // catches; `arrival` = the named effect dealt to the caught slot's occupant.
+      if (d.spread != null) {
+        const s = d.spread;
+        if (typeof s !== 'object') return 'spread must be an object';
+        if (s.phase != null && !['turn_start','turn_end'].includes(s.phase)) return 'bad spread phase (turn_start/turn_end)';
+        for (const f of ['chance','decay_chance'])
+          if (s[f] != null && (typeof s[f] !== 'number' || s[f] < 0 || s[f] > 1))
+            return `spread ${f} must be a number between 0 and 1`;
+        if (s.to != null && !['adjacent','ground'].includes(s.to)) return 'bad spread "to" (adjacent/ground)';
+        if (s.status != null && (typeof s.status !== 'string' || !validId(s.status)))
+          return 'spread "status" must be a status id';
+        if (s.arrival != null) {
+          if (typeof s.arrival !== 'string' || !s.arrival) return 'spread "arrival" must be a named-effect id';
+          if (!namedEffectIds().includes(s.arrival)) return `spread arrival: unknown named effect "${s.arrival}"`;
+        }
+      }
       return validateEffects(d.effects, 'status');
+    }
+    case 'namedeffect': {
+      // A named effect is a PARTIAL effect: the payload half (what happens), merged under
+      // a call site's authored keys at parse time — so no trigger/targets are required
+      // (the call site owns those), and referencing another named effect is a chain the
+      // game loader refuses.
+      if (d.named != null) return 'a named effect cannot reference another named effect (no chains)';
+      if (d.attribute != null && !EFFECT_ATTRS.includes(d.attribute)) return `bad attribute "${d.attribute}"`;
+      if (d.attribute != null && typeof d.amount !== 'number') return 'an attribute payload needs a numeric amount';
+      if (d.per_stack != null && typeof d.per_stack !== 'boolean') return 'per_stack must be a boolean';
+      const rerr = validateRiders(d, 'template') || validatePerStackChance(d, 'template');
+      if (rerr) return rerr;
+      if (d.status != null && (typeof d.status !== 'object' || !d.status.id))
+        return 'the status payload needs an id';
+      if (!d.attribute && !(d.status && d.status.id) && !(d.riders || []).length)
+        return 'the template does nothing — give it an attribute change, a status to apply, or riders';
+      return null;
+    }
+    case 'innate': {
+      // An innate rule is a bundle of effects EVERY unit carries. Mirrors the game loader's
+      // refusal (InnateEffects._load_json): only event-driven, non-standing effects dispatch
+      // in this build — a standing/modifier/interceptor innate would need enumeration in
+      // LiveEffects/Resolver too, so it is rejected here rather than silently never folding.
+      if (!(d.effects || []).length) return 'an innate rule needs at least one effect';
+      for (let i = 0; i < d.effects.length; i++) {
+        const e = d.effects[i] || {};
+        const kind = e.kind || (e.key ? 'modifier' : e.intercept ? 'interceptor' : e.custom ? 'custom' : 'triggered');
+        if (kind !== 'triggered' && kind !== 'custom')
+          return `innate effect ${i + 1}: only event-driven (triggered/custom) effects can be innate — `
+            + `a ${kind} innate would never fold, and the game loader refuses it`;
+        if (e.trigger && typeof e.trigger === 'object' && e.trigger.kind === 'while')
+          return `innate effect ${i + 1}: a standing (while) effect cannot be innate — `
+            + 'only event-driven innates dispatch in this build';
+      }
+      return validateEffects(d.effects, 'innate');
     }
     case 'ability': {
       if (!(d.effects || []).length) return 'an ability needs at least one effect';
@@ -1822,6 +1944,7 @@ function gameVocab() {
     cards,
     sounds: simple('data/sounds'),
     statuses: simple('data/statuses'),
+    namedEffects: simple('data/named_effects'),
     abilities: simple('data/abilities'),
     charms: simple('data/charms'),
     relics: simple('data/relics'),
@@ -2838,7 +2961,9 @@ const EFFECTS_MODEL_DEFAULT = 'qwen3-coder-next:q4_K_M';
 
 // Types whose entries carry a top-level effects array — the example mine.
 const FX_OWNER_NOUN = { card: 'this card', relic: 'this relic', status: 'the carrier',
-  ability: 'the holder', charm: 'the charmed card', upgrade: 'this upgrade' };
+  ability: 'the holder', charm: 'the charmed card', upgrade: 'this upgrade',
+  // an innate rule has no container: its holder is every unit on the board
+  innate: 'any unit' };
 
 function effectShapeKey(e) {
   const t = e.trigger;

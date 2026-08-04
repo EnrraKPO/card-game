@@ -587,13 +587,18 @@
 				"steps": 8,
 				"guidance": 1,
 				"rembg": false,
-				"prompt": "Towering sculpted wet-clay wizard spire, mud-slick tiered walls oozing rich brown slip, glowing amber-lit arched doorway, ribbon-of-light runes spiraling around its peak, a big-headed chibi robed clay priest before it clutching a dripping ceramic staff and open molded tome, warm terracotta and ochre palette, hazy blue-gray sky, marshy puddled ground, glossy sculpted claymation texture, painterly stylized fantasy render, heroic low angle",
+				"prompt": "Towering temple sculpted from soft wet clay, thumb-pressed walls glistening with dripping brown slip, arched doorway oozing warm amber light, banners of hardened terracotta slabs, chibi priest magician facing right at its base in glossy sculpted robes, raising a swirling ooze-topped staff, mud puddles below, warm ochre and tan palette, hazy sky, painterly claymation fantasy render",
 				"ref": {
-					"source": "upload",
+					"source": "game",
 					"path": "snap_bishop_rook.png",
-					"name": "snap_bishop_rook.png",
 					"mode": "img2img",
 					"denoise": 0.6
+				},
+				"last": {
+					"seed": 938911144,
+					"prompt": "Towering temple sculpted from soft wet clay, thumb-pressed walls glistening with dripping brown slip, arched doorway oozing warm amber light, banners of hardened terracotta slabs, chibi priest magician facing right at its base in glossy sculpted robes, raising a swirling ooze-topped staff, mud puddles below, warm ochre and tan palette, hazy sky, painterly claymation fantasy render, cartoon art style, 2d illustration, clean bold outlines, dramatic volumetric light, fantasy game illustration, chibi cartoon style. detailed background scene, neat, clear,",
+					"style": "",
+					"at": "2026-08-03"
 				}
 			}
 		}

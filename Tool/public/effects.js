@@ -244,10 +244,34 @@ function renderCondition(c, ctx, onChange, onRemove, allowMutation) {
       );
     } else if (k === 'composition') {
       if (!Array.isArray(c.composition)) c.composition = c.composition ? [c.composition] : [];
+      // TWO QUESTIONS, TWO LENSES (see EffectCondition.composition_counted):
+      //  • presence — "is it fire?" — reads the TREATED-AS lens, so a blessing's granted
+      //    component satisfies it.
+      //  • count — "is it built from two fire?" — reads the card's REAL composition. A
+      //    blessing says a unit is to be treated as fire, never how MUCH fire it is, so it
+      //    contributes nothing to a quantity. This is how fire_fire-only rules are authored.
+      const mode = { m: c.count != null ? 'count' : 'presence' };
       row.append(
-        fld('Presence', boolSelect(c, 'present', 'must contain any of…', 'must contain NONE of…', onChange)),
+        fld('Asks', selectInput(mode, 'm', [
+          { value: 'presence', label: 'is it made of… (counts blessings)' },
+          { value: 'count', label: 'how many is it built from… (real composition only)' },
+        ], () => {
+          if (mode.m === 'count') { delete c.present; c.count = 2; c.comparator = 'gte'; }
+          else { delete c.count; delete c.comparator; delete c.value; c.present = true; }
+          onChange(); renderInto();
+        }), 'a granted (blessed) component answers "is it fire?" but never "how much fire?"'),
+      );
+      if (mode.m === 'count') {
+        row.append(
+          fld('Count is', selectInput(c, 'comparator', ctx.vocab.comparators.map(x => ({ value: x, label: labelOf('cmp', x) })), onChange)),
+          fld('N', numInput(c, 'count', onChange, { min: 0 }), null, 'narrow'),
+        );
+      } else {
+        row.append(fld('Presence', boolSelect(c, 'present', 'must contain any of…', 'must contain NONE of…', onChange)));
+      }
+      row.append(
         el('div', { class: 'fld wide' },
-          el('span', { class: 'lab', text: 'Elements / pieces' }),
+          el('span', { class: 'lab', text: mode.m === 'count' ? 'Counted from (occurrences are summed)' : 'Elements / pieces' }),
           chipSet(c.composition, ctx.vocab.elements.concat(ctx.vocab.pieces), onChange,
             id => labelOf('element', id) !== id ? labelOf('element', id) : labelOf('piece', id))),
       );
@@ -279,6 +303,38 @@ function boolSelect(obj, key, trueLabel, falseLabel, onChange) {
   sel.append(el('option', { value: 'yes', text: trueLabel, selected: obj[key] !== false }));
   sel.append(el('option', { value: 'no', text: falseLabel, selected: obj[key] === false }));
   return sel;
+}
+
+// ── damage riders ("the damage carries a follow-on") ─────────────────────────
+// One roll PER DAMAGE INSTANCE, flat — the amount never multiplies the rolls. Shared by
+// the effect builder and the named-effect editor (both edit the same authored shape).
+function renderRiderList(host, e, ctx, onChange) {
+  const render = () => {
+    host.replaceChildren();
+    (e.riders || []).forEach((r, i) => {
+      if (!r.status) r.status = { id: ctx.statusIds()[0] || '', stacks: 1 };
+      host.append(el('div', { class: 'frow' },
+        fld('The damage may apply', statusPicker(r.status, 'id', ctx, onChange),
+          'rolled once per damage instance that actually lands'),
+        fld('Stacks', numInput(r.status, 'stacks', onChange, { min: 1 }), null, 'narrow'),
+        fld('Chance', numInput(r, 'chance', onChange, { float: true, step: 0.05, min: 0, max: 1, optional: true, placeholder: '1.0' }),
+          '0–1; empty = always', 'narrow'),
+        el('div', { class: 'fld narrow', style: 'justify-content:flex-end' },
+          el('button', { class: 'ghost tiny', text: '✕ remove', onclick: () => {
+            e.riders.splice(i, 1);
+            if (!e.riders.length) delete e.riders;
+            onChange(); render();
+          } })),
+      ));
+    });
+    host.append(el('button', { class: 'ghost small list-add', text: '+ the damage carries a rider (e.g. burn may ignite)', onclick: () => {
+      if (!e.riders) e.riders = [];
+      e.riders.push({ chance: 1.0, status: { id: ctx.statusIds()[0] || '', stacks: 1 } });
+      onChange(); render();
+    } }));
+  };
+  render();
+  return host;
 }
 
 function statusPicker(obj, key, ctx, onChange) {
@@ -573,6 +629,26 @@ function renderEffect(e, ctx, onChange, onRemove) {
         // A side target commits side stats and nothing else (no unit stats, no status —
         // mirrors the game's load validation), so the payload vocabulary follows the kind.
         const sideTargeted = tg.kind === 'side';
+        // ── NAMED-EFFECT reference: the library template supplies the payload ──
+        // The call site keeps trigger/targets; picking a name replaces the hand-authored
+        // payload fields below wholesale (the game merges the template at parse time).
+        const namedPool = (ctx.vocab.namedEffects || []);
+        if (!sideTargeted && namedPool.length) {
+          rows.push(el('div', { class: 'frow' },
+            fld('Named effect', selectInput(e, 'named', namedPool.map(n => ({ value: n.id, label: n.name || n.id })), () => {
+              if (e.named) { delete e.attribute; delete e.amount; delete e.status; delete e.riders; delete e.per_stack_chance; }
+              else { delete e.named; e.attribute = 'attack'; e.amount = 1; }
+              onChange(); renderInto();
+            }, { optional: true, emptyLabel: '(none — author the payload below)' }),
+              'a library payload (🧩 Named Effects tab) — what happens comes from the template, when/whom stays here'),
+          ));
+        }
+        if (e.named) {
+          body.append(...rows);
+          if (tg.kind !== 'side')
+            body.append(participantConditionSection(tg, 'conditions', ctx, localChange, 'TARGETS must satisfy:'));
+          return;
+        }
         const attrPool = sideTargeted ? (ctx.vocab.sideAttrs || ['draw', 'discard', 'mana', 'max_mana'])
           : ctx.vocab.effectAttrs;
         if (sideTargeted && !attrPool.includes(e.attribute)) { e.attribute = attrPool[0]; delete e.status; }
@@ -581,6 +657,15 @@ function renderEffect(e, ctx, onChange, onRemove) {
           fld('By', numInput(e, 'amount', localChange, { optional: e.attribute == null, placeholder: '0' }),
             sideTargeted ? 'mana: + gains (uncapped above max), − drains.' : 'health: + heals, − damages. damage_taken: positive number of damage.', 'narrow'),
         ));
+        // Damage riders + the restrike chance — the wildfire vocabulary, valid on any
+        // damage payload (riders ride the damage; restrike needs a stacked container).
+        if (e.attribute === 'damage_taken' && !sideTargeted) {
+          rows.push(renderRiderList(el('div'), e, ctx, localChange));
+          rows.push(el('div', { class: 'frow' },
+            fld('Restrike chance', numInput(e, 'per_stack_chance', localChange, { float: true, step: 0.05, min: 0, max: 1, optional: true, placeholder: 'off' }),
+              'stacked container only: each stack past the first repeats this effect at this chance (0–1; empty = the first activation is all)', 'narrow'),
+          ));
+        }
         // status payload
         const hasStatus = !sideTargeted && !!(e.status && e.status.id != null);
         const stWrap = el('div');
@@ -598,6 +683,12 @@ function renderEffect(e, ctx, onChange, onRemove) {
             fld('Stacks', numInput(e.status, 'stacks', localChange, { min: 1 }), null, 'narrow'),
             fld('Duration', numInput(e.status, 'duration', localChange, { optional: true, placeholder: 'default' }),
               'empty = the status’s own default', 'narrow'),
+            // WHICH LAYER receives it (mirrors Effect.status_layer): the resolved unit, or
+            // the board SLOT beneath it. "Burn the ground you strike" is destination + ground.
+            fld('Lands on', selectInput(e.status, 'layer', [
+              { value: 'units', label: 'the unit (default)' },
+              { value: 'ground', label: 'the ground beneath it' },
+            ], localChange), 'ground = the board slot at the target’s cell, not the unit', 'narrow'),
             el('div', { class: 'fld narrow', style: 'justify-content:flex-end' },
               el('button', { class: 'ghost tiny', text: '✕ no status', onclick: () => { delete e.status; localChange(); renderStatus(); } })),
           ));
@@ -698,10 +789,24 @@ function cleanEffectForDeploy(e) {
   if (out.status) {
     if (out.status.duration == null) delete out.status.duration;
     if (out.status.stacks === 1) delete out.status.stacks;
+    // "units" is the loader default — the data files leave it unspelled (byte-faithful)
+    if (!out.status.layer || out.status.layer === 'units') delete out.status.layer;
     if (!out.status.id) delete out.status;
   }
-  if (out.attribute == null || out.attribute === '') { delete out.attribute; if (out.status || out.custom) delete out.amount; }
+  if (out.attribute == null || out.attribute === '') { delete out.attribute; if (out.status || out.custom || out.named) delete out.amount; }
   if (out.filter && !Object.keys(out.filter).length) delete out.filter;
+  // Named-effect reference + the wildfire payload extras: prune empties/defaults.
+  if (out.named == null || out.named === '') delete out.named;
+  if (Array.isArray(out.riders)) {
+    out.riders = out.riders.filter(r => r && r.status && r.status.id);
+    for (const r of out.riders) {
+      if (r.chance == null || r.chance === 1) delete r.chance;
+      if (r.status.stacks === 1) delete r.status.stacks;
+      if (r.status.duration == null) delete r.status.duration;
+    }
+    if (!out.riders.length) delete out.riders;
+  }
+  if (!out.per_stack_chance) delete out.per_stack_chance;
   const kind = effectKindOf(out);
   // "kind" is inferred by the game parser for modifier (key) / custom / interceptor,
   // and triggered is the default — keep explicit kind only where the data files do.

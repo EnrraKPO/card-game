@@ -1,0 +1,14 @@
+[
+	{
+		"id": "burn",
+		"display_name": "Burn",
+		"description": "Deal 1 damage. The damaged unit may catch fire (Ablaze). In a stacked fire, each flame beyond the first may burn again.",
+		"attribute": "damage_taken",
+		"amount": 1,
+		"per_stack": false,
+		"per_stack_chance": 0.25,
+		"riders": [
+			{ "chance": 0.3333, "status": { "id": "ablaze", "stacks": 1 } }
+		]
+	}
+]

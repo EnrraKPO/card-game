@@ -24,6 +24,9 @@ func run() -> void:
 	_has_element_lens()
 	_negative_gate_respects_grants()
 	_round_trip()
+	_count_reads_identity_not_grants()
+	_count_comparators_and_pools()
+	_count_round_trips()
 
 
 # ── helpers ────────────────────────────────────────────────────────────────────────────
@@ -222,3 +225,63 @@ func _round_trip() -> void:
 	check(not e.is_standing() or e.standing_attribute() == "",
 			"a grant is invisible to the stat fold (no standing attribute)")
 	check_eq(e.to_dict(), d, "grants effect round-trips byte-faithfully")
+
+
+# ── The COUNT form: two lenses, two questions (user ruling 2026-08-04) ──────────────────
+# PRESENCE asks the grant-aware "treated as" lens; COUNT asks the card's real identity.
+# A grant says a unit is to be TREATED AS fire — never how MUCH fire it is built from —
+# so it has nothing to contribute to a quantity, and a blessed fire pawn is fire but is
+# NOT fire_fire. This is also what keeps the count form clear of the Layer-1 fixed point.
+func _count_reads_identity_not_grants() -> void:
+	_fire_grant_status()
+	var double := unit("fire_fire_pawn")   # elements ["fire", "fire"] — really double fire
+	var single := unit("fire_pawn")        # elements ["fire"]         — really single fire
+	var two_fire := EffectCondition.from_dict({"composition": ["fire"], "count": 2})
+	check(two_fire.evaluate(double), "a real fire_fire unit is built from two fire")
+	check(not two_fire.evaluate(single), "a single-fire unit is not")
+
+	# THE RULING, as a test: bless the single-fire unit and it stays single fire.
+	StatusEngine.apply(single, FIRE_GRANT, Effect.STATUS_DURATION_DEFAULT, 1, null)
+	check(EffectCondition.from_dict({"composition": ["fire"]}).evaluate(single),
+			"the blessing still answers the PRESENCE question — it is treated as fire")
+	check(not two_fire.evaluate(single),
+			"…but it does not make the unit count as fire_fire — a grant is not a quantity")
+
+	# And a blessing on a unit with no fire at all cannot manufacture even one.
+	var none := unit("pawn")
+	StatusEngine.apply(none, FIRE_GRANT, Effect.STATUS_DURATION_DEFAULT, 1, null)
+	check(EffectCondition.from_dict({"composition": ["fire"]}).evaluate(none),
+			"a blessed pawn is treated as fire")
+	check(not EffectCondition.from_dict({"composition": ["fire"], "count": 1}).evaluate(none),
+			"…and is built from no fire at all")
+	_unregister_status(FIRE_GRANT)
+
+
+func _count_comparators_and_pools() -> void:
+	var double := unit("fire_fire_pawn")
+	var single := unit("fire_pawn")
+	# The default comparator is "at least" — the common authoring intent.
+	check(EffectCondition.from_dict({"composition": ["fire"], "count": 1}).evaluate(double),
+			"count defaults to 'at least': two fire satisfies at-least-one")
+	check(EffectCondition.from_dict({"composition": ["fire"], "count": 2, "comparator": "eq"}).evaluate(double),
+			"an explicit comparator pins it exactly")
+	check(not EffectCondition.from_dict({"composition": ["fire"], "count": 2, "comparator": "eq"}).evaluate(single),
+			"…and excludes the single-fire unit")
+	check(EffectCondition.from_dict({"composition": ["fire"], "count": 1, "comparator": "eq"}).evaluate(single),
+			"exactly-one admits the single-fire unit")
+	# Occurrences across the listed ids are SUMMED: the list is a POOL to count from.
+	check(EffectCondition.from_dict({"composition": ["fire", "water"], "count": 2}).evaluate(double),
+			"a multi-id list counts the pool: two fire fills a two-from-{fire,water} ask")
+	# Pieces count on the same footing as elements.
+	check(EffectCondition.from_dict({"composition": ["pawn"], "count": 1}).evaluate(double),
+			"chess pieces are counted by the same lens")
+	check(not EffectCondition.from_dict({"composition": ["rook"], "count": 1}).evaluate(double),
+			"…and a piece it doesn't have counts zero")
+
+
+func _count_round_trips() -> void:
+	var d := {"composition": ["fire"], "count": 2, "comparator": "gte"}
+	check_eq(EffectCondition.from_dict(d).to_dict(), d, "the count form round-trips byte-faithfully")
+	# The presence form must be untouched by the addition (no stray count/comparator keys).
+	var p := {"composition": ["fire"], "present": true}
+	check_eq(EffectCondition.from_dict(p).to_dict(), p, "the presence form still round-trips as before")

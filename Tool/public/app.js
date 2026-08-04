@@ -2358,8 +2358,8 @@ function attachInferPoll(file, jobId) {
 }
 
 // ── sidebar ──────────────────────────────────────────────────────────────────
-const TAB_ORDER = ['card', 'relic', 'status', 'ability', 'charm', 'upgrade', 'fights', 'encounter', 'enemyai', 'nodeweights', 'sound', 'vfx', 'render_filter', 'tuning', 'localization'];
-const TAB_LABELS = { card: '🃏 Cards', relic: '🏺 Relics', status: '☠ Statuses', ability: '✨ Abilities',
+const TAB_ORDER = ['card', 'relic', 'status', 'namedeffect', 'innate', 'ability', 'charm', 'upgrade', 'fights', 'encounter', 'enemyai', 'nodeweights', 'sound', 'vfx', 'render_filter', 'tuning', 'localization'];
+const TAB_LABELS = { card: '🃏 Cards', relic: '🏺 Relics', status: '☠ Statuses', namedeffect: '🧩 Named FX', innate: '⚡ Innate', ability: '✨ Abilities',
   charm: '🔮 Charms', upgrade: '🌳 Upgrades', fights: '🗂 Fights', encounter: '⚔ Encounters', enemyai: '🧠 Enemy AI',
   nodeweights: '🗺 Map Nodes',
   sound: '🔊 Sounds', vfx: '🎇 VFX', render_filter: '🔆 Filters', tuning: '🎛 Tuning', localization: '🌐 Localization' };

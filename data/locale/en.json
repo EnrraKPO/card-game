@@ -1575,6 +1575,8 @@
   "statguide.speed": "Sets turn priority, and grants a chance to dodge attacks or land critical hits.",
   "statguide.title": "Stats",
   "statguide.toggle": "Show Stat Descriptions",
+  "status.ablaze.desc": "This unit is on fire: it takes 1 damage at the end of each round, and at the start of each round every flame may set light to the ground beneath it or die down.",
+  "status.ablaze.name": "Burning",
   "status.air_blessing.desc": "For 2 turns: +4 <speed>, and this unit is treated as an <air> unit.",
   "status.air_blessing.name": "Air Blessing",
   "status.barrier.desc": "Blocks the next attack that would deal damage to this unit. A blocked strike reads as a Miss; a harmless whiff doesn't spend the Barrier.",

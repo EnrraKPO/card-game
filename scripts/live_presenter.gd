@@ -37,7 +37,26 @@ static func make(animator: CombatAnimator, tree: SceneTree, board: CombatBoard,
 
 func show_effect_results(results: Array, holder: CardInstance, status_id: String = "",
 		cue: bool = true) -> void:
-	await _animator.show_effect_results(results, holder, status_id, cue)
+	# RESTRIKES present as their own beats AFTER the base activation: the base plays with its
+	# normal container cue, then each extra flame that burned glints the pip again and lands
+	# its own number — only the stacks that triggered re-glint (user call). A unit's pile is
+	# one badge wearing a count, so "that stack's pip" is the badge, once per restrike.
+	var base: Array = []
+	var restrikes: Array = []
+	for r: Dictionary in results:
+		if r.has("restrike_stack"):
+			restrikes.append(r)
+		else:
+			base.append(r)
+	if not base.is_empty():
+		await _animator.show_effect_results(base, holder, status_id, cue)
+	for r: Dictionary in restrikes:
+		var card := _board.get_card_ui(holder) if holder != null else null
+		if card != null and not status_id.is_empty():
+			var pip := card.find_status_pip(status_id)
+			if pip != null:
+				pip.flash_proc()
+		await _animator.show_effect_results([r], null, "", false)
 
 
 func show_ground_results(procs: Array) -> void:
@@ -45,9 +64,10 @@ func show_ground_results(procs: Array) -> void:
 	# its tabs glints in the same instant — the whole fire acts as one (the spread tier is
 	# where flames act alone, one glint per roll). The flare rides each glint (see VFXPlayer's
 	# arrival path): the slot acting and the tabs discharging are one event, and the flare's
-	# sparks are what carry it to a covered slot.
+	# sparks are what carry it to a covered slot. RESTRIKE results sit this beat out — each
+	# extra flame that burned gets its own re-glint after, and ONLY those (user call).
 	var any_cue := false
-	var all_results: Array = []
+	var base_results: Array = []
 	for p: Dictionary in procs:
 		var slot: BoardSlot = p["slot"]
 		var slot_ui := _board.slot_ui_at(slot.side, slot.row, slot.col)
@@ -56,35 +76,71 @@ func show_ground_results(procs: Array) -> void:
 			for pip: StatusPip in slot_ui.ground_pips_of(str(p["status_id"])):
 				pip.flash_proc()
 			any_cue = true
-		all_results.append_array(p["results"])
+		for r: Dictionary in p["results"]:
+			if not r.has("restrike_stack"):
+				base_results.append(r)
 	if any_cue:
 		await beat(VFXPlayer.PIP_SPAN)
-	# Then the effect: all the results land together, exactly as any effect's do (damage
+	# Then the effect: the base results land together, exactly as any effect's do (damage
 	# numbers, reticles) — one moment, not a slot-by-slot stagger. No holder card exists to
 	# glint — the tabs above WERE the cue.
-	await _animator.show_effect_results(all_results, null, "", false)
+	await _animator.show_effect_results(base_results, null, "", false)
+	# The second burn: stack by stack, in order — the specific tab that rolled its extra
+	# flame glints again and its own number lands, the per-flame rhythm the spread tier
+	# already taught the eye.
+	for p: Dictionary in procs:
+		var slot: BoardSlot = p["slot"]
+		var slot_ui := _board.slot_ui_at(slot.side, slot.row, slot.col)
+		for r: Dictionary in p["results"]:
+			if not r.has("restrike_stack"):
+				continue
+			if slot_ui != null:
+				var pip := slot_ui.ground_pip_at(str(p["status_id"]), int(r["restrike_stack"]))
+				if pip != null:
+					pip.flash_proc()
+			await _animator.show_effect_results([r], null, "", false)
 
 
-func show_ground_spread_roll(slot: BoardSlot, status_id: String, stack_index: int,
-		outcome: StringName, target: BoardSlot) -> void:
-	var slot_ui := _board.slot_ui_at(slot.side, slot.row, slot.col)
-	if slot_ui != null:
-		# The roll: the rolling tab glints — identically whatever comes of it (user call: the
-		# ignition flare below is the only success signal).
-		var pip := slot_ui.ground_pip_at(status_id, stack_index)
-		if pip != null:
-			pip.flash_proc()
+func show_spread_roll(carrier: StatusCarrier, status_id: String, stack_index: int,
+		outcome: StringName, target: BoardSlot, arrival_results: Array = [],
+		arrived_id: String = "") -> void:
+	# The roll: the rolling pip glints — identically whatever comes of it (user call: the
+	# ignition flare below is the only success signal). ONE vocabulary, either layer: a ground
+	# tab on a slot, the card's own status badge on a unit.
+	var slot := carrier as BoardSlot
+	if slot != null:
+		var slot_ui := _board.slot_ui_at(slot.side, slot.row, slot.col)
+		if slot_ui != null:
+			var pip := slot_ui.ground_pip_at(status_id, stack_index)
+			if pip != null:
+				pip.flash_proc()
+	else:
+		var unit := carrier as CardInstance
+		if unit != null:
+			var card := _board.get_card_ui(unit)
+			if card != null:
+				# A card badge shows the pile as ONE pip wearing a count, so every stack's roll
+				# glints the same badge — the count beside it says how many are rolling.
+				var upip := card.find_status_pip(status_id)
+				if upip != null:
+					upip.flash_proc()
 	await beat(VFXPlayer.PIP_SPAN)
 	if outcome == &"spread" and target != null:
 		# The catch: the target's tab arrives WITH its flare — the slot catching light and the
-		# tab appearing are one event (the ground arrival convention).
+		# tab appearing are one event (the ground arrival convention). The destination speaks
+		# its own status (arrived_id): a unit's ablaze lands on the ground as burning.
+		var caught := arrived_id if not arrived_id.is_empty() else status_id
 		_board.refresh()
 		var target_ui := _board.slot_ui_at(target.side, target.row, target.col)
 		if target_ui != null:
-			target_ui.flare_ground(status_id)
-			var fresh := target_ui.find_ground_pip(status_id)   # newest tab (last match)
+			target_ui.flare_ground(caught)
+			var fresh := target_ui.find_ground_pip(caught)   # newest tab (last match)
 			if fresh != null:
 				fresh.flash_applied()
+		if not arrival_results.is_empty():
+			# The arriving flame's touch on the occupant — damage numbers land with the catch,
+			# through the same animator path as any effect's results.
+			await _animator.show_effect_results(arrival_results, null, "", false)
 		await beat(VFXPlayer.PIP_SPAN)
 	elif outcome == &"fade":
 		# The flame dying down: the glint above has played out; the re-render simply shows one

@@ -1,0 +1,33 @@
+[
+	{
+		"id": "fire_scorches_ground",
+		"display_name": "Fire scorches the ground",
+		"description": "A unit really built from two fire sets the ground it strikes burning — the wildfire cornerstone's first live content. The gate is a composition COUNT, so it reads the card's own make-up: a single-fire unit does not scorch, and neither does one merely blessed with fire (a blessing says you are TREATED AS fire, never how much fire you are). Disable this entry to turn the rule off.",
+		"effects": [
+			{
+				"trigger": {
+					"kind": "dual_event",
+					"event": "attack",
+					"origin_of": "self",
+					"origin_conditions": [
+						{
+							"composition": [
+								"fire"
+							],
+							"count": 2,
+							"comparator": "gte"
+						}
+					]
+				},
+				"targets": {
+					"kind": "participant",
+					"participant": "destination"
+				},
+				"status": {
+					"id": "burning",
+					"layer": "ground"
+				}
+			}
+		]
+	}
+]

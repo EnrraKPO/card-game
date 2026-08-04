@@ -1,0 +1,18 @@
+{
+	"id": "ablaze",
+	"display_name": "Burning",
+	"description": "This unit is on fire: it takes 1 damage at the end of each round, and at the start of each round every flame may set light to the ground beneath it or die down.",
+	"beneficial": false,
+	"color": "e25822",
+	"glyph": "🔥",
+	"decay": "none",
+	"stacking": "stack",
+	"spread": { "phase": "turn_start", "chance": 0.3333, "decay_chance": 0.6667, "to": "ground", "status": "burning" },
+	"effects": [
+		{
+			"trigger": { "kind": "event", "event": "turn_end" },
+			"targets": { "kind": "self" },
+			"named": "burn"
+		}
+	]
+}

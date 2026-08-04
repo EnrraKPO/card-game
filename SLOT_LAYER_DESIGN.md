@@ -145,23 +145,103 @@ CardInstance source — slot dispatch SKIPS cues in this build; see §6 UI fence
    (`CombatPresenter.show_ground_results(procs)`): mutations land slot by slot in reading
    order, then every acting tab on the board glints AT ONCE as the results land together —
    the whole fire acts as one.
-2. **Spread** (`CombatCascade._spread_ground`) — a status that authors a `spread` block
-   (`StatusData.spread`: `{phase, chance, decay_chance}`, generic) rolls ONCE PER STACK at
-   its phase: `chance` to propagate one stack to a random orthogonal neighbour on the same
-   half (`_random_adjacent` — the battle line is a wall, the one predicate to widen if
-   cross-line adjacency ever lands), else `decay_chance` for that stack to die down
-   (`StatusEngine.shed_stack`). The jobs are a SNAPSHOT taken before any roll: a stack
-   arriving mid-pass never rolls the pass that lit it. Rolls draw from the CombatRng
-   `rules` stream. Each roll presents individually and in order
-   (`show_ground_spread_roll`): the rolling tab glints identically for every outcome — the
-   target's ignition flare is the only success signal (user call). For statuses that
-   author spread, the roll IS the lifetime: burning is `decay: "none"` and only ever goes
-   out by fading here. Universal expiry rule added for this:
+2. **Spread** (`CombatCascade._spread_statuses`) — a status that authors a `spread` block
+   (`StatusData.spread`: `{phase, chance, decay_chance, to}`, generic) rolls ONCE PER STACK
+   at its phase: `chance` to propagate one stack to the destination `to` names, else
+   `decay_chance` for that stack to die down (`StatusEngine.shed_stack`). The jobs are a
+   SNAPSHOT taken before any roll: a stack arriving mid-pass never rolls the pass that lit
+   it. Rolls draw from the CombatRng `rules` stream. Each roll presents individually and in
+   order (`show_spread_roll`): the rolling pip glints identically for every outcome — the
+   target's ignition flare is the only success signal (user call). For statuses that author
+   spread, the roll IS the lifetime: burning and ablaze are both `decay: "none"` and only
+   ever go out by fading here. Universal expiry rule added for this:
    `StatusEngine.is_expired` treats 0 stacks as expired whatever the decay mode.
+
+   **CARRIER-GENERIC** (2026-08-03): the tier runs over slots AND units through one path —
+   slots first, then living units, each in reading order. `spread.to` is the destination
+   PROVIDER, mirroring the targeting-provider pattern:
+   - `"adjacent"` (default) — a random orthogonal neighbouring SLOT on the same half. The
+     battle line is a wall; this branch is the one predicate to widen if cross-line
+     adjacency ever lands. Meaningless on a unit carrier (units don't ignite each other by
+     proximity) — a legal miss.
+   - `"ground"` — the slot the carrier STANDS ON. Meaningless on a slot carrier.
+
+   The two are ONE rule seen from each layer: fire moves either sideways within its layer,
+   or across the layers at its own address.
+
+   Two more spread fields (2026-08-03, the arrival build):
+   - `status` — what the destination CATCHES (default: the roller's own id). A cross-layer
+     leap must speak the destination layer's language: ablaze authors `"status": "burning"`
+     so a unit's fire lands on the ground as ground-fire. (Without it the slot would catch
+     ablaze — a self-targeting unit status the slot dispatch fence rightly refuses; found
+     as a live bug when the arrival feature forced the question.)
+   - `arrival` — a NAMED EFFECT dealt to whoever STANDS on the caught slot when a stack
+     arrives (`CombatCascade._spread_arrival`, manual-targeting through the ordinary
+     pipeline — interception/riders/provenance all behave normally). Empty slot = legal
+     miss. Burning authors `"arrival": "burn"`: a fire leaping into an occupied cell deals
+     its 1 and may ignite, one definition doing both.
+
+   **The rest of the cross-layer bridge is NOT here** — it's `Effect.riders` (see below),
+   because what sets a standing unit alight each round is the ground's DAMAGE, not its fire.
+
 3. **Decay**: `StatusEngine.advance(slot, event_id)` — identical call to the unit tier.
    Slots first touched by a spread this pass aren't in the captured `ground` list and skip
    it (a status is never asked to decay the phase it arrived). Subject-scoped events
    (`subject != null`) skip slots entirely (slots are never a subject in this build).
+
+### 4.4b Damage riders — how the ground sets a unit alight
+
+`Effect.riders` (2026-08-03) — follow-ons a damage instance CARRIES onto whoever took it.
+Authored on the damage effect: `"riders": [{"chance": 0.3333, "status": {"id": "ablaze"}}]`.
+Fired in `EffectSystem._run_riders`, right after the damage mutation lands.
+
+**ONE ROLL PER DAMAGE INSTANCE, flat.** The amount is NOT a multiplier — a 3-damage hit
+rolls exactly as often as a 1-damage one. More rolls means more instances of damage, which
+is a repetition question living nowhere near this seam (settled with the user 2026-08-03,
+who explicitly rejected a per-point variant).
+
+Gated on the damage having LANDED (`delta != 0`): an intercepted-away hit carries nothing,
+because the rider rides the damage rather than the attempt. Shield-absorbed damage DOES
+carry it — the delta is real, it just spent itself on shield — so a shield is not immunity
+to catching fire.
+
+**Deliberately NOT a fire-damage TYPE.** Typed/elemental damage is a separate concern with
+no current plans (explicit user call); the rider is a property of the damage an effect
+deals, general in the axis that matters — "this damage carries a follow-on". Frost damage
+that chills or poison damage that spreads use the identical seam with no new machinery.
+
+**RESTRIKES** (`Effect.per_stack_chance`, 2026-08-03) — "each flame beyond the first may
+burn again": when > 0 and the effect fires from a STACKED status container, each stack
+PAST THE FIRST repeats the whole effect once, gated by its own roll
+(`EffectSystem._restrikes`, both grouped dispatch sites). The first flame burns for sure
+(the base activation, unchanged); each repeat is a fresh damage INSTANCE, so riders roll
+per repeat — a 10-stack fire is dangerous through repetition, never through bigger
+numbers ("heat is flat, stacks are flames" survives). Stackless firings (spells, arrival
+touches) ignore it. Results carry `restrike_stack` (1-based index) so presentation glints
+EXACTLY the stacks that burned again, and only those (user call): base burn = the
+board-wide simultaneous glint, then each restrike re-glints its own tab (ground) or the
+badge (unit) with its own number. The burn template authors `per_stack_chance: 0.25`, so
+both fires inherit it. ⚠ Tests measuring damage near a stacked burn must calm BOTH riders
+and restrike (`test_burning._tick_calm`).
+
+**NAMED EFFECTS** (2026-08-03) — the naming layer over the rider mechanism, the classic
+TCG-keyword move. `data/named_effects.json` holds reusable effect PAYLOAD templates;
+"burn" (deal 1, 33% ablaze) is the first. A call site authors
+`{"trigger": ..., "targets": ..., "named": "burn"}` — it owns WHEN and ON WHOM, the name
+supplies WHAT HAPPENS. `Effect.from_dict` merges the template UNDER the authored keys
+(authored wins — escape-hatch overrides); `to_dict` returns the authored dict verbatim, so
+the reference round-trips byte-faithfully and the expansion never leaks into saved data.
+No template chains (NamedEffects refuses a template that names another). Registry is
+lazy-loaded (loader static-init order is nobody's contract).
+
+**THE WILDFIRE RULING** (user): ablaze's own tick is ALSO `"named": "burn"` — rider and
+all. A burning unit may re-light itself; fire fuels itself by burning things. Tuning knobs,
+one place: the chance/amount in named_effects.json, the spread numbers per status.
+
+⚠ **Testing note**: a rider makes any downstream damage sum non-deterministic. Tests that
+measure burn arithmetic strip burning's riders for their duration
+(`test_burning._burning_riders_off`) and the rider's own behavior is proven separately with
+chance-1 / chance-0 statuses.
 
 ### 4.5 EffectContext — the anchor coordinates
 
