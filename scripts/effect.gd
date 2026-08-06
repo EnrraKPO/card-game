@@ -204,6 +204,21 @@ var role: Role = Role.SOURCE      # legacy mirror: which side of the mutation th
 # identity travels as dispatch context — the enumeration knows which container it is
 # iterating — and reactions to an effect firing go through the container's blind upward
 # channel, fired(e). See StatusInstance.fired and EFFECT_SYSTEM_DESIGN.md §2.2.)
+# ── EVAL ANNOTATION (the enemy engine's channel pricing — STATUS_EVAL_BRIEF.md) ──
+# Hand-AUTHORED, flat (applied once per carrier; stack scaling lives on StatusData.eval_mods):
+# how this effect's PRESENCE moves its carrier in the engine's three channels. Keys:
+#   "threat" / "exposure" / "value"             — adds (damage points per round for the first
+#                                                 two, value-units for the third)
+#   "threat_mul" / "exposure_mul" / "value_mul" — multipliers (applied after ALL adds)
+# Absent = this effect is invisible to the engine (today's behavior, never wrong-and-loud).
+# The number is a human judgment written next to the effect — NEVER derived from what the
+# effect does (deriving is the discarded channel-taxonomy appraiser). Folded at BoardState
+# capture by EvalChannels; the game rules never read it.
+var eval_mods: Dictionary = {}
+
+const EVAL_KEYS: Array[String] = ["threat", "exposure", "value",
+		"threat_mul", "exposure_mul", "value_mul"]
+
 # Probabilistic gate, rolled once before the effect resolves: the effect fires with this chance
 # (1.0 = always). A declarative condition, separate from what the effect does. See EffectSystem.
 var chance: float = 1.0
@@ -233,6 +248,7 @@ static func from_dict(d: Dictionary) -> Effect:
 	var e := Effect.new()
 	e.amount = float(d.get("amount", 0))
 	e.chance = float(d.get("chance", 1.0))
+	e._parse_eval(d)
 	for c_data: Dictionary in d.get("conditions", []):
 		if EffectCondition.is_identity_dict(c_data):
 			continue   # {"relation": "self"} is structural (self targeting), not a predicate
@@ -328,6 +344,37 @@ static func from_dict(d: Dictionary) -> Effect:
 			if c.is_mutation_form():
 				push_error("Effect: mutation-form condition on a non-interceptor effect — %s" % [d])
 	return e
+
+
+# Parses the authored "eval" annotation (any kind may carry one — see eval_mods above).
+# Unknown keys fail loud: a typoed channel silently contributing nothing is exactly the
+# quiet degradation the absent-is-invisible rule must NOT extend to authored numbers.
+func _parse_eval(d: Dictionary) -> void:
+	var ev_v: Variant = d.get("eval", null)
+	if ev_v == null:
+		return
+	if not ev_v is Dictionary:
+		push_error("Effect: 'eval' must be a dictionary of channel numbers — %s" % [d])
+		return
+	for k: Variant in (ev_v as Dictionary):
+		if not str(k) in EVAL_KEYS:
+			push_error("Effect: unknown eval channel '%s' (%s) — %s" % [k, EVAL_KEYS, d])
+			continue
+		eval_mods[str(k)] = float((ev_v as Dictionary)[k])
+
+
+# The fold's read accessors: a channel's add (absent = 0) and multiplier (absent = 1).
+func eval_add(p_channel: String) -> float:
+	return float(eval_mods.get(p_channel, 0.0))
+
+
+func eval_mul(p_channel: String) -> float:
+	return float(eval_mods.get(p_channel + "_mul", 1.0))
+
+
+func _eval_out(d: Dictionary) -> void:
+	if not eval_mods.is_empty():
+		d["eval"] = eval_mods.duplicate()
 
 
 # Parses the interceptor match gate from either schema. Native form: "of" is a dictionary
@@ -576,6 +623,7 @@ func to_dict() -> Dictionary:
 				var mconds := TriggerResolver.conditions_to_dicts(conditions)
 				if not mconds.is_empty():
 					d["conditions"] = mconds
+			_eval_out(d)
 			return d
 		Kind.CUSTOM:
 			var cd := {
@@ -591,6 +639,7 @@ func to_dict() -> Dictionary:
 				cd["targeting_policy"] = policy_key(targeting_policy)
 			if not authored_native_trigger and subject_filter != SubjectFilter.SELF:
 				cd["subject"] = subject_key(subject_filter)
+			_eval_out(cd)
 			return cd
 		Kind.INTERCEPTOR:
 			var idd := {"intercept": String(intercept)}
@@ -614,6 +663,7 @@ func to_dict() -> Dictionary:
 				idd["op"] = "mul"
 			if chance != 1.0:
 				idd["chance"] = chance
+			_eval_out(idd)
 			return idd
 		_:
 			var d := {"trigger": _trigger_out()}
@@ -659,6 +709,7 @@ func to_dict() -> Dictionary:
 				d["riders"] = rl
 			if not spawn_id.is_empty():
 				d["spawn"] = {"id": spawn_id, "count": spawn_count}
+			_eval_out(d)
 			return d
 
 

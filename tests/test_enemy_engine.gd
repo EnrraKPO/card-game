@@ -47,7 +47,6 @@ func run() -> void:
 	_mana_optimization_shape()
 	_mana_pressure_is_structural()
 	_readiness_shape()
-	_noop_veto_shape()
 	_idle_hand_shape()
 	_idle_hand_changes_a_decision()
 	_valuation_raw_ignores_the_wound()
@@ -68,6 +67,19 @@ func run() -> void:
 	_arrangement_enumeration()
 	_arrangement_feasibility()
 	_arrangement_apply_purity()
+	_eval_annotation_parse()
+	_eval_fold_unit_statuses()
+	_eval_fold_ground_and_seat()
+	_eval_fold_innate_attribution()
+	_eval_three_places_forwarding()
+	_eval_threat_consumption()
+	_eval_exposure_consumption()
+	_eval_value_consumption()
+	_eval_overlay_row_agrees()
+	_quota_blows()
+	_quota_split()
+	_king_safety_gradient()
+	_quota_overkill_pressure()
 
 
 # ── Formation: value order vs seat safety (the user's spec, restored 2026-07-31) ─────
@@ -340,9 +352,9 @@ func _exposure_geometry() -> void:
 func _scoring_prefers_screens() -> void:
 	var back := BoardData.ROWS - 1
 	var deep := BoardData.COLS - 1
-	# The waterfall's two definitional properties (user-stated), pinned where they live:
+	# The quota's two definitional properties (user-stated), pinned where they live:
 	# front slots carry strictly more expected damage than back slots in EVERY scenario,
-	# and a screen SUBTRACTS from what reaches the ranks behind it.
+	# and a screen ATTENUATES what reaches the ranks behind it.
 	var players: Array = [_player("queen", back, 0)]
 	var naked := _state_with([_enemy("king", back, deep)], players)
 	var screened := _state_with([_enemy("king", back, deep), _enemy("pawn", back, 0)], players)
@@ -531,8 +543,8 @@ func _harm_shape() -> void:
 	cap.shield = 0
 	cap.health = 6
 	check_eq(BoardScoring.urgency(state, cap), 1.0, "10 incoming vs 6 remaining: dead")
-	# Under the waterfall a body only ever ABSORBS up to its remaining life — the overkill
-	# flows past it instead of inflating its own reading — so harm is what the body can
+	# Under the quota a body only ever ABSORBS up to its remaining life — the overkill
+	# is wasted instead of inflating its own reading — so harm is what the body can
 	# still soak: 6 of its 20-point frame, not the thrown 10.
 	check_eq(BoardScoring.harm(state, cap), 0.3, "…but harm is what it can still absorb: 6/20")
 
@@ -1307,33 +1319,6 @@ func _readiness_shape() -> void:
 			"…while a two-ability unit also forfeits the one it did NOT use")
 
 
-# ── The no-op legality rule: an effect that changes nothing is not a candidate ────────
-
-func _noop_veto_shape() -> void:
-	var back := BoardData.ROWS - 1
-	var deep := BoardData.COLS - 1
-	var support := _enemy("support_dummy", back, 1)
-	var full := _enemy("fodder_dummy", back, 0)
-	var roster: Array = [_enemy("captain_dummy", back, deep), support, full]
-	var state := _state_with(roster)
-	var futile := CandidateApply.apply(state, {"kind": "ability", "inst": support,
-			"ability": AbilityData.get_ability("heal"), "target": full, "cost": 1},
-			_sim_for(roster))
-	check(EnemyEngine._effect_changed_nothing(state, futile),
-			"a heal at full health changes nothing — the tap and mana are costs, not outcomes")
-
-	var hurt := _enemy("fodder_dummy", back, 0)
-	hurt.current_health = 1
-	var support2 := _enemy("support_dummy", back, 1)
-	var roster2: Array = [_enemy("captain_dummy", back, deep), support2, hurt]
-	var state2 := _state_with(roster2)
-	var real := CandidateApply.apply(state2, {"kind": "ability", "inst": support2,
-			"ability": AbilityData.get_ability("heal"), "target": hurt, "cost": 1},
-			_sim_for(roster2))
-	check(not EnemyEngine._effect_changed_nothing(state2, real),
-			"a heal that actually restores health is a real play")
-
-
 # ── Idle hand: a body it could field is never left in hand ───────────────────────────
 #
 # The blunt criterion (user mandate 2026-07-30, after the withholding bug kept coming back
@@ -1706,7 +1691,7 @@ func _doomed_attacker_projects_less() -> void:
 	var deep := BoardData.COLS - 1
 	var safe := _state_with(
 			[_enemy("fodder_dummy", 0, 0)], [_player("queen", back, deep)])
-	# The CPU queens stand DEEP so the fodder is the waterfall's first stop — front-most,
+	# The CPU queens stand DEEP so the fodder is the quota's biggest draw — front-most,
 	# it receives the naive mass; whether that mass is real is exactly what the refined
 	# pass discounts (position never gates attacking, so the deep queens still doom the
 	# player's attacker).
@@ -1870,3 +1855,312 @@ func _king_safety_shape() -> void:
 	BoardScoring.run_valuation(doomed)
 	check(judge.objection(doomed) <= BoardScoring.KingSafety.GRADED_MAX + 0.0001,
 			"a living king's objection never reaches the categorical ceiling")
+
+
+# ── The eval channels (STATUS_EVAL_BRIEF.md — computation only, per the doctrine) ──────
+
+# Parse + round-trip of the authored annotation, and that the shipped burn numbers
+# actually arrived off disk (the whole feature is authored data reaching the fold).
+func _eval_annotation_parse() -> void:
+	var e := Effect.from_dict({"trigger": {"kind": "event", "event": "turn_end"},
+			"targets": {"kind": "self"}, "attribute": "damage_taken", "amount": 1,
+			"eval": {"exposure": 1.0, "threat_mul": 0.5}})
+	check_eq(e.eval_add("exposure"), 1.0, "effect eval add parses")
+	check_eq(e.eval_mul("threat"), 0.5, "effect eval mul parses")
+	check_eq(e.eval_add("threat"), 0.0, "absent add reads 0")
+	check_eq(e.eval_mul("exposure"), 1.0, "absent mul reads 1")
+	var out := e.to_dict()
+	check(out.has("eval") and float((out["eval"] as Dictionary).get("exposure", 0.0)) == 1.0,
+			"the annotation round-trips through to_dict")
+	var clean := Effect.from_dict({"trigger": {"kind": "event", "event": "turn_end"},
+			"targets": {"kind": "self"}, "attribute": "damage_taken", "amount": 1})
+	check(not clean.to_dict().has("eval"), "an unannotated effect serialises no eval key")
+
+	var ablaze := StatusData.get_status("ablaze")
+	check_eq(ablaze.eval_add("exposure"), 0.25, "ablaze per-stack exposure authored (0.25)")
+	var flat := 0.0
+	for ef: Effect in ablaze.effects:
+		flat += ef.eval_add("exposure")
+	check_eq(flat, 1.0, "ablaze's burn effect carries flat exposure 1")
+	var burning := StatusData.get_status("burning")
+	check_eq(burning.eval_add("exposure"), 0.25, "burning (ground) per-stack exposure authored")
+
+
+# The unit fold: status-level per-stack adds × stacks + the status's effects' flat adds.
+func _eval_fold_unit_statuses() -> void:
+	var p := unit("pawn")
+	StatusEngine.apply(p, "ablaze", Effect.STATUS_DURATION_DEFAULT, 2)
+	var m := EvalChannels.unit_mods(p)
+	check(m != null, "an ablaze unit folds non-neutral")
+	check_eq(m.exposure_add, 0.25 * 2 + 1.0, "ablaze ×2 = per-stack 0.25×2 + flat 1")
+	check_eq(m.threat_add, 0.0, "…and touches no other channel")
+	check_eq(m.exposure_mul, 1.0, "…and no muls")
+	check(EvalChannels.unit_mods(unit("pawn")) == null, "a clean unit folds neutral (null)")
+
+
+# The ground fold: a slot's statuses through the same two levels, filed on capture.
+func _eval_fold_ground_and_seat() -> void:
+	var sim := _sim_for([_enemy("pawn", 0, 0)])
+	var w: CombatWorld = sim["world"]
+	var slot := w.slot_at(1, 0, 0)
+	StatusEngine.apply(slot, "burning", Effect.STATUS_DURATION_DEFAULT, 3)
+	var gm := EvalChannels.slot_mods(slot)
+	check(gm != null, "a burning slot folds non-neutral")
+	check_eq(gm.exposure_add, 0.25 * 3 + 1.0, "burning ×3 = per-stack 0.25×3 + flat 1")
+	var state := BoardState.capture(w.player_grid, w.enemy_grid, 0, w.slots)
+	var seat := state.seat_mods(1, 0, 0)
+	check(seat != null, "capture files the burning seat into the ground map")
+	check_eq(seat.exposure_add, 1.75, "…with the folded exposure")
+	check(state.seat_mods(1, 0, 1) == null, "a clean seat stays absent (neutral)")
+
+
+# Innate attribution: a rule about the holder's own action folds onto exactly the units
+# its origin conditions admit (fire_scorches_ground: composition fire ≥ 2).
+func _eval_fold_innate_attribution() -> void:
+	var double_fire := unit("fire_fire_pawn")
+	var m := EvalChannels.unit_mods(double_fire)
+	check(m != null and m.threat_add == 1.25 and m.value_add == 1.0,
+			"a double-fire unit carries the scorch annotation (threat +1.25, value +1)")
+	check(EvalChannels.unit_mods(unit("pawn")) == null,
+			"a fireless unit does not carry it")
+
+
+# The three-places rule: copy() carries both folds; the cast path's _capture_back
+# re-captures ground from the simulated world and re-folds units from instances.
+func _eval_three_places_forwarding() -> void:
+	var burner := _enemy("pawn", 0, 1)
+	StatusEngine.apply(burner, "ablaze", Effect.STATUS_DURATION_DEFAULT, 1)
+	var sim := _sim_for([burner])
+	var w: CombatWorld = sim["world"]
+	StatusEngine.apply(w.slot_at(1, 0, 0), "burning", Effect.STATUS_DURATION_DEFAULT, 2)
+	var state := BoardState.capture(w.player_grid, w.enemy_grid, 0, w.slots)
+	check(state.units(1)[0].eval_mods != null, "capture folds the unit's statuses")
+
+	var copied := state.copy()
+	check(copied.seat_mods(1, 0, 0) == state.seat_mods(1, 0, 0),
+			"copy() carries the ground map (shared immutable folds)")
+	check(copied.units(1)[0].eval_mods == state.units(1)[0].eval_mods,
+			"copy() carries the unit fold")
+
+	var back := CandidateApply._capture_back(w, state, {}, [])
+	var seat := back.seat_mods(1, 0, 0)
+	check(seat != null and seat.exposure_add == 0.25 * 2 + 1.0,
+			"_capture_back re-captures the ground from the simulated world")
+	var u: BoardState.UnitState = back.units(1)[0]
+	check(u.eval_mods != null and u.eval_mods.exposure_add == 0.25 + 1.0,
+			"_capture_back re-folds units from their instances")
+
+
+# Threat consumption: (attack × strikes + adds) × muls, unit fold and seat fold combined,
+# reaching threat_against.
+func _eval_threat_consumption() -> void:
+	var state := _state_with([], [_player("knight", 0, 0)])   # knight: attack 2, strikes 1
+	var u := _unit_by_id(state, 0, "knight")
+	check_eq(BoardScoring.unit_threat_out(state, u), 2.0, "unannotated output is the raw mass")
+	var m := EvalChannels.Mods.new()
+	m.threat_add = 2.0
+	m.threat_mul = 0.5
+	u.eval_mods = m
+	check_eq(BoardScoring.unit_threat_out(state, u), (2.0 + 2.0) * 0.5,
+			"unit threat = (mass + add) × mul, muls after adds")
+	check_eq(BoardScoring.threat_against(state, 1), 2.0,
+			"threat_against sums the annotated output (no player mana)")
+	var g := EvalChannels.Mods.new()
+	g.threat_add = 2.0
+	state.ground[Vector3i(0, 0, 0)] = g
+	check_eq(BoardScoring.unit_threat_out(state, u), (2.0 + 2.0 + 2.0) * 0.5,
+			"the seat's threat channel joins the unit's own")
+
+
+# Exposure consumption: standing exposure lands on top of the waterfall's pour and drives
+# urgency — the chain that makes a burning unit read as dying, hence worth less.
+func _eval_exposure_consumption() -> void:
+	var state := _state_with([], [_player("pawn", 0, 0)])   # pawn: health 3; no enemy mass
+	var u := _unit_by_id(state, 0, "pawn")
+	check_eq(BoardScoring.incoming(state, u), 0.0, "no threat, no exposure: incoming 0")
+	var m := EvalChannels.Mods.new()
+	m.exposure_add = 1.5
+	u.eval_mods = m
+	check_eq(BoardScoring.incoming(state, u), 1.5,
+			"standing exposure lands with an empty waterfall")
+	check_eq(BoardScoring.urgency(state, u), 0.5, "urgency drinks it (1.5 of 3 life)")
+	m.exposure_mul = 0.5
+	check_eq(BoardScoring.incoming(state, u), 0.75, "exposure muls wrap the whole incoming")
+	var g := EvalChannels.Mods.new()
+	g.exposure_add = 0.5
+	state.ground[Vector3i(0, 0, 0)] = g
+	check_eq(BoardScoring.incoming(state, u), (1.5 + 0.5) * 0.5,
+			"the seat's exposure joins the unit's own before the muls")
+
+
+# Value consumption: the third channel enters the valuation's raw pricing —
+# (raw + adds) × muls — and flows into the stamped worth.
+func _eval_value_consumption() -> void:
+	var state := _state_with([_enemy("pawn", 0, 0), _enemy("pawn", 1, 0)])
+	var twin_a: BoardState.UnitState = state.unit_at(1, 0, 0)
+	var twin_b: BoardState.UnitState = state.unit_at(1, 1, 0)
+	var m := EvalChannels.Mods.new()
+	m.value_add = 1.0
+	twin_a.eval_mods = m
+	BoardScoring.run_valuation(state)
+	check_eq(twin_a.raw_value, twin_b.raw_value + 1.0,
+			"a value add raises raw worth by exactly itself")
+	m.value_mul = 2.0
+	state.valued = false
+	BoardScoring.run_valuation(state)
+	check_eq(twin_a.raw_value, (twin_b.raw_value + 1.0) * 2.0,
+			"value muls apply after the add, around the whole raw price")
+
+
+# The debug row must agree with itself: LANDED is the pour alone, but the stamps on the
+# same row (urgency/persist/value) drink the exposure fold — so the row prints the bridge
+# (`takes` = exposed_incoming of the pour). Pins the printed number TO the function, so
+# the two can never silently diverge again (the 2026-08-06 audit gap).
+func _eval_overlay_row_agrees() -> void:
+	var state := _state_with([_enemy("pawn", 0, 0)], [_player("pawn", 0, 0)])
+	var u := _unit_by_id(state, 1, "pawn")
+	var m := EvalChannels.Mods.new()
+	m.exposure_add = 1.5
+	u.eval_mods = m
+	BoardScoring.run_valuation(state)
+	var landed := BoardScoring.incoming_allocation(state, 1, false)
+	var pour := float(landed.get(u, 0.0))
+	var expect := BoardScoring.exposed_incoming(state, u, pour)
+	check(expect != pour, "fixture sanity: the fold moves the number on this row")
+	var row := ""
+	for line: Variant in DamageShareOverlay.report_lines(state):
+		if String(line).contains("takes"):
+			row = String(line)   # side 1 prints first; its only body is this pawn
+			break
+	check(row.contains("LANDED %.2f" % pour) and row.contains("takes %.2f" % expect),
+			"the printed takes column IS exposed_incoming of the printed quota")
+
+
+# The blow count (the quota's concentration limit): one per fielded strike, plus the
+# triangular pretend-units for open mana — costs 1, 2, 3, … while affordable, a remainder
+# folds into the last pretend unit instead of becoming one (user-designed 2026-08-06).
+func _quota_blows() -> void:
+	check_eq(BoardScoring.mana_blows(0), 0, "no mana, no pretend units")
+	check_eq(BoardScoring.mana_blows(1), 1, "1 = one unit of cost 1")
+	check_eq(BoardScoring.mana_blows(2), 1, "2 = 1 + a remainder folded into it")
+	check_eq(BoardScoring.mana_blows(3), 2, "3 = 1+2")
+	check_eq(BoardScoring.mana_blows(5), 2, "5 = 1+2 with the remainder folded")
+	check_eq(BoardScoring.mana_blows(6), 3, "6 = 1+2+3")
+	check_eq(BoardScoring.mana_blows(9), 3, "9 = 1+2+3 with the remainder folded")
+	check_eq(BoardScoring.mana_blows(10), 4, "10 = 1+2+3+4")
+	var state := _state_with([_enemy("pawn", 0, 0)], [_player("queen", 0, 0)])
+	var attacker := _unit_by_id(state, 0, "queen")
+	attacker.strikes = 3
+	check_eq(BoardScoring.blow_count(state, 1), 3,
+			"a multi-striker counts one blow per strike (no player mana here)")
+	state.player_mana = 3
+	check_eq(BoardScoring.blow_count(state, 1), 5,
+			"…plus the mana pretend-units when pricing the CPU side")
+	check_eq(BoardScoring.blow_count(state, 0), 1,
+			"the player side counts CPU strikes only — CPU mana is never threat")
+
+
+# The blast: equal quanta walk the exposure order front-first; a standing body is a
+# screen until its pool is spent; ties split each quantum evenly; overkill dies with the
+# body it hit; a body the blows never reach draws exactly zero (user-corrected
+# 2026-08-06 — "five more-exposed bodies and five blows: the sixth takes nothing").
+func _quota_split() -> void:
+	var deep := BoardData.COLS - 1
+	# Two same-depth pawns (equal exposure — a tie) screening a deep king. Mass comes
+	# from mana alone so every number is exact: 6 mana = mass 6 in 3 blows of 2.
+	var state := _state_with(
+			[_enemy("pawn", 0, 0), _enemy("pawn", 1, 0), _enemy("king", 2, deep)])
+	state.player_mana = 6
+	var a: BoardState.UnitState = state.unit_at(1, 0, 0)
+	var b: BoardState.UnitState = state.unit_at(1, 1, 0)
+	var king: BoardState.UnitState = state.unit_at(1, 2, deep)
+	check(BoardScoring.exposure_of(state, 1, 0, 0) > BoardScoring.exposure_of(state, 1, 2, deep),
+			"fixture sanity: the screened king is less exposed")
+
+	# Fat screens: every blow is absorbed at the front — the king draws NOTHING. This is
+	# the breakthrough doctrine itself: as long as the tier stands, the back is covered.
+	a.health = 50
+	b.health = 50
+	a.shield = 0
+	b.shield = 0
+	var trace: Dictionary = {"units": []}
+	var landed := BoardScoring.incoming_allocation(state, 1, true, trace)
+	check_eq(float(trace["mass"]), 6.0, "mana-only mass: 6")
+	check_eq(int(trace["blows"]), 3, "6 mana = 3 pretend blows (1+2+3)")
+	check_eq(float(trace["quantum"]), 2.0, "quantum = mass ÷ blows")
+	check_eq(float(_quota_rec(trace, a)["aimed"]), 3.0, "the tied front pair splits every quantum")
+	check_eq(float(_quota_rec(trace, b)["aimed"]), 3.0, "…evenly")
+	check(not bool(_quota_rec(trace, king)["eligible"]) and float(landed.get(king, 0.0)) == 0.0,
+			"while the front tier stands, the blows never reach the king")
+
+	# Breakthrough: the screens' pools spend on the first two blows and the third walks
+	# through to the king.
+	a.health = 2
+	b.health = 2
+	trace = {"units": []}
+	landed = BoardScoring.incoming_allocation(state, 1, true, trace)
+	check_eq(float(landed.get(a, 0.0)), 2.0, "a screen absorbs exactly its pool")
+	check_eq(float(landed.get(b, 0.0)), 2.0, "…both of them")
+	check_eq(float(_quota_rec(trace, king)["aimed"]), 2.0,
+			"the last blow breaks through to the king")
+
+	# Overkill dies with the body it hit: the lone 2-pool screen left standing eats a
+	# whole 2-point quantum's aim with 1 pool — the excess is wasted, never passed on.
+	a.health = 1
+	b.health = 2
+	trace = {"units": []}
+	landed = BoardScoring.incoming_allocation(state, 1, true, trace)
+	check_eq(float(_quota_rec(trace, king)["aimed"]), 2.0,
+			"the king still draws exactly one blow — waste never flows deeper")
+	var absorbed := 0.0
+	for u: Variant in landed.values():
+		absorbed += float(u)
+	check_eq(absorbed, 5.0, "1 + 2 + 2 absorbed of mass 6 — the overkill point is destroyed")
+
+
+# Past the death line the judge keeps a gradient (the unclamped loss ratio): a
+# 1.05×-lethal seat strictly outranks a 1.9×-lethal one — the T3 freeze — yet the
+# objection never turns categorical short of actual death.
+func _king_safety_gradient() -> void:
+	var state := _state_with([_enemy("king", 0, 0)])
+	var judge := BoardScoring.KingSafety.new()
+	var cap: BoardState.UnitState = state.captain(1)
+	state.valued = true   # hand-stamped ratios: the judge reads the stamp, never its own math
+	cap.loss_ratio = 0.2
+	check_eq(judge.objection(state), 0.0, "below the panic floor the judge is silent")
+	cap.loss_ratio = 0.4
+	check(absf(judge.objection(state) - BoardScoring.KingSafety.GRADED_MAX * 0.5) < 0.0001,
+			"mid-window: half the graded objection")
+	cap.loss_ratio = 1.05
+	var close := judge.objection(state)
+	cap.loss_ratio = 1.9
+	var far := judge.objection(state)
+	check(close >= BoardScoring.KingSafety.GRADED_MAX and far > close and far < 1.0,
+			"past the death line the objection still ranks seats and never saturates flat")
+
+
+# Overkill stays visible as PRESSURE: landed caps at the pool, but aimed keeps counting —
+# leftover blows with nobody left standing aim at whoever fell last, and loss_ratio reads
+# aimed (the T5 freeze: 28 mass onto a 3-pool captain read ratio 1.0, the gradient went
+# flat and surrender never fired).
+func _quota_overkill_pressure() -> void:
+	var state := _state_with([_enemy("pawn", 0, 0)])
+	state.player_mana = 12   # mass 12 in 4 blows (1+2+3+4's remainder folds into the last)
+	var pawn: BoardState.UnitState = state.unit_at(1, 0, 0)
+	var trace: Dictionary = {"units": []}
+	var landed := BoardScoring.incoming_allocation(state, 1, true, trace)
+	check_eq(int(trace["blows"]), 4, "12 mana = 4 pretend blows")
+	check_eq(float(landed.get(pawn, 0.0)), 3.0, "landed caps at the pool")
+	check_eq(float(_quota_rec(trace, pawn)["aimed"]), 12.0,
+			"aimed records the whole pressure — leftover blows aim at whoever fell last")
+	BoardScoring.run_valuation(state)
+	check_eq(pawn.persistence, 0.0, "persistence reads landed: certainly dead")
+	check(pawn.loss_ratio > EnemyEngine.SURRENDER_MARGIN,
+			"loss_ratio reads aimed: deep past the margin, never 'exactly dead'")
+
+
+func _quota_rec(trace: Dictionary, u: BoardState.UnitState) -> Dictionary:
+	for rec: Dictionary in (trace["units"] as Array):
+		if rec["unit"] == u:
+			return rec
+	return {}

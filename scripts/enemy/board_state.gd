@@ -83,6 +83,17 @@ var valued_by: EnemyPersonality = null
 # reality has. Always empty on capture: it records what THIS decision's simulation cost.
 var graveyard: Array = []
 
+# ── The GROUND layer's eval fold (STATUS_EVAL_BRIEF.md) ────────────────────────────────
+# Vector3i(side, row, col) -> EvalChannels.Mods, non-neutral seats only (mirrors
+# CombatWorld.slots' keying). What a seat DOES to whoever stands on it, in the engine's
+# three channels — the scoring helpers combine a unit's own fold with its seat's at read
+# time (never baked into the unit, so a move candidate re-prices by geometry alone).
+# Captured from the live slots (capture / CandidateApply._capture_back — a simulated cast
+# can set new ground alight, so the cast path re-captures rather than forwards); carried
+# by copy() (geometry candidates never change the ground). Mods instances are immutable
+# after the fold, so copies share them.
+var ground: Dictionary = {}
+
 
 class UnitState:
 	extends RefCounted
@@ -128,6 +139,18 @@ class UnitState:
 	var raw_value: float = 0.0
 	var persistence: float = 1.0
 	var value: float = 0.0
+	# The UNCLAMPED lethality ratio (aimed pressure ÷ remaining life) behind
+	# persistence's clamp: 1.05 and 1.9 are both "certainly dead" to persistence, but a
+	# judge choosing between two lethal seats needs the difference (the T3 freeze,
+	# 2026-08-06). Reads AIMED, not landed — the blast caps landed at the pool, which
+	# would flatten every overkill to exactly 1.0 (the T5 freeze, same day). Derived
+	# like its siblings — meaningful only when `valued`.
+	var loss_ratio: float = 0.0
+	# The unit's own eval-channel fold (EvalChannels.unit_mods — card effects, innates,
+	# statuses × stacks). Null = neutral (the common, unannotated case); immutable once
+	# folded, so copies share the instance. Its SEAT's fold lives on BoardState.ground and
+	# is combined at read time by the scoring helpers, never baked in here.
+	var eval_mods: EvalChannels.Mods = null
 
 	static func from_instance(inst: CardInstance) -> UnitState:
 		var u := UnitState.new()
@@ -158,6 +181,7 @@ class UnitState:
 				u.live_effects += 1
 			else:
 				u.triggered_effects += 1
+		u.eval_mods = EvalChannels.unit_mods(inst)
 		return u
 
 	func copy() -> UnitState:
@@ -184,18 +208,39 @@ class UnitState:
 		u.exhausted = exhausted
 		u.triggered_effects = triggered_effects
 		u.live_effects = live_effects
+		u.eval_mods = eval_mods   # immutable after the fold — shared, never re-derived
 		return u
 
 
 # Snapshots the live grids ([row][col] -> CardInstance or null). Takes plain grids, not
-# the CombatBoard control — the engine never sees a scene node.
+# the CombatBoard control — the engine never sees a scene node. `slots` is the live ground
+# layer (CombatWorld.slots, Vector3i -> BoardSlot); omitted, the ground map stays empty
+# and every seat reads neutral — a caller with no world in hand degrades to the
+# ground-blind capture.
 static func capture(live_player_grid: Array, live_enemy_grid: Array,
-		p_player_mana: int = 0) -> BoardState:
+		p_player_mana: int = 0, slots: Dictionary = {}) -> BoardState:
 	var s := BoardState.new()
 	s.player_units = _capture_grid(live_player_grid)
 	s.enemy_units = _capture_grid(live_enemy_grid)
 	s.player_mana = p_player_mana
+	s.ground = capture_ground(slots)
 	return s
+
+
+# The ground layer's fold: each live slot's statuses through EvalChannels; neutral seats
+# stay absent. Shared by capture above and CandidateApply._capture_back.
+static func capture_ground(slots: Dictionary) -> Dictionary:
+	var out: Dictionary = {}
+	for key: Vector3i in slots:
+		var mods := EvalChannels.slot_mods(slots[key] as BoardSlot)
+		if mods != null:
+			out[key] = mods
+	return out
+
+
+# What the seat at (side, r, c) does to its occupant — null = neutral (the common case).
+func seat_mods(side: int, r: int, c: int) -> EvalChannels.Mods:
+	return ground.get(Vector3i(side, r, c), null)
 
 
 static func _capture_grid(live_grid: Array) -> Array:
@@ -242,6 +287,9 @@ func copy() -> BoardState:
 	# A fresh list of the same corpses: nothing ever mutates a dead unit, so the entries
 	# are shared while the LIST stays per-copy (appending to one never reaches another).
 	s.graveyard = graveyard.duplicate()
+	# Same shape for the ground: a fresh MAP of the same immutable seat folds (geometry
+	# candidates never change the ground; the cast path re-captures instead).
+	s.ground = ground.duplicate()
 	# value_total / valued are DELIBERATELY not carried (nor UnitState's value stamp): a
 	# copy exists to be mutated, and the valuation pass re-runs on unvalued states. This
 	# is the one exception to the "every stamped field goes in three places" rule —

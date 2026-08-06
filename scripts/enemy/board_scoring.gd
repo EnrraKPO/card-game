@@ -644,8 +644,16 @@ class KingSafety:
 			return 1.0 if categorical(state) else 0.0
 		if not state.valued or state.valued_by != pricer:
 			BoardScoring.run_valuation(state, pricer)
-		var endanger := 1.0 - king.persistence
-		return GRADED_MAX * clampf((endanger - PANIC_FLOOR) / (PANIC_CEIL - PANIC_FLOOR),
+		# Past the death line the objection keeps a GRADIENT (the unclamped loss ratio):
+		# 1 − objection = (1 − GRADED_MAX) ÷ ratio, so a 1.05×-lethal seat strictly
+		# outranks a 1.9×-lethal one and a doomed king still crawls toward the least-bad
+		# seat instead of freezing (the T3 freeze, 2026-08-06: every candidate objected
+		# 0.95 flat, all moves tied decline, the king sat on burning ground). Asymptotic
+		# to 1, never reaching it — danger short of actual death stays non-categorical.
+		var ratio := king.loss_ratio
+		if ratio > 1.0:
+			return 1.0 - (1.0 - GRADED_MAX) / ratio
+		return GRADED_MAX * clampf((ratio - PANIC_FLOOR) / (PANIC_CEIL - PANIC_FLOOR),
 				0.0, 1.0)
 
 	func categorical(state: BoardState) -> bool:
@@ -901,12 +909,12 @@ static func exposure_breakdown(state: BoardState, side: int, r: int, c: int) -> 
 # pair counts against proportionally — never a cliff, so a tank fronting the army loses
 # only its own pairs ("suboptimal setups still count", ruled 2026-07-31).
 #
-# WHY IT EXISTS. The waterfall is honest to a fault: behind a body whose pool swallows
-# the entire pour, every slot behind receives exactly zero, so persistence (and through
-# it total_value) and delivery (and through it damage_output) go identically flat, and
-# seating falls to the tie-break. Leapers are the standing reason to care: some damage
-# reaches past every screen, and this eval is the hedge, priced as a PRIOR — it never
-# models who leaps or where.
+# WHY IT EXISTS. The quota split leaks through screens on purpose, but it still zeroes
+# every body past the blow-count cutoff — beyond the N most exposed seats, persistence
+# (and through it total_value) and delivery (and through it damage_output) go identically
+# flat, and seating falls to the tie-break. Leapers are the standing reason to care: some
+# damage reaches past every screen, and this eval is the hedge, priced as a PRIOR — it
+# never models who leaps or where.
 #
 # KNOWN SILENCE, on the record: units sharing a column read identical exposure, so
 # intra-stack pairs drop out. A stack is still judged through its pairs with every unit
@@ -941,6 +949,56 @@ static func formation_order(state: BoardState, side: int, pricer: EnemyPersonali
 	return concordant / comparable
 
 
+# ── the eval channels' consumption (STATUS_EVAL_BRIEF.md) ─────────────────────────────
+# The authored annotation fold (EvalChannels, stamped at capture) enters the engine at
+# exactly three sites: unit_threat_out below (threat — damage out), exposed_incoming
+# (exposure — damage in), and run_valuation's raw pricing (value). Each reading combines
+# the unit's OWN fold with its SEAT's (BoardState.ground, read at the unit's current
+# coordinates — so a move candidate re-prices by geometry alone), muls after all adds
+# around the native base: (base + adds) × muls. Null folds are neutral, and clamping at
+# zero keeps a hostile annotation from turning a quantity into its opposite.
+
+# Damage out per round — the unit's native attack mass through its threat channel.
+# (Blind: threat_mul 0.5 halves whatever the unit's mass happens to be.)
+static func unit_threat_out(state: BoardState, u: BoardState.UnitState) -> float:
+	var base := float(u.attack * u.strikes)
+	var m := u.eval_mods
+	var g := state.seat_mods(u.owner, u.row, u.col)
+	if m == null and g == null:
+		return base
+	var add := (m.threat_add if m != null else 0.0) + (g.threat_add if g != null else 0.0)
+	var mul := (m.threat_mul if m != null else 1.0) * (g.threat_mul if g != null else 1.0)
+	return maxf(0.0, (base + add) * mul)
+
+
+# Damage in per round: the waterfall's pour IS the native base of the incoming quantity;
+# standing exposure (burning, its seat's fire) adds on top, and exposure muls wrap the
+# whole thing (a "halve all incoming" ward halves the pour too).
+static func exposed_incoming(state: BoardState, u: BoardState.UnitState,
+		landed: float) -> float:
+	var m := u.eval_mods
+	var g := state.seat_mods(u.owner, u.row, u.col)
+	if m == null and g == null:
+		return landed
+	var add := (m.exposure_add if m != null else 0.0) + (g.exposure_add if g != null else 0.0)
+	var mul := (m.exposure_mul if m != null else 1.0) * (g.exposure_mul if g != null else 1.0)
+	return maxf(0.0, (landed + add) * mul)
+
+
+# The value channel around the raw pricing (run_valuation's stage 1). Kept non-negative:
+# "worse than absent" is not a worth the persistence math can carry.
+static func annotated_raw_value(state: BoardState, u: BoardState.UnitState,
+		pricer: EnemyPersonality) -> float:
+	var raw := raw_unit_value(u, pricer)
+	var m := u.eval_mods
+	var g := state.seat_mods(u.owner, u.row, u.col)
+	if m == null and g == null:
+		return raw
+	var add := (m.value_add if m != null else 0.0) + (g.value_add if g != null else 0.0)
+	var mul := (m.value_mul if m != null else 1.0) * (g.value_mul if g != null else 1.0)
+	return maxf(0.0, (raw + add) * mul)
+
+
 # Total damage the player can put out per round: Σ attack × strikes over fielded units,
 # PLUS their open mana at MANA_THREAT_RATE — unspent mana is damage not yet given a body.
 # Visible quantities only — reading the enemy's fielded army and mana pool is not
@@ -959,41 +1017,47 @@ static func threat_mass(state: BoardState) -> float:
 static func threat_against(state: BoardState, side: int) -> float:
 	var total := float(state.player_mana) * MANA_THREAT_RATE if side == 1 else 0.0
 	for u: BoardState.UnitState in state.units(1 - side):
-		total += float(u.attack * u.strikes)
+		total += unit_threat_out(state, u)
 	return total
 
 
-# ── the damage waterfall (user-designed 2026-07-31; replaces the proportional spray) ──
+# ── the damage quota (user-designed 2026-08-06; replaces the sequential pour) ─────────
 #
 # ALL threat is MELEE-TARGETING pressure — open mana included: mana prices the unit about
 # to be played, not a spell, and spells reaching the back line are out of planning's
-# control, so the geometry does not price them (the melee doctrine). One distribution
-# rule end to end: the side's expected incoming mass is poured into its units FRONT-FIRST
-# (targeting order — exposure, descending), each body absorbs up to its pool, and only
-# the OVERFLOW reaches the ranks behind. Dodged strikes are thrown at their target but
-# land on no one — they neither hurt the dodger nor pass through it.
+# control, so the geometry does not price them (the melee doctrine). The model's one job
+# is LANE BREAKTHROUGH: how likely the incoming damage is to reach past the screens. Who
+# swings at whom is unknowable at plan time (targeting policies, dodges, mid-round
+# deaths), so the model keeps only the knowable parts:
+#   · the side's total incoming mass,
+#   · roughly how many BLOWS it arrives in (blow_count — fielded strikes plus the
+#     triangular pretend-units open mana could still field),
+#   · and each body's exposure — the geometry number that already encodes how much of
+#     the incoming pressure survives the bodies in front (exposure v2).
 #
-# What this buys, all by construction: front slots carry strictly more expected damage
-# than back slots in every scenario (targeting reaches them first — the old spray gave
-# everyone a simultaneous slice and let a clamp flatten the difference); screening is
-# literal subtraction (a body in a more exposed slot removes what reaches the slots
-# behind); and a unit's allocation is bounded by its pool, so "overwhelmed" never erases
-# the position gradient — the excess goes where it really goes, onward.
+# Distribution is a FRONT-FIRST BLAST (user-corrected 2026-08-06 — the interim
+# exposure-proportional split leaked a dummy-sized share onto a fully screened captain;
+# "five more-exposed bodies and five blows: the sixth body takes zero"): the mass is cut
+# into `blows` equal quanta, and each quantum in turn lands on the most exposed body
+# still STANDING — a tie splits the quantum evenly (equal-depth bodies are equally
+# targetable in the rules, so neither is a screen for the other). What lands on a body
+# is capped by its remaining pool; the overkill past the pool and the dodged part are
+# WASTED, never redistributed. A body is a screen until its pool is spent, then the
+# remaining blows walk deeper — so breakthrough is what the model measures: depth = how
+# many blows must be consumed before one reaches you. Bodies the blows never reach draw
+# exactly zero.
 #
-# Still never "X will attack Y" (17b): one aggregate mass, one pour, no pairing. EQUAL
-# exposure SHARES the pour — melee targeting picks freely among equal-depth bodies, so a
-# tie is not a screen (a screen requires a body in a strictly MORE exposed slot); within
-# a tie group the mass water-fills evenly, capped by each body's pool, and only what the
-# whole group cannot absorb flows to the group behind.
+# Still never "X will attack Y" (17b): one aggregate mass, anonymous equal quanta, no
+# pairing.
 #   naive=true — the seeding pass: raw stat mass, no delivery/crit/dodge. Cuts the
 #   delivery recursion exactly as before (delivery reads naive urgencies).
 #   trace — an optional out-parameter for the debug inspector (DamageShareOverlay): the
-#   pour written down step by step, so the UI SHOWS this function's own arithmetic instead
-#   of re-deriving a second opinion of it. Ask for it by passing {"tiers": []}; omitted, it
-#   costs one has() check.
-#     { "mass": the side's total incoming, "thrown_at": the attackers' speed reference,
-#       "tiers": [{ "exposure", "arriving", "leaving",
-#                   "units": [{ "unit", "pool", "dodge", "cap", "aimed", "landed" }] }] }
+#   blast written down term by term, so the UI SHOWS this function's own arithmetic
+#   instead of re-deriving a second opinion of it. Ask for it by passing {"units": []};
+#   omitted, it costs one has() check.
+#     { "mass", "thrown_at", "blows", "quantum" (mass ÷ blows),
+#       "units": [{ "unit", "exposure", "eligible" (drew any blow), "pool", "dodge",
+#       "aimed", "landed" }] — exposure-descending }
 static func incoming_allocation(state: BoardState, side: int, naive: bool,
 		trace: Dictionary = {}) -> Dictionary:
 	var entries: Array = []
@@ -1001,72 +1065,109 @@ static func incoming_allocation(state: BoardState, side: int, naive: bool,
 		entries.append({"u": u, "e": exposure_of(state, side, u.row, u.col)})
 	entries.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return float(a["e"]) > float(b["e"]))
-	var remaining := threat_against(state, side) if naive \
+	var mass := threat_against(state, side) if naive \
 			else expected_threat_against(state, side)
 	var thrown_at := attack_speed_ref(state, 1 - side)
-	# Opt-in by key, not by emptiness: the default argument is itself an empty dictionary,
-	# so a caller asks for the trace by handing one that already carries "tiers".
-	var tracing := trace.has("tiers")
-	if tracing:
-		trace["mass"] = remaining
-		trace["thrown_at"] = thrown_at
-		trace["tiers"] = []
+	var blows := blow_count(state, side)
+	var quantum := mass / float(blows) if blows > 0 else 0.0
+	var aimed: Dictionary = {}
 	var landed: Dictionary = {}
-	var i := 0
-	while i < entries.size():
-		var j := i
-		while j < entries.size() \
-				and absf(float(entries[j]["e"]) - float(entries[i]["e"])) < 0.0001:
-			j += 1
-		# The tie group [i, j): water-fill evenly. A dodger soaks attention beyond its
-		# pool — to consume its life the enemy must throw pool/(1−dodge) at it, and the
-		# dodged part is wasted, not passed on.
-		var arriving := remaining   # what this tier is handed, before it absorbs anything
-		var aimed: Dictionary = {}
-		var caps: Dictionary = {}
-		var active: Array = []
-		for k in range(i, j):
-			var u: BoardState.UnitState = entries[k]["u"]
-			var life := float(u.health + u.shield)
-			var dodge := 0.0 if naive else minf(dodge_expect(u, thrown_at), 0.95)
-			aimed[u] = 0.0
-			caps[u] = life / (1.0 - dodge) if life > 0.0 else 0.0
-			landed[u] = 0.0
-			if float(caps[u]) > 0.0:
-				active.append(u)
-		while remaining > 0.0001 and not active.is_empty():
-			var share := remaining / float(active.size())
-			var still: Array = []
-			for u: BoardState.UnitState in active:
-				var room := float(caps[u]) - float(aimed[u])
-				var take := minf(share, room)
-				aimed[u] = float(aimed[u]) + take
-				remaining -= take
-				if float(caps[u]) - float(aimed[u]) > 0.0001:
-					still.append(u)
-			active = still
-		var rows: Array = []
-		for k in range(i, j):
-			var u: BoardState.UnitState = entries[k]["u"]
-			var dodge := 0.0 if naive else minf(dodge_expect(u, thrown_at), 0.95)
-			landed[u] = float(aimed[u]) * (1.0 - dodge)
-			if tracing:
-				rows.append({"unit": u, "pool": float(u.health + u.shield), "dodge": dodge,
-						"cap": float(caps[u]), "aimed": float(aimed[u]),
-						"landed": float(landed[u])})
-		if tracing:
-			(trace["tiers"] as Array).append({"exposure": float(entries[i]["e"]),
-					"arriving": arriving, "leaving": remaining, "units": rows})
-		i = j
+	var dodge: Dictionary = {}
+	var pool_left: Dictionary = {}
+	for ent: Dictionary in entries:
+		var u: BoardState.UnitState = ent["u"]
+		aimed[u] = 0.0
+		landed[u] = 0.0
+		dodge[u] = 0.0 if naive else minf(dodge_expect(u, thrown_at), 0.95)
+		pool_left[u] = float(u.health + u.shield)
+	# The blast: each quantum walks the exposure order and lands on the front-most
+	# STANDING tie group. A dodger soaks the aim without spending its pool (thrown-and-
+	# lost), so it keeps screening — attention is what a screen absorbs.
+	if quantum > 0.0:
+		var last_group: Array = []
+		for q in blows:
+			var group: Array = []
+			var top := -1.0
+			for ent: Dictionary in entries:
+				if float(pool_left[ent["u"]]) <= 0.0001:
+					continue
+				if top < 0.0:
+					top = float(ent["e"])
+					group.append(ent["u"])
+				elif absf(float(ent["e"]) - top) < 0.0001:
+					group.append(ent["u"])
+				else:
+					break
+			if group.is_empty():
+				# Every body is spent. Nothing more LANDS — but the leftover blows do not
+				# vanish from the pressure story: they aim at whoever fell last (the
+				# deepest tier), so `aimed` keeps recording how overkilled this side is.
+				# loss_ratio reads aimed — capping it here would blind the judge and the
+				# surrender verdict to everything past "exactly dead" (the T5 freeze:
+				# 28 mass onto a 3-pool captain read ratio 1.0).
+				if not last_group.is_empty():
+					var excess := quantum * float(blows - q) / float(last_group.size())
+					for u: BoardState.UnitState in last_group:
+						aimed[u] = float(aimed[u]) + excess
+				break
+			last_group = group
+			var share := quantum / float(group.size())
+			for u: BoardState.UnitState in group:
+				aimed[u] = float(aimed[u]) + share
+				var add := minf(share * (1.0 - float(dodge[u])), float(pool_left[u]))
+				landed[u] = float(landed[u]) + add
+				pool_left[u] = float(pool_left[u]) - add
+	# Opt-in by key, not by emptiness: the default argument is itself an empty dictionary,
+	# so a caller asks for the trace by handing one that already carries "units".
+	if trace.has("units"):
+		trace["mass"] = mass
+		trace["thrown_at"] = thrown_at
+		trace["blows"] = blows
+		trace["quantum"] = quantum
+		trace["units"] = []
+		for ent: Dictionary in entries:
+			var u: BoardState.UnitState = ent["u"]
+			(trace["units"] as Array).append({"unit": u, "exposure": float(ent["e"]),
+					"eligible": float(aimed[u]) > 0.0, "pool": float(u.health + u.shield),
+					"dodge": float(dodge[u]), "aimed": float(aimed[u]),
+					"landed": float(landed[u])})
 	return landed
 
 
-# Expected damage landing on this unit per round, under the NAIVE waterfall (raw stat
-# mass — the public seeding vocabulary; the valuation's stamp uses the refined pour
-# inside run_valuation). Side-aware: a player unit's incoming is the CPU's mass poured
+# How many BLOWS the mass bearing down on `side` arrives in: one per strike of every
+# opposing fielded unit, plus the pretend-units the player's open mana could still field
+# (side 1 only — mirroring threat_against's mana asymmetry). Pretend units cost 1, 2, 3, …
+# in sequence: keep fielding while affordable; a remainder that cannot afford the next
+# cost folds into the last pretend unit instead of becoming one (user-designed
+# 2026-08-06 — 3 mana is 2 units because 1+2, 6 mana is 3 because 1+2+3).
+static func blow_count(state: BoardState, side: int) -> int:
+	var n := 0
+	for u: BoardState.UnitState in state.units(1 - side):
+		n += maxi(1, u.strikes)
+	if side == 1:
+		n += mana_blows(state.player_mana)
+	return n
+
+
+# The triangular pretend-unit count for open mana (see blow_count).
+static func mana_blows(mana: int) -> int:
+	var n := 0
+	var cost := 1
+	var left := mana
+	while left >= cost:
+		left -= cost
+		n += 1
+		cost += 1
+	return n
+
+
+# Expected damage landing on this unit per round, under the NAIVE quota (raw stat
+# mass — the public seeding vocabulary; the valuation's stamp uses the refined split
+# inside run_valuation). Side-aware: a player unit's incoming is the CPU's mass split
 # through the player's own formation.
 static func incoming(state: BoardState, unit: BoardState.UnitState) -> float:
-	return float(incoming_allocation(state, unit.owner, true).get(unit, 0.0))
+	return exposed_incoming(state, unit,
+			float(incoming_allocation(state, unit.owner, true).get(unit, 0.0)))
 
 
 # The unit's likelihood of dying where it stands, 0..1: expected incoming damage against
@@ -1247,14 +1348,14 @@ static func crit_expect(u: BoardState.UnitState, target_speed: float) -> float:
 # mass is discounted by what it will live to throw (delivery — damage a dead unit never
 # lands isn't damage) and raised by its expected crits. Player open mana rides on top for
 # the CPU side exactly as in threat_against, undiscounted by delivery (it has no body to
-# kill before it swings) — under the melee doctrine it then pours and dodges through the
-# waterfall like every other part of the mass (incoming_allocation).
-# Delivery reads pass-1 urgencies (naive waterfall), so this never recurses.
+# kill before it swings) — under the melee doctrine it then splits and dodges through the
+# quota like every other part of the mass (incoming_allocation).
+# Delivery reads pass-1 urgencies (naive quota), so this never recurses.
 static func expected_threat_against(state: BoardState, side: int) -> float:
 	var t_ref := target_speed_ref(state, side)
 	var total := float(state.player_mana) * MANA_THREAT_RATE if side == 1 else 0.0
 	for u: BoardState.UnitState in state.units(1 - side):
-		total += float(u.attack * u.strikes) * delivery(state, u) * crit_expect(u, t_ref)
+		total += unit_threat_out(state, u) * delivery(state, u) * crit_expect(u, t_ref)
 	return total
 
 
@@ -1372,24 +1473,34 @@ static func persistence(state: BoardState, u: BoardState.UnitState) -> float:
 # TWO PASSES (the expected-damage model). Raw threat pretends every attacker lands
 # everything: a unit that dies before it swings still projects its full mass, so the CPU
 # would be paid for damage that can never happen and cower from corpses. Instead:
-#   PASS 1 (implicit): delivery() reads naive-waterfall urgencies — how likely each
+#   PASS 1 (implicit): delivery() reads naive-quota urgencies — how likely each
 #     ATTACKER is to live to throw its damage. Seeding the refinement with the naive
 #     reading is what cuts the recursion (my delivery depends on your threat, which
 #     would depend on my delivery, …) — one refinement step, no fixpoint.
-#   PASS 2: each side's incoming is the REFINED waterfall (incoming_allocation with the
+#   PASS 2: each side's incoming is the REFINED quota (incoming_allocation with the
 #     delivery-discounted, crit-raised mass, dodge folded per body) — then urgency,
 #     persistence and value follow as before. Since the melee doctrine every part of the
-#     mass, mana included, pours and dodges the same way.
+#     mass, mana included, splits and dodges the same way.
 static func run_valuation(state: BoardState, pricer: EnemyPersonality = null) -> void:
 	var dial := _persistence_factor(pricer)
 	var total := 0.0
 	for side in 2:
-		var landed := incoming_allocation(state, side, false)
+		var trace: Dictionary = {"units": []}
+		var landed := incoming_allocation(state, side, false, trace)
+		# The blast caps LANDED at each pool, so the lethality RATIO must read AIMED —
+		# the dodge-discounted pressure a seat draws, uncapped by what the body could
+		# absorb. Landed says what is lost (persistence); aimed says how far past dead
+		# the seat is (loss_ratio — the judge's and the surrender verdict's number).
+		var pressure: Dictionary = {}
+		for rec: Dictionary in (trace["units"] as Array):
+			pressure[rec["unit"]] = float(rec["aimed"]) * (1.0 - float(rec["dodge"]))
 		for u: BoardState.UnitState in state.units(side):
-			u.raw_value = raw_unit_value(u, pricer)
-			var inc := float(landed.get(u, 0.0))
+			u.raw_value = annotated_raw_value(state, u, pricer)
+			var inc := exposed_incoming(state, u, float(landed.get(u, 0.0)))
 			var life := u.health + u.shield
 			var urg := 1.0 if life <= 0 else clampf(inc / float(life), 0.0, 1.0)
+			u.loss_ratio = INF if life <= 0 else \
+					exposed_incoming(state, u, float(pressure.get(u, 0.0))) / float(life)
 			u.persistence = 1.0 - urg
 			u.value = u.raw_value * lerpf(1.0, u.persistence, dial)
 			total += u.value if side == 1 else -u.value

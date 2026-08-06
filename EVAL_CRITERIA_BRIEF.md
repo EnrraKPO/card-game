@@ -56,28 +56,49 @@ Known consequences, deliberate: damage-sharing EMERGES (the king fronts when its
 redistributes incoming off units the fight prices as precious — a price, not a role); a
 placement always ADDS value, so anti-withholding holds by construction.
 
-### The damage waterfall (user-designed 2026-07-31 — replaces the proportional spray)
+### The damage quota (user-designed 2026-08-06 — replaces the sequential pour)
 
 **All threat is melee-targeting pressure — the melee doctrine.** Open mana prices the
 unit about to be played, not a spell; spells reaching the back line are out of planning's
-control, so the geometry does not price them. One distribution rule end to end
-(`incoming_allocation`): the side's expected incoming mass is poured into its units
-**front-first** (targeting order — exposure, descending); each body absorbs up to its
-pool; only the **overflow** reaches the ranks behind. **Equal exposure shares the pour**
-(water-filling) — melee targeting picks freely among equal-depth bodies, so a tie is not
-a screen; a screen requires a body in a strictly MORE exposed slot. Dodged strikes are
-thrown at their target but land on no one — a dodger soaks attention beyond its pool
-(`pool ÷ (1 − dodge)`) and the dodged part is wasted, never passed on. Mana pours and
-dodges like everything else (the old "mana is undodgeable" special case died with the
-spray it served).
+control, so the geometry does not price them. The model's ONE JOB is **lane
+breakthrough**: how likely the incoming damage is to reach past the screens. Who swings
+at whom is unknowable at plan time (targeting policies, dodges, mid-round deaths), so the
+model keeps only the knowable parts — the total mass, roughly how many **blows** it
+arrives in, and each body's exposure. One closed form (`incoming_allocation`), every line
+independent:
 
-By construction: front slots carry strictly more expected damage than back slots in every
-scenario; screening is literal subtraction; a unit's allocation is bounded by its pool,
-so overwhelming threat never flattens the position gradient (the spray + clamp did — the
-live bug where a 3/2 was fronted over a 1/2 under heavy threat). Harm semantics moved
-with it: a body's harm is what it can still absorb, not the mass thrown at it. Overkill
-currently flows through undiminished (a queen's overkill of a 2-HP fodder is not wasted)
-— known coarseness, deliberate v1.
+- **Blows** (`blow_count`): one per strike of every opposing fielded unit, plus the
+  triangular **pretend-units** the player's open mana could still field — costs 1, 2,
+  3, … while affordable, a remainder folds into the last pretend unit (3 mana = 2 units
+  because 1+2; 6 = 3 because 1+2+3).
+- **The blast**: each quantum in turn lands on the most exposed body still STANDING;
+  a tie splits the quantum evenly (equal-depth bodies are equally targetable under
+  nearest-targeting, so a tie is never a screen). A body is a screen until its pool is
+  spent, then the remaining blows walk deeper — **breakthrough is the measured thing**:
+  depth = how many blows must be consumed before one reaches you. Bodies the blows never
+  reach draw exactly ZERO ("five more-exposed bodies and five blows: the sixth takes
+  nothing" — user-corrected 2026-08-06, replacing a same-day exposure-proportional split
+  that leaked a dummy-sized share onto a fully screened captain).
+- **Landing**: what lands on a body is `min(share × (1 − dodge), remaining pool)`. The
+  dodged part is thrown-and-lost (a dodger keeps soaking aim — attention is what a
+  screen absorbs); the overkill past the pool is **wasted** — neither is EVER
+  redistributed.
+
+By construction: front slots carry strictly more expected damage than back slots; a
+covered seat's safety is stepped, not smooth (count of front bodies vs blows); small
+bodies annihilate the damage they absorb (the pour's spill-through-the-full-body bug —
+a 2-HP fodder passed a queen's overkill onward undiminished, so the eval called a fully
+screened captain dead and declined every rescue; observed live 2026-08-06). Harm
+semantics unchanged: a body's harm is what it can still absorb, not the mass thrown at
+it.
+
+Succession, for the record: proportional spray (no screening, flatten-by-clamp) → the
+sequential pour / waterfall 2026-07-31 (screening as subtraction; failed on overkill
+conservation — damage is not a fluid, bodies are not sieves) → exposure-proportional
+quota (2026-08-06, hours: screening as smooth attenuation; failed the breakthrough
+doctrine — everyone eligible drew a share, a fully screened captain read dead) → this
+FRONT-FIRST BLAST same day (equal quanta, front-first, waste on kill, tie-split). The
+tier and proportional machinery are deleted, not dormant.
 
 **Exposure v2 — RELATIVE depth** (user-designed 2026-07-31, replacing the absolute base):
 depth without a screen is not safety. The base term counts distinct own-occupied columns
@@ -87,8 +108,8 @@ the waterfall correctly poured everything onto it). Screens are LANE-BLIND
 (`COVER_OFF_LANE` = `COVER_SAME_LANE` = 1.0): nearest-targeting resolves by column depth
 first, so the v1 same/off-lane 1.0/0.5 split modelled nothing in the rules; the
 column-mate 0.25 attention split stays (within a same-depth tie the facing lane is eaten
-first — that one IS in the rules). Consequence: the exposure map now agrees with the pour
-it orders — an unscreened back column reads as the front line it really is.
+first — that one IS in the rules). Consequence: the exposure map now agrees with the
+split it weights — an unscreened back column reads as the front line it really is.
 
 ### The expected-damage model
 
@@ -101,7 +122,7 @@ The refinements, all inside the measurement vocabulary, invisible to every crite
    `delivery` (its own likelihood of living to throw it, from the NAIVE pass — one
    refinement step, seeded raw, cuts the recursion; no fixpoint) × crit expectation. A
    unit that dies before it swings projects almost nothing.
-2. **Dodge expectation** — folded into the waterfall per body, as above.
+2. **Dodge expectation** — folded into the quota per body, as above.
 3. **Crit expectation** — each attacker's mass × `1 + chance × (multiplier − 1)`; also
    folded into `outgoing_mass`.
 
@@ -163,18 +184,28 @@ BEHAVIORS score expression relative to the pick's cohort (`score_pick`, two-pass
 ## The stock table
 
 **THE JUDGE — KingSafety** ("Protect the king", 🧠 Enemy AI): objection reads the own
-king's stamped endangerment (1 − persistence; the waterfall reading, never its own
+king's stamped endangerment (1 − persistence; the quota reading, never its own
 arithmetic) through **THE PANIC WINDOW** — the tank-early → protect-late arc as a stated
 rule: below `PANIC_FLOOR` (0.3 expected pool loss this turn) the judge is silent and the
 king's fat pool is a fine screen; past `PANIC_CEIL` (0.5) objection saturates at
 `GRADED_MAX` (0.95) and protection overrides everything short of the veto; between them
 it ramps. "The king tolerates risking a third of its life; by half, nothing else
-matters." Dead king → objection 1, categorical (this IS the old Captain-dead veto,
-deleted from the engine); never-staged king → 0; living danger is never categorical
-(GRADED_MAX < 1: a cornered king picks the least-bad line). No weight exists to re-tune —
-the old 2.275 knife-edge is GONE, dissolved rather than solved; a cowardly or reckless
-personality would author the window, not a weight. Floor/ceiling PROVISIONAL, no
-playtest.
+matters." **Past the death line the objection keeps a GRADIENT** (added 2026-08-06 after
+the T3 freeze — every candidate objected 0.95 flat, all rescue moves tied decline, the
+king sat on burning ground): the judge reads the UNCLAMPED loss ratio
+(`UnitState.loss_ratio`, stamped beside persistence — computed from AIMED pressure, not
+landed: the blast caps landed at the pool, which read every overkill as exactly 1.0 and
+re-froze the gradient, the T5 freeze; leftover blows with nobody standing aim at whoever
+fell last, so total annihilation stays visible) and for ratio > 1 objects
+`1 − (1 − GRADED_MAX) ÷ ratio` — 1.05×-lethal strictly outranks 1.9×-lethal, asymptotic
+to 1, never categorical short of actual death. The same ratio feeds the SURRENDER
+verdict with a margin (`EnemyEngine.SURRENDER_MARGIN` 1.5 — expected loss barely past
+the pool is a coin flip under the model's error bars, not doom). Dead king → objection
+1, categorical (this IS the old Captain-dead veto, deleted from the engine);
+never-staged king → 0; living danger is never categorical (a cornered king picks the
+least-bad line). No weight exists to re-tune — the old 2.275 knife-edge is GONE,
+dissolved rather than solved; a cowardly or reckless personality would author the
+window, not a weight. Floor/ceiling/margin PROVISIONAL, no playtest.
 
 **PEERS:**
 - **TotalValue** (1.0, the reference scale) — the stamped `value_total`, min-max
@@ -228,11 +259,6 @@ anti-decoration A/B with it (see `_idle_hand_changes_a_decision`).
 
 ## Supporting rules
 
-- **No-op plays are vetoed engine-side**: `EnemyEngine._effect_changed_nothing` rejects
-  any cast/ability whose resulting state matches the current one on OUTCOMES, ignoring
-  the play's own costs. Known limit: a pure-marker status folding into no captured stat
-  would be wrongly vetoed. The PLAYER-facing targeting rule ("heals cannot target
-  full-health units", keyed off "effect would change nothing") is still pending.
 - **Engine-stamped BoardState fields must be forwarded in three places** —
   `BoardState.copy()`, `CandidateApply._capture_back` (it REBUILDS the state
   field-by-field), and the engine's stamping — or a criterion goes quiet on casts only.
@@ -259,7 +285,8 @@ its authored weight entirely. Shipped starters (`aggressive`, `defensive`,
   raw preference). The documented greedy limitation, now with teeth because value is not
   linear in mana. A proper fix needs lookahead or a per-mana notion of value — a design
   decision, not a tune.
-- The player-facing no-op targeting rule (above).
+- The player-facing no-op targeting rule ("heals cannot target full-health units",
+  keyed off "effect would change nothing") is still pending.
 - **Re-expressing the parked offenders on 0..1** (protection, idle_hand, death_risk,
   harm) — each is a design question ("what is this, as a conviction?"), not a rescale;
   none is scheduled, and idle_hand may never return (the mana invariant carries fielding).

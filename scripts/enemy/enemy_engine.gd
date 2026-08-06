@@ -35,6 +35,19 @@ var personality: EnemyPersonality = null
 # synthesizes a planning world from the call's own grids and hand.
 var world: CombatWorld = null
 
+# Death needs a MARGIN before it is called (user ruling 2026-08-06): an expected loss
+# barely past the pool is a coin flip under the model's own error bars, not doom — the
+# T3 captain read 1.05×-lethal in a seat where discrete reality likely landed nothing.
+# Only past this ratio does the surrender verdict call the fight decided. A feel dial
+# for the playtest, like every constant here.
+const SURRENDER_MARGIN := 1.5
+
+# Stamped by decide_actions: whether the board its PLANNED turn ends on still leaves the
+# own captain dead PAST THE MARGIN this round (the surrender verdict — see the stamp at
+# the end of decide_actions; combat reads it to play the surrender beat instead of the
+# plan).
+var plan_leaves_captain_doomed := false
+
 # The tie-break generator. Null = draw from the fight's `ai` stream (CombatRng), which is
 # what makes a logged fight's tie-breaks replayable; an injected one overrides it, as the
 # deterministic tests rely on.
@@ -70,7 +83,8 @@ func _tie_break(n: int) -> int:
 func decide_actions(hand: Array, player_grid: Array, enemy_grid: Array, mana: int,
 		player_mana: int = 0) -> Array:
 	var scoring := BoardScoring.stock(weight_overrides, personality)
-	var state := BoardState.capture(player_grid, enemy_grid, player_mana)
+	var state := BoardState.capture(player_grid, enemy_grid, player_mana,
+			world.slots if world != null else {})
 	var pool: Array = hand.duplicate()
 	var remaining := mana
 	# The mana story the mana-optimization criterion reads: the engine stamps it onto the
@@ -115,8 +129,9 @@ func decide_actions(hand: Array, player_grid: Array, enemy_grid: Array, mana: in
 		# The do-nothing baseline is scored INSIDE the same cohort (_pick_best puts the
 		# current state first), so behavior criteria compare "act" and "decline" in the
 		# same currency instead of inflating every candidate against a behavior-blind
-		# baseline.
-		if float(best["score"]) <= float(best["current"]) + TIE_EPSILON:
+		# baseline. The accept/decline verdict is COMPUTED IN _pick_best — the same place
+		# that logs it — so the log line and this break can never tell different stories.
+		if not bool(best.get("accepted", false)):
 			break   # the best candidate improves nothing — then none do; the turn is done
 		var cand: Dictionary = best["cand"]
 		state = CandidateApply.apply(state, cand, sim)
@@ -149,6 +164,16 @@ func decide_actions(hand: Array, player_grid: Array, enemy_grid: Array, mana: in
 			"ability":
 				actions.append({"type": Action.GENERATE, "unit": cand["inst"],
 						"ability": cand["ability"], "target": cand.get("target", null)})
+	# The surrender verdict, stamped for the caller (combat's surrender beat): the plan
+	# above is the best turn this engine could put together, and `state` is the board that
+	# turn ends on — if THAT board still leaves the own captain dead PAST THE MARGIN
+	# (unclamped loss ratio ≥ SURRENDER_MARGIN — expected loss barely past the pool is a
+	# coin flip, not doom), the fight is decided and playing the plan out is theater.
+	# Stamped here, where the final planned state exists; whether to yield is the
+	# caller's call, not an action kind.
+	BoardScoring.run_valuation(state, personality)
+	var cap := state.captain(1)
+	plan_leaves_captain_doomed = cap != null and cap.loss_ratio >= SURRENDER_MARGIN
 	return actions
 
 
@@ -157,8 +182,10 @@ func decide_actions(hand: Array, player_grid: Array, enemy_grid: Array, mana: in
 # every candidate is applied first, then the whole cohort — the current state (the
 # do-nothing baseline, entry 0) plus every surviving candidate's result — is scored
 # together through score_pick, so behaviors can normalize against this pick's best option.
-# Returns { "cand": Dictionary, "score": float, "current": float } — an empty cand at
-# -INF when every candidate was vetoed, which the caller reads as "nothing worth doing".
+# Returns { "cand", "score", "current", "accepted" } — `accepted` is the must-strictly-
+# improve verdict against the baseline, decided here (and logged here) so the caller's
+# break and the log's ✓/✗ are one computation. An empty cand at -INF (no "accepted" key)
+# when every candidate was vetoed, which the caller reads as "nothing worth doing".
 #
 # CATEGORICAL VETOES BELONG TO THE JUDGES (BoardScoring.vetoes): a candidate a judge
 # categorically objects to — today, one that leaves the Captain dead — is not an option
@@ -178,13 +205,6 @@ func _pick_best(cands: Array, state: BoardState, scoring: BoardScoring,
 	for cand: Dictionary in cands:
 		var next := CandidateApply.apply(state, cand, sim)
 		if scoring.vetoes(next):
-			continue
-		# The no-op legality rule (EVAL_CRITERIA_BRIEF.md): a cast whose EFFECT changes
-		# nothing is not a candidate — first case caught: heals at full health. Without
-		# this, the mana-optimization criterion happily burns mana on functionally
-		# irrelevant plays just to avoid stranding it.
-		var kind := String(cand["kind"])
-		if (kind == "cast" or kind == "ability") and _effect_changed_nothing(state, next):
 			continue
 		_note_spend(next, cand)
 		kept.append(cand)
@@ -228,8 +248,10 @@ func _pick_best(cands: Array, state: BoardState, scoring: BoardScoring,
 		elif absf(s - best_score) <= TIE_EPSILON:
 			best.append(kept[i])
 	var chosen: Dictionary = best[_tie_break(best.size())]
-	_log_pick(kept, terms, chosen, cands.size() - kept.size())
-	return {"cand": chosen, "score": best_score, "current": float(totals[0])}
+	var accepted := best_score > float(totals[0]) + TIE_EPSILON
+	_log_pick(kept, terms, chosen, cands.size() - kept.size(), accepted)
+	return {"cand": chosen, "score": best_score, "current": float(totals[0]),
+			"accepted": accepted}
 
 
 # ── The reasoning dump (debug only — see CombatLog) ────────────────────────────────────
@@ -237,7 +259,8 @@ func _pick_best(cands: Array, state: BoardState, scoring: BoardScoring,
 # One pick, written out: the decision table's shares, every surviving candidate with its
 # per-criterion scores and the judges' objections, the do-nothing baseline it had to beat,
 # and the winner. Gated on CombatLog.verbose(), so with logging off nothing here runs.
-func _log_pick(kept: Array, terms: Array, chosen: Dictionary, vetoed: int) -> void:
+func _log_pick(kept: Array, terms: Array, chosen: Dictionary, vetoed: int,
+		accepted: bool) -> void:
 	if not CombatLog.verbose():
 		return
 	var baseline: Dictionary = terms[0]
@@ -250,7 +273,15 @@ func _log_pick(kept: Array, terms: Array, chosen: Dictionary, vetoed: int) -> vo
 		var t: Dictionary = terms[i + 1]
 		lines.append("  %-9.4f %-34s %s" % [float(t["total"]),
 				EnemyEngine.describe(kept[i]), _terms_line(t)])
-	lines.append("  ✓ %s" % EnemyEngine.describe(chosen))
+	# ✓ only on a pick that was actually taken. The old unconditional ✓ printed the best
+	# candidate even when the must-improve gate then declined the pick — a checkmark on
+	# an action that never executed, which is exactly the kind of self-disagreeing log
+	# line the audit doctrine forbids.
+	if accepted:
+		lines.append("  ✓ %s" % EnemyEngine.describe(chosen))
+	else:
+		lines.append("  ✗ declined — best candidate (%s) does not beat the baseline; turn ends"
+				% EnemyEngine.describe(chosen))
 	CombatLog.block(lines)
 
 
@@ -323,30 +354,3 @@ static func _note_spend(next: BoardState, cand: Dictionary) -> void:
 	if kind == "place":
 		# The body left the hand — that is the idle-hand charge this placement pays off.
 		next.hand_unit_costs.erase(int((cand["inst"] as CardInstance).get_attribute("cost")))
-
-
-# "The effect would change nothing": the resulting state matches the current one on every
-# OUTCOME — unit identities, positions, stats, corpses — deliberately IGNORING the play's
-# own costs (mana, the tap, the spent card): paying for nothing is exactly what makes it
-# a no-op. Keyed off outcomes rather than health, per the brief: a full-health heal with
-# a shield rider produces a different state and stays legal. KNOWN LIMIT: a status whose
-# effects fold into no captured stat (a pure marker) is invisible here and would be
-# wrongly vetoed — revisit if such a status ever exists. (This is the engine-side form;
-# the PLAYER-facing targeting rule from the brief is separate and still pending.)
-static func _effect_changed_nothing(prev: BoardState, next: BoardState) -> bool:
-	if next.graveyard.size() != prev.graveyard.size():
-		return false
-	for side in 2:
-		for r in BoardData.ROWS:
-			for c in BoardData.COLS:
-				var a: BoardState.UnitState = prev.grid_of(side)[r][c]
-				var b: BoardState.UnitState = next.grid_of(side)[r][c]
-				if (a == null) != (b == null):
-					return false
-				if a == null:
-					continue
-				if a.source != b.source or a.attack != b.attack or a.health != b.health \
-						or a.max_health != b.max_health or a.shield != b.shield \
-						or a.speed != b.speed or a.strikes != b.strikes:
-					return false
-	return true
