@@ -458,6 +458,10 @@ func _begin_round() -> void:
 			"%d/%d" % [_enemy_side.mana, _enemy_side.max_mana])
 	CombatLog.note("hand", ", ".join(_card_ids(_player_side.hand)))
 	await _do_cpu_placement()
+	# The CPU may have surrendered during its own placement — the fight is over and the
+	# end sequence owns the screen; starting the player phase would fight it for the board.
+	if _board.any_king_dead():
+		return
 	Sfx.play("combat_turn_start")
 	Vfx.play("mana_refill_surge", _mana_chunks_box)   # the gauge blooms as it refills
 	_phase = Phase.PLAYER_PLACE
@@ -495,6 +499,13 @@ func _do_cpu_placement() -> void:
 	_log_slot_table("── board read (pre-plan) ──")
 	var plan := engine.decide_actions(_enemy_side.hand,
 			_board.player_grid, _board.enemy_grid, _enemy_side.mana, _player_side.mana)
+	# The surrender beat (see the Surrender section): the engine stamps whether the board
+	# its best plan ends on STILL leaves its captain certainly dead this round. If so, the
+	# fight is decided and playing the plan out is theater — a yielding captain does not
+	# first deploy three more bodies. The plan is dropped, the concession plays instead.
+	if engine.plan_leaves_captain_doomed:
+		await _surrender_captain()
+		return
 	CombatLog.note("cpu", "── executing %d action(s) ──" % plan.size())
 	for action: Dictionary in plan:
 		await _execute_enemy_action(action)
@@ -1047,8 +1058,8 @@ func _log_strike(attacker: CardInstance, target: CardInstance, outcome: Resolver
 	CombatLog.note("combat", line)
 
 
-# The damage-share inspector, toggled from the debug row: a live read of the waterfall for
-# every slot on both boards (see DamageShareOverlay). Reopened rather than refreshed — the
+# The damage-share inspector, toggled from the debug row: a live read of the damage quota
+# for every slot on both boards (see DamageShareOverlay). Reopened rather than refreshed — the
 # board changes constantly and a stale panel would be worse than no panel.
 var _damage_overlay: DamageShareOverlay
 
@@ -1060,7 +1071,8 @@ func _toggle_damage_inspector() -> void:
 		return
 	_damage_overlay = DamageShareOverlay.open(self, _board.player_grid, _board.enemy_grid,
 			_player_side.mana,
-			GameData.current_encounter.personality if GameData.current_encounter != null else null)
+			GameData.current_encounter.personality if GameData.current_encounter != null else null,
+			_world.slots)
 	# Opening the panel also files the snapshot: what you are looking at now is what the log
 	# will still hold when the board has moved on and the question is still open.
 	_log_slot_table("── board read (inspector opened, turn %d) ──" % _turn)
@@ -1072,7 +1084,8 @@ func _toggle_damage_inspector() -> void:
 func _log_slot_table(caption: String) -> void:
 	if not CombatLog.verbose():
 		return
-	var state := BoardState.capture(_board.player_grid, _board.enemy_grid, _player_side.mana)
+	var state := BoardState.capture(_board.player_grid, _board.enemy_grid, _player_side.mana,
+			_world.slots)
 	BoardScoring.run_valuation(state,
 			GameData.current_encounter.personality if GameData.current_encounter != null else null)
 	CombatLog.block(DamageShareOverlay.report_lines(state, caption))
@@ -1105,18 +1118,59 @@ func _debug_kill_captain() -> void:
 	if _debug_killing or king == null or not king.is_alive():
 		return
 	_debug_killing = true
+	await _fell_enemy_captain()
+	_debug_killing = false
+
+
+# The captain's exit, shared by the debug button and the surrender beat: the lethal blow
+# through the Resolver like any other, and everything after it is the same path a killing
+# strike takes — kill/death broadcasts, the fall, the chest, the end-of-combat gate.
+func _fell_enemy_captain() -> void:
+	var king := _board.get_enemy_king()
+	if king == null or not king.is_alive():
+		return
 	Resolver.submit(StatMutation.make(king, StatMutation.HEALTH, -king.current_health,
 			null, StatMutation.CH_SYSTEM))
 	await _emit_kill(king)
 	await _broadcast(GameEvent.make(&"death", king))
 	await _bury(king)
 	_board.cleanup_effect_deaths()
-	_debug_killing = false
 	# Mid-combat the resolution loop is already watching for a fallen king and will end the fight at
 	# its next checkpoint — ending it here too would run the whole end sequence twice. Outside combat
-	# (the placement phases, where this button is most useful) nothing else is watching, so end it.
+	# (the placement phases, where the debug button and surrender both live) nothing else is
+	# watching, so end it.
 	if _phase != Phase.COMBAT and _board.any_king_dead():
 		_handle_combat_end()
+
+
+# ── Surrender ──────────────────────────────────────────────────────────────────────────
+
+# A doomed captain playing out a decided fight is correct play that READS as a hang, so
+# it gets a punctuation mark instead: when even the engine's best plan ends on a board
+# where its captain is certainly dead this round (the engine stamps that verdict —
+# EnemyEngine.plan_leaves_captain_doomed), the captain concedes — a word, a shiver, and
+# the same fall a killing blow ends with. Flavor pool, not one line, so repeat fights stay
+# a little alive; picked off the global RNG on purpose (cosmetic only — combat's seeded
+# streams must not shift over a joke).
+const SURRENDER_LINES: Array = [
+	"You got me. I yield.",
+	"I've seen enough. I yield!",
+	"Tell my pawns I loved them. I yield.",
+	"We who are about to die… would rather not. I yield.",
+]
+
+
+func _surrender_captain() -> void:
+	var king := _board.get_enemy_king()
+	if king == null or not king.is_alive():
+		return
+	CombatLog.note("cpu", "SURRENDER — even the best plan ends with the captain dead this round; it yields")
+	var ui := _board.get_card_ui(king)
+	if ui != null:
+		var line: String = SURRENDER_LINES.pick_random()
+		_animator.tremble_card(ui, 1.9)   # concurrent: the shiver runs under the words
+		await SpeechBubble.say(ui, line, 1.7)
+	await _fell_enemy_captain()
 
 
 # The corpse's send-off, deliberately outliving the death beat. Awaits the fade IN FULL — unlike the
@@ -1987,7 +2041,7 @@ func _build_action_column() -> Control:
 		UIScale.tip(_log_btn, "Debug: write the combat event log (seed, decks, plays, CPU reasoning)")
 		debug_row.add_child(_log_btn)
 
-		# The damage-share inspector: every slot's read of the waterfall, live.
+		# The damage-share inspector: every slot's read of the damage quota, live.
 		var debug_share := ScreenUI.action_button("Dmg", _toggle_damage_inspector,
 			Vector2(0, side), 20, ScreenUI.CHROME_DEBUG)
 		debug_share.size_flags_horizontal = SIZE_EXPAND_FILL
