@@ -18,6 +18,7 @@ func run() -> void:
 	_conditioned_modifiers()
 	_run_scope_allegiance()
 	_consumable_relic_use()
+	_registry_keywords_expand()
 	_non_op_prohibition()
 	_non_op_exclusions()
 
@@ -99,6 +100,27 @@ func _run_scope_allegiance() -> void:
 	check_eq(neutral.get_attribute("attack"), neutral.data.attack,
 			"…and never a sideless (preview) instance")
 	GameData.current_modifiers = ModifierSet.new()   # restore the clean env
+
+
+# Keywords must expand no matter WHICH registry parses them. Content registries parse their
+# effects from `_static_init`, where a sibling class_name can still be an uncompiled script —
+# reaching NamedEffects by class name there dies with "Nonexistent function 'get_named' in
+# base 'GDScript'", and whether it happens is script load order (relics broke, cards did not).
+# Effect._named_registry resolves by path instead; these are the real authored call sites.
+func _registry_keywords_expand() -> void:
+	var ward := RelicData.get_relic("blinding_ward")
+	check(ward != null and ward.effects.size() == 2, "blinding_ward carries its two effects")
+	if ward != null and ward.effects.size() == 2:
+		var e := ward.effects[0] as Effect
+		check_eq(e.named_id, "blind", "a relic parsed at static-init time still finds the keyword")
+		check_eq(e.status_id, "blind", "…and the template's payload reached it")
+		check_eq(e.status_stacks, 1, "…at the call site's magnitude")
+	var drain := RelicData.get_relic("pollution_drain")
+	if drain != null and not drain.effects.is_empty():
+		check_eq((drain.effects[0] as Effect).status_id, "poison", "venom expands in a relic too")
+	var pawn_card := CardData.get_card("darkness_water_pawn")
+	if pawn_card != null and not pawn_card.effects.is_empty():
+		check_eq((pawn_card.effects[0] as Effect).status_id, "poison", "…and in a card")
 
 
 # The consumable-relic use path (Combat._use_consumable): the authored bomb's transient effect,

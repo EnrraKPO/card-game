@@ -647,6 +647,7 @@ function renderEffect(e, ctx, onChange, onRemove) {
           body.append(...rows);
           if (tg.kind !== 'side')
             body.append(participantConditionSection(tg, 'conditions', ctx, localChange, 'TARGETS must satisfy:'));
+          body.append(evalAnnotationSection(e, localChange));
           return;
         }
         const attrPool = sideTargeted ? (ctx.vocab.sideAttrs || ['draw', 'discard', 'mana', 'max_mana'])
@@ -703,6 +704,10 @@ function renderEffect(e, ctx, onChange, onRemove) {
         rows.push(participantConditionSection(tg, 'conditions', ctx, localChange, 'TARGETS must satisfy:'));
       body.append(...rows);
     }
+    // Every kind may carry the enemy engine's pricing (an interceptor prices blind, a
+    // named tick prices burn, a card's applier prices its poison) — appended last, and
+    // the named-effect branch above appends its own before returning.
+    body.append(evalAnnotationSection(e, localChange));
   }
   renderInto();
   return card;
@@ -712,6 +717,54 @@ function cleanupFilter(e) {
   if (e.filter && !e.filter.kind && !e.filter.has_element) delete e.filter;
   if (e.filter && e.filter.has_element === false) delete e.filter.has_element;
   if (e.filter && !Object.keys(e.filter).length) delete e.filter;
+}
+
+// ── The enemy engine's authored pricing (STATUS_EVAL_BRIEF.md) ────────────────────────
+// Flat, applied ONCE per carrier — the per-stack half of a status's pricing lives on the
+// STATUS root, not here. Absent = this effect is invisible to the enemy engine (never
+// wrong, just unpriced). The number is a human judgment written next to the effect; the
+// engine folds it at capture and never derives it from what the effect does.
+// opts.magnitude opens the price fields to the "$X" placeholder — only meaningful on a
+// named-effect TEMPLATE, where the price scales with the keyword's number ("Blind X" is
+// worth X). A call site's own effect prices a fixed thing, so it stays numbers-only.
+function evalAnnotationSection(e, localChange, opts) {
+  opts = opts || {};
+  const mag = !!opts.magnitude;
+  const wrap = el('div');
+  const ADDS = [
+    ['threat', 'Threat +', 'damage/round the carrier’s OUTPUT gains (+) or loses (−)'],
+    ['exposure', 'Exposure +', 'damage/round expected ONTO the carrier; a soak/heal is negative'],
+    ['value', 'Value +', 'value-units for what is neither damage-in nor -out (1 ≈ a point of attack)'],
+  ];
+  const MULS = [
+    ['threat_mul', '× Threat', 'wraps the carrier’s whole output — blind’s "halve it" is 0.5'],
+    ['exposure_mul', '× Exposure', 'wraps the carrier’s whole incoming'],
+    ['value_mul', '× Value', 'wraps the carrier’s whole raw worth'],
+  ];
+  const render = () => {
+    wrap.replaceChildren();
+    if (!e.eval) {
+      wrap.append(el('button', { class: 'ghost small list-add', text: '+ enemy eval pricing',
+        title: 'Price this effect for the enemy engine (threat / exposure / value) — an unpriced effect is invisible to its planning',
+        onclick: () => { e.eval = {}; localChange(); render(); } }));
+      return;
+    }
+    wrap.append(el('span', { class: 'lab subtle',
+      text: 'Enemy eval pricing — flat, applied once (per-stack scaling lives on the status itself). '
+        + 'Never price a standing stat effect: captured stats already say it (double count).' }));
+    const addRow = el('div', { class: 'frow' });
+    for (const [key, label, hint] of ADDS)
+      addRow.append(fld(label, numInput(e.eval, key, localChange, { float: true, step: 'any', optional: true, placeholder: mag ? '— or $X' : '—', magnitude: mag }), hint, 'narrow'));
+    const mulRow = el('div', { class: 'frow' });
+    for (const [key, label, hint] of MULS)
+      mulRow.append(fld(label, numInput(e.eval, key, localChange, { float: true, step: 'any', optional: true, placeholder: '1', magnitude: mag }), hint, 'narrow'));
+    mulRow.append(el('div', { class: 'fld narrow', style: 'justify-content:flex-end' },
+      el('button', { class: 'ghost tiny', text: '✕ unpriced', title: 'Drop the pricing — the effect goes back to invisible',
+        onclick: () => { delete e.eval; localChange(); render(); } })));
+    wrap.append(addRow, mulRow);
+  };
+  render();
+  return wrap;
 }
 
 // The whole list, with an "add" button.
@@ -807,6 +860,15 @@ function cleanEffectForDeploy(e) {
     if (!out.riders.length) delete out.riders;
   }
   if (!out.per_stack_chance) delete out.per_stack_chance;
+  // Eval pricing: a 0 add and a 1 mul both mean "absent" (the fold's neutral values);
+  // a 0 MUL is meaningful ("output erased") and survives.
+  if (out.eval && typeof out.eval === 'object') {
+    for (const k of Object.keys(out.eval)) {
+      const v = out.eval[k];
+      if (v == null || v === '' || (k.endsWith('_mul') ? v === 1 : v === 0)) delete out.eval[k];
+    }
+    if (!Object.keys(out.eval).length) delete out.eval;
+  } else delete out.eval;
   const kind = effectKindOf(out);
   // "kind" is inferred by the game parser for modifier (key) / custom / interceptor,
   // and triggered is the default — keep explicit kind only where the data files do.

@@ -145,6 +145,18 @@ async function main() {
     r = await api('/api/game/save', { type: 'namedeffect', file: 'apitest_named.json', data: {
       id: 'apitest_badrider', riders: [{ chance: 2, status: { id: 'poison' } }] } });
     check('rider chance out of range rejected', r.status === 400 && /between 0 and 1/.test(r.data.error), r.data.error);
+    // PARAMETERISED keyword ("Blind X"): stacks and the enemy-engine price both take the
+    // call site's amount, so the magnitude placeholder is legal where a number is.
+    r = await api('/api/game/save', { type: 'namedeffect', file: 'apitest_named.json', data: {
+      id: 'apitest_blind', display_name: 'Blind', amount: 1,
+      status: { id: 'blind', stacks: '$X' }, eval: { value: '$X' } } });
+    check('a parameterised template saves with its magnitude', r.status === 200, JSON.stringify(r.data).slice(0, 200));
+    r = await api('/api/game/save', { type: 'namedeffect', file: 'apitest_named.json', data: {
+      id: 'apitest_badmag', status: { id: 'blind', stacks: '$Y' } } });
+    check('an unknown placeholder is not a number', r.status === 400 && /positive integer/.test(r.data.error), r.data.error);
+    r = await api('/api/game/save', { type: 'namedeffect', file: 'apitest_named.json', data: {
+      id: 'apitest_badeval', status: { id: 'blind' }, eval: { nonsense: 1 } } });
+    check('unknown eval channel on a template rejected', r.status === 400 && /unknown eval channel/.test(r.data.error), r.data.error);
     // an effect referencing the library passes the payload gate; unknown names are loud
     r = await api('/api/game/save', { type: 'status', file: 'apitest_statuses.json', data: {
       id: 'apitest_burner', effects: [{ trigger: { kind: 'event', event: 'turn_end' }, targets: { kind: 'self' }, named: 'apitest_burn' }] } });

@@ -1,22 +1,26 @@
 class_name DamageShareOverlay
 extends PanelContainer
 
-# THE debug read of the damage waterfall: what every slot on both boards is expected to
+# THE debug read of the damage quota: what every slot on both boards is expected to
 # absorb this turn, and the arithmetic that got there (BoardScoring.incoming_allocation —
-# EVAL_CRITERIA_BRIEF.md, "the damage waterfall"). Opened from combat's debug row.
+# EVAL_CRITERIA_BRIEF.md, "the damage quota"). Opened from combat's debug row.
 #
-# EVERY SLOT, not every unit. The waterfall allocates damage to BODIES — absorption needs a
-# pool — but the terms that decide the pour are geometric and defined for a bare
+# EVERY SLOT, not every unit. The quota allocates damage to BODIES — absorption needs a
+# pool — but the terms that decide the split are geometric and defined for a bare
 # coordinate, so an empty slot is not a blank row here:
-#   · exposure — column depth divided by the cover the side's own units give it. Computed
-#     for any (row, col), occupied or not; this is what the engine already reads when it
-#     prices a placement into an empty slot.
-#   · tier — where that exposure puts the slot in the front-first pour order.
-#   · arriving — the mass still unabsorbed when the pour reaches that tier: what a body
-#     standing here would be walking into.
-# An occupied slot adds the terms that need a pool: cap (pool inflated by dodge — a dodger
-# soaks attention beyond its life), aimed, landed, and the valuation stamp the whole thing
-# feeds (urgency → persistence → value).
+#   · exposure — the blast's ordering key: relative depth divided by the cover the
+#     side's own units give it. Computed for any (row, col), occupied or not; this is
+#     what the engine already reads when it prices a placement into an empty slot.
+#   · arriving — the mass still unconsumed when the blast's front-first walk reaches
+#     this depth: what a body standing here would be walking into.
+# An occupied slot adds the terms that need a body: eligibility (the blows land
+# front-first on standing bodies — one that is never reached draws nothing), quota
+# (aimed), dodge,
+# LANDED (capped by the pool — overkill and dodge are wasted, never redistributed), takes
+# (the landed quota through the body's exposure fold — standing annotations like burning
+# or its seat's fire; this is the number the valuation stamps drink,
+# BoardScoring.exposed_incoming), and the valuation stamp the whole thing feeds
+# (urgency → persistence → value).
 #
 # The numbers are READ, never re-derived: the panel asks incoming_allocation for its own
 # trace, so it can only ever show what the engine actually computed.
@@ -42,14 +46,15 @@ static func report_lines(state: BoardState, caption: String = "") -> Array:
 	if not caption.is_empty():
 		lines.append(caption)
 	for side in [1, 0]:
-		var trace: Dictionary = {"tiers": []}
+		var trace: Dictionary = {"units": []}
 		var landed := BoardScoring.incoming_allocation(state, side, false, trace)
 		var mass := float(trace.get("mass", 0.0))
 		var absorbed := 0.0
 		for u: Variant in landed.values():
 			absorbed += float(u)
-		lines.append("%s — incoming mass %.2f · absorbed %.2f · dodged/unspent %.2f · speed ref %.2f"
-				% ["CPU board" if side == 1 else "Player board", mass, absorbed,
+		lines.append("%s — incoming mass %.2f in %d blows (quantum %.2f) · absorbed %.2f · wasted/dodged %.2f · speed ref %.2f"
+				% ["CPU board" if side == 1 else "Player board", mass,
+				int(trace.get("blows", 0)), float(trace.get("quantum", 0.0)), absorbed,
 				maxf(0.0, mass - absorbed), float(trace.get("thrown_at", 0.0))])
 		for r in BoardData.ROWS:
 			for c in BoardData.COLS:
@@ -65,19 +70,27 @@ static func _slot_line(state: BoardState, side: int, r: int, c: int, trace: Dict
 	var b := BoardScoring.exposure_breakdown(state, side, r, c)
 	var exposure := float(b["exposure"])
 	var unit := _unit_at(state, side, r, c)
-	var s := "r%dc%d %-16s base %.3f  cover %.2f  exp %.3f (tier %d)  arriving %.2f" \
+	var s := "r%dc%d %-16s base %.3f  cover %.2f  exp %.3f" \
 			% [r, c, unit.card_id if unit != null else "—empty—", float(b["base"]),
-			float(b["cover"]), exposure, _tier_of(state, side, exposure),
-			_arriving_at(trace, exposure)]
-	if unit != null:
+			float(b["cover"]), exposure]
+	if unit == null:
+		s += "  arriving ≈%.2f" % _arriving(trace, exposure)
+	else:
 		var rec := _record_for(trace, unit)
 		var got := float(landed.get(unit, 0.0))
-		s += "  | pool %d+%d  dodge %.0f%%  cap %.2f  aimed %.2f  LANDED %.2f (%.0f%%)" \
+		if not bool(rec.get("eligible", false)):
+			s += "  (the %d blows never reach it)" % int(trace.get("blows", 0))
+		s += "  | pool %d+%d  dodge %.0f%%  quota %.2f (%.0f%%)  LANDED %.2f" \
 				% [unit.health, unit.shield, float(rec.get("dodge", 0.0)) * 100.0,
-				float(rec.get("cap", 0.0)), float(rec.get("aimed", 0.0)), got,
-				100.0 * got / mass if mass > 0.0 else 0.0]
-		s += "  urgency %.2f  persist %.2f  value %.2f (raw %.2f)" \
-				% [BoardScoring.urgency(state, unit), unit.persistence, unit.value,
+				float(rec.get("aimed", 0.0)),
+				100.0 * float(rec.get("aimed", 0.0)) / mass if mass > 0.0 else 0.0, got]
+		# LANDED is the quota alone; `takes` is that quota through the body's exposure fold
+		# (exposed_incoming) — the number urgency/persist/value actually consume. Printed
+		# always, so a row where standing exposure moves the total can never silently
+		# disagree with its own stamps.
+		s += "  takes %.2f  urgency %.2f  persist %.2f  value %.2f (raw %.2f)" \
+				% [BoardScoring.exposed_incoming(state, unit, got),
+				BoardScoring.urgency(state, unit), unit.persistence, unit.value,
 				unit.raw_value]
 	s += _who_text(b)
 	return s
@@ -86,10 +99,10 @@ static func _slot_line(state: BoardState, side: int, r: int, c: int, trace: Dict
 # Builds and parents the panel. `pricer` is the fight's personality (null = stock), so the
 # value stamps shown are the ones THIS opponent computes, not a generic pricing.
 static func open(host: Control, player_grid: Array, enemy_grid: Array, player_mana: int,
-		pricer: EnemyPersonality = null) -> DamageShareOverlay:
+		pricer: EnemyPersonality = null, slots: Dictionary = {}) -> DamageShareOverlay:
 	var o := DamageShareOverlay.new()
 	o._pricer = pricer
-	o._state = BoardState.capture(player_grid, enemy_grid, player_mana)
+	o._state = BoardState.capture(player_grid, enemy_grid, player_mana, slots)
 	# The same valuation pass every criterion runs on, so persistence/value below are the
 	# stamps the engine itself would read this instant.
 	BoardScoring.run_valuation(o._state, pricer)
@@ -131,7 +144,7 @@ func _build() -> void:
 	top.add_theme_constant_override("separation", 12)
 	col.add_child(top)
 	var title := Label.new()
-	title.text = "Damage share — every slot's read of the waterfall"
+	title.text = "Damage share — every slot's read of the damage quota"
 	title.add_theme_font_size_override("font_size", 22)
 	title.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
 	title.size_flags_horizontal = SIZE_EXPAND_FILL
@@ -155,7 +168,7 @@ func _build() -> void:
 
 # One side: the header of totals, then its slots laid out as the board is.
 func _build_side(host: VBoxContainer, side: int, caption: String) -> void:
-	var trace: Dictionary = {"tiers": []}
+	var trace: Dictionary = {"units": []}
 	var landed := BoardScoring.incoming_allocation(_state, side, false, trace)
 	var mass := float(trace.get("mass", 0.0))
 
@@ -170,13 +183,15 @@ func _build_side(host: VBoxContainer, side: int, caption: String) -> void:
 	sub.add_theme_color_override("font_color", Color(0.88, 0.91, 0.98))
 	# The mass is what the OTHER side is expected to deliver — delivery-discounted and
 	# crit-raised (expected_threat_against), plus the player's open mana when the player is
-	# the aggressor. Absorbed vs wasted is the dodge story: a dodged part is thrown and
-	# lands on no one.
+	# the aggressor — arriving in `blows` pieces (fielded strikes + mana pretend-units).
+	# Absorbed vs wasted is the waste story: dodged parts land on no one, overkill past a
+	# pool is destroyed, and mass beyond the blow-count's reach touches nothing.
 	var absorbed := 0.0
 	for u: Variant in landed.values():
 		absorbed += float(u)
-	sub.text = "incoming mass %.2f   ·   absorbed %.2f   ·   dodged/unspent %.2f   ·   attacker speed ref %.2f" \
-			% [mass, absorbed, maxf(0.0, mass - absorbed), float(trace.get("thrown_at", 0.0))]
+	sub.text = "incoming mass %.2f in %d blows (quantum %.2f)   ·   absorbed %.2f   ·   wasted/dodged %.2f   ·   attacker speed ref %.2f" \
+			% [mass, int(trace.get("blows", 0)), float(trace.get("quantum", 0.0)),
+			absorbed, maxf(0.0, mass - absorbed), float(trace.get("thrown_at", 0.0))]
 	host.add_child(sub)
 
 	var grid := GridContainer.new()
@@ -224,15 +239,14 @@ func _cell(side: int, r: int, c: int, trace: Dictionary, landed: Dictionary,
 	# slots exactly as for occupied ones, which is also what keeps an empty cell worth its
 	# space on screen.
 	var cover := BoardScoring.exposure_breakdown(_state, side, r, c)
-	var tier := _tier_of(_state, side, exposure)
 	_row(v, "base", "%.3f   (depth: col %d of %d)" % [float(cover["base"]), c, BoardData.COLS])
 	_row(v, "cover", "%.2f%s" % [float(cover["cover"]), _who_text(cover)])
-	_row(v, "exposure", "%.3f   (tier %d)" % [exposure, tier])
-	# What is still in the air when the pour reaches this depth — the number that makes an
-	# empty slot's danger legible before anything stands in it.
-	_row(v, "arriving", "%.2f" % _arriving_at(trace, exposure))
+	_row(v, "exposure", "%.3f" % exposure)
 
 	if unit == null:
+		# The mass still unconsumed when the blast reaches this depth — the number that
+		# makes an empty slot's danger legible before anything stands in it.
+		_row(v, "arriving", "≈%.2f" % _arriving(trace, exposure))
 		var none := Label.new()
 		none.add_theme_font_size_override("font_size", 14)
 		none.add_theme_color_override("font_color", Color(0.70, 0.74, 0.86))
@@ -243,11 +257,16 @@ func _cell(side: int, r: int, c: int, trace: Dictionary, landed: Dictionary,
 	var rec := _record_for(trace, unit)
 	var got := float(landed.get(unit, 0.0))
 	_row(v, "pool", "%d hp + %d shield" % [unit.health, unit.shield])
-	_row(v, "dodge", "%.0f%%   cap %.2f" % [float(rec.get("dodge", 0.0)) * 100.0,
-			float(rec.get("cap", 0.0))])
-	_row(v, "aimed", "%.2f" % float(rec.get("aimed", 0.0)))
-	_row(v, "LANDED", "%.2f   (%.0f%% of mass)" % [got,
-			100.0 * got / mass if mass > 0.0 else 0.0], true)
+	if not bool(rec.get("eligible", false)):
+		_row(v, "quota", "0   (beyond the %d blows)" % int(trace.get("blows", 0)))
+	else:
+		_row(v, "quota", "%.2f   (%.0f%% of mass)" % [float(rec.get("aimed", 0.0)),
+				100.0 * float(rec.get("aimed", 0.0)) / mass if mass > 0.0 else 0.0])
+	_row(v, "dodge", "%.0f%%" % (float(rec.get("dodge", 0.0)) * 100.0))
+	_row(v, "LANDED", "%.2f" % got, true)
+	# The landed quota through the body's exposure fold — what the valuation stamps below
+	# actually consume. Same bridge as the log line's `takes` column.
+	_row(v, "takes", "%.2f" % BoardScoring.exposed_incoming(_state, unit, got))
 	_row(v, "urgency", "%.2f" % BoardScoring.urgency(_state, unit))
 	_row(v, "persist", "%.2f" % unit.persistence)
 	_row(v, "value", "%.2f   (raw %.2f)" % [unit.value, unit.raw_value])
@@ -295,48 +314,22 @@ static func _unit_at(state: BoardState, side: int, r: int, c: int) -> BoardState
 	return null
 
 
-# The pour's own record for this unit, straight out of the trace.
+# The split's own record for this unit, straight out of the trace.
 static func _record_for(trace: Dictionary, unit: BoardState.UnitState) -> Dictionary:
-	for t: Dictionary in (trace["tiers"] as Array):
-		for rec: Dictionary in (t["units"] as Array):
-			if rec["unit"] == unit:
-				return rec
+	for rec: Dictionary in (trace["units"] as Array):
+		if rec["unit"] == unit:
+			return rec
 	return {}
 
 
-# The slot's place in the pour order, 1 = poured into first. Ranked over EVERY slot on the
-# side, not just the occupied ones: the trace's own tiers contain bodies only, so ranking
-# against them would file every empty slot behind the same body and report a dozen
-# different positions as one tier. Equal exposures share a rank — that is the water-filling
-# rule, and it is the difference between a screen and a tie.
-static func _tier_of(state: BoardState, side: int, exposure: float) -> int:
-	var levels: Array = []
-	for r in BoardData.ROWS:
-		for c in BoardData.COLS:
-			var e := BoardScoring.exposure_of(state, side, r, c)
-			var seen := false
-			for l: Variant in levels:
-				if absf(float(l) - e) < 0.0001:
-					seen = true
-					break
-			if not seen:
-				levels.append(e)
-	levels.sort()
-	levels.reverse()
-	for i in levels.size():
-		if absf(float(levels[i]) - exposure) < 0.0001:
-			return i + 1
-	return levels.size()
-
-
-# The mass still unabsorbed when the pour reaches this exposure: everything strictly more
-# exposed has already taken its fill. For an occupied slot this is what its own tier was
-# handed; for an empty one it is what a body standing here would meet.
-static func _arriving_at(trace: Dictionary, exposure: float) -> float:
-	var tiers: Array = trace["tiers"]
-	for t: Dictionary in tiers:
-		if float(t["exposure"]) <= exposure + 0.0001:
-			return float(t["arriving"])
-	if tiers.is_empty():
-		return float(trace.get("mass", 0.0))
-	return float((tiers[tiers.size() - 1] as Dictionary)["leaving"])
+# The mass still unconsumed when the blast's front-first walk reaches this depth:
+# everything strictly more exposed has already drawn its blows. Approximate on purpose
+# (a body actually standing here would also change the walk) — the exact number is what
+# the engine computes when it prices the placement candidate; this is the readable
+# preview of it.
+static func _arriving(trace: Dictionary, exposure: float) -> float:
+	var left := float(trace.get("mass", 0.0))
+	for rec: Dictionary in (trace.get("units", []) as Array):
+		if float(rec["exposure"]) > exposure + 0.0001:
+			left -= float(rec["aimed"])
+	return maxf(0.0, left)

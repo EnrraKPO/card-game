@@ -197,10 +197,8 @@
 					"darkness"
 				],
 				"targeting_policy": "attacker",
-				"status": {
-					"id": "poison",
-					"stacks": 1
-				}
+				"named": "venom",
+				"amount": 1
 			}
 		]
 	},
@@ -229,10 +227,8 @@
 					]
 				},
 				"targeting_policy": "attacker",
-				"status": {
-					"id": "blind",
-					"stacks": 1
-				}
+				"named": "blind",
+				"amount": 1
 			},
 			{
 				"kind": "triggered",
@@ -251,10 +247,8 @@
 					]
 				},
 				"targeting_policy": "attack_target",
-				"status": {
-					"id": "blind",
-					"stacks": 1
-				}
+				"named": "blind",
+				"amount": 1
 			}
 		]
 	},

@@ -91,7 +91,7 @@
     "effects": [
       { "trigger": "on_turn_end",
         "targets": { "kind": "auto", "criterion": "random", "count": 1, "conditions": [ { "allegiance": "enemy" } ] },
-        "status": { "id": "poison", "stacks": 2 } }
+        "named": "venom", "amount": 2 }
     ]
   },
   {

@@ -36,8 +36,30 @@ function textInput(obj, key, onChange, placeholder) {
   });
 }
 
+// The named-effect MAGNITUDE placeholder (game: NamedEffects.MAGNITUDE) — a keyword
+// template writes it wherever the call site's number belongs ("Blind X").
+const MAGNITUDE = '$X';
+const isMagnitude = v => typeof v === 'string' && v.trim() === MAGNITUDE;
+
 function numInput(obj, key, onChange, opts) {
   opts = opts || {};
+  // A field that may hold the placeholder becomes a TEXT input: a number input reads "$X"
+  // as empty and would silently zero a parameterised template on the next save. opts.magnitude
+  // opens the field for authoring one; a value already holding it always gets the text box,
+  // wherever it is shown.
+  if (opts.magnitude || isMagnitude(obj[key])) {
+    return el('input', {
+      type: 'text', value: obj[key] == null ? '' : obj[key],
+      placeholder: opts.placeholder || '', title: 'a number, or $X — the keyword magnitude (the call site\'s amount)',
+      oninput: e => {
+        const v = e.target.value.trim();
+        if (isMagnitude(v)) obj[key] = MAGNITUDE;
+        else if (v === '') { if (opts.optional) delete obj[key]; else obj[key] = 0; }
+        else obj[key] = opts.float ? parseFloat(v) : parseInt(v, 10);
+        onChange();
+      },
+    });
+  }
   return el('input', {
     type: 'number', value: obj[key] == null ? '' : obj[key],
     step: opts.step || 1, min: opts.min, max: opts.max, placeholder: opts.placeholder || '',

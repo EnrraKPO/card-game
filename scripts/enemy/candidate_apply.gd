@@ -191,6 +191,9 @@ static func _capture_back(w: CombatWorld, prev: BoardState, remap: Dictionary,
 	s.mana_capacity_before = prev.mana_capacity_before
 	s.hand_budget_before = prev.hand_budget_before
 	s.graveyard = prev.graveyard.duplicate()
+	# The GROUND is re-captured from the simulated world, never forwarded from prev — a
+	# cast can set new ground alight, and this state must price the seats it just made.
+	s.ground = BoardState.capture_ground(w.slots)
 	for corpse: CardInstance in swept:
 		var dead := BoardState.UnitState.from_instance(corpse)
 		dead.source = reverse.get(corpse, corpse)

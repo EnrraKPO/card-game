@@ -26,7 +26,8 @@
 				"status": {
 					"id": "burning",
 					"layer": "ground"
-				}
+				},
+				"eval": { "threat": 1.25, "value": 1 }
 			}
 		]
 	}

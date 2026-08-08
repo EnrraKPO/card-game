@@ -56,11 +56,11 @@ enum TargetingPolicy {
 	SUBJECT,         # the unit the event is about (the activator/actor — see EffectContext.subject)
 	ATTACKER,        # the unit that dealt the blow (valid in an ON_DAMAGE_TAKEN context)
 	MANUAL_SLOT,     # a SLOT the player picks on their own side — may be EMPTY (the effect decides
-	                 # what an empty pick means, e.g. material delivery spawns there); an occupied
-	                 # pick is gated by the effect's conditions. See SpellCaster's slot-mode flow.
+					 # what an empty pick means, e.g. material delivery spawns there); an occupied
+					 # pick is gated by the effect's conditions. See SpellCaster's slot-mode flow.
 	AT_LOCATION,     # the unit standing at the effect's anchor coordinates (position-first
-	                 # targeting — a slot status hitting its own cell's occupant; whiffs legally
-	                 # when the cell is empty). See TargetResolver.AtLocation.
+					 # targeting — a slot status hitting its own cell's occupant; whiffs legally
+					 # when the cell is empty). See TargetResolver.AtLocation.
 }
 
 # For an event-driven (TRIGGERED/CUSTOM) effect, which unit — relative to the effect's HOLDER — must
@@ -204,11 +204,44 @@ var role: Role = Role.SOURCE      # legacy mirror: which side of the mutation th
 # identity travels as dispatch context — the enumeration knows which container it is
 # iterating — and reactions to an effect firing go through the container's blind upward
 # channel, fired(e). See StatusInstance.fired and EFFECT_SYSTEM_DESIGN.md §2.2.)
+# ── EVAL ANNOTATION (the enemy engine's channel pricing — STATUS_EVAL_BRIEF.md) ──
+# Hand-AUTHORED, flat (applied once per carrier; stack scaling lives on StatusData.eval_mods):
+# how this effect's PRESENCE moves its carrier in the engine's three channels. Keys:
+#   "threat" / "exposure" / "value"             — adds (damage points per round for the first
+#                                                 two, value-units for the third)
+#   "threat_mul" / "exposure_mul" / "value_mul" — multipliers (applied after ALL adds)
+# Absent = this effect is invisible to the engine (today's behavior, never wrong-and-loud).
+# The number is a human judgment written next to the effect — NEVER derived from what the
+# effect does (deriving is the discarded channel-taxonomy appraiser). Folded at BoardState
+# capture by EvalChannels; the game rules never read it.
+var eval_mods: Dictionary = {}
+
+const EVAL_KEYS: Array[String] = ["threat", "exposure", "value",
+		"threat_mul", "exposure_mul", "value_mul"]
+
 # Probabilistic gate, rolled once before the effect resolves: the effect fires with this chance
 # (1.0 = always). A declarative condition, separate from what the effect does. See EffectSystem.
 var chance: float = 1.0
 var op: Op = Op.ADD
 var filter: Dictionary = {}   # card selection predicate for scope=CARD
+
+
+# THE NAMED-EFFECT REGISTRY, reached by PATH rather than by class name — a landmine, not a
+# style choice. Content registries parse their effects from `_static_init` (RelicData,
+# CardData, StatusData, …), and during another script's static initialisation a sibling
+# class_name may resolve to a script object that is not compiled yet: the static call then
+# dies with "Nonexistent function 'get_named' in base 'GDScript'". Whether it happens at all
+# is script LOAD ORDER — relics broke, cards did not, and either could flip. `load()` at call
+# time forces the script fully in, and the result is cached for every later parse. Never
+# reintroduce a direct `NamedEffects.…` call in this parser.
+static var _named_lib: Object = null
+
+static func _named_registry() -> Object:
+	if _named_lib == null:
+		_named_lib = load("res://scripts/named_effects.gd")
+		if _named_lib == null:
+			push_error("Effect: the named-effect registry script is missing — keywords will not expand")
+	return _named_lib
 
 
 # The one canonical parser. Kind is explicit ("kind") or inferred: a "key" → MODIFIER, a
@@ -219,13 +252,19 @@ static func from_dict(d: Dictionary) -> Effect:
 	# "named" key (NamedEffects refuses chains), so the recursion is one level by construction.
 	var named := str(d.get("named", ""))
 	if not named.is_empty():
-		var template := NamedEffects.get_named(named)
+		var registry := _named_registry()
+		var template: Dictionary = {} if registry == null else registry.get_named(named)
 		if template.is_empty():
 			push_error("Effect: unknown named effect '%s' — parsing the call site alone — %s" % [named, d])
 		var merged := template.duplicate(true)
 		for k: Variant in d:
 			if str(k) != "named":
 				merged[k] = d[k]
+		# "Blind X": the keyword's magnitude is the effect's `amount` (call site's if it
+		# authored one, else the template's default), substituted into every "$X" the
+		# template wrote — stacks, eval price, whatever the keyword scales. See NamedEffects.
+		if registry != null:
+			merged = registry.substitute(merged, float(merged.get("amount", 0))) as Dictionary
 		var ne := from_dict(merged)
 		ne.named_id = named
 		ne._named_authored = d.duplicate(true)
@@ -233,6 +272,7 @@ static func from_dict(d: Dictionary) -> Effect:
 	var e := Effect.new()
 	e.amount = float(d.get("amount", 0))
 	e.chance = float(d.get("chance", 1.0))
+	e._parse_eval(d)
 	for c_data: Dictionary in d.get("conditions", []):
 		if EffectCondition.is_identity_dict(c_data):
 			continue   # {"relation": "self"} is structural (self targeting), not a predicate
@@ -328,6 +368,37 @@ static func from_dict(d: Dictionary) -> Effect:
 			if c.is_mutation_form():
 				push_error("Effect: mutation-form condition on a non-interceptor effect — %s" % [d])
 	return e
+
+
+# Parses the authored "eval" annotation (any kind may carry one — see eval_mods above).
+# Unknown keys fail loud: a typoed channel silently contributing nothing is exactly the
+# quiet degradation the absent-is-invisible rule must NOT extend to authored numbers.
+func _parse_eval(d: Dictionary) -> void:
+	var ev_v: Variant = d.get("eval", null)
+	if ev_v == null:
+		return
+	if not ev_v is Dictionary:
+		push_error("Effect: 'eval' must be a dictionary of channel numbers — %s" % [d])
+		return
+	for k: Variant in (ev_v as Dictionary):
+		if not str(k) in EVAL_KEYS:
+			push_error("Effect: unknown eval channel '%s' (%s) — %s" % [k, EVAL_KEYS, d])
+			continue
+		eval_mods[str(k)] = float((ev_v as Dictionary)[k])
+
+
+# The fold's read accessors: a channel's add (absent = 0) and multiplier (absent = 1).
+func eval_add(p_channel: String) -> float:
+	return float(eval_mods.get(p_channel, 0.0))
+
+
+func eval_mul(p_channel: String) -> float:
+	return float(eval_mods.get(p_channel + "_mul", 1.0))
+
+
+func _eval_out(d: Dictionary) -> void:
+	if not eval_mods.is_empty():
+		d["eval"] = eval_mods.duplicate()
 
 
 # Parses the interceptor match gate from either schema. Native form: "of" is a dictionary
@@ -576,6 +647,7 @@ func to_dict() -> Dictionary:
 				var mconds := TriggerResolver.conditions_to_dicts(conditions)
 				if not mconds.is_empty():
 					d["conditions"] = mconds
+			_eval_out(d)
 			return d
 		Kind.CUSTOM:
 			var cd := {
@@ -591,6 +663,7 @@ func to_dict() -> Dictionary:
 				cd["targeting_policy"] = policy_key(targeting_policy)
 			if not authored_native_trigger and subject_filter != SubjectFilter.SELF:
 				cd["subject"] = subject_key(subject_filter)
+			_eval_out(cd)
 			return cd
 		Kind.INTERCEPTOR:
 			var idd := {"intercept": String(intercept)}
@@ -614,6 +687,7 @@ func to_dict() -> Dictionary:
 				idd["op"] = "mul"
 			if chance != 1.0:
 				idd["chance"] = chance
+			_eval_out(idd)
 			return idd
 		_:
 			var d := {"trigger": _trigger_out()}
@@ -659,6 +733,7 @@ func to_dict() -> Dictionary:
 				d["riders"] = rl
 			if not spawn_id.is_empty():
 				d["spawn"] = {"id": spawn_id, "count": spawn_count}
+			_eval_out(d)
 			return d
 
 

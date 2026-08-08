@@ -234,6 +234,46 @@ the reference round-trips byte-faithfully and the expansion never leaks into sav
 No template chains (NamedEffects refuses a template that names another). Registry is
 lazy-loaded (loader static-init order is nobody's contract).
 
+⚠ **LANDMINE (hit 2026-08-06): the parser reaches the registry by PATH, never by class
+name.** Content registries parse their effects from `_static_init` (RelicData, CardData,
+StatusData, …), and during another script's static initialisation a sibling `class_name`
+can resolve to a script object that is not compiled yet — the static call dies with
+*"Nonexistent function 'get_named' in base 'GDScript'"*. It is pure script LOAD ORDER
+whether it bites: relics broke the moment they used a keyword, cards with the identical
+shape did not. `Effect._named_registry` `load()`s the script at call time and caches it.
+Never put a direct `NamedEffects.…` call back into `from_dict`. Pinned by
+`test_effects._registry_keywords_expand`, and the tests alone would NOT have caught the
+original break — the suite loads scripts in a different order than the game boots, so a
+headless boot (`--quit-after`) is the check that matters for anything parsed at load.
+
+**PARAMETERISED KEYWORDS — "Blind X"** (2026-08-06) — a keyword with a NUMBER. The call
+site spells X as `amount` (already what "Burn 1" means); the template writes
+`NamedEffects.MAGNITUDE` (`"$X"`) wherever that number belongs, and expansion substitutes
+it before the merged dict is parsed. Substitution is STRUCTURAL — only a value that IS the
+placeholder is replaced, at any depth — so prose mentioning X survives. `blind` is the
+first: `{"amount": 1, "status": {"id": "blind", "stacks": "$X"}, "eval": {"value": "$X"}}`,
+called as `{"trigger": ..., "named": "blind", "amount": 2}` (an unauthored amount falls
+back to the template's — "Blind" alone is Blind 1).
+
+The point is that **the price scales with the keyword**: the enemy engine's eval annotation
+(STATUS_EVAL_BRIEF.md) lives on the template, so "Blind 2" is worth twice "Blind 1" to its
+carrier without a single call site restating — or drifting from — the number. This is the
+answer to the annotation pass's per-call-site repetition: price the KEYWORD once.
+Tool-authorable (`$X` accepted in the Stacks + pricing fields of the Named FX tab; the
+serializer keeps `eval` and a payload-less `amount`, which it used to drop).
+
+Shipped keywords: `blind` (X stacks, `value "$X"`) and `venom` (X poison stacks,
+`threat "$X"` — poison costs its victim ~1 health per stack per round). Every applier in
+the game references them: 9 blind sites, 28 venom sites, no raw payload left.
+
+Keyword ids are INTERNAL and deliberately decoupled from player-facing wording (user ruling
+2026-08-06): cards say "applies X Poison" / "X Blindness" while the data says `venom` /
+`blind`. Don't "fix" the mismatch — the id names the mechanic, the text names the effect.
+
+A keyword can be used on ANY trigger, including a battlecry: the fold drops the price of a
+SPENT effect on its own (`EvalChannels.is_spent` — see below), so a one-shot never gets
+charged for forever.
+
 **THE WILDFIRE RULING** (user): ablaze's own tick is ALSO `"named": "burn"` — rider and
 all. A burning unit may re-light itself; fire fuels itself by burning things. Tuning knobs,
 one place: the chance/amount in named_effects.json, the spread numbers per status.

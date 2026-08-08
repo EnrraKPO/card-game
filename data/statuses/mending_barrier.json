@@ -10,6 +10,7 @@
 		"decay": "intercept",
 		"stacking": "stack",
 		"max_stacks": 9,
+		"eval": { "exposure": -2 },
 		"effects": [
 			{
 				"intercept": "damage",
@@ -28,7 +29,8 @@
 					"kind": "self"
 				},
 				"attribute": "health",
-				"amount": 1
+				"amount": 1,
+				"eval": { "exposure": -1 }
 			}
 		]
 	}

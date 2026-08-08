@@ -16,7 +16,7 @@
     "description": "Throws sleep-dust in arriving guests' eyes: Blinds the nearest foe (50% miss, 2 attacks).",
     "enemy_only": true, "tribe": "fairy", "elements": [], "chess_pieces": [],
     "effects": [
-      { "trigger": "on_play", "targeting_policy": "single_nearest", "status": { "id": "blind", "stacks": 2 } }
+      { "trigger": "on_play", "targeting_policy": "single_nearest", "named": "blind", "amount": 2 }
     ]
   },
   {
@@ -26,7 +26,7 @@
     "description": "A rose with opinions: whoever it pricks is left with 1 Poison.",
     "enemy_only": true, "tribe": "fairy", "elements": [], "chess_pieces": [],
     "effects": [
-      { "trigger": "on_attack", "targeting_policy": "attack_target", "status": { "id": "poison", "stacks": 1 } }
+      { "trigger": "on_attack", "targeting_policy": "attack_target", "named": "venom", "amount": 1 }
     ]
   },
   {
@@ -68,7 +68,7 @@
     "elements": [], "chess_pieces": [],
     "effects": [
       { "trigger": { "kind": "while" }, "targets": { "kind": "self" }, "attribute": "dodge_bonus", "amount": 33 },
-      { "trigger": "on_damage_taken", "targeting_policy": "attacker", "status": { "id": "blind", "stacks": 1 } }
+      { "trigger": "on_damage_taken", "targeting_policy": "attacker", "named": "blind", "amount": 1 }
     ]
   },
   {

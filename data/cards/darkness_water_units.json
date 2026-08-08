@@ -22,9 +22,8 @@
 					"event": "attack",
 					"origin_of": "self"
 				},
-				"status": {
-					"id": "poison"
-				},
+				"named": "venom",
+				"amount": 1,
 				"targets": {
 					"kind": "participant",
 					"participant": "destination"
@@ -79,9 +78,8 @@
 					"event": "attack",
 					"origin_of": "self"
 				},
-				"status": {
-					"id": "poison"
-				},
+				"named": "venom",
+				"amount": 1,
 				"targets": {
 					"kind": "participant",
 					"participant": "destination"
@@ -137,9 +135,8 @@
 					"event": "attack",
 					"origin_of": "self"
 				},
-				"status": {
-					"id": "poison"
-				},
+				"named": "venom",
+				"amount": 1,
 				"targets": {
 					"kind": "participant",
 					"participant": "destination"
@@ -192,9 +189,8 @@
 					"event": "attack",
 					"origin_of": "self"
 				},
-				"status": {
-					"id": "poison"
-				},
+				"named": "venom",
+				"amount": 1,
 				"targets": {
 					"kind": "participant",
 					"participant": "destination"
@@ -247,9 +243,8 @@
 					"event": "attack",
 					"origin_of": "self"
 				},
-				"status": {
-					"id": "poison"
-				},
+				"named": "venom",
+				"amount": 1,
 				"targets": {
 					"kind": "participant",
 					"participant": "destination"
@@ -299,9 +294,8 @@
 					"event": "attack",
 					"origin_of": "self"
 				},
-				"status": {
-					"id": "poison"
-				},
+				"named": "venom",
+				"amount": 1,
 				"targets": {
 					"kind": "participant",
 					"participant": "destination"
@@ -351,9 +345,8 @@
 					"event": "attack",
 					"origin_of": "self"
 				},
-				"status": {
-					"id": "poison"
-				},
+				"named": "venom",
+				"amount": 1,
 				"targets": {
 					"kind": "participant",
 					"participant": "destination"
@@ -403,9 +396,8 @@
 					"event": "attack",
 					"origin_of": "self"
 				},
-				"status": {
-					"id": "poison"
-				},
+				"named": "venom",
+				"amount": 1,
 				"targets": {
 					"kind": "participant",
 					"participant": "destination"
@@ -459,9 +451,8 @@
 					"event": "attack",
 					"origin_of": "self"
 				},
-				"status": {
-					"id": "poison"
-				},
+				"named": "venom",
+				"amount": 1,
 				"targets": {
 					"kind": "participant",
 					"participant": "destination"
@@ -515,9 +506,8 @@
 					"event": "attack",
 					"origin_of": "self"
 				},
-				"status": {
-					"id": "poison"
-				},
+				"named": "venom",
+				"amount": 1,
 				"targets": {
 					"kind": "participant",
 					"participant": "destination"
@@ -567,9 +557,8 @@
 					"event": "attack",
 					"origin_of": "self"
 				},
-				"status": {
-					"id": "poison"
-				},
+				"named": "venom",
+				"amount": 1,
 				"targets": {
 					"kind": "participant",
 					"participant": "destination"
@@ -619,10 +608,8 @@
 					"event": "attack",
 					"origin_of": "self"
 				},
-				"status": {
-					"id": "poison",
-					"stacks": 2
-				},
+				"named": "venom",
+				"amount": 2,
 				"targets": {
 					"kind": "participant",
 					"participant": "destination"
@@ -638,10 +625,8 @@
 					"kind": "participant",
 					"participant": "origin"
 				},
-				"status": {
-					"id": "poison",
-					"stacks": 2
-				}
+				"named": "venom",
+				"amount": 2
 			}
 		],
 		"abilities": [
@@ -691,9 +676,8 @@
 					"event": "attack",
 					"origin_of": "self"
 				},
-				"status": {
-					"id": "poison"
-				},
+				"named": "venom",
+				"amount": 1,
 				"targets": {
 					"kind": "participant",
 					"participant": "destination"
@@ -747,9 +731,8 @@
 					"event": "attack",
 					"origin_of": "self"
 				},
-				"status": {
-					"id": "poison"
-				},
+				"named": "venom",
+				"amount": 1,
 				"targets": {
 					"kind": "participant",
 					"participant": "destination"
@@ -800,9 +783,8 @@
 					"event": "attack",
 					"origin_of": "self"
 				},
-				"status": {
-					"id": "poison"
-				},
+				"named": "venom",
+				"amount": 1,
 				"targets": {
 					"kind": "participant",
 					"participant": "destination"
@@ -856,9 +838,8 @@
 					"event": "attack",
 					"origin_of": "self"
 				},
-				"status": {
-					"id": "poison"
-				},
+				"named": "venom",
+				"amount": 1,
 				"targets": {
 					"kind": "participant",
 					"participant": "destination"
@@ -912,9 +893,8 @@
 					"event": "attack",
 					"origin_of": "self"
 				},
-				"status": {
-					"id": "poison"
-				},
+				"named": "venom",
+				"amount": 1,
 				"targets": {
 					"kind": "participant",
 					"participant": "destination"
@@ -968,9 +948,8 @@
 					"event": "attack",
 					"origin_of": "self"
 				},
-				"status": {
-					"id": "poison"
-				},
+				"named": "venom",
+				"amount": 1,
 				"targets": {
 					"kind": "participant",
 					"participant": "destination"
@@ -1021,9 +1000,8 @@
 					"event": "attack",
 					"origin_of": "self"
 				},
-				"status": {
-					"id": "poison"
-				},
+				"named": "venom",
+				"amount": 1,
 				"targets": {
 					"kind": "participant",
 					"participant": "destination"
@@ -1077,9 +1055,8 @@
 					"event": "attack",
 					"origin_of": "self"
 				},
-				"status": {
-					"id": "poison"
-				},
+				"named": "venom",
+				"amount": 1,
 				"targets": {
 					"kind": "participant",
 					"participant": "destination"

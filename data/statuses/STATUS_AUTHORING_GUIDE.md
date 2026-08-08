@@ -29,6 +29,7 @@ card/spell/charm/upgrade effect's `status` payload (see the card guide).
 | `stacking` | string | No | How a re-application combines (see below) |
 | `max_stacks` | int | No | Cap for intensity stacking |
 | `effects` | array | No | The effects the status carries — identical schema to card effects |
+| `eval` | object | No | Enemy-engine pricing, PER STACK (folded × stacks at capture): `{"threat": n, "exposure": n, "value": n}` — adds only, muls are refused at this level. The flat, stack-blind half (and any mul, e.g. blind's `threat_mul`) goes on the carried effect's own `eval`. Absent = the stacks contribute nothing beyond the effects' flat annotations. NEVER price a `while` stat effect's stats — captured stats already say it (double count). See `STATUS_EVAL_BRIEF.md` / `STATUS_ANNOTATION_BRIEF.md`. |
 
 ## `stacking` — re-applying onto a card that already has the status
 

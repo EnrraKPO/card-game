@@ -77,6 +77,17 @@ var stack_display: String = "count"
 # The two are the same rule seen from each layer (see SLOT_LAYER_DESIGN.md §4.4): fire moves
 # either sideways within its layer, or across layers at its own address.
 var spread: Dictionary = {}
+# ── EVAL ANNOTATION, status level (× stacks — STATUS_EVAL_BRIEF.md) ──
+# Hand-AUTHORED per-STACK adds on the enemy engine's channels ("threat" / "exposure" /
+# "value"): the fold contributes number × stacks, because stacks ARE the quantity (see
+# StatusEngine.is_expired). The flat, stack-blind half of a status's pricing lives on its
+# EFFECTS (Effect.eval_mods) — effects are the universal carrier vocabulary and know
+# nothing of stacks. Multipliers are refused at this level: a stack-scaled multiplier has
+# no settled meaning; muls are authored flat on the effect. Absent = invisible.
+var eval_mods: Dictionary = {}
+
+const EVAL_KEYS: Array[String] = ["threat", "exposure", "value"]
+
 var effects: Array = []   # Array[Effect]
 # Activated abilities this status HOLDS (by id, see AbilityData) — ported to the carrier while
 # the status is active, gone with it. Any effect container may hold abilities.
@@ -132,6 +143,16 @@ static func from_dict(d: Dictionary) -> StatusData:
 	var spread_spec: Variant = d.get("spread", {})
 	s.spread           = spread_spec if spread_spec is Dictionary else {}
 	s.abilities        = Array(d.get("abilities", []), TYPE_STRING, "", null)
+	var ev_v: Variant = d.get("eval", null)
+	if ev_v is Dictionary:
+		for k: Variant in (ev_v as Dictionary):
+			if not str(k) in EVAL_KEYS:
+				push_error(("StatusData %s: unknown status-level eval key '%s' (per-stack adds "
+						+ "only: %s; muls go on the effect) — dropped") % [s.id, k, EVAL_KEYS])
+				continue
+			s.eval_mods[str(k)] = float((ev_v as Dictionary)[k])
+	elif ev_v != null:
+		push_error("StatusData %s: 'eval' must be a dictionary of per-stack adds" % s.id)
 	for e_data: Dictionary in d.get("effects", []):
 		var eff := Effect.from_dict(e_data)
 		# Legacy shim (load-time data migration only — the runtime has no per-container
@@ -142,6 +163,11 @@ static func from_dict(d: Dictionary) -> StatusData:
 			eff.tracker_spec = {"kind": "stacks"}
 		s.effects.append(eff)
 	return s
+
+
+# The fold's read accessor: this status's per-stack add on a channel (absent = 0).
+func eval_add(p_channel: String) -> float:
+	return float(eval_mods.get(p_channel, 0.0))
 
 
 static func get_status(p_id: String) -> StatusData:
