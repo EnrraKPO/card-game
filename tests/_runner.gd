@@ -12,6 +12,7 @@ extends Node
 # is the harness that proves it.
 
 const SUITES: Array = [
+	preload("res://tests/test_locations.gd"),
 	preload("res://tests/test_resolver.gd"),
 	preload("res://tests/test_triggers.gd"),
 	preload("res://tests/test_targeting.gd"),
