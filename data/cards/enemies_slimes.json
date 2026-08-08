@@ -43,7 +43,7 @@
     "description": "A bubbling vat on the move — applies 2 Poison to whatever it hits.",
     "enemy_only": true, "tribe": "slime", "elements": [], "chess_pieces": [],
     "effects": [
-      { "trigger": "on_attack", "targeting_policy": "attack_target", "status": { "id": "poison", "stacks": 2 } }
+      { "trigger": "on_attack", "targeting_policy": "attack_target", "named": "venom", "amount": 2 }
     ]
   },
   {

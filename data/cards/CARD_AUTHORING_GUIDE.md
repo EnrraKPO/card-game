@@ -190,6 +190,29 @@ target the `targeting_policy` resolves.
 | `duration` | int | Optional — overrides the status's own default duration |
 | `stacks` | int | Optional — stacks to add (default 1; combines per the status's stacking rule) |
 
+### `named` — use a keyword instead of spelling the payload out (optional)
+
+The reusable payload library (`data/named_effects/`) holds the game's KEYWORDS. Reference one
+and the call site keeps only WHEN and ON WHOM; the keyword supplies WHAT HAPPENS — including
+its price to the enemy AI, so a card never has to justify itself twice.
+
+```json
+{ "trigger": "on_play", "targeting_policy": "single_nearest", "named": "blind", "amount": 2 }
+```
+
+`amount` is the keyword's number — the X in "Blind X" (here: 2 stacks of Blind). Omit it and
+the keyword's own default applies. Today's keywords: **Blind X**, **Venom X** (X stacks of
+Poison), **Burn X**. Prefer a keyword over a hand-written payload wherever one exists:
+retuning it there retunes every card that uses it. Authored keys still win over the template
+if a card genuinely needs to differ, but that is an escape hatch, not the normal case.
+
+A keyword carries its price to the enemy AI, but you never have to think about where it is
+safe to use one: a battlecry's price is dropped automatically, because by the time anything
+is priced the play moment has already happened (`EvalChannels.is_spent`).
+
+Keyword ids are internal. Card text stays in the game's own words — "applies 2 Poison", not
+"Venom 2" — so the id and the wording are free to differ.
+
 ### `spawn` — conjure units onto the board (optional)
 
 A triggered effect may carry a **spawn payload** instead of (or beside a) stat change: for each

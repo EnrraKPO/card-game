@@ -26,7 +26,7 @@
     "description": "Assigns the nearest opponent mandatory training videos: Blinded for their next 2 attacks (50% miss).",
     "enemy_only": true, "tribe": "corporate", "elements": [], "chess_pieces": [],
     "effects": [
-      { "trigger": "on_play", "targeting_policy": "single_nearest", "status": { "id": "blind", "stacks": 2 } }
+      { "trigger": "on_play", "targeting_policy": "single_nearest", "named": "blind", "amount": 2 }
     ]
   },
   {

@@ -40,7 +40,8 @@
 					"kind": "self"
 				},
 				"attribute": "health",
-				"amount": 1
+				"amount": 1,
+				"eval": { "exposure": -1 }
 			}
 		]
 	}

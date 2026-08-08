@@ -32,7 +32,7 @@
     "description": "Her scream travels farther than she does. On arrival it Blinds the nearest foe (50% miss, 2 attacks).",
     "enemy_only": true, "tribe": "harpy", "elements": [], "chess_pieces": [],
     "effects": [
-      { "trigger": "on_play", "targeting_policy": "single_nearest", "status": { "id": "blind", "stacks": 2 } }
+      { "trigger": "on_play", "targeting_policy": "single_nearest", "named": "blind", "amount": 2 }
     ]
   },
   {

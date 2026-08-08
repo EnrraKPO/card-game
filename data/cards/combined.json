@@ -438,9 +438,8 @@
 					"event": "play",
 					"of": "self"
 				},
-				"status": {
-					"id": "poison"
-				},
+				"named": "venom",
+				"amount": 1,
 				"targets": {
 					"kind": "manual"
 				}

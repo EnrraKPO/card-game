@@ -41,7 +41,8 @@
 				},
 				"attribute": "health",
 				"amount": 2,
-				"conditions": []
+				"conditions": [],
+				"eval": { "exposure": -2 }
 			}
 		]
 	}

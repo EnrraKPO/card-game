@@ -10,6 +10,7 @@
 		"decay": "intercept",
 		"stacking": "stack",
 		"max_stacks": 9,
+		"eval": { "exposure": -2 },
 		"effects": [
 			{
 				"intercept": "damage",
@@ -29,7 +30,8 @@
 					"participant": "origin"
 				},
 				"attribute": "attack",
-				"amount": -1
+				"amount": -1,
+				"eval": { "value": 0.5 }
 			}
 		]
 	}

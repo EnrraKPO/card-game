@@ -37,7 +37,7 @@ class Mods:
 
 	# The flat effect-level contribution: adds sum, muls multiply.
 	func fold_effect(e: Effect) -> void:
-		if e.eval_mods.is_empty():
+		if e.eval_mods.is_empty() or EvalChannels.is_spent(e):
 			return
 		threat_add += e.eval_add("threat")
 		threat_mul *= e.eval_mul("threat")
@@ -53,6 +53,34 @@ class Mods:
 		threat_add += sdata.eval_add("threat") * float(stacks)
 		exposure_add += sdata.eval_add("exposure") * float(stacks)
 		value_add += sdata.eval_add("value") * float(stacks)
+
+
+# SPENT effects are never priced (user ruling 2026-08-06): the channels describe what a
+# unit still MEANS on the board — its standing rules, what it does when struck or when the
+# round turns, what its statuses will cost it. A battlecry is none of those. By the time
+# anything is priced the play moment is history: for a fielded unit it fired long ago, and
+# in a simulated cast the real rules already ran it, so its consequences are IN the state
+# being scored — pricing it again would count it twice and then keep charging forever.
+#
+# Structurally that is exactly one shape: a triggered effect gated to the holder's OWN play
+# event. "Whenever a unit is played" (no self gate) is a standing rule about the future and
+# keeps its price, as does every other trigger — struck, death, turn end, kill.
+#
+# The corollary for authors: a priced KEYWORD ("Venom X") belongs on a recurring trigger.
+# On a battlecry its price is now silently dropped rather than silently permanent — the
+# safer of the two failures, but still not what the author asked for. See
+# SLOT_LAYER_DESIGN.md §Parameterised keywords.
+static func is_spent(e: Effect) -> bool:
+	# Only an event-driven effect can have a moment to be past. An interceptor or modifier
+	# is a live rule that never "fires" at all — it parses with the default (play) resolver,
+	# which would read as spent if this gate weren't here.
+	if e.kind != Effect.Kind.TRIGGERED:
+		return false
+	var tr := e.trigger_resolver()
+	if not tr is TriggerResolver.Simple:
+		return false
+	var simple := tr as TriggerResolver.Simple
+	return simple.event == &"play" and simple.of_holder
 
 
 # The whole unit fold: the card's own effects, the innate rules it carries, and its

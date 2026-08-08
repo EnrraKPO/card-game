@@ -1493,6 +1493,13 @@ function namedEffectIds() {
   return scanGameJson('data/named_effects').map(({ entry: e }) => e.id).filter(Boolean);
 }
 
+const EVAL_CHANNELS = ['threat', 'exposure', 'value', 'threat_mul', 'exposure_mul', 'value_mul'];
+// The keyword MAGNITUDE (game: NamedEffects.MAGNITUDE) — legal only inside a named-effect
+// TEMPLATE, where it stands for the call site's amount ("Blind X"). Anywhere else a number
+// is required, because nothing would ever substitute it.
+const MAGNITUDE = '$X';
+const isMagnitude = v => typeof v === 'string' && v.trim() === MAGNITUDE;
+
 // Damage RIDERS (mirrors Effect.riders): follow-ons a damage instance carries onto whoever
 // took it — one roll per instance, flat, amount never multiplies. Each entry names a status.
 function validateRiders(e, where) {
@@ -1523,6 +1530,16 @@ function validatePerStackChance(e, where) {
 function validateEffect(e, where) {
   if (!e || typeof e !== 'object') return `${where}: effect must be an object`;
   const kind = e.kind || (e.key ? 'modifier' : e.intercept ? 'interceptor' : e.custom ? 'custom' : 'triggered');
+  // Effect-level eval pricing (mirrors Effect._parse_eval, fail-loud): flat annotations
+  // on the enemy engine's channels — any kind may carry one.
+  if (e.eval != null) {
+    if (typeof e.eval !== 'object') return `${where}: eval must be an object of channel numbers`;
+    for (const k of Object.keys(e.eval)) {
+      if (!EVAL_CHANNELS.includes(k))
+        return `${where}: unknown eval channel "${k}" (threat/exposure/value, each with an optional _mul)`;
+      if (typeof e.eval[k] !== 'number') return `${where}: eval "${k}" must be a number`;
+    }
+  }
   // Composition grants live on standing triggered effects only (mirrors Effect._validate_grants).
   if (e.grants != null && kind !== 'triggered')
     return `${where}: grants is only valid on a standing (while) effect`;
@@ -1688,6 +1705,16 @@ function validateItem(type, d) {
           if (!namedEffectIds().includes(s.arrival)) return `spread arrival: unknown named effect "${s.arrival}"`;
         }
       }
+      // Status-level eval pricing (mirrors StatusData's parse): per-STACK adds on the
+      // three channels only — muls are refused at this level (they go on the effect).
+      if (d.eval != null) {
+        if (typeof d.eval !== 'object') return 'eval must be an object of per-stack channel numbers';
+        for (const k of Object.keys(d.eval)) {
+          if (!['threat','exposure','value'].includes(k))
+            return `unknown status eval channel "${k}" (per-stack adds only: threat/exposure/value; muls go on the effect)`;
+          if (typeof d.eval[k] !== 'number') return `status eval "${k}" must be a number`;
+        }
+      }
       return validateEffects(d.effects, 'status');
     }
     case 'namedeffect': {
@@ -1703,6 +1730,21 @@ function validateItem(type, d) {
       if (rerr) return rerr;
       if (d.status != null && (typeof d.status !== 'object' || !d.status.id))
         return 'the status payload needs an id';
+      // PARAMETERISED template ("Blind X"): the stacks applied and the enemy-engine price
+      // may be the magnitude placeholder as well as fixed numbers. The price lives here,
+      // on the keyword, so every call site inherits it — mirrors Effect._parse_eval.
+      if (d.status != null && d.status.stacks != null && !isMagnitude(d.status.stacks)
+          && (!Number.isInteger(d.status.stacks) || d.status.stacks < 1))
+        return `stacks must be a positive integer or "${MAGNITUDE}" (the call site's amount)`;
+      if (d.eval != null) {
+        if (typeof d.eval !== 'object') return 'eval must be an object of channel numbers';
+        for (const k of Object.keys(d.eval)) {
+          if (!EVAL_CHANNELS.includes(k))
+            return `unknown eval channel "${k}" (threat/exposure/value, each with an optional _mul)`;
+          if (typeof d.eval[k] !== 'number' && !isMagnitude(d.eval[k]))
+            return `eval "${k}" must be a number or "${MAGNITUDE}" (the call site's amount)`;
+        }
+      }
       if (!d.attribute && !(d.status && d.status.id) && !(d.riders || []).length)
         return 'the template does nothing — give it an attribute change, a status to apply, or riders';
       return null;

@@ -355,6 +355,7 @@ const StatusEditor = {
     stacking: 'refresh', max_stacks: 9, effects: [], abilities: [] }),
   form(draft, ctx, onChange) {
     for (const k of ['effects', 'abilities']) if (!draft[k]) draft[k] = [];
+    if (!draft.eval) draft.eval = {};
     const wrap = el('div');
     wrap.append(
       groupBox('Identity',
@@ -388,6 +389,24 @@ const StatusEditor = {
           el('span', { class: 'lab', text: 'Activated abilities the carrier gains while this status rides it' }),
           chipSet(draft.abilities, abilityIds(ctx), onChange)),
       ),
+      // The enemy engine's per-STACK pricing (STATUS_EVAL_BRIEF.md): folded × stacks at
+      // capture. The flat, stack-blind half (and all muls) is authored on the EFFECTS
+      // below — this level exists because only the status knows what a stack is.
+      groupBox('Enemy eval pricing (per stack)',
+        el('div', { class: 'hint', text: 'How each STACK moves the enemy engine’s reading of the '
+          + 'carrier, folded × stacks (burning: exposure +0.25/stack; barrier: exposure −2/stack). '
+          + 'Adds only — a flat annotation or a multiplier goes on the effect that carries the '
+          + 'behaviour. Empty = stacks are priced by the effects alone. Never price a standing '
+          + 'stat effect’s stats here: captured stats already say it (double count).' }),
+        el('div', { class: 'frow' },
+          fld('Threat / stack', numInput(draft.eval, 'threat', onChange, { float: true, step: 'any', optional: true, placeholder: '—' }),
+            'damage/round the carrier’s output gains per stack', 'narrow'),
+          fld('Exposure / stack', numInput(draft.eval, 'exposure', onChange, { float: true, step: 'any', optional: true, placeholder: '—' }),
+            'damage/round onto the carrier per stack; a soak is negative', 'narrow'),
+          fld('Value / stack', numInput(draft.eval, 'value', onChange, { float: true, step: 'any', optional: true, placeholder: '—' }),
+            'value-units per stack for what is neither', 'narrow'),
+        ),
+      ),
       renderSpreadBox(draft, ctx, onChange),
       groupBox('Effects it carries'),
     );
@@ -412,6 +431,12 @@ const StatusEditor = {
       if (d.spread.arrival) s.arrival = d.spread.arrival;
       out.spread = s;
     }
+    // Per-stack eval pricing: 0 means absent (the fold's neutral value); adds only —
+    // the game loader refuses muls at status level.
+    const ev = {};
+    for (const k of ['threat', 'exposure', 'value'])
+      if (d.eval && d.eval[k] != null && d.eval[k] !== 0) ev[k] = d.eval[k];
+    if (Object.keys(ev).length) out.eval = ev;
     out.effects = cleanEffects(d.effects);
     if (d.abilities && d.abilities.length) out.abilities = d.abilities.slice();
     return out;
@@ -1761,7 +1786,7 @@ const NamedEffectEditor = {
         fld('Change stat', selectInput(draft, 'attribute', ctx.vocab.effectAttrs
           .map(a => ({ value: a, label: labelOf('attr', a) })), onChange, { optional: true, emptyLabel: '(no stat change)' })),
         fld('By', numInput(draft, 'amount', onChange, { optional: draft.attribute == null, placeholder: '0' }),
-          'health: + heals, − damages. damage_taken: positive damage, shield first', 'narrow'),
+          'the keyword’s number — X. Also the stat change where one is set (health: + heals, − damages; damage_taken: positive damage, shield first)', 'narrow'),
         el('div', { class: 'fld' }, checkInput(draft, 'per_stack', onChange,
           'Amount × the holding status’s stacks (off = flat, however tall the pile)')),
       ));
@@ -1782,7 +1807,8 @@ const NamedEffectEditor = {
         }
         stWrap.append(el('div', { class: 'frow' },
           fld('Apply status', statusPicker(draft.status, 'id', fx, onChange)),
-          fld('Stacks', numInput(draft.status, 'stacks', onChange, { min: 1 }), null, 'narrow'),
+          fld('Stacks', numInput(draft.status, 'stacks', onChange, { min: 1, magnitude: true, placeholder: '1 or $X' }),
+            'a fixed count, or $X to scale with the keyword’s number ("Blind X")', 'narrow'),
           el('div', { class: 'fld narrow', style: 'justify-content:flex-end' },
             el('button', { class: 'ghost tiny', text: '✕ no status', onclick: () => { delete draft.status; onChange(); renderStatus(); } })),
         ));
@@ -1790,6 +1816,9 @@ const NamedEffectEditor = {
       renderStatus();
       payloadBox.append(stWrap);
       payloadBox.append(renderRiderList(el('div'), draft, fx, onChange));
+      // The keyword's price for the enemy engine — authored ONCE here, inherited by every
+      // call site (and scalable with $X, so "Blind 2" is worth twice "Blind 1").
+      payloadBox.append(evalAnnotationSection(draft, onChange, { magnitude: true }));
     };
     renderPayload();
     wrap.append(
@@ -1814,10 +1843,21 @@ const NamedEffectEditor = {
   serialize(d) {
     const out = { id: d.id, display_name: d.display_name || slugToName(d.id), description: d.description || '' };
     if (d.attribute) { out.attribute = d.attribute; out.amount = d.amount || 0; out.per_stack = !!d.per_stack; }
+    // A payload-less amount is still meaningful on a PARAMETERISED template: it is the
+    // keyword's default X ("Blind" alone = Blind 1), which every "$X" reads.
+    else if (d.amount) out.amount = d.amount;
     if (d.per_stack_chance) out.per_stack_chance = d.per_stack_chance;
     if (d.status && d.status.id) {
       out.status = { id: d.status.id };
       if (d.status.stacks && d.status.stacks !== 1) out.status.stacks = d.status.stacks;
+    }
+    // The enemy-engine price travels WITH the keyword — dropping it here is how a
+    // parameterised template silently loses its pricing on a round-trip through the Tool.
+    if (d.eval && Object.keys(d.eval).length) {
+      const ev = {};
+      for (const [k, v] of Object.entries(d.eval))
+        if (v != null && v !== '' && !(k.endsWith('_mul') ? v === 1 : v === 0)) ev[k] = v;
+      if (Object.keys(ev).length) out.eval = ev;
     }
     const riders = (d.riders || []).filter(r => r && r.status && r.status.id).map(r => {
       const rr = { status: { id: r.status.id } };

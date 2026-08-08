@@ -117,6 +117,10 @@ func run() -> void:
 	_named_effect_call_site_wins()
 	_named_effect_round_trips()
 	_named_effect_unknown_is_survivable()
+	_named_effect_magnitude_scales()
+	_named_effect_magnitude_defaults()
+	_named_effect_magnitude_round_trips()
+	_named_effect_magnitude_leaves_prose_alone()
 	_arrival_burns_the_occupant()
 	_arrival_whiffs_on_empty_ground()
 	_cross_layer_catch_speaks_the_ground_language()
@@ -645,6 +649,55 @@ func _named_effect_unknown_is_survivable() -> void:
 			"targets": {"kind": "self"}, "named": "_t_no_such_named"})
 	check_eq(e.named_id, "_t_no_such_named", "the bad reference is still remembered")
 	check_eq(e.amount_int(), 0, "…and supplies no payload")
+
+
+# "Blind X" — the PARAMETERISED keyword. One authored template; the call site's amount is
+# substituted into everything that scales with the number: the stacks applied AND their
+# price to the enemy engine. Off-disk numbers deliberately (the shipped blind entry), like
+# the status annotation pass — a template that stopped scaling its own price would pass a
+# synthetic fixture and misprice every card in the game.
+
+
+func _named_effect_magnitude_scales() -> void:
+	var two := Effect.from_dict({"trigger": "on_play", "targeting_policy": "single_nearest",
+			"named": "blind", "amount": 2})
+	check_eq(two.status_id, "blind", "the keyword supplies the status")
+	check_eq(two.status_stacks, 2, "…X stacks of it")
+	check_eq(two.eval_add("value"), 2.0, "…and prices its carrier at X, from the same one number")
+	var one := Effect.from_dict({"trigger": "on_play", "targeting_policy": "single_nearest",
+			"named": "blind", "amount": 1})
+	check_eq(one.status_stacks, 1, "a smaller X applies fewer stacks")
+	check_eq(one.eval_add("value"), 1.0, "…and is worth proportionally less")
+
+
+func _named_effect_magnitude_defaults() -> void:
+	# No authored amount: the template's own is X — "Blind" alone means Blind 1.
+	var e := Effect.from_dict({"trigger": "on_play", "targeting_policy": "single_nearest",
+			"named": "blind"})
+	check_eq(e.status_stacks, 1, "the template's amount is the default magnitude")
+	check_eq(e.eval_add("value"), 1.0, "…and prices it")
+
+
+func _named_effect_magnitude_round_trips() -> void:
+	var authored: Dictionary = {"trigger": "on_play", "targeting_policy": "single_nearest",
+			"named": "blind", "amount": 2}
+	var back: Dictionary = Effect.from_dict(authored).to_dict()
+	check_eq(str(back.get("named", "")), "blind", "the reference survives serialisation")
+	check_eq(int(back.get("amount", 0)), 2, "…carrying its magnitude")
+	check(not back.has("status") and not back.has("eval"),
+			"…while the substitution never leaks into saved data")
+
+
+func _named_effect_magnitude_leaves_prose_alone() -> void:
+	# Substitution is STRUCTURAL: only a value that IS the placeholder is replaced, so a
+	# template whose text merely mentions X keeps its text.
+	var subbed: Dictionary = NamedEffects.substitute({
+			"status": {"id": "blind", "stacks": "$X"},
+			"note": "Blind X — apply X stacks",
+			"eval": {"value": "$X"}}, 3.0) as Dictionary
+	check_eq(str(subbed["note"]), "Blind X — apply X stacks", "prose mentioning X is not a placeholder")
+	check_eq(int((subbed["status"] as Dictionary)["stacks"]), 3, "the nested placeholder took the magnitude")
+	check_eq(float((subbed["eval"] as Dictionary)["value"]), 3.0, "…at any depth")
 
 
 # ── Spread arrival (the flame's touch) + cross-layer catch ──────────────────────────────

@@ -68,6 +68,8 @@ func run() -> void:
 	_arrangement_feasibility()
 	_arrangement_apply_purity()
 	_eval_annotation_parse()
+	_eval_status_annotation_pass()
+	_eval_spent_effects_unpriced()
 	_eval_fold_unit_statuses()
 	_eval_fold_ground_and_seat()
 	_eval_fold_innate_attribution()
@@ -1886,6 +1888,116 @@ func _eval_annotation_parse() -> void:
 	check_eq(burning.eval_add("exposure"), 0.25, "burning (ground) per-stack exposure authored")
 
 
+# The annotation pass over the rest of the statuses (STATUS_ANNOTATION_BRIEF.md): the
+# shipped numbers arrived off disk, and — the double-count guard — pure-stat statuses
+# (whose `while` effects are already visible in captured attributes) fold NEUTRAL.
+func _eval_status_annotation_pass() -> void:
+	# Group B — the damage ticks, per-stack exposure like burning.
+	check_eq(StatusData.get_status("poison").eval_add("exposure"), 1.0,
+			"poison: per-stack exposure 1 (tick = stacks)")
+	check_eq(StatusData.get_status("withered").eval_add("exposure"), 1.0,
+			"withered: per-stack exposure 1")
+
+	# Group C — blind's miss chance is a flat threat halving on the interceptor,
+	# and it reaches the unit fold as a mul (stacks are charges, not intensity).
+	var blinded := unit("pawn")
+	StatusEngine.apply(blinded, "blind", Effect.STATUS_DURATION_DEFAULT, 3)
+	var bm := EvalChannels.unit_mods(blinded)
+	check(bm != null and bm.threat_mul == 0.5 and bm.threat_add == 0.0,
+			"blind ×3 folds threat_mul 0.5 — flat, stack-blind")
+
+	# Group C — every barrier soaks blows: per-stack exposure −2, scaling × stacks.
+	for sid: String in ["barrier", "empowered_barrier", "swift_barrier", "stalwart_barrier",
+			"mending_barrier", "luminous_barrier", "umbral_barrier"]:
+		check_eq(StatusData.get_status(sid).eval_add("exposure"), -2.0,
+				"%s: per-stack exposure −2" % sid)
+	var warded := unit("pawn")
+	StatusEngine.apply(warded, "barrier", Effect.STATUS_DURATION_DEFAULT, 3)
+	var wm := EvalChannels.unit_mods(warded)
+	check(wm != null and wm.exposure_add == -6.0, "barrier ×3 folds exposure −6")
+
+	# Group D — the riders: mending's heal −1 on top of the block, luminous/umbral a
+	# small value premium; the stat riders (empowered/swift/stalwart) add NOTHING beyond
+	# the block itself (their `while` halves live in the captured stats).
+	var flat_of := func(sid: String, channel: String) -> float:
+		var total := 0.0
+		for ef: Effect in (StatusData.get_status(sid).effects as Array):
+			total += ef.eval_add(channel)
+		return total
+	check_eq(flat_of.call("mending_barrier", "exposure"), -1.0,
+			"mending rider: flat exposure −1 (the heal)")
+	check_eq(flat_of.call("luminous_barrier", "value"), 0.5,
+			"luminous rider: flat value 0.5 (the mana proc)")
+	check_eq(flat_of.call("umbral_barrier", "value"), 0.5,
+			"umbral rider: flat value 0.5 (the deterrent)")
+	for sid: String in ["empowered_barrier", "swift_barrier", "stalwart_barrier"]:
+		check_eq(flat_of.call(sid, "exposure") + flat_of.call(sid, "threat")
+				+ flat_of.call(sid, "value"), 0.0,
+				"%s: stat rider carries no effect-level annotation" % sid)
+
+	# Group E — blessing heals only; grants and stat lines stay unannotated.
+	check_eq(flat_of.call("light_blessing", "exposure"), -1.0,
+			"light blessing: flat exposure −1 (the heal)")
+	check_eq(flat_of.call("water_blessing", "exposure"), -2.0,
+			"water blessing: flat exposure −2 (the heal)")
+
+	# The APPLIERS (either side — the player-cards-only scope was reversed 2026-08-06):
+	# a unit that poisons per strike deals recurring extra damage its victim's statuses
+	# don't show yet. The price now rides the KEYWORD ("Venom X" — see NamedEffects), so
+	# it scales with the number the call site asks for and no card restates it.
+	var blight := unit("darkness_water_pawn")
+	var blm := EvalChannels.unit_mods(blight)
+	check(blm != null and blm.threat_add == 1.0,
+			"a per-strike Venom 1 folds threat +1 off its card effect")
+	# Venom 2, twice over (strike AND retaliation): the magnitude reaches the fold.
+	var basilisk := EvalChannels.unit_mods(unit("darkness_water_bishop_knight"))
+	check(basilisk != null and basilisk.threat_add == 4.0,
+			"two Venom 2 effects fold threat +4 — the keyword's price scales with X")
+	# The one-shot combined Blight uses the SAME keyword, priced identically — and folds
+	# neutral anyway, because a battlecry is spent (see _eval_spent_effects_unpriced).
+	# Authors no longer have to know that: the fold does.
+	check(EvalChannels.unit_mods(unit("darkness_water")) == null,
+			"the one-shot combined Blight folds neutral — its battlecry is history")
+
+	# Group A — the double-count guard: pure stat statuses fold NEUTRAL. Their whole
+	# story is `while` attribute effects, which capture already reads off effective
+	# stats; an annotation here would price them twice.
+	for sid: String in ["charged", "frenzied", "slimed", "tailwind", "empowered",
+			"air_blessing", "earth_blessing", "fire_blessing", "darkness_blessing"]:
+		var p := unit("pawn")
+		StatusEngine.apply(p, sid, Effect.STATUS_DURATION_DEFAULT, 1)
+		check(EvalChannels.unit_mods(p) == null,
+				"%s folds neutral — stats already say it (double-count guard)" % sid)
+
+
+# SPENT effects are never priced (user ruling 2026-08-06): the channels describe what a
+# unit still means, and a battlecry is history by the time anything reads them. Computation
+# only — the same annotation on two triggers, one folded and one not.
+func _eval_spent_effects_unpriced() -> void:
+	var battlecry := Effect.from_dict({"trigger": {"kind": "event", "event": "play", "of": "self"},
+			"targets": {"kind": "self"}, "status": {"id": "poison"}, "eval": {"threat": 3}})
+	check(EvalChannels.is_spent(battlecry), "a battlecry is spent")
+	var bm := EvalChannels.Mods.new()
+	bm.fold_effect(battlecry)
+	check(bm.is_neutral(), "…so its price never reaches the fold")
+	check(EvalChannels.is_spent(Effect.from_dict({"trigger": "on_play",
+			"targeting_policy": "self", "status": {"id": "poison"}, "eval": {"threat": 3}})),
+			"the legacy on_play spelling is the same battlecry")
+
+	# Everything else keeps its price — including "whenever a UNIT is played", which is a
+	# standing rule about the future, not a moment that already passed.
+	var any_play := Effect.from_dict({"trigger": {"kind": "event", "event": "play"},
+			"targets": {"kind": "self"}, "status": {"id": "poison"}, "eval": {"threat": 3}})
+	check(not EvalChannels.is_spent(any_play), "'whenever a unit is played' is not spent")
+	var retaliation := Effect.from_dict({"trigger": {"kind": "dual_event", "event": "struck",
+			"destination_of": "self"},
+			"targets": {"kind": "participant", "participant": "origin"},
+			"named": "venom", "amount": 2})
+	var rm := EvalChannels.Mods.new()
+	rm.fold_effect(retaliation)
+	check_eq(rm.threat_add, 2.0, "a recurring Venom 2 still prices at 2")
+
+
 # The unit fold: status-level per-stack adds × stacks + the status's effects' flat adds.
 func _eval_fold_unit_statuses() -> void:
 	var p := unit("pawn")
@@ -1991,6 +2103,14 @@ func _eval_exposure_consumption() -> void:
 	state.ground[Vector3i(0, 0, 0)] = g
 	check_eq(BoardScoring.incoming(state, u), (1.5 + 0.5) * 0.5,
 			"the seat's exposure joins the unit's own before the muls")
+	# The clamp: a negative add (a barrier soaking blows) can outweigh the pour, but the
+	# reading floors at zero — below it, exposure would turn into healing and inflate
+	# persistence past 1.
+	m.exposure_add = -50.0
+	m.exposure_mul = 1.0
+	check_eq(BoardScoring.incoming(state, u), 0.0,
+			"a negative add past the pour clamps the reading at zero")
+	check_eq(BoardScoring.urgency(state, u), 0.0, "…so urgency bottoms out, never inverts")
 
 
 # Value consumption: the third channel enters the valuation's raw pricing —

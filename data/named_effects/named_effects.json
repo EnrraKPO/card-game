@@ -10,5 +10,21 @@
 		"riders": [
 			{ "chance": 0.3333, "status": { "id": "ablaze", "stacks": 1 } }
 		]
+	},
+	{
+		"id": "venom",
+		"display_name": "Venom",
+		"description": "Venom X — apply X stacks of Poison. Each stack costs its victim 1 health when it activates, so a recurring Venom X sustains about X damage a round: what it is worth to whoever deals it.",
+		"amount": 1,
+		"status": { "id": "poison", "stacks": "$X" },
+		"eval": { "threat": "$X" }
+	},
+	{
+		"id": "blind",
+		"display_name": "Blind",
+		"description": "Blind X — apply X stacks of the Blind status. Each stack is a charge: one attack, 50% chance to miss. Worth X to the unit that deals it.",
+		"amount": 1,
+		"status": { "id": "blind", "stacks": "$X" },
+		"eval": { "value": "$X" }
 	}
 ]

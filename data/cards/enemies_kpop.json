@@ -36,7 +36,7 @@
     "description": "The high note is a weapons-grade event: the nearest foe is Blinded by sheer stage lighting (50% miss, 2 attacks).",
     "enemy_only": true, "tribe": "idol", "elements": [], "chess_pieces": [],
     "effects": [
-      { "trigger": "on_play", "targeting_policy": "single_nearest", "status": { "id": "blind", "stacks": 2 } }
+      { "trigger": "on_play", "targeting_policy": "single_nearest", "named": "blind", "amount": 2 }
     ]
   },
   {

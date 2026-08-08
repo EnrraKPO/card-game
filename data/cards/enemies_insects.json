@@ -20,7 +20,7 @@
     "description": "A dart with a grudge — leaves 1 Poison in whatever it stings.",
     "enemy_only": true, "tribe": "insect", "elements": [], "chess_pieces": [],
     "effects": [
-      { "trigger": "on_attack", "targeting_policy": "attack_target", "status": { "id": "poison", "stacks": 1 } }
+      { "trigger": "on_attack", "targeting_policy": "attack_target", "named": "venom", "amount": 1 }
     ]
   },
   {

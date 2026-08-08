@@ -56,11 +56,11 @@ enum TargetingPolicy {
 	SUBJECT,         # the unit the event is about (the activator/actor — see EffectContext.subject)
 	ATTACKER,        # the unit that dealt the blow (valid in an ON_DAMAGE_TAKEN context)
 	MANUAL_SLOT,     # a SLOT the player picks on their own side — may be EMPTY (the effect decides
-	                 # what an empty pick means, e.g. material delivery spawns there); an occupied
-	                 # pick is gated by the effect's conditions. See SpellCaster's slot-mode flow.
+					 # what an empty pick means, e.g. material delivery spawns there); an occupied
+					 # pick is gated by the effect's conditions. See SpellCaster's slot-mode flow.
 	AT_LOCATION,     # the unit standing at the effect's anchor coordinates (position-first
-	                 # targeting — a slot status hitting its own cell's occupant; whiffs legally
-	                 # when the cell is empty). See TargetResolver.AtLocation.
+					 # targeting — a slot status hitting its own cell's occupant; whiffs legally
+					 # when the cell is empty). See TargetResolver.AtLocation.
 }
 
 # For an event-driven (TRIGGERED/CUSTOM) effect, which unit — relative to the effect's HOLDER — must
@@ -226,6 +226,24 @@ var op: Op = Op.ADD
 var filter: Dictionary = {}   # card selection predicate for scope=CARD
 
 
+# THE NAMED-EFFECT REGISTRY, reached by PATH rather than by class name — a landmine, not a
+# style choice. Content registries parse their effects from `_static_init` (RelicData,
+# CardData, StatusData, …), and during another script's static initialisation a sibling
+# class_name may resolve to a script object that is not compiled yet: the static call then
+# dies with "Nonexistent function 'get_named' in base 'GDScript'". Whether it happens at all
+# is script LOAD ORDER — relics broke, cards did not, and either could flip. `load()` at call
+# time forces the script fully in, and the result is cached for every later parse. Never
+# reintroduce a direct `NamedEffects.…` call in this parser.
+static var _named_lib: Object = null
+
+static func _named_registry() -> Object:
+	if _named_lib == null:
+		_named_lib = load("res://scripts/named_effects.gd")
+		if _named_lib == null:
+			push_error("Effect: the named-effect registry script is missing — keywords will not expand")
+	return _named_lib
+
+
 # The one canonical parser. Kind is explicit ("kind") or inferred: a "key" → MODIFIER, a
 # "custom" → CUSTOM, otherwise TRIGGERED — so legacy data needs no migration.
 static func from_dict(d: Dictionary) -> Effect:
@@ -234,13 +252,19 @@ static func from_dict(d: Dictionary) -> Effect:
 	# "named" key (NamedEffects refuses chains), so the recursion is one level by construction.
 	var named := str(d.get("named", ""))
 	if not named.is_empty():
-		var template := NamedEffects.get_named(named)
+		var registry := _named_registry()
+		var template: Dictionary = {} if registry == null else registry.get_named(named)
 		if template.is_empty():
 			push_error("Effect: unknown named effect '%s' — parsing the call site alone — %s" % [named, d])
 		var merged := template.duplicate(true)
 		for k: Variant in d:
 			if str(k) != "named":
 				merged[k] = d[k]
+		# "Blind X": the keyword's magnitude is the effect's `amount` (call site's if it
+		# authored one, else the template's default), substituted into every "$X" the
+		# template wrote — stacks, eval price, whatever the keyword scales. See NamedEffects.
+		if registry != null:
+			merged = registry.substitute(merged, float(merged.get("amount", 0))) as Dictionary
 		var ne := from_dict(merged)
 		ne.named_id = named
 		ne._named_authored = d.duplicate(true)
