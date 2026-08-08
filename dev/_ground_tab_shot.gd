@@ -57,9 +57,10 @@ func _ready() -> void:
 	# cell carrying a second status so a two-tab row can be judged.
 	var grounds: Array = []
 	for i in slots.size():
+		# A DETACHED slot, purely to carry statuses for the shot — it is docked
+		# nowhere, and a slot has no address of its own to set (LocationManager
+		# holds those). The widget below already knows which cell it draws.
 		var gs := BoardSlot.new()
-		gs.side = 0
-		gs.location = BoardLocation.at(0, int(i / 4), i % 4)
 		grounds.append(gs)
 		var slot := slots[i] as SlotUI
 		slot.ground_lookup = func() -> BoardSlot: return gs

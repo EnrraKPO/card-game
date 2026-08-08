@@ -23,13 +23,27 @@ func _slot(owner_id: int) -> SlotUI:
 func _ready() -> void:
 	await get_tree().process_frame
 
+	# A real board over a real world: "fielded" is a fact of the BOARD now, not a coordinate
+	# the unit carries, so the fixture has to actually stand the holder somewhere.
+	var board := CombatBoard.new()
+	add_child(board)
+	board.setup_grids()
+	var row := HBoxContainer.new()
+	add_child(row)
+	board.build_section(row, true)
+	board.build_section(row, false)
+	var world := CombatWorld.make(GameData.current_modifiers)
+	world.rewards_live = false
+	board.world = world
+
 	var caster := SpellCaster.new()
+	caster.board = board
 	caster.get_mana = func() -> int: return 99
 	add_child(caster)
 
 	# A fielded Barracks with Conscription armed.
 	var holder := CardInstance.from_data(CardData.get_card("pawn_rook"))
-	holder.owner = 0
+	world.place_unit(holder, 0, 0, 0)
 	holder.autocast_ability = "pawn_material"
 
 	var ab := holder.armed_autocast()

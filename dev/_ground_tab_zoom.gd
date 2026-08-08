@@ -56,9 +56,10 @@ func _ready() -> void:
 
 	var grounds: Array = []
 	for i in 6:
+		# A DETACHED slot, purely to carry statuses for the shot — it is docked
+		# nowhere, and a slot has no address of its own to set (LocationManager
+		# holds those). The widget below already knows which cell it draws.
 		var gs := BoardSlot.new()
-		gs.side = 0
-		gs.location = BoardLocation.at(0, int(i / 3), i % 3)
 		grounds.append(gs)
 		(slots[i] as SlotUI).ground_lookup = func() -> BoardSlot: return gs
 	# A hit's worth (2 stacks) on the occupied and empty cells; a heavy 6-stack pile on the

@@ -25,6 +25,14 @@ func setup(p_board: CombatBoard, p_animator: CombatAnimator, p_get_mana: Callabl
 	interaction = p_interaction
 
 
+# "Is this unit a piece standing on the field?" — asked of the board, which is the only thing
+# that knows (see LocationManager). No board, or a board with no world, means no field to
+# stand on: false, rather than a crash. A gesture gate must never be the thing that takes the
+# game down.
+func _is_fielded(inst: CardInstance) -> bool:
+	return board != null and BoardFacade.is_on_board(board.world, inst)
+
+
 # ── Spell input → Interaction actions ──────────────────────────────────────────
 
 func wire_spell_card(ui: CardUI) -> void:
@@ -230,7 +238,7 @@ func _effects_need_slot(effects: Array) -> bool:
 # A slot is a valid MANUAL_SLOT pick when it's on the caster's OWN side and is either EMPTY
 # (the effect's spawn case) or holds a unit passing the effect's conditions (the merge case).
 func _effects_slot_eligible(effects: Array, slot: SlotUI) -> bool:
-	if slot.owner_id != 0:
+	if slot.location == null or slot.location.side != 0:
 		return false
 	var occupant := slot.get_card()
 	if occupant == null:
@@ -267,7 +275,7 @@ func effects_target_ok(effects: Array, slot: SlotUI) -> bool:
 # both gestures, and only the cost/arming checks live here. Consulted by the AUTOCAST action's
 # role predicate (cue + drop gate, via CombatBoard.can_autocast) and again at execution.
 func autocast_drop_ok(holder: CardInstance, slot: SlotUI) -> bool:
-	if holder == null or holder.owner != 0 or not BoardFacade.is_on_board(board.world, holder):
+	if holder == null or holder.owner != 0 or not _is_fielded(holder):
 		return false
 	var ab := holder.armed_autocast()
 	if ab == null:
