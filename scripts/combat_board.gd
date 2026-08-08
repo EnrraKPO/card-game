@@ -274,15 +274,20 @@ func retire_unit(inst: CardInstance) -> CardUI:
 	return card
 
 
-# Disposes of a retired unit's card, once its send-off has played. Clears the slot only if that card
-# is STILL the one standing there — if anything has moved in since, the newcomer is not ours to
-# remove — but always frees the card itself.
+# Disposes of a retired unit's card, once its send-off has played. The slot is found BY THE
+# CARD, never by the unit: everything that reaches here has already left play, and "is this
+# card still the one standing there" is the check that was always meant — if anything has
+# moved in since, the newcomer is not ours to remove. The card is always freed.
 func drop_card_view(inst: CardInstance, card_ui: CardUI) -> void:
-	var slot := slot_of(inst)
-	if slot != null and slot.get_card() == card_ui:
+	var card := card_ui
+	if card == null or not is_instance_valid(card):
+		card = get_card_ui(inst)   # a caller holding only the unit
+	if card == null:
+		return
+	var slot := _slot_holding(card)
+	if slot != null:
 		slot.clear_card()
-	if is_instance_valid(card_ui):
-		card_ui.queue_free()
+	card.queue_free()
 
 
 # State and view together, with no send-off: the unit leaves play and its card vanishes on the spot.
@@ -290,13 +295,48 @@ func remove_card(inst: CardInstance) -> void:
 	drop_card_view(inst, retire_unit(inst))
 
 
+# The card VIEW standing for a unit — asked of the SLOT WIDGETS, which are the authority on
+# what they are drawing, and deliberately NOT routed through placement.
+#
+# ⚠ A DEATH IS THE WINDOW WHERE THOSE TWO DIVERGE, and it is the whole reason this is not a
+# placement lookup. Retiring a unit undocks it instantly — the rules must stop seeing it —
+# while its card stays standing for exactly as long as its send-off takes (see retire_unit:
+# state and view are separate on purpose). Ask placement here and every consumer of that
+# window comes up empty: the fade never plays, the corpse is never disposed of, no damage
+# number lands on the killing blow, and the body stands on the board at negative health.
+#
+# Where a unit STANDS and where its card is BEING DRAWN are two facts with two lifetimes.
+# One authority each — the board for the first, the widgets for the second.
 func get_card_ui(inst: CardInstance) -> CardUI:
-	var slot := slot_of(inst)
+	var slot := card_slot_of(inst)
 	return null if slot == null else slot.get_card()
 
 
-# The SLOT a unit stands in — the widget that speaks for it to the input layer. Null when the
-# unit is not on the board at all, which the world answers and nothing else has to infer.
+# The slot widget currently DRAWING this unit's card, or null. Survives the unit leaving play.
+func card_slot_of(inst: CardInstance) -> SlotUI:
+	if inst == null:
+		return null
+	return _find_slot(func(slot: SlotUI) -> bool:
+		var card := slot.get_card()
+		return card != null and is_instance_valid(card) and card.card_instance == inst)
+
+
+func _slot_holding(card_ui: CardUI) -> SlotUI:
+	return _find_slot(func(slot: SlotUI) -> bool: return slot.get_card() == card_ui)
+
+
+func _find_slot(matches: Callable) -> SlotUI:
+	for slots: Array in [player_slots, enemy_slots]:
+		for slot_row: Array in slots:
+			for slot: SlotUI in slot_row:
+				if slot != null and bool(matches.call(slot)):
+					return slot
+	return null
+
+
+# The SLOT a unit OCCUPIES — placement, straight from the one authority. Null when the unit is
+# not on the board, which is the honest answer for a corpse. Input questions ask this ("which
+# widget speaks for the unit standing here"); view questions ask card_slot_of above.
 func slot_of(inst: CardInstance) -> SlotUI:
 	return slot_ui_for(BoardFacade.location_of(world, inst))
 

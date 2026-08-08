@@ -87,7 +87,7 @@ const CHIP_SPAN := 0.34   # a relic chip glinting in the tray (RelicTray.glint)
 func play_results(results: Array, source_inst: CardInstance = null,
 		cue_status_id: String = "", show_cue: bool = true) -> void:
 	var source_ui: CardUI = null
-	if CombatContext.fielded(source_inst):
+	if source_inst != null:
 		# The ACTOR settles before its ability is presented: a unit still withdrawing from its own
 		# strike glints, and fires any projectile, from where it has come to rest — not from a card
 		# sliding away underneath the cue. Covers the whole resolution, since source_ui is also the
@@ -141,8 +141,11 @@ func play_results(results: Array, source_inst: CardInstance = null,
 		# A side-targeted result (draw/mana — target is a CombatSide, not a card) has no board
 		# surface here: its presentation IS the hand/gauge reacting to the side's signals.
 		var inst := r.get("target") as CardInstance
-		if not CombatContext.fielded(inst):
+		if inst == null:
 			continue
+		# HAVING A CARD is the test, not being on the board: the unit this result killed was
+		# undocked the instant it died, and its number has to land on the card still standing
+		# there. A side target (no card) and a hand card (not in a slot) both fall out here.
 		var card_ui: CardUI = _get_card_ui.call(inst) as CardUI
 		if card_ui == null:
 			continue
@@ -287,8 +290,9 @@ func _stage(inst: CardInstance) -> CardUI:
 		return null
 	if await_settled.is_valid():
 		await await_settled.call(inst)
-	if not CombatContext.fielded(inst):
-		return null
+	# No placement check: a unit that has just died is already undocked, and its card is
+	# precisely what its send-off is played on. Having no card IS the "no surface" answer —
+	# for a hand card, a spell token, or a corpse already disposed of.
 	var ui := _get_card_ui.call(inst) as CardUI
 	return ui if ui != null and is_instance_valid(ui) else null
 

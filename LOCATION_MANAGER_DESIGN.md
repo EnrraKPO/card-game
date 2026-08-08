@@ -320,3 +320,23 @@ license deleting the one the data uses.
 - **`EnemyEngine.decide_actions` still takes grid arrays.** Its emitted ACTIONS carry
   addresses; its entry signature is the last grid-shaped seam, and `CombatWorld.adopt_grid`
   is the honest bridge marked for removal with it.
+
+### 9.3 The one defect the conversion caused, and the rule that came out of it
+
+A killed unit stayed on the board at negative health (reported in play, fixed same day).
+
+Retiring a unit undocks it *instantly* — the rules must stop seeing it — while its card
+stays standing for as long as its send-off takes. That split is deliberate and predates this
+work. What the old code leaned on, without saying so, was the SECOND authority: retire nulled
+the grid cell but left `row`/`col` on the instance, so the view recovered the corpse's last
+address from the corpse. Removing those fields removed the crutch, and every consumer of the
+death window went blind at once — the fade never played, the corpse was never disposed of,
+the killing blow's damage number never landed, and the bounty coins flew from the wrong place.
+
+**The rule: where a unit STANDS and where its card is BEING DRAWN are two facts with two
+lifetimes, and a death is the window in which they differ.** One authority each — the board
+for placement (`CombatBoard.slot_of`), the slot widgets for what they are drawing
+(`get_card_ui` / `card_slot_of`). That is not the two-authorities smell this initiative
+removed; it is two questions that were being answered by one field.
+
+`tests/_corpse_smoke.tscn` pins it, on both removal paths (the presented death and the sweep).
