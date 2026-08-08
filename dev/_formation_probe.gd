@@ -74,11 +74,11 @@ func _ready() -> void:
 	for a: Dictionary in actions:
 		match int(a["type"]):
 			EnemyEngine.Action.PLACE:
-				print("   place %s → r%dc%d" % [(a["inst"] as CardInstance).data.id,
-						int(a["row"]), int(a["col"])])
+				print("   place %s → %s" % [(a["inst"] as CardInstance).data.id,
+						str(a["at"])])
 			EnemyEngine.Action.MOVE:
-				print("   move  %s → r%dc%d" % [(a["inst"] as CardInstance).data.id,
-						int(a["row"]), int(a["col"])])
+				print("   move  %s → %s" % [(a["inst"] as CardInstance).data.id,
+						str(a["at"])])
 			_:
 				print("   (other action)")
 	get_tree().quit()

@@ -50,8 +50,8 @@ static func _deliver_material(ctx: EffectContext) -> Array:
 	# is what lets a two-part delivery ("a pawn, then a fire") build a fire_pawn on an EMPTY slot:
 	# the first effect spawns the pawn, the second finds it here and merges the fire onto it.
 	var target: CardInstance = ctx.manual_target
-	if target == null and ctx.manual_row >= 0 and ctx.world != null:
-		target = ctx.world.unit_at(0, ctx.manual_row, ctx.manual_col)
+	if target == null and ctx.manual_at != null and ctx.world != null:
+		target = BoardFacade.unit_at(ctx.world, ctx.manual_at)
 	if target != null:                                    # ── MERGE onto the (possibly just-spawned) unit
 		if not CardData.can_combine(target.data, material) \
 				or target.data.chess_pieces.has("king") \
@@ -61,14 +61,14 @@ static func _deliver_material(ctx: EffectContext) -> Array:
 		# No board refresh here: the result rides back to the animator, whose play_results
 		# snaps the transformed card's printed stats itself.
 		return [{"target": target}]
-	if ctx.manual_row >= 0 and ctx.world != null:   # ── SPAWN on the empty slot
+	if ctx.manual_at != null and ctx.world != null:   # ── SPAWN on the empty slot
 		if material.chess_pieces.is_empty():
 			return []   # never spawn a piece-less (element-only) material as a board unit
 		var inst := CardInstance.from_data(material)
 		inst.owner = 0
 		Resolver.fill_health(inst)   # after owner is set, so run-wide unit bonuses fold in
 		var out: Array = [{"target": inst}]
-		ctx.world.spawn_unit(inst, ctx.manual_row, ctx.manual_col, 0)
+		ctx.world.spawn_unit_at(inst, ctx.manual_at, 0)
 		out.append_array(ctx.world.play_dispatch(inst))
 		ctx.world.cleanup_deaths()
 		return out

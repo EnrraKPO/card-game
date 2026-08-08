@@ -56,7 +56,7 @@ func _ready() -> void:
 			_sv.add_child(vc)
 
 	var victim := CardInstance.from_data(CardData.get_card("queen"))   # 5 cost = 5 coins
-	board.place_enemy_card(victim, 1, 1)
+	board.place_enemy_card(victim, BoardLocation.at(1, 1, 1))
 	await get_tree().process_frame
 	var bag = combat.get("_gold_bag")
 	var corpse: Vector2 = board.get_card_ui(victim).get_global_rect().get_center()

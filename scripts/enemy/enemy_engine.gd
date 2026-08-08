@@ -10,7 +10,9 @@ extends RefCounted
 # candidate_apply / board_scoring — this class only runs the loop.
 
 # The CPU's action vocabulary, executed by combat._execute_enemy_action:
-#   { "type": Action.PLACE,    "inst": CardInstance, "row": int, "col": int }
+#   { "type": Action.PLACE,    "inst": CardInstance, "at": BoardLocation }
+#   (PLACE/MOVE name their destination as ONE address — never a loose row and column the
+#   receiver has to pair with a half of the board. LOCATION_MANAGER_DESIGN.md §2.6.)
 #   { "type": Action.MOVE,     "inst": CardInstance, "row": int, "col": int }
 #   { "type": Action.CAST,     "inst": CardInstance(spell), "target": CardInstance|null }
 #   { "type": Action.GENERATE, "unit": CardInstance(holder), "ability": AbilityData,
@@ -145,18 +147,18 @@ func decide_actions(hand: Array, player_grid: Array, enemy_grid: Array, mana: in
 				# is churn the player reads as jitter, so it counts as this turn's move.
 				moved[cand["inst"]] = true
 				actions.append({"type": Action.PLACE, "inst": cand["inst"],
-						"row": int(cand["row"]), "col": int(cand["col"])})
+						"at": BoardLocation.at(1, int(cand["row"]), int(cand["col"]))})
 			"move":
 				moved[cand["inst"]] = true
 				actions.append({"type": Action.MOVE, "inst": cand["inst"],
-						"row": int(cand["row"]), "col": int(cand["col"])})
+						"at": BoardLocation.at(1, int(cand["row"]), int(cand["col"]))})
 			"arrange":
 				# Two ordinary move actions — the pair was one CANDIDATE (scored as one
 				# destination board), but it executes as the moves it is.
 				for m: Dictionary in (cand["moves"] as Array):
 					moved[m["inst"]] = true
 					actions.append({"type": Action.MOVE, "inst": m["inst"],
-							"row": int(m["row"]), "col": int(m["col"])})
+							"at": BoardLocation.at(1, int(m["row"]), int(m["col"]))})
 			"cast":
 				pool.erase(cand["inst"])
 				actions.append({"type": Action.CAST, "inst": cand["inst"],

@@ -30,7 +30,7 @@ func _ready() -> void:
 
 	# ── Split on death: Green Slime dies → 2 Droplets, first reclaiming its slot ──
 	var slime := CardInstance.from_data(CardData.get_card("slime_green"))
-	board.place_enemy_card(slime, 1, 1)
+	board.place_enemy_card(slime, BoardLocation.at(1, 1, 1))
 	Resolver.submit(StatMutation.damage(slime, 99, null))
 	# The Resolver only mutates — COMBAT broadcasts `death` and then sweeps (events ≠
 	# mutations). Mirror that here: fire the corpse's death effects, then clean up.
@@ -52,7 +52,7 @@ func _ready() -> void:
 
 	# ── Phase-change boss: Slimeon dies → Slimeon Reborn (is_king) → fight continues ──
 	var boss := CardInstance.from_data(CardData.get_card("slime_overlord"))
-	board.place_enemy_card(boss, 2, 3)
+	board.place_enemy_card(boss, BoardLocation.at(1, 2, 3))
 	Resolver.submit(StatMutation.damage(boss, 999, null))
 	EffectSystem.trigger(GameEvent.make(&"death", boss), boss, board.make_context(boss))
 	board.cleanup_effect_deaths()
@@ -73,7 +73,7 @@ func _ready() -> void:
 
 	# ── strikes read on a live board unit ──
 	var talon := CardInstance.from_data(CardData.get_card("harpy_talon"))
-	board.place_enemy_card(talon, 0, 0)
+	board.place_enemy_card(talon, BoardLocation.at(1, 0, 0))
 	if talon.get_attribute("strikes") != 2:
 		failures += 1
 		print("FAIL: Twin-Talon Harpy should read 2 strikes")

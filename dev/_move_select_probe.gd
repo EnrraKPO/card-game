@@ -21,7 +21,7 @@ func _ready() -> void:
 		return
 
 	var atk := CardInstance.from_data(CardData.get_card("bishop"))
-	board.spawn_player_card(atk, 1, 3)
+	board.spawn_player_card(atk, BoardLocation.at(0, 1, 3))
 	await get_tree().process_frame
 
 	var src_slot: SlotUI = board.player_slots[1][3]

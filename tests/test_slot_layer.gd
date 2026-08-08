@@ -184,8 +184,7 @@ func _ground_delivery() -> void:
 	var w := _world()
 	var caster := unit("pawn")
 	var ctx := w.make_context(caster)
-	ctx.manual_row = 1
-	ctx.manual_col = 2
+	ctx.manual_at = BoardLocation.at(0, 1, 2)
 	var e := Effect.from_dict({"targets": {"kind": "manual_slot"},
 			"status": {"id": "_t_ground_mark", "layer": "ground"}})
 	var res := EffectSystem.apply_single(e, caster, ctx)
@@ -197,16 +196,27 @@ func _ground_delivery() -> void:
 	# Anchor-coordinate fallback (a slot status re-applying ground state through its own dispatch).
 	var ctx2 := w.make_context(null)
 	ctx2.owner_anchor = 1
-	ctx2.anchor_side = 1
-	ctx2.anchor_row = 0
-	ctx2.anchor_col = 3
+	ctx2.anchor_at = BoardLocation.at(1, 0, 3)
 	EffectSystem.apply_single(e, null, ctx2)
 	check(w.slot_at(1, 0, 3).find_status("_t_ground_mark") != null,
 			"with no pick, the anchor coordinates address the ground")
 	# No coordinates at all: authoring bug — loud no-op (the push_error is the fence).
 	var bare := w.make_context(caster)
 	check(EffectSystem.apply_single(e, caster, bare).is_empty(),
-			"a ground payload with no coordinates applies nothing")
+			"a ground payload with no address applies nothing")
+
+	# ⚠ THE CONFLATION, PINNED SHUT (LOCATION_MANAGER_DESIGN.md §3). A pick on the ENEMY half
+	# by a PLAYER-allegiance caster lands on the enemy half. It used to land on the player's,
+	# because delivery held a bare row and column and took its half from the allegiance
+	# channel — the two normally agree, which is precisely why nobody saw it. A picked square
+	# arrives as one whole address now, so there is no half to go looking for.
+	var across := w.make_context(caster)
+	across.manual_at = BoardLocation.at(1, 2, 1)
+	EffectSystem.apply_single(e, caster, across)
+	check(w.slot_at(1, 2, 1).find_status("_t_ground_mark") != null,
+			"a pick lands on the half it points at, whoever is casting")
+	check(w.slot_at(0, 2, 1).find_status("_t_ground_mark") == null,
+			"…and NOT on the caster's own half, which is what the allegiance read used to do")
 
 
 func _at_location_spelling() -> void:

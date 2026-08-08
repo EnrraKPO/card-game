@@ -45,7 +45,7 @@ func _ready() -> void:
 	for c in 3:
 		var foe := CardInstance.from_data(CardData.get_card("pawn"))
 		foe.owner = 1
-		board.place_enemy_card(foe, 1, c)
+		board.place_enemy_card(foe, BoardLocation.at(1, 1, c))
 	if KILL_KING:
 		var eking = board.get_enemy_king()
 		eking.current_health = 1

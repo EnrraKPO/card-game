@@ -67,8 +67,10 @@ func side(side_owner: int) -> CombatSide:
 
 # ── Asking the board ────────────────────────────────────────────────────────────────────
 # Thin doors onto the façade, kept because the world is what every rules path already holds.
-# The loose (side, row, col) forms are TRANSITIONAL — increment 2 replaces them with bundled
-# locations at the call sites (LOCATION_MANAGER_DESIGN.md §5.2).
+# The (side, row, col) forms mint an address and forward; they survive for the callers whose
+# own vocabulary is still a pair of loop counters (a board sweep, a fixture), and every one
+# of them hands a WHOLE address onward from there — nothing downstream ever takes a row and
+# a column and has to find a half (LOCATION_MANAGER_DESIGN.md §2.6).
 
 # Where a unit (or any dockable) stands. Null = not on the board, which is now an honest
 # absence rather than a sentinel coordinate a caller has to recognise.
@@ -234,7 +236,11 @@ func place_unit_at(inst: CardInstance, loc: BoardLocation, p_owner: int) -> void
 
 # A rules-driven arrival: place + tell the view a card is owed (see unit_spawned).
 func spawn_unit(inst: CardInstance, r: int, c: int, p_owner: int) -> void:
-	place_unit(inst, r, c, p_owner)
+	spawn_unit_at(inst, BoardLocation.at(p_owner, r, c), p_owner)
+
+
+func spawn_unit_at(inst: CardInstance, loc: BoardLocation, p_owner: int) -> void:
+	place_unit_at(inst, loc, p_owner)
 	unit_spawned.emit(inst)
 
 
@@ -303,8 +309,7 @@ func _spawn_from_queue(s: Dictionary) -> bool:
 	var inst := CardInstance.from_data(data)
 	inst.owner = spawn_owner
 	Resolver.fill_health(inst)   # after owner is set, so run-wide unit bonuses fold in
-	place_unit_at(inst, landing, spawn_owner)
-	unit_spawned.emit(inst)
+	spawn_unit_at(inst, landing, spawn_owner)
 	play_dispatch(inst)   # results discarded, as the board always did for queued spawns
 	return true
 

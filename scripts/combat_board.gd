@@ -210,10 +210,10 @@ func can_place_from_hand(card_ui: CardUI) -> bool:
 	return card_ui.card_instance.get_attribute("cost") <= get_mana.call()
 
 
-func place_enemy_card(inst: CardInstance, r: int, c: int) -> Array:
-	world.place_unit(inst, r, c, 1)
+func place_enemy_card(inst: CardInstance, at: BoardLocation) -> Array:
+	world.place_unit_at(inst, at, 1)
 	var ui := CardUI.create(inst)
-	enemy_slots[r][c].set_card(ui)
+	slot_ui_for(at).set_card(ui)
 	var results := world.play_dispatch(inst)
 	cleanup_effect_deaths()
 	refresh()
@@ -223,12 +223,12 @@ func place_enemy_card(inst: CardInstance, r: int, c: int) -> Array:
 # Spawns a unit into an empty PLAYER slot outside the hand-placement flow (material
 # delivery's empty-slot case — see EffectHooks.deliver_material). Mirrors place_enemy_card:
 # occupies the grid, creates the CardUI, fires the unit's ON_PLAY effects.
-func spawn_player_card(inst: CardInstance, r: int, c: int) -> Array:
-	if world.unit_at(0, r, c) != null:
+func spawn_player_card(inst: CardInstance, at: BoardLocation) -> Array:
+	if BoardFacade.unit_at(world, at) != null:
 		return []
-	world.place_unit(inst, r, c, 0)
+	world.place_unit_at(inst, at, 0)
 	var ui := CardUI.create(inst)
-	(player_slots[r][c] as SlotUI).set_card(ui)
+	slot_ui_for(at).set_card(ui)
 	_wire_unit_drag(ui)
 	var results := world.play_dispatch(inst)
 	cleanup_effect_deaths()
@@ -245,7 +245,7 @@ func spawn_player_card(inst: CardInstance, r: int, c: int) -> Array:
 # view are separate here, exactly as they are for a death (see retire_unit), so the grid, the
 # targeting and the next attacker are all correct the instant this returns whether or not anybody
 # plays the cue.
-func move_enemy_card(inst: CardInstance, r: int, c: int) -> Vector2:
+func move_enemy_card(inst: CardInstance, at: BoardLocation) -> Vector2:
 	# Read BEFORE the card is taken out of its slot: clear_card reparents it out of the tree, and an
 	# orphaned Control's global position is just its local one — the origin, wherever it stood.
 	var old_slot := slot_of(inst)
@@ -253,8 +253,8 @@ func move_enemy_card(inst: CardInstance, r: int, c: int) -> Vector2:
 	var from := standing.global_position if standing != null else old_slot.global_position
 	var ui: CardUI = old_slot.clear_card()
 	# ONE move, on the one authority — no vacate-then-occupy pair to get out of step.
-	world.locations.move(inst, BoardLocation.at(1, r, c))
-	(enemy_slots[r][c] as SlotUI).set_card(ui)
+	world.locations.move(inst, at)
+	slot_ui_for(at).set_card(ui)
 	return from
 
 

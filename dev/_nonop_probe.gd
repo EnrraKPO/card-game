@@ -36,9 +36,9 @@ func _ready() -> void:
 
 	var board = combat.get("_board")
 	var healer := CardInstance.from_data(CardData.get_card(HEALER))
-	board.spawn_player_card(healer, 0, 0)
+	board.spawn_player_card(healer, BoardLocation.at(0, 0, 0))
 	var ally := CardInstance.from_data(CardData.get_card("pawn"))
-	board.spawn_player_card(ally, 0, 1)
+	board.spawn_player_card(ally, BoardLocation.at(0, 0, 1))
 	Resolver.fill_health(ally)
 	for _i in 10:
 		await get_tree().process_frame

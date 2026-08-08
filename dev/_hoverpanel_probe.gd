@@ -62,7 +62,7 @@ func _ready() -> void:
 
 func _check_board(board: Node, r: int, c: int) -> int:
 	var unit := CardInstance.from_data(CardData.get_card("bishop"))
-	board.spawn_player_card(unit, r, c)
+	board.spawn_player_card(unit, BoardLocation.at(0, r, c))
 	await get_tree().process_frame
 	var card: CardUI = board.get_card_ui(unit)
 	var bad := await _hover_and_report(card, "player %d,%d" % [r, c])
@@ -85,7 +85,7 @@ func _check_hand(combat: Node) -> int:
 func _check_delay(board: Node) -> int:
 	UxPrefs.tooltip_delay = 0.4
 	var unit := CardInstance.from_data(CardData.get_card("bishop"))
-	board.spawn_player_card(unit, 1, 1)
+	board.spawn_player_card(unit, BoardLocation.at(0, 1, 1))
 	await get_tree().process_frame
 	var card: CardUI = board.get_card_ui(unit)
 	var bad := 0
@@ -127,8 +127,8 @@ func _check_delay(board: Node) -> int:
 func _check_card_to_card(board: Node) -> int:
 	var a := CardInstance.from_data(CardData.get_card("bishop"))
 	var b := CardInstance.from_data(CardData.get_card("knight"))
-	board.spawn_player_card(a, 1, 0)
-	board.spawn_player_card(b, 1, 2)
+	board.spawn_player_card(a, BoardLocation.at(0, 1, 0))
+	board.spawn_player_card(b, BoardLocation.at(0, 1, 2))
 	await get_tree().process_frame
 	var ca: CardUI = board.get_card_ui(a)
 	var cb: CardUI = board.get_card_ui(b)

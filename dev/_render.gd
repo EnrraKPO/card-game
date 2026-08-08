@@ -327,11 +327,11 @@ func _ready() -> void:
 				for c in BoardData.COLS:
 					var pid: String = fodder[(r * BoardData.COLS + c) % fodder.size()]
 					if pboard.player_grid[r][c] == null:
-						pboard.spawn_player_card(CardInstance.from_data(CardData.get_card(pid)), r, c)
+						pboard.spawn_player_card(CardInstance.from_data(CardData.get_card(pid)), BoardLocation.at(0, r, c))
 					if pboard.enemy_grid[r][c] == null:
 						var foe := CardInstance.from_data(CardData.get_card(fodder[(c + r) % fodder.size()]))
 						foe.owner = 1
-						pboard.place_enemy_card(foe, r, c)
+						pboard.place_enemy_card(foe, BoardLocation.at(1, r, c))
 			for _f in 20:
 				await get_tree().process_frame
 	# "abilities": field an ability-holder (rook/castling) on the player board and open the
@@ -352,7 +352,7 @@ func _ready() -> void:
 				if a.begins_with("holder="):
 					holder_id = a.trim_prefix("holder=")
 			var rk := CardInstance.from_data(CardData.get_card(holder_id))
-			board.spawn_player_card(rk, 2, 1)
+			board.spawn_player_card(rk, BoardLocation.at(0, 2, 1))
 			if "armed" in args:
 				rk.autocast_ability = "castling"
 			await get_tree().process_frame
@@ -416,7 +416,7 @@ func _ready() -> void:
 		if cb != null:
 			var board = cb.get("_board")
 			var ep := CardInstance.from_data(CardData.get_card("pawn"))
-			board.place_enemy_card(ep, 1, 0)
+			board.place_enemy_card(ep, BoardLocation.at(1, 1, 0))
 			# An enemy in the bishop's lane — it targets our bishop, so it wears the incoming-threat
 			# glow + attack-badge highlight (distinct from the crosshair on the bishop's OWN target).
 			var pawn03 := CardInstance.from_data(CardData.get_card("pawn"))
@@ -426,9 +426,9 @@ func _ready() -> void:
 				var sd := StatusData.get_status(sid)
 				if sd != null:
 					pawn03.statuses.append(StatusInstance.make(sd, 2, 2, null))
-			board.place_enemy_card(pawn03, 0, 3)
+			board.place_enemy_card(pawn03, BoardLocation.at(1, 0, 3))
 			var atk := CardInstance.from_data(CardData.get_card("bishop"))
-			board.spawn_player_card(atk, 1, 3)
+			board.spawn_player_card(atk, BoardLocation.at(0, 1, 3))
 			await get_tree().process_frame
 			# "dragstart": exercise the drag-start selection fix — a fielded unit's drag with the
 			# cursor still on its origin (no landing-slot hover) must still show its attack preview.
@@ -490,9 +490,9 @@ func _ready() -> void:
 		if cb3 != null:
 			var board3 = cb3.get("_board")
 			var victim := CardInstance.from_data(CardData.get_card("pawn"))
-			board3.place_enemy_card(victim, 1, 0)
+			board3.place_enemy_card(victim, BoardLocation.at(1, 1, 0))
 			var striker := CardInstance.from_data(CardData.get_card("bishop"))
-			board3.spawn_player_card(striker, 1, 3)
+			board3.spawn_player_card(striker, BoardLocation.at(0, 1, 3))
 			await get_tree().process_frame
 			var s_card: CardUI = board3.get_card_ui(striker)
 			var v_card: CardUI = board3.get_card_ui(victim)
@@ -519,7 +519,7 @@ func _ready() -> void:
 		if cbg != null:
 			var gboard = cbg.get("_board")
 			var victim := CardInstance.from_data(CardData.get_card("pawn"))
-			gboard.place_enemy_card(victim, 1, 0)
+			gboard.place_enemy_card(victim, BoardLocation.at(1, 1, 0))
 			var gworld: CombatWorld = gboard.world
 			StatusEngine.apply(gworld.slot_at(1, 1, 0), "burning", Effect.STATUS_DURATION_DEFAULT, 1, null)
 			StatusEngine.apply(gworld.slot_at(0, 2, 1), "burning", Effect.STATUS_DURATION_DEFAULT, 1, null)
@@ -535,9 +535,9 @@ func _ready() -> void:
 				break
 		if cb2 != null:
 			var board2 = cb2.get("_board")
-			board2.place_enemy_card(CardInstance.from_data(CardData.get_card("pawn")), 1, 0)
+			board2.place_enemy_card(CardInstance.from_data(CardData.get_card("pawn")), BoardLocation.at(1, 1, 0))
 			var rk2 := CardInstance.from_data(CardData.get_card("rook"))
-			board2.spawn_player_card(rk2, 1, 3)
+			board2.spawn_player_card(rk2, BoardLocation.at(0, 1, 3))
 			rk2.autocast_ability = "castling"
 			await get_tree().process_frame
 			board2.interaction.begin(board2.make_autocast_action(board2.get_card_ui(rk2)))

@@ -43,7 +43,7 @@ func _ready() -> void:
 			sv.add_child(vc)
 
 	var victim := CardInstance.from_data(CardData.get_card("queen"))   # 5 cost = 5 coins
-	board.place_enemy_card(victim, 1, 1)
+	board.place_enemy_card(victim, BoardLocation.at(1, 1, 1))
 	await get_tree().process_frame
 	Resolver.set_health(victim, 0)
 	combat.call("_bury", victim)

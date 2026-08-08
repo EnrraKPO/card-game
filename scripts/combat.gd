@@ -516,7 +516,7 @@ func _execute_enemy_action(action: Dictionary) -> void:
 			var inst: CardInstance = action["inst"]
 			_pay_mana(_enemy_side, inst.data.cost)
 			_enemy_side.remove_from_hand(inst)
-			var results := _board.place_enemy_card(inst, action["row"], action["col"])
+			var results := _board.place_enemy_card(inst, action["at"])
 			Sfx.play("combat_enemy_place")
 			_vfx.play(VFXEvent.card_placed(_board.get_card_ui(inst)))
 			await _animator.show_effect_results(results, inst)
@@ -541,7 +541,7 @@ func _execute_enemy_action(action: Dictionary) -> void:
 			if not ab.material.is_empty():
 				var mat := CardData.get_card(ab.material)
 				var m_inst := CardInstance.from_data(mat)
-				var m_results := _board.place_enemy_card(m_inst, action["row"], action["col"])
+				var m_results := _board.place_enemy_card(m_inst, action["at"])
 				# A conjured unit MATERIALIZES (distinct from a card landing from a hand).
 				Vfx.play("summon_materialize", _board.get_card_ui(m_inst))
 				await _animator.show_effect_results(m_results, m_inst)
@@ -556,7 +556,7 @@ func _execute_enemy_action(action: Dictionary) -> void:
 				var spell_target: CardInstance = action.get("target", null)
 				await _show_enemy_spell(display, spell_target)
 		EnemyEngine.Action.MOVE:
-			var from := _board.move_enemy_card(action["inst"], action["row"], action["col"])
+			var from := _board.move_enemy_card(action["inst"], action["at"])
 			var moved := _board.get_card_ui(action["inst"])
 			Vfx.play("unit_move_dash", moved)
 			# AWAITED, unlike the streak playing over it: the unit has to have LANDED before the
@@ -1004,13 +1004,13 @@ func _log_enemy_action(action: Dictionary) -> void:
 	match action["type"]:
 		EnemyEngine.Action.PLACE:
 			var inst: CardInstance = action["inst"]
-			line = "place %s → r%dc%d (cost %d, mana %d left)" % [inst.data.id,
-					int(action["row"]), int(action["col"]), inst.data.cost,
+			line = "place %s → %s (cost %d, mana %d left)" % [inst.data.id,
+					str(action["at"]), inst.data.cost,
 					_enemy_side.mana - inst.data.cost]
 		EnemyEngine.Action.MOVE:
 			var inst: CardInstance = action["inst"]
-			line = "move %s %s → r%dc%d" % [inst.data.id,
-					str(_world.location_of(inst)), int(action["row"]), int(action["col"])]
+			line = "move %s %s → %s" % [inst.data.id,
+					str(_world.location_of(inst)), str(action["at"])]
 		EnemyEngine.Action.CAST:
 			line = "cast %s on %s" % [(action["inst"] as CardInstance).data.id,
 					_where(action.get("target", null))]

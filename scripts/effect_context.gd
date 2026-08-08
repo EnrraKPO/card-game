@@ -31,19 +31,20 @@ var subject: CardInstance = null
 var owner_anchor: int = -9999   # == TriggerResolver.OWNER_FROM_HOLDER
 
 
-# The picked SLOT for MANUAL_SLOT effects (material delivery) as plain coordinates — the
-# gesture edge (SpellCaster) translates its SlotUI into these; the slot may be EMPTY (that's
-# the spawn case). -1 = no slot picked; hooks must check.
-var manual_row: int = -1
-var manual_col: int = -1
-# WHERE this effect is anchored, AS A LOCATION — the coordinate-provider channel for
-# position-first targeting (the AT_LOCATION kind reads these; see SLOT_LAYER_DESIGN.md).
-# Set ONLY by ground-layer dispatch (a slot status firing: the slot's own address); unit
-# dispatches never set it — their anchor is `source`, a unit. Three plain ints mirroring
-# manual_row/col: no position object, no slot reference in the context. -1 = no anchor.
-var anchor_side: int = -1
-var anchor_row: int = -1
-var anchor_col: int = -1
+# The picked SLOT for MANUAL_SLOT effects (material delivery) — the gesture edge
+# (SpellCaster) hands over the SlotUI's own address, WHOLE. The cell may be EMPTY (that is
+# the spawn case). Null = no slot picked; hooks must check.
+#
+# This carries its own side, and that is the whole point (LOCATION_MANAGER_DESIGN.md §2.6).
+# It used to be a bare row and column, so delivery had to find a half somewhere and took one
+# from the ALLEGIANCE channel — the conflation defect §3 records. There is nothing left to
+# recombine: a pick is one value or it is nothing.
+var manual_at: BoardLocation = null
+# WHERE this effect is anchored — the coordinate-provider channel for position-first
+# targeting (the AT_LOCATION kind reads it; see SLOT_LAYER_DESIGN.md). Set ONLY by
+# ground-layer dispatch (a slot status firing: the slot's own address); unit dispatches never
+# set it — their anchor is `source`, a unit. Null = no anchor.
+var anchor_at: BoardLocation = null
 # The cohesive combat world this dispatch runs in (grids, sides, spawn queue — see
 # CombatWorld), set by CombatWorld.make_context. Null in contexts built outside a combat,
 # where board procedures (spawn payloads, hooks) are inert.

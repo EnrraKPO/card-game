@@ -160,10 +160,9 @@ class AtLocation extends TargetResolver:
 	# legal whiff — no targets, no error. Conditions gate the found unit normally ("only
 	# burn non-flying occupants").
 	func resolve(_event: GameEvent, holder: CardInstance, context: EffectContext) -> Array:
-		if context == null or context.anchor_side < 0:
+		if context == null or context.anchor_at == null:
 			return []
-		var unit := TargetResolver.unit_at_coords(context,
-				context.anchor_side, context.anchor_row, context.anchor_col)
+		var unit := TargetResolver.unit_at(context, context.anchor_at)
 		if unit == null:
 			return []
 		# (An empty cell is a legal whiff — see the note above.)
@@ -352,16 +351,20 @@ static func legacy_policy_for(resolver: TargetResolver) -> Effect.TargetingPolic
 
 # ── Shared helpers ───────────────────────────────────────────────────────────────────
 
-# The unit standing at a ground address, read from the context's boards (the pieces layer's
-# spatial index — never cached anywhere else). Null = empty cell or out-of-range address.
-static func unit_at_coords(context: EffectContext, side: int, r: int, c: int) -> CardInstance:
-	var board: Array = context.player_board if side == 0 else context.enemy_board
-	if r < 0 or r >= board.size():
+# The unit standing at an address, read from the context's own boards — which derive from
+# the world when there is one, and are the caller's explicit fixtures when there is not.
+# Null = nobody there, which is an answer (§2.9); a location is real by construction, so the
+# four hand-rolled bounds guards this used to carry are gone.
+static func unit_at(context: EffectContext, at: BoardLocation) -> CardInstance:
+	if context == null or at == null:
 		return null
-	var board_row: Array = board[r]
-	if c < 0 or c >= board_row.size():
+	var board: Array = context.player_board if at.side == 0 else context.enemy_board
+	if at.row >= board.size():
 		return null
-	return board_row[c]
+	var board_row: Array = board[at.row]
+	if at.col >= board_row.size():
+		return null
+	return board_row[at.col]
 
 
 static func board_units(context: EffectContext) -> Array:

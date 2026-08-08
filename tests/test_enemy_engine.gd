@@ -455,7 +455,7 @@ func _engine_determinism() -> void:
 	check_eq(a.size(), b.size(), "seeded runs plan the same number of actions")
 	for i in a.size():
 		var same: bool = a[i]["inst"] == b[i]["inst"] \
-				and int(a[i]["row"]) == int(b[i]["row"]) and int(a[i]["col"]) == int(b[i]["col"])
+				and a[i].get("at", null) == b[i].get("at", null)
 		check(same, "seeded runs pick identical action %d" % i)
 
 

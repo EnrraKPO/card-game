@@ -217,10 +217,10 @@ static func _run_effect(effect: Effect, source: CardInstance, context: EffectCon
 				beneath = context.world.location_of(under)
 			if beneath == null:
 				continue   # a side target / off-board unit has no ground beneath it
-			# The half comes from WHERE THE UNIT STANDS, never from whose army it is: one
-			# address, two layers (LOCATION_MANAGER_DESIGN.md §3's conflation defect).
-			var gr := _ground_status_at(effect, source, context, cause,
-					beneath.side, beneath.row, beneath.col)
+			# ONE address, both layers: the ground under a unit is the unit's own square,
+			# asked for as a whole rather than rebuilt out of a row, a column and a guess at
+			# which half (LOCATION_MANAGER_DESIGN.md §3).
+			var gr := _ground_status_at(effect, source, context, cause, beneath)
 			if not gr.is_empty():
 				gresults.append(gr)
 		return gresults
@@ -257,47 +257,43 @@ static func _apply_side(effect: Effect, side: CombatSide, source: CardInstance, 
 	return _with_interceptions({"target": side, "attribute": effect.attribute, "delta": out.delta}, out)
 
 
-# The coordinate-channel form of ground delivery (MANUAL_SLOT targeting): the picked cell
-# (a cast's gesture, on the caster's own half), else the anchor coords (a slot status
-# re-applying ground state through its own dispatch). No coordinates at all = authoring
-# bug: fail loud, apply nothing.
+# The ADDRESS form of ground delivery (MANUAL_SLOT targeting): the picked cell (a cast's
+# gesture), else the anchor (a slot status re-applying ground state through its own
+# dispatch). No address at all = authoring bug: fail loud, apply nothing.
+#
+# ⚠ HISTORY WORTH KEEPING: this used to hold a bare row and column and reach for
+# TriggerResolver.anchor_owner to decide WHICH HALF the picked square was on — deriving a
+# spatial fact from the allegiance channel. It worked because the two normally agree, which
+# is exactly what made it hard to see. A pick arrives as one whole address now, so there is
+# no half left to go looking for (LOCATION_MANAGER_DESIGN.md §3, §2.6).
 static func _ground_status_at_coords(effect: Effect, source: CardInstance, context: EffectContext, cause: StringName) -> Dictionary:
 	if context == null or context.world == null:
 		return {}
-	var slot_side := -1
-	var slot_row := -1
-	var slot_col := -1
-	if context.manual_row >= 0:
-		slot_side = TriggerResolver.anchor_owner(source, context.owner_anchor)
-		slot_row = context.manual_row
-		slot_col = context.manual_col
-	elif context.anchor_side >= 0:
-		slot_side = context.anchor_side
-		slot_row = context.anchor_row
-		slot_col = context.anchor_col
-	if slot_side < 0 or slot_row < 0 or slot_col < 0:
-		push_error("EffectSystem: ground status '%s' has no coordinates (no picked slot, no anchor)"
+	var at: BoardLocation = context.manual_at
+	if at == null:
+		at = context.anchor_at
+	if at == null:
+		push_error("EffectSystem: ground status '%s' has no address (no picked slot, no anchor)"
 				% effect.status_id)
 		return {}
-	return _ground_status_at(effect, source, context, cause, slot_side, slot_row, slot_col)
+	return _ground_status_at(effect, source, context, cause, at)
 
 
 # The one delivery point for a ground status: submit to the slot at the address, through the
 # Resolver like the unit form (single-writer rule — stack counts stay interceptable).
 # Outside combat (no world in the context) the payload is inert, mirroring spawn.
 static func _ground_status_at(effect: Effect, source: CardInstance, context: EffectContext,
-		cause: StringName, slot_side: int, slot_row: int, slot_col: int) -> Dictionary:
-	if context == null or context.world == null:
+		cause: StringName, at: BoardLocation) -> Dictionary:
+	if context == null or context.world == null or at == null:
 		return {}
-	var slot := context.world.slot_at(slot_side, slot_row, slot_col)
+	var slot := BoardFacade.slot_at(context.world, at)
 	var sout := Resolver.submit(_caused(StatMutation.status_apply(slot, effect.status_id,
 			effect.status_duration, effect.status_stacks, source), cause))
 	if sout.delta <= 0:
 		return {}
 	# Ground state is INVISIBLE for now (no slot pips until the presentation step) — the
 	# always-recording combat log is the one witness a playtest has.
-	CombatLog.note("ground", "%s ignites slot (%s r%d c%d)%s" % [effect.status_id,
-			"player" if slot_side == 0 else "enemy", slot_row, slot_col,
+	CombatLog.note("ground", "%s ignites slot %s%s" % [effect.status_id, str(at),
 			"" if source == null else " — by " + str(source.data.id)])
 	return _with_interceptions({"target": slot, "status_applied": effect.status_id}, sout)
 

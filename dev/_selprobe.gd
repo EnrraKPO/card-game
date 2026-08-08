@@ -46,7 +46,7 @@ func _ready() -> void:
 		await get_tree().process_frame
 
 	var unit := CardInstance.from_data(CardData.get_card("rook"))
-	board.spawn_player_card(unit, 2, 1)
+	board.spawn_player_card(unit, BoardLocation.at(0, 2, 1))
 	for _i in 5:
 		await get_tree().process_frame
 

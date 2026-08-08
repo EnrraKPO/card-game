@@ -34,13 +34,13 @@ func _ready() -> void:
 # ── 1. The enemy slide ─────────────────────────────────────────────────────────
 func _probe_slide(board: Node) -> void:
 	var foe := CardInstance.from_data(CardData.get_card("pawn"))
-	board.place_enemy_card(foe, 0, 0)
+	board.place_enemy_card(foe, BoardLocation.at(1, 0, 0))
 	await get_tree().process_frame
 	await get_tree().process_frame
 
 	var card: CardUI = board.get_card_ui(foe)
 	var start := card.global_position
-	var from: Vector2 = board.move_enemy_card(foe, 1, 3)
+	var from: Vector2 = board.move_enemy_card(foe, BoardLocation.at(1, 1, 3))
 	var moved: CardUI = board.get_card_ui(foe)
 	print("SLIDE: from=%s (card stood at %s) — same=%s" % [from, start, from == start])
 	Vfx.play("unit_move_slide", moved, {"from": from})
@@ -64,7 +64,7 @@ func _probe_slide(board: Node) -> void:
 # ── 2. The turn number ─────────────────────────────────────────────────────────
 func _probe_turn_number(board: Node) -> void:
 	var unit := CardInstance.from_data(CardData.get_card("pawn"))
-	board.spawn_player_card(unit, 1, 1)
+	board.spawn_player_card(unit, BoardLocation.at(0, 1, 1))
 	await get_tree().process_frame
 	var card: CardUI = board.get_card_ui(unit)
 
@@ -94,7 +94,7 @@ func _probe_turn_number(board: Node) -> void:
 # ── 3. The card-details tooltip ────────────────────────────────────────────────
 func _probe_tooltip(board: Node) -> void:
 	var unit := CardInstance.from_data(CardData.get_card("bishop"))
-	board.spawn_player_card(unit, 1, 2)
+	board.spawn_player_card(unit, BoardLocation.at(0, 1, 2))
 	await get_tree().process_frame
 	var card: CardUI = board.get_card_ui(unit)
 

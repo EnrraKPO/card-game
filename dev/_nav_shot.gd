@@ -35,7 +35,7 @@ func _ready() -> void:
 	# Content for the list: a rook (holds Castling) on the player board.
 	var rook := CardInstance.from_data(CardData.get_card("rook"))
 	Resolver.fill_health(rook)
-	combat._board.spawn_player_card(rook, 1, 1)
+	combat._board.spawn_player_card(rook, BoardLocation.at(0, 1, 1))
 
 	combat._hand.show_abilities()
 	for _i in 4:

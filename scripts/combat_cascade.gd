@@ -155,9 +155,7 @@ func resolve_event(event_id: StringName, subject: CardInstance = null) -> void:
 			var here := world.location_of(slot)
 			var gctx := world.make_context(null)
 			gctx.owner_anchor = here.side   # the ground inherits the half it sits on
-			gctx.anchor_side = here.side
-			gctx.anchor_row = here.row
-			gctx.anchor_col = here.col
+			gctx.anchor_at = here
 			var groups := EffectSystem.trigger_carrier_grouped(GameEvent.make(event_id, null), slot, gctx)
 			for grp: Dictionary in groups:
 				for res: Dictionary in grp["results"]:

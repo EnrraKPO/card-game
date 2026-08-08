@@ -85,7 +85,7 @@ func _ready() -> void:
 		# "big" = a 5-cost queen, i.e. five coins — the case that proves the stream reads as one
 		# lane rather than a spray.
 		var victim := CardInstance.from_data(CardData.get_card("queen" if "big" in args else "knight"))
-		board.place_enemy_card(victim, 1, 1)
+		board.place_enemy_card(victim, BoardLocation.at(1, 1, 1))
 		await get_tree().process_frame
 		Resolver.set_health(victim, 0)
 		combat.call("_bury", victim)
