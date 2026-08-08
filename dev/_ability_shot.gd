@@ -47,16 +47,12 @@ func _ready() -> void:
 func _fielded_rook() -> CardInstance:
 	var inst := CardInstance.from_data(CardData.get_card("rook"))
 	inst.owner = 0
-	inst.row = 1
-	inst.col = 1
 	return inst
 
 
 func _widget(ab: AbilityData, holder: CardInstance) -> Control:
 	var tok := CardInstance.from_data(ab.display_card())
 	tok.owner = 0
-	tok.row = -1
-	tok.col = -1
 	tok.source_building = holder
 	tok.ability = ab
 	var w := AbilityWidget.create_for(tok)

@@ -17,7 +17,7 @@ func _report(combat: Node, healer: CardInstance, ally: CardInstance, when: Strin
 	var caster = combat.get("_spell_caster")
 	var board = combat.get("_board")
 	var ab := AbilityData.get_ability("heal")
-	var slot: SlotUI = board.player_slots[ally.row][ally.col]
+	var slot: SlotUI = board.slot_of(ally)
 	_say("%s: ally %d/%d | ability_usable=%s | ally is a legal pick=%s | has_a_play=%s" % [
 		when, ally.current_health, ally.get_attribute("max_health"),
 		ctx.ability_usable(healer, ab),
@@ -50,7 +50,7 @@ func _ready() -> void:
 	# The player King is the OTHER candidate on the board — with it whole and the ally wounded
 	# the ability is legal, but the King itself must still refuse the pick.
 	var king = board.get_player_king()
-	var kslot: SlotUI = board.player_slots[king.row][king.col]
+	var kslot: SlotUI = board.slot_of(king)
 	var caster = combat.get("_spell_caster")
 	var ab := AbilityData.get_ability("heal")
 	_say("whole King is a legal pick=%s (must be false)" % [

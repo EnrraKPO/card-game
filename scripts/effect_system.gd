@@ -212,10 +212,15 @@ static func _run_effect(effect: Effect, source: CardInstance, context: EffectCon
 		var gresults: Array = []
 		for gtarget: Object in effect.targets_resolver().resolve(event, source, context):
 			var under := gtarget as CardInstance
-			if under == null or under.row < 0:
+			var beneath: BoardLocation = null
+			if context != null and context.world != null:
+				beneath = context.world.location_of(under)
+			if beneath == null:
 				continue   # a side target / off-board unit has no ground beneath it
+			# The half comes from WHERE THE UNIT STANDS, never from whose army it is: one
+			# address, two layers (LOCATION_MANAGER_DESIGN.md §3's conflation defect).
 			var gr := _ground_status_at(effect, source, context, cause,
-					under.owner, under.row, under.col)
+					beneath.side, beneath.row, beneath.col)
 			if not gr.is_empty():
 				gresults.append(gr)
 		return gresults
@@ -316,7 +321,7 @@ static func _apply(effect: Effect, target: CardInstance, source: CardInstance, c
 	# authored, never stack-scaled — a status stack multiplies magnitudes, not populations.
 	# Outside combat (no world in context) the payload is inert.
 	if not effect.spawn_id.is_empty():
-		if context == null or context.world == null or target.row < 0:
+		if context == null or context.world == null or context.world.location_of(target) == null:
 			return {}
 		context.world.queue_spawn(effect.spawn_id, effect.spawn_count, target)
 		return {"target": target, "spawned": effect.spawn_id, "count": effect.spawn_count}

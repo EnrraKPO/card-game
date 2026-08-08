@@ -27,9 +27,13 @@ var current_shield: int:
 func _set_current_health(v: int) -> void:
 	current_health = v
 	health_changed.emit(v)
-var row: int = -1
-var col: int = -1
-var owner: int = -1  # 0 = player, 1 = enemy
+# ALLEGIANCE — whose army this unit fights for (0 = player, 1 = enemy). NOT a position.
+# Where the unit stands is the board's business and nobody else's: ask the world
+# (BoardFacade.location_of), whose LocationManager is the sole container of coordinates.
+# A unit is not the authority on its own position — the board moves it. See
+# LOCATION_MANAGER_DESIGN.md §2.1/§4.5; the two questions are separate because they can
+# disagree, and conflating them is exactly the defect that initiative was written to kill.
+var owner: int = -1
 var modifiers: Dictionary = {}  # attribute id -> cumulative int delta
 # Charm ids attached to this card (display only — their mechanics are already baked into
 # `data` by DeckCard.make_instance). Empty for enemies, kings, and tokens.
@@ -65,6 +69,14 @@ var is_spell: bool:
 	get: return data != null and data.card_type == CardData.CardType.SPELL
 
 
+# The layer this thing occupies when it is on the board — an OPAQUE tag the manager files by
+# and never interprets (LOCATION_MANAGER_DESIGN.md §2.3). Units are the pieces layer; the
+# ground under them is another. The manager holds no list of layers, so declaring one here is
+# the whole of joining it.
+func dock_layer() -> StringName:
+	return BoardFacade.PIECES
+
+
 static func from_data(card_data: CardData) -> CardInstance:
 	var inst := CardInstance.new()
 	inst.data = card_data
@@ -93,9 +105,10 @@ static func copied(inst: CardInstance, remap: Dictionary) -> CardInstance:
 	copy.data = inst.data
 	copy.current_health = inst.current_health   # emits health_changed — a fresh copy has no subscribers
 	copy.shield_spent = inst.shield_spent
-	copy.row = inst.row
-	copy.col = inst.col
 	copy.owner = inst.owner
+	# Placement is NOT copied here — the world's LocationManager copies it, through this same
+	# identity remap, so a copied unit's position comes from the copied board rather than from
+	# a field that could drift out of step with it (CombatWorld.copy / LocationManager.copy).
 	copy.modifiers = inst.modifiers.duplicate()
 	copy.charms = inst.charms.duplicate()
 	copy.killed_by_unit = copied(inst.killed_by_unit, remap)

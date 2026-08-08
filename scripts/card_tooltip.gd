@@ -480,8 +480,6 @@ static func _ability_row(inst: CardInstance, ab: AbilityData, s := 1.0) -> Contr
 
 	var tok := CardInstance.from_data(ab.display_card())
 	tok.owner = inst.owner
-	tok.row = -1
-	tok.col = -1
 	tok.source_building = inst
 	tok.ability = ab
 	var w := AbilityWidget.create_for(tok)

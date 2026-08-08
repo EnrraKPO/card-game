@@ -41,7 +41,7 @@ func _ready() -> void:
 	add_child(interaction)
 
 	var slot := SlotUI.new()
-	slot.owner_id = 0
+	slot.location = BoardLocation.at(0, 0, 0)
 	slot.custom_minimum_size = Vector2(165, 216)
 	slot.interaction = interaction
 	add_child(slot)

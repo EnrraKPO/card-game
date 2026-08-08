@@ -30,12 +30,7 @@ func run() -> void:
 # A unit of the fixture card placed on the world's grid at (r, c) for the given side.
 func _place(w: CombatWorld, card_id: String, side_owner: int, r: int, c: int) -> CardInstance:
 	var inst := unit(card_id)
-	inst.owner = side_owner
-	inst.row = r
-	inst.col = c
-	var grid: Array = w.grid_of(side_owner)
-	var grid_row: Array = grid[r]
-	grid_row[c] = inst
+	w.place_unit(inst, r, c, side_owner)
 	return inst
 
 
@@ -51,7 +46,7 @@ func _construction() -> void:
 	var first_row: Array = w.player_grid[0]
 	check_eq(first_row.size(), BoardData.COLS, "each row has COLS cells")
 	check(w.side(0) == w.player_side and w.side(1) == w.enemy_side, "side() routes by owner")
-	check(w.grid_of(1) == w.enemy_grid, "grid_of() routes by owner")
+	check_eq(w.grid_of(1), w.enemy_grid, "grid_of() routes by side")
 	check(w.rewards_live, "a made world is live — it pays rewards")
 
 
@@ -65,8 +60,8 @@ func _grid_copy_independence() -> void:
 	check(pawn2 != null and pawn2 != pawn, "the copied cell holds a DIFFERENT object")
 	check(_cell(w2, 1, 2, 3) != null, "every occupied cell copies")
 	check_eq(pawn2.current_health, pawn.current_health, "copied unit carries the same health")
-	check_eq(pawn2.row, 0, "position copies (row)")
-	check_eq(pawn2.col, 0, "position copies (col)")
+	check(w2.location_of(pawn2) == BoardLocation.at(0, 0, 0), "placement copies with the world")
+	check_eq(w2.location_of(pawn), null, "and the copy knows nothing of the live units")
 
 	# Mutate the copy — the original must not move.
 	pawn2.current_health -= 2
@@ -76,9 +71,9 @@ func _grid_copy_independence() -> void:
 			"a stat write on the copy never reaches the original")
 
 	# Clear a cell on the copy (a simulated death) — the live board keeps its unit.
-	var row2: Array = w2.player_grid[0]
-	row2[0] = null
-	check(_cell(w, 0, 0, 0) == pawn, "emptying the copy's cell leaves the live grid intact")
+	w2.locations.undock(pawn2)
+	check(_cell(w2, 0, 0, 0) == null, "the copy's cell is empty")
+	check(_cell(w, 0, 0, 0) == pawn, "emptying the copy's cell leaves the live board intact")
 
 	# And the reverse: the live game moving on must not disturb a held snapshot.
 	var w3 := w.copy()

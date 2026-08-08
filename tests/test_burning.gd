@@ -190,12 +190,7 @@ func _world() -> CombatWorld:
 
 func _place(w: CombatWorld, card_id: String, side_owner: int, r: int, c: int) -> CardInstance:
 	var inst := unit(card_id)
-	inst.owner = side_owner
-	inst.row = r
-	inst.col = c
-	var grid: Array = w.grid_of(side_owner)
-	var grid_row: Array = grid[r]
-	grid_row[c] = inst
+	w.place_unit(inst, r, c, side_owner)
 	return inst
 
 
@@ -234,10 +229,7 @@ func _fire_attack_ignites() -> void:
 	var w := _world()
 	var cascade := CombatCascade.make(w, CombatPresenter.new())
 	var atk := _fire_unit(0)
-	atk.row = 1
-	atk.col = 3
-	var arow: Array = w.player_grid[1]
-	arow[3] = atk
+	w.place_unit(atk, 1, 3, 0)
 	var def := _place(w, "pawn", 1, 1, 0)
 	_attack(cascade, atk, def)
 	var si := w.slot_at(1, 1, 0).find_status("burning")
@@ -279,10 +271,7 @@ func _single_fire_does_not() -> void:
 	var w := _world()
 	var cascade := CombatCascade.make(w, CombatPresenter.new())
 	var atk := _single_fire_unit(0)
-	atk.row = 2
-	atk.col = 3
-	var arow: Array = w.player_grid[2]
-	arow[3] = atk
+	w.place_unit(atk, 2, 3, 0)
 	var def := _place(w, "pawn", 1, 2, 0)
 	_attack(cascade, atk, def)
 	check(w.slot_at(1, 2, 0).find_status("burning") == null,
@@ -293,10 +282,7 @@ func _burn_ticks_and_persists() -> void:
 	var w := _world()
 	var cascade := CombatCascade.make(w, CombatPresenter.new())
 	var atk := _fire_unit(0)
-	atk.row = 0
-	atk.col = 3
-	var arow: Array = w.player_grid[0]
-	arow[3] = atk
+	w.place_unit(atk, 0, 3, 0)
 	var def := _place(w, "rook", 1, 0, 0)   # 6 HP, 3 shield — the tick is shield-first damage
 	_attack(cascade, atk, def)
 	var done: Array = [false]
@@ -322,10 +308,7 @@ func _reattack_piles_on() -> void:
 	var w := _world()
 	var cascade := CombatCascade.make(w, CombatPresenter.new())
 	var atk := _fire_unit(0)
-	atk.row = 1
-	atk.col = 3
-	var arow: Array = w.player_grid[1]
-	arow[3] = atk
+	w.place_unit(atk, 1, 3, 0)
 	var def := _place(w, "rook", 1, 1, 0)   # 6 HP, 3 shield — room to measure several ticks
 	_attack(cascade, atk, def)
 	var done: Array = [false]
@@ -366,13 +349,14 @@ func _turn_start(cascade: CombatCascade) -> void:
 func _side_spread(w: CombatWorld, side_owner: int, status_id: String) -> Dictionary:
 	var total := 0
 	var cells: Array = []
-	for key: Vector3i in w.slots:
-		if key.x != side_owner:
+	for slot: BoardSlot in w.locations.docked(BoardFacade.GROUND):
+		var here := w.location_of(slot)
+		if here.side != side_owner:
 			continue
-		var si: StatusInstance = (w.slots[key] as BoardSlot).find_status(status_id)
+		var si: StatusInstance = slot.find_status(status_id)
 		if si != null and not StatusEngine.is_expired(si):
 			total += si.stacks
-			cells.append(Vector2i(key.y, key.z))
+			cells.append(Vector2i(here.row, here.col))
 	return {"total": total, "cells": cells}
 
 

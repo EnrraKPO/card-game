@@ -52,12 +52,7 @@ func _world() -> CombatWorld:
 
 func _place(w: CombatWorld, card_id: String, side_owner: int, r: int, c: int) -> CardInstance:
 	var inst := unit(card_id)
-	inst.owner = side_owner
-	inst.row = r
-	inst.col = c
-	var grid: Array = w.grid_of(side_owner)
-	var grid_row: Array = grid[r]
-	grid_row[c] = inst
+	w.place_unit(inst, r, c, side_owner)
 	return inst
 
 
@@ -73,7 +68,7 @@ func _phase(cascade: CombatCascade, event_id: StringName, subject: CardInstance 
 
 func _slot_filing_and_stacking() -> void:
 	# The application rules land identically on the second carrier species — same one writer.
-	var slot := BoardSlot.make(0, 1, 2)
+	var slot := _world().slot_at(0, 1, 2)
 	StatusEngine.apply(slot, "_t_ground_mark", Effect.STATUS_DURATION_DEFAULT, 1, null)
 	var si := slot.find_status("_t_ground_mark")
 	check(si != null, "a slot files an applied status")
@@ -131,7 +126,7 @@ func _ticking_and_reading_order() -> void:
 	w.slot_at(1, 0, 0)   # touched but empty — must not enumerate
 	var order: Array = []
 	for s: BoardSlot in w.active_slots():
-		order.append(Vector3i(s.side, s.row, s.col))
+		order.append(w.location_of(s).key())
 	check_eq(order, [Vector3i(0, 0, 0), Vector3i(0, 1, 2), Vector3i(1, 1, 3)],
 			"active_slots lists carrying slots only, in reading order")
 
@@ -157,12 +152,9 @@ func _at_location_over_colocation() -> void:
 	StatusEngine.apply(w.slot_at(0, 0, 0), "_t_ground_burn", Effect.STATUS_DURATION_DEFAULT, 1, null)
 	_phase(cascade, &"turn_end")
 	check_eq(first.current_health, hp0 - 2, "a slot status hits the unit standing on its cell")
-	# The unit steps off; the fire stays behind by construction.
-	var grid_row0: Array = w.player_grid[0]
-	grid_row0[0] = null
-	var grid_row1: Array = w.player_grid[1]
-	first.row = 1
-	grid_row1[0] = first
+	# The unit steps off; the fire stays behind by construction. ONE move, on the one
+	# authority — leaving the old cell is not a second step to remember.
+	w.locations.move(first, BoardLocation.at(0, 1, 0))
 	_phase(cascade, &"turn_end")
 	check_eq(first.current_health, hp0 - 2, "an empty cell whiffs legally — the mover is not chased")
 	# A NEW unit walks in and takes the ground as it finds it.

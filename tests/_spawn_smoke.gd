@@ -20,10 +20,9 @@ func _ready() -> void:
 	board.build_section(row, false)
 	board.player_side = CombatSide.new()
 	board.enemy_side = CombatSide.new()
-	# The board is a view over a CombatWorld now (grids aliased) — same wiring combat does.
+	# The board is a view over a CombatWorld — the world OWNS placement (see LocationManager)
+	# and the board reads it. Same wiring combat does.
 	var world := CombatWorld.new()
-	world.player_grid = board.player_grid
-	world.enemy_grid = board.enemy_grid
 	world.player_side = board.player_side
 	world.enemy_side = board.enemy_side
 	world.modifiers = GameData.current_modifiers
@@ -67,8 +66,7 @@ func _ready() -> void:
 		print("FAIL: the reborn form must be a king")
 	# Give the player a king so the win check reads both sides.
 	var pk := CardInstance.from_data(CardData.get_card("king"))
-	pk.row = 2; pk.col = 0; pk.owner = 0
-	board.player_grid[2][0] = pk
+	world.place_unit(pk, 2, 0, 0)
 	if board.any_king_dead():
 		failures += 1
 		print("FAIL: fight should CONTINUE — the reborn king keeps the enemy side alive")

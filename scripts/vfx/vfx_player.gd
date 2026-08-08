@@ -3,7 +3,7 @@ extends Node
 
 var _root:           Node
 var _get_card_ui:    Callable  # func(CardInstance) -> CardUI
-var _get_slot_ui:    Callable  # func(side, row, col) -> SlotUI (ground cues; unset = skipped)
+var _get_slot_ui:    Callable  # func(BoardSlot) -> SlotUI (ground cues; unset = skipped)
 # The relic-chip cue for relic-owned interceptions — func(relic_id: String). Injected by
 # combat (the tray lives in its chrome); invalid = no chip on screen, cue skipped.
 var relic_glint:     Callable
@@ -17,7 +17,7 @@ var await_settled:   Callable
 func setup(root: Node, get_card_ui: Callable, get_slot_ui: Callable = Callable()) -> void:
 	_root        = root
 	_get_card_ui = get_card_ui
-	_get_slot_ui = get_slot_ui   # func(side, row, col) -> SlotUI; unset outside a live board
+	_get_slot_ui = get_slot_ui   # func(BoardSlot) -> SlotUI; unset outside a live board
 	for id: String in EFFECT_SCRIPTS:
 		Vfx.register_custom(id, _run_designed.bind(EFFECT_SCRIPTS[id]))
 
@@ -87,7 +87,7 @@ const CHIP_SPAN := 0.34   # a relic chip glinting in the tray (RelicTray.glint)
 func play_results(results: Array, source_inst: CardInstance = null,
 		cue_status_id: String = "", show_cue: bool = true) -> void:
 	var source_ui: CardUI = null
-	if source_inst != null and source_inst.row >= 0:
+	if CombatContext.fielded(source_inst):
 		# The ACTOR settles before its ability is presented: a unit still withdrawing from its own
 		# strike glints, and fires any projectile, from where it has come to rest — not from a card
 		# sliding away underneath the cue. Covers the whole resolution, since source_ui is also the
@@ -141,7 +141,7 @@ func play_results(results: Array, source_inst: CardInstance = null,
 		# A side-targeted result (draw/mana — target is a CombatSide, not a card) has no board
 		# surface here: its presentation IS the hand/gauge reacting to the side's signals.
 		var inst := r.get("target") as CardInstance
-		if inst == null or inst.row < 0:
+		if not CombatContext.fielded(inst):
 			continue
 		var card_ui: CardUI = _get_card_ui.call(inst) as CardUI
 		if card_ui == null:
@@ -201,7 +201,7 @@ func play_interceptions(records: Array) -> void:
 func _play_ground_status_applied(slot: BoardSlot, status_id: String) -> void:
 	if not _get_slot_ui.is_valid():
 		return
-	var slot_ui := _get_slot_ui.call(slot.side, slot.row, slot.col) as SlotUI
+	var slot_ui := _get_slot_ui.call(slot) as SlotUI
 	if slot_ui == null or not is_instance_valid(slot_ui):
 		return
 	slot_ui.render_ground()
@@ -287,7 +287,7 @@ func _stage(inst: CardInstance) -> CardUI:
 		return null
 	if await_settled.is_valid():
 		await await_settled.call(inst)
-	if inst.row < 0:
+	if not CombatContext.fielded(inst):
 		return null
 	var ui := _get_card_ui.call(inst) as CardUI
 	return ui if ui != null and is_instance_valid(ui) else null

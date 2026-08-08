@@ -2,8 +2,22 @@ class_name EffectContext
 extends RefCounted
 
 var source: CardInstance                 # the HOLDER: the unit whose effect is being evaluated
-var player_board: Array  # [row][col] -> CardInstance or null
-var enemy_board: Array   # [row][col] -> CardInstance or null
+
+# The two halves as the 2D grids the older targeting paths still speak in. DERIVED from the
+# world whenever there is one, so a dispatch always reads the board as it stands RIGHT NOW —
+# a unit killed earlier in the same cascade is gone from the very next read, exactly as it was
+# when these fields aliased the world's live arrays. Placement has one home (see
+# LocationManager) and a context that snapshotted it would be a second, quietly out of date.
+# The stored arrays behind them serve contexts built with no world (tests, non-combat
+# dispatch), which pass their boards in directly.
+var _player_board: Array = []
+var _enemy_board: Array = []
+var player_board: Array:   # [row][col] -> CardInstance or null
+	get: return world.grid_of(0) if world != null else _player_board
+	set(v): _player_board = v
+var enemy_board: Array:    # [row][col] -> CardInstance or null
+	get: return world.grid_of(1) if world != null else _enemy_board
+	set(v): _enemy_board = v
 var manual_target: CardInstance = null
 var attack_target: CardInstance = null   # the unit `source` is striking, during an ON_ATTACK
 var attacker: CardInstance = null        # the unit that dealt the blow, during an ON_DAMAGE_TAKEN

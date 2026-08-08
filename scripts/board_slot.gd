@@ -1,26 +1,25 @@
 class_name BoardSlot
 extends StatusCarrier
 
-# One cell of the GROUND layer: a filing cabinet with an address. The board is a stack of
-# layers over one shared coordinate space — ground (slots, permanent) under pieces (units,
-# transient) — and co-location is INCIDENTAL: a unit is "on top of" its slot, never inside
-# it. Occupancy is therefore NOT stored here (the unit grids stay the single authority —
-# ask the world); a slot stores only what it is the authority on: its own address and its
-# filed statuses. See SLOT_LAYER_DESIGN.md.
+# One cell of the GROUND layer: a filing cabinet whose identity IS its address. The board is a
+# stack of layers over one shared coordinate space — ground (slots, permanent) under pieces
+# (units, transient) — and co-location is INCIDENTAL: a unit is "on top of" its slot, never
+# inside it. See SLOT_LAYER_DESIGN.md.
 #
-# `side` is spatial addressing (which half's coordinate space row/col live in), NOT the
-# allegiance of anything the slot does — allegiance is answered per-dispatch through the
-# context's owner_anchor (the ground inherits the half it sits on, until a mechanic needs
-# otherwise; see CombatCascade's ground pass).
+# A SLOT IS AN ORDINARY DOCKABLE, not a special case (LOCATION_MANAGER_DESIGN.md §2.4). Its
+# identity is its location and it never undocks — but that is a property of the slot, not a
+# rule the manager knows, and the manager is exactly as ignorant of what a slot is as it is of
+# what a unit is.
+#
+# IT DOES NOT STORE ITS OWN ADDRESS. That was the last coordinate store outside the manager:
+# ask the world (BoardFacade.location_of) and you get an answer that cannot be stale, on a
+# board that cannot be the wrong one. A slot stores only what it is the authority on — the
+# statuses filed on it.
+#
+# The location's `side` is SPATIAL addressing (which half's coordinate space the cell lives
+# in), NOT the allegiance of anything the slot does — allegiance is answered per-dispatch
+# through the context's owner_anchor (see CombatCascade's ground pass).
 
-var side: int = -1   # 0 = player half, 1 = enemy half
-var row: int = -1
-var col: int = -1
 
-
-static func make(p_side: int, p_row: int, p_col: int) -> BoardSlot:
-	var s := BoardSlot.new()
-	s.side = p_side
-	s.row = p_row
-	s.col = p_col
-	return s
+func dock_layer() -> StringName:
+	return BoardFacade.GROUND

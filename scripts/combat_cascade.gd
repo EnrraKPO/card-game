@@ -152,17 +152,18 @@ func resolve_event(event_id: StringName, subject: CardInstance = null) -> void:
 		# flame acting alone.
 		var ground_procs: Array = []
 		for slot: BoardSlot in ground:
+			var here := world.location_of(slot)
 			var gctx := world.make_context(null)
-			gctx.owner_anchor = slot.side   # the ground inherits the half it sits on
-			gctx.anchor_side = slot.side
-			gctx.anchor_row = slot.row
-			gctx.anchor_col = slot.col
+			gctx.owner_anchor = here.side   # the ground inherits the half it sits on
+			gctx.anchor_side = here.side
+			gctx.anchor_row = here.row
+			gctx.anchor_col = here.col
 			var groups := EffectSystem.trigger_carrier_grouped(GameEvent.make(event_id, null), slot, gctx)
 			for grp: Dictionary in groups:
 				for res: Dictionary in grp["results"]:
 					var victim := res.get("target") as CardInstance
-					CombatLog.note("ground", "slot (%s r%d c%d) %s: %s %d on %s" % [
-							"player" if slot.side == 0 else "enemy", slot.row, slot.col,
+					CombatLog.note("ground", "slot %s %s: %s %d on %s" % [
+							str(here),
 							str(grp["status_id"]), str(res.get("attribute", "?")),
 							int(res.get("delta", 0)),
 							"?" if victim == null or victim.data == null else str(victim.data.id)])
@@ -241,9 +242,9 @@ func _spread_statuses(event_id: StringName, ground: Array, units: Array) -> void
 					outcome = &"spread"
 					# The propagated stack keeps its parent's source — provenance survives the leap.
 					StatusEngine.apply(target, spread_id, Effect.STATUS_DURATION_DEFAULT, 1, si.source)
-					CombatLog.note("ground", "%s %s spreads %s to (%s r%d c%d)" % [
+					CombatLog.note("ground", "%s %s spreads %s to %s" % [
 							_carrier_name(carrier), si.data.id, spread_id,
-							"player" if target.side == 0 else "enemy", target.row, target.col])
+							str(world.location_of(target))])
 					if not arrival.is_empty():
 						arrival_results = _spread_arrival(arrival, target, si.source)
 			elif CombatRng.roll() < fade_chance:
@@ -261,12 +262,13 @@ func _spread_statuses(event_id: StringName, ground: Array, units: Array) -> void
 # ordinary effect pipeline (manual targeting, pre-resolved), so interception, riders and
 # provenance all behave exactly as any other effect's damage would.
 func _spread_arrival(arrival: String, target: BoardSlot, fire_source: CardInstance) -> Array:
-	var occupant := world.unit_at(target.side, target.row, target.col)
+	var here := world.location_of(target)
+	var occupant := BoardFacade.unit_at(world, here)
 	if occupant == null or not occupant.is_alive():
 		return []
 	var eff := Effect.from_dict({"targets": {"kind": "manual"}, "named": arrival})
 	var ctx := world.make_context(null)
-	ctx.owner_anchor = target.side
+	ctx.owner_anchor = here.side
 	ctx.manual_target = occupant
 	var results := EffectSystem.apply_single(eff, fire_source, ctx)
 	for res: Dictionary in results:
@@ -284,40 +286,46 @@ func _spread_destination(carrier: StatusCarrier, to: String) -> BoardSlot:
 		"ground":
 			# ACROSS the layers at one address: the slot this unit stands on. Meaningless on a
 			# slot carrier (ground is already the ground) — a legal miss, authored in error.
+			# One address, both layers — the half is READ off where the unit stands, never
+			# derived from whose army it belongs to (LOCATION_MANAGER_DESIGN.md §3).
 			var unit := carrier as CardInstance
-			if unit == null or unit.row < 0 or unit.col < 0:
+			var under := world.location_of(unit)
+			if unit == null or under == null:
 				return null
-			return world.slot_at(unit.owner, unit.row, unit.col)
+			return BoardFacade.slot_at(world, under)
 		_:
 			# WITHIN the ground layer: a random orthogonal neighbour on the SAME half. The
 			# battle line is a wall for now (cross-line adjacency is a parked decision, and
 			# this branch is the one predicate to widen when it lands). Meaningless on a unit
 			# carrier — units don't set each other alight by proximity.
 			var slot := carrier as BoardSlot
-			if slot == null:
+			var from := world.location_of(slot)
+			if slot == null or from == null:
 				return null
+			# The four orthogonal steps in a FIXED order — the pick below draws its index from
+			# the rules stream, so the order of the options is itself part of the fight's
+			# determinism and must not be reshuffled by how the cells are gathered.
 			var options: Array = []
 			for d: Vector2i in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
-				var r := slot.row + d.x
-				var c := slot.col + d.y
-				if r >= 0 and r < BoardData.ROWS and c >= 0 and c < BoardData.COLS:
-					options.append(Vector2i(r, c))
+				var loc := BoardLocation.at(from.side, from.row + d.x, from.col + d.y)
+				if loc != null:
+					options.append(loc)
 			if options.is_empty():
 				return null
 			# The pick draws from the rules stream: which slot catches fire is a rules outcome.
-			var pick: Vector2i = options[CombatRng.roll_int(0, options.size() - 1, &"rules")]
-			return world.slot_at(slot.side, pick.x, pick.y)
+			var pick: BoardLocation = options[CombatRng.roll_int(0, options.size() - 1, &"rules")]
+			return BoardFacade.slot_at(world, pick)
 
 
 # A carrier's address for the combat log, whichever layer it lives on.
 func _carrier_name(carrier: StatusCarrier) -> String:
 	var slot := carrier as BoardSlot
 	if slot != null:
-		return "slot (%s r%d c%d)" % ["player" if slot.side == 0 else "enemy", slot.row, slot.col]
+		return "slot %s" % str(world.location_of(slot))
 	var unit := carrier as CardInstance
 	if unit != null:
-		return "unit %s (r%d c%d)" % [
-				"?" if unit.data == null else str(unit.data.id), unit.row, unit.col]
+		return "unit %s %s" % [
+				"?" if unit.data == null else str(unit.data.id), str(world.location_of(unit))]
 	return "carrier"
 
 

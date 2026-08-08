@@ -122,16 +122,13 @@ static func _replay(w: CombatWorld, remap: Dictionary, a: Dictionary) -> void:
 			# Geometry only — mirrors the BoardState place op above.
 			w.place_unit(CardInstance.copied(a["inst"], remap), int(a["row"]), int(a["col"]), 1)
 		"move":
-			var mover := CardInstance.copied(a["inst"], remap)
-			var from_row: Array = w.enemy_grid[int(a["from_row"])]
-			from_row[int(a["from_col"])] = null
-			w.place_unit(mover, int(a["row"]), int(a["col"]), 1)
+			# No vacate step: docking somewhere new IS leaving where it was.
+			w.place_unit(CardInstance.copied(a["inst"], remap),
+					int(a["row"]), int(a["col"]), 1)
 		"arrange":
 			for m: Dictionary in (a["moves"] as Array):
-				var mv := CardInstance.copied(m["inst"], remap)
-				var row: Array = w.enemy_grid[int(m["from_row"])]
-				row[int(m["from_col"])] = null
-				w.place_unit(mv, int(m["row"]), int(m["col"]), 1)
+				w.place_unit(CardInstance.copied(m["inst"], remap),
+						int(m["row"]), int(m["col"]), 1)
 		"cast", "ability":
 			_run_cast(w, remap, a)
 
@@ -193,7 +190,7 @@ static func _capture_back(w: CombatWorld, prev: BoardState, remap: Dictionary,
 	s.graveyard = prev.graveyard.duplicate()
 	# The GROUND is re-captured from the simulated world, never forwarded from prev — a
 	# cast can set new ground alight, and this state must price the seats it just made.
-	s.ground = BoardState.capture_ground(w.slots)
+	s.ground = BoardState.capture_ground(w)
 	for corpse: CardInstance in swept:
 		var dead := BoardState.UnitState.from_instance(corpse)
 		dead.source = reverse.get(corpse, corpse)
@@ -203,13 +200,15 @@ static func _capture_back(w: CombatWorld, prev: BoardState, remap: Dictionary,
 
 static func _capture_grid_back(grid: Array, reverse: Dictionary) -> Array:
 	var out: Array = []
-	for grid_row: Array in grid:
+	for r in grid.size():
+		var grid_row: Array = grid[r]
 		var row: Array = []
-		for cell: CardInstance in grid_row:
+		for c in grid_row.size():
+			var cell: CardInstance = grid_row[c]
 			if cell == null:
 				row.append(null)
 				continue
-			var u := BoardState.UnitState.from_instance(cell)
+			var u := BoardState.UnitState.from_instance(cell, r, c)
 			u.source = reverse.get(cell, cell)
 			row.append(u)
 		out.append(row)

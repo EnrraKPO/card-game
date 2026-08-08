@@ -68,12 +68,10 @@ func _build(source: CardUI, at_position: Vector2) -> void:
 	# The context views only exist for a fielded player unit with an armed autocast ability —
 	# built exactly like the tray builds its tokens (see Hand._rebuild_inspect_view).
 	var ab: AbilityData = inst.armed_autocast() \
-			if inst.row >= 0 and inst.owner == 0 and not inst.is_spell else null
+			if CombatContext.fielded(inst) and inst.owner == 0 and not inst.is_spell else null
 	if ab != null:
 		var tok := CardInstance.from_data(ab.display_card())
 		tok.owner = inst.owner
-		tok.row = -1
-		tok.col = -1
 		tok.source_building = inst
 		tok.ability = ab
 		_ability_view = AbilityWidget.create_for(tok)

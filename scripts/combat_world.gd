@@ -2,13 +2,13 @@ class_name CombatWorld
 extends RefCounted
 
 # THE cohesive context of combat rules state (COMBAT_DECOUPLING_REFACTOR.md Step 1): if the
-# rules read it, it lives here — the two unit grids, the two resource sides, the run-level
-# modifier set, and world policy. The cascade never scrapes an autoload, a global or a scene
-# node for game state; copy() is therefore a COMPLETE snapshot, and a simulation that holds
-# one holds everything a hypothetical can diverge on.
+# rules read it, it lives here — placement, the two resource sides, the run-level modifier set,
+# and world policy. The cascade never scrapes an autoload, a global or a scene node for game
+# state; copy() is therefore a COMPLETE snapshot, and a simulation that holds one holds
+# everything a hypothetical can diverge on.
 #
 # Two tiers inside the one context, and copy() treats them differently:
-#   • Mutable state (grids, cards, statuses, sides, policy flags) — deep-copied through one
+#   • Mutable state (placement, cards, statuses, sides, policy flags) — deep-copied through one
 #     shared identity remap (original -> copy), so every internal reference in the copy
 #     resolves to a copy, never to a live object.
 #   • Immutable environment (card/status/ability defs, the modifiers set — fixed for a
@@ -31,8 +31,14 @@ signal unit_swept(inst: CardInstance)
 # view's cue to build its card. Board-driven placements don't emit this; their views exist.
 signal unit_spawned(inst: CardInstance)
 
-var player_grid: Array = []   # [row][col] -> CardInstance or null
-var enemy_grid:  Array = []   # [row][col] -> CardInstance or null
+# ── PLACEMENT: the one authority ────────────────────────────────────────────────────────
+# The sole container of board coordinates (LOCATION_MANAGER_DESIGN.md). Both layers live in
+# it — the pieces (units) and the ground (slots) — and nothing anywhere else stores, derives
+# or remembers where something is. It is a MEMBER of the world, deliberately, and never a
+# global: simulations copy the whole world to try out plans, and a globally reachable manager
+# would silently share placement between a hypothetical and the real board (§4.2).
+var locations: LocationManager = LocationManager.new()
+
 var player_side: CombatSide = null
 var enemy_side:  CombatSide = null
 
@@ -49,14 +55,6 @@ var rewards_live: bool = true
 
 static func make(p_modifiers: ModifierSet = null) -> CombatWorld:
 	var w := CombatWorld.new()
-	for _r in BoardData.ROWS:
-		var prow: Array = []
-		var erow: Array = []
-		for _c in BoardData.COLS:
-			prow.append(null)
-			erow.append(null)
-		w.player_grid.append(prow)
-		w.enemy_grid.append(erow)
 	w.player_side = CombatSide.make(0)
 	w.enemy_side = CombatSide.make(1)
 	w.modifiers = p_modifiers
@@ -67,77 +65,82 @@ func side(side_owner: int) -> CombatSide:
 	return player_side if side_owner == 0 else enemy_side
 
 
-# ── The GROUND layer (see SLOT_LAYER_DESIGN.md) ─────────────────────────────────────────
-# One BoardSlot per cell of either half, permanent once touched. Lazy allocation is an
-# invisible detail — slot_at ALWAYS answers, so to every caller the ground simply exists.
-# Keyed Vector3i(side, row, col): the address IS the identity.
+# ── Asking the board ────────────────────────────────────────────────────────────────────
+# Thin doors onto the façade, kept because the world is what every rules path already holds.
+# The loose (side, row, col) forms are TRANSITIONAL — increment 2 replaces them with bundled
+# locations at the call sites (LOCATION_MANAGER_DESIGN.md §5.2).
 
-var slots: Dictionary = {}   # Vector3i(side, row, col) -> BoardSlot
+# Where a unit (or any dockable) stands. Null = not on the board, which is now an honest
+# absence rather than a sentinel coordinate a caller has to recognise.
+func location_of(dockable: Object) -> BoardLocation:
+	return locations.location_of(dockable)
 
 
+# The GROUND at an address — ALWAYS answers for a real cell (see SLOT_LAYER_DESIGN.md). Lazy
+# allocation is an invisible detail: to every caller the ground simply exists.
 func slot_at(slot_side: int, r: int, c: int) -> BoardSlot:
-	var key := Vector3i(slot_side, r, c)
-	var s: BoardSlot = slots.get(key)
-	if s == null:
-		s = BoardSlot.make(slot_side, r, c)
-		slots[key] = s
-	return s
+	return BoardFacade.slot_at(self, BoardLocation.at(slot_side, r, c))
 
 
 # Read-only ground lookup for PRESENTATION: answers null for ground that was never touched,
 # so a render pass over the whole board doesn't allocate 24 slots that carry nothing.
 # Rules paths use slot_at (which always answers).
 func peek_slot(slot_side: int, r: int, c: int) -> BoardSlot:
-	return slots.get(Vector3i(slot_side, r, c)) as BoardSlot
+	return BoardFacade.peek_slot(self, BoardLocation.at(slot_side, r, c))
 
 
-# The unit standing at a ground address right now — the pieces-layer lookup the slot layer
-# never caches (incidental co-location: derived fresh at read time, from the grids, the one
-# occupancy authority). Null = empty cell or out-of-range address.
+# The unit standing at a ground address right now. Null = empty cell or out-of-range address.
 func unit_at(slot_side: int, r: int, c: int) -> CardInstance:
-	if r < 0 or r >= BoardData.ROWS or c < 0 or c >= BoardData.COLS:
-		return null
-	var grid: Array = grid_of(slot_side)
-	var grid_row: Array = grid[r]
-	return grid_row[c]
+	return BoardFacade.unit_at(self, BoardLocation.at(slot_side, r, c))
 
 
-# Slots that currently carry statuses, in deterministic reading order (side, then row, then
-# col) — dictionaries don't promise order, and the ticking paths re-run in simulations, so
-# the order is sorted into existence rather than trusted. Expired-but-unfiled statuses don't
-# count as activity (pull validity — see StatusEngine.is_expired).
+# Slots that currently carry statuses, in fixed address order (side, then row, then col) —
+# the ticking paths re-run in simulations, so the order is sorted into existence rather than
+# trusted. Expired-but-unfiled statuses don't count as activity (pull validity — see
+# StatusEngine.is_expired).
 func active_slots() -> Array:
-	var keys: Array = slots.keys()
-	keys.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
-		if a.x != b.x:
-			return a.x < b.x
-		if a.y != b.y:
-			return a.y < b.y
-		return a.z < b.z)
+	return BoardFacade.active_slots(self)
+
+
+# A side's units as the 2D grid the older rules paths still speak in — DERIVED, never stored.
+# This is the forwarding §5.1 calls for: the shape survives so targeting strategies and the
+# effect context read unchanged, while the only copy of the fact lives in the manager. The
+# array is a snapshot: writing into it changes nothing, which is the point.
+func grid_of(side_owner: int) -> Array:
 	var out: Array = []
-	for key: Vector3i in keys:
-		var s: BoardSlot = slots[key]
-		if not s.statuses.is_empty():
-			out.append(s)
+	for r in BoardData.ROWS:
+		var grid_row: Array = []
+		for c in BoardData.COLS:
+			grid_row.append(BoardFacade.unit_at(self, BoardLocation.at(side_owner, r, c)))
+		out.append(grid_row)
 	return out
 
 
-func grid_of(side_owner: int) -> Array:
-	return player_grid if side_owner == 0 else enemy_grid
+var player_grid: Array:
+	get: return grid_of(0)
+var enemy_grid: Array:
+	get: return grid_of(1)
 
 
-# Every unit on either grid, reading order (row-major, player cell before enemy cell) —
-# moved verbatim from CombatBoard, which now forwards here: enumeration of the world is
-# the world's own business.
+# TRANSITIONAL, and deliberately loud about it: dock everything a grid array describes onto
+# this world's half. Callers that still hand grids around (the enemy engine's public entry,
+# fixtures) used to build a world by ASSIGNING its arrays — which cannot work once the arrays
+# are a reading rather than the store, and would fail silently, leaving an empty board that
+# simulates beautifully and answers nothing. This is the honest version of that move, and it
+# goes away with the grid-shaped signatures (LOCATION_MANAGER_DESIGN.md §5.2).
+func adopt_grid(grid: Array, side_owner: int) -> void:
+	for r in mini(grid.size(), BoardData.ROWS):
+		var grid_row: Array = grid[r]
+		for c in mini(grid_row.size(), BoardData.COLS):
+			var inst: CardInstance = grid_row[c]
+			if inst != null:
+				place_unit(inst, r, c, side_owner)
+
+
+# Every unit on either half, in the board's declared reading order (row-major, player cell
+# before enemy cell at each address).
 func get_all_units() -> Array:
-	var all: Array = []
-	for r in BoardData.ROWS:
-		for c in BoardData.COLS:
-			if player_grid[r][c] != null:
-				all.append(player_grid[r][c])
-			if enemy_grid[r][c] != null:
-				all.append(enemy_grid[r][c])
-	return all
+	return BoardFacade.units(self)
 
 
 # THE activation order: who acts, and in what order, when the round resolves. Speed first,
@@ -162,6 +165,12 @@ var acting: CardInstance = null
 
 func turn_order() -> Array:
 	var order := get_all_units()
+	# Depth is a SPATIAL reading of where each unit stands, taken once here rather than
+	# re-derived inside the comparator — the sort runs O(n log n) times and the board is the
+	# authority being asked.
+	var placed: Dictionary = {}
+	for unit: CardInstance in order:
+		placed[unit] = location_of(unit)
 	order.sort_custom(func(a: CardInstance, b: CardInstance) -> bool:
 		var sa := a.get_attribute("speed")
 		var sb := b.get_attribute("speed")
@@ -169,11 +178,13 @@ func turn_order() -> Array:
 			return sa > sb
 		if a.owner != b.owner:
 			return a.owner < b.owner
-		var pa: int = a.col if a.owner == 0 else BoardData.COLS - 1 - a.col
-		var pb: int = b.col if b.owner == 0 else BoardData.COLS - 1 - b.col
+		var la: BoardLocation = placed[a]
+		var lb: BoardLocation = placed[b]
+		var pa: int = la.col if la.side == 0 else BoardData.COLS - 1 - la.col
+		var pb: int = lb.col if lb.side == 0 else BoardData.COLS - 1 - lb.col
 		if pa != pb:
 			return pa > pb
-		return a.row > b.row
+		return la.row > lb.row
 	)
 	return order
 
@@ -183,9 +194,7 @@ func turn_order() -> Array:
 # of its card afterwards (the view half stayed on CombatBoard). Emits unit_retired while
 # any card view is still standing, so listeners may read where it stood.
 func retire(inst: CardInstance) -> void:
-	var grid: Array = player_grid if inst.owner == 0 else enemy_grid
-	var grid_row: Array = grid[inst.row]
-	grid_row[inst.col] = null
+	locations.undock(inst)
 	unit_retired.emit(inst)
 
 
@@ -203,16 +212,23 @@ func make_context(src: CardInstance) -> EffectContext:
 
 # ── Placement & the play moment ────────────────────────────────────────────────────────
 
-# The STATE of putting a unit at (r, c): position, allegiance, the grid write, and the
-# composition-cache invalidation every owner change requires. View-silent — callers with a
-# card view (board placements) manage it themselves; rules-driven arrivals use spawn_unit.
+# The STATE of putting a unit at (r, c): the dock, allegiance, and the composition-cache
+# invalidation every owner change requires. View-silent — callers with a card view (board
+# placements) manage it themselves; rules-driven arrivals use spawn_unit.
+#
+# `p_owner` sets ALLEGIANCE and names the half being stood on. Those are two questions with
+# one answer today; they are asked separately now, so the day they diverge (a charmed unit
+# fighting from the enemy half) is a data change rather than a rewrite.
 func place_unit(inst: CardInstance, r: int, c: int, p_owner: int) -> void:
-	inst.row = r
-	inst.col = c
+	place_unit_at(inst, BoardLocation.at(p_owner, r, c), p_owner)
+
+
+func place_unit_at(inst: CardInstance, loc: BoardLocation, p_owner: int) -> void:
+	if loc == null:
+		push_error("CombatWorld: refusing to place %s at no location" % inst)
+		return
 	inst.owner = p_owner
-	var grid: Array = grid_of(p_owner)
-	var grid_row: Array = grid[r]
-	grid_row[c] = inst
+	locations.dock(inst, loc)
 	LiveEffects.invalidate_compositions()   # owner set — allegiance-gated grants may now reach
 
 
@@ -234,13 +250,15 @@ func play_dispatch(inst: CardInstance) -> Array:
 
 # Units conjured by effects, pending placement. Queued rather than placed immediately so an
 # on-death spawn resolves AFTER the corpse leaves the board; cleanup_deaths flushes.
-var _pending_spawns: Array = []   # [{ "id": String, "count": int, "owner": int, "row": int, "col": int }]
+# `owner` is the arrival's ALLEGIANCE; `anchor` is WHERE it wants to land — the two travel
+# separately because they are separate facts (§2.6).
+var _pending_spawns: Array = []   # [{ "id": String, "count": int, "owner": int, "anchor": BoardLocation }]
 var _flushing_spawns := false
 
 
 func queue_spawn(card_id: String, count: int, anchor: CardInstance) -> void:
 	_pending_spawns.append({"id": card_id, "count": maxi(1, count),
-			"owner": anchor.owner, "row": anchor.row, "col": anchor.col})
+			"owner": anchor.owner, "anchor": location_of(anchor)})
 
 
 # Sweeps effect-kills, then flushes queued effect spawns now that corpses have left their
@@ -262,16 +280,10 @@ func cleanup_deaths() -> void:
 
 
 func _sweep_dead() -> void:
-	for r in BoardData.ROWS:
-		for c in BoardData.COLS:
-			var p: CardInstance = player_grid[r][c]
-			if p != null and not p.is_alive():
-				retire(p)
-				unit_swept.emit(p)
-			var e: CardInstance = enemy_grid[r][c]
-			if e != null and not e.is_alive():
-				retire(e)
-				unit_swept.emit(e)
+	for unit: CardInstance in get_all_units():
+		if not unit.is_alive():
+			retire(unit)
+			unit_swept.emit(unit)
 
 
 # Places one queued spawn into its anchor slot if free, else the nearest empty slot on that
@@ -282,66 +294,45 @@ func _spawn_from_queue(s: Dictionary) -> bool:
 		push_error("CombatWorld: spawn payload names unknown card '%s'" % s["id"])
 		return true   # a bad id is handled (loudly), not a full board
 	var spawn_owner := int(s["owner"])
-	var slot := _nearest_empty(spawn_owner, int(s["row"]), int(s["col"]))
-	if slot.is_empty():
+	var anchor: BoardLocation = s["anchor"]
+	if anchor == null:
+		return false   # the anchor left the board before the queue drained — nowhere to land
+	var landing := BoardFacade.nearest_empty(self, anchor, anchor.side)
+	if landing == null:
 		return false
 	var inst := CardInstance.from_data(data)
 	inst.owner = spawn_owner
 	Resolver.fill_health(inst)   # after owner is set, so run-wide unit bonuses fold in
-	spawn_unit(inst, slot[0], slot[1], spawn_owner)
+	place_unit_at(inst, landing, spawn_owner)
+	unit_spawned.emit(inst)
 	play_dispatch(inst)   # results discarded, as the board always did for queued spawns
 	return true
 
 
-# The nearest empty slot to (row, col) on `spawn_owner`'s side by Manhattan distance (the
-# anchor itself when free). [] = that side is full.
-func _nearest_empty(spawn_owner: int, row: int, col: int) -> Array:
-	var grid: Array = grid_of(spawn_owner)
-	var best: Array = []
-	var best_d := 999
-	for r in BoardData.ROWS:
-		for c in BoardData.COLS:
-			if grid[r][c] != null:
-				continue
-			var d := absi(r - row) + absi(c - col)
-			if d < best_d:
-				best_d = d
-				best = [r, c]
-	return best
-
-
-# The complete snapshot: one identity remap spans grids and sides, so a unit referenced
-# from several places (a hand spell's status source on a board unit, mutual killers) copies
-# once and every reference converges on that one copy. Callers that need the identity
-# table (the enemy engine maps candidates' live tokens into the copy) pass their own
+# The complete snapshot: one identity remap spans both board layers and the sides, so a unit
+# referenced from several places (a hand spell's status source on a board unit, mutual
+# killers) copies once and every reference converges on that one copy. Callers that need the
+# identity table (the enemy engine maps candidates' live tokens into the copy) pass their own
 # `remap` dictionary; the default is a fresh private one. LiveEffects' composition cache
 # is keyed per instance — fresh copies simply miss it and compute lazily; no invalidation.
+#
+# PLACEMENT copies through that same table (LocationManager.copy), which is why no dockable
+# carries a position of its own: there is one board to copy, and copying it moves everything.
 func copy(remap: Dictionary = {}) -> CombatWorld:
 	var w := CombatWorld.new()
-	w.player_grid = _copy_grid(player_grid, remap)
-	w.enemy_grid = _copy_grid(enemy_grid, remap)
+	# Register a twin for every dockable BEFORE the placement copy, which resolves through the
+	# table and refuses to guess at anything missing from it.
+	for unit: CardInstance in get_all_units():
+		CardInstance.copied(unit, remap)
+	for slot: BoardSlot in locations.docked(BoardFacade.GROUND):
+		var new_slot := BoardSlot.new()
+		remap[slot] = new_slot
+		for si: StatusInstance in slot.statuses:
+			new_slot.statuses.append(StatusInstance.copied(si, new_slot, remap))
+	w.locations = locations.copy(remap)
 	w.player_side = player_side.copy(remap)
 	w.enemy_side = enemy_side.copy(remap)
 	w.modifiers = modifiers        # immutable environment — shared, never copied
 	w.rewards_live = false         # a copy is a hypothetical: it never pays
 	w._pending_spawns = _pending_spawns.duplicate(true)   # queued arrivals are combat state
-	# The ground layer: a new BoardSlot per entry (coordinates are stable identity — no remap
-	# needed for the slots themselves), statuses deep-copied with their `source` unit refs
-	# resolved through the same identity remap as unit statuses.
-	for key: Vector3i in slots:
-		var src_slot: BoardSlot = slots[key]
-		var new_slot := BoardSlot.make(src_slot.side, src_slot.row, src_slot.col)
-		for si: StatusInstance in src_slot.statuses:
-			new_slot.statuses.append(StatusInstance.copied(si, new_slot, remap))
-		w.slots[key] = new_slot
 	return w
-
-
-static func _copy_grid(grid: Array, remap: Dictionary) -> Array:
-	var out: Array = []
-	for grid_row: Array in grid:
-		var new_row: Array = []
-		for cell: CardInstance in grid_row:
-			new_row.append(CardInstance.copied(cell, remap))
-		out.append(new_row)
-	return out

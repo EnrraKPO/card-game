@@ -438,7 +438,7 @@ func _ready() -> void:
 				# measuring from it was the "menace never updates" defect). The fielded bishop
 				# is removed first so the pivot is the enemies' only nearby mark — with it, a
 				# correct derivation MUST light all three enemies; the broken one lit none.
-				board.player_grid[atk.row][atk.col] = null
+				board.world.locations.undock(atk)
 				(board.player_slots[1][3] as SlotUI).clear_card()
 				var hand = cb.get("_hand")
 				board._on_unit_drag_started(hand._hand_cards[0])
@@ -458,9 +458,11 @@ func _ready() -> void:
 			# "reticle": also mark the bishop's target enemy as a valid autocast target, so the slot
 			# shows BOTH the green reticle (centre) AND the attack crosshair (top-right) composed.
 			if "reticle" in args:
-				var tgt = board._projected_target(atk, atk.row, atk.col)
+				var tgt = board.find_target(atk)
 				if tgt != null:
-					(board.enemy_slots[tgt.row][tgt.col] as SlotUI).set_cue(SlotUI.Cue.TARGET_OK)
+					var tslot = board.slot_of(tgt)
+					if tslot != null:
+						tslot.set_cue(SlotUI.Cue.TARGET_OK)
 			if "enemysel" not in args and "handdrag" not in args:
 				# The [0][1] phantom belongs to the player-selection staging (handdrag mounts
 				# its own and removed atk from the board entirely).
@@ -794,7 +796,7 @@ func _ready() -> void:
 		var seen := 0
 		for n: Node in sv.find_children("*", "SlotUI", true, false):
 			var slot := n as SlotUI
-			if slot.owner_id != 0 or slot.get_card() != null:
+			if slot.location.side != 0 or slot.get_card() != null:
 				continue
 			seen += 1
 			if seen != want:
@@ -802,7 +804,7 @@ func _ready() -> void:
 			slot._on_pointer_entered()
 			for _f in 30:
 				await get_tree().process_frame
-			print("SLOTHOVER: empty player slot #%d at r%d c%d" % [want, slot.row, slot.col])
+			print("SLOTHOVER: empty player slot #%d at %s" % [want, str(slot.location)])
 			break
 	# CombatBoard.press_unit, i.e. the same `slot_pressed` a press on the unit's own card takes. The
 	# print says who ended up the pick, which is what the click is FOR.

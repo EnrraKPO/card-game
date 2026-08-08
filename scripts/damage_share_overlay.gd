@@ -99,10 +99,10 @@ static func _slot_line(state: BoardState, side: int, r: int, c: int, trace: Dict
 # Builds and parents the panel. `pricer` is the fight's personality (null = stock), so the
 # value stamps shown are the ones THIS opponent computes, not a generic pricing.
 static func open(host: Control, player_grid: Array, enemy_grid: Array, player_mana: int,
-		pricer: EnemyPersonality = null, slots: Dictionary = {}) -> DamageShareOverlay:
+		pricer: EnemyPersonality = null, world: CombatWorld = null) -> DamageShareOverlay:
 	var o := DamageShareOverlay.new()
 	o._pricer = pricer
-	o._state = BoardState.capture(player_grid, enemy_grid, player_mana, slots)
+	o._state = BoardState.capture(player_grid, enemy_grid, player_mana, world)
 	# The same valuation pass every criterion runs on, so persistence/value below are the
 	# stamps the engine itself would read this instant.
 	BoardScoring.run_valuation(o._state, pricer)

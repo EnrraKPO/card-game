@@ -45,8 +45,8 @@ func _ready() -> void:
 			src_slot.get_card() == null])
 	print("PROBE highlight vfx: before=%s after=%s" % [key_before, key_after])
 	# The re-presented action must describe the NEW spot (stale = old row/col declaration).
-	print("PROBE preview pivot at: (%d,%d) — unit at (%d,%d)" % [
-			board._pivot_row, board._pivot_col, atk.row, atk.col])
+	print("PROBE preview pivot at: %s — unit at %s" % [
+			str(board._pivot_at), str(board.world.location_of(atk))])
 
 	# The release lands on the moved card (cursor sat on the button): CardUI re-emits pressed.
 	combat._on_board_slot_pressed(dest)

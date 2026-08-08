@@ -234,38 +234,47 @@ func _buff_prefers_fresh_over_tapped() -> void:
 			"…by exactly the attack stock × (1 − TAP_DELIVERY_FACTOR)")
 
 
+# WHERE each fixture unit is MEANT to stand. The fixture knows its own layout; the unit does
+# not know where it is (see LocationManager), so the intent is recorded here and handed to a
+# board below rather than written onto the instances.
+var _seats: Dictionary = {}   # CardInstance -> Vector2i(row, col)
+
+
 func _enemy(card_id: String, r: int, c: int) -> CardInstance:
 	var inst := unit(card_id)
 	inst.owner = 1
-	inst.row = r
-	inst.col = c
+	_seats[inst] = Vector2i(r, c)
 	return inst
 
 
 func _player(card_id: String, r: int, c: int) -> CardInstance:
 	var inst := unit(card_id)
-	inst.row = r
-	inst.col = c
+	_seats[inst] = Vector2i(r, c)
 	return inst
 
 
-# A live-shaped grid pair with the given units standing on it.
+# A live-shaped grid pair with the given units standing on it — built through a real world,
+# so the arrangement comes from the one placement authority even in a fixture.
 func _grids(enemy_insts: Array, player_insts: Array = []) -> Array:
-	var player_grid: Array = []
-	var enemy_grid: Array = []
-	for _r in BoardData.ROWS:
-		var pr: Array = []
-		var er: Array = []
-		for _c in BoardData.COLS:
-			pr.append(null)
-			er.append(null)
-		player_grid.append(pr)
-		enemy_grid.append(er)
-	for inst: CardInstance in enemy_insts:
-		enemy_grid[inst.row][inst.col] = inst
+	var w := _world_for(enemy_insts, player_insts)
+	return [w.player_grid, w.enemy_grid]
+
+
+# The fixture's world: every listed unit docked at the seat the fixture asked for.
+func _world_for(enemy_insts: Array, player_insts: Array = [], hand: Array = []) -> CombatWorld:
+	var w := CombatWorld.new()
+	w.player_side = CombatSide.make(0)
+	w.enemy_side = CombatSide.make(1)
+	w.enemy_side.hand = hand
+	w.modifiers = GameData.current_modifiers
+	w.rewards_live = false
 	for inst: CardInstance in player_insts:
-		player_grid[inst.row][inst.col] = inst
-	return [player_grid, enemy_grid]
+		var ps: Vector2i = _seats[inst]
+		w.place_unit(inst, ps.x, ps.y, 0)
+	for inst: CardInstance in enemy_insts:
+		var es: Vector2i = _seats[inst]
+		w.place_unit(inst, es.x, es.y, 1)
+	return w
 
 
 func _state_capture() -> void:
@@ -313,15 +322,7 @@ func _state_with(enemy_insts: Array, player_insts: Array = []) -> BoardState:
 # instances the state was captured from, standing on a CombatWorld (see CandidateApply's
 # `sim` parameter — cast/ability candidates copy this world and run the real rules on it).
 func _sim_for(enemy_insts: Array, player_insts: Array = [], hand: Array = []) -> Dictionary:
-	var grids := _grids(enemy_insts, player_insts)
-	var w := CombatWorld.new()
-	w.player_grid = grids[0]
-	w.enemy_grid = grids[1]
-	w.player_side = CombatSide.make(0)
-	w.enemy_side = CombatSide.make(1)
-	w.enemy_side.hand = hand
-	w.modifiers = GameData.current_modifiers
-	return {"world": w, "accepted": []}
+	return {"world": _world_for(enemy_insts, player_insts, hand), "accepted": []}
 
 
 func _exposure_geometry() -> void:
@@ -1441,17 +1442,11 @@ func _planning_leaves_the_world_untouched() -> void:
 	wounded.current_health = 1
 	var enemies: Array = [_enemy("captain_dummy", back, deep), support, wounded]
 	var players: Array = [_player("knight", 0, deep), _player("knight", 1, deep)]
-	var grids := _grids(enemies, players)
 	var group_heal := unit("dummy_group_heal")
 	group_heal.owner = 1
 
-	var w := CombatWorld.new()
-	w.player_grid = grids[0]
-	w.enemy_grid = grids[1]
-	w.player_side = CombatSide.make(0)
-	w.enemy_side = CombatSide.make(1)
-	w.enemy_side.hand = [group_heal]
-	w.modifiers = GameData.current_modifiers
+	var w := _world_for(enemies, players, [group_heal])
+	var grids: Array = [w.player_grid, w.enemy_grid]
 
 	var engine := _seeded_engine()
 	engine.weight_overrides = {"dps": 0.6}
@@ -1464,8 +1459,7 @@ func _planning_leaves_the_world_untouched() -> void:
 	check(support.statuses.is_empty() and wounded.statuses.is_empty(),
 			"no live unit gained a status")
 	check_eq(w.enemy_side.hand.size(), 1, "the live hand kept its spell")
-	var live_row: Array = w.enemy_grid[0]
-	check(live_row[2] == wounded, "the live grid never moved")
+	check(w.unit_at(1, 0, 2) == wounded, "the live board never moved")
 
 
 # ── The valuation pass (user-designed 2026-07-30) ────────────────────────────────────
@@ -2019,7 +2013,7 @@ func _eval_fold_ground_and_seat() -> void:
 	var gm := EvalChannels.slot_mods(slot)
 	check(gm != null, "a burning slot folds non-neutral")
 	check_eq(gm.exposure_add, 0.25 * 3 + 1.0, "burning ×3 = per-stack 0.25×3 + flat 1")
-	var state := BoardState.capture(w.player_grid, w.enemy_grid, 0, w.slots)
+	var state := BoardState.capture(w.player_grid, w.enemy_grid, 0, w)
 	var seat := state.seat_mods(1, 0, 0)
 	check(seat != null, "capture files the burning seat into the ground map")
 	check_eq(seat.exposure_add, 1.75, "…with the folded exposure")
@@ -2045,7 +2039,7 @@ func _eval_three_places_forwarding() -> void:
 	var sim := _sim_for([burner])
 	var w: CombatWorld = sim["world"]
 	StatusEngine.apply(w.slot_at(1, 0, 0), "burning", Effect.STATUS_DURATION_DEFAULT, 2)
-	var state := BoardState.capture(w.player_grid, w.enemy_grid, 0, w.slots)
+	var state := BoardState.capture(w.player_grid, w.enemy_grid, 0, w)
 	check(state.units(1)[0].eval_mods != null, "capture folds the unit's statuses")
 
 	var copied := state.copy()

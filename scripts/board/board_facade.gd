@@ -70,12 +70,23 @@ static func peek_slot(world: CombatWorld, loc: BoardLocation) -> BoardSlot:
 
 # ── Enumeration ─────────────────────────────────────────────────────────────────────────
 
-# Every unit on the board, in fixed address order (player half first, then enemy, each in
-# reading order).
+# Every unit on the board, in THE board's declared reading order: row-major, the player's
+# cell before the enemy's at each address. Fixed, and preserved from before the manager
+# existed — simulations re-run and must reproduce results exactly, and a re-ordering here
+# would be invisible right up until it changed a fight.
 static func units(world: CombatWorld) -> Array:
 	if world == null:
 		return []
-	return world.locations.docked(PIECES)
+	var out: Array = []
+	for r in BoardData.ROWS:
+		for c in BoardData.COLS:
+			var p := unit_at(world, BoardLocation.at(0, r, c))
+			if p != null:
+				out.append(p)
+			var e := unit_at(world, BoardLocation.at(1, r, c))
+			if e != null:
+				out.append(e)
+	return out
 
 
 # Every unit on one half of the board, in reading order. SPATIAL — this is who is standing on

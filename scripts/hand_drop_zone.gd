@@ -12,7 +12,7 @@ func _can_drop_data(_at: Vector2, data: Variant) -> bool:
 		return false
 	# Buildings are rooted once fielded — an armed building's drag exists only to cast its
 	# ability, never to come back to hand.
-	if inst.row >= 0 and inst.data.is_building():
+	if CombatContext.fielded(inst) and inst.data.is_building():
 		return false
 	DragGhost.report(DragGhost.State.UNIT, self)   # returning to hand is a move — ghost shows the unit
 	return true

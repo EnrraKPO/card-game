@@ -118,13 +118,13 @@ func _resolve_on_play(effects: Array, src: CardInstance, ab: AbilityData,
 		var ctx := board.make_context(src)
 		ctx.manual_target = manual_target
 		if manual_slot != null:   # the gesture edge translates the picked slot to coordinates
-			ctx.manual_row = manual_slot.row
-			ctx.manual_col = manual_slot.col
+			ctx.manual_row = manual_slot.location.row
+			ctx.manual_col = manual_slot.location.col
 		ctx.ability = ab
 		var results := EffectSystem.apply_single(effect, src, ctx)
 		# Passing `src` glints the ability's holder (see VFXPlayer.play_results) — safe for a
 		# regular non-ability spell too, since its `src` is the ephemeral spell card itself
-		# (row == -1, never on the board), which play_results's own row-guard already skips.
+		# (never on the board), which play_results's own fielded-guard already skips.
 		await animator.show_effect_results(results, src)
 		board.cleanup_effect_deaths()
 
@@ -268,7 +268,7 @@ func effects_target_ok(effects: Array, slot: SlotUI) -> bool:
 # both gestures, and only the cost/arming checks live here. Consulted by the AUTOCAST action's
 # role predicate (cue + drop gate, via CombatBoard.can_autocast) and again at execution.
 func autocast_drop_ok(holder: CardInstance, slot: SlotUI) -> bool:
-	if holder == null or holder.row < 0 or holder.owner != 0:
+	if holder == null or holder.owner != 0 or not BoardFacade.is_on_board(board.world, holder):
 		return false
 	var ab := holder.armed_autocast()
 	if ab == null:

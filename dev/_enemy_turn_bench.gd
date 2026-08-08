@@ -112,8 +112,6 @@ func _make(id: String, owner: int) -> CardInstance:
 
 
 func _put(grid: Array, inst: CardInstance, r: int, c: int) -> void:
-	inst.row = r
-	inst.col = c
 	grid[r][c] = inst
 
 

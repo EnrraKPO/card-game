@@ -156,7 +156,7 @@ func _ready() -> void:
 	var _get_card_ui: Callable = func(inst: CardInstance) -> CardUI:
 		var stand_in := _ctx.stand_in_for(inst)
 		return stand_in if stand_in != null else _board.get_card_ui(inst)
-	_vfx.setup(self, _get_card_ui, _board.slot_ui_at)
+	_vfx.setup(self, _get_card_ui, _board.slot_ui_of)
 	_vfx.await_settled = _await_settled
 	# Relic-owned interception cues glint the tray chip; the tray lives in combat's chrome,
 	# so combat lends the presenter this one reach into it.
@@ -170,11 +170,9 @@ func _ready() -> void:
 	_presenter = LivePresenter.make(_animator, get_tree(), _board,
 			func() -> RelicTray: return _relic_tray, _king_fall, _fade_out)
 	# The live WORLD: the one cohesive context the rules read (COMBAT_DECOUPLING_REFACTOR.md).
-	# Its grids ARE the board's grid arrays — one state, two vantage points — and the board
-	# gets the world back for the state halves it forwards (retire, contexts, enumeration).
+	# It OWNS placement (see LocationManager) — the board reads it and stores none of its own,
+	# which is why nothing has to keep two arrangements in step any more.
 	_world = CombatWorld.new()
-	_world.player_grid = _board.player_grid
-	_world.enemy_grid = _board.enemy_grid
 	_world.player_side = _player_side
 	_world.enemy_side = _enemy_side
 	_world.modifiers = GameData.current_modifiers
@@ -204,11 +202,9 @@ func _ready() -> void:
 	# to inspect", not "can act"; usable_glow below is what tracks payability.
 	_hand.get_ability_units = func() -> Array:
 		var out: Array = []
-		for r in BoardData.ROWS:
-			for c in BoardData.COLS:
-				var inst: CardInstance = _board.player_grid[r][c]
-				if inst != null and not inst.ability_list().is_empty():
-					out.append(inst)
+		for inst: CardInstance in BoardFacade.units_on_side(_world, 0):
+			if not inst.ability_list().is_empty():
+				out.append(inst)
 		return out
 
 	# Whether an ability is castable RIGHT NOW — THE rule is CombatContext.ability_usable (cost
@@ -649,9 +645,11 @@ func _reset_exhaustion() -> void:
 # Toggles the gold targeting glow on a building's board slot, used to point out
 # which rook a hovered/selected token belongs to.
 func _highlight_building(inst: CardInstance, on: bool) -> void:
-	if inst == null or inst.owner != 0 or inst.row < 0 or inst.col < 0:
+	if inst == null or inst.owner != 0:
 		return
-	(_board.player_slots[inst.row][inst.col] as SlotUI).set_targetable(on)
+	var slot := _board.slot_of(inst)
+	if slot != null:
+		slot.set_targetable(on)
 
 
 # The inspection DECLARATION changed (Hand._inspected is the fact; board cards derive their
@@ -1011,8 +1009,8 @@ func _log_enemy_action(action: Dictionary) -> void:
 					_enemy_side.mana - inst.data.cost]
 		EnemyEngine.Action.MOVE:
 			var inst: CardInstance = action["inst"]
-			line = "move %s r%dc%d → r%dc%d" % [inst.data.id, inst.row, inst.col,
-					int(action["row"]), int(action["col"])]
+			line = "move %s %s → r%dc%d" % [inst.data.id,
+					str(_world.location_of(inst)), int(action["row"]), int(action["col"])]
 		EnemyEngine.Action.CAST:
 			line = "cast %s on %s" % [(action["inst"] as CardInstance).data.id,
 					_where(action.get("target", null))]
@@ -1032,10 +1030,10 @@ static func _card_ids(cards: Array) -> Array:
 
 # Where a unit stands, in the log's coordinates. Sides are named rather than numbered so a
 # line reads without a legend.
-static func _where(inst: CardInstance) -> String:
+func _where(inst: CardInstance) -> String:
 	if inst == null:
 		return "(none)"
-	return "%s r%dc%d[%s]" % [inst.data.id, inst.row, inst.col,
+	return "%s %s[%s]" % [inst.data.id, str(_world.location_of(inst)),
 			"player" if inst.owner == 0 else "cpu"]
 
 
@@ -1072,7 +1070,7 @@ func _toggle_damage_inspector() -> void:
 	_damage_overlay = DamageShareOverlay.open(self, _board.player_grid, _board.enemy_grid,
 			_player_side.mana,
 			GameData.current_encounter.personality if GameData.current_encounter != null else null,
-			_world.slots)
+			_world)
 	# Opening the panel also files the snapshot: what you are looking at now is what the log
 	# will still hold when the board has moved on and the question is still open.
 	_log_slot_table("── board read (inspector opened, turn %d) ──" % _turn)
@@ -1085,7 +1083,7 @@ func _log_slot_table(caption: String) -> void:
 	if not CombatLog.verbose():
 		return
 	var state := BoardState.capture(_board.player_grid, _board.enemy_grid, _player_side.mana,
-			_world.slots)
+			_world)
 	BoardScoring.run_valuation(state,
 			GameData.current_encounter.personality if GameData.current_encounter != null else null)
 	CombatLog.block(DamageShareOverlay.report_lines(state, caption))
@@ -1503,8 +1501,9 @@ func _on_board_unit_placed(inst: CardInstance, card_ui: CardUI, from_hand: bool,
 	if not from_hand and _phase == Phase.PLAYER_PLACE and Selection.holds(inst):
 		_interaction.begin(_board.make_unit_action(card_ui, false, false))
 	if CombatLog.recording():
-		CombatLog.note("player", "%s %s → r%dc%d%s" % ["place" if from_hand else "move",
-				inst.data.id, inst.row, inst.col, "  (cost %d)" % cost if cost > 0 else ""])
+		CombatLog.note("player", "%s %s → %s%s" % ["place" if from_hand else "move",
+				inst.data.id, str(_world.location_of(inst)),
+				"  (cost %d)" % cost if cost > 0 else ""])
 	if from_hand:
 		# The placed card may still be the hand's live selection (the click-place path commits
 		# through the Interaction session, which doesn't know the hand) — clear it before the
@@ -1637,7 +1636,7 @@ func _on_interaction_changed(action: Interaction.Action) -> void:
 	# and self-limiting: the begin below re-enters this handler with a non-null action.
 	if action == null and _phase == Phase.PLAYER_PLACE:
 		var inst := Selection.current() as CardInstance
-		if inst != null and inst.row >= 0 and inst.col >= 0:
+		if BoardFacade.is_on_board(_world, inst):
 			var ui := _board.get_card_ui(inst)
 			if ui != null:
 				_interaction.begin(_board.make_unit_action(ui, false, false))

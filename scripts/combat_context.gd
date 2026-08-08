@@ -61,6 +61,31 @@ static func clear() -> void:
 	current = null
 
 
+# ── Where things stand: presentation's door onto the one placement authority ──────────
+# Views ask "is this card a piece on the field, and if so where" constantly — a hand card and
+# a fielded one wear different affordances, and the answer used to be read off a coordinate
+# the card carried around. It carries none now (see LocationManager): the board knows, and
+# these ask it.
+#
+# THE LIVE BOARD, ALWAYS. That is not the exception to "the manager is never a global"
+# (LOCATION_MANAGER_DESIGN.md §4.2) — the rule exists so a SIMULATION cannot silently read
+# the real board's placement, and simulations run entirely inside the rules layer, holding
+# the world they were handed. Presentation only ever draws the fight the player is looking
+# at. Outside combat `current` is null and the answer is "nowhere", which is the same answer
+# a deck-screen card used to get from its -1 coordinates.
+
+static func where(inst: CardInstance) -> BoardLocation:
+	if current == null or current.board == null:
+		return null
+	return BoardFacade.location_of(current.board.world, inst)
+
+
+# "Is this card a piece standing on the field?" — the question almost every caller of `where`
+# actually had.
+static func fielded(inst: CardInstance) -> bool:
+	return where(inst) != null
+
+
 # NOTHING HERE ANSWERS "is this selected". There is one selection in the game and it answers for
 # itself (Selection.holds), asked directly by the view that wants to know — a second door onto the
 # same question is how two views come to disagree. The hand's selected() / inspected_instance()

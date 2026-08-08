@@ -21,20 +21,32 @@ func run() -> void:
 	_dispatch_participant()
 
 
-func _unit(atk: int, owner: int, row: int = 0, col: int = 0, pieces: Array = ["pawn"]) -> CardInstance:
+# A unit with no place on any board — where it stands is the board's business, and these
+# fixtures hand it over to one below.
+func _unit(atk: int, owner: int, pieces: Array = ["pawn"]) -> CardInstance:
 	var inst := CardInstance.from_data(CardData.build_from_dict({
 		"id": "_tgt_test", "display_name": "T",
 		"cost": 1, "attack": atk, "health": 5, "speed": 1, "chess_pieces": pieces,
 	}))
 	inst.owner = owner
-	inst.row = row
-	inst.col = col
 	return inst
 
 
-# A context with explicit small boards ([row][col] grids, nulls allowed).
+# A world with each side's units standing along its back row, one per column in list order
+# (nulls leave a gap) — the same shape the old explicit single-row grids described, now
+# expressed as placement because placement is where it lives.
 func _ctx(holder: CardInstance, player_units: Array, enemy_units: Array) -> EffectContext:
-	return EffectContext.make(holder, [player_units], [enemy_units])
+	var w := CombatWorld.make(GameData.current_modifiers)
+	w.rewards_live = false
+	for i in player_units.size():
+		var pu := player_units[i] as CardInstance
+		if pu != null:
+			w.place_unit(pu, 0, i, 0)
+	for i in enemy_units.size():
+		var eu := enemy_units[i] as CardInstance
+		if eu != null:
+			w.place_unit(eu, 0, i, 1)
+	return w.make_context(holder)
 
 
 func _legacy_mapping() -> void:
@@ -67,9 +79,9 @@ func _legacy_mapping() -> void:
 
 
 func _all_and_conditions() -> void:
-	var holder := _unit(2, 0, 0, 0)
-	var ally := _unit(2, 0, 0, 1)
-	var enemy := _unit(2, 1, 0, 0)
+	var holder := _unit(2, 0)
+	var ally := _unit(2, 0)
+	var enemy := _unit(2, 1)
 	var ctx := _ctx(holder, [holder, ally], [enemy])
 
 	var e := Effect.from_dict({"trigger": "on_play", "targeting_policy": "all_allies",
@@ -93,9 +105,9 @@ func _all_and_conditions() -> void:
 
 
 func _auto_nearest_and_random() -> void:
-	var holder := _unit(2, 0, 0, 0)
-	var near_enemy := _unit(2, 1, 0, 0)
-	var far_enemy := _unit(2, 1, 0, 2)
+	var holder := _unit(2, 0)
+	var near_enemy := _unit(2, 1)
+	var far_enemy := _unit(2, 1)
 	var ctx := _ctx(holder, [holder], [near_enemy, null, far_enemy])
 
 	var e := Effect.from_dict({"trigger": "on_play", "targeting_policy": "single_nearest",
@@ -112,7 +124,7 @@ func _auto_nearest_and_random() -> void:
 	# native Auto: nearest ALLY — inexpressible before this refactor. The candidates are WOUNDED
 	# because the payload is a heal, and a heal cannot reach anyone at full health (the implicit
 	# viability condition — see EffectCondition); this case is about the auto search, not that rule.
-	var ally_near := _unit(2, 0, 0, 1)
+	var ally_near := _unit(2, 0)
 	ally_near.current_health -= 2
 	holder.current_health -= 2
 	var ctx2 := _ctx(holder, [holder, ally_near], [near_enemy])
@@ -139,38 +151,35 @@ func _auto_nearest_and_random() -> void:
 # (TargetingStrategy.dist) and effect targeting (TargetResolver.board_distance) must
 # agree on this geometry.
 func _column_priority() -> void:
-	var attacker := _unit(2, 0, 1, 3)          # player: front column, middle lane
-	var same_lane_deep := _unit(2, 1, 1, 1)    # faces the attacker, two columns deep
-	var adjacent_front := _unit(2, 1, 0, 0)    # one lane over, front column
-	var grid: Array = [
-		[adjacent_front, null, null, null],
-		[null, same_lane_deep, null, null],
-		[null, null, null, null],
-	]
+	var w := CombatWorld.make(GameData.current_modifiers)
+	w.rewards_live = false
+	var attacker := _unit(2, 0)
+	var same_lane_deep := _unit(2, 1)
+	var adjacent_front := _unit(2, 1)
+	w.place_unit(attacker, 1, 3, 0)        # player: front column, middle lane
+	w.place_unit(same_lane_deep, 1, 1, 1)  # faces the attacker, two columns deep
+	w.place_unit(adjacent_front, 0, 0, 1)  # one lane over, front column
+
 	var strat := TargetingNearest.new()
-	check(strat.find_target(attacker, grid) == adjacent_front,
+	check(strat.find_target(w.locations, attacker) == adjacent_front,
 			"attack targeting: closest COLUMN beats a same-lane deeper target")
 
-	var facing := _unit(2, 1, 1, 0)            # front column, facing lane
-	grid[1][0] = facing
-	check(strat.find_target(attacker, grid) == facing,
+	var facing := _unit(2, 1)               # front column, facing lane
+	w.place_unit(facing, 1, 0, 1)
+	check(strat.find_target(w.locations, attacker) == facing,
 			"attack targeting: within the closest column the facing lane wins")
-	grid[1][0] = null
+	w.locations.undock(facing)
 
-	var lane_two := _unit(2, 1, 2, 0)          # front column, one lane over (the other way)
-	grid[2][0] = lane_two
-	check(strat.find_target(attacker, grid) == adjacent_front,
+	var lane_two := _unit(2, 1)             # front column, one lane over (the other way)
+	w.place_unit(lane_two, 2, 0, 1)
+	check(strat.find_target(w.locations, attacker) == adjacent_front,
 			"attack targeting: equal lane offsets break deterministically by row")
-	grid[2][0] = null
+	w.locations.undock(lane_two)
 
-	# effect targeting shares the geometry
-	var ctx := EffectContext.make(attacker, [[attacker]], [
-		[adjacent_front, null, null, null],
-		[null, same_lane_deep, null, null],
-	])
+	# effect targeting shares the geometry — one placement, both readings
 	var e := Effect.from_dict({"trigger": "on_play", "targeting_policy": "single_nearest",
 			"attribute": "damage_taken", "amount": 1})
-	var targets := e.targets_resolver().resolve(null, attacker, ctx)
+	var targets := e.targets_resolver().resolve(null, attacker, w.make_context(attacker))
 	check(targets.size() == 1 and targets[0] == adjacent_front,
 			"effect targeting: single_nearest agrees — closest column first")
 
@@ -206,7 +215,7 @@ func _participant() -> void:
 
 func _manual() -> void:
 	var holder := _unit(2, 0)
-	var picked := _unit(2, 0, 0, 1)
+	var picked := _unit(2, 0)
 	picked.current_health -= 2   # the payload below is a heal; a whole unit is no target for one
 	var ctx := _ctx(holder, [holder, picked], [])
 	var e := Effect.from_dict({"trigger": "on_play", "targeting_policy": "manual",

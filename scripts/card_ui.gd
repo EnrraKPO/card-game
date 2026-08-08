@@ -596,7 +596,7 @@ func derive_presentation() -> void:
 	refresh_playable()
 	var slot := get_parent() as SlotUI
 	if slot != null:
-		set_flipped(slot.owner_id == 1)   # facing derives from which side's slot holds me
+		set_flipped(slot.location != null and slot.location.side == 1)   # facing derives from which side's slot holds me
 	# SELECTION, asked rather than told, and asked FIRST — before the combat-context guard below,
 	# because a card is pickable on every screen that shows one, not just in combat. An ABILITY
 	# view asks the ability question: it stands for "this ability, of this holder", never for a
@@ -1503,7 +1503,7 @@ func _refresh_aura(stats: Array) -> void:
 # (row/col set, owner 0); lazily created like _aura, torn down (tween killed) when inactive so
 # refresh() — called often, e.g. every board.refresh() pass — never stacks tweens.
 func _refresh_ability_cue() -> void:
-	var active := card_instance != null and card_instance.row >= 0 and card_instance.col >= 0 \
+	var active := CombatContext.fielded(card_instance) \
 			and card_instance.owner == 0 and card_instance.has_available_abilities()
 	if not active:
 		if _ability_cue != null:
@@ -1554,7 +1554,7 @@ func build_autocast_fx(bracket_size: Vector2, inset: float) -> AutocastFX:
 # refresh(). armed_autocast() already validates the id against the current ability list —
 # a stale arm just disappears.
 func _refresh_autocast_brackets() -> void:
-	var active := card_instance != null and card_instance.row >= 0 and card_instance.col >= 0 \
+	var active := CombatContext.fielded(card_instance) \
 			and card_instance.owner == 0 and card_instance.armed_autocast() != null
 	if not active:
 		if _autocast_fx != null:
@@ -2091,13 +2091,13 @@ func _get_drag_data(at_position: Vector2) -> Variant:
 			_hold_dragging = true
 			set_process(true)
 	# The opponent's fielded units are not the player's to pick up.
-	if card_instance.row >= 0 and card_instance.owner == 1:
+	if CombatContext.fielded(card_instance) and card_instance.owner == 1:
 		return null
 	# Buildings root in place: a unit with a rook can be dropped from the hand, but once on the
 	# board it can't be picked up to MOVE. With an autocast ability ARMED it drags anyway — the
 	# drag can only cast (no move spot ever accepts it; see CombatBoard/_can_drop_on_player_slot),
 	# and the DragGhost accordingly always presents the ability.
-	if card_instance.row >= 0 and card_instance.data.is_building() \
+	if CombatContext.fielded(card_instance) and card_instance.data.is_building() \
 			and card_instance.armed_autocast() == null:
 		return null
 	if card_instance.is_spell:
@@ -2137,7 +2137,7 @@ func _notification(what: int) -> void:
 		# wrong-facing frame); the rest re-derives deferred, once the transition settles.
 		var slot := get_parent() as SlotUI
 		if slot != null:
-			set_flipped(slot.owner_id == 1)
+			set_flipped(slot.location != null and slot.location.side == 1)
 		# The hover lift is a claim on the position, and the position now belongs to a different
 		# layout — release it rather than tweening the card back to where it stood in the old one.
 		_drop_hover_claim()

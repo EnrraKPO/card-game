@@ -20,8 +20,6 @@ func _ready() -> void:
 
 	var rook := CardInstance.from_data(CardData.get_card("rook"))
 	rook.owner = 0
-	rook.row = 1
-	rook.col = 1
 	rook.autocast_ability = "castling"
 
 	var pawn := CardInstance.from_data(CardData.get_card("air_fire_king"))

@@ -51,8 +51,7 @@ static func _deliver_material(ctx: EffectContext) -> Array:
 	# the first effect spawns the pawn, the second finds it here and merges the fire onto it.
 	var target: CardInstance = ctx.manual_target
 	if target == null and ctx.manual_row >= 0 and ctx.world != null:
-		var grid_row: Array = ctx.world.player_grid[ctx.manual_row]
-		target = grid_row[ctx.manual_col]
+		target = ctx.world.unit_at(0, ctx.manual_row, ctx.manual_col)
 	if target != null:                                    # ── MERGE onto the (possibly just-spawned) unit
 		if not CardData.can_combine(target.data, material) \
 				or target.data.chess_pieces.has("king") \

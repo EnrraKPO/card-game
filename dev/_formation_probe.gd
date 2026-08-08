@@ -7,11 +7,13 @@ extends Node
 #   godot --headless --path D:\Godot\CardGame res://dev/_formation_probe.tscn
 
 
+var _seats: Dictionary = {}   # CardInstance -> Vector2i(row, col), the probe's layout
+
+
 func _inst(card_id: String, owner: int, r: int, c: int) -> CardInstance:
 	var inst := CardInstance.from_data(CardData.get_card(card_id))
 	inst.owner = owner
-	inst.row = r
-	inst.col = c
+	_seats[inst] = Vector2i(r, c)
 	return inst
 
 
@@ -27,9 +29,11 @@ func _grids(enemy: Array, player: Array = []) -> Array:
 		pg.append(pr)
 		eg.append(er)
 	for u: CardInstance in player:
-		pg[u.row][u.col] = u
+		var ps: Vector2i = _seats[u]
+		pg[ps.x][ps.y] = u
 	for u: CardInstance in enemy:
-		eg[u.row][u.col] = u
+		var es: Vector2i = _seats[u]
+		eg[es.x][es.y] = u
 	return [pg, eg]
 
 

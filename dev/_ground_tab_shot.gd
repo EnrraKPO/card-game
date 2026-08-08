@@ -10,9 +10,7 @@ const REF := "res://dev/_ground_tab_ref.png"   # the same board with NO ground, 
 
 func _make_slot(row: int, col: int) -> SlotUI:
 	var slot := SlotUI.new()
-	slot.owner_id = 0
-	slot.row = row
-	slot.col = col
+	slot.location = BoardLocation.at(0, row, col)
 	slot.custom_minimum_size = Vector2(165, 216)
 	return slot
 
@@ -61,8 +59,7 @@ func _ready() -> void:
 	for i in slots.size():
 		var gs := BoardSlot.new()
 		gs.side = 0
-		gs.row = int(i / 4)
-		gs.col = i % 4
+		gs.location = BoardLocation.at(0, int(i / 4), i % 4)
 		grounds.append(gs)
 		var slot := slots[i] as SlotUI
 		slot.ground_lookup = func() -> BoardSlot: return gs

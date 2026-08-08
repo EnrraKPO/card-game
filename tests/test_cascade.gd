@@ -27,12 +27,7 @@ func _headless_world() -> CombatWorld:
 
 func _place(w: CombatWorld, card_id: String, side_owner: int, r: int, c: int) -> CardInstance:
 	var inst := unit(card_id)
-	inst.owner = side_owner
-	inst.row = r
-	inst.col = c
-	var grid: Array = w.grid_of(side_owner)
-	var grid_row: Array = grid[r]
-	grid_row[c] = inst
+	w.place_unit(inst, r, c, side_owner)
 	return inst
 
 
@@ -68,8 +63,7 @@ func _bury_retires_and_signals() -> void:
 		done[0] = true
 	chain.call()
 	check(bool(done[0]), "bury completes synchronously without any view")
-	var row: Array = w.player_grid[1]
-	check(row[2] == null, "bury's state half clears the cell")
+	check(w.unit_at(0, 1, 2) == null, "bury's state half clears the cell")
 	check(retired.size() == 1 and retired[0] == pawn, "the world's unit_retired wire fires — where bounties hang")
 
 
@@ -106,5 +100,5 @@ func _headless_spawn_drain() -> void:
 		if inst != anchor and inst.owner == 1:
 			on_board += 1
 	check_eq(on_board, 2, "both arrivals stand on the spawning side's grid")
-	check(arrivals.is_empty() or (arrivals[0] as CardInstance).row >= 0,
-			"an arrival carries its landed position")
+	check(arrivals.is_empty() or w.location_of(arrivals[0] as CardInstance) != null,
+			"an arrival is on the board by the time its signal fires")

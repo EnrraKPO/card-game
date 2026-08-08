@@ -60,8 +60,6 @@ func _ready() -> void:
 func _rook_ui() -> CardUI:
 	var rook := CardInstance.from_data(CardData.get_card("rook"))
 	rook.owner = 0
-	rook.row = 1
-	rook.col = 1
 	rook.autocast_ability = "castling"
 	var ui := CardUI.create(rook, false)
 	ui.custom_minimum_size = CARD_SIZE

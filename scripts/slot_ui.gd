@@ -10,9 +10,10 @@ signal move_pressed
 # of the slot is non-interactive dead space during a static fielded selection.
 signal move_hover(on: bool)
 
-var row: int = -1
-var col: int = -1
-var owner_id: int = -1
+# WHICH CELL this widget speaks for — one bundled address, not three loose numbers
+# (LOCATION_MANAGER_DESIGN.md §2.6). A reference to a board cell, never a store of what
+# stands there: occupancy questions go to the world, which is the only thing that knows.
+var location: BoardLocation = null
 # The combat-wide interaction session (see Interaction): the drop gate and drop commit ask it
 # for this slot's ROLE under the current action — the SAME predicate that lit this slot's cue,
 # so the visuals and the drop verdict can never disagree. Null outside combat (tooling shots).
@@ -684,7 +685,7 @@ func set_cue(cue: int, animated: bool = false) -> void:
 # hints are on, otherwise nothing. Called whenever a targeting/move gesture ends or occupancy
 # changes.
 func reset_cue() -> void:
-	if _open_hints and _card_ui == null and owner_id == 0:
+	if _open_hints and _card_ui == null and location != null and location.side == 0:
 		set_cue(Cue.OPEN)
 	else:
 		set_cue(Cue.NONE)

@@ -70,7 +70,7 @@ func show_ground_results(procs: Array) -> void:
 	var base_results: Array = []
 	for p: Dictionary in procs:
 		var slot: BoardSlot = p["slot"]
-		var slot_ui := _board.slot_ui_at(slot.side, slot.row, slot.col)
+		var slot_ui := _board.slot_ui_of(slot)
 		if slot_ui != null:
 			slot_ui.flare_ground(str(p["status_id"]))
 			for pip: StatusPip in slot_ui.ground_pips_of(str(p["status_id"])):
@@ -90,7 +90,7 @@ func show_ground_results(procs: Array) -> void:
 	# already taught the eye.
 	for p: Dictionary in procs:
 		var slot: BoardSlot = p["slot"]
-		var slot_ui := _board.slot_ui_at(slot.side, slot.row, slot.col)
+		var slot_ui := _board.slot_ui_of(slot)
 		for r: Dictionary in p["results"]:
 			if not r.has("restrike_stack"):
 				continue
@@ -109,7 +109,7 @@ func show_spread_roll(carrier: StatusCarrier, status_id: String, stack_index: in
 	# tab on a slot, the card's own status badge on a unit.
 	var slot := carrier as BoardSlot
 	if slot != null:
-		var slot_ui := _board.slot_ui_at(slot.side, slot.row, slot.col)
+		var slot_ui := _board.slot_ui_of(slot)
 		if slot_ui != null:
 			var pip := slot_ui.ground_pip_at(status_id, stack_index)
 			if pip != null:
@@ -131,7 +131,7 @@ func show_spread_roll(carrier: StatusCarrier, status_id: String, stack_index: in
 		# its own status (arrived_id): a unit's ablaze lands on the ground as burning.
 		var caught := arrived_id if not arrived_id.is_empty() else status_id
 		_board.refresh()
-		var target_ui := _board.slot_ui_at(target.side, target.row, target.col)
+		var target_ui := _board.slot_ui_of(target)
 		if target_ui != null:
 			target_ui.flare_ground(caught)
 			var fresh := target_ui.find_ground_pip(caught)   # newest tab (last match)

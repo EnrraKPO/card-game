@@ -110,11 +110,14 @@ func _plan_advance(board: CombatBoard, occ: Array, actions: Array) -> void:
 		return
 	var dest_col: int = slot[1]
 	var best: CardInstance = null
+	var best_col := -1
 	for inst: CardInstance in _units(board.enemy_grid):
 		if inst.data.is_king or inst.data.is_building():
 			continue  # buildings are rooted
-		if inst.col > dest_col and (best == null or inst.col > best.col):
+		var loc := BoardFacade.location_of(board.world, inst)
+		if loc != null and loc.col > dest_col and loc.col > best_col:
 			best = inst  # the furthest-back mover ahead of the empty slot
+			best_col = loc.col
 	if best != null:
 		actions.append({ "type": Action.MOVE, "inst": best, "row": slot[0], "col": dest_col })
 

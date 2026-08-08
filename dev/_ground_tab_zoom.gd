@@ -30,9 +30,7 @@ func _ready() -> void:
 	var slots: Array = []
 	for i in 6:
 		var slot := SlotUI.new()
-		slot.owner_id = 0
-		slot.row = int(i / 3)
-		slot.col = i % 3
+		slot.location = BoardLocation.at(0, int(i / 3), i % 3)
 		slot.custom_minimum_size = Vector2(165, 216)
 		grid.add_child(slot)
 		slots.append(slot)
@@ -60,8 +58,7 @@ func _ready() -> void:
 	for i in 6:
 		var gs := BoardSlot.new()
 		gs.side = 0
-		gs.row = int(i / 3)
-		gs.col = i % 3
+		gs.location = BoardLocation.at(0, int(i / 3), i % 3)
 		grounds.append(gs)
 		(slots[i] as SlotUI).ground_lookup = func() -> BoardSlot: return gs
 	# A hit's worth (2 stacks) on the occupied and empty cells; a heavy 6-stack pile on the

@@ -14,7 +14,7 @@ func _check(ok: bool, label: String) -> void:
 
 func _slot(owner_id: int) -> SlotUI:
 	var s := SlotUI.new()
-	s.owner_id = owner_id
+	s.location = BoardLocation.at(owner_id, 0, 0)
 	s.custom_minimum_size = Vector2(165, 216)
 	add_child(s)
 	return s
@@ -30,8 +30,6 @@ func _ready() -> void:
 	# A fielded Barracks with Conscription armed.
 	var holder := CardInstance.from_data(CardData.get_card("pawn_rook"))
 	holder.owner = 0
-	holder.row = 0
-	holder.col = 0
 	holder.autocast_ability = "pawn_material"
 
 	var ab := holder.armed_autocast()

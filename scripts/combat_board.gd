@@ -8,12 +8,17 @@ signal slot_pressed(slot: SlotUI)
 # Emitted when an AUTOCAST action commits on a valid occupied slot; combat routes it to
 # SpellCaster.activate_autocast. The dragged unit never moves.
 signal autocast_dropped(slot: SlotUI, card_ui: CardUI)
-var player_grid: Array = []   # [row][col] -> CardInstance or null
-var enemy_grid:  Array = []   # [row][col] -> CardInstance or null
-# The cohesive rules-state context these grids belong to (CombatWorld — its grid arrays ARE
-# the two above, aliased at setup). Retirement, the spawn queue, contexts and the play
-# moment live on IT now; the board keeps the view halves — reacting to the world's
-# unit_swept/unit_spawned cues for deaths and arrivals the rules decide on their own.
+# The two halves as grids, FORWARDED from the world — the board stores no occupancy of its
+# own. It used to hold the arrays and lend them to the world, which made two owners of one
+# fact kept in step by hand; placement has exactly one home now (see LocationManager) and
+# these are a reading of it. Empty before the world is injected.
+var player_grid: Array:
+	get: return [] if world == null else world.grid_of(0)
+var enemy_grid: Array:
+	get: return [] if world == null else world.grid_of(1)
+# The cohesive rules-state context (CombatWorld) — placement, retirement, the spawn queue,
+# contexts and the play moment all live on IT; the board keeps the view halves, reacting to
+# the world's unit_swept/unit_spawned cues for deaths and arrivals the rules decide on.
 var world: CombatWorld = null:
 	set(v):
 		world = v
@@ -29,10 +34,11 @@ func _on_world_unit_swept(inst: CardInstance) -> void:
 
 # A rules-driven arrival (queued spawn / hook spawn): build the card the state is owed.
 func _on_world_unit_spawned(inst: CardInstance) -> void:
-	var slots: Array = player_slots if inst.owner == 0 else enemy_slots
-	var slot_row: Array = slots[inst.row]
+	var slot := slot_of(inst)
+	if slot == null:
+		return
 	var ui := CardUI.create(inst)
-	(slot_row[inst.col] as SlotUI).set_card(ui)
+	slot.set_card(ui)
 	if inst.owner == 0:
 		_wire_unit_drag(ui)
 	Vfx.play("summon_materialize", ui)
@@ -63,13 +69,17 @@ var _default_strategy := TargetingNearest.new()
 # occupant the pivot's victim?" — recomputed wholesale on declaration change, never
 # accumulated per-card (the old `_glow_cards`/`_preview_slot` residue lists are gone).
 var _pivot: CardInstance = null
-var _pivot_row: int = -1
-var _pivot_col: int = -1
-# Derived once per declaration change: snapshot grids with the pivot installed at its declared
-# spot (its real cell vacated — a move preview reflects the freed lane), and the pivot's own
-# target in that world, memoized so every card's "am I the victim?" is a compare.
-var _world_player: Array = []
-var _world_enemy: Array = []
+var _pivot_at: BoardLocation = null
+# Derived once per declaration change: a HYPOTHETICAL PLACEMENT — the same units, arranged
+# with the pivot standing at its declared spot (its real cell vacated, so a move preview
+# reflects the freed lane) — plus the pivot's own target in that arrangement, memoized so
+# every card's "am I the victim?" is a compare.
+#
+# This used to be a pair of duplicated grid arrays PLUS a mutate-the-pivot's-coordinates-and-
+# put-them-back trick around every query, because targeting read a unit's position off the
+# unit. Targeting reads a placement now, so a hypothetical is simply a second placement:
+# nothing is moved, nothing is restored, and no query can observe a half-applied state.
+var _preview_places: LocationManager = null
 var _pivot_target: CardInstance = null
 # Drag phantom: the unit being dragged for a move/place and the slot showing its landing preview.
 var _drag_card: CardUI = null
@@ -105,15 +115,12 @@ const ENEMY_ZONE_BG  := Color(0.72, 0.36, 0.42, 0.24)
 
 # ── Initialisation ─────────────────────────────────────────────────────────────
 
+# The SLOT WIDGET matrices only — occupancy is the world's (see player_grid above).
 func setup_grids() -> void:
 	for r in BoardData.ROWS:
-		player_grid.append([])
-		enemy_grid.append([])
 		player_slots.append([])
 		enemy_slots.append([])
 		for _c in BoardData.COLS:
-			player_grid[r].append(null)
-			enemy_grid[r].append(null)
 			player_slots[r].append(null)
 			enemy_slots[r].append(null)
 
@@ -155,9 +162,7 @@ func build_section(parent: BoxContainer, is_player: bool) -> void:
 	for r in row_order:
 		for c in BoardData.COLS:
 			var slot := SlotUI.new()
-			slot.row      = r
-			slot.col      = c
-			slot.owner_id = 0 if is_player else 1
+			slot.location = BoardLocation.at(0 if is_player else 1, r, c)
 
 			# Both sides share the exact same wiring: the slot's drop gate and drop commit ask
 			# the Interaction session (the same predicate that lit its cue), and presses bubble
@@ -167,7 +172,7 @@ func build_section(parent: BoxContainer, is_player: bool) -> void:
 			# resolved through `world` at call time (the world is injected after build).
 			var gs := slot
 			slot.ground_lookup = func() -> BoardSlot:
-				return null if world == null else world.peek_slot(gs.owner_id, gs.row, gs.col)
+				return null if world == null else BoardFacade.peek_slot(world, gs.location)
 			if is_player:
 				player_slots[r][c] = slot
 			else:
@@ -185,16 +190,14 @@ func place_kings(player_king_id: String = "king", enemy_king_id: String = "king"
 	var back: int = BoardData.ROWS - 1
 
 	var pk := CardInstance.from_data(CardData.get_card(player_king_id))
-	pk.row = back; pk.col = 0; pk.owner = 0
-	player_grid[back][0] = pk
+	world.place_unit(pk, back, 0, 0)
 	var pk_ui := CardUI.create(pk)
 	player_slots[back][0].set_card(pk_ui)
 	_wire_unit_drag(pk_ui)
 
 	# The enemy Captain scales with encounter power, like the rest of the deck.
 	var ek := CardInstance.from_data(CardData.scaled(CardData.get_card(enemy_king_id), enemy_power))
-	ek.row = back; ek.col = BoardData.COLS - 1; ek.owner = 1
-	enemy_grid[back][BoardData.COLS - 1] = ek
+	world.place_unit(ek, back, BoardData.COLS - 1, 1)
 	enemy_slots[back][BoardData.COLS - 1].set_card(CardUI.create(ek))
 	LiveEffects.invalidate_compositions()   # owners set — allegiance-gated grants may now reach
 
@@ -221,7 +224,7 @@ func place_enemy_card(inst: CardInstance, r: int, c: int) -> Array:
 # delivery's empty-slot case — see EffectHooks.deliver_material). Mirrors place_enemy_card:
 # occupies the grid, creates the CardUI, fires the unit's ON_PLAY effects.
 func spawn_player_card(inst: CardInstance, r: int, c: int) -> Array:
-	if player_grid[r][c] != null:
+	if world.unit_at(0, r, c) != null:
 		return []
 	world.place_unit(inst, r, c, 0)
 	var ui := CardUI.create(inst)
@@ -245,13 +248,12 @@ func spawn_player_card(inst: CardInstance, r: int, c: int) -> Array:
 func move_enemy_card(inst: CardInstance, r: int, c: int) -> Vector2:
 	# Read BEFORE the card is taken out of its slot: clear_card reparents it out of the tree, and an
 	# orphaned Control's global position is just its local one — the origin, wherever it stood.
-	var old_slot := enemy_slots[inst.row][inst.col] as SlotUI
+	var old_slot := slot_of(inst)
 	var standing := old_slot.get_card()
 	var from := standing.global_position if standing != null else old_slot.global_position
 	var ui: CardUI = old_slot.clear_card()
-	enemy_grid[inst.row][inst.col] = null
-	inst.row = r; inst.col = c
-	enemy_grid[r][c] = inst
+	# ONE move, on the one authority — no vacate-then-occupy pair to get out of step.
+	world.locations.move(inst, BoardLocation.at(1, r, c))
 	(enemy_slots[r][c] as SlotUI).set_card(ui)
 	return from
 
@@ -276,8 +278,7 @@ func retire_unit(inst: CardInstance) -> CardUI:
 # is STILL the one standing there — if anything has moved in since, the newcomer is not ours to
 # remove — but always frees the card itself.
 func drop_card_view(inst: CardInstance, card_ui: CardUI) -> void:
-	var slots := player_slots if inst.owner == 0 else enemy_slots
-	var slot := slots[inst.row][inst.col] as SlotUI
+	var slot := slot_of(inst)
 	if slot != null and slot.get_card() == card_ui:
 		slot.clear_card()
 	if is_instance_valid(card_ui):
@@ -290,16 +291,30 @@ func remove_card(inst: CardInstance) -> void:
 
 
 func get_card_ui(inst: CardInstance) -> CardUI:
-	if inst.owner == 0:
-		return (player_slots[inst.row][inst.col] as SlotUI).get_card()
-	return (enemy_slots[inst.row][inst.col] as SlotUI).get_card()
+	var slot := slot_of(inst)
+	return null if slot == null else slot.get_card()
 
 
-# The SLOT a unit stands in — the widget that speaks for it to the input layer.
+# The SLOT a unit stands in — the widget that speaks for it to the input layer. Null when the
+# unit is not on the board at all, which the world answers and nothing else has to infer.
 func slot_of(inst: CardInstance) -> SlotUI:
-	if inst == null or inst.row < 0 or inst.col < 0:
+	return slot_ui_for(BoardFacade.location_of(world, inst))
+
+
+# The slot WIDGET at a board address (null for no address) — the one coordinates-to-widget
+# lookup, so nothing else indexes the matrices by hand.
+func slot_ui_for(loc: BoardLocation) -> SlotUI:
+	if loc == null:
 		return null
-	return (player_slots if inst.owner == 0 else enemy_slots)[inst.row][inst.col] as SlotUI
+	var slots: Array = player_slots if loc.side == 0 else enemy_slots
+	var slot_row: Array = slots[loc.row]
+	return slot_row[loc.col] as SlotUI
+
+
+# The slot widget under a GROUND cell (a BoardSlot) — presentation's route from a rules-side
+# ground object back to the widget drawing it.
+func slot_ui_of(ground: BoardSlot) -> SlotUI:
+	return slot_ui_for(BoardFacade.location_of(world, ground))
 
 
 # "The player pressed this unit" — from somewhere that isn't the unit's own slot (the turn-order
@@ -318,48 +333,35 @@ func get_all_units() -> Array:
 
 
 func find_target(attacker: CardInstance) -> CardInstance:
-	var target_board: Array = enemy_grid if attacker.owner == 0 else player_grid
 	var strategy: TargetingStrategy = attacker.data.targeting_strategy \
 		if attacker.data != null else _default_strategy
-	return strategy.find_target(attacker, target_board)
+	return strategy.find_target(world.locations, attacker)
 
 
 func any_king_dead() -> bool:
-	var p_alive := false
-	var e_alive := false
-	for r in BoardData.ROWS:
-		for c in BoardData.COLS:
-			if player_grid[r][c] != null and player_grid[r][c].data.is_king:
-				p_alive = true
-			if enemy_grid[r][c] != null and enemy_grid[r][c].data.is_king:
-				e_alive = true
-	return not p_alive or not e_alive
+	return get_player_king() == null or get_enemy_king() == null
+
+
+# The king standing on a HALF of the board. Spatial, as it always was — these read the grid,
+# and a grid is a half — so a king fighting from the wrong side would still be found where it
+# is rather than where its loyalty says it should be.
+func _king_on(side: int) -> CardInstance:
+	for unit: CardInstance in BoardFacade.units_on_side(world, side):
+		if unit.data.is_king:
+			return unit
+	return null
 
 
 func get_player_king() -> CardInstance:
-	for r in BoardData.ROWS:
-		for c in BoardData.COLS:
-			var p: CardInstance = player_grid[r][c]
-			if p != null and p.data.is_king:
-				return p
-	return null
+	return _king_on(0)
 
 
 func get_enemy_king() -> CardInstance:
-	for r in BoardData.ROWS:
-		for c in BoardData.COLS:
-			var e: CardInstance = enemy_grid[r][c]
-			if e != null and e.data.is_king:
-				return e
-	return null
+	return _king_on(1)
 
 
 func player_king_alive() -> bool:
-	for r in BoardData.ROWS:
-		for c in BoardData.COLS:
-			if player_grid[r][c] != null and player_grid[r][c].data.is_king:
-				return true
-	return false
+	return get_player_king() != null
 
 
 # The sweep + spawn-queue drain lives on the world now (state); the board hears about each
@@ -387,9 +389,7 @@ func refresh() -> void:
 
 
 func slot_ui_at(side: int, r: int, c: int) -> SlotUI:
-	var slots: Array = player_slots if side == 0 else enemy_slots
-	var slot_row: Array = slots[r]
-	return slot_row[c] as SlotUI
+	return slot_ui_for(BoardLocation.at(side, r, c))
 
 
 # ── Interaction presentation ────────────────────────────────────────────────────
@@ -419,7 +419,7 @@ func present(action: Interaction.Action) -> void:
 	# this baseline (_set_phantom_slot). Cards/slots derive from the declaration.
 	if action != null and action.preview_instance != null:
 		var p := action.preview_instance
-		declare_preview(p, p.row, p.col)
+		declare_preview(p, BoardFacade.location_of(world, p))
 	else:
 		clear_preview()
 	if action != null and action.is_drag:
@@ -490,7 +490,7 @@ func make_unit_action(card_ui: CardUI, animated: bool, is_drag: bool) -> Interac
 	# be repositioned at all; only the tap is refused.
 	act.click_commit = from_hand
 	act.role_check = func(slot: SlotUI) -> int:
-		if slot.owner_id != 0 or slot.get_card() != null:
+		if slot.location.side != 0 or slot.get_card() != null:
 			return Interaction.Role.NONE
 		if _can_drop_on_player_slot(card_ui, slot):
 			return Interaction.Role.DESTINATION
@@ -516,7 +516,7 @@ func make_autocast_action(card_ui: CardUI) -> Interaction.Action:
 	act.is_drag = true
 	act.preview_instance = card_ui.card_instance
 	var is_move_spot := func(slot: SlotUI) -> bool:
-		return slot.get_card() == null and slot.owner_id == 0 \
+		return slot.get_card() == null and slot.location.side == 0 \
 				and _can_drop_on_player_slot(card_ui, slot)
 	act.role_check = func(slot: SlotUI) -> int:
 		if is_move_spot.call(slot):
@@ -553,66 +553,51 @@ func wire_unit_card(card_ui: CardUI) -> void:
 # SIDE-NEUTRAL: the pivot may belong to either army — a selected enemy reads identically
 # (crosshair on the player unit it targets, menace on the player units targeting it).
 
-# The grid/slot matrix a side's units stand on — the one owner→side lookup.
-func _grid_of(side: int) -> Array:
-	return player_grid if side == 0 else enemy_grid
-
-
-func _slots_of(side: int) -> Array:
-	return player_slots if side == 0 else enemy_slots
-
-
-# Declares "pivot standing at (row, col)" as the world threat questions are answered in,
-# rebuilds the derived snapshot, and cues a re-derive. Idempotent on an unchanged declaration.
-func declare_preview(pivot: CardInstance, row: int, col: int) -> void:
-	if pivot == _pivot and row == _pivot_row and col == _pivot_col:
+# Declares "pivot standing HERE" as the world threat questions are answered in, rebuilds the
+# derived placement, and cues a re-derive. Idempotent on an unchanged declaration.
+func declare_preview(pivot: CardInstance, at_loc: BoardLocation) -> void:
+	if pivot == _pivot and at_loc == _pivot_at:
 		return
 	_pivot = pivot
-	_pivot_row = row
-	_pivot_col = col
+	_pivot_at = at_loc
 	_rebuild_preview_world()
 	derive_cards()
 
 
 func clear_preview() -> void:
-	declare_preview(null, -1, -1)
+	declare_preview(null, null)
 
 
-func _copy_grid(g: Array) -> Array:
-	var out: Array = []
-	for row_arr: Array in g:
-		out.append((row_arr as Array).duplicate())
-	return out
-
-
-# The derived snapshot: real grids with one change — the pivot stands at its declared spot
-# (its real cell vacated). Built once per declaration, so cards consulting at ANY later moment
-# (a poll tick, a cue) answer in the same world a synchronous computation would have used.
+# The derived arrangement: the real placement with one change — the pivot stands at its
+# declared spot. Built once per declaration, so cards consulting at ANY later moment (a poll
+# tick, a cue) answer in the same world a synchronous computation would have used.
 func _rebuild_preview_world() -> void:
 	_pivot_target = null
-	_world_player = []
-	_world_enemy = []
-	if _pivot == null:
+	_preview_places = null
+	if _pivot == null or _pivot_at == null or world == null:
 		return
-	_world_player = _copy_grid(player_grid)
-	_world_enemy = _copy_grid(enemy_grid)
-	var own: Array = _world_player if _pivot.owner == 0 else _world_enemy
-	if _pivot.row >= 0 and own[_pivot.row][_pivot.col] == _pivot:
-		own[_pivot.row][_pivot.col] = null   # a move preview reflects the vacated spot
-	own[_pivot_row][_pivot_col] = _pivot
-	# The pivot's own victim in the declared world, memoized — every card's "am I the target?"
-	# is then a compare, not a redundant rerun of the pivot's strategy. find_target reads the
-	# attacker's row/col, so stand the pivot at its declared spot for the one call.
-	var save_r := _pivot.row
-	var save_c := _pivot.col
-	_pivot.row = _pivot_row
-	_pivot.col = _pivot_col
+	# A copy of the placement over the SAME units — the identity map is every dockable mapped
+	# to itself, so "is this card the pivot's target?" stays a compare against the very object
+	# the caller holds. Only the arrangement is hypothetical.
+	var identity: Dictionary = {}
+	for unit: CardInstance in world.get_all_units():
+		identity[unit] = unit
+	for ground: BoardSlot in world.locations.docked(BoardFacade.GROUND):
+		identity[ground] = ground
+	identity[_pivot] = _pivot   # a hand card is not on the board yet, and still lands somewhere
+	_preview_places = world.locations.copy(identity)
+	# The declared spot is normally empty (destinations are). If something does stand there,
+	# the hypothetical is that the pivot stands there INSTEAD — so evict it from the copy
+	# rather than let the collision rule refuse a placement that is not really a move.
+	var sitting: Object = _preview_places.at(_pivot_at, BoardFacade.PIECES)
+	if sitting != null and sitting != _pivot:
+		_preview_places.undock(sitting)
+	_preview_places.move(_pivot, _pivot_at)
+	# The pivot's own victim in the declared arrangement, memoized — every card's "am I the
+	# target?" is then a compare, not a redundant rerun of the pivot's strategy.
 	var strategy: TargetingStrategy = _pivot.data.targeting_strategy \
 		if _pivot.data != null else _default_strategy
-	_pivot_target = strategy.find_target(_pivot,
-			_world_enemy if _pivot.owner == 0 else _world_player)
-	_pivot.row = save_r
-	_pivot.col = save_c
+	_pivot_target = strategy.find_target(_preview_places, _pivot)
 
 
 # The declared pivot itself — the OTHER party in every exchange a threat cue describes, so a card
@@ -677,25 +662,17 @@ func is_pivot_target(inst: CardInstance) -> bool:
 func menaces_pivot(inst: CardInstance) -> bool:
 	if _pivot == null or inst == null or inst == _pivot:
 		return false
-	if inst.owner == _pivot.owner or inst.row < 0:
+	if inst.owner == _pivot.owner or _preview_places == null:
+		return false
+	if _preview_places.location_of(inst) == null:
 		return false
 	var strategy: TargetingStrategy = inst.data.targeting_strategy \
 		if inst.data != null else _default_strategy
-	# Strategies measure candidates by their INSTANCE row/col, not the grid cell they sit in
-	# (TargetingStrategy.sorted_by_dist) — so the pivot must WEAR its declared spot for the
-	# query's duration, or every asker measures it at its real position (a hand card at
-	# row -1 measured as unreachable — the exact "menace never updates to the landing spot"
-	# defect). Same mutate-restore _rebuild_preview_world uses for the pivot's own target:
-	# synchronous, no await inside, the real position is restored before anyone else looks.
-	var save_r := _pivot.row
-	var save_c := _pivot.col
-	_pivot.row = _pivot_row
-	_pivot.col = _pivot_col
-	var hit: bool = strategy.find_target(inst,
-			_world_player if inst.owner == 1 else _world_enemy) == _pivot
-	_pivot.row = save_r
-	_pivot.col = save_c
-	return hit
+	# Asked IN the declared arrangement — which is what makes a hand card hovering a landing
+	# slot answer as though it already stood there (the "menace never updates to the landing
+	# spot" defect, structurally impossible now that the hypothetical is a placement rather
+	# than a temporary edit to the pivot).
+	return strategy.find_target(_preview_places, inst) == _pivot
 
 
 # The "re-check now" cue: every slot re-derives its attack marker from the declaration and
@@ -783,13 +760,14 @@ func _set_button_phantom(slot: SlotUI) -> void:
 	if slot != null:
 		var act := interaction.current()
 		slot.mount_phantom(act.source.make_ghost_view())
-		declare_preview(act.source.card_instance, slot.row, slot.col)
+		declare_preview(act.source.card_instance, slot.location)
 	elif interaction != null and interaction.active():
 		# Hover ended mid-action — the declaration falls back to the action's baseline (the
 		# unit's standing spot). On action teardown present() re-declares/clears on its own.
 		var act := interaction.current()
 		if act.preview_instance != null:
-			declare_preview(act.preview_instance, act.preview_instance.row, act.preview_instance.col)
+			declare_preview(act.preview_instance,
+					BoardFacade.location_of(world, act.preview_instance))
 		else:
 			clear_preview()
 
@@ -815,9 +793,10 @@ func _declare_hover_preview() -> void:
 	if act == null or act.source == null:
 		return
 	if _hover_slot != null and interaction.role_of(_hover_slot) == Interaction.Role.DESTINATION:
-		declare_preview(act.source.card_instance, _hover_slot.row, _hover_slot.col)
+		declare_preview(act.source.card_instance, _hover_slot.location)
 	elif act.preview_instance != null:
-		declare_preview(act.preview_instance, act.preview_instance.row, act.preview_instance.col)
+		declare_preview(act.preview_instance,
+				BoardFacade.location_of(world, act.preview_instance))
 	else:
 		clear_preview()
 
@@ -865,12 +844,12 @@ func _set_phantom_slot(slot: SlotUI) -> void:
 	if slot != null and _drag_card != null:
 		slot.set_cue(SlotUI.Cue.NONE)                  # the phantom IS the "lands here" signal
 		slot.mount_phantom(_drag_card.make_ghost_view())
-		declare_preview(_drag_card.card_instance, slot.row, slot.col)
+		declare_preview(_drag_card.card_instance, slot.location)
 	elif _drag_card != null and not (is_hand_card.is_valid() and is_hand_card.call(_drag_card)):
 		# Off any landing slot — fall back to declaring from where the unit actually stands, so
 		# a fielded unit's map info persists through the whole drag, not just over a new slot.
 		var inst := _drag_card.card_instance
-		declare_preview(inst, inst.row, inst.col)
+		declare_preview(inst, BoardFacade.location_of(world, inst))
 
 
 # The empty player slot under the cursor that would accept the dragged unit ([] → none).
@@ -912,7 +891,7 @@ func _can_drop_on_player_slot(card_ui: CardUI, _slot: SlotUI) -> bool:
 	# exists solely to cast its armed ability, and no move spot ever accepts it.
 	if inst.owner != 0:
 		return false
-	if inst.row >= 0 and inst.data.is_building():
+	if BoardFacade.is_on_board(world, inst) and inst.data.is_building():
 		return false
 	return true
 
@@ -963,10 +942,8 @@ func do_place_unit(slot: SlotUI, card_ui: CardUI) -> void:
 	if not from_hand and inst.data.is_building():
 		return
 
-	if not from_hand and inst.row >= 0 and inst.col >= 0:
-		player_grid[inst.row][inst.col] = null
-
-	world.place_unit(inst, slot.row, slot.col, 0)
+	# No vacate step: docking somewhere new IS leaving where it was (LocationManager.dock).
+	world.place_unit_at(inst, slot.location, 0)
 	slot.set_card(card_ui)
 
 	_wire_unit_drag(card_ui)

@@ -37,7 +37,7 @@ func _ready() -> void:
 		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		box.add_child(lbl)
 		var slot := SlotUI.new()
-		slot.owner_id = 0
+		slot.location = BoardLocation.at(0, 0, 0)
 		slot.custom_minimum_size = Vector2(165, 216)
 		box.add_child(slot)
 		slots.append([slot, st[1], st[2]])

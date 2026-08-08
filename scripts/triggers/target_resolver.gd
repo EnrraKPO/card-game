@@ -105,15 +105,20 @@ class Auto extends TargetResolver:
 		match criterion:
 			"random":
 				pool.shuffle()
-			_:   # nearest — row/col tie-break keeps the legacy scan-order determinism
-				pool.sort_custom(func(a: CardInstance, b: CardInstance) -> bool:
-					var da := TargetResolver.board_distance(holder, a)
-					var db := TargetResolver.board_distance(holder, b)
-					if da != db:
-						return da < db
-					if a.row != b.row:
-						return a.row < b.row
-					return a.col < b.col)
+			_:   # nearest — address tie-break keeps the legacy scan-order determinism
+				var places := TargetResolver.places_of(context)
+				if places != null:
+					var from := places.location_of(holder)
+					pool.sort_custom(func(a: CardInstance, b: CardInstance) -> bool:
+						var la := places.location_of(a)
+						var lb := places.location_of(b)
+						var da := TargetResolver.board_distance(from, la)
+						var db := TargetResolver.board_distance(from, lb)
+						if da != db:
+							return da < db
+						if la.row != lb.row:
+							return la.row < lb.row
+						return la.col < lb.col)
 		return pool.slice(0, count)
 
 	func to_dict() -> Dictionary:
@@ -161,6 +166,7 @@ class AtLocation extends TargetResolver:
 				context.anchor_side, context.anchor_row, context.anchor_col)
 		if unit == null:
 			return []
+		# (An empty cell is a legal whiff — see the note above.)
 		return _passing([unit], TargetResolver._anchor(holder, context))
 
 	func to_dict() -> Dictionary:
@@ -368,18 +374,32 @@ static func board_units(context: EffectContext) -> Array:
 	return out
 
 
-# Board distance from the holder to a candidate. Cross-board: COLUMN DEPTH DOMINATES
-# and the mirrored lane offset only breaks ties within a column — the same lexicographic
-# geometry as TargetingStrategy.dist, so attack targeting and effect targeting agree on
-# what "nearest" means. Same side: plain Manhattan, scaled by the same factor so mixed
-# ally/enemy pools stay commensurate.
-static func board_distance(holder: CardInstance, cand: CardInstance) -> int:
-	if cand.owner == holder.owner:
-		return (absi(holder.row - cand.row) + absi(holder.col - cand.col)) * BoardData.ROWS
-	var lane_offset: int = absi(holder.row + cand.row - (BoardData.ROWS - 1))
+# The placement this dispatch reads — the world's, or nothing outside a combat, where
+# proximity has no meaning and the pool keeps its enumeration order.
+static func places_of(context: EffectContext) -> LocationManager:
+	if context == null or context.world == null:
+		return null
+	return context.world.locations
+
+
+# Effect targeting's PREFERENCE ordering from one cell to another — NOT a distance
+# (LOCATION_MANAGER_DESIGN.md §2.10; BoardGeometry.distance is the real, symmetric one).
+# Cross-half: COLUMN DEPTH DOMINATES and the mirrored lane offset only breaks ties within a
+# column — the same lexicographic geometry as TargetingStrategy.dist, so attack targeting and
+# effect targeting agree on what "nearest" means. Same half: plain Manhattan, scaled by the
+# same factor so mixed ally/enemy pools stay commensurate.
+#
+# Kept bit-identical through the location refactor: it still reads two addresses, it just no
+# longer reads them off the units.
+static func board_distance(from: BoardLocation, to: BoardLocation) -> int:
+	if from == null or to == null:
+		return 1 << 30
+	if to.side == from.side:
+		return (absi(from.row - to.row) + absi(from.col - to.col)) * BoardData.ROWS
+	var lane_offset: int = absi(from.row + to.row - (BoardData.ROWS - 1))
 	var depth: int
-	if holder.owner == 0:
-		depth = BoardData.COLS + cand.col - holder.col
+	if from.side == 0:
+		depth = BoardData.COLS + to.col - from.col
 	else:
-		depth = BoardData.COLS + holder.col - cand.col
+		depth = BoardData.COLS + from.col - to.col
 	return depth * BoardData.ROWS + lane_offset

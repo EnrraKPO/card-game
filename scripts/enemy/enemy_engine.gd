@@ -83,8 +83,7 @@ func _tie_break(n: int) -> int:
 func decide_actions(hand: Array, player_grid: Array, enemy_grid: Array, mana: int,
 		player_mana: int = 0) -> Array:
 	var scoring := BoardScoring.stock(weight_overrides, personality)
-	var state := BoardState.capture(player_grid, enemy_grid, player_mana,
-			world.slots if world != null else {})
+	var state := BoardState.capture(player_grid, enemy_grid, player_mana, world)
 	var pool: Array = hand.duplicate()
 	var remaining := mana
 	# The mana story the mana-optimization criterion reads: the engine stamps it onto the
@@ -105,13 +104,14 @@ func decide_actions(hand: Array, player_grid: Array, enemy_grid: Array, mana: in
 	# grows AFTER each acceptance — a candidate never replays itself.
 	var live := world
 	if live == null:
-		live = CombatWorld.new()
-		live.player_grid = player_grid
-		live.enemy_grid = enemy_grid
-		live.player_side = CombatSide.make(0)
-		live.enemy_side = CombatSide.make(1)
+		# No live world given (a fixture, or a caller holding only grids): build one and DOCK
+		# what the grids describe. Handing the arrays over is not a thing that can work any
+		# more — placement has one home and a grid is a reading of it (see CombatWorld).
+		live = CombatWorld.make(GameData.current_modifiers)
+		live.rewards_live = false
 		live.enemy_side.hand = hand
-		live.modifiers = GameData.current_modifiers
+		live.adopt_grid(player_grid, 0)
+		live.adopt_grid(enemy_grid, 1)
 	var accepted: Array = []
 	var sim := {"world": live, "accepted": accepted}
 	while true:
@@ -334,12 +334,14 @@ static func describe(cand: Dictionary) -> String:
 	return kind
 
 
+# A cast/ability candidate's victim, for the decision log. The SEAT is deliberately absent:
+# a unit does not carry one (see LocationManager), and describe() is a static formatter with
+# no board to ask. Who and whose is what the line was read for.
 static func _at(cand: Dictionary) -> String:
 	var target := cand.get("target", null) as CardInstance
 	if target == null:
 		return ""
-	return " on %s (r%dc%d, %s)" % [target.data.id, target.row, target.col,
-			"theirs" if target.owner == 0 else "ours"]
+	return " on %s (%s)" % [target.data.id, "theirs" if target.owner == 0 else "ours"]
 
 
 # Keeps a candidate state's mana story true: the candidate's cost leaves the pool, and a

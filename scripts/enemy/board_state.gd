@@ -152,13 +152,17 @@ class UnitState:
 	# is combined at read time by the scoring helpers, never baked in here.
 	var eval_mods: EvalChannels.Mods = null
 
-	static func from_instance(inst: CardInstance) -> UnitState:
+	# The unit's stats frozen for scoring, at the seat the capture walk is standing on. The
+	# SEAT IS PASSED IN, not read off the unit: a unit does not know where it is (see
+	# LocationManager), and the walk that found it does. A corpse has no seat at all — the
+	# graveyard's entries carry -1, and nothing prices a seat for the dead.
+	static func from_instance(inst: CardInstance, p_row: int = -1, p_col: int = -1) -> UnitState:
 		var u := UnitState.new()
 		u.source = inst
 		u.card_id = inst.data.id
 		u.owner = inst.owner
-		u.row = inst.row
-		u.col = inst.col
+		u.row = p_row
+		u.col = p_col
 		u.is_king = inst.data.is_king
 		u.is_building = inst.data.is_building()
 		u.role = inst.data.role
@@ -218,21 +222,24 @@ class UnitState:
 # and every seat reads neutral — a caller with no world in hand degrades to the
 # ground-blind capture.
 static func capture(live_player_grid: Array, live_enemy_grid: Array,
-		p_player_mana: int = 0, slots: Dictionary = {}) -> BoardState:
+		p_player_mana: int = 0, world: CombatWorld = null) -> BoardState:
 	var s := BoardState.new()
 	s.player_units = _capture_grid(live_player_grid)
 	s.enemy_units = _capture_grid(live_enemy_grid)
 	s.player_mana = p_player_mana
-	s.ground = capture_ground(slots)
+	s.ground = capture_ground(world)
 	return s
 
 
 # The ground layer's fold: each live slot's statuses through EvalChannels; neutral seats
 # stay absent. Shared by capture above and CandidateApply._capture_back.
-static func capture_ground(slots: Dictionary) -> Dictionary:
+static func capture_ground(world: CombatWorld) -> Dictionary:
 	var out: Dictionary = {}
-	for key: Vector3i in slots:
-		var mods := EvalChannels.slot_mods(slots[key] as BoardSlot)
+	if world == null:
+		return out
+	for slot: BoardSlot in world.locations.docked(BoardFacade.GROUND):
+		var key := world.location_of(slot).key()
+		var mods := EvalChannels.slot_mods(slot)
 		if mods != null:
 			out[key] = mods
 	return out
@@ -249,7 +256,7 @@ static func _capture_grid(live_grid: Array) -> Array:
 		var row: Array = []
 		for c in BoardData.COLS:
 			var inst: CardInstance = live_grid[r][c]
-			row.append(UnitState.from_instance(inst) if inst != null else null)
+			row.append(UnitState.from_instance(inst, r, c) if inst != null else null)
 		grid.append(row)
 	return grid
 

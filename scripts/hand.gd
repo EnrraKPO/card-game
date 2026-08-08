@@ -402,8 +402,9 @@ func _on_cards_discarded(insts: Array) -> void:
 
 
 func _spawn_hand_card(inst: CardInstance) -> void:
-	inst.row = -1
-	inst.col = -1
+	# (A card in hand stands nowhere, and it says so by not being on the board — there is no
+	# coordinate to reset. Drawn instances have never been docked; a unit leaving the field
+	# undocks on the way out, through the board.)
 	var ui := CardUI.create(inst, true)
 	ui.custom_minimum_size = _card_size
 	# THE HAND IS THE ONE SURFACE THAT LIFTS (see CardUI.lift_check). A hand card stands nowhere, so
@@ -736,8 +737,6 @@ func _rebuild_inspect_view() -> void:
 	for ab: AbilityData in inst.ability_list():
 		var tok := CardInstance.from_data(ab.display_card())
 		tok.owner = inst.owner
-		tok.row = -1
-		tok.col = -1
 		tok.source_building = inst
 		tok.ability = ab
 		var ui := AbilityWidget.create_for(tok)
@@ -967,9 +966,7 @@ func contains(ui: CardUI) -> bool:
 # is not an inspection (see selected()), so the two readings of the one value never overlap.
 func inspected_instance() -> CardInstance:
 	var inst := Selection.current() as CardInstance
-	if inst == null or inst.row < 0 or inst.col < 0:
-		return null
-	return inst
+	return inst if CombatContext.fielded(inst) else null
 
 
 # The "re-check now" cue for every card view the hand owns (hand row + tray tokens) — routed

@@ -3,13 +3,14 @@ extends TargetingStrategy
 
 # Locks onto the tankiest enemy — focuses the highest-HP unit.
 # Distance is used as a tiebreaker when HP is equal.
-func find_target(attacker: CardInstance, opponent_board: Array) -> CardInstance:
-	var all := sorted_by_dist(attacker, opponent_board)
+func find_target(places: LocationManager, attacker: CardInstance) -> CardInstance:
+	var all := sorted_by_dist(places, attacker)
 	if all.is_empty():
 		return null
+	var from := at(places, attacker)
 	all.sort_custom(func(a: CardInstance, b: CardInstance) -> bool:
 		if a.current_health != b.current_health:
 			return a.current_health > b.current_health
-		return dist(attacker, a.row, a.col) < dist(attacker, b.row, b.col)
+		return dist(from, at(places, a)) < dist(from, at(places, b))
 	)
 	return all[0]
