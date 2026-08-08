@@ -205,7 +205,8 @@ static func _run_effect(effect: Effect, source: CardInstance, context: EffectCon
 	# fallback; any unit-resolving targeting delivers to the ground UNDER each resolved
 	# unit ("burn the slot you strike" = participant destination + layer ground). An empty
 	# resolution is a legal whiff — no coordinates to complain about.
-	if not effect.status_id.is_empty() and effect.status_layer == "ground":
+	if not effect.status_id.is_empty() and effect.status_layer == "ground" \
+			and not _targets_the_ground(effect):
 		if effect.targets_resolver() is TargetResolver.ManualSlot:
 			var gres := _ground_status_at_coords(effect, source, context, cause)
 			return [gres] if not gres.is_empty() else []
@@ -226,19 +227,46 @@ static func _run_effect(effect: Effect, source: CardInstance, context: EffectCon
 		return gresults
 	# THE targeting socket: the effect's injected resolver returns the affected target(s)
 	# from the same shared context the trigger saw (see TargetResolver). The array is
-	# heterogeneous — units (CardInstance) or a player (CombatSide, the "side" kind) —
-	# dispatched by type here, mirroring Resolver.submit. Effects apply to royalty
-	# (King/Queen) and lackeys alike; only the resolver's conditions filter.
+	# heterogeneous — units (CardInstance), a player (CombatSide, the "side" kind), or a
+	# cell of the ground (BoardSlot, the location socket's ground layer) — dispatched by
+	# type here, mirroring Resolver.submit. Effects apply to royalty (King/Queen) and
+	# lackeys alike; only the resolver's conditions filter.
 	var results: Array = []
 	for target: Object in effect.targets_resolver().resolve(event, source, context):
 		var r: Dictionary
 		if target is CombatSide:
 			r = _apply_side(effect, target as CombatSide, source, amount_scale, cause)
+		elif target is BoardSlot:
+			r = _apply_ground(effect, target as BoardSlot, source, context, cause)
 		else:
 			r = _apply(effect, target as CardInstance, source, context, amount_scale, cause)
 		if not r.is_empty():
 			results.append(r)
 	return results
+
+
+# Whether this effect's own targeting already resolves to GROUND — in which case delivery
+# goes through the ordinary socket below, not the layer-key pre-branch above. Both routes
+# reach the same one delivery point; the pre-branch stays because it is how every ground
+# status authored so far is spelled, and a reversal of policy is not a deletion of the
+# mechanism it replaced.
+static func _targets_the_ground(effect: Effect) -> bool:
+	var at := effect.targets_resolver() as TargetResolver.AtLocation
+	return at != null and at.layer == "ground"
+
+
+# A resolved SLOT: the ground is a status carrier and nothing else, so the only payload
+# that means anything here is a status. Anything else is an authoring error — loud, and no
+# quiet no-op that looks like a legal whiff.
+static func _apply_ground(effect: Effect, slot: BoardSlot, source: CardInstance,
+		context: EffectContext, cause: StringName) -> Dictionary:
+	if effect.status_id.is_empty():
+		push_error("EffectSystem: ground-layer targeting resolved a slot, but the payload is "
+				+ "'%s' — the ground carries statuses and nothing else" % effect.attribute)
+		return {}
+	if context == null or context.world == null:
+		return {}
+	return _ground_status_at(effect, source, context, cause, context.world.location_of(slot))
 
 
 # ── Effect application ─────────────────────────────────────────────────────────

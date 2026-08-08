@@ -40,8 +40,11 @@ extends RefCounted
 #   { "targets": { "kind": "auto", "criterion": "nearest", "count": 1, "conditions": [ ... ] } }
 #   { "targets": { "kind": "manual", "conditions": [ ... ] } }
 #   { "targets": { "kind": "manual_slot", "conditions": [ ... ] } }
-#   { "targets": { "kind": "at_location", "conditions": [ ... ] } }   — the unit at the effect's
-#                                                                      anchor coordinates (see AtLocation)
+#   { "targets": { "kind": "at_location", "from": "holder", "shape": "around",
+#                  "layer": "ground", "half": "same", "count": 0, "conditions": [ ... ] } }
+#         — THE LOCATION SOCKET (see AtLocation): name where you resolve FROM and what
+#           SHAPE that implies, get game objects back. Every key is optional, and the
+#           defaults are exactly what "at_location" meant before it took any.
 #   { "targets": { "kind": "participant", "participant": "origin", "conditions": [ ... ] } }
 #   { "targets": { "kind": "side", "of": "own"|"opponent" } }   — a PLAYER, not a unit (see Side)
 
@@ -151,25 +154,117 @@ class ManualSlot extends TargetResolver:
 
 
 class AtLocation extends TargetResolver:
-	# POSITION-FIRST targeting (SLOT_LAYER_DESIGN.md §2.4): "the unit(s) at these
-	# coordinates" — a relationship-blind pieces-layer lookup at a coordinate set. WHERE the
-	# coordinates come from is a separate concern (a coordinate PROVIDER); the only provider
-	# built now is the context's ANCHOR coordinates (for a slot status: the slot's own
-	# address — see EffectContext.anchor_*). AoE/adjacency later = richer providers feeding
-	# this same primitive, never a new targeting kind. An empty cell (or no anchor set) is a
-	# legal whiff — no targets, no error. Conditions gate the found unit normally ("only
-	# burn non-flying occupants").
-	func resolve(_event: GameEvent, holder: CardInstance, context: EffectContext) -> Array:
-		if context == null or context.anchor_at == null:
+	# POSITION-FIRST targeting, and THE EFFECT-SIDE SOCKET onto the location layer
+	# (LOCATION_MANAGER_DESIGN.md §4.6; SLOT_LAYER_DESIGN.md §2.4). An effect names two
+	# things it understands and gets back GAME OBJECTS:
+	#
+	#   `from`  — the LOCATION POLICY: where it resolves FROM.
+	#   `shape` — the GEOMETRY PROCEDURE: which cells that origin implies.
+	#
+	# …plus `layer` (whose contents come back — units or ground) and `half` (whether the
+	# battle line is a wall for this effect, which is a RULE and so lives here rather than
+	# in geometry). AT NO POINT DOES AN EFFECT SEE A COORDINATE: it names a policy, gets
+	# objects, and runs its own conditions and mutations exactly as any other kind does.
+	#
+	# The division of labour is the fence §4.4 draws. Geometry yields an ORDERED LIST OF
+	# LOCATIONS and has never heard of a unit; this walks that list, asks the façade what is
+	# there, and applies the authored conditions. Geometry never sees a condition; this never
+	# does arithmetic. A new shape teaches geometry; a new predicate teaches nobody.
+	#
+	# Emptiness is an ANSWER (§2.9). No origin, an empty cell, a whole shape with nobody in
+	# it — all legal whiffs, no error. Only an unknown policy name is a bug, and that is
+	# caught at parse.
+	#
+	# DEFAULTS REPRODUCE WHAT SHIPPED: from "anchor", shape "here", layer "pieces" — the
+	# unit standing at the effect's anchor address, which is what `at_location` meant before
+	# it had any parameters. Existing authored data is untouched by construction.
+
+	const POLICIES: Array[String] = ["anchor", "picked", "holder", "origin", "destination"]
+	const SHAPES: Array[String] = ["here", "around", "nearest"]
+	const LAYERS: Array[String] = ["pieces", "ground"]
+	const HALVES: Array[String] = ["any", "same"]
+
+	var from: String = "anchor"
+	var shape: String = "here"
+	var layer: String = "pieces"
+	var half: String = "any"
+	var count: int = 0   # 0 = however many the shape finds
+
+	func resolve(event: GameEvent, holder: CardInstance, context: EffectContext) -> Array:
+		if context == null:
 			return []
-		var unit := TargetResolver.unit_at(context, context.anchor_at)
-		if unit == null:
-			return []
-		# (An empty cell is a legal whiff — see the note above.)
-		return _passing([unit], TargetResolver._anchor(holder, context))
+		var origin := _origin(event, holder, context)
+		if origin == null:
+			return []   # nothing to resolve FROM — a whiff, not a fault
+		var out: Array = []
+		for loc: BoardLocation in _cells(origin):
+			if half == "same" and loc.side != origin.side:
+				continue
+			var found: Object = _contents(context, loc)
+			if found != null:
+				out.append(found)
+		if layer == "ground":
+			# A slot has no stats, no composition and no allegiance — nothing the condition
+			# grammar can predicate on. Parse refuses authored conditions here, so there is
+			# nothing to apply.
+			return out.slice(0, count) if count > 0 else out
+		var passing := _passing(out, TargetResolver._anchor(holder, context))
+		return passing.slice(0, count) if count > 0 else passing
+
+	# THE LOCATION POLICY. Every branch asks something that already knows; none of them
+	# reads a coordinate off the thing it is asking about.
+	func _origin(event: GameEvent, holder: CardInstance, context: EffectContext) -> BoardLocation:
+		match from:
+			"anchor":
+				return context.anchor_at
+			"picked":
+				return context.manual_at
+			"holder":
+				return _where(context, holder)
+			"origin":
+				return null if event == null else _where(context, event.origin as CardInstance)
+			"destination":
+				return null if event == null else _where(context, event.destination as CardInstance)
+		return null
+
+	static func _where(context: EffectContext, unit: CardInstance) -> BoardLocation:
+		if context.world == null or unit == null:
+			return null
+		return context.world.location_of(unit)
+
+	# THE GEOMETRY PROCEDURE — pure locations in, pure locations out, in a fixed order.
+	func _cells(origin: BoardLocation) -> Array:
+		match shape:
+			"around":
+				return BoardGeometry.neighbours(origin)
+			"nearest":
+				# Every cell, nearest first, the origin included — "the closest thing to
+				# here" has an obvious answer when something is standing on `here`.
+				return BoardGeometry.cells_by_distance(origin)
+		return [origin]   # "here"
+
+	# THE FAÇADE CROSSING: the one place this kind knows that a layer yields a species.
+	func _contents(context: EffectContext, loc: BoardLocation) -> Object:
+		if layer == "ground":
+			# slot_at, not peek: the ground EXISTS at every real address (SLOT_LAYER_DESIGN.md),
+			# and a shape that skipped cells nothing had touched yet would set three neighbours
+			# alight and mysteriously miss the fourth.
+			return BoardFacade.slot_at(context.world, loc) if context.world != null else null
+		return TargetResolver.unit_at(context, loc)
 
 	func to_dict() -> Dictionary:
-		return _base_dict("at_location")
+		var d := _base_dict("at_location")
+		if from != "anchor":
+			d["from"] = from
+		if shape != "here":
+			d["shape"] = shape
+		if layer != "pieces":
+			d["layer"] = layer
+		if half != "any":
+			d["half"] = half
+		if count > 0:
+			d["count"] = count
+		return d
 
 
 class Side extends TargetResolver:
@@ -243,6 +338,34 @@ static func parse(d: Dictionary) -> TargetResolver:
 		"at_location":
 			var at := AtLocation.new()
 			at.conditions = conds
+			at.from = str(d.get("from", "anchor"))
+			at.shape = str(d.get("shape", "here"))
+			at.layer = str(d.get("layer", "pieces"))
+			at.half = str(d.get("half", "any"))
+			at.count = maxi(0, int(d.get("count", 0)))
+			# Fail loud on a misspelt policy — a silent degrade here is an effect that
+			# quietly resolves to nothing forever (the house rule, and §2.9's point that a
+			# legal whiff and a bug must not look alike).
+			if not at.from in AtLocation.POLICIES:
+				push_error("TargetResolver: unknown location policy '%s' %s — %s"
+						% [at.from, AtLocation.POLICIES, d])
+				at.from = "anchor"
+			if not at.shape in AtLocation.SHAPES:
+				push_error("TargetResolver: unknown shape '%s' %s — %s"
+						% [at.shape, AtLocation.SHAPES, d])
+				at.shape = "here"
+			if not at.layer in AtLocation.LAYERS:
+				push_error("TargetResolver: unknown layer '%s' %s — %s"
+						% [at.layer, AtLocation.LAYERS, d])
+				at.layer = "pieces"
+			if not at.half in AtLocation.HALVES:
+				push_error("TargetResolver: unknown half selector '%s' %s — %s"
+						% [at.half, AtLocation.HALVES, d])
+				at.half = "any"
+			if at.layer == "ground" and not conds.is_empty():
+				push_error("TargetResolver: ground-layer targeting takes no conditions — "
+						+ "a slot has no stats, composition or allegiance to predicate on — %s" % [d])
+				at.conditions = []
 			return at
 		"side":
 			var side := Side.new()

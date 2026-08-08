@@ -1,8 +1,10 @@
 # Location Manager — Design & Implementation Guide
 
-Status: **DESIGN AGREED 2026-08-08 (user), NOT BUILT.** §2 records decisions settled in
-discussion — do not reopen them. §3 is the survey of what exists (verify, don't re-survey).
-§5 is the increment plan, §6 the verification strategy, §7 the scope fences.
+Status: **DESIGN AGREED 2026-08-08 (user); BUILT 2026-08-08 on branch `location-manager`,
+NOT YET PLAYTESTED.** §2 records decisions settled in discussion — do not reopen them. §3 is
+the survey of what exists (verify, don't re-survey). §5 is the increment plan, §6 the
+verification strategy, §7 the scope fences. §9 records what was built and the two places the
+as-built differs from the plan.
 
 This initiative is to be developed **to full extent before anything else is pursued**
 (user, 2026-08-08). The whole game ends up on one placement implementation.
@@ -267,3 +269,54 @@ attack targeting, the most playtested behaviour in the game.
   typed `for` loops.
 - Edit files with the harness Edit/Write tools only (PowerShell corrupts encoding).
 - Commit discipline: planned phases get one commit per increment, when green and approved.
+
+---
+
+## 9. As built (2026-08-08, branch `location-manager` — not playtested)
+
+**The files.** `scripts/board/board_location.gd` (§4.1 — interned, immutable, side+row+col),
+`location_manager.gd` (§4.2), `board_geometry.gd` (§4.4), `board_facade.gd` (§4.3).
+`CombatWorld.locations` holds the manager; the grids and the slot dictionary are gone, and
+`player_grid`/`enemy_grid` survive as derived readings for the callers that still speak that
+shape. `EffectContext`'s boards derive from the world rather than snapshotting it, so a
+dispatch still sees a unit that died two effects ago as gone.
+
+**Suites.** `test_locations` (the layer's own contract), `test_location_parity` (§6 — the
+pre-refactor formulas, frozen, checked over all 576 address pairs), `test_location_socket`
+(§4.6). Full suite green throughout.
+
+**Verification actually performed** (§6): the exhaustive formula parity above; a replay of
+the CPU planner against the pre-refactor tree on the same fixture and seed, which planned
+identical actions in identical order at identical cost (159ms vs 157ms); the full suite; the
+spawn and combat smokes; and a render of the combat screen with a unit selected, confirming
+the declared preview world, the target crosshair and the menace derivation all still read.
+
+### 9.1 Two places the as-built differs from the plan
+
+**Targeting moved in increment 1, not 3.** §5 has the geometry consumers migrating after
+placement consolidates, but attack targeting could not wait: the board's move preview works
+by asking "who would this unit hit from over there", and the old answer was to write the
+pivot's coordinates onto the pivot, run the query, and put them back. With no coordinates on
+a unit, a hypothetical is a second PLACEMENT — so strategies take a `LocationManager` rather
+than a grid, and the mutate-restore trick is gone. The preference ordering itself is
+bit-identical, and §6's parity suite is what says so.
+
+**The socket's ground layer sits BESIDE the `status_layer: "ground"` key, not instead of
+it.** §4.6 says the socket subsumes ground delivery as authored policy. It can: `{"kind":
+"at_location", "layer": "ground"}` resolves to slots and delivers through the ordinary
+targeting path. Every ground status authored so far is still spelled with the layer key, and
+that mechanism is untouched — a policy that says "author it the new way from here" does not
+license deleting the one the data uses.
+
+### 9.2 Open, and deliberately not built
+
+- **Materials never land ON the ground.** §4.6 describes material delivery as "merge into the
+  unit if there is one, otherwise place on the ground". An empty pick still SPAWNS the
+  material as a unit, which is what it has always done; ground-borne materials are not a
+  mechanic that exists, and inventing one is a design decision, not a refactor.
+- **The enemy engine's `BoardState` keeps its own row/col.** It is an explicit frozen
+  projection for scoring, not a placement store — it is captured FROM the manager and never
+  written back. §3's survey did not name it, so it was left alone.
+- **`EnemyEngine.decide_actions` still takes grid arrays.** Its emitted ACTIONS carry
+  addresses; its entry signature is the last grid-shaped seam, and `CombatWorld.adopt_grid`
+  is the honest bridge marked for removal with it.
