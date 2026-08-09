@@ -10,6 +10,11 @@ signal spell_consumed(card_ui: CardUI, mana_cost: int)
 # An armed autocast ability is about to resolve (holder dropped onto a valid target); the
 # orchestrator pays its costs (mana + tap) — the tray-token flow's spell_consumed equivalent.
 signal ability_autocast(holder: CardInstance, ab: AbilityData)
+# A cast has FULLY resolved — hand spell, tray ability token or autocast alike. The await chain
+# inside a cast is the only thing that knows when it has finished, and a cast can end the fight
+# (a fire spell on the captain), so the orchestrator asks its own question here — see
+# Combat._settle_if_decided. Nothing about spell RULES hangs off this; it is a "done" wire.
+signal cast_resolved
 
 var board: CombatBoard
 var animator: CombatAnimator
@@ -113,6 +118,7 @@ func _execute_spell(card_ui: CardUI, manual_target: CardInstance, manual_slot: S
 	card_ui.queue_free()
 	await _resolve_on_play(inst.data.effects, src, inst.ability, manual_target, manual_slot)
 	board.refresh()
+	cast_resolved.emit()
 
 
 # The ON_PLAY resolution loop shared by spell/token casts and autocast activations: build a
@@ -303,3 +309,4 @@ func activate_autocast(holder: CardInstance, slot: SlotUI) -> void:
 			occupant.card_instance if occupant != null else null,
 			slot if slot_mode else null)
 	board.refresh()
+	cast_resolved.emit()

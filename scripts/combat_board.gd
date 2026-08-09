@@ -28,8 +28,35 @@ var world: CombatWorld = null:
 
 
 # A swept effect-kill: the state is already gone; drop the card where it stands.
+#
+# EXCEPT a KING. A king dying is the fight ending, and that ending is a SCENE — the fall, the
+# blast, the treasure chest thrown clear of it — and a scene needs the body. The anonymous sweep
+# therefore leaves a fallen king's card standing exactly where it stood, and whoever presents the
+# ending claims it (Combat._settle_if_decided). Before this, a captain killed by a spell was
+# thrown away by the sweep like any bystander, so the fight ended a whole turn later with nothing
+# to show for it.
+var _fallen_body: CardInstance = null
+
 func _on_world_unit_swept(inst: CardInstance) -> void:
+	if inst.data != null and inst.data.is_king:
+		_fallen_body = inst
+		return
 	drop_card_view(inst, get_card_ui(inst))
+
+
+# The body left standing, claimed exactly once — by the ending that owes it a send-off.
+func claim_fallen_body() -> CardInstance:
+	var body := _fallen_body
+	_fallen_body = null
+	return body
+
+
+# A king that died and was REPLACED rather than ending the fight (a phase-change boss spawning
+# its next form): nobody owes it a scene, so the body simply goes.
+func discard_fallen_body() -> void:
+	var body := claim_fallen_body()
+	if body != null:
+		drop_card_view(body, get_card_ui(body))
 
 
 # A rules-driven arrival (queued spawn / hook spawn): build the card the state is owed.
@@ -37,6 +64,14 @@ func _on_world_unit_spawned(inst: CardInstance) -> void:
 	var slot := slot_of(inst)
 	if slot == null:
 		return
+	# The arrival may be landing on a body the sweep left standing — a phase-change boss reclaims
+	# the very slot its previous form died on. The spot belongs to the newcomer: the body goes now
+	# rather than being silently drawn over.
+	var standing := slot.get_card()
+	if standing != null and is_instance_valid(standing):
+		if standing.card_instance == _fallen_body:
+			_fallen_body = null
+		drop_card_view(standing.card_instance, standing)
 	var ui := CardUI.create(inst)
 	slot.set_card(ui)
 	if inst.owner == 0:

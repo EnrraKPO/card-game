@@ -241,6 +241,10 @@ func _ready() -> void:
 		_board.present(_interaction.current()))
 	_spell_caster.spell_consumed.connect(_on_spell_consumed)
 	_spell_caster.ability_autocast.connect(_on_ability_autocast)
+	# A resolved cast is a moment the fight may have ended in — the commonest one, in fact: a
+	# fire spell on the enemy captain. The cast itself knows nothing of endings, so it reports
+	# back and the orchestrator asks its own question (see _settle_if_decided).
+	_spell_caster.cast_resolved.connect(_on_cast_resolved)
 
 	# A practice bout runs the REAL economy and rolls it back on the way out (see _rewards_live):
 	# the snapshot is taken before a single coin can be paid.
@@ -454,9 +458,10 @@ func _begin_round() -> void:
 			"%d/%d" % [_enemy_side.mana, _enemy_side.max_mana])
 	CombatLog.note("hand", ", ".join(_card_ids(_player_side.hand)))
 	await _do_cpu_placement()
-	# The CPU may have surrendered during its own placement — the fight is over and the
-	# end sequence owns the screen; starting the player phase would fight it for the board.
-	if _board.any_king_dead():
+	# The CPU may have surrendered or killed the player's King during its own turn — the fight is
+	# over and the end sequence owns the screen; starting the player phase would fight it for the
+	# board. (A surrender has already settled; this is the catch-all for the rest.)
+	if await _settle_if_decided():
 		return
 	Sfx.play("combat_turn_start")
 	Vfx.play("mana_refill_surge", _mana_chunks_box)   # the gauge blooms as it refills
@@ -505,6 +510,10 @@ func _do_cpu_placement() -> void:
 	CombatLog.note("cpu", "── executing %d action(s) ──" % plan.size())
 	for action: Dictionary in plan:
 		await _execute_enemy_action(action)
+		# A cast in the plan may have felled a King (either one). The rest of the plan is a plan
+		# for a fight that no longer exists — stop, and let _begin_round settle it.
+		if _board.any_king_dead():
+			break
 
 
 # Carries out one planned CPU action. The AI guarantees each is legal in sequence
@@ -672,16 +681,13 @@ func _on_done_pressed() -> void:
 	_set_placement_input(false)
 	_refresh()
 	await _resolve_event(&"turn_start")
-	if _board.any_king_dead():
-		_handle_combat_end()
+	if await _settle_if_decided():
 		return
 	await _run_combat()
-	if _board.any_king_dead():
-		_handle_combat_end()
+	if await _settle_if_decided():
 		return
 	await _resolve_event(&"turn_end")
-	if _board.any_king_dead():
-		_handle_combat_end()
+	if await _settle_if_decided():
 		return
 	await get_tree().create_timer(0.8).timeout
 	var any_shield_regen := false
@@ -707,6 +713,12 @@ func _run_combat() -> void:
 	# The order the strip between the boards has been showing all along — one definition, so
 	# the promise the display makes is the one the round keeps (see CombatWorld.turn_order).
 	for attacker: CardInstance in _world.turn_order():
+		# A captain down ENDS the round on the spot. The order is a promise about a fight, and once
+		# a King has fallen there is no fight left for the rest of the list to be a promise about —
+		# leaderless units trading blows over a corpse read as the game not having noticed. The
+		# survivors fall with their captain a moment later (see _collapse_losing_army).
+		if _board.any_king_dead():
+			break
 		if not attacker.is_alive():
 			continue
 		# Publish whose moment this is (the strip lights its entry — see CombatWorld.acting). Set
@@ -1120,25 +1132,85 @@ func _debug_kill_captain() -> void:
 	_debug_killing = false
 
 
-# The captain's exit, shared by the debug button and the surrender beat: the lethal blow
-# through the Resolver like any other, and everything after it is the same path a killing
-# strike takes — kill/death broadcasts, the fall, the chest, the end-of-combat gate.
-func _fell_enemy_captain() -> void:
-	var king := _board.get_enemy_king()
-	if king == null or not king.is_alive():
+# A unit's death DEALT rather than suffered: the lethal blow through the Resolver like any other,
+# and everything after it is the same path a killing strike takes — kill/death broadcasts, the
+# presented burial (a king FALLS and leaves its chest), the secondary sweep. Used by the captain's
+# exits (debug button, surrender) and by the army that falls with it.
+func _fell(inst: CardInstance) -> void:
+	if inst == null or not inst.is_alive():
 		return
-	Resolver.submit(StatMutation.make(king, StatMutation.HEALTH, -king.current_health,
+	Resolver.submit(StatMutation.make(inst, StatMutation.HEALTH, -inst.current_health,
 			null, StatMutation.CH_SYSTEM))
-	await _emit_kill(king)
-	await _broadcast(GameEvent.make(&"death", king))
-	await _bury(king)
+	await _emit_kill(inst)
+	await _broadcast(GameEvent.make(&"death", inst))
+	await _bury(inst)
 	_board.cleanup_effect_deaths()
-	# Mid-combat the resolution loop is already watching for a fallen king and will end the fight at
-	# its next checkpoint — ending it here too would run the whole end sequence twice. Outside combat
-	# (the placement phases, where the debug button and surrender both live) nothing else is
-	# watching, so end it.
-	if _phase != Phase.COMBAT and _board.any_king_dead():
-		_handle_combat_end()
+
+
+# The captain's exit, shared by the debug button and the surrender beat.
+func _fell_enemy_captain() -> void:
+	await _fell(_board.get_enemy_king())
+	await _settle_if_decided()
+
+
+# ── "Is this fight decided?" — ONE authority ───────────────────────────────────────────
+#
+# Asked after every step that can kill, wherever the killing came from: a strike, a spell, an
+# ability, a consumable, a ground fire, a CPU cast, the debug button. A king off the board is the
+# whole test.
+#
+# It used to be asked only at the combat loop's own checkpoints, plus two hand-written "outside
+# COMBAT nothing else is watching" special cases. So a captain felled by a spell in the placement
+# phase — the commonest way a fight actually ends — sat dead on a board nobody was watching until
+# the NEXT turn's fighting reached a checkpoint, and by then the sweep had thrown its body away:
+# the fight ended a turn late, with no fall and no chest. The checkpoints were the bug; one
+# authority every path asks is the fix.
+#
+# Returns TRUE when the fight is over — the caller must stop whatever it was doing, because the
+# sequence this runs owns the screen from here — and false when there is still a fight to play.
+var _settling := false
+
+func _settle_if_decided() -> bool:
+	if _settling:
+		return true
+	if not _board.any_king_dead():
+		# A king may still have died here and been REPLACED (a phase-change boss): the fight goes
+		# on, so no scene is owed and the body it left standing simply goes.
+		_board.discard_fallen_body()
+		return false
+	_settling = true
+	# The send-off an effect-kill never got. A king felled by a strike or by _fell was buried on
+	# the spot by that path and leaves no body here; one swept by a spell has been standing and
+	# waiting for exactly this.
+	var body := _board.claim_fallen_body()
+	if body != null:
+		await _emit_kill(body)
+		await _broadcast(GameEvent.make(&"death", body))
+		await _bury(body)
+		_board.cleanup_effect_deaths()
+	await _collapse_losing_army()
+	_handle_combat_end()
+	return true
+
+
+# The army falls with its captain. A decided fight used to play itself out anyway — the turn list
+# carrying on, leaderless units trading blows over a corpse — which reads as the game not having
+# noticed. Now the order stops on the spot (see _run_combat) and everyone still standing on the
+# beaten side dies where they stand.
+#
+# REAL deaths, through the real path (user call): each pays its bounty and fires its on-death
+# effects, exactly as if it had been cut down. The captain's own chest is separate — it is the
+# fight's reward, not a bounty (see _king_fall).
+func _collapse_losing_army() -> void:
+	var beaten := 0 if _board.get_player_king() == null else 1
+	# Snapshotted: each death sweeps the board and may spawn onto it, and a list being walked is
+	# no place for either.
+	var doomed: Array = BoardFacade.units_on_side(_world, beaten).duplicate()
+	if doomed.is_empty():
+		return
+	CombatLog.note("end", "captain down — %d unit(s) of side %d fall with it" % [doomed.size(), beaten])
+	for inst: CardInstance in doomed:
+		await _fell(inst)
 
 
 # ── Surrender ──────────────────────────────────────────────────────────────────────────
@@ -1338,10 +1410,11 @@ func _use_consumable(relic_id: String) -> void:
 		await _animator.show_effect_results(results, src, "", false)
 		_board.cleanup_effect_deaths()
 	_consumable_busy = false
-	# Outside COMBAT nothing else is watching for a fallen king (same reasoning as the debug
-	# kill button) — if the use finished the fight, end it here.
-	if _phase != Phase.COMBAT and _board.any_king_dead():
-		_handle_combat_end()
+	await _settle_if_decided()   # a bomb can end a fight
+
+
+func _on_cast_resolved() -> void:
+	await _settle_if_decided()
 
 
 func _emit_kill(corpse: CardInstance) -> void:
@@ -1406,7 +1479,15 @@ func _on_king_health_changed(current: int) -> void:
 					Vfx.detach("king_critical_pulse", king_ui)
 
 
+# The bookkeeping and the exit, run exactly ONCE per fight. Reached through _settle_if_decided on
+# every real path; the debug ✕ still calls it directly as the deliberate shortcut past the whole
+# sequence, and the guard is what keeps the two from ever both firing.
+var _ended := false
+
 func _handle_combat_end() -> void:
+	if _ended:
+		return
+	_ended = true
 	var player_won := _board.player_king_alive()
 	var enc := GameData.current_encounter
 	if CombatLog.recording():
