@@ -625,27 +625,15 @@ func _apply_move_purity() -> void:
 # ── The sim-support gate: the engine never plays what it cannot evaluate ─────────────
 
 func _sim_gate() -> void:
-	check(CandidateApply.can_simulate_cast(AbilityData.get_ability("heal").effects),
-			"a manual heal is simulatable")
-	check(CandidateApply.can_simulate_cast(AbilityData.get_ability("magic_missile").effects),
-			"a manual damage bolt is simulatable")
-	check(CandidateApply.can_simulate_cast(CardData.get_card("dummy_group_heal").effects),
-			"an all-allies heal is simulatable")
-	check(CandidateApply.can_simulate_cast(AbilityData.get_ability("fire_bless").effects),
-			"a status-applying cast SIMULATES — the real rules run in sims now (Step 5)")
-	check(CandidateApply.can_simulate_cast([Effect.from_dict({
-		"trigger": "on_play", "targeting_policy": "manual",
-		"attribute": "health", "amount": 2,
-		"conditions": [{"attribute": "health", "comparator": "lte", "value": 3}],
-	})]), "a condition-gated cast simulates — the real resolver evaluates eligibility")
-	check(not CandidateApply.can_simulate_cast([Effect.from_dict({
-		"trigger": "on_play", "targeting_policy": "manual",
-		"attribute": "health", "amount": -2, "chance": 0.5,
-	})]), "a probabilistic cast is STILL refused — the sim would have to guess the roll")
-	check(CandidateApply.needs_manual(AbilityData.get_ability("heal").effects),
-			"the heal wants a picked target")
-	check(not CandidateApply.needs_manual(CardData.get_card("dummy_group_heal").effects),
-			"the group heal targets by itself")
+	# TARGETING REMOVED (targeting-cleanup demolition): with no target resolution there are no
+	# cast candidates at all, so the gate refuses everything. The cases that stood here — a
+	# manual heal / damage bolt / all-allies heal / status-applying cast are simulatable, a
+	# condition-gated cast simulates (the real resolver evaluates eligibility), a
+	# probabilistic cast is refused (the sim would have to guess the roll), needs_manual
+	# reads the gesture requirement — are the specification the rebuilt authority's suite
+	# must re-pin.
+	check(not CandidateApply.can_simulate_cast(AbilityData.get_ability("heal").effects),
+			"while targeting is demolished, NOTHING is simulatable")
 
 
 # ── Spell / ability enumeration: candidates exist iff the play is legal ──────────────

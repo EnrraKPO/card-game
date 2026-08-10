@@ -174,13 +174,10 @@ static func abilities(state: BoardState, mana: int) -> Array:
 	return out
 
 
-# The target axis of a cast's candidates: every fielded unit for a manual cast, the single
-# no-target candidate otherwise (area/self casts carry their own targeting).
-static func _targets_for(state: BoardState, effects: Array) -> Array:
-	if not CandidateApply.needs_manual(effects):
-		return [null]
-	var out: Array = []
-	for side in 2:
-		for u: BoardState.UnitState in state.units(side):
-			out.append(u.source)
-	return out
+# The target axis of a cast's candidates. TARGETING REMOVED (targeting-cleanup demolition):
+# unreachable while can_simulate_cast refuses everything. NEEDS: every fielded unit (both
+# sides) as one candidate each for a manual cast — the gesture requirement asked of the
+# targeting authority — and the single no-target candidate otherwise (area/self casts carry
+# their own targeting).
+static func _targets_for(_state: BoardState, _effects: Array) -> Array:
+	return [null]

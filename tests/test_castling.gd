@@ -37,10 +37,12 @@ func run() -> void:
 	check(si != null and si.source == holder, "the Barrier's source is the HOLDER (the rook)")
 
 	# Eligibility: Barriered units are not valid picks; a refused re-cast does nothing.
+	# (The condition grammar is evaluated directly — the demolished eligibility helper's
+	# verdicts must return through the rebuilt targeting authority.)
 	for e: Effect in ab.effects:
-		check(not EffectSystem.passes_conditions(e.conditions, a1),
+		check(not _passes(e.conditions, a1),
 				"a Barriered unit fails the eligibility conditions")
-		check(EffectSystem.passes_conditions(e.conditions, a2),
+		check(_passes(e.conditions, a2),
 				"a Barrier-less unit passes the eligibility conditions")
 		res = EffectSystem.apply_single(e, holder, ctx)
 	check(res.is_empty(), "re-casting at a Barriered unit resolves to nothing")
@@ -50,7 +52,7 @@ func run() -> void:
 	# Barrier or not — buildings don't get to hide behind Castling.
 	var a3 := unit("rook")
 	for e: Effect in ab.effects:
-		check(not EffectSystem.passes_conditions(e.conditions, a3),
+		check(not _passes(e.conditions, a3),
 				"a unit with Rook in its composition fails eligibility, even without a Barrier")
 
 	# The card-shaped tray view is presentational only.
@@ -94,3 +96,12 @@ func _heal() -> void:
 	Resolver.fill_health(t)
 	res = EffectSystem.apply_single(ab.effects[0], holder, ctx)
 	check(res.is_empty(), "healing a full unit resolves to nothing")
+
+
+# The demolished EffectSystem.passes_conditions helper, reproduced locally: the checks above
+# pin the CONDITION GRAMMAR, which survives the targeting demolition.
+func _passes(conds: Array, u: CardInstance) -> bool:
+	for c: EffectCondition in conds:
+		if not c.evaluate(u, -1):
+			return false
+	return true

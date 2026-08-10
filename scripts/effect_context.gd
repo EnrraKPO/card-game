@@ -27,7 +27,8 @@ var subject: CardInstance = null
 # The allegiance anchor for target resolution — the side that "ally"/"enemy" read relative to.
 # Left at the sentinel for board effects (targeting anchors on the holder's own side); set to
 # the PLAYER side (0) for run-scope dispatch (relics/upgrades have no holder unit, so their
-# targeting anchors on the player regardless of whose event fired). See TargetResolver._anchor.
+# targeting anchors on the player regardless of whose event fired). Still consumed by the
+# trigger gates (TriggerResolver.anchor_owner); the rebuilt targeting authority reads it too.
 var owner_anchor: int = -9999   # == TriggerResolver.OWNER_FROM_HOLDER
 
 
@@ -57,9 +58,9 @@ var ability: AbilityData = null
 # immediately before the hook runs; null outside CUSTOM dispatch.
 var effect: Effect = null
 
-# The two CombatSides, for side-targeted effects ("draw 2" — see TargetResolver.Side).
-# Injected wherever a combat is live (CombatBoard.make_context); null in contexts built
-# outside one, where a side target simply resolves to nothing.
+# The two CombatSides, for side-targeted effects ("draw 2" — the authored "side" targeting
+# kind). Injected wherever a combat is live (CombatBoard.make_context); null in contexts
+# built outside one, where a side target simply resolves to nothing.
 var player_side: CombatSide = null
 var enemy_side: CombatSide = null
 

@@ -15,9 +15,9 @@ extends RefCounted
 # side, any performance argument for something cleverer is imaginary.
 #
 # DISTANCE IS NOT PREFERENCE (§2.10). What lives here is a real distance: symmetric, with no
-# notion of "forward". `TargetingStrategy.dist` is a *preference ordering* ("column depth
-# dominates, lane offset breaks ties") and it stays where it is, as the game rule it is —
-# who attacks whom must not move.
+# notion of "forward". The attack-targeting *preference ordering* ("column depth dominates,
+# lane offset breaks ties") is a GAME RULE, not a distance — it lived in the targeting layer
+# and must return with it (targeting-cleanup demolition), never migrate in here.
 
 # ── The unified reading of the two mirrored halves ──────────────────────────────────────
 # The halves face each other: rows are mirrored (units are opposite when their rows SUM to
@@ -82,8 +82,8 @@ static func neighbours(origin: BoardLocation) -> Array:
 	return out
 
 
-# True when the two cells share a visual lane — the "directly facing each other" test, lifted
-# out of TargetingStrategy.is_facing so the lane convention has one owner.
+# True when the two cells share a visual lane — the "directly facing each other" test; the
+# lane convention has one owner, here.
 static func same_lane(a: BoardLocation, b: BoardLocation) -> bool:
 	if a == null or b == null:
 		return false

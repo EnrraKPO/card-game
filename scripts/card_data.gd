@@ -48,14 +48,13 @@ var image: Texture2D:
 		_image = value
 var elements: Array[String] = []
 var chess_pieces: Array[String] = []
-# The AUTO-ATTACK targeting policy — how this unit picks which enemy its auto-attack hits
-# (see TARGET_POLICIES / effective_target_policy). Authored per-card in the tool; "" means
-# AUTO — derive it from the chess composition exactly as before (pawns/fodder → nearest,
-# knight → leaper, bishop → wounded, rook → tank, queen → threat). Setting it overrides that.
-# It resolves the concrete `targeting_strategy` below, and a localized one-line description of
-# it is appended to the card's rules text on display (see targeting_line).
+# The AUTO-ATTACK targeting policy, as AUTHORED — an OPAQUE string on this branch (targeting-
+# cleanup demolition): parsed and re-serialized verbatim so authored content and deck saves
+# round-trip, interpreted by NOTHING. NEEDS: the rebuilt targeting authority reads this
+# vocabulary (nearest / leaper / wounded / tank / threat; "" = derive from the chess
+# composition: pawns/fodder → nearest, knight → leaper, bishop → wounded, rook → tank,
+# queen → threat) and a localized one-line description of it returns to the rules text.
 var target_policy: String = ""
-var targeting_strategy: TargetingStrategy
 # Enemy-only fodder cards (tribes the CPU fights with). Kept out of every player-facing
 # pool — reward offers and shop stock (random_non_kings). They carry no element/chess
 # composition, so composition_key is empty and they're already absent from the collection
@@ -201,8 +200,8 @@ static func _load_json(path: String) -> void:
 
 # Builds a CardData from a definition dict WITHOUT registering it. The single card
 # constructor: used by the JSON loader, and by run-level overridden cards rebuilt from
-# their stored definition (see DeckCard). Derived fields (image, targeting_strategy)
-# are recomputed here from id + chess_pieces, so they never need to be serialised.
+# their stored definition (see DeckCard). Derived fields (image) are recomputed here from
+# id + chess_pieces, so they never need to be serialised.
 static func build_from_dict(d: Dictionary) -> CardData:
 	var card := CardData.new()
 	card.id           = d.get("id", "")
@@ -234,7 +233,6 @@ static func build_from_dict(d: Dictionary) -> CardData:
 		card.card_type = CardType.SPELL
 	else:
 		card.card_type = CardType.UNIT
-	card.targeting_strategy = _strategy_for_policy(card.effective_target_policy())
 	# Enemy fodder/captain art is organised under cards/enemies/ to keep it out of the
 	# main (player-facing) card art folder.
 	var art_dir := "res://assets/cards/enemies/" if card.enemy_only else "res://assets/cards/"
@@ -274,8 +272,8 @@ static func _fill_derived_stats() -> void:
 	_derive_fill.clear()
 
 
-# Inverse of build_from_dict — serialises the authorable definition (omitting derived
-# image/targeting_strategy). Used to snapshot a card into a DeckCard override.
+# Inverse of build_from_dict — serialises the authorable definition (omitting the derived
+# image). Used to snapshot a card into a DeckCard override.
 func to_dict() -> Dictionary:
 	var fx: Array = []
 	for e: Effect in effects:
@@ -354,7 +352,6 @@ static func scaled(base: CardData, power: float) -> CardData:
 	c.bounty_exp    = base.bounty_exp
 	c.target_policy = base.target_policy
 	c.effects       = base.effects
-	c.targeting_strategy = base.targeting_strategy
 	c.art_path      = base.art_path
 	var mult := 1.0 + power * POWER_STAT_GROWTH
 	c.attack = int(round(base.attack * mult))
@@ -531,31 +528,23 @@ static func _derive(elems: Array, chess: Array, key: String) -> CardData:
 	c.attack       = int(s["attack"])
 	c.health       = int(s["health"])
 	c.speed        = int(s["speed"])
-	c.card_type          = CardType.SPELL if (chess.is_empty() and not elems.is_empty()) else CardType.UNIT
-	c.targeting_strategy = _strategy_for_policy(_derived_policy(chess))
+	c.card_type = CardType.SPELL if (chess.is_empty() and not elems.is_empty()) else CardType.UNIT
 	c.art_path = "res://assets/cards/%s.png" % key
 	return c
 
 
-# The authorable auto-attack targeting policies (the semantic vocabulary, decoupled from the
-# chess pieces that historically implied them). Mirrors the tool's TARGET_POLICIES select and the
-# `targeting.<policy>.desc` locale keys — keep the three in step. "" (unlisted) means AUTO/derive.
-const TARGET_POLICIES: Array[String] = ["nearest", "leaper", "wounded", "tank", "threat"]
-
-
-# The policy this card's auto-attack actually uses: the authored override when set, otherwise the
-# one derived from the chess composition (backward-compatible with every pre-policy card).
-func effective_target_policy() -> String:
-	return target_policy if not target_policy.is_empty() else _derived_policy(chess_pieces)
-
-
-# The localized one-line rules-text description of this card's auto-attack targeting, appended
-# after the authored description on every board unit (see CardTooltip / CardUI). Spells never
-# auto-attack, so they get nothing. Carries <term> markup, so TextIcons resolves the icons/words.
+# TARGETING REMOVED (targeting-cleanup demolition). NEEDS: the authorable auto-attack policy
+# vocabulary and its resolution. What stood here:
+#   · TARGET_POLICIES — the semantic vocabulary (nearest / leaper / wounded / tank / threat),
+#     mirrored by the Tool's select and the `targeting.<policy>.desc` locale keys (both still
+#     exist; keep the three in step when this returns).
+#   · effective_target_policy() — the authored `target_policy` override when set, else derived
+#     from the chess composition (backward-compatible with every pre-policy card).
+#   · targeting_line() — the localized one-line rules-text description of the card's targeting,
+#     appended to every board unit's rules text (spells never auto-attack, so they got nothing).
+#     Carried <term> markup for TextIcons.
 func targeting_line() -> String:
-	if card_type == CardType.SPELL:
-		return ""
-	return Loc.t("targeting.%s.desc" % effective_target_policy())
+	return ""
 
 
 # The localized one-line rules-text note that marks a building as rooted, appended after the
@@ -564,28 +553,6 @@ func building_line() -> String:
 	if not is_building():
 		return ""
 	return Loc.t("building.line")
-
-
-# The legacy composition → policy mapping (the AUTO default). First non-pawn piece wins; a pure
-# pawn / element / fodder composition falls through to nearest.
-static func _derived_policy(chess_pieces: Array) -> String:
-	for piece: String in chess_pieces:
-		match piece:
-			"pawn": continue
-			"knight": return "leaper"
-			"bishop": return "wounded"
-			"rook":   return "tank"
-			"queen":  return "threat"
-	return "nearest"
-
-
-static func _strategy_for_policy(policy: String) -> TargetingStrategy:
-	match policy:
-		"leaper":  return TargetingKnight.new()
-		"wounded": return TargetingBishop.new()
-		"tank":    return TargetingRook.new()
-		"threat":  return TargetingQueen.new()
-		_:         return TargetingNearest.new()
 
 
 static func _derive_name(elems: Array, chess: Array) -> String:

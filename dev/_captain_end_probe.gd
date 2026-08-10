@@ -60,9 +60,10 @@ func _in_combat() -> void:
 	# The captain sits in the DEEPEST column, so a nearest-targeting hero would chew through the
 	# army first and never reach it. A wounded-seeking hero goes straight for the one point of
 	# health left standing — which is the whole staging: the captain dies with turns still queued.
+	# TARGETING REMOVED (targeting-cleanup demolition): the wounded policy below is authored but
+	# nothing interprets it, so this probe's combat half CANNOT PASS until targeting returns.
 	var hero_def := CardData.scaled(CardData.get_card("queen"), 0.0)
 	hero_def.target_policy = "wounded"
-	hero_def.targeting_strategy = TargetingBishop.new()
 	hero_def.speed = 99   # it swings FIRST; the enemy turns behind it are the ones that must not
 	var hero := CardInstance.from_data(hero_def)
 	board.spawn_player_card(hero, BoardLocation.at(0, 1, 3))

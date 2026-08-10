@@ -66,47 +66,23 @@ static func bonus(inst: CardInstance, attr: String) -> int:
 	return total
 
 
-# Whether standing effect `e` applies to `u` for `attr` — targeting + conditions evaluated
-# against the CURRENT state. `holder` is the identity anchor (null for run-scope);
-# `owner` the allegiance anchor (the container's side — always present).
-static func _contributes(e: Effect, u: CardInstance, holder: CardInstance, owner: int, attr: String) -> bool:
-	if not e.is_standing():
-		return false
-	# (Composition grants pass the standing check but are naturally invisible here: their
-	# standing_attribute() is "", which never equals a folded attr. They fold in Layer 1 —
-	# effective_composition — never into the stat sum.)
-	if e.standing_attribute() != attr:
-		return false
-	# The SELF target kind: the effect reaches the holder and nobody else.
-	if e.targeting_policy == Effect.TargetingPolicy.SELF and u != holder:
-		return false
-	# Unit-stat payloads never land on spell cards; cost is the one shared attribute.
-	if attr != "cost" and u.data.card_type == CardData.CardType.SPELL:
-		return false
-	# Legacy `filter` narrowing (kind / has_element) — kept for authored data; native
-	# effects express the same through card_type / has_element conditions.
-	match str(e.filter.get("kind", "")):
-		"unit":
-			if u.data.card_type != CardData.CardType.UNIT:
-				return false
-		"spell":
-			if u.data.card_type != CardData.CardType.SPELL:
-				return false
-	if bool(e.filter.get("has_element", false)) and u.data.elements.is_empty():
-		return false
-	if e.conditions.is_empty():
-		return true
-	# Stratified: nested condition-bearing standing effects are invisible to gates.
-	if _in_condition:
-		return false
-	_in_condition = true
-	var ok := true
-	for c: EffectCondition in e.conditions:
-		if not c.evaluate(u, owner):
-			ok = false
-			break
-	_in_condition = false
-	return ok
+# Whether standing effect `e` applies to `u` for `attr`.
+# TARGETING REMOVED (targeting-cleanup demolition): standing MEMBERSHIP — "does this effect
+# reach unit u?" — was targeting's second verb, and with no authority to ask, NO standing
+# effect reaches ANYONE (the honest inert state: reaching everyone would leak self-buffs
+# board-wide). What the demolished gate evaluated, for the rebuild:
+#   · the SELF target kind reached the holder and nobody else;
+#   · unit-stat payloads never landed on spell cards (cost being the one shared attribute);
+#   · the legacy `filter` narrowing (kind / has_element) — authored data still carries it;
+#   · the effect's conditions, evaluated against the CURRENT state with `holder` as identity
+#     anchor and `owner` (the container's side) as allegiance anchor — STRATIFIED, via the
+#     _in_condition latch: nested condition-bearing standing effects are invisible to gates,
+#     or the fold would recurse into itself.
+# NEEDS: the rebuilt authority answers membership as a cheap per-read predicate (this fold is
+# hot — every get_attribute), and answers it with no combat context for the out-of-combat
+# folds (deck screens, shop cost reads) — self/all+conditions need holder and owner alone.
+static func _contributes(_e: Effect, _u: CardInstance, _holder: CardInstance, _owner: int, _attr: String) -> bool:
+	return false
 
 
 # ── Effective composition (Layer 1) ─────────────────────────────────────────────────────
@@ -209,41 +185,17 @@ static func _union_grants(e: Effect, comp: Dictionary) -> bool:
 
 
 # Whether grant effect `e` reaches `u` right now, judged against the WORKING set `comp`.
-# Mirrors _contributes minus the stat-fold specifics: grants skip the spell exclusion
-# (composition is identity for spells too), and their composition/has_element conditions
-# read `comp` inline — never the cache; that is the fixed point being computed. Intensity
-# is irrelevant to a union payload, so stacks don't multiply — only tracker validity gates.
-static func _grant_applies(e: Effect, u: CardInstance, holder: CardInstance, owner: int, comp: Dictionary) -> bool:
-	if not e.is_composition_grant():
-		return false
-	# The SELF target kind: the grant reaches the holder and nobody else.
-	if e.targeting_policy == Effect.TargetingPolicy.SELF and u != holder:
-		return false
-	for c: EffectCondition in e.conditions:
-		if not c.composition.is_empty():
-			var has := false
-			for id: String in c.composition:
-				if comp.has(id):
-					has = true
-					break
-			if has != c.present:
-				return false
-		elif c.has_element_set:
-			var any := false
-			for id: String in CardData.ELEMENT_IDS:
-				if comp.has(id):
-					any = true
-					break
-			if any != c.has_element:
-				return false
-		else:
-			# Every other form (status/allegiance/card_type/attribute) reads current state.
-			# Attribute gates run under the stratification guard: they see base + baked +
-			# unconditional live stats — grants never write stats, so no cycle back here.
-			var prev := _in_condition
-			_in_condition = true
-			var ok := c.evaluate(u, owner)
-			_in_condition = prev
-			if not ok:
-				return false
-	return true
+# TARGETING REMOVED (targeting-cleanup demolition): membership for grants mirrored the stat
+# fold's — the SELF target kind reached the holder and nobody else; everything else reached
+# whoever the conditions admitted. With no authority to ask, no grant reaches anyone.
+# NEEDS, beyond the fold's membership predicate — the fixed-point subtleties the demolished
+# walk encoded, which the rebuilt predicate must reproduce exactly:
+#   · a grant's composition/has_element conditions read the WORKING set `comp` INLINE — never
+#     the cache; that is the fixed point being computed;
+#   · every other condition form (status/allegiance/card_type/attribute) reads current state
+#     UNDER THE STRATIFICATION GUARD (_in_condition): attribute gates see base + baked +
+#     unconditional live stats — grants never write stats, so no cycle back into the fold;
+#   · intensity is irrelevant to a union payload (stacks don't multiply — only tracker
+#     validity gates).
+static func _grant_applies(_e: Effect, _u: CardInstance, _holder: CardInstance, _owner: int, _comp: Dictionary) -> bool:
+	return false

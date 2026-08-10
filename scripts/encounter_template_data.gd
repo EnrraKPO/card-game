@@ -204,7 +204,6 @@ static func pick_for(p_node_type: MapNodeData.Type, floor: int, stage: int, rng:
 func instantiate(rng: RandomNumberGenerator, power: float = 0.0) -> EncounterData:
 	var enc := EncounterData.new()
 	enc.type = _encounter_data_type(node_type)
-	enc.ai   = EnemyAI.from_key(ai)
 	enc.enemy_king = enemy_king
 	enc.survival_weights = survival_weights.duplicate()
 	# Combat always receives a personality — a template built in code (tests, harnesses) may

@@ -25,10 +25,11 @@ func _definitions() -> void:
 		return
 	check_eq(ab.material, "pawn", "what it delivers is declared by the material field")
 	check(ab.tap, "material delivery taps the holder")
+	# TARGETING REMOVED (targeting-cleanup demolition): the authored manual_slot policy is
+	# opaque data now — the classification half of this check returns with the authority.
 	var fx: Array = ab.effects.filter(func(e: Effect) -> bool:
-		return e.kind == Effect.Kind.CUSTOM and e.custom_id == "deliver_material" \
-			and e.targeting_policy == Effect.TargetingPolicy.MANUAL_SLOT)
-	check_eq(fx.size(), 1, "one MANUAL_SLOT deliver_material effect, authored in JSON")
+		return e.kind == Effect.Kind.CUSTOM and e.custom_id == "deliver_material")
+	check_eq(fx.size(), 1, "one deliver_material effect, authored in JSON")
 	check(CardData.get_card("pawn_material") == null, "material abilities are not cards")
 
 
@@ -76,23 +77,33 @@ func _holders() -> void:
 			"an upgraded (overridden) Barracks still holds pawn_material")
 
 
+# The demolished EffectSystem.passes_conditions helper, reproduced locally: these cases pin
+# the CONDITION GRAMMAR (which survives — EffectCondition), not targeting. The rebuilt
+# targeting authority's eligibility must give the same verdicts through its own front door.
+func _passes(conds: Array, u: CardInstance) -> bool:
+	for c: EffectCondition in conds:
+		if not c.evaluate(u, -1):
+			return false
+	return true
+
+
 func _eligibility() -> void:
 	var ab := AbilityData.get_ability("pawn_material")
 	var conds: Array = (ab.effects[0] as Effect).conditions
-	check(EffectSystem.passes_conditions(conds, unit("pawn")),
+	check(_passes(conds, unit("pawn")),
 			"a 1-piece unit can take a pawn material")
-	check(not EffectSystem.passes_conditions(conds,
+	check(not _passes(conds,
 			CardInstance.from_data(CardData.get_card("pawn_pawn"))),
 			"a 2-piece unit has no room for another piece")
-	check(not EffectSystem.passes_conditions(conds, unit("king")),
+	check(not _passes(conds, unit("king")),
 			"kings are never merge targets")
-	check(not EffectSystem.passes_conditions(conds, unit("rook")),
+	check(not _passes(conds, unit("rook")),
 			"rooks/buildings are never merge targets")
 
 	var econds: Array = (AbilityData.get_ability("blight_material").effects[0] as Effect).conditions
-	check(EffectSystem.passes_conditions(econds, unit("pawn")),
+	check(_passes(econds, unit("pawn")),
 			"a no-element unit can take a 2-element material")
-	check(not EffectSystem.passes_conditions(econds,
+	check(not _passes(econds,
 			CardInstance.from_data(CardData.get_card("fire_pawn"))),
 			"an element-carrying unit exceeds the element cap")
 

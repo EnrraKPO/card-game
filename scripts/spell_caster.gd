@@ -154,122 +154,47 @@ func _can_afford(card_ui: CardUI) -> bool:
 			and card_has_a_play(card_ui.card_instance)
 
 
-# ── Legality: does this still DO anything? ─────────────────────────────────────
-# The companion of the implicit viability condition (see EffectCondition): that rule decides
-# which UNITS an effect may reach, and this one asks what falls out of it — if no effect on the
-# card can reach anybody right now, there is no play here to make, and the card is illegal
-# rather than merely wasteful. A spell that fizzles is a spell the player paid mana for and got
-# nothing from; the refusal has to happen before the cost, not after.
+# ── Legality & eligibility — TARGETING REMOVED (targeting-cleanup demolition) ──
+# The judge layer that stood here was SpellCaster's own hand-rolled half of targeting, and it
+# is demolished WITH targeting rather than kept as a second authority. What it answered, which
+# the rebuilt targeting authority must answer instead (asked, not re-derived here):
 #
-# Conservative by construction: an effect counts as a play unless it can be PROVEN inert. A
-# CUSTOM hook's payload is opaque code, so it always counts — guessing at it would forbid real
-# plays, and a wrongly-forbidden card is a far worse failure than a wasted one.
+#   · LEGALITY — "does this card still have a play?" If no effect on a spell can reach anybody
+#     right now, the card is ILLEGAL, not merely wasteful: the refusal happens before the mana
+#     is paid, never after (the prohibit-non-ops rule's user-facing half). Conservative by
+#     construction: an effect counts as a play unless PROVEN inert (a CUSTOM hook's payload is
+#     opaque code — it always counts). Units are exempt: a body is a play whatever its ON_PLAY
+#     effects would do. An empty set / no ON_PLAY effects = legal (nothing to judge).
+#   · GESTURE REQUIREMENT — "does this effect set need a pick, and of what species?" (a unit,
+#     or a SQUARE — the slot-mode/material-delivery flow, where an EMPTY own-side square is a
+#     valid pick meaning "spawn here"). The old code classified via targeting_policy enum
+#     peeks; the rebuilt kinds must DECLARE their requirement instead.
+#   · PICK ELIGIBILITY — "is this slot/unit a legal pick?" Only units the resolution would
+#     actually affect may light up and accept the drop (e.g. Castling refuses a unit that
+#     already has a Barrier); a slot pick must be on the caster's OWN side (a RULE the old
+#     code kept only here, in the UI layer — the authority must own it). ONE judge for every
+#     gesture — hand spell, tray token, armed-holder autocast drag: the Barracks bug was two
+#     judges answering differently. And eligibility must be THE SAME evaluation resolution
+#     uses (the old split evaluated conditions with a different allegiance anchor than
+#     resolution — the latent disagreement TECH_DEBT_BRIEF.md §"one dispatch" records).
+#
+# Demolition stubs: no legal picks exist (spells cannot be aimed), while cards themselves stay
+# "legal" so hands remain interactive. Everything downstream treats these as the one judge.
 
-# A card-shaped view's legality (a hand spell, an ability's tray token). Units are exempt: a
-# unit is a BODY, and putting one on the board is a play whatever its ON_PLAY effects would do.
-func card_has_a_play(inst: CardInstance) -> bool:
-	if inst == null or not inst.is_spell:
-		return true
-	# An ability token acts AS its holder — the same substitution _execute_spell makes, so the
-	# legality question is asked from where the effects would actually resolve.
-	var src := inst
-	if inst.ability != null and inst.source_building != null:
-		src = inst.source_building
-	return effects_have_a_play(inst.data.effects, src)
-
-
-# Whether ANY of this effect set's ON_PLAY effects has a legal application right now. An empty
-# set (or one with no ON_PLAY effects at all) is legal: there is nothing to judge, so there is
-# nothing to forbid.
-func effects_have_a_play(effects: Array, holder: CardInstance) -> bool:
-	var judged := false
-	for e: Effect in effects:
-		if e.trigger != Effect.Trigger.ON_PLAY:
-			continue
-		judged = true
-		if _effect_has_a_play(e, holder):
-			return true
-	return not judged
+func card_has_a_play(_inst: CardInstance) -> bool:
+	return true
 
 
-func _effect_has_a_play(e: Effect, holder: CardInstance) -> bool:
-	if e.kind == Effect.Kind.CUSTOM:
-		return true   # opaque payload — never proven inert
-	if e.targeting_policy == Effect.TargetingPolicy.MANUAL \
-			or e.targeting_policy == Effect.TargetingPolicy.MANUAL_SLOT:
-		# A manual effect's legality IS "is there a pick the targeting UI would light up", so it
-		# asks the very judge that lights them — one definition for the cue and the legality.
-		var one: Array = [e]
-		for slots: Array in [board.player_slots, board.enemy_slots]:
-			for row: Array in slots:
-				for slot: SlotUI in row:
-					if effects_target_ok(one, slot):
-						return true
-		return false
-	# Everything else resolves its own targets, through the same socket resolution uses — so a
-	# set that would resolve to nobody (every candidate filtered out, viability included) is
-	# exactly the set that would have fizzled.
-	return not e.targets_resolver().resolve(null, holder, board.make_context(holder)).is_empty()
+func effects_have_a_play(_effects: Array, _holder: CardInstance) -> bool:
+	return true
 
 
-# ── Target eligibility ─────────────────────────────────────────────────────────
-
-# Whether `target` is a valid manual pick for this effect set: it must pass the conditions of
-# at least one manual ON_PLAY effect (a set with no manual effects has no eligibility gate).
-# Keeps the targeting UI honest — only units the resolution would actually affect light up and
-# accept the pick, so a cast can't be wasted on an invalid target (e.g. Castling onto a unit
-# that already has a Barrier). Reached through effects_target_ok, never called directly.
-func _manual_effects_eligible(effects: Array, target: CardInstance) -> bool:
-	var has_manual := false
-	for e: Effect in effects:
-		if e.trigger != Effect.Trigger.ON_PLAY \
-				or e.targeting_policy != Effect.TargetingPolicy.MANUAL:
-			continue
-		has_manual = true
-		if EffectSystem.passes_conditions(e.conditions, target):
-			return true
-	return not has_manual
-
-
-# ── Slot-mode eligibility (MANUAL_SLOT effects, e.g. material delivery) ─────────
-# Effects-level like _manual_effects_eligible, for the same reason: the autocast gate judges an
-# AbilityData's effects directly, where no spell-shaped token exists to reach through.
-
-func _effects_need_slot(effects: Array) -> bool:
-	return effects.any(func(e: Effect) -> bool:
-		return e.trigger == Effect.Trigger.ON_PLAY \
-			and e.targeting_policy == Effect.TargetingPolicy.MANUAL_SLOT)
-
-
-# A slot is a valid MANUAL_SLOT pick when it's on the caster's OWN side and is either EMPTY
-# (the effect's spawn case) or holds a unit passing the effect's conditions (the merge case).
-func _effects_slot_eligible(effects: Array, slot: SlotUI) -> bool:
-	if slot.location == null or slot.location.side != 0:
-		return false
-	var occupant := slot.get_card()
-	if occupant == null:
-		return true
-	for e: Effect in effects:
-		if e.trigger == Effect.Trigger.ON_PLAY \
-				and e.targeting_policy == Effect.TargetingPolicy.MANUAL_SLOT \
-				and EffectSystem.passes_conditions(e.conditions, occupant.card_instance):
-			return true
+func _effects_need_slot(_effects: Array) -> bool:
 	return false
 
 
-# THE target judge: is `slot` a legal manual pick for this effect set? Dispatches on the set's
-# own targeting policy — MANUAL_SLOT effects judge the SLOT (so an empty own slot is a valid
-# pick), everything else judges the OCCUPANT. Every gesture that aims an effect set asks this
-# one function: hand spells, tray ability tokens, and the armed-holder autocast drag. Keep it
-# that way — the Barracks bug was two judges answering this question differently, so a
-# slot-targeting ability read valid from the tray and invalid under the holder drag.
-func effects_target_ok(effects: Array, slot: SlotUI) -> bool:
-	if _effects_need_slot(effects):
-		return _effects_slot_eligible(effects, slot)
-	var occupant := slot.get_card()
-	if occupant == null:
-		return false
-	return _manual_effects_eligible(effects, occupant.card_instance)
+func effects_target_ok(_effects: Array, _slot: SlotUI) -> bool:
+	return false
 
 
 # ── Autocast (an armed ability fired by dragging its holder onto a target) ──────

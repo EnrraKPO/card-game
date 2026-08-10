@@ -162,19 +162,14 @@ func _relation_conditions() -> void:
 	check(legacy_c.evaluate(ally, 0) and legacy_c.to_dict() == {"allegiance": "ally"},
 			"legacy relation ally maps to allegiance (canonical out)")
 
-	# Identity in a native targets list is consumed into the SELF kind, zero conditions.
-	var normalized := Effect.from_dict({"trigger": {"kind": "while"},
-			"targets": {"kind": "all", "conditions": [{"relation": "self"}]},
-			"attribute": "attack", "amount": 1})
-	check(normalized.targeting_policy == Effect.TargetingPolicy.SELF
-			and normalized.conditions.is_empty(),
-			"targets all + relation self normalizes to the self kind, no conditions")
+	# TARGETING REMOVED (targeting-cleanup demolition): the identity-normalization cases that
+	# stood here (targets all + relation self consumed into the SELF kind; the native self kind
+	# parsing and serializing canonically) belong to the rebuilt targeting authority's suite.
+	# What remains testable now: a native targets dict round-trips VERBATIM through parse.
 	var native_self := Effect.from_dict({"trigger": {"kind": "while"},
 			"targets": {"kind": "self"}, "attribute": "speed", "amount": 1})
-	check(native_self.targeting_policy == Effect.TargetingPolicy.SELF,
-			"the native self target kind parses")
-	check(str(native_self.targets_resolver().to_dict().get("kind")) == "self",
-			"the self kind serializes canonically")
+	check(native_self.to_dict().get("targets") == {"kind": "self"},
+			"a native targets dict is held and re-emitted verbatim")
 
 
 func _round_trip() -> void:

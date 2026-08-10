@@ -831,8 +831,9 @@ class DamageOutput:
 #     nearer the front than this slot. Zero bodies in front = front line = 1.0, wherever
 #     the slot is; each occupied column between you and the enemy steps it down a tier.
 #   · a body strictly in FRONT (lower col) screens, LANE-BLIND — nearest-targeting is
-#     resolved by column depth FIRST (targeting_strategy.gd dist(): depth strictly
-#     dominates; lane offset only orders within a column), so an off-lane screen in a
+#     resolved by column depth FIRST (the attack-preference rule: depth strictly
+#     dominates; lane offset only orders within a column — the rule this model assumes
+#     even while the targeting layer is demolished), so an off-lane screen in a
 #     nearer column intercepts exactly as absolutely as a same-lane one. The v1 same/off
 #     lane split (1.0/0.5) modelled nothing in the rules and is retired (ruled
 #     2026-07-31); the two kinds remain distinguished in the breakdown for the debug

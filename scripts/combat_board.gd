@@ -93,10 +93,9 @@ var can_autocast: Callable        # func(CardInstance, SlotUI) -> bool
 # begins/ends drag actions on it; injected by combat before build_section runs.
 var interaction: Interaction = null
 # The two CombatSides (player resources), injected by combat so every effect context built
-# during a fight can resolve side targets ("draw 2" — see TargetResolver.Side).
+# during a fight can resolve side targets ("draw 2").
 var player_side: CombatSide = null
 var enemy_side: CombatSide = null
-var _default_strategy := TargetingNearest.new()
 
 # The DECLARED preview world (see CombatContext / INTERACTION_DESIGN.md): the pivot unit
 # standing at a hypothetical spot. Everything threat-shaped DERIVES from this declaration —
@@ -407,10 +406,19 @@ func get_all_units() -> Array:
 	return world.get_all_units()
 
 
-func find_target(attacker: CardInstance) -> CardInstance:
-	var strategy: TargetingStrategy = attacker.data.targeting_strategy \
-		if attacker.data != null else _default_strategy
-	return strategy.find_target(world.locations, attacker)
+# TARGETING REMOVED (targeting-cleanup demolition). NEEDS: the auto-attack target authority.
+# Given an attacker and a PLACEMENT (LocationManager — so the same question works in the live
+# world and in any hypothetical arrangement), answer which enemy unit its auto-attack hits.
+#   · The candidate pool is the units on the OPPOSITE half of the board.
+#   · The pick follows the unit's authored policy (CardData.target_policy — the raw string is
+#     still authored/parsed: nearest / leaper / wounded / tank / threat, "" = derive from
+#     chess composition), each a different ordering over candidates.
+#   · "Nearest" is a PREFERENCE ORDERING, not a distance: column depth dominates, mirrored
+#     lane offset breaks ties within a column, deterministic address tie-break after that
+#     (this is the most playtested rule in the game — its behaviour is a design constant).
+#   · An attacker standing nowhere reaches nobody; an empty pool is a legal "no target".
+func find_target(_attacker: CardInstance) -> CardInstance:
+	return null
 
 
 func any_king_dead() -> bool:
@@ -668,11 +676,11 @@ func _rebuild_preview_world() -> void:
 	if sitting != null and sitting != _pivot:
 		_preview_places.undock(sitting)
 	_preview_places.move(_pivot, _pivot_at)
-	# The pivot's own victim in the declared arrangement, memoized — every card's "am I the
-	# target?" is then a compare, not a redundant rerun of the pivot's strategy.
-	var strategy: TargetingStrategy = _pivot.data.targeting_strategy \
-		if _pivot.data != null else _default_strategy
-	_pivot_target = strategy.find_target(_preview_places, _pivot)
+	# TARGETING REMOVED. NEEDS: the pivot's own victim in the declared arrangement, memoized —
+	# every card's "am I the target?" is then a compare, not a redundant rerun of the pivot's
+	# targeting. Ask the auto-attack authority against _preview_places (the hypothetical
+	# placement), NOT the live world — that is what makes the landing preview honest.
+	_pivot_target = null
 
 
 # The declared pivot itself — the OTHER party in every exchange a threat cue describes, so a card
@@ -741,13 +749,13 @@ func menaces_pivot(inst: CardInstance) -> bool:
 		return false
 	if _preview_places.location_of(inst) == null:
 		return false
-	var strategy: TargetingStrategy = inst.data.targeting_strategy \
-		if inst.data != null else _default_strategy
-	# Asked IN the declared arrangement — which is what makes a hand card hovering a landing
-	# slot answer as though it already stood there (the "menace never updates to the landing
-	# spot" defect, structurally impossible now that the hypothetical is a placement rather
-	# than a temporary edit to the pivot).
-	return strategy.find_target(_preview_places, inst) == _pivot
+	# TARGETING REMOVED. NEEDS: "does MY OWN auto-attack resolve to the pivot in the declared
+	# world?" — one targeting run for the asking card, asked IN the declared arrangement
+	# (_preview_places), which is what makes a hand card hovering a landing slot answer as
+	# though it already stood there (the "menace never updates to the landing spot" defect,
+	# structurally impossible when the hypothetical is a placement rather than a temporary
+	# edit to the pivot).
+	return false
 
 
 # The "re-check now" cue: every slot re-derives its attack marker from the declaration and

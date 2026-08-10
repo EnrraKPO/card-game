@@ -167,8 +167,10 @@ static func trigger_carrier_grouped(event: GameEvent, carrier: StatusCarrier, co
 
 
 # The holder-shaped constructs a slot dispatch must refuse (see trigger_carrier_grouped):
-# identity trigger gates ("of: self"), self/holder targeting, and the nearest criterion
-# (spatially anchored on a holder unit). Returns a description of the offence, "" if clean.
+# identity trigger gates ("of: self"). Returns a description of the offence, "" if clean.
+# TARGETING REMOVED: this fence also refused holder-shaped TARGETING (self targeting, and the
+# nearest criterion — spatially anchored on a holder unit a slot doesn't have). The rebuilt
+# targeting authority must restore that half of the refusal.
 static func _holder_shaped(effect: Effect) -> String:
 	var tr := effect.trigger_resolver()
 	if tr is TriggerResolver.Simple and (tr as TriggerResolver.Simple).of_holder:
@@ -177,21 +179,17 @@ static func _holder_shaped(effect: Effect) -> String:
 		var dual := tr as TriggerResolver.Dual
 		if dual.origin_of_holder or dual.destination_of_holder:
 			return "an identity trigger gate ('of: self')"
-	var tres := effect.targets_resolver()
-	if tres is TargetResolver.Participant and (tres as TargetResolver.Participant).participant == "holder":
-		return "self targeting"
-	if tres is TargetResolver.Auto and (tres as TargetResolver.Auto).criterion == "nearest":
-		return "nearest targeting (distance is measured from a holder unit)"
 	return ""
 
 
 # Runs one effect (TRIGGERED → resolve targets + apply; CUSTOM → invoke its code hook).
-# `event` is the GameEvent that activated the effect (null for a transient use — a spell
-# cast / ability activation), handed to the target resolver so participant targeting can
-# reference the event's origin/destination. `amount_scale` multiplies stat/heal magnitudes
-# (used to scale a stacked status's effects).
-static func _run_effect(effect: Effect, source: CardInstance, context: EffectContext,
-		event: GameEvent = null, amount_scale: int = 1, cause: StringName = &"") -> Array:
+# `_event` is the GameEvent that activated the effect (null for a transient use — a spell
+# cast / ability activation); the targeting authority needs it so participant targeting can
+# reference the event's origin/destination. `_amount_scale` multiplies stat/heal magnitudes
+# (used to scale a stacked status's effects). Both unread while resolution is demolished —
+# the signature is kept whole because every dispatch entry point threads them.
+static func _run_effect(effect: Effect, _source: CardInstance, context: EffectContext,
+		_event: GameEvent = null, _amount_scale: int = 1, _cause: StringName = &"") -> Array:
 	# Probabilistic gate (the effect's `chance`): roll once; on a miss the effect doesn't fire at all.
 	if effect.chance < 1.0 and CombatRng.roll(&"rules") >= effect.chance:
 		return []
@@ -199,60 +197,23 @@ static func _run_effect(effect: Effect, source: CardInstance, context: EffectCon
 		var hook := EffectHooks.get_hook(effect.custom_id)
 		context.effect = effect   # expose per-effect params to the hook (e.g. deliver_material's material)
 		return hook.call(context) if hook.is_valid() else []
-	# GROUND-layer status delivery (SLOT_LAYER_DESIGN.md §4.7): the payload names its
-	# recipient layer — the SLOT, never a unit. WHERE stays the targeting socket's job:
-	# a slot-pick (MANUAL_SLOT) delivers to the picked cell, anchor coords as the dispatch
-	# fallback; any unit-resolving targeting delivers to the ground UNDER each resolved
-	# unit ("burn the slot you strike" = participant destination + layer ground). An empty
-	# resolution is a legal whiff — no coordinates to complain about.
-	if not effect.status_id.is_empty() and effect.status_layer == "ground" \
-			and not _targets_the_ground(effect):
-		if effect.targets_resolver() is TargetResolver.ManualSlot:
-			var gres := _ground_status_at_coords(effect, source, context, cause)
-			return [gres] if not gres.is_empty() else []
-		var gresults: Array = []
-		for gtarget: Object in effect.targets_resolver().resolve(event, source, context):
-			var under := gtarget as CardInstance
-			var beneath: BoardLocation = null
-			if context != null and context.world != null:
-				beneath = context.world.location_of(under)
-			if beneath == null:
-				continue   # a side target / off-board unit has no ground beneath it
-			# ONE address, both layers: the ground under a unit is the unit's own square,
-			# asked for as a whole rather than rebuilt out of a row, a column and a guess at
-			# which half (LOCATION_MANAGER_DESIGN.md §3).
-			var gr := _ground_status_at(effect, source, context, cause, beneath)
-			if not gr.is_empty():
-				gresults.append(gr)
-		return gresults
-	# THE targeting socket: the effect's injected resolver returns the affected target(s)
-	# from the same shared context the trigger saw (see TargetResolver). The array is
-	# heterogeneous — units (CardInstance), a player (CombatSide, the "side" kind), or a
-	# cell of the ground (BoardSlot, the location socket's ground layer) — dispatched by
-	# type here, mirroring Resolver.submit. Effects apply to royalty (King/Queen) and
-	# lackeys alike; only the resolver's conditions filter.
-	var results: Array = []
-	for target: Object in effect.targets_resolver().resolve(event, source, context):
-		var r: Dictionary
-		if target is CombatSide:
-			r = _apply_side(effect, target as CombatSide, source, amount_scale, cause)
-		elif target is BoardSlot:
-			r = _apply_ground(effect, target as BoardSlot, source, context, cause)
-		else:
-			r = _apply(effect, target as CardInstance, source, context, amount_scale, cause)
-		if not r.is_empty():
-			results.append(r)
-	return results
-
-
-# Whether this effect's own targeting already resolves to GROUND — in which case delivery
-# goes through the ordinary socket below, not the layer-key pre-branch above. Both routes
-# reach the same one delivery point; the pre-branch stays because it is how every ground
-# status authored so far is spelled, and a reversal of policy is not a deletion of the
-# mechanism it replaced.
-static func _targets_the_ground(effect: Effect) -> bool:
-	var at := effect.targets_resolver() as TargetResolver.AtLocation
-	return at != null and at.layer == "ground"
+	# TARGETING REMOVED (targeting-cleanup demolition) — every dispatch below this line is
+	# INERT: no effect resolves anybody, so no payload lands. NEEDS: the targeting authority
+	# returns the affected target(s) from the same shared context the trigger saw, as ONE
+	# heterogeneous answer — units (CardInstance), a player (CombatSide), or cells of the
+	# ground (BoardSlot) — dispatched by type to the payload appliers kept below
+	# (_apply / _apply_side / _apply_ground), mirroring Resolver.submit. Requirements the
+	# old resolution honoured, which the rebuild must state rather than special-case:
+	#   · GROUND delivery: a status payload naming layer "ground" lands on SLOTS — the picked
+	#     cell for a slot-pick (context.manual_at), the anchor address as the slot-dispatch
+	#     fallback (context.anchor_at), or the ground UNDER each resolved unit ("burn the slot
+	#     you strike"). ONE address asked whole, never rebuilt from row+col+a guessed half
+	#     (LOCATION_MANAGER_DESIGN.md §3). The old code did this in a pre-branch that
+	#     type-peeked the resolver — the rebuilt socket should make slots an ordinary answer.
+	#   · An empty resolution is a LEGAL WHIFF, not an error; effects reach royalty and
+	#     lackeys alike — only conditions filter.
+	#   · `amount_scale` (a stacked status's multiplier) applies to what lands.
+	return []
 
 
 # A resolved SLOT: the ground is a status carrier and nothing else, so the only payload
@@ -431,21 +392,10 @@ static func _with_interceptions(r: Dictionary, out: Resolver.Outcome) -> Diction
 
 
 # ── Condition evaluation ───────────────────────────────────────────────────────
-
-# The same gate _resolve_targets applies, exposed for PRE-resolution eligibility checks —
-# the spell-targeting UI (only eligible units light up / accept the drop) and the enemy AI's
-# target picking, so an ineligible pick is impossible instead of a silent fizzle.
-static func passes_conditions(conditions: Array, card: CardInstance, holder: CardInstance = null) -> bool:
-	return _passes_conditions(conditions, card, holder)
-
-
-static func _passes_conditions(conditions: Array, card: CardInstance, holder: CardInstance = null) -> bool:
-	var owner := -1 if holder == null else holder.owner   # conditions are (unit, owner-side) predicates
-	for cond: EffectCondition in conditions:
-		if not cond.evaluate(card, owner):
-			return false
-	return true
-
-
-# (Board flattening and the nearest-distance metric moved into TargetResolver — the
-# targeting socket owns its own search primitives now.)
+# TARGETING REMOVED — the PRE-resolution eligibility gate went with it. NEEDS: one evaluation
+# of an effect's conditions serving BOTH the resolution and the eligibility surfaces (the
+# spell-targeting UI lighting eligible units, the enemy AI's target picking), with ONE anchor
+# semantics. The old exposed helper evaluated with owner −1 when no holder was passed while
+# resolution used the real allegiance anchor — two paths that could disagree (see
+# TECH_DEBT_BRIEF.md, "one dispatch, one vocabulary"): the rebuilt authority must make that
+# disagreement impossible, not rare.

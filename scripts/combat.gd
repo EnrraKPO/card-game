@@ -478,10 +478,10 @@ func _do_cpu_placement() -> void:
 	_refresh_done_btn()
 
 	# The enemy engine plans the whole CPU turn (see ENCOUNTER_ENGINE_DESIGN.md); the old
-	# EnemyAI placeholder is no longer consulted. All four action kinds are planned:
-	# placements, moves, spell casts and ability activations (the latter two simulate on
-	# copies of the live world through the REAL rules — see CandidateApply; a short
-	# deny-list in can_simulate_cast is the only legality gate left).
+	# placeholder AI is deleted. All four action kinds are planned: placements, moves, spell
+	# casts and ability activations (the latter two simulate on copies of the live world
+	# through the REAL rules — see CandidateApply; while targeting is demolished,
+	# can_simulate_cast refuses everything, so the CPU plans placements and moves only).
 	var engine := EnemyEngine.new()
 	engine.world = _world
 	if GameData.current_encounter != null:

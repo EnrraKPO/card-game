@@ -220,12 +220,12 @@ func _ground_delivery() -> void:
 
 
 func _at_location_spelling() -> void:
+	# TARGETING REMOVED (targeting-cleanup demolition): "parses to the AtLocation kind" and its
+	# compat mirror belong to the rebuilt authority's suite. The verbatim round-trip remains.
 	var e := Effect.from_dict({"trigger": {"kind": "event", "event": "turn_end"},
 			"targets": {"kind": "at_location"}, "attribute": "health", "amount": -1})
-	check(e.targets_resolver() is TargetResolver.AtLocation, "native 'at_location' parses to the kind")
-	check_eq(e.targeting_policy, Effect.TargetingPolicy.AT_LOCATION, "…and mirrors to the compat policy")
 	var td: Dictionary = e.to_dict()
-	check_eq(str((td["targets"] as Dictionary)["kind"]), "at_location", "…and serializes back by name")
+	check_eq(str((td["targets"] as Dictionary)["kind"]), "at_location", "at_location serializes back by name")
 
 
 func _copy_fidelity() -> void:

@@ -44,24 +44,25 @@ enum Trigger {
 # Sentinel for "apply this status for its own default duration" (the applier didn't override it).
 const STATUS_DURATION_DEFAULT := -9999
 
-enum TargetingPolicy {
-	SELF,
-	SINGLE_NEAREST,
-	SINGLE_RANDOM,
-	ALL_ENEMIES,
-	ALL_ALLIES,
-	ALL,
-	MANUAL,
-	ATTACK_TARGET,   # the unit this card is currently striking (valid in an ON_ATTACK context)
-	SUBJECT,         # the unit the event is about (the activator/actor — see EffectContext.subject)
-	ATTACKER,        # the unit that dealt the blow (valid in an ON_DAMAGE_TAKEN context)
-	MANUAL_SLOT,     # a SLOT the player picks on their own side — may be EMPTY (the effect decides
-					 # what an empty pick means, e.g. material delivery spawns there); an occupied
-					 # pick is gated by the effect's conditions. See SpellCaster's slot-mode flow.
-	AT_LOCATION,     # the unit standing at the effect's anchor coordinates (position-first
-					 # targeting — a slot status hitting its own cell's occupant; whiffs legally
-					 # when the cell is empty). See TargetResolver.AtLocation.
-}
+# TARGETING REMOVED (targeting-cleanup demolition). NEEDS: the effect-targeting authority —
+# the injected component that decides WHO an effect affects, the "who" beside the trigger's
+# "when". The authored vocabulary it must serve (both schemas survive VERBATIM in the data and
+# in `_native_targets` / `targeting_policy_raw` below, uninterpreted):
+#   · self / participant (event origin | destination) — a direct reference, no search
+#   · auto (nearest | random, count N) — an automatic pick among condition-passing units
+#   · all (+ allegiance conditions) — everyone the conditions admit
+#   · manual — the unit the player PICKS; the conditions are the eligibility gate the UI enforces
+#   · manual_slot — a picked SQUARE (possibly empty), own-side only (a rule the old code kept
+#     in the UI layer — the rebuilt authority must own it)
+#   · at_location (from / shape / layer / half / count) — position-first: name where you
+#     resolve FROM and what shape that implies, get game objects back
+#   · side (own | opponent) — a PLAYER, not a unit (draw/discard/mana payloads)
+# Cross-cutting requirements the old system answered piecemeal (see TECH_DEBT_BRIEF.md §1-2):
+# one authority answering BOTH verbs (enumerate targets AND does-it-reach-this-candidate, with
+# one anchor semantics so the two can never disagree), a declared gesture requirement per kind
+# (none / unit pick / slot pick), legality ("is there any legal play right now" — the
+# prohibit-non-ops viability rule lived here as an implicit condition), and heterogeneous
+# returns (units, a CombatSide, ground slots).
 
 # For an event-driven (TRIGGERED/CUSTOM) effect, which unit — relative to the effect's HOLDER — must
 # be the event's subject for the effect to react. Default SELF means "I react only to my own action,"
@@ -94,21 +95,22 @@ var resolver: TriggerResolver = null
 # Whether the trigger was authored in the native (dictionary) form — steers to_dict so both
 # schemas round-trip byte-faithfully (legacy in → legacy out).
 var authored_native_trigger := false
-# THE targeting socket: an injected TargetResolver returns the unit(s) this effect
-# affects, from the same shared context the trigger saw (event, holder, board). Built by
-# from_dict from either the native form ("targets" as a dictionary) or the legacy
-# "targeting_policy" string — zero migration.
-var target_resolver: TargetResolver = null
+# The authored targeting, held VERBATIM and interpreted by NOTHING (targeting-cleanup
+# demolition): the native "targets" dictionary, or the legacy "targeting_policy" string.
+# Kept solely so authored content and deck saves round-trip byte-faithfully through to_dict.
+# NEEDS: the rebuilt targeting authority parses these — and per the brief, ONE surviving
+# schema, with the content migrated and the dead form refused at load.
 var authored_native_targets := false
-var _native_targets: Dictionary = {}   # raw native "targets" form; resolver built lazily
-# Legacy/compat mirrors, kept for the consumers that classify effects WITHOUT resolving:
-# the spell/ability "== ON_PLAY" include filter, SpellCaster's manual/slot mode checks and
-# eligibility reads (conditions), enemy-AI heuristics. Derived for native-form effects;
-# never consulted by dispatch.
+var _native_targets: Dictionary = {}      # raw native "targets" form, verbatim
+var targeting_policy_raw: String = ""     # raw legacy policy string, verbatim
+# Legacy/compat trigger mirrors (the TRIGGER side is untouched by this demolition; its own
+# consolidation is the next initiative — see TECH_DEBT_BRIEF.md §1).
 var trigger: Trigger = Trigger.ON_PLAY
 var subject_filter: SubjectFilter = SubjectFilter.SELF
 var subject_elements: Array = []   # legacy companion of `trigger`; folded into the resolver
-var targeting_policy: TargetingPolicy = TargetingPolicy.SELF
+# The effect's authored CONDITIONS (shared predicate grammar — EffectCondition). Still parsed:
+# the INTERCEPTOR match gate evaluates them, and legacy TRIGGERED effects round-trip them.
+# Their other historical consumer — targeting eligibility — is demolished with targeting.
 var conditions: Array = []   # Array[EffectCondition]
 var attribute: String = ""
 var custom_id: String = ""           # CUSTOM: id into EffectHooks
@@ -298,7 +300,6 @@ static func from_dict(d: Dictionary) -> Effect:
 		if e.scope == Scope.CARD:
 			e.resolver = TriggerResolver.While.new()
 			e.trigger = Trigger.PERMANENT
-			e.targeting_policy = TargetingPolicy.ALL
 			e.attribute = CARD_ATTR.get(e.key, "")
 			e.tracker_spec = (d.get("tracker", {}) as Dictionary).duplicate()
 	elif kind_str == "interceptor" or (kind_str.is_empty() and d.has("intercept")):
@@ -360,7 +361,6 @@ static func from_dict(d: Dictionary) -> Effect:
 	e._validate_standing(d)
 	e._validate_grants(d)
 	e._validate_side_targets(d)
-	e._install_viability()
 	# Mutation-form conditions predicate over a pending StatMutation — only the interceptor
 	# match ever evaluates them. Anywhere else they'd be a silently-vacuous gate: fail loud.
 	if e.kind != Kind.INTERCEPTOR:
@@ -432,35 +432,18 @@ func _parse_intercept_gate(d: Dictionary) -> void:
 	intercept_identity = true
 
 
-# PROHIBIT NON-OPS. Every effect whose payload is a stat change on a UNIT is given an implicit
-# condition asking whether that change would actually do anything to the unit in front of it
-# (see EffectCondition's viability form). Nobody authors it and nobody can forget it — which is
-# the point: the rule is a property of the payload, so it belongs to the effect rather than to
-# each card that happens to carry one.
-#
-# Because it lands in the ordinary conditions list, everything downstream inherits it at once:
-# an AoE heal skips the unwounded, a manual heal refuses to light them up, the enemy AI stops
-# picking them, and a spell whose every effect is a no-op right now has no legal play left at
-# all (see SpellCaster.effects_have_a_play).
-#
-# The exclusions are all cases where "would this change anything" is either unanswerable or the
-# wrong question:
-#   • CUSTOM — a code hook's payload is opaque; guessing at it would gate real effects away.
-#   • standing (while) — membership is folded INSIDE get_attribute (LiveEffects), and a
-#     condition that reads get_attribute would recurse straight back into the fold. A standing
-#     bonus is also a continuous fold, not an act: there is no moment for it to be a no-op at.
-#   • MODIFIER / INTERCEPTOR — neither applies a payload to a resolved unit.
-#   • status / spawn / grant payloads — the attribute is not what the effect does.
-#   • side stats (draw/discard/mana) — the target is a PLAYER, which no unit predicate can read.
-func _install_viability() -> void:
-	if kind != Kind.TRIGGERED or is_standing():
-		return
-	if attribute.is_empty() or not status_id.is_empty() or not spawn_id.is_empty() \
-			or not grants.is_empty():
-		return
-	if StatMutation.is_side_stat(attribute):
-		return
-	conditions.append(EffectCondition.viability(attribute, amount_int()))
+# TARGETING REMOVED — PROHIBIT NON-OPS demolished with it. NEEDS (a user-designed rule, see
+# PROHIBIT_NONOPS memory/initiative): every effect whose payload is a stat change on a UNIT
+# carried an implicit, never-authored VIABILITY condition — "would this change actually do
+# anything to the unit in front of it" — installed here at parse into the ordinary conditions
+# list, so everything downstream inherited it at once: an AoE heal skipped the unwounded, a
+# manual heal refused to light them up, the enemy AI stopped picking them, and a spell whose
+# every effect was a no-op had NO LEGAL PLAY at all. Exclusions: CUSTOM (opaque payload),
+# standing/while (a fold has no no-op moment, and the condition would recurse into
+# get_attribute), MODIFIER/INTERCEPTOR (no resolved unit), status/spawn/grant payloads (the
+# attribute is not what the effect does), side stats (the target is a player). The rebuilt
+# targeting authority must own this rule — it is an ELIGIBILITY rule, and eligibility is
+# targeting's second verb.
 
 
 # Load-time authoring validation for standing effects — FAIL LOUD, never silently closed
@@ -574,59 +557,19 @@ func trigger_resolver() -> TriggerResolver:
 	return resolver
 
 
-# Parses the targeting socket from either schema — WITHOUT constructing the resolver.
-# Construction is deferred to targets_resolver(): data files parse during other classes'
-# @static_initializer runs, when TargetResolver's script (whose signatures reach into the
-# UI layer via EffectContext) may not be compiled yet. Only the raw form and the compat
-# mirrors (targeting_policy enum + conditions list) are captured here.
+# Captures the authored targeting VERBATIM — no interpretation, no resolver, no mirror
+# (targeting-cleanup demolition; see the NEEDS block at the top of this file). The one
+# subtlety kept: a native form's conditions still parse into `conditions` so the shared
+# grammar stays load-validated (mutation-form fencing below) — the LIST is not re-emitted
+# for native effects (the verbatim dict already carries them).
 func _parse_targets(d: Dictionary) -> void:
 	var tv: Variant = d.get("targets", null)
 	if tv is Dictionary:
 		authored_native_targets = true
 		_native_targets = (tv as Dictionary).duplicate(true)
 		conditions = TriggerResolver._parse_conditions(_native_targets.get("conditions", []))
-		targeting_policy = _policy_from_native(_native_targets)
 		return
-	targeting_policy = _str_policy(d.get("targeting_policy", ""))
-
-
-# The targeting resolver, built on first use (runtime — never during static init).
-func targets_resolver() -> TargetResolver:
-	if target_resolver == null:
-		if authored_native_targets:
-			target_resolver = TargetResolver.parse(_native_targets)
-			# the mirror and the resolver must share ONE condition list (see TargetResolver)
-			target_resolver.conditions = conditions
-		else:
-			target_resolver = TargetResolver.from_legacy(policy_key(targeting_policy), conditions,
-					trigger == Trigger.ON_DAMAGE_TAKEN)
-	return target_resolver
-
-
-# The compat TargetingPolicy for a native "targets" dict — derived from the raw strings so
-# no TargetResolver construction is needed at parse time.
-static func _policy_from_native(d: Dictionary) -> TargetingPolicy:
-	match str(d.get("kind", "all")):
-		"self":        return TargetingPolicy.SELF
-		"manual":      return TargetingPolicy.MANUAL
-		"manual_slot": return TargetingPolicy.MANUAL_SLOT
-		"at_location": return TargetingPolicy.AT_LOCATION
-		# A side target needs no pick and no unit scan — ALL is the honest compat mirror
-		# (the classifiers only ask "is this manual / slot-mode?", to which the answer is no).
-		"side":        return TargetingPolicy.ALL
-		"auto":
-			return TargetingPolicy.SINGLE_RANDOM if str(d.get("criterion", "nearest")) == "random" \
-					else TargetingPolicy.SINGLE_NEAREST
-		"participant":
-			match str(d.get("participant", "holder")):
-				"origin":      return TargetingPolicy.ATTACKER
-				"destination": return TargetingPolicy.ATTACK_TARGET
-				_:             return TargetingPolicy.SELF
-	# Pre-gate native data spelled self-targeting as all + {"relation": "self"} — that
-	# identity entry is structural (the self kind), not a condition.
-	if TriggerResolver._has_identity(d.get("conditions", [])):
-		return TargetingPolicy.SELF
-	return TargetingPolicy.ALL
+	targeting_policy_raw = str(d.get("targeting_policy", ""))
 
 
 # Serialises back to the authored shape. Exercised for persisted (overridden) CARD effects,
@@ -657,10 +600,12 @@ func to_dict() -> Dictionary:
 			}
 			if not material.is_empty():
 				cd["material"] = material
+			# Targeting re-emits VERBATIM (demolition — nothing interprets it, so nothing may
+			# rewrite it). The legacy default "self" is spelled out, matching the old serializer.
 			if authored_native_targets:
-				cd["targets"] = targets_resolver().to_dict()
+				cd["targets"] = _native_targets.duplicate(true)
 			else:
-				cd["targeting_policy"] = policy_key(targeting_policy)
+				cd["targeting_policy"] = targeting_policy_raw if not targeting_policy_raw.is_empty() else "self"
 			if not authored_native_trigger and subject_filter != SubjectFilter.SELF:
 				cd["subject"] = subject_key(subject_filter)
 			_eval_out(cd)
@@ -702,11 +647,12 @@ func to_dict() -> Dictionary:
 				# A grant's payload IS the component set — no attribute/amount keys, matching
 				# the authored form byte-faithfully.
 				d["grants"] = grants.duplicate()
+			# Targeting re-emits VERBATIM (demolition — see the CUSTOM branch note).
 			if authored_native_targets:
-				# the resolver owns the conditions in the native form — no top-level copy
-				d["targets"] = targets_resolver().to_dict()
+				# the verbatim dict owns the conditions in the native form — no top-level copy
+				d["targets"] = _native_targets.duplicate(true)
 			else:
-				d["targeting_policy"] = policy_key(targeting_policy)
+				d["targeting_policy"] = targeting_policy_raw if not targeting_policy_raw.is_empty() else "self"
 				d["conditions"] = TriggerResolver.conditions_to_dicts(conditions)
 			if not authored_native_trigger and subject_filter != SubjectFilter.SELF:
 				d["subject"] = subject_key(subject_filter)
@@ -797,23 +743,6 @@ static func _str_trigger(s: String) -> Trigger:
 	return Trigger.ON_PLAY
 
 
-static func _str_policy(s: String) -> TargetingPolicy:
-	match s:
-		"self":           return TargetingPolicy.SELF
-		"single_nearest": return TargetingPolicy.SINGLE_NEAREST
-		"single_random":  return TargetingPolicy.SINGLE_RANDOM
-		"all_enemies":    return TargetingPolicy.ALL_ENEMIES
-		"all_allies":     return TargetingPolicy.ALL_ALLIES
-		"all":            return TargetingPolicy.ALL
-		"manual":         return TargetingPolicy.MANUAL
-		"attack_target":  return TargetingPolicy.ATTACK_TARGET
-		"subject":        return TargetingPolicy.SUBJECT
-		"attacker":       return TargetingPolicy.ATTACKER
-		"manual_slot":    return TargetingPolicy.MANUAL_SLOT
-		"at_location":    return TargetingPolicy.AT_LOCATION
-	return TargetingPolicy.SELF
-
-
 static func _str_role(s: String) -> Role:
 	return Role.TARGET if s == "target" else Role.SOURCE
 
@@ -851,20 +780,3 @@ static func trigger_key(t: Trigger) -> String:
 		Trigger.ON_TURN_END:     return "on_turn_end"
 		Trigger.ON_ACTIVATE:     return "on_activate"
 	return "on_play"
-
-
-static func policy_key(p: TargetingPolicy) -> String:
-	match p:
-		TargetingPolicy.SELF:           return "self"
-		TargetingPolicy.SINGLE_NEAREST: return "single_nearest"
-		TargetingPolicy.SINGLE_RANDOM:  return "single_random"
-		TargetingPolicy.ALL_ENEMIES:    return "all_enemies"
-		TargetingPolicy.ALL_ALLIES:     return "all_allies"
-		TargetingPolicy.ALL:            return "all"
-		TargetingPolicy.MANUAL:         return "manual"
-		TargetingPolicy.ATTACK_TARGET:  return "attack_target"
-		TargetingPolicy.SUBJECT:        return "subject"
-		TargetingPolicy.ATTACKER:       return "attacker"
-		TargetingPolicy.MANUAL_SLOT:    return "manual_slot"
-		TargetingPolicy.AT_LOCATION:    return "at_location"
-	return "self"

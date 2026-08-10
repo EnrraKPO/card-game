@@ -166,7 +166,6 @@ func display_card() -> CardData:
 	c.card_type = CardData.CardType.SPELL
 	c.description = description
 	c.effects = effects
-	c.targeting_strategy = TargetingNearest.new()
 	# Art: assets/abilities/<id>.png preferred; assets/cards/<id>.png accepted too (the material
 	# art predates the ability migration and lives there); placeholder otherwise.
 	var art := ABILITY_ART_DIR + id + ".png"

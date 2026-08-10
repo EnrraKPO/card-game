@@ -18,7 +18,6 @@ func run() -> void:
 	_max_mana_form()
 	_set_forms()
 	_signals()
-	_side_targeting()
 	_effect_payload()
 	_interception()
 	_cost_channel()
@@ -129,25 +128,10 @@ func _ctx_with_sides(holder: CardInstance, player: CombatSide, enemy: CombatSide
 	return ctx
 
 
-func _side_targeting() -> void:
-	var player := CombatSide.make(0)
-	var enemy := CombatSide.make(1)
-	var mine := unit("pawn")
-	var theirs := unit("pawn")
-	theirs.owner = 1
-	var own := TargetResolver.parse({"kind": "side", "of": "own"})
-	var opp := TargetResolver.parse({"kind": "side", "of": "opponent"})
-	var ctx := _ctx_with_sides(mine, player, enemy)
-	check_eq(own.resolve(null, mine, ctx), [player], "own side of a player holder")
-	check_eq(opp.resolve(null, mine, ctx), [enemy], "opponent side of a player holder")
-	var ectx := _ctx_with_sides(theirs, player, enemy)
-	check_eq(own.resolve(null, theirs, ectx), [enemy], "own side of an ENEMY holder is the enemy side")
-	check_eq(opp.resolve(null, theirs, ectx), [player], "…and its opponent is the player")
-	var unowned := unit("pawn")
-	unowned.owner = -1
-	check(own.resolve(null, unowned, ctx).is_empty(), "an unowned holder resolves no side")
-	check(own.resolve(null, mine, ctx_for(mine)).is_empty(),
-			"a context without sides resolves nothing (no crash)")
+# TARGETING REMOVED (targeting-cleanup demolition): the side-targeting resolution cases that
+# stood here — own/opponent relative to a player holder AND to an enemy holder, an unowned
+# holder resolving no side, a context without sides resolving nothing (no crash) — specify
+# the "side" target kind for the rebuilt targeting authority's suite.
 
 
 func _effect_payload() -> void:
@@ -236,8 +220,6 @@ func _authoring_roundtrip() -> void:
 	var t: Dictionary = out.get("targets", {})
 	check(str(t.get("kind", "")) == "side" and str(t.get("of", "")) == "opponent",
 			"side targets round-trip through to_dict")
-	check_eq(eff.targeting_policy, Effect.TargetingPolicy.ALL,
-			"the compat mirror classifies side as ALL (not manual, not slot)")
 	check(StatMutation.is_side_stat("draw") and StatMutation.is_side_stat("max_mana")
 			and not StatMutation.is_side_stat("attack"), "the side-stat vocabulary set")
 

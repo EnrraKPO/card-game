@@ -57,36 +57,19 @@ static func apply(state: BoardState, cand: Dictionary, sim: Dictionary = {}) -> 
 
 # ── The sim-support gate, inverted (decision 18 under the real rules) ─────────────────
 
-# The real rules run in simulation now, so the refuse-list holds only the genuinely
-# unknowable-or-unsafe:
-#   · probabilistic effects — the sim would have to guess the roll;
-#   · random discards — a nondeterministic pick;
-#   · CUSTOM code hooks — several embed player-side board procedures (material delivery
-#     spawns for owner 0); allowing them is a per-hook decision later, not a blanket yes.
-# A cast still needs at least one ON_PLAY effect — a castable no-op isn't a candidate.
-static func can_simulate_cast(effects: Array) -> bool:
-	var any := false
-	for e: Effect in effects:
-		if e.trigger != Effect.Trigger.ON_PLAY:
-			continue   # never fires at cast time — irrelevant to the simulation
-		if e.chance < 1.0:
-			return false
-		if e.attribute == "discard":
-			return false
-		if e.kind == Effect.Kind.CUSTOM:
-			return false
-		any = true
-	return any
-
-
-# Whether any of the cast's effects needs a manually picked target — then the candidate
-# generators enumerate one candidate per possible target ("tested against EVERY possible
-# target", decision 17).
-static func needs_manual(effects: Array) -> bool:
-	for e: Effect in effects:
-		if e.trigger == Effect.Trigger.ON_PLAY \
-				and e.targeting_policy == Effect.TargetingPolicy.MANUAL:
-			return true
+# TARGETING REMOVED (targeting-cleanup demolition): with no target resolution there is no
+# cast to simulate — the CPU plans placements and moves only, and NO cast/ability candidates
+# are generated. NEEDS, when targeting returns:
+#   · can_simulate_cast — the real rules run in simulation, so the refuse-list holds only the
+#     genuinely unknowable-or-unsafe: probabilistic effects (the sim would have to guess the
+#     roll), random discards (a nondeterministic pick), CUSTOM code hooks (several embed
+#     player-side board procedures; allowing them is a per-hook decision, not a blanket yes).
+#     A cast still needs at least one ON_PLAY effect — a castable no-op isn't a candidate.
+#   · needs_manual — whether any of the cast's effects needs a manually picked target; the
+#     candidate generators then enumerate one candidate per possible target ("tested against
+#     EVERY possible target", decision 17). Must come from the targeting authority's declared
+#     gesture requirement, never from a policy peek.
+static func can_simulate_cast(_effects: Array) -> bool:
 	return false
 
 
