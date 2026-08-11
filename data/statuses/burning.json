@@ -1,19 +1,13 @@
 {
 	"id": "burning",
 	"display_name": "Burning",
-	"description": "This ground is on fire: at the start of each round every flame may leap to an adjacent tile or die down, and the unit standing here takes 1 damage at the round's end.",
+	"description": "This ground is on fire: the unit standing here takes 1 damage at the round's end.",
 	"beneficial": false,
 	"color": "e25822",
 	"glyph": "🔥",
 	"decay": "none",
 	"stacking": "stack",
 	"stack_display": "duplicates",
-	"spread": {
-		"phase": "turn_start",
-		"chance": 0.2,
-		"decay_chance": 0.4,
-		"arrival": "burn"
-	},
 	"eval": {
 		"exposure": 0.25
 	}

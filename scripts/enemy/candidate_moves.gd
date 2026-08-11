@@ -132,52 +132,21 @@ static func _take_row(free: Dictionary, col: int) -> int:
 	return int(rows.pop_front())
 
 
-# Every legal spell cast: each affordable, simulatable spell card in the pool — a manual
-# spell tested against every fielded unit on either side (decision 17: every possible
-# target; nonsense targets score as non-improvements and die in selection, which is
-# exactly where "don't heal the player" is supposed to be decided).
-static func spells(state: BoardState, pool: Array, mana: int) -> Array:
-	var out: Array = []
-	for inst: CardInstance in pool:
-		if not inst.is_spell:
-			continue
-		var cost: int = inst.get_attribute("cost")
-		if cost > mana or not CandidateApply.can_simulate_cast(inst.data.effects):
-			continue
-		for target: CardInstance in _targets_for(state, inst.data.effects):
-			out.append({"kind": "cast", "inst": inst, "target": target, "cost": cost})
-	return out
+# Every legal spell cast. EFFECT LAYER RAZED (2026-08-11): with no effects to simulate
+# there are no cast candidates. NEEDS: each affordable, simulatable spell card in the
+# pool — a manual spell tested against every fielded unit on either side (decision 17:
+# every possible target; nonsense targets score as non-improvements and die in selection,
+# which is exactly where "don't heal the player" is supposed to be decided); the gesture
+# requirement comes from the targeting authority's declaration, never a policy peek.
+static func spells(_state: BoardState, _pool: Array, _mana: int) -> Array:
+	return []
 
 
-# Every legal ability activation: each fielded unit × each of its abilities, gated the
-# way the live game gates the player (AbilityData.usable_by: mana + an unspent tap) —
-# the sim state carries `exhausted`, so a tap spent earlier in this planned turn (or a
-# unit that already acted) closes the window naturally.
-static func abilities(state: BoardState, mana: int) -> Array:
-	var out: Array = []
-	for u: BoardState.UnitState in state.units(1):
-		for ab_id: String in u.ability_ids:
-			var ab := AbilityData.get_ability(ab_id)
-			if ab == null or ab.mana > mana:
-				continue
-			if ab.tap and u.exhausted:
-				continue
-			if not ab.material.is_empty():
-				continue   # material delivery = the spawn-half path; no sim story yet
-			if ab.mana == 0 and not ab.tap:
-				continue   # free + untapped = unbounded repeats; refuse until a cadence rule exists
-			if not CandidateApply.can_simulate_cast(ab.effects):
-				continue
-			for target: CardInstance in _targets_for(state, ab.effects):
-				out.append({"kind": "ability", "inst": u.source, "ability": ab,
-						"target": target, "cost": ab.mana})
-	return out
-
-
-# The target axis of a cast's candidates. TARGETING REMOVED (targeting-cleanup demolition):
-# unreachable while can_simulate_cast refuses everything. NEEDS: every fielded unit (both
-# sides) as one candidate each for a manual cast — the gesture requirement asked of the
-# targeting authority — and the single no-target candidate otherwise (area/self casts carry
-# their own targeting).
-static func _targets_for(_state: BoardState, _effects: Array) -> Array:
-	return [null]
+# Every legal ability activation. EFFECT LAYER RAZED (2026-08-11): with no ActivatedEffect
+# bodies there are no ability candidates. NEEDS: each fielded unit × each of its
+# abilities, gated the way the live game gates the player (AbilityData.usable_by — the
+# one rule; the sim state carries `exhausted`, so a tap spent earlier in this planned
+# turn closes the window naturally); free-and-untapped abilities refused until a cadence
+# rule exists; one candidate per possible target for manual casts.
+static func abilities(_state: BoardState, _mana: int) -> Array:
+	return []

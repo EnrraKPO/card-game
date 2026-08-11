@@ -1,5 +1,5 @@
-/* helpers.js — DOM builders + the designer-facing vocabulary (labels, help text,
- * plain-English effect descriptions). Loaded first. */
+/* helpers.js — DOM builders + the designer-facing vocabulary (labels, help text).
+ * Loaded first. */
 'use strict';
 
 // ── tiny DOM builder ─────────────────────────────────────────────────────────
@@ -36,30 +36,8 @@ function textInput(obj, key, onChange, placeholder) {
   });
 }
 
-// The named-effect MAGNITUDE placeholder (game: NamedEffects.MAGNITUDE) — a keyword
-// template writes it wherever the call site's number belongs ("Blind X").
-const MAGNITUDE = '$X';
-const isMagnitude = v => typeof v === 'string' && v.trim() === MAGNITUDE;
-
 function numInput(obj, key, onChange, opts) {
   opts = opts || {};
-  // A field that may hold the placeholder becomes a TEXT input: a number input reads "$X"
-  // as empty and would silently zero a parameterised template on the next save. opts.magnitude
-  // opens the field for authoring one; a value already holding it always gets the text box,
-  // wherever it is shown.
-  if (opts.magnitude || isMagnitude(obj[key])) {
-    return el('input', {
-      type: 'text', value: obj[key] == null ? '' : obj[key],
-      placeholder: opts.placeholder || '', title: 'a number, or $X — the keyword magnitude (the call site\'s amount)',
-      oninput: e => {
-        const v = e.target.value.trim();
-        if (isMagnitude(v)) obj[key] = MAGNITUDE;
-        else if (v === '') { if (opts.optional) delete obj[key]; else obj[key] = 0; }
-        else obj[key] = opts.float ? parseFloat(v) : parseInt(v, 10);
-        onChange();
-      },
-    });
-  }
   return el('input', {
     type: 'number', value: obj[key] == null ? '' : obj[key],
     step: opts.step || 1, min: opts.min, max: opts.max, placeholder: opts.placeholder || '',
@@ -138,10 +116,6 @@ function groupBox(title, ...children) {
 // the record — { en:{name,desc}, es:{name,desc} } — and mirrors the English into the
 // record's display_name/description so list labels, summaries and art prompts keep reading
 // them (a transitional mirror; the game itself reads only the locale). See locFields.
-const LOC_TAGS = ['air', 'darkness', 'earth', 'fire', 'light', 'water',
-  'pawn', 'bishop', 'knight', 'rook', 'queen', 'king',
-  'attack', 'health', 'hp', 'mana', 'shield', 'speed'];
-
 function locGet(type, id, lang, f) {
   const t = (typeof state !== 'undefined' && state.locale && state.locale[lang]) || {};
   return (id && t[`${type}.${id}.${f}`]) || '';
@@ -173,9 +147,10 @@ function locSync(holder, onChange) {
 }
 
 // The per-record Text panel: canonical English name + description, Spanish name + description,
-// a ✦ "From effects" button (LLM writes the English description from the effect definition),
 // and a ✨ "Translate" button (LLM fills Spanish from English, tags/{values} preserved).
-// `opts`: { type, onChange, describeLines() -> [strings], typeLabel }.
+// (The ✦ "describe from effects" button died with the effect layer 2026-08-11 — the
+// description IS the authored source now: it is the re-authoring brief.)
+// `opts`: { type, onChange, typeLabel }.
 function locFields(holder, opts) {
   opts = opts || {};
   const type = opts.type;
@@ -192,21 +167,6 @@ function locFields(holder, opts) {
     oninput: e => { loc.es.name = e.target.value; onChange(); } });
   const esDesc = el('textarea', { value: loc.es.desc || '', placeholder: loc.en.desc || '(descripción)',
     oninput: e => { loc.es.desc = e.target.value; onChange(); } });
-
-  const fromBtn = el('button', { class: 'ghost tiny', text: '✦ From effects',
-    title: "Write the English description from this item's effects (LLM). Emits <id> term tags." });
-  fromBtn.onclick = async () => {
-    const lines = opts.describeLines ? opts.describeLines() : [];
-    if (!lines.length) { toast('No effects to describe yet', 'err'); return; }
-    fromBtn.disabled = true; const t0 = fromBtn.textContent; fromBtn.textContent = '…';
-    try {
-      const r = await api('/api/locale/describe',
-        { typeLabel: opts.typeLabel || type, name: loc.en.name, lines, tags: LOC_TAGS });
-      if (r.ok && r.description) { loc.en.desc = r.description; enDesc.value = r.description; locSync(holder, onChange); toast('Description written — review it', 'ok'); }
-      else toast('Describe failed: ' + (r.error || '?'), 'err');
-    } catch (e) { toast('Describe failed: ' + e.message, 'err'); }
-    fromBtn.disabled = false; fromBtn.textContent = t0;
-  };
 
   const trBtn = el('button', { class: 'ghost tiny', text: '✨ Translate → ES',
     title: 'Translate the English name + description into Spanish (LLM). Tags and {values} are kept intact.' });
@@ -227,72 +187,58 @@ function locFields(holder, opts) {
     trBtn.disabled = false; trBtn.textContent = t0;
   };
 
-  const enDescBtns = el('span', { class: 'loc-inline-btns' });
-  if (opts.describeLines) enDescBtns.append(fromBtn);
   return el('div', { class: 'loc-fields' },
     el('div', { class: 'frow' }, fld('Name (English)', enName)),
-    el('div', { class: 'fld wide' }, el('span', { class: 'lab' }, 'Description (English)', enDescBtns), enDesc),
+    el('div', { class: 'fld wide' }, el('span', { class: 'lab' }, 'Description (English)'), enDesc),
     el('div', { class: 'frow' }, fld('Nombre (Español)', esName)),
     el('div', { class: 'fld wide' }, el('span', { class: 'lab' }, 'Descripción (Español)',
       el('span', { class: 'loc-inline-btns' }, trBtn)), esDesc));
 }
 
-// The six player-facing effect-container types the localization panel + bulk tools act on.
+// The six player-facing localizable container types the panel + bulk tools act on.
 const CONTAINER_TYPES = ['card', 'relic', 'status', 'ability', 'charm', 'upgrade'];
 
-// The bulk localization bar under the item list: run ✦ generate / ✨ translate across the
-// whole FILTERED set (the same records the list shows), scoping the batch by the active filter.
+// The bulk localization bar under the item list: run ✨ translate across the whole
+// FILTERED set (the same records the list shows), scoping the batch by the active filter.
+// (The ✦ bulk describe-from-effects died with the effect layer 2026-08-11.)
 function renderLocBulkBar(type, records) {
   const bar = el('div', { class: 'loc-bulk-bar' });
-  const genBtn = el('button', { class: 'ghost small', text: `✦ Descriptions (${records.length})`,
-    title: 'Generate the English description from effects for every listed entry that has effects (LLM). Review before it ships.' });
-  genBtn.onclick = () => bulkLoc('describe', type, records, genBtn);
   const trBtn = el('button', { class: 'ghost small', text: `✨ Translate → ES (${records.length})`,
     title: "Translate every listed entry's English name + description into Spanish (LLM). Tags/{values} preserved." });
-  trBtn.onclick = () => bulkLoc('translate', type, records, trBtn);
-  bar.append(genBtn, trBtn);
+  trBtn.onclick = () => bulkLoc(type, records, trBtn);
+  bar.append(trBtn);
   return bar;
 }
 
-// One localizable subject = one id + its effects. Upgrades expand into the tree PLUS each node,
+// One localizable subject = one id. Upgrades expand into the tree PLUS each node,
 // since every node carries its own upgrade.<id> text.
 function locSubjects(type, records) {
   const subjects = [];
   for (const g of records) {
     const d = g.data || {};
-    subjects.push({ id: g.id, effects: d.effects || [], subject: `this ${type}` });
+    subjects.push({ id: g.id });
     if (type === 'upgrade') for (const n of d.nodes || [])
-      if (n && n.id) subjects.push({ id: n.id, effects: n.effects || [], subject: 'this upgrade' });
+      if (n && n.id) subjects.push({ id: n.id });
   }
   return subjects;
 }
 
-async function bulkLoc(mode, type, records, btn) {
+async function bulkLoc(type, records, btn) {
   const enText = (id, f) => (state.locale && state.locale.en && state.locale.en[`${type}.${id}.${f}`]) || '';
   const subjects = locSubjects(type, records);
-  const label = mode === 'describe' ? 'Generate descriptions' : 'Translate to Spanish';
+  const label = 'Translate to Spanish';
   if (!confirm(`${label} for ${subjects.length} entr${subjects.length === 1 ? 'y' : 'ies'} with the LLM?\nResults are written to the locale files — review them, they are not final.`)) return;
   btn.disabled = true; const t0 = btn.textContent;
   const entries = {};
   let done = 0, failed = 0, skipped = 0;
   for (const s of subjects) {
     try {
-      if (mode === 'describe') {
-        const lines = (s.effects || []).map(e => describeEffect(e, s.subject));
-        if (!lines.length) { skipped++; }
-        else {
-          const r = await api('/api/locale/describe', { typeLabel: type, name: enText(s.id, 'name'), lines, tags: LOC_TAGS });
-          if (r.ok && r.description) { (entries[`${type}.${s.id}.desc`] = entries[`${type}.${s.id}.desc`] || {}).en = r.description; done++; }
-          else failed++;
-        }
-      } else {
-        const nm = enText(s.id, 'name'), ds = enText(s.id, 'desc');
-        if (!nm && !ds) { skipped++; }
-        else {
-          if (nm) { const r = await api('/api/locale/translate', { text: nm, lang: 'es', key: `${type}.${s.id}.name` }); if (r.ok && r.translation) (entries[`${type}.${s.id}.name`] = entries[`${type}.${s.id}.name`] || {}).es = r.translation; }
-          if (ds) { const r = await api('/api/locale/translate', { text: ds, lang: 'es', key: `${type}.${s.id}.desc` }); if (r.ok && r.translation) (entries[`${type}.${s.id}.desc`] = entries[`${type}.${s.id}.desc`] || {}).es = r.translation; }
-          done++;
-        }
+      const nm = enText(s.id, 'name'), ds = enText(s.id, 'desc');
+      if (!nm && !ds) { skipped++; }
+      else {
+        if (nm) { const r = await api('/api/locale/translate', { text: nm, lang: 'es', key: `${type}.${s.id}.name` }); if (r.ok && r.translation) (entries[`${type}.${s.id}.name`] = entries[`${type}.${s.id}.name`] || {}).es = r.translation; }
+        if (ds) { const r = await api('/api/locale/translate', { text: ds, lang: 'es', key: `${type}.${s.id}.desc` }); if (r.ok && r.translation) (entries[`${type}.${s.id}.desc`] = entries[`${type}.${s.id}.desc`] || {}).es = r.translation; }
+        done++;
       }
     } catch { failed++; }
     btn.textContent = `… ${done + failed + skipped}/${subjects.length}`;
@@ -332,146 +278,10 @@ function collectLocEntries(type, draft) {
 }
 
 // ── designer-facing labels ───────────────────────────────────────────────────
+// (The old effect schema's vocabulary — triggers, events, targeting kinds, modifier keys,
+// payload attributes — died with the effect layer 2026-08-11. The new schema brings its
+// own vocabulary with its builder.)
 const L = {
-  trigger: {
-    on_play: 'When played onto the board',
-    on_death: 'When it dies',
-    on_attack: 'Each time it attacks',
-    on_damage_taken: 'Each time it takes damage',
-    permanent: 'Once, when it enters the board',
-    on_turn_start: 'At the start of each round',
-    on_turn_end: 'At the end of each round',
-    on_activate: 'When its turn comes up',
-  },
-  // Native trigger events (the resolver schema): every event has an ORIGIN and dual
-  // events also a DESTINATION; conditions gate the participants.
-  event: {
-    transient: 'On use (spell cast / ability activation)',
-    play: 'When a unit is played',
-    death: 'When a unit dies',
-    attack: 'When a unit attacks (before the hit)',
-    struck: 'When a unit is struck (after the hit)',
-    kill: 'When a unit dies (names the killer / cause)',
-    activate: 'When a unit takes its turn',
-    turn_start: 'At round start (per unit)',
-    turn_end: 'At round end (per unit)',
-  },
-  // Designer nouns for each event's participants (origin, destination).
-  eventOrigin: {
-    play: 'The played unit', death: 'The dying unit', attack: 'The attacker',
-    struck: 'The attacker', kill: 'The killer (attacks only)', activate: 'The acting unit',
-    turn_start: 'The unit whose round it is', turn_end: 'The unit whose round it is',
-  },
-  eventDestination: { attack: 'The unit being struck', struck: 'The struck unit',
-    kill: 'The unit that died' },
-  // Identity ("self") is relative to the effect's HOLDER (the unit carrying it — the
-  // status's carrier, the card itself); ally/enemy are SIDES relative to the effect's
-  // OWNER, which every container has (a relic's owner is the player). See the game's
-  // EffectCondition (allegiance) — legacy data spells both as "relation".
-  relation: {
-    self: 'the holder itself',
-    ally: 'an ally of this effect’s owner (holder included)',
-    enemy: 'an enemy of this effect’s owner',
-  },
-  // Native targeting kinds (the TargetResolver schema).
-  targetKind: {
-    self: 'The holder itself',
-    all: 'Every unit matching the conditions',
-    auto: 'Auto-pick from matching units',
-    manual: 'A unit the player picks',
-    manual_slot: 'A slot the player picks (may be empty)',
-    participant: 'An event participant (origin / destination)',
-    side: 'A player side (own / opponent) — side-stat payloads only',
-  },
-  // Standing-effect vocabulary: what the payload folds into, and the tracker kinds
-  // (the effect's authored lifetime authority — see EffectTracker in the game).
-  standingAttr: {
-    attack: 'Attack', health: 'Max Health', speed: 'Speed', cost: 'Mana cost',
-  },
-  trackerKind: {
-    container: 'its container exists (status active / card fielded)',
-    stacks: 'stacks remain — and the amount SCALES per stack',
-  },
-  criterion: { nearest: 'nearest to this card', random: 'at random' },
-  participant: {
-    holder: 'this card itself',
-    origin: 'the event ORIGIN (whoever caused it)',
-    destination: 'the event DESTINATION (whoever received it)',
-  },
-  policy: {
-    self: 'Itself',
-    single_nearest: 'The nearest enemy',
-    single_random: 'A random enemy',
-    all_enemies: 'Every enemy',
-    all_allies: 'Every ally (incl. itself)',
-    all: 'Every unit on the board',
-    manual: 'A unit the player picks',
-    manual_slot: 'A slot the player picks (may be empty)',
-    attack_target: 'The unit it is striking',
-    attacker: 'The unit that dealt the blow',
-    subject: 'The unit the event is about',
-  },
-  subject: {
-    self: 'its own action only',
-    ally: 'any ALLY’s action',
-    enemy: 'any ENEMY’s action',
-    any: 'anyone’s action',
-  },
-  attr: {
-    health: 'Health (heal + / damage −, ignores shield)',
-    max_health: 'Max Health (raises the cap, does not heal)',
-    damage_taken: 'Damage (hits shield first)',
-    attack: 'Attack',
-    speed: 'Speed',
-    shield: 'Shield',
-    cost: 'Mana cost',
-    // Side stats (targets kind "side" only — a PLAYER, not a unit).
-    draw: 'Draw cards (deck → hand)',
-    discard: 'Discard random cards',
-    mana: 'Mana (current pool, uncapped above max)',
-    max_mana: 'Max mana',
-  },
-  condAttr: {
-    health: 'Health', attack: 'Attack', speed: 'Speed', cost: 'Mana cost',
-    piece_count: 'How many chess pieces it holds',
-    element_count: 'How many elements it holds',
-  },
-  cmp: { gt: 'more than', gte: 'at least', lt: 'less than', lte: 'at most', eq: 'exactly', neq: 'anything but' },
-  modKey: {
-    'unit.attack': 'Unit Attack (your units)',
-    'unit.health': 'Unit max Health (your units)',
-    'unit.speed': 'Unit Speed (your units)',
-    'card.cost': 'Card mana cost (your cards)',
-    'mana.initial': 'Starting mana (turn 1)',
-    'mana.max': 'Maximum mana (ramp ceiling)',
-    'mana.per_turn': 'Bonus mana every turn (stacks above the cap)',
-    'hand.size.initial': 'Opening hand size',
-    'draw.per_turn': 'Cards drawn per round',
-    'gold.initial': 'Starting gold',
-    'magic_mineral.initial': 'Starting Magic Mineral (the forge-merge resource)',
-    'king.max_health': 'King bonus max Health',
-    'relic.capacity': 'Relic slots',
-    'reward.essence': 'Bonus essence per combat win',
-    'reward.king_piece_chance': 'Chance an Elite drops a King Piece (0–1)',
-    'reward.gold.combat': 'Default gold per normal-fight win',
-    'reward.gold.elite': 'Default gold per elite win',
-    'reward.gold.boss': 'Default gold per boss win',
-    'reward.magic_mineral.combat': 'Default Magic Mineral per normal-fight win',
-    'reward.magic_mineral.elite': 'Default Magic Mineral per elite win',
-    'reward.magic_mineral.boss': 'Default Magic Mineral per boss win',
-    'bounty.gold_per_cost': 'Kill bounty — gold per point of the dead unit\'s mana cost',
-    'bounty.exp_per_cost': 'Kill bounty — experience per point of the same',
-    'bounty.minimum': 'Kill bounty — floor for a derived bounty',
-    'forge.cost.per_piece': 'Forge cost per chess-piece component (result)',
-    'forge.cost.per_element': 'Forge cost per element component (result)',
-    'forge.cost.element_only': 'Forge flat cost — both inputs pure-element',
-    'forge.cost.piece_op': 'Forge flat cost — a chess piece is involved',
-    'shop.magic_mineral.price': 'Shop gold price of one Magic Mineral',
-  },
-  hook: {
-    rallying_cry: 'Rallying Cry — other allies gain +1 Attack when the subject attacks',
-    deliver_material: 'Deliver Material — merges/spawns the ability’s material into the picked slot',
-  },
   decay: {
     duration: 'Timer — counts down each round',
     stacks: 'Stacks — count IS the timer (StS poison)',
@@ -490,151 +300,7 @@ const L = {
 
 function labelOf(dict, key) { return (L[dict] && L[dict][key]) || key; }
 
-// ── plain-English descriptions ───────────────────────────────────────────────
-function describeCondition(c) {
-  if (!c) return '';
-  if (c.relation) return 'is ' + labelOf('relation', c.relation);
-  if (c.allegiance) return 'is ' + labelOf('relation', c.allegiance);
-  if (c.status) return (c.present === false ? 'not carrying ' : 'carrying ') + c.status;
-  if (c.composition) {
-    const list = Array.isArray(c.composition) ? c.composition : [c.composition];
-    // the COUNT form asks a quantity of the REAL composition (blessings don't count toward it)
-    if (c.count !== undefined)
-      return `really built from ${labelOf('cmp', c.comparator || 'gte')} ${c.count} of: ${list.join(', ')}`;
-    return (c.present === false ? 'made of none of: ' : 'made of any of: ') + list.join(', ');
-  }
-  if (c.mutation) return `the pending amount ${labelOf('cmp', c.comparator)} ${c.value}`;
-  return `${labelOf('condAttr', c.attribute)} ${labelOf('cmp', c.comparator)} ${c.value}`;
-}
-
 function signed(n) { return (n > 0 ? '+' : '') + n; }
-
-function describeEffect(e, ownerNoun) {
-  const owner = ownerNoun || 'this';
-  if (!e) return '';
-  if (e.trigger && typeof e.trigger === 'object' && e.trigger.kind === 'while') {
-    // STANDING: live while its tracker is, folded into stats at read time.
-    const tgt = e.targets && e.targets.kind === 'all'
-      ? 'every unit' + ((e.targets.conditions || []).length
-          ? ` (${e.targets.conditions.map(describeCondition).join(' and ')})` : '')
-      : `${owner} itself`;
-    const per = e.tracker && e.tracker.kind === 'stacks' ? ' per stack' : '';
-    if (Array.isArray(e.grants) && e.grants.length) {
-      // Composition grant: the target COUNTS AS containing these for condition resolution.
-      const ids = e.grants.map(g => labelOf('element', g) !== g ? labelOf('element', g) : labelOf('piece', g));
-      return `While active: ${tgt} counts as ${ids.join(', ')}.`;
-    }
-    const attr = e.attribute === 'health' ? 'max Health' : labelOf('attr', e.attribute).split(' (')[0];
-    return `While active: ${signed(e.amount || 0)} ${attr}${per} to ${tgt}.`;
-  }
-  const kind = e.kind || (e.key ? 'modifier' : e.intercept ? 'interceptor' : e.custom ? 'custom' : 'triggered');
-  if (kind === 'modifier') {
-    let s = `Passive: ${labelOf('modKey', e.key)} ${signed(e.amount || 0)}`;
-    if (e.filter && e.filter.kind) s += ` (only ${e.filter.kind}s)`;
-    if (e.filter && e.filter.has_element) s += ' (element cards only)';
-    if (e.conditions && e.conditions.length)
-      s += ` — only for cards ${e.conditions.map(describeCondition).join(' and ')}`;
-    return s + '.';
-  }
-  if (kind === 'interceptor') {
-    const chan = e.channel ? `${e.channel} ` : '';
-    const stat = e.intercept === 'status' ? 'status stacks' : (e.intercept || 'damage');
-    let verb;
-    if (e.op === 'mul') verb = e.amount === 0 ? 'is fully blocked' : `is multiplied ×${e.amount}`;
-    else verb = `is shifted by ${signed(e.amount || 0)}`;
-    let s;
-    if (e.of && typeof e.of === 'object') {
-      // Native relational gate: which mutation participant is scrutinised + its relation.
-      const part = e.of.participant === 'source' ? 'caused by' : 'received by';
-      const rel = e.of.relation === 'self' ? owner
-        : e.of.relation === 'ally' ? 'an ally'
-        : e.of.relation === 'enemy' ? 'an enemy' : 'anyone';
-      s = `Pending ${chan}${stat} ${part} ${rel} ${verb}`;
-    } else {
-      const side = e.role === 'target' ? 'incoming' : 'outgoing';
-      s = `The holder’s ${side} ${chan}${stat} ${verb}`;
-    }
-    if (e.conditions && e.conditions.length)
-      s += ` — where ${e.conditions.map(describeCondition).join(' and ')}`;
-    if (e.chance != null && e.chance !== 1) s += ` (${Math.round(e.chance * 100)}% of the time)`;
-    return s + '.';
-  }
-  // triggered / custom
-  let when, subj = '';
-  if (e.trigger && typeof e.trigger === 'object') {
-    // native resolver form: event + participant condition lists
-    const t = e.trigger;
-    if (t.kind === 'transient') {
-      when = labelOf('event', 'transient');
-    } else {
-      when = labelOf('event', t.event);
-      const gates = [];
-      if (t.of === 'self' || t.origin_of === 'self') gates.push('its own');
-      if (t.destination_of === 'self') gates.push('it is the destination');
-      const oc = t.kind === 'dual_event' ? t.origin_conditions : t.conditions;
-      if (oc && oc.length)
-        gates.push(`origin ${oc.map(describeCondition).join(' and ')}`);
-      if (t.kind === 'dual_event' && t.destination_conditions && t.destination_conditions.length)
-        gates.push(`destination ${t.destination_conditions.map(describeCondition).join(' and ')}`);
-      if (gates.length) subj = ' — where ' + gates.join('; ');
-    }
-  } else {
-    when = labelOf('trigger', e.trigger || 'on_play');
-    if (e.subject && e.subject !== 'self') subj = ` — reacting to ${labelOf('subject', e.subject)}`;
-    if (e.subject_elements && e.subject_elements.length) subj += ` (subject must be ${e.subject_elements.join('/')})`;
-  }
-  let who;
-  if (e.targets && typeof e.targets === 'object') {
-    const tg = e.targets;
-    const conds = (tg.conditions || []).map(describeCondition).join(' and ');
-    if (tg.kind === 'self') who = 'itself';
-    else if (tg.kind === 'participant') who = labelOf('participant', tg.participant || 'holder');
-    else if (tg.kind === 'auto') who = `${tg.count > 1 ? tg.count + ' units' : 'one unit'} ${labelOf('criterion', tg.criterion || 'nearest')}`;
-    else if (tg.kind === 'manual') who = 'a unit the player picks';
-    else if (tg.kind === 'manual_slot') who = 'a slot the player picks';
-    else if (tg.kind === 'side') who = tg.of === 'opponent' ? 'the OPPONENT player' : 'YOUR side';
-    else who = 'every unit';
-    if (conds && tg.kind !== 'participant') who += ` (${conds})`;
-    else if (conds) who += ` (if ${conds})`;
-  } else {
-    who = labelOf('policy', e.targeting_policy || 'self');
-  }
-  const parts = [];
-  if (kind === 'custom') {
-    parts.push(labelOf('hook', e.custom));
-  } else {
-    // A named-effect reference: the registry template supplies the payload — say the name.
-    if (e.named) parts.push(`${e.named} (named effect)`);
-    if (e.attribute) {
-      const amt = e.amount || 0;
-      if (e.attribute === 'health') parts.push(amt >= 0 ? `heal ${amt} Health` : `deal ${-amt} direct damage`);
-      else if (e.attribute === 'damage_taken') parts.push(`deal ${amt} damage (shield first)`);
-      else if (e.attribute === 'draw') parts.push(`draw ${amt} card${amt === 1 ? '' : 's'}`);
-      else if (e.attribute === 'discard') parts.push(`discard ${amt} random card${amt === 1 ? '' : 's'}`);
-      else if (e.attribute === 'mana') parts.push(amt >= 0 ? `gain ${amt} mana` : `lose ${-amt} mana`);
-      else if (e.attribute === 'max_mana') parts.push(`${signed(amt)} max mana`);
-      else parts.push(`${signed(amt)} ${labelOf('attr', e.attribute).split(' (')[0]}`);
-    }
-    if (e.status && e.status.id) {
-      let st = `apply ${e.status.stacks || 1}× ${e.status.id}`;
-      if (e.status.duration != null && e.status.duration !== -9999) st += ` for ${e.status.duration} rounds`;
-      parts.push(st);
-    }
-    for (const r of e.riders || []) {
-      if (!r || !r.status || !r.status.id) continue;
-      const pct = r.chance != null && r.chance !== 1 ? `${Math.round(r.chance * 100)}% to ` : '';
-      parts.push(`the damage carries ${pct}apply ${r.status.stacks || 1}× ${r.status.id}`);
-    }
-    if (e.per_stack_chance)
-      parts.push(`each stack past the first repeats this at ${Math.round(e.per_stack_chance * 100)}%`);
-  }
-  if (!parts.length) parts.push('(no payload yet)');
-  let s = `${when}${subj} → ${who}: ${parts.join(' and ')}`;
-  if (e.conditions && e.conditions.length && !(e.targets && typeof e.targets === 'object'))
-    s += ` — only if ${e.conditions.map(describeCondition).join(' and ')}`;
-  if (e.chance != null && e.chance !== 1) s += ` (${Math.round(e.chance * 100)}% chance)`;
-  return s + '.';
-}
 
 function describeCost(cost) {
   if (!cost) return 'free, taps the holder';
@@ -649,8 +315,3 @@ function slugToName(id) {
   return (id || '').split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 }
 
-// The plain-English describers are pure functions — the server requires them too
-// (few-shot example pairs for the ✨ effects-from-words prompt), so English↔JSON
-// stays a single source in both directions.
-if (typeof module !== 'undefined' && module.exports)
-  module.exports = { describeEffect, describeCondition, labelOf, slugToName };

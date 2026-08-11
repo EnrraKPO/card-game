@@ -54,22 +54,16 @@ static func apply(state: BoardState, cand: Dictionary, sim: Dictionary = {}) -> 
 	return state.copy()
 
 
-# ── The sim-support gate, inverted (decision 18 under the real rules) ─────────────────
-
-# TARGETING REMOVED (targeting-cleanup demolition): with no target resolution there is no
-# cast to simulate — the CPU plans placements and moves only, and NO cast/ability candidates
-# are generated. NEEDS, when targeting returns:
-#   · can_simulate_cast — the real rules run in simulation, so the refuse-list holds only the
-#     genuinely unknowable-or-unsafe: probabilistic effects (the sim would have to guess the
-#     roll), random discards (a nondeterministic pick), CUSTOM code hooks (several embed
-#     player-side board procedures; allowing them is a per-hook decision, not a blanket yes).
-#     A cast still needs at least one ON_PLAY effect — a castable no-op isn't a candidate.
-#   · needs_manual — whether any of the cast's effects needs a manually picked target; the
-#     candidate generators then enumerate one candidate per possible target ("tested against
-#     EVERY possible target", decision 17). Must come from the targeting authority's declared
+# ── The sim-support gate (decision 18 under the real rules) — RAZED with the effect
+# layer, 2026-08-11. NEEDS, when the rebuilt structures land:
+#   · a simulatability gate — the real rules run in simulation, so the refuse-list holds
+#     only the genuinely unknowable-or-unsafe: probabilistic effects (the sim would have
+#     to guess the roll) and random discards (a nondeterministic pick). A cast still needs
+#     at least one played-effect — a castable no-op isn't a candidate.
+#   · needs_manual — whether the cast needs a manually picked target; the candidate
+#     generators then enumerate one candidate per possible target ("tested against EVERY
+#     possible target", decision 17). Must come from the targeting authority's declared
 #     gesture requirement, never from a policy peek.
-static func can_simulate_cast(_effects: Array) -> bool:
-	return false
 
 
 # ── The real-rules path — EFFECT SIMULATION REMOVED (effect-cleanse demolition) ────────

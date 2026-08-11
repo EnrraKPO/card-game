@@ -809,14 +809,15 @@ function economySection(cfg, ga) {
 }
 
 // ♟ Board value — the enemy engine's "total board value" eval prices every unit by its
-// stats + abilities + effects at these exchange rates (scripts/enemy/board_value_config.gd),
+// stats + abilities at these exchange rates (scripts/enemy/board_value_config.gd),
 // own side positive, player side negative. Saves data/board_value.json as overrides on the
 // code defaults (an absent file = pure defaults).
 function boardValueDefaults() {
   return {
     stat_rates: { attack: 1.0, health: 1.0, missing_health: 0.1, shield: 2.0, speed: 0.5 },
     ability_default: 2.0, ability_values: {},
-    triggered_default: 1.5, live_default: 1.5,
+    // (triggered_default / live_default — the per-effect-category prices — died with the
+    // effect layer 2026-08-11; the rebuild's schema decides how effects are priced)
     // the valuation pass (2026-07-30): survival discount dial + raw-worth enhancers
     persistence_weight: 0.65, role_values: {}, unit_values: {},
   };
@@ -887,9 +888,7 @@ function boardValueSection(cfg) {
         rate('shield', 'Shield', 'regenerates every round — defaults to double'),
         rate('speed', 'Speed', 'defaults to half'),
         el('h3', { text: 'Kit equivalences' }),
-        scalar('ability_default', 'Ability (default)', 'stat-points per activated ability, unless overridden by id'),
-        scalar('triggered_default', 'Triggered effect', 'per event-driven effect (on-death, on-attack…)'),
-        scalar('live_default', 'Live effect', 'per standing effect (auras, interceptors)')),
+        scalar('ability_default', 'Ability (default)', 'stat-points per activated ability, unless overridden by id')),
       el('div', { style: 'flex:1;min-width:250px' },
         el('h3', { text: 'Role bonuses', style: 'margin-top:0' }),
         el('div', { class: 'hint', text: 'Flat raw worth per role tag ("captain" = any king, "default" = untagged) — '
@@ -1423,7 +1422,7 @@ function personalitySummaryLine(d) {
 function countRateOverrides(r) {
   if (!r) return 0;
   return Object.keys(r.stat_rates || {}).length + Object.keys(r.ability_values || {}).length
-    + ['ability_default', 'triggered_default', 'live_default'].filter(k => r[k] != null).length;
+    + (r.ability_default != null ? 1 : 0);
 }
 
 // The fight's own personality instance, created on first touch. A fight with no personality
@@ -1641,9 +1640,7 @@ function evalParams(id, p) {
     for (const [key, label] of [['attack', 'attack'], ['health', 'health (frame)'], ['missing_health', 'missing hp'],
         ['shield', 'shield'], ['speed', 'speed']])
       grid.append(paramCell(label, rates.stat_rates, key, (g.stat_rates || {})[key]));
-    for (const [key, label] of [['ability_default', 'any ability'], ['triggered_default', 'triggered fx'],
-        ['live_default', 'live fx']])
-      grid.append(paramCell(label, rates, key, g[key], 0.1));
+    grid.append(paramCell('any ability', rates, 'ability_default', g.ability_default, 0.1));
     box.append(grid);
     box.append(el('div', { class: 'hint', text: 'The persistence dial (0–1): how much a unit\'s chance of dying this turn '
       + 'discounts its worth. 0 = a dying queen is still a queen; 1 = a doomed unit is worth nothing. THE handle on how '
@@ -2358,8 +2355,8 @@ function attachInferPoll(file, jobId) {
 }
 
 // ── sidebar ──────────────────────────────────────────────────────────────────
-const TAB_ORDER = ['card', 'relic', 'status', 'namedeffect', 'innate', 'ability', 'charm', 'upgrade', 'fights', 'encounter', 'enemyai', 'nodeweights', 'sound', 'vfx', 'render_filter', 'tuning', 'localization'];
-const TAB_LABELS = { card: '🃏 Cards', relic: '🏺 Relics', status: '☠ Statuses', namedeffect: '🧩 Named FX', innate: '⚡ Innate', ability: '✨ Abilities',
+const TAB_ORDER = ['card', 'relic', 'status', 'namedeffect', 'ability', 'charm', 'upgrade', 'fights', 'encounter', 'enemyai', 'nodeweights', 'sound', 'vfx', 'render_filter', 'tuning', 'localization'];
+const TAB_LABELS = { card: '🃏 Cards', relic: '🏺 Relics', status: '☠ Statuses', namedeffect: '🧩 Named FX', ability: '✨ Abilities',
   charm: '🔮 Charms', upgrade: '🌳 Upgrades', fights: '🗂 Fights', encounter: '⚔ Encounters', enemyai: '🧠 Enemy AI',
   nodeweights: '🗺 Map Nodes',
   sound: '🔊 Sounds', vfx: '🎇 VFX', render_filter: '🔆 Filters', tuning: '🎛 Tuning', localization: '🌐 Localization' };
@@ -2525,7 +2522,7 @@ function renderEnemyHubList() {
   bulkBtn.hidden = false;
   bulkBtn.textContent = `≡ Bulk (${shownEnemies.length})`;
   bulkBtn.disabled = !shownEnemies.length;
-  bulkBtn.title = 'Set a battlefield role, stat, ability or effect on EVERY enemy unit listed below';
+  bulkBtn.title = 'Set a battlefield role, stat or ability on EVERY enemy unit listed below';
   list.append(section('enemies', '👹 Enemy Units', enemies.length, 'card'));
   if (expand.enemies !== false || q) {
     for (const k of [...byTribe.keys()].sort()) {
@@ -3766,7 +3763,6 @@ function generateSetCards(cfg) {
     card.display_name = defaultSetCardName(els, sorted);
     if (sorted.length) card.chess_pieces = sorted;
     if (cfg.description) card.description = cfg.description;
-    if (cfg.effects.length) card.effects = cfg.effects.map(cleanEffectForDeploy);
     return card;
   });
 }
@@ -3824,10 +3820,11 @@ function defaultSetCardName(els, pieces) {
   return [elName, pieceName].filter(Boolean).join(' ');
 }
 
-// ≡ Bulk edit — act on the whole currently-filtered card set at once. Four actions: set a
+// ≡ Bulk edit — act on the whole currently-filtered card set at once. Actions: set a
 // stat to a constant, pump a stat by ±delta (relative, so uneven values stay relative),
-// grant an ability id, grant authored effect(s). Each posts to /api/game/bulk, which writes
+// set the battlefield role, grant an ability id. Each posts to /api/game/bulk, which writes
 // every entry through the normal per-card save (backups + Revert + validation intact).
+// (The grant-effect action died with the effect layer 2026-08-11.)
 function openBulkEditor() {
   const ids = (state.bulkIds || []).slice();
   const n = ids.length;
@@ -3897,29 +3894,17 @@ function openBulkEditor() {
       : el('div', { class: 'hint', text: 'No abilities defined yet — create some in the Abilities tab first.' }),
     el('div', { class: 'hint', text: 'Adds the ability id to every matched card that doesn’t already have it.' }));
 
-  const fxScratch = { effects: [] };
-  const fxWrap = el('div');
-  renderEffectList(fxWrap, fxScratch.effects, fxCtx(editorCtx(), 'each matched card'), () => {});
-  const fxBox = groupBox('Grant an effect',
-    fxWrap,
-    el('div', { class: 'frow', style: 'margin-top:8px' },
-      el('button', { class: 'primary', text: 'Grant to all', onclick: () => {
-        const eff = fxScratch.effects.map(cleanEffectForDeploy);
-        if (!eff.length) { toast('Author at least one effect first.', 'err'); return; }
-        run(eff.map(e => ({ kind: 'grant_effect', effect: e })), `Grant ${eff.length} effect(s)`); } })),
-    el('div', { class: 'hint', text: 'Appends the authored effect(s) to every matched card’s effect list.' }));
-
   const modal = el('div', { class: 'modal', style: 'width:680px; max-height:88vh; overflow:auto' },
     el('h2', { text: `Bulk edit — ${n} ${noun}${n === 1 ? '' : 's'} match the filter` }),
     el('div', { class: 'hint', text: `Every action applies to ALL ${n} filtered ${noun}s at once. Each writes through the normal per-card save, so Revert still works per entry.` }),
-    roleBox, setBox, pumpBox, abBox, fxBox,
+    roleBox, setBox, pumpBox, abBox,
     el('div', { class: 'modal-actions' }, el('button', { class: 'ghost', text: 'Close', onclick: close })));
   $('modal-root').replaceChildren(modal);
 }
 
 function openSetGenerator() {
   const cfg = { a: 'water', b: '', singles: true, pairs: true, spell: false,
-    description: '', effects: [], install: true };
+    description: '', install: true };
   const preview = el('div', { class: 'subtle mono', style: 'margin-top:8px; line-height:1.6' });
   const refresh = () => {
     const plan = planSetCards(cfg);
@@ -3933,8 +3918,6 @@ function openSetGenerator() {
       + (plan.taken.length ? ` · ${plan.taken.length} skipped (id taken by a different composition: ${plan.taken.join(', ')})` : '')
       + (plan.fresh.length ? ': ' + plan.fresh.map(c => c.id).join(', ') : '');
   };
-  const fxWrap = el('div');
-  renderEffectList(fxWrap, cfg.effects, fxCtx(editorCtx(), 'each generated card'), refresh);
   const modal = el('div', { class: 'modal', style: 'width:640px' },
     el('h2', { text: 'Generate a composition set' }),
     el('div', { class: 'frow' },
@@ -3951,8 +3934,6 @@ function openSetGenerator() {
       el('div', { class: 'fld wide' }, el('span', { class: 'lab', text: 'Description (stamped on each card — edit per card afterwards)' }),
         el('textarea', { value: '', oninput: e => { cfg.description = e.target.value; } })),
     ),
-    el('span', { class: 'lab subtle', text: 'Starting effects (stamped on each card — edit per card afterwards):' }),
-    fxWrap,
     preview,
     el('div', { class: 'modal-actions' },
       el('button', { class: 'ghost', text: 'Cancel', onclick: () => $('modal-root').replaceChildren() }),
@@ -4403,7 +4384,7 @@ async function openSettings() {
     llmProvider: state.settings.llmProvider || 'ollama',
     ollamaUrl: state.settings.ollamaUrl || 'http://127.0.0.1:11434',
     llmModel: state.settings.llmModel || 'gemma4:31b',
-    effectsModel: state.settings.effectsModel || 'qwen3-coder-next:q4_K_M',
+    chatModel: state.settings.chatModel || 'qwen3-coder-next:q4_K_M',
     claudeModel: state.settings.claudeModel || 'claude-opus-4-8',
     openaiModel: state.settings.openaiModel || 'gpt-5.5',
     claudeCodeModel: state.settings.claudeCodeModel || '',
@@ -4427,11 +4408,11 @@ async function openSettings() {
       { value: 'claude-code', label: 'Claude Code (your subscription)' },
       { value: 'claude', label: 'Claude API (pay per token)' },
       { value: 'openai', label: 'ChatGPT (OpenAI API, pay per token)' },
-    ], () => {}), 'routes ALL ✨ features — art prompts, prompt-from-art, effects from words'),
+    ], () => {}), 'routes ALL ✨ features — art prompts, prompt-from-art, the 💬 edit chat'),
     el('div', { class: 'frow', style: 'margin-top:10px' },
       fld('Ollama URL', textInput(s, 'ollamaUrl', () => {}, 'http://127.0.0.1:11434'), 'local LLM server for the ✨ features'),
       fld('LLM model', textInput(s, 'llmModel', () => {}, 'gemma4:31b'), 'vision model for ✨ art prompts'),
-      fld('Effects model', textInput(s, 'effectsModel', () => {}, 'qwen3-coder-next:q4_K_M'), 'coder model for ✨ effects from words'),
+      fld('Chat model', textInput(s, 'chatModel', () => {}, 'qwen3-coder-next:q4_K_M'), 'coder model for the 💬 edit chat (JSON ops)'),
     ),
     el('div', { class: 'frow', style: 'margin-top:10px' },
       fld('Claude Code model', textInput(s, 'claudeCodeModel', () => {}, '(your Claude Code default)'), 'uses the `claude` CLI login — no key; blank = its default, or opus/sonnet/haiku'),

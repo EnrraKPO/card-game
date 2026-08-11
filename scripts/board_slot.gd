@@ -1,5 +1,5 @@
 class_name BoardSlot
-extends StatusCarrier
+extends GameEntity
 
 # One cell of the GROUND layer: a filing cabinet whose identity IS its address. The board is a
 # stack of layers over one shared coordinate space — ground (slots, permanent) under pieces

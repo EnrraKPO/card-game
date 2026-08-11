@@ -200,16 +200,9 @@ func retire(inst: CardInstance) -> void:
 	unit_retired.emit(inst)
 
 
-# The one context builder (moved from CombatBoard, which forwards here): grids + sides so
-# side targets always resolve, the world's OWN modifier set for run-scope dispatch, and the
-# world itself for board procedures (spawn payloads, CUSTOM hooks).
-func make_context(src: CardInstance) -> EffectContext:
-	var ctx := EffectContext.make(src, player_grid, enemy_grid)
-	ctx.player_side = player_side
-	ctx.enemy_side = enemy_side
-	ctx.run_modifiers = modifiers
-	ctx.world = self
-	return ctx
+# (The dispatch-context builder died with the effect layer, 2026-08-11 — the rebuilt
+# dispatch reads this world directly; resolvers are pure functions over a passed-in world,
+# TARGETING_DESIGN.md §3.)
 
 
 # ── Placement & the play moment ────────────────────────────────────────────────────────
@@ -231,7 +224,6 @@ func place_unit_at(inst: CardInstance, loc: BoardLocation, p_owner: int) -> void
 		return
 	inst.owner = p_owner
 	locations.dock(inst, loc)
-	LiveEffects.invalidate_compositions()   # owner set — allegiance-gated grants may now reach
 
 
 # A rules-driven arrival: place + tell the view a card is owed (see unit_spawned).
@@ -244,12 +236,12 @@ func spawn_unit_at(inst: CardInstance, loc: BoardLocation, p_owner: int) -> void
 	unit_spawned.emit(inst)
 
 
-# THE play moment — a unit's ON_PLAY triggers, fired in this world's context (moved out of
-# CombatBoard.place_*, so placement triggers run under a chosen world wherever it came
-# from). Returns the results; presenting them is the caller's business (the live board
-# hands them to combat, the spawn drain below discards them — both as before).
-func play_dispatch(inst: CardInstance) -> Array:
-	return EffectSystem.trigger(GameEvent.make(&"play", inst), inst, make_context(inst))
+# THE play moment. EFFECT DISPATCH RAZED (2026-08-11): the old ON_PLAY dispatcher died
+# with the effect layer, so a play currently triggers nothing. NEEDS: every card's arrival
+# emits `played` through the one event pipeline (TARGETING_DESIGN.md §9 — one uniform act;
+# spells are cards that don't stick to the board); results present at the caller.
+func play_dispatch(_inst: CardInstance) -> Array:
+	return []
 
 
 # ── Death sweep & effect-driven spawning (moved verbatim-in-shape from CombatBoard) ─────

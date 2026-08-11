@@ -6,15 +6,5 @@
   "letter": "F",
   "stats": {
     "attack": 1
-  },
-  "effects": [
-    {
-      "trigger": "on_attack",
-      "targeting_policy": "attack_target",
-      "status": {
-        "id": "chilled",
-        "stacks": 1
-      }
-    }
-  ]
+  }
 }

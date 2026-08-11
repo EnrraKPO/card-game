@@ -94,12 +94,7 @@ class Outcome:
 
 
 static func submit(m: StatMutation) -> Outcome:
-	var out := _submit(m)
-	# Any committed write may change which standing effects reach whom — drop the settled
-	# composition snapshot (Layer 1); the next condition read recomputes lazily. The Resolver
-	# being the single stat/status writer is what makes this ONE hook cover them all.
-	LiveEffects.invalidate_compositions()
-	return out
+	return _submit(m)
 
 
 static func _submit(m: StatMutation) -> Outcome:
@@ -118,13 +113,13 @@ static func _submit(m: StatMutation) -> Outcome:
 		var sout := _apply_to_side(m.target as CombatSide, m)
 		sout.interceptions = side_interceptions
 		return sout
-	if m.target is StatusCarrier and not (m.target is CardInstance):
+	if m.target is GameEntity and not (m.target is CardInstance):
 		# A ground-layer (slot) mutation — the fourth target species. Interception runs the
 		# same gate first: unit-shaped interceptors degrade silently (their target-participant
 		# cast yields null → no match), while source-gated ones ("statuses YOU apply gain a
 		# stack") still fire — see _try_intercept.
 		var carrier_interceptions := _intercept(m)
-		var cout := _apply_to_carrier(m.target as StatusCarrier, m)
+		var cout := _apply_to_carrier(m.target as GameEntity, m)
 		cout.interceptions = carrier_interceptions
 		return cout
 	var inst := m.target as CardInstance
@@ -209,12 +204,12 @@ static func _dispatch_apply(inst: CardInstance, m: StatMutation) -> Outcome:
 			return Outcome.make(inst, m.stat, m.amount)
 
 
-# ── Application form: a bare StatusCarrier (a board slot) ──
+# ── Application form: a bare GameEntity (a board slot) ──
 # Slots hold statuses and nothing else in this build — the STATUS form routes to the same
 # StatusEngine.apply call the unit arm uses (one application writer); any other stat aimed
 # at a slot is an authoring error: fail loud, commit nothing (slots have no stats to move).
 
-static func _apply_to_carrier(carrier: StatusCarrier, m: StatMutation) -> Outcome:
+static func _apply_to_carrier(carrier: GameEntity, m: StatMutation) -> Outcome:
 	if m.stat != StatMutation.STATUS:
 		push_error("Resolver: stat '%s' cannot land on a board slot (slots hold statuses only)"
 				% String(m.stat))
@@ -505,123 +500,18 @@ static func _apply_health(inst: CardInstance, amount: int) -> Outcome:
 	return Outcome.make(inst, StatMutation.HEALTH, healed)
 
 
-# ── Interception (see Effect.Kind.INTERCEPTOR) ──
-# Before a mutation commits, every active container's interceptors get to rewrite the amount —
-# universal interception: the same source set every other evaluator enumerates (a participant
-# unit's own card + statuses, and the run set: relics/upgrades via GameData.current_modifiers).
-# WHO an interceptor scrutinises is the effect's own data (participant + identity/conditions),
-# not the enumeration. Fixed structural order (no authored ordering yet): source unit →
-# target unit → run set; within a unit: native effects, then each status's (scaled by stack
-# count). Each match rolls its own chance. DAMAGE and STATUS amounts are re-floored at 0
-# after every rewrite — a blocked strike is 0, never a heal; an intercepted-away status
-# application applies nothing (split-hit portions clamp the mirror way, at <= 0). Runs
-# once per pending mutation — a DAMAGE hit passes through up to three times: the total,
-# then its shield and health portions (see _apply_damage). Returns the presentation
-# records for Outcome.interceptions.
+# ── Interception — THE SEAM (TARGETING_DESIGN.md §8) ──
+# Before a mutation commits, this is where InterceptorEffects rewrite the pending amount.
+# ENGINE RAZED (2026-08-11): the old union-Effect interceptor walk was deleted with the
+# effect layer; nothing authored exists to fire. The pipeline point stays so every commit
+# and every rate query keeps passing through the one gate. NEEDS, from the razed engine +
+# §8: rewrite-in-chain (each matching interceptor fires in order on the prior result —
+# the ORDER itself is an open design ruling; the old code's structural order was never
+# sanctioned); magnitude stats re-floor at 0 after EVERY rewrite and split-hit portions
+# re-clamp at <= 0; "changed nothing = didn't fire" (no cue, no Barrier charge — the blind
+# si.fired() channel is how an intercept-decay status spends itself); enumeration spans
+# the participants' containers AND the run set, with owner attribution in the returned
+# presentation records ({owner_kind, owner_id, holder, delta}).
 
-static func _intercept(m: StatMutation) -> Array:
-	var records: Array = []
-	var t := m.target as CardInstance
-	_intercept_unit(m.source, m, records)
-	if t != null and t != m.source:
-		_intercept_unit(t, m, records)
-	if GameData.current_modifiers != null:
-		for e: Effect in GameData.current_modifiers.interceptors():
-			# Run scope: no holder; owned by the PLAYER side (the allegiance anchor).
-			_try_intercept(e, 1, null, 0, m, records, null,
-					GameData.current_modifiers.owner_of(e))
-	return records
-
-
-static func _intercept_unit(holder: CardInstance, m: StatMutation, records: Array) -> void:
-	if holder == null or holder.data == null:
-		return
-	# The enumeration knows which container it is iterating — that knowledge stays HERE
-	# (dispatch context for the cue record) and in the blind fired() channel; the effects
-	# themselves are container-blind.
-	for e: Effect in holder.data.effects:
-		_try_intercept(e, 1, holder, holder.owner, m, records, null, {})
-	for si: StatusInstance in holder.statuses:
-		for e: Effect in si.data.effects:
-			_try_intercept(e, si.stacks, holder, holder.owner, m, records, si, {})
-
-
-static func _try_intercept(e: Effect, stacks: int, holder: CardInstance, owner_side: int,
-		m: StatMutation, records: Array, si: StatusInstance, run_owner: Dictionary) -> void:
-	if e.kind != Effect.Kind.INTERCEPTOR:
-		return
-	if e.intercept != m.stat:
-		return
-	if e.channel != &"" and e.channel != m.channel:
-		return
-	# The participant gate: which side of the pending mutation this interceptor scrutinises.
-	# A missing participant (system mutation with no source) never matches. When the target
-	# is a CombatSide, THE SIDE is the target participant: allegiance conditions compare its
-	# owner against the anchor; identity and the unit-form predicates can never match a side
-	# (a player has no stats/composition and is nobody's holder).
-	var participant: CardInstance = null
-	var side: CombatSide = null
-	if e.intercept_participant == "source":
-		participant = m.source
-	elif m.target is CombatSide:
-		side = m.target as CombatSide
-	else:
-		participant = m.target as CardInstance
-	if participant == null and side == null:
-		return
-	# Structural identity (legacy role / of.relation "self"): the participant must BE the
-	# holder — by construction never matched by a holderless (run-scope) container, and
-	# never by a side participant.
-	if e.intercept_identity and (side != null or participant != holder):
-		return
-	# Conditions — the shared grammar's fourth socket (trigger → targets → payload →
-	# intercept): mutation-form predicates read the pending mutation; unit forms read the
-	# selected participant against the owner anchor (allegiance/composition/stat/status);
-	# a side participant answers only the allegiance form (fail-closed otherwise).
-	for c: EffectCondition in e.conditions:
-		if c.is_mutation_form():
-			if not c.evaluate_mutation(m):
-				return
-		elif side != null:
-			if not c.evaluate_side(side.owner, owner_side):
-				return
-		elif not c.evaluate(participant, owner_side):
-			return
-	if e.chance < 1.0 and CombatRng.roll(&"rules") >= e.chance:
-		return
-	var before := m.amount
-	if e.op == Effect.Op.MUL:
-		m.amount = int(round(m.amount * e.amount))
-	else:
-		m.amount += e.amount_int() * stacks   # additive rewrites scale by stacks, like stat deltas
-	if m.stat == StatMutation.DAMAGE or m.stat == StatMutation.STATUS \
-			or m.stat == StatMutation.DRAW or m.stat == StatMutation.DISCARD \
-			or m.stat == StatMutation.DODGE or m.stat == StatMutation.CRIT \
-			or m.stat == StatMutation.CRIT_MULT:
-		# Magnitude-form stats re-floor after every rewrite — an intercepted-away draw
-		# draws nothing; it never becomes a discard.
-		m.amount = maxi(0, m.amount)
-	elif m.portion:
-		# A split hit's shield/health share is a reduction by construction: re-clamp at 0
-		# after every rewrite, so "take less" zeroes a wound but never flips it into a heal.
-		m.amount = mini(0, m.amount)
-	if m.amount == before:
-		# Changed nothing = didn't fire: no cue, no charge spent. This is what makes a Barrier
-		# ignore a whiff — blocking a 0-damage strike (a Blinded attacker's miss) is a no-op.
-		return
-	if run_owner.is_empty():
-		records.append({
-			"owner_kind": "status" if si != null else "card",
-			"owner_id": si.data.id if si != null else str(holder.data.id),
-			"holder": holder, "delta": m.amount - before,
-		})
-	else:
-		records.append({
-			"owner_kind": str(run_owner.get("kind", "run")),
-			"owner_id": str(run_owner.get("id", "")),
-			"holder": null, "delta": m.amount - before,
-		})
-	# The blind upward channel: the container learns one of its effects actually fired and
-	# reacts on its own terms — an intercept-decay status (Barrier) spends a charge.
-	if si != null:
-		si.fired(e)
+static func _intercept(_m: StatMutation) -> Array:
+	return []

@@ -1,12 +1,14 @@
 class_name StatusData
 extends RefCounted
 
-# A Status is a named, time-boxed bundle of Effects applied to a card at runtime (buffs,
-# debuffs, periodic or event-reactive effects). It is NOT special-cased anywhere: it carries the
-# SAME Effect payloads (MODIFIER / TRIGGERED / CUSTOM) that cards, charms, relics and upgrades
-# use — so anything those can express, a status can too — only it is applied dynamically during
-# combat and removed on a timer. See StatusInstance (runtime) and StatusEngine (the operator).
-# Data-driven from data/statuses/*.json.
+# A Status is a named, time-boxed EFFECT CONTAINER applied to a carrier at runtime (buffs,
+# debuffs, periodic or event-reactive bundles). It is NOT special-cased anywhere: it holds
+# the same structures every container holds (TARGETING_DESIGN.md §1), applied dynamically
+# during combat and removed by its lifecycle. What a status CARRIES was razed with the
+# effect layer (2026-08-11) and re-authors in the new schema; the lifecycle machinery here
+# (stacking / decay / phases) stays as-is — user ruling: out of the effect layer's scope.
+# See StatusInstance (runtime) and StatusEngine (the operator). Data-driven from
+# data/statuses/*.json.
 
 const ICON_DIR := "res://assets/ui/status/"   # pip art: "<id>_status.png" (optional)
 
@@ -63,32 +65,21 @@ var max_stacks: int = 99
 # "duplicates" (one pip per stack; burning — the tabs on a slot literally count the flames).
 # Presentation only; honored by the ground tab row today (SlotUI.render_ground).
 var stack_display: String = "count"
-# SPREAD (generic — burning is the first author, any status on any carrier may). Once per
-# stack at `phase` (default "turn_start"), the status rolls: `chance` to propagate one stack
-# to the destination `to` names, else `decay_chance` for that stack to die down. This replaces
-# phase decay for statuses that author it — the roll IS the lifetime. Interpreted by the
-# cascade's spread tier (CombatCascade._spread_statuses). Empty = never spreads.
-#
-# `to` is the DESTINATION PROVIDER, mirroring the targeting-provider pattern:
-#   "adjacent" (default) — a random orthogonal neighbouring SLOT on the same half. Ground
-#                          fire creeping sideways; only meaningful on a slot carrier.
-#   "ground"             — the slot the carrier STANDS ON. A burning unit setting light to
-#                          the floor; only meaningful on a unit carrier.
-# The two are the same rule seen from each layer (see SLOT_LAYER_DESIGN.md §4.4): fire moves
-# either sideways within its layer, or across layers at its own address.
-var spread: Dictionary = {}
+# (The `spread` propagation block was deleted 2026-08-11: never user-designed — it accreted
+# with the burning-ground work, the same lineage as the disavowed riders/restrikes. The
+# authored key is refused loudly below. Status propagation returns only as a designed,
+# signed-off feature.)
 # ── EVAL ANNOTATION, status level (× stacks — STATUS_EVAL_BRIEF.md) ──
 # Hand-AUTHORED per-STACK adds on the enemy engine's channels ("threat" / "exposure" /
 # "value"): the fold contributes number × stacks, because stacks ARE the quantity (see
 # StatusEngine.is_expired). The flat, stack-blind half of a status's pricing lives on its
-# EFFECTS (Effect.eval_mods) — effects are the universal carrier vocabulary and know
-# nothing of stacks. Multipliers are refused at this level: a stack-scaled multiplier has
-# no settled meaning; muls are authored flat on the effect. Absent = invisible.
+# carried structures when the rebuilt effect layer prices them (flat, stack-blind).
+# Multipliers are refused at this level: a stack-scaled multiplier has no settled
+# meaning. Absent = invisible.
 var eval_mods: Dictionary = {}
 
 const EVAL_KEYS: Array[String] = ["threat", "exposure", "value"]
 
-var effects: Array = []   # Array[Effect]
 # Activated abilities this status HOLDS (by id, see AbilityData) — ported to the carrier while
 # the status is active, gone with it. Any effect container may hold abilities.
 var abilities: Array[String] = []
@@ -140,8 +131,8 @@ static func from_dict(d: Dictionary) -> StatusData:
 	s.stacking         = str(d.get("stacking", STACK_REFRESH))
 	s.max_stacks       = int(d.get("max_stacks", 99))
 	s.stack_display    = str(d.get("stack_display", "count"))
-	var spread_spec: Variant = d.get("spread", {})
-	s.spread           = spread_spec if spread_spec is Dictionary else {}
+	if d.has("spread"):
+		push_error("StatusData %s: 'spread' is deleted (disavowed 2026-08-11, never designed) — dropped" % s.id)
 	s.abilities        = Array(d.get("abilities", []), TYPE_STRING, "", null)
 	var ev_v: Variant = d.get("eval", null)
 	if ev_v is Dictionary:
@@ -153,15 +144,8 @@ static func from_dict(d: Dictionary) -> StatusData:
 			s.eval_mods[str(k)] = float((ev_v as Dictionary)[k])
 	elif ev_v != null:
 		push_error("StatusData %s: 'eval' must be a dictionary of per-stack adds" % s.id)
-	for e_data: Dictionary in d.get("effects", []):
-		var eff := Effect.from_dict(e_data)
-		# Legacy shim (load-time data migration only — the runtime has no per-container
-		# behavior): an old modifier-kind effect in a STATUS file always scaled by stack
-		# count, so it defaults to the `stacks` tracker. Native (while) effects author
-		# their tracker explicitly; absent = the container-existence default.
-		if eff.kind == Effect.Kind.MODIFIER and eff.is_standing() and eff.tracker_spec.is_empty():
-			eff.tracker_spec = {"kind": "stacks"}
-		s.effects.append(eff)
+	if not (d.get("effects", []) as Array).is_empty():
+		push_error("StatusData %s: 'effects' is the deleted schema (effect-cleanse 2026-08-11) — dropped; re-author in the new schema" % s.id)
 	return s
 
 

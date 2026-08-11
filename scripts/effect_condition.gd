@@ -6,7 +6,6 @@ enum Comparator { GT, GTE, LT, LTE, EQ, NEQ }
 var attribute: String = ""
 var comparator: Comparator = Comparator.GTE
 var value: int = 0
-var custom_check: Callable
 # STATUS-form condition: passes when the card's carrying of the named status matches `present`
 # (e.g. { "status": "barrier", "present": false } = "only units without a Barrier"). When
 # `status_id` is set, the attribute/comparator fields are ignored.
@@ -43,10 +42,9 @@ var composition_counted := false
 # ALLEGIANCE-form condition: passes on the tested unit's SIDE relative to the effect's
 # OWNER (the container's side — every container has one, even holderless run-scope ones):
 # "ally" = same side (the holder itself included — do not "fix" that), "enemy" = opposite.
-# Replaces the old relation form's ally/enemy: allegiance is an owner question, never a
-# holder question. Identity-with-holder ("self") is NOT a condition — it is structural
-# (the `self` target kind / the trigger's participant gate); legacy {"relation": "self"}
-# dicts are extracted by the resolver parsers before conditions are built.
+# Allegiance is an owner question, never a holder question. Identity-with-holder ("self")
+# is NOT a condition — it is structural (the `self` target kind / the trigger's
+# participant gate).
 var allegiance: String = ""
 # CARD_TYPE-form condition: passes when the card is the named type ("unit" / "spell").
 # The native replacement for the legacy `filter` {"kind": ...} narrowing.
@@ -55,83 +53,18 @@ var card_type: String = ""
 # element (`true`) or none (`false`). Native replacement for filter {"has_element": true}.
 var has_element_set := false
 var has_element := false
-# VIABILITY-form condition — the one condition NOBODY AUTHORS. Every stat-targeting effect is
-# given one at load (see Effect._install_viability), and it asks the question the payload itself
-# implies: would this actually DO anything to that unit? A heal is not a heal to something at
-# full health; a debuff is not a debuff to a stat already sitting on its floor. Both used to
-# resolve, spend the card, play their numbers and change nothing.
+# (The load-derived VIABILITY form — the prohibit-non-ops implicit condition — and the
+# programmatic custom_check hook were deleted 2026-08-11: the viability installer died in
+# the targeting demolition and orphaned implementations don't get kept, and inline code
+# hooks are not authored data. The RULE survives in the design: every "is there any legal
+# play" question is a query INTO the rebuilt target resolver, TARGETING_DESIGN.md §3.)
 #
-# It rides in the ordinary conditions list on purpose. Everything that already consults
-# conditions — target resolution, the spell-targeting UI's eligibility, the enemy AI's target
-# picking, the autocast drop gate — inherits the rule with no second door to keep in sync, and
-# the same list is what decides whether a spell has any legal play left at all.
-#
-# `implicit` keeps it out of to_dict: it was never in the authored file and must never appear in
-# one (the effect schema round-trips byte-faithfully — see Effect.to_dict).
-var op_attribute: String = ""
-var op_amount: int = 0
-# The stats whose value CANNOT go below a floor once resolution has spoken, and the read that
-# answers where they stand. Reducing one that already sits on its floor writes a number nothing
-# will ever look at:
-#   attack     — StatMutation.damage floors a strike at 0, so a 0-attack unit swings for 0 either way
-#   shield     — the authored name for the per-round BASE; current_shield floors at 0
-#   strikes    — get_attribute floors it at 1; the basic attack cannot be stripped
-# Deliberately NOT here: speed (turn order and the dodge/crit formulae read it signed, so pushing
-# it further down keeps mattering), cost, and the dodge/crit bonuses (additive points on a
-# derived chance, meaningful below zero).
-const FLOORS := {
-	"attack":     ["attack", 0],
-	"shield":     ["max_shield", 0],
-	"max_shield": ["max_shield", 0],
-	"strikes":    ["strikes", 1],
-}
 # MUTATION-form condition: a predicate over a PENDING StatMutation rather than a unit —
-# valid only on INTERCEPTOR effects (load-validated), evaluated by the Resolver's match
-# via evaluate_mutation. "amount" is the one attribute today (e.g. {"mutation": "amount",
-# "comparator": "gt", "value": 0} = "only heals" on a health intercept); the comparator
-# machinery is shared with the attribute form.
+# the delivery-condition seat the interception system evaluates (TARGETING_DESIGN.md §8).
+# "amount" is the one attribute today (e.g. {"mutation": "amount", "comparator": "gt",
+# "value": 0} = "only heals" on a health intercept); the comparator machinery is shared
+# with the attribute form.
 var mutation_attr: String = ""
-# Derived at load rather than authored (the viability form). Kept out of to_dict: it was never
-# in the data file and must never appear in one.
-var implicit := false
-
-
-# Built only by Effect._install_viability — never by the authoring parser.
-static func viability(attr: String, amount: int) -> EffectCondition:
-	var c := EffectCondition.new()
-	c.op_attribute = attr
-	c.op_amount = amount
-	c.implicit = true
-	return c
-
-
-func is_viability_form() -> bool:
-	return not op_attribute.is_empty()
-
-
-# Would applying this effect's payload to `card` change anything at all? The rules it encodes
-# are the Resolver's own clamps, read back the other way round (see Resolver._apply_health /
-# _dispatch_apply / StatMutation.damage) — so "no-op" here means exactly what "no-op" means
-# once the mutation lands, and the two cannot drift apart into a card that lights up and then
-# does nothing.
-func _viable(card: CardInstance) -> bool:
-	if op_amount == 0:
-		return false                      # a zero payload is a no-op on anybody
-	match op_attribute:
-		"health":
-			# Positive is a HEAL, clamped to max — nothing to give a unit that is whole.
-			# Negative is a direct wound: it bypasses shield, has no floor, and can kill.
-			if op_amount > 0:
-				return card.current_health < card.get_attribute("max_health")
-			return true
-		"damage_taken":
-			return op_amount > 0          # the attack-form channel; a non-positive hit deals nothing
-	if op_amount > 0:
-		return true                       # raising a stat always lands
-	var floor_spec: Array = FLOORS.get(op_attribute, [])
-	if floor_spec.is_empty():
-		return true                       # unfloored: a reduction always means something
-	return card.get_attribute(str(floor_spec[0])) > int(floor_spec[1])
 
 
 static func make(attr: String, comp: Comparator, val: int) -> EffectCondition:
@@ -142,18 +75,12 @@ static func make(attr: String, comp: Comparator, val: int) -> EffectCondition:
 	return c
 
 
-static func make_custom(check: Callable) -> EffectCondition:
-	var c := EffectCondition.new()
-	c.custom_check = check
-	return c
-
-
-# Parses an authored condition dict (inverse of to_dict). Used by Effect.from_dict so all
-# effect/condition parsing lives in one place. A "status" key selects the status form, a
-# "composition" key (single id or list) the composition form, an "allegiance" key the
-# allegiance form. Legacy {"relation": "ally"/"enemy"} maps onto allegiance losslessly;
-# legacy {"relation": "self"} is STRUCTURAL and must be extracted by the caller first
-# (is_identity_dict) — one slipping through parses as vacuous-true, loudly.
+# Parses an authored condition dict (inverse of to_dict) — all condition parsing lives in
+# one place. A "status" key selects the status form, a "composition" key (single id or
+# list) the composition form, an "allegiance" key the allegiance form. Legacy
+# {"relation": "ally"/"enemy"} maps onto allegiance losslessly; {"relation": "self"} is
+# STRUCTURAL (the trigger's participant gate / the self target kind), never a condition —
+# it parses as vacuous-true, loudly.
 static func from_dict(d: Dictionary) -> EffectCondition:
 	if d.has("status"):
 		var c := EffectCondition.new()
@@ -206,13 +133,6 @@ static func from_dict(d: Dictionary) -> EffectCondition:
 	)
 
 
-# Whether a RAW condition dict is the legacy identity form ({"relation": "self"}) — the
-# resolver parsers consume these into structure (self target kind / trigger participant
-# gate) before building the condition list.
-static func is_identity_dict(d: Dictionary) -> bool:
-	return str(d.get("relation", "")) == "self"
-
-
 static func _str_comparator(s: String) -> Comparator:
 	match s:
 		"gt":  return Comparator.GT
@@ -224,15 +144,9 @@ static func _str_comparator(s: String) -> Comparator:
 	return Comparator.GTE
 
 
-# Inverse of CardData._parse_condition (custom_check is programmatic-only, not stored).
-# Legacy {"relation": "ally"/"enemy"} input serializes as its canonical allegiance form —
-# a deliberate native-schema migration (parse accepts both; emit converges on one).
+# Inverse of from_dict. Legacy {"relation": "ally"/"enemy"} input serializes as its
+# canonical allegiance form (parse accepts both; emit converges on one).
 func to_dict() -> Dictionary:
-	if implicit:
-		# Derived at load from the effect's own payload — it has no authored spelling, and every
-		# emit site drops it (see conditions_to_dicts). Reaching here means one forgot to.
-		push_error("EffectCondition: an implicit condition has no authored form — %s" % [op_attribute])
-		return {}
 	if not status_id.is_empty():
 		return {"status": status_id, "present": present}
 	if not composition.is_empty() and composition_counted:
@@ -266,26 +180,8 @@ static func comparator_key(c: Comparator) -> String:
 	return "gte"
 
 
-# `owner` is the SIDE of the effect this condition belongs to (the container's owner) —
-# required by the allegiance form, ignored by every other form. -1 = no side known
-# (allegiance then fails closed: you can't compare against a side that isn't there).
 func is_mutation_form() -> bool:
 	return not mutation_attr.is_empty()
-
-
-# Evaluates this condition against a SIDE participant (a CombatSide-targeted mutation
-# passing through the interceptor match). Only the allegiance form can speak about a
-# player; every other form is a unit predicate and fails CLOSED — a side has no stats,
-# statuses, or composition to test.
-func evaluate_side(side_owner: int, owner: int) -> bool:
-	if allegiance.is_empty():
-		return false
-	if owner < 0:
-		return false
-	match allegiance:
-		"ally":  return side_owner == owner
-		"enemy": return side_owner >= 0 and side_owner != owner
-	return false
 
 
 # Evaluates a MUTATION-form condition against a pending StatMutation (the Resolver's
@@ -296,13 +192,12 @@ func evaluate_mutation(m: StatMutation) -> bool:
 	return _compare(m.amount)
 
 
+# `owner` is the SIDE of the effect this condition belongs to (the container's owner) —
+# required by the allegiance form, ignored by every other form. -1 = no side known
+# (allegiance then fails closed: you can't compare against a side that isn't there).
 func evaluate(card: CardInstance, owner: int = -1) -> bool:
 	if is_mutation_form():
 		return true   # not a unit predicate — routed to evaluate_mutation; vacuous here
-	if is_viability_form():
-		return card != null and _viable(card)
-	if custom_check.is_valid():
-		return custom_check.call(card)
 	if not allegiance.is_empty():
 		if owner < 0:
 			return false

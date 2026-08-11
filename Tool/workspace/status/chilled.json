@@ -8,12 +8,5 @@
   "stacking": "stack",
   "max_stacks": 5,
   "decay": "duration",
-  "default_duration": 2,
-  "effects": [
-    {
-      "kind": "modifier",
-      "key": "unit.speed",
-      "amount": -1
-    }
-  ]
+  "default_duration": 2
 }

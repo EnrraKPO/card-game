@@ -5,15 +5,5 @@
   "cost": {
     "mana": 2,
     "tap": true
-  },
-  "effects": [
-    {
-      "trigger": "on_play",
-      "targeting_policy": "all_enemies",
-      "status": {
-        "id": "chilled",
-        "stacks": 1
-      }
-    }
-  ]
+  }
 }

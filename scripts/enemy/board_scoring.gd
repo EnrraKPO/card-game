@@ -1378,8 +1378,6 @@ static func unit_value(u: BoardState.UnitState, pricer: EnemyPersonality = null)
 	v += float(u.speed) * _stat_rate(pricer, "speed")
 	for id: String in u.ability_ids:
 		v += _ability_value(pricer, id)
-	v += float(u.triggered_effects) * (pricer.triggered_value() if pricer != null else BoardValueConfig.triggered_value())
-	v += float(u.live_effects) * (pricer.live_value() if pricer != null else BoardValueConfig.live_value())
 	return v
 
 
@@ -1451,8 +1449,6 @@ static func raw_unit_value(u: BoardState.UnitState, pricer: EnemyPersonality = n
 	v += float(u.speed) * _stat_rate(pricer, "speed")
 	for id: String in u.ability_ids:
 		v += _ability_value(pricer, id)
-	v += float(u.triggered_effects) * (pricer.triggered_value() if pricer != null else BoardValueConfig.triggered_value())
-	v += float(u.live_effects) * (pricer.live_value() if pricer != null else BoardValueConfig.live_value())
 	v += _unit_bonus(pricer, u.card_id)
 	return v
 
@@ -1677,7 +1673,7 @@ static func option_costs(state: BoardState) -> Array:
 			var ab := AbilityData.get_ability(ab_id)
 			if ab == null or ab.mana <= 0:
 				continue
-			if ab.tap and u.exhausted:
+			if not ab.ready(u.exhausted):
 				continue
 			costs.append(ab.mana)
 	return costs

@@ -1,5 +1,5 @@
 class_name CardInstance
-extends StatusCarrier
+extends GameEntity
 
 # Fires on every current_health write (damage, healing, shield bleed-through, initial draw/reset).
 # Combat connects this for the player King specifically to drive the header's live HP display (see
@@ -38,7 +38,7 @@ var modifiers: Dictionary = {}  # attribute id -> cumulative int delta
 # Charm ids attached to this card (display only — their mechanics are already baked into
 # `data` by DeckCard.make_instance). Empty for enemies, kings, and tokens.
 var charms: Array = []
-# (Live Statuses — `statuses` and its lookups — are inherited from StatusCarrier: a unit is
+# (Live Statuses — `statuses` and its lookups — are inherited from GameEntity: a unit is
 # one kind of status carrier, with zero say in status behavior. See StatusEngine.)
 
 # Provenance of the FATAL blow — stamped by the Resolver at the lethal HP crossing, read by
@@ -172,11 +172,12 @@ func ability_list() -> Array:
 	return out
 
 
-# Whether at least one of this unit's abilities is currently offerable — a tap-costed ability of
-# an already-tapped unit doesn't count (mana affordability is checked later, at cast time).
+# Whether at least one of this unit's abilities is currently offerable — the readiness half
+# of the one usability rule (AbilityData.ready); mana affordability is checked later, at
+# cast time.
 func has_available_abilities() -> bool:
 	for ab: AbilityData in ability_list():
-		if not (ab.tap and attack_exhausted):
+		if ab.ready(attack_exhausted):
 			return true
 	return false
 
@@ -192,11 +193,10 @@ func transform(new_data: CardData) -> void:
 		return
 	var damage := get_attribute("max_health") - current_health
 	data = new_data
-	# The data swap changes the BASE composition — invalidate before the health read below
-	# (its standing gates must see the new identity), not just via set_health's submit.
-	LiveEffects.invalidate_compositions()
+	# The data swap changes the BASE composition; reads derive fresh (nothing cached —
+	# LiveEffects ruling 2026-08-11), so the health read below sees the new identity.
 	Resolver.set_health(self, maxi(1, get_attribute("max_health") - damage))
 
 
 # (Status application/stacking rules live in StatusEngine.apply — the unit holds the list
-# it inherits from StatusCarrier and nothing else.)
+# it inherits from GameEntity and nothing else.)

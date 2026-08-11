@@ -7,32 +7,24 @@ extends Node
 # Exits 0 when green, 1 on any failure (CI-able). To add a suite: create tests/test_<area>.gd
 # extending TestCase (override suite_name() + run()) and list it in SUITES below.
 #
-# Run this after ANY change to the resolution layer (Resolver/StatMutation/EffectSystem/
-# statuses) — every migration onto the Resolver is a behavior-preservation exercise, and this
-# is the harness that proves it.
+# Run this after ANY change to the resolution layer (Resolver/StatMutation/statuses) —
+# every migration onto the Resolver is a behavior-preservation exercise, and this is the
+# harness that proves it.
 
-# TARGETING REMOVED (targeting-cleanup demolition): the pure targeting suites are deleted —
-# test_targeting (the resolver kinds), test_location_socket (the at_location kind), and
-# test_location_parity (the FROZEN pre-refactor distance formulas: that suite existed to
-# witness that the location refactor preserved the attack-preference ordering, and per its
-# own standing rule it dies when that behaviour is deliberately retired rather than being
-# edited to agree). Suites that exercised payloads THROUGH targeting are trimmed or disabled
-# below, each marked at the site. The rebuilt targeting authority ships with its own suites.
+# THE TEST DOCTRINE (user ruling, 2026-08-11): only tests that validate SYSTEMS may exist,
+# and only tests that validate systems that won't change may pass. Tests enforcing dead
+# machinery or content boundaries are banished, and everything red is gone: the demolition
+# quarantine table died with the throwaway code it was guarding (the rebuild's requirements
+# live in TARGETING_DESIGN.md; each rebuild phase ships its own native suite as it lands).
+# Green here means green — any failure is real breakage.
 const SUITES: Array = [
 	preload("res://tests/test_locations.gd"),
 	preload("res://tests/test_resolver.gd"),
-	preload("res://tests/test_triggers.gd"),
-	preload("res://tests/test_effects.gd"),
 	preload("res://tests/test_statuses.gd"),
-	preload("res://tests/test_interception.gd"),
-	preload("res://tests/test_castling.gd"),
-	preload("res://tests/test_materials.gd"),
 	preload("res://tests/test_combat_side.gd"),
-	preload("res://tests/test_composition_grants.gd"),
 	preload("res://tests/test_dodge.gd"),
 	preload("res://tests/test_crit.gd"),
 	preload("res://tests/test_economy.gd"),
-	preload("res://tests/test_spawn_strikes.gd"),
 	preload("res://tests/test_forge_costs.gd"),
 	preload("res://tests/test_encounter_pool.gd"),
 	preload("res://tests/test_decision_table.gd"),
@@ -42,74 +34,23 @@ const SUITES: Array = [
 	preload("res://tests/test_combat_world.gd"),
 	preload("res://tests/test_presenter.gd"),
 	preload("res://tests/test_cascade.gd"),
-	preload("res://tests/test_slot_layer.gd"),
-	preload("res://tests/test_burning.gd"),
 ]
-
-
-# ── DEMOLITION QUARANTINE ──────────────────────────────────────────────────────────────
-# Two demolitions feed this table. TARGETING (2026-08-09): every check that asserts an
-# effect LANDING or a strike FINDING someone fails by design — resolution is inert. CONTENT
-# (effect-cleanse, 2026-08-11, user ruling "forget all effects"): every authored effect
-# payload was stripped from data/, so checks that prove authored JSON works (statuses,
-# innates, named effects, abilities, relic/card payloads) fail until that content is
-# RE-AUTHORED in the new schema — never migrated. Those checks are the REBUILD'S
-# SPECIFICATION and regression net, so they are neither deleted nor silenced: each suite
-# below carries its expected failure count, the runner reports them as quarantined, and the
-# exit code stays green unless a suite fails MORE than expected (new breakage) or LESS
-# (tighten the table). The rebuild's exit criterion is driving every number here to zero —
-# resolution rebuilt AND content re-authored — and deleting this table.
-const QUARANTINE := {
-	"Trigger resolvers": 10,
-	"Effects & Interception": 17,
-	"Statuses": 17,
-	"Interception": 10,
-	"Castling & abilities": 5,
-	"Materials & merge": 3,
-	"Combat sides": 8,
-	"CompositionGrants": 13,
-	"Dodge": 4,
-	"Crit": 14,
-	"Spawn payload & multi-strike": 1,
-	# The sim's cast seam (CandidateApply's _run_cast clone) died with the other ON_PLAY
-	# dispatchers, taking the cost side the sim still performed for real (tap spend, hand
-	# removal, corpse capture); the content strip took the ability fixtures' payloads.
-	"Enemy engine": 30,
-	"Combat world": 4,
-	"Combat cascade": 1,
-	"Slot layer": 7,
-	# 36 → 23 when riders/restrikes were deleted outright (2026-08-11): disavowed, never
-	# user-designed — their rows were never spec, so they left the table instead of waiting
-	# for a rebuild.
-	"Burning ground": 23,
-}
 
 
 func _ready() -> void:
 	_clean_env()
 	var passed := 0
 	var failed := 0
-	var quarantined := 0
-	var unexpected := 0
 	for suite_script: GDScript in SUITES:
 		var suite: TestCase = suite_script.new()
 		print("── ", suite.suite_name(), " ──")
 		suite.run()
-		var expected: int = int(QUARANTINE.get(suite.suite_name(), 0))
 		passed += suite.passed
 		failed += suite.failed
-		if suite.failed == expected:
-			quarantined += expected
-			print("    %d passed, %d failed%s" % [suite.passed, suite.failed,
-					"" if expected == 0 else " (all quarantined — expected while targeting is demolished)"])
-		else:
-			unexpected += 1
-			print("    %d passed, %d failed — EXPECTED %d: %s" % [suite.passed, suite.failed,
-					expected, "NEW BREAKAGE" if suite.failed > expected else "tighten the quarantine table"])
+		print("    %d passed, %d failed" % [suite.passed, suite.failed])
 	print("")
-	print("TOTAL: %d passed, %d failed (%d quarantined by the targeting demolition) — %s"
-			% [passed, failed, quarantined, "OK" if unexpected == 0 else "FAILURES"])
-	get_tree().quit(0 if unexpected == 0 else 1)
+	print("TOTAL: %d passed, %d failed — %s" % [passed, failed, "OK" if failed == 0 else "FAILURES"])
+	get_tree().quit(0 if failed == 0 else 1)
 
 
 # A deterministic, in-memory environment: a FRESH profile and an EMPTY modifier set — never a

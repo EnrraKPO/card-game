@@ -55,24 +55,10 @@ func unit_fade(_inst: CardInstance) -> void:
 
 # One phase moment's GROUND procs, batched board-wide: each entry {slot, status_id, results}.
 # Presented as ONE beat — every acting tab glints at once and the results land together (the
-# whole fire acts as one; contrast show_ground_spread_roll, where each flame acts alone).
-# See SLOT_LAYER_DESIGN.md.
+# whole fire acts as one). See SLOT_LAYER_DESIGN.md.
+# (The spread-roll method left this surface with the deleted spread mechanism, 2026-08-11 —
+# disavowed, never user-designed.)
 func show_ground_results(_procs: Array) -> void:
-	pass
-
-
-# One spread-tier ROLL (CombatCascade._spread_statuses): `carrier`'s `stack_index`-th pip of
-# `status_id` just rolled, with `outcome` &"spread" (a stack leapt to slot `target`), &"fade"
-# (that flame died down) or &"hold" (nothing). The carrier is a BoardSlot (a ground tab) or a
-# CardInstance (a card pip) — one cue vocabulary, either layer. The rolling glint is identical
-# for every outcome — the target's ignition flare is the only success signal.
-# `arrival_results` = what the arriving flame did to the destination's occupant (the spread
-# `arrival` effect's results — damage numbers etc.), presented with the catch.
-# `arrived_id` = the status the DESTINATION caught (spread.status may differ from the roller's
-# own — a unit's ablaze arrives on the ground as burning); empty = same as `status_id`.
-func show_spread_roll(_carrier: StatusCarrier, _status_id: String, _stack_index: int,
-		_outcome: StringName, _target: BoardSlot, _arrival_results: Array = [],
-		_arrived_id: String = "") -> void:
 	pass
 
 

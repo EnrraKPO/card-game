@@ -1,11 +1,11 @@
 class_name RelicData
 extends RefCounted
 
-# A relic is a run-long item that grants run-wide Effects — the run-scoped counterpart to a
-# profile Upgrade node (see UpgradeNode). Mechanically identical: a relic just carries an
-# Array[Effect] that gets folded into the run's ModifierSet (see ModifierSet.for_run), so relic
-# effects flow through the SAME Effect/modifier system as upgrades and cards. Held on RunData
-# (run.relics, by id), acquired through the unified ItemKind/Grant layer, and discardable at will.
+# A relic is a run-long item — a run-scope effect container (TARGETING_DESIGN.md §1), the
+# counterpart to a profile Upgrade node (see UpgradeNode). What a relic DOES was razed with
+# the effect layer (2026-08-11) and re-authors in the new schema when the rebuild reaches
+# this container (each relic's description is its brief). Held on RunData (run.relics, by
+# id), acquired through the unified ItemKind/Grant layer, and discardable at will.
 # Data-driven from data/relics/*.json.
 
 var id: String
@@ -29,11 +29,9 @@ var letter: String = "✦"                      # short glyph shown on the chip 
 var icon: Texture2D = null                     # optional illustration; when present it replaces the
 											   # coloured letter chip everywhere the relic is shown
 var price: int = 80                            # gold cost when offered in a shop
-var effects: Array = []                        # Array[Effect] — the run-wide effects this relic grants
-# A CONSUMABLE relic is an item the player SPENDS, not a passive: its effects are transient
-# (applied once, on use — never folded passively, which the trigger kind already guarantees:
-# a transient resolver listens to no event), used from combat by holding its chip (see
-# ConsumableChip), and discarded by the use. It still holds a normal relic slot until spent.
+# A CONSUMABLE relic is an item the player SPENDS, not a passive: used from combat by
+# holding its chip (see ConsumableChip), and discarded by the use. It still holds a normal
+# relic slot until spent.
 var consumable: bool = false
 
 static var _all: Dictionary = {}
@@ -76,10 +74,8 @@ static func _load_json(path: String) -> void:
 			r.icon = load(art_path)
 		r.price        = int(d.get("price", 80))
 		r.consumable   = bool(d.get("consumable", false))
-		for e: Dictionary in d.get("effects", []):
-			# No owner stamping: the effect stays container-blind. The relic-chip glint is
-			# driven by dispatch context (ModifierSet.owner_of → trigger_global_grouped).
-			r.effects.append(Effect.from_dict(e))
+		if not (d.get("effects", []) as Array).is_empty():
+			push_error("RelicData %s: 'effects' is the deleted schema (effect-cleanse 2026-08-11) — dropped; re-author in the new schema" % r.id)
 		if not r.id.is_empty():
 			_all[r.id] = r
 

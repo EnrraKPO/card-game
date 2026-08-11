@@ -519,8 +519,8 @@ func _ready() -> void:
 			var victim := CardInstance.from_data(CardData.get_card("pawn"))
 			gboard.place_enemy_card(victim, BoardLocation.at(1, 1, 0))
 			var gworld: CombatWorld = gboard.world
-			StatusEngine.apply(gworld.slot_at(1, 1, 0), "burning", Effect.STATUS_DURATION_DEFAULT, 1, null)
-			StatusEngine.apply(gworld.slot_at(0, 2, 1), "burning", Effect.STATUS_DURATION_DEFAULT, 1, null)
+			StatusEngine.apply(gworld.slot_at(1, 1, 0), "burning", StatusEngine.DURATION_DEFAULT, 1, null)
+			StatusEngine.apply(gworld.slot_at(0, 2, 1), "burning", StatusEngine.DURATION_DEFAULT, 1, null)
 			gboard.refresh()
 			await get_tree().process_frame
 	# ("armeddrag" retired with the armed-autocast gesture — effect-cleanse demolition.)

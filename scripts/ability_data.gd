@@ -39,13 +39,11 @@ var description: String:
 		_desc_override = value
 var mana: int = 0
 var tap: bool = true
-# Autocast-capable (AUTHORED FACT, kept through the demolition): the quick-cast arming
-# mechanism it once drove died with the ability costume and returns on the rebuilt
-# ActivatedEffect; this flag marks which abilities offer it.
-var autocast: bool = false
-# For material-delivery abilities: the composition key delivered (see EffectHooks.deliver_material).
-var material: String = ""
-var effects: Array = []   # Array[Effect] — the ordinary schema (targeting, conditions, payloads)
+# (The `autocast` flag, the `material` delivery key, and the carried `effects` array were
+# deleted 2026-08-11 with the effect layer: their mechanisms are razed and nothing may
+# exist on round-trip life-support. The rebuilt ActivatedEffect (TARGETING_DESIGN.md §7)
+# is the runtime body abilities have been missing; what an ability DOES is re-authored in
+# the new schema when the rebuild reaches this container.)
 
 var _display: CardData = null
 
@@ -89,12 +87,8 @@ static func from_dict(d: Dictionary) -> AbilityData:
 	var cost: Dictionary = d.get("cost", {})
 	ab.mana         = int(cost.get("mana", 0))
 	ab.tap          = bool(cost.get("tap", true))
-	ab.autocast     = bool(d.get("autocast", false))
-	ab.material     = str(d.get("material", ""))
-	for e_data: Dictionary in d.get("effects", []):
-		# No owner stamping — effects are container-blind (see EFFECT_SYSTEM_DESIGN.md §2.2);
-		# ability activation presents its own cue (the tray token), no per-effect id needed.
-		ab.effects.append(Effect.from_dict(e_data))
+	if d.has("effects"):
+		push_error("AbilityData %s: 'effects' is the deleted schema (effect-cleanse 2026-08-11) — dropped; re-author in the new schema" % ab.id)
 	return ab
 
 
@@ -106,9 +100,12 @@ static func all() -> Array:
 	return _all.values()
 
 
-# FALLBACK synthesis for a rook building whose material delivery no one has authored (e.g. a
-# forge-derived elemental rook): builds the same shape an authored definition would carry, from
-# the same authored schema, and registers it — authoring the id in data/abilities/ replaces it.
+# FALLBACK synthesis for a rook building whose material delivery no one has authored (e.g.
+# a forge-derived elemental rook): registers a cost-and-text shell so the building still
+# PRESENTS its delivery ability. What it DOES is razed with the effect layer — the
+# material-merge semantics become an authored payload species in the new schema (the
+# deliver_material NEED recorded at the hook burn), and this synthesis then authors it
+# natively. Authoring the id in data/abilities/ replaces the fallback either way.
 static func material_ability(elems: Array, chess: Array) -> AbilityData:
 	var key := CardData.composition_key(elems, chess)
 	var ab_id := "deliver_" + key
@@ -117,20 +114,7 @@ static func material_ability(elems: Array, chess: Array) -> AbilityData:
 	var remainder := CardData.get_card(key)
 	if remainder == null:
 		return null
-	var ab := from_dict({
-		"id": ab_id,
-		"cost": {"mana": remainder.cost, "tap": true},
-		"material": key,
-		"effects": [{
-			"kind": "custom", "custom": "deliver_material",
-			"trigger": "on_play", "targeting_policy": "manual_slot",
-			"conditions": [
-				{"composition": ["king", "rook"], "present": false},
-				{"attribute": "piece_count", "comparator": "lte", "value": 2 - chess.size()},
-				{"attribute": "element_count", "comparator": "lte", "value": 2 - elems.size()},
-			],
-		}],
-	})
+	var ab := from_dict({"id": ab_id, "cost": {"mana": remainder.cost, "tap": true}})
 	# Runtime-composed ability (no Loc key): its text lives only in the override. Uses the
 	# remainder card's localized name; the English scaffolding is the parked derived-string case.
 	ab.display_name = remainder.display_name + " Material"
@@ -144,17 +128,26 @@ static func material_ability(elems: Array, chess: Array) -> AbilityData:
 # ability (today the Inspect Abilities button's ready-glow via CombatContext.ability_usable;
 # the rebuilt activation gate joins it). Pure query of live facts, so no two consumers can
 # ever disagree about whether an ability is castable this moment.
-func usable_by(holder: CardInstance, mana: int) -> bool:
+#
+# Its READINESS half stands alone below because two consumers legitimately ask it apart
+# from affordability: the tray offer defers mana to cast time (CardInstance.
+# has_available_abilities), and the enemy engine's sim asks against its own planned
+# `exhausted` snapshot rather than the live holder. Neither may re-spell the clause.
+func usable_by(holder: CardInstance, mana_available: int) -> bool:
 	if holder == null:
 		return false
-	if tap and holder.attack_exhausted:
-		return false
-	return self.mana <= mana
+	return ready(holder.attack_exhausted) and self.mana <= mana_available
+
+
+# The readiness half of THE usability rule: a tap-costed ability needs an unspent tap.
+# `exhausted` is passed in rather than read off a holder so a simulation can ask about
+# its hypothetical state through the same one clause.
+func ready(exhausted: bool) -> bool:
+	return not (tap and exhausted)
 
 
 # The card-shaped VIEW of this ability for the tray (interim UX: abilities present alongside
-# cards). Purely presentational — never registered, in no pool; shares this ability's effects
-# so the targeting/eligibility flows read them unchanged. Art: assets/abilities/<id>.png,
+# cards). Purely presentational — never registered, in no pool. Art: assets/abilities/<id>.png,
 # placeholder until authored.
 func display_card() -> CardData:
 	if _display != null:
@@ -165,7 +158,6 @@ func display_card() -> CardData:
 	c.cost = mana
 	c.card_type = CardData.CardType.SPELL
 	c.description = description
-	c.effects = effects
 	# Art: assets/abilities/<id>.png preferred; assets/cards/<id>.png accepted too (the material
 	# art predates the ability migration and lives there); placeholder otherwise.
 	var art := ABILITY_ART_DIR + id + ".png"

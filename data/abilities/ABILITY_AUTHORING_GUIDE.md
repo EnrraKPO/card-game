@@ -18,8 +18,11 @@ not cards — they live in no pool, deck, or collection.
 | `display_name` | string | No | Shown on the tray entry (defaults from `id`) |
 | `description` | string | No | Tooltip text |
 | `cost` | object | No | `{ "mana": int, "tap": bool }`. `tap` (default **true**) spends the holder's action for the round (it neither attacks nor taps again until the round refresh); a tapped holder's tap-costed abilities are not offered at all |
-| `material` | string | No | For material-delivery abilities: the composition key delivered (read by the `deliver_material` hook) |
-| `autocast` | bool | No | Autocast-capable (default false) — an AUTHORED FACT kept through the demolition. The quick-cast mechanism it drives (arming + drag-fire) is razed and returns on the rebuilt ActivatedEffect |
+
+(The `material` and `autocast` fields were DELETED 2026-08-11 with the effect layer —
+their mechanisms are razed and orphaned authored facts don't get kept. Material delivery
+and quick-cast return as designed parts of the rebuilt ActivatedEffect, authored in the
+new schema.)
 
 ## Effects — FORGOTTEN (effect-cleanse, 2026-08-11)
 

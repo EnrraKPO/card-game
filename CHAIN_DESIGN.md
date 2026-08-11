@@ -13,8 +13,13 @@ user rulings recorded in §2.3, §2.4, §2.6 and §5.3 (walk not plan; leap from
 never onto one; hops count units struck; the arc ships with the rules) were answers to
 questions asked too early, and the user is free to withdraw them.
 
+Since written, the effect pipeline this draft assumed was DELETED whole (effect-cleanse,
+2026-08-11): any chain mechanic now re-derives on `TARGETING_DESIGN.md`'s vocabulary
+(where a chain would be a resolver with a relocating current), not on Effect/EffectSystem.
+
 Sibling docs: `LOCATION_MANAGER_DESIGN.md` (the prerequisite), `EFFECT_SYSTEM_DESIGN.md`
-(effect pipeline), `SLOT_LAYER_DESIGN.md` (the position-first targeting ruling, §2.4).
+(the PRIOR generation's effect pipeline — superseded by `TARGETING_DESIGN.md`),
+`SLOT_LAYER_DESIGN.md` (the position-first targeting ruling, §2.4).
 
 ---
 

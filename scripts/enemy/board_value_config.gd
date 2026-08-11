@@ -45,8 +45,9 @@ static func _defaults() -> Dictionary:
 		},
 		"ability_default": 2.0,     # any activated ability, unless priced by id below
 		"ability_values": {},       # per-ability-id overrides, e.g. {"heal": 3.0}
-		"triggered_default": 1.5,   # per event-driven effect (Kind TRIGGERED/CUSTOM)
-		"live_default": 1.5,        # per standing effect (Kind MODIFIER/INTERCEPTOR)
+		# (triggered_default / live_default — the per-effect-category prices — died with
+		# the effect layer, 2026-08-11; the rebuilt structures re-enter category pricing
+		# with their own keys.)
 		# ── the valuation pass (BoardScoring.run_valuation) ──
 		# THE persistence dial, 0..1: how much a unit's likelihood of dying this turn
 		# discounts its raw worth (value = raw × lerp(1, persistence, this)). 0 = a dying
@@ -93,8 +94,7 @@ static func _merge(dst: Dictionary, src: Dictionary) -> void:
 			var v: Variant = (src["stat_rates"] as Dictionary)[key]
 			if rates.has(key) and (v is float or v is int):
 				rates[key] = float(v)
-	for key: String in ["ability_default", "triggered_default", "live_default",
-			"persistence_weight"]:
+	for key: String in ["ability_default", "persistence_weight"]:
 		var v: Variant = src.get(key)
 		if v is float or v is int:
 			dst[key] = float(v)
@@ -138,10 +138,6 @@ static func ability_value(id: String) -> float:
 	return float(_config()["ability_default"])
 
 
-static func triggered_value() -> float:
-	return float(_config()["triggered_default"])
-
-
 # ── The valuation pass's own knobs (BoardScoring.run_valuation) ────────────────────────
 
 # The persistence dial, clamped to its meaningful range (see _defaults).
@@ -164,7 +160,3 @@ static func role_value(u: BoardState.UnitState) -> float:
 
 static func unit_bonus(card_id: String) -> float:
 	return float((_config()["unit_values"] as Dictionary).get(card_id, 0.0))
-
-
-static func live_value() -> float:
-	return float(_config()["live_default"])

@@ -1,10 +1,12 @@
 extends TestCase
 
-# CombatSide: player-targeted effects (draw / discard / mana / max_mana) as Resolver
-# mutations on a side object — the forms (floors, pile/hand limits, NO mana cap),
-# targetless side-stat payloads (the `side` target kind is DEAD — TARGETING_DESIGN.md §10),
-# interception over side mutations (allegiance vs side.owner, channel gating incl. the
-# cost channel), and the authoring round-trip. See EFFECT_SYSTEM_DESIGN.md §10.
+# CombatSide through the arbitration Resolver — the side-stat mutation forms (draw /
+# discard / mana / max_mana): floors, pile/hand limits, NO mana cap (settled), set-forms,
+# and presentation signals. This is Resolver + StatMutation behavior, a surviving system.
+#
+# Deliberately absent: anything through the old effect layer (dispatch payloads, legacy
+# interceptors, authored content) — banished with that machinery; the rebuild's own suites
+# cover side-stat payloads when the new structures deliver them.
 
 
 func suite_name() -> String:
@@ -18,11 +20,7 @@ func run() -> void:
 	_max_mana_form()
 	_set_forms()
 	_signals()
-	_effect_payload()
-	_interception()
-	_cost_channel()
-	_authoring_roundtrip()
-	_authored_content_end_to_end()
+	_side_stat_vocabulary()
 
 
 # A side with `n` units in its draw pile.
@@ -33,16 +31,6 @@ func _side_with_pile(side_owner: int, n: int) -> CombatSide:
 		inst.owner = side_owner
 		s.draw_pile.append(inst)
 	return s
-
-
-func _seed_run_set(effect_dict: Dictionary, owner_kind: String, owner_id: String) -> void:
-	var s := ModifierSet.new()
-	s._add_owned(Effect.from_dict(effect_dict), owner_kind, owner_id)
-	GameData.current_modifiers = s
-
-
-func _clear_run_set() -> void:
-	GameData.current_modifiers = ModifierSet.new()
 
 
 func _draw_form() -> void:
@@ -121,132 +109,6 @@ func _signals() -> void:
 	check_eq(drawn_seen.size(), 2, "a no-op draw emits nothing")
 
 
-func _ctx_with_sides(holder: CardInstance, player: CombatSide, enemy: CombatSide) -> EffectContext:
-	var ctx := ctx_for(holder)
-	ctx.player_side = player
-	ctx.enemy_side = enemy
-	return ctx
-
-
-# SIDE TARGET KIND DEAD (effect-cleanse demolition): side payloads are TARGETLESS — the
-# recipient derives from the holder's allegiance anchor, never from an authored target
-# (TARGETING_DESIGN.md §2/§10). Opponent-directed side payloads, if ever wanted, are a
-# PAYLOAD variant, not a target kind (Decision Record).
-
-
-func _effect_payload() -> void:
-	# The full authored path: "on play, your side draws 2" through EffectSystem.
-	var player := _side_with_pile(0, 3)
-	var enemy := CombatSide.make(1)
-	var caster := unit("pawn")
-	var eff := Effect.from_dict({"trigger": "on_play", "attribute": "draw", "amount": 2})
-	var results := EffectSystem.apply_single(eff, caster, _ctx_with_sides(caster, player, enemy))
-	check_eq(results.size(), 1, "one side result")
-	var r: Dictionary = {} if results.is_empty() else results[0]
-	check(r.get("target") == player and str(r.get("attribute", "")) == "draw"
-			and int(r.get("delta", 0)) == 2, "result dict: side target, draw, delta 2")
-	check_eq(player.hand.size(), 2, "the cards actually arrived")
-	# Empty pile → delta 0 → no result (the no-op rule the cue system relies on).
-	var dry := EffectSystem.apply_single(eff, caster,
-			_ctx_with_sides(caster, CombatSide.make(0), enemy))
-	var _drained := Resolver.submit(StatMutation.make(player, StatMutation.DRAW, 9))
-	check(dry.is_empty(), "an empty-pile draw produces no result (no cue)")
-
-
-func _interception() -> void:
-	# "Your draws are doubled" — a run-set interceptor over side mutations. The target
-	# participant IS the side: allegiance compares side.owner against the run anchor.
-	_seed_run_set({"kind": "interceptor", "intercept": "draw",
-			"of": {"participant": "target", "relation": "ally"}, "op": "mul", "amount": 2},
-			"relic", "twin_lens")
-	var player := _side_with_pile(0, 10)
-	var enemy := _side_with_pile(1, 6)
-	var out := Resolver.submit(StatMutation.make(player, StatMutation.DRAW, 2))
-	check_eq(out.delta, 4, "the player's draw 2 doubles to 4")
-	check(not out.interceptions.is_empty()
-			and str(out.interceptions[0].get("owner_id", "")) == "twin_lens",
-			"the rewrite records its owner for the cue")
-	var eout := Resolver.submit(StatMutation.make(enemy, StatMutation.DRAW, 2))
-	check_eq(eout.delta, 2, "the ENEMY side's draw is untouched (allegiance vs side.owner)")
-	_clear_run_set()
-	# Re-floor: an intercepted-away draw draws nothing, never discards.
-	_seed_run_set({"kind": "interceptor", "intercept": "draw",
-			"of": {"participant": "target", "relation": "ally"}, "amount": -5},
-			"relic", "drought_stone")
-	var dout := Resolver.submit(StatMutation.make(player, StatMutation.DRAW, 2))
-	check_eq(dout.delta, 0, "a draw rewritten below 0 floors at 0")
-	check_eq(player.hand.size(), 4, "no cards moved either way")
-	_clear_run_set()
-	# Source-participant gate still works when the TARGET is a side: a unit whose own
-	# effects cause the draw boosts it (identity on the source).
-	var booster := CardInstance.from_data(CardData.build_from_dict({
-		"id": "_test_draw_booster", "display_name": "T",
-		"cost": 1, "attack": 1, "health": 5, "speed": 1,
-		"effects": [
-			{"intercept": "draw",
-			 "of": {"participant": "source", "relation": "self"}, "amount": 1},
-		]}))
-	booster.owner = 0
-	var bout := Resolver.submit(StatMutation.make(player, StatMutation.DRAW, 1, booster))
-	check_eq(bout.delta, 2, "a source-held interceptor boosts its own side draw (+1)")
-	var other := unit("pawn")
-	var oout := Resolver.submit(StatMutation.make(player, StatMutation.DRAW, 1, other))
-	check_eq(oout.delta, 1, "someone else's draw is untouched (identity gate)")
-
-
-func _cost_channel() -> void:
-	# "Mana gains doubled" must never double SPENDING: gains ride CH_EFFECT, payments
-	# ride CH_COST — the interceptor subscribes by channel.
-	_seed_run_set({"kind": "interceptor", "intercept": "mana", "channel": "effect",
-			"of": {"participant": "target", "relation": "ally"}, "op": "mul", "amount": 2},
-			"relic", "mana_prism")
-	var s := CombatSide.make(0)
-	s.max_mana = 5
-	s.mana = 3
-	var gain := Resolver.submit(StatMutation.make(s, StatMutation.MANA, 2))
-	check_eq(gain.delta, 4, "an effect-channel mana gain doubles")
-	var pay := Resolver.submit(StatMutation.make(s, StatMutation.MANA, -3,
-			null, StatMutation.CH_COST))
-	check_eq(pay.delta, -3, "a cost-channel payment is untouched")
-	_clear_run_set()
-
-
-func _authoring_roundtrip() -> void:
-	# A side-stat effect is targetless: it authors no targets and re-emits none.
-	var d := {"trigger": "on_play", "attribute": "draw", "amount": 2}
-	var eff := Effect.from_dict(d)
-	var out := eff.to_dict()
-	check(not out.has("targets"), "a targetless side payload re-emits no targets dict")
+func _side_stat_vocabulary() -> void:
 	check(StatMutation.is_side_stat("draw") and StatMutation.is_side_stat("max_mana")
 			and not StatMutation.is_side_stat("attack"), "the side-stat vocabulary set")
-
-
-func _authored_content_end_to_end() -> void:
-	# The REAL shipped data: darkness_pawn's on-death draw (card tier) and the Reaper's
-	# Ledger relic (run tier, through the REAL ModifierSet.for_run build) — proves the
-	# authored JSON works, not just in-test dicts.
-	var player := _side_with_pile(0, 6)
-	var enemy_side := CombatSide.make(1)
-	var pawn := unit("darkness_pawn")
-	var ctx := _ctx_with_sides(pawn, player, enemy_side)
-	var results := EffectSystem.trigger(GameEvent.make(&"death", pawn), pawn, ctx)
-	check_eq(player.hand.size(), 1, "darkness_pawn (authored JSON): its own death draws 1")
-	check_eq(results.size(), 1, "…reported as one side result")
-
-	var run := RunData.from_dict({})
-	run.relics = ["reapers_ledger"]
-	GameData.current_modifiers = ModifierSet.for_run(ProfileData.from_dict({}), run)
-	var knight := unit("darkness_knight")
-	var kctx := _ctx_with_sides(knight, player, enemy_side)
-	kctx.subject = knight
-	var rres := EffectSystem.trigger_global(GameEvent.make(&"death", knight), kctx)
-	check_eq(player.hand.size(), 2, "Reaper's Ledger (authored JSON): a darkness death draws 1")
-	check(not rres.is_empty(), "…via the run tier")
-	# The composition gate: a plain pawn's death feeds no Ledger.
-	var plain := unit("pawn")
-	var pctx := _ctx_with_sides(plain, player, enemy_side)
-	pctx.subject = plain
-	var pres := EffectSystem.trigger_global(GameEvent.make(&"death", plain), pctx)
-	check(pres.is_empty() and player.hand.size() == 2,
-			"a non-darkness death draws nothing (subject_elements gate)")
-	_clear_run_set()

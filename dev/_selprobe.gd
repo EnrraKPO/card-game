@@ -83,27 +83,8 @@ func _ready() -> void:
 	await _click(sv, hand_at);  _report("9 the hand card", hand)
 	await _click(sv, hand_at);  _report("10 same card = never mind", hand)
 
-	# ── The ability sub-pick: aim from the tray, panel must stay open on the holder ──
-	await _click(sv, unit_at);  _report("11 the unit (panel opens)", hand)
-	var tok: CardUI = null
-	for g: CardUI in hand.get("_gen_cards"):
-		tok = g
-		break
-	if tok == null:
-		print("PROBE: no ability token in tray")
-		get_tree().quit()
-		return
-	var tok_at := tok.get_global_rect().get_center()
-	await _click(sv, tok_at)
-	_report("12 click its ability token", hand)
-	await _click(sv, tok_at)
-	_report("13 same token = un-aim", hand)
-	await _click(sv, tok_at)
-	_report("14 aim it again", hand)
-	await _click(sv, dead)
-	_report("15 dead space (clears ALL)", hand)
-	await _click(sv, unit_at)
-	_report("16 the unit again", hand)
+	# (The ability sub-pick steps died with the sub-pick API, 2026-08-11 — the rebuilt
+	# activation gesture brings its own probe.)
 
 	# ── Click-placement must still commit through the dismissal guard ──
 	await _click(sv, dead)      # close the panel so the hand row is back
@@ -147,10 +128,8 @@ func _report(label: String, hand: Node) -> void:
 	if sub is CardInstance:
 		name_of = (sub as CardInstance).data.id
 	var act: Variant = _combat.get("_interaction").current()
-	var ab: Variant = Selection.current_ability()
-	print("PROBE %-26s pick=%-9s ability=%-10s panel=%-5s shows_unit=%-5s aiming=%s" % [
+	print("PROBE %-26s pick=%-9s panel=%-5s shows_unit=%-5s aiming=%s" % [
 			label, name_of,
-			(ab as AbilityData).id if ab is AbilityData else "none",
 			hand.get("_desc_panel").visible,
 			hand.inspected_instance() != null,
 			"none" if act == null else ("MODAL" if act.modal else "static")])

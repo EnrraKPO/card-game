@@ -12,8 +12,8 @@ falls off.
 > re-authoring brief; the old payload spellings live in git history.
 
 Statuses are defined as JSON files in `data/statuses/`. Any `.json` file there is loaded at
-startup (a file may hold a single status or an array of them). They are referenced by `id` from a
-card/spell/charm/upgrade effect's `status` payload (see the card guide).
+startup (a file may hold a single status or an array of them). They will be referenced by `id`
+from a container's status payloads once the rebuilt effect system lands.
 
 ---
 
@@ -63,8 +63,8 @@ Cards — and their statuses — are rebuilt every fight, so nothing persists be
 
 ## Examples
 
-**Empowered** — a simple timed buff. A `modifier` effect folds into the card's Attack while the
-status is active (it disappears automatically when the status falls off):
+**Empowered** — a simple timed buff (lifecycle only; its Attack payload re-authors in the
+new schema and disappears automatically when the status falls off):
 ```json
 {
   "id": "empowered", "display_name": "Empowered", "beneficial": true,
@@ -74,8 +74,8 @@ status is active (it disappears automatically when the status falls off):
 (Its old payload — a `unit.attack` modifier folding while active — returns as a PassiveEffect
 contribution in the new language.)
 
-**Withered** — a periodic debuff that stacks. The `on_turn_end` effect drains 1 HP each round,
-and because `stacking` is `stack`, re-applying makes it drain harder:
+**Withered** — a periodic debuff that stacks (the round-end 1 HP drain re-authors in the new
+schema; because `stacking` is `stack`, re-applying makes it drain harder):
 ```json
 {
   "id": "withered", "display_name": "Withered", "beneficial": false,
@@ -84,8 +84,9 @@ and because `stacking` is `stack`, re-applying makes it drain harder:
 ```
 
 **Poison** — Slay-the-Spire poison. `decay: "stacks"` makes the **count** itself the timer: each
-turn-start the unit takes damage equal to the count (the `-1` effect scaled by stacks), then the
-count drops by 1, until it's gone. `stacking: "stack"` means re-applying adds to the count:
+turn-start the unit takes damage equal to the count (a per-stack tick payload, re-authored in
+the new schema), then the count drops by 1, until it's gone. `stacking: "stack"` means
+re-applying adds to the count:
 ```json
 {
   "id": "poison", "display_name": "Poison", "beneficial": false,
@@ -107,75 +108,48 @@ status's own lifecycle fields above do the rest).
 
 ## Interceptors: rewriting a mutation before it commits
 
-> The SPELLINGS below are the forgotten language (reference only — do not author them); the
-> SEMANTICS are the arbitration layer's living spec and survive the rebuild untouched:
-> channels, the three interceptable passes, re-flooring, and `decay: "intercept"`'s
-> spends-only-when-it-changes-something rule. InterceptorEffect re-authors them in the new
-> schema (TARGETING_DESIGN.md §8).
+> The old spellings are burned with the effect language (do not author them; git history is
+> the reference). The SEMANTICS below are the arbitration layer's living spec and survive
+> the rebuild untouched: channels, the three interceptable passes, re-flooring, and
+> `decay: "intercept"`'s spends-only-when-it-changes-something rule. InterceptorEffect
+> re-authors them in the new schema (TARGETING_DESIGN.md §8).
 
 Every stat change in the game is a **StatMutation** submitted to the **Resolver** (the single
 writer — it owns the shield-first damage resolution; no effect or combat code knows shields
-exist). An **interceptor** effect is a standing rewrite that fires *inside* that gate: it is
-NOT an event reaction (no `trigger`) — it matches mutations declaratively and adjusts the
-amount before it commits.
+exist). An **interceptor** is a standing rewrite that fires *inside* that gate: it is NOT an
+event reaction — it matches pending mutations declaratively and adjusts the amount before it
+commits. An interceptor is defined by:
 
-```json
-{ "intercept": "damage", "channel": "attack", "role": "source", "op": "mul", "amount": 0, "chance": 0.5 }
-```
+- **what it rewrites** — the mutation stat (a hit's damage, a health change, the shield
+  share, status stacks being applied, a side stat, an additive attribute);
+- **provenance** — the mutation's channel; an attack-only interceptor ignores poison ticks
+  and spell damage;
+- **whose side** — whether the holder must be the mutation's *source* (Blind sits on the
+  attacker) or its *target* (armor and barriers sit on the receiver);
+- **the operation** — multiply (×0 = full block, reads as **Miss**) or shift (negative is
+  armor that shaves the hit, scaled by stacks);
+- **an optional chance**, rolled per matching mutation.
 
-| Field | Meaning |
-|---|---|
-| `intercept` | The mutation stat to rewrite (`damage`, `health`, `shield_pool`, `status`, a side stat, or an additive attribute) |
-| `channel` | Provenance filter: `attack` = a unit's strike; omit to match any channel (so e.g. an attack-only barrier ignores poison ticks and spell damage) |
-| `role` | Which side the holder must be: `source` (the causing unit — Blind) or `target` (the receiving unit — armor, barriers) |
-| `op` / `amount` | `mul` scales the amount (`0` = full block, reads as **Miss**); default add shifts it — negative is armor (`-3` shaves 3 off the hit), scaled by stacks |
-| `chance` | Optional roll per matching mutation |
-
-A `damage` amount is re-floored at 0 after every rewrite — a blocked strike is 0, never a heal.
+A damage amount is re-floored at 0 after every rewrite — a blocked strike is 0, never a heal.
 
 ### A hit resolves in three interceptable passes
 
-`damage` is the hit's **pre-split total**. Once it settles, the Resolver apportions it
-shield-first, and each share becomes its own pending mutation **on the hit's channel** — the
-shield share as `shield_pool`, the health share as `health` — gated again before committing.
-Shares are always reductions (re-clamped at ≤ 0 after every rewrite, so "take less" can zero
-a wound but never flip it into a heal), and a rewritten share never redistributes to the
-other. So "block attack damage **that would reach Health**, letting shield absorption pass"
-is one interceptor, no sign conditions:
+The hit's damage is first gated as its **pre-split total**. Once that settles, the Resolver
+apportions it shield-first, and each share becomes its own pending mutation **on the hit's
+channel** — the shield share and the health share — gated again before committing. Shares
+are always reductions (re-clamped after every rewrite, so "take less" can zero a wound but
+never flip it into a heal), and a rewritten share never redistributes to the other. So
+"block attack damage **that would reach Health**, letting shield absorption pass" is one
+interceptor on the health share, no sign conditions — that is **Stalwart Barrier**, and
+because a rewrite that changes nothing spends nothing, a hit fully eaten by the shield
+doesn't consume the charge (`decay: "intercept"`). Direct health changes (poison, heals)
+are health mutations on their own channels and never pass through the split.
 
-```json
-{ "intercept": "health", "channel": "attack", "role": "target", "op": "mul", "amount": 0 }
-```
-
-That is **Stalwart Barrier** — and because a rewrite that changes nothing spends nothing, a
-hit fully eaten by the shield doesn't consume the charge (`decay: "intercept"`). Direct
-health changes (poison, heals) are `health` mutations on their own channels and never pass
-through the split.
-
-**Blind** is the canonical example — 50% chance the holder's own attack strike is multiplied
-to nothing; one charge spent per attack (`decay: "stacks"`, `decay_phase: "attack"`):
-```json
-{
-	"id": "blind", "beneficial": false, "glyph": "◐",
-	"decay": "stacks", "decay_phase": "attack", "stacking": "stack", "max_stacks": 99,
-	"effects": [
-		{ "intercept": "damage", "channel": "attack", "role": "source", "op": "mul", "amount": 0, "chance": 0.5 }
-	]
-}
-```
-
-**Barrier** is the defender-side counterpart — a target-role block that spends itself only
-when it actually stops something (`decay: "intercept"`), stacks as extra charges, and shows a
-persistent protected frame (`aura`):
-```json
-{
-	"id": "barrier", "beneficial": true, "glyph": "◈", "color": "8fd0ff", "aura": true,
-	"decay": "intercept", "stacking": "stack", "max_stacks": 9,
-	"effects": [
-		{ "intercept": "damage", "channel": "attack", "role": "target", "op": "mul", "amount": 0 }
-	]
-}
-```
+The two canonical shapes: **Blind** — a source-side attack-channel block at 50% chance, one
+charge spent per attack (`decay: "stacks"`, `decay_phase: "attack"`). **Barrier** — the
+defender-side counterpart, a target-side block that spends itself only when it actually
+stops something (`decay: "intercept"`), stacks as extra charges, and shows a persistent
+protected frame (`aura`).
 
 Nothing persists between strikes: the mutation is built fresh, intercepted inside the gate,
 committed, discarded. Combat carries no status-specific logic — it just submits and presents

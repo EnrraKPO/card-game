@@ -112,7 +112,7 @@ pick/panel/aim per step.
 
 ## Out of scope
 
-Resolver/EffectSystem/animator/enemy AI — untouched. This is strictly the
+Resolver/effect resolution/animator/enemy AI — untouched. This is strictly the
 player-gesture → presentation → commit layer.
 
 ## Migration order (each step parse-checked; regression suite + render harness at the end)

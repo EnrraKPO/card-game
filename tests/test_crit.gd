@@ -24,8 +24,6 @@ func run() -> void:
 	_chance_formula()
 	_multiplier_formula()
 	_crit_chance_bonus_fold()
-	_crit_multiplier_bonus_fold()
-	_crit_interception()
 	var prev := Resolver.crit_enabled
 	Resolver.crit_enabled = true
 	_certain_crit_multiplies_damage()
@@ -33,10 +31,8 @@ func run() -> void:
 	_crit_is_attack_channel_only()
 	_toggle_off_never_crits()
 	_dodge_beats_crit()
-	_blocked_hit_never_crits()
 	_buildings_crit_both_ways()
 	Resolver.crit_enabled = prev
-	_proof_relics_load()
 	Resolver.set_crit_tuning({})   # drop the injected cache; later reads reload from disk
 
 
@@ -88,9 +84,10 @@ func _multiplier_formula() -> void:
 	_near(Resolver.crit_multiplier(_unit(3, 9, 0)), 1.0, "the multiplier floors at 1.0")
 
 
-# The `crit_chance_bonus` stat: extra crit percentage points, foldable by standing effects. A
-# written modifier and a run-level standing modifier (the Eagle-Eye Charm relic) both flow into
-# crit_chance — the attacker-side mirror of _dodge_bonus_fold.
+# The `crit_chance_bonus` stat: extra crit percentage points, written through the Resolver
+# and folded by get_attribute — the attacker-side mirror of _dodge_bonus_fold. (The
+# standing-effect and interception routes into this stat are effect-layer behavior —
+# banished with that machinery; the rebuild's suites re-cover them.)
 func _crit_chance_bonus_fold() -> void:
 	# Zero out the speed-derived terms so the bonus is the whole chance.
 	Resolver.set_crit_tuning({"fixed_pct": 0.0, "per_speed_pct": 0.0, "per_speed_diff_pct": 0.0, "max_pct": 100.0})
@@ -103,100 +100,6 @@ func _crit_chance_bonus_fold() -> void:
 	# The cap bounds the bonus too — no attacker crits every time past the ceiling.
 	Resolver.set_crit_tuning({"fixed_pct": 0.0, "per_speed_pct": 0.0, "max_pct": 20.0})
 	_near(Resolver.crit_chance(u), 0.20, "the cap ceils a bonus that would exceed it")
-
-	# The Eagle-Eye Charm relic: a run-level standing modifier granting +25 crit_chance_bonus to
-	# allied AIR units only — anchored to the player, gated by composition.
-	Resolver.set_crit_tuning({"fixed_pct": 0.0, "per_speed_pct": 0.0, "per_speed_diff_pct": 0.0, "max_pct": 100.0})
-	GameData.current_modifiers = ModifierSet.new()
-	GameData.current_modifiers.add(Effect.from_dict({
-		"kind": "modifier", "key": "unit.crit_chance_bonus", "amount": 25,
-		"conditions": [{"composition": ["air"]}],
-	}))
-	var air_ally := _unit(5, 9, 0, ["air"], 0)
-	var fire_ally := _unit(5, 9, 0, ["fire"], 0)
-	var air_enemy := _unit(5, 9, 0, ["air"], 1)
-	check_eq(air_ally.get_attribute("crit_chance_bonus"), 25, "the relic grants +25 crit chance to an allied air unit")
-	check_eq(fire_ally.get_attribute("crit_chance_bonus"), 0, "a non-air ally gets no crit-chance bonus")
-	check_eq(air_enemy.get_attribute("crit_chance_bonus"), 0, "an enemy air unit gets no player-scoped bonus")
-	_near(Resolver.crit_chance(air_ally), 0.25, "the granted bonus flows into the air unit's crit chance")
-	GameData.current_modifiers = ModifierSet.new()
-
-
-# The `crit_multiplier_bonus` stat — the axis dodge never had: extra multiplier points ×100,
-# foldable by standing effects (the Executioner's Edge relic) into crit_multiplier.
-func _crit_multiplier_bonus_fold() -> void:
-	Resolver.set_crit_tuning({"multiplier": 2.0, "multiplier_max": 5.0})
-	GameData.current_modifiers = ModifierSet.new()
-	GameData.current_modifiers.add(Effect.from_dict({
-		"kind": "modifier", "key": "unit.crit_multiplier_bonus", "amount": 50,
-		"conditions": [{"composition": ["darkness"]}],
-	}))
-	var dark_ally := _unit(5, 9, 0, ["darkness"], 0)
-	var fire_ally := _unit(5, 9, 0, ["fire"], 0)
-	var dark_enemy := _unit(5, 9, 0, ["darkness"], 1)
-	check_eq(dark_ally.get_attribute("crit_multiplier_bonus"), 50, "the relic grants +50 multiplier points to an allied darkness unit")
-	check_eq(fire_ally.get_attribute("crit_multiplier_bonus"), 0, "a non-darkness ally gets no multiplier bonus")
-	check_eq(dark_enemy.get_attribute("crit_multiplier_bonus"), 0, "an enemy darkness unit gets no player-scoped bonus")
-	_near(Resolver.crit_multiplier(dark_ally), 2.5, "the granted bonus lifts the darkness unit's crits to 2.5×")
-	_near(Resolver.crit_multiplier(fire_ally), 2.0, "a non-darkness ally keeps the base multiplier")
-
-	# multiplier_max caps the relic-boosted factor too.
-	Resolver.set_crit_tuning({"multiplier": 2.0, "multiplier_max": 2.2})
-	_near(Resolver.crit_multiplier(dark_ally), 2.2, "multiplier_max caps the relic-boosted factor")
-	GameData.current_modifiers = ModifierSet.new()
-
-
-# The assembled crit rate is INTERCEPTABLE through the universal gate (stat "crit_chance"): a
-# relic can triple fire allies' crit (Warlord's Fury, mul 3) or cancel enemy crit (Steady Hand
-# Ward, mul 0). REMEMBER THE PARTICIPANT SWAP vs dodge: the query's `target` is the ATTACKER —
-# participant "target" matches the unit landing the crit, not the one being hit.
-func _crit_interception() -> void:
-	# A flat 20% base so the multipliers read cleanly.
-	Resolver.set_crit_tuning({"fixed_pct": 20.0, "per_speed_pct": 0.0, "per_speed_diff_pct": 0.0, "max_pct": 100.0})
-	var fire_ally := _unit(5, 9, 0, ["fire"], 0)
-	var air_ally := _unit(5, 9, 0, ["air"], 0)
-	var foe := _unit(5, 9, 0, ["fire"], 1)
-	var my_victim := _unit(5, 9, 0, [], 0)
-	var foe_victim := _unit(5, 9, 0, [], 1)
-	_near(Resolver.crit_chance(fire_ally, foe_victim), 0.20, "base crit with no interceptors")
-
-	# Warlord's Fury: the critter (the query's target) is an allied fire unit → 3× the rate.
-	GameData.current_modifiers = ModifierSet.new()
-	GameData.current_modifiers.add(Effect.from_dict({
-		"kind": "interceptor", "intercept": "crit_chance", "op": "mul", "amount": 3,
-		"of": {"participant": "target", "relation": "ally"},
-		"conditions": [{"composition": ["fire"]}]}))
-	_near(Resolver.crit_chance(fire_ally, foe_victim), 0.60, "3x interceptor triples a fire ally's crit")
-	_near(Resolver.crit_chance(air_ally, foe_victim), 0.20, "a non-fire ally is untouched by the fire interceptor")
-
-	# Steady Hand Ward: the critter is an enemy → crit cancelled (mul 0).
-	GameData.current_modifiers = ModifierSet.new()
-	GameData.current_modifiers.add(Effect.from_dict({
-		"kind": "interceptor", "intercept": "crit_chance", "op": "mul", "amount": 0,
-		"of": {"participant": "target", "relation": "enemy"}}))
-	_near(Resolver.crit_chance(foe, my_victim), 0.0, "cancel-crit zeroes an enemy attacker")
-	_near(Resolver.crit_chance(fire_ally, foe_victim), 0.20, "cancel-crit (enemy) leaves an ally's crit intact")
-
-	# The cap still bounds an amplified rate — no interceptor makes every hit a crit past it.
-	Resolver.set_crit_tuning({"fixed_pct": 20.0, "per_speed_pct": 0.0, "per_speed_diff_pct": 0.0, "max_pct": 75.0})
-	GameData.current_modifiers = ModifierSet.new()
-	GameData.current_modifiers.add(Effect.from_dict({
-		"kind": "interceptor", "intercept": "crit_chance", "op": "mul", "amount": 5,
-		"of": {"participant": "target", "relation": "ally"}}))
-	_near(Resolver.crit_chance(fire_ally, foe_victim), 0.75, "the cap bounds a 5x-amplified rate (20%×5 → 75% cap)")
-
-	# The MULTIPLIER is its own interceptable query (stat "crit_multiplier", points ×100): a
-	# mul rewrite scales the factor, and multiplier_max still ceils the result.
-	Resolver.set_crit_tuning({"multiplier": 2.0, "multiplier_max": 5.0})
-	GameData.current_modifiers = ModifierSet.new()
-	GameData.current_modifiers.add(Effect.from_dict({
-		"kind": "interceptor", "intercept": "crit_multiplier", "op": "mul", "amount": 2,
-		"of": {"participant": "target", "relation": "ally"}}))
-	_near(Resolver.crit_multiplier(fire_ally), 4.0, "a 2x interceptor doubles an ally's crit factor (2.0 → 4.0)")
-	_near(Resolver.crit_multiplier(foe), 2.0, "an enemy's factor is untouched by the ally interceptor")
-	Resolver.set_crit_tuning({"multiplier": 2.0, "multiplier_max": 3.0})
-	_near(Resolver.crit_multiplier(fire_ally), 3.0, "multiplier_max still ceils an intercepted factor")
-	GameData.current_modifiers = ModifierSet.new()
 
 
 # At a certain (100%, uncapped) chance the strike lands multiplied, and the outcome reports the
@@ -273,35 +176,6 @@ func _dodge_beats_crit() -> void:
 	Resolver.set_dodge_tuning({})
 
 
-# Crit never procs on zero damage (the settled crit-after-interception ordering): a
-# Barrier-blocked hit deals 0 → no crit roll, no crit flag — but the barrier IS consumed as an
-# ordinary block (only dodge preserves it). Companion: a PARTIALLY reduced hit that still
-# lands > 0 damage DOES crit, with the multiplier applied to the reduced amount.
-func _blocked_hit_never_crits() -> void:
-	Resolver.set_crit_tuning({"fixed_pct": 100.0, "per_speed_pct": 0.0, "max_pct": 100.0,
-			"multiplier": 3.0, "multiplier_max": 5.0})
-	var tgt := _unit(0, 9, 0)
-	StatusEngine.apply(tgt, "barrier", Effect.STATUS_DURATION_DEFAULT, 1, null)
-	var out := Resolver.submit(StatMutation.damage(tgt, 4, _unit(1, 5, 0)))
-	check_eq(out.delta, 0, "the barrier blocks the strike (0 damage)")
-	check(not out.crit, "a fully blocked hit never procs crit, however certain the rate")
-	check_eq(out.crit_bonus_damage, 0, "no crit bonus on a blocked hit")
-	check(tgt.find_status("barrier") == null, "the blocking barrier IS consumed (only dodge preserves it)")
-
-	# A halving interceptor (partial reduction, not negation): the crit rolls on what's LEFT —
-	# 6 halved to 3, then the certain 3.0× crit lands 9.
-	GameData.current_modifiers = ModifierSet.new()
-	GameData.current_modifiers.add(Effect.from_dict({
-		"kind": "interceptor", "intercept": "damage", "channel": "attack", "op": "mul", "amount": 0.5,
-		"of": {"participant": "target", "relation": "ally"}}))
-	var tgt2 := _unit(0, 20, 0)
-	var out2 := Resolver.submit(StatMutation.damage(tgt2, 6, _unit(1, 5, 0)))
-	check(out2.crit, "a partially reduced hit still crits")
-	check_eq(out2.delta, -9, "the multiplier applies to the REDUCED amount (6 → 3, ×3.0 = 9)")
-	check_eq(out2.crit_bonus_damage, 6, "the bonus is measured against the post-interception base (9 − 3)")
-	GameData.current_modifiers = ModifierSet.new()
-
-
 # No building exclusion, in either direction (settled design — the deliberate inverse of
 # _building_never_dodges): a rook attacker CAN land a crit, and a rook defender CAN be crit.
 func _buildings_crit_both_ways() -> void:
@@ -319,29 +193,6 @@ func _buildings_crit_both_ways() -> void:
 	var out2 := Resolver.submit(StatMutation.damage(wall, 4, _unit(1, 5, 0)))
 	check(out2.crit, "a building defender can be critically hit")
 	check_eq(out2.delta, -8, "the crit against the building deals full multiplied damage")
-
-
-# The proof-relic coverage matrix (see CRIT_DAMAGE_SPEC.md): every mechanical surface of crit
-# is proven by an authored, acquirable relic — chance modifier, multiplier modifier, `crit`
-# trigger, interception-multiply, interception-deny. This guards the CONTENT half of that
-# contract: all five load through the real RelicData pipeline with their effects parsed.
-func _proof_relics_load() -> void:
-	var want := {
-		"eagle_eye_charm": Effect.Kind.MODIFIER,       # crit chance modifier
-		"executioners_edge": Effect.Kind.MODIFIER,     # crit damage multiplier modifier
-		"berserkers_momentum": Effect.Kind.TRIGGERED,  # crit as an effect trigger
-		"warlords_fury": Effect.Kind.INTERCEPTOR,      # interception: multiply chance
-		"steady_hand_ward": Effect.Kind.INTERCEPTOR,   # interception: deny
-	}
-	for id: String in want:
-		var r: RelicData = RelicData.get_relic(id)
-		if r == null:
-			check(false, "proof relic '%s' is missing from the relic pool" % id)
-			continue
-		check(not r.effects.is_empty(), "proof relic '%s' parsed its effects" % id)
-		if not r.effects.is_empty():
-			check_eq((r.effects[0] as Effect).kind, want[id],
-					"proof relic '%s' carries the expected effect kind" % id)
 
 
 func _near(got: float, want: float, label: String) -> void:

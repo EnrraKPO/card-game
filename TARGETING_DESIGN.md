@@ -7,14 +7,18 @@ itself: supersessions are resolved into final positions here, and the paths cons
 and rejected are preserved in the Decision Record.
 
 Ground truth for the starting state: the demolition is complete (branch
-`targeting-cleanup`) — all targeting deleted, combat inert, and the quarantine table in
-`tests/_runner.tscn` (167 checks after the content strip and the rider/restrike deletion,
-2026-08-11) is the rebuild's specification and regression net. Driving that table to
-zero — resolution rebuilt AND content re-authored — and deleting it is the exit
-criterion. (Riders and restrikes — damage follow-ons and per-stack repeat rolls — were
+`targeting-cleanup`) — all targeting deleted, combat inert. The quarantine table that
+briefly held the razed behavior as red checks was itself DELETED in the Great Purge
+(2026-08-11, test doctrine: "only tests that validate systems that won't change may
+pass" — red throwaway checks included). The rebuild's requirements live in this document
+and in the NEEDS blocks at every razed seam; each phase ships its own native suite as it
+lands, and the exit criterion is §14. (Riders and restrikes — damage follow-ons and per-stack repeat rolls — were
 DELETED outright rather than quarantined: never user-designed, disavowed 2026-08-09;
 their rows were never spec. If damage follow-ons or stack-depth are ever wanted, they are
-designed first, as payload delivery rules.)
+designed first, as payload delivery rules. The status `spread` mechanism — chance-gated
+per-stack propagation with arrival follow-ons, accreted in the same burning-ground work —
+followed them under the same ruling, 2026-08-11: cleansed now, designed and signed off
+before it is ever rebuilt.)
 
 The **effect-cleanse pass** (2026-08-11) executed the combat-only rows of §10's deletion
 map ahead of the rebuild: SpellCaster and all three ON_PLAY dispatcher clones, the
@@ -93,10 +97,14 @@ The authored unit reads as a sentence: *"When [event], if [conditions]: deliver
   the way the status payload owns stacking. Nothing above the payload knows attacks are
   special. Two proofs of decoupling: (A) a unit's act need not be an attack; (B) an
   attack payload can ride any action ("when played, make an attack").
-- **Auto-attack is a TriggeredEffect** on the `act` event: the unit's innate action —
-  *when I act → attack payload → my policy's targets*. Dependency made explicit: "HOW
-  MUCH = my attack stat" is a runtime value; this conscripts amounts-as-evaluable-values
-  (TECH_DEBT_BRIEF §5) into this rebuild's chain.
+- **Auto-attack is a TriggeredEffect** on the `act` event — and (re-ruled 2026-08-11) an
+  **explicitly authored NAMED EFFECT**, never synthesized from a card field: the attack
+  family (`melee_attack` / `ranged_attack` / `leap_attack` / policy variants) is authored
+  once in the library (`data/effects/`) and units reference it by id, the same
+  reference-by-id pattern abilities and statuses use. `CardData.target_policy` is
+  deleted; the policy lives inside the referenced effect's target resolver. A card
+  referencing no attack simply doesn't attack. Dependency made explicit: "HOW MUCH = my
+  attack stat" is a runtime value — resolved by the mutator (§12.6).
 
 ## 3. The targeting layer
 
@@ -113,24 +121,36 @@ act, does not know about payloads, and has no lifetime of its own.
 - **Transparent and pure.** Inputs in, targets out — a pure function over a passed-in
   world. No live-global reads: previews, hypotheticals, and simulations all query
   resolvers against declared/copied worlds.
-- **Standing state: the current.** Each live resolver holds its current resolution
-  (possibly empty), re-engaging on board changes as soon as it has enough information;
-  manual resolvers stay empty until conducted. Reverse queries — "am I being
-  targeted?" — consult whichever resolvers are alive right now (a mid-aim spell's
-  resolver truthfully registering on its target IS the aim-preview cue). Resolver
-  instances and currents are owned by a CombatWorld and copied with it; re-engagement is
-  driven from the arbitration layer's single-writer settle points, never mid-cascade
-  signals.
+- **Standing state: the current — computed on read (user-ratified 2026-08-11).** A
+  resolver's current is not continuously maintained state; it is derived fresh at the
+  moments someone actually reads it, and there are exactly two: **(A) the trigger
+  moment** — the owning action resolves against the world as it stands right then — and
+  **(B) the interactive idle** — previews, crosshair/menace cues, and reverse queries
+  ("am I being targeted?") while play waits for input. Mid-cascade nobody reads a
+  current, so nothing re-engages and stale-current rulings are unnecessary by
+  construction. Manual resolvers stay empty until conducted. Reverse queries consult
+  whichever resolvers are alive right now (a mid-aim spell's resolver truthfully
+  registering on its target IS the aim-preview cue). Resolver instances are owned by a
+  CombatWorld and copied with it. Resolution and delivery admit no gap: events are
+  post-hoc news (the arbitration layer's hard rule), so a reaction to an action exists
+  only after that action's payloads landed — nothing can invalidate a resolution
+  between the read and the landing. Pre-delivery interference is the interceptor
+  stream's job, and interceptors rewrite amounts, never targets.
 - **Owned by the pointing behavior, never the entity.** A unit does not own a resolver —
   its auto-attack (a TriggeredEffect) does; a spell's played-effect does; an ability
   does. Entities carry behaviors; behaviors point. Lifetime is not a resolver concern:
   a resolver lives exactly as long as its owner. Authored data only ever declares (the
   card's `target_policy` string, the effect's `targets` dict); instantiation belongs to
   whoever materializes the behavior into the world.
-- **Sole authority, to all extents, including pre-cast.** Every "is this a valid
-  target" / "is there any legal play" (the prohibit-non-ops viability rule) is a query
-  INTO a resolver. No external component peeks at the decision process — the interaction
-  layer must never read targeting declarations to anticipate gestures.
+- **Sole authority — and no anticipatory queries (user-ratified 2026-08-11).** No
+  external component peeks at the decision process — the interaction layer must never
+  read targeting declarations to anticipate gestures. Sharpened: nothing evaluates
+  candidates prior to resolution, period. The prohibit-non-ops viability rule survives
+  *relocated to execution*: an invocation whose resolution comes up empty (or whose
+  manual pick could never complete) REJECTS — nothing lands, no cost paid, the same
+  path as cancellation. The hand does not predict castability (the grey-out cue is
+  given up — an accepted UX trade, revisitable as presentation later); the enemy
+  engine discards candidate moves whose simulated resolution rejects.
 - **The resolver conducts its own manual gesture.** The targeting pass runs before
   payloads land; a manual resolver suspends for its pick and is cancellable (nothing
   lands, no cost paid). The pick-provider is injected: the player's Selection UI in live
@@ -206,12 +226,24 @@ composition grants; never one-shot operations, which need a moment, and the fold
 moments.
 
 The demolition NEED comments called standing membership "targeting's second verb" —
-retracted: it is not a targeting verb. The fold's quarantined checks rebuild on the
+retracted: it is not a targeting verb. The fold's checks rebuild on the
 condition grammar alone (predicates over unit + holder/owner anchors), a scope
 *reduction* for targeting. The passive system also owns its own liveness and fold — the
 current inert `While` type-tag interpreted by four other systems dies with the rebuild.
-The two-layer read survives as built: Layer 1 composition grants settle as a per-unit
-fixed point into a cached snapshot; Layer 2 folds stats under the stratification guard.
+The two-layer read survives: Layer 1 composition grants settle as a per-unit fixed
+point; Layer 2 folds stats under the stratification guard.
+
+**Nothing is cached, and no lifetime object exists (user rulings, 2026-08-11).** Any
+live effect may affect any other live effect, so any stat alteration invalidates
+everything — a fine-grained cache is intractable and a coarse one worthless; the old
+implementation's cached composition snapshot was never sanctioned and is void. Every
+read derives fresh from the containers that exist at that moment (the unit's statuses,
+its card, its charms, the run set) and discards the result. Liveness is each container
+species' own fact, owned by its governing system (StatusEngine expiry, fielded-ness,
+run membership) — an expired container is simply not encountered by the walk, so
+staleness is impossible by construction and the old EffectTracker has no successor.
+Per-stack scaling, if a payload wants it, is authored in the payload's own amount
+semantics — never a lifetime concern.
 
 ## 7. The activated system
 
@@ -227,6 +259,12 @@ An activation still **emits** an event through the one pipeline — for bystande
 ("whenever an ability is activated…") — but the activated effect does not receive its
 own activation as a dispatched event; it is invoked directly. Activation is a mechanism,
 not a trigger wearing a cost.
+
+**The spell play is the second payer (re-ruled 2026-08-11, reversing §11's earlier
+position).** A spell's own effects are an ActivatedEffect whose cost gate is the card
+itself + mana, invoked by the play action; `played` is emitted as news for bystanders —
+exactly the invoked-directly pattern above, with a different cost. THE usability rule
+(`usable_by`-style pure query) widens to serve both payers.
 
 ## 8. The interception system
 
@@ -248,9 +286,12 @@ interception "should be a trigger — it just is." Deferred, not overruled.)
 Three moments, three verbs, no overlap:
 
 - **Played** — a card leaves hand and enters the world: every card, one uniform act (pay
-  mana, emit `played`). A **spell is simply a card that doesn't stick to the board** —
-  its effects are TriggeredEffects on the played event; conceptually identical to a unit
-  card in every other way. "Cast" retires as a mechanism word.
+  mana, emit `played` as news). A **spell is simply a card that doesn't stick to the
+  board** — and (re-ruled 2026-08-11) its own effects are an **ActivatedEffect invoked
+  by the play** (cost: the card itself + mana), never TriggeredEffects on its own
+  `played` event: a cancellable, pre-cost manual pick cannot be a reaction to post-hoc
+  news (§11 records the argument). Bystanders still hear `played` as an ordinary
+  post-hoc event. "Cast" retires as a mechanism word.
 - **Acts** — a unit takes its main turn action at its speed-ordered moment; the act is
   *typically* the auto-attack, but attack is never the moment's name. Renames today's
   `activate`/`ON_ACTIVATE` event to `act` — the current word collides with the ability
@@ -287,6 +328,12 @@ Each hack maps to a structural absence the design fills:
   stop.
 - **A bespoke "auto-attack object"** — superseded; the pointing behavior is a
   TriggeredEffect.
+- **Auto-attack synthesized at fielding from `CardData.target_policy`** — rejected
+  2026-08-11 (pitched, corrected at sign-off): the auto-attack is an ordinary authored
+  named effect referenced by the unit; no synthesis special case, and the field dies.
+- **"Resolver" as the arbitration layer's class name** — renamed **Arbitrator**
+  (2026-08-11): three unrelated "resolvers" was a naming hazard; "resolver" now belongs
+  only to TriggerResolver and TargetResolver.
 - **Load-time payload↔resolver kind cross-check** — rejected; it would forbid legitimate
   mixed-kind clusters and create static connivance between blind parts.
 - **A trigger that splits payload subsets onto different targets** — rejected on
@@ -296,41 +343,103 @@ Each hack maps to a structural absence the design fills:
 - **Allegiance owned by the deck** — rejected (the deck's job is holding/granting
   cards); **allegiance tracker/manager** — rejected (nothing to manage); resolved as a
   carried birth fact.
-- **"Spell cast effects are activated (cost: card+mana)"** — superseded; spells are
-  ordinary cards whose effects trigger on played.
+- **"Spell effects are TriggeredEffects on `played`"** — REVERSED 2026-08-11, restoring
+  the once-rejected "activated (cost: card+mana)". The cancellation rule forced it: a
+  manual pick is cancellable with no cost paid, but a reaction to the post-hoc `played`
+  event fires only after the cost was paid and the card left hand — you cannot cancel a
+  reaction to news. Framing the spell's own effects as triggered would force the play
+  mechanism to inspect and conduct a triggered effect PRIOR to its event's dispatch.
+  The card's own effects are invoked by the play (§7); bystanders hear `played` as news.
+- **A general amount/expression grammar** (value species + combinators: "half of",
+  "X per stack") — rejected 2026-08-11 for per-need mutator species under one
+  contract (§12.6): each need is an encapsulated species that derives its own value
+  from the delivery context; no combinator language exists to rot.
+- **Pre-resolution candidate evaluation** (the castability grey-out, any-legal-play and
+  is-candidate-valid as contract queries) — rejected 2026-08-11: execution rejects on
+  failed resolution instead; prohibit-non-ops is enforced at the invocation, not the
+  offer. Eligibility survives only INSIDE manual conduct, gating what a pick may
+  appoint.
 - **Interception as a trigger kind** — deferred (user's conceptual position recorded in
   §8); kept a separate structure at this scope.
+- **Continuously maintained currents re-engaging at settle points** — superseded
+  (2026-08-11): currents are computed on read; with only two read moments (trigger,
+  interactive idle) the settle-point concept and its mid-cascade death rulings are
+  unnecessary.
 - **Build-first anchor (attack resolver before design)** — deferred 2026-08-10 in favor
   of design-first; now satisfied: the design is settled and the attack system is the
   first build.
 
 ## 12. Open questions (design-complete is not spec-complete)
 
-1. **The resolver contract's exact shape** — inputs (world, owner, authored params; what
-   "enough information to engage" means precisely), the target return type, the full
-   query set (current · is-candidate-valid · any-legal-play · gesture conduct).
-2. **Engagement settle points** — the precise definition on the arbitration layer's
-   single-writer choke; the rule for deaths mid-cascade (unit-leaves-play-instantly
-   doctrine vs. a striker's current).
+1. **The resolver contract's exact shape** — NARROWED (user-ratified 2026-08-11) to the
+   single-issue frame: a target resolver answers ONE question — *what am I pointing
+   to?* — as an array of game objects; empty is literally empty, and all other states
+   derive. Two entry points only: **resolve** (automatic; the trigger-moment and
+   interactive-idle reads) and **conduct** (manual; suspend for the pick,
+   cancel/reject). No candidate-enumeration, viability, or validity queries exist in
+   the contract (§3, §11). The return type is settled: `Array[GameEntity]` — the
+   shared base of CardInstance and BoardSlot (renamed from StatusCarrier 2026-08-11:
+   the base carries the two universally shared facts, status pinning and
+   pointability). Still open: only the exact input set (world + spatial/allegiance
+   anchors + authored params).
+2. ~~**Engagement settle points**~~ — RESOLVED (user-ratified 2026-08-11): currents are
+   computed on read, and the only reads are the trigger moment and the interactive idle
+   (§3). Settle points as a maintained-state concept are gone; the deaths-mid-cascade
+   question dissolved with them (a resolution is read against the live world at its
+   moment, and events-are-post-hoc means nothing fires between resolution and landing).
 3. **Manual conduct details** — the pick-provider interface, suspension, cancellation
-   unwinding, eligibility service to the UI.
-4. **The surviving authored schema** — which form lives; the mechanical migration
-   (Tool's serializer) of ~147 legacy occurrences; load-time refusal of the dead form.
+   unwinding, the zero-eligible auto-reject; pick eligibility lives INSIDE conduct
+   (gating what the tap may appoint), never as a service exposed outside it.
+4. ~~**The surviving authored schema**~~ — DISSOLVED by the content strip (2026-08-11,
+   "forget all effects — we author them again"): nothing migrates; every effect is
+   re-authored natively as the rebuild reaches its container, and loaders + the Tool's
+   save gate refuse the dead form.
 5. **The payload handoff** — what resolution hands to payload delivery; kept narrow so
    the payload redesign (TECH_DEBT §3/4/7) can proceed without reopening targeting.
-6. **Amounts as evaluable values** (TECH_DEBT §5) — conscripted by the attack payload
-   ("my attack stat"); scope to be set when the attack rebuild reaches it.
+6. ~~**Amounts as evaluable values**~~ (TECH_DEBT §5) — RESOLVED (user-ratified
+   2026-08-11): **the mutator**. Every payload value slot — numeric amounts AND
+   identities (which stat, which status, which card: "deliver [material]", "apply
+   [amount] [status]") — is filled by a mutator: per-need species under ONE contract,
+   the targeting doctrine verbatim (generality in the contract, specificity in the
+   species; NO general expression language, ever). A literal is the trivial species,
+   not a separate path. Lifecycle: **parameterized at parse** (the payload's parser
+   `new()`s the species with its authored params — one stateless immutable instance
+   shared by every fielded copy, the TriggerResolver precedent), **fed at delivery**
+   (the action's executor — the only party holding all the facts — assembles the
+   context and calls `produce`), **derives on the spot** (the species' own logic; the
+   executor never knows how), **emits concrete StatMutations** to the arbitration
+   Resolver. The context is the four facts and stays a DUMB PLATE (facts only, no
+   logic, no caching — the deleted `effect_context.gd` is the cautionary tale):
+   world · holder + EXPLICIT allegiance anchor (holder is null for run-scope
+   containers; holder-reading species are refused at load there) · occasion (the
+   GameEvent for triggered, the invocation for activated) · recipient (per-recipient
+   evaluation, forced by plural resolutions). Events carry no magnitudes today; a
+   species needing one ("heal the damage just taken") adds it to the event at its
+   emission point — parked until wanted. Species roster is content-driven, never
+   speculative: day one is the literal species and the holder-stat species the
+   auto-attack needs.
+7. **Effect-level enemy-eval pricing — DEFERRED (user ruling 2026-08-11, post-hoc
+   problem).** The old schema let an effect carry flat/mul prices on the enemy engine's
+   channels (threat/exposure/value — STATUS_EVAL_BRIEF.md); that half died with the
+   layer. Status-level PER-STACK pricing survives (StatusData.eval, adds only). Until
+   the new schema decides where effect-level pricing lives, re-authored effects are
+   simply unpriced — invisible to enemy planning, never wrong. Revisit once payloads
+   exist to price.
 
 ## 13. The rebuild path
 
 First build: **the attack system** — the purest exercise of the design. The `act` event;
-the unit's innate TriggeredEffect; the `nearest` resolver with a current, engaging and
-re-engaging at settle points; reverse queries feeding the crosshair/menace cues; the
+the unit's innate TriggeredEffect; the `nearest` resolver with its current computed on
+read (trigger moment + interactive idle, §3); reverse queries feeding the
+crosshair/menace cues; the
 attack payload carrying the strike mechanics through the arbitration Resolver. No
-gestures, no schema migration, no payload redesign required. Done = the auto-attack
-slice of the quarantine table green and removed.
+gestures, no schema migration, no payload redesign required. Done = the attack system's
+own native suite green in `tests/_runner.tscn`.
 
 ## 14. Exit criterion
 
-The quarantine table in `tests/_runner.tscn` is driven to zero and deleted. Until then,
-its 121 checks are this design's acceptance suite.
+Every phase of this design has landed with its own native test suite green in
+`tests/_runner.tscn`, and every NEEDS block at a razed seam has been either fulfilled or
+explicitly retired by a ruling recorded here. (The quarantine table that once served as
+the acceptance suite was deleted 2026-08-11 under the test doctrine — accepted knowingly:
+there is no executable tripwire for razed behavior until each phase ships its suite.)

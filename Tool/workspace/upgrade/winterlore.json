@@ -12,13 +12,7 @@
       "icon": "?",
       "row": 0,
       "col": 0,
-      "requires": [],
-      "effects": [
-        {
-          "key": "mana.initial",
-          "amount": 1
-        }
-      ]
+      "requires": []
     },
     {
       "id": "wl_deep",
@@ -30,17 +24,6 @@
       "col": 0,
       "requires": [
         "wl_root"
-      ],
-      "effects": [
-        {
-          "kind": "triggered",
-          "trigger": "on_damage_taken",
-          "targeting_policy": "attacker",
-          "status": {
-            "id": "chilled",
-            "stacks": 1
-          }
-        }
       ]
     }
   ]

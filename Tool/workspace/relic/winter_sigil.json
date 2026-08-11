@@ -4,16 +4,5 @@
   "description": "Whenever an enemy attacks one of your units, the attacker is Chilled.",
   "color": "7fc4e8",
   "letter": "W",
-  "price": 100,
-  "effects": [
-    {
-      "kind": "triggered",
-      "trigger": "on_damage_taken",
-      "targeting_policy": "attacker",
-      "status": {
-        "id": "chilled",
-        "stacks": 1
-      }
-    }
-  ]
+  "price": 100
 }

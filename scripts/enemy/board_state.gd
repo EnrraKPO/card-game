@@ -124,13 +124,10 @@ class UnitState:
 	# (attack_exhausted) — what the ability candidate generator needs to gate legality.
 	var ability_ids: Array = []
 	var exhausted: bool = false
-	# How many of the card's own effects are event-driven vs standing — captured as COUNTS
-	# because the board-value criterion prices them by category (BoardValueConfig), never
-	# interprets them. ON_PLAY effects are excluded: a fielded unit's battlecry already
-	# fired. Status-borne effects are deliberately not counted (temporary by nature; their
-	# stat side already folds into the captured stats at read time).
-	var triggered_effects: int = 0
-	var live_effects: int = 0
+	# (The per-category effect COUNTS — the last mirror-vocabulary read in the rules layer —
+	# died with the effect layer, 2026-08-11. The rebuilt structures re-enter category
+	# pricing here when they exist: counts by structure kind, priced by BoardValueConfig,
+	# never interpreted; a fielded unit's own-play trigger is excluded as already spent.)
 	# The valuation pass's per-unit stamp (BoardScoring.run_valuation): what the unit IS
 	# (raw_value, current health irrelevant), how likely it survives the turn
 	# (persistence, 0..1), and the canon worth every value eval reads (value = raw ×
@@ -178,13 +175,6 @@ class UnitState:
 		u.crit_multiplier_bonus = inst.get_attribute("crit_multiplier_bonus")
 		u.ability_ids = inst.data.ability_ids().duplicate()
 		u.exhausted = inst.attack_exhausted
-		for e: Effect in inst.data.effects:
-			if e.trigger == Effect.Trigger.ON_PLAY:
-				continue
-			if e.kind == Effect.Kind.MODIFIER or e.kind == Effect.Kind.INTERCEPTOR:
-				u.live_effects += 1
-			else:
-				u.triggered_effects += 1
 		u.eval_mods = EvalChannels.unit_mods(inst)
 		return u
 
@@ -210,8 +200,6 @@ class UnitState:
 		u.crit_multiplier_bonus = crit_multiplier_bonus
 		u.ability_ids = ability_ids.duplicate()
 		u.exhausted = exhausted
-		u.triggered_effects = triggered_effects
-		u.live_effects = live_effects
 		u.eval_mods = eval_mods   # immutable after the fold — shared, never re-derived
 		return u
 

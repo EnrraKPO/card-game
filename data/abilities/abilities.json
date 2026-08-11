@@ -6,8 +6,7 @@
 		"cost": {
 			"mana": 1,
 			"tap": true
-		},
-		"autocast": true
+		}
 	},
 	{
 		"id": "heal",
@@ -17,7 +16,6 @@
 			"mana": 1,
 			"tap": true
 		},
-		"autocast": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -45,8 +43,6 @@
 			"mana": 2,
 			"tap": true
 		},
-		"autocast": true,
-		"material": "pawn",
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -79,8 +75,6 @@
 			"mana": 3,
 			"tap": true
 		},
-		"autocast": true,
-		"material": "knight",
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -107,9 +101,7 @@
 		"cost": {
 			"mana": 3,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "bishop"
+		}
 	},
 	{
 		"id": "queen_material",
@@ -118,9 +110,7 @@
 		"cost": {
 			"mana": 5,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "queen"
+		}
 	},
 	{
 		"id": "warding_charge",
@@ -129,8 +119,7 @@
 		"cost": {
 			"mana": 1,
 			"tap": true
-		},
-		"autocast": true
+		}
 	},
 	{
 		"id": "gale_charge",
@@ -140,7 +129,6 @@
 			"mana": 1,
 			"tap": true
 		},
-		"autocast": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -174,8 +162,7 @@
 		"cost": {
 			"mana": 1,
 			"tap": true
-		},
-		"autocast": true
+		}
 	},
 	{
 		"id": "radiant_charge",
@@ -184,8 +171,7 @@
 		"cost": {
 			"mana": 1,
 			"tap": true
-		},
-		"autocast": true
+		}
 	},
 	{
 		"id": "stone_charge",
@@ -194,8 +180,7 @@
 		"cost": {
 			"mana": 1,
 			"tap": true
-		},
-		"autocast": true
+		}
 	},
 	{
 		"id": "umbral_charge",
@@ -204,8 +189,7 @@
 		"cost": {
 			"mana": 1,
 			"tap": true
-		},
-		"autocast": true
+		}
 	},
 	{
 		"id": "earth_bless",
@@ -214,8 +198,7 @@
 		"cost": {
 			"mana": 1,
 			"tap": true
-		},
-		"autocast": true
+		}
 	},
 	{
 		"id": "fire_bless",
@@ -224,8 +207,7 @@
 		"cost": {
 			"mana": 1,
 			"tap": true
-		},
-		"autocast": true
+		}
 	},
 	{
 		"id": "air_bless",
@@ -234,8 +216,7 @@
 		"cost": {
 			"mana": 1,
 			"tap": false
-		},
-		"autocast": true
+		}
 	},
 	{
 		"id": "water_bless",
@@ -244,8 +225,7 @@
 		"cost": {
 			"mana": 1,
 			"tap": true
-		},
-		"autocast": true
+		}
 	},
 	{
 		"id": "light_bless",
@@ -254,8 +234,7 @@
 		"cost": {
 			"mana": 1,
 			"tap": true
-		},
-		"autocast": true
+		}
 	},
 	{
 		"id": "darkness_bless",
@@ -264,8 +243,7 @@
 		"cost": {
 			"mana": 1,
 			"tap": true
-		},
-		"autocast": true
+		}
 	},
 	{
 		"id": "rally",
@@ -274,8 +252,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true
+		}
 	},
 	{
 		"id": "light_pawn_training",
@@ -284,9 +261,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "light"
+		}
 	},
 	{
 		"id": "water_pawn_training",
@@ -295,9 +270,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "water"
+		}
 	},
 	{
 		"id": "fire_pawn_training",
@@ -306,9 +279,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "fire"
+		}
 	},
 	{
 		"id": "darkness_pawn_training",
@@ -317,9 +288,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "darkness"
+		}
 	},
 	{
 		"id": "earth_pawn_training",
@@ -328,9 +297,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "earth"
+		}
 	},
 	{
 		"id": "air_pawn_training",
@@ -339,9 +306,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "air"
+		}
 	},
 	{
 		"id": "light_bishop_training",
@@ -350,9 +315,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "light"
+		}
 	},
 	{
 		"id": "water_bishop_training",
@@ -361,9 +324,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "water"
+		}
 	},
 	{
 		"id": "fire_bishop_training",
@@ -372,9 +333,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "fire"
+		}
 	},
 	{
 		"id": "darkness_bishop_training",
@@ -383,9 +342,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "darkness"
+		}
 	},
 	{
 		"id": "earth_bishop_training",
@@ -394,9 +351,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "earth"
+		}
 	},
 	{
 		"id": "air_bishop_training",
@@ -405,9 +360,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "air"
+		}
 	},
 	{
 		"id": "light_queen_training",
@@ -416,9 +369,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "light"
+		}
 	},
 	{
 		"id": "water_queen_training",
@@ -427,9 +378,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "water"
+		}
 	},
 	{
 		"id": "fire_queen_training",
@@ -438,9 +387,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "fire"
+		}
 	},
 	{
 		"id": "darkness_queen_training",
@@ -449,9 +396,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "darkness"
+		}
 	},
 	{
 		"id": "earth_queen_training",
@@ -460,9 +405,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "earth"
+		}
 	},
 	{
 		"id": "air_queen_training",
@@ -471,9 +414,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "air"
+		}
 	},
 	{
 		"id": "light_knight_training",
@@ -482,9 +423,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "light"
+		}
 	},
 	{
 		"id": "water_knight_training",
@@ -493,9 +432,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "water"
+		}
 	},
 	{
 		"id": "fire_knight_training",
@@ -504,9 +441,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "fire"
+		}
 	},
 	{
 		"id": "darkness_knight_training",
@@ -515,9 +450,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "darkness"
+		}
 	},
 	{
 		"id": "earth_knight_training",
@@ -526,9 +459,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "earth"
+		}
 	},
 	{
 		"id": "air_knight_training",
@@ -537,9 +468,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "air"
+		}
 	},
 	{
 		"id": "air_pawn_training_pure",
@@ -548,9 +477,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "air"
+		}
 	},
 	{
 		"id": "air_bishop_training_pure",
@@ -559,9 +486,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "air"
+		}
 	},
 	{
 		"id": "air_knight_training_pure",
@@ -570,9 +495,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "air"
+		}
 	},
 	{
 		"id": "air_queen_training_pure",
@@ -581,9 +504,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "air"
+		}
 	},
 	{
 		"id": "darkness_pawn_training_pure",
@@ -592,9 +513,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "darkness"
+		}
 	},
 	{
 		"id": "darkness_bishop_training_pure",
@@ -603,9 +522,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "darkness"
+		}
 	},
 	{
 		"id": "darkness_knight_training_pure",
@@ -614,9 +531,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "darkness"
+		}
 	},
 	{
 		"id": "darkness_queen_training_pure",
@@ -625,9 +540,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "darkness"
+		}
 	},
 	{
 		"id": "earth_pawn_training_pure",
@@ -636,9 +549,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "earth"
+		}
 	},
 	{
 		"id": "earth_bishop_training_pure",
@@ -647,9 +558,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "earth"
+		}
 	},
 	{
 		"id": "earth_knight_training_pure",
@@ -658,9 +567,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "earth"
+		}
 	},
 	{
 		"id": "earth_queen_training_pure",
@@ -669,9 +576,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "earth"
+		}
 	},
 	{
 		"id": "fire_pawn_training_pure",
@@ -680,9 +585,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "fire"
+		}
 	},
 	{
 		"id": "fire_bishop_training_pure",
@@ -691,9 +594,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "fire"
+		}
 	},
 	{
 		"id": "fire_knight_training_pure",
@@ -702,9 +603,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "fire"
+		}
 	},
 	{
 		"id": "fire_queen_training_pure",
@@ -713,9 +612,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "fire"
+		}
 	},
 	{
 		"id": "light_pawn_training_pure",
@@ -724,9 +621,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "light"
+		}
 	},
 	{
 		"id": "light_bishop_training_pure",
@@ -735,9 +630,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "light"
+		}
 	},
 	{
 		"id": "light_knight_training_pure",
@@ -746,9 +639,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "light"
+		}
 	},
 	{
 		"id": "light_queen_training_pure",
@@ -757,9 +648,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "light"
+		}
 	},
 	{
 		"id": "water_pawn_training_pure",
@@ -768,9 +657,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "water"
+		}
 	},
 	{
 		"id": "water_bishop_training_pure",
@@ -779,9 +666,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "water"
+		}
 	},
 	{
 		"id": "water_knight_training_pure",
@@ -790,9 +675,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "water"
+		}
 	},
 	{
 		"id": "water_queen_training_pure",
@@ -801,9 +684,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "water"
+		}
 	},
 	{
 		"id": "air_pawn_material",
@@ -812,9 +693,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "pawn"
+		}
 	},
 	{
 		"id": "air_bishop_material",
@@ -823,9 +702,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "bishop"
+		}
 	},
 	{
 		"id": "air_knight_material",
@@ -834,9 +711,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "knight"
+		}
 	},
 	{
 		"id": "air_queen_material",
@@ -845,9 +720,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "queen"
+		}
 	},
 	{
 		"id": "darkness_pawn_material",
@@ -856,9 +729,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "pawn"
+		}
 	},
 	{
 		"id": "darkness_bishop_material",
@@ -867,9 +738,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "bishop"
+		}
 	},
 	{
 		"id": "darkness_knight_material",
@@ -878,9 +747,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "knight"
+		}
 	},
 	{
 		"id": "darkness_queen_material",
@@ -889,9 +756,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "queen"
+		}
 	},
 	{
 		"id": "earth_pawn_material",
@@ -900,9 +765,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "pawn"
+		}
 	},
 	{
 		"id": "earth_bishop_material",
@@ -911,9 +774,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "bishop"
+		}
 	},
 	{
 		"id": "earth_knight_material",
@@ -922,9 +783,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "knight"
+		}
 	},
 	{
 		"id": "earth_queen_material",
@@ -933,9 +792,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "queen"
+		}
 	},
 	{
 		"id": "fire_pawn_material",
@@ -944,9 +801,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "pawn"
+		}
 	},
 	{
 		"id": "fire_bishop_material",
@@ -955,9 +810,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "bishop"
+		}
 	},
 	{
 		"id": "fire_knight_material",
@@ -966,9 +819,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "knight"
+		}
 	},
 	{
 		"id": "fire_queen_material",
@@ -977,9 +828,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "queen"
+		}
 	},
 	{
 		"id": "light_pawn_material",
@@ -988,9 +837,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "pawn"
+		}
 	},
 	{
 		"id": "light_bishop_material",
@@ -999,9 +846,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "bishop"
+		}
 	},
 	{
 		"id": "light_knight_material",
@@ -1010,9 +855,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "knight"
+		}
 	},
 	{
 		"id": "light_queen_material",
@@ -1021,9 +864,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "queen"
+		}
 	},
 	{
 		"id": "water_pawn_material",
@@ -1032,9 +873,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "pawn"
+		}
 	},
 	{
 		"id": "water_bishop_material",
@@ -1043,9 +882,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "bishop"
+		}
 	},
 	{
 		"id": "water_knight_material",
@@ -1054,9 +891,7 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "knight"
+		}
 	},
 	{
 		"id": "water_queen_material",
@@ -1065,8 +900,6 @@
 		"cost": {
 			"mana": 2,
 			"tap": true
-		},
-		"autocast": true,
-		"material": "queen"
+		}
 	}
 ]

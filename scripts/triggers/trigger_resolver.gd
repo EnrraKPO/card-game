@@ -1,43 +1,36 @@
 class_name TriggerResolver
 extends RefCounted
 
-# The injectable component that decides WHETHER an effect activates — the "when" of an
-# effect, fully separated from its targeting (the "who"). Every event-driven Effect holds
-# exactly one resolver; the dispatch pipeline (EffectSystem) only ever asks it
+# The injectable component that decides WHETHER a triggered effect activates — the "when"
+# of an effect, fully separated from its targeting (the "who"). Dispatch only ever asks
 # `fires(event, holder)` and knows nothing about subjects, participants or filters.
 #
-# Kinds (inner classes — ONE file on purpose: the factory below constructs them during
-# other classes' @static_initializer runs, and separate files hit the static-init load
-# order, leaving half-parsed scripts):
-#   • While     — no event: a STANDING effect, live for as long as its tracker is valid
-#                 (see EffectTracker / LiveEffects). Never dispatched — the read path
-#                 evaluates it continuously against the current board.
-#   • Simple    — an origin-only event (play/death/act/turn_start/turn_end) gated by
-#                 one plain-condition list evaluated against the origin.
-#   • Dual      — a two-participant event (attack/struck) gated by TWO condition lists:
-#                 ORIGIN_CONDITIONS and DESTINATION_CONDITIONS, AND-ed. A non-empty list
-#                 on a missing participant fails (never fires).
-# (The Transient kind — "applies as part of its own use" — died in the effect-cleanse
-# demolition: activation is its own MECHANISM, not a trigger wearing a cost, and plays are
-# events through the one pipeline. TARGETING_DESIGN.md §7/§10.)
+# The Simple/Dual shape is ENDORSED AS-IS by the settled design (TARGETING_DESIGN.md §4.1:
+# firing conditions belong to trigger implementations — Simple gates one participant list,
+# Dual gates origin and destination independently). Everything legacy — the string-schema
+# mapping, the subject-filter fold, the While standing tag, the compat enum derivation —
+# was deleted with the effect layer (2026-08-11); this file carries only what the rebuilt
+# TriggeredEffect stands on.
 #
-# Conditions are plain EffectConditions (stat / status / composition / allegiance) —
-# true PREDICATES only. "Reacts only to its own action" is NOT a condition: it is the
-# structural PARTICIPANT GATE ("of": "self" — the watched participant must BE the holder),
-# a field on the event kinds. Allegiance ("an ally died") stays a condition, compared
-# against the holder's side. Legacy {"relation": "self"} condition dicts (both the old
-# subject mapping and Tool-authored native lists) are extracted into the gate at parse.
+# Kinds (inner classes — ONE file on purpose: constructing them during other classes'
+# @static_initializer runs hits the static-init load order with separate files):
+#   • Simple — an origin-only event (play/death/act/turn_start/turn_end) gated by one
+#     plain-condition list evaluated against the origin.
+#   • Dual   — a two-participant event (attack/struck/kill/dodge/crit) gated by TWO
+#     condition lists: origin and destination, AND-ed. A non-empty list on a missing
+#     participant fails (never fires).
 #
-# Authoring: the effect's "trigger" key. A STRING is the legacy schema
-# ("on_attack" + "subject" + "subject_elements") and maps losslessly onto a resolver here
-# (zero data migration); a DICTIONARY is the native form:
-#   { "kind": "while" }
+# Conditions are plain EffectConditions — true PREDICATES only. "Reacts only to its own
+# action" is NOT a condition: it is the structural PARTICIPANT GATE ("of": "self" — the
+# watched participant must BE the holder), a field on the event kinds.
+#
+# Authoring (the native dictionary form):
 #   { "kind": "event", "event": "death", "of": "self", "conditions": [ ... ] }
 #   { "kind": "dual_event", "event": "struck", "origin_of": "any", "destination_of": "self",
 #     "origin_conditions": [ ... ], "destination_conditions": [ ... ] }
 #   ("of" values: "self" = the holder only; "any" (default) = anyone's event)
 
-const SIMPLE_EVENTS: Array[StringName] = [&"play", &"death", &"act", &"turn_start", &"turn_end", &"permanent"]
+const SIMPLE_EVENTS: Array[StringName] = [&"play", &"death", &"act", &"turn_start", &"turn_end"]
 const DUAL_EVENTS: Array[StringName] = [&"attack", &"struck", &"kill", &"dodge", &"crit"]
 
 # The allegiance anchor for condition evaluation is normally the HOLDER's side. Run-scope
@@ -54,22 +47,8 @@ static func anchor_owner(holder: CardInstance, owner: int) -> int:
 		return owner
 	return holder.owner if holder != null else -1
 
-# Legacy trigger key → (event id, whether the legacy single subject was the DESTINATION).
-# `permanent` is intercepted in from_legacy before this map is consulted: it becomes the
-# While kind (a standing effect) — the meaning that dangling slot always wanted.
-const LEGACY_EVENTS := {
-	"on_play":         [&"play", false],
-	"on_death":        [&"death", false],
-	"on_attack":       [&"attack", false],
-	"on_damage_taken": [&"struck", true],
-	"permanent":       [&"permanent", false],
-	"on_turn_start":   [&"turn_start", false],
-	"on_turn_end":     [&"turn_end", false],
-	"on_activate":     [&"act", false],
-}
 
-
-# Cheap prefilter: could this resolver ever fire for this event id? (The dispatch tiers use
+# Cheap prefilter: could this resolver ever fire for this event id? (Dispatch tiers use
 # it to collect candidates before the full gate runs.)
 func listens(_event_id: StringName) -> bool:
 	return false
@@ -88,13 +67,6 @@ func to_dict() -> Dictionary:
 
 
 # ── Kinds ────────────────────────────────────────────────────────────────────────────
-
-class While extends TriggerResolver:
-	# A STANDING effect: live for as long as its tracker is valid, contributing at read time
-	# (see LiveEffects). All base gates stay false — dispatch and the use path never touch it.
-	func to_dict() -> Dictionary:
-		return {"kind": "while"}
-
 
 class Simple extends TriggerResolver:
 	var event: StringName = &"play"
@@ -170,103 +142,43 @@ class Dual extends TriggerResolver:
 
 # ── Parsing ──────────────────────────────────────────────────────────────────────────
 
-# The one entry point Effect.from_dict uses. `trigger_value` is the raw "trigger" key
-# (String = legacy, Dictionary = native); subject/subject_elements are the legacy
-# companions, ignored for the native form.
-static func parse(trigger_value: Variant, subject_key: String, subject_elements: Array) -> TriggerResolver:
-	if trigger_value is Dictionary:
-		return _from_native(trigger_value as Dictionary)
-	return from_legacy(str(trigger_value), subject_key, subject_elements)
-
-
-# Maps the legacy schema (trigger string + subject filter + subject elements) onto a
-# resolver, applied to the participant that WAS the subject (the origin for every event
-# except on_damage_taken, whose subject was the struck unit). Legacy subject "self"
-# becomes the structural participant gate; ally/enemy become allegiance conditions.
-static func from_legacy(trigger_key: String, subject_key: String, subject_elements: Array) -> TriggerResolver:
-	if trigger_key == "permanent":
-		return While.new()   # the legacy "permanent" trigger IS the standing kind
-	var mapping: Array = LEGACY_EVENTS.get(trigger_key, LEGACY_EVENTS["on_play"])
-	var event_id: StringName = mapping[0]
-	var subject_is_destination: bool = mapping[1]
-
-	var gate_self := false
-	var conds: Array = []
-	match subject_key:
-		"ally":  conds.append(EffectCondition.from_dict({"allegiance": "ally"}))
-		"enemy": conds.append(EffectCondition.from_dict({"allegiance": "enemy"}))
-		"any":   pass   # no gate at all
-		_:       gate_self = true   # legacy default: reacts only to its own action
-	if not subject_elements.is_empty():
-		conds.append(EffectCondition.from_dict({"composition": subject_elements.duplicate()}))
-
-	if DUAL_EVENTS.has(event_id):
-		var dual := Dual.new()
-		dual.event = event_id
-		if subject_is_destination:
-			dual.destination_of_holder = gate_self
-			dual.destination_conditions = conds
-		else:
-			dual.origin_of_holder = gate_self
-			dual.origin_conditions = conds
-		return dual
-	var simple := Simple.new()
-	simple.event = event_id
-	simple.of_holder = gate_self
-	simple.conditions = conds
-	return simple
-
-
-static func _from_native(d: Dictionary) -> TriggerResolver:
+# The one authored form. Anything else — the legacy string schema included — is refused
+# loudly: the dead language is not parsed, it is re-authored.
+static func parse(trigger_value: Variant) -> TriggerResolver:
+	if not (trigger_value is Dictionary):
+		push_error("TriggerResolver: '%s' is not the native trigger form (the legacy string schema was deleted 2026-08-11) — refusing" % str(trigger_value))
+		return null
+	var d := trigger_value as Dictionary
 	match str(d.get("kind", "")):
-		"while":
-			return While.new()
 		"dual_event":
 			var dual := Dual.new()
 			dual.event = StringName(str(d.get("event", "attack")))
-			dual.origin_of_holder = str(d.get("origin_of", "any")) == "self" \
-					or _has_identity(d.get("origin_conditions", []))
-			dual.destination_of_holder = str(d.get("destination_of", "any")) == "self" \
-					or _has_identity(d.get("destination_conditions", []))
+			dual.origin_of_holder = str(d.get("origin_of", "any")) == "self"
+			dual.destination_of_holder = str(d.get("destination_of", "any")) == "self"
 			dual.origin_conditions = _parse_conditions(d.get("origin_conditions", []))
 			dual.destination_conditions = _parse_conditions(d.get("destination_conditions", []))
 			dual.cause = StringName(str(d.get("cause", "")))
 			return dual
-		_:   # "event" (and anything unrecognised degrades to a simple event)
+		"event":
 			var simple := Simple.new()
 			simple.event = StringName(str(d.get("event", "play")))
-			simple.of_holder = str(d.get("of", "any")) == "self" \
-					or _has_identity(d.get("conditions", []))
+			simple.of_holder = str(d.get("of", "any")) == "self"
 			simple.conditions = _parse_conditions(d.get("conditions", []))
 			return simple
-
-
-# Identity dicts ({"relation": "self"} — the pre-gate native schema) are STRUCTURE, not
-# predicates: they are read into the participant gate and never become conditions.
-static func _has_identity(raw: Variant) -> bool:
-	for c_data: Dictionary in (raw as Array):
-		if EffectCondition.is_identity_dict(c_data):
-			return true
-	return false
+	push_error("TriggerResolver: unknown trigger kind '%s' — refusing (no permissive default)" % str(d.get("kind", "")))
+	return null
 
 
 static func _parse_conditions(raw: Variant) -> Array:
 	var out: Array = []
 	for c_data: Dictionary in (raw as Array):
-		if EffectCondition.is_identity_dict(c_data):
-			continue   # structural — consumed by the participant gate / self target kind
 		out.append(EffectCondition.from_dict(c_data))
 	return out
 
 
-# Implicit conditions are skipped: they are DERIVED at load from the effect's own payload (the
-# viability form — see EffectCondition), never authored, so emitting one would invent a key the
-# data file never had and break the schema's byte-faithful round trip.
 static func conditions_to_dicts(conds: Array) -> Array:
 	var out: Array = []
 	for c: EffectCondition in conds:
-		if c.implicit:
-			continue
 		out.append(c.to_dict())
 	return out
 
@@ -285,18 +197,3 @@ static func conditions_pass(conds: Array, unit: CardInstance, owner: int) -> boo
 		if not c.evaluate(unit, owner):
 			return false
 	return true
-
-
-# The compat Trigger enum value for this resolver — kept on Effect for the consumers that
-# read effect.trigger without dispatching (the spell/ability "== ON_PLAY" include filter,
-# enemy-AI heuristics). Derived, never authoritative.
-static func legacy_trigger_for(event_id: StringName) -> Effect.Trigger:
-	match event_id:
-		&"death":       return Effect.Trigger.ON_DEATH
-		&"attack":      return Effect.Trigger.ON_ATTACK
-		&"struck":      return Effect.Trigger.ON_DAMAGE_TAKEN
-		&"act":         return Effect.Trigger.ON_ACT
-		&"turn_start":  return Effect.Trigger.ON_TURN_START
-		&"turn_end":    return Effect.Trigger.ON_TURN_END
-		&"permanent":   return Effect.Trigger.PERMANENT
-	return Effect.Trigger.ON_PLAY

@@ -101,12 +101,12 @@ var channel: StringName = CH_EFFECT
 # the KIND of cause (attack/effect/…); `cause` is WHICH specific one — a status id for a
 # tick ("poison"), else "". Together they answer "what killed this unit": an attack, or
 # poison, or another effect. Set by the producing site (StatMutation.damage stamps the
-# attack kind; EffectSystem stamps the status id for a status-held effect).
+# attack kind; the rebuilt dispatcher stamps the status id for a status-held effect).
 var cause: StringName = &""
 # STATUS-form metadata: which status is being applied and with what duration override
 # (`amount` carries the stack count — the interceptable magnitude, like every other form).
 var status_id: String = ""
-var status_duration: int = Effect.STATUS_DURATION_DEFAULT
+var status_duration: int = StatusEngine.DURATION_DEFAULT
 # Marks the shield/health SHARE of a split hit (built inside Resolver._apply_damage). A
 # portion is a reduction by construction: rewrites clamp it at <= 0 after every interceptor
 # (mirroring the >= 0 re-floor on DAMAGE), so "take less" can zero a wound but never flip
@@ -117,7 +117,8 @@ var portion := false
 # Effect-attribute name → the stat it lands as. The two authored names with a distinct
 # resolution form map to their stat ("health" signed/shield-bypassing, "damage_taken" the
 # shield-first attack form); any other attribute is an additive modifier under its own name.
-# Owned here so the vocabulary and its translation live in one file (used by EffectSystem).
+# Owned here so the vocabulary and its translation live in one file — the rebuilt effect
+# dispatcher (TARGETING_DESIGN.md) is its consumer when payloads exist again.
 static func stat_for_attribute(attr: String) -> StringName:
 	match attr:
 		"health":       return HEALTH

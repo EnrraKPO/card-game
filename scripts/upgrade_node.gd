@@ -27,7 +27,8 @@ var icon: String = "✦"
 var row: int = 0
 var col: int = 0
 var requires: Array[String] = []
-var effects: Array = []   # Array[Effect] — the run-wide effects this node grants
+# (The carried `effects` array was deleted 2026-08-11 with the effect layer; what a node
+# grants is re-authored in the new schema when the rebuild reaches this container.)
 
 
 static func from_dict(d: Dictionary) -> UpgradeNode:
@@ -40,6 +41,6 @@ static func from_dict(d: Dictionary) -> UpgradeNode:
 	n.col          = int(d.get("col", 0))
 	for r: String in d.get("requires", []):
 		n.requires.append(r)
-	for e: Dictionary in d.get("effects", []):
-		n.effects.append(Effect.from_dict(e))
+	if not (d.get("effects", []) as Array).is_empty():
+		push_error("UpgradeNode %s: 'effects' is the deleted schema (effect-cleanse 2026-08-11) — dropped; re-author in the new schema" % n.id)
 	return n

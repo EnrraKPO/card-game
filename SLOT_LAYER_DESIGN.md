@@ -1,12 +1,19 @@
 # Slot Layer — Design & Implementation Guide
 
-Status: **BUILT 2026-08-02 (commits 05edac0 + c73571a + 4268b77, suite 1256 green), not
-yet playtested.** The model decisions below were settled in discussion with the user across
-several rounds — do not reopen them. §4 now describes what EXISTS; the scope fences in §6
-still stand (nothing behind them was built). Burning content (Step 3) remains unstarted.
+Status: **BUILT 2026-08-02 (commits 05edac0 + c73571a + 4268b77), then PARTIALLY RAZED by
+the effect-layer demolition (targeting-cleanup, 2026-08-11).** What SURVIVES: the layer
+model itself — slots as real status carriers over the shared coordinate space (§2's settled
+decisions stand; do not reopen them), the StatusEngine tick/decay/expiry spine, and the
+ground presentation. What is GONE with the old effect layer: every effect-delivery path
+this doc narrates (EffectSystem/EffectContext ground dispatch, `Effect.riders`, restrikes,
+the spread tier, named effects) — the cascade's ground-proc sites are fail-loud NEEDS stubs
+and burning/ablaze survive as tick-only statuses until re-authored in the new schema
+(`TARGETING_DESIGN.md` is the authority). Read §4's mechanism prose as HISTORY of the razed
+build, not the current tree.
 
-Sibling docs: `EFFECT_SYSTEM_DESIGN.md` (effect pipeline), `EVAL_CRITERIA_BRIEF.md`
-(enemy engine — explicitly OUT of scope here), `data/statuses/STATUS_AUTHORING_GUIDE.md`.
+Sibling docs: `EFFECT_SYSTEM_DESIGN.md` (the PRIOR generation's effect pipeline — superseded
+by `TARGETING_DESIGN.md`), `EVAL_CRITERIA_BRIEF.md` (enemy engine — explicitly OUT of scope
+here), `data/statuses/STATUS_AUTHORING_GUIDE.md`.
 
 ---
 
@@ -37,7 +44,7 @@ Consequences, all deliberate:
   the authority on.)
 - A unit leaving a burning slot leaves the fire behind by construction.
 
-**2.3 Statuses are the actors; carriers are addresses.** Settled during the StatusCarrier
+**2.3 Statuses are the actors; carriers are addresses.** Settled during the GameEntity
 step: a status knows when to tick, trigger, expire (StatusData + StatusEngine own ALL
 behavior); a carrier holds a list purely for organization and has ZERO say. Slots are the
 second carrier species. Do not put any status logic on the slot.
@@ -51,17 +58,17 @@ richer providers feeding the SAME primitive; never a new targeting kind. An earl
 `OCCUPANT` ("the unit standing on me") design was REJECTED for baking the
 holder-relationship into the semantics.
 
-**2.5 Bigger frame (context, not scope):** the user sees StatusCarrier as one facet of a
+**2.5 Bigger frame (context, not scope):** the user sees GameEntity as one facet of a
 future "game entity core" (identity + position + Resolver-written state bags + read-time
 folds). Parked, explicitly: whether statuses and modifiers are even different things. Do
 not unify anything here.
 
 ## 3. Already built / already true (verify, don't rebuild)
 
-- **`scripts/status_carrier.gd`** (`StatusCarrier extends RefCounted`) — statuses list +
-  `find/remove/clear` filing. `CardInstance extends StatusCarrier`. Application rules
+- **`scripts/game_entity.gd`** (`GameEntity extends RefCounted`) — statuses list +
+  `find/remove/clear` filing. `CardInstance extends GameEntity`. Application rules
   (stacking/clamp/refresh/duration) live in **`StatusEngine.apply(carrier, id, duration,
-  stacks, src)`**; `advance`/`triggered_groups` already take `StatusCarrier`.
+  stacks, src)`**; `advance`/`triggered_groups` already take `GameEntity`.
   `StatusInstance.bind_carrier/copied` already carrier-typed. Suite green (1216).
 - **`StatMutation.target` is `Object`** (`stat_mutation.gd:94`) — the Resolver already
   dispatches on target species (`DeckCard` / `CombatSide` / else-CardInstance in
@@ -86,7 +93,7 @@ not unify anything here.
 
 ```gdscript
 class_name BoardSlot
-extends StatusCarrier
+extends GameEntity
 # One cell of the GROUND layer: a filing cabinet with an address. Coordinates are
 # identity; occupancy is NOT stored here (the unit grids are the authority — ask the
 # world). See SLOT_LAYER_DESIGN.md.
@@ -114,7 +121,7 @@ answered per-dispatch via `owner_anchor` (§4.4).
 ### 4.3 Resolver — delivery (single writer preserved)
 
 `Resolver._submit` / `_dispatch_apply`: a `StatMutation.STATUS` whose target is a
-`StatusCarrier` that is not a `CardInstance` routes to the same
+`GameEntity` that is not a `CardInstance` routes to the same
 `StatusEngine.apply(target, ...)` call the unit arm uses (resolver.gd:189). Non-STATUS
 mutations aimed at a slot are authoring errors: `push_error` + no-op Outcome (fail loud —
 slots have no stats in this build). Everything else (interceptors, LiveEffects
@@ -139,7 +146,14 @@ Do NOT build a second dispatch pipeline; this is a caller loop feeding the exist
 (Presentation note: `trigger_grouped`'s per-container cue/source-proc machinery expects a
 CardInstance source — slot dispatch SKIPS cues in this build; see §6 UI fence.)
 
-**As built, the ground pass is THREE tiers** (2026-08-03, the spread build):
+> **⚠ PARTIALLY DEAD (2026-08-11):** the SPREAD tier below (tier 2) and everything in
+> §4.4b (riders, restrikes) were DELETED outright with the targeting-cleanup demolition —
+> never user-designed, accreted in the burning-ground work, disavowed. The ground pass is
+> now procs then decay. These sections remain as historical record only; do not re-author
+> any of their vocabulary (`spread`, `riders`, `per_stack_chance` are refused at load).
+> Status propagation and damage follow-ons return only as designed, signed-off features.
+
+**As built, the ground pass WAS three tiers** (2026-08-03, the spread build):
 
 1. **Procs** — as above, but gathered board-wide and presented as ONE moment
    (`CombatPresenter.show_ground_results(procs)`): mutations land slot by slot in reading

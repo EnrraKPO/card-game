@@ -1,5 +1,11 @@
 # Effect System Redesign — One Effect, Transparent Containers
 
+> **SUPERSEDED (2026-08-11).** This is the PRIOR generation's effect system. Everything it
+> describes was DELETED whole in the targeting-cleanup demolition + Great Purge; the living
+> authority for the rebuild is `TARGETING_DESIGN.md`. Kept as the decision record of that
+> generation (several of its rulings — the owner model, allegiance-vs-identity, transparent
+> containers — carried forward into the new design's reasoning).
+
 Status: STAGES 1 + 2 IMPLEMENTED (stage 1 merged to main; stage 2 on branch
 `effect-stage2`) — contract + Tracker + the one evaluator (stage 1); owner model,
 relation dissolution (self target kind / allegiance conditions / trigger `of` gates),

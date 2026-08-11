@@ -126,8 +126,18 @@ func _ready() -> void:
 	# same cards and rolls the same dodges.
 	CombatLog.open(CombatRng.begin())
 
-	_player_side  = CombatSide.make(0)
-	_enemy_side   = CombatSide.make(1)
+	# The live WORLD: the one cohesive context the rules read (COMBAT_DECOUPLING_REFACTOR.md),
+	# built through the one constructor every world comes from (CombatWorld.make — the enemy
+	# engine's fixtures walk in the same door). It OWNS placement (see LocationManager) — the
+	# board reads it and stores none of its own, which is why nothing has to keep two
+	# arrangements in step any more. rewards_live = whether this fight pays run state at all:
+	# it needs a run to pay INTO, and that is the whole test. A practice bout still pays for
+	# real and is rolled back at the EXIT (see _handle_combat_end / _practice_gold) — a
+	# rehearsal that skips the payment isn't a rehearsal of the fight.
+	_world = CombatWorld.make(GameData.current_modifiers)
+	_world.rewards_live = GameData.current_run != null
+	_player_side  = _world.player_side
+	_enemy_side   = _world.enemy_side
 	_hand         = Hand.new()
 	_board        = CombatBoard.new()
 	_animator     = CombatAnimator.new()
@@ -166,14 +176,6 @@ func _ready() -> void:
 	# tray is fetched through a Callable because it is built after this wiring block.
 	_presenter = LivePresenter.make(_animator, get_tree(), _board,
 			func() -> RelicTray: return _relic_tray, _king_fall, _fade_out)
-	# The live WORLD: the one cohesive context the rules read (COMBAT_DECOUPLING_REFACTOR.md).
-	# It OWNS placement (see LocationManager) — the board reads it and stores none of its own,
-	# which is why nothing has to keep two arrangements in step any more.
-	_world = CombatWorld.new()
-	_world.player_side = _player_side
-	_world.enemy_side = _enemy_side
-	_world.modifiers = GameData.current_modifiers
-	_world.rewards_live = GameData.current_run != null   # the old _rewards_live() predicate
 	_board.world = _world
 	_cascade = CombatCascade.make(_world, _presenter)
 
@@ -235,8 +237,9 @@ func _ready() -> void:
 	_interaction.changed.connect(func(_action: Interaction.Action) -> void:
 		_board.present(_interaction.current()))
 
-	# A practice bout runs the REAL economy and rolls it back on the way out (see _rewards_live):
-	# the snapshot is taken before a single coin can be paid.
+	# A practice bout runs the REAL economy and rolls it back on the way out (see the
+	# rewards_live note at world construction): the snapshot is taken before a single coin
+	# can be paid.
 	if GameData.current_encounter != null and GameData.current_encounter.practice \
 			and GameData.current_run != null:
 		_practice_gold = GameData.current_run.gold
@@ -782,18 +785,6 @@ var _paid: Dictionary = {}   # instance id -> true; a corpse pays exactly once, 
 							  # removal path retires it
 
 
-# Whether this fight pays at all: it needs a run to pay INTO, and that is the whole test.
-#
-# A practice bout in the Combat Gym still leaves no footprint — but that promise is kept where it
-# belongs, at the EXIT (see _handle_combat_end / _practice_gold), not by suppressing the payment
-# everywhere it happens. Practice used to fail this predicate, which switched off the coins, the
-# gauge and the chest as a side effect: the one place in the game built for testing a fight was
-# the one place its payment cues never played. A rehearsal that skips the payment isn't a
-# rehearsal of the fight.
-func _rewards_live() -> bool:
-	return GameData.current_run != null
-
-
 # The purse as it stood when a practice fight began, so the fight can spend and earn for real and
 # still leave the run exactly where it found it. -1 = not a practice bout, nothing to restore.
 var _practice_gold: int = -1
@@ -802,7 +793,9 @@ var _practice_gold: int = -1
 # CombatBoard.unit_retired — the one wire every death arrives on. Reads the bounty, banks the
 # gold, holds the experience, and throws the coins from where the body stood.
 func _pay_bounty(inst: CardInstance) -> void:
-	if inst == null or inst.owner != 1 or inst.is_alive() or not _rewards_live():
+	# rewards_live is WORLD policy (one home — set at construction; false on every copy, so
+	# a hypothetical never pays): whether this fight pays run state at all.
+	if inst == null or inst.owner != 1 or inst.is_alive() or not _world.rewards_live:
 		return
 	var key := inst.get_instance_id()
 	if _paid.has(key):
@@ -1171,8 +1164,8 @@ func _await_settled(inst: CardInstance) -> void:
 func _apply_attack_damage(attacker: CardInstance, target: CardInstance, t_card: CardUI) -> void:
 	# The ON_ATTACK moment is an EVENT — it fires whether or not any damage follows (reactions
 	# like on-hit poison ride it). The strike itself is just a mutation submitted to the
-	# Resolver, which owns both the shield-first resolution form AND interception (Blind and
-	# friends rewriting the amount inside the gate — see Effect.Kind.INTERCEPTOR). Combat never
+	# Resolver, which owns both the shield-first resolution form AND the interception seam
+	# (TARGETING_DESIGN.md §8: interceptors rewrite the amount inside the gate). Combat never
 	# learns WHY the number changed; it presents the outcome the Resolver reports.
 	await _broadcast(GameEvent.make(&"attack", attacker, target))
 	var outcome := Resolver.submit(
@@ -1268,11 +1261,8 @@ func _fire_run_level(event: GameEvent) -> void:
 
 
 # A consumable relic's use (the tray chip's completed safety hold — see ConsumableChip): SPEND
-# the relic, then cue the chip and apply the relic's transient effects anchored to the PLAYER
-# (the same two-anchor read as run-level dispatch: the King is the spatial anchor, owner_anchor 0
-# makes "ally"/"enemy" read from the player's side). The effects ride the same use-path as a
-# spell cast (EffectSystem.apply_single + death sweep), so a consumable is authored exactly like
-# transient spell effects.
+# the relic, then cue the chip. What the use DOES is razed with the effect layer — see the
+# NEEDS block below (an ACTIVATION anchored to the player, per the two-anchor model).
 #
 # The discard happens FIRST, before a single await: a consumable is gone at the moment its hold
 # commits, and everything after is just the telling of it. Spending at the END made the relic's

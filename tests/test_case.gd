@@ -77,8 +77,3 @@ func unit(card_id: String) -> CardInstance:
 	var inst := CardInstance.from_data(data)
 	inst.owner = 0
 	return inst
-
-
-# A minimal one-unit board context for effect dispatch.
-func ctx_for(inst: CardInstance) -> EffectContext:
-	return EffectContext.make(inst, [[inst]], [[]])

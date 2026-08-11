@@ -60,13 +60,11 @@ async function main() {
     let r = await api('/api/state');
     check('GET /api/state 200', r.status === 200);
     check('game tree lists entries with files', r.data.game.card.some(c => c.id === 'pawn' && c.file === 'base.json'));
-    check('vocab exposes builder vocabularies', Array.isArray(r.data.vocab.simpleEvents) && Array.isArray(r.data.vocab.targetKinds));
+    check('vocab exposes composition vocabularies', Array.isArray(r.data.vocab.elements) && Array.isArray(r.data.vocab.pieces));
 
     // ── save NEW entries into a chosen (fresh) file ──
     r = await api('/api/game/save', { type: 'card', file: 'apitest_units.json', data: {
-      id: 'apitest_zap', display_name: 'Zap', cost: 1, attack: 2, health: 2, speed: 3,
-      effects: [{ trigger: { kind: 'dual_event', event: 'attack', origin_conditions: [{ relation: 'self' }] },
-        targets: { kind: 'participant', participant: 'destination' }, status: { id: 'poison', stacks: 1 } }] } });
+      id: 'apitest_zap', display_name: 'Zap', cost: 1, attack: 2, health: 2, speed: 3 } });
     check('new entry saved into a new file', r.status === 200 && r.data.action === 'added', JSON.stringify(r.data));
     r = await api('/api/game/save', { type: 'card', file: 'apitest_units.json', data: {
       id: 'apitest_bolt', display_name: 'Bolt', cost: 1, attack: 3, health: 1, speed: 5 } });
@@ -89,157 +87,64 @@ async function main() {
 
     // ── validation still gates saves ──
     r = await api('/api/game/save', { type: 'card', file: 'apitest_units.json', data: {
-      id: 'apitest_bad', display_name: 'B', cost: 1, attack: 1, health: 1, speed: 1,
-      effects: [{ trigger: { kind: 'event', event: 'bogus_event' }, targets: { kind: 'all' }, attribute: 'attack', amount: 1 }] } });
-    check('invalid entry rejected', r.status === 400 && /not a simple event/.test(r.data.error), r.data.error);
-    // interceptors must name a stat a mutation can actually carry (the stalwart_barrier
-    // lesson: "intercept: max_health" is a plausible invention that matches nothing)…
+      id: 'apitest_bad', display_name: 'B', cost: 1, attack: 1, health: 1, speed: 'fast' } });
+    check('invalid entry rejected', r.status === 400 && /missing stat "speed"/.test(r.data.error), r.data.error);
+    // ── the deleted effect schema is REFUSED at the gate (effect-cleanse 2026-08-11) ──
+    // An EMPTY effects array is the post-strip save shape and passes silently; authored
+    // content is the old language and must not flow back into data/ through the Tool.
+    const OLD_FX = [{ trigger: { kind: 'event', event: 'play' }, targets: { kind: 'self' }, attribute: 'attack', amount: 1 }];
+    r = await api('/api/game/save', { type: 'card', file: 'apitest_units.json', data: {
+      id: 'apitest_oldfx', display_name: 'O', cost: 1, attack: 1, health: 1, speed: 1, effects: OLD_FX } });
+    check('card with authored effects refused', r.status === 400 && /deleted schema/.test(r.data.error), r.data.error);
+    r = await api('/api/game/save', { type: 'card', file: 'apitest_units.json', data: {
+      id: 'apitest_emptyfx', display_name: 'E', cost: 1, attack: 1, health: 1, speed: 1, effects: [] } });
+    check('card with an EMPTY effects array saves (post-strip shape)', r.status === 200, JSON.stringify(r.data).slice(0, 200));
+    await api('/api/game/delete-entry', { type: 'card', id: 'apitest_emptyfx' });
     r = await api('/api/game/save', { type: 'status', file: 'apitest_statuses.json', data: {
-      id: 'apitest_badint', effects: [{ kind: 'interceptor', intercept: 'healing', role: 'target', op: 'mul', amount: 0 }] } });
-    check('unknown intercept stat rejected', r.status === 400 && /unknown intercept stat "healing"/.test(r.data.error), r.data.error);
-    // …and standing (while) attributes must be in the read-time fold's served set.
-    r = await api('/api/game/save', { type: 'status', file: 'apitest_statuses.json', data: {
-      id: 'apitest_badwhile', effects: [{ trigger: { kind: 'while' }, targets: { kind: 'self' }, attribute: 'damage_taken', amount: 1 }] } });
-    check('non-foldable standing attribute rejected', r.status === 400 && /cannot be standing/.test(r.data.error), r.data.error);
-    // the shield base IS foldable (maps to max_shield — the stalwart_barrier fix)
-    r = await api('/api/game/save', { type: 'status', file: 'apitest_statuses.json', data: {
-      id: 'apitest_shieldwhile', effects: [{ trigger: { kind: 'while' }, targets: { kind: 'self' }, attribute: 'shield', amount: 1 }] } });
-    check('standing shield accepted', r.status === 200, JSON.stringify(r.data).slice(0, 200));
-    await api('/api/game/delete-entry', { type: 'status', id: 'apitest_shieldwhile' });
-    // ── composition grants (mirrors Effect._validate_grants: standing-only, union-only,
-    // canonical ids, no negative composition predicates — Layer-1 monotonicity) ──
-    r = await api('/api/game/save', { type: 'status', file: 'apitest_statuses.json', data: {
-      id: 'apitest_grant', effects: [{ trigger: { kind: 'while' }, targets: { kind: 'self' }, grants: ['fire'] }] } });
-    check('composition grant accepted', r.status === 200, JSON.stringify(r.data).slice(0, 200));
-    await api('/api/game/delete-entry', { type: 'status', id: 'apitest_grant' });
-    r = await api('/api/game/save', { type: 'status', file: 'apitest_statuses.json', data: {
-      id: 'apitest_badgrant1', effects: [{ trigger: { kind: 'while' },
-        targets: { kind: 'all', conditions: [{ composition: ['king'], present: false }] }, grants: ['fire'] }] } });
-    check('negative composition condition on a grant rejected',
-      r.status === 400 && /negative composition condition/.test(r.data.error), r.data.error);
-    r = await api('/api/game/save', { type: 'status', file: 'apitest_statuses.json', data: {
-      id: 'apitest_badgrant2', effects: [{ trigger: { kind: 'while' }, targets: { kind: 'self' }, grants: ['dragon'] }] } });
-    check('unknown component id in grants rejected',
-      r.status === 400 && /not an element or chess piece/.test(r.data.error), r.data.error);
-    r = await api('/api/game/save', { type: 'status', file: 'apitest_statuses.json', data: {
-      id: 'apitest_badgrant3', effects: [{ trigger: { kind: 'event', event: 'play' }, targets: { kind: 'self' }, grants: ['fire'] }] } });
-    check('grants on a non-while trigger rejected',
-      r.status === 400 && /requires a standing/.test(r.data.error), r.data.error);
-    r = await api('/api/game/save', { type: 'status', file: 'apitest_statuses.json', data: {
-      id: 'apitest_badgrant4', effects: [{ trigger: { kind: 'while' }, targets: { kind: 'self' }, grants: ['fire'], attribute: 'attack', amount: 1 }] } });
-    check('grants exclusive with the attribute payload',
-      r.status === 400 && /exclusive with/.test(r.data.error), r.data.error);
-
-    // ── named effects: the reusable payload library (data/named_effects) ──
-    r = await api('/api/game/save', { type: 'namedeffect', file: 'apitest_named.json', data: {
-      id: 'apitest_burn', display_name: 'Burn', attribute: 'damage_taken', amount: 1,
-      per_stack: false, per_stack_chance: 0.25,
-      riders: [{ chance: 0.33, status: { id: 'poison', stacks: 1 } }] } });
-    check('named effect saves', r.status === 200, JSON.stringify(r.data).slice(0, 200));
-    r = await api('/api/game/save', { type: 'namedeffect', file: 'apitest_named.json', data: {
-      id: 'apitest_noop' } });
-    check('payload-less template rejected', r.status === 400 && /does nothing/.test(r.data.error), r.data.error);
-    r = await api('/api/game/save', { type: 'namedeffect', file: 'apitest_named.json', data: {
-      id: 'apitest_chain', named: 'apitest_burn', attribute: 'damage_taken', amount: 1 } });
-    check('template chains rejected', r.status === 400 && /no chains/.test(r.data.error), r.data.error);
-    r = await api('/api/game/save', { type: 'namedeffect', file: 'apitest_named.json', data: {
-      id: 'apitest_badrider', riders: [{ chance: 2, status: { id: 'poison' } }] } });
-    check('rider chance out of range rejected', r.status === 400 && /between 0 and 1/.test(r.data.error), r.data.error);
-    // PARAMETERISED keyword ("Blind X"): stacks and the enemy-engine price both take the
-    // call site's amount, so the magnitude placeholder is legal where a number is.
-    r = await api('/api/game/save', { type: 'namedeffect', file: 'apitest_named.json', data: {
-      id: 'apitest_blind', display_name: 'Blind', amount: 1,
-      status: { id: 'blind', stacks: '$X' }, eval: { value: '$X' } } });
-    check('a parameterised template saves with its magnitude', r.status === 200, JSON.stringify(r.data).slice(0, 200));
-    r = await api('/api/game/save', { type: 'namedeffect', file: 'apitest_named.json', data: {
-      id: 'apitest_badmag', status: { id: 'blind', stacks: '$Y' } } });
-    check('an unknown placeholder is not a number', r.status === 400 && /positive integer/.test(r.data.error), r.data.error);
-    r = await api('/api/game/save', { type: 'namedeffect', file: 'apitest_named.json', data: {
-      id: 'apitest_badeval', status: { id: 'blind' }, eval: { nonsense: 1 } } });
-    check('unknown eval channel on a template rejected', r.status === 400 && /unknown eval channel/.test(r.data.error), r.data.error);
-    // an effect referencing the library passes the payload gate; unknown names are loud
-    r = await api('/api/game/save', { type: 'status', file: 'apitest_statuses.json', data: {
-      id: 'apitest_burner', effects: [{ trigger: { kind: 'event', event: 'turn_end' }, targets: { kind: 'self' }, named: 'apitest_burn' }] } });
-    check('a named reference IS a payload', r.status === 200, JSON.stringify(r.data).slice(0, 200));
-    r = await api('/api/game/save', { type: 'status', file: 'apitest_statuses.json', data: {
-      id: 'apitest_burner2', effects: [{ trigger: { kind: 'event', event: 'turn_end' }, targets: { kind: 'self' }, named: 'no_such_name' }] } });
-    check('unknown named effect rejected', r.status === 400 && /unknown named effect/.test(r.data.error), r.data.error);
-    // the spread block (wildfire authoring): shape + named-effect references validate
+      id: 'apitest_oldstatus', effects: OLD_FX } });
+    check('status with authored effects refused', r.status === 400 && /deleted schema/.test(r.data.error), r.data.error);
+    r = await api('/api/game/save', { type: 'relic', file: 'apitest_relics.json', data: {
+      id: 'apitest_shell_relic', display_name: 'Shell', description: 'the re-authoring brief' } });
+    check('an effect-less relic SHELL saves (the brief is the content)', r.status === 200, JSON.stringify(r.data).slice(0, 200));
+    await api('/api/game/delete-entry', { type: 'relic', id: 'apitest_shell_relic' });
+    r = await api('/api/game/save', { type: 'relic', file: 'apitest_relics.json', data: {
+      id: 'apitest_oldrelic', display_name: 'R', effects: OLD_FX } });
+    check('relic with authored effects refused', r.status === 400 && /deleted schema/.test(r.data.error), r.data.error);
+    r = await api('/api/game/save', { type: 'charm', file: 'apitest_charms.json', data: {
+      id: 'apitest_oldcharm', display_name: 'C', effects: OLD_FX } });
+    check('charm with authored effects refused', r.status === 400 && /deleted schema/.test(r.data.error), r.data.error);
+    r = await api('/api/game/save', { type: 'upgrade', file: 'apitest_upgrades.json', data: {
+      id: 'apitest_oldtree', display_name: 'T', nodes: [{ id: 'n1', display_name: 'N', effects: OLD_FX }] } });
+    check('upgrade node with authored effects refused', r.status === 400 && /deleted schema/.test(r.data.error), r.data.error);
+    // the spread mechanism is deleted from the game (disavowed 2026-08-11) — the key is
+    // refused whole, whatever its shape.
     r = await api('/api/game/save', { type: 'status', file: 'apitest_statuses.json', data: {
       id: 'apitest_wildfire', decay: 'none', stacking: 'stack',
-      spread: { phase: 'turn_start', chance: 0.2, decay_chance: 0.4, to: 'ground', status: 'poison', arrival: 'apitest_burn' } } });
-    check('spread block accepted', r.status === 200, JSON.stringify(r.data).slice(0, 200));
-    r = await api('/api/game/save', { type: 'status', file: 'apitest_statuses.json', data: {
-      id: 'apitest_badspread', spread: { chance: 3 } } });
-    check('spread chance out of range rejected', r.status === 400 && /between 0 and 1/.test(r.data.error), r.data.error);
-    r = await api('/api/game/save', { type: 'status', file: 'apitest_statuses.json', data: {
-      id: 'apitest_badspread2', spread: { to: 'sideways' } } });
-    check('bad spread destination rejected', r.status === 400 && /adjacent\/ground/.test(r.data.error), r.data.error);
-    r = await api('/api/game/save', { type: 'status', file: 'apitest_statuses.json', data: {
-      id: 'apitest_badspread3', spread: { arrival: 'no_such_name' } } });
-    check('unknown arrival named effect rejected', r.status === 400 && /unknown named effect/.test(r.data.error), r.data.error);
-    // vocab exposes the library for the pickers (effect builder + spread arrival select)
-    r = await api('/api/state');
-    check('vocab lists named effects', (r.data.vocab.namedEffects || []).some(n => n.id === 'apitest_burn'),
-      JSON.stringify(r.data.vocab.namedEffects || []));
-    await api('/api/game/delete-entry', { type: 'status', id: 'apitest_burner' });
-    await api('/api/game/delete-entry', { type: 'status', id: 'apitest_wildfire' });
+      spread: { phase: 'turn_start', chance: 0.2, decay_chance: 0.4 } } });
+    check('spread block refused (deleted mechanism)', r.status === 400 && /'spread' is deleted/.test(r.data.error), r.data.error);
 
-    // ── innate rules: effects every unit carries (data/innate_effects) ──
-    // The gate is the effect's OWN trigger conditions — this is the fire_scorches_ground shape.
+    // ── named effects survive as id + description SHELLS (briefs) ──
+    r = await api('/api/game/save', { type: 'namedeffect', file: 'apitest_named.json', data: {
+      id: 'apitest_burn', display_name: 'Burn', description: 'Deal 1 damage.' } });
+    check('named-effect shell saves', r.status === 200, JSON.stringify(r.data).slice(0, 200));
+    r = await api('/api/game/save', { type: 'namedeffect', file: 'apitest_named.json', data: {
+      id: 'apitest_oldnamed', display_name: 'Old', attribute: 'damage_taken', amount: 1 } });
+    check('named-effect payload keys refused', r.status === 400 && /deleted named-effect payload schema/.test(r.data.error), r.data.error);
+    // the innate-rules tier was KILLED whole (2026-08-11 ruling) — the type no longer exists
     r = await api('/api/game/save', { type: 'innate', file: 'apitest_innate.json', data: {
-      id: 'apitest_scorch', display_name: 'Scorch', effects: [{
-        trigger: { kind: 'dual_event', event: 'attack', origin_of: 'self',
-          origin_conditions: [{ composition: ['fire'] }] },
-        targets: { kind: 'participant', participant: 'destination' },
-        status: { id: 'poison', layer: 'ground', stacks: 2 } }] } });
-    check('innate rule saves', r.status === 200, JSON.stringify(r.data).slice(0, 200));
-    check('innate rule persisted', (readSbox('data/innate_effects/apitest_innate.json') || [])
-      .some(e => e.id === 'apitest_scorch'));
-    r = await api('/api/game/save', { type: 'innate', file: 'apitest_innate.json', data: {
-      id: 'apitest_noeffects', display_name: 'Empty' } });
-    check('effect-less innate rejected', r.status === 400 && /at least one effect/.test(r.data.error), r.data.error);
-    // Mirrors InnateEffects._load_json: only event-driven, non-standing effects dispatch.
-    r = await api('/api/game/save', { type: 'innate', file: 'apitest_innate.json', data: {
-      id: 'apitest_standing', effects: [{ trigger: { kind: 'while' }, targets: { kind: 'self' },
-        attribute: 'attack', amount: 1 }] } });
-    check('standing innate rejected', r.status === 400 && /cannot be innate/.test(r.data.error), r.data.error);
-    r = await api('/api/game/save', { type: 'innate', file: 'apitest_innate.json', data: {
-      id: 'apitest_modifier', effects: [{ key: 'unit.attack', amount: 1 }] } });
-    check('modifier innate rejected', r.status === 400 && /only event-driven/.test(r.data.error), r.data.error);
-    // the ordinary effect grammar still applies inside an innate rule
-    r = await api('/api/game/save', { type: 'innate', file: 'apitest_innate.json', data: {
-      id: 'apitest_badfx', effects: [{ trigger: { kind: 'event', event: 'turn_end' },
-        targets: { kind: 'self' }, attribute: 'not_a_stat', amount: 1 }] } });
-    check('bad attribute inside an innate rejected', r.status === 400 && /bad attribute/.test(r.data.error), r.data.error);
-    // composition COUNT conditions ("really built from 2+ fire" — the fire_fire gate).
-    // Presence and count are different questions: presence honours granted/blessed
-    // components, count reads the card's real composition, so they cannot be combined.
-    r = await api('/api/game/save', { type: 'innate', file: 'apitest_innate.json', data: {
-      id: 'apitest_count', effects: [{
-        trigger: { kind: 'dual_event', event: 'attack', origin_of: 'self',
-          origin_conditions: [{ composition: ['fire'], count: 2, comparator: 'gte' }] },
-        targets: { kind: 'participant', participant: 'destination' },
-        status: { id: 'poison', layer: 'ground' } }] } });
-    check('composition count condition accepted', r.status === 200, JSON.stringify(r.data).slice(0, 200));
-    check('count + comparator persisted', JSON.stringify(readSbox('data/innate_effects/apitest_innate.json')
-      .find(e => e.id === 'apitest_count').effects[0].trigger.origin_conditions[0])
-      === JSON.stringify({ composition: ['fire'], count: 2, comparator: 'gte' }));
-    check('ground layer persisted', readSbox('data/innate_effects/apitest_innate.json')
-      .find(e => e.id === 'apitest_count').effects[0].status.layer === 'ground');
-    r = await api('/api/game/save', { type: 'innate', file: 'apitest_innate.json', data: {
-      id: 'apitest_badcount', effects: [{ trigger: { kind: 'event', event: 'turn_end' },
-        targets: { kind: 'self', conditions: [{ composition: ['fire'], count: -1 }] },
-        attribute: 'attack', amount: 1 }] } });
-    check('negative composition count rejected', r.status === 400 && /count must be an integer/.test(r.data.error), r.data.error);
-    r = await api('/api/game/save', { type: 'innate', file: 'apitest_innate.json', data: {
-      id: 'apitest_bothforms', effects: [{ trigger: { kind: 'event', event: 'turn_end' },
-        targets: { kind: 'self', conditions: [{ composition: ['fire'], count: 2, present: true }] },
-        attribute: 'attack', amount: 1 }] } });
-    check('count + present together rejected', r.status === 400 && /takes no present flag/.test(r.data.error), r.data.error);
-    await api('/api/game/delete-entry', { type: 'innate', id: 'apitest_count' });
-    await api('/api/game/delete-entry', { type: 'innate', id: 'apitest_scorch' });
-
+      id: 'apitest_scorch', display_name: 'Scorch' } });
+    check('innate type is gone', r.status === 400, JSON.stringify(r.data).slice(0, 120));
+    // ability: the costume's combat half is gone too — autocast/material refused
+    r = await api('/api/game/save', { type: 'ability', file: 'apitest_abilities.json', data: {
+      id: 'apitest_shell_ability', display_name: 'Shout', cost: { mana: 1, tap: true } } });
+    check('an effect-less ability SHELL saves', r.status === 200, JSON.stringify(r.data).slice(0, 200));
+    await api('/api/game/delete-entry', { type: 'ability', id: 'apitest_shell_ability' });
+    r = await api('/api/game/save', { type: 'ability', file: 'apitest_abilities.json', data: {
+      id: 'apitest_oldability', cost: { mana: 1 }, autocast: true } });
+    check('ability autocast refused', r.status === 400 && /'autocast' is the deleted schema/.test(r.data.error), r.data.error);
+    r = await api('/api/game/save', { type: 'ability', file: 'apitest_abilities.json', data: {
+      id: 'apitest_oldability2', cost: { mana: 1 }, effects: OLD_FX } });
+    check('ability with authored effects refused', r.status === 400 && /deleted schema/.test(r.data.error), r.data.error);
     await api('/api/game/delete-entry', { type: 'namedeffect', id: 'apitest_burn' });
 
     // ── enemy-engine authoring handles: card role + encounter survival_weights ──
@@ -307,7 +212,7 @@ async function main() {
     check('game tree exposes is_king', treeCard('roletest_king').is_king === true);
     check('an untagged unit reports no role', treeCard('roletest_a').role === undefined);
 
-    // ── bulk edits across a filtered set (set / pump / grant ability / grant effect) ──
+    // ── bulk edits across a filtered set (set / pump / grant ability) ──
     for (const c of [
       { id: 'bulk_a', display_name: 'A', cost: 3, attack: 2, health: 2, speed: 3 },
       { id: 'bulk_b', display_name: 'B', cost: 1, attack: 2, health: 2, speed: 3 },
@@ -333,13 +238,12 @@ async function main() {
     r = await api('/api/game/bulk', { type: 'card', ids: ['bulk_a'], ops: [{ kind: 'grant_ability', ability: 'zap_bolt' }] });
     check('bulk grant ability is idempotent (already present → skipped)', r.data.updated === 0 && r.data.skipped === 1 && bulkById('bulk_a').abilities.length === 1);
 
-    r = await api('/api/game/bulk', { type: 'card', ids: ['bulk_a', 'bulk_b'], ops: [{ kind: 'grant_effect',
-      effect: { trigger: { kind: 'event', event: 'play' }, targets: { kind: 'self' }, attribute: 'attack', amount: 1 } }] });
-    check('bulk grant effect appends a valid effect', r.data.updated === 2 && (bulkById('bulk_b').effects || []).length === 1);
-    // a malformed effect is rejected per-entry by the normal validation gate
+    // the grant_effect op died with the effect layer — an unknown op is a per-entry error
     r = await api('/api/game/bulk', { type: 'card', ids: ['bulk_a'], ops: [{ kind: 'grant_effect',
-      effect: { trigger: { kind: 'event', event: 'bogus_event' }, targets: { kind: 'all' }, attribute: 'attack', amount: 1 } }] });
-    check('bulk grant effect surfaces per-entry validation errors', r.status === 200 && r.data.updated === 0 && (r.data.errors || []).length === 1, JSON.stringify(r.data));
+      effect: { trigger: { kind: 'event', event: 'play' }, targets: { kind: 'self' }, attribute: 'attack', amount: 1 } }] });
+    check('bulk grant_effect op is gone (unknown op errors, nothing written)',
+      r.status === 200 && r.data.updated === 0 && (r.data.errors || []).length === 1
+      && /unknown bulk op/.test(r.data.errors[0].error) && !(bulkById('bulk_a').effects || []).length, JSON.stringify(r.data));
     for (const id of bulkIds) await api('/api/game/delete-entry', { type: 'card', id });
 
     // ── revert semantics: replaced → original; added → removed ──
@@ -390,7 +294,7 @@ async function main() {
       && fs.existsSync(path.join(SANDBOX, 'assets/ui/status/poison_status.png')), JSON.stringify(r.data));
     // upgrade trees carry an emblem slot too (assets/ui/upgrades/<id>.png, plain name)
     fs.writeFileSync(path.join(SANDBOX, 'data/upgrades/apitest_tree.json'),
-      JSON.stringify({ id: 'apitest_tree', display_name: 'T', nodes: [{ id: 'n1', display_name: 'N', effects: [] }] }));
+      JSON.stringify({ id: 'apitest_tree', display_name: 'T', nodes: [{ id: 'n1', display_name: 'N' }] }));
     fs.mkdirSync(path.join(WS_DIR, 'art', 'upgrade'), { recursive: true });
     fs.writeFileSync(path.join(WS_DIR, 'art', 'upgrade', 'apitest_tree.png'), PNG1x1);
     r = await api('/api/art/deploy', { type: 'upgrade', id: 'apitest_tree' });
@@ -523,61 +427,9 @@ async function main() {
     check('prompt-from-art without art rejected', r.status === 400 && /no installed game art/.test(r.data.error || ''));
     fakeOllama.close();
 
-    // ── ✨ effects from words: generate → validate → retry, on a scripted fake ──
-    const fxReqs = []; let fxQueue = [];
-    const fakeFx = require('http').createServer((rq, rs) => {
-      let b = ''; rq.on('data', c => b += c);
-      rq.on('end', () => {
-        fxReqs.push(JSON.parse(b));
-        rs.setHeader('Content-Type', 'application/json');
-        rs.end(JSON.stringify({ response: fxQueue.shift() || '[]' }));
-      });
-    });
-    await new Promise(ok => fakeFx.listen(8481, ok));
-    await api('/api/settings', { ollamaUrl: 'http://127.0.0.1:8481', effectsModel: 'fxmodel' });
-    // an entry with a valid effect → the example miner has something to pair
-    await api('/api/game/save', { type: 'card', file: 'apitest_units.json', data: {
-      id: 'apitest_fx_example', display_name: 'FxEx', cost: 1, attack: 1, health: 1, speed: 1,
-      effects: [{ trigger: { kind: 'event', event: 'play', of: 'self' },
-        targets: { kind: 'self' }, attribute: 'attack', amount: 2 }] } });
-    const GOOD_FX = JSON.stringify([{ trigger: { kind: 'while' },
-      targets: { kind: 'all', conditions: [{ composition: ['pawn'] }] }, attribute: 'attack', amount: 1 }]);
-    const BAD_FX = JSON.stringify([{ trigger: { kind: 'event', event: 'bogus' },
-      targets: { kind: 'all' }, attribute: 'attack', amount: 1 }]);
-
-    fxQueue = ['<think>hm</think>```json\n' + GOOD_FX + '\n```'];
+    // ── ✨ effects-from-words died with the effect layer (2026-08-11): endpoint gone ──
     r = await api('/api/effects/from-text', { type: 'card', text: '+1 strength to all pawn units' });
-    check('effects-from-text returns validated effects (noise stripped)',
-      r.data.ok && r.data.attempts === 1 && !r.data.warning
-      && r.data.effects.length === 1 && r.data.effects[0].attribute === 'attack', JSON.stringify(r.data));
-    let fxReq = fxReqs[fxReqs.length - 1];
-    check('effects request uses the effects model + schema + the text',
-      fxReq.model === 'fxmodel' && /JSON array of effect objects/.test(fxReq.system)
-      && fxReq.prompt.includes('+1 strength to all pawn units'));
-    check('prompt carries mined english⇒json example pairs',
-      /Examples \(plain words ⇒ JSON\)/.test(fxReq.prompt) && fxReq.prompt.includes('⇒ [{'));
-    check('schema prompt lists the live status vocab', /poison/.test(fxReq.system));
-
-    fxQueue = [BAD_FX, GOOD_FX];
-    r = await api('/api/effects/from-text', { type: 'card', text: 'x' });
-    check('invalid attempt retries with the validator error fed back',
-      r.data.attempts === 2 && !r.data.warning
-      && fxReqs[fxReqs.length - 1].prompt.includes('not a simple event'), JSON.stringify(r.data));
-
-    fxQueue = ['no json here at all', GOOD_FX];
-    r = await api('/api/effects/from-text', { type: 'card', text: 'x' });
-    check('unparseable reply retries', r.data.attempts === 2 && !r.data.warning, JSON.stringify(r.data));
-
-    fxQueue = [BAD_FX, BAD_FX, BAD_FX];
-    r = await api('/api/effects/from-text', { type: 'card', text: 'x' });
-    check('persistent invalid returns the best attempt WITH its warning',
-      r.data.ok && r.data.attempts === 3 && /not a simple event/.test(r.data.warning || '')
-      && r.data.effects.length === 1, JSON.stringify(r.data));
-
-    r = await api('/api/effects/from-text', { type: 'card', text: '   ' });
-    check('empty text rejected', r.status === 400);
-    await api('/api/game/delete-entry', { type: 'card', id: 'apitest_fx_example' });
-    fakeFx.close();
+    check('effects-from-text endpoint is gone', r.status === 404, JSON.stringify(r.data).slice(0, 120));
 
     // ── 💬 edit chat: ops plan → simulate + validate → preview → apply ──
     const chatReqs = []; let chatQueue = [];
@@ -590,17 +442,15 @@ async function main() {
       });
     });
     await new Promise(ok => fakeChat.listen(8485, ok));
-    await api('/api/settings', { ollamaUrl: 'http://127.0.0.1:8485', effectsModel: 'chatmodel' });
+    await api('/api/settings', { ollamaUrl: 'http://127.0.0.1:8485', chatModel: 'chatmodel' });
     await api('/api/game/save', { type: 'card', file: 'chattest_units.json', data: {
       id: 'chat_pawn_a', display_name: 'Chat Pawn A', cost: 1, attack: 1, health: 2, speed: 3, chess_pieces: ['pawn'] } });
     await api('/api/game/save', { type: 'card', file: 'chattest_units.json', data: {
       id: 'chat_pawn_b', display_name: 'Chat Pawn B', cost: 1, attack: 1, health: 2, speed: 3, chess_pieces: ['pawn'] } });
-    const DRAW_FX = { trigger: { kind: 'event', event: 'death', of: 'self' }, targets: { kind: 'self' }, attribute: 'attack', amount: 1 };
-
-    // a full blanket edit: one op across both pawns + one append on a single pawn
+    // a full blanket edit: one op across both pawns + one single-pawn op
     chatQueue = ['<think>ok</think>```json\n' + JSON.stringify({ reply: 'Done.', ops: [
       { type: 'card', ids: ['chat_pawn_a', 'chat_pawn_b'], op: 'set', field: 'cost', value: 2 },
-      { type: 'card', ids: ['chat_pawn_b'], op: 'append', field: 'effects', value: DRAW_FX },
+      { type: 'card', ids: ['chat_pawn_b'], op: 'set', field: 'speed', value: 5 },
     ] }) + '\n```'];
     r = await api('/api/chat/edit', { messages: [{ role: 'user', content: 'all chat pawns cost 2' }] });
     const proposal = r.data;
@@ -608,14 +458,23 @@ async function main() {
       && proposal.reply === 'Done.' && proposal.changes.length === 2, JSON.stringify(r.data).slice(0, 400));
     const chA = proposal.changes.find(c => c.id === 'chat_pawn_a'), chB = proposal.changes.find(c => c.id === 'chat_pawn_b');
     check('preview carries before/after + notes', chA.before.cost === 1 && chA.after.cost === 2
-      && chB.after.effects.length === 1 && chA.notes.some(n => /cost: 1 → 2/.test(n))
-      && chB.notes.some(n => /effects \+/.test(n)), JSON.stringify({ a: chA.notes, b: chB.notes }));
+      && chB.after.speed === 5 && chA.notes.some(n => /cost: 1 → 2/.test(n))
+      && chB.notes.some(n => /speed: 3 → 5/.test(n)), JSON.stringify({ a: chA.notes, b: chB.notes }));
     check('preview writes NOTHING to game files', readSbox('data/cards/chattest_units.json')[0].cost === 1);
     let chatReq = chatReqs[chatReqs.length - 1];
-    check('chat request: model + ops grammar + effect grammar + catalog + conversation',
+    check('chat request: model + ops grammar + effects refusal + catalog + conversation',
       chatReq.model === 'chatmodel' && /"set"\|"delete"\|"append"\|"remove"/.test(chatReq.system)
-      && /An effect object takes ONE of these forms/.test(chatReq.system)
+      && /Never write an "effects" field/.test(chatReq.system)
       && /- chat_pawn_a: .*cost=1/.test(chatReq.prompt) && /Designer: all chat pawns cost 2/.test(chatReq.prompt));
+
+    // an ops plan that writes the deleted effect schema fails validation every retry —
+    // the chat physically cannot reinstall the old language
+    const FX_OP = JSON.stringify({ reply: 'x', ops: [{ type: 'card', ids: ['chat_pawn_a'], op: 'append',
+      field: 'effects', value: { trigger: { kind: 'event', event: 'play' }, targets: { kind: 'self' }, attribute: 'attack', amount: 1 } }] });
+    chatQueue = [FX_OP, FX_OP, FX_OP, FX_OP, FX_OP, FX_OP];
+    r = await api('/api/chat/edit', { messages: [{ role: 'user', content: 'x' }] });
+    check('chat cannot append the deleted effect schema',
+      r.data.ok && r.data.changes.length === 0 && /deleted schema/.test(r.data.warning || ''), JSON.stringify(r.data).slice(0, 300));
 
     // a pure chat answer proposes nothing
     chatQueue = [JSON.stringify({ reply: 'You have two chat pawns.', ops: [] })];
@@ -652,7 +511,7 @@ async function main() {
     r = await api('/api/chat/apply', { changes: proposal.changes });
     check('apply writes both entries', r.data.ok && r.data.applied.length === 2 && r.data.skipped.length === 0, JSON.stringify(r.data));
     let chatFile = readSbox('data/cards/chattest_units.json');
-    check('applied values landed', chatFile[0].cost === 2 && chatFile[1].cost === 2 && chatFile[1].effects.length === 1);
+    check('applied values landed', chatFile[0].cost === 2 && chatFile[1].cost === 2 && chatFile[1].speed === 5);
     r = await api('/api/game/item?type=card&id=chat_pawn_a');
     check('applied entry is a recorded (revertible) edit', r.data.edited === true);
 
@@ -678,8 +537,7 @@ async function main() {
       && readSbox('data/cards/base.json').find(e => e.id === 'pawn').cost === 1);
 
     // ── create: a brand-new entry, referenced by a later op in the SAME plan ──
-    const RAGE = { id: 'chat_rage', display_name: 'Chat Rage', cost: { mana: 1, tap: true },
-      effects: [{ trigger: 'on_play', targeting_policy: 'manual', attribute: 'health', amount: 2 }] };
+    const RAGE = { id: 'chat_rage', display_name: 'Chat Rage', cost: { mana: 1, tap: true } };
     chatQueue = [JSON.stringify({ reply: 'Created.', ops: [
       { type: 'ability', op: 'create', id: 'chat_rage', file: 'chattest_abilities.json', value: RAGE },
       { type: 'card', ids: ['chat_pawn_b'], op: 'append', field: 'abilities', value: 'chat_rage' },
@@ -789,14 +647,6 @@ async function main() {
       && claudeReq.body.messages[0].content.some(c => c.type === 'text' && c.text.includes('Cost 2')),
       JSON.stringify(claudeReq && claudeReq.body));
     check('claude request is authenticated', /test-key/.test(claudeReq.auth), claudeReq.auth);
-    // ✨ effects ride the same switch — ONE provider model, s.effectsModel ignored
-    claudeText = '```json\n' + GOOD_FX + '\n```';
-    r = await api('/api/effects/from-text', { type: 'card', text: '+1 strength to all pawn units' });
-    check('claude serves ✨ effects with the provider model',
-      r.data.ok && !r.data.warning && r.data.effects.length === 1
-      && claudeReq.body.model === 'claude-test'
-      && /JSON array of effect objects/.test(claudeReq.body.system), JSON.stringify(r.data));
-
     let openaiReq = null;
     const fakeOpenAI = require('http').createServer((rq, rs) => {
       let b = ''; rq.on('data', c => b += c);
@@ -842,11 +692,6 @@ async function main() {
       cc.stdin.includes('Cost 3') && /Reference image 1 .* Read tool: (.+\.png)/.test(cc.stdin));
     check('claude-code reference image written for the Read tool',
       cc.refs.length === 1 && !cc.refs[0].missing && cc.refs[0].data === PNG1x1.toString('base64'));
-    // ✨ effects ride the same switch
-    fs.writeFileSync(ccReply, '```json\n' + GOOD_FX + '\n```');
-    r = await api('/api/effects/from-text', { type: 'card', text: '+1 strength to all pawn units' });
-    check('claude-code serves ✨ effects', r.data.ok && !r.data.warning
-      && r.data.effects.length === 1, JSON.stringify(r.data));
 
     r = await api('/api/settings', { llmProvider: 'bogus' });
     check('bad llmProvider rejected', r.status === 400);

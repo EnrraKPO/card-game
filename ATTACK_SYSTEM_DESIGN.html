@@ -1,0 +1,363 @@
+<title>Attack System — Build Pitch</title>
+<style>
+  :root {
+    --ground: #FAF9F6;
+    --surface: #F1EFEA;
+    --ink: #1F2125;
+    --ink-soft: #56534D;
+    --line: #DAD6CE;
+    --accent: #B3392B;
+    --accent-soft: #F3E3E0;
+    --steel: #4E6172;
+    --new-bg: #E7EDE4;
+    --new-ink: #3C5A40;
+    --exists-bg: #E5E9EE;
+    --exists-ink: #40566B;
+    --code-bg: #ECEAE4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #17181B;
+      --surface: #1F2125;
+      --ink: #E8E6E1;
+      --ink-soft: #A9A59D;
+      --line: #35383E;
+      --accent: #E06A55;
+      --accent-soft: #3A2622;
+      --steel: #8FA3B5;
+      --new-bg: #24301F;
+      --new-ink: #9FBF8F;
+      --exists-bg: #222B33;
+      --exists-ink: #93AEC7;
+      --code-bg: #24262B;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #17181B;
+    --surface: #1F2125;
+    --ink: #E8E6E1;
+    --ink-soft: #A9A59D;
+    --line: #35383E;
+    --accent: #E06A55;
+    --accent-soft: #3A2622;
+    --steel: #8FA3B5;
+    --new-bg: #24301F;
+    --new-ink: #9FBF8F;
+    --exists-bg: #222B33;
+    --exists-ink: #93AEC7;
+    --code-bg: #24262B;
+  }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Segoe UI", -apple-system, system-ui, sans-serif;
+    font-size: 1.0rem;
+    line-height: 1.65;
+    margin: 0;
+  }
+  .page { max-width: 46rem; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+  h1, h2, h3 { font-family: Cambria, Georgia, "Times New Roman", serif; text-wrap: balance; line-height: 1.2; }
+  h1 { font-size: 2.3rem; margin: 0.4rem 0 0.6rem; }
+  h2 { font-size: 1.5rem; margin: 3rem 0 0.8rem; padding-top: 1.6rem; border-top: 1px solid var(--line); }
+  h2 .secno { color: var(--accent); margin-right: 0.5rem; font-size: 1.1rem; vertical-align: 0.08rem; }
+  h3 { font-size: 1.12rem; margin: 1.8rem 0 0.4rem; }
+  p { margin: 0.7rem 0; }
+  .eyebrow {
+    text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.72rem;
+    color: var(--accent); font-weight: 600;
+  }
+  .ribbon {
+    display: flex; flex-wrap: wrap; gap: 0.6rem 1.6rem; align-items: baseline;
+    border-block: 1px solid var(--line); padding: 0.6rem 0; margin: 1.4rem 0 2rem;
+    font-size: 0.84rem; color: var(--ink-soft);
+  }
+  .ribbon b { color: var(--ink); font-weight: 600; }
+  .status-chip {
+    background: var(--accent); color: var(--ground); border-radius: 2px;
+    padding: 0.1rem 0.55rem; font-size: 0.74rem; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .lede { font-size: 1.12rem; color: var(--ink-soft); }
+  code, .mono {
+    font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+    font-size: 0.88em; background: var(--code-bg); border-radius: 3px; padding: 0.08em 0.35em;
+  }
+  .cast { display: flex; flex-direction: column; gap: 0.9rem; margin: 1.2rem 0; }
+  .part {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 4px;
+    padding: 0.85rem 1rem;
+  }
+  .part-head { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: baseline; margin-bottom: 0.25rem; }
+  .part-head .name { font-family: "Cascadia Code", Consolas, monospace; font-weight: 600; font-size: 0.95rem; }
+  .tag {
+    font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+    border-radius: 2px; padding: 0.06rem 0.45rem;
+  }
+  .tag.new { background: var(--new-bg); color: var(--new-ink); }
+  .tag.exists { background: var(--exists-bg); color: var(--exists-ink); }
+  .part .file { font-size: 0.78rem; color: var(--ink-soft); font-family: "Cascadia Code", Consolas, monospace; }
+  .part p { margin: 0.35rem 0 0; font-size: 0.94rem; }
+  ol.flow { counter-reset: step; list-style: none; padding-left: 0; }
+  ol.flow > li {
+    counter-increment: step; position: relative; padding-left: 2.4rem; margin: 0.7rem 0;
+  }
+  ol.flow > li::before {
+    content: counter(step); position: absolute; left: 0; top: 0.1rem;
+    width: 1.5rem; height: 1.5rem; border-radius: 50%;
+    background: var(--accent-soft); color: var(--accent);
+    font-size: 0.8rem; font-weight: 700; display: flex; align-items: center; justify-content: center;
+  }
+  table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.92rem; }
+  .table-wrap { overflow-x: auto; }
+  th, td { text-align: left; padding: 0.45rem 0.7rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--ink-soft); }
+  .quiet { color: var(--ink-soft); font-size: 0.9rem; }
+  .rule-card {
+    border-left: 3px solid var(--accent); background: var(--surface);
+    padding: 0.7rem 1rem; margin: 1rem 0; font-size: 0.95rem;
+  }
+  .signoff { list-style: none; padding-left: 0; }
+  .signoff li { position: relative; padding-left: 2rem; margin: 0.8rem 0; }
+  .signoff li::before {
+    content: "✓"; position: absolute; left: 0; top: 0.1rem;
+    width: 1.05rem; height: 1.05rem; border: 2px solid var(--accent); border-radius: 2px;
+    background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: 0.78rem;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .mermaid-wrap { overflow-x: auto; margin: 1.4rem 0; background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 0.8rem; }
+  ul { padding-left: 1.2rem; }
+  li { margin: 0.3rem 0; }
+</style>
+
+<div class="page">
+
+<span class="eyebrow">Build pitch · first phase of the effect-system rebuild</span>
+<h1>The Attack System</h1>
+<div class="ribbon">
+  <span class="status-chip">Signed off · 2026-08-11</span>
+  <span>Authority: <b>TARGETING_DESIGN.md</b> (§13)</span>
+  <span>Date: <b>2026-08-11</b></span>
+  <span>Branch: <b>targeting-cleanup</b></span>
+</div>
+
+<p class="lede">Combat is currently inert: units take their turns but nothing swings. This
+initiative makes units fight again — and in doing so, builds and proves every core piece of
+the new effect machinery on the simplest real behavior in the game: <em>when my turn comes,
+I hit the nearest enemy.</em></p>
+
+<h2><span class="secno">§1</span>What the player gets</h2>
+<p>At the end of this initiative, fights work: each unit, at its speed-ordered moment, attacks
+the enemy its policy chooses; dodge, shield, and crit behave as before; kills pay bounties;
+and the board shows who is aiming at whom (crosshair on my target, menace glow on whoever
+targets me). Outwardly this restores what the demolition removed. Inwardly, every step now
+runs on the new machinery — and that machinery is the same one spells, abilities, statuses,
+and relics will ride later, which is the real prize.</p>
+
+<h2><span class="secno">§2</span>How one attack happens</h2>
+<p>The whole design in one pass — each numbered step is performed by one named part from §3:</p>
+
+<pre class="mermaid">
+flowchart TD
+  A["A unit's turn arrives<br/><b>act</b> event fires"] --> B["Dispatch asks every effect:<br/>do you react? (TriggerResolver)"]
+  B --> C["The unit's referenced <b>melee_attack</b><br/>named effect fires (a TriggeredEffect)"]
+  C --> D["ActionExecutor runs it"]
+  D --> E["TargetResolver picks the victim<br/>(NearestResolver: the settled ordering)"]
+  E --> F["AttackPayload delivers the strike"]
+  F --> G["Mutator derives the amount<br/>(holder's attack stat)"]
+  G --> H["Arbitration Resolver commits damage<br/>(dodge · shield · crit, as today)"]
+  H --> I["Events emitted as news:<br/>attack · struck · dodge · crit · kill"]
+</pre>
+
+<ol class="flow">
+  <li>A unit's activation moment arrives. The game emits the <code>act</code> event — an ordinary
+      event in the one pipeline, nothing attack-specific about it.</li>
+  <li>Dispatch asks every live effect's <b>TriggerResolver</b> (already built): do you fire for
+      this event? The unit's referenced <b>named effect</b> — <code>melee_attack</code>, authored
+      once in the library as <em>"when I act"</em> — says yes.</li>
+  <li>The <b>ActionExecutor</b> runs the effect: it asks the effect's <b>TargetResolver</b>
+      "what are you pointing at?" and receives the resolution — for <code>nearest</code>, the enemy
+      chosen by the most-playtested rule in the game (column depth dominates, lane offset breaks
+      ties, deterministic address after that).</li>
+  <li>The executor assembles the <b>feed</b> — the four facts (world, holder, occasion, recipient) —
+      and hands it to the <b>AttackPayload</b>, which asks its <b>Mutator</b> to derive the amount:
+      the holder's attack stat, read fresh at that instant.</li>
+  <li>The payload proposes the strike to the <b>arbitration Resolver</b> — the single writer —
+      which applies dodge, shield, and crit exactly as it does today, and commits.</li>
+  <li>The results become events (<code>attack</code>, <code>struck</code>, <code>dodge</code>,
+      <code>crit</code>, <code>kill</code>) — post-hoc news that other effects may react to,
+      continuing the cascade.</li>
+</ol>
+
+<h2><span class="secno">§3</span>The cast — every name that will exist in code</h2>
+<p class="quiet">Tagged <b>new</b> (built by this initiative) or <b>exists</b> (already in the
+codebase, used as-is).</p>
+
+<div class="cast">
+  <div class="part">
+    <div class="part-head"><span class="name">TriggeredEffect</span><span class="tag new">new</span>
+      <span class="file">scripts/effects/triggered_effect.gd</span></div>
+    <p>The action structure from the settled design: <em>when [trigger], deliver [payloads] to
+    [targets]</em>. Holds one TriggerResolver, one TargetResolver, and a list of Payloads.
+    The auto-attack is the first one ever instantiated.</p>
+  </div>
+  <div class="part">
+    <div class="part-head"><span class="name">TargetResolver</span><span class="tag new">new</span>
+      <span class="file">scripts/targeting/target_resolver.gd</span></div>
+    <p>The single-issue contract you ratified: one question — <em>what am I pointing to?</em> —
+    answered as <code>Array[GameEntity]</code>, empty is empty. Stateless and pure: the world is
+    passed in, so previews and enemy simulations ask against any world they like.</p>
+  </div>
+  <div class="part">
+    <div class="part-head"><span class="name">NearestResolver</span><span class="tag new">new</span>
+      <span class="file">scripts/targeting/target_resolver.gd (inner class)</span></div>
+    <p>The first species: opposite-half candidates, ordered by the settled preference rule.
+    Species live as inner classes in the base's file — the same one-file arrangement
+    TriggerResolver uses, forced by a script-loading order constraint.</p>
+  </div>
+  <div class="part">
+    <div class="part-head"><span class="name">Payload</span> / <span class="name">AttackPayload</span><span class="tag new">new</span>
+      <span class="file">scripts/effects/payload.gd</span></div>
+    <p>A payload is the small dumb "what happens" species. AttackPayload is the first: it owns the
+    strike's delivery rules and proposes the damage through the arbitration Resolver. Nothing above
+    the payload knows attacks are special — the settled decoupling.</p>
+  </div>
+  <div class="part">
+    <div class="part-head"><span class="name">Mutator</span><span class="tag new">new</span>
+      <span class="file">scripts/effects/mutator.gd</span></div>
+    <p>The contract we settled today: parameterized at parse, fed at delivery, derives on the spot,
+    emits concrete mutations. Two day-one species (inner classes, same file):
+    <code>LiteralMutator</code> (a fixed number) and <code>HolderStatMutator</code> (reads a named
+    stat off the holder — the auto-attack's "my attack stat").</p>
+  </div>
+  <div class="part">
+    <div class="part-head"><span class="name">Feed</span><span class="tag new">new</span>
+      <span class="file">scripts/effects/feed.gd</span></div>
+    <p>The dumb plate: world · holder (+ explicit allegiance anchor, because run-scope containers
+    have no holder) · occasion (the GameEvent) · recipient. Facts only, assembled per delivery,
+    discarded after — deliberately <em>not</em> named after the deleted <code>effect_context.gd</code>,
+    whose growth into a smart object is the failure this guards against.</p>
+  </div>
+  <div class="part">
+    <div class="part-head"><span class="name">ActionExecutor</span><span class="tag new">new</span>
+      <span class="file">scripts/effects/action_executor.gd</span></div>
+    <p>The one piece of machinery that runs an effect once its trigger says yes: asks the
+    TargetResolver, assembles the Feed per recipient, walks the payloads, forwards presentation
+    records. It is the only party that ever holds all four facts at once — which is exactly why
+    the feeding job is its.</p>
+  </div>
+  <div class="part">
+    <div class="part-head"><span class="name">Named effects</span><span class="tag new">new</span>
+      <span class="file">data/effects/*.json</span></div>
+    <p>An effect authored <em>once</em>, by name, in the library; containers reference it by id —
+    the same pattern abilities and statuses already use. The auto-attack is the first family:
+    <code>melee_attack</code> (this initiative), then <code>ranged_attack</code>,
+    <code>leap_attack</code>, and the policy variants (phase 3), each a full TriggeredEffect —
+    <em>when I act → attack payload (my attack stat) → its resolver</em> — differing only in
+    target resolver and presentation dressing. A card's authoring is one line:
+    <code>effects: ["melee_attack"]</code>. A card that references no attack simply doesn't
+    attack — pacifist units become authorable. Card-unique effects can still be authored inline;
+    both forms parse to the same structure. This reclaims the id+description shells the content
+    strip deliberately left standing, and <b>deletes <code>CardData.target_policy</code></b> —
+    the policy now lives inside the referenced effect.</p>
+  </div>
+  <div class="part">
+    <div class="part-head"><span class="name">GameEntity</span><span class="tag exists">exists</span>
+      <span class="file">scripts/game_entity.gd</span></div>
+    <p>Renamed today from StatusCarrier: the shared base of units and slots — the thing a
+    resolution points at and statuses pin to.</p>
+  </div>
+  <div class="part">
+    <div class="part-head"><span class="name">TriggerResolver · GameEvent · CombatCascade · Arbitrator</span><span class="tag exists">exists</span></div>
+    <p>The "when" gate, the event object, the event fan-out, and the single writer of stats —
+    all survive as-is. The cascade's razed <code>fire()</code> seam is where dispatch attaches;
+    the Arbitrator's strike math (dodge, shield, crit-after-interception) is reused untouched.</p>
+  </div>
+</div>
+
+<div class="rule-card"><b>Naming ruling:</b> the arbitration layer's <code>Resolver</code> is
+<b>renamed <code>Arbitrator</code></b> (<code>scripts/resolver.gd</code> →
+<code>scripts/arbitrator.gd</code>, phase 1). "Resolver" then means only the two question-answerers
+— TriggerResolver (when) and TargetResolver (who) — always by their full compound names in new
+code.</div>
+
+<h2><span class="secno">§4</span>Phases</h2>
+<p>Four phases, each ending with the full suite green in <code>tests/_runner.tscn</code> and a
+phase commit. Nothing merges until all four are done and signed.</p>
+<div class="table-wrap"><table>
+  <tr><th>Phase</th><th>Delivers</th><th>Proof</th></tr>
+  <tr><td><b>1 — Machinery</b></td>
+      <td>The Arbitrator rename (<code>Resolver</code> → <code>Arbitrator</code>), then
+      TargetResolver, Mutator, Feed, Payload, TriggeredEffect, ActionExecutor — the classes
+      and their parse/produce contracts, no combat wiring yet.</td>
+      <td><code>tests/test_target_resolvers.gd</code>, <code>tests/test_mutators.gd</code>,
+      full suite green after the rename</td></tr>
+  <tr><td><b>2 — The attack</b></td>
+      <td>The <code>act</code> wiring, the named-effect library and reference loading, the
+      <code>melee_attack</code> definition, NearestResolver, AttackPayload, and the reference
+      stamped on melee units. Units referencing <code>melee_attack</code> fight again, end to end.
+      <code>CardData.target_policy</code> deleted.</td>
+      <td><code>tests/test_attack.gd</code> (act → strike → events → kill), full suite green</td></tr>
+  <tr><td><b>3 — The attack family</b></td>
+      <td>The remaining named attacks and their resolver species: <code>ranged_attack</code>,
+      <code>leap_attack</code>, and the policy variants (wounded / tank / threat), plus the full
+      content stamp — every unit that should attack references its flavor (bulk edit; the Tool's
+      ability to author references is verified here first). Until this phase, a reference to a
+      not-yet-built named effect fails <em>loudly</em> at load — never a silent fallback.</td>
+      <td>Ordering cases per species in <code>tests/test_target_resolvers.gd</code>; content
+      loads clean</td></tr>
+  <tr><td><b>4 — The cues</b></td>
+      <td>Reverse queries at interactive idle: <code>find_target</code> reimplemented as a query
+      into the unit's own resolver; crosshair and menace projections and the turn-order strip read
+      from it. One authority, as the board's NEEDS blocks demand.</td>
+      <td>Suite green + visual check of the cues in a real fight</td></tr>
+</table></div>
+
+<h2><span class="secno">§5</span>What this initiative deliberately does not touch</h2>
+<ul>
+  <li><b>Manual targeting & gestures</b> — no manual resolver, no pick-provider. Comes with the
+      spell rebuild.</li>
+  <li><b>Spells as activated effects</b> — ruled today, built later; nothing here blocks it.</li>
+  <li><b>Passives and interceptors</b> — the interception seam in the arbitration Resolver stays
+      an inert pass-through, exactly as it is now.</li>
+  <li><b>Event magnitudes</b> — parked until a mutator species needs one.</li>
+  <li><b>Effect re-authoring beyond the attack family</b> — the only content this initiative
+      authors is the named attack effects and the references to them; every other stripped
+      effect waits for its own container's rebuild.</li>
+</ul>
+
+<h2><span class="secno">§6</span>Risks, named</h2>
+<ul>
+  <li><b>The executor is the growth point.</b> Every future structure will lean on it; if logic
+      that belongs to species leaks into it, we rebuild the old dispatcher. Guard: the executor
+      never inspects what a payload or mutator <em>is</em> — it only serves the plate.</li>
+  <li><b>Phase 2/3 gap.</b> Between phases, units referencing not-yet-built named attacks don't
+      fight (loud load error). Acceptable only because it lives inside this branch — flagged so
+      it's a known state, not a surprise.</li>
+  <li><b>Tool authoring is unverified.</b> The save gate refuses the old schema, but whether the
+      editors can write named-effect references hasn't been checked; phase 3 verifies before the
+      content stamp, and if the Tool can't, that gap gets raised as its own appended decision.</li>
+  <li><b>Cue wiring (phase 4) touches the presentation layer</b>, where regressions are visual and
+      tests are weak — hence the explicit visual check in its exit criteria.</li>
+</ul>
+
+<h2><span class="secno">§7</span>Sign-off</h2>
+<p><b>All points below signed off by the user, 2026-08-11.</b> Approved at conceptual level:</p>
+<ul class="signoff">
+  <li>The flow in §2 — event → trigger gate → executor → target resolver → payload → mutator →
+      arbitration Resolver → news.</li>
+  <li>Every name in §3, including the new files, the two day-one mutator species, and the
+      named attack family (<code>melee_attack</code> · <code>ranged_attack</code> ·
+      <code>leap_attack</code> · policy variants).</li>
+  <li><b>Feed</b> as the name of the four-fact context.</li>
+  <li>The auto-attack as an explicitly authored <b>named effect</b> referenced by units —
+      no synthesis, no <code>target_policy</code> (the field is deleted); a card referencing
+      no attack doesn't attack.</li>
+  <li>The <b>Arbitrator</b> rename of the arbitration Resolver, in phase 1.</li>
+  <li>The four phases, their order, their exit criteria, and the temporary loud-failure gap
+      between phases 2 and 3.</li>
+  <li>The §5 exclusions.</li>
+</ul>
+<p class="quiet">Anything that surfaces mid-build and isn't covered here gets raised to you,
+appended to this document, and signed before it's coded.</p>
+
+</div>

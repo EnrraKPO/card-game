@@ -66,7 +66,7 @@ func play(event: VFXEvent) -> void:
 		Vfx.play("king_hit_flash", event.target)
 
 
-# Plays an EffectSystem result array (await it). Three layers read as cause → effect: (1) the SOURCE
+# Plays a resolution result array (await it). Three layers read as cause → effect: (1) the SOURCE
 # card glints once (its ability fired); (2) every affected card gets a tinted TARGET reticle that
 # leads its hit; (3) the effect's own VFX lands. Layers 2 + 3 fire for ALL targets AT ONCE, so a
 # multi-target effect (e.g. a death that damages a whole row) reads as one simultaneous burst rather

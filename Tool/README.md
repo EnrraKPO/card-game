@@ -32,33 +32,25 @@ The tool is part of the game ecosystem — seamless and organic:
 
 ## Authoring UX
 
-- Effects are built from dropdowns in the engine's native resolver schema: a trigger
-  (event + ORIGIN/DESTINATION condition gates) and targets (kind + conditions), with the
-  full condition grammar everywhere. "In plain words" restates the item in English;
-  "Deployed JSON" shows exactly what's in the file.
+- **Effects are razed** (effect-cleanse 2026-08-11): the old effect builder, its grammar
+  and the ✨ effects-from-words feature died with the game's old effect layer. The save
+  gate REFUSES a non-empty `effects` array everywhere — the old schema cannot be
+  installed back. Container descriptions survive as re-authoring briefs; a new builder
+  speaking the new schema (TARGETING_DESIGN.md) arrives with the rebuild.
 - **⚙ Set…** on the Cards tab batch-creates a composition family (element pair × piece
   combos, derived stats) into one normally-named file — every entry an ordinary card.
-- Server-side validation gates every save (unknown events, dangling references,
-  payload-less effects…).
-- **✨ from words** (below every effect list): type an effect in plain English
-  ("+1 strength to all pawn units") and a local coder LLM (`effectsModel` in Settings,
-  default qwen3-coder) writes the JSON. The server teaches it the effect grammar plus
-  english⇒json example pairs mined live from the game's own content (via the same
-  `describeEffect` that renders "In plain words" — the two directions can't drift),
-  validates every attempt and feeds errors back for up to 3 tries. Results land in the
-  builder as ordinary editable rows — check the plain-words restatement; if validation
-  still objects, the best attempt lands anyway with the error as a toast (the save gate
-  keeps final say).
+- Server-side validation gates every save (missing stats, dangling references, the
+  deleted effect schema…).
 - **💬 AI edit** (topbar): a chat for blanket edits across ALL content types — "all
-  pawns cost 2 mana, water pawns get +2 health". The LLM sees a compact catalog (every
-  entry as one line: fields + plain-words effect summaries) and answers with an
-  OPERATIONS PLAN — four JSON verbs (`set`/`delete`/`append`/`remove` on a field or
-  dot-path) against entry ids — never rewritten entries, so fields it doesn't name
-  can't change. It can request full entry JSON when a catalog line is too terse, and
-  it writes effect values in the same validated effect grammar as ✨ from words. Ops
-  are simulated + validated server-side (errors feed retries); the reply is a per-entry
-  before/after preview that touches nothing until **Apply**, and applied entries carry
-  the normal per-entry Revert. Pure questions work too (empty ops = just an answer).
+  pawns cost 2 mana, water pawns get +2 health". The LLM (`chatModel` in Settings,
+  default qwen3-coder) sees a compact catalog (every entry as one line of fields) and
+  answers with an OPERATIONS PLAN — four JSON verbs (`set`/`delete`/`append`/`remove`
+  on a field or dot-path) against entry ids — never rewritten entries, so fields it
+  doesn't name can't change. It can request full entry JSON when a catalog line is too
+  terse. Ops are simulated + validated server-side (errors feed retries); the reply is
+  a per-entry before/after preview that touches nothing until **Apply**, and applied
+  entries carry the normal per-entry Revert. Pure questions work too (empty ops = just
+  an answer).
 
 ## Art (ComfyUI)
 
@@ -229,15 +221,15 @@ workspace art (background removal happens there, once, for types that want it) a
 its seed into the entry's recipe. Flows save as named presets (Settings-backed, like
 style presets).
 
-**✨ AI provider** — Settings routes every ✨ feature (art prompts, 🔎 match art, effects
-from words) through one provider: **Local (Ollama)** (the default; per-feature models as
+**✨ AI provider** — Settings routes every ✨ feature (art prompts, 🔎 match art, the
+💬 edit chat) through one provider: **Local (Ollama)** (the default; per-feature models as
 above), **Claude Code** (shells out to the installed `claude` CLI in headless print mode —
 uses the login/subscription you already have, no API key, no extra billing; model blank =
 your Claude Code default), **Claude API** (official SDK; pay-per-token developer platform —
 `ant auth login` or `ANTHROPIC_API_KEY`; default `claude-opus-4-8`), or **ChatGPT**
 (OpenAI Responses API; pay-per-token; needs `OPENAI_API_KEY`; default `gpt-5.5`).
 Non-Ollama providers use their one configured model for all features (the Ollama
-art/effects model split doesn't apply) and handle multi-image references natively.
+art/chat model split doesn't apply) and handle multi-image references natively.
 
 ## Tests
 

@@ -121,10 +121,10 @@ var quirks: Dictionary = {}
 # which units it fears losing. An encounter's own survival_weights layer on top of these.
 var survival_weights: Dictionary = {}
 # This character's own unit-value price list — the parameters of the board-value and readiness
-# evals, same shape as data/board_value.json ({stat_rates:{}, ability_default, ability_values,
-# triggered_default, live_default}). PARTIAL BY DESIGN: only the entries this personality
-# re-prices are here, and every other key falls through to the global config, so a fight that
-# cares about shields says so in one line instead of restating the whole price list.
+# evals, same shape as data/board_value.json ({stat_rates:{}, ability_default,
+# ability_values}). PARTIAL BY DESIGN: only the entries this personality re-prices are
+# here, and every other key falls through to the global config, so a fight that cares
+# about shields says so in one line instead of restating the whole price list.
 var value_rates: Dictionary = {}
 # Which template this instance was copied from, for provenance only — the tool shows it
 # ("copied from Aggressive") and nothing in the engine reads it. A future "follow the
@@ -237,8 +237,7 @@ static func _value_rates(src: Variant) -> Dictionary:
 	if not (src is Dictionary):
 		return out
 	var d := src as Dictionary
-	for key: String in ["ability_default", "triggered_default", "live_default",
-			"persistence_weight"]:
+	for key: String in ["ability_default", "persistence_weight"]:
 		var v: Variant = d.get(key)
 		if v is float or v is int:
 			out[key] = float(v)
@@ -269,18 +268,6 @@ func ability_value(ability_id: String) -> float:
 	if value_rates.has("ability_default"):
 		return float(value_rates["ability_default"])
 	return BoardValueConfig.ability_value(ability_id)
-
-
-func triggered_value() -> float:
-	if value_rates.has("triggered_default"):
-		return float(value_rates["triggered_default"])
-	return BoardValueConfig.triggered_value()
-
-
-func live_value() -> float:
-	if value_rates.has("live_default"):
-		return float(value_rates["live_default"])
-	return BoardValueConfig.live_value()
 
 
 # ── The valuation pass's per-fight knobs (BoardScoring.run_valuation) ──────────────────

@@ -15,7 +15,6 @@ func suite_name() -> String:
 func run() -> void:
 	_resolve_event_decays()
 	_bury_retires_and_signals()
-	_context_repoint()
 	_headless_spawn_drain()
 
 
@@ -34,9 +33,8 @@ func _place(w: CombatWorld, card_id: String, side_owner: int, r: int, c: int) ->
 func _resolve_event_decays() -> void:
 	var w := _headless_world()
 	var pawn := _place(w, "pawn", 0, 0, 0)
-	var atk0 := pawn.get_attribute("attack")
-	StatusEngine.apply(pawn, "empowered", Effect.STATUS_DURATION_DEFAULT, 1, null)
-	check_eq(pawn.get_attribute("attack"), atk0 + 2, "empowered folds before the cascade runs")
+	StatusEngine.apply(pawn, "empowered", StatusEngine.DURATION_DEFAULT, 1, null)
+	check(pawn.find_status("empowered") != null, "the status applies before the cascade runs")
 
 	var cascade := CombatCascade.make(w, CombatPresenter.new())
 	var done: Array = [false]
@@ -47,7 +45,6 @@ func _resolve_event_decays() -> void:
 	chain.call()
 	check(bool(done[0]), "the cascade runs SYNCHRONOUSLY under the null presenter")
 	check(pawn.find_status("empowered") == null, "two turn-ends expire empowered through the real decay tier")
-	check_eq(pawn.get_attribute("attack"), atk0, "the expired status stops folding")
 
 
 func _bury_retires_and_signals() -> void:
@@ -67,21 +64,9 @@ func _bury_retires_and_signals() -> void:
 	check(retired.size() == 1 and retired[0] == pawn, "the world's unit_retired wire fires — where bounties hang")
 
 
-func _context_repoint() -> void:
-	# The world amendment's teeth: run-scope dispatch reads the CONTEXT's modifier set, and a
-	# world's context carries the WORLD's own reference — not the ambient global.
-	var own_set := ModifierSet.new()
-	var w := _headless_world()
-	w.modifiers = own_set
-	var ctx := w.make_context(unit("pawn"))
-	check(ctx.run_modifiers == own_set, "a world's context carries the world's own modifier set")
-	check(ctx.player_side == w.player_side, "…and the world's sides")
-
-	# Contexts built OUTSIDE a world (tests, legacy paths) default to the live run set at
-	# construction — the ambient read is confined to that boundary.
-	var bare := EffectContext.make(unit("pawn"), [[]], [[]])
-	check(bare.run_modifiers == GameData.current_modifiers,
-			"a bare context defaults to the live run set at build time")
+# (The context-repoint checks died with the dispatch context object, 2026-08-11. The rule
+# they pinned — run-scope dispatch reads the WORLD's own modifier set, never the ambient
+# global — carries to the rebuilt dispatch, which reads the world directly.)
 
 
 func _headless_spawn_drain() -> void:

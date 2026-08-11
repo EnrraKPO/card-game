@@ -11,8 +11,8 @@ func _ready() -> void:
 	if card:
 		failed += _check("card is ranged water pawn",
 			card.ranged and card.elements == Array(["water"], TYPE_STRING, "", null))
-		failed += _check("card applies chilled on attack",
-			card.effects.size() == 1 and card.effects[0].status_id == "chilled")
+		# (the on-attack chilled effect check died with the effect layer 2026-08-11 —
+		# CardData no longer carries effects; the new schema brings its own check)
 		failed += _check("card art wired (may be placeholder until the editor imports the png)",
 			card.art_path != "")
 

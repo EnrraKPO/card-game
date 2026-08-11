@@ -9,17 +9,17 @@
  */
 'use strict';
 
-function fxCtx(ctx, ownerNoun) {
-  return {
-    vocab: ctx.vocab,
-    ownerNoun,
-    type: ctx.type,   // the item type — /api/effects/from-text biases its examples by it
-    statusIds: () => {
-      const game = ctx.vocab.statuses.map(s => s.id);
-      const ws = (ctx.workspace.status || []).map(s => s.id);
-      return [...new Set([...game, ...ws])];
-    },
-  };
+// NEEDS (effect-cleanse 2026-08-11): the old effect BUILDER (effects.js — trigger/targets/
+// payload rows editing Effect.from_dict's schema) is deleted with the game's old effect
+// layer. Every container's `effects` list is razed with it; the game loaders and the Tool's
+// save gate now REFUSE a non-empty 'effects' array. When the rebuild lands its authored
+// vocabulary (TARGETING_DESIGN.md — Triggered/Activated/Passive/Interceptor as four sibling
+// structures), the Tool grows a NEW builder speaking that schema natively; nothing of the
+// old builder is meant to return. Container descriptions survive as re-authoring briefs.
+function effectsRazedNote() {
+  return el('div', { class: 'hint', text: 'Effects were razed with the old effect layer '
+    + '(2026-08-11) and are re-authored in the new schema (TARGETING_DESIGN.md) as the '
+    + 'rebuild lands. The description above is the re-authoring brief.' });
 }
 
 function abilityIds(ctx) {
@@ -57,8 +57,6 @@ function idField(draft, onChange, isNew) {
   return fld('ID', input, isNew ? 'unique; lowercase letters, digits, underscores — fixed after creation' : 'fixed after creation');
 }
 
-function cleanEffects(list) { return (list || []).map(cleanEffectForDeploy); }
-
 // ── enemy-engine vocabulary (mirrors scripts/card_data.gd :: role and
 //    scripts/enemy/board_scoring.gd :: STOCK_SURVIVAL_WEIGHTS) ────────────────
 // A unit's ROLE is one tag, never load-bearing: an untagged unit resolves through the
@@ -82,7 +80,7 @@ const CardEditor = {
   newItem: () => ({
     id: '', display_name: '', description: '', art_instructions: '',
     cost: 1, attack: 2, health: 3, speed: 3, shield: 0,
-    elements: [], chess_pieces: [], effects: [], abilities: [],
+    elements: [], chess_pieces: [], abilities: [],
     ranged: false, is_king: false, enemy_only: false, target_policy: '', role: '',
     // bounty_gold / bounty_exp are deliberately ABSENT by default: an unset bounty derives
     // from the card's mana cost through the bounty.* rates (see GameData.kill_bounty), and a
@@ -91,7 +89,7 @@ const CardEditor = {
   }),
   form(draft, ctx, onChange) {
     const wrap = el('div');
-    for (const k of ['elements', 'chess_pieces', 'effects', 'abilities']) if (!draft[k]) draft[k] = [];
+    for (const k of ['elements', 'chess_pieces', 'abilities']) if (!draft[k]) draft[k] = [];
 
     const statRow = el('div', { class: 'frow' },
       fld('Mana cost', numInput(draft, 'cost', onChange, { min: 0 }), null, 'narrow'),
@@ -142,8 +140,7 @@ const CardEditor = {
             'what the ENEMY ENGINE thinks this unit is worth protecting; an encounter can re-price any role. Kings need no role — they are always the Captain'),
         ),
       ),
-      groupBox('Text (shown on the card)', locFields(draft, { type: 'card', typeLabel: 'card', onChange,
-        describeLines: () => (draft.effects || []).map(e => describeEffect(e, 'this card')) })),
+      groupBox('Text (shown on the card)', locFields(draft, { type: 'card', typeLabel: 'card', onChange })),
       groupBox('Composition',
         el('div', { class: 'frow' },
           el('div', { class: 'fld' }, el('span', { class: 'lab', text: 'Elements' }),
@@ -158,7 +155,7 @@ const CardEditor = {
       groupBox('Stats',
         el('div', { class: 'frow' },
           el('div', { class: 'fld wide' }, checkInput(draft, '_derive_stats', () => { syncStats(); onChange(); },
-            'Derive stats from the composition (composition cards only — the game computes cost/attack/health/speed, you just attach effects)')),
+            'Derive stats from the composition (composition cards only — the game computes cost/attack/health/speed)')),
         ),
         statRow,
         el('div', { class: 'frow' },
@@ -174,9 +171,8 @@ const CardEditor = {
           el('span', { class: 'lab', text: 'Abilities this card offers (definitions live in the Abilities tab)' }),
           chipSet(draft.abilities, abilityIds(ctx), onChange)),
       ),
-      groupBox('Effects'),
+      effectsRazedNote(),
     );
-    renderEffectList(wrap.lastChild, draft.effects, fxCtx(ctx, 'this card'), onChange);
     syncStats();
     return wrap;
   },
@@ -205,13 +201,13 @@ const CardEditor = {
     if (d.bounty_exp != null && d.bounty_exp !== '') out.bounty_exp = d.bounty_exp;
     if (d.card_type) out.card_type = d.card_type;
     if (d.shield && d._derive_stats) out.shield = d.shield;
-    if (d.effects.length) out.effects = cleanEffects(d.effects);
     if (d.abilities.length) out.abilities = d.abilities.slice();
     return out;
   },
   toDraft(g) {
     const d = JSON.parse(JSON.stringify(g));
-    for (const k of ['elements', 'chess_pieces', 'effects', 'abilities']) if (!d[k]) d[k] = [];
+    for (const k of ['elements', 'chess_pieces', 'abilities']) if (!d[k]) d[k] = [];
+    delete d.effects;   // the deleted schema — a stale draft must not resurrect it
     const comp = d.elements.length + d.chess_pieces.length;
     d._derive_stats = comp > 0 && d.attack == null;
     for (const k of ['cost', 'attack', 'health', 'speed', 'shield']) if (d[k] == null) d[k] = k === 'health' ? 1 : 0;
@@ -234,7 +230,6 @@ const CardEditor = {
     if (d.is_king) lines.push('KING — losing it loses the fight.');
     if (d.enemy_only) lines.push('Enemy-only: never appears in player pools.');
     for (const a of d.abilities || []) lines.push(`Offers activated ability: ${a}.`);
-    for (const e of d.effects || []) lines.push(describeEffect(e, 'this card'));
     return lines;
   },
   // Deliberately never says "card"/"tcg" (the model renders a whole framed card with
@@ -260,9 +255,8 @@ const CardEditor = {
 // ═════════════════════════════════ RELIC ════════════════════════════════════
 const RelicEditor = {
   label: 'Relic',
-  newItem: () => ({ id: '', display_name: '', description: '', color: 'ccbc72', letter: '✦', price: 90, effects: [] }),
+  newItem: () => ({ id: '', display_name: '', description: '', color: 'ccbc72', letter: '✦', price: 90 }),
   form(draft, ctx, onChange) {
-    if (!draft.effects) draft.effects = [];
     const wrap = el('div');
     wrap.append(
       groupBox('Identity',
@@ -273,27 +267,23 @@ const RelicEditor = {
           fld('Shop price (gold)', numInput(draft, 'price', onChange, { min: 0 }), null, 'narrow'),
         ),
       ),
-      groupBox('Text (shown in shop / relic tray)', locFields(draft, { type: 'relic', typeLabel: 'relic', onChange,
-        describeLines: () => (draft.effects || []).map(e => describeEffect(e, 'this relic')) })),
-      groupBox('Run-wide effects'),
+      groupBox('Text (shown in shop / relic tray)', locFields(draft, { type: 'relic', typeLabel: 'relic', onChange })),
+      effectsRazedNote(),
     );
-    renderEffectList(wrap.lastChild, draft.effects, fxCtx(ctx, 'this relic'), onChange);
     return wrap;
   },
   serialize(d) {
     return { id: d.id, display_name: d.display_name, description: d.description || '',
-      color: d.color || 'ccbc72', letter: d.letter || '✦', price: d.price == null ? 80 : d.price,
-      effects: cleanEffects(d.effects) };
+      color: d.color || 'ccbc72', letter: d.letter || '✦', price: d.price == null ? 80 : d.price };
   },
   summarize(d) {
     const lines = [`${d.display_name || d.id || 'Unnamed relic'} — ${d.price || 0} gold in shops.`];
-    for (const e of d.effects || []) lines.push(describeEffect(e, 'this relic'));
-    lines.push('Effects are run-wide and fire from your side only.');
+    if (d.description) lines.push(d.description);
     return lines;
   },
   toDraft(g) {
     const d = JSON.parse(JSON.stringify(g));
-    if (!d.effects) d.effects = [];
+    delete d.effects;   // the deleted schema — a stale draft must not resurrect it
     return d;
   },
   promptFor(d) {
@@ -302,59 +292,18 @@ const RelicEditor = {
   artNote: 'Installed to assets/relics/<id>.png — replaces the letter chip in game. Background removal recommended.',
 };
 
-// The SPREAD block (mirrors StatusData.spread / the cascade's spread tier): once per stack
-// at its phase the status rolls — a chance to propagate one stack to a destination, else a
-// chance for that stack to die down. The wildfire vocabulary: burning creeps to adjacent
-// slots; a unit's ablaze lights the ground beneath it (arriving AS burning).
-function renderSpreadBox(draft, ctx, onChange) {
-  const box = groupBox('Spread — each stack may propagate or die down (per-stack roll)');
-  const fx = fxCtx(ctx, 'the carrier');
-  const render = () => {
-    box.replaceChildren(box.firstChild);
-    if (!draft.spread) {
-      box.append(el('button', { class: 'ghost small list-add', text: '+ this status spreads (wildfire-style)', onclick: () => {
-        draft.spread = { phase: 'turn_start', chance: 0.2, decay_chance: 0.4 };
-        onChange(); render();
-      } }));
-      return;
-    }
-    const s = draft.spread;
-    box.append(el('div', { class: 'frow' },
-      fld('Rolls at', selectInput(s, 'phase', [
-        { value: 'turn_start', label: 'start of round' },
-        { value: 'turn_end', label: 'end of round' },
-      ], onChange)),
-      fld('Propagate chance', numInput(s, 'chance', onChange, { float: true, step: 0.05, min: 0, max: 1 }),
-        'per stack, 0–1', 'narrow'),
-      fld('Else die down', numInput(s, 'decay_chance', onChange, { float: true, step: 0.05, min: 0, max: 1 }),
-        'rolled only when the leap failed; with no phase decay, this is the status’s whole lifetime', 'narrow'),
-      el('div', { class: 'fld narrow', style: 'justify-content:flex-end' },
-        el('button', { class: 'ghost tiny', text: '✕ no spread', onclick: () => { delete draft.spread; onChange(); render(); } })),
-    ));
-    box.append(el('div', { class: 'frow' },
-      fld('Destination', selectInput(s, 'to', [
-        { value: 'adjacent', label: 'a random adjacent slot, same half (ground fire creeping)' },
-        { value: 'ground', label: 'the slot the carrier stands on (a unit lighting its floor)' },
-      ], onChange, { optional: true, emptyLabel: 'a random adjacent slot (default)' })),
-      fld('Arrives as', selectInput(s, 'status', fx.statusIds(), onChange, { optional: true, emptyLabel: '(itself)' }),
-        'what the destination catches; a cross-layer leap must speak the destination layer (ablaze arrives as burning)'),
-      fld('Arrival touch', selectInput(s, 'arrival', (ctx.vocab.namedEffects || []).map(n => ({ value: n.id, label: n.name || n.id })),
-        onChange, { optional: true, emptyLabel: '(none)' }),
-        'named effect dealt to whoever STANDS on the caught slot (burning: "burn" — damage and ignition in one)'),
-    ));
-  };
-  render();
-  return box;
-}
+// (The SPREAD block editor was deleted 2026-08-11 with the game's spread mechanism —
+// never user-designed, disavowed; the game loader now refuses the key. Status
+// propagation returns only as a designed, signed-off feature.)
 
 // ═════════════════════════════════ STATUS ═══════════════════════════════════
 const StatusEditor = {
   label: 'Status',
   newItem: () => ({ id: '', display_name: '', description: '', beneficial: false, aura: false,
     color: '8fd0ff', glyph: '✦', default_duration: 2, decay: 'duration', decay_phase: 'turn_end',
-    stacking: 'refresh', max_stacks: 9, effects: [], abilities: [] }),
+    stacking: 'refresh', max_stacks: 9, abilities: [] }),
   form(draft, ctx, onChange) {
-    for (const k of ['effects', 'abilities']) if (!draft[k]) draft[k] = [];
+    if (!draft.abilities) draft.abilities = [];
     if (!draft.eval) draft.eval = {};
     const wrap = el('div');
     wrap.append(
@@ -367,8 +316,7 @@ const StatusEditor = {
           fld('Pip glyph', textInput(draft, 'glyph', onChange, '☠'), 'short symbol', 'narrow'),
         ),
       ),
-      groupBox('Text (tooltip)', locFields(draft, { type: 'status', typeLabel: 'status', onChange,
-        describeLines: () => (draft.effects || []).map(e => describeEffect(e, 'the carrier')) })),
+      groupBox('Text (tooltip)', locFields(draft, { type: 'status', typeLabel: 'status', onChange })),
       groupBox('Lifecycle',
         el('div', { class: 'frow' },
           fld('Wears off by', selectInput(draft, 'decay', ['duration','stacks','none','intercept'].map(v => ({ value: v, label: labelOf('decay', v) })), onChange)),
@@ -390,14 +338,13 @@ const StatusEditor = {
           chipSet(draft.abilities, abilityIds(ctx), onChange)),
       ),
       // The enemy engine's per-STACK pricing (STATUS_EVAL_BRIEF.md): folded × stacks at
-      // capture. The flat, stack-blind half (and all muls) is authored on the EFFECTS
-      // below — this level exists because only the status knows what a stack is.
+      // capture. This level exists because only the status knows what a stack is. (The old
+      // per-EFFECT flat/mul half died with the effect layer — the rebuild's schema decides
+      // where effect-level pricing lives.)
       groupBox('Enemy eval pricing (per stack)',
         el('div', { class: 'hint', text: 'How each STACK moves the enemy engine’s reading of the '
           + 'carrier, folded × stacks (burning: exposure +0.25/stack; barrier: exposure −2/stack). '
-          + 'Adds only — a flat annotation or a multiplier goes on the effect that carries the '
-          + 'behaviour. Empty = stacks are priced by the effects alone. Never price a standing '
-          + 'stat effect’s stats here: captured stats already say it (double count).' }),
+          + 'Adds only. Empty = the stacks are unpriced (invisible to enemy planning).' }),
         el('div', { class: 'frow' },
           fld('Threat / stack', numInput(draft.eval, 'threat', onChange, { float: true, step: 'any', optional: true, placeholder: '—' }),
             'damage/round the carrier’s output gains per stack', 'narrow'),
@@ -407,10 +354,8 @@ const StatusEditor = {
             'value-units per stack for what is neither', 'narrow'),
         ),
       ),
-      renderSpreadBox(draft, ctx, onChange),
-      groupBox('Effects it carries'),
+      effectsRazedNote(),
     );
-    renderEffectList(wrap.lastChild, draft.effects, fxCtx(ctx, 'the carrier'), onChange);
     return wrap;
   },
   serialize(d) {
@@ -423,39 +368,25 @@ const StatusEditor = {
     if (d.decay_phase && d.decay_phase !== 'turn_end') out.decay_phase = d.decay_phase;
     out.stacking = d.stacking || 'refresh';
     if (d.stacking === 'stack' || d.decay === 'stacks' || d.decay === 'intercept') out.max_stacks = d.max_stacks || 9;
-    if (d.spread && typeof d.spread === 'object') {
-      const s = { phase: d.spread.phase || 'turn_start',
-        chance: d.spread.chance || 0, decay_chance: d.spread.decay_chance || 0 };
-      if (d.spread.to && d.spread.to !== 'adjacent') s.to = d.spread.to;
-      if (d.spread.status) s.status = d.spread.status;
-      if (d.spread.arrival) s.arrival = d.spread.arrival;
-      out.spread = s;
-    }
     // Per-stack eval pricing: 0 means absent (the fold's neutral value); adds only —
     // the game loader refuses muls at status level.
     const ev = {};
     for (const k of ['threat', 'exposure', 'value'])
       if (d.eval && d.eval[k] != null && d.eval[k] !== 0) ev[k] = d.eval[k];
     if (Object.keys(ev).length) out.eval = ev;
-    out.effects = cleanEffects(d.effects);
     if (d.abilities && d.abilities.length) out.abilities = d.abilities.slice();
     return out;
   },
   summarize(d) {
     const lines = [`${d.display_name || d.id || 'Unnamed status'} — ${d.beneficial ? 'buff' : 'debuff'}.`];
     lines.push(`Wears off: ${labelOf('decay', d.decay || 'duration')}; re-apply: ${labelOf('stacking', d.stacking || 'refresh')}.`);
-    if (d.spread) lines.push(`Spreads: each stack ${Math.round((d.spread.chance || 0) * 100)}% to `
-      + `${d.spread.to === 'ground' ? 'the ground beneath the carrier' : 'an adjacent slot'}`
-      + `${d.spread.status ? ' (arriving as ' + d.spread.status + ')' : ''}, else `
-      + `${Math.round((d.spread.decay_chance || 0) * 100)}% that flame dies down`
-      + `${d.spread.arrival ? '; an arrival deals "' + d.spread.arrival + '" to the occupant' : ''}.`);
-    for (const e of d.effects || []) lines.push(describeEffect(e, 'the carrier'));
     for (const a of d.abilities || []) lines.push(`Grants ability while active: ${a}.`);
     return lines;
   },
   toDraft(g) {
     const d = JSON.parse(JSON.stringify(g));
-    for (const k of ['effects', 'abilities']) if (!d[k]) d[k] = [];
+    if (!d.abilities) d.abilities = [];
+    delete d.effects;   // the deleted schema — a stale draft must not resurrect it
     if (d.glyph == null && d.letter != null) d.glyph = d.letter;   // loader alias
     if (d.default_duration == null) d.default_duration = d.duration != null ? d.duration : 1;
     if (d.beneficial == null) d.beneficial = true;                 // loader default
@@ -470,9 +401,8 @@ const StatusEditor = {
 // ═════════════════════════════════ ABILITY ══════════════════════════════════
 const AbilityEditor = {
   label: 'Ability',
-  newItem: () => ({ id: '', display_name: '', description: '', cost: { mana: 1, tap: true }, material: '', effects: [] }),
+  newItem: () => ({ id: '', display_name: '', description: '', cost: { mana: 1, tap: true } }),
   form(draft, ctx, onChange) {
-    if (!draft.effects) draft.effects = [];
     if (!draft.cost) draft.cost = { mana: 1, tap: true };
     const wrap = el('div');
     wrap.append(
@@ -481,50 +411,31 @@ const AbilityEditor = {
           idField(draft, onChange, ctx.isNew),
         ),
       ),
-      groupBox('Text (tooltip)', locFields(draft, { type: 'ability', typeLabel: 'ability', onChange,
-        describeLines: () => (draft.effects || []).map(e => describeEffect(e, 'the holder')) })),
+      groupBox('Text (tooltip)', locFields(draft, { type: 'ability', typeLabel: 'ability', onChange })),
       groupBox('Cost',
         el('div', { class: 'frow' },
           fld('Mana', numInput(draft.cost, 'mana', onChange, { min: 0 }), null, 'narrow'),
           el('div', { class: 'fld' }, checkInput(draft.cost, 'tap', onChange, 'Taps the holder (spends its action for the round)')),
         ),
       ),
-      groupBox('Activation',
-        el('div', { class: 'frow' },
-          el('div', { class: 'fld wide' }, checkInput(draft, 'autocast', onChange,
-            'Autocast-capable: shows corner brackets in the tray; the player can arm it (right-click / long-press) and fire by dragging the holder onto a target')),
-        ),
-      ),
-      groupBox('Material (optional)',
-        el('div', { class: 'frow' },
-          fld('Delivered composition key', textInput(draft, 'material', onChange, 'e.g. pawn, queen, darkness_water'),
-            'only for deliver_material abilities: the composition merged/spawned into the picked slot'),
-        ),
-      ),
-      groupBox('Effects (triggers are ignored — they fire on activation)'),
+      effectsRazedNote(),
     );
-    renderEffectList(wrap.lastChild, draft.effects, fxCtx(ctx, 'the holder'), onChange);
     return wrap;
   },
   serialize(d) {
-    const out = { id: d.id, display_name: d.display_name || slugToName(d.id), description: d.description || '',
+    return { id: d.id, display_name: d.display_name || slugToName(d.id), description: d.description || '',
       cost: { mana: (d.cost && d.cost.mana) || 0, tap: !d.cost || d.cost.tap !== false } };
-    if (d.autocast) out.autocast = true;
-    if (d.material) out.material = d.material;
-    out.effects = cleanEffects(d.effects);
-    return out;
   },
   summarize(d) {
     const lines = [`${d.display_name || d.id || 'Unnamed ability'} — costs ${describeCost(d.cost)}.`];
-    if (d.autocast) lines.push('Autocast-capable: can be armed and fired by dragging the holder onto a target.');
-    if (d.material) lines.push(`Delivers material: ${d.material}.`);
-    for (const e of d.effects || []) lines.push(describeEffect(e, 'the holder'));
+    if (d.description) lines.push(d.description);
     lines.push('Cards hold it via their "Activated abilities" list; statuses can grant it temporarily.');
     return lines;
   },
   toDraft(g) {
     const d = JSON.parse(JSON.stringify(g));
-    if (!d.effects) d.effects = [];
+    // autocast/material/effects: the deleted schema — a stale draft must not resurrect them
+    delete d.effects; delete d.autocast; delete d.material;
     if (!d.cost) d.cost = { mana: 0, tap: true };
     if (d.cost.tap == null) d.cost.tap = true;
     return d;
@@ -539,9 +450,8 @@ const AbilityEditor = {
 const CharmEditor = {
   label: 'Charm',
   newItem: () => ({ id: '', display_name: '', description: '', color: 'b8b8c8', letter: '✦',
-    targets: 'unit', stats: {}, effects: [] }),
+    targets: 'unit', stats: {} }),
   form(draft, ctx, onChange) {
-    if (!draft.effects) draft.effects = [];
     if (!draft.stats) draft.stats = {};
     const wrap = el('div');
     const statFld = (key, label) => fld(label, numInput(draft.stats, key, onChange, { optional: true, placeholder: '—' }), null, 'narrow');
@@ -558,20 +468,15 @@ const CharmEditor = {
           ], onChange), 'the King is never eligible'),
         ),
       ),
-      groupBox('Text', locFields(draft, { type: 'charm', typeLabel: 'charm', onChange,
-        describeLines: () => [
-          ...Object.entries(draft.stats || {}).filter(([, v]) => typeof v === 'number' && v !== 0).map(([k, v]) => `${signed(v)} <${k}>`),
-          ...(draft.effects || []).map(e => describeEffect(e, 'the charmed card')),
-        ] })),
+      groupBox('Text', locFields(draft, { type: 'charm', typeLabel: 'charm', onChange })),
       groupBox('Permanent stat bonuses (leave blank for none)',
         el('div', { class: 'frow' },
           statFld('attack', 'Attack'), statFld('health', 'Health'), statFld('speed', 'Speed'),
           statFld('shield', 'Shield'), statFld('cost', 'Mana cost'),
         ),
       ),
-      groupBox('Extra effects merged into the card'),
+      effectsRazedNote(),
     );
-    renderEffectList(wrap.lastChild, draft.effects, fxCtx(ctx, 'the charmed card'), onChange);
     return wrap;
   },
   serialize(d) {
@@ -581,19 +486,17 @@ const CharmEditor = {
     const stats = {};
     for (const [k, v] of Object.entries(d.stats || {})) if (typeof v === 'number' && v !== 0) stats[k] = v;
     if (Object.keys(stats).length) out.stats = stats;
-    if ((d.effects || []).length) out.effects = cleanEffects(d.effects);
     return out;
   },
   summarize(d) {
     const lines = [`${d.display_name || d.id || 'Unnamed charm'} — attaches to ${d.targets || 'unit'}s (never the King).`];
     const stats = Object.entries(d.stats || {}).filter(([, v]) => typeof v === 'number' && v !== 0);
     if (stats.length) lines.push('Stat bonuses: ' + stats.map(([k, v]) => `${signed(v)} ${k}`).join(', ') + '.');
-    for (const e of d.effects || []) lines.push(describeEffect(e, 'the charmed card'));
     return lines;
   },
   toDraft(g) {
     const d = JSON.parse(JSON.stringify(g));
-    if (!d.effects) d.effects = [];
+    delete d.effects;   // the deleted schema — a stale draft must not resurrect it
     if (!d.stats) d.stats = {};
     if (!d.targets) d.targets = 'unit';
     return d;
@@ -625,7 +528,6 @@ const UpgradeEditor = {
       while (nodesBox.children.length > 1) nodesBox.lastChild.remove();
       draft.nodes.forEach((n, i) => {
         if (!n.requires) n.requires = [];
-        if (!n.effects) n.effects = [];
         const otherIds = draft.nodes.filter(x => x !== n && x.id).map(x => x.id);
         // renaming/adding node ids must refresh every node's "Requires" chip set
         const idInput = textInput(n, 'id', onChange, 'e.g. arc_root');
@@ -639,8 +541,7 @@ const UpgradeEditor = {
             fld('Node id', idInput),
             fld('Icon glyph', textInput(n, 'icon', onChange, '✦'), null, 'narrow'),
           ),
-          locFields(n, { type: 'upgrade', typeLabel: 'upgrade node', onChange,
-            describeLines: () => (n.effects || []).map(e => describeEffect(e, 'this upgrade')) }),
+          locFields(n, { type: 'upgrade', typeLabel: 'upgrade node', onChange }),
           el('div', { class: 'frow' },
             fld('Point cost', numInput(n, 'cost', onChange, { min: 1 }), null, 'narrow'),
             fld('Row', numInput(n, 'row', onChange, { min: 0 }), null, 'narrow'),
@@ -648,16 +549,13 @@ const UpgradeEditor = {
             el('div', { class: 'fld' }, el('span', { class: 'lab', text: 'Requires (owned first)' }),
               otherIds.length ? chipSet(n.requires, otherIds, onChange) : el('span', { class: 'subtle', text: 'no other nodes yet' })),
           ),
-          el('div', { class: 'lab subtle', style: 'margin:6px 0 4px', text: 'Node effects:' }),
         );
-        const fxWrap = el('div');
-        renderEffectList(fxWrap, n.effects, fxCtx(ctx, 'this upgrade'), onChange);
-        nodeCard.append(fxWrap);
+        nodeCard.append(effectsRazedNote());
         nodesBox.append(nodeCard);
       });
       nodesBox.append(el('button', { class: 'ghost small list-add', text: '+ add node', onclick: () => {
         draft.nodes.push({ id: '', display_name: '', description: '', cost: 1, icon: '✦',
-          row: draft.nodes.length, col: 0, requires: [], effects: [] });
+          row: draft.nodes.length, col: 0, requires: [] });
         onChange(); renderNodes();
       } }));
     };
@@ -671,21 +569,19 @@ const UpgradeEditor = {
         id: n.id, display_name: n.display_name, description: n.description || '',
         cost: n.cost || 1, icon: n.icon || '✦', row: n.row || 0, col: n.col || 0,
         requires: (n.requires || []).slice(),
-        effects: cleanEffects(n.effects),
       })) };
   },
   summarize(d) {
     const lines = [`${d.display_name || d.id || 'Unnamed tree'} — ${(d.nodes || []).length} node(s).`];
     for (const n of d.nodes || []) {
-      lines.push(`● ${n.display_name || n.id} (cost ${n.cost || 1}${(n.requires || []).length ? ', needs ' + n.requires.join('+') : ''}):`);
-      for (const e of n.effects || []) lines.push('   ' + describeEffect(e, 'this upgrade'));
+      lines.push(`● ${n.display_name || n.id} (cost ${n.cost || 1}${(n.requires || []).length ? ', needs ' + n.requires.join('+') : ''})${n.description ? ': ' + n.description : ''}`);
     }
     return lines;
   },
   toDraft(g) {
     const d = JSON.parse(JSON.stringify(g));
     if (!d.nodes) d.nodes = [];
-    for (const n of d.nodes) { if (!n.requires) n.requires = []; if (!n.effects) n.effects = []; }
+    for (const n of d.nodes) { if (!n.requires) n.requires = []; delete n.effects; }
     return d;
   },
   promptFor(d) {
@@ -1766,61 +1662,15 @@ const RenderFilterEditor = {
 };
 
 // ═══════════════════════════ NAMED EFFECT ═══════════════════════════════════
-// A named effect is a reusable effect PAYLOAD template — the TCG keyword library ("burn" =
-// deal 1 damage, a chance to catch Ablaze, each extra stack may burn again). Any effect
-// anywhere references one via its "Named effect" select: the call site owns WHEN and ON
-// WHOM (trigger/targets), the template supplies WHAT HAPPENS. Retuning a number here
-// updates every user; display_name/description are library metadata the game strips.
+// The keyword library ("Burn", "Venom", "Blind"). The old PAYLOAD half (attribute/amount/
+// status/riders/$X magnitude) died with the effect layer — each entry survives as an
+// id + description SHELL: the re-authoring brief for the keyword, re-authored natively
+// in the new schema (TARGETING_DESIGN.md) when the rebuild decides how keywords are spelled.
 const NamedEffectEditor = {
   label: 'Named Effect',
-  newItem: () => ({ id: '', display_name: '', description: '',
-    attribute: 'damage_taken', amount: 1, per_stack: false, riders: [] }),
+  newItem: () => ({ id: '', display_name: '', description: '' }),
   form(draft, ctx, onChange) {
-    if (!draft.riders) draft.riders = [];
     const wrap = el('div');
-    const fx = fxCtx(ctx, 'the target');
-    const payloadBox = groupBox('Payload — what happens where this name is used');
-    const renderPayload = () => {
-      payloadBox.replaceChildren(payloadBox.firstChild);   // keep the group title
-      payloadBox.append(el('div', { class: 'frow' },
-        fld('Change stat', selectInput(draft, 'attribute', ctx.vocab.effectAttrs
-          .map(a => ({ value: a, label: labelOf('attr', a) })), onChange, { optional: true, emptyLabel: '(no stat change)' })),
-        fld('By', numInput(draft, 'amount', onChange, { optional: draft.attribute == null, placeholder: '0' }),
-          'the keyword’s number — X. Also the stat change where one is set (health: + heals, − damages; damage_taken: positive damage, shield first)', 'narrow'),
-        el('div', { class: 'fld' }, checkInput(draft, 'per_stack', onChange,
-          'Amount × the holding status’s stacks (off = flat, however tall the pile)')),
-      ));
-      payloadBox.append(el('div', { class: 'frow' },
-        fld('Restrike chance', numInput(draft, 'per_stack_chance', onChange, { float: true, step: 0.05, min: 0, max: 1, optional: true, placeholder: 'off' }),
-          'fired from a STACKED status: each stack past the first repeats the effect at this chance (the wildfire’s "each flame may burn again")', 'narrow'),
-      ));
-      const stWrap = el('div');
-      const renderStatus = () => {
-        stWrap.replaceChildren();
-        if (!draft.status || !draft.status.id) {
-          delete draft.status;
-          stWrap.append(el('button', { class: 'ghost small list-add', text: '+ also apply a status', onclick: () => {
-            draft.status = { id: fx.statusIds()[0] || '', stacks: 1 };
-            onChange(); renderStatus();
-          } }));
-          return;
-        }
-        stWrap.append(el('div', { class: 'frow' },
-          fld('Apply status', statusPicker(draft.status, 'id', fx, onChange)),
-          fld('Stacks', numInput(draft.status, 'stacks', onChange, { min: 1, magnitude: true, placeholder: '1 or $X' }),
-            'a fixed count, or $X to scale with the keyword’s number ("Blind X")', 'narrow'),
-          el('div', { class: 'fld narrow', style: 'justify-content:flex-end' },
-            el('button', { class: 'ghost tiny', text: '✕ no status', onclick: () => { delete draft.status; onChange(); renderStatus(); } })),
-        ));
-      };
-      renderStatus();
-      payloadBox.append(stWrap);
-      payloadBox.append(renderRiderList(el('div'), draft, fx, onChange));
-      // The keyword's price for the enemy engine — authored ONCE here, inherited by every
-      // call site (and scalable with $X, so "Blind 2" is worth twice "Blind 1").
-      payloadBox.append(evalAnnotationSection(draft, onChange, { magnitude: true }));
-    };
-    renderPayload();
     wrap.append(
       groupBox('Identity',
         el('div', { class: 'frow' },
@@ -1829,56 +1679,26 @@ const NamedEffectEditor = {
             'shown in pickers — the game never reads it'),
         ),
         el('div', { class: 'frow' },
-          fld('Library note', textInput(draft, 'description', onChange, 'what this does, for the picker'),
+          fld('Library note', textInput(draft, 'description', onChange, 'what this keyword does — the re-authoring brief'),
             'documentation only', 'wide'),
         ),
       ),
-      payloadBox,
-      el('div', { class: 'hint', text: 'No trigger, no targets: those belong to each call site '
-        + '(a status tick, a spell, a spread arrival). This template is only the payload they share. '
-        + 'Overriding a field at a call site is possible but exceptional — retune numbers HERE so every user follows.' }),
+      effectsRazedNote(),
     );
     return wrap;
   },
   serialize(d) {
-    const out = { id: d.id, display_name: d.display_name || slugToName(d.id), description: d.description || '' };
-    if (d.attribute) { out.attribute = d.attribute; out.amount = d.amount || 0; out.per_stack = !!d.per_stack; }
-    // A payload-less amount is still meaningful on a PARAMETERISED template: it is the
-    // keyword's default X ("Blind" alone = Blind 1), which every "$X" reads.
-    else if (d.amount) out.amount = d.amount;
-    if (d.per_stack_chance) out.per_stack_chance = d.per_stack_chance;
-    if (d.status && d.status.id) {
-      out.status = { id: d.status.id };
-      if (d.status.stacks && d.status.stacks !== 1) out.status.stacks = d.status.stacks;
-    }
-    // The enemy-engine price travels WITH the keyword — dropping it here is how a
-    // parameterised template silently loses its pricing on a round-trip through the Tool.
-    if (d.eval && Object.keys(d.eval).length) {
-      const ev = {};
-      for (const [k, v] of Object.entries(d.eval))
-        if (v != null && v !== '' && !(k.endsWith('_mul') ? v === 1 : v === 0)) ev[k] = v;
-      if (Object.keys(ev).length) out.eval = ev;
-    }
-    const riders = (d.riders || []).filter(r => r && r.status && r.status.id).map(r => {
-      const rr = { status: { id: r.status.id } };
-      if (r.chance != null && r.chance !== 1) rr.chance = r.chance;
-      if (r.status.stacks && r.status.stacks !== 1) rr.status.stacks = r.status.stacks;
-      return rr;
-    });
-    if (riders.length) out.riders = riders;
-    return out;
+    return { id: d.id, display_name: d.display_name || slugToName(d.id), description: d.description || '' };
   },
   summarize(d) {
-    const lines = [`${d.display_name || d.id || 'Unnamed effect'} — a reusable payload referenced as {"named": "${d.id}"}.`];
-    if (d.attribute) lines.push(describeEffect({ trigger: { kind: 'transient' }, targets: { kind: 'self' },
-      attribute: d.attribute, amount: d.amount, riders: d.riders, per_stack_chance: d.per_stack_chance }, 'the user'));
+    const lines = [`${d.display_name || d.id || 'Unnamed effect'} — a keyword brief (payload awaits the new schema).`];
     if (d.description) lines.push(d.description);
     return lines;
   },
   toDraft(g) {
     const d = JSON.parse(JSON.stringify(g));
-    if (!d.riders) d.riders = [];
-    if (d.per_stack == null) d.per_stack = true;   // loader default
+    // the deleted payload schema — a stale draft must not resurrect it
+    for (const k of ['attribute', 'amount', 'per_stack', 'per_stack_chance', 'status', 'riders', 'eval']) delete d[k];
     return d;
   },
   promptFor(d) {
@@ -1887,72 +1707,12 @@ const NamedEffectEditor = {
   artNote: 'Named effects have no art slot in the game — generation here is reference-only.',
 };
 
-// ═══════════════════════════ INNATE RULE ════════════════════════════════════
-// An innate rule is a bundle of effects EVERY unit on the board implicitly carries — the
-// rules of the WORLD rather than of any card ("fire scorches the ground it strikes" is one
-// rule, not a line copied onto every fire card). There is no holder to speak of and no
-// container to select: the effects fire for every unit, and their own trigger conditions
-// are the entire gate. A composition condition on the trigger is what narrows a rule to
-// "fire units" — and because conditions read the EFFECTIVE composition, a unit merely
-// granted fire obeys the rule too.
-const InnateEditor = {
-  label: 'Innate Rule',
-  newItem: () => ({ id: '', display_name: '', description: '', effects: [] }),
-  form(draft, ctx, onChange) {
-    if (!draft.effects) draft.effects = [];
-    const wrap = el('div');
-    wrap.append(
-      groupBox('Identity',
-        el('div', { class: 'frow' },
-          idField(draft, onChange, ctx.isNew),
-          fld('Rule name', textInput(draft, 'display_name', onChange, 'Fire scorches the ground'),
-            'documentation — the game never shows it'),
-        ),
-        el('div', { class: 'frow' },
-          fld('Note', textInput(draft, 'description', onChange, 'what this rule does, and why it is a world rule'),
-            'documentation only', 'wide'),
-        ),
-      ),
-      el('div', { class: 'hint', text: 'These effects are carried by EVERY unit on BOTH sides — '
-        + 'they are not attached to any card. Their own trigger conditions are the whole gate: '
-        + 'to make a rule apply only to fire units, put a composition condition on the trigger '
-        + '(a unit that merely COUNTS AS fire obeys it too). Only event-driven effects can be '
-        + 'innate — a "while" (standing) effect is refused by the game loader.' }),
-      groupBox('Effects every unit carries'),
-    );
-    renderEffectList(wrap.lastChild, draft.effects, fxCtx(ctx, 'any unit'), onChange);
-    return wrap;
-  },
-  serialize(d) {
-    return {
-      id: d.id,
-      display_name: d.display_name || slugToName(d.id),
-      description: d.description || '',
-      effects: cleanEffects(d.effects),
-    };
-  },
-  summarize(d) {
-    const lines = [`${d.display_name || d.id || 'Unnamed rule'} — carried by every unit on the board.`];
-    for (const e of d.effects || []) lines.push(describeEffect(e, 'any unit'));
-    if (d.description) lines.push(d.description);
-    return lines;
-  },
-  toDraft(g) {
-    const d = JSON.parse(JSON.stringify(g));
-    if (!d.effects) d.effects = [];
-    // the pre-directory authoring form spelled the documentation field "note"
-    if (d.description == null && d.note != null) { d.description = d.note; delete d.note; }
-    return d;
-  },
-  promptFor(d) {
-    return `Small fantasy emblem representing the world rule "${d.display_name || slugToName(d.id)}", single centered glowing symbol, painterly style, on a plain solid white background`;
-  },
-  artNote: 'Innate rules have no art slot in the game — generation here is reference-only.',
-};
+// (The INNATE RULES tier was KILLED whole 2026-08-11 — see the type registry note in
+// server.js. Re-designed from scratch if world rules are ever wanted again.)
 
 const EDITORS = {
   card: CardEditor, relic: RelicEditor, status: StatusEditor, ability: AbilityEditor,
-  namedeffect: NamedEffectEditor, innate: InnateEditor,
+  namedeffect: NamedEffectEditor,
   charm: CharmEditor, upgrade: UpgradeEditor, encounter: EncounterEditor, nodeweights: NodeWeightsEditor,
   sound: SoundEditor, vfx: VfxEditor, render_filter: RenderFilterEditor, tribe: TribeEditor,
 };

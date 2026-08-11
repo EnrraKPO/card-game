@@ -29,7 +29,9 @@ var description: String:
 		return s if s != "" else _desc_override
 	set(value):
 		_desc_override = value
-var effects: Array = []  # Array[Effect]
+# (The carried `effects` array was deleted 2026-08-11 with the effect layer; what a card
+# does is re-authored in the new schema when the rebuild reaches this container — each
+# card's `description` is its re-authoring brief.)
 # Where this card's art lives (resolved at build time — see build_from_dict). Kept as a path
 # rather than a texture so the library can be built without touching the disk: eagerly load()ing
 # every card's art cost ~800 texture decodes at boot for a fight that shows a couple of dozen.
@@ -94,7 +96,7 @@ var bounty_exp: int = -1
 const POWER_STAT_GROWTH := 0.05
 
 # The canonical component-id vocabulary — everything a composition may contain, and therefore
-# everything a standing composition GRANT may confer (see Effect._validate_grants /
+# everything a standing composition GRANT may confer (see
 # LiveEffects.effective_composition). Mirrors the Tool's ELEMENTS/PIECES (Tool/server.js),
 # like FOLDABLE_ATTRS — keep the two in step.
 const ELEMENT_IDS: Array[String] = ["fire", "water", "air", "earth", "darkness", "light"]
@@ -225,8 +227,10 @@ static func build_from_dict(d: Dictionary) -> CardData:
 	card.bounty_gold  = int(d.get("bounty_gold", -1))
 	card.bounty_exp   = int(d.get("bounty_exp", -1))
 	card.target_policy = str(d.get("target_policy", ""))
-	for e_data: Dictionary in d.get("effects", []):
-		card.effects.append(Effect.from_dict(e_data))
+	# An EMPTY effects list is the shape every post-strip override snapshot carried — drop it
+	# silently; only a real payload is the dead schema worth refusing loudly.
+	if not (d.get("effects", []) as Array).is_empty():
+		push_error("CardData %s: 'effects' is the deleted schema (effect-cleanse 2026-08-11) — dropped; re-author in the new schema" % card.id)
 	if d.has("card_type"):
 		card.card_type = CardType.SPELL if d.get("card_type") == "spell" else CardType.UNIT
 	elif not card.elements.is_empty() and card.chess_pieces.is_empty():
@@ -275,9 +279,6 @@ static func _fill_derived_stats() -> void:
 # Inverse of build_from_dict — serialises the authorable definition (omitting the derived
 # image). Used to snapshot a card into a DeckCard override.
 func to_dict() -> Dictionary:
-	var fx: Array = []
-	for e: Effect in effects:
-		fx.append(e.to_dict())
 	var d := {
 		"id":           id,
 		"display_name": display_name,
@@ -292,9 +293,8 @@ func to_dict() -> Dictionary:
 		"card_type":    "spell" if card_type == CardType.SPELL else "unit",
 		"elements":     Array(elements, TYPE_STRING, "", null),
 		"chess_pieces": Array(chess_pieces, TYPE_STRING, "", null),
-		"effects":      fx,
 	}
-	# A card's held abilities are identity, like its effects — they survive override snapshots
+	# A card's held abilities are identity — they survive override snapshots
 	# (a "?"-event bump must not reset what a rook offers).
 	if not abilities.is_empty():
 		d["abilities"] = Array(abilities, TYPE_STRING, "", null)
@@ -351,7 +351,6 @@ static func scaled(base: CardData, power: float) -> CardData:
 	c.bounty_gold   = base.bounty_gold
 	c.bounty_exp    = base.bounty_exp
 	c.target_policy = base.target_policy
-	c.effects       = base.effects
 	c.art_path      = base.art_path
 	var mult := 1.0 + power * POWER_STAT_GROWTH
 	c.attack = int(round(base.attack * mult))

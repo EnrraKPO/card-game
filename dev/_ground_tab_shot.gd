@@ -65,7 +65,7 @@ func _ready() -> void:
 		var slot := slots[i] as SlotUI
 		slot.ground_lookup = func() -> BoardSlot: return gs
 	for i in [1, 3, 4, 5, 6, 7]:
-		StatusEngine.apply(grounds[i], "burning", Effect.STATUS_DURATION_DEFAULT, 2, null)
+		StatusEngine.apply(grounds[i], "burning", StatusEngine.DURATION_DEFAULT, 2, null)
 	StatusEngine.apply(grounds[5], "poison", 3, 2, null)
 
 	await get_tree().process_frame

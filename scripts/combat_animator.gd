@@ -12,7 +12,7 @@ func setup(root: Node, p_get_card_ui: Callable, vfx: VFXPlayer) -> void:
 	_vfx         = vfx
 
 
-# Converts EffectSystem result arrays to VFX events via VFXPlayer. Pass `source` (the unit whose
+# Converts resolution result arrays to VFX events via VFXPlayer. Pass `source` (the unit whose
 # effect produced these results) so direct damage flies in as a projectile from it. `cue_status_id`
 # selects the container cue played before the effects: "" glints the source card, a status id glints
 # that status's pip; `show_cue=false` suppresses the cue (e.g. un-attributed run-level effects).

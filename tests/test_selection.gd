@@ -20,7 +20,6 @@ func suite_name() -> String:
 
 func run() -> void:
 	_freed_pick_is_no_pick()
-	_freed_pick_takes_its_ability()
 	_collapse_is_silent()
 	Selection.clear()
 
@@ -41,15 +40,9 @@ func _freed_pick_is_no_pick() -> void:
 	check(inst == null, "casting the collapsed pick yields null instead of throwing")
 
 
-# The ability is "the PICK's ability" — it cannot outlive the owner it hangs off, freed or not.
-func _freed_pick_takes_its_ability() -> void:
-	var owner_widget := Control.new()
-	var ability := RefCounted.new()
-	Selection.select_ability(owner_widget, ability)
-	check(Selection.current_ability() == ability, "the pick's ability is held")
-	owner_widget.free()
-	check(Selection.current_ability() == null, "a freed owner takes its ability with it")
-	check(not Selection.ability_held(owner_widget, ability), "…and holds it for nobody")
+# (The ability sub-pick checks were BANISHED 2026-08-11: they were the last consumer of
+# the retired sub-pick API, which dies with them — the rebuilt activation gesture ships
+# its own selection surface and suite.)
 
 
 # Reading is not a transition: the pick did not MOVE, it stopped existing, and every view

@@ -4,7 +4,7 @@ extends Node
 # for another whole turn, and the sweep threw the body away so the fall and the chest never played.
 #
 # Stages a real combat, puts an enemy army on the board, then kills the captain THROUGH THE EFFECT
-# PATH (EffectSystem damage + the sweep — what any resolved cast does) and asks the
+# PATH (a Resolver effect-channel blow + the sweep — what any resolved cast does) and asks the
 # fight-may-have-ended question a finished cast asks. Then checks the four promises:
 #   1. the fight ENDED there and then (no waiting for the next turn),
 #   2. the captain got its fall — the treasure chest exists,
@@ -126,17 +126,12 @@ func _by_spell() -> void:
 	await get_tree().process_frame
 	var gold_before: int = GameData.current_run.gold
 
-	# THE SPELL. Not a strike: a damage effect resolved and swept, which is the whole path the
-	# defect lived on. The captain is dead and off the board the moment cleanup returns.
+	# THE SPELL-SHAPED BLOW. Not a strike: a non-attack HEALTH mutation through the Resolver
+	# (what a resolved damage payload commits — effect dispatch itself is razed) and the
+	# effect-death sweep, which is the whole path the defect lived on. The captain is dead
+	# and off the board the moment cleanup returns.
 	var king: CardInstance = board.get_enemy_king()
-	var burn := Effect.from_dict({
-		"trigger": {"kind": "on_play"},
-		"targets": {"kind": "manual"},
-		"attribute": "health", "amount": -999,
-	})
-	var ctx: EffectContext = board.make_context(null)
-	ctx.manual_target = king
-	EffectSystem.apply_single(burn, null, ctx)
+	Resolver.submit(StatMutation.make(king, StatMutation.HEALTH, -999, null, StatMutation.CH_EFFECT))
 	board.cleanup_effect_deaths()
 
 	if board.get_card_ui(king) == null:

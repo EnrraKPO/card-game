@@ -27,47 +27,23 @@ static func make(p_world: CombatWorld, p_presenter: CombatPresenter) -> CombatCa
 	return c
 
 
-# Builds a dispatch context for one holder reacting to an event. The context carries the
-# legacy single-subject view (SUBJECT/ATTACKER/ATTACK_TARGET targeting still read it); the
-# activation decision itself lives entirely in each effect's TriggerResolver.
-func event_ctx(event: GameEvent, holder: CardInstance) -> EffectContext:
-	var ctx := world.make_context(holder)
-	ctx.subject = event.subject()
-	if event.id == &"attack" or event.id == &"crit":
-		ctx.attack_target = event.destination   # attack/crit: subject is the striker, expose who got hit
-	elif event.id == &"struck" or event.id == &"dodge":
-		ctx.attacker = event.origin             # struck/dodge: the unit that struck (the dodger is the subject)
-	return ctx
-
-
-# The per-holder dispatch-and-present point: resolves `event` for `holder` in world context AND
-# forwards the results to the presenter, inseparably — a dispatch path shows its results BY
-# CONSTRUCTION, not by each call site remembering to forward them.
-func fire(event: GameEvent, holder: CardInstance) -> void:
-	var ctx := event_ctx(event, holder)
-	# Walk the holder's containers one at a time — its card, then each status — cueing each before its
-	# (container-blind) effects land: card glint / pip glint → that container's effect VFX.
-	for group: Dictionary in EffectSystem.trigger_grouped(event, holder, ctx):
-		var gres: Array = group["results"]
-		var sid: String = group["status_id"]
-		await presenter.show_effect_results(gres, holder, sid)
+# The per-holder dispatch-and-present point. EFFECT DISPATCH RAZED (2026-08-11): the old
+# union-Effect dispatcher and its context object were deleted whole with the effect layer.
+# The event still flows through here so the cascade's fan-out, death path, and decay tiers
+# stay real; the rebuilt TriggeredEffect dispatch attaches at this seam (TARGETING_DESIGN.md
+# §2: the event fires, the runtime asks "who reacts?", triggers alone answer). NEEDS kept
+# from the old path: per-container grouping (card glint / pip glint before that container's
+# results) and dispatch-shows-its-results by construction, through the presenter.
+func fire(_event: GameEvent, _holder: CardInstance) -> void:
+	pass
 
 
 # Run-level (relic/upgrade) effects for an event, fired ONCE from the perspective of the
-# event's subject, grouped by their owning item: glint the owner's chip (relics only for now)
-# before its effects' VFX, so a relic proc reads as cause -> effect.
-func fire_run_level(event: GameEvent) -> void:
-	var persp := event.subject()
-	if persp == null:
-		return
-	var ctx := event_ctx(event, persp)
-	for grp: Dictionary in EffectSystem.trigger_global_grouped(event, ctx):
-		var rres: Array = grp["results"]
-		if rres.is_empty():
-			continue
-		if str(grp["owner_kind"]) == "relic":
-			await presenter.relic_glint(str(grp["owner_id"]))
-		await presenter.show_effect_results(rres, persp, "", false)
+# event's subject. RAZED with the dispatcher (see fire). NEEDS: grouped by owning
+# container with the owner attribution cue first (a relic proc reads as cause -> effect:
+# chip glint, then results), anchored on the player side per the two-anchor model (§5).
+func fire_run_level(_event: GameEvent) -> void:
+	pass
 
 
 # Fires the `kill` event for a just-dead unit, immediately before its `death` — reading the
@@ -144,186 +120,18 @@ func resolve_event(event_id: StringName, subject: CardInstance = null) -> void:
 	# world state changes and board_refresh shows the aftermath.
 	if subject == null:
 		var ground := world.active_slots()
-		# Tier 1 — PROCS, gathered first and presented as ONE moment. Mutations still land
-		# slot by slot in reading order (deterministic), and narrate into the combat log —
-		# the tint/pip may have no witnesses in a headless run, the log always does. But the
-		# board-wide batch presents together: every acting ground tab glints AT ONCE as the
-		# damage arrives — the whole fire acts as one, where the spread tier below is each
-		# flame acting alone.
-		var ground_procs: Array = []
-		for slot: BoardSlot in ground:
-			var here := world.location_of(slot)
-			var gctx := world.make_context(null)
-			gctx.owner_anchor = here.side   # the ground inherits the half it sits on
-			gctx.anchor_at = here
-			var groups := EffectSystem.trigger_carrier_grouped(GameEvent.make(event_id, null), slot, gctx)
-			for grp: Dictionary in groups:
-				for res: Dictionary in grp["results"]:
-					var victim := res.get("target") as CardInstance
-					CombatLog.note("ground", "slot %s %s: %s %d on %s" % [
-							str(here),
-							str(grp["status_id"]), str(res.get("attribute", "?")),
-							int(res.get("delta", 0)),
-							"?" if victim == null or victim.data == null else str(victim.data.id)])
-				ground_procs.append({"slot": slot, "status_id": str(grp["status_id"]),
-						"results": grp["results"]})
-		if not ground_procs.is_empty():
-			await presenter.show_ground_results(ground_procs)
-		# Tier 2 — SPREAD: statuses that author `spread` roll their stacks, on EITHER layer
-		# (see _spread_statuses).
-		await _spread_statuses(event_id, ground, units)
-		# Tier 3 — decay, same order as before. Slots first touched by a spread this pass are
-		# not in `ground` and skip it — a status is never asked to decay the phase it arrived.
+		# Ground PROCS: RAZED with the dispatcher (see fire). NEEDS: slot-held statuses fire
+		# HOLDERLESS through the one pipeline, anchored on the half the slot sits in;
+		# mutations land slot by slot in reading order and narrate into the combat log; the
+		# board-wide batch presents as ONE moment (presenter.show_ground_results). (The
+		# SPREAD tier that sat between procs and decay was deleted 2026-08-11: never
+		# user-designed — the disavowed riders/restrikes lineage. Status propagation returns
+		# only as a designed, signed-off feature.)
+		# Decay, same order as before.
 		for slot: BoardSlot in ground:
 			StatusEngine.advance(slot, event_id)
 	world.cleanup_deaths()
 	presenter.board_refresh()
-
-
-# ── The SPREAD tier (SLOT_LAYER_DESIGN.md §4.4) ────────────────────────────────────────
-# A status that authors `spread` (StatusData.spread) rolls ONCE PER STACK at its phase:
-# `chance` to propagate one stack to whatever its `to` provider names, else `decay_chance`
-# for that stack to die down — the roll IS the status's lifetime (burning and ablaze both
-# author decay "none"; fire only ever goes out by failing here).
-#
-# CARRIER-GENERIC: slots and units roll through the identical path. The two destinations are
-# one rule seen from each layer — ground fire creeps SIDEWAYS to a neighbouring slot
-# ("adjacent"), a burning unit sets light to the floor at its own address ("ground").
-#
-# The jobs are a SNAPSHOT taken before any roll: a stack that arrives mid-pass never rolls
-# in the pass that lit it, so one lucky chain can't sweep the board in a single turn. Slots
-# roll before units, each in its own deterministic order (reading order both times).
-# Rolls draw from the rules stream — seeded, replayable, and scratch-isolated inside a
-# hypothetical (see CombatRng). Each roll presents individually, in order: the rolling pip
-# glints the same whatever comes of it (the target's ignition flare is the only success
-# signal — user call).
-func _spread_statuses(event_id: StringName, ground: Array, units: Array) -> void:
-	var carriers: Array = []
-	carriers.append_array(ground)
-	for u: CardInstance in units:
-		if u.is_alive():
-			carriers.append(u)
-	var jobs: Array = []
-	for carrier: StatusCarrier in carriers:
-		for si: StatusInstance in carrier.statuses:
-			if StatusEngine.is_expired(si) or si.data.spread.is_empty():
-				continue
-			if str(si.data.spread.get("phase", "turn_start")) != String(event_id):
-				continue
-			jobs.append({"carrier": carrier, "si": si, "count": si.stacks})
-	for job: Dictionary in jobs:
-		var carrier: StatusCarrier = job["carrier"]
-		var si: StatusInstance = job["si"]
-		# A unit that died earlier in this pass stops rolling — its fire went with it.
-		var host := carrier as CardInstance
-		if host != null and not host.is_alive():
-			continue
-		var chance := float(si.data.spread.get("chance", 0.0))
-		var fade_chance := float(si.data.spread.get("decay_chance", 0.0))
-		var to := str(si.data.spread.get("to", "adjacent"))
-		# What the destination CATCHES — by default the status itself, but a cross-layer leap
-		# must speak the destination layer's language: a unit's ablaze lights the ground as
-		# BURNING (slot-shaped), never as ablaze (self-targeting, which the slot dispatch
-		# fence rightly refuses).
-		var spread_id := str(si.data.spread.get("status", si.data.id))
-		# The flame's touch on arrival: a named effect dealt to whoever STANDS on the caught
-		# slot (empty slot = nothing). Burning authors "burn", so a fire leaping into an
-		# occupied cell burns its occupant — damage AND ignition chance, one definition.
-		var arrival := str(si.data.spread.get("arrival", ""))
-		for i: int in int(job["count"]):
-			var outcome: StringName = &"hold"
-			var target: BoardSlot = null
-			var arrival_results: Array = []
-			if CombatRng.roll() < chance:
-				target = _spread_destination(carrier, to)
-				if target != null:
-					outcome = &"spread"
-					# The propagated stack keeps its parent's source — provenance survives the leap.
-					StatusEngine.apply(target, spread_id, Effect.STATUS_DURATION_DEFAULT, 1, si.source)
-					CombatLog.note("ground", "%s %s spreads %s to %s" % [
-							_carrier_name(carrier), si.data.id, spread_id,
-							str(world.location_of(target))])
-					if not arrival.is_empty():
-						arrival_results = _spread_arrival(arrival, target, si.source)
-			elif CombatRng.roll() < fade_chance:
-				outcome = &"fade"
-				StatusEngine.shed_stack(carrier, si)
-				CombatLog.note("ground", "%s %s dies down (%d left)" % [
-						_carrier_name(carrier), si.data.id, si.stacks])
-			await presenter.show_spread_roll(carrier, si.data.id, i, outcome, target,
-					arrival_results, spread_id)
-
-
-# The arriving flame touching the destination's occupant: deal the `arrival` named effect
-# (e.g. "burn") to the unit standing on the caught slot. Nobody there = nothing, a legal
-# miss. Routed through the ordinary effect pipeline (manual targeting, pre-resolved), so
-# interception and provenance behave exactly as any other effect's damage would.
-func _spread_arrival(arrival: String, target: BoardSlot, fire_source: CardInstance) -> Array:
-	var here := world.location_of(target)
-	var occupant := BoardFacade.unit_at(world, here)
-	if occupant == null or not occupant.is_alive():
-		return []
-	var eff := Effect.from_dict({"targets": {"kind": "manual"}, "named": arrival})
-	var ctx := world.make_context(null)
-	ctx.owner_anchor = here.side
-	ctx.manual_target = occupant
-	var results := EffectSystem.apply_single(eff, fire_source, ctx)
-	for res: Dictionary in results:
-		CombatLog.note("ground", "arriving %s %s %d on %s" % [arrival,
-				str(res.get("attribute", "?")), int(res.get("delta", 0)),
-				"?" if occupant.data == null else str(occupant.data.id)])
-	return results
-
-
-# Where one stack goes when it propagates — the destination PROVIDER named by `spread.to`
-# (see StatusData.spread). Null = nowhere to go, which is a legal miss, not an error: the
-# roll simply produces nothing (an off-board unit has no floor under it).
-func _spread_destination(carrier: StatusCarrier, to: String) -> BoardSlot:
-	match to:
-		"ground":
-			# ACROSS the layers at one address: the slot this unit stands on. Meaningless on a
-			# slot carrier (ground is already the ground) — a legal miss, authored in error.
-			# One address, both layers — the half is READ off where the unit stands, never
-			# derived from whose army it belongs to (LOCATION_MANAGER_DESIGN.md §3).
-			var unit := carrier as CardInstance
-			var under := world.location_of(unit)
-			if unit == null or under == null:
-				return null
-			return BoardFacade.slot_at(world, under)
-		_:
-			# WITHIN the ground layer: a random orthogonal neighbour on the SAME half. The
-			# battle line is a wall for now (cross-line adjacency is a parked decision, and
-			# this branch is the one predicate to widen when it lands). Meaningless on a unit
-			# carrier — units don't set each other alight by proximity.
-			var slot := carrier as BoardSlot
-			var from := world.location_of(slot)
-			if slot == null or from == null:
-				return null
-			# The four orthogonal steps in a FIXED order — the pick below draws its index from
-			# the rules stream, so the order of the options is itself part of the fight's
-			# determinism and must not be reshuffled by how the cells are gathered.
-			var options: Array = []
-			for d: Vector2i in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
-				var loc := BoardLocation.at(from.side, from.row + d.x, from.col + d.y)
-				if loc != null:
-					options.append(loc)
-			if options.is_empty():
-				return null
-			# The pick draws from the rules stream: which slot catches fire is a rules outcome.
-			var pick: BoardLocation = options[CombatRng.roll_int(0, options.size() - 1, &"rules")]
-			return BoardFacade.slot_at(world, pick)
-
-
-# A carrier's address for the combat log, whichever layer it lives on.
-func _carrier_name(carrier: StatusCarrier) -> String:
-	var slot := carrier as BoardSlot
-	if slot != null:
-		return "slot %s" % str(world.location_of(slot))
-	var unit := carrier as CardInstance
-	if unit != null:
-		return "unit %s %s" % [
-				"?" if unit.data == null else str(unit.data.id), str(world.location_of(unit))]
-	return "carrier"
 
 
 # The LOGIC half of a death: the unit leaves play this instant (world.retire — which also

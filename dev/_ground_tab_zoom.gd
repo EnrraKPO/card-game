@@ -66,10 +66,10 @@ func _ready() -> void:
 	# glint cell so the shrink-to-fit path is on screen too.
 	# A SINGLE stack on the top row: the lone-tab case, which is the one the width fraction names
 	# directly ("slightly over half the tile"). Every other count falls out of the equal share.
-	StatusEngine.apply(grounds[0], "burning", Effect.STATUS_DURATION_DEFAULT, 1, null)
-	StatusEngine.apply(grounds[3], "burning", Effect.STATUS_DURATION_DEFAULT, 2, null)
-	StatusEngine.apply(grounds[4], "burning", Effect.STATUS_DURATION_DEFAULT, 4, null)
-	StatusEngine.apply(grounds[5], "burning", Effect.STATUS_DURATION_DEFAULT, 12, null)
+	StatusEngine.apply(grounds[0], "burning", StatusEngine.DURATION_DEFAULT, 1, null)
+	StatusEngine.apply(grounds[3], "burning", StatusEngine.DURATION_DEFAULT, 2, null)
+	StatusEngine.apply(grounds[4], "burning", StatusEngine.DURATION_DEFAULT, 4, null)
+	StatusEngine.apply(grounds[5], "burning", StatusEngine.DURATION_DEFAULT, 12, null)
 
 	await get_tree().process_frame
 	await get_tree().process_frame

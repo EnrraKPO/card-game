@@ -62,17 +62,13 @@ const TYPES = {
   // Control via the Vfx autoload. Procedural renderer only today; the prompt targets future
   // asset-backed renderers (flipbook sprite sheets).
   vfx:        { label: 'VFX',             dataDir: 'data/vfx',        artDir: null,               artW: 1024, artH: 1024, rembg: false },
-  // NAMED EFFECTS: reusable effect PAYLOAD templates (the TCG keyword library — "burn" =
-  // deal 1 damage, a chance to catch Ablaze, each extra stack may burn again). Any effect
-  // references one via {"named": "<id>"}: the call site owns trigger/targets, the template
-  // supplies the payload (Effect.from_dict merges it under the authored keys). No art slot.
+  // NAMED EFFECTS: the keyword library ("Burn", "Venom", "Blind"). The old payload half
+  // died with the effect layer (2026-08-11) — each entry is an id + description SHELL:
+  // the keyword's re-authoring brief for the new schema (TARGETING_DESIGN.md). No art slot.
   namedeffect: { label: 'Named Effect',   dataDir: 'data/named_effects', artDir: null,      artW: 1024, artH: 1024, rembg: false },
-  // INNATE RULES: effects EVERY unit implicitly carries by being what it is, gated purely by
-  // their own trigger conditions ("fire scorches the ground it strikes" is ONE rule, not a
-  // line copied onto every fire card). Dispatched alongside a unit's own effects
-  // (EffectSystem.trigger_grouped → InnateEffects.all). A rule's id/name/description are
-  // documentation; its `effects` are the content. No art slot.
-  innate:     { label: 'Innate Rule',      dataDir: 'data/innate_effects', artDir: null,     artW: 1024, artH: 1024, rembg: false },
+  // (The INNATE RULES tier — world rules every unit implicitly carried — was KILLED whole
+  // 2026-08-11, user ruling: peripheral delivery clutter; re-designed from scratch if ever
+  // wanted. data/innate_effects/ is gone with it.)
   // RENDER FILTERS: parametrized GPU effects (data/render_filters/) applied to a texture-bearing
   // Control, whose look is derived from the SOURCE TEXTURE'S OWN ALPHA — as opposed to the VFX
   // library's procedural behaviors, which draw primitives sized to a target's bounding box and
@@ -144,7 +140,7 @@ function getSettings() {
     claudeCodeModel: '',     // blank = the user's Claude Code default; or opus/sonnet/haiku/full id
     claudeCliCmd: 'claude',  // launcher override (tests point it at a stub)
     ollamaUrl: 'http://127.0.0.1:11434', llmModel: 'gemma4:31b',   // local LLM for art prompts
-    effectsModel: 'qwen3-coder-next:q4_K_M',   // local LLM for ✨ effects-from-words (JSON work — a coder model)
+    chatModel: 'qwen3-coder-next:q4_K_M',   // local LLM for the 💬 edit chat (JSON work — a coder model)
     claudeModel: 'claude-opus-4-8',   // cloud providers use ONE model for every ✨ feature
     openaiModel: 'gpt-5.5',
   }, readJson(SETTINGS_PATH, {}));
@@ -463,16 +459,16 @@ function getEconomy() {
 }
 
 // ── board value (enemy-engine exchange rates) ────────────────────────────────
-// The enemy engine's "total board value" criterion prices every unit by its stats,
-// abilities and effects at these authored exchange rates (scripts/enemy/
-// board_value_config.gd). Lives in the game's data/board_value.json; an absent file (or
-// key) means the code defaults. Mirror of the game's defaults so the tool round-trips
-// the same shape / fallbacks.
+// The enemy engine's "total board value" criterion prices every unit by its stats and
+// abilities at these authored exchange rates (scripts/enemy/board_value_config.gd).
+// Lives in the game's data/board_value.json; an absent file (or key) means the code
+// defaults. Mirror of the game's defaults so the tool round-trips the same shape /
+// fallbacks. (triggered_default / live_default — the per-effect-category prices — died
+// with the effect layer 2026-08-11, in the game's _defaults and here alike.)
 const BOARD_VALUE_PATH = path.join(GAME_ROOT, 'data/board_value.json');
 const BOARD_VALUE_DEFAULT = {
   stat_rates: { attack: 1.0, health: 1.0, missing_health: 0.1, shield: 2.0, speed: 0.5 },
   ability_default: 2.0, ability_values: {},
-  triggered_default: 1.5, live_default: 1.5,
   // the valuation pass (2026-07-30): the persistence dial + the raw-worth enhancers.
   // persistence_weight 0..1 = how much a unit's chance of dying this turn discounts its
   // raw worth; role_values = flat bonus per role tag ("captain"/"default" included);
@@ -487,9 +483,9 @@ function sanitizeBoardValue(src) {
       const v = Number(s.stat_rates[k]);
       if (Number.isFinite(v)) out.stat_rates[k] = v;
     }
-  for (const k of ['ability_default', 'triggered_default', 'live_default']) {
-    const v = Number(s[k]);
-    if (Number.isFinite(v)) out[k] = v;
+  {
+    const v = Number(s.ability_default);
+    if (Number.isFinite(v)) out.ability_default = v;
   }
   const pw = Number(s.persistence_weight);
   if (Number.isFinite(pw)) out.persistence_weight = Math.min(1, Math.max(0, pw));
@@ -613,9 +609,9 @@ function sanitizePersonality(src) {
 function sanitizeValueRates(src) {
   const s = (src && typeof src === 'object') ? src : {};
   const out = {};
-  for (const k of ['ability_default', 'triggered_default', 'live_default']) {
-    const v = Number(s[k]);
-    if (Number.isFinite(v)) out[k] = v;
+  {
+    const v = Number(s.ability_default);
+    if (Number.isFinite(v)) out.ability_default = v;
   }
   const pw = Number(s.persistence_weight);
   if (Number.isFinite(pw)) out.persistence_weight = Math.min(1, Math.max(0, pw));
@@ -1025,11 +1021,7 @@ function applyBulkOp(data, op) {
     if (data.abilities.includes(op.ability)) return false;
     data.abilities.push(op.ability); return true;
   }
-  if (op.kind === 'grant_effect') {
-    if (!op.effect || typeof op.effect !== 'object') return false;
-    if (!Array.isArray(data.effects)) data.effects = [];
-    data.effects.push(JSON.parse(JSON.stringify(op.effect))); return true;
-  }
+  // (The grant_effect op died with the effect layer 2026-08-11 — an unknown op throws.)
   throw new Error('unknown bulk op: ' + op.kind);
 }
 
@@ -1323,49 +1315,12 @@ function stripMeta(data) {
 }
 
 // ── validation (server-side gate before install) ─────────────────────────────
-const TRIGGERS = ['on_play','on_death','on_attack','on_damage_taken','permanent','on_turn_start','on_turn_end','on_activate'];
-// The native trigger-resolver schema (see scripts/triggers/trigger_resolver.gd).
-const SIMPLE_EVENTS = ['play','death','activate','turn_start','turn_end'];
-const DUAL_EVENTS = ['attack','struck','kill','dodge','crit'];
-const RELATIONS = ['self','ally','enemy'];   // legacy spelling; ally/enemy map to allegiance in-game
-const ALLEGIANCES = ['ally','enemy'];        // side vs the effect's OWNER — the native predicate form
-const PARTICIPANT_GATES = ['self','any'];    // trigger "of" gates (identity is structural, not a condition)
-const TRACKER_KINDS = ['container','stacks'];
-// The native targeting schema (see scripts/triggers/target_resolver.gd).
-const TARGET_KINDS = ['self','all','auto','manual','manual_slot','participant','side'];
-const CRITERIA = ['nearest','random'];
-const PARTICIPANTS = ['holder','origin','destination'];
-const SIDE_SELECTORS = ['own','opponent'];   // the side kind's "of" (relative to the holder)
-const POLICIES = ['self','single_nearest','single_random','all_enemies','all_allies','all','manual','attack_target','subject','attacker','manual_slot'];
-const SUBJECTS = ['self','ally','enemy','any'];
-const COMPARATORS = ['gt','gte','lt','lte','eq','neq'];
-const MODIFIER_KEYS = ['unit.attack','unit.health','unit.speed','card.cost',
-  'mana.initial','mana.max','mana.per_turn','hand.size.initial','draw.per_turn',
-  'gold.initial','magic_mineral.initial','king.max_health','relic.capacity',
-  'reward.essence','reward.king_piece_chance',
-  'reward.gold.combat','reward.gold.elite','reward.gold.boss',
-  'reward.magic_mineral.combat','reward.magic_mineral.elite','reward.magic_mineral.boss',
-  'bounty.gold_per_cost','bounty.exp_per_cost','bounty.minimum',
-  'forge.cost.per_piece','forge.cost.per_element','forge.cost.element_only','forge.cost.piece_op',
-  'shop.magic_mineral.price'];
-const CUSTOM_HOOKS = ['rallying_cry','deliver_material'];
-const EFFECT_ATTRS = ['health','max_health','damage_taken','attack','speed','shield','cost',
-  'dodge_bonus','crit_chance_bonus','crit_multiplier_bonus','strikes'];
-// Side stats: only valid with targets {"kind":"side"} and vice versa (mirrors
-// Effect._validate_side_targets — see EFFECT_SYSTEM_DESIGN.md §10).
-const SIDE_ATTRS = ['draw','discard','mana','max_mana'];
-// The stats a pending mutation can carry — the interceptor match vocabulary (mirrors
-// StatMutation + the Resolver's split: "damage" is a hit's pre-split total; its shares
-// then pass as "shield_pool" / "health" on the hit's channel).
-const INTERCEPT_STATS = ['damage','health','shield_pool','status',
-  'attack','speed','cost','max_health','shield', ...SIDE_ATTRS];
-// The attributes the game's read-time fold serves — the ONLY legal standing (while)
-// targets (mirrors Effect.FOLDABLE_ATTRS/FOLDABLE_MAP: pool-named attributes fold as
-// their base — "health" means max_health, "shield" the shield base the pool follows).
-const FOLDABLE_MAP = { health: 'max_health', shield: 'max_shield' };
-const FOLDABLE_ATTRS = ['max_health', 'attack', 'speed', 'cost', 'max_shield',
-  'dodge_bonus', 'crit_chance_bonus', 'crit_multiplier_bonus', 'strikes'];
-const COND_ATTRS = ['health','attack','speed','cost','piece_count','element_count'];
+// NEEDS (effect-cleanse 2026-08-11): the old effect schema's validators — the whole
+// trigger/targets/tracker/condition/payload vocabulary mirroring Effect.from_dict — are
+// deleted with the game's old effect layer. The save gate now REFUSES a non-empty
+// 'effects' array everywhere (see refuseDeletedEffects), so the old schema cannot be
+// installed back through the Tool. When the rebuild lands its authored vocabulary
+// (TARGETING_DESIGN.md), the Tool grows NEW validators mirroring the NEW game parsers.
 const ELEMENTS = ['fire','water','air','earth','darkness','light'];
 const PIECES = ['pawn','knight','bishop','rook','queen','king'];
 // Auto-attack targeting policies (mirrors CardData.TARGET_POLICIES and the editor's select /
@@ -1376,279 +1331,16 @@ const TARGET_POLICIES = ['nearest','leaper','wounded','tank','threat'];
 // through the table's "default" entry. Kings need no role: is_king already reads as captain.
 const UNIT_ROLES = ['fodder','tank','dps','support','burst'];
 
-function validateConditionList(list, where, allowMutation) {
-  for (let i = 0; i < (list || []).length; i++) {
-    const c = list[i];
-    if (c.status) continue;
-    if (c.mutation) {
-      // Mutation-form conditions predicate over a PENDING StatMutation — only the
-      // interceptor match evaluates them (mirrors Effect.from_dict's fail-loud rule).
-      if (!allowMutation) return `${where} condition ${i + 1}: mutation-form conditions are only valid on interceptors`;
-      if (c.mutation !== 'amount') return `${where} condition ${i + 1}: bad mutation attribute "${c.mutation}"`;
-      if (!COMPARATORS.includes(c.comparator)) return `${where} condition ${i + 1}: bad comparator`;
-      continue;
-    }
-    if (c.allegiance) {
-      if (!ALLEGIANCES.includes(c.allegiance)) return `${where} condition ${i + 1}: bad allegiance "${c.allegiance}"`;
-      continue;
-    }
-    if (c.relation) {
-      if (!RELATIONS.includes(c.relation)) return `${where} condition ${i + 1}: bad relation "${c.relation}"`;
-      continue;
-    }
-    if (c.card_type) {
-      if (!['unit','spell'].includes(c.card_type)) return `${where} condition ${i + 1}: bad card_type "${c.card_type}"`;
-      continue;
-    }
-    if (c.has_element !== undefined) {
-      if (typeof c.has_element !== 'boolean') return `${where} condition ${i + 1}: has_element must be a boolean`;
-      continue;
-    }
-    if (c.composition) {
-      const compList = Array.isArray(c.composition) ? c.composition : [c.composition];
-      for (const cid of compList)
-        if (!ELEMENTS.includes(cid) && !PIECES.includes(cid)) return `${where} condition ${i + 1}: "${cid}" is not an element or chess piece`;
-      // The COUNT form (mirrors EffectCondition.composition_counted): a quantity read off
-      // the card's REAL composition, comparator-driven. Presence and count are different
-      // questions — presence honours granted ("blessed") components, count never does.
-      if (c.count !== undefined) {
-        if (!Number.isInteger(c.count) || c.count < 0)
-          return `${where} condition ${i + 1}: composition count must be an integer >= 0`;
-        if (c.comparator !== undefined && !COMPARATORS.includes(c.comparator))
-          return `${where} condition ${i + 1}: bad comparator`;
-        if (c.present !== undefined)
-          return `${where} condition ${i + 1}: a composition COUNT asks "how many", so it takes no present flag — drop one or the other`;
-      }
-      continue;
-    }
-    if (!COND_ATTRS.includes(c.attribute)) return `${where} condition ${i + 1}: bad attribute "${c.attribute}"`;
-    if (!COMPARATORS.includes(c.comparator)) return `${where} condition ${i + 1}: bad comparator`;
-  }
-  return null;
-}
-
-// The trigger may be a legacy string or a native resolver object.
-function validateTrigger(t, where) {
-  if (t == null) return null;                       // omitted = legacy default on_play
-  if (typeof t === 'string') {
-    if (!TRIGGERS.includes(t)) return `${where}: bad trigger "${t}"`;
-    return null;
-  }
-  if (typeof t !== 'object') return `${where}: trigger must be a string or an object`;
-  const kind = String(t.kind || 'event');
-  if (kind === 'transient') return null;
-  if (kind === 'while') return null;   // standing: no event, no participants — lifetime is the tracker's
-  if (kind === 'event') {
-    if (!SIMPLE_EVENTS.includes(String(t.event))) return `${where}: "${t.event}" is not a simple event (${SIMPLE_EVENTS.join('/')})`;
-    if (t.of != null && !PARTICIPANT_GATES.includes(String(t.of))) return `${where}: bad participant gate "of": "${t.of}"`;
-    return validateConditionList(t.conditions, `${where} trigger`);
-  }
-  if (kind === 'dual_event') {
-    if (!DUAL_EVENTS.includes(String(t.event))) return `${where}: "${t.event}" is not a dual event (${DUAL_EVENTS.join('/')})`;
-    for (const k of ['origin_of', 'destination_of'])
-      if (t[k] != null && !PARTICIPANT_GATES.includes(String(t[k]))) return `${where}: bad participant gate "${k}": "${t[k]}"`;
-    // The `cause` gate is unique to `kill` — a free-form provenance match (a status id like
-    // "poison", or the kind "attack"/"effect"); mirrors TriggerResolver.Dual.cause.
-    if (t.cause != null) {
-      if (t.event !== 'kill') return `${where}: "cause" gates only the kill event`;
-      if (typeof t.cause !== 'string' || !t.cause) return `${where}: "cause" must be a non-empty string`;
-    }
-    return validateConditionList(t.origin_conditions, `${where} trigger origin`)
-        || validateConditionList(t.destination_conditions, `${where} trigger destination`);
-  }
-  return `${where}: unknown trigger kind "${kind}"`;
-}
-
-// The tracker (standing effects only): the effect's authored lifetime authority.
-function validateTracker(t, where) {
-  if (t == null) return null;   // absent = the container-existence default
-  if (typeof t !== 'object') return `${where}: tracker must be an object`;
-  if (!TRACKER_KINDS.includes(String(t.kind || 'container'))) return `${where}: unknown tracker kind "${t.kind}"`;
-  return null;
-}
-
-// The targets may be a legacy policy string ("targeting_policy") or a native resolver object.
-function validateTargets(t, where) {
-  if (t == null) return null;
-  if (typeof t !== 'object') return `${where}: targets must be an object`;
-  const kind = String(t.kind || 'all');
-  if (!TARGET_KINDS.includes(kind)) return `${where}: unknown targets kind "${kind}"`;
-  if (kind === 'auto') {
-    if (!CRITERIA.includes(String(t.criterion || 'nearest'))) return `${where}: bad criterion "${t.criterion}"`;
-    if (t.count != null && (!Number.isInteger(t.count) || t.count < 1)) return `${where}: count must be a positive integer`;
-  }
-  if (kind === 'participant' && !PARTICIPANTS.includes(String(t.participant || 'holder')))
-    return `${where}: bad participant "${t.participant}"`;
-  if (kind === 'side') {
-    if (!SIDE_SELECTORS.includes(String(t.of || 'own'))) return `${where}: bad side selector "${t.of}" (own/opponent)`;
-    if ((t.conditions || []).length) return `${where}: side targets take no conditions (players have nothing to predicate on)`;
-  }
-  return validateConditionList(t.conditions, `${where} targets`);
-}
-
-// Live named-effect vocabulary (data/named_effects/*.json entry ids) — scanned per
-// validation call: the registry is small and a stale cache would reject a name the user
-// just saved in the other tab.
-function namedEffectIds() {
-  return scanGameJson('data/named_effects').map(({ entry: e }) => e.id).filter(Boolean);
-}
-
-const EVAL_CHANNELS = ['threat', 'exposure', 'value', 'threat_mul', 'exposure_mul', 'value_mul'];
-// The keyword MAGNITUDE (game: NamedEffects.MAGNITUDE) — legal only inside a named-effect
-// TEMPLATE, where it stands for the call site's amount ("Blind X"). Anywhere else a number
-// is required, because nothing would ever substitute it.
-const MAGNITUDE = '$X';
-const isMagnitude = v => typeof v === 'string' && v.trim() === MAGNITUDE;
-
-// Damage RIDERS (mirrors Effect.riders): follow-ons a damage instance carries onto whoever
-// took it — one roll per instance, flat, amount never multiplies. Each entry names a status.
-function validateRiders(e, where) {
-  if (e.riders == null) return null;
-  if (!Array.isArray(e.riders)) return `${where}: riders must be an array`;
-  for (let i = 0; i < e.riders.length; i++) {
-    const r = e.riders[i];
-    if (!r || typeof r !== 'object') return `${where} rider ${i + 1}: must be an object`;
-    if (!r.status || typeof r.status !== 'object' || !r.status.id)
-      return `${where} rider ${i + 1}: needs a status payload ({"status": {"id": ...}}) — a rider with nothing to apply does nothing`;
-    if (r.chance != null && (typeof r.chance !== 'number' || r.chance < 0 || r.chance > 1))
-      return `${where} rider ${i + 1}: chance must be a number between 0 and 1`;
-    if (r.status.stacks != null && (!Number.isInteger(r.status.stacks) || r.status.stacks < 1))
-      return `${where} rider ${i + 1}: stacks must be a positive integer`;
-  }
-  return null;
-}
-
-// The restrike chance (mirrors Effect.per_stack_chance): each stack past the first repeats
-// the effect at this chance. Meaningful only where a stacked container fires it.
-function validatePerStackChance(e, where) {
-  if (e.per_stack_chance == null) return null;
-  if (typeof e.per_stack_chance !== 'number' || e.per_stack_chance < 0 || e.per_stack_chance > 1)
-    return `${where}: per_stack_chance must be a number between 0 and 1`;
-  return null;
-}
-
-function validateEffect(e, where) {
-  if (!e || typeof e !== 'object') return `${where}: effect must be an object`;
-  const kind = e.kind || (e.key ? 'modifier' : e.intercept ? 'interceptor' : e.custom ? 'custom' : 'triggered');
-  // Effect-level eval pricing (mirrors Effect._parse_eval, fail-loud): flat annotations
-  // on the enemy engine's channels — any kind may carry one.
-  if (e.eval != null) {
-    if (typeof e.eval !== 'object') return `${where}: eval must be an object of channel numbers`;
-    for (const k of Object.keys(e.eval)) {
-      if (!EVAL_CHANNELS.includes(k))
-        return `${where}: unknown eval channel "${k}" (threat/exposure/value, each with an optional _mul)`;
-      if (typeof e.eval[k] !== 'number') return `${where}: eval "${k}" must be a number`;
-    }
-  }
-  // Composition grants live on standing triggered effects only (mirrors Effect._validate_grants).
-  if (e.grants != null && kind !== 'triggered')
-    return `${where}: grants is only valid on a standing (while) effect`;
-  if (kind === 'modifier') {
-    if (!MODIFIER_KEYS.includes(e.key)) return `${where}: unknown modifier key "${e.key}"`;
-    if (typeof e.amount !== 'number') return `${where}: modifier needs a numeric amount`;
-  } else if (kind === 'interceptor') {
-    if (!e.intercept) return `${where}: interceptor needs an "intercept" stat (${INTERCEPT_STATS.join('/')})`;
-    if (!INTERCEPT_STATS.includes(e.intercept))
-      return `${where}: unknown intercept stat "${e.intercept}" — a mutation only ever carries one of ${INTERCEPT_STATS.join('/')}`;
-    if (e.role && !['source','target'].includes(e.role)) return `${where}: bad role`;
-    // Native relational gate: which mutation participant is scrutinised + its relation.
-    if (e.of != null) {
-      if (typeof e.of !== 'object') return `${where}: interceptor "of" must be an object`;
-      if (e.of.participant && !['source','target'].includes(e.of.participant)) return `${where}: bad intercept participant "${e.of.participant}"`;
-      if (e.of.relation && !['self','ally','enemy','any'].includes(e.of.relation)) return `${where}: bad intercept relation "${e.of.relation}"`;
-    }
-    return validateConditionList(e.conditions, where, true);
-  } else if (kind === 'custom') {
-    if (!CUSTOM_HOOKS.includes(e.custom)) return `${where}: unknown custom hook "${e.custom}"`;
-    const terr = validateTrigger(e.trigger, where) || validateTargets(e.targets, where);
-    if (terr) return terr;
-    if (e.targeting_policy && !POLICIES.includes(e.targeting_policy)) return `${where}: bad targeting_policy`;
-  } else {
-    const terr = validateTrigger(e.trigger, where) || validateTargets(e.targets, where)
-        || validateTracker(e.tracker, where);
-    if (terr) return terr;
-    if (e.targeting_policy && !POLICIES.includes(e.targeting_policy)) return `${where}: bad targeting_policy "${e.targeting_policy}"`;
-    if (e.subject && !SUBJECTS.includes(e.subject)) return `${where}: bad subject filter`;
-    if (e.attribute && !EFFECT_ATTRS.includes(e.attribute) && !SIDE_ATTRS.includes(e.attribute)) return `${where}: bad attribute "${e.attribute}"`;
-    // Side-stat/side-target pairing, fail-loud both ways (Effect._validate_side_targets).
-    const sideTargeted = e.targets && typeof e.targets === 'object' && String(e.targets.kind || '') === 'side';
-    if (SIDE_ATTRS.includes(e.attribute) && !sideTargeted)
-      return `${where}: side stat "${e.attribute}" requires targets {"kind": "side"}`;
-    if (sideTargeted && !SIDE_ATTRS.includes(e.attribute))
-      return `${where}: side-targeted attribute must be one of ${SIDE_ATTRS.join('/')}`;
-    if (sideTargeted && e.status && e.status.id)
-      return `${where}: a side-targeted effect cannot apply a status`;
-    // The "spawn units" payload (mirrors Effect.spawn_id/spawn_count): triggered-only,
-    // never standing, never side-targeted; card-id existence is the game loader's check.
-    if (e.spawn != null) {
-      if (typeof e.spawn !== 'object' || !e.spawn.id)
-        return `${where}: spawn must be an object naming a card id ({"id": ..., "count": n})`;
-      if (e.spawn.count != null && (!Number.isInteger(e.spawn.count) || e.spawn.count < 1))
-        return `${where}: spawn count must be a positive integer`;
-      if (sideTargeted) return `${where}: a side-targeted effect cannot spawn units`;
-    }
-    // NAMED-EFFECT reference: the registry template supplies the payload at parse time —
-    // the call site owns trigger/targets and needs no payload of its own. Chains are the
-    // game loader's refusal; here the name just has to exist.
-    if (e.named != null) {
-      if (typeof e.named !== 'string' || !e.named) return `${where}: "named" must be a named-effect id`;
-      if (!namedEffectIds().includes(e.named)) return `${where}: unknown named effect "${e.named}"`;
-    }
-    const riderErr = validateRiders(e, where) || validatePerStackChance(e, where);
-    if (riderErr) return riderErr;
-    const standing = e.trigger && typeof e.trigger === 'object' && e.trigger.kind === 'while';
-    const hasGrants = Array.isArray(e.grants) && e.grants.length > 0;
-    if (standing && e.named) return `${where}: a standing (while) effect cannot reference a named effect`;
-    if (standing && e.riders != null) return `${where}: a standing (while) effect cannot carry damage riders`;
-    if (standing) {
-      // Mirrors the game's fail-loud rules (Effect._validate_standing): a standing effect
-      // is a continuous stat fold — nothing else is meaningful on it, and only attributes
-      // the read-time fold actually serves are legal (membership, not mere presence —
-      // anything else would be computed and read by nobody). A composition GRANT is the
-      // one other standing payload: its component set replaces the attribute.
-      if (!e.attribute && !hasGrants)
-        return `${where}: a standing (while) effect needs an attribute to fold (or a grants set)`;
-      if (e.attribute && !FOLDABLE_ATTRS.includes(FOLDABLE_MAP[e.attribute] || e.attribute))
-        return `${where}: attribute "${e.attribute}" cannot be standing — only `
-          + `health/shield/${FOLDABLE_ATTRS.join('/')} fold at read time`;
-      if (e.status && e.status.id) return `${where}: a standing (while) effect cannot apply a status`;
-      if (e.spawn && e.spawn.id) return `${where}: a standing (while) effect cannot spawn units`;
-      const tk = e.targets && typeof e.targets === 'object' ? String(e.targets.kind || 'all') : 'all';
-      if (!['self','all'].includes(tk)) return `${where}: standing targets must be "self" or "all"`;
-    }
-    if (e.grants != null) {
-      // Mirrors Effect._validate_grants: standing-only, union-only, canonical ids, and
-      // NO negative composition predicates (Layer-1 monotonicity — grants only ever ADD;
-      // the game's fixed point is provably convergent only while this holds).
-      if (!Array.isArray(e.grants) || !e.grants.length)
-        return `${where}: grants must be a non-empty array of component ids`;
-      for (const g of e.grants)
-        if (!ELEMENTS.includes(g) && !PIECES.includes(g))
-          return `${where}: "${g}" in grants is not an element or chess piece`;
-      if (!standing) return `${where}: grants requires a standing (while) trigger`;
-      if (e.attribute || (e.status && e.status.id))
-        return `${where}: grants is exclusive with the attribute/status payloads`;
-      const grantConds = [...(e.conditions || []),
-        ...((e.targets && typeof e.targets === 'object' && e.targets.conditions) || [])];
-      for (const c of grantConds) {
-        if (c && c.composition && c.present === false)
-          return `${where}: a composition grant cannot carry a negative composition condition (grants only ever ADD)`;
-        if (c && c.has_element === false)
-          return `${where}: a composition grant cannot carry has_element:false (grants only ever ADD)`;
-      }
-    }
-    const hasPayload = e.attribute || (e.status && e.status.id) || hasGrants || (e.spawn && e.spawn.id)
-      || e.named;   // a named reference IS a payload — the template supplies it
-    if (!hasPayload) return `${where}: effect does nothing — set an attribute change, a status to apply, units to spawn, or a named effect`;
-  }
-  return validateConditionList(e.conditions, where);
-}
-
-function validateEffects(list, where) {
-  for (let i = 0; i < (list || []).length; i++) {
-    const err = validateEffect(list[i], `${where} effect ${i + 1}`);
-    if (err) return err;
-  }
+// Mirrors the game loaders' refusal (card_data.gd / relic_data.gd / status_data.gd /
+// upgrade_node.gd, effect-cleanse 2026-08-11): an EMPTY effects array is the post-strip
+// save shape and passes silently; authored content is the deleted schema and is refused —
+// the old language cannot flow back into data/ through the Tool.
+function refuseDeletedEffects(d, where) {
+  if (d == null || d.effects == null) return null;
+  if (!Array.isArray(d.effects)) return `${where}: 'effects' must be an array`;
+  if (d.effects.length)
+    return `${where}: 'effects' is the deleted schema (effect-cleanse 2026-08-11) — `
+      + 're-author in the new schema (TARGETING_DESIGN.md) as the rebuild lands';
   return null;
 }
 
@@ -1675,36 +1367,22 @@ function validateItem(type, d) {
       // number = a flat override. 0 is legal and means "pays nothing".
       for (const f of ['bounty_gold', 'bounty_exp'])
         if (d[f] != null && (typeof d[f] !== 'number' || d[f] < 0)) return `${f} must be a number >= 0`;
-      return validateEffects(d.effects, 'card');
+      return refuseDeletedEffects(d, 'card');
     }
     case 'relic': {
       if (!d.display_name) return 'missing display_name';
-      if (!(d.effects || []).length) return 'a relic needs at least one effect';
-      return validateEffects(d.effects, 'relic');
+      // A relic with no effects is the post-strip shell — its description is the
+      // re-authoring brief, so an effect-less relic is a legal save.
+      return refuseDeletedEffects(d, 'relic');
     }
     case 'status': {
       if (d.decay && !['duration','stacks','none','intercept'].includes(d.decay)) return 'bad decay';
       if (d.decay_phase && !['turn_end','turn_start','attack'].includes(d.decay_phase)) return 'bad decay_phase';
       if (d.stacking && !['refresh','extend','stack','independent'].includes(d.stacking)) return 'bad stacking';
-      // The SPREAD block (mirrors StatusData.spread / CombatCascade._spread_statuses):
-      // once per stack at `phase`, `chance` to propagate one stack to `to`, else
-      // `decay_chance` for that stack to die down. `status` = what the destination
-      // catches; `arrival` = the named effect dealt to the caught slot's occupant.
-      if (d.spread != null) {
-        const s = d.spread;
-        if (typeof s !== 'object') return 'spread must be an object';
-        if (s.phase != null && !['turn_start','turn_end'].includes(s.phase)) return 'bad spread phase (turn_start/turn_end)';
-        for (const f of ['chance','decay_chance'])
-          if (s[f] != null && (typeof s[f] !== 'number' || s[f] < 0 || s[f] > 1))
-            return `spread ${f} must be a number between 0 and 1`;
-        if (s.to != null && !['adjacent','ground'].includes(s.to)) return 'bad spread "to" (adjacent/ground)';
-        if (s.status != null && (typeof s.status !== 'string' || !validId(s.status)))
-          return 'spread "status" must be a status id';
-        if (s.arrival != null) {
-          if (typeof s.arrival !== 'string' || !s.arrival) return 'spread "arrival" must be a named-effect id';
-          if (!namedEffectIds().includes(s.arrival)) return `spread arrival: unknown named effect "${s.arrival}"`;
-        }
-      }
+      // The spread mechanism was deleted from the game 2026-08-11 (disavowed, never
+      // user-designed); the game loader refuses the key, so the Tool refuses it too.
+      if (d.spread != null)
+        return "'spread' is deleted (disavowed 2026-08-11, never designed) — remove it";
       // Status-level eval pricing (mirrors StatusData's parse): per-STACK adds on the
       // three channels only — muls are refused at this level (they go on the effect).
       if (d.eval != null) {
@@ -1715,69 +1393,28 @@ function validateItem(type, d) {
           if (typeof d.eval[k] !== 'number') return `status eval "${k}" must be a number`;
         }
       }
-      return validateEffects(d.effects, 'status');
+      return refuseDeletedEffects(d, 'status');
     }
     case 'namedeffect': {
-      // A named effect is a PARTIAL effect: the payload half (what happens), merged under
-      // a call site's authored keys at parse time — so no trigger/targets are required
-      // (the call site owns those), and referencing another named effect is a chain the
-      // game loader refuses.
-      if (d.named != null) return 'a named effect cannot reference another named effect (no chains)';
-      if (d.attribute != null && !EFFECT_ATTRS.includes(d.attribute)) return `bad attribute "${d.attribute}"`;
-      if (d.attribute != null && typeof d.amount !== 'number') return 'an attribute payload needs a numeric amount';
-      if (d.per_stack != null && typeof d.per_stack !== 'boolean') return 'per_stack must be a boolean';
-      const rerr = validateRiders(d, 'template') || validatePerStackChance(d, 'template');
-      if (rerr) return rerr;
-      if (d.status != null && (typeof d.status !== 'object' || !d.status.id))
-        return 'the status payload needs an id';
-      // PARAMETERISED template ("Blind X"): the stacks applied and the enemy-engine price
-      // may be the magnitude placeholder as well as fixed numbers. The price lives here,
-      // on the keyword, so every call site inherits it — mirrors Effect._parse_eval.
-      if (d.status != null && d.status.stacks != null && !isMagnitude(d.status.stacks)
-          && (!Number.isInteger(d.status.stacks) || d.status.stacks < 1))
-        return `stacks must be a positive integer or "${MAGNITUDE}" (the call site's amount)`;
-      if (d.eval != null) {
-        if (typeof d.eval !== 'object') return 'eval must be an object of channel numbers';
-        for (const k of Object.keys(d.eval)) {
-          if (!EVAL_CHANNELS.includes(k))
-            return `unknown eval channel "${k}" (threat/exposure/value, each with an optional _mul)`;
-          if (typeof d.eval[k] !== 'number' && !isMagnitude(d.eval[k]))
-            return `eval "${k}" must be a number or "${MAGNITUDE}" (the call site's amount)`;
-        }
-      }
-      if (!d.attribute && !(d.status && d.status.id) && !(d.riders || []).length)
-        return 'the template does nothing — give it an attribute change, a status to apply, or riders';
-      return null;
-    }
-    case 'innate': {
-      // An innate rule is a bundle of effects EVERY unit carries. Mirrors the game loader's
-      // refusal (InnateEffects._load_json): only event-driven, non-standing effects dispatch
-      // in this build — a standing/modifier/interceptor innate would need enumeration in
-      // LiveEffects/Resolver too, so it is rejected here rather than silently never folding.
-      if (!(d.effects || []).length) return 'an innate rule needs at least one effect';
-      for (let i = 0; i < d.effects.length; i++) {
-        const e = d.effects[i] || {};
-        const kind = e.kind || (e.key ? 'modifier' : e.intercept ? 'interceptor' : e.custom ? 'custom' : 'triggered');
-        if (kind !== 'triggered' && kind !== 'custom')
-          return `innate effect ${i + 1}: only event-driven (triggered/custom) effects can be innate — `
-            + `a ${kind} innate would never fold, and the game loader refuses it`;
-        if (e.trigger && typeof e.trigger === 'object' && e.trigger.kind === 'while')
-          return `innate effect ${i + 1}: a standing (while) effect cannot be innate — `
-            + 'only event-driven innates dispatch in this build';
-      }
-      return validateEffects(d.effects, 'innate');
+      // A keyword SHELL (id + description): the re-authoring brief. The old payload half
+      // (attribute/amount/status/riders/$X magnitude) is the deleted schema — refused.
+      for (const k of ['attribute', 'amount', 'per_stack', 'per_stack_chance', 'status', 'riders', 'eval', 'named'])
+        if (d[k] != null)
+          return `'${k}' is the deleted named-effect payload schema (effect-cleanse 2026-08-11) — `
+            + 'a named effect is an id + description brief until the rebuild lands';
+      return refuseDeletedEffects(d, 'namedeffect');
     }
     case 'ability': {
-      if (!(d.effects || []).length) return 'an ability needs at least one effect';
       if (d.cost && typeof d.cost.mana !== 'number') return 'ability cost needs a mana amount';
-      return validateEffects(d.effects, 'ability');
+      // autocast/material: stripped with the ability costume's combat half (2026-08-11).
+      if (d.autocast != null) return "'autocast' is the deleted schema (effect-cleanse 2026-08-11) — remove it";
+      if (d.material != null) return "'material' is the deleted schema (effect-cleanse 2026-08-11) — remove it";
+      return refuseDeletedEffects(d, 'ability');
     }
     case 'charm': {
       if (!d.display_name) return 'missing display_name';
       if (d.targets && !['unit','spell','any'].includes(d.targets)) return 'bad targets';
-      const hasStats = d.stats && Object.keys(d.stats).length;
-      if (!hasStats && !(d.effects || []).length) return 'a charm needs stat bonuses or effects';
-      return validateEffects(d.effects, 'charm');
+      return refuseDeletedEffects(d, 'charm');
     }
     case 'upgrade': {
       if (!d.display_name) return 'missing display_name';
@@ -1791,7 +1428,7 @@ function validateItem(type, d) {
       for (const n of d.nodes) {
         for (const r of n.requires || [])
           if (!ids.has(r)) return `node "${n.id}" requires unknown node "${r}"`;
-        const err = validateEffects(n.effects, `node "${n.id}"`);
+        const err = refuseDeletedEffects(n, `node "${n.id}"`);
         if (err) return err;
       }
       return null;
@@ -1986,7 +1623,6 @@ function gameVocab() {
     cards,
     sounds: simple('data/sounds'),
     statuses: simple('data/statuses'),
-    namedEffects: simple('data/named_effects'),
     abilities: simple('data/abilities'),
     charms: simple('data/charms'),
     relics: simple('data/relics'),
@@ -1998,25 +1634,8 @@ function gameVocab() {
     encounters: scanGameJson('data/encounters').map(({ entry: e }) => ({ id: e.id, name: e.id, node_type: e.node_type })).filter(x => x.id),
     elements: ELEMENTS,
     pieces: PIECES,
-    triggers: TRIGGERS,
-    simpleEvents: SIMPLE_EVENTS,
-    dualEvents: DUAL_EVENTS,
-    relations: RELATIONS,
-    allegiances: ALLEGIANCES,
-    participantGates: PARTICIPANT_GATES,
-    trackerKinds: TRACKER_KINDS,
-    targetKinds: TARGET_KINDS,
-    criteria: CRITERIA,
-    participants: PARTICIPANTS,
-    policies: POLICIES,
-    subjects: SUBJECTS,
-    comparators: COMPARATORS,
-    modifierKeys: MODIFIER_KEYS,
-    customHooks: CUSTOM_HOOKS,
-    effectAttrs: EFFECT_ATTRS,
-    sideAttrs: SIDE_ATTRS,
-    sideSelectors: SIDE_SELECTORS,
-    condAttrs: COND_ATTRS,
+    // (The old effect schema's vocabulary lists — triggers/events/target kinds/modifier
+    // keys/… — died with the effect layer 2026-08-11. The new schema ships its own.)
   };
 }
 
@@ -2607,41 +2226,6 @@ async function llmTranslate(text, lang, langName, key) {
   return s;
 }
 
-// ── LLM description-from-definition (per-record ✦ "From effects") ─────────────
-// Writes the CANONICAL English description for an effect container from its mechanical
-// definition. The description is 100% mechanical — a plain statement of what the effects do,
-// zero lore. Game terms are emitted as <id> term tags (the same markup TextIcons renders):
-// the 6 elements, the 6 pieces, and the stat words. body = { typeLabel, name, lines, tags }
-// where `lines` are the tool's own human-readable effect summary (the mechanical truth) and
-// `tags` is the allowed tag vocabulary.
-const DESCRIBE_TAGS_FALLBACK = ['air','darkness','earth','fire','light','water',
-  'pawn','bishop','knight','rook','queen','king','attack','health','hp','mana','shield','speed'];
-async function llmDescribe(body) {
-  const typeLabel = String(body.typeLabel || 'card');
-  const name = String(body.name || '');
-  const lines = Array.isArray(body.lines) ? body.lines.filter(l => l && String(l).trim()) : [];
-  const tags = (Array.isArray(body.tags) && body.tags.length ? body.tags : DESCRIBE_TAGS_FALLBACK)
-    .map(t => String(t)).filter(t => /^[a-z0-9_]+$/.test(t));
-  if (!lines.length) return '';
-  const sys =
-    `You write the rules text for a card game. Given a ${typeLabel}'s mechanical definition, ` +
-    `write ONE concise player-facing description of exactly what it does.\n` +
-    `Rules, all mandatory:\n` +
-    `- 100% MECHANICAL. State only what the effects do — no lore, flavour, story, or adjectives of mood.\n` +
-    `- Wrap every game term in <id> tags, using ONLY these ids: ${tags.join(', ')}. ` +
-    `E.g. "+2 <attack>", "a <fire> <pawn>". Never tag a word that is not in that list; never invent ids.\n` +
-    `- Refer to numbers and conditions exactly as the definition gives them. Do not add or drop effects.\n` +
-    `- Output ONLY the description. No quotes, no notes, no name, no trailing period commentary.\n` +
-    `- Keep it tight — one or two sentences, imperative game-rules register.`;
-  const user = [name ? `Name: ${name}` : '', 'Mechanical definition:', ...lines.map(l => '- ' + l), '', 'Description:']
-    .filter(x => x !== null).join('\n');
-  const out = await llmGenerate({ system: sys, prompt: user, options: { temperature: 0.2, num_predict: 240 } });
-  let s = String(out.response || '').trim();
-  s = s.replace(/^```[^\n]*\n?|\n?```$/g, '').trim();
-  if (s.length >= 2 && /^["'“](.*)["'”]$/s.test(s)) s = s.replace(/^["'“]|["'”]$/g, '').trim();
-  return s;
-}
-
 // One vision generation with the multi-image crash fallback. Some model runners
 // (gemma4:31b on current Ollama) crash on MULTI-image requests while handling single
 // images fine — on failure, describe each image's style in its own single-image call,
@@ -2992,158 +2576,6 @@ async function runInferJob(job, entries) {
   }
 }
 
-// ── ✨ effects from words: plain-English description → validated effect JSON ──
-// The LLM writes the same dicts Effect.from_dict parses; validateEffects gates every
-// attempt and feeds its error message back for a retry. describeEffect (required from
-// public/helpers.js — the single English↔JSON source) pairs real game effects with
-// their plain-words line as always-current few-shot examples.
-const { describeEffect } = require(path.join(PUBLIC, 'helpers.js'));
-
-const EFFECTS_MODEL_DEFAULT = 'qwen3-coder-next:q4_K_M';
-
-// Types whose entries carry a top-level effects array — the example mine.
-const FX_OWNER_NOUN = { card: 'this card', relic: 'this relic', status: 'the carrier',
-  ability: 'the holder', charm: 'the charmed card', upgrade: 'this upgrade',
-  // an innate rule has no container: its holder is every unit on the board
-  innate: 'any unit' };
-
-function effectShapeKey(e) {
-  const t = e.trigger;
-  const trig = t && typeof t === 'object' ? `${t.kind || 'event'}:${t.event || ''}` : String(t || '');
-  const tgt = e.targets && typeof e.targets === 'object' ? String(e.targets.kind || 'all') : String(e.targeting_policy || '');
-  const kind = e.kind || (e.key ? 'modifier' : e.intercept ? 'interceptor' : e.custom ? 'custom' : 'triggered');
-  return [kind, trig, tgt, e.attribute || '', e.status && e.status.id ? 'st' : '', e.key || '', e.custom || ''].join('|');
-}
-
-// One valid example per effect SHAPE, same-type entries first — diversity over volume.
-function mineEffectExamples(type, cap) {
-  const order = [type, ...Object.keys(FX_OWNER_NOUN).filter(t => t !== type && t !== 'upgrade')];
-  const seen = new Set(), out = [];
-  for (const t of order) {
-    if (!FX_OWNER_NOUN[t] || t === 'upgrade') continue;   // upgrade effects live on nested nodes
-    for (const entry of listGameEntries(t)) {
-      for (const fx of Array.isArray(entry.data.effects) ? entry.data.effects : []) {
-        if (out.length >= cap) return out;
-        if (validateEffect(fx, 'x')) continue;            // only teach grammar that validates
-        const shape = effectShapeKey(fx);
-        if (seen.has(shape)) continue;
-        seen.add(shape);
-        out.push({ english: describeEffect(fx, FX_OWNER_NOUN[t]), json: fx });
-      }
-    }
-  }
-  return out;
-}
-
-// The effect grammar, spelled for a code model. Status ids are live vocab.
-// Shared verbatim between ✨ effects-from-words and the 💬 edit chat (which writes
-// effect objects as op VALUES) — one grammar, two wrappers.
-function effectsGrammarLines() {
-  const statusIds = listGameEntries('status').map(e => e.id);
-  return [
-    'An effect object takes ONE of these forms:',
-    '1. TRIGGERED — reacts to an event:',
-    '   {"trigger": <trigger>, "targets": <targets>, plus a payload: "attribute" one of',
-    `   ${EFFECT_ATTRS.join('/')} with numeric "amount", and/or "status": {"id": <status id>,`,
-    '   "stacks": n?, "duration": rounds?}. Optional "chance": 0..1.}',
-    '   attribute "health": negative amount = direct damage, positive = heal.',
-    '   attribute "max_health" raises/lowers the unit\'s maximum health (does not heal).',
-    '   attribute "damage_taken" deals damage that consumes shield first.',
-    '   attribute "shield" raises/lowers the unit\'s shield BASE — the pool follows it',
-    '   (triggered = permanent bump; standing = while the effect holds).',
-    `   PLAYER-side payloads ("draw 2 cards", "gain 1 mana"): attribute one of ${SIDE_ATTRS.join('/')}`,
-    '   paired with targets {"kind":"side","of":"own"|"opponent"} (and ONLY that pairing:',
-    '   side stats never target units, unit stats/statuses never target a side; no conditions).',
-    '   "draw" pulls cards deck→hand, "discard" removes random hand cards, "mana"/"max_mana"',
-    '   change the current/maximum mana pool. For PASSIVE per-turn quantities ("draw an extra',
-    '   card each turn") use a MODIFIER key instead (draw.per_turn etc.), not a side payload.',
-    `   <trigger> = {"kind":"event","event": one of ${SIMPLE_EVENTS.join('/')}, "of":"self"?, "conditions":[...]?}`,
-    `     or {"kind":"dual_event","event": one of ${DUAL_EVENTS.join('/')}, "origin_of":"self"?,`,
-    '     "destination_of":"self"?, "origin_conditions":[...]?, "destination_conditions":[...]?}.',
-    '   "of"/"origin_of"/"destination_of":"self" = the event must involve the holder itself;',
-    '   omit them to react to anyone\'s event. For dual events, origin = the acting unit',
-    '   (e.g. attacker), destination = the receiving unit.',
-    '   The "kill" dual event fires when a unit dies: origin = the KILLER unit (present only',
-    '   for attack kills; absent for effect/poison kills), destination = the dead unit. Add',
-    '   "cause":"poison" (a status id) or "cause":"attack" to match only that kind of kill —',
-    '   e.g. "when a unit dies from poison" is {"event":"kill","cause":"poison"}; "when I kill"',
-    '   is {"event":"kill","origin_of":"self"} (attacks only, since only attacks credit a unit).',
-    '2. STANDING — continuous stat change while the effect is active:',
-    '   {"trigger": {"kind":"while"}, "targets": {"kind":"self"} or {"kind":"all","conditions":[...]?},',
-    '   "attribute": ..., "amount": n, "tracker": {"kind":"stacks"}?}',
-    '   tracker "stacks" = the amount applies PER STACK; omit the tracker otherwise.',
-    '   Use STANDING for any ongoing/aura wording ("while", "as long as", buffs from a status).',
-    `   Standing attributes fold at read time — legal: health/shield/${FOLDABLE_ATTRS.join('/')}`,
-    '   ("health" folds as max_health, "shield" as the shield base). Pools cannot be standing.',
-    '   COMPOSITION GRANT — the other standing payload: replace "attribute"/"amount" with',
-    `   "grants": [<element/piece ids>] and the target COUNTS AS containing those components`,
-    '   for every condition while the effect holds ("counts as fire", "treat as a rook") — its',
-    '   real composition never changes. Grants only ever ADD: composition conditions on a',
-    '   grant must be positive ("present": false and "has_element": false are rejected).',
-    `3. MODIFIER — run-wide passive number change: {"kind":"modifier","key": one of ${MODIFIER_KEYS.join('/')},`,
-    '   "amount": n, "conditions":[...]?}. Only for run-wide numbers, never for board effects.',
-    '4. INTERCEPTOR — rewrites a pending stat change before it lands: {"kind":"interceptor",',
-    `   "intercept": one of ${INTERCEPT_STATS.map(a => `"${a}"`).join('|')},`,
-    '   "channel":"attack"|"effect"|"system"|"cost"?,',
-    '   "of": {"participant":"source"|"target", "relation":"self"|"ally"|"enemy"|"any"},',
-    '   "op":"add"|"mul", "amount": n, "chance":?, "conditions":[...]?}',
-    '   The channel is the change\'s PROVENANCE — gate on it to say where it must come from.',
-    '   A hit resolves in three interceptable passes: "damage" = the whole hit before the',
-    '   shield/health split, then each share on the hit\'s channel — "shield_pool" = what the',
-    '   shield is about to absorb, "health" = what is about to wound health. So "block attack',
-    '   damage that would reach Health" = intercept "health" + channel "attack", op "mul",',
-    '   amount 0 (shares are always reductions; no sign condition needed). Rewritten shares',
-    '   never redistribute to each other.',
-    '   participant = which side of the change is scrutinised (source caused it, target receives',
-    '   it); relation = that unit\'s side vs the effect\'s owner ("self" = must be the holder —',
-    '   only meaningful on a card/status, never a relic/upgrade). Conditions gate the participant;',
-    '   an interceptor may also use the mutation-form condition (below) to gate on the amount,',
-    '   e.g. amount > 0 on "health" = heals only. intercept "status" rewrites the STACK COUNT of',
-    '   a status being applied. Intercepting a side stat (e.g. "your draws are doubled" =',
-    '   intercept "draw", op "mul"): the target participant is the PLAYER side — relation',
-    '   ally/enemy compares that side against the owner; "self" never matches a side.',
-    '   Any container can intercept — relics and upgrades included.',
-    '   (Legacy spelling "role":"source"|"target" = participant + relation "self".)',
-    `5. CUSTOM code hook: {"kind":"custom","custom": one of ${CUSTOM_HOOKS.join('/')}, "trigger":..., "targets":...}`,
-    '',
-    '<targets> = {"kind":"self"} | {"kind":"all","conditions":[...]?}',
-    '  | {"kind":"auto","criterion":"nearest"|"random","count":n?,"conditions":[...]?}',
-    '  | {"kind":"manual"} (the player picks a unit) | {"kind":"manual_slot"} (the player picks a slot)',
-    `  | {"kind":"participant","participant":"holder"|"origin"|"destination"} (a trigger participant)`,
-    '  | {"kind":"side","of":"own"|"opponent"} (a PLAYER — only for side-stat payloads, see above)',
-    '',
-    'A condition object is ONE of:',
-    '  {"allegiance":"ally"|"enemy"} — side relative to the effect\'s owner (ally includes the holder)',
-    '  {"status": <status id>, "present": false?} — carrying (or not carrying) a status',
-    '  {"composition": [<elements/pieces>...], "present": false?} — made of any of these / none of these',
-    '    (standing "grants" count: a unit granted "fire" passes composition/has_element checks as fire)',
-    '  {"card_type":"unit"|"spell"} | {"has_element": true|false}',
-    `  {"attribute": one of ${COND_ATTRS.join('/')}, "comparator": one of ${COMPARATORS.join('/')}, "value": n}`,
-    `  {"mutation":"amount", "comparator": one of ${COMPARATORS.join('/')}, "value": n} — INTERCEPTOR ONLY:`,
-    '    a predicate over the pending change\'s amount (e.g. gt 0 = only positive changes/heals)',
-    '',
-    `Vocabulary: elements = ${ELEMENTS.join(', ')}; chess pieces = ${PIECES.join(', ')}.`,
-    `Status ids that exist: ${statusIds.join(', ') || '(none yet)'}. Never invent a status id.`,
-    'Rules:',
-    '- "strength" means the attack attribute.',
-    '- Write the SIMPLEST form that says exactly what the text says — no extra conditions,',
-    '  chances, triggers or effects the text does not ask for.',
-    '- Several distinct effects in the text = several objects in the array. In particular:',
-    '  ONE effect object has ONE targets — payloads aimed at different recipients (e.g.',
-    '  "poison the target and gain shield" = destination + self) MUST be separate objects,',
-    '  each repeating the trigger.',
-  ];
-}
-
-function effectsSystemPrompt() {
-  return [
-    "You translate a game designer's plain-English effect description into the game's effect JSON.",
-    'Respond with ONLY a JSON array of effect objects — no prose, no markdown fences.',
-    '',
-    ...effectsGrammarLines(),
-  ].join('\n');
-}
-
 // Strip think blocks / fences, then parse the first JSON value found (shrinking from
 // the right until something parses — tolerates trailing prose).
 function extractJson(response) {
@@ -3162,50 +2594,6 @@ function extractJson(response) {
   throw new Error('unparseable JSON in the reply');
 }
 
-function extractJsonEffects(response) {
-  const v = extractJson(response);
-  return Array.isArray(v) ? v : [v];
-}
-
-// Generate → validate → feed the error back, up to 3 attempts. Never throws on a
-// mere bad answer: the last parseable attempt returns WITH its validation warning,
-// so the user fixes a dropdown instead of losing the whole result (the save gate
-// still refuses invalid effects).
-async function llmEffectsFromText(type, text) {
-  const s = getSettings();
-  const noun = FX_OWNER_NOUN[type] || 'the holder';
-  const examples = mineEffectExamples(type, 10);
-  const system = effectsSystemPrompt();
-  let user = [
-    `Effect holder: a ${TYPES[type].label} ("${noun}").`,
-    examples.length ? "Examples (plain words ⇒ JSON) from the game's existing content:" : '',
-    ...examples.map(x => `${x.english} ⇒ ${JSON.stringify([x.json])}`),
-    `Write the JSON array for: ${text}`,
-  ].filter(Boolean).join('\n');
-  let best = null, lastErr = null;
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    const out = await llmGenerate({
-      model: s.effectsModel || EFFECTS_MODEL_DEFAULT,
-      system, prompt: user,
-      options: { temperature: attempt === 1 ? 0.2 : 0.5, num_predict: 800 },
-    });
-    let effects;
-    try {
-      effects = extractJsonEffects(out.response);
-    } catch (e) {
-      lastErr = e.message;
-      user += `\nYour previous reply was not parseable JSON (${e.message}). Reply with ONLY the JSON array.`;
-      continue;
-    }
-    best = effects;
-    const err = validateEffects(effects, 'generated');
-    if (!err) return { effects, attempts: attempt };
-    lastErr = err;
-    user += `\nYou replied: ${JSON.stringify(effects)}\nThe validator rejected it: ${err}\nFix that and reply with ONLY the corrected JSON array.`;
-  }
-  return { effects: best || [], warning: lastErr, attempts: 3 };
-}
-
 // ── 💬 edit chat: conversational blanket edits over the game's content ────────
 // The designer chats ("all pawns cost 2 mana; water pawns +2 health"); the LLM
 // answers with an OPERATIONS PLAN — field verbs (set / delete / append / remove)
@@ -3216,10 +2604,11 @@ async function llmEffectsFromText(type, text) {
 // goes through applyGameEdit (or saveGameEntry for created ones), so the normal
 // per-entry snapshot/Revert machinery covers chat edits.
 const CHAT_OPS = ['set', 'delete', 'append', 'remove', 'create'];
+const CHAT_MODEL_DEFAULT = 'qwen3-coder-next:q4_K_M';
 
-// One catalog line per entry: every top-level field as k=v (JSON, truncated), effects
-// as indexed plain-words summaries (the index is the LLM's handle for remove/dot-paths).
-// `tool` metadata (art recipes) is noise for content edits and huge — always dropped.
+// One catalog line per entry: every top-level field as k=v (JSON, truncated).
+// `tool` metadata (art recipes) is noise for content edits and huge — always dropped;
+// `effects` is the deleted schema (any stale empty array is not worth a line).
 const CHAT_SKIP_FIELDS = new Set(['id', 'display_name', 'effects', 'tool']);
 function chatFieldValue(v) {
   const s = JSON.stringify(v);
@@ -3239,11 +2628,6 @@ function chatCatalog() {
       for (const [k, v] of Object.entries(d)) {
         if (CHAT_SKIP_FIELDS.has(k) || v === null || v === undefined) continue;
         parts.push(`${k}=${chatFieldValue(v)}`);
-      }
-      const fx = Array.isArray(d.effects) ? d.effects : [];
-      if (fx.length) {
-        const noun = FX_OWNER_NOUN[type] || 'the holder';
-        parts.push('effects=[' + fx.map((x, i) => `${i}: ${describeEffect(x, noun)}`).join(' | ') + ']');
       }
       lines.push(`- ${e.id}: ${parts.join(' ')}`);
     }
@@ -3287,10 +2671,9 @@ function chatSystemPrompt() {
     'To take an entry out of the game, set enabled=false (the game skips disabled entries).',
     'Only propose what the designer asked for — no extra "improvements".',
     '',
-    'When a value you write is an effect object (an item of an "effects" list), use the',
-    'effect grammar below. The catalog shows current effects as "<index>: <plain words>".',
-    '',
-    ...effectsGrammarLines(),
+    'Never write an "effects" field: the old effect schema is deleted from the game',
+    '(2026-08-11) and the save gate refuses it. Effects are re-authored in a new schema',
+    'outside this chat.',
   ].join('\n');
 }
 
@@ -3382,20 +2765,12 @@ function simulateChatOps(ops) {
   return [...touched.values()];
 }
 
-// Human-readable per-entry diff lines for the preview ("cost: 1 → 2", "effects + …").
+// Human-readable per-entry diff lines for the preview ("cost: 1 → 2").
 function chatChangeNotes(type, before, after) {
   const notes = [];
-  const noun = FX_OWNER_NOUN[type] || 'the holder';
   for (const k of new Set([...Object.keys(before), ...Object.keys(after)])) {
     const a = before[k], b = after[k];
     if (JSON.stringify(a) === JSON.stringify(b)) continue;
-    if (k === 'effects') {
-      const av = (Array.isArray(a) ? a : []).map(x => describeEffect(x, noun));
-      const bv = (Array.isArray(b) ? b : []).map(x => describeEffect(x, noun));
-      for (const s of bv.filter(x => !av.includes(x))) notes.push(`effects + ${s}`);
-      for (const s of av.filter(x => !bv.includes(x))) notes.push(`effects − ${s}`);
-      continue;
-    }
     const fmt = v => v === undefined ? '(none)' : chatFieldValue(v);
     notes.push(`${k}: ${fmt(a)} → ${fmt(b)}`);
   }
@@ -3415,7 +2790,7 @@ async function llmChatEdit(messages) {
   let reply = '', lastErr = null;
   for (let attempt = 1; attempt <= 6; attempt++) {
     const out = await llmGenerate({
-      model: s.effectsModel || EFFECTS_MODEL_DEFAULT,
+      model: s.chatModel || CHAT_MODEL_DEFAULT,
       system, prompt: user,
       options: { temperature: 0.2, num_predict: 4000 },
     });
@@ -4285,7 +3660,7 @@ async function handle(req, res) {
       if ('turboStrength' in body) s.turboStrength = parseFloat(body.turboStrength) || 1.0;
       if (body.ollamaUrl) s.ollamaUrl = String(body.ollamaUrl);
       if ('llmModel' in body) s.llmModel = String(body.llmModel || '');
-      if ('effectsModel' in body) s.effectsModel = String(body.effectsModel || '');
+      if ('chatModel' in body) s.chatModel = String(body.chatModel || '');
       if ('llmProvider' in body) {
         if (!['ollama', 'claude-code', 'claude', 'openai'].includes(body.llmProvider))
           return send(res, 400, { error: `bad llmProvider "${body.llmProvider}"` });
@@ -4490,17 +3865,6 @@ async function handle(req, res) {
       const body = await readBody(req);
       mergeLocale((body && body.entries) || {});
       return send(res, 200, { ok: true });
-    }
-    if (p === '/api/locale/describe' && req.method === 'POST') {
-      // "Complete description from effect definition": the payload → a mechanical English
-      // description written with <id> term tags, ready to become the canonical string.
-      const body = await readBody(req);
-      try {
-        const description = await llmDescribe(body || {});
-        return send(res, 200, { ok: !!description, description, error: description ? '' : 'empty result' });
-      } catch (e) {
-        return send(res, 200, { ok: false, error: e.message });
-      }
     }
     if (p === '/api/game-attributes' && req.method === 'GET')
       return send(res, 200, { ok: true, config: getGameAttrs() });
@@ -4911,19 +4275,7 @@ async function handle(req, res) {
         total: job.total, done: job.done, results: job.results,
         elapsed: Math.round((Date.now() - job.startedAt) / 1000) });
     }
-    // Plain-English effect description → validated effect JSON (✨ from words).
-    if (p === '/api/effects/from-text' && req.method === 'POST') {
-      const { type, text } = await readBody(req);
-      if (!TYPES[type] || typeof text !== 'string' || !text.trim() || text.length > 2000)
-        return send(res, 400, { error: 'bad request' });
-      try {
-        const result = await runPromptInQueue(`✨ Effects (${type})`, { type, id: null }, () =>
-          llmEffectsFromText(type, text.trim()));
-        return send(res, 200, Object.assign({ ok: true }, result));
-      } catch (e) {
-        return send(res, 502, { error: e.message });
-      }
-    }
+    // (The ✨ effects-from-words endpoint died with the effect layer 2026-08-11.)
     // 💬 edit chat: one conversational turn → ops plan simulated + validated into a
     // PREVIEW ({changes}); nothing touches the game until /api/chat/apply.
     if (p === '/api/chat/edit' && req.method === 'POST') {

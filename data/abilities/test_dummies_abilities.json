@@ -6,7 +6,6 @@
 		"cost": {
 			"mana": 3,
 			"tap": true
-		},
-		"autocast": true
+		}
 	}
 ]

@@ -11,26 +11,6 @@
   ],
   "enemy_only": true,
   "ranged": true,
-  "effects": [
-    {
-      "trigger": {
-        "kind": "dual_event",
-        "event": "attack",
-        "origin_conditions": [
-          {
-            "relation": "self"
-          }
-        ]
-      },
-      "status": {
-        "id": "chilled"
-      },
-      "targets": {
-        "kind": "participant",
-        "participant": "destination"
-      }
-    }
-  ],
   "_art": {
     "width": 1024,
     "height": 1536,

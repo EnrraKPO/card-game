@@ -126,11 +126,6 @@ var _hover_live: bool = false
 var _button_phantom_slot: SlotUI = null
 
 
-# Context building moved to the world (the one builder — grids, sides, run modifiers,
-# transitional board access); the board forwards so its many call sites read unchanged.
-func make_context(src: CardInstance) -> EffectContext:
-	return world.make_context(src)
-
 # Zone dressing: each half sits on its own faintly tinted field so "my side / their side" reads
 # at a glance — cool blue for the player, warm red for the enemy. Low alpha keeps the shared
 # backdrop showing through.
@@ -226,7 +221,6 @@ func place_kings(player_king_id: String = "king", enemy_king_id: String = "king"
 	var ek := CardInstance.from_data(CardData.scaled(CardData.get_card(enemy_king_id), enemy_power))
 	world.place_unit(ek, back, BoardData.COLS - 1, 1)
 	enemy_slots[back][BoardData.COLS - 1].set_card(CardUI.create(ek))
-	LiveEffects.invalidate_compositions()   # owners set — allegiance-gated grants may now reach
 
 
 # ── Card operations ────────────────────────────────────────────────────────────

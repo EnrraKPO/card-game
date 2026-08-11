@@ -21,7 +21,6 @@ func run() -> void:
 	_remap_completeness()
 	_off_world_reference_copies()
 	_shared_immutables()
-	_tracker_rebind()
 	_kill_provenance_cycle()
 	_policy_flip()
 	_turn_order()
@@ -85,7 +84,7 @@ func _grid_copy_independence() -> void:
 func _status_copy_independence() -> void:
 	var w := CombatWorld.make()
 	var pawn := _place(w, "pawn", 0, 0, 0)
-	StatusEngine.apply(pawn, "empowered", Effect.STATUS_DURATION_DEFAULT, 1, null)
+	StatusEngine.apply(pawn, "empowered", StatusEngine.DURATION_DEFAULT, 1, null)
 	var w2 := w.copy()
 	var pawn2 := _cell(w2, 0, 0, 0)
 
@@ -102,7 +101,7 @@ func _status_copy_independence() -> void:
 	check(pawn.find_status("empowered") != null, "…and the original's is untouched")
 
 	# A status applied to the copy never appears on the original.
-	StatusEngine.apply(pawn2, "empowered", Effect.STATUS_DURATION_DEFAULT, 1, null)
+	StatusEngine.apply(pawn2, "empowered", StatusEngine.DURATION_DEFAULT, 1, null)
 	check_eq(pawn.statuses.size(), 1, "a status applied to the copy stays on the copy")
 
 
@@ -136,7 +135,7 @@ func _remap_completeness() -> void:
 	var pawn := _place(w, "pawn", 0, 0, 0)
 	var king := _place(w, "king", 0, 2, 0)
 	var rook := _place(w, "rook", 0, 1, 1)
-	StatusEngine.apply(pawn, "empowered", Effect.STATUS_DURATION_DEFAULT, 1, king)
+	StatusEngine.apply(pawn, "empowered", StatusEngine.DURATION_DEFAULT, 1, king)
 	pawn.killed_by_unit = rook
 	pawn.killed_by_channel = &"attack"
 	var w2 := w.copy()
@@ -159,7 +158,7 @@ func _off_world_reference_copies() -> void:
 	var pawn := _place(w, "pawn", 0, 0, 0)
 	var dead := unit("knight")
 	pawn.killed_by_unit = dead
-	StatusEngine.apply(pawn, "empowered", Effect.STATUS_DURATION_DEFAULT, 1, dead)
+	StatusEngine.apply(pawn, "empowered", StatusEngine.DURATION_DEFAULT, 1, dead)
 	var w2 := w.copy()
 	var pawn2 := _cell(w2, 0, 0, 0)
 
@@ -175,7 +174,7 @@ func _shared_immutables() -> void:
 	var mods := ModifierSet.new()
 	var w := CombatWorld.make(mods)
 	var pawn := _place(w, "pawn", 0, 0, 0)
-	StatusEngine.apply(pawn, "empowered", Effect.STATUS_DURATION_DEFAULT, 1, null)
+	StatusEngine.apply(pawn, "empowered", StatusEngine.DURATION_DEFAULT, 1, null)
 	var w2 := w.copy()
 	var pawn2 := _cell(w2, 0, 0, 0)
 
@@ -186,29 +185,9 @@ func _shared_immutables() -> void:
 	check(w2.modifiers == mods, "the modifier set is shared into copies (full-fidelity sims)")
 
 
-func _tracker_rebind() -> void:
-	var w := CombatWorld.make()
-	var pawn := _place(w, "pawn", 0, 0, 0)
-	var atk0 := pawn.get_attribute("attack")
-	StatusEngine.apply(pawn, "charged", Effect.STATUS_DURATION_DEFAULT, 3, null)
-	check_eq(pawn.get_attribute("attack"), atk0 + 3, "charged folds live (tracker went live pre-copy)")
-
-	var w2 := w.copy()
-	var pawn2 := _cell(w2, 0, 0, 0)
-	check_eq(pawn2.get_attribute("attack"), atk0 + 3, "the copy folds the same standing bonus")
-
-	# The copy's trackers must watch the COPY's stacks, not the original's.
-	var si2 := pawn2.find_status("charged")
-	si2.stacks = 0
-	check_eq(pawn2.get_attribute("attack"), atk0, "zeroing the copy's stacks kills the copy's fold")
-	check_eq(pawn.get_attribute("attack"), atk0 + 3, "…while the original keeps folding its own")
-
-	# And the mirror: the original's tracker dying must not reach the copy.
-	var w3 := w.copy()
-	var si := pawn.find_status("charged")
-	si.stacks = 0
-	var pawn3 := _cell(w3, 0, 0, 0)
-	check_eq(pawn3.get_attribute("attack"), atk0 + 3, "a held snapshot's fold survives the original's expiry")
+# (The tracker-rebind checks were BANISHED 2026-08-11 with the effect-layer fold and
+# tracker machinery; copy independence of the STATUSES themselves is pinned above in
+# _status_copy_independence. The rebuilt passive system's suite re-pins fold-across-copy.)
 
 
 func _kill_provenance_cycle() -> void:

@@ -10,6 +10,13 @@ build it the same way, in the same order, without re-deriving the process.
 the concrete reference implementation for almost every phase below. Where crit's design diverges
 from dodge's, the divergence and its reasoning are called out explicitly.
 
+> **⚠ Effect-layer demolition (2026-08-11):** the machinery phases 4–6 lean on — trigger
+> events feeding authored effects, grantable stats via standing folds, interceptable rates —
+> was deleted whole with the old effect layer and rebuilds per `TARGETING_DESIGN.md`. The
+> core resolution phases (1–3: Resolver roll, cues, tuning) survive as described; the crit
+> formula/roll tests remain green. Build phases 4–6 against the NEW schema when it exists,
+> not the spellings referenced below.
+
 ## The seven phases, in build order
 
 1. Core resolution (Resolver)

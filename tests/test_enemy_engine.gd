@@ -30,16 +30,7 @@ func run() -> void:
 	_mana_as_threat()
 	_move_enumeration()
 	_apply_move_purity()
-	_sim_gate()
-	_spell_enumeration()
-	_ability_enumeration()
-	_apply_ability_heal()
-	_apply_cast_group_heal()
-	_apply_cast_sweeps_dead()
-	_apply_ability_fire_bless()
 	_board_value_measurement()
-	_death_of_own_unit_scores_worse()
-	_engine_never_kills_its_own_captain()
 	_planning_leaves_the_world_untouched()
 	_first_strike_and_delivery()
 	_outgoing_mass_shape()
@@ -54,7 +45,6 @@ func run() -> void:
 	_valuation_prices_both_sides()
 	_valuation_enhancers_reach_raw()
 	_valuation_cache_is_per_pricer()
-	_total_value_changes_a_decision()
 	_first_strike_is_side_aware()
 	_doomed_attacker_projects_less()
 	_dodge_expectation_reaches_persistence()
@@ -67,12 +57,8 @@ func run() -> void:
 	_arrangement_enumeration()
 	_arrangement_feasibility()
 	_arrangement_apply_purity()
-	_eval_annotation_parse()
-	_eval_status_annotation_pass()
-	_eval_spent_effects_unpriced()
 	_eval_fold_unit_statuses()
 	_eval_fold_ground_and_seat()
-	_eval_fold_innate_attribution()
 	_eval_three_places_forwarding()
 	_eval_threat_consumption()
 	_eval_exposure_consumption()
@@ -624,146 +610,9 @@ func _apply_move_purity() -> void:
 
 # ── The sim-support gate: the engine never plays what it cannot evaluate ─────────────
 
-func _sim_gate() -> void:
-	# TARGETING REMOVED (targeting-cleanup demolition): with no target resolution there are no
-	# cast candidates at all, so the gate refuses everything. The cases that stood here — a
-	# manual heal / damage bolt / all-allies heal / status-applying cast are simulatable, a
-	# condition-gated cast simulates (the real resolver evaluates eligibility), a
-	# probabilistic cast is refused (the sim would have to guess the roll), needs_manual
-	# reads the gesture requirement — are the specification the rebuilt authority's suite
-	# must re-pin.
-	check(not CandidateApply.can_simulate_cast(AbilityData.get_ability("heal").effects),
-			"while targeting is demolished, NOTHING is simulatable")
-
-
-# ── Spell / ability enumeration: candidates exist iff the play is legal ──────────────
-
-func _spell_enumeration() -> void:
-	var back := BoardData.ROWS - 1
-	var deep := BoardData.COLS - 1
-	var state := _state_with([_enemy("captain_dummy", back, deep), _enemy("fodder_dummy", back, 0)])
-	var group_heal := unit("dummy_group_heal")
-	group_heal.owner = 1
-	var pool: Array = [group_heal, unit("pawn")]
-
-	check_eq(CandidateMoves.spells(state, pool, 3).size(), 0,
-			"mana below the spell's cost enumerates nothing")
-	var cands := CandidateMoves.spells(state, pool, 4)
-	check_eq(cands.size(), 1, "an area spell is ONE candidate — its targeting is its own")
-	if not cands.is_empty():
-		check(cands[0]["target"] == null, "…carrying no manual target")
-		check_eq(int(cands[0]["cost"]), 4, "…at the card's mana cost")
-	check_eq(CandidateMoves.placements(state, [group_heal], 10).size(), 0,
-			"a spell card never enumerates as a placement")
-
-
-func _ability_enumeration() -> void:
-	var back := BoardData.ROWS - 1
-	var deep := BoardData.COLS - 1
-	var support := _enemy("support_dummy", back, 1)
-	var state := _state_with([_enemy("captain_dummy", back, deep), support],
-			[_player("pawn", 0, deep)])
-	var fielded := 3   # two enemies + one player unit — a manual cast tests every one
-
-	var cands := CandidateMoves.abilities(state, 1)
-	check_eq(cands.size(), fielded * 2,
-			"the support offers heal AND fire_bless at every fielded unit — the status gate fell (Step 5)")
-	for cand: Dictionary in cands:
-		check((cand["ability"] as AbilityData).id in ["heal", "fire_bless"],
-				"…each of its own two abilities")
-		check(cand["inst"] == support, "…held by the support")
-	check_eq(CandidateMoves.abilities(state, 0).size(), 0, "no mana, no ability candidates")
-
-	var tapped_state := state.copy()
-	tapped_state.find(support).exhausted = true
-	check_eq(CandidateMoves.abilities(tapped_state, 5).size(), 0,
-			"a spent tap closes the ability window")
-
-
-# ── Apply: casts land on the copy, never the input ───────────────────────────────────
-
-func _apply_ability_heal() -> void:
-	var back := BoardData.ROWS - 1
-	var deep := BoardData.COLS - 1
-	var support := _enemy("support_dummy", back, 1)
-	var wounded := _enemy("fodder_dummy", back, 0)
-	wounded.current_health = 1
-	var roster: Array = [_enemy("captain_dummy", back, deep), support, wounded]
-	var state := _state_with(roster)
-
-	var next := CandidateApply.apply(state, {"kind": "ability", "inst": support,
-			"ability": AbilityData.get_ability("heal"), "target": wounded, "cost": 1},
-			_sim_for(roster))
-	check_eq(next.find(wounded).health, 2,
-			"the heal restores 2, clamped to the fodder's max of 2")
-	check(next.find(support).exhausted, "the sim spends the holder's tap")
-	check_eq(state.find(wounded).health, 1, "apply leaves the input state untouched")
-	check(not state.find(support).exhausted, "…tap included")
-	check_eq(wounded.current_health, 1, "…and never the live CardInstance")
-
-
-func _apply_cast_group_heal() -> void:
-	var back := BoardData.ROWS - 1
-	var deep := BoardData.COLS - 1
-	var hurt_a := _enemy("tank_dummy", back, 0)
-	hurt_a.current_health = 2
-	var hurt_b := _enemy("dps_dummy", 0, 1)
-	hurt_b.current_health = 1
-	var full := _enemy("fodder_dummy", 1, 0)
-	var foe := _player("pawn", 0, deep)
-	foe.current_health = 1
-	var roster: Array = [_enemy("captain_dummy", back, deep), hurt_a, hurt_b, full]
-	var state := _state_with(roster, [foe])
-
-	var group_heal := unit("dummy_group_heal")
-	group_heal.owner = 1
-	var next := CandidateApply.apply(state,
-			{"kind": "cast", "inst": group_heal, "target": null, "cost": 4},
-			_sim_for(roster, [foe], [group_heal]))
-	check_eq(next.find(hurt_a).health, 3, "the area heal reaches every ally")
-	check_eq(next.find(hurt_b).health, 2, "…all of them")
-	check_eq(next.find(full).health, 2, "a full ally clamps at max")
-	check_eq(next.find(foe).health, 1, "an ALL_ALLIES cast never touches the player's side")
-
-
-func _apply_cast_sweeps_dead() -> void:
-	var back := BoardData.ROWS - 1
-	var deep := BoardData.COLS - 1
-	var burst := _enemy("burst_damage_dummy", back, 0)
-	var victim := _player("pawn", 0, deep)
-	victim.current_health = 2
-	var roster: Array = [_enemy("captain_dummy", back, deep), burst]
-	var state := _state_with(roster, [victim])
-
-	var next := CandidateApply.apply(state, {"kind": "ability", "inst": burst,
-			"ability": AbilityData.get_ability("magic_missile"), "target": victim, "cost": 3},
-			_sim_for(roster, [victim]))
-	check(next.find(victim) == null, "a simulated kill removes the unit from the board copy")
-	check(state.find(victim) != null, "…only the copy")
-	check_eq(victim.current_health, 2, "…and never the live instance")
-
-
-func _apply_ability_fire_bless() -> void:
-	# The refactor's agreed acceptance shape ("Bless by Fire", COMBAT_DECOUPLING_REFACTOR.md
-	# criterion 3): a STATUS-APPLYING cast simulates through the real rules — impossible for
-	# the deleted SimEffects interpreter. The captured state folds the status's standing
-	# +2 attack at read time; the live unit never feels any of it.
-	var back := BoardData.ROWS - 1
-	var deep := BoardData.COLS - 1
-	var support := _enemy("support_dummy", back, 1)
-	var ally := _enemy("dps_dummy", 0, 2)
-	var atk0 := ally.get_attribute("attack")
-	var roster: Array = [_enemy("captain_dummy", back, deep), support, ally]
-	var state := _state_with(roster)
-
-	var next := CandidateApply.apply(state, {"kind": "ability", "inst": support,
-			"ability": AbilityData.get_ability("fire_bless"), "target": ally, "cost": 1},
-			_sim_for(roster))
-	check_eq(next.find(ally).attack, atk0 + 2,
-			"the blessed unit's captured attack folds the status — real statuses run in the sim")
-	check(next.find(support).exhausted, "the bless spends the tap")
-	check(ally.statuses.is_empty(), "the live unit never gained the status")
-	check_eq(ally.get_attribute("attack"), atk0, "…and its live attack never moved")
+# (The spell/ability enumeration, cast-seam apply, and sim-gate checks were BANISHED
+# 2026-08-11: they exercised the deleted cast/ability simulation and its dummy content.
+# The rebuilt activation/played pipeline ships its own enumeration and apply suites.)
 
 
 # ── Board value: the net worth of the battlefield (replaced presence) ────────────────
@@ -775,15 +624,13 @@ func _board_value_measurement() -> void:
 		"stat_rates": {"attack": 1.0, "health": 1.0, "missing_health": 0.1,
 				"shield": 2.0, "speed": 0.5},
 		"ability_default": 2.0, "ability_values": {"heal": 3.0},
-		"triggered_default": 1.5, "live_default": 1.5,
 	})
 
 	var fodder := BoardState.UnitState.from_instance(_enemy("fodder_dummy", 0, 0))
 	var expected := float(fodder.attack * fodder.strikes) + float(fodder.health) \
 			+ float(fodder.max_health - fodder.health) * 0.1 \
 			+ float(fodder.shield) * 2.0 + float(fodder.speed) * 0.5 \
-			+ float(fodder.ability_ids.size()) * 2.0 \
-			+ float(fodder.triggered_effects + fodder.live_effects) * 1.5
+			+ float(fodder.ability_ids.size()) * 2.0
 	check(absf(BoardScoring.unit_value(fodder) - expected) < 0.0001,
 			"a unit's value is its stats at the authored exchange rates + its kit")
 
@@ -843,90 +690,10 @@ func _board_value_measurement() -> void:
 # "destroy your own valuable unit" score as an improvement. Death must be the worst
 # outcome for a unit, not the absence of one.
 
-func _death_of_own_unit_scores_worse() -> void:
-	var back := BoardData.ROWS - 1
-	var deep := BoardData.COLS - 1
-	var scoring := BoardScoring.stock()
-	var players: Array = [_player("knight", 0, deep)]
-
-	# Isolating the death accounting: the SAME board either way — one reached by killing
-	# the dps, one where it was never there. Identical geometry, identical survivors (the
-	# caster genuinely stands on the board in the real-rules path, so it stands in BOTH
-	# states); the only difference is that one of them cost a unit to get to. That must
-	# score worse, and nothing but the graveyard term can say so.
-	var doomed := _enemy("dps_dummy", 0, 0)
-	doomed.current_health = 1
-	var burst := _enemy("burst_damage_dummy", 0, 1)
-	var roster: Array = [_enemy("captain_dummy", back, deep), doomed, burst]
-	var before := _state_with(roster, players)
-	var missile := {"kind": "ability", "inst": burst,
-			"ability": AbilityData.get_ability("magic_missile"), "target": doomed, "cost": 3}
-	var killed := CandidateApply.apply(before, missile, _sim_for(roster, players))
-	var never_there := _state_with(
-			[_enemy("captain_dummy", back, deep), _enemy("burst_damage_dummy", 0, 1)], players)
-
-	check(killed.find(doomed) == null, "the bolt did kill the dps (fixture sanity)")
-	check_eq(killed.graveyard.size(), 1, "…and the corpse is recorded")
-	# Since the valuation system, the loss speaks through TOTAL VALUE — a behavior, so the
-	# three states are compared as one cohort (which is exactly how the engine sees every
-	# pick): the killed unit's worth simply leaves the sum.
-	var totals := scoring.score_pick([before, killed, never_there])
-	check(float(totals[1]) < float(totals[2]),
-			"reaching a board by KILLING an own unit scores worse than the same board without it")
-	check(float(totals[1]) < float(totals[0]),
-			"…and worse than leaving the dying unit alive")
-	check_eq(BoardState.capture(_grids([])[0], _grids([])[1]).graveyard.size(), 0,
-			"a freshly captured board starts with an empty graveyard")
-
-	# A dead PLAYER unit is not a loss to mourn — it stops contributing threat, which the
-	# threat mass already rewards. It must never be charged to the enemy's own risk.
-	var victim := _player("knight", 0, deep)
-	victim.current_health = 1
-	var burst2 := _enemy("burst_damage_dummy", 0, 1)
-	var foe_roster: Array = [_enemy("captain_dummy", back, deep), burst2]
-	var with_foe := _state_with(foe_roster, [victim])
-	var foe_killed := CandidateApply.apply(with_foe,
-			{"kind": "ability", "inst": burst2,
-			 "ability": AbilityData.get_ability("magic_missile"), "target": victim, "cost": 3},
-			_sim_for(foe_roster, [victim]))
-	var foe_totals := scoring.score_pick([with_foe, foe_killed])
-	check(float(foe_totals[1]) > float(foe_totals[0]),
-			"killing a PLAYER unit is still an improvement — their negative worth leaves the total")
-
-
-func _engine_never_kills_its_own_captain() -> void:
-	var back := BoardData.ROWS - 1
-	var deep := BoardData.COLS - 1
-	# A wounded Captain and a burst unit holding a 3-damage bolt: the bolt can finish it.
-	# Killing its own king removes the board's biggest risk term (weight 1.75) and costs no
-	# presence (the captain's mana cost is 0) — so an unguarded scorer rates suicide as the
-	# best play available. Losing the Captain IS losing the fight; no score may buy it.
-	var captain := _enemy("captain_dummy", back, deep)
-	captain.current_health = 2
-	captain.current_shield = 0
-	var burst := _enemy("burst_damage_dummy", back, 0)
-	var enemies: Array = [captain, burst, _enemy("fodder_dummy", 0, 0)]
-	var players: Array = [_player("queen", 0, deep), _player("queen", 1, deep)]
-	var grids := _grids(enemies, players)
-
-	var engine := _seeded_engine()
-	var actions := engine.decide_actions([], grids[0], grids[1], 3)
-	var bolts_own: Array = actions.filter(func(a: Dictionary) -> bool:
-		if int(a["type"]) != EnemyEngine.Action.GENERATE:
-			return false
-		var t: CardInstance = a.get("target", null)
-		return t != null and t.owner == 1)
-	check_eq(bolts_own.size(), 0, "the CPU never aims a damage ability at its own units")
-
-	# …and the criterion itself must say so, not just this board's arithmetic.
-	var scoring := BoardScoring.stock()
-	var state := BoardState.capture(grids[0], grids[1])
-	var suicide := CandidateApply.apply(state, {"kind": "ability", "inst": burst,
-			"ability": AbilityData.get_ability("magic_missile"), "target": captain, "cost": 3},
-			_sim_for(enemies, players))
-	var pair := scoring.score_pick([state, suicide])
-	check(float(pair[1]) < float(pair[0]),
-			"killing its own Captain scores worse than doing nothing at all")
+# (The graveyard-accounting and captain-suicide-guard checks were BANISHED 2026-08-11:
+# both could only stage their boards through the deleted cast/ability simulation. Their
+# rules — an own kill costs its worth through the graveyard term, losing the Captain is
+# never worth any score — return with the rebuilt simulation seam's suite.)
 
 
 # ── Damage output: the aggression measurement (EVAL_CRITERIA_BRIEF.md eval 2) ─────────
@@ -1192,11 +959,13 @@ func _mana_optimization_shape() -> void:
 func _mana_pressure_is_structural() -> void:
 	var back := BoardData.ROWS - 1
 	var deep := BoardData.COLS - 1
+	# A spell card is unplayable BY CONSTRUCTION while the effect layer is razed (no cast
+	# candidates exist at all) — which is exactly the shape this fixture needs: a hand card
+	# that never becomes a candidate. When the rebuilt sim gate lands, this fixture becomes
+	# a genuinely refused cast (e.g. probabilistic) again.
 	var unplayable := CardInstance.from_data(CardData.build_from_dict({
 		"id": "_ee_unplayable", "display_name": "U", "cost": 3, "card_type": "spell",
-		"effects": [{"trigger": "on_play", "targeting_policy": "manual",
-			"attribute": "health", "amount": -2, "chance": 0.5}],
-	}))   # probabilistic → refused by the sim gate, so it never becomes a candidate
+	}))
 	unplayable.owner = 1
 
 	var cases: Array = [
@@ -1588,54 +1357,9 @@ func _valuation_cache_is_per_pricer() -> void:
 # Deliberately direction-free (tests validate computation, behaviors belong to the
 # playtest): what is pinned is that the criterion's weight REACHES the decision, not
 # which choice is right.
-func _total_value_changes_a_decision() -> void:
-	var back := BoardData.ROWS - 1
-	var deep := BoardData.COLS - 1
-	var dying_tower := _enemy("rook", 1, 0)
-	dying_tower.current_health = 1
-	dying_tower.current_shield = 0
-	var support := _enemy("support_dummy", back, 1)
-	var enemies: Array = [_enemy("captain_dummy", back, deep), support, dying_tower]
-	# Fast for the same reason as the arbitration fixture: the knight's pressure must
-	# fully deliver, or the expected-damage model rightly stops calling the tower dying.
-	var knight := _player("knight", 0, deep)
-	knight.modifiers["speed"] = 7
-	var players: Array = [knight]
-	var fodder := unit("fodder_dummy")
-	fodder.owner = 1
-	var grids := _grids(enemies, players)
-	var state := BoardState.capture(grids[0], grids[1])
-	state.enemy_mana_total = 1
-	state.enemy_mana_left = 1
-	state.hand_costs = [1]
-	state.hand_unit_costs = [1]
-	state.mana_spent_step = 0
-	var sim := _sim_for(enemies, players, [fodder])
-	var heal := {"kind": "ability", "inst": support,
-			"ability": AbilityData.get_ability("heal"), "target": dying_tower, "cost": 1}
-	var place := {"kind": "place", "inst": fodder, "row": back, "col": 0, "cost": 1}
-	var cohort: Array = [state]
-	for cand: Dictionary in [heal, place]:
-		var next := CandidateApply.apply(state, cand, sim)
-		EnemyEngine._note_spend(next, cand)
-		next.mana_capacity_before = 1
-		next.hand_budget_before = 1
-		cohort.append(next)
-	state.mana_capacity_before = 1
-	state.hand_budget_before = 1
-
-	var pricer := EnemyPersonality.from_dict({"id": "_tower_fight",
-			"value_rates": {"unit_values": {"rook": 10.0}}})
-	var with_it := BoardScoring.stock({}, pricer)
-	var without := BoardScoring.stock({}, pricer)
-	for c: BoardScoring.Criterion in without.criteria:
-		if c.id == "total_value":
-			c.weight = 0.0
-	var verdict := func(scoring: BoardScoring) -> String:
-		var totals := scoring.score_pick(cohort)
-		return "heal" if float(totals[1]) > float(totals[2]) else "place"
-	check(verdict.call(with_it) != verdict.call(without),
-			"zeroing total value's weight flips the pick — the criterion reaches the decision")
+# (The total-value-reaches-the-decision check was BANISHED 2026-08-11: its cohort could
+# only be staged through the deleted cast/ability simulation. The dial-reaches-decision
+# rule returns with the rebuilt simulation seam's suite.)
 
 
 # ── The expected-damage model (user-designed 2026-07-31) ─────────────────────────────
@@ -1842,192 +1566,58 @@ func _king_safety_shape() -> void:
 
 
 # ── The eval channels (STATUS_EVAL_BRIEF.md — computation only, per the doctrine) ──────
-
-# Parse + round-trip of the authored annotation, and that the shipped burn numbers
-# actually arrived off disk (the whole feature is authored data reaching the fold).
-func _eval_annotation_parse() -> void:
-	var e := Effect.from_dict({"trigger": {"kind": "event", "event": "turn_end"},
-			"targets": {"kind": "self"}, "attribute": "damage_taken", "amount": 1,
-			"eval": {"exposure": 1.0, "threat_mul": 0.5}})
-	check_eq(e.eval_add("exposure"), 1.0, "effect eval add parses")
-	check_eq(e.eval_mul("threat"), 0.5, "effect eval mul parses")
-	check_eq(e.eval_add("threat"), 0.0, "absent add reads 0")
-	check_eq(e.eval_mul("exposure"), 1.0, "absent mul reads 1")
-	var out := e.to_dict()
-	check(out.has("eval") and float((out["eval"] as Dictionary).get("exposure", 0.0)) == 1.0,
-			"the annotation round-trips through to_dict")
-	var clean := Effect.from_dict({"trigger": {"kind": "event", "event": "turn_end"},
-			"targets": {"kind": "self"}, "attribute": "damage_taken", "amount": 1})
-	check(not clean.to_dict().has("eval"), "an unannotated effect serialises no eval key")
-
-	var ablaze := StatusData.get_status("ablaze")
-	check_eq(ablaze.eval_add("exposure"), 0.25, "ablaze per-stack exposure authored (0.25)")
-	var flat := 0.0
-	for ef: Effect in ablaze.effects:
-		flat += ef.eval_add("exposure")
-	check_eq(flat, 1.0, "ablaze's burn effect carries flat exposure 1")
-	var burning := StatusData.get_status("burning")
-	check_eq(burning.eval_add("exposure"), 0.25, "burning (ground) per-stack exposure authored")
+# (The effect-level annotation checks — Effect.eval_mods parse/round-trip, is_spent, the
+# per-status shipped-numbers pass, innate attribution — were BANISHED 2026-08-11 with the
+# old effect machinery and the content-boundary test ban. Status-LEVEL per-stack pricing
+# survives below through an injected fixture; the consumption algebra needs no effects.)
 
 
-# The annotation pass over the rest of the statuses (STATUS_ANNOTATION_BRIEF.md): the
-# shipped numbers arrived off disk, and — the double-count guard — pure-stat statuses
-# (whose `while` effects are already visible in captured attributes) fold NEUTRAL.
-func _eval_status_annotation_pass() -> void:
-	# Group B — the damage ticks, per-stack exposure like burning.
-	check_eq(StatusData.get_status("poison").eval_add("exposure"), 1.0,
-			"poison: per-stack exposure 1 (tick = stacks)")
-	check_eq(StatusData.get_status("withered").eval_add("exposure"), 1.0,
-			"withered: per-stack exposure 1")
-
-	# Group C — blind's miss chance is a flat threat halving on the interceptor,
-	# and it reaches the unit fold as a mul (stacks are charges, not intensity).
-	var blinded := unit("pawn")
-	StatusEngine.apply(blinded, "blind", Effect.STATUS_DURATION_DEFAULT, 3)
-	var bm := EvalChannels.unit_mods(blinded)
-	check(bm != null and bm.threat_mul == 0.5 and bm.threat_add == 0.0,
-			"blind ×3 folds threat_mul 0.5 — flat, stack-blind")
-
-	# Group C — every barrier soaks blows: per-stack exposure −2, scaling × stacks.
-	for sid: String in ["barrier", "empowered_barrier", "swift_barrier", "stalwart_barrier",
-			"mending_barrier", "luminous_barrier", "umbral_barrier"]:
-		check_eq(StatusData.get_status(sid).eval_add("exposure"), -2.0,
-				"%s: per-stack exposure −2" % sid)
-	var warded := unit("pawn")
-	StatusEngine.apply(warded, "barrier", Effect.STATUS_DURATION_DEFAULT, 3)
-	var wm := EvalChannels.unit_mods(warded)
-	check(wm != null and wm.exposure_add == -6.0, "barrier ×3 folds exposure −6")
-
-	# Group D — the riders: mending's heal −1 on top of the block, luminous/umbral a
-	# small value premium; the stat riders (empowered/swift/stalwart) add NOTHING beyond
-	# the block itself (their `while` halves live in the captured stats).
-	var flat_of := func(sid: String, channel: String) -> float:
-		var total := 0.0
-		for ef: Effect in (StatusData.get_status(sid).effects as Array):
-			total += ef.eval_add(channel)
-		return total
-	check_eq(flat_of.call("mending_barrier", "exposure"), -1.0,
-			"mending rider: flat exposure −1 (the heal)")
-	check_eq(flat_of.call("luminous_barrier", "value"), 0.5,
-			"luminous rider: flat value 0.5 (the mana proc)")
-	check_eq(flat_of.call("umbral_barrier", "value"), 0.5,
-			"umbral rider: flat value 0.5 (the deterrent)")
-	for sid: String in ["empowered_barrier", "swift_barrier", "stalwart_barrier"]:
-		check_eq(flat_of.call(sid, "exposure") + flat_of.call(sid, "threat")
-				+ flat_of.call(sid, "value"), 0.0,
-				"%s: stat rider carries no effect-level annotation" % sid)
-
-	# Group E — blessing heals only; grants and stat lines stay unannotated.
-	check_eq(flat_of.call("light_blessing", "exposure"), -1.0,
-			"light blessing: flat exposure −1 (the heal)")
-	check_eq(flat_of.call("water_blessing", "exposure"), -2.0,
-			"water blessing: flat exposure −2 (the heal)")
-
-	# The APPLIERS (either side — the player-cards-only scope was reversed 2026-08-06):
-	# a unit that poisons per strike deals recurring extra damage its victim's statuses
-	# don't show yet. The price now rides the KEYWORD ("Venom X" — see NamedEffects), so
-	# it scales with the number the call site asks for and no card restates it.
-	var blight := unit("darkness_water_pawn")
-	var blm := EvalChannels.unit_mods(blight)
-	check(blm != null and blm.threat_add == 1.0,
-			"a per-strike Venom 1 folds threat +1 off its card effect")
-	# Venom 2, twice over (strike AND retaliation): the magnitude reaches the fold.
-	var basilisk := EvalChannels.unit_mods(unit("darkness_water_bishop_knight"))
-	check(basilisk != null and basilisk.threat_add == 4.0,
-			"two Venom 2 effects fold threat +4 — the keyword's price scales with X")
-	# The one-shot combined Blight uses the SAME keyword, priced identically — and folds
-	# neutral anyway, because a battlecry is spent (see _eval_spent_effects_unpriced).
-	# Authors no longer have to know that: the fold does.
-	check(EvalChannels.unit_mods(unit("darkness_water")) == null,
-			"the one-shot combined Blight folds neutral — its battlecry is history")
-
-	# Group A — the double-count guard: pure stat statuses fold NEUTRAL. Their whole
-	# story is `while` attribute effects, which capture already reads off effective
-	# stats; an annotation here would price them twice.
-	for sid: String in ["charged", "frenzied", "slimed", "tailwind", "empowered",
-			"air_blessing", "earth_blessing", "fire_blessing", "darkness_blessing"]:
-		var p := unit("pawn")
-		StatusEngine.apply(p, sid, Effect.STATUS_DURATION_DEFAULT, 1)
-		check(EvalChannels.unit_mods(p) == null,
-				"%s folds neutral — stats already say it (double-count guard)" % sid)
-
-
-# SPENT effects are never priced (user ruling 2026-08-06): the channels describe what a
-# unit still means, and a battlecry is history by the time anything reads them. Computation
-# only — the same annotation on two triggers, one folded and one not.
-func _eval_spent_effects_unpriced() -> void:
-	var battlecry := Effect.from_dict({"trigger": {"kind": "event", "event": "play", "of": "self"},
-			"targets": {"kind": "self"}, "status": {"id": "poison"}, "eval": {"threat": 3}})
-	check(EvalChannels.is_spent(battlecry), "a battlecry is spent")
-	var bm := EvalChannels.Mods.new()
-	bm.fold_effect(battlecry)
-	check(bm.is_neutral(), "…so its price never reaches the fold")
-	check(EvalChannels.is_spent(Effect.from_dict({"trigger": "on_play",
-			"targeting_policy": "self", "status": {"id": "poison"}, "eval": {"threat": 3}})),
-			"the legacy on_play spelling is the same battlecry")
-
-	# Everything else keeps its price — including "whenever a UNIT is played", which is a
-	# standing rule about the future, not a moment that already passed.
-	var any_play := Effect.from_dict({"trigger": {"kind": "event", "event": "play"},
-			"targets": {"kind": "self"}, "status": {"id": "poison"}, "eval": {"threat": 3}})
-	check(not EvalChannels.is_spent(any_play), "'whenever a unit is played' is not spent")
-	var retaliation := Effect.from_dict({"trigger": {"kind": "dual_event", "event": "struck",
-			"destination_of": "self"},
-			"targets": {"kind": "participant", "participant": "origin"},
-			"named": "venom", "amount": 2})
-	var rm := EvalChannels.Mods.new()
-	rm.fold_effect(retaliation)
-	check_eq(rm.threat_add, 2.0, "a recurring Venom 2 still prices at 2")
-
-
-# The unit fold: status-level per-stack adds × stacks + the status's effects' flat adds.
+# The unit fold: status-level per-stack adds × stacks, through an injected fixture (no
+# shipped content — content is never test-enforced).
 func _eval_fold_unit_statuses() -> void:
+	StatusData._all["_t_priced"] = StatusData.from_dict({
+		"id": "_t_priced", "decay": "none", "stacking": "stack", "eval": {"exposure": 0.5}})
 	var p := unit("pawn")
-	StatusEngine.apply(p, "ablaze", Effect.STATUS_DURATION_DEFAULT, 2)
+	StatusEngine.apply(p, "_t_priced", StatusEngine.DURATION_DEFAULT, 2)
 	var m := EvalChannels.unit_mods(p)
-	check(m != null, "an ablaze unit folds non-neutral")
-	check_eq(m.exposure_add, 0.25 * 2 + 1.0, "ablaze ×2 = per-stack 0.25×2 + flat 1")
+	check(m != null, "a priced status folds non-neutral")
+	check_eq(m.exposure_add, 0.5 * 2, "per-stack add × stacks (0.5 × 2)")
 	check_eq(m.threat_add, 0.0, "…and touches no other channel")
 	check_eq(m.exposure_mul, 1.0, "…and no muls")
 	check(EvalChannels.unit_mods(unit("pawn")) == null, "a clean unit folds neutral (null)")
+	StatusData._all.erase("_t_priced")
 
 
-# The ground fold: a slot's statuses through the same two levels, filed on capture.
+# The ground fold: a slot's statuses through the same per-stack level, filed on capture.
 func _eval_fold_ground_and_seat() -> void:
+	StatusData._all["_t_priced"] = StatusData.from_dict({
+		"id": "_t_priced", "decay": "none", "stacking": "stack", "eval": {"exposure": 0.5}})
 	var sim := _sim_for([_enemy("pawn", 0, 0)])
 	var w: CombatWorld = sim["world"]
 	var slot := w.slot_at(1, 0, 0)
-	StatusEngine.apply(slot, "burning", Effect.STATUS_DURATION_DEFAULT, 3)
+	StatusEngine.apply(slot, "_t_priced", StatusEngine.DURATION_DEFAULT, 3)
 	var gm := EvalChannels.slot_mods(slot)
-	check(gm != null, "a burning slot folds non-neutral")
-	check_eq(gm.exposure_add, 0.25 * 3 + 1.0, "burning ×3 = per-stack 0.25×3 + flat 1")
+	check(gm != null, "a priced slot folds non-neutral")
+	check_eq(gm.exposure_add, 0.5 * 3, "per-stack add × stacks (0.5 × 3)")
 	var state := BoardState.capture(w.player_grid, w.enemy_grid, 0, w)
 	var seat := state.seat_mods(1, 0, 0)
-	check(seat != null, "capture files the burning seat into the ground map")
-	check_eq(seat.exposure_add, 1.75, "…with the folded exposure")
+	check(seat != null, "capture files the priced seat into the ground map")
+	check_eq(seat.exposure_add, 1.5, "…with the folded exposure")
 	check(state.seat_mods(1, 0, 1) == null, "a clean seat stays absent (neutral)")
-
-
-# Innate attribution: a rule about the holder's own action folds onto exactly the units
-# its origin conditions admit (fire_scorches_ground: composition fire ≥ 2).
-func _eval_fold_innate_attribution() -> void:
-	var double_fire := unit("fire_fire_pawn")
-	var m := EvalChannels.unit_mods(double_fire)
-	check(m != null and m.threat_add == 1.25 and m.value_add == 1.0,
-			"a double-fire unit carries the scorch annotation (threat +1.25, value +1)")
-	check(EvalChannels.unit_mods(unit("pawn")) == null,
-			"a fireless unit does not carry it")
+	StatusData._all.erase("_t_priced")
 
 
 # The three-places rule: copy() carries both folds. (The cast path's _capture_back died
 # with the effect-cleanse demolition — its re-capture/re-fold checks return with the
 # rebuilt simulation seam; the doctrine is preserved in CandidateApply's NEED block.)
 func _eval_three_places_forwarding() -> void:
+	StatusData._all["_t_priced"] = StatusData.from_dict({
+		"id": "_t_priced", "decay": "none", "stacking": "stack", "eval": {"exposure": 0.5}})
 	var burner := _enemy("pawn", 0, 1)
-	StatusEngine.apply(burner, "ablaze", Effect.STATUS_DURATION_DEFAULT, 1)
+	StatusEngine.apply(burner, "_t_priced", StatusEngine.DURATION_DEFAULT, 1)
 	var sim := _sim_for([burner])
 	var w: CombatWorld = sim["world"]
-	StatusEngine.apply(w.slot_at(1, 0, 0), "burning", Effect.STATUS_DURATION_DEFAULT, 2)
+	StatusEngine.apply(w.slot_at(1, 0, 0), "_t_priced", StatusEngine.DURATION_DEFAULT, 2)
 	var state := BoardState.capture(w.player_grid, w.enemy_grid, 0, w)
 	check(state.units(1)[0].eval_mods != null, "capture folds the unit's statuses")
 
@@ -2036,6 +1626,7 @@ func _eval_three_places_forwarding() -> void:
 			"copy() carries the ground map (shared immutable folds)")
 	check(copied.units(1)[0].eval_mods == state.units(1)[0].eval_mods,
 			"copy() carries the unit fold")
+	StatusData._all.erase("_t_priced")
 
 
 # Threat consumption: (attack × strikes + adds) × muls, unit fold and seat fold combined,

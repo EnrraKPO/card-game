@@ -35,7 +35,7 @@
   "claudeCliCmd": "claude",
   "ollamaUrl": "http://127.0.0.1:11434",
   "llmModel": "gemma4:31b",
-  "effectsModel": "qwen3-coder-next:q4_K_M",
+  "chatModel": "qwen3-coder-next:q4_K_M",
   "claudeModel": "claude-opus-4-8",
   "openaiModel": "gpt-5.5",
   "kinThemeMode": "family",

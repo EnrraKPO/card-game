@@ -31,14 +31,11 @@ var editing_deck_id: String = ""
 var current_profile: ProfileData = null
 # Aggregate of every active run-wide Effect (from owned upgrades now; relics/heroes
 # later). Rebuilt whenever the profile changes or a run starts; the game systems read every
-# number through value() (globals) / LiveEffects.bonus (cards) / EffectSystem.trigger_global
+# number through value() (globals) / LiveEffects.bonus (cards) / run-level dispatch
 # (combat events). Empty default = no-op for every query.
 var current_modifiers: ModifierSet = ModifierSet.new():
 	set(v):
 		current_modifiers = v
-		# Whole-set swaps (rebuild_modifiers, test resets) may add/remove composition
-		# grants — drop the settled snapshot (see LiveEffects.effective_composition).
-		LiveEffects.invalidate_compositions()
 
 
 # Harness safety: while this is on, every write to the save file is a no-op (reads still work,
