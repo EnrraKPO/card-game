@@ -309,5 +309,5 @@ func _non_op_prohibition() -> void:
 	# One survivor, still meaningful: nothing synthetic may leak into serialized conditions.
 	var authored := {"trigger": "on_play", "targeting_policy": "manual",
 			"attribute": "health", "amount": 2, "conditions": []}
-	check_eq((Effect.from_dict(authored).to_dict() as Dictionary)["conditions"], [],
+	check_eq((Effect.from_dict(authored).to_dict() as Dictionary).get("conditions", []), [],
 			"no derived condition is ever serialized")

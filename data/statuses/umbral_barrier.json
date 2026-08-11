@@ -10,29 +10,8 @@
 		"decay": "intercept",
 		"stacking": "stack",
 		"max_stacks": 9,
-		"eval": { "exposure": -2 },
-		"effects": [
-			{
-				"intercept": "damage",
-				"channel": "attack",
-				"role": "target",
-				"op": "mul",
-				"amount": 0
-			},
-			{
-				"trigger": {
-					"kind": "dual_event",
-					"event": "struck",
-					"destination_of": "self"
-				},
-				"targets": {
-					"kind": "participant",
-					"participant": "origin"
-				},
-				"attribute": "attack",
-				"amount": -1,
-				"eval": { "value": 0.5 }
-			}
-		]
+		"eval": {
+			"exposure": -2
+		}
 	}
 ]

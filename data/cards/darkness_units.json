@@ -14,17 +14,6 @@
 		"chess_pieces": [
 			"pawn"
 		],
-		"effects": [
-			{
-				"trigger": {
-					"kind": "event",
-					"event": "death",
-					"of": "self"
-				},
-				"attribute": "draw",
-				"amount": 1
-			}
-		],
 		"tool": {
 			"art": {
 				"model": "krea2",

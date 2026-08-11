@@ -2,38 +2,54 @@
   {
     "id": "skeleton_grunt",
     "display_name": "Skeleton Grunt",
-    "cost": 2, "attack": 3, "health": 4, "speed": 2,
+    "cost": 2,
+    "attack": 3,
+    "health": 4,
+    "speed": 2,
     "description": "A reanimated soldier that simply refuses to stay down.",
-    "enemy_only": true, "tribe": "undead", "elements": [], "chess_pieces": [], "effects": []
+    "enemy_only": true,
+    "tribe": "undead",
+    "elements": [],
+    "chess_pieces": []
   },
   {
     "id": "bone_archer",
     "display_name": "Bone Archer",
-    "cost": 3, "attack": 4, "health": 3, "speed": 4, "ranged": true,
+    "cost": 3,
+    "attack": 4,
+    "health": 3,
+    "speed": 4,
+    "ranged": true,
     "description": "Looses a cursed arrow that saps 1 <attack> from every enemy.",
-    "enemy_only": true, "tribe": "undead", "elements": [], "chess_pieces": [],
-    "effects": [
-      { "trigger": "on_play", "targeting_policy": "all_enemies", "attribute": "attack", "amount": -1 }
-    ]
+    "enemy_only": true,
+    "tribe": "undead",
+    "elements": [],
+    "chess_pieces": []
   },
   {
     "id": "ghoul",
     "display_name": "Ravenous Ghoul",
-    "cost": 3, "attack": 4, "health": 5, "speed": 3,
+    "cost": 3,
+    "attack": 4,
+    "health": 5,
+    "speed": 3,
     "description": "Feasts as it fights, healing 1 <hp> with every strike.",
-    "enemy_only": true, "tribe": "undead", "elements": [], "chess_pieces": [],
-    "effects": [
-      { "trigger": "on_attack", "targeting_policy": "self", "attribute": "health", "amount": 1 }
-    ]
+    "enemy_only": true,
+    "tribe": "undead",
+    "elements": [],
+    "chess_pieces": []
   },
   {
     "id": "vampire_lord",
     "display_name": "Vampire Lord",
-    "cost": 5, "attack": 6, "health": 7, "speed": 4,
+    "cost": 5,
+    "attack": 6,
+    "health": 7,
+    "speed": 4,
     "description": "A noble of the night that drains 2 <hp> from its prey with every attack.",
-    "enemy_only": true, "tribe": "undead", "elements": [], "chess_pieces": [],
-    "effects": [
-      { "trigger": "on_attack", "targeting_policy": "self", "attribute": "health", "amount": 2 }
-    ]
+    "enemy_only": true,
+    "tribe": "undead",
+    "elements": [],
+    "chess_pieces": []
   }
 ]

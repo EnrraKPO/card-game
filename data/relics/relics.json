@@ -6,13 +6,6 @@
 		"color": "d98032",
 		"letter": "A",
 		"price": 90,
-		"effects": [
-			{
-				"kind": "modifier",
-				"key": "unit.attack",
-				"amount": 1
-			}
-		],
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -39,13 +32,6 @@
 		"color": "5fae4f",
 		"letter": "H",
 		"price": 90,
-		"effects": [
-			{
-				"kind": "modifier",
-				"key": "unit.health",
-				"amount": 1
-			}
-		],
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -72,13 +58,6 @@
 		"color": "5f8fd9",
 		"letter": "M",
 		"price": 110,
-		"effects": [
-			{
-				"kind": "modifier",
-				"key": "mana.per_turn",
-				"amount": 1
-			}
-		],
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -104,14 +83,7 @@
 		"description": "Draw +1 card each round.",
 		"color": "5fb3d9",
 		"letter": "D",
-		"price": 110,
-		"effects": [
-			{
-				"kind": "modifier",
-				"key": "draw.per_turn",
-				"amount": 1
-			}
-		]
+		"price": 110
 	},
 	{
 		"id": "crown_of_vigor",
@@ -120,13 +92,6 @@
 		"color": "d9b94f",
 		"letter": "K",
 		"price": 100,
-		"effects": [
-			{
-				"kind": "modifier",
-				"key": "king.max_health",
-				"amount": 10
-			}
-		],
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -152,17 +117,7 @@
 		"description": "When one of your units dies, deal 2 damage to the nearest enemy.",
 		"color": "9b6fd9",
 		"letter": "V",
-		"price": 80,
-		"effects": [
-			{
-				"kind": "triggered",
-				"trigger": "on_death",
-				"subject": "ally",
-				"targeting_policy": "single_nearest",
-				"attribute": "damage_taken",
-				"amount": 2
-			}
-		]
+		"price": 80
 	},
 	{
 		"id": "war_drums",
@@ -170,15 +125,7 @@
 		"description": "When one of your units attacks, your other units gain +1 <attack> for the rest of combat.",
 		"color": "c2603a",
 		"letter": "W",
-		"price": 120,
-		"effects": [
-			{
-				"kind": "custom",
-				"custom": "rallying_cry",
-				"trigger": "on_attack",
-				"subject": "ally"
-			}
-		]
+		"price": 120
 	},
 	{
 		"id": "pollution_drain",
@@ -186,21 +133,7 @@
 		"description": "Whenever an allied <water> or <darkness> unit is attacked, the attacker gets 1 Poison.",
 		"color": "5a8f3a",
 		"letter": "P",
-		"price": 90,
-		"effects": [
-			{
-				"kind": "triggered",
-				"trigger": "on_damage_taken",
-				"subject": "ally",
-				"subject_elements": [
-					"water",
-					"darkness"
-				],
-				"targeting_policy": "attacker",
-				"named": "venom",
-				"amount": 1
-			}
-		]
+		"price": 90
 	},
 	{
 		"id": "blinding_ward",
@@ -208,49 +141,7 @@
 		"description": "Whenever an enemy attacks, or is attacked by a <light> unit, it gets 1 Blind.",
 		"color": "5a6a9f",
 		"letter": "B",
-		"price": 100,
-		"effects": [
-			{
-				"kind": "triggered",
-				"trigger": {
-					"kind": "dual_event",
-					"event": "struck",
-					"destination_conditions": [
-						{
-							"composition": [
-								"light"
-							]
-						},
-						{
-							"allegiance": "ally"
-						}
-					]
-				},
-				"targeting_policy": "attacker",
-				"named": "blind",
-				"amount": 1
-			},
-			{
-				"kind": "triggered",
-				"trigger": {
-					"kind": "dual_event",
-					"event": "attack",
-					"origin_conditions": [
-						{
-							"composition": [
-								"light"
-							]
-						},
-						{
-							"allegiance": "ally"
-						}
-					]
-				},
-				"targeting_policy": "attack_target",
-				"named": "blind",
-				"amount": 1
-			}
-		]
+		"price": 100
 	},
 	{
 		"id": "menders_charm",
@@ -259,24 +150,6 @@
 		"color": "6fce8f",
 		"letter": "+",
 		"price": 100,
-		"effects": [
-			{
-				"kind": "interceptor",
-				"intercept": "health",
-				"of": {
-					"participant": "source",
-					"relation": "ally"
-				},
-				"conditions": [
-					{
-						"mutation": "amount",
-						"comparator": "gt",
-						"value": 0
-					}
-				],
-				"amount": 1
-			}
-		],
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -303,17 +176,6 @@
 		"color": "8f5aa0",
 		"letter": "S",
 		"price": 110,
-		"effects": [
-			{
-				"kind": "interceptor",
-				"intercept": "status",
-				"of": {
-					"participant": "source",
-					"relation": "ally"
-				},
-				"amount": 1
-			}
-		],
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -340,26 +202,6 @@
 		"color": "6a4a8f",
 		"letter": "R",
 		"price": 100,
-		"effects": [
-			{
-				"trigger": {
-					"kind": "event",
-					"event": "death",
-					"conditions": [
-						{
-							"composition": [
-								"darkness"
-							]
-						},
-						{
-							"allegiance": "ally"
-						}
-					]
-				},
-				"attribute": "draw",
-				"amount": 1
-			}
-		],
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -385,28 +227,7 @@
 		"description": "Whenever a unit dies from poison, a random ally gains +1 <shield>.",
 		"color": "5a8f3a",
 		"letter": "S",
-		"price": 100,
-		"effects": [
-			{
-				"kind": "triggered",
-				"trigger": {
-					"kind": "dual_event",
-					"event": "kill",
-					"cause": "poison"
-				},
-				"attribute": "shield",
-				"amount": 1,
-				"targets": {
-					"kind": "auto",
-					"criterion": "random",
-					"conditions": [
-						{
-							"allegiance": "ally"
-						}
-					]
-				}
-			}
-		]
+		"price": 100
 	},
 	{
 		"id": "zephyr_charm",
@@ -414,34 +235,7 @@
 		"description": "Whenever an allied <air> unit dodges an attack, it gains a Barrier.",
 		"color": "7ec8c0",
 		"letter": "Z",
-		"price": 100,
-		"effects": [
-			{
-				"kind": "triggered",
-				"trigger": {
-					"kind": "dual_event",
-					"event": "dodge",
-					"destination_conditions": [
-						{
-							"composition": [
-								"air"
-							]
-						},
-						{
-							"allegiance": "ally"
-						}
-					]
-				},
-				"targets": {
-					"kind": "participant",
-					"participant": "destination"
-				},
-				"status": {
-					"id": "barrier",
-					"stacks": 1
-				}
-			}
-		]
+		"price": 100
 	},
 	{
 		"id": "gale_sigil",
@@ -449,21 +243,7 @@
 		"description": "All your <air> units get +25% Dodge.",
 		"color": "6fb7d6",
 		"letter": "G",
-		"price": 110,
-		"effects": [
-			{
-				"kind": "modifier",
-				"key": "unit.dodge_bonus",
-				"amount": 25,
-				"conditions": [
-					{
-						"composition": [
-							"air"
-						]
-					}
-				]
-			}
-		]
+		"price": 110
 	},
 	{
 		"id": "cyclone_totem",
@@ -471,26 +251,7 @@
 		"description": "Your <air> units have 3x Dodge rate.",
 		"color": "4fc7c9",
 		"letter": "C",
-		"price": 140,
-		"effects": [
-			{
-				"kind": "interceptor",
-				"intercept": "dodge",
-				"op": "mul",
-				"amount": 3,
-				"of": {
-					"participant": "target",
-					"relation": "ally"
-				},
-				"conditions": [
-					{
-						"composition": [
-							"air"
-						]
-					}
-				]
-			}
-		]
+		"price": 140
 	},
 	{
 		"id": "trueshot_sigil",
@@ -498,19 +259,7 @@
 		"description": "Enemy units cannot dodge.",
 		"color": "9f5a5a",
 		"letter": "T",
-		"price": 130,
-		"effects": [
-			{
-				"kind": "interceptor",
-				"intercept": "dodge",
-				"op": "mul",
-				"amount": 0,
-				"of": {
-					"participant": "target",
-					"relation": "enemy"
-				}
-			}
-		]
+		"price": 130
 	},
 	{
 		"id": "berserkers_momentum",
@@ -518,32 +267,7 @@
 		"description": "Whenever an allied <fire> unit lands a critical hit, it gains 1 <attack>.",
 		"color": "d9502f",
 		"letter": "B",
-		"price": 110,
-		"effects": [
-			{
-				"kind": "triggered",
-				"trigger": {
-					"kind": "dual_event",
-					"event": "crit",
-					"origin_conditions": [
-						{
-							"composition": [
-								"fire"
-							]
-						},
-						{
-							"allegiance": "ally"
-						}
-					]
-				},
-				"targets": {
-					"kind": "participant",
-					"participant": "origin"
-				},
-				"attribute": "attack",
-				"amount": 1
-			}
-		]
+		"price": 110
 	},
 	{
 		"id": "eagle_eye_charm",
@@ -551,21 +275,7 @@
 		"description": "All your <air> units get +25% Crit chance.",
 		"color": "c9a13a",
 		"letter": "E",
-		"price": 110,
-		"effects": [
-			{
-				"kind": "modifier",
-				"key": "unit.crit_chance_bonus",
-				"amount": 25,
-				"conditions": [
-					{
-						"composition": [
-							"air"
-						]
-					}
-				]
-			}
-		]
+		"price": 110
 	},
 	{
 		"id": "warlords_fury",
@@ -573,26 +283,7 @@
 		"description": "Your <fire> units have 3x Crit chance.",
 		"color": "c9502f",
 		"letter": "W",
-		"price": 140,
-		"effects": [
-			{
-				"kind": "interceptor",
-				"intercept": "crit_chance",
-				"op": "mul",
-				"amount": 3,
-				"of": {
-					"participant": "target",
-					"relation": "ally"
-				},
-				"conditions": [
-					{
-						"composition": [
-							"fire"
-						]
-					}
-				]
-			}
-		]
+		"price": 140
 	},
 	{
 		"id": "steady_hand_ward",
@@ -600,19 +291,7 @@
 		"description": "Enemy units cannot land critical hits.",
 		"color": "6b6b7a",
 		"letter": "S",
-		"price": 130,
-		"effects": [
-			{
-				"kind": "interceptor",
-				"intercept": "crit_chance",
-				"op": "mul",
-				"amount": 0,
-				"of": {
-					"participant": "target",
-					"relation": "enemy"
-				}
-			}
-		]
+		"price": 130
 	},
 	{
 		"id": "executioners_edge",
@@ -620,21 +299,7 @@
 		"description": "Your <darkness> units' critical hits deal +50% damage.",
 		"color": "5a2a6b",
 		"letter": "X",
-		"price": 120,
-		"effects": [
-			{
-				"kind": "modifier",
-				"key": "unit.crit_multiplier_bonus",
-				"amount": 50,
-				"conditions": [
-					{
-						"composition": [
-							"darkness"
-						]
-					}
-				]
-			}
-		]
+		"price": 120
 	},
 	{
 		"id": "bomb",
@@ -644,23 +309,6 @@
 		"letter": "✦",
 		"price": 90,
 		"consumable": true,
-		"effects": [
-			{
-				"trigger": {
-					"kind": "transient"
-				},
-				"targets": {
-					"kind": "all",
-					"conditions": [
-						{
-							"allegiance": "enemy"
-						}
-					]
-				},
-				"attribute": "damage_taken",
-				"amount": 5
-			}
-		],
 		"tool": {
 			"art": {
 				"model": "krea2",

@@ -220,12 +220,12 @@ func _ground_delivery() -> void:
 
 
 func _at_location_spelling() -> void:
-	# TARGETING REMOVED (targeting-cleanup demolition): "parses to the AtLocation kind" and its
-	# compat mirror belong to the rebuilt authority's suite. The verbatim round-trip remains.
+	# TARGETING REMOVED + CONTENT FORGOTTEN: "parses to the AtLocation kind" belongs to the
+	# rebuilt authority's suite, and the old spelling is never written again — to_dict emits
+	# no targeting at all.
 	var e := Effect.from_dict({"trigger": {"kind": "event", "event": "turn_end"},
 			"targets": {"kind": "at_location"}, "attribute": "health", "amount": -1})
-	var td: Dictionary = e.to_dict()
-	check_eq(str((td["targets"] as Dictionary)["kind"]), "at_location", "at_location serializes back by name")
+	check(not e.to_dict().has("targets"), "the forgotten targeting language is never re-emitted")
 
 
 func _copy_fidelity() -> void:

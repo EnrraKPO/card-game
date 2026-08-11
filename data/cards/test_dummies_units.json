@@ -82,15 +82,7 @@
 		"id": "dummy_group_heal",
 		"card_type": "spell",
 		"cost": 4,
-		"enemy_only": true,
-		"effects": [
-			{
-				"trigger": "on_play",
-				"targeting_policy": "all_allies",
-				"attribute": "health",
-				"amount": 1
-			}
-		]
+		"enemy_only": true
 	},
 	{
 		"id": "burning_dummy",
@@ -102,19 +94,6 @@
 		"description": "A test dummy that caught fire and kept working. Counts as a fire unit — the ground it strikes burns.",
 		"enemy_only": true,
 		"tribe": "dummy",
-		"role": "fodder",
-		"effects": [
-			{
-				"trigger": {
-					"kind": "while"
-				},
-				"targets": {
-					"kind": "self"
-				},
-				"grants": [
-					"fire"
-				]
-			}
-		]
+		"role": "fodder"
 	}
 ]

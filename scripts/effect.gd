@@ -45,10 +45,12 @@ enum Trigger {
 # Sentinel for "apply this status for its own default duration" (the applier didn't override it).
 const STATUS_DURATION_DEFAULT := -9999
 
-# TARGETING REMOVED (targeting-cleanup demolition). NEEDS: the effect-targeting authority —
-# the injected component that decides WHO an effect affects, the "who" beside the trigger's
-# "when". The authored vocabulary it must serve (both schemas survive VERBATIM in the data and
-# in `_native_targets` / `targeting_policy_raw` below, uninterpreted):
+# TARGETING REMOVED (targeting-cleanup demolition); CONTENT FORGOTTEN (effect-cleanse,
+# user ruling 2026-08-11): all authored effect payloads were stripped from data/ — nothing
+# migrates; every effect is re-authored in the new schema as the rebuild reaches its
+# container (git history holds the old blocks as reference). NEEDS: the effect-targeting
+# authority — the injected component that decides WHO an effect affects, the "who" beside
+# the trigger's "when". The authored vocabulary it must serve (spec, not data now):
 #   · self / participant (event origin | destination) — a direct reference, no search
 #   · auto (nearest | random, count N) — an automatic pick among condition-passing units
 #   · all (+ allegiance conditions) — everyone the conditions admit
@@ -57,7 +59,7 @@ const STATUS_DURATION_DEFAULT := -9999
 #     in the UI layer — the rebuilt authority must own it)
 #   · at_location (from / shape / layer / half / count) — position-first: name where you
 #     resolve FROM and what shape that implies, get game objects back
-#   · side (own | opponent) — a PLAYER, not a unit (draw/discard/mana payloads)
+#   (the `side` kind is DEAD — side payloads are targetless, TARGETING_DESIGN.md §2/§10)
 # Cross-cutting requirements the old system answered piecemeal (see TECH_DEBT_BRIEF.md §1-2):
 # one authority answering BOTH verbs (enumerate targets AND does-it-reach-this-candidate, with
 # one anchor semantics so the two can never disagree), a declared gesture requirement per kind
@@ -96,14 +98,9 @@ var resolver: TriggerResolver = null
 # Whether the trigger was authored in the native (dictionary) form — steers to_dict so both
 # schemas round-trip byte-faithfully (legacy in → legacy out).
 var authored_native_trigger := false
-# The authored targeting, held VERBATIM and interpreted by NOTHING (targeting-cleanup
-# demolition): the native "targets" dictionary, or the legacy "targeting_policy" string.
-# Kept solely so authored content and deck saves round-trip byte-faithfully through to_dict.
-# NEEDS: the rebuilt targeting authority parses these — and per the brief, ONE surviving
-# schema, with the content migrated and the dead form refused at load.
-var authored_native_targets := false
-var _native_targets: Dictionary = {}      # raw native "targets" form, verbatim
-var targeting_policy_raw: String = ""     # raw legacy policy string, verbatim
+# (The verbatim targeting round-trip — _native_targets / targeting_policy_raw — died with
+# the content strip: nothing old-language remains to preserve, and to_dict emits no
+# targeting. The rebuilt authority defines the one surviving authored form.)
 # Legacy/compat trigger mirrors (the TRIGGER side is untouched by this demolition; its own
 # consolidation is the next initiative — see TECH_DEBT_BRIEF.md §1).
 var trigger: Trigger = Trigger.ON_PLAY
@@ -467,7 +464,8 @@ func _validate_standing(d: Dictionary) -> void:
 		push_error("Effect: a custom hook cannot be standing (while) — %s" % [d])
 	# Standing membership is self or condition-based; selection policies (nearest/random/
 	# manual) have no meaning for a continuous fold.
-	if authored_native_targets and not str(_native_targets.get("kind", "all")) in ["all", "self"]:
+	if d.get("targets", null) is Dictionary \
+			and not str((d["targets"] as Dictionary).get("kind", "all")) in ["all", "self"]:
 		push_error("Effect: standing (while) targets must be the 'self' or 'all' form — %s" % [d])
 
 
@@ -499,15 +497,16 @@ func _validate_grants(d: Dictionary) -> void:
 # its recipient is derivable (the holder's own side via the allegiance anchor), so it
 # authors no target at all (TARGETING_DESIGN.md §2/§10; every authored use was `of: own`).
 func _validate_side_targets(d: Dictionary) -> void:
-	if authored_native_targets and str(_native_targets.get("kind", "")) == "side":
+	var tv: Variant = d.get("targets", null)
+	if tv is Dictionary and str((tv as Dictionary).get("kind", "")) == "side":
 		push_error("Effect: the 'side' target kind is dead — side payloads are targetless — %s" % [d])
 	if not StatMutation.is_side_stat(attribute):
 		return
 	if kind != Kind.TRIGGERED:
 		push_error("Effect: a side stat is only valid on a triggered effect — %s" % [d])
-	# "self" passes as authored: it is the vacuous legacy default to_dict spells out on every
-	# legacy triggered effect, so deck-save round-trips would otherwise flag themselves.
-	if authored_native_targets or not targeting_policy_raw in ["", "self"]:
+	# "self" passes as authored: it is the vacuous legacy default old serializers spelled
+	# out on every legacy triggered effect.
+	if tv is Dictionary or not str(d.get("targeting_policy", "")) in ["", "self"]:
 		push_error("Effect: side stat '%s' is targetless — it authors no targets — %s" % [attribute, d])
 	if not status_id.is_empty():
 		push_error("Effect: a side-stat effect cannot also apply a status — %s" % [d])
@@ -563,13 +562,12 @@ func trigger_resolver() -> TriggerResolver:
 # grammar stays load-validated (mutation-form fencing below) — the LIST is not re-emitted
 # for native effects (the verbatim dict already carries them).
 func _parse_targets(d: Dictionary) -> void:
+	# Targeting itself is uninterpreted (demolished) and never stored — but a native
+	# "targets" dict still carries the effect's CONDITIONS, which the shared predicate
+	# grammar load-validates (mutation-form fencing below).
 	var tv: Variant = d.get("targets", null)
 	if tv is Dictionary:
-		authored_native_targets = true
-		_native_targets = (tv as Dictionary).duplicate(true)
-		conditions = TriggerResolver._parse_conditions(_native_targets.get("conditions", []))
-		return
-	targeting_policy_raw = str(d.get("targeting_policy", ""))
+		conditions = TriggerResolver._parse_conditions((tv as Dictionary).get("conditions", []))
 
 
 # Serialises back to the authored shape. Exercised for persisted (overridden) CARD effects,
@@ -600,12 +598,8 @@ func to_dict() -> Dictionary:
 			}
 			if not material.is_empty():
 				cd["material"] = material
-			# Targeting re-emits VERBATIM (demolition — nothing interprets it, so nothing may
-			# rewrite it). The legacy default "self" is spelled out, matching the old serializer.
-			if authored_native_targets:
-				cd["targets"] = _native_targets.duplicate(true)
-			else:
-				cd["targeting_policy"] = targeting_policy_raw if not targeting_policy_raw.is_empty() else "self"
+			# No targeting is emitted: the old language is forgotten (content stripped, saves
+			# scrubbed); the rebuilt authority's schema is the only targeting ever written again.
 			if not authored_native_trigger and subject_filter != SubjectFilter.SELF:
 				cd["subject"] = subject_key(subject_filter)
 			_eval_out(cd)
@@ -647,13 +641,11 @@ func to_dict() -> Dictionary:
 				# A grant's payload IS the component set — no attribute/amount keys, matching
 				# the authored form byte-faithfully.
 				d["grants"] = grants.duplicate()
-			# Targeting re-emits VERBATIM (demolition — see the CUSTOM branch note).
-			if authored_native_targets:
-				# the verbatim dict owns the conditions in the native form — no top-level copy
-				d["targets"] = _native_targets.duplicate(true)
-			else:
-				d["targeting_policy"] = targeting_policy_raw if not targeting_policy_raw.is_empty() else "self"
-				d["conditions"] = TriggerResolver.conditions_to_dicts(conditions)
+			# No targeting is emitted (see the CUSTOM branch note); conditions keep their
+			# top-level spelling so the predicate grammar round-trips.
+			var tconds := TriggerResolver.conditions_to_dicts(conditions)
+			if not tconds.is_empty():
+				d["conditions"] = tconds
 			if not authored_native_trigger and subject_filter != SubjectFilter.SELF:
 				d["subject"] = subject_key(subject_filter)
 			if not authored_native_trigger and not subject_elements.is_empty():

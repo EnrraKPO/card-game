@@ -7,42 +7,6 @@
 		"color": "fff3b0",
 		"glyph": "◆",
 		"default_duration": 2,
-		"stacking": "refresh",
-		"effects": [
-			{
-				"trigger": {
-					"kind": "while"
-				},
-				"targets": {
-					"kind": "self"
-				},
-				"grants": [
-					"light"
-				]
-			},
-			{
-				"trigger": {
-					"kind": "while"
-				},
-				"targets": {
-					"kind": "self"
-				},
-				"attribute": "speed",
-				"amount": 2
-			},
-			{
-				"trigger": {
-					"kind": "event",
-					"event": "turn_start",
-					"of": "self"
-				},
-				"targets": {
-					"kind": "self"
-				},
-				"attribute": "health",
-				"amount": 1,
-				"eval": { "exposure": -1 }
-			}
-		]
+		"stacking": "refresh"
 	}
 ]

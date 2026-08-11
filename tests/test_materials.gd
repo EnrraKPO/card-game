@@ -89,6 +89,11 @@ func _passes(conds: Array, u: CardInstance) -> bool:
 
 func _eligibility() -> void:
 	var ab := AbilityData.get_ability("pawn_material")
+	# CONTENT FORGOTTEN (effect-cleanse): the material payloads author again in the new
+	# schema; until then these are quarantined failures, not crashes.
+	check(not ab.effects.is_empty(), "pawn_material carries its authored effect")
+	if ab.effects.is_empty():
+		return
 	var conds: Array = (ab.effects[0] as Effect).conditions
 	check(_passes(conds, unit("pawn")),
 			"a 1-piece unit can take a pawn material")
@@ -115,6 +120,9 @@ func _eligibility() -> void:
 
 func _merge() -> void:
 	var ab := AbilityData.get_ability("pawn_material")
+	check(not ab.effects.is_empty(), "pawn_material carries its merge effect")
+	if ab.effects.is_empty():
+		return
 	var holder := unit("rook")   # an ability acts AS its holder
 
 	# A wounded, buffed, statused pawn: everything runtime must survive the merge.

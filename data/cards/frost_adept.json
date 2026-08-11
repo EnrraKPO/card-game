@@ -7,25 +7,5 @@
 	"speed": 4,
 	"description": "A ranged initiate of the winter arts. Chills whoever it strikes.",
 	"enemy_only": true,
-	"ranged": true,
-	"effects": [
-		{
-			"trigger": {
-				"kind": "dual_event",
-				"event": "attack",
-				"origin_conditions": [
-					{
-						"relation": "self"
-					}
-				]
-			},
-			"status": {
-				"id": "chilled"
-			},
-			"targets": {
-				"kind": "participant",
-				"participant": "destination"
-			}
-		}
-	]
+	"ranged": true
 }

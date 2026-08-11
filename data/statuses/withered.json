@@ -8,8 +8,7 @@
 	"default_duration": 3,
 	"stacking": "stack",
 	"max_stacks": 9,
-	"eval": { "exposure": 1 },
-	"effects": [
-		{ "trigger": "on_turn_end", "targeting_policy": "self", "attribute": "health", "amount": -1 }
-	]
+	"eval": {
+		"exposure": 1
+	}
 }

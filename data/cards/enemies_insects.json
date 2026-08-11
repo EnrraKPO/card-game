@@ -2,105 +2,153 @@
   {
     "id": "insect_larva",
     "display_name": "Hive Grub",
-    "cost": 1, "attack": 1, "health": 1, "speed": 1,
+    "cost": 1,
+    "attack": 1,
+    "health": 1,
+    "speed": 1,
     "description": "A squirming morsel of the hive. Individually pathetic. They are never individual.",
-    "enemy_only": true, "tribe": "insect", "elements": [], "chess_pieces": [], "effects": []
+    "enemy_only": true,
+    "tribe": "insect",
+    "elements": [],
+    "chess_pieces": []
   },
   {
     "id": "insect_worker",
     "display_name": "Carapace Worker",
-    "cost": 2, "attack": 1, "health": 4, "speed": 1, "shield": 1,
+    "cost": 2,
+    "attack": 1,
+    "health": 4,
+    "speed": 1,
+    "shield": 1,
     "description": "Built to haul, armored to last. It doesn't fight so much as refuse to stop existing.",
-    "enemy_only": true, "tribe": "insect", "elements": [], "chess_pieces": [], "effects": []
+    "enemy_only": true,
+    "tribe": "insect",
+    "elements": [],
+    "chess_pieces": []
   },
   {
     "id": "insect_vespid",
     "display_name": "Vespid Stinger",
-    "cost": 2, "attack": 3, "health": 1, "speed": 5,
+    "cost": 2,
+    "attack": 3,
+    "health": 1,
+    "speed": 5,
     "description": "A dart with a grudge — leaves 1 Poison in whatever it stings.",
-    "enemy_only": true, "tribe": "insect", "elements": [], "chess_pieces": [],
-    "effects": [
-      { "trigger": "on_attack", "targeting_policy": "attack_target", "named": "venom", "amount": 1 }
-    ]
+    "enemy_only": true,
+    "tribe": "insect",
+    "elements": [],
+    "chess_pieces": []
   },
   {
     "id": "insect_cocoon",
     "display_name": "Sealed Cocoon",
-    "cost": 2, "attack": 0, "health": 3, "speed": 1,
+    "cost": 2,
+    "attack": 0,
+    "health": 3,
+    "speed": 1,
     "description": "It ripens by 1 each round, and whatever's inside comes OUT when the shell breaks — by patience or by blade. Your move.",
-    "enemy_only": true, "tribe": "insect", "elements": [], "chess_pieces": [],
-    "effects": [
-      { "trigger": "on_turn_end", "targeting_policy": "self", "attribute": "health", "amount": -1 },
-      { "trigger": "on_death", "targeting_policy": "self", "spawn": { "id": "insect_vespid", "count": 1 } }
-    ]
+    "enemy_only": true,
+    "tribe": "insect",
+    "elements": [],
+    "chess_pieces": []
   },
   {
     "id": "insect_beetle",
     "display_name": "Bombardier Beetle",
-    "cost": 3, "attack": 2, "health": 5, "speed": 2,
+    "cost": 3,
+    "attack": 2,
+    "health": 5,
+    "speed": 2,
     "description": "Pressurized and rude about it: vents a scalding acid burst on death, 2 damage to every opposing unit.",
-    "enemy_only": true, "tribe": "insect", "elements": [], "chess_pieces": [],
-    "effects": [
-      { "trigger": "on_death", "targeting_policy": "all_enemies", "attribute": "damage_taken", "amount": 2 }
-    ]
+    "enemy_only": true,
+    "tribe": "insect",
+    "elements": [],
+    "chess_pieces": []
   },
   {
     "id": "insect_locust",
     "display_name": "Locust Chorus",
-    "cost": 3, "attack": 2, "health": 3, "speed": 3,
+    "cost": 3,
+    "attack": 2,
+    "health": 3,
+    "speed": 3,
     "description": "The hum gets into everything: allied units move +1 <speed> while the chorus lives.",
-    "enemy_only": true, "tribe": "insect", "elements": [], "chess_pieces": [],
-    "effects": [
-      { "trigger": { "kind": "while" }, "targets": { "kind": "all", "conditions": [ { "allegiance": "ally" } ] },
-        "attribute": "speed", "amount": 1 }
-    ]
+    "enemy_only": true,
+    "tribe": "insect",
+    "elements": [],
+    "chess_pieces": []
   },
   {
     "id": "insect_mantis",
     "display_name": "Scythe Mantis",
-    "cost": 4, "attack": 3, "health": 3, "speed": 4, "strikes": 2,
+    "cost": 4,
+    "attack": 3,
+    "health": 3,
+    "speed": 4,
+    "strikes": 2,
     "description": "Two scythes, two reapings — strikes twice every round.",
-    "enemy_only": true, "tribe": "insect", "elements": [], "chess_pieces": [], "effects": []
+    "enemy_only": true,
+    "tribe": "insect",
+    "elements": [],
+    "chess_pieces": []
   },
   {
     "id": "insect_broodmother",
     "display_name": "Broodmother",
-    "cost": 5, "attack": 2, "health": 7, "speed": 1,
+    "cost": 5,
+    "attack": 2,
+    "health": 7,
+    "speed": 1,
     "description": "The conveyor belt of the hive: births a Hive Grub at every round's end.",
-    "enemy_only": true, "tribe": "insect", "elements": [], "chess_pieces": [],
-    "effects": [
-      { "trigger": "on_turn_end", "targeting_policy": "self", "spawn": { "id": "insect_larva", "count": 1 } }
-    ]
+    "enemy_only": true,
+    "tribe": "insect",
+    "elements": [],
+    "chess_pieces": []
   },
   {
     "id": "insect_hive_tyrant",
     "display_name": "Vrix, Hive Tyrant",
-    "cost": 0, "attack": 1, "health": 14, "speed": 2, "shield": 3,
-    "is_king": true, "enemy_only": true, "tribe": "insect",
+    "cost": 0,
+    "attack": 1,
+    "health": 14,
+    "speed": 2,
+    "shield": 3,
+    "is_king": true,
+    "enemy_only": true,
+    "tribe": "insect",
     "description": "The hive's will on six legs. Extrudes a fresh Hive Grub at every round's end. Crush him to win.",
-    "elements": [], "chess_pieces": [],
-    "effects": [
-      { "trigger": "on_turn_end", "targeting_policy": "self", "spawn": { "id": "insect_larva", "count": 1 } }
-    ]
+    "elements": [],
+    "chess_pieces": []
   },
   {
     "id": "insect_mantis_prime",
     "display_name": "Mantis Prime",
-    "cost": 0, "attack": 2, "health": 17, "speed": 4, "shield": 2, "strikes": 2,
-    "is_king": true, "enemy_only": true, "tribe": "insect",
+    "cost": 0,
+    "attack": 2,
+    "health": 17,
+    "speed": 4,
+    "shield": 2,
+    "strikes": 2,
+    "is_king": true,
+    "enemy_only": true,
+    "tribe": "insect",
     "description": "The perfected blade the hive keeps for special occasions. Strikes twice a round, each on a fresh victim. Break it to win.",
-    "elements": [], "chess_pieces": [],
-    "effects": []
+    "elements": [],
+    "chess_pieces": []
   },
   {
     "id": "insect_hive_queen",
     "display_name": "Zellixa, the Hive Queen",
-    "cost": 0, "attack": 3, "health": 15, "speed": 2, "shield": 5,
-    "is_king": true, "enemy_only": true, "tribe": "insect",
+    "cost": 0,
+    "attack": 3,
+    "health": 15,
+    "speed": 2,
+    "shield": 5,
+    "is_king": true,
+    "enemy_only": true,
+    "tribe": "insect",
     "description": "Mother of every chitinous thing on this map. Lays a Sealed Cocoon at every round's end — deal with them early or meet what hatches. Slay her to win.",
-    "elements": [], "chess_pieces": [],
-    "effects": [
-      { "trigger": "on_turn_end", "targeting_policy": "self", "spawn": { "id": "insect_cocoon", "count": 1 } }
-    ]
+    "elements": [],
+    "chess_pieces": []
   }
 ]

@@ -6,8 +6,5 @@
 	"color": "e0a93b",
 	"glyph": "↑",
 	"default_duration": 2,
-	"stacking": "refresh",
-	"effects": [
-		{ "kind": "modifier", "key": "unit.attack", "amount": 2 }
-	]
+	"stacking": "refresh"
 }

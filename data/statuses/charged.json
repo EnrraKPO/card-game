@@ -7,21 +7,5 @@
 	"glyph": "✦",
 	"decay": "stacks",
 	"stacking": "stack",
-	"max_stacks": 9,
-	"effects": [
-		{
-			"trigger": { "kind": "while" },
-			"targets": { "kind": "self" },
-			"tracker": { "kind": "stacks" },
-			"attribute": "attack",
-			"amount": 1
-		},
-		{
-			"trigger": { "kind": "while" },
-			"targets": { "kind": "self" },
-			"tracker": { "kind": "stacks" },
-			"attribute": "speed",
-			"amount": 1
-		}
-	]
+	"max_stacks": 9
 }

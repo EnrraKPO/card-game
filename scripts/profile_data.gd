@@ -62,6 +62,16 @@ var quick_merge_ack: bool = false
 # lose a card — so unlike quick_merge it needs no acknowledgement, just a switch.
 var quick_preview: bool = false
 
+# The effect-cleanse divide (2026-08-11): schema-1 saves carry old-language effect dicts
+# inside card overrides and charm patches. Those payloads are FORGOTTEN, never migrated —
+# a schema-1 profile loads with every deck card's override and charms scrubbed, and the
+# caller discards the slot's in-flight run (see GameData.select_slot). Bump this when a
+# future divide needs the same ritual.
+const EFFECT_SCHEMA := 2
+var effect_schema: int = EFFECT_SCHEMA
+# Transient load fact (never serialized): this profile crossed the divide just now.
+var effect_scrubbed := false
+
 
 static func create_default() -> ProfileData:
 	var p := ProfileData.new()
@@ -125,6 +135,16 @@ static func from_dict(data: Dictionary) -> ProfileData:
 			if od.king_id == STARTING_KING:
 				od.is_base_template = true
 				break
+	# The effect-cleanse divide: a pre-divide save's overrides/charms speak the forgotten
+	# language — scrub them (cards revert to their registered base defs).
+	p.effect_schema = int(data.get("effect_schema", 1))
+	if p.effect_schema < EFFECT_SCHEMA:
+		for od: OwnedDeck in p.decks:
+			for dc: DeckCard in od.cards:
+				dc.override = {}
+				dc.charms = []
+		p.effect_schema = EFFECT_SCHEMA
+		p.effect_scrubbed = true
 	return p
 
 
@@ -148,6 +168,7 @@ func to_dict() -> Dictionary:
 		"quick_merge":           quick_merge,
 		"quick_merge_ack":       quick_merge_ack,
 		"quick_preview":         quick_preview,
+		"effect_schema":         effect_schema,
 	}
 
 

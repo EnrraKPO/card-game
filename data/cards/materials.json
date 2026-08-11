@@ -10,15 +10,7 @@
 		"elements": [
 			"fire"
 		],
-		"chess_pieces": [],
-		"effects": [
-			{
-				"trigger": "on_play",
-				"targeting_policy": "manual",
-				"attribute": "damage_taken",
-				"amount": 3
-			}
-		]
+		"chess_pieces": []
 	},
 	{
 		"id": "water",
@@ -31,15 +23,7 @@
 		"elements": [
 			"water"
 		],
-		"chess_pieces": [],
-		"effects": [
-			{
-				"trigger": "on_play",
-				"targeting_policy": "manual",
-				"attribute": "health",
-				"amount": 4
-			}
-		]
+		"chess_pieces": []
 	},
 	{
 		"id": "air",
@@ -52,15 +36,7 @@
 		"elements": [
 			"air"
 		],
-		"chess_pieces": [],
-		"effects": [
-			{
-				"trigger": "on_play",
-				"targeting_policy": "manual",
-				"attribute": "speed",
-				"amount": 2
-			}
-		]
+		"chess_pieces": []
 	},
 	{
 		"id": "earth",
@@ -73,21 +49,7 @@
 		"elements": [
 			"earth"
 		],
-		"chess_pieces": [],
-		"effects": [
-			{
-				"trigger": {
-					"kind": "event",
-					"event": "play",
-					"of": "self"
-				},
-				"targets": {
-					"kind": "manual"
-				},
-				"attribute": "shield",
-				"amount": 3
-			}
-		]
+		"chess_pieces": []
 	},
 	{
 		"id": "darkness",
@@ -100,30 +62,7 @@
 		"elements": [
 			"darkness"
 		],
-		"chess_pieces": [],
-		"effects": [
-			{
-				"trigger": {
-					"kind": "event",
-					"event": "play",
-					"of": "self"
-				},
-				"targets": {
-					"kind": "manual"
-				},
-				"attribute": "health",
-				"amount": -6
-			},
-			{
-				"trigger": {
-					"kind": "event",
-					"event": "play",
-					"of": "self"
-				},
-				"attribute": "draw",
-				"amount": 1
-			}
-		]
+		"chess_pieces": []
 	},
 	{
 		"id": "light",
@@ -136,18 +75,7 @@
 		"elements": [
 			"light"
 		],
-		"chess_pieces": [],
-		"effects": [
-			{
-				"trigger": {
-					"kind": "event",
-					"event": "play",
-					"of": "self"
-				},
-				"attribute": "mana",
-				"amount": 1
-			}
-		]
+		"chess_pieces": []
 	},
 	{
 		"id": "pawn",

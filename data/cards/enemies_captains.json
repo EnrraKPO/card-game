@@ -23,26 +23,7 @@
 		"shield": 3,
 		"description": "The horde's dark master. He knits himself back together with every strike â€” destroy him to win. Starts each round with 3 <shield>.",
 		"is_king": true,
-		"enemy_only": true,
-		"effects": [
-			{
-				"trigger": {
-					"kind": "dual_event",
-					"event": "attack",
-					"origin_conditions": [
-						{
-							"relation": "self"
-						}
-					]
-				},
-				"attribute": "health",
-				"amount": 2,
-				"targets": {
-					"kind": "participant",
-					"participant": "holder"
-				}
-			}
-		]
+		"enemy_only": true
 	},
 	{
 		"id": "stoneborn_warlord",

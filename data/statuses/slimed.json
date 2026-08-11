@@ -8,9 +8,5 @@
   "default_duration": 2,
   "decay": "duration",
   "stacking": "stack",
-  "max_stacks": 5,
-  "effects": [
-    { "trigger": { "kind": "while" }, "targets": { "kind": "self" },
-      "tracker": { "kind": "stacks" }, "attribute": "speed", "amount": -1 }
-  ]
+  "max_stacks": 5
 }

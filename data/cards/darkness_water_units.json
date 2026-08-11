@@ -15,21 +15,6 @@
 		"chess_pieces": [
 			"pawn"
 		],
-		"effects": [
-			{
-				"trigger": {
-					"kind": "dual_event",
-					"event": "attack",
-					"origin_of": "self"
-				},
-				"named": "venom",
-				"amount": 1,
-				"targets": {
-					"kind": "participant",
-					"participant": "destination"
-				}
-			}
-		],
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -70,21 +55,6 @@
 		],
 		"chess_pieces": [
 			"knight"
-		],
-		"effects": [
-			{
-				"trigger": {
-					"kind": "dual_event",
-					"event": "attack",
-					"origin_of": "self"
-				},
-				"named": "venom",
-				"amount": 1,
-				"targets": {
-					"kind": "participant",
-					"participant": "destination"
-				}
-			}
 		],
 		"tool": {
 			"art": {
@@ -128,21 +98,6 @@
 			"bishop"
 		],
 		"ranged": true,
-		"effects": [
-			{
-				"trigger": {
-					"kind": "dual_event",
-					"event": "attack",
-					"origin_of": "self"
-				},
-				"named": "venom",
-				"amount": 1,
-				"targets": {
-					"kind": "participant",
-					"participant": "destination"
-				}
-			}
-		],
 		"abilities": [
 			"heal"
 		],
@@ -182,21 +137,6 @@
 			"rook"
 		],
 		"ranged": true,
-		"effects": [
-			{
-				"trigger": {
-					"kind": "dual_event",
-					"event": "attack",
-					"origin_of": "self"
-				},
-				"named": "venom",
-				"amount": 1,
-				"targets": {
-					"kind": "participant",
-					"participant": "destination"
-				}
-			}
-		],
 		"abilities": [
 			"blight_material"
 		],
@@ -236,21 +176,6 @@
 			"queen"
 		],
 		"ranged": true,
-		"effects": [
-			{
-				"trigger": {
-					"kind": "dual_event",
-					"event": "attack",
-					"origin_of": "self"
-				},
-				"named": "venom",
-				"amount": 1,
-				"targets": {
-					"kind": "participant",
-					"participant": "destination"
-				}
-			}
-		],
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -286,21 +211,6 @@
 		"chess_pieces": [
 			"pawn",
 			"pawn"
-		],
-		"effects": [
-			{
-				"trigger": {
-					"kind": "dual_event",
-					"event": "attack",
-					"origin_of": "self"
-				},
-				"named": "venom",
-				"amount": 1,
-				"targets": {
-					"kind": "participant",
-					"participant": "destination"
-				}
-			}
 		],
 		"tool": {
 			"art": {
@@ -338,21 +248,6 @@
 			"knight",
 			"pawn"
 		],
-		"effects": [
-			{
-				"trigger": {
-					"kind": "dual_event",
-					"event": "attack",
-					"origin_of": "self"
-				},
-				"named": "venom",
-				"amount": 1,
-				"targets": {
-					"kind": "participant",
-					"participant": "destination"
-				}
-			}
-		],
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -388,21 +283,6 @@
 		"chess_pieces": [
 			"bishop",
 			"pawn"
-		],
-		"effects": [
-			{
-				"trigger": {
-					"kind": "dual_event",
-					"event": "attack",
-					"origin_of": "self"
-				},
-				"named": "venom",
-				"amount": 1,
-				"targets": {
-					"kind": "participant",
-					"participant": "destination"
-				}
-			}
 		],
 		"abilities": [
 			"heal"
@@ -444,21 +324,6 @@
 			"rook"
 		],
 		"ranged": true,
-		"effects": [
-			{
-				"trigger": {
-					"kind": "dual_event",
-					"event": "attack",
-					"origin_of": "self"
-				},
-				"named": "venom",
-				"amount": 1,
-				"targets": {
-					"kind": "participant",
-					"participant": "destination"
-				}
-			}
-		],
 		"abilities": [
 			"darkness_pawn_material",
 			"water_pawn_material"
@@ -499,21 +364,6 @@
 			"pawn",
 			"queen"
 		],
-		"effects": [
-			{
-				"trigger": {
-					"kind": "dual_event",
-					"event": "attack",
-					"origin_of": "self"
-				},
-				"named": "venom",
-				"amount": 1,
-				"targets": {
-					"kind": "participant",
-					"participant": "destination"
-				}
-			}
-		],
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -550,21 +400,6 @@
 			"knight",
 			"knight"
 		],
-		"effects": [
-			{
-				"trigger": {
-					"kind": "dual_event",
-					"event": "attack",
-					"origin_of": "self"
-				},
-				"named": "venom",
-				"amount": 1,
-				"targets": {
-					"kind": "participant",
-					"participant": "destination"
-				}
-			}
-		],
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -600,34 +435,6 @@
 		"chess_pieces": [
 			"bishop",
 			"knight"
-		],
-		"effects": [
-			{
-				"trigger": {
-					"kind": "dual_event",
-					"event": "attack",
-					"origin_of": "self"
-				},
-				"named": "venom",
-				"amount": 2,
-				"targets": {
-					"kind": "participant",
-					"participant": "destination"
-				}
-			},
-			{
-				"trigger": {
-					"kind": "dual_event",
-					"event": "struck",
-					"destination_of": "self"
-				},
-				"targets": {
-					"kind": "participant",
-					"participant": "origin"
-				},
-				"named": "venom",
-				"amount": 2
-			}
 		],
 		"abilities": [
 			"heal"
@@ -669,21 +476,6 @@
 			"rook"
 		],
 		"ranged": true,
-		"effects": [
-			{
-				"trigger": {
-					"kind": "dual_event",
-					"event": "attack",
-					"origin_of": "self"
-				},
-				"named": "venom",
-				"amount": 1,
-				"targets": {
-					"kind": "participant",
-					"participant": "destination"
-				}
-			}
-		],
 		"abilities": [
 			"darkness_knight_material",
 			"water_knight_material"
@@ -724,21 +516,6 @@
 			"knight",
 			"queen"
 		],
-		"effects": [
-			{
-				"trigger": {
-					"kind": "dual_event",
-					"event": "attack",
-					"origin_of": "self"
-				},
-				"named": "venom",
-				"amount": 1,
-				"targets": {
-					"kind": "participant",
-					"participant": "destination"
-				}
-			}
-		],
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -776,21 +553,6 @@
 			"bishop"
 		],
 		"ranged": true,
-		"effects": [
-			{
-				"trigger": {
-					"kind": "dual_event",
-					"event": "attack",
-					"origin_of": "self"
-				},
-				"named": "venom",
-				"amount": 1,
-				"targets": {
-					"kind": "participant",
-					"participant": "destination"
-				}
-			}
-		],
 		"abilities": [
 			"heal"
 		],
@@ -831,21 +593,6 @@
 			"rook"
 		],
 		"ranged": true,
-		"effects": [
-			{
-				"trigger": {
-					"kind": "dual_event",
-					"event": "attack",
-					"origin_of": "self"
-				},
-				"named": "venom",
-				"amount": 1,
-				"targets": {
-					"kind": "participant",
-					"participant": "destination"
-				}
-			}
-		],
 		"abilities": [
 			"darkness_bishop_material",
 			"water_bishop_material"
@@ -885,21 +632,6 @@
 		"chess_pieces": [
 			"bishop",
 			"queen"
-		],
-		"effects": [
-			{
-				"trigger": {
-					"kind": "dual_event",
-					"event": "attack",
-					"origin_of": "self"
-				},
-				"named": "venom",
-				"amount": 1,
-				"targets": {
-					"kind": "participant",
-					"participant": "destination"
-				}
-			}
 		],
 		"abilities": [
 			"heal"
@@ -941,21 +673,6 @@
 			"rook"
 		],
 		"ranged": true,
-		"effects": [
-			{
-				"trigger": {
-					"kind": "dual_event",
-					"event": "attack",
-					"origin_of": "self"
-				},
-				"named": "venom",
-				"amount": 1,
-				"targets": {
-					"kind": "participant",
-					"participant": "destination"
-				}
-			}
-		],
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -993,21 +710,6 @@
 			"rook"
 		],
 		"ranged": true,
-		"effects": [
-			{
-				"trigger": {
-					"kind": "dual_event",
-					"event": "attack",
-					"origin_of": "self"
-				},
-				"named": "venom",
-				"amount": 1,
-				"targets": {
-					"kind": "participant",
-					"participant": "destination"
-				}
-			}
-		],
 		"abilities": [
 			"darkness_queen_material",
 			"water_queen_material"
@@ -1047,21 +749,6 @@
 		"chess_pieces": [
 			"queen",
 			"queen"
-		],
-		"effects": [
-			{
-				"trigger": {
-					"kind": "dual_event",
-					"event": "attack",
-					"origin_of": "self"
-				},
-				"named": "venom",
-				"amount": 1,
-				"targets": {
-					"kind": "participant",
-					"participant": "destination"
-				}
-			}
 		],
 		"tool": {
 			"art": {

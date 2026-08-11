@@ -10,25 +10,8 @@
 		"decay": "intercept",
 		"stacking": "stack",
 		"max_stacks": 9,
-		"eval": { "exposure": -2 },
-		"effects": [
-			{
-				"intercept": "damage",
-				"channel": "attack",
-				"role": "target",
-				"op": "mul",
-				"amount": 0
-			},
-			{
-				"trigger": {
-					"kind": "while"
-				},
-				"targets": {
-					"kind": "self"
-				},
-				"attribute": "attack",
-				"amount": 1
-			}
-		]
+		"eval": {
+			"exposure": -2
+		}
 	}
 ]

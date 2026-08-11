@@ -9,8 +9,7 @@
 	"decay_phase": "act",
 	"stacking": "stack",
 	"max_stacks": 99,
-	"eval": { "exposure": 1 },
-	"effects": [
-		{ "trigger": "on_activate", "targeting_policy": "self", "attribute": "health", "amount": -1 }
-	]
+	"eval": {
+		"exposure": 1
+	}
 }

@@ -399,7 +399,6 @@
 			"king"
 		],
 		"description": "Ruler of <darkness> and <light>. If the <king> falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 <shield>.",
-		"effects": [],
 		"tool": {
 			"art": {
 				"prompt": "Chibi skeletal monarch looking right, cracked bone crown with teal gemstone, weathered black iron plate armor, tattered charcoal cloak, gripping a bone scepter and skull-embossed shield, glowing cyan eyes, standing on an arcane circle in a gothic graveyard, eerie teal lighting, detailed digital fantasy painting",
@@ -436,21 +435,6 @@
 			"king"
 		],
 		"is_king": true,
-		"effects": [
-			{
-				"trigger": {
-					"kind": "dual_event",
-					"event": "attack",
-					"origin_of": "self"
-				},
-				"named": "venom",
-				"amount": 1,
-				"targets": {
-					"kind": "participant",
-					"participant": "destination"
-				}
-			}
-		],
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -529,7 +513,6 @@
 			"king"
 		],
 		"description": "Ruler of <fire> and <earth>. If the <king> falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 <shield>.",
-		"effects": [],
 		"tool": {
 			"art": {
 				"prompt": "Chibi sovereign looking right, crown of jagged obsidian with a glowing red core, scepter of solidified magma, shield of cooling basalt with flowing orange veins, robes of liquid lava and dark volcanic rock, thick beard of molten slag, standing on scorched earth, deep crimson and gold palette, stylized fantasy digital art",
@@ -685,7 +668,6 @@
 			"king"
 		],
 		"description": "Ruler of <fire> and <light>. If the <king> falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 <shield>.",
-		"effects": [],
 		"tool": {
 			"art": {
 				"prompt": "chibi royal figure looking right, crown of cobalt fire, scepter of flickering blue flames, ornate polished silver armor with luminous sapphire accents, heavy cloak of shimmering midnight silk, dark void background, intense cool blue rim lighting, vibrant spectral glow, painterly digital fantasy art, full-body centered composition",
@@ -722,7 +704,6 @@
 			"king"
 		],
 		"description": "Ruler of <fire> and <water>. If the <king> falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 <shield>.",
-		"effects": [],
 		"tool": {
 			"art": {
 				"prompt": "chibi royal figure looking right, ornate brass gear crown venting white vapor, copper plated armor with glowing orange furnace vents, holding a mechanical scepter and riveted metal shield, bold outlines, painterly cartoon style, warm gold and teal palette, pastel pink sky background with distant metallic spires, soft cinematic lighting",
@@ -795,7 +776,6 @@
 			"king"
 		],
 		"description": "Ruler of <light> and <water>. If the <king> falls, the battle is lost. Attacks the nearest enemy. Starts each round with 5 <shield>.",
-		"effects": [],
 		"tool": {
 			"art": {
 				"prompt": "Chibi royal figure looking right, iridescent prismatic armor, flowing holographic cloak, faceted rainbow gemstone crown, holding a crystalline scepter and a shimmering translucent shield, bold black outlines, glowing white eyes, sparkling refraction flares, soft pastel background, reflective floor, luminous multicolored palette, clean stylized cel-shaded illustration",

@@ -15,30 +15,6 @@
 			"bishop"
 		],
 		"ranged": true,
-		"effects": [
-			{
-				"trigger": {
-					"kind": "event",
-					"event": "turn_start",
-					"of": "self"
-				},
-				"targets": {
-					"kind": "all",
-					"conditions": [
-						{
-							"allegiance": "ally"
-						},
-						{
-							"composition": [
-								"water"
-							]
-						}
-					]
-				},
-				"attribute": "health",
-				"amount": 2
-			}
-		],
 		"abilities": [
 			"heal"
 		],

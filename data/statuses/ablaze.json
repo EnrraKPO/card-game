@@ -7,14 +7,14 @@
 	"glyph": "🔥",
 	"decay": "none",
 	"stacking": "stack",
-	"spread": { "phase": "turn_start", "chance": 0.3333, "decay_chance": 0.6667, "to": "ground", "status": "burning" },
-	"eval": { "exposure": 0.25 },
-	"effects": [
-		{
-			"trigger": { "kind": "event", "event": "turn_end" },
-			"targets": { "kind": "self" },
-			"named": "burn",
-			"eval": { "exposure": 1 }
-		}
-	]
+	"spread": {
+		"phase": "turn_start",
+		"chance": 0.3333,
+		"decay_chance": 0.6667,
+		"to": "ground",
+		"status": "burning"
+	},
+	"eval": {
+		"exposure": 0.25
+	}
 }

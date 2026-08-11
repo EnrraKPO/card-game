@@ -7,29 +7,6 @@
 		"color": "bfe8e0",
 		"glyph": "◆",
 		"stacking": "refresh",
-		"default_duration": 2,
-		"effects": [
-			{
-				"trigger": {
-					"kind": "while"
-				},
-				"targets": {
-					"kind": "self"
-				},
-				"attribute": "speed",
-				"amount": 4
-			},
-			{
-				"trigger": {
-					"kind": "while"
-				},
-				"targets": {
-					"kind": "self"
-				},
-				"grants": [
-					"air"
-				]
-			}
-		]
+		"default_duration": 2
 	}
 ]

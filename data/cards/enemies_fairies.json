@@ -2,85 +2,110 @@
   {
     "id": "fairy_sprite",
     "display_name": "Giggling Sprite",
-    "cost": 1, "attack": 1, "health": 1, "speed": 6,
+    "cost": 1,
+    "attack": 1,
+    "health": 1,
+    "speed": 6,
     "description": "Mostly giggle, barely substance (+30% dodge).",
-    "enemy_only": true, "tribe": "fairy", "elements": [], "chess_pieces": [],
-    "effects": [
-      { "trigger": { "kind": "while" }, "targets": { "kind": "self" }, "attribute": "dodge_bonus", "amount": 30 }
-    ]
+    "enemy_only": true,
+    "tribe": "fairy",
+    "elements": [],
+    "chess_pieces": []
   },
   {
     "id": "fairy_dustling",
     "display_name": "Dustling",
-    "cost": 2, "attack": 1, "health": 2, "speed": 5,
+    "cost": 2,
+    "attack": 1,
+    "health": 2,
+    "speed": 5,
     "description": "Throws sleep-dust in arriving guests' eyes: Blinds the nearest foe (50% miss, 2 attacks).",
-    "enemy_only": true, "tribe": "fairy", "elements": [], "chess_pieces": [],
-    "effects": [
-      { "trigger": "on_play", "targeting_policy": "single_nearest", "named": "blind", "amount": 2 }
-    ]
+    "enemy_only": true,
+    "tribe": "fairy",
+    "elements": [],
+    "chess_pieces": []
   },
   {
     "id": "fairy_thornwisp",
     "display_name": "Thornwisp",
-    "cost": 2, "attack": 2, "health": 2, "speed": 4,
+    "cost": 2,
+    "attack": 2,
+    "health": 2,
+    "speed": 4,
     "description": "A rose with opinions: whoever it pricks is left with 1 Poison.",
-    "enemy_only": true, "tribe": "fairy", "elements": [], "chess_pieces": [],
-    "effects": [
-      { "trigger": "on_attack", "targeting_policy": "attack_target", "named": "venom", "amount": 1 }
-    ]
+    "enemy_only": true,
+    "tribe": "fairy",
+    "elements": [],
+    "chess_pieces": []
   },
   {
     "id": "fairy_glimmer",
     "display_name": "Glimmer Chanter",
-    "cost": 3, "attack": 1, "health": 3, "speed": 4,
+    "cost": 3,
+    "attack": 1,
+    "health": 3,
+    "speed": 4,
     "description": "Sings the glade's blessing: a Barrier over the ally who needs it most... or whoever's prettiest.",
-    "enemy_only": true, "tribe": "fairy", "elements": [], "chess_pieces": [],
-    "effects": [
-      { "trigger": "on_play",
-        "targets": { "kind": "auto", "criterion": "random", "count": 1, "conditions": [ { "allegiance": "ally" }, { "status": "barrier", "present": false } ] },
-        "status": { "id": "barrier", "stacks": 1 } }
-    ]
+    "enemy_only": true,
+    "tribe": "fairy",
+    "elements": [],
+    "chess_pieces": []
   },
   {
     "id": "fairy_puck",
     "display_name": "Puck of the Crossed Paths",
-    "cost": 4, "attack": 3, "health": 3, "speed": 5,
+    "cost": 4,
+    "attack": 3,
+    "health": 3,
+    "speed": 5,
     "description": "His pranks are load-bearing: steals 1 <speed> with every strike and never stops smiling.",
-    "enemy_only": true, "tribe": "fairy", "elements": [], "chess_pieces": [],
-    "effects": [
-      { "trigger": "on_attack", "targeting_policy": "attack_target", "attribute": "speed", "amount": -1 },
-      { "trigger": "on_attack", "targeting_policy": "self", "attribute": "speed", "amount": 1 }
-    ]
+    "enemy_only": true,
+    "tribe": "fairy",
+    "elements": [],
+    "chess_pieces": []
   },
   {
     "id": "fairy_oakguard",
     "display_name": "Oakguard Bruiser",
-    "cost": 5, "attack": 4, "health": 8, "speed": 1, "shield": 2,
+    "cost": 5,
+    "attack": 4,
+    "health": 8,
+    "speed": 1,
+    "shield": 2,
     "description": "Technically a fairy. Practically a tree that took offense.",
-    "enemy_only": true, "tribe": "fairy", "elements": [], "chess_pieces": [], "effects": []
+    "enemy_only": true,
+    "tribe": "fairy",
+    "elements": [],
+    "chess_pieces": []
   },
   {
     "id": "fairy_queen_mab",
     "display_name": "Queen Mab of the Hollow",
-    "cost": 0, "attack": 1, "health": 13, "speed": 5, "shield": 3,
-    "is_king": true, "enemy_only": true, "tribe": "fairy",
+    "cost": 0,
+    "attack": 1,
+    "health": 13,
+    "speed": 5,
+    "shield": 3,
+    "is_king": true,
+    "enemy_only": true,
+    "tribe": "fairy",
     "description": "Her court finds you HILARIOUS. Dodges a third of all blows and Blinds whoever dares strike her. Catch her to win.",
-    "elements": [], "chess_pieces": [],
-    "effects": [
-      { "trigger": { "kind": "while" }, "targets": { "kind": "self" }, "attribute": "dodge_bonus", "amount": 33 },
-      { "trigger": "on_damage_taken", "targeting_policy": "attacker", "named": "blind", "amount": 1 }
-    ]
+    "elements": [],
+    "chess_pieces": []
   },
   {
     "id": "fairy_erlking",
     "display_name": "The Erlking",
-    "cost": 0, "attack": 2, "health": 18, "speed": 4, "shield": 4,
-    "is_king": true, "enemy_only": true, "tribe": "fairy",
+    "cost": 0,
+    "attack": 2,
+    "health": 18,
+    "speed": 4,
+    "shield": 4,
+    "is_king": true,
+    "enemy_only": true,
+    "tribe": "fairy",
     "description": "The old crown of the wild hunt. Every strike of his antlered lance saps 1 <speed>, and the forest keeps him laughing past a quarter of your blows. End the hunt to win.",
-    "elements": [], "chess_pieces": [],
-    "effects": [
-      { "trigger": { "kind": "while" }, "targets": { "kind": "self" }, "attribute": "dodge_bonus", "amount": 25 },
-      { "trigger": "on_attack", "targeting_policy": "attack_target", "attribute": "speed", "amount": -1 }
-    ]
+    "elements": [],
+    "chess_pieces": []
   }
 ]

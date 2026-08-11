@@ -7,39 +7,6 @@
 		"color": "7a3dcc",
 		"glyph": "◆",
 		"stacking": "refresh",
-		"default_duration": 2,
-		"effects": [
-			{
-				"trigger": {
-					"kind": "while"
-				},
-				"targets": {
-					"kind": "self"
-				},
-				"grants": [
-					"darkness"
-				]
-			},
-			{
-				"trigger": {
-					"kind": "while"
-				},
-				"targets": {
-					"kind": "self"
-				},
-				"attribute": "attack",
-				"amount": 1
-			},
-			{
-				"trigger": {
-					"kind": "while"
-				},
-				"targets": {
-					"kind": "self"
-				},
-				"attribute": "shield",
-				"amount": 1
-			}
-		]
+		"default_duration": 2
 	}
 ]

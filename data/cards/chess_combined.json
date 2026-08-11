@@ -24,26 +24,6 @@
 			"bishop",
 			"pawn"
 		],
-		"effects": [
-			{
-				"trigger": {
-					"kind": "dual_event",
-					"event": "attack",
-					"origin_of": "self"
-				},
-				"targets": {
-					"kind": "auto",
-					"criterion": "random",
-					"conditions": [
-						{
-							"allegiance": "enemy"
-						}
-					]
-				},
-				"attribute": "health",
-				"amount": -1
-			}
-		],
 		"abilities": [
 			"heal"
 		]
@@ -90,48 +70,6 @@
 			"pawn",
 			"queen"
 		],
-		"effects": [
-			{
-				"trigger": {
-					"kind": "while"
-				},
-				"targets": {
-					"kind": "all",
-					"conditions": [
-						{
-							"allegiance": "ally"
-						},
-						{
-							"composition": [
-								"pawn"
-							]
-						}
-					]
-				},
-				"attribute": "attack",
-				"amount": 1
-			},
-			{
-				"trigger": {
-					"kind": "while"
-				},
-				"targets": {
-					"kind": "all",
-					"conditions": [
-						{
-							"allegiance": "ally"
-						},
-						{
-							"composition": [
-								"pawn"
-							]
-						}
-					]
-				},
-				"attribute": "speed",
-				"amount": 1
-			}
-		],
 		"abilities": [
 			"rally"
 		]
@@ -147,20 +85,6 @@
 		"chess_pieces": [
 			"knight",
 			"knight"
-		],
-		"effects": [
-			{
-				"trigger": {
-					"kind": "dual_event",
-					"event": "attack",
-					"origin_of": "self"
-				},
-				"attribute": "attack",
-				"amount": 1,
-				"targets": {
-					"kind": "self"
-				}
-			}
 		]
 	},
 	{
@@ -174,26 +98,6 @@
 		"chess_pieces": [
 			"bishop",
 			"knight"
-		],
-		"effects": [
-			{
-				"trigger": {
-					"kind": "dual_event",
-					"event": "attack",
-					"origin_of": "self"
-				},
-				"targets": {
-					"kind": "auto",
-					"criterion": "random",
-					"conditions": [
-						{
-							"allegiance": "ally"
-						}
-					]
-				},
-				"attribute": "health",
-				"amount": 1
-			}
 		],
 		"abilities": [
 			"heal"
@@ -210,20 +114,6 @@
 		"chess_pieces": [
 			"knight",
 			"queen"
-		],
-		"effects": [
-			{
-				"trigger": {
-					"kind": "dual_event",
-					"event": "attack",
-					"origin_of": "self"
-				},
-				"targets": {
-					"kind": "self"
-				},
-				"attribute": "health",
-				"amount": 2
-			}
 		]
 	},
 	{
@@ -240,27 +130,6 @@
 			"rook"
 		],
 		"ranged": true,
-		"effects": [
-			{
-				"trigger": {
-					"kind": "dual_event",
-					"event": "struck",
-					"destination_of": "self"
-				},
-				"targets": {
-					"kind": "self",
-					"conditions": [
-						{
-							"attribute": "health",
-							"comparator": "lte",
-							"value": 4
-						}
-					]
-				},
-				"attribute": "attack",
-				"amount": 2
-			}
-		],
 		"abilities": [
 			"castling",
 			"knight_material"
@@ -278,25 +147,6 @@
 			"bishop"
 		],
 		"ranged": true,
-		"effects": [
-			{
-				"trigger": {
-					"kind": "event",
-					"event": "play",
-					"of": "self"
-				},
-				"attribute": "damage_taken",
-				"amount": 1,
-				"targets": {
-					"kind": "all",
-					"conditions": [
-						{
-							"allegiance": "enemy"
-						}
-					]
-				}
-			}
-		],
 		"abilities": [
 			"heal"
 		]
@@ -315,25 +165,6 @@
 			"rook"
 		],
 		"ranged": true,
-		"effects": [
-			{
-				"trigger": {
-					"kind": "event",
-					"event": "play",
-					"of": "self"
-				},
-				"targets": {
-					"kind": "all",
-					"conditions": [
-						{
-							"allegiance": "ally"
-						}
-					]
-				},
-				"attribute": "health",
-				"amount": 2
-			}
-		],
 		"abilities": [
 			"bishop_material",
 			"heal"
@@ -352,25 +183,6 @@
 			"queen"
 		],
 		"ranged": true,
-		"effects": [
-			{
-				"trigger": {
-					"kind": "event",
-					"event": "play",
-					"of": "self"
-				},
-				"targets": {
-					"kind": "all",
-					"conditions": [
-						{
-							"allegiance": "ally"
-						}
-					]
-				},
-				"attribute": "attack",
-				"amount": 1
-			}
-		],
 		"abilities": [
 			"heal"
 		]
@@ -406,25 +218,6 @@
 			"rook"
 		],
 		"ranged": true,
-		"effects": [
-			{
-				"trigger": {
-					"kind": "event",
-					"event": "play",
-					"of": "self"
-				},
-				"targets": {
-					"kind": "all",
-					"conditions": [
-						{
-							"allegiance": "ally"
-						}
-					]
-				},
-				"attribute": "max_health",
-				"amount": 2
-			}
-		],
 		"abilities": [
 			"castling",
 			"queen_material"
@@ -441,25 +234,6 @@
 		"chess_pieces": [
 			"queen",
 			"queen"
-		],
-		"effects": [
-			{
-				"trigger": {
-					"kind": "event",
-					"event": "play",
-					"of": "self"
-				},
-				"targets": {
-					"kind": "all",
-					"conditions": [
-						{
-							"allegiance": "ally"
-						}
-					]
-				},
-				"attribute": "attack",
-				"amount": 1
-			}
 		],
 		"tool": {
 			"art": {

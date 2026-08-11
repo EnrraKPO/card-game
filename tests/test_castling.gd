@@ -79,6 +79,11 @@ func _heal() -> void:
 	check(ab.tap, "heal taps its holder")
 	check("heal" in CardData.get_card("bishop").ability_ids(), "the Bishop holds Heal")
 
+	# CONTENT FORGOTTEN (effect-cleanse): heal's payload authors again in the new schema;
+	# until then these are quarantined failures, not crashes.
+	check(not ab.effects.is_empty(), "heal carries its authored effect")
+	if ab.effects.is_empty():
+		return
 	var holder := unit("bishop")
 	var t := unit("rook")
 	Resolver.submit(StatMutation.make(t, StatMutation.HEALTH, -3, null))

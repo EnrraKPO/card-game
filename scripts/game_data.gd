@@ -84,6 +84,12 @@ func select_slot(slot: int) -> void:
 	current_profile = ProfileData.from_dict(existing)
 	if existing.is_empty():
 		save_profile()   # register the new save so the slot reads as started
+	elif current_profile.effect_scrubbed:
+		# The effect-cleanse divide: the slot's in-flight run spoke the forgotten effect
+		# language — it is discarded with the overrides, and the scrubbed profile persists
+		# so the divide is crossed exactly once.
+		_erase_sections(["slot_%d" % slot, "map_%d" % slot])
+		save_profile()
 	rebuild_modifiers()
 	current_run = null
 	current_map_state = null

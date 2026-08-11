@@ -8,18 +8,29 @@ and rejected are preserved in the Decision Record.
 
 Ground truth for the starting state: the demolition is complete (branch
 `targeting-cleanup`) — all targeting deleted, combat inert, and the quarantine table in
-`tests/_runner.tscn` (125 checks after the effect-cleanse pass, 2026-08-11) is the
-rebuild's specification and regression net. Driving that table to zero and deleting it
-is the exit criterion. The effect-cleanse pass executed the combat-only rows of §10's
-deletion map ahead of the rebuild: SpellCaster and all three ON_PLAY dispatcher clones,
-the Transient kind + `applies_on_use`, the ability spell-costume's combat half
+`tests/_runner.tscn` (180 checks after the content strip, 2026-08-11) is the rebuild's
+specification and regression net. Driving that table to zero — resolution rebuilt AND
+content re-authored — and deleting it is the exit criterion.
+
+The **effect-cleanse pass** (2026-08-11) executed the combat-only rows of §10's deletion
+map ahead of the rebuild: SpellCaster and all three ON_PLAY dispatcher clones, the
+Transient kind + `applies_on_use`, the ability spell-costume's combat half
 (arming/tap/autocast/token-cast; the informational tray/tooltip views and `usable_by`
-survive), the `ON_ACTIVATE`→`act` rename, and the `side` target kind (authored blobs
-stripped; side payloads now validate as targetless, the dead form refused at load).
-Still standing, deliberately: `effect.gd`'s parse/serialize (incl. the verbatim
-`_native_targets`/`targeting_policy_raw` round-trip fields — load-bearing for deck saves
-and the Tool until the §12 schema migration), the passive fold, ModifierSet, and the
-147-occurrence legacy schema.
+survive), the `ON_ACTIVATE`→`act` rename, and the `side` target kind (side payloads
+validate as targetless, the dead form refused at load).
+
+The **content strip** (2026-08-11, user ruling): ALL authored effect payloads are
+FORGOTTEN, never migrated — 377 blocks stripped from every container in `data/` (cards,
+abilities, statuses, relics, charms, upgrades, innates; named effects reduced to
+id+description shells). Effects are re-authored natively in the new schema as the rebuild
+reaches each container; git history holds the old blocks as reference, and card
+descriptions remain as the re-authoring briefs. The §12 Q4 migration question is thereby
+DISSOLVED — there is nothing to migrate; the verbatim round-trip fields are deleted and
+`to_dict` emits no targeting. Old profile saves cross the divide once on load
+(`ProfileData.EFFECT_SCHEMA`): deck overrides and charms are scrubbed and the slot's
+in-flight run is discarded. Still standing, deliberately: `effect.gd`'s parse (the
+tests' authoring language until each suite converts), the passive fold, ModifierSet,
+and `EffectCondition`.
 
 Sibling docs: `TECH_DEBT_BRIEF.md` (the disease catalogue this design answers),
 `EFFECT_SYSTEM_DESIGN.md` (the prior generation's intent), `LOCATION_MANAGER_DESIGN.md`

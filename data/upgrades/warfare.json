@@ -4,15 +4,64 @@
 	"description": "Sharpen your army — bonuses to your units' combat stats.",
 	"color": "d96b57",
 	"nodes": [
-		{ "id": "war_root", "display_name": "Conscription", "description": "Begin each combat drawing one extra card.", "cost": 1, "icon": "✦", "row": 0, "col": 1, "requires": [],
-			"effects": [{ "key": "hand.size.initial", "amount": 1 }] },
-		{ "id": "war_atk", "display_name": "Sharpened Blades", "description": "All of your units gain +1 <attack>.", "cost": 2, "icon": "◆", "row": 1, "col": 0, "requires": ["war_root"],
-			"effects": [{ "key": "unit.attack", "amount": 1 }] },
-		{ "id": "war_hp", "display_name": "Hardened Armour", "description": "All of your units gain +1 <health>.", "cost": 2, "icon": "❖", "row": 1, "col": 2, "requires": ["war_root"],
-			"effects": [{ "key": "unit.health", "amount": 1 }] },
-		{ "id": "war_bulwark", "display_name": "Bulwark", "description": "All of your units take 1 less damage from attacks.", "cost": 3, "icon": "⛨", "row": 2, "col": 0, "requires": ["war_atk"],
-			"effects": [{ "kind": "interceptor", "intercept": "damage", "channel": "attack", "of": { "participant": "target", "relation": "ally" }, "amount": -1 }] },
-		{ "id": "war_cap", "display_name": "Warlord", "description": "Capstone: your <king> gains +3 <health> each run.", "cost": 4, "icon": "▲", "row": 2, "col": 1, "requires": ["war_atk", "war_hp"],
-			"effects": [{ "key": "king.max_health", "amount": 3 }] }
+		{
+			"id": "war_root",
+			"display_name": "Conscription",
+			"description": "Begin each combat drawing one extra card.",
+			"cost": 1,
+			"icon": "✦",
+			"row": 0,
+			"col": 1,
+			"requires": []
+		},
+		{
+			"id": "war_atk",
+			"display_name": "Sharpened Blades",
+			"description": "All of your units gain +1 <attack>.",
+			"cost": 2,
+			"icon": "◆",
+			"row": 1,
+			"col": 0,
+			"requires": [
+				"war_root"
+			]
+		},
+		{
+			"id": "war_hp",
+			"display_name": "Hardened Armour",
+			"description": "All of your units gain +1 <health>.",
+			"cost": 2,
+			"icon": "❖",
+			"row": 1,
+			"col": 2,
+			"requires": [
+				"war_root"
+			]
+		},
+		{
+			"id": "war_bulwark",
+			"display_name": "Bulwark",
+			"description": "All of your units take 1 less damage from attacks.",
+			"cost": 3,
+			"icon": "⛨",
+			"row": 2,
+			"col": 0,
+			"requires": [
+				"war_atk"
+			]
+		},
+		{
+			"id": "war_cap",
+			"display_name": "Warlord",
+			"description": "Capstone: your <king> gains +3 <health> each run.",
+			"cost": 4,
+			"icon": "▲",
+			"row": 2,
+			"col": 1,
+			"requires": [
+				"war_atk",
+				"war_hp"
+			]
+		}
 	]
 }

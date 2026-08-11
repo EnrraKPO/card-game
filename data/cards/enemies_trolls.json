@@ -2,72 +2,98 @@
   {
     "id": "troll_whelp",
     "display_name": "Troll Whelp",
-    "cost": 2, "attack": 2, "health": 4, "speed": 1,
+    "cost": 2,
+    "attack": 2,
+    "health": 4,
+    "speed": 1,
     "description": "Young, dumb, and already regrowing: heals 1 at every round's end.",
-    "enemy_only": true, "tribe": "troll", "elements": [], "chess_pieces": [],
-    "effects": [
-      { "trigger": "on_turn_end", "targeting_policy": "self", "attribute": "health", "amount": 1 }
-    ]
+    "enemy_only": true,
+    "tribe": "troll",
+    "elements": [],
+    "chess_pieces": []
   },
   {
     "id": "troll_bridgekeeper",
     "display_name": "Bridgekeeper",
-    "cost": 3, "attack": 3, "health": 6, "speed": 1,
+    "cost": 3,
+    "attack": 3,
+    "health": 6,
+    "speed": 1,
     "description": "Nobody crosses without paying. Heals 2 at every round's end — arguments with it tend to outlast the arguer.",
-    "enemy_only": true, "tribe": "troll", "elements": [], "chess_pieces": [],
-    "effects": [
-      { "trigger": "on_turn_end", "targeting_policy": "self", "attribute": "health", "amount": 2 }
-    ]
+    "enemy_only": true,
+    "tribe": "troll",
+    "elements": [],
+    "chess_pieces": []
   },
   {
     "id": "troll_stonehide",
     "display_name": "Stonehide Troll",
-    "cost": 4, "attack": 3, "health": 7, "speed": 1, "shield": 3,
+    "cost": 4,
+    "attack": 3,
+    "health": 7,
+    "speed": 1,
+    "shield": 3,
     "description": "Skin like a quarry wall, patience like one too.",
-    "enemy_only": true, "tribe": "troll", "elements": [], "chess_pieces": [], "effects": []
+    "enemy_only": true,
+    "tribe": "troll",
+    "elements": [],
+    "chess_pieces": []
   },
   {
     "id": "troll_berserker",
     "display_name": "Troll Berserker",
-    "cost": 5, "attack": 4, "health": 8, "speed": 2,
+    "cost": 5,
+    "attack": 4,
+    "health": 8,
+    "speed": 2,
     "description": "The wounds close as fast as you make them — heals 2 each round and hits harder (+1 <attack>) every time you try.",
-    "enemy_only": true, "tribe": "troll", "elements": [], "chess_pieces": [],
-    "effects": [
-      { "trigger": "on_turn_end", "targeting_policy": "self", "attribute": "health", "amount": 2 },
-      { "trigger": "on_damage_taken", "targeting_policy": "self", "attribute": "attack", "amount": 1 }
-    ]
+    "enemy_only": true,
+    "tribe": "troll",
+    "elements": [],
+    "chess_pieces": []
   },
   {
     "id": "troll_shaman",
     "display_name": "Moss Shaman",
-    "cost": 5, "attack": 2, "health": 6, "speed": 1, "ranged": true,
+    "cost": 5,
+    "attack": 2,
+    "health": 6,
+    "speed": 1,
+    "ranged": true,
     "description": "Chews the right herbs and spits the wrong ones: every troll heals 1 at round's end.",
-    "enemy_only": true, "tribe": "troll", "elements": [], "chess_pieces": [],
-    "effects": [
-      { "trigger": "on_turn_end", "targeting_policy": "all_allies", "attribute": "health", "amount": 1 }
-    ]
+    "enemy_only": true,
+    "tribe": "troll",
+    "elements": [],
+    "chess_pieces": []
   },
   {
     "id": "troll_chieftain",
     "display_name": "Chieftain Gnarl",
-    "cost": 0, "attack": 1, "health": 16, "speed": 2, "shield": 3,
-    "is_king": true, "enemy_only": true, "tribe": "troll",
+    "cost": 0,
+    "attack": 1,
+    "health": 16,
+    "speed": 2,
+    "shield": 3,
+    "is_king": true,
+    "enemy_only": true,
+    "tribe": "troll",
     "description": "Has been killed eleven times and finds it increasingly funny. Heals 3 at every round's end. Make the twelfth stick to win.",
-    "elements": [], "chess_pieces": [],
-    "effects": [
-      { "trigger": "on_turn_end", "targeting_policy": "self", "attribute": "health", "amount": 3 }
-    ]
+    "elements": [],
+    "chess_pieces": []
   },
   {
     "id": "troll_ancient_gorge",
     "display_name": "Old Gorge, the Unkillable",
-    "cost": 0, "attack": 2, "health": 19, "speed": 1, "shield": 5,
-    "is_king": true, "enemy_only": true, "tribe": "troll",
+    "cost": 0,
+    "attack": 2,
+    "health": 19,
+    "speed": 1,
+    "shield": 5,
+    "is_king": true,
+    "enemy_only": true,
+    "tribe": "troll",
     "description": "A landslide that got up. Heals 4 at every round's end and grows +1 <attack> per wound taken. Outpace the healing to win.",
-    "elements": [], "chess_pieces": [],
-    "effects": [
-      { "trigger": "on_turn_end", "targeting_policy": "self", "attribute": "health", "amount": 4 },
-      { "trigger": "on_damage_taken", "targeting_policy": "self", "attribute": "attack", "amount": 1 }
-    ]
+    "elements": [],
+    "chess_pieces": []
   }
 ]

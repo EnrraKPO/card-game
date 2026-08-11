@@ -47,34 +47,38 @@ const SUITES: Array = [
 ]
 
 
-# ── TARGETING DEMOLITION QUARANTINE ────────────────────────────────────────────────────
-# While targeting is demolished (branch targeting-cleanup), every check that asserts an
-# effect LANDING or a strike FINDING someone fails by design — resolution is inert. Those
-# checks are the REBUILD'S SPECIFICATION and regression net, so they are neither deleted nor
-# silenced: each suite below carries its expected failure count, the runner reports them as
-# quarantined, and the exit code stays green unless a suite fails MORE than expected (new
-# breakage) or LESS (tighten the table). The rebuilt targeting authority's exit criterion is
-# driving every number here to zero and deleting this table.
+# ── DEMOLITION QUARANTINE ──────────────────────────────────────────────────────────────
+# Two demolitions feed this table. TARGETING (2026-08-09): every check that asserts an
+# effect LANDING or a strike FINDING someone fails by design — resolution is inert. CONTENT
+# (effect-cleanse, 2026-08-11, user ruling "forget all effects"): every authored effect
+# payload was stripped from data/, so checks that prove authored JSON works (statuses,
+# innates, named effects, abilities, relic/card payloads) fail until that content is
+# RE-AUTHORED in the new schema — never migrated. Those checks are the REBUILD'S
+# SPECIFICATION and regression net, so they are neither deleted nor silenced: each suite
+# below carries its expected failure count, the runner reports them as quarantined, and the
+# exit code stays green unless a suite fails MORE than expected (new breakage) or LESS
+# (tighten the table). The rebuild's exit criterion is driving every number here to zero —
+# resolution rebuilt AND content re-authored — and deleting this table.
 const QUARANTINE := {
-	"Trigger resolvers": 9,
-	"Effects & Interception": 16,
-	"Statuses": 10,
-	"Interception": 3,
-	"Castling & abilities": 7,
-	"Materials & merge": 1,
+	"Trigger resolvers": 10,
+	"Effects & Interception": 17,
+	"Statuses": 17,
+	"Interception": 10,
+	"Castling & abilities": 5,
+	"Materials & merge": 3,
 	"Combat sides": 8,
-	"CompositionGrants": 12,
-	"Dodge": 2,
-	"Crit": 5,
+	"CompositionGrants": 13,
+	"Dodge": 4,
+	"Crit": 14,
 	"Spawn payload & multi-strike": 1,
-	# 12 → 16 with the effect-cleanse demolition: the sim's cast seam (CandidateApply's
-	# _run_cast clone) died with the other ON_PLAY dispatchers, taking the cost side the
-	# sim still performed for real (tap spend, hand removal, corpse capture) with it.
-	"Enemy engine": 16,
+	# The sim's cast seam (CandidateApply's _run_cast clone) died with the other ON_PLAY
+	# dispatchers, taking the cost side the sim still performed for real (tap spend, hand
+	# removal, corpse capture); the content strip took the ability fixtures' payloads.
+	"Enemy engine": 30,
 	"Combat world": 4,
 	"Combat cascade": 1,
 	"Slot layer": 7,
-	"Burning ground": 23,
+	"Burning ground": 36,
 }
 
 

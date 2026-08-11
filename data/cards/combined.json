@@ -11,15 +11,7 @@
 			"fire",
 			"air"
 		],
-		"chess_pieces": [],
-		"effects": [
-			{
-				"trigger": "on_play",
-				"targeting_policy": "manual",
-				"attribute": "damage_taken",
-				"amount": 5
-			}
-		]
+		"chess_pieces": []
 	},
 	{
 		"id": "fire_water",
@@ -33,21 +25,7 @@
 			"fire",
 			"water"
 		],
-		"chess_pieces": [],
-		"effects": [
-			{
-				"trigger": "on_play",
-				"targeting_policy": "manual",
-				"attribute": "damage_taken",
-				"amount": 2
-			},
-			{
-				"trigger": "on_play",
-				"targeting_policy": "manual",
-				"attribute": "speed",
-				"amount": -2
-			}
-		]
+		"chess_pieces": []
 	},
 	{
 		"id": "earth_fire",
@@ -61,15 +39,7 @@
 			"fire",
 			"earth"
 		],
-		"chess_pieces": [],
-		"effects": [
-			{
-				"trigger": "on_play",
-				"targeting_policy": "manual",
-				"attribute": "damage_taken",
-				"amount": 6
-			}
-		]
+		"chess_pieces": []
 	},
 	{
 		"id": "darkness_fire",
@@ -83,15 +53,7 @@
 			"fire",
 			"darkness"
 		],
-		"chess_pieces": [],
-		"effects": [
-			{
-				"trigger": "on_play",
-				"targeting_policy": "manual",
-				"attribute": "attack",
-				"amount": -4
-			}
-		]
+		"chess_pieces": []
 	},
 	{
 		"id": "fire_light",
@@ -105,15 +67,7 @@
 			"fire",
 			"light"
 		],
-		"chess_pieces": [],
-		"effects": [
-			{
-				"trigger": "on_play",
-				"targeting_policy": "manual",
-				"attribute": "attack",
-				"amount": 4
-			}
-		]
+		"chess_pieces": []
 	},
 	{
 		"id": "fire_fire",
@@ -127,15 +81,7 @@
 			"fire",
 			"fire"
 		],
-		"chess_pieces": [],
-		"effects": [
-			{
-				"trigger": "on_play",
-				"targeting_policy": "manual",
-				"attribute": "damage_taken",
-				"amount": 6
-			}
-		]
+		"chess_pieces": []
 	},
 	{
 		"id": "air_air",
@@ -149,15 +95,7 @@
 			"air",
 			"air"
 		],
-		"chess_pieces": [],
-		"effects": [
-			{
-				"trigger": "on_play",
-				"targeting_policy": "manual",
-				"attribute": "speed",
-				"amount": 4
-			}
-		]
+		"chess_pieces": []
 	},
 	{
 		"id": "water_water",
@@ -171,15 +109,7 @@
 			"water",
 			"water"
 		],
-		"chess_pieces": [],
-		"effects": [
-			{
-				"trigger": "on_play",
-				"targeting_policy": "manual",
-				"attribute": "health",
-				"amount": 8
-			}
-		]
+		"chess_pieces": []
 	},
 	{
 		"id": "earth_earth",
@@ -193,21 +123,7 @@
 			"earth",
 			"earth"
 		],
-		"chess_pieces": [],
-		"effects": [
-			{
-				"trigger": {
-					"kind": "event",
-					"event": "play",
-					"of": "self"
-				},
-				"targets": {
-					"kind": "manual"
-				},
-				"attribute": "shield",
-				"amount": 6
-			}
-		]
+		"chess_pieces": []
 	},
 	{
 		"id": "darkness_darkness",
@@ -221,30 +137,7 @@
 			"darkness",
 			"darkness"
 		],
-		"chess_pieces": [],
-		"effects": [
-			{
-				"trigger": {
-					"kind": "event",
-					"event": "play",
-					"of": "self"
-				},
-				"targets": {
-					"kind": "manual"
-				},
-				"attribute": "health",
-				"amount": -8
-			},
-			{
-				"trigger": {
-					"kind": "event",
-					"event": "play",
-					"of": "self"
-				},
-				"attribute": "draw",
-				"amount": 2
-			}
-		]
+		"chess_pieces": []
 	},
 	{
 		"id": "light_light",
@@ -258,18 +151,7 @@
 			"light",
 			"light"
 		],
-		"chess_pieces": [],
-		"effects": [
-			{
-				"trigger": {
-					"kind": "event",
-					"event": "play",
-					"of": "self"
-				},
-				"attribute": "mana",
-				"amount": 2
-			}
-		]
+		"chess_pieces": []
 	},
 	{
 		"id": "air_water",
@@ -283,15 +165,7 @@
 			"air",
 			"water"
 		],
-		"chess_pieces": [],
-		"effects": [
-			{
-				"trigger": "on_play",
-				"targeting_policy": "all_enemies",
-				"attribute": "damage_taken",
-				"amount": 2
-			}
-		]
+		"chess_pieces": []
 	},
 	{
 		"id": "air_earth",
@@ -305,15 +179,7 @@
 			"air",
 			"earth"
 		],
-		"chess_pieces": [],
-		"effects": [
-			{
-				"trigger": "on_play",
-				"targeting_policy": "all_enemies",
-				"attribute": "speed",
-				"amount": -2
-			}
-		]
+		"chess_pieces": []
 	},
 	{
 		"id": "air_darkness",
@@ -327,15 +193,7 @@
 			"air",
 			"darkness"
 		],
-		"chess_pieces": [],
-		"effects": [
-			{
-				"trigger": "on_play",
-				"targeting_policy": "all_enemies",
-				"attribute": "attack",
-				"amount": -2
-			}
-		]
+		"chess_pieces": []
 	},
 	{
 		"id": "air_light",
@@ -349,21 +207,7 @@
 			"air",
 			"light"
 		],
-		"chess_pieces": [],
-		"effects": [
-			{
-				"trigger": "on_play",
-				"targeting_policy": "manual",
-				"attribute": "attack",
-				"amount": 2
-			},
-			{
-				"trigger": "on_play",
-				"targeting_policy": "manual",
-				"attribute": "speed",
-				"amount": 3
-			}
-		]
+		"chess_pieces": []
 	},
 	{
 		"id": "earth_water",
@@ -377,15 +221,7 @@
 			"water",
 			"earth"
 		],
-		"chess_pieces": [],
-		"effects": [
-			{
-				"trigger": "on_play",
-				"targeting_policy": "manual",
-				"attribute": "speed",
-				"amount": -3
-			}
-		]
+		"chess_pieces": []
 	},
 	{
 		"id": "darkness_water",
@@ -398,44 +234,6 @@
 		"elements": [
 			"darkness",
 			"water"
-		],
-		"effects": [
-			{
-				"trigger": {
-					"kind": "event",
-					"event": "play",
-					"of": "self"
-				},
-				"attribute": "damage_taken",
-				"amount": 3,
-				"targets": {
-					"kind": "manual"
-				}
-			},
-			{
-				"trigger": {
-					"kind": "event",
-					"event": "play",
-					"of": "self"
-				},
-				"attribute": "attack",
-				"amount": -2,
-				"targets": {
-					"kind": "manual"
-				}
-			},
-			{
-				"trigger": {
-					"kind": "event",
-					"event": "play",
-					"of": "self"
-				},
-				"named": "venom",
-				"amount": 1,
-				"targets": {
-					"kind": "manual"
-				}
-			}
 		]
 	},
 	{
@@ -450,15 +248,7 @@
 			"water",
 			"light"
 		],
-		"chess_pieces": [],
-		"effects": [
-			{
-				"trigger": "on_play",
-				"targeting_policy": "manual",
-				"attribute": "health",
-				"amount": 6
-			}
-		]
+		"chess_pieces": []
 	},
 	{
 		"id": "earth_light",
@@ -472,15 +262,7 @@
 			"earth",
 			"light"
 		],
-		"chess_pieces": [],
-		"effects": [
-			{
-				"trigger": "on_play",
-				"targeting_policy": "manual",
-				"attribute": "max_health",
-				"amount": 6
-			}
-		]
+		"chess_pieces": []
 	},
 	{
 		"id": "darkness_earth",
@@ -494,21 +276,7 @@
 			"earth",
 			"darkness"
 		],
-		"chess_pieces": [],
-		"effects": [
-			{
-				"trigger": "on_play",
-				"targeting_policy": "manual",
-				"attribute": "max_health",
-				"amount": 5
-			},
-			{
-				"trigger": "on_play",
-				"targeting_policy": "manual",
-				"attribute": "speed",
-				"amount": -1
-			}
-		]
+		"chess_pieces": []
 	},
 	{
 		"id": "darkness_light",
@@ -522,20 +290,6 @@
 			"light",
 			"darkness"
 		],
-		"chess_pieces": [],
-		"effects": [
-			{
-				"trigger": "on_play",
-				"targeting_policy": "manual",
-				"attribute": "damage_taken",
-				"amount": 3
-			},
-			{
-				"trigger": "on_play",
-				"targeting_policy": "manual",
-				"attribute": "max_health",
-				"amount": -3
-			}
-		]
+		"chess_pieces": []
 	}
 ]
