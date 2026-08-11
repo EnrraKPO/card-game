@@ -2,9 +2,14 @@
 
 A **Status** is a named, time-boxed bundle of effects applied to a card *at runtime* — a buff,
 debuff, periodic effect, or event-reactive effect that rides the card for a duration and then
-falls off. Statuses are **not** special-cased: a status carries the exact same `effects` array
-that cards use (see `data/cards/CARD_AUTHORING_GUIDE.md`), so **anything a card effect can do, a
-status can do too** — it's just applied dynamically during combat and removed on a timer.
+falls off.
+
+> **Effects — FORGOTTEN (effect-cleanse, 2026-08-11).** Do not author `effects` on a status.
+> The old effect language is burned; status payloads re-author in the rebuilt effect system's
+> schema (`TARGETING_DESIGN.md` is the authority; a status is an ordinary effect CONTAINER
+> there). What this guide still governs is the status's own lifecycle — decay, stacking,
+> presentation, and eval pricing — which survives intact. Each status's `description` is its
+> re-authoring brief; the old payload spellings live in git history.
 
 Statuses are defined as JSON files in `data/statuses/`. Any `.json` file there is loaded at
 startup (a file may hold a single status or an array of them). They are referenced by `id` from a
@@ -28,7 +33,6 @@ card/spell/charm/upgrade effect's `status` payload (see the card guide).
 | `decay_phase` | string | No | When it counts down: `turn_end` (default) or `turn_start` |
 | `stacking` | string | No | How a re-application combines (see below) |
 | `max_stacks` | int | No | Cap for intensity stacking |
-| `effects` | array | No | The effects the status carries — identical schema to card effects |
 | `eval` | object | No | Enemy-engine pricing, PER STACK (folded × stacks at capture): `{"threat": n, "exposure": n, "value": n}` — adds only, muls are refused at this level. The flat, stack-blind half (and any mul, e.g. blind's `threat_mul`) goes on the carried effect's own `eval`. Absent = the stacks contribute nothing beyond the effects' flat annotations. NEVER price a `while` stat effect's stats — captured stats already say it (double count). See `STATUS_EVAL_BRIEF.md` / `STATUS_ANNOTATION_BRIEF.md`. |
 
 ## `stacking` — re-applying onto a card that already has the status
@@ -64,29 +68,18 @@ status is active (it disappears automatically when the status falls off):
 ```json
 {
   "id": "empowered", "display_name": "Empowered", "beneficial": true,
-  "color": "e0a93b", "glyph": "↑", "default_duration": 2, "stacking": "refresh",
-  "effects": [
-    { "kind": "modifier", "key": "unit.attack", "amount": 2 }
-  ]
+  "color": "e0a93b", "glyph": "↑", "default_duration": 2, "stacking": "refresh"
 }
 ```
-> `modifier` keys: `unit.attack`, `unit.health` (max HP), `unit.speed`, `card.cost`.
-> A card-scoped `modifier` may also carry `conditions` — the same list triggered effects use
-> (stat / status / composition forms, see the card guide). Every card the modifier would fold
-> into is a *target*, and targeting is always gated by the conditions: e.g.
-> `{ "kind": "modifier", "key": "unit.health", "amount": 1, "conditions": [{ "composition": ["pawn"] }] }`
-> is "+1 Health to pawn units". A condition on the very attribute the modifier feeds sees the
-> unit valued without condition-bearing modifiers (no self-reference loops).
+(Its old payload — a `unit.attack` modifier folding while active — returns as a PassiveEffect
+contribution in the new language.)
 
 **Withered** — a periodic debuff that stacks. The `on_turn_end` effect drains 1 HP each round,
 and because `stacking` is `stack`, re-applying makes it drain harder:
 ```json
 {
   "id": "withered", "display_name": "Withered", "beneficial": false,
-  "color": "7a9b58", "glyph": "☠", "default_duration": 3, "stacking": "stack", "max_stacks": 9,
-  "effects": [
-    { "trigger": "on_turn_end", "targeting_policy": "self", "attribute": "health", "amount": -1 }
-  ]
+  "color": "7a9b58", "glyph": "☠", "default_duration": 3, "stacking": "stack", "max_stacks": 9
 }
 ```
 
@@ -97,32 +90,28 @@ count drops by 1, until it's gone. `stacking: "stack"` means re-applying adds to
 {
   "id": "poison", "display_name": "Poison", "beneficial": false,
   "color": "5a8f3a", "glyph": "☠",
-  "decay": "stacks", "decay_phase": "turn_start", "stacking": "stack", "max_stacks": 99,
-  "effects": [
-    { "trigger": "on_turn_start", "targeting_policy": "self", "attribute": "health", "amount": -1 }
-  ]
+  "decay": "stacks", "decay_phase": "turn_start", "stacking": "stack", "max_stacks": 99
 }
 ```
 
-A card applies these via its effect's `status` payload — e.g. a unit that poisons whoever it hits,
-or a spell that withers the nearest enemy on play:
-```json
-{ "trigger": "on_attack", "targeting_policy": "single_nearest", "status": { "id": "poison", "stacks": 1 } }
-{ "trigger": "on_play",   "targeting_policy": "single_nearest", "status": { "id": "withered", "duration": 3 } }
-```
+A card applies a status through a STATUS PAYLOAD on one of its own effects — authored in the
+new language once the rebuild lands (the payload names the status id, stacks, duration; the
+status's own lifecycle fields above do the rest).
 
 ---
 
 ## Notes
 
-- A status's `effects` use the **full** card-effect schema: `modifier` (passive stat deltas),
-  triggered effects on any event (`on_play`/`on_attack`/`on_death`/`on_damage_taken`/`on_turn_*`),
-  conditions, even a nested `status` payload (apply another status), and custom hooks. Stacked
-  statuses scale `modifier` and triggered magnitudes by their stack count.
 - Statuses are combat-runtime only — they are never saved and never carry across fights.
 - `id` must be unique across all status files; duplicates silently overwrite.
 
 ## Interceptors: rewriting a mutation before it commits
+
+> The SPELLINGS below are the forgotten language (reference only — do not author them); the
+> SEMANTICS are the arbitration layer's living spec and survive the rebuild untouched:
+> channels, the three interceptable passes, re-flooring, and `decay: "intercept"`'s
+> spends-only-when-it-changes-something rule. InterceptorEffect re-authors them in the new
+> schema (TARGETING_DESIGN.md §8).
 
 Every stat change in the game is a **StatMutation** submitted to the **Resolver** (the single
 writer — it owns the shield-first damage resolution; no effect or combat code knows shields

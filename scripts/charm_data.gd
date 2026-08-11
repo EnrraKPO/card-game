@@ -3,9 +3,9 @@ extends RefCounted
 
 # A charm is a persistent enchantment attached to a specific deck card — a Wildfrost-style
 # charm (the per-card reward axis; the run-global axis, relics, is separate/TODO).
-# Mechanically it's a small definition-patch: stat bumps + extra effects that get merged
-# into the card's definition when its CardInstance is built (see DeckCard.make_instance),
-# so charm effects fire through the SAME per-card Effect/trigger system as native effects.
+# Mechanically it's a small definition-patch of stat bumps merged into the card's definition
+# when its CardInstance is built (see DeckCard.make_instance). The effects half of the patch
+# burned in the effect-cleanse — charm effect payloads re-author in the new schema.
 # Data-driven from data/charms/*.json.
 
 var id: String
@@ -29,7 +29,6 @@ var letter: String = "✦"                     # short glyph shown on the pip
 var icon: Texture2D = null                    # optional illustration; when present it replaces the
 											   # coloured letter chip everywhere the charm is shown
 var stats: Dictionary = {}    # attribute -> int delta (attack/health/speed/shield/cost)
-var effects: Array = []       # Array[Dictionary], the same effect schema cards use
 # Which cards this charm may attach to: "unit" (default — combat charms), "spell"
 # (e.g. cost/on_play charms on element cards), or "any". The King is never eligible.
 var targets: String = "unit"
@@ -73,7 +72,6 @@ static func _load_json(path: String) -> void:
 		if ResourceLoader.exists(art_path):
 			c.icon = load(art_path)
 		c.stats        = d.get("stats", {})
-		c.effects      = d.get("effects", [])
 		c.targets      = d.get("targets", "unit")
 		if not c.id.is_empty():
 			_all[c.id] = c

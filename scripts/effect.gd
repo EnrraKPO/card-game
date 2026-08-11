@@ -10,7 +10,8 @@ extends RefCounted
 #   • TRIGGERED   — an event-driven, targeted, conditional effect (the classic card effect).
 #                   Dispatched from a card on the board (EffectSystem.trigger) AND at run level
 #                   from any active source (EffectSystem.trigger_global).
-#   • CUSTOM      — a code hook (EffectHooks) keyed by `custom_id`, for logic the schema can't
+#   • CUSTOM      — a code hook keyed by `custom_id` (EffectHooks BURNED in the effect-cleanse;
+#                   the kind parses for old in-test dicts but dispatches nothing), for logic the schema can't
 #                   express. Fired like a TRIGGERED effect; runs arbitrary code with the context.
 #   • INTERCEPTOR — a standing rewrite of a pending StatMutation passing through the Resolver.
 #                   NOT an event in time: it matches mutations by stat/channel/role and adjusts

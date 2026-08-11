@@ -194,9 +194,12 @@ static func _run_effect(effect: Effect, _source: CardInstance, context: EffectCo
 	if effect.chance < 1.0 and CombatRng.roll(&"rules") >= effect.chance:
 		return []
 	if effect.kind == Effect.Kind.CUSTOM:
-		var hook := EffectHooks.get_hook(effect.custom_id)
-		context.effect = effect   # expose per-effect params to the hook (e.g. deliver_material's material)
-		return hook.call(context) if hook.is_valid() else []
+		# CODE HOOKS REMOVED (effect-cleanse — EffectHooks burned with its content). NEEDS:
+		# the rebuilt payload species cover what the hooks hand-rolled — deliver_material's
+		# merge (composition combine, wounds as a damage delta, never lethal, king/rook
+		# backstops, empty-pick = spawn) chief among them — as AUTHORED payloads, not opaque
+		# code; a payload the schema can't say is the schema's gap to close, not a hook's.
+		return []
 	# TARGETING REMOVED (targeting-cleanup demolition) — every dispatch below this line is
 	# INERT: no effect resolves anybody, so no payload lands. NEEDS: the targeting authority
 	# returns the affected target(s) from the same shared context the trigger saw, as ONE

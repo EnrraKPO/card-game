@@ -19,16 +19,21 @@ not cards — they live in no pool, deck, or collection.
 | `description` | string | No | Tooltip text |
 | `cost` | object | No | `{ "mana": int, "tap": bool }`. `tap` (default **true**) spends the holder's action for the round (it neither attacks nor taps again until the round refresh); a tapped holder's tap-costed abilities are not offered at all |
 | `material` | string | No | For material-delivery abilities: the composition key delivered (read by the `deliver_material` hook) |
-| `autocast` | bool | No | Autocast-capable (default false). The widget shows corner brackets; right-click / long-press ARMS it (max 1 armed per unit). While armed, dragging the holder unit onto a valid target fires the ability on it, paying the normal cost — the unit does not move. Only meaningful on movable holders with manually-targeted effects |
-| `effects` | array | No | The ordinary effect schema — triggers are ignored (`on_play` by convention); targeting policies, conditions and payloads work exactly as on cards |
+| `autocast` | bool | No | Autocast-capable (default false) — an AUTHORED FACT kept through the demolition. The quick-cast mechanism it drives (arming + drag-fire) is razed and returns on the rebuilt ActivatedEffect |
+
+## Effects — FORGOTTEN (effect-cleanse, 2026-08-11)
+
+**Do not author `effects` on an ability.** The old effect language is burned; ability
+payloads re-author on the rebuilt **ActivatedEffect** — the runtime structure whose "when"
+is a COST GATE, invoked and paid for, with its own target resolver conducting the gesture
+(`TARGETING_DESIGN.md` §7). Each ability's `description` is its re-authoring brief; the old
+payload spellings live in git history.
 
 ## Presentation
 
-For now abilities present **card-like in the hand tray**, alongside cards (an interim UX): the
-entry shows the ability's name, mana cost and description, with art from
-`assets/abilities/<id>.png` (placeholder until authored). Activating one routes through the
-same targeting flows as spells — ineligible targets don't light up. The effects resolve with
-the **holder** as their source (the rook grants the Barrier).
+For now abilities present **card-like in the hand tray**, alongside cards (an interim UX,
+informational while activation is rebuilt): the entry shows the ability's name, mana cost
+and description, with art from `assets/abilities/<id>.png` (placeholder until authored).
 
 ## Example
 
@@ -37,14 +42,7 @@ the **holder** as their source (the rook grants the Barrier).
   "id": "castling",
   "display_name": "Castling",
   "description": "Grants one unit without a Barrier a Barrier that blocks the next damaging attack.",
-  "cost": { "mana": 1, "tap": true },
-  "effects": [
-    {
-      "trigger": "on_play", "targeting_policy": "manual",
-      "conditions": [ { "status": "barrier", "present": false } ],
-      "status": { "id": "barrier", "stacks": 1 }
-    }
-  ]
+  "cost": { "mana": 1, "tap": true }
 }
 ```
 

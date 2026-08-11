@@ -100,18 +100,15 @@ func add_charm(charm_id: String) -> bool:
 	return true
 
 
-# Merges a charm's definition-patch (stat bumps + extra effects) into a def dict, so the
-# charm's effects fire through the normal per-card trigger system once built.
+# Merges a charm's definition-patch (stat bumps) into a def dict. (The effects half of the
+# patch burned in the effect-cleanse: charm effects re-author in the new schema, and the
+# rebuilt charm patch carries new-language payloads or none.)
 func _apply_charm(def: Dictionary, charm_id: String) -> void:
 	var charm := CharmData.get_charm(charm_id)
 	if charm == null:
 		return
 	for attr in charm.stats:
 		def[attr] = int(def.get(attr, 0)) + int(charm.stats[attr])
-	if not charm.effects.is_empty():
-		var fx: Array = (def.get("effects", []) as Array).duplicate()
-		fx.append_array(charm.effects)
-		def["effects"] = fx
 
 
 func make_instance() -> CardInstance:
