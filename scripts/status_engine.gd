@@ -117,7 +117,7 @@ static func _decays_on(si: StatusInstance, event_id: StringName) -> bool:
 		return false
 	match si.data.decay_phase:
 		StatusData.PHASE_TURN_START: return event_id == &"turn_start"
-		StatusData.PHASE_ACTIVATE:   return event_id == &"activate"
+		StatusData.PHASE_ACT:        return event_id == &"act"
 		StatusData.PHASE_ATTACK:     return event_id == &"attack"
 		_:                           return event_id == &"turn_end"
 

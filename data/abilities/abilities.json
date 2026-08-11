@@ -607,7 +607,7 @@
 			{
 				"trigger": {
 					"kind": "event",
-					"event": "activate",
+					"event": "act",
 					"of": "self"
 				},
 				"targets": {
@@ -626,7 +626,7 @@
 			{
 				"trigger": {
 					"kind": "event",
-					"event": "activate",
+					"event": "act",
 					"of": "self"
 				},
 				"targets": {

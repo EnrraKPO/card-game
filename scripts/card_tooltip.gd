@@ -148,15 +148,6 @@ static func build_details(inst: CardInstance, s := 1.0, max_h := 0.0) -> Contain
 
 	blocks.append(_glued(HSeparator.new()))
 
-	# Generated tokens explain their hidden cost: playing one taps the rook.
-	if inst.source_building != null:
-		var note := Label.new()
-		# No leading icon glyph here — the default font (Baloo2-ExtraBold) is missing several
-		# symbol glyphs (⚒, ✓, ●, the old ✕), which render broken on web/mobile builds where
-		# there's no system-font fallback; see ScreenUI.CLOSE_GLYPH for the same issue.
-		note.text = Loc.t("card_tooltip.generated", {"name": inst.source_building.data.display_name})
-		blocks.append(_wrap_label(note, col_w, int(15.0 * s), TEXT_NOTE))
-
 	var desc := inst.data.description
 	if not desc.is_empty():
 		blocks.append(_rich_label(desc, col_w, int(18.0 * s), TEXT_MAIN))
@@ -472,16 +463,14 @@ static func _fmt(v: float) -> String:
 	return String.num(v, 2).trim_suffix("0").trim_suffix(".")
 
 
-# One ability line: the small widget (built exactly like the tray's tokens, so armed autocast
-# brackets/effects read here too) beside the ability's name and description.
+# One ability line: the small widget (built exactly like the tray's tokens) beside the
+# ability's name and description.
 static func _ability_row(inst: CardInstance, ab: AbilityData, s := 1.0) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", int(10.0 * s))
 
 	var tok := CardInstance.from_data(ab.display_card())
 	tok.owner = inst.owner
-	tok.source_building = inst
-	tok.ability = ab
 	var w := AbilityWidget.create_for(tok)
 	w.custom_minimum_size = ABILITY_WIDGET_SIZE * s
 	w.size_flags_vertical = Control.SIZE_SHRINK_CENTER

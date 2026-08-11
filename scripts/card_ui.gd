@@ -67,10 +67,6 @@ var _aura: Panel = null
 # created lazily, only for a fielded player unit with a currently offerable ability.
 var _ability_cue: Panel = null
 var _ability_cue_tween: Tween = null
-# The armed-autocast echo on a fielded holder (see _refresh_autocast_brackets) — small corner
-# brackets + the armed effects (glow pulse, orbiting sparkles), so "who is armed" reads on
-# the board without inspecting. Lazily created like _aura.
-var _autocast_fx: AutocastFX = null
 
 # The card is authored once at this fixed native resolution. Every visual lives
 # under the Canvas node, which is uniformly scaled to fill whatever size the
@@ -442,24 +438,15 @@ func _apply_border_style() -> void:
 	_border.add_theme_stylebox_override("panel", style)
 
 
-# Marks this card as a rook-generated token and refreshes its glowing frame.
-# The source building is stored on the instance (card_instance.source_building).
+# Marks this card as an ability-tray token view and refreshes its glowing frame.
+# Tokens are INFORMATIONAL while the effect system is demolished — the activation flow
+# returns with the rebuilt ActivatedEffect (TARGETING_DESIGN.md §7).
 func set_generated() -> void:
 	is_generated = true
 	# An ENEMY unit's ability token is view-only — a fact of the token's OWN model (its
 	# instance carries the holder's owner), derived here rather than pushed by the tray.
 	if card_instance != null and card_instance.owner == 1:
 		set_noninteractive()
-	if _border != null:
-		_apply_border_style()
-
-
-# Once a token is actually played it becomes an ordinary board unit: drop the
-# glow and sever the source-building link.
-func clear_generated() -> void:
-	is_generated = false
-	if card_instance != null:
-		card_instance.source_building = null
 	if _border != null:
 		_apply_border_style()
 
@@ -618,12 +605,7 @@ func derive_presentation() -> void:
 	_refresh_turn_number(ctx.turn_number(card_instance) if ctx != null and occupant else 0)
 	# Ordered AFTER the number: the spotlight lights the plate, so the plate has to exist first.
 	_apply_spotlight(spotlit)
-	if card_instance != null and card_instance.ability != null \
-			and card_instance.source_building != null:
-		_apply_selected(_pickable() \
-				and Selection.ability_held(card_instance.source_building, card_instance.ability))
-	else:
-		_apply_selected(_pickable() and Selection.holds(subject()))
+	_apply_selected(_pickable() and Selection.holds(subject()))
 	if ctx == null:
 		return
 	var tags: Array[Dictionary] = []
@@ -826,14 +808,6 @@ func _apply_playable(playable: bool) -> void:
 		_canvas.modulate = Color(0.93, 0.93, 0.93)
 
 
-# Whether this view may BEGIN an activation right now, on grounds OTHER than its mana cost
-# (which every caster checks separately). Ordinary card views always may; AbilityWidget
-# overrides it with the usability it derives, so the cast gate and the spent grey always
-# answer from the same derivation.
-func castable_now() -> bool:
-	return true
-
-
 # Sheds every HAND-BOUND presentation state: the play-me glow, the unaffordable dim, the
 # selection highlight. Called by SlotUI.set_card — the one door every card passes through on its
 # way onto the board — because these states are facts about hand life ("affordable to play",
@@ -889,7 +863,6 @@ func refresh() -> void:
 	_refresh_charms()
 	_refresh_statuses()
 	_refresh_ability_cue()
-	_refresh_autocast_brackets()
 	# The lines above rebuild dynamic labels (chips/pips) — re-point them at the current
 	# oversampled font so an enlarged card's WHOLE text stays crisp (see _apply_scale).
 	if _font_factor > 1.0:
@@ -1536,37 +1509,6 @@ func _refresh_ability_cue() -> void:
 	_ability_cue_tween.tween_property(_ability_cue, "modulate:a", 1.0, 0.9).set_ease(Tween.EASE_IN_OUT)
 
 
-# Builds the autocast FX bundle (corner brackets + armed glow/sparkles — see AutocastFX)
-# full-rect under the Canvas, sized/inset in native units. Shared by the board echo below
-# and the AbilityWidget's capability display — same visuals at two scales, so the tray
-# widget and its board holder visually rhyme.
-func build_autocast_fx(bracket_size: Vector2, inset: float) -> AutocastFX:
-	var fx := AutocastFX.new()
-	_canvas.add_child(fx)
-	fx.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	fx.setup(bracket_size, inset, NATIVE_SIZE)
-	return fx
-
-
-# The board-side echo of an ARMED autocast ability: small corner brackets + the armed
-# effects on the fielded holder, so the player can see who is armed without opening the
-# inspect tray. Derivable from card_instance (like _refresh_ability_cue), so it lives in
-# refresh(). armed_autocast() already validates the id against the current ability list —
-# a stale arm just disappears.
-func _refresh_autocast_brackets() -> void:
-	var active := CombatContext.fielded(card_instance) \
-			and card_instance.owner == 0 and card_instance.armed_autocast() != null
-	if not active:
-		if _autocast_fx != null:
-			_autocast_fx.visible = false
-			_autocast_fx.set_armed(false)
-		return
-	if _autocast_fx == null:
-		_autocast_fx = build_autocast_fx(Vector2(48.0, 42.0), 6.0)
-	_autocast_fx.visible = true
-	_autocast_fx.set_armed(true)
-
-
 # The badge node for a given active status (or null) — lets the VFX layer glint the right pip as
 # that status's container cue before its effects land.
 func find_status_pip(status_id: String) -> StatusPip:
@@ -2031,8 +1973,7 @@ func _gui_input(event: InputEvent) -> void:
 					pressed.emit()
 				accept_event()
 		elif mb.button_index == MOUSE_BUTTON_RIGHT and mb.pressed:
-			# The desktop path to the in-depth view (touch reaches it via long-press). Note the
-			# AbilityWidget override consumes right-click first for autocast-capable abilities.
+			# The desktop path to the in-depth view (touch reaches it via long-press).
 			CardInspector.open(self, card_instance, _show_cost, is_phantom)
 			accept_event()
 	elif event is InputEventMouseMotion:
@@ -2073,8 +2014,7 @@ func _on_long_press() -> void:
 	CardInspector.open(self, card_instance, _show_cost, is_phantom)
 
 
-# The ghost copy of this card a DragGhost preview shows — overridden by AbilityWidget so a
-# tray token ghosts with its own widget frame, not a card frame.
+# The ghost copy of this card a DragGhost preview shows.
 func make_ghost_view() -> CardUI:
 	return CardUI.create(card_instance, _show_cost)
 
@@ -2094,11 +2034,9 @@ func _get_drag_data(at_position: Vector2) -> Variant:
 	if CombatContext.fielded(card_instance) and card_instance.owner == 1:
 		return null
 	# Buildings root in place: a unit with a rook can be dropped from the hand, but once on the
-	# board it can't be picked up to MOVE. With an autocast ability ARMED it drags anyway — the
-	# drag can only cast (no move spot ever accepts it; see CombatBoard/_can_drop_on_player_slot),
-	# and the DragGhost accordingly always presents the ability.
-	if CombatContext.fielded(card_instance) and card_instance.data.is_building() \
-			and card_instance.armed_autocast() == null:
+	# board it can't be picked up to MOVE. (The armed-autocast drag exception died with the
+	# ability costume; the quick-cast gesture returns with the rebuilt ActivatedEffect.)
+	if CombatContext.fielded(card_instance) and card_instance.data.is_building():
 		return null
 	if card_instance.is_spell:
 		spell_drag_started.emit(self)
@@ -2108,7 +2046,7 @@ func _get_drag_data(at_position: Vector2) -> Variant:
 		# screens that don't listen (collection/deck/shop never connect it).
 		unit_drag_started.emit(self)
 	# The real card stays fully visible in place; the cursor carries a clearly-distinct ghost
-	# copy (context-sensitive when an autocast ability is armed — see DragGhost).
+	# copy (see DragGhost).
 	set_drag_preview(DragGhost.make(self, at_position))
 	return self
 

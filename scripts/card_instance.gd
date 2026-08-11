@@ -51,19 +51,9 @@ var killed_by_unit: CardInstance = null
 var killed_by_channel: StringName = &""
 var killed_by_cause: StringName = &""
 
-# Set true for the round when this unit spent its attack to generate a card
-# (see rook/building generation in combat.gd). Reset at the start of each round.
+# Whether this unit's act for the round is SPENT (attacking, or paying an ability's tap
+# cost when activation returns — tap ≡ exhausted). Reset at the start of each round.
 var attack_exhausted: bool = false
-# On an ability's tray token (the card-shaped view of an activated ability), the unit that
-# HOLDS the ability — activation acts as this unit (effect source) and pays its tap cost.
-# Null on normal units.
-var source_building: CardInstance = null
-# On an ability's tray token, the ability being activated. Null on normal units.
-var ability: AbilityData = null
-# The ARMED autocast ability's id ("" = none) — set by the AbilityWidget toggle. A single field,
-# so "max 1 armed per unit" is structural. Runtime-only (never serialized); survives tapping
-# (the offer just isn't fireable until the round refresh). Read through armed_autocast().
-var autocast_ability: String = ""
 
 var is_spell: bool:
 	get: return data != null and data.card_type == CardData.CardType.SPELL
@@ -87,7 +77,7 @@ static func from_data(card_data: CardData) -> CardInstance:
 
 # Deep-copy for world snapshots (see CombatWorld.copy). `remap` is the snapshot's identity
 # table (original -> copy), shared across the whole copy pass: every unit reference inside
-# the copy (killed_by_unit, source_building, a status's source/carrier) resolves through it,
+# the copy (killed_by_unit, a status's source/carrier) resolves through it,
 # so relationships between copies mirror the originals' exactly — including references to
 # units no longer ON the world (a buried killer), which get copied on first encounter.
 # Memoized null-safe entry point; the copy registers in the table BEFORE its references are
@@ -115,9 +105,6 @@ static func copied(inst: CardInstance, remap: Dictionary) -> CardInstance:
 	copy.killed_by_channel = inst.killed_by_channel
 	copy.killed_by_cause = inst.killed_by_cause
 	copy.attack_exhausted = inst.attack_exhausted
-	copy.source_building = copied(inst.source_building, remap)
-	copy.ability = inst.ability
-	copy.autocast_ability = inst.autocast_ability
 	for si: StatusInstance in inst.statuses:
 		copy.statuses.append(StatusInstance.copied(si, copy, remap))
 	return copy
@@ -183,17 +170,6 @@ func ability_list() -> Array:
 			if ab != null:
 				out.append(ab)
 	return out
-
-
-# The armed autocast ability, resolved against the CURRENT ability list — a stale id (the
-# granting status expired) reads as "nothing armed" without needing an eviction hook.
-func armed_autocast() -> AbilityData:
-	if autocast_ability.is_empty():
-		return null
-	for ab: AbilityData in ability_list():
-		if ab.id == autocast_ability:
-			return ab
-	return null
 
 
 # Whether at least one of this unit's abilities is currently offerable — a tap-costed ability of

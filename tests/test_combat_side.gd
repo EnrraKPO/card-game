@@ -1,10 +1,10 @@
 extends TestCase
 
 # CombatSide: player-targeted effects (draw / discard / mana / max_mana) as Resolver
-# mutations on a side object — the forms (floors, pile/hand limits, NO mana cap), the
-# side target kind (own/opponent relative to the holder), interception over side
-# mutations (allegiance vs side.owner, channel gating incl. the cost channel), and the
-# authoring round-trip. See EFFECT_SYSTEM_DESIGN.md §10.
+# mutations on a side object — the forms (floors, pile/hand limits, NO mana cap),
+# targetless side-stat payloads (the `side` target kind is DEAD — TARGETING_DESIGN.md §10),
+# interception over side mutations (allegiance vs side.owner, channel gating incl. the
+# cost channel), and the authoring round-trip. See EFFECT_SYSTEM_DESIGN.md §10.
 
 
 func suite_name() -> String:
@@ -128,10 +128,10 @@ func _ctx_with_sides(holder: CardInstance, player: CombatSide, enemy: CombatSide
 	return ctx
 
 
-# TARGETING REMOVED (targeting-cleanup demolition): the side-targeting resolution cases that
-# stood here — own/opponent relative to a player holder AND to an enemy holder, an unowned
-# holder resolving no side, a context without sides resolving nothing (no crash) — specify
-# the "side" target kind for the rebuilt targeting authority's suite.
+# SIDE TARGET KIND DEAD (effect-cleanse demolition): side payloads are TARGETLESS — the
+# recipient derives from the holder's allegiance anchor, never from an authored target
+# (TARGETING_DESIGN.md §2/§10). Opponent-directed side payloads, if ever wanted, are a
+# PAYLOAD variant, not a target kind (Decision Record).
 
 
 func _effect_payload() -> void:
@@ -139,8 +139,7 @@ func _effect_payload() -> void:
 	var player := _side_with_pile(0, 3)
 	var enemy := CombatSide.make(1)
 	var caster := unit("pawn")
-	var eff := Effect.from_dict({"trigger": "on_play", "attribute": "draw", "amount": 2,
-			"targets": {"kind": "side", "of": "own"}})
+	var eff := Effect.from_dict({"trigger": "on_play", "attribute": "draw", "amount": 2})
 	var results := EffectSystem.apply_single(eff, caster, _ctx_with_sides(caster, player, enemy))
 	check_eq(results.size(), 1, "one side result")
 	var r: Dictionary = {} if results.is_empty() else results[0]
@@ -213,13 +212,11 @@ func _cost_channel() -> void:
 
 
 func _authoring_roundtrip() -> void:
-	var d := {"trigger": "on_play", "attribute": "draw", "amount": 2,
-			"targets": {"kind": "side", "of": "opponent"}}
+	# A side-stat effect is targetless: it authors no targets and re-emits none.
+	var d := {"trigger": "on_play", "attribute": "draw", "amount": 2}
 	var eff := Effect.from_dict(d)
 	var out := eff.to_dict()
-	var t: Dictionary = out.get("targets", {})
-	check(str(t.get("kind", "")) == "side" and str(t.get("of", "")) == "opponent",
-			"side targets round-trip through to_dict")
+	check(not out.has("targets"), "a targetless side payload re-emits no targets dict")
 	check(StatMutation.is_side_stat("draw") and StatMutation.is_side_stat("max_mana")
 			and not StatMutation.is_side_stat("attack"), "the side-stat vocabulary set")
 

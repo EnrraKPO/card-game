@@ -353,8 +353,6 @@ func _ready() -> void:
 					holder_id = a.trim_prefix("holder=")
 			var rk := CardInstance.from_data(CardData.get_card(holder_id))
 			board.spawn_player_card(rk, BoardLocation.at(0, 2, 1))
-			if "armed" in args:
-				rk.autocast_ability = "castling"
 			await get_tree().process_frame
 			if "inspectunit" in args:
 				# "longdesc": stress the fixed-height guarantee with a wall of text.
@@ -455,7 +453,7 @@ func _ready() -> void:
 				# Stage the selection through the real path: a static UNIT action renders the
 				# move cues AND the attack preview from one declaration (see Interaction).
 				board.interaction.begin(board.make_unit_action(board.get_card_ui(atk), false, false))
-			# "reticle": also mark the bishop's target enemy as a valid autocast target, so the slot
+			# "reticle": also mark the bishop's target enemy as a valid cast target, so the slot
 			# shows BOTH the green reticle (centre) AND the attack crosshair (top-right) composed.
 			if "reticle" in args:
 				var tgt = board.find_target(atk)
@@ -525,23 +523,7 @@ func _ready() -> void:
 			StatusEngine.apply(gworld.slot_at(0, 2, 1), "burning", Effect.STATUS_DURATION_DEFAULT, 1, null)
 			gboard.refresh()
 			await get_tree().process_frame
-	# "armeddrag": the armed-autocast drag hybrid — empty own slots show MOVE (priority), occupied
-	# invalid slots show the red X (a valid cast target would show the green reticle).
-	if scene_path.contains("combat") and "armeddrag" in args:
-		var cb2: Node = null
-		for n: Node in sv.find_children("*", "Node", true, false):
-			if n.has_method("get_chrome") and n.get("_board") != null:
-				cb2 = n
-				break
-		if cb2 != null:
-			var board2 = cb2.get("_board")
-			board2.place_enemy_card(CardInstance.from_data(CardData.get_card("pawn")), BoardLocation.at(1, 1, 0))
-			var rk2 := CardInstance.from_data(CardData.get_card("rook"))
-			board2.spawn_player_card(rk2, BoardLocation.at(0, 1, 3))
-			rk2.autocast_ability = "castling"
-			await get_tree().process_frame
-			board2.interaction.begin(board2.make_autocast_action(board2.get_card_ui(rk2)))
-			await get_tree().process_frame
+	# ("armeddrag" retired with the armed-autocast gesture — effect-cleanse demolition.)
 	# "inspect": pop the full-screen CardInspector over the scene (a content-rich card).
 	# "stattip": a single stat badge's rich hover tooltip (colour-named), built directly since a real
 	# hover can't be staged. Pass stat=<health|shield|attack|speed> to pick which.

@@ -5,9 +5,6 @@ extends Node
 signal unit_placed(inst: CardInstance, card_ui: CardUI, from_hand: bool, cost: int, on_play_results: Array)
 # Emitted for any slot press; combat listens (and routes to the Interaction session first).
 signal slot_pressed(slot: SlotUI)
-# Emitted when an AUTOCAST action commits on a valid occupied slot; combat routes it to
-# SpellCaster.activate_autocast. The dragged unit never moves.
-signal autocast_dropped(slot: SlotUI, card_ui: CardUI)
 # The two halves as grids, FORWARDED from the world — the board stores no occupancy of its
 # own. It used to hold the arrays and lend them to the world, which made two owners of one
 # fact kept in step by hand; placement has exactly one home now (see LocationManager) and
@@ -84,10 +81,6 @@ var enemy_slots:  Array = []  # [row][col] -> SlotUI
 var placement_enabled: bool  = false
 var is_hand_card: Callable        # func(CardUI) -> bool
 var get_mana: Callable            # func() -> int
-# Whether dropping this dragged unit onto this slot fires its armed autocast ability —
-# SpellCaster.autocast_drop_ok (armed + payable + the ability's own target judge, which may
-# well accept an EMPTY slot — slot-mode abilities do), injected like get_mana.
-var can_autocast: Callable        # func(CardInstance, SlotUI) -> bool
 # The combat-wide interaction session owner (see Interaction / INTERACTION_DESIGN.md). The
 # board renders WHATEVER the current action declares (present, connected to its `changed`) and
 # begins/ends drag actions on it; injected by combat before build_section runs.
@@ -584,37 +577,12 @@ func make_unit_action(card_ui: CardUI, animated: bool, is_drag: bool) -> Interac
 	return act
 
 
-# The armed-autocast drag: PURE COMPOSITION of a move and a cast — BOTH interpretations are
-# offered on EVERY slot, move first. A legal move spot is a DESTINATION; anything else (empty
-# slots included) goes to the ability's own judge, and only a slot neither can use reads invalid
-# (a cast IS a targeted effect). Asking the cast about empty slots is the point: a rooted
-# building can't move anywhere, so a move-only reading painted red X over the very slots its
-# delivery ability wants. Commit mirrors the same precedence via is_move_spot — one definition,
-# so cue / drop-accept / execution cannot disagree.
-func make_autocast_action(card_ui: CardUI) -> Interaction.Action:
-	var act := Interaction.Action.new()
-	act.kind = Interaction.Action.Kind.AUTOCAST
-	act.source = card_ui
-	act.animated = true
-	act.is_drag = true
-	act.preview_instance = card_ui.card_instance
-	var is_move_spot := func(slot: SlotUI) -> bool:
-		return slot.get_card() == null and slot.location.side == 0 \
-				and _can_drop_on_player_slot(card_ui, slot)
-	act.role_check = func(slot: SlotUI) -> int:
-		if is_move_spot.call(slot):
-			return Interaction.Role.DESTINATION
-		if _can_autocast_on_slot(card_ui, slot):
-			return Interaction.Role.TARGET_VALID
-		return Interaction.Role.TARGET_INVALID
-	act.on_commit = func(slot: SlotUI) -> void:
-		if not placement_enabled:
-			return
-		if is_move_spot.call(slot):
-			do_place_unit(slot, card_ui)
-		else:
-			autocast_dropped.emit(slot, card_ui)
-	return act
+# AUTOCAST ACTION REMOVED (effect-cleanse demolition): the armed-autocast drag (a pure
+# move+cast composition, move first, the cast judging every other slot including empty
+# ones) died with the ability costume. When quick-cast returns on the rebuilt
+# ActivatedEffect, its action composes the same way — one role predicate, so cue /
+# drop-accept / execution cannot disagree — with eligibility asked OF the activation's
+# target resolver (TARGETING_DESIGN.md §3), never a second judge.
 
 
 # Toggles the idle "open here" marker on empty player slots — combat turns it on only while
@@ -970,8 +938,8 @@ func _can_drop_on_player_slot(card_ui: CardUI, _slot: SlotUI) -> bool:
 	if is_hand_card.call(card_ui):
 		return inst.get_attribute("cost") <= get_mana.call()
 	# Board-to-board MOVE legality (the accept-side twin of CardUI._get_drag_data's gates):
-	# only the player's own fielded, non-building units relocate — a fielded building's drag
-	# exists solely to cast its armed ability, and no move spot ever accepts it.
+	# only the player's own fielded, non-building units relocate — a fielded building never
+	# drags at all while the quick-cast gesture is demolished.
 	if inst.owner != 0:
 		return false
 	if BoardFacade.is_on_board(world, inst) and inst.data.is_building():
@@ -979,14 +947,7 @@ func _can_drop_on_player_slot(card_ui: CardUI, _slot: SlotUI) -> bool:
 	return true
 
 
-# The occupied-slot gate consulted by SlotUI._can_drop_data — occupied slots reject unit
-# drops except the autocast gesture (see `can_autocast`).
-func _can_autocast_on_slot(card_ui: CardUI, slot: SlotUI) -> bool:
-	return placement_enabled and can_autocast.is_valid() \
-			and bool(can_autocast.call(card_ui.card_instance, slot))
-
-
-# Every PLAYER board unit joins the autocast drag affordance, whatever path fielded it (hand
+# Every PLAYER board unit joins the drag affordance, whatever path fielded it (hand
 # placement, move, material spawn, the king). Re-entry (a relocating unit) is guarded.
 func _wire_unit_drag(card_ui: CardUI) -> void:
 	if not card_ui.unit_drag_started.is_connected(_on_unit_drag_started):
@@ -996,15 +957,11 @@ func _wire_unit_drag(card_ui: CardUI) -> void:
 
 # A unit drag BEGINS an Interaction action and nothing else — everything it used to set up
 # piecemeal here (cues, card filters, attack preview, drag phantom) is now rendered by
-# present() from the action. An armed unit's drag is the move+cast composition; a plain
-# unit's drag is a pure reposition.
+# present() from the action.
 func _on_unit_drag_started(card_ui: CardUI) -> void:
 	if interaction == null:
 		return
-	if card_ui.card_instance.armed_autocast() != null:
-		interaction.begin(make_autocast_action(card_ui))
-	else:
-		interaction.begin(make_unit_action(card_ui, true, true))
+	interaction.begin(make_unit_action(card_ui, true, true))
 
 
 func _on_unit_drag_ended(card_ui: CardUI) -> void:

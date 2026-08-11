@@ -82,7 +82,7 @@ func _legacy_mapping() -> void:
 	# permanent stays inert: listens to an event nothing ever emits.
 	var ep := Effect.from_dict({"trigger": "permanent", "targeting_policy": "self",
 			"attribute": "attack", "amount": 1})
-	for ev_id: StringName in [&"play", &"death", &"attack", &"struck", &"activate", &"turn_start", &"turn_end"]:
+	for ev_id: StringName in [&"play", &"death", &"attack", &"struck", &"act", &"turn_start", &"turn_end"]:
 		if ep.trigger_resolver().listens(ev_id):
 			check(false, "permanent must stay inert (listened to %s)" % ev_id)
 			return
@@ -108,13 +108,8 @@ func _native_form() -> void:
 	check(not e.trigger_resolver().fires(GameEvent.make(&"death", strong_knight), holder),
 			"native form: composition gate rejects a knight")
 
-	var t := Effect.from_dict({"trigger": {"kind": "transient"}, "targeting_policy": "manual",
-			"attribute": "health", "amount": -2})
-	check(t.trigger_resolver() is TriggerResolver.Transient, "native transient parses")
-	check(t.trigger_resolver().applies_on_use(), "transient applies on use")
-	check(not t.trigger_resolver().fires(GameEvent.make(&"play", holder), holder),
-			"transient never fires from events")
-	check(t.trigger == Effect.Trigger.ON_PLAY, "transient derives the ON_PLAY compat trigger")
+	# (The Transient kind and its applies_on_use gate died in the effect-cleanse demolition —
+	# activation is a mechanism, not a trigger wearing a cost. TARGETING_DESIGN.md §7/§10.)
 
 
 func _dual_gating() -> void:

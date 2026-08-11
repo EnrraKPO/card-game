@@ -4,8 +4,8 @@ extends Node
 # for another whole turn, and the sweep threw the body away so the fall and the chest never played.
 #
 # Stages a real combat, puts an enemy army on the board, then kills the captain THROUGH THE EFFECT
-# PATH (EffectSystem damage + the sweep — exactly what SpellCaster._resolve_on_play does) and
-# reports the cast the way SpellCaster.cast_resolved does. Then checks the four promises:
+# PATH (EffectSystem damage + the sweep — what any resolved cast does) and asks the
+# fight-may-have-ended question a finished cast asks. Then checks the four promises:
 #   1. the fight ENDED there and then (no waiting for the next turn),
 #   2. the captain got its fall — the treasure chest exists,
 #   3. the army fell with it — no enemy unit still standing,
@@ -143,8 +143,8 @@ func _by_spell() -> void:
 		failures += 1
 		print("FAIL: the sweep threw the captain's body away — nothing left to fall")
 
-	# What the cast reports when it finishes (SpellCaster.cast_resolved -> Combat._on_cast_resolved).
-	await combat.call("_on_cast_resolved")
+	# The question a finished cast makes the orchestrator ask (see Combat._settle_if_decided).
+	await combat.call("_settle_if_decided")
 	await get_tree().create_timer(3.5).timeout   # the fall, the chest, the army coming apart
 
 	if not combat.get("_ended"):

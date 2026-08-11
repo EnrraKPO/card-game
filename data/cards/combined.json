@@ -241,10 +241,6 @@
 					"event": "play",
 					"of": "self"
 				},
-				"targets": {
-					"kind": "side",
-					"of": "own"
-				},
 				"attribute": "draw",
 				"amount": 2
 			}
@@ -269,10 +265,6 @@
 					"kind": "event",
 					"event": "play",
 					"of": "self"
-				},
-				"targets": {
-					"kind": "side",
-					"of": "own"
 				},
 				"attribute": "mana",
 				"amount": 2

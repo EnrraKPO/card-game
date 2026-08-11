@@ -18,10 +18,6 @@ var hand: Hand = null
 var board: CombatBoard = null
 var interaction: Interaction = null
 var side: CombatSide = null   # the PLAYER's side — the resource facts affordability derives from
-# The spell-rules expert (see SpellCaster) — the one authority on whether a set of effects can
-# still do anything. Assigned by Combat after install rather than passed in: it is a rules
-# consultant the views ASK, not part of the declared state they derive from.
-var caster: SpellCaster = null
 
 
 static func install(p_hand: Hand, p_board: CombatBoard, p_interaction: Interaction,
@@ -41,20 +37,19 @@ func player_mana() -> int:
 	return side.mana if side != null else 0
 
 
-# Whether an ability is castable RIGHT NOW: its own cost rule (see AbilityData.usable_by) AND
-# something left for it to do — an ability whose every effect is currently a no-op is illegal to
-# play, exactly like a spell (see SpellCaster.effects_have_a_play).
+# Whether an ability is castable RIGHT NOW: its cost rule (see AbilityData.usable_by, the one
+# usability definition that survives the demolition). The other half of the old answer —
+# "has it anything left to do" (the prohibit-non-ops viability rule) — is a query INTO the
+# rebuilt target resolvers (TARGETING_DESIGN.md §3), not answerable while they don't exist.
 func ability_usable(holder: CardInstance, ab: AbilityData) -> bool:
-	if ab == null or not ab.usable_by(holder, player_mana()):
-		return false
-	return caster == null or caster.effects_have_a_play(ab.effects, holder)
+	return ab != null and ab.usable_by(holder, player_mana())
 
 
 # Whether this card-shaped view still has a play in it — the hand's play-me glow and the cast
-# gate ask the same question of the same authority (see SpellCaster.card_has_a_play). Units
-# always do: a body on the board is a play whatever its effects would manage.
-func has_a_play(inst: CardInstance) -> bool:
-	return caster == null or caster.card_has_a_play(inst)
+# gate must ask the SAME rebuilt authority (any-legal-play is a resolver query, TARGETING_DESIGN.md
+# §3). Demolition stub: every card stays "legal" so hands remain interactive.
+func has_a_play(_inst: CardInstance) -> bool:
+	return true
 
 
 static func clear() -> void:

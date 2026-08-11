@@ -33,8 +33,9 @@ const HALVES_FLANK := 10.0   # breathing room either side of the gutter
 const COL_SEP := 14.0   # board↔hand breathing room; also a term in _resize_board's height budget
 const TOP_MARGIN := 12.0   # the body's top inset; another _resize_board height-budget term
 
-# Turn structure ONLY. "What is the player's gesture doing" (targeting, placing, moving,
-# aiming an autocast) lives in the Interaction session, not here — see INTERACTION_DESIGN.md.
+# Turn structure ONLY. "What is the player's gesture doing" (placing, moving, and — when the
+# rebuilt targeting returns — aiming) lives in the Interaction session, not here — see
+# INTERACTION_DESIGN.md.
 enum Phase { CPU_PLACE, PLAYER_PLACE, COMBAT }
 
 var _phase: Phase = Phase.CPU_PLACE
@@ -82,7 +83,6 @@ var _arena_chrome_w: float = 0.0   # side margins + left rail + action column + 
 var _hand: Hand
 var _board: CombatBoard
 var _animator: CombatAnimator
-var _spell_caster: SpellCaster
 var _vfx: VFXPlayer
 var _interaction: Interaction   # THE owner of the current player gesture (see Interaction)
 var _ctx: CombatContext         # the declared surface cards consult — installed in _ready
@@ -131,20 +131,17 @@ func _ready() -> void:
 	_hand         = Hand.new()
 	_board        = CombatBoard.new()
 	_animator     = CombatAnimator.new()
-	_spell_caster = SpellCaster.new()
 	_vfx          = VFXPlayer.new()
 	_interaction  = Interaction.new()
 	add_child(_hand)
 	add_child(_board)
 	add_child(_animator)
-	add_child(_spell_caster)
 	add_child(_vfx)
 	add_child(_interaction)
 
 	# The declared-state surface cards consult (selection / inspection / preview world) —
 	# see CombatContext + CardUI.derive_presentation. Cleared in _exit_tree.
 	_ctx = CombatContext.install(_hand, _board, _interaction, _player_side)
-	_ctx.caster = _spell_caster   # the rules consultant views ask about castability
 
 	_board.setup_grids()
 	_board.interaction  = _interaction   # before _build_ui — build_section hands it to every slot
@@ -180,7 +177,6 @@ func _ready() -> void:
 	_board.world = _world
 	_cascade = CombatCascade.make(_world, _presenter)
 
-	_spell_caster.setup(_board, _animator, func() -> int: return _player_side.mana, _interaction)
 	_hand.bind_side(_player_side)
 	_player_side.mana_changed.connect(_refresh_mana)
 	# Mana changing shifts which abilities are affordable, so re-derive the Inspect Abilities glow
@@ -189,12 +185,13 @@ func _ready() -> void:
 	_player_side.mana_changed.connect(_hand.refresh_nav)
 	# Mana also gates which hand cards are affordable — re-derive their play-me glow / 3% dim.
 	_player_side.mana_changed.connect(_hand.refresh_playable)
-	_hand.wire_spell_card = _spell_caster.wire_spell_card
+	# SPELL CASTING REMOVED (effect-cleanse demolition): hand spells wire to nothing — the
+	# rebuilt ActivatedEffect/played pipeline provides the cast gesture (TARGETING_DESIGN.md
+	# §7/§9); until then spells sit in hand uncastable, like attacks sit unresolved.
 	_hand.wire_unit_card = _board.wire_unit_card   # hand-unit drags light the board's place cues
 	_hand.selection_changed.connect(_on_hand_selection_changed)
 	_hand.token_hovered.connect(_highlight_building)
 	_hand.inspect_changed.connect(_on_inspect_changed)
-	_hand.autocast_changed.connect(_on_autocast_changed)
 	# Feeds the hand's level-2 Abilities view: the fielded player units whose abilities are
 	# currently offerable (same rule as CardUI's amber ability cue).
 	# Every fielded player unit that HAS an activated ability — payable this moment or not. The
@@ -219,14 +216,12 @@ func _ready() -> void:
 	Vfx.register_custom("king_fall", KingFallFx.play)
 	Vfx.register_custom("reward_orb", RewardOrbFx.play)
 
-	_board.can_autocast = _spell_caster.autocast_drop_ok
 	# Every death, from any cause, pays its bounty through this one wire (see
 	# CombatWorld.unit_retired — a world copy has no subscribers, so simulated deaths
 	# structurally cannot pay).
 	_world.unit_retired.connect(_pay_bounty)
 	_board.unit_placed.connect(_on_board_unit_placed)
 	_board.slot_pressed.connect(_on_board_slot_pressed)
-	_board.autocast_dropped.connect(_on_autocast_dropped)
 	# Order matters: the orchestrator's gating runs FIRST (a modal session locking placement
 	# input resets cues via set_open_hints), THEN the board paints the action's cues over the
 	# freshly-reset board.
@@ -239,12 +234,6 @@ func _ready() -> void:
 	# emission converge on the truth, whatever order the emissions unwind in.
 	_interaction.changed.connect(func(_action: Interaction.Action) -> void:
 		_board.present(_interaction.current()))
-	_spell_caster.spell_consumed.connect(_on_spell_consumed)
-	_spell_caster.ability_autocast.connect(_on_ability_autocast)
-	# A resolved cast is a moment the fight may have ended in — the commonest one, in fact: a
-	# fire spell on the enemy captain. The cast itself knows nothing of endings, so it reports
-	# back and the orchestrator asks its own question (see _settle_if_decided).
-	_spell_caster.cast_resolved.connect(_on_cast_resolved)
 
 	# A practice bout runs the REAL economy and rolls it back on the way out (see _rewards_live):
 	# the snapshot is taken before a single coin can be paid.
@@ -298,7 +287,7 @@ func _input(event: InputEvent) -> void:
 				get_viewport().set_input_as_handled()
 			elif not get_viewport().gui_is_dragging() and not _click_engages(true):
 				# The universal back-out: a right-click that does NOT itself engage anything
-				# (a card's details view, an ability token's autocast toggle) clears the
+				# (a card's details view) clears the
 				# selection, the inspection, and whatever selection action was live.
 				_hand.dismiss_to_hand()
 				_interaction.end_action()
@@ -310,7 +299,7 @@ func _input(event: InputEvent) -> void:
 # Whether a click at the cursor's position ENGAGES an interactive control rather than landing
 # on dead panel/background space — walked up from the GUI's actual hovered control, so it
 # needs no registry of rects. Left clicks engage cards, buttons and scrollbars; right clicks
-# only cards (the details view / autocast toggle — buttons don't respond to right-click).
+# only cards (the details view — buttons don't respond to right-click).
 func _click_engages(right_click: bool = false) -> bool:
 	var c := get_viewport().gui_get_hovered_control()
 	while c != null:
@@ -529,41 +518,14 @@ func _execute_enemy_action(action: Dictionary) -> void:
 			Sfx.play("combat_enemy_place")
 			_vfx.play(VFXEvent.card_placed(_board.get_card_ui(inst)))
 			await _animator.show_effect_results(results, inst)
-		EnemyEngine.Action.CAST:
-			var inst: CardInstance = action["inst"]
-			_pay_mana(_enemy_side, inst.data.cost)
-			_enemy_side.remove_from_hand(inst)
-			await _show_enemy_spell(inst, action["target"])
-		EnemyEngine.Action.GENERATE:
-			# An enemy unit activates an ability. Pay the cost (mana + tap if the ability
-			# carries it), then resolve per v1 policy: a material ability always takes its
-			# SPAWN half onto the planned slot (functionally the old unit generation; merge
-			# smarts later); any other ability casts at the AI-picked target.
-			var holder: CardInstance = action["unit"]
-			var ab: AbilityData = action["ability"]
-			_pay_mana(_enemy_side, ab.mana)
-			if ab.tap:
-				holder.attack_exhausted = true   # the fact; the card derives its grey from it
-				var b_ui := _board.get_card_ui(holder)
-				if b_ui != null:
-					b_ui.derive_presentation()   # re-check cue — instant instead of a poll beat
-			if not ab.material.is_empty():
-				var mat := CardData.get_card(ab.material)
-				var m_inst := CardInstance.from_data(mat)
-				var m_results := _board.place_enemy_card(m_inst, action["at"])
-				# A conjured unit MATERIALIZES (distinct from a card landing from a hand).
-				Vfx.play("summon_materialize", _board.get_card_ui(m_inst))
-				await _animator.show_effect_results(m_results, m_inst)
-			else:
-				# Present via the card-shaped ability view, like an enemy spell cast. source_building
-				# + ability mirror the player's ability tokens (see Hand._rebuild_inspect_view) so
-				# _cast_enemy_spell resolves the holder as the effect source (glint included).
-				var display := CardInstance.from_data(ab.display_card())
-				display.owner = 1
-				display.source_building = holder
-				display.ability = ab
-				var spell_target: CardInstance = action.get("target", null)
-				await _show_enemy_spell(display, spell_target)
+		EnemyEngine.Action.CAST, EnemyEngine.Action.GENERATE:
+			# SPELL/ABILITY EXECUTION REMOVED (effect-cleanse demolition): unreachable — the
+			# engine plans no cast/ability candidates while CandidateApply.can_simulate_cast
+			# refuses everything. NEEDS, when the rebuilt effect system lands: pay the cost
+			# (mana; the activation's own cost gate), present the cast legibly (the old
+			# _show_enemy_spell pop-and-fly), then resolve through the ONE played/activated
+			# pipeline — never a private effect loop here (TARGETING_DESIGN.md §7/§10).
+			push_warning("enemy CAST/GENERATE planned while the effect system is demolished")
 		EnemyEngine.Action.MOVE:
 			var from := _board.move_enemy_card(action["inst"], action["at"])
 			var moved := _board.get_card_ui(action["inst"])
@@ -573,72 +535,6 @@ func _execute_enemy_action(action: Dictionary) -> void:
 			# neither move can be followed.
 			await Vfx.play("unit_move_slide", moved, {"from": from})
 	await get_tree().create_timer(0.35).timeout
-
-
-# Makes a CPU spell legible: the enemy has no visible hand, so a cast would otherwise
-# land as unexplained damage during the CPU phase. We pop the spell card up, name it,
-# fly it into its target, THEN resolve the effect (which plays the on-target VFX).
-const _ENEMY_SPELL_HOLD := 0.55
-
-func _show_enemy_spell(inst: CardInstance, target: CardInstance) -> void:
-	var card := CardUI.create(inst)
-	card.custom_minimum_size = Vector2(150, 200)
-	card.z_index      = 40
-	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(card)
-	var origin := Vector2(size.x * 0.5 - 75.0, size.y * 0.28)
-	card.global_position = origin
-
-	var banner := Label.new()
-	banner.text = Loc.t("combat.enemy_casts", {"name": inst.data.display_name})
-	banner.add_theme_font_size_override("font_size", 22)
-	banner.modulate         = Color(1.0, 0.55, 0.3)
-	banner.z_index          = 40
-	banner.mouse_filter     = Control.MOUSE_FILTER_IGNORE
-	banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	add_child(banner)
-	banner.global_position = Vector2(size.x * 0.5 - 150.0, origin.y - 44.0)
-	banner.custom_minimum_size.x = 300.0
-
-	Sfx.play("spell_cast")   # the enemy's cast sounds like the player's
-	# Pop in, then hold so the player can read what was cast.
-	card.scale = Vector2(0.5, 0.5)
-	var pop := create_tween()
-	pop.set_trans(Tween.TRANS_BACK); pop.set_ease(Tween.EASE_OUT)
-	pop.tween_property(card, "scale", Vector2.ONE, 0.18)
-	await pop.finished
-	await get_tree().create_timer(_ENEMY_SPELL_HOLD).timeout
-	banner.queue_free()
-
-	# Single-target spells fly into the victim; area spells just resolve in place.
-	if target != null:
-		var t_ui := _board.get_card_ui(target)
-		if t_ui != null:
-			var fly := create_tween()
-			fly.set_trans(Tween.TRANS_QUAD); fly.set_ease(Tween.EASE_IN)
-			fly.tween_property(card, "global_position", t_ui.global_position, 0.22)
-			await fly.finished
-
-	await _cast_enemy_spell(inst, target)
-	await get_tree().create_timer(0.25).timeout
-	card.queue_free()
-
-
-# Applies an enemy spell's ON_PLAY effects against the AI-chosen target (mirrors
-# SpellCaster._execute_spell, minus the player-facing targeting UI).
-func _cast_enemy_spell(inst: CardInstance, target: CardInstance) -> void:
-	# An ability's display card acts AS its holder — same resolution as SpellCaster._execute_spell.
-	var src := inst
-	if inst.ability != null and inst.source_building != null:
-		src = inst.source_building
-	for effect: Effect in inst.data.effects:
-		if effect.trigger != Effect.Trigger.ON_PLAY:
-			continue
-		var ctx := _board.make_context(src)
-		ctx.manual_target = target
-		await _animator.show_effect_results(EffectSystem.apply_single(effect, src, ctx), src)
-		_board.cleanup_effect_deaths()
-	_board.refresh()
 
 
 # ── Rook / building card generation ──────────────────────────────────────────────
@@ -722,12 +618,12 @@ func _run_combat() -> void:
 		if not attacker.is_alive():
 			continue
 		# Publish whose moment this is (the strip lights its entry — see CombatWorld.acting). Set
-		# for EVERY unit whose turn comes up, tapped ones included: their activate still fires.
+		# for EVERY unit whose turn comes up, tapped ones included: their act moment still fires.
 		_world.acting = attacker
-		# The unit's turn has come up: broadcast its ON_ACTIVATE moment (subject = this unit). Its own
+		# The unit's turn has come up: broadcast its ACT moment (subject = this unit). Its own
 		# effects proc (e.g. poison) then its statuses decay. This can kill it before it acts, so
 		# re-check life before its attack.
-		await _resolve_event(&"activate", attacker)
+		await _resolve_event(&"act", attacker)
 		if not attacker.is_alive():
 			continue
 		# A building that spent its attack generating a card sits this round out.
@@ -1401,20 +1297,13 @@ func _use_consumable(relic_id: String) -> void:
 	_relic_tray.glint(relic_id)
 	await get_tree().create_timer(Vfx.handoff(LivePresenter.RELIC_CHIP_SPAN)).timeout
 	_relic_tray.refresh()
-	for effect: Effect in relic.effects:
-		if not effect.trigger_resolver().applies_on_use():
-			continue
-		var ctx := _board.make_context(src)
-		ctx.owner_anchor = 0   # run-scope item: "enemy" means the player's enemy, whoever acts
-		var results := EffectSystem.apply_single(effect, src, ctx)
-		await _animator.show_effect_results(results, src, "", false)
-		_board.cleanup_effect_deaths()
+	# CONSUMABLE RESOLUTION REMOVED (effect-cleanse demolition): the use-path dispatch
+	# (applies_on_use) died with the Transient kind. NEEDS: using a consumable is an
+	# ACTIVATION — the relic container's ActivatedEffect invoked through the one pipeline,
+	# anchored to the player side (owner_anchor 0), then the death sweep and the
+	# fight-may-have-ended question (_settle_if_decided). TARGETING_DESIGN.md §7.
 	_consumable_busy = false
 	await _settle_if_decided()   # a bomb can end a fight
-
-
-func _on_cast_resolved() -> void:
-	await _settle_if_decided()
 
 
 func _emit_kill(corpse: CardInstance) -> void:
@@ -1595,11 +1484,8 @@ func _on_board_unit_placed(inst: CardInstance, card_ui: CardUI, from_hand: bool,
 		if cost > 0:
 			# The mana paying for the play flies from the gauge into the placed card.
 			Vfx.play("mana_spend_wisp", card_ui, {"source": _mana_chunks_box})
-		if card_ui.is_generated:
-			_consume_generated_token(card_ui)
-		else:
-			_player_side.remove_from_hand(inst)
-			_hand.remove_card(card_ui)
+		_player_side.remove_from_hand(inst)
+		_hand.remove_card(card_ui)
 	_vfx.play(VFXEvent.card_placed(card_ui))
 	# A unit just entered (or an ability token left) the board, so the roster of ability-bearing
 	# units changed — re-derive the Inspect Abilities button against the new composition.
@@ -1607,62 +1493,16 @@ func _on_board_unit_placed(inst: CardInstance, card_ui: CardUI, from_hand: bool,
 	await _animator.show_effect_results(results, inst)
 
 
-# An ability token was just activated: pay its tap cost if it has one (the holder's action
-# for the round — its other tap-costed offers leave the tray immediately).
-func _consume_generated_token(card_ui: CardUI) -> void:
-	_hand.remove_token(card_ui)
-	var holder: CardInstance = card_ui.card_instance.source_building
-	var ab: AbilityData = card_ui.card_instance.ability
-	if holder != null:
-		Vfx.play("ability_activate_flare", _board.get_card_ui(holder))
-	if holder != null and (ab == null or ab.tap):
-		_pay_tap(holder)
-	card_ui.clear_generated()
-	# Stay in the inspect view (no auto-pop): re-derive the tray so a tapped-out unit shows its
-	# empty state in place. The Inspect Abilities button withdraws separately via _pay_tap's prune.
-	_hand.refresh_inspect()
-
-
-# Spends the holder's action for the round — the tap half of an ability's cost, shared by
-# the tray-token path above and the autocast path (_on_ability_autocast).
-func _pay_tap(holder: CardInstance) -> void:
-	holder.attack_exhausted = true   # the fact; the card derives its grey from it
-	_highlight_building(holder, false)
-	var holder_ui := _board.get_card_ui(holder)
-	if holder_ui != null:
-		holder_ui.derive_presentation()   # re-check cue — instant instead of a poll beat
-	_hand.prune_tapped(holder)
-
-
-# ── Autocast (armed ability fired by dragging the holder onto a target) ─────────
-
-# The AUTOCAST action committed on a valid occupied slot (role predicate →
-# SpellCaster.autocast_drop_ok); hand it to the caster, which re-validates and emits
-# ability_autocast for payment below.
-func _on_autocast_dropped(slot: SlotUI, card_ui: CardUI) -> void:
-	await _spell_caster.activate_autocast(card_ui.card_instance, slot)
-
-
-# The autocast twin of _on_spell_consumed + _consume_generated_token: mana, then the tap.
-func _on_ability_autocast(holder: CardInstance, ab: AbilityData) -> void:
-	CombatLog.note("player", "ability %s.%s (mana %d%s)" % [holder.data.id, ab.id, ab.mana,
-			", tap" if ab.tap else ""])
-	Vfx.play("ability_activate_flare", _board.get_card_ui(holder))
-	_pay_mana(_player_side, ab.mana)
-	if ab.tap:
-		_pay_tap(holder)
-
-
-# An ability widget toggled a holder's armed state: refresh that unit's board card so the
-# armed-brackets echo (CardUI._refresh_autocast_brackets) tracks it.
-func _on_autocast_changed(holder: CardInstance) -> void:
-	var ui := _board.get_card_ui(holder)
-	if ui != null:
-		ui.refresh()
-		if holder.armed_autocast() != null:
-			Vfx.play("autocast_arm_brackets", ui)
-		else:
-			Sfx.play("autocast_disarm")
+# ABILITY ACTIVATION REMOVED (effect-cleanse demolition): the tray-token cast flow, the tap
+# payment (_pay_tap: attack_exhausted + prune) and the armed-autocast gesture all died with
+# the ability spell-costume. NEEDS, from the rebuilt ActivatedEffect (TARGETING_DESIGN.md §7):
+#   · activation is invoked-and-paid (mana + tap through the one cost gate), never a fake
+#     spell card cast through the hand;
+#   · the tap spends the holder's act for the round (attack_exhausted is that fact) and the
+#     presentation re-derives (ability_activate_flare on the holder, tray prune, inspect
+#     refresh);
+#   · quick-cast (the armed-autocast drag) returns as a GESTURE onto the same activation,
+#     conducted by the activation's target resolver — never a second judge.
 
 
 func _on_board_slot_pressed(slot: SlotUI) -> void:
@@ -1732,20 +1572,10 @@ func _refresh_card_presentation() -> void:
 	_hand.derive_cards()
 
 
-func _on_spell_consumed(card_ui: CardUI, cost: int) -> void:
-	CombatLog.note("player", "cast %s (cost %d)" % [card_ui.card_instance.data.id, cost])
-	Sfx.play("spell_cast")
-	_pay_mana(_player_side, cost)
-	if cost > 0:
-		Vfx.play("mana_spend_wisp", card_ui, {"source": _mana_chunks_box})
-	# A rook-generated SPELL token (e.g. Castling) casts through this same path as a normal hand
-	# spell — but it must exhaust its source rook like a generated UNIT token does, not just drop
-	# out of the normal hand list (see _consume_generated_token).
-	if card_ui.is_generated:
-		_consume_generated_token(card_ui)
-	else:
-		_player_side.remove_from_hand(card_ui.card_instance)
-		_hand.remove_card(card_ui)
+# SPELL CONSUMPTION REMOVED (effect-cleanse demolition): paying for a cast (mana wisp, log
+# note, hand removal) belongs to the uniform PLAYED act — every card pays mana and emits
+# `played` the same way (TARGETING_DESIGN.md §9); the rebuilt pipeline owns it, not a
+# spell-only handler.
 
 
 # ── UI building ────────────────────────────────────────────────────────────────

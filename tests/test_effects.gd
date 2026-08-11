@@ -140,8 +140,8 @@ func _consumable_relic_use() -> void:
 	var ctx := EffectContext.make(king, [[king, mine]], [[foe_rook, foe_pawn]])
 	ctx.owner_anchor = 0                   # run-scope item: "enemy" reads from the player
 	for e: Effect in relic.effects:
-		check(e.trigger_resolver().applies_on_use(),
-				"bomb effect is transient — the use path applies it")
+		# The applies_on_use gate died with the Transient kind (effect-cleanse demolition);
+		# consumable use becomes an ACTIVATION on the rebuilt effect system.
 		EffectSystem.apply_single(e, king, ctx)
 	check_eq(foe_rook.current_shield, 0, "bomb damage resolves shield-first on an enemy")
 	check_eq(foe_rook.current_health, 4, "…and bleeds the remainder (6 - 2)")

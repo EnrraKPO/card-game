@@ -22,11 +22,7 @@
 					"of": "self"
 				},
 				"attribute": "draw",
-				"amount": 1,
-				"targets": {
-					"kind": "side",
-					"of": "own"
-				}
+				"amount": 1
 			}
 		],
 		"tool": {

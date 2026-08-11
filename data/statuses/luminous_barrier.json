@@ -25,10 +25,6 @@
 					"event": "struck",
 					"destination_of": "self"
 				},
-				"targets": {
-					"kind": "side",
-					"of": "own"
-				},
 				"attribute": "mana",
 				"amount": 1,
 				"eval": { "value": 0.5 }

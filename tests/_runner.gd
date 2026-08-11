@@ -67,7 +67,10 @@ const QUARANTINE := {
 	"Dodge": 2,
 	"Crit": 5,
 	"Spawn payload & multi-strike": 1,
-	"Enemy engine": 12,
+	# 12 → 16 with the effect-cleanse demolition: the sim's cast seam (CandidateApply's
+	# _run_cast clone) died with the other ON_PLAY dispatchers, taking the cost side the
+	# sim still performed for real (tap spend, hand removal, corpse capture) with it.
+	"Enemy engine": 16,
 	"Combat world": 4,
 	"Combat cascade": 1,
 	"Slot layer": 7,

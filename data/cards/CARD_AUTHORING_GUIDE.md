@@ -77,7 +77,7 @@ may watch any event; conditions decide who reacts.
 | Kind | Fields | Events |
 |---|---|---|
 | `transient` | — (applies when its container is USED: spell cast / ability activation) | — |
-| `event` | `event`, `conditions` (gate the origin) | `play`, `death`, `activate` (the unit's turn comes up), `turn_start`, `turn_end` |
+| `event` | `event`, `conditions` (gate the origin) | `play`, `death`, `act` (the unit's turn comes up), `turn_start`, `turn_end` |
 | `dual_event` | `event`, `origin_conditions`, `destination_conditions` (AND-ed) | `attack` (the swing, before the hit resolves), `struck` (after the hit resolves — fires whether or not damage landed) |
 
 Conditions are the ordinary schema below, plus the **relation form**
@@ -97,7 +97,7 @@ the subject):
 | `on_attack` | dual `attack`, origin self-gated |
 | `on_damage_taken` | dual `struck`, destination self-gated |
 | `on_turn_start` / `on_turn_end` | the round-boundary events, self-gated |
-| `on_activate` | event `activate`, self-gated |
+| `on_activate` | event `act`, self-gated |
 | `permanent` | inert (never dispatched — kept only for old data) |
 
 ### `targets` — who is affected

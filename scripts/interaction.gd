@@ -2,16 +2,16 @@ class_name Interaction
 extends Node
 
 # THE single owner of "what is the player doing right now" in combat. At most one Action is
-# live at a time; every gesture (placing/moving a unit, targeting a spell or tray ability,
-# aiming an armed autocast) BEGINS an action here and ENDS through here. Presentation
-# components (CombatBoard's cue renderer, SlotUI's drop gate, DragGhost verdicts, the Ready
-# button, input gating) all derive from the one `changed` signal — so a gesture ending resets
-# everything structurally, with no per-path cleanup to forget. See INTERACTION_DESIGN.md.
+# live at a time; every gesture (placing/moving a unit; aiming, when the rebuilt targeting
+# returns) BEGINS an action here and ENDS through here. Presentation components (CombatBoard's
+# cue renderer, SlotUI's drop gate, DragGhost verdicts, the Ready button, input gating) all
+# derive from the one `changed` signal — so a gesture ending resets everything structurally,
+# with no per-path cleanup to forget. See INTERACTION_DESIGN.md.
 #
 # Actions DECLARE (rules: role_of / commit); components REACT (each maps roles to its own
-# visuals in exactly one place). The rules themselves stay with the rules experts — SpellCaster
-# builds cast actions, CombatBoard builds unit/autocast actions — this node only runs the
-# lifecycle.
+# visuals in exactly one place). The rules themselves stay with the rules experts — CombatBoard
+# builds unit actions; the rebuilt effect system's resolvers conduct cast gestures through
+# actions of their own (TARGETING_DESIGN.md §3) — this node only runs the lifecycle.
 
 signal changed(action: Action)   # null = returned to idle
 
@@ -23,11 +23,13 @@ enum Role { NONE, DESTINATION, TARGET_VALID, TARGET_INVALID }
 
 
 # A declarative description of one player gesture. Built by the rules experts' factories
-# (CombatBoard.make_unit_action / make_autocast_action, SpellCaster.make_cast_action).
+# (CombatBoard.make_unit_action today; the rebuilt cast/aim actions later).
 class Action:
 	extends RefCounted
 
-	enum Kind { UNIT, CAST, CAST_SLOT, AUTOCAST }
+	# CAST/CAST_SLOT/AUTOCAST retired with the demolished cast gestures; the rebuilt
+	# resolver-conducted actions re-add the kinds they need.
+	enum Kind { UNIT }
 
 	var kind: int = Kind.UNIT
 	var source: CardUI = null
@@ -74,8 +76,8 @@ func active() -> bool:
 	return _action != null
 
 
-# A modal click session (spell/tray targeting) is live — the state most "don't interfere"
-# guards care about (the old SpellCaster.is_targeting()).
+# A modal click session (a targeted aim) is live — the state most "don't interfere"
+# guards care about.
 func modal_active() -> bool:
 	return _action != null and _action.modal
 
@@ -92,16 +94,12 @@ func begin(action: Action) -> void:
 	if prev != null and prev.on_end.is_valid():
 		prev.on_end.call()
 	# Aiming IS picking — declared here, where every gesture begins, rather than by each caster.
-	# But what gets picked depends on what is being aimed: a SPELL is a card, so it becomes the
-	# pick; a tray ABILITY is not a card — aiming it picks the ability OF its holder, which keeps
-	# the holder the pick (and its inspect panel open) for the whole aim. Idempotent either way: a
-	# gesture begun on what the player had already picked changes nothing at all.
+	# Idempotent: a gesture begun on what the player had already picked changes nothing at all.
+	# (The ability sub-pick branch — aiming a tray token picks the ability OF its holder, via
+	# Selection.select_ability — retired with the costume; it returns with the rebuilt
+	# activation gesture.)
 	if action != null and action.modal and action.source != null:
-		var inst := action.source.card_instance
-		if inst != null and inst.ability != null and inst.source_building != null:
-			Selection.select_ability(inst.source_building, inst.ability)
-		else:
-			Selection.select(inst)
+		Selection.select(action.source.card_instance)
 	changed.emit(_action)
 
 
@@ -116,15 +114,11 @@ func end_action(only: Action = null) -> void:
 	_action = null
 	if prev.on_end.is_valid():
 		prev.on_end.call()
-	# The aim's pick ends with the aim — at the level the aim picked. An ability aim backs out of
-	# the ABILITY alone (its holder stays the pick, panel open); a spell aim clears the card pick.
-	# Guarded so a pick that already moved on (the aim resolved into a new selection) is left be.
+	# The aim's pick ends with the aim. Guarded so a pick that already moved on (the aim
+	# resolved into a new selection) is left be. (The ability-level unpick retired with the
+	# costume, alongside the sub-pick in begin.)
 	if prev.modal and prev.source != null and prev.source.card_instance != null:
-		var inst := prev.source.card_instance
-		if inst.ability != null and inst.source_building != null:
-			if Selection.ability_held(inst.source_building, inst.ability):
-				Selection.clear_ability()
-		elif Selection.holds(inst):
+		if Selection.holds(prev.source.card_instance):
 			Selection.clear()
 	changed.emit(null)
 
@@ -146,8 +140,8 @@ func role_of(slot: SlotUI) -> int:
 # Whether `dragged` is the card the live action is actually about. Godot's drag-drop asks the
 # control under the CURSOR, and hands it the payload — it has no idea which gesture is live, so
 # nothing downstream can assume the two agree. They diverge for real: a modal click session
-# (SpellCaster._on_spell_card_pressed) stays live while another card is picked up, and that
-# card's drag deliberately begins no action of its own (_on_spell_drag_started early-returns).
+# (an aim begun by click) stays live while another card is picked up, and that
+# card's drag deliberately begins no action of its own.
 # Without this check the drop gate would answer for the SESSION's card, so dropping card B
 # spent card A — the wrong ability consumed, resolved wherever B happened to land.
 # EVERY drag-drop path must pass the payload through here; role_of alone is not a gate.

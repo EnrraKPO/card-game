@@ -2019,8 +2019,9 @@ func _eval_fold_innate_attribution() -> void:
 			"a fireless unit does not carry it")
 
 
-# The three-places rule: copy() carries both folds; the cast path's _capture_back
-# re-captures ground from the simulated world and re-folds units from instances.
+# The three-places rule: copy() carries both folds. (The cast path's _capture_back died
+# with the effect-cleanse demolition — its re-capture/re-fold checks return with the
+# rebuilt simulation seam; the doctrine is preserved in CandidateApply's NEED block.)
 func _eval_three_places_forwarding() -> void:
 	var burner := _enemy("pawn", 0, 1)
 	StatusEngine.apply(burner, "ablaze", Effect.STATUS_DURATION_DEFAULT, 1)
@@ -2035,14 +2036,6 @@ func _eval_three_places_forwarding() -> void:
 			"copy() carries the ground map (shared immutable folds)")
 	check(copied.units(1)[0].eval_mods == state.units(1)[0].eval_mods,
 			"copy() carries the unit fold")
-
-	var back := CandidateApply._capture_back(w, state, {}, [])
-	var seat := back.seat_mods(1, 0, 0)
-	check(seat != null and seat.exposure_add == 0.25 * 2 + 1.0,
-			"_capture_back re-captures the ground from the simulated world")
-	var u: BoardState.UnitState = back.units(1)[0]
-	check(u.eval_mods != null and u.eval_mods.exposure_add == 0.25 + 1.0,
-			"_capture_back re-folds units from their instances")
 
 
 # Threat consumption: (attack × strikes + adds) × muls, unit fold and seat fold combined,

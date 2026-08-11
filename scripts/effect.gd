@@ -38,7 +38,8 @@ enum Trigger {
 	PERMANENT,
 	ON_TURN_START,   # fired for every unit at the start of a combat round (status lifecycle)
 	ON_TURN_END,     # fired for every unit at the end of a combat round; statuses then count down
-	ON_ACTIVATE,     # fired for a unit when ITS turn comes up in the speed-ordered combat loop
+	ON_ACT,          # fired for a unit when ITS turn comes up in the speed-ordered combat loop
+					 # (the `act` event — "activate" belongs to the ability mechanism now)
 }
 
 # Sentinel for "apply this status for its own default duration" (the applier didn't override it).
@@ -493,26 +494,25 @@ func _validate_grants(d: Dictionary) -> void:
 					+ "(Layer-1 monotonicity — grants only ever ADD) — %s" % [d])
 
 
-# Load-time cross-validation of the side-targeted vocabulary — FAIL LOUD both ways:
-# a side stat (draw/discard/mana/max_mana) is meaningless on a unit, and a side target
-# can commit nothing else (players have no unit stats, no statuses, no conditions to pass).
+# Load-time validation of side-stat payloads (draw/discard/mana/max_mana) — FAIL LOUD.
+# The `side` TARGET KIND is DEAD (effect-cleanse demolition): a side payload is TARGETLESS —
+# its recipient is derivable (the holder's own side via the allegiance anchor), so it
+# authors no target at all (TARGETING_DESIGN.md §2/§10; every authored use was `of: own`).
 func _validate_side_targets(d: Dictionary) -> void:
-	var side_targeted := authored_native_targets and str(_native_targets.get("kind", "")) == "side"
-	if StatMutation.is_side_stat(attribute) and not side_targeted:
-		push_error("Effect: side stat '%s' requires targets {\"kind\": \"side\"} — %s" % [attribute, d])
-	if not side_targeted:
+	if authored_native_targets and str(_native_targets.get("kind", "")) == "side":
+		push_error("Effect: the 'side' target kind is dead — side payloads are targetless — %s" % [d])
+	if not StatMutation.is_side_stat(attribute):
 		return
 	if kind != Kind.TRIGGERED:
-		push_error("Effect: side targeting is only valid on a triggered effect — %s" % [d])
-	if not StatMutation.is_side_stat(attribute):
-		push_error("Effect: side-targeted attribute '%s' is not a side stat %s — %s"
-				% [attribute, StatMutation.SIDE_STATS, d])
+		push_error("Effect: a side stat is only valid on a triggered effect — %s" % [d])
+	# "self" passes as authored: it is the vacuous legacy default to_dict spells out on every
+	# legacy triggered effect, so deck-save round-trips would otherwise flag themselves.
+	if authored_native_targets or not targeting_policy_raw in ["", "self"]:
+		push_error("Effect: side stat '%s' is targetless — it authors no targets — %s" % [attribute, d])
 	if not status_id.is_empty():
-		push_error("Effect: a side-targeted effect cannot apply a status — %s" % [d])
+		push_error("Effect: a side-stat effect cannot also apply a status — %s" % [d])
 	if not spawn_id.is_empty():
-		push_error("Effect: a side-targeted effect cannot spawn units — %s" % [d])
-	if not (_native_targets.get("conditions", []) as Array).is_empty():
-		push_error("Effect: side targets take no conditions (players have nothing to predicate on) — %s" % [d])
+		push_error("Effect: a side-stat effect cannot also spawn units — %s" % [d])
 
 
 # Parses the activation gate from either schema. Native form: "trigger" is a Dictionary
@@ -739,7 +739,7 @@ static func _str_trigger(s: String) -> Trigger:
 		"permanent":       return Trigger.PERMANENT
 		"on_turn_start":   return Trigger.ON_TURN_START
 		"on_turn_end":     return Trigger.ON_TURN_END
-		"on_activate":     return Trigger.ON_ACTIVATE
+		"on_activate":     return Trigger.ON_ACT
 	return Trigger.ON_PLAY
 
 
@@ -778,5 +778,5 @@ static func trigger_key(t: Trigger) -> String:
 		Trigger.PERMANENT:       return "permanent"
 		Trigger.ON_TURN_START:   return "on_turn_start"
 		Trigger.ON_TURN_END:     return "on_turn_end"
-		Trigger.ON_ACTIVATE:     return "on_activate"
+		Trigger.ON_ACT:          return "on_activate"   # the legacy authored key, re-emitted byte-faithfully
 	return "on_play"

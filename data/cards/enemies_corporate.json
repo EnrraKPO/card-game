@@ -6,7 +6,7 @@
     "description": "Compensated in experience. The exit interview yields valuable insights: the company draws a card when they quit (die).",
     "enemy_only": true, "tribe": "corporate", "elements": [], "chess_pieces": [],
     "effects": [
-      { "trigger": "on_death", "targets": { "kind": "side", "of": "own" }, "attribute": "draw", "amount": 1 }
+      { "trigger": "on_death", "attribute": "draw", "amount": 1 }
     ]
   },
   {

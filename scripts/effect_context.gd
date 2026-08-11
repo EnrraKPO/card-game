@@ -32,8 +32,8 @@ var subject: CardInstance = null
 var owner_anchor: int = -9999   # == TriggerResolver.OWNER_FROM_HOLDER
 
 
-# The picked SLOT for MANUAL_SLOT effects (material delivery) — the gesture edge
-# (SpellCaster) hands over the SlotUI's own address, WHOLE. The cell may be EMPTY (that is
+# The picked SLOT for slot-targeted effects (material delivery) — the gesture edge hands
+# over the SlotUI's own address, WHOLE. The cell may be EMPTY (that is
 # the spawn case). Null = no slot picked; hooks must check.
 #
 # This carries its own side, and that is the whole point (LOCATION_MANAGER_DESIGN.md §2.6).

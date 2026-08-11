@@ -28,7 +28,7 @@ const DECAY_INTERCEPT := "intercept" # a stack is spent each time one of this st
 # the round boundary; ACTIVATE ticks the one unit when its turn comes up in the combat order.
 const PHASE_TURN_START := "turn_start"
 const PHASE_TURN_END := "turn_end"   # default
-const PHASE_ACTIVATE := "activate"
+const PHASE_ACT := "act"   # the unit's own turn moment (renamed from "activate" — that word is the ability mechanism's)
 const PHASE_ATTACK := "attack"       # counts down each time the unit attacks (e.g. Blind charges)
 
 var id: String

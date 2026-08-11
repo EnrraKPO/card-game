@@ -1,15 +1,19 @@
 class_name Hand
 extends Node
 
-# PRESENTS the player's hand: the hand-card UI, the rook-generated tokens, the containers
+# PRESENTS the player's hand: the hand-card UI, the ability-tray token views, the containers
 # that present them, and the current selection. Hand STATE (the card instances + draw pile)
 # lives on the player's CombatSide — this node subscribes to its signals (see bind_side)
 # and mirrors them as CardUI. Cross-cutting concerns (mana, board placement, which board
 # slot a token highlights) stay in the combat orchestrator; intent reports back through
 # signals and a small query interface.
+#
+# CASTING REMOVED (effect-cleanse demolition): hand spells and tray tokens present but cast
+# nothing — the cast gesture returns with the rebuilt effect system (TARGETING_DESIGN.md
+# §7/§9), conducted by target resolvers, never wired here per-card-kind again.
 
-# Emitted when a generated token is hovered/unhovered so the orchestrator can glow
-# the source building's board slot. Also emitted (with `false`) when a token is
+# Emitted when an ability token is hovered/unhovered so the orchestrator can glow
+# the holder's board slot. Also emitted (with `false`) when a token is
 # cleared, so any lingering highlight is dropped.
 signal token_hovered(building: CardInstance, hovering: bool)
 
@@ -17,17 +21,12 @@ signal token_hovered(building: CardInstance, hovering: bool)
 # orchestrator can mirror it as a board highlight — see Combat._on_inspect_changed.
 signal inspect_changed(inst: CardInstance)
 
-# Emitted when an ability widget's autocast toggle changes a holder's armed state, so the
-# orchestrator can refresh that unit's board card (the armed-brackets echo).
-signal autocast_changed(holder: CardInstance)
 # The selected hand unit changed (null = nothing selected). Combat lights the board's static
 # "place here" cues for the selection (see Combat._on_hand_selection_changed).
 signal selection_changed(ui: CardUI)
 
-# Wires a spell CardUI for drag-casting; injected by combat (SpellCaster.wire_spell_card).
-var wire_spell_card: Callable
 # Wires a hand UNIT card so its drag lights the board's move/place cues; injected by combat
-# (CombatBoard.wire_unit_card). Mirrors wire_spell_card.
+# (CombatBoard.wire_unit_card).
 var wire_unit_card: Callable
 # The fielded player units that HAVE at least one activated ability, payable RIGHT NOW or not
 # (func() -> Array[CardInstance]); injected by combat — feeds the level-2 Abilities view and the
@@ -47,7 +46,8 @@ var selection_enabled: bool = false
 enum NavLevel { HAND, ABILITIES, INSPECT }
 
 var _hand_cards: Array = []  # Array[CardUI]
-var _gen_cards: Array  = []  # Array[CardUI] — rook-generated tokens, this turn only
+var _gen_cards: Array  = []  # Array[CardUI] — the inspect view's ability token views
+var _token_holder: CardInstance = null   # the unit whose tokens fill _gen_cards (hover glow target)
 var _ability_entries: Array = []  # Array[CardUI] — the level-2 Abilities view's entries
 # NO SELECTION STATE OF ITS OWN. What the player has picked is one game-wide value (Selection);
 # the hand asks it the two questions it cares about — "is the pick a card in my row?" (that's the
@@ -109,10 +109,6 @@ const DESC_FONT_MIN := 16
 # The Inspect Abilities button's base colour — fuchsia, deliberately loud (see its build site).
 const INSPECT_ACCENT := Color("d92bc4")
 
-# The arming hint appended to every AUTOCAST ability's description in the inspect view, in gold so
-# it reads as a control affordance (how to enable quick cast) rather than part of the rules text.
-const QUICKCAST_HINT := "(Tap and hold/Right click to enable quick cast)"
-const QUICKCAST_COLOR := Color("ffc94a")
 # Light body text for the ability descriptions, which sit on the dark hand-bar strip (the unit
 # description, by contrast, sits on the light SURFACE_DEEP sidebar and stays dark — see build_into).
 const ABILITY_TEXT_COLOR := Color(0.95, 0.93, 0.86)
@@ -424,8 +420,9 @@ func _spawn_hand_card(inst: CardInstance) -> void:
 	# from here on (see CardUI.set_playable_check). Parent test, not our _hand_cards list:
 	# the node tree is the structural truth a stale bookkeeping list can't contradict.
 	# Mana is not the only gate: a spell whose every effect is currently a no-op is ILLEGAL, not
-	# merely wasteful (see SpellCaster.card_has_a_play), and it must stop glowing before the
-	# player reaches for it. Asked of the same authority the cast gate asks, so the glow and the
+	# merely wasteful (the prohibit-non-ops rule), and it must stop glowing before the player
+	# reaches for it. has_a_play is a query into the rebuilt targeting authority (a demolition
+	# stub meanwhile) — asked of the same authority the cast gate will ask, so the glow and the
 	# refusal can never disagree.
 	ui.set_playable_check(func(c: CardUI) -> bool:
 		return c.get_parent() == _hand_box and selection_enabled \
@@ -433,10 +430,8 @@ func _spawn_hand_card(inst: CardInstance) -> void:
 			and (CombatContext.current == null
 				or CombatContext.current.has_a_play(c.card_instance)))
 	Vfx.play("card_draw_flick", ui)   # the dealt-card sheen (Vfx waits out the layout frame)
-	if ui.card_instance.is_spell:
-		if wire_spell_card.is_valid():
-			wire_spell_card.call(ui)
-	else:
+	if not ui.card_instance.is_spell:
+		# A spell wires to nothing while casting is demolished — it sits in hand, informational.
 		ui.pressed.connect(func(): _toggle_select(ui))
 		if wire_unit_card.is_valid():
 			wire_unit_card.call(ui)   # light the board's place cues while this card is dragged
@@ -535,10 +530,9 @@ func inspected() -> CardInstance:
 	return inspected_instance()
 
 
-# Re-derives the inspect view's ability tray against the holder's CURRENT offerability —
-# called by combat after an ability is spent so a tapped-out unit's tray drops to the
-# "no activated abilities" state IN PLACE, without popping out of the inspect view (a
-# non-tap ability's token simply reappears, still castable). A no-op outside inspection.
+# Re-derives the inspect view's ability tray against the holder's CURRENT roster — so a
+# gained/lost ability updates IN PLACE, without popping out of the inspect view. A no-op
+# outside inspection.
 func refresh_inspect() -> void:
 	if inspected_instance() == null:
 		return
@@ -608,8 +602,8 @@ func _set_level(level: NavLevel) -> void:
 
 # Owns the nav column's button visibility — a pure function of the current level and whether
 # any fielded unit still has an offerable ability. Called on every level change AND whenever
-# ability availability shifts under a stationary level: prune_tapped here, plus board changes
-# from combat (unit placed, turn-start untap — combat calls this). So Inspect Abilities
+# ability availability shifts under a stationary level (unit placed, turn-start untap —
+# combat calls this). So Inspect Abilities
 # appears/vanishes in lockstep with there being abilities to inspect. Both buttons are
 # EXPAND_FILL, so whichever shows alone claims the whole column — never a half-height button.
 func refresh_nav() -> void:
@@ -665,9 +659,9 @@ func _sync_strip_clip() -> void:
 
 
 # A card sized to sit FULLY on-screen in the hand strip — shrunk in from _card_size (kept to the
-# card aspect) so its bottom (frame, stat gems, autocast brackets) clears the off-screen crop
+# card aspect) so its bottom (frame, stat gems) clears the off-screen crop
 # (BOTTOM_BLEED) instead of riding it like a hand card's dead frame. Used for the ability tokens
-# and the Abilities-list holder cards — both show corner brackets that must stay whole.
+# and the Abilities-list holder cards.
 func _tray_card_size() -> Vector2:
 	var h := _card_size.y - 2.0 * BOTTOM_BLEED - 6.0
 	return Vector2(roundf(h * _card_size.x / _card_size.y), roundf(h))
@@ -680,8 +674,8 @@ func _rebuild_abilities_view() -> void:
 	var entry_size := _tray_card_size()
 	for inst: CardInstance in get_ability_units.call():
 		var ui := CardUI.create(inst, false)
-		# Shrunk to clear the bottom crop whole — an armed holder's autocast brackets sit near the
-		# card edge and bled off when these entries rode the full-size hand-card crop.
+		# Shrunk to clear the bottom crop whole — badge art near the card edge bled off when
+		# these entries rode the full-size hand-card crop.
 		ui.custom_minimum_size = entry_size
 		ui.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		ui.draggable = false   # a menu entry, not the board unit — click inspects, never drags
@@ -701,10 +695,9 @@ func _clear_ability_entries() -> void:
 	_ability_entries.clear()
 
 
-# One entry per ability; a tap-costed ability of an already-tapped holder isn't offered at
-# all. Abilities of the player's own units are real, castable spell-shaped activations
-# (routed through SpellCaster like any hand spell); an inspected ENEMY unit's abilities are
-# shown the same way for information but rendered non-interactive — look, don't touch.
+# One entry per ability. CASTING REMOVED (effect-cleanse demolition): every roster — the
+# player's included — is informational while the activation mechanism is rebuilt as
+# ActivatedEffect (TARGETING_DESIGN.md §7); hover still glows the holder's board slot.
 func _rebuild_inspect_view() -> void:
 	clear_tokens()
 	var inst := inspected_instance()
@@ -728,24 +721,23 @@ func _rebuild_inspect_view() -> void:
 	_desc_name_lbl.text = inst.data.display_name
 	_desc_text_lbl.text = TextIcons.plain(inst.data.description)
 	_fit_desc_width()
-	# Ability display cards fill their frame (and armed brackets) right to the edge — unlike a unit
+	# Ability display cards fill their frame right to the edge — unlike a unit
 	# card, whose bottom band is dead frame the bar can afford to bleed off-screen (BOTTOM_BLEED).
 	# So they ride the slightly-shorter tray size (see _tray_card_size) that clears the crop whole.
 	var tray_size := _tray_card_size()
 	var tray_h := tray_size.y
-	var interactive := inst.owner == 0
 	for ab: AbilityData in inst.ability_list():
 		var tok := CardInstance.from_data(ab.display_card())
 		tok.owner = inst.owner
-		tok.source_building = inst
-		tok.ability = ab
 		var ui := AbilityWidget.create_for(tok)
 		ui.custom_minimum_size = tray_size
 		ui.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		ui.draggable = false   # informational: nothing to cast while the effect system is rebuilt
 		_gen_cards.append(ui)
+		_token_holder = inst
 		# Each ability shows its illustration beside a large-text description (the widget alone
 		# doesn't say what it does). The row is the _gen_box child; the widget stays tracked in
-		# _gen_cards for arming/hover/refresh and is freed via its row (see clear_tokens).
+		# _gen_cards for hover/refresh and is freed via its row (see clear_tokens).
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 16)
 		row.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -753,18 +745,9 @@ func _rebuild_inspect_view() -> void:
 		row.add_child(_ability_text_col(ab, tray_h))
 		_gen_box.add_child(row)   # entering the tree runs _ready, so set_generated is safe after
 		ui.set_generated()   # an enemy unit's token derives its own view-only dim (owner == 1)
-		if not interactive:
-			continue   # enemy roster: informational only — no cast wiring, no arming
-		# The unit's whole ability roster is shown, payable or not. A currently-unpayable one
-		# (tapped out or unaffordable) rides the same spent grey as a tapped board unit and can't
-		# be drag-cast — but it still arms (right-click) and hovers, since arming survives tapping.
-		# The widget DERIVES that verdict itself, continuously (AbilityWidget.is_usable); the tray
-		# wires the cast path unconditionally and lets the gate live where the grey does, so mana
-		# spent elsewhere or a holder that just attacked can't leave a stale castable token here.
-		if wire_spell_card.is_valid():
-			wire_spell_card.call(ui)
-		ui.derive_presentation()   # land the grey/draggable before the first frame shows
-		ui.autocast_toggled.connect(_on_autocast_toggled)
+		if inst.owner != 0:
+			continue   # enemy roster: fully non-interactive (set_generated dimmed it)
+		# Hovering a player token still points out its holder on the board.
 		ui.mouse_entered.connect(func(): token_hovered.emit(inst, true))
 		ui.mouse_exited.connect(func():  token_hovered.emit(inst, false))
 	_hand_box.visible = false
@@ -818,7 +801,7 @@ func _fit_desc_font(w: float) -> void:
 
 
 # The text beside an ability's illustration in the inspect view: the ability name over its
-# large-text description, with (for autocast abilities) the gold quick-cast arming hint appended.
+# large-text description.
 # ONE fixed-size RichTextLabel — height pinned to the illustration's height so a long description
 # can never grow the fixed-height hand bar (it clips as a last resort; the font is chosen so the
 # current abilities fit). Width pinned to the strip (see the measured scroll width). Light text:
@@ -831,11 +814,6 @@ func _ability_text_col(ab: AbilityData, col_h: float) -> Control:
 	const COL_W := 280.0
 	var body := "[font_size=22][b]%s[/b][/font_size]\n" % ab.display_name
 	body += TextIcons.enrich(ab.description, 19)
-	if ab.autocast:
-		# The hint is a control affordance, not rules text — a notch smaller than the description
-		# so it reads as secondary and (with the description) fits the fixed one-card-tall strip.
-		body += "\n[font_size=15][color=#%s]%s[/color][/font_size]" \
-				% [QUICKCAST_COLOR.to_html(false), QUICKCAST_HINT]
 	var rtl := RichTextLabel.new()
 	rtl.bbcode_enabled = true
 	rtl.fit_content = false          # fixed size — must NOT report content height and grow the bar
@@ -851,38 +829,11 @@ func _ability_text_col(ab: AbilityData, col_h: float) -> Control:
 	return rtl
 
 
-# Arming one ability implicitly disarms the holder's other one (single autocast_ability
-# field) — refresh EVERY tray widget so the disarmed sibling's brackets dim too, then let
-# the orchestrator update the holder's board card.
-func _on_autocast_toggled(holder: CardInstance) -> void:
-	for ui: CardUI in _gen_cards:
-		ui.refresh()
-	autocast_changed.emit(holder)
-
-
-# Removes remaining tray offers a holder can no longer pay for because it just tapped —
-# a tapped shopkeeper's tap-costed wares leave the shelf immediately.
-func prune_tapped(holder: CardInstance) -> void:
-	for ui: CardUI in _gen_cards.duplicate():
-		var inst := ui.card_instance
-		if inst != null and inst.source_building == holder \
-				and inst.ability != null and inst.ability.tap:
-			remove_token(ui)
-			token_hovered.emit(holder, false)
-			# The widget lives inside its ability row (see _rebuild_inspect_view) — free the row.
-			var row := ui.get_parent()
-			(row if row != null else ui).queue_free()
-	# The holder just tapped out, so the roster of ability-bearing units may have shrunk (to
-	# empty). Re-derive the Inspect Abilities button so it withdraws the moment nothing's left —
-	# this fires under a stationary level too (e.g. an autocast fired from the plain hand).
-	refresh_nav()
-
-
 func clear_tokens() -> void:
-	for ui: CardUI in _gen_cards:
-		if ui.card_instance != null:
-			token_hovered.emit(ui.card_instance.source_building, false)
-	# The widgets are now nested inside per-ability rows (see _rebuild_inspect_view) — free the
+	if _token_holder != null:
+		token_hovered.emit(_token_holder, false)   # drop any lingering holder highlight
+		_token_holder = null
+	# The widgets are nested inside per-ability rows (see _rebuild_inspect_view) — free the
 	# rows, which frees their widget + description children with them.
 	for child: Node in _gen_box.get_children():
 		child.queue_free()
@@ -895,15 +846,6 @@ func clear_tokens() -> void:
 func remove_card(ui: CardUI) -> void:
 	_hand_cards.erase(ui)
 	_drop_pick_of(ui)
-
-
-# Removes a played token from the hand's bookkeeping and hides the token zone once
-# empty. The orchestrator handles the source-rook side effects (exhaust + dim).
-func remove_token(ui: CardUI) -> void:
-	_gen_cards.erase(ui)
-	_drop_pick_of(ui)
-	if _gen_cards.is_empty():
-		_gen_box.visible = false
 
 
 # A card that has LEFT the hand was played, and playing it is what the pick was for — so the

@@ -9,16 +9,17 @@ extends RefCounted
 # Kinds (inner classes — ONE file on purpose: the factory below constructs them during
 # other classes' @static_initializer runs, and separate files hit the static-init load
 # order, leaving half-parsed scripts):
-#   • Transient — no event: the effect applies as part of its own use (a spell cast, an
-#                 ability activation). Never fires from dispatch.
 #   • While     — no event: a STANDING effect, live for as long as its tracker is valid
-#                 (see EffectTracker / LiveEffects). Never dispatched, never applied on
-#                 use — the read path evaluates it continuously against the current board.
-#   • Simple    — an origin-only event (play/death/activate/turn_start/turn_end) gated by
+#                 (see EffectTracker / LiveEffects). Never dispatched — the read path
+#                 evaluates it continuously against the current board.
+#   • Simple    — an origin-only event (play/death/act/turn_start/turn_end) gated by
 #                 one plain-condition list evaluated against the origin.
 #   • Dual      — a two-participant event (attack/struck) gated by TWO condition lists:
 #                 ORIGIN_CONDITIONS and DESTINATION_CONDITIONS, AND-ed. A non-empty list
 #                 on a missing participant fails (never fires).
+# (The Transient kind — "applies as part of its own use" — died in the effect-cleanse
+# demolition: activation is its own MECHANISM, not a trigger wearing a cost, and plays are
+# events through the one pipeline. TARGETING_DESIGN.md §7/§10.)
 #
 # Conditions are plain EffectConditions (stat / status / composition / allegiance) —
 # true PREDICATES only. "Reacts only to its own action" is NOT a condition: it is the
@@ -30,14 +31,13 @@ extends RefCounted
 # Authoring: the effect's "trigger" key. A STRING is the legacy schema
 # ("on_attack" + "subject" + "subject_elements") and maps losslessly onto a resolver here
 # (zero data migration); a DICTIONARY is the native form:
-#   { "kind": "transient" }
 #   { "kind": "while" }
 #   { "kind": "event", "event": "death", "of": "self", "conditions": [ ... ] }
 #   { "kind": "dual_event", "event": "struck", "origin_of": "any", "destination_of": "self",
 #     "origin_conditions": [ ... ], "destination_conditions": [ ... ] }
 #   ("of" values: "self" = the holder only; "any" (default) = anyone's event)
 
-const SIMPLE_EVENTS: Array[StringName] = [&"play", &"death", &"activate", &"turn_start", &"turn_end", &"permanent"]
+const SIMPLE_EVENTS: Array[StringName] = [&"play", &"death", &"act", &"turn_start", &"turn_end", &"permanent"]
 const DUAL_EVENTS: Array[StringName] = [&"attack", &"struck", &"kill", &"dodge", &"crit"]
 
 # The allegiance anchor for condition evaluation is normally the HOLDER's side. Run-scope
@@ -65,7 +65,7 @@ const LEGACY_EVENTS := {
 	"permanent":       [&"permanent", false],
 	"on_turn_start":   [&"turn_start", false],
 	"on_turn_end":     [&"turn_end", false],
-	"on_activate":     [&"activate", false],
+	"on_activate":     [&"act", false],
 }
 
 
@@ -82,28 +82,12 @@ func fires(_event: GameEvent, _holder: CardInstance, _owner: int = OWNER_FROM_HO
 	return false
 
 
-# Whether the effect applies when its container is USED (spell cast / ability activation) —
-# the direct-apply path, which never consults events.
-func applies_on_use() -> bool:
-	return false
-
-
 # Native (dictionary) authored form.
 func to_dict() -> Dictionary:
 	return {}
 
 
 # ── Kinds ────────────────────────────────────────────────────────────────────────────
-
-class Transient extends TriggerResolver:
-	# "Fires" as part of its container's own use — a spell being cast, an activated ability
-	# being paid for. Never reacts to board events.
-	func applies_on_use() -> bool:
-		return true
-
-	func to_dict() -> Dictionary:
-		return {"kind": "transient"}
-
 
 class While extends TriggerResolver:
 	# A STANDING effect: live for as long as its tracker is valid, contributing at read time
@@ -129,11 +113,6 @@ class Simple extends TriggerResolver:
 			return false
 		return TriggerResolver.conditions_pass(conditions, p_event.origin,
 				TriggerResolver.anchor_owner(holder, owner))
-
-	# Legacy spells/units author their cast-time effects as "on_play"; the use path must
-	# keep applying them (see SpellCaster) even though a play event also exists for placement.
-	func applies_on_use() -> bool:
-		return event == &"play"
 
 	func to_dict() -> Dictionary:
 		var d := {"kind": "event", "event": String(event)}
@@ -240,8 +219,6 @@ static func from_legacy(trigger_key: String, subject_key: String, subject_elemen
 
 static func _from_native(d: Dictionary) -> TriggerResolver:
 	match str(d.get("kind", "")):
-		"transient":
-			return Transient.new()
 		"while":
 			return While.new()
 		"dual_event":
@@ -318,7 +295,7 @@ static func legacy_trigger_for(event_id: StringName) -> Effect.Trigger:
 		&"death":       return Effect.Trigger.ON_DEATH
 		&"attack":      return Effect.Trigger.ON_ATTACK
 		&"struck":      return Effect.Trigger.ON_DAMAGE_TAKEN
-		&"activate":    return Effect.Trigger.ON_ACTIVATE
+		&"act":         return Effect.Trigger.ON_ACT
 		&"turn_start":  return Effect.Trigger.ON_TURN_START
 		&"turn_end":    return Effect.Trigger.ON_TURN_END
 		&"permanent":   return Effect.Trigger.PERMANENT

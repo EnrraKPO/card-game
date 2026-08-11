@@ -3,7 +3,7 @@ extends TestCase
 # CombatWorld: the cohesive context of combat rules state and its snapshot (copy()) — the
 # Step-1 contract of COMBAT_DECOUPLING_REFACTOR.md. Pins: copy INDEPENDENCE (mutating either
 # side of a snapshot never touches the other), identity-remap COMPLETENESS (no reference
-# inside a copy resolves to an original object — killed_by_unit, source_building, a status's
+# inside a copy resolves to an original object — killed_by_unit, a status's
 # source and carrier, hand/pile cards), the TWO-TIER rule (mutable state deep-copied,
 # immutable defs/modifiers shared), tracker re-binding (a copy's standing effects fold from
 # the copy's own stacks), and the rewards_live policy flip (a copy never pays).
@@ -139,7 +139,6 @@ func _remap_completeness() -> void:
 	StatusEngine.apply(pawn, "empowered", Effect.STATUS_DURATION_DEFAULT, 1, king)
 	pawn.killed_by_unit = rook
 	pawn.killed_by_channel = &"attack"
-	pawn.source_building = rook
 	var w2 := w.copy()
 	var pawn2 := _cell(w2, 0, 0, 0)
 	var king2 := _cell(w2, 0, 2, 0)
@@ -151,7 +150,6 @@ func _remap_completeness() -> void:
 			"a status's carrier rebinds to the copy")
 	check(pawn2.killed_by_unit == rook2, "killed_by_unit remaps to the copied killer")
 	check_eq(pawn2.killed_by_channel, &"attack", "kill provenance channel copies")
-	check(pawn2.source_building == rook2, "source_building remaps within the copy")
 
 
 func _off_world_reference_copies() -> void:

@@ -6,7 +6,7 @@
     "description": "A chirping chrome eyeball. Transmits its findings as it dies: the invaders draw a card.",
     "enemy_only": true, "tribe": "alien", "elements": [], "chess_pieces": [],
     "effects": [
-      { "trigger": "on_death", "targets": { "kind": "side", "of": "own" }, "attribute": "draw", "amount": 1 }
+      { "trigger": "on_death", "attribute": "draw", "amount": 1 }
     ]
   },
   {

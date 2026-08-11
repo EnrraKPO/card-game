@@ -39,9 +39,9 @@ var description: String:
 		_desc_override = value
 var mana: int = 0
 var tap: bool = true
-# Autocast-capable: the widget shows corner brackets and the player can ARM it (right-click /
-# long-press). While armed, dragging the holder onto a valid target fires the ability on it.
-# Armed state lives on the holder (CardInstance.autocast_ability), not here.
+# Autocast-capable (AUTHORED FACT, kept through the demolition): the quick-cast arming
+# mechanism it once drove died with the ability costume and returns on the rebuilt
+# ActivatedEffect; this flag marks which abilities offer it.
 var autocast: bool = false
 # For material-delivery abilities: the composition key delivered (see EffectHooks.deliver_material).
 var material: String = ""
@@ -141,8 +141,8 @@ static func material_ability(elems: Array, chess: Array) -> AbilityData:
 
 
 # THE usability rule — one definition, consulted by everything that presents or gates an
-# ability: the tray widget's own derivation (AbilityWidget.is_usable), the Inspect Abilities
-# button's ready-glow, and the cast gate. Pure query of live facts, so no two consumers can
+# ability (today the Inspect Abilities button's ready-glow via CombatContext.ability_usable;
+# the rebuilt activation gate joins it). Pure query of live facts, so no two consumers can
 # ever disagree about whether an ability is castable this moment.
 func usable_by(holder: CardInstance, mana: int) -> bool:
 	if holder == null:

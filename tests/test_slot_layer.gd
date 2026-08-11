@@ -132,7 +132,7 @@ func _ticking_and_reading_order() -> void:
 
 	var cascade := CombatCascade.make(w, CombatPresenter.new())
 	var subject := _place(w, "pawn", 0, 0, 3)
-	_phase(cascade, &"activate", subject)
+	_phase(cascade, &"act", subject)
 	var si := w.slot_at(0, 0, 0).find_status("_t_ground_mark")
 	check(si != null and si.remaining == 2, "a subject-scoped moment never ticks the ground")
 	_phase(cascade, &"turn_end")

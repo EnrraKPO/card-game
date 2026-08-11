@@ -6,7 +6,7 @@
 	"color": "5a8f3a",
 	"glyph": "☠",
 	"decay": "stacks",
-	"decay_phase": "activate",
+	"decay_phase": "act",
 	"stacking": "stack",
 	"max_stacks": 99,
 	"eval": { "exposure": 1 },
