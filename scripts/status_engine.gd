@@ -124,6 +124,6 @@ static func shed_stack(carrier: GameEntity, si: StatusInstance) -> void:
 		carrier.statuses.erase(si)
 
 
-# (Intercept-charge spending moved into the container itself: Resolver._try_intercept
+# (Intercept-charge spending moved into the container itself: Arbitrator._try_intercept
 # signals the owning StatusInstance through the blind fired() channel, and the status
 # spends its own DECAY_INTERCEPT charge — see StatusInstance.fired.)

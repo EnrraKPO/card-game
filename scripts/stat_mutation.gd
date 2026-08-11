@@ -2,8 +2,8 @@ class_name StatMutation
 extends RefCounted
 
 # The ONE request shape for changing a game-state number. Nothing in the game writes a stat
-# directly — combat, effects, hooks and screens build one of these and submit it to Resolver
-# (the single writer), then act on the outcome. See Resolver for the application rules.
+# directly — combat, effects, hooks and screens build one of these and submit it to Arbitrator
+# (the single writer), then act on the outcome. See Arbitrator for the application rules.
 #
 # `stat` is the consistent vocabulary shared by every stat-touching system: these are the SAME
 # names effect attributes use, CardInstance.modifiers keys on, and DeckCard override fields
@@ -20,21 +20,21 @@ extends RefCounted
 # bypassing shield (poison, sacrifice effects).
 const HEALTH := &"health"
 # Attack-form harm: a positive magnitude, resolved shield-first. HOW it lands (shield absorbs,
-# the rest wounds health) is the Resolver's knowledge — no caller knows shields exist.
+# the rest wounds health) is the Arbitrator's knowledge — no caller knows shields exist.
 const DAMAGE := &"damage"
 # The CURRENT shield pool (floors at 0). Distinct from SHIELD below: "shield" has always meant
 # the per-round base (what restore_shield refills to), so the live pool gets its own name —
 # one word must never mean two stats.
 const SHIELD_POOL := &"shield_pool"
 # Status application: "apply `amount` stacks of `status_id` to the target". Routed through the
-# Resolver like every other state write (single-writer rule), which is what makes stack counts
+# Arbitrator like every other state write (single-writer rule), which is what makes stack counts
 # interceptable ("statuses you apply gain +1 stack"). Floors at 0 like DAMAGE — an intercepted-
 # away application applies nothing, never removes stacks.
 const STATUS := &"status"
 # A transient, never-stored quantity: the TARGET's dodge chance (integer percentage points) for
 # one incoming attack, routed through the interception gate so a relic can rewrite it — "air
 # units 3x dodge" (mul 3), "cancel enemy dodge" (mul 0). Built + intercepted in
-# Resolver.dodge_chance and read straight back (never applied to any pool). Distinct from
+# Arbitrator.dodge_chance and read straight back (never applied to any pool). Distinct from
 # DODGE_BONUS below, which is the STORED additive modifier folded INTO this chance. Floors at 0.
 const DODGE := &"dodge"
 # Transient crit-chance query (integer percentage points), the offensive mirror of DODGE — but
@@ -42,12 +42,12 @@ const DODGE := &"dodge"
 # chance is being queried — `target` always means "whoever the quantity belongs to") and its
 # `source` is the DEFENDER being struck. An interceptor's participant "target" therefore means
 # "the unit landing the crit", NOT the unit being hit. Built + intercepted in
-# Resolver.crit_chance, read straight back, never applied to any pool. Floors at 0.
+# Arbitrator.crit_chance, read straight back, never applied to any pool. Floors at 0.
 const CRIT := &"crit_chance"
 # Transient crit-damage-multiplier query: the multiplier ×100 as integer points (200 = 2.0×),
 # so interceptor mul/add rewrites work on the same integer contract as everything else. Same
 # participant wiring as CRIT (target = the attacker). Built + intercepted in
-# Resolver.crit_multiplier, capped at tuning multiplier_max on the way out.
+# Arbitrator.crit_multiplier, capped at tuning multiplier_max on the way out.
 const CRIT_MULT := &"crit_multiplier"
 
 # ── Stats: additive modifiers on a CardInstance (fold into get_attribute at read time) ──
@@ -56,9 +56,9 @@ const SPEED := &"speed"
 const COST := &"cost"
 const MAX_HEALTH := &"max_health"
 const SHIELD := &"shield"   # per-round base shield (raises what each round's refill restores)
-const DODGE_BONUS := &"dodge_bonus"   # additive dodge-chance bonus in percentage points (see Resolver.dodge_chance)
-const CRIT_CHANCE_BONUS := &"crit_chance_bonus"           # additive crit-chance bonus in percentage points (see Resolver.crit_chance)
-const CRIT_MULTIPLIER_BONUS := &"crit_multiplier_bonus"   # additive crit-multiplier bonus in points ×100 (50 → +0.5×; see Resolver.crit_multiplier)
+const DODGE_BONUS := &"dodge_bonus"   # additive dodge-chance bonus in percentage points (see Arbitrator.dodge_chance)
+const CRIT_CHANCE_BONUS := &"crit_chance_bonus"           # additive crit-chance bonus in percentage points (see Arbitrator.crit_chance)
+const CRIT_MULTIPLIER_BONUS := &"crit_multiplier_bonus"   # additive crit-multiplier bonus in points ×100 (50 → +0.5×; see Arbitrator.crit_multiplier)
 
 # A DeckCard target instead treats `stat` as the card-definition FIELD to bump permanently
 # ("attack"/"health"/"speed"/"shield" — see DeckCard.UPGRADABLE and the "?" event).
@@ -97,7 +97,7 @@ var stat: StringName = HEALTH
 var amount: int = 0
 var source: CardInstance = null    # who caused it (null for system mutations)
 var channel: StringName = CH_EFFECT
-# Provenance for the `kill` event (see Resolver kill-stamping + GameEvent). `channel` is
+# Provenance for the `kill` event (see Arbitrator kill-stamping + GameEvent). `channel` is
 # the KIND of cause (attack/effect/…); `cause` is WHICH specific one — a status id for a
 # tick ("poison"), else "". Together they answer "what killed this unit": an attack, or
 # poison, or another effect. Set by the producing site (StatMutation.damage stamps the
@@ -107,7 +107,7 @@ var cause: StringName = &""
 # (`amount` carries the stack count — the interceptable magnitude, like every other form).
 var status_id: String = ""
 var status_duration: int = StatusEngine.DURATION_DEFAULT
-# Marks the shield/health SHARE of a split hit (built inside Resolver._apply_damage). A
+# Marks the shield/health SHARE of a split hit (built inside Arbitrator._apply_damage). A
 # portion is a reduction by construction: rewrites clamp it at <= 0 after every interceptor
 # (mirroring the >= 0 re-floor on DAMAGE), so "take less" can zero a wound but never flip
 # it into a heal or a shield gain.
@@ -138,7 +138,7 @@ static func make(p_target: Object, p_stat: StringName, p_amount: int,
 
 
 # The strike of an attack: attack-channel damage from `p_source`. Interception happens inside
-# Resolver.submit (INTERCEPTOR effects on the source/target rewriting the amount — e.g. Blind);
+# Arbitrator.submit (INTERCEPTOR effects on the source/target rewriting the amount — e.g. Blind);
 # the caller just submits and presents the outcome. Never negative: a fully blocked strike is
 # 0, not a heal.
 static func damage(p_target: Object, p_amount: int, p_source: CardInstance) -> StatMutation:
@@ -146,7 +146,7 @@ static func damage(p_target: Object, p_amount: int, p_source: CardInstance) -> S
 
 
 # A status application: `p_stacks` stacks of `p_status_id` onto the target. Submitted through
-# the Resolver so interceptors can rewrite the stack count before it commits.
+# the Arbitrator so interceptors can rewrite the stack count before it commits.
 static func status_apply(p_target: Object, p_status_id: String, p_duration: int,
 		p_stacks: int, p_source: CardInstance = null) -> StatMutation:
 	var m := make(p_target, STATUS, maxi(0, p_stacks), p_source, CH_EFFECT)

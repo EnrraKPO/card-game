@@ -15,7 +15,7 @@ extends RefCounted
 # fired just before `death`, both while the corpse is still on the board),
 # dodge (a strike was avoided outright — origin = the attacker whose blow was slipped,
 # destination = the DODGER; fired after `struck`, only when the target's speed dodged
-# the hit — see Resolver dodge + combat),
+# the hit — see Arbitrator dodge + combat),
 # crit (a strike landed as a CRITICAL — origin = the attacker who landed it, destination =
 # the unit hit; fired after the damage resolves, only when real damage landed multiplied —
 # a fully blocked hit never crits).

@@ -109,7 +109,7 @@ func _ready() -> void:
 	await _strobe(OUT_ONE, crop)
 
 	# ── The whole payment, thrown by a real death down the real wire ─────────────────
-	Resolver.set_health(victim, 0)
+	Arbitrator.set_health(victim, 0)
 	combat.call("_bury", victim)
 	await _strobe(OUT_ALL, crop)
 	get_tree().quit()

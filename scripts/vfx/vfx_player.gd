@@ -121,7 +121,7 @@ func play_results(results: Array, source_inst: CardInstance = null,
 	for r: Dictionary in results:
 		if r.is_empty():
 			continue
-		# Whatever intercepted this result's mutation inside the Resolver cues FIRST — the
+		# Whatever intercepted this result's mutation inside the Arbitrator cues FIRST — the
 		# rewriter (relic chip / status pip) reads as the cause of the adjusted number.
 		if r.has("interceptions"):
 			await play_interceptions(r.get("interceptions"))

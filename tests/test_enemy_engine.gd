@@ -1423,9 +1423,9 @@ func _doomed_attacker_projects_less() -> void:
 
 
 func _dodge_expectation_reaches_persistence() -> void:
-	var prev := Resolver.dodge_enabled
-	Resolver.dodge_enabled = true
-	Resolver.set_dodge_tuning({
+	var prev := Arbitrator.dodge_enabled
+	Arbitrator.dodge_enabled = true
+	Arbitrator.set_dodge_tuning({
 		"fixed_pct": 0.0, "per_speed_pct": 5.0, "per_speed_diff_pct": 0.0, "max_pct": 75.0,
 	})
 	# Same slot, same body, different speed: the faster unit dodges more of its incoming
@@ -1451,20 +1451,20 @@ func _dodge_expectation_reaches_persistence() -> void:
 	BoardScoring.run_valuation(plain)
 	BoardScoring.run_valuation(blessed)
 	check(blessed.units(1)[0].persistence > plain.units(1)[0].persistence,
-			"dodge_bonus raises the expectation like the Resolver folds it into the roll")
+			"dodge_bonus raises the expectation like the Arbitrator folds it into the roll")
 	var rooted := BoardState.UnitState.new()
 	rooted.is_building = true
 	rooted.speed = 8
 	check_eq(BoardScoring.dodge_expect(rooted, 0.0), 0.0,
 			"a building never dodges — hard 0 before any tuning term")
-	Resolver.set_dodge_tuning({})
-	Resolver.dodge_enabled = prev
+	Arbitrator.set_dodge_tuning({})
+	Arbitrator.dodge_enabled = prev
 
 
 func _crit_expectation_reaches_threat() -> void:
-	var prev := Resolver.crit_enabled
-	Resolver.crit_enabled = true
-	Resolver.set_crit_tuning({
+	var prev := Arbitrator.crit_enabled
+	Arbitrator.crit_enabled = true
+	Arbitrator.set_crit_tuning({
 		"fixed_pct": 0.0, "per_speed_pct": 5.0, "per_speed_diff_pct": 0.0,
 		"max_pct": 90.0, "multiplier": 2.0, "multiplier_max": 5.0,
 	})
@@ -1489,18 +1489,18 @@ func _crit_expectation_reaches_threat() -> void:
 	var army := _state_with([_enemy("dps_dummy", 0, 0)], [_player("queen", 0, 0)])
 	army.units(0)[0].speed = 1   # slower than the dps — its strike is insured, delivery 1
 	var with_crit := BoardScoring.outgoing_mass(army)
-	Resolver.crit_enabled = false
+	Arbitrator.crit_enabled = false
 	var without_crit := BoardScoring.outgoing_mass(army)
 	check(with_crit > without_crit, "crit expectation raises the outgoing damage mass")
-	Resolver.set_crit_tuning({})
-	Resolver.crit_enabled = prev
+	Arbitrator.set_crit_tuning({})
+	Arbitrator.crit_enabled = prev
 
 
 func _expectation_honors_determinism_switches() -> void:
 	# The runner keeps dodge/crit OFF (the deterministic harness): the model's factors
 	# must read exactly neutral — the scorer never believes in a rule the fight will not
 	# roll, and every pre-model assertion in this suite stays byte-identical.
-	check(not Resolver.dodge_enabled and not Resolver.crit_enabled,
+	check(not Arbitrator.dodge_enabled and not Arbitrator.crit_enabled,
 			"harness precondition: the switches are off outside the flipped blocks")
 	var u := BoardState.UnitState.new()
 	u.speed = 9

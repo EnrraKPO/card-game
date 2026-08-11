@@ -39,7 +39,7 @@ func _ready() -> void:
 	var bag = combat.get("_gold_bag")
 	print("BAG drop_point=", bag.drop_point())
 	print("CORPSE centre=", board.get_card_ui(victim).get_global_rect().get_center())
-	Resolver.set_health(victim, 0)
+	Arbitrator.set_health(victim, 0)
 	combat.call("_bury", victim)
 
 	# THE ONE RULE, asserted rather than eyeballed (see CoinFlightFx): walk the path at a fixed

@@ -123,7 +123,7 @@ func _side_copy_independence() -> void:
 	check(w2.player_side.hand[0] != held, "hand cards are copies, not shared refs")
 
 	# Draw and spend on the copy — the live side must not move.
-	Resolver.submit(StatMutation.make(w2.player_side, StatMutation.DRAW, 2))
+	Arbitrator.submit(StatMutation.make(w2.player_side, StatMutation.DRAW, 2))
 	w2.player_side.set_mana(0)
 	check_eq(w.player_side.hand.size(), 1, "drawing on the copy leaves the live hand alone")
 	check_eq(w.player_side.draw_pile.size(), 3, "…and the live pile")

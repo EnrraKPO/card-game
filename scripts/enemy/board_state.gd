@@ -114,7 +114,7 @@ class UnitState:
 	var speed: int = 0
 	var strikes: int = 1
 	# The dodge/crit expectation inputs (BoardScoring's expected-damage model):
-	# the effect-granted bonuses that move the Resolver's dodge/crit formulas beyond speed.
+	# the effect-granted bonuses that move the Arbitrator's dodge/crit formulas beyond speed.
 	# Captured so a unit BUILT around these stats (a relic's "+25% dodge to air units")
 	# isn't invisible to the scorer's expectations — speed alone would mis-price it.
 	var dodge_bonus: int = 0

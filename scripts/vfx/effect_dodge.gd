@@ -1,7 +1,7 @@
 class_name VFXEffectDodge
 extends VFXEffect
 
-# Played when a unit DODGES an attack (the speed-driven avoid in Resolver._apply_damage). The
+# Played when a unit DODGES an attack (the speed-driven avoid in Arbitrator._apply_damage). The
 # target darts aside and snaps back — an active evade, sold by motion — while an agile cyan
 # "Dodge!" label pops off it. Distinct from VFXEffectMiss: a miss is the ATTACKER whiffing
 # (a grey absence-of-damage), a dodge is the TARGET's own nimbleness reading as a deliberate slip.

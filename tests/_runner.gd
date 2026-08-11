@@ -7,8 +7,8 @@ extends Node
 # Exits 0 when green, 1 on any failure (CI-able). To add a suite: create tests/test_<area>.gd
 # extending TestCase (override suite_name() + run()) and list it in SUITES below.
 #
-# Run this after ANY change to the resolution layer (Resolver/StatMutation/statuses) —
-# every migration onto the Resolver is a behavior-preservation exercise, and this is the
+# Run this after ANY change to the resolution layer (Arbitrator/StatMutation/statuses) —
+# every migration onto the Arbitrator is a behavior-preservation exercise, and this is the
 # harness that proves it.
 
 # THE TEST DOCTRINE (user ruling, 2026-08-11): only tests that validate SYSTEMS may exist,
@@ -19,7 +19,7 @@ extends Node
 # Green here means green — any failure is real breakage.
 const SUITES: Array = [
 	preload("res://tests/test_locations.gd"),
-	preload("res://tests/test_resolver.gd"),
+	preload("res://tests/test_arbitrator.gd"),
 	preload("res://tests/test_statuses.gd"),
 	preload("res://tests/test_combat_side.gd"),
 	preload("res://tests/test_dodge.gd"),
@@ -34,6 +34,8 @@ const SUITES: Array = [
 	preload("res://tests/test_combat_world.gd"),
 	preload("res://tests/test_presenter.gd"),
 	preload("res://tests/test_cascade.gd"),
+	preload("res://tests/test_mutators.gd"),
+	preload("res://tests/test_target_resolvers.gd"),
 ]
 
 
@@ -58,10 +60,10 @@ func _ready() -> void:
 # time and skew expectations). Nothing here touches disk; select_slot is deliberately avoided
 # because it writes a save file for a fresh slot.
 func _clean_env() -> void:
-	# Dodge and crit are the non-authored sources of RNG in the Resolver; off by default here so
+	# Dodge and crit are the non-authored sources of RNG in the Arbitrator; off by default here so
 	# the damage-math suites are deterministic. Each feature's suite re-enables its own.
-	Resolver.dodge_enabled = false
-	Resolver.crit_enabled = false
+	Arbitrator.dodge_enabled = false
+	Arbitrator.crit_enabled = false
 	# Pin debug mode ON regardless of the local (git-ignored) debug.json, so profile seeding
 	# is identical on every machine. The economy suite exercises both launch modes itself.
 	DebugConfig.set_override(true)

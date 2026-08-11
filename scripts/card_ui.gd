@@ -620,7 +620,7 @@ func derive_presentation() -> void:
 		# never disagree with the glow/crosshair it explains. Both can apply at once (a unit that
 		# attacks the pivot AND is the pivot's own victim wears both sets).
 		#
-		# Each flag also carries the ODDS of the exchange it names, asked of the Resolver — the same
+		# Each flag also carries the ODDS of the exchange it names, asked of the Arbitrator — the same
 		# functions the actual swing rolls against, so the preview cannot drift from the resolution
 		# (they are pure queries: crit_chance/dodge_chance run a rewrite-only interception pass and
 		# submit nothing). Both are speed-scaled, which is why they hang off the Speed badge.
@@ -629,16 +629,16 @@ func derive_presentation() -> void:
 			# The pivot swings at ME: its crit chance, my chance to dodge it.
 			tags.append({"id": "current_target"})
 			tags.append({"id": "crit_taken",
-				"params": {"n": _as_pct(Resolver.crit_chance(pivot, card_instance))}})
+				"params": {"n": _as_pct(Arbitrator.crit_chance(pivot, card_instance))}})
 			tags.append({"id": "dodge_taken",
-				"params": {"n": _as_pct(Resolver.dodge_chance(card_instance, pivot))}})
+				"params": {"n": _as_pct(Arbitrator.dodge_chance(card_instance, pivot))}})
 		if menacing:
 			# I swing at the pivot: my crit chance, the pivot's chance to dodge me.
 			tags.append({"id": "menacing"})
 			tags.append({"id": "crit_dealt",
-				"params": {"n": _as_pct(Resolver.crit_chance(card_instance, pivot))}})
+				"params": {"n": _as_pct(Arbitrator.crit_chance(card_instance, pivot))}})
 			tags.append({"id": "dodge_dealt",
-				"params": {"n": _as_pct(Resolver.dodge_chance(pivot, card_instance))}})
+				"params": {"n": _as_pct(Arbitrator.dodge_chance(pivot, card_instance))}})
 	_apply_tags(tags)
 
 
@@ -783,7 +783,7 @@ func _apply_number_spotlight(on: bool) -> void:
 		Vfx.detach("turn_number_spotlight", _turn_plate)
 
 
-# Resolver rates are 0..1; the tags speak in whole percent.
+# Arbitrator rates are 0..1; the tags speak in whole percent.
 func _as_pct(rate: float) -> int:
 	return int(round(rate * 100.0))
 
@@ -1086,7 +1086,7 @@ const TAGS := {
 	"menacing": {"loc": "combat.tag_menacing", "bg": TAG_RED, "fg": Color.WHITE,
 		"ol": TAG_RED_OL, "place": "outward_bottom"},
 	# The odds of the exchange, beside the Speed badge — the stat both quantities are driven by
-	# (Resolver.crit_chance / dodge_chance are speed-scaled), so the number sits next to its cause.
+	# (Arbitrator.crit_chance / dodge_chance are speed-scaled), so the number sits next to its cause.
 	# Gold pair: the pivot ATTACKS this card. Red pair: this card attacks the pivot.
 	#
 	# Whose number is it? One rule, applied everywhere: an UNQUALIFIED label is the card the chip

@@ -184,7 +184,7 @@ func is_mutation_form() -> bool:
 	return not mutation_attr.is_empty()
 
 
-# Evaluates a MUTATION-form condition against a pending StatMutation (the Resolver's
+# Evaluates a MUTATION-form condition against a pending StatMutation (the Arbitrator's
 # interceptor match routes mutation-form conditions here, unit forms to evaluate()).
 func evaluate_mutation(m: StatMutation) -> bool:
 	if mutation_attr != "amount" or m == null:

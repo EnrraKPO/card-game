@@ -1262,14 +1262,14 @@ static func first_strike_share(state: BoardState, unit: BoardState.UnitState) ->
 
 # ── dodge / crit expectation ───────────────────────────────────────────────────────────
 #
-# The Resolver's dodge and crit rules folded into the scorer's damage model as EXPECTED
+# The Arbitrator's dodge and crit rules folded into the scorer's damage model as EXPECTED
 # VALUE — closed-form arithmetic over the same data-driven tuning the fight resolves with
-# (combat_tuning.json via Resolver.dodge_tuning / crit_tuning), no rolls. This is not a
+# (combat_tuning.json via Arbitrator.dodge_tuning / crit_tuning), no rolls. This is not a
 # new value channel: it is a CORRECTION to incoming() — a speed-5 unit in a slot does not
 # actually absorb what a speed-1 unit there would, and the model should not believe it
 # does. Flows into persistence (and everything downstream) by construction.
 #
-# Not 1:1 with the Resolver, in exactly two ways, both deliberate:
+# Not 1:1 with the Arbitrator, in exactly two ways, both deliberate:
 #   · the PAIRWISE speed-edge terms (dodge: target − attacker; crit: attacker − target)
 #     are measured against ONE aggregate reference speed per side, because the no-pairing
 #     doctrine (design 17b) forbids attacker↔target matching. The references are chosen
@@ -1309,12 +1309,12 @@ static func target_speed_ref(state: BoardState, side: int) -> float:
 
 
 # This unit's chance (0..1) to dodge a strike thrown at `attacker_speed` —
-# Resolver.dodge_chance's formula on snapshot data: buildings never dodge; fixed +
+# Arbitrator.dodge_chance's formula on snapshot data: buildings never dodge; fixed +
 # per-speed + one-sided speed-edge + the unit's own dodge_bonus; capped at max_pct.
 static func dodge_expect(u: BoardState.UnitState, attacker_speed: float) -> float:
-	if not Resolver.dodge_enabled or u.is_building:
+	if not Arbitrator.dodge_enabled or u.is_building:
 		return 0.0
-	var cfg := Resolver.dodge_tuning()
+	var cfg := Arbitrator.dodge_tuning()
 	var spd := float(u.speed)
 	var pct := float(cfg["fixed_pct"]) + float(cfg["per_speed_pct"]) * spd
 	var edge := spd - attacker_speed
@@ -1325,13 +1325,13 @@ static func dodge_expect(u: BoardState.UnitState, attacker_speed: float) -> floa
 
 
 # The expected-damage multiplier this unit's crits add against targets around
-# `target_speed`: 1 + chance × (multiplier − 1). Mirrors Resolver.crit_chance /
+# `target_speed`: 1 + chance × (multiplier − 1). Mirrors Arbitrator.crit_chance /
 # crit_multiplier on snapshot data (fixed + per-speed + one-sided edge + the unit's own
 # bonuses, both capped). Never below 1 — a crit only ever adds.
 static func crit_expect(u: BoardState.UnitState, target_speed: float) -> float:
-	if not Resolver.crit_enabled:
+	if not Arbitrator.crit_enabled:
 		return 1.0
-	var cfg := Resolver.crit_tuning()
+	var cfg := Arbitrator.crit_tuning()
 	var spd := float(u.speed)
 	var pct := float(cfg["fixed_pct"]) + float(cfg["per_speed_pct"]) * spd
 	var edge := spd - target_speed

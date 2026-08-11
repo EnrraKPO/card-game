@@ -59,7 +59,7 @@ costume around abilities, and a second dispatcher. The new design splits at the 
 | **TriggeredEffect** | reacts | trigger resolver (event gate) | target resolver | operation payloads |
 | **ActivatedEffect** | is invoked | **cost gate** (nothing to listen for) | target resolver | operation payloads |
 | **PassiveEffect** | is present | membership predicate (read-time) | — | continuous contributions |
-| **InterceptorEffect** | rewrites | pending-mutation gate (in the Resolver) | — | rewrite of the proposal |
+| **InterceptorEffect** | rewrites | pending-mutation gate (in the Arbitrator) | — | rewrite of the proposal |
 
 **Effect containers** — Unit, Spell card, Relic, Status, Upgrade — are plain holders.
 Any container may hold any mix of the four structures; there is no container taxonomy
@@ -207,7 +207,7 @@ the anchor's. Slots derive theirs from the board half they sit in.
 creates it — a constructor argument, not a reporting duty. No manager (a manager earns
 its existence by managing *change*; a birth fact that nothing invalidates passes the
 widget-state-ownership rule carried on the object). Mutation, if ever wanted, is already
-provided for: the arbitration Resolver is the single writer of all stats — side-switching
+provided for: the Arbitrator is the single writer of all stats — side-switching
 would be an ordinary StatMutation through the existing gate.
 
 **The anchor:** every cluster binds one allegiance anchor at materialization — the
@@ -268,7 +268,7 @@ exactly the invoked-directly pattern above, with a different cost. THE usability
 
 ## 8. The interception system
 
-An InterceptorEffect watches **pending StatMutations inside the arbitration Resolver**,
+An InterceptorEffect watches **pending StatMutations inside the Arbitrator**,
 pre-commit — a different stream from events (events ≠ mutations is the arbitration
 layer's hard rule; events are post-hoc news, proposals are interceptable). Its verb is
 **rewrite-in-chain**: each matching interceptor fires in order on the prior result, with
@@ -407,8 +407,8 @@ Each hack maps to a structural absence the design fills:
    shared by every fielded copy, the TriggerResolver precedent), **fed at delivery**
    (the action's executor — the only party holding all the facts — assembles the
    context and calls `produce`), **derives on the spot** (the species' own logic; the
-   executor never knows how), **emits concrete StatMutations** to the arbitration
-   Resolver. The context is the four facts and stays a DUMB PLATE (facts only, no
+   executor never knows how), **emits concrete StatMutations** to the Arbitrator.
+   The context is the four facts and stays a DUMB PLATE (facts only, no
    logic, no caching — the deleted `effect_context.gd` is the cautionary tale):
    world · holder + EXPLICIT allegiance anchor (holder is null for run-scope
    containers; holder-reading species are refused at load there) · occasion (the
@@ -432,7 +432,7 @@ First build: **the attack system** — the purest exercise of the design. The `a
 the unit's innate TriggeredEffect; the `nearest` resolver with its current computed on
 read (trigger moment + interactive idle, §3); reverse queries feeding the
 crosshair/menace cues; the
-attack payload carrying the strike mechanics through the arbitration Resolver. No
+attack payload carrying the strike mechanics through the Arbitrator. No
 gestures, no schema migration, no payload redesign required. Done = the attack system's
 own native suite green in `tests/_runner.tscn`.
 

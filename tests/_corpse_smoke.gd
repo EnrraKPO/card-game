@@ -46,7 +46,7 @@ func _ready() -> void:
 		print("FAIL: a living unit's card is not findable")
 
 	# Overkill, exactly as reported: well past zero, not merely at it.
-	Resolver.submit(StatMutation.damage(victim, victim.current_health + 6, null))
+	Arbitrator.submit(StatMutation.damage(victim, victim.current_health + 6, null))
 	if victim.current_health >= 0:
 		print("NOTE: victim at %d health" % victim.current_health)
 
@@ -75,7 +75,7 @@ func _ready() -> void:
 	var swept := CardInstance.from_data(CardData.get_card("pawn"))
 	board.place_enemy_card(swept, at2)
 	var slot2 := board.slot_ui_for(at2)
-	Resolver.submit(StatMutation.damage(swept, swept.current_health + 6, null))
+	Arbitrator.submit(StatMutation.damage(swept, swept.current_health + 6, null))
 	board.cleanup_effect_deaths()   # world sweep -> unit_swept -> the board drops the card
 
 	if world.location_of(swept) != null:

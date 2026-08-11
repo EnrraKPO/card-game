@@ -45,7 +45,7 @@ var _turn: int    = 0
 var _modal_lock: bool = false
 
 # The two sides' resource state (mana / hand / draw pile) — one object each, mutated ONLY
-# through Resolver.submit (side stats: draw/discard/mana/max_mana). The player's Hand bar
+# through Arbitrator.submit (side stats: draw/discard/mana/max_mana). The player's Hand bar
 # and the mana gauge subscribe to the player side's signals; the enemy side has no watchers.
 var _player_side: CombatSide
 var _enemy_side: CombatSide
@@ -100,7 +100,7 @@ var _ctx: CombatContext         # the declared surface cards consult — install
 # very `position` the move is already driving, so the two fight and the loser snaps.
 #
 # The presentation layer therefore SETTLES a unit before cueing on it (see _await_settled, lent to
-# VFXPlayer at setup). This is a presentation gate only: the Resolver wrote the mutation long before
+# VFXPlayer at setup). This is a presentation gate only: the Arbitrator wrote the mutation long before
 # any of this draws, so waiting changes what the player SEES, never what resolved or in what order.
 # One rule, no per-effect authoring — an on-attack self-buff, a retaliation striking the attacker
 # mid-withdrawal, and anything authored later all read correctly by construction.
@@ -257,7 +257,7 @@ func _ready() -> void:
 	_apply_king_persistence()
 	# The opening hand: a system-channel draw on the side (single-writer rule — every side
 	# write rides submit, so even opening draws are interceptable by channel-aware effects).
-	Resolver.submit(StatMutation.make(_player_side, StatMutation.DRAW,
+	Arbitrator.submit(StatMutation.make(_player_side, StatMutation.DRAW,
 			GameData.value("hand.size.initial"), null, StatMutation.CH_SYSTEM))
 	var is_boss_fight := GameData.current_encounter != null \
 			and GameData.current_encounter.type == EncounterData.Type.BOSS
@@ -365,7 +365,7 @@ func _maybe_dismiss_hand_view(point: Vector2) -> void:
 	_hand.dismiss_to_hand()
 
 
-# ── Deck construction (each side's draw pile; draws themselves ride the Resolver) ──
+# ── Deck construction (each side's draw pile; draws themselves ride the Arbitrator) ──
 
 # Builds the player's draw pile from the run deck (shuffled DeckCard instances). Kings
 # never ride the pile; fresh units fill to their run-resolved max health.
@@ -378,7 +378,7 @@ func _init_player_deck(deck_cards: Array) -> void:
 			inst.owner = 0
 			# Fill to the run-resolved max (read-time card modifiers add to max_health once
 			# owner is set), so a fresh unit enters at full HP including any unit.health buff.
-			Resolver.fill_health(inst)
+			Arbitrator.fill_health(inst)
 			_player_side.draw_pile.append(inst)
 
 
@@ -410,7 +410,7 @@ func _init_enemy_deck() -> void:
 			var inst := CardInstance.from_data(data)
 			inst.owner = 1
 			_enemy_side.draw_pile.append(inst)
-	Resolver.submit(StatMutation.make(_enemy_side, StatMutation.DRAW, _enemy_side.draw_pile.size(),
+	Arbitrator.submit(StatMutation.make(_enemy_side, StatMutation.DRAW, _enemy_side.draw_pile.size(),
 			null, StatMutation.CH_SYSTEM))
 
 
@@ -418,7 +418,7 @@ func _init_enemy_deck() -> void:
 # "mana gains doubled" interceptor can never touch spending. Legality (can afford) is
 # checked at the call sites / by the AI planner, as before.
 func _pay_mana(side: CombatSide, cost: int) -> void:
-	Resolver.submit(StatMutation.make(side, StatMutation.MANA, -cost,
+	Arbitrator.submit(StatMutation.make(side, StatMutation.MANA, -cost,
 			null, StatMutation.CH_COST))
 
 
@@ -431,15 +431,15 @@ func _begin_round() -> void:
 	# The ramp is UNCAPPED by design — mana keeps growing every turn, the whole fight, for both
 	# sides (turn-1 start is mana.initial); mana.per_turn is a flat bonus stacked on top.
 	var ramp := GameData.value("mana.initial") if _turn == 1 else _turn
-	Resolver.set_side_max_mana(_player_side, ramp + GameData.value("mana.per_turn"))
-	Resolver.set_side_mana(_player_side, _player_side.max_mana)
-	Resolver.set_side_max_mana(_enemy_side, _turn)
-	Resolver.set_side_mana(_enemy_side, _turn)
+	Arbitrator.set_side_max_mana(_player_side, ramp + GameData.value("mana.per_turn"))
+	Arbitrator.set_side_mana(_player_side, _player_side.max_mana)
+	Arbitrator.set_side_max_mana(_enemy_side, _turn)
+	Arbitrator.set_side_mana(_enemy_side, _turn)
 	# Turn draws are DRAW mutations on each side (system channel), so "your draws are
 	# doubled" interceptors catch them like any effect-driven draw.
-	Resolver.submit(StatMutation.make(_player_side, StatMutation.DRAW,
+	Arbitrator.submit(StatMutation.make(_player_side, StatMutation.DRAW,
 			GameData.value("draw.per_turn"), null, StatMutation.CH_SYSTEM))
-	Resolver.submit(StatMutation.make(_enemy_side, StatMutation.DRAW, 1,
+	Arbitrator.submit(StatMutation.make(_enemy_side, StatMutation.DRAW, 1,
 			null, StatMutation.CH_SYSTEM))
 	# Fresh taps BEFORE the CPU turn: the enemy engine plans ability activations against
 	# attack_exhausted, so last round's spent attacks must be cleared by the time it
@@ -592,7 +592,7 @@ func _on_done_pressed() -> void:
 	var any_shield_regen := false
 	for inst: CardInstance in _board.get_all_units():
 		var prev_shield := inst.current_shield
-		Resolver.restore_shield(inst)
+		Arbitrator.restore_shield(inst)
 		var gained := inst.current_shield - prev_shield
 		if gained > 0:
 			any_shield_regen = true
@@ -856,7 +856,7 @@ func _king_fall(inst: CardInstance, corpse: CardUI) -> void:
 # Debug only: fell the enemy captain on the spot, so the whole "captain defeated" sequence — the
 # kill/death broadcasts, the fall, the chest and the end-of-combat gate — can be replayed without
 # fighting the fight for it. Deliberately NOT a shortcut past that sequence (the debug ✕ beside it
-# already is one): the lethal blow goes through the Resolver like any other, and everything after it
+# already is one): the lethal blow goes through the Arbitrator like any other, and everything after it
 # is the same path a killing strike takes, so what gets polished here is the real thing.
 #
 # The blow is a signed SYSTEM-channel HEALTH mutation: shield-bypassing (a shielded King would
@@ -938,8 +938,8 @@ func _where(inst: CardInstance) -> String:
 			"player" if inst.owner == 0 else "cpu"]
 
 
-# One strike's resolved outcome — what the Resolver decided, not what was thrown.
-func _log_strike(attacker: CardInstance, target: CardInstance, outcome: Resolver.Outcome) -> void:
+# One strike's resolved outcome — what the Arbitrator decided, not what was thrown.
+func _log_strike(attacker: CardInstance, target: CardInstance, outcome: Arbitrator.Outcome) -> void:
 	if not CombatLog.recording():
 		return
 	var line := "%s → %s" % [_where(attacker), _where(target)]
@@ -1021,14 +1021,14 @@ func _debug_kill_captain() -> void:
 	_debug_killing = false
 
 
-# A unit's death DEALT rather than suffered: the lethal blow through the Resolver like any other,
+# A unit's death DEALT rather than suffered: the lethal blow through the Arbitrator like any other,
 # and everything after it is the same path a killing strike takes — kill/death broadcasts, the
 # presented burial (a king FALLS and leaves its chest), the secondary sweep. Used by the captain's
 # exits (debug button, surrender) and by the army that falls with it.
 func _fell(inst: CardInstance) -> void:
 	if inst == null or not inst.is_alive():
 		return
-	Resolver.submit(StatMutation.make(inst, StatMutation.HEALTH, -inst.current_health,
+	Arbitrator.submit(StatMutation.make(inst, StatMutation.HEALTH, -inst.current_health,
 			null, StatMutation.CH_SYSTEM))
 	await _emit_kill(inst)
 	await _broadcast(GameEvent.make(&"death", inst))
@@ -1164,11 +1164,11 @@ func _await_settled(inst: CardInstance) -> void:
 func _apply_attack_damage(attacker: CardInstance, target: CardInstance, t_card: CardUI) -> void:
 	# The ON_ATTACK moment is an EVENT — it fires whether or not any damage follows (reactions
 	# like on-hit poison ride it). The strike itself is just a mutation submitted to the
-	# Resolver, which owns both the shield-first resolution form AND the interception seam
+	# Arbitrator, which owns both the shield-first resolution form AND the interception seam
 	# (TARGETING_DESIGN.md §8: interceptors rewrite the amount inside the gate). Combat never
-	# learns WHY the number changed; it presents the outcome the Resolver reports.
+	# learns WHY the number changed; it presents the outcome the Arbitrator reports.
 	await _broadcast(GameEvent.make(&"attack", attacker, target))
-	var outcome := Resolver.submit(
+	var outcome := Arbitrator.submit(
 			StatMutation.damage(target, attacker.get_attribute("attack"), attacker))
 	# Cue whatever intercepted (the Blind pip glint, a relic chip) BEFORE the damage readout —
 	# resolution is already complete; this is pure playback in resolution order.
@@ -1182,8 +1182,8 @@ func _apply_attack_damage(attacker: CardInstance, target: CardInstance, t_card: 
 	# announced as critical. Fired here it still overlaps the numbers (it is a long, unawaited cue
 	# with a ~1s tail), but it can no longer drift away from the impact it belongs to.
 	#
-	# Still AFTER the interception cues, deliberately: the Resolver rolls crit only on what survives
-	# interception (see Resolver._submit), so the rewriter reading first is the true causal order.
+	# Still AFTER the interception cues, deliberately: the Arbitrator rolls crit only on what survives
+	# interception (see Arbitrator._submit), so the rewriter reading first is the true causal order.
 	if outcome.crit:
 		# Real damage still lands — this cue sits ALONGSIDE the shield/health numbers, never
 		# instead of them. The ATTACKER's Speed badge glints too (speed drives crit, mirroring how
@@ -1195,7 +1195,7 @@ func _apply_attack_damage(attacker: CardInstance, target: CardInstance, t_card: 
 			a_ui = _board.get_card_ui(attacker)
 		if a_ui != null and is_instance_valid(a_ui):
 			a_ui.flash_stat_proc("speed")
-	# Resolve the attack-driven decay AFTER submit (the Resolver needs the status alive to query
+	# Resolve the attack-driven decay AFTER submit (the Arbitrator needs the status alive to query
 	# its interceptors) and BEFORE the strike's on-hit reactions below. A charge is spent per
 	# attack (hit or miss); a Blind that an effect applies in *reaction* to this attack (a relic
 	# blinding the attacker on hit, via ON_DAMAGE_TAKEN) lands afterwards and survives, instead
@@ -1324,9 +1324,9 @@ func _apply_king_persistence() -> void:
 	# (the King is excluded from the blanket unit.* buffs — its HP has its own modifier axis).
 	var hp_bonus := GameData.value("king.max_health")
 	if hp_bonus != 0:
-		Resolver.submit(StatMutation.make(pk, StatMutation.MAX_HEALTH, hp_bonus,
+		Arbitrator.submit(StatMutation.make(pk, StatMutation.MAX_HEALTH, hp_bonus,
 				null, StatMutation.CH_SYSTEM))
-	Resolver.set_health(pk, run.king_health())
+	Arbitrator.set_health(pk, run.king_health())
 	_board.refresh()
 
 	# The header's HP field mirrors RunData, which only finalizes king_damage at combat end (see

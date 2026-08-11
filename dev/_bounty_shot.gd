@@ -58,7 +58,7 @@ func _ready() -> void:
 		for u: CardInstance in board.get_all_units():
 			if u.owner == 1 and u.data.is_king:
 				ek2 = u
-		Resolver.set_health(ek2, 0)
+		Arbitrator.set_health(ek2, 0)
 		combat.call("_bury", ek2)
 		combat.call("_handle_combat_end")          # awaits the chest, exactly as the real loop does
 		await get_tree().create_timer(2.6).timeout  # burst + chest flight + landing
@@ -70,7 +70,7 @@ func _ready() -> void:
 		for u: CardInstance in board.get_all_units():
 			if u.owner == 1 and u.data.is_king:
 				ek = u
-		Resolver.set_health(ek, 0)
+		Arbitrator.set_health(ek, 0)
 		combat.call("_bury", ek)
 		# Real seconds, not frames: the harness renders far faster than 60fps, so a frame count
 		# lands somewhere arbitrary in the sequence. "at=N" picks the moment to capture, which is
@@ -87,7 +87,7 @@ func _ready() -> void:
 		var victim := CardInstance.from_data(CardData.get_card("queen" if "big" in args else "knight"))
 		board.place_enemy_card(victim, BoardLocation.at(1, 1, 1))
 		await get_tree().process_frame
-		Resolver.set_health(victim, 0)
+		Arbitrator.set_health(victim, 0)
 		combat.call("_bury", victim)
 		if "big" in args:
 			await get_tree().create_timer(0.42).timeout   # mid-stream, every coin in the air

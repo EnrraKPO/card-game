@@ -1,7 +1,7 @@
 class_name VFXEffectCrit
 extends VFXEffect
 
-# Played when an attack lands as a CRITICAL (the speed-driven damage spike in Resolver._submit).
+# Played when an attack lands as a CRITICAL (the speed-driven damage spike in Arbitrator._submit).
 # Unlike a dodge or a miss, real damage still lands — so this cue sits ALONGSIDE the normal
 # shield/health damage numbers, never replacing them. It has to feel like it HURTS: the victim
 # flashes hot, gets punched (a quick squash), shakes violently and emits a shockwave ring, with

@@ -1,4 +1,4 @@
-class_name Resolver
+class_name Arbitrator
 extends RefCounted
 
 # Dodge tuning is DATA-DRIVEN — all four knobs live in res://data/combat_tuning.json (authored
@@ -37,7 +37,7 @@ static var _crit_cfg: Dictionary = {}
 # Master switches for the dodge/crit rolls. On in the live game; the deterministic regression
 # harness turns them OFF so damage-math assertions aren't perturbed by a random avoid or spike
 # (each feature's suite flips its own back on around injected tuning). These are the ONLY
-# randomness in the Resolver that isn't authored per-effect, so they're the only determinism seams.
+# randomness in the Arbitrator that isn't authored per-effect, so they're the only determinism seams.
 static var dodge_enabled := true
 static var crit_enabled := true
 
@@ -46,7 +46,7 @@ static var crit_enabled := true
 # nothing else in the game mutates these values. Two things this centralisation buys:
 #   • Resolution FORM lives here and nowhere else: attack damage routes through shield before
 #     health, heals clamp to max, direct wounds bypass shield. Callers say WHAT ("damage 5");
-#     the Resolver knows HOW.
+#     the Arbitrator knows HOW.
 #   • INTERCEPTION happens inside the gate: before a mutation on a CardInstance commits, every
 #     active container's INTERCEPTOR effects (the participants' cards + statuses AND the run
 #     set — relics/upgrades) get to rewrite its amount, matched declaratively by stat/channel/
@@ -164,7 +164,7 @@ static func _apply_to_instance(inst: CardInstance, m: StatMutation) -> Outcome:
 	# The lethal crossing is stamped HERE, around the stat dispatch, so it covers every form
 	# that lowers health — the shield-split DAMAGE and the direct HEALTH (poison) alike. Only
 	# the FIRST mutation to take a live unit to <= 0 records the kill (the `pre > 0` guard);
-	# overkill from a later mutation can't overwrite the killer. The Resolver only RECORDS the
+	# overkill from a later mutation can't overwrite the killer. The Arbitrator only RECORDS the
 	# cause — combat emits the event (its contract: events are never mutations).
 	var pre_health := inst.current_health
 	var out := _dispatch_apply(inst, m)
@@ -184,7 +184,7 @@ static func _dispatch_apply(inst: CardInstance, m: StatMutation) -> Outcome:
 		StatMutation.HEALTH:
 			return _apply_health(inst, m.amount)
 		StatMutation.STATUS:
-			# Status application — the Resolver is the single writer of statuses too, which is
+			# Status application — the Arbitrator is the single writer of statuses too, which is
 			# what lets interceptors rewrite the stack count. An application intercepted away
 			# (amount <= 0) applies nothing and reports delta 0. Stacking/clamping knowledge
 			# stays in StatusEngine.apply; delta reports the REQUESTED stacks (the pre-clamp ask).
@@ -211,7 +211,7 @@ static func _dispatch_apply(inst: CardInstance, m: StatMutation) -> Outcome:
 
 static func _apply_to_carrier(carrier: GameEntity, m: StatMutation) -> Outcome:
 	if m.stat != StatMutation.STATUS:
-		push_error("Resolver: stat '%s' cannot land on a board slot (slots hold statuses only)"
+		push_error("Arbitrator: stat '%s' cannot land on a board slot (slots hold statuses only)"
 				% String(m.stat))
 		return Outcome.make(carrier, m.stat, 0)
 	if m.amount <= 0 or m.status_id.is_empty():
@@ -245,7 +245,7 @@ static func _apply_to_side(side: CombatSide, m: StatMutation) -> Outcome:
 		_:
 			# Load validation keeps authored data out of here; a programmatic mismatch
 			# fails loud and commits nothing.
-			push_error("Resolver: stat '%s' is not a side stat" % String(m.stat))
+			push_error("Arbitrator: stat '%s' is not a side stat" % String(m.stat))
 			return Outcome.make(side, m.stat, 0)
 
 
@@ -389,7 +389,7 @@ static func _dodge_config() -> Dictionary:
 					if (dodge as Dictionary).get(k) != null:
 						_dodge_cfg[k] = float((dodge as Dictionary)[k])
 		else:
-			push_error("Resolver: bad combat_tuning.json — using dodge defaults")
+			push_error("Arbitrator: bad combat_tuning.json — using dodge defaults")
 	return _dodge_cfg
 
 
@@ -472,7 +472,7 @@ static func _crit_config() -> Dictionary:
 					if (crit as Dictionary).get(k) != null:
 						_crit_cfg[k] = float((crit as Dictionary)[k])
 		else:
-			push_error("Resolver: bad combat_tuning.json — using crit defaults")
+			push_error("Arbitrator: bad combat_tuning.json — using crit defaults")
 	return _crit_cfg
 
 

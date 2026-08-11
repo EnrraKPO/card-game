@@ -41,7 +41,7 @@ var charms: Array = []
 # (Live Statuses — `statuses` and its lookups — are inherited from GameEntity: a unit is
 # one kind of status carrier, with zero say in status behavior. See StatusEngine.)
 
-# Provenance of the FATAL blow — stamped by the Resolver at the lethal HP crossing, read by
+# Provenance of the FATAL blow — stamped by the Arbitrator at the lethal HP crossing, read by
 # combat to fire the `kill` event before `death` (see GameEvent). `killed_by_unit` is the
 # killer UNIT, populated ONLY for an attack (an effect/poison kill credits no unit — that is
 # the deliberate rule: units kill by striking). `killed_by_channel` is the cause KIND
@@ -125,11 +125,11 @@ func get_attribute(attr: String) -> int:
 		"max_shield": return data.shield + modifiers.get("shield", 0) + LiveEffects.bonus(self, "max_shield")
 		# Additive dodge-chance bonus in PERCENTAGE POINTS (base 0 — no innate card stat yet).
 		# Folds written modifiers + live standing effects like the other stats; read by
-		# Resolver.dodge_chance, where it stacks on the speed-derived chance before the cap.
+		# Arbitrator.dodge_chance, where it stacks on the speed-derived chance before the cap.
 		"dodge_bonus": return modifiers.get("dodge_bonus", 0) + LiveEffects.bonus(self, "dodge_bonus")
 		# Crit's two stored axes, same fold shape as dodge_bonus (base 0 — no innate card stat).
 		# crit_chance_bonus is percentage points on the chance; crit_multiplier_bonus is
-		# multiplier points ×100 (50 = +0.5×). Read by Resolver.crit_chance / crit_multiplier.
+		# multiplier points ×100 (50 = +0.5×). Read by Arbitrator.crit_chance / crit_multiplier.
 		"crit_chance_bonus": return modifiers.get("crit_chance_bonus", 0) + LiveEffects.bonus(self, "crit_chance_bonus")
 		"crit_multiplier_bonus": return modifiers.get("crit_multiplier_bonus", 0) + LiveEffects.bonus(self, "crit_multiplier_bonus")
 		# Attacks per combat round (combat._resolve_attack loops this many strikes). Base is the
@@ -143,9 +143,9 @@ func get_attribute(attr: String) -> int:
 		_:            return modifiers.get(attr, 0)
 
 
-# Storage-level write for the additive-modifier bag. Called by Resolver ONLY — every stat
-# change in the game routes through Resolver.submit (see Resolver); nothing else mutates
-# these values directly. Damage/heal/shield forms live in the Resolver too.
+# Storage-level write for the additive-modifier bag. Called by Arbitrator ONLY — every stat
+# change in the game routes through Arbitrator.submit (see Arbitrator); nothing else mutates
+# these values directly. Damage/heal/shield forms live in the Arbitrator too.
 func apply_modifier(attr: String, delta: int) -> void:
 	modifiers[attr] = modifiers.get(attr, 0) + delta
 
@@ -187,7 +187,7 @@ func has_available_abilities() -> bool:
 # it never heals it — and never kills it (floor 1 HP). Runtime modifiers, statuses, the charm
 # list, the current shield pool, position and owner all stay. Per-card overrides and charm
 # stat bakes on the OLD data do NOT transfer — the combined composition resolves to its
-# authored/derived card (v1 rule). Health lands through the Resolver like every stat write.
+# authored/derived card (v1 rule). Health lands through the Arbitrator like every stat write.
 func transform(new_data: CardData) -> void:
 	if new_data == null:
 		return
@@ -195,7 +195,7 @@ func transform(new_data: CardData) -> void:
 	data = new_data
 	# The data swap changes the BASE composition; reads derive fresh (nothing cached —
 	# LiveEffects ruling 2026-08-11), so the health read below sees the new identity.
-	Resolver.set_health(self, maxi(1, get_attribute("max_health") - damage))
+	Arbitrator.set_health(self, maxi(1, get_attribute("max_health") - damage))
 
 
 # (Status application/stacking rules live in StatusEngine.apply — the unit holds the list

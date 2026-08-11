@@ -422,7 +422,7 @@ static func _stat_badge(tex: Texture2D, value: int, num_color: Color, s := 1.0) 
 
 # This card's live crit/dodge rules, spelled out with its own numbers (Speed drives both) and the
 # authored coefficients/caps from combat_tuning.json — so the note stays true if balance is retuned.
-# Buildings never dodge (Resolver hard-zeroes it), so their dodge line says exactly that.
+# Buildings never dodge (Arbitrator hard-zeroes it), so their dodge line says exactly that.
 static func _crit_dodge_note(inst: CardInstance) -> String:
 	var spd := int(inst.get_attribute("speed"))
 	var lines: Array[String] = [Loc.t("statguide.at_speed", {"speed": spd})]
@@ -430,15 +430,15 @@ static func _crit_dodge_note(inst: CardInstance) -> String:
 	if inst.data != null and inst.data.is_building():
 		lines.append(Loc.t("statguide.dodge_building"))
 	else:
-		var d := Resolver.dodge_tuning()
-		lines.append(_rule_line("statguide.dodge_line", int(round(Resolver.dodge_chance(inst) * 100.0)),
+		var d := Arbitrator.dodge_tuning()
+		lines.append(_rule_line("statguide.dodge_line", int(round(Arbitrator.dodge_chance(inst) * 100.0)),
 			d, "statguide.diff_dodge"))
 
-	var c := Resolver.crit_tuning()
-	var crit_line := _rule_line("statguide.crit_line", int(round(Resolver.crit_chance(inst) * 100.0)),
+	var c := Arbitrator.crit_tuning()
+	var crit_line := _rule_line("statguide.crit_line", int(round(Arbitrator.crit_chance(inst) * 100.0)),
 		c, "statguide.diff_crit")
 	lines.append(Loc.t("statguide.crit_dmg", {"line": crit_line,
-		"mult": _fmt(Resolver.crit_multiplier(inst))}))
+		"mult": _fmt(Arbitrator.crit_multiplier(inst))}))
 	return "\n".join(lines)
 
 

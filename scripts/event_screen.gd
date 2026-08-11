@@ -156,9 +156,9 @@ func _apply_upgrade() -> void:
 	# the upgrade sound), plus the spent gold sliding off the counter.
 	Vfx.play("card_upgrade_shine", entry.ui)
 	Vfx.play("gold_spend_slide", _gold_lbl, {"text": "-%d" % _cost})
-	# Permanent deck-card upgrade: an override mutation, routed through the Resolver like every
-	# other stat change (the DeckCard target form — see Resolver.submit).
-	Resolver.submit(StatMutation.make(entry.card, StringName(_attr), 1,
+	# Permanent deck-card upgrade: an override mutation, routed through the Arbitrator like every
+	# other stat change (the DeckCard target form — see Arbitrator.submit).
+	Arbitrator.submit(StatMutation.make(entry.card, StringName(_attr), 1,
 			null, StatMutation.CH_SYSTEM))
 	# Each training doubles the price of the next one within this visit.
 	_cost *= 2

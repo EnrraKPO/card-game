@@ -47,7 +47,7 @@ func fire_run_level(_event: GameEvent) -> void:
 
 
 # Fires the `kill` event for a just-dead unit, immediately before its `death` — reading the
-# provenance the Resolver stamped at the fatal blow (CardInstance.killed_by_*). `kill` names
+# provenance the Arbitrator stamped at the fatal blow (CardInstance.killed_by_*). `kill` names
 # the killer (a unit for attacks; the cause id, e.g. "poison", otherwise) so "when I kill" and
 # "when a unit dies from poison" are authorable; `death` stays the corpse's own perspective.
 # A death with no recorded cause (killed_by_channel == "") fires `death` only.

@@ -300,7 +300,7 @@ func _spawn_from_queue(s: Dictionary) -> bool:
 		return false
 	var inst := CardInstance.from_data(data)
 	inst.owner = spawn_owner
-	Resolver.fill_health(inst)   # after owner is set, so run-wide unit bonuses fold in
+	Arbitrator.fill_health(inst)   # after owner is set, so run-wide unit bonuses fold in
 	spawn_unit_at(inst, landing, spawn_owner)
 	play_dispatch(inst)   # results discarded, as the board always did for queued spawns
 	return true

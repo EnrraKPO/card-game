@@ -5,10 +5,10 @@ extends RefCounted
 # that used to live as loose asymmetric fields on combat.gd (_mana/_enemy_mana/_enemy_hand/…).
 # Both sides are the same object now; "the player" and "the CPU" differ only in who watches.
 #
-# A CombatSide is a StatMutation TARGET (the third target kind Resolver.submit dispatches on,
+# A CombatSide is a StatMutation TARGET (the third target kind Arbitrator.submit dispatches on,
 # beside CardInstance and DeckCard): effects like "draw 2" or "gain 1 mana" are mutations on a
 # side, which is what makes them interceptable ("your draws are doubled"). It is NOT a writer —
-# the Resolver stays the single writer of game-state numbers, and it alone knows the resolution
+# the Arbitrator stays the single writer of game-state numbers, and it alone knows the resolution
 # FORMS (draw floors at 0 and stops at the pile; mana floors at 0, UNCAPPED above max — settled).
 # This class holds state plus the commit PRIMITIVES those forms call.
 #
@@ -48,9 +48,9 @@ func copy(remap: Dictionary) -> CombatSide:
 	return s
 
 
-# ── Commit primitives (called by Resolver._apply_to_side — see the class comment) ──
+# ── Commit primitives (called by Arbitrator._apply_to_side — see the class comment) ──
 
-# Moves up to `n` cards off the top of the draw pile into the hand. The Resolver has already
+# Moves up to `n` cards off the top of the draw pile into the hand. The Arbitrator has already
 # floored `n`; running out of pile is THIS zone's knowledge — the return reports what moved.
 func pull_to_hand(n: int) -> Array:
 	var count := mini(n, draw_pile.size())
@@ -91,7 +91,7 @@ func set_max_mana(v: int) -> void:
 
 
 # Hand membership bookkeeping for a card leaving by being PLAYED — zone movement via play,
-# not a stat mutation, so it doesn't ride the Resolver (the orchestrator calls it where it
+# not a stat mutation, so it doesn't ride the Arbitrator (the orchestrator calls it where it
 # already handles the play). No signal: the play flow removes its own UI.
 func remove_from_hand(inst: CardInstance) -> void:
 	hand.erase(inst)
