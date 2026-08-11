@@ -21,14 +21,9 @@ const SPREAD_HOLD := "_t_wildfire_hold"  # chance 0, decay_chance 0 — nothing 
 const SPREAD_DOWN := "_t_wildfire_down"  # chance 1, to "ground" — a unit lighting its own floor
 const SPREAD_MORPH := "_t_wildfire_morph"  # to "ground", but the floor catches SPREAD_HOLD (spread.status)
 const SPREAD_TOUCH := "_t_wildfire_touch"  # chance 1, arrival "_t_zap" — the flame's touch on arrival
-const ZAP := "_t_zap"                    # injected named effect: flat 1 damage, no rider
-const EMBER_ALL := "_t_ember_all"        # ground tick, restrike chance 1 — every extra flame burns
-const EMBER_NONE := "_t_ember_none"      # ground tick, restrike chance 0 — the first flame alone
-const EMBER_CATCHY := "_t_ember_catchy"  # restrike 1 AND rider 1 — every flame burns AND ignites
-const EMBER_SELF := "_t_ember_self"      # unit-carried tick, restrike chance 1 (the ablaze shape)
-const RIDER_SURE := "_t_rider_sure"      # ground damage whose rider ALWAYS ignites
-const RIDER_NEVER := "_t_rider_never"    # …and one whose rider never does
-const CAUGHT := "_t_caught"              # the status the riders apply
+const ZAP := "_t_zap"                    # injected named effect: flat 1 damage
+# (The rider/restrike fixtures — EMBER_*/RIDER_*/CAUGHT — died with those mechanisms,
+# deleted 2026-08-11: never user-designed, disavowed 2026-08-09.)
 
 
 func run() -> void:
@@ -56,47 +51,12 @@ func run() -> void:
 	StatusData._all[SPREAD_TOUCH] = StatusData.from_dict({
 		"id": SPREAD_TOUCH, "decay": "none", "stacking": "stack",
 		"spread": {"phase": "turn_start", "chance": 1.0, "decay_chance": 0.0, "arrival": ZAP}})
-	StatusData._all[EMBER_ALL] = StatusData.from_dict({
-		"id": EMBER_ALL, "decay": "none", "stacking": "stack", "effects": [
-			{"trigger": {"kind": "event", "event": "turn_end"}, "targets": {"kind": "at_location"},
-			"attribute": "damage_taken", "amount": 1, "per_stack": false, "per_stack_chance": 1.0}]})
-	StatusData._all[EMBER_NONE] = StatusData.from_dict({
-		"id": EMBER_NONE, "decay": "none", "stacking": "stack", "effects": [
-			{"trigger": {"kind": "event", "event": "turn_end"}, "targets": {"kind": "at_location"},
-			"attribute": "damage_taken", "amount": 1, "per_stack": false}]})
-	StatusData._all[EMBER_CATCHY] = StatusData.from_dict({
-		"id": EMBER_CATCHY, "decay": "none", "stacking": "stack", "effects": [
-			{"trigger": {"kind": "event", "event": "turn_end"}, "targets": {"kind": "at_location"},
-			"attribute": "damage_taken", "amount": 1, "per_stack": false, "per_stack_chance": 1.0,
-			"riders": [{"chance": 1.0, "status": {"id": CAUGHT, "stacks": 1}}]}]})
-	StatusData._all[EMBER_SELF] = StatusData.from_dict({
-		"id": EMBER_SELF, "decay": "none", "stacking": "stack", "effects": [
-			{"trigger": {"kind": "event", "event": "turn_end"}, "targets": {"kind": "self"},
-			"attribute": "damage_taken", "amount": 1, "per_stack": false, "per_stack_chance": 1.0}]})
-	StatusData._all[CAUGHT] = StatusData.from_dict({"id": CAUGHT, "decay": "none", "stacking": "stack"})
-	StatusData._all[RIDER_SURE] = StatusData.from_dict({
-		"id": RIDER_SURE, "decay": "none", "effects": [
-			{"trigger": {"kind": "event", "event": "turn_end"}, "targets": {"kind": "at_location"},
-			"attribute": "damage_taken", "amount": 1, "per_stack": false,
-			"riders": [{"chance": 1.0, "status": {"id": CAUGHT, "stacks": 1}}]}]})
-	StatusData._all[RIDER_NEVER] = StatusData.from_dict({
-		"id": RIDER_NEVER, "decay": "none", "effects": [
-			{"trigger": {"kind": "event", "event": "turn_end"}, "targets": {"kind": "at_location"},
-			"attribute": "damage_taken", "amount": 1, "per_stack": false,
-			"riders": [{"chance": 0.0, "status": {"id": CAUGHT, "stacks": 1}}]}]})
 	_fire_attack_ignites()
 	_non_fire_does_not()
 	_single_fire_does_not()
 	_granted_fire_does_not_reach_a_count_gate()
-	# The two damage-ARITHMETIC tests measure the ground's tick alone. Burning's rider would
-	# add a second, RANDOMLY-lit fire on the occupant (ablaze deals its own 1 each round) and
-	# its restrike chance a random extra point, so the sums would ride coin flips. Calmed for
-	# their duration — both behaviors are proven deterministically further down, with
-	# chance-1 and chance-0 test statuses.
-	var saved_calm := _tick_calm("burning")
 	_burn_ticks_and_persists()
 	_reattack_piles_on()
-	_tick_calm_off("burning", saved_calm)
 	_burning_authors_spread()
 	_spread_propagates_and_snapshots()
 	_spread_stays_in_bounds_and_on_side()
@@ -104,11 +64,6 @@ func run() -> void:
 	_hold_changes_nothing()
 	_spread_only_fires_its_phase()
 	_zero_stacks_is_expired_whatever_the_decay()
-	_rider_ignites_on_damage()
-	_rider_chance_gates_it()
-	_rider_needs_a_victim()
-	_rider_rolls_once_per_instance_not_per_point()
-	_rider_round_trips()
 	_ablaze_authored_shape()
 	_ablaze_burns_its_host()
 	_ablaze_lights_the_ground_beneath_it()
@@ -124,16 +79,6 @@ func run() -> void:
 	_arrival_burns_the_occupant()
 	_arrival_whiffs_on_empty_ground()
 	_cross_layer_catch_speaks_the_ground_language()
-	_restrike_every_extra_flame_burns()
-	_restrike_one_flame_never_restrikes()
-	_restrike_off_burns_once()
-	_restrike_carries_the_rider_per_instance()
-	_restrike_on_a_unit_carrier()
-	_burn_authors_the_restrike()
-	StatusData._all.erase(EMBER_ALL)
-	StatusData._all.erase(EMBER_NONE)
-	StatusData._all.erase(EMBER_CATCHY)
-	StatusData._all.erase(EMBER_SELF)
 	StatusData._all.erase(FIRE_GRANT)
 	StatusData._all.erase(SPREAD_ALL)
 	StatusData._all.erase(SPREAD_FADE)
@@ -142,32 +87,6 @@ func run() -> void:
 	StatusData._all.erase(SPREAD_MORPH)
 	StatusData._all.erase(SPREAD_TOUCH)
 	NamedEffects._all.erase(ZAP)
-	StatusData._all.erase(RIDER_SURE)
-	StatusData._all.erase(RIDER_NEVER)
-	StatusData._all.erase(CAUGHT)
-
-
-# Calms a status tick's randomness (returning what was lifted) so a test can measure the
-# tick alone: the damage riders (a random ignition adds a second fire) AND the restrike
-# chance (an extra flame adds a random second point). Paired with _tick_calm_off.
-func _tick_calm(status_id: String) -> Dictionary:
-	var sd := StatusData.get_status(status_id)
-	if sd == null or sd.effects.is_empty():
-		return {}
-	var tick: Effect = sd.effects[0]
-	var saved: Dictionary = {"riders": tick.riders, "restrike": tick.per_stack_chance}
-	tick.riders = []
-	tick.per_stack_chance = 0.0
-	return saved
-
-
-func _tick_calm_off(status_id: String, saved: Dictionary) -> void:
-	var sd := StatusData.get_status(status_id)
-	if sd == null or sd.effects.is_empty() or saved.is_empty():
-		return
-	var tick: Effect = sd.effects[0]
-	tick.riders = saved["riders"]
-	tick.per_stack_chance = float(saved["restrike"])
 
 
 # The stack count the fire_scorches_ground INNATE rule authors, read from the rule itself
@@ -447,76 +366,9 @@ func _turn_end(cascade: CombatCascade) -> void:
 	check(bool(done[0]), "the turn-end pass resolves synchronously under the null presenter")
 
 
-# ── Damage riders (Effect.riders) ────────────────────────────────────────────────────────
-# The follow-on a damage instance CARRIES onto whoever took it — what makes burning ground
-# set its occupant alight without inventing a fire-damage TYPE.
-
-
-func _rider_ignites_on_damage() -> void:
-	var w := _world()
-	var cascade := CombatCascade.make(w, CombatPresenter.new())
-	var victim := _place(w, "rook", 1, 0, 1)
-	StatusEngine.apply(w.slot_at(1, 0, 1), RIDER_SURE, Effect.STATUS_DURATION_DEFAULT, 1, null)
-	_turn_end(cascade)
-	check(victim.find_status(CAUGHT) != null, "burn damage carries its rider onto the unit that took it")
-	check_eq(victim.current_shield, 2, "…and the damage itself still lands")
-
-
-func _rider_chance_gates_it() -> void:
-	var w := _world()
-	var cascade := CombatCascade.make(w, CombatPresenter.new())
-	var victim := _place(w, "rook", 1, 0, 1)
-	StatusEngine.apply(w.slot_at(1, 0, 1), RIDER_NEVER, Effect.STATUS_DURATION_DEFAULT, 1, null)
-	_turn_end(cascade)
-	check(victim.find_status(CAUGHT) == null, "a rider that loses its roll applies nothing")
-	check_eq(victim.current_shield, 2, "…while the damage lands regardless")
-
-
-func _rider_needs_a_victim() -> void:
-	# Nobody standing there = no damage instance = no rider. The rider rides the damage.
-	var w := _world()
-	var cascade := CombatCascade.make(w, CombatPresenter.new())
-	StatusEngine.apply(w.slot_at(1, 2, 1), RIDER_SURE, Effect.STATUS_DURATION_DEFAULT, 1, null)
-	_turn_end(cascade)
-	check(w.slot_at(1, 2, 1).find_status(RIDER_SURE) != null, "the empty fire burns on")
-	check(true, "an empty slot's burn carries its rider nowhere (no crash, no victim)")
-
-
-# THE RULE, stated as a test: one damage INSTANCE, one roll — the amount is not a multiplier.
-# A 3-damage tick ignites exactly as often as a 1-damage one; more rolls means more instances.
-func _rider_rolls_once_per_instance_not_per_point() -> void:
-	var heavy := "_t_rider_heavy"
-	StatusData._all[heavy] = StatusData.from_dict({
-		"id": heavy, "decay": "none", "effects": [
-			{"trigger": {"kind": "event", "event": "turn_end"}, "targets": {"kind": "at_location"},
-			"attribute": "damage_taken", "amount": 3, "per_stack": false,
-			"riders": [{"chance": 1.0, "status": {"id": CAUGHT, "stacks": 1}}]}]})
-	var w := _world()
-	var cascade := CombatCascade.make(w, CombatPresenter.new())
-	var victim := _place(w, "rook", 1, 1, 2)
-	StatusEngine.apply(w.slot_at(1, 1, 2), heavy, Effect.STATUS_DURATION_DEFAULT, 1, null)
-	_turn_end(cascade)
-	var si := victim.find_status(CAUGHT)
-	check(si != null and si.stacks == 1,
-			"three points of damage in ONE instance still rolls its rider exactly once")
-	StatusData._all.erase(heavy)
-
-
-func _rider_round_trips() -> void:
-	var authored: Dictionary = {"trigger": {"kind": "event", "event": "turn_end"},
-			"targets": {"kind": "at_location"}, "attribute": "damage_taken", "amount": 1,
-			"riders": [{"chance": 0.5, "status": {"id": "ablaze", "duration": -999, "stacks": 2}}]}
-	var e := Effect.from_dict(authored)
-	check_eq(e.riders.size(), 1, "a rider parses off the authored effect")
-	var back: Dictionary = e.to_dict()
-	var rl: Array = back.get("riders", [])
-	check_eq(rl.size(), 1, "…and survives the round trip")
-	if rl.is_empty():
-		return
-	var r: Dictionary = rl[0]
-	check(is_equal_approx(float(r.get("chance", 1.0)), 0.5), "the chance round-trips")
-	check_eq(str((r.get("status", {}) as Dictionary).get("id", "")), "ablaze", "the status id round-trips")
-	check_eq(int((r.get("status", {}) as Dictionary).get("stacks", 0)), 2, "the stack count round-trips")
+# (The damage-rider suite died with the rider mechanism — deleted 2026-08-11, disavowed
+# 2026-08-09, never user-designed. If damage ever carries follow-ons again, that is a
+# DESIGNED payload delivery rule in the new schema, with its own suite.)
 
 
 # ── Ablaze: burning, on the piece layer ──────────────────────────────────────────────────
@@ -533,22 +385,9 @@ func _ablaze_authored_shape() -> void:
 	# The ground's burn is what sets units alight — the one authored bridge between layers.
 	var ground := StatusData.get_status("burning")
 	check(ground != null and not ground.effects.is_empty(), "burning still deals its tick")
-	if ground == null or ground.effects.is_empty():
-		return
-	var tick: Effect = ground.effects[0]
-	check_eq(tick.riders.size(), 1, "burning's damage carries exactly one rider")
-	if tick.riders.is_empty():
-		return
-	check_eq(str((tick.riders[0] as Dictionary)["status_id"]), "ablaze", "…and that rider is ablaze")
-	check(is_equal_approx(float((tick.riders[0] as Dictionary)["chance"]), 0.3333),
-			"…at one third per instance of burn damage")
 
 
 func _ablaze_burns_its_host() -> void:
-	# Ablaze's own tick is burn damage, so its rider could randomly deepen the pile and its
-	# restrike chance add a random point — calmed for the arithmetic here (both behaviors
-	# are proven as data/deterministically elsewhere).
-	var saved := _tick_calm("ablaze")
 	var w := _world()
 	var cascade := CombatCascade.make(w, CombatPresenter.new())
 	var victim := _place(w, "rook", 0, 1, 1)   # 6 HP, 3 shield
@@ -559,7 +398,6 @@ func _ablaze_burns_its_host() -> void:
 	check(si != null and si.stacks == 3, "…and the fire on it doesn't tick away — only the roll fades it")
 	_turn_end(cascade)
 	check_eq(victim.current_shield, 1, "three stacks still burn for exactly 1 — fire's heat is flat")
-	_tick_calm_off("ablaze", saved)
 
 
 func _ablaze_lights_the_ground_beneath_it() -> void:
@@ -579,9 +417,9 @@ func _ablaze_lights_the_ground_beneath_it() -> void:
 
 
 func _the_fire_fuels_itself() -> void:
-	# THE WILDFIRE RULING (user, 2026-08-03): ablaze's own tick IS burn damage, rider and
-	# all — a burning unit may re-light itself, because fire fuels itself by burning things.
-	# Both fires speak the same name, so the self-fueling is a consequence, not an authoring.
+	# Both fires deal the SAME named burn damage — one definition, two layers, so a retune
+	# of "burn" reaches both. (The ignition-rider half of the old wildfire loop died with
+	# the disavowed rider mechanism, 2026-08-11.)
 	var ground := StatusData.get_status("burning")
 	var unit_fire := StatusData.get_status("ablaze")
 	check(ground != null and not ground.effects.is_empty()
@@ -590,8 +428,6 @@ func _the_fire_fuels_itself() -> void:
 		return
 	check_eq((ground.effects[0] as Effect).named_id, "burn", "the ground's tick is named burn damage")
 	check_eq((unit_fire.effects[0] as Effect).named_id, "burn", "…and so is the unit's own")
-	check(not (unit_fire.effects[0] as Effect).riders.is_empty(),
-			"a burning unit's tick carries the ignition rider — the fire fuels itself")
 
 
 # ── Named effects (NamedEffects + Effect."named") ────────────────────────────────────────
@@ -604,17 +440,12 @@ func _named_effect_expands() -> void:
 	check_eq(e.attribute, "damage_taken", "the template supplies the payload")
 	check_eq(e.amount_int(), 1, "…its amount")
 	check(not e.per_stack, "…its flat-damage flag")
-	check_eq(e.riders.size(), 1, "…and its rider")
-	if e.riders.is_empty():
-		return
-	check_eq(str((e.riders[0] as Dictionary)["status_id"]), "ablaze", "the rider ignites ablaze")
 
 
 func _named_effect_call_site_wins() -> void:
 	var e := Effect.from_dict({"trigger": {"kind": "event", "event": "turn_end"},
 			"targets": {"kind": "self"}, "named": "burn", "amount": 3})
 	check_eq(e.amount_int(), 3, "an authored key overrides the template's (escape hatch)")
-	check_eq(e.riders.size(), 1, "…without disturbing the rest of the template")
 
 
 func _named_effect_round_trips() -> void:
@@ -622,8 +453,7 @@ func _named_effect_round_trips() -> void:
 			"targets": {"kind": "self"}, "named": "burn"}
 	var back: Dictionary = Effect.from_dict(authored).to_dict()
 	check_eq(str(back.get("named", "")), "burn", "serialisation keeps the reference")
-	check(not back.has("riders") and not back.has("attribute"),
-			"…and the expansion never leaks into saved data")
+	check(not back.has("attribute"), "…and the expansion never leaks into saved data")
 
 
 func _named_effect_unknown_is_survivable() -> void:
@@ -737,68 +567,8 @@ func _cross_layer_catch_speaks_the_ground_language() -> void:
 			"burning's leap carries the burn touch onto whoever stands there")
 
 
-# ── Restrikes (Effect.per_stack_chance — "each flame beyond the first may burn again") ──
-
-
-func _restrike_every_extra_flame_burns() -> void:
-	var w := _world()
-	var cascade := CombatCascade.make(w, CombatPresenter.new())
-	var victim := _place(w, "rook", 1, 0, 1)   # 6 HP, 3 shield
-	StatusEngine.apply(w.slot_at(1, 0, 1), EMBER_ALL, Effect.STATUS_DURATION_DEFAULT, 3, null)
-	_turn_end(cascade)
-	check_eq(victim.current_shield, 0,
-			"3 stacks at certain restrike: the first burns for sure, both extras burn again — 3 total")
-
-
-func _restrike_one_flame_never_restrikes() -> void:
-	var w := _world()
-	var cascade := CombatCascade.make(w, CombatPresenter.new())
-	var victim := _place(w, "rook", 1, 0, 1)
-	StatusEngine.apply(w.slot_at(1, 0, 1), EMBER_ALL, Effect.STATUS_DURATION_DEFAULT, 1, null)
-	_turn_end(cascade)
-	check_eq(victim.current_shield, 2,
-			"one flame burns exactly once, even at certain restrike — only stacks PAST the first roll")
-
-
-func _restrike_off_burns_once() -> void:
-	var w := _world()
-	var cascade := CombatCascade.make(w, CombatPresenter.new())
-	var victim := _place(w, "rook", 1, 0, 1)
-	StatusEngine.apply(w.slot_at(1, 0, 1), EMBER_NONE, Effect.STATUS_DURATION_DEFAULT, 5, null)
-	_turn_end(cascade)
-	check_eq(victim.current_shield, 2,
-			"no restrike authored: five stacks still burn for exactly 1 — today's flat fire")
-
-
-func _restrike_carries_the_rider_per_instance() -> void:
-	# Each restrike is a fresh damage INSTANCE, so the rider rolls with every one — the
-	# one-roll-per-instance rule, now visibly paying off: 3 flames, 3 catches.
-	var w := _world()
-	var cascade := CombatCascade.make(w, CombatPresenter.new())
-	var victim := _place(w, "rook", 1, 1, 1)
-	StatusEngine.apply(w.slot_at(1, 1, 1), EMBER_CATCHY, Effect.STATUS_DURATION_DEFAULT, 3, null)
-	_turn_end(cascade)
-	check_eq(victim.current_shield, 0, "three flames, three points")
-	var si := victim.find_status(CAUGHT)
-	check(si != null and si.stacks == 3,
-			"…and three instances each rolled the rider — 3 catches, not 1")
-
-
-func _restrike_on_a_unit_carrier() -> void:
-	# The identical rule through the UNIT dispatch (trigger_grouped) — the ablaze shape.
-	var w := _world()
-	var cascade := CombatCascade.make(w, CombatPresenter.new())
-	var host := _place(w, "rook", 0, 1, 2)
-	StatusEngine.apply(host, EMBER_SELF, Effect.STATUS_DURATION_DEFAULT, 3, null)
-	_turn_end(cascade)
-	check_eq(host.current_shield, 0, "a unit's own stacked fire restrikes the same way — 3 total")
-
-
-func _burn_authors_the_restrike() -> void:
-	var e := Effect.from_dict({"trigger": {"kind": "event", "event": "turn_end"},
-			"targets": {"kind": "self"}, "named": "burn"})
-	check(is_equal_approx(e.per_stack_chance, 0.25),
-			"the burn template carries the restrike chance — every burn tick inherits it")
+# (The restrike suite died with the restrike mechanism — deleted 2026-08-11, disavowed
+# 2026-08-09, never user-designed. Stacked fire burns flat: one activation per firing.)
 
 
 func _zero_stacks_is_expired_whatever_the_decay() -> void:

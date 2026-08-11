@@ -78,7 +78,10 @@ const QUARANTINE := {
 	"Combat world": 4,
 	"Combat cascade": 1,
 	"Slot layer": 7,
-	"Burning ground": 36,
+	# 36 → 23 when riders/restrikes were deleted outright (2026-08-11): disavowed, never
+	# user-designed — their rows were never spec, so they left the table instead of waiting
+	# for a rebuild.
+	"Burning ground": 23,
 }
 
 

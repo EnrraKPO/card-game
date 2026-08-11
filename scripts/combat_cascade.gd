@@ -255,10 +255,9 @@ func _spread_statuses(event_id: StringName, ground: Array, units: Array) -> void
 
 
 # The arriving flame touching the destination's occupant: deal the `arrival` named effect
-# (e.g. "burn" — 1 damage plus the ignition rider, one definition doing both) to the unit
-# standing on the caught slot. Nobody there = nothing, a legal miss. Routed through the
-# ordinary effect pipeline (manual targeting, pre-resolved), so interception, riders and
-# provenance all behave exactly as any other effect's damage would.
+# (e.g. "burn") to the unit standing on the caught slot. Nobody there = nothing, a legal
+# miss. Routed through the ordinary effect pipeline (manual targeting, pre-resolved), so
+# interception and provenance behave exactly as any other effect's damage would.
 func _spread_arrival(arrival: String, target: BoardSlot, fire_source: CardInstance) -> Array:
 	var here := world.location_of(target)
 	var occupant := BoardFacade.unit_at(world, here)

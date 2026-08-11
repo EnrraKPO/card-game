@@ -8,9 +8,13 @@ and rejected are preserved in the Decision Record.
 
 Ground truth for the starting state: the demolition is complete (branch
 `targeting-cleanup`) — all targeting deleted, combat inert, and the quarantine table in
-`tests/_runner.tscn` (180 checks after the content strip, 2026-08-11) is the rebuild's
-specification and regression net. Driving that table to zero — resolution rebuilt AND
-content re-authored — and deleting it is the exit criterion.
+`tests/_runner.tscn` (167 checks after the content strip and the rider/restrike deletion,
+2026-08-11) is the rebuild's specification and regression net. Driving that table to
+zero — resolution rebuilt AND content re-authored — and deleting it is the exit
+criterion. (Riders and restrikes — damage follow-ons and per-stack repeat rolls — were
+DELETED outright rather than quarantined: never user-designed, disavowed 2026-08-09;
+their rows were never spec. If damage follow-ons or stack-depth are ever wanted, they are
+designed first, as payload delivery rules.)
 
 The **effect-cleanse pass** (2026-08-11) executed the combat-only rows of §10's deletion
 map ahead of the rebuild: SpellCaster and all three ON_PLAY dispatcher clones, the

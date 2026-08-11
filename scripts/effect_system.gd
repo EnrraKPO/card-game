@@ -49,31 +49,13 @@ static func trigger_grouped(event: GameEvent, source: CardInstance, context: Eff
 			sres.append_array(_run_effect(effect, source, context, event,
 					int(grp["stacks"]) if effect.per_stack else 1,
 					StringName(grp["status_id"])))
-			sres.append_array(_restrikes(effect, source, context, event,
-					int(grp["stacks"]), StringName(grp["status_id"])))
 		if not sres.is_empty():
 			groups.append({"status_id": grp["status_id"], "results": sres})
 	return groups
 
 
-# The RESTRIKE pass (Effect.per_stack_chance — "each flame beyond the first may burn
-# again"): repeats the whole effect once per stack PAST THE FIRST, each repeat gated by
-# its own roll. Each success is a fresh damage INSTANCE through _run_effect — so damage
-# riders roll per repeat, exactly as the one-roll-per-instance rule demands. Results carry
-# the 1-based stack index ("restrike_stack") so presentation can glint exactly the stacks
-# that burned, and only those (user call).
-static func _restrikes(effect: Effect, source: CardInstance, context: EffectContext,
-		event: GameEvent, stacks: int, cause: StringName) -> Array:
-	var out: Array = []
-	if effect.per_stack_chance <= 0.0 or stacks <= 1:
-		return out
-	for i: int in range(1, stacks):
-		if CombatRng.roll(&"rules") >= effect.per_stack_chance:
-			continue
-		for res: Dictionary in _run_effect(effect, source, context, event, 1, cause):
-			res["restrike_stack"] = i
-			out.append(res)
-	return out
+# (The RESTRIKE pass and damage RIDERS were deleted 2026-08-11: never user-designed,
+# disavowed 2026-08-09. One activation per firing; damage carries no follow-ons.)
 
 
 # Flat results across all of a unit's containers — for callers that don't sequence per-container
@@ -159,8 +141,6 @@ static func trigger_carrier_grouped(event: GameEvent, carrier: StatusCarrier, co
 			sres.append_array(_run_effect(effect, null, context, event,
 					int(grp["stacks"]) if effect.per_stack else 1,
 					StringName(grp["status_id"])))
-			sres.append_array(_restrikes(effect, null, context, event,
-					int(grp["stacks"]), StringName(grp["status_id"])))
 		if not sres.is_empty():
 			groups.append({"status_id": grp["status_id"], "results": sres})
 	return groups
@@ -332,50 +312,13 @@ static func _apply(effect: Effect, target: CardInstance, source: CardInstance, c
 			return {}
 		var dout := Resolver.submit(_caused(StatMutation.make(target,
 				StatMutation.stat_for_attribute(effect.attribute), amount, source), cause))
-		var dres := _with_interceptions({"target": target, "attribute": "health", "delta": -amount}, dout)
-		_run_riders(effect, target, source, cause, dout, dres)
-		return dres
+		return _with_interceptions({"target": target, "attribute": "health", "delta": -amount}, dout)
 	else:
 		if amount == 0:
 			return {}
 		var mout := Resolver.submit(_caused(StatMutation.make(target,
 				StatMutation.stat_for_attribute(effect.attribute), amount, source), cause))
 		return _with_interceptions({"target": target, "attribute": effect.attribute, "delta": amount}, mout)
-
-
-# The damage RIDERS (see Effect.riders): follow-ons the damage CARRIES onto whoever took
-# it — "burn damage may set you alight" without inventing a fire-damage TYPE, which is a
-# separate concern we deliberately have no plans for (user call 2026-08-03).
-#
-# ONE ROLL PER DAMAGE INSTANCE, flat: the amount is not a multiplier, so a 3-damage hit
-# rolls exactly as often as a 1-damage one. Getting more rolls means dealing damage in more
-# instances — a repetition question that lives nowhere near here.
-#
-# Gated on the damage having LANDED (delta != 0): the rider rides the damage, so a hit
-# intercepted away to nothing carries nothing. Shield-absorbed damage DOES carry it (the
-# delta is real, it just spent itself on shield) — otherwise a shield would read as immunity
-# to catching fire, which it is not.
-#
-# Applications ride the Resolver like every other status write (single-writer rule), and
-# land on the result dict as `rider_applied` so presentation can cue the new pip.
-static func _run_riders(effect: Effect, target: CardInstance, source: CardInstance,
-		cause: StringName, dout: Resolver.Outcome, result: Dictionary) -> void:
-	if effect.riders.is_empty() or target == null or dout.delta == 0:
-		return
-	var applied: Array = []
-	for r: Dictionary in effect.riders:
-		var chance := float(r["chance"])
-		if chance < 1.0 and CombatRng.roll(&"rules") >= chance:
-			continue
-		var sout := Resolver.submit(_caused(StatMutation.status_apply(target,
-				str(r["status_id"]), int(r["status_duration"]), int(r["status_stacks"]), source), cause))
-		if sout.delta <= 0:
-			continue   # intercepted away — nothing was applied, so nothing to cue
-		applied.append(str(r["status_id"]))
-		CombatLog.note("rider", "%s damage sets %s %s" % [cause,
-				"?" if target.data == null else str(target.data.id), str(r["status_id"])])
-	if not applied.is_empty():
-		result["rider_applied"] = applied
 
 
 # Stamps the provenance cause onto a mutation just before submit — a passthrough so the

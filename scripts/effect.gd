@@ -130,29 +130,14 @@ var status_stacks: int = 1
 # NOT a half-general "amount_per" field: the real replacement is amounts-as-expressions
 # ("damage equal to its speed"), which supersedes this wholesale when it arrives.
 var per_stack: bool = true
-# The RESTRIKE chance ("each flame beyond the first may burn again" — user 2026-08-03):
-# when > 0 and this effect fires from a STACKED status container, each stack PAST THE FIRST
-# repeats the whole effect once, gated by its own roll at this chance. Each success is its
-# own damage INSTANCE — so damage riders roll per repeat, and a tall fire threatens ignition
-# repeatedly. 0 = off (one activation, today's behavior). Consumed only at the grouped
-# dispatch sites (stacks live there); a stackless firing (spell, arrival touch) ignores it.
-var per_stack_chance: float = 0.0
+# (RESTRIKES and RIDERS deleted 2026-08-11: never user-designed — they accreted during the
+# burning work 2026-08-03 and were disavowed 2026-08-09. If stacked fire ever wants depth
+# again, it is DESIGNED first, as payload delivery rules in the new schema.)
 # Which LAYER receives the status: "units" (default — today's behavior, each resolved unit)
 # or "ground" (the BOARD SLOT at the effect's coordinates — the MANUAL_SLOT picked cell, or
 # the anchor coords). Layer addressing lives on the PAYLOAD (WHAT is delivered); WHO/WHERE
 # stays the target resolver's job. See EffectSystem._apply_ground_status / SLOT_LAYER_DESIGN.md.
 var status_layer: String = "units"
-
-# RIDERS — follow-ons carried by this effect's damage, applied to the unit that took it.
-# Each entry: {"chance": float, "status": {"id", "duration", "stacks"}}. Rolled ONCE PER
-# DAMAGE INSTANCE, flat: an effect dealing 3 in one instance rolls exactly as often as one
-# dealing 1 (the amount is not a multiplier — settled with the user 2026-08-03). More rolls
-# means more instances of damage, which is a repetition question, not a rider question.
-# Only fires when damage ACTUALLY LANDED (delta != 0) — an intercepted-away hit carries
-# nothing, because the rider rides the damage, not the attempt.
-# GENERAL in the right axis: not "burning ignites" but "this damage carries a follow-on".
-# Frost damage that chills or poison damage that spreads use the identical seam.
-var riders: Array = []
 
 # NAMED-EFFECT reference (see NamedEffects): non-empty when this effect was authored as
 # {"named": "<id>", ...} — the registry template merged under the authored keys at parse
@@ -319,7 +304,6 @@ static func from_dict(d: Dictionary) -> Effect:
 		e._parse_targets(d)
 		e.attribute        = d.get("attribute", "")
 		e.per_stack        = bool(d.get("per_stack", true))
-		e.per_stack_chance = float(d.get("per_stack_chance", 0.0))
 		e.tracker_spec     = (d.get("tracker", {}) as Dictionary).duplicate()
 		# Parsed for round-trip fidelity; no TRIGGERED evaluator consumes MUL today (the
 		# INTERCEPTOR kind is where mul does its work — see Resolver._intercept).
@@ -334,20 +318,10 @@ static func from_dict(d: Dictionary) -> Effect:
 		if not e.status_layer in ["units", "ground"]:
 			push_error("Effect: unknown status layer '%s' (units/ground) — %s" % [e.status_layer, d])
 			e.status_layer = "units"
-	# Optional damage RIDERS, valid on any event-driven (TRIGGERED) effect that deals damage.
-	for r_v: Variant in (d.get("riders", []) as Array):
-		var rd: Dictionary = r_v as Dictionary
-		if rd == null:
-			continue
-		var rst: Dictionary = rd.get("status", {})
-		if str(rst.get("id", "")).is_empty():
-			push_error("Effect: a rider with no status payload does nothing — %s" % d)
-			continue
-		e.riders.append({
-			"chance": float(rd.get("chance", 1.0)),
-			"status_id": str(rst.get("id", "")),
-			"status_duration": int(rst.get("duration", STATUS_DURATION_DEFAULT)),
-			"status_stacks": int(rst.get("stacks", 1))})
+	# (Riders/restrikes: deleted 2026-08-11 — disavowed, never designed. A "riders" or
+	# "per_stack_chance" key is refused loudly rather than silently dropped.)
+	if d.has("riders") or d.has("per_stack_chance"):
+		push_error("Effect: riders/restrikes are DELETED (disavowed 2026-08-09) — %s" % [d])
 	# Optional "spawn units" payload, valid on any event-driven (TRIGGERED) effect.
 	var sp: Dictionary = d.get("spawn", {})
 	if not sp.is_empty():
@@ -636,8 +610,6 @@ func to_dict() -> Dictionary:
 				d["amount"]    = amount_int()
 				if not per_stack:
 					d["per_stack"] = false
-				if per_stack_chance > 0.0:
-					d["per_stack_chance"] = per_stack_chance
 			else:
 				# A grant's payload IS the component set — no attribute/amount keys, matching
 				# the authored form byte-faithfully.
@@ -661,15 +633,6 @@ func to_dict() -> Dictionary:
 				d["status"] = {"id": status_id, "duration": status_duration, "stacks": status_stacks}
 				if status_layer != "units":   # the default stays unspelled — byte-faithful round trip
 					d["status"]["layer"] = status_layer
-			if not riders.is_empty():
-				var rl: Array = []
-				for r: Dictionary in riders:
-					var rdd: Dictionary = {"status": {"id": r["status_id"],
-							"duration": r["status_duration"], "stacks": r["status_stacks"]}}
-					if float(r["chance"]) != 1.0:
-						rdd["chance"] = r["chance"]
-					rl.append(rdd)
-				d["riders"] = rl
 			if not spawn_id.is_empty():
 				d["spawn"] = {"id": spawn_id, "count": spawn_count}
 			_eval_out(d)

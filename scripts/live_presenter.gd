@@ -37,26 +37,9 @@ static func make(animator: CombatAnimator, tree: SceneTree, board: CombatBoard,
 
 func show_effect_results(results: Array, holder: CardInstance, status_id: String = "",
 		cue: bool = true) -> void:
-	# RESTRIKES present as their own beats AFTER the base activation: the base plays with its
-	# normal container cue, then each extra flame that burned glints the pip again and lands
-	# its own number — only the stacks that triggered re-glint (user call). A unit's pile is
-	# one badge wearing a count, so "that stack's pip" is the badge, once per restrike.
-	var base: Array = []
-	var restrikes: Array = []
-	for r: Dictionary in results:
-		if r.has("restrike_stack"):
-			restrikes.append(r)
-		else:
-			base.append(r)
-	if not base.is_empty():
-		await _animator.show_effect_results(base, holder, status_id, cue)
-	for r: Dictionary in restrikes:
-		var card := _board.get_card_ui(holder) if holder != null else null
-		if card != null and not status_id.is_empty():
-			var pip := card.find_status_pip(status_id)
-			if pip != null:
-				pip.flash_proc()
-		await _animator.show_effect_results([r], null, "", false)
+	# (Restrike beats deleted 2026-08-11 with the disavowed restrike mechanism.)
+	if not results.is_empty():
+		await _animator.show_effect_results(results, holder, status_id, cue)
 
 
 func show_ground_results(procs: Array) -> void:
@@ -64,8 +47,8 @@ func show_ground_results(procs: Array) -> void:
 	# its tabs glints in the same instant — the whole fire acts as one (the spread tier is
 	# where flames act alone, one glint per roll). The flare rides each glint (see VFXPlayer's
 	# arrival path): the slot acting and the tabs discharging are one event, and the flare's
-	# sparks are what carry it to a covered slot. RESTRIKE results sit this beat out — each
-	# extra flame that burned gets its own re-glint after, and ONLY those (user call).
+	# sparks are what carry it to a covered slot. (The restrike second-burn beat is deleted
+	# with the disavowed restrike mechanism, 2026-08-11.)
 	var any_cue := false
 	var base_results: Array = []
 	for p: Dictionary in procs:
@@ -76,29 +59,13 @@ func show_ground_results(procs: Array) -> void:
 			for pip: StatusPip in slot_ui.ground_pips_of(str(p["status_id"])):
 				pip.flash_proc()
 			any_cue = true
-		for r: Dictionary in p["results"]:
-			if not r.has("restrike_stack"):
-				base_results.append(r)
+		base_results.append_array(p["results"])
 	if any_cue:
 		await beat(VFXPlayer.PIP_SPAN)
-	# Then the effect: the base results land together, exactly as any effect's do (damage
+	# Then the effect: the results land together, exactly as any effect's do (damage
 	# numbers, reticles) — one moment, not a slot-by-slot stagger. No holder card exists to
 	# glint — the tabs above WERE the cue.
 	await _animator.show_effect_results(base_results, null, "", false)
-	# The second burn: stack by stack, in order — the specific tab that rolled its extra
-	# flame glints again and its own number lands, the per-flame rhythm the spread tier
-	# already taught the eye.
-	for p: Dictionary in procs:
-		var slot: BoardSlot = p["slot"]
-		var slot_ui := _board.slot_ui_of(slot)
-		for r: Dictionary in p["results"]:
-			if not r.has("restrike_stack"):
-				continue
-			if slot_ui != null:
-				var pip := slot_ui.ground_pip_at(str(p["status_id"]), int(r["restrike_stack"]))
-				if pip != null:
-					pip.flash_proc()
-			await _animator.show_effect_results([r], null, "", false)
 
 
 func show_spread_roll(carrier: StatusCarrier, status_id: String, stack_index: int,

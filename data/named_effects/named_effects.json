@@ -2,7 +2,7 @@
 	{
 		"id": "burn",
 		"display_name": "Burn",
-		"description": "Deal 1 damage. The damaged unit may catch fire (Ablaze). In a stacked fire, each flame beyond the first may burn again."
+		"description": "Deal 1 damage."
 	},
 	{
 		"id": "venom",
