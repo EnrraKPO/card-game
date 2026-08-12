@@ -7,5 +7,7 @@
 	"speed": 4,
 	"description": "A ranged initiate of the winter arts. Chills whoever it strikes.",
 	"enemy_only": true,
-	"ranged": true
+	"effects": [
+		"nearest_attack"
+	]
 }

@@ -12,7 +12,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   },
   {
@@ -28,7 +28,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   },
   {
@@ -44,7 +44,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   },
   {
@@ -54,12 +54,14 @@
     "attack": 3,
     "health": 3,
     "speed": 2,
-    "ranged": true,
     "description": "Won the ship's cannon in a card game. The cannon disagrees, but fires anyway.",
     "enemy_only": true,
     "tribe": "pirate",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "nearest_attack"
+    ]
   },
   {
     "id": "pirate_swashbuckler",
@@ -74,7 +76,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   },
   {
@@ -90,7 +92,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   },
   {
@@ -106,7 +108,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   },
   {
@@ -117,12 +119,14 @@
     "health": 6,
     "speed": 1,
     "shield": 2,
-    "ranged": true,
     "description": "Bolted down, loaded up, and pointed at your problems.",
     "enemy_only": true,
     "tribe": "pirate",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "nearest_attack"
+    ]
   },
   {
     "id": "pirate_captain",
@@ -139,7 +143,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   },
   {
@@ -157,7 +161,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   },
   {
@@ -176,7 +180,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   }
 ]

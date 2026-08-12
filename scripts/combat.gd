@@ -642,7 +642,10 @@ func _run_combat() -> void:
 # bring their own dressings with their rebuilds. ──
 
 # WINDUP: everything the player sees before the payloads land; the rules hold for it so
-# the delivery lands on the beat of contact.
+# the delivery lands on the beat of contact. Ranged-ness is DERIVED from the effect's
+# targeting policy (signed ATTACK_SYSTEM_DESIGN.html §8.3 — the `ranged` bool is dead):
+# the stat-hunting policies (wounded/tank/threat) fire the bolt BY DEFINITION, the
+# geometric ones (nearest/leap) make a physical approach.
 #   · Ranged: hold position and fire a bolt; the hit lands when it arrives. The bolt
 #     carries the attacker's composition so the library can fly its element-variant look.
 #   · Melee: lunge across and plunge INTO the target (overlapping from the side it
@@ -664,7 +667,7 @@ func _cue_action_windup(attacker: CardInstance, effect: TriggeredEffect, recipie
 	# swing over: the cue skips; the blow still resolves (rules never depend on the show).
 	if a_card == null or t_card == null:
 		return
-	if attacker.data.ranged:
+	if _fires_bolt(effect):
 		var shot := VFXEvent.projectile(
 			a_card, t_card, attacker.get_attribute("attack"),
 			Color(0.65, 0.9, 1.0), VFXEvent.Projectile.BOLT, false)
@@ -714,6 +717,15 @@ func _delivers_blow(effect: TriggeredEffect) -> bool:
 		if p is Payload.Attack:
 			return true
 	return false
+
+
+# The other dressing choice: bolt or lunge — derived from the effect's targeting policy
+# (same sanction as above; the rules never ask). Hunting by STATS means striking from
+# where you stand; hunting by GEOMETRY means closing the distance.
+func _fires_bolt(effect: TriggeredEffect) -> bool:
+	return effect.targets is TargetResolver.Wounded \
+		or effect.targets is TargetResolver.Tank \
+		or effect.targets is TargetResolver.Threat
 
 
 # RESULTS: everything the player sees once the Arbitrator has spoken — the withdrawal

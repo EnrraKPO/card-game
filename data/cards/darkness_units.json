@@ -33,7 +33,7 @@
 			}
 		},
 		"effects": [
-			"melee_attack"
+			"nearest_attack"
 		]
 	},
 	{
@@ -67,7 +67,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "darkness_bishop",
@@ -83,7 +86,6 @@
 		"chess_pieces": [
 			"bishop"
 		],
-		"ranged": true,
 		"abilities": [
 			"darkness_bless",
 			"heal"
@@ -105,7 +107,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"wounded_attack"
+		]
 	},
 	{
 		"id": "darkness_rook",
@@ -121,7 +126,6 @@
 		"chess_pieces": [
 			"rook"
 		],
-		"ranged": true,
 		"abilities": [
 			"umbral_charge"
 		],
@@ -142,7 +146,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"tank_attack"
+		]
 	},
 	{
 		"id": "darkness_queen",
@@ -158,7 +165,6 @@
 		"chess_pieces": [
 			"queen"
 		],
-		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -176,7 +182,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"threat_attack"
+		]
 	},
 	{
 		"id": "darkness_pawn_pawn",
@@ -212,7 +221,7 @@
 			}
 		},
 		"effects": [
-			"melee_attack"
+			"nearest_attack"
 		]
 	},
 	{
@@ -247,7 +256,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"nearest_attack"
+		]
 	},
 	{
 		"id": "darkness_bishop_pawn",
@@ -285,7 +297,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"nearest_attack"
+		]
 	},
 	{
 		"id": "darkness_pawn_rook",
@@ -302,7 +317,6 @@
 			"pawn",
 			"rook"
 		],
-		"ranged": true,
 		"abilities": [
 			"pawn_material",
 			"darkness_pawn_training"
@@ -324,7 +338,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"nearest_attack"
+		]
 	},
 	{
 		"id": "darkness_pawn_queen",
@@ -358,7 +375,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"nearest_attack"
+		]
 	},
 	{
 		"id": "darkness_knight_knight",
@@ -387,7 +407,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "darkness_bishop_knight",
@@ -425,7 +448,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "darkness_knight_rook",
@@ -437,7 +463,6 @@
 			"knight",
 			"rook"
 		],
-		"ranged": true,
 		"abilities": [
 			"darkness_knight_training",
 			"knight_material"
@@ -459,7 +484,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "darkness_knight_queen",
@@ -488,7 +516,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "darkness_bishop_bishop",
@@ -500,7 +531,6 @@
 			"bishop",
 			"bishop"
 		],
-		"ranged": true,
 		"abilities": [
 			"heal"
 		],
@@ -521,7 +551,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"wounded_attack"
+		]
 	},
 	{
 		"id": "darkness_bishop_rook",
@@ -533,7 +566,6 @@
 			"bishop",
 			"rook"
 		],
-		"ranged": true,
 		"abilities": [
 			"darkness_bishop_training",
 			"bishop_material"
@@ -555,7 +587,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"wounded_attack"
+		]
 	},
 	{
 		"id": "darkness_bishop_queen",
@@ -587,7 +622,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"wounded_attack"
+		]
 	},
 	{
 		"id": "darkness_rook_rook",
@@ -599,7 +637,6 @@
 			"rook",
 			"rook"
 		],
-		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -617,7 +654,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"tank_attack"
+		]
 	},
 	{
 		"id": "darkness_queen_rook",
@@ -629,7 +669,6 @@
 			"queen",
 			"rook"
 		],
-		"ranged": true,
 		"abilities": [
 			"darkness_queen_training",
 			"queen_material"
@@ -651,7 +690,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"threat_attack"
+		]
 	},
 	{
 		"id": "darkness_queen_queen",
@@ -680,6 +722,9 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"threat_attack"
+		]
 	}
 ]

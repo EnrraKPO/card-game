@@ -38,7 +38,7 @@
 		"speed": 5,
 		"shield": 1,
 		"effects": [
-			"melee_attack"
+			"nearest_attack"
 		]
 	},
 	{
@@ -71,7 +71,10 @@
 		"attack": 3,
 		"health": 2,
 		"speed": 6,
-		"shield": 1
+		"shield": 1,
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "air_darkness_bishop",
@@ -116,7 +119,6 @@
 				}
 			}
 		},
-		"ranged": true,
 		"cost": 2,
 		"attack": 2,
 		"health": 3,
@@ -124,6 +126,9 @@
 		"shield": 1,
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"wounded_attack"
 		]
 	},
 	{
@@ -136,7 +141,6 @@
 		"chess_pieces": [
 			"rook"
 		],
-		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -157,7 +161,10 @@
 		"attack": 2,
 		"health": 6,
 		"speed": 5,
-		"shield": 3
+		"shield": 3,
+		"effects": [
+			"tank_attack"
+		]
 	},
 	{
 		"id": "air_darkness_queen",
@@ -169,7 +176,6 @@
 		"chess_pieces": [
 			"queen"
 		],
-		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -190,7 +196,10 @@
 		"attack": 6,
 		"health": 4,
 		"speed": 7,
-		"shield": 1
+		"shield": 1,
+		"effects": [
+			"threat_attack"
+		]
 	},
 	{
 		"id": "air_darkness_pawn_pawn",
@@ -225,7 +234,7 @@
 		"speed": 5,
 		"shield": 2,
 		"effects": [
-			"melee_attack"
+			"nearest_attack"
 		]
 	},
 	{
@@ -259,7 +268,10 @@
 		"attack": 4,
 		"health": 4,
 		"speed": 6,
-		"shield": 2
+		"shield": 2,
+		"effects": [
+			"nearest_attack"
+		]
 	},
 	{
 		"id": "air_darkness_bishop_pawn",
@@ -295,6 +307,9 @@
 		"shield": 3,
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"nearest_attack"
 		]
 	},
 	{
@@ -308,7 +323,6 @@
 			"pawn",
 			"rook"
 		],
-		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -333,7 +347,10 @@
 		"attack": 3,
 		"health": 7,
 		"speed": 5,
-		"shield": 2
+		"shield": 2,
+		"effects": [
+			"nearest_attack"
+		]
 	},
 	{
 		"id": "air_darkness_pawn_queen",
@@ -366,7 +383,10 @@
 		"attack": 6,
 		"health": 4,
 		"speed": 7,
-		"shield": 1
+		"shield": 1,
+		"effects": [
+			"nearest_attack"
+		]
 	},
 	{
 		"id": "air_darkness_knight_knight",
@@ -399,7 +419,10 @@
 		"attack": 4,
 		"health": 4,
 		"speed": 7,
-		"shield": 1
+		"shield": 1,
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "air_darkness_bishop_knight",
@@ -435,6 +458,9 @@
 		"shield": 1,
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"leap_attack"
 		]
 	},
 	{
@@ -448,7 +474,6 @@
 			"knight",
 			"rook"
 		],
-		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -473,7 +498,10 @@
 		"attack": 4,
 		"health": 7,
 		"speed": 6,
-		"shield": 3
+		"shield": 3,
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "air_darkness_knight_queen",
@@ -506,7 +534,10 @@
 		"attack": 7,
 		"health": 6,
 		"speed": 8,
-		"shield": 1
+		"shield": 1,
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "air_darkness_bishop_bishop",
@@ -524,7 +555,6 @@
 			"bishop",
 			"bishop"
 		],
-		"ranged": true,
 		"abilities": [
 			"heal"
 		],
@@ -543,7 +573,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"wounded_attack"
+		]
 	},
 	{
 		"id": "air_darkness_bishop_rook",
@@ -561,7 +594,6 @@
 			"bishop",
 			"rook"
 		],
-		"ranged": true,
 		"abilities": [
 			"air_bishop_material",
 			"darkness_bishop_material"
@@ -581,7 +613,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"wounded_attack"
+		]
 	},
 	{
 		"id": "air_darkness_bishop_queen",
@@ -617,6 +652,9 @@
 		"shield": 1,
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"wounded_attack"
 		]
 	},
 	{
@@ -630,7 +668,6 @@
 			"rook",
 			"rook"
 		],
-		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -651,7 +688,10 @@
 		"attack": 3,
 		"health": 10,
 		"speed": 5,
-		"shield": 5
+		"shield": 5,
+		"effects": [
+			"tank_attack"
+		]
 	},
 	{
 		"id": "air_darkness_queen_rook",
@@ -664,7 +704,6 @@
 			"queen",
 			"rook"
 		],
-		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -689,7 +728,10 @@
 		"attack": 6,
 		"health": 9,
 		"speed": 6,
-		"shield": 3
+		"shield": 3,
+		"effects": [
+			"threat_attack"
+		]
 	},
 	{
 		"id": "air_darkness_queen_queen",
@@ -723,6 +765,9 @@
 		"attack": 9,
 		"health": 7,
 		"speed": 7,
-		"shield": 1
+		"shield": 1,
+		"effects": [
+			"threat_attack"
+		]
 	}
 ]

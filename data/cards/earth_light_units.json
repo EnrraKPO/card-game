@@ -33,7 +33,7 @@
 			}
 		},
 		"effects": [
-			"melee_attack"
+			"nearest_attack"
 		]
 	},
 	{
@@ -68,7 +68,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "earth_light_bishop",
@@ -85,7 +88,6 @@
 		"chess_pieces": [
 			"bishop"
 		],
-		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -106,6 +108,9 @@
 		},
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"wounded_attack"
 		]
 	},
 	{
@@ -123,7 +128,6 @@
 		"chess_pieces": [
 			"rook"
 		],
-		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -141,7 +145,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"tank_attack"
+		]
 	},
 	{
 		"id": "earth_light_queen",
@@ -158,7 +165,6 @@
 		"chess_pieces": [
 			"queen"
 		],
-		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -176,7 +182,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"threat_attack"
+		]
 	},
 	{
 		"id": "earth_light_pawn_pawn",
@@ -213,7 +222,7 @@
 			}
 		},
 		"effects": [
-			"melee_attack"
+			"nearest_attack"
 		]
 	},
 	{
@@ -249,7 +258,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"nearest_attack"
+		]
 	},
 	{
 		"id": "earth_light_bishop_pawn",
@@ -287,6 +299,9 @@
 		},
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"nearest_attack"
 		]
 	},
 	{
@@ -305,7 +320,6 @@
 			"pawn",
 			"rook"
 		],
-		"ranged": true,
 		"abilities": [
 			"earth_pawn_material",
 			"light_pawn_material"
@@ -327,7 +341,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"nearest_attack"
+		]
 	},
 	{
 		"id": "earth_light_pawn_queen",
@@ -362,7 +379,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"nearest_attack"
+		]
 	},
 	{
 		"id": "earth_light_knight_knight",
@@ -397,7 +417,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "earth_light_bishop_knight",
@@ -441,6 +464,9 @@
 		"shield": 1,
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"leap_attack"
 		]
 	},
 	{
@@ -459,7 +485,6 @@
 			"knight",
 			"rook"
 		],
-		"ranged": true,
 		"abilities": [
 			"earth_knight_material",
 			"light_knight_material"
@@ -481,7 +506,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "earth_light_knight_queen",
@@ -516,7 +544,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "earth_light_bishop_bishop",
@@ -534,7 +565,6 @@
 			"bishop",
 			"bishop"
 		],
-		"ranged": true,
 		"abilities": [
 			"heal"
 		],
@@ -555,7 +585,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"wounded_attack"
+		]
 	},
 	{
 		"id": "earth_light_bishop_rook",
@@ -573,7 +606,6 @@
 			"bishop",
 			"rook"
 		],
-		"ranged": true,
 		"abilities": [
 			"earth_bishop_material",
 			"light_bishop_material"
@@ -595,7 +627,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"wounded_attack"
+		]
 	},
 	{
 		"id": "earth_light_bishop_queen",
@@ -633,6 +668,9 @@
 		},
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"wounded_attack"
 		]
 	},
 	{
@@ -651,7 +689,6 @@
 			"rook",
 			"rook"
 		],
-		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -669,7 +706,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"tank_attack"
+		]
 	},
 	{
 		"id": "earth_light_queen_rook",
@@ -687,7 +727,6 @@
 			"queen",
 			"rook"
 		],
-		"ranged": true,
 		"abilities": [
 			"earth_queen_material",
 			"light_queen_material"
@@ -709,7 +748,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"threat_attack"
+		]
 	},
 	{
 		"id": "earth_light_queen_queen",
@@ -744,6 +786,9 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"threat_attack"
+		]
 	}
 ]

@@ -1621,7 +1621,7 @@
   "status.water_blessing.name": "Water Blessing",
   "status.withered.desc": "Loses 1 <health> at the end of each turn. Stacks.",
   "status.withered.name": "Withered",
-  "targeting.leaper.desc": "Leaps past the front column to strike the backline.",
+  "targeting.leap.desc": "Leaps past the front column to strike the backline.",
   "targeting.nearest.desc": "Strikes the nearest enemy.",
   "targeting.tank.desc": "Strikes the enemy with the highest <health>.",
   "targeting.threat.desc": "Strikes the enemy with the highest <attack>.",

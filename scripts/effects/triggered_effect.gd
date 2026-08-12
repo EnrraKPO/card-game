@@ -24,7 +24,7 @@ var payloads: Array = []                # Array[Payload]
 # CONDITIONALLY SANCTIONED (signature note, 2026-08-12 — revisited when any other effect
 # needs a follow-up): how many times one firing unfolds (resolve-then-deliver), as an
 # evaluable value (null = once). Each repeat RE-RESOLVES, which is what preserves the
-# playtested flurry rule — a slain victim doesn't soak the follow-ups. melee_attack
+# playtested flurry rule — a slain victim doesn't soak the follow-ups. nearest_attack
 # authors {"kind": "holder_stat", "stat": "strikes"}; the read floors at 1.
 var repeats: Mutator = null
 

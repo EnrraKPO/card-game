@@ -55,7 +55,7 @@
 		"health": 3,
 		"speed": 5,
 		"effects": [
-			"melee_attack"
+			"nearest_attack"
 		]
 	},
 	{
@@ -93,7 +93,10 @@
 		"cost": 2,
 		"attack": 4,
 		"health": 3,
-		"speed": 6
+		"speed": 6,
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "air_fire_bishop",
@@ -123,13 +126,15 @@
 				}
 			}
 		},
-		"ranged": true,
 		"cost": 2,
 		"attack": 3,
 		"health": 4,
 		"speed": 5,
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"wounded_attack"
 		]
 	},
 	{
@@ -154,12 +159,14 @@
 				"turbo": true
 			}
 		},
-		"ranged": true,
 		"cost": 3,
 		"attack": 3,
 		"health": 7,
 		"speed": 5,
-		"shield": 2
+		"shield": 2,
+		"effects": [
+			"tank_attack"
+		]
 	},
 	{
 		"id": "air_fire_queen",
@@ -171,7 +178,6 @@
 		"chess_pieces": [
 			"queen"
 		],
-		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -193,7 +199,10 @@
 		"cost": 5,
 		"attack": 7,
 		"health": 5,
-		"speed": 7
+		"speed": 7,
+		"effects": [
+			"threat_attack"
+		]
 	},
 	{
 		"id": "air_fire_pawn_pawn",
@@ -234,7 +243,7 @@
 		"speed": 5,
 		"shield": 1,
 		"effects": [
-			"melee_attack"
+			"nearest_attack"
 		]
 	},
 	{
@@ -274,7 +283,10 @@
 		"attack": 5,
 		"health": 5,
 		"speed": 6,
-		"shield": 1
+		"shield": 1,
+		"effects": [
+			"nearest_attack"
+		]
 	},
 	{
 		"id": "air_fire_bishop_pawn",
@@ -312,6 +324,9 @@
 		"shield": 2,
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"nearest_attack"
 		]
 	},
 	{
@@ -347,7 +362,6 @@
 				}
 			}
 		},
-		"ranged": true,
 		"abilities": [
 			"air_pawn_material",
 			"fire_pawn_material"
@@ -356,7 +370,10 @@
 		"attack": 4,
 		"health": 8,
 		"speed": 5,
-		"shield": 1
+		"shield": 1,
+		"effects": [
+			"nearest_attack"
+		]
 	},
 	{
 		"id": "air_fire_pawn_queen",
@@ -394,7 +411,10 @@
 		"cost": 6,
 		"attack": 7,
 		"health": 5,
-		"speed": 7
+		"speed": 7,
+		"effects": [
+			"nearest_attack"
+		]
 	},
 	{
 		"id": "air_fire_knight_knight",
@@ -432,7 +452,10 @@
 		"cost": 4,
 		"attack": 5,
 		"health": 5,
-		"speed": 7
+		"speed": 7,
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "air_fire_bishop_knight",
@@ -469,6 +492,9 @@
 		"speed": 7,
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"leap_attack"
 		]
 	},
 	{
@@ -504,7 +530,6 @@
 				}
 			}
 		},
-		"ranged": true,
 		"abilities": [
 			"air_knight_material",
 			"fire_knight_material"
@@ -513,7 +538,10 @@
 		"attack": 5,
 		"health": 8,
 		"speed": 6,
-		"shield": 2
+		"shield": 2,
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "air_fire_knight_queen",
@@ -551,7 +579,10 @@
 		"cost": 6,
 		"attack": 8,
 		"health": 7,
-		"speed": 8
+		"speed": 8,
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "air_fire_bishop_bishop",
@@ -564,7 +595,6 @@
 			"bishop",
 			"bishop"
 		],
-		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -595,6 +625,9 @@
 		"speed": 5,
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"wounded_attack"
 		]
 	},
 	{
@@ -613,7 +646,6 @@
 			"bishop",
 			"rook"
 		],
-		"ranged": true,
 		"abilities": [
 			"air_bishop_material",
 			"fire_bishop_material"
@@ -635,7 +667,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"wounded_attack"
+		]
 	},
 	{
 		"id": "air_fire_bishop_queen",
@@ -648,7 +683,6 @@
 			"bishop",
 			"queen"
 		],
-		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -673,6 +707,9 @@
 		"speed": 7,
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"wounded_attack"
 		]
 	},
 	{
@@ -686,7 +723,6 @@
 			"rook",
 			"rook"
 		],
-		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -709,7 +745,10 @@
 		"attack": 4,
 		"health": 11,
 		"speed": 5,
-		"shield": 4
+		"shield": 4,
+		"effects": [
+			"tank_attack"
+		]
 	},
 	{
 		"id": "air_fire_queen_rook",
@@ -744,7 +783,6 @@
 				}
 			}
 		},
-		"ranged": true,
 		"abilities": [
 			"air_queen_material",
 			"fire_queen_material"
@@ -753,7 +791,10 @@
 		"attack": 7,
 		"health": 10,
 		"speed": 6,
-		"shield": 2
+		"shield": 2,
+		"effects": [
+			"threat_attack"
+		]
 	},
 	{
 		"id": "air_fire_queen_queen",
@@ -791,6 +832,9 @@
 		"cost": 8,
 		"attack": 10,
 		"health": 8,
-		"speed": 7
+		"speed": 7,
+		"effects": [
+			"threat_attack"
+		]
 	}
 ]

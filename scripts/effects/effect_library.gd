@@ -3,7 +3,7 @@ extends RefCounted
 
 # The NAMED-EFFECT library (signed ATTACK_SYSTEM_DESIGN.html §3/§8.2): an effect authored
 # ONCE, by id, in data/effects/ — one effect per file, the statuses/abilities pattern —
-# and referenced by containers ("effects": ["melee_attack"]). The attack family lives
+# and referenced by containers ("effects": ["nearest_attack"]). The attack family lives
 # here; any shared effect joins it. Card-unique effects are authored inline instead; both
 # forms parse to the same TriggeredEffect structure (see CardData).
 #

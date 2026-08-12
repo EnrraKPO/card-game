@@ -1390,6 +1390,7 @@ function validateItem(type, d) {
       for (const el of d.elements || []) if (!ELEMENTS.includes(el)) return `unknown element "${el}"`;
       for (const p of d.chess_pieces || []) if (!PIECES.includes(p)) return `unknown chess piece "${p}"`;
       if (d.target_policy != null) return `'target_policy' is deleted (2026-08-12) — the policy lives inside the referenced attack effect`;
+      if (d.ranged != null) return `'ranged' is deleted (2026-08-12) — the projectile-vs-lunge visual derives from the attack effect's targeting policy`;
       if (d.role && !UNIT_ROLES.includes(d.role)) return `bad role "${d.role}" (${UNIT_ROLES.join(', ')})`;
       // Kill bounties (see GameData.kill_bounty): absent = derived from the mana cost, a
       // number = a flat override. 0 is legal and means "pays nothing".

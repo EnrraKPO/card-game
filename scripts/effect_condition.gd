@@ -55,7 +55,7 @@ var has_element_set := false
 var has_element := false
 # UNTAPPED-form condition: passes while the unit's round action is unspent (`true`) or
 # spent (`false`) — a plain ask-time read of CardInstance.attack_exhausted, nothing
-# stored (signed ATTACK_SYSTEM_DESIGN.html §8.0: melee_attack gates itself with it; the
+# stored (signed ATTACK_SYSTEM_DESIGN.html §8.0: nearest_attack gates itself with it; the
 # boolean's writer returns with the ActivatedEffect rebuild's tap costs).
 var untapped_set := false
 var untapped := true

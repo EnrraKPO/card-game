@@ -12,7 +12,7 @@
 			"pawn"
 		],
 		"effects": [
-			"melee_attack"
+			"nearest_attack"
 		]
 	},
 	{
@@ -29,6 +29,9 @@
 		],
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"nearest_attack"
 		]
 	},
 	{
@@ -42,6 +45,9 @@
 		"chess_pieces": [
 			"knight",
 			"pawn"
+		],
+		"effects": [
+			"nearest_attack"
 		]
 	},
 	{
@@ -56,9 +62,11 @@
 			"pawn",
 			"rook"
 		],
-		"ranged": true,
 		"abilities": [
 			"pawn_material"
+		],
+		"effects": [
+			"nearest_attack"
 		]
 	},
 	{
@@ -75,6 +83,9 @@
 		],
 		"abilities": [
 			"rally"
+		],
+		"effects": [
+			"nearest_attack"
 		]
 	},
 	{
@@ -88,6 +99,9 @@
 		"chess_pieces": [
 			"knight",
 			"knight"
+		],
+		"effects": [
+			"leap_attack"
 		]
 	},
 	{
@@ -104,6 +118,9 @@
 		],
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"leap_attack"
 		]
 	},
 	{
@@ -117,6 +134,9 @@
 		"chess_pieces": [
 			"knight",
 			"queen"
+		],
+		"effects": [
+			"leap_attack"
 		]
 	},
 	{
@@ -132,10 +152,12 @@
 			"knight",
 			"rook"
 		],
-		"ranged": true,
 		"abilities": [
 			"castling",
 			"knight_material"
+		],
+		"effects": [
+			"leap_attack"
 		]
 	},
 	{
@@ -149,9 +171,11 @@
 			"bishop",
 			"bishop"
 		],
-		"ranged": true,
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"wounded_attack"
 		]
 	},
 	{
@@ -167,10 +191,12 @@
 			"bishop",
 			"rook"
 		],
-		"ranged": true,
 		"abilities": [
 			"bishop_material",
 			"heal"
+		],
+		"effects": [
+			"wounded_attack"
 		]
 	},
 	{
@@ -185,9 +211,11 @@
 			"bishop",
 			"queen"
 		],
-		"ranged": true,
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"wounded_attack"
 		]
 	},
 	{
@@ -202,9 +230,11 @@
 			"rook",
 			"rook"
 		],
-		"ranged": true,
 		"abilities": [
 			"castling"
+		],
+		"effects": [
+			"tank_attack"
 		]
 	},
 	{
@@ -220,10 +250,12 @@
 			"queen",
 			"rook"
 		],
-		"ranged": true,
 		"abilities": [
 			"castling",
 			"queen_material"
+		],
+		"effects": [
+			"threat_attack"
 		]
 	},
 	{
@@ -259,6 +291,9 @@
 					"at": "2026-07-08"
 				}
 			}
-		}
+		},
+		"effects": [
+			"threat_attack"
+		]
 	}
 ]

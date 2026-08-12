@@ -32,7 +32,7 @@
 		"health": 5,
 		"speed": 5,
 		"effects": [
-			"melee_attack"
+			"nearest_attack"
 		]
 	},
 	{
@@ -66,7 +66,10 @@
 		"cost": 2,
 		"attack": 2,
 		"health": 5,
-		"speed": 6
+		"speed": 6,
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "air_water_bishop",
@@ -78,7 +81,6 @@
 		"chess_pieces": [
 			"bishop"
 		],
-		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -103,6 +105,9 @@
 		"speed": 5,
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"wounded_attack"
 		]
 	},
 	{
@@ -133,12 +138,14 @@
 				}
 			}
 		},
-		"ranged": true,
 		"cost": 3,
 		"attack": 1,
 		"health": 9,
 		"speed": 5,
-		"shield": 2
+		"shield": 2,
+		"effects": [
+			"tank_attack"
+		]
 	},
 	{
 		"id": "air_water_queen",
@@ -150,7 +157,6 @@
 		"chess_pieces": [
 			"queen"
 		],
-		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -178,7 +184,10 @@
 		"cost": 5,
 		"attack": 5,
 		"health": 7,
-		"speed": 7
+		"speed": 7,
+		"effects": [
+			"threat_attack"
+		]
 	},
 	{
 		"id": "air_water_pawn_pawn",
@@ -221,7 +230,7 @@
 		"speed": 5,
 		"shield": 1,
 		"effects": [
-			"melee_attack"
+			"nearest_attack"
 		]
 	},
 	{
@@ -263,7 +272,10 @@
 		"attack": 3,
 		"health": 7,
 		"speed": 6,
-		"shield": 1
+		"shield": 1,
+		"effects": [
+			"nearest_attack"
+		]
 	},
 	{
 		"id": "air_water_bishop_pawn",
@@ -307,6 +319,9 @@
 		"shield": 2,
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"nearest_attack"
 		]
 	},
 	{
@@ -344,7 +359,6 @@
 				}
 			}
 		},
-		"ranged": true,
 		"abilities": [
 			"air_pawn_material",
 			"water_pawn_material"
@@ -353,7 +367,10 @@
 		"attack": 2,
 		"health": 10,
 		"speed": 5,
-		"shield": 1
+		"shield": 1,
+		"effects": [
+			"nearest_attack"
+		]
 	},
 	{
 		"id": "air_water_pawn_queen",
@@ -393,7 +410,10 @@
 		"cost": 6,
 		"attack": 5,
 		"health": 7,
-		"speed": 7
+		"speed": 7,
+		"effects": [
+			"nearest_attack"
+		]
 	},
 	{
 		"id": "air_water_knight_knight",
@@ -433,7 +453,10 @@
 		"cost": 4,
 		"attack": 3,
 		"health": 7,
-		"speed": 7
+		"speed": 7,
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "air_water_bishop_knight",
@@ -470,7 +493,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "air_water_knight_rook",
@@ -513,7 +539,6 @@
 				}
 			}
 		},
-		"ranged": true,
 		"abilities": [
 			"air_knight_material",
 			"water_knight_material"
@@ -522,7 +547,10 @@
 		"attack": 3,
 		"health": 10,
 		"speed": 6,
-		"shield": 2
+		"shield": 2,
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "air_water_knight_queen",
@@ -556,7 +584,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "air_water_bishop_bishop",
@@ -573,7 +604,6 @@
 			"bishop",
 			"bishop"
 		],
-		"ranged": true,
 		"abilities": [
 			"heal"
 		],
@@ -594,7 +624,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"wounded_attack"
+		]
 	},
 	{
 		"id": "air_water_bishop_rook",
@@ -612,7 +645,6 @@
 			"bishop",
 			"rook"
 		],
-		"ranged": true,
 		"abilities": [
 			"air_bishop_material",
 			"water_bishop_material"
@@ -634,7 +666,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"wounded_attack"
+		]
 	},
 	{
 		"id": "air_water_bishop_queen",
@@ -677,6 +712,9 @@
 		"speed": 7,
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"wounded_attack"
 		]
 	},
 	{
@@ -690,7 +728,6 @@
 			"rook",
 			"rook"
 		],
-		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -719,7 +756,10 @@
 		"attack": 2,
 		"health": 13,
 		"speed": 5,
-		"shield": 4
+		"shield": 4,
+		"effects": [
+			"tank_attack"
+		]
 	},
 	{
 		"id": "air_water_queen_rook",
@@ -756,7 +796,6 @@
 				}
 			}
 		},
-		"ranged": true,
 		"abilities": [
 			"air_queen_material",
 			"water_queen_material"
@@ -765,7 +804,10 @@
 		"attack": 5,
 		"health": 12,
 		"speed": 6,
-		"shield": 2
+		"shield": 2,
+		"effects": [
+			"threat_attack"
+		]
 	},
 	{
 		"id": "air_water_queen_queen",
@@ -805,6 +847,9 @@
 		"cost": 8,
 		"attack": 8,
 		"health": 10,
-		"speed": 7
+		"speed": 7,
+		"effects": [
+			"threat_attack"
+		]
 	}
 ]

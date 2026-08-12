@@ -13,7 +13,7 @@ func suite_name() -> String:
 
 
 func run() -> void:
-	_library_loads_melee_attack()
+	_library_loads_the_attack_family()
 	_act_unfolds_the_attack()
 	_untapped_condition_gates()
 	_pacifists_never_swing()
@@ -67,13 +67,25 @@ func _act(w: CombatWorld, attacker: CardInstance) -> void:
 	check(bool(done[0]), "the act moment completes synchronously under the null presenter")
 
 
-func _library_loads_melee_attack() -> void:
-	var e := EffectLibrary.get_effect("melee_attack")
-	check(e != null, "the library loads melee_attack from data/effects/")
-	if e == null:
-		return
-	check(e.targets is TargetResolver.Nearest, "melee_attack points with the nearest species")
-	check(e.repeats != null, "melee_attack authors its repeats (the strikes stat)")
+func _library_loads_the_attack_family() -> void:
+	# One named effect per POLICY (signed §8.3) — each loads and points with its species.
+	var species := {
+		"nearest_attack": TargetResolver.Nearest,
+		"leap_attack": TargetResolver.Leap,
+		"wounded_attack": TargetResolver.Wounded,
+		"tank_attack": TargetResolver.Tank,
+		"threat_attack": TargetResolver.Threat,
+	}
+	for effect_id: String in species:
+		var e := EffectLibrary.get_effect(effect_id)
+		check(e != null, "the library loads %s from data/effects/" % effect_id)
+		if e == null:
+			continue
+		check(is_instance_of(e.targets, species[effect_id]),
+				"%s points with its own species" % effect_id)
+		check(e.repeats != null, "%s authors its repeats (the strikes stat)" % effect_id)
+	check(EffectLibrary.get_effect("melee_attack") == null,
+			"melee_attack is DEAD — renamed nearest_attack (signed §8.3)")
 
 
 func _act_unfolds_the_attack() -> void:

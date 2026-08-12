@@ -12,7 +12,7 @@
 		"is_king": true,
 		"enemy_only": true,
 		"effects": [
-			"melee_attack"
+			"nearest_attack"
 		]
 	},
 	{
@@ -28,7 +28,7 @@
 		"is_king": true,
 		"enemy_only": true,
 		"effects": [
-			"melee_attack"
+			"nearest_attack"
 		]
 	},
 	{
@@ -44,7 +44,7 @@
 		"is_king": true,
 		"enemy_only": true,
 		"effects": [
-			"melee_attack"
+			"nearest_attack"
 		]
 	}
 ]

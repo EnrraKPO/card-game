@@ -33,7 +33,7 @@
 		"speed": 1,
 		"shield": 2,
 		"effects": [
-			"melee_attack"
+			"nearest_attack"
 		]
 	},
 	{
@@ -72,7 +72,10 @@
 		"attack": 3,
 		"health": 2,
 		"speed": 2,
-		"shield": 2
+		"shield": 2,
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "darkness_earth_bishop",
@@ -106,7 +109,6 @@
 				}
 			}
 		},
-		"ranged": true,
 		"cost": 2,
 		"attack": 2,
 		"health": 3,
@@ -114,6 +116,9 @@
 		"shield": 2,
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"wounded_attack"
 		]
 	},
 	{
@@ -148,12 +153,14 @@
 				}
 			}
 		},
-		"ranged": true,
 		"cost": 3,
 		"attack": 2,
 		"health": 6,
 		"speed": 1,
-		"shield": 4
+		"shield": 4,
+		"effects": [
+			"tank_attack"
+		]
 	},
 	{
 		"id": "darkness_earth_queen",
@@ -165,7 +172,6 @@
 		"chess_pieces": [
 			"queen"
 		],
-		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -188,7 +194,10 @@
 		"attack": 6,
 		"health": 4,
 		"speed": 3,
-		"shield": 2
+		"shield": 2,
+		"effects": [
+			"threat_attack"
+		]
 	},
 	{
 		"id": "darkness_earth_pawn_pawn",
@@ -225,7 +234,7 @@
 		"speed": 1,
 		"shield": 3,
 		"effects": [
-			"melee_attack"
+			"nearest_attack"
 		]
 	},
 	{
@@ -261,7 +270,10 @@
 		"attack": 4,
 		"health": 4,
 		"speed": 2,
-		"shield": 3
+		"shield": 3,
+		"effects": [
+			"nearest_attack"
+		]
 	},
 	{
 		"id": "darkness_earth_bishop_pawn",
@@ -299,6 +311,9 @@
 		"shield": 4,
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"nearest_attack"
 		]
 	},
 	{
@@ -330,7 +345,6 @@
 				}
 			}
 		},
-		"ranged": true,
 		"abilities": [
 			"darkness_pawn_material",
 			"earth_pawn_material"
@@ -339,7 +353,10 @@
 		"attack": 3,
 		"health": 7,
 		"speed": 1,
-		"shield": 3
+		"shield": 3,
+		"effects": [
+			"nearest_attack"
+		]
 	},
 	{
 		"id": "darkness_earth_pawn_queen",
@@ -374,7 +391,10 @@
 		"attack": 6,
 		"health": 4,
 		"speed": 3,
-		"shield": 2
+		"shield": 2,
+		"effects": [
+			"nearest_attack"
+		]
 	},
 	{
 		"id": "darkness_earth_knight_knight",
@@ -409,7 +429,10 @@
 		"attack": 4,
 		"health": 4,
 		"speed": 3,
-		"shield": 2
+		"shield": 2,
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "darkness_earth_bishop_knight",
@@ -447,6 +470,9 @@
 		"shield": 2,
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"leap_attack"
 		]
 	},
 	{
@@ -460,7 +486,6 @@
 			"knight",
 			"rook"
 		],
-		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -487,7 +512,10 @@
 		"attack": 4,
 		"health": 7,
 		"speed": 2,
-		"shield": 4
+		"shield": 4,
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "darkness_earth_knight_queen",
@@ -522,7 +550,10 @@
 		"attack": 7,
 		"health": 6,
 		"speed": 4,
-		"shield": 2
+		"shield": 2,
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "darkness_earth_bishop_bishop",
@@ -540,7 +571,6 @@
 			"bishop",
 			"bishop"
 		],
-		"ranged": true,
 		"abilities": [
 			"heal"
 		],
@@ -561,7 +591,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"wounded_attack"
+		]
 	},
 	{
 		"id": "darkness_earth_bishop_rook",
@@ -579,7 +612,6 @@
 			"bishop",
 			"rook"
 		],
-		"ranged": true,
 		"abilities": [
 			"darkness_bishop_material",
 			"earth_bishop_material"
@@ -601,7 +633,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"wounded_attack"
+		]
 	},
 	{
 		"id": "darkness_earth_bishop_queen",
@@ -639,6 +674,9 @@
 		"shield": 2,
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"wounded_attack"
 		]
 	},
 	{
@@ -670,12 +708,14 @@
 				}
 			}
 		},
-		"ranged": true,
 		"cost": 6,
 		"attack": 3,
 		"health": 10,
 		"speed": 1,
-		"shield": 6
+		"shield": 6,
+		"effects": [
+			"tank_attack"
+		]
 	},
 	{
 		"id": "darkness_earth_queen_rook",
@@ -706,7 +746,6 @@
 				}
 			}
 		},
-		"ranged": true,
 		"abilities": [
 			"darkness_queen_material",
 			"earth_queen_material"
@@ -715,7 +754,10 @@
 		"attack": 6,
 		"health": 9,
 		"speed": 2,
-		"shield": 4
+		"shield": 4,
+		"effects": [
+			"threat_attack"
+		]
 	},
 	{
 		"id": "darkness_earth_queen_queen",
@@ -750,6 +792,9 @@
 		"attack": 9,
 		"health": 7,
 		"speed": 3,
-		"shield": 2
+		"shield": 2,
+		"effects": [
+			"threat_attack"
+		]
 	}
 ]

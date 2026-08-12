@@ -13,7 +13,7 @@
 			"pawn"
 		],
 		"effects": [
-			"melee_attack"
+			"nearest_attack"
 		]
 	},
 	{
@@ -28,7 +28,10 @@
 		"cost": 2,
 		"attack": 2,
 		"health": 3,
-		"speed": 6
+		"speed": 6,
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "air_bishop",
@@ -43,10 +46,12 @@
 		"chess_pieces": [
 			"bishop"
 		],
-		"ranged": true,
 		"abilities": [
 			"air_bless",
 			"heal"
+		],
+		"effects": [
+			"wounded_attack"
 		]
 	},
 	{
@@ -61,12 +66,14 @@
 		"abilities": [
 			"gale_charge"
 		],
-		"ranged": true,
 		"cost": 3,
 		"attack": 1,
 		"health": 7,
 		"speed": 5,
-		"shield": 2
+		"shield": 2,
+		"effects": [
+			"tank_attack"
+		]
 	},
 	{
 		"id": "air_queen",
@@ -77,11 +84,13 @@
 		"chess_pieces": [
 			"queen"
 		],
-		"ranged": true,
 		"cost": 5,
 		"attack": 5,
 		"health": 5,
-		"speed": 7
+		"speed": 7,
+		"effects": [
+			"threat_attack"
+		]
 	},
 	{
 		"id": "air_pawn_pawn",
@@ -99,7 +108,7 @@
 		"speed": 5,
 		"shield": 1,
 		"effects": [
-			"melee_attack"
+			"nearest_attack"
 		]
 	},
 	{
@@ -116,7 +125,10 @@
 		"attack": 3,
 		"health": 5,
 		"speed": 6,
-		"shield": 1
+		"shield": 1,
+		"effects": [
+			"nearest_attack"
+		]
 	},
 	{
 		"id": "air_bishop_pawn",
@@ -135,6 +147,9 @@
 		"shield": 2,
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"nearest_attack"
 		]
 	},
 	{
@@ -155,7 +170,10 @@
 		"attack": 2,
 		"health": 8,
 		"speed": 5,
-		"shield": 1
+		"shield": 1,
+		"effects": [
+			"nearest_attack"
+		]
 	},
 	{
 		"id": "air_pawn_queen",
@@ -171,7 +189,10 @@
 		"attack": 5,
 		"health": 5,
 		"speed": 7,
-		"shield": 0
+		"shield": 0,
+		"effects": [
+			"nearest_attack"
+		]
 	},
 	{
 		"id": "air_knight_knight",
@@ -186,7 +207,10 @@
 		"cost": 4,
 		"attack": 3,
 		"health": 5,
-		"speed": 7
+		"speed": 7,
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "air_bishop_knight",
@@ -204,6 +228,9 @@
 		"speed": 7,
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"leap_attack"
 		]
 	},
 	{
@@ -224,7 +251,10 @@
 		"attack": 3,
 		"health": 8,
 		"speed": 6,
-		"shield": 2
+		"shield": 2,
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "air_knight_queen",
@@ -239,7 +269,10 @@
 		"cost": 6,
 		"attack": 6,
 		"health": 7,
-		"speed": 8
+		"speed": 8,
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "air_bishop_bishop",
@@ -255,9 +288,11 @@
 			"bishop",
 			"bishop"
 		],
-		"ranged": true,
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"wounded_attack"
 		]
 	},
 	{
@@ -278,6 +313,9 @@
 		"abilities": [
 			"air_bishop_training",
 			"bishop_material"
+		],
+		"effects": [
+			"wounded_attack"
 		]
 	},
 	{
@@ -314,6 +352,9 @@
 		"speed": 7,
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"wounded_attack"
 		]
 	},
 	{
@@ -331,7 +372,9 @@
 			"rook",
 			"rook"
 		],
-		"ranged": true
+		"effects": [
+			"tank_attack"
+		]
 	},
 	{
 		"id": "air_queen_rook",
@@ -369,7 +412,10 @@
 		"attack": 5,
 		"health": 10,
 		"speed": 6,
-		"shield": 2
+		"shield": 2,
+		"effects": [
+			"threat_attack"
+		]
 	},
 	{
 		"id": "air_queen_queen",
@@ -384,6 +430,9 @@
 		"cost": 8,
 		"attack": 8,
 		"health": 8,
-		"speed": 7
+		"speed": 7,
+		"effects": [
+			"threat_attack"
+		]
 	}
 ]

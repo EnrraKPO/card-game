@@ -12,7 +12,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   },
   {
@@ -28,7 +28,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   },
   {
@@ -45,7 +45,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   },
   {
@@ -61,7 +61,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   },
   {
@@ -71,12 +71,14 @@
     "attack": 2,
     "health": 6,
     "speed": 1,
-    "ranged": true,
     "description": "Chews the right herbs and spits the wrong ones: every troll heals 1 at round's end.",
     "enemy_only": true,
     "tribe": "troll",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "nearest_attack"
+    ]
   },
   {
     "id": "troll_chieftain",
@@ -93,7 +95,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   },
   {
@@ -111,7 +113,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   }
 ]

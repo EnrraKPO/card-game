@@ -18,6 +18,12 @@ func run() -> void:
 	_lane_offset_breaks_ties_in_column()
 	_deterministic_tiebreak()
 	_edges()
+	_leap_prefers_past_the_front_column()
+	_leap_prefers_landing_off_its_row()
+	_leap_falls_back_to_nearest()
+	_wounded_hunts_the_lowest_health()
+	_tank_locks_the_highest_health()
+	_threat_hunts_the_highest_attack()
 	_executor_runs_the_attack_shape()
 
 
@@ -38,6 +44,13 @@ func _parse_and_roundtrip() -> void:
 	var res := TargetResolver.parse({"kind": "nearest"})
 	check(res is TargetResolver.Nearest, "nearest parses to its species")
 	check_eq(res.to_dict(), {"kind": "nearest"}, "nearest round-trips its authored form")
+	check(TargetResolver.parse({"kind": "leap"}) is TargetResolver.Leap, "leap parses to its species")
+	check(TargetResolver.parse({"kind": "wounded"}) is TargetResolver.Wounded, "wounded parses to its species")
+	check(TargetResolver.parse({"kind": "tank"}) is TargetResolver.Tank, "tank parses to its species")
+	check(TargetResolver.parse({"kind": "threat"}) is TargetResolver.Threat, "threat parses to its species")
+	for kind: String in ["leap", "wounded", "tank", "threat"]:
+		check_eq(TargetResolver.parse({"kind": kind}).to_dict(), {"kind": kind},
+				"%s round-trips its authored form" % kind)
 	check(TargetResolver.parse({"kind": "everyone"}) == null, "an unknown kind is refused loudly")
 	check(TargetResolver.parse("nearest") == null, "a bare string is refused (no permissive default)")
 
@@ -89,19 +102,108 @@ func _edges() -> void:
 	check_eq(res.resolve(null, attacker).size(), 0, "a null world resolves to empty, never crashes")
 
 
+# ── The variant species (signed §8.3): each recovered verbatim from its razed original.
+# Fixture stats (attack/health, frozen in TestCase.FIXTURE_DEFS): pawn 1/3 · bishop 1/4 ·
+# knight 2/3 · rook 4/6 · queen 5/5. ──
+
+func _leap_prefers_past_the_front_column() -> void:
+	# The frontmost occupied enemy column is leapt OVER: a unit standing behind it wins
+	# even against a nearer, facing front-liner (the razed TargetingKnight's first filter).
+	var w := _world()
+	var attacker := _place(w, "knight", 0, 1, 3)
+	var front_and_facing := _place(w, "pawn", 1, 1, 0)
+	var behind := _place(w, "pawn", 1, 1, 1)
+	var got := TargetResolver.parse({"kind": "leap"}).resolve(w, attacker)
+	check_eq(got.size(), 1, "leap resolves to exactly one unit")
+	check(got[0] == behind, "leap jumps the frontmost occupied column")
+	check(got[0] != front_and_facing, "the facing front-liner is exactly what a leaper ignores")
+
+
+func _leap_prefers_landing_off_its_row() -> void:
+	# Among what stands behind the front column, a landing OFF the mirrored lane beats a
+	# facing one (the second filter).
+	var w := _world()
+	var attacker := _place(w, "knight", 0, 1, 3)
+	_place(w, "pawn", 1, 1, 0)                     # the front column, leapt over
+	_place(w, "pawn", 1, 1, 1)                     # behind, but facing (rows mirror: 1+1)
+	var off_row := _place(w, "pawn", 1, 0, 1)      # behind AND off the mirrored lane
+	var got := TargetResolver.parse({"kind": "leap"}).resolve(w, attacker)
+	check(got[0] == off_row, "behind the front column, an off-lane landing is preferred")
+
+
+func _leap_falls_back_to_nearest() -> void:
+	# Each preference applies only while it leaves a candidate: with ONLY the front column
+	# occupied, the leaper degrades gracefully to a plain nearest pick — and an empty half
+	# is a legal empty resolution.
+	var w := _world()
+	var attacker := _place(w, "knight", 0, 1, 3)
+	var res := TargetResolver.parse({"kind": "leap"})
+	check_eq(res.resolve(w, attacker).size(), 0, "an empty opposite half resolves empty for leap too")
+	var only_front := _place(w, "pawn", 1, 1, 0)
+	check(res.resolve(w, attacker)[0] == only_front,
+			"with nothing to leap to, the leaper strikes the front like anyone else")
+
+
+func _wounded_hunts_the_lowest_health() -> void:
+	# Lowest current health wins regardless of distance; equal health falls back to the
+	# full nearest preference (the razed TargetingBishop, deterministic where it wasn't).
+	var w := _world()
+	var attacker := _place(w, "knight", 0, 1, 3)
+	_place(w, "rook", 1, 1, 0)                      # near, 6 health
+	var frail := _place(w, "pawn", 1, 1, 2)         # far, 3 health
+	var res := TargetResolver.parse({"kind": "wounded"})
+	check(res.resolve(w, attacker)[0] == frail, "the most wounded is hunted past nearer, healthier targets")
+	var w2 := _world()
+	var attacker2 := _place(w2, "knight", 0, 1, 3)
+	var near_pawn := _place(w2, "pawn", 1, 1, 0)
+	_place(w2, "pawn", 1, 1, 2)                     # same health, farther
+	check(res.resolve(w2, attacker2)[0] == near_pawn, "equal health falls back to the nearest preference")
+
+
+func _tank_locks_the_highest_health() -> void:
+	# Highest current health wins regardless of distance (the razed TargetingRook).
+	var w := _world()
+	var attacker := _place(w, "knight", 0, 1, 3)
+	_place(w, "pawn", 1, 1, 0)                      # near, 3 health
+	var wall := _place(w, "rook", 1, 1, 2)          # far, 6 health
+	var res := TargetResolver.parse({"kind": "tank"})
+	check(res.resolve(w, attacker)[0] == wall, "the tankiest is locked past nearer, frailer targets")
+	var w2 := _world()
+	var attacker2 := _place(w2, "knight", 0, 1, 3)
+	var near_rook := _place(w2, "rook", 1, 1, 0)
+	_place(w2, "rook", 1, 1, 2)                     # same health, farther
+	check(res.resolve(w2, attacker2)[0] == near_rook, "equal health falls back to the nearest preference")
+
+
+func _threat_hunts_the_highest_attack() -> void:
+	# Highest attack wins regardless of distance — read through get_attribute, so standing
+	# bonuses would count (the razed TargetingQueen).
+	var w := _world()
+	var attacker := _place(w, "knight", 0, 1, 3)
+	_place(w, "pawn", 1, 1, 0)                      # near, attack 1
+	var menace := _place(w, "queen", 1, 1, 2)       # far, attack 5
+	var res := TargetResolver.parse({"kind": "threat"})
+	check(res.resolve(w, attacker)[0] == menace, "the greatest threat is hunted past nearer, weaker targets")
+	var w2 := _world()
+	var attacker2 := _place(w2, "knight", 0, 1, 3)
+	var near_pawn := _place(w2, "pawn", 1, 1, 0)
+	_place(w2, "pawn", 1, 1, 2)                     # same attack, farther
+	check(res.resolve(w2, attacker2)[0] == near_pawn, "equal attack falls back to the nearest preference")
+
+
 func _executor_runs_the_attack_shape() -> void:
 	# The whole phase-1 machine in one pass: the authored attack shape parses, the
 	# executor serves the plate, the mutator derives the holder's attack fresh, and the
 	# strike lands through the Arbitrator. (The act wiring into combat is phase 2; this
 	# pins the machinery it will call.)
 	var effect := TriggeredEffect.parse({
-		"id": "melee_attack",
+		"id": "nearest_attack",
 		"trigger": {"kind": "event", "event": "act", "of": "self"},
 		"targets": {"kind": "nearest"},
 		"payloads": [{"kind": "attack", "amount": {"kind": "holder_stat", "stat": "attack"}}],
 	})
-	check(effect != null, "the melee-attack shape parses whole")
-	check_eq(effect.to_dict().get("id", ""), "melee_attack", "the named id survives the round-trip")
+	check(effect != null, "the attack shape parses whole")
+	check_eq(effect.to_dict().get("id", ""), "nearest_attack", "the named id survives the round-trip")
 
 	var w := _world()
 	var attacker := _place(w, "knight", 0, 1, 3)   # fixture knight: attack 2

@@ -469,7 +469,7 @@ furniture:</p>
       <code>attack</code> — it must be settled before that effect is authored.</li>
 </ul>
 
-<h3>8.3 · The phase-3 family — <span style="color:var(--new-ink);background:var(--new-bg);padding:0 0.4rem;border-radius:2px">RULED 2026-08-12</span> <span class="quiet">(two names still open, listed below)</span></h3>
+<h3>8.3 · The phase-3 family — <span style="color:var(--new-ink);background:var(--new-bg);padding:0 0.4rem;border-radius:2px">SIGNED 2026-08-12</span></h3>
 <p>Phase 2 landed and committed under §8.0 (suite 877/0). Preparing phase 3 exposed that
 the signed §3 family list conflated two independent axes — <code>ranged_attack</code> has
 no coherent place, because ranged-ness is presentation while the policy is the resolver
@@ -489,12 +489,30 @@ no coherent place, because ranged-ness is presentation while the policy is the r
       LUNGE, losing its authored bolt — barely relevant at this scope, tunable later,
       and properly solved when "every attack deserves its own visual" arrives (parked
       granularity, on the record).</li>
-  <li><b>Still open for the fresh context — two naming signatures:</b> the variant ids
-      (proposed: <code>leap_attack</code> / <code>wounded_attack</code> /
-      <code>tank_attack</code> / <code>threat_attack</code>) and whether
-      <code>melee_attack</code> keeps its name or becomes <code>nearest_attack</code>
-      now that "melee" is not an axis (the rename is cheap while the reference is two
-      days old). NO phase-3 code until both are signed.</li>
+  <li><b>The two naming signatures — SIGNED 2026-08-12:</b> the variant ids are
+      <code>leap_attack</code> / <code>wounded_attack</code> / <code>tank_attack</code> /
+      <code>threat_attack</code>, as proposed; and <code>melee_attack</code> is
+      <b>renamed <code>nearest_attack</code></b> — every id in the family now names its
+      targeting policy, since "melee" is not an axis. The rename lands with phase 3
+      (data file id, the stamped references, tests, the windup dressing's key).</li>
+  <li><b>The stamp rule (Enrra, 2026-08-12 — a content ruling, no signature required):</b>
+      every unit with an attack stat references its flavor, chosen by the highest-priority
+      component it contains — <b>pawn &gt; knight &gt; bishop &gt; queen &gt; rook</b> —
+      pieceless units (fodder, kings) attack nearest; spells are untouched. Recorded
+      consequence: pawn now DOMINATES mixed compositions where the razed derivation
+      skipped it, so e.g. pawn+queen units move from threat to nearest.</li>
+  <li><b>Phase 3 landed (2026-08-12):</b> the four resolver species
+      (<code>TargetResolver.Leap/Wounded/Tank/Threat</code>, semantics recovered verbatim
+      from the razed knight/bishop/rook/queen strategies, stat ties falling back to the
+      full nearest preference — deterministic where the originals left ties to sort
+      whim); the five authored effects; the full stamp — 741 units: nearest 349 ·
+      leap 140 · wounded 112 · tank 56 · threat 84 (two single-object card files,
+      <code>frost_adept</code>/<code>king</code>, had been invisible to every earlier
+      list-shaped survey and are stamped now); <code>ranged</code> stripped from data and
+      refused by the Tool validator; the windup dressing keys on the effect's policy; the
+      card tooltip's targeting line returns, keyed by policy (locale key
+      <code>targeting.leaper</code> renamed <code>targeting.leap</code>). Suite 910/0;
+      api_test at its 11 pre-existing failures.</li>
 </ul>
 
 <h3>8.2 · Two names the pitch missed — <span style="color:var(--new-ink);background:var(--new-bg);padding:0 0.4rem;border-radius:2px">SIGNED 2026-08-12</span></h3>

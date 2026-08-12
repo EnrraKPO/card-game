@@ -81,7 +81,7 @@ const CardEditor = {
     id: '', display_name: '', description: '', art_instructions: '',
     cost: 1, attack: 2, health: 3, speed: 3, shield: 0,
     elements: [], chess_pieces: [], abilities: [],
-    ranged: false, is_king: false, enemy_only: false, role: '',
+    is_king: false, enemy_only: false, role: '',
     // bounty_gold / bounty_exp are deliberately ABSENT by default: an unset bounty derives
     // from the card's mana cost through the bounty.* rates (see GameData.kill_bounty), and a
     // key that is only written when authored keeps every existing card file untouched.
@@ -114,7 +114,8 @@ const CardEditor = {
               oninput: e => { draft.art_instructions = e.target.value; onChange(); } })),
         ),
         el('div', { class: 'frow' },
-          el('div', { class: 'fld' }, checkInput(draft, 'ranged', onChange, 'Ranged — fires a projectile instead of lunging')),
+          // ('ranged' died 2026-08-12 — ATTACK_SYSTEM_DESIGN.html §8.3: the projectile-vs-
+          // lunge visual derives from the referenced attack effect's targeting policy.)
           el('div', { class: 'fld' }, checkInput(draft, 'is_king', onChange, 'King unit (win/lose condition)')),
           el('div', { class: 'fld' }, checkInput(draft, 'enemy_only', onChange, 'Enemy-only (CPU fodder, never offered to the player). Tick this + King for an enemy CAPTAIN. Enemy art deploys to assets/cards/enemies/.')),
           fld('Tribe', tribeOptions().length
@@ -185,7 +186,6 @@ const CardEditor = {
     if (d.is_king) out.is_king = true;
     if (d.enemy_only) out.enemy_only = true;
     if (d.tribe) out.tribe = d.tribe;   // fodder-tribe tag (cue variants); no form input yet
-    if (d.ranged) out.ranged = true;
     // The NEW effects schema (named ids / inline effects) passes through untouched: no
     // form UI edits it yet (phase 3's editor) — but a stamped reference must never be
     // dropped by an unrelated edit.
@@ -202,6 +202,7 @@ const CardEditor = {
   toDraft(g) {
     const d = JSON.parse(JSON.stringify(g));
     for (const k of ['elements', 'chess_pieces', 'abilities']) if (!d[k]) d[k] = [];
+    delete d.ranged;   // deleted 2026-08-12 (§8.3) — a stale draft must not resurrect it
     // effects (the NEW schema) ride the draft untouched — see toGame's passthrough.
     const comp = d.elements.length + d.chess_pieces.length;
     d._derive_stats = comp > 0 && d.attack == null;
@@ -218,7 +219,6 @@ const CardEditor = {
     if (comp) lines.push(`Composition: ${comp}.`);
     if (d._derive_stats) lines.push('Stats derived from the composition by the game.');
     else lines.push(`Cost ${d.cost} · ATK ${d.attack} · HP ${d.health} · SPD ${d.speed}${d.shield ? ' · Shield ' + d.shield : ''}.`);
-    if (d.ranged) lines.push('Attacks at range (projectile).');
     for (const e of d.effects || [])
       lines.push(typeof e === 'string' ? `Effect: ${e}.` : 'Carries an inline effect.');
     if (d.bounty_gold != null && d.bounty_gold !== '') lines.push(`Pays ${d.bounty_gold} gold when killed.`);

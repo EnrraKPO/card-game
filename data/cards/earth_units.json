@@ -32,7 +32,7 @@
 			}
 		},
 		"effects": [
-			"melee_attack"
+			"nearest_attack"
 		]
 	},
 	{
@@ -66,7 +66,10 @@
 		"attack": 2,
 		"health": 3,
 		"speed": 2,
-		"shield": 1
+		"shield": 1,
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "earth_bishop",
@@ -82,7 +85,6 @@
 		"chess_pieces": [
 			"bishop"
 		],
-		"ranged": true,
 		"abilities": [
 			"earth_bless",
 			"heal"
@@ -104,7 +106,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"wounded_attack"
+		]
 	},
 	{
 		"id": "earth_rook",
@@ -115,7 +120,6 @@
 		"chess_pieces": [
 			"rook"
 		],
-		"ranged": true,
 		"abilities": [
 			"stone_charge"
 		],
@@ -141,7 +145,10 @@
 		"attack": 1,
 		"health": 7,
 		"speed": 1,
-		"shield": 3
+		"shield": 3,
+		"effects": [
+			"tank_attack"
+		]
 	},
 	{
 		"id": "earth_queen",
@@ -157,7 +164,6 @@
 		"chess_pieces": [
 			"queen"
 		],
-		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -175,7 +181,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"threat_attack"
+		]
 	},
 	{
 		"id": "earth_pawn_pawn",
@@ -193,7 +202,7 @@
 		"speed": 1,
 		"shield": 2,
 		"effects": [
-			"melee_attack"
+			"nearest_attack"
 		]
 	},
 	{
@@ -210,7 +219,10 @@
 		"attack": 3,
 		"health": 5,
 		"speed": 2,
-		"shield": 2
+		"shield": 2,
+		"effects": [
+			"nearest_attack"
+		]
 	},
 	{
 		"id": "earth_bishop_pawn",
@@ -229,6 +241,9 @@
 		"shield": 3,
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"nearest_attack"
 		]
 	},
 	{
@@ -249,7 +264,10 @@
 		"attack": 2,
 		"health": 8,
 		"speed": 1,
-		"shield": 2
+		"shield": 2,
+		"effects": [
+			"nearest_attack"
+		]
 	},
 	{
 		"id": "earth_pawn_queen",
@@ -265,7 +283,10 @@
 		"attack": 5,
 		"health": 5,
 		"speed": 3,
-		"shield": 1
+		"shield": 1,
+		"effects": [
+			"nearest_attack"
+		]
 	},
 	{
 		"id": "earth_knight_knight",
@@ -281,7 +302,10 @@
 		"attack": 3,
 		"health": 5,
 		"speed": 3,
-		"shield": 1
+		"shield": 1,
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "earth_bishop_knight",
@@ -300,6 +324,9 @@
 		"shield": 1,
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"leap_attack"
 		]
 	},
 	{
@@ -320,7 +347,10 @@
 		"attack": 3,
 		"health": 8,
 		"speed": 2,
-		"shield": 3
+		"shield": 3,
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "earth_knight_queen",
@@ -336,7 +366,10 @@
 		"attack": 6,
 		"health": 7,
 		"speed": 4,
-		"shield": 1
+		"shield": 1,
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "earth_bishop_bishop",
@@ -353,9 +386,11 @@
 			"bishop",
 			"bishop"
 		],
-		"ranged": true,
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"wounded_attack"
 		]
 	},
 	{
@@ -376,6 +411,9 @@
 		"abilities": [
 			"earth_bishop_training",
 			"bishop_material"
+		],
+		"effects": [
+			"wounded_attack"
 		]
 	},
 	{
@@ -413,6 +451,9 @@
 		"shield": 1,
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"wounded_attack"
 		]
 	},
 	{
@@ -430,7 +471,9 @@
 			"rook",
 			"rook"
 		],
-		"ranged": true
+		"effects": [
+			"tank_attack"
+		]
 	},
 	{
 		"id": "earth_queen_rook",
@@ -468,7 +511,10 @@
 		"attack": 5,
 		"health": 10,
 		"speed": 2,
-		"shield": 3
+		"shield": 3,
+		"effects": [
+			"threat_attack"
+		]
 	},
 	{
 		"id": "earth_queen_queen",
@@ -484,6 +530,9 @@
 		"attack": 8,
 		"health": 8,
 		"speed": 3,
-		"shield": 1
+		"shield": 1,
+		"effects": [
+			"threat_attack"
+		]
 	}
 ]

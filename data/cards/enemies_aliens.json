@@ -6,12 +6,14 @@
     "attack": 1,
     "health": 1,
     "speed": 3,
-    "ranged": true,
     "description": "A chirping chrome eyeball. Transmits its findings as it dies: the invaders draw a card.",
     "enemy_only": true,
     "tribe": "alien",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "nearest_attack"
+    ]
   },
   {
     "id": "alien_drone",
@@ -27,7 +29,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   },
   {
@@ -43,7 +45,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   },
   {
@@ -54,12 +56,14 @@
     "health": 5,
     "speed": 1,
     "shield": 4,
-    "ranged": true,
     "description": "A floating generator pylon. On arrival it projects a Barrier over 2 random allies.",
     "enemy_only": true,
     "tribe": "alien",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "nearest_attack"
+    ]
   },
   {
     "id": "alien_vivisector",
@@ -74,7 +78,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   },
   {
@@ -90,7 +94,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   },
   {
@@ -101,13 +105,15 @@
     "health": 5,
     "speed": 4,
     "shield": 2,
-    "ranged": true,
     "strikes": 2,
     "description": "Twin beam arrays, twin targets: fires twice each round.",
     "enemy_only": true,
     "tribe": "alien",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "nearest_attack"
+    ]
   },
   {
     "id": "alien_commander",
@@ -124,7 +130,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   },
   {
@@ -142,7 +148,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   },
   {
@@ -153,13 +159,15 @@
     "health": 15,
     "speed": 2,
     "shield": 8,
-    "ranged": true,
     "is_king": true,
     "enemy_only": true,
     "tribe": "alien",
     "description": "A city-sized hull blotting out the sky. Its fabricator bays release a Harvest Drone at every round's end — and its command saucer detaches when the hull falls. Destroy BOTH to win.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "nearest_attack"
+    ]
   },
   {
     "id": "alien_mothership_core",
@@ -169,13 +177,15 @@
     "health": 9,
     "speed": 5,
     "shield": 2,
-    "ranged": true,
     "strikes": 2,
     "is_king": true,
     "enemy_only": true,
     "tribe": "alien",
     "description": "The Mothership's escaping brain — small, furious, and armed with both beam arrays. Shoot it down to win.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "nearest_attack"
+    ]
   }
 ]

@@ -14,7 +14,6 @@
 		"chess_pieces": [
 			"bishop"
 		],
-		"ranged": true,
 		"abilities": [
 			"heal"
 		],
@@ -35,7 +34,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"wounded_attack"
+		]
 	},
 	{
 		"id": "water_water_bishop_bishop",
@@ -52,7 +54,6 @@
 			"bishop",
 			"bishop"
 		],
-		"ranged": true,
 		"abilities": [
 			"heal"
 		],
@@ -79,7 +80,10 @@
 					"at": "2026-07-09"
 				}
 			}
-		}
+		},
+		"effects": [
+			"wounded_attack"
+		]
 	},
 	{
 		"id": "water_water_bishop_knight",
@@ -116,7 +120,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "water_water_bishop_pawn",
@@ -154,7 +161,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"nearest_attack"
+		]
 	},
 	{
 		"id": "water_water_bishop_queen",
@@ -192,7 +202,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"wounded_attack"
+		]
 	},
 	{
 		"id": "water_water_bishop_rook",
@@ -210,7 +223,6 @@
 			"bishop",
 			"rook"
 		],
-		"ranged": true,
 		"abilities": [
 			"water_bishop_training_pure",
 			"bishop_material"
@@ -238,7 +250,10 @@
 					"at": "2026-07-08"
 				}
 			}
-		}
+		},
+		"effects": [
+			"wounded_attack"
+		]
 	},
 	{
 		"id": "water_water_knight",
@@ -271,7 +286,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "water_water_knight_knight",
@@ -305,7 +323,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "water_water_knight_pawn",
@@ -346,7 +367,10 @@
 					"at": "2026-07-12"
 				}
 			}
-		}
+		},
+		"effects": [
+			"nearest_attack"
+		]
 	},
 	{
 		"id": "water_water_knight_queen",
@@ -389,7 +413,10 @@
 					"at": "2026-07-08"
 				}
 			}
-		}
+		},
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "water_water_knight_rook",
@@ -407,7 +434,6 @@
 			"knight",
 			"rook"
 		],
-		"ranged": true,
 		"abilities": [
 			"water_knight_training_pure",
 			"knight_material"
@@ -429,7 +455,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "water_water_pawn",
@@ -464,7 +493,7 @@
 			}
 		},
 		"effects": [
-			"melee_attack"
+			"nearest_attack"
 		]
 	},
 	{
@@ -508,7 +537,7 @@
 			}
 		},
 		"effects": [
-			"melee_attack"
+			"nearest_attack"
 		]
 	},
 	{
@@ -543,7 +572,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"nearest_attack"
+		]
 	},
 	{
 		"id": "water_water_pawn_rook",
@@ -561,7 +593,6 @@
 			"pawn",
 			"rook"
 		],
-		"ranged": true,
 		"abilities": [
 			"water_pawn_training_pure",
 			"pawn_material"
@@ -583,7 +614,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"nearest_attack"
+		]
 	},
 	{
 		"id": "water_water_queen",
@@ -599,7 +633,6 @@
 		"chess_pieces": [
 			"queen"
 		],
-		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -628,7 +661,10 @@
 					"at": "2026-07-08"
 				}
 			}
-		}
+		},
+		"effects": [
+			"threat_attack"
+		]
 	},
 	{
 		"id": "water_water_queen_queen",
@@ -672,7 +708,10 @@
 					"at": "2026-07-08"
 				}
 			}
-		}
+		},
+		"effects": [
+			"threat_attack"
+		]
 	},
 	{
 		"id": "water_water_queen_rook",
@@ -690,7 +729,6 @@
 			"queen",
 			"rook"
 		],
-		"ranged": true,
 		"abilities": [
 			"water_queen_training_pure",
 			"queen_material"
@@ -722,7 +760,10 @@
 					"at": "2026-07-08"
 				}
 			}
-		}
+		},
+		"effects": [
+			"threat_attack"
+		]
 	},
 	{
 		"id": "water_water_rook",
@@ -739,7 +780,6 @@
 		"chess_pieces": [
 			"rook"
 		],
-		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -757,7 +797,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"tank_attack"
+		]
 	},
 	{
 		"id": "water_water_rook_rook",
@@ -775,7 +818,6 @@
 			"rook",
 			"rook"
 		],
-		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -793,6 +835,9 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"tank_attack"
+		]
 	}
 ]

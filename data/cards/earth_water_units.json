@@ -33,7 +33,7 @@
 			}
 		},
 		"effects": [
-			"melee_attack"
+			"nearest_attack"
 		]
 	},
 	{
@@ -68,7 +68,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "earth_water_bishop",
@@ -85,7 +88,6 @@
 		"chess_pieces": [
 			"bishop"
 		],
-		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -106,6 +108,9 @@
 		},
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"wounded_attack"
 		]
 	},
 	{
@@ -123,7 +128,6 @@
 		"chess_pieces": [
 			"rook"
 		],
-		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -141,7 +145,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"tank_attack"
+		]
 	},
 	{
 		"id": "earth_water_queen",
@@ -158,7 +165,6 @@
 		"chess_pieces": [
 			"queen"
 		],
-		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -176,7 +182,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"threat_attack"
+		]
 	},
 	{
 		"id": "earth_water_pawn_pawn",
@@ -213,7 +222,7 @@
 			}
 		},
 		"effects": [
-			"melee_attack"
+			"nearest_attack"
 		]
 	},
 	{
@@ -249,7 +258,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"nearest_attack"
+		]
 	},
 	{
 		"id": "earth_water_bishop_pawn",
@@ -287,6 +299,9 @@
 		},
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"nearest_attack"
 		]
 	},
 	{
@@ -318,7 +333,6 @@
 				}
 			}
 		},
-		"ranged": true,
 		"abilities": [
 			"earth_pawn_material",
 			"water_pawn_material"
@@ -327,7 +341,10 @@
 		"attack": 2,
 		"health": 10,
 		"speed": 1,
-		"shield": 2
+		"shield": 2,
+		"effects": [
+			"nearest_attack"
+		]
 	},
 	{
 		"id": "earth_water_pawn_queen",
@@ -362,7 +379,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"nearest_attack"
+		]
 	},
 	{
 		"id": "earth_water_knight_knight",
@@ -397,7 +417,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "earth_water_bishop_knight",
@@ -448,6 +471,9 @@
 		},
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"leap_attack"
 		]
 	},
 	{
@@ -466,7 +492,6 @@
 			"knight",
 			"rook"
 		],
-		"ranged": true,
 		"abilities": [
 			"earth_knight_material",
 			"water_knight_material"
@@ -488,7 +513,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "earth_water_knight_queen",
@@ -523,7 +551,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "earth_water_bishop_bishop",
@@ -541,7 +572,6 @@
 			"bishop",
 			"bishop"
 		],
-		"ranged": true,
 		"abilities": [
 			"heal"
 		],
@@ -562,7 +592,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"wounded_attack"
+		]
 	},
 	{
 		"id": "earth_water_bishop_rook",
@@ -580,7 +613,6 @@
 			"bishop",
 			"rook"
 		],
-		"ranged": true,
 		"abilities": [
 			"earth_bishop_material",
 			"water_bishop_material"
@@ -607,7 +639,10 @@
 					"at": "2026-08-03"
 				}
 			}
-		}
+		},
+		"effects": [
+			"wounded_attack"
+		]
 	},
 	{
 		"id": "earth_water_bishop_queen",
@@ -657,6 +692,9 @@
 		"shield": 1,
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"wounded_attack"
 		]
 	},
 	{
@@ -675,7 +713,6 @@
 			"rook",
 			"rook"
 		],
-		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -693,7 +730,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"tank_attack"
+		]
 	},
 	{
 		"id": "earth_water_queen_rook",
@@ -711,7 +751,6 @@
 			"queen",
 			"rook"
 		],
-		"ranged": true,
 		"abilities": [
 			"earth_queen_material",
 			"water_queen_material"
@@ -733,7 +772,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"threat_attack"
+		]
 	},
 	{
 		"id": "earth_water_queen_queen",
@@ -768,6 +810,9 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"threat_attack"
+		]
 	}
 ]

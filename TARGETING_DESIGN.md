@@ -105,7 +105,8 @@ The authored unit reads as a sentence: *"When [event], if [conditions]: deliver
   engine through the same payload).
 - **Auto-attack is a TriggeredEffect** on the `act` event — and (re-ruled 2026-08-11) an
   **explicitly authored NAMED EFFECT**, never synthesized from a card field: the attack
-  family — **one effect per POLICY** (melee_attack + the leap/wounded/tank/threat
+  family — **one effect per POLICY** (nearest_attack — né melee_attack, renamed by
+  signature 2026-08-12 since "melee" is not an axis — + the leap/wounded/tank/threat
   variants; there is NO ranged_attack — ruled 2026-08-12: ranged-ness is presentation,
   derived from the policy: stat-hunting policies fly the bolt, geometric ones lunge, and
   `CardData.ranged` dies as a flag) — is authored once in the library (`data/effects/`)

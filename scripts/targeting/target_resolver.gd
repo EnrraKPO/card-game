@@ -50,6 +50,14 @@ static func parse(targets_value: Variant) -> TargetResolver:
 	match str(d.get("kind", "")):
 		"nearest":
 			return Nearest.new()
+		"leap":
+			return Leap.new()
+		"wounded":
+			return Wounded.new()
+		"tank":
+			return Tank.new()
+		"threat":
+			return Threat.new()
 	push_error("TargetResolver: unknown targets kind '%s' — refusing (no permissive default)" % str(d.get("kind", "")))
 	return null
 
@@ -115,3 +123,101 @@ class Nearest extends TargetResolver:
 
 	func to_dict() -> Dictionary:
 		return {"kind": "nearest"}
+
+
+class Leap extends TargetResolver:
+	# The chess knight's jump, recovered verbatim from the razed TargetingKnight: prefers
+	# to leap OVER the frontmost occupied enemy column, then among what's left prefers
+	# landing OFF its own mirrored lane. Each preference applies only when it leaves at
+	# least one candidate — otherwise it falls away, degrading gracefully to plain nearest.
+	func resolve(world: CombatWorld, holder: CardInstance,
+			_owner: int = TargetResolver.OWNER_FROM_HOLDER) -> Array[GameEntity]:
+		var out: Array[GameEntity] = []
+		var pool := TargetResolver.opposite_half_by_preference(world, holder)
+		if pool.is_empty():
+			return out
+		var from := BoardFacade.location_of(world, holder)
+		# The frontmost occupied enemy column — "front" means closest to the holder: the
+		# lowest column seen from the player half, the highest from the enemy half.
+		var front_col := 1 << 30
+		for t: CardInstance in pool:
+			var c: int = BoardFacade.location_of(world, t).col
+			if front_col == 1 << 30 \
+					or (c < front_col if from.side == 0 else c > front_col):
+				front_col = c
+		var behind: Array = pool.filter(func(t: CardInstance) -> bool:
+			return BoardFacade.location_of(world, t).col != front_col)
+		if not behind.is_empty():
+			pool = behind
+		var off_row: Array = pool.filter(func(t: CardInstance) -> bool:
+			var loc := BoardFacade.location_of(world, t)
+			return from.row + loc.row != BoardData.ROWS - 1)
+		if not off_row.is_empty():
+			pool = off_row
+		out.append(pool[0] as GameEntity)
+		return out
+
+	func to_dict() -> Dictionary:
+		return {"kind": "leap"}
+
+
+# The three stat-hunting species share one shape: scan the preference-ordered pool for the
+# best value of their stat, first-seen winning ties — so equal stats fall back to the full
+# preference ordering (nearest-first with its deterministic tie-break), never to sort
+# instability. The razed originals sorted with the distance tie-break but left equal
+# stat-and-distance to sort_custom's whim; the scan keeps their semantics where they were
+# defined and is deterministic where they weren't.
+
+class Wounded extends TargetResolver:
+	# Hunts the most wounded enemy — lowest current health (razed TargetingBishop).
+	func resolve(world: CombatWorld, holder: CardInstance,
+			_owner: int = TargetResolver.OWNER_FROM_HOLDER) -> Array[GameEntity]:
+		var out: Array[GameEntity] = []
+		var best: CardInstance = null
+		for t: CardInstance in TargetResolver.opposite_half_by_preference(world, holder):
+			if best == null or t.current_health < best.current_health:
+				best = t
+		if best != null:
+			out.append(best as GameEntity)
+		return out
+
+	func to_dict() -> Dictionary:
+		return {"kind": "wounded"}
+
+
+class Tank extends TargetResolver:
+	# Locks onto the tankiest enemy — highest current health (razed TargetingRook).
+	func resolve(world: CombatWorld, holder: CardInstance,
+			_owner: int = TargetResolver.OWNER_FROM_HOLDER) -> Array[GameEntity]:
+		var out: Array[GameEntity] = []
+		var best: CardInstance = null
+		for t: CardInstance in TargetResolver.opposite_half_by_preference(world, holder):
+			if best == null or t.current_health > best.current_health:
+				best = t
+		if best != null:
+			out.append(best as GameEntity)
+		return out
+
+	func to_dict() -> Dictionary:
+		return {"kind": "tank"}
+
+
+class Threat extends TargetResolver:
+	# Neutralises the greatest threat — highest attack, read foldably through
+	# get_attribute so standing bonuses count (razed TargetingQueen).
+	func resolve(world: CombatWorld, holder: CardInstance,
+			_owner: int = TargetResolver.OWNER_FROM_HOLDER) -> Array[GameEntity]:
+		var out: Array[GameEntity] = []
+		var best: CardInstance = null
+		var best_atk := 0
+		for t: CardInstance in TargetResolver.opposite_half_by_preference(world, holder):
+			var atk := t.get_attribute("attack")
+			if best == null or atk > best_atk:
+				best = t
+				best_atk = atk
+		if best != null:
+			out.append(best as GameEntity)
+		return out
+
+	func to_dict() -> Dictionary:
+		return {"kind": "threat"}

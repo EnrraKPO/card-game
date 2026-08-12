@@ -88,7 +88,7 @@
 			"pawn"
 		],
 		"effects": [
-			"melee_attack"
+			"nearest_attack"
 		]
 	},
 	{
@@ -101,9 +101,11 @@
 		"chess_pieces": [
 			"bishop"
 		],
-		"ranged": true,
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"wounded_attack"
 		]
 	},
 	{
@@ -115,6 +117,9 @@
 		"speed": 2,
 		"chess_pieces": [
 			"knight"
+		],
+		"effects": [
+			"leap_attack"
 		]
 	},
 	{
@@ -130,6 +135,9 @@
 		],
 		"abilities": [
 			"castling"
+		],
+		"effects": [
+			"tank_attack"
 		]
 	},
 	{
@@ -142,6 +150,8 @@
 		"chess_pieces": [
 			"queen"
 		],
-		"ranged": true
+		"effects": [
+			"threat_attack"
+		]
 	}
 ]

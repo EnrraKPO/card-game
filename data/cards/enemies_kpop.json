@@ -12,7 +12,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   },
   {
@@ -28,7 +28,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   },
   {
@@ -44,7 +44,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   },
   {
@@ -54,12 +54,14 @@
     "attack": 2,
     "health": 3,
     "speed": 3,
-    "ranged": true,
     "description": "The high note is a weapons-grade event: the nearest foe is Blinded by sheer stage lighting (50% miss, 2 attacks).",
     "enemy_only": true,
     "tribe": "idol",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "nearest_attack"
+    ]
   },
   {
     "id": "kpop_rapper",
@@ -74,7 +76,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   },
   {
@@ -92,7 +94,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   }
 ]

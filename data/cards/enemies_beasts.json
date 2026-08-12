@@ -12,7 +12,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   },
   {
@@ -28,7 +28,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   },
   {
@@ -44,7 +44,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   },
   {
@@ -60,7 +60,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   },
   {
@@ -76,7 +76,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   },
   {
@@ -92,7 +92,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   },
   {
@@ -108,7 +108,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   },
   {
@@ -124,7 +124,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   },
   {
@@ -142,7 +142,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   },
   {
@@ -160,7 +160,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   },
   {
@@ -178,7 +178,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   }
 ]

@@ -13,7 +13,7 @@
 			"pawn"
 		],
 		"effects": [
-			"melee_attack"
+			"nearest_attack"
 		]
 	},
 	{
@@ -28,7 +28,10 @@
 		"cost": 2,
 		"attack": 4,
 		"health": 3,
-		"speed": 2
+		"speed": 2,
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "fire_bishop",
@@ -39,7 +42,6 @@
 		"chess_pieces": [
 			"bishop"
 		],
-		"ranged": true,
 		"abilities": [
 			"fire_bless",
 			"heal"
@@ -47,7 +49,10 @@
 		"cost": 2,
 		"attack": 3,
 		"health": 4,
-		"speed": 1
+		"speed": 1,
+		"effects": [
+			"wounded_attack"
+		]
 	},
 	{
 		"id": "fire_rook",
@@ -61,12 +66,14 @@
 		"abilities": [
 			"warding_charge"
 		],
-		"ranged": true,
 		"cost": 3,
 		"attack": 3,
 		"health": 7,
 		"speed": 1,
-		"shield": 2
+		"shield": 2,
+		"effects": [
+			"tank_attack"
+		]
 	},
 	{
 		"id": "fire_queen",
@@ -77,11 +84,13 @@
 		"chess_pieces": [
 			"queen"
 		],
-		"ranged": true,
 		"cost": 5,
 		"attack": 7,
 		"health": 5,
-		"speed": 3
+		"speed": 3,
+		"effects": [
+			"threat_attack"
+		]
 	},
 	{
 		"id": "fire_pawn_pawn",
@@ -99,7 +108,7 @@
 		"speed": 1,
 		"shield": 1,
 		"effects": [
-			"melee_attack"
+			"nearest_attack"
 		]
 	},
 	{
@@ -116,7 +125,10 @@
 		"attack": 5,
 		"health": 5,
 		"speed": 2,
-		"shield": 1
+		"shield": 1,
+		"effects": [
+			"nearest_attack"
+		]
 	},
 	{
 		"id": "fire_bishop_pawn",
@@ -136,6 +148,9 @@
 		"abilities": [
 			"heal",
 			"fire_bless"
+		],
+		"effects": [
+			"nearest_attack"
 		]
 	},
 	{
@@ -148,7 +163,6 @@
 			"pawn",
 			"rook"
 		],
-		"ranged": true,
 		"cost": 4,
 		"attack": 4,
 		"health": 8,
@@ -157,6 +171,9 @@
 		"abilities": [
 			"pawn_material",
 			"fire_pawn_training"
+		],
+		"effects": [
+			"nearest_attack"
 		]
 	},
 	{
@@ -172,7 +189,10 @@
 		"cost": 6,
 		"attack": 7,
 		"health": 5,
-		"speed": 3
+		"speed": 3,
+		"effects": [
+			"nearest_attack"
+		]
 	},
 	{
 		"id": "fire_knight_knight",
@@ -183,6 +203,9 @@
 		"chess_pieces": [
 			"knight",
 			"knight"
+		],
+		"effects": [
+			"leap_attack"
 		]
 	},
 	{
@@ -202,6 +225,9 @@
 		"abilities": [
 			"heal",
 			"fire_bless"
+		],
+		"effects": [
+			"leap_attack"
 		]
 	},
 	{
@@ -214,10 +240,12 @@
 			"knight",
 			"rook"
 		],
-		"ranged": true,
 		"abilities": [
 			"fire_knight_training",
 			"knight_material"
+		],
+		"effects": [
+			"leap_attack"
 		]
 	},
 	{
@@ -229,6 +257,9 @@
 		"chess_pieces": [
 			"knight",
 			"queen"
+		],
+		"effects": [
+			"leap_attack"
 		]
 	},
 	{
@@ -241,9 +272,11 @@
 			"bishop",
 			"bishop"
 		],
-		"ranged": true,
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"wounded_attack"
 		]
 	},
 	{
@@ -256,10 +289,12 @@
 			"bishop",
 			"rook"
 		],
-		"ranged": true,
 		"abilities": [
 			"fire_bishop_training",
 			"bishop_material"
+		],
+		"effects": [
+			"wounded_attack"
 		]
 	},
 	{
@@ -274,6 +309,9 @@
 		],
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"wounded_attack"
 		]
 	},
 	{
@@ -286,7 +324,9 @@
 			"rook",
 			"rook"
 		],
-		"ranged": true
+		"effects": [
+			"tank_attack"
+		]
 	},
 	{
 		"id": "fire_queen_rook",
@@ -298,7 +338,6 @@
 			"queen",
 			"rook"
 		],
-		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -320,6 +359,9 @@
 		"abilities": [
 			"fire_queen_training",
 			"queen_material"
+		],
+		"effects": [
+			"threat_attack"
 		]
 	},
 	{
@@ -331,6 +373,9 @@
 		"chess_pieces": [
 			"queen",
 			"queen"
+		],
+		"effects": [
+			"threat_attack"
 		]
 	}
 ]

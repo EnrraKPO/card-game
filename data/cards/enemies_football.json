@@ -13,7 +13,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   },
   {
@@ -29,7 +29,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   },
   {
@@ -45,7 +45,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   },
   {
@@ -61,7 +61,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   },
   {
@@ -71,12 +71,14 @@
     "attack": 4,
     "health": 4,
     "speed": 3,
-    "ranged": true,
     "description": "His spiral has been clocked at highway speeds. Throws from the pocket, hits like a truck.",
     "enemy_only": true,
     "tribe": "gridiron",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "nearest_attack"
+    ]
   },
   {
     "id": "fb_coach",
@@ -93,7 +95,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   }
 ]

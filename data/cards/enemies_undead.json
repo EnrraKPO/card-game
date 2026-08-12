@@ -12,7 +12,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   },
   {
@@ -22,12 +22,14 @@
     "attack": 4,
     "health": 3,
     "speed": 4,
-    "ranged": true,
     "description": "Looses a cursed arrow that saps 1 <attack> from every enemy.",
     "enemy_only": true,
     "tribe": "undead",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "nearest_attack"
+    ]
   },
   {
     "id": "ghoul",
@@ -42,7 +44,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   },
   {
@@ -58,7 +60,7 @@
     "elements": [],
     "chess_pieces": [],
     "effects": [
-      "melee_attack"
+      "nearest_attack"
     ]
   }
 ]

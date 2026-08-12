@@ -77,11 +77,9 @@ var role: String = ""
 # data/abilities/). Rook buildings author these ("abilities": ["castling"]); any card may.
 # Read through ability_ids(), which adds the derived fallback for un-authored rook combos.
 var abilities: Array[String] = []
-# Ranged units fire a projectile at their target on auto-attack instead of the melee lunge
-# (a PRESENTATION fact: the live presenter's windup dressing reads it — signed
-# ATTACK_SYSTEM_DESIGN.html §8.0). Authored per-card — NOT derived from composition, so e.g.
-# the base Bishop is ranged but most bishop-composed units aren't unless they opt in.
-var ranged: bool = false
+# (The `ranged` bool died 2026-08-12 — signed ATTACK_SYSTEM_DESIGN.html §8.3: ranged-ness
+# is a VISUAL, derived from the attack effect's targeting policy — the stat-hunting
+# policies fire the bolt, the geometric ones lunge. See Combat's windup dressing.)
 # Attacks per combat round (the multi-strike stat — the attack effect's authored repeats reads it).
 # Base 1 for everyone; authored higher for flurry units (harpies and friends). Foldable, so
 # standing effects/statuses can grant extra strikes at read time (CardInstance.get_attribute).
@@ -224,12 +222,11 @@ static func build_from_dict(d: Dictionary) -> CardData:
 	card.tribe        = str(d.get("tribe", ""))
 	card.role         = str(d.get("role", ""))
 	card.abilities    = Array(d.get("abilities", []), TYPE_STRING, "", null)
-	card.ranged       = bool(d.get("ranged", false))
 	card.strikes      = maxi(1, int(d.get("strikes", 1)))
 	card.bounty_gold  = int(d.get("bounty_gold", -1))
 	card.bounty_exp   = int(d.get("bounty_exp", -1))
 	# Effects, the NEW schema (signed ATTACK_SYSTEM_DESIGN.html §3): each entry is either a
-	# named-effect id (a String — "melee_attack", resolved through EffectLibrary) or an
+	# named-effect id (a String — "nearest_attack", resolved through EffectLibrary) or an
 	# inline TriggeredEffect dictionary (card-unique effects). The authored form is kept
 	# verbatim in effects_src for serialization; the resolved structures land in effects.
 	# A bad entry is refused loudly and dropped — old-schema dicts die inside
@@ -306,7 +303,6 @@ func to_dict() -> Dictionary:
 		"speed":        speed,
 		"shield":       shield,
 		"is_king":      is_king,
-		"ranged":       ranged,
 		"description":  description,
 		"card_type":    "spell" if card_type == CardType.SPELL else "unit",
 		"elements":     Array(elements, TYPE_STRING, "", null),
@@ -364,7 +360,6 @@ static func scaled(base: CardData, power: float) -> CardData:
 	c.tribe         = base.tribe
 	c.role          = base.role
 	c.abilities     = base.abilities.duplicate()
-	c.ranged        = base.ranged
 	c.strikes       = base.strikes
 	c.bounty_gold   = base.bounty_gold
 	c.bounty_exp    = base.bounty_exp
@@ -552,11 +547,21 @@ static func _derive(elems: Array, chess: Array, key: String) -> CardData:
 	return c
 
 
-# The localized one-line rules-text description of the card's targeting. The policy now
-# lives inside the referenced attack effect's resolver (target_policy is DELETED — signed
-# ATTACK_SYSTEM_DESIGN.html); the line returns with phase 3's attack family, keyed by the
-# referenced effect's id (the `targeting.<policy>.desc` locale keys still exist for it).
+# The localized one-line rules-text description of the card's auto-attack targeting,
+# appended after the authored description on every board unit (see CardTooltip / CardUI).
+# The policy lives inside the referenced attack effect's target resolver (target_policy is
+# DELETED — signed ATTACK_SYSTEM_DESIGN.html §8.3), so the line reads it from the first
+# attack-payload effect the card carries. Spells never auto-attack and pacifists carry no
+# attack effect — both honestly get no line.
 func targeting_line() -> String:
+	if card_type == CardType.SPELL:
+		return ""
+	for e: TriggeredEffect in effects:
+		if e.targets == null:
+			continue
+		for p: Payload in e.payloads:
+			if p is Payload.Attack:
+				return Loc.t("targeting.%s.desc" % str(e.targets.to_dict().get("kind", "")))
 	return ""
 
 

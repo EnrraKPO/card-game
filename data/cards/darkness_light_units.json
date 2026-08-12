@@ -33,7 +33,7 @@
 		"speed": 2,
 		"shield": 1,
 		"effects": [
-			"melee_attack"
+			"nearest_attack"
 		]
 	},
 	{
@@ -68,7 +68,10 @@
 		"attack": 3,
 		"health": 3,
 		"speed": 3,
-		"shield": 1
+		"shield": 1,
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "darkness_light_bishop",
@@ -98,7 +101,6 @@
 				}
 			}
 		},
-		"ranged": true,
 		"cost": 1,
 		"attack": 2,
 		"health": 4,
@@ -106,6 +108,9 @@
 		"shield": 1,
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"wounded_attack"
 		]
 	},
 	{
@@ -136,12 +141,14 @@
 				}
 			}
 		},
-		"ranged": true,
 		"cost": 2,
 		"attack": 2,
 		"health": 7,
 		"speed": 2,
-		"shield": 3
+		"shield": 3,
+		"effects": [
+			"tank_attack"
+		]
 	},
 	{
 		"id": "darkness_light_queen",
@@ -153,7 +160,6 @@
 		"chess_pieces": [
 			"queen"
 		],
-		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -182,7 +188,10 @@
 		"attack": 6,
 		"health": 5,
 		"speed": 4,
-		"shield": 1
+		"shield": 1,
+		"effects": [
+			"threat_attack"
+		]
 	},
 	{
 		"id": "darkness_light_pawn_pawn",
@@ -219,7 +228,7 @@
 		"speed": 2,
 		"shield": 2,
 		"effects": [
-			"melee_attack"
+			"nearest_attack"
 		]
 	},
 	{
@@ -261,7 +270,10 @@
 		"attack": 4,
 		"health": 5,
 		"speed": 3,
-		"shield": 2
+		"shield": 2,
+		"effects": [
+			"nearest_attack"
+		]
 	},
 	{
 		"id": "darkness_light_bishop_pawn",
@@ -305,6 +317,9 @@
 		"shield": 3,
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"nearest_attack"
 		]
 	},
 	{
@@ -336,7 +351,6 @@
 				}
 			}
 		},
-		"ranged": true,
 		"abilities": [
 			"darkness_pawn_material",
 			"light_pawn_material"
@@ -345,7 +359,10 @@
 		"attack": 3,
 		"health": 8,
 		"speed": 2,
-		"shield": 2
+		"shield": 2,
+		"effects": [
+			"nearest_attack"
+		]
 	},
 	{
 		"id": "darkness_light_pawn_queen",
@@ -380,7 +397,10 @@
 		"attack": 6,
 		"health": 5,
 		"speed": 4,
-		"shield": 1
+		"shield": 1,
+		"effects": [
+			"nearest_attack"
+		]
 	},
 	{
 		"id": "darkness_light_knight_knight",
@@ -421,7 +441,10 @@
 		"attack": 4,
 		"health": 5,
 		"speed": 4,
-		"shield": 1
+		"shield": 1,
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "darkness_light_bishop_knight",
@@ -459,6 +482,9 @@
 		"shield": 1,
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"leap_attack"
 		]
 	},
 	{
@@ -490,7 +516,6 @@
 				}
 			}
 		},
-		"ranged": true,
 		"abilities": [
 			"darkness_knight_material",
 			"light_knight_material"
@@ -499,7 +524,10 @@
 		"attack": 4,
 		"health": 8,
 		"speed": 3,
-		"shield": 3
+		"shield": 3,
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "darkness_light_knight_queen",
@@ -534,7 +562,10 @@
 		"attack": 7,
 		"health": 7,
 		"speed": 5,
-		"shield": 1
+		"shield": 1,
+		"effects": [
+			"leap_attack"
+		]
 	},
 	{
 		"id": "darkness_light_bishop_bishop",
@@ -552,7 +583,6 @@
 			"bishop",
 			"bishop"
 		],
-		"ranged": true,
 		"abilities": [
 			"heal"
 		],
@@ -573,7 +603,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"wounded_attack"
+		]
 	},
 	{
 		"id": "darkness_light_bishop_rook",
@@ -591,7 +624,6 @@
 			"bishop",
 			"rook"
 		],
-		"ranged": true,
 		"abilities": [
 			"darkness_bishop_material",
 			"light_bishop_material"
@@ -613,7 +645,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"wounded_attack"
+		]
 	},
 	{
 		"id": "darkness_light_bishop_queen",
@@ -651,6 +686,9 @@
 		"shield": 1,
 		"abilities": [
 			"heal"
+		],
+		"effects": [
+			"wounded_attack"
 		]
 	},
 	{
@@ -664,7 +702,6 @@
 			"rook",
 			"rook"
 		],
-		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -693,7 +730,10 @@
 		"attack": 3,
 		"health": 11,
 		"speed": 2,
-		"shield": 5
+		"shield": 5,
+		"effects": [
+			"tank_attack"
+		]
 	},
 	{
 		"id": "darkness_light_queen_rook",
@@ -706,7 +746,6 @@
 			"queen",
 			"rook"
 		],
-		"ranged": true,
 		"tool": {
 			"art": {
 				"model": "krea2",
@@ -739,7 +778,10 @@
 		"attack": 6,
 		"health": 10,
 		"speed": 3,
-		"shield": 3
+		"shield": 3,
+		"effects": [
+			"threat_attack"
+		]
 	},
 	{
 		"id": "darkness_light_queen_queen",
@@ -780,6 +822,9 @@
 		"attack": 9,
 		"health": 8,
 		"speed": 4,
-		"shield": 1
+		"shield": 1,
+		"effects": [
+			"threat_attack"
+		]
 	}
 ]

@@ -42,20 +42,20 @@ func check_eq(got: Variant, want: Variant, label: String) -> void:
 # with unit(). The resolution/status/interception suites assert exact stat arithmetic against
 # these numbers, so they must NEVER track live balance data — a content pass retuning the real
 # rook must not break the arbitration-layer regression suite (it did once: 26 failures when
-# the live rook went 6 HP/3 shield -> 7 HP/2 shield). Identity fields (chess_pieces, abilities,
-# ranged) mirror the real cards so composition/eligibility tests keep meaning; only the ids
-# listed here are frozen — any other id passed to unit() still resolves live.
+# the live rook went 6 HP/3 shield -> 7 HP/2 shield). Identity fields (chess_pieces,
+# abilities) mirror the real cards so composition/eligibility tests keep meaning; only the
+# ids listed here are frozen — any other id passed to unit() still resolves live.
 const FIXTURE_DEFS: Dictionary = {
 	"pawn": {"id": "pawn", "display_name": "Pawn", "cost": 1, "attack": 1, "health": 3,
 			"speed": 1, "chess_pieces": ["pawn"]},
 	"bishop": {"id": "bishop", "display_name": "Bishop", "cost": 2, "attack": 1, "health": 4,
-			"speed": 1, "ranged": true, "chess_pieces": ["bishop"], "abilities": ["heal"]},
+			"speed": 1, "chess_pieces": ["bishop"], "abilities": ["heal"]},
 	"knight": {"id": "knight", "display_name": "Knight", "cost": 2, "attack": 2, "health": 3,
 			"speed": 2, "chess_pieces": ["knight"]},
 	"rook": {"id": "rook", "display_name": "Rook", "cost": 3, "attack": 4, "health": 6,
 			"speed": 1, "shield": 3, "chess_pieces": ["rook"], "abilities": ["castling"]},
 	"queen": {"id": "queen", "display_name": "Queen", "cost": 5, "attack": 5, "health": 5,
-			"speed": 3, "ranged": true, "chess_pieces": ["queen"]},
+			"speed": 3, "chess_pieces": ["queen"]},
 	"king": {"id": "king", "display_name": "King", "cost": 0, "attack": 1, "health": 20,
 			"speed": 3, "shield": 5, "is_king": true, "chess_pieces": ["king"]},
 }

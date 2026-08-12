@@ -658,7 +658,7 @@
   "statguide.speed": "Define la prioridad de turno y otorga posibilidad de esquivar ataques o asestar golpes críticos.",
   "statguide.title": "Estadísticas",
   "statguide.toggle": "Mostrar descripciones de estadísticas",
-  "targeting.leaper.desc": "Salta la columna delantera para golpear la retaguardia.",
+  "targeting.leap.desc": "Salta la columna delantera para golpear la retaguardia.",
   "targeting.nearest.desc": "Golpea al enemigo más cercano.",
   "targeting.tank.desc": "Golpea al enemigo con más <health>.",
   "targeting.threat.desc": "Golpea al enemigo con más <attack>.",

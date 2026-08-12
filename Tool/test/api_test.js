@@ -104,7 +104,7 @@ async function main() {
     // native inline effects flow through the Tool — the phase-3 authoring contract.
     r = await api('/api/game/save', { type: 'card', file: 'apitest_units.json', data: {
       id: 'apitest_newfx', display_name: 'N', cost: 1, attack: 1, health: 1, speed: 1,
-      effects: ['melee_attack', { trigger: { kind: 'event', event: 'act', of: 'self' },
+      effects: ['nearest_attack', { trigger: { kind: 'event', event: 'act', of: 'self' },
         targets: { kind: 'nearest' }, payloads: [{ kind: 'attack', amount: 3 }] }] } });
     check('card with new-schema effects (reference + inline) saves', r.status === 200, JSON.stringify(r.data).slice(0, 200));
     await api('/api/game/delete-entry', { type: 'card', id: 'apitest_newfx' });

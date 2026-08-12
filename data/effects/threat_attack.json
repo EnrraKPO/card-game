@@ -1,0 +1,12 @@
+{
+	"id": "threat_attack",
+	"trigger": {
+		"kind": "event", "event": "act", "of": "self",
+		"conditions": [{"untapped": true}]
+	},
+	"targets": {"kind": "threat"},
+	"payloads": [
+		{"kind": "attack", "amount": {"kind": "holder_stat", "stat": "attack"}}
+	],
+	"repeats": {"kind": "holder_stat", "stat": "strikes"}
+}

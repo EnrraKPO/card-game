@@ -10,5 +10,8 @@
 	"chess_pieces": [
 		"king"
 	],
-	"is_king": true
+	"is_king": true,
+	"effects": [
+		"nearest_attack"
+	]
 }
