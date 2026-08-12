@@ -35,7 +35,10 @@
 		"cost": 0,
 		"attack": 1,
 		"health": 4,
-		"speed": 6
+		"speed": 6,
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "air_light_knight",
@@ -223,7 +226,10 @@
 		"attack": 2,
 		"health": 5,
 		"speed": 6,
-		"shield": 1
+		"shield": 1,
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "air_light_knight_pawn",

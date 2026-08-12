@@ -81,7 +81,7 @@ const CardEditor = {
     id: '', display_name: '', description: '', art_instructions: '',
     cost: 1, attack: 2, health: 3, speed: 3, shield: 0,
     elements: [], chess_pieces: [], abilities: [],
-    ranged: false, is_king: false, enemy_only: false, target_policy: '', role: '',
+    ranged: false, is_king: false, enemy_only: false, role: '',
     // bounty_gold / bounty_exp are deliberately ABSENT by default: an unset bounty derives
     // from the card's mana cost through the bounty.* rates (see GameData.kill_bounty), and a
     // key that is only written when authored keeps every existing card file untouched.
@@ -127,14 +127,6 @@ const CardEditor = {
             { value: 'unit', label: 'Unit (fielded on the board)' },
             { value: 'spell', label: 'Spell (cast, never fielded)' },
           ], onChange, { optional: true, emptyLabel: 'auto — elements-only = spell, otherwise unit' })),
-          fld('Auto-attack target', selectInput(draft, 'target_policy', [
-            { value: 'nearest', label: 'Nearest — the closest enemy' },
-            { value: 'leaper', label: 'Leaper — jumps the front column to the backline' },
-            { value: 'wounded', label: 'Wounded — the enemy with the lowest health' },
-            { value: 'tank', label: 'Tank — the enemy with the highest health' },
-            { value: 'threat', label: 'Threat — the enemy with the highest attack' },
-          ], onChange, { optional: true, emptyLabel: 'auto — from chess composition' }),
-            'how this unit picks whom to auto-attack; a matching line is appended to the card text (spells never auto-attack)'),
           fld('Battlefield role', selectInput(draft, 'role', UNIT_ROLES, onChange,
             { optional: true, emptyLabel: 'untagged — uses the "default" weight' }),
             'what the ENEMY ENGINE thinks this unit is worth protecting; an encounter can re-price any role. Kings need no role — they are always the Captain'),
@@ -194,7 +186,10 @@ const CardEditor = {
     if (d.enemy_only) out.enemy_only = true;
     if (d.tribe) out.tribe = d.tribe;   // fodder-tribe tag (cue variants); no form input yet
     if (d.ranged) out.ranged = true;
-    if (d.target_policy) out.target_policy = d.target_policy;   // "" = auto (derive from composition)
+    // The NEW effects schema (named ids / inline effects) passes through untouched: no
+    // form UI edits it yet (phase 3's editor) — but a stamped reference must never be
+    // dropped by an unrelated edit.
+    if (d.effects && d.effects.length) out.effects = d.effects;
     if (d.role) out.role = d.role;   // "" = untagged (falls to the survival table's "default")
     // 0 is a real bounty ("pays nothing"), so these test for PRESENCE, not truthiness.
     if (d.bounty_gold != null && d.bounty_gold !== '') out.bounty_gold = d.bounty_gold;
@@ -207,7 +202,7 @@ const CardEditor = {
   toDraft(g) {
     const d = JSON.parse(JSON.stringify(g));
     for (const k of ['elements', 'chess_pieces', 'abilities']) if (!d[k]) d[k] = [];
-    delete d.effects;   // the deleted schema — a stale draft must not resurrect it
+    // effects (the NEW schema) ride the draft untouched — see toGame's passthrough.
     const comp = d.elements.length + d.chess_pieces.length;
     d._derive_stats = comp > 0 && d.attack == null;
     for (const k of ['cost', 'attack', 'health', 'speed', 'shield']) if (d[k] == null) d[k] = k === 'health' ? 1 : 0;
@@ -224,7 +219,8 @@ const CardEditor = {
     if (d._derive_stats) lines.push('Stats derived from the composition by the game.');
     else lines.push(`Cost ${d.cost} · ATK ${d.attack} · HP ${d.health} · SPD ${d.speed}${d.shield ? ' · Shield ' + d.shield : ''}.`);
     if (d.ranged) lines.push('Attacks at range (projectile).');
-    if (d.target_policy) lines.push(`Auto-attack targets: ${d.target_policy}.`);
+    for (const e of d.effects || [])
+      lines.push(typeof e === 'string' ? `Effect: ${e}.` : 'Carries an inline effect.');
     if (d.bounty_gold != null && d.bounty_gold !== '') lines.push(`Pays ${d.bounty_gold} gold when killed.`);
     if (d.bounty_exp != null && d.bounty_exp !== '') lines.push(`Pays ${d.bounty_exp} experience when killed.`);
     if (d.is_king) lines.push('KING — losing it loses the fight.');
@@ -1662,57 +1658,14 @@ const RenderFilterEditor = {
 };
 
 // ═══════════════════════════ NAMED EFFECT ═══════════════════════════════════
-// The keyword library ("Burn", "Venom", "Blind"). The old PAYLOAD half (attribute/amount/
-// status/riders/$X magnitude) died with the effect layer — each entry survives as an
-// id + description SHELL: the re-authoring brief for the keyword, re-authored natively
-// in the new schema (TARGETING_DESIGN.md) when the rebuild decides how keywords are spelled.
-const NamedEffectEditor = {
-  label: 'Named Effect',
-  newItem: () => ({ id: '', display_name: '', description: '' }),
-  form(draft, ctx, onChange) {
-    const wrap = el('div');
-    wrap.append(
-      groupBox('Identity',
-        el('div', { class: 'frow' },
-          idField(draft, onChange, ctx.isNew),
-          fld('Library name', textInput(draft, 'display_name', onChange, 'Burn'),
-            'shown in pickers — the game never reads it'),
-        ),
-        el('div', { class: 'frow' },
-          fld('Library note', textInput(draft, 'description', onChange, 'what this keyword does — the re-authoring brief'),
-            'documentation only', 'wide'),
-        ),
-      ),
-      effectsRazedNote(),
-    );
-    return wrap;
-  },
-  serialize(d) {
-    return { id: d.id, display_name: d.display_name || slugToName(d.id), description: d.description || '' };
-  },
-  summarize(d) {
-    const lines = [`${d.display_name || d.id || 'Unnamed effect'} — a keyword brief (payload awaits the new schema).`];
-    if (d.description) lines.push(d.description);
-    return lines;
-  },
-  toDraft(g) {
-    const d = JSON.parse(JSON.stringify(g));
-    // the deleted payload schema — a stale draft must not resurrect it
-    for (const k of ['attribute', 'amount', 'per_stack', 'per_stack_chance', 'status', 'riders', 'eval']) delete d[k];
-    return d;
-  },
-  promptFor(d) {
-    return `Small fantasy spell-effect emblem representing "${d.display_name || slugToName(d.id)}", single centered glowing symbol, painterly style, on a plain solid white background`;
-  },
-  artNote: 'Named effects have no art slot in the game — generation here is reference-only.',
-};
-
+// (The OLD named-effects keyword tier was deleted whole 2026-08-12 with the attack
+// rebuild's total cleanse; the NEW library is data/effects/ — its editor arrives with
+// the attack pitch's phase 3.)
 // (The INNATE RULES tier was KILLED whole 2026-08-11 — see the type registry note in
 // server.js. Re-designed from scratch if world rules are ever wanted again.)
 
 const EDITORS = {
   card: CardEditor, relic: RelicEditor, status: StatusEditor, ability: AbilityEditor,
-  namedeffect: NamedEffectEditor,
   charm: CharmEditor, upgrade: UpgradeEditor, encounter: EncounterEditor, nodeweights: NodeWeightsEditor,
   sound: SoundEditor, vfx: VfxEditor, render_filter: RenderFilterEditor, tribe: TribeEditor,
 };

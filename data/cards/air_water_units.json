@@ -30,7 +30,10 @@
 		"cost": 1,
 		"attack": 1,
 		"health": 5,
-		"speed": 5
+		"speed": 5,
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "air_water_knight",
@@ -216,7 +219,10 @@
 		"attack": 2,
 		"health": 6,
 		"speed": 5,
-		"shield": 1
+		"shield": 1,
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "air_water_knight_pawn",

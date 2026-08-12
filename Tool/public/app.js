@@ -2355,8 +2355,8 @@ function attachInferPoll(file, jobId) {
 }
 
 // ── sidebar ──────────────────────────────────────────────────────────────────
-const TAB_ORDER = ['card', 'relic', 'status', 'namedeffect', 'ability', 'charm', 'upgrade', 'fights', 'encounter', 'enemyai', 'nodeweights', 'sound', 'vfx', 'render_filter', 'tuning', 'localization'];
-const TAB_LABELS = { card: '🃏 Cards', relic: '🏺 Relics', status: '☠ Statuses', namedeffect: '🧩 Named FX', ability: '✨ Abilities',
+const TAB_ORDER = ['card', 'relic', 'status', 'ability', 'charm', 'upgrade', 'fights', 'encounter', 'enemyai', 'nodeweights', 'sound', 'vfx', 'render_filter', 'tuning', 'localization'];
+const TAB_LABELS = { card: '🃏 Cards', relic: '🏺 Relics', status: '☠ Statuses', ability: '✨ Abilities',
   charm: '🔮 Charms', upgrade: '🌳 Upgrades', fights: '🗂 Fights', encounter: '⚔ Encounters', enemyai: '🧠 Enemy AI',
   nodeweights: '🗺 Map Nodes',
   sound: '🔊 Sounds', vfx: '🎇 VFX', render_filter: '🔆 Filters', tuning: '🎛 Tuning', localization: '🌐 Localization' };

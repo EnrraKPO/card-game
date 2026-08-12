@@ -10,7 +10,10 @@
     "enemy_only": true,
     "tribe": "troll",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "troll_bridgekeeper",
@@ -23,7 +26,10 @@
     "enemy_only": true,
     "tribe": "troll",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "troll_stonehide",
@@ -37,7 +43,10 @@
     "enemy_only": true,
     "tribe": "troll",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "troll_berserker",
@@ -50,7 +59,10 @@
     "enemy_only": true,
     "tribe": "troll",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "troll_shaman",
@@ -79,7 +91,10 @@
     "tribe": "troll",
     "description": "Has been killed eleven times and finds it increasingly funny. Heals 3 at every round's end. Make the twelfth stick to win.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "troll_ancient_gorge",
@@ -94,6 +109,9 @@
     "tribe": "troll",
     "description": "A landslide that got up. Heals 4 at every round's end and grows +1 <attack> per wound taken. Outpace the healing to win.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   }
 ]

@@ -36,7 +36,10 @@
 					"at": "2026-07-12"
 				}
 			}
-		}
+		},
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "air_air_knight",
@@ -216,7 +219,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "air_air_knight_pawn",

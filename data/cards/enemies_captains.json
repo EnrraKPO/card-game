@@ -10,7 +10,10 @@
 		"shield": 2,
 		"description": "The warband's biggest, meanest goblin. Cut him down to win. Attacks the nearest enemy and starts each round with 2 <shield>.",
 		"is_king": true,
-		"enemy_only": true
+		"enemy_only": true,
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "bone_lich",
@@ -23,7 +26,10 @@
 		"shield": 3,
 		"description": "The horde's dark master. He knits himself back together with every strike â€” destroy him to win. Starts each round with 3 <shield>.",
 		"is_king": true,
-		"enemy_only": true
+		"enemy_only": true,
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "stoneborn_warlord",
@@ -36,6 +42,9 @@
 		"shield": 6,
 		"description": "An immense living monolith that anchors the legion. Bring it down to win. Slow, but starts each round with 6 <shield>.",
 		"is_king": true,
-		"enemy_only": true
+		"enemy_only": true,
+		"effects": [
+			"melee_attack"
+		]
 	}
 ]

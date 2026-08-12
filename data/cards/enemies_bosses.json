@@ -11,7 +11,10 @@
     "enemy_only": true,
     "description": "An elite hobgoblin who rules the warband through sheer brutality. Cut him down to win. Starts each round with 3 <shield>.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "death_knight",
@@ -25,7 +28,10 @@
     "enemy_only": true,
     "description": "An armored champion of the dead that mends itself with every blow. Destroy it to win. Starts each round with 4 <shield>.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "obsidian_behemoth",
@@ -39,7 +45,10 @@
     "enemy_only": true,
     "description": "A vast slab of living obsidian that anchors the legion. Bring it down to win. Slow, but starts each round with 8 <shield>.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "gorthok",
@@ -53,7 +62,10 @@
     "enemy_only": true,
     "description": "Warchief of the entire goblin horde — monstrous and merciless. Slay him to win the battle. Starts each round with 4 <shield>.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "mortis",
@@ -67,7 +79,10 @@
     "enemy_only": true,
     "description": "The deathless sovereign of the undead, knitting his bones whole with every strike. Destroy him to win. Starts each round with 5 <shield>.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "titanus",
@@ -81,6 +96,9 @@
     "enemy_only": true,
     "description": "A mountain that walks — the eldest of the stoneborn. Bring it down to win. Immensely slow, but starts each round with 10 <shield>.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   }
 ]

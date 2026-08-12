@@ -1,0 +1,260 @@
+<title>The Strike Seam — Combat Refactor Pitch</title>
+<style>
+  :root {
+    --ground: #FAF9F6;
+    --surface: #F1EFEA;
+    --ink: #1F2125;
+    --ink-soft: #56534D;
+    --line: #DAD6CE;
+    --accent: #8A5A2B;
+    --accent-soft: #F0E6D8;
+    --rules: #40566B;
+    --rules-bg: #E5E9EE;
+    --visual: #3C5A40;
+    --visual-bg: #E7EDE4;
+    --code-bg: #ECEAE4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #17181B;
+      --surface: #1F2125;
+      --ink: #E8E6E1;
+      --ink-soft: #A9A59D;
+      --line: #35383E;
+      --accent: #D2A05C;
+      --accent-soft: #33291B;
+      --rules: #93AEC7;
+      --rules-bg: #222B33;
+      --visual: #9FBF8F;
+      --visual-bg: #24301F;
+      --code-bg: #24262B;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #17181B;
+    --surface: #1F2125;
+    --ink: #E8E6E1;
+    --ink-soft: #A9A59D;
+    --line: #35383E;
+    --accent: #D2A05C;
+    --accent-soft: #33291B;
+    --rules: #93AEC7;
+    --rules-bg: #222B33;
+    --visual: #9FBF8F;
+    --visual-bg: #24301F;
+    --code-bg: #24262B;
+  }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Segoe UI", -apple-system, system-ui, sans-serif;
+    font-size: 1.0rem;
+    line-height: 1.65;
+    margin: 0;
+  }
+  .page { max-width: 46rem; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+  h1, h2, h3 { font-family: Cambria, Georgia, "Times New Roman", serif; text-wrap: balance; line-height: 1.2; }
+  h1 { font-size: 2.3rem; margin: 0.4rem 0 0.6rem; }
+  h2 { font-size: 1.5rem; margin: 3rem 0 0.8rem; padding-top: 1.6rem; border-top: 1px solid var(--line); }
+  h2 .secno { color: var(--accent); margin-right: 0.5rem; font-size: 1.1rem; }
+  h3 { font-size: 1.12rem; margin: 1.8rem 0 0.4rem; }
+  p { margin: 0.7rem 0; }
+  .eyebrow {
+    text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.72rem;
+    color: var(--accent); font-weight: 600;
+  }
+  .ribbon {
+    display: flex; flex-wrap: wrap; gap: 0.6rem 1.6rem; align-items: baseline;
+    border-block: 1px solid var(--line); padding: 0.6rem 0; margin: 1.4rem 0 2rem;
+    font-size: 0.84rem; color: var(--ink-soft);
+  }
+  .ribbon b { color: var(--ink); font-weight: 600; }
+  .status-chip {
+    background: var(--accent); color: var(--ground); border-radius: 2px;
+    padding: 0.1rem 0.55rem; font-size: 0.74rem; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .lede { font-size: 1.12rem; color: var(--ink-soft); }
+  code {
+    font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+    font-size: 0.88em; background: var(--code-bg); border-radius: 3px; padding: 0.08em 0.35em;
+  }
+  .tag {
+    font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+    border-radius: 2px; padding: 0.06rem 0.45rem; margin-right: 0.4rem;
+  }
+  .tag.rules { background: var(--rules-bg); color: var(--rules); }
+  .tag.visual { background: var(--visual-bg); color: var(--visual); }
+  table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.92rem; }
+  .table-wrap { overflow-x: auto; }
+  th, td { text-align: left; padding: 0.45rem 0.7rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--ink-soft); }
+  .quiet { color: var(--ink-soft); font-size: 0.9rem; }
+  .rule-card {
+    border-left: 3px solid var(--accent); background: var(--surface);
+    padding: 0.7rem 1rem; margin: 1rem 0; font-size: 0.95rem;
+  }
+  .decision {
+    border: 1px solid var(--accent); border-radius: 4px; background: var(--accent-soft);
+    padding: 0.8rem 1rem; margin: 1.2rem 0;
+  }
+  .decision .eyebrow { display: block; margin-bottom: 0.3rem; }
+  .signoff { list-style: none; padding-left: 0; }
+  .signoff li { position: relative; padding-left: 2rem; margin: 0.8rem 0; }
+  .signoff li::before {
+    content: ""; position: absolute; left: 0; top: 0.28rem;
+    width: 0.85rem; height: 0.85rem; border: 2px solid var(--accent); border-radius: 2px;
+  }
+  ul { padding-left: 1.2rem; }
+  li { margin: 0.3rem 0; }
+</style>
+
+<div class="page">
+
+<span class="eyebrow">Combat refactor · found work blocking the attack initiative</span>
+<h1>The Strike Seam</h1>
+<div class="ribbon">
+  <span class="status-chip">Dissolved · never signed · builds nothing</span>
+  <span>Ruling: <b>2026-08-12 — the problem this pitch answers DID NOT EXIST</b></span>
+  <span>Superseded by: <b>ATTACK_SYSTEM_DESIGN.html §8</b></span>
+</div>
+
+<div class="rule-card"><b>DISSOLVED (user ruling, 2026-08-12).</b> This pitch was scaffolding
+around a phantom: its "strike protocol" was inferred from degraded, accreted combat code —
+code the cleanup exists to delete, mistaken for design. The truth is one line: <b>attack is
+one damaging effect</b> (the Arbitrator already owns dodge/shield/crit), shared across
+target resolvers for the attack flavors, presented as two cues — approach, then result —
+holding where presentation asks. Nothing here was ever signed or built. The document is
+kept only as the record of the lesson (see memory: <i>code-is-not-design</i>); the attack
+initiative resumed under its own signed pitch.</div>
+
+<p class="lede">Designing the attack wiring exposed that combat's strike flow is a
+conflation of mixed authorities: one function hand-runs rules that belong to four
+different owners, interleaved with visuals. This refactor dissolves the conflation —
+each step returns to its owner — and leaves the strike as a small mechanic with a front
+door anything may call. It moves no behavior the player can feel; it moves who is in
+charge of it.</p>
+
+<h2><span class="secno">§1</span>The finding, in one table</h2>
+<p>What the current flow hand-runs, and who actually owns each step:</p>
+<div class="table-wrap"><table>
+  <tr><th>Step today (inlined in combat)</th><th></th><th>Rightful owner</th></tr>
+  <tr><td>Announce "X attacks Y"</td><td><span class="tag rules">rules</span></td>
+      <td>The event pipeline — news fires when the fact occurs; nobody sequences it</td></tr>
+  <tr><td>Lunge / bolt toward the victim</td><td><span class="tag visual">visual</span></td>
+      <td>The live presenter — a dressing of the swing, held for pacing</td></tr>
+  <tr><td>Propose damage; dodge, shield, crit resolve</td><td><span class="tag rules">rules</span></td>
+      <td><b>The Arbitrator — already correct. This is the only real mechanic in the flow.</b></td></tr>
+  <tr><td>Interception cues, "CRITICAL!" flash</td><td><span class="tag visual">visual</span></td>
+      <td>The live presenter</td></tr>
+  <tr><td>Per-attack status charge spend (Blind, etc.)</td><td><span class="tag rules">rules</span></td>
+      <td>StatusEngine — ticks on the attack event like any status on any event (§3)</td></tr>
+  <tr><td>Announce "Y was struck", then dodge/crit news</td><td><span class="tag rules">rules</span></td>
+      <td>The event pipeline</td></tr>
+  <tr><td>Dodge sidestep / miss / damage numbers</td><td><span class="tag visual">visual</span></td>
+      <td>The live presenter</td></tr>
+  <tr><td>Death sweep, corpse fade</td><td><span class="tag rules">rules</span> <span class="tag visual">visual</span></td>
+      <td>Already owned correctly (cascade's death path + presenter) — untouched</td></tr>
+</table></div>
+
+<h2><span class="secno">§2</span>The shape after the refactor</h2>
+<p><b>The strike mechanic</b> becomes one small, scene-free routine — the front door:</p>
+<div class="rule-card">
+<code>CombatCascade.strike(attacker, target, amount) → Outcome</code><br>
+announce the swing → propose the damage to the Arbitrator → announce the outcome
+(<code>struck</code>, then <code>dodge</code> or <code>crit</code>) → return the Outcome.
+That is the whole mechanic: <b>attack is dealing damage</b> — the Arbitrator already owns
+everything inside the blow (dodge, shield, crit). Deaths ride the existing death path at
+the call site, unchanged.
+</div>
+<p>It lives on <b>CombatCascade</b> because the cascade is already the home of combat's
+rules-moments (<code>resolve_event</code>, <code>broadcast</code>, <code>emit_kill</code>,
+<code>bury</code>) and already carries the two things a strike needs: the world and the
+presenter. <span class="quiet">(StrikeEngine as a separate class remains the ratified
+destination if the mechanic ever grows enough to deserve its own file — the content-driven
+rule. Today it would be a file holding one function.)</span></p>
+<p><b>The visuals</b> become presenter dressings, the pattern deaths and ground procs
+already use — no-ops on the null presenter, so a simulated strike runs silent and
+instant:</p>
+<div class="table-wrap"><table>
+  <tr><th>New presenter surface</th><th>When it plays</th><th>What the live fight puts there</th></tr>
+  <tr><td><code>strike_windup(attacker, target)</code></td>
+      <td>After the swing announcement, before the blow resolves</td>
+      <td>The melee lunge to its apex, or the ranged bolt's flight (ghost, concealment,
+          swing arc — moved whole from combat, the Callable pattern LivePresenter already
+          uses for scene-heavy dressings)</td></tr>
+  <tr><td><code>strike_impact(attacker, target, outcome)</code></td>
+      <td>The instant the Arbitrator reports</td>
+      <td>Interception playback, the "CRITICAL!" flash + speed-badge glint</td></tr>
+  <tr><td><code>strike_readout(attacker, target, outcome)</code></td>
+      <td>After the <code>struck</code> announcement</td>
+      <td>Dodge sidestep / "Miss" / shield-then-health damage numbers, shield-break sting</td></tr>
+</table></div>
+<p>The withdrawal (retreat glide, ghost teardown) stays live-side inside the windup/readout
+dressings — it never was a rules step. The <b>combat log line</b> (a debug record of the
+blow) moves into the mechanic, since it describes the Outcome, not the dressing.</p>
+<p><b>What combat's act loop keeps:</b> the turn order, the flurry (the <code>strikes</code>
+stat — how many blows one act delivers), and — until the attack initiative resumes — nothing
+else: with targeting still razed, the loop has no victim to name, so combat stays inert
+after this refactor. The refactor's proof is its suite, not a fight on screen.</p>
+
+<h2><span class="secno">§3</span>Per-attack statuses: not this design's concern</h2>
+<p>Statuses that tick "per attack" (Blind and kin) tick the way every status ticks: through
+StatusEngine's normal event advance, on the attack event. Combat's hand-rolled
+<code>StatusEngine.advance(attacker, "attack")</code> call is deleted with the rest of the
+conflation. Ruled at review (2026-08-11): no individual status's timing subtleties may
+drive this design — if a specific status needs finer timing, that is <em>that status's
+authoring problem</em>, solved when it is re-authored, and raised then as its own
+question. The system is never engineered around a single effect.</p>
+
+<h2><span class="secno">§4</span>What this refactor does NOT touch</h2>
+<ul>
+  <li><b>The Arbitrator</b> — dodge, shield split, interception, crit-after-interception:
+      byte-identical.</li>
+  <li><b>Event semantics</b> — the same announcements in the same order as today,
+      including the swing news firing before the blow resolves. (The parked question of
+      whether strike news should all follow the blow stays parked in the attack pitch
+      §8.1 — it must be settled before any effect is authored to listen for
+      <code>attack</code>.)</li>
+  <li><b>The death path</b> — kill provenance, burial, bounties: untouched.</li>
+  <li><b>Targeting and effects</b> — nothing here reads the new machinery; the attack
+      initiative does that when it resumes.</li>
+</ul>
+
+<h2><span class="secno">§5</span>Proof and order of work</h2>
+<div class="table-wrap"><table>
+  <tr><th>Step</th><th>Delivers</th><th>Proof</th></tr>
+  <tr><td><b>1 — The mechanic</b></td>
+      <td><code>CombatCascade.strike</code>; combat's <code>_apply_attack_damage</code>
+      dissolves into it.</td>
+      <td>New suite <code>tests/test_strike.gd</code>: outcome fidelity, event order,
+      silent-and-instant under the null presenter. Full suite green.</td></tr>
+  <tr><td><b>2 — The dressings</b></td>
+      <td>The three presenter surfaces; lunge/bolt/impact/readout choreography moves into
+      LivePresenter (via the established Callable pattern where scene-bound).</td>
+      <td>Full suite green + a real-fight visual check for feel parity — the player must
+      not be able to tell the seam exists. (Combat is inert pending the attack initiative,
+      so the check uses the dev harness's scripted strike.)</td></tr>
+</table></div>
+<p class="quiet">Each step commits separately. Done = both landed, attack initiative
+unblocked.</p>
+
+<h2><span class="secno">§6</span>Sign-off</h2>
+<p>Approving this document approves, at conceptual level:</p>
+<ul class="signoff">
+  <li>The ownership table in §1 — the finding this refactor answers.</li>
+  <li><code>CombatCascade.strike(attacker, target, amount)</code> as the mechanic's front
+      door, living on the cascade; StrikeEngine deferred until the mechanic earns its own
+      file.</li>
+  <li>The three presenter surfaces in §2 (<code>strike_windup</code>,
+      <code>strike_impact</code>, <code>strike_readout</code>) and the choreography moving
+      behind them.</li>
+  <li>§3 — per-attack statuses tick through the normal event advance; no single status
+      ever drives system design.</li>
+  <li>The §4 non-goals, including event order preserved as-is.</li>
+  <li>The two steps and their proofs in §5.</li>
+</ul>
+<p class="quiet">Anything surfacing mid-build gets raised, appended here, and signed
+before it is coded.</p>
+
+</div>

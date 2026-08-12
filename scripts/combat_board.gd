@@ -397,9 +397,9 @@ func get_all_units() -> Array:
 # Given an attacker and a PLACEMENT (LocationManager — so the same question works in the live
 # world and in any hypothetical arrangement), answer which enemy unit its auto-attack hits.
 #   · The candidate pool is the units on the OPPOSITE half of the board.
-#   · The pick follows the unit's authored policy (CardData.target_policy — the raw string is
-#     still authored/parsed: nearest / leaper / wounded / tank / threat, "" = derive from
-#     chess composition), each a different ordering over candidates.
+#   · The pick follows the unit's AUTHORED ATTACK EFFECT's target resolver (the attack
+#     family of named effects — melee_attack et al.; target_policy is deleted), each
+#     flavor a different ordering over candidates.
 #   · "Nearest" is a PREFERENCE ORDERING, not a distance: column depth dominates, mirrored
 #     lane offset breaks ties within a column, deterministic address tie-break after that
 #     (this is the most playtested rule in the game — its behaviour is a design constant).

@@ -360,4 +360,125 @@ phase commit. Nothing merges until all four are done and signed.</p>
 <p class="quiet">Anything that surfaces mid-build and isn't covered here gets raised to you,
 appended to this document, and signed before it's coded.</p>
 
+<h2><span class="secno">§8</span>Appended decisions</h2>
+<p class="quiet">Raised mid-build under the sign-off protocol. Status of each is marked.</p>
+
+<h3>8.0 · The ruled model: ONE crank, no attack-shaped rules — <span style="color:var(--new-ink);background:var(--new-bg);padding:0 0.4rem;border-radius:2px">SIGNED 2026-08-12</span></h3>
+<p><b>Signature note (user):</b> repeat triggers are sanctioned CONDITIONALLY — revisited
+as soon as any other effect needs a follow-up, which is expected soon.</p>
+<p class="quiet">History, kept honest: the initiative paused on a phantom "strike protocol"
+(dissolved — see the <i>code-is-not-design</i> lesson), resumed, and then a first §8.0 was
+coded WITHOUT signature and rebuilt the special case it was deleting
+(<code>attack_action</code>, an attack-shaped procedure hand-walking effects). That code is
+condemned and dies with this revision. What follows is the user's model, written BEFORE the
+code that will obey it.</p>
+
+<p><b>The model, in the user's words: events trigger, effects unfold.</b> The sequencer
+(CombatCascade) fires <code>act</code> for each unit in priority order — that IS a unit's
+turn, and there is no separate "now attack" step anywhere. The one dispatch inside that
+moment finds every effect clinging to it and unfolds each. A unit's attack is an ordinary
+effect, indistinguishable in the rules from any other:</p>
+<ul>
+  <li><b>The one dispatch.</b> <code>CombatCascade.fire(event, holder)</code> — the seam
+      the demolition left waiting — gets its real body: for each effect the holder's card
+      carries whose trigger says yes, unfold it (ActionExecutor: resolve targets → deliver
+      payloads → return Outcomes), let presentation attend it, sweep any deaths through
+      the existing death path. It serves <code>act</code> today and every event forever;
+      nothing in it knows what an attack is.</li>
+  <li><b><code>melee_attack</code> gates itself</b>, needing nothing structural:
+      trigger = <em>act, of self</em>, plus a firing condition —
+      <code>{"untapped": true}</code>, a new EffectCondition form in the condition
+      family's own key-selected style (a plain read of the unit's existing
+      <code>attack_exhausted</code> boolean at ask-time, nothing stored) — so a unit
+      whose round action is spent still gets its act moment (poison ticks) but its attack
+      does not unfold. No writer sets the boolean today (the tap payment died with the
+      ability costume); the condition is kept ON by user ruling 2026-08-12 — tap returns
+      with the signed ActivatedEffect rebuild (§7), and the content is stamped once, not
+      twice.</li>
+  <li><b>Multi-strike is an authored repetition, because content really uses it</b>
+      (enemies author <code>strikes</code> 2–3; the stat is foldable and grantable).
+      TriggeredEffect gains one authored slot: <code>repeats</code> — an evaluable value
+      (a Mutator, default literal 1) — and the unfolding runs resolve-then-deliver that
+      many times, stopping early when a resolution comes back empty or the holder has
+      left play. <code>melee_attack</code> authors
+      <code>"repeats": {"kind": "holder_stat", "stat": "strikes"}</code>. Re-resolution
+      per repeat is what preserves the playtested rule that a flurry re-acquires — a slain
+      victim doesn't soak the follow-ups. Any effect may repeat; nothing about it is
+      attack-specific.</li>
+  <li><b>Presentation attends the unfolding, generically.</b> Two surfaces on
+      CombatPresenter, no-ops on the null presenter (simulations stay instant):
+      <code>action_windup(holder, effect, resolution)</code> — before payloads land; the
+      LIVE presenter decides what that looks like from the effect's identity (for the
+      attack family: the melee lunge held to contact, or the ranged bolt) — and
+      <code>action_results(holder, effect, outcomes)</code> — after; the live presenter
+      reads the Outcomes (dodged, crit, shield split) and plays the numbers, the "Miss",
+      the sidestep. The choreography itself stays on the Combat scene behind the
+      established Callable pattern. These replace the condemned
+      <code>attack_approach</code>/<code>attack_result</code> pair — same dressings, no
+      longer attack-named.</li>
+  <li><b>The strike's news</b> fires from the unfolding as signed in §2: <code>attack</code>,
+      <code>struck</code>, then <code>dodge</code> or <code>crit</code> as the Outcome
+      reports, per delivery to a unit recipient. Emission: the dispatcher emits the news
+      AS RESULTS, reading the returned Outcomes — the user's standing ruling ("the event
+      dispatch is a RESULT, not a cause"); a DAMAGE-form Outcome IS the fact "a blow
+      happened", so no payload plumbing and no attack-type inspection exists anywhere.
+      (An earlier draft of this bullet placed emission "with the payload's delivery" —
+      corrected at build time: that wording contradicted both the rejected payload→pipeline
+      plumbing and the ruling above; flagged to the user in the build report.)</li>
+  <li><b>Total cleanse (user ruling, 2026-08-12), extended to my own unsigned code:</b>
+      already deleted — the old interleaved attack flow
+      (<code>_resolve_attack</code> internals / <code>_perform_strike</code> /
+      <code>_apply_attack_damage</code>), the hand-called per-attack
+      <code>StatusEngine.advance</code>, the old named-effects tier (data + Tool tab +
+      validator), <code>CardData.target_policy</code>. Dies with this revision:
+      <code>CombatCascade.attack_action</code> and everything shaped like it. No remnant,
+      no compat, no commentary survives.</li>
+</ul>
+
+<h3>8.1 · Attack is a game MECHANIC, decoupled by a FRONT DOOR — <span class="quiet">SUPERSEDED by the strike-seam pitch (see §8.0)</span></h3>
+<p>Phase 1 landed clean (suite 858/0, committed). Wiring phase 2 surfaced a question the
+flow diagram left open, and its answer went through three wrong drafts (an event-plumbing
+scheme rejected at review; an engine extraction that moved working code nobody asked to
+move) before the user's ruling landed on the simple truth:</p>
+<p><b>The attack flow already works — its only problem is being rigged into the combat
+loop.</b> So it is decoupled by giving it a <em>front door</em>, not by moving its
+furniture:</p>
+<ul>
+  <li><b>The flow stays byte-for-byte where it is</b> — combat's strike sequence (swing
+      choreography, Arbitrator proposal, event announcements, cues), exactly as playtested.
+      Nothing relocates, no new plumbing exists.</li>
+  <li><b>It runs ON COMMAND:</b> one entry point — combat's attack routine invoked with an
+      attacker — instead of steps inlined into the loop. Today the act moment is its only
+      caller; a future "counter-attack on dodge" payload is simply a second caller through
+      the same door.</li>
+  <li><b>The authored effect supplies the three answers</b> the razed layer used to:
+      <em>whether</em> the unit attacks (it references an attack effect — none means it
+      doesn't swing), <em>whom</em> (the effect's TargetResolver — replacing the dead
+      <code>find_target</code>), and <em>how hard</em> (the effect's Mutator). The payload
+      is the authored <em>description</em> the door reads — it executes nothing.</li>
+  <li><b>Vocabulary (ratified):</b> "attack" is the <em>number</em> (the stat and its
+      namesakes); "strike" is the <em>deed</em> (one blow).</li>
+  <li><b>StrikeEngine is the ratified destination, deferred:</b> the mechanic's one home
+      gets extracted when a second invoker actually exists — the same content-driven rule
+      every species follows. Extracting it today would move playtested code with zero
+      callers to justify it.</li>
+  <li><b>Parked, on the record:</b> today's flow fires the <code>attack</code> event before
+      the damage commits. The events-are-post-hoc ruling suggests strike news should follow
+      the blow; no authored content rides the old timing (the strip forgot everything), so
+      the question is deferred until a triggered effect actually listens for
+      <code>attack</code> — it must be settled before that effect is authored.</li>
+</ul>
+
+<h3>8.2 · Two names the pitch missed — <span style="color:var(--new-ink);background:var(--new-bg);padding:0 0.4rem;border-radius:2px">SIGNED 2026-08-12</span></h3>
+<ul>
+  <li><b><code>EffectLibrary</code></b> (<code>scripts/effects/effect_library.gd</code>) —
+      the loader of <code>data/effects/*.json</code>: named-effect definitions by id,
+      refusing duplicates and malformed entries loudly. The pitch promised the library;
+      this names its class.</li>
+  <li><b><code>TargetResolver.Nearest</code></b> — the pitch said "NearestResolver"; the
+      one-file species rule makes it an inner class, so its real name is
+      <code>TargetResolver.Nearest</code> (as <code>TriggerResolver.Simple</code> already
+      reads). Same object, honest name.</li>
+</ul>
+
 </div>

@@ -30,7 +30,10 @@
 		"attack": 3,
 		"health": 3,
 		"speed": 1,
-		"shield": 1
+		"shield": 1,
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "earth_fire_knight",
@@ -207,7 +210,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "earth_fire_knight_pawn",

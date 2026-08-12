@@ -50,13 +50,14 @@ var image: Texture2D:
 		_image = value
 var elements: Array[String] = []
 var chess_pieces: Array[String] = []
-# The AUTO-ATTACK targeting policy, as AUTHORED — an OPAQUE string on this branch (targeting-
-# cleanup demolition): parsed and re-serialized verbatim so authored content and deck saves
-# round-trip, interpreted by NOTHING. NEEDS: the rebuilt targeting authority reads this
-# vocabulary (nearest / leaper / wounded / tank / threat; "" = derive from the chess
-# composition: pawns/fodder → nearest, knight → leaper, bishop → wounded, rook → tank,
-# queen → threat) and a localized one-line description of it returns to the rules text.
-var target_policy: String = ""
+# The card's EFFECTS in the new schema (signed ATTACK_SYSTEM_DESIGN.html): resolved
+# TriggeredEffect structures — stateless, immutable, shared by every fielded copy. The
+# auto-attack is simply the referenced attack-family effect; a card with no attack effect
+# doesn't swing (pacifists are authorable). effects_src holds the authored form verbatim
+# (named ids as Strings, inline effects as Dictionaries) — it is what to_dict emits.
+# (target_policy is DELETED: the policy lives inside the referenced effect's resolver.)
+var effects: Array = []       # Array[TriggeredEffect]
+var effects_src: Array = []   # the authored form: String ids | Dictionary inline effects
 # Enemy-only fodder cards (tribes the CPU fights with). Kept out of every player-facing
 # pool — reward offers and shop stock (random_non_kings). They carry no element/chess
 # composition, so composition_key is empty and they're already absent from the collection
@@ -77,10 +78,11 @@ var role: String = ""
 # Read through ability_ids(), which adds the derived fallback for un-authored rook combos.
 var abilities: Array[String] = []
 # Ranged units fire a projectile at their target on auto-attack instead of the melee lunge
-# (see combat.gd::_resolve_attack). Authored per-card — NOT derived from composition, so e.g.
+# (a PRESENTATION fact: the live presenter's windup dressing reads it — signed
+# ATTACK_SYSTEM_DESIGN.html §8.0). Authored per-card — NOT derived from composition, so e.g.
 # the base Bishop is ranged but most bishop-composed units aren't unless they opt in.
 var ranged: bool = false
-# Attacks per combat round (the multi-strike stat — see combat._resolve_attack's strike loop).
+# Attacks per combat round (the multi-strike stat — the attack effect's authored repeats reads it).
 # Base 1 for everyone; authored higher for flurry units (harpies and friends). Foldable, so
 # standing effects/statuses can grant extra strikes at read time (CardInstance.get_attribute).
 var strikes: int = 1
@@ -226,11 +228,27 @@ static func build_from_dict(d: Dictionary) -> CardData:
 	card.strikes      = maxi(1, int(d.get("strikes", 1)))
 	card.bounty_gold  = int(d.get("bounty_gold", -1))
 	card.bounty_exp   = int(d.get("bounty_exp", -1))
-	card.target_policy = str(d.get("target_policy", ""))
-	# An EMPTY effects list is the shape every post-strip override snapshot carried — drop it
-	# silently; only a real payload is the dead schema worth refusing loudly.
-	if not (d.get("effects", []) as Array).is_empty():
-		push_error("CardData %s: 'effects' is the deleted schema (effect-cleanse 2026-08-11) — dropped; re-author in the new schema" % card.id)
+	# Effects, the NEW schema (signed ATTACK_SYSTEM_DESIGN.html §3): each entry is either a
+	# named-effect id (a String — "melee_attack", resolved through EffectLibrary) or an
+	# inline TriggeredEffect dictionary (card-unique effects). The authored form is kept
+	# verbatim in effects_src for serialization; the resolved structures land in effects.
+	# A bad entry is refused loudly and dropped — old-schema dicts die inside
+	# TriggeredEffect.parse, unknown ids die here; the card still loads without them.
+	for e_src: Variant in (d.get("effects", []) as Array):
+		if e_src is String:
+			var named := EffectLibrary.get_effect(e_src)
+			if named == null:
+				push_error("CardData %s: unknown named effect '%s' — refused" % [card.id, e_src])
+				continue
+			card.effects_src.append(e_src)
+			card.effects.append(named)
+		else:
+			var inline := TriggeredEffect.parse(e_src)
+			if inline == null:
+				push_error("CardData %s: unparseable inline effect — refused" % card.id)
+				continue
+			card.effects_src.append(e_src)
+			card.effects.append(inline)
 	if d.has("card_type"):
 		card.card_type = CardType.SPELL if d.get("card_type") == "spell" else CardType.UNIT
 	elif not card.elements.is_empty() and card.chess_pieces.is_empty():
@@ -312,10 +330,10 @@ func to_dict() -> Dictionary:
 		d["bounty_gold"] = bounty_gold
 	if bounty_exp >= 0:
 		d["bounty_exp"] = bounty_exp
-	# Only the authored override is serialised — an AUTO ("") card keeps its byte-identical
-	# pre-policy shape, and the strategy re-derives from the composition on load.
-	if not target_policy.is_empty():
-		d["target_policy"] = target_policy
+	# The authored effects form, verbatim: named ids as strings, inline effects as dicts.
+	# An effect-less card keeps its serialized shape byte-identical to before effects existed.
+	if not effects_src.is_empty():
+		d["effects"] = effects_src.duplicate(true)
 	return d
 
 
@@ -350,7 +368,9 @@ static func scaled(base: CardData, power: float) -> CardData:
 	c.strikes       = base.strikes
 	c.bounty_gold   = base.bounty_gold
 	c.bounty_exp    = base.bounty_exp
-	c.target_policy = base.target_policy
+	# Shared, not duplicated: effect structures are stateless and immutable after parse.
+	c.effects       = base.effects
+	c.effects_src   = base.effects_src
 	c.art_path      = base.art_path
 	var mult := 1.0 + power * POWER_STAT_GROWTH
 	c.attack = int(round(base.attack * mult))
@@ -532,16 +552,10 @@ static func _derive(elems: Array, chess: Array, key: String) -> CardData:
 	return c
 
 
-# TARGETING REMOVED (targeting-cleanup demolition). NEEDS: the authorable auto-attack policy
-# vocabulary and its resolution. What stood here:
-#   · TARGET_POLICIES — the semantic vocabulary (nearest / leaper / wounded / tank / threat),
-#     mirrored by the Tool's select and the `targeting.<policy>.desc` locale keys (both still
-#     exist; keep the three in step when this returns).
-#   · effective_target_policy() — the authored `target_policy` override when set, else derived
-#     from the chess composition (backward-compatible with every pre-policy card).
-#   · targeting_line() — the localized one-line rules-text description of the card's targeting,
-#     appended to every board unit's rules text (spells never auto-attack, so they got nothing).
-#     Carried <term> markup for TextIcons.
+# The localized one-line rules-text description of the card's targeting. The policy now
+# lives inside the referenced attack effect's resolver (target_policy is DELETED — signed
+# ATTACK_SYSTEM_DESIGN.html); the line returns with phase 3's attack family, keyed by the
+# referenced effect's id (the `targeting.<policy>.desc` locale keys still exist for it).
 func targeting_line() -> String:
 	return ""
 

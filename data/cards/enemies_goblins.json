@@ -10,7 +10,10 @@
     "enemy_only": true,
     "tribe": "goblin",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "goblin_fanatic",
@@ -23,7 +26,10 @@
     "enemy_only": true,
     "tribe": "goblin",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "goblin_bomber",
@@ -36,7 +42,10 @@
     "enemy_only": true,
     "tribe": "goblin",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "goblin_warboss",
@@ -49,6 +58,9 @@
     "enemy_only": true,
     "tribe": "goblin",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   }
 ]

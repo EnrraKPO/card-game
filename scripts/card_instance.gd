@@ -132,7 +132,7 @@ func get_attribute(attr: String) -> int:
 		# multiplier points ×100 (50 = +0.5×). Read by Arbitrator.crit_chance / crit_multiplier.
 		"crit_chance_bonus": return modifiers.get("crit_chance_bonus", 0) + LiveEffects.bonus(self, "crit_chance_bonus")
 		"crit_multiplier_bonus": return modifiers.get("crit_multiplier_bonus", 0) + LiveEffects.bonus(self, "crit_multiplier_bonus")
-		# Attacks per combat round (combat._resolve_attack loops this many strikes). Base is the
+		# Attacks per combat round (the attack effect's authored repeats reads it). Base is the
 		# card's authored stat (1 for almost everyone); written modifiers and live standing
 		# effects fold in like any stat, floored at 1 — a debuff can't strip the basic attack.
 		"strikes": return maxi(1, data.strikes + modifiers.get("strikes", 0) + LiveEffects.bonus(self, "strikes"))

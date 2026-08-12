@@ -10,7 +10,10 @@
     "enemy_only": true,
     "tribe": "dino",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "dino_raptor",
@@ -23,7 +26,10 @@
     "enemy_only": true,
     "tribe": "dino",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "dino_pachy",
@@ -36,7 +42,10 @@
     "enemy_only": true,
     "tribe": "dino",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "dino_stego",
@@ -50,7 +59,10 @@
     "enemy_only": true,
     "tribe": "dino",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "dino_trike",
@@ -64,7 +76,10 @@
     "enemy_only": true,
     "tribe": "dino",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "dino_rex_junior",
@@ -77,7 +92,10 @@
     "enemy_only": true,
     "tribe": "dino",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "dino_packmother",
@@ -92,7 +110,10 @@
     "tribe": "dino",
     "description": "The valley hunts as one, and she is its appetite. A Compy Pack scurries in at every round's end. Fell her to win.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "dino_carno",
@@ -107,7 +128,10 @@
     "tribe": "dino",
     "description": "Bred by the valley for one job. Every kill sharpens it: +2 <attack> per victim. Drop it before the math gets away from you.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "dino_rex",
@@ -123,6 +147,9 @@
     "tribe": "dino",
     "description": "The asteroid missed one. Two strikes a round, nine tons each, and every kill heals it 5. Finish what the sky started to win.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   }
 ]

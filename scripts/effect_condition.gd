@@ -53,6 +53,12 @@ var card_type: String = ""
 # element (`true`) or none (`false`). Native replacement for filter {"has_element": true}.
 var has_element_set := false
 var has_element := false
+# UNTAPPED-form condition: passes while the unit's round action is unspent (`true`) or
+# spent (`false`) — a plain ask-time read of CardInstance.attack_exhausted, nothing
+# stored (signed ATTACK_SYSTEM_DESIGN.html §8.0: melee_attack gates itself with it; the
+# boolean's writer returns with the ActivatedEffect rebuild's tap costs).
+var untapped_set := false
+var untapped := true
 # (The load-derived VIABILITY form — the prohibit-non-ops implicit condition — and the
 # programmatic custom_check hook were deleted 2026-08-11: the viability installer died in
 # the targeting demolition and orphaned implementations don't get kept, and inline code
@@ -118,6 +124,11 @@ static func from_dict(d: Dictionary) -> EffectCondition:
 		c.has_element_set = true
 		c.has_element = bool(d.get("has_element", true))
 		return c
+	if d.has("untapped"):
+		var c := EffectCondition.new()
+		c.untapped_set = true
+		c.untapped = bool(d.get("untapped", true))
+		return c
 	if d.has("mutation"):
 		var c := EffectCondition.new()
 		c.mutation_attr = str(d.get("mutation", ""))
@@ -160,6 +171,8 @@ func to_dict() -> Dictionary:
 		return {"card_type": card_type}
 	if has_element_set:
 		return {"has_element": has_element}
+	if untapped_set:
+		return {"untapped": untapped}
 	if not mutation_attr.is_empty():
 		return {"mutation": mutation_attr, "comparator": comparator_key(comparator), "value": value}
 	return {
@@ -228,6 +241,8 @@ func evaluate(card: CardInstance, owner: int = -1) -> bool:
 	if has_element_set:
 		# Same lens as the composition form — a granted element must satisfy both alike.
 		return LiveEffects.has_any_element(card) == has_element
+	if untapped_set:
+		return (not card.attack_exhausted) == untapped
 	return _compare(card.get_attribute(attribute))
 
 

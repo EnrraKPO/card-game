@@ -62,10 +62,11 @@ const TYPES = {
   // Control via the Vfx autoload. Procedural renderer only today; the prompt targets future
   // asset-backed renderers (flipbook sprite sheets).
   vfx:        { label: 'VFX',             dataDir: 'data/vfx',        artDir: null,               artW: 1024, artH: 1024, rembg: false },
-  // NAMED EFFECTS: the keyword library ("Burn", "Venom", "Blind"). The old payload half
-  // died with the effect layer (2026-08-11) — each entry is an id + description SHELL:
-  // the keyword's re-authoring brief for the new schema (TARGETING_DESIGN.md). No art slot.
-  namedeffect: { label: 'Named Effect',   dataDir: 'data/named_effects', artDir: null,      artW: 1024, artH: 1024, rembg: false },
+  // (The OLD named-effects keyword tier — id+description shells in data/named_effects —
+  // was deleted whole 2026-08-12 with the attack rebuild's total cleanse; its briefs live
+  // in git history. The NEW named-effect library is data/effects/ (TriggeredEffects by id,
+  // signed ATTACK_SYSTEM_DESIGN.html); its Tool editor arrives with the attack pitch's
+  // phase 3.)
   // (The INNATE RULES tier — world rules every unit implicitly carried — was KILLED whole
   // 2026-08-11, user ruling: peripheral delivery clutter; re-designed from scratch if ever
   // wanted. data/innate_effects/ is gone with it.)
@@ -1323,9 +1324,9 @@ function stripMeta(data) {
 // (TARGETING_DESIGN.md), the Tool grows NEW validators mirroring the NEW game parsers.
 const ELEMENTS = ['fire','water','air','earth','darkness','light'];
 const PIECES = ['pawn','knight','bishop','rook','queen','king'];
-// Auto-attack targeting policies (mirrors CardData.TARGET_POLICIES and the editor's select /
-// the targeting.<policy>.desc locale keys). "" / absent = auto (derived from the composition).
-const TARGET_POLICIES = ['nearest','leaper','wounded','tank','threat'];
+// (TARGET_POLICIES deleted 2026-08-12 with CardData.target_policy: the auto-attack policy
+// lives inside the referenced attack effect's target resolver — signed
+// ATTACK_SYSTEM_DESIGN.html. The attack-family select returns with phase 3's editor.)
 // Battlefield ROLE tags (mirrors CardData.role and the enemy engine's survival-weight
 // table keys — see scripts/enemy/board_scoring.gd). "" / absent = untagged, which resolves
 // through the table's "default" entry. Kings need no role: is_king already reads as captain.
@@ -1341,6 +1342,33 @@ function refuseDeletedEffects(d, where) {
   if (d.effects.length)
     return `${where}: 'effects' is the deleted schema (effect-cleanse 2026-08-11) — `
       + 're-author in the new schema (TARGETING_DESIGN.md) as the rebuild lands';
+  return null;
+}
+
+// CARDS speak the NEW effects schema (signed ATTACK_SYSTEM_DESIGN.html, phase 2): each
+// entry is a named-effect id (string, resolved by the game's EffectLibrary from
+// data/effects/) or an inline TriggeredEffect object (which must at least carry its
+// trigger). Old-schema dicts have no "trigger" and are refused here; deep validation of
+// inline effects mirrors the game parsers with phase 3's editor.
+const DELETED_EFFECT_KEYS = ['attribute', 'amount', 'per_stack', 'per_stack_chance',
+  'status', 'riders', 'named', 'eval', 'duration', 'chance'];
+function validateNewEffects(d, where) {
+  if (d == null || d.effects == null) return null;
+  if (!Array.isArray(d.effects)) return `${where}: 'effects' must be an array`;
+  for (const e of d.effects) {
+    if (typeof e === 'string') continue;
+    if (e == null || typeof e !== 'object')
+      return `${where}: each effect is a named-effect id (string) or an inline effect object`;
+    // The native trigger is a DICTIONARY ({kind: "event", ...}); the deleted schema's was
+    // a string, and its payload rode the effect's top level — both refused loudly, so the
+    // old language cannot flow back into data/ looking like the new one.
+    if (typeof e.trigger !== 'object' || e.trigger == null)
+      return `${where}: an inline effect needs its native trigger object (the deleted string schema is refused)`;
+    for (const k of DELETED_EFFECT_KEYS)
+      if (e[k] != null)
+        return `${where}: '${k}' is the deleted schema (effect-cleanse 2026-08-11) — `
+          + 're-author as payloads/mutators (TARGETING_DESIGN.md)';
+  }
   return null;
 }
 
@@ -1361,13 +1389,13 @@ function validateItem(type, d) {
       }
       for (const el of d.elements || []) if (!ELEMENTS.includes(el)) return `unknown element "${el}"`;
       for (const p of d.chess_pieces || []) if (!PIECES.includes(p)) return `unknown chess piece "${p}"`;
-      if (d.target_policy && !TARGET_POLICIES.includes(d.target_policy)) return `bad target_policy "${d.target_policy}"`;
+      if (d.target_policy != null) return `'target_policy' is deleted (2026-08-12) — the policy lives inside the referenced attack effect`;
       if (d.role && !UNIT_ROLES.includes(d.role)) return `bad role "${d.role}" (${UNIT_ROLES.join(', ')})`;
       // Kill bounties (see GameData.kill_bounty): absent = derived from the mana cost, a
       // number = a flat override. 0 is legal and means "pays nothing".
       for (const f of ['bounty_gold', 'bounty_exp'])
         if (d[f] != null && (typeof d[f] !== 'number' || d[f] < 0)) return `${f} must be a number >= 0`;
-      return refuseDeletedEffects(d, 'card');
+      return validateNewEffects(d, 'card');
     }
     case 'relic': {
       if (!d.display_name) return 'missing display_name';
@@ -1394,15 +1422,6 @@ function validateItem(type, d) {
         }
       }
       return refuseDeletedEffects(d, 'status');
-    }
-    case 'namedeffect': {
-      // A keyword SHELL (id + description): the re-authoring brief. The old payload half
-      // (attribute/amount/status/riders/$X magnitude) is the deleted schema — refused.
-      for (const k of ['attribute', 'amount', 'per_stack', 'per_stack_chance', 'status', 'riders', 'eval', 'named'])
-        if (d[k] != null)
-          return `'${k}' is the deleted named-effect payload schema (effect-cleanse 2026-08-11) — `
-            + 'a named effect is an id + description brief until the rebuild lands';
-      return refuseDeletedEffects(d, 'namedeffect');
     }
     case 'ability': {
       if (d.cost && typeof d.cost.mana !== 'number') return 'ability cost needs a mana amount';

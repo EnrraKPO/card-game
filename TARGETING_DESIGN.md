@@ -92,11 +92,17 @@ The authored unit reads as a sentence: *"When [event], if [conditions]: deliver
   rules only. Conditions may attach per payload. Effects may be **targetless**: a
   payload whose recipient is derivable (draw/discard/mana/max_mana land on the holder's
   own side via the allegiance anchor) authors no target at all.
-- **Attack is a payload kind, not a ruleset.** The strike mechanics (dodge, interception
-  ordering, crit-after-interception) live inside the attack payload's delivery rules,
-  the way the status payload owns stacking. Nothing above the payload knows attacks are
-  special. Two proofs of decoupling: (A) a unit's act need not be an attack; (B) an
-  attack payload can ride any action ("when played, make an attack").
+- **Attack is a payload kind — and a GAME MECHANIC (refined 2026-08-11, signed §8.1 of
+  the attack pitch).** The payload owns the *delivery* (routing, the authored amount);
+  the mechanic owns the *striking*: `StrikeEngine` is the one-blow protocol's single
+  home (emit `attack` → propose to the Arbitrator → decay tick → emit `struck` →
+  `dodge`/`crit` news), invoked by the attack payload exactly as the status payload
+  invokes StatusEngine — the effect system happens to use the mechanic, it never owns
+  it. Vocabulary: "attack" is the NUMBER (the stat and its namesakes); "strike" is the
+  DEED (one blow). Nothing above the payload knows attacks are special. Two proofs of
+  decoupling: (A) a unit's act need not be an attack; (B) an attack payload can ride
+  any action ("when played, make an attack" — or "counter-attack on dodge", the same
+  engine through the same payload).
 - **Auto-attack is a TriggeredEffect** on the `act` event — and (re-ruled 2026-08-11) an
   **explicitly authored NAMED EFFECT**, never synthesized from a card field: the attack
   family (`melee_attack` / `ranged_attack` / `leap_attack` / policy variants) is authored

@@ -9,7 +9,10 @@
 		"description": "A test dummy with nothing going on — cheap, weak, disposable.",
 		"enemy_only": true,
 		"tribe": "dummy",
-		"role": "fodder"
+		"role": "fodder",
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "tank_dummy",
@@ -20,7 +23,10 @@
 		"speed": 1,
 		"shield": 2,
 		"enemy_only": true,
-		"role": "tank"
+		"role": "tank",
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "dps_dummy",
@@ -32,7 +38,10 @@
 		"description": "A test dummy built for damage output — fast and hard-hitting, but fragile.",
 		"enemy_only": true,
 		"tribe": "dummy",
-		"role": "dps"
+		"role": "dps",
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "support_dummy",
@@ -48,7 +57,10 @@
 			"heal",
 			"fire_bless"
 		],
-		"role": "support"
+		"role": "support",
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "burst_damage_dummy",
@@ -63,7 +75,10 @@
 		"abilities": [
 			"magic_missile"
 		],
-		"role": "burst"
+		"role": "burst",
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "captain_dummy",
@@ -76,7 +91,10 @@
 		"description": "The test roster's Captain. Bring it down to win.",
 		"is_king": true,
 		"enemy_only": true,
-		"tribe": "dummy"
+		"tribe": "dummy",
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "dummy_group_heal",
@@ -94,6 +112,9 @@
 		"description": "A test dummy that caught fire and kept working. Counts as a fire unit — the ground it strikes burns.",
 		"enemy_only": true,
 		"tribe": "dummy",
-		"role": "fodder"
+		"role": "fodder",
+		"effects": [
+			"melee_attack"
+		]
 	}
 ]

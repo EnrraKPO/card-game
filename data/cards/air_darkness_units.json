@@ -36,7 +36,10 @@
 		"attack": 2,
 		"health": 2,
 		"speed": 5,
-		"shield": 1
+		"shield": 1,
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "air_darkness_knight",
@@ -220,7 +223,10 @@
 		"attack": 3,
 		"health": 3,
 		"speed": 5,
-		"shield": 2
+		"shield": 2,
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "air_darkness_knight_pawn",

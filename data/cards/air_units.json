@@ -11,6 +11,9 @@
 		],
 		"chess_pieces": [
 			"pawn"
+		],
+		"effects": [
+			"melee_attack"
 		]
 	},
 	{
@@ -94,7 +97,10 @@
 		"attack": 2,
 		"health": 4,
 		"speed": 5,
-		"shield": 1
+		"shield": 1,
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "air_knight_pawn",

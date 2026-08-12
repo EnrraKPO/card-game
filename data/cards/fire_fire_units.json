@@ -40,7 +40,10 @@
 					"at": "2026-07-07"
 				}
 			}
-		}
+		},
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "fire_fire_knight",
@@ -230,7 +233,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "fire_fire_knight_pawn",

@@ -31,7 +31,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "earth_earth_knight",
@@ -208,7 +211,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "earth_earth_knight_pawn",

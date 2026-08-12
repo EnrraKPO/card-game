@@ -10,7 +10,10 @@
     "enemy_only": true,
     "tribe": "slime",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "slime_green",
@@ -23,7 +26,10 @@
     "enemy_only": true,
     "tribe": "slime",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "slime_blue",
@@ -36,7 +42,10 @@
     "enemy_only": true,
     "tribe": "slime",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "slime_sticky",
@@ -49,7 +58,10 @@
     "enemy_only": true,
     "tribe": "slime",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "slime_toxic",
@@ -62,7 +74,10 @@
     "enemy_only": true,
     "tribe": "slime",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "slime_magma",
@@ -75,7 +90,10 @@
     "enemy_only": true,
     "tribe": "slime",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "slime_gluttonous",
@@ -88,7 +106,10 @@
     "enemy_only": true,
     "tribe": "slime",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "slime_big",
@@ -101,7 +122,10 @@
     "enemy_only": true,
     "tribe": "slime",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "slime_mega",
@@ -114,7 +138,10 @@
     "enemy_only": true,
     "tribe": "slime",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "slime_king_gel",
@@ -129,7 +156,10 @@
     "tribe": "slime",
     "description": "Sovereign of the ooze, wearing a crown it digested along with its previous owner. Grows crueler (+1 <attack>) each time a subject pops. Cut it down to win.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "slime_amalgam",
@@ -144,7 +174,10 @@
     "tribe": "slime",
     "description": "Every slime that ever died in this bog is still in there, somewhere. Absorbs each fallen ally for +1 <attack> and +2 <health>. Destroy it to win.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "slime_overlord",
@@ -159,7 +192,10 @@
     "tribe": "slime",
     "description": "An ocean pretending to be a monster. Slimes whatever it strikes — and killing it only frees what boils at its core. Destroy BOTH forms to win.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "slime_overlord_reborn",
@@ -174,6 +210,9 @@
     "tribe": "slime",
     "description": "The Overlord's boiling core, freed of its bulk — twice as fast, twice as angry, striking twice a round. This one stays dead.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   }
 ]

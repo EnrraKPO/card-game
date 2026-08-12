@@ -10,7 +10,10 @@
     "enemy_only": true,
     "tribe": "undead",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "bone_archer",
@@ -37,7 +40,10 @@
     "enemy_only": true,
     "tribe": "undead",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "vampire_lord",
@@ -50,6 +56,9 @@
     "enemy_only": true,
     "tribe": "undead",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   }
 ]

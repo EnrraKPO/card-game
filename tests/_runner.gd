@@ -36,6 +36,7 @@ const SUITES: Array = [
 	preload("res://tests/test_cascade.gd"),
 	preload("res://tests/test_mutators.gd"),
 	preload("res://tests/test_target_resolvers.gd"),
+	preload("res://tests/test_attack.gd"),
 ]
 
 

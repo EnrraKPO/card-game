@@ -10,7 +10,10 @@
     "enemy_only": true,
     "tribe": "beast",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "beast_boar",
@@ -23,7 +26,10 @@
     "enemy_only": true,
     "tribe": "beast",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "beast_hyena",
@@ -36,7 +42,10 @@
     "enemy_only": true,
     "tribe": "beast",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "beast_panther",
@@ -49,7 +58,10 @@
     "enemy_only": true,
     "tribe": "beast",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "beast_bear",
@@ -62,7 +74,10 @@
     "enemy_only": true,
     "tribe": "beast",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "beast_direwolf",
@@ -75,7 +90,10 @@
     "enemy_only": true,
     "tribe": "beast",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "beast_ape",
@@ -88,7 +106,10 @@
     "enemy_only": true,
     "tribe": "beast",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "beast_behemoth",
@@ -101,7 +122,10 @@
     "enemy_only": true,
     "tribe": "beast",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "beast_alpha",
@@ -116,7 +140,10 @@
     "tribe": "beast",
     "description": "The pack answers to one voice. Every kill feeds him: heals 3 whenever he slays a unit. Bring him down to win.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "beast_ancient",
@@ -131,7 +158,10 @@
     "tribe": "beast",
     "description": "Hunters have carved a hundred scars into its hide, and each one made it meaner: +1 <attack> every time it takes a hit. Destroy it to win.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "beast_ragnor",
@@ -146,6 +176,9 @@
     "tribe": "beast",
     "description": "It has never once stopped eating. Every unit it kills feeds it +2 <attack> and 4 healing — kill it before it kills everything. Destroy it to win.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   }
 ]

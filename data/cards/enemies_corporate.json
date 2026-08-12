@@ -10,7 +10,10 @@
     "enemy_only": true,
     "tribe": "corporate",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "corp_middle_manager",
@@ -23,7 +26,10 @@
     "enemy_only": true,
     "tribe": "corporate",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "corp_hr",
@@ -36,7 +42,10 @@
     "enemy_only": true,
     "tribe": "corporate",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "corp_sales_shark",
@@ -49,7 +58,10 @@
     "enemy_only": true,
     "tribe": "corporate",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "corp_lawyer",
@@ -63,7 +75,10 @@
     "enemy_only": true,
     "tribe": "corporate",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "corp_consultant",
@@ -76,7 +91,10 @@
     "enemy_only": true,
     "tribe": "corporate",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "corp_security",
@@ -90,7 +108,10 @@
     "enemy_only": true,
     "tribe": "corporate",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "corp_vp",
@@ -105,7 +126,10 @@
     "tribe": "corporate",
     "description": "Nobody knows what synergy is, but the quarterly targets keep rising: +1 <attack> to all reports at every round's end. Disrupt him to win.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "corp_cfo",
@@ -120,7 +144,10 @@
     "tribe": "corporate",
     "description": "Every attack against the company is a line item, and she cuts budgets accordingly: attackers lose 1 <attack> per swing. Zero her out to win.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "corp_ceo",
@@ -135,7 +162,10 @@
     "tribe": "corporate",
     "description": "The hiring pipeline never sleeps (an Unpaid Intern onboards every round) and every hostile takeover (kill) is +1 <attack>. Terminating him triggers the severance clause — destroy THAT too to win.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "corp_golden_parachute",
@@ -150,6 +180,9 @@
     "tribe": "corporate",
     "description": "He's escaping with the severance package! Fast, slippery (+25% dodge), and worth eight figures. Ground him before he reaches the helipad to win.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   }
 ]

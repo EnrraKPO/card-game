@@ -34,7 +34,10 @@
 		"cost": 0,
 		"attack": 1,
 		"health": 6,
-		"speed": 2
+		"speed": 2,
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "light_water_knight",
@@ -213,7 +216,10 @@
 		"attack": 2,
 		"health": 7,
 		"speed": 2,
-		"shield": 1
+		"shield": 1,
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "light_water_knight_pawn",

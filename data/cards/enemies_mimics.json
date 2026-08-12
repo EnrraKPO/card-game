@@ -10,7 +10,10 @@
     "enemy_only": true,
     "tribe": "mimic",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "mimic_rug",
@@ -23,7 +26,10 @@
     "enemy_only": true,
     "tribe": "mimic",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "mimic_table",
@@ -37,7 +43,10 @@
     "enemy_only": true,
     "tribe": "mimic",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "mimic_chest",
@@ -50,7 +59,10 @@
     "enemy_only": true,
     "tribe": "mimic",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "mimic_landlord",
@@ -65,6 +77,9 @@
     "tribe": "mimic",
     "description": "The entire house was the mimic. Every blow against it gets a door slammed on the offender (2 damage back). The security deposit was never coming back. Evict it to win.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   }
 ]

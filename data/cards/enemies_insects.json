@@ -10,7 +10,10 @@
     "enemy_only": true,
     "tribe": "insect",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "insect_worker",
@@ -24,7 +27,10 @@
     "enemy_only": true,
     "tribe": "insect",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "insect_vespid",
@@ -37,7 +43,10 @@
     "enemy_only": true,
     "tribe": "insect",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "insect_cocoon",
@@ -50,7 +59,10 @@
     "enemy_only": true,
     "tribe": "insect",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "insect_beetle",
@@ -63,7 +75,10 @@
     "enemy_only": true,
     "tribe": "insect",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "insect_locust",
@@ -76,7 +91,10 @@
     "enemy_only": true,
     "tribe": "insect",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "insect_mantis",
@@ -90,7 +108,10 @@
     "enemy_only": true,
     "tribe": "insect",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "insect_broodmother",
@@ -103,7 +124,10 @@
     "enemy_only": true,
     "tribe": "insect",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "insect_hive_tyrant",
@@ -118,7 +142,10 @@
     "tribe": "insect",
     "description": "The hive's will on six legs. Extrudes a fresh Hive Grub at every round's end. Crush him to win.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "insect_mantis_prime",
@@ -134,7 +161,10 @@
     "tribe": "insect",
     "description": "The perfected blade the hive keeps for special occasions. Strikes twice a round, each on a fresh victim. Break it to win.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "insect_hive_queen",
@@ -149,6 +179,9 @@
     "tribe": "insect",
     "description": "Mother of every chitinous thing on this map. Lays a Sealed Cocoon at every round's end — deal with them early or meet what hatches. Slay her to win.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   }
 ]

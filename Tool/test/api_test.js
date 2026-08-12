@@ -100,6 +100,14 @@ async function main() {
       id: 'apitest_emptyfx', display_name: 'E', cost: 1, attack: 1, health: 1, speed: 1, effects: [] } });
     check('card with an EMPTY effects array saves (post-strip shape)', r.status === 200, JSON.stringify(r.data).slice(0, 200));
     await api('/api/game/delete-entry', { type: 'card', id: 'apitest_emptyfx' });
+    // The NEW schema (signed ATTACK_SYSTEM_DESIGN.html): named-effect references and
+    // native inline effects flow through the Tool — the phase-3 authoring contract.
+    r = await api('/api/game/save', { type: 'card', file: 'apitest_units.json', data: {
+      id: 'apitest_newfx', display_name: 'N', cost: 1, attack: 1, health: 1, speed: 1,
+      effects: ['melee_attack', { trigger: { kind: 'event', event: 'act', of: 'self' },
+        targets: { kind: 'nearest' }, payloads: [{ kind: 'attack', amount: 3 }] }] } });
+    check('card with new-schema effects (reference + inline) saves', r.status === 200, JSON.stringify(r.data).slice(0, 200));
+    await api('/api/game/delete-entry', { type: 'card', id: 'apitest_newfx' });
     r = await api('/api/game/save', { type: 'status', file: 'apitest_statuses.json', data: {
       id: 'apitest_oldstatus', effects: OLD_FX } });
     check('status with authored effects refused', r.status === 400 && /deleted schema/.test(r.data.error), r.data.error);
@@ -123,13 +131,11 @@ async function main() {
       spread: { phase: 'turn_start', chance: 0.2, decay_chance: 0.4 } } });
     check('spread block refused (deleted mechanism)', r.status === 400 && /'spread' is deleted/.test(r.data.error), r.data.error);
 
-    // ── named effects survive as id + description SHELLS (briefs) ──
+    // ── the OLD named-effects keyword tier was deleted whole (2026-08-12, attack rebuild
+    // total cleanse) — the type no longer exists; the NEW library is data/effects/ ──
     r = await api('/api/game/save', { type: 'namedeffect', file: 'apitest_named.json', data: {
       id: 'apitest_burn', display_name: 'Burn', description: 'Deal 1 damage.' } });
-    check('named-effect shell saves', r.status === 200, JSON.stringify(r.data).slice(0, 200));
-    r = await api('/api/game/save', { type: 'namedeffect', file: 'apitest_named.json', data: {
-      id: 'apitest_oldnamed', display_name: 'Old', attribute: 'damage_taken', amount: 1 } });
-    check('named-effect payload keys refused', r.status === 400 && /deleted named-effect payload schema/.test(r.data.error), r.data.error);
+    check('namedeffect type is gone', r.status === 400, JSON.stringify(r.data).slice(0, 120));
     // the innate-rules tier was KILLED whole (2026-08-11 ruling) — the type no longer exists
     r = await api('/api/game/save', { type: 'innate', file: 'apitest_innate.json', data: {
       id: 'apitest_scorch', display_name: 'Scorch' } });
@@ -145,7 +151,6 @@ async function main() {
     r = await api('/api/game/save', { type: 'ability', file: 'apitest_abilities.json', data: {
       id: 'apitest_oldability2', cost: { mana: 1 }, effects: OLD_FX } });
     check('ability with authored effects refused', r.status === 400 && /deleted schema/.test(r.data.error), r.data.error);
-    await api('/api/game/delete-entry', { type: 'namedeffect', id: 'apitest_burn' });
 
     // ── enemy-engine authoring handles: card role + encounter survival_weights ──
     // These are the dials the CPU actually reads (BoardScoring). The Tool used to drop

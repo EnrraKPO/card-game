@@ -18,13 +18,16 @@ const RELIC_CHIP_SPAN := 0.34
 var _animator: CombatAnimator
 var _tree: SceneTree
 var _board: CombatBoard
-var _relic_tray_get: Callable   # -> RelicTray; the tray is built after combat's wiring block
-var _king_fall_cb: Callable     # Combat._king_fall
-var _fade_out_cb: Callable      # Combat._fade_out
+var _relic_tray_get: Callable      # -> RelicTray; the tray is built after combat's wiring block
+var _king_fall_cb: Callable        # Combat._king_fall
+var _fade_out_cb: Callable         # Combat._fade_out
+var _action_windup_cb: Callable    # Combat._cue_action_windup (lunge / bolt, scene-heavy)
+var _action_results_cb: Callable   # Combat._cue_action_results (readout + withdrawal)
 
 
 static func make(animator: CombatAnimator, tree: SceneTree, board: CombatBoard,
-		relic_tray_get: Callable, king_fall_cb: Callable, fade_out_cb: Callable) -> LivePresenter:
+		relic_tray_get: Callable, king_fall_cb: Callable, fade_out_cb: Callable,
+		action_windup_cb: Callable, action_results_cb: Callable) -> LivePresenter:
 	var p := LivePresenter.new()
 	p._animator = animator
 	p._tree = tree
@@ -32,7 +35,20 @@ static func make(animator: CombatAnimator, tree: SceneTree, board: CombatBoard,
 	p._relic_tray_get = relic_tray_get
 	p._king_fall_cb = king_fall_cb
 	p._fade_out_cb = fade_out_cb
+	p._action_windup_cb = action_windup_cb
+	p._action_results_cb = action_results_cb
 	return p
+
+
+# Presentation attending an unfolding effect (see CombatPresenter): scene-heavy
+# choreography stays on the Combat scene and is reached through Callables — the
+# established pattern above.
+func action_windup(holder: CardInstance, effect: TriggeredEffect, recipients: Array) -> void:
+	await _action_windup_cb.call(holder, effect, recipients)
+
+
+func action_results(holder: CardInstance, effect: TriggeredEffect, outcomes: Array) -> void:
+	await _action_results_cb.call(holder, effect, outcomes)
 
 
 func show_effect_results(results: Array, holder: CardInstance, status_id: String = "",

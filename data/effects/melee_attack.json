@@ -1,0 +1,12 @@
+{
+	"id": "melee_attack",
+	"trigger": {
+		"kind": "event", "event": "act", "of": "self",
+		"conditions": [{"untapped": true}]
+	},
+	"targets": {"kind": "nearest"},
+	"payloads": [
+		{"kind": "attack", "amount": {"kind": "holder_stat", "stat": "attack"}}
+	],
+	"repeats": {"kind": "holder_stat", "stat": "strikes"}
+}

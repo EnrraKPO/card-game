@@ -11,7 +11,10 @@
     "enemy_only": true,
     "tribe": "gridiron",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "fb_referee",
@@ -24,7 +27,10 @@
     "enemy_only": true,
     "tribe": "gridiron",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "fb_runningback",
@@ -37,7 +43,10 @@
     "enemy_only": true,
     "tribe": "gridiron",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "fb_mascot",
@@ -50,7 +59,10 @@
     "enemy_only": true,
     "tribe": "gridiron",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "fb_quarterback",
@@ -79,6 +91,9 @@
     "tribe": "gridiron",
     "description": "Half drill sergeant, half cryptid, all clipboard. Runs conditioning at every round's end: +1 <speed> to the whole roster. Fire the coach to win.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   }
 ]

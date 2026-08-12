@@ -175,7 +175,8 @@ func _ready() -> void:
 	# animates; a simulation would hand the same cascade the null base class instead. The
 	# tray is fetched through a Callable because it is built after this wiring block.
 	_presenter = LivePresenter.make(_animator, get_tree(), _board,
-			func() -> RelicTray: return _relic_tray, _king_fall, _fade_out)
+			func() -> RelicTray: return _relic_tray, _king_fall, _fade_out,
+			_cue_action_windup, _cue_action_results)
 	_board.world = _world
 	_cascade = CombatCascade.make(_world, _presenter)
 
@@ -623,135 +624,171 @@ func _run_combat() -> void:
 		# Publish whose moment this is (the strip lights its entry — see CombatWorld.acting). Set
 		# for EVERY unit whose turn comes up, tapped ones included: their act moment still fires.
 		_world.acting = attacker
-		# The unit's turn has come up: broadcast its ACT moment (subject = this unit). Its own
-		# effects proc (e.g. poison) then its statuses decay. This can kill it before it acts, so
-		# re-check life before its attack.
+		# The unit's turn has come up: broadcast its ACT moment (subject = this unit). That
+		# moment IS the whole turn (signed ATTACK_SYSTEM_DESIGN.html §8.0): the one dispatch
+		# unfolds everything that clings to it — poison procs, the unit's own attack effect
+		# (gated of-self + untapped, repeating per its strikes stat), status decay. There is
+		# no separate "now attack" step anywhere.
 		await _resolve_event(&"act", attacker)
-		if not attacker.is_alive():
-			continue
-		# A building that spent its attack generating a card sits this round out.
-		if attacker.attack_exhausted:
-			continue
-		await _resolve_attack(attacker)
 	# The round is over: nobody's moment, so the strip stops pointing at anyone.
 	_world.acting = null
 
 
-# Plays out a single attacker's turn: `strikes` full strike sequences (base 1 — the
-# multi-strike stat; standing effects can add more). Each strike re-acquires its target,
-# so a slain victim doesn't soak the follow-ups; the attacker dying mid-flurry (retaliation,
-# a deathrattle) or a king falling ends the flurry immediately.
-func _resolve_attack(attacker: CardInstance) -> void:
-	var strikes := attacker.get_attribute("strikes")
-	for _i in strikes:
-		# A re-entrant effect from an earlier strike (an on-death/on-attack trigger) can pull the
-		# attacker OFF the board without killing it (a bounce, push, or relocation leaves health > 0),
-		# so "still alive" isn't enough — it must still hold a slot to swing from.
-		if not attacker.is_alive() or attacker.attack_exhausted or _board.get_card_ui(attacker) == null:
-			break
-		var target := _board.find_target(attacker)
-		if target == null:
-			break
-		await _perform_strike(attacker, target)
-		if _board.any_king_dead():
-			break
+# ── Presentation attending an unfolding effect (CombatPresenter.action_windup/
+# action_results, reached via LivePresenter's Callables). The rules moment is the
+# cascade's one dispatch; these are what the live fight puts on its two beats. The
+# dressing is chosen from the effect's IDENTITY — presentation may inspect what rules may
+# not: an effect delivering a blow gets the attack choreography; future effect families
+# bring their own dressings with their rebuilds. ──
 
-
-# One full strike sequence against an acquired target: delivery (melee lunge or ranged
-# bolt), damage + triggered effects, and the target's death or survival.
-func _perform_strike(attacker: CardInstance, target: CardInstance) -> void:
+# WINDUP: everything the player sees before the payloads land; the rules hold for it so
+# the delivery lands on the beat of contact.
+#   · Ranged: hold position and fire a bolt; the hit lands when it arrives. The bolt
+#     carries the attacker's composition so the library can fly its element-variant look.
+#   · Melee: lunge across and plunge INTO the target (overlapping from the side it
+#     approaches — player units from the target's left, enemy units from its right) and
+#     bounce back out to the attack position beside it. The lunge and rebound chain with
+#     no pause at the overshoot, so the hit keeps its momentum on impact; the withdrawal
+#     (started by the results cue) keeps that same momentum instead of parking the
+#     attacker beside its victim to watch it suffer.
+func _cue_action_windup(attacker: CardInstance, effect: TriggeredEffect, recipients: Array) -> void:
+	if not _delivers_blow(effect) or recipients.is_empty():
+		return
+	var target := recipients[0] as CardInstance
+	if target == null:
+		return
 	var a_card := _board.get_card_ui(attacker)
 	var t_card := _board.get_card_ui(target)
-	# Either combatant can be yanked off the board between target acquisition and impact by a
-	# re-entrant effect (an on-death trigger from a prior strike bouncing/relocating a live unit,
-	# or a spawn reshuffle). With no slot to read a global_position from, there is nothing to swing:
-	# skip this strike rather than crash. The flurry's own liveness re-check ends the sequence next.
+	# Either combatant can be yanked off the board between resolution and impact by a
+	# re-entrant effect. With no slot to read a global_position from, there is nothing to
+	# swing over: the cue skips; the blow still resolves (rules never depend on the show).
 	if a_card == null or t_card == null:
 		return
-
 	if attacker.data.ranged:
-		# Ranged: hold position and fire a bolt; the hit lands when it arrives. The bolt
-		# carries the attacker's composition so the library can fly its element-variant look.
 		var shot := VFXEvent.projectile(
 			a_card, t_card, attacker.get_attribute("attack"),
 			Color(0.65, 0.9, 1.0), VFXEvent.Projectile.BOLT, false)
 		shot.composition = attacker.data.elements
 		await _vfx.play(shot)
-		await _apply_attack_damage(attacker, target, t_card)
-	else:
-		# Melee: lunge across and plunge INTO the target (overlapping from the side it approaches —
-		# player units from the target's left, enemy units from its right), bounce back out to the
-		# attack position beside it, and LEAVE — the strike's damage + triggered effects (numbers,
-		# glints, the target's death) all play out while the attacker is already gliding home. The
-		# lunge and rebound chain with no pause at the overshoot, so the hit keeps its momentum on
-		# impact, and the withdrawal keeps that same momentum instead of parking the attacker beside
-		# its victim to watch it suffer. One continuous move-hit-leave, with the consequences
-		# unfolding underneath it.
-		var a_home := a_card.global_position
-		var gap := 12.0
-		var beside_x: float = (t_card.global_position.x - a_card.size.x - gap) if attacker.owner == 0 \
-			else (t_card.global_position.x + t_card.size.x + gap)
-		var beside := Vector2(beside_x, t_card.global_position.y)
-		# Overshoot PAST the attack position along the approach line (beside, pushed further from
-		# home), so the rebound retraces the exact vector the lunge came in on — a real recoil off the
-		# hit, not a step to the side.
-		var overshoot := beside + (beside - a_home).normalized() * (a_card.size.x * 0.3)
-		# A unit must be standing still before it can start another move. Without this, the second
-		# swing of a multi-strike flurry spawns a ghost while the first is still gliding home, and
-		# the two fight over the attacker's card.
-		await _await_settled(attacker)
-		var ghost := _animator.spawn_ghost(a_card)
-		# Declaring the stand-in IS the hide: the original card consults this on its next derivation
-		# and conceals itself, and the attacker's own VFX routes onto the ghost (see CombatContext).
-		# The re-derive that follows is a "re-check now" cue carrying no verdict — the card still
-		# decides for itself — but it makes the concealment land on THIS frame rather than whenever
-		# the 0.75s presentation poll next comes round, which is what keeps the swap seamless.
-		_ctx.declare_stand_in(attacker, ghost)
-		a_card.derive_presentation()
-		Vfx.play("attack_swing_arc", ghost)   # the swing reads over the lunge, concurrent
-		await _animator.play_lunge(ghost, overshoot)
-		_animator.shake_card(t_card)               # impact shake at the apex, over the rebound
-		await _animator.play_rebound(ghost, beside)
-		# The withdrawal and the consequences run CONCURRENTLY: the retreat starts on the rebound's
-		# heel while the damage, its numbers and every triggered glint resolve underneath it.
-		var retreat := _animator.start_retreat(ghost, a_home)
+		return
+	var a_home := a_card.global_position
+	var gap := 12.0
+	var beside_x: float = (t_card.global_position.x - a_card.size.x - gap) if attacker.owner == 0 \
+		else (t_card.global_position.x + t_card.size.x + gap)
+	var beside := Vector2(beside_x, t_card.global_position.y)
+	# Overshoot PAST the attack position along the approach line (beside, pushed further from
+	# home), so the rebound retraces the exact vector the lunge came in on — a real recoil off the
+	# hit, not a step to the side.
+	var overshoot := beside + (beside - a_home).normalized() * (a_card.size.x * 0.3)
+	# A unit must be standing still before it can start another move. Without this, the second
+	# swing of a multi-strike flurry spawns a ghost while the first is still gliding home, and
+	# the two fight over the attacker's card.
+	await _await_settled(attacker)
+	var ghost := _animator.spawn_ghost(a_card)
+	# Declaring the stand-in IS the hide: the original card consults this on its next derivation
+	# and conceals itself, and the attacker's own VFX routes onto the ghost (see CombatContext).
+	# The re-derive that follows is a "re-check now" cue carrying no verdict — the card still
+	# decides for itself — but it makes the concealment land on THIS frame rather than whenever
+	# the 0.75s presentation poll next comes round, which is what keeps the swap seamless.
+	_ctx.declare_stand_in(attacker, ghost)
+	a_card.derive_presentation()
+	Vfx.play("attack_swing_arc", ghost)   # the swing reads over the lunge, concurrent
+	await _animator.play_lunge(ghost, overshoot)
+	_animator.shake_card(t_card)               # impact shake at the moment of contact
+	await _animator.play_rebound(ghost, beside)
+	# Hand the melee state to the result cue: the withdrawal belongs to the aftermath.
+	_strike_ghost = ghost
+	_strike_home = a_home
+
+
+# The melee stand-in mid-strike, handed from the approach cue to the result cue (one
+# attacker acts at a time, so a single slot is the honest shape).
+var _strike_ghost: Control = null
+var _strike_home := Vector2.ZERO
+
+
+# The dressing choice: does this effect deliver a blow? Presentation inspecting payload
+# identity is sanctioned (cues key off identity everywhere); RULES never do this.
+func _delivers_blow(effect: TriggeredEffect) -> bool:
+	for p: Payload in effect.payloads:
+		if p is Payload.Attack:
+			return true
+	return false
+
+
+# RESULTS: everything the player sees once the Arbitrator has spoken — the withdrawal
+# starting on the rebound's heel while the consequences resolve underneath it, then the
+# blow's readout: interception playback first (resolution order), the crit flash at the
+# moment the blow is known, then the dodge sidestep / "Miss" / shield-then-health numbers.
+func _cue_action_results(attacker: CardInstance, _effect: TriggeredEffect, outcomes: Array) -> void:
+	var outcome: Arbitrator.Outcome = null
+	for o: Arbitrator.Outcome in outcomes:
+		if o.stat == StatMutation.DAMAGE:
+			outcome = o
+			break
+	var target := (outcome.target as CardInstance) if outcome != null else null
+	var t_card := _board.get_card_ui(target) if target != null else null
+	var withdraw: SceneTreeTimer = null
+	if _strike_ghost != null and is_instance_valid(_strike_ghost):
+		var ghost := _strike_ghost
+		_strike_ghost = null
+		# The withdrawal and the consequences run CONCURRENTLY. MOVEMENT IS A BEAT: it
+		# hands off through the same `vfx.overlap` dial as every cue, so it obeys the
+		# player's pacing setting. The timer starts WITH the retreat and is awaited at the
+		# end of the cue — the readout usually outlasts it.
+		var retreat := _animator.start_retreat(ghost, _strike_home)
 		_transit[attacker] = retreat
-		# MOVEMENT IS A BEAT: the withdrawal hands off through the same `vfx.overlap` dial as every
-		# cue, so it obeys the player's pacing setting instead of being unconditionally concurrent.
-		# At Flowing the next unit winds up while this one is still gliding; at Step by step the
-		# handoff equals the full span, so the attacker is home before anything else begins. The
-		# timer starts WITH the retreat and is awaited at the end of the strike — the damage
-		# resolving usually outlasts it, in which case there is nothing left to wait for.
-		var withdraw := get_tree().create_timer(Vfx.handoff(CombatAnimator.RETREAT_DUR))
-		# Teardown rides the tween's own completion rather than the await chain, so the ghost is
-		# never freed early no matter how the handoff and the damage race.
+		withdraw = get_tree().create_timer(Vfx.handoff(CombatAnimator.RETREAT_DUR))
+		# Teardown rides the tween's own completion rather than the await chain, so the
+		# ghost is never freed early no matter how the handoff and the readout race.
 		retreat.finished.connect(func() -> void:
 			_transit.erase(attacker)
-			# Withdrawing the stand-in is the whole of un-hiding: the card re-derives and finds
-			# itself on screen again, wearing whatever it should be wearing NOW — an exhaust grey it
-			# earned by swinging, a threat glow the exchange just changed — instead of the opacity
-			# it happened to have when it left.
+			# Withdrawing the stand-in is the whole of un-hiding: the card re-derives and
+			# finds itself on screen again, wearing whatever it should be wearing NOW.
 			_ctx.clear_stand_in(attacker)
 			if is_instance_valid(ghost):
 				ghost.queue_free()
-			if is_instance_valid(a_card):
+			var a_card := _board.get_card_ui(attacker)
+			if a_card != null and is_instance_valid(a_card):
 				a_card.derive_presentation())
-		await _apply_attack_damage(attacker, target, t_card)
-		if withdraw.time_left > 0.0:
-			await withdraw.timeout
-
-	if not target.is_alive():
-		await _emit_kill(target)
-		await _broadcast(GameEvent.make(&"death", target))
-		await _bury(target)   # the death BEAT; the fade itself plays on past it
-	else:
-		# No trailing beat: the strike's own damage cues were awaited to their handoffs above and
-		# are still playing. The next attacker winds up under them rather than after them.
-		t_card.refresh()
-
-	# A triggered/run-level effect resolved during this attack (e.g. an upgrade's on-death
-	# retaliation) may have killed a bystander; sweep any secondary deaths off the board.
-	_board.cleanup_effect_deaths()
+	if outcome != null and t_card != null and is_instance_valid(t_card):
+		# Cue whatever intercepted (the Blind pip glint, a relic chip) BEFORE the damage
+		# readout — resolution is complete; this is pure playback in resolution order.
+		await _vfx.play_interceptions(outcome.interceptions)
+		var dmg := -outcome.delta
+		# THE CRIT CUE IS PART OF THE BLOW: fired the moment the blow is known, alongside
+		# the numbers, never instead of them. The ATTACKER's Speed badge glints too (speed
+		# drives crit, mirroring how a dodge glints the dodger's Speed); mid-melee its live
+		# presentation is its lunge ghost, so the stand-in routing applies.
+		if outcome.crit:
+			_vfx.play(VFXEvent.crit(t_card, dmg))
+			var a_ui := _ctx.stand_in_for(attacker)
+			if a_ui == null:
+				a_ui = _board.get_card_ui(attacker)
+			if a_ui != null and is_instance_valid(a_ui):
+				a_ui.flash_stat_proc("speed")
+		if outcome.dodged:
+			# An ACTIVE evade (sidestep + "Dodge!"), distinct from the grey whiff of a
+			# miss. Both land 0 damage; the cause differs.
+			await _vfx.play(VFXEvent.dodge(t_card))
+		elif dmg <= 0:
+			await _vfx.play(VFXEvent.miss(t_card))
+		else:
+			# Shield reads FIRST: it takes the blow on its own badge; when the hit also
+			# bleeds through to HP, the awaited absorb lets the shield read as the first
+			# thing that happened. Only the shield BREAK layer is contextual here.
+			if outcome.shield_absorbed > 0:
+				if target.current_shield <= 0:
+					Sfx.play("shield_break")
+				await _vfx.play(VFXEvent.shield_hit(t_card, outcome.shield_absorbed))
+			if outcome.health_damage > 0:
+				await _vfx.play(VFXEvent.health_damage(t_card, outcome.health_damage))
+		if target.is_alive():
+			# No trailing beat: the cues above were awaited to their handoffs and are
+			# still playing; the next beat winds up under them rather than after them.
+			t_card.refresh()
+	if withdraw != null and withdraw.time_left > 0.0:
+		await withdraw.timeout
 
 
 # A unit LEAVES PLAY the instant it dies — slot free, targeting blind to it, sequence carrying
@@ -936,25 +973,6 @@ func _where(inst: CardInstance) -> String:
 		return "(none)"
 	return "%s %s[%s]" % [inst.data.id, str(_world.location_of(inst)),
 			"player" if inst.owner == 0 else "cpu"]
-
-
-# One strike's resolved outcome — what the Arbitrator decided, not what was thrown.
-func _log_strike(attacker: CardInstance, target: CardInstance, outcome: Arbitrator.Outcome) -> void:
-	if not CombatLog.recording():
-		return
-	var line := "%s → %s" % [_where(attacker), _where(target)]
-	if outcome.dodged:
-		line += " : DODGED"
-	else:
-		line += " : %d dmg (shield %d, hp %d)" % [-outcome.delta,
-				outcome.shield_absorbed, outcome.health_damage]
-		if outcome.crit:
-			line += " CRIT +%d" % outcome.crit_bonus_damage
-	if not outcome.interceptions.is_empty():
-		line += "  intercepted×%d" % outcome.interceptions.size()
-	if not target.is_alive():
-		line += "  ☠ dies"
-	CombatLog.note("combat", line)
 
 
 # The damage-share inspector, toggled from the debug row: a live read of the damage quota
@@ -1144,8 +1162,8 @@ func _fade_out(inst: CardInstance, corpse: CardUI) -> void:
 # attacker mid-withdrawal, since units act strictly one at a time.
 #
 # Gates on the TWEEN finishing, deliberately, NOT on the ghost being cleaned up: the ghost is freed
-# after _apply_attack_damage returns, and the cues that need this gate run INSIDE it — waiting on
-# the cleanup would deadlock. The tween runs on the scene clock, independent of the await chain.
+# after the result cue's readout returns, and cues that need this gate can run INSIDE it — waiting
+# on the cleanup would deadlock. The tween runs on the scene clock, independent of the await chain.
 func _await_settled(inst: CardInstance) -> void:
 	if inst == null:
 		return
@@ -1156,92 +1174,6 @@ func _await_settled(inst: CardInstance) -> void:
 	if not tween.is_valid() or not tween.is_running():
 		return
 	await tween.finished
-
-
-# Applies a strike's damage at the moment of impact: ON_ATTACK trigger, the (shield-split)
-# damage, ON_DAMAGE_TAKEN trigger, and the shield/health hit numbers. Attack value is read
-# before ON_ATTACK fires so a self-buff on attack doesn't retroactively change this hit.
-func _apply_attack_damage(attacker: CardInstance, target: CardInstance, t_card: CardUI) -> void:
-	# The ON_ATTACK moment is an EVENT — it fires whether or not any damage follows (reactions
-	# like on-hit poison ride it). The strike itself is just a mutation submitted to the
-	# Arbitrator, which owns both the shield-first resolution form AND the interception seam
-	# (TARGETING_DESIGN.md §8: interceptors rewrite the amount inside the gate). Combat never
-	# learns WHY the number changed; it presents the outcome the Arbitrator reports.
-	await _broadcast(GameEvent.make(&"attack", attacker, target))
-	var outcome := Arbitrator.submit(
-			StatMutation.damage(target, attacker.get_attribute("attack"), attacker))
-	# Cue whatever intercepted (the Blind pip glint, a relic chip) BEFORE the damage readout —
-	# resolution is already complete; this is pure playback in resolution order.
-	await _vfx.play_interceptions(outcome.interceptions)
-	_log_strike(attacker, target, outcome)
-	var dmg := -outcome.delta
-	# THE CRIT CUE IS PART OF THE BLOW, so it fires the moment the blow is known — here, not down in
-	# the readout below. It used to sit with the damage numbers, on the far side of `struck`, so on
-	# any strike carrying an on-hit reaction the "CRITICAL!" headline arrived after that reaction's
-	# own cues had played: the hit landed, something else happened, and only then was the hit
-	# announced as critical. Fired here it still overlaps the numbers (it is a long, unawaited cue
-	# with a ~1s tail), but it can no longer drift away from the impact it belongs to.
-	#
-	# Still AFTER the interception cues, deliberately: the Arbitrator rolls crit only on what survives
-	# interception (see Arbitrator._submit), so the rewriter reading first is the true causal order.
-	if outcome.crit:
-		# Real damage still lands — this cue sits ALONGSIDE the shield/health numbers, never
-		# instead of them. The ATTACKER's Speed badge glints too (speed drives crit, mirroring how
-		# a dodge glints the dodger's Speed); mid-melee its live presentation is its lunge ghost,
-		# so the stand-in routing applies exactly as in _get_card_ui.
-		_vfx.play(VFXEvent.crit(t_card, dmg))
-		var a_ui := _ctx.stand_in_for(attacker)
-		if a_ui == null:
-			a_ui = _board.get_card_ui(attacker)
-		if a_ui != null and is_instance_valid(a_ui):
-			a_ui.flash_stat_proc("speed")
-	# Resolve the attack-driven decay AFTER submit (the Arbitrator needs the status alive to query
-	# its interceptors) and BEFORE the strike's on-hit reactions below. A charge is spent per
-	# attack (hit or miss); a Blind that an effect applies in *reaction* to this attack (a relic
-	# blinding the attacker on hit, via ON_DAMAGE_TAKEN) lands afterwards and survives, instead
-	# of being eaten by this same attack.
-	StatusEngine.advance(attacker, &"attack")
-
-	# The strike is PERFORMED either way — even a whiff still attacks, it just deals 0. So damage
-	# was applied (0 on a miss) and ON_DAMAGE_TAKEN fires regardless, so on-attacked reactions
-	# (e.g. a relic blinding the attacker) run whether or not it connected. Only the readout
-	# differs.
-	await _broadcast(GameEvent.make(&"struck", attacker, target))
-	# Each cue below is AWAITED — not to its last frame, but to its handoff, so the next beat of the
-	# strike starts while it is still playing out. That await IS the pacing; there is no sleep.
-	if outcome.dodged:
-		# The target's speed slipped the blow outright — an ACTIVE evade (sidestep + "Dodge!"),
-		# distinct from the grey whiff of a miss. Both land 0 damage; the cause differs.
-		await _vfx.play(VFXEvent.dodge(t_card))
-		# The `dodge` event fires after `struck` (a dodged unit was still attacked): origin = the
-		# attacker whose blow was slipped, destination = the dodger. Lets "when an ally dodges…"
-		# reactions run (the dodger is the subject).
-		await _broadcast(GameEvent.make(&"dodge", attacker, target))
-	elif dmg <= 0:
-		# A 0-damage strike (blocked, or <=0 Attack) reads as "Miss" rather than a number.
-		await _vfx.play(VFXEvent.miss(t_card))
-	else:
-		# (The crit cue itself fired at the moment of resolution above — see there for why.)
-		# Shield reads FIRST: it takes the blow on its own badge (and only the badge — a held shield
-		# leaves the card unwounded). When the hit also bleeds through to HP, a brief halt lets the
-		# absorb land before the wound, so the shield is legible as the first thing that happened.
-		# Hit sounds ride the VFX entries (combat_shield_hit/combat_health_damage carry their
-		# sfx in data) — only the shield BREAK layer is contextual and fires here.
-		if outcome.shield_absorbed > 0:
-			if target.current_shield <= 0:
-				Sfx.play("shield_break")
-			# Awaited: the absorb's handoff is exactly the "shield took the blow FIRST" beat the old
-			# SHIELD_LEAD sleep faked, except the badge is still visibly reacting as the wound lands.
-			await _vfx.play(VFXEvent.shield_hit(t_card, outcome.shield_absorbed))
-		if outcome.health_damage > 0:
-			await _vfx.play(VFXEvent.health_damage(t_card, outcome.health_damage))
-		if outcome.crit:
-			# The `crit` event fires after the hit's cues are queued (hit → numbers → reaction
-			# reads in causal order): origin = the attacker who landed it, destination = the unit
-			# hit. Unlike dodge, the SUBJECT is the origin — "when I land a crit" reactions run
-			# from the attacker's perspective (see GameEvent.subject).
-			await _broadcast(GameEvent.make(&"crit", attacker, target))
-	_board.refresh()
 
 
 # (Interception playback lives in VFXPlayer.play_interceptions — the one presenter every

@@ -31,7 +31,10 @@
 		"attack": 4,
 		"health": 2,
 		"speed": 1,
-		"shield": 1
+		"shield": 1,
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "darkness_fire_knight",
@@ -220,7 +223,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "darkness_fire_knight_pawn",

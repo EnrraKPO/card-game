@@ -62,6 +62,22 @@ func show_ground_results(_procs: Array) -> void:
 	pass
 
 
+# Presentation attending an unfolding effect (signed ATTACK_SYSTEM_DESIGN.html §8.0),
+# generic for every effect. WINDUP plays before the payloads land — the live fight
+# decides what that looks like from the effect's identity (for the attack family: the
+# melee lunge held to contact, or the ranged bolt's flight) — and the rules hold for it
+# so the delivery lands on the beat the player sees. RESULTS plays after: the live fight
+# reads the Outcomes (dodged, crit, shield split) and plays the numbers, the "Miss", the
+# sidestep, the withdrawal. Both are silent no-ops here, so a simulated unfolding is
+# instant.
+func action_windup(_holder: CardInstance, _effect: TriggeredEffect, _recipients: Array) -> void:
+	pass
+
+
+func action_results(_holder: CardInstance, _effect: TriggeredEffect, _outcomes: Array) -> void:
+	pass
+
+
 # The board view re-deriving itself after a phase moment's dust settles.
 func board_refresh() -> void:
 	pass

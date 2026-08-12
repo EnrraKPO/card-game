@@ -10,7 +10,10 @@
     "enemy_only": true,
     "tribe": "harpy",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "harpy_winddancer",
@@ -23,7 +26,10 @@
     "enemy_only": true,
     "tribe": "harpy",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "harpy_talon",
@@ -37,7 +43,10 @@
     "enemy_only": true,
     "tribe": "harpy",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "harpy_shrieker",
@@ -64,7 +73,10 @@
     "enemy_only": true,
     "tribe": "harpy",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "harpy_thief",
@@ -77,7 +89,10 @@
     "enemy_only": true,
     "tribe": "harpy",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "harpy_stormwing",
@@ -91,7 +106,10 @@
     "enemy_only": true,
     "tribe": "harpy",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "harpy_queen",
@@ -106,7 +124,10 @@
     "tribe": "harpy",
     "description": "Queen of the high shriek. The gale answers her moods — she dodges a quarter of all blows. Ground her to win.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "harpy_tempest",
@@ -121,7 +142,10 @@
     "tribe": "harpy",
     "description": "The storm has a center and it hates you. Dodges a third of all blows, and every dodge stokes her (+1 <attack>). Ground her to win.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "harpy_boss_roc",
@@ -137,6 +161,9 @@
     "tribe": "harpy",
     "description": "Half harpy, half hurricane. Strikes THREE times a round, each swipe on a fresh victim, and dodges a quarter of everything thrown back. Ground her to win.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   }
 ]

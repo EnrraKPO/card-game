@@ -10,7 +10,10 @@
     "enemy_only": true,
     "tribe": "fairy",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "fairy_dustling",
@@ -23,7 +26,10 @@
     "enemy_only": true,
     "tribe": "fairy",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "fairy_thornwisp",
@@ -36,7 +42,10 @@
     "enemy_only": true,
     "tribe": "fairy",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "fairy_glimmer",
@@ -49,7 +58,10 @@
     "enemy_only": true,
     "tribe": "fairy",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "fairy_puck",
@@ -62,7 +74,10 @@
     "enemy_only": true,
     "tribe": "fairy",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "fairy_oakguard",
@@ -76,7 +91,10 @@
     "enemy_only": true,
     "tribe": "fairy",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "fairy_queen_mab",
@@ -91,7 +109,10 @@
     "tribe": "fairy",
     "description": "Her court finds you HILARIOUS. Dodges a third of all blows and Blinds whoever dares strike her. Catch her to win.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "fairy_erlking",
@@ -106,6 +127,9 @@
     "tribe": "fairy",
     "description": "The old crown of the wild hunt. Every strike of his antlered lance saps 1 <speed>, and the forest keeps him laughing past a quarter of your blows. End the hunt to win.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   }
 ]

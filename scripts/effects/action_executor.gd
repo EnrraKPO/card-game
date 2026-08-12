@@ -11,11 +11,7 @@ extends RefCounted
 # only serves the plate. Species logic leaking in here is how the old dispatcher grew;
 # any such leak is a design violation, not a refactor.
 
-# Run a triggered effect that already passed its trigger gate. Payload-major order: each
-# payload lands on every recipient of the ONE shared resolution before the next payload
-# starts ("deal 3 to X and stun IT" lands as authored). A targetless effect delivers
-# once with a null recipient (the payload names its own recipient — side payloads, when
-# they return). An empty resolution delivers nothing — a legal whiff, not an error.
+# Run a triggered effect that already passed its trigger gate: resolve, then deliver.
 static func run(effect: TriggeredEffect, event: GameEvent, holder: CardInstance,
 		world: CombatWorld, owner: int = TriggerResolver.OWNER_FROM_HOLDER) -> Array:
 	var anchor := TriggerResolver.anchor_owner(holder, owner)
@@ -24,6 +20,20 @@ static func run(effect: TriggeredEffect, event: GameEvent, holder: CardInstance,
 		recipients = [null]
 	else:
 		recipients = effect.targets.resolve(world, holder, anchor)
+	return deliver(effect, event, holder, world, recipients, anchor)
+
+
+# Deliver a resolution already taken (the read happened at the trigger moment; a caller
+# that presents between resolution and delivery — the attack's approach cue — hands the
+# same resolution back in). Payload-major order: each payload lands on every recipient of
+# the ONE shared resolution before the next payload starts ("deal 3 to X and stun IT"
+# lands as authored). A targetless effect delivers once with a null recipient (the
+# payload names its own recipient — side payloads, when they return). An empty resolution
+# delivers nothing — a legal whiff, not an error.
+static func deliver(effect: TriggeredEffect, event: GameEvent, holder: CardInstance,
+		world: CombatWorld, recipients: Array,
+		owner: int = TriggerResolver.OWNER_FROM_HOLDER) -> Array:
+	var anchor := TriggerResolver.anchor_owner(holder, owner)
 	var outcomes: Array = []
 	for payload: Payload in effect.payloads:
 		for recipient: Variant in recipients:

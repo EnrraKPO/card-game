@@ -39,7 +39,10 @@
 					"at": "2026-07-12"
 				}
 			}
-		}
+		},
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "air_darkness_king",
@@ -87,7 +90,10 @@
 					"mode": "replicate"
 				}
 			}
-		}
+		},
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "air_earth_king",
@@ -135,7 +141,10 @@
 					"mode": "replicate"
 				}
 			}
-		}
+		},
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "air_fire_king",
@@ -177,7 +186,10 @@
 					"mode": "replicate"
 				}
 			}
-		}
+		},
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "air_light_king",
@@ -219,7 +231,10 @@
 					"mode": "replicate"
 				}
 			}
-		}
+		},
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "air_water_king",
@@ -261,7 +276,10 @@
 					"mode": "replicate"
 				}
 			}
-		}
+		},
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "darkness_darkness_king",
@@ -297,7 +315,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "darkness_earth_king",
@@ -338,7 +359,10 @@
 					"at": "2026-07-25"
 				}
 			}
-		}
+		},
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "darkness_fire_king",
@@ -380,7 +404,10 @@
 					"mode": "replicate"
 				}
 			}
-		}
+		},
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "darkness_light_king",
@@ -416,7 +443,10 @@
 					"mode": "replicate"
 				}
 			}
-		}
+		},
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "darkness_water_king",
@@ -458,7 +488,10 @@
 					"mode": "replicate"
 				}
 			}
-		}
+		},
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "earth_earth_king",
@@ -494,7 +527,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "earth_fire_king",
@@ -529,7 +565,10 @@
 					"mode": "replicate"
 				}
 			}
-		}
+		},
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "earth_light_king",
@@ -571,7 +610,10 @@
 					"mode": "replicate"
 				}
 			}
-		}
+		},
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "earth_water_king",
@@ -613,7 +655,10 @@
 					"mode": "replicate"
 				}
 			}
-		}
+		},
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "fire_fire_king",
@@ -649,7 +694,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "fire_light_king",
@@ -685,7 +733,10 @@
 					"mode": "replicate"
 				}
 			}
-		}
+		},
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "fire_water_king",
@@ -721,7 +772,10 @@
 					"mode": "replicate"
 				}
 			}
-		}
+		},
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "light_light_king",
@@ -757,7 +811,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "light_water_king",
@@ -793,7 +850,10 @@
 					"mode": "replicate"
 				}
 			}
-		}
+		},
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "water_water_king",
@@ -829,6 +889,9 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"melee_attack"
+		]
 	}
 ]

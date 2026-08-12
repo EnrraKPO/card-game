@@ -462,7 +462,10 @@
 					"denoise": 0.6
 				}
 			}
-		}
+		},
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "water_water_pawn_pawn",
@@ -503,7 +506,10 @@
 					"at": "2026-07-12"
 				}
 			}
-		}
+		},
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "water_water_pawn_queen",

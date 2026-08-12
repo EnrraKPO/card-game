@@ -10,7 +10,10 @@
     "enemy_only": true,
     "tribe": "cultist",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "cult_offering",
@@ -23,7 +26,10 @@
     "enemy_only": true,
     "tribe": "cultist",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "cult_zealot",
@@ -36,7 +42,10 @@
     "enemy_only": true,
     "tribe": "cultist",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "cult_bloodpriest",
@@ -49,7 +58,10 @@
     "enemy_only": true,
     "tribe": "cultist",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "cult_summoner",
@@ -62,7 +74,10 @@
     "enemy_only": true,
     "tribe": "cultist",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "cult_horrorspawn",
@@ -75,7 +90,10 @@
     "enemy_only": true,
     "tribe": "cultist",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "cult_flesh_horror",
@@ -88,7 +106,10 @@
     "enemy_only": true,
     "tribe": "cultist",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "cult_high_priest",
@@ -103,7 +124,10 @@
     "tribe": "cultist",
     "description": "Every fallen follower is a coin in his purse: +1 <attack> and 2 healing per ally death. Strike him down to win.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "cult_prophet",
@@ -118,7 +142,10 @@
     "tribe": "cultist",
     "description": "Speaks tomorrow's obituaries aloud: a random foe gains 2 Poison at every round's end. Silence the Prophet to win.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "cult_hierophant",
@@ -133,7 +160,10 @@
     "tribe": "cultist",
     "description": "He has spent forty years digging for something under this map, growing +1 <attack> per offered ally. Kill him and you'll meet it. Destroy WHAT COMES AFTER to win.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "cult_elder_god",
@@ -148,6 +178,9 @@
     "tribe": "cultist",
     "description": "The digging is over. Two strikes a round, and every mouth is hungry. Put it back to sleep — permanently — to win.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   }
 ]

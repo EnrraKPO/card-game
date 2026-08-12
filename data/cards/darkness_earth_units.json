@@ -31,7 +31,10 @@
 		"attack": 2,
 		"health": 2,
 		"speed": 1,
-		"shield": 2
+		"shield": 2,
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "darkness_earth_knight",
@@ -220,7 +223,10 @@
 		"attack": 3,
 		"health": 3,
 		"speed": 1,
-		"shield": 3
+		"shield": 3,
+		"effects": [
+			"melee_attack"
+		]
 	},
 	{
 		"id": "darkness_earth_knight_pawn",

@@ -21,6 +21,20 @@ var id: String = ""                     # the named-effect id; "" for an inline 
 var trigger: TriggerResolver = null
 var targets: TargetResolver = null      # null = targetless
 var payloads: Array = []                # Array[Payload]
+# CONDITIONALLY SANCTIONED (signature note, 2026-08-12 — revisited when any other effect
+# needs a follow-up): how many times one firing unfolds (resolve-then-deliver), as an
+# evaluable value (null = once). Each repeat RE-RESOLVES, which is what preserves the
+# playtested flurry rule — a slain victim doesn't soak the follow-ups. melee_attack
+# authors {"kind": "holder_stat", "stat": "strikes"}; the read floors at 1.
+var repeats: Mutator = null
+
+
+# The firing's repeat count, derived fresh at dispatch (floors at 1 — a debuffed stat
+# never cancels the act outright).
+func repeat_count(feed: Feed) -> int:
+	if repeats == null:
+		return 1
+	return maxi(1, int(repeats.derive(feed)))
 
 
 # The one authored form. A malformed member poisons the whole effect — refused loudly,
@@ -44,6 +58,10 @@ static func parse(effect_value: Variant) -> TriggeredEffect:
 		if p == null:
 			return null
 		e.payloads.append(p)
+	if d.has("repeats"):
+		e.repeats = Mutator.parse(d.get("repeats"))
+		if e.repeats == null:
+			return null
 	return e
 
 
@@ -58,4 +76,6 @@ func to_dict() -> Dictionary:
 		for p: Payload in payloads:
 			pl.append(p.to_dict())
 		d["payloads"] = pl
+	if repeats != null:
+		d["repeats"] = repeats.to_dict()
 	return d

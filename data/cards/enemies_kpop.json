@@ -10,7 +10,10 @@
     "enemy_only": true,
     "tribe": "idol",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "kpop_hypeman",
@@ -23,7 +26,10 @@
     "enemy_only": true,
     "tribe": "idol",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "kpop_dancer",
@@ -36,7 +42,10 @@
     "enemy_only": true,
     "tribe": "idol",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "kpop_vocalist",
@@ -63,7 +72,10 @@
     "enemy_only": true,
     "tribe": "idol",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "kpop_bias",
@@ -78,6 +90,9 @@
     "tribe": "idol",
     "description": "That smile has a body count. Dodges a quarter of everything (the cameras must never catch a hit) and leads an encore at every round's end: Tailwind for the whole group. End the world tour to win.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   }
 ]

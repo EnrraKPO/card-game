@@ -25,7 +25,10 @@
     "enemy_only": true,
     "tribe": "alien",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "alien_grey",
@@ -38,7 +41,10 @@
     "enemy_only": true,
     "tribe": "alien",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "alien_shieldnode",
@@ -66,7 +72,10 @@
     "enemy_only": true,
     "tribe": "alien",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "alien_replicator",
@@ -79,7 +88,10 @@
     "enemy_only": true,
     "tribe": "alien",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "alien_saucer",
@@ -110,7 +122,10 @@
     "tribe": "alien",
     "description": "Coordinates the landing party with cold precision, re-projecting a Barrier onto a random ally at every round's end. Destroy it to win.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "alien_abductor",
@@ -125,7 +140,10 @@
     "tribe": "alien",
     "description": "Its tractor beam drags the fight its way: every strike saps its victim's <attack> and <speed> by 1. Destroy it to win — before your army is dragged aboard.",
     "elements": [],
-    "chess_pieces": []
+    "chess_pieces": [],
+    "effects": [
+      "melee_attack"
+    ]
   },
   {
     "id": "alien_mothership",

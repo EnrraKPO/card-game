@@ -27,15 +27,37 @@ static func make(p_world: CombatWorld, p_presenter: CombatPresenter) -> CombatCa
 	return c
 
 
-# The per-holder dispatch-and-present point. EFFECT DISPATCH RAZED (2026-08-11): the old
-# union-Effect dispatcher and its context object were deleted whole with the effect layer.
-# The event still flows through here so the cascade's fan-out, death path, and decay tiers
-# stay real; the rebuilt TriggeredEffect dispatch attaches at this seam (TARGETING_DESIGN.md
-# §2: the event fires, the runtime asks "who reacts?", triggers alone answer). NEEDS kept
-# from the old path: per-container grouping (card glint / pip glint before that container's
-# results) and dispatch-shows-its-results by construction, through the presenter.
-func fire(_event: GameEvent, _holder: CardInstance) -> void:
-	pass
+# The per-holder dispatch-and-present point — THE ONE CRANK (signed ATTACK_SYSTEM_DESIGN
+# §8.0): events trigger, effects unfold. For each effect the holder's card carries whose
+# trigger says yes: derive its repeat count (the conditionally-sanctioned follow-up slot),
+# then per repeat — resolve targets (the read at the trigger moment; each repeat
+# re-resolves, which is what keeps the flurry re-acquiring), let presentation attend the
+# windup, deliver the payloads, present the results, emit the news the Outcomes report,
+# and sweep deaths through the one death path. Nothing here knows what an attack is.
+# NEEDS kept for the containers still to join dispatch (statuses/relics): per-container
+# grouping — card glint / pip glint before that container's results.
+func fire(event: GameEvent, holder: CardInstance) -> void:
+	if holder == null or holder.data == null:
+		return
+	for effect: TriggeredEffect in holder.data.effects:
+		if not effect.trigger.fires(event, holder):
+			continue
+		var reps := effect.repeat_count(Feed.make(world, holder, holder.owner, event, null))
+		for _i in reps:
+			# A repeat needs its actor standing: dead, or displaced off the board by a
+			# reaction (a bounce leaves health > 0) — rules facts, not presentation ones.
+			if not holder.is_alive() or not BoardFacade.is_on_board(world, holder):
+				break
+			var recipients: Array = [null]
+			if effect.targets != null:
+				recipients = effect.targets.resolve(world, holder)
+				if recipients.is_empty():
+					break   # a legal "no target" — nothing to unfold onto
+			await presenter.action_windup(holder, effect, recipients)
+			var outcomes := ActionExecutor.deliver(effect, event, holder, world, recipients)
+			await presenter.action_results(holder, effect, outcomes)
+			await _emit_outcome_news(holder, outcomes)
+			await _sweep_delivery_deaths(recipients)
 
 
 # Run-level (relic/upgrade) effects for an event, fired ONCE from the perspective of the
@@ -44,6 +66,66 @@ func fire(_event: GameEvent, _holder: CardInstance) -> void:
 # chip glint, then results), anchored on the player side per the two-anchor model (§5).
 func fire_run_level(_event: GameEvent) -> void:
 	pass
+
+
+# Blow-news, derived from what actually happened (events are RESULTS — user ruling,
+# signed §8.0): a DAMAGE-form Outcome IS the fact "a blow landed on this unit", so it
+# earns the strike's news — attack, struck, then dodge or crit as the Outcome reports.
+# No payload inspection, no attack-type knowledge: the Outcome's form carries the fact.
+func _emit_outcome_news(holder: CardInstance, outcomes: Array) -> void:
+	for o: Arbitrator.Outcome in outcomes:
+		if o.stat != StatMutation.DAMAGE:
+			continue
+		var victim := o.target as CardInstance
+		_log_strike(holder, victim, o)
+		await broadcast(GameEvent.make(&"attack", holder, victim))
+		await broadcast(GameEvent.make(&"struck", holder, victim))
+		if o.dodged:
+			await broadcast(GameEvent.make(&"dodge", holder, victim))
+		elif o.crit:
+			await broadcast(GameEvent.make(&"crit", holder, victim))
+
+
+# Recipients felled by a delivery leave through the one death path; bystanders a
+# reaction killed are swept by the world cleanup, and the view re-derives once.
+func _sweep_delivery_deaths(recipients: Array) -> void:
+	for r: Variant in recipients:
+		var unit := r as CardInstance
+		if unit != null and not unit.is_alive():
+			await emit_kill(unit)
+			await broadcast(GameEvent.make(&"death", unit))
+			await bury(unit)
+	world.cleanup_deaths()
+	presenter.board_refresh()
+
+
+# The combat log's record of one blow (CLAUDE-only diagnostics — see CombatLog): a rules
+# record of the Outcome, so it lives with the delivery, not the dressing.
+func _log_strike(attacker: CardInstance, victim: CardInstance, outcome: Arbitrator.Outcome) -> void:
+	if not CombatLog.recording():
+		return
+	var line := "%s → %s" % [_log_where(attacker), _log_where(victim)]
+	if outcome == null:
+		line += " : no outcome"
+	elif outcome.dodged:
+		line += " : DODGED"
+	else:
+		line += " : %d dmg (shield %d, hp %d)" % [-outcome.delta,
+				outcome.shield_absorbed, outcome.health_damage]
+		if outcome.crit:
+			line += " CRIT +%d" % outcome.crit_bonus_damage
+	if outcome != null and not outcome.interceptions.is_empty():
+		line += "  intercepted×%d" % outcome.interceptions.size()
+	if victim != null and not victim.is_alive():
+		line += "  ☠ dies"
+	CombatLog.note("combat", line)
+
+
+func _log_where(inst: CardInstance) -> String:
+	if inst == null:
+		return "?"
+	var loc := BoardFacade.location_of(world, inst)
+	return "%s%s" % [inst.data.id, str(loc) if loc != null else "(off-board)"]
 
 
 # Fires the `kill` event for a just-dead unit, immediately before its `death` — reading the
