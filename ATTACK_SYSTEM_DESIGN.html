@@ -418,13 +418,13 @@ effect, indistinguishable in the rules from any other:</p>
       longer attack-named.</li>
   <li><b>The strike's news</b> fires from the unfolding as signed in §2: <code>attack</code>,
       <code>struck</code>, then <code>dodge</code> or <code>crit</code> as the Outcome
-      reports, per delivery to a unit recipient. Emission: the dispatcher emits the news
-      AS RESULTS, reading the returned Outcomes — the user's standing ruling ("the event
-      dispatch is a RESULT, not a cause"); a DAMAGE-form Outcome IS the fact "a blow
-      happened", so no payload plumbing and no attack-type inspection exists anywhere.
-      (An earlier draft of this bullet placed emission "with the payload's delivery" —
-      corrected at build time: that wording contradicted both the rejected payload→pipeline
-      plumbing and the ruling above; flagged to the user in the build report.)</li>
+      reports, per delivery to a unit recipient. <b>Emission principle (user ruling,
+      2026-08-12):</b> emission belongs to no layer by doctrine — not the payload, not the
+      Outcome — it lives WHEREVER CONTENT NEEDS IT SERVED, and it is never authorable
+      content itself: it only serves authored consumers. The dispatcher reading the
+      returned Outcomes is today's serving location (events as results, no payload
+      plumbing, no attack-type inspection) — a plumbing choice, movable whenever a
+      consumer needs the news from somewhere else.</li>
   <li><b>Total cleanse (user ruling, 2026-08-12), extended to my own unsigned code:</b>
       already deleted — the old interleaved attack flow
       (<code>_resolve_attack</code> internals / <code>_perform_strike</code> /
@@ -467,6 +467,34 @@ furniture:</p>
       the blow; no authored content rides the old timing (the strip forgot everything), so
       the question is deferred until a triggered effect actually listens for
       <code>attack</code> — it must be settled before that effect is authored.</li>
+</ul>
+
+<h3>8.3 · The phase-3 family — <span style="color:var(--new-ink);background:var(--new-bg);padding:0 0.4rem;border-radius:2px">RULED 2026-08-12</span> <span class="quiet">(two names still open, listed below)</span></h3>
+<p>Phase 2 landed and committed under §8.0 (suite 877/0). Preparing phase 3 exposed that
+the signed §3 family list conflated two independent axes — <code>ranged_attack</code> has
+no coherent place, because ranged-ness is presentation while the policy is the resolver
+(the base Bishop is ranged AND hunts the wounded). The user's rulings:</p>
+<ul>
+  <li><b>One named effect per POLICY.</b> The family is the policy variants of
+      <code>melee_attack</code> — leap / wounded / tank / threat. There is no
+      <code>ranged_attack</code>; §3's mention of it is superseded here.</li>
+  <li><b>The <code>ranged</code> card flag DIES — it should never have been a bool.</b>
+      Ranged is just a visual effect, and it applies to any targeting policy that isn't
+      geometry-based: wounded, tank and threat are ranged BY DEFINITION (they hunt by
+      stats, so the bolt); nearest and leap are physical approaches (the lunge). The
+      windup dressing derives the visual from the effect's policy; nothing else consumes
+      ranged today.</li>
+  <li><b>Accepted consequence (user: option 1):</b> content authored as
+      <code>ranged: true</code> on nearest-policy units (probes, ranged fodder) will
+      LUNGE, losing its authored bolt — barely relevant at this scope, tunable later,
+      and properly solved when "every attack deserves its own visual" arrives (parked
+      granularity, on the record).</li>
+  <li><b>Still open for the fresh context — two naming signatures:</b> the variant ids
+      (proposed: <code>leap_attack</code> / <code>wounded_attack</code> /
+      <code>tank_attack</code> / <code>threat_attack</code>) and whether
+      <code>melee_attack</code> keeps its name or becomes <code>nearest_attack</code>
+      now that "melee" is not an axis (the rename is cheap while the reference is two
+      days old). NO phase-3 code until both are signed.</li>
 </ul>
 
 <h3>8.2 · Two names the pitch missed — <span style="color:var(--new-ink);background:var(--new-bg);padding:0 0.4rem;border-radius:2px">SIGNED 2026-08-12</span></h3>

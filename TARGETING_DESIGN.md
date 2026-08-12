@@ -105,12 +105,15 @@ The authored unit reads as a sentence: *"When [event], if [conditions]: deliver
   engine through the same payload).
 - **Auto-attack is a TriggeredEffect** on the `act` event — and (re-ruled 2026-08-11) an
   **explicitly authored NAMED EFFECT**, never synthesized from a card field: the attack
-  family (`melee_attack` / `ranged_attack` / `leap_attack` / policy variants) is authored
-  once in the library (`data/effects/`) and units reference it by id, the same
-  reference-by-id pattern abilities and statuses use. `CardData.target_policy` is
-  deleted; the policy lives inside the referenced effect's target resolver. A card
-  referencing no attack simply doesn't attack. Dependency made explicit: "HOW MUCH = my
-  attack stat" is a runtime value — resolved by the mutator (§12.6).
+  family — **one effect per POLICY** (melee_attack + the leap/wounded/tank/threat
+  variants; there is NO ranged_attack — ruled 2026-08-12: ranged-ness is presentation,
+  derived from the policy: stat-hunting policies fly the bolt, geometric ones lunge, and
+  `CardData.ranged` dies as a flag) — is authored once in the library (`data/effects/`)
+  and units reference it by id, the same reference-by-id pattern abilities and statuses
+  use. `CardData.target_policy` is deleted; the policy lives inside the referenced
+  effect's target resolver. A card referencing no attack simply doesn't attack.
+  Dependency made explicit: "HOW MUCH = my attack stat" is a runtime value — resolved by
+  the mutator (§12.6).
 
 ## 3. The targeting layer
 
