@@ -537,22 +537,21 @@ static func _derive(elems: Array, chess: Array, key: String) -> CardData:
 	return c
 
 
-# The localized one-line rules-text description of the card's auto-attack targeting,
-# appended after the authored description on every board unit (see CardTooltip / CardUI).
-# The policy lives inside the referenced attack effect's target resolver (target_policy is
-# DELETED — signed ATTACK_SYSTEM_DESIGN.html §8.3), so the line reads it from the first
-# attack-payload effect the card carries. Spells never auto-attack and pacifists carry no
-# attack effect — both honestly get no line.
-func targeting_line() -> String:
-	if card_type == CardType.SPELL:
-		return ""
+# The localized rules-text lines for the card's effects, appended after the authored
+# description (see CardTooltip). §7 of the signed EFFECT_PRESENTATION_DESIGN.html
+# (amendment 4): every effect gets a text description, and that is what the card shows —
+# each line is the effect's own text, keyed by the effect's IDENTITY in the locale table
+# (effect.<id>.desc), never derived from the effect's insides. An effect with no entry
+# honestly contributes no line (inline effects have no id and no entry).
+func effect_lines() -> Array[String]:
+	var lines: Array[String] = []
 	for e: TriggeredEffect in effects:
-		if e.targets == null:
+		if e.id.is_empty():
 			continue
-		for p: Payload in e.payloads:
-			if p is Payload.Attack:
-				return Loc.t("targeting.%s.desc" % str(e.targets.to_dict().get("kind", "")))
-	return ""
+		var line := Loc.opt("effect.%s.desc" % e.id)
+		if not line.is_empty():
+			lines.append(line)
+	return lines
 
 
 # The localized one-line rules-text note that marks a building as rooted, appended after the

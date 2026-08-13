@@ -2,6 +2,9 @@ extends TestCase
 
 # The Arbitrator contract: single writer, resolution forms (shield-first damage, signed health,
 # shield floor), set-form helpers, the DeckCard override target, and the stat vocabulary.
+# A submit returns NOTHING (the outcome is ruled out of existence — signed
+# EFFECT_PRESENTATION_DESIGN.html amendment 2): every assertion observes the committed
+# state itself, and blow facts ride the news queue the cascade broadcasts from.
 
 
 func suite_name() -> String:
@@ -21,16 +24,13 @@ func run() -> void:
 
 func _damage_form() -> void:
 	var u := unit("rook")   # 6 HP, 3 shield
-	var out := Arbitrator.submit(StatMutation.damage(u, 5, null))
-	check_eq(out.shield_absorbed, 3, "damage 5 vs 3 shield: shield absorbs 3")
-	check_eq(out.health_damage, 2, "damage 5 vs 3 shield: 2 bleeds through")
-	check_eq(out.delta, -5, "damage outcome delta = total landed, negative")
-	check_eq(u.current_shield, 0, "shield pool emptied")
-	check_eq(u.current_health, 4, "health pool wounded by the bleed only")
+	Arbitrator.submit(StatMutation.damage(u, 5, null))
+	check_eq(u.current_shield, 0, "damage 5 vs 3 shield: shield absorbs 3 — pool emptied")
+	check_eq(u.current_health, 4, "damage 5 vs 3 shield: only the 2 bleed-through wounds health")
 
-	var whiff := Arbitrator.submit(StatMutation.damage(u, -4, null))
-	check_eq(whiff.delta, 0, "sub-zero damage lands 0 (never heals)")
-	check_eq(u.current_health, 4, "health untouched by sub-zero damage")
+	Arbitrator.submit(StatMutation.damage(u, -4, null))
+	check_eq(u.current_health, 4, "sub-zero damage lands 0 (never heals) — health untouched")
+	check_eq(u.current_shield, 0, "sub-zero damage restores no shield either")
 
 
 func _health_form() -> void:
@@ -39,20 +39,18 @@ func _health_form() -> void:
 	check_eq(u.current_health, 4, "direct -2 health bypasses shield (poison form)")
 	check_eq(u.current_shield, 3, "shield untouched by direct health change")
 
-	var heal := Arbitrator.submit(StatMutation.make(u, StatMutation.HEALTH, 99, null))
+	Arbitrator.submit(StatMutation.make(u, StatMutation.HEALTH, 99, null))
 	check_eq(u.current_health, 6, "heal clamps to max")
-	check_eq(heal.delta, 2, "heal outcome reports the LANDED delta, not the request")
 
-	var full := Arbitrator.submit(StatMutation.make(u, StatMutation.HEALTH, 5, null))
-	check_eq(full.delta, 0, "heal at full HP lands 0")
+	Arbitrator.submit(StatMutation.make(u, StatMutation.HEALTH, 5, null))
+	check_eq(u.current_health, 6, "heal at full HP lands 0")
 
 
 func _modifier_form() -> void:
 	var u := unit("rook")
 	var atk0 := u.get_attribute("attack")
-	var out := Arbitrator.submit(StatMutation.make(u, StatMutation.ATTACK, 2, null))
+	Arbitrator.submit(StatMutation.make(u, StatMutation.ATTACK, 2, null))
 	check_eq(u.get_attribute("attack"), atk0 + 2, "modifier mutation folds into get_attribute")
-	check_eq(out.delta, 2, "modifier outcome carries the delta")
 
 
 func _shield_form_and_helpers() -> void:
@@ -63,9 +61,8 @@ func _shield_form_and_helpers() -> void:
 
 	Arbitrator.submit(StatMutation.make(u, StatMutation.SHIELD_POOL, 2, null))
 	check_eq(u.current_shield, 5, "SHIELD_POOL mutation adds to the live pool")
-	var floored := Arbitrator.submit(StatMutation.make(u, StatMutation.SHIELD_POOL, -99, null))
+	Arbitrator.submit(StatMutation.make(u, StatMutation.SHIELD_POOL, -99, null))
 	check_eq(u.current_shield, 0, "shield pool floors at 0")
-	check_eq(floored.delta, -5, "shield outcome reports the ACTUAL change under the floor")
 
 	# Plain SHIELD is the per-round BASE (a modifier): it raises what restore_shield refills to.
 	Arbitrator.submit(StatMutation.make(u, StatMutation.SHIELD, 1, null))
@@ -97,9 +94,9 @@ func _vocabulary() -> void:
 
 
 func _null_safety() -> void:
-	check_eq(Arbitrator.submit(null).delta, 0, "null mutation -> empty outcome, no crash")
-	check_eq(Arbitrator.submit(StatMutation.make(null, StatMutation.HEALTH, 5, null)).delta, 0,
-			"null target -> empty outcome, no crash")
+	Arbitrator.submit(null)
+	Arbitrator.submit(StatMutation.make(null, StatMutation.HEALTH, 5, null))
+	check(true, "null mutation / null target commit nothing and never crash")
 
 
 # The Arbitrator records the fatal blow's provenance at the lethal HP crossing (killed_by_*),

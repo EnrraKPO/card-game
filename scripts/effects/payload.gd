@@ -21,11 +21,12 @@ func applies(_feed: Feed) -> bool:
 	return false
 
 
-# Deliver to the feed's recipient: derive values via the payload's mutators, propose
-# StatMutations to the Arbitrator, return the Outcomes (presentation's records), in
-# landing order.
-func deliver(_feed: Feed) -> Array:
-	return []
+# Deliver to the feed's recipient: derive values via the payload's mutators and propose
+# StatMutations to the Arbitrator. Nothing comes back (the outcome is ruled out of
+# existence — signed EFFECT_PRESENTATION_DESIGN.html amendment 2): each mutation
+# announces its presentation and fires its events at its own commit.
+func deliver(_feed: Feed) -> void:
+	pass
 
 
 # Native (dictionary) authored form.
@@ -71,11 +72,10 @@ class Attack extends Payload:
 		var unit := feed.recipient as CardInstance
 		return unit != null and unit.is_alive()
 
-	func deliver(feed: Feed) -> Array:
+	func deliver(feed: Feed) -> void:
 		var unit := feed.recipient as CardInstance
 		var dmg: int = amount.derive(feed)
-		var outcome := Arbitrator.submit(StatMutation.damage(unit, dmg, feed.holder))
-		return [outcome]
+		Arbitrator.submit(StatMutation.damage(unit, dmg, feed.holder))
 
 	func to_dict() -> Dictionary:
 		return {"kind": "attack", "amount": amount.to_dict()}

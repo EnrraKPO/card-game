@@ -51,92 +51,78 @@ static var crit_enabled := true
 #     active container's INTERCEPTOR effects (the participants' cards + statuses AND the run
 #     set — relics/upgrades) get to rewrite its amount, matched declaratively by stat/channel/
 #     participant/conditions — e.g. Blind multiplies the holder's outgoing attack damage to 0;
-#     a relic adds +1 to every allied heal. No call site knows interception exists; the
-#     Outcome records what fired so presentation can cue the right pips/chips afterwards.
+#     a relic adds +1 to every allied heal. No call site knows interception exists.
 #
-# Every submit returns an Outcome — the standardized report of what actually happened, and
-# the embryo of the future outcome stream presentation will consume. Events stay separate
-# from mutations: firing "an attack happened" is the caller's (combat's) broadcast, made
-# whether or not any mutation follows.
+# A submit returns NOTHING (signed EFFECT_PRESENTATION_DESIGN.html, amendment 2: the
+# outcome is ruled out of existence). A mutation commits, announces its presentation
+# through the one generic channel and fires its events at that moment, and nothing
+# anywhere writes down what happened for later re-reading. The arithmetic of a blow —
+# dodge, shield split, critical — stays internal here, in the single writer that
+# performs it. Blow EVENTS (attack/struck/dodge/crit) fire from the committing site:
+# each attack-channel damage commit queues its news below, and the dispatching cascade
+# broadcasts it the moment delivery returns (events are broadcasts and must ride the
+# cascade's await spine; the queue is the firing in transit, never a record — nothing
+# re-reads an entry after its broadcast).
 
 
-# What actually happened when a mutation was applied. Uniform shape: `stat` + the signed
-# `delta` that LANDED (0 = nothing happened — clamped away, floored, blocked, or a no-op
-# submit). The DAMAGE form additionally reports its split (what the shield ate vs what
-# wounded health), which the shield/health VFX read separately. `interceptions` lists every
-# interceptor that rewrote the mutation, in firing order — presentation-only data
-# ({owner_kind, owner_id, holder, delta}) for cueing pips; resolution never reads it back.
-class Outcome:
-	var target: Object = null
-	var stat: StringName = &""
-	var delta: int = 0
-	var shield_absorbed: int = 0   # DAMAGE form only
-	var health_damage: int = 0     # DAMAGE form only
-	# DAMAGE form only: the strike was DODGED — the target avoided an attack outright, so the
-	# whole hit was zeroed before it could touch shield or health (see _apply_damage / dodge).
-	# Distinct from an ordinary 0-delta whiff: presentation will branch on this to cue a dodge
-	# (VFX/SFX/event hooks are a follow-up task).
-	var dodged: bool = false
-	# DAMAGE form only: the strike was a CRITICAL — the attacker's blow landed harder, and the
-	# post-interception amount was multiplied up (see _submit / crit_chance). The seam for
-	# presentation (crit VFX/SFX) and the `crit` trigger event, exactly as `dodged` is for dodge.
-	# `crit_bonus_damage` is how much EXTRA the crit added beyond the base hit, for cueing.
-	var crit: bool = false
-	var crit_bonus_damage: int = 0
-	var interceptions: Array = []
-
-	static func make(p_target: Object, p_stat: StringName, p_delta: int) -> Outcome:
-		var o := Outcome.new()
-		o.target = p_target
-		o.stat = p_stat
-		o.delta = p_delta
-		return o
+# The blow news awaiting broadcast: {source, target, dodged, crit} per attack-channel
+# damage commit, in commit order. Drained synchronously by the dispatching cascade
+# immediately after delivery (no await between commit and drain, so nested and
+# simulated dispatches each drain exactly their own).
+static var _news: Array = []
 
 
-static func submit(m: StatMutation) -> Outcome:
-	return _submit(m)
+static func drain_news() -> Array:
+	var n := _news
+	_news = []
+	return n
 
 
-static func _submit(m: StatMutation) -> Outcome:
+static func submit(m: StatMutation) -> void:
+	_submit(m)
+
+
+static func _submit(m: StatMutation) -> void:
 	if m == null or m.target == null:
-		return Outcome.new()
+		return
 	if m.target is DeckCard:
 		# Persistent definition bump (the "?" event's permanent +1): the override system's
 		# storage writer, gated here so deck edits speak the same contract as live stats.
 		# Definition edits are out-of-combat bookkeeping — never intercepted.
 		(m.target as DeckCard).bump(String(m.stat), m.amount)
-		return Outcome.make(m.target, m.stat, m.amount)
+		return
 	if m.target is CombatSide:
 		# Player-resource mutation (draw / discard / mana / max_mana) — intercepted like any
 		# live stat: "your draws are doubled" is just an interceptor with intercept "draw".
-		var side_interceptions := _intercept(m)
-		var sout := _apply_to_side(m.target as CombatSide, m)
-		sout.interceptions = side_interceptions
-		return sout
+		# Its presentation IS the hand/gauge reacting to the side's own signals.
+		_intercept(m)
+		_apply_to_side(m.target as CombatSide, m)
+		return
 	if m.target is GameEntity and not (m.target is CardInstance):
 		# A ground-layer (slot) mutation — the fourth target species. Interception runs the
 		# same gate first: unit-shaped interceptors degrade silently (their target-participant
 		# cast yields null → no match), while source-gated ones ("statuses YOU apply gain a
 		# stack") still fire — see _try_intercept.
-		var carrier_interceptions := _intercept(m)
-		var cout := _apply_to_carrier(m.target as GameEntity, m)
-		cout.interceptions = carrier_interceptions
-		return cout
+		_intercept(m)
+		_apply_to_carrier(m.target as GameEntity, m)
+		return
 	var inst := m.target as CardInstance
 	if inst == null:
-		return Outcome.new()
+		return
 	# DODGE is resolved BEFORE any interception: a dodged attack is avoided outright, so nothing
 	# about the hit happens — no shield split, and crucially no interceptor is consumed. A barrier
 	# is NOT spent on a strike the unit dodged (there was nothing to block), and blind never fires
 	# either. Attack-channel damage only; a real incoming hit (raw amount > 0, pre-interception)
-	# is the gate. See dodge_chance for the (itself interceptable) rate.
+	# is the gate. See dodge_chance for the (itself interceptable) rate. The dodge announces
+	# itself and fires its news HERE — the moment it happens (§3).
 	if m.stat == StatMutation.DAMAGE and m.channel == StatMutation.CH_ATTACK \
 			and dodge_enabled and m.amount > 0 \
 			and CombatRng.roll(&"rules") < dodge_chance(inst, m.source):
-		var od := Outcome.make(inst, StatMutation.DAMAGE, 0)
-		od.dodged = true
-		return od
-	var interceptions := _intercept(m)
+		PresentationChannel.tell(&"dodge", inst)
+		_news.append({"source": m.source, "target": inst, "dodged": true, "crit": false})
+		_log_blow(m.source, inst, 0, 0, true, 0)
+		return
+	_intercept(m)
 	# CRIT is resolved AFTER interception (settled design, the mirror of dodge-before-
 	# interception): a crit only ever procs on a hit that still deals damage once the defensive
 	# layer has spoken — a Barrier-blocked (or otherwise fully negated) strike is 0 and never
@@ -150,58 +136,45 @@ static func _submit(m: StatMutation) -> Outcome:
 		var boosted := int(round(m.amount * crit_multiplier(m.source)))
 		crit_bonus = maxi(0, boosted - m.amount)
 		m.amount += crit_bonus
-	var out := _apply_to_instance(inst, m)
-	if crit_bonus > 0:
-		out.crit = true
-		out.crit_bonus_damage = crit_bonus
-	# The application form may have run nested gates of its own (a DAMAGE split intercepts
-	# its shield/health portions — see _apply_damage): keep those records, in firing order.
-	out.interceptions = interceptions + out.interceptions
-	return out
+	_apply_to_instance(inst, m, crit_bonus)
 
 
-static func _apply_to_instance(inst: CardInstance, m: StatMutation) -> Outcome:
+static func _apply_to_instance(inst: CardInstance, m: StatMutation, crit_bonus: int = 0) -> void:
 	# The lethal crossing is stamped HERE, around the stat dispatch, so it covers every form
 	# that lowers health — the shield-split DAMAGE and the direct HEALTH (poison) alike. Only
 	# the FIRST mutation to take a live unit to <= 0 records the kill (the `pre > 0` guard);
 	# overkill from a later mutation can't overwrite the killer. The Arbitrator only RECORDS the
 	# cause — combat emits the event (its contract: events are never mutations).
 	var pre_health := inst.current_health
-	var out := _dispatch_apply(inst, m)
+	_dispatch_apply(inst, m, crit_bonus)
 	if pre_health > 0 and inst.current_health <= 0:
 		# An attack credits its striker as the killer unit; every other cause credits none —
 		# "died from poison"/"from an effect" is a causeful death with no killer UNIT.
 		inst.killed_by_unit = m.source if m.channel == StatMutation.CH_ATTACK else null
 		inst.killed_by_channel = m.channel
 		inst.killed_by_cause = m.cause
-	return out
 
 
-static func _dispatch_apply(inst: CardInstance, m: StatMutation) -> Outcome:
+static func _dispatch_apply(inst: CardInstance, m: StatMutation, crit_bonus: int = 0) -> void:
 	match m.stat:
 		StatMutation.DAMAGE:
-			return _apply_damage(inst, m)
+			_apply_damage(inst, m, crit_bonus)
 		StatMutation.HEALTH:
-			return _apply_health(inst, m.amount)
+			_apply_health(inst, m.amount)
 		StatMutation.STATUS:
 			# Status application — the Arbitrator is the single writer of statuses too, which is
 			# what lets interceptors rewrite the stack count. An application intercepted away
-			# (amount <= 0) applies nothing and reports delta 0. Stacking/clamping knowledge
-			# stays in StatusEngine.apply; delta reports the REQUESTED stacks (the pre-clamp ask).
+			# (amount <= 0) applies nothing. Stacking/clamping knowledge stays in StatusEngine.apply.
 			if m.amount <= 0 or m.status_id.is_empty():
-				return Outcome.make(inst, StatMutation.STATUS, 0)
+				return
 			StatusEngine.apply(inst, m.status_id, m.status_duration, m.amount, m.source)
-			return Outcome.make(inst, StatMutation.STATUS, m.amount)
 		StatMutation.SHIELD_POOL:
-			# Pool floors at 0; the outcome reports the change that ACTUALLY landed. (Plain
-			# "shield" is the per-round BASE — an additive modifier, handled below.)
-			var prev := inst.current_shield
-			inst.current_shield = maxi(0, prev + m.amount)
-			return Outcome.make(inst, StatMutation.SHIELD_POOL, inst.current_shield - prev)
+			# Pool floors at 0. (Plain "shield" is the per-round BASE — an additive modifier,
+			# handled below.)
+			inst.current_shield = maxi(0, inst.current_shield + m.amount)
 		_:
 			# Additive modifier on any named attribute (attack/speed/cost/max_health/shield/…).
 			inst.apply_modifier(String(m.stat), m.amount)
-			return Outcome.make(inst, m.stat, m.amount)
 
 
 # ── Application form: a bare GameEntity (a board slot) ──
@@ -209,44 +182,35 @@ static func _dispatch_apply(inst: CardInstance, m: StatMutation) -> Outcome:
 # StatusEngine.apply call the unit arm uses (one application writer); any other stat aimed
 # at a slot is an authoring error: fail loud, commit nothing (slots have no stats to move).
 
-static func _apply_to_carrier(carrier: GameEntity, m: StatMutation) -> Outcome:
+static func _apply_to_carrier(carrier: GameEntity, m: StatMutation) -> void:
 	if m.stat != StatMutation.STATUS:
 		push_error("Arbitrator: stat '%s' cannot land on a board slot (slots hold statuses only)"
 				% String(m.stat))
-		return Outcome.make(carrier, m.stat, 0)
+		return
 	if m.amount <= 0 or m.status_id.is_empty():
-		return Outcome.make(carrier, StatMutation.STATUS, 0)
+		return
 	StatusEngine.apply(carrier, m.status_id, m.status_duration, m.amount, m.source)
-	return Outcome.make(carrier, StatMutation.STATUS, m.amount)
 
 
 # ── Application forms: CombatSide (player resources) ──
 # The side stats' resolution knowledge: draw/discard floor at 0 and stop at their zone's
-# supply (delta reports what actually moved); mana floors at 0 and is UNCAPPED above
-# max_mana (settled — no clamp); max_mana floors at 0. The side's primitives commit and
-# emit; the forms decide how much.
+# supply; mana floors at 0 and is UNCAPPED above max_mana (settled — no clamp); max_mana
+# floors at 0. The side's primitives commit and emit; the forms decide how much.
 
-static func _apply_to_side(side: CombatSide, m: StatMutation) -> Outcome:
+static func _apply_to_side(side: CombatSide, m: StatMutation) -> void:
 	match m.stat:
 		StatMutation.DRAW:
-			var drawn := side.pull_to_hand(maxi(0, m.amount))
-			return Outcome.make(side, StatMutation.DRAW, drawn.size())
+			side.pull_to_hand(maxi(0, m.amount))
 		StatMutation.DISCARD:
-			var gone := side.discard_random(maxi(0, m.amount))
-			return Outcome.make(side, StatMutation.DISCARD, gone.size())
+			side.discard_random(maxi(0, m.amount))
 		StatMutation.MANA:
-			var prev := side.mana
-			side.set_mana(maxi(0, prev + m.amount))
-			return Outcome.make(side, StatMutation.MANA, side.mana - prev)
+			side.set_mana(maxi(0, side.mana + m.amount))
 		StatMutation.MAX_MANA:
-			var prev_max := side.max_mana
-			side.set_max_mana(maxi(0, prev_max + m.amount))
-			return Outcome.make(side, StatMutation.MAX_MANA, side.max_mana - prev_max)
+			side.set_max_mana(maxi(0, side.max_mana + m.amount))
 		_:
 			# Load validation keeps authored data out of here; a programmatic mismatch
 			# fails loud and commits nothing.
 			push_error("Arbitrator: stat '%s' is not a side stat" % String(m.stat))
-			return Outcome.make(side, m.stat, 0)
 
 
 # ── Set-form conveniences (expressed as additive mutations, so there is still one contract) ──
@@ -287,7 +251,7 @@ static func set_side_mana(side: CombatSide, value: int) -> void:
 
 # ── Application forms (private knowledge of HOW each stat resolves) ──
 
-static func _apply_damage(inst: CardInstance, m: StatMutation) -> Outcome:
+static func _apply_damage(inst: CardInstance, m: StatMutation, crit_bonus: int = 0) -> void:
 	# An incoming hit: the shield absorbs first, the rest wounds health. Damage never heals —
 	# a sub-zero amount deals 0. (Direct health changes — poison, heals — are HEALTH mutations
 	# and bypass this entirely.)
@@ -305,23 +269,60 @@ static func _apply_damage(inst: CardInstance, m: StatMutation) -> Outcome:
 	# barrier); by the time a hit reaches here it was NOT dodged and resolves normally.
 	var amount := maxi(0, m.amount)
 	var absorbed := mini(amount, inst.current_shield)
-	var records: Array = []
 	var sm := StatMutation.make(inst, StatMutation.SHIELD_POOL, -absorbed, m.source, m.channel)
 	sm.portion = true
-	records.append_array(_intercept(sm))
+	_intercept(sm)
 	absorbed = clampi(-sm.amount, 0, inst.current_shield)
 	var pierce := amount - mini(amount, inst.current_shield)
 	var hm := StatMutation.make(inst, StatMutation.HEALTH, -pierce, m.source, m.channel)
 	hm.portion = true
-	records.append_array(_intercept(hm))
+	_intercept(hm)
 	pierce = maxi(0, -hm.amount)
 	inst.current_shield -= absorbed
 	inst.current_health -= pierce
-	var o := Outcome.make(inst, StatMutation.DAMAGE, -(absorbed + pierce))
-	o.shield_absorbed = absorbed
-	o.health_damage = pierce
-	o.interceptions = records
-	return o
+	# THE COMMIT IS THE ANNOUNCEMENT (signed EFFECT_PRESENTATION_DESIGN.html §3 + amendments
+	# 2-3): each result tells the one generic channel the moment it lands — the shield's
+	# bite, the wound's number, the critical's flash (victim half + the attacker's speed
+	# glint, its own telling), or the whiff of a blow that landed nothing. Nothing is
+	# recorded; presentation was told, and that is the whole of it.
+	if absorbed > 0:
+		PresentationChannel.tell(&"shield_hit", inst, absorbed)
+	if pierce > 0:
+		PresentationChannel.tell(&"health_damage", inst, pierce)
+	if crit_bonus > 0:
+		PresentationChannel.tell(&"crit", inst, absorbed + pierce)
+		PresentationChannel.tell(&"crit_speed_glint", m.source)
+	if m.channel == StatMutation.CH_ATTACK:
+		if absorbed + pierce <= 0:
+			PresentationChannel.tell(&"miss", inst)
+		# The blow's news, queued from the committing site (see the header): attack, struck,
+		# then crit as it happened. The dodge branch in _submit queues its own.
+		_news.append({"source": m.source, "target": inst, "dodged": false,
+				"crit": crit_bonus > 0})
+		_log_blow(m.source, inst, absorbed, pierce, false, crit_bonus)
+
+
+# The combat log's record of one blow (CLAUDE-only diagnostics — see CombatLog): a rules
+# record written by the single writer at the commit, the only party that ever holds the
+# blow's arithmetic (the outcome is ruled out of existence — nothing else may).
+static func _log_blow(source: CardInstance, victim: CardInstance, absorbed: int,
+		pierce: int, p_dodged: bool, crit_bonus: int) -> void:
+	if not CombatLog.recording():
+		return
+	var line := "%s → %s" % [_log_name(source), _log_name(victim)]
+	if p_dodged:
+		line += " : DODGED"
+	else:
+		line += " : %d dmg (shield %d, hp %d)" % [absorbed + pierce, absorbed, pierce]
+		if crit_bonus > 0:
+			line += " CRIT +%d" % crit_bonus
+	if victim != null and not victim.is_alive():
+		line += "  ☠ dies"
+	CombatLog.note("combat", line)
+
+
+static func _log_name(inst: CardInstance) -> String:
+	return inst.data.id if inst != null and inst.data != null else "?"
 
 
 # The target's chance (0..1) to dodge an incoming attack from `attacker`, assembled from the
@@ -488,16 +489,15 @@ static func set_crit_tuning(cfg: Dictionary) -> void:
 			_crit_cfg[k] = float(cfg[k])
 
 
-static func _apply_health(inst: CardInstance, amount: int) -> Outcome:
+static func _apply_health(inst: CardInstance, amount: int) -> void:
 	# Signed direct health change: negative wounds through the shield (poison); positive
-	# heals, clamped to effective max. Reports the delta that actually landed.
+	# heals, clamped to effective max.
 	if amount < 0:
 		inst.current_health += amount
-		return Outcome.make(inst, StatMutation.HEALTH, amount)
+		return
 	var healed := mini(amount, inst.get_attribute("max_health") - inst.current_health)
 	if healed > 0:
 		inst.current_health += healed
-	return Outcome.make(inst, StatMutation.HEALTH, healed)
 
 
 # ── Interception — THE SEAM (TARGETING_DESIGN.md §8) ──
@@ -510,8 +510,10 @@ static func _apply_health(inst: CardInstance, amount: int) -> Outcome:
 # sanctioned); magnitude stats re-floor at 0 after EVERY rewrite and split-hit portions
 # re-clamp at <= 0; "changed nothing = didn't fire" (no cue, no Barrier charge — the blind
 # si.fired() channel is how an intercept-decay status spends itself); enumeration spans
-# the participants' containers AND the run set, with owner attribution in the returned
-# presentation records ({owner_kind, owner_id, holder, delta}).
+# the participants' containers AND the run set. Owner attribution (the pip/chip cue) is
+# ANNOUNCED through the one generic channel at the moment an interceptor fires — never
+# returned as a record (the outcome is ruled out of existence, EFFECT_PRESENTATION_
+# DESIGN.html amendment 2).
 
 static func _intercept(_m: StatMutation) -> Array:
 	return []

@@ -3,7 +3,9 @@ extends TestCase
 # The core DODGE rule (Arbitrator): an attack strike can be avoided outright based on the TARGET's
 # speed. The chance is DATA-DRIVEN (data/combat_tuning.json → Arbitrator.dodge_chance):
 #     fixed_pct + per_speed_pct × target_speed + per_speed_diff_pct × max(0, tgt − atk speed)
-# capped at max_pct. A dodge zeroes the WHOLE hit before shield/health and reports Outcome.dodged.
+# capped at max_pct. A dodge zeroes the WHOLE hit before shield/health, announces itself at the
+# commit, and queues its blow news (the outcome is ruled out of existence — the news queue the
+# cascade broadcasts from is the observable fact here, alongside the committed state).
 # This is core combat, not an effect — so it's proven here rather than in the effect suites.
 #
 # Two halves: the CHANCE FORMULA is a pure function (no RNG — asserted directly against injected
@@ -92,33 +94,34 @@ func _dodge_bonus_fold() -> void:
 func _certain_dodge_zeroes_attack() -> void:
 	Arbitrator.set_dodge_tuning({"fixed_pct": 100.0, "max_pct": 100.0})
 	var tgt := _unit(1, 5, 3)
-	var out := Arbitrator.submit(StatMutation.damage(tgt, 4, _unit(1, 5, 0)))
-	check(out.dodged, "a certain-dodge target flags the strike as dodged")
-	check_eq(out.delta, 0, "a dodged strike lands 0 total")
-	check_eq(out.shield_absorbed, 0, "a dodged strike touches no shield")
-	check_eq(out.health_damage, 0, "a dodged strike touches no health")
+	Arbitrator.drain_news()
+	Arbitrator.submit(StatMutation.damage(tgt, 4, _unit(1, 5, 0)))
 	check_eq(tgt.current_shield, 3, "the dodging unit keeps its full shield")
 	check_eq(tgt.current_health, 5, "the dodging unit takes no wound")
-	check(out.interceptions.is_empty(), "a dodge is not an interception (no phantom cue)")
+	var news := Arbitrator.drain_news()
+	check_eq(news.size(), 1, "the dodged blow still queues its one news entry")
+	check(not news.is_empty() and bool(news[0]["dodged"]), "the news carries the dodge fact")
 
 
 # At a 0% chance the strike always resolves in full.
 func _impossible_dodge_lands_in_full() -> void:
 	Arbitrator.set_dodge_tuning({"fixed_pct": 0.0, "per_speed_pct": 0.0, "per_speed_diff_pct": 0.0})
 	var tgt := _unit(9, 5, 0)   # high speed, but every rate is 0
-	var out := Arbitrator.submit(StatMutation.damage(tgt, 4, null))
-	check(not out.dodged, "a 0%-tuning target never dodges, however fast")
-	check_eq(out.delta, -4, "the strike lands in full at 0% dodge")
-	check_eq(tgt.current_health, 1, "the target is wounded normally")
+	Arbitrator.drain_news()
+	Arbitrator.submit(StatMutation.damage(tgt, 4, null))
+	check_eq(tgt.current_health, 1, "a 0%-tuning target never dodges — the strike lands in full")
+	var news := Arbitrator.drain_news()
+	check(not news.is_empty() and not bool(news[0]["dodged"]), "the news reports no dodge")
 
 
 # Dodge is attack-channel only: a poison-form HEALTH mutation is never dodged, however certain.
 func _dodge_is_attack_channel_only() -> void:
 	Arbitrator.set_dodge_tuning({"fixed_pct": 100.0, "max_pct": 100.0})
 	var tgt := _unit(1, 5, 0)
-	var out := Arbitrator.submit(StatMutation.make(tgt, StatMutation.HEALTH, -3, null))
-	check(not out.dodged, "a non-attack (poison/effect) wound is never dodged")
+	Arbitrator.drain_news()
+	Arbitrator.submit(StatMutation.make(tgt, StatMutation.HEALTH, -3, null))
 	check_eq(tgt.current_health, 2, "the poison wound lands despite a certain dodge chance")
+	check(Arbitrator.drain_news().is_empty(), "a non-attack wound is no blow — no news, no dodge")
 
 
 # The master switch: with dodge disabled, even a certain-dodge target takes the full hit.
@@ -126,9 +129,11 @@ func _toggle_off_never_dodges() -> void:
 	Arbitrator.set_dodge_tuning({"fixed_pct": 100.0, "max_pct": 100.0})
 	Arbitrator.dodge_enabled = false
 	var tgt := _unit(1, 5, 0)
-	var out := Arbitrator.submit(StatMutation.damage(tgt, 4, null))
-	check(not out.dodged, "dodge_enabled = false suppresses the roll entirely")
-	check_eq(out.delta, -4, "the strike lands in full with dodge disabled")
+	Arbitrator.drain_news()
+	Arbitrator.submit(StatMutation.damage(tgt, 4, null))
+	check_eq(tgt.current_health, 1, "dodge_enabled = false — the strike lands in full")
+	var news := Arbitrator.drain_news()
+	check(not news.is_empty() and not bool(news[0]["dodged"]), "no dodge fact with the roll disabled")
 	Arbitrator.dodge_enabled = true
 
 

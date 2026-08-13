@@ -29,9 +29,14 @@ static func make(p_world: CombatWorld, p_presenter: CombatPresenter) -> CombatCa
 
 # The per-holder dispatch-and-present point — THE ONE CRANK: events trigger, effects
 # unfold. For each effect the holder's card carries whose trigger says yes: resolve
-# targets (the read at the trigger moment), let presentation attend the windup, deliver
-# the payloads, present the results, emit the news the Outcomes report, and sweep deaths
-# through the one death path. Nothing here knows what an attack is.
+# targets (the read at the trigger moment), tell presentation the windup opens, deliver
+# the payloads (each mutation announces itself and queues its news at its own commit —
+# see Arbitrator), tell presentation the contact plays, tell the windup to close (the
+# act concluding is its OWN telling — signed EFFECT_PRESENTATION_DESIGN.html amendment
+# 3; back-to-back with the contact is coincidence, never a bundle), broadcast the blow
+# news, and sweep deaths through the one death path. Nothing here knows what an attack
+# is, and no effect-shaped object ever crosses to presentation — the two presentation
+# NAMES are the whole cargo (§2/§3).
 # NEEDS kept for the containers still to join dispatch (statuses/relics): per-container
 # grouping — card glint / pip glint before that container's results.
 func fire(event: GameEvent, holder: CardInstance) -> void:
@@ -45,10 +50,15 @@ func fire(event: GameEvent, holder: CardInstance) -> void:
 			recipients = effect.targets.resolve(world, holder)
 			if recipients.is_empty():
 				continue   # a legal "no target" — nothing to unfold onto
-		await presenter.action_windup(holder, effect, recipients)
-		var outcomes := ActionExecutor.deliver(effect, event, holder, world, recipients)
-		await presenter.action_results(holder, effect, outcomes)
-		await _emit_outcome_news(holder, outcomes)
+		await presenter.action_windup(holder, effect.windup_presentation_id(), recipients)
+		ActionExecutor.deliver(effect, event, holder, world, recipients)
+		# Drained on the delivery's heel, no await between — the queue is the news in
+		# transit from the committing site, and this dispatch drains exactly its own.
+		var news := Arbitrator.drain_news()
+		await presenter.action_results(holder, effect.contact_presentation_id(), recipients)
+		await presenter.action_conclude(holder, effect.windup_presentation_id())
+		for blow: Dictionary in news:
+			await _broadcast_blow_news(blow)
 		await _sweep_delivery_deaths(recipients)
 
 
@@ -60,22 +70,21 @@ func fire_run_level(_event: GameEvent) -> void:
 	pass
 
 
-# Blow-news, derived from what actually happened (events are RESULTS — user ruling,
-# signed §8.0): a DAMAGE-form Outcome IS the fact "a blow landed on this unit", so it
-# earns the strike's news — attack, struck, then dodge or crit as the Outcome reports.
-# No payload inspection, no attack-type knowledge: the Outcome's form carries the fact.
-func _emit_outcome_news(holder: CardInstance, outcomes: Array) -> void:
-	for o: Arbitrator.Outcome in outcomes:
-		if o.stat != StatMutation.DAMAGE:
-			continue
-		var victim := o.target as CardInstance
-		_log_strike(holder, victim, o)
-		await broadcast(GameEvent.make(&"attack", holder, victim))
-		await broadcast(GameEvent.make(&"struck", holder, victim))
-		if o.dodged:
-			await broadcast(GameEvent.make(&"dodge", holder, victim))
-		elif o.crit:
-			await broadcast(GameEvent.make(&"crit", holder, victim))
+# Blow-news, fired from the committing site (events are RESULTS — user ruling; signed
+# EFFECT_PRESENTATION_DESIGN.html amendment 2: events fire at mutation time, never
+# derived from a record afterward): each attack-channel damage commit queued its fact
+# in the Arbitrator, and the broadcast rides the cascade's await spine here — attack,
+# struck, then dodge or crit as it happened. No payload inspection, no attack-type
+# knowledge: the commit itself carried the fact.
+func _broadcast_blow_news(blow: Dictionary) -> void:
+	var striker := blow.get("source") as CardInstance
+	var victim := blow.get("target") as CardInstance
+	await broadcast(GameEvent.make(&"attack", striker, victim))
+	await broadcast(GameEvent.make(&"struck", striker, victim))
+	if bool(blow.get("dodged", false)):
+		await broadcast(GameEvent.make(&"dodge", striker, victim))
+	elif bool(blow.get("crit", false)):
+		await broadcast(GameEvent.make(&"crit", striker, victim))
 
 
 # Recipients felled by a delivery leave through the one death path; bystanders a
@@ -89,35 +98,6 @@ func _sweep_delivery_deaths(recipients: Array) -> void:
 			await bury(unit)
 	world.cleanup_deaths()
 	presenter.board_refresh()
-
-
-# The combat log's record of one blow (CLAUDE-only diagnostics — see CombatLog): a rules
-# record of the Outcome, so it lives with the delivery, not the dressing.
-func _log_strike(attacker: CardInstance, victim: CardInstance, outcome: Arbitrator.Outcome) -> void:
-	if not CombatLog.recording():
-		return
-	var line := "%s → %s" % [_log_where(attacker), _log_where(victim)]
-	if outcome == null:
-		line += " : no outcome"
-	elif outcome.dodged:
-		line += " : DODGED"
-	else:
-		line += " : %d dmg (shield %d, hp %d)" % [-outcome.delta,
-				outcome.shield_absorbed, outcome.health_damage]
-		if outcome.crit:
-			line += " CRIT +%d" % outcome.crit_bonus_damage
-	if outcome != null and not outcome.interceptions.is_empty():
-		line += "  intercepted×%d" % outcome.interceptions.size()
-	if victim != null and not victim.is_alive():
-		line += "  ☠ dies"
-	CombatLog.note("combat", line)
-
-
-func _log_where(inst: CardInstance) -> String:
-	if inst == null:
-		return "?"
-	var loc := BoardFacade.location_of(world, inst)
-	return "%s%s" % [inst.data.id, str(loc) if loc != null else "(off-board)"]
 
 
 # Fires the `kill` event for a just-dead unit, immediately before its `death` — reading the

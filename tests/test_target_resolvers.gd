@@ -213,12 +213,13 @@ func _executor_runs_the_attack_shape() -> void:
 	check(not effect.trigger.fires(GameEvent.make(&"act", victim), attacker),
 			"someone else's act stays gated out")
 
-	var outcomes := ActionExecutor.run(effect, ev, attacker, w)
-	check_eq(outcomes.size(), 1, "one strike, one outcome")
+	Arbitrator.drain_news()
+	ActionExecutor.run(effect, ev, attacker, w)
 	check_eq(victim.current_health, 1, "the strike lands the holder's attack stat through the Arbitrator")
+	check_eq(Arbitrator.drain_news().size(), 1, "one strike, one blow news queued at the commit")
 
 	# A whiff: no enemies left standing anywhere — an empty resolution delivers nothing.
 	var lonely := _world()
 	var alone := _place(lonely, "knight", 0, 1, 3)
-	var whiff := ActionExecutor.run(effect, GameEvent.make(&"act", alone), alone, lonely)
-	check_eq(whiff.size(), 0, "an empty resolution is a legal whiff, not an error")
+	ActionExecutor.run(effect, GameEvent.make(&"act", alone), alone, lonely)
+	check(Arbitrator.drain_news().is_empty(), "an empty resolution is a legal whiff — nothing committed")

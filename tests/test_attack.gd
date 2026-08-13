@@ -1,9 +1,10 @@
 extends TestCase
 
 # The attack, end to end, under the ONE CRANK: the sequencer fires `act`, dispatch
-# unfolds the unit's attack effect like any other, blow-news derives from the Outcomes,
-# deaths ride the one death path — headless, under the null presenter, proving the rules
-# never needed a screen. Effects here are INLINE fixtures (frozen — the suite must never
+# unfolds the unit's attack effect like any other, blow-news fires from the committing
+# site (the Arbitrator queues it at each commit; the cascade broadcasts it on the
+# delivery's heel), deaths ride the one death path — headless, under the null presenter,
+# proving the rules never needed a screen. Effects here are INLINE fixtures (frozen — the suite must never
 # track live content); the library's own loading is pinned separately.
 
 
@@ -131,8 +132,8 @@ func _repeats_is_dead() -> void:
 
 
 func _news_is_results_retaliation_unfolds() -> void:
-	# Blow-news derives from the Outcomes and feeds the same crank: a victim authored with
-	# a struck-triggered attack (retaliation) unfolds it the moment the news fires.
+	# Blow-news fires from the committing site and feeds the same crank: a victim authored
+	# with a struck-triggered attack (retaliation) unfolds it the moment the news fires.
 	var retaliation := {
 		"trigger": {"kind": "dual_event", "event": "struck", "destination_of": "self"},
 		"targets": {"kind": "nearest"},

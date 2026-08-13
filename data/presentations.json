@@ -1,0 +1,10 @@
+{
+	"windups": {
+		"lunge": {"choreography": "lunge"},
+		"bolt": {"choreography": "bolt"},
+		"glint": {"choreography": "glint"}
+	},
+	"contacts": {
+		"default_landing": {"visuals": ["recipient_mark", "hit_burst"]}
+	}
+}

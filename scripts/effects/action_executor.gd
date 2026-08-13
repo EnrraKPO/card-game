@@ -3,9 +3,11 @@ extends RefCounted
 
 # The one piece of machinery that RUNS an action once its trigger (or, later, its cost
 # gate) says yes (signed ATTACK_SYSTEM_DESIGN.html §3): it asks the TargetResolver for
-# the resolution, assembles the Feed per recipient, walks the payloads, and returns the
-# Outcomes for presentation. It is the only party that ever holds all four facts at once
-# — which is exactly why the feeding job is its.
+# the resolution, assembles the Feed per recipient, and walks the payloads. It is the
+# only party that ever holds all four facts at once — which is exactly why the feeding
+# job is its. Nothing is returned (the outcome is ruled out of existence — signed
+# EFFECT_PRESENTATION_DESIGN.html amendment 2): every mutation announces itself at its
+# own commit.
 #
 # THE GUARD (signed §6): this executor never inspects what a payload or mutator IS — it
 # only serves the plate. Species logic leaking in here is how the old dispatcher grew;
@@ -13,14 +15,14 @@ extends RefCounted
 
 # Run a triggered effect that already passed its trigger gate: resolve, then deliver.
 static func run(effect: TriggeredEffect, event: GameEvent, holder: CardInstance,
-		world: CombatWorld, owner: int = TriggerResolver.OWNER_FROM_HOLDER) -> Array:
+		world: CombatWorld, owner: int = TriggerResolver.OWNER_FROM_HOLDER) -> void:
 	var anchor := TriggerResolver.anchor_owner(holder, owner)
 	var recipients: Array = []
 	if effect.targets == null:
 		recipients = [null]
 	else:
 		recipients = effect.targets.resolve(world, holder, anchor)
-	return deliver(effect, event, holder, world, recipients, anchor)
+	deliver(effect, event, holder, world, recipients, anchor)
 
 
 # Deliver a resolution already taken (the read happened at the trigger moment; a caller
@@ -32,12 +34,10 @@ static func run(effect: TriggeredEffect, event: GameEvent, holder: CardInstance,
 # delivers nothing — a legal whiff, not an error.
 static func deliver(effect: TriggeredEffect, event: GameEvent, holder: CardInstance,
 		world: CombatWorld, recipients: Array,
-		owner: int = TriggerResolver.OWNER_FROM_HOLDER) -> Array:
+		owner: int = TriggerResolver.OWNER_FROM_HOLDER) -> void:
 	var anchor := TriggerResolver.anchor_owner(holder, owner)
-	var outcomes: Array = []
 	for payload: Payload in effect.payloads:
 		for recipient: Variant in recipients:
 			var feed := Feed.make(world, holder, anchor, event, recipient as GameEntity)
 			if payload.applies(feed):
-				outcomes.append_array(payload.deliver(feed))
-	return outcomes
+				payload.deliver(feed)

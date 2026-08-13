@@ -152,11 +152,11 @@ static func build_details(inst: CardInstance, s := 1.0, max_h := 0.0) -> Contain
 	if not desc.is_empty():
 		blocks.append(_rich_label(desc, col_w, int(18.0 * s), TEXT_MAIN))
 
-	# Auto-attack targeting policy, appended after the authored text as its own line (units only;
-	# spells return "" — see CardData.targeting_line). Colour-dimmed to read as a system rule.
-	var targeting := inst.data.targeting_line()
-	if not targeting.is_empty():
-		blocks.append(_rich_label(targeting, col_w, int(15.0 * s), TEXT_SECTION))
+	# Each effect's own text description, appended after the authored text as its own line
+	# (see CardData.effect_lines — the effect speaks for itself, §7 of the presentation
+	# design). Colour-dimmed to read as a system rule.
+	for effect_line: String in inst.data.effect_lines():
+		blocks.append(_rich_label(effect_line, col_w, int(15.0 * s), TEXT_SECTION))
 
 	# Rooted-building note, appended after the authored/targeting text as its own line (buildings
 	# only; non-buildings return "" — see CardData.building_line). Colour-dimmed as a system rule.

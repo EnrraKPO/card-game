@@ -62,19 +62,25 @@ func show_ground_results(_procs: Array) -> void:
 	pass
 
 
-# Presentation attending an unfolding effect (signed ATTACK_SYSTEM_DESIGN.html §8.0),
-# generic for every effect. WINDUP plays before the payloads land — the live fight
-# decides what that looks like from the effect's identity (for the attack family: the
-# melee lunge held to contact, or the ranged bolt's flight) — and the rules hold for it
-# so the delivery lands on the beat the player sees. RESULTS plays after: the live fight
-# reads the Outcomes (dodged, crit, shield split) and plays the numbers, the "Miss", the
-# sidestep, the withdrawal. Both are silent no-ops here, so a simulated unfolding is
-# instant.
-func action_windup(_holder: CardInstance, _effect: TriggeredEffect, _recipients: Array) -> void:
+# Presentation attending an unfolding effect (signed EFFECT_PRESENTATION_DESIGN.html
+# §3/§8), generic for every effect. The cargo is two plain presentation NAMES — the
+# windup and the contact the effect resolved for itself — never the effect: no
+# effect-shaped object crosses into presentation (§2). WINDUP opens before the payloads
+# land, and the rules hold for it so the delivery lands on the beat the player sees.
+# RESULTS is the contact playing on each recipient after the payloads land. CONCLUDE is
+# the act concluding, telling the windup to close — its own telling, never bundled with
+# the contact (amendment 3). All three are silent no-ops here, so a simulated unfolding
+# is instant. (A mutation's own results — numbers, dodge, crit — are announced at their
+# commits through the one generic channel, not through this surface.)
+func action_windup(_holder: CardInstance, _windup: String, _recipients: Array) -> void:
 	pass
 
 
-func action_results(_holder: CardInstance, _effect: TriggeredEffect, _outcomes: Array) -> void:
+func action_results(_holder: CardInstance, _contact: String, _recipients: Array) -> void:
+	pass
+
+
+func action_conclude(_holder: CardInstance, _windup: String) -> void:
 	pass
 
 

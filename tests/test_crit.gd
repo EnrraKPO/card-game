@@ -7,8 +7,9 @@ extends TestCase
 #     fixed_pct + per_speed_pct × attacker_speed + per_speed_diff_pct × max(0, atk − tgt speed)
 # capped at max_pct. The damage factor is Arbitrator.crit_multiplier (tuning base + the attacker's
 # crit_multiplier_bonus in points ×100, capped at multiplier_max). Crit resolves AFTER
-# interception — it only rolls on a hit that still deals > 0 — and reports Outcome.crit +
-# crit_bonus_damage. Core combat, not an effect — proven here rather than in the effect suites.
+# interception — it only rolls on a hit that still deals > 0 — announces itself at the commit,
+# and rides the blow news (the outcome is ruled out of existence — committed state and the news
+# queue are the observable facts). Core combat, not an effect — proven here.
 #
 # Same two halves as the dodge suite: the CHANCE/MULTIPLIER FORMULAS are pure functions (no RNG),
 # and the ROLL is exercised only at the certain (100%) and impossible (0%) ends.
@@ -102,33 +103,34 @@ func _crit_chance_bonus_fold() -> void:
 	_near(Arbitrator.crit_chance(u), 0.20, "the cap ceils a bonus that would exceed it")
 
 
-# At a certain (100%, uncapped) chance the strike lands multiplied, and the outcome reports the
-# crit + the exact bonus.
+# At a certain (100%, uncapped) chance the strike lands multiplied, and the news carries the
+# crit fact.
 func _certain_crit_multiplies_damage() -> void:
 	Arbitrator.set_crit_tuning({"fixed_pct": 100.0, "per_speed_pct": 0.0, "per_speed_diff_pct": 0.0,
 			"max_pct": 100.0, "multiplier": 2.0, "multiplier_max": 5.0})
 	var tgt := _unit(0, 12, 0)
-	var out := Arbitrator.submit(StatMutation.damage(tgt, 4, _unit(1, 5, 0)))
-	check(out.crit, "a certain-crit strike flags the outcome as a crit")
-	check_eq(out.crit_bonus_damage, 4, "a 2.0× crit on a 4 hit adds exactly 4 bonus damage")
-	check_eq(out.delta, -8, "the strike lands multiplied (4 × 2.0 = 8)")
-	check_eq(tgt.current_health, 4, "the target is wounded by the full crit amount")
+	Arbitrator.drain_news()
+	Arbitrator.submit(StatMutation.damage(tgt, 4, _unit(1, 5, 0)))
+	check_eq(tgt.current_health, 4, "the strike lands multiplied (4 × 2.0 = 8)")
+	var news := Arbitrator.drain_news()
+	check(not news.is_empty() and bool(news[0]["crit"]), "the news carries the crit fact")
 
 	# A sourceless hit can never crit — there is no attacker to own the chance.
 	var tgt2 := _unit(0, 12, 0)
-	var out2 := Arbitrator.submit(StatMutation.damage(tgt2, 4, null))
-	check(not out2.crit, "a sourceless strike never crits, whatever the tuning")
-	check_eq(out2.delta, -4, "the sourceless strike lands at base damage")
+	Arbitrator.submit(StatMutation.damage(tgt2, 4, null))
+	check_eq(tgt2.current_health, 8, "a sourceless strike never crits — base damage lands")
+	Arbitrator.drain_news()
 
 
 # At a 0% chance the strike always resolves at its base amount.
 func _impossible_crit_lands_base() -> void:
 	Arbitrator.set_crit_tuning({"fixed_pct": 0.0, "per_speed_pct": 0.0, "per_speed_diff_pct": 0.0})
 	var tgt := _unit(0, 9, 0)
-	var out := Arbitrator.submit(StatMutation.damage(tgt, 4, _spd(9)))
-	check(not out.crit, "a 0%-tuning attacker never crits, however fast")
-	check_eq(out.crit_bonus_damage, 0, "no bonus damage without a crit")
-	check_eq(out.delta, -4, "the strike lands at base damage")
+	Arbitrator.drain_news()
+	Arbitrator.submit(StatMutation.damage(tgt, 4, _spd(9)))
+	check_eq(tgt.current_health, 5, "a 0%-tuning attacker never crits — base damage lands")
+	var news := Arbitrator.drain_news()
+	check(not news.is_empty() and not bool(news[0]["crit"]), "the news reports no crit")
 
 
 # Crit is attack-channel only: a poison-form HEALTH wound (or any effect-channel damage) never
@@ -136,13 +138,14 @@ func _impossible_crit_lands_base() -> void:
 func _crit_is_attack_channel_only() -> void:
 	Arbitrator.set_crit_tuning({"fixed_pct": 100.0, "per_speed_pct": 0.0, "max_pct": 100.0})
 	var tgt := _unit(0, 9, 0)
-	var out := Arbitrator.submit(StatMutation.make(tgt, StatMutation.HEALTH, -3, _unit(1, 5, 0)))
-	check(not out.crit, "a non-attack (poison/effect) wound is never a crit")
-	check_eq(tgt.current_health, 6, "the wound lands at its base amount")
-	var out2 := Arbitrator.submit(StatMutation.make(tgt, StatMutation.DAMAGE, 3, _unit(1, 5, 0),
+	Arbitrator.drain_news()
+	Arbitrator.submit(StatMutation.make(tgt, StatMutation.HEALTH, -3, _unit(1, 5, 0)))
+	check_eq(tgt.current_health, 6, "a non-attack (poison/effect) wound is never a crit — base lands")
+	check(Arbitrator.drain_news().is_empty(), "a non-attack wound is no blow — no news")
+	Arbitrator.submit(StatMutation.make(tgt, StatMutation.DAMAGE, 3, _unit(1, 5, 0),
 			StatMutation.CH_EFFECT))
-	check(not out2.crit, "effect-channel damage is never a crit")
-	check_eq(out2.delta, -3, "the effect damage lands at its base amount")
+	check_eq(tgt.current_health, 3, "effect-channel damage is never a crit — base lands")
+	check(Arbitrator.drain_news().is_empty(), "effect-channel damage queues no blow news")
 
 
 # The master switch: with crit disabled, even a certain-crit attacker lands base damage.
@@ -150,9 +153,11 @@ func _toggle_off_never_crits() -> void:
 	Arbitrator.set_crit_tuning({"fixed_pct": 100.0, "per_speed_pct": 0.0, "max_pct": 100.0})
 	Arbitrator.crit_enabled = false
 	var tgt := _unit(0, 9, 0)
-	var out := Arbitrator.submit(StatMutation.damage(tgt, 4, _unit(1, 5, 0)))
-	check(not out.crit, "crit_enabled = false suppresses the roll entirely")
-	check_eq(out.delta, -4, "the strike lands at base damage with crit disabled")
+	Arbitrator.drain_news()
+	Arbitrator.submit(StatMutation.damage(tgt, 4, _unit(1, 5, 0)))
+	check_eq(tgt.current_health, 5, "crit_enabled = false — base damage lands")
+	var news := Arbitrator.drain_news()
+	check(not news.is_empty() and not bool(news[0]["crit"]), "no crit fact with the roll disabled")
 	Arbitrator.crit_enabled = true
 
 
@@ -167,11 +172,12 @@ func _dodge_beats_crit() -> void:
 	var prev_dodge := Arbitrator.dodge_enabled
 	Arbitrator.dodge_enabled = true
 	var tgt := _unit(0, 9, 0)
-	var out := Arbitrator.submit(StatMutation.damage(tgt, 4, _unit(1, 5, 0)))
-	check(out.dodged, "with both certain, the strike is dodged")
-	check(not out.crit, "a dodged strike is never also a crit")
-	check_eq(out.crit_bonus_damage, 0, "a dodged strike adds no crit damage")
-	check_eq(tgt.current_health, 9, "the dodging unit is untouched")
+	Arbitrator.drain_news()
+	Arbitrator.submit(StatMutation.damage(tgt, 4, _unit(1, 5, 0)))
+	check_eq(tgt.current_health, 9, "with both certain, the strike is dodged — the unit is untouched")
+	var news := Arbitrator.drain_news()
+	check(not news.is_empty() and bool(news[0]["dodged"]) and not bool(news[0]["crit"]),
+			"the news carries the dodge and never also the crit")
 	Arbitrator.dodge_enabled = prev_dodge
 	Arbitrator.set_dodge_tuning({})
 
@@ -181,18 +187,21 @@ func _dodge_beats_crit() -> void:
 func _buildings_crit_both_ways() -> void:
 	Arbitrator.set_crit_tuning({"fixed_pct": 100.0, "per_speed_pct": 0.0, "max_pct": 100.0,
 			"multiplier": 2.0, "multiplier_max": 5.0})
-	var out := Arbitrator.submit(StatMutation.damage(_unit(0, 20, 0), 4, _building()))
-	check(out.crit, "a building attacker lands a critical hit")
-	check_eq(out.delta, -8, "the building's crit deals full multiplied damage")
+	var victim := _unit(0, 20, 0)
+	Arbitrator.drain_news()
+	Arbitrator.submit(StatMutation.damage(victim, 4, _building()))
+	check_eq(victim.current_health, 12, "a building attacker lands a full multiplied crit")
+	var news := Arbitrator.drain_news()
+	check(not news.is_empty() and bool(news[0]["crit"]), "the building's blow carries the crit fact")
 
 	var wall := CardInstance.from_data(CardData.build_from_dict({
 		"id": "_test_crit_wall", "display_name": "Wall",
 		"cost": 1, "attack": 1, "health": 20, "speed": 0, "chess_pieces": ["rook"],
 	}))
 	wall.owner = 1
-	var out2 := Arbitrator.submit(StatMutation.damage(wall, 4, _unit(1, 5, 0)))
-	check(out2.crit, "a building defender can be critically hit")
-	check_eq(out2.delta, -8, "the crit against the building deals full multiplied damage")
+	Arbitrator.submit(StatMutation.damage(wall, 4, _unit(1, 5, 0)))
+	check_eq(wall.current_health, 12, "a building defender can be critically hit — full multiplied damage")
+	Arbitrator.drain_news()
 
 
 func _near(got: float, want: float, label: String) -> void:

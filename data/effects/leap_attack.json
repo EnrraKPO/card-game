@@ -7,5 +7,6 @@
 	"targets": {"kind": "leap"},
 	"payloads": [
 		{"kind": "attack", "amount": {"kind": "holder_stat", "stat": "attack"}}
-	]
+	],
+	"windup_presentation": "lunge"
 }
