@@ -7,7 +7,7 @@ extends RefCounted
 #
 # NAMED STREAMS, not one sequence. Each concern draws from its own generator, derived from
 # the master seed:
-#   · rules — dodge, crit, and every effect-layer chance gate (the Arbitrator's rolls)
+#   · rules — every effect-layer chance gate (the dodge and crit rolls were nuked 2026-08-13)
 #   · deck  — shuffles and random discard (which cards arrive, and when)
 #   · ai    — the enemy engine's tie-break among equally-scored candidates
 # The split is what makes a replay survive EDITING: change how the CPU breaks ties and the
@@ -24,8 +24,8 @@ extends RefCounted
 # in their own right, and structurally unable to touch the live streams.
 #
 # OUTSIDE COMBAT there is no fight to seed: every entry point falls back to the global
-# generator, exactly as before. The Arbitrator and the rules layer run in the Lab, the forge and
-# deck edits too — this class never makes them deterministic, and never has to.
+# generator, exactly as before. The rules layer runs in the Lab, the forge and deck edits
+# too — this class never makes them deterministic, and never has to.
 
 # The streams built per fight. Names are the vocabulary above; drawing from an unknown one
 # is a programming error (loud, not silent — a mis-typed stream would quietly re-couple two

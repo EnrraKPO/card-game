@@ -41,15 +41,9 @@ var charms: Array = []
 # (Live Statuses — `statuses` and its lookups — are inherited from GameEntity: a unit is
 # one kind of status carrier, with zero say in status behavior. See StatusEngine.)
 
-# Provenance of the FATAL blow — stamped by the Arbitrator at the lethal HP crossing, read by
-# combat to fire the `kill` event before `death` (see GameEvent). `killed_by_unit` is the
-# killer UNIT, populated ONLY for an attack (an effect/poison kill credits no unit — that is
-# the deliberate rule: units kill by striking). `killed_by_channel` is the cause KIND
-# (attack/effect), `killed_by_cause` the specific id (a status id like "poison", else "").
-# `killed_by_channel == ""` means "died with no recorded cause" — fires `death` only.
-var killed_by_unit: CardInstance = null
-var killed_by_channel: StringName = &""
-var killed_by_cause: StringName = &""
+# NUKED (2026-08-13 ruling): the fatal-blow provenance was `killed_by_channel` and its two
+# companions — the cursed channel vocabulary carried onto the corpse. Kill attribution
+# returns only with the sanctioned write form.
 
 # Whether this unit's act for the round is SPENT (attacking, or paying an ability's tap
 # cost when activation returns — tap ≡ exhausted). Reset at the start of each round.
@@ -112,9 +106,9 @@ static func from_data(card_data: CardData) -> CardInstance:
 
 # Deep-copy for world snapshots (see CombatWorld.copy). `remap` is the snapshot's identity
 # table (original -> copy), shared across the whole copy pass: every unit reference inside
-# the copy (killed_by_unit, a status's source/carrier) resolves through it,
-# so relationships between copies mirror the originals' exactly — including references to
-# units no longer ON the world (a buried killer), which get copied on first encounter.
+# the copy (a status's source/carrier) resolves through it, so relationships between copies
+# mirror the originals' exactly — including references to units no longer ON the world,
+# which get copied on first encounter.
 # Memoized null-safe entry point; the copy registers in the table BEFORE its references are
 # filled, so reference cycles (mutual killers) terminate.
 #
@@ -136,9 +130,6 @@ static func copied(inst: CardInstance, remap: Dictionary) -> CardInstance:
 	# a field that could drift out of step with it (CombatWorld.copy / LocationManager.copy).
 	copy.modifiers = inst.modifiers.duplicate()
 	copy.charms = inst.charms.duplicate()
-	copy.killed_by_unit = copied(inst.killed_by_unit, remap)
-	copy.killed_by_channel = inst.killed_by_channel
-	copy.killed_by_cause = inst.killed_by_cause
 	copy.attack_exhausted = inst.attack_exhausted
 	for si: StatusInstance in inst.statuses:
 		copy.statuses.append(StatusInstance.copied(si, copy, remap))
@@ -158,15 +149,8 @@ func get_attribute(attr: String) -> int:
 		"cost":       return data.cost   + modifiers.get("cost",       0) + LiveEffects.bonus(self, "cost")
 		"shield":     return current_shield
 		"max_shield": return data.shield + modifiers.get("shield", 0) + LiveEffects.bonus(self, "max_shield")
-		# Additive dodge-chance bonus in PERCENTAGE POINTS (base 0 — no innate card stat yet).
-		# Folds written modifiers + live standing effects like the other stats; read by
-		# Arbitrator.dodge_chance, where it stacks on the speed-derived chance before the cap.
-		"dodge_bonus": return modifiers.get("dodge_bonus", 0) + LiveEffects.bonus(self, "dodge_bonus")
-		# Crit's two stored axes, same fold shape as dodge_bonus (base 0 — no innate card stat).
-		# crit_chance_bonus is percentage points on the chance; crit_multiplier_bonus is
-		# multiplier points ×100 (50 = +0.5×). Read by Arbitrator.crit_chance / crit_multiplier.
-		"crit_chance_bonus": return modifiers.get("crit_chance_bonus", 0) + LiveEffects.bonus(self, "crit_chance_bonus")
-		"crit_multiplier_bonus": return modifiers.get("crit_multiplier_bonus", 0) + LiveEffects.bonus(self, "crit_multiplier_bonus")
+		# NUKED (2026-08-13 ruling): dodge_bonus and crit's two stored axes went with the
+		# dodge/crit rolls — both gated on the cursed channel and cannot exist without it.
 		# Read-only composition counts, so conditions can query merge room with the ordinary
 		# attribute/comparator form (e.g. a pawn material: piece_count <= 1). Never modified.
 		"piece_count":   return data.chess_pieces.size()
@@ -174,9 +158,9 @@ func get_attribute(attr: String) -> int:
 		_:            return modifiers.get(attr, 0)
 
 
-# Storage-level write for the additive-modifier bag. Called by Arbitrator ONLY — every stat
-# change in the game routes through Arbitrator.submit (see Arbitrator); nothing else mutates
-# these values directly. Damage/heal/shield forms live in the Arbitrator too.
+# Storage-level write for the additive-modifier bag. INERT CALLER SET (2026-08-13 ruling):
+# its one caller was the nuked single writer, so nothing reaches it until the sanctioned
+# write form exists.
 func apply_modifier(attr: String, delta: int) -> void:
 	modifiers[attr] = modifiers.get(attr, 0) + delta
 
@@ -218,15 +202,14 @@ func has_available_abilities() -> bool:
 # it never heals it — and never kills it (floor 1 HP). Runtime modifiers, statuses, the charm
 # list, the current shield pool, position and owner all stay. Per-card overrides and charm
 # stat bakes on the OLD data do NOT transfer — the combined composition resolves to its
-# authored/derived card (v1 rule). Health lands through the Arbitrator like every stat write.
+# authored/derived card (v1 rule).
+#
+# INERT HEALTH CARRY-OVER (2026-08-13 ruling): the wound delta rode the nuked write form,
+# so the identity swap lands but health is left untouched until the sanctioned form exists.
 func transform(new_data: CardData) -> void:
 	if new_data == null:
 		return
-	var damage := get_attribute("max_health") - current_health
 	data = new_data
-	# The data swap changes the BASE composition; reads derive fresh (nothing cached —
-	# LiveEffects ruling 2026-08-11), so the health read below sees the new identity.
-	Arbitrator.set_health(self, maxi(1, get_attribute("max_health") - damage))
 
 
 # (Status application/stacking rules live in StatusEngine.apply — the unit holds the list

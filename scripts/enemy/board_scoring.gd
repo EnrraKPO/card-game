@@ -1262,25 +1262,12 @@ static func first_strike_share(state: BoardState, unit: BoardState.UnitState) ->
 
 # ── dodge / crit expectation ───────────────────────────────────────────────────────────
 #
-# The Arbitrator's dodge and crit rules folded into the scorer's damage model as EXPECTED
-# VALUE — closed-form arithmetic over the same data-driven tuning the fight resolves with
-# (combat_tuning.json via Arbitrator.dodge_tuning / crit_tuning), no rolls. This is not a
-# new value channel: it is a CORRECTION to incoming() — a speed-5 unit in a slot does not
-# actually absorb what a speed-1 unit there would, and the model should not believe it
-# does. Flows into persistence (and everything downstream) by construction.
-#
-# Not 1:1 with the Arbitrator, in exactly two ways, both deliberate:
-#   · the PAIRWISE speed-edge terms (dodge: target − attacker; crit: attacker − target)
-#     are measured against ONE aggregate reference speed per side, because the no-pairing
-#     doctrine (design 17b) forbids attacker↔target matching. The references are chosen
-#     by whose damage they stand for: a side's damage is thrown at its attack-mass-
-#     weighted mean speed, and lands on targets around its exposure-weighted mean speed
-#     (the same shares incoming() apportions by).
-#   · the interception pass (relics rewriting a dodge/crit query per-strike) is invisible
-#     to the static model; the flat per-unit bonuses (dodge_bonus etc.) ARE captured.
-# The determinism switches are honored: with a mechanic disabled (the regression
-# harness's default), its expectation factor is exactly neutral — the scorer never
-# believes in a rule the fight will not roll.
+# The scorer modelled the dodge and crit rules as expected value — a CORRECTION to
+# incoming(), since a speed-5 unit in a slot does not absorb what a speed-1 unit there
+# would. Both rules were nuked 2026-08-13 (they gated on the cursed channel), so both
+# expectations read exactly neutral: the scorer never believes in a rule the fight will
+# not roll. The speed-reference helpers below survive — they are plain aggregates the
+# model will want again when the rules return in sanctioned form.
 
 # The speed a side's damage is thrown at: attack-mass-weighted mean speed of its fielded
 # units (a 0-attack body's speed says nothing about the damage). 0 when the side projects
@@ -1308,40 +1295,16 @@ static func target_speed_ref(state: BoardState, side: int) -> float:
 	return acc / total if total > 0.0 else 0.0
 
 
-# This unit's chance (0..1) to dodge a strike thrown at `attacker_speed` —
-# Arbitrator.dodge_chance's formula on snapshot data: buildings never dodge; fixed +
-# per-speed + one-sided speed-edge + the unit's own dodge_bonus; capped at max_pct.
-static func dodge_expect(u: BoardState.UnitState, attacker_speed: float) -> float:
-	if not Arbitrator.dodge_enabled or u.is_building:
-		return 0.0
-	var cfg := Arbitrator.dodge_tuning()
-	var spd := float(u.speed)
-	var pct := float(cfg["fixed_pct"]) + float(cfg["per_speed_pct"]) * spd
-	var edge := spd - attacker_speed
-	if edge > 0.0:
-		pct += float(cfg["per_speed_diff_pct"]) * edge
-	pct += float(u.dodge_bonus)
-	return clampf(minf(pct, float(cfg["max_pct"])), 0.0, 100.0) / 100.0
+# NEUTRALISED (2026-08-13 ruling): both expectations modelled the dodge and crit rules,
+# which gated on the cursed channel and were nuked with it. The scorer must never believe
+# in a rule the fight will not roll, so each returns its exactly-neutral value — no dodge,
+# no crit uplift — until those rules return in sanctioned form.
+static func dodge_expect(_u: BoardState.UnitState, _attacker_speed: float) -> float:
+	return 0.0
 
 
-# The expected-damage multiplier this unit's crits add against targets around
-# `target_speed`: 1 + chance × (multiplier − 1). Mirrors Arbitrator.crit_chance /
-# crit_multiplier on snapshot data (fixed + per-speed + one-sided edge + the unit's own
-# bonuses, both capped). Never below 1 — a crit only ever adds.
-static func crit_expect(u: BoardState.UnitState, target_speed: float) -> float:
-	if not Arbitrator.crit_enabled:
-		return 1.0
-	var cfg := Arbitrator.crit_tuning()
-	var spd := float(u.speed)
-	var pct := float(cfg["fixed_pct"]) + float(cfg["per_speed_pct"]) * spd
-	var edge := spd - target_speed
-	if edge > 0.0:
-		pct += float(cfg["per_speed_diff_pct"]) * edge
-	pct += float(u.crit_chance_bonus)
-	var chance := clampf(minf(pct, float(cfg["max_pct"])), 0.0, 100.0) / 100.0
-	var mult := clampf(float(cfg["multiplier"]) + float(u.crit_multiplier_bonus) / 100.0,
-			1.0, float(cfg["multiplier_max"]))
-	return 1.0 + chance * (mult - 1.0)
+static func crit_expect(_u: BoardState.UnitState, _target_speed: float) -> float:
+	return 1.0
 
 
 # The damage `side` should EXPECT to absorb this round — the valuation pass's refined

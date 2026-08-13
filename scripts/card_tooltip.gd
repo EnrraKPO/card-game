@@ -319,10 +319,8 @@ static func build_stat_guide(inst: CardInstance, s := 1.0, descriptions_shown :=
 	vbox.add_child(_stat_row(CardUI.BADGE_SPEED, int(inst.get_attribute("speed")), STAT_NUM_COLOR,
 		SPEED_COLOR, "speed", s, false))
 
-	# The crit/dodge maths reads as a FOOTNOTE under the whole column — dim, its own rule, sitting
-	# outside the Speed container it elaborates on.
-	vbox.add_child(HSeparator.new())
-	vbox.add_child(_rich_label(_crit_dodge_note(inst), GUIDE_WIDTH * s, int(13.0 * s), TEXT_SECTION))
+	# NUKED (2026-08-13 ruling): the crit/dodge footnote explained rules that went with the
+	# cursed channel. Speed keeps its badge; nothing elaborates on it until the rules return.
 	return vbox
 
 
@@ -381,9 +379,8 @@ static func stat_tips(inst: CardInstance) -> Dictionary:
 	}
 	var tips := {}
 	for k: String in ["health", "shield", "attack", "speed"]:
+		# (Speed's crit/dodge elaboration was nuked with those rules — 2026-08-13 ruling.)
 		var body := Loc.t("statguide." + k)
-		if k == "speed":
-			body += "\n\n" + _crit_dodge_note(inst)
 		tips[k] = {"title": Loc.t("term." + k), "color": colors[k], "body": body}
 	return tips
 
@@ -420,47 +417,9 @@ static func _stat_badge(tex: Texture2D, value: int, num_color: Color, s := 1.0) 
 	return box
 
 
-# This card's live crit/dodge rules, spelled out with its own numbers (Speed drives both) and the
-# authored coefficients/caps from combat_tuning.json — so the note stays true if balance is retuned.
-# Buildings never dodge (Arbitrator hard-zeroes it), so their dodge line says exactly that.
-static func _crit_dodge_note(inst: CardInstance) -> String:
-	var spd := int(inst.get_attribute("speed"))
-	var lines: Array[String] = [Loc.t("statguide.at_speed", {"speed": spd})]
-
-	if inst.data != null and inst.data.is_building():
-		lines.append(Loc.t("statguide.dodge_building"))
-	else:
-		var d := Arbitrator.dodge_tuning()
-		lines.append(_rule_line("statguide.dodge_line", int(round(Arbitrator.dodge_chance(inst) * 100.0)),
-			d, "statguide.diff_dodge"))
-
-	var c := Arbitrator.crit_tuning()
-	var crit_line := _rule_line("statguide.crit_line", int(round(Arbitrator.crit_chance(inst) * 100.0)),
-		c, "statguide.diff_crit")
-	lines.append(Loc.t("statguide.crit_dmg", {"line": crit_line,
-		"mult": _fmt(Arbitrator.crit_multiplier(inst))}))
-	return "\n".join(lines)
-
-
-# Assembles one "Dodge/Crit N%: base% + per% per Speed[, +diff% …] (max cap%)" rule from a tuning
-# dict, dropping the speed-edge clause when that coefficient is zero.
-static func _rule_line(key: String, chance: int, cfg: Dictionary, diff_key: String) -> String:
-	var params := {
-		"chance": chance,
-		"base": _fmt(float(cfg.get("fixed_pct", 0))),
-		"per": _fmt(float(cfg.get("per_speed_pct", 0))),
-		"max": _fmt(float(cfg.get("max_pct", 100))),
-	}
-	var diff := float(cfg.get("per_speed_diff_pct", 0))
-	params["diff"] = "" if diff <= 0.0 else Loc.t(diff_key, {"diff": _fmt(diff)})
-	return Loc.t(key, params)
-
-
-# Trims a tuning number to its shortest exact form (2.5 stays "2.5", 1.0 becomes "1").
-static func _fmt(v: float) -> String:
-	if is_equal_approx(v, round(v)):
-		return str(int(round(v)))
-	return String.num(v, 2).trim_suffix("0").trim_suffix(".")
+# NUKED (2026-08-13 ruling): _crit_dodge_note, _rule_line and _fmt existed only to spell
+# out the dodge/crit rules to the player. Those rules gated on the cursed channel and went
+# with it; the explanation has nothing left to explain.
 
 
 # One ability line: the small widget (built exactly like the tray's tokens) beside the

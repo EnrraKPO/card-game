@@ -70,7 +70,7 @@ func _ready() -> void:
 		if data != null and not data.is_king:
 			var inst := CardInstance.from_data(data)
 			inst.owner = 1
-			Arbitrator.fill_health(inst)
+			# INERT (2026-08-13 ruling): the fill-to-max rode the nuked write form.
 			hand.append(inst)
 
 	# Two kings on an otherwise empty field — the most open board there is, so the placement
@@ -107,7 +107,7 @@ func _ready() -> void:
 func _make(id: String, owner: int) -> CardInstance:
 	var inst := CardInstance.from_data(CardData.get_card(id))
 	inst.owner = owner
-	Arbitrator.fill_health(inst)
+	# INERT (2026-08-13 ruling): the fill-to-max rode the nuked write form.
 	return inst
 
 

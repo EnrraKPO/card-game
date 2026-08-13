@@ -14,7 +14,7 @@ extends RefCounted
 #     signatures kept — every construction site already routes through them);
 #   · owner attribution per held structure (the {kind, id} record) for presentation;
 #   · enumeration by structure kind: passive contributions to the fold, interceptors to
-#     the Arbitrator's gate, triggered effects to event dispatch;
+#     the interception gate, triggered effects to event dispatch;
 #   · global registry-number contributions (GameData.value_f's total_add).
 
 

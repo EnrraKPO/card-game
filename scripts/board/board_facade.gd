@@ -7,8 +7,8 @@ extends RefCounted
 #
 # TYPE KNOWLEDGE LIVES HERE AND NOWHERE ELSE. Callers never cast. A third layer would only
 # teach this file — every other call site would be untouched, which is the whole point of
-# having a façade instead of the codebase's older pattern (StatMutation.target is Object and
-# every dispatcher branches on what it turns out to be).
+# having a façade instead of the codebase's older pattern (a write target typed as Object,
+# with every dispatcher branching on what it turns out to be).
 #
 # Static, taking the world it reads. The manager is not reachable any other way — see §4.2
 # on why it is not a global and why dockables hold no back-reference to it.

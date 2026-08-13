@@ -13,12 +13,9 @@ extends RefCounted
 # resolves), struck (fired after the damage resolves — whether or not any landed),
 # kill (a unit died — origin = killer unit (attacks only), destination = the corpse;
 # fired just before `death`, both while the corpse is still on the board),
-# dodge (a strike was avoided outright — origin = the attacker whose blow was slipped,
-# destination = the DODGER; fired after `struck`, only when the target's speed dodged
-# the hit — see Arbitrator dodge + combat),
-# crit (a strike landed as a CRITICAL — origin = the attacker who landed it, destination =
-# the unit hit; fired after the damage resolves, only when real damage landed multiplied —
-# a fully blocked hit never crits).
+# dodge and crit (the avoid and the critical). NOTHING EMITS THESE TODAY — 2026-08-13
+# ruling: both rolls gated on the cursed channel and were nuked with it, as was the blow
+# news that broadcast them. The ids survive as vocabulary for the sanctioned re-pitch.
 # FRAMING convention: struck/kill/dodge are framed from the AFFECTED party's perspective
 # ("it was struck / died / dodged"); attack and crit from the ACTING party's ("it attacked
 # / landed a crit").
@@ -26,11 +23,9 @@ extends RefCounted
 var id: StringName = &""
 var origin: CardInstance = null
 var destination: CardInstance = null
-# Cause provenance — populated for the `kill` event (see combat kill emission). `cause_kind`
-# is the KIND of blow (attack/effect), `cause_id` the specific one (a status id like "poison",
-# else ""). Trigger resolvers gate the `kill` event on these (see TriggerResolver.Dual.cause).
-var cause_kind: StringName = &""
-var cause_id: StringName = &""
+# NUKED (2026-08-13 ruling): cause_kind was the cursed channel vocabulary riding on the
+# event ("the KIND of blow: attack/effect"), and cause_id its companion. Nothing populates
+# a kill's provenance until the sanctioned write form carries one.
 
 
 static func make(p_id: StringName, p_origin: CardInstance, p_destination: CardInstance = null) -> GameEvent:
@@ -41,15 +36,11 @@ static func make(p_id: StringName, p_origin: CardInstance, p_destination: CardIn
 	return e
 
 
-# The `kill` event: origin = the killer UNIT (null unless the kill was an attack — an
-# effect/poison kill credits no unit), destination = the killed unit (the corpse, still on
-# board), plus the cause provenance. A dual event.
-static func kill(p_killer: CardInstance, p_killed: CardInstance,
-		p_cause_kind: StringName, p_cause_id: StringName) -> GameEvent:
-	var e := make(&"kill", p_killer, p_killed)
-	e.cause_kind = p_cause_kind
-	e.cause_id = p_cause_id
-	return e
+# The `kill` event: origin = the killer UNIT, destination = the killed unit (the corpse,
+# still on board). A dual event. The cause provenance it also carried was nuked with the
+# channel — 2026-08-13 ruling.
+static func kill(p_killer: CardInstance, p_killed: CardInstance) -> GameEvent:
+	return make(&"kill", p_killer, p_killed)
 # (The legacy single-subject bridge — subject() — was deleted 2026-08-11 with its last
 # consumer: the design has no single-subject perspective, only origin/destination and the
 # framing convention above.)

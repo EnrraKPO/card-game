@@ -121,8 +121,8 @@ func play_results(results: Array, source_inst: CardInstance = null,
 	for r: Dictionary in results:
 		if r.is_empty():
 			continue
-		# Whatever intercepted this result's mutation inside the Arbitrator cues FIRST — the
-		# rewriter (relic chip / status pip) reads as the cause of the adjusted number.
+		# Whatever intercepted this result's state change cues FIRST — the rewriter (relic
+		# chip / status pip) reads as the cause of the adjusted number.
 		if r.has("interceptions"):
 			await play_interceptions(r.get("interceptions"))
 		# A status application has no stat delta — it's its own cue: mark the target, then pop the
@@ -360,8 +360,7 @@ var EFFECT_SCRIPTS := {
 	"combat_source_glint":    VFXEffectSourceGlint,
 	"combat_target_mark":     VFXEffectTargetMark,
 	"combat_miss":            VFXEffectMiss,
-	"combat_dodge":           VFXEffectDodge,
-	"combat_crit":            VFXEffectCrit,
+	# (combat_dodge / combat_crit renderers were nuked with those rules — 2026-08-13 ruling.)
 }
 
 

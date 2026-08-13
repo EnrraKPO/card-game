@@ -30,8 +30,8 @@ static func make(p_world: CombatWorld, p_presenter: CombatPresenter) -> CombatCa
 # The per-holder dispatch-and-present point — THE ONE CRANK: events trigger, effects
 # unfold. For each effect the holder's card carries whose trigger says yes: resolve
 # targets (the read at the trigger moment), tell presentation the windup opens, deliver
-# the payloads (each mutation announces itself and queues its news at its own commit —
-# see Arbitrator), tell presentation the contact plays, tell the windup to close (the
+# the payloads (inert since the write form was nuked — nothing announces and no blow news
+# is queued), tell presentation the contact plays, tell the windup to close (the
 # act concluding is its OWN telling — signed EFFECT_PRESENTATION_DESIGN.html amendment
 # 3; back-to-back with the contact is coincidence, never a bundle), broadcast the blow
 # news, and sweep deaths through the one death path. Nothing here knows what an attack
@@ -66,13 +66,11 @@ func _unfold(effect: TriggeredEffect, event: GameEvent, holder: CardInstance) ->
 			return   # a legal "no target" — nothing to unfold onto
 	await presenter.action_windup(holder, effect.windup_presentation_id(), recipients)
 	ActionExecutor.deliver(effect, event, holder, world, recipients)
-	# Drained on the delivery's heel, no await between — the queue is the news in
-	# transit from the committing site, and this dispatch drains exactly its own.
-	var news := Arbitrator.drain_news()
 	await presenter.action_results(holder, effect.contact_presentation_id(), recipients)
 	await presenter.action_conclude(holder, effect.windup_presentation_id())
-	for blow: Dictionary in news:
-		await _broadcast_blow_news(blow)
+	# NO BLOW NEWS (2026-08-13 ruling): attack/struck/dodge/crit were queued by the nuked
+	# single writer, gated on the cursed channel. Nothing announces a blow until the
+	# sanctioned write form is pitched.
 	await _sweep_delivery_deaths(recipients)
 
 
@@ -82,23 +80,6 @@ func _unfold(effect: TriggeredEffect, event: GameEvent, holder: CardInstance) ->
 # chip glint, then results), anchored on the player side per the two-anchor model (§5).
 func fire_run_level(_event: GameEvent) -> void:
 	pass
-
-
-# Blow-news, fired from the committing site (events are RESULTS — user ruling; signed
-# EFFECT_PRESENTATION_DESIGN.html amendment 2: events fire at mutation time, never
-# derived from a record afterward): each attack-channel damage commit queued its fact
-# in the Arbitrator, and the broadcast rides the cascade's await spine here — attack,
-# struck, then dodge or crit as it happened. No payload inspection, no attack-type
-# knowledge: the commit itself carried the fact.
-func _broadcast_blow_news(blow: Dictionary) -> void:
-	var striker := blow.get("source") as CardInstance
-	var victim := blow.get("target") as CardInstance
-	await broadcast(GameEvent.make(&"attack", striker, victim))
-	await broadcast(GameEvent.make(&"struck", striker, victim))
-	if bool(blow.get("dodged", false)):
-		await broadcast(GameEvent.make(&"dodge", striker, victim))
-	elif bool(blow.get("crit", false)):
-		await broadcast(GameEvent.make(&"crit", striker, victim))
 
 
 # Recipients felled by a delivery leave through the one death path; bystanders a
@@ -114,16 +95,12 @@ func _sweep_delivery_deaths(recipients: Array) -> void:
 	presenter.board_refresh()
 
 
-# Fires the `kill` event for a just-dead unit, immediately before its `death` — reading the
-# provenance the Arbitrator stamped at the fatal blow (CardInstance.killed_by_*). `kill` names
-# the killer (a unit for attacks; the cause id, e.g. "poison", otherwise) so "when I kill" and
-# "when a unit dies from poison" are authorable; `death` stays the corpse's own perspective.
-# A death with no recorded cause (killed_by_channel == "") fires `death` only.
-func emit_kill(corpse: CardInstance) -> void:
-	if corpse.killed_by_channel == &"":
-		return
-	await broadcast(GameEvent.kill(corpse.killed_by_unit, corpse,
-			corpse.killed_by_channel, corpse.killed_by_cause))
+# INERT (2026-08-13 ruling): the `kill` event read the fatal-blow provenance the nuked
+# single writer stamped — `killed_by_channel` and its companions, the cursed channel
+# vocabulary on the corpse. Deaths fire `death` alone until the sanctioned write form
+# carries provenance again.
+func emit_kill(_corpse: CardInstance) -> void:
+	pass
 
 
 # BROADCASTS one event to the whole board: the participants first (the origin fires even when

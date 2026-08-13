@@ -47,9 +47,7 @@ func run() -> void:
 	_valuation_cache_is_per_pricer()
 	_first_strike_is_side_aware()
 	_doomed_attacker_projects_less()
-	_dodge_expectation_reaches_persistence()
-	_crit_expectation_reaches_threat()
-	_expectation_honors_determinism_switches()
+	_expectation_reads_neutral()
 	_buff_prefers_fresh_over_tapped()
 	_king_safety_shape()
 	_formation_order_shape()
@@ -1420,92 +1418,15 @@ func _doomed_attacker_projects_less() -> void:
 			"the stamped persistence outreads the naive one: the doomed attacker's mass is discounted")
 
 
-func _dodge_expectation_reaches_persistence() -> void:
-	var prev := Arbitrator.dodge_enabled
-	Arbitrator.dodge_enabled = true
-	Arbitrator.set_dodge_tuning({
-		"fixed_pct": 0.0, "per_speed_pct": 5.0, "per_speed_diff_pct": 0.0, "max_pct": 75.0,
-	})
-	# Same slot, same body, different speed: the faster unit dodges more of its incoming
-	# share, so it stamps higher persistence — speed is damage-reduction information now.
-	# The attacker outspeeds BOTH variants, so its own first-strike share (which reads
-	# defender speeds too) is identical across the boards — dodge is the only variable.
-	var slow := _state_with([_enemy("tank_dummy", 0, 0)], [_player("queen", 0, 0)])
-	var fast := _state_with([_enemy("tank_dummy", 0, 0)], [_player("queen", 0, 0)])
-	slow.units(0)[0].speed = 9
-	fast.units(0)[0].speed = 9
-	slow.units(1)[0].speed = 1
-	fast.units(1)[0].speed = 8
-	BoardScoring.run_valuation(slow)
-	BoardScoring.run_valuation(fast)
-	check(fast.units(1)[0].persistence > slow.units(1)[0].persistence,
-			"a faster unit expects to dodge more of its incoming share")
-
-	# The flat effect-granted bonus reaches the model too (a relic-built dodger is not
-	# invisible), and a building never dodges, whatever its numbers say.
-	var plain := _state_with([_enemy("tank_dummy", 0, 0)], [_player("queen", 0, 0)])
-	var blessed := _state_with([_enemy("tank_dummy", 0, 0)], [_player("queen", 0, 0)])
-	blessed.units(1)[0].dodge_bonus = 30
-	BoardScoring.run_valuation(plain)
-	BoardScoring.run_valuation(blessed)
-	check(blessed.units(1)[0].persistence > plain.units(1)[0].persistence,
-			"dodge_bonus raises the expectation like the Arbitrator folds it into the roll")
-	var rooted := BoardState.UnitState.new()
-	rooted.is_building = true
-	rooted.speed = 8
-	check_eq(BoardScoring.dodge_expect(rooted, 0.0), 0.0,
-			"a building never dodges — hard 0 before any tuning term")
-	Arbitrator.set_dodge_tuning({})
-	Arbitrator.dodge_enabled = prev
-
-
-func _crit_expectation_reaches_threat() -> void:
-	var prev := Arbitrator.crit_enabled
-	Arbitrator.crit_enabled = true
-	Arbitrator.set_crit_tuning({
-		"fixed_pct": 0.0, "per_speed_pct": 5.0, "per_speed_diff_pct": 0.0,
-		"max_pct": 90.0, "multiplier": 2.0, "multiplier_max": 5.0,
-	})
-	# Same attack stat, different attacker speed: the faster player unit's expected
-	# crits raise the mass bearing down, so the CPU unit under it stamps LOWER
-	# persistence — the fight really does run hotter under a fast army. The defender is
-	# slower than BOTH variants, so the attacker's first-strike share (which reads
-	# defender speeds) is identical across the boards — crit is the only variable.
-	var calm := _state_with([_enemy("tank_dummy", 0, 0)], [_player("queen", 0, 0)])
-	var hot := _state_with([_enemy("tank_dummy", 0, 0)], [_player("queen", 0, 0)])
-	calm.units(1)[0].speed = 0
-	hot.units(1)[0].speed = 0
-	calm.units(0)[0].speed = 1
-	hot.units(0)[0].speed = 8
-	BoardScoring.run_valuation(calm)
-	BoardScoring.run_valuation(hot)
-	check(hot.units(1)[0].persistence < calm.units(1)[0].persistence,
-			"a faster attacker's expected crits raise the expected incoming")
-
-	# The CPU's own aggression measure rides the same expectation: outgoing mass grows
-	# with the crit factor the fight will actually roll.
-	var army := _state_with([_enemy("dps_dummy", 0, 0)], [_player("queen", 0, 0)])
-	army.units(0)[0].speed = 1   # slower than the dps — its strike is insured, delivery 1
-	var with_crit := BoardScoring.outgoing_mass(army)
-	Arbitrator.crit_enabled = false
-	var without_crit := BoardScoring.outgoing_mass(army)
-	check(with_crit > without_crit, "crit expectation raises the outgoing damage mass")
-	Arbitrator.set_crit_tuning({})
-	Arbitrator.crit_enabled = prev
-
-
-func _expectation_honors_determinism_switches() -> void:
-	# The runner keeps dodge/crit OFF (the deterministic harness): the model's factors
-	# must read exactly neutral — the scorer never believes in a rule the fight will not
-	# roll, and every pre-model assertion in this suite stays byte-identical.
-	check(not Arbitrator.dodge_enabled and not Arbitrator.crit_enabled,
-			"harness precondition: the switches are off outside the flipped blocks")
+# NUKED (2026-08-13 ruling): _dodge_expectation_reaches_persistence and
+# _crit_expectation_reaches_threat pinned the scorer's model of the dodge and crit rules.
+# Those rules gated on the cursed channel and went with it; both expectations now read
+# exactly neutral, which is what this check holds them to.
+func _expectation_reads_neutral() -> void:
 	var u := BoardState.UnitState.new()
 	u.speed = 9
-	u.dodge_bonus = 50
-	u.crit_chance_bonus = 50
-	check_eq(BoardScoring.dodge_expect(u, 0.0), 0.0, "disabled dodge expects nothing")
-	check_eq(BoardScoring.crit_expect(u, 0.0), 1.0, "disabled crit is a neutral factor")
+	check_eq(BoardScoring.dodge_expect(u, 0.0), 0.0, "no dodge rule — the model expects nothing")
+	check_eq(BoardScoring.crit_expect(u, 0.0), 1.0, "no crit rule — the model's factor is neutral")
 
 
 # ── King safety: the win-condition JUDGE ──────────────────────────────────────────────

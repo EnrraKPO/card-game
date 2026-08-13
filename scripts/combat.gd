@@ -44,9 +44,9 @@ var _turn: int    = 0
 # job) — tracked so _on_interaction_changed only toggles the lock on transitions.
 var _modal_lock: bool = false
 
-# The two sides' resource state (mana / hand / draw pile) — one object each, mutated ONLY
-# through Arbitrator.submit (side stats: draw/discard/mana/max_mana). The player's Hand bar
-# and the mana gauge subscribe to the player side's signals; the enemy side has no watchers.
+# The two sides' resource state (mana / hand / draw pile) — one object each. Every write to
+# them rode the nuked single writer, so none moves today. The player's Hand bar and the mana
+# gauge subscribe to the player side's signals; the enemy side has no watchers.
 var _player_side: CombatSide
 var _enemy_side: CombatSide
 
@@ -100,8 +100,8 @@ var _ctx: CombatContext         # the declared surface cards consult — install
 # very `position` the move is already driving, so the two fight and the loser snaps.
 #
 # The presentation layer therefore SETTLES a unit before cueing on it (see _await_settled, lent to
-# VFXPlayer at setup). This is a presentation gate only: the Arbitrator wrote the mutation long before
-# any of this draws, so waiting changes what the player SEES, never what resolved or in what order.
+# VFXPlayer at setup). This is a presentation gate only: the write landed long before any of this
+# draws, so waiting changes what the player SEES, never what resolved or in what order.
 # One rule, no per-effect authoring — an on-attack self-buff, a retaliation striking the attacker
 # mid-withdrawal, and anything authored later all read correctly by construction.
 var _transit: Dictionary = {}   # CardInstance -> Tween
@@ -261,10 +261,8 @@ func _ready() -> void:
 		GameData.current_run.king_id if GameData.current_run != null else "king",
 		enemy_king_id, enemy_power)
 	_apply_king_persistence()
-	# The opening hand: a system-channel draw on the side (single-writer rule — every side
-	# write rides submit, so even opening draws are interceptable by channel-aware effects).
-	Arbitrator.submit(StatMutation.make(_player_side, StatMutation.DRAW,
-			GameData.value("hand.size.initial"), null, StatMutation.CH_SYSTEM))
+	# INERT (2026-08-13 ruling): the opening hand rode the nuked write form. No cards are
+	# drawn until the sanctioned form exists.
 	var is_boss_fight := GameData.current_encounter != null \
 			and GameData.current_encounter.type == EncounterData.Type.BOSS
 	var is_elite_fight := GameData.current_encounter != null \
@@ -372,7 +370,7 @@ func _maybe_dismiss_hand_view(point: Vector2) -> void:
 	_hand.dismiss_to_hand()
 
 
-# ── Deck construction (each side's draw pile; draws themselves ride the Arbitrator) ──
+# ── Deck construction (each side's draw pile; the draws themselves are inert) ──
 
 # Builds the player's draw pile from the run deck (shuffled DeckCard instances). Kings
 # never ride the pile; fresh units fill to their run-resolved max health.
@@ -383,9 +381,8 @@ func _init_player_deck(deck_cards: Array) -> void:
 		var inst := dc.make_instance()
 		if inst != null and not inst.data.is_king:
 			inst.owner = 0
-			# Fill to the run-resolved max (read-time card modifiers add to max_health once
-			# owner is set), so a fresh unit enters at full HP including any unit.health buff.
-			Arbitrator.fill_health(inst)
+			# INERT (2026-08-13 ruling): the fill-to-max rode the nuked write form. A fresh
+			# unit enters at its card-base health until the sanctioned form exists.
 			_player_side.draw_pile.append(inst)
 
 
@@ -417,16 +414,14 @@ func _init_enemy_deck() -> void:
 			var inst := CardInstance.from_data(data)
 			inst.owner = 1
 			_enemy_side.draw_pile.append(inst)
-	Arbitrator.submit(StatMutation.make(_enemy_side, StatMutation.DRAW, _enemy_side.draw_pile.size(),
-			null, StatMutation.CH_SYSTEM))
+	# INERT (2026-08-13 ruling): the enemy's opening deal rode the nuked write form.
 
 
-# Paying a card/ability cost: a COST-channel mana mutation — its own provenance so a
-# "mana gains doubled" interceptor can never touch spending. Legality (can afford) is
-# checked at the call sites / by the AI planner, as before.
-func _pay_mana(side: CombatSide, cost: int) -> void:
-	Arbitrator.submit(StatMutation.make(side, StatMutation.MANA, -cost,
-			null, StatMutation.CH_COST))
+# INERT (2026-08-13 ruling): paying a cost was a mana mutation on the cursed `cost`
+# channel — that channel existed precisely so a "mana gains doubled" rewrite could never
+# touch spending. Nothing is paid until the sanctioned write form exists.
+func _pay_mana(_side: CombatSide, _cost: int) -> void:
+	pass
 
 
 # ── Round flow ─────────────────────────────────────────────────────────────────
@@ -437,17 +432,10 @@ func _begin_round() -> void:
 	# enemy reads the raw registry defaults so player upgrades never buff the CPU.
 	# The ramp is UNCAPPED by design — mana keeps growing every turn, the whole fight, for both
 	# sides (turn-1 start is mana.initial); mana.per_turn is a flat bonus stacked on top.
-	var ramp := GameData.value("mana.initial") if _turn == 1 else _turn
-	Arbitrator.set_side_max_mana(_player_side, ramp + GameData.value("mana.per_turn"))
-	Arbitrator.set_side_mana(_player_side, _player_side.max_mana)
-	Arbitrator.set_side_max_mana(_enemy_side, _turn)
-	Arbitrator.set_side_mana(_enemy_side, _turn)
-	# Turn draws are DRAW mutations on each side (system channel), so "your draws are
-	# doubled" interceptors catch them like any effect-driven draw.
-	Arbitrator.submit(StatMutation.make(_player_side, StatMutation.DRAW,
-			GameData.value("draw.per_turn"), null, StatMutation.CH_SYSTEM))
-	Arbitrator.submit(StatMutation.make(_enemy_side, StatMutation.DRAW, 1,
-			null, StatMutation.CH_SYSTEM))
+	# INERT (2026-08-13 ruling): the mana ramp, the refill and both turn draws all rode the
+	# nuked write form. No mana moves and no cards are drawn until the sanctioned form
+	# exists. (The ramp is UNCAPPED by design — mana keeps growing every turn, for both
+	# sides, turn-1 start being mana.initial with mana.per_turn stacked on top.)
 	# Fresh taps BEFORE the CPU turn: the enemy engine plans ability activations against
 	# attack_exhausted, so last round's spent attacks must be cleared by the time it
 	# captures the board — and a tap the CPU pays must survive into this round's combat
@@ -599,7 +587,7 @@ func _on_done_pressed() -> void:
 	var any_shield_regen := false
 	for inst: CardInstance in _board.get_all_units():
 		var prev_shield := inst.current_shield
-		Arbitrator.restore_shield(inst)
+		# INERT (2026-08-13 ruling): the round-start shield refresh rode the nuked write form.
 		var gained := inst.current_shield - prev_shield
 		if gained > 0:
 			any_shield_regen = true
@@ -926,8 +914,8 @@ func _king_fall(inst: CardInstance, corpse: CardUI) -> void:
 # Debug only: fell the enemy captain on the spot, so the whole "captain defeated" sequence — the
 # kill/death broadcasts, the fall, the chest and the end-of-combat gate — can be replayed without
 # fighting the fight for it. Deliberately NOT a shortcut past that sequence (the debug ✕ beside it
-# already is one): the lethal blow goes through the Arbitrator like any other, and everything after it
-# is the same path a killing strike takes, so what gets polished here is the real thing.
+# already is one): everything after the lethal blow is the same path a killing strike takes, so what
+# gets polished here is the real thing. (The blow itself is inert — see _fell.)
 #
 # The blow is a signed SYSTEM-channel HEALTH mutation: shield-bypassing (a shielded King would
 # otherwise survive a damage-form hit) and killer-less, so the death reads as "died to the engine"
@@ -1072,15 +1060,16 @@ func _debug_kill_captain() -> void:
 	_debug_killing = false
 
 
-# A unit's death DEALT rather than suffered: the lethal blow through the Arbitrator like any other,
-# and everything after it is the same path a killing strike takes — kill/death broadcasts, the
-# presented burial (a king FALLS and leaves its chest), the secondary sweep. Used by the captain's
-# exits (debug button, surrender) and by the army that falls with it.
+# A unit's death DEALT rather than suffered: everything after the lethal blow is the same
+# path a killing strike takes — kill/death broadcasts, the presented burial (a king FALLS and
+# leaves its chest), the secondary sweep. Used by the captain's exits (debug button,
+# surrender) and by the army that falls with it.
+#
+# INERT LETHAL BLOW (2026-08-13 ruling): the blow itself rode the nuked write form, so the
+# unit's health is not lowered here and the aftermath runs on a unit still standing.
 func _fell(inst: CardInstance) -> void:
 	if inst == null or not inst.is_alive():
 		return
-	Arbitrator.submit(StatMutation.make(inst, StatMutation.HEALTH, -inst.current_health,
-			null, StatMutation.CH_SYSTEM))
 	await _emit_kill(inst)
 	await _broadcast(GameEvent.make(&"death", inst))
 	await _bury(inst)
@@ -1286,13 +1275,9 @@ func _apply_king_persistence() -> void:
 	var pk := _board.get_player_king()
 	if pk == null:
 		return
-	# Reflect any run-wide king.max_health bonus on the unit itself so its bar reads correctly
-	# (the King is excluded from the blanket unit.* buffs — its HP has its own modifier axis).
-	var hp_bonus := GameData.value("king.max_health")
-	if hp_bonus != 0:
-		Arbitrator.submit(StatMutation.make(pk, StatMutation.MAX_HEALTH, hp_bonus,
-				null, StatMutation.CH_SYSTEM))
-	Arbitrator.set_health(pk, run.king_health())
+	# INERT (2026-08-13 ruling): the run-wide king.max_health bonus and the persisted health
+	# carry-over both rode the nuked write form. The King enters at its card-base health and
+	# the run's accumulated damage is not applied until the sanctioned form exists.
 	_board.refresh()
 
 	# The header's HP field mirrors RunData, which only finalizes king_damage at combat end (see

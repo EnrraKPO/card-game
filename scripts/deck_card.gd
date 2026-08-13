@@ -41,8 +41,8 @@ func _current_def() -> Dictionary:
 
 
 # Permanently changes one numeric field, materialising the override on first edit.
-# Storage-level writer — called by Arbitrator ONLY (every stat change routes through
-# Arbitrator.submit; a DeckCard target lands here).
+# Storage-level writer. Its one caller was the nuked single writer, so nothing reaches it
+# today (see event_screen.gd's inert training).
 func bump(field: String, amount: int = 1) -> void:
 	var def := _current_def()
 	def[field] = int(def.get(field, 0)) + amount

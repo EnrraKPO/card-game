@@ -87,7 +87,7 @@ static var _overrides_loaded := false
 
 
 # Lazily loads (and caches) the authored overrides, tolerating a partial/absent/bad JSON
-# (mirrors Arbitrator._dodge_config).
+# (the same lazy-load-with-fallback shape the other config readers use).
 static func _override_config() -> Dictionary:
 	if _overrides_loaded:
 		return _overrides

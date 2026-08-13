@@ -34,7 +34,7 @@ func _ready() -> void:
 
 	# Content for the list: a rook (holds Castling) on the player board.
 	var rook := CardInstance.from_data(CardData.get_card("rook"))
-	Arbitrator.fill_health(rook)
+	# INERT (2026-08-13 ruling): the fill-to-max rode the nuked write form.
 	combat._board.spawn_player_card(rook, BoardLocation.at(0, 1, 1))
 
 	combat._hand.show_abilities()

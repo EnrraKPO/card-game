@@ -90,7 +90,7 @@ static func _merge_bag(dst: Dictionary, src: Dictionary) -> void:
 
 # Injects a config directly, bypassing the JSON (the regression harness uses this to
 # exercise the bag logic deterministically). Unset keys keep their defaults. Pass {} to
-# force a reload from disk on the next read (mirrors Arbitrator.set_dodge_tuning).
+# force a reload from disk on the next read.
 static func set_config(cfg: Dictionary) -> void:
 	if cfg.is_empty():
 		_cfg = {}

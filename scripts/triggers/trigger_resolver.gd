@@ -106,10 +106,10 @@ class Dual extends TriggerResolver:
 	var destination_of_holder := false
 	var origin_conditions: Array = []        # Array[EffectCondition] (predicates)
 	var destination_conditions: Array = []   # Array[EffectCondition] (predicates)
-	# The CAUSE gate (the `kill` event): when non-empty, the event's cause must match — a
-	# specific id ("poison" ⇒ event.cause_id) or a kind ("attack" ⇒ event.cause_kind). This
-	# is a structural gate like origin_of, not a unit predicate: the cause is not a unit, so
-	# it can't be an EffectCondition. Empty = fires regardless of cause.
+	# The CAUSE gate (the `kill` event): a structural gate like origin_of, not a unit
+	# predicate. INERT (2026-08-13 ruling) — the event's cause provenance was the cursed
+	# channel vocabulary and was nuked with it, so an authored cause matches nothing and a
+	# cause-gated trigger never fires. The authored FORM survives for the sanctioned re-pitch.
 	var cause: StringName = &""
 
 	func listens(event_id: StringName) -> bool:
@@ -118,8 +118,8 @@ class Dual extends TriggerResolver:
 	func fires(p_event: GameEvent, holder: CardInstance, owner: int = TriggerResolver.OWNER_FROM_HOLDER) -> bool:
 		if p_event.id != event:
 			return false
-		if cause != &"" and p_event.cause_id != cause and p_event.cause_kind != cause:
-			return false
+		if cause != &"":
+			return false   # inert: nothing carries a cause today (see the field's note)
 		# Identity gates are inert for a holderless run-scope container (see Simple.fires).
 		if origin_of_holder and holder != null and p_event.origin != holder:
 			return false

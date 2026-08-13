@@ -352,8 +352,8 @@ func build_into(parent: Control, left_widget: Control = null) -> void:
 # ── State mirroring (the player's CombatSide drives; this bar presents) ──────────
 
 # Subscribes this bar to the player side's zone signals: drawn cards spawn CardUI,
-# discarded cards drop theirs. All draw/discard STATE changes happen on the side (via
-# the Arbitrator); this is the one place the hand UI learns about them.
+# discarded cards drop theirs. All draw/discard STATE changes happen on the side; this is
+# the one place the hand UI learns about them.
 func bind_side(side: CombatSide) -> void:
 	_side = side
 	side.cards_drawn.connect(_on_cards_drawn)

@@ -303,7 +303,7 @@ func _spawn_from_queue(s: Dictionary) -> bool:
 		return false
 	var inst := CardInstance.from_data(data)
 	inst.owner = spawn_owner
-	Arbitrator.fill_health(inst)   # after owner is set, so run-wide unit bonuses fold in
+	# INERT (2026-08-13 ruling): the fill-to-max rode the nuked write form.
 	spawn_unit_at(inst, landing, spawn_owner)
 	play_dispatch(inst)   # results discarded, as the board always did for queued spawns
 	return true

@@ -1,10 +1,11 @@
 class_name Payload
 extends RefCounted
 
-# The small dumb "what happens" species of an action (TARGETING_DESIGN.md §2, signed
-# ATTACK_SYSTEM_DESIGN.html): a payload carries delivery rules only. It does not point
-# (the target resolver's job), does not decide when (the trigger's job), and proposes
-# every state change to the Arbitrator — never writes one itself.
+# The small dumb "what happens" species of an action (TARGETING_DESIGN.md §2): a payload
+# carries delivery rules only. It does not point (the target resolver's job) and does not
+# decide when (the trigger's job). It proposed every state change rather than writing one
+# itself — and the form it proposed in was nuked 2026-08-13 as cursed, so every species
+# below is INERT until the sanctioned write form is pitched.
 #
 # DELIVERY CONDITIONS (§4.3): each payload gates itself against what was resolved. Kind
 # fitness ("I apply to units") is simply a payload's first delivery condition; a payload
@@ -21,10 +22,10 @@ func applies(_feed: Feed) -> bool:
 	return false
 
 
-# Deliver to the feed's recipient: derive values via the payload's mutators and propose
-# StatMutations to the Arbitrator. Nothing comes back (the outcome is ruled out of
-# existence — signed EFFECT_PRESENTATION_DESIGN.html amendment 2): each mutation
-# announces its presentation and fires its events at its own commit.
+# Deliver to the feed's recipient: derive values via the payload's mutators and propose the
+# resulting state change. Nothing comes back (the outcome is ruled out of existence — signed
+# EFFECT_PRESENTATION_DESIGN.html amendment 2): each change announces its presentation and
+# fires its events at its own commit.
 func deliver(_feed: Feed) -> void:
 	pass
 
@@ -50,12 +51,14 @@ static func parse(payload_value: Variant) -> Payload:
 # ── Species ──────────────────────────────────────────────────────────────────────────
 
 class Attack extends Payload:
-	# THE STRIKE (§2: attack is a payload kind, not a ruleset). Owns the attack's delivery
-	# rules the way the status payload owns stacking; nothing above it knows attacks are
-	# special. The strike mechanics themselves — dodge before interception, the shield
-	# split, crit after interception — are the Arbitrator's application knowledge: this
-	# payload builds the attack-channel damage proposal and submits it. The amount is a
-	# Mutator ("my attack stat" by default — authored explicitly in the named effects).
+	# THE STRIKE. Owns a blow's delivery rules; nothing above it knows attacks are special.
+	# The blow's own mechanics — dodge, the shield split, crit — were nuked 2026-08-13 with
+	# the cursed channel that gated them, and the proposal this built rode the nuked write
+	# form, so delivery is inert. The amount is a Mutator ("my attack stat" by default —
+	# authored explicitly in the named effects) and still parses and derives.
+	#
+	# ⚠ UNSETTLED: §2's payload roster is "damage, status, spawn, draw" — no attack species.
+	# The line making attack a payload kind cites the cursed §8.1. Not ruled; not acted on.
 	var amount: Mutator = null
 
 	static func parse_attack(d: Dictionary) -> Attack:
@@ -72,10 +75,10 @@ class Attack extends Payload:
 		var unit := feed.recipient as CardInstance
 		return unit != null and unit.is_alive()
 
-	func deliver(feed: Feed) -> void:
-		var unit := feed.recipient as CardInstance
-		var dmg: int = amount.derive(feed)
-		Arbitrator.submit(StatMutation.damage(unit, dmg, feed.holder))
+	# INERT (2026-08-13 ruling): delivery rode a StatMutation, which is nuked as cursed.
+	# Nothing lands until the replacement write form is pitched and signed.
+	func deliver(_feed: Feed) -> void:
+		pass
 
 	func to_dict() -> Dictionary:
 		return {"kind": "attack", "amount": amount.to_dict()}

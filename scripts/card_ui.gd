@@ -620,25 +620,13 @@ func derive_presentation() -> void:
 		# never disagree with the glow/crosshair it explains. Both can apply at once (a unit that
 		# attacks the pivot AND is the pivot's own victim wears both sets).
 		#
-		# Each flag also carries the ODDS of the exchange it names, asked of the Arbitrator — the same
-		# functions the actual swing rolls against, so the preview cannot drift from the resolution
-		# (they are pure queries: crit_chance/dodge_chance run a rewrite-only interception pass and
-		# submit nothing). Both are speed-scaled, which is why they hang off the Speed badge.
-		var pivot := ctx.pivot()
+		# NUKED (2026-08-13 ruling): each flag used to carry the ODDS of the exchange it names
+		# (crit_taken / dodge_taken / crit_dealt / dodge_dealt), asked of the nuked single
+		# writer. The naming flags survive; the odds went with the rolls.
 		if ctx.is_pivot_target(card_instance):
-			# The pivot swings at ME: its crit chance, my chance to dodge it.
 			tags.append({"id": "current_target"})
-			tags.append({"id": "crit_taken",
-				"params": {"n": _as_pct(Arbitrator.crit_chance(pivot, card_instance))}})
-			tags.append({"id": "dodge_taken",
-				"params": {"n": _as_pct(Arbitrator.dodge_chance(card_instance, pivot))}})
 		if menacing:
-			# I swing at the pivot: my crit chance, the pivot's chance to dodge me.
 			tags.append({"id": "menacing"})
-			tags.append({"id": "crit_dealt",
-				"params": {"n": _as_pct(Arbitrator.crit_chance(card_instance, pivot))}})
-			tags.append({"id": "dodge_dealt",
-				"params": {"n": _as_pct(Arbitrator.dodge_chance(pivot, card_instance))}})
 	_apply_tags(tags)
 
 
@@ -783,9 +771,8 @@ func _apply_number_spotlight(on: bool) -> void:
 		Vfx.detach("turn_number_spotlight", _turn_plate)
 
 
-# Arbitrator rates are 0..1; the tags speak in whole percent.
-func _as_pct(rate: float) -> int:
-	return int(round(rate * 100.0))
+# NUKED (2026-08-13 ruling): _as_pct converted the nuked writer's 0..1 rates for the odds
+# tags; both the rates and the tags are gone.
 
 
 # Re-derives the glow/dim from current facts. Safe to call from anywhere at any time.
@@ -1085,22 +1072,8 @@ const TAGS := {
 	# Worn by a unit whose auto-attack resolves ONTO the pivot — the red menace glow's caption.
 	"menacing": {"loc": "combat.tag_menacing", "bg": TAG_RED, "fg": Color.WHITE,
 		"ol": TAG_RED_OL, "place": "outward_bottom"},
-	# The odds of the exchange, beside the Speed badge — the stat both quantities are driven by
-	# (Arbitrator.crit_chance / dodge_chance are speed-scaled), so the number sits next to its cause.
-	# Gold pair: the pivot ATTACKS this card. Red pair: this card attacks the pivot.
-	#
-	# Whose number is it? One rule, applied everywhere: an UNQUALIFIED label is the card the chip
-	# hangs off, "Your …" is the selected unit. So the gold pair reads "Your Crit" (your unit's crit
-	# on this victim) + "Dodge" (this victim's own dodge), and the red pair reads "Crit" (this
-	# attacker's crit) + "Your Dodge" (your unit's dodge against it) — each chip names its owner.
-	"crit_taken": {"loc": "combat.tag_crit_own", "bg": TAG_GOLD, "fg": Color.BLACK,
-		"ol": TAG_GOLD_OL, "place": "outward_top"},
-	"dodge_taken": {"loc": "combat.tag_dodge", "bg": TAG_GOLD, "fg": Color.BLACK,
-		"ol": TAG_GOLD_OL, "place": "outward_top"},
-	"crit_dealt": {"loc": "combat.tag_crit", "bg": TAG_RED, "fg": Color.WHITE,
-		"ol": TAG_RED_OL, "place": "outward_bottom"},
-	"dodge_dealt": {"loc": "combat.tag_dodge_own", "bg": TAG_RED, "fg": Color.WHITE,
-		"ol": TAG_RED_OL, "place": "outward_bottom"},
+	# NUKED (2026-08-13 ruling): the four odds chips (crit_taken / dodge_taken / crit_dealt /
+	# dodge_dealt) quoted the dodge and crit rates, which went with the cursed channel.
 }
 
 # Native-canvas geometry (the card is authored at NATIVE_SIZE and scaled as one unit, so these are

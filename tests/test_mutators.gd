@@ -1,10 +1,10 @@
 extends TestCase
 
-# The Mutator contract (TARGETING_DESIGN.md §12.6, signed ATTACK_SYSTEM_DESIGN.html):
-# parameterized at parse, fed at delivery, derives on the spot. Pins the two day-one
-# species (Literal, HolderStat), the bare-number shorthand, the read-fresh rule, and the
-# loud refusal of unknown forms. (Refusal checks intentionally print an ERROR line each —
-# the loud-refusal contract under test; the tally below is the verdict.)
+# The Mutator contract (TARGETING_DESIGN.md §12.6): parameterized at parse, fed at
+# delivery, derives on the spot. Pins the two day-one species (FixedNumber, HolderStat),
+# the bare-number shorthand, the read-fresh rule, and the loud refusal of unknown forms.
+# (Refusal checks intentionally print an ERROR line each — the loud-refusal contract
+# under test; the tally below is the verdict.)
 
 
 func suite_name() -> String:
@@ -12,7 +12,7 @@ func suite_name() -> String:
 
 
 func run() -> void:
-	_literal_forms()
+	_fixed_number_forms()
 	_holder_stat_reads_fresh()
 	_refusals()
 
@@ -21,13 +21,15 @@ func _feed_for(holder: CardInstance) -> Feed:
 	return Feed.make(null, holder, 0, null, null)
 
 
-func _literal_forms() -> void:
+func _fixed_number_forms() -> void:
 	var bare := Mutator.parse(5)
-	check(bare is Mutator.Literal, "a bare number parses as the Literal species")
-	check_eq(bare.derive(_feed_for(null)), 5, "Literal derives its fixed value")
-	var longhand := Mutator.parse({"kind": "literal", "value": 3})
-	check_eq(longhand.derive(_feed_for(null)), 3, "the longhand literal form derives the same way")
-	check_eq(longhand.to_dict(), 3, "Literal round-trips to the bare-number shorthand")
+	check(bare is Mutator.FixedNumber, "a bare number parses as the FixedNumber species")
+	check_eq(bare.derive(_feed_for(null)), 5, "FixedNumber derives its fixed value")
+	var longhand := Mutator.parse({"kind": "fixed_number", "value": 3})
+	check_eq(longhand.derive(_feed_for(null)), 3, "the longhand fixed_number form derives the same way")
+	check_eq(longhand.to_dict(), 3, "FixedNumber round-trips to the bare-number shorthand")
+	check(Mutator.parse({"kind": "literal", "value": 3}) == null,
+			"'literal' is dead vocabulary — refused loudly, never silently accepted")
 
 
 func _holder_stat_reads_fresh() -> void:

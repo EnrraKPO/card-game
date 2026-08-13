@@ -21,7 +21,6 @@ func run() -> void:
 	_remap_completeness()
 	_off_world_reference_copies()
 	_shared_immutables()
-	_kill_provenance_cycle()
 	_policy_flip()
 	_turn_order()
 
@@ -122,8 +121,9 @@ func _side_copy_independence() -> void:
 	check_eq(w2.player_side.draw_pile.size(), 3, "pile copies")
 	check(w2.player_side.hand[0] != held, "hand cards are copies, not shared refs")
 
-	# Draw and spend on the copy — the live side must not move.
-	Arbitrator.submit(StatMutation.make(w2.player_side, StatMutation.DRAW, 2))
+	# Spend on the copy — the live side must not move. (The DRAW half rode the nuked write
+	# form and went with it — 2026-08-13 ruling; the side's own primitives still isolate.)
+	w2.player_side.pull_to_hand(2)
 	w2.player_side.set_mana(0)
 	check_eq(w.player_side.hand.size(), 1, "drawing on the copy leaves the live hand alone")
 	check_eq(w.player_side.draw_pile.size(), 3, "…and the live pile")
@@ -135,39 +135,33 @@ func _remap_completeness() -> void:
 	var pawn := _place(w, "pawn", 0, 0, 0)
 	var king := _place(w, "king", 0, 2, 0)
 	var rook := _place(w, "rook", 0, 1, 1)
+	# (The kill-provenance half of this check went with killed_by_* — 2026-08-13 ruling.)
 	StatusEngine.apply(pawn, "empowered", StatusEngine.DURATION_DEFAULT, 1, king)
-	pawn.killed_by_unit = rook
-	pawn.killed_by_channel = &"attack"
 	var w2 := w.copy()
 	var pawn2 := _cell(w2, 0, 0, 0)
 	var king2 := _cell(w2, 0, 2, 0)
-	var rook2 := _cell(w2, 0, 1, 1)
 
 	var si2: StatusInstance = pawn2.statuses[0]
 	check(si2.source == king2, "a status's source remaps to the COPIED unit")
 	check(si2._carrier_ref != null and si2._carrier_ref.get_ref() == pawn2,
 			"a status's carrier rebinds to the copy")
-	check(pawn2.killed_by_unit == rook2, "killed_by_unit remaps to the copied killer")
-	check_eq(pawn2.killed_by_channel, &"attack", "kill provenance channel copies")
 
 
 func _off_world_reference_copies() -> void:
-	# A reference to a unit NOT on the world (a buried killer, a dead status source) still
-	# copies — the remap grows to cover it, so no original ever leaks into a snapshot.
+	# A reference to a unit NOT on the world (a dead status source) still copies — the remap
+	# grows to cover it, so no original ever leaks into a snapshot. (The buried-killer half
+	# went with killed_by_* — 2026-08-13 ruling.)
 	var w := CombatWorld.make()
 	var pawn := _place(w, "pawn", 0, 0, 0)
 	var dead := unit("knight")
-	pawn.killed_by_unit = dead
 	StatusEngine.apply(pawn, "empowered", StatusEngine.DURATION_DEFAULT, 1, dead)
 	var w2 := w.copy()
 	var pawn2 := _cell(w2, 0, 0, 0)
 
-	check(pawn2.killed_by_unit != dead, "an off-world killer never leaks into the copy")
-	check(pawn2.killed_by_unit != null and pawn2.killed_by_unit.data == dead.data,
-			"…it is copied instead, same definition")
 	var si2: StatusInstance = pawn2.statuses[0]
-	check(si2.source == pawn2.killed_by_unit,
-			"the ONE remap spans all reference kinds — killer and status source converge on one copy")
+	check(si2.source != dead, "an off-world status source never leaks into the copy")
+	check(si2.source != null and si2.source.data == dead.data,
+			"…it is copied instead, same definition")
 
 
 func _shared_immutables() -> void:
@@ -190,20 +184,9 @@ func _shared_immutables() -> void:
 # _status_copy_independence. The rebuilt passive system's suite re-pins fold-across-copy.)
 
 
-func _kill_provenance_cycle() -> void:
-	# Mutual killers: a reference cycle through killed_by_unit must terminate (the remap
-	# memoizes BEFORE references fill) and both references must converge inside the copy.
-	var w := CombatWorld.make()
-	var a := _place(w, "pawn", 0, 0, 0)
-	var b := _place(w, "knight", 1, 0, 3)
-	a.killed_by_unit = b
-	b.killed_by_unit = a
-	var w2 := w.copy()
-	var a2 := _cell(w2, 0, 0, 0)
-	var b2 := _cell(w2, 1, 0, 3)
-
-	check(a2.killed_by_unit == b2, "cycle: a's killer remaps to the copied b")
-	check(b2.killed_by_unit == a2, "cycle: b's killer remaps to the copied a")
+# NUKED (2026-08-13 ruling): _kill_provenance_cycle pinned the remap's cycle handling
+# through killed_by_unit, which went with the corpse's channel vocabulary. The remap itself
+# is unchanged; nothing on a unit references another unit in a cycle today.
 
 
 func _policy_flip() -> void:

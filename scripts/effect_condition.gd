@@ -65,11 +65,11 @@ var untapped := true
 # hooks are not authored data. The RULE survives in the design: every "is there any legal
 # play" question is a query INTO the rebuilt target resolver, TARGETING_DESIGN.md §3.)
 #
-# MUTATION-form condition: a predicate over a PENDING StatMutation rather than a unit —
+# MUTATION-form condition: a predicate over a PENDING state change rather than a unit —
 # the delivery-condition seat the interception system evaluates (TARGETING_DESIGN.md §8).
 # "amount" is the one attribute today (e.g. {"mutation": "amount", "comparator": "gt",
 # "value": 0} = "only heals" on a health intercept); the comparator machinery is shared
-# with the attribute form.
+# with the attribute form. INERT since the write form was nuked — see evaluate_mutation.
 var mutation_attr: String = ""
 
 
@@ -197,12 +197,11 @@ func is_mutation_form() -> bool:
 	return not mutation_attr.is_empty()
 
 
-# Evaluates a MUTATION-form condition against a pending StatMutation (the Arbitrator's
-# interceptor match routes mutation-form conditions here, unit forms to evaluate()).
-func evaluate_mutation(m: StatMutation) -> bool:
-	if mutation_attr != "amount" or m == null:
-		return false
-	return _compare(m.amount)
+# INERT (2026-08-13 ruling): this predicate read a pending StatMutation, which is nuked as
+# cursed. The mutation FORM survives as authored data; nothing evaluates it until the
+# sanctioned write form exists and the interception seat is pitched.
+func evaluate_mutation(_m: Variant) -> bool:
+	return false
 
 
 # `owner` is the SIDE of the effect this condition belongs to (the container's owner) —

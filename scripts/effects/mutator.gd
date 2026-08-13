@@ -10,12 +10,12 @@ extends RefCounted
 # authored params — one stateless, immutable instance shared by every fielded copy, the
 # TriggerResolver precedent), FED AT DELIVERY (the ActionExecutor assembles the Feed and
 # the payload calls derive), DERIVES ON THE SPOT (the species' own logic; nobody outside
-# knows how). A literal is the trivial species, not a separate code path.
+# knows how). A fixed number is the trivial species, not a separate code path.
 #
 # Species are inner classes of this file (the one-file load-order rule). The roster is
 # content-driven, never speculative: day one is exactly the two the auto-attack needs.
 #
-# Authoring: a bare number is Literal shorthand; otherwise { "kind": "<species>", ... }.
+# Authoring: a bare number is FixedNumber shorthand; otherwise { "kind": "<species>", ... }.
 
 
 # Derive this mutator's value from the delivery context. Variant because species may
@@ -30,18 +30,18 @@ func to_dict() -> Variant:
 	return null
 
 
-# The one authored form. Bare numbers are Literal shorthand; unknown kinds are refused
+# The one authored form. Bare numbers are FixedNumber shorthand; unknown kinds are refused
 # loudly — no permissive default.
 static func parse(value: Variant) -> Mutator:
 	if value is int or value is float:
-		return Literal.of(int(value))
+		return FixedNumber.of(int(value))
 	if not (value is Dictionary):
 		push_error("Mutator: '%s' is not a mutator form (number or {kind: ...}) — refusing" % str(value))
 		return null
 	var d := value as Dictionary
 	match str(d.get("kind", "")):
-		"literal":
-			return Literal.of(int(d.get("value", 0)))
+		"fixed_number":
+			return FixedNumber.of(int(d.get("value", 0)))
 		"holder_stat":
 			return HolderStat.of(str(d.get("stat", "")))
 	push_error("Mutator: unknown mutator kind '%s' — refusing (no permissive default)" % str(d.get("kind", "")))
@@ -50,12 +50,14 @@ static func parse(value: Variant) -> Mutator:
 
 # ── Species ──────────────────────────────────────────────────────────────────────────
 
-class Literal extends Mutator:
-	# A fixed authored number — the trivial species.
+class FixedNumber extends Mutator:
+	# A fixed authored number — the trivial species. It is a NUMBER and only a number:
+	# the species says so in its name, and nothing here ever carries a word, a flag or
+	# an id (Enrra's naming ruling, 2026-08-13).
 	var value: int = 0
 
-	static func of(p_value: int) -> Literal:
-		var m := Literal.new()
+	static func of(p_value: int) -> FixedNumber:
+		var m := FixedNumber.new()
 		m.value = p_value
 		return m
 

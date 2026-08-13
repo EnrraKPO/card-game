@@ -45,7 +45,7 @@ func _ready() -> void:
 	var victim := CardInstance.from_data(CardData.get_card("queen"))   # 5 cost = 5 coins
 	board.place_enemy_card(victim, BoardLocation.at(1, 1, 1))
 	await get_tree().process_frame
-	Arbitrator.set_health(victim, 0)
+	# INERT (2026-08-13 ruling): staging the death rode the nuked write form.
 	combat.call("_bury", victim)
 
 	# Coins in the air, and the purse actually moved.

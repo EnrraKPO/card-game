@@ -112,13 +112,8 @@ class UnitState:
 	var max_health: int = 0
 	var shield: int = 0
 	var speed: int = 0
-	# The dodge/crit expectation inputs (BoardScoring's expected-damage model):
-	# the effect-granted bonuses that move the Arbitrator's dodge/crit formulas beyond speed.
-	# Captured so a unit BUILT around these stats (a relic's "+25% dodge to air units")
-	# isn't invisible to the scorer's expectations — speed alone would mis-price it.
-	var dodge_bonus: int = 0
-	var crit_chance_bonus: int = 0
-	var crit_multiplier_bonus: int = 0
+	# NUKED (2026-08-13 ruling): the dodge/crit expectation inputs went with those rules and
+	# with the unit attributes that fed them.
 	# The unit's activated-ability ids (CardData.ability_ids) and whether its tap is spent
 	# (attack_exhausted) — what the ability candidate generator needs to gate legality.
 	var ability_ids: Array = []
@@ -168,9 +163,6 @@ class UnitState:
 		u.max_health = inst.get_attribute("max_health")
 		u.shield = inst.current_shield
 		u.speed = inst.get_attribute("speed")
-		u.dodge_bonus = inst.get_attribute("dodge_bonus")
-		u.crit_chance_bonus = inst.get_attribute("crit_chance_bonus")
-		u.crit_multiplier_bonus = inst.get_attribute("crit_multiplier_bonus")
 		u.ability_ids = inst.data.ability_ids().duplicate()
 		u.exhausted = inst.attack_exhausted
 		u.eval_mods = EvalChannels.unit_mods(inst)
@@ -192,9 +184,6 @@ class UnitState:
 		u.max_health = max_health
 		u.shield = shield
 		u.speed = speed
-		u.dodge_bonus = dodge_bonus
-		u.crit_chance_bonus = crit_chance_bonus
-		u.crit_multiplier_bonus = crit_multiplier_bonus
 		u.ability_ids = ability_ids.duplicate()
 		u.exhausted = exhausted
 		u.eval_mods = eval_mods   # immutable after the fold — shared, never re-derived
