@@ -55,6 +55,41 @@ var killed_by_cause: StringName = &""
 # cost when activation returns — tap ≡ exhausted). Reset at the start of each round.
 var attack_exhausted: bool = false
 
+# ── The main action (signed MAIN_ACTION_DESIGN.html) ─────────────────────────────────
+
+# The world this unit currently fights in — stamped by the world itself at placement and
+# at copy (a copy's units belong to the copy, so their resolvers answer in it; TARGETING_
+# DESIGN.md §3's ownership ruling). Weak: the world already owns its units through
+# placement, and a strong back-reference would cycle two RefCounteds into a leak. This is
+# MEMBERSHIP, never position — where the unit stands stays the LocationManager's fact.
+var _world_ref: WeakRef = null
+
+
+func set_world(w: CombatWorld) -> void:
+	_world_ref = weakref(w) if w != null else null
+
+
+func world() -> CombatWorld:
+	return (_world_ref.get_ref() as CombatWorld) if _world_ref != null else null
+
+
+# The one piece of main-action machinery on the unit (§4) — lazily built, so every
+# construction path (from_data, copied, a bare fixture) owns one the moment it is asked.
+var _main_action_holder: MainActionHolder = null
+
+
+func main_action_holder() -> MainActionHolder:
+	if _main_action_holder == null:
+		_main_action_holder = MainActionHolder.make(self)
+	return _main_action_holder
+
+
+# THE TARGET POLL (§5/§7): "who are my main action's current targets?" — the card's one
+# query, answered internally, ENTITIES ONLY. The board it is answered against is the
+# resolver's own concern (owned by this unit's world) — never the poller's.
+func main_action_targets() -> Array[GameEntity]:
+	return main_action_holder().targets()
+
 var is_spell: bool:
 	get: return data != null and data.card_type == CardData.CardType.SPELL
 

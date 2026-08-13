@@ -631,9 +631,9 @@ func _run_combat() -> void:
 		# for EVERY unit whose turn comes up, tapped ones included: their act moment still fires.
 		_world.acting = attacker
 		# The unit's turn has come up: broadcast its ACT moment (subject = this unit). That
-		# moment IS the whole turn (signed ATTACK_SYSTEM_DESIGN.html §8.0): the one dispatch
-		# unfolds everything that clings to it — poison procs, the unit's own attack effect
-		# (gated of-self + untapped), status decay. There is
+		# moment IS the whole turn: the one dispatch unfolds everything that clings to it —
+		# poison procs, the unit's own MAIN ACTION (fired by its appointment, gated untapped —
+		# signed MAIN_ACTION_DESIGN.html §4), status decay. There is
 		# no separate "now attack" step anywhere.
 		await _resolve_event(&"act", attacker)
 	# The round is over: nobody's moment, so the strip stops pointing at anyone.

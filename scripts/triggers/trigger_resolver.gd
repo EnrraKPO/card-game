@@ -19,6 +19,10 @@ extends RefCounted
 #   • Dual   — a two-participant event (attack/struck/kill/dodge/crit) gated by TWO
 #     condition lists: origin and destination, AND-ed. A non-empty list on a missing
 #     participant fails (never fires).
+#   • Action — the trigger that owns no "when" (signed MAIN_ACTION_DESIGN.html,
+#     amendment 3). It names no event and carries no conditions; dispatch never fires
+#     it — only the unit's main-action appointment does (see MainActionHolder). An
+#     effect whose trigger is Action-kind is thereby appointable as a main action.
 #
 # Conditions are plain EffectConditions — true PREDICATES only. "Reacts only to its own
 # action" is NOT a condition: it is the structural PARTICIPANT GATE ("of": "self" — the
@@ -28,6 +32,7 @@ extends RefCounted
 #   { "kind": "event", "event": "death", "of": "self", "conditions": [ ... ] }
 #   { "kind": "dual_event", "event": "struck", "origin_of": "any", "destination_of": "self",
 #     "origin_conditions": [ ... ], "destination_conditions": [ ... ] }
+#   { "kind": "action" }   — nothing further inside it; any further member is a stranger
 #   ("of" values: "self" = the holder only; "any" (default) = anyone's event)
 
 const SIMPLE_EVENTS: Array[StringName] = [&"play", &"death", &"act", &"turn_start", &"turn_end"]
@@ -140,6 +145,16 @@ class Dual extends TriggerResolver:
 		return d
 
 
+class Action extends TriggerResolver:
+	# The Action kind: no "when" of its own. The base class's never-answers are this
+	# kind's REAL answers — `listens` false keeps it out of every dispatch candidate
+	# pool, `fires` false makes mis-routing structurally inert. The appointment (the
+	# main-action holder) is the only thing that ever fires the effect carrying it.
+
+	func to_dict() -> Dictionary:
+		return {"kind": "action"}
+
+
 # ── Parsing ──────────────────────────────────────────────────────────────────────────
 
 # The one authored form. Anything else — the legacy string schema included — is refused
@@ -165,6 +180,15 @@ static func parse(trigger_value: Variant) -> TriggerResolver:
 			simple.of_holder = str(d.get("of", "any")) == "self"
 			simple.conditions = _parse_conditions(d.get("conditions", []))
 			return simple
+		"action":
+			# Nothing further inside it (MAIN_ACTION_DESIGN.html amendment 3): the Action
+			# trigger refuses every further member as a stranger, loudly — an action cannot
+			# be written to look like a triggered effect, nor the reverse.
+			if d.size() != 1:
+				var strangers := d.keys().filter(func(k: Variant) -> bool: return str(k) != "kind")
+				push_error("TriggerResolver: the Action trigger carries nothing — stranger member(s) %s refused" % [strangers])
+				return null
+			return Action.new()
 	push_error("TriggerResolver: unknown trigger kind '%s' — refusing (no permissive default)" % str(d.get("kind", "")))
 	return null
 

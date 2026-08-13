@@ -1,9 +1,6 @@
 {
 	"id": "threat_attack",
-	"trigger": {
-		"kind": "event", "event": "act", "of": "self",
-		"conditions": [{"untapped": true}]
-	},
+	"trigger": {"kind": "action"},
 	"targets": {"kind": "threat"},
 	"payloads": [
 		{"kind": "attack", "amount": {"kind": "holder_stat", "stat": "attack"}}

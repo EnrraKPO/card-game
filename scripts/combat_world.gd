@@ -223,6 +223,9 @@ func place_unit_at(inst: CardInstance, loc: BoardLocation, p_owner: int) -> void
 		push_error("CombatWorld: refusing to place %s at no location" % inst)
 		return
 	inst.owner = p_owner
+	# Membership stamp (weak — see CardInstance.set_world): the unit now fights in THIS
+	# world, so its target poll answers against it (MAIN_ACTION_DESIGN.html §5).
+	inst.set_world(self)
 	locations.dock(inst, loc)
 
 
@@ -318,9 +321,11 @@ func _spawn_from_queue(s: Dictionary) -> bool:
 func copy(remap: Dictionary = {}) -> CombatWorld:
 	var w := CombatWorld.new()
 	# Register a twin for every dockable BEFORE the placement copy, which resolves through the
-	# table and refuses to guess at anything missing from it.
+	# table and refuses to guess at anything missing from it. Each twin belongs to the COPY
+	# (membership restamped) — its resolvers answer the target poll in the hypothetical, never
+	# in the live world it was copied from.
 	for unit: CardInstance in get_all_units():
-		CardInstance.copied(unit, remap)
+		CardInstance.copied(unit, remap).set_world(w)
 	for slot: BoardSlot in locations.docked(BoardFacade.GROUND):
 		var new_slot := BoardSlot.new()
 		remap[slot] = new_slot

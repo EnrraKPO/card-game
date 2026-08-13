@@ -97,16 +97,24 @@ var enemy_side: CombatSide = null
 # accumulated per-card (the old `_glow_cards`/`_preview_slot` residue lists are gone).
 var _pivot: CardInstance = null
 var _pivot_at: BoardLocation = null
-# Derived once per declaration change: a HYPOTHETICAL PLACEMENT — the same units, arranged
-# with the pivot standing at its declared spot (its real cell vacated, so a move preview
-# reflects the freed lane) — plus the pivot's own target in that arrangement, memoized so
-# every card's "am I the victim?" is a compare.
+# Derived once per declaration change: a HYPOTHETICAL WORLD — a copy of the whole combat
+# world, arranged with the pivot standing at its declared spot (its real cell vacated, so a
+# move preview reflects the freed lane) — plus the pivot's own target in that arrangement,
+# memoized so every card's "am I the victim?" is a compare. A whole world, not just a
+# placement, because the threat questions are answered by the TARGET POLL (signed
+# MAIN_ACTION_DESIGN.html §5) and a poll answers against the world that owns the polled
+# unit: previews query resolvers against declared/copied worlds (TARGETING_DESIGN.md §3).
+#
+# `_preview_remap` is the copy's identity table (live -> twin): every question enters
+# through it and every answer maps back through it, so callers keep comparing against the
+# very objects they hold.
 #
 # This used to be a pair of duplicated grid arrays PLUS a mutate-the-pivot's-coordinates-and-
 # put-them-back trick around every query, because targeting read a unit's position off the
-# unit. Targeting reads a placement now, so a hypothetical is simply a second placement:
-# nothing is moved, nothing is restored, and no query can observe a half-applied state.
-var _preview_places: LocationManager = null
+# unit. A hypothetical is simply a second world now: nothing is moved, nothing is restored,
+# and no query can observe a half-applied state.
+var _preview_world: CombatWorld = null
+var _preview_remap: Dictionary = {}
 var _pivot_target: CardInstance = null
 # Drag phantom: the unit being dragged for a move/place and the slot showing its landing preview.
 var _drag_card: CardUI = null
@@ -393,19 +401,17 @@ func get_all_units() -> Array:
 	return world.get_all_units()
 
 
-# TARGETING REMOVED (targeting-cleanup demolition). NEEDS: the auto-attack target authority.
-# Given an attacker and a PLACEMENT (LocationManager — so the same question works in the live
-# world and in any hypothetical arrangement), answer which enemy unit its auto-attack hits.
-#   · The candidate pool is the units on the OPPOSITE half of the board.
-#   · The pick follows the unit's AUTHORED ATTACK EFFECT's target resolver (the attack
-#     family of named effects — nearest_attack et al.; target_policy is deleted), each
-#     flavor a different ordering over candidates.
-#   · "Nearest" is a PREFERENCE ORDERING, not a distance: column depth dominates, mirrored
-#     lane offset breaks ties within a column, deterministic address tie-break after that
-#     (this is the most playtested rule in the game — its behaviour is a design constant).
-#   · An attacker standing nowhere reaches nobody; an empty pool is a legal "no target".
-func find_target(_attacker: CardInstance) -> CardInstance:
-	return null
+# The auto-attack target authority is THE TARGET POLL now (signed MAIN_ACTION_DESIGN.html
+# §5): the card is asked "who are your main action's current targets?" and answers
+# internally — entities only, computed fresh at this read (the interactive idle). The
+# board it answers against is its own world's concern, never this caller's. An attacker
+# standing nowhere reaches nobody; an empty poll is a legal "no target" — both read as
+# null here, the head-of-poll convenience the board's own callers want.
+func find_target(attacker: CardInstance) -> CardInstance:
+	if attacker == null:
+		return null
+	var targets := attacker.main_action_targets()
+	return (targets[0] as CardInstance) if not targets.is_empty() else null
 
 
 func any_king_dead() -> bool:
@@ -613,36 +619,37 @@ func clear_preview() -> void:
 	declare_preview(null, null)
 
 
-# The derived arrangement: the real placement with one change — the pivot stands at its
+# The derived arrangement: the real world with one change — the pivot stands at its
 # declared spot. Built once per declaration, so cards consulting at ANY later moment (a poll
 # tick, a cue) answer in the same world a synchronous computation would have used.
 func _rebuild_preview_world() -> void:
 	_pivot_target = null
-	_preview_places = null
+	_preview_world = null
+	_preview_remap = {}
 	if _pivot == null or _pivot_at == null or world == null:
 		return
-	# A copy of the placement over the SAME units — the identity map is every dockable mapped
-	# to itself, so "is this card the pivot's target?" stays a compare against the very object
-	# the caller holds. Only the arrangement is hypothetical.
-	var identity: Dictionary = {}
-	for unit: CardInstance in world.get_all_units():
-		identity[unit] = unit
-	for ground: BoardSlot in world.locations.docked(BoardFacade.GROUND):
-		identity[ground] = ground
-	identity[_pivot] = _pivot   # a hand card is not on the board yet, and still lands somewhere
-	_preview_places = world.locations.copy(identity)
+	# The pivot may be a hand card — standing in no world yet, so the world copy alone would
+	# never mint its twin. Copying it through the SAME remap first covers both cases; the
+	# copy pass memoizes and converges on this one twin if the pivot is fielded.
+	var pivot_twin := CardInstance.copied(_pivot, _preview_remap)
+	_preview_world = world.copy(_preview_remap)
+	pivot_twin.set_world(_preview_world)   # a hand twin missed the copy pass's stamp
 	# The declared spot is normally empty (destinations are). If something does stand there,
-	# the hypothetical is that the pivot stands there INSTEAD — so evict it from the copy
+	# the hypothetical is that the pivot stands there INSTEAD — so evict its twin from the copy
 	# rather than let the collision rule refuse a placement that is not really a move.
-	var sitting: Object = _preview_places.at(_pivot_at, BoardFacade.PIECES)
-	if sitting != null and sitting != _pivot:
-		_preview_places.undock(sitting)
-	_preview_places.move(_pivot, _pivot_at)
-	# TARGETING REMOVED. NEEDS: the pivot's own victim in the declared arrangement, memoized —
-	# every card's "am I the target?" is then a compare, not a redundant rerun of the pivot's
-	# targeting. Ask the auto-attack authority against _preview_places (the hypothetical
-	# placement), NOT the live world — that is what makes the landing preview honest.
-	_pivot_target = null
+	var sitting: Object = _preview_world.locations.at(_pivot_at, BoardFacade.PIECES)
+	if sitting != null and sitting != pivot_twin:
+		_preview_world.locations.undock(sitting)
+	_preview_world.locations.move(pivot_twin, _pivot_at)
+	# The pivot's own victim in the declared arrangement — the target poll asked of the
+	# pivot's twin IN the hypothetical, memoized and mapped BACK to the live unit, so every
+	# card's "am I the target?" is a compare, not a redundant rerun of the pivot's targeting.
+	var picked := pivot_twin.main_action_targets()
+	if not picked.is_empty():
+		for live: Object in _preview_remap:
+			if _preview_remap[live] == picked[0]:
+				_pivot_target = live as CardInstance
+				break
 
 
 # The declared pivot itself — the OTHER party in every exchange a threat cue describes, so a card
@@ -707,17 +714,17 @@ func is_pivot_target(inst: CardInstance) -> bool:
 func menaces_pivot(inst: CardInstance) -> bool:
 	if _pivot == null or inst == null or inst == _pivot:
 		return false
-	if inst.owner == _pivot.owner or _preview_places == null:
+	if inst.owner == _pivot.owner or _preview_world == null:
 		return false
-	if _preview_places.location_of(inst) == null:
+	var twin := _preview_remap.get(inst) as CardInstance
+	if twin == null or _preview_world.location_of(twin) == null:
 		return false
-	# TARGETING REMOVED. NEEDS: "does MY OWN auto-attack resolve to the pivot in the declared
-	# world?" — one targeting run for the asking card, asked IN the declared arrangement
-	# (_preview_places), which is what makes a hand card hovering a landing slot answer as
-	# though it already stood there (the "menace never updates to the landing spot" defect,
-	# structurally impossible when the hypothetical is a placement rather than a temporary
-	# edit to the pivot).
-	return false
+	# "Does MY OWN main action resolve to the pivot in the declared world?" — the target
+	# poll asked of the asking card's twin IN the declared arrangement, which is what makes
+	# a hand card hovering a landing slot answer as though it already stood there (the
+	# "menace never updates to the landing spot" defect, structurally impossible when the
+	# hypothetical is a whole world rather than a temporary edit to the pivot).
+	return twin.main_action_targets().has(_preview_remap.get(_pivot))
 
 
 # The "re-check now" cue: every slot re-derives its attack marker from the declaration and

@@ -42,24 +42,38 @@ static func make(p_world: CombatWorld, p_presenter: CombatPresenter) -> CombatCa
 func fire(event: GameEvent, holder: CardInstance) -> void:
 	if holder == null or holder.data == null:
 		return
+	# THE MAIN ACTION (signed MAIN_ACTION_DESIGN.html §2/§4): the holder's appointed
+	# action is bound to the unit's OWN act moment here, at runtime — never through an
+	# authored trigger (an Action-kind trigger never enters the matching pool below).
+	# The appointment gates it on untapped; its unfolding is the same crank as every
+	# other effect's.
+	var main := holder.main_action_holder().action_for(event)
+	if main != null:
+		await _unfold(main, event, holder)
 	for effect: TriggeredEffect in holder.data.effects:
 		if not effect.trigger.fires(event, holder):
 			continue
-		var recipients: Array = [null]
-		if effect.targets != null:
-			recipients = effect.targets.resolve(world, holder)
-			if recipients.is_empty():
-				continue   # a legal "no target" — nothing to unfold onto
-		await presenter.action_windup(holder, effect.windup_presentation_id(), recipients)
-		ActionExecutor.deliver(effect, event, holder, world, recipients)
-		# Drained on the delivery's heel, no await between — the queue is the news in
-		# transit from the committing site, and this dispatch drains exactly its own.
-		var news := Arbitrator.drain_news()
-		await presenter.action_results(holder, effect.contact_presentation_id(), recipients)
-		await presenter.action_conclude(holder, effect.windup_presentation_id())
-		for blow: Dictionary in news:
-			await _broadcast_blow_news(blow)
-		await _sweep_delivery_deaths(recipients)
+		await _unfold(effect, event, holder)
+
+
+# ONE effect unfolding under the crank: resolve targets (the read at the trigger moment),
+# windup, deliver, drain and broadcast the blow news, sweep the deaths — see fire.
+func _unfold(effect: TriggeredEffect, event: GameEvent, holder: CardInstance) -> void:
+	var recipients: Array = [null]
+	if effect.targets != null:
+		recipients = effect.targets.resolve(world, holder)
+		if recipients.is_empty():
+			return   # a legal "no target" — nothing to unfold onto
+	await presenter.action_windup(holder, effect.windup_presentation_id(), recipients)
+	ActionExecutor.deliver(effect, event, holder, world, recipients)
+	# Drained on the delivery's heel, no await between — the queue is the news in
+	# transit from the committing site, and this dispatch drains exactly its own.
+	var news := Arbitrator.drain_news()
+	await presenter.action_results(holder, effect.contact_presentation_id(), recipients)
+	await presenter.action_conclude(holder, effect.windup_presentation_id())
+	for blow: Dictionary in news:
+		await _broadcast_blow_news(blow)
+	await _sweep_delivery_deaths(recipients)
 
 
 # Run-level (relic/upgrade) effects for an event, fired ONCE from the perspective of the
