@@ -24,7 +24,7 @@ extends RefCounted
 # value, and a unit worth less than nothing is one the engine would rather see dead.
 # Both terms stay positive.
 #
-# Attack is valued on the unit's real output, attack × strikes. All defaults PROVISIONAL
+# Attack is valued on the unit's real output. All defaults PROVISIONAL
 # until playtested — and all of them are tool-authorable (Tool ▸ 🎛 Tuning ▸ ♟ Board value).
 
 const PATH := "res://data/board_value.json"
@@ -36,7 +36,7 @@ static var _loaded := false
 static func _defaults() -> Dictionary:
 	return {
 		"stat_rates": {
-			"attack": 1.0,          # per point of attack × strikes — the payload's yardstick
+			"attack": 1.0,          # per point of attack — the payload's yardstick
 			"health": 0.1,          # MINIMAL: the pool is priced by persistence
 			"missing_health": 0.1,  # per point of max − current (parked quirk's split only)
 			"shield": 0.2,          # minimal like health; regeneration shows up as persistence

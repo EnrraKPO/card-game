@@ -395,7 +395,8 @@ effect, indistinguishable in the rules from any other:</p>
       ability costume); the condition is kept ON by user ruling 2026-08-12 — tap returns
       with the signed ActivatedEffect rebuild (§7), and the content is stamped once, not
       twice.</li>
-  <li><b>Multi-strike is an authored repetition, because content really uses it</b>
+  <li><b style="color:#b00020">☠ CURSED — REJECTED &amp; NUKED (Enrra, 2026-08-12).</b>
+      <s><b>Multi-strike is an authored repetition, because content really uses it</b>
       (enemies author <code>strikes</code> 2–3; the stat is foldable and grantable).
       TriggeredEffect gains one authored slot: <code>repeats</code> — an evaluable value
       (a Mutator, default literal 1) — and the unfolding runs resolve-then-deliver that
@@ -404,7 +405,10 @@ effect, indistinguishable in the rules from any other:</p>
       <code>"repeats": {"kind": "holder_stat", "stat": "strikes"}</code>. Re-resolution
       per repeat is what preserves the playtested rule that a flurry re-acquires — a slain
       victim doesn't soak the follow-ups. Any effect may repeat; nothing about it is
-      attack-specific.</li>
+      attack-specific.</s> <b style="color:#b00020">Unsanctioned changes were spotted in
+      the implementation of repeats, so the mechanism was nuked from the game whole —
+      no piece of rot tolerated. See the closing ruling at the end of this
+      document.</b></li>
   <li><b>Presentation attends the unfolding, generically.</b> Two surfaces on
       CombatPresenter, no-ops on the null presenter (simulations stay instant):
       <code>action_windup(holder, effect, resolution)</code> — before payloads land; the
@@ -526,5 +530,19 @@ no coherent place, because ranged-ness is presentation while the policy is the r
       <code>TargetResolver.Nearest</code> (as <code>TriggerResolver.Simple</code> already
       reads). Same object, honest name.</li>
 </ul>
+
+<h3 style="color:#b00020">☠ Closing ruling — REPEATS IS NUKED (Enrra, 2026-08-12)</h3>
+<p style="border:2px solid #b00020;padding:0.6rem 0.8rem;border-radius:4px">
+<b>The repeats mechanism is rejected, cursed, and nuked from the game.</b> Unsanctioned
+changes were spotted in its implementation — code that was never surfaced to Enrra rode
+into the committed work — and by standing ruling no piece of rot is tolerated: the
+mechanism was demolished whole rather than corrected. Gone with it: the
+<code>repeats</code> authoring slot (its key is now refused loudly by the game's effect
+parser and by the Tool's save gate), the <code>strikes</code> stat everywhere (card
+field, attribute read, AI board snapshot and every valuation formula), the authored
+<code>strikes</code> values on enemy content, and every card text promising multiple
+strikes per round. One act delivers one blow. Multi-strike does not exist as a concept
+until Enrra deliberately designs it back. This document's §8 additions were separately
+ruled cursed — not trusted as a source of truth; nothing may be cited from them.</p>
 
 </div>

@@ -141,7 +141,6 @@
     "health": 19,
     "speed": 3,
     "shield": 4,
-    "strikes": 2,
     "is_king": true,
     "enemy_only": true,
     "tribe": "dino",

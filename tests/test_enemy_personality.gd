@@ -186,7 +186,6 @@ func _personality_changes_a_decision() -> void:
 	extra.health = 6
 	extra.max_health = 6
 	extra.attack = 2
-	extra.strikes = 1
 	extra.speed = 1
 	hold.place(extra, 1, 0)
 
@@ -213,7 +212,6 @@ func _value_rates_layer_over_the_global_price_list() -> void:
 	var u := BoardState.UnitState.new()
 	u.owner = 1
 	u.attack = 3
-	u.strikes = 1
 	u.health = 4
 	u.max_health = 4
 	u.shield = 2
@@ -302,7 +300,6 @@ func _staged_state() -> BoardState:
 	u.health = 1
 	u.max_health = 6
 	u.attack = 2
-	u.strikes = 1
 	u.speed = 1
 	state.place(u, 0, 0)
 	state.player_mana = 6

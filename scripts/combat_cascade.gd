@@ -27,13 +27,11 @@ static func make(p_world: CombatWorld, p_presenter: CombatPresenter) -> CombatCa
 	return c
 
 
-# The per-holder dispatch-and-present point — THE ONE CRANK (signed ATTACK_SYSTEM_DESIGN
-# §8.0): events trigger, effects unfold. For each effect the holder's card carries whose
-# trigger says yes: derive its repeat count (the conditionally-sanctioned follow-up slot),
-# then per repeat — resolve targets (the read at the trigger moment; each repeat
-# re-resolves, which is what keeps the flurry re-acquiring), let presentation attend the
-# windup, deliver the payloads, present the results, emit the news the Outcomes report,
-# and sweep deaths through the one death path. Nothing here knows what an attack is.
+# The per-holder dispatch-and-present point — THE ONE CRANK: events trigger, effects
+# unfold. For each effect the holder's card carries whose trigger says yes: resolve
+# targets (the read at the trigger moment), let presentation attend the windup, deliver
+# the payloads, present the results, emit the news the Outcomes report, and sweep deaths
+# through the one death path. Nothing here knows what an attack is.
 # NEEDS kept for the containers still to join dispatch (statuses/relics): per-container
 # grouping — card glint / pip glint before that container's results.
 func fire(event: GameEvent, holder: CardInstance) -> void:
@@ -42,22 +40,16 @@ func fire(event: GameEvent, holder: CardInstance) -> void:
 	for effect: TriggeredEffect in holder.data.effects:
 		if not effect.trigger.fires(event, holder):
 			continue
-		var reps := effect.repeat_count(Feed.make(world, holder, holder.owner, event, null))
-		for _i in reps:
-			# A repeat needs its actor standing: dead, or displaced off the board by a
-			# reaction (a bounce leaves health > 0) — rules facts, not presentation ones.
-			if not holder.is_alive() or not BoardFacade.is_on_board(world, holder):
-				break
-			var recipients: Array = [null]
-			if effect.targets != null:
-				recipients = effect.targets.resolve(world, holder)
-				if recipients.is_empty():
-					break   # a legal "no target" — nothing to unfold onto
-			await presenter.action_windup(holder, effect, recipients)
-			var outcomes := ActionExecutor.deliver(effect, event, holder, world, recipients)
-			await presenter.action_results(holder, effect, outcomes)
-			await _emit_outcome_news(holder, outcomes)
-			await _sweep_delivery_deaths(recipients)
+		var recipients: Array = [null]
+		if effect.targets != null:
+			recipients = effect.targets.resolve(world, holder)
+			if recipients.is_empty():
+				continue   # a legal "no target" — nothing to unfold onto
+		await presenter.action_windup(holder, effect, recipients)
+		var outcomes := ActionExecutor.deliver(effect, event, holder, world, recipients)
+		await presenter.action_results(holder, effect, outcomes)
+		await _emit_outcome_news(holder, outcomes)
+		await _sweep_delivery_deaths(recipients)
 
 
 # Run-level (relic/upgrade) effects for an event, fired ONCE from the perspective of the

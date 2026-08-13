@@ -202,12 +202,10 @@ func _arrangement_apply_purity() -> void:
 func _buff_prefers_fresh_over_tapped() -> void:
 	var fresh := BoardState.UnitState.new()
 	fresh.attack = 3
-	fresh.strikes = 1
 	fresh.health = 2
 	fresh.max_health = 2
 	var tapped := BoardState.UnitState.new()
 	tapped.attack = 3
-	tapped.strikes = 1
 	tapped.health = 2
 	tapped.max_health = 2
 	tapped.exhausted = true
@@ -474,10 +472,10 @@ func _weight_resolution() -> void:
 func _threat_and_incoming() -> void:
 	var back := BoardData.ROWS - 1
 	var deep := BoardData.COLS - 1
-	# knight fixture: attack 2, strikes 1 ×2 units → threat mass 4.
+	# knight fixture: attack 2 ×2 units → threat mass 4.
 	var players: Array = [_player("knight", 0, deep), _player("knight", 1, deep)]
 	var lone := _state_with([_enemy("king", back, deep)], players)
-	check_eq(BoardScoring.threat_mass(lone), 4.0, "threat mass sums player attack × strikes")
+	check_eq(BoardScoring.threat_mass(lone), 4.0, "threat mass sums player attack")
 
 	var cap: BoardState.UnitState = lone.captain(1)
 	check_eq(BoardScoring.incoming(lone, cap), 4.0,
@@ -572,7 +570,7 @@ func _mana_as_threat() -> void:
 	# knight ×1 (attack 2) + 3 open mana: fielded threat and mana threat stack.
 	var mixed_grids := _grids([_enemy("king", back, deep)], [_player("knight", 0, deep)])
 	var mixed := BoardState.capture(mixed_grids[0], mixed_grids[1], 3)
-	check_eq(BoardScoring.threat_mass(mixed), 5.0, "attack × strikes + mana, one pot")
+	check_eq(BoardScoring.threat_mass(mixed), 5.0, "attack + mana, one pot")
 
 
 # ── Moves: enumeration + apply ───────────────────────────────────────────────────────
@@ -627,7 +625,7 @@ func _board_value_measurement() -> void:
 	})
 
 	var fodder := BoardState.UnitState.from_instance(_enemy("fodder_dummy", 0, 0))
-	var expected := float(fodder.attack * fodder.strikes) + float(fodder.health) \
+	var expected := float(fodder.attack) + float(fodder.health) \
 			+ float(fodder.max_health - fodder.health) * 0.1 \
 			+ float(fodder.shield) * 2.0 + float(fodder.speed) * 0.5 \
 			+ float(fodder.ability_ids.size()) * 2.0
@@ -741,9 +739,9 @@ func _outgoing_mass_shape() -> void:
 	var calm := _state_with([_enemy("dps_dummy", 0, 0), _enemy("knight", 1, 0)])
 	var expected := 0.0
 	for u: BoardState.UnitState in calm.units(1):
-		expected += float(u.attack * u.strikes)
+		expected += float(u.attack)
 	check_eq(BoardScoring.outgoing_mass(calm), expected,
-			"under no pressure the mass is exactly Σ attack × strikes")
+			"under no pressure the mass is exactly Σ attack")
 
 	# A buff moves the measure — the initiative's whole point.
 	var buffed := calm.copy()
@@ -758,7 +756,7 @@ func _outgoing_mass_shape() -> void:
 	var tapped := calm.copy()
 	tapped.units(1)[0].exhausted = true
 	var tap_loss := BoardScoring.outgoing_mass(calm) - BoardScoring.outgoing_mass(tapped)
-	var expected_loss := float(fresh.attack * fresh.strikes) \
+	var expected_loss := float(fresh.attack) \
 			* (1.0 - BoardScoring.TAP_DELIVERY_FACTOR)
 	check(absf(tap_loss - expected_loss) < 0.0001,
 			"a tapped unit keeps only the hard-capped sliver of its output")
@@ -1071,7 +1069,7 @@ func _readiness_shape() -> void:
 	var burst := BoardState.UnitState.from_instance(_enemy("burst_damage_dummy", 0, 0))
 	burst.exhausted = true
 	check(absf(BoardScoring.tap_forfeit(burst)
-			- float(burst.attack * burst.strikes) * BoardValueConfig.stat_rate("attack")) < 0.0001,
+			- float(burst.attack) * BoardValueConfig.stat_rate("attack")) < 0.0001,
 			"tapping a one-ability unit costs its swing, not the ability it just used")
 	var supp_unit := BoardState.UnitState.from_instance(_enemy("support_dummy", 0, 1))
 	supp_unit.exhausted = true
@@ -1383,9 +1381,9 @@ func _first_strike_is_side_aware() -> void:
 	var tank_mass := 0.0
 	var total_mass := 0.0
 	for u: BoardState.UnitState in state.units(1):
-		total_mass += float(u.attack * u.strikes)
+		total_mass += float(u.attack)
 		if u.card_id == "tank_dummy":
-			tank_mass += float(u.attack * u.strikes)
+			tank_mass += float(u.attack)
 	check_eq(BoardScoring.first_strike_share(state, foe), tank_mass / total_mass,
 			"a player unit's first-strike share reads the CPU army, not its own side")
 
@@ -1629,10 +1627,10 @@ func _eval_three_places_forwarding() -> void:
 	StatusData._all.erase("_t_priced")
 
 
-# Threat consumption: (attack × strikes + adds) × muls, unit fold and seat fold combined,
+# Threat consumption: (attack + adds) × muls, unit fold and seat fold combined,
 # reaching threat_against.
 func _eval_threat_consumption() -> void:
-	var state := _state_with([], [_player("knight", 0, 0)])   # knight: attack 2, strikes 1
+	var state := _state_with([], [_player("knight", 0, 0)])   # knight: attack 2
 	var u := _unit_by_id(state, 0, "knight")
 	check_eq(BoardScoring.unit_threat_out(state, u), 2.0, "unannotated output is the raw mass")
 	var m := EvalChannels.Mods.new()
@@ -1735,15 +1733,13 @@ func _quota_blows() -> void:
 	check_eq(BoardScoring.mana_blows(9), 3, "9 = 1+2+3 with the remainder folded")
 	check_eq(BoardScoring.mana_blows(10), 4, "10 = 1+2+3+4")
 	var state := _state_with([_enemy("pawn", 0, 0)], [_player("queen", 0, 0)])
-	var attacker := _unit_by_id(state, 0, "queen")
-	attacker.strikes = 3
-	check_eq(BoardScoring.blow_count(state, 1), 3,
-			"a multi-striker counts one blow per strike (no player mana here)")
+	check_eq(BoardScoring.blow_count(state, 1), 1,
+			"a fielded unit counts one blow (no player mana here)")
 	state.player_mana = 3
-	check_eq(BoardScoring.blow_count(state, 1), 5,
+	check_eq(BoardScoring.blow_count(state, 1), 3,
 			"…plus the mana pretend-units when pricing the CPU side")
 	check_eq(BoardScoring.blow_count(state, 0), 1,
-			"the player side counts CPU strikes only — CPU mana is never threat")
+			"the player side counts CPU units only — CPU mana is never threat")
 
 
 # The blast: equal quanta walk the exposure order front-first; a standing body is a

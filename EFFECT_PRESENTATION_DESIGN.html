@@ -1,0 +1,486 @@
+<title>Effect Presentation Design</title>
+<style>
+  :root {
+    --ground: #FAF9F6;
+    --surface: #F1EFEA;
+    --ink: #1F2125;
+    --ink-soft: #56534D;
+    --line: #DAD6CE;
+    --accent: #B3392B;
+    --accent-soft: #F3E3E0;
+    --steel: #4E6172;
+    --new-bg: #E7EDE4;
+    --new-ink: #3C5A40;
+    --prop-bg: #F5ECD9;
+    --prop-ink: #8A6A1F;
+    --code-bg: #ECEAE4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #17181B;
+      --surface: #1F2125;
+      --ink: #E8E6E1;
+      --ink-soft: #A9A59D;
+      --line: #35383E;
+      --accent: #E06A55;
+      --accent-soft: #3A2622;
+      --steel: #8FA3B5;
+      --new-bg: #24301F;
+      --new-ink: #9FBF8F;
+      --prop-bg: #33290F;
+      --prop-ink: #D9B45C;
+      --code-bg: #24262B;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #17181B;
+    --surface: #1F2125;
+    --ink: #E8E6E1;
+    --ink-soft: #A9A59D;
+    --line: #35383E;
+    --accent: #E06A55;
+    --accent-soft: #3A2622;
+    --steel: #8FA3B5;
+    --new-bg: #24301F;
+    --new-ink: #9FBF8F;
+    --prop-bg: #33290F;
+    --prop-ink: #D9B45C;
+    --code-bg: #24262B;
+  }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Segoe UI", -apple-system, system-ui, sans-serif;
+    font-size: 1.0rem;
+    line-height: 1.65;
+    margin: 0;
+  }
+  .page { max-width: 46rem; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+  h1, h2, h3 { font-family: Cambria, Georgia, "Times New Roman", serif; text-wrap: balance; line-height: 1.2; }
+  h1 { font-size: 2.3rem; margin: 0.4rem 0 0.6rem; }
+  h2 { font-size: 1.5rem; margin: 3rem 0 0.8rem; padding-top: 1.6rem; border-top: 1px solid var(--line); }
+  h2 .secno { color: var(--accent); margin-right: 0.5rem; font-size: 1.1rem; vertical-align: 0.08rem; }
+  p { margin: 0.7rem 0; }
+  .eyebrow {
+    text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.72rem;
+    color: var(--accent); font-weight: 600;
+  }
+  .ribbon {
+    display: flex; flex-wrap: wrap; gap: 0.6rem 1.6rem; align-items: baseline;
+    border-block: 1px solid var(--line); padding: 0.6rem 0; margin: 1.4rem 0 2rem;
+    font-size: 0.84rem; color: var(--ink-soft);
+  }
+  .ribbon b { color: var(--ink); font-weight: 600; }
+  .status-chip {
+    background: var(--accent); color: var(--ground); border-radius: 2px;
+    padding: 0.1rem 0.55rem; font-size: 0.74rem; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .lede { font-size: 1.12rem; color: var(--ink-soft); }
+  code, .mono {
+    font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+    font-size: 0.88em; background: var(--code-bg); border-radius: 3px; padding: 0.08em 0.35em;
+  }
+  .part {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 4px;
+    padding: 0.85rem 1rem; margin: 0.9rem 0;
+  }
+  .part-head { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: baseline; margin-bottom: 0.25rem; }
+  .part-head .name { font-family: "Cascadia Code", Consolas, monospace; font-weight: 600; font-size: 0.95rem; }
+  .part-head .plain { font-family: Cambria, Georgia, serif; font-weight: 700; font-size: 1.02rem; }
+  .part p { margin: 0.35rem 0 0; font-size: 0.94rem; }
+  .tag {
+    font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+    border-radius: 2px; padding: 0.06rem 0.45rem;
+  }
+  .tag.ruled { background: var(--new-bg); color: var(--new-ink); }
+  .tag.proposed { background: var(--prop-bg); color: var(--prop-ink); }
+  .proposed-block {
+    border: 2px dashed var(--prop-ink); background: var(--prop-bg);
+    border-radius: 4px; padding: 0.7rem 1rem; margin: 1rem 0;
+  }
+  .proposed-block .tag { margin-right: 0.5rem; }
+  .open-block {
+    border: 2px solid var(--accent); background: var(--accent-soft);
+    border-radius: 4px; padding: 0.7rem 1rem; margin: 1rem 0;
+  }
+  .rule-card {
+    border-left: 3px solid var(--accent); background: var(--surface);
+    padding: 0.7rem 1rem; margin: 1rem 0; font-size: 0.98rem;
+  }
+  ol.flow { counter-reset: step; list-style: none; padding-left: 0; }
+  ol.flow > li {
+    counter-increment: step; position: relative; padding-left: 2.4rem; margin: 0.7rem 0;
+  }
+  ol.flow > li::before {
+    content: counter(step); position: absolute; left: 0; top: 0.1rem;
+    width: 1.5rem; height: 1.5rem; border-radius: 50%;
+    background: var(--accent-soft); color: var(--accent);
+    font-size: 0.8rem; font-weight: 700; display: flex; align-items: center; justify-content: center;
+  }
+  ul { padding-left: 1.2rem; }
+  li { margin: 0.4rem 0; }
+  .quiet { color: var(--ink-soft); font-size: 0.9rem; }
+  .signoff-box {
+    border: 1px solid var(--line); background: var(--surface); border-radius: 4px;
+    padding: 1rem 1.2rem; margin: 2.5rem 0 0;
+  }
+  .amendment {
+    border: 3px double var(--steel); border-radius: 4px;
+    padding: 1rem 1.2rem 1.2rem; margin: 2rem 0 0;
+  }
+  .amendment .stamp {
+    display: inline-block; background: var(--steel); color: var(--ground);
+    border-radius: 2px; padding: 0.1rem 0.55rem; font-size: 0.74rem; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.5rem;
+  }
+  .amendment .ruling {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 4px;
+    padding: 0.85rem 1rem; margin: 0.9rem 0 0;
+  }
+  .amendment .ruling h4 {
+    font-family: Cambria, Georgia, "Times New Roman", serif;
+    font-size: 1.05rem; margin: 0 0 0.3rem; line-height: 1.25;
+  }
+  .amendment .ruling p { margin: 0.35rem 0 0; font-size: 0.94rem; }
+  .amendment .ruling .supersedes {
+    margin-top: 0.5rem; font-size: 0.8rem; color: var(--ink-soft);
+    border-top: 1px dashed var(--line); padding-top: 0.4rem;
+  }
+  s.dead { opacity: 0.5; }
+  .amref {
+    font-size: 0.66rem; font-weight: 700; letter-spacing: 0.06em;
+    color: var(--steel); vertical-align: super; white-space: nowrap;
+  }
+</style>
+
+<div class="page">
+
+<span class="eyebrow">Design pitch · the presentation cleanse</span>
+<h1>Effect Presentation</h1>
+<div class="ribbon">
+  <span class="status-chip">Signed — 2026-08-12</span>
+  <span>Date: <b>2026-08-12</b></span>
+  <span>Branch: <b>targeting-cleanup</b></span>
+  <span><s class="dead">One open question: <b>§7</b></s><span class="amref">a4</span>
+  Open questions: <b>none</b> — §7 resolved by amendment 4</span>
+</div>
+
+<p class="lede">Nothing below is implemented.</p>
+<p class="quiet">Scratched text is superseded, never deleted; the small a2/a3/a4 tags
+name the amendment that retired it.</p>
+
+<h2><span class="secno">§1</span>The problem</h2>
+<p>Presentation decides how effects look by reading inside them — scanning their
+payloads (the concrete game changes an effect carries, such as "deal damage") and
+type-checking their targeting (<code>combat.gd:715</code>, <code>combat.gd:725</code>,
+<code>card_data.gd:556</code>).</p>
+<p>The root cause is not discipline but accessibility: the whole effect object is handed
+into presentation code (<code>combat_cascade.gd:56</code>), its internals readable by
+anyone holding it. Any rule against reading is policing, and policing fails at one
+discretional call.</p>
+
+<h2><span class="secno">§2</span>The principle</h2>
+<div class="rule-card"><b>Presentation never asks "do I fire now?" or "what do I do
+now?" A system tells presentation: "you do this now." Every single time.</b></div>
+<p>No effect-shaped object ever crosses into presentation. Peeking is not forbidden —
+it is unwritable.</p>
+
+<h2><span class="secno">§3</span>The solution</h2>
+<p>Every effect has two presentations — appointed by the effect itself, or filled by
+the defaults of §4. Each is a plain name — a word, not a structure — so naming them
+reveals nothing of the effect's insides.</p>
+<p><b>The windup</b> is how the actor performs the act: the lunge across the board, the
+projectile fired, the flare on the acting card.</p>
+<p><b>The contact</b> is what this effect landing looks like on the recipients.</p>
+<p>A windup always plays in two steps: it <b>opens</b> before the effect applies, and it
+<b>closes</b> after. Many windups have nothing to close with, and that is normal — the
+closing step is simply empty for them.</p>
+<p>The order of events is fixed in one place, the cascade, as three consecutive lines
+that already exist (<code>combat_cascade.gd:56-58</code>): the windup opens, the rules
+apply the payloads, then the contact plays <s class="dead">together with the windup's
+closing step</s><span class="amref">a3</span>. The
+only change to those lines is their cargo: they carry the two names instead of the
+effect object.</p>
+<ol class="flow">
+  <li>The windup <b>opens</b> — lunge in, bolt flies, or glint flares</li>
+  <li>The rules apply the payloads</li>
+  <li>The <b>contact</b> plays<s class="dead">, together with the windup's closing
+      step</s><span class="amref">a3</span></li>
+</ol>
+<p>Everything else the player sees — during a strike or any other effect — follows its
+own happening, not this routing (Enrra's ruling, 2026-08-12). A stat mutation's result —
+the damage number — presents when the mutation commits. Dodge and critical are processed
+inside the strike itself, and the strike flow tells presentation to show them and fires
+their events at the moment each actually happens. No strike record exists<s class="dead">:
+the outcome — the record of what a mutation did — keeps only mutation results, and
+nothing later re-reads it to decide what to show</s><span class="amref">a2</span>.
+Nothing couples any of these to the contact or the
+windup: timings coincide when happenings coincide, and that is all.</p>
+<div class="proposed-block"><span class="tag proposed">Proposed</span><s class="dead">The
+reticle that marks a struck recipient and the hit burst ride that same happening — the
+mutation's commit. Awaiting Enrra's ruling.</s><span class="amref">a2 — rejected</span></div>
+
+<h2><span class="secno">§4</span>Defaults</h2>
+<p>An effect that appoints no windup gets the shared default: <b>the glint</b>, the soft
+flare that already marks "this card's effect is firing" for every trigger today.</p>
+<p>An effect that appoints no contact is looked up under its own name — the id it was
+authored with. <s class="dead">If nothing is found under that name, the landing shows
+nothing extra — silently. Enrra delegated this choice; silent is the ruled
+behavior.</s><span class="amref">a2</span></p>
+
+<h2><span class="secno">§5</span>The windups and who appoints them</h2>
+<p>Three windups are proposed. Their choreography exists in the game today; what is new
+is that each becomes a named thing an effect can appoint.</p>
+<div class="part"><div class="part-head"><span class="plain">The lunge</span></div>
+  <p>The melee windup. Its opening is the physical approach: the actor crosses to the
+  target, strikes, and rebounds. Its closing is the withdrawal — the walk back home.</p></div>
+<div class="part"><div class="part-head"><span class="plain">The bolt</span></div>
+  <p>The shot windup. Its opening fires a projectile from where the actor stands. It has
+  nothing to close.</p></div>
+<div class="part"><div class="part-head"><span class="plain">The glint</span></div>
+  <p>The soft windup. Its opening is the flare on the acting card. It has nothing to
+  close.</p></div>
+<p>The five attack effects appoint theirs: <code>nearest_attack</code> and
+<code>leap_attack</code> take the lunge; <code>wounded_attack</code>,
+<code>tank_attack</code>, and <code>threat_attack</code> take the bolt. Every other
+effect falls to the default glint.</p>
+<p>Changing what any effect looks like later means changing these appointments — data,
+never consumer code.</p>
+
+<h2><span class="secno">§6</span>The demolition</h2>
+<p>Everything effect-presentation related that is not a necessary part of the exact
+solution above is demolished in the same stroke (Enrra's ruling) — no survivors,
+nothing kept "for later." By name:</p>
+<ul>
+  <li><code>_delivers_blow</code> (<code>combat.gd:715</code>) — deleted. Choreography
+      plays because a windup is named, not because payloads were counted.</li>
+  <li><code>_fires_bolt</code> (<code>combat.gd:725</code>) — deleted. The windup's
+      name says bolt or lunge.</li>
+  <li><code>targeting_line()</code> (<code>card_data.gd:556</code>) — the producer of
+      the tooltip's one-line targeting description — deleted as it exists today. <s class="dead">Its
+      replacement is the open question of §7.</s><span class="amref">a4</span> Its
+      replacement is §7's ruled answer: the effect's own description text.</li>
+  <li>The outcome's strike-story flags (<code>dodged</code>, <code>crit</code>,
+      <code>crit_bonus_damage</code> on the Arbitrator's outcome) — deleted (Enrra's
+      ruling, 2026-08-12). <s class="dead">The outcome keeps only mutation results —
+      health reduced, shield absorbed: everything derivable from what actually
+      happened, never from which effect did it.</s><span class="amref">a2</span> The
+      strike flow announces dodge and critical itself, to
+      presentation and to events, as they happen; nothing reads flags afterward.</li>
+</ul>
+<p>One visible feature dies with the demolition: today the projectile colors itself by
+the attacker's elements, which requires reading the attacker card. Enrra ruled the
+feature dropped at this scope. Projectiles fly uncolored.</p>
+
+<h2><span class="secno">§7</span><s class="dead">Open question</s><span class="amref">a4
+— resolved</span> — the card description text</h2>
+<div class="part">
+<p>Card tooltips today append a one-line description of the unit's targeting ("attacks
+the nearest enemy"). The mechanism that produces it reads effect internals and dies in
+the demolition.</p>
+<p><s class="dead"><b>Where this line comes from in the new system is unresolved and awaits Enrra's
+ruling.</b> A proposal to attach it to the contact was put forward and not sanctioned;
+the question is open.</s><span class="amref">a4 — resolved</span></p>
+<p><b>Resolved by amendment 4 (Enrra's ruling):</b> every effect gets a text
+description, and that is what the card shows.</p>
+</div>
+
+<h2><span class="secno">§8</span>The names</h2>
+<p class="quiet">Every new thing the solution creates, each stated in plain words
+first.</p>
+<div class="part"><div class="part-head"><span class="plain">The two appointed fields</span>
+  <span class="name">windup_presentation</span> <span class="name">contact_presentation</span></div>
+  <p>The two names an effect appoints are authored as two new optional fields on the
+  effect — Enrra's naming: descriptive over short.</p></div>
+<div class="part"><div class="part-head"><span class="plain">The effect speaking outward</span>
+  <span class="name">windup_presentation_id()</span> <span class="name">contact_presentation_id()</span></div>
+  <p>The effect exposes each resolved name — appointed, or default — through one method
+  apiece. No caller ever reaches in.</p></div>
+<div class="part"><div class="part-head"><span class="plain">The presentations data file</span>
+  <span class="name">data/presentations.json</span></div>
+  <p>The one data file defining the presentations themselves, with a windups section and
+  a contacts section. A windup entry is a name bound to one of the three choreographies
+  of §5 — the file ships with exactly the three. A contact entry describes what plays on
+  each recipient when the effect lands — and at this scope <s class="dead">the contacts
+  section ships <b>empty</b> — no effect appoints one</s><span class="amref">a2</span>.
+  The section exists so future visuals <s class="dead">(and §7's
+  answer, if it lands here)</s><span class="amref">a4</span> have their lawful place. A contact, once one exists, plays
+  once per recipient.</p></div>
+<div class="part"><div class="part-head"><span class="plain">The loader</span>
+  <span class="name">PresentationLibrary</span>
+  <span class="quiet">scripts/effects/presentation_library.gd</span></div>
+  <p>One loader reads that file at startup and refuses malformed or duplicate content,
+  the same way the effect library already behaves. It answers two questions: give me
+  the windup with this name, give me the contact with this name.</p></div>
+<p>One existing structure must be understood to see where the change lands. The game can
+run a whole fight with no visuals — simulations do exactly that, running the real rules
+on invisible copies of the board. This works because the rules never speak to the
+screen; they speak to a <b>presenter</b>: one object holding the show-this-moment
+functions the cascade calls. Two presenters exist today: <code>CombatPresenter</code>,
+the silent one that shows nothing (simulations use it), and <code>LivePresenter</code>,
+the one live fights use, which forwards each moment to the visible combat scene through
+two functions Combat exposes for the purpose — those two receive the names as well.</p>
+<p>Today, the presenter's windup and results functions are handed the whole effect
+object. They will receive the two presentation names instead. After this change, no
+presentation code in the codebase is handed an effect at all.</p>
+<div class="proposed-block"><span class="tag proposed">Proposed</span><s class="dead">The
+happenings of §3 need mouths, because today those visuals are produced by reading the
+outcome's flags after the fact — the path §6 demolishes. Awaiting Enrra's ruling on the
+shape and the names: the presenter grows one function per happening.
+<code>strike_dodged</code> (the sidestep and "Miss") and <code>strike_crit</code> (the
+flash) belong to the strike flow alone, called at the moment each happens;
+<code>mutation_result</code> (the number, the reticle, the hit burst) is announced by
+whatever commits the mutation — every mutation of every effect, strike or not, at the
+moment it commits. The results call keeps only what §3 gives it: the contact and the
+windup's close. The silent presenter answers each with nothing, as it does
+everything.</s><span class="amref">a3 — rejected</span></div>
+
+<h2><span class="secno">§9</span>Scope</h2>
+<p>This document cleanses the presentation peek only. The rest of phase 4 is untouched:
+the seam where the board asks which unit an attacker would strike
+(<code>find_target</code>), the annotated debts waiting in the board script (the NEEDS
+blocks in <code>combat_board.gd</code>), and giving each attack its own distinct
+visuals. Nothing here stands on the cursed additions of ATTACK_SYSTEM_DESIGN.html;
+every statement stands on the 2026-08-12 conversation alone.</p>
+
+<div class="signoff-box">
+<h3 style="margin-top:0">Sign-off</h3>
+<p><b>Enrra's ruling: SIGNED — 2026-08-12</b>, given in conversation ("Please mark the
+document as signed off"), covering the body and amendments 2–4. The body above is now
+immutable; further change arrives only as amendments below.</p>
+<p class="quiet">Once signed, the body above is immutable. Amendments appear only below
+this box, each in its own visibly distinct container stating that it is an amendment
+and at which iteration it was added (Enrra's ruling, 2026-08-12), delivered to Enrra so
+it can't be missed.</p>
+</div>
+
+<div class="amendment">
+<span class="stamp">Amendment · iteration 2 · 2026-08-12</span>
+<p>Ruled by Enrra in conversation after the iteration-1 read. Where a point below
+contradicts the body above, the point below governs.</p>
+
+<div class="ruling">
+<h4>The outcome is ruled out of existence</h4>
+<p>A mutation commits, announces its presentation and fires its events at that moment,
+and returns nothing. Nothing anywhere writes down what happened for later re-reading.
+The arithmetic of a blow — dodge, shield split, critical — stays internal to the
+Arbitrator, the single writer that performs it.</p>
+<p>Every piece of code currently holding an outcome is a conformance site to be brought
+to this design or demolished; the codebase has no veto over the design.</p>
+<p class="supersedes">Supersedes §3's "the outcome keeps only mutation results" and
+§6's outcome bullet.</p>
+</div>
+
+<div class="ruling">
+<h4>Events fire at commit</h4>
+<p>The events of an effect mutation fire at mutation time, from the committing site —
+never derived from a record afterward. Dodge and critical still announce from the
+strike flow, as §3 states.</p>
+<p class="supersedes">Completes the ruling above: supersedes §3's "the outcome — the
+record of what a mutation did — keeps only mutation results" for events as well as for
+presentation.</p>
+</div>
+
+<div class="ruling">
+<h4>The mark and the burst are contact presentation</h4>
+<p>§3's proposed container is resolved — rejected as written. The mark that snaps onto
+a recipient and the hit burst are not universal mutation announcements. They are
+contact presentation — the landing look §3 already defines — routed like any contact.
+Housekeeping mutations (shield regeneration and its kin) have no contact and show
+nothing.</p>
+<p>Vocabulary ruling: that mark is the <b>recipient mark</b> — never "reticle," never
+"target"-anything; it plays at the landing and has nothing to do with targeting.</p>
+<p class="supersedes">Resolves §3's PROPOSED container.</p>
+</div>
+
+<div class="ruling">
+<h4>The default contact exists</h4>
+<p>The contacts section ships with ONE entry — the <b>default landing</b>: the
+recipient mark and the hit burst. An effect that appoints no contact and has no entry
+under its own name falls to the default landing, exactly as the windup slot falls to
+the glint.</p>
+<p><span class="tag proposed">Proposed</span> the entry's id in data:
+<code>default_landing</code>.</p>
+<p class="supersedes">Supersedes §4's contact silence and §8's "ships empty."</p>
+</div>
+
+<div class="ruling">
+<h4><s class="dead">§8's proposed mouths adjust accordingly</s><span class="amref">a3</span></h4>
+<p><s class="dead"><code>mutation_result</code> announces the number alone — the
+recipient mark and the burst belong to the contact — and with the outcome gone, no
+record exists for anything to read.</s><span class="amref">a3</span></p>
+<p class="supersedes">Adjusts §8's PROPOSED container. The mouths themselves were later
+rejected whole — see amendment 3.</p>
+</div>
+
+</div>
+
+<div class="amendment">
+<span class="stamp">Amendment · iteration 3 · 2026-08-12</span>
+<p>Ruled by Enrra in conversation after the iteration-2 read. Where a ruling below
+contradicts anything above, the ruling below governs. Scratched text throughout the
+page marks statements these amendments invalidated — scratched, never deleted, each
+tagged with the amendment that retired it (a2, a3).</p>
+
+<div class="ruling">
+<h4>The windup's closure is its own telling</h4>
+<p>The contact and the windup's closing step are two different happenings, and each is
+told at its own moment: the effect landing tells the contact — "the effect lands:
+contact, now" — and the act concluding tells the windup to close — "the act concludes:
+close your windup, now." They usually come one on the other's heels, so the eye sees
+what today's game shows — but that is coincidence of timing under §3's own rule, not a
+bundle. No instruction carries them together.</p>
+<p class="supersedes">Supersedes "together with the windup's closing step" in §3's
+prose and its step list.</p>
+</div>
+
+<div class="ruling">
+<h4>One generic channel — the per-happening interface is rejected</h4>
+<p>§8's proposed container is resolved — rejected whole. A dodge's sidestep, a
+critical's flash, a damage number: each is simply a visual — something to show, on
+someone, now, with a magnitude when there is one. The game already owns the machinery
+for exactly that: the VFX library, where named visuals live as data.</p>
+<p>So presentation is told through <b>one generic channel</b>: a named visual, a
+recipient, a magnitude when there is one. The strike flow tells it "show
+<code>dodge</code> on this unit"; a mutation's commit tells it "show
+<code>damage_number</code> here, amount 3." What each name looks like lives in the VFX
+data — if X, do whatever X maps to — and a new happening is a new data entry, never a
+new function. Silence for simulations is one gate on the one channel.</p>
+<p class="supersedes">Rejects §8's PROPOSED container (the three per-happening
+functions) and retires amendment 2's "mutation_result announces the number alone" —
+the number is a named visual through the same channel.</p>
+</div>
+
+</div>
+
+<div class="amendment">
+<span class="stamp">Amendment · iteration 4 · 2026-08-12</span>
+<p>Ruled by Enrra in conversation after the iteration-3 read. Where a ruling below
+contradicts anything above, the ruling below governs.</p>
+
+<div class="ruling">
+<h4>§7 is resolved — every effect has a text description, and the card shows it</h4>
+<p>Every effect gets a text description. That is what the card shows: the tooltip's
+line is each effect's own text, presented as given — the card derives nothing from
+the effect's insides.</p>
+<p>The description's home is the locale table, under a key derived from the effect's
+identity: <code>effect.&lt;id&gt;.desc</code> — e.g.
+<code>effect.nearest_attack.desc</code>. No new field on the effect; the id is the
+key, and the text is translated alongside every other string. Keying by the effect's
+identity — its id as an opaque token, never its contents — was ruled lawful routing
+in the same design conversation that ruled the seal; the effect's contents stay
+unread.</p>
+<p>Entailed by the ruling: the five existing strings at
+<code>targeting.&lt;policy&gt;.desc</code> (en and es) move to their effect-identity
+keys, and the <code>targeting.*</code> keys die with <code>targeting_line()</code>.
+The answer does <b>not</b> land in the contacts section of
+<code>data/presentations.json</code> — a description is text on the card, not a
+landing visual.</p>
+<p class="supersedes">Resolves §7 whole; supersedes the ribbon's "one open question,"
+§6's "open question of §7," and §8's "§7's answer, if it lands here."</p>
+</div>
+
+</div>
+
+</div>

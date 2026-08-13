@@ -1368,6 +1368,8 @@ function validateNewEffects(d, where) {
       if (e[k] != null)
         return `${where}: '${k}' is the deleted schema (effect-cleanse 2026-08-11) — `
           + 're-author as payloads/mutators (TARGETING_DESIGN.md)';
+    if (e.repeats != null)
+      return `${where}: 'repeats' is deleted (nuked 2026-08-12) — remove it`;
   }
   return null;
 }
@@ -1391,6 +1393,7 @@ function validateItem(type, d) {
       for (const p of d.chess_pieces || []) if (!PIECES.includes(p)) return `unknown chess piece "${p}"`;
       if (d.target_policy != null) return `'target_policy' is deleted (2026-08-12) — the policy lives inside the referenced attack effect`;
       if (d.ranged != null) return `'ranged' is deleted (2026-08-12) — the projectile-vs-lunge visual derives from the attack effect's targeting policy`;
+      if (d.strikes != null) return `'strikes' is deleted (nuked 2026-08-12 with the repeats mechanism) — remove it`;
       if (d.role && !UNIT_ROLES.includes(d.role)) return `bad role "${d.role}" (${UNIT_ROLES.join(', ')})`;
       // Kill bounties (see GameData.kill_bounty): absent = derived from the mana cost, a
       // number = a flat override. 0 is legal and means "pays nothing".

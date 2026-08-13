@@ -80,10 +80,6 @@ var abilities: Array[String] = []
 # (The `ranged` bool died 2026-08-12 — signed ATTACK_SYSTEM_DESIGN.html §8.3: ranged-ness
 # is a VISUAL, derived from the attack effect's targeting policy — the stat-hunting
 # policies fire the bolt, the geometric ones lunge. See Combat's windup dressing.)
-# Attacks per combat round (the multi-strike stat — the attack effect's authored repeats reads it).
-# Base 1 for everyone; authored higher for flurry units (harpies and friends). Foldable, so
-# standing effects/statuses can grant extra strikes at read time (CardInstance.get_attribute).
-var strikes: int = 1
 # What killing this unit pays the player on the spot (see GameData.kill_bounty): gold into the
 # run's purse — one coin flies to the gold bag per point — and profile experience. -1 means
 # UNAUTHORED: the bounty derives from the card's mana cost through the `bounty.*` rates, which
@@ -222,7 +218,6 @@ static func build_from_dict(d: Dictionary) -> CardData:
 	card.tribe        = str(d.get("tribe", ""))
 	card.role         = str(d.get("role", ""))
 	card.abilities    = Array(d.get("abilities", []), TYPE_STRING, "", null)
-	card.strikes      = maxi(1, int(d.get("strikes", 1)))
 	card.bounty_gold  = int(d.get("bounty_gold", -1))
 	card.bounty_exp   = int(d.get("bounty_exp", -1))
 	# Effects, the NEW schema (signed ATTACK_SYSTEM_DESIGN.html §3): each entry is either a
@@ -316,10 +311,6 @@ func to_dict() -> Dictionary:
 		d["tribe"] = tribe
 	if not role.is_empty():
 		d["role"] = role
-	# Conditional like tribe/abilities: the overwhelming single-strike majority keeps its
-	# serialized shape byte-identical to before the stat existed.
-	if strikes != 1:
-		d["strikes"] = strikes
 	# Same conditional shape: an unauthored bounty (-1, i.e. "derive it from my cost") leaves
 	# the serialized card byte-identical to before the stat existed.
 	if bounty_gold >= 0:
@@ -360,7 +351,6 @@ static func scaled(base: CardData, power: float) -> CardData:
 	c.tribe         = base.tribe
 	c.role          = base.role
 	c.abilities     = base.abilities.duplicate()
-	c.strikes       = base.strikes
 	c.bounty_gold   = base.bounty_gold
 	c.bounty_exp    = base.bounty_exp
 	# Shared, not duplicated: effect structures are stateless and immutable after parse.

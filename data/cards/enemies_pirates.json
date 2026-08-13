@@ -172,7 +172,6 @@
     "health": 18,
     "speed": 2,
     "shield": 5,
-    "strikes": 3,
     "is_king": true,
     "enemy_only": true,
     "tribe": "pirate",

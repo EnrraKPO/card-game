@@ -183,7 +183,7 @@ func _build_side(host: VBoxContainer, side: int, caption: String) -> void:
 	sub.add_theme_color_override("font_color", Color(0.88, 0.91, 0.98))
 	# The mass is what the OTHER side is expected to deliver — delivery-discounted and
 	# crit-raised (expected_threat_against), plus the player's open mana when the player is
-	# the aggressor — arriving in `blows` pieces (fielded strikes + mana pretend-units).
+	# the aggressor — arriving in `blows` pieces (fielded units + mana pretend-units).
 	# Absorbed vs wasted is the waste story: dodged parts land on no one, overkill past a
 	# pool is destroyed, and mass beyond the blow-count's reach touches nothing.
 	var absorbed := 0.0

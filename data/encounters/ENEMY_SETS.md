@@ -5,23 +5,22 @@ Eleven tribes plus rare easter-egg encounters, authored across `data/cards/enemi
 unit is `enemy_only` with art at `assets/cards/enemies/<id>.png`. Totals: **40 combat / 15
 elite / 9 boss templates**, all riding the existing floor/stage bands + power scaling.
 
-Two engine mechanics were added for this content (see the card guide):
+One engine mechanic was added for this content (see the card guide):
 - **`spawn` payload** — on-death splits, per-round summons, and **two-phase bosses** (a dying
   king spawning its next `is_king` form keeps the fight going).
-- **`strikes` stat** — multi-attack; each strike re-acquires its target.
 
 | Tribe | Identity | Signature moments | Boss |
 |---|---|---|---|
-| Slimes | split-on-death cascades, absorption | Colossal→Giant→Green→Droplet chain; Gluttonous eats fallen allies | **Slimeon, the Boundless** → phase 2: his boiling core (fast, 2 strikes) |
+| Slimes | split-on-death cascades, absorption | Colossal→Giant→Green→Droplet chain; Gluttonous eats fallen allies | **Slimeon, the Boundless** → phase 2: his boiling core (fast) |
 | Beasts | enrage, Frenzied stacks, kill-feeding | Boar/Bear grow when hit; wolves Frenzy on kills; Hyena profits from every death | **Ragnor, the Endless Hunger** (+2 atk & heal 4 per kill) |
-| Harpies | speed, dodge, multi-strike, Tailwind | Twin-Talon double strike; Galecaller hastes the flock; Aellai grows off dodges | **Kyrraxa, the Hundred-Gale** (3 strikes, 25% dodge) |
+| Harpies | speed, dodge, Tailwind | Galecaller hastes the flock; Aellai grows off dodges | **Kyrraxa, the Hundred-Gale** (25% dodge) |
 | Aliens | shields, side-draw tech, replication | Probes make the CPU draw on death; Aegis Nodes project Barriers; tractor-drain Abductor | **The Mothership** (fabricates drones) → phase 2: Command Saucer |
 | Insects | swarm, cocoons, aura | Sealed Cocoon self-ripens & hatches on ANY death; Locust aura; broodmothers | **Zellixa, the Hive Queen** (lays a cocoon each round) |
-| Pirates | chaos kegs, kill ledgers, grog | Powder Monkey damages BOTH sides; Sea Cook heals crew; First Mate notches kills | **The Kraken, Debt Collector** (3 tentacle strikes) |
-| Cultists | sacrifice economy | Willing Offering wants to die; Blood Priest converts ally deaths to attack | **Hierophant Ozmun** → phase 2: **Vhal'Zhoth**, the god he dug up (double-striker) |
+| Pirates | chaos kegs, kill ledgers, grog | Powder Monkey damages BOTH sides; Sea Cook heals crew; First Mate notches kills | **The Kraken, Debt Collector** |
+| Cultists | sacrifice economy | Willing Offering wants to die; Blood Priest converts ally deaths to attack | **Hierophant Ozmun** → phase 2: **Vhal'Zhoth**, the god he dug up |
 | Trolls | regeneration | Everything heals every round; Old Gorge (elite) heals 4 + enrages | — (elite tribe) |
 | Fairies | dodge, Blind, trickery | Queen Mab blinds whoever hits her; Puck steals speed for himself | — (elite tribe) |
-| Dinosaurs | crit, retaliation, endgame stats | Raptor +crit; Stegoback thorns; Compies keep coming (50%) | **TYRANNUS, the Extinction** (double-striker, heals 5 per kill) |
+| Dinosaurs | crit, retaliation, endgame stats | Raptor +crit; Stegoback thorns; Compies keep coming (50%) | **TYRANNUS, the Extinction** (heals 5 per kill) |
 | Corporate | buzzword warfare | Interns draw on death ("exit interview"); Consultant debuffs BOTH sides | **The CEO** (hires interns, takeover stacks) → phase 2: **The Golden Parachute** |
 
 **Easter eggs** (combat templates at weight ~0.06–0.07 — rare surprises, better-than-normal

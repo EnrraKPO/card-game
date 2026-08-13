@@ -172,7 +172,6 @@
     "attack": 4,
     "health": 11,
     "speed": 3,
-    "strikes": 2,
     "is_king": true,
     "enemy_only": true,
     "tribe": "cultist",

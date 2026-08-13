@@ -204,7 +204,6 @@
     "attack": 4,
     "health": 9,
     "speed": 4,
-    "strikes": 2,
     "is_king": true,
     "enemy_only": true,
     "tribe": "slime",

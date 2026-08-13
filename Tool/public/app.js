@@ -881,7 +881,7 @@ function boardValueSection(cfg) {
         numRow('Persistence weight', '0 = a dying queen is still a queen · 1 = a doomed unit is worth nothing',
           () => cfg.persistence_weight, v => { cfg.persistence_weight = Math.min(1, Math.max(0, v)); }, 0, 1, 0.05),
         el('h3', { text: 'Stat exchange rates' }),
-        rate('attack', 'Attack', 'per point of attack × strikes'),
+        rate('attack', 'Attack', 'per point of attack'),
         rate('health', 'Health (the frame)', 'per point of MAX health — what the unit is, not its damage state'),
         // still read by the PARKED board-value quirk's current-health pricing
         rate('missing_health', 'Missing health', 'parked board-value quirk only (spent health)'),

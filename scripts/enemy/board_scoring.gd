@@ -7,7 +7,7 @@ extends RefCounted
 #
 # THE VALUATION SYSTEM: before ANY value-related eval runs, a whole valuation pass prices
 # every unit on BOTH sides (run_valuation). Per unit, two stages:
-#   · RAW VALUE — what the unit DOES: attack × strikes, abilities, effects, speed, plus
+#   · RAW VALUE — what the unit DOES: attack, abilities, effects, speed, plus
 #     arbitrary per-card enhancers. Health/shield count only minimally (the pool's real
 #     worth — absorbing damage — is persistence's job) and role tags are not consulted
 #     (roles unfold naturally from stats). Current health plays NO part here — a wounded
@@ -962,7 +962,7 @@ static func formation_order(state: BoardState, side: int, pricer: EnemyPersonali
 # Damage out per round — the unit's native attack mass through its threat channel.
 # (Blind: threat_mul 0.5 halves whatever the unit's mass happens to be.)
 static func unit_threat_out(state: BoardState, u: BoardState.UnitState) -> float:
-	var base := float(u.attack * u.strikes)
+	var base := float(u.attack)
 	var m := u.eval_mods
 	var g := state.seat_mods(u.owner, u.row, u.col)
 	if m == null and g == null:
@@ -1000,7 +1000,7 @@ static func annotated_raw_value(state: BoardState, u: BoardState.UnitState,
 	return maxf(0.0, (raw + add) * mul)
 
 
-# Total damage the player can put out per round: Σ attack × strikes over fielded units,
+# Total damage the player can put out per round: Σ attack over fielded units,
 # PLUS their open mana at MANA_THREAT_RATE — unspent mana is damage not yet given a body.
 # Visible quantities only — reading the enemy's fielded army and mana pool is not
 # predicting targeting. Consequence: with mana in the pot, threat is nonzero even against
@@ -1031,7 +1031,7 @@ static func threat_against(state: BoardState, side: int) -> float:
 # swings at whom is unknowable at plan time (targeting policies, dodges, mid-round
 # deaths), so the model keeps only the knowable parts:
 #   · the side's total incoming mass,
-#   · roughly how many BLOWS it arrives in (blow_count — fielded strikes plus the
+#   · roughly how many BLOWS it arrives in (blow_count — fielded units plus the
 #     triangular pretend-units open mana could still field),
 #   · and each body's exposure — the geometry number that already encodes how much of
 #     the incoming pressure survives the bodies in front (exposure v2).
@@ -1143,8 +1143,8 @@ static func incoming_allocation(state: BoardState, side: int, naive: bool,
 # 2026-08-06 — 3 mana is 2 units because 1+2, 6 mana is 3 because 1+2+3).
 static func blow_count(state: BoardState, side: int) -> int:
 	var n := 0
-	for u: BoardState.UnitState in state.units(1 - side):
-		n += maxi(1, u.strikes)
+	for _u: BoardState.UnitState in state.units(1 - side):
+		n += 1
 	if side == 1:
 		n += mana_blows(state.player_mana)
 	return n
@@ -1204,7 +1204,7 @@ static func harm(state: BoardState, unit: BoardState.UnitState) -> float:
 # unit that dies before swinging is nearly worthless. All the aggression math lives in
 # these three functions; refine here, invisibly to the criterion.
 
-# Σ attack × strikes × delivery × crit expectation over the CPU's fielded units. The crit
+# Σ attack × delivery × crit expectation over the CPU's fielded units. The crit
 # factor keeps the aggression measure honest with the fight's real rules: a fast
 # attacker's output genuinely runs ~10–15% hotter. Target dodge is deliberately NOT
 # folded in here — it is a property of the defender the cohort normalization would mostly
@@ -1213,7 +1213,7 @@ static func outgoing_mass(state: BoardState) -> float:
 	var t_ref := target_speed_ref(state, 0)
 	var total := 0.0
 	for u: BoardState.UnitState in state.units(1):
-		total += float(u.attack * u.strikes) * delivery(state, u) * crit_expect(u, t_ref)
+		total += float(u.attack) * delivery(state, u) * crit_expect(u, t_ref)
 	return total
 
 
@@ -1251,7 +1251,7 @@ static func first_strike_share(state: BoardState, unit: BoardState.UnitState) ->
 	var total := 0.0
 	var slower := 0.0
 	for u: BoardState.UnitState in state.units(1 - unit.owner):
-		var mass := float(u.attack * u.strikes)
+		var mass := float(u.attack)
 		total += mass
 		if u.speed < unit.speed:
 			slower += mass
@@ -1289,7 +1289,7 @@ static func attack_speed_ref(state: BoardState, side: int) -> float:
 	var mass := 0.0
 	var acc := 0.0
 	for u: BoardState.UnitState in state.units(side):
-		var m := float(u.attack * u.strikes)
+		var m := float(u.attack)
 		mass += m
 		acc += m * float(u.speed)
 	return acc / mass if mass > 0.0 else 0.0
@@ -1371,7 +1371,7 @@ static func expected_threat_against(state: BoardState, side: int) -> float:
 # over the global one. Null means the global config alone — what a lone measurement
 # outside a fight reads.
 static func unit_value(u: BoardState.UnitState, pricer: EnemyPersonality = null) -> float:
-	var v := float(u.attack * u.strikes) * _stat_rate(pricer, "attack")
+	var v := float(u.attack) * _stat_rate(pricer, "attack")
 	v += float(u.health) * _stat_rate(pricer, "health")
 	v += float(u.max_health - u.health) * _stat_rate(pricer, "missing_health")
 	v += float(u.shield) * _stat_rate(pricer, "shield")
@@ -1411,7 +1411,7 @@ static func board_value(state: BoardState, pricer: EnemyPersonality = null) -> f
 # what something is worth reads the stamped values — never its own arithmetic.
 #
 #   1. RAW VALUE — what the unit DOES, current health irrelevant: stats at the authored
-#      exchange rates (attack × strikes full; MAX health and shield at MINIMAL rates —
+#      exchange rates (attack full; MAX health and shield at MINIMAL rates —
 #      the pool is the carrier, priced by persistence, not the payload; speed half), its
 #      abilities and effect categories, and arbitrary per-card enhancers (unit_values,
 #      keyed by card id). ROLE TAGS are deliberately not consulted (parked — roles unfold
@@ -1434,7 +1434,7 @@ static func board_value(state: BoardState, pricer: EnemyPersonality = null) -> f
 # stats: a tank reads as a big cheap absorber because that is what its sheet says;
 # protecting high-value targets is a future eval's own concern).
 static func raw_unit_value(u: BoardState.UnitState, pricer: EnemyPersonality = null) -> float:
-	var atk := float(u.attack * u.strikes) * _stat_rate(pricer, "attack")
+	var atk := float(u.attack) * _stat_rate(pricer, "attack")
 	# A spent tap is a spent swing HERE TOO: the valuation is a this-turn instrument, and
 	# this turn a tapped unit's attack delivers almost nothing — same hard cap delivery
 	# uses, one constant. A tap-blind attack stock ties fresh and tapped buff targets and
@@ -1525,7 +1525,7 @@ static func _unit_bonus(pricer: EnemyPersonality, card_id: String) -> float:
 # regardless. Rates come from BoardValueConfig, so this stays tool-authored like every
 # other number in the value currency.
 static func activity_potential(u: BoardState.UnitState, pricer: EnemyPersonality = null) -> float:
-	var p := float(u.attack * u.strikes) * _stat_rate(pricer, "attack")
+	var p := float(u.attack) * _stat_rate(pricer, "attack")
 	for id: String in u.ability_ids:
 		var ab := AbilityData.get_ability(id)
 		if ab != null and ab.tap:

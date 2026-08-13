@@ -7,6 +7,5 @@
 	"targets": {"kind": "tank"},
 	"payloads": [
 		{"kind": "attack", "amount": {"kind": "holder_stat", "stat": "attack"}}
-	],
-	"repeats": {"kind": "holder_stat", "stat": "strikes"}
+	]
 }

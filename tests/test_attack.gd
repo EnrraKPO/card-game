@@ -1,11 +1,10 @@
 extends TestCase
 
-# The attack, end to end, under the ONE CRANK (signed ATTACK_SYSTEM_DESIGN.html §8.0):
-# the sequencer fires `act`, dispatch unfolds the unit's attack effect like any other,
-# blow-news derives from the Outcomes, deaths ride the one death path — headless, under
-# the null presenter, proving the rules never needed a screen. Effects here are INLINE
-# fixtures (frozen — the suite must never track live content); the library's own loading
-# is pinned separately.
+# The attack, end to end, under the ONE CRANK: the sequencer fires `act`, dispatch
+# unfolds the unit's attack effect like any other, blow-news derives from the Outcomes,
+# deaths ride the one death path — headless, under the null presenter, proving the rules
+# never needed a screen. Effects here are INLINE fixtures (frozen — the suite must never
+# track live content); the library's own loading is pinned separately.
 
 
 func suite_name() -> String:
@@ -17,7 +16,7 @@ func run() -> void:
 	_act_unfolds_the_attack()
 	_untapped_condition_gates()
 	_pacifists_never_swing()
-	_repeats_reacquire_per_strike()
+	_repeats_is_dead()
 	_news_is_results_retaliation_unfolds()
 
 
@@ -26,7 +25,6 @@ const MELEE_FIXTURE := {
 			"conditions": [{"untapped": true}]},
 	"targets": {"kind": "nearest"},
 	"payloads": [{"kind": "attack", "amount": {"kind": "holder_stat", "stat": "attack"}}],
-	"repeats": {"kind": "holder_stat", "stat": "strikes"},
 }
 
 
@@ -36,10 +34,10 @@ func _world() -> CombatWorld:
 	return w
 
 
-func _fighter(attack: int, health: int, strikes: int = 1, extra_effects: Array = []) -> CardInstance:
-	var def := {"id": "atk_fixture_%d_%d_%d" % [attack, health, strikes],
+func _fighter(attack: int, health: int, extra_effects: Array = []) -> CardInstance:
+	var def := {"id": "atk_fixture_%d_%d" % [attack, health],
 			"display_name": "Fixture", "cost": 1, "attack": attack, "health": health,
-			"speed": 1, "strikes": strikes, "chess_pieces": ["pawn"],
+			"speed": 1, "chess_pieces": ["pawn"],
 			"effects": [MELEE_FIXTURE] + extra_effects}
 	return CardInstance.from_data(CardData.build_from_dict(def))
 
@@ -83,9 +81,8 @@ func _library_loads_the_attack_family() -> void:
 			continue
 		check(is_instance_of(e.targets, species[effect_id]),
 				"%s points with its own species" % effect_id)
-		check(e.repeats != null, "%s authors its repeats (the strikes stat)" % effect_id)
 	check(EffectLibrary.get_effect("melee_attack") == null,
-			"melee_attack is DEAD — renamed nearest_attack (signed §8.3)")
+			"melee_attack is DEAD — renamed nearest_attack")
 
 
 func _act_unfolds_the_attack() -> void:
@@ -114,19 +111,23 @@ func _pacifists_never_swing() -> void:
 	check_eq(victim.current_health, 4, "a card referencing no attack effect simply doesn't swing")
 
 
-func _repeats_reacquire_per_strike() -> void:
-	# strikes 2, attack 3: the first blow kills the 3-health victim; the second RE-RESOLVES
-	# and lands on the next unit — a slain victim doesn't soak the follow-ups.
+func _repeats_is_dead() -> void:
+	# The repeats mechanism was nuked 2026-08-12 (Enrra's ruling): an effect authoring the
+	# dead key is refused whole, and one act delivers exactly one blow. The kill-crediting
+	# checks that rode the old flurry test live on against the single blow.
+	var authored := MELEE_FIXTURE.duplicate(true)
+	authored["repeats"] = {"kind": "holder_stat", "stat": "strikes"}
+	check(TriggeredEffect.parse(authored) == null, "'repeats' is a refused key — the effect is not half-loaded")
 	var w := _world()
-	var attacker := _place(w, _fighter(3, 5, 2), 0, 1, 3)
+	var attacker := _place(w, _fighter(3, 5), 0, 1, 3)
 	var first := _place(w, _bystander(3), 1, 1, 0)
 	var second := _place(w, _bystander(4), 1, 0, 0)
 	_act(w, attacker)
-	check(not first.is_alive(), "the first strike fells the first victim")
+	check(not first.is_alive(), "the blow fells the victim")
 	check(w.location_of(first) == null, "the corpse left play through the one death path")
 	check_eq(first.killed_by_channel, StatMutation.CH_ATTACK, "the kill is credited to the attack channel")
 	check(first.killed_by_unit == attacker, "the killer unit is stamped for the kill event")
-	check_eq(second.current_health, 1, "the second strike re-acquired and landed on the next unit")
+	check_eq(second.current_health, 4, "one act, one blow — nothing reaches the second unit")
 
 
 func _news_is_results_retaliation_unfolds() -> void:
