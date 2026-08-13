@@ -1,0 +1,356 @@
+<title>Main Action Design</title>
+<style>
+  :root {
+    --ground: #FAF9F6;
+    --surface: #F1EFEA;
+    --ink: #1F2125;
+    --ink-soft: #56534D;
+    --line: #DAD6CE;
+    --accent: #B3392B;
+    --accent-soft: #F3E3E0;
+    --steel: #4E6172;
+    --new-bg: #E7EDE4;
+    --new-ink: #3C5A40;
+    --prop-bg: #F5ECD9;
+    --prop-ink: #8A6A1F;
+    --code-bg: #ECEAE4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #17181B;
+      --surface: #1F2125;
+      --ink: #E8E6E1;
+      --ink-soft: #A9A59D;
+      --line: #35383E;
+      --accent: #E06A55;
+      --accent-soft: #3A2622;
+      --steel: #8FA3B5;
+      --new-bg: #24301F;
+      --new-ink: #9FBF8F;
+      --prop-bg: #33290F;
+      --prop-ink: #D9B45C;
+      --code-bg: #24262B;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #17181B;
+    --surface: #1F2125;
+    --ink: #E8E6E1;
+    --ink-soft: #A9A59D;
+    --line: #35383E;
+    --accent: #E06A55;
+    --accent-soft: #3A2622;
+    --steel: #8FA3B5;
+    --new-bg: #24301F;
+    --new-ink: #9FBF8F;
+    --prop-bg: #33290F;
+    --prop-ink: #D9B45C;
+    --code-bg: #24262B;
+  }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Segoe UI", -apple-system, system-ui, sans-serif;
+    font-size: 1.0rem;
+    line-height: 1.65;
+    margin: 0;
+  }
+  .page { max-width: 46rem; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+  h1, h2, h3 { font-family: Cambria, Georgia, "Times New Roman", serif; text-wrap: balance; line-height: 1.2; }
+  h1 { font-size: 2.3rem; margin: 0.4rem 0 0.6rem; }
+  h2 { font-size: 1.5rem; margin: 3rem 0 0.8rem; padding-top: 1.6rem; border-top: 1px solid var(--line); }
+  h2 .secno { color: var(--accent); margin-right: 0.5rem; font-size: 1.1rem; vertical-align: 0.08rem; }
+  p { margin: 0.7rem 0; }
+  .eyebrow {
+    text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.72rem;
+    color: var(--accent); font-weight: 600;
+  }
+  .ribbon {
+    display: flex; flex-wrap: wrap; gap: 0.6rem 1.6rem; align-items: baseline;
+    border-block: 1px solid var(--line); padding: 0.6rem 0; margin: 1.4rem 0 2rem;
+    font-size: 0.84rem; color: var(--ink-soft);
+  }
+  .ribbon b { color: var(--ink); font-weight: 600; }
+  .status-chip {
+    background: var(--accent); color: var(--ground); border-radius: 2px;
+    padding: 0.1rem 0.55rem; font-size: 0.74rem; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .lede { font-size: 1.12rem; color: var(--ink-soft); }
+  code, .mono {
+    font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+    font-size: 0.88em; background: var(--code-bg); border-radius: 3px; padding: 0.08em 0.35em;
+  }
+  .part {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 4px;
+    padding: 0.85rem 1rem; margin: 0.9rem 0;
+  }
+  .part-head { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: baseline; margin-bottom: 0.25rem; }
+  .part-head .name { font-family: "Cascadia Code", Consolas, monospace; font-weight: 600; font-size: 0.95rem; }
+  .part-head .plain { font-family: Cambria, Georgia, serif; font-weight: 700; font-size: 1.02rem; }
+  .part p { margin: 0.35rem 0 0; font-size: 0.94rem; }
+  .tag {
+    font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+    border-radius: 2px; padding: 0.06rem 0.45rem;
+  }
+  .tag.ruled { background: var(--new-bg); color: var(--new-ink); }
+  .tag.proposed { background: var(--prop-bg); color: var(--prop-ink); }
+  .proposed-block {
+    border: 2px dashed var(--prop-ink); background: var(--prop-bg);
+    border-radius: 4px; padding: 0.7rem 1rem; margin: 1rem 0;
+  }
+  .proposed-block .tag { margin-right: 0.5rem; }
+  .open-block {
+    border: 2px solid var(--accent); background: var(--accent-soft);
+    border-radius: 4px; padding: 0.7rem 1rem; margin: 1rem 0;
+  }
+  .rule-card {
+    border-left: 3px solid var(--accent); background: var(--surface);
+    padding: 0.7rem 1rem; margin: 1rem 0; font-size: 0.98rem;
+  }
+  ol.flow { counter-reset: step; list-style: none; padding-left: 0; }
+  ol.flow > li {
+    counter-increment: step; position: relative; padding-left: 2.4rem; margin: 0.7rem 0;
+  }
+  ol.flow > li::before {
+    content: counter(step); position: absolute; left: 0; top: 0.1rem;
+    width: 1.5rem; height: 1.5rem; border-radius: 50%;
+    background: var(--accent-soft); color: var(--accent);
+    font-size: 0.8rem; font-weight: 700; display: flex; align-items: center; justify-content: center;
+  }
+  ul { padding-left: 1.2rem; }
+  li { margin: 0.4rem 0; }
+  .quiet { color: var(--ink-soft); font-size: 0.9rem; }
+  .signoff-box {
+    border: 1px solid var(--line); background: var(--surface); border-radius: 4px;
+    padding: 1rem 1.2rem; margin: 2.5rem 0 0;
+  }
+  s.dead { opacity: 0.5; }
+  .amendment {
+    border: 3px double var(--steel); border-radius: 4px;
+    padding: 1rem 1.2rem 1.2rem; margin: 2rem 0 0;
+  }
+  .amendment .stamp {
+    display: inline-block; background: var(--steel); color: var(--ground);
+    border-radius: 2px; padding: 0.1rem 0.55rem; font-size: 0.74rem; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.5rem;
+  }
+  .amendment .ruling {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 4px;
+    padding: 0.85rem 1rem; margin: 0.9rem 0 0;
+  }
+  .amendment .ruling h4 {
+    font-family: Cambria, Georgia, "Times New Roman", serif;
+    font-size: 1.05rem; margin: 0 0 0.3rem; line-height: 1.25;
+  }
+  .amendment .ruling p { margin: 0.35rem 0 0; font-size: 0.94rem; }
+  .amendment .ruling .supersedes {
+    margin-top: 0.5rem; font-size: 0.8rem; color: var(--ink-soft);
+    border-top: 1px dashed var(--line); padding-top: 0.4rem;
+  }
+  .amref {
+    font-size: 0.66rem; font-weight: 700; letter-spacing: 0.06em;
+    color: var(--steel); vertical-align: super; white-space: nowrap;
+  }
+</style>
+
+<div class="page">
+
+<span class="eyebrow">Design pitch · the phase-4 remnant, initiative 1</span>
+<h1>The Main Action</h1>
+<div class="ribbon">
+  <span class="status-chip">Signed — 2026-08-13</span>
+  <span>Date: <b>2026-08-13</b></span>
+  <span>Branch: <b>targeting-cleanup</b></span>
+  <span>Open questions: <b>one</b> — §8, deferred by ruling to its own future cycle</span>
+</div>
+
+<p class="lede">Nothing below is implemented. Every statement stands on the 2026-08-13
+conversation and the signed TARGETING_DESIGN.md alone; nothing stands on the cursed
+additions of ATTACK_SYSTEM_DESIGN.html.</p>
+
+<h2><span class="secno">§1</span>The problem</h2>
+<p>Presentation must illustrate each unit's decision — whom it would strike — while play
+waits for input: the crosshair and menace cues. To answer, it needs to know each unit's
+<b>main action</b> and ask that action for its current targets.</p>
+<p>But under the current design, "this is the unit's main action" would live in two
+places at once. The effect's authored trigger ("fire when I act") decides what
+<i>actually happens</i> when the unit acts. A separate appointment would decide what the
+unit <i>claims outward</i> for target polling. Nothing ties them together: it is
+materially possible to appoint effect X while effect Y is the one that fires — and
+presentation would then illustrate an action that never occurs.</p>
+<p>Two independent statements of one truth, kept consistent only by authoring
+discipline. Discipline is policing, and policing fails at one discretional call.</p>
+
+<h2><span class="secno">§2</span>The principle</h2>
+<div class="rule-card"><b>The appointment is the single authority. A main action is not
+"an effect bound to the act event" — it is the effect appointed as THE main action of
+the unit. Everything flows from that one fact.</b></div>
+<p>Both consequences read the same appointment, so drift is unwritable:</p>
+<ul>
+  <li>The main action is <b>what fires when the unit acts</b> — bound to the act
+      through the appointment, at runtime, not through an authored trigger.</li>
+  <li>The main action is <b>what the target poll answers for</b>.</li>
+</ul>
+<p>The event is not the distinguishing thing. "Act" remains ordinary trigger vocabulary:
+any triggered effect may bind to it, and that is just a normal effect reacting to a
+normal event — a bystander, not a rival authority. It makes no claim to being the main
+action, so it cannot drift against it.</p>
+
+<h2><span class="secno">§3</span>The two kinds of effect</h2>
+<p>Today every effect is a triggered effect: <i>when [trigger], deliver [payloads] to
+[targets]</i>. This design adds a second kind — the <b>card action</b> — differing in
+exactly one slot: <b>who owns the "when."</b></p>
+<div class="part"><div class="part-head"><span class="plain">The triggered effect</span></div>
+  <p>Owns its own "when": an authored trigger, fixed at parse, part of the effect's
+  definition. Events arrive, the trigger answers "do I fire?" — unchanged, for every
+  event, forever.</p></div>
+<div class="part"><div class="part-head"><span class="plain">The card action</span></div>
+  <p>Owns no "when" at all. The slot is not a different kind of trigger — it is absent
+  from the effect and owned by the card. The card's runtime appointment is the only
+  thing that fires it. Everything else — targets, payloads, appointed presentations —
+  is the shared body both kinds carry.</p></div>
+<p>The two dispatch paths are disjoint, decided at parse by kind: a card action never
+enters the trigger-matching pool (there is nothing in it to match), and a triggered
+effect can never be appointed as a main action (it is not of the appointable kind). No
+flag, no runtime condition, no discipline — each path structurally cannot carry the
+other kind.</p>
+<p>At this scope, only the five attack effects become card actions. Candidacy is not
+the mechanism — explicitness is: any future effect authored as an action qualifies the
+same way.</p>
+
+<h2><span class="secno">§4</span>The machinery</h2>
+<p>One piece of machinery on the unit — <b>the main-action holder</b> — is the single
+authority on "what this unit does." It has three duties:</p>
+<ol class="flow">
+  <li><b>Fire on act.</b> When the unit acts, the holder fires the appointed main
+      action.</li>
+  <li><b>Answer the target poll.</b> "Who are my main action's current targets?" — see
+      §5.</li>
+  <li><b>Serve as the entry point for switches.</b> When main actions become switchable
+      at runtime, the switch lands here and nowhere else. Its semantics are §8's open
+      question; only the entry point is ruled now.</li>
+</ol>
+<p>The main action is a <b>runtime fact</b>: the card is the authority on its current
+main action, and the poll's contract never changes when switching arrives.</p>
+<div class="rule-card"><b>The auto-appointment rule: a unit with exactly one action
+needs no ceremony — that action is immediately its main action.</b> A unit with more
+than one action has exactly one active at a time.</div>
+<p>Every current unit has exactly one attack, so nothing per-card is authored anywhere:
+no per-unit stamp exists at this scope, and none is needed until multi-action cards
+exist.</p>
+
+<h2><span class="secno">§5</span>The target poll</h2>
+<p>The card exposes one query: <b>"who are my main action's current targets?"</b> It is
+answered internally — the card consults its main action, the action consults its own
+target resolver — and the answer is <b>entities only</b>. No effect-shaped object, no
+resolver, nothing with readable insides ever crosses outward. The effect stays sealed
+exactly as the signed presentation charter demands: the card activates it and polls its
+appointed targets, never opens it.</p>
+<p>The poll costs nothing to keep honest, because the answer is never stored:
+TARGETING_DESIGN.md's ratified ruling (2026-08-11) already defines a resolver's
+<b>current</b> as computed fresh at the moment someone reads it, at exactly two read
+moments — the trigger moment, and the interactive idle. The poll <i>is</i> the second
+read moment: presentation computes every unit's main-action targets while play waits
+for input, and illustrates the decisions. The board that answering happens against is
+the resolver's own concern (resolvers are owned by a CombatWorld and query it) — never
+the poller's.</p>
+
+<h2><span class="secno">§6</span>The authored form</h2>
+<p>Authoring an action must be unmistakable — the authored form itself says what kind of
+thing it is.</p>
+<p>Since a card action owns no "when," its honest authored form has <b>no trigger member
+at all</b>. <s class="dead">In the trigger's place stands the declaration that it is an
+action. The absence is not an omission to tolerate — it is the marker
+itself.</s><span class="amref">a2</span> The kind is declared by <b>which form is
+authored</b> — see amendment 2.</p>
+<p>The parser refuses every mistake loudly<s class="dead">: an effect declaring both a
+trigger and actionhood is malformed</s><span class="amref">a2</span> — each form refuses
+the other's members — exactly as every other malformed member poisons its effect today.
+Mis-authoring is structurally visible: an action cannot be written to look like a
+triggered effect, nor a triggered effect to look like an action.</p>
+<div class="proposed-block"><span class="tag proposed">Proposed</span><s class="dead">The
+concrete marker: the authored member <code>"action": true</code> standing where
+<code>"trigger"</code> would. The five attack effect files
+(<code>nearest_attack</code>, <code>leap_attack</code>, <code>wounded_attack</code>,
+<code>tank_attack</code>, <code>threat_attack</code>) replace their trigger member with
+it — five files touched, nothing else authored.</s><span class="amref">a2 —
+rejected</span> The marker member is rejected; the ruled shape is amendment 2's. The
+five-files-touched scope survives: the five attack effect files become action-form
+files by dropping their trigger member, nothing else authored.</div>
+
+<h2><span class="secno">§7</span>The names</h2>
+<p class="quiet">Every new thing this design creates, each stated in plain words first.
+Each concrete name is proposed, not ruled.</p>
+<div class="part"><div class="part-head"><span class="plain">The card action</span>
+  <span class="tag proposed">name proposed</span></div>
+  <p>The second kind of effect (§3): the shared body with no "when." Enrra's own words
+  name the concept — "this is a card action."</p></div>
+<div class="part"><div class="part-head"><span class="plain">The main-action holder</span>
+  <span class="tag proposed">name proposed</span></div>
+  <p>The one piece of machinery on the unit (§4): fires on act, answers the poll, takes
+  future switches.</p></div>
+<div class="part"><div class="part-head"><span class="plain">The target poll</span>
+  <span class="name">main_action_targets()</span>
+  <span class="tag proposed">name proposed</span></div>
+  <p>The card's one query (§5). Returns entities only.</p></div>
+
+<h2><span class="secno">§8</span>Open question — switching semantics</h2>
+<div class="open-block">
+<p><b>What "active" means and who may switch it is unstated and awaits Enrra's
+ruling</b> — as its own ruling, when switching is actually built. Ruled now: the entry
+point lives on the main-action holder (§4), and the poll's contract survives any answer.
+Deferred: who may switch, when, and whether "active" and "main" are the same word.</p>
+</div>
+
+<h2><span class="secno">§9</span>Scope</h2>
+<p>This document is initiative 1 of the phase-4 remnant (Enrra's re-scoping,
+2026-08-13): the machinery that lets presentation illustrate each unit's decision. Out
+of its scope, by ruling:</p>
+<ul>
+  <li><b>Initiative 2</b> — Tool authoring of the presentation appointment fields — its
+      own full cycle, after this one.</li>
+  <li><b>Ruled creep</b> — per-attack distinct visuals; interception presentation.</li>
+  <li>The crosshair and menace cue <i>visuals</i> consume the poll; their looks are not
+      redesigned here.</li>
+</ul>
+
+<div class="signoff-box">
+<h3 style="margin-top:0">Sign-off</h3>
+<p><b>Enrra's ruling: SIGNED — 2026-08-13</b>, given in conversation ("You can defer
+the switching semantics question and mark the document signed off"), covering the body
+and amendment 2. §8 stands deferred by the same ruling: its answer arrives as its own
+future ruling, never as an implementation choice. Development starts in a later, clean
+context — nothing is coded in this one.</p>
+<p class="quiet">Once signed, the body above is immutable. Amendments appear only below
+this box, each in its own visibly distinct container; invalidated text is scratched,
+never deleted.</p>
+</div>
+
+<div class="amendment">
+<span class="stamp">Amendment · iteration 2 · 2026-08-13</span>
+<p>Ruled by Enrra in conversation after the iteration-1 read (pre-signature). Where a
+ruling below contradicts anything above, the ruling below governs. Scratched text in §6
+marks the statements this amendment invalidated, each tagged a2.</p>
+
+<div class="ruling">
+<h4>The kind is declared by the authored form, not by a marker member</h4>
+<p>The sibling type itself suffices; no field inside the effect states its kind.
+Triggered effects and card actions are two authored <b>forms</b>, and which form is
+written declares which kind parses:</p>
+<p>— The <b>triggered form</b> is today's, unchanged: the trigger member is
+<b>required</b>, its absence refused loudly. A triggered effect that forgot its trigger
+is a caught mistake, never a silent action.</p>
+<p>— The <b>action form</b> has no trigger slot at all: a trigger member appearing
+there is a stranger, refused loudly like any other stranger.</p>
+<p>Each form refuses the other's members, so neither kind can be written to look like
+the other. The five attack effect files simply <i>are</i> action-form files — they drop
+their trigger member, and nothing else is authored.</p>
+<p class="supersedes">Supersedes §6's "the absence is the marker itself," §6's
+both-members contradiction rule, and rejects §6's proposed <code>"action": true</code>
+marker whole.</p>
+</div>
+
+</div>
+
+</div>
