@@ -199,22 +199,26 @@ action, so it cannot drift against it.</p>
 
 <h2><span class="secno">§3</span>The two kinds of effect</h2>
 <p>Today every effect is a triggered effect: <i>when [trigger], deliver [payloads] to
-[targets]</i>. This design adds a second kind — the <b>card action</b> — differing in
-exactly one slot: <b>who owns the "when."</b></p>
+[targets]</i>. <s class="dead">This design adds a second kind — the <b>card action</b> —
+differing in exactly one slot: <b>who owns the "when."</b></s><span class="amref">a3</span>
+The card action is not a sibling kind of effect but a trigger <b>kind</b> — see
+amendment 3; the concept below survives with that correction.</p>
 <div class="part"><div class="part-head"><span class="plain">The triggered effect</span></div>
   <p>Owns its own "when": an authored trigger, fixed at parse, part of the effect's
   definition. Events arrive, the trigger answers "do I fire?" — unchanged, for every
   event, forever.</p></div>
 <div class="part"><div class="part-head"><span class="plain">The card action</span></div>
-  <p>Owns no "when" at all. The slot is not a different kind of trigger — it is absent
-  from the effect and owned by the card. The card's runtime appointment is the only
+  <p>Owns no "when" at all. <s class="dead">The slot is not a different kind of
+  trigger — it is absent from the effect and owned by the
+  card.</s><span class="amref">a3</span> The card's runtime appointment is the only
   thing that fires it. Everything else — targets, payloads, appointed presentations —
   is the shared body both kinds carry.</p></div>
 <p>The two dispatch paths are disjoint, decided at parse by kind: a card action never
-enters the trigger-matching pool (there is nothing in it to match), and a triggered
-effect can never be appointed as a main action (it is not of the appointable kind). No
-flag, no runtime condition, no discipline — each path structurally cannot carry the
-other kind.</p>
+enters the trigger-matching pool (there is nothing in it to match), <s class="dead">and
+a triggered effect can never be appointed as a main action (it is not of the appointable
+kind)</s><span class="amref">a3</span> and only an Action-kind trigger makes its effect
+appointable. No flag, no runtime condition, no discipline — each path structurally
+cannot carry the other kind.</p>
 <p>At this scope, only the five attack effects become card actions. Candidacy is not
 the mechanism — explicitness is: any future effect authored as an action qualifies the
 same way.</p>
@@ -259,33 +263,41 @@ the poller's.</p>
 <h2><span class="secno">§6</span>The authored form</h2>
 <p>Authoring an action must be unmistakable — the authored form itself says what kind of
 thing it is.</p>
-<p>Since a card action owns no "when," its honest authored form has <b>no trigger member
-at all</b>. <s class="dead">In the trigger's place stands the declaration that it is an
-action. The absence is not an omission to tolerate — it is the marker
-itself.</s><span class="amref">a2</span> The kind is declared by <b>which form is
-authored</b> — see amendment 2.</p>
+<p><s class="dead">Since a card action owns no "when," its honest authored form has
+<b>no trigger member at all</b>.</s><span class="amref">a3</span> <s class="dead">In the
+trigger's place stands the declaration that it is an action. The absence is not an
+omission to tolerate — it is the marker itself.</s><span class="amref">a2</span>
+<s class="dead">The kind is declared by <b>which form is authored</b> — see
+amendment 2.</s><span class="amref">a3</span> The kind is declared by the trigger's own
+<code>kind</code>: <code>"trigger": {"kind": "action"}</code> — see amendment 3.</p>
 <p>The parser refuses every mistake loudly<s class="dead">: an effect declaring both a
-trigger and actionhood is malformed</s><span class="amref">a2</span> — each form refuses
-the other's members — exactly as every other malformed member poisons its effect today.
-Mis-authoring is structurally visible: an action cannot be written to look like a
-triggered effect, nor a triggered effect to look like an action.</p>
+trigger and actionhood is malformed</s><span class="amref">a2</span> — <s class="dead">each
+form refuses the other's members</s><span class="amref">a3</span> the Action trigger
+refuses every further member as a stranger — exactly as every other malformed member
+poisons its effect today. Mis-authoring is structurally visible: an action cannot be
+written to look like a triggered effect, nor a triggered effect to look like an
+action.</p>
 <div class="proposed-block"><span class="tag proposed">Proposed</span><s class="dead">The
 concrete marker: the authored member <code>"action": true</code> standing where
 <code>"trigger"</code> would. The five attack effect files
 (<code>nearest_attack</code>, <code>leap_attack</code>, <code>wounded_attack</code>,
 <code>tank_attack</code>, <code>threat_attack</code>) replace their trigger member with
 it — five files touched, nothing else authored.</s><span class="amref">a2 —
-rejected</span> The marker member is rejected; the ruled shape is amendment 2's. The
+rejected</span> The marker member is rejected; <s class="dead">the ruled shape is
+amendment 2's</s><span class="amref">a3</span> the ruled shape is amendment 3's. The
 five-files-touched scope survives: the five attack effect files become action-form
-files by dropping their trigger member, nothing else authored.</div>
+files <s class="dead">by dropping their trigger member</s><span class="amref">a3</span>
+by authoring <code>"trigger": {"kind": "action"}</code> in place of their act trigger,
+nothing else authored.</div>
 
 <h2><span class="secno">§7</span>The names</h2>
 <p class="quiet">Every new thing this design creates, each stated in plain words first.
 Each concrete name is proposed, not ruled.</p>
 <div class="part"><div class="part-head"><span class="plain">The card action</span>
   <span class="tag proposed">name proposed</span></div>
-  <p>The second kind of effect (§3): the shared body with no "when." Enrra's own words
-  name the concept — "this is a card action."</p></div>
+  <p><s class="dead">The second kind of effect (§3):</s><span class="amref">a3</span>
+  The effect whose trigger is Action-kind (§3, amendment 3): the shared body with no
+  "when." Enrra's own words name the concept — "this is a card action."</p></div>
 <div class="part"><div class="part-head"><span class="plain">The main-action holder</span>
   <span class="tag proposed">name proposed</span></div>
   <p>The one piece of machinery on the unit (§4): fires on act, answers the poll, takes
@@ -334,22 +346,75 @@ ruling below contradicts anything above, the ruling below governs. Scratched tex
 marks the statements this amendment invalidated, each tagged a2.</p>
 
 <div class="ruling">
-<h4>The kind is declared by the authored form, not by a marker member</h4>
-<p>The sibling type itself suffices; no field inside the effect states its kind.
-Triggered effects and card actions are two authored <b>forms</b>, and which form is
-written declares which kind parses:</p>
-<p>— The <b>triggered form</b> is today's, unchanged: the trigger member is
-<b>required</b>, its absence refused loudly. A triggered effect that forgot its trigger
-is a caught mistake, never a silent action.</p>
-<p>— The <b>action form</b> has no trigger slot at all: a trigger member appearing
-there is a stranger, refused loudly like any other stranger.</p>
-<p>Each form refuses the other's members, so neither kind can be written to look like
-the other. The five attack effect files simply <i>are</i> action-form files — they drop
-their trigger member, and nothing else is authored.</p>
+<h4><s class="dead">The kind is declared by the authored form, not by a marker
+member</s> <span class="amref">a3 — superseded whole</span></h4>
+<p><s class="dead">The sibling type itself suffices; no field inside the effect states
+its kind. Triggered effects and card actions are two authored <b>forms</b>, and which
+form is written declares which kind parses:</s></p>
+<p><s class="dead">— The <b>triggered form</b> is today's, unchanged: the trigger
+member is <b>required</b>, its absence refused loudly. A triggered effect that forgot
+its trigger is a caught mistake, never a silent action.</s></p>
+<p><s class="dead">— The <b>action form</b> has no trigger slot at all: a trigger
+member appearing there is a stranger, refused loudly like any other
+stranger.</s></p>
+<p><s class="dead">Each form refuses the other's members, so neither kind can be
+written to look like the other. The five attack effect files simply <i>are</i>
+action-form files — they drop their trigger member, and nothing else is
+authored.</s></p>
 <p class="supersedes">Supersedes §6's "the absence is the marker itself," §6's
 both-members contradiction rule, and rejects §6's proposed <code>"action": true</code>
-marker whole.</p>
+marker whole. <b>Amendment 3 (2026-08-13) supersedes this ruling whole</b> — the
+required-trigger rule it stated survives trivially under amendment 3: the trigger
+member is always present, in both kinds.</p>
 </div>
+
+</div>
+
+<div class="amendment">
+<span class="stamp">Amendment · iteration 3 · 2026-08-13</span>
+<p>Ruled by Enrra in conversation after the document was reopened (2026-08-13, the
+same day as signature), prompted by two implementation-blocking gaps: how a reader
+tells the two authored forms apart, and where the attack files' <code>untapped</code>
+gate lives once their trigger is gone. Where a ruling below contradicts anything
+above — amendment 2 included — the ruling below governs. Scratched text in §3, §6, §7
+and amendment 2 marks the statements this amendment invalidated, each tagged a3.</p>
+
+<div class="ruling">
+<h4>The action is a trigger kind, not a sibling kind of effect</h4>
+<p>There is no second kind of effect. Every effect remains a triggered effect —
+<i>when [trigger], deliver [payloads] to [targets]</i> — and the trigger vocabulary
+gains a third kind alongside Simple and Dual: <b>Action</b>.</p>
+<p>The authored form: <code>"trigger": {"kind": "action"}</code> — nothing further
+inside it. It names no event and carries no conditions; any further member appearing
+inside it is a stranger, refused loudly. An Action trigger listens to no event on its
+own — dispatch never fires it; only the appointment does (next ruling).</p>
+<p>Both gaps close at once: the trigger member is <b>always present</b>, in both
+kinds, so a missing trigger stays a caught mistake — never a silent action — and the
+kind is read where every trigger's kind is already read. No absence to interpret, no
+field added to the effect body.</p>
+<p class="supersedes">Supersedes §3's "second kind of effect" and its absent-slot
+framing, §6's "no trigger member at all," and amendment 2 whole.</p>
+</div>
+
+<div class="ruling">
+<h4>Appointability flows from the trigger kind; the appointment binds and gates</h4>
+<p>An effect whose trigger is Action-kind is thereby appointable as a main action —
+automatically, with no further spec. The appointment — not the authored trigger —
+binds it to the act event, and gates its firing on <b>untapped</b> as a condition: a
+tapped unit's main action does not fire. Nothing about this is authored per card or
+per file; §4's auto-appointment rule and the holder's three duties stand unchanged.</p>
+<p>The five attack effect files author <code>"trigger": {"kind": "action"}</code> in
+place of their act trigger; the authored <code>untapped</code> condition leaves with
+it — the appointment now carries that rule. Everything else in them — targets,
+payloads, appointed presentations — stands untouched. Five files, nothing else
+authored: §6's scope survives.</p>
+</div>
+
+<p><b>Enrra's ruling: SIGNED — 2026-08-13</b>, given in conversation ("mark the
+document signed off with the new amendment"). The signature covers this amendment; the
+2026-08-13 reopening is closed. The document as it now stands — body with a2/a3
+scratches, amendment 2 (superseded whole), amendment 3 — is the authority the
+implementation codes to, exactly and only.</p>
 
 </div>
 
