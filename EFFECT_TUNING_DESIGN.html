@@ -1,0 +1,249 @@
+<title>The Numbers Handle</title>
+<style>
+  :root {
+    --ground: #FAF9F6;
+    --surface: #F1EFEA;
+    --ink: #1F2125;
+    --ink-soft: #56534D;
+    --line: #DAD6CE;
+    --accent: #B3392B;
+    --accent-soft: #F3E3E0;
+    --steel: #4E6172;
+    --new-bg: #E7EDE4;
+    --new-ink: #3C5A40;
+    --prop-bg: #F5ECD9;
+    --prop-ink: #8A6A1F;
+    --code-bg: #ECEAE4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #17181B;
+      --surface: #1F2125;
+      --ink: #E8E6E1;
+      --ink-soft: #A9A59D;
+      --line: #35383E;
+      --accent: #E06A55;
+      --accent-soft: #3A2622;
+      --steel: #8FA3B5;
+      --new-bg: #24301F;
+      --new-ink: #9FBF8F;
+      --prop-bg: #33290F;
+      --prop-ink: #D9B45C;
+      --code-bg: #24262B;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #17181B;
+    --surface: #1F2125;
+    --ink: #E8E6E1;
+    --ink-soft: #A9A59D;
+    --line: #35383E;
+    --accent: #E06A55;
+    --accent-soft: #3A2622;
+    --steel: #8FA3B5;
+    --new-bg: #24301F;
+    --new-ink: #9FBF8F;
+    --prop-bg: #33290F;
+    --prop-ink: #D9B45C;
+    --code-bg: #24262B;
+  }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Segoe UI", -apple-system, system-ui, sans-serif;
+    font-size: 1.0rem;
+    line-height: 1.65;
+    margin: 0;
+  }
+  .page { max-width: 46rem; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+  h1, h2, h3 { font-family: Cambria, Georgia, "Times New Roman", serif; text-wrap: balance; line-height: 1.2; }
+  h1 { font-size: 2.3rem; margin: 0.4rem 0 0.6rem; }
+  h2 { font-size: 1.5rem; margin: 3rem 0 0.8rem; padding-top: 1.6rem; border-top: 1px solid var(--line); }
+  h2 .secno { color: var(--accent); margin-right: 0.5rem; font-size: 1.1rem; vertical-align: 0.08rem; }
+  p { margin: 0.7rem 0; }
+  .eyebrow {
+    text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.72rem;
+    color: var(--accent); font-weight: 600;
+  }
+  .ribbon {
+    display: flex; flex-wrap: wrap; gap: 0.6rem 1.6rem; align-items: baseline;
+    border-block: 1px solid var(--line); padding: 0.6rem 0; margin: 1.4rem 0 2rem;
+    font-size: 0.84rem; color: var(--ink-soft);
+  }
+  .ribbon b { color: var(--ink); font-weight: 600; }
+  .status-chip {
+    background: var(--steel); color: var(--ground); border-radius: 2px;
+    padding: 0.1rem 0.55rem; font-size: 0.74rem; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .lede { font-size: 1.12rem; color: var(--ink-soft); }
+  code, .mono {
+    font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+    font-size: 0.88em; background: var(--code-bg); border-radius: 3px; padding: 0.08em 0.35em;
+  }
+  .part {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 4px;
+    padding: 0.85rem 1rem; margin: 0.9rem 0;
+  }
+  .part-head { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: baseline; margin-bottom: 0.25rem; }
+  .part-head .name { font-family: "Cascadia Code", Consolas, monospace; font-weight: 600; font-size: 0.95rem; }
+  .part-head .plain { font-family: Cambria, Georgia, serif; font-weight: 700; font-size: 1.02rem; }
+  .part p { margin: 0.35rem 0 0; font-size: 0.94rem; }
+  .tag {
+    font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+    border-radius: 2px; padding: 0.06rem 0.45rem;
+  }
+  .tag.proposed { background: var(--prop-bg); color: var(--prop-ink); }
+  .proposed-block {
+    border: 2px dashed var(--prop-ink); background: var(--prop-bg);
+    border-radius: 4px; padding: 0.7rem 1rem; margin: 1rem 0;
+  }
+  .proposed-block .tag { margin-right: 0.5rem; }
+  .open-block {
+    border: 2px solid var(--accent); background: var(--accent-soft);
+    border-radius: 4px; padding: 0.7rem 1rem; margin: 1rem 0;
+  }
+  .rule-card {
+    border-left: 3px solid var(--accent); background: var(--surface);
+    padding: 0.7rem 1rem; margin: 1rem 0; font-size: 0.98rem;
+  }
+  .sample {
+    background: var(--code-bg); border: 1px solid var(--line); border-radius: 4px;
+    padding: 0.8rem 1rem; margin: 1rem 0; overflow-x: auto;
+    font-family: "Cascadia Code", Consolas, "Courier New", monospace; font-size: 0.84rem;
+    line-height: 1.55; white-space: pre;
+  }
+  .sample .lbl { color: var(--ink-soft); }
+  .sample .num { color: var(--accent); font-weight: 700; }
+  ul { padding-left: 1.2rem; }
+  li { margin: 0.4rem 0; }
+  .quiet { color: var(--ink-soft); font-size: 0.9rem; }
+  .signoff-box {
+    border: 1px solid var(--line); background: var(--surface); border-radius: 4px;
+    padding: 1rem 1.2rem; margin: 2.5rem 0 0;
+  }
+  s.dead { opacity: 0.5; }
+  .amendment {
+    border: 3px double var(--steel); border-radius: 4px;
+    padding: 1rem 1.2rem 1.2rem; margin: 2rem 0 0;
+  }
+  .amendment .stamp {
+    display: inline-block; background: var(--steel); color: var(--ground);
+    border-radius: 2px; padding: 0.1rem 0.55rem; font-size: 0.74rem; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.5rem;
+  }
+  .amref {
+    font-size: 0.66rem; font-weight: 700; letter-spacing: 0.06em;
+    color: var(--steel); vertical-align: super; white-space: nowrap;
+  }
+</style>
+
+<div class="page">
+
+<span class="eyebrow">Design pitch · the phase-4 remnant, initiative 2</span>
+<h1>The Numbers Handle</h1>
+<div class="ribbon">
+  <span class="status-chip">Draft — unsigned</span>
+  <span>Date: <b>2026-08-13</b></span>
+  <span>Branch: <b>targeting-cleanup</b></span>
+  <span>Open questions: <b>one</b> — §6</span>
+</div>
+
+<p class="lede">Nothing below is implemented. This initiative was originally scoped as
+"Tool authoring of the presentation appointment fields"; Enrra re-stated the real need in
+conversation on 2026-08-13, and this document is written to that statement alone.</p>
+
+<h2><span class="secno">§1</span>The two needs</h2>
+<p>Effects are authored as data and the authored language is complete. Reading that JSON is
+not a problem, and no one is asking for a builder. Two things are missing, and they are
+different in kind:</p>
+<div class="part"><div class="part-head"><span class="plain">The handle — a human tweaking numbers</span></div>
+  <p>A <b>non-Notepad way to tweak the numbers</b>: the balance pass, done in the Tool
+  where every other balance knob already lives.</p></div>
+<div class="part"><div class="part-head"><span class="plain">The knowledge — the Tool authoring by itself</span></div>
+  <p>The Tool's AI writes content. To write an <i>effect</i> it must know the effect
+  language — which is a question about knowledge, not about widgets, and it is the larger
+  half of this initiative.</p></div>
+<div class="rule-card"><b>For the handle: the meaty pieces are the numbers and what each
+number means. Those are surfaced clearly. Everything else may be ugly — raw JSON, plain
+text fields, whatever is cheapest — because it will not be touched.</b></div>
+
+<h2><span class="secno">§2</span>The principle</h2>
+<p>Nothing describes the effect language twice. No mirrored kind lists, no schema manifest,
+no vocabulary file kept beside the real one — every one of those is a second copy of a
+language that has exactly one home, and a second copy is bookkeeping that rots into a
+lie.</p>
+<div class="rule-card"><b>The Tool is never TOLD the language. It READS it, at the moment
+it needs it, from the one place the language lives.</b></div>
+
+<h2><span class="secno">§3</span>Where the Tool's AI gets the language</h2>
+<p><b>The parsers are the specification.</b> They are already written as authoring
+documentation — <code>TriggerResolver</code> lists its native dictionary forms with
+examples, <code>TargetResolver</code> and <code>Payload</code> state
+<code>{"kind": "&lt;species&gt;", …params}</code> and document each species,
+<code>EffectCondition</code> spells out each of its forms with worked examples. Handing
+those files to the AI as it authors <i>is</i> sharing the knowledge with the game: one
+text, read by both, copied by neither. A kind added to a parser is known on the next
+request, having been written down nowhere else.</p>
+<p><b>The authored content is the second free source.</b> <code>data/effects/</code> and
+the inline effects on cards are worked examples that cannot go stale, because they are the
+live content the game runs.</p>
+<p class="quiet">This is knowledge, not a guarantee: the AI can still emit something the
+game refuses. The backstop stays the one that already exists — the game refuses malformed
+content loudly at load. Catching it earlier is the validation amenity parked in §7.</p>
+
+<h2><span class="secno">§4</span>What the surface shows</h2>
+<p>One effect, two tiers, in this order:</p>
+<div class="part"><div class="part-head"><span class="plain">The numbers, surfaced</span></div>
+  <p>Every number in the effect, each carrying the words it sits under, editable in place.
+  Nothing else competes with them for the top of the panel.</p></div>
+<div class="part"><div class="part-head"><span class="plain">Everything else, present and out of the way</span></div>
+  <p>The rest of the effect, in whatever crude form is cheapest to build — the structure
+  stays editable and stays honest, but it is never what the eye lands on first.</p></div>
+<p class="quiet">A worked example — the shape of the reading, not a mockup of the widget:</p>
+<div class="sample"><span class="lbl">flame_burst</span>
+<span class="lbl">  payload 1 · attack · amount</span>      <span class="num">3</span>
+<span class="lbl">  payload 2 · status · duration</span>     <span class="num">2</span>
+<span class="lbl">  payload 2 · status · stacks</span>       <span class="num">1</span>
+<span class="lbl">  ── the rest ──────────────────</span>
+<span class="lbl">  trigger, targets, presentations …</span></div>
+<p>Today's five attack effects carry no literal numbers at all — their amount derives from
+the card's own attack stat, which the card editor already tunes. This surface earns its
+keep as effects with real constants arrive.</p>
+
+<h2><span class="secno">§5</span>Where it lives</h2>
+<div class="proposed-block"><span class="tag proposed">Proposed</span>
+<code>data/effects/</code> joins the Tool's content types the way every other library
+already does — one registry entry, one editor — so the effect list, the workspace, the
+save path and the deploy step are the machinery that already exists rather than a new
+mechanism beside it.</div>
+
+<h2><span class="secno">§6</span>Open question — the presentation appointments</h2>
+<div class="open-block">
+<p>This initiative was originally scoped around authoring <code>windup_presentation</code>
+and <code>contact_presentation</code>. They are words, not numbers, so under §4 they fall
+in the crude tier — editable, unadorned, no bespoke field. <b>Whether that settles the
+original scope, or whether the appointments want a treatment of their own, is Enrra's to
+rule.</b></p>
+</div>
+
+<h2><span class="secno">§7</span>Scope</h2>
+<p>Out, by Enrra's statement in conversation — each available later on request, none of it
+now:</p>
+<ul>
+  <li><b>Pre-populated choices</b> — dropdowns of the valid kinds and species.</li>
+  <li><b>Validation</b> — the Tool judging whether an effect is well-formed. The game
+      already refuses malformed content loudly at load.</li>
+  <li><b>A builder</b> — composing an effect from parts through the UI.</li>
+</ul>
+
+<div class="signoff-box">
+<h3 style="margin-top:0">Sign-off</h3>
+<p><b>UNSIGNED</b> — awaiting Enrra's ruling on §6 and on the document as a whole. Nothing
+is coded until that signature exists.</p>
+<p class="quiet">Once signed, the body above is immutable. Amendments appear only below
+this box, each in its own visibly distinct container; invalidated text is scratched,
+never deleted.</p>
+</div>
+
+</div>

@@ -2,8 +2,5 @@
 	"id": "tank_attack",
 	"trigger": {"kind": "action"},
 	"targets": {"kind": "tank"},
-	"payloads": [
-		{"kind": "attack", "amount": {"kind": "holder_stat", "stat": "attack"}}
-	],
 	"windup_presentation": "bolt"
 }

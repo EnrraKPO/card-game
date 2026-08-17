@@ -192,14 +192,15 @@ func _threat_hunts_the_highest_attack() -> void:
 
 
 func _executor_runs_the_attack_shape() -> void:
-	# The authored attack shape parses, the trigger gates, and the executor runs. WHAT THE
-	# STRIKE LANDS IS NO LONGER PINNED (2026-08-13 ruling): delivery rode the nuked write
-	# form, so payloads are inert and nothing reaches the victim.
+	# The authored attack shape parses and the trigger gates. WHAT THE STRIKE LANDS IS NO
+	# LONGER PINNED (2026-08-13 ruling): delivery rode the nuked write form. As of the
+	# 2026-08-14 rulings the effect has no consequence half at all — the payloads are
+	# vaporized and the illegal ActionExecutor is nuked whole — so the shape below is a
+	# trigger and a resolution, nothing more.
 	var effect := TriggeredEffect.parse({
 		"id": "nearest_attack",
 		"trigger": {"kind": "event", "event": "act", "of": "self"},
 		"targets": {"kind": "nearest"},
-		"payloads": [{"kind": "attack", "amount": {"kind": "holder_stat", "stat": "attack"}}],
 	})
 	check(effect != null, "the attack shape parses whole")
 	check_eq(effect.to_dict().get("id", ""), "nearest_attack", "the named id survives the round-trip")
@@ -211,11 +212,4 @@ func _executor_runs_the_attack_shape() -> void:
 	check(effect.trigger.fires(ev, attacker), "the act-of-self trigger gates its own act in")
 	check(not effect.trigger.fires(GameEvent.make(&"act", victim), attacker),
 			"someone else's act stays gated out")
-
-	ActionExecutor.run(effect, ev, attacker, w)
-	check_eq(victim.current_health, 3, "delivery is inert — the victim is untouched")
-
-	# A whiff: no enemies left standing anywhere — an empty resolution delivers nothing.
-	var lonely := _world()
-	var alone := _place(lonely, "knight", 0, 1, 3)
-	ActionExecutor.run(effect, GameEvent.make(&"act", alone), alone, lonely)
+	check_eq(victim.current_health, 3, "no delivery machinery exists — the victim is untouched")

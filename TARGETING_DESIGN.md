@@ -40,6 +40,11 @@ in-flight run is discarded. Still standing, deliberately: `effect.gd`'s parse (t
 tests' authoring language until each suite converts), the passive fold, ModifierSet,
 and `EffectCondition`.
 
+> **⚠ READ FIRST — AMENDMENT 1 (2026-08-14, SIGNED) IS AT THE END OF THIS DOCUMENT.**
+> Large parts of this instrument no longer describe the system. Every affected passage
+> carries an **[a1]** mark; no original word has been removed. Anything marked **[a1]**
+> is not ground for anything.
+
 Sibling docs: `TECH_DEBT_BRIEF.md` (the disease catalogue this design answers),
 `EFFECT_SYSTEM_DESIGN.md` (the prior generation's intent), `LOCATION_MANAGER_DESIGN.md`
 (the model cleanup this one imitates: one authority, downstream problems dissolve).
@@ -61,6 +66,11 @@ costume around abilities, and a second dispatcher. The new design splits at the 
 | **PassiveEffect** | is present | membership predicate (read-time) | — | continuous contributions |
 | **InterceptorEffect** | rewrites | pending-mutation gate (in the Arbitrator) | — | rewrite of the proposal |
 
+> **⚠ [a1] VOID IN PART.** The *What* column for TriggeredEffect and ActivatedEffect
+> ("operation payloads") and the whole InterceptorEffect row describe machinery that no
+> longer exists — payloads, the Arbitrator, and pending mutations were all vaporized.
+> The four-structure split itself STANDS. See Amendment 1.
+
 **Effect containers** — Unit, Spell card, Relic, Status, Upgrade — are plain holders.
 Any container may hold any mix of the four structures; there is no container taxonomy
 and never will be. (Corollary: an activated or passive effect usable/live *from hand*
@@ -72,6 +82,13 @@ resolver). PassiveEffect is a presence; InterceptorEffect is a gatekeeper. Targe
 serves the actions exclusively.
 
 ## 2. The action anatomy: trigger-anchored, one resolution, N payloads
+
+> **⚠ [a1] THE PAYLOAD HALF OF THIS SECTION IS VOID.** Payloads were vaporized as cursed
+> 2026-08-14. Everything here about what an action *delivers* — the payload species
+> roster, delivery rules, attack-as-a-payload-kind, the amount — describes nothing that
+> exists, and nothing replaces it until the follow-up initiative is signed. What STANDS:
+> the trigger is the anchor; one anchor, at most one resolution; targetless effects; and
+> auto-attack as an authored named effect referenced by id. See Amendment 1.
 
 The authored unit reads as a sentence: *"When [event], if [conditions]: deliver
 [payloads] to [the targets]."*
@@ -94,10 +111,13 @@ The authored unit reads as a sentence: *"When [event], if [conditions]: deliver
   own side via the allegiance anchor) authors no target at all.
 - **Attack is a payload kind — and a GAME MECHANIC (refined 2026-08-11, signed §8.1 of
   the attack pitch).** The payload owns the *delivery* (routing, the authored amount);
-  the mechanic owns the *striking*: `StrikeEngine` is the one-blow protocol's single
+  the mechanic owns the *striking*: ~~`StrikeEngine` is the one-blow protocol's single
   home (emit `attack` → propose to the Arbitrator → decay tick → emit `struck` →
   `dodge`/`crit` news), invoked by the attack payload exactly as the status payload
-  invokes StatusEngine — the effect system happens to use the mechanic, it never owns
+  invokes StatusEngine~~ **[a1] NEVER EXISTED — STRUCK.** No `StrikeEngine` was ever
+  built, in this generation or any other; the sentence entered sourced to the cursed
+  §8.1 of the attack pitch and describes nothing. Dodge and crit are likewise gone
+  (nuked 2026-08-13) — the effect system happens to use the mechanic, it never owns
   it. Vocabulary: "attack" is the NUMBER (the stat and its namesakes); "strike" is the
   DEED (one blow). Nothing above the payload knows attacks are special. Two proofs of
   decoupling: (A) a unit's act need not be an attack; (B) an attack payload can ride
@@ -140,11 +160,14 @@ act, does not know about payloads, and has no lifetime of its own.
   current, so nothing re-engages and stale-current rulings are unnecessary by
   construction. Manual resolvers stay empty until conducted. Reverse queries consult
   whichever resolvers are alive right now (a mid-aim spell's resolver truthfully
-  registering on its target IS the aim-preview cue). Resolver instances are owned by a
-  CombatWorld and copied with it. Resolution and delivery admit no gap: events are
+  registering on its target IS the aim-preview cue). ~~Resolver instances are owned by a
+  CombatWorld and copied with it.~~ **[a1] NEVER PERFORMED — STRUCK.** A resolver is
+  stateless and holds nothing; the world is supplied per call. Ownership by a world was
+  never built and is not needed while the current is derived on read, as ruled above.
+  Resolution and delivery admit no gap: events are
   post-hoc news (the arbitration layer's hard rule), so a reaction to an action exists
-  only after that action's payloads landed — nothing can invalidate a resolution
-  between the read and the landing. Pre-delivery interference is the interceptor
+  only after that action's ~~payloads~~ **[a1]** consequences landed — nothing can
+  invalidate a resolution between the read and the landing. Pre-delivery interference is the interceptor
   stream's job, and interceptors rewrite amounts, never targets.
 - **Owned by the pointing behavior, never the entity.** A unit does not own a resolver —
   its auto-attack (a TriggeredEffect) does; a spell's played-effect does; an ability
@@ -197,12 +220,15 @@ own without knowing the others exist. There is **no cluster-level conditions fie
    the anchor is supplied ONCE by the resolver's engagement to every evaluation
    uniformly — no predicate finds its own anchor. (The old owner-−1-vs-real-anchor split
    must be unwritable, not rare.)
-3. **Delivery conditions** — each payload's: "does this payload apply to what was
+3. ~~**Delivery conditions** — each payload's: "does this payload apply to what was
    resolved?" Kind fitness ("I apply to units") is simply a payload's first delivery
    condition. A resolver may return mixed kinds with each payload fitting its own slice
    ("create a Pawn on an empty slot" / "add a Pawn to a unit's composition"); a payload
    not applying is SELECTION, not failure. No connivance between payload and resolver —
-   not even statically.
+   not even statically.~~
+   **[a1] VOID** — the third seat rode the payload and went with it. The grammar and the
+   first two seats STAND; the third has no holder until the follow-up initiative gives
+   consequences a form.
 
 Self-exclusion ("not me") is an IDENTITY comparison, not allegiance — a separate
 structural mechanism, parked.
@@ -216,9 +242,11 @@ the anchor's. Slots derive theirs from the board half they sit in.
 **Ownership:** the object itself carries its allegiance, stamped at creation by whatever
 creates it — a constructor argument, not a reporting duty. No manager (a manager earns
 its existence by managing *change*; a birth fact that nothing invalidates passes the
-widget-state-ownership rule carried on the object). Mutation, if ever wanted, is already
+widget-state-ownership rule carried on the object). ~~Mutation, if ever wanted, is already
 provided for: the Arbitrator is the single writer of all stats — side-switching
-would be an ordinary StatMutation through the existing gate.
+would be an ordinary StatMutation through the existing gate.~~ **[a1] VOID — there is no
+gate. The Arbitrator and StatMutation were vaporized; nothing in the game writes a fact
+today. Allegiance mutation waits on the follow-up initiative like every other write.**
 
 **The anchor:** every cluster binds one allegiance anchor at materialization — the
 holder's side for board-held effects, the player's side for run-scoped containers
@@ -277,6 +305,13 @@ exactly the invoked-directly pattern above, with a different cost. THE usability
 (`usable_by`-style pure query) widens to serve both payers.
 
 ## 8. The interception system
+
+> **⚠ [a1] THIS SECTION IS VOID IN WHOLE.** It describes a stream inside the Arbitrator,
+> pending StatMutations, and dodge/crit rate queries — none of which exist. Interception
+> has been a stub since 2026-08-11 and its subject matter was vaporized after it. Ruled
+> 2026-08-14: interception is not a design constraint on the rebuild; it is a feature
+> that will take its socket if the architecture lands correctly. Nothing here is ground
+> for anything. See Amendment 1.
 
 An InterceptorEffect watches **pending StatMutations inside the Arbitrator**,
 pre-commit — a different stream from events (events ≠ mutations is the arbitration
@@ -406,7 +441,14 @@ Each hack maps to a structural absence the design fills:
    save gate refuse the dead form.
 5. **The payload handoff** — what resolution hands to payload delivery; kept narrow so
    the payload redesign (TECH_DEBT §3/4/7) can proceed without reopening targeting.
-6. ~~**Amounts as evaluable values**~~ (TECH_DEBT §5) — RESOLVED (user-ratified
+   **[a1] STILL OPEN, and now the live question:** there is no payload to hand to. What
+   a resolution hands to whatever carries consequence is owed to the follow-up
+   initiative.
+6. ~~**Amounts as evaluable values**~~ **[a1] VOID — the mutator was vaporized
+   2026-08-14 and this item describes nothing that exists. It is the clause under which
+   the 2026-08-13 forgery was found: the delivered code made the mutator a value
+   supplier and moved the emitting into the payload. Reopened, unanswered, and owed to
+   the follow-up initiative named in Amendment 1.** (TECH_DEBT §5) — RESOLVED (user-ratified
    2026-08-11): **the mutator**. Every payload value slot — numeric amounts AND
    identities (which stat, which status, which card: "deliver [material]", "apply
    [amount] [status]") — is filled by a mutator: per-need species under ONE contract,
@@ -441,10 +483,17 @@ Each hack maps to a structural absence the design fills:
 First build: **the attack system** — the purest exercise of the design. The `act` event;
 the unit's innate TriggeredEffect; the `nearest` resolver with its current computed on
 read (trigger moment + interactive idle, §3); reverse queries feeding the
-crosshair/menace cues; the
-attack payload carrying the strike mechanics through the Arbitrator. No
+crosshair/menace cues; ~~the
+attack payload carrying the strike mechanics through the Arbitrator~~ **[a1] VOID — no
+payload, no Arbitrator**. No
 gestures, no schema migration, no payload redesign required. Done = the attack system's
 own native suite green in `tests/_runner.tscn`.
+
+> **⚠ [a1] STATE OF THE REBUILD, 2026-08-14.** Everything on this path landed EXCEPT the
+> striking itself: the `act` event, the authored named effects, the five target-resolver
+> policies, the current computed on read, and the crosshair/menace cues are all built and
+> green. What is gone is what an action *does* when it arrives — and with it every write
+> in the game. See Amendment 1.
 
 ## 14. Exit criterion
 
@@ -453,3 +502,73 @@ Every phase of this design has landed with its own native test suite green in
 explicitly retired by a ruling recorded here. (The quarantine table that once served as
 the acceptance suite was deleted 2026-08-11 under the test doctrine — accepted knowingly:
 there is no executable tripwire for razed behavior until each phase ships its suite.)
+
+---
+
+# Amendment 1 — the consequence half is void
+
+~~**Tendered 2026-08-14. AWAITING SIGNATURE.** Until signed, this amendment states nothing;
+the body above remains the instrument as executed.~~
+
+**SIGNED OFF 2026-08-14 (Enrra).** This amendment is executed and is binding text. The
+body above is read subject to it: every passage marked **[a1]** is void or struck as
+stated here, and the instrument as amended is what performance is measured against.
+
+## Why
+
+Between 2026-08-13 and 2026-08-14 the machinery that carried out what an effect *does*
+was demolished by ruling: the mutation `channel` and the single writer that carried it,
+then the `Payload` and `Mutator` structures entire. This document was written when all of
+it existed, so it now asserts, in an executed instrument, a system that is not there.
+
+An instrument containing false statements cannot be performed against. This amendment
+makes it legal again. **It does so by voiding, never by restating.** The replacements are
+not designed; writing what they might become into a signed contract would be the very
+disease this engagement exists to prevent.
+
+## What it does
+
+**One — corrects two statements that were false about what was built.** These were never
+demolition casualties; they never matched reality:
+
+- **§3 — "Resolver instances are owned by a CombatWorld and copied with it."** STRUCK.
+  Never performed. Resolvers are stateless, shared by reference, and take the world per
+  call. Ruled 2026-08-14: the built shape stands, and the derive-on-read clause in the
+  same paragraph — which is performed faithfully — is what the design actually rests on.
+- **§2 — `StrikeEngine`.** STRUCK. It never existed in any generation. The sentence
+  entered sourced to the cursed §8.1 of the attack pitch.
+
+**Two — voids what described the vaporized machinery.** Marked **[a1]** at each site:
+the §1 structure table's *What* column and InterceptorEffect row; §2's payload half;
+§3's "payloads landed"; §4's third condition seat; §5's allegiance-mutation gate; §8 in
+whole; §12 items 5 and 6; §13's attack payload.
+
+**Three — leaves history intact.** The content-strip narrative, the deletion map (§10),
+the Decision Record (§11) and the resolved-question scratches record decisions taken at
+their dates. They remain true *as history* and are not voided. Only statements asserting
+what the system **is** are void.
+
+## What still stands
+
+Unaffected and performed: the four-structure split; the trigger layer; the whole
+targeting layer including per-need resolvers, the current computed on read at exactly two
+moments, allegiance as a birth fact, and the sole-authority rule; the authored vocabulary;
+auto-attack as a named effect referenced by id; the passive system; the language of §9.
+The Action trigger kind, the main-action holder and the target poll rest on these and are
+unaffected.
+
+## The follow-up initiative
+
+**Arbitration and the mutation of facts are addressed in a follow-up initiative.** How a
+fact changes, who issues the change, who executes it, and what announces at the moment it
+commits are open questions owed to that initiative and to no other document. Nothing may
+be built on the voided passages above in the meantime, and nothing in this amendment
+prejudges what that design will be.
+
+Until it is signed and performed, **no fact in the game changes** — every write site sits
+inert by ruling.
+
+---
+
+*Tendered by the contractor. **Signed off by Enrra, 2026-08-14**, in conversation: "The
+document is signed off."*

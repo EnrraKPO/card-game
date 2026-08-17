@@ -2,8 +2,5 @@
 	"id": "wounded_attack",
 	"trigger": {"kind": "action"},
 	"targets": {"kind": "wounded"},
-	"payloads": [
-		{"kind": "attack", "amount": {"kind": "holder_stat", "stat": "attack"}}
-	],
 	"windup_presentation": "bolt"
 }

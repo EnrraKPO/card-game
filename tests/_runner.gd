@@ -18,7 +18,9 @@ extends Node
 # Green here means green — any failure is real breakage.
 const SUITES: Array = [
 	# (NUKED 2026-08-13: test_arbitrator, test_combat_side, test_dodge, test_crit and
-	# test_attack pinned the cursed channel and the single writer that carried it.)
+	# test_attack pinned the cursed channel and the single writer that carried it.
+	# NUKED 2026-08-14: test_mutators pinned the Mutator contract, vaporized with the
+	# payload it fed.)
 	preload("res://tests/test_locations.gd"),
 	preload("res://tests/test_statuses.gd"),
 	preload("res://tests/test_economy.gd"),
@@ -31,7 +33,6 @@ const SUITES: Array = [
 	preload("res://tests/test_combat_world.gd"),
 	preload("res://tests/test_presenter.gd"),
 	preload("res://tests/test_cascade.gd"),
-	preload("res://tests/test_mutators.gd"),
 	preload("res://tests/test_target_resolvers.gd"),
 ]
 

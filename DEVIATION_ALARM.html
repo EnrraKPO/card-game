@@ -1,0 +1,181 @@
+<title>The Hollowed Mutator</title>
+<style>
+  :root {
+    --ground: #FAF9F6;
+    --surface: #F1EFEA;
+    --ink: #1F2125;
+    --ink-soft: #56534D;
+    --line: #DAD6CE;
+    --accent: #B3392B;
+    --accent-soft: #F3E3E0;
+    --steel: #4E6172;
+    --code-bg: #ECEAE4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #17181B;
+      --surface: #1F2125;
+      --ink: #E8E6E1;
+      --ink-soft: #A9A59D;
+      --line: #35383E;
+      --accent: #E06A55;
+      --accent-soft: #3A2622;
+      --steel: #8FA3B5;
+      --code-bg: #24262B;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #17181B;
+    --surface: #1F2125;
+    --ink: #E8E6E1;
+    --ink-soft: #A9A59D;
+    --line: #35383E;
+    --accent: #E06A55;
+    --accent-soft: #3A2622;
+    --steel: #8FA3B5;
+    --code-bg: #24262B;
+  }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Segoe UI", -apple-system, system-ui, sans-serif;
+    font-size: 1.0rem;
+    line-height: 1.65;
+    margin: 0;
+  }
+  .page { max-width: 46rem; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+  h1, h2 { font-family: Cambria, Georgia, "Times New Roman", serif; text-wrap: balance; line-height: 1.2; }
+  h1 { font-size: 2.3rem; margin: 0.4rem 0 0.6rem; }
+  h2 { font-size: 1.5rem; margin: 3rem 0 0.8rem; padding-top: 1.6rem; border-top: 1px solid var(--line); }
+  h2 .secno { color: var(--accent); margin-right: 0.5rem; font-size: 1.1rem; vertical-align: 0.08rem; }
+  p { margin: 0.7rem 0; }
+  .eyebrow {
+    text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.72rem;
+    color: var(--accent); font-weight: 600;
+  }
+  .ribbon {
+    display: flex; flex-wrap: wrap; gap: 0.6rem 1.6rem; align-items: baseline;
+    border-block: 1px solid var(--line); padding: 0.6rem 0; margin: 1.4rem 0 2rem;
+    font-size: 0.84rem; color: var(--ink-soft);
+  }
+  .ribbon b { color: var(--ink); font-weight: 600; }
+  .status-chip {
+    background: var(--accent); color: var(--ground); border-radius: 2px;
+    padding: 0.1rem 0.55rem; font-size: 0.74rem; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .lede { font-size: 1.12rem; color: var(--ink-soft); }
+  code {
+    font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+    font-size: 0.88em; background: var(--code-bg); border-radius: 3px; padding: 0.08em 0.35em;
+  }
+  .facing { display: grid; gap: 0.8rem; margin: 1rem 0; }
+  @media (min-width: 34rem) { .facing { grid-template-columns: 1fr 1fr; } }
+  .side {
+    border: 1px solid var(--line); border-radius: 4px; padding: 0.7rem 0.9rem;
+    background: var(--surface);
+  }
+  .side.says { border-left: 3px solid var(--steel); }
+  .side.does { border-left: 3px solid var(--accent); }
+  .side h3 {
+    font-family: "Segoe UI", system-ui, sans-serif;
+    font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--ink-soft); margin: 0 0 0.4rem; font-weight: 700;
+  }
+  .side p { margin: 0; font-size: 0.93rem; }
+  .side pre {
+    margin: 0; overflow-x: auto; background: var(--code-bg); border-radius: 3px;
+    padding: 0.5rem 0.6rem;
+    font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+    font-size: 0.79rem; line-height: 1.5;
+  }
+  .verdict {
+    border-left: 3px solid var(--accent); background: var(--accent-soft);
+    padding: 0.7rem 1rem; margin: 1rem 0; font-size: 0.98rem;
+  }
+  .ask {
+    border: 2px solid var(--accent); background: var(--accent-soft);
+    border-radius: 4px; padding: 0.8rem 1.1rem; margin: 1.2rem 0;
+  }
+  ul { padding-left: 1.2rem; }
+  li { margin: 0.4rem 0; }
+  .quiet { color: var(--ink-soft); font-size: 0.9rem; }
+</style>
+
+<div class="page">
+
+<span class="eyebrow">Deviation alarm · the effect system</span>
+<h1>The Hollowed Mutator</h1>
+<div class="ribbon">
+  <span class="status-chip">Alarm — awaiting ruling</span>
+  <span>Raised: <b>2026-08-13</b></span>
+  <span>Branch: <b>targeting-cleanup</b></span>
+  <span>Findings: <b>two</b></span>
+</div>
+
+<p class="lede">The implementation has left the ratified design in two places. Found while
+evaluating the spell work, on Enrra's question — not by audit. Nothing has been changed in
+response; both findings are stated here for ruling.</p>
+
+<h2><span class="secno">§1</span>The mutator issues no mutation</h2>
+<div class="facing">
+  <div class="side says"><h3>TARGETING_DESIGN.md §12.6 says</h3>
+    <p>The executor assembles the context and calls <code>produce</code>; the mutator
+    <b>"emits concrete StatMutations to the Arbitrator."</b></p></div>
+  <div class="side does"><h3>The code does</h3>
+    <pre>var dmg: int = amount.derive(feed)
+Arbitrator.submit(
+    StatMutation.damage(unit, dmg, holder))</pre>
+    <p class="quiet">payload.gd — Payload.Attack.deliver</p></div>
+</div>
+<p>Three things moved. The mutator no longer emits a mutation — it hands back a
+<b>number</b>. The building and submitting of the mutation migrated <b>into the payload</b>.
+And <code>produce</code> became <code>derive</code>.</p>
+<div class="verdict">The thing named for issuing mutations issues none. That is why no name
+for it could carry meaning — it had been hollowed out to a value supplier, and a name for
+a hollow thing is an empty label. The naming complaint was a symptom; this is the disease.</div>
+
+<h2><span class="secno">§2</span>Resolvers are not owned by a world</h2>
+<div class="facing">
+  <div class="side says"><h3>TARGETING_DESIGN.md §3 says</h3>
+    <p><b>"Resolver instances are owned by a CombatWorld and copied with it."</b> A
+    resolver holds its current — derived fresh at the two read moments, against the world
+    that owns it.</p></div>
+  <div class="side does"><h3>The code does</h3>
+    <p>Resolvers are parsed into <code>TriggeredEffect</code>, which lives on
+    <code>CardData</code> — one shared, immutable definition per card, handed into world
+    copies <b>by reference</b>. No world owns one; each call is passed a world:
+    <code>resolve(world, holder)</code>.</p></div>
+</div>
+<p>This one is <b>latent</b>: the resolvers hold nothing today, so nothing has yet gone
+wrong. It surfaces the moment a resolver holds anything of its own — which is what
+"a resolver holds its current" describes.</p>
+<p class="quiet">This is also the point I misread twice in conversation, arguing from the
+code instead of the design, and it cost Enrra two corrections.</p>
+
+<h2><span class="secno">§3</span>How far it has spread</h2>
+<ul>
+  <li><b>Contained, for now.</b> Exactly <b>one</b> payload species exists
+      (<code>Attack</code>), so the misplaced mutation-building sits in one method.</li>
+  <li><b>The spell work would multiply it.</b> Every new payload species copies the shape
+      of the existing one. Building spells before this is ruled means authoring the
+      deviation four or five more times.</li>
+  <li><b>The design document now carries a false statement.</b> §12.6 describes behaviour
+      the code does not have, so the ratified text can no longer be read as a description
+      of the system.</li>
+</ul>
+
+<h2><span class="secno">§4</span>What needs your ruling</h2>
+<div class="ask">
+<p><b>1. Nuke or repair?</b> Whether the deviated pieces come out whole, or the mutation
+issuing moves back where the design put it.</p>
+<p><b>2. Does §12.6 stand as intent?</b> If the mutator is meant to issue mutations, the
+document is right and the code is wrong. That is the reading Enrra stated in conversation
+on 2026-08-13, but it has not been ruled.</p>
+<p><b>3. Does the spell work wait?</b> It is currently blocked behind this by dependency,
+not by decree.</p>
+</div>
+
+<p class="quiet">No code has been written or changed in response to this alarm.</p>
+
+</div>

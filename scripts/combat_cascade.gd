@@ -2,8 +2,10 @@ class_name CombatCascade
 extends RefCounted
 
 # The event cascade — THE rules of "what happens when an effect fires" (broadcast fan-out,
-# per-holder dispatch, run-level procs, kill provenance, death and burial), re-homed verbatim
-# from combat.gd methods (COMBAT_DECOUPLING_REFACTOR.md Step 3). Constructed with the two
+# per-holder dispatch, death and burial), re-homed from combat.gd methods
+# (COMBAT_DECOUPLING_REFACTOR.md Step 3). The nuke-era stubs (kill event, run-scoped
+# relic/upgrade dispatch) were removed 2026-08-14 — those capabilities return as designed
+# features of MUTATION_DESIGN.html §12, not through resurrected hooks. Constructed with the two
 # injected dependencies and nothing else:
 #
 #   world     — WHAT is: the cohesive combat state (see CombatWorld). The live game hands
@@ -58,14 +60,16 @@ func fire(event: GameEvent, holder: CardInstance) -> void:
 
 # ONE effect unfolding under the crank: resolve targets (the read at the trigger moment),
 # windup, deliver, drain and broadcast the blow news, sweep the deaths — see fire.
-func _unfold(effect: TriggeredEffect, event: GameEvent, holder: CardInstance) -> void:
+# ⚠ NOTHING IS DELIVERED (2026-08-14 rulings): the write form is nuked and the illegal
+# ActionExecutor is nuked with it — the moment between windup and results stays empty
+# until the sanctioned form is pitched and signed (MUTATION_DESIGN.html).
+func _unfold(effect: TriggeredEffect, _event: GameEvent, holder: CardInstance) -> void:
 	var recipients: Array = [null]
 	if effect.targets != null:
 		recipients = effect.targets.resolve(world, holder)
 		if recipients.is_empty():
 			return   # a legal "no target" — nothing to unfold onto
 	await presenter.action_windup(holder, effect.windup_presentation_id(), recipients)
-	ActionExecutor.deliver(effect, event, holder, world, recipients)
 	await presenter.action_results(holder, effect.contact_presentation_id(), recipients)
 	await presenter.action_conclude(holder, effect.windup_presentation_id())
 	# NO BLOW NEWS (2026-08-13 ruling): attack/struck/dodge/crit were queued by the nuked
@@ -74,42 +78,25 @@ func _unfold(effect: TriggeredEffect, event: GameEvent, holder: CardInstance) ->
 	await _sweep_delivery_deaths(recipients)
 
 
-# Run-level (relic/upgrade) effects for an event, fired ONCE from the perspective of the
-# event's subject. RAZED with the dispatcher (see fire). NEEDS: grouped by owning
-# container with the owner attribution cue first (a relic proc reads as cause -> effect:
-# chip glint, then results), anchored on the player side per the two-anchor model (§5).
-func fire_run_level(_event: GameEvent) -> void:
-	pass
-
-
 # Recipients felled by a delivery leave through the one death path; bystanders a
 # reaction killed are swept by the world cleanup, and the view re-derives once.
 func _sweep_delivery_deaths(recipients: Array) -> void:
 	for r: Variant in recipients:
 		var unit := r as CardInstance
 		if unit != null and not unit.is_alive():
-			await emit_kill(unit)
 			await broadcast(GameEvent.make(&"death", unit))
 			await bury(unit)
 	world.cleanup_deaths()
 	presenter.board_refresh()
 
 
-# INERT (2026-08-13 ruling): the `kill` event read the fatal-blow provenance the nuked
-# single writer stamped — `killed_by_channel` and its companions, the cursed channel
-# vocabulary on the corpse. Deaths fire `death` alone until the sanctioned write form
-# carries provenance again.
-func emit_kill(_corpse: CardInstance) -> void:
-	pass
-
-
 # BROADCASTS one event to the whole board: the participants first (the origin fires even when
 # it is dead-but-on-board — a dying unit's own death effects), then every other alive unit as
-# a watcher, then the run-level tier once. Any watcher a proc kills goes through the normal
+# a watcher. Any watcher a proc kills goes through the normal
 # death path (itself a broadcast). Legacy content is self-gated by its parsed resolver
 # conditions, so only participants ever produce results from it — bystander watching is the
 # new capability this opens (e.g. "whenever a darkness pawn dies…" on a fielded card).
-func broadcast(event: GameEvent, run_level: bool = true) -> void:
+func broadcast(event: GameEvent) -> void:
 	var holders: Array = []
 	if event.origin != null:
 		holders.append(event.origin)
@@ -124,11 +111,8 @@ func broadcast(event: GameEvent, run_level: bool = true) -> void:
 		# Swept only if this broadcast's procs killed it; a participant that ENTERED dead (the
 		# struck unit after a lethal hit) is the call site's death to handle, not ours.
 		if was_alive and not holder.is_alive() and event.id != &"death":
-			await emit_kill(holder)
 			await broadcast(GameEvent.make(&"death", holder))
 			await bury(holder)
-	if run_level:
-		await fire_run_level(event)
 
 
 # The entry point for a combat PHASE moment (turn boundaries, a unit's activation): fans the
@@ -146,11 +130,8 @@ func resolve_event(event_id: StringName, subject: CardInstance = null) -> void:
 		if not holder.is_alive():
 			continue
 		var ev := GameEvent.make(event_id, subject if subject != null else holder)
-		# Per-holder fan-out: no run-level tier here (phase moments never fed it, and firing it
-		# per holder would multiply it).
 		await fire(ev, holder)
 		if not holder.is_alive():
-			await emit_kill(holder)
 			await broadcast(GameEvent.make(&"death", holder))
 			await bury(holder)
 	for holder: CardInstance in units:

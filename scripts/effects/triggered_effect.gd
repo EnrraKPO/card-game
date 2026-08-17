@@ -1,28 +1,29 @@
 class_name TriggeredEffect
 extends RefCounted
 
-# The action structure that REACTS (TARGETING_DESIGN.md §1-2, signed
-# ATTACK_SYSTEM_DESIGN.html): *when [trigger], deliver [payloads] to [targets]*. One
-# TriggerResolver (the anchor — dispatch asks it "do you fire?"), at most one
-# TargetResolver (one resolution shared by every payload — sharing the outcome's
-# IDENTITY is what makes "deal 3 to a random enemy and stun IT" expressible; null =
-# targetless, the payloads name their own recipients), and N Payloads.
+# The action structure that REACTS (TARGETING_DESIGN.md §1-2): *when [trigger], to
+# [targets]* — and, once a sanctioned form exists again, what happens to them. One
+# TriggerResolver (the anchor — dispatch asks it "do you fire?") and at most one
+# TargetResolver (null = targetless).
+#
+# ⚠ THE CONSEQUENCE HALF IS GONE (2026-08-14 ruling): Payload and Mutator were
+# vaporized as cursed, and the effect no longer carries anything that happens. An
+# effect currently says only WHEN and to WHOM. Nothing replaces them until a form is
+# pitched and signed.
 #
 # Stateless and immutable after parse — one instance serves every fielded copy of its
-# container; all runtime facts arrive through the ActionExecutor's Feed.
+# container; runtime facts arrive from the machinery that runs it at the moment it runs.
 #
 # Authoring (the native dictionary form):
 #   { "id": "<name>",                       # named-effect id ("" for inline effects)
 #     "trigger": { ...TriggerResolver... },
 #     "targets": { ...TargetResolver... },  # absent = targetless
-#     "payloads": [ { ...Payload... }, ... ],
 #     "windup_presentation": "<name>",      # optional appointment (absent = default)
 #     "contact_presentation": "<name>" }    # optional appointment (absent = default)
 
 var id: String = ""                     # the named-effect id; "" for an inline effect
 var trigger: TriggerResolver = null
 var targets: TargetResolver = null      # null = targetless
-var payloads: Array = []                # Array[Payload]
 # The two appointed presentation names (signed EFFECT_PRESENTATION_DESIGN.html §3/§8):
 # each is a plain name into data/presentations.json — a word, not a structure — so
 # naming them reveals nothing of the effect's insides. "" = unappointed; the defaults
@@ -63,11 +64,6 @@ static func parse(effect_value: Variant) -> TriggeredEffect:
 		e.targets = TargetResolver.parse(d.get("targets"))
 		if e.targets == null:
 			return null
-	for p_data: Variant in (d.get("payloads", []) as Array):
-		var p := Payload.parse(p_data)
-		if p == null:
-			return null
-		e.payloads.append(p)
 	if d.has("repeats"):
 		push_error("TriggeredEffect: 'repeats' is deleted (nuked 2026-08-12) — refusing")
 		return null
@@ -92,11 +88,6 @@ func to_dict() -> Dictionary:
 		d["id"] = id
 	if targets != null:
 		d["targets"] = targets.to_dict()
-	if not payloads.is_empty():
-		var pl: Array = []
-		for p: Payload in payloads:
-			pl.append(p.to_dict())
-		d["payloads"] = pl
 	if not windup_presentation.is_empty():
 		d["windup_presentation"] = windup_presentation
 	if not contact_presentation.is_empty():

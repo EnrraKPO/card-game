@@ -1,0 +1,694 @@
+<title>The Mutation of Facts</title>
+<style>
+  :root {
+    --ground: #FAF9F6;
+    --surface: #F1EFEA;
+    --ink: #1F2125;
+    --ink-soft: #56534D;
+    --line: #DAD6CE;
+    --accent: #3D5A73;
+    --accent-soft: #E3EAF0;
+    --warn: #B3392B;
+    --warn-soft: #F3E3E0;
+    --code-bg: #ECEAE4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #17181B;
+      --surface: #1F2125;
+      --ink: #E8E6E1;
+      --ink-soft: #A9A59D;
+      --line: #35383E;
+      --accent: #8FA3B5;
+      --accent-soft: #232A31;
+      --warn: #E06A55;
+      --warn-soft: #3A2622;
+      --code-bg: #24262B;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #17181B;
+    --surface: #1F2125;
+    --ink: #E8E6E1;
+    --ink-soft: #A9A59D;
+    --line: #35383E;
+    --accent: #8FA3B5;
+    --accent-soft: #232A31;
+    --warn: #E06A55;
+    --warn-soft: #3A2622;
+    --code-bg: #24262B;
+  }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Segoe UI", -apple-system, system-ui, sans-serif;
+    font-size: 1.0rem;
+    line-height: 1.65;
+    margin: 0;
+  }
+  .page { max-width: 46rem; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+  h1, h2 { font-family: Cambria, Georgia, "Times New Roman", serif; text-wrap: balance; line-height: 1.2; }
+  h1 { font-size: 2.3rem; margin: 0.4rem 0 0.6rem; }
+  h2 { font-size: 1.5rem; margin: 3rem 0 0.8rem; padding-top: 1.6rem; border-top: 1px solid var(--line); }
+  h2 .secno { color: var(--accent); margin-right: 0.5rem; font-size: 1.1rem; vertical-align: 0.08rem; }
+  p { margin: 0.7rem 0; }
+  .eyebrow {
+    text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.72rem;
+    color: var(--accent); font-weight: 600;
+  }
+  .ribbon {
+    display: flex; flex-wrap: wrap; gap: 0.6rem 1.6rem; align-items: baseline;
+    border-block: 1px solid var(--line); padding: 0.6rem 0; margin: 1.4rem 0 2rem;
+    font-size: 0.84rem; color: var(--ink-soft);
+  }
+  .ribbon b { color: var(--ink); font-weight: 600; }
+  .status-chip {
+    background: var(--accent); color: var(--ground); border-radius: 2px;
+    padding: 0.1rem 0.55rem; font-size: 0.74rem; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .lede { font-size: 1.12rem; color: var(--ink-soft); }
+  code {
+    font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+    font-size: 0.88em; background: var(--code-bg); border-radius: 3px; padding: 0.08em 0.35em;
+  }
+  pre {
+    overflow-x: auto; background: var(--code-bg); border-radius: 3px;
+    padding: 0.6rem 0.8rem; margin: 0.8rem 0;
+    font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+    font-size: 0.82rem; line-height: 1.5;
+  }
+  .chain {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 4px;
+    padding: 0.9rem 1.1rem; margin: 1rem 0; text-align: center;
+    font-size: 1.02rem;
+  }
+  .chain b { color: var(--accent); }
+  .open {
+    border: 2px solid var(--warn); background: var(--warn-soft);
+    border-radius: 4px; padding: 0.8rem 1.1rem; margin: 1.2rem 0;
+  }
+  .open .tag {
+    display: inline-block; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; margin-right: 0.5rem; color: var(--warn);
+  }
+  ul, ol { padding-left: 1.2rem; }
+  li { margin: 0.4rem 0; }
+  .quiet { color: var(--ink-soft); font-size: 0.9rem; }
+  s, .scratch { text-decoration: line-through; text-decoration-color: var(--warn); opacity: 0.55; }
+  .amchip {
+    display: inline-block; background: var(--warn); color: var(--ground);
+    border-radius: 2px; padding: 0 0.4rem; margin: 0 0.3rem;
+    font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; vertical-align: 0.1rem;
+  }
+  .amendment {
+    border: 2px solid var(--warn); border-radius: 4px; padding: 0.8rem 1.1rem;
+    margin: 1.2rem 0; background: var(--warn-soft);
+  }
+  .amendment h3 { margin: 0 0 0.4rem; font-size: 1.02rem; }
+  .signoff {
+    border: 2px solid var(--line); border-radius: 4px; padding: 0.9rem 1.1rem;
+    margin-top: 3rem; background: var(--surface);
+  }
+  table { border-collapse: collapse; margin: 1rem 0; width: 100%; }
+  th, td { border: 1px solid var(--line); padding: 0.45rem 0.7rem; text-align: left; font-size: 0.93rem; }
+  th { background: var(--surface); font-weight: 600; }
+</style>
+
+<div class="page">
+
+<span class="eyebrow">Design pitch · the effect system</span>
+<h1>The Mutation of Facts</h1>
+<div class="ribbon">
+  <span class="status-chip">Pitch — unsigned</span>
+  <span class="status-chip">Retired 2026-08-16 — superseded by MUTATION_DESIGN_V2.html</span>
+  <span>Drafted: <b>2026-08-15</b></span>
+  <span>Branch: <b>nuke-channel</b></span>
+  <span>Supersedes: <b>TARGETING_DESIGN.md §12.6 (void per Amendment 1)</b></span>
+</div>
+
+<p class="lede">The write system: how authored effects change game facts. An effect
+today carries a trigger (when) and a target resolver (whom); this pitch establishes the
+third slot (what) and every piece between it and a changed fact.</p>
+
+<h2><span class="secno">§1</span> The system at a glance</h2>
+<div class="chain">
+  <s><b>EffectConductor</b> runs the effect &nbsp;→&nbsp; each <b>Mutator</b> issues
+  &nbsp;→&nbsp; the <b>Arbitrator</b> routes &nbsp;→&nbsp; the owning
+  <b>module</b> renders &nbsp;→&nbsp; the <b>facts</b> change</s><span class="amchip">a7</span>
+</div>
+<div class="chain">
+  <span class="amchip">a7</span>a <b>payload</b> delivers &nbsp;→&nbsp; each
+  <b>Mutator</b> issues &nbsp;→&nbsp; the <b>router</b> routes &nbsp;→&nbsp; the owning
+  <b>module</b> renders &nbsp;→&nbsp; the <b>WriteAuthority</b> writes the facts
+  &nbsp;→&nbsp; the module <b>holsters</b> the events &nbsp;→&nbsp; the <b>cascade</b>
+  fires the holster
+</div>
+<p>One effect firing, end to end:</p>
+<ol>
+  <li>The cascade catches a trigger (or the activation entrance is invoked) and hands
+      the effect to its <b>EffectConductor</b>.</li>
+  <li>The conductor resolves the effect's targets, cues the windup, and engages every
+      mutator of the effect's <b>payload</b>, handing each a per-recipient
+      <b>plate</b> of facts.</li>
+  <li>Each mutator reasons freely over its plate and submits zero or more
+      <b>MutationRequests</b> to the <b>Arbitrator</b>.</li>
+  <li>The Arbitrator routes each request, by its type, to the installed
+      <b>arbitrator module</b> that owns it; the module renders it into <s>fact
+      changes</s><span class="amchip">a6</span> writes committed through the
+      WriteAuthority. Submission is synchronous: when it returns, the facts have
+      changed.</li>
+  <li>The conductor cues the contact and the conclusion. <s>The cascade then processes
+      any deaths the act caused (§8).</s><span class="amchip">a4</span> The cascade then
+      fires the payload's holster (a4).</li>
+</ol>
+<p><span class="amchip">a2</span><b>The audience:</b> the cascade polls every effect
+holder that exists in its world — fielded entities, slots' and units' statuses, the
+run's holders (relics, upgrades), and cards in hand. Every effect carries an implied
+default condition — <i>the holder is not a unit sitting in hand</i> — which an
+authored form may explicitly remove; a hand-held card's effects fire only when it
+does. (The removal's syntax belongs to the markup shape, §13.5.)</p>
+
+<h2><span class="secno">§2</span> The payload</h2>
+<p>The effect's anatomy is a triad: <b>trigger = when · targets = whom · payload =
+what.</b> <s>The payload is a bare typed list on the effect:</s><span class="amchip">a8</span>
+The payload is an object: a bundle of mutators issued together — the unit of
+arbitration and the scope of the holster (a8).</p>
+<pre><s>var payload: Array[Mutator]</s> <span class="amchip">a8</span></pre>
+<p><s>There is no payload wrapper type. Parse validation belongs to the effect's parser;
+delivery belongs to the conductor; the list itself has no behavior.</s><span class="amchip">a8</span></p>
+
+<h2><span class="secno">§3</span> The Mutator</h2>
+<p>A mutator is a content-nameable object whose competence is issuing mutation
+requests. Content names it; the logic lives inside it. The strike mutator issues
+"strike X" where X is the holder's attack stat, read at issuance — markup stays flat,
+and a new capability is a new mutator in code, never new authoring vocabulary.</p>
+<ul>
+  <li><b>Internals are unbounded code.</b> A mutator may read anything and reason
+      however it likes before speaking.</li>
+  <li><b>Contract:</b> <code>issue(plate)</code>. Invoked by the conductor; submits
+      zero, one, or several requests; returns nothing.</li>
+  <li><b>Mutator-to-module is many-to-few.</b> Differently-reasoning mutators may all
+      conclude in the same request type.</li>
+  <li><b>Day-one roster:</b> the StatMutator (a plain stat change: "+3 speed") and the
+      strike mutator. The roster is content-driven<span class="amchip">a8</span>.</li>
+</ul>
+
+<h2><span class="secno">§4</span> The plate</h2>
+<p>Because mutator internals are unbounded, mutator inputs cannot be enumerated.
+Instead, every mutator receives the same plate of facts at issuance — one uniform
+signature that never grows. One fact is <b>the world itself</b>: every question about
+game state is answerable through it, which is what lets the plate stay closed. The
+remaining facts are <b>situational</b> — the circumstances of this issuance, which the
+world cannot supply: who holds the effect, on what occasion it fired, whom this
+delivery lands on.<span class="amchip">a8</span></p>
+<div class="open"><span class="tag">Open</span>The plate's name and exact roster of
+situational facts (§13.2).</div>
+
+<h2><span class="secno">§5</span> The MutationRequest</h2>
+<p>What a mutator issues. The facts changing is the mutation; this object is the
+asking. It is a dumb data record: a base class carrying the context bundle common to
+every request, and one subclass per module carrying that module's parameters as typed
+members.</p>
+<pre>class_name MutationRequest        # the base: the context bundle
+    var mutator: Mutator          # who issued this — identity IS the provenance
+    var source: EffectHolder      # the holder it came from (§10)
+    var target: GameEntity        # whom it addresses; null = no target entity exists
+                                  #   (a card draw addresses nobody)
+
+class StatMutationRequest extends MutationRequest:
+    var stat: StringName
+    var delta: int
+
+class StrikeMutationRequest extends MutationRequest:
+    var amount: int               # the attack value read from the plate</pre>
+<ul>
+  <li><b>The subclass type is the verb.</b> No kind field, no parameter dictionary, no
+      schema shared across verbs.</li>
+  <li><b>The parameter contract has two parties:</b> the mutators that speak the verb
+      fill the members; the module that owns it reads them. The Arbitrator transports
+      without reading; conditions interrogate only the context bundle.</li>
+  <li><b>A request is complete at construction.</b> Context is stamped at issuance and
+      travels unmodified; a null context slot states that the party does not exist.</li>
+  <li><b>The context bundle is a floor.</b> A request may carry more than the three
+      slots; the extension mechanism is future work (§12).</li>
+</ul>
+
+<h2><span class="secno">§6</span> The Arbitrator and its modules
+<span class="amchip">a7</span></h2>
+<p><s>The Arbitrator is the doorway through which facts change. It executes requests
+and makes no decisions — every concrete decision is made before submission (by a
+mutator) or during rendering (by a module).</s>
+<span class="amchip">a7</span> The router makes no decisions — every concrete decision
+is made before submission (by a mutator) or during rendering (by a module).</p>
+<ul>
+  <li><span class="amchip">a3</span><b>Form:</b> a static doorway —
+      <s><code>Arbitrator.submit(request)</code></s><span class="amchip">a5</span>
+      <code>Arbitrator.submit(request, holster)</code>, callable from anywhere; the module
+      roster is a static registry installed once. Requests are self-sufficient, so one
+      doorway serves the live fight and every simulated world.</li>
+  <li><span class="amchip">a3</span><b>Modules are stateless — all state lives in the
+      world's facts.</b></li>
+  <li><b>Signature:</b> <s><code>submit(request: MutationRequest) -&gt; void</code></s>
+      <span class="amchip">a5</span> <code>submit(request, holster) -&gt; void</code> —
+      the holster travels through the doorway into the module's hands.
+      Synchronous; submission is execution; nothing is returned.</li>
+  <li><b>Routing is the type:</b> each request goes to the installed module claiming
+      its type. The module's downcast to its own request type always succeeds.</li>
+  <li><b>A module owns one general game mechanic</b> and renders its requests into
+      <s>raw fact changes (health, shield)</s><span class="amchip">a6</span> writes
+      committed through the WriteAuthority. Mechanic knowledge
+      lives in the module alone: the shield-absorbs-first split is the strike module's
+      rendering, invisible to the mutator that requested the strike.</li>
+  <li><b>Growth rule:</b> a new mechanic = one module + its request type, added
+      together. Nothing existing changes.</li>
+</ul>
+<table>
+  <tr><th>Day-one module</th><th>Request</th><th>Rendering</th></tr>
+  <tr><td><b>StatArbitratorModule</b></td><td><code>StatMutationRequest</code></td>
+      <td>Applies the delta to the stat.</td></tr>
+  <tr><td><b>StrikeArbitratorModule</b></td><td><code>StrikeMutationRequest</code></td>
+      <td>Shield absorbs first, remainder to health. Day-one floor: this and nothing
+      else (§13.8).</td></tr>
+</table>
+
+<h2><span class="secno">§7</span> The EffectConductor</h2>
+<p>The owner of what running one effect means. The triad's parts each answer one
+question — when, whom, what — and hold no flow; the conductor asks them in order and
+tells presentation between the steps. It is built by the cascade from the cascade's own
+(world, presenter) pair, at construction.</p>
+<p><b>The run, exactly:</b></p>
+<ol>
+  <li>Resolve the effect's targets against the world. An empty resolution ends the run;
+      it is a legal no-target.</li>
+  <li>Cue the windup (the effect's windup presentation name, the recipients).</li>
+  <li>Deliver: engage every payload mutator on every recipient's plate
+      (nesting order — §13.11). Requests flow to the Arbitrator as they are issued.</li>
+  <li>Cue the contact (the effect's contact presentation name, the recipients).</li>
+  <li>Cue the conclusion (the windup name closes).</li>
+</ol>
+<p>The conductor ends at step 5. <s>Aftermath belongs to the cascade.</s>
+<span class="amchip">a4</span> After it returns, the cascade fires the payload's
+holster (a4).</p>
+<p><b>Two entrances, one conductor:</b> triggered dispatch enters through the cascade's
+event machinery; the activation path (effects with a cost instead of a trigger —
+abilities, consumables<s>, §11</s><span class="amchip">a2</span>) enters through a
+cascade entrance that skips audience-and-trigger and invokes the same conductor.</p>
+
+<h2><span class="secno">§8</span> The act <s>and the death sweep</s><span class="amchip">a4</span></h2>
+<p><b>Within one act, everything commits as it happens; between acts, the world
+responds.</b><span class="amchip">a8</span> An effect's delivery is one atomic act: the
+resolution was read at the trigger moment and delivers whole. Facts change instantly
+mid-act — a killed unit is dead that instant — but reactions open at the act boundary.
+Three units killed by one blow died simultaneously, whatever order their requests
+committed in.</p>
+<p><b>Death carries an innate consequence the game itself executes: removal from the
+board.</b> <s>That guaranteed handling is the death sweep: at the act boundary, the
+cascade takes each death in order — broadcast, reactions (nested acts, recursing in
+full), burial.</s><span class="amchip">a4</span></p>
+<p><s>Reactions to other mid-act happenings (an "on shield depleted" trigger) are
+de-scoped (§12).</s><span class="amchip">a4</span></p>
+
+<h2><span class="secno">§9</span> Events</h2>
+<p>An event dispatched as a result of a request has two halves:</p>
+<ul>
+  <li><b>The carried half</b> — the request's context bundle (mutator, source, target),
+      forwarded with every event the request gives rise to. Provenance is the mutator's
+      identity; there is no separate provenance vocabulary.</li>
+  <li><b>The produced half</b> — what actually happened at commit, contributed by the
+      rendering end: died, shield emptied, health lost. "Died from poison" reads both
+      halves.</li>
+</ul>
+<p><b>Effect boundaries restart the context.</b> When an event triggers another effect,
+that effect's requests carry their own context; context never accumulates across
+effects.</p>
+
+<h2><span class="secno">§10</span> The effect holder</h2>
+<p>One common base class for everything that holds effects. Holding effects, querying
+them, being queued for resolution, and riding in a request's source slot are
+type-agnostic: the plumbing traffics in the base class. Concrete types reappear only
+in condition evaluation, via checked downcast.</p>
+<ul>
+  <li><b>The hierarchy:</b> the effect-holder base is the root; <code>GameEntity</code>
+      derives from it (units, board slots); relics and statuses derive from it
+      directly. Slots thereby hold effects — dormant capacity for future boards whose
+      slots act.</li>
+  <li><b>Everything is typed.</b> The house law: no Variant members, no inferred
+      Variant.</li>
+  <li><b>Cost, accepted:</b> the base's permanent claim on the hierarchy root — every
+      future holder kind descends from it.</li>
+</ul>
+<div class="open"><span class="tag">Open</span>The base class's name (§13.4).</div>
+
+<h2><span class="secno">§11</span> Conditions interrogate the source</h2>
+<p>The source slot carries the actual issuing object, and trigger conditions are
+predicates asked of it. "Was the death caused by me" is an identity comparison; "was
+the source a fire unit" is a checked downcast plus a property read. A failed downcast
+is a clean <i>false</i>: a relic-sourced death is not "caused by a fire unit." A real
+object answers any predicate written against it, present or future, with nothing added
+to the request's shape.</p>
+
+<h2><span class="secno">§12</span> <s>Standing obligations and</s> Out of frame
+<span class="amchip">a2</span></h2>
+<p><s><b>Obligations</b> — needed capabilities this design must eventually serve, on
+the record here since their code stubs were deleted 2026-08-14:</s></p>
+<ul class="scratch">
+  <li><b>The kill event.</b> "X killed Y" as its own happening, distinct from Y's
+      death; attribution reads the fatal request's carried context. Kill-conditioned
+      content is unauthorable until it exists. <span class="amchip">a1</span></li>
+  <li><b>Run-scoped holders acting in combat.</b> Relics and profile upgrades return as
+      effect holders (§10); their effects fire through the same dispatch. Includes the
+      consumable-use path — the activation entrance of §7.
+      <span class="amchip">a2</span></li>
+</ul>
+<p><b>Out of frame</b> — named so absence is never read as oversight:</p>
+<ul>
+  <li>Interception.</li>
+  <li>The context-bundle extension mechanism (§5).</li>
+  <li><s>The general act-boundary event queue (§8) — only the death sweep is
+      designed.</s><span class="amchip">a4</span></li>
+  <li>Module internals beyond the day-one floor — dodge, crit, on-strike events each
+      arrive by their own pitch.</li>
+  <li>The authored markup shape (but see §13.5 — it gates implementation).</li>
+</ul>
+
+<h2><span class="secno">§13</span> Open questions</h2>
+<p>Each is ruled, explicitly deferred, or dismissed as safe-to-infer before code
+touches its ground.</p>
+<div class="open"><span class="tag">First level</span>
+<p><b>1. Null semantics.</b> Ratify: null in a context slot means the party genuinely
+does not exist — never "unknown."</p>
+<p><b>2. The plate's name and roster</b> (§4).</p>
+<p><b>3. The Arbitrator's form</b> <s>(§6) — static doorway or owned instance</s>
+<span class="amchip">a3</span> — RESOLVED 2026-08-15: static doorway + stateless
+modules, ruled into §6.</p>
+<p><b>4. The effect-holder base class's name</b> (§10).</p>
+</div>
+<div class="open"><span class="tag">Second level</span>
+<p><b>5. The authored markup shape.</b> Needed on day one: effect files must name their
+mutators in some syntax before anything runs.</p>
+<p><b>6. The event roster <s>and firing point</s>.</b> <s>Which events a module's
+commit produces, and their names.</s><span class="amchip">a4</span><span class="amchip">a6</span>
+— firing point RESOLVED 2026-08-16 (a4: events are holstered, fired by the cascade at
+payload completion). The roster split by a6: fact events belong to the WriteAuthority,
+mechanic events to each module; the names remain open, settled fact-by-fact and
+module-by-module.</p>
+<p><b>7. Module-to-presentation announcements.</b> Per-commit visuals (damage number,
+shield flash) come from the module's side; how the announcement travels and what it may
+say.</p>
+<p><b>8. The witness modules' day-one floor</b> — stated in §6; ratify it.</p>
+</div>
+<div class="open"><span class="tag">Third level</span>
+<p><b>9. The jurisdiction of the monopoly.</b> <s>Statuses, movement, burial, mana, and
+tap-state currently mutate outside the Arbitrator. Total monopoly (all of it eventually
+routes through requests) or scoped, with named exemptions?</s>
+<span class="amchip">a6</span><span class="amchip">a8</span> — RESOLVED 2026-08-16:
+total monopoly. Every change to a game fact passes the WriteAuthority, with no
+exemptions; every current outside-writer must be converted to the pass.</p>
+<p><b>10. The Mutator's lifecycle.</b> Who constructs mutators, when, and whether they
+are stateless immutable instances shared across card copies and simulated worlds.</p>
+<p><b>11. The delivery nesting order</b> (§7 step 3) — per-recipient-then-per-mutator
+or the reverse; the two orders read different worlds mid-act.
+<span class="amchip">a8</span> Reframed, still open: the unit under question is one
+payload delivery.</p>
+<p><b>12. Delivery onto the mid-act dead.</b> A recipient may already be a corpse when
+its delivery arrives. Deliver anyway, or skip?</p>
+<p><b>13. The doorway's refusal discipline.</b> A request no module claims, or a null
+target where the verb requires one: loud error, silent drop, or impossible by
+construction.</p>
+<p><b>14. The carried half of request-less events.</b> Phase events (turn start, act)
+are born from no request. One event shape with honest nulls, or two acknowledged
+kinds. <span class="amchip">a8</span> Narrowed, still open: every mutation-borne event
+now carries its request's bundle; only pure phase markers remain in question.</p>
+</div>
+<div class="open"><span class="tag">Opened by amendment · 2026-08-16</span>
+<p><b>15. The router's class name.</b> <span class="amchip">a7</span> The class formerly
+called Arbitrator is ruled a mutation router; its code name is open.</p>
+<p><b>16. The WriteAuthority's form.</b> <span class="amchip">a6</span> Its duties are
+ruled; whether it is a static facility or an owned instance is not.</p>
+<p><b>17. The payload object's shape.</b> <span class="amchip">a8</span> Its exact
+members. (The holster's ownership is not part of this open — a4 ruled it the
+cascade's.)</p>
+<p><b>18. Plain changes versus crossings.</b> <span class="amchip">a6</span> Whether
+every write produces a fact event, or only threshold crossings do and plain changes are
+served by presentation announcements alone (adjoins open 7).</p>
+<p><b>19. The holster's path to the submitter.</b> <span class="amchip">a5</span> The
+mutator submits, so it must hold the holster to pass it — whether it arrives on the
+plate, or the conductor mediates the submission, is unruled.</p>
+</div>
+
+<div class="signoff">
+<p><b>Sign-off:</b> <i>unsigned — pitch awaiting Enrra's review.</i></p>
+<p class="quiet">Until signed, nothing in this document authorizes code. Invalidated
+statements get scratched, never removed; amendments are marked.</p>
+</div>
+
+<h2>Amendments</h2>
+<div class="amendment">
+<h3><span class="amchip">a1</span>Amendment 1 — the kill event dissolved (2026-08-15,
+Enrra's finding in review)</h3>
+<p>A separate kill event is unnecessary: kill-conditioned content ("whenever I kill a
+unit") is authorable as a <b>death trigger whose condition reads the carried source</b>
+— the death event, like every request-born event, carries the fatal request's context
+bundle (§9), and "caused by me" is §11's identity comparison. The §12 obligation is
+scratched. Between a1 and a2, §12 briefly carried an explanatory note to this effect;
+a2 removed it with the section's obligations half.</p>
+</div>
+<div class="amendment">
+<h3><span class="amchip">a2</span>Amendment 2 — the audience rule; obligations
+dissolved (2026-08-15, Enrra's rulings in review)</h3>
+<p><b>Added to §1:</b> the audience — the cascade polls every effect holder that exists
+in its world, hand cards included; every effect carries the implied default condition
+<i>"the holder is not a unit sitting in hand,"</i> explicitly removable (syntax owed to
+the markup shape, §13.5).</p>
+<p><b>Scratched:</b> §12's obligations half. The relic/unit framing was an error — the
+design treats all holders uniformly, so "run-scoped holders acting in combat" is the
+audience rule applied, not a separate capability; re-authoring relic content is content
+work, not design. §7's cross-reference to the scratched block is scratched with it.</p>
+</div>
+<div class="amendment">
+<h3><span class="amchip">a3</span>Amendment 3 — the Arbitrator's form resolved
+(2026-08-15, Enrra's ruling: "static is fine at this scope")</h3>
+<p><b>Added to §6:</b> the static doorway (<code>Arbitrator.submit</code> callable from
+anywhere, module roster a static registry installed once) and the companion doctrine:
+<b>modules are stateless — all state lives in the world's facts.</b> Open §13.3
+closed.</p>
+</div>
+<div class="amendment">
+<h3><span class="amchip">a4</span>Amendment 4 — the event holster (2026-08-16, Enrra's
+rulings in conversation)</h3>
+<p><b>The mutations of one payload are simultaneous for the purpose of event firing.</b>
+No event is dispatched at its own commit. Events wait in a <b>holster</b> — the
+payload's container of pending events — and fire together once the payload's last
+mutation has resolved.</p>
+<p><b>One holster per payload delivery, owned by the cascade.</b> The cascade opens the
+delivery and creates the holster; after the conductor returns, the cascade fires the
+holster's events in order; the holster dies when its last event has fired and its
+consequences have unfolded. Nothing persists between deliveries.</p>
+<p><b>Firing is depth-first.</b> An event may trigger a fresh effect, which resolves in
+full — its own payload, its own holster — before the next event of the outer holster
+fires.</p>
+<p><b>The death sweep dissolves into this rule.</b> A death event is an ordinary
+holstered event, fired and reacted to like any other. What survives of death's special
+handling is the innate consequence: when a death event's reactions have unfolded, the
+cascade executes the burial — removal from the board.</p>
+<p><b>Scratched accordingly:</b> §8's separate sweep walk and its de-scoping of mid-act
+reactions; §12's out-of-frame act-boundary queue (now designed); §1 step 5; open 13.6's
+firing-point half; §7's "aftermath" sentence; §8's heading half.</p>
+</div>
+<div class="amendment">
+<h3><span class="amchip">a5</span>Amendment 5 — the module feeds the holster
+(2026-08-16, Enrra's rulings in conversation)</h3>
+<p><b>The module is the holster's only feeder.</b> Every event — its own mechanic's and
+the fact events returned by the WriteAuthority (a6) — is completed by the module, which
+stamps the carried bundle from the request in its hand, and holstered by the module.
+Stamping-and-holstering is native base-class functionality, written once, inherited by
+every module.</p>
+<p><b>The doorway carries the holster:</b> the submission signature becomes
+<code>submit(request, holster)</code>. The holster travels as the submission's second
+argument — from the submitter, through the doorway, into the stateless module's hands.
+How the current delivery's holster reaches the submitter is open 19.</p>
+</div>
+<div class="amendment">
+<h3><span class="amchip">a6</span>Amendment 6 — the WriteAuthority (2026-08-16,
+Enrra's rulings in conversation)</h3>
+<p><b>Every change to a game fact goes through the WriteAuthority.</b> No bypass, from
+any origin — a bypassed write is a skipped rule. Open 13.9 is resolved: total monopoly,
+no exemptions.</p>
+<p><b>The authority owns the rules of each write</b> — floors, caps, whatever governs a
+specific fact's arithmetic — in exactly one place.</p>
+<p><b>The authority performs the write and returns the crossings it detected</b> —
+health reaching zero is <i>died</i>, shield reaching zero is <i>shield depleted</i> —
+as bare, context-free facts. It never sees a holster or a context bundle; the module
+completes and holsters what it returns (a5).</p>
+<p><b>Events therefore have two layers.</b> <i>Mechanic events</i> are composed by the
+module in its own mechanic's vocabulary. <i>Fact events</i> are detected by the
+authority — one author per event, blind to which mechanic drove the write, so every
+module present or future produces them correctly by construction. "On shield depleted"
+is thereby designed, consistent with a4's re-scoping.</p>
+<p><b>The authority is the hardening point.</b> Emerging consequences of facts are
+written into it with relative freedom; it is monolithic at this scope, and its internal
+structure is deferred until its contents demand one. Its form (static or owned) is
+open 16; the plain-changes-versus-crossings boundary is open 18.</p>
+<p><b>Scratched accordingly:</b> §6's statement that the module renders into raw fact
+changes itself — the module decides the writes; the authority performs them.</p>
+</div>
+<div class="amendment">
+<h3><span class="amchip">a7</span>Amendment 7 — arbitration is the system; the class
+is a router (2026-08-16, Enrra's ruling in conversation)</h3>
+<p><b>"Arbitration" names the whole system, not a class.</b> The system dissolves into
+its pieces:
+the <b>mutation router</b> (the class §5–§6 call "the Arbitrator": it receives
+requests through the static doorway and routes each by type to the owning module —
+that is all it does), the <b>modules</b>, the <b>WriteAuthority</b> (a6), and the
+module-fed <b>holster</b> (a4, a5).</p>
+<p><b>Doc-wide reading:</b> wherever the body says "the Arbitrator" as a class, read
+the router. Its code name is open 15.</p>
+</div>
+<div class="amendment">
+<h3><span class="amchip">a8</span>Amendment 8 — the universal pass; the payload becomes
+an object (2026-08-16, Enrra's rulings in conversation)</h3>
+<p><b>Every mutation in the game is governed by a mutator.</b> Not only effects: game
+machinery — movement, mana, draws, burial, all of it — speaks through mutators of its
+own, and every write travels the full pass: mutator issues → router routes → module
+renders → WriteAuthority writes → module holsters → cascade fires. There are no
+request-less writes; the mutator is the game's universal issuing vocabulary, and an
+effect's payload is one habitat of mutators among others.</p>
+<p><b>§3 and §4 speak of the effect habitat.</b> Content names an effect's payload
+mutators; machinery mutators are constructed in code. The plate's situational facts
+are worded for an effect's firing; the machinery habitat's issuance occasions fold
+into the plate roster question (open 2).</p>
+<p><b>The payload earns its object form.</b> A payload is a bundle of mutators issued
+together — <b>the unit of arbitration, and the scope of the holster.</b> An effect
+bears one; machinery constructs one on the spot. Either way it is handed to the
+cascade, which opens every delivery scope. §2's no-wrapper ruling is reversed: the
+payload now has a job. Its exact members are open 17.</p>
+<p><b>An act = one payload delivery.</b> §8's word acquires its definition; the
+simultaneity rule of a4 is the payload's, whether an effect or machinery bears it.</p>
+<p><b>Opens touched:</b> 13.11 reframed onto the payload; 13.14 narrowed to pure phase
+markers.</p>
+</div>
+<div class="amendment">
+<h3><span class="amchip">a9</span>Amendment 9 — the MutationEngine and its
+<s>rules</s><span class="amchip">a9.1</span> procedures
+(2026-08-16, Enrra's rulings in conversation)</h3>
+<p><b>The MutationEngine.</b> The single entry point for every mutation in the game.
+<s>It creates its modules once, in one install function whose body lists the complete
+roster; it holds the map from request type to module; and it decides which module
+executes each request. That is its only decision — every other decision is made before
+submission, by a mutator, or during rendering, by a module.</s><span class="amchip">a9.1</span>
+The doorway is
+<code>MutationEngine.submit(request)</code>: synchronous, returning the mutation's
+events.</p>
+<p><s><b>The module.</b> A module is one rule of the game behind one request shape — one
+module per shape, one shape per module. Rendering holds every decision the mutation
+requires; the WriteAuthority's primitives perform writes without deciding. The
+primitives comprise the stat write and the structural writes — dock (occupy a board
+cell), undock (vacate it), container insert, container remove, mint — each existing
+exactly once (exact roster: open 20).
+Floors and caps (a6) belong to the write's performance and stay the authority's.</s><span class="amchip">a9.1</span></p>
+<p><b>The roster.</b> <s>Seven modules carry the game's rules, and every write the game
+performs travels one of them.</s><span class="amchip">a9.1</span> Every write the game
+performs travels one of the engine's procedures (a9.1). Build order is outside this
+design.</p>
+<table class="scratch">
+  <tr><th>Module <span class="amchip">a9.1</span></th><th>Request shape</th><th>The rule it owns</th></tr>
+  <tr><td><b>StatModule</b></td><td>target · stat · delta</td>
+      <td>Applies the delta. Serves stat changes, mana pay and refill, exhaustion.</td></tr>
+  <tr><td><b>StrikeModule</b></td><td>target (striker = the source)</td>
+      <td>Reads the striker's attack, rolls dodge and crit; a connecting strike
+      renders into damage.</td></tr>
+  <tr><td><b>DamageModule</b></td><td>target · amount</td>
+      <td>Shield absorbs first, remainder to health.</td></tr>
+  <tr><td><b>StatusModule</b></td><td>target · status</td>
+      <td>Status application.</td></tr>
+  <tr><td><b>ContainerMoveModule</b></td><td>target · a side's coordinate-less
+      container (deck, hand, graveyard)</td>
+      <td>Draw, burial, discard.</td></tr>
+  <tr><td><b>BoardMoveModule</b></td><td>target · BoardLocation</td>
+      <td>Placement and movement on the board.</td></tr>
+  <tr><td><b>SpawnModule</b></td><td>card id · BoardLocation</td>
+      <td>Mints a unit into existence on the board.</td></tr>
+</table>
+<p>A mutator exists for each way the game asks for change: content names an effect's
+payload mutators; machinery constructs its own (a8). A draw's request carries the
+drawn card; its mutator reads the deck's top from the world before issuing.</p>
+<p><s><b>The rendering chain.</b> A module may render its request into one request of one
+lower module; the two then stand in layers. Today the strike module stands above the
+damage module, and every other module renders directly into writes. A chain is one
+mutation: the descendant request carries the originating request's context bundle
+unchanged, and every module traversed adds its events to the one record. A mutator may
+issue at any layer — burning ground issues damage. A module renders downward only, one
+descendant per layer, within the one mutation.</s><span class="amchip">a9.1</span></p>
+<p><s><b>Returned events.</b> The WriteAuthority returns the fact events of each write;
+a module returns those together with its own mechanic events, completed from the
+request in its hand; the doorway returns the whole record to the submitter. Events are
+holstered at the payload scope alone — the payload is the unit of issuance and the
+scope of its holster. A module's contract is its request in, its events out.</s><span class="amchip">a9.1</span></p>
+<p><b>Opens:</b> 15 resolved (the name above); 8 dissolved (the roster above states
+<s>every module's rule</s><span class="amchip">a9.1</span> every procedure, and build
+order is outside this design); 19 reframed (the returned events' path from submitter
+to holster); 20 opened (the primitive roster).</p>
+</div>
+<div class="amendment">
+<h3><span class="amchip">a9.1</span>Amendment 9.1 — the procedure (2026-08-16, Enrra's
+rulings in conversation)</h3>
+<p><b>The procedure.</b> A procedure is the game's way of resolving one kind of
+happening into writes and events. A procedure is a fixed part of the engine,
+stateless, owning one request shape. Its signature is its typed parameters plus the
+originating request as context; its events are stamped from that context.</p>
+<table>
+  <tr><th>Procedure</th><th>Request shape</th><th>Resolution</th></tr>
+  <tr><td><b>StatProcedure</b></td><td>target · stat · delta</td>
+      <td>Applies the delta. Serves stat changes, mana pay and refill, exhaustion.</td></tr>
+  <tr><td><b>StrikeProcedure</b></td><td>target (striker = the source)</td>
+      <td>Dodge, crit, amount read from the striker's attack; a connecting strike
+      applies damage.</td></tr>
+  <tr><td><b>DamageProcedure</b></td><td>target · amount</td>
+      <td>Shield absorbs first, remainder to health.</td></tr>
+  <tr><td><b>StatusProcedure</b></td><td>target · status</td>
+      <td>Status application.</td></tr>
+  <tr><td><b>ContainerMoveProcedure</b></td><td>target · a side's coordinate-less
+      container (deck, hand, graveyard)</td>
+      <td>Draw, burial, discard.</td></tr>
+  <tr><td><b>BoardMoveProcedure</b></td><td>target · BoardLocation</td>
+      <td>Placement and movement on the board.</td></tr>
+  <tr><td><b>SpawnProcedure</b></td><td>card id · BoardLocation</td>
+      <td>Mints a unit into existence on the board.</td></tr>
+</table>
+<p><b>The engine has its procedures fixed in code, as a class has its parts.</b> Its
+one decision is handing each request to the procedure that claims its shape; every
+other decision is made before submission, by a mutator, or during resolution, by a
+procedure. A new happening enters as one new procedure and its request; nothing
+existing changes.</p>
+<p><b>Every decision lives in a procedure; a primitive never decides.</b> A procedure
+may hold much law, little, or none. The WriteAuthority's primitives comprise the stat
+write and the structural writes — dock (occupy a board cell), undock (vacate it),
+container insert, container remove, mint — each existing exactly once (exact roster:
+open 20). Floors and caps (a6) belong to the write's performance and stay the
+authority's.</p>
+<p><b>A mutator is the only thing that issues requests.</b> Minting a request is the
+act of asking: one ask is one request, one mutation, one provenance — the mutator's
+identity.</p>
+<p><b>A procedure has two entrances, one body.</b> Asked: a mutator issues the
+procedure's request; the procedure unpacks it and runs. Applied: a procedure,
+mid-resolution, runs a lower procedure directly, passing the parameters it computed
+and the request already in its hand. Both entrances run the same body, produce the
+same events, stamp the same way.</p>
+<p><b>Application stays inside the one mutation.</b> No request is minted on the
+applied path; no new ask originates inside a resolution. The applying procedure's
+request travels down as context, so provenance stays singular: a burn's damage
+carries the burn mutator, a strike's damage carries the strike mutator, and the
+damaged event is produced identically on either path.</p>
+<p><b>A procedure applies a procedure only when the applied happening happens.</b>
+Damage happens inside a connecting strike, so the strike procedure applies the damage
+procedure. Where only a raw write happens, a procedure uses a WriteAuthority
+primitive: spawn docks a unit — no board move happens.</p>
+<p><b>Returned events.</b> The WriteAuthority returns the fact events of each write; a
+procedure returns those together with its own events, stamped from the request in its
+hand; the doorway returns the mutation's events to the submitter. Events are holstered
+at the payload scope alone — the payload is the unit of issuance and the scope of its
+holster.</p>
+</div>
+
+</div>

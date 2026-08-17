@@ -1061,7 +1061,7 @@ func _debug_kill_captain() -> void:
 
 
 # A unit's death DEALT rather than suffered: everything after the lethal blow is the same
-# path a killing strike takes — kill/death broadcasts, the presented burial (a king FALLS and
+# path a killing strike takes — the death broadcast, the presented burial (a king FALLS and
 # leaves its chest), the secondary sweep. Used by the captain's exits (debug button,
 # surrender) and by the army that falls with it.
 #
@@ -1070,7 +1070,6 @@ func _debug_kill_captain() -> void:
 func _fell(inst: CardInstance) -> void:
 	if inst == null or not inst.is_alive():
 		return
-	await _emit_kill(inst)
 	await _broadcast(GameEvent.make(&"death", inst))
 	await _bury(inst)
 	_board.cleanup_effect_deaths()
@@ -1113,7 +1112,6 @@ func _settle_if_decided() -> bool:
 	# waiting for exactly this.
 	var body := _board.claim_fallen_body()
 	if body != null:
-		await _emit_kill(body)
 		await _broadcast(GameEvent.make(&"death", body))
 		await _bury(body)
 		_board.cleanup_effect_deaths()
@@ -1204,15 +1202,11 @@ func _await_settled(inst: CardInstance) -> void:
 # outcome record it used to ride is ruled out of existence.)
 
 
-# The cascade proper — _broadcast/_resolve_event/_fire/_fire_run_level/_emit_kill/_bury —
-# lives on CombatCascade now, hosted on (_world, _presenter); these wrappers keep every
-# combat call site (the attack loop, casts, the debug captain-kill) reading as before.
+# The cascade proper — _broadcast/_resolve_event/_fire/_bury — lives on CombatCascade
+# now, hosted on (_world, _presenter); these wrappers keep every combat call site (the
+# attack loop, casts, the debug captain-kill) reading as before.
 func _fire(event: GameEvent, holder: CardInstance) -> void:
 	await _cascade.fire(event, holder)
-
-
-func _fire_run_level(event: GameEvent) -> void:
-	await _cascade.fire_run_level(event)
 
 
 # A consumable relic's use (the tray chip's completed safety hold — see ConsumableChip): SPEND
@@ -1251,12 +1245,8 @@ func _use_consumable(relic_id: String) -> void:
 	await _settle_if_decided()   # a bomb can end a fight
 
 
-func _emit_kill(corpse: CardInstance) -> void:
-	await _cascade.emit_kill(corpse)
-
-
-func _broadcast(event: GameEvent, run_level: bool = true) -> void:
-	await _cascade.broadcast(event, run_level)
+func _broadcast(event: GameEvent) -> void:
+	await _cascade.broadcast(event)
 
 
 func _resolve_event(event_id: StringName, subject: CardInstance = null) -> void:
@@ -1652,7 +1642,7 @@ func _build_halves_gutter() -> Control:
 # The vertical relic strip, owning the whole left rail: with no header during combat this is
 # where the run's relics live — a full-height column of big chips, count at the top, framed like
 # the mana gauge in the hand bar so the two read as one family. Read-only here (discarding is the
-# map HUD's job), and combat keeps the handle to glint a firing relic's chip (see _fire_run_level).
+# map HUD's job), and combat keeps the handle to glint a firing relic's chip.
 func _build_relic_strip() -> Control:
 	var strip := Panel.new()
 	strip.custom_minimum_size.x = 122.0 if UIScale.is_compact() else 92.0

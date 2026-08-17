@@ -2,8 +2,5 @@
 	"id": "nearest_attack",
 	"trigger": {"kind": "action"},
 	"targets": {"kind": "nearest"},
-	"payloads": [
-		{"kind": "attack", "amount": {"kind": "holder_stat", "stat": "attack"}}
-	],
 	"windup_presentation": "lunge"
 }
