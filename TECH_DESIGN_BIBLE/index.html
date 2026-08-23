@@ -1,0 +1,89 @@
+<meta charset="utf-8">
+<title>Tech Design Bible</title>
+<style>
+  :root {
+    --ground: #FAF9F6;
+    --surface: #F1EFEA;
+    --ink: #1F2125;
+    --ink-soft: #56534D;
+    --line: #DAD6CE;
+    --accent: #3D5A73;
+    --accent-soft: #E3EAF0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #17181B;
+      --surface: #1F2125;
+      --ink: #E8E6E1;
+      --ink-soft: #A9A59D;
+      --line: #35383E;
+      --accent: #8FA3B5;
+      --accent-soft: #232A31;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #17181B;
+    --surface: #1F2125;
+    --ink: #E8E6E1;
+    --ink-soft: #A9A59D;
+    --line: #35383E;
+    --accent: #8FA3B5;
+    --accent-soft: #232A31;
+  }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Segoe UI", -apple-system, system-ui, sans-serif;
+    font-size: 1.0rem;
+    line-height: 1.65;
+    margin: 0;
+  }
+  .page { max-width: 46rem; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+  h1, h2 { font-family: Cambria, Georgia, "Times New Roman", serif; text-wrap: balance; line-height: 1.2; }
+  h1 { font-size: 2.3rem; margin: 0.4rem 0 0.6rem; }
+  p { margin: 0.7rem 0; }
+  .eyebrow {
+    text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.72rem;
+    color: var(--accent); font-weight: 600;
+  }
+  .entry {
+    display: block; border: 1px solid var(--line); border-radius: 4px;
+    background: var(--surface); padding: 1rem 1.2rem; margin: 1.2rem 0;
+    color: inherit; text-decoration: none;
+  }
+  .entry:hover { border-color: var(--accent); background: var(--accent-soft); }
+  .entry h2 { font-size: 1.3rem; margin: 0 0 0.3rem; color: var(--accent); }
+  .entry p { margin: 0.3rem 0 0; color: var(--ink-soft); font-size: 0.95rem; }
+  .entry .chip {
+    float: right; background: var(--accent); color: var(--ground); border-radius: 2px;
+    padding: 0.1rem 0.55rem; font-size: 0.72rem; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase; margin-left: 0.8rem;
+  }
+</style>
+
+<div class="page">
+
+<span class="eyebrow">Canonical documentation</span>
+<h1>Tech Design Bible</h1>
+
+<p>The canonical documentation of the game's systems — one system, two
+documents. A statement here is ruling text: code conforms to it, and changes
+enter by amendment and signature.</p>
+
+<a class="entry" href="CORE_SYSTEM_DESIGN.html">
+  <span class="chip">Signed 2026-08-23</span>
+  <h2>Core System Design</h2>
+  <p>The card system: entity types and their built-in effects, containers and
+  housing, the board and geometry, the target resolver, the play road,
+  abilities, the event structure, and conditions.</p>
+</a>
+
+<a class="entry" href="MUTATION_SYSTEM_DESIGN.html">
+  <span class="chip">Signed 2026-08-23</span>
+  <h2>Mutation System Design</h2>
+  <p>The write system: the mutator, the request, the engine and its procedures,
+  the WriteAuthority, the conductor's run, the act and the holster, the
+  presentation pause, and the gather.</p>
+</a>
+
+</div>

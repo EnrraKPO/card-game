@@ -107,8 +107,9 @@
 <span class="eyebrow">Development instructions · the write system</span>
 <h1>Mutation System Design</h1>
 <div class="ribbon">
-  <span class="status-chip">Draft — awaiting signature</span>
+  <span class="status-chip">Signed</span>
   <span>Authored: <b>2026-08-23</b></span>
+  <span>Signed off: <b>2026-08-23</b></span>
   <span>Replaces: <b>MUTATION_INSTRUCTIONS.html (The Mutation of Facts III, retired to record)</b></span>
   <span>Reference: <b>CORE_SYSTEM_DESIGN.html — one system, two documents</b></span>
 </div>
@@ -625,15 +626,14 @@ existence that begins mid-play; a status is minted and inserted by its procedure
   <li>The procedures' build order.</li>
   <li>Status removal — expiry and cleanse. Its committed write is a container remove
       (§8); its procedure enters with the first content that removes a status.</li>
-  <li>Upgrades — where they live next; they hold no bucket and no place in the
-      entity hierarchy at this scope.</li>
+  <li>Upgrades — de-scoped entirely; they hold no bucket and no place in the
+      entity hierarchy.</li>
   <li>Spawn — mid-play unit creation; its mutator, request, and procedure enter
       with the first content that spawns.</li>
 </ul>
 
 <div class="signoff">
-  <b>Signature:</b> pending. Code downstream of this document is gated on the
-  signature.
+  <b>Signature:</b> signed off — Enrra, 2026-08-23.
 </div>
 
 </div>
