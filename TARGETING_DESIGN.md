@@ -1,5 +1,13 @@
 # Effect System Design — the rebuilt foundation
 
+> **DEPRECATED (Enrra, 2026-08-19).** This document is retired as a source of truth:
+> valuable in spirit, no longer strictly valid. Later rulings supersede parts of it
+> without individual marks here. The living authorities are CARD_INSTRUCTIONS.html
+> ("The Anatomy of Cards", in authoring) and MUTATION_INSTRUCTIONS.html ("The Mutation
+> of Facts III", on hold as its reference). Nothing may be cited from this document as
+> standing law; its statements re-enter the system only by restatement in a living
+> document.
+
 Status: **DESIGN SETTLED 2026-08-10 (user-ratified); rebuild begins with the attack
 system.** This document began as the targeting rebuild's anchor and grew, by settled
 rulings, into the design of the whole effect layer. It replaces the rulings-log form of

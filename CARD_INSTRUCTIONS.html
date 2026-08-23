@@ -1,0 +1,679 @@
+<meta charset="utf-8">
+<title>The Anatomy of Cards</title>
+<style>
+  :root {
+    --ground: #FAF9F6;
+    --surface: #F1EFEA;
+    --ink: #1F2125;
+    --ink-soft: #56534D;
+    --line: #DAD6CE;
+    --accent: #3D5A73;
+    --accent-soft: #E3EAF0;
+    --warn: #B3392B;
+    --warn-soft: #F3E3E0;
+    --code-bg: #ECEAE4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #17181B;
+      --surface: #1F2125;
+      --ink: #E8E6E1;
+      --ink-soft: #A9A59D;
+      --line: #35383E;
+      --accent: #8FA3B5;
+      --accent-soft: #232A31;
+      --warn: #E06A55;
+      --warn-soft: #3A2622;
+      --code-bg: #24262B;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #17181B;
+    --surface: #1F2125;
+    --ink: #E8E6E1;
+    --ink-soft: #A9A59D;
+    --line: #35383E;
+    --accent: #8FA3B5;
+    --accent-soft: #232A31;
+    --warn: #E06A55;
+    --warn-soft: #3A2622;
+    --code-bg: #24262B;
+  }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Segoe UI", -apple-system, system-ui, sans-serif;
+    font-size: 1.0rem;
+    line-height: 1.65;
+    margin: 0;
+  }
+  .page { max-width: 46rem; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+  h1, h2 { font-family: Cambria, Georgia, "Times New Roman", serif; text-wrap: balance; line-height: 1.2; }
+  h1 { font-size: 2.3rem; margin: 0.4rem 0 0.6rem; }
+  h2 { font-size: 1.5rem; margin: 3rem 0 0.8rem; padding-top: 1.6rem; border-top: 1px solid var(--line); }
+  h2 .secno { color: var(--accent); margin-right: 0.5rem; font-size: 1.1rem; vertical-align: 0.08rem; }
+  p { margin: 0.7rem 0; }
+  .eyebrow {
+    text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.72rem;
+    color: var(--accent); font-weight: 600;
+  }
+  .ribbon {
+    display: flex; flex-wrap: wrap; gap: 0.6rem 1.6rem; align-items: baseline;
+    border-block: 1px solid var(--line); padding: 0.6rem 0; margin: 1.4rem 0 2rem;
+    font-size: 0.84rem; color: var(--ink-soft);
+  }
+  .ribbon b { color: var(--ink); font-weight: 600; }
+  .status-chip {
+    background: var(--accent); color: var(--ground); border-radius: 2px;
+    padding: 0.1rem 0.55rem; font-size: 0.74rem; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .lede { font-size: 1.12rem; color: var(--ink-soft); }
+  code {
+    font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+    font-size: 0.88em; background: var(--code-bg); border-radius: 3px; padding: 0.08em 0.35em;
+  }
+  pre {
+    overflow-x: auto; background: var(--code-bg); border-radius: 3px;
+    padding: 0.6rem 0.8rem; margin: 0.8rem 0;
+    font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+    font-size: 0.82rem; line-height: 1.5;
+  }
+  ul, ol { padding-left: 1.2rem; }
+  li { margin: 0.4rem 0; }
+  .quiet { color: var(--ink-soft); font-size: 0.9rem; }
+  s, .scratch { text-decoration: line-through; text-decoration-color: var(--warn); opacity: 0.55; }
+  .amendment {
+    border: 2px solid var(--warn); border-radius: 4px; padding: 0.8rem 1.1rem;
+    margin: 1.2rem 0; background: var(--warn-soft);
+  }
+  .signoff {
+    border: 2px solid var(--line); border-radius: 4px; padding: 0.9rem 1.1rem;
+    margin-top: 3rem; background: var(--surface);
+  }
+  table { border-collapse: collapse; margin: 1rem 0; width: 100%; }
+  th, td { border: 1px solid var(--line); padding: 0.45rem 0.7rem; text-align: left; font-size: 0.93rem; }
+  th { background: var(--surface); font-weight: 600; }
+</style>
+
+<div class="page">
+
+<span class="eyebrow">Development instructions · the card system</span>
+<h1>The Anatomy of Cards</h1>
+<div class="ribbon">
+  <span class="status-chip" style="background: var(--warn);">Rejected — superseded</span>
+  <span>Elaborated: <b>2026-08-23</b></span>
+  <span>Rejected: <b>2026-08-23 (Enrra) — unprofessional redaction; superseded by CORE_SYSTEM_DESIGN.html</b></span>
+  <span>Draft record: <b>CARD_INSTRUCTIONS_DRAFT.html</b></span>
+  <span>Reference: <b>MUTATION_INSTRUCTIONS.html (The Mutation of Facts III) — one system, two documents; §10 lists the amendments it receives</b></span>
+</div>
+
+<p class="lede">The core of playable things: what a card, a spell, and a unit are,
+and how triggered and activated effects give them behavior. This document defines
+those kinds, the board they stand on, and the full road from a player's ask to a
+delivered play.</p>
+
+<h2><span class="secno">§1</span> Charter</h2>
+<p>This document settles:</p>
+<ul>
+  <li><b>The kinds</b> — card, spell, unit: what each is, where each lives, which
+      capacities each bears, and the baked reactions each kind carries.</li>
+  <li><b>The board</b> — the slots, their coordinates, the sides' halves, the
+      BoardManager, and the geometry functions.</li>
+  <li><b>The two effect natures</b> — triggered and activated: how each attaches
+      to its holder and how each comes to run.</li>
+  <li><b>The play road</b> — the carrier and the road for everything a play needs
+      beyond the source's identity: the appointed targets, the destination
+      slot.</li>
+  <li><b>The ability</b> — an entity's capability to fire an event at will, and
+      the bundle that dresses it.</li>
+  <li><b>The event anatomy</b> — the shape of a happening: the core facts every
+      event bears and the components it accretes on the road.</li>
+  <li><b>The condition</b> — the predicate serving in effects and resolvers: its
+      kinds, its authored form, its subjects and their routing.</li>
+</ul>
+
+<h2><span class="secno">§2</span> The entity anatomy</h2>
+
+<p><b>The kind chain spends inheritance on card-ness.</b> <code>Card</code> derives
+from <code>GameEntity</code> and embeds the machinery every playable thing shares:
+the play effect (§5) and the payability query. <code>Unit</code> derives from
+<code>Card</code> and embeds the machinery every unit shares: the main action, the
+target poll, the placement reactor on <code>play_engaged</code>, and the burial
+reactor on <code>died</code> (§6). <code>Spell</code> derives from
+<code>Card</code> beside Unit and embeds the spell's machinery: the burial reactor
+on <code>play_engaged</code> (§6). A kind with embedded machinery is what a type
+expresses; the type is the home of the appointment slots.</p>
+
+<p><b><code>Slot</code> is a <code>GameEntity</code>.</b> Its coordinate — row and
+column within its half — is an immutable birth fact, the slot's identity on the
+board. The coordinate carries no side component: the slot's side is the housing
+read — my housing's owner (§3). The slot bears a named container, <b>slotted
+unit</b>, and board occupancy is membership in it: a unit housed in a slot's
+slotted-unit container is fielded there. Placement legality lives where every
+invariant lives — in the membership primitives all writes pass through.</p>
+
+<p><b>The container is an object, one class for every use.</b> Its identity: the
+<b>owner</b> entity and a <b>name</b>; its substance: ordered
+<code>Array[GameEntity]</code> members. It admits any GameEntity; membership
+legality is the writing procedure's law. Any entity organizes its containment into
+named containers as its anatomy warrants — a side names deck, hand, graveyard, and
+board (§3); a slot names slotted unit.</p>
+
+<p><b>Every housed entity bears a back-reference to its container object.</b> The
+owner is one hop away through the container's owner member; the entity thereby
+knows both its holder and which of the holder's containers houses it. The
+membership primitives — the only writers of members — maintain the back-reference
+with every insert and remove. Fielded reads as: my housing is a slot's slotted-unit
+container. A unit's board position reads as: my housing's owner's coordinate.</p>
+
+<p><b>The one-housing law:</b> an entity is housed in exactly one container object,
+or unhoused at mint. A move is remove-from-housing plus insert-at-destination,
+one procedure's act.</p>
+
+<p><b>The move procedure stamps its happening.</b> A container move stamps the
+origin housing and the destination as EventData on the event it produces; a
+condition gates on the happening's origin read from the component, and the mover's
+current housing stays a separate, world-side read.</p>
+
+<p><b>The arrival has one author.</b> The membership procedure, on any insert into
+a slotted-unit container, stamps the origin and destination housings and produces
+the fact event <code>fielded</code>, source the arriving unit. Every road onto the
+board — play or summon — produces the arrival by construction, and on-arrival
+triggers gate on <code>fielded</code> without knowing which road delivered
+them.</p>
+
+<p><b>The mover mutator's destination address.</b> A container is addressed by
+owner plus name. A mover mutator's recipient is the destination's owner, and the
+destination container's name is a fact of the mutator — baked into the kind where
+the kind has one office (placement names slotted unit, burial names graveyard), a
+declared typed member where a general container-move kind is authored. A container
+is never a recipient; recipients stay entities, and the name completes the
+address.</p>
+
+<p><b>Occupancy is a fact of content.</b> A slot's slotted-unit container holds
+what play puts there; current content fields one unit per slot, and the mechanics
+carry any count.</p>
+
+<p><b>Any GameEntity can be a target.</b> Target eligibility spans the entity root;
+narrowing is the work of each resolver's authored conditions.</p>
+
+<p><b>Geometry is a read layer.</b> Distance, area, adjacency, and row-and-column
+reasoning compute from slot coordinates and occupancy, through the same reads as
+everything else (§3).</p>
+
+<p class="quiet"><b>Implementation note:</b> back-references follow the established
+weak-reference discipline, and world copies remap both ends of every housing
+relation.</p>
+
+<h2><span class="secno">§3</span> The board and the geometry</h2>
+
+<p><b>Each side owns a container named <i>board</i></b>, housing its half's slots.
+A slot's side is thereby a housing fact, read as my housing's owner — never a
+stored component of the coordinate.</p>
+
+<p><b>BoardManager — one instance, embedded in the world.</b> It owns behavior, no
+content; the container stays the one class (§2), and the board machinery is a class
+beside it, never an extension. Its duties:</p>
+<ul>
+  <li><b>The birth clause.</b> At the world's birth it mints both halves' slots,
+      stamps their coordinates, houses them through the membership primitives, and
+      files each in the index in the same act.</li>
+  <li><b>The fetch.</b> Address → slot: a direct map written once at birth over
+      immutable facts, never invalidated and never rebuilt. A slot fetch is one
+      lookup, never a search. The manager also offers the read "slots at these
+      addresses".</li>
+</ul>
+<p>The manager computes no shape and owns no comparator.</p>
+
+<p><b>The geometry functions are a pure class of static functions</b> (name
+pending ruling): stateless, world-blind; coordinates and the halves' facing
+relation in, coordinates out. Its members:</p>
+<ul>
+  <li><b>The symmetric distance</b> — two coordinates in, no notion of
+      facing.</li>
+  <li><b>The attack-preference comparator</b> — the attack targeting ordering,
+      fed the facing as an input. Its standard is behavioral: the current
+      orderings are the expected ones.</li>
+  <li><b>The AOE shapes</b> — cone, row, column, radius, square.</li>
+</ul>
+<p>The mirroring arithmetic between the two halves lives here alone; no slot and
+no side reasons about it.</p>
+
+<p><b>The composer is the resolver (§4).</b> Conditions narrow by entity facts;
+the decision ranks by a named geometry function — nearest by the distance, the
+attack decision by the preference comparator. The composition is one motion:
+geometry yields addresses, the manager's fetch yields slots, occupancy reads
+onward through the slot's container.</p>
+
+<p><b>Allegiance and standing are two reads.</b> A unit's allegiance is its birth
+fact; the half it stands on is read through its slot's housing — the side owning
+the board container. The reads answer truthfully when they differ.</p>
+
+<h2><span class="secno">§4</span> The target resolver</h2>
+
+<p><b>The resolver elects the recipients of the payload.</b> That election is its
+one office in the triad. It is fed the plate — the same facts a mutator receives,
+because both are unbounded in how they use the information: the occasion and the
+holder (§9), with each candidate supplied as the typed subject and the world
+reached through the holder. Through the occasion and the world it can resolve into
+anything.</p>
+
+<p><b>Its anatomy is ordered: conditions, then decision.</b> Conditions narrow the
+world to eligible candidates; the decision picks among the survivors. The decision
+mechanisms are a family — nearest, random, stat-ranked, hand-pick, the occasion's
+targets — and hand-picking is one mechanism among them: a manual resolver is a
+resolver whose decision consults the player.</p>
+
+<p><b>The election runs in two phases.</b> <b>Resolve</b> is the side-effect-free
+phase: conditions applied, the field narrowed as far as determinism reaches. It
+commits nothing, so any reader may run it at any moment — the interactive-idle
+target poll, the preview world, the greyout all read resolve. <b>Engage</b> is the
+committing phase: unknowns settle — the roll rolls, the picker picks — once, in the
+live flow. Engagement is issued uniformly for every resolver, and engaging is the
+hinge that fires the escalation into payload delivery; a resolver with nothing
+unknown answers its engagement from its resolution. Rolls made at engagement draw
+from the world's seeded rng.</p>
+
+<p><b>An engagement can be declined.</b> A declined pick yields an empty election:
+the effect is targetless, it does not trigger, and the payload never runs. For an
+activated ask this ends the ask whole, with everything unpaid.</p>
+
+<p><b>An effect authored without a resolver targets the Game.</b> The default is a
+fact of the authored form, decided at birth. An authored resolver is a commitment:
+it names the shape of its candidates and either elects them or elects nobody — and
+an empty election ends the delivery.</p>
+
+<p><b>Events carry their targets as a set.</b> An effect's elected targets travel
+in the events its delivery produces — stamped as <code>EntityEventData</code>
+under the role <code>targets</code>, a singular target riding as a set of one
+(§8) — and downstream resolvers read them from the occasion. Derivations are
+authored as conditions — "adjacent to the occasion's targets" is a resolver
+reading the occasion and narrowing by geometry.</p>
+
+<p><b>The unique mutator.</b> A mutator kind may bear the <b>unique</b> quality:
+the conductor runs it once per delivery, first, before the per-recipient walk,
+handing it the plate with a null recipient (§9). A unique mutator appoints its
+own target internally, from the plate. The quality is declared by the kind; the
+conductor reads the declaration and the seal stays shut.</p>
+
+<h2><span class="secno">§5</span> The play road</h2>
+
+<p><b>Every card bears the play effect,</b> machinery of the Card type. Content
+authors its targeting; the effect itself is baked. Its anatomy:</p>
+<ul>
+  <li><b>Trigger:</b> <code>play</code>; the played card is the event's source
+      (§8).</li>
+  <li><b>Conditions:</b> affordability — the cost stat within open mana — and the
+      holder being in hand; authored conditions join them.</li>
+  <li><b>Targeting:</b> authored (resolver and conditions). The defaults are type
+      facts: a card assumes auto/Game; a unit assumes manual/Slot. The engagement
+      is where the player's pick happens; a declined pick ends the play unpaid.</li>
+  <li><b>Payload:</b> the pay mutator, a unique mutator — it runs once per play,
+      ahead of the walk, and addresses the holder's side, whose mana pays.</li>
+</ul>
+
+<p><b>Cost is a card stat</b> — seeded from the authored form at construction,
+mutable through the road like any stat. Discounts and surcharges are ordinary stat
+mutations.</p>
+
+<p><b>The payment produces <code>play_engaged</code>,</b> carrying the play's
+elected targets as its <code>EntityEventData</code> under the role
+<code>targets</code> (§8). The card's substantive effects trigger on
+<code>play_engaged</code> under the source route's <code>is_holder</code>
+condition (§8, §9), and their resolvers read the occasion: the stock form takes
+the occasion's targets as its own; authored forms derive from them by
+condition.</p>
+
+<h2><span class="secno">§6</span> The baked reactions of the kinds</h2>
+
+<p><b>The kinds' landings and burials are ordinary baked effects</b> — each an
+effect of the kind's machinery, built from the same anatomy every effect has, and
+each reacting to the event that concerns its holder under the source route's
+<code>is_holder</code> condition (§9).</p>
+
+<p><b>The unit's placement.</b> An effect of the Unit kind. Trigger
+<code>play_engaged</code>; gate: entity entry, route source, condition
+<code>is_holder</code>. Its resolver is the stock form taking the occasion's
+targets as its own, electing the play's slot (§5). Its payload is the
+<b>placement mutator</b>: recipient the elected slot, act the container move —
+the holder leaves its housing and enters the recipient's slotted-unit container,
+one procedure's act under the one-housing law (§2). The insert produces
+<code>fielded</code> (§2).</p>
+
+<p><b>The unit's burial.</b> An effect of the Unit kind. Trigger
+<code>died</code>; gate: entity entry, route source, condition
+<code>is_holder</code>. Its payload is the <b>burial mutator</b>: the container
+move to the graveyard. <code>died</code> is a fact event authored by the
+WriteAuthority (III §8): one author for the crossing, and every road to zero
+health produces it by construction.</p>
+
+<p><b>The spell's burial.</b> An effect of the Spell kind. Trigger
+<code>play_engaged</code> — the spell is spent by its play; gate: entity entry,
+route source, condition <code>is_holder</code>. Its payload is the burial
+mutator.</p>
+
+<p><b>Burial-reactors are decoupled from depletion-reactors.</b> The move's
+procedure stamps the origin housing and the destination as EventData (§2), and a
+condition gates on the happening's origin read from the component; the mover's
+current housing stays a separate, world-side read.</p>
+
+<h2><span class="secno">§7</span> The ability</h2>
+
+<p><b>An ability is its holder's capability to fire an event at will</b> — machinery
+any GameEntity can bear. That capability is the whole of the machinery's
+contribution; everything downstream of the event is authored content. The bundle
+that dresses the capability into a usable ability is an amenity over it.</p>
+
+<p><b>Ask events are imperative verbs.</b> The event vocabulary splits by direction:
+an ask going in is an imperative — <code>play</code>, <code>use_heal</code> — and a
+happening coming out is past tense — <code>play_engaged</code>,
+<code>use_heal_engaged</code>, <code>died</code>. The grammar names the side of the
+road a name sits on.</p>
+
+<p><b>Every ability is a separate identity, and the identity lives in its event
+names.</b> An ability named Heal owns the ask <code>use_heal</code> and the
+engagement <code>use_heal_engaged</code>; both derive from its name. Firing the ask
+names the ability whole — the ask carries no further cargo for it. The name is the
+event core's name fact (§8); the ask rides the core alone, componentless.</p>
+
+<p><b>The bundle.</b> Appointing the ability Heal on an entity expands, at
+construction, into three pieces:</p>
+<ul>
+  <li><b>The ask capability:</b> the holder can have <code>use_heal</code> fired
+      at it at will.</li>
+  <li><b>The use effect,</b> built on the play effect's anatomy: trigger
+      <code>use_heal</code>; conditions — affordability and the authored gating;
+      targeting authored; payload — the pay mutator. Its payment produces
+      <code>use_heal_engaged</code>, carrying the elected targets as its
+      <code>EntityEventData</code> under the role <code>targets</code> (§8).</li>
+  <li><b>The substantive effect</b> — authored — triggering on
+      <code>use_heal_engaged</code> under the source route's
+      <code>is_holder</code> condition (§8, §9).</li>
+</ul>
+
+<p><b>The two discriminators bind by construction.</b> The event name identifies the
+ability's kind; the source route's <code>is_holder</code> condition binds each
+instance to its own holder's engagement. Two units bearing Heal share the event
+names and are told apart by the condition. Both bindings are the bundle's work;
+the author wires nothing.</p>
+
+<p><b>The engaged name derives from the occasion, uniformly.</b> The plate's
+occasion holds the event that fired the effect; the pay mutator reads the ask's name
+there and derives the produced event's name from it — <code>play</code> into
+<code>play_engaged</code>, <code>use_heal</code> into
+<code>use_heal_engaged</code>. One derivation serves both roads.</p>
+
+<p><b>Abilities are authored through a markup form, the only authoring door.</b>
+The form requests the authored fields alone: the ability's name, its cost, its
+targeting policy, the substantive effect. The expansion into the pieces — the ask
+event, the use effect, the name derivations, the discriminating conditions — is
+programmatic baking at construction, concealed below the form. The triggered-effect
+ground the mechanism extends stays machinery's vocabulary; the markup requests only
+what varies. The play road holds the same stance: the play effect is baked, and
+content authors only its fields (§5).</p>
+
+<p><b>The play and the use are similar mechanisms, not the same one.</b> The play
+effect is machinery of the Card type, one per card, asked by <code>play</code>; a
+use effect is minted per appointed ability, asked by the ability's own name. Both
+share the one anatomy.</p>
+
+<h2><span class="secno">§8</span> The event anatomy</h2>
+
+<p><b>An event is a core plus components.</b> The core holds the two facts inherent
+to every happening: the <b>source</b> — the entity the happening comes from, and any
+GameEntity can be a source — and the <b>event's name</b>. Every further fact rides
+in the event's component list: <code>Array[EventData]</code>.</p>
+
+<p><b>EventData is a typed class family, one class per shape of fact.</b> Each
+component carries its fact as typed members — <code>StatMutationEventData</code>
+the stat and the delta, <code>MutatorEventData</code> the manner of a mutation:
+the mutator's kind. A fact of an existing shape with a different purpose is not a
+new class — the container's ruling holds here (§2, one class for every use):
+purpose is a name. A fact's carrier class is the same on every event that carries
+the fact; the class family is the vocabulary of event facts.</p>
+
+<p><b>Entity-bearing facts ride one class: <code>EntityEventData</code>.</b> Its
+members: the <b>role</b> — a <code>StringName</code> naming what the entities are
+to the happening, <code>targets</code> among them — and the entities,
+<code>Array[GameEntity]</code>, a singular fact riding as a set of one. The
+gate's bare event-data route (§9) pools every EntityEventData's yield; narrowed, it
+narrows by role.</p>
+
+<p><b>The event accretes its components as it travels.</b> Each layer of the road
+appends the components it knows: an event passing through a mutator gains its
+<code>MutatorEventData</code>; a delivery that elected targets stamps them as
+<code>EntityEventData</code> under the role <code>targets</code>; a procedure
+stamps the facts of its happening. Appending is open to anything on the road, and
+each layer's stamp is its own contribution.</p>
+
+<p><b>Reading is fetch-by-shape.</b> A reader names a component class and receives
+the matching components, reading their typed members. An event may carry any count
+of components of one shape; the fetch serves any or all, and the reader governs its
+use of several.</p>
+
+<p><b>A condition asking of an absent component evaluates false.</b> Provenance
+interrogation keeps its two questions over this shape: the source answers
+<i>who</i>, the <code>MutatorEventData</code> answers <i>how</i>.</p>
+
+<p><b>The trigger names the event.</b> An effect's trigger names its event, and the
+naming is itself a condition of the effect; the effect's further conditions read
+the named occasion's components from there.</p>
+
+<p><b>The activation road's source.</b> The ask event's source is the activated
+entity: <code>use_heal</code> fires with the asked unit as its source,
+<code>play</code> with the played card. The engaged event's source is the same
+entity, stamped by the procedure from the request. The discriminating condition
+is <code>is_holder</code> under the source route (§9) — one predicate, both
+stages, every ability and every play.</p>
+
+<h2><span class="secno">§9</span> The condition</h2>
+
+<p><b>A condition is a predicate.</b> It asks one question of the facts before it and
+answers true or false. It decides nothing beyond its answer and writes nothing.</p>
+
+<p><b>The condition serves in two seats.</b> In an <b>effect</b>, conditions gate the
+firing: the trigger's naming of the event is itself a condition (§8), and the further
+conditions join it — every one must hold for the effect to run. In a <b>resolver</b>,
+conditions narrow the world to the eligible candidates before the decision picks
+(§4). One concept serves both seats.</p>
+
+<p><b>Conditions read event components by shape.</b> A condition interrogating the
+occasion names a component class and reads the matching components' typed members
+(§8). A condition asking of an absent component evaluates false.</p>
+
+<p><b>The rostered members so far.</b> Two authored kinds are established.
+<b><code>is_holder</code></b>, an EntityCondition with no members: the subject is
+the plate's holder. At the gate, under the source route, it is the discriminating
+condition of every play and every ability (§8); the source fetch is the route's
+work, never the predicate's. <b><code>has_status</code></b>, an
+EntityCondition with one member, <code>status_id: StringName</code>: the subject's
+<code>contained</code> holds a Status of that id, read by checked downcast (III §9).
+The machinery's baked conditions — affordability and holder-in-hand on the play
+effect (§5), affordability on the use effect (§7) — are conditions of those
+effects' anatomy, not authored content. Membership grows under Open 8.</p>
+
+<p><b>Derivations are conditions.</b> A targeting rule that derives from the occasion
+— "adjacent to the occasion's targets" — is a resolver condition reading the
+occasion's target set and narrowing by geometry (§4).</p>
+
+<p><b>The working material is the plate plus a typed subject.</b> The plate is two
+facts: the <b>occasion</b> (an Event) and the <b>holder</b> (a GameEntity). The
+world is reached through the holder — every entity bears a back-reference to the
+world it lives in (III). The <b>subject</b> — the object the predicate runs on — is
+a separate input, typed, supplied by the seat: the resolver hands each candidate;
+the gate hands EventConditions the occasion and EntityConditions their routed yield
+(routing below). The same plate serves mutators, whose recipient is likewise a
+separate typed input.</p>
+
+<p><b>The family is the subject's type.</b> A condition's base class declares what
+it tests and thereby its signature: <code>EntityCondition</code> tests a GameEntity,
+<code>EventCondition</code> tests an Event; concrete kinds derive within their base.
+A seat supplies one subject type and accepts that family: resolver conditions are
+EntityConditions; the gate runs both families — EventConditions on the occasion,
+EntityConditions on routed subjects; the trigger's naming is the EventCondition
+family's founding member.</p>
+
+<p><b>The gate routes its entity subjects.</b> An EntityCondition serving at the
+gate names its subject's origin — the <b>route</b>, authored on the entry beside
+the conditions. Four routes exist: <b>source</b> — the occasion's core; <b>holder</b>
+— the plate's; <b>event data</b> — bare, pooling every EntityEventData's yield, or
+narrowed by role (§8); and <b>world</b> — every entity that exists, reached through
+the holder's world. The route list is closed: the world is the top scope, and any
+narrower fetch is the world narrowed by conditions. Every route yields a set of
+entities: source and holder as sets of one, a named role absent from the occasion
+as the empty set — genuine absence (§8).</p>
+
+<p><b>The effect fetches; the condition only answers.</b> Routing exists because an
+entity subject has a choice of origins, and the choice is authored outside the
+predicate. The effect owns the fetch: its gate walk reads each entry's route,
+gathers the yield, and hands each entity to the conditions. EventConditions carry
+no route — the occasion has one home, the plate — and read their components by
+shape themselves (§8). The rule: the effect supplies what the condition cannot
+locate alone.</p>
+
+<p><b>Two lists, one gate.</b> The effect holds its gating conditions in two typed
+lists, sorted at parse by family — EventConditions and entity entries. The gate
+holds when both lists hold; an empty list holds vacuously. Each list bears its own
+all-or-any policy across its entries.</p>
+
+<p><b>The entity entry: any-fold under a negate.</b> An entry is one route, a list
+of conditions conjoined per entity, and the entry's <b>negate</b>. The fold is
+<b>any</b> alone: the entry asks whether any entity of the yield satisfies every
+condition, and the negate — a handle over the folded answer — turns the existential
+claim universal. "All enemies are wounded" is authored "not: any (enemy, healthy)".
+The per-entity conjunction narrows and tests in one motion; no narrowing role and
+no all-fold exist at the entry. The base negate (below) keeps its seat — it inverts
+one condition's answer per entity; the entry's negate inverts the entry's.</p>
+
+<p><b>The authored form of the gate.</b> An effect's gating block holds the two
+lists under one key per family; each list bears its policy; an entity entry bears
+its route, its negate, and its conditions:</p>
+<pre>"gate": {
+  "event":  { "policy": "all", "conditions": [
+    { "kind": "mutator_is", "mutator": "poison" }
+  ]},
+  "entity": { "policy": "all", "entries": [
+    { "route": "source", "conditions": [ { "kind": "is_holder" } ] },
+    { "route": "world", "negate": true, "conditions": [
+      { "kind": "is_enemy" },
+      { "kind": "stat_vs_stat", "left": "health", "op": "lt", "right": "max_health", "negate": true }
+    ]}
+  ]}
+}</pre>
+<p>The route token is <code>source</code>, <code>holder</code>, <code>world</code>,
+<code>eventdata</code> for the pooled yield, or a role for that role's components
+(§8). Absent members take their defaults: policy <code>all</code>, negate false, an
+absent list empty — holding vacuously. The generic driver (below) parses the whole
+block; kinds shown beyond the roster are illustrative.</p>
+
+<p><b>The families share the authored skeleton, never the call.</b> One base class
+carries what every family authors alike — the kind id, the negate handle, the
+declared typed members and their parse, the stateless-immutable lifecycle — so the
+driver and the kind table stay single. The evaluation signature lives per family;
+no shared evaluate exists — a loosely typed subject is exactly the input this
+design refuses.</p>
+
+<p><b>The family roster is open by subject type.</b> A subject neither entity nor
+event founds a new family with its own routes — the container is the standing case:
+an origin or destination housing is a container, not a GameEntity. Membership grows
+under Open 8.</p>
+
+<p><b>The predicate is the class; the handles are its members.</b> Content never
+authors logic — it selects a kind by its id and fills the kind's declared typed
+members. A stat comparison is one kind with three members:</p>
+<pre>{ "kind": "stat_compare", "stat": "strength", "op": "gt", "value": 5 }</pre>
+<p>A check no existing kind supports is a new class, extending the family its
+subject dictates, plus one row in the kind table.</p>
+
+<p><b>The stat identity.</b> A stat's identity is its id, a <code>StringName</code>.
+Every entity kind declares its stats in two lists — public mutable and read-only.
+Validation runs at two gates: parse refuses an id absent from the authored subject
+kind's declaration; execution refuses at the concrete bearer — an unborne id, or a
+write addressing a read-only stat.</p>
+
+<p><b>The collection combines; the condition never does.</b> Each seat's condition
+list bears a policy — <b>all</b> or <b>any</b> — and the combination vocabulary is
+the policies, the two negates, and the entity entry's any-fold (above); a condition
+holding conditions never exists.</p>
+
+<p><b>Negation is a base handle.</b> Every condition bears <code>negate: bool</code>,
+a member of the base class, false unless authored. The kind's class computes its
+question in its natural sense; the machinery inverts the answer where the handle is
+set. The driver parses the handle as base vocabulary beside the kind id. Over an
+absent component the inverted answer is true — absence is a genuine fact of the
+happening (§8), so the negated question truthfully holds.</p>
+
+<p><b>Lifecycle: stateless immutable instances.</b> A condition is constructed at
+parse, holds only its authored members, and never accumulates state across
+evaluations; one instance is shared safely across card copies and simulated worlds.
+Anything that needs memory is a world fact.</p>
+
+<p><b>Parse is one generic driver.</b> The kind id resolves to the class through a
+static table; the driver fills the class's declared members by name from the markup,
+refusing strangers and type mismatches loudly; serialization is the mirror walk.
+No kind carries parse code; the driver grows only when the value-type vocabulary
+grows. Authoring a kind is the class and its table row, nothing further.</p>
+
+<p><b>Text survives parse nowhere.</b> An authored member parses into its real type
+— a stat's name becomes the stat's identity, or refuses loudly because no such stat
+exists. The conversion is the validation; no checking layer follows it.</p>
+
+<h2><span class="secno">§10</span> Amendments to The Mutation of Facts III</h2>
+<p class="quiet">Each lands on III at the amendment pass; III's statements on
+spells and abilities are superseded by this document.</p>
+<ul>
+  <li><b>§10–§11, the hierarchy:</b> board presence relocates from a base type onto
+      <code>Slot</code>; <code>Unit</code> derives from <code>Card</code>; the
+      inheritance chart redraws.</li>
+  <li><b>§7, the primitive ontology:</b> the membership primitives (insert, remove)
+      carry board occupancy; the ontology's categories become number, membership,
+      and existence.</li>
+  <li><b>Open 21's container clauses:</b> naming generalizes from the side to any
+      entity; the container grows its object form (owner, name, members) as primary
+      text.</li>
+  <li><b>§5, the context bundle:</b> the target slot dissolves — elected targets
+      ride the event as <code>EntityEventData</code> under the role
+      <code>targets</code> (§8).</li>
+  <li><b>§5, the plate:</b> the plate narrows to two facts — occasion and holder;
+      the world member is trimmed (reached through the holder's world
+      back-reference); the recipient leaves the plate and becomes the seat's
+      separate typed input.</li>
+  <li><b>§4, the mutator lifecycle:</b> the stateless-immutable clause extends to
+      conditions verbatim.</li>
+  <li><b>§11, the conductor's run:</b> the election splits into resolve and engage;
+      the run opens with the unique mutators; the empty-resolution clause takes
+      §4's vocabulary — for an activated ask the empty election refuses the ask
+      before payment.</li>
+  <li><b>§15 and Open 27:</b> the pay effect is the <b>play effect</b> — machinery
+      of the Card type, named by its office; the payability clause and the
+      activation language restate over the §5 anatomy.</li>
+  <li><b>§15–§16, the ask vocabulary:</b> <code>activation_invoked</code> is
+      <code>play</code>; ask events form the imperative family beside the
+      past-tense happenings; the pay mutator's produced event name derives from
+      the occasion — <code>cost_paid</code> is <code>play_engaged</code>.</li>
+  <li><b>§12, the death clause:</b> the innate burial consequence dissolves —
+      the cascade executes no burial. Burial is an ordinary baked effect of the
+      kind, reacting to its holder's depletion event (§6).</li>
+</ul>
+
+<h2><span class="secno">§11</span> Opens</h2>
+<ul>
+  <li><b>Open 2 — each kind's container anatomy.</b> Which named containers each
+      entity kind bears (a unit's statuses among them) settles per kind as its
+      section is written.</li>
+  <li><b>Open 5 — user-facing language.</b> The player-facing words for target,
+      pick, and play settle after the mechanics; the mechanical vocabulary is this
+      document's.</li>
+  <li><b>Open 8 — the roster of condition kinds.</b> The structure is settled (§9:
+      families by subject type, kinds within); the concrete membership — which
+      kinds exist per family — settles as content demands them.</li>
+</ul>
+
+<div class="signoff">
+  <b>Signature:</b> <s>pending</s> refused — rejected 2026-08-23 for unprofessional
+  redaction; superseded by CORE_SYSTEM_DESIGN.html. This document authorizes no
+  code and is retained as record only.
+</div>
+
+</div>
