@@ -1,0 +1,269 @@
+<meta charset="utf-8">
+<title>Combat Frame Design</title>
+<style>
+  :root {
+    --ground: #FAF9F6;
+    --surface: #F1EFEA;
+    --ink: #1F2125;
+    --ink-soft: #56534D;
+    --line: #DAD6CE;
+    --accent: #3D5A73;
+    --accent-soft: #E3EAF0;
+    --warn: #B3392B;
+    --warn-soft: #F3E3E0;
+    --code-bg: #ECEAE4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #17181B;
+      --surface: #1F2125;
+      --ink: #E8E6E1;
+      --ink-soft: #A9A59D;
+      --line: #35383E;
+      --accent: #8FA3B5;
+      --accent-soft: #232A31;
+      --warn: #E06A55;
+      --warn-soft: #3A2622;
+      --code-bg: #24262B;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #17181B;
+    --surface: #1F2125;
+    --ink: #E8E6E1;
+    --ink-soft: #A9A59D;
+    --line: #35383E;
+    --accent: #8FA3B5;
+    --accent-soft: #232A31;
+    --warn: #E06A55;
+    --warn-soft: #3A2622;
+    --code-bg: #24262B;
+  }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Segoe UI", -apple-system, system-ui, sans-serif;
+    font-size: 1.0rem;
+    line-height: 1.65;
+    margin: 0;
+  }
+  .page { max-width: 46rem; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+  h1, h2, h3 { font-family: Cambria, Georgia, "Times New Roman", serif; text-wrap: balance; line-height: 1.2; }
+  h1 { font-size: 2.3rem; margin: 0.4rem 0 0.6rem; }
+  h2 { font-size: 1.5rem; margin: 3rem 0 0.8rem; padding-top: 1.6rem; border-top: 1px solid var(--line); }
+  h2 .secno { color: var(--accent); margin-right: 0.5rem; font-size: 1.1rem; vertical-align: 0.08rem; }
+  h3 { font-size: 1.1rem; margin: 1.6rem 0 0.5rem; }
+  p { margin: 0.7rem 0; }
+  .eyebrow {
+    text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.72rem;
+    color: var(--accent); font-weight: 600;
+  }
+  .ribbon {
+    display: flex; flex-wrap: wrap; gap: 0.6rem 1.6rem; align-items: baseline;
+    border-block: 1px solid var(--line); padding: 0.6rem 0; margin: 1.4rem 0 2rem;
+    font-size: 0.84rem; color: var(--ink-soft);
+  }
+  .ribbon b { color: var(--ink); font-weight: 600; }
+  .status-chip {
+    background: var(--accent); color: var(--ground); border-radius: 2px;
+    padding: 0.1rem 0.55rem; font-size: 0.74rem; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  code {
+    font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+    font-size: 0.88em; background: var(--code-bg); border-radius: 3px; padding: 0.08em 0.35em;
+  }
+  ul, ol { padding-left: 1.2rem; }
+  li { margin: 0.4rem 0; }
+  .quiet { color: var(--ink-soft); font-size: 0.9rem; }
+  .signoff {
+    border: 2px solid var(--line); border-radius: 4px; padding: 0.9rem 1.1rem;
+    margin-top: 3rem; background: var(--surface);
+  }
+  table { border-collapse: collapse; margin: 1rem 0; width: 100%; }
+  th, td { border: 1px solid var(--line); padding: 0.45rem 0.7rem; text-align: left; font-size: 0.93rem; }
+  th { background: var(--surface); font-weight: 600; }
+</style>
+
+<div class="page">
+
+<span class="eyebrow">Development instructions · the combat frame</span>
+<h1>Combat Frame Design</h1>
+<div class="ribbon">
+  <span class="status-chip">Signed</span>
+  <span>Authored: <b>2026-08-23</b></span>
+  <span>Signed off: <b>2026-08-23</b></span>
+  <span>Absorbs: <b>AMENDMENTS.html A2, A5, A6 as primary text</b></span>
+  <span>Reference: <b>Core System Design · Mutation System Design</b></span>
+</div>
+
+<p>Scope: the frame that drives one fight — the clock, the round and its spans,
+the base rules the clock's events engage, the activation order, the tap fact,
+and the fight's ending. Everything the frame's events reach runs on the card
+system and the write system.</p>
+
+<h2><span class="secno">§1</span> The fight</h2>
+
+<p>A fight is a sequence of rounds. Each side fields a <b>king</b>: a unit
+bearing the king birth fact, authored in the card envelope (A7). A king's death
+ends the fight: the enemy king's death is victory, the player king's death is
+defeat. When one act kills both kings, the fight is a defeat.</p>
+
+<h2><span class="secno">§2</span> The clock</h2>
+
+<p>The clock is machinery embedded in the world, the frame's only moving part.
+It fires the frame's first-mover events (Mutation §2) and advances the round
+through its spans; every change of fact it causes is performed by effects
+reacting through the road. The clock decides two things alone: which event
+fires next, and when the fight has ended (§7).</p>
+
+<h2><span class="secno">§3</span> The round</h2>
+
+<p>One round, in order:</p>
+<ol>
+  <li><b>The opening</b> — the clock fires <code>round_started</code>; the
+      Game's base rules run (§4).</li>
+  <li><b>The enemy's command span</b> — the enemy commands (§5).</li>
+  <li><b>The player's command span</b> — the player commands (§5).</li>
+  <li><b>The combat span</b> — every fielded unit's moment, in activation
+      order (§6).</li>
+</ol>
+<p>The next round opens when the combat span's last moment has resolved. The
+fight's ending interrupts the round wherever it lands (§7).</p>
+
+<h2><span class="secno">§4</span> The opening and the base rules</h2>
+
+<p><code>round_started</code> is a fact event, source the Game, fired by the
+clock at each round's open. The Game's base rules trigger on it and run in
+their declared order:</p>
+<ol>
+  <li><b>The round count rule</b> — raises the Game's <code>round</code> stat
+      by one.</li>
+  <li><b>The untap rule</b> — clears every fielded unit's <code>tapped</code>
+      stat (§6).</li>
+  <li><b>The ramp rule</b> — raises each side's <code>mana_capacity</code> by
+      the ramp amount. Capacity is uncapped.</li>
+  <li><b>The refill rule</b> — raises each side's <code>mana</code> to its
+      capacity.</li>
+  <li><b>The draw rule</b> — each side draws the turn draw from its deck.</li>
+</ol>
+<p>Each rule is an ordinary effect: trigger on <code>round_started</code>,
+resolver electing its recipients, payload of roster mutators. The numbers are
+Game stats, seeded from data and mutable through the road (Mutation §2):</p>
+<table>
+  <tr><th>Stat</th><th>Seed</th><th>Consumed by</th></tr>
+  <tr><td>starting mana capacity</td><td>1</td><td>genesis (§8)</td></tr>
+  <tr><td>mana ramp per round</td><td>1</td><td>the ramp rule</td></tr>
+  <tr><td>turn draw</td><td>1</td><td>the draw rule</td></tr>
+  <tr><td>opening hand size</td><td>3</td><td>genesis (§8)</td></tr>
+</table>
+
+<h2><span class="secno">§5</span> The command spans</h2>
+
+<p>The enemy commands first, then the player (A5). Within its span, a
+commander fires the ask events the card system defines — <code>play</code>,
+<code>use_ability</code>, Move's ask among the latter — at will, each ask
+resolving in full before the next.</p>
+<ul>
+  <li><b>The player's span</b> is served by the interaction layer: the existing
+      hand, board, and moving UI fire the asks; the span ends when the player
+      ends the turn.</li>
+  <li><b>The enemy's span</b> is served by the enemy commander — the encounter
+      engine behind the same ask vocabulary; the span ends when the commander
+      yields.</li>
+</ul>
+<p>A unit fielded during a command span acts in that same round's combat span
+(A5).</p>
+
+<h2><span class="secno">§6</span> The combat span</h2>
+
+<h3>The activation order</h3>
+<p>At the span's open the clock computes the activation order once — every
+fielded unit, ordered by the <b>activation comparator</b>: speed descending;
+ties to the player's units; ties then to forward depth (the unit furthest
+forward on its own half first); ties then to row order. Acceptance standard:
+the comparator reproduces the current game's ordering. The order is computed
+once per round and is the single definition both the clock and the turn-order
+display walk.</p>
+
+<h3>The moment</h3>
+<p>The clock walks the order and fires the ask event <code>act</code> at each
+unit still fielded at its moment; a unit no longer fielded is passed over. The
+ask is fired at every fielded unit, tapped or not — bystanders and the unit's
+statuses react to the moment through their own triggers, in gather order
+(Mutation §12).</p>
+
+<h3>The main action</h3>
+<p>The main action is fixed Unit machinery (Core §1) with the standard effect
+structure:</p>
+<ul>
+  <li><b>Trigger:</b> event <code>act</code>; the route-<code>source</code> +
+      <code>is_holder</code> entry; the baked condition that the holder is
+      untapped.</li>
+  <li><b>Targeting:</b> the attack resolver — conditions narrowing to enemy
+      units, the decision ranking by BoardGeometry's attack-preference
+      comparator (Core §3), electing one.</li>
+  <li><b>Payload:</b> the <b>tap mutator</b> — machinery only, unique (Core
+      §4): recipient null, it appoints its holder and concludes in a
+      StatMutationRequest setting <code>tapped</code> — then the strike
+      mutator.</li>
+</ul>
+<p>Acting is free: the ask carries no pay mutator and no engaged pair — the
+strike procedure's events are the happening record. The <b>target poll</b> is
+this resolver's resolve phase, run at interactive idle for the previews
+(Core §4).</p>
+
+<h3>The tap fact</h3>
+<p><code>tapped</code> is a public mutable unit stat: zero is untapped, above
+zero is tapped; its arithmetic floors at zero (Mutation §8). It is spent by
+the main action's tap mutator and by tap-priced ability costs
+(PayCostProcedure, Mutation §7), and cleared by the untap rule at the round's
+opening (§4). The tap mutator's row joins the mutator roster (Mutation §4) by
+this document.</p>
+
+<h2><span class="secno">§7</span> The fight's ending</h2>
+
+<p>The clock ends the fight when a king's <code>died</code> event has fired
+and the delivery it belongs to has unfolded whole — the holster drained, every
+reaction resolved (Mutation §9). The ended fight fires no further first-mover
+events; the frame reports victory or defeat (§1) to the run layer through the
+existing combat-end seam.</p>
+
+<h2><span class="secno">§8</span> Genesis</h2>
+
+<p>Setup constructs the fight whole (Mutation §13): both sides' decks shuffled
+by the world's seeded rng, each opening hand of the seeded size built directly
+into its <code>hand</code> container, each side's <code>mana_capacity</code>
+and <code>mana</code> seeded to the starting capacity, kings and any authored
+starting units housed on their slots. The first
+<code>round_started</code> is the first event ever fired.</p>
+
+<h2><span class="secno">§9</span> The frame's events</h2>
+
+<table>
+  <tr><th>Event</th><th>Kind</th><th>Source</th><th>Fired</th></tr>
+  <tr><td><code>round_started</code></td><td>fact</td><td>the Game</td>
+      <td>at each round's opening</td></tr>
+  <tr><td><code>act</code></td><td>ask</td><td>the asked unit</td>
+      <td>at each unit's moment in the combat span</td></tr>
+</table>
+<p class="quiet">Further frame events enter under Mutation §8's law — where
+content cares.</p>
+
+<h2><span class="secno">§10</span> Out of frame</h2>
+
+<p>Named so absence is never read as oversight:</p>
+<ul>
+  <li>Surrender — the captain's yield exists in the current game; it re-enters
+      at the parity pass.</li>
+  <li>Round limits and timers.</li>
+  <li>Extra or repeated spans within a round.</li>
+  <li>Mid-combat-span arrivals — spawn is out of frame whole
+      (Mutation §14).</li>
+</ul>
+
+<div class="signoff">
+  <b>Signature:</b> signed off — Enrra, 2026-08-23.
+</div>
+
+</div>

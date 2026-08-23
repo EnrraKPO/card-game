@@ -1,0 +1,289 @@
+<meta charset="utf-8">
+<title>Implementation Plan — Vertical Slice</title>
+<style>
+  :root {
+    --ground: #FAF9F6;
+    --surface: #F1EFEA;
+    --ink: #1F2125;
+    --ink-soft: #56534D;
+    --line: #DAD6CE;
+    --accent: #3D5A73;
+    --accent-soft: #E3EAF0;
+    --warn: #B3392B;
+    --warn-soft: #F3E3E0;
+    --code-bg: #ECEAE4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #17181B;
+      --surface: #1F2125;
+      --ink: #E8E6E1;
+      --ink-soft: #A9A59D;
+      --line: #35383E;
+      --accent: #8FA3B5;
+      --accent-soft: #232A31;
+      --warn: #E06A55;
+      --warn-soft: #3A2622;
+      --code-bg: #24262B;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #17181B;
+    --surface: #1F2125;
+    --ink: #E8E6E1;
+    --ink-soft: #A9A59D;
+    --line: #35383E;
+    --accent: #8FA3B5;
+    --accent-soft: #232A31;
+    --warn: #E06A55;
+    --warn-soft: #3A2622;
+    --code-bg: #24262B;
+  }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Segoe UI", -apple-system, system-ui, sans-serif;
+    font-size: 1.0rem;
+    line-height: 1.65;
+    margin: 0;
+  }
+  .page { max-width: 46rem; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+  h1, h2, h3 { font-family: Cambria, Georgia, "Times New Roman", serif; text-wrap: balance; line-height: 1.2; }
+  h1 { font-size: 2.3rem; margin: 0.4rem 0 0.6rem; }
+  h2 { font-size: 1.5rem; margin: 3rem 0 0.8rem; padding-top: 1.6rem; border-top: 1px solid var(--line); }
+  h2 .secno { color: var(--accent); margin-right: 0.5rem; font-size: 1.1rem; vertical-align: 0.08rem; }
+  h3 { font-size: 1.1rem; margin: 1.6rem 0 0.5rem; }
+  p { margin: 0.7rem 0; }
+  .eyebrow {
+    text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.72rem;
+    color: var(--accent); font-weight: 600;
+  }
+  .ribbon {
+    display: flex; flex-wrap: wrap; gap: 0.6rem 1.6rem; align-items: baseline;
+    border-block: 1px solid var(--line); padding: 0.6rem 0; margin: 1.4rem 0 2rem;
+    font-size: 0.84rem; color: var(--ink-soft);
+  }
+  .ribbon b { color: var(--ink); font-weight: 600; }
+  .status-chip {
+    background: var(--warn); color: var(--ground); border-radius: 2px;
+    padding: 0.1rem 0.55rem; font-size: 0.74rem; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  code {
+    font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+    font-size: 0.88em; background: var(--code-bg); border-radius: 3px; padding: 0.08em 0.35em;
+  }
+  ul, ol { padding-left: 1.2rem; }
+  li { margin: 0.4rem 0; }
+  .quiet { color: var(--ink-soft); font-size: 0.9rem; }
+  .signoff {
+    border: 2px solid var(--line); border-radius: 4px; padding: 0.9rem 1.1rem;
+    margin-top: 3rem; background: var(--surface);
+  }
+  table { border-collapse: collapse; margin: 1rem 0; width: 100%; }
+  th, td { border: 1px solid var(--line); padding: 0.45rem 0.7rem; text-align: left; font-size: 0.93rem; }
+  th { background: var(--surface); font-weight: 600; }
+</style>
+
+<div class="page">
+
+<span class="eyebrow">Build plan · executing the Tech Design Bible</span>
+<h1>Implementation Plan — Vertical Slice</h1>
+<div class="ribbon">
+  <span class="status-chip">Draft — unsigned</span>
+  <span>Authored: <b>2026-08-23</b></span>
+  <span>Authority: <b>TECH_DESIGN_BIBLE/ (Core System Design + Mutation System Design, both signed 2026-08-23)</b></span>
+</div>
+
+<p>This document plans the build. It adds no design: every mechanism it names is
+a statement of the bible, cited by section. Where the slice needs a fact the
+bible does not rule, that fact is listed in §6 and awaits ruling — nothing in
+§6 is decided here.</p>
+
+<h2><span class="secno">§1</span> Goal and scope</h2>
+<p>The long-term goal is functional parity with the pre-nuke game on the new
+system. This plan's deliverable is the first step: a <b>vertical slice</b> —
+one complete fight, playable start to finish, in which every system the bible
+designs executes at least once on authored content. The slice runs as a fixed
+fight launched from the existing shell; wiring into real runs, the full card
+catalogue, and the Tool is parity work that follows the slice.</p>
+
+<h2><span class="secno">§2</span> Build order</h2>
+<p>Six phases, each ending with the suite green and a per-phase commit. A
+phase builds only what the cited sections state.</p>
+
+<h3>Phase 1 — The world's skeleton</h3>
+<p>The entity hierarchy and its facts. <code>GameEntity</code> and its types
+(Core §1); stats with the two declaration lists (Core §9); the
+<code>Container</code> class, the container map, the declarations, housing and
+back-references (Core §2); the world with its outlet and seeded rng, the
+embedded BoardManager, and the geometry class (Core §1, §3); the event
+structure — Event core plus the EventData family (Core §8); the WriteAuthority
+and its four primitives (Mutation §8). Exit: entities constructible, containers
+writable through the primitives, board born and fetchable.</p>
+
+<h3>Phase 2 — The write road</h3>
+<p>The <code>EngineRequest</code> family (Mutation §6);
+<code>MutationEngine.submit</code> and the six procedures, including the strike
+mechanics with their seeded Game stats (Mutation §7); fact events from the
+authority, <code>died</code> among them (Mutation §8). Exit: a hand-built
+request of each shape resolves into committed writes and returned events.</p>
+
+<h3>Phase 3 — Rules and flow</h3>
+<p>Conditions — the base, the two families, routes, the trigger structure, the
+generic parse driver (Core §9); the target resolver with its two phases and
+five decision mechanisms (Core §4); the mutator roster (Mutation §4); the
+EffectConductor's five-step run (Mutation §11); the cascade — gather, roster
+order, holster, depth-first firing (Mutation §9, §12); genesis as construction
+(Mutation §13). Exit: an event fired into a hand-built world runs authored
+effects end to end.</p>
+
+<h3>Phase 4 — The card roads</h3>
+<p>The play effect with pay, and the substantive effects on
+<code>play_engaged</code> (Core §5); the built-in placement and burials, the
+<code>fielded</code> event (Core §6, §2); the ability expansion —
+<code>use_ability</code> / <code>ability_used</code>, the baked conditions, the
+markup form (Core §7). Exit: a card plays from hand to board, an ability
+activates, a death buries — all through the road.</p>
+
+<h3>Phase 5 — Reconnection</h3>
+<p>The seam to what survives: the live world's presenter behind the
+presentation outlet, the pause and the cues (Mutation §10, §11); the hand-pick
+decision consulting the player through the existing interaction layer; the
+payability and target previews reading resolve (Core §4); the fight driven from
+the existing combat screen. Exit: the Phase 4 roads run visibly on screen.</p>
+
+<h3>Phase 6 — The slice fight</h3>
+<p>The §4 content authored in the bible's markup, the fixed encounter
+assembled, the fight playable whole. Exit: the coverage table of §5 fully
+exercised in one playthrough, suite green. Visual acceptance is Enrra's.</p>
+
+<h2><span class="secno">§3</span> Disposition of the surviving code</h2>
+<p>The bible restructures the ground the old combat layer stood on, so the core
+is built fresh; nothing derives design from prior code. Per phase, the old
+piece serving a rebuilt duty is retired when its successor lands — no additive
+migration, no compatibility layers. The principal conformance sites:</p>
+<ul>
+  <li><b>Replaced by the new core:</b> <code>card_instance</code>,
+      <code>combat_world</code>, <code>combat_side</code>,
+      <code>combat_cascade</code>, <code>game_entity</code>,
+      <code>effect_condition</code>, <code>status_engine</code> /
+      <code>status_instance</code>, and the <code>effects/</code>,
+      <code>triggers/</code>, <code>targeting/</code> folders.</li>
+  <li><b>Conformed at the seam, kept:</b> the presenters and combat scene
+      (<code>combat</code>, <code>combat_board</code>,
+      <code>combat_presenter</code>, <code>live_presenter</code>,
+      <code>presentation_channel</code>), the interaction layer, VFX/SFX, the
+      shell and every non-combat screen.</li>
+  <li><b>Untouched by the slice:</b> map, runs, saves, economy, Tool. The
+      catalogue's card data stays in its current schema until the parity
+      initiative migrates it; the slice's content is authored in the new markup
+      as new files.</li>
+</ul>
+
+<h2><span class="secno">§4</span> The slice content</h2>
+<p>The minimal authored set that makes every designed system execute. Names are
+working labels for the plan; the authored names are Enrra's at content
+sign-off.</p>
+<ul>
+  <li><b>Squire</b> — a plain unit. Its main action strikes: dodge, crit,
+      shield-then-health damage.</li>
+  <li><b>Sentinel</b> — a building unit: never dodges, is rooted.</li>
+  <li><b>Cleric</b> — a unit bearing a <b>Heal</b> ability: cost, hand-picked
+      ally, positive stat mutation on health.</li>
+  <li><b>Venom Adder</b> — a unit whose play effect applies the <b>Poison</b>
+      status to a hand-picked enemy; the status is minted and inserted, and its
+      own effect deals its holder periodic damage carrying the poison kind.</li>
+  <li><b>Avenger</b> — a unit with a triggered effect: when an allied unit
+      dies, its attack rises.</li>
+  <li><b>Fireball</b> — a spell: hand-picked enemy unit, damage payload, spell
+      burial on play.</li>
+  <li><b>Hourglass</b> — a relic: when the player fields a unit, draw a
+      card.</li>
+  <li><b>The enemy side</b> — a mirrored small set plus one unit using a
+      stat-ranked resolver decision, and the enemy captain whose death ends the
+      fight (the ending's rule is §6-R4).</li>
+</ul>
+
+<h3>Coverage</h3>
+<table>
+  <tr><th>System</th><th>Exercised by</th></tr>
+  <tr><td>Strike pipeline: dodge, crit, damage</td><td>Squire, Sentinel</td></tr>
+  <tr><td>Stat mutation</td><td>Cleric's Heal, Avenger's rise</td></tr>
+  <tr><td>Status: mint, insert, stacks, status-held effect</td><td>Poison</td></tr>
+  <tr><td>Draw</td><td>Hourglass, the turn draw</td></tr>
+  <tr><td>Play road: pay, <code>play_engaged</code>, occasion's targets</td><td>every card</td></tr>
+  <tr><td>Placement, <code>fielded</code>, move stamping</td><td>every unit play</td></tr>
+  <tr><td>Burials, origin gating</td><td>unit deaths, Fireball</td></tr>
+  <tr><td>Ability road: <code>use_ability</code>/<code>ability_used</code>, name discrimination</td><td>Heal, Move</td></tr>
+  <tr><td>Resolver decisions: nearest, hand-pick, occasion's targets, stat-ranked</td><td>main actions, picks, play effects, the enemy unit</td></tr>
+  <tr><td>Empty election and declined pick</td><td>Fireball with no legal target; a cancelled pick</td></tr>
+  <tr><td>Unique mutator</td><td>the pay mutator on every play and use</td></tr>
+  <tr><td>Conditions: <code>is_holder</code>, <code>has_status</code>, <code>name_is</code>, routes, negate</td><td>the expansions, Avenger, Poison reactions</td></tr>
+  <tr><td>Holster, depth-first firing</td><td>a lethal strike chaining Avenger's reaction and burial</td></tr>
+  <tr><td>Gather buckets and ordering</td><td>Game rules, both sides, Hourglass, hand cards' play effects, fielded units with Poison, graveyard</td></tr>
+  <tr><td>Presentation pause and cues</td><td>every delivery on screen</td></tr>
+  <tr><td>Simulation on a world copy</td><td>the target previews at interactive idle</td></tr>
+</table>
+
+<h2><span class="secno">§5</span> Testing</h2>
+<p>Per the standing doctrine: tests pin computation, never behavior. Each phase
+lands its computational tests with it — primitives, procedures, parse
+refusals, resolver elections, gather order. The existing suite keeps running;
+old tests covering replaced code retire with their subjects.</p>
+
+<h2><span class="secno">§6</span> Rulings the plan requires</h2>
+<p>Facts the slice needs that the bible does not rule. Each is stated with the
+phase it blocks. R1–R2 are the bible's own standing opens; R3–R8 are found
+work surfaced by this planning.</p>
+<ol>
+  <li><b>R1 — The geometry class's name</b> (Core §11, standing open). Blocks
+      Phase 1's geometry file.</li>
+  <li><b>R2 — The allegiance fact's form</b> (Core §11, standing open): the
+      birth fact's shape, and the read that fetches the holder's side — the pay
+      mutator's recipient. Blocks Phase 4.</li>
+  <li><b>R3 — The fight frame.</b> The bible names the turn clock and the
+      player's asks as first-mover events (Mutation §2) and takes turn order as
+      a gather key (Mutation §12), but does not design them: the round
+      structure, the first-mover event names, mana refill and turn-draw timing,
+      and when each unit's main action fires. Needs its own signed document.
+      Blocks Phases 5–6.</li>
+  <li><b>R4 — The fight's ending.</b> Win and loss are not in the bible.
+      Belongs with R3. Blocks Phase 6.</li>
+  <li><b>R5 — The main action's structure.</b> Core §1 embeds "the main
+      action" and "the target poll" in Unit machinery; their content — the
+      firing occasion, the attack resolver's authored form, the strike payload
+      — is unstated. Belongs with R3. Blocks Phase 4's main action.</li>
+  <li><b>R6 — The Move ability's definition.</b> The placement mutator "serves
+      placement and the Move ability" (Mutation §4); the ability itself — its
+      appointment, cost, and targeting — is stated nowhere. Blocks Phase 4's
+      Move.</li>
+  <li><b>R7 — The card file's envelope.</b> The bible rules the markup of
+      triggers, payloads, and abilities; the card-level authored form that
+      carries them — stats, kind, effects list, abilities list in one file —
+      is unstated. Blocks Phase 6's authoring.</li>
+  <li><b>R8 — Roster growth the content demands</b> (Core §11, Opens 2 and 8,
+      settling per content as designed): <code>name_is</code>'s entry in the
+      condition roster (the flagged signed gap), the condition kinds §4's
+      content needs beyond the roster (Avenger's stat rise gate, Poison's
+      holder-of-my-container read), and each type's container roster as its
+      content lands. Settles per item during Phases 4–6.</li>
+</ol>
+
+<h2><span class="secno">§7</span> Unruled decisions met mid-build</h2>
+<p>A decision the bible and the signed rulings do not cover stops the work and
+becomes a question — or, exceptionally, where waiting is impossible, a written
+brief filed for review before the work proceeds further. The bible binds to
+full extent; the brief is the exception's paper trail, never a sanction.</p>
+
+<h2><span class="secno">§8</span> UI <span class="quiet" style="font-size:0.8rem;">(appended 2026-08-23)</span></h2>
+<p>UI is out of scope for the contract, with the only rule being: the pre-nuke
+functionality is the requirement. Partial functionality through iteration is
+allowed — while the work iterates, UI features may be non-functional, partially
+functional, or broken (AMENDMENTS.html A10).</p>
+
+<div class="signoff">
+  <b>Signature:</b> unsigned — awaiting Enrra's review.
+</div>
+
+</div>

@@ -1,0 +1,221 @@
+<meta charset="utf-8">
+<title>Bible Amendments</title>
+<style>
+  :root {
+    --ground: #FAF9F6;
+    --surface: #F1EFEA;
+    --ink: #1F2125;
+    --ink-soft: #56534D;
+    --line: #DAD6CE;
+    --accent: #3D5A73;
+    --accent-soft: #E3EAF0;
+    --warn: #B3392B;
+    --warn-soft: #F3E3E0;
+    --code-bg: #ECEAE4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #17181B;
+      --surface: #1F2125;
+      --ink: #E8E6E1;
+      --ink-soft: #A9A59D;
+      --line: #35383E;
+      --accent: #8FA3B5;
+      --accent-soft: #232A31;
+      --warn: #E06A55;
+      --warn-soft: #3A2622;
+      --code-bg: #24262B;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #17181B;
+    --surface: #1F2125;
+    --ink: #E8E6E1;
+    --ink-soft: #A9A59D;
+    --line: #35383E;
+    --accent: #8FA3B5;
+    --accent-soft: #232A31;
+    --warn: #E06A55;
+    --warn-soft: #3A2622;
+    --code-bg: #24262B;
+  }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Segoe UI", -apple-system, system-ui, sans-serif;
+    font-size: 1.0rem;
+    line-height: 1.65;
+    margin: 0;
+  }
+  .page { max-width: 46rem; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+  h1, h2 { font-family: Cambria, Georgia, "Times New Roman", serif; text-wrap: balance; line-height: 1.2; }
+  h1 { font-size: 2.3rem; margin: 0.4rem 0 0.6rem; }
+  h2 { font-size: 1.5rem; margin: 3rem 0 0.8rem; padding-top: 1.6rem; border-top: 1px solid var(--line); }
+  h2 .secno { color: var(--accent); margin-right: 0.5rem; font-size: 1.1rem; vertical-align: 0.08rem; }
+  p { margin: 0.7rem 0; }
+  .eyebrow {
+    text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.72rem;
+    color: var(--accent); font-weight: 600;
+  }
+  .ribbon {
+    display: flex; flex-wrap: wrap; gap: 0.6rem 1.6rem; align-items: baseline;
+    border-block: 1px solid var(--line); padding: 0.6rem 0; margin: 1.4rem 0 2rem;
+    font-size: 0.84rem; color: var(--ink-soft);
+  }
+  .ribbon b { color: var(--ink); font-weight: 600; }
+  .status-chip {
+    background: var(--accent); color: var(--ground); border-radius: 2px;
+    padding: 0.1rem 0.55rem; font-size: 0.74rem; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  code {
+    font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+    font-size: 0.88em; background: var(--code-bg); border-radius: 3px; padding: 0.08em 0.35em;
+  }
+  ul, ol { padding-left: 1.2rem; }
+  li { margin: 0.4rem 0; }
+  .quiet { color: var(--ink-soft); font-size: 0.9rem; }
+  .ruling {
+    border: 2px solid var(--accent); border-radius: 4px; padding: 0.8rem 1.1rem;
+    margin: 1.2rem 0; background: var(--accent-soft);
+  }
+  .ruling .head { font-weight: 600; margin-bottom: 0.3rem; }
+  .signoff {
+    border: 2px solid var(--line); border-radius: 4px; padding: 0.9rem 1.1rem;
+    margin-top: 3rem; background: var(--surface);
+  }
+</style>
+
+<div class="page">
+
+<span class="eyebrow">Canonical documentation · amendments</span>
+<h1>Bible Amendments</h1>
+<div class="ribbon">
+  <span class="status-chip">Ruling record</span>
+  <span>Opened: <b>2026-08-23</b></span>
+  <span>Amends: <b>Core System Design · Mutation System Design</b></span>
+</div>
+
+<p>Rulings issued after the bible's signature, recorded here as ruling text of
+equal force. Each names the section it lands on; transfer into that section may
+follow. A ruling enters this document only by Enrra's word.</p>
+
+<div class="ruling">
+  <div class="head">A1 — The geometry class is named <code>BoardGeometry</code>.</div>
+  <p>Ruled by Enrra, 2026-08-23. Closes the naming open of Core §11; lands on
+  Core §3.</p>
+</div>
+
+<div class="ruling">
+  <div class="head">A2 — The win condition: killing the enemy's king ends the
+  fight in victory.</div>
+  <p>The enemy's king (the captain) dying is the win condition. Ruled by Enrra,
+  2026-08-23. New ground — no prior section states it; it lands with the fight
+  frame's document when that is authored.</p>
+</div>
+
+<div class="ruling">
+  <div class="head">A3 — The Move ability: free, asked by the existing moving
+  UI.</div>
+  <p>Moving costs nothing in this version. The <code>use_ability</code> ask for
+  Move is fired by the moving UI already in place; that UI is adapted as needed
+  to obtain the target slots and fire the event — the old system carries the
+  desired functionality. Ruled by Enrra, 2026-08-23. Lands on Core §7 and the
+  placement mutator's row (Mutation §4).</p>
+</div>
+
+<div class="ruling">
+  <div class="head">A4 — The allegiance fact is a direct reference to the
+  owning Side.</div>
+  <p>Every entity bears a member referencing the <code>Side</code> it belongs
+  to, stamped at construction as a birth fact and never rewritten. The read
+  "the holder's side" — the pay mutator's recipient among its users — returns
+  this member. World copies remap it under the established reference
+  discipline. Ruled by Enrra, 2026-08-23. Closes the allegiance open of Core
+  §11; lands on Core §3 and §5.</p>
+</div>
+
+<div class="ruling">
+  <div class="head">A5 — Command order, and when a fielded unit first acts.</div>
+  <p>Within a round, the enemy commands first, then the player. A unit acts in
+  the first combat span after it is fielded — fielded during a round's command
+  span, it acts in that same round's combat span. Ruled by Enrra, 2026-08-23.
+  Lands with the fight frame's document, beside A2.</p>
+</div>
+
+<div class="ruling">
+  <div class="head">A6 — The main action and the target poll.</div>
+  <p>The combat span's clock fires the ask event <code>act</code> at each
+  fielded unit in speed order. The main action is fixed Unit machinery with the
+  standard effect structure: trigger — event <code>act</code>, the
+  route-<code>source</code> + <code>is_holder</code> entry, and the baked
+  condition that the unit is untapped (not exhausted); targeting — the attack
+  resolver, deciding by BoardGeometry's attack-preference comparator, electing
+  one enemy unit; payload — the strike mutator. Acting has no cost: no pay
+  mutator, no engaged pair — the action triggers directly on the ask, and the
+  strike procedure's events are the happening record. The target poll is this
+  resolver's resolve phase, run at interactive idle for the previews (Core §4).
+  Ruled by Enrra, 2026-08-23. Lands on Core §1's Unit machinery and with the
+  fight frame's document.</p>
+</div>
+
+<div class="ruling">
+  <div class="head">A7 — The card file's envelope (ruling delegated).</div>
+  <p>One object per card: identity (<code>id</code>, display name); kind
+  (<code>unit</code> or <code>spell</code>, deciding the constructed type);
+  stats as a name→value map seeding construction, validated against the type's
+  declared lists; birth facts where the type bears them (building, elements);
+  <code>effects</code> — a list of the bible's effect markup (trigger,
+  targeting, payload); <code>abilities</code> — a list of the Core §7 ability
+  form. Relics and statuses use the same envelope minus kind. Parsing is the
+  Core §9 generic driver at file scope — strangers refused loudly. The slice
+  authors new files in this envelope; the existing catalogue converts at the
+  parity migration. Approved conditionally by Enrra, 2026-08-23 — <b>the
+  ruling's detail is delegated to the contractor's judgment</b>; deviations of
+  detail within this envelope are lawful, its outer shape is ruled.</p>
+</div>
+
+<div class="ruling">
+  <div class="head">A8 — Roster growth for the slice.</div>
+  <p>The condition roster (Core §9, Open 8) gains:</p>
+  <ul>
+    <li><code>name_is</code> — EventDataCondition, members <code>role</code>
+        and <code>name</code>; true when the occasion carries a
+        <code>NameEventData</code> of that role bearing that name. States the
+        kind the §9 example and the baked ability-name condition already
+        use.</li>
+    <li><code>is_ally</code> / <code>is_enemy</code> — EntityCondition, no
+        members; the subject's allegiance (A4) compared to the holder's.</li>
+    <li><code>is_unit</code> — EntityCondition, no members; a type check.</li>
+    <li><code>houses_me</code> — EntityCondition, no members; true when the
+        subject owns the container housing the holder.</li>
+  </ul>
+  <p>Open 2, for the slice's types: no container is added beyond the declared —
+  statuses ride <code>contained</code> (Mutation §7); the open stays open for
+  future content. Ruled by Enrra, 2026-08-23. Lands on Core §9's roster and
+  §2.</p>
+</div>
+
+<div class="ruling">
+  <div class="head">A9 — Move's appointment.</div>
+  <p>Machinery appoints the Move ability on every unit at construction —
+  conditionally: buildings do not receive it. Ruled by Enrra, 2026-08-23.
+  Completes A3; lands on Core §7.</p>
+</div>
+
+<div class="ruling">
+  <div class="head">A10 — UI is out of the contract's scope.</div>
+  <p>UI is out of scope for the contract, with the only rule being: the
+  pre-nuke functionality is the requirement. Partial functionality through
+  iteration is allowed — while the work iterates, UI features may be
+  non-functional, partially functional, or broken. Ruled by Enrra,
+  2026-08-23.</p>
+</div>
+
+<div class="signoff">
+  <b>Signature:</b> signed off — Enrra, 2026-08-23, covering A1–A10.
+  A ruling recorded after this signature enters with its own dated signature
+  line.
+</div>
+
+</div>

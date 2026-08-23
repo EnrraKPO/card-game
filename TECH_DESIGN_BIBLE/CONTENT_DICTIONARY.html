@@ -1,0 +1,179 @@
+<meta charset="utf-8">
+<title>Content Dictionary</title>
+<style>
+  :root {
+    --ground: #FAF9F6;
+    --surface: #F1EFEA;
+    --ink: #1F2125;
+    --ink-soft: #56534D;
+    --line: #DAD6CE;
+    --accent: #3D5A73;
+    --accent-soft: #E3EAF0;
+    --warn: #B3392B;
+    --warn-soft: #F3E3E0;
+    --code-bg: #ECEAE4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #17181B;
+      --surface: #1F2125;
+      --ink: #E8E6E1;
+      --ink-soft: #A9A59D;
+      --line: #35383E;
+      --accent: #8FA3B5;
+      --accent-soft: #232A31;
+      --warn: #E06A55;
+      --warn-soft: #3A2622;
+      --code-bg: #24262B;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #17181B;
+    --surface: #1F2125;
+    --ink: #E8E6E1;
+    --ink-soft: #A9A59D;
+    --line: #35383E;
+    --accent: #8FA3B5;
+    --accent-soft: #232A31;
+    --warn: #E06A55;
+    --warn-soft: #3A2622;
+    --code-bg: #24262B;
+  }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Segoe UI", -apple-system, system-ui, sans-serif;
+    font-size: 1.0rem;
+    line-height: 1.65;
+    margin: 0;
+  }
+  .page { max-width: 50rem; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+  h1, h2 { font-family: Cambria, Georgia, "Times New Roman", serif; text-wrap: balance; line-height: 1.2; }
+  h1 { font-size: 2.3rem; margin: 0.4rem 0 0.6rem; }
+  h2 { font-size: 1.5rem; margin: 3rem 0 0.8rem; padding-top: 1.6rem; border-top: 1px solid var(--line); }
+  p { margin: 0.7rem 0; }
+  .eyebrow {
+    text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.72rem;
+    color: var(--accent); font-weight: 600;
+  }
+  .ribbon {
+    display: flex; flex-wrap: wrap; gap: 0.6rem 1.6rem; align-items: baseline;
+    border-block: 1px solid var(--line); padding: 0.6rem 0; margin: 1.4rem 0 2rem;
+    font-size: 0.84rem; color: var(--ink-soft);
+  }
+  .ribbon b { color: var(--ink); font-weight: 600; }
+  .status-chip {
+    background: var(--accent); color: var(--ground); border-radius: 2px;
+    padding: 0.1rem 0.55rem; font-size: 0.74rem; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  code {
+    font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+    font-size: 0.88em; background: var(--code-bg); border-radius: 3px; padding: 0.08em 0.35em;
+  }
+  table { border-collapse: collapse; margin: 1rem 0; width: 100%; }
+  th, td { border: 1px solid var(--line); padding: 0.45rem 0.7rem; text-align: left; font-size: 0.93rem; vertical-align: top; }
+  th { background: var(--surface); font-weight: 600; }
+  .quiet { color: var(--ink-soft); font-size: 0.9rem; }
+</style>
+
+<div class="page">
+
+<span class="eyebrow">Canonical documentation · content registry</span>
+<h1>Content Dictionary</h1>
+<div class="ribbon">
+  <span class="status-chip">Living registry</span>
+  <span>Opened: <b>2026-08-23</b> (Enrra's order)</span>
+  <span>Authority for demands: <b>the bible + AMENDMENTS.html</b></span>
+</div>
+
+<p>The registry of approved content. Content authoring is mostly free; this
+dictionary is the handle on it, because content drives engineering — a card
+that needs a condition kind, a mutator, an event name, or a container the
+rosters lack is making an engineering demand. The rule: <b>a content piece
+whose demands are not all ruled is not authorable</b>; the demand surfaces for
+ruling first, and the ruling lands in AMENDMENTS.html. The dictionary records,
+per piece, exactly what it stands on — so every roster entry traces to the
+content that demanded it, and no mechanism enters through a card unseen.</p>
+
+<h2>The slice set</h2>
+<p class="quiet">Working labels from the implementation plan; authored names
+are Enrra's at content sign-off. Status "proposed" = named in the unsigned
+plan; a piece turns "approved" on Enrra's word.</p>
+
+<table>
+  <tr><th>Piece</th><th>Type</th><th>What it does</th><th>Engineering it stands on</th><th>Status</th></tr>
+  <tr>
+    <td>Squire</td><td>Unit</td>
+    <td>A plain striker — main action only.</td>
+    <td>The fixed machinery (A6); nothing further.</td>
+    <td>proposed</td>
+  </tr>
+  <tr>
+    <td>Sentinel</td><td>Unit</td>
+    <td>A building: never dodges, rooted.</td>
+    <td>The building birth fact in the envelope (A7); strike's building rule
+        (Mutation §7); no Move appointment (A9).</td>
+    <td>proposed</td>
+  </tr>
+  <tr>
+    <td>Cleric</td><td>Unit</td>
+    <td>Bears <b>Heal</b>: cost, hand-picked ally unit, positive health stat
+        mutation.</td>
+    <td>Ability expansion (Core §7); <code>is_ally</code>,
+        <code>is_unit</code> (A8); hand-pick decision (Core §4); health cap
+        arithmetic in the WriteAuthority.</td>
+    <td>proposed</td>
+  </tr>
+  <tr>
+    <td>Venom Adder</td><td>Unit</td>
+    <td>On play, applies <b>Poison</b> to a hand-picked enemy unit.</td>
+    <td>Status mutator + StatusProcedure (Mutation §4, §7);
+        <code>is_enemy</code>, <code>is_unit</code> (A8); the Poison status
+        below.</td>
+    <td>proposed</td>
+  </tr>
+  <tr>
+    <td>Poison</td><td>Status</td>
+    <td>At its holder's moment, damages the unit carrying it, per its stacks;
+        the damage carries the poison kind.</td>
+    <td><code>houses_me</code> (A8); the <code>act</code> event (Combat Frame
+        §6, signed); damage mutator; stacks as a stat on the status.</td>
+    <td>proposed</td>
+  </tr>
+  <tr>
+    <td>Avenger</td><td>Unit</td>
+    <td>When an allied unit dies, its attack rises.</td>
+    <td><code>died</code> event (Mutation §8); <code>is_ally</code> (A8);
+        stat-mutation mutator.</td>
+    <td>proposed</td>
+  </tr>
+  <tr>
+    <td>Fireball</td><td>Spell</td>
+    <td>Damages a hand-picked enemy unit; buried by its play.</td>
+    <td><code>is_enemy</code>, <code>is_unit</code> (A8); damage mutator; spell
+        burial (Core §6).</td>
+    <td>proposed</td>
+  </tr>
+  <tr>
+    <td>Hourglass</td><td>Relic</td>
+    <td>When the player fields a unit, draw a card.</td>
+    <td><code>fielded</code> event (Core §2); <code>is_ally</code> (A8); draw
+        mutator.</td>
+    <td>proposed</td>
+  </tr>
+  <tr>
+    <td>The enemy set</td><td>Units</td>
+    <td>Mirrored small set, one unit deciding by stat rank, plus the enemy
+        king — its death ends the fight (A2).</td>
+    <td>Stat-ranked decision (Core §4); the king fact and fight ending
+        (Combat Frame §1, signed).</td>
+    <td>proposed</td>
+  </tr>
+</table>
+
+<p class="quiet">New pieces append; a piece's row updates only its status and
+its demands' citations. Pieces beyond the slice enter as parity content is
+defined.</p>
+
+</div>
