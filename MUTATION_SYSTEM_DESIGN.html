@@ -1,0 +1,639 @@
+<meta charset="utf-8">
+<title>Mutation System Design</title>
+<style>
+  :root {
+    --ground: #FAF9F6;
+    --surface: #F1EFEA;
+    --ink: #1F2125;
+    --ink-soft: #56534D;
+    --line: #DAD6CE;
+    --accent: #3D5A73;
+    --accent-soft: #E3EAF0;
+    --warn: #B3392B;
+    --warn-soft: #F3E3E0;
+    --code-bg: #ECEAE4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #17181B;
+      --surface: #1F2125;
+      --ink: #E8E6E1;
+      --ink-soft: #A9A59D;
+      --line: #35383E;
+      --accent: #8FA3B5;
+      --accent-soft: #232A31;
+      --warn: #E06A55;
+      --warn-soft: #3A2622;
+      --code-bg: #24262B;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #17181B;
+    --surface: #1F2125;
+    --ink: #E8E6E1;
+    --ink-soft: #A9A59D;
+    --line: #35383E;
+    --accent: #8FA3B5;
+    --accent-soft: #232A31;
+    --warn: #E06A55;
+    --warn-soft: #3A2622;
+    --code-bg: #24262B;
+  }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Segoe UI", -apple-system, system-ui, sans-serif;
+    font-size: 1.0rem;
+    line-height: 1.65;
+    margin: 0;
+  }
+  .page { max-width: 46rem; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+  h1, h2, h3 { font-family: Cambria, Georgia, "Times New Roman", serif; text-wrap: balance; line-height: 1.2; }
+  h1 { font-size: 2.3rem; margin: 0.4rem 0 0.6rem; }
+  h2 { font-size: 1.5rem; margin: 3rem 0 0.8rem; padding-top: 1.6rem; border-top: 1px solid var(--line); }
+  h2 .secno { color: var(--accent); margin-right: 0.5rem; font-size: 1.1rem; vertical-align: 0.08rem; }
+  h3 { font-size: 1.1rem; margin: 1.6rem 0 0.5rem; }
+  p { margin: 0.7rem 0; }
+  .eyebrow {
+    text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.72rem;
+    color: var(--accent); font-weight: 600;
+  }
+  .ribbon {
+    display: flex; flex-wrap: wrap; gap: 0.6rem 1.6rem; align-items: baseline;
+    border-block: 1px solid var(--line); padding: 0.6rem 0; margin: 1.4rem 0 2rem;
+    font-size: 0.84rem; color: var(--ink-soft);
+  }
+  .ribbon b { color: var(--ink); font-weight: 600; }
+  .status-chip {
+    background: var(--accent); color: var(--ground); border-radius: 2px;
+    padding: 0.1rem 0.55rem; font-size: 0.74rem; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .chain {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 4px;
+    padding: 0.9rem 1.1rem; margin: 1rem 0; text-align: center;
+    font-size: 1.02rem;
+  }
+  .chain b { color: var(--accent); }
+  code {
+    font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+    font-size: 0.88em; background: var(--code-bg); border-radius: 3px; padding: 0.08em 0.35em;
+  }
+  pre {
+    overflow-x: auto; background: var(--code-bg); border-radius: 3px;
+    padding: 0.6rem 0.8rem; margin: 0.8rem 0;
+    font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+    font-size: 0.82rem; line-height: 1.5;
+  }
+  ul, ol { padding-left: 1.2rem; }
+  li { margin: 0.4rem 0; }
+  .quiet { color: var(--ink-soft); font-size: 0.9rem; }
+  s, .scratch { text-decoration: line-through; text-decoration-color: var(--warn); opacity: 0.55; }
+  .amendment {
+    border: 2px solid var(--warn); border-radius: 4px; padding: 0.8rem 1.1rem;
+    margin: 1.2rem 0; background: var(--warn-soft);
+  }
+  .signoff {
+    border: 2px solid var(--line); border-radius: 4px; padding: 0.9rem 1.1rem;
+    margin-top: 3rem; background: var(--surface);
+  }
+  table { border-collapse: collapse; margin: 1rem 0; width: 100%; }
+  th, td { border: 1px solid var(--line); padding: 0.45rem 0.7rem; text-align: left; font-size: 0.93rem; }
+  th { background: var(--surface); font-weight: 600; }
+</style>
+
+<div class="page">
+
+<span class="eyebrow">Development instructions · the write system</span>
+<h1>Mutation System Design</h1>
+<div class="ribbon">
+  <span class="status-chip">Draft — awaiting signature</span>
+  <span>Authored: <b>2026-08-23</b></span>
+  <span>Replaces: <b>MUTATION_INSTRUCTIONS.html (The Mutation of Facts III, retired to record)</b></span>
+  <span>Reference: <b>CORE_SYSTEM_DESIGN.html — one system, two documents</b></span>
+</div>
+
+<p>Scope: the write machinery — how the game changes its facts. The mutator, the
+request, the engine and its procedures, the WriteAuthority, the conductor's run,
+the act and the holster, the presentation pause, and the gather. The entity
+types, containers, the board, the target resolver, the play road, abilities, the
+event structure, and conditions are Core System.</p>
+
+<h2><span class="secno">§1</span> The system at a glance</h2>
+<div class="chain">
+  an <b>event</b> fires &nbsp;→&nbsp; the cascade gathers the <b>roster</b> &nbsp;→&nbsp;
+  the <b>conductor</b> runs each effect &nbsp;→&nbsp; each <b>mutator</b> issues
+  &nbsp;→&nbsp; the <b>MutationEngine</b> dispatches &nbsp;→&nbsp; <b>procedures</b>
+  resolve &nbsp;→&nbsp; the <b>WriteAuthority</b> commits &nbsp;→&nbsp; <b>events</b>
+  return to the <b>holster</b> &nbsp;→&nbsp; the boundary fires them depth-first
+</div>
+<p>One effect firing, end to end:</p>
+<ol>
+  <li>An event fires. The cascade gathers every eligible effect into the <b>roster</b>
+      (§12) and runs it in order, one effect at a time, each through the
+      <b>EffectConductor</b>.</li>
+  <li>The conductor engages the effect's target resolution (Core §4), cues the
+      windup, pauses the presenter, and delivers the effect's <b>payload</b> —
+      the unique mutators once, then every mutator per recipient — handing each
+      issuance the <b>plate</b> of facts.</li>
+  <li>Each mutator reasons over its plate and submits zero or more
+      <b>EngineRequests</b> to the <b>MutationEngine</b>.</li>
+  <li>The engine hands each request to the <b>procedure</b> that claims its shape.
+      The procedure resolves it into writes committed through the
+      <b>WriteAuthority</b>, issues its presentation cues at commit (§10), and
+      returns the mutation's events. Submission is synchronous.</li>
+  <li>Events travel back by return into the delivery's <b>holster</b>. The conductor
+      unpauses the presenter at the contact cue — the held cues play — cues the
+      conclusion, and returns. The cascade fires the holster's events at the act
+      boundary, depth-first (§9).</li>
+</ol>
+
+<figure style="margin: 1.6rem 0;">
+<svg viewBox="0 0 740 600" role="img" style="max-width: 100%; height: auto; display: block;"
+     aria-label="Flow chart of one payload delivery: asks flow down from cascade to conductor to mutator to engine to procedure to WriteAuthority; a procedure may apply another procedure inside the same mutation; events travel back up by return into the holster, fired depth-first at the act boundary; procedures issue cues at commit to the world's presentation outlet, which the paused presenter holds until the contact cue.">
+  <defs>
+    <marker id="m-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+    </marker>
+    <marker id="m-acc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent)"/>
+    </marker>
+  </defs>
+
+  <!-- the spine: forward asks -->
+  <g fill="var(--surface)" stroke="currentColor" stroke-width="1.2">
+    <rect x="40" y="16"  width="300" height="56" rx="4"/>
+    <rect x="40" y="112" width="300" height="56" rx="4"/>
+    <rect x="40" y="208" width="300" height="56" rx="4"/>
+    <rect x="40" y="304" width="300" height="56" rx="4"/>
+    <rect x="40" y="400" width="300" height="72" rx="4"/>
+    <rect x="40" y="512" width="300" height="68" rx="4"/>
+  </g>
+  <g text-anchor="middle" font-size="13" font-weight="600" fill="currentColor">
+    <text x="190" y="38">CombatCascade</text>
+    <text x="190" y="134">EffectConductor</text>
+    <text x="190" y="230">Mutator</text>
+    <text x="190" y="326">MutationEngine</text>
+    <text x="190" y="422">EngineProcedure</text>
+    <text x="190" y="534">WriteAuthority</text>
+  </g>
+  <g text-anchor="middle" font-size="11" fill="var(--ink-soft)">
+    <text x="190" y="56">fires events · gathers the roster · opens the delivery</text>
+    <text x="190" y="152">engages targets · plays the cues · pauses the presenter</text>
+    <text x="190" y="248">reasons over the plate · the only minter of requests</text>
+    <text x="190" y="344">one decision: dispatch each request by its shape</text>
+    <text x="190" y="440">resolves the happening into writes and events</text>
+    <text x="190" y="456">may apply another procedure — same mutation</text>
+    <text x="190" y="552">commits every change of fact</text>
+    <text x="190" y="568">the decision-free primitives · arithmetic in one place</text>
+  </g>
+
+  <g stroke="currentColor" stroke-width="1.4" fill="none">
+    <line x1="115" y1="72"  x2="115" y2="110" marker-end="url(#m-ink)"/>
+    <line x1="115" y1="168" x2="115" y2="206" marker-end="url(#m-ink)"/>
+    <line x1="115" y1="264" x2="115" y2="302" marker-end="url(#m-ink)"/>
+    <line x1="115" y1="360" x2="115" y2="398" marker-end="url(#m-ink)"/>
+    <line x1="115" y1="472" x2="115" y2="510" marker-end="url(#m-ink)"/>
+    <path d="M 40 424 C 12 424 12 452 38 452" marker-end="url(#m-ink)"/>
+  </g>
+  <g font-size="12" fill="currentColor">
+    <text x="127" y="96">runs the roster</text>
+    <text x="127" y="192">a plate per issuance</text>
+    <text x="127" y="288">submit(request)</text>
+    <text x="127" y="384">the claimed shape</text>
+    <text x="127" y="496">primitive writes</text>
+  </g>
+
+  <!-- events travel by return -->
+  <g stroke="var(--accent)" stroke-width="1.4" fill="none">
+    <line x1="265" y1="208" x2="265" y2="170" marker-end="url(#m-acc)"/>
+    <line x1="265" y1="304" x2="265" y2="266" marker-end="url(#m-acc)"/>
+    <line x1="265" y1="400" x2="265" y2="362" marker-end="url(#m-acc)"/>
+    <line x1="265" y1="512" x2="265" y2="474" marker-end="url(#m-acc)"/>
+    <path d="M 340 132 H 514" marker-end="url(#m-acc)"/>
+    <path d="M 620 90 V 44 H 350" marker-end="url(#m-acc)"/>
+  </g>
+  <g font-size="12" fill="var(--accent)">
+    <text x="350" y="192">issue() returns the events</text>
+    <text x="350" y="288">the mutation's events</text>
+    <text x="350" y="384">+ procedure events (struck, dodged)</text>
+    <text x="350" y="494">fact events — where content cares</text>
+    <text x="428" y="124" text-anchor="middle">the delivery's events, collected</text>
+    <text x="484" y="36" text-anchor="middle">fired depth-first at the act boundary</text>
+  </g>
+  <rect x="520" y="90" width="200" height="60" rx="4" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.2"/>
+  <text x="620" y="112" text-anchor="middle" font-size="13" font-weight="600" fill="currentColor">The holster</text>
+  <text x="620" y="130" text-anchor="middle" font-size="11" fill="var(--ink-soft)">pending events of the delivery</text>
+
+  <!-- cues: issued at commit, held by the pause -->
+  <g stroke="currentColor" stroke-width="1.4" stroke-dasharray="4 3" fill="none" opacity="0.85">
+    <path d="M 340 436 H 514" marker-end="url(#m-ink)"/>
+  </g>
+  <g font-size="12" font-style="italic" fill="var(--ink-soft)">
+    <text x="420" y="428" text-anchor="middle">cues at commit, fire-and-forget</text>
+    <text x="630" y="500">paused during delivery;</text>
+    <text x="630" y="516">plays at the contact cue</text>
+  </g>
+  <g fill="var(--surface)" stroke="currentColor" stroke-width="1.2">
+    <rect x="520" y="406" width="200" height="72" rx="4"/>
+  </g>
+  <g text-anchor="middle" font-size="13" font-weight="600" fill="currentColor">
+    <text x="620" y="428">The world's outlet</text>
+  </g>
+  <g text-anchor="middle" font-size="11" fill="var(--ink-soft)">
+    <text x="620" y="446">live world: the presenter</text>
+    <text x="620" y="462">simulated world: deaf</text>
+  </g>
+</svg>
+<figcaption class="quiet" style="margin-top: 0.5rem;">The write road of one payload
+delivery. Asks flow down the spine; events travel back by return (accent) into the
+delivery's holster, fired depth-first at the act boundary; procedures issue cues at
+commit (dashed) to the world's presentation outlet, held by the presenter's pause
+until the contact cue.</figcaption>
+</figure>
+
+<h2><span class="secno">§2</span> Effects are rules</h2>
+<p><b>An effect is a rule of the game.</b> The machinery's effects are the base
+rules; cards, relics, and statuses add rules on top. Every effect enters the flow
+by one road: its trigger.</p>
+<ul>
+  <li><b>The Game entity holds the base rules.</b> It holds the machinery's
+      effects and bears the game's stats — the numbers the base rules consume
+      (mana refill, draws per turn, the strike numbers of §7). A rule that tunes
+      the game writes those stats through the road as any stat mutation.</li>
+  <li><b>Every write originates in an effect's payload delivery.</b> Machinery
+      dispatches no payloads. It fires <b>first-mover events</b> — the turn
+      clock, the player's asks (Core §7) — and its effects react.</li>
+  <li><b>The audience is everything that exists.</b> The cascade polls every
+      effect holder in the world — deck, hand, and graveyard units included.
+      Every effect of a unit carries the implied default condition <i>the holder
+      is fielded</i> (housed in a slot's <code>slotted_unit</code>, Core §2),
+      which an authored form may explicitly remove; a non-fielded unit's effects
+      fire only when it does. The condition binds units; holders that are not
+      units are untouched by it. (The removal's authored syntax is out of frame —
+      §14.)</li>
+</ul>
+
+<h2><span class="secno">§3</span> The payload</h2>
+<p>The payload is a bare typed list on the effect — a bundle of mutators delivered
+together:</p>
+<pre>var payload: Array[Mutator]</pre>
+<p>Parse validation belongs to the effect's parser, delivery belongs to the
+conductor. One delivery of a payload is the
+unit of issuance and the scope of the holster (§9).</p>
+<p><b>The authored form</b> is a <code>"payload"</code> array on the effect. Each
+entry names one mutator: a string where the mutator takes no authored parameters
+(<code>"strike"</code>), an object naming the mutator with its typed parameters where
+it does (<code>{"stat_mutation": {"stat": "speed", "delta": 3}}</code>). The parser
+refuses strangers.</p>
+
+<h2><span class="secno">§4</span> The mutator</h2>
+<p>A mutator turns an intent — authored by content or constructed by machinery — into
+concrete requests, using the facts of the firing. <b>A mutator is the only thing that
+issues requests.</b> One ask is one request, one mutation, one provenance — the
+mutator's kind.</p>
+<ul>
+  <li><b>The kind.</b> Every mutator carries a <b>kind</b>: a
+      <code>StringName</code>, its name in the roster below. An authored
+      mutator's kind is its authored name (§3); machinery-only mutators are
+      named the same way, their names just never appear in markup. The kind is
+      the provenance: everything that carries provenance carries this string,
+      and the mutator object itself never travels.</li>
+  <li><b>Internals are unbounded code.</b> A mutator may read anything and reason
+      however it likes before speaking. The strike mutator asks that the recipient be
+      struck; the draw mutator reads the deck's top from the world and asks that the
+      card move to hand. Markup stays flat, and a new capability is a new mutator in
+      code, never new authoring vocabulary.</li>
+  <li><b>Contract:</b> <code>issue(plate, recipient) → events</code>. Invoked by the
+      conductor; submits zero, one, or several requests and returns the events those
+      mutations produced.</li>
+  <li><b>Mutator-to-procedure is many-to-few.</b> Differently-reasoning mutators may
+      all conclude in the same request type.</li>
+  <li><b>The unique quality.</b> A kind may declare itself <b>unique</b> (Core §4):
+      the conductor runs it once per delivery, before the per-recipient walk, with a
+      null recipient; the mutator appoints its own target from the plate. The
+      conductor reads only the declaration.</li>
+  <li><b>Destination addressing.</b> A mover mutator's recipient is the
+      destination's owner; the container name is fixed in the kind where the kind
+      serves one destination (placement → <code>slotted_unit</code>, burial →
+      <code>graveyard</code>), or is a declared typed member on a general
+      container-move kind (Core §2).</li>
+  <li><b>Lifecycle: stateless immutable instances.</b> A mutator is constructed once —
+      at parse for an authored effect, in code for a machinery effect — and holds only
+      its authored parameters; every situational fact arrives on the plate. One
+      instance is shared across card copies and simulated worlds. Anything that needs
+      memory is a world fact.</li>
+</ul>
+
+<h3>The roster</h3>
+<p>A mutator exists for each way the game asks for change. Content names an
+effect's payload mutators; machinery's effects carry mutators constructed in
+code. The build-one roster:</p>
+<table>
+  <tr><th>Mutator</th><th>Authored form</th><th>Concludes in</th></tr>
+  <tr><td>strike</td><td><code>"strike"</code> — no parameters</td><td>StrikeRequest</td></tr>
+  <tr><td>stat mutation</td><td><code>{"stat_mutation": {"stat": StringName, "delta": int}}</code></td><td>StatMutationRequest</td></tr>
+  <tr><td>damage</td><td><code>{"damage": {"amount": int}}</code></td><td>DamageRequest</td></tr>
+  <tr><td>status</td><td><code>{"status": {"id": StringName, "stacks": int}}</code></td><td>StatusRequest</td></tr>
+  <tr><td>draw</td><td><code>{"draw": {"count": int}}</code></td><td>ContainerMoveRequest</td></tr>
+  <tr><td>burial</td><td>machinery only — never authored</td><td>ContainerMoveRequest</td></tr>
+  <tr><td>pay</td><td>machinery only — never authored; unique</td><td>PayCostRequest</td></tr>
+  <tr><td>placement</td><td>machinery only — never authored; serves placement and
+      the Move ability (Core §6, §7)</td><td>ContainerMoveRequest</td></tr>
+</table>
+<p>Every roster parameter is required and typed: an authored entry states every
+parameter of its mutator, and an entry omitting one fails parse — a draw of
+one is authored <code>{"draw": {"count": 1}}</code>, a single grant
+<code>"stacks": 1</code>. Identifiers are <code>StringName</code>, quantities
+<code>int</code>.</p>
+
+<h2><span class="secno">§5</span> The plate</h2>
+<p>Because mutator internals are unbounded, mutator inputs cannot be enumerated.
+Instead, every issuance receives the same closed set of facts. The plate carries
+two:</p>
+<ul>
+  <li><b>The occasion</b> — the event that fired the effect.</li>
+  <li><b>The holder</b> — who holds the firing effect. The world is reached
+      through the holder's world back-reference (Core §1), and every question
+      about game state is answerable through it — which is what lets the plate
+      stay closed.</li>
+</ul>
+<p><b>The recipient</b> — whom this issuance lands on — is a separate typed input
+beside the plate, supplied by the conductor's walk; a unique mutator's recipient
+is null (§4). </p>
+
+<h2><span class="secno">§6</span> The EngineRequest</h2>
+<p>What a mutator issues, and what the engine receives. The facts changing is the
+mutation; this object is the asking — <b>minting a request is the act of asking</b>,
+and only mutators mint. It is a dumb data record: a base class carrying the context
+bundle common to every request, and one subclass per procedure, named by the
+happening it asks for, carrying that procedure's parameters as typed members.</p>
+<pre>class_name EngineRequest          # the base: the context bundle
+    var mutator_kind: StringName  # the manner of the asking — the kind IS the provenance
+    var source: GameEntity        # the holder it came from
+    var target: GameEntity        # whom it addresses; null = no target entity exists
+
+class StatMutationRequest extends EngineRequest:
+    var stat: StringName
+    var delta: int
+
+class StrikeRequest extends EngineRequest:
+    pass                          # the striker is the source; the strike procedure
+                                  #   reads its attack (§7)
+
+class DamageRequest extends EngineRequest:
+    var amount: int</pre>
+<ul>
+  <li><b>The subclass type is the verb.</b> Routing is the type; parameters are typed
+      members.</li>
+  <li><b>The parameter contract has two parties:</b> the mutators that speak the verb
+      fill the members; the procedure that claims it reads them. The engine transports
+      without reading.</li>
+  <li><b>A request is complete at construction.</b> Context is stamped at issuance and
+      travels unmodified; a null context slot states that the party genuinely does not
+      exist — never "unknown."</li>
+  <li><b>The context bundle is a floor.</b> A request may carry more than the three
+      slots; the extension mechanism is future work (§14).</li>
+</ul>
+
+<h2><span class="secno">§7</span> The MutationEngine and its procedures</h2>
+<p>The MutationEngine is the single entry point for every mutation in the game. The
+doorway is <code>MutationEngine.submit(request)</code> — static; synchronous,
+returning the mutation's events. Requests are self-sufficient, so one doorway serves
+the live fight and every simulated world. The doorway refuses loudly: a request no
+procedure claims, or a null target where the verb requires one, is an error at
+submission — never a silent drop — with the type system closing what it can before
+runtime. Only mutators mint requests, and only the conductor engages mutators, so no
+submitter exists outside an open delivery.</p>
+<p><b>A procedure is the game's way of resolving one kind of happening into writes and
+events.</b> A procedure is a fixed part of the engine, stateless — all state lives in
+the world's facts — and owns one request shape. Its signature is its typed parameters
+plus the originating request as context; its events are stamped from that context. In
+code, the base class is <code>EngineProcedure</code>; each concrete procedure is named
+by the happening it resolves, and its request pairs with it by that name.</p>
+<ul>
+  <li><b>The engine has its procedures fixed in code, as a class has its parts.</b>
+      Its one decision is handing each request to the procedure that claims its shape;
+      every other decision is made before submission, by a mutator, or during
+      resolution, by a procedure. A new happening enters as one new procedure and its
+      request; nothing existing changes.</li>
+  <li><b>A procedure has two entrances, one body.</b> <i>Asked:</i> a mutator issues
+      the procedure's request; the procedure unpacks it and runs. <i>Applied:</i> a
+      procedure, mid-resolution, runs another procedure directly, passing the
+      parameters it computed and the request already in its hand. Both entrances run
+      the same body, produce the same events, stamp the same way.</li>
+  <li><b>Application stays inside the one mutation.</b> No request is minted on the
+      applied path. The applying procedure's request travels down as context, so
+      provenance stays singular: a burn's damage carries the burn kind, a strike's
+      damage carries the strike kind, and the damaged event is produced identically
+      on either path.</li>
+  <li><b>A procedure applies a procedure only when the applied happening happens.</b>
+      Damage happens inside a connecting strike, so the strike procedure applies the
+      damage procedure. Where only a raw write happens, a procedure uses a
+      WriteAuthority primitive (§8).</li>
+  <li><b>Every decision lives in a procedure; a primitive never decides.</b> A
+      procedure may hold much law, little, or none.</li>
+</ul>
+<table>
+  <tr><th>Procedure</th><th>Request shape</th><th>Resolution</th></tr>
+  <tr><td><b>StatMutationProcedure</b></td><td>target · stat · delta</td>
+      <td>Applies the delta. Serves stat changes, mana refill, exhaustion.</td></tr>
+  <tr><td><b>StrikeProcedure</b></td><td>target (striker = the source)</td>
+      <td>Dodge, crit, amount read from the striker's attack; a connecting strike
+      applies damage. The mechanics below.</td></tr>
+  <tr><td><b>DamageProcedure</b></td><td>target · amount</td>
+      <td>Shield absorbs first, remainder to health.</td></tr>
+  <tr><td><b>StatusProcedure</b></td><td>target · status_id · stacks</td>
+      <td>A target not carrying the status has the object minted and inserted into
+      its <code>contained</code>; a target already carrying it has the stacks
+      added.</td></tr>
+  <tr><td><b>ContainerMoveProcedure</b></td><td>target · destination (owner entity +
+      container name)</td>
+      <td>Removes the target from its housing, inserts it at the destination.
+      Draw, burial, discard, placement, movement. Stamps origin and destination
+      housing on its event (Core §2); produces <code>fielded</code> when the
+      destination is a <code>slotted_unit</code> container and the stamped origin
+      housing is not.</td></tr>
+  <tr><td><b>PayCostProcedure</b></td><td>target (the paying side) · mana · tap</td>
+      <td>Commits the cost — mana down on the target side, tap spent on the source —
+      and produces the engaged event — <code>play_engaged</code> for the play,
+      <code>ability_used</code> for an ability use, the ability's name carried
+      forward (Core §7).</td></tr>
+</table>
+<p>The roster covers every write the game performs today; a happening it does not
+yet speak enters by the rule above — one new procedure and its request.</p>
+
+<h3>The strike mechanics</h3>
+<p><b>The chance formula, shared by dodge and crit:</b> chance = base + own Speed ×
+speed rating + difference rating × max(0, Speed difference), capped. The difference
+term is one-sided: only a positive difference contributes. Dodge rolls from the
+defender (difference = defender minus attacker); crit rolls from the attacker
+(difference = attacker minus defender). Rolls draw from the world's seeded rng.</p>
+<p><b>Dodge</b> rolls first. A dodge ends the strike — no damage, no crit — and
+produces the <code>dodged</code> event. Buildings never dodge.</p>
+<p><b>Crit</b> rolls only on a connecting strike whose damage, after mitigation, is
+above zero. On success the damage is multiplied by the crit multiplier (flat,
+capped) and the <code>crit</code> event is produced. Buildings crit and are crit
+normally.</p>
+<p><b>The pipeline, fixed:</b> dodge → (interception — out of frame, slot
+reserved) → crit → damage.</p>
+<p><b>The numbers are stats of the Game entity</b> — per mechanic: base, speed
+rating, difference rating, cap; plus the crit multiplier and its cap. Seeded from
+data at construction, mutable through the road like any stat. The seeds: dodge —
+0% base, 1% per Speed, 4% per difference point, 75% cap; crit — 5% base, 1% per
+Speed, 0% per difference point, 75% cap, multiplier ×2.0, multiplier cap ×5.0.</p>
+
+<h2><span class="secno">§8</span> The WriteAuthority</h2>
+<p><b>Every change to a game fact goes through the WriteAuthority.</b> No bypass, from
+any origin. It performs writes and decides nothing. It is static, matching the
+engine: requests are self-sufficient and all state lives in the world's facts, so one
+authority serves the live fight and every simulated world.</p>
+<ul>
+  <li><b>Its primitives are exactly four</b> — the stat write, container insert,
+      container remove, and mint — each existing exactly once. The four are an
+      ontology of world structure: a <b>number</b> (the stat write), a
+      <b>membership</b> (insert, remove), an <b>existence</b> (mint). The roster
+      grows only when a procedure needs a decision-free write no primitive covers;
+      per-container law stays above the primitives, in procedures. Primitive
+      signatures are pinned when procedures are written against them. The
+      membership primitives are the only writers of container members, and they
+      maintain the housed entity's back-reference on every write (Core §2).</li>
+  <li><b>It owns each fact's arithmetic</b> — floors, caps, whatever governs a
+      specific fact's committed value — in exactly one place. Arithmetic bounds the
+      write's performance; it is not a decision.</li>
+  <li><b>It may produce events on the writes it performs</b> — health reaching zero
+      produces <code>died</code>. A fact event exists only where content cares:
+      none is issued ahead of need, and any fact mutation, crossing or plain
+      change, bears one the moment something cares about it.</li>
+  <li><b>The authority is the hardening point.</b> Emerging consequences of facts are
+      written into it with relative freedom; it is monolithic at this scope, and its
+      internal structure is deferred until its contents demand one.</li>
+</ul>
+
+<h2><span class="secno">§9</span> The act and the holster</h2>
+<p><b>An act is one payload delivery.</b> Within one act, everything commits as it
+happens; between acts, the world responds.  The election settles at engagement (§11) and delivers
+whole. Every delivery lands whole on every resolved recipient,
+whatever facts earlier deliveries committed. Mid-walk reads see earlier commits —
+that is what the delivery order (§11) fixes.</p>
+<p><b>No event is dispatched at its own commit.</b> Events wait in the <b>holster</b>
+— the payload's container of pending events — and fire together once the payload's
+last mutation has resolved. One holster per payload delivery, owned by the cascade:
+the cascade opens the delivery and creates the holster; after the conductor returns,
+the cascade fires the holster's events; the holster dies when its last event has
+fired and its consequences have unfolded. Nothing persists between deliveries.</p>
+<p><b>The holster is a queue.</b> Events fire in the order they arrived, and every
+link of the return chain appends its events in resolution order. Reaction order
+across a payload follows from the authored payload sequence, the target resolution,
+and each procedure's body.</p>
+<p><b>Firing is depth-first.</b> An event may trigger a fresh effect, which resolves
+in full — its own payload, its own holster — before the next event of the outer
+holster fires.</p>
+<p><b>A death event is an ordinary holstered event,</b> fired and reacted to like any
+other. Burial is the holder's built-in effect reacting to its own
+<code>died</code> (Core §6), resolving depth-first at the boundary as any
+reaction.</p>
+
+<h2><span class="secno">§10</span> Presentation: the pause</h2>
+<p><b>A procedure issues its cue on the spot, at commit</b> — named visual,
+recipient, magnitude — fire-and-forget, synchronous, never awaited. The engine never
+waits; the return chain carries events alone.</p>
+<ul>
+  <li><b>The cue's destination is the world's presentation outlet.</b> The live world
+      bears the presenter; a simulated world bears a deaf outlet. A procedure reaches
+      the outlet through the world it writes. Nested and cross-world deliveries
+      cannot collide, and resolution is synchronous (§7), so a paused span is never
+      interleaved within its world.</li>
+  <li><b>The conductor pauses the presenter before engaging the payload and unpauses
+      at the contact cue</b> (§11). Between the last mutation and the unpause, the
+      presenter holds the full cue set and reshapes it at will — merging, sequencing,
+      pacing: its standing authority.</li>
+  <li><b>Reception is unconditional; playback is gated.</b> A cue arriving while the
+      presenter is paused or mid-cue queues, in arrival order.</li>
+  <li><b>Any VFX determines the span of its block</b> before greenlighting the flow.</li>
+</ul>
+
+<h2><span class="secno">§11</span> The EffectConductor</h2>
+<p>The owner of what running one effect means. The triad's parts each answer one
+question — when, whom, what — and hold no flow; the conductor asks them in order and
+tells presentation between the steps. It is built by the cascade from the world
+alone; presentation is reached through the world's outlet (§10).</p>
+<p><b>The run, exactly:</b></p>
+<ol>
+  <li>Engage the effect's target resolution (Core §4). Unknowns settle here, in
+      the live flow: rolls draw from the world's seeded rng; the picker picks. An
+      empty election ends the delivery (Core §4); for an activated ask, an empty
+      election refuses the ask before payment.</li>
+  <li>Cue the windup (the effect's windup presentation name, the recipients).</li>
+  <li>Pause the presenter (§10). Deliver: first the payload's unique mutators, once
+      each, recipient null (§4); then per-mutator-then-per-recipient — the payload
+      list is the authored sequence, so its order dominates: each mutator speaks its
+      full ask across all recipients before the next mutator begins. Requests flow to
+      the engine as they are issued.</li>
+  <li>Cue the contact (the effect's contact presentation name, the recipients). The
+      presenter unpauses here; the held cues play (§10).</li>
+  <li>Cue the conclusion (the windup name closes).</li>
+</ol>
+<p><b>Every cue is awaited.</b> The flow proceeds when presentation greenlights it,
+and any VFX determines the span of its block (§10). Blocking lives here, in the flow
+layer — never in the engine.</p>
+<p>The conductor ends at step 5. After it returns, the cascade fires the payload's
+holster (§9).</p>
+
+<h2><span class="secno">§12</span> The gather and the roster</h2>
+<p><b>The gather is a named step of the cascade:</b> an event fires, the cascade
+gathers every eligible effect into the <b>roster</b>, orders it, and runs it —
+reactions resolve in roster order. Eligibility is existence: a holder is polled while
+it exists in the world (§2); the gather inspects no other fact of it — any finer
+gating is a condition.</p>
+<p>Ordering is a two-tier lexicographic comparator, in one place, at the gather: a
+holder's <b>bucket</b> decides first, the bucket's <b>key</b> decides within. The
+buckets and their keys:</p>
+<ol>
+  <li>The Game — a single holder, no key.</li>
+  <li>The Sides — player before enemy.</li>
+  <li>Relics — acquisition order.</li>
+  <li>Cards in hand — hand position.</li>
+  <li>Fielded units and their statuses — turn order; a status resolves immediately
+      after its holding unit.</li>
+  <li>Board slots — slot order (per-side).</li>
+  <li>Graveyard units — order of death.</li>
+</ol>
+<p>One principle closes every side tie across the comparator: <b>the player's
+holders order before the enemy's.</b> It applies in every bucket whose key orders
+each side internally — hand position, order of death, and slot order are such
+keys; turn order interleaves the sides and leaves no tie. Within such a bucket,
+all player holders precede all enemy holders, each side then ordered by its own
+key.</p>
+<p>The table grows by amendment — a new holder kind is a new bucket at a weight,
+finer granularity is a refined key — and the mechanism never restructures.</p>
+
+<h2><span class="secno">§13</span> Genesis is construction, not mutation</h2>
+<p>The world is constructed whole: setup builds every entity in its starting
+container directly, before the first event fires. The write road governs play —
+every change from the first first-mover event onward. The mint primitive serves
+existence that begins mid-play; a status is minted and inserted by its procedure
+(§7).</p>
+
+<h2><span class="secno">§14</span> Out of frame</h2>
+<p>Named so absence is never read as oversight:</p>
+<ul>
+  <li>Interception — the strike pipeline reserves its slot (§7).</li>
+  <li>The context-bundle extension mechanism (§6).</li>
+  <li>The authored syntax that removes the implied fielded condition (§2) — the
+      payload markup (§3) does not carry it.</li>
+  <li>The procedures' build order.</li>
+  <li>Status removal — expiry and cleanse. Its committed write is a container remove
+      (§8); its procedure enters with the first content that removes a status.</li>
+  <li>Upgrades — where they live next; they hold no bucket and no place in the
+      entity hierarchy at this scope.</li>
+  <li>Spawn — mid-play unit creation; its mutator, request, and procedure enter
+      with the first content that spawns.</li>
+</ul>
+
+<div class="signoff">
+  <b>Signature:</b> pending. Code downstream of this document is gated on the
+  signature.
+</div>
+
+</div>
