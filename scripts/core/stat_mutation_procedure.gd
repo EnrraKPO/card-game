@@ -27,6 +27,8 @@ static func apply(target: GameEntity, stat: StringName, delta: int,
 		var visual: StringName
 		if stat == &"health" and delta > 0:
 			visual = &"heal"
+		elif stat == &"shield" and delta > 0:
+			visual = &"shield_restored"   # the old routing: a shield raise is its own read
 		elif delta > 0:
 			visual = &"buff"
 		else:

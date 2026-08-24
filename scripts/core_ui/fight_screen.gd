@@ -237,6 +237,8 @@ func play_cue(visual: StringName, recipient: GameEntity, magnitude: float) -> vo
 			_vfx.play(VFXEvent.shield_hit(ui, roundi(magnitude)))
 		&"heal":
 			_vfx.play(VFXEvent.heal(ui, roundi(magnitude)))
+		&"shield_restored":
+			_vfx.play(VFXEvent.shield_restored(ui, roundi(magnitude)))
 		&"buff":
 			_vfx.play(VFXEvent.buff(ui, "", roundi(magnitude)))
 		&"debuff":

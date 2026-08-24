@@ -442,7 +442,11 @@ func _refresh_statuses() -> void:
 # The "a status just landed" flash on the badge row — the newest pip blooms in its own
 # colour (StatusPip.flash_applied). Told by the presenter's status_applied cue; the row's
 # CONTENT still arrives only by injection (set_status_views), this only flashes what is
-# already worn.
+# already worn. DECLARED APPROXIMATION (journaled): the cue carries no status identity
+# (named visual + recipient + magnitude is the whole shape), so a stack landing on an
+# EXISTING status flashes the row's last pip, not necessarily the stacked one — the old
+# find-by-id flash needs the cue shape to grow an identity, the same contract limit as
+# the missing source on the beats.
 func flash_status_applied() -> void:
 	if _status_row == null or _status_row.get_child_count() == 0:
 		return
