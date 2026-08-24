@@ -388,4 +388,39 @@ standing on it non-conforming, to be corrected.</p>
   guess.</p>
 </div>
 
+<h2>Phase 5a — the combat frame</h2>
+
+<div class="brief">
+  <div class="head">B32 — Frame machinery the sections leave unnamed.</div>
+  <p>The base rules need an "everyone" election the five authored decisions
+  lack: <code>AllDecision</code> (machinery) elects the narrowed field whole.
+  The untap, ramp, and refill rules speak through machinery mutators of those
+  kinds (their amounts read from the Game's stats at issuance, staying
+  mutable); the draw rule is the draw mutator with a machinery-only −1 count
+  reading <code>turn_draw</code>; refill only raises — mana above capacity
+  stays. Baked narrowings <code>Fielded</code> and <code>IsSide</code> join
+  BakedConditions. The clock's class is <code>CombatClock</code>, embedded as
+  <code>world.clock</code>; command spans are served behind a
+  <code>Commander</code> seam whose base yields an empty span; the ending
+  check runs after each top-level delivery has unfolded; a king is fallen at
+  health ≤ 0.</p>
+</div>
+
+<div class="brief">
+  <div class="head">B33 — Content machinery.</div>
+  <p><code>ContentLibrary</code>: the A7 envelope's static registry — parse
+  once at registration, every built copy shares the parsed effects and
+  expanded abilities (the §4 lifecycle; the type machinery and base rules
+  are likewise shared static templates now). The StatusProcedure consults it
+  when minting; an unregistered id mints bare — a plain stacks marker.
+  <code>Genesis.setup</code> takes per-side <code>{"deck", "units"
+  (id + [row, col]), "relics"}</code>; kings enter as units whose envelope
+  bears the king fact. <code>GameEntity</code> gains the envelope's identity
+  members (<code>id</code>, <code>display_name</code>). <code>World.copy</code>:
+  skeleton born fresh, entities cloned container-for-container, allegiance
+  remapped, stats by value, definitions shared; the twin is deaf, declining,
+  and carries its own rng seeded from the same seed — repeatable, and
+  structurally unable to touch the live stream.</p>
+</div>
+
 </div>

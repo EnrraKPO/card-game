@@ -57,3 +57,15 @@ class IsSlot extends EntityCondition:
 class SlotVacant extends EntityCondition:
 	func _answer(_plate: Plate, subject: GameEntity) -> bool:
 		return subject is Slot and (subject as Slot).get_container(&"slotted_unit").members.is_empty()
+
+
+# Fielded: housed in a slot's `slotted_unit` (Core §2) — the untap rule's narrowing.
+class Fielded extends EntityCondition:
+	func _answer(_plate: Plate, subject: GameEntity) -> bool:
+		return subject.housing != null and subject.housing.name == &"slotted_unit"
+
+
+# A Side — the base rules that reach each side narrow by this (Combat Frame §4).
+class IsSide extends EntityCondition:
+	func _answer(_plate: Plate, subject: GameEntity) -> bool:
+		return subject is Side

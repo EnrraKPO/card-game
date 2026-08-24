@@ -27,12 +27,30 @@ extends Card
 
 var is_building: bool = false
 
+# The king birth fact (Combat Frame §1, envelope A7): a king's death ends the fight —
+# the enemy king's in victory, the player king's in defeat. Stamped by the envelope.
+var is_king: bool = false
+
 var main_action: Effect = null
+
+
+# The type's machinery, built once and shared (Mutation §4's lifecycle).
+static var _machinery_templates: Array[Effect] = []
+static var _main_action_template: Effect = null
 
 
 func _init(p_allegiance: Side = null, p_building: bool = false) -> void:
 	super._init(p_allegiance)
 	is_building = p_building
+	effects.append_array(Unit._machinery())
+	main_action = Unit._main_action_template
+	if not is_building:
+		Ability.appoint_move(self)
+
+
+static func _machinery() -> Array[Effect]:
+	if not _machinery_templates.is_empty():
+		return _machinery_templates
 
 	var placement_trigger := Trigger.new()
 	placement_trigger.event = &"play_engaged"
@@ -42,7 +60,7 @@ func _init(p_allegiance: Side = null, p_building: bool = false) -> void:
 	var placement := Effect.new(placement_trigger,
 			TargetResolver.new([], OccasionsTargetsDecision.new()), placement_payload)
 	placement.fielded_condition_removed = true
-	effects.append(placement)
+	_machinery_templates.append(placement)
 
 	var burial_trigger := Trigger.new()
 	burial_trigger.event = &"died"
@@ -51,7 +69,7 @@ func _init(p_allegiance: Side = null, p_building: bool = false) -> void:
 	burial_payload.append(BurialMutator.new())
 	var burial := Effect.new(burial_trigger, null, burial_payload)
 	burial.fielded_condition_removed = true
-	effects.append(burial)
+	_machinery_templates.append(burial)
 
 	var act_trigger := Trigger.new()
 	act_trigger.event = &"act"
@@ -66,12 +84,10 @@ func _init(p_allegiance: Side = null, p_building: bool = false) -> void:
 	var act_payload: Array[Mutator] = []
 	act_payload.append(TapMutator.new())
 	act_payload.append(StrikeMutator.new())
-	main_action = Effect.new(act_trigger,
+	_main_action_template = Effect.new(act_trigger,
 			TargetResolver.new(attack_conditions, AttackDecision.new()), act_payload)
-	effects.append(main_action)
-
-	if not is_building:
-		Ability.appoint_move(self)
+	_machinery_templates.append(_main_action_template)
+	return _machinery_templates
 
 
 # The type fact (Core §5): a Unit's play is a manual pick of a Slot — a vacant slot of

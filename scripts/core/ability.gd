@@ -103,18 +103,26 @@ static func expand(holder: GameEntity, name: StringName, mana: int, tap: int,
 
 # The Move ability (A3, A9): machinery appoints it on every non-building unit at
 # construction — free, hand-picked vacant ally slot, the placement mutator carrying the
-# move. Rooted buildings do not receive it.
+# move. Rooted buildings do not receive it. The pair is built once and shared (Mutation
+# §4's lifecycle).
+static var _move_pair: Array[Effect] = []
+
 static func appoint_move(unit: Unit) -> void:
-	var conditions: Array[EntityCondition] = []
-	conditions.append(BakedConditions.IsSlot.new())
-	conditions.append(IsAllyCondition.new())
-	conditions.append(BakedConditions.SlotVacant.new())
-	var placement: Array[Mutator] = []
-	placement.append(PlacementMutator.new())
-	expand(unit, &"move", 0, 0,
-			TargetResolver.new(conditions, HandPickDecision.new()),
-			TargetResolver.new([], OccasionsTargetsDecision.new()),
-			placement)
+	if _move_pair.is_empty():
+		var conditions: Array[EntityCondition] = []
+		conditions.append(BakedConditions.IsSlot.new())
+		conditions.append(IsAllyCondition.new())
+		conditions.append(BakedConditions.SlotVacant.new())
+		var placement: Array[Mutator] = []
+		placement.append(PlacementMutator.new())
+		var probe := GameEntity.new()
+		expand(probe, &"move", 0, 0,
+				TargetResolver.new(conditions, HandPickDecision.new()),
+				TargetResolver.new([], OccasionsTargetsDecision.new()),
+				placement)
+		_move_pair = probe.effects
+	unit.effects.append_array(_move_pair)
+	unit.abilities.append(&"move")
 
 
 static func _name_condition(name: StringName) -> NameIsCondition:

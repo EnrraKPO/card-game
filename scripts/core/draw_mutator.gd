@@ -5,6 +5,9 @@ extends Mutator
 # world and asks that the card move to hand — one ContainerMoveRequest per card, the
 # recipient being the drawing side. The deck's top is its first member (B22); a deck
 # holding fewer than `count` yields the draws that exist.
+#
+# count −1 is the machinery's sentinel (never authored): the turn-draw rule's form,
+# reading the Game's `turn_draw` stat at issuance (Combat Frame §4).
 
 var count: int = 0
 
@@ -18,7 +21,8 @@ func _issue(plate: Plate, recipient: GameEntity) -> Array[Event]:
 	var deck: EntityContainer = recipient.get_container(&"deck")
 	if deck == null:
 		return events
-	for i: int in count:
+	var asked: int = count if count >= 0 else roundi(plate.world().game.get_stat(&"turn_draw"))
+	for i: int in asked:
 		if deck.members.is_empty():
 			break
 		var top: GameEntity = deck.members[0]

@@ -21,7 +21,10 @@ static func resolve(request: StatusRequest) -> Array[Event]:
 			WriteAuthority.stat_write(member, &"stacks",
 					member.get_stat(&"stacks") + float(request.stacks), events)
 			return events
-	var status := Status.new(request.status_id, target.allegiance)
+	var status: Status = ContentLibrary.build_status(request.status_id, target.allegiance)
+	if status == null:
+		# An unregistered id mints bare — a plain stacks marker (B33).
+		status = Status.new(request.status_id, target.allegiance)
 	status.seed_stat(&"stacks", float(request.stacks))
 	WriteAuthority.mint(target.world, status)
 	WriteAuthority.insert(contained, status)

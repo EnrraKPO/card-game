@@ -19,15 +19,25 @@ extends GameEntity
 
 var play_effect: Effect = null
 
+# One play effect per TYPE, not per card: the machinery is stateless and shared across
+# card copies and simulated worlds (Mutation §4's lifecycle) — built once per concrete
+# class (the targeting default is the type fact that differs).
+static var _play_templates: Dictionary = {}
+
 
 func _init(p_allegiance: Side = null) -> void:
 	super._init(p_allegiance)
+	var key: Script = get_script()
+	if not Card._play_templates.has(key):
+		Card._play_templates[key] = _build_play_effect()
+	play_effect = Card._play_templates[key]
+	effects.append(play_effect)
+
+
+func _build_play_effect() -> Effect:
 	var trigger := Trigger.new()
 	trigger.event = &"play"
-	var source_entry := Trigger.EntityEntry.new()
-	source_entry.route = &"source"
-	source_entry.conditions.append(IsHolderCondition.new())
-	trigger.entity_entries.append(source_entry)
+	trigger.entity_entries.append(Ability.source_is_holder())
 	var holder_entry := Trigger.EntityEntry.new()
 	holder_entry.route = &"holder"
 	holder_entry.conditions.append(BakedConditions.Affordability.new(-1, 0))
@@ -35,9 +45,9 @@ func _init(p_allegiance: Side = null) -> void:
 	trigger.entity_entries.append(holder_entry)
 	var pay: Array[Mutator] = []
 	pay.append(PayMutator.new(-1, 0))
-	play_effect = Effect.new(trigger, _default_play_targeting(), pay)
-	play_effect.fielded_condition_removed = true
-	effects.append(play_effect)
+	var effect := Effect.new(trigger, _default_play_targeting(), pay)
+	effect.fielded_condition_removed = true
+	return effect
 
 
 # The type fact (Core §5): a Card targets the Game automatically; Unit overrides.

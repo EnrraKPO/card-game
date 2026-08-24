@@ -10,6 +10,11 @@ extends RefCounted
 # world → Game → containers → members — holds the strong references, so entities die with
 # the world that owns them. World copies remap both ends of every housing relation (§2).
 
+# Identity (envelope A7): the authored id and the display name. Empty on machinery-born
+# entities the envelope never dressed (slots, sides, the Game).
+var id: StringName = &""
+var display_name: String = ""
+
 # Effects this entity holds (Mutation §2: an effect is a rule of the game).
 var effects: Array[Effect] = []
 
@@ -116,6 +121,17 @@ func get_container_list() -> Array[EntityContainer]:
 	for c: EntityContainer in _containers.values():
 		out.append(c)
 	return out
+
+
+# The world-copy's fact transfer (Core §1): stats by value; identity, effects, and
+# abilities are the shared stateless definitions — the arrays duplicate, their members
+# do not.
+func copy_facts_from(source: GameEntity) -> void:
+	id = source.id
+	display_name = source.display_name
+	_stats = source._stats.duplicate()
+	effects = source.effects.duplicate()
+	abilities = source.abilities.duplicate()
 
 
 # The type's name for error text — script class_name, cold-readable in a refusal message.
