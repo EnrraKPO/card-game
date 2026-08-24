@@ -21,6 +21,11 @@ var _held: Array[Array] = []
 var _ghost: CardUI = null
 var _ghost_source: CardUI = null
 var _ghost_home: Vector2 = Vector2.ZERO
+# The settle discipline (the old _await_settled, in presenter form): one retreat tween per
+# source card, awaited before that SAME source may open a new lunge — a retaliation can
+# begin while the prior ghost is still gliding home, and without the wait the earlier
+# retreat's teardown pops the original back to full alpha mid-swing.
+var _retreats: Dictionary = {}
 
 
 func _init(screen: FightScreen) -> void:
@@ -54,6 +59,11 @@ func windup(visual: StringName, source: GameEntity, recipients: Array[GameEntity
 		_screen.play_beat_mark(recipient)
 	var source_ui: CardUI = _screen.card_of(source)
 	if source_ui == null:
+		# The old yank guard: a choreography whose actor has no card on screen SKIPS its
+		# show outright — the delivery still resolves; rules never depend on the show. A
+		# side-held effect (a relic, the hourglass) lands its cues without an approach.
+		if visual == &"glint" or visual == &"bolt" or visual == &"lunge":
+			return
 		await _screen.beat(visual, recipients, 0.35)
 		return
 	match visual:
@@ -79,11 +89,20 @@ func windup(visual: StringName, source: GameEntity, recipients: Array[GameEntity
 func _lunge(source_ui: CardUI, target_ui: CardUI) -> void:
 	if target_ui == null or not is_instance_valid(target_ui):
 		return
+	# A unit must be standing still before it can start another move (the old settle rule):
+	# its own prior retreat finishes — and its teardown restores the original — first.
+	var prior: Tween = _retreats.get(source_ui)
+	if prior != null and prior.is_valid() and prior.is_running():
+		await prior.finished
 	var a_home: Vector2 = source_ui.global_position
 	var gap := 12.0
-	var attacker_on_left: bool = source_ui.global_position.x < target_ui.global_position.x
+	# The approach side keys on ALLEGIANCE, as the old geometry did: the player strikes
+	# from the target's left, the enemy from its right — the armies' facing. The card's
+	# housing slot says whose half the attacker stands in.
+	var player_attacks: bool = source_ui.get_parent() is SlotUI \
+			and (source_ui.get_parent() as SlotUI).own_side
 	var beside_x: float = (target_ui.global_position.x - source_ui.size.x - gap) \
-			if attacker_on_left \
+			if player_attacks \
 			else (target_ui.global_position.x + target_ui.size.x + gap)
 	var beside := Vector2(beside_x, target_ui.global_position.y)
 	var overshoot: Vector2 = beside + (beside - a_home).normalized() * (source_ui.size.x * 0.3)
@@ -112,16 +131,22 @@ func contact(_visual: StringName, _source: GameEntity,
 # it (the old rule: standing around waiting for the victim to finish reacting is what made
 # a strike read as a stall); the ghost frees and the original returns at the glide's end.
 func conclude(_visual: StringName, _source: GameEntity) -> void:
+	var hold := 0.1
 	if _ghost != null and is_instance_valid(_ghost):
 		var ghost: CardUI = _ghost
 		var source_ui: CardUI = _ghost_source
 		var retreat: Tween = _screen.animator().start_retreat(ghost, _ghost_home)
+		if source_ui != null:
+			_retreats[source_ui] = retreat
 		retreat.finished.connect(func() -> void:
 			if is_instance_valid(source_ui):
 				source_ui.modulate.a = 1.0
+				_retreats.erase(source_ui)
 			if is_instance_valid(ghost):
 				ghost.queue_free())
+		# The withdrawal paces through the player's overlap dial, as the old conclude did.
+		hold = Vfx.handoff(CombatAnimator.RETREAT_DUR)
 	_ghost = null
 	_ghost_source = null
-	await _screen.beat(&"", [], 0.1)
+	await _screen.beat(&"", [], hold)
 	_screen.refresh()
