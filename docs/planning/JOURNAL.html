@@ -370,6 +370,26 @@ dispatch, so the probe drives the exact <code>_can_drop_data</code>/
 <code>_drop_data</code> pair a real release calls; visuals (bobbing arrows,
 ghost) verified with real synthetic motion.</p>
 
+<h2>2026-08-24 — Interaction batch 3: the drag target preview</h2>
+
+<p>The old declared-preview machinery imported onto the core; suite 607/0.
+<code>declare_preview(pivot, at)</code> builds one world copy per declaration
+— a hand pivot enters by its index twin, a sitting twin is evicted ("the
+hypothetical is INSTEAD"), bare authority primitives on the throwaway copy —
+and everything threat-shaped derives from it: the crosshair on the pivot's
+would-be victim, and the menace read (<code>set_threat_highlight</code>
+reimported whole: <code>attack_target_glow</code> + the pulsing attack-badge
+flare) on every unit whose own targeting resolves to the pivot, mapped back
+by address. The hover engine polls slot rects while a session is live (the
+old board's technique — occupant cards swallow enter/exit): a drag mounts the
+landing phantom in the hovered destination, a static selection wears the
+white outline, both declare the same landing preview; session end tears all
+of it down structurally. The selected-fielded-unit preview folded into the
+same declaration as its baseline. Probe caveat: synthetic input can't move
+the cached cursor the poll reads (garbage coordinates in the probe window) —
+the probe freezes the poll and drives its one consequence; the poll itself is
+the old board's proven technique, and the real mouse is the final check.</p>
+
 <p><b>Observed, unexplored:</b> the enemy's placed Sentinel renders oversized
 against its slot in the probe shot, with a stray badge chip beside it —
 board-card mounting nit to chase when it survives a second look.</p>
