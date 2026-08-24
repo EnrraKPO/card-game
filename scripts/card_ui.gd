@@ -728,6 +728,25 @@ func derive_presentation() -> void:
 	_apply_selected(_pickable() and Selection.holds(subject()))
 
 
+# The authority's move IS the re-check cue — without it the ring waits for the slow poll's
+# next beat (up to 0.75s), which reads as lag on every click. The poll stays as the
+# backstop for changes no signal announces (a freed pick, a reparent-shifted answer).
+# Enter/exit rather than _ready: slots REPARENT cards as units move, and a connection
+# left on a node outside the tree would error on the autoload's next emission.
+func _enter_tree() -> void:
+	if not Selection.changed.is_connected(_on_selection_moved):
+		Selection.changed.connect(_on_selection_moved)
+
+
+func _exit_tree() -> void:
+	if Selection.changed.is_connected(_on_selection_moved):
+		Selection.changed.disconnect(_on_selection_moved)
+
+
+func _on_selection_moved(_subject: Variant) -> void:
+	derive_presentation()
+
+
 # HOW A CARD BEHAVES WHEN IT IS THE PICK — its own behaviour, never handed to it.
 #
 # Nothing outside can call this: the card ASKS Selection whether it is the pick (see
