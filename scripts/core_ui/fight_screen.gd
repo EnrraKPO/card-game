@@ -67,6 +67,21 @@ var _interaction: Interaction = null
 # seam between the old click-to-place gesture and the core's ask road.
 var _pending_destination: Vector3i = Vector3i(-1, -1, -1)
 
+# ── The declared preview (the old board's declare_preview, on the core) ───────────────
+# SIDE-NEUTRAL: the pivot may belong to either army. The declaration is "pivot standing
+# HERE"; everything threat-shaped derives from one world copy built per declaration — the
+# pivot's would-be victim (the crosshair) and every unit whose own targeting resolves to
+# the pivot (the red menace read).
+var _declared_pivot: Unit = null
+var _declared_at: Vector3i = Vector3i(-1, -1, -1)
+var _preview_crosshair: Vector3i = Vector3i(-1, -1, -1)
+var _menacing: Array[Unit] = []
+# Hover tracking during a live session (rect tests rather than mouse_entered — occupant
+# cards would swallow the enter/exit events): the hovered DESTINATION slot carries the
+# landing phantom (drag) or the white outline (static), and declares the preview from it.
+var _hover_slot: SlotUI = null
+var _phantom_slot: SlotUI = null
+
 signal commanded(ask: Event)
 signal picked(choice: GameEntity)
 
@@ -269,26 +284,163 @@ func _exit_tree() -> void:
 		Selection.clear()
 
 
-# ── The previews ──────────────────────────────────────────────────────────────────────
-# The selected unit's would-be target, polled at interactive idle on a world COPY
-# (Core §4; the coverage's simulation row): the twin's poll maps back by address.
+# ── The declared preview ──────────────────────────────────────────────────────────────
+# Polled at interactive idle on a world COPY (Core §4; the coverage's simulation row): the
+# twin's polls map back by address. Idempotent on an unchanged declaration.
 
-func _preview_target_address() -> Vector3i:
+func declare_preview(pivot: Unit, at: Vector3i) -> void:
+	if pivot == _declared_pivot and at == _declared_at:
+		return
+	_declared_pivot = pivot
+	_declared_at = at
+	_rebuild_preview()
+
+
+func clear_preview() -> void:
+	declare_preview(null, Vector3i(-1, -1, -1))
+
+
+# The hypothetical: the real world with one change — the pivot stands at its declared spot
+# (a hand pivot enters the board; a fielded pivot moves; anything sitting there is evicted,
+# since destinations are normally empty and the hypothetical is "INSTEAD"). All writes land
+# on the throwaway copy through the authority's bare primitives, no events.
+func _rebuild_preview() -> void:
+	_preview_crosshair = Vector3i(-1, -1, -1)
+	_menacing = []
+	if _declared_pivot == null or world == null:
+		return
+	var twin_world: World = world.copy()
+	var pivot_twin: Unit = _twin_of(_declared_pivot, twin_world)
+	if pivot_twin == null:
+		return
+	if _declared_at.x >= 0:
+		var declared_slot: Slot = twin_world.board_manager.slot_at(_declared_at)
+		var seat: EntityContainer = declared_slot.get_container(&"slotted_unit")
+		if not seat.members.has(pivot_twin):
+			var sitting: Unit = SlotViewModel.occupant(declared_slot)
+			if sitting != null:
+				WriteAuthority.remove(seat, sitting)
+			if pivot_twin.housing != null:
+				WriteAuthority.remove(pivot_twin.housing, pivot_twin)
+			WriteAuthority.insert(seat, pivot_twin)
+	var targets: Array[GameEntity] = pivot_twin.main_action_targets()
+	if not targets.is_empty():
+		_preview_crosshair = TargetResolver.standing_address(targets[0])
+	# Every fielded unit whose OWN targeting resolves to the pivot in that world menaces it —
+	# mapped back to the live units by address (addresses are identical across the copy).
+	for side_index: int in 2:
+		for row: int in BoardGeometry.ROWS:
+			for col: int in BoardGeometry.COLS:
+				var address := Vector3i(side_index, row, col)
+				var twin_unit: Unit = SlotViewModel.occupant(
+						twin_world.board_manager.slot_at(address))
+				if twin_unit == null or twin_unit == pivot_twin:
+					continue
+				if twin_unit.main_action_targets().has(pivot_twin):
+					var live: Unit = SlotViewModel.occupant(
+							world.board_manager.slot_at(address))
+					if live != null:
+						_menacing.append(live)
+
+
+# The pivot's twin in the copy: a fielded pivot stands at the same address; a hand pivot
+# holds the same index in the copy's hand container.
+func _twin_of(pivot: Unit, twin_world: World) -> Unit:
+	var standing: Vector3i = TargetResolver.standing_address(pivot)
+	if standing.x >= 0:
+		return SlotViewModel.occupant(twin_world.board_manager.slot_at(standing))
+	if pivot.housing != null and pivot.housing.name == &"hand":
+		var index: int = pivot.housing.members.find(pivot)
+		var twin_hand: Array[GameEntity] = twin_world.player_side() \
+				.get_container(&"hand").members
+		if index >= 0 and index < twin_hand.size():
+			return twin_hand[index] as Unit
+	return null
+
+
+# The baseline declaration when no destination is hovered: a selected fielded unit previews
+# from where it stands; a hand card has no origin to preview from until it hovers a landing
+# slot (the old board's exact policy).
+func _derive_baseline_preview() -> void:
+	if _hover_slot != null or _phantom_slot != null:
+		return
 	var selected: Unit = _selected_unit()
-	if selected == null:
-		return Vector3i(-1, -1, -1)
-	var standing: Vector3i = TargetResolver.standing_address(selected)
-	if standing.x < 0:
-		return Vector3i(-1, -1, -1)
-	var twin: World = world.copy()
-	var twin_slot: Slot = twin.board_manager.slot_at(standing)
-	var twin_unit: Unit = SlotViewModel.occupant(twin_slot)
-	if twin_unit == null:
-		return Vector3i(-1, -1, -1)
-	var targets: Array[GameEntity] = twin_unit.main_action_targets()
-	if targets.is_empty():
-		return Vector3i(-1, -1, -1)
-	return TargetResolver.standing_address(targets[0])
+	if selected != null and TargetResolver.standing_address(selected).x >= 0:
+		declare_preview(selected, TargetResolver.standing_address(selected))
+	else:
+		clear_preview()
+
+
+# ── The hover engine (rect polling while a session is live) ───────────────────────────
+
+func _process(_delta: float) -> void:
+	if not _interaction.active():
+		return
+	var act: Interaction.Action = _interaction.current()
+	var slot: SlotUI = _hovered_destination()
+	if act.is_drag:
+		if slot != _phantom_slot:
+			_set_phantom_slot(slot)
+	else:
+		if slot != _hover_slot:
+			_set_hover_slot(slot)
+
+
+func _hovered_destination() -> SlotUI:
+	var mouse: Vector2 = get_global_mouse_position()
+	for address: Vector3i in _slot_uis:
+		var slot_ui: SlotUI = _slot_uis[address]
+		if slot_ui.get_global_rect().has_point(mouse) \
+				and _interaction.role_of(slot_ui) == Interaction.Role.DESTINATION:
+			return slot_ui
+	return null
+
+
+# Drag: the hovered landing slot mounts the translucent projection of the dragged unit and
+# declares the targeting preview from that spot.
+func _set_phantom_slot(slot_ui: SlotUI) -> void:
+	if slot_ui == _phantom_slot:
+		return
+	if _phantom_slot != null and is_instance_valid(_phantom_slot):
+		_phantom_slot.unmount_phantom()
+	_phantom_slot = slot_ui
+	if slot_ui != null and _interaction.active():
+		var source: CardUI = _interaction.current().source
+		if source != null and is_instance_valid(source):
+			slot_ui.mount_phantom(source.make_ghost_view())
+			declare_preview(source.subject() as Unit, _address_of_slot_ui(slot_ui))
+			refresh()
+			return
+	clear_preview()
+	_derive_baseline_preview()
+	refresh()
+
+
+# Static selection: the hovered destination wears the white outline (and its MOVE arrow
+# bobs — SlotUI.set_hovered) and declares the same landing preview a drag phantom would.
+func _set_hover_slot(slot_ui: SlotUI) -> void:
+	if slot_ui == _hover_slot:
+		return
+	if _hover_slot != null and is_instance_valid(_hover_slot):
+		_hover_slot.set_hovered(false)
+	_hover_slot = slot_ui
+	if slot_ui != null and _interaction.active():
+		slot_ui.set_hovered(true)
+		var source: CardUI = _interaction.current().source
+		if source != null and is_instance_valid(source):
+			declare_preview(source.subject() as Unit, _address_of_slot_ui(slot_ui))
+			refresh()
+			return
+	clear_preview()
+	_derive_baseline_preview()
+	refresh()
+
+
+func _address_of_slot_ui(slot_ui: SlotUI) -> Vector3i:
+	for address: Vector3i in _slot_uis:
+		if _slot_uis[address] == slot_ui:
+			return address
+	return Vector3i(-1, -1, -1)
 
 
 # ── Rendering ─────────────────────────────────────────────────────────────────────────
@@ -301,7 +453,8 @@ func refresh() -> void:
 			roundi(world.player_side().get_stat(&"mana_capacity"))]
 	_enemy_label.text = "Enemy %d/%d" % [roundi(world.enemy_side().get_stat(&"mana")),
 			roundi(world.enemy_side().get_stat(&"mana_capacity"))]
-	var preview: Vector3i = _preview_target_address()
+	_derive_baseline_preview()
+	var preview: Vector3i = _preview_crosshair
 	var seen: Array = []
 	for address: Vector3i in _slot_uis:
 		var unit: Unit = _paint_slot(address, _slot_uis[address], preview)
@@ -345,6 +498,8 @@ func _paint_slot(address: Vector3i, slot_ui: SlotUI, preview: Vector3i) -> Unit:
 		ui.view_subject = unit
 		# A tapped (exhausted) unit dims.
 		ui.modulate = Color(0.55, 0.55, 0.6) if unit.get_stat(&"tapped") > 0.0 else Color.WHITE
+		# The menace read: this unit's own targeting resolves to the previewed pivot.
+		ui.set_threat_highlight(_menacing.has(unit))
 	slot_ui.set_ground(SlotViewModel.ground_view(slot))
 	# Cues: placement hints while the command is the player's to give; a pick's candidates wear
 	# the valid-target cue; the selected unit's would-be victim wears the attack crosshair.
@@ -400,6 +555,23 @@ func _on_hand_index_pressed(index: int) -> void:
 		_on_hand_clicked(card)
 		return
 	_hand.toggle_select(index)
+
+
+# Session lifecycle: the hover engine polls only while a session is live; a session ending
+# tears its hover furniture down structurally (phantom, outline, declaration) — no per-path
+# cleanup to forget (the old present-null teardown, imported).
+func _on_interaction_changed(action: Interaction.Action) -> void:
+	set_process(action != null)
+	if action == null:
+		if _phantom_slot != null and is_instance_valid(_phantom_slot):
+			_phantom_slot.unmount_phantom()
+		_phantom_slot = null
+		if _hover_slot != null and is_instance_valid(_hover_slot):
+			_hover_slot.set_hovered(false)
+		_hover_slot = null
+		clear_preview()
+	if world != null:
+		refresh()
 
 
 # A unit drag BEGINS an Interaction action and nothing else — cues, drop verdicts and
@@ -484,9 +656,7 @@ func _build_ui() -> void:
 	add_child(_interaction)
 	# Cue rendering derives from the one `changed` signal — a gesture ending resets
 	# everything structurally, with no per-path cleanup to forget.
-	_interaction.changed.connect(func(_action: Interaction.Action) -> void:
-		if world != null:
-			refresh())
+	_interaction.changed.connect(_on_interaction_changed)
 	var root := VBoxContainer.new()
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(root)

@@ -1265,6 +1265,60 @@ func _on_long_press() -> void:
 	CardInspector.open(self, card_data, _show_cost, is_phantom)
 
 
+# ── The menace read ─────────────────────────────────────────────────────────────
+# "This unit will strike the previewed pivot": the red outer glow plus a pulsing flare on
+# the Attack badge — one derived verdict, one applier; the change-guard makes re-derivation
+# free (repeated same-verdict calls don't churn the tween or the glow bake).
+var _threat_on: bool = false
+var _threat_tw: Tween = null   # looping pulse on the Attack badge while flagged
+
+
+func set_threat_highlight(on: bool) -> void:
+	if on == _threat_on:
+		return
+	_threat_on = on
+	if on:
+		Vfx.attach("attack_target_glow", self)
+	else:
+		Vfx.detach("attack_target_glow", self)
+	if _atk_bg == null or not is_instance_valid(_atk_bg):
+		return
+	if _threat_tw != null and _threat_tw.is_valid():
+		_threat_tw.kill()
+		_threat_tw = null
+	# Pulse between a SUSTAINED warm tint and a hotter peak — never back to plain white, so
+	# the badge always reads as flagged (a dip to white would look like the highlight blinked
+	# off). The badge art is ALREADY red, so a red tint barely reads — pulse toward a bright
+	# warm FLARE (over-bright, gold-white) that visibly lights the badge up.
+	var has_lbl := _atk_lbl != null and is_instance_valid(_atk_lbl)
+	var warm := Color(1.7, 1.15, 0.8) if on else Color.WHITE
+	var hot := Color(2.6, 2.2, 1.3)
+	_atk_bg.modulate = warm
+	if has_lbl:
+		_atk_lbl.modulate = warm
+	# Bump the badge 10% larger while flagged — icon AND number about their shared centre so
+	# they scale as one rigid unit. Sustained; reset to authored size on clear so the fixed
+	# Canvas layout is never permanently disturbed.
+	var scl := Vector2(1.1, 1.1) if on else Vector2.ONE
+	_atk_bg.pivot_offset = _atk_bg.size * 0.5
+	_atk_bg.scale = scl
+	if has_lbl:
+		_atk_lbl.pivot_offset = (_atk_bg.position + _atk_bg.size * 0.5) - _atk_lbl.position
+		_atk_lbl.scale = scl
+	# The badge is part of the card's SHAPE, so a 10% bump really does change the silhouette —
+	# say so, and let the glows decide whether it moved enough to matter.
+	Vfx.shape_changed(self)
+	if not on:
+		return
+	_threat_tw = create_tween().set_loops()
+	_threat_tw.tween_property(_atk_bg, "modulate", hot, 0.55)
+	if has_lbl:
+		_threat_tw.parallel().tween_property(_atk_lbl, "modulate", hot, 0.55)
+	_threat_tw.tween_property(_atk_bg, "modulate", warm, 0.55)
+	if has_lbl:
+		_threat_tw.parallel().tween_property(_atk_lbl, "modulate", warm, 0.55)
+
+
 # The ghost copy of this card a DragGhost preview shows.
 func make_ghost_view() -> CardUI:
 	return CardUI.create(card_data, _show_cost)

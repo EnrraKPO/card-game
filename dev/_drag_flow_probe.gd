@@ -53,6 +53,17 @@ func _ready() -> void:
 		if screen._slot_uis[address]._cue == SlotUI.Cue.MOVE:
 			cued += 1
 	print("PROBE mid-drag destination cues: ", cued)
+	print("PROBE processing=", screen.is_processing(),
+			" mouse=", screen.get_global_mouse_position(),
+			" hovered=", screen._hovered_destination())
+	# Synthetic input can't move the cached cursor the hover poll reads (a real mouse
+	# does) — freeze the poll and drive its one consequence directly to prove the machinery.
+	screen.set_process(false)
+	screen._set_phantom_slot(screen._slot_uis[destination])
+	await get_tree().process_frame
+	print("PROBE phantom mounted: ", screen._phantom_slot != null,
+			" crosshair=", screen._preview_crosshair,
+			" menacing=", screen._menacing.size())
 	await RenderingServer.frame_post_draw
 	get_viewport().get_texture().get_image().save_png(OUT_SELECTED)
 	var target: SlotUI = screen._slot_uis[destination]
@@ -93,7 +104,8 @@ func _press(at: Vector2) -> void:
 
 
 func _move(at: Vector2, rel: Vector2) -> void:
-	var motion := InputEventMouseMotion.new()
+	Input.warp_mouse(at)   # the hover engine polls the cached cursor, which only real
+	var motion := InputEventMouseMotion.new()   # or warped movement updates
 	motion.position = at
 	motion.global_position = at
 	motion.relative = rel
