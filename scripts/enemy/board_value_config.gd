@@ -1,7 +1,7 @@
 class_name BoardValueConfig
 extends RefCounted
 
-# The authored exchange rates behind the "total board value" criterion (BoardScoring.
+# The authored exchange rates behind the "total board value" criterion (the retired scorer's
 # BoardValue): what one point of each stat — and one ability / triggered effect / live
 # effect — is worth in the eval's common currency. EVERY number here is tool-authorable
 # by design: authored into data/board_value.json, absent file (or key) falls back to the
@@ -48,7 +48,7 @@ static func _defaults() -> Dictionary:
 		# (triggered_default / live_default — the per-effect-category prices — died with
 		# the effect layer, 2026-08-11; the rebuilt structures re-enter category pricing
 		# with their own keys.)
-		# ── the valuation pass (BoardScoring.run_valuation) ──
+		# ── the valuation pass (retired) ──
 		# THE persistence dial, 0..1: how much a unit's likelihood of dying this turn
 		# discounts its raw worth (value = raw × lerp(1, persistence, this)). 0 = a dying
 		# queen is still a queen; 1 = a doomed unit is worth nearly nothing. Swept window:
@@ -138,7 +138,7 @@ static func ability_value(id: String) -> float:
 	return float(_config()["ability_default"])
 
 
-# ── The valuation pass's own knobs (BoardScoring.run_valuation) ────────────────────────
+# ── The valuation pass's own knobs (retired with the scorer) ───────────────────────────
 
 # The persistence dial, clamped to its meaningful range (see _defaults).
 static func persistence_weight() -> float:
@@ -148,14 +148,6 @@ static func persistence_weight() -> float:
 # The role key a unit's flat bonus is filed under: the implicit "captain" tag for kings,
 # the unit's own tag, else "default" (untagged). One resolution, shared with the
 # personality layer so both tables speak the same key.
-static func role_key(u: BoardState.UnitState) -> String:
-	if u.is_king:
-		return "captain"
-	return u.role if not u.role.is_empty() else "default"
-
-
-static func role_value(u: BoardState.UnitState) -> float:
-	return float((_config()["role_values"] as Dictionary).get(role_key(u), 0.0))
 
 
 static func unit_bonus(card_id: String) -> float:

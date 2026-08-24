@@ -17,7 +17,7 @@ extends RefCounted
 #     plus the PARKED pre-valuation trio — death risk, harm, board value — kept whole for
 #     any personality that wants the old readings back.
 # Conceptually they are the same thing — a criterion and a weight. The engine treats them
-# identically (see BoardScoring.stock); only the tool and this file's bookkeeping separate
+# identically (the retired scorer's shape); only the tool and this file's bookkeeping separate
 # them.
 #
 # PERSONALITIES ARE TEMPLATES, NOT LINKS. The library in
@@ -47,7 +47,7 @@ const DEFAULT_ID := "default"
 # The criteria a personality can speak about, in tool display order. `core` decides which
 # section the tool puts it in and whether it is always present — the engine reads the same
 # list either way. Adding a criterion to the scorer means adding one entry here (and one arm
-# in BoardScoring._criterion_for).
+# in the retired scorer).
 const TRAITS: Array = [
 	{"id": "total_value", "core": true},
 	# The JUDGE seat (decision-table contract, board_scoring.gd): full authority, fixed —
@@ -68,23 +68,23 @@ const TRAITS: Array = [
 ]
 
 
-# The stock weight of every criterion — the code defaults in board_scoring.gd, which stay
-# the single source of truth (they carry the reasoning behind each number). A function, not
-# a const, deliberately: a const Dictionary reading BoardScoring's consts would make the two
-# classes depend on each other at parse time.
+# The stock weight of every criterion. The scoring engine that read these retired with
+# the demoted layer (A11); the numbers survive HERE as the personality data's own
+# defaults — the encounter authoring stays intact, and the rebuilt commander re-reads
+# them at the parity pass.
 static func stock_weights() -> Dictionary:
 	return {
-		"total_value": BoardScoring.TOTAL_VALUE_CRITERION_WEIGHT,   # the reference scale
+		"total_value": 1.0,   # the reference scale
 		# king_safety has no entry: it is a JUDGE — full authority, no weight dial.
-		"formation": BoardScoring.FORMATION_CRITERION_WEIGHT,
+		"formation": 0.1,
 		"death_risk": 1.0,   # parked; the old reference scale, kept for opting back in
-		"harm": BoardScoring.HARM_CRITERION_WEIGHT,
-		"protection": BoardScoring.EXPOSURE_CRITERION_WEIGHT,
-		"board_value": BoardScoring.BOARD_VALUE_CRITERION_WEIGHT,
-		"mana": BoardScoring.MANA_CRITERION_WEIGHT,
-		"readiness": BoardScoring.READINESS_CRITERION_WEIGHT,
-		"idle_hand": BoardScoring.IDLE_HAND_CRITERION_WEIGHT,
-		"damage_output": BoardScoring.DAMAGE_CRITERION_WEIGHT,
+		"harm": 0.5,
+		"protection": 0.15,
+		"board_value": 0.1,
+		"mana": 0.6,
+		"readiness": 0.1,
+		"idle_hand": 1.0,
+		"damage_output": 0.1,
 	}
 
 
@@ -93,7 +93,7 @@ static func stock_weights() -> Dictionary:
 # without per-encounter authoring) — it is a quirk because a personality may drop it, not
 # because the default lacks it.
 static func stock_quirks() -> Dictionary:
-	return {"damage_output": BoardScoring.DAMAGE_CRITERION_WEIGHT}
+	return {"damage_output": 0.1}
 
 
 static func core_ids() -> Array:
@@ -116,7 +116,7 @@ var traits: Dictionary = {}
 # quirks. Only a personality that never mentions quirks at all inherits the stock ones —
 # see from_dict, where the distinction is made once.
 var quirks: Dictionary = {}
-# Role/card → protect weight, layered over BoardScoring.STOCK_SURVIVAL_WEIGHTS. The death
+# Role/card → protect weight, layered over the stock survival weights. The death
 # risk trait's parameters: its weight says how loudly the CPU fears losing units, this says
 # which units it fears losing. An encounter's own survival_weights layer on top of these.
 var survival_weights: Dictionary = {}
@@ -270,7 +270,7 @@ func ability_value(ability_id: String) -> float:
 	return BoardValueConfig.ability_value(ability_id)
 
 
-# ── The valuation pass's per-fight knobs (BoardScoring.run_valuation) ──────────────────
+# ── The valuation pass's per-fight knobs (the retired valuation pass's) ────────────────
 
 # This character's persistence dial — how much a unit's fragility discounts its worth —
 # else the global one. Clamped the same way.
@@ -280,16 +280,9 @@ func persistence_factor() -> float:
 	return BoardValueConfig.persistence_weight()
 
 
-# The flat role bonus, resolved on ONE key (BoardValueConfig.role_key) then layered:
+
 # this character's entry for that key, else the global table's. One-key-then-layer keeps
 # the two tables one vocabulary — no cross-table specificity puzzles.
-func role_value(u: BoardState.UnitState) -> float:
-	var roles: Variant = value_rates.get("role_values")
-	var key := BoardValueConfig.role_key(u)
-	if roles is Dictionary and (roles as Dictionary).has(key):
-		return float((roles as Dictionary)[key])
-	return BoardValueConfig.role_value(u)
-
 
 # The per-card enhancer: this character's price for the card, else the global one.
 func unit_bonus(card_id: String) -> float:

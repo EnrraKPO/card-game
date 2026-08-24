@@ -9,7 +9,7 @@ extends CardUI
 # cast wiring, usability derivation, and the armed-autocast toggle (brackets, arming input,
 # quick-cast drag) all died with the ability spell-costume. The rebuilt ActivatedEffect
 # (TARGETING_DESIGN.md §7) owns invocation; presentation then re-derives usability from the
-# one usability rule (AbilityData.usable_by via CombatContext.ability_usable), never from
+# one usability rule, never from
 # state pushed at build time.
 
 # Procedural frame palette — deliberately not the card frames' gold/parchment: a cool dark
@@ -20,11 +20,11 @@ const FRAME_EDGE := Color(0.66, 0.52, 0.92)
 static var _widget_scene: PackedScene = null
 
 
-static func create_for(tok: CardInstance) -> AbilityWidget:
+static func create_for(token_data: CardData) -> AbilityWidget:
 	if _widget_scene == null:
 		_widget_scene = load("res://scenes/ability_widget.tscn")
 	var ui: AbilityWidget = _widget_scene.instantiate()
-	ui.card_instance = tok
+	ui.card_data = token_data
 	ui._show_cost = true
 	return ui
 
@@ -65,6 +65,4 @@ func _build_ability_chrome() -> void:
 	edge.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 
-# A dragged tray token ghosts as an ability widget, not a plain card (see DragGhost).
-func make_ghost_view() -> CardUI:
-	return AbilityWidget.create_for(card_instance)
+

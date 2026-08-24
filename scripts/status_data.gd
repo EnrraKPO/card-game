@@ -7,7 +7,7 @@ extends RefCounted
 # during combat and removed by its lifecycle. What a status CARRIES was razed with the
 # effect layer (2026-08-11) and re-authors in the new schema; the lifecycle machinery here
 # (stacking / decay / phases) stays as-is — user ruling: out of the effect layer's scope.
-# See StatusInstance (runtime) and StatusEngine (the operator). Data-driven from
+# The runtime status layer was demoted; the new core's statuses live in its envelope. Data-driven from
 # data/statuses/*.json.
 
 const ICON_DIR := "res://assets/ui/status/"   # pip art: "<id>_status.png" (optional)
@@ -63,7 +63,7 @@ var stacking: String = STACK_REFRESH
 var max_stacks: int = 99
 # How a stacked instance PRESENTS its pile: "count" (one pip, a number — default) or
 # "duplicates" (one pip per stack; burning — the tabs on a slot literally count the flames).
-# Presentation only; honored by the ground tab row today (SlotUI.render_ground).
+# Presentation only; the ground rendering re-enters with the board UI at parity.
 var stack_display: String = "count"
 # (The `spread` propagation block was deleted 2026-08-11: never user-designed — it accreted
 # with the burning-ground work, the same lineage as the disavowed riders/restrikes. The
@@ -72,7 +72,7 @@ var stack_display: String = "count"
 # ── EVAL ANNOTATION, status level (× stacks — STATUS_EVAL_BRIEF.md) ──
 # Hand-AUTHORED per-STACK adds on the enemy engine's channels ("threat" / "exposure" /
 # "value"): the fold contributes number × stacks, because stacks ARE the quantity (see
-# StatusEngine.is_expired). The flat, stack-blind half of a status's pricing lives on its
+# the demoted engine). The flat, stack-blind half of a status's pricing lives on its
 # carried structures when the rebuilt effect layer prices them (flat, stack-blind).
 # Multipliers are refused at this level: a stack-scaled multiplier has no settled
 # meaning. Absent = invisible.

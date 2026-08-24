@@ -111,28 +111,23 @@ func _apply_charm(def: Dictionary, charm_id: String) -> void:
 		def[attr] = int(def.get(attr, 0)) + int(charm.stats[attr])
 
 
-func make_instance() -> CardInstance:
-	var inst: CardInstance
+# The card this deck entry stands for, override and charms folded in — the one product
+# every screen renders (the live-fight construction goes through the new core's envelope).
+func effective_data() -> CardData:
 	# Fast path: a plain card with no override and no charms uses the registered base.
 	if override.is_empty() and charms.is_empty():
-		var base := CardData.get_card(id)
-		if base == null:
-			return null
-		inst = CardInstance.from_data(base)
-	else:
-		var def := _current_def()
-		for charm_id: String in charms:
-			_apply_charm(def, charm_id)
-		var data := CardData.build_from_dict(def)
-		if data == null:
-			return null
-		# Restore the snapshot's text into the override: for an authored card Loc still wins by
-		# id, but a runtime-derived composite carries its only copy of the name/desc here.
-		data.display_name = str(def.get("display_name", ""))
-		data.description  = str(def.get("description", ""))
-		inst = CardInstance.from_data(data)
-	inst.charms = charms.duplicate()   # display only; mechanics are baked into the data above
-	return inst
+		return CardData.get_card(id)
+	var def := _current_def()
+	for charm_id: String in charms:
+		_apply_charm(def, charm_id)
+	var data := CardData.build_from_dict(def)
+	if data == null:
+		return null
+	# Restore the snapshot's text into the override: for an authored card Loc still wins by
+	# id, but a runtime-derived composite carries its only copy of the name/desc here.
+	data.display_name = str(def.get("display_name", ""))
+	data.description  = str(def.get("description", ""))
+	return data
 
 
 func to_dict() -> Dictionary:

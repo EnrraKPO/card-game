@@ -12,7 +12,7 @@ func make_offer_ui(id: String) -> Control:
 	var data := CardData.get_card(id)
 	if data == null:
 		return Control.new()
-	var ui := CardUI.create(CardInstance.from_data(data))
+	var ui := CardUI.create(data)
 	ui.custom_minimum_size = Vector2(130, 170)
 	ui.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return ui

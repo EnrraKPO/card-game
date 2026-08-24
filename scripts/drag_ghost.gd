@@ -42,7 +42,7 @@ static func make(source: CardUI, at_position: Vector2) -> DragGhost:
 	return ghost
 
 
-# A drop zone's live verdict for the cursor's current position (see SlotUI / HandDropZone).
+# A drop zone's live verdict for the cursor's current position (the Forge's drags).
 static func report(verdict: State, zone: Control) -> void:
 	if current != null:
 		current._on_report(verdict, zone)

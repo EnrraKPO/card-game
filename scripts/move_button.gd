@@ -9,7 +9,7 @@ extends HoldButton
 # SELF-CONTAINED: the button owns its entire presentation as its own children — the open-rect
 # frame (the same glyph the empty-slot marker wears, at the marker's exact half-slot box), the
 # spotlight pool + arrow scaled to sit inside it, and the hold-progress fill. It borrows no
-# SlotUI cue nodes, and it lives at ONE fixed z for its whole life: above the card badge/tag
+# the demoted board UI's cue nodes, and it lives at ONE fixed z for its whole life: above the card badge/tag
 # layer (CardUI.TAG_Z) — by definition this is a control that must stay readable over any card
 # content its slot can show (the ghost phantom mounts under it while hovered/held).
 #

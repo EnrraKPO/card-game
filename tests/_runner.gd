@@ -17,23 +17,14 @@ extends Node
 # live in TARGETING_DESIGN.md; each rebuild phase ships its own native suite as it lands).
 # Green here means green — any failure is real breakage.
 const SUITES: Array = [
-	# (NUKED 2026-08-13: test_arbitrator, test_combat_side, test_dodge, test_crit and
-	# test_attack pinned the cursed channel and the single writer that carried it.
-	# NUKED 2026-08-14: test_mutators pinned the Mutator contract, vaporized with the
-	# payload it fed.)
-	preload("res://tests/test_locations.gd"),
-	preload("res://tests/test_statuses.gd"),
+	# (Suites covering the demoted combat layer retired with their subjects at the
+	# A11 swap, 2026-08-23: test_locations, test_statuses, test_combat_world,
+	# test_presenter, test_cascade, test_target_resolvers, test_enemy_engine,
+	# test_decision_table, test_enemy_personality.)
 	preload("res://tests/test_economy.gd"),
 	preload("res://tests/test_forge_costs.gd"),
 	preload("res://tests/test_encounter_pool.gd"),
-	preload("res://tests/test_decision_table.gd"),
-	preload("res://tests/test_enemy_engine.gd"),
-	preload("res://tests/test_enemy_personality.gd"),
 	preload("res://tests/test_selection.gd"),
-	preload("res://tests/test_combat_world.gd"),
-	preload("res://tests/test_presenter.gd"),
-	preload("res://tests/test_cascade.gd"),
-	preload("res://tests/test_target_resolvers.gd"),
 	preload("res://tests/test_core_world.gd"),
 	preload("res://tests/test_write_road.gd"),
 	preload("res://tests/test_rules_flow.gd"),

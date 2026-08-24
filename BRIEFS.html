@@ -423,4 +423,39 @@ standing on it non-conforming, to be corrected.</p>
   structurally unable to touch the live stream.</p>
 </div>
 
+<h2>Phase 5b — the swap and the cleanse (A11)</h2>
+
+<div class="brief">
+  <div class="head">B34 — ⚠ The extermination's scope judgments.</div>
+  <p>Executed in one stroke, per A11. The demoted layer died whole: the old
+  entity/world/cascade/status/effect/targeting/board classes, the
+  <b>combat screen and its board UI</b> (combat, combat_board, presenters,
+  hand, slot_ui, turn-order strip, animator, log, gym, overlays, vfx_player,
+  the old CombatRng), and the <b>encounter engine's substrate</b>
+  (board_state, enemy_engine, candidate_*, eval_channels, board_scoring) —
+  all stood on demoted classes and none could be rewired short of their
+  parity rebuild. The personality and encounter DATA layer survives (its
+  stock weights now literal, recovered from the retired scorer); a simple
+  new-core EnemyCommander serves the slice's span; personality-driven play
+  re-enters at parity, rebuilt on the new core. Legacy-bound dev probes and
+  the retired layers' suites went with their subjects.</p>
+</div>
+
+<div class="brief">
+  <div class="head">B35 — The new fight surface, and the CardData rewiring.</div>
+  <p><code>scenes/fight_screen.tscn</code> + <code>scripts/core_ui/</code>:
+  FightScreen (functional first iteration — chips, highlights, cue log, the
+  copy-backed target preview), FightPresenter (the live outlet), UiPicker,
+  PlayerCommander, EnemyCommander; the combat map node routes here, and an
+  unconfigured launch refuses loudly. The kept collection/deck/reward UI
+  rewired off the demoted instance wrapper onto <b>CardData</b>:
+  CardUI/CardTooltip/CardInspector/AbilityWidget render data;
+  <code>DeckCard.make_instance</code> became <code>effective_data()</code>;
+  <code>GameData.kill_bounty</code> takes CardData (its payer rewires at
+  parity); the catalogue keeps its raw effects schema unparsed until the
+  parity migration. Combat-only card presentation (statuses, tags, flip,
+  ground tint, drag-to-board) died with the board UI and re-enters through
+  the fight screen's iteration (A10).</p>
+</div>
+
 </div>

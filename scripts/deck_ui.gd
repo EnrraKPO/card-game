@@ -19,7 +19,7 @@ static func card_thumbnail(card_id: String, width: float, interactive := false) 
 		var placeholder := Control.new()
 		placeholder.custom_minimum_size = card_size
 		return placeholder
-	var ui := CardUI.create(CardInstance.from_data(data))
+	var ui := CardUI.create(data)
 	ui.draggable = false
 	ui.custom_minimum_size = card_size
 	if not interactive:
@@ -42,11 +42,11 @@ static func deck_label(od: OwnedDeck, ordinal: int) -> String:
 
 
 # The deck's cards as bare CardUI controls (read-only, baked with overrides/charms via
-# DeckCard.make_instance), unsized — for a FitGrid, which drives their size to fit the space.
+# DeckCard.effective_data), unsized — for a FitGrid, which drives their size to fit the space.
 static func deck_cards(od: OwnedDeck) -> Array[Control]:
 	var out: Array[Control] = []
 	for dc: DeckCard in od.cards:
-		var inst := dc.make_instance()
+		var inst := dc.effective_data()
 		if inst == null:
 			continue
 		var ui := CardUI.create(inst)
@@ -56,7 +56,7 @@ static func deck_cards(od: OwnedDeck) -> Array[Control]:
 
 
 # A read-only, auto-wrapping grid of a deck's cards (each the real CardUI, baked with its
-# overrides/charms via DeckCard.make_instance). An HFlowContainer so it fills the available width
+# overrides/charms via DeckCard.effective_data). An HFlowContainer so it fills the available width
 # — packing as many `card_width` cards per row as fit and wrapping the rest — instead of a fixed
 # column count that wastes a wide pane and forces extra scrolling. Shared by the Decks preview
 # pane and the View Deck screen; place it in a width-constraining parent (a horizontal-scroll-
@@ -68,7 +68,7 @@ static func deck_grid(od: OwnedDeck, card_width: float) -> HFlowContainer:
 	grid.add_theme_constant_override("v_separation", 10)
 	var card_size := Vector2(card_width, card_width * CARD_RATIO)
 	for dc: DeckCard in od.cards:
-		var inst := dc.make_instance()
+		var inst := dc.effective_data()
 		if inst == null:
 			continue
 		var ui := CardUI.create(inst)

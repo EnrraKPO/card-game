@@ -8,8 +8,8 @@ extends RefCounted
 #
 # This is the global, run/match-state side of the attribute model. CARD stats (attack /
 # health / cost) are deliberately NOT here: those bases live per-card in CardData and resolve
-# through CardInstance.get_attribute — the symmetric, per-instance attribute holder. The same
-# modifier system feeds both sides (cards via LiveEffects.bonus; globals via value()).
+# through the demoted per-instance attribute holder. The same
+# modifier system fed both sides; the card half retired with the demoted layer.
 
 const DEFAULTS := {
 	# Combat economy

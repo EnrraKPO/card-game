@@ -7,7 +7,7 @@ extends RefCounted
 # section (each entry the named visuals that play on every recipient when the effect
 # lands; ships with the one default_landing entry — amendment 4 of iteration 2).
 #
-# Load is loud and total, the EffectLibrary pattern: a malformed file, entry, or unknown
+# Load is loud and total: a malformed file, entry, or unknown
 # choreography is refused with an error, never half-loaded.
 
 const PRESENTATIONS_PATH := "res://data/presentations.json"

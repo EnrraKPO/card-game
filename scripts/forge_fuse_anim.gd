@@ -42,7 +42,7 @@ var _dest := Callable()          # -> Rect2 (global): the landing slot, read at 
 var _merge_fx: ForgeMergeFX = null   # the swirl/link/wobble riding the pair as it converges
 
 
-func play(a_inst: CardInstance, b_inst: CardInstance, result_inst: CardInstance,
+func play(a_inst: CardData, b_inst: CardData, result_inst: CardData,
 		a_gc: Vector2, b_gc: Vector2, center_gc: Vector2, card_size: Vector2,
 		color_a: Color, color_b: Color, link_color: Color, dest: Callable) -> void:
 	_card_size = card_size
@@ -81,7 +81,7 @@ func play(a_inst: CardInstance, b_inst: CardInstance, result_inst: CardInstance,
 	tw.chain().tween_callback(_flash_and_reveal.bind(card_a, card_b, result_inst, c_local))
 
 
-func _flash_and_reveal(card_a: Control, card_b: Control, result_inst: CardInstance, c_local: Vector2) -> void:
+func _flash_and_reveal(card_a: Control, card_b: Control, result_inst: CardData, c_local: Vector2) -> void:
 	if _merge_fx != null:            # the reaction collapses into the impact along with the cards
 		_merge_fx.queue_free()
 		_merge_fx = null
@@ -140,7 +140,7 @@ func _fly_home(result: Control) -> void:
 
 # A CardUI clone whose CENTRE sits at `center_local`, pivoted at its centre so scale/rotation swirl
 # around the middle.
-func _make_card(inst: CardInstance, center_local: Vector2) -> Control:
+func _make_card(inst: CardData, center_local: Vector2) -> Control:
 	var ui := CardUI.create(inst)
 	ui.custom_minimum_size = _card_size
 	ui.size = _card_size

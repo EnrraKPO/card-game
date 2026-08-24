@@ -1,6 +1,0 @@
-[gd_scene format=3]
-
-[ext_resource type="Script" path="res://dev/_debugvis_probe.gd" id="1"]
-
-[node name="DebugVisProbe" type="Node"]
-script = ExtResource("1")

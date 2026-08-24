@@ -25,7 +25,7 @@ var exp_reward: int = 1           # profile experience for winning this fight (s
 var ai: String = "default"
 var reward_pool: String = "default"
 # Optional role→weight entries layered over the enemy engine's stock survival-weight table
-# (see BoardScoring / EncounterData.survival_weights).
+# (see EncounterData.survival_weights).
 var survival_weights: Dictionary = {}
 # WHO the CPU is in this fight: this encounter's OWN personality instance — every eval weight
 # and every eval parameter, as a local copy (user call 2026-07-30: personalities are templates

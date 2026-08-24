@@ -124,21 +124,7 @@ static func material_ability(elems: Array, chess: Array) -> AbilityData:
 	return ab
 
 
-# THE usability rule — one definition, consulted by everything that presents or gates an
-# ability (today the Inspect Abilities button's ready-glow via CombatContext.ability_usable;
-# the rebuilt activation gate joins it). Pure query of live facts, so no two consumers can
-# ever disagree about whether an ability is castable this moment.
-#
-# Its READINESS half stands alone below because two consumers legitimately ask it apart
-# from affordability: the tray offer defers mana to cast time (CardInstance.
-# has_available_abilities), and the enemy engine's sim asks against its own planned
-# `exhausted` snapshot rather than the live holder. Neither may re-spell the clause.
-func usable_by(holder: CardInstance, mana_available: int) -> bool:
-	if holder == null:
-		return false
-	return ready(holder.attack_exhausted) and self.mana <= mana_available
-
-
+# THE readiness rule, kept for the parity re-entry of ability presentation.
 # The readiness half of THE usability rule: a tap-costed ability needs an unspent tap.
 # `exhausted` is passed in rather than read off a holder so a simulation can ask about
 # its hypothetical state through the same one clause.

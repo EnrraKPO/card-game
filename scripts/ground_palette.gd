@@ -3,7 +3,7 @@ extends RefCounted
 
 # ── The ground layer's shades, derived from a status's ONE authored colour ─────────────────────
 #
-# A ground status paints three surfaces at once (SlotUI's frame and floor, StatusPip's tabs), and
+# A ground status paints several surfaces at once (the board UI re-enters at parity), and
 # they overlap: the tabs ride the top gutter, which is exactly where the frame runs. Three parts of
 # one system in ONE flat colour would read as a single smeared shape, so each surface takes its own
 # shade of the same hue — same status, three depths.

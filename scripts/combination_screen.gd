@@ -449,7 +449,7 @@ func _rebuild_deck(changed: Array = []) -> void:
 		var data := CardData.get_card(dc.id)
 		if data == null:
 			continue
-		var ui := CardUI.create(dc.make_instance())
+		var ui := CardUI.create(dc.effective_data())
 		ui.draggable = false   # the Forge drives its own drag; CardUI's combat drag stays off
 
 		var combinable := data.elements.size() > 0 or data.chess_pieces.size() > 0
@@ -481,7 +481,7 @@ func _refresh_face(e: Dictionary) -> bool:
 	if data == null:
 		return false
 	(e.ui as Control).queue_free()
-	var ui := CardUI.create(dc.make_instance())
+	var ui := CardUI.create(dc.effective_data())
 	ui.draggable = false
 	var shell := e.item as ForgeDragItem
 	shell.setup(ui, shell.payload)
@@ -605,7 +605,7 @@ func _begin_drag(payload: Dictionary) -> void:
 
 func _make_follower_visual(payload: Dictionary) -> Control:
 	if payload.kind == "card":
-		var inst: CardInstance = _entries[payload.idx].card.make_instance()
+		var inst: CardData = _entries[payload.idx].card.effective_data()
 		var ui := CardUI.create(inst)
 		ui.custom_minimum_size = _live_card_size()
 		ui.size = _live_card_size()
@@ -918,7 +918,7 @@ func _cancel_drag() -> void:
 # ── Validity + preview ──────────────────────────────────────────────────────────
 
 # Evaluates pairing `payload` with the card at `target_idx`. Returns:
-#   { ok, status, color, preview: CardInstance|null, result_dc: DeckCard|null,
+#   { ok, status, color, preview: CardData|null, result_dc: DeckCard|null,
 #     affordable, cost (combine only) }
 func _evaluate_target(payload: Dictionary, target_idx: int) -> Dictionary:
 	var tgt: Dictionary = _entries[target_idx]
@@ -938,10 +938,10 @@ func _evaluate_target(payload: Dictionary, target_idx: int) -> Dictionary:
 		if have < cost:
 			return {"ok": true, "affordable": false, "cost": cost,
 				"status": Loc.t("combine.status_need_mineral", {"cost": cost, "have": have}),
-				"color": BAD_COLOR, "preview": rdc.make_instance(), "result_dc": rdc}
+				"color": BAD_COLOR, "preview": rdc.effective_data(), "result_dc": rdc}
 		# Affordable: the cost renders on the commit button itself — no status text needed.
 		return {"ok": true, "affordable": true, "cost": cost, "status": "",
-			"color": OK_COLOR, "preview": rdc.make_instance(), "result_dc": rdc}
+			"color": OK_COLOR, "preview": rdc.effective_data(), "result_dc": rdc}
 	else:
 		var charm := CharmData.get_charm(str(payload.id))
 		var data: CardData = tgt.data
@@ -959,7 +959,7 @@ func _evaluate_target(payload: Dictionary, target_idx: int) -> Dictionary:
 				"color": BAD_COLOR}
 		var preview_dc := (tgt.card as DeckCard).clone()
 		preview_dc.add_charm(str(payload.id))
-		return {"ok": true, "status": "", "color": OK_COLOR, "preview": preview_dc.make_instance()}
+		return {"ok": true, "status": "", "color": OK_COLOR, "preview": preview_dc.effective_data()}
 
 
 # Union of both parents' charms still valid on the combined result, capped at what the result can
@@ -1315,7 +1315,7 @@ func _reconcile_previews() -> void:
 		if _preview_uis.has(i):
 			continue
 		var verdict := _evaluate_target(_sel, i)
-		var inst: CardInstance = verdict.get("preview", null)
+		var inst: CardData = verdict.get("preview", null)
 		if inst == null:
 			continue
 		_preview_uis[i] = _make_preview(i, inst, str(want[i]))
@@ -1378,7 +1378,7 @@ func _fit_previews() -> void:
 # Builds one stand-in over the card at `idx`: the host's exact size, dropped by PREVIEW_DROP so the
 # host's name band stays uncovered, and mouse-transparent so the card underneath still takes every
 # tap and drag — the preview is a way of LOOKING at the table, never a new thing to click.
-func _make_preview(idx: int, inst: CardInstance, sig: String) -> Control:
+func _make_preview(idx: int, inst: CardData, sig: String) -> Control:
 	var host: Control = _entries[idx].item
 	var holder := Control.new()
 	holder.mouse_filter = MOUSE_FILTER_IGNORE
@@ -1547,7 +1547,7 @@ func _open_merge(src: Dictionary, tgt_idx: int, verdict: Dictionary,
 # Builds the framing cluster: [components] · [enlarged result] · [details], buttons beneath.
 func _build_cluster(src: Dictionary, tgt_idx: int, verdict: Dictionary) -> void:
 	var enchanting := str(src.get("kind", "")) == "charm"
-	var result_inst: CardInstance = verdict.get("preview", null)
+	var result_inst: CardData = verdict.get("preview", null)
 
 	# Sizes flow from the RESULT card: comfortably larger than a grid card, capped by the screen.
 	var res_h := clampf(_live_card_size().y * 1.7, 300.0, size.y * 0.52)
@@ -1585,17 +1585,17 @@ func _build_cluster(src: Dictionary, tgt_idx: int, verdict: Dictionary) -> void:
 	var comp_size := Vector2(comp_w, comp_h)
 	if enchanting:
 		# Attach: the original card + the charm chip.
-		comps.add_child(_make_component_card(_entries[tgt_idx].card.make_instance(), comp_size))
+		comps.add_child(_make_component_card(_entries[tgt_idx].card.effective_data(), comp_size))
 		var plus := _glyph("+", 32)
 		plus.size_flags_horizontal = SIZE_SHRINK_CENTER
 		comps.add_child(plus)
 		comps.add_child(_make_component_charm(str(src.get("id", "")), comp_size))
 	else:
-		comps.add_child(_make_component_card(_entries[int(src.idx)].card.make_instance(), comp_size))
+		comps.add_child(_make_component_card(_entries[int(src.idx)].card.effective_data(), comp_size))
 		var plus2 := _glyph("+", 32)
 		plus2.size_flags_horizontal = SIZE_SHRINK_CENTER
 		comps.add_child(plus2)
-		comps.add_child(_make_component_card(_entries[tgt_idx].card.make_instance(), comp_size))
+		comps.add_child(_make_component_card(_entries[tgt_idx].card.effective_data(), comp_size))
 
 	row.add_child(_glyph("→", 44))
 
@@ -1755,7 +1755,7 @@ func _place_cluster(global_anchor: Vector2) -> void:
 
 
 # A component mini-card for the framing's ingredients column.
-func _make_component_card(inst: CardInstance, comp_size: Vector2) -> Control:
+func _make_component_card(inst: CardData, comp_size: Vector2) -> Control:
 	var holder := Control.new()
 	holder.custom_minimum_size = comp_size
 	holder.size_flags_horizontal = SIZE_SHRINK_CENTER
@@ -1845,7 +1845,7 @@ func _commit_merge() -> void:
 	var tgt := int(_merge.get("tgt", -1))
 	var verdict: Dictionary = _merge.get("verdict", {})
 	if str(src.get("kind", "")) == "charm":
-		var result_inst: CardInstance = verdict.get("preview", null)
+		var result_inst: CardData = verdict.get("preview", null)
 		_do_enchant(str(src.get("id", "")), tgt)
 		_drop_cluster()
 		_show_result_toast(result_inst, Loc.t("combine.attached"))
@@ -1921,9 +1921,9 @@ func _start_fusion(src_idx: int, tgt_idx: int, result_dc: DeckCard, host: Contro
 	var center := (a_gc + b_gc) * 0.5
 	var fly_size := _live_card_size()
 
-	var a_inst := (_entries[src_idx].card as DeckCard).make_instance()
-	var b_inst := (_entries[tgt_idx].card as DeckCard).make_instance()
-	var result_inst := result_dc.make_instance()
+	var a_inst := (_entries[src_idx].card as DeckCard).effective_data()
+	var b_inst := (_entries[tgt_idx].card as DeckCard).effective_data()
+	var result_inst := result_dc.effective_data()
 	var color_a := _color_for_card(_entries[src_idx].data)
 	var color_b := _color_for_card(_entries[tgt_idx].data)
 	var tgt_dc: DeckCard = _entries[tgt_idx].card
@@ -2042,7 +2042,7 @@ func _entry_index_of(dc: DeckCard) -> int:
 # new card blown up beside its full read, taking real advantage of the screen. Clicking the dim
 # (outside the panel) closes the whole modal; the panel swallows its own clicks, so it's a true
 # "click out to dismiss". The merge is already committed by this point.
-func _show_result_toast(result_inst: CardInstance, title_text: String) -> void:
+func _show_result_toast(result_inst: CardData, title_text: String) -> void:
 	if _modal == null or result_inst == null:
 		return
 	var center := CenterContainer.new()

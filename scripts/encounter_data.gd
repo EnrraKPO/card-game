@@ -18,7 +18,7 @@ var mineral_reward: int = 0          # authored Magic Mineral on win (the tool-d
                                      # default stacks on top — see GameData.reward_mineral)
 var exp_reward: int = 1              # profile experience granted on win (1 by default; special fights more)
 var material_rewards: Dictionary = {}  # profile crafting resources (id→count) granted on win
-# Per-encounter overrides layered over BoardScoring.STOCK_SURVIVAL_WEIGHTS (role → weight,
+# Per-encounter overrides layered over the stock survival weights (role → weight,
 # e.g. {"fodder": 0.5} = "in this fight, fodders are precious"). The enemy engine's one
 # authored steering knob so far; empty = pure stock behaviour.
 var survival_weights: Dictionary = {}
@@ -29,7 +29,7 @@ var personality: EnemyPersonality = null
 
 var outcome: Outcome = Outcome.PENDING
 
-# A Combat Gym launch (see combat_gym.gd): the fight plays out exactly like the real thing,
+# A practice launch (the gym retired with the demoted layer): the fight plays out exactly like the real thing,
 # but its ENDING writes nothing — no rewards, no king-damage carry, no map advance, no save,
 # no run end on defeat — and navigation returns to the gym instead of the map/reward flow.
 var practice: bool = false

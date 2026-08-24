@@ -3,13 +3,13 @@ extends Node
 
 # THE single owner of "what is the player doing right now" in combat. At most one Action is
 # live at a time; every gesture (placing/moving a unit; aiming, when the rebuilt targeting
-# returns) BEGINS an action here and ENDS through here. Presentation components (CombatBoard's
-# cue renderer, SlotUI's drop gate, DragGhost verdicts, the Ready button, input gating) all
+# returns) BEGINS an action here and ENDS through here. Presentation components (the board's
+# cue renderer, drop gates, DragGhost verdicts, the Ready button, input gating) all
 # derive from the one `changed` signal — so a gesture ending resets everything structurally,
 # with no per-path cleanup to forget. See INTERACTION_DESIGN.md.
 #
 # Actions DECLARE (rules: role_of / commit); components REACT (each maps roles to its own
-# visuals in exactly one place). The rules themselves stay with the rules experts — CombatBoard
+# visuals in exactly one place). The rules themselves stay with the rules experts — the board
 # builds unit actions; the rebuilt effect system's resolvers conduct cast gestures through
 # actions of their own (TARGETING_DESIGN.md §3) — this node only runs the lifecycle.
 
@@ -23,7 +23,7 @@ enum Role { NONE, DESTINATION, TARGET_VALID, TARGET_INVALID }
 
 
 # A declarative description of one player gesture. Built by the rules experts' factories
-# (CombatBoard.make_unit_action today; the rebuilt cast/aim actions later).
+# (the fight screen's actions, when it adopts this seam at the parity pass).
 class Action:
 	extends RefCounted
 
@@ -33,11 +33,11 @@ class Action:
 
 	var kind: int = Kind.UNIT
 	var source: CardUI = null
-	# THE rules authority for this action: func(SlotUI) -> Interaction.Role. Consulted by the
+	# THE rules authority for this action: func(Control) -> Interaction.Role. Consulted by the
 	# board renderer (cue per slot), the slot drop gate, AND commit-time re-validation — one
 	# predicate, so cue / drop-accept / execution can never disagree.
 	var role_check: Callable
-	# func(SlotUI) -> void. Performs the action on a chosen slot (drop or click — same entry).
+	# func(Control) -> void. Performs the action on a chosen slot (drop or click — same entry).
 	# May be async (spell resolution awaits); fired without awaiting.
 	var on_commit: Callable
 	# Optional func() -> void, called once when the action ends (deselect visuals, etc.).
@@ -55,16 +55,12 @@ class Action:
 	# player just built. The commit path itself is untouched (the drag uses the same action and
 	# the same predicate); only the click entry is closed.
 	var click_commit: bool = true
-	# The fielded unit whose attack projection (crosshair + incoming-threat glow) shows while
-	# this action is live; null = no preview (hand cards aren't on the board yet).
-	var preview_instance: CardInstance = null
-
-	func role_of(slot: SlotUI) -> int:
+	func role_of(slot: Control) -> int:
 		if role_check.is_valid():
 			return role_check.call(slot)
 		return Interaction.Role.NONE
 
-	func commit(slot: SlotUI) -> void:
+	func commit(slot: Control) -> void:
 		if on_commit.is_valid():
 			on_commit.call(slot)
 
@@ -99,7 +95,7 @@ func begin(action: Action) -> void:
 	# Selection.select_ability — retired with the costume; it returns with the rebuilt
 	# activation gesture.)
 	if action != null and action.modal and action.source != null:
-		Selection.select(action.source.card_instance)
+		Selection.select(action.source.card_data)
 	changed.emit(_action)
 
 
@@ -117,8 +113,8 @@ func end_action(only: Action = null) -> void:
 	# The aim's pick ends with the aim. Guarded so a pick that already moved on (the aim
 	# resolved into a new selection) is left be. (The ability-level unpick retired with the
 	# costume, alongside the sub-pick in begin.)
-	if prev.modal and prev.source != null and prev.source.card_instance != null:
-		if Selection.holds(prev.source.card_instance):
+	if prev.modal and prev.source != null and prev.source.card_data != null:
+		if Selection.holds(prev.source.card_data):
 			Selection.clear()
 	changed.emit(null)
 
@@ -131,7 +127,7 @@ func end_drag(source: CardUI) -> void:
 
 
 # The current action's verdict for a slot (NONE when idle) — cue rendering and hover ask this.
-func role_of(slot: SlotUI) -> int:
+func role_of(slot: Control) -> int:
 	if _action == null:
 		return Role.NONE
 	return _action.role_of(slot)
@@ -158,7 +154,7 @@ func owns_drag(dragged: Variant) -> bool:
 # `dragged` is Godot's drop payload: the commit is refused unless it IS this action's source
 # (see owns_drag). The gate is repeated here rather than trusted from _can_drop_data because the
 # two are separate queries at separate moments — the same reason the role is re-validated.
-func commit_drop(slot: SlotUI, dragged: Variant) -> bool:
+func commit_drop(slot: Control, dragged: Variant) -> bool:
 	if _action == null or not owns_drag(dragged):
 		return false
 	var role := role_of(slot)
@@ -174,7 +170,7 @@ func commit_drop(slot: SlotUI, dragged: Variant) -> bool:
 # MOVE BUTTON uses: click_commit stays false for a fielded unit (a stray tap on the slot still
 # never moves it), while the button — an explicit control that exists only to commit — goes
 # through here. Same end-then-commit order as drops and clicks, same role re-validation.
-func commit_press(slot: SlotUI) -> bool:
+func commit_press(slot: Control) -> bool:
 	if _action == null or _action.is_drag:
 		return false
 	var role := role_of(slot)
@@ -189,7 +185,7 @@ func commit_press(slot: SlotUI) -> bool:
 # Click commit: a slot was pressed while a click session is live. Returns true when the press
 # was CONSUMED (committed, or swallowed by a modal session holding out for a valid pick);
 # false lets the press fall through to normal handling (inspection, selection switching).
-func handle_slot_press(slot: SlotUI) -> bool:
+func handle_slot_press(slot: Control) -> bool:
 	if _action == null or _action.is_drag:
 		return false
 	if _action.click_commit and commit_press(slot):

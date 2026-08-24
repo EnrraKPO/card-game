@@ -2,12 +2,12 @@ extends TestCase
 
 # THE selection's one hazard: a pick whose subject stops existing.
 #
-# Selection accepts any Object as a subject — a CardInstance for a card, a bare widget for
+# Selection accepts any Object as a subject — a CardData for a card, a bare widget for
 # things that are their own subject (a forge chip, a shop/event entry's ui). The widget kind is
 # a NODE, and a screen that rebuilds or tears down its entries frees it out from under the pick.
 # A freed instance then fails LOUDLY at every use: `==` errors and `as` throws "Trying to cast a
 # freed object" — which is exactly how it surfaced, a crash at the `Selection.current() as
-# CardInstance` read in combat's interaction bridge.
+# subject` read wherever a pick is consumed.
 #
 # So the collapse is pinned at the STATE, not at the asking sites: no reader may observe a freed
 # pick. These are plumbing tests — the guard's mechanics and its silence — never a claim about
@@ -36,7 +36,7 @@ func _freed_pick_is_no_pick() -> void:
 	check(not Selection.active(), "…and as inactive through active()")
 	check(not Selection.holds(null), "…and holds nothing")
 	# The regression itself: the cast that crashed combat.gd must now yield a plain null.
-	var inst := Selection.current() as CardInstance
+	var inst := Selection.current() as CardData
 	check(inst == null, "casting the collapsed pick yields null instead of throwing")
 
 
@@ -57,6 +57,6 @@ func _collapse_is_silent() -> void:
 	widget.free()
 	var _ignored: Variant = Selection.current()
 	check_eq(beats.size(), 0, "collapsing a freed pick emits nothing")
-	Selection.select(unit("pawn"))
+	Selection.select(CardData.get_card("pawn"))
 	check_eq(beats.size(), 1, "…and a real selection after it still signals")
 	Selection.changed.disconnect(tap)

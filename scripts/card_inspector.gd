@@ -19,7 +19,7 @@ const DETAIL_PAD := 14.0   # padding inside the detail panel
 # no cap: on a phone, readability under a thumb outweighs texel-perfect frame art.
 const DESKTOP_MAX_SCALE := 2.0
 
-var _inst: CardInstance
+var _inst: CardData
 var _show_cost: bool
 # Inspecting a card that isn't real (a forge quick-preview stand-in, any other projection) keeps it
 # unreal here: the enlarged copy wears the same phantom treatment, so the overlay can never be read
@@ -40,7 +40,7 @@ var _content: Control = null  # the laid-out card + flanking columns; rebuilt in
 # Opens the inspector for `inst` above everything else (combat HUD, menus). `host` only supplies
 # the viewport; the overlay parents to that viewport (not the originating card) so it survives
 # the card and stays inside whatever viewport the game runs in (window, embedded, render harness).
-static func open(host: Node, inst: CardInstance, show_cost := true, phantom := false) -> void:
+static func open(host: Node, inst: CardData, show_cost := true, phantom := false) -> void:
 	if inst == null or host == null or not host.is_inside_tree():
 		return
 	var insp := CardInspector.new()

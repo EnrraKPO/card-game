@@ -4,7 +4,7 @@ extends RefCounted
 # A charm is a persistent enchantment attached to a specific deck card — a Wildfrost-style
 # charm (the per-card reward axis; the run-global axis, relics, is separate/TODO).
 # Mechanically it's a small definition-patch of stat bumps merged into the card's definition
-# when its CardInstance is built (see DeckCard.make_instance). The effects half of the patch
+# when its effective CardData is built (see DeckCard.effective_data). The effects half of the patch
 # burned in the effect-cleanse — charm effect payloads re-author in the new schema.
 # Data-driven from data/charms/*.json.
 

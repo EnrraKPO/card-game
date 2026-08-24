@@ -31,7 +31,7 @@ var editing_deck_id: String = ""
 var current_profile: ProfileData = null
 # Aggregate of every active run-wide Effect (from owned upgrades now; relics/heroes
 # later). Rebuilt whenever the profile changes or a run starts; the game systems read every
-# number through value() (globals) / LiveEffects.bonus (cards) / run-level dispatch
+# number through value() (globals) / run-level dispatch
 # (combat events). Empty default = no-op for every query.
 var current_modifiers: ModifierSet = ModifierSet.new():
 	set(v):
@@ -221,18 +221,18 @@ func _bonus_reward_materials(enc: EncounterData) -> Dictionary:
 #
 # Kings pay NOTHING: a king's death is the fight itself ending, and it hands over a treasure
 # chest instead (see Combat._king_fall) — a bounty on top would double-pay the same moment.
-func kill_bounty(inst: CardInstance) -> Dictionary:
+func kill_bounty(data: CardData) -> Dictionary:
 	var none := {"gold": 0, "exp": 0}
-	if inst == null or inst.data == null or inst.data.is_king:
+	if data == null or data.is_king:
 		return none
-	var cost: int = maxi(0, inst.data.cost)
+	var cost: int = maxi(0, data.cost)
 	var floor_v: int = maxi(0, value("bounty.minimum"))
-	var gold: int = inst.data.bounty_gold
+	var gold: int = data.bounty_gold
 	if gold < 0:
 		gold = maxi(floor_v, int(round(cost * value_f("bounty.gold_per_cost"))))
 	# `xp`, not `exp` — `exp()` is a GDScript global and shadowing it is a warning (this
 	# project treats warnings as errors).
-	var xp: int = inst.data.bounty_exp
+	var xp: int = data.bounty_exp
 	if xp < 0:
 		xp = maxi(floor_v, int(round(cost * value_f("bounty.exp_per_cost"))))
 	return {"gold": maxi(0, gold), "exp": maxi(0, xp)}

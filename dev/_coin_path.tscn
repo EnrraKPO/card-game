@@ -1,6 +1,0 @@
-[gd_scene format=3]
-
-[ext_resource type="Script" path="res://dev/_coin_path.gd" id="1"]
-
-[node name="CoinPath" type="Node"]
-script = ExtResource("1")

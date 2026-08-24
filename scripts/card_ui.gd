@@ -1,28 +1,17 @@
 class_name CardUI
 extends Control
 
+
 signal pressed
-signal spell_drag_started(card_ui: CardUI)
-signal spell_drag_ended(card_ui: CardUI)
-# Fielded-unit drag lifecycle (row >= 0, non-spell) — the board listens to run the autocast
-# drag affordance (drop card filters + light valid targets). See CombatBoard.
-signal unit_drag_started(card_ui: CardUI)
-signal unit_drag_ended(card_ui: CardUI)
 
-# Status badge scene — its size/fonts/style are authored in the editor (status_pip.tscn).
-const STATUS_PIP_SCENE := preload("res://scenes/status_pip.tscn")
-
-var card_instance: CardInstance
+# The card this view renders (the authoring data — the new core's live entities render
+# through the fight screen; this view serves the collection, deck, and reward screens).
+var card_data: CardData
 var _show_cost: bool
-# Drag-and-drop is a combat affordance (hand → board). Off-combat cards (forge, rewards,
-# deck views) set this false: otherwise a touch tap that drifts a pixel starts a drag
-# instead of firing `pressed`, so selection silently fails on touchscreens.
-var draggable: bool = true
+# Charm pips shown on the left edge — handed by screens that render a DeckCard.
+var charm_ids: Array = []
 # Left-edge column of charm pips, built lazily (mirrors the composition chips on the right).
 var _charm_col: VBoxContainer = null
-# True for a rook-generated token shown in the hand's "generated" zone; gives
-# the card a distinct glowing frame and a tooltip naming its source building.
-var is_generated: bool = false
 
 # Touch card inspection: hover tooltips don't fire on a touchscreen, so a long-press
 # (hold still ~0.4s) opens the full-screen CardInspector instead. Desktop keeps the
@@ -56,17 +45,8 @@ var _hold_dragging := false   # a drag started while the hold was still viable
 @onready var _hp_bg: TextureRect = %HpBg
 @onready var _hp_lbl: Label     = %HpLabel
 @onready var _comp_row: BoxContainer = %CompRow
-@onready var _status_row: BoxContainer = %StatusRow   # authored under Canvas; position it in the editor
-var _threat_tw: Tween = null   # looping pulse on the Attack badge while flagged an incoming threat
 @onready var _border: Panel     = %Border
 @onready var _canvas: Control   = $Canvas
-# The status-aura overlay (see _refresh_aura) — created lazily, only for cards that carry an
-# aura-declaring status (e.g. Barrier's "protected" ring).
-var _aura: Panel = null
-# The idle "click me, I have an ability" cue (see _refresh_ability_cue) — a dim pulsing outline,
-# created lazily, only for a fielded player unit with a currently offerable ability.
-var _ability_cue: Panel = null
-var _ability_cue_tween: Tween = null
 
 # The card is authored once at this fixed native resolution. Every visual lives
 # under the Canvas node, which is uniformly scaled to fill whatever size the
@@ -163,11 +143,11 @@ const COMP_VISUALS := {
 static var _scene: PackedScene = null
 
 
-static func create(inst: CardInstance, show_cost: bool = false) -> CardUI:
+static func create(data: CardData, show_cost: bool = false) -> CardUI:
 	if _scene == null:
 		_scene = load("res://scenes/card_ui.tscn")
 	var ui: CardUI = _scene.instantiate()
-	ui.card_instance = inst
+	ui.card_data = data
 	ui._show_cost = show_cost
 	return ui
 
@@ -176,18 +156,15 @@ func _ready() -> void:
 	_apply_asset_textures()
 	_apply_label_style()
 	_apply_border_style()
-	_apply_ground_tint()   # a card can be dealt a tint before it is in the tree
 	refresh()
 	resized.connect(_apply_scale)
-	# The self-derivation poll (see derive_presentation): every card re-consults its own
-	# situation on a slow beat, so no state can outlive the facts it derives from even if
-	# every cue is missed. Outside combat (CombatContext.current == null, no playable_check)
-	# each tick is a no-op.
-	_presentation_poll = Timer.new()
-	_presentation_poll.wait_time = PRESENTATION_POLL_SECS
-	_presentation_poll.autostart = true
-	_presentation_poll.timeout.connect(derive_presentation)
-	add_child(_presentation_poll)
+	# The selection self-poll: the pick is DERIVED, and with no pusher the view re-asks on a
+	# slow beat so no stale ring can outlive the facts (see Selection).
+	var poll := Timer.new()
+	poll.wait_time = 0.75
+	poll.autostart = true
+	poll.timeout.connect(derive_presentation)
+	add_child(poll)
 	mouse_entered.connect(_on_pointer_entered)
 	mouse_exited.connect(_on_pointer_exited)
 	# The intent wait. One-shot and cancellable, hence a Timer node rather than an awaited
@@ -200,7 +177,6 @@ func _ready() -> void:
 	# Defining _physics_process turns it ON by default; it must idle until a hover arms it.
 	set_physics_process(false)
 	_apply_scale()
-	_apply_flip()   # honour a facing set before the nodes existed (see set_flipped)
 	# Arm long-press inspection only on touch devices; desktop relies on the hover tooltip.
 	_touch_inspect = DisplayServer.is_touchscreen_available()
 	set_process(false)   # only polls while a drag is racing a pending hold (see _get_drag_data)
@@ -259,75 +235,6 @@ func _apply_font_oversampling() -> void:
 		lbl.add_theme_font_override("font", _oversampled_fonts[_font_factor])
 
 
-# ── Combat facing ────────────────────────────────────────────────────────────────
-# During combat the two armies face across the board (player half on the left facing right, enemy
-# half on the right facing left). By default a card's stat badges sit fixed (Attack on the left
-# edge, Shield/Health on the right), so both armies read as parallel rather than facing off. Setting
-# a card "flipped" mirrors its stat cluster horizontally, so its Attack faces the opponent and the
-# two sides become mirror images across the centre line. Only the badge POSITIONS mirror — the
-# numbers and icons inside each badge are moved, never flipped, so everything still reads normally.
-
-var _want_flipped := false
-var _flip_applied := false
-
-# EVERY positioned overlay node mirrors as one rigid reflection — not just the stat badges. The
-# original layout is collision-free, so its full mirror is too; mirroring only some badges would
-# drop them onto the ones left in place (e.g. Shield onto the charm column, Cost onto the comp
-# chips). Art/Frame/Border are full-rect and symmetric, so they're deliberately excluded (and the
-# art must never mirror). `_charm_col` is built lazily and may be null here — callers skip nulls,
-# and _refresh_charms mirrors it on creation if the flip is already applied.
-func _flip_nodes() -> Array:
-	return [_cost_bg, _cost_lbl, _name_bg, _name_label, _comp_row,
-		_atk_bg, _atk_lbl, _spd_bg, _spd_lbl, _shield_bg, _shield_lbl,
-		_hp_bg, _hp_lbl, _status_row, _charm_col]
-
-
-# The stat-badge background textures — mirrored in place (flip_h) so their asymmetric art faces the
-# same way as the reflected layout. Just the badge assets, not the labels or the illustration.
-func _badge_bgs() -> Array:
-	return [_cost_bg, _name_bg, _spd_bg, _atk_bg, _shield_bg, _hp_bg]
-
-
-# Sets the card's combat facing. `flipped` mirrors the stat cluster to the opposite edge. Idempotent
-# and order-independent: safe to call before _ready (the flip is applied in _ready) and to call
-# repeatedly (e.g. when a unit is moved between slots) — it tracks the applied state, never toggling.
-func set_flipped(flipped: bool) -> void:
-	_want_flipped = flipped
-	_apply_flip()
-
-
-func _apply_flip() -> void:
-	if _atk_bg == null:            # nodes not ready yet — _ready() will call this again
-		return
-	if _flip_applied == _want_flipped:
-		return
-	_flip_applied = _want_flipped
-	for node: Control in _flip_nodes():
-		if node != null:   # _charm_col is built lazily; skip until it exists
-			_mirror_x(node)
-	# Also reflect the badge ART itself (not just its position): the badge textures are asymmetric
-	# (e.g. the speed wing, the attack blade), so after the cluster mirrors they'd point the wrong
-	# way. flip_h reflects each badge texture in place; the number Labels are left alone so they
-	# still read normally. The card illustration is deliberately NOT flipped.
-	for bg: TextureRect in _badge_bgs():
-		bg.flip_h = _want_flipped
-
-
-# Reflects a control's horizontal placement across the Canvas's vertical centre, leaving its
-# vertical placement and its contents untouched. Its own inverse, so re-calling toggles cleanly.
-# Works in Canvas pixels pinned to a zero anchor rather than mirroring the anchors themselves: the
-# Canvas is a fixed native size (never resized, only scaled — see _apply_scale), so pixel offsets
-# are stable, and this sidesteps the anchor-crossing clamp that stretches a badge when its left
-# anchor is pushed past its still-old right anchor mid-update.
-func _mirror_x(node: Control) -> void:
-	var w := NATIVE_SIZE.x
-	var cur_left := node.anchor_left * w + node.offset_left
-	var cur_right := node.anchor_right * w + node.offset_right
-	node.anchor_left = 0.0
-	node.anchor_right = 0.0
-	node.offset_left = w - cur_right
-	node.offset_right = w - cur_left
-
 
 func _apply_asset_textures() -> void:
 	_name_bg.texture = NAMEPLATE
@@ -365,11 +272,9 @@ const HEALTH_NUM_CRIT := Color(1.0, 0.30, 0.24)
 
 # Feeds the badge-as-gauge from the live instance. Called from refresh.
 func _refresh_health_badge() -> void:
-	var maximum := int(card_instance.get_attribute("max_health"))
-	var have := clampi(card_instance.current_health, 0, maxi(maximum, 0))
-	# A unit with no max (shouldn't happen, but a card mid-construction can) reads as full rather
-	# than as a corpse.
-	var ratio := 1.0 if maximum <= 0 else float(have) / float(maximum)
+	# The authoring view: a card at rest is whole — the gauge reads full and recolours only
+	# in a live fight, which renders through the fight screen now.
+	var ratio := 1.0
 	var tint: Color
 	if ratio >= HEALTH_WARN:
 		tint = HEALTH_RAMP_WARN.lerp(HEALTH_RAMP_FULL,
@@ -415,15 +320,11 @@ const CORNER_RADIUS := 6
 
 
 func _apply_border_style() -> void:
-	var is_king := card_instance != null and card_instance.data.is_king
-	var is_building := card_instance != null and card_instance.data.is_building()
+	var is_king := card_data != null and card_data.is_king
+	var is_building := card_data != null and card_data.is_building()
 	var style   := StyleBoxFlat.new()
 	style.bg_color = Color.TRANSPARENT
-	if is_generated:
-		# A bright cyan frame marks a freshly conjured token in the hand.
-		style.set_border_width_all(3)
-		style.border_color = Color(0.35, 0.95, 1.0, 0.95)
-	elif is_king:
+	if is_king:
 		style.set_border_width_all(1)
 		style.border_color = Color(1.0, 0.82, 0.2, 0.45)
 	elif is_building:
@@ -437,29 +338,6 @@ func _apply_border_style() -> void:
 	style.set_corner_radius_all(CORNER_RADIUS)
 	_border.add_theme_stylebox_override("panel", style)
 
-
-# Marks this card as an ability-tray token view and refreshes its glowing frame.
-# Tokens are INFORMATIONAL while the effect system is demolished — the activation flow
-# returns with the rebuilt ActivatedEffect (TARGETING_DESIGN.md §7).
-func set_generated() -> void:
-	is_generated = true
-	# An ENEMY unit's ability token is view-only — a fact of the token's OWN model (its
-	# instance carries the holder's owner), derived here rather than pushed by the tray.
-	if card_instance != null and card_instance.owner == 1:
-		set_noninteractive()
-	if _border != null:
-		_apply_border_style()
-
-
-# THE look of "spent" — shared, because the turn-order strip greys a tapped unit's entry with it
-# too (see TurnOrderStrip._dress) and two definitions of tapped would drift apart.
-const EXHAUST_TINT := Color(0.6, 0.6, 0.68)
-
-
-# Dims a building whose attack was spent generating a card this round, so it
-# reads as "tapped". Reset to normal at the start of the next round.
-func set_exhausted(exhausted: bool) -> void:
-	modulate = EXHAUST_TINT if exhausted else Color.WHITE
 
 
 # ── Phantom: a card that isn't real ─────────────────────────────────────────────
@@ -490,36 +368,6 @@ var _phantom_mat: ShaderMaterial = null
 var is_phantom := false
 
 
-# ── The ground's light on this unit (pushed by the SlotUI it stands on) ─────────────────────────
-# A unit standing on burning ground is lit by it, so the ground MULTIPLIES its colour over the
-# card's picture. `modulate` on a TextureRect IS a multiply, so no blend material is needed.
-#
-# ⚠ THE PICTURE ONLY, NEVER THE WHOLE CARD. This started as a multiply layer over the card's rect
-# and was wrong twice over (user's call): the stat badges are the numbers read fastest in combat and
-# are UI rather than scenery — a fire lighting the scene has no business recolouring them — AND they
-# OVERFLOW the card's rect, so a rect-shaped tint cannot even cover them consistently. Tinting the
-# art node sidesteps both: it is exactly the picture, whatever the badges do around it.
-#
-# `self_modulate`, not `modulate`: it touches this node's own drawing and nothing below it, and it
-# is a channel with exactly ONE writer. The card's other tint appliers all ride `_canvas.modulate`
-# or the root `modulate` (dim, exhaust, selection), so this composes with every one of them instead
-# of fighting for the same property — the documented failure mode of every brightness cue here.
-var _ground_tint := Color.WHITE
-
-
-func set_ground_tint(c: Color) -> void:
-	if _ground_tint == c:
-		return
-	_ground_tint = c
-	_apply_ground_tint()
-
-
-func _apply_ground_tint() -> void:
-	# By name, not the @onready ref: slots dress cards that are built but not yet in the tree.
-	var art: CanvasItem = _art if _art != null else get_node_or_null("%Art") as CanvasItem
-	if art != null:
-		art.self_modulate = _ground_tint
-
 
 func set_phantom(on: bool) -> void:
 	is_phantom = on
@@ -536,275 +384,6 @@ func set_phantom(on: bool) -> void:
 		n.use_parent_material = on
 
 
-# Hand-affordance: a card the player can play RIGHT NOW wears a soft outer glow; one that can't
-# sits 7% dimmer. The dim rides `_canvas.modulate` (all the card art hangs under Canvas), NOT the
-# root `modulate` — so it composes multiplicatively with the root-level selection/exhaust tints
-# instead of overwriting them. The glow is a COMPOSITED GlowFx (see GlowFx/SilhouetteBaker): it reads
-# the card's true silhouette and radiates on the overlay layer, so it never clips (escapes the hand
-# ScrollContainer) and is hollow over every child — badges and status pips stay fully visible.
-# Idempotent: safe to call every mana change (Vfx.attach/detach de-dupe, so no re-bake churn).
-# ── Playability: DERIVED, never stored ──────────────────────────────────────────
-# The card OWNS the question "should I wear the play-me glow?" and answers it by consulting
-# live facts through `playable_check` (injected by the Hand: parented in the hand row +
-# selection enabled + affordable). Nothing pushes glow state in from outside — callers only
-# ask for a re-derive (refresh_playable) — so a stale caller can affect WHEN the question is
-# asked, never what the answer is. The card re-derives PROACTIVELY: on any reparent (played,
-# moved — see NOTIFICATION_PARENTED) and on the presentation self-poll, so even a missed cue
-# self-corrects within a beat instead of persisting until someone remembers it.
-var playable_check: Callable   # func(CardUI) -> bool
-var _presentation_poll: Timer = null
-
-const PRESENTATION_POLL_SECS := 0.75
-
-
-# Installs the playability rule. Hand-spawned cards only — CardUI serves many non-combat
-# screens whose cards must never be dimmed by a false verdict, so without an installed check
-# refresh_playable does nothing at all.
-func set_playable_check(cb: Callable) -> void:
-	playable_check = cb
-	refresh_playable()
-
-
-# ── Presentation derivation ─────────────────────────────────────────────────────
-# EVERY combat presentation state the card can wear is DERIVED here from declared facts —
-# CombatContext (selection / inspection / the preview world) and the card's own situation
-# (parent slot, its instance's flags). Nothing outside pushes verdicts; signals are only
-# "re-check now" cues, and the poll + reparent hooks make the derivation self-correcting.
-# Each applier is idempotent, so re-deriving is always safe.
-#
-# Eligibility guards (they decide which states CAN apply, preventing the appliers — several
-# share `modulate` — from stomping presentations owned by other contexts):
-#   • selection: only a view the player can actually pick — see _pickable.
-#   • board states (concealment / exhaust grey / threat glow): only a slot's OCCUPANT — a landing
-#     phantom mounted in a slot is a projection, not the unit, and an attacker's lunge ghost hangs
-#     off the combat root rather than a slot, so it can never conceal itself for being its own
-#     stand-in.
-func derive_presentation() -> void:
-	refresh_playable()
-	var slot := get_parent() as SlotUI
-	if slot != null:
-		set_flipped(slot.location != null and slot.location.side == 1)   # facing derives from which side's slot holds me
-	# SELECTION, asked rather than told, and asked FIRST — before the combat-context guard below,
-	# because a card is pickable on every screen that shows one, not just in combat. An ABILITY
-	# view asks the ability question: it stands for "this ability, of this holder", never for a
-	# card of its own — so it lights while its ability is the aimed sub-pick, and its holder's
-	# board card (whose subject is the holder itself) never mistakes that pick for its own.
-	var ctx := CombatContext.current
-	# The SPOTLIGHT: something elsewhere on the screen is pointing at this unit (the turn-order
-	# strip's hover — see CombatBoard.declare_spotlight). Deliberately NOT the selection treatment:
-	# a pick is something the player did to this card, a spotlight is a question asked ABOUT it
-	# somewhere else, and the answer is the TURN NUMBER — so the card only gets the shared hover ring
-	# while the number badge takes the loud cue (see _apply_spotlight). Guarded to a
-	# slot's real occupant like the other board states — a landing phantom or a lunge ghost is a
-	# projection of the unit, not the unit being pointed at.
-	var occupant: bool = card_instance != null and slot != null and slot.get_card() == self
-	var spotlit: bool = ctx != null and occupant and ctx.is_spotlit(card_instance)
-	# The whole activation order, written on the units themselves while the player reads the strip
-	# (see CombatBoard.declare_turn_numbers). Same guard as the spotlight: a landing phantom or a
-	# lunge ghost stands FOR a unit, it does not hold that unit's place in the round.
-	_refresh_turn_number(ctx.turn_number(card_instance) if ctx != null and occupant else 0)
-	# Ordered AFTER the number: the spotlight lights the plate, so the plate has to exist first.
-	_apply_spotlight(spotlit)
-	_apply_selected(_pickable() and Selection.holds(subject()))
-	if ctx == null:
-		return
-	var tags: Array[Dictionary] = []
-	if slot != null and slot.get_card() == self and card_instance != null:
-		# Concealment first: it decides whether this view is on screen AT ALL, so it can't be
-		# expressed by any of the tints below and none of them can overrule it.
-		set_concealed(ctx.is_concealed(card_instance))
-		set_exhausted(card_instance.attack_exhausted)
-		var menacing := ctx.menaces_pivot(card_instance)
-		set_threat_highlight(menacing)
-		# The word for each visual cue, from the SAME verdict that lights the cue — so a tag can
-		# never disagree with the glow/crosshair it explains. Both can apply at once (a unit that
-		# attacks the pivot AND is the pivot's own victim wears both sets).
-		#
-		# NUKED (2026-08-13 ruling): each flag used to carry the ODDS of the exchange it names
-		# (crit_taken / dodge_taken / crit_dealt / dodge_dealt), asked of the nuked single
-		# writer. The naming flags survive; the odds went with the rolls.
-		if ctx.is_pivot_target(card_instance):
-			tags.append({"id": "current_target"})
-		if menacing:
-			tags.append({"id": "menacing"})
-	_apply_tags(tags)
-
-
-# ── The turn number, worn on the card ───────────────────────────────────────────
-# While the player reads the turn-order strip, every listed unit says its own place in the round
-# right where it stands. Big and central on purpose: it is a TRANSIENT reading aid, alive only for
-# the length of the gesture that asked for it, so it may cover art the rest of the game needs — a
-# discreet corner pip would just be a second thing to hunt for, which is the problem this solves.
-# Styled from the strip's own constants so the tab in the list and the number on the board are
-# visibly the same statement.
-var _turn_plate: Panel = null
-var _turn_lbl: Label = null
-var _turn_plate_sb: StyleBoxFlat = null   # the plate's own skin — the spotlight opens its alpha
-
-const TURN_PLATE_SIZE := Vector2(120.0, 96.0)   # native card units (see NATIVE_SIZE)
-const TURN_FONT := 72
-const TURN_LINE_W := 7          # heavy, like the strip's own panels
-const PLATE_ALPHA := 0.5
-
-
-func _refresh_turn_number(n: int) -> void:
-	if n <= 0:
-		if _turn_plate != null:
-			_turn_plate.visible = false
-			# The plate is the loud half of the spotlight — a lit badge on a hidden badge is a
-			# glow radiating around nothing (GlowFx mirrors visibility, but the state would linger).
-			_apply_number_spotlight(false)
-		return
-	if _turn_plate == null:
-		var fill := TurnOrderStrip.fill_color(card_instance.owner)
-		var line := TurnOrderStrip.line_color(card_instance.owner)
-		_turn_plate = Panel.new()
-		_turn_plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		# Born hidden so its first show is an ARRIVAL like every later one (see the fade below) —
-		# a Panel is visible by default, and the plate would otherwise skip the fade exactly once,
-		# on the one showing the player is most likely to be watching for.
-		_turn_plate.visible = false
-		var ps := StyleBoxFlat.new()
-		# The plate is SEE-THROUGH — the unit it names has to stay recognisable underneath it (the
-		# player is reading the order OF units, not of numbers). The numeral itself stays fully
-		# opaque, which is what its heavy outline is for.
-		ps.bg_color = Color(fill.r, fill.g, fill.b, PLATE_ALPHA)
-		ps.set_corner_radius_all(14)
-		ps.set_border_width_all(TURN_LINE_W)
-		ps.border_color = Color(line.r, line.g, line.b, 0.92)
-		_turn_plate.add_theme_stylebox_override("panel", ps)
-		# Kept: the spotlight makes the plate OPAQUE while it lights it (see _apply_number_spotlight).
-		_turn_plate_sb = ps
-		_canvas.add_child(_turn_plate)
-
-		# The numeral is a CHILD of the plate, not its sibling. The two are one object as far as the
-		# player is concerned, and the spotlight treats them as one: HighlightFx grows the plate and
-		# the number rides that transform, and the baked silhouette the outline/glow hug is the
-		# plate's whole subtree. As siblings the plate would have grown out from under its own digit.
-		_turn_lbl = Label.new()
-		_turn_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		_turn_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		# TOP — the vertical placement is TurnOrderStrip.baseline_offset's job (see below).
-		_turn_lbl.vertical_alignment = VERTICAL_ALIGNMENT_TOP
-		_turn_lbl.add_theme_color_override("font_color", TurnOrderStrip.NUM_COLOR)
-		_turn_lbl.add_theme_color_override("font_outline_color", line)
-		_turn_lbl.add_theme_font_size_override("font_size", TURN_FONT)
-		_turn_lbl.add_theme_constant_override("outline_size",
-				int(TURN_FONT * TurnOrderStrip.NUM_OUTLINE))
-		_turn_plate.add_child(_turn_lbl)
-
-		# Centred in the card's native box — the one place no stat badge, nameplate or status pip
-		# can be, and immune to the flip that mirrors the badge layout (see _apply_mirror).
-		_turn_plate.position = (NATIVE_SIZE - TURN_PLATE_SIZE) * 0.5
-		_turn_plate.size = TURN_PLATE_SIZE
-		# The digits, not the line box, sit centred in the plate — the SAME baseline placement the
-		# strip uses on its own numerals, so the two can't disagree about what centred means.
-		# Placed in the PLATE's space now that the label hangs off it.
-		_turn_lbl.position = Vector2(0.0,
-				TurnOrderStrip.baseline_offset(_turn_lbl, TURN_PLATE_SIZE.y))
-		_turn_lbl.size = TURN_PLATE_SIZE
-	# ARRIVAL, not appearance — but only on the frame the number actually arrives. This runs on every
-	# re-derivation, and a plate that is already being read must not restart its fade because the
-	# order behind it was recomputed; the number would flicker for as long as the player looked at it.
-	var arriving := not _turn_plate.visible
-	_turn_lbl.text = str(n)
-	_turn_plate.visible = true
-	_turn_lbl.visible = true
-	if arriving:
-		Vfx.play("turn_number_arrive", _turn_plate)
-	# The plate may have been BUILT under a spotlight that was already on. The strip declares its
-	# hover and its numbers in two steps (see TurnOrderStrip.point_at), so the frame the card learns
-	# it is spotlit is the frame BEFORE it has a plate to light — and _apply_spotlight's own guard
-	# would then never come back to it. The plate half owns its own guard and is re-asserted here,
-	# every time the plate exists, which is a fact this function is the only one to know.
-	_apply_number_spotlight(_spotlit_now)
-
-
-# ── The spotlight: "the list is pointing at THIS unit" ──────────────────────────
-# Two cues, on two different things, because they answer two different questions. The CARD wears THE
-# HOVER RING — not a cue of its own: pointing at a unit from the gutter and pointing at it with the
-# cursor are the same statement about the same unit, so they share one look and the spotlight is
-# simply hover arriving from the other end of the screen (see _apply_hover_outline). It does not
-# grow and does not glow, so it can never be misread as a pick the player made. The TURN NUMBER is
-# what the gesture actually asked
-# about, so it takes the loud cue: the plate grows and burns gold (see the turn_number_spotlight
-# entry), which has to survive a board full of cards, damage numbers and threat glows.
-#
-# Idempotent through the same change-guard the other appliers use, since derive_presentation runs
-# this on every re-derivation.
-var _spotlit_now := false
-
-func _apply_spotlight(on: bool) -> void:
-	if on == _spotlit_now:
-		return
-	_spotlit_now = on
-	_apply_hover_outline()
-	_apply_number_spotlight(on)
-
-
-# The loud half, on the number plate — separately guarded because the plate outlives neither the
-# card nor the spotlight in step with it (see the call in _refresh_turn_number).
-var _num_spotlit_now := false
-
-func _apply_number_spotlight(on: bool) -> void:
-	# No plate yet (a card that has never worn a number): nothing to light. Not recorded either —
-	# the plate's arrival re-asks, and recording it would swallow that.
-	if _turn_plate == null or not is_instance_valid(_turn_plate):
-		return
-	if on == _num_spotlit_now:
-		return
-	_num_spotlit_now = on
-	# THE PLATE GOES OPAQUE while it is lit, and not only because a solid plate reads louder: the
-	# glow shader hollows itself wherever the silhouette is opaque, so a half-transparent plate lets
-	# its own halo wash across its face and drown the digit. At rest it goes back to see-through —
-	# an unlit number must not hide the unit it names (see PLATE_ALPHA).
-	if _turn_plate_sb != null:
-		_turn_plate_sb.bg_color.a = 0.97 if on else PLATE_ALPHA
-	# The grow factor comes from the entry EXPLICITLY: set_grown's own lookup reads the meta the
-	# attached effect leaves behind, which on the very first spotlight isn't there yet (this runs
-	# before the attach below) and would silently fall back to the generic `highlight` scale.
-	HighlightFx.set_grown(_turn_plate, on,
-			Vfx.param_of("turn_number_spotlight", "scale", 1.18))
-	if on:
-		Vfx.attach("turn_number_spotlight", _turn_plate)
-	else:
-		Vfx.detach("turn_number_spotlight", _turn_plate)
-
-
-# NUKED (2026-08-13 ruling): _as_pct converted the nuked writer's 0..1 rates for the odds
-# tags; both the rates and the tags are gone.
-
-
-# Re-derives the glow/dim from current facts. Safe to call from anywhere at any time.
-func refresh_playable() -> void:
-	if not playable_check.is_valid():
-		return
-	_apply_playable(bool(playable_check.call(self)))
-
-
-# Presentation ONLY — the single place the glow/dim lands; the verdict always arrives through
-# refresh_playable's derivation, never as externally pushed state.
-func _apply_playable(playable: bool) -> void:
-	if _canvas == null:
-		return
-	if playable:
-		Vfx.attach("card_playable_glow", self)
-		_canvas.modulate = Color.WHITE
-	else:
-		Vfx.detach("card_playable_glow", self)
-		_canvas.modulate = Color(0.93, 0.93, 0.93)
-
-
-# Sheds every HAND-BOUND presentation state: the play-me glow, the unaffordable dim, the
-# selection highlight. Called by SlotUI.set_card — the one door every card passes through on its
-# way onto the board — because these states are facts about hand life ("affordable to play",
-# "selected to place") that no fielded card can truthfully wear. Cleared at the door rather
-# than by whoever played the card, so no play path can leak them (Hand.refresh_playable only
-# walks cards still IN the hand — it can never reach a card that already left).
-func shed_hand_state() -> void:
-	Vfx.detach("card_playable_glow", self)
-	if _canvas != null:
-		_canvas.modulate = Color.WHITE   # neutral — neither the glow'd nor the dimmed hand look
 
 
 # An inspected ENEMY unit's ability tokens are shown for information only — not castable.
@@ -813,28 +392,27 @@ func shed_hand_state() -> void:
 var _noninteractive: bool = false
 func set_noninteractive() -> void:
 	_noninteractive = true   # excludes this view from selection derivation (it owns its dim)
-	draggable = false
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	modulate = Color(1.0, 1.0, 1.0, 0.62)
 
 
 func refresh() -> void:
-	if card_instance == null:
+	if card_data == null:
 		return
-	_art.texture = card_instance.data.image
+	_art.texture = card_data.image
 
-	var is_spell := card_instance.is_spell
-	_frame.texture = FRAME_KING if card_instance.data.is_king else (FRAME_SPELL if is_spell else FRAME_UNIT)
-	_name_label.text  = card_instance.data.display_name
-	_cost_lbl.text    = str(card_instance.get_attribute("cost"))
+	var is_spell := card_data.card_type == CardData.CardType.SPELL
+	_frame.texture = FRAME_KING if card_data.is_king else (FRAME_SPELL if is_spell else FRAME_UNIT)
+	_name_label.text  = card_data.display_name
+	_cost_lbl.text    = str(card_data.cost)
 	# The King isn't cast from hand for mana, so its cost badge is meaningless — hide it.
-	var show_cost := not card_instance.data.is_king
+	var show_cost := not card_data.is_king
 	_cost_bg.visible  = show_cost
 	_cost_lbl.visible = show_cost
-	_atk_lbl.text       = str(card_instance.get_attribute("attack"))
-	_hp_lbl.text        = str(card_instance.current_health)
-	_spd_lbl.text       = str(card_instance.get_attribute("speed"))
-	var shld            := card_instance.current_shield
+	_atk_lbl.text       = str(card_data.attack)
+	_hp_lbl.text        = str(card_data.health)
+	_spd_lbl.text       = str(card_data.speed)
+	var shld            := card_data.shield
 	_shield_lbl.text    = str(shld)
 	_atk_bg.visible     = not is_spell
 	_atk_lbl.visible    = not is_spell
@@ -848,8 +426,6 @@ func refresh() -> void:
 	_spd_lbl.visible    = not is_spell
 	_refresh_composition()
 	_refresh_charms()
-	_refresh_statuses()
-	_refresh_ability_cue()
 	# The lines above rebuild dynamic labels (chips/pips) — re-point them at the current
 	# oversampled font so an enlarged card's WHOLE text stays crisp (see _apply_scale).
 	if _font_factor > 1.0:
@@ -908,362 +484,12 @@ func _apply_stat_tooltips() -> void:
 			lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 
-# Global-space centre of the badge that displays a given stat, so combat VFX can pop a number
-# right where its stat lives (position carries the meaning). Uses the badge's global transform so
-# the Canvas's uniform scale is accounted for. Falls back to the card centre for unknown/hidden
-# stats (e.g. a spell, or a shield badge that's currently empty).
-func stat_anchor(attr: String) -> Vector2:
-	var node: Control = null
-	match attr:
-		"attack":               node = _atk_bg
-		"health", "max_health": node = _hp_bg
-		"shield":               node = _shield_bg
-		"speed":                node = _spd_bg
-		"cost":                 node = _cost_bg
-	# Don't require `visible`: a badge that's momentarily hidden (e.g. a shield badge at 0 about to
-	# be restored) still has a valid anchored position, and we want the glint to land on it.
-	if node != null and is_instance_valid(node):
-		return node.get_global_transform() * (node.size * 0.5)
-	return global_position + size * 0.5
-
-
-# A focal "this stat just changed" pop: scales the named stat's badge — icon AND number together,
-# about their shared centre — up and back, pulling the eye straight to the badge that moved. `grow`
-# true springs a gain outward; false gives a loss a quick recoil dip. Purely transient — the badge
-# returns to its authored scale, so the card's fixed Canvas layout is never disturbed.
-func pulse_stat(attr: String, grow: bool = true) -> void:
-	var bg: Control = null
-	var lbl: Control = null
-	match attr:
-		"attack":               bg = _atk_bg;    lbl = _atk_lbl
-		"health", "max_health": bg = _hp_bg;     lbl = _hp_lbl
-		"shield":               bg = _shield_bg; lbl = _shield_lbl
-		"speed":                bg = _spd_bg;    lbl = _spd_lbl
-		"cost":                 bg = _cost_bg;   lbl = _cost_lbl
-	if bg == null or not is_instance_valid(bg):
-		return
-	var peak: float = 1.32 if grow else 0.8
-	# Both nodes pivot about the badge centre (the bg's centre) so they scale as one rigid unit
-	# instead of drifting apart.
-	var centre := bg.position + bg.size * 0.5
-	_pop_node(bg, bg.size * 0.5, peak)
-	if lbl != null and is_instance_valid(lbl):
-		_pop_node(lbl, centre - lbl.position, peak)
-
-
-func _pop_node(node: Control, pivot: Vector2, peak: float) -> void:
-	node.pivot_offset = pivot
-	# Pop out, HOLD at the peak a beat so the change registers, then settle — without the hold the
-	# badge just blinks and the eye can't catch what moved.
-	var tw := create_tween()
-	tw.tween_property(node, "scale", Vector2(peak, peak), 0.14).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
-	tw.tween_interval(0.14)
-	tw.tween_property(node, "scale", Vector2.ONE, 0.20).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
-
-
-# A stat badge's PROC glint — the "this stat just fired" cue, for when a stat directly caused
-# something (a dodge is the unit's Speed at work). The SAME effect a relic chip uses when it
-# fires (RelicTray.glint): a scale pop plus a brightness flash on the badge itself — no overlay,
-# so it reads on the badge's own (non-rectangular) art. Purely transient; the badge returns to
-# its authored scale and colour.
-func flash_stat_proc(attr: String) -> void:
-	var bg: Control = null
-	var lbl: Control = null
-	match attr:
-		"attack":               bg = _atk_bg;    lbl = _atk_lbl
-		"health", "max_health": bg = _hp_bg;     lbl = _hp_lbl
-		"shield":               bg = _shield_bg; lbl = _shield_lbl
-		"speed":                bg = _spd_bg;    lbl = _spd_lbl
-		"cost":                 bg = _cost_bg;   lbl = _cost_lbl
-	if bg == null or not is_instance_valid(bg) or bg.size == Vector2.ZERO:
-		return
-	pulse_stat(attr, true)   # the scale pop (icon + number about their shared centre)
-	_brighten(bg)            # + the relic-chip brightness flash on the badge's own art
-	if lbl != null and is_instance_valid(lbl):
-		_brighten(lbl)
-
-
-# Sustained "this unit threatens the preview pivot" cue: the incoming-threat card glow + a
-# slow warm-red pulse on the Attack badge and its number, so the eye lands on WHICH stat is
-# the threat. Derived (see derive_presentation: "does MY targeting resolve to the pivot in the
-# declared world?"); the change-guard makes re-derivation free — repeated same-verdict calls
-# don't churn the tween or the glow bake.
-var _threat_on: bool = false
-
-func set_threat_highlight(on: bool) -> void:
-	if on == _threat_on:
-		return
-	_threat_on = on
-	# The card-level menace glow rides the same verdict as the badge flare — one derived
-	# state, one applier (this was a separate push pair on the board before).
-	if on:
-		Vfx.attach("attack_target_glow", self)
-	else:
-		Vfx.detach("attack_target_glow", self)
-	if _atk_bg == null or not is_instance_valid(_atk_bg):
-		return
-	if _threat_tw != null and _threat_tw.is_valid():
-		_threat_tw.kill()
-		_threat_tw = null
-	# Pulse between a SUSTAINED warm tint and a hotter peak — never back to plain white, so the
-	# badge always reads as flagged (a dip to white would look like the highlight blinked off).
-	var has_lbl := _atk_lbl != null and is_instance_valid(_atk_lbl)
-	# The badge art is ALREADY red, so a red tint barely reads — pulse toward a bright warm FLARE
-	# (over-bright, gold-white) that visibly lights the badge up against its own colour.
-	var warm := Color(1.7, 1.15, 0.8) if on else Color.WHITE
-	var hot := Color(2.6, 2.2, 1.3)
-	_atk_bg.modulate = warm
-	if has_lbl:
-		_atk_lbl.modulate = warm
-	# Bump the badge 10% larger while flagged — icon AND number about their shared centre so they
-	# scale as one rigid unit (same pivot trick as pulse_stat). Sustained; reset to authored size
-	# on clear so the fixed Canvas layout is never permanently disturbed.
-	var scl := Vector2(1.1, 1.1) if on else Vector2.ONE
-	_atk_bg.pivot_offset = _atk_bg.size * 0.5
-	_atk_bg.scale = scl
-	if has_lbl:
-		_atk_lbl.pivot_offset = (_atk_bg.position + _atk_bg.size * 0.5) - _atk_lbl.position
-		_atk_lbl.scale = scl
-	# The badge is part of the card's SHAPE (unlike the tags), so a 10% bump really does change the
-	# silhouette — say so, and let the glows decide whether it moved enough to matter.
-	Vfx.shape_changed(self)
-	if not on:
-		return
-	_threat_tw = create_tween().set_loops()
-	# Step to the hot peak, then back to warm; the badge art and its number pulse together.
-	_threat_tw.tween_property(_atk_bg, "modulate", hot, 0.55)
-	if has_lbl:
-		_threat_tw.parallel().tween_property(_atk_lbl, "modulate", hot, 0.55)
-	_threat_tw.tween_property(_atk_bg, "modulate", warm, 0.55)
-	if has_lbl:
-		_threat_tw.parallel().tween_property(_atk_lbl, "modulate", warm, 0.55)
-
-
-# ── Presentation tags ───────────────────────────────────────────────────────────
-# The WORDS for the card's combat cues: a stack of small coloured labels under the nameplate that
-# name what a visual state means ("Current Target" for the crosshair, "Targeted by:" for the red
-# menace glow). A cue teaches its meaning once and then stands alone; until then the tag says it
-# outright.
-#
-# GENERAL, not one-off: a tag is an id in TAGS (text key, its two colours, and WHERE it hangs) and
-# the card wears a LIST of them, derived in derive_presentation from the same verdicts that light
-# the cues. Adding a future tag (rooted, exhausted, silenced…) is one table entry plus one line in
-# the derivation — no new node plumbing, no new push path. Like every other presentation state here
-# the list is derived and never pushed, so a card that leaves the board (or the combat screen) sheds
-# its tags on the next derive rather than needing anyone to remember to clear them.
-#
-# `place` picks one of the PLACEMENTS below; each is a holder built lazily on first use, so a tag
-# added later can pick an existing spot or declare a new one without touching the appliers.
-# `ol` is the text's outline — chosen AWAY from the font colour (a light halo behind dark text, a
-# dark one behind light text) so the lettering holds its shape over both the tag's own fill and the
-# busy card art a wide tag overhangs.
-#
-# The two hues are the two SIDES of the declared exchange, and every tag inherits the hue of the
-# cue it elaborates: gold = what the pivot does to this card (it is the pivot's victim), red = what
-# this card does to the pivot (it menaces the pivot). A card that is both wears both sets.
-const TAG_GOLD := Color("f2c319")
-const TAG_GOLD_OL := Color("fff4cc")
-const TAG_RED := Color("c02a22")
-const TAG_RED_OL := Color("360705")
-
-const TAGS := {
-	"current_target": {"loc": "combat.tag_current_target", "bg": TAG_GOLD, "fg": Color.BLACK,
-		"ol": TAG_GOLD_OL, "place": "outward_top"},
-	# Worn by a unit whose auto-attack resolves ONTO the pivot — the red menace glow's caption.
-	"menacing": {"loc": "combat.tag_menacing", "bg": TAG_RED, "fg": Color.WHITE,
-		"ol": TAG_RED_OL, "place": "outward_bottom"},
-	# NUKED (2026-08-13 ruling): the four odds chips (crit_taken / dodge_taken / crit_dealt /
-	# dodge_dealt) quoted the dodge and crit rates, which went with the cursed channel.
-}
-
-# Native-canvas geometry (the card is authored at NATIVE_SIZE and scaled as one unit, so these are
-# plain authored coordinates). Both bands are read off the nameplate's authored anchors — see
-# NameBg in card_ui.tscn: it spans x 50 → 216 and y -4 → 43.6.
-const TAG_HEIGHT := 40.0
-const TAG_SPACING := 4.0
-const TAG_FONT_SIZE := 24
-const TAG_OUTLINE := 10        # text outline, in native px — thick enough to read over card art
-const TAG_BORDER := 4.0        # the tag's own rim
-const TAG_CORNER := 9
-const TAG_GAP := 4.0           # breathing room between a tag stack and the widget it hangs off
-const TAG_Z := 60              # above the board's cards/slots, below full-screen overlay layers
-const TAG_INSET_TOP := 6.0     # the gold stack's first chip, just inside the card's top edge
-const TAG_INSET_BOTTOM := 14.0 # the red stack's last chip, clearing the stat gems' line
-
-# Where each placement hangs. Every tag box sizes to ITS OWN TEXT and is then positioned outright
-# in native canvas coords, so a longer translation widens the tag instead of truncating it.
-# TWO STACKS, ONE PER RELATIONSHIP. Each colour is a headed sentence — who the exchange is with,
-# then its two odds — so the six chips read as two statements instead of one list of six:
-#
-#       Current Target   ← gold: the pivot swings at this card
-#       Your Crit: 6%
-#       My Dodge 1%
-#          (gap)
-#       Attacker:        ← red: this card swings at the pivot
-#       My Crit: 6%
-#       Your Dodge 1%
-#
-# The gap is the whole point of the top/bottom split, which is why each stack anchors to an EDGE
-# rather than sitting where the other one ended: with only one relationship live, the surviving
-# stack still sits where its colour always sits, and never drifts into the other's half.
-#
-# Both hang OUTSIDE the card, and are never clamped to it — a tag sits BESIDE the card, never over
-# its art or badges (the side rule is in _fill_holder).
-const PLACEMENTS := {
-	"outward_top": {"align": "outward_top"},
-	"outward_bottom": {"align": "outward_bottom"},
-}
-
-var _tag_holders: Dictionary = {}   # place -> VBoxContainer, built on first use
-var _tags_sig: String = ""          # id+params of what is currently mounted — the change guard
-
-
-# The single place tags land. Each entry is {"id": <TAGS key>, "params": {…}}, params filling the
-# {placeholders} in the tag's localized text. Idempotent: the guard compares ids AND their values,
-# so a re-derive is free while a CHANGED number (a buff shifting the odds) still repaints.
-func _apply_tags(specs: Array[Dictionary]) -> void:
-	var sig := ""
-	for s: Dictionary in specs:
-		sig += String(s.get("id", "")) + str(s.get("params", {})) + ";"
-	if sig == _tags_sig:
-		return
-	_tags_sig = sig
-	# Group by placement first, so each holder is rebuilt once from the full list it owns.
-	var by_place: Dictionary = {}
-	for s: Dictionary in specs:
-		var id: String = String(s.get("id", ""))
-		if not TAGS.has(id):
-			continue
-		var place: String = (TAGS[id] as Dictionary)["place"]
-		if not by_place.has(place):
-			by_place[place] = [] as Array[Dictionary]
-		(by_place[place] as Array[Dictionary]).append(s)
-	for place: String in PLACEMENTS:
-		var mine: Array[Dictionary] = by_place.get(place, [] as Array[Dictionary])
-		if mine.is_empty() and not _tag_holders.has(place):
-			continue   # never built, nothing to wear — don't build it just to hide it
-		_fill_holder(place, mine)
-	# The tags are labels under the Canvas like any other — keep them on this card's oversampled
-	# font so an enlarged card's tag text stays as crisp as its name (see _apply_scale).
-	if _font_factor > 1.0:
-		_apply_font_oversampling()
-	Vfx.shape_changed(self)   # the subtree moved — see GlowFx.shape_changed (measures before baking)
-
-
-func _fill_holder(place: String, specs: Array[Dictionary]) -> void:
-	var holder: VBoxContainer = _tag_holders.get(place, null)
-	if holder == null:
-		holder = _build_holder(place)
-	for child in holder.get_children():
-		holder.remove_child(child)
-		child.queue_free()
-	for s: Dictionary in specs:
-		holder.add_child(_make_tag(s))
-	holder.visible = not specs.is_empty()
-	if specs.is_empty():
-		return
-	# Size the holder to exactly the stack it now carries, then place it per its placement rule.
-	# The width is the widest tag's own text (capped at the card), never a fixed fraction; the
-	# height is the SUM OF THE CHIPS' OWN minimums, not a constant — TAG_HEIGHT is only a floor, and
-	# the real row height is taller (the thick text outline adds to the font's line height). Forcing
-	# the constant here squashed every chip.
-	var n := float(specs.size())
-	var h := maxf(n - 1.0, 0.0) * TAG_SPACING
-	for c in holder.get_children():
-		h += maxf((c as Control).get_combined_minimum_size().y, TAG_HEIGHT)
-	var w: float = holder.get_combined_minimum_size().x
-	var align: String = (PLACEMENTS[place] as Dictionary)["align"]
-	# WHICH SIDE: OUTWARD — away from the board's centre line, where the two armies face each other.
-	# Your units hang their tags to the left, theirs to the right, so a stack always grows into the
-	# open edge of the screen rather than across the enemy it is describing. Inward would put both
-	# armies' stacks in the same contested gap, each covering the other's cards. Flipping is the
-	# same signal the stat cluster mirrors on, so the tags travel with the card's facing.
-	var x := (NATIVE_SIZE.x + TAG_GAP) if _flip_applied else (-TAG_GAP - w)
-	# WHICH END: gold from the top, red from the bottom, each held inside the card's edges rather
-	# than flush with them (the nameplate's band above, the stat gems' line below).
-	var y: float = TAG_INSET_TOP if align == "outward_top" 			else NATIVE_SIZE.y - TAG_INSET_BOTTOM - h
-	holder.position = Vector2(x, y)
-	holder.size = Vector2(w, h)
-
-
-func _build_holder(place: String) -> VBoxContainer:
-	var holder := VBoxContainer.new()
-	holder.name = "TagCol_" + place
-	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE   # pure caption; never eats a card click
-	# ANNOTATION, NOT SHAPE. Tags hang off the card to describe it and come and go with the preview
-	# world; a glow baked from a silhouette that included them wrapped the chips instead of the card
-	# — and kept that outline after they were gone. See SilhouetteBaker.EXCLUDE_META.
-	SilhouetteBaker.exclude(holder)
-	holder.add_theme_constant_override("separation", int(TAG_SPACING))
-	# A tag that hangs off the card lands in a NEIGHBOURING slot's airspace, and slots later in the
-	# board's tree paint over it — the stack beside the Speed badge was being buried by the slot next
-	# door. Lift the whole holder above the board's ordinary card/slot layer so an overhanging tag is
-	# always readable, whichever direction it grows.
-	holder.z_index = TAG_Z
-	# Both placements keep the default top-left anchors and are positioned outright in _fill_holder,
-	# because their size follows the TEXT, not a fraction of the card.
-	# Added last so the tags sit above the frame and the art, like the badges do.
-	_canvas.add_child(holder)
-	_tag_holders[place] = holder
-	return holder
-
-
-func _make_tag(entry: Dictionary) -> Control:
-	var spec: Dictionary = TAGS[String(entry["id"])]
-	var params: Dictionary = entry.get("params", {})
-	var bg: Color = spec["bg"]
-	var fg: Color = spec["fg"]
-	var ol: Color = spec["ol"]
-	var loc_key: String = spec["loc"]
-	var box := PanelContainer.new()
-	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	box.custom_minimum_size = Vector2(0.0, TAG_HEIGHT)
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = bg
-	sb.set_corner_radius_all(TAG_CORNER)
-	sb.set_content_margin_all(4.0)
-	sb.content_margin_left = 12.0
-	sb.content_margin_right = 12.0
-	# A THICK rim in the tag's own hue, darkened — the same "moulded chip" treatment the stat badges
-	# wear, so a tag reads as part of the card's art rather than as a debug overlay. A near-black rim
-	# would flatten it; a dark tint of the fill keeps the colour identity at a glance.
-	sb.set_border_width_all(int(TAG_BORDER))
-	sb.border_color = bg.darkened(0.62)
-	# Lifted off the card with a soft drop shadow, so a tag overhanging busy art still reads.
-	sb.shadow_size = 5
-	sb.shadow_offset = Vector2(0.0, 2.0)
-	sb.shadow_color = Color(0.0, 0.0, 0.0, 0.45)
-	box.add_theme_stylebox_override("panel", sb)
-	var lbl := Label.new()
-	lbl.text = Loc.t(loc_key, params)
-	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	# NOT clip_text: a clipping Label reports a ~zero minimum width, which collapsed the whole tag
-	# box to its margins. The box sizes to this text, so there is nothing to clip.
-	lbl.add_theme_color_override("font_color", fg)
-	lbl.add_theme_color_override("font_outline_color", ol)
-	lbl.add_theme_constant_override("outline_size", TAG_OUTLINE)
-	lbl.add_theme_font_size_override("font_size", TAG_FONT_SIZE)
-	box.add_child(lbl)
-	return box
-
-
-# A quick over-bright flash back to normal — the relic chip's "fired" discharge (RelicTray.glint),
-# applied to whatever node it's given so it works on any badge shape.
-func _brighten(node: Control) -> void:
-	var tw := create_tween()
-	tw.tween_property(node, "modulate", Color(1.7, 1.7, 1.7), 0.12)
-	tw.tween_property(node, "modulate", Color.WHITE, 0.22)
-
-
-# Rebuilds the composition chip strip from the card's elements + chess pieces.
 func _refresh_composition() -> void:
 	for child in _comp_row.get_children():
 		child.queue_free()
-	for el: String in card_instance.data.elements:
+	for el: String in card_data.elements:
 		_comp_row.add_child(_make_comp_chip(el, true))
-	for pc: String in card_instance.data.chess_pieces:
+	for pc: String in card_data.chess_pieces:
 		_comp_row.add_child(_make_comp_chip(pc, false))
 
 
@@ -1324,7 +550,6 @@ static func _make_comp_chip(comp_id: String, is_element: bool) -> Control:
 # Builds the left-edge column of charm pips — one coloured glyph per attached charm,
 # mirroring the composition chips on the right. The full detail lives in the tooltip.
 func _refresh_charms() -> void:
-	var charm_ids: Array = card_instance.charms if card_instance != null else []
 	if _charm_col == null:
 		if charm_ids.is_empty():
 			return   # don't create the column until a charm needs it
@@ -1341,11 +566,6 @@ func _refresh_charms() -> void:
 		_charm_col.offset_right = 0.0
 		_charm_col.offset_bottom = 0.0
 		_canvas.add_child(_charm_col)
-		# If this card was already flipped before it grew a charm column, mirror the new column to
-		# match the rest of the reflected layout. (When the column already exists at flip time, the
-		# _flip_nodes() loop handles it instead.)
-		if _flip_applied:
-			_mirror_x(_charm_col)
 
 	for child in _charm_col.get_children():
 		child.queue_free()
@@ -1376,138 +596,17 @@ func _make_charm_pip(charm_id: String) -> Control:
 	pip.add_theme_stylebox_override("panel", style)
 	return pip
 
-
-# Fills the StatusRow node (authored in card_ui.tscn — move/anchor it in the editor) with one pip
-# per active Status: its icon (or coloured glyph), count, and a hover tooltip with the detail.
-func _refresh_statuses() -> void:
-	if _status_row == null:
-		return
-	for child in _status_row.get_children():
-		_status_row.remove_child(child)
-		child.queue_free()
-	var stats: Array = card_instance.statuses if card_instance != null else []
-	for si: StatusInstance in stats:
-		_status_row.add_child(_make_status_pip(si))
-	_refresh_aura(stats)
-	_sync_status_auras(stats)
-
-
-# Library auras riding the card while statuses are held (aura_<status_id> entries, sustained):
-# attached on gain, detached on loss — a loss the player can see also gets the expiry sound.
-# Statuses without an aura entry still get the sound; the pip vanishing is their visual.
-var _held_status_auras: Dictionary = {}
-
-func _sync_status_auras(stats: Array) -> void:
-	var present: Dictionary = {}
-	for si: StatusInstance in stats:
-		present[str(si.data.id)] = true
-	for sid: String in present:
-		if not _held_status_auras.has(sid) and VFXData.get_vfx("aura_" + sid) != null:
-			Vfx.attach("aura_" + sid, self)
-		_held_status_auras[sid] = true
-	for sid: String in _held_status_auras.keys():
-		if not present.has(sid):
-			_held_status_auras.erase(sid)
-			Vfx.detach("aura_" + sid, self)
-			Sfx.play("status_expire")
-
-
-# A persistent "protected"-style frame over the whole card while an aura-declaring status
-# (StatusData.aura — e.g. Barrier) is active, in that status's color: a thick soft ring plus a
-# faint tint wash, so the protection reads at a glance without hunting for the pip. Lazily
-# created; appears/disappears with the status on the next refresh (combat refreshes the board
-# after every strike, so a spent Barrier's aura drops immediately).
-func _refresh_aura(stats: Array) -> void:
-	var aura_status: StatusData = null
-	for si: StatusInstance in stats:
-		if si.data.aura:
-			aura_status = si.data
-			break
-	if aura_status == null:
-		if _aura != null:
-			_aura.visible = false
-		return
-	if _aura == null:
-		_aura = Panel.new()
-		_aura.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		_canvas.add_child(_aura)
-		_aura.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	var c := aura_status.color
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(c.r, c.g, c.b, 0.10)
-	style.border_color = Color(c.r, c.g, c.b, 0.85)
-	style.set_border_width_all(7)
-	style.set_corner_radius_all(10)
-	style.set_expand_margin_all(4.0)
-	_aura.add_theme_stylebox_override("panel", style)
-	_aura.visible = true
-
-
-# A dim, slowly-pulsing outline on a fielded player unit that currently has an ability worth
-# clicking — the "dormant device, may turn on" affordance for the click-to-inspect view
-# (see Hand.set_inspected). Placeholder styling until real art exists. Board units only
-# (row/col set, owner 0); lazily created like _aura, torn down (tween killed) when inactive so
-# refresh() — called often, e.g. every board.refresh() pass — never stacks tweens.
-func _refresh_ability_cue() -> void:
-	var active := CombatContext.fielded(card_instance) \
-			and card_instance.owner == 0 and card_instance.has_available_abilities()
-	if not active:
-		if _ability_cue != null:
-			_ability_cue.visible = false
-		if _ability_cue_tween != null:
-			_ability_cue_tween.kill()
-			_ability_cue_tween = null
-		return
-	if _ability_cue == null:
-		_ability_cue = Panel.new()
-		_ability_cue.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		_canvas.add_child(_ability_cue)
-		_ability_cue.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		# Matched to _refresh_aura's visual weight (7px/0.85/0.10) — the previous 4px/0.55 border,
-		# further diluted by a 0.35-1.0 modulate pulse (real alpha dipping to ~0.19), was too weak
-		# to register against the card's own gold/parchment frame art at board-slot scale.
-		var style := StyleBoxFlat.new()
-		style.bg_color = Color(1.0, 0.78, 0.35, 0.10)
-		style.border_color = Color(1.0, 0.78, 0.35, 0.85)
-		style.set_border_width_all(6)
-		style.set_corner_radius_all(10)
-		style.set_expand_margin_all(4.0)
-		_ability_cue.add_theme_stylebox_override("panel", style)
-	_ability_cue.visible = true
-	if _ability_cue_tween != null:
-		_ability_cue_tween.kill()
-	_ability_cue_tween = create_tween()
-	_ability_cue_tween.set_loops()
-	_ability_cue_tween.tween_property(_ability_cue, "modulate:a", 0.6, 0.9).set_ease(Tween.EASE_IN_OUT)
-	_ability_cue_tween.tween_property(_ability_cue, "modulate:a", 1.0, 0.9).set_ease(Tween.EASE_IN_OUT)
-
-
-# The badge node for a given active status (or null) — lets the VFX layer glint the right pip as
-# that status's container cue before its effects land.
-func find_status_pip(status_id: String) -> StatusPip:
-	if _status_row == null:
-		return null
-	for child in _status_row.get_children():
-		var pip := child as StatusPip
-		if pip != null and pip.status != null and pip.status.data.id == status_id:
-			return pip
-	return null
-
-
-func _make_status_pip(si: StatusInstance) -> Control:
-	var pip := STATUS_PIP_SCENE.instantiate() as StatusPip
-	pip.setup(si)
-	return pip
-
-
-# This card's details, as the shared CardTooltip builds them, so a card reads identically wherever
-# it is shown. WHEN and WHERE the panel appears is CardHoverPanel's business; which options of the
-# shared builder this particular view wants is ours, which is why the presenter asks rather than
-# reaching in.
 func build_details_panel() -> Control:
-	if card_instance == null:
+	if card_data == null:
 		return null
-	return CardTooltip.build(card_instance, _show_cost, 1.0, false, true, is_phantom)
+	return CardTooltip.build(card_data, _show_cost, 1.0, false, true, is_phantom)
+
+
+# The one derived presentation left on this view: selection. The card ASKS Selection
+# whether it is the pick and applies the answer — signals and reparents are only
+# "re-check now" cues, and the applier is idempotent.
+func derive_presentation() -> void:
+	_apply_selected(_pickable() and Selection.holds(subject()))
 
 
 # HOW A CARD BEHAVES WHEN IT IS THE PICK — its own behaviour, never handed to it.
@@ -1526,7 +625,7 @@ var _selected_now := false
 
 # WHAT THIS VIEW IS A VIEW OF — the thing Selection names when this card is the pick.
 #
-# A card view normally stands for its CardInstance, and several views can stand for the same one
+# A card view normally stands for its CardData, and several views can stand for the same one
 # (a unit's board card, its tray entry): naming the subject rather than the widget is what lets
 # them agree without anyone syncing them. Screens whose cards stand for something else say so —
 # the Decks screen's cards stand for a DECK, and its id survives the rebuild that frees the card,
@@ -1534,7 +633,7 @@ var _selected_now := false
 var view_subject: Variant = null
 
 func subject() -> Variant:
-	return view_subject if view_subject != null else card_instance
+	return view_subject if view_subject != null else card_data
 
 
 # ── Hover: "the cursor is addressing me" ────────────────────────────────────────
@@ -1556,7 +655,7 @@ func subject() -> Variant:
 # Not a state anyone declares — unlike the spotlight or the pick, "the cursor is on me" is the
 # WIDGET's own fact, and two views of one card can be hovered independently (a unit's board card and
 # its tray copy) and both be right. So this is the one presentation on CardUI that is NOT derived
-# from CombatContext, and it needs no board declaration and nothing to un-push.
+# from anything shared, and it needs no board declaration and nothing to un-push.
 #
 # WHAT THE CARD IS DOING: pulling out of the row a little, the way you ease one card proud of a
 # real hand before deciding to play it. Not a pop. The first version of this used EASE_OUT, which
@@ -1774,7 +873,7 @@ func _set_hovered(on: bool) -> void:
 	# rising card's own bottom edge passes the stationary pointer, Godot reports a legitimate exit,
 	# the card drops, which puts it back under the pointer, which enters again. That oscillation is
 	# the "snaps back instead of staying up" in the hand. Leaving is therefore HIT-TESTED per frame
-	# against the union of where the card is and where it rests — the same answer CombatBoard and
+	# against the union of where the card is and where it rests — the same answer other hover owners and
 	# TurnOrderStrip reached for the same reason (see their own notes on not trusting enter/exit).
 	set_physics_process(on)
 	var to := _hover_rest - Vector2(0.0, _hover_travel()) if on else _hover_rest
@@ -1835,8 +934,6 @@ func _hover_settle() -> void:
 	# The drop finished, so the card IS home — and only now may the recorded floor be forgotten.
 	# Forgetting it any earlier is what let a fast in-and-out sample a still-rising card as its rest.
 	_hover_rest_valid = false
-	if get_parent() is SlotUI:
-		set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 
 # A reparent moves the card to a layout that will place it itself — drop the claim without
@@ -1854,17 +951,9 @@ func _drop_hover_claim() -> void:
 
 
 # ── The ring ────────────────────────────────────────────────────────────────────
-# ONE outline for TWO facts that turn out to be the same fact: the cursor resting on this card, and
-# something elsewhere on the screen pointing at the unit it shows (the turn-order strip's hover —
-# see CombatBoard.declare_spotlight). Both mean "this is the one being addressed", they can never
-# usefully disagree, and giving them one look is what makes the strip and the board read as a single
-# surface rather than two widgets that happen to agree.
-#
-# Derived from both every time, never toggled from one of them, so whichever ends last leaves the
-# ring in the state the OTHER still justifies — a cursor leaving a card the strip is pointing at
-# must not take the strip's ring with it.
+# The one ring for "this is the one being addressed" — the cursor resting on this card.
 func _apply_hover_outline() -> void:
-	HoverFx.apply(self, _hover_now or _spotlit_now)
+	HoverFx.apply(self, _hover_now)
 
 
 func _apply_selected(picked: bool) -> void:
@@ -1903,31 +992,15 @@ func _apply_selected(picked: bool) -> void:
 var interactive_check: Callable   # func(CardUI) -> bool
 
 
-# Whether this VIEW is one the player can pick at all. Structural, not a flag to be maintained: a
-# view is pickable if a press on it is wired to anything, if it stands in a board slot (where the
-# slot takes the press on its occupant's behalf), or if the surface it stands on says it answers
-# presses for it (see interactive_check). Portraits, tooltips, the inspector's copy, the sidebar
-# preview, a landing phantom and an attacker's lunge ghost are all views of a card that nobody can
-# click — so they show no pick, even while the card they depict IS the pick.
+# Whether this VIEW is one the player can pick at all. Structural, not a flag to be
+# maintained: a view is pickable if a press on it is wired to anything, or if the surface
+# it stands on says it answers presses for it (see interactive_check). Portraits,
+# tooltips, and the inspector's copy are views of a card that nobody can click — so they
+# show no pick, even while the card they depict IS the pick.
 func _pickable() -> bool:
 	return not _noninteractive \
-			and (not pressed.get_connections().is_empty() or get_parent() is SlotUI \
+			and (not pressed.get_connections().is_empty()
 				or (interactive_check.is_valid() and bool(interactive_check.call(self))))
-
-
-# Concealment: this unit is out on a stand-in — its lunge ghost is doing the travelling — so the
-# original hides where it stands and the ghost is the only copy on screen.
-#
-# SHARP, never a fade. The swap is meant to be invisible machinery behind "the unit flew at its
-# target"; any transition on it would show two copies of the unit for exactly as long as it lasted,
-# which is the artefact this exists to prevent.
-#
-# `visible` rather than an alpha poke, deliberately: it is a channel of its own that no tint applier
-# can stomp (set_exhausted / set_noninteractive write `modulate` wholesale, alpha
-# included), and it takes any attached GlowFx with it — a threat glow left radiating around an empty
-# slot would give the concealment away just as loudly as the card itself.
-func set_concealed(concealed: bool) -> void:
-	visible = not concealed
 
 
 func _gui_input(event: InputEvent) -> void:
@@ -1947,7 +1020,7 @@ func _gui_input(event: InputEvent) -> void:
 				accept_event()
 		elif mb.button_index == MOUSE_BUTTON_RIGHT and mb.pressed:
 			# The desktop path to the in-depth view (touch reaches it via long-press).
-			CardInspector.open(self, card_instance, _show_cost, is_phantom)
+			CardInspector.open(self, card_data, _show_cost, is_phantom)
 			accept_event()
 	elif event is InputEventMouseMotion:
 		_check_hold_drift((event as InputEventMouseMotion).global_position)
@@ -1984,44 +1057,7 @@ func _on_long_press() -> void:
 	if was_dragging:
 		get_viewport().gui_cancel_drag()
 	Sfx.play("card_inspect_open")
-	CardInspector.open(self, card_instance, _show_cost, is_phantom)
-
-
-# The ghost copy of this card a DragGhost preview shows.
-func make_ghost_view() -> CardUI:
-	return CardUI.create(card_instance, _show_cost)
-
-
-func _get_drag_data(at_position: Vector2) -> Variant:
-	if not draggable or card_instance == null:
-		return null
-	# A drag beginning does NOT settle the gesture any more: while the finger is still inside
-	# the hold tolerance the drag is provisional, and a completed hold takes it back.
-	if _hold_timer != null and not _hold_timer.is_stopped():
-		if get_viewport().get_mouse_position().distance_to(_press_origin) > _long_press_move:
-			_end_hold()
-		else:
-			_hold_dragging = true
-			set_process(true)
-	# The opponent's fielded units are not the player's to pick up.
-	if CombatContext.fielded(card_instance) and card_instance.owner == 1:
-		return null
-	# Buildings root in place: a unit with a rook can be dropped from the hand, but once on the
-	# board it can't be picked up to MOVE. (The armed-autocast drag exception died with the
-	# ability costume; the quick-cast gesture returns with the rebuilt ActivatedEffect.)
-	if CombatContext.fielded(card_instance) and card_instance.data.is_building():
-		return null
-	if card_instance.is_spell:
-		spell_drag_started.emit(self)
-	elif not card_instance.is_spell:
-		# Any non-spell unit drag — fielded (a MOVE) or from the hand (a PLACE). Combat wires both
-		# to the board's move/place cues (see CombatBoard.wire_unit_card). The signal is inert on
-		# screens that don't listen (collection/deck/shop never connect it).
-		unit_drag_started.emit(self)
-	# The real card stays fully visible in place; the cursor carries a clearly-distinct ghost
-	# copy (see DragGhost).
-	set_drag_preview(DragGhost.make(self, at_position))
-	return self
+	CardInspector.open(self, card_data, _show_cost, is_phantom)
 
 
 func _notification(what: int) -> void:
@@ -2036,31 +1072,17 @@ func _notification(what: int) -> void:
 		# ability widgets) then cancelled the next card's pending panel as they were freed.
 		_own_hover(false)
 	elif what == NOTIFICATION_DRAG_END:
-		modulate.a = 1.0   # the source is no longer hidden during drags; kept as a safety reset
+		modulate.a = 1.0   # a safety reset after any surface-owned drag (the Forge's)
 		_end_hold()
-		if card_instance != null and card_instance.is_spell:
-			spell_drag_ended.emit(self)
-		elif card_instance != null and not card_instance.is_spell:
-			unit_drag_ended.emit(self)
 	elif what == NOTIFICATION_PARENTED:
-		# A reparent (played onto the board, moved, mounted) changes the answer to most
-		# derived questions. Facing derives IMMEDIATELY (a deferred flip would flash one
-		# wrong-facing frame); the rest re-derives deferred, once the transition settles.
-		var slot := get_parent() as SlotUI
-		if slot != null:
-			set_flipped(slot.location != null and slot.location.side == 1)
-		# The hover lift is a claim on the position, and the position now belongs to a different
-		# layout — release it rather than tweening the card back to where it stood in the old one.
+		# A reparent (mounted, moved between layouts) changes the answers to the derived
+		# questions. The hover lift is a claim on the position, and the position now
+		# belongs to a different layout — release it rather than tweening the card back to
+		# where it stood in the old one.
 		_drop_hover_claim()
-		# Reparenting DESTROYED any sustained Vfx attachment (Vfx.attach auto-detaches on
-		# tree_exiting, which remove_child fires) — but the widget-side state the appliers
-		# guard with (_selected_now / _threat_on, the grow transform, the badge pulse)
-		# SURVIVES the reparent, so the guarded appliers would truthfully answer "already
-		# applied" and never restore the glow. Re-attach what the flags say is worn; the
-		# deferred derivation below then keeps or sheds it against the current state as
-		# usual (a moved unit that is still the pick keeps its highlight lit).
+		# Reparenting destroyed any sustained Vfx attachment (Vfx.attach auto-detaches on
+		# tree_exiting) while the widget-side guard flags survive — re-attach what the
+		# flags say is worn, then re-derive.
 		if _selected_now:
 			Vfx.attach.call_deferred("highlight", self)
-		if _threat_on:
-			Vfx.attach.call_deferred("attack_target_glow", self)
 		derive_presentation.call_deferred()

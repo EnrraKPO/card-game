@@ -17,10 +17,10 @@ extends Node
 # when DevFlags.placeholder_vfx is off (F8) — so undesigned effects can be silenced at will
 # while judging real content. Designed looks always play.
 #
-# Combat's board choreography (VFXPlayer: reticle-leads-hit ordering, simultaneous bursts,
+# Combat's board choreography (retired with the demoted layer: reticle-leads-hit ordering, simultaneous bursts,
 # projectile damage deferral) intentionally stays where it is — that's sequencing, not looks.
 # Its LOOKS, though, resolve through here: the combat_* entries carry renderer "custom" and
-# VFXPlayer registers its designed effect classes on them at setup — one library, one dispatch.
+# a board presenter registers its designed effect classes on them at setup — one library, one dispatch.
 
 # The procedural behavior vocabulary. Adding a primitive = a _fx_* method + a list entry here
 # (the Tool validates entries against this same list — keep them in sync).
@@ -45,7 +45,7 @@ var _attached: Dictionary = {}
 # Custom renderers, entry id -> Callable(vd, target, opts). An entry with renderer "custom"
 # plays through the callable registered for its id; the callable owns its own drawing (combat
 # effects draw in the combat tree, not on this service's layer). Registered by the system that
-# owns the look (VFXPlayer at combat setup); re-registering overwrites, which keeps this
+# owns the look (the board presenter at combat setup); re-registering overwrites, which keeps this
 # correct across scene reloads.
 var _custom: Dictionary = {}
 

@@ -16,7 +16,7 @@ extends Node
 # That idempotence is the whole point: "select what is already selected" has to be a no-op in the
 # STATE, so that no amount of re-clicking can accumulate anything downstream.
 #
-# The subject is the thing picked, not the widget showing it — a CardInstance for a card (the same
+# The subject is the thing picked, not the widget showing it — a CardData for a card (the same
 # unit may be drawn by its board card, a tray entry and a sidebar preview at once), any Object for
 # widgets that are their own subject (a forge chip). Whoever handles the gesture declares it; that
 # is recording game state, not addressing a view.

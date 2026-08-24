@@ -91,7 +91,7 @@ func _rebuild_deck() -> void:
 		var data := CardData.get_card(dc.id)
 		if data == null:
 			continue
-		var ui := CardUI.create(dc.make_instance())
+		var ui := CardUI.create(dc.effective_data())
 
 		# Only fieldable deck units are valid targets — spells aren't placed as units, and
 		# the King isn't drawn from the deck (so a deck-side change never reaches the board).

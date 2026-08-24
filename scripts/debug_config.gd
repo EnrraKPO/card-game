@@ -29,7 +29,7 @@ static func enabled() -> bool:
 
 # The fight seed this checkout forces ({"combat_seed": 12345}) — how a logged fight is
 # REPLAYED: paste the seed from the log's header, relaunch, get the same fight (see
-# CombatRng). -1 = unset, the normal case: every fight rolls its own.
+# the world's seeded rng). -1 = unset, the normal case: every fight rolls its own.
 static func forced_seed() -> int:
 	if not _loaded:
 		_load()

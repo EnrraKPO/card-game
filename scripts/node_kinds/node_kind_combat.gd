@@ -27,4 +27,8 @@ func enter(node: MapNodeData, map_screen: MapScreen) -> void:
 	enc.completing_node_id  = map_screen.current_node_id
 	enc.destination_node_id = node.id
 	GameData.current_encounter = enc
-	Nav.goto("res://scenes/combat.tscn")
+	# The fight runs on the new core. The slice's fixed fight is what FightScreen accepts
+	# today; the run-layer encounter above wires into it at the parity pass — until then
+	# the screen refuses loudly when no fight is configured (A10: partial through
+	# iteration).
+	Nav.goto("res://scenes/fight_screen.tscn")

@@ -15,7 +15,7 @@ extends RefCounted
 # opts:
 #   origin   Vector2  where the coins are thrown from, in global coordinates. A Vector2 and not
 #                     a Control on purpose — the payer is a card that is being disposed of this
-#                     very frame (see CombatBoard.remove_card), so the flight cannot hold it.
+#                     very frame (the board frees dead cards), so the flight cannot hold it.
 #   count    int      coins to throw (= gold paid).
 #   on_land  Callable fired once per ARRIVING coin, so the bag's tally climbs with the coins
 #                     rather than ahead of them (see GoldBag).

@@ -3,7 +3,7 @@ extends RefCounted
 
 # The King is the player's run-long avatar and the only loss condition: when its
 # health hits 0 in a fight, the run is over. The King unit itself is rebuilt fresh
-# each combat (CombatBoard.place_kings), so the only thing we persist between fights
+# each combat by the fight setup, so the only thing we persist between fights
 # is how wounded it is — accumulated, unhealed damage. Current health is never
 # stored; it's just (max health - king_damage), computed when a fight starts.
 var king_damage: int = 0 : set = _set_king_damage

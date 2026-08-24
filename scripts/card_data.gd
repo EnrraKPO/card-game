@@ -51,13 +51,15 @@ var image: Texture2D:
 var elements: Array[String] = []
 var chess_pieces: Array[String] = []
 # The card's EFFECTS in the new schema (signed ATTACK_SYSTEM_DESIGN.html): resolved
-# TriggeredEffect structures — stateless, immutable, shared by every fielded copy. The
+# effect sources — the authored forms, raw. The
 # auto-attack is simply the referenced attack-family effect; a card with no attack effect
 # doesn't swing (pacifists are authorable). effects_src holds the authored form verbatim
 # (named ids as Strings, inline effects as Dictionaries) — it is what to_dict emits.
 # (target_policy is DELETED: the policy lives inside the referenced effect's resolver.)
-var effects: Array = []       # Array[TriggeredEffect]
-var effects_src: Array = []   # the authored form: String ids | Dictionary inline effects
+# The authored form, verbatim: String ids | Dictionary inline effects. The demoted
+# effect-object layer is gone; the catalogue keeps its schema raw until the parity
+# migration authors it into the new core's envelope (plan §3).
+var effects_src: Array = []   # String ids | Dictionary inline effects
 # Enemy-only fodder cards (tribes the CPU fights with). Kept out of every player-facing
 # pool — reward offers and shop stock (random_non_kings). They carry no element/chess
 # composition, so composition_key is empty and they're already absent from the collection
@@ -68,7 +70,7 @@ var enemy_only: bool = false
 var tribe: String = ""
 # The unit's battlefield ROLE tag ("fodder"/"tank"/"dps"/"support"/"burst", "" = untagged) —
 # the enemy engine's authoring convenience (design decision 18): an identity statement the
-# encounter's survival-weight table resolves into a protection weight (BoardScoring). ONE role
+# encounter's survival-weight table resolves into a protection weight (retired scorer). ONE role
 # per unit, deliberately — the tag vocabulary must stay small. Never load-bearing: an untagged
 # unit falls to the table's "default" entry and is still handled correctly. Kings need no role;
 # is_king already reads as "captain".
@@ -93,7 +95,7 @@ const POWER_STAT_GROWTH := 0.05
 
 # The canonical component-id vocabulary — everything a composition may contain, and therefore
 # everything a standing composition GRANT may confer (see
-# LiveEffects.effective_composition). Mirrors the Tool's ELEMENTS/PIECES (Tool/server.js),
+# the composition read). Mirrors the Tool's ELEMENTS/PIECES (Tool/server.js),
 # like FOLDABLE_ATTRS — keep the two in step.
 const ELEMENT_IDS: Array[String] = ["fire", "water", "air", "earth", "darkness", "light"]
 const CHESS_PIECE_IDS: Array[String] = ["pawn", "knight", "bishop", "rook", "queen", "king"]
@@ -113,7 +115,7 @@ func component_count() -> int:
 
 # A building is any unit carrying a rook in its composition. Buildings are
 # defensive structures: once placed on the board they are rooted and cannot be
-# repositioned (enforced in CardUI._get_drag_data and CombatBoard.do_place_unit).
+# repositioned (the new core roots it: no Move appointment, A9).
 func is_building() -> bool:
 	return chess_pieces.has("rook")
 
@@ -220,27 +222,9 @@ static func build_from_dict(d: Dictionary) -> CardData:
 	card.abilities    = Array(d.get("abilities", []), TYPE_STRING, "", null)
 	card.bounty_gold  = int(d.get("bounty_gold", -1))
 	card.bounty_exp   = int(d.get("bounty_exp", -1))
-	# Effects, the NEW schema (signed ATTACK_SYSTEM_DESIGN.html §3): each entry is either a
-	# named-effect id (a String — "nearest_attack", resolved through EffectLibrary) or an
-	# inline TriggeredEffect dictionary (card-unique effects). The authored form is kept
-	# verbatim in effects_src for serialization; the resolved structures land in effects.
-	# A bad entry is refused loudly and dropped — old-schema dicts die inside
-	# TriggeredEffect.parse, unknown ids die here; the card still loads without them.
-	for e_src: Variant in (d.get("effects", []) as Array):
-		if e_src is String:
-			var named := EffectLibrary.get_effect(e_src)
-			if named == null:
-				push_error("CardData %s: unknown named effect '%s' — refused" % [card.id, e_src])
-				continue
-			card.effects_src.append(e_src)
-			card.effects.append(named)
-		else:
-			var inline := TriggeredEffect.parse(e_src)
-			if inline == null:
-				push_error("CardData %s: unparseable inline effect — refused" % card.id)
-				continue
-			card.effects_src.append(e_src)
-			card.effects.append(inline)
+	# Effects: the authored form kept verbatim — the parity migration converts it into
+	# the new core's envelope; nothing here parses it any more.
+	card.effects_src = (d.get("effects", []) as Array).duplicate()
 	if d.has("card_type"):
 		card.card_type = CardType.SPELL if d.get("card_type") == "spell" else CardType.UNIT
 	elif not card.elements.is_empty() and card.chess_pieces.is_empty():
@@ -545,10 +529,10 @@ static func _derive(elems: Array, chess: Array, key: String) -> CardData:
 # honestly contributes no line (inline effects have no id and no entry).
 func effect_lines() -> Array[String]:
 	var lines: Array[String] = []
-	for e: TriggeredEffect in effects:
-		if e.id.is_empty():
+	for e_src: Variant in effects_src:
+		if not (e_src is String):
 			continue
-		var line := Loc.opt("effect.%s.desc" % e.id)
+		var line := Loc.opt("effect.%s.desc" % e_src)
 		if not line.is_empty():
 			lines.append(line)
 	return lines

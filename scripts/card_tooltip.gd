@@ -5,7 +5,7 @@ extends RefCounted
 # generated-token note, description, abilities, attached charms). CardUI._make_custom_tooltip
 # returns this in-game, and any other screen (the Forge, collection, decks…) can call build() to
 # get the exact same hover, so card info reads identically everywhere. Pure read of the
-# CardInstance — every call builds fresh nodes, so the returned Control is owned by whoever
+# CardData — every call builds fresh nodes, so the returned Control is owned by whoever
 # shows it.
 #
 # SIZING RULE: every autowrap label gets custom_minimum_size.x pinned to its actual column
@@ -64,9 +64,9 @@ const TEXT_HINT := Color(0.95, 0.82, 0.35)    # yellow "expand" footnote on the 
 # that toggle (CardInspector owns the toggle state and rebuilds on change).
 # `phantom` carries the hovered card's own unreality into the preview (CardUI.set_phantom): pointing
 # at a card that isn't real must not pop an enlarged copy that looks like one you have.
-static func build(inst: CardInstance, show_cost := true, scale := 1.0,
+static func build(data: CardData, show_cost := true, scale := 1.0,
 		with_stat_guide := false, descriptions_shown := true, phantom := false) -> Control:
-	if inst == null:
+	if data == null:
 		return null
 	var s := scale
 
@@ -90,7 +90,7 @@ static func build(inst: CardInstance, show_cost := true, scale := 1.0,
 	# Enlarged visual of the card itself (art + frame + badges). SHRINK_CENTER (not the default FILL)
 	# keeps the card at PREVIEW_SIZE instead of stretching vertically when the detail column is
 	# taller, which would blow up the COVERED art far past its window.
-	var preview := CardUI.create(inst, show_cost)
+	var preview := CardUI.create(data, show_cost)
 	preview.custom_minimum_size = PREVIEW_SIZE * s
 	preview.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -101,16 +101,16 @@ static func build(inst: CardInstance, show_cost := true, scale := 1.0,
 	# Height budget = the preview card's own height: a content-heavy card (multiple abilities,
 	# charms, statuses) flows into EXTRA COLUMNS beside the card instead of growing a tall
 	# skinny panel past it.
-	hbox.add_child(build_details(inst, s, PREVIEW_SIZE.y * s))
+	hbox.add_child(build_details(data, s, PREVIEW_SIZE.y * s))
 
 	# The stat glossary, prepended as the leftmost column so it reads before the card itself. The
 	# same explanations also ride the card's OWN stat badges as hover tooltips (see set_stat_tooltips).
-	if with_stat_guide and has_stat_guide(inst):
-		var guide := build_stat_guide(inst, s, descriptions_shown)
+	if with_stat_guide and has_stat_guide(data):
+		var guide := build_stat_guide(data, s, descriptions_shown)
 		hbox.add_child(guide)
 		hbox.move_child(guide, 0)
 		if preview.has_method("set_stat_tooltips"):
-			preview.set_stat_tooltips(stat_tips(inst))
+			preview.set_stat_tooltips(stat_tips(data))
 
 	# Hover-tooltip footnote pointing to the full-screen inspector. Only on the compact hover panel
 	# (not the guide variant, which already IS the expanded view).
@@ -136,87 +136,45 @@ static func build(inst: CardInstance, show_cost := true, scale := 1.0,
 # many abilities widens its read, it never pushes the surrounding UI away (0 = no budget, one
 # column that grows freely). Section headers stay glued to their first row, so a column never
 # ends on a dangling title.
-static func build_details(inst: CardInstance, s := 1.0, max_h := 0.0) -> Container:
+static func build_details(data: CardData, s := 1.0, max_h := 0.0) -> Container:
 	var col_w := COLUMN_WIDTH * s
 	var blocks: Array = []   # Controls, in read order; "keep_with_next" meta glues headers down
 
 	var name_lbl := Label.new()
-	name_lbl.text = inst.data.display_name
+	name_lbl.text = data.display_name
 	name_lbl.add_theme_font_size_override("font_size", int(22.0 * s))
 	name_lbl.add_theme_color_override("font_color", TEXT_TITLE)
 	blocks.append(name_lbl)
 
 	blocks.append(_glued(HSeparator.new()))
 
-	var desc := inst.data.description
+	var desc := data.description
 	if not desc.is_empty():
 		blocks.append(_rich_label(desc, col_w, int(18.0 * s), TEXT_MAIN))
 
 	# Each effect's own text description, appended after the authored text as its own line
 	# (see CardData.effect_lines — the effect speaks for itself, §7 of the presentation
 	# design). Colour-dimmed to read as a system rule.
-	for effect_line: String in inst.data.effect_lines():
+	for effect_line: String in data.effect_lines():
 		blocks.append(_rich_label(effect_line, col_w, int(15.0 * s), TEXT_SECTION))
 
 	# Rooted-building note, appended after the authored/targeting text as its own line (buildings
 	# only; non-buildings return "" — see CardData.building_line). Colour-dimmed as a system rule.
-	var building := inst.data.building_line()
+	var building := data.building_line()
 	if not building.is_empty():
 		blocks.append(_rich_label(building, col_w, int(15.0 * s), TEXT_SECTION))
 
 	# Activated abilities: a SMALL ability-widget view per ability beside its description —
 	# the same visual the tray uses, so "this is an ability" reads identically everywhere.
 	# Info-only here (mouse-ignored, not draggable); activation stays in the tray.
-	var abilities: Array = inst.ability_list()
+	var abilities: Array = data.ability_ids()
 	if not abilities.is_empty():
 		blocks.append(_glued(HSeparator.new()))
 		blocks.append(_glued(_section_title(Loc.t("card_tooltip.section_abilities"), s)))
-		for ab: AbilityData in abilities:
-			blocks.append(_ability_row(inst, ab, s))
-
-	# Charm detail: one line per attached charm, colour-matched to its on-card pip.
-	if not inst.charms.is_empty():
-		blocks.append(_glued(HSeparator.new()))
-		blocks.append(_glued(_section_title(Loc.t("card_tooltip.section_charms"), s)))
-		for charm_id: String in inst.charms:
-			var charm := CharmData.get_charm(charm_id)
-			if charm == null:
-				continue
-			# The charm's art leads its line, exactly as a status pip leads its own below — the
-			# inspector was showing the letter glyph even for charms that ship a painting. A charm
-			# with no art keeps the glyph, so the column still reads as a list either way.
-			var ch_icon := charm.icon_rect(22.0 * s)
-			var ch_line := "%s — %s" % [charm.display_name, charm.description]
-			if ch_icon == null:
-				blocks.append(_rich_label("%s  %s" % [charm.letter, ch_line], col_w,
-					int(15.0 * s), charm.color.lightened(0.35)))
-				continue
-			var ch_row := HBoxContainer.new()
-			ch_row.add_theme_constant_override("separation", int(6.0 * s))
-			ch_row.add_child(ch_icon)
-			ch_row.add_child(_rich_label(ch_line, col_w - 28.0 * s, int(15.0 * s),
-				charm.color.lightened(0.35)))
-			blocks.append(ch_row)
-
-	# Active statuses: one line each (glyph, name, count, description), colour-matched to its pip.
-	if not inst.statuses.is_empty():
-		blocks.append(_glued(HSeparator.new()))
-		blocks.append(_glued(_section_title(Loc.t("card_tooltip.section_statuses"), s)))
-		for si: StatusInstance in inst.statuses:
-			var sd: StatusData = si.data
-			var cnt := si.count()
-			var row := HBoxContainer.new()
-			row.add_theme_constant_override("separation", int(6.0 * s))
-			var icon := sd.icon_rect(22.0 * s)
-			if icon != null:
-				row.add_child(icon)
-			var line := "%s%s" % [sd.display_name, (" %d" % cnt) if cnt > 0 else ""]
-			if not sd.description.is_empty():
-				line += " — %s" % sd.description
-			# The pip + the row's separation, so pip + text fill the column.
-			row.add_child(_rich_label(line, col_w - 28.0 * s, int(15.0 * s),
-				sd.color.lightened(0.35)))
-			blocks.append(row)
+		for ability_id: String in abilities:
+			var ab: AbilityData = AbilityData.get_ability(ability_id)
+			if ab != null:
+				blocks.append(_ability_row(ab, s))
 
 	return _flow_columns(blocks, max_h if max_h > 0.0 else INF, col_w, s)
 
@@ -276,15 +234,15 @@ static func _new_flow_col(col_w: float, sep_v: float) -> VBoxContainer:
 
 # Whether the stat-guide column applies to this card: units carry Health/Shield/Attack/Speed,
 # spells carry none of them, so the glossary would be meaningless there.
-static func has_stat_guide(inst: CardInstance) -> bool:
-	return inst != null and not inst.is_spell
+static func has_stat_guide(data: CardData) -> bool:
+	return data != null and data.card_type != CardData.CardType.SPELL
 
 
 # The Health/Shield/Attack/Speed glossary column: each row is the card's real stat badge (reused
 # from CardUI, so the icon matches the number on the card exactly) beside a plain-language rule,
 # with a live crit/dodge formula note under Speed. Each badge also carries the same text as a
 # hover tooltip (UIScale.tip, so touch — where the inspector opens by long-press — stays clean).
-static func build_stat_guide(inst: CardInstance, s := 1.0, descriptions_shown := true) -> Control:
+static func build_stat_guide(data: CardData, s := 1.0, descriptions_shown := true) -> Control:
 	var vbox := VBoxContainer.new()
 	vbox.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	vbox.add_theme_constant_override("separation", int(GUIDE_ROW_SEP * s))
@@ -310,13 +268,13 @@ static func build_stat_guide(inst: CardInstance, s := 1.0, descriptions_shown :=
 	# MAX health, not current — the card's own badge is now the live readout (it drains and
 	# recolours, see CardUI._refresh_health_badge), so the total it no longer prints has to be
 	# legible somewhere, and the stat column is where a card's scale belongs.
-	vbox.add_child(_stat_row(CardUI.BADGE_HEALTH, int(inst.get_attribute("max_health")),
+	vbox.add_child(_stat_row(CardUI.BADGE_HEALTH, data.health,
 		STAT_NUM_COLOR, HEALTH_COLOR, "health", s, true))
-	vbox.add_child(_stat_row(CardUI.BADGE_SHIELD, inst.current_shield, SHIELD_NUM_COLOR,
+	vbox.add_child(_stat_row(CardUI.BADGE_SHIELD, data.shield, SHIELD_NUM_COLOR,
 		SHIELD_COLOR, "shield", s, true))
-	vbox.add_child(_stat_row(CardUI.BADGE_ATTACK, int(inst.get_attribute("attack")), STAT_NUM_COLOR,
+	vbox.add_child(_stat_row(CardUI.BADGE_ATTACK, data.attack, STAT_NUM_COLOR,
 		ATTACK_COLOR, "attack", s, true))
-	vbox.add_child(_stat_row(CardUI.BADGE_SPEED, int(inst.get_attribute("speed")), STAT_NUM_COLOR,
+	vbox.add_child(_stat_row(CardUI.BADGE_SPEED, data.speed, STAT_NUM_COLOR,
 		SPEED_COLOR, "speed", s, false))
 
 	# NUKED (2026-08-13 ruling): the crit/dodge footnote explained rules that went with the
@@ -372,7 +330,7 @@ static func _stat_row(icon_tex: Texture2D, value: int, num_color: Color, stat_co
 # The card's own explanations, keyed by stat, for the card-badge hover tooltips — each a
 # {title, color, body}: the stat's name in its glossary colour over the plain-language rule (with
 # the live formula appended to Speed's body). Consumed by CardUI.set_stat_tooltips (StatBadgeTip).
-static func stat_tips(inst: CardInstance) -> Dictionary:
+static func stat_tips(_data: CardData) -> Dictionary:
 	var colors := {
 		"health": HEALTH_COLOR, "shield": SHIELD_COLOR,
 		"attack": ATTACK_COLOR, "speed": SPEED_COLOR,
@@ -424,17 +382,14 @@ static func _stat_badge(tex: Texture2D, value: int, num_color: Color, s := 1.0) 
 
 # One ability line: the small widget (built exactly like the tray's tokens) beside the
 # ability's name and description.
-static func _ability_row(inst: CardInstance, ab: AbilityData, s := 1.0) -> Control:
+static func _ability_row(ab: AbilityData, s := 1.0) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", int(10.0 * s))
 
-	var tok := CardInstance.from_data(ab.display_card())
-	tok.owner = inst.owner
-	var w := AbilityWidget.create_for(tok)
+	var w := AbilityWidget.create_for(ab.display_card())
 	w.custom_minimum_size = ABILITY_WIDGET_SIZE * s
 	w.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	w.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	w.draggable = false
 	row.add_child(w)
 
 	var line := ab.display_name
