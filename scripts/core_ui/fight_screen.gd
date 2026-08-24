@@ -57,7 +57,6 @@ var _span_active: bool = false
 var _awaiting_command: bool = false
 var _picking: bool = false
 var _pick_candidates: Array[GameEntity] = []
-var _selected: Unit = null
 var _cue_lines: PackedStringArray = []
 
 signal commanded(ask: Event)
@@ -66,6 +65,9 @@ signal picked(choice: GameEntity)
 
 func _ready() -> void:
 	_build_ui()
+	# The pick's consequences (preview, ability bar, cues) re-derive whenever the one
+	# authority moves — the cards themselves re-derive their ring on their own poll.
+	Selection.changed.connect(_on_selection_changed)
 	if next_fight.is_empty():
 		next_fight = slice_fight()
 	if next_fight.is_empty():
@@ -119,7 +121,7 @@ func begin_player_span() -> void:
 
 func end_player_span() -> void:
 	_span_active = false
-	_select(null)
+	Selection.clear()
 	_state_label.text = ""
 	refresh()
 
@@ -129,7 +131,7 @@ func next_command() -> Event:
 	refresh()
 	var ask: Event = await commanded
 	_awaiting_command = false
-	_select(null)
+	Selection.clear()
 	return ask
 
 
@@ -191,7 +193,13 @@ func _on_slot_clicked(address: Vector3i) -> void:
 		return
 	if _span_active and _awaiting_command and occupant != null \
 			and occupant.allegiance == world.player_side():
-		_select(occupant if _selected != occupant else null)
+		# The toggle writes THE one authority (R9); everything that shows a consequence —
+		# the card's own ring, the preview, the ability bar — derives from it on the
+		# changed-triggered refresh.
+		if Selection.holds(occupant):
+			Selection.clear()
+		else:
+			Selection.select(occupant)
 
 
 func _on_hand_clicked(card: Card) -> void:
@@ -204,15 +212,29 @@ func _on_hand_clicked(card: Card) -> void:
 
 
 func _on_ability_clicked(ability_name: StringName) -> void:
-	if _span_active and _awaiting_command and _selected != null:
-		var ask := Event.new(&"use_ability", _selected)
+	var selected: Unit = _selected_unit()
+	if _span_active and _awaiting_command and selected != null:
+		var ask := Event.new(&"use_ability", selected)
 		ask.components.append(NameEventData.new(&"ability", ability_name))
 		commanded.emit(ask)
 
 
-func _select(unit: Unit) -> void:
-	_selected = unit
-	refresh()
+# The fight's read of the one selection authority: the pick, when it is a unit of this
+# fight (any other screen's leftover pick reads as nothing).
+func _selected_unit() -> Unit:
+	return Selection.current() as Unit
+
+
+func _on_selection_changed(_subject: Variant) -> void:
+	if world != null:
+		refresh()
+
+
+func _exit_tree() -> void:
+	Selection.changed.disconnect(_on_selection_changed)
+	# A fight unit must not outlive the fight as the game-wide pick.
+	if _selected_unit() != null:
+		Selection.clear()
 
 
 # ── The previews ──────────────────────────────────────────────────────────────────────
@@ -220,9 +242,10 @@ func _select(unit: Unit) -> void:
 # (Core §4; the coverage's simulation row): the twin's poll maps back by address.
 
 func _preview_target_address() -> Vector3i:
-	if _selected == null:
+	var selected: Unit = _selected_unit()
+	if selected == null:
 		return Vector3i(-1, -1, -1)
-	var standing: Vector3i = TargetResolver.standing_address(_selected)
+	var standing: Vector3i = TargetResolver.standing_address(selected)
 	if standing.x < 0:
 		return Vector3i(-1, -1, -1)
 	var twin: World = world.copy()
@@ -285,12 +308,11 @@ func _paint_slot(address: Vector3i, slot_ui: SlotUI, preview: Vector3i) -> Unit:
 		ui.set_status_views(CardViewModel.status_views(unit))
 		if slot_ui.get_card() != ui:
 			slot_ui.set_card(ui)
-		# A tapped (exhausted) unit dims; selection lights its own card.
-		var tapped: bool = unit.get_stat(&"tapped") > 0.0
-		if unit == _selected:
-			ui.modulate = Color(1.0, 1.0, 0.6)
-		else:
-			ui.modulate = Color(0.55, 0.55, 0.6) if tapped else Color.WHITE
+		# The card derives its own selection ring from the authority (CardUI's self-poll,
+		# keyed by view_subject); this screen only states what the view is a view OF.
+		ui.view_subject = unit
+		# A tapped (exhausted) unit dims.
+		ui.modulate = Color(0.55, 0.55, 0.6) if unit.get_stat(&"tapped") > 0.0 else Color.WHITE
 	slot_ui.set_ground(SlotViewModel.ground_view(slot))
 	# Cues: placement hints while the command is the player's to give; a pick's candidates wear
 	# the valid-target cue; the selected unit's would-be victim wears the attack crosshair.
@@ -323,9 +345,10 @@ func _on_hand_index_pressed(index: int) -> void:
 func _rebuild_abilities() -> void:
 	for child: Node in _ability_bar.get_children():
 		child.queue_free()
-	if _selected == null:
+	var selected: Unit = _selected_unit()
+	if selected == null:
 		return
-	for ability_name: StringName in _selected.abilities:
+	for ability_name: StringName in selected.abilities:
 		var button := Button.new()
 		button.text = String(ability_name)
 		button.disabled = not (_span_active and _awaiting_command and not _picking)

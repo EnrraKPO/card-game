@@ -286,6 +286,20 @@ stays in the pre-swap tree for its own atom.</p>
       the bridge test measures against the dealt baseline.</li>
 </ul>
 
+<h2>2026-08-24 — Selection conformed to the one authority (R9, per-issue
+under R10)</h2>
+
+<p>The fight screen's local <code>_selected</code> — a second selection state
+beside the authority — is dissolved. A click on an own fielded unit toggles
+the pick by writing <code>Selection</code>; the card dresses itself through
+its existing self-poll (<code>view_subject</code> now stamped to the unit, the
+hand-rolled yellow modulate deleted); the pick's consequences — target
+preview, ability bar, cues — re-derive from <code>Selection.current()</code>
+on the changed-triggered refresh. The pick clears when a command is consumed,
+when the player's span ends, and on leaving the screen (a fight unit must not
+outlive the fight as the game-wide pick). No feeder, no new plumbing — the
+per-issue form R10 prescribes; cards keep their direct poll. Suite 607/0.</p>
+
 <p><b>Flagged, not touched:</b> the core card envelope carries no
 <code>elements</code> birth fact yet (roster: id/name/stats/building/king/
 effects/abilities), so a fielded face composes no composition chips until the

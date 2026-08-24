@@ -25,6 +25,7 @@ func run() -> void:
 	_aura_follows_its_view()
 	_ground_tint_lands_on_art()
 	_phantom_is_reversible()
+	_selection_derives_from_the_authority()
 	_tooltip_carries_the_views()
 	_card_bridge_composes_from_the_core()
 	_host.queue_free()
@@ -133,6 +134,21 @@ func _phantom_is_reversible() -> void:
 	check(ui._canvas.material != null, "the phantom treatment hangs its shader")
 	ui.set_phantom(false)
 	check(ui._canvas.material == null, "the treatment lifts whole")
+
+
+# The card asks THE one authority whether it is the pick (R9) and dresses itself — no
+# screen writes a selection state onto the view.
+func _selection_derives_from_the_authority() -> void:
+	var ui := _card(_face())
+	var subject := RefCounted.new()   # any Object can be a pick's subject
+	ui.view_subject = subject
+	ui.pressed.connect(func() -> void: pass)   # a wired press makes the view pickable
+	Selection.select(subject)
+	ui.derive_presentation()
+	check(ui._selected_now, "the pick's view derives selected")
+	Selection.clear()
+	ui.derive_presentation()
+	check(not ui._selected_now, "clearing the authority undresses the view")
 
 
 # The card's details read renders the SAME injected views its badge row wears — the tooltip
