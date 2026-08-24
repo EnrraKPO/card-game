@@ -1,6 +1,6 @@
 extends TestCase
 
-# CombatCascade: the re-homed event cascade (Step 3 of COMBAT_DECOUPLING_REFACTOR.md).
+# LegacyCombatCascade: the re-homed event cascade (Step 3 of COMBAT_DECOUPLING_REFACTOR.md).
 # Runs the REAL cascade headless — a CombatWorld with no view, the null presenter — which is
 # exactly the shape Step 5's simulations use. Pins: synchronous completion under the null
 # presenter, phase-moment status decay, bury's state half + the world's unit_retired wire,
@@ -36,7 +36,7 @@ func _resolve_event_decays() -> void:
 	StatusEngine.apply(pawn, "empowered", StatusEngine.DURATION_DEFAULT, 1, null)
 	check(pawn.find_status("empowered") != null, "the status applies before the cascade runs")
 
-	var cascade := CombatCascade.make(w, CombatPresenter.new())
+	var cascade := LegacyCombatCascade.make(w, CombatPresenter.new())
 	var done: Array = [false]
 	var chain := func() -> void:
 		await cascade.resolve_event(&"turn_end")
@@ -53,7 +53,7 @@ func _bury_retires_and_signals() -> void:
 	var retired: Array = []
 	w.unit_retired.connect(func(inst: CardInstance) -> void: retired.append(inst))
 
-	var cascade := CombatCascade.make(w, CombatPresenter.new())
+	var cascade := LegacyCombatCascade.make(w, CombatPresenter.new())
 	var done: Array = [false]
 	var chain := func() -> void:
 		await cascade.bury(pawn)

@@ -15,6 +15,8 @@ extends RefCounted
 var game: Game = null
 var board_manager: BoardManager = null
 var outlet: PresentationOutlet = null
+var picker: TargetPicker = null
+var cascade: CombatCascade = null
 var rng: RandomNumberGenerator = null
 
 
@@ -22,6 +24,8 @@ func _init(p_seed: int) -> void:
 	rng = RandomNumberGenerator.new()
 	rng.seed = p_seed
 	outlet = PresentationOutlet.new()
+	picker = TargetPicker.new()
+	cascade = CombatCascade.new(self)
 	game = Game.new()
 	WriteAuthority.mint(self, game)
 	var sides_container: EntityContainer = game.get_container(&"sides")
@@ -43,3 +47,19 @@ func player_side() -> Side:
 
 func enemy_side() -> Side:
 	return game.get_container(&"sides").members[1] as Side
+
+
+# Every entity that exists (Core §9's `world` route; the resolver's candidate field):
+# the ownership tree walked whole — the Game, then depth-first through every entity's
+# containers, in declaration order. Deterministic on every re-run.
+func all_entities() -> Array[GameEntity]:
+	var out: Array[GameEntity] = []
+	_collect(game, out)
+	return out
+
+
+func _collect(entity: GameEntity, out: Array[GameEntity]) -> void:
+	out.append(entity)
+	for container: EntityContainer in entity.get_container_list():
+		for member: GameEntity in container.members:
+			_collect(member, out)

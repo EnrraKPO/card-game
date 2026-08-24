@@ -15,6 +15,7 @@ extends RefCounted
 # manager, with the world.
 
 var _index: Dictionary[Vector3i, Slot] = {}
+var _addresses: Dictionary[Slot, Vector3i] = {}
 
 
 # The one act of birth. Each side's half is ROWS × COLS slots, housed in that side's
@@ -30,12 +31,19 @@ func birth(world: World, sides: Array[Side]) -> void:
 				WriteAuthority.mint(world, slot)
 				WriteAuthority.insert(board, slot)
 				_index[Vector3i(side_index, row, col)] = slot
+				_addresses[slot] = Vector3i(side_index, row, col)
 
 
 # Address → slot. Null = that is not a cell — an answer for a shape running off the
 # board's edge, not an error.
 func slot_at(address: Vector3i) -> Slot:
 	return _index.get(address)
+
+
+# Slot → address, the fetch map's inversion over the same immutable facts (B22). Serves
+# the standing read: a unit's position is its housing slot's coordinate (Core §2).
+func address_of(slot: Slot) -> Vector3i:
+	return _addresses.get(slot, Vector3i(-1, -1, -1))
 
 
 # Slots at these addresses, in the given order; addresses off the board yield nothing.

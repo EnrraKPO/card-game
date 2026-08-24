@@ -36,6 +36,7 @@ const SUITES: Array = [
 	preload("res://tests/test_target_resolvers.gd"),
 	preload("res://tests/test_core_world.gd"),
 	preload("res://tests/test_write_road.gd"),
+	preload("res://tests/test_rules_flow.gd"),
 ]
 
 
@@ -46,7 +47,10 @@ func _ready() -> void:
 	for suite_script: GDScript in SUITES:
 		var suite: TestCase = suite_script.new()
 		print("── ", suite.suite_name(), " ──")
-		suite.run()
+		# The core's flow layer is coroutine-native (picks and cues await); a suite
+		# exercising it awaits, and awaiting a plain suite completes on the spot.
+		@warning_ignore("redundant_await")
+		await suite.run()
 		passed += suite.passed
 		failed += suite.failed
 		print("    %d passed, %d failed" % [suite.passed, suite.failed])

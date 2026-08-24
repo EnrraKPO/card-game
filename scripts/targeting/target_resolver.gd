@@ -1,4 +1,4 @@
-class_name TargetResolver
+class_name LegacyTargetResolver
 extends RefCounted
 
 # THE single-issue contract of the targeting layer (TARGETING_DESIGN.md §3, §12.1, signed
@@ -42,9 +42,9 @@ func to_dict() -> Dictionary:
 
 # The one authored form. Unknown kinds are refused loudly: the dead legacy language is
 # not parsed, and no species is ever guessed.
-static func parse(targets_value: Variant) -> TargetResolver:
+static func parse(targets_value: Variant) -> LegacyTargetResolver:
 	if not (targets_value is Dictionary):
-		push_error("TargetResolver: '%s' is not the native targets form — refusing" % str(targets_value))
+		push_error("LegacyTargetResolver: '%s' is not the native targets form — refusing" % str(targets_value))
 		return null
 	var d := targets_value as Dictionary
 	match str(d.get("kind", "")):
@@ -58,7 +58,7 @@ static func parse(targets_value: Variant) -> TargetResolver:
 			return Tank.new()
 		"threat":
 			return Threat.new()
-	push_error("TargetResolver: unknown targets kind '%s' — refusing (no permissive default)" % str(d.get("kind", "")))
+	push_error("LegacyTargetResolver: unknown targets kind '%s' — refusing (no permissive default)" % str(d.get("kind", "")))
 	return null
 
 
@@ -110,13 +110,13 @@ static func opposite_half_by_preference(world: CombatWorld, holder: CardInstance
 
 # ── Species ──────────────────────────────────────────────────────────────────────────
 
-class Nearest extends TargetResolver:
+class Nearest extends LegacyTargetResolver:
 	# The geometrically closest enemy under the preference ordering. Resolves to at most
 	# ONE unit — the head of the preference order.
 	func resolve(world: CombatWorld, holder: CardInstance,
-			_owner: int = TargetResolver.OWNER_FROM_HOLDER) -> Array[LegacyGameEntity]:
+			_owner: int = LegacyTargetResolver.OWNER_FROM_HOLDER) -> Array[LegacyGameEntity]:
 		var out: Array[LegacyGameEntity] = []
-		var pool := TargetResolver.opposite_half_by_preference(world, holder)
+		var pool := LegacyTargetResolver.opposite_half_by_preference(world, holder)
 		if not pool.is_empty():
 			out.append(pool[0] as LegacyGameEntity)
 		return out
@@ -125,15 +125,15 @@ class Nearest extends TargetResolver:
 		return {"kind": "nearest"}
 
 
-class Leap extends TargetResolver:
+class Leap extends LegacyTargetResolver:
 	# The chess knight's jump, recovered verbatim from the razed TargetingKnight: prefers
 	# to leap OVER the frontmost occupied enemy column, then among what's left prefers
 	# landing OFF its own mirrored lane. Each preference applies only when it leaves at
 	# least one candidate — otherwise it falls away, degrading gracefully to plain nearest.
 	func resolve(world: CombatWorld, holder: CardInstance,
-			_owner: int = TargetResolver.OWNER_FROM_HOLDER) -> Array[LegacyGameEntity]:
+			_owner: int = LegacyTargetResolver.OWNER_FROM_HOLDER) -> Array[LegacyGameEntity]:
 		var out: Array[LegacyGameEntity] = []
-		var pool := TargetResolver.opposite_half_by_preference(world, holder)
+		var pool := LegacyTargetResolver.opposite_half_by_preference(world, holder)
 		if pool.is_empty():
 			return out
 		var from := BoardFacade.location_of(world, holder)
@@ -168,13 +168,13 @@ class Leap extends TargetResolver:
 # stat-and-distance to sort_custom's whim; the scan keeps their semantics where they were
 # defined and is deterministic where they weren't.
 
-class Wounded extends TargetResolver:
+class Wounded extends LegacyTargetResolver:
 	# Hunts the most wounded enemy — lowest current health (razed TargetingBishop).
 	func resolve(world: CombatWorld, holder: CardInstance,
-			_owner: int = TargetResolver.OWNER_FROM_HOLDER) -> Array[LegacyGameEntity]:
+			_owner: int = LegacyTargetResolver.OWNER_FROM_HOLDER) -> Array[LegacyGameEntity]:
 		var out: Array[LegacyGameEntity] = []
 		var best: CardInstance = null
-		for t: CardInstance in TargetResolver.opposite_half_by_preference(world, holder):
+		for t: CardInstance in LegacyTargetResolver.opposite_half_by_preference(world, holder):
 			if best == null or t.current_health < best.current_health:
 				best = t
 		if best != null:
@@ -185,13 +185,13 @@ class Wounded extends TargetResolver:
 		return {"kind": "wounded"}
 
 
-class Tank extends TargetResolver:
+class Tank extends LegacyTargetResolver:
 	# Locks onto the tankiest enemy — highest current health (razed TargetingRook).
 	func resolve(world: CombatWorld, holder: CardInstance,
-			_owner: int = TargetResolver.OWNER_FROM_HOLDER) -> Array[LegacyGameEntity]:
+			_owner: int = LegacyTargetResolver.OWNER_FROM_HOLDER) -> Array[LegacyGameEntity]:
 		var out: Array[LegacyGameEntity] = []
 		var best: CardInstance = null
-		for t: CardInstance in TargetResolver.opposite_half_by_preference(world, holder):
+		for t: CardInstance in LegacyTargetResolver.opposite_half_by_preference(world, holder):
 			if best == null or t.current_health > best.current_health:
 				best = t
 		if best != null:
@@ -202,15 +202,15 @@ class Tank extends TargetResolver:
 		return {"kind": "tank"}
 
 
-class Threat extends TargetResolver:
+class Threat extends LegacyTargetResolver:
 	# Neutralises the greatest threat — highest attack, read foldably through
 	# get_attribute so standing bonuses count (razed TargetingQueen).
 	func resolve(world: CombatWorld, holder: CardInstance,
-			_owner: int = TargetResolver.OWNER_FROM_HOLDER) -> Array[LegacyGameEntity]:
+			_owner: int = LegacyTargetResolver.OWNER_FROM_HOLDER) -> Array[LegacyGameEntity]:
 		var out: Array[LegacyGameEntity] = []
 		var best: CardInstance = null
 		var best_atk := 0
-		for t: CardInstance in TargetResolver.opposite_half_by_preference(world, holder):
+		for t: CardInstance in LegacyTargetResolver.opposite_half_by_preference(world, holder):
 			var atk := t.get_attribute("attack")
 			if best == null or atk > best_atk:
 				best = t

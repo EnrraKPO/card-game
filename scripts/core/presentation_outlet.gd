@@ -21,3 +21,23 @@ func pause() -> void:
 
 func unpause() -> void:
 	pass
+
+
+# ── The conductor's flow beats (Mutation §11) ─────────────────────────────────────────
+# Unlike the procedures' fire-and-forget cue above, every flow beat is AWAITED: the flow
+# proceeds when presentation greenlights it, and any VFX determines the span of its
+# block. Coroutines by contract; the deaf base greenlights on the spot.
+
+func windup(_visual: StringName, _recipients: Array[GameEntity]) -> void:
+	@warning_ignore("redundant_await")
+	await null
+
+
+func contact(_visual: StringName, _recipients: Array[GameEntity]) -> void:
+	@warning_ignore("redundant_await")
+	await null
+
+
+func conclude(_visual: StringName) -> void:
+	@warning_ignore("redundant_await")
+	await null

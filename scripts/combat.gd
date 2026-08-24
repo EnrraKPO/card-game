@@ -61,7 +61,7 @@ var _presenter: CombatPresenter   # the cascade's presentation surface — LiveP
 								   # the null base class in a simulation (see CombatPresenter)
 var _world: CombatWorld           # THE cohesive rules-state context: the board's grids
 								   # (aliased), the sides, run modifiers, world policy
-var _cascade: CombatCascade       # the event cascade, hosted on (world, presenter); the
+var _cascade: LegacyCombatCascade       # the event cascade, hosted on (world, presenter); the
 								   # _broadcast/_fire/… methods below are delegating wrappers
 var _consumable_busy := false   # a consumable's use is resolving — no second use may start
 								 # under its awaits (the chips' usability check reads this)
@@ -178,7 +178,7 @@ func _ready() -> void:
 			func() -> RelicTray: return _relic_tray, _king_fall, _fade_out,
 			_cue_action_windup, _cue_action_results, _cue_action_conclude)
 	_board.world = _world
-	_cascade = CombatCascade.make(_world, _presenter)
+	_cascade = LegacyCombatCascade.make(_world, _presenter)
 	# The one generic channel's live sink (signed EFFECT_PRESENTATION_DESIGN.html,
 	# amendment 3): committing rules tell "show this named visual, on this recipient,
 	# now" — the live fight is the only place those tellings become pixels. Cleared with
@@ -1202,7 +1202,7 @@ func _await_settled(inst: CardInstance) -> void:
 # outcome record it used to ride is ruled out of existence.)
 
 
-# The cascade proper — _broadcast/_resolve_event/_fire/_bury — lives on CombatCascade
+# The cascade proper — _broadcast/_resolve_event/_fire/_bury — lives on LegacyCombatCascade
 # now, hosted on (_world, _presenter); these wrappers keep every combat call site (the
 # attack loop, casts, the debug captain-kill) reading as before.
 func _fire(event: GameEvent, holder: CardInstance) -> void:

@@ -18,7 +18,7 @@ extends LegacyGameEntity
 #
 # The location's `side` is SPATIAL addressing (which half's coordinate space the cell lives
 # in), NOT the allegiance of anything the slot does — allegiance is answered per-dispatch
-# through the context's owner_anchor (see CombatCascade's ground pass).
+# through the context's owner_anchor (see LegacyCombatCascade's ground pass).
 
 
 func dock_layer() -> StringName:

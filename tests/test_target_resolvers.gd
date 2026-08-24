@@ -1,6 +1,6 @@
 extends TestCase
 
-# The TargetResolver contract (TARGETING_DESIGN.md §3/§12.1, signed
+# The LegacyTargetResolver contract (TARGETING_DESIGN.md §3/§12.1, signed
 # ATTACK_SYSTEM_DESIGN.html): single-issue, stateless, pure over a passed-in world; and
 # the auto-attack preference ordering preserved BIT-IDENTICAL through the demolition —
 # column depth dominates, mirrored lane offset breaks ties within a column, deterministic
@@ -41,18 +41,18 @@ func _place(w: CombatWorld, card_id: String, side_owner: int, r: int, c: int) ->
 
 
 func _parse_and_roundtrip() -> void:
-	var res := TargetResolver.parse({"kind": "nearest"})
-	check(res is TargetResolver.Nearest, "nearest parses to its species")
+	var res := LegacyTargetResolver.parse({"kind": "nearest"})
+	check(res is LegacyTargetResolver.Nearest, "nearest parses to its species")
 	check_eq(res.to_dict(), {"kind": "nearest"}, "nearest round-trips its authored form")
-	check(TargetResolver.parse({"kind": "leap"}) is TargetResolver.Leap, "leap parses to its species")
-	check(TargetResolver.parse({"kind": "wounded"}) is TargetResolver.Wounded, "wounded parses to its species")
-	check(TargetResolver.parse({"kind": "tank"}) is TargetResolver.Tank, "tank parses to its species")
-	check(TargetResolver.parse({"kind": "threat"}) is TargetResolver.Threat, "threat parses to its species")
+	check(LegacyTargetResolver.parse({"kind": "leap"}) is LegacyTargetResolver.Leap, "leap parses to its species")
+	check(LegacyTargetResolver.parse({"kind": "wounded"}) is LegacyTargetResolver.Wounded, "wounded parses to its species")
+	check(LegacyTargetResolver.parse({"kind": "tank"}) is LegacyTargetResolver.Tank, "tank parses to its species")
+	check(LegacyTargetResolver.parse({"kind": "threat"}) is LegacyTargetResolver.Threat, "threat parses to its species")
 	for kind: String in ["leap", "wounded", "tank", "threat"]:
-		check_eq(TargetResolver.parse({"kind": kind}).to_dict(), {"kind": kind},
+		check_eq(LegacyTargetResolver.parse({"kind": kind}).to_dict(), {"kind": kind},
 				"%s round-trips its authored form" % kind)
-	check(TargetResolver.parse({"kind": "everyone"}) == null, "an unknown kind is refused loudly")
-	check(TargetResolver.parse("nearest") == null, "a bare string is refused (no permissive default)")
+	check(LegacyTargetResolver.parse({"kind": "everyone"}) == null, "an unknown kind is refused loudly")
+	check(LegacyTargetResolver.parse("nearest") == null, "a bare string is refused (no permissive default)")
 
 
 func _column_depth_dominates() -> void:
@@ -62,7 +62,7 @@ func _column_depth_dominates() -> void:
 	var attacker := _place(w, "knight", 0, 1, 3)
 	var facing_but_deep := _place(w, "pawn", 1, 1, 1)
 	var off_lane_but_near := _place(w, "pawn", 1, 0, 0)
-	var res := TargetResolver.parse({"kind": "nearest"})
+	var res := LegacyTargetResolver.parse({"kind": "nearest"})
 	var got := res.resolve(w, attacker)
 	check_eq(got.size(), 1, "nearest resolves to exactly one unit")
 	check(got[0] == off_lane_but_near, "column depth dominates the lane offset")
@@ -75,7 +75,7 @@ func _lane_offset_breaks_ties_in_column() -> void:
 	var attacker := _place(w, "knight", 0, 1, 3)
 	var facing := _place(w, "pawn", 1, 1, 0)    # enemy row 1 mirrors player row 1
 	_place(w, "pawn", 1, 0, 0)                  # same column, one lane off
-	var res := TargetResolver.parse({"kind": "nearest"})
+	var res := LegacyTargetResolver.parse({"kind": "nearest"})
 	var got := res.resolve(w, attacker)
 	check(got[0] == facing, "within a column, the facing lane is preferred")
 
@@ -87,7 +87,7 @@ func _deterministic_tiebreak() -> void:
 	var attacker := _place(w, "knight", 0, 1, 3)
 	var row0 := _place(w, "pawn", 1, 0, 0)
 	_place(w, "pawn", 1, 2, 0)
-	var res := TargetResolver.parse({"kind": "nearest"})
+	var res := LegacyTargetResolver.parse({"kind": "nearest"})
 	var got := res.resolve(w, attacker)
 	check(got[0] == row0, "equal preference breaks deterministically by row")
 
@@ -95,7 +95,7 @@ func _deterministic_tiebreak() -> void:
 func _edges() -> void:
 	var w := _world()
 	var nowhere := unit("pawn")   # never placed
-	var res := TargetResolver.parse({"kind": "nearest"})
+	var res := LegacyTargetResolver.parse({"kind": "nearest"})
 	check_eq(res.resolve(w, nowhere).size(), 0, "an attacker standing nowhere reaches nobody")
 	var attacker := _place(w, "knight", 0, 1, 3)
 	check_eq(res.resolve(w, attacker).size(), 0, "an empty opposite half is a legal empty resolution")
@@ -113,7 +113,7 @@ func _leap_prefers_past_the_front_column() -> void:
 	var attacker := _place(w, "knight", 0, 1, 3)
 	var front_and_facing := _place(w, "pawn", 1, 1, 0)
 	var behind := _place(w, "pawn", 1, 1, 1)
-	var got := TargetResolver.parse({"kind": "leap"}).resolve(w, attacker)
+	var got := LegacyTargetResolver.parse({"kind": "leap"}).resolve(w, attacker)
 	check_eq(got.size(), 1, "leap resolves to exactly one unit")
 	check(got[0] == behind, "leap jumps the frontmost occupied column")
 	check(got[0] != front_and_facing, "the facing front-liner is exactly what a leaper ignores")
@@ -127,7 +127,7 @@ func _leap_prefers_landing_off_its_row() -> void:
 	_place(w, "pawn", 1, 1, 0)                     # the front column, leapt over
 	_place(w, "pawn", 1, 1, 1)                     # behind, but facing (rows mirror: 1+1)
 	var off_row := _place(w, "pawn", 1, 0, 1)      # behind AND off the mirrored lane
-	var got := TargetResolver.parse({"kind": "leap"}).resolve(w, attacker)
+	var got := LegacyTargetResolver.parse({"kind": "leap"}).resolve(w, attacker)
 	check(got[0] == off_row, "behind the front column, an off-lane landing is preferred")
 
 
@@ -137,7 +137,7 @@ func _leap_falls_back_to_nearest() -> void:
 	# is a legal empty resolution.
 	var w := _world()
 	var attacker := _place(w, "knight", 0, 1, 3)
-	var res := TargetResolver.parse({"kind": "leap"})
+	var res := LegacyTargetResolver.parse({"kind": "leap"})
 	check_eq(res.resolve(w, attacker).size(), 0, "an empty opposite half resolves empty for leap too")
 	var only_front := _place(w, "pawn", 1, 1, 0)
 	check(res.resolve(w, attacker)[0] == only_front,
@@ -151,7 +151,7 @@ func _wounded_hunts_the_lowest_health() -> void:
 	var attacker := _place(w, "knight", 0, 1, 3)
 	_place(w, "rook", 1, 1, 0)                      # near, 6 health
 	var frail := _place(w, "pawn", 1, 1, 2)         # far, 3 health
-	var res := TargetResolver.parse({"kind": "wounded"})
+	var res := LegacyTargetResolver.parse({"kind": "wounded"})
 	check(res.resolve(w, attacker)[0] == frail, "the most wounded is hunted past nearer, healthier targets")
 	var w2 := _world()
 	var attacker2 := _place(w2, "knight", 0, 1, 3)
@@ -166,7 +166,7 @@ func _tank_locks_the_highest_health() -> void:
 	var attacker := _place(w, "knight", 0, 1, 3)
 	_place(w, "pawn", 1, 1, 0)                      # near, 3 health
 	var wall := _place(w, "rook", 1, 1, 2)          # far, 6 health
-	var res := TargetResolver.parse({"kind": "tank"})
+	var res := LegacyTargetResolver.parse({"kind": "tank"})
 	check(res.resolve(w, attacker)[0] == wall, "the tankiest is locked past nearer, frailer targets")
 	var w2 := _world()
 	var attacker2 := _place(w2, "knight", 0, 1, 3)
@@ -182,7 +182,7 @@ func _threat_hunts_the_highest_attack() -> void:
 	var attacker := _place(w, "knight", 0, 1, 3)
 	_place(w, "pawn", 1, 1, 0)                      # near, attack 1
 	var menace := _place(w, "queen", 1, 1, 2)       # far, attack 5
-	var res := TargetResolver.parse({"kind": "threat"})
+	var res := LegacyTargetResolver.parse({"kind": "threat"})
 	check(res.resolve(w, attacker)[0] == menace, "the greatest threat is hunted past nearer, weaker targets")
 	var w2 := _world()
 	var attacker2 := _place(w2, "knight", 0, 1, 3)

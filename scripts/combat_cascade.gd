@@ -1,4 +1,4 @@
-class_name CombatCascade
+class_name LegacyCombatCascade
 extends RefCounted
 
 # The event cascade — THE rules of "what happens when an effect fires" (broadcast fan-out,
@@ -22,8 +22,8 @@ var world: CombatWorld
 var presenter: CombatPresenter
 
 
-static func make(p_world: CombatWorld, p_presenter: CombatPresenter) -> CombatCascade:
-	var c := CombatCascade.new()
+static func make(p_world: CombatWorld, p_presenter: CombatPresenter) -> LegacyCombatCascade:
+	var c := LegacyCombatCascade.new()
 	c.world = p_world
 	c.presenter = p_presenter
 	return c

@@ -4,7 +4,7 @@ extends RefCounted
 # The action structure that REACTS (TARGETING_DESIGN.md §1-2): *when [trigger], to
 # [targets]* — and, once a sanctioned form exists again, what happens to them. One
 # TriggerResolver (the anchor — dispatch asks it "do you fire?") and at most one
-# TargetResolver (null = targetless).
+# LegacyTargetResolver (null = targetless).
 #
 # ⚠ THE CONSEQUENCE HALF IS GONE (2026-08-14 ruling): Payload and Mutator were
 # vaporized as cursed, and the effect no longer carries anything that happens. An
@@ -17,13 +17,13 @@ extends RefCounted
 # Authoring (the native dictionary form):
 #   { "id": "<name>",                       # named-effect id ("" for inline effects)
 #     "trigger": { ...TriggerResolver... },
-#     "targets": { ...TargetResolver... },  # absent = targetless
+#     "targets": { ...LegacyTargetResolver... },  # absent = targetless
 #     "windup_presentation": "<name>",      # optional appointment (absent = default)
 #     "contact_presentation": "<name>" }    # optional appointment (absent = default)
 
 var id: String = ""                     # the named-effect id; "" for an inline effect
 var trigger: TriggerResolver = null
-var targets: TargetResolver = null      # null = targetless
+var targets: LegacyTargetResolver = null      # null = targetless
 # The two appointed presentation names (signed EFFECT_PRESENTATION_DESIGN.html §3/§8):
 # each is a plain name into data/presentations.json — a word, not a structure — so
 # naming them reveals nothing of the effect's insides. "" = unappointed; the defaults
@@ -61,7 +61,7 @@ static func parse(effect_value: Variant) -> TriggeredEffect:
 	if e.trigger == null:
 		return null
 	if d.has("targets"):
-		e.targets = TargetResolver.parse(d.get("targets"))
+		e.targets = LegacyTargetResolver.parse(d.get("targets"))
 		if e.targets == null:
 			return null
 	if d.has("repeats"):

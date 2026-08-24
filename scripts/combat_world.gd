@@ -25,7 +25,7 @@ extends RefCounted
 # pay — the rewards_live flag below is the explicit policy on top of that structure.
 signal unit_retired(inst: CardInstance)
 # A dead unit swept by cleanup — the VIEW's cue to drop its card on the spot (the presented
-# death path keeps the card standing for its dressing instead; see CombatCascade.bury).
+# death path keeps the card standing for its dressing instead; see LegacyCombatCascade.bury).
 signal unit_swept(inst: CardInstance)
 # A unit the RULES put into play (a queued spawn payload, a hook's material spawn) — the
 # view's cue to build its card. Board-driven placements don't emit this; their views exist.
