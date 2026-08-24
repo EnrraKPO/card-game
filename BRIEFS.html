@@ -196,4 +196,89 @@ standing on it non-conforming, to be corrected.</p>
   the moment the class exists.</p>
 </div>
 
+<h2>Phase 2 — the write road</h2>
+
+<div class="brief">
+  <div class="head">B12 — The stat write carries the authority's events out by a
+  required parameter.</div>
+  <p><code>stat_write(entity, stat, value, events)</code> — the authority's
+  fact events (died among them) append to the caller's collection; events
+  travel by return (Mutation §8), and a discarding default would lose a death
+  silently.</p>
+</div>
+
+<div class="brief">
+  <div class="head">B13 — Sources of the new fact events.</div>
+  <p><code>damaged</code> and <code>died</code> — the entity it happened to;
+  <code>dodged</code> — the dodging defender; <code>crit</code> — the critting
+  striker; the engaged events — the asked entity, from the request (Core §8
+  states only the last).</p>
+</div>
+
+<div class="brief">
+  <div class="head">B14 — The damaged event's facts, and death's place in the
+  return order.</div>
+  <p><code>damaged</code> carries one <code>StatMutationEventData</code> per
+  committed write (shield, health), zero-delta writes omitted; the authority's
+  <code>died</code> follows <code>damaged</code> in the returned order.</p>
+</div>
+
+<div class="brief">
+  <div class="head">B15 — Health is unfloored; died is the crossing.</div>
+  <p>No ruling floors health; <code>died</code> is produced when a write takes
+  it from above zero to zero or below — once per crossing, not per write below
+  zero.</p>
+</div>
+
+<div class="brief">
+  <div class="head">B16 — Strike arithmetic rounding.</div>
+  <p>The strike's amount is <code>roundi(attack)</code>; a crit's amount is
+  <code>roundi(amount × multiplier)</code>, the multiplier first capped by its
+  cap stat. "Damage after mitigation" (the crit gate) reads: amount minus the
+  defender's shield, above zero.</p>
+</div>
+
+<div class="brief">
+  <div class="head">B17 — The strike numbers seed in code.</div>
+  <p>Game's construction seeds the §7 ruled values (dodge 0/1/4/75, crit
+  5/1/0/75, ×2.0 cap ×5.0) with the stat ids <code>dodge_base</code>,
+  <code>dodge_speed_rating</code>, <code>dodge_difference_rating</code>,
+  <code>dodge_cap</code>, <code>crit_*</code> likewise,
+  <code>crit_multiplier</code>, <code>crit_multiplier_cap</code>. "Seeded from
+  data" resolves to a data file when the frame's genesis lands its seeding
+  road.</p>
+</div>
+
+<div class="brief">
+  <div class="head">B18 — Move events enter when content asks.</div>
+  <p><code>ContainerMoveRequest</code> members: <code>destination_owner</code>
+  + <code>destination_container</code>. Only <code>fielded</code> is produced
+  today (its condition and stamps as ruled, Core §2); other moves bear no
+  event yet — a general move event's name is deliberately unminted.</p>
+</div>
+
+<div class="brief">
+  <div class="head">B19 — PayCostRequest carries the engaged name.</div>
+  <p>Members beside mana/tap: <code>engaged_name</code> and
+  <code>ability</code> (empty for a play). Requests are self-sufficient and
+  the occasion-derived event name (Core §10) must ride in; the elected targets
+  do not ride — the delivery appends them (Core §8).</p>
+</div>
+
+<div class="brief">
+  <div class="head">B20 — Status grant details.</div>
+  <p>Tap spend increments <code>tapped</code> (pay of tap N = tapped + N). A
+  minted status's starting stacks are its construction seed; later grants go
+  through the stat write. The minted status's allegiance is stamped the
+  <b>target's</b> — it lives on the target's side of the world. ⚠ Flagged for
+  ruling: an inflicted status could as defensibly belong to the inflictor;
+  nothing in the slice reads it yet.</p>
+</div>
+
+<div class="brief">
+  <div class="head">B21 — The building birth fact is a Unit member.</div>
+  <p><code>Unit.is_building</code>, false unless authored (envelope A7), set
+  at construction; the strike's buildings-never-dodge rule reads it.</p>
+</div>
+
 </div>

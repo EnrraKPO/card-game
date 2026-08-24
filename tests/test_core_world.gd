@@ -104,18 +104,20 @@ func _test_membership_primitives() -> void:
 
 func _test_stat_write() -> void:
 	var unit := Unit.new()
-	var committed: float = WriteAuthority.stat_write(unit, &"health", 7.0)
+	var events: Array[Event] = []
+	var committed: float = WriteAuthority.stat_write(unit, &"health", 7.0, events)
 	check_eq(committed, 7.0, "the stat write commits the value")
 	check_eq(unit.get_stat(&"health"), 7.0, "the committed value is the borne value")
 
 	# tapped floors at zero (Combat Frame §6) — arithmetic owned by the authority.
-	check_eq(WriteAuthority.stat_write(unit, &"tapped", -2.0), 0.0, "tapped floors at zero")
+	check_eq(WriteAuthority.stat_write(unit, &"tapped", -2.0, events), 0.0, "tapped floors at zero")
+	check(events.is_empty(), "no fact event is issued ahead of need")
 
 	# Refusals commit nothing.
-	WriteAuthority.stat_write(unit, &"mana", 5.0)
+	WriteAuthority.stat_write(unit, &"mana", 5.0, events)
 	check(not unit.bears_stat(&"mana"), "a write to an unborne stat is refused")
 	var bearer := ReadOnlyBearer.new()
-	WriteAuthority.stat_write(bearer, &"engraving", 4.0)
+	WriteAuthority.stat_write(bearer, &"engraving", 4.0, events)
 	check_eq(bearer.get_stat(&"engraving"), 0.0, "a write to a read-only stat is refused")
 
 

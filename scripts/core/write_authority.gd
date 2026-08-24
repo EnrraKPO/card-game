@@ -16,15 +16,18 @@ extends RefCounted
 # committed value — in exactly one place (_bound below). Arithmetic bounds the write's
 # performance; it is not a decision.
 #
-# Fact events on writes (died among them) land with the write road in Phase 2 — a fact
-# event exists only where content cares, and nothing cares yet.
+# It may produce events on the writes it performs — health reaching zero produces
+# `died`. A fact event exists only where content cares: none is issued ahead of need.
+# Events travel by return: the caller's collection receives them.
 
 
 # ── The stat write ─────────────────────────────────────────────────────────────────────
 # Commits `value` to the entity's stat, bounded by the fact's arithmetic. Execution
 # refuses at the concrete bearer — an unborne id, or a write to a read-only stat — loudly,
-# committing nothing (Core §9). Returns the committed value (the current value on refusal).
-static func stat_write(entity: GameEntity, stat: StringName, value: float) -> float:
+# committing nothing (Core §9). Fact events of the write append to `events`. Returns the
+# committed value (the current value on refusal).
+static func stat_write(entity: GameEntity, stat: StringName, value: float,
+		events: Array[Event]) -> float:
 	if not entity.bears_stat(stat):
 		push_error("WriteAuthority: '%s' does not bear stat '%s' — write refused"
 				% [entity.get_class_label(), stat])
@@ -33,8 +36,11 @@ static func stat_write(entity: GameEntity, stat: StringName, value: float) -> fl
 		push_error("WriteAuthority: stat '%s' on '%s' is read-only — write refused"
 				% [stat, entity.get_class_label()])
 		return entity.get_stat(stat)
+	var previous: float = entity._stats[stat]
 	var committed: float = _bound(stat, value)
 	entity._stats[stat] = committed
+	if stat == &"health" and previous > 0.0 and committed <= 0.0:
+		events.append(Event.new(&"died", entity))
 	return committed
 
 

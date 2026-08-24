@@ -9,6 +9,10 @@ extends Card
 # first then `health` (Mutation §7); `tapped` is the public mutable tap fact — zero is
 # untapped, above zero is tapped, floored at zero by the WriteAuthority (Combat Frame §6).
 
+# The building birth fact (envelope A7): a building never dodges (Mutation §7), is
+# rooted, and receives no Move appointment (A9). Set at construction, never rewritten.
+var is_building: bool = false
+
 
 func _init(p_allegiance: Side = null) -> void:
 	super._init(p_allegiance)
