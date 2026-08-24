@@ -65,7 +65,8 @@ const TEXT_HINT := Color(0.95, 0.82, 0.35)    # yellow "expand" footnote on the 
 # `phantom` carries the hovered card's own unreality into the preview (CardUI.set_phantom): pointing
 # at a card that isn't real must not pop an enlarged copy that looks like one you have.
 static func build(data: CardData, show_cost := true, scale := 1.0,
-		with_stat_guide := false, descriptions_shown := true, phantom := false) -> Control:
+		with_stat_guide := false, descriptions_shown := true, phantom := false,
+		statuses: Array[StatusPipView] = []) -> Control:
 	if data == null:
 		return null
 	var s := scale
@@ -97,11 +98,13 @@ static func build(data: CardData, show_cost := true, scale := 1.0,
 	hbox.add_child(preview)
 	if phantom:
 		preview.set_phantom(true)
+	# The enlarged copy wears the same status views the real card was handed — an honest twin.
+	preview.set_status_views(statuses)
 
 	# Height budget = the preview card's own height: a content-heavy card (multiple abilities,
 	# charms, statuses) flows into EXTRA COLUMNS beside the card instead of growing a tall
 	# skinny panel past it.
-	hbox.add_child(build_details(data, s, PREVIEW_SIZE.y * s))
+	hbox.add_child(build_details(data, s, PREVIEW_SIZE.y * s, statuses))
 
 	# The stat glossary, prepended as the leftmost column so it reads before the card itself. The
 	# same explanations also ride the card's OWN stat badges as hover tooltips (see set_stat_tooltips).
@@ -136,7 +139,8 @@ static func build(data: CardData, show_cost := true, scale := 1.0,
 # many abilities widens its read, it never pushes the surrounding UI away (0 = no budget, one
 # column that grows freely). Section headers stay glued to their first row, so a column never
 # ends on a dangling title.
-static func build_details(data: CardData, s := 1.0, max_h := 0.0) -> Container:
+static func build_details(data: CardData, s := 1.0, max_h := 0.0,
+		statuses: Array[StatusPipView] = []) -> Container:
 	var col_w := COLUMN_WIDTH * s
 	var blocks: Array = []   # Controls, in read order; "keep_with_next" meta glues headers down
 
@@ -175,6 +179,31 @@ static func build_details(data: CardData, s := 1.0, max_h := 0.0) -> Container:
 			var ab: AbilityData = AbilityData.get_ability(ability_id)
 			if ab != null:
 				blocks.append(_ability_row(ab, s))
+
+	# Active statuses: one line each (icon, name, count, description), colour-matched to its
+	# pip — rendered from the same injected views the card's badge row wears (R4: the read
+	# never asks who holds what).
+	if not statuses.is_empty():
+		blocks.append(_glued(HSeparator.new()))
+		blocks.append(_glued(_section_title(Loc.t("card_tooltip.section_statuses"), s)))
+		for view: StatusPipView in statuses:
+			var row := HBoxContainer.new()
+			row.add_theme_constant_override("separation", int(6.0 * s))
+			if view.icon != null:
+				var icon := TextureRect.new()
+				icon.texture = view.icon
+				icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+				icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+				icon.custom_minimum_size = Vector2(22.0, 22.0) * s
+				row.add_child(icon)
+			var line := "%s%s" % [view.display_name,
+					(" %d" % view.count) if view.count > 1 else ""]
+			if not view.description.is_empty():
+				line += " — %s" % view.description
+			# The pip + the row's separation, so pip + text fill the column.
+			row.add_child(_rich_label(line, col_w - 28.0 * s, int(15.0 * s),
+					view.color.lightened(0.35)))
+			blocks.append(row)
 
 	return _flow_columns(blocks, max_h if max_h > 0.0 else INF, col_w, s)
 

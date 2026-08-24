@@ -45,8 +45,12 @@ var _hold_dragging := false   # a drag started while the hold was still viable
 @onready var _hp_bg: TextureRect = %HpBg
 @onready var _hp_lbl: Label     = %HpLabel
 @onready var _comp_row: BoxContainer = %CompRow
+@onready var _status_row: BoxContainer = %StatusRow   # authored under Canvas; position it in the editor
 @onready var _border: Panel     = %Border
 @onready var _canvas: Control   = $Canvas
+
+# Status badge scene — its size/fonts/style are authored in the editor (status_pip.tscn).
+const STATUS_PIP_SCENE := preload("res://scenes/status_pip.tscn")
 
 # The card is authored once at this fixed native resolution. Every visual lives
 # under the Canvas node, which is uniformly scaled to fill whatever size the
@@ -156,6 +160,7 @@ func _ready() -> void:
 	_apply_asset_textures()
 	_apply_label_style()
 	_apply_border_style()
+	_apply_ground_tint()   # a card can be dealt a tint before it is in the tree
 	refresh()
 	resized.connect(_apply_scale)
 	# The selection self-poll: the pick is DERIVED, and with no pusher the view re-asks on a
@@ -365,6 +370,116 @@ func _apply_border_style() -> void:
 # glyphs and pips all transform together through one material.
 const PHANTOM_SHADER := preload("res://assets/ui/shaders/phantom.gdshader")
 var _phantom_mat: ShaderMaterial = null
+# ── The ground's light (see SlotUI's ground layer) ──────────────────────────────
+# The tint a claimed ground casts on whoever stands in it, handed here by the slot and
+# multiplied over the ART ALONE (self_modulate on the art node): the stat badges are UI, not
+# scenery, and stay unlit. A separate axis from the phantom shader and the root modulate
+# (dim, exhaust, selection), so this composes with every one of them instead of fighting for
+# the same property — the documented failure mode of every brightness cue here.
+var _ground_tint := Color.WHITE
+
+
+func set_ground_tint(c: Color) -> void:
+	if _ground_tint == c:
+		return
+	_ground_tint = c
+	_apply_ground_tint()
+
+
+func _apply_ground_tint() -> void:
+	# By name, not the @onready ref: slots dress cards that are built but not yet in the tree.
+	var art: CanvasItem = _art if _art != null else get_node_or_null("%Art") as CanvasItem
+	if art != null:
+		art.self_modulate = _ground_tint
+
+
+# ── The status badge row (injected — see StatusPipView) ─────────────────────────
+# The card renders whatever status views were last injected (R4: the widget never asks who
+# holds what) — one pip per view in the authored StatusRow, plus the aura ring and the
+# aura_<id> library VFX for views that declare one. Whoever composes the views (CardViewModel
+# for a fielded unit) re-injects when the facts move.
+var _status_views: Array[StatusPipView] = []
+# The status-aura overlay (see _refresh_aura) — created lazily, only for cards whose views
+# declare an aura (e.g. a Barrier-style "protected" ring).
+var _aura: Panel = null
+
+
+func set_status_views(views: Array[StatusPipView]) -> void:
+	_status_views = views
+	_refresh_statuses()
+
+
+func status_views() -> Array[StatusPipView]:
+	return _status_views
+
+
+# Fills the StatusRow node (authored in card_ui.tscn — move/anchor it in the editor) with one
+# pip per view: its icon (or coloured glyph), count, and the status's own hover tooltip.
+func _refresh_statuses() -> void:
+	if _status_row == null:
+		return
+	for child in _status_row.get_children():
+		_status_row.remove_child(child)
+		child.queue_free()
+	for view: StatusPipView in _status_views:
+		var pip := STATUS_PIP_SCENE.instantiate() as StatusPip
+		pip.setup(view)
+		_status_row.add_child(pip)
+	_refresh_aura()
+	_sync_status_auras()
+
+
+# Library auras riding the card while statuses are held (aura_<status_id> entries, sustained):
+# attached on gain, detached on loss — a loss the player can see also gets the expiry sound.
+# Statuses without an aura entry still get the sound; the pip vanishing is their visual.
+var _held_status_auras: Dictionary = {}
+
+
+func _sync_status_auras() -> void:
+	var present: Dictionary = {}
+	for view: StatusPipView in _status_views:
+		present[view.id] = true
+	for sid: String in present:
+		if not _held_status_auras.has(sid) and VFXData.get_vfx("aura_" + sid) != null:
+			Vfx.attach("aura_" + sid, self)
+		_held_status_auras[sid] = true
+	for sid: String in _held_status_auras.keys():
+		if not present.has(sid):
+			_held_status_auras.erase(sid)
+			Vfx.detach("aura_" + sid, self)
+			Sfx.play("status_expire")
+
+
+# A persistent "protected"-style frame over the whole card while an aura-declaring view is
+# held, in that status's color: a thick soft ring plus a faint tint wash, so the protection
+# reads at a glance without hunting for the pip. Lazily created; appears/disappears with the
+# view on the next injection.
+func _refresh_aura() -> void:
+	var aura_view: StatusPipView = null
+	for view: StatusPipView in _status_views:
+		if view.aura:
+			aura_view = view
+			break
+	if aura_view == null:
+		if _aura != null:
+			_aura.visible = false
+		return
+	if _aura == null:
+		_aura = Panel.new()
+		_aura.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_canvas.add_child(_aura)
+		_aura.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var c := aura_view.color
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(c.r, c.g, c.b, 0.10)
+	style.border_color = Color(c.r, c.g, c.b, 0.85)
+	style.set_border_width_all(7)
+	style.set_corner_radius_all(10)
+	style.set_expand_margin_all(4.0)
+	_aura.add_theme_stylebox_override("panel", style)
+	_aura.visible = true
+
+
 var is_phantom := false
 
 
@@ -426,6 +541,7 @@ func refresh() -> void:
 	_spd_lbl.visible    = not is_spell
 	_refresh_composition()
 	_refresh_charms()
+	_refresh_statuses()
 	# The lines above rebuild dynamic labels (chips/pips) — re-point them at the current
 	# oversampled font so an enlarged card's WHOLE text stays crisp (see _apply_scale).
 	if _font_factor > 1.0:
@@ -599,7 +715,10 @@ func _make_charm_pip(charm_id: String) -> Control:
 func build_details_panel() -> Control:
 	if card_data == null:
 		return null
-	return CardTooltip.build(card_data, _show_cost, 1.0, false, true, is_phantom)
+	# The card's injected status views ride into the read (R4: the tooltip renders what the
+	# card was handed, it never asks who holds what).
+	return CardTooltip.build(card_data, _show_cost, 1.0, false, true, is_phantom,
+			_status_views)
 
 
 # The one derived presentation left on this view: selection. The card ASKS Selection

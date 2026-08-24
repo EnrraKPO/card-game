@@ -46,7 +46,10 @@ var _ability_bar: HBoxContainer = null
 var _end_turn: Button = null
 var _cancel_pick: Button = null
 
-var _slot_buttons: Dictionary[Vector3i, Button] = {}
+var _slot_uis: Dictionary[Vector3i, SlotUI] = {}
+# The board card faces, one per fielded unit, reused across refreshes so a unit's card is a
+# stable node (reparented by the slots as the unit moves). Freed when the unit leaves play.
+var _card_uis: Dictionary = {}
 var _hand_buttons: Dictionary = {}
 
 var _span_active: bool = false
@@ -178,7 +181,7 @@ func show_cue(visual: StringName, recipient: GameEntity, magnitude: float) -> vo
 
 func _on_slot_clicked(address: Vector3i) -> void:
 	var slot: Slot = world.board_manager.slot_at(address)
-	var occupant: Unit = _occupant(slot)
+	var occupant: Unit = SlotViewModel.occupant(slot)
 	if _picking:
 		if _pick_candidates.has(slot):
 			picked.emit(slot)
@@ -223,7 +226,7 @@ func _preview_target_address() -> Vector3i:
 		return Vector3i(-1, -1, -1)
 	var twin: World = world.copy()
 	var twin_slot: Slot = twin.board_manager.slot_at(standing)
-	var twin_unit: Unit = _occupant(twin_slot)
+	var twin_unit: Unit = SlotViewModel.occupant(twin_slot)
 	if twin_unit == null:
 		return Vector3i(-1, -1, -1)
 	var targets: Array[GameEntity] = twin_unit.main_action_targets()
@@ -243,44 +246,62 @@ func refresh() -> void:
 	_enemy_label.text = "Enemy %d/%d" % [roundi(world.enemy_side().get_stat(&"mana")),
 			roundi(world.enemy_side().get_stat(&"mana_capacity"))]
 	var preview: Vector3i = _preview_target_address()
-	for address: Vector3i in _slot_buttons:
-		_paint_slot(address, _slot_buttons[address], preview)
+	var seen: Array = []
+	for address: Vector3i in _slot_uis:
+		var unit: Unit = _paint_slot(address, _slot_uis[address], preview)
+		if unit != null:
+			seen.append(unit)
+	# Card faces whose units left play (killed, buried) have no slot to stand in — free them.
+	for unit: Variant in _card_uis.keys():
+		if not seen.has(unit):
+			var ui := _card_uis[unit] as CardUI
+			if ui != null and is_instance_valid(ui):
+				ui.queue_free()
+			_card_uis.erase(unit)
 	_rebuild_hand()
 	_rebuild_abilities()
 	_end_turn.disabled = not (_span_active and _awaiting_command and not _picking)
 
 
-func _paint_slot(address: Vector3i, button: Button, preview: Vector3i) -> void:
+# Injects one slot widget's whole state — occupant card, ground view, cues — from the world's
+# current facts, each concept through its own bridge (SlotViewModel for the cell, CardViewModel
+# for the occupant's face; the widgets never read the engine). Returns the fielded unit so
+# refresh() can retire the card faces of the departed.
+func _paint_slot(address: Vector3i, slot_ui: SlotUI, preview: Vector3i) -> Unit:
 	var slot: Slot = world.board_manager.slot_at(address)
-	var unit: Unit = _occupant(slot)
+	var unit: Unit = SlotViewModel.occupant(slot)
 	if unit == null:
-		button.text = "·"
+		if slot_ui.get_card() != null:
+			slot_ui.clear_card()
 	else:
-		var marks := ""
-		if unit.is_king:
-			marks += "K"
-		if unit.is_building:
-			marks += "B"
-		if unit.get_stat(&"tapped") > 0.0:
-			marks += "T"
-		var statuses := ""
-		for member: GameEntity in unit.get_container(&"contained").members:
-			if member is Status:
-				statuses += "\n%s x%d" % [(member as Status).status_id,
-						roundi(member.get_stat(&"stacks"))]
-		button.text = "%s %s\nA%d H%d+%d%s" % [unit.display_name, marks,
-				roundi(unit.get_stat(&"attack")), roundi(unit.get_stat(&"health")),
-				roundi(unit.get_stat(&"shield")), statuses]
+		var ui := _card_uis.get(unit) as CardUI
+		if ui == null:
+			ui = CardUI.create(CardViewModel.unit_card(unit))
+			_card_uis[unit] = ui
+		else:
+			ui.card_data = CardViewModel.unit_card(unit)
+			ui.refresh()
+		ui.set_status_views(CardViewModel.status_views(unit))
+		if slot_ui.get_card() != ui:
+			slot_ui.set_card(ui)
+		# A tapped (exhausted) unit dims; selection lights its own card.
+		var tapped: bool = unit.get_stat(&"tapped") > 0.0
+		if unit == _selected:
+			ui.modulate = Color(1.0, 1.0, 0.6)
+		else:
+			ui.modulate = Color(0.55, 0.55, 0.6) if tapped else Color.WHITE
+	slot_ui.set_ground(SlotViewModel.ground_view(slot))
+	# Cues: placement hints while the command is the player's to give; a pick's candidates wear
+	# the valid-target cue; the selected unit's would-be victim wears the attack crosshair.
+	slot_ui.set_open_hints(_span_active and _awaiting_command and not _picking)
 	var highlighted: bool = _picking and (_pick_candidates.has(slot)
 			or (unit != null and _pick_candidates.has(unit)))
 	if highlighted:
-		button.modulate = Color(0.6, 1.0, 0.6)
-	elif unit != null and unit == _selected:
-		button.modulate = Color(1.0, 1.0, 0.5)
-	elif address == preview:
-		button.modulate = Color(1.0, 0.6, 0.6)
+		slot_ui.set_cue(SlotUI.Cue.TARGET_OK)
 	else:
-		button.modulate = Color.WHITE
+		slot_ui.reset_cue()
+	slot_ui.set_attack_marker(address == preview)
+	return unit
 
 
 func _rebuild_hand() -> void:
@@ -318,13 +339,6 @@ func _rebuild_abilities() -> void:
 		_ability_bar.add_child(button)
 
 
-func _occupant(slot: Slot) -> Unit:
-	if slot == null:
-		return null
-	var members: Array[GameEntity] = slot.get_container(&"slotted_unit").members
-	return members[0] as Unit if not members.is_empty() else null
-
-
 # ── Construction ──────────────────────────────────────────────────────────────────────
 
 func _build_ui() -> void:
@@ -355,11 +369,14 @@ func _build_ui() -> void:
 		for row: int in BoardGeometry.ROWS:
 			for col: int in BoardGeometry.COLS:
 				var address := Vector3i(side_index, row, col)
-				var button := Button.new()
-				button.custom_minimum_size = Vector2(110, 84)
-				button.pressed.connect(_on_slot_clicked.bind(address))
-				(_player_grid if side_index == 0 else _enemy_grid).add_child(button)
-				_slot_buttons[address] = button
+				var slot_ui := SlotUI.new()
+				slot_ui.own_side = side_index == 0
+				slot_ui.pressed.connect(_on_slot_clicked.bind(address))
+				(_player_grid if side_index == 0 else _enemy_grid).add_child(slot_ui)
+				# Shrunk from the widget's authored size to fit the placeholder frame; the
+				# widget's whole layout is size-relative, so it reads the same at any scale.
+				slot_ui.custom_minimum_size = Vector2(110, 144)
+				_slot_uis[address] = slot_ui
 
 	_ability_bar = HBoxContainer.new()
 	_ability_bar.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -393,5 +410,9 @@ func _label(parent: Control, text: String) -> Label:
 func _grid(parent: Control) -> GridContainer:
 	var grid := GridContainer.new()
 	grid.columns = BoardGeometry.COLS
+	# The gutter is the widget's own constant — the ground frames (half a gap each) only tile
+	# into one field when the layout honours the same number.
+	grid.add_theme_constant_override("h_separation", SlotUI.SLOT_GAP)
+	grid.add_theme_constant_override("v_separation", SlotUI.SLOT_GAP)
 	parent.add_child(grid)
 	return grid
