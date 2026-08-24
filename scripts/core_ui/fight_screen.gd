@@ -234,8 +234,10 @@ func play_cue(visual: StringName, recipient: GameEntity, magnitude: float) -> vo
 		Sfx.play(String(visual))
 	match visual:
 		&"health_damage":
+			_animator.shake_card(ui)   # the impact shake rides the hit, struck cards only
 			_vfx.play(VFXEvent.health_damage(ui, roundi(magnitude)))
 		&"shield_hit":
+			_animator.shake_card(ui)
 			_vfx.play(VFXEvent.shield_hit(ui, roundi(magnitude)))
 		&"heal":
 			_vfx.play(VFXEvent.heal(ui, roundi(magnitude)))

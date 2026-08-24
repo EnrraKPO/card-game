@@ -55,8 +55,12 @@ func unpause() -> void:
 # in), and every recipient wears the tinted target reticle that leads its hit.
 func windup(visual: StringName, source: GameEntity, recipients: Array[GameEntity]) -> void:
 	_screen.refresh()
-	for recipient: GameEntity in recipients:
-		_screen.play_beat_mark(recipient)
+	# Marks lead only AUTHORED windups: every delivery beats through here — the round
+	# machinery included (untap's recipients are the whole board) — and an unnamed windup
+	# is machinery's, not a show (the same over-broadcast the contact shake had).
+	if visual != &"":
+		for recipient: GameEntity in recipients:
+			_screen.play_beat_mark(recipient)
 	var source_ui: CardUI = _screen.card_of(source)
 	if source_ui == null:
 		# The old yank guard: a choreography whose actor has no card on screen SKIPS its
@@ -116,13 +120,13 @@ func _lunge(source_ui: CardUI, target_ui: CardUI) -> void:
 
 
 # The contact: the held procedure cues burst here (unpause follows this beat in the
-# conductor's order), the struck cards shake under them, and the board re-reads.
+# conductor's order) and the board re-reads. The impact shake does NOT live here — a
+# contact fires for EVERY delivery, the round machinery's included (the untap rule's
+# recipients are the whole board, and shaking them read as a board-wide vibration at the
+# turn boundary); the shake belongs to the DAMAGE moment, on the struck card, where the
+# old solution kept it (see FightScreen.play_cue).
 func contact(_visual: StringName, _source: GameEntity,
 		recipients: Array[GameEntity]) -> void:
-	for recipient: GameEntity in recipients:
-		var ui: CardUI = _screen.card_of(recipient)
-		if ui != null:
-			_screen.animator().shake_card(ui)
 	await _screen.beat(_visual, recipients, 0.2)
 	_screen.refresh()
 
