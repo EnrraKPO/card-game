@@ -41,7 +41,9 @@ var _state_label: Label = null
 var _cue_log: Label = null
 var _player_grid: GridContainer = null
 var _enemy_grid: GridContainer = null
-var _ability_bar: HBoxContainer = null
+# The unit whose inspect read the hand's sidebar currently shows (identity token only —
+# guards set_inspect against per-refresh recomposition churn).
+var _inspected: Unit = null
 var _end_turn: Button = null
 var _cancel_pick: Button = null
 
@@ -499,7 +501,7 @@ func refresh() -> void:
 				ui.queue_free()
 			_card_uis.erase(unit)
 	_rebuild_hand()
-	_rebuild_abilities()
+	_refresh_inspect()
 	_end_turn.disabled = not (_span_active and _awaiting_command and not _picking)
 
 
@@ -694,18 +696,19 @@ func _commit_move(card_ui: CardUI, slot_ui: SlotUI) -> void:
 	commanded.emit(ask)
 
 
-func _rebuild_abilities() -> void:
-	for child: Node in _ability_bar.get_children():
-		child.queue_free()
+# The hand's inspect sidebar + ability tray derive from the one selection authority: a
+# FIELDED pick (either side) is the inspected unit; the composition is this screen's (the
+# engine-reading layer), the bar renders what it is handed. The Abilities roster rides
+# along so the fuchsia door gates itself.
+func _refresh_inspect() -> void:
 	var selected: Unit = _selected_unit()
-	if selected == null:
-		return
-	for ability_name: StringName in selected.abilities:
-		var button := Button.new()
-		button.text = String(ability_name)
-		button.disabled = not (_span_active and _awaiting_command and not _picking)
-		button.pressed.connect(_on_ability_clicked.bind(ability_name))
-		_ability_bar.add_child(button)
+	if selected != null and TargetResolver.standing_address(selected).x < 0:
+		selected = null   # a hand pick is a selection, not an inspection
+	if selected != _inspected:
+		_inspected = selected
+		_hand.set_inspect(HandViewModel.inspect_view(selected, world.player_side())
+				if selected != null else null)
+	_hand.set_ability_roster(HandViewModel.ability_roster(world))
 
 
 # ── Construction ──────────────────────────────────────────────────────────────────────
@@ -755,10 +758,6 @@ func _build_ui() -> void:
 				slot_ui.custom_minimum_size = Vector2(110, 144)
 				_slot_uis[address] = slot_ui
 
-	_ability_bar = HBoxContainer.new()
-	_ability_bar.alignment = BoxContainer.ALIGNMENT_CENTER
-	root.add_child(_ability_bar)
-
 	var bottom := HBoxContainer.new()
 	root.add_child(bottom)
 	# The mana reading rides INSIDE the bar as its leftmost column — mana is what the hand
@@ -771,6 +770,7 @@ func _build_ui() -> void:
 	_hand.set_card_size(Vector2(110, 144))   # the slots' size — one card scale per screen
 	_hand.card_pressed.connect(_on_hand_index_pressed)
 	_hand.selection_changed.connect(_on_hand_selection_changed)
+	_hand.ability_pressed.connect(_on_ability_clicked)
 	_hand.wire_unit_card = _wire_unit_drag
 	_cancel_pick = Button.new()
 	_cancel_pick.text = "Cancel"
