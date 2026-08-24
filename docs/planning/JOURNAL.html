@@ -390,6 +390,50 @@ the cached cursor the poll reads (garbage coordinates in the probe window) —
 the probe freezes the poll and drives its one consequence; the poll itself is
 the old board's proven technique, and the real mouse is the final check.</p>
 
+<h2>2026-08-24 — Interaction batches 4–6: the Sentinel fix, the move flow,
+the inspect sidebar + tray</h2>
+
+<p>Each on its own commit, each audited by a fanned-out legality agent
+(verdicts: CLEAN, CLEAN, third pending at writing).</p>
+<ul>
+  <li><b>The Sentinel nit resolved</b> (closing the "observed, unexplored"
+      entry below): an anchored child only recomputes its rect on its
+      parent's next resize, and a slot at final size never resizes — a card
+      mounted mid-fight kept its scene-native 160×210. The old combat's
+      constant board resizing masked it. <code>set_card</code> and
+      <code>mount_phantom</code> now hand the child the slot's rect at the
+      mounting door.</li>
+  <li><b>The move flow</b>: selecting an own fielded non-building unit begins
+      the old unit action in its fielded form — destination cues,
+      <code>click_commit</code> false (a stray tap never moves a unit), the
+      MoveButton as the explicit static commit, hover mounting the landing
+      phantom; board cards draggable for own non-building units (the old
+      refusals held structurally). The commit answers the core's Move road
+      (use_ability + the destination pick seam). Surfaced: cues light every
+      empty own slot; the road's own conditions re-validate at the commit.
+      Also found and fixed: an earlier python patch had flattened a line
+      continuation, silently disabling part of the selection stale-end
+      guard.</li>
+  <li><b>Spell drag-cast: NOT built, surfaced instead</b> — the old tree has
+      no cast gesture to import (casting was demolished pre-swap; the
+      Interaction file records the CAST action kinds retired). Under R11/R12
+      building one would be invention; spells stay click-cast through the
+      core's ask road until a cast gesture is designed or ruled.</li>
+  <li><b>The inspect sidebar + ability tray</b>: the hand's three nav levels,
+      the description sidebar with its fitted width/font and fixed-height
+      clip, the fuchsia door + Back pill, tray tokens with text columns, the
+      strip's headroom rule. Surfaced adaptations: the inspect derivation
+      moved to the screen (the selection authority still drives it; the
+      engine-reading layer composes a HandInspectView and injects); the tray
+      is the activation surface (token press → the use_ability ask),
+      replacing the placeholder ability bar; the door's usable-right-now glow
+      deferred (needs per-ability payability composition); an ability absent
+      from the AbilityData registry renders as a bare named plate (authoring
+      the entry is the fix); <code>token_hovered</code>'s board-slot glow not
+      yet rewired (the selection ring already marks the holder). Enemy trays
+      view-only, as before.</li>
+</ul>
+
 <p><b>Observed, unexplored:</b> the enemy's placed Sentinel renders oversized
 against its slot in the probe shot, with a stray badge chip beside it —
 board-card mounting nit to chase when it survives a second look.</p>
