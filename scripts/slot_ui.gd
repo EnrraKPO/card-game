@@ -801,6 +801,8 @@ func mount_phantom(ghost: CardUI) -> void:
 	add_child(ghost)   # facing derives from the slot on reparent (CardUI NOTIFICATION_PARENTED)
 	ghost.custom_minimum_size = Vector2.ZERO
 	ghost.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	ghost.position = Vector2.ZERO
+	ghost.size = size   # same stale-rect guard as set_card — the slot won't resize again
 	ghost.set_phantom(true)
 
 
@@ -850,6 +852,12 @@ func set_card(card: CardUI) -> void:
 	# drive it. A carried-over minimum (the hand's card size, or card_ui.tscn's default on a King
 	# placed directly) would overrule the anchors and overflow any slot smaller than it.
 	card.custom_minimum_size = Vector2.ZERO
+	# ...and take the slot's rect NOW: an anchored child only recomputes on its parent's next
+	# resize, and a slot at its final size never resizes again — a card mounted mid-fight would
+	# keep its scene-native rect and overflow the cell (the old combat's constant board
+	# resizing masked this).
+	card.position = Vector2.ZERO
+	card.size = size
 	# Becoming a board occupant sheds hand-bound presentation (play-me glow / dim / selection
 	# tint) — hand states are re-derived by the Hand for cards IN the hand; a card that left
 	# can't truthfully wear them, and nobody else is positioned to clear them. Guarded: the
