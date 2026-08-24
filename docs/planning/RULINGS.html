@@ -1,0 +1,155 @@
+<meta charset="utf-8">
+<title>Parity Rulings</title>
+<style>
+  :root {
+    --ground: #FAF9F6;
+    --surface: #F1EFEA;
+    --ink: #1F2125;
+    --ink-soft: #56534D;
+    --line: #DAD6CE;
+    --accent: #3D5A73;
+    --accent-soft: #E3EAF0;
+    --warn: #B3392B;
+    --warn-soft: #F3E3E0;
+    --code-bg: #ECEAE4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #17181B;
+      --surface: #1F2125;
+      --ink: #E8E6E1;
+      --ink-soft: #A9A59D;
+      --line: #35383E;
+      --accent: #8FA3B5;
+      --accent-soft: #232A31;
+      --warn: #E06A55;
+      --warn-soft: #3A2622;
+      --code-bg: #24262B;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #17181B;
+    --surface: #1F2125;
+    --ink: #E8E6E1;
+    --ink-soft: #A9A59D;
+    --line: #35383E;
+    --accent: #8FA3B5;
+    --accent-soft: #232A31;
+    --warn: #E06A55;
+    --warn-soft: #3A2622;
+    --code-bg: #24262B;
+  }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Segoe UI", -apple-system, system-ui, sans-serif;
+    font-size: 1.0rem;
+    line-height: 1.65;
+    margin: 0;
+  }
+  .page { max-width: 46rem; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+  h1 { font-family: Cambria, Georgia, "Times New Roman", serif; text-wrap: balance; line-height: 1.2; font-size: 2.3rem; margin: 0.4rem 0 0.6rem; }
+  p { margin: 0.7rem 0; }
+  .eyebrow {
+    text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.72rem;
+    color: var(--accent); font-weight: 600;
+  }
+  .ribbon {
+    display: flex; flex-wrap: wrap; gap: 0.6rem 1.6rem; align-items: baseline;
+    border-block: 1px solid var(--line); padding: 0.6rem 0; margin: 1.4rem 0 2rem;
+    font-size: 0.84rem; color: var(--ink-soft);
+  }
+  .ribbon b { color: var(--ink); font-weight: 600; }
+  .status-chip {
+    background: var(--accent); color: var(--ground); border-radius: 2px;
+    padding: 0.1rem 0.55rem; font-size: 0.74rem; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  code {
+    font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+    font-size: 0.88em; background: var(--code-bg); border-radius: 3px; padding: 0.08em 0.35em;
+  }
+  ul { padding-left: 1.2rem; }
+  li { margin: 0.4rem 0; }
+  .ruling {
+    border: 2px solid var(--accent); border-radius: 4px; padding: 0.8rem 1.1rem;
+    margin: 1.2rem 0; background: var(--accent-soft);
+  }
+  .ruling .head { font-weight: 600; margin-bottom: 0.3rem; }
+</style>
+
+<div class="page">
+
+<span class="eyebrow">Parity initiative · ruling record</span>
+<h1>Parity Rulings</h1>
+<div class="ribbon">
+  <span class="status-chip">Binding</span>
+  <span>Opened: <b>2026-08-24</b></span>
+  <span>Companion: <b>JOURNAL.html</b></span>
+</div>
+
+<p>The parity initiative's ruling statements. Each entry is binding from the
+moment it lands, with the force of signed design text. An entry lands only by
+Enrra's word; the amendment rule governs — invalidated text is scratched,
+never removed. Exploration lives in the companion journal; only ruled
+statements live here.</p>
+
+<div class="ruling">
+  <div class="head">R1 — The atomic procedure.</div>
+  <p>This part of the process operates at atomic level: decisions at minimal
+  scope, each recorded, the problem analysed, the resulting statements
+  documented — an agile, incremental implementation that becomes legally
+  binding on the move. Two documents carry it: one for day-to-day exploration
+  (JOURNAL.html), one for the ruling statements (this document). Ruled by
+  Enrra, 2026-08-24.</p>
+</div>
+
+<div class="ruling">
+  <div class="head">R2 — The parity order.</div>
+  <p>The primary goal: the new combat flow hooked into all the rest of the
+  game systems. First priorities: the combat UI, and the game content hookup —
+  the content hookup works with a stubbed loop using real content, the whole
+  run flow left for later as relatively safe. Immediately after: the enemy
+  behavior hookup. Ruled by Enrra, 2026-08-24.</p>
+</div>
+
+<div class="ruling">
+  <div class="head">R3 — The combat UI salvages the old surface.</div>
+  <p>The old combat UI was developed with care; as much of it as possible is
+  salvaged from history (the pre-swap tree, <code>a9af8d6^</code>). The
+  approach: identify the recoverable pieces, assess the cost of making each
+  ready for integration into the new system. Lawful ground: A10 places UI
+  outside the contract's cleanse doctrine. Ruled by Enrra, 2026-08-24.</p>
+</div>
+
+<div class="ruling">
+  <div class="head">R4 — Views take injected data, never pull from the game
+  world.</div>
+  <p>The view is not coupled to the game system. An intermediation layer — a
+  view model, nothing fancy — stands between them: the widget carries just
+  the data inserts, and information is injected into the component instead of
+  the component pulling it from the game world. The view model is the only
+  piece that reads the engine. Governs every salvaged piece. Ruled by Enrra,
+  2026-08-24.</p>
+</div>
+
+<div class="ruling">
+  <div class="head">R5 — The SlotUI atom.</div>
+  <p>Scope ruled: (1) refactor the salvaged SlotUI to work with a view model
+  per R4; (2) a test proving it works and renders well across different data
+  setups; (3) then author the actual view model that communicates with the
+  engine; (4) SlotUI embeds, for now, in the current placeholder fight frame.
+  Ruled by Enrra, 2026-08-24.</p>
+</div>
+
+<div class="ruling">
+  <div class="head">R6 — Card stands on its own.</div>
+  <p>R5's execution conflated two concepts: card-face composition entered the
+  slot's view model unsurfaced. Tolerated FOR THIS ONE CASE as a clean split
+  rather than a nuke. The ruling: card stands on its own — CardUI gets its
+  own view model and its own tests for ALL its functionality, composition and
+  status included. Only then is it re-inserted into slots. Ruled by Enrra,
+  2026-08-24.</p>
+</div>
+
+</div>

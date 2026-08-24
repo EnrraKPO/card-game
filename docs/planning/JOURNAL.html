@@ -1,0 +1,265 @@
+<meta charset="utf-8">
+<title>Parity Journal</title>
+<style>
+  :root {
+    --ground: #FAF9F6;
+    --surface: #F1EFEA;
+    --ink: #1F2125;
+    --ink-soft: #56534D;
+    --line: #DAD6CE;
+    --accent: #3D5A73;
+    --accent-soft: #E3EAF0;
+    --warn: #B3392B;
+    --warn-soft: #F3E3E0;
+    --code-bg: #ECEAE4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #17181B;
+      --surface: #1F2125;
+      --ink: #E8E6E1;
+      --ink-soft: #A9A59D;
+      --line: #35383E;
+      --accent: #8FA3B5;
+      --accent-soft: #232A31;
+      --warn: #E06A55;
+      --warn-soft: #3A2622;
+      --code-bg: #24262B;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #17181B;
+    --surface: #1F2125;
+    --ink: #E8E6E1;
+    --ink-soft: #A9A59D;
+    --line: #35383E;
+    --accent: #8FA3B5;
+    --accent-soft: #232A31;
+    --warn: #E06A55;
+    --warn-soft: #3A2622;
+    --code-bg: #24262B;
+  }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Segoe UI", -apple-system, system-ui, sans-serif;
+    font-size: 1.0rem;
+    line-height: 1.65;
+    margin: 0;
+  }
+  .page { max-width: 46rem; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+  h1 { font-family: Cambria, Georgia, "Times New Roman", serif; text-wrap: balance; line-height: 1.2; font-size: 2.3rem; margin: 0.4rem 0 0.6rem; }
+  h2 { font-family: Cambria, Georgia, "Times New Roman", serif; font-size: 1.3rem; margin: 2.4rem 0 0.6rem; padding-top: 1.2rem; border-top: 1px solid var(--line); }
+  p { margin: 0.7rem 0; }
+  .eyebrow {
+    text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.72rem;
+    color: var(--accent); font-weight: 600;
+  }
+  .ribbon {
+    display: flex; flex-wrap: wrap; gap: 0.6rem 1.6rem; align-items: baseline;
+    border-block: 1px solid var(--line); padding: 0.6rem 0; margin: 1.4rem 0 2rem;
+    font-size: 0.84rem; color: var(--ink-soft);
+  }
+  .ribbon b { color: var(--ink); font-weight: 600; }
+  .status-chip {
+    background: var(--ink-soft); color: var(--ground); border-radius: 2px;
+    padding: 0.1rem 0.55rem; font-size: 0.74rem; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  code {
+    font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+    font-size: 0.88em; background: var(--code-bg); border-radius: 3px; padding: 0.08em 0.35em;
+  }
+  ul { padding-left: 1.2rem; }
+  li { margin: 0.4rem 0; }
+  table { border-collapse: collapse; margin: 1rem 0; font-size: 0.92rem; }
+  th, td { border: 1px solid var(--line); padding: 0.3rem 0.7rem; text-align: left; }
+  th { background: var(--surface); }
+</style>
+
+<div class="page">
+
+<span class="eyebrow">Parity initiative · day-to-day exploration</span>
+<h1>Parity Journal</h1>
+<div class="ribbon">
+  <span class="status-chip">Exploration</span>
+  <span>Opened: <b>2026-08-24</b></span>
+  <span>Companion: <b>RULINGS.html</b></span>
+</div>
+
+<p>Working record: analyses, surveys, findings, and open questions. Nothing
+here carries force — a statement binds only once it lands in RULINGS.html by
+Enrra's word.</p>
+
+<h2>2026-08-24 — The combat UI salvage field</h2>
+
+<p>The A11 swap (commit <code>a9af8d6</code>) deleted the old combat layer
+whole; the last tree bearing the old UI is <code>a9af8d6^</code>. The
+deletions split into the engine half (replaced by the core, stays dead) and
+the UI half — the salvage field, profiled by size and by how many references
+each holds to demoted engine classes (the integration seam):</p>
+
+<table>
+<tr><th>Piece</th><th>Lines</th><th>Demoted refs</th><th>Band</th></tr>
+<tr><td><code>slot_ui.gd</code> — cue states, attack preview, drag phantom</td><td>923</td><td>5</td><td>cheap</td></tr>
+<tr><td><code>hand.gd</code> — fan layout, drag, drop zones</td><td>930</td><td>21</td><td>cheap</td></tr>
+<tr><td><code>turn_order_strip.gd</code></td><td>777</td><td>20</td><td>cheap</td></tr>
+<tr><td><code>vfx_player.gd</code></td><td>415</td><td>10</td><td>cheap</td></tr>
+<tr><td><code>status_pip.gd</code> (+ scene)</td><td>325</td><td>2</td><td>cheap</td></tr>
+<tr><td><code>enemy_hand_overlay.gd</code></td><td>173</td><td>3</td><td>cheap</td></tr>
+<tr><td><code>enemy_intel.gd</code></td><td>178</td><td>4</td><td>cheap</td></tr>
+<tr><td><code>combat_log.gd</code></td><td>178</td><td>1</td><td>cheap</td></tr>
+<tr><td><code>combat_animator.gd</code></td><td>104</td><td>2</td><td>cheap</td></tr>
+<tr><td><code>live_effects.gd</code></td><td>75</td><td>6</td><td>cheap</td></tr>
+<tr><td><code>presentation_channel.gd</code></td><td>30</td><td>0</td><td>cheap</td></tr>
+<tr><td><code>board_slot.gd</code>, <code>hand_drop_zone.gd</code></td><td>47</td><td>3</td><td>cheap</td></tr>
+<tr><td><code>combat.gd</code> — orchestrator + choreography</td><td>2107</td><td>~85</td><td>expensive</td></tr>
+<tr><td><code>combat_board.gd</code> — board assembly + preview</td><td>999</td><td>~91</td><td>expensive</td></tr>
+<tr><td><code>damage_share_overlay.gd</code></td><td>335</td><td>15</td><td>dead subject</td></tr>
+</table>
+
+<p>The cheap band (~4,100 lines, ~60 references) is presentation-pure: the
+seam is a handle swap — old <code>CardInstance</code>/<code>CombatSide</code>
+reads become core <code>Unit</code>/<code>Side</code> or plain
+<code>CardData</code>. The expensive pair's orchestration duties now belong to
+the core's clock and FightPresenter; their salvage value is the presentation
+choreography and layout inside them, extracted piecemeal.
+<code>damage_share_overlay.gd</code> leaned on the exterminated BoardState
+scoring — nothing to integrate it to until the enemy rebuild. Integration
+shape: salvaged surfaces mount into <code>fight_screen.tscn</code>, fed by
+FightPresenter — the core pushes occurrences, the salvaged pieces render
+them.</p>
+
+<h2>2026-08-24 — Recovery evaluation: the slot surface</h2>
+
+<p>First atom: what it takes to bring back <code>slot_ui.gd</code> (and its
+neighbour <code>board_slot.gd</code>).</p>
+
+<p><b>Alive and waiting.</b> Every widget-side dependency of SlotUI survived
+the swap untouched: <code>CardUI</code>, <code>MoveButton</code>,
+<code>BoardGlyphs</code>, <code>GroundPalette</code>,
+<code>HighlightFx</code>, <code>DragGhost</code>, the <code>Vfx</code>
+autoload, and <code>Interaction</code> — the latter with the exact surface
+SlotUI speaks to (<code>Role</code> enum, <code>role_of</code>,
+<code>commit_press</code>), so the drop gate, drop commit, and cue/verdict
+agreement work unchanged.</p>
+
+<p><b>The four dead seams in slot_ui.gd</b> (its 5 demoted references):</p>
+<ul>
+  <li><code>location: BoardLocation</code> → the core's address form,
+      <code>Vector3i(side,row,col)</code> (BoardGeometry).</li>
+  <li>The old <code>BoardSlot</code> ground entity → the core's
+      <code>Slot</code> (BoardManager births one per cell and indexes by
+      address — a direct replacement).</li>
+  <li><code>BoardData.SLOT_GAP</code> (layout constant, died with
+      board_data.gd) → needs a new home in the recovered board layer.</li>
+  <li><code>render_ground()</code> iterated <code>StatusInstance</code>s on
+      the slot → maps to core <code>Status</code> entities riding the Slot's
+      containment; member names differ and must be re-verified at recovery.
+      No slice content puts statuses on ground yet, so this half renders
+      nothing until such content exists.</li>
+</ul>
+
+<p><b>Also needed:</b> <code>status_pip.gd</code> + its scene (deleted; the
+ground tabs preload it) — itself a cheap-band salvage with the same
+Status-member seam.</p>
+
+<p><b>Not salvaged:</b> <code>board_slot.gd</code> — it was engine (the
+ground-layer entity), and the core's <code>Slot</code> is its replacement.</p>
+
+<p><b>The real cost driver:</b> SlotUI has nowhere to stand.
+<code>fight_screen.gd</code> has no board grid — the old mounter was
+<code>combat_board.gd</code> (expensive band). The atom therefore needs a
+minimal grid host: a thin container that births one SlotUI per core Slot
+address and installs the interaction/lookup wiring. The seam edits inside
+SlotUI itself are small — tens of lines against its 923.</p>
+
+<h2>2026-08-24 — R5 executed</h2>
+
+<p>All four steps landed; suite 555/0; renders produced for the visual
+half.</p>
+<ul>
+  <li><b>Views</b> (new): <code>scripts/status_pip_view.gd</code> +
+      <code>scripts/slot_ground_view.gd</code> — plain display facts, zero
+      engine references.</li>
+  <li><b>Widgets salvaged to R4 form</b>: <code>scripts/slot_ui.gd</code>
+      (the world pulls replaced — <code>own_side</code> injected,
+      <code>set_ground(SlotGroundView)</code> replaces the ground lookup, the
+      gutter constant <code>SLOT_GAP</code> now lives on the widget) and
+      <code>scripts/status_pip.gd</code> + <code>scenes/status_pip.tscn</code>
+      (binds a StatusPipView; count/stacks decisions moved to the composer).
+      The status-specific narration in the comments was neutralized to the
+      generic mechanism. The Interaction/DragGhost drop plumbing stays — it is
+      UI-side session state, not the game world.</li>
+  <li><b>The bridge</b> (new): <code>scripts/core_ui/slot_view_model.gd</code>
+      — the one engine reader: occupant lookup, ground view composition
+      (core Status → pip views, display metadata bridged from the StatusData
+      registry by id; unregistered renders bare), and a unit's live-stat card
+      face as CardData for CardUI.</li>
+  <li><b>Embedding</b>: fight_screen.gd's slot Buttons replaced by a SlotUI
+      grid (gutter = the widget's SLOT_GAP so ground frames tile); units
+      render as real CardUI faces, reused across refreshes and freed when the
+      unit leaves play; pick candidates wear TARGET_OK, the selected unit's
+      would-be victim wears the crosshair, placement hints follow the command
+      window; tapped units dim.</li>
+  <li><b>Proof</b>: <code>tests/test_slot_ui.gd</code> (31 checks —
+      injection-only behavior + the bridge over a slice-fight genesis) and
+      <code>dev/_slotui_shot.tscn</code> / <code>dev/_fight_slots_shot.tscn</code>
+      render probes (PNG sheets for Enrra's eye).</li>
+</ul>
+<p><b>Guarded seams, re-arm later:</b> CardUI lost
+<code>set_ground_tint</code>/<code>shed_hand_state</code> in the A11 swap —
+SlotUI guards those calls with <code>has_method</code> until the hand/card
+salvage atom restores them. Unit statuses don't yet show on board cards (the
+card-side pip row died with the swap; it returns with the card atom). The
+valid-target glow and ground ambience play only where vfx.json authors those
+entries.</p>
+
+<p><b>Enrra's review notes (2026-08-24):</b> SlotUI shows scaling issues —
+accepted at this scope, on record for a later pass. The missing card-side
+status pips confirmed expected (the guarded CardUI seam above).</p>
+
+<h2>2026-08-24 — R6 executed: the card stands on its own</h2>
+
+<p>The conflation corrected and the card atom landed in one stroke; suite
+583/0.</p>
+<ul>
+  <li><b>The split</b>: SlotViewModel answers slot questions only (occupancy,
+      ground). Status composition moved to its own concept —
+      <code>scripts/core_ui/status_view_model.gd</code>, one composer serving
+      ground tabs and card rows alike (one badge language, by design). The
+      card's composition is <code>scripts/core_ui/card_view_model.gd</code>:
+      <code>unit_card()</code> (moved out of the slot bridge) +
+      <code>status_views()</code>.</li>
+  <li><b>CardUI's combat surface restored, R4 form</b>: the status badge row
+      returns as an injection (<code>set_status_views(Array[StatusPipView])</code>
+      — one pip per view in the authored StatusRow), with the aura ring and
+      <code>aura_&lt;id&gt;</code> library VFX sync riding the views
+      (StatusPipView grew <code>aura</code>); <code>set_ground_tint</code>
+      returns (the ground's light on the art alone) — SlotUI's guards now find
+      both and re-arm on their own. Hand states stay dead until the hand
+      atom.</li>
+  <li><b>The injection site</b>: the fight screen refresh hands each unit's
+      views to its card through CardViewModel — Poison in the slice fight is
+      now visible on its victim's card.</li>
+  <li><b>Proof</b>: <code>tests/test_card_ui.gd</code> (28 checks — face,
+      kinds, composition chips, status row, aura, tint, phantom, and the
+      bridge composing a live poisoned unit) + <code>dev/_cardui_shot.tscn</code>
+      render sheet.</li>
+</ul>
+<p><b>Follow-up (same day, Enrra's find):</b> the details tooltip showed no
+statuses — its old section died with CardInstance at the swap, and the read
+sat off the injection circuit. Closed: <code>CardTooltip.build</code> /
+<code>build_details</code> take the card's injected
+<code>Array[StatusPipView]</code>; <code>CardUI.build_details_panel</code>
+passes its views through; the read renders the statuses section from views
+(name, count, description, pip colour) and the enlarged preview card wears
+the same views. Suite 586/0; probe <code>dev/_card_tooltip_shot.tscn</code>.</p>
+
+<p><b>Flagged, not touched:</b> the core card envelope carries no
+<code>elements</code> birth fact yet (roster: id/name/stats/building/king/
+effects/abilities), so a fielded face composes no composition chips until the
+envelope grows the fact — an engine-side matter for its own ruling, not a UI
+edit. The widget side is proven with injected data regardless.</p>
+
+</div>
