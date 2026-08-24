@@ -107,13 +107,18 @@ standing on it non-conforming, to be corrected.</p>
 </div>
 
 <div class="brief">
-  <div class="head">B3 — Colliding legacy class names yield to the new core.</div>
+  <div class="head">B3 — Colliding legacy class names yield to the new core.
+  <span class="quiet">(ruled — A11)</span></div>
   <p>The old <code>GameEntity</code> and <code>BoardGeometry</code> are renamed
   <code>LegacyGameEntity</code> / <code>LegacyBoardGeometry</code> in place,
-  their reference sites retargeted, nothing else touched. The legacy pieces
+  their reference sites retargeted, nothing else touched. <s>The legacy pieces
   keep serving the old combat layer until they retire on the plan §3 schedule;
   retiring them in Phase 1 would break the running fight and the seam Phase 5
-  reconnects to.</p>
+  reconnects to.</s> The struck rationale was corrected in review (the fight is
+  non-functional; what the staging preserves is compilation of the 60 reference
+  sites) and the disposition is now ruled by AMENDMENTS.html A11: legacy is
+  tolerated only until the replacement is complete, then exterminated whole at
+  the Phase 5 swap.</p>
 </div>
 
 <div class="brief">
