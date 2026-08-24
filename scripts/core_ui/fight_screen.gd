@@ -191,8 +191,9 @@ func _on_slot_clicked(address: Vector3i) -> void:
 		elif occupant != null and _pick_candidates.has(occupant):
 			picked.emit(occupant)
 		return
-	if _span_active and _awaiting_command and occupant != null \
-			and occupant.allegiance == world.player_side():
+	if occupant != null:
+		# ANY fielded unit is selectable at ANY time, both sides — as the original UI had
+		# it (enemy units inspectable for information); only COMMANDS are window-gated.
 		# The toggle writes THE one authority (R9); everything that shows a consequence —
 		# the card's own ring, the preview, the ability bar — derives from it on the
 		# changed-triggered refresh.
@@ -213,7 +214,8 @@ func _on_hand_clicked(card: Card) -> void:
 
 func _on_ability_clicked(ability_name: StringName) -> void:
 	var selected: Unit = _selected_unit()
-	if _span_active and _awaiting_command and selected != null:
+	if _span_active and _awaiting_command and selected != null \
+			and selected.allegiance == world.player_side():
 		var ask := Event.new(&"use_ability", selected)
 		ask.components.append(NameEventData.new(&"ability", ability_name))
 		commanded.emit(ask)
