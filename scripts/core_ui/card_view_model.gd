@@ -29,3 +29,15 @@ static func unit_card(unit: Unit) -> CardData:
 # The unit's held statuses as the card's badge-row views.
 static func status_views(unit: Unit) -> Array[StatusPipView]:
 	return StatusViewModel.held_views(unit)
+
+
+# Any card's face — the kind decides the shape: a unit brings its combat stats, a spell
+# carries only its name and cost (CardUI hides the stat badges off the SPELL type).
+static func card_face(card: Card) -> CardData:
+	if card is Unit:
+		return unit_card(card as Unit)
+	var data := CardData.new()
+	data.display_name = card.display_name
+	data.cost = roundi(card.get_stat(&"cost"))
+	data.card_type = CardData.CardType.SPELL
+	return data

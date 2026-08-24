@@ -152,4 +152,25 @@ statements live here.</p>
   2026-08-24.</p>
 </div>
 
+<div class="ruling">
+  <div class="head">R7 — The hand is restored micro-atomically.</div>
+  <p>The hand is a very complex widget — the inspect-abilities flow, the card
+  inspection panel, autocast, target previews on hover, and more — and the
+  fact that it contains cards and applies behaviors to them is a great
+  opportunity for problematic conflation of responsibilities. Approached very
+  carefully: minimal pieces of functionality restored one at a time, each its
+  own recorded atom. The R6 boundary governs throughout — the card renders
+  what it is handed; the hand arranges cards and hands them things, never
+  reaches inside them. Ruled by Enrra, 2026-08-24.</p>
+</div>
+
+<div class="ruling">
+  <div class="head">R8 — The hand's presentation gets two view objects.</div>
+  <p>At least two: one for the fan itself, and one operating as a "hand item"
+  wrapper per card — the home of visual states a card has by virtue of its
+  association to the hand presentation (whether it displays as affordable,
+  and its kin). Hand-relational states live on the item wrapper, never on the
+  card's own face. Ruled by Enrra, 2026-08-24.</p>
+</div>
+
 </div>

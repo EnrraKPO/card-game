@@ -41,7 +41,6 @@ var _state_label: Label = null
 var _cue_log: Label = null
 var _player_grid: GridContainer = null
 var _enemy_grid: GridContainer = null
-var _hand_row: HBoxContainer = null
 var _ability_bar: HBoxContainer = null
 var _end_turn: Button = null
 var _cancel_pick: Button = null
@@ -50,7 +49,9 @@ var _slot_uis: Dictionary[Vector3i, SlotUI] = {}
 # The board card faces, one per fielded unit, reused across refreshes so a unit's card is a
 # stable node (reparented by the slots as the unit moves). Freed when the unit leaves play.
 var _card_uis: Dictionary = {}
-var _hand_buttons: Dictionary = {}
+# The hand bar (the R7 bar slice) — renders the HandView composed each refresh; presses
+# report back by index and this screen decides what a press means.
+var _hand: Hand = null
 
 var _span_active: bool = false
 var _awaiting_command: bool = false
@@ -305,25 +306,18 @@ func _paint_slot(address: Vector3i, slot_ui: SlotUI, preview: Vector3i) -> Unit:
 
 
 func _rebuild_hand() -> void:
-	for child: Node in _hand_row.get_children():
-		child.queue_free()
-	_hand_buttons.clear()
-	for member: GameEntity in world.player_side().get_container(&"hand").members:
-		var card := member as Card
-		var button := Button.new()
-		button.text = "%s (%d)\nA%d H%d" % [card.display_name, roundi(card.get_stat(&"cost")),
-				roundi(card.get_stat(&"attack")) if card is Unit else 0,
-				roundi(card.get_stat(&"health")) if card is Unit else 0]
-		if card is Spell:
-			button.text = "%s (%d)\nspell" % [card.display_name, roundi(card.get_stat(&"cost"))]
-		var pickable: bool = _picking and _pick_candidates.has(card)
-		button.disabled = not pickable and not (_span_active and _awaiting_command
-				and not _picking and card.payable())
-		if pickable:
-			button.modulate = Color(0.6, 1.0, 0.6)
-		button.pressed.connect(_on_hand_clicked.bind(card))
-		_hand_row.add_child(button)
-		_hand_buttons[card] = button
+	var candidates: Array[GameEntity] = []
+	if _picking:
+		candidates = _pick_candidates
+	_hand.set_hand(HandViewModel.hand_view(world.player_side(), candidates))
+
+
+# The bar reports where the press landed; the hand container's order IS the view's item
+# order (HandViewModel walks it), so the index maps straight back to the card.
+func _on_hand_index_pressed(index: int) -> void:
+	var members: Array[GameEntity] = world.player_side().get_container(&"hand").members
+	if index >= 0 and index < members.size():
+		_on_hand_clicked(members[index] as Card)
 
 
 func _rebuild_abilities() -> void:
@@ -384,10 +378,15 @@ func _build_ui() -> void:
 
 	var bottom := HBoxContainer.new()
 	root.add_child(bottom)
-	_mana_label = _label(bottom, "Mana 0/0")
-	_hand_row = HBoxContainer.new()
-	_hand_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	bottom.add_child(_hand_row)
+	# The mana reading rides INSIDE the bar as its leftmost column — mana is what the hand
+	# spends (the bar's authored left_widget seat).
+	_mana_label = Label.new()
+	_mana_label.text = "Mana 0/0"
+	_hand = Hand.new()
+	add_child(_hand)
+	_hand.build_into(bottom, _mana_label)
+	_hand.set_card_size(Vector2(110, 144))   # the slots' size — one card scale per screen
+	_hand.card_pressed.connect(_on_hand_index_pressed)
 	_cancel_pick = Button.new()
 	_cancel_pick.text = "Cancel"
 	_cancel_pick.visible = false

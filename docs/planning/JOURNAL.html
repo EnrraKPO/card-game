@@ -256,6 +256,36 @@ passes its views through; the read renders the statuses section from views
 (name, count, description, pip colour) and the enlarged preview card wears
 the same views. Suite 586/0; probe <code>dev/_card_tooltip_shot.tscn</code>.</p>
 
+<h2>2026-08-24 — Hand micro-atom 1: the bar</h2>
+
+<p>The first R7 slice, salvaged from the pre-swap <code>hand.gd</code>: the
+bar's skeleton — panel, padded scrolling strip (the fixed-width guarantee
+kept), the card row on one centreline, the left-widget seat (mana), the
+shared-card-size doctrine (<code>set_card_size</code>, bar height = card +
+pad, BOTTOM_BLEED design). Everything else the old file carried — hover lift,
+play-me glow, drag, the inspect sidebar and nav levels, the ability tray —
+stays in the pre-swap tree for its own atom.</p>
+<ul>
+  <li><b>R8 views</b>: <code>HandView</code> (the fan's facts) +
+      <code>HandItemView</code> (one card's presence in the hand: the face +
+      statuses, and the hand-relational states <code>affordable</code> /
+      <code>pickable</code>). The bar dresses its ARRANGEMENT of the card
+      (root modulate: dim / candidate tint), never the face.</li>
+  <li><b>Bridge</b>: <code>core_ui/hand_view_model.gd</code> — composes from
+      the side's hand container; affordability speaks
+      <code>Card.payable()</code>; pickability comes from the passed
+      candidate list (interaction state stays the screen's). CardViewModel
+      grew <code>card_face()</code> (unit or spell).</li>
+  <li><b>Embedding</b>: the placeholder hand buttons are gone; presses report
+      by index and the screen keeps its existing click-to-play / pick logic —
+      surfaced: this preserves the placeholder's click functionality through
+      the screen's own wiring, it does NOT restore the old hand's selection
+      behavior (its own atom).</li>
+  <li><b>Proof</b>: <code>tests/test_hand.gd</code> (23 checks; suite 605/0)
+      + <code>dev/_hand_shot.tscn</code>. Genesis deals the opening hand —
+      the bridge test measures against the dealt baseline.</li>
+</ul>
+
 <p><b>Flagged, not touched:</b> the core card envelope carries no
 <code>elements</code> birth fact yet (roster: id/name/stats/building/king/
 effects/abilities), so a fielded face composes no composition chips until the
