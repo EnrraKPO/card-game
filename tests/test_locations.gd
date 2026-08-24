@@ -67,13 +67,13 @@ func _location_value() -> void:
 
 func _geometry_distance() -> void:
 	var origin := BoardLocation.at(0, 0, 0)
-	check_eq(BoardGeometry.distance(origin, origin), 0, "distance to itself is zero")
+	check_eq(LegacyBoardGeometry.distance(origin, origin), 0, "distance to itself is zero")
 
 	# SYMMETRY is the whole point of separating distance from preference (§2.10): a real
 	# distance has no notion of "forward", so it cannot depend on who is asking.
 	for a: BoardLocation in BoardLocation.all():
 		for b: BoardLocation in BoardLocation.all():
-			if BoardGeometry.distance(a, b) != BoardGeometry.distance(b, a):
+			if LegacyBoardGeometry.distance(a, b) != LegacyBoardGeometry.distance(b, a):
 				check(false, "distance is symmetric for %s / %s" % [a, b])
 				return
 	check(true, "distance is symmetric across every pair of cells")
@@ -82,38 +82,38 @@ func _geometry_distance() -> void:
 	# enemy's front column, one step apart.
 	var p_front := BoardLocation.at(0, 1, BoardData.COLS - 1)
 	var e_front := BoardLocation.at(1, BoardData.ROWS - 1 - 1, 0)
-	check_eq(BoardGeometry.distance(p_front, e_front), 1, "the front lines are adjacent")
-	check(BoardGeometry.same_lane(p_front, e_front), "mirrored rows share a visual lane")
-	check(not BoardGeometry.same_lane(p_front, BoardLocation.at(1, 0, 0)), "other lanes do not")
+	check_eq(LegacyBoardGeometry.distance(p_front, e_front), 1, "the front lines are adjacent")
+	check(LegacyBoardGeometry.same_lane(p_front, e_front), "mirrored rows share a visual lane")
+	check(not LegacyBoardGeometry.same_lane(p_front, BoardLocation.at(1, 0, 0)), "other lanes do not")
 
 	# Within a half it is plain grid distance.
-	check_eq(BoardGeometry.distance(BoardLocation.at(0, 0, 0), BoardLocation.at(0, 2, 3)), 5,
+	check_eq(LegacyBoardGeometry.distance(BoardLocation.at(0, 0, 0), BoardLocation.at(0, 2, 3)), 5,
 			"same-half distance is orthogonal steps")
 
 	# Neighbours are exactly the cells one step away — including across the line, because
 	# whether the line is a wall is a RULE and geometry does not hold rules.
 	var mid := BoardLocation.at(0, 1, 1)
-	check_eq(BoardGeometry.neighbours(mid).size(), 4, "an interior cell has four neighbours")
-	var crossers: Array = BoardGeometry.neighbours(p_front)
+	check_eq(LegacyBoardGeometry.neighbours(mid).size(), 4, "an interior cell has four neighbours")
+	var crossers: Array = LegacyBoardGeometry.neighbours(p_front)
 	check(crossers.has(e_front), "a front-line cell neighbours the other half")
 
 
 func _geometry_ordering() -> void:
 	var origin := BoardLocation.at(0, 1, 1)
-	var ordered: Array = BoardGeometry.cells_by_distance(origin)
+	var ordered: Array = LegacyBoardGeometry.cells_by_distance(origin)
 	check_eq(ordered.size(), BoardData.ROWS * BoardData.COLS * 2, "the ordering covers the board")
 	check(ordered[0] == origin, "the origin is nearest to itself")
 	var last := -1
 	var monotone := true
 	for loc: BoardLocation in ordered:
-		var d := BoardGeometry.distance(origin, loc)
+		var d := LegacyBoardGeometry.distance(origin, loc)
 		if d < last:
 			monotone = false
 		last = d
 	check(monotone, "cells come back nearest-first")
 
 	# Determinism: ties break in reading order, so the list is identical on every re-run.
-	var again: Array = BoardGeometry.cells_by_distance(origin)
+	var again: Array = LegacyBoardGeometry.cells_by_distance(origin)
 	var identical := true
 	for i in ordered.size():
 		if ordered[i] != again[i]:

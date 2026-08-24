@@ -2,12 +2,12 @@ class_name StatusEngine
 extends RefCounted
 
 # The operator for Statuses — ALL the rules of status behavior, so carriers (units, slots —
-# see GameEntity) hold their list and have zero say:
+# see LegacyGameEntity) hold their list and have zero say:
 #   • apply    — the one application writer: stacking policy, clamping, refresh.
 #   • advance  — the per-round countdown: decrement, drop expired.
 # This lifecycle machinery stays as-is through the effect-layer rebuild (user ruling
 # 2026-08-11: out of that initiative's scope). What a status CARRIES is the rebuilt
-# structures' business. See StatusData, StatusInstance, GameEntity.
+# structures' business. See StatusData, StatusInstance, LegacyGameEntity.
 
 
 # The "no duration override" sentinel: apply() falls back to the status's own default.
@@ -17,7 +17,7 @@ const DURATION_DEFAULT := -9999
 # Applies a status (by id) to a carrier, combining with an existing one of the same id per the
 # status's stacking rule. `duration` defaults to the status's own (pass to override); a status
 # whose kind is "combat" always lasts the whole fight regardless. See StatusData.
-static func apply(carrier: GameEntity, status_id: String, duration: int = DURATION_DEFAULT, stacks: int = 1, src: CardInstance = null) -> void:
+static func apply(carrier: LegacyGameEntity, status_id: String, duration: int = DURATION_DEFAULT, stacks: int = 1, src: CardInstance = null) -> void:
 	if carrier == null:
 		return
 	var sdata := StatusData.get_status(status_id)
@@ -79,7 +79,7 @@ static func _longer_duration(a: int, b: int) -> int:
 # whose decay_phase matches `event` counts down (its stack count for DECAY_STACKS, else its
 # `remaining` timer) and is dropped if it hits zero. Run once per carrier per phase, AFTER that
 # phase's effects fire — so e.g. poison deals its damage from the current count, then the count drops.
-static func advance(carrier: GameEntity, event_id: StringName) -> void:
+static func advance(carrier: LegacyGameEntity, event_id: StringName) -> void:
 	var kept: Array = []
 	for si: StatusInstance in carrier.statuses:
 		if _decays_on(si, event_id):
@@ -118,7 +118,7 @@ static func is_expired(si: StatusInstance) -> bool:
 # Sheds ONE stack off a status instance and files the hygiene removal if that was the last.
 # The write lives here because carriers have no say and a cascade is a caller, not a writer
 # (the same split advance already draws).
-static func shed_stack(carrier: GameEntity, si: StatusInstance) -> void:
+static func shed_stack(carrier: LegacyGameEntity, si: StatusInstance) -> void:
 	si.stacks -= 1
 	if carrier != null and is_expired(si):
 		carrier.statuses.erase(si)

@@ -1,9 +1,13 @@
-class_name GameEntity
+class_name LegacyGameEntity
 extends RefCounted
+
+# LEGACY — the name GameEntity yielded to the new core (scripts/core/game_entity.gd, Phase 1
+# of IMPLEMENTATION_PLAN.html). This class keeps serving the old combat layer until that
+# layer's pieces retire on their scheduled phases (plan §3); it is not a reference.
 
 # A thing that exists in the game world — a unit (CardInstance), a board slot (BoardSlot).
 # This shared base carries the two facts common to every entity: statuses can be pinned to
-# it, and a target resolver can point at it (a resolution is an Array[GameEntity] —
+# it, and a target resolver can point at it (a resolution is an Array[LegacyGameEntity] —
 # TARGETING_DESIGN.md §12.1; payloads tell kinds apart via delivery conditions, §4.3).
 # As a status carrier it is deliberately DUMB: an address plus a filing cabinet. It holds the list below and
 # answers lookups over it — nothing more. Every rule of status BEHAVIOR (application/stacking,

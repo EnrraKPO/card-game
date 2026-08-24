@@ -1,5 +1,9 @@
-class_name BoardGeometry
+class_name LegacyBoardGeometry
 extends RefCounted
+
+# LEGACY — the name BoardGeometry yielded to the new core (scripts/core/board_geometry.gd,
+# Phase 1 of IMPLEMENTATION_PLAN.html). Serves the old board layer until it retires with its
+# dependents (plan §3); it is not a reference.
 
 # COORDINATES IN, COORDINATES OUT (LOCATION_MANAGER_DESIGN.md §4.4). Pure functions with no
 # knowledge that any *thing* exists — no units, no slots, no manager, no world. Geometry

@@ -1,5 +1,5 @@
 class_name CardInstance
-extends GameEntity
+extends LegacyGameEntity
 
 # Fires on every current_health write (damage, healing, shield bleed-through, initial draw/reset).
 # Combat connects this for the player King specifically to drive the header's live HP display (see
@@ -38,7 +38,7 @@ var modifiers: Dictionary = {}  # attribute id -> cumulative int delta
 # Charm ids attached to this card (display only — their mechanics are already baked into
 # `data` by DeckCard.make_instance). Empty for enemies, kings, and tokens.
 var charms: Array = []
-# (Live Statuses — `statuses` and its lookups — are inherited from GameEntity: a unit is
+# (Live Statuses — `statuses` and its lookups — are inherited from LegacyGameEntity: a unit is
 # one kind of status carrier, with zero say in status behavior. See StatusEngine.)
 
 # NUKED (2026-08-13 ruling): the fatal-blow provenance was `killed_by_channel` and its two
@@ -81,7 +81,7 @@ func main_action_holder() -> MainActionHolder:
 # THE TARGET POLL (§5/§7): "who are my main action's current targets?" — the card's one
 # query, answered internally, ENTITIES ONLY. The board it is answered against is the
 # resolver's own concern (owned by this unit's world) — never the poller's.
-func main_action_targets() -> Array[GameEntity]:
+func main_action_targets() -> Array[LegacyGameEntity]:
 	return main_action_holder().targets()
 
 var is_spell: bool:
@@ -213,4 +213,4 @@ func transform(new_data: CardData) -> void:
 
 
 # (Status application/stacking rules live in StatusEngine.apply — the unit holds the list
-# it inherits from GameEntity and nothing else.)
+# it inherits from LegacyGameEntity and nothing else.)

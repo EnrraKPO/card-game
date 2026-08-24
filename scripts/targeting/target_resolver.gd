@@ -31,7 +31,7 @@ const OWNER_FROM_HOLDER := TriggerResolver.OWNER_FROM_HOLDER
 # whatever world they are asking about. An empty array is a real answer ("nobody"), and
 # execution rejects on it — never the resolver's concern.
 func resolve(_world: CombatWorld, _holder: CardInstance,
-		_owner: int = OWNER_FROM_HOLDER) -> Array[GameEntity]:
+		_owner: int = OWNER_FROM_HOLDER) -> Array[LegacyGameEntity]:
 	return []
 
 
@@ -114,11 +114,11 @@ class Nearest extends TargetResolver:
 	# The geometrically closest enemy under the preference ordering. Resolves to at most
 	# ONE unit — the head of the preference order.
 	func resolve(world: CombatWorld, holder: CardInstance,
-			_owner: int = TargetResolver.OWNER_FROM_HOLDER) -> Array[GameEntity]:
-		var out: Array[GameEntity] = []
+			_owner: int = TargetResolver.OWNER_FROM_HOLDER) -> Array[LegacyGameEntity]:
+		var out: Array[LegacyGameEntity] = []
 		var pool := TargetResolver.opposite_half_by_preference(world, holder)
 		if not pool.is_empty():
-			out.append(pool[0] as GameEntity)
+			out.append(pool[0] as LegacyGameEntity)
 		return out
 
 	func to_dict() -> Dictionary:
@@ -131,8 +131,8 @@ class Leap extends TargetResolver:
 	# landing OFF its own mirrored lane. Each preference applies only when it leaves at
 	# least one candidate — otherwise it falls away, degrading gracefully to plain nearest.
 	func resolve(world: CombatWorld, holder: CardInstance,
-			_owner: int = TargetResolver.OWNER_FROM_HOLDER) -> Array[GameEntity]:
-		var out: Array[GameEntity] = []
+			_owner: int = TargetResolver.OWNER_FROM_HOLDER) -> Array[LegacyGameEntity]:
+		var out: Array[LegacyGameEntity] = []
 		var pool := TargetResolver.opposite_half_by_preference(world, holder)
 		if pool.is_empty():
 			return out
@@ -154,7 +154,7 @@ class Leap extends TargetResolver:
 			return from.row + loc.row != BoardData.ROWS - 1)
 		if not off_row.is_empty():
 			pool = off_row
-		out.append(pool[0] as GameEntity)
+		out.append(pool[0] as LegacyGameEntity)
 		return out
 
 	func to_dict() -> Dictionary:
@@ -171,14 +171,14 @@ class Leap extends TargetResolver:
 class Wounded extends TargetResolver:
 	# Hunts the most wounded enemy — lowest current health (razed TargetingBishop).
 	func resolve(world: CombatWorld, holder: CardInstance,
-			_owner: int = TargetResolver.OWNER_FROM_HOLDER) -> Array[GameEntity]:
-		var out: Array[GameEntity] = []
+			_owner: int = TargetResolver.OWNER_FROM_HOLDER) -> Array[LegacyGameEntity]:
+		var out: Array[LegacyGameEntity] = []
 		var best: CardInstance = null
 		for t: CardInstance in TargetResolver.opposite_half_by_preference(world, holder):
 			if best == null or t.current_health < best.current_health:
 				best = t
 		if best != null:
-			out.append(best as GameEntity)
+			out.append(best as LegacyGameEntity)
 		return out
 
 	func to_dict() -> Dictionary:
@@ -188,14 +188,14 @@ class Wounded extends TargetResolver:
 class Tank extends TargetResolver:
 	# Locks onto the tankiest enemy — highest current health (razed TargetingRook).
 	func resolve(world: CombatWorld, holder: CardInstance,
-			_owner: int = TargetResolver.OWNER_FROM_HOLDER) -> Array[GameEntity]:
-		var out: Array[GameEntity] = []
+			_owner: int = TargetResolver.OWNER_FROM_HOLDER) -> Array[LegacyGameEntity]:
+		var out: Array[LegacyGameEntity] = []
 		var best: CardInstance = null
 		for t: CardInstance in TargetResolver.opposite_half_by_preference(world, holder):
 			if best == null or t.current_health > best.current_health:
 				best = t
 		if best != null:
-			out.append(best as GameEntity)
+			out.append(best as LegacyGameEntity)
 		return out
 
 	func to_dict() -> Dictionary:
@@ -206,8 +206,8 @@ class Threat extends TargetResolver:
 	# Neutralises the greatest threat — highest attack, read foldably through
 	# get_attribute so standing bonuses count (razed TargetingQueen).
 	func resolve(world: CombatWorld, holder: CardInstance,
-			_owner: int = TargetResolver.OWNER_FROM_HOLDER) -> Array[GameEntity]:
-		var out: Array[GameEntity] = []
+			_owner: int = TargetResolver.OWNER_FROM_HOLDER) -> Array[LegacyGameEntity]:
+		var out: Array[LegacyGameEntity] = []
 		var best: CardInstance = null
 		var best_atk := 0
 		for t: CardInstance in TargetResolver.opposite_half_by_preference(world, holder):
@@ -216,7 +216,7 @@ class Threat extends TargetResolver:
 				best = t
 				best_atk = atk
 		if best != null:
-			out.append(best as GameEntity)
+			out.append(best as LegacyGameEntity)
 		return out
 
 	func to_dict() -> Dictionary:

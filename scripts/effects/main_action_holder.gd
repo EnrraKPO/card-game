@@ -74,8 +74,8 @@ func action_for(event: GameEvent) -> TriggeredEffect:
 # never a world the poller chose. Computed fresh at every read (this poll IS the
 # interactive-idle read moment); never stored. Empty is a real answer: no appointment,
 # a targetless action, or a unit standing in no world all answer "nobody".
-func targets() -> Array[GameEntity]:
-	var nobody: Array[GameEntity] = []
+func targets() -> Array[LegacyGameEntity]:
+	var nobody: Array[LegacyGameEntity] = []
 	var unit := _unit()
 	var action := main_action()
 	if unit == null or action == null or action.targets == null:

@@ -63,6 +63,6 @@ static func slot_mods(slot: BoardSlot) -> Mods:
 	return null if m.is_neutral() else m
 
 
-static func _fold_statuses(m: Mods, carrier: GameEntity) -> void:
+static func _fold_statuses(m: Mods, carrier: LegacyGameEntity) -> void:
 	for si: StatusInstance in carrier.statuses:
 		m.fold_status(si.data, si.stacks)

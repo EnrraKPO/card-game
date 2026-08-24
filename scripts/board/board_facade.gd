@@ -120,7 +120,7 @@ static func active_slots(world: CombatWorld) -> Array:
 # board. Null = that half is full. Geometry orders the cells; the emptiness condition is
 # applied HERE, by the caller side of the fence — geometry never sees a predicate (§4.4).
 static func nearest_empty(world: CombatWorld, origin: BoardLocation, side: int) -> BoardLocation:
-	for loc: BoardLocation in BoardGeometry.cells_by_distance(origin):
+	for loc: BoardLocation in LegacyBoardGeometry.cells_by_distance(origin):
 		if loc.side != side:
 			continue
 		if unit_at(world, loc) == null:

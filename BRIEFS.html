@@ -1,0 +1,194 @@
+<meta charset="utf-8">
+<title>Contractor's Briefs</title>
+<style>
+  :root {
+    --ground: #FAF9F6;
+    --surface: #F1EFEA;
+    --ink: #1F2125;
+    --ink-soft: #56534D;
+    --line: #DAD6CE;
+    --accent: #3D5A73;
+    --accent-soft: #E3EAF0;
+    --code-bg: #ECEAE4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #17181B;
+      --surface: #1F2125;
+      --ink: #E8E6E1;
+      --ink-soft: #A9A59D;
+      --line: #35383E;
+      --accent: #8FA3B5;
+      --accent-soft: #232A31;
+      --code-bg: #24262B;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #17181B;
+    --surface: #1F2125;
+    --ink: #E8E6E1;
+    --ink-soft: #A9A59D;
+    --line: #35383E;
+    --accent: #8FA3B5;
+    --accent-soft: #232A31;
+    --code-bg: #24262B;
+  }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Segoe UI", -apple-system, system-ui, sans-serif;
+    font-size: 1.0rem;
+    line-height: 1.65;
+    margin: 0;
+  }
+  .page { max-width: 46rem; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+  h1, h2 { font-family: Cambria, Georgia, "Times New Roman", serif; text-wrap: balance; line-height: 1.2; }
+  h1 { font-size: 2.3rem; margin: 0.4rem 0 0.6rem; }
+  h2 { font-size: 1.3rem; margin: 2.2rem 0 0.6rem; }
+  p { margin: 0.7rem 0; }
+  .eyebrow {
+    text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.72rem;
+    color: var(--accent); font-weight: 600;
+  }
+  .ribbon {
+    display: flex; flex-wrap: wrap; gap: 0.6rem 1.6rem; align-items: baseline;
+    border-block: 1px solid var(--line); padding: 0.6rem 0; margin: 1.4rem 0 2rem;
+    font-size: 0.84rem; color: var(--ink-soft);
+  }
+  .ribbon b { color: var(--ink); font-weight: 600; }
+  .status-chip {
+    background: var(--accent); color: var(--ground); border-radius: 2px;
+    padding: 0.1rem 0.55rem; font-size: 0.74rem; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  code {
+    font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+    font-size: 0.88em; background: var(--code-bg); border-radius: 3px; padding: 0.08em 0.35em;
+  }
+  ul { padding-left: 1.2rem; }
+  li { margin: 0.4rem 0; }
+  .brief {
+    border: 1px solid var(--line); border-left: 3px solid var(--accent);
+    border-radius: 4px; padding: 0.7rem 1.0rem; margin: 1.0rem 0;
+    background: var(--surface);
+  }
+  .brief .head { font-weight: 600; }
+  .quiet { color: var(--ink-soft); font-size: 0.9rem; }
+</style>
+
+<div class="page">
+
+<span class="eyebrow">Contractor's record · self-unblocked decisions</span>
+<h1>Contractor's Briefs</h1>
+<div class="ribbon">
+  <span class="status-chip">Provisional</span>
+  <span>Opened: <b>2026-08-23</b></span>
+  <span>Under: <b>CONTRACT.html §2.3</b></span>
+</div>
+
+<p>Each brief is one decision the documentation does not rule, made to unblock
+the work, recorded at the moment it was made. Every brief is provisional until
+validated; validation confirms it into ruling text, rejection renders the work
+standing on it non-conforming, to be corrected.</p>
+
+<h2>Phase 1 — the world's skeleton</h2>
+
+<div class="brief">
+  <div class="head">B1 — The Container class is named <code>EntityContainer</code>.</div>
+  <p>Godot refuses <code>class_name Container</code>: the name is a native
+  class (verified against 4.6.3). The bible's class (Core §2) is otherwise
+  implemented member-for-member.</p>
+</div>
+
+<div class="brief">
+  <div class="head">B2 — The world's class is named <code>World</code>.</div>
+  <p>The bible names the object only "the world"; the class takes that word.
+  The name is free in Godot 4 and in the project.</p>
+</div>
+
+<div class="brief">
+  <div class="head">B3 — Colliding legacy class names yield to the new core.</div>
+  <p>The old <code>GameEntity</code> and <code>BoardGeometry</code> are renamed
+  <code>LegacyGameEntity</code> / <code>LegacyBoardGeometry</code> in place,
+  their reference sites retargeted, nothing else touched. The legacy pieces
+  keep serving the old combat layer until they retire on the plan §3 schedule;
+  retiring them in Phase 1 would break the running fight and the seam Phase 5
+  reconnects to.</p>
+</div>
+
+<div class="brief">
+  <div class="head">B4 — Stat values are stored as <code>float</code>.</div>
+  <p>The strike numbers include the crit multiplier ×2.0 (Mutation §7), so the
+  stat domain is fractional. Authored quantities and deltas stay
+  <code>int</code> as the markup rules (Mutation §4).</p>
+</div>
+
+<div class="brief">
+  <div class="head">B5 — Spellings the documents leave unnamed.</div>
+  <p>The A4 allegiance member is named <code>allegiance</code> (A4 rules the
+  fact, not the member's name; <code>side</code> would shadow the Side class).
+  A Status bears <code>status_id</code> — the id <code>has_status</code> reads
+  (Core §9). The Phase 1 stat ids, per the signed statements that name them:
+  <code>round</code> (Game); <code>mana</code>, <code>mana_capacity</code>
+  (Side); <code>cost</code> (Card); <code>attack</code>, <code>health</code>,
+  <code>speed</code>, <code>shield</code>, <code>tapped</code> (Unit);
+  <code>stacks</code> (Status). Stats named by later phases (the strike
+  numbers, the frame's seeds) land with their consumers.</p>
+</div>
+
+<div class="brief">
+  <div class="head">B6 — A Side's allegiance is itself; the Game's is null.</div>
+  <p>A4 stamps every entity's owning Side at construction and rules neither
+  edge case. Self answers <code>is_ally</code>/<code>is_enemy</code> for
+  side-held holders; null states the Game belongs to no side.</p>
+</div>
+
+<div class="brief">
+  <div class="head">B7 — The board address form.</div>
+  <p>An address is <code>Vector3i(side, row, col)</code>; the half index
+  matches the sides container's order (player 0, enemy 1), which is the
+  identity read (<code>World.player_side()</code> /
+  <code>enemy_side()</code>). The board's shape — ROWS 3 × COLS 4 per half,
+  the current board's facts — lives as constants on BoardGeometry, whose
+  mirroring arithmetic depends on it.</p>
+</div>
+
+<div class="brief">
+  <div class="head">B8 — The AOE shape definitions (Core §3 names the shapes, not their extents).</div>
+  <ul>
+    <li><b>row</b> / <b>column</b> — every cell of the origin's half sharing
+        the origin's row / column.</li>
+    <li><b>radius</b> — every cell within r by the symmetric distance, both
+        halves, origin included.</li>
+    <li><b>square</b> — every cell within r on both axes of the unified
+        depth/lane space (Chebyshev), origin included.</li>
+    <li><b>cone</b> — spreads toward the facing half: at forward step d
+        (1..reach), the cells d columns ahead within lane offset d; origin
+        excluded.</li>
+  </ul>
+</div>
+
+<div class="brief">
+  <div class="head">B9 — Mint's concrete act.</div>
+  <p>The existence primitive stamps the entity's world back-reference — an
+  entity exists in a world from that stamp. The minted entity is unhoused
+  until a membership write houses it; allegiance is stamped by the
+  constructor, as A4 states.</p>
+</div>
+
+<div class="brief">
+  <div class="head">B10 — The PresentationOutlet base is the deaf outlet.</div>
+  <p>One class: the base receives every cue and plays nothing — the simulated
+  world's outlet as-is; the live presenter subclasses it at the Phase 5 seam.
+  The cue signature (visual name, recipient, magnitude) is provisional until
+  the conductor and the procedures pin it in Phases 2–3.</p>
+</div>
+
+<div class="brief">
+  <div class="head">B11 — <code>GameEntity.effects</code> is untyped until Phase 3.</div>
+  <p>The member the bible states (Core §1) exists now; its element type is the
+  Effect class, which lands with the rules machinery — the annotation tightens
+  the moment the class exists.</p>
+</div>
+
+</div>
