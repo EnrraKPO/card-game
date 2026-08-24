@@ -315,6 +315,45 @@ redraws). Now every in-tree card re-derives the moment the authority moves
 Verified ≤150ms after a real click through the full shell stack
 (<code>dev/_selection_shell_probe.tscn</code>).</p>
 
+<h2>2026-08-24 — Interaction batch 1 under R12: glow, hand selection,
+click-to-place</h2>
+
+<p>Direct imports, adapted only at the core seams; suite 607/0; the place-flow
+probe drives the whole gesture with real input.</p>
+<ul>
+  <li><b>CardUI</b>: the playability block returns verbatim (play-me glow /
+      7% dim on <code>_canvas.modulate</code> / shed at the board door via
+      <code>shed_hand_state</code> — SlotUI's guard re-arms);
+      <code>derive_presentation</code> re-derives it, as before.</li>
+  <li><b>Hand</b>: lift rule, selection toggle
+      (<code>toggle_select</code>/<code>deselect</code>/<code>selected</code>,
+      the old gesture semantics: press the pick again = never mind), input
+      gating (<code>set_input_enabled</code>, driven by the command span).
+      Seam adaptations: the playable check closes over the item wrapper's
+      composed <code>affordable</code> (R8) instead of the dead mana read;
+      presses stay routed by index through the screen. NOT imported: the old
+      mouse-filter toggle (it would block pick-candidate presses under the
+      core's ask road).</li>
+  <li><b>The Interaction session, adopted whole</b>: the screen owns an
+      Interaction node; the old unit-action factory imported with its rules
+      re-aimed (empty own slots = DESTINATION during the command window;
+      irrelevant slots NEUTRAL by the old policy); the old
+      <code>_present_slot</code> role→cue mapping imported into the paint
+      pass; <code>handle_slot_press</code> gets clicks first. Slots carry the
+      session reference — the drop gate is armed for the drag atom.</li>
+  <li><b>The commit seam</b>: the click's chosen slot lands in
+      <code>_pending_destination</code>; <code>pick_one</code> answers the
+      core's destination ask with it — one gesture, no second prompt.</li>
+  <li><b>Stability recovered</b>: the bar's rebuild-per-injection freed the
+      selected card mid-gesture (the probe caught it). The old hand's stable
+      card nodes return as reconciliation by subject —
+      <code>HandItemView.subject</code> (opaque identity token) keys reuse;
+      departed cards free; order follows the view.</li>
+</ul>
+<p><b>Observed, unexplored:</b> the enemy's placed Sentinel renders oversized
+against its slot in the probe shot, with a stray badge chip beside it —
+board-card mounting nit to chase when it survives a second look.</p>
+
 <p><b>Flagged, not touched:</b> the core card envelope carries no
 <code>elements</code> birth fact yet (roster: id/name/stats/building/king/
 effects/abilities), so a fielded face composes no composition chips until the

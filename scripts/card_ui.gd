@@ -3,6 +3,16 @@ extends Control
 
 
 signal pressed
+# Unit drag lifecycle — any non-spell drag, from the hand (a PLACE) or fielded (a MOVE).
+# The fight wires both to the board's cues through the Interaction session; the signal is
+# inert on screens that don't listen (collection/deck/reward never connect it).
+signal unit_drag_started(card_ui: CardUI)
+signal unit_drag_ended(card_ui: CardUI)
+
+# Drag-and-drop is a combat affordance (hand → board). Off by default — otherwise a touch
+# tap that drifts a pixel starts a drag on screens where dragging means nothing; the
+# surfaces that own a drag gesture (the hand's unit cards) turn it on.
+var draggable: bool = false
 
 # The card this view renders (the authoring data — the new core's live entities render
 # through the fight screen; this view serves the collection, deck, and reward screens).
@@ -1255,6 +1265,29 @@ func _on_long_press() -> void:
 	CardInspector.open(self, card_data, _show_cost, is_phantom)
 
 
+# The ghost copy of this card a DragGhost preview shows.
+func make_ghost_view() -> CardUI:
+	return CardUI.create(card_data, _show_cost)
+
+
+func _get_drag_data(at_position: Vector2) -> Variant:
+	if not draggable or card_data == null:
+		return null
+	# A drag beginning does NOT settle the gesture: while the finger is still inside the hold
+	# tolerance the drag is provisional, and a completed hold takes it back.
+	if _hold_timer != null and not _hold_timer.is_stopped():
+		if get_viewport().get_mouse_position().distance_to(_press_origin) > _long_press_move:
+			_end_hold()
+		else:
+			_hold_dragging = true
+			set_process(true)
+	unit_drag_started.emit(self)
+	# The real card stays fully visible in place; the cursor carries a clearly-distinct ghost
+	# copy (see DragGhost).
+	set_drag_preview(DragGhost.make(self, at_position))
+	return self
+
+
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_PREDELETE:
 		# A card can be destroyed while the pointer is still on it — a unit dying under the cursor,
@@ -1269,6 +1302,8 @@ func _notification(what: int) -> void:
 	elif what == NOTIFICATION_DRAG_END:
 		modulate.a = 1.0   # a safety reset after any surface-owned drag (the Forge's)
 		_end_hold()
+		if draggable:
+			unit_drag_ended.emit(self)
 	elif what == NOTIFICATION_PARENTED:
 		# A reparent (mounted, moved between layouts) changes the answers to the derived
 		# questions. The hover lift is a claim on the position, and the position now

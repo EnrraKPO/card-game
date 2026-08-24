@@ -402,11 +402,27 @@ func _on_hand_index_pressed(index: int) -> void:
 	_hand.toggle_select(index)
 
 
+# A unit drag BEGINS an Interaction action and nothing else — cues, drop verdicts and
+# commit all derive from the one action (the old board's drag wiring, imported).
+func _wire_unit_drag(card_ui: CardUI) -> void:
+	if not card_ui.unit_drag_started.is_connected(_on_unit_drag_started):
+		card_ui.unit_drag_started.connect(_on_unit_drag_started)
+		card_ui.unit_drag_ended.connect(_on_unit_drag_ended)
+
+
+func _on_unit_drag_started(card_ui: CardUI) -> void:
+	_interaction.begin(_make_place_action(card_ui, true, true))
+
+
+func _on_unit_drag_ended(card_ui: CardUI) -> void:
+	_interaction.end_drag(card_ui)   # the null present resets every cue structurally
+
+
 # A hand unit's selection begins the placement session; deselection (or the pick moving on)
 # ends it. Imported from the old combat's _on_hand_selection_changed.
 func _on_hand_selection_changed(ui: CardUI) -> void:
 	if ui != null:
-		_interaction.begin(_make_place_action(ui))
+		_interaction.begin(_make_place_action(ui, false, false))
 	elif _interaction.active() and not _interaction.current().is_drag:
 		_interaction.end_action()
 
@@ -415,12 +431,12 @@ func _on_hand_selection_changed(ui: CardUI) -> void:
 # re-aimed at the core: empty own slots are DESTINATIONS while the command window is open;
 # everything else stays NEUTRAL (a placement isn't a targeted effect, so irrelevant slots
 # show no red X — deliberate policy). Commit hands the chosen slot to the play command.
-func _make_place_action(card_ui: CardUI) -> Interaction.Action:
+func _make_place_action(card_ui: CardUI, animated: bool, is_drag: bool) -> Interaction.Action:
 	var act := Interaction.Action.new()
 	act.kind = Interaction.Action.Kind.UNIT
 	act.source = card_ui
-	act.animated = false
-	act.is_drag = false
+	act.animated = animated
+	act.is_drag = is_drag
 	act.click_commit = true
 	act.role_check = func(slot_ui: SlotUI) -> int:
 		if not slot_ui.own_side or slot_ui.get_card() != null:
@@ -523,6 +539,7 @@ func _build_ui() -> void:
 	_hand.set_card_size(Vector2(110, 144))   # the slots' size — one card scale per screen
 	_hand.card_pressed.connect(_on_hand_index_pressed)
 	_hand.selection_changed.connect(_on_hand_selection_changed)
+	_hand.wire_unit_card = _wire_unit_drag
 	_cancel_pick = Button.new()
 	_cancel_pick.text = "Cancel"
 	_cancel_pick.visible = false

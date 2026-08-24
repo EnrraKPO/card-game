@@ -26,6 +26,10 @@ signal selection_changed(ui: CardUI)
 # the player's command span). Toggled via set_input_enabled().
 var selection_enabled: bool = false
 
+# Wires a hand UNIT card so its drag lights the board's move/place cues; injected by the
+# host (the fight connects drag start/end to its Interaction session).
+var wire_unit_card: Callable
+
 # One card size for the whole screen: matches the authored slot footprint so a card is the
 # same object at the same scale whether it's in the hand or on the field. Hosts adopt the
 # board's computed size through set_card_size.
@@ -143,6 +147,12 @@ func set_hand(view: HandView) -> void:
 				# hand" and "is in the hand" are different facts; only the second may lift.
 				ui.lift_check = func(c: CardUI) -> bool:
 					return c.get_parent() == _hand_box
+				# A unit card is draggable out of the hand (a spell casts by click for now);
+				# the host's wire routes its drag into the interaction session.
+				if item.card.card_type == CardData.CardType.UNIT:
+					ui.draggable = true
+					if wire_unit_card.is_valid():
+						wire_unit_card.call(ui)
 				_hand_box.add_child(ui)
 			else:
 				kept.erase(item.subject)
