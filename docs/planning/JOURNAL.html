@@ -350,6 +350,26 @@ probe drives the whole gesture with real input.</p>
       <code>HandItemView.subject</code> (opaque identity token) keys reuse;
       departed cards free; order follows the view.</li>
 </ul>
+<h2>2026-08-24 — Interaction batch 2: drag &amp; drop</h2>
+
+<p>Direct import; suite 607/0. CardUI regains its drag surface — the
+drag-vs-hold race, the DragGhost cursor copy (<code>make_ghost_view</code>
+re-imported), the drag-end notification — with <code>draggable</code> now
+DEFAULT OFF (the old default-on left 13 dead assignments across non-combat
+screens at the swap); the hand turns it on for unit cards and routes their
+drags through the old injected wire seat (<code>wire_unit_card</code>, kept
+by name) into the same unit action the click session uses: one role
+predicate for cue, drop verdict, and commit — the drop lands on the slot
+gate armed in batch 1, and the chosen slot answers the core's destination
+ask. Spells stay click-cast for now. Old-solution note: the enemy-fielded /
+rooted-building drag refusals referenced the dead CombatContext — board
+cards simply stay <code>draggable = false</code> until the move-drag atom
+brings the fielded gesture (same policy, structural instead of queried).
+Probe caveat on record: synthetic releases never reach Godot's internal drop
+dispatch, so the probe drives the exact <code>_can_drop_data</code>/
+<code>_drop_data</code> pair a real release calls; visuals (bobbing arrows,
+ghost) verified with real synthetic motion.</p>
+
 <p><b>Observed, unexplored:</b> the enemy's placed Sentinel renders oversized
 against its slot in the probe shot, with a stray badge chip beside it —
 board-card mounting nit to chase when it survives a second look.</p>
