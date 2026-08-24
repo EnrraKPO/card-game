@@ -265,14 +265,25 @@ func _selected_unit() -> Unit:
 	return Selection.current() as Unit
 
 
-func _on_selection_changed(_subject: Variant) -> void:
+func _on_selection_changed(subject: Variant) -> void:
 	# The pick moving on ends a click session that was ABOUT the old pick (the old
 	# session's own modal cleanup, generalized): a placement whose card is no longer
 	# selected has no gesture left to finish.
 	if _interaction != null and _interaction.active() and not _interaction.current().is_drag:
 		var source: CardUI = _interaction.current().source
-		if source == null or not is_instance_valid(source) 				or not Selection.holds(source.subject()):
+		if source == null or not is_instance_valid(source) \
+				or not Selection.holds(source.subject()):
 			_interaction.end_action()
+	# Selecting an OWN fielded unit during the command window begins the move session —
+	# destination cues light, the commit is drag or MoveButton only (click_commit false:
+	# a stray tap on a slot must never move a fielded unit; the old rule).
+	if world != null and _interaction != null and not _interaction.active() \
+			and subject is Unit and _span_active and _awaiting_command:
+		var unit := subject as Unit
+		if unit.allegiance == world.player_side() and not unit.is_building \
+				and TargetResolver.standing_address(unit).x >= 0 \
+				and _card_uis.has(unit):
+			_interaction.begin(_make_unit_action(_card_uis[unit], false, false))
 	if world != null:
 		refresh()
 
@@ -396,6 +407,26 @@ func _hovered_destination() -> SlotUI:
 	return null
 
 
+# The move button's commit — routed through the session's commit_press: the same role
+# re-validation and end-then-commit order as clicks and drops, minus the click_commit gate
+# (the button is an explicit control that exists only to commit; a press on it is not
+# stray).
+func _on_move_button_pressed(slot_ui: SlotUI) -> void:
+	_interaction.commit_press(slot_ui)
+
+
+# The move button's hover: mount the landing phantom in its slot and declare the targeting
+# preview from that spot — the same information the drag phantom carries, for exactly as
+# long as the cursor sits on the button.
+func _on_move_button_hover(on: bool, slot_ui: SlotUI) -> void:
+	if not _interaction.active() or _interaction.current().is_drag:
+		return
+	if on and _interaction.role_of(slot_ui) == Interaction.Role.DESTINATION:
+		_set_phantom_slot(slot_ui)
+	elif not on and slot_ui == _phantom_slot:
+		_set_phantom_slot(null)
+
+
 # Drag: the hovered landing slot mounts the translucent projection of the dragged unit and
 # declares the targeting preview from that spot.
 func _set_phantom_slot(slot_ui: SlotUI) -> void:
@@ -496,6 +527,12 @@ func _paint_slot(address: Vector3i, slot_ui: SlotUI, preview: Vector3i) -> Unit:
 		# The card derives its own selection ring from the authority (CardUI's self-poll,
 		# keyed by view_subject); this screen only states what the view is a view OF.
 		ui.view_subject = unit
+		# An own fielded non-building unit can be picked up to reposition (buildings root
+		# in place; the opponent's units are not the player's to lift) — the old drag
+		# refusals, structural on the paint pass instead of queried mid-drag.
+		ui.draggable = unit.allegiance == world.player_side() and not unit.is_building
+		if ui.draggable:
+			_wire_unit_drag(ui)
 		# A tapped (exhausted) unit dims.
 		ui.modulate = Color(0.55, 0.55, 0.6) if unit.get_stat(&"tapped") > 0.0 else Color.WHITE
 		# The menace read: this unit's own targeting resolves to the previewed pivot.
@@ -583,7 +620,7 @@ func _wire_unit_drag(card_ui: CardUI) -> void:
 
 
 func _on_unit_drag_started(card_ui: CardUI) -> void:
-	_interaction.begin(_make_place_action(card_ui, true, true))
+	_interaction.begin(_make_unit_action(card_ui, true, true))
 
 
 func _on_unit_drag_ended(card_ui: CardUI) -> void:
@@ -594,22 +631,30 @@ func _on_unit_drag_ended(card_ui: CardUI) -> void:
 # ends it. Imported from the old combat's _on_hand_selection_changed.
 func _on_hand_selection_changed(ui: CardUI) -> void:
 	if ui != null:
-		_interaction.begin(_make_place_action(ui, false, false))
+		_interaction.begin(_make_unit_action(ui, false, false))
 	elif _interaction.active() and not _interaction.current().is_drag:
 		_interaction.end_action()
 
 
-# Place-from-hand, static selection — the old board's unit-action factory, its rules
-# re-aimed at the core: empty own slots are DESTINATIONS while the command window is open;
-# everything else stays NEUTRAL (a placement isn't a targeted effect, so irrelevant slots
-# show no red X — deliberate policy). Commit hands the chosen slot to the play command.
-func _make_place_action(card_ui: CardUI, animated: bool, is_drag: bool) -> Interaction.Action:
+# Place-from-hand and reposition, drag or static selection — one action (the old board's
+# make_unit_action, its rules re-aimed at the core): empty own slots are DESTINATIONS while
+# the command window is open; everything else stays NEUTRAL (a move isn't a targeted
+# effect, so irrelevant slots show no red X — deliberate policy). Playing out of hand may
+# be FINISHED with a tap; moving a fielded unit is drag-or-button only (click_commit) — the
+# destination cues still light on selection, because they are what teaches that the unit
+# can be repositioned at all; only the stray tap is refused. NOTE (surfaced adaptation):
+# the cues light every empty own slot — the Move road's own conditions re-validate at the
+# commit through the core's ask, so an ineligible pick is refused there, never silently.
+func _make_unit_action(card_ui: CardUI, animated: bool, is_drag: bool) -> Interaction.Action:
 	var act := Interaction.Action.new()
 	act.kind = Interaction.Action.Kind.UNIT
 	act.source = card_ui
 	act.animated = animated
 	act.is_drag = is_drag
-	act.click_commit = true
+	var subject: Variant = card_ui.subject()
+	var from_hand: bool = subject is Card and (subject as Card).housing != null \
+			and (subject as Card).housing.name == &"hand"
+	act.click_commit = from_hand
 	act.role_check = func(slot_ui: SlotUI) -> int:
 		if not slot_ui.own_side or slot_ui.get_card() != null:
 			return Interaction.Role.NONE
@@ -617,7 +662,10 @@ func _make_place_action(card_ui: CardUI, animated: bool, is_drag: bool) -> Inter
 			return Interaction.Role.DESTINATION
 		return Interaction.Role.NONE
 	act.on_commit = func(slot_ui: SlotUI) -> void:
-		_commit_place(card_ui, slot_ui)
+		if from_hand:
+			_commit_place(card_ui, slot_ui)
+		else:
+			_commit_move(card_ui, slot_ui)
 	return act
 
 
@@ -627,11 +675,23 @@ func _commit_place(card_ui: CardUI, slot_ui: SlotUI) -> void:
 	var card := card_ui.subject() as Card
 	if card == null:
 		return
-	for address: Vector3i in _slot_uis:
-		if _slot_uis[address] == slot_ui:
-			_pending_destination = address
-			break
+	_pending_destination = _address_of_slot_ui(slot_ui)
 	commanded.emit(Event.new(&"play", card))
+
+
+# The reposition commit: the chosen slot answers the Move ability's destination ask — the
+# same seam the place commit uses, on the use_ability road (A3/A9: Move is machinery on
+# every non-building unit, free).
+func _commit_move(card_ui: CardUI, slot_ui: SlotUI) -> void:
+	if not (_span_active and _awaiting_command):
+		return
+	var unit := card_ui.subject() as Unit
+	if unit == null:
+		return
+	_pending_destination = _address_of_slot_ui(slot_ui)
+	var ask := Event.new(&"use_ability", unit)
+	ask.components.append(NameEventData.new(&"ability", &"move"))
+	commanded.emit(ask)
 
 
 func _rebuild_abilities() -> void:
@@ -687,6 +747,8 @@ func _build_ui() -> void:
 				slot_ui.own_side = side_index == 0
 				slot_ui.interaction = _interaction   # the drop gate's authority (drag's atom)
 				slot_ui.pressed.connect(_on_slot_clicked.bind(address))
+				slot_ui.move_pressed.connect(_on_move_button_pressed.bind(slot_ui))
+				slot_ui.move_hover.connect(_on_move_button_hover.bind(slot_ui))
 				(_player_grid if side_index == 0 else _enemy_grid).add_child(slot_ui)
 				# Shrunk from the widget's authored size to fit the placeholder frame; the
 				# widget's whole layout is size-relative, so it reads the same at any scale.
