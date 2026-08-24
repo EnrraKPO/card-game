@@ -379,7 +379,6 @@ func _build_element_offers(content_row: HBoxContainer, ids: Array[String], compa
 		slot.alignment = BoxContainer.ALIGNMENT_CENTER
 
 		var ui := CardUI.create(data)
-		ui.draggable = false
 		ui.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		ui.custom_minimum_size = Vector2(card_w, card_h)
 		ui.size = Vector2(card_w, card_h)
@@ -456,7 +455,6 @@ func _make_card_offer(grant: Grant) -> Control:
 	var ui := grant.make_ui()
 	ui.mouse_filter = Control.MOUSE_FILTER_STOP   # the offer card captures clicks to pick
 	if ui is CardUI:
-		(ui as CardUI).draggable = false
 		(ui as CardUI).pressed.connect(func() -> void: _pick(grant, ui))
 	wrap.add_child(ui)
 

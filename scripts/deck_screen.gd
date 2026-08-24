@@ -196,7 +196,6 @@ func _make_deck_tile(od: OwnedDeck, ordinal: int) -> Control:
 	var king := CardData.get_card(od.king_id)
 	if king != null:
 		var card := CardUI.create(king)
-		card.draggable = false
 		card.custom_minimum_size = Vector2.ZERO
 		card.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 		card.pressed.connect(func(): _on_deck_clicked(id))

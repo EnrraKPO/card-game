@@ -20,7 +20,6 @@ static func card_thumbnail(card_id: String, width: float, interactive := false) 
 		placeholder.custom_minimum_size = card_size
 		return placeholder
 	var ui := CardUI.create(data)
-	ui.draggable = false
 	ui.custom_minimum_size = card_size
 	if not interactive:
 		ui.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -50,7 +49,6 @@ static func deck_cards(od: OwnedDeck) -> Array[Control]:
 		if inst == null:
 			continue
 		var ui := CardUI.create(inst)
-		ui.draggable = false
 		out.append(ui)
 	return out
 
@@ -72,7 +70,6 @@ static func deck_grid(od: OwnedDeck, card_width: float) -> HFlowContainer:
 		if inst == null:
 			continue
 		var ui := CardUI.create(inst)
-		ui.draggable = false
 		ui.custom_minimum_size = card_size
 		grid.add_child(ui)
 	return grid

@@ -97,7 +97,6 @@ func _make_card_tile(elem_id: String) -> Control:
 	var wrap := Control.new()
 
 	var ui := CardUI.create(data)
-	ui.draggable = false
 	ui.mouse_filter = Control.MOUSE_FILTER_STOP
 	ui.pressed.connect(func() -> void: _pick(elem_id, ui))
 	wrap.add_child(ui)

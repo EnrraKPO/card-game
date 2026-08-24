@@ -450,7 +450,6 @@ func _rebuild_deck(changed: Array = []) -> void:
 		if data == null:
 			continue
 		var ui := CardUI.create(dc.effective_data())
-		ui.draggable = false   # the Forge drives its own drag; CardUI's combat drag stays off
 
 		var combinable := data.elements.size() > 0 or data.chess_pieces.size() > 0
 
@@ -482,7 +481,6 @@ func _refresh_face(e: Dictionary) -> bool:
 		return false
 	(e.ui as Control).queue_free()
 	var ui := CardUI.create(dc.effective_data())
-	ui.draggable = false
 	var shell := e.item as ForgeDragItem
 	shell.setup(ui, shell.payload)
 	e.data = data
@@ -1386,7 +1384,6 @@ func _make_preview(idx: int, inst: CardData, sig: String) -> Control:
 	holder.size = host.size
 
 	var card := CardUI.create(inst)
-	card.draggable = false
 	# PASS, not IGNORE: the stand-in is still "a way of LOOKING at the table, never a new thing to
 	# click" for the gestures that DO something — left press and drag are seen first by the screen's
 	# own _input (which runs before the GUI) and still select and drag the card underneath. What the
@@ -1607,7 +1604,6 @@ func _build_cluster(src: Dictionary, tgt_idx: int, verdict: Dictionary) -> void:
 	_result_holder = holder
 	if result_inst != null:
 		var big := CardUI.create(result_inst)
-		big.draggable = false
 		big.custom_minimum_size = Vector2.ZERO
 		big.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 		# STOP (not IGNORE): the enlarged result behaves like any card — right-click opens the full
@@ -1760,7 +1756,6 @@ func _make_component_card(inst: CardData, comp_size: Vector2) -> Control:
 	holder.custom_minimum_size = comp_size
 	holder.size_flags_horizontal = SIZE_SHRINK_CENTER
 	var ui := CardUI.create(inst)
-	ui.draggable = false
 	ui.custom_minimum_size = Vector2.ZERO
 	ui.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	ui.mouse_filter = MOUSE_FILTER_PASS   # it still answers the pointer inside the framing
@@ -1964,7 +1959,7 @@ func _start_fusion(src_idx: int, tgt_idx: int, result_dc: DeckCard, host: Contro
 	# The merge impact announces the newborn card's element: the combine element-variant bursts
 	# at the collision point exactly on the impact beat. No variant live (or placeholders
 	# muted) = the anim's own spark splash carries the moment, as before.
-	var combine_vid := Vfx.resolve("combine", result_inst.data.elements)
+	var combine_vid := Vfx.resolve("combine", result_inst.elements)
 	if not combine_vid.is_empty():
 		var marker := Control.new()
 		marker.mouse_filter = MOUSE_FILTER_IGNORE
