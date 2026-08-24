@@ -1,0 +1,136 @@
+<meta charset="utf-8">
+<title>Contractual Obligations</title>
+<style>
+  :root {
+    --ground: #FAF9F6;
+    --surface: #F1EFEA;
+    --ink: #1F2125;
+    --ink-soft: #56534D;
+    --line: #DAD6CE;
+    --accent: #3D5A73;
+    --accent-soft: #E3EAF0;
+    --code-bg: #ECEAE4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #17181B;
+      --surface: #1F2125;
+      --ink: #E8E6E1;
+      --ink-soft: #A9A59D;
+      --line: #35383E;
+      --accent: #8FA3B5;
+      --accent-soft: #232A31;
+      --code-bg: #24262B;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #17181B;
+    --surface: #1F2125;
+    --ink: #E8E6E1;
+    --ink-soft: #A9A59D;
+    --line: #35383E;
+    --accent: #8FA3B5;
+    --accent-soft: #232A31;
+    --code-bg: #24262B;
+  }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Segoe UI", -apple-system, system-ui, sans-serif;
+    font-size: 1.0rem;
+    line-height: 1.65;
+    margin: 0;
+  }
+  .page { max-width: 46rem; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+  h1, h2 { font-family: Cambria, Georgia, "Times New Roman", serif; text-wrap: balance; line-height: 1.2; }
+  h1 { font-size: 2.3rem; margin: 0.4rem 0 0.6rem; }
+  h2 { font-size: 1.5rem; margin: 3rem 0 0.8rem; padding-top: 1.6rem; border-top: 1px solid var(--line); }
+  h2 .secno { color: var(--accent); margin-right: 0.5rem; font-size: 1.1rem; vertical-align: 0.08rem; }
+  p { margin: 0.7rem 0; }
+  .eyebrow {
+    text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.72rem;
+    color: var(--accent); font-weight: 600;
+  }
+  .ribbon {
+    display: flex; flex-wrap: wrap; gap: 0.6rem 1.6rem; align-items: baseline;
+    border-block: 1px solid var(--line); padding: 0.6rem 0; margin: 1.4rem 0 2rem;
+    font-size: 0.84rem; color: var(--ink-soft);
+  }
+  .ribbon b { color: var(--ink); font-weight: 600; }
+  .status-chip {
+    background: var(--accent); color: var(--ground); border-radius: 2px;
+    padding: 0.1rem 0.55rem; font-size: 0.74rem; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  blockquote {
+    border-left: 3px solid var(--accent); margin: 1rem 0; padding: 0.6rem 1.1rem;
+    background: var(--surface); font-size: 1.0rem;
+  }
+  ul { padding-left: 1.2rem; }
+  li { margin: 0.4rem 0; }
+  .quiet { color: var(--ink-soft); font-size: 0.9rem; }
+  .signoff {
+    border: 2px solid var(--line); border-radius: 4px; padding: 0.9rem 1.1rem;
+    margin-top: 3rem; background: var(--surface);
+  }
+  a { color: var(--accent); }
+</style>
+
+<div class="page">
+
+<span class="eyebrow">Contractual obligations</span>
+<h1>Contractual Obligations</h1>
+<div class="ribbon">
+  <span class="status-chip">Contract — signed</span>
+  <span>Authored: <b>2026-08-23</b></span>
+  <span>Signed off: <b>2026-08-23</b></span>
+  <span>Governs: <b>the implementation of the Tech Design Bible</b></span>
+</div>
+
+<h2><span class="secno">§1</span> Goals</h2>
+<ul>
+  <li><b>Short term:</b> a vertical slice of all systems.</li>
+  <li><b>Long term:</b> functional parity with the pre-nuke version.</li>
+</ul>
+
+<h2><span class="secno">§2</span> The rulings</h2>
+<ol>
+  <li><b>The tech design is legally binding</b>, and must be respected with
+      precision, to full extent.</li>
+  <li><b>Found work is documented for ruling.</b> Work the documentation does
+      not cover is surfaced and recorded the moment it is found; it proceeds
+      only under a ruling.</li>
+  <li><b>Self-unblocking is an exceptional resource.</b> Where the work is
+      blocked on a decision the documentation does not rule, the contractor
+      may decide and proceed. Each such decision carries a contractual
+      obligation: it is recorded in a brief at the moment it is made and
+      submitted for validation. Until validated the decision is provisional;
+      validation confirms it into ruling text, and rejection renders the work
+      standing on it non-conforming, to be corrected. A decision that can wait
+      for ruling, waits.</li>
+  <li><b>Legacy code is not a reference.</b> No legacy code is treated as a
+      valid reference. Code that aligns perfectly to the document stays;
+      otherwise it is cleansed entirely. Any piece of leftover code that
+      collides with the document is a legal liability.</li>
+</ol>
+
+<h2><span class="secno">§3</span> The plan</h2>
+<p>The build order, the slice's definition, and its coverage:
+<a href="../IMPLEMENTATION_PLAN.html">IMPLEMENTATION_PLAN.html</a>.</p>
+
+<h2><span class="secno">§4</span> Approach</h2>
+<p class="quiet">Contractor's insight, offered — not ruling text.</p>
+<p>The slice comes first because it is the cheapest complete proof: every
+designed system executes at least once, on minimal content, before any content
+scale is attempted — a flaw in the ground surfaces while the ground is small.
+Parity is then reached by widening, not by new mechanism: content migrates
+into the signed envelope, UI features reconnect progressively under A10, and
+every engineering demand content makes enters through the Content Dictionary's
+gate and lands as a ruled amendment. The rulings of §2 hold at every step of
+both goals.</p>
+
+<div class="signoff">
+  <b>Signature:</b> signed off — Enrra, 2026-08-23.
+</div>
+
+</div>
