@@ -721,10 +721,67 @@ func build_details_panel() -> Control:
 			_status_views)
 
 
+# Hand-affordance: a card the player can play RIGHT NOW wears a soft outer glow; one that
+# can't sits 7% dimmer. The dim rides `_canvas.modulate` (all the card art hangs under
+# Canvas), NOT the root `modulate` — so it composes multiplicatively with the root-level
+# selection/exhaust tints instead of overwriting them. The glow is a COMPOSITED GlowFx (see
+# GlowFx/SilhouetteBaker): it reads the card's true silhouette and radiates on the overlay
+# layer, so it never clips (escapes the hand ScrollContainer) and is hollow over every child
+# — badges and status pips stay fully visible. Idempotent: safe to call every mana change
+# (Vfx.attach/detach de-dupe, so no re-bake churn).
+# ── Playability: DERIVED, never stored ──────────────────────────────────────────
+# The card OWNS the question "should I wear the play-me glow?" and answers it by consulting
+# live facts through `playable_check` (injected by the Hand: parented in the hand row +
+# input enabled + affordable). Nothing pushes glow state in from outside — callers only
+# ask for a re-derive (refresh_playable) — so a stale caller can affect WHEN the question is
+# asked, never what the answer is.
+var playable_check: Callable   # func(CardUI) -> bool
+
+
+# Installs the playability rule. Hand-spawned cards only — CardUI serves many non-combat
+# screens whose cards must never be dimmed by a false verdict, so without an installed check
+# refresh_playable does nothing at all.
+func set_playable_check(cb: Callable) -> void:
+	playable_check = cb
+	refresh_playable()
+
+
+func refresh_playable() -> void:
+	if not playable_check.is_valid():
+		return
+	_apply_playable(bool(playable_check.call(self)))
+
+
+# Presentation ONLY — the single place the glow/dim lands; the verdict always arrives through
+# refresh_playable's derivation, never as externally pushed state.
+func _apply_playable(playable: bool) -> void:
+	if _canvas == null:
+		return
+	if playable:
+		Vfx.attach("card_playable_glow", self)
+		_canvas.modulate = Color.WHITE
+	else:
+		Vfx.detach("card_playable_glow", self)
+		_canvas.modulate = Color(0.93, 0.93, 0.93)
+
+
+# Sheds every HAND-BOUND presentation state: the play-me glow, the unaffordable dim. Called
+# by SlotUI.set_card — the one door every card passes through on its way onto the board —
+# because these states are facts about hand life ("affordable to play", "selected to place")
+# that no fielded card can truthfully wear. Cleared at the door rather than by whoever played
+# the card, so no play path can leak them.
+func shed_hand_state() -> void:
+	playable_check = Callable()
+	Vfx.detach("card_playable_glow", self)
+	if _canvas != null:
+		_canvas.modulate = Color.WHITE   # neutral — neither the glow'd nor the dimmed hand look
+
+
 # The one derived presentation left on this view: selection. The card ASKS Selection
 # whether it is the pick and applies the answer — signals and reparents are only
 # "re-check now" cues, and the applier is idempotent.
 func derive_presentation() -> void:
+	refresh_playable()
 	_apply_selected(_pickable() and Selection.holds(subject()))
 
 

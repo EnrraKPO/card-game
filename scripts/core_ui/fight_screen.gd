@@ -59,6 +59,14 @@ var _picking: bool = false
 var _pick_candidates: Array[GameEntity] = []
 var _cue_lines: PackedStringArray = []
 
+# THE single owner of "what is the player doing right now" (the old combat's session,
+# imported whole — see Interaction). The screen builds unit actions; slots consult roles.
+var _interaction: Interaction = null
+# The destination the committed place gesture already chose — consumed by pick_one so the
+# core's destination ask is answered by the click that committed, not a second prompt. The
+# seam between the old click-to-place gesture and the core's ask road.
+var _pending_destination: Vector3i = Vector3i(-1, -1, -1)
+
 signal commanded(ask: Event)
 signal picked(choice: GameEntity)
 
@@ -115,12 +123,15 @@ func _leave() -> void:
 
 func begin_player_span() -> void:
 	_span_active = true
+	_hand.set_input_enabled(true)
 	_state_label.text = "Your command"
 	refresh()
 
 
 func end_player_span() -> void:
 	_span_active = false
+	_hand.set_input_enabled(false)
+	_interaction.end_action()
 	Selection.clear()
 	_state_label.text = ""
 	refresh()
@@ -143,6 +154,14 @@ func _on_end_turn() -> void:
 # ── The pick (UiPicker's surface) ─────────────────────────────────────────────────────
 
 func pick_one(candidates: Array[GameEntity]) -> GameEntity:
+	# The committed place gesture already chose its slot — answer the core's destination ask
+	# with it and never open the prompt (see _pending_destination).
+	if _pending_destination.x >= 0:
+		var chosen: Vector3i = _pending_destination
+		_pending_destination = Vector3i(-1, -1, -1)
+		for candidate: GameEntity in candidates:
+			if candidate is Slot and world.board_manager.address_of(candidate as Slot) == chosen:
+				return candidate
 	_picking = true
 	_pick_candidates = candidates
 	_cancel_pick.visible = true
@@ -183,6 +202,10 @@ func show_cue(visual: StringName, recipient: GameEntity, magnitude: float) -> vo
 # ── Clicks ────────────────────────────────────────────────────────────────────────────
 
 func _on_slot_clicked(address: Vector3i) -> void:
+	# A live click session (a selected hand unit's placement) gets the press first — the
+	# same routing the old combat ran; a consumed press goes no further.
+	if _interaction.handle_slot_press(_slot_uis[address]):
+		return
 	var slot: Slot = world.board_manager.slot_at(address)
 	var occupant: Unit = SlotViewModel.occupant(slot)
 	if _picking:
@@ -228,6 +251,13 @@ func _selected_unit() -> Unit:
 
 
 func _on_selection_changed(_subject: Variant) -> void:
+	# The pick moving on ends a click session that was ABOUT the old pick (the old
+	# session's own modal cleanup, generalized): a placement whose card is no longer
+	# selected has no gesture left to finish.
+	if _interaction != null and _interaction.active() and not _interaction.current().is_drag:
+		var source: CardUI = _interaction.current().source
+		if source == null or not is_instance_valid(source) 				or not Selection.holds(source.subject()):
+			_interaction.end_action()
 	if world != null:
 		refresh()
 
@@ -322,9 +352,26 @@ func _paint_slot(address: Vector3i, slot_ui: SlotUI, preview: Vector3i) -> Unit:
 	var highlighted: bool = _picking and (_pick_candidates.has(slot)
 			or (unit != null and _pick_candidates.has(unit)))
 	if highlighted:
+		slot_ui.set_targetable(true)
 		slot_ui.set_cue(SlotUI.Cue.TARGET_OK)
 	else:
-		slot_ui.reset_cue()
+		# The live action's verdict for this slot — the old board's _present_slot, imported:
+		# one role predicate drives cue, drop-accept and commit, so they cannot disagree.
+		match _interaction.role_of(slot_ui):
+			Interaction.Role.DESTINATION:
+				slot_ui.set_targetable(false)
+				slot_ui.set_cue(SlotUI.Cue.MOVE, _interaction.current().animated)
+				slot_ui.set_move_button(not _interaction.current().is_drag
+						and not _interaction.current().click_commit)
+			Interaction.Role.TARGET_VALID:
+				slot_ui.set_targetable(true)
+				slot_ui.set_cue(SlotUI.Cue.TARGET_OK)
+			Interaction.Role.TARGET_INVALID:
+				slot_ui.set_targetable(false)
+				slot_ui.set_cue(SlotUI.Cue.TARGET_BAD)
+			_:
+				slot_ui.set_targetable(false)
+				slot_ui.reset_cue()
 	slot_ui.set_attack_marker(address == preview)
 	return unit
 
@@ -337,11 +384,66 @@ func _rebuild_hand() -> void:
 
 
 # The bar reports where the press landed; the hand container's order IS the view's item
-# order (HandViewModel walks it), so the index maps straight back to the card.
+# order (HandViewModel walks it), so the index maps straight back to the card. A pick's
+# candidate answers the pick; a spell plays; a unit toggles its selection (the old hand's
+# gesture — placement then commits through the click session's cues).
 func _on_hand_index_pressed(index: int) -> void:
 	var members: Array[GameEntity] = world.player_side().get_container(&"hand").members
-	if index >= 0 and index < members.size():
-		_on_hand_clicked(members[index] as Card)
+	if index < 0 or index >= members.size():
+		return
+	var card := members[index] as Card
+	if _picking:
+		if _pick_candidates.has(card):
+			picked.emit(card)
+		return
+	if card is Spell:
+		_on_hand_clicked(card)
+		return
+	_hand.toggle_select(index)
+
+
+# A hand unit's selection begins the placement session; deselection (or the pick moving on)
+# ends it. Imported from the old combat's _on_hand_selection_changed.
+func _on_hand_selection_changed(ui: CardUI) -> void:
+	if ui != null:
+		_interaction.begin(_make_place_action(ui))
+	elif _interaction.active() and not _interaction.current().is_drag:
+		_interaction.end_action()
+
+
+# Place-from-hand, static selection — the old board's unit-action factory, its rules
+# re-aimed at the core: empty own slots are DESTINATIONS while the command window is open;
+# everything else stays NEUTRAL (a placement isn't a targeted effect, so irrelevant slots
+# show no red X — deliberate policy). Commit hands the chosen slot to the play command.
+func _make_place_action(card_ui: CardUI) -> Interaction.Action:
+	var act := Interaction.Action.new()
+	act.kind = Interaction.Action.Kind.UNIT
+	act.source = card_ui
+	act.animated = false
+	act.is_drag = false
+	act.click_commit = true
+	act.role_check = func(slot_ui: SlotUI) -> int:
+		if not slot_ui.own_side or slot_ui.get_card() != null:
+			return Interaction.Role.NONE
+		if _span_active and _awaiting_command:
+			return Interaction.Role.DESTINATION
+		return Interaction.Role.NONE
+	act.on_commit = func(slot_ui: SlotUI) -> void:
+		_commit_place(card_ui, slot_ui)
+	return act
+
+
+func _commit_place(card_ui: CardUI, slot_ui: SlotUI) -> void:
+	if not (_span_active and _awaiting_command):
+		return
+	var card := card_ui.subject() as Card
+	if card == null:
+		return
+	for address: Vector3i in _slot_uis:
+		if _slot_uis[address] == slot_ui:
+			_pending_destination = address
+			break
+	commanded.emit(Event.new(&"play", card))
 
 
 func _rebuild_abilities() -> void:
@@ -362,6 +464,13 @@ func _rebuild_abilities() -> void:
 
 func _build_ui() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
+	_interaction = Interaction.new()
+	add_child(_interaction)
+	# Cue rendering derives from the one `changed` signal — a gesture ending resets
+	# everything structurally, with no per-path cleanup to forget.
+	_interaction.changed.connect(func(_action: Interaction.Action) -> void:
+		if world != null:
+			refresh())
 	var root := VBoxContainer.new()
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(root)
@@ -390,6 +499,7 @@ func _build_ui() -> void:
 				var address := Vector3i(side_index, row, col)
 				var slot_ui := SlotUI.new()
 				slot_ui.own_side = side_index == 0
+				slot_ui.interaction = _interaction   # the drop gate's authority (drag's atom)
 				slot_ui.pressed.connect(_on_slot_clicked.bind(address))
 				(_player_grid if side_index == 0 else _enemy_grid).add_child(slot_ui)
 				# Shrunk from the widget's authored size to fit the placeholder frame; the
@@ -412,6 +522,7 @@ func _build_ui() -> void:
 	_hand.build_into(bottom, _mana_label)
 	_hand.set_card_size(Vector2(110, 144))   # the slots' size — one card scale per screen
 	_hand.card_pressed.connect(_on_hand_index_pressed)
+	_hand.selection_changed.connect(_on_hand_selection_changed)
 	_cancel_pick = Button.new()
 	_cancel_pick.text = "Cancel"
 	_cancel_pick.visible = false

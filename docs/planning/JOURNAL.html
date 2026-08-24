@@ -300,6 +300,21 @@ when the player's span ends, and on leaving the screen (a fight unit must not
 outlive the fight as the game-wide pick). No feeder, no new plumbing — the
 per-issue form R10 prescribes; cards keep their direct poll. Suite 607/0.</p>
 
+<p><b>Correction (Enrra's report: no selected visuals):</b> selection was
+gated behind the command window — clicks outside the player's exact command
+moment did nothing. Conformed to the original UI: any fielded unit is
+selectable at any time, both sides; only COMMANDS stay window-gated (the
+ability ask also checks allegiance now). <code>dev/_selection_probe.tscn</code>
+drives the real click path and confirms ring + crosshair + ability bar.</p>
+
+<p><b>Second correction (Enrra's report: works but slow):</b> the ring waited
+for the card's 0.75s self-poll — no card ever listened to
+<code>Selection.changed</code> (the old combat's orchestrator forced its
+redraws). Now every in-tree card re-derives the moment the authority moves
+(enter/exit-paired connection, reparent-safe; the poll stays as backstop).
+Verified ≤150ms after a real click through the full shell stack
+(<code>dev/_selection_shell_probe.tscn</code>).</p>
+
 <p><b>Flagged, not touched:</b> the core card envelope carries no
 <code>elements</code> birth fact yet (roster: id/name/stats/building/king/
 effects/abilities), so a fielded face composes no composition chips until the

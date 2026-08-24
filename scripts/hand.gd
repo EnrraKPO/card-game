@@ -14,8 +14,17 @@ extends Node
 # (R6/R7); a card face stays exactly what CardUI renders anywhere else.
 
 # A press on the `index`-th card of the fan. The host owns what a press means (play it,
-# answer a pick with it) — the bar only reports where the finger landed.
+# answer a pick with it, toggle its selection) — the bar only reports where the finger
+# landed.
 signal card_pressed(index: int)
+
+# The selected hand card changed (null = nothing selected). The host lights the board's
+# static "place here" cues for the selection.
+signal selection_changed(ui: CardUI)
+
+# Card selection is only honoured while the host has placement input enabled (i.e. during
+# the player's command span). Toggled via set_input_enabled().
+var selection_enabled: bool = false
 
 # One card size for the whole screen: matches the authored slot footprint so a card is the
 # same object at the same scale whether it's in the hand or on the field. Hosts adopt the
@@ -108,27 +117,59 @@ func build_into(parent: Control, left_widget: Control = null) -> void:
 
 # ── The one input ────────────────────────────────────────────────────────────────
 
-# Injects the hand's whole presentation and re-renders the row. The card views are rebuilt
-# per injection — the row is small, and reconciliation earns its keep only when the draw/
-# discard animations return (their own atom).
+# Injects the hand's whole presentation and re-renders the row — RECONCILED by each item's
+# subject, never rebuilt wholesale: the old hand kept its card nodes stable across every
+# refresh (rebuilding only on draw/discard), and a live gesture (a selection, a glow, a
+# drag) must never have its card freed out from under it by a repaint.
 func set_hand(view: HandView) -> void:
 	_view = view
+	var kept: Dictionary = {}
 	for ui: CardUI in _hand_cards:
 		if is_instance_valid(ui):
-			_hand_box.remove_child(ui)
-			ui.queue_free()
+			kept[ui.view_subject] = ui
 	_hand_cards.clear()
-	if _view == null:
-		return
-	for index: int in _view.items.size():
-		var item: HandItemView = _view.items[index]
-		var ui := CardUI.create(item.card, true)
-		ui.custom_minimum_size = _card_size
-		ui.set_status_views(item.statuses)
-		_apply_item_states(ui, item)
-		ui.pressed.connect(func() -> void: card_pressed.emit(index))
-		_hand_cards.append(ui)
-		_hand_box.add_child(ui)
+	if _view != null:
+		for item: HandItemView in _view.items:
+			var ui := kept.get(item.subject) as CardUI
+			if ui == null:
+				ui = CardUI.create(item.card, true)
+				ui.view_subject = item.subject
+				# A press reports the item's CURRENT index — looked up live, since
+				# reconciliation reorders without rewiring.
+				ui.pressed.connect(_on_card_pressed.bind(ui))
+				# THE HAND IS THE ONE SURFACE THAT LIFTS. A hand card stands nowhere, so its
+				# position carries no meaning to spend. Installed as a RULE the card asks:
+				# THIS node is reparented into a board slot when played, so "was dealt by the
+				# hand" and "is in the hand" are different facts; only the second may lift.
+				ui.lift_check = func(c: CardUI) -> bool:
+					return c.get_parent() == _hand_box
+				_hand_box.add_child(ui)
+			else:
+				kept.erase(item.subject)
+				ui.card_data = item.card
+				ui.refresh()
+			ui.custom_minimum_size = _card_size
+			ui.set_status_views(item.statuses)
+			_apply_item_states(ui, item)
+			# The playability RULE (see CardUI.set_playable_check) — re-installed each
+			# injection so it closes over the CURRENT item's composed affordability (R8),
+			# the seam's answer to the old mana read.
+			ui.set_playable_check(func(c: CardUI) -> bool:
+				return c.get_parent() == _hand_box and selection_enabled and item.affordable)
+			_hand_cards.append(ui)
+	# Departed items' cards go; surviving ones take the view's order.
+	for leftover: Variant in kept:
+		var gone := kept[leftover] as CardUI
+		_hand_box.remove_child(gone)
+		gone.queue_free()
+	for index: int in _hand_cards.size():
+		_hand_box.move_child(_hand_cards[index], index)
+
+
+func _on_card_pressed(ui: CardUI) -> void:
+	var index := _hand_cards.find(ui)
+	if index >= 0:
+		card_pressed.emit(index)
 
 
 # The hand-relational dressings, applied BY the hand ONTO its arrangement of the card — the
@@ -141,6 +182,53 @@ func _apply_item_states(ui: CardUI, item: HandItemView) -> void:
 		ui.modulate = UNAFFORDABLE_DIM
 	else:
 		ui.modulate = Color.WHITE
+
+
+# ── Selection (the hand's gesture on its own cards) ─────────────────────────────
+
+# The pick, when it is one of this bar's cards.
+func selected() -> CardUI:
+	for ui: CardUI in _hand_cards:
+		if Selection.holds(ui.subject()):
+			return ui
+	return null
+
+
+# Nothing is picked any more. Only clears a pick that is actually a hand card's — a fielded
+# unit's pick belongs to the board and is not the hand row's to clear.
+func deselect() -> void:
+	var ui := selected()
+	if ui == null:
+		return
+	Sfx.play("card_deselect")
+	Selection.clear()
+	selection_changed.emit(null)
+
+
+# The gesture on a hand card. Pressing the pick again means "never mind" — the one place a
+# second press is not a no-op, because clearing is the only other thing this gesture can
+# mean. Anything else is a single assignment; whatever was picked before stops being picked
+# because it is no longer named, and its card works that out for itself.
+func toggle_select(index: int) -> void:
+	if not selection_enabled:
+		return
+	var ui := card_at(index)
+	if ui == null:
+		return
+	if Selection.holds(ui.subject()):
+		deselect()
+		return
+	Selection.select(ui.subject())
+	Vfx.play("card_select_lift", ui)   # entry carries the select sound
+	selection_changed.emit(ui)
+
+
+# Placement input gating: outside the player's command span the hand presents but does not
+# answer — and the play-me glow may only show while acting is possible at all.
+func set_input_enabled(enabled: bool) -> void:
+	selection_enabled = enabled
+	for ui: CardUI in _hand_cards:
+		ui.refresh_playable()
 
 
 func view() -> HandView:

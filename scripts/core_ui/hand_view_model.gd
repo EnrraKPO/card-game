@@ -16,6 +16,7 @@ static func hand_view(side: Side, pick_candidates: Array[GameEntity] = []) -> Ha
 		if card == null:
 			continue
 		var item := HandItemView.new()
+		item.subject = card
 		item.card = CardViewModel.card_face(card)
 		if card is Unit:
 			item.statuses = CardViewModel.status_views(card as Unit)
