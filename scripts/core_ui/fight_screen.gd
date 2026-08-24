@@ -57,6 +57,8 @@ var _hand: Hand = null
 # The salvaged combat VFX dispatcher (see VFXPlayer): the presenter's cues resolve here to
 # designed looks on the recipients' cards.
 var _vfx: VFXPlayer = null
+# The salvaged motion choreographer (see CombatAnimator): attacker ghosts and shakes.
+var _animator: CombatAnimator = null
 
 var _span_active: bool = false
 var _awaiting_command: bool = false
@@ -260,6 +262,21 @@ func play_beat_mark(recipient: GameEntity) -> void:
 	var ui := _card_uis.get(recipient) as CardUI
 	if ui != null and is_instance_valid(ui):
 		_vfx.play(VFXEvent.target_mark(ui, Color(1.0, 0.85, 0.2)))
+
+
+# The presenter's lookups: an entity's card face (null for the un-carded — a Side, the
+# Game, a hand card), the VFX dispatcher, and the motion choreographer.
+func card_of(entity: GameEntity) -> CardUI:
+	var ui := _card_uis.get(entity) as CardUI
+	return ui if ui != null and is_instance_valid(ui) else null
+
+
+func vfx() -> VFXPlayer:
+	return _vfx
+
+
+func animator() -> CombatAnimator:
+	return _animator
 
 
 # ── Clicks ────────────────────────────────────────────────────────────────────────────
@@ -766,6 +783,9 @@ func _build_ui() -> void:
 	_vfx = VFXPlayer.new()
 	add_child(_vfx)
 	_vfx.setup(self)
+	_animator = CombatAnimator.new()
+	add_child(_animator)
+	_animator.setup(self)
 	# Cue rendering derives from the one `changed` signal — a gesture ending resets
 	# everything structurally, with no per-path cleanup to forget.
 	_interaction.changed.connect(_on_interaction_changed)

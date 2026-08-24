@@ -86,6 +86,10 @@ static func _machinery() -> Array[Effect]:
 	act_payload.append(StrikeMutator.new())
 	_main_action_template = Effect.new(act_trigger,
 			TargetResolver.new(attack_conditions, AttackDecision.new()), act_payload)
+	# The strike's windup presentation name — the melee approach (the old nearest/leap
+	# default). A mint like the procedure cue names (journaled, provisional): the bible
+	# names the beat's shape, not this roster.
+	_main_action_template.windup_presentation = &"lunge"
 	_machinery_templates.append(_main_action_template)
 	return _machinery_templates
 

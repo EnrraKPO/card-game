@@ -32,7 +32,7 @@ func run(effect: Effect, plate: Plate, holster: Array[Event]) -> void:
 	var targets: Array[GameEntity] = await effect.resolver.engage(plate)
 	if targets.is_empty():
 		return
-	await world.outlet.windup(effect.windup_presentation, targets)
+	await world.outlet.windup(effect.windup_presentation, plate.holder, targets)
 	world.outlet.pause()
 	for mutator: Mutator in effect.payload:
 		if mutator.is_unique():
@@ -42,9 +42,9 @@ func run(effect: Effect, plate: Plate, holster: Array[Event]) -> void:
 			continue
 		for recipient: GameEntity in targets:
 			_holster(mutator.issue(plate, recipient), targets, holster)
-	await world.outlet.contact(effect.contact_presentation, targets)
+	await world.outlet.contact(effect.contact_presentation, plate.holder, targets)
 	world.outlet.unpause()
-	await world.outlet.conclude(effect.windup_presentation)
+	await world.outlet.conclude(effect.windup_presentation, plate.holder)
 
 
 func _holster(events: Array[Event], targets: Array[GameEntity], holster: Array[Event]) -> void:
