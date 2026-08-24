@@ -54,6 +54,9 @@ var _card_uis: Dictionary = {}
 # The hand bar (the R7 bar slice) — renders the HandView composed each refresh; presses
 # report back by index and this screen decides what a press means.
 var _hand: Hand = null
+# The salvaged combat VFX dispatcher (see VFXPlayer): the presenter's cues resolve here to
+# designed looks on the recipients' cards.
+var _vfx: VFXPlayer = null
 
 var _span_active: bool = false
 var _awaiting_command: bool = false
@@ -214,6 +217,47 @@ func show_cue(visual: StringName, recipient: GameEntity, magnitude: float) -> vo
 	while _cue_lines.size() > 5:
 		_cue_lines.remove_at(0)
 	_cue_log.text = "\n".join(_cue_lines)
+
+
+# One procedure cue, resolved to its designed look on the recipient's card (R13: the
+# presenter tells, the dispatch table answers; a recipient without a card face — a Side, a
+# Game, a hand card — keeps the log line only). Sounds ride the same names, data-gated:
+# an authored sounds.json entry named like the cue plays, silence otherwise.
+func play_cue(visual: StringName, recipient: GameEntity, magnitude: float) -> void:
+	show_cue(visual, recipient, magnitude)
+	var ui := _card_uis.get(recipient) as CardUI
+	if ui == null or not is_instance_valid(ui):
+		return
+	if SoundData.get_sound(String(visual)) != null:
+		Sfx.play(String(visual))
+	match visual:
+		&"health_damage":
+			_vfx.play(VFXEvent.health_damage(ui, roundi(magnitude)))
+		&"shield_hit":
+			_vfx.play(VFXEvent.shield_hit(ui, roundi(magnitude)))
+		&"heal":
+			_vfx.play(VFXEvent.heal(ui, roundi(magnitude)))
+		&"buff":
+			_vfx.play(VFXEvent.buff(ui, "", roundi(magnitude)))
+		&"debuff":
+			_vfx.play(VFXEvent.debuff(ui, "", roundi(magnitude)))
+		&"dodge":
+			_vfx.play(VFXEvent.dodge(ui))
+		&"crit":
+			_vfx.play(VFXEvent.crit(ui))
+		&"card_placed":
+			_vfx.play(VFXEvent.card_placed(ui))
+		&"status_applied":
+			ui.flash_status_applied()
+		_:
+			pass   # an unmapped cue keeps its log line — authoring the look is the fix
+
+
+# The windup's target mark on one recipient — the reticle that leads the hit.
+func play_beat_mark(recipient: GameEntity) -> void:
+	var ui := _card_uis.get(recipient) as CardUI
+	if ui != null and is_instance_valid(ui):
+		_vfx.play(VFXEvent.target_mark(ui, Color(1.0, 0.85, 0.2)))
 
 
 # ── Clicks ────────────────────────────────────────────────────────────────────────────
@@ -717,6 +761,9 @@ func _build_ui() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	_interaction = Interaction.new()
 	add_child(_interaction)
+	_vfx = VFXPlayer.new()
+	add_child(_vfx)
+	_vfx.setup(self)
 	# Cue rendering derives from the one `changed` signal — a gesture ending resets
 	# everything structurally, with no per-path cleanup to forget.
 	_interaction.changed.connect(_on_interaction_changed)

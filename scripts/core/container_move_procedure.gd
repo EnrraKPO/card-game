@@ -30,5 +30,6 @@ static func resolve(request: ContainerMoveRequest) -> Array[Event]:
 		var fielded := Event.new(&"fielded", target)
 		fielded.components.append(NameEventData.new(&"origin", origin.name))
 		fielded.components.append(NameEventData.new(&"destination", destination.name))
+		target.world.outlet.cue(&"card_placed", target, 0.0)   # its cue at commit (MSD s10)
 		events.append(fielded)
 	return events

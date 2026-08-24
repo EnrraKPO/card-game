@@ -21,10 +21,12 @@ static func apply(target: GameEntity, amount: int, _context: EngineRequest) -> A
 	var absorbed: float = minf(shield, dealt)
 	if absorbed > 0.0:
 		WriteAuthority.stat_write(target, &"shield", shield - absorbed, authority_events)
+		target.world.outlet.cue(&"shield_hit", target, absorbed)   # its cue at commit (MSD s10)
 	var remainder: float = dealt - absorbed
 	if remainder > 0.0:
 		WriteAuthority.stat_write(target, &"health",
 				target.get_stat(&"health") - remainder, authority_events)
+		target.world.outlet.cue(&"health_damage", target, remainder)   # its cue at commit
 	var damaged := Event.new(&"damaged", target)
 	if absorbed > 0.0:
 		damaged.components.append(StatMutationEventData.new(&"shield", -roundi(absorbed)))
