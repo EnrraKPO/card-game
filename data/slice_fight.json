@@ -1,0 +1,137 @@
+{
+  "_comment": "The vertical slice's fixed fight (IMPLEMENTATION_PLAN §4). Working labels — the authored names are Enrra's at content sign-off. Every envelope is the bible's markup through the A7 envelope; every engineering demand stands ruled or briefed (CONTENT_DICTIONARY, BRIEFS.html B36).",
+  "seed": 20260823,
+  "content": {
+    "cards": [
+      {
+        "id": "squire", "name": "Squire", "kind": "unit",
+        "stats": {"cost": 1, "attack": 2, "health": 5, "max_health": 5, "speed": 1}
+      },
+      {
+        "id": "sentinel", "name": "Sentinel", "kind": "unit", "building": true,
+        "stats": {"cost": 2, "attack": 1, "health": 8, "max_health": 8, "shield": 2, "speed": 0}
+      },
+      {
+        "id": "cleric", "name": "Cleric", "kind": "unit",
+        "stats": {"cost": 2, "attack": 1, "health": 4, "max_health": 4, "speed": 1},
+        "abilities": [
+          {
+            "name": "heal",
+            "cost": {"mana": 2},
+            "targeting": {"decision": "hand_pick",
+              "conditions": [{"kind": "is_ally"}, {"kind": "is_unit"}]},
+            "effect": {"payload": [{"stat_mutation": {"stat": "health", "delta": 3}}],
+              "windup": "glint"}
+          }
+        ]
+      },
+      {
+        "id": "venom_adder", "name": "Venom Adder", "kind": "unit",
+        "stats": {"cost": 2, "attack": 1, "health": 3, "max_health": 3, "speed": 2},
+        "effects": [
+          {
+            "trigger": {"event": "play_engaged", "entity_conditions": {"entries": [
+              {"route": "source", "conditions": [{"kind": "is_holder"}]}
+            ]}},
+            "targeting": {"decision": "hand_pick", "conditions": [
+              {"kind": "is_enemy"}, {"kind": "is_unit"},
+              {"kind": "has_status", "status_id": "poison", "negate": true}
+            ]},
+            "payload": [{"status": {"id": "poison", "stacks": 2}}],
+            "windup": "glint"
+          }
+        ]
+      },
+      {
+        "id": "avenger", "name": "Avenger", "kind": "unit",
+        "stats": {"cost": 2, "attack": 2, "health": 4, "max_health": 4, "speed": 1},
+        "effects": [
+          {
+            "trigger": {"event": "died", "entity_conditions": {"entries": [
+              {"route": "source", "conditions": [{"kind": "is_ally"}, {"kind": "is_unit"}]}
+            ]}},
+            "targeting": {"decision": "nearest", "conditions": [{"kind": "is_holder"}]},
+            "payload": [{"stat_mutation": {"stat": "attack", "delta": 2}}]
+          }
+        ]
+      },
+      {
+        "id": "fireball", "name": "Fireball", "kind": "spell",
+        "stats": {"cost": 2},
+        "effects": [
+          {
+            "trigger": {"event": "play_engaged", "entity_conditions": {"entries": [
+              {"route": "source", "conditions": [{"kind": "is_holder"}]}
+            ]}},
+            "targeting": {"decision": "hand_pick",
+              "conditions": [{"kind": "is_enemy"}, {"kind": "is_unit"}]},
+            "payload": [{"damage": {"amount": 4}}],
+            "windup": "bolt"
+          }
+        ]
+      },
+      {
+        "id": "sniper", "name": "Sniper", "kind": "unit",
+        "stats": {"cost": 2, "attack": 1, "health": 3, "max_health": 3, "speed": 2},
+        "effects": [
+          {
+            "trigger": {"event": "play_engaged", "entity_conditions": {"entries": [
+              {"route": "source", "conditions": [{"kind": "is_holder"}]}
+            ]}},
+            "targeting": {"decision": {"stat_ranked": {"stat": "health", "rank": "lowest"}},
+              "conditions": [{"kind": "is_enemy"}, {"kind": "is_unit"}]},
+            "payload": [{"damage": {"amount": 2}}],
+            "windup": "bolt"
+          }
+        ]
+      },
+      {
+        "id": "king", "name": "King", "kind": "unit", "king": true,
+        "stats": {"cost": 0, "attack": 1, "health": 20, "max_health": 20, "shield": 3, "speed": 3}
+      },
+      {
+        "id": "captain", "name": "Captain", "kind": "unit", "king": true,
+        "stats": {"cost": 0, "attack": 1, "health": 30, "max_health": 30, "shield": 3, "speed": 3}
+      }
+    ],
+    "statuses": [
+      {
+        "id": "poison", "name": "Poison",
+        "effects": [
+          {
+            "trigger": {"event": "act", "entity_conditions": {"entries": [
+              {"route": "source", "conditions": [{"kind": "houses_me"}]}
+            ]}},
+            "targeting": {"decision": {"stat_ranked": {"stat": "health", "rank": "highest"}},
+              "conditions": [{"kind": "houses_me"}]},
+            "payload": ["poison"]
+          }
+        ]
+      }
+    ],
+    "relics": [
+      {
+        "id": "hourglass", "name": "Hourglass",
+        "effects": [
+          {
+            "trigger": {"event": "fielded", "entity_conditions": {"entries": [
+              {"route": "source", "conditions": [{"kind": "is_ally"}, {"kind": "is_unit"}]}
+            ]}},
+            "targeting": {"decision": {"stat_ranked": {"stat": "mana", "rank": "highest"}},
+              "conditions": [{"kind": "is_ally"}, {"kind": "is_side"}]},
+            "payload": [{"draw": {"count": 1}}]
+          }
+        ]
+      }
+    ]
+  },
+  "player": {
+    "deck": ["squire", "squire", "cleric", "venom_adder", "avenger", "fireball", "sentinel"],
+    "units": [{"id": "king", "slot": [1, 0]}],
+    "relics": ["hourglass"]
+  },
+  "enemy": {
+    "deck": ["squire", "squire", "sniper", "sentinel"],
+    "units": [{"id": "captain", "slot": [1, 0]}]
+  }
+}

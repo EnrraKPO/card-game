@@ -122,7 +122,8 @@ plan; a piece turns "approved" on Enrra's word.</p>
         mutation.</td>
     <td>Ability expansion (Core §7); <code>is_ally</code>,
         <code>is_unit</code> (A8); hand-pick decision (Core §4); health cap
-        arithmetic in the WriteAuthority.</td>
+        arithmetic in the WriteAuthority (landed, BRIEFS.html B36 —
+        <code>max_health</code> in the envelope).</td>
     <td>proposed</td>
   </tr>
   <tr>
@@ -138,7 +139,10 @@ plan; a piece turns "approved" on Enrra's word.</p>
     <td>At its holder's moment, damages the unit carrying it, per its stacks;
         the damage carries the poison kind.</td>
     <td><code>houses_me</code> (A8); the <code>act</code> event (Combat Frame
-        §6, signed); damage mutator; stacks as a stat on the status.</td>
+        §6, signed); stacks as a stat on the status; the <code>poison</code>
+        mutator — damage per the holder's stacks, carrying the poison kind
+        (roster growth, BRIEFS.html B36: the fixed-amount damage mutator
+        cannot speak "per its stacks").</td>
     <td>proposed</td>
   </tr>
   <tr>
@@ -159,7 +163,8 @@ plan; a piece turns "approved" on Enrra's word.</p>
     <td>Hourglass</td><td>Relic</td>
     <td>When the player fields a unit, draw a card.</td>
     <td><code>fielded</code> event (Core §2); <code>is_ally</code> (A8); draw
-        mutator.</td>
+        mutator; <code>is_side</code> — the draw's recipient narrowed to the
+        holder's Side (roster growth, BRIEFS.html B36).</td>
     <td>proposed</td>
   </tr>
   <tr>

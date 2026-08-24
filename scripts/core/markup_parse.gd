@@ -19,6 +19,7 @@ static var CONDITION_KINDS: Dictionary = {
 	"is_ally": IsAllyCondition,
 	"is_enemy": IsEnemyCondition,
 	"is_unit": IsUnitCondition,
+	"is_side": IsSideCondition,
 	"houses_me": HousesMeCondition,
 }
 
@@ -28,6 +29,7 @@ static var MUTATOR_KINDS: Dictionary = {
 	"damage": DamageMutator,
 	"status": StatusMutator,
 	"draw": DrawMutator,
+	"poison": PoisonMutator,
 }
 
 static var DECISION_KINDS: Dictionary = {

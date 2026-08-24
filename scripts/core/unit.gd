@@ -108,5 +108,5 @@ func main_action_targets() -> Array[GameEntity]:
 
 func _declared_mutable_stats() -> Array[StringName]:
 	var out: Array[StringName] = super._declared_mutable_stats()
-	out.append_array([&"attack", &"health", &"speed", &"shield", &"tapped"])
+	out.append_array([&"attack", &"health", &"max_health", &"speed", &"shield", &"tapped"])
 	return out

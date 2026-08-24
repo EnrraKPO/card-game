@@ -11,9 +11,26 @@ extends Control
 #
 # The launcher states the fight: FightScreen.next_fight = {"seed": int, "content":
 # {"cards": [envelopes], "statuses": [...], "relics": [...]}, "player": <Genesis side
-# config>, "enemy": <...>}. An unconfigured screen refuses loudly and stands empty.
+# config>, "enemy": <...>}. Unconfigured, the screen runs THE SLICE'S FIXED FIGHT
+# (data/slice_fight.json — IMPLEMENTATION_PLAN §1: the slice runs as a fixed fight
+# launched from the existing shell; wiring into real runs is parity work). A missing
+# slice file refuses loudly and stands empty.
+
+const SLICE_FIGHT_PATH := "res://data/slice_fight.json"
 
 static var next_fight: Dictionary = {}
+
+
+static func slice_fight() -> Dictionary:
+	var text := FileAccess.get_file_as_string(SLICE_FIGHT_PATH)
+	if text.is_empty():
+		push_error("FightScreen: %s is missing or empty" % SLICE_FIGHT_PATH)
+		return {}
+	var parsed: Variant = JSON.parse_string(text)
+	if not (parsed is Dictionary):
+		push_error("FightScreen: %s does not parse" % SLICE_FIGHT_PATH)
+		return {}
+	return parsed
 
 var world: World = null
 
@@ -46,8 +63,9 @@ signal picked(choice: GameEntity)
 func _ready() -> void:
 	_build_ui()
 	if next_fight.is_empty():
-		_state_label.text = "No fight configured — the launcher must state one."
-		push_error("FightScreen: launched without a fight configuration")
+		next_fight = slice_fight()
+	if next_fight.is_empty():
+		_state_label.text = "No fight configured."
 		return
 	var fight: Dictionary = next_fight
 	next_fight = {}

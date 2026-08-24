@@ -37,7 +37,7 @@ static func stat_write(entity: GameEntity, stat: StringName, value: float,
 				% [stat, entity.get_class_label()])
 		return entity.get_stat(stat)
 	var previous: float = entity._stats[stat]
-	var committed: float = _bound(stat, value)
+	var committed: float = _bound(entity, stat, value)
 	entity._stats[stat] = committed
 	if stat == &"health" and previous > 0.0 and committed <= 0.0:
 		events.append(Event.new(&"died", entity))
@@ -45,11 +45,16 @@ static func stat_write(entity: GameEntity, stat: StringName, value: float,
 
 
 # The per-fact arithmetic table. One place, growing as signed facts land:
-#   · tapped floors at zero (Combat Frame §6).
-static func _bound(stat: StringName, value: float) -> float:
+#   · tapped floors at zero (Combat Frame §6);
+#   · health caps at the bearer's max_health where one is borne and stated — the Heal's
+#     demand (CONTENT_DICTIONARY: "health cap arithmetic in the WriteAuthority"; B36).
+static func _bound(entity: GameEntity, stat: StringName, value: float) -> float:
 	match stat:
 		&"tapped":
 			return maxf(0.0, value)
+		&"health":
+			if entity.bears_stat(&"max_health") and entity.get_stat(&"max_health") > 0.0:
+				return minf(value, entity.get_stat(&"max_health"))
 	return value
 
 
