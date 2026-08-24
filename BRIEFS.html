@@ -342,4 +342,50 @@ standing on it non-conforming, to be corrected.</p>
   play's targets.</p>
 </div>
 
+<h2 id="phase4">Phase 4 — the card roads</h2>
+
+<div class="brief">
+  <div class="head">B28 — The baked machinery's details.</div>
+  <p>The route-source + is_holder entry is baked on the play and use effects
+  too — without it every card's play would answer any play ask (the §5/§7
+  discrimination, entailed). The baked conditions live together in
+  <code>BakedConditions</code> (machinery, not authored vocabulary): one
+  <code>affordable</code> definition serves the play trigger, the use
+  trigger, and the payability query; a tap price is affordable while the
+  holder is untapped. The Unit play's default pick narrows to VACANT slots of
+  the holder's own side. Machinery built-ins whose duty begins off-board —
+  play, placement, burial — carry the implied fielded condition removed.</p>
+</div>
+
+<div class="brief">
+  <div class="head">B29 — The ability form's details (under A7's delegation).</div>
+  <p><code>{"name", "cost": {"mana", "tap"}?, "targeting", "effect":
+  {"payload", "targeting"?, "windup"?, "contact"?}}</code> — cost absent =
+  free (Move's shape); the substantive effect's targeting defaults to the
+  stock occasion's-targets form; a trigger inside the effect body is a
+  stranger — the expansion owns both triggers. Borne ability names live in
+  <code>GameEntity.abilities</code> — the ask capability made readable.</p>
+</div>
+
+<div class="brief">
+  <div class="head">B30 — Orderings the effect-list order decides.</div>
+  <p>A holder's machinery effects precede its authored ones (construction
+  first), so a spell's burial reacts to <code>play_engaged</code> before its
+  substantive effect — the spell strikes from the graveyard, lawfully (its
+  effects still exist). Likewise a unit's burial precedes its own authored
+  death reactions, which therefore need the implied fielded condition
+  removed to fire. <code>Unit.new(side, building)</code> — the building birth
+  fact became a constructor parameter so the Move appointment (A9) can read
+  it at construction.</p>
+</div>
+
+<div class="brief">
+  <div class="head">B31 — ⚠ The deck has no gather bucket.</div>
+  <p>Mutation §2 names deck cards in the cascade's audience; §12's bucket
+  table has no deck bucket. The gather follows the table — deck-held effects
+  are not polled today. No slice content holds one; flagged so the bucket
+  enters by amendment the moment content demands it, not by my weight
+  guess.</p>
+</div>
+
 </div>

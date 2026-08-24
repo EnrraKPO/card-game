@@ -10,9 +10,12 @@ extends RefCounted
 # world → Game → containers → members — holds the strong references, so entities die with
 # the world that owns them. World copies remap both ends of every housing relation (§2).
 
-# Effects this entity holds (Mutation §2: an effect is a rule of the game). Array of Effect;
-# the element type lands with the effect machinery in Phase 3.
-var effects: Array = []
+# Effects this entity holds (Mutation §2: an effect is a rule of the game).
+var effects: Array[Effect] = []
+
+# The ability names this entity bears (Core §7): the ask capability — `use_ability` may
+# be fired at the holder carrying one of these names. Appended by the ability expansion.
+var abilities: Array[StringName] = []
 
 var _world_ref: WeakRef = null
 var _allegiance_ref: WeakRef = null

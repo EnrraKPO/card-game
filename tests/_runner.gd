@@ -37,6 +37,7 @@ const SUITES: Array = [
 	preload("res://tests/test_core_world.gd"),
 	preload("res://tests/test_write_road.gd"),
 	preload("res://tests/test_rules_flow.gd"),
+	preload("res://tests/test_card_roads.gd"),
 ]
 
 

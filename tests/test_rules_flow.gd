@@ -371,8 +371,11 @@ func _test_depth_first() -> void:
 						{"kind": "is_holder", "negate": true}]},
 		"payload": [{"damage": {"amount": 3}}],
 	})
-	# The dying martyr's own effect must not require it fielded at reaction time — its
-	# death does not unfield it in this hand-built scene, so the implied condition holds.
+	# The martyr's built-in burial reacts to its death ahead of lash (same holder,
+	# machinery first), so at lash's moment the martyr stands in the graveyard — the
+	# implied fielded condition must be removed for a die-reaction to fire (Mutation §2's
+	# removable default; the authored syntax is out of frame, the machinery member serves).
+	lash.fielded_condition_removed = true
 	avenger.effects.append(avenge)
 	martyr.effects.append(lash)
 
