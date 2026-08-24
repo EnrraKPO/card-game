@@ -390,11 +390,17 @@ func toggle_select(index: int) -> void:
 
 
 # Placement input gating: outside the player's command span the hand presents but does not
-# answer — and the play-me glow may only show while acting is possible at all.
+# answer — presses fall dead at the widgets (the old mouse-filter gate, hand row and tray
+# tokens both), and the play-me glow may only show while acting is possible at all.
 func set_input_enabled(enabled: bool) -> void:
 	selection_enabled = enabled
+	var filter := Control.MOUSE_FILTER_STOP if enabled else Control.MOUSE_FILTER_IGNORE
 	for ui: CardUI in _hand_cards:
+		ui.mouse_filter = filter
 		ui.refresh_playable()
+	for token: Control in _gen_cards:
+		if is_instance_valid(token):
+			token.mouse_filter = filter
 
 
 # ── The inspect sidebar + ability tray (injected — see HandInspectView) ─────────
@@ -466,7 +472,8 @@ func _rebuild_inspect_view() -> void:
 		row.add_theme_constant_override("separation", 16)
 		row.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		row.add_child(token)
-		row.add_child(_ability_text_col(_inspect.ability_texts[index], tray_size.y))
+		row.add_child(_ability_text_col(_inspect.ability_titles[index],
+				_inspect.ability_texts[index], tray_size.y))
 		_gen_cards.append(token)
 		_gen_box.add_child(row)
 		if _inspect.enemy:
@@ -491,21 +498,26 @@ func _rebuild_inspect_view() -> void:
 
 
 # Each ability's illustration sits beside a large-text description (the widget alone
-# doesn't say what it does).
-func _ability_text_col(text: String, col_h: float) -> Control:
+# doesn't say what it does) — the bold name line leads, the body keeps its inline keyword
+# icon chips (TextIcons.enrich).
+func _ability_text_col(title: String, description: String, col_h: float) -> Control:
 	const COL_W := 280.0
-	var clip := Control.new()
-	clip.clip_contents = true
-	clip.custom_minimum_size = Vector2(COL_W, col_h)
-	clip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	var lbl := Label.new()
-	lbl.text = TextIcons.plain(text)
-	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	lbl.add_theme_font_size_override("font_size", 18)
-	lbl.add_theme_color_override("font_color", ABILITY_TEXT_COLOR)
-	lbl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	clip.add_child(lbl)
-	return clip
+	var body := "[font_size=22][b]%s[/b][/font_size]
+" % title
+	body += TextIcons.enrich(description, 19)
+	var rtl := RichTextLabel.new()
+	rtl.bbcode_enabled = true
+	rtl.fit_content = false          # fixed size — must NOT report content height and grow the bar
+	rtl.scroll_active = false
+	rtl.clip_contents = true         # last resort if a description still overruns the fixed box
+	rtl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	rtl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	rtl.add_theme_font_size_override("normal_font_size", 19)
+	rtl.add_theme_color_override("default_color", ABILITY_TEXT_COLOR)
+	rtl.text = body
+	rtl.custom_minimum_size = Vector2(COL_W, col_h)
+	rtl.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	return rtl
 
 
 func clear_tokens() -> void:

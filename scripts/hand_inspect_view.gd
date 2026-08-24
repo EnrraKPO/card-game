@@ -16,4 +16,5 @@ var card: CardData = null                     # the sidebar's preview face
 var enemy: bool = false
 var ability_names: Array[StringName] = []     # the ask names, parallel to the entries below
 var ability_cards: Array[CardData] = []       # each ability's display card (may hold nulls)
-var ability_texts: Array[String] = []         # each ability's name+description column text
+var ability_titles: Array[String] = []        # each ability's display name (the bold lead)
+var ability_texts: Array[String] = []         # each ability's description body

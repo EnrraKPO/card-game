@@ -34,6 +34,11 @@ static func inspect_view(unit: Unit, player_side: Side) -> HandInspectView:
 	var view := HandInspectView.new()
 	view.subject = unit
 	view.title = unit.display_name
+	# The sidebar body stays EMPTY for now: the core envelope carries no description birth
+	# fact (its roster is id/name/stats/building/king/effects/abilities), so there is
+	# nothing to compose — the old bar showed the catalogue CardData's description. Grows
+	# with the envelope (an engine matter for its own ruling), like the elements gap.
+	view.description = ""
 	view.card = CardViewModel.unit_card(unit)
 	view.enemy = unit.allegiance != player_side
 	for ability_name: StringName in unit.abilities:
@@ -41,13 +46,12 @@ static func inspect_view(unit: Unit, player_side: Side) -> HandInspectView:
 		var authored: AbilityData = AbilityData.get_ability(String(ability_name))
 		if authored != null:
 			view.ability_cards.append(authored.display_card())
-			var text := authored.display_name
-			if not authored.description.is_empty():
-				text += "\n" + authored.description
-			view.ability_texts.append(text)
+			view.ability_titles.append(authored.display_name)
+			view.ability_texts.append(authored.description)
 		else:
 			view.ability_cards.append(null)
-			view.ability_texts.append(String(ability_name).capitalize())
+			view.ability_titles.append(String(ability_name).capitalize())
+			view.ability_texts.append("")
 	return view
 
 
