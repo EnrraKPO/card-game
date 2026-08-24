@@ -105,6 +105,13 @@ func _fill_panel() -> void:
 	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	right.add_child(_mixer_row(Loc.t("settings.music"), "music"))
 	right.add_child(_mixer_row(Loc.t("settings.sfx"), "sfx"))
+	# The test suite inspector (TestSuiteOverlay) spawns the headless runner as a subprocess,
+	# which the web export cannot do — the entry exists only where it can deliver.
+	if not OS.has_feature("web"):
+		var tests := ScreenUI.action_button(Loc.t("settings.tests"),
+				func() -> void: TestSuiteOverlay.open(self), Vector2(0, 96), 34)
+		tests.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		right.add_child(tests)
 	columns.add_child(right)
 
 	var done := ScreenUI.action_button(Loc.t("settings.done"), _close, Vector2(0, 96), 34)

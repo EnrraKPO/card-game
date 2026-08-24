@@ -31,6 +31,8 @@ const SUITES: Array = [
 	preload("res://tests/test_card_roads.gd"),
 	preload("res://tests/test_combat_frame.gd"),
 	preload("res://tests/test_slice.gd"),
+	preload("res://tests/test_slot_ui.gd"),
+	preload("res://tests/test_card_ui.gd"),
 ]
 
 
@@ -40,7 +42,9 @@ func _ready() -> void:
 	var failed := 0
 	for suite_script: GDScript in SUITES:
 		var suite: TestCase = suite_script.new()
-		print("── ", suite.suite_name(), " ──")
+		# ASCII marker on purpose: the suite inspector (TestSuiteOverlay) reads this output
+		# through a Windows pipe, which mangles anything beyond ASCII.
+		print("-- ", suite.suite_name(), " --")
 		# The core's flow layer is coroutine-native (picks and cues await); a suite
 		# exercising it awaits, and awaiting a plain suite completes on the spot.
 		@warning_ignore("redundant_await")
@@ -49,7 +53,7 @@ func _ready() -> void:
 		failed += suite.failed
 		print("    %d passed, %d failed" % [suite.passed, suite.failed])
 	print("")
-	print("TOTAL: %d passed, %d failed — %s" % [passed, failed, "OK" if failed == 0 else "FAILURES"])
+	print("TOTAL: %d passed, %d failed - %s" % [passed, failed, "OK" if failed == 0 else "FAILURES"])
 	get_tree().quit(0 if failed == 0 else 1)
 
 
