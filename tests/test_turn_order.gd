@@ -26,6 +26,7 @@ func run() -> void:
 	_entries_dress_by_side_and_state()
 	_declarations_reach_the_screen()
 	await _cards_wear_the_declared_numbers()
+	await _attention_arrives_from_the_board()
 	_host.queue_free()
 	_host = null
 	Selection.clear()
@@ -167,4 +168,48 @@ func _cards_wear_the_declared_numbers() -> void:
 	strip.queue_free()
 	slot_ui.queue_free()
 	FightScreen.current = null
+	screen.free()
+
+
+# The board-side circuits: marking a unit (the cursor on its CARD) lifts its entry with
+# the hover cue, and the game-wide pick lays the dashed ring on its entry — both derived
+# on the strip's own beat, exactly as the cursor's own hover is.
+func _attention_arrives_from_the_board() -> void:
+	var strip := _strip()
+	strip.refresh()
+	var tree := Engine.get_main_loop() as SceneTree
+	await tree.process_frame
+	var unit: Unit = strip.listed()[0]
+	var entry: Control = strip._entry_for(unit)
+	check(float(entry.get_meta("turn_lift", 1.0)) == 1.0, "an unmarked entry rests")
+	strip.mark(unit)
+	check(float(entry.get_meta("turn_lift", 1.0)) > 1.0,
+			"marking the unit lifts its entry with the hover cue")
+	strip.mark(null)
+	# mark(null) drops the latch; the next attention sync re-derives from the real facts.
+	strip._sync_attention()
+	check(float(entry.get_meta("turn_lift", 1.0)) == 1.0, "the mark sheds with the gesture")
+	# The pick: Selection is the one authority — the strip reads it, never mirrors it.
+	var ring: Control = entry.get_meta("ring")
+	check(not ring.visible, "no pick, no dashed ring")
+	Selection.select(unit)
+	strip._sync_attention()
+	check(ring.visible, "the pick lays the dashed ring on its entry")
+	Selection.clear()
+	strip._sync_attention()
+	check(not ring.visible, "the ring dies with the pick")
+	# The acting moment: the screen's beat-derived fact golds the entry, outranking spent.
+	var screen := FightScreen.new()
+	strip.screen = screen
+	unit.seed_stat(&"tapped", 1.0)
+	screen.acting = unit
+	strip._sync_states()
+	check_eq(int(entry.get_meta("state", -1)), TurnOrderStrip.ST_ACTING,
+			"the acting moment outranks spent (a tapped unit's moment is still its moment)")
+	screen.acting = null
+	strip._sync_states()
+	check_eq(int(entry.get_meta("state", -1)), TurnOrderStrip.ST_SPENT,
+			"the moment passes and the entry reads spent")
+	unit.seed_stat(&"tapped", 0.0)
+	strip.queue_free()
 	screen.free()

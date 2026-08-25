@@ -6,6 +6,7 @@ extends Node
 # "D:/Godot/Godot_v4.6.3-stable_win64_console.exe" --path . res://dev/_turn_order_shot.tscn
 const OUT_REST := "res://dev/_turn_order_rest.png"
 const OUT_POINT := "res://dev/_turn_order_point.png"
+const OUT_ACT := "res://dev/_turn_order_act.png"
 
 
 func _ready() -> void:
@@ -37,6 +38,12 @@ func _ready() -> void:
 		strip.point_at(listed[0])
 	await get_tree().create_timer(0.6).timeout
 	sv.get_texture().get_image().save_png(OUT_POINT)
+	# The combat span: end the player's command and catch a unit's acting moment — the
+	# gold entry, the strike choreography, the spent greys accumulating behind it.
+	strip.point_at(null)
+	screen._on_end_turn()
+	await get_tree().create_timer(0.45).timeout
+	sv.get_texture().get_image().save_png(OUT_ACT)
 	print("RENDERED turn order strip (%d listed)" % listed.size())
 	get_tree().quit()
 
